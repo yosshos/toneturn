@@ -13,7 +13,7 @@ import { VOICE_NOTE } from '../src/engine/drumKit';
 const FAMS = drumFamilies();
 // DRUMS P2 (drumMore.ts) added the rest of the curriculum: strokes 8, rolls 10, diddles 10, time 9, rock 9, fills 8, read 11, funk 8, shuffle 8, indep 8, feet 8.
 // AUDIT-6 Stage B: the first steps lead (d-first, 8 levels).
-const V1: Record<string, number> = { 'd-first': 8, 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 10, 'd-song': 8, 'd-prog': 11, 'd-count': 5, 'd-notation': 5, 'd-form': 5,
+const V1: Record<string, number> = { 'd-first': 8, 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 7 /* 8–10 hidden until a teacher checks them (verifiedContent.ts) */, 'd-song': 8, 'd-prog': 11, 'd-count': 5, 'd-notation': 5, 'd-form': 5,
   // STAGE C (AUDIT-6 DA-10): the advanced families past 1400.
   'd-pas': 12, 'd-stick': 6, 'd-synco': 6, 'd-chapin': 6, 'd-linear': 5, 'd-brush': 4, 'd-oddtempo': 5, 'd-trade': 5 };
 const HE = /[֐-׿]/;

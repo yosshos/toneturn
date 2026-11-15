@@ -236,12 +236,20 @@ describe('Elevator (Echols F1.2, C6-dim from C)', () => {
       for (const m of c.answer.slice(held.length)) expect(onChord(noteStep(c.t, c.scale, m)!)).toBe(false);
     }
   });
-  it('all 12 keys; melody cases keep the melody on top', () => {
+  it('all 12 keys; every floor from the tonic, so the outer voices keep the interval rule (owner 2026-11-15)', () => {
     expect(new Set(Array.from({ length: 120 }, (_, i) => pc(elevatorCase(3, i, 4).t))).size).toBe(12);
-    for (let s = 0; s < 60; s++) {
-      const c = elevatorCase(s, 0, 4);
-      expect(c.answer[c.answer.length - 1]).toBe(c.shown[0]);
-    }
+    // 3rds, 5ths, 6ths, 8ths, 10ths, 11ths, 13ths, double octaves by letter name (in semitones: diminished 5ths and
+    // augmented 11ths appear on the dim floors)
+    const OK = new Set([3, 4, 6, 7, 8, 9, 12, 15, 16, 17, 18, 20, 21, 24]);
+    for (let s = 0; s < 120; s++)
+      for (let lv = 1; lv <= 6; lv++) {
+        const c = elevatorCase(s, s % 10, lv);
+        expect(c.s0, `${lv} ${s}`).toBe(0);
+        expect(c.kind).not.toBe('melody');
+        if (c.kind === 'borrow') continue;
+        const span = c.answer[c.answer.length - 1] - c.answer[0];
+        expect(OK.has(span), `${lv} ${s} ${c.scale} floor ${c.floor}: ${span}`).toBe(true);
+      }
   });
 });
 

@@ -193,11 +193,14 @@ import { isRepLesson, repGoal, repResult, repResults, type RepItem, type RepWay 
 import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
+import { PracticeDiaryScreen, DiaryEntryCard, plateausOf } from './PracticeDiary';
+import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
+import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'diary';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -209,7 +212,7 @@ const enterPlay = () => {
 };
 const routeFromHash = (): Route => {
   const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -327,12 +330,16 @@ export function App() {
   const [streakOpen, setStreakOpen] = useState(false);
   // Practice log (SPEC-0.48 §P1): practice away from the app.
   const [logOpen, setLogOpen] = useState(false);
-  const saveLog = async (kind: LogKind, minutes: number, xpToday: number) => {
+  const saveLog = async (kind: LogKind, minutes: number, xpToday: number, note?: string) => {
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-    setProgress(await store.recordCompletion(makeLogResult(kind, minutes, xpToday, new Date(), id)));
+    setProgress(await store.recordCompletion({ ...makeLogResult(kind, minutes, xpToday, new Date(), id), ...(note ? { note } : {}) }));
     setLogOpen(false);
   };
-  const gems = useMemo(() => gemsOf(progress, settings?.purchases ?? []), [progress, settings?.purchases]);
+  const gems = useMemo(() => gemsOf(progress, settings?.purchases ?? [], new Date(), settings?.streakWeekly), [progress, settings?.purchases, settings?.streakWeekly]);
+  // AUDIT-5 #1: the practice clock (active, idle-trimmed time on practice screens), and #4: a day with 5 measured
+  // minutes is a practice day even without a recorded take.
+  useEffect(() => installPracticeClock(), []);
+  useEffect(() => onMeasuredDay(() => void store.markPracticeDay().then(setProgress)), []);
   const buyCosmetic = (item: string) => {
     const purchases = settings?.purchases ?? [];
     if (!canBuyCosmetic(item, gems.balance, purchases)) return;
@@ -465,6 +472,8 @@ export function App() {
     const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
   }, [s.uiLang, s.reducedMotion]);
+  // AUDIT-5 #1: the clock runs on practice screens only, and books time to the active course.
+  useEffect(() => setPracticeContext(route, settings?.activeCourse), [route, settings?.activeCourse]);
   // Appearance (0.61): light / dark / high contrast, or automatic by the device. Old theme choices map to a mode.
   const appearance = appearanceOf(s.theme);
   const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
@@ -1216,7 +1225,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | null>(null);
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1325,14 +1334,16 @@ export function App() {
   /** The depth page (src/partner): a family opens its first level's drills; a topic opens its lesson. Back returns there. */
   const openDepthLink = (l: DepthLink) => {
     if (l.kind === 'topic') return openTopic(l.id, l.level ?? 1);
-    const lv = familyById(l.id as FamilyId)?.levels[(l.level ?? 1) - 1];
+    // by level number (levels hidden until verified leave gaps), else the family's first shown level
+    const fam = familyById(l.id as FamilyId);
+    const lv = fam?.levels.find((x) => x.level === (l.level ?? 1)) ?? fam?.levels[0];
     if (!lv || !settings) return;
     chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
     drillFrom.current = 'depth';
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'diary' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1414,6 +1425,11 @@ export function App() {
       // Key mastery: a skill in one key, started from Insights — the technique result is recorded above; back to Insights.
       chartQueue.current = null;
       return go('insights');
+    }
+    if (from === 'diary') {
+      // AUDIT-5 #5: a plateau suggestion opened from the practice diary — back to it.
+      chartQueue.current = null;
+      return go('diary');
     }
     if (from === 'chart') {
       chartQueue.current = null;
@@ -1925,6 +1941,62 @@ export function App() {
     go(id as Route);
   };
 
+  // AUDIT-5 #5: act on a plateau — step back on the tempo ladder, another key, or open the item (loop the weak bars
+  // from its error map); a flat skill goes into a mixed workout. The try is remembered so the next one rotates.
+  const drillOfItem = (itemId: string): Drill | undefined => {
+    const st = progress.drillItems?.[itemId];
+    const f = st ? familyById(st.family) : undefined;
+    for (const lv of f?.levels ?? []) {
+      try {
+        const d = levelDrills(lv, drillSettingsOf(s).keyOrder).find((x) => x.itemId === itemId);
+        if (d) return d;
+      } catch {
+        /* a level that can't build here (another instrument's tuning) */
+      }
+    }
+    return undefined;
+  };
+  const openDrillItem = (itemId: string, from: 'diary' | 'keys') => {
+    const d = drillOfItem(itemId);
+    if (!d) return go('drills');
+    chartQueue.current = [d];
+    drillFrom.current = from;
+    go('drills');
+  };
+  const actOnPlateau = (f: PlateauFinding, from: 'diary' | 'keys') => {
+    recordPlateauTry({ id: f.scope === 'skill' ? `skill:${f.id}` : f.id, how: f.how, base: f.now });
+    const st = f.scope === 'item' ? progress.drillItems?.[f.id] : undefined;
+    if (!st) return go('workout');
+    if (f.how === 'key') {
+      const fam = familyById(st.family);
+      const k = otherKey(progress.drillItems ?? {}, st.family, st.key, [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]);
+      const q = fam ? skillDrillsInKey(fam, progress.drillItems ?? {}, drillSettingsOf(s).keyOrder, k, s.drillStart?.[st.family]) : [];
+      if (!q.length) return openDrillItem(f.id, from);
+      chartQueue.current = q;
+      drillFrom.current = from;
+      return go('drills');
+    }
+    if (f.how === 'slower') return void store.setDrillItem(stepBack(st)).then((p) => (setProgress(p), openDrillItem(f.id, from)));
+    openDrillItem(f.id, from);
+  };
+  /** Names for the diary's ledger ids: lesson titles and game names. */
+  const ledgerLabel = (id: string): string | null => {
+    const rest = id.slice(2);
+    if (id.startsWith('l:')) {
+      if (LESSON_META[rest as LessonId]) return lessonTitle(rest as LessonId);
+      const generic: Record<string, [string, string]> = { review: ['Review', 'חזרה'], topic: ['Topic lesson', 'שיעור נושא'], placement: ['Find my level', 'מציאת רמה'], 'weekly-puzzle': ['Weekly puzzle', 'חידה שבועית'] };
+      const g = generic[rest] ?? (rest.startsWith('vocal') ? ['Vocal technique', 'טכניקה קולית'] : null);
+      return g ? g[s.uiLang === 'he' ? 1 : 0] : null;
+    }
+    if (id.startsWith('g:')) {
+      const g = GAMES2.find((x) => x.id === rest);
+      if (g) return g[s.uiLang][0];
+      const mem: Record<string, [string, string]> = { melody: ['Melody memory', 'זיכרון מלודי'], rhythm: ['Rhythm memory', 'זיכרון קצבי'] };
+      return mem[rest]?.[s.uiLang === 'he' ? 1 : 0] ?? null;
+    }
+    return null;
+  };
+
   // The parent digest page stands alone (no menus, no sign-in).
   if (digestToken)
     return (
@@ -2267,6 +2339,7 @@ export function App() {
                   ›
                 </span>
               </button>
+              <DiaryEntryCard lang={s.uiLang} onOpen={() => go('diary')} />
               <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
               <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />
@@ -2521,7 +2594,11 @@ export function App() {
             // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first.
             if (b.target.kind === 'strengthen' && instrumentCourse) {
               saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
-              const q = strengthenDrills(mview, mctx);
+              let q = strengthenDrills(mview, mctx);
+              // AUDIT-5 #5: an item on a plateau leads the block (once in the opened levels' pool or not, it is edge work).
+              const pf = plateausOf(progress, loadLedger(), localDay(new Date()), 4).find((f) => f.scope === 'item' && f.kind === 'plateau');
+              const pd = pf ? drillOfItem(pf.id) : undefined;
+              if (pd && q.length) q = [pd, ...q.filter((d) => d.itemId !== pd.itemId)].slice(0, Math.max(q.length, 1));
               chartQueue.current = q.length ? q : null;
               drillFrom.current = 'workout';
               drillSessionXp.current = 0;
@@ -2565,7 +2642,7 @@ export function App() {
             if (min >= 1) {
               const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
               void store.recordCompletion({ ...makeLogResult('other', min, 0, new Date(), id), sessionId: `wk-${id}`, xp: 0, ...(note ? { note } : {}) }).then(setProgress);
-            }
+            } else if (note) addJournalNote(note, { course: s.activeCourse }); // under a minute: the note still goes in the diary
             saveRun(r);
             if (!r.finished) runCurrent(r);
           }}
@@ -2596,7 +2673,20 @@ export function App() {
           }}
         />
       )}
-      {route === 'insights' && <InsightsScreen lang={s.uiLang} progress={progress} nearMastery={masteryLine(mview, mctx, unitName, (st) => nodeTitle(st, s, 'en')) || undefined} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
+      {route === 'diary' && (
+        <PracticeDiaryScreen
+          lang={s.uiLang}
+          progress={progress}
+          skillNames={t.skillNames}
+          label={ledgerLabel}
+          course={(s.activeCourse ?? 'ear') as CourseId}
+          weeklyTarget={s.streakWeekly ?? 0}
+          onWeekly={(n) => updateSettings({ streakWeekly: n || undefined })}
+          onBack={() => go('skills')}
+          onPlateau={(f) => actOnPlateau(f, 'diary')}
+        />
+      )}
+      {route === 'insights' && <InsightsScreen onPlateau={(f) => actOnPlateau(f, 'keys')} plateauLabel={ledgerLabel} lang={s.uiLang} progress={progress} nearMastery={masteryLine(mview, mctx, unitName, (st) => nodeTitle(st, s, 'en')) || undefined} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
             const f = familyById(family);
             const q = f ? skillDrillsInKey(f, progress.drillItems ?? {}, drillSettingsOf(s).keyOrder, key, s.drillStart?.[family]) : [];
             if (!q.length) return go('drills');
@@ -3003,7 +3093,7 @@ export function App() {
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
-      {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x) => void saveLog(k, m, x)} onClose={() => setLogOpen(false)} />}
+      {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x, note) => void saveLog(k, m, x, note)} onClose={() => setLogOpen(false)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} frame={s.avatarFrame} onBuyCosmetic={buyCosmetic} onFrame={(avatarFrame) => updateSettings({ avatarFrame })} onClose={() => setStreakOpen(false)} />
       )}

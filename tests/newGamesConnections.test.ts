@@ -1,5 +1,6 @@
 // AUDIT-GAMES §4.2 new games — "everything connects": path units and bonus steps (with their difficulty floors), the
 // games lists, the workout rotation, boards, glyphs, badges, tiers, key mastery, ratings, XP and tier clears.
+import { gameVerified } from '../src/engine/verifiedContent';
 import { describe, expect, it } from 'vitest';
 import { GAME_STEPS, gameForArea } from '../src/engine/path';
 import { BONUS_GAMES, bonusSteps } from '../src/engine/pathBonus';
@@ -15,7 +16,9 @@ import { GAME_BADGE_GAMES } from '../src/engine/gameBadges';
 import { inCourse, type CourseId } from '../src/engine/courses';
 import { TAKES_PER_RUN } from '../src/engine/instGames';
 
-const NEW = ['guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'];
+const ALL_NEW = ['guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'];
+// 5-4-3-2 Call is hidden until verified (src/engine/verifiedContent.ts; owner: not pursued): left out of every list.
+const NEW = ALL_NEW.filter(gameVerified);
 
 describe('the new games connect to everything', () => {
   const base = { noMic: false, noSing: false, packs: [] as never[] };
@@ -26,7 +29,8 @@ describe('the new games connect to everything', () => {
         const g = gameForArea('instrument', n, { ...base, plays: [c], course: c }, 1400);
         if (g) seen.add(g);
       }
-      for (const g of ['guidetone', 'enclosure', 'call5432']) expect([...seen], `${c} ${g}`).toContain(g);
+      for (const g of ['guidetone', 'enclosure']) expect([...seen], `${c} ${g}`).toContain(g);
+      expect([...seen]).not.toContain('call5432');
     }
     const ear = new Set<string>();
     for (let n = 0; n < 40; n++) ear.add(gameForArea('pitch', n, { ...base, plays: [], course: 'ear' }, 1400) ?? '');
@@ -47,15 +51,16 @@ describe('the new games connect to everything', () => {
   it('games lists, workout rotation, boards, glyphs, badges, tiers', () => {
     expect(COURSE_GAMES.jazz).toEqual(expect.arrayContaining(NEW));
     expect(COURSE_GAMES.ear).toEqual(expect.arrayContaining(['crossword', 'holdnote']));
-    for (const c of ['keys', 'guitar', 'bass'] as const) expect(COURSE_GAMES[c]).toEqual(expect.arrayContaining(['guidetone', 'call5432', 'enclosure']));
+    for (const c of ['keys', 'guitar', 'bass'] as const) expect(COURSE_GAMES[c]).toEqual(expect.arrayContaining(['guidetone', 'enclosure']));
+    for (const c of Object.keys(COURSE_GAMES) as CourseId[]) expect(COURSE_GAMES[c]).not.toContain('call5432');
     expect(WORKOUT_GAMES.ear).toContain('crossword');
     expect(WORKOUT_GAMES.jazz).toEqual(expect.arrayContaining(['crossword', 'holdnote']));
     for (const c of ['keys', 'guitar', 'bass'] as const) expect(WORKOUT_GAMES[c]).toContain('guidetone');
     expect(boardGames(COURSE_GAMES.jazz)).toEqual(expect.arrayContaining(NEW));
-    const glyphs = NEW.map((g) => GAME_STEP_GLYPH[g]);
+    const glyphs = ALL_NEW.map((g) => GAME_STEP_GLYPH[g]);
     for (const g of glyphs) expect(GLYPHS[g], g).toBeDefined();
     expect(new Set(glyphs).size).toBe(5);
-    for (const g of NEW) {
+    for (const g of ALL_NEW) {
       expect(GAME_BADGE_GAMES.some((b) => b.game === g), g).toBe(true);
       const spec = tierSpec(g)!;
       expect(spec, g).toBeTruthy();

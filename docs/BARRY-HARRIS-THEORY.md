@@ -1,6 +1,6 @@
 # Barry Harris theory: the app's canonical reference
 
-Every Barry Harris lesson, drill, ear item and AI explanation in the app follows this file. When content disagrees with it, the content is wrong. Items marked **(verify)** wait for a Harris teacher's confirmation.
+Every Barry Harris lesson, drill, ear item and AI explanation in the app follows this file. When content disagrees with it, the content is wrong. Items marked **(verify)** wait for a Harris teacher's confirmation and are hidden from users until then (§12).
 
 Positioning (owner, 2026-11-14): The 7th Sense aims to be the first app to teach the Harris method professionally, and to measure the quality and time of practice continuously and the improvement over time. The bar is "the most professional there is".
 
@@ -181,6 +181,7 @@ Every step runs rubato first, then the tempo ladder, on piano and guitar (and ba
   - borrow with one, two or three voices. A borrowed dominant root in a dim voicing gives a maj7 colour.
 - **Contrary motion:** from a unison, the outer voices step apart and the middle fills in, 6 and dim alternating.
   - Echols's Elevator: floors are voicing types. Moving along a floor is parallel motion; moving between floors is contrary.
+  - The floors are built **from the tonic** (owner 2026-11-15: that is how Echols builds them). From the tonic the outer voices are always 3rds, 5ths, 6ths, 8ths, 10ths, 11ths, 13ths or double octaves, on all four scales; from other degrees they are not, so the app never starts a floor elsewhere.
 
 ## 11. Line devices in the app (2026-11-15)
 
@@ -206,6 +207,17 @@ Built from §8–§9 and docs/research/BARRY-HARRIS-METHOD.md Parts D–F. The n
 - **The chromatic scale in two voices (Echols, LL 8).** A second voice two scale steps below (3rds) or above (6ths) in the 6-dim scale, along one floor.
 - **Tune charts.** Cherokee, How High the Moon and Night in Tunisia were typed from the standard changes and need checking against a fake book. The app uses chord charts only, never melodies.
 - **The blues outline's bar details** (§9 "Scale outline").
+
+## 12. Hidden until verified (2026-11-15)
+
+The owner's rule: anything not 100% certain is not shown. Every item above marked **(verify)**, and every item resting on one secondary source, an attendee's notes, an inference or a derivation, is hidden from users through one registry, `src/engine/verifiedContent.ts` (`UNVERIFIED_CLAIMS`). Hidden content disappears everywhere at once: path, map, Drills, games, workout, key mastery, badges, level test, lessons and the depth page. The code and the player's saved progress stay.
+
+- **The exact question per item** (what we have, the source, what to look for and where): `docs/THEORY-QUESTIONS.md`.
+- **To switch an item on** once it is confirmed: add its claim id to `SWITCHED_ON` in the registry.
+- **Hidden now (Harris lines):** the chromatic scale (all forms) and its two-voice form; the blues outline; the Cherokee, How High the Moon and Night in Tunisia charts; Parks's dominant eight ways; seven down to the 3rd; 3 to ♭9; the ♭7-major pivot; the ABCs and chromatic arpeggios; feel 6 in 4; compose a line.
+- **Hidden, not pursued:** the 5-4-3-2 phrases, their minor forms and the combined lick (owner: specific licks don't matter). The "5-4-3-2 Call" game is hidden with them.
+- **Echols:** the Elevator is verified from the tonic (§10). Still hidden: the elevator under a melody, borrowing through the elevator, the voicing ladder.
+- **Shown (sourced):** the three important arpeggios, the arpeggio into the scale, the major and minor rules, the triplet and miscellaneous rules, upbeat comping, the scale outlines of rhythm changes, Donna Lee, All the Things You Are and Giant Steps, and everything in §1–§10 not marked (verify).
 
 ## Sources
 

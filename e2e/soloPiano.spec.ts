@@ -49,8 +49,9 @@ for (const lang of ['en', 'he'] as const) {
       await page.locator('.sheet-backdrop .btn.ghost').first().click();
     });
     const bad: string[] = [];
-    for (const topic of ['lh-tex-ear', 'solo-tex-ear', 'comp-rhythm-ear'])
-      for (let l = 1; l <= 3; l++) {
+    // lh-tex-ear 2–3 and comp-rhythm-ear are hidden until verified (src/engine/verifiedContent.ts)
+    for (const [topic, levels] of [['lh-tex-ear', [1]], ['solo-tex-ear', [1, 2, 3]]] as const)
+      for (const l of levels) {
         await page.goto(`/?sim=1&brief=1&lang=${lang}#/topic/${topic}/${l}`);
         await page.locator('main.lesson').waitFor({ timeout: 15_000 });
         await page.locator('[data-brief-play]').click({ timeout: 5000 }).catch(() => {});
@@ -65,9 +66,10 @@ for (const lang of ['en', 'he'] as const) {
   });
 
   for (const [family, levels] of [
-    ['k-lh', range(18, 'k-lh')],
-    ['k-tex', range(20, 'k-tex')],
-    ['k-comp', range(7, 'k-comp')],
+    // the levels on show; the rest are hidden until verified (src/engine/verifiedContent.ts)
+    ['k-lh', range(18, 'k-lh').filter((id) => !/-(1[0-6]|18)$/.test(id))],
+    ['k-tex', range(20, 'k-tex').filter((id) => !/-(4|11|18)$/.test(id))],
+    ['k-comp', ['k-comp-2', 'k-comp-6', 'k-comp-7']],
     ['k-impro', range(7, 'k-impro')],
     ['k-harm', ['k-harm-8']],
   ] as const)

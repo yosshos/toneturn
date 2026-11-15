@@ -29,6 +29,8 @@ const MODE_NAME: Record<string, { en: string; he: string }> = {
 
 function LinkChip({ link, lang, onOpen }: { link: DepthLink; lang: Lang; onOpen: (l: DepthLink) => void }) {
   const n = link.kind === 'family' ? familyLevels(link.id) : topicLevels(link.id);
+  // Hidden until verified (verifiedContent.ts): a family / topic with nothing on show gets no chip.
+  if (n === 0) return null;
   return (
     <button type="button" className={`dp-link ${link.kind}`} onClick={() => onOpen(link)} data-depth-link={`${link.kind}:${link.id}`}>
       <span className="dp-link-name">{linkTitle(link, lang)}</span>

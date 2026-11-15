@@ -1,12 +1,13 @@
 // Which rows and games the Practice page shows per course (pure tables, moved out of Arcade.tsx in 0.67 so tests can
 // read them without the UI).
 import type { CourseId } from '../engine/courses';
+import { gameVerified } from '../engine/verifiedContent';
 
 /** The games each course offers (0.64, owner: every bottom-tab screen is the course's — no guitar game in piano).
  *  AUDIT-GAMES §5 (games fix): Technique left the lists (it is the Technique row), Odd-meter Echo is a mode of Groove
  *  Echo, Pitch Memory is a Today card, the groove trainer a tool; in drums Groove Echo replaces Beat Echo. Their
  *  routes and saved progress stay. */
-export const COURSE_GAMES: Record<CourseId, string[]> = {
+const ALL_COURSE_GAMES: Record<CourseId, string[]> = {
   ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'rush-note', 'rush-keysig', 'peakhunter', 'rush-voicing', 'reharm', 'rush-scale', 'transcribe', 'rush-standard', 'polylock', 'bordercontrol', 'crossword', 'holdnote'],
   jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily', 'rush-standard', 'rush-voicing', 'reharm', 'bhtime', 'transcribe', 'rush-scale', 'bordercontrol', 'whichbrother', 'compcaller', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'],
   voice: ['flight', 'melody', 'nametune', 'rush-interval', 'rush-scale', 'singinterval', 'harmonyhold', 'runcatcher'],
@@ -17,6 +18,8 @@ export const COURSE_GAMES: Record<CourseId, string[]> = {
   // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
   drums: ['highway', 'land', 'groove-echo', 'polylock', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'kitread', 'namegroove'],
 };
+/** The games on show: hidden-until-verified games (verifiedContent.ts) left out; their routes and saved progress stay. */
+export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Object.entries(ALL_COURSE_GAMES).map(([c, gs]) => [c, gs.filter(gameVerified)])) as Record<CourseId, string[]>;
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
  *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
  *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines.

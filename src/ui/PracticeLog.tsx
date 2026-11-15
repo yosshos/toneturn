@@ -6,14 +6,16 @@ import { LOG_KINDS, LOG_MINUTES, LOG_NAME, LOG_XP_PER_DAY, isLog, logKind, logMi
 import { localDay, type Progress } from '../storage/progress';
 
 const TX = {
-  en: { title: 'Log practice', what: 'What did you practice?', long: 'How long?', min: 'min', save: 'Save', week: 'This week, away from the app', none: 'Nothing logged this week yet.', close: 'Close', xpCap: `Logged practice earns up to ${LOG_XP_PER_DAY} XP a day.`, other: 'Other' },
-  he: { title: 'רישום אימון', what: 'על מה התאמנתם?', long: 'כמה זמן?', min: 'דק׳', save: 'שמירה', week: 'השבוע, מחוץ לאפליקציה', none: 'עדיין לא נרשם אימון השבוע.', close: 'סגירה', xpCap: `אימון שנרשם מזכה בעד ${LOG_XP_PER_DAY} XP ביום.`, other: 'אחר' },
+  en: { title: 'Log practice', what: 'What did you practice?', long: 'How long?', note: 'A note (optional): what you worked on, what is next', min: 'min', save: 'Save', week: 'This week, away from the app', none: 'Nothing logged this week yet.', close: 'Close', xpCap: `Logged practice earns up to ${LOG_XP_PER_DAY} XP a day.`, other: 'Other' },
+  he: { title: 'רישום אימון', what: 'על מה התאמנתם?', long: 'כמה זמן?', note: 'הערה (רשות): על מה עבדתם, מה הלאה', min: 'דק׳', save: 'שמירה', week: 'השבוע, מחוץ לאפליקציה', none: 'עדיין לא נרשם אימון השבוע.', close: 'סגירה', xpCap: `אימון שנרשם מזכה בעד ${LOG_XP_PER_DAY} XP ביום.`, other: 'אחר' },
 };
 
-export function PracticeLogSheet({ lang, progress, onSave, onClose }: { lang: 'en' | 'he'; progress: Progress; onSave: (kind: LogKind, minutes: number, xpToday: number) => void; onClose: () => void }) {
+export function PracticeLogSheet({ lang, progress, onSave, onClose }: { lang: 'en' | 'he'; progress: Progress; onSave: (kind: LogKind, minutes: number, xpToday: number, note?: string) => void; onClose: () => void }) {
   const tx = TX[lang];
   const [kind, setKind] = useState<LogKind | null>(null);
   const [minutes, setMinutes] = useState<number | null>(null);
+  // AUDIT-5 #3: a short note goes into the practice diary with the entry.
+  const [note, setNote] = useState('');
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     addEventListener('keydown', k);
@@ -53,7 +55,8 @@ export function PracticeLogSheet({ lang, progress, onSave, onClose }: { lang: 'e
             </button>
           ))}
         </div>
-        <button className="btn plog-save" disabled={!kind || !minutes} onClick={() => kind && minutes && onSave(kind, minutes, xpToday)} data-log-save="1">
+        <textarea className="plog-note" rows={2} maxLength={500} placeholder={tx.note} aria-label={tx.note} value={note} onChange={(e) => setNote(e.target.value)} data-log-note="1" dir="auto" />
+        <button className="btn plog-save" disabled={!kind || !minutes} onClick={() => kind && minutes && onSave(kind, minutes, xpToday, note.trim() || undefined)} data-log-save="1">
           {tx.save}
         </button>
         <small className="field-hint">{tx.xpCap}</small>

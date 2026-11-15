@@ -174,7 +174,9 @@ describe('the harmonization ladder (k-sharm, g-harm)', () => {
   const kf = CAT.find((f) => f.id === 'k-sharm')!;
   const gf = GCAT.find((f) => f.id === 'g-harm')!;
   it('42 piano levels and 13 guitar levels, every item in every key, a perfect take clean (piano)', () => {
-    expect(kf.levels).toHaveLength(42);
+    // 42 built; k-sharm-41 (Echols's voicing ladder) is hidden until verified (src/engine/verifiedContent.ts)
+    expect(kf.levels).toHaveLength(41);
+    expect(kf.levels.some((l) => l.id === 'k-sharm-41')).toBe(false);
     expect(gf.levels).toHaveLength(13);
     for (const l of kf.levels)
       for (const sp of l.specs)
@@ -298,7 +300,7 @@ describe('wiring', () => {
     }
   });
   it('every new piano level spans 12 keys', () => {
-    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 42 }, (_, i) => `k-sharm-${i + 1}`)]) {
+    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 42 }, (_, i) => `k-sharm-${i + 1}`).filter((id) => id !== 'k-sharm-41')]) {
       const l = lv(id);
       expect(Array.isArray(l.keys) ? new Set(l.keys).size : 12, id).toBe(12);
     }

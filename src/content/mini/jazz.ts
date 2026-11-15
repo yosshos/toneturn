@@ -528,7 +528,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Lower one note of a dim7 a half step → a dominant 7 on that note. Raise one → a minor 6 a fourth above it.', he: 'מורידים צליל אחד בדימיניש בחצי טון → דומיננט 7 על הצליל הזה. מעלים צליל אחד → מינור 6 קוורטה מעליו.' },
     steps: [
       {
-        say: { en: 'Hey {name}! Time for Barry Harris’s favorite magic trick. Start with a diminished chord: B, D, F, A♭.', he: 'היי {name}! הגיע הזמן לטריק הקסם האהוב של בארי האריס. מתחילים באקורד דימיניש: סי, רה, פה, לה במול.' },
+        say: { en: 'Hey {name}! Time for a Barry Harris magic trick. Start with a diminished chord: B, D, F, A♭.', he: 'היי {name}! הגיע הזמן לטריק קסם של בארי האריס. מתחילים באקורד דימיניש: סי, רה, פה, לה במול.' },
         play: [chord(B_DIM, 1.1, true), chord(B_DIM, 1.4)],
         show: { notes: B_DIM, chord: true, key: 'C', text: { en: 'B°7', he: 'B°7' } },
       },

@@ -50,6 +50,8 @@ describe('guitar above grade 8', () => {
   it('the genuinely advanced levels move up to grades 9–11; the new families sit there too', () => {
     for (const [id, g] of Object.entries(GUITAR_GRADE_UP)) {
       const lv = GUITAR.flatMap((f) => f.levels).find((l) => l.id === id);
+      // a level hidden until verified (src/engine/verifiedContent.ts) is not in the shown catalogue
+      if (!lv && /^g-(harrisline|hlfast)-/.test(id)) continue;
       expect(lv, id).toBeTruthy();
       expect(lv!.grade, id).toBe(g);
     }

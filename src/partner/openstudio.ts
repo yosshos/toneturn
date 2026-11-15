@@ -2,6 +2,7 @@
 // looks like an official Open Studio product. The name is used descriptively ("built for Open Studio members"); the
 // colours are inspired by the public website's palette (warm cream, near-black, burnt orange, sand gold, Inter-style
 // sans), adjusted for readable contrast; the mascot is a neutral "your teacher here" frame set.
+import { topicVerified } from '../engine/verifiedContent'; // hidden-until-verified topics are not linked
 import type { PartnerConfig } from './types';
 
 export const OPENSTUDIO: PartnerConfig = {
@@ -83,7 +84,7 @@ export const OPENSTUDIO: PartnerConfig = {
     { course: 'Jazz Piano Inside and Out', area: 'keys', what: { en: 'Bebop lines, reharmonization', he: 'קווי ביבופ, הרמוניה מחדש' }, links: [{ kind: 'family', id: 'k-bebop' }, { kind: 'family', id: 'k-reharm' }] },
     { course: 'Jazz Piano Expansions', area: 'keys', what: { en: 'Colour: common tones, mediants, borrowed chords', he: 'צבע: צליל משותף, מדיאנטות, אקורדים שאולים' }, links: [{ kind: 'family', id: 'k-ctone' }, { kind: 'family', id: 'k-mediant' }, { kind: 'topic', id: 'borrowed-ext' }] },
     { course: 'Art of the Scale', area: 'keys', what: { en: 'Every scale, both hands, harmonized', he: 'כל סולם, שתי ידיים, בהרמוניה' }, links: [{ kind: 'family', id: 'scales' }, { kind: 'family', id: 'k-sharm' }, { kind: 'family', id: 'g-scales' }] },
-    { course: 'Locking In', area: 'keys', what: { en: 'Time, swing feel, comping rhythm', he: 'זמן, תחושת סווינג, מקצב ליווי' }, links: [{ kind: 'family', id: 'k-rhythm' }, { kind: 'topic', id: 'swing-ratio' }, { kind: 'topic', id: 'comp-rhythm-ear' }] },
+    { course: 'Locking In', area: 'keys', what: { en: 'Time, swing feel, comping rhythm', he: 'זמן, תחושת סווינג, מקצב ליווי' }, links: [{ kind: 'family', id: 'k-rhythm' }, { kind: 'topic', id: 'swing-ratio' }, topicVerified('comp-rhythm-ear') ? { kind: 'topic', id: 'comp-rhythm-ear' } : { kind: 'family', id: 'k-comp' }] },
     { course: 'Jazz Guitar Foundations', area: 'guitar', what: { en: 'Jazz chords, comping, lines on the neck', he: 'אקורדי ג׳אז, ליווי, קווים על הצוואר' }, links: [{ kind: 'family', id: 'g-jazz' }, { kind: 'family', id: 'g-chords' }, { kind: 'family', id: 'g-bebop' }] },
     { course: 'Barry Harris (topic)', area: 'jazz', what: { en: '6th-diminished harmony, lines, borrowing', he: 'הרמוניית שישית־מוקטן, קווים, השאלה' }, links: [{ kind: 'family', id: 'harris' }, { kind: 'family', id: 'k-sixdim' }, { kind: 'family', id: 'k-harrisline' }, { kind: 'family', id: 'g-harris' }] },
     { course: 'Solo piano (topic)', area: 'keys', what: { en: 'Left-hand patterns, solo textures', he: 'דפוסי יד שמאל, מרקמי סולו' }, links: [{ kind: 'family', id: 'k-lh' }, { kind: 'family', id: 'k-tex' }] },

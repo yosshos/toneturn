@@ -80,7 +80,7 @@ test.describe('keys course', () => {
   for (const lang of ['he', 'en'] as const)
     for (const [f, n] of FAMS)
       test(`every ${f} level's run screen fits 390 × 844 (${lang})`, async ({ page }) => {
-        test.setTimeout(300_000);
+        test.setTimeout(600_000); // scales / arpeggios run every level in all 12 keys (0.91)
         await seed(page, lang);
         const bad: string[] = [];
         for (let i = 1; i <= n; i++) {

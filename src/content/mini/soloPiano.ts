@@ -3,6 +3,7 @@
 // src/engine/soloPiano.ts (sources cited there), in C. His terms: "three elements, three registers", "the mango
 // problem", "bass shells", "Bud Powell voicings", "shell stride", "walking 10ths", "stride-style comping", "shared
 // hands", "stop-start rubato ballad", "repeated-quarter-note ballad". See ../miniTypes.ts for the format.
+import { gated, gatedOr, isVerified, lessonVerified } from '../../engine/verifiedContent';
 import type { Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
 import { bpAlternate, bpShell, rootless, sharedVoicing, shellA, shellB, stridePattern, walkingTenths, withTritoneBass, type TChord } from '../../engine/soloPiano';
@@ -184,23 +185,26 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '2+',
     title: { en: 'Comping vocabulary', he: 'אוצר מילים לליווי' },
-    takeaway: {
+    // Hidden until verified (verifiedContent.ts): the named rhythms the doc only read from titles.
+    takeaway: isVerified('card:sp-comp-rhythms')
+      ? {
       en: 'Beat-3 Charleston, lead-ins, Count Basie, push-offs, accent comping, two-bar patterns — then free comping by rule.',
       he: 'צ׳רלסטון מ־3, כניסות מקדימות, קאונט בייסי, פוש־אוף, ליווי על ההדגשות, תבניות של שתי תיבות — ואז ליווי חופשי לפי כללים.',
-    },
+    }
+      : { en: 'Lead-ins and two-bar patterns — then free comping by rule.', he: 'כניסות מקדימות ותבניות של שתי תיבות — ואז ליווי חופשי לפי כללים.' },
     steps: [
       { say: { en: 'Comping is mostly off the beat — short jabs, like a boxer.', he: 'ליווי הוא בעיקר מחוץ לפעמה — מכות קצרות, כמו מתאגרף.' } },
-      { say: { en: 'The Beat-3 Charleston starts the Charleston on 3: room for a melody in the first half of the bar.', he: 'הצ׳רלסטון מ־3 מתחיל את הצ׳רלסטון על 3: מקום למנגינה בחצי הראשון של התיבה.' }, play: [rest(0.9), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 7, q: '7' }, 'B'), 0.5)] },
+      ...gatedOr('sp-comp-rhythms', { say: { en: 'The Beat-3 Charleston starts the Charleston on 3: room for a melody in the first half of the bar.', he: 'הצ׳רלסטון מ־3 מתחיל את הצ׳רלסטון על 3: מקום למנגינה בחצי הראשון של התיבה.' }, play: [rest(0.9), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 7, q: '7' }, 'B'), 0.5)] }, [{ say: { en: 'The Charleston: a chord on 1 and on the and of 2. Short, like a jab, then wait for the next bar.', he: 'הצ׳רלסטון: אקורד על 1 ועל ה"וְ" של 2. קצר, כמו מכה, ואז מחכים לתיבה הבאה.' }, play: [chord([48, 52, 55, 58], 0.2), rest(0.55), chord([48, 52, 55, 58], 0.2)] }]),
       { say: { en: 'A lead-in: a chord on the and of 3, or on 4, leads into the next downbeat.', he: 'כניסה מקדימה: אקורד על ה״וְ״ של 3, או על 4, מוביל אל הפעמה הבאה.' }, play: [rest(0.9), chord(rootless({ root: 7, q: '7' }, 'B'), 0.4), chord(rootless({ root: 0, q: 'maj7' }, 'A'), 0.8)] },
-      { say: { en: 'A push-off repeats a chord on a beat and the offbeat after it — a lift to the Count Basie rhythm.', he: 'פוש־אוף חוזר על אקורד בפעמה ובחלק החלש שאחריה — הרמה לקצב של קאונט בייסי.' }, play: [rest(0.5), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25), rest(0.75), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25)] },
+      ...gatedOr('sp-comp-rhythms', { say: { en: 'A push-off repeats a chord on a beat and the offbeat after it — a lift to the Count Basie rhythm.', he: 'פוש־אוף חוזר על אקורד בפעמה ובחלק החלש שאחריה — הרמה לקצב של קאונט בייסי.' }, play: [rest(0.5), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25), rest(0.75), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.25)] }, [{ say: { en: 'A two-bar pattern: the Charleston in the first bar, a lead-in on 4 in the second, so the comp breathes across two bars.', he: 'תבנית של שתי תיבות: צ׳רלסטון בתיבה הראשונה, כניסה מקדימה על 4 בשנייה, כך שהליווי נושם על פני שתי תיבות.' }, play: [chord([48, 52, 55, 58], 0.2), rest(0.55), chord([48, 52, 55, 58], 0.2), rest(1.6), chord([53, 57, 60, 63], 0.3)] }]),
       { say: { en: 'Free comping by rule: one to four hits a bar, at least three rhythms, never three bars the same, anticipations that sound the next chord.', he: 'ליווי חופשי לפי כללים: אחת עד ארבע מכות בתיבה, לפחות שלושה מקצבים, אף פעם לא שלוש תיבות זהות, הקדמות שמשמיעות את האקורד הבא.' } },
       { say: { en: 'Keep every chord short and light, and let the click on 2 and 4 hold the time for you.', he: 'כל אקורד קצר וקליל, והקליק על 2 ו־4 מחזיק בשבילכם את הזמן.' } },
       { say: { en: 'Every take is measured in all twelve keys: free time first, then in time on the tempo ladder. Your turn — slowly, and listen to each register.', he: 'כל ניסיון נמדד בכל שנים־עשר הסולמות: קודם בלי קצב, ואז בזמן על סולם הטמפו. תורכם — לאט, ולהקשיב לכל רגיסטר.' } },
     ],
     more: [
-      { say: { en: 'Accent comping is a coordination device: the left hand lands exactly with the right hand’s accents.', he: 'ליווי על ההדגשות הוא תרגיל קואורדינציה: יד שמאל נוחתת בדיוק עם ההדגשות של יד ימין.' } },
-      { say: { en: 'The Basie rhythm and the push-off placements here are our reading of his videos; the names are his.', he: 'מיקומי קצב בייסי והפוש־אוף כאן הם הקריאה שלנו בסרטונים שלו; השמות שלו.' } },
-      { say: { en: 'Hear the Charleston and the Beat-3 Charleston side by side: the same two hits, half a bar apart.', he: 'שמעו את הצ׳רלסטון ואת הצ׳רלסטון מ־3 זה לצד זה: אותן שתי מכות, בהפרש של חצי תיבה.' }, play: [chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(1), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4)] },
+      ...gatedOr('sp-comp-rhythms', { say: { en: 'Accent comping is a coordination device: the left hand lands exactly with the right hand’s accents.', he: 'ליווי על ההדגשות הוא תרגיל קואורדינציה: יד שמאל נוחתת בדיוק עם ההדגשות של יד ימין.' } }, [{ say: { en: 'Two-bar patterns: a rhythm that takes two bars to come round, so the comp does not repeat every bar and the soloist hears a phrase, not a loop. Start with a lead-in in the second bar, then move it.', he: 'תבניות של שתי תיבות: מקצב שלוקח שתי תיבות להשלים סיבוב, כך שהליווי לא חוזר על עצמו בכל תיבה והסולן שומע משפט ולא לופ. מתחילים בכניסה מקדימה בתיבה השנייה, ואז מזיזים אותה.' }, play: [chord([48, 52, 55, 58], 0.2), rest(0.55), chord([48, 52, 55, 58], 0.2), rest(1.6), chord([53, 57, 60, 63], 0.3)] }]),
+      ...gated('sp-comp-rhythms', { say: { en: 'The Basie rhythm and the push-off placements here are our reading of his videos; the names are his.', he: 'מיקומי קצב בייסי והפוש־אוף כאן הם הקריאה שלנו בסרטונים שלו; השמות שלו.' } }),
+      ...gated('sp-comp-rhythms', { say: { en: 'Hear the Charleston and the Beat-3 Charleston side by side: the same two hits, half a bar apart.', he: 'שמעו את הצ׳רלסטון ואת הצ׳רלסטון מ־3 זה לצד זה: אותן שתי מכות, בהפרש של חצי תיבה.' }, play: [chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(1), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4), rest(0.35), chord(rootless({ root: 2, q: 'm7' }, 'A'), 0.4)] }),
       { say: { en: 'A common mistake is comping on every downbeat. Leave space: a comp that answers the melody is worth more than a busy one.', he: 'טעות נפוצה היא ללוות על כל פעמה ראשונה. משאירים מקום: ליווי שעונה למנגינה שווה יותר מליווי עמוס.' }, play: [chord(rootless({ root: 7, q: '7' }, 'B'), 0.3), rest(0.9), chord(rootless({ root: 0, q: 'maj7' }, 'A'), 0.6)] },
       { say: { en: 'Recap: name the rhythm, keep it light, vary it by rule, and anticipate into the next chord.', he: 'סיכום: נותנים שם למקצב, שומרים אותו קליל, מגוונים לפי כללים, ומקדימים אל האקורד הבא.' } },
       { say: { en: 'Where it lives: the great compers mix these rhythms freely, answering the soloist instead of repeating one pattern. Learn each by name first, then let them blend: a Charleston here, a lead-in there, space in between.', he: 'איפה זה חי: המלווים הגדולים מערבבים את המקצבים האלה בחופשיות, ועונים לסולן במקום לחזור על תבנית אחת. לומדים קודם כל אחד בשמו, ואז נותנים להם להתמזג: צ׳רלסטון כאן, כניסה מקדימה שם, ומקום ביניהם.' } },
@@ -237,7 +241,7 @@ export const LESSONS: MiniLesson[] = [
 ];
 
 /** The lesson each level opens with (App.tsx gate: "tech:<level id>"), by its kind. */
-const LH_LESSON = (kind: string): string => (['lh-bass', 'lh-six'].includes(kind) ? 'sp-registers' : /^lh-(bp|sh|roll|sstride|strong)/.test(kind) ? 'sp-shells' : 'sp-stride');
+const LH_LESSON = (kind: string): string => (['lh-bass', 'lh-six'].includes(kind) ? 'sp-registers' : /^lh-(bp|sh|roll|sstride|strong)/.test(kind) || !lessonVerified('sp-stride') ? 'sp-shells' : 'sp-stride');
 const TEX_LESSON = (kind: string): string => (/^tx-(shared|stop|repq|sballad|inner|4v)/.test(kind) ? 'sp-shared' : 'sp-mango');
 export const UNITS: Record<string, string> = {
   'tech:k-lh': 'sp-registers',

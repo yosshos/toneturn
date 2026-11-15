@@ -10,35 +10,36 @@ import { planSocialPush, type SocialItem } from '../_shared/socialPush.ts';
 
 const MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 
-/** Message per kind (spec N.6); the evening one mentions a milestone due tomorrow. */
+/** Message per kind (spec N.6). AUDIT-5 #4: plan-framed and emoji-free — what is waiting, not what could be lost; a
+ * practice day is measured practice (a take, a finished session, or 5 measured minutes). */
 function message(kind: string, lang: 'en' | 'he', n: number): { title: string; body: string } {
   const nextIsMilestone = MILESTONES.includes(n + 1);
   if (lang === 'he') {
-    if (kind === 'freeze_used') return { title: 'ההקפאה הצילה את הרצף ❄', body: `הרצף של ${n} ימים עדיין חי. שיעור קצר היום ממשיך אותו.` };
-    if (kind === 'at_risk') return { title: 'הרצף בסכנה 🔥', body: `נשארו שעתיים לשמור על רצף של ${n} ימים.` };
+    if (kind === 'freeze_used') return { title: 'ההקפאה כיסתה את אתמול', body: `${n} ימי אימון ברצף. התוכנית של היום מחכה.` };
+    if (kind === 'at_risk') return { title: 'האימון של היום מחכה', body: `חמש דקות של נגינה נמדדת נספרות כיום אימון (${n} ברצף).` };
     return nextIsMilestone
-      ? { title: `עוד יום אחד ל־${n + 1} 🔥`, body: `שיעור קצר היום, ומחר מגיעים לרצף של ${n + 1} ימים.` }
-      : { title: 'שמרו על הרצף 🔥', body: `רצף של ${n} ימים. שיעור קצר אחד שומר עליו.` };
+      ? { title: `מחר ${n + 1} ימי אימון`, body: 'התוכנית של היום מוכנה: חזרה קצרה ועבודה על מה שבקצה.' }
+      : { title: 'התוכנית של היום מוכנה', body: `חזרה קצרה ועבודה על מה שבקצה. ${n} ימי אימון ברצף.` };
   }
-  if (kind === 'freeze_used') return { title: 'Your freeze saved your streak ❄', body: `Your ${n}-day streak is still alive. A short lesson today keeps it going.` };
-  if (kind === 'at_risk') return { title: 'Your streak is at risk 🔥', body: `Two hours left to keep your ${n}-day streak.` };
+  if (kind === 'freeze_used') return { title: 'A freeze covered yesterday', body: `${n} practice days in a row. Today's plan is waiting.` };
+  if (kind === 'at_risk') return { title: "Today's practice is waiting", body: `Five measured minutes make a practice day (${n} in a row).` };
   return nextIsMilestone
-    ? { title: `1 more day to ${n + 1} 🔥`, body: `One short lesson today and tomorrow you reach a ${n + 1}-day streak.` }
-    : { title: 'Keep your streak 🔥', body: `${n}-day streak. One short lesson keeps it alive.` };
+    ? { title: `Tomorrow: ${n + 1} practice days`, body: "Today's plan is ready: a short review and work at your edge." }
+    : { title: "Today's plan is ready", body: `A short review and work at your edge. ${n} practice days in a row.` };
 }
 
 /** One-off notifications (friend duels). */
 function queueMessage(kind: string, lang: 'en' | 'he', d: { from?: string; mine?: number; theirs?: number }): { title: string; body: string } {
   const who = d.from || (lang === 'he' ? 'חבר' : 'A friend');
   if (kind === 'duel_new')
-    return lang === 'he' ? { title: 'הוזמנתם לדו־קרב ⚔️', body: `${who} שיחק את הסיבוב שלו — תורכם.` } : { title: 'You were challenged ⚔️', body: `${who} played their round — your turn.` };
+    return lang === 'he' ? { title: 'הוזמנתם לדו־קרב', body: `${who} שיחק את הסיבוב שלו — תורכם.` } : { title: 'You were challenged', body: `${who} played their round — your turn.` };
   const mine = d.mine ?? 0;
   const theirs = d.theirs ?? 0;
   if (lang === 'he') {
-    const r = mine > theirs ? 'ניצחתם 🎉' : mine < theirs ? `${who} ניצח` : 'תיקו';
+    const r = mine > theirs ? 'ניצחתם' : mine < theirs ? `${who} ניצח` : 'תיקו';
     return { title: `הדו־קרב הסתיים: ${r}`, body: `${who} שיחק את הדו־קרב: ${mine} מול ${theirs}.` };
   }
-  const r = mine > theirs ? 'you won 🎉' : mine < theirs ? `${who} won` : 'a draw';
+  const r = mine > theirs ? 'you won' : mine < theirs ? `${who} won` : 'a draw';
   return { title: `Duel over: ${r}`, body: `${who} played your duel: ${mine} vs ${theirs}.` };
 }
 

@@ -28,7 +28,9 @@ describe('bass course families', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const f of BASS)
       f.levels.forEach((l: GuitarLevelDef, i) => {
-        expect(l.level).toBe(i + 1);
+        // numbered in order; a gap only where a level is hidden until verified (verifiedContent.ts)
+        expect(l.level).toBeGreaterThanOrEqual(i + 1);
+        if (i > 0) expect(l.level).toBeGreaterThan(f.levels[i - 1].level);
         expect(l.title.en.length).toBeGreaterThan(2);
         expect(/[֐-׿]/.test(l.title.he)).toBe(true);
         expect(l.tempo).toBeDefined();
