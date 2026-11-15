@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { borderCase, stampBorder, keyStamp } from '../src/engine/borderControl';
 import { chordPcs } from '../src/engine/keyMoves';
-import { BROTHERS, brotherCase, brotherRoot, brotherVoicing, dimMoveVoicings, dimNoteFor, dom7, familyDim, judgeBrother, tonicVoicing } from '../src/engine/whichBrother';
+import { BROTHERS, brotherCase, brotherRoot, brotherVoicing, dimMoveReveal, dimMoveVoicings, dimNoteFor, dom7, familyDim, judgeBrother, tonicVoicing } from '../src/engine/whichBrother';
 import { elevatorCase, floorShape, floorVoicing, judgeElevator, noteStep, onChord, SCALES, stepNote, type SixDimScale } from '../src/engine/elevator';
 import { foldCents, gradeRun, newRc, rcAfterTake, rcNoteSec, rcOver, rcResult, runItem, shapesFor, RC_MAX_PCT, type RcFrame } from '../src/engine/runCatcher';
 import { compHitsOf, compItem, compPcs, gradeComp, groupAttacks, guideTones, RHYTHMS, type CompItem } from '../src/engine/compCaller';
@@ -102,13 +102,42 @@ describe('Which Brother? (BARRY-HARRIS-THEORY §1–§2)', () => {
         expect(pc(dimNoteFor(t, b) - 1)).toBe(r);
       }
   });
-  it('the dim move voicing: the born chord is the brother (one note lowered, the new root in the bass)', () => {
+  it('the dim move voicing: one register, a fixed lowest voice, the drop inside, the born brother in inversion', () => {
+    let rootLowest = 0;
+    let n = 0;
     for (let t = 0; t < 12; t++)
-      for (const b of BROTHERS) {
-        const [d, born] = dimMoveVoicings(t, b);
-        expect(new Set(d.slice(1).map(pc))).toEqual(new Set(familyDim(t)));
-        expect(judgeBrother(t, b, born).ok).toBe(true);
-      }
+      for (const b of BROTHERS)
+        for (let low = 0; low < 3; low++) {
+          const [d, born] = dimMoveVoicings(t, b, low);
+          n++;
+          expect(new Set(d.map(pc))).toEqual(new Set(familyDim(t)));
+          // exactly one voice moves, down a half step, and it is never the lowest
+          const moved = d.map((m, k) => born[k] - m);
+          expect(moved.filter((x) => x !== 0)).toEqual([-1]);
+          expect(Math.min(...born)).toBe(Math.min(...d));
+          expect(born[0]).toBe(d[0]);
+          expect(pc(d[moved.indexOf(-1)])).toBe(dimNoteFor(t, b));
+          // one register: the lowest voice C3–B3, the chord inside an octave
+          expect(d[0]).toBeGreaterThanOrEqual(48);
+          expect(d[0]).toBeLessThan(60);
+          expect(d[3] - d[0]).toBe(9);
+          // the born chord is the brother (its four tones), but the root is not the lowest note
+          const root = brotherRoot(t, b);
+          if (pc(Math.min(...born)) === root) rootLowest++;
+          expect(new Set(born.map(pc))).toEqual(new Set(dom7(root)));
+        }
+    expect(rootLowest / n).toBeLessThan(0.25);
+  });
+  it('level 3 cases: all four brothers, all 12 keys, the lowest voice rotates', () => {
+    const cs = Array.from({ length: 300 }, (_, i) => brotherCase(13, i, 3));
+    expect(new Set(cs.map((c) => c.answer)).size).toBe(4);
+    expect(new Set(cs.map((c) => c.tonic)).size).toBe(12);
+    expect(new Set(cs.map((c) => c.low)).size).toBe(3);
+    for (const c of cs.slice(0, 40)) {
+      const r = dimMoveReveal(c.tonic, c.answer, c.low);
+      expect(pc(r[0])).toBe(brotherRoot(c.tonic, c.answer));
+      expect(judgeBrother(c.tonic, c.answer, r).ok).toBe(true);
+    }
   });
   it('voicings: the brother passes its own judge, fails the others; the tonic is a 6 chord', () => {
     for (let t = 0; t < 12; t++)

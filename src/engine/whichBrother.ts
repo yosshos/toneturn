@@ -51,6 +51,8 @@ export interface BrotherCase {
   options: Brother[];
   /** Play levels: the dominant the question is about (the V7 of the tonic, or the brother heard at level 6). */
   of: Brother;
+  /** Level 3: which of the dim tones that stay is the lowest voice (0–2; rotates per case). */
+  low?: number;
   /** Level 5: which brother to play, named. */
   ask?: Brother;
 }
@@ -65,7 +67,11 @@ export function brotherCase(seed: number, i: number, level: number): BrotherCase
     const answer = pickR(r, [0, 6] as Brother[]);
     return { level: lv, tonic, answer, options: [0, 6], of: 0 };
   }
-  if (lv === 2 || lv === 3) return { level: lv, tonic, answer: pickR(r, BROTHERS), options: BROTHERS.slice(), of: 0 };
+  if (lv === 2) return { level: lv, tonic, answer: pickR(r, BROTHERS), options: BROTHERS.slice(), of: 0 };
+  if (lv === 3) {
+    const answer = pickR(r, BROTHERS);
+    return { level: lv, tonic, answer, options: BROTHERS.slice(), of: 0, low: Math.floor(r() * 3) };
+  }
   if (lv === 4) return { level: lv, tonic, answer: 6, options: [], of: 0 };
   if (lv === 5) {
     const ask = pickR(r, [3, 6, 9] as Brother[]);
@@ -116,13 +122,25 @@ export function dimVoicing(tonic: number): number[] {
   const lo = 55;
   return pcs.map((p) => lo + mod12(p - lo)).sort((a, b) => a - b);
 }
-/** Level 3: the dim, then the same voicing with the brother's note lowered a half step (and the new root in the bass). */
-export function dimMoveVoicings(tonic: number, b: Brother): [number[], number[]] {
-  const d = dimVoicing(tonic);
+/**
+ * Level 3: the dim, then the same voicing with the brother's note lowered a half step. The drop is heard as voice
+ * leading, not as a bass move: one register (the lowest voice C3–B3), the lowest voice is one of the three dim tones
+ * that stay (`low` 0–2 picks which, rotating per case), and the dropping note is an inner or the top voice. The born
+ * chord sounds in inversion — the brother is recognised by its sound (its tritone), never by a root in the bass.
+ */
+export function dimMoveVoicings(tonic: number, b: Brother, low = 0): [number[], number[]] {
   const note = dimNoteFor(tonic, b);
+  const stay = familyDim(tonic).filter((p) => p !== note);
+  const bottom = 48 + mod12(stay[((low % 3) + 3) % 3] - 48);
+  // the other three dim tones stacked close above the bottom (each a minor third up)
+  const d = [bottom, bottom + 3, bottom + 6, bottom + 9];
   const born = d.map((m) => (mod12(m) === note ? m - 1 : m));
+  return [d, born];
+}
+/** The confirmation after a level-3 answer: the born brother with its root low in the bass. */
+export function dimMoveReveal(tonic: number, b: Brother, low = 0): number[] {
   const root = brotherRoot(tonic, b);
-  return [[36 + mod12(note - 36), ...d], [36 + mod12(root - 36), ...born]];
+  return [36 + mod12(root - 36), ...dimMoveVoicings(tonic, b, low)[1]];
 }
 
 /** "Why?" for a wrong answer: the brother's place in the family. */
