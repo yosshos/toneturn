@@ -505,7 +505,7 @@ export function WorkoutEditor({
 }
 
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen }: { t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen }: { t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -584,7 +584,7 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
             </>
           )}
           <textarea className="wk-note" placeholder={tx.note} value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
-          <button className="btn primary" onClick={() => onBlockDone(now - t0)}>
+          <button className="btn primary" onClick={() => onBlockDone(now - t0, note.trim() || undefined)}>
             ✓ {tx.blockDone}
           </button>
         </>

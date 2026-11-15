@@ -47,6 +47,8 @@ export interface LessonResult {
   course?: import('../engine/courses').CourseId;
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
+  /** AUDIT-5: the player's own note on an off-app practice block ("What did you work on?"). */
+  note?: string;
 }
 
 export interface Progress {

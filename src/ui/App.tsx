@@ -2520,9 +2520,14 @@ export function App() {
             }
             else go('vocal');
           }}
-          onBlockDone={(ms) => {
-            const b = wrun.blocks[wrun.at];
-            const r = addSession(wrun, Math.max(ms, b.minutes * 60000), 1, 1);
+          onBlockDone={(ms, note) => {
+            // AUDIT-5: book the time actually measured (not the planned block), and keep the player's note as a log entry.
+            const r = addSession(wrun, ms, 1, 1);
+            const min = Math.round(ms / 60000);
+            if (min >= 1) {
+              const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+              void store.recordCompletion({ ...makeLogResult('other', min, 0, new Date(), id), sessionId: `wk-${id}`, xp: 0, ...(note ? { note } : {}) }).then(setProgress);
+            }
             saveRun(r);
             if (!r.finished) runCurrent(r);
           }}
