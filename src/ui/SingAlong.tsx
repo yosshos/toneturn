@@ -21,6 +21,7 @@ import { LaneNote, SingLane } from './SingLane';
 import { SingFeed } from './singFeed';
 import { paceFrames, SIM_RT } from './simRt';
 import { NoVoiceBanner } from './VoiceCheck';
+import { prefersCalm } from './Flight';
 
 const BPM = 84;
 /** Usual major-key spelling for a tonic pitch class. */
@@ -153,7 +154,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
         {noteLabel(tl.tonic, settings, keyPc)} · ♩ = {BPM}
       </p>
       <div className="sing-lane-wrap">
-        <SingLane feed={feed} targets={tl.notes.map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }))} mode="song" seconds={0} tol={35} live={phase === 'count' || phase === 'singing'} settings={settings} beat={60 / BPM} compact={phase === 'done'} label={song.title[lang]} />
+        <SingLane feed={feed} targets={tl.notes.map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }))} mode="song" seconds={0} tol={35} live={phase === 'count' || phase === 'singing'} settings={settings} beat={60 / BPM} compact={phase === 'done'} fermata={phase === 'done' && !!grade && grade.total >= 0.9} calm={prefersCalm(settings)} label={song.title[lang]} />
         <LaneNote feed={feed} live={phase === 'singing'} settings={settings} />
         <NoVoiceBanner feed={feed} live={phase === 'singing'} from={tl.notes[0]?.start ?? 0} lang={lang === 'en' ? 'en' : 'he'} />
       </div>

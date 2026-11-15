@@ -8,8 +8,8 @@
   margin: 16px 0;
   padding: 16px 18px;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(75, 227, 181, 0.16), rgba(169, 139, 255, 0.18));
-  border: 1px solid var(--line);
+  background: var(--card);
+  border: var(--stroke, 2.5px) solid var(--outline);
 }
 .vocal-strip h2 {
   margin: 0 0 4px;
@@ -143,27 +143,6 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
-.hold-meter {
-  position: relative;
-  height: 22px;
-  border-radius: 11px;
-  background: var(--card-2);
-  overflow: hidden;
-}
-.hold-meter span {
-  display: block;
-  height: 100%;
-  background: var(--mint);
-  transition: width 0.1s linear;
-}
-.hold-meter small {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
 .vocal-cue {
   text-align: center;
   font-weight: 800;
@@ -172,7 +151,7 @@
   color: var(--ink-soft);
 }
 .vocal-cue.vib {
-  color: var(--gold);
+  color: var(--purple);
   animation: cue-pulse 0.35s ease-out;
 }
 @keyframes cue-pulse {
@@ -298,7 +277,7 @@
 .big-score {
   font-size: 3.4rem;
   font-weight: 800;
-  color: var(--gold);
+  color: var(--purple);
 }
 .sr-only {
   position: absolute;
@@ -336,8 +315,9 @@
   cursor: pointer;
 }
 .modes-levels .chip.on {
-  border-color: var(--gold);
-  color: var(--gold);
+  border-color: var(--outline);
+  background: color-mix(in srgb, var(--lilac) 30%, var(--card));
+  color: var(--ink);
 }
 .vib-notes {
   display: flex;
@@ -355,30 +335,6 @@
 .vib-notes span.vib {
   background: rgba(255, 201, 77, 0.2);
   color: var(--gold);
-}
-.vib-pulse {
-  width: 22px;
-  height: 22px;
-  margin: 6px auto;
-  border-radius: 50%;
-  background: var(--gold);
-  animation: vib-pulse linear infinite;
-}
-@keyframes vib-pulse {
-  0%,
-  100% {
-    transform: scale(0.6);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .vib-pulse {
-    animation: none;
-  }
 }
 .sound-grid {
   display: grid;
@@ -424,7 +380,7 @@
   font-weight: 800;
 }
 .big-key {
-  color: var(--mint);
+  color: var(--ink);
 }
 .room-code.small {
   font-size: 1.2rem;
@@ -580,14 +536,17 @@
   background: var(--card-2);
 }
 .sing-notes li.good {
-  background: rgba(75, 227, 181, 0.3);
+  background: var(--teal);
+  color: var(--ink-c, #1e1033);
 }
 .sing-notes li.fair {
-  background: rgba(255, 201, 77, 0.3);
+  background: color-mix(in srgb, var(--teal) 30%, var(--card));
 }
 .sing-notes li.weak,
 .sing-notes li.miss {
-  background: rgba(255, 106, 77, 0.3);
+  background: var(--card);
+  outline: 2px dashed var(--outline);
+  outline-offset: -2px;
 }
 .league-board li.zone-up .rank {
   color: var(--mint);
@@ -694,7 +653,7 @@
 .choice-text {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--gold);
+  color: var(--ink);
   margin: 0;
 }
 .choice-show .note-staff {

@@ -74,6 +74,7 @@ import { SingFeed, type LaneTarget } from './singFeed';
 import { moneyNotes, noteDetail, zoneTolerance, type VibratoGoal } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
+import { prefersCalm } from './Flight';
 
 import { paceFrames, SIM_RT } from './simRt';
 
@@ -793,6 +794,8 @@ function VocalSession({
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
   const feed = useMemo(() => new SingFeed(), []);
   const [why, setWhy] = useState(false);
+  // Fading support: after a strong take of a melody, the next takes are sung blind (outlines only until review).
+  const strongTakes = useRef<Record<string, number>>({});
   // The review: the tapped note, and the take played back under a moving playhead.
   const [sel, setSel] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -1042,6 +1045,7 @@ function VocalSession({
     setSel(null);
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
+    if (!g.unclear && g.score >= 0.8) strongTakes.current[item.id] = (strongTakes.current[item.id] ?? 0) + 1;
     if (audio) setAudioUrl(URL.createObjectURL(audio));
     if (audio && settings.keepTakes && !g.unclear && !test) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
     setPhase('result');
@@ -1260,7 +1264,8 @@ function VocalSession({
         {!test && fill(t.vocalItemOf, { i: i + 1, n: items.length })}
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
-      {phase !== 'result' && <p className="vocal-instr">
+      {/* sight-singing: the instruction gives the score its room while singing (the brief already said it) */}
+      {phase !== 'result' && !(isSight(item) && phase === 'singing') && <p className="vocal-instr">
         {item.ear
           ? earInstruction(item, settings.uiLang === 'en' ? 'en' : 'he', (s) => t.intervalNames[String(s)] ?? '')
           : item.kind === 'scale' && item.scale
@@ -1303,7 +1308,8 @@ function VocalSession({
           ))}
         </p>
       )}
-      {isSight(item) ? (
+      {/* After a sight-singing take the review lane (blocks, chips, curve) stands in for the score. */}
+      {isSight(item) && phase !== 'result' ? (
         <div className="sight-score">
           <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} now={pulseNow} />
           <div className="pulse-wrap compact">
@@ -1333,14 +1339,16 @@ function VocalSession({
           </button>
         </div>
       )}
-      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} />}
+      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} hideTarget={isSight(item) || hiddenTask} />}
       {cue && (
         <p className={`vocal-cue ${cue === t.vocalNowVibrato ? 'vib' : ''}`} aria-live="assertive">
           {cue}
         </p>
       )}
+      {/* Sight-singing: the score is the task and carries the now-cue; a lane would give the pitches away (and
+          push the screen past a phone). It shows the take only in review. */}
       <div className="sing-lane-wrap">
-      <SingLane
+      {(!isSight(item) || phase === 'result') && <SingLane
         feed={feed}
         targets={laneTargets}
         mode={pulse ? 'melody' : 'hold'}
@@ -1356,13 +1364,16 @@ function VocalSession({
         selected={sel}
         onSelect={melNotes ? setSel : undefined}
         playClock={playClock}
+        blind={phase === 'singing' && !!pulse && (strongTakes.current[item.id] ?? 0) >= 1}
+        fermata={phase === 'result' && !!grade && !grade.unclear && grade.score >= 0.9}
+        calm={prefersCalm(settings)}
         label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`}
-      />
+      />}
       <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
       {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} lang={lang} onClose={() => setSel(null)} />}
       {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && (holdItem || !!frozenVib) && grade && !grade.unclear)) && (
-        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
+        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result' && !isSight(item)} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
       )}
       {item.reference === 'during' && (
         <label className="toggle-row">

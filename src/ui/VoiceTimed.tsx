@@ -12,6 +12,7 @@ import { LaneNote, PhraseStrip, SingLane } from './SingLane';
 import { SingFeed } from './singFeed';
 import { paceFrames, SIM_RT } from './simRt';
 import { NoVoiceBanner } from './VoiceCheck';
+import { prefersCalm } from './Flight';
 import { zoneTolerance } from '../engine/vocalLive';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { BleedGate } from '../engine/bleed';
@@ -330,6 +331,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
                 settings={settings}
                 beat={plan?.beat}
                 compact={phase === 'result'}
+                fermata={phase === 'result' && !!take && !take.grade.unclear && take.grade.score >= 0.9}
+                calm={prefersCalm(settings)}
                 label={songTitle ?? title}
               />
               <LaneNote feed={feed} live={busy} settings={settings} />

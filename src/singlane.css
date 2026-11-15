@@ -882,3 +882,54 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------- polish: blind takes, stamps, the final barline */
+.sing-lane.blind.is-live .sl-block,
+.sing-lane.blind.is-live .sl-zone,
+.sing-lane.blind.is-live .sl-fill {
+  fill: transparent;
+}
+.sing-lane.blind.is-live .sl-outline {
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.sl-outline.stamp {
+  animation: sl-stamp 0.2s steps(1, end);
+}
+@keyframes sl-stamp {
+  0% {
+    stroke-width: 3.5;
+  }
+}
+.sl-mark {
+  font: 900 11px var(--font);
+  fill: var(--ink);
+  opacity: 0;
+}
+.sl-mark.on {
+  opacity: 1;
+}
+.sl-final .thin {
+  stroke: var(--outline);
+  stroke-width: 1.5;
+}
+.sl-final .thick {
+  stroke: var(--outline);
+  stroke-width: 4;
+}
+.sl-final .fermata {
+  font: 30px var(--music);
+  fill: var(--ink);
+}
+.cents-needle .vg-needle-labels {
+  justify-content: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sl-outline.stamp {
+    animation: none;
+  }
+}
+:root[data-motion='reduced'] .sl-outline.stamp,
+:root[data-motion='reduced'] .vib-chip.flash {
+  animation: none;
+}
