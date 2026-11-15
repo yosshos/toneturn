@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.93.0',
+    date: '2026-11-15',
+    en: [
+      'Singing, redesigned: a live pitch lane with the target notes, a big note name, a calm in-the-zone meter (no numbers while you’re on it; ▲ sharp, ▼ flat), steadiness bars, and a mic check before you start — you see your voice arrive before the take.',
+      'The path in every course now follows real difficulty, mapped to graded syllabi; Jazz has a true beginning (swing, the blues, shells, guide tones, a first solo you play); repertoire runs to the top.',
+      'Reharm and colour: one note, many chords; chromatic mediants; modal interchange; pedal, planing, sus and organ comping. Solo jazz piano after Jeremy Siskind: left-hand shells to stride, solo textures, comping vocabulary, improv habits.',
+      'Fixes: fresh sight-singing melodies every time, minor-key Roman numerals from natural minor, real agility levels for singers, and a correct minor cadence in the degrees exercise.',
+    ],
+    he: [
+      'שירה בעיצוב חדש: נתיב גובה חי עם צלילי היעד, שם צליל גדול, מד "באזור" רגוע (בלי מספרים כשאתם בתוכו; ▲ גבוה, ▼ נמוך), פסי יציבות, ובדיקת מיקרופון לפני שמתחילים — רואים שהקול נקלט לפני הביצוע.',
+      'המסלול בכל הקורסים מסודר עכשיו לפי קושי אמיתי, ממופה לתכניות לימוד מדורגות; לג׳אז יש התחלה אמיתית (סווינג, בלוז, שלדים, guide tones, סולו ראשון בנגינה); הרפרטואר מגיע עד הסוף.',
+      'רה־הרמוניזציה וצבע: צליל אחד, הרבה אקורדים; מדיאנטים כרומטיים; מודל אינטרצ׳יינג׳; פדל, planing, sus וליווי אורגן. פסנתר סולו בשיטת Jeremy Siskind: משלדי יד שמאל עד סטרייד, טקסטורות סולו, אוצר ליווי והרגלי אלתור.',
+      'תיקונים: מנגינות חדשות לשירה מדף בכל פעם, ספרות רומיות במינור מהמינור הטבעי, שלבי גמישות אמיתיים לזמרים, וקדנצה מינורית נכונה בתרגיל הדרגות.',
+    ],
+  },
+  {
     version: '0.92.0',
     date: '2026-11-15',
     en: [
