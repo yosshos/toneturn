@@ -19,11 +19,12 @@ import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES, vocalLevelByRef } from './voiceFamilies';
-import { DRUM_STAGGER, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from './levelPlacement';
+import { DRUM_STAGGER, guitarGradeBase, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from './levelPlacement';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
 import { FIRST_RANK, NEW_FIRST_FAMILIES } from './drills/firstStepsDiff'; // AUDIT-6 Stage B
+import { GUITAR_TOP_RANK } from './drills/guitarTop';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -488,7 +489,10 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
  */
 export const PATH_CAP = 1900;
 /** Families whose level order on the path is not their number order (placed by grade, or by KEYS_LEVEL_DIFF). */
-export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+export const NON_MONOTONE_FAMILIES = [
+  // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
+  'g-ctx',
+  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).
@@ -541,6 +545,8 @@ GUITAR_RANK['g-harrisline'] = 6;
 // HARMONY-REHARM: one note many chords and colour harmony on the neck, with the theory families.
 GUITAR_RANK['g-ctone'] = 6;
 GUITAR_RANK['g-color'] = 6;
+// STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
+Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -548,8 +554,10 @@ GUITAR_RANK['g-color'] = 6;
  * are unchanged (saved progress keys stay valid); other instruments' difficulties rise with the level, so nothing moves.
  */
 export const ladderOrder = (a: PathStep, b: PathStep): number => a.difficulty - b.difficulty || a.ladder!.level - b.ladder!.level;
-/** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
-export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
+/** A guitar grade's base rating (levelPlacement.guitarGradeBase: G(grade) to 8, the diploma grades 9–11 above it). */
+export { guitarGradeBase };
+/** A guitar level's path difficulty from its grade (0 = Debut … 8, 9–11 = diploma): the grade's base + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
+export const guitarPathDifficulty = (family: string, grade: number): number => guitarGradeBase(grade) + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];

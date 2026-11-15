@@ -23,6 +23,8 @@ import { displayNote, hzToMidi, type PitchClass } from '../engine/pitch';
 import type { SungFrame } from '../engine/sing';
 import {
   DEFAULT_RANGE,
+  EXTENT_BAND,
+  WIDTH_BAND,
   gradeTake,
   itemFits,
   itemTargets,
@@ -59,6 +61,7 @@ import { piano, SIMULATED, store } from './services';
 import { TIMED_KINDS } from '../engine/vocal';
 import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags, voiceLevelUnlocked } from '../engine/voiceFamilies';
 import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
+import { partEvents, sessionKeyItem } from '../engine/voiceTop';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, RUN_INSTR, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { restTakes, TimedSession, type VoiceTestMode } from './VoiceTimed';
@@ -67,24 +70,14 @@ import { VoiceLevelTest } from './VoiceLevelTest';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
-import { SingLane, SingMeters, SingReadout } from './SingLane';
+import { ltrLabel, NoteDetailRow, SingLane, SingMeters, SingReadout } from './SingLane';
 import { SingFeed, type LaneTarget } from './singFeed';
-import { zoneTolerance } from '../engine/vocalLive';
+import { moneyNotes, noteDetail, zoneTolerance, type VibratoGoal } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
+import { prefersCalm } from './Flight';
 
-/** The simulator feeds its take in real time (?sim=1&simrt=1): screenshots and e2e see the live view. */
-const SIM_RT = SIMULATED && typeof location !== 'undefined' && new URLSearchParams(location.search).has('simrt');
-
-/** Push frames at their own pace from `zero` (performance.now() of t = 0); resolves early when aborted. */
-async function paceFrames(frames: SungFrame[], zero: number, signal: AbortSignal, push: (f: SungFrame) => void): Promise<void> {
-  let k = 0;
-  while (k < frames.length && !signal.aborted) {
-    const at = (performance.now() - zero) / 1000;
-    while (k < frames.length && frames[k].t <= at) push(frames[k++]);
-    await new Promise((r) => setTimeout(r, 16));
-  }
-}
+import { paceFrames, SIM_RT } from './simRt';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -375,7 +368,8 @@ type View =
 const openLevel = (level: number, range: VoiceRange): View => {
   // Echo and audiation items get a fresh melody every session (no memorizable items); ids stay.
   const seed = Date.now() >>> 0;
-  const items = levelDef(level).items.map((it) => sessionEarItem(it, seed)).filter((it) => itemFits(it, range));
+  // STAGE C: key-relative items take this session's key (all 12 in turn).
+  const items = levelDef(level).items.map((it, k) => sessionKeyItem(sessionEarItem(it, seed), seed, k)).filter((it) => itemFits(it, range));
   return isTimedLevel(level) ? { kind: 'timed', level, items: levelDef(level).items } : { kind: 'session', level, items };
 };
 
@@ -802,6 +796,14 @@ function VocalSession({
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
   const feed = useMemo(() => new SingFeed(), []);
   const [why, setWhy] = useState(false);
+  // Fading support: after a strong take of a melody, the next takes are sung blind (outlines only until review).
+  const strongTakes = useRef<Record<string, number>>({});
+  // The review: the tapped note, and the take played back under a moving playhead.
+  const [sel, setSel] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const player = useRef<HTMLAudioElement | null>(null);
+  const playOffset = useRef(0);
+  useEffect(() => () => player.current?.pause(), []);
   useEffect(() => {
     if (test?.autoStart) void take();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -858,6 +860,9 @@ function VocalSession({
     setAudioUrl(null);
     setPulseClock(null);
     setWhy(false);
+    setSel(null);
+    player.current?.pause();
+    setPlaying(false);
     feed.reset();
     feed.latency = pulse && !SIMULATED ? (settings.micLatencyMs ?? 0) / 1000 : 0;
     await piano.unlock();
@@ -868,7 +873,7 @@ function VocalSession({
     const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line', 'sight', 'breath-phrase', 'breath-plan', 'drift-phrase', 'siren', 'terraced-scale', 'terraced', 'accents', 'arc'].includes(item.kind) || (item.kind === 'inflect' && item.more?.shape === 'ghost');
     // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
     // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
-    const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during';
+    const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during' || !!item.more?.parts;
     const needGate = sounding && !headphones && !SIMULATED;
     const buf: SungFrame[] = [];
     let onset: number | null = null;
@@ -892,12 +897,13 @@ function VocalSession({
     };
 
     if (needGate) {
-      const gate = new BleedGate(item.kind === 'harmony-line' || item.kind === 'harmony-hold' ? acc : [shownTargets[0]]);
+      const partNotes = item.more?.parts ? partEvents(item, targets, 0, 60 / (item.bpm ?? 72)) : [];
+      const gate = new BleedGate(item.kind === 'harmony-line' || item.kind === 'harmony-hold' ? acc : partNotes.length ? [...new Set(partNotes.map((e) => e.midi))] : [shownTargets[0]]);
       let stage: 'cal' | 'pre' | 'sing' = 'cal';
       let lastT = 0;
       let tStart = 0;
       const beat = 60 / (item.bpm ?? 72);
-      const extra = CALIBRATE_SEC + (item.kind === 'harmony-line' ? 4 * beat : 0) + 1;
+      const extra = CALIBRATE_SEC + (item.kind === 'harmony-line' || partNotes.length ? 4 * beat : 0) + 1;
       const capture = new BrowserPitchCapture().sing({
         signal: c.signal,
         maxMs: (item.seconds + 4 + extra) * 1000,
@@ -917,9 +923,18 @@ function VocalSession({
       if (item.pre) await piano.play(item.pre.map((x) => ({ midi: shownTargets[0] + x, start: 0, duration: 1.2, velocity: 0.6 })), 1.4, c.signal).catch(() => {});
       if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
       else if (item.kind === 'harmony-line') piano.startDrone(item.chords ? acc.slice(0, 1) : [acc[0]], 0.12);
-      else piano.startDrone([shownTargets[0]], 0.12);
+      else piano.startDrone(partNotes.length ? [partNotes[0].midi] : [shownTargets[0]], 0.12);
       await new Promise((r) => setTimeout(r, CALIBRATE_SEC * 1000 + 150));
       gate.finishCalibration();
+      if (partNotes.length) {
+        // One part from the score: a bar of count-in, then the other parts play while the player reads and sings.
+        piano.stopDrone();
+        stage = 'pre';
+        setPhase('listening');
+        const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
+        await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
+        void piano.play(partNotes, Math.max(...partNotes.map((e) => e.start + e.duration)) + 0.3, c.signal).catch(() => {});
+      }
       if (item.kind === 'harmony-line') {
         piano.stopDrone();
         stage = 'pre';
@@ -929,6 +944,7 @@ function VocalSession({
         void piano.play(lineAccompaniment(acc, chordsAbs, beat), acc.length * beat + 0.3, c.signal).catch(() => {});
       }
       tStart = lastT;
+      playOffset.current = tStart;
       stage = 'sing';
       setPhase('singing');
       startTicking();
@@ -967,6 +983,7 @@ function VocalSession({
       startTicking();
       // Timed takes: a bar of count-in, then the click (if on) and the lit notes carry the singer through.
       const lead = pulse ? pulse.countIn * pulse.beat : 0;
+      playOffset.current = lead + feed.latency;
       const clickCtl = new AbortController();
       c.signal.addEventListener('abort', () => clickCtl.abort());
       captureT0.current = performance.now() + lead * 1000;
@@ -974,17 +991,29 @@ function VocalSession({
       if (pulse) {
         const pc = pulseClicks(pulse, clickOn);
         setPulseClock({ pulse, zero: captureT0.current });
-        void piano.play(pc.events, pc.length, clickCtl.signal).catch(() => {});
+        // STAGE C one part from the score: the other parts sound in time with the take (with headphones; without, the
+        // bleed-gated take below plays them).
+        const parts = item.more?.parts ? partEvents(item, targets, lead, pulse.beat) : [];
+        void piano.play([...pc.events, ...parts], Math.max(pc.length, ...parts.map((e) => e.start + e.duration + 0.2)), clickCtl.signal).catch(() => {});
       }
       const keepShifted = (f: SungFrame) => {
         if (f.t >= lead - 0.4) keep(lead ? { ...f, t: f.t - lead } : f);
       };
       if (SIMULATED) {
         const sim = simulatedFrames(item, targets, noteIdx);
+        let rtSim: SungFrame[] | null = null;
         if (SIM_RT) {
-          // Real time, lined up with the lane (the simulated melody starts 0.3 s in).
+          // Real time, lined up with the lane (the simulated melody starts 0.3 s in). A demo singer: on melodies one
+          // note a little sharp and one flat, so the review shows every chip state.
           const shift = pulse ? 0.3 : 0;
-          await paceFrames(shift ? sim.map((f) => ({ ...f, t: f.t - shift })) : sim, captureT0.current, c.signal, keep);
+          const demo = pulse ? sim.map((f) => {
+            const t = f.t - shift;
+            const k = pulse.onsets.findIndex((o, j) => t >= o && t < (pulse.onsets[j + 1] ?? Infinity));
+            const off = k === 2 ? 28 : k === 3 ? -48 : 0;
+            return { ...f, t, hz: f.hz && off ? f.hz * 2 ** (off / 1200) : f.hz };
+          }) : sim;
+          rtSim = demo;
+          await paceFrames(demo, captureT0.current, c.signal, keep);
           clickCtl.abort();
           if (c.signal.aborted && !stopped.current) {
             clearInterval(tick);
@@ -997,7 +1026,7 @@ function VocalSession({
           // The simulator runs through the count-in and the first notes too (the now-cue is part of the take).
           await new Promise((r) => setTimeout(r, 300 + (pulse ? (lead + Math.min(pulse.length, 1.5)) * 1000 : 0)));
         }
-        got = sim;
+        got = rtSim ?? sim;
       } else {
         const r = await new BrowserPitchCapture().sing({
           signal: c.signal,
@@ -1027,9 +1056,11 @@ function VocalSession({
     piano.stopDrone();
     setPulseClock(null);
     setFrames(got ?? []);
-    feed.load(SIM_RT && pulse && got ? got.map((f) => ({ ...f, t: f.t - 0.3 })) : got ?? []);
+    feed.load(got ?? []);
+    setSel(null);
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
+    if (!g.unclear && g.score >= 0.8) strongTakes.current[item.id] = (strongTakes.current[item.id] ?? 0) + 1;
     if (audio) setAudioUrl(URL.createObjectURL(audio));
     if (audio && settings.keepTakes && !g.unclear && !test) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
     setPhase('result');
@@ -1167,8 +1198,53 @@ function VocalSession({
   const laneTargets: LaneTarget[] = pulse
     ? shownTargets.map((m, k) => ({ midi: m, start: pulse.onsets[k], dur: (pulse.onsets[k + 1] ?? pulse.length) - pulse.onsets[k] }))
     : shownTargets.map((m) => ({ midi: m }));
+  if (pulse) for (const k of moneyNotes(shownTargets, laneTargets.map((x) => x.dur ?? 0))) laneTargets[k].golden = true;
+  const melNotes = phase === 'result' && grade && !grade.unclear && pulse ? grade.melody?.notes ?? null : null;
+  const playClock = playing ? () => (player.current ? player.current.currentTime - playOffset.current : null) : null;
+  const togglePlay = () => {
+    if (!audioUrl) return;
+    if (playing) {
+      player.current?.pause();
+      setPlaying(false);
+      return;
+    }
+    const a = player.current && player.current.src === audioUrl ? player.current : new Audio(audioUrl);
+    player.current = a;
+    a.currentTime = 0;
+    a.onended = () => setPlaying(false);
+    void a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  };
+  const detail = (() => {
+    if (sel === null || !melNotes?.[sel]) return null;
+    const n = melNotes[sel];
+    const tg = laneTargets[sel];
+    const first = melNotes.findIndex((x) => x.start !== null);
+    const t0 = first >= 0 ? melNotes[first].start! - (laneTargets[first].start ?? 0) : 0;
+    const onsetMs = n.start !== null && tg.start !== undefined && sel !== first ? Math.round((n.start - (t0 + tg.start)) * 1000) : null;
+    return { d: noteDetail(n, feed.track(n.target), tg.dur ?? 0.5, onsetMs), golden: !!tg.golden, label: noteLabel(n.target, settings) };
+  })();
   const shownIdx = hidden ? shownTargets.map((m, k) => (visible.includes(m) ? k : -1)).filter((k) => k >= 0) : null;
   const holdItem = HOLD_KINDS.includes(item.kind);
+  // The vibrato chip: holds, vibrato items and messa di voce (never staccato, fast melodies or songs).
+  const vibItem = item.kind.startsWith('vibrato') && item.kind !== 'vibrato-notes' || item.kind === 'messa' || item.kind === 'hold' || item.kind === 'straight';
+  const vibGoal: VibratoGoal | false | null = !vibItem
+    ? false
+    : item.kind === 'vibrato-rate'
+      ? { rate: [(item.vibRate ?? 5.5) - 0.4, (item.vibRate ?? 5.5) + 0.4], extent: EXTENT_BAND[style] }
+      : item.kind === 'vibrato-width'
+        ? { rate: [4.5, 7], extent: WIDTH_BAND[item.vibWidth ?? 'narrow'] }
+        : item.kind.startsWith('vibrato')
+          ? { rate: [4.5, 7], extent: EXTENT_BAND[style] }
+          : null;
+  const hv = grade && !grade.unclear ? grade.hold?.vibrato : undefined;
+  const frozenVib = vibItem && hv
+    ? {
+        state: (hv.present ? (hv.regularity > 0.35 ? 'unsteady' : 'vibrato') : 'straight') as 'vibrato' | 'unsteady' | 'straight',
+        rate: Math.round(hv.rate * 10) / 10,
+        extent: Math.round(hv.extent / 5) * 5,
+        note: hv.present ? (hv.jitter <= 0.1 ? SING_TX.even[lang] : `${SING_TX.wanders[lang]} ${Math.round(hv.jitter * 100)}%`) : undefined,
+      }
+    : null;
   const strong = !!grade && !grade.unclear && grade.score >= STRONG;
   const weakestScore = grade && grade.weakest ? Math.min(...grade.metrics.filter((m) => m.key === grade.weakest).map((m) => m.score)) : 1;
   const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
@@ -1203,7 +1279,8 @@ function VocalSession({
         {!test && fill(t.vocalItemOf, { i: i + 1, n: items.length })}
         {noteCount > 1 && ` · ${fill(t.vocalNoteOf, { i: noteIdx + 1, n: noteCount })}`}
       </p>
-      {phase !== 'result' && <p className="vocal-instr">
+      {/* sight-singing: the instruction gives the score its room while singing (the brief already said it) */}
+      {phase !== 'result' && !(isSight(item) && phase === 'singing') && <p className="vocal-instr">
         {item.ear
           ? earInstruction(item, settings.uiLang === 'en' ? 'en' : 'he', (s) => t.intervalNames[String(s)] ?? '')
           : item.kind === 'scale' && item.scale
@@ -1221,7 +1298,11 @@ function VocalSession({
           : item.bh
             ? barryInstruction(item, shownTargets[0], t, settings)
           : isSight(item)
-            ? t.sightInstr
+            ? item.more?.parts
+              ? settings.uiLang === 'he'
+                ? 'שירו את הקול שלכם; השני מתנגן.'
+                : 'Sing your part; the other one plays.'
+              : t.sightInstr
           : item.run
             ? fill(RUN_INSTR[item.run.shape][settings.uiLang === 'en' ? 'en' : 'he'], { pct: item.run.pct })
           : item.kind === 'ornament'
@@ -1246,8 +1327,8 @@ function VocalSession({
           ))}
         </p>
       )}
-      {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
-      {isSight(item) ? (
+      {/* After a sight-singing take the review lane (blocks, chips, curve) stands in for the score. */}
+      {isSight(item) && phase !== 'result' ? (
         <div className="sight-score">
           <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} now={pulseNow} />
           <div className="pulse-wrap compact">
@@ -1258,9 +1339,9 @@ function VocalSession({
           </button>
           </div>
         </div>
-      ) : (pulse && phase !== 'result') || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
+      ) : (pulse && phase !== 'result') || (phase === 'result' && !!melNotes) || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
       <p className="vocal-targets" dir="ltr">
-        {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
+        {visible.map((m) => ltrLabel(Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
       )}
       {/* While singing, the lane carries the notes; the beat light keeps the count-in and the pulse (timing-cue rule). */}
@@ -1277,14 +1358,16 @@ function VocalSession({
           </button>
         </div>
       )}
-      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} />}
+      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} hideTarget={isSight(item) || hiddenTask} />}
       {cue && (
         <p className={`vocal-cue ${cue === t.vocalNowVibrato ? 'vib' : ''}`} aria-live="assertive">
           {cue}
         </p>
       )}
+      {/* Sight-singing: the score is the task and carries the now-cue; a lane would give the pitches away (and
+          push the screen past a phone). It shows the take only in review. */}
       <div className="sing-lane-wrap">
-      <SingLane
+      {(!isSight(item) || phase === 'result') && <SingLane
         feed={feed}
         targets={laneTargets}
         mode={pulse ? 'melody' : 'hold'}
@@ -1295,13 +1378,21 @@ function VocalSession({
         settings={settings}
         beat={pulse?.beat}
         countIn={pulse?.countIn}
-        compact={phase === 'result'}
+        compact={phase === 'result' && !pulse}
+        notes={melNotes}
+        selected={sel}
+        onSelect={melNotes ? setSel : undefined}
+        playClock={playClock}
+        blind={phase === 'singing' && !!pulse && (strongTakes.current[item.id] ?? 0) >= 1}
+        fermata={phase === 'result' && !!grade && !grade.unclear && grade.score >= 0.9}
+        calm={prefersCalm(settings)}
         label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`}
-      />
+      />}
       <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
-      {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && holdItem && grade && !grade.unclear)) && (
-        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} />
+      {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} lang={lang} onClose={() => setSel(null)} />}
+      {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && (holdItem || !!frozenVib) && grade && !grade.unclear)) && (
+        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result' && !isSight(item)} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
       )}
       {item.reference === 'during' && (
         <label className="toggle-row">
@@ -1350,10 +1441,9 @@ function VocalSession({
             </>
           )}
           {audioUrl && (
-            <div className="listen-back">
-              <span>{t.vocalListenBack}</span>
-              <audio controls src={audioUrl} />
-            </div>
+            <button className="btn ghost listen-btn" onClick={togglePlay} aria-pressed={playing}>
+              <Icon k={playing ? 'pause' : 'play'} /> {playing ? SING_TX.pause[lang] : SING_TX.listen[lang]}
+            </button>
           )}
         </section>
       )}

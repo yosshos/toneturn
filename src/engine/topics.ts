@@ -54,6 +54,8 @@ import './topicsAdvGames';
 import './topicsTopTiers';
 // AUDIT-6 Stage B: the Ear course's beginnings — rhythm echo, descending intervals early, root / 3rd / 5th, which note changed.
 import './topicsEarStart';
+// STAGE C (AUDIT-6 ear #8): the lowest of three voices, single-hearing playback, describe the piece (ABRSM D).
+import './topicsStageC';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

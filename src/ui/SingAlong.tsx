@@ -4,12 +4,12 @@
 import { NotesView } from './NotesView';
 import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import { melodyRemarkText } from '../game/content';
-import { useEffect, useRef, useState } from 'react';
-import { gradeSingAlong, songTimeline, type RollNote, type SingAlongGrade } from '../engine/singalong';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { gradeSingAlong, songTimeline, type SingAlongGrade } from '../engine/singalong';
 import type { SungFrame } from '../engine/sing';
 import { SONGS, type SongOpening } from '../engine/songs';
 import { DEFAULT_RANGE } from '../engine/vocal';
-import { hzToMidi, pc } from '../engine/pitch';
+import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
@@ -17,45 +17,21 @@ import { piano, SIMULATED } from './services';
 import { noteLabel } from './Vocal';
 import { loadClick, saveClick } from './PulseNotes';
 import { Icon } from './icons';
+import { LaneNote, SingLane } from './SingLane';
+import { SingFeed } from './singFeed';
+import { paceFrames, SIM_RT } from './simRt';
+import { NoVoiceBanner } from './VoiceCheck';
+import { prefersCalm } from './Flight';
 
 const BPM = 84;
 /** Usual major-key spelling for a tonic pitch class. */
 const KEY_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-export function SingRoll({ notes, frames, now }: { notes: RollNote[]; frames: SungFrame[]; now: number }) {
-  const W = 320;
-  const H = 150;
-  const lo = Math.min(...notes.map((n) => n.midi)) - 3;
-  const hi = Math.max(...notes.map((n) => n.midi)) + 3;
-  const span = 4; // seconds visible
-  const x0 = Math.max(0, now - 1); // the cursor sits a second from the left
-  const x = (t: number) => ((t - x0) / span) * W;
-  const y = (m: number) => H - ((m - lo) / (hi - lo)) * H;
-  const centre = (lo + hi) / 2;
-  const pts = frames
-    .filter((f) => f.hz && f.confidence >= 0.8 && f.t >= x0 && f.t <= x0 + span)
-    .map((f) => {
-      let m = hzToMidi(f.hz!);
-      m += Math.round((centre - m) / 12) * 12;
-      return `${x(f.t).toFixed(1)},${y(m).toFixed(1)}`;
-    })
-    .join(' ');
-  return (
-    <svg className="sing-roll" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
-      {notes.map((n, i) => (
-        <rect key={i} x={x(n.start)} y={y(n.midi + 0.4)} width={Math.max(2, x(n.start + n.dur) - x(n.start) - 2)} height={y(n.midi - 0.4) - y(n.midi + 0.4)} rx="4" className={now >= n.start && now < n.start + n.dur ? 'roll-note on' : 'roll-note'} />
-      ))}
-      <line x1={x(now)} x2={x(now)} y1="0" y2={H} className="roll-cursor" />
-      {pts && <polyline points={pts} className="trace-line" />}
-    </svg>
-  );
-}
-
 export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings: Settings; onBack: () => void }) {
   const [song, setSong] = useState<SongOpening | null>(null);
   const [phase, setPhase] = useState<'pick' | 'ready' | 'count' | 'singing' | 'done'>('pick');
-  const [frames, setFrames] = useState<SungFrame[]>([]);
-  const [now, setNow] = useState(0);
+  const [, setFrames] = useState<SungFrame[]>([]);
+  const [, setNow] = useState(0);
   const [grade, setGrade] = useState<SingAlongGrade | null>(null);
   // Off by default: the guide plays the very notes being sung, so only with headphones can it stay out of the microphone.
   const [guide, setGuide] = useState(false);
@@ -63,6 +39,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
   const [clickOn, setClickOn] = useState(loadClick);
   const [remark, setRemark] = useState<string | null>(null);
   const ctl = useRef<AbortController | null>(null);
+  const feed = useMemo(() => new SingFeed(), []);
   useEffect(() => () => ctl.current?.abort(), []);
   const range = settings.voiceRange ?? DEFAULT_RANGE;
   const lang = settings.uiLang;
@@ -75,6 +52,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
     ctl.current = c;
     setGrade(null);
     setFrames([]);
+    feed.reset();
     await piano.unlock();
     setPhase('count');
     const beat = 60 / BPM;
@@ -89,13 +67,15 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
     }
     if (guide) void piano.play(tl.notes.map((n) => ({ midi: n.midi, start: n.start, duration: n.dur * 0.92, velocity: 0.35 })), end + 0.2, c.signal).catch(() => {});
     const t0 = performance.now();
+    feed.zeroWall = t0;
     const tick = setInterval(() => setNow((performance.now() - t0) / 1000), 50);
     let got: SungFrame[] = [];
     const buf: SungFrame[] = [];
     if (SIMULATED) {
       // A clean synthetic take, timed to the song.
       got = tl.notes.flatMap((n) => Array.from({ length: Math.floor(n.dur / 0.02) }, (_, k) => ({ t: n.start + k * 0.02, hz: 440 * 2 ** ((n.midi - 69) / 12), confidence: 0.95, rms: 0.08 })));
-      await new Promise((r) => setTimeout(r, Math.min(3000, end * 1000)));
+      if (SIM_RT) await paceFrames(got, t0, c.signal, (f) => feed.push(f));
+      else await new Promise((r) => setTimeout(r, Math.min(3000, end * 1000)));
       setFrames(got);
     } else {
       const r = await new BrowserPitchCapture().sing({
@@ -105,8 +85,9 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
         endSilenceMs: 1500,
         hopMs: 20,
         onFrame: (f) => {
-          buf.push({ ...f, t: (performance.now() - t0) / 1000 });
-          if (buf.length % 3 === 0) setFrames(buf.slice());
+          const g = { ...f, t: (performance.now() - t0) / 1000 };
+          buf.push(g);
+          feed.push(g);
         },
       });
       got = r.kind === 'frames' || r.kind === 'aborted' ? buf : [];
@@ -114,6 +95,8 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
     clearInterval(tick);
     piano.stopAll();
     setNow(end);
+    setFrames(got);
+    feed.load(got);
     setGrade(gradeSingAlong(got, tl.notes));
     const items = sungMelodyRemarks(got, tl.notes.map((n) => n.midi));
     setRemark(items.length ? melodyRemarkText(items, settings.uiLang) : null);
@@ -170,7 +153,11 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
       <p className="field-hint" dir="ltr">
         {noteLabel(tl.tonic, settings, keyPc)} · ♩ = {BPM}
       </p>
-      <SingRoll notes={tl.notes} frames={frames} now={phase === 'pick' || phase === 'ready' ? 0 : now} />
+      <div className="sing-lane-wrap">
+        <SingLane feed={feed} targets={tl.notes.map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }))} mode="song" seconds={0} tol={35} live={phase === 'count' || phase === 'singing'} settings={settings} beat={60 / BPM} compact={phase === 'done'} fermata={phase === 'done' && !!grade && grade.total >= 0.9} calm={prefersCalm(settings)} label={song.title[lang]} />
+        <LaneNote feed={feed} live={phase === 'singing'} settings={settings} />
+        <NoVoiceBanner feed={feed} live={phase === 'singing'} from={tl.notes[0]?.start ?? 0} lang={lang === 'en' ? 'en' : 'he'} />
+      </div>
       <NotesView midis={tl.notes.map((n) => n.midi)} keyPc={keyPc} settings={settings} />
       {phase === 'count' && <p className="vocal-cue vib">1 · 2 · 3 · 4</p>}
       {grade && (

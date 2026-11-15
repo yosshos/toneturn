@@ -8,6 +8,7 @@
 // Provenance: every own melody and chart below was written for The 7th Sense (2026-11-11) and quotes no existing head.
 
 import type { ChartStyle } from '../engine/charts';
+import { VOICE_TOP_SONGS } from './voiceTopSongs';
 
 export interface VoiceSong {
   id: string;
@@ -405,4 +406,5 @@ export const VERSE_SONGS: VoiceSong[] = [
   },
 ];
 
-export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS, ...VERSE_SONGS];
+// STAGE C (AUDIT-6 §3.5): the Quick Study tunes and the non-jazz style studies (voiceTopSongs.ts).
+export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS, ...VERSE_SONGS, ...VOICE_TOP_SONGS];

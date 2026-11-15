@@ -165,8 +165,7 @@ describe('the drums course and its path', () => {
   });
   it('drum levels are path steps of the drums course only, each a "tech:" step rated as drum technique', () => {
     const tech = stepCatalogue().filter((s) => s.ladder?.instrument === 'drums');
-    expect(tech.length).toBe(178); // + d-first 8 (AUDIT-6 Stage B)
-    // was 170: // + d-prog 11 (AUDIT-CONTENT-THEORY R-1/R-5)
+    expect(tech.length).toBe(227); // + d-first 8 (AUDIT-6 Stage B) + 49 STAGE C levels (AUDIT-6 DA-10)
     for (const s of tech) {
       expect(s.id.startsWith('tech:d-')).toBe(true);
       expect(s.sub).toBe('instrument/drum-tech');
@@ -174,7 +173,7 @@ describe('the drums course and its path', () => {
       expect(inCourse(s, 'bass')).toBe(false);
       expect(techLevel(s.ladder!.ref)).toBeDefined();
     }
-    expect(ladderFamiliesFor('drums', DEFAULT_DRILL_SETTINGS)).toEqual(['d-first', 'd-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-rock', 'd-fills', 'd-read', 'd-funk', 'd-shuffle', 'd-indep', 'd-mideast', 'd-feet', 'd-ear', 'd-jazz', 'd-latin', 'd-song', 'd-prog', 'd-count', 'd-notation', 'd-form']);
+    expect(ladderFamiliesFor('drums', DEFAULT_DRILL_SETTINGS)).toEqual(['d-first', 'd-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-rock', 'd-fills', 'd-read', 'd-funk', 'd-shuffle', 'd-indep', 'd-mideast', 'd-feet', 'd-ear', 'd-jazz', 'd-latin', 'd-song', 'd-prog', 'd-count', 'd-notation', 'd-form', 'd-pas', 'd-stick', 'd-synco', 'd-chapin', 'd-linear', 'd-brush', 'd-oddtempo', 'd-trade']);
     expect(ladderFamiliesFor('bass', DEFAULT_DRILL_SETTINGS).some((f) => f.startsWith('d-'))).toBe(false);
   });
   it('the drums path starts at level 1 of the first families; a practice pad leaves out the kit levels', () => {

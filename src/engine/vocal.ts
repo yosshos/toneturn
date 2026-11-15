@@ -8,6 +8,7 @@ import { hzToMidi, midiToHz } from './pitch';
 import type { SungFrame } from './sing';
 import { segmentNotes } from './memory';
 import { itemOctave, octaveOffset } from './feedback';
+import { keyedBase } from './voiceTop';
 
 // ------------------------------------------------------------------ voice range (P.0)
 
@@ -754,6 +755,11 @@ export interface MoreSpec {
   straight?: boolean;
   /** Sight-singing in this clef (F9 L6, low voices). */
   clef?: 'bass';
+  /** STAGE C (voiceTop.ts): a key-relative item — each session sets `key` (the first note's pitch class), all 12 in turn. */
+  key12?: boolean;
+  key?: number;
+  /** STAGE C one part from the score: the other parts the app plays during the take (semitones from the steps' base, beats). */
+  parts?: { steps: number[]; durs: number[] }[];
 }
 
 export { MODE_STEPS, type ModeId } from './modes';
@@ -1371,7 +1377,9 @@ export function itemTargets(item: VocalItem, range: VoiceRange): number[] {
   // Keep the whole figure inside the range (never change the intervals).
   const lo = Math.min(...item.steps);
   const hi = Math.max(...item.steps);
-  base = Math.max(range.low - lo, Math.min(range.high - hi, base));
+  // STAGE C: a keyed item starts on its session's key, moved by octaves to fit (voiceTop.keyedBase).
+  if (item.more?.key !== undefined) base = keyedBase(base, item.more.key - item.steps[0], lo, hi, range.low, range.high);
+  else base = Math.max(range.low - lo, Math.min(range.high - hi, base));
   return item.steps.map((s) => base + s);
 }
 
