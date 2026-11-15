@@ -62,14 +62,48 @@ const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: '
 /** The keyboard map 1–3 (key-notes): offered to every player and in the Ear course too (AUDIT-CONTENT-THEORY §ב.1). */
 export const isKeysForAll = (s: Partial<Pick<PathStep, 'topic' | 'level'>>): boolean => s.topic === 'key-notes' && (s.level ?? 9) <= 3;
 
-/** Does this path step belong to the course? Courses are (almost) disjoint, so progress never shows twice. */
-export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level'>>, c: CourseId): boolean {
+/**
+ * AUDIT-6 J-W2: the performed jazz families — improvising, comping, walking, scat — that the Jazz course path also
+ * teaches, for the instruments the player plays (the step's forPlays decides; singing only when singing is on). Their
+ * progress is the instrument course's own (technique and vocal facts come from the measured takes), so nothing counts twice.
+ */
+export const JAZZ_LADDER_FAMILIES: string[] = [
+  // piano: improvisation habits (a one-note / two-note solo over a blues), the solo left hand (shells), LH voicings,
+  // jazz lines (guide tones), comping vocabulary, improvising by the rules
+  'k-impro', 'k-lh', 'voicings', 'jazz', 'k-comp', 'k-solo',
+  // guitar: target-note improvising, jazz comping, improvising by the rules
+  'g-impro', 'g-jazz', 'g-solo',
+  // bass: walking, fills and target notes, swing time
+  'b-walk', 'b-impro', 'b-swing',
+  // drums: the jazz ride, comping and trading
+  'd-jazz',
+  // voice: scat and standards
+  'v-scat', 'v-standards',
+];
+
+/**
+ * Does this path step belong to the course? Courses are (almost) disjoint, so progress never shows twice.
+ *
+ * COURSE MEMBERSHIP RULE (AUDIT-6 §3, docs/SPEC-COURSES.md "Course membership"):
+ * - An instrument step (forPlays) belongs to its instrument course; a sung step to Voice. The one exception: the
+ *   performed jazz families (JAZZ_LADDER_FAMILIES) are also Jazz steps — shared credit, the same step id.
+ * - Jazz = the jazz pack (path.ts PACK_TOPICS / PACK_LEVELS: swing, the blues on-ramp, shells and guide tones,
+ *   comping, rootless and upper-structure voicings, jazz-blues and 32-bar grids, bebop scales, ii–V chains, Barry
+ *   Harris, reharm and colour, jazz forms and dictation) plus the improvising skill (licks, call and response,
+ *   jazz repertoire).
+ * - Ear = everything else that is heard, read or written — including expression (mood, dynamics, articulation,
+ *   character: the ABRSM aural "features"), Nashville numbers, transposition and melodic / rhythmic transformations,
+ *   which the creative area used to drag into Jazz.
+ */
+export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level' | 'skill' | 'ladder'>>, c: CourseId): boolean {
   // AUDIT-CONTENT-THEORY §ב.1: note names on the keyboard (key-notes 1–3) are the theory picture every beginner needs,
   // so they belong to the Ear course too (the one shared exception).
   if (c === 'ear' && isKeysForAll(s)) return true;
+  if (c === 'jazz' && s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family)) return true;
   const voiceish = !!s.sung || s.domain === 'voice';
   const instr = s.forPlays?.map((p) => INSTR[p]).filter(Boolean) as CourseId[] | undefined;
-  const jazzish = s.pack === 'jazz' || s.domain === 'creative';
+  // The improvising skill is jazz; the rest of the creative area (expression, transposition) is ear (AUDIT-6 X3).
+  const jazzish = s.pack === 'jazz' || (s.domain === 'creative' && (s.skill === undefined || s.skill === 'improv'));
   switch (c) {
     case 'voice':
       return voiceish && !instr?.length;

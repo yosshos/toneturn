@@ -33,7 +33,7 @@ describe('exercise taxonomy (spec AD)', () => {
   });
   it('every topic is tagged, every tag vector is well formed, every sub-skill is reachable', () => {
     const reached = new Set<string>(EVENT_SOURCED);
-    for (const [topic, T] of Object.entries(TOPIC_GEN)) {
+    for (const [topic, T] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly)) {
       expect(TOPIC_TAGS[topic], topic).toBeTruthy();
       for (let level = 1; level <= T.levels.length; level++) {
         const t = TOPIC_TAGS[topic];
@@ -57,7 +57,7 @@ describe('exercise taxonomy (spec AD)', () => {
     }
   });
   it('within a sub-skill, a topic\'s levels never get easier', () => {
-    for (const [topic, T] of Object.entries(TOPIC_GEN)) {
+    for (const [topic, T] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly)) {
       const last = new Map<string, number>();
       for (let level = 1; level <= T.levels.length; level++) {
         const q = T.gen(12345, level, 'q');

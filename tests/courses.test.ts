@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courseInput, coursesFromProfile, inCourse, switchCourse, type CourseId } from '../src/engine/courses';
+import { courseInput, coursesFromProfile, inCourse, JAZZ_LADDER_FAMILIES, switchCourse, type CourseId } from '../src/engine/courses';
 import { eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { migrateSettings, DEFAULT_SETTINGS } from '../src/storage/progress';
 
@@ -39,8 +39,11 @@ describe('courses (SPEC-COURSES)', () => {
         continue;
       }
       const instr = (['keys', 'guitar', 'bass'] as CourseId[]).some((c) => inCourse(s, c));
+      // AUDIT-6 J-W2: the performed jazz families are the one shared set — their instrument course (or voice) and Jazz.
+      const jazzShared = !!s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family);
       const owners = (['ear', 'voice', 'jazz'] as CourseId[]).filter((c) => inCourse(s, c)).length + (instr ? 1 : 0);
-      expect(owners, s.id).toBeLessThanOrEqual(1);
+      expect(owners, s.id).toBeLessThanOrEqual(jazzShared ? 2 : 1);
+      if (jazzShared) expect(inCourse(s, 'jazz'), s.id).toBe(true);
     }
   });
   it('sung steps live in the voice course, never in ear', () => {

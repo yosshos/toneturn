@@ -104,14 +104,14 @@ TOPIC_GEN['lh-tex-ear'] = {
       const stim = (f: '3' | '10') => [render(cs.map((c) => ({ beat: c.beat, dur: 4, ps: bpShell(c, f) })), 90, false)];
       const ans = rnd() < 0.5 ? '3' : '10';
       const names: Names = { '3': nm('Root + 3rd', 'יסוד + טרצה', 'third', 'shell'), '10': nm('Root + 10th', 'יסוד + דצימה', 'tenth') };
-      return choiceQ({ ...base, difficulty: 1000, ask: { en: 'A ii–V–I in two-note shells: the 3rd or the 10th?', he: 'ii–V–I בשלדים של שני צלילים: טרצה או דצימה?' }, names, answer: ans, choices: ['3', '10'], stimulus: stim(ans), choiceStim: { '3': stim('3'), '10': stim('10') } });
+      return choiceQ({ ...base, difficulty: 920, ask: { en: 'A ii–V–I in two-note shells: the 3rd or the 10th?', he: 'ii–V–I בשלדים של שני צלילים: טרצה או דצימה?' }, names, answer: ans, choices: ['3', '10'], stimulus: stim(ans), choiceStim: { '3': stim('3'), '10': stim('10') } });
     }
     if (level === 2) {
       const ks = Object.keys(LH_NAME);
       const ans = pickR(rnd, ks);
       const choices = shuffleR(rnd, [ans, ...shuffleR(rnd, ks.filter((k) => k !== ans)).slice(0, 3)]);
       const names: Names = Object.fromEntries(choices.map((k) => [k, LH_NAME[k]]));
-      const diff: Record<string, number> = { stride: 1100, two: 1150, sstride: 1250, walk10: 1400, shuttle: 1500 };
+      const diff: Record<string, number> = { stride: 1050, two: 1080, sstride: 1150, walk10: 1250, shuttle: 1300 };
       return choiceQ({ ...base, difficulty: diff[ans], ask: { en: 'Four bars of left hand: which pattern?', he: 'ארבע תיבות של יד שמאל: איזו תבנית?' }, names, answer: ans, choices, stimulus: [lhStim(ans, key)], choiceStim: Object.fromEntries(choices.map((k) => [k, [lhStim(k, key)]])) });
     }
     // level 3: stride with the bass of one bar anticipated on the "and" of 4 before it [7SS] — which bar?
@@ -121,7 +121,7 @@ TOPIC_GEN['lh-tex-ear'] = {
     const early = stridePattern(cs, 4, 'antic-bass').filter((e) => e.role === 'bass' && Math.abs(e.beat - (bar * 4 - 0.5)) < 1e-6);
     const notes = [...plain.filter((e) => !(e.role === 'bass' && Math.abs(e.beat - bar * 4) < 1e-6)), ...early];
     const names: Names = { b2: nm('Bar 2', 'תיבה 2', 'two', 'bar two'), b3: nm('Bar 3', 'תיבה 3', 'three', 'bar three'), b4: nm('Bar 4', 'תיבה 4', 'four', 'bar four') };
-    return choiceQ({ ...base, difficulty: 1400, ask: { en: 'Stride: which bar’s bass comes early?', he: 'סטרייד: הבס של איזו תיבה מגיע מוקדם?' }, names, answer: `b${bar + 1}`, choices: ['b2', 'b3', 'b4'], stimulus: [render(lhNotes(notes), 108)] });
+    return choiceQ({ ...base, difficulty: 1300, ask: { en: 'Stride: which bar’s bass comes early?', he: 'סטרייד: הבס של איזו תיבה מגיע מוקדם?' }, names, answer: `b${bar + 1}`, choices: ['b2', 'b3', 'b4'], stimulus: [render(lhNotes(notes), 108)] });
   },
 };
 TOPIC_TAGS['lh-tex-ear'] = tg(['chords', 'voicing', 1]);
@@ -193,7 +193,7 @@ TOPIC_GEN['solo-tex-ear'] = {
     const p = phrase(rnd, key, level === 3);
     const ans = pickR(rnd, set);
     const names: Names = Object.fromEntries(set.map((k) => [k, TEX_NAME[k]]));
-    const diff = [1200, 1450, 1700][level - 1] ?? 1200;
+    const diff = [1200, 1380, 1560][level - 1] ?? 1200;
     const s = (k: string) => [texStim(k, p, rng(seed + 7))];
     return choiceQ({ ...{ id, topic: 'solo-tex-ear', level, seed, skill: 'chords' as const }, difficulty: diff, ask: { en: `${p.h.title.en}: which texture?`, he: `${p.h.title.he}: איזה מרקם?` }, names, answer: ans, choices: shuffleR(rnd, set.slice()), stimulus: s(ans), choiceStim: Object.fromEntries(set.map((k) => [k, s(k)])) });
   },
@@ -246,7 +246,7 @@ TOPIC_GEN['comp-rhythm-ear'] = {
     const set = sets[level - 1] ?? sets[0];
     const ans = pickR(rnd, set);
     const names: Names = Object.fromEntries(set.map((k) => [k, RHY[k].name]));
-    return choiceQ({ ...{ id, topic: 'comp-rhythm-ear', level, seed, skill: 'rhythm-dictation' as const }, difficulty: [1000, 1200, 1400][level - 1] ?? 1000, ask: { en: 'Four bars of comping: which rhythm?', he: 'ארבע תיבות של ליווי: איזה מקצב?' }, names, answer: ans, choices: shuffleR(rnd, set.slice()), stimulus: [rhyStim(ans, key)], choiceStim: Object.fromEntries(set.map((k) => [k, [rhyStim(k, key)]])) });
+    return choiceQ({ ...{ id, topic: 'comp-rhythm-ear', level, seed, skill: 'rhythm-dictation' as const }, difficulty: [1000, 1150, 1300][level - 1] ?? 1000, ask: { en: 'Four bars of comping: which rhythm?', he: 'ארבע תיבות של ליווי: איזה מקצב?' }, names, answer: ans, choices: shuffleR(rnd, set.slice()), stimulus: [rhyStim(ans, key)], choiceStim: Object.fromEntries(set.map((k) => [k, [rhyStim(k, key)]])) });
   },
 };
 TOPIC_TAGS['comp-rhythm-ear'] = tg(['rhythm-dictation', 'syncopation', 1]);

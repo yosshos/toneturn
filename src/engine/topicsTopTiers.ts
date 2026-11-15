@@ -51,6 +51,8 @@ export const JAZZ_TENSIONS = JAZZ.map((j) => j.k);
 
 TOPIC_GEN['interval-cells'] = {
   title: { en: 'Interval cells and jazz names', he: 'תאי מרווחים ושמות ג׳אז' },
+  // AUDIT-6 X1: the Interval Sprint top tiers only (8 choices, timed) — never a path step.
+  gameOnly: true,
   skill: 'intervals',
   levels: [
     { en: 'Two intervals in a row (3 notes)', he: 'שני מרווחים ברצף (3 צלילים)' },
