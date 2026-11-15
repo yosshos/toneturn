@@ -77,3 +77,36 @@ for (const lang of ['en', 'he'] as const) {
     });
   }
 }
+
+// slice 3: songs (the timed session and the sing-along) ride the same lane, with the phrase strip above it
+for (const lang of ['en', 'he'] as const) {
+  test(`sing lane: song with the band, live + review (${lang})`, async ({ page }) => {
+    await page.goto(`/?sim=1&simrt=1&unlock=all&lang=${lang}&vlevel=1303#/vocal`);
+    const sing = page.locator('.vtimed .vocal-actions .btn.mega').first();
+    await expect(sing).toBeVisible({ timeout: 60_000 });
+    await sing.click();
+    await expect(page.locator('.vtimed .sing-lane.is-live')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('.phrase-strip .ps.now')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.lane-note')).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(1500);
+    expect(await overflow(page), 'live').toBeLessThanOrEqual(2);
+    if (SHOTS) await page.screenshot({ path: `docs/voice-ui-shots/s3-song-live-${lang}.png` });
+    await expect(page.locator('.vt-result')).toBeVisible({ timeout: 90_000 });
+    await expect(page.locator('.vtimed .sing-lane.is-review')).toBeVisible();
+    await expect(page.locator('.phrase-strip .ps.good').first()).toBeVisible();
+    expect(await overflow(page), 'review').toBeLessThanOrEqual(2);
+    if (SHOTS) await page.screenshot({ path: `docs/voice-ui-shots/s3-song-review-${lang}.png` });
+  });
+
+  test(`sing lane: sing-along screen (${lang})`, async ({ page }) => {
+    await page.goto(`/?sim=1&simrt=1&lang=${lang}#/singalong`);
+    await page.locator('.song-list .tool-card').first().click({ timeout: 60_000 });
+    await page.locator('.singalong .vocal-actions .btn.mega').click();
+    await expect(page.locator('.singalong .sing-lane.is-live')).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    await expect(page.locator('.singalong .sl-trail').first()).toHaveAttribute('d', /L/);
+    if (SHOTS) await page.screenshot({ path: `docs/voice-ui-shots/s3-singalong-live-${lang}.png` });
+    await expect(page.locator('.singalong .take-card')).toBeVisible({ timeout: 90_000 });
+    await expect(page.locator('.singalong .sing-lane.is-review')).toBeVisible();
+  });
+}

@@ -295,7 +295,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
       if (ticks.current) ticks.current.querySelectorAll('rect').forEach((r) => r.classList.toggle('on', now >= Number(r.dataset.t)));
       // Review: the vibrato centre (dashed) through the curve, and the playback playhead.
       if (centre.current) {
-        if (reviewFit) {
+        if (reviewFit && mode !== 'song') {
           const cl = centreLine(pts.map((p) => ({ t: p.t, m: p.m === null ? null : p.m + octaveFold(p.m, (targetAt(targets, p.t, p.m) ?? { midi: centreM }).midi) })));
           let d = '';
           let down = false;
@@ -332,6 +332,17 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
   const rows: number[] = [];
   for (let m = lo; m <= hi; m++) rows.push(m);
   const named = new Set(midis.map((m) => Math.round(m)));
+  // Ruler names never collide: top-down, a name is skipped when it would sit within 11 px of the last one.
+  const labelled = new Set<number>();
+  {
+    let lastY = -Infinity;
+    for (let m = hi; m >= lo; m--) {
+      if (!named.has(m) && ((m % 12) + 12) % 12 !== 0) continue;
+      if (y(m) - lastY < 11) continue;
+      labelled.add(m);
+      lastY = y(m);
+    }
+  }
   const zone = (m: number) => ({ y: y(m + tol / 100), h: Math.max(2, y(m - tol / 100) - y(m + tol / 100)) });
   const lastEnd = timed ? Math.max(...targets.map((x) => (x.start ?? 0) + (x.dur ?? 0.5))) : 0;
   const beats: number[] = [];
@@ -425,7 +436,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
           <rect x={G - 7} width="4" y={y(Math.min(hi, range.high) + 0.5)} height={Math.max(0, y(Math.max(lo, range.low) - 0.5) - y(Math.min(hi, range.high) + 0.5))} className="sl-range" />
         )}
         {rows.map((m) =>
-          named.has(m) || ((m % 12) + 12) % 12 === 0 ? (
+          labelled.has(m) ? (
             <text key={`n${m}`} x={G - 10} y={y(m) + 3.5} className={`sl-name${named.has(m) ? ' tg' : ''}`} textAnchor="end">
               {ltrLabel(noteLabel(m, settings))}
             </text>
@@ -632,5 +643,44 @@ export function NoteDetailRow({ label, d, golden, tol, lang, onClose }: { label:
         ×
       </button>
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ songs: the small note chip and the phrase strip (§4.14)
+
+/** Songs: the sung note as a small chip in the lane's corner (no hero, no meter: the block fill does the job). */
+export function LaneNote({ feed, live, settings }: { feed: SingFeed; live: boolean; settings: Settings }) {
+  useTick(8, live);
+  if (!live || feed.shown === null) return null;
+  return (
+    <span className="lane-note" aria-hidden="true">
+      <NoteName label={noteLabel(feed.shown, settings)} />
+    </span>
+  );
+}
+
+/**
+ * The phrase strip above the lane: one segment per phrase, the current one underlined lemon (now); after the take
+ * each fills by its score (teal = met, hatched = close, outline = weak). Words, when a song has them, read in their
+ * own direction here, never on the LTR timeline.
+ */
+export function PhraseStrip({ phrases, feed, live, scores, need, label }: { phrases: { i: number; start: number; end: number; words?: string }[]; feed: SingFeed; live: boolean; scores?: number[] | null; need: number; label: (n: number) => string }) {
+  useTick(6, live);
+  const now = live ? feed.now() : -Infinity;
+  const total = phrases.reduce((a, p) => a + Math.max(0.1, p.end - p.start), 0);
+  return (
+    <ol className="phrase-strip" aria-hidden={live ? 'true' : undefined}>
+      {phrases.map((p, k) => {
+        const sc = scores?.[k];
+        const cls = sc === undefined || sc === null ? '' : sc >= need ? ' good' : sc >= need - 0.2 ? ' fair' : ' weak';
+        const on = now >= p.start - 0.1 && now < p.end;
+        return (
+          <li key={p.i} className={`ps${cls}${on ? ' now' : ''}`} style={{ flexGrow: Math.max(0.1, p.end - p.start) / total }}>
+            <span>{p.words ?? (sc !== undefined && sc !== null ? String(p.i + 1) : label(p.i + 1))}</span>
+            {sc !== undefined && sc !== null && <b dir="ltr">{Math.round(sc * 100)}%</b>}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

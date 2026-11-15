@@ -73,18 +73,7 @@ import { moneyNotes, noteDetail, zoneTolerance } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
 
-/** The simulator feeds its take in real time (?sim=1&simrt=1): screenshots and e2e see the live view. */
-const SIM_RT = SIMULATED && typeof location !== 'undefined' && new URLSearchParams(location.search).has('simrt');
-
-/** Push frames at their own pace from `zero` (performance.now() of t = 0); resolves early when aborted. */
-async function paceFrames(frames: SungFrame[], zero: number, signal: AbortSignal, push: (f: SungFrame) => void): Promise<void> {
-  let k = 0;
-  while (k < frames.length && !signal.aborted) {
-    const at = (performance.now() - zero) / 1000;
-    while (k < frames.length && frames[k].t <= at) push(frames[k++]);
-    await new Promise((r) => setTimeout(r, 16));
-  }
-}
+import { paceFrames, SIM_RT } from './simRt';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 

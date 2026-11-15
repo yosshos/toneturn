@@ -2038,8 +2038,8 @@ p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
   .singalong .field-hint {
     margin: 0;
   }
-  .singalong .sing-roll {
-    height: clamp(70px, 15vh, 160px);
+  .singalong .sing-lane {
+    height: clamp(90px, 17vh, 170px);
     margin: 0;
   }
   .singalong .keyboard {

@@ -8,7 +8,11 @@ import { Icon } from './icons';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { piano, SIMULATED, store } from './services';
 import { noteLabel } from './Vocal';
-import { SingRoll } from './SingAlong';
+import { LaneNote, PhraseStrip, SingLane } from './SingLane';
+import { SingFeed } from './singFeed';
+import { paceFrames, SIM_RT } from './simRt';
+import { NoVoiceBanner } from './VoiceCheck';
+import { zoneTolerance } from '../engine/vocalLive';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { BleedGate } from '../engine/bleed';
 import { atRange, type TakeGrade, type VocalItem, type VoiceRange } from '../engine/vocal';
@@ -82,8 +86,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<'ready' | 'count' | 'singing' | 'result' | 'summary'>('ready');
   const [take, setTake] = useState<Take | null>(null);
-  const [frames, setFrames] = useState<SungFrame[]>([]);
-  const [now, setNow] = useState(0);
+  const [, setFrames] = useState<SungFrame[]>([]);
+  const [, setNow] = useState(0);
   const [beatNow, setBeatNow] = useState(-1);
   const [headphones, setHeadphones] = useState(readHp);
   const [guide, setGuide] = useState(false);
@@ -96,6 +100,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   const best = useRef<Record<string, { score: number; take: VocalTake }>>({});
   const ctl = useRef<AbortController | null>(null);
   const stopped = useRef(false);
+  const feed = useMemo(() => new SingFeed(), []);
   const sessionId = useMemo(() => `vocal-${level}-${Date.now().toString(36)}`, [level]);
   const item = items[i];
   const lvDef = vocalLevelByRef(level);
@@ -130,12 +135,15 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     setNow(0);
     setPhase('count');
     setColla(null);
+    feed.reset();
     let tick: ReturnType<typeof setInterval> | undefined;
     const res = await captureTimed({
       item, plan, span, range, tonicPc, settings, headphones, guide, loop, signal: c.signal, stopped, mine: mine?.buffer ?? null,
       onFrames: setFrames,
+      onFrame: (f) => feed.push(f),
       onCue: setColla,
       onClock: (zero, beat) => {
+        feed.zeroWall = zero;
         tick = setInterval(() => {
           const s = (performance.now() - zero) / 1000;
           setNow(s);
@@ -153,6 +161,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     }
     const tk = res.take;
     setFrames(res.frames);
+    feed.load(res.frames);
     setTake(tk);
     setPhase('result');
     piano.cue(tk.grade.unclear ? 'wrong' : tk.grade.score >= lvDef.pass ? 'correct' : 'wrong');
@@ -201,6 +210,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     setLoop(null);
     setTake(null);
     setFrames([]);
+    feed.reset();
     if (i < items.length - 1) {
       setI(i + 1);
       setPhase('ready');
@@ -277,6 +287,8 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
   })();
   const songTitle = plan ? `${L(plan.song.title)}${plan.song.form ? ` · ${L(plan.song.form)}` : ''}` : null;
   const shownNotes = plan && span ? plan.notes.filter((n) => n.bar >= span.from && n.bar <= span.to).map((n) => ({ midi: n.midi, start: n.start - span.from * plan.meter * plan.beat, dur: n.dur, degree: 1 })) : null;
+  const laneTargets = (shownNotes ?? []).map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }));
+  const stripPhrases = plan && span ? plan.phrases.filter((p) => p.fromBar >= span.from && p.toBar <= span.to).map((p) => ({ i: p.i, start: p.start - span.from * plan.meter * plan.beat, end: p.end - span.from * plan.meter * plan.beat })) : [];
   const weak = take?.song ? take.song.phrases.reduce((w, p) => (p.score < w.score ? p : w), take.song.phrases[0]) : null;
   const need = item.song?.need ?? lvDef.pass;
   const busy = phase === 'count' || phase === 'singing';
@@ -300,12 +312,31 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       {item.kind === 'scat' && item.scat && <ChordStrip item={item} tonicPc={tonicPc} beatNow={busy ? beatNow : -1} slots={take?.slots} />}
       {item.song?.read && plan && span && phase !== 'result' ? (
         <ReadSheet plan={plan} span={span} lead={item.song.read === 'lead'} clef={range.low <= 45 ? 'bass' : undefined} lang={lang} />
-      ) : shownNotes && shownNotes.length > 0 && phase === 'result' ? (
-        <div className="roll-compact">
-          <SingRoll notes={shownNotes} frames={frames} now={now} />
-        </div>
       ) : (
-        shownNotes && shownNotes.length > 0 && <SingRoll notes={shownNotes} frames={frames} now={busy || phase === 'result' ? now : 0} />
+        shownNotes &&
+        shownNotes.length > 0 && (
+          <>
+            {plan && span && stripPhrases.length > 1 && (
+              <PhraseStrip phrases={stripPhrases} feed={feed} live={busy} scores={phase === 'result' ? take?.song?.phrases.map((p) => p.score) ?? null : null} need={need} label={(n) => fill(L(VT.phrase), { n })} />
+            )}
+            <div className="sing-lane-wrap">
+              <SingLane
+                feed={feed}
+                targets={laneTargets}
+                mode="song"
+                seconds={0}
+                tol={zoneTolerance(item)}
+                live={busy}
+                settings={settings}
+                beat={plan?.beat}
+                compact={phase === 'result'}
+                label={songTitle ?? title}
+              />
+              <LaneNote feed={feed} live={busy} settings={settings} />
+              <NoVoiceBanner feed={feed} live={phase === 'singing'} from={laneTargets[0]?.start ?? 0} lang={lang} />
+            </div>
+          </>
+        )
       )}
       {phase === 'count' && <p className="vocal-cue vib">{item.time?.call ? L(VT.listenCall) : item.song?.rubato || item.song?.freeUntil !== undefined ? L(VT.rubatoGo) : L(VT.countIn)}</p>}
       {phase === 'singing' && item.time?.call && <p className="vocal-cue">{beatNow >= (item.time.answerAt ?? 8) ? L(VT.yourTurn) : L(VT.listenCall)}</p>}
@@ -324,7 +355,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
                 {L(VT.score)}: <b>{Math.round(take.grade.score * 100)}%</b>
                 {take.loop && <small className="field-hint"> · {L(VT.loopNote)}</small>}
               </div>
-              {take.song && (
+              {take.song && stripPhrases.length <= 1 && (
                 <ol className="vt-phrases" aria-label={L(VT.phrases)}>
                   {take.song.phrases.map((p) => (
                     <li key={p.i} className={p.score >= need ? 'good' : p.score >= need - 0.2 ? 'fair' : 'weak'}>
@@ -377,7 +408,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
         )}
         {busy && (
           <button className="btn mega ghost" onClick={() => ((stopped.current = phase === 'singing'), ctl.current?.abort())}>
-            ■ {L(VT.stop)}
+            <Icon k="stop" /> {L(VT.stop)}
           </button>
         )}
         {phase === 'result' && take && test && (
@@ -462,6 +493,8 @@ export async function captureTimed(a: {
   signal: AbortSignal;
   stopped: { current: boolean };
   onFrames: (f: SungFrame[]) => void;
+  /** Every frame as it arrives (the live lane reads it from a ref feed). */
+  onFrame?: (f: SungFrame) => void;
   onClock: (zeroPerfMs: number, beatSec: number) => void;
   /** F13 L8: the singer's recording (played instead of the band). */
   mine?: AudioBuffer | null;
@@ -720,7 +753,8 @@ export async function captureTimed(a: {
       got = sc.frames;
       rejoin = sc.rejoin;
     } else got = simulate(item, plan, span, range, tonicPc);
-    await new Promise((r) => setTimeout(r, 1200));
+    if (SIM_RT && a.onFrame) await paceFrames(got, zero, signal, a.onFrame);
+    else await new Promise((r) => setTimeout(r, 1200));
   } else {
     let started: () => void = () => {};
     const ready = new Promise<void>((r) => (started = r));
@@ -748,7 +782,7 @@ export async function captureTimed(a: {
         }
         if (tt >= -0.2) buf.push(f);
         if (live && tt >= 0) live(f, buf);
-        if (buf.length % 4 === 0) a.onFrames(buf.slice());
+        if (tt >= -0.2) a.onFrame?.(f);
       },
     });
     await ready;

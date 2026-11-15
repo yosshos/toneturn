@@ -187,7 +187,14 @@ export function centreLine(pts: { t: number; m: number | null }[], win = 0.3): {
     if (p.m === null) {
       if (run.length) flush();
       out.push({ t: p.t, m: null });
-    } else run.push({ t: p.t, m: p.m });
+    } else {
+      // a new note (a jump of more than ~half a semitone) starts its own centre line
+      if (run.length && Math.abs(p.m - run[run.length - 1].m) > 0.6) {
+        flush();
+        out.push({ t: p.t, m: null });
+      }
+      run.push({ t: p.t, m: p.m });
+    }
   }
   if (run.length) flush();
   return out;
