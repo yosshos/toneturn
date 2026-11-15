@@ -8,7 +8,7 @@ test.use({ viewport: { width: 320, height: 720 }, hasTouch: true, ...(process.en
 type Plays = 'keys' | 'guitar' | 'bass' | 'drums';
 const SHOTS = !!process.env.SHOTS;
 const shot = async (page: Page, name: string) => {
-  if (SHOTS) await page.screenshot({ path: `docs/ui-shots-v3/${name}.png` });
+  if (SHOTS) await page.screenshot({ path: `docs/ui-shots-v3/${process.env.SHOTS_PREFIX ?? ''}${name}.png` });
 };
 
 export const seed = async (page: Page, lang: 'en' | 'he', plays: Plays, extra: Record<string, unknown> = {}) => {
@@ -76,3 +76,120 @@ for (const lang of ['en', 'he'] as const) {
     await shot(page, `jazz-reharm-panel-${lang}-after`);
   });
 }
+
+const openLevel = async (page: Page, lang: 'en' | 'he', family: string, level: string) => {
+  await openFamily(page, lang, family);
+  const card = page.locator(`[data-level="${level}"]`);
+  await card.scrollIntoViewIfNeeded();
+  if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
+  await page.locator(`[data-level-start="${level}"]`).click();
+  await page.locator('[data-brief-play]').click({ timeout: 3000 }).catch(() => {});
+  await expect(page.locator('[data-drills="run"]')).toBeVisible();
+};
+/** Play a take with the dev-only synthesized input (fakeTake.ts): the real analysis, no audio. */
+const fakeTakeRun = async (page: Page, pattern: 'clean' | 'mixed' | 'weak') => {
+  await page.evaluate((p) => ((window as unknown as { __fakeTake?: string }).__fakeTake = p), pattern);
+  // the Play button reads the flag when it renders: re-render by toggling nothing — wait one frame
+  await page.waitForTimeout(50);
+  const speaker = page.locator('[data-drums-choice="speaker"]');
+  if (await speaker.isVisible().catch(() => false)) await speaker.click();
+  await page.locator('[data-drill-play]').click();
+  await expect(page.locator('.drill-result')).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(700);
+};
+const RUNS: [Plays, string, string][] = [
+  ['keys', 'scales', 'scales-1'],
+  ['guitar', 'g-scales', 'g-scales-1'],
+  ['drums', 'd-rock', 'd-rock-1'],
+];
+const overflow = (page: Page) =>
+  page.evaluate(() => {
+    const banner = document.querySelector('.sim-banner') as HTMLElement | null;
+    if (banner) banner.style.display = 'none';
+    return { tall: document.scrollingElement!.scrollHeight - innerHeight, wide: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+  });
+
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of RUNS)
+    test(`marks after a take: two signals per note, v2 colours (${plays}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+      await seed(page, lang, plays);
+      await openLevel(page, lang, family, level);
+      await page.waitForTimeout(600);
+      // the score is drawn (VexFlow staff / tab with heads, or the drum SVG), not an empty box
+      const drawn = await page.evaluate(() => {
+        const svg = document.querySelector('.drill-staff svg, .drum-score svg, svg.drum-lanes') as SVGSVGElement | null;
+        const r = svg?.getBoundingClientRect();
+        return { w: r?.width ?? 0, h: r?.height ?? 0, heads: document.querySelectorAll('.drill-staff .vf-notehead, .drill-staff .vf-tabnote, .dn-head, .dn-x, .dl-hit').length };
+      });
+      expect(drawn.heads).toBeGreaterThan(0);
+      expect(drawn.w).toBeLessThanOrEqual(320);
+      expect(drawn.h).toBeGreaterThan(30);
+      await shot(page, `${plays}-run-before-${lang}`);
+      await fakeTakeRun(page, 'mixed');
+      // the marks are drawn (staff / tab layer or the drum SVG classes), never in green
+      const r = await page.evaluate(() => {
+        const marks = document.querySelectorAll('.mk-layer .mk, .dn.ok, .dn.early, .dn.late, .dn.wrong, .dn.missed, .dl-hit.ok, .dl-hit.wrong').length;
+        const green = [...document.querySelectorAll('.drills-screen *')].some((e) => /rgb\((31, 143, 103|60, 207, 151|76, 208, 125)\)/.test(getComputedStyle(e).color + getComputedStyle(e).fill + getComputedStyle(e).backgroundColor));
+        return { marks, green };
+      });
+      expect(r.marks).toBeGreaterThan(0);
+      expect(r.green).toBe(false);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await shot(page, `${plays}-run-after-${lang}`);
+      void overflow;
+    });
+
+type MidiWin = Window & { __keys: { name: string; onmidimessage: null | ((e: { data: Uint8Array; timeStamp: number }) => void) } };
+/** A stub MIDI keyboard on Web MIDI (Chrome). */
+const stubMidi = (page: Page) =>
+  page.addInitScript(() => {
+    const input = { name: 'Test Keys', onmidimessage: null };
+    (window as unknown as MidiWin).__keys = input;
+    Object.defineProperty(navigator, 'requestMIDIAccess', { value: async () => ({ inputs: new Map([['1', input]]), outputs: new Map(), onstatechange: null }) });
+  });
+/** Latin letters in visible text outside <bdi> / SVG (allowed: MIDI, note and chord names, ♩, numbers). */
+const latinLeft = (page: Page) =>
+  page.evaluate(() => {
+    const out: string[] = [];
+    const root = document.querySelector('main') ?? document.body;
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const allow = /\b(MIDI|BPM|USB|[A-G](?:[♭♯#b])?(?:maj|min|m|dim|aug|sus|ø|°|add)?\d*(?:[♭♯#b]\d+)*)\b/g;
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const el = n.parentElement;
+      if (!el || el.closest('bdi, svg, [aria-hidden="true"], .sim-banner, script, style')) continue;
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || !el.getClientRects().length) continue;
+      const t = (n.textContent ?? '').replace(allow, '');
+      if (/[A-Za-z]/.test(t)) out.push((n.textContent ?? '').trim());
+    }
+    return out;
+  });
+
+test('Hebrew drill screen with MIDI: the staff has note heads, the device has a Hebrew label, no English left', async ({ page }) => {
+  await stubMidi(page);
+  await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+  await seed(page, 'he', 'keys');
+  await page.goto('/?unlock#/settings');
+  await page.evaluate(async () => {
+    const path = '/src/speech/midi.ts';
+    const { midi } = await import(/* @vite-ignore */ path);
+    await midi.enable();
+  });
+  await page.evaluate(() => (location.hash = '#/drills'));
+  await page.locator('[data-topic="all"]').click();
+  await page.locator('[data-family="scales"]').click();
+  const card = page.locator('[data-level="scales-1"]');
+  if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
+  await page.locator('[data-level-start="scales-1"]').click();
+  await page.locator('[data-brief-play]').click({ timeout: 3000 }).catch(() => {});
+  await expect(page.locator('[data-drills="run"]')).toBeVisible();
+  await expect(page.locator('.drill-staff .vf-stavenote').first()).toBeVisible();
+  const box = await page.locator('.drill-staff svg').first().boundingBox();
+  expect(box!.height).toBeGreaterThan(30);
+  expect(box!.width).toBeLessThanOrEqual(320);
+  await expect(page.locator('.input-check .ic-dev')).toContainText('מקלדת:');
+  await expect(page.locator('.input-check .ic-dev bdi')).toHaveText('Test Keys');
+  expect(await latinLeft(page)).toEqual([]);
+  await shot(page, 'keys-midi-ready-he');
+});

@@ -30,8 +30,8 @@
   font-size: 0.8rem;
 }
 .gd-tools .btn.on {
-  border-color: var(--mint);
-  color: var(--mint);
+  border-color: var(--ok);
+  color: var(--ink);
 }
 .gd-grid {
   display: grid;
@@ -61,16 +61,16 @@
   min-height: 34px;
 }
 .gd-cell.cur {
-  border-color: var(--mint);
-  box-shadow: 0 0 0 1px var(--mint) inset;
+  border-color: var(--ok);
+  box-shadow: 0 0 0 1px var(--ok) inset;
 }
 .gd-cell.locked,
 .gd-cell.right {
-  border-color: color-mix(in srgb, var(--mint) 55%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 55%, transparent);
 }
 .gd-cell.wrong,
 .gd-cell.fix {
-  border-color: color-mix(in srgb, var(--coral) 70%, transparent);
+  border-color: color-mix(in srgb, var(--bad) 70%, transparent);
 }
 .gd-n {
   position: absolute;
@@ -90,7 +90,7 @@
   font-size: 0.6rem;
   font-style: normal;
   font-weight: 800;
-  color: var(--gold);
+  color: var(--ink);
   line-height: 1;
 }
 .gd-sym {
@@ -114,10 +114,10 @@
   font-size: 0.92em;
 }
 .gd-p.ok {
-  color: var(--mint);
+  color: var(--ink);
 }
 .gd-p.bad {
-  color: var(--coral);
+  color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -165,9 +165,9 @@
   white-space: nowrap;
 }
 .gd-chip.on {
-  background: var(--mint);
-  border-color: var(--mint);
-  color: #10122a;
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--ink-c);
 }
 .gd-chip:disabled {
   cursor: default;

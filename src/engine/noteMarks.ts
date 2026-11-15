@@ -1,16 +1,41 @@
-// Per-note result marks on the staff (after an answer or a drill take): right, timing off, wrong, missed. Pure.
+// Per-note result marks on the staff (after an answer or a drill take). Pure.
+// COURSE-FEEDBACK-UI §4.1: two signals per note — the head carries pitch (right / wrong / missed), a tick beside it
+// carries timing (early on the left, late on the right). "Off time" is split into early and late, with the offset.
 
 import type { Question } from './lesson';
-import type { NoteResult } from './drills/types';
+import type { NoteResult, TakeMetrics } from './drills/types';
 
-export type NoteMark = 'ok' | 'timing' | 'wrong' | 'missed' | undefined;
+export type NoteMark = 'ok' | 'early' | 'late' | 'wrong' | 'missed' | 'extra' | undefined;
 
-/** A drill note's mark: missed / wrong red, right but off time (beyond timingMs) amber, right green. */
+/** Worst first: a chord (or a bar) shows the worst mark of its notes. */
+export const MARK_ORDER: Exclude<NoteMark, undefined>[] = ['missed', 'wrong', 'extra', 'late', 'early', 'ok'];
+/** The worst of some marks (undefined when none). */
+export const worstMark = (ms: NoteMark[]): NoteMark => MARK_ORDER.find((w) => ms.includes(w));
+
+/** A drill note's mark: missed, wrong pitch, right but early / late beyond `timingMs`, or right. */
 export function markOf(r: NoteResult | undefined, timingMs: number): NoteMark {
   if (!r) return undefined;
   if (!r.played) return 'missed';
   if (!r.ok) return 'wrong';
-  return r.dev !== null && Math.abs(r.dev) > timingMs ? 'timing' : 'ok';
+  if (r.dev !== null && Math.abs(r.dev) > timingMs) return r.dev < 0 ? 'early' : 'late';
+  return 'ok';
+}
+
+/** Length (px) of the timing tick: 4 at the window's edge, growing to 12 at twice the window. */
+export function tickLen(dev: number, win: number): number {
+  const w = Math.max(1, win);
+  const over = Math.max(0, Math.min(1, (Math.abs(dev) - w) / w));
+  return 4 + 8 * over;
+}
+
+/** Counts of each mark over a take — the same numbers the review shows (no "all green but 83 %"). */
+export function markCounts(m: Pick<TakeMetrics, 'perNote'>, timingMs: number): Record<Exclude<NoteMark, undefined>, number> {
+  const out = { ok: 0, early: 0, late: 0, wrong: 0, missed: 0, extra: 0 };
+  for (const r of m.perNote) {
+    const k = markOf(r, timingMs);
+    if (k) out[k]++;
+  }
+  return out;
 }
 
 /** Note-by-note marks for a sequence answer (degrees / names): which notes of the melody were right. */

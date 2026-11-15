@@ -7,7 +7,7 @@ import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine
 import { analyzeTake, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
 import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
-import { markOf } from '../engine/noteMarks';
+import { markOf, worstMark } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
 import { analyzePedal, pedalDown, type PedalEvent } from '../engine/drills/pedal';
@@ -31,6 +31,7 @@ import { withSplash, type CcSample } from '../engine/drills/drumSplash';
 import { kitKind, openness, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
 import { acousticHits, acousticOk, acousticOnsets, drillAcousticVoices } from '../engine/drumAcoustic';
 import type { NoteEvent } from '../engine/lesson';
+import { fakeTake, fakeTakeOn } from './fakeTake';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -43,7 +44,6 @@ const keyName = (sig: string) => (sig === 'C' ? null : { letter: sig[0] as 'C', 
 /** Staff(s) for a drill: treble for RH, bass for LH (both when hands together). Long drills show the first 2 bars per line. */
 const noteKey = (n: ExpNote) => `${n.hand}:${n.beat}:${n.pitch}`;
 const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
-const WORSE: NoteMark[] = ['missed', 'wrong', 'timing', 'ok'];
 
 const TECH_SYM: Partial<Record<NonNullable<ExpNote['technique']>, string>> = { hammer: 'h', pull: 'p', slide: '/', bend: 'b', prebend: 'pb', release: 'r', vibrato: '~', tap: 'T', harmonic: 'harm', mute: 'PM', dead: 'X', 'strum-down': '↓', 'strum-up': '↑', 'rest-stroke': 'apoy.', rasgueado: 'rasg.' };
 const STROKE_SYM: Record<string, string> = { D: '⊓', U: 'V', p: 'p', i: 'i', m: 'm', a: 'a', c: 'c' };
@@ -90,7 +90,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
   const timingMs = result ? thresholds(tempoBand(result.nps)).sd * 2 : 0;
-  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; at: number; top?: string; bottom?: string; mark?: NoteMark }[] = [];
+  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; at: number; top?: string; bottom?: string; mark?: NoteMark; dev?: number | null }[] = [];
   const seen = new Set<number>();
   const k = qOf(drill);
   for (const n of ns) {
@@ -104,7 +104,10 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
     const tech = n.technique && TECH_SYM[n.technique] ? TECH_SYM[n.technique]! + (n.bendCents && n.technique !== 'vibrato' ? (n.bendCents >= 200 ? ' full' : ' ½') : '') : undefined;
     const bottom = picking ? (n.stroke ? STROKE_SYM[n.stroke] : undefined) : fingering && n.finger ? String(n.finger) : undefined;
     const ms = result ? group.map((x) => markOf(byKey.get(noteKey(x)), timingMs)) : [];
-    cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark: result ? WORSE.find((w) => ms.includes(w)) : undefined });
+    const mark = result ? worstMark(ms) : undefined;
+    // The tick of the note that set the mark (early / late), its offset in ms.
+    const dev = mark === 'early' || mark === 'late' ? (byKey.get(noteKey(group[ms.indexOf(mark)]))?.dev ?? null) : null;
+    cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark, dev });
   }
   const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : isBassDrill(drill) ? 4 : 6;
   // B2 (0.64): the whole drill, two bars a line (bar lines where the music has them), in a window that follows the beat.
@@ -129,6 +132,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
             now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
             cols={l.map(({ mark: _m, at: _a, ...c }) => c)}
             marks={result ? l.map((c) => c.mark) : undefined}
+            win={timingMs}
             strings={strings}
             {...(sl?.[from + i] ? { bars: sl[from + i].bars.map((b, j) => ({ len: b.len, sig: b.sig ?? (from + i === 0 && j === 0 ? b.cur : undefined) })), at: l.map((c) => c.at * k - sl[from + i].from) } : {})}
           />
@@ -250,7 +254,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
     if (!result) return undefined;
     const group = n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId);
     const ms = group.map((x) => markOf(byKey.get(noteKey(x)), timingMs));
-    return WORSE.find((w) => ms.includes(w));
+    return worstMark(ms);
   };
   const lh = drill.notes.filter((n) => n.hand === 'L');
   // A long item (a whole head, AUDIT-DEPTH-3): two lines at a time with a pager, like the bass (one phone screen).
@@ -261,8 +265,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   const playedLabel = (n: ExpNote): string => {
     const r = byKey.get(noteKey(n));
     if (!r) return '';
-    if (r.played && r.played.pitch !== n.pitch) return `✕ ${NAMES[((r.played.pitch % 12) + 12) % 12]}${Math.floor(r.played.pitch / 12) - 1}`;
-    if (!r.played) return '○';
+    // The ✕ and the ghost head are drawn on the staff; the label names the note really played.
+    if (r.played && r.played.pitch !== n.pitch) return `${NAMES[((r.played.pitch % 12) + 12) % 12]}${Math.floor(r.played.pitch / 12) - 1}`;
+    if (!r.played) return '';
     if (r.dev !== null && Math.abs(r.dev) > timingMs) return `${r.dev > 0 ? '+' : '−'}${Math.round(Math.abs(r.dev))}`;
     return '';
   };
@@ -291,6 +296,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       const fing = fingering && xs.some((n) => n.finger);
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
+      const devs = result ? xs.map((n) => byKey.get(noteKey(n))?.dev ?? null) : undefined;
+      const ghosts = result ? xs.map((n) => { const p = byKey.get(noteKey(n))?.played; return p && p.pitch !== n.pitch ? p.pitch + shift : null; }) : undefined;
       // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
       // `at`: where the item really starts (quarter notes). The written value is rounded to a standard one (a triplet is
       // drawn as an eighth), so the now-cue follows `at`, never a sum of written values (it drifted off the notes).
@@ -333,6 +340,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
           durs={items.map((x) => x.dur)}
           labels={labels ? items.map((x) => (x.n ? labels[idx(x.n)] : '')) : undefined}
           marks={marks ? items.map((x) => (x.n ? marks[idx(x.n)] : undefined)) : undefined}
+          devs={devs ? items.map((x) => (x.n ? devs[idx(x.n)] : null)) : undefined}
+          ghosts={ghosts ? items.map((x) => (x.n ? ghosts[idx(x.n)] : null)) : undefined}
+          win={timingMs}
           meter={meter}
           timeSig={li === 0 || (windowed && li === win.from) || !!sl?.[li].bars[0].sig}
           sig={sl ? sl[li].bars[0].cur : sig}
@@ -364,15 +374,29 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   );
 }
 
-/** The colour key under a marked staff (shape + word, never colour-only). */
-export function MarkLegend({ lang }: { lang: Lang }) {
-  const L = lang === 'he' ? { ok: 'נכון', timing: '~ לא בזמן', wrong: '✕ שגוי', missed: '○ חסר' } : { ok: 'Right', timing: '~ Off time', wrong: '✕ Wrong', missed: '○ Missed' };
+/** One mark as a small picture (the same shapes the staff draws): a head, and the tick for early / late. */
+function MarkIcon({ k }: { k: 'ok' | 'early' | 'late' | 'wrong' | 'missed' }) {
   return (
-    <p className="mark-legend">
-      <span className="mk ok">● {L.ok}</span>
-      <span className="mk timing">● {L.timing}</span>
-      <span className="mk wrong">● {L.wrong}</span>
-      <span className="mk missed">● {L.missed}</span>
+    <svg className={`mk-icon mk ${k}`} viewBox="0 0 30 14" aria-hidden="true" style={{ direction: 'ltr' }}>
+      <ellipse cx={15} cy={7} rx={5.4} ry={4} transform="rotate(-20 15 7)" className="mk-head" />
+      {k === 'early' && <rect x={2} y={5.3} width={6} height={3.4} rx={1.1} className="mk-tick early" />}
+      {k === 'late' && <rect x={22} y={5.3} width={6} height={3.4} rx={1.1} className="mk-tick late" />}
+      {k === 'wrong' && <path d="M11.5 3.5l7 7M18.5 3.5l-7 7" className="mk-x" />}
+    </svg>
+  );
+}
+
+/** The key to the marks (shape + word in ink, never colour-only text; the shapes are LTR like the music). */
+export function MarkLegend({ lang }: { lang: Lang }) {
+  const L = lang === 'he' ? { ok: 'נכון', early: 'מוקדם', late: 'מאוחר', wrong: 'צליל שגוי', missed: 'חסר' } : { ok: 'Right', early: 'Early', late: 'Late', wrong: 'Wrong note', missed: 'Missed' };
+  return (
+    <p className="mark-legend" data-mark-legend="1">
+      {(['ok', 'early', 'late', 'wrong', 'missed'] as const).map((k) => (
+        <span key={k} className="ml-item">
+          <MarkIcon k={k} />
+          {L[k]}
+        </span>
+      ))}
     </p>
   );
 }
@@ -504,6 +528,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   }, []);
   if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
+    // DEV ONLY (e2e / screenshots): a synthesized take through the real analysis, no audio.
+    const fake = fakeTakeOn();
+    if (fake) {
+      const f = fakeTake(drill, bpm, cal, fake);
+      return onDone(f.m, f.played);
+    }
     await piano.unlock();
     const abort = new AbortController();
     ac.current = abort;
@@ -802,7 +832,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             </p>
           )}
           {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
-          <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked || pianoBlocked}>
+          <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
             ▶ {tx.play}
           </button>
         </>

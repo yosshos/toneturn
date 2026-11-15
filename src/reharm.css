@@ -12,7 +12,7 @@
   padding-inline: 6px;
 }
 .rh-listen .btn.on {
-  outline: 2px solid var(--mint);
+  outline: 2px solid var(--ok);
 }
 .rh-status {
   margin: 0;
@@ -37,10 +37,10 @@
   cursor: pointer;
 }
 .rh-bar.on {
-  outline: 3px solid var(--gold);
+  outline: 3px solid var(--accent);
 }
 .rh-bar.ok {
-  outline: 3px solid var(--mint);
+  outline: 3px solid var(--ok);
 }
 .rh-bar.bad {
   outline: 3px solid var(--red);

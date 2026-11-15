@@ -200,7 +200,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
     setAgainTake(false);
     setTake((t) => t + 1);
   };
-  const marks: NoteMark[] | undefined = play ? play.notes.map((n) => (n.verdict === 'ok' ? 'ok' : n.verdict === 'missing' ? 'missed' : n.verdict === 'pitch' ? 'wrong' : 'timing')) : undefined;
+  const marks: NoteMark[] | undefined = play ? play.notes.map((n) => (n.verdict === 'ok' ? 'ok' : n.verdict === 'missing' ? 'missed' : n.verdict === 'pitch' ? 'wrong' : n.verdict === 'early' ? 'early' : 'late')) : undefined;
   const clef = inst === 'bass' || Math.max(...phrase.notes.map((n) => n.midi)) < 58 ? 'bass' : 'treble';
   const showNotes = revealed || !!play || !!grade;
   const book: LickBook = settings.lickBook ?? {};

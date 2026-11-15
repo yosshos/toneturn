@@ -37,6 +37,8 @@ const TX = {
     test: 'Test the mic',
     hit: 'Hit',
     noDevice: 'No MIDI device',
+    keys: 'Keys:',
+    pads: 'Pads:',
     mic: 'Microphone',
     hints: {
       permission: 'Allow the microphone (the icon in the address bar).',
@@ -60,6 +62,8 @@ const TX = {
     test: 'לבדוק מיקרופון',
     hit: 'מכה',
     noDevice: 'אין התקן MIDI',
+    keys: 'מקלדת:',
+    pads: 'תופים:',
     mic: 'מיקרופון',
     hints: {
       permission: 'אשרו את המיקרופון (הסמל בשורת הכתובת).',
@@ -327,7 +331,15 @@ function MidiStrip({ mode, lang, className, noteName }: { mode: InputCheckMode; 
     <div className={`input-check midi ${className}`} data-input-check={mode} data-ic-state={state} data-ic-notes={m.blink} role="status" aria-live="polite">
       <Led n={m.blink} />
       <span className="ic-dev">
-        <bdi>{m.devices.length ? m.devices.join(', ') : tx.noDevice}</bdi>
+        {/* Owner: a raw device name read as an untranslated string — a localized label before it, the name isolated. */}
+        {m.devices.length ? (
+          <>
+            {drums ? tx.pads : tx.keys}{' '}
+            <bdi dir="ltr">{m.devices.join(', ')}</bdi>
+          </>
+        ) : (
+          tx.noDevice
+        )}
       </span>
       <span className="ic-line">
         {gotIt && m.last ? (

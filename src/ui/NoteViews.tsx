@@ -84,6 +84,10 @@ function useSvg(draw: (VF: VF, el: HTMLDivElement) => void | number[], deps: unk
           svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
           svg.setAttribute('width', '100%');
           svg.removeAttribute('height');
+          // VexFlow's resize() also writes an inline pixel size (style="width: 750px; height: 120px"): it beat the
+          // 100 % width, so a long staff overflowed its card and showed as an empty box (COURSE-FEEDBACK-UI S4).
+          svg.style.removeProperty('width');
+          svg.style.removeProperty('height');
           svg.setAttribute('aria-hidden', 'true');
         }
       })
@@ -133,14 +137,10 @@ export const headX = (x: any): number => {
 import type { NoteMark } from '../engine/noteMarks';
 import { glidePos, nowX } from '../engine/playhead';
 export type { NoteMark };
-const MARK_RG: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
-/** Colour-blind friendly marks (Settings → Display): blue for right, orange for wrong (symbols stay). */
-const MARK_CVD: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f6fd1', timing: '#8a6a00', wrong: '#d1620f', missed: '#d1620f' };
-const MARK_COLOR = new Proxy(MARK_RG, { get: (o, k: string) => (typeof document !== 'undefined' && document.documentElement.dataset.cvd === 'on' ? MARK_CVD : o)[k as keyof typeof o] });
-/** Symbols under marked notes so the result is never colour-only. */
-const MARK_SYM: Record<Exclude<NoteMark, undefined>, string> = { ok: '', timing: '~', wrong: '✕', missed: '○' };
+import { drawMarks, type MarkSpot } from './markLayer';
+/** A ghost head's key: the note really played, spelled in the staff's key. */
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now }: { /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts }: { /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
@@ -162,11 +162,9 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
             const rest = !!rests?.[i];
             const s = new VF.StaveNote({ keys: [rest ? (clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4') : vfKey(m, keyPc)], duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8') + (rest ? 'r' : ''), clef });
             if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
-            const mk = marks?.[i];
-            // a given label (what was played, a finger) wins over the bare mark symbol
-            const lab = labels?.[i] || (mk && MARK_SYM[mk] ? MARK_SYM[mk] : '');
+            // a given label (what was played, a finger, ms off the click) under the note; the mark itself is drawn over it
+            const lab = labels?.[i];
             if (lab) s.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
-            if (mk) s.setStyle({ fillStyle: MARK_COLOR[mk], strokeStyle: MARK_COLOR[mk] });
             return s;
           });
       const voice = new VF.Voice({ num_beats: chord ? 4 : durs ? Math.ceil(durs.reduce((a, b) => a + b, 0)) : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
@@ -198,9 +196,39 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
       if (!chord && ties) ties.forEach((t, i) => t && sn[i + 1] && new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: [0], last_indices: [0] }).setContext(ctx).draw());
+      // COURSE-FEEDBACK-UI §4.1: the result marks over the heads (pitch on the head, timing as a tick beside it).
+      if (!chord && marks?.some(Boolean)) {
+        const spots: MarkSpot[] = [];
+        sn.forEach((x, i) => {
+          const mk = marks[i];
+          if (!mk || rests?.[i]) return;
+          let hw = 5.6;
+          let cx = headX(x);
+          try {
+            hw = Math.max(4, (x.getNoteHeadEndX() - x.getNoteHeadBeginX()) / 2);
+            cx = (x.getNoteHeadEndX() + x.getNoteHeadBeginX()) / 2;
+          } catch {
+            /* not formatted */
+          }
+          const y = x.getYs()[0];
+          const g = ghosts?.[i];
+          let ghostY: number | undefined;
+          if (mk === 'wrong' && g !== null && g !== undefined) {
+            try {
+              const gn = new VF.StaveNote({ keys: [vfKey(g, keyPc)], duration: 'q', clef });
+              gn.setStave(stave);
+              ghostY = gn.getYs()[0];
+            } catch {
+              /* unknown key */
+            }
+          }
+          spots.push({ mark: mk, x: cx, y, hw, dev: devs?.[i] ?? null, win, ghostY });
+        });
+        drawMarks(el.querySelector('svg'), spots, 'staff');
+      }
       return [...sn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
+    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
   return (
     <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
@@ -255,7 +283,7 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at, now }: { /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40 }: { /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const width = Math.max(220, 60 + cols.length * 40);
@@ -275,10 +303,7 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now }: { /** The d
         const firstOfBar = !!ends && (i === 0 || barOf(i) !== barOf(i - 1));
         const sig = firstOfBar ? bars![barOf(i)]?.sig : undefined;
         if (sig || c.top) n.addModifier(new VF.Annotation([sig, c.top].filter(Boolean).join(' ')).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
-        const mk = marks?.[i];
-        const lab = mk && MARK_SYM[mk] ? MARK_SYM[mk] : c.bottom;
-        if (lab) n.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
-        if (mk) n.setStyle({ fillStyle: MARK_COLOR[mk], strokeStyle: MARK_COLOR[mk] });
+        if (c.bottom) n.addModifier(new VF.Annotation(c.bottom).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
         return n;
       });
       const voice = new VF.Voice({ num_beats: Math.max(1, Math.ceil(cols.reduce((a, c) => a + c.dur, 0))), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
@@ -292,9 +317,23 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now }: { /** The d
       } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
+      // COURSE-FEEDBACK-UI §4.1: each marked digit on a chip (teal right, pink wrong, dashed missed) + the timing tick.
+      if (marks?.some(Boolean)) {
+        const spots: MarkSpot[] = [];
+        tn.forEach((x, i) => {
+          const mk = marks[i];
+          if (!mk) return;
+          const cx = headX(x);
+          for (const p of cols[i].pos) {
+            const text = String(p.fret === 'x' ? 'X' : p.fret);
+            spots.push({ mark: mk, x: cx, y: stave.getYForLine(p.str - 1), hw: 3.4 * text.length + 3, dev: cols[i].dev ?? null, win, text });
+          }
+        });
+        drawMarks(el.querySelector('svg'), spots, 'tab');
+      }
       return [...tn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [JSON.stringify(cols), (marks ?? []).join(','), strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
+    [JSON.stringify(cols), (marks ?? []).join(','), win, strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );
   return (
     <div className="guitar-tab" role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>

@@ -3,11 +3,11 @@
    physical (dir="ltr") on purpose. */
 
 .g3 {
-  --g3-lane-0: var(--hue-pitch, #7c8cff);
-  --g3-lane-1: var(--hue-time, #ff8a5c);
-  --g3-lane-2: var(--hue-memory, #5ce1e6);
-  --g3-lane-3: var(--hue-voice, #ff6fb1);
-  --g3-lane-4: var(--hue-reading, #ffd15c);
+  --g3-lane-0: var(--hue-pitch, var(--purple));
+  --g3-lane-1: var(--hue-time, var(--tangerine));
+  --g3-lane-2: var(--hue-memory);
+  --g3-lane-3: var(--hue-voice);
+  --g3-lane-4: var(--hue-reading);
   min-width: 0;
 }
 
@@ -40,8 +40,8 @@
   color: var(--ink-dim);
 }
 .g3-chip.on {
-  border-color: var(--mint);
-  background: color-mix(in srgb, var(--mint) 16%, var(--card));
+  border-color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 16%, var(--card));
 }
 .g3-chip.wide {
   flex-direction: row;
@@ -61,7 +61,7 @@
   text-align: center;
 }
 .field-hint.warn {
-  color: var(--gold);
+  color: var(--ink);
 }
 
 /* ---------- Rhythm Highway ---------- */
@@ -98,7 +98,7 @@
   font-size: 1.3rem;
 }
 .hw-stat.combo b {
-  color: var(--gold);
+  color: var(--ink);
 }
 
 .hw-road {
@@ -109,7 +109,7 @@
   height: 56vh;
   overflow: hidden;
   border-radius: 22px;
-  background: linear-gradient(180deg, var(--bg) 0%, var(--card) 70%, var(--card-2) 100%);
+  background: var(--card);
   border: 2px solid var(--line);
   display: grid;
   grid-template-columns: repeat(var(--lanes, 1), 1fr);
@@ -148,22 +148,22 @@
   transform: translateY(50%);
   border-radius: 10px;
   background: var(--g3-lane-0);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-0) 60%, transparent), inset 0 -3px 0 rgb(0 0 0 / 0.25);
+  box-shadow: none;
 }
 .hw-road { --lanes: 1; }
 .hw-road.lanes-3 { --lanes: 3; }
 .hw-road.lanes-4 { --lanes: 4; }
 .hw-road.lanes-5 { --lanes: 5; }
-.hw-note.lane-1 { background: var(--g3-lane-1); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-1) 60%, transparent); }
-.hw-note.lane-2 { background: var(--g3-lane-2); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-2) 60%, transparent); }
-.hw-note.lane-3 { background: var(--g3-lane-3); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-3) 60%, transparent); }
-.hw-note.lane-4 { background: var(--g3-lane-4); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-4) 60%, transparent); }
+.hw-note.lane-1 { background: var(--g3-lane-1); box-shadow: none; }
+.hw-note.lane-2 { background: var(--g3-lane-2); box-shadow: none; }
+.hw-note.lane-3 { background: var(--g3-lane-3); box-shadow: none; }
+.hw-note.lane-4 { background: var(--g3-lane-4); box-shadow: none; }
 .hw-road.lanes-1 .hw-note,
 .hw-road:not(.lanes-3):not(.lanes-4):not(.lanes-5) .hw-note {
   left: 22%;
   width: 56%;
-  background: var(--mint);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--mint) 55%, transparent);
+  background: var(--ok);
+  box-shadow: none;
 }
 .hw-note.is-perfect,
 .hw-note.is-good {
@@ -181,8 +181,8 @@
   bottom: 16%;
   height: 4px;
   margin-bottom: -2px;
-  background: var(--mint);
-  box-shadow: 0 0 16px var(--mint);
+  background: var(--ok);
+  box-shadow: none;
   pointer-events: none;
 }
 .hw-flash {
@@ -195,10 +195,10 @@
   pointer-events: none;
   animation: hw-pop 0.5s ease-out both;
 }
-.hw-flash.perfect { color: var(--gold); }
-.hw-flash.good { color: var(--mint); }
+.hw-flash.perfect { color: var(--ink); }
+.hw-flash.good { color: var(--ink); }
 .hw-flash.miss,
-.hw-flash.wrong { color: var(--coral); }
+.hw-flash.wrong { color: var(--ink); }
 @keyframes hw-pop {
   0% { opacity: 0; transform: scale(0.7); }
   25% { opacity: 1; transform: scale(1.1); }
@@ -263,9 +263,9 @@
   border: 1px solid var(--line);
   font-size: 0.9rem;
 }
-.g3-stats li.perfect { border-color: var(--gold); }
-.g3-stats li.good { border-color: var(--mint); }
-.g3-stats li.miss { border-color: var(--coral); }
+.g3-stats li.perfect { border-color: var(--accent); }
+.g3-stats li.good { border-color: var(--ok); }
+.g3-stats li.miss { border-color: var(--bad); }
 
 /* Calm variant (reduced motion): no shake, no pop, no glow pulse. */
 .hw-play.calm .hw-road,
@@ -344,19 +344,19 @@
 }
 .mp-slot.filled {
   border-style: solid;
-  border-color: var(--hue-pitch, #7c8cff);
+  border-color: var(--hue-pitch, var(--purple));
   background: var(--card-2);
 }
 .mp-slot.active {
-  border-color: var(--mint);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 35%, transparent);
+  border-color: var(--ok);
+  box-shadow: 0 0 0 2px var(--outline);
 }
 .mp-slot.wrong {
-  border-color: var(--coral);
-  background: color-mix(in srgb, var(--coral) 18%, var(--card));
+  border-color: var(--bad);
+  background: color-mix(in srgb, var(--bad) 18%, var(--card));
 }
 .mp-slot.right {
-  border-color: var(--mint);
+  border-color: var(--ok);
 }
 .mp-slot:disabled {
   cursor: default;
@@ -384,8 +384,8 @@
   padding: 0 10px;
   border-radius: 14px;
   border: 0;
-  background: var(--hue-pitch, #7c8cff);
-  color: #0f1020;
+  background: var(--hue-pitch, var(--purple));
+  color: var(--ink-c);
   box-shadow: 0 5px 0 rgb(0 0 0 / 0.35);
   cursor: grab;
   touch-action: none;
@@ -466,13 +466,13 @@
   cursor: pointer;
 }
 .bingo-cell.on {
-  background: color-mix(in srgb, var(--gold) 28%, var(--card));
-  border-color: var(--gold);
+  background: color-mix(in srgb, var(--accent) 28%, var(--card));
+  border-color: var(--accent);
 }
 .bingo-cell.win {
-  background: var(--mint);
-  border-color: var(--mint-deep, #1f8f67);
-  color: #0f1020;
+  background: var(--ok);
+  border-color: var(--outline);
+  color: var(--ink-c);
 }
 .bingo-cell:disabled {
   cursor: default;
@@ -486,11 +486,11 @@
   margin: 0;
   font-weight: 700;
 }
-.bingo-msg.good { color: var(--mint); }
-.bingo-msg.warn { color: var(--coral); }
+.bingo-msg.good { color: var(--ink); }
+.bingo-msg.warn { color: var(--ink); }
 .bingo-btn.ready {
-  background: var(--gold);
-  box-shadow: 0 6px 0 var(--gold-deep, #b8862a);
+  background: var(--accent);
+  box-shadow: 0 6px 0 var(--outline);
 }
 .bingo-current {
   display: grid;
@@ -542,8 +542,8 @@
 .bingo-winners {
   padding: 12px;
   border-radius: 18px;
-  border: 2px solid var(--gold);
-  background: color-mix(in srgb, var(--gold) 12%, var(--card));
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
 }
 .bingo-winners ul {
   margin: 6px 0 0;
@@ -583,7 +583,7 @@
 .hw-lane-labels.kit .kit-pad .kit-icon { color: var(--c, var(--g3-lane-0)); }
 /* a note of this lane is on the line now */
 .hw-lane-labels.kit .kit-pad[data-due='1'] {
-  box-shadow: 0 0 0 2px var(--c, var(--g3-lane-0)), 0 0 18px color-mix(in srgb, var(--c, var(--g3-lane-0)) 70%, transparent);
+  box-shadow: 0 0 0 2px var(--outline);
 }
 .hw-lane-labels.kit .kit-pad.hit { animation: kit-pad-hit 0.16s ease-out; }
 @keyframes kit-pad-hit {

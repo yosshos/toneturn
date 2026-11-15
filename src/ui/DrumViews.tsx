@@ -5,14 +5,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
-import { markOf, type NoteMark } from '../engine/noteMarks';
+import { markOf, tickLen, type NoteMark } from '../engine/noteMarks';
 import { barsPerLine, beamBeats, dotted, eighthGroupOf, restsOf, type RestKind } from '../engine/drumNotation';
 import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, QUICK_PADS, type WizardPad, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
 import { buildCal, CAL_HITS, CAL_ORDER, OnsetTracker } from '../engine/drumAcoustic';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
-import { Glyph, type GlyphKind } from './Glyph';
+import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { LatencyCalibrate, type LatencyValues } from './LatencyCalibrate';
 import { useLineWindow } from './DrillTake';
 import { beamGroupAt, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
@@ -30,11 +30,26 @@ export const PAD_GLYPH: Record<DrumVoice, GlyphKind> = { kick: 'kick', snare: 's
 
 const noteKey = (n: ExpNote) => `${n.voice}:${n.beat}`;
 
+/** Each marked hit's offset (ms) and the window, for the early / late tick (COURSE-FEEDBACK-UI §4.1). */
+const DEVS = new WeakMap<Map<string, NoteMark>, { dev: Map<string, number | null>; win: number }>();
 function marksOf(result?: TakeMetrics | null): Map<string, NoteMark> {
   const out = new Map<string, NoteMark>();
+  const dev = new Map<string, number | null>();
   const w = result?.drum?.windowMs ?? 40;
-  for (const r of result?.perNote ?? []) out.set(noteKey(r.exp), markOf(r, w));
+  for (const r of result?.perNote ?? []) {
+    out.set(noteKey(r.exp), markOf(r, w));
+    dev.set(noteKey(r.exp), r.dev);
+  }
+  DEVS.set(out, { dev, win: w });
   return out;
+}
+/** The timing tick beside a head at (x, y): tangerine on the left (early), purple on the right (late). */
+function Tick({ marks, k, x, y, edge }: { marks: Map<string, NoteMark>; k: string; x: number; y: number; edge: number }) {
+  const m = marks.get(k);
+  if (m !== 'early' && m !== 'late') return null;
+  const d = DEVS.get(marks);
+  const len = tickLen(d?.dev.get(k) ?? 0, d?.win ?? 40);
+  return <rect x={m === 'early' ? x - edge - len : x + edge} y={y - 1.6} width={len} height={3.2} rx={1.1} className={`mk-tick ${m}`} />;
 }
 
 /** One line of the score: its drill-beat range and bars (a time signature where it changes, beam groups for x/8 bars). */
@@ -338,6 +353,8 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
             ) : (
               <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />
             )}
+            <Tick marks={marks} k={n.key} x={x} y={y} edge={6.5} />
+            {m === 'wrong' && <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="mk-x" />}
             {n.grace && (
               // Grace note(s): small heads just before the stroke, the flam's with a slash.
               <g className="dn-grace">
@@ -413,7 +430,12 @@ function LaneLine({ drill, line, geo, marks, beat, lang }: { drill: Drill; line:
         const y = 3 + li * H + (H - 2) / 2;
         const m = marks.get(noteKey(n));
         const r = n.accent ? 5 : n.ghost ? 3 : 4;
-        return <circle key={i} cx={xOf(n.beat)} cy={y} r={r} className={`dl-hit ${m ?? ''} ${n.ghost ? 'ghost' : ''} ${n.voice === 'hhOpen' ? 'open' : ''}`} data-voice={n.voice} />;
+        return (
+          <g key={i}>
+            <circle cx={xOf(n.beat)} cy={y} r={r} className={`dl-hit ${m ?? ''} ${n.ghost ? 'ghost' : ''} ${n.voice === 'hhOpen' ? 'open' : ''}`} data-voice={n.voice} />
+            <Tick marks={marks} k={noteKey(n)} x={xOf(n.beat)} y={y} edge={r + 1.5} />
+          </g>
+        );
       })}
       {cursor !== null && <line x1={cursor} x2={cursor} y1={0} y2={h} className="dn-cursor" />}
     </svg>
@@ -501,7 +523,7 @@ export function KitCard({ kit, lang, onSetup, onKit }: { kit?: KitProfile; lang:
   return (
     <section className={`kit-card ${ready ? 'ready' : ''}`} data-kit-card={ready ? 'ready' : 'none'} data-kit-kind={chosen}>
       <div className="kc-row">
-        <Glyph kind="drums" color="#4CD07D" size={44} />
+        <Glyph kind="drums" color={DOMAIN_COLOR.rhythm} size={44} />
         <span className="kc-text">
           <b>{ready ? KIND_NAME[chosen][lang] : tx.title}</b>
           <small>{status}</small>
@@ -576,7 +598,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       </ol>
       {step === 'connect' && (
         <section className="kit-step">
-          <Glyph kind="drums" color="#4CD07D" size={72} shadow />
+          <Glyph kind="drums" color={DOMAIN_COLOR.rhythm} size={72} shadow />
           {!midi.supported ? <p className="field-hint">{tx.noMidi}</p> : devices && !devices.length ? <p className="field-hint warn">{tx.none}</p> : null}
           {midi.supported && (
             <button className="btn primary" onClick={() => void connect()} data-kit-connect="1">
@@ -615,7 +637,7 @@ export function KitSetup({ lang, kit: kit0, latency, onSave, onLatency, onDone, 
       {step === 'acal' && <AcousticCalStep lang={lang} onDone={(cal) => (save({ acoustic: cal, done: true }), next())} onSkip={next} />}
       {step === 'done' && (
         <section className="kit-step">
-          <Glyph kind="drums" color="#4CD07D" size={72} shadow />
+          <Glyph kind="drums" color={DOMAIN_COLOR.rhythm} size={72} shadow />
           <h2>{tx.done}</h2>
           {onTest && (
             <button className="btn primary" onClick={onTest} data-kit-test="1">
@@ -869,7 +891,7 @@ function AcousticCalStep({ lang, onDone, onSkip }: { lang: Lang; onDone: (cal: A
       <p className="field-hint small">{tx.acalHint}</p>
       {err && <p className="kit-warn">{tx.micErr}</p>}
       <div className="kit-pad">
-        <Glyph kind={glyph[cur.voice]} color="#4CD07D" size={84} shadow />
+        <Glyph kind={glyph[cur.voice]} color={DOMAIN_COLOR.rhythm} size={84} shadow />
         <b>{cur.prompt[lang]}</b>
         <span className="kit-dots" aria-label={`${n} / ${CAL_HITS}`}>
           {Array.from({ length: CAL_HITS }, (_, k) => (

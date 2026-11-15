@@ -28,7 +28,8 @@
   padding: 14px;
   border-radius: 18px;
   border: 1px solid var(--card-2);
-  background: linear-gradient(160deg, color-mix(in srgb, var(--hue, var(--mint)) 18%, var(--card)), var(--card));
+  background: var(--card);
+  border-inline-start: 6px solid var(--hue, var(--ok));
   color: var(--ink);
   font: inherit;
   cursor: pointer;
@@ -38,12 +39,12 @@
   font-size: 16px;
 }
 .drill-family small {
-  color: var(--soft, #d8d5f0);
+  color: var(--ink-soft);
   font-size: 12px;
 }
 .drill-family .lvl {
   font-weight: 800;
-  color: var(--hue, var(--mint));
+  color: var(--ink);
 }
 .drill-levels {
   display: grid;
@@ -65,11 +66,11 @@
 }
 .drill-level .n {
   font-family: var(--display);
-  color: var(--gold);
+  color: var(--ink);
   font-size: 18px;
 }
 .drill-level.done {
-  border-color: color-mix(in srgb, var(--mint) 50%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 50%, transparent);
 }
 .drill-opts {
   display: grid;
@@ -83,7 +84,7 @@
 }
 .drill-opts .row > span {
   min-width: 70px;
-  color: var(--soft, #d8d5f0);
+  color: var(--ink-soft);
   font-size: 13px;
 }
 .drill-staff {
@@ -97,7 +98,7 @@
 }
 .drill-goal {
   font-size: 14px;
-  color: var(--soft, #d8d5f0);
+  color: var(--ink-soft);
 }
 .drill-take {
   display: grid;
@@ -119,11 +120,11 @@
 }
 .drill-beat.count .beat-dot,
 .drill-beat.play .beat-dot {
-  background: var(--mint);
+  background: var(--ok);
   animation: beat-flash 180ms ease-out;
 }
 .drill-beat .beat-dot.accent {
-  background: var(--gold);
+  background: var(--accent);
 }
 @keyframes beat-flash {
   from {
@@ -139,10 +140,10 @@
   border: 2px solid var(--card-2);
 }
 .drill-result.v-clean {
-  border-color: var(--mint);
+  border-color: var(--ok);
 }
 .drill-result.v-almost {
-  border-color: var(--gold);
+  border-color: var(--accent);
 }
 .drill-result h2 {
   margin: 0;
@@ -150,7 +151,7 @@
 }
 .drill-why {
   margin: 0;
-  color: var(--soft, #d8d5f0);
+  color: var(--ink-soft);
 }
 .drill-stats {
   display: flex;
@@ -163,13 +164,13 @@
 }
 .drill-chart figcaption {
   font-size: 12px;
-  color: var(--dim, #a9a6c9);
+  color: var(--ink-dim);
   margin-bottom: 2px;
 }
 .drill-chart svg {
   width: 100%;
   height: auto;
-  background: rgb(0 0 0 / 0.2);
+  background: var(--card-2);
   border-radius: 10px;
 }
 .drill-chart .axis {
@@ -177,29 +178,29 @@
   stroke-width: 1;
 }
 .drill-chart .bar.good {
-  fill: var(--mint);
+  fill: var(--ok);
 }
 .drill-chart .bar.warn {
-  fill: var(--gold);
+  fill: var(--accent);
 }
 .drill-chart .bar.bad,
 .drill-chart .bar.miss {
-  fill: #ff6b5c;
+  fill: var(--bad);
 }
 .drill-chart .bar.L {
   opacity: 0.75;
 }
 .drill-chart .glitch {
-  fill: #ff6b5c;
+  fill: var(--bad);
 }
 .drill-chart .vdot.R {
-  fill: #7c8cff;
+  fill: var(--purple);
 }
 .drill-chart .vdot.L {
-  fill: #ff8a5c;
+  fill: var(--tangerine);
 }
 .drill-chart .vdot.acc {
-  stroke: var(--gold);
+  stroke: var(--accent);
   stroke-width: 1.5;
 }
 .drill-actions {
@@ -243,17 +244,17 @@
   color: var(--ink);
 }
 .heat-cell.l1 {
-  background: color-mix(in srgb, var(--mint) 25%, var(--card-2));
+  background: color-mix(in srgb, var(--ok) 25%, var(--card-2));
 }
 .heat-cell.l2 {
-  background: color-mix(in srgb, var(--mint) 45%, var(--card-2));
+  background: color-mix(in srgb, var(--ok) 45%, var(--card-2));
 }
 .heat-cell.l3 {
-  background: color-mix(in srgb, var(--mint) 70%, var(--card-2));
-  color: #0f1020;
+  background: color-mix(in srgb, var(--ok) 70%, var(--card-2));
+  color: var(--ink-c);
 }
 .heat-cell.weak {
-  outline: 2px solid #ff6b5c;
+  outline: 2px solid var(--bad);
 }
 .creator-grid {
   display: flex;
@@ -275,7 +276,7 @@ html[data-motion='reduced'] .drill-beat .beat-dot {
   width: 100%;
 }
 .drill-level.current {
-  border-color: var(--gold);
+  border-color: var(--accent);
 }
 .drill-level-block {
   display: grid;
@@ -342,9 +343,9 @@ button.heat-cell {
   cursor: pointer;
 }
 .drill-opts .chip.on {
-  background: var(--mint);
-  border-color: var(--mint);
-  color: #0f1020;
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--ink-c);
   font-weight: 700;
 }
 .mark-legend {
@@ -353,26 +354,26 @@ button.heat-cell {
   gap: 4px 12px;
   margin: 0;
   font-size: 12px;
-  color: var(--soft, #d8d5f0);
+  color: var(--ink-soft);
 }
 .mark-legend .mk.ok {
-  color: #3ccf97;
+  color: var(--ok);
 }
 .mark-legend .mk.timing {
-  color: #e6b54a;
+  color: var(--tangerine);
 }
 .mark-legend .mk.wrong,
 .mark-legend .mk.missed {
-  color: #ff6b5c;
+  color: var(--bad);
 }
 .drill-inst {
   display: flex;
   gap: 6px;
 }
 .drill-inst .chip.on {
-  background: var(--mint);
-  border-color: var(--mint);
-  color: #0f1020;
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--ink-c);
   font-weight: 700;
 }
 .drill-tab .guitar-tab {
@@ -494,8 +495,8 @@ button.heat-cell {
 .drums-gate { display: grid; gap: 8px; }
 .drill-prep { display: grid; gap: 8px; justify-items: center; }
 .write-slots li { flex: 1 0 68px; font-size: 0.75rem; }
-.write-slots li.w-ok { border-color: #3ccf97; }
-.write-slots li.w-bad { border-color: #ff6b5c; }
+.write-slots li.w-ok { border-color: var(--ok); }
+.write-slots li.w-bad { border-color: var(--bad); }
 .write-answer { display: block; color: var(--ink-dim); }
 /* Drummer's ear (0.66): the dictation step grid and the style pick. */
 .drum-grid { display: grid; grid-template-columns: 46px repeat(var(--cells), minmax(0, 1fr)); gap: 3px; align-items: center; }
@@ -504,12 +505,12 @@ button.heat-cell {
 .dg-cell { height: 30px; min-width: 0; padding: 0; border: 2px solid var(--line-strong); border-radius: 6px; background: var(--card); }
 .dg-cell.beat { border-color: var(--outline); }
 .dg-cell.on { background: var(--ink); }
-.dg-cell.ok { box-shadow: 0 0 0 2px #3ccf97 inset; }
-.dg-cell.bad { box-shadow: 0 0 0 2px #ff6b5c inset; }
+.dg-cell.ok { box-shadow: 0 0 0 2px var(--ok) inset; }
+.dg-cell.bad { box-shadow: 0 0 0 2px var(--bad) inset; }
 .drum-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .drum-pick .btn { font-size: 0.95rem; padding: 8px 6px; }
-.drum-pick .pick-ok { border-color: #3ccf97; }
-.drum-pick .pick-bad { border-color: #ff6b5c; }
+.drum-pick .pick-ok { border-color: var(--ok); }
+.drum-pick .pick-bad { border-color: var(--bad); }
 .drums-route { justify-self: center; font-size: 0.85rem; }
 .level-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; font-size: 0.75rem; color: var(--ink-dim); }
 .level-meta .lm-exam { padding: 0 6px; border: 1.5px solid var(--line-strong); border-radius: 999px; }
@@ -546,9 +547,9 @@ button.heat-cell {
 .vl-chords li { display: grid; justify-items: center; gap: 1px; padding: 6px 2px; border: 2px solid var(--outline); border-radius: 8px; background: var(--card); min-width: 0; }
 .vl-chords li b { font-size: 1rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .vl-chords li.now { background: var(--now); }
-.vl-chords li.v-clean { border-color: #3ccf97; }
-.vl-chords li.v-almost { border-color: #e0a63a; }
-.vl-chords li.v-not { border-color: #ff6b5c; }
+.vl-chords li.v-clean { border-color: var(--ok); }
+.vl-chords li.v-almost { border-color: var(--tangerine); }
+.vl-chords li.v-not { border-color: var(--bad); }
 .vl-mark { font-size: 0.75rem; line-height: 1; color: var(--ink-dim); }
 .vl-start { display: grid; gap: 2px; justify-items: center; }
 .vl-hint { color: var(--ink-dim); font-size: 0.8rem; text-align: center; }
@@ -558,10 +559,10 @@ button.heat-cell {
 .vl-lanes svg { width: 100%; height: auto; max-height: 150px; }
 .vl-lanes .vl-model { fill: none; stroke: var(--ink-dim); stroke-width: 1.2; opacity: 0.7; }
 .vl-lanes .vl-line { stroke: var(--ink); stroke-width: 1.6; }
-.vl-lanes .vl-line.jump { stroke: #ff6b5c; stroke-width: 2.6; stroke-dasharray: 5 3; }
+.vl-lanes .vl-line.jump { stroke: var(--bad); stroke-width: 2.6; stroke-dasharray: 5 3; }
 .vl-lanes .vl-you { fill: var(--ink); }
-.vl-lanes .vl-you.v-not { fill: #ff6b5c; }
-.vl-lanes .vl-you.v-almost { fill: #e0a63a; }
+.vl-lanes .vl-you.v-not { fill: var(--bad); }
+.vl-lanes .vl-you.v-almost { fill: var(--tangerine); }
 .vl-key { display: flex; justify-content: center; gap: 12px; font-size: 0.75rem; color: var(--ink-dim); }
 .vl-lessons { display: grid; gap: 4px; margin-block: 4px 8px; }
 .vl-lessons > small { color: var(--ink-dim); }
@@ -574,10 +575,10 @@ button.km-cell { cursor: pointer; }
 button.km-cell:disabled { cursor: default; opacity: 0.45; }
 button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 .km-cell.st-untried { border: 1px dashed var(--line); background: transparent; color: var(--ink-dim); }
-.km-cell.st-ok { background: color-mix(in srgb, var(--mint) 35%, var(--card-2)); }
-.km-cell.st-strong { background: color-mix(in srgb, var(--mint) 70%, var(--card-2)); color: #0f1020; }
+.km-cell.st-ok { background: color-mix(in srgb, var(--ok) 35%, var(--card-2)); }
+.km-cell.st-strong { background: color-mix(in srgb, var(--ok) 70%, var(--card-2)); color: var(--ink-c); }
 .km-cell.st-weak { background: var(--card-2); }
-.km-cell.st-weak::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 3px; height: 2px; border-radius: 1px; background: var(--coral); }
+.km-cell.st-weak::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 3px; height: 2px; border-radius: 1px; background: var(--bad); }
 .km12.compact .km-cell { height: 8px; border-radius: 3px; }
 .km12.compact .km-cell.st-weak::after { left: 0; right: 0; bottom: 0; }
 .km-block { display: grid; gap: 6px; min-width: 0; margin-bottom: 10px; }
@@ -637,11 +638,11 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .chorus-bar small { font-size: 0.68rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .chorus-bar b { font-size: 0.78rem; font-weight: 600; }
 .chorus-bar.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
-.chorus-bar.warn small { color: #ff9c8a; }
+.chorus-bar.warn small { color: var(--bad); }
 .chorus-sel { margin: 4px 0; font-size: 0.85rem; color: var(--ink-soft); }
 .chorus-cells { display: flex; flex-wrap: wrap; gap: 4px; }
 .chorus-cells .chip { font: inherit; font-size: 0.78rem; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink); cursor: pointer; }
 .chorus-cells .chip.on { border-color: var(--ink); background: var(--ink); color: var(--bg-2); }
 .chorus-check { margin: 8px 0 6px; font-size: 0.8rem; color: var(--ink-soft); }
 .chorus-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.drill-rh .miss { color: #ff9c8a; }
+.drill-rh .miss { color: var(--bad); }

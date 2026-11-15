@@ -1,0 +1,99 @@
+/* COURSE-FEEDBACK-UI (docs/research/COURSE-FEEDBACK-UI.md): the exercise and feedback layer in the v2 language.
+   Loaded after v2.css. Teal / tangerine / purple / pink / lemon are fills under ink outlines, never text on paper.
+   No green, no gradients, no glow; lemon only for "now". */
+
+/* ---------------------------------------------------------------- marks: pitch on the head, timing as a tick */
+.mk-layer { pointer-events: none; }
+.mk .mk-head { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1.3; }
+.mk.wrong .mk-head { fill: var(--pink); }
+.mk.missed .mk-head { fill: var(--card, #fff); stroke-dasharray: 2.2 1.8; stroke-width: 1.5; }
+.mk.extra .mk-head { fill: var(--card, #fff); }
+.mk .mk-x { stroke: var(--ink-c); stroke-width: 1.8; stroke-linecap: round; fill: none; }
+.mk .mk-ghost { fill: color-mix(in srgb, var(--pink) 45%, transparent); stroke: var(--ink-c); stroke-width: 0.9; stroke-dasharray: 1.6 1.4; }
+.mk .mk-digit { fill: var(--ink-c); font: 700 10px var(--font); }
+.mk-tick { stroke: var(--ink-c); stroke-width: 0.8; }
+.mk-tick.early { fill: var(--tangerine); }
+.mk-tick.late { fill: var(--purple); }
+:root[data-theme='contrast'] .mk-tick { stroke-width: 1.4; }
+/* drums (own SVG): heads keep their shape; the colour follows the same rule */
+.dn.early .dn-head, .dn.late .dn-head, .dn.ok .dn-head { fill: var(--teal); stroke: var(--ink-c); stroke-width: 0.9; }
+.dn.early .dn-x, .dn.late .dn-x, .dn.ok .dn-x { stroke: var(--ink-c); }
+.dn.wrong .dn-head { fill: var(--pink); stroke: var(--ink-c); stroke-width: 0.9; }
+.dn.missed .dn-head { fill: var(--card, #fff); stroke: var(--ink-c); stroke-width: 1.1; stroke-dasharray: 2 1.6; }
+.dn.wrong .dn-x { stroke: var(--pink); }
+.dn.missed .dn-x { stroke: var(--ink-c); stroke-dasharray: 2 1.6; }
+.dl-hit.ok, .dl-hit.early, .dl-hit.late { fill: var(--teal); stroke: var(--ink-c); }
+.dl-hit.wrong { fill: var(--pink); stroke: var(--ink-c); }
+.dl-hit.missed { fill: var(--card, #fff); stroke: var(--ink-c); stroke-dasharray: 2 1.6; }
+
+/* the legend: shapes + ink words (it fails as coloured text: 1.8–2.6 : 1) */
+.mark-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; font-size: 12px; color: var(--ink-soft); }
+.mark-legend .ml-item { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; color: var(--ink); }
+.mk-icon { width: 30px; height: 14px; flex: none; }
+
+/* ---------------------------------------------------------------- the now-cue: lemon with an ink edge, no halo */
+.staff-now {
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 1px;
+  background: var(--now);
+  box-shadow: none;
+  outline: 1.5px solid var(--ink-c);
+}
+.dn-cursor { stroke: var(--ink-c); stroke-width: 4; opacity: 1; }
+:root[data-theme] .orb.sounding { box-shadow: var(--sx) 5px 0 var(--outline); }
+
+/* ---------------------------------------------------------------- no pale yellow: notices and disabled buttons */
+.kit-warn {
+  background: var(--card);
+  border: 2px dashed var(--outline);
+  color: var(--ink);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.kit-warn::before {
+  content: 'i';
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid var(--outline);
+  font: 700 11px/1 var(--display);
+  color: var(--ink);
+}
+:root[data-theme] .btn:disabled,
+:root[data-theme] .btn.mega:disabled,
+:root[data-theme] .btn.primary:disabled {
+  opacity: 1;
+  background: var(--card);
+  color: var(--ink-dim) !important;
+  border: 2px dashed var(--line-strong);
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------------- the drill charts (behind "Why?"): paper, ink axis */
+.drill-chart svg { background: var(--card-2); border: 1.5px solid var(--line-strong); }
+.drill-chart .axis { stroke: var(--ink-c); stroke-width: 1; }
+.drill-chart .bar { stroke: var(--ink-c); stroke-width: 0.6; }
+.drill-chart .bar.good { fill: var(--teal); }
+.drill-chart .bar.warn { fill: var(--tangerine); }
+.drill-chart .bar.bad { fill: var(--pink); }
+.drill-chart .bar.miss { fill: var(--card); stroke-dasharray: 2 1.5; }
+.drill-chart .glitch { fill: var(--pink); stroke: var(--ink-c); stroke-width: 0.8; }
+.drill-chart .vdot { stroke: var(--ink-c); stroke-width: 0.8; }
+.drill-chart .vdot.R { fill: var(--purple); }
+.drill-chart .vdot.L { fill: var(--tangerine); }
+.drill-chart .vdot.acc { stroke-width: 2; }
+.drill-chart figcaption { color: var(--ink-soft); }
+
+/* ---------------------------------------------------------------- Highway: no glow, verdict flashes readable */
+:root[data-theme] .hw-note[data-near='2'] { box-shadow: 0 0 0 3px var(--ink-c); }
+:root[data-theme] .hw-flash { text-shadow: none; padding: 2px 10px; border-radius: 10px; border: 2px solid var(--ink-c); color: var(--ink-c) !important; background: var(--card); }
+:root[data-theme] .hw-flash.perfect, :root[data-theme] .hw-flash.good { background: var(--teal); }
+:root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { background: var(--pink); }
+:root[data-theme] .hw-flash.early { background: var(--tangerine); }
+:root[data-theme] .hw-flash.late { background: var(--lilac); }

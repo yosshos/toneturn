@@ -19,7 +19,8 @@ const keyPcOf = (fifths: number): PitchClass => {
   const k = FIFTHS_KEY[Math.max(0, Math.min(14, fifths + 7))];
   return { letter: k[0] as PitchClass['letter'], acc: (k[1] === 'b' ? -1 : k[1] === '#' ? 1 : 0) as PitchClass['acc'] };
 };
-const MARK: Record<Exclude<NoteMark, undefined>, string> = { ok: '#1f8f67', timing: '#b8861b', wrong: '#d43c2c', missed: '#d43c2c' };
+// v2 marks (COURSE-FEEDBACK-UI §4.1): deep teal right, tangerine early, purple late, pink wrong / missed.
+const MARK: Record<Exclude<NoteMark, undefined>, string> = { ok: '#0b7a6d', early: '#c25a12', late: '#6d28d9', wrong: '#d6337a', missed: '#d6337a', extra: '#1e1033' };
 
 export interface ScoreGeometry {
   /** Per bar: x (0..1 of the width) and y top / bottom (px in the rendered SVG coordinate space) of its system. */
