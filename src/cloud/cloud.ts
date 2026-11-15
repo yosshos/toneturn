@@ -62,6 +62,10 @@ export async function signOut() {
   await supabase()?.auth.signOut();
 }
 
+/** AUDIT-5: the result's measured time and note have columns once migration 20261202000000_toneturn_practice_time
+ * is applied (the owner dry-runs it first). Until then they stay on this device (sync.ts keeps them on merge). */
+export const RESULT_EXTRAS_SYNCED = false;
+
 interface ResultRow {
   session_id: string;
   lesson_id: string;
@@ -72,6 +76,8 @@ interface ResultRow {
   missed: LessonResult['missed'];
   completed_at: string;
   items?: LessonResult['items'];
+  duration_ms?: number | null;
+  note?: string | null;
 }
 
 const toRow = (r: LessonResult): ResultRow => ({
@@ -84,6 +90,7 @@ const toRow = (r: LessonResult): ResultRow => ({
   missed: r.missed,
   completed_at: r.completedAt,
   items: r.items ?? [],
+  ...(RESULT_EXTRAS_SYNCED ? { duration_ms: r.durationMs ? Math.round(r.durationMs) : null, note: r.note ? r.note.slice(0, 500) : null } : {}),
 });
 const fromRow = (x: ResultRow): LessonResult => ({
   sessionId: x.session_id,
@@ -95,6 +102,8 @@ const fromRow = (x: ResultRow): LessonResult => ({
   missed: x.missed ?? [],
   items: x.items ?? [],
   completedAt: new Date(x.completed_at).toISOString(),
+  ...(x.duration_ms ? { durationMs: x.duration_ms } : {}),
+  ...(x.note ? { note: x.note } : {}),
 });
 
 /**
@@ -104,9 +113,9 @@ const fromRow = (x: ResultRow): LessonResult => ({
 export async function syncProgress(local: Progress): Promise<Progress> {
   const sb = supabase();
   if (!sb) return local;
-  const { data, error } = await sb.from('toneturn_lesson_results').select('session_id,lesson_id,lesson_version,first_try,total,xp,missed,items,completed_at').order('completed_at');
+  const { data, error } = await sb.from('toneturn_lesson_results').select(`session_id,lesson_id,lesson_version,first_try,total,xp,missed,items,completed_at${RESULT_EXTRAS_SYNCED ? ',duration_ms,note' : ''}`).order('completed_at');
   if (error) throw error;
-  const remote = (data as ResultRow[]).map(fromRow);
+  const remote = (data as unknown as ResultRow[]).map(fromRow);
   const up = pendingUploads(local.history, remote);
   if (up.length) {
     const { error: e2 } = await sb.from('toneturn_lesson_results').upsert(up.map(toRow), { onConflict: 'user_id,session_id', ignoreDuplicates: true });

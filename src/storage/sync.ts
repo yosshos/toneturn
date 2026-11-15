@@ -5,8 +5,23 @@ import { applyResult, emptyProgress, type LessonResult, type Progress } from './
 
 export function mergeResults(local: LessonResult[], remote: LessonResult[]): LessonResult[] {
   const bySession = new Map<string, LessonResult>();
-  for (const r of [...remote, ...local]) if (!bySession.has(r.sessionId)) bySession.set(r.sessionId, r);
+  for (const r of [...remote, ...local]) {
+    const have = bySession.get(r.sessionId);
+    if (!have) bySession.set(r.sessionId, r);
+    // AUDIT-5: fields the server has no column for yet (the measured duration, the player's note, the course) stay
+    // from this device's copy — additive only, the server's row wins for everything it stores.
+    else bySession.set(r.sessionId, { ...have, ...localExtras(have, r) });
+  }
   return [...bySession.values()].sort((a, b) => a.completedAt.localeCompare(b.completedAt));
+}
+
+/** The local-only fields of a result that the server copy lacks. */
+function localExtras(server: LessonResult, local: LessonResult): Partial<LessonResult> {
+  const out: Partial<LessonResult> = {};
+  if (server.durationMs === undefined && local.durationMs !== undefined) out.durationMs = local.durationMs;
+  if (server.note === undefined && local.note !== undefined) out.note = local.note;
+  if (server.course === undefined && local.course !== undefined) out.course = local.course;
+  return out;
 }
 
 /** Rebuild progress from results; streaks follow each result's own completion time. */

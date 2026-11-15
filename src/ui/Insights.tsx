@@ -3,11 +3,16 @@
 // with "boss fights", and the trouble bars of the pieces. Every finding links to the exercise that trains it.
 
 import { withGameKeys } from '../engine/gameKeys';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { DX, PlateauCards, plateausOf, useLedger } from './PracticeDiary';
+import type { PlateauFinding } from '../engine/plateau';
+import { practiceDigest } from '../engine/practiceTime';
+import { loadLedger } from '../storage/practice';
+import { STRINGS } from '../i18n/strings';
 import { findings, type PlayerModel } from '../engine/analysis/model';
 import { grooveFindings, type GrooveModel } from '../engine/analysis/groove';
 import { earIndex, earIndexHistory } from '../engine/rating';
-import { ratingsOf, type Progress } from '../storage/progress';
+import { localDay, ratingsOf, type Progress } from '../storage/progress';
 import { loadGroove, loadModel } from '../storage/analysis';
 import { loadConfusions, topConfusions, type ConfusionMap } from '../storage/confusion';
 import { loadPieces, type StoredPiece } from './Pieces';
@@ -44,7 +49,7 @@ const TX = {
 const KEYS_5THS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
-export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear', nearMastery }: { lang: 'en' | 'he'; progress: Progress; /** SPEC-PATH-ROLE §8: path units close to mastery, for the weekly summary. */ nearMastery?: string; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
+export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear', nearMastery, onPlateau, plateauLabel }: { /** AUDIT-5 #5: act on a plateau / fading item. */ onPlateau?: (f: PlateauFinding) => void; plateauLabel?: (id: string) => string | null; lang: 'en' | 'he'; progress: Progress; /** SPEC-PATH-ROLE §8: path units close to mastery, for the weekly summary. */ nearMastery?: string; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
   const tx = TX[lang];
   const on = (c: Parameters<typeof showsInsight>[0]) => showsInsight(c, course);
   const [model, setModel] = useState<PlayerModel | null>(null);
@@ -84,6 +89,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
       </header>
 
       {profile && <ProfileCard profile={profile} lang={lang} tx={tx} shows={(src) => on(SOURCE_CARD[src])} act={act} nearMastery={nearMastery} />}
+      <PlateauSection lang={lang} progress={progress} onPlateau={onPlateau} label={plateauLabel} />
 
       {on('ear-index') && (
       <section className="set-card in-ear" data-ear-index={ei?.r ?? ''}>
@@ -353,6 +359,19 @@ function ProfileCard({ profile, lang, tx, shows, act, nearMastery }: { nearMaste
 
 /** The coach's weekly summary (SPEC-AI §2, Claude Opus): asked for on a tap, kept for the week on this device. */
 const WEEKLY_KEY = 'toneturn.aiWeekly.v1';
+/** AUDIT-5 #5: the plateau detector's findings on the profile, each with one concrete change of approach. */
+function PlateauSection({ lang, progress, onPlateau, label }: { lang: 'en' | 'he'; progress: Progress; onPlateau?: (f: PlateauFinding) => void; label?: (id: string) => string | null }) {
+  const l = useLedger();
+  const fs = useMemo(() => plateausOf(progress, l, localDay(new Date()), 4), [progress, l]);
+  if (!fs.length) return null;
+  return (
+    <section className="set-card" data-insights-plateaus={fs.length}>
+      <h2>{DX.plateaus[lang]}</h2>
+      <PlateauCards findings={fs} lang={lang} progress={progress} skillNames={STRINGS[lang].skillNames} label={label} tries={l.tries} onAct={onPlateau} />
+    </section>
+  );
+}
+
 function WeeklyCoach({ lang, digest }: { lang: 'en' | 'he'; digest: ReturnType<typeof profileDigest> }) {
   const week = weekKey(new Date());
   const [text, setText] = useState<string | null>(() => {
@@ -369,7 +388,10 @@ function WeeklyCoach({ lang, digest }: { lang: 'en' | 'he'; digest: ReturnType<t
   const ask = async () => {
     setBusy(true);
     setErr(null);
-    const r = await askAi('weekly', { lang, context: { week, ...digest } });
+    // AUDIT-5: measured practice time, quality share and plateaus go into the weekly summary's inputs.
+    const today = localDay(new Date());
+    const practice = practiceDigest(loadLedger(), today);
+    const r = await askAi('weekly', { lang, context: { week, ...digest, practice } });
     setBusy(false);
     if ('error' in r) return setErr(r.error);
     setText(r.text);

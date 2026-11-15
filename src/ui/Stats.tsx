@@ -42,10 +42,19 @@ import {
   type InputKind,
   type MonthReview,
   type SessionKind,
+  type StatsDays,
 } from '../engine/stats';
 import type { Strings } from '../i18n/strings';
 import { localDay, practiceDays, type LessonResult, type Progress } from '../storage/progress';
 import { fmtDay, FrameChips, FrameDelta, Spark, TrendDetail, useStatsFrame } from './Trends';
+import { useLedger } from './useLedger';
+import { msByDay, withLedgerMs } from '../engine/practiceTime';
+
+/** AUDIT-5 #1: the stats days with the practice clock's measured time (lessons, technique, games, songs …). */
+function usePracticeDays(days: StatsDays | undefined): StatsDays | undefined {
+  const l = useLedger();
+  return useMemo(() => withLedgerMs(days, msByDay(l), () => ({ items: 0, correct: 0, ms: 0, xp: 0, sessions: 0, byArea: {} })), [days, l]);
+}
 
 type L = { en: string; he: string };
 type Lang = 'he' | 'en';
@@ -493,7 +502,8 @@ export function ActivityView(props: ProgressTabsProps) {
   const [frame] = useStatsFrame();
   const day = today();
   const events = progress.ratingEvents ?? [];
-  const tot = useMemo(() => frameTotals(ps.statsDays, frame, day), [ps.statsDays, frame, day]);
+  const timed = usePracticeDays(ps.statsDays);
+  const tot = useMemo(() => frameTotals(timed, frame, day), [timed, frame, day]);
   return (
     <div className="ps-view">
       <FrameChips lang={lang} />
@@ -517,7 +527,8 @@ export function StatsView({ t, lang, progress, leagueLevels, friendLevels }: Pro
   const events = progress.ratingEvents ?? [];
   const ratings = foldFromMemo(ps.ratingBase, events);
   const o = overallRating(ratings);
-  const tot = useMemo(() => frameTotals(ps.statsDays, frame, day), [ps.statsDays, frame, day]);
+  const timed = usePracticeDays(ps.statsDays);
+  const tot = useMemo(() => frameTotals(timed, frame, day), [timed, frame, day]);
   const overallPts = useMemo(() => longSeries(ps.statsDays, seriesFrom(ps.ratingBase, events, 'overall'), 'overall'), [ps.statsDays, ps.ratingBase, events]);
   const ofs = frameSeries(overallPts, frame, day);
   const [sel, setSel] = useState<SkillId | 'overall'>('overall');
@@ -730,7 +741,8 @@ export function InsightsView({ t, lang, progress, folded }: ProgressTabsProps & 
   const ps = P(progress);
   const [frame] = useStatsFrame();
   const day = today();
-  const tot = useMemo(() => frameTotals(ps.statsDays, frame, day), [ps.statsDays, frame, day]);
+  const timed = usePracticeDays(ps.statsDays);
+  const tot = useMemo(() => frameTotals(timed, frame, day), [timed, frame, day]);
   const areaB = nokBuckets(tot.byArea);
   const areaC = compareBuckets(areaB);
   const tod = timeOfDayBuckets(ps.statsHours);
