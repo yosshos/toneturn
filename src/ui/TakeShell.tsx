@@ -3,6 +3,8 @@
 // the measured take — a one-line verdict, and the results. Three lives: a take under 70 % costs one. The game supplies
 // its item, its sound, its measured take and its board (src/engine/instGames.ts has the pure parts).
 
+import { IsoMix } from './Iso';
+import type { KeyInstrument } from '../engine/analysis/keyMastery';
 import '../advgames.css';
 import '../instgames.css';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -47,6 +49,8 @@ export interface TakeGameCfg<I> {
   hear?: (c: Omit<TakeCtx<I>, 'input'>) => Promise<void>;
   take: (c: TakeCtx<I>) => Promise<TakeOutcome | 'mic-error' | null>;
   board: (p: { item: I; save: TakeSave; phase: TakePhase; outcome: TakeOutcome | null; cell: number; lang: Lang }) => ReactNode;
+  /** AUDIT-GAMES §1: the take's key (tonic pitch class) and instrument, for key mastery; null = no key (open chords). */
+  keyOf?: (item: I, settings: Settings, save: TakeSave, i: number) => { key: number; inst: KeyInstrument } | null;
 }
 
 const TX = {
@@ -164,7 +168,9 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
       onSave(null);
       const r = takeRunResult(next, input);
       setFinal(r);
-      onResult(r);
+      // Key mastery (AUDIT-GAMES §1): each take's key and accuracy (the items are seeded, so resumed runs keep them).
+      const keyed = cfg.keyOf ? next.takes.map((acc, i) => ({ k: cfg.keyOf!(cfg.item(next, i), settings, next, i), acc })).filter((x) => x.k) : [];
+      onResult(keyed.length ? { ...r, detail: { ...r.detail, keyInst: keyed[0].k!.inst, keyTakes: keyed.map((x) => ({ key: x.k!.key, acc: x.acc, bpm: next.bpm })) } } : r);
     } else onSave(next);
     setPhase('review');
   };
@@ -195,7 +201,7 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
               <div className="seg g2-seg" role="radiogroup" aria-label={tx(TX.input, lang)}>
                 {cfg.inputs.map((k) => (
                   <button key={k} type="button" role="radio" aria-checked={input === k} className={input === k ? 'on' : ''} onClick={() => setInput(k)}>
-                    {tx(k === 'mic' ? TX.mic : TX.midiIn, lang)}
+                    <IsoMix text={tx(k === 'mic' ? TX.mic : TX.midiIn, lang)} />
                   </button>
                 ))}
               </div>

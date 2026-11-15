@@ -1,4 +1,5 @@
 import { TodayCards } from './TodayCards';
+import { GrooveEchoModes } from './GrooveEchoModes';
 import { qualityOf } from '../audio/quality';
 import { courseLevels } from '../engine/courseSocial';
 import { techLevel, techQueue, workoutCreditsStep } from '../engine/ladderFacts';
@@ -122,7 +123,7 @@ import { foldSubs } from '../engine/taxonomy';
 import { DOMAINS, evidence, weakestSkill } from '../engine/rating';
 import { useMotion } from './motion';
 import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
-import { achievements, earnAwards, firstLaunchAwards } from '../engine/achievements';
+import { achievements, earnAwards, firstAwardsLine, firstLaunchAwards } from '../engine/achievements';
 import { bumpCount } from '../engine/stats';
 import { gameAccuracy } from '../engine/gameRating';
 import '../tiers.css';
@@ -910,7 +911,8 @@ export function App() {
       const next = { ...progress, awards };
       void store.saveProgress(next).then(() => setProgress(next));
       updateSettings({ awardsInit: true });
-      if (count > 0 && !settings.cleanView) setAwardToast(settings.uiLang === 'en' ? `${count} awards from before are in your Awards` : `${count} פרסים מלפני כן מחכים בפרסים שלכם`);
+      // AUDIT-GAMES §6: the shown language (a forced ?lang too), and "1 award", not "1 awards".
+      if (count > 0 && !settings.cleanView) setAwardToast(firstAwardsLine(count, s.uiLang));
       return;
     }
     const { awards, newly } = earnAwards(progress.awards, achievements(progress, extra), at);
@@ -919,7 +921,7 @@ export function App() {
     void store.saveProgress(next).then(() => setProgress(next));
     if (!settings.cleanView) {
       const best = newly.sort((a, b) => b.tier - a.tier)[0];
-      setAwardToast(`${awardName(best.id, settings.uiLang)}${newly.length > 1 ? ` +${newly.length - 1}` : ''}`);
+      setAwardToast(`${awardName(best.id, s.uiLang)}${newly.length > 1 ? ` +${newly.length - 1}` : ''}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.applied.length, progress.ratingEvents?.length, progress.bests, route, settings?.awardsInit]);
@@ -1670,7 +1672,7 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide' });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
@@ -1985,6 +1987,7 @@ export function App() {
               onLeague={() => go('friends')}
               exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
               onRepertoire={(id) => ((repShown.current = id ?? null), go('repertoire'))}
+              onPitchMemory={() => go('pitchmemory')}
             />
           }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
@@ -2836,7 +2839,8 @@ export function App() {
           settings: s,
           saved: loadSlot<unknown>(key)?.data ?? null,
           onSave: (st: unknown | null) => (st ? saveSlot(key, { title, route: g, done: 0, total: 0, data: st }) : clearSlot(key)),
-          onExit: () => go('arcade'),
+          // Pitch Memory is a Today card (AUDIT-GAMES §9): back goes home.
+          onExit: () => go(g === 'pitchmemory' ? 'home' : 'arcade'),
           onResult: (r: { score: number; detail?: unknown }) => {
             void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
             noteGameBest(g, r.score, r.detail);
@@ -2899,7 +2903,25 @@ export function App() {
           onBack={() => go('arcade')}
         />
       )}
-      {(['land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush'] as const).map((g) => {
+      {(route === 'groove-echo' || route === 'odd-echo') && (
+        // AUDIT-GAMES §10: Odd-meter Echo is Groove Echo's second mode; each mode records under its own id.
+        <GrooveEchoModes
+          key={route}
+          initialOdd={route === 'odd-echo'}
+          lang={s.uiLang}
+          settings={s}
+          onExit={() => go('arcade')}
+          onResult={(g, r) => {
+            void store.recordGame2(g, r.score, undefined, (r.detail ?? {}) as Record<string, unknown>).then(setProgress);
+            noteGameBest(g, r.score, r.detail);
+            noteGameStep(g, r.score, r.detail);
+          }}
+          bestOf={(g) => progress.bests?.[g]}
+          tierOf={(g) => tierFor(g)}
+          onKit={(drumKit) => updateSettings({ drumKit })}
+        />
+      )}
+      {(['land', 'time-lock', 'ghost-control', 'rudiment-rush'] as const).map((g) => {
         // Drum games P1 (DRUMS_NICHE_PLAN §3): measured takes on the kit, tiers / XP / path like every game.
         if (route !== g) return null;
         return (
@@ -3014,6 +3036,10 @@ export function App() {
       {route === 'duelplay' && duel && (
         <DuelScreen key={gameKey} t={t} settings={s} {...duel} onExit={() => go('home')} onRematch={() => {
           setGameKey((k) => k + 1);
+        }} onResult={(r) => {
+          // AUDIT-GAMES §9: the duel records like every game (the device owner's side): XP, rating, tier, board.
+          void store.recordGame2('duel', r.score, undefined, r.detail).then(setProgress);
+          noteGameBest('duel', r.score, r.detail);
         }} />
       )}
       {route === 'game' && gameSetup && (

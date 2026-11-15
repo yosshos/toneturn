@@ -117,3 +117,11 @@ describe('Transcription Race', () => {
     expect(Number(tierDef('transcribe', 'ff')?.params?.notes)).toBeGreaterThan(Number(tierDef('transcribe', 'mp')?.params?.notes));
   });
 });
+
+describe('Transcription Race: all 12 keys (games fix)', () => {
+  it('phrases come in every one of the 12 keys', () => {
+    const keys = new Set<number>();
+    for (let i = 0; i < 300; i++) keys.add(phraseAt(12345, i, 1, 5).key);
+    expect(keys.size).toBe(12);
+  });
+});

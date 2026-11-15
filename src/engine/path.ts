@@ -1088,7 +1088,7 @@ export function buildPath(inp: PathInput): PathView {
     if (inp.reviewDue >= 3 && n === units.length + 1) steps.push({ step: virtualStep(`review:${unitId}`, unitId)!, state: 'open' });
     // A game for the unit's leading area (0.38), before the checkpoint — a lighter, faster round of the same skills.
     const lead = order[0]?.s.domain;
-    const game = lead ? gameForArea(lead, n, { ...inp, noDrills: inp.noDrills || !!inp.ladderFamilies?.length }) : null;
+    const game = lead ? gameForArea(lead, n, { ...inp, noDrills: inp.noDrills || !!inp.ladderFamilies?.length }, median(order.map((p) => p.s.difficulty)) || 1000) : null;
     if (game && order.length >= 4) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
     // PIANO_JAZZ P2: a repertoire item / an optional bonus game at the unit's end, where its depth fits the unit.
     if (order.length >= 3)
@@ -1193,7 +1193,7 @@ function virtualStep(id: string, unitId: string, from: PathStep[] = []): PathSte
 }
 
 /** Games that can sit inside a unit, by the area they train (0.38). */
-export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub: string; title: { en: string; he: string }; needsMic?: boolean; forPlays?: string[] }> = {
+export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub: string; title: { en: string; he: string }; needsMic?: boolean; forPlays?: string[]; minDiff?: number }> = {
   'rush-interval': { domain: 'pitch', skill: 'intervals', sub: 'melodic', title: { en: 'Interval Sprint', he: 'ספרינט מרווחים' } },
   'rush-chord': { domain: 'pitch', skill: 'chords', sub: 'quality', title: { en: 'Chord Rush', he: 'מרוץ אקורדים' } },
   'rush-progression': { domain: 'pitch', skill: 'cadences', sub: 'progression', title: { en: 'Progression Detective', he: 'בלש המהלכים' } },
@@ -1214,20 +1214,33 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   'time-lock': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Time Lock', he: 'נעילת זמן' }, forPlays: ['drums'] },
   'ghost-control': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Ghost Control', he: 'שליטה ברפאים' }, forPlays: ['drums'] },
   'rudiment-rush': { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Rudiment Rush', he: 'מרוץ רודימנטים' }, forPlays: ['drums'] },
+  // AUDIT-GAMES §1 (games fix): the games that never reached the path, in their course's units. `minDiff` keeps a
+  // harder game out of the first units (the unit's median difficulty must reach it).
+  tuneup: { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Tune-up', he: 'כיוון' }, forPlays: ['guitar', 'bass'] },
+  rootsear: { domain: 'instrument', skill: 'instrument', sub: 'fretboard', title: { en: 'Roots by Ear', he: 'שורשים מהאוזן' }, forPlays: ['guitar', 'bass'], minDiff: 880 },
+  changerace: { domain: 'instrument', skill: 'instrument', sub: 'guitar-tech', title: { en: 'Chord Change Race', he: 'מרוץ החלפות אקורדים' }, forPlays: ['guitar'] },
+  walkchanges: { domain: 'instrument', skill: 'instrument', sub: 'bass-tech', title: { en: 'Walk the Changes', he: 'ללכת על המהלך' }, forPlays: ['bass'], minDiff: 950 },
+  playback: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Play It Back', he: 'לנגן בחזרה' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 900 },
+  voicingsprint: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Voicing Sprint', he: 'ספרינט וויסינגים' }, forPlays: ['keys', 'piano'], minDiff: 1000 },
+  kitread: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Kit Read Rush', he: 'מרוץ קריאת תופים' }, forPlays: ['drums'] },
+  namegroove: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Name That Groove', he: 'זהו את הגרוב' }, forPlays: ['drums'], minDiff: 850 },
+  singinterval: { domain: 'voice', skill: 'singing', sub: 'intervals', title: { en: 'Interval Sing', he: 'ספרינט שירה' }, needsMic: true, minDiff: 850 },
+  harmonyhold: { domain: 'voice', skill: 'singing', sub: 'harmony', title: { en: 'Harmony Hold', he: 'להחזיק הרמוניה' }, needsMic: true, minDiff: 1000 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
-  voice: ['flight'],
+  voice: ['flight', 'singinterval', 'harmonyhold'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
-export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }): string | null {
+export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }, diff = Infinity): string | null {
   const ok = AREA_GAMES[area].filter((g) => {
     const s = GAME_STEPS[g];
+    if (s.minDiff && diff < s.minDiff) return false;
     if (inp.course && !inCourse({ domain: s.domain, sung: !!s.needsMic && s.domain === 'voice', forPlays: s.forPlays }, inp.course)) return false;
     if (g === 'drills' && inp.noDrills) return false;
     if (s.needsMic && (inp.noMic || inp.noSing)) return false;

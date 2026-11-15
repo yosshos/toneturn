@@ -13,6 +13,8 @@ import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { CentsNeedle } from './HarmonyHold';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
+import { RushResultCard } from './GameResult';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -37,6 +39,7 @@ const TX = {
   over: { en: 'Results', he: 'תוצאות' },
   playAgain: { en: 'Play again', he: 'לשחק שוב' },
   best: { en: 'Best', he: 'שיא' },
+  level: { en: 'Level', he: 'רמה' },
 };
 const tx = (b: { en: string; he: string }, l: Lang) => b[l];
 const paramsOf = (t: DynName) => {
@@ -212,6 +215,7 @@ export function SingInterval({ lang, settings, saved, onSave, onExit, onResult, 
         <section className="g2-card">
           <p>{tx(TX.blurb, lang)}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="singinterval" />}
+          <InputCheck mode="mic" lang={lang} />
           {!!best && (
             <p className="g2-best">
               {tx(TX.best, lang)}: <b dir="ltr">{best}</b>
@@ -285,20 +289,18 @@ export function SingInterval({ lang, settings, saved, onSave, onExit, onResult, 
       )}
 
       {phase === 'over' && final && (
-        <section className="g2-card" aria-live="polite">
-          <h2>{tx(TX.over, lang)}</h2>
-          <p>
-            {tx(TX.right, lang)}: <b dir="ltr">{final.right}</b> · {tx(TX.wrong, lang)}: <b dir="ltr">{final.wrong}</b>
-          </p>
-          <div className="g2-row">
-            <button className="btn primary" onClick={() => void begin(false)}>
-              {tx(TX.playAgain, lang)}
-            </button>
-            <button className="btn ghost" onClick={() => (stop(), onExit())}>
-              {tx(TX.back, lang)}
-            </button>
-          </div>
-        </section>
+        <RushResultCard
+          lang={lang}
+          heading={tx(TX.over, lang)}
+          score={siResult(final).score}
+          best={best}
+          newBest={siResult(final).score > 0 && siResult(final).score > (best ?? 0)}
+          right={final.right}
+          wrong={final.wrong}
+          stats={[{ label: tx(TX.level, lang), value: final.tier ? <i className="dyn">{final.tier}</i> : final.level }]}
+          onAgain={() => void begin(false)}
+          onBack={() => (stop(), onExit())}
+        />
       )}
     </main>
   );

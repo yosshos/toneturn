@@ -223,7 +223,7 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
             </small>
           )}
         </p>
-        <button className="btn primary" data-go-new="1" onClick={() => begin({ seed: newGrooveSeed(level.tier), reply: false })}>
+        <button className="btn primary mega" data-go-new="1" onClick={() => begin({ seed: newGrooveSeed(level.tier), reply: false })}>
           {tx(TX.newCode)}
         </button>
         <form

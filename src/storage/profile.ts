@@ -1,6 +1,7 @@
 // The player profile's timeline on this device (SPEC-AI §8): one small snapshot per week of the patterns that showed.
 // Refreshed when Insights opens, at app start and after practice; the snapshot of the current week is simply replaced.
 
+import { gameKeyTitle, withGameKeys } from '../engine/gameKeys';
 import { buildProfile, emptyHistory, keyCounters, keyLineOf, profileItems, withSnapshot, type Profile, type ProfileCounters, type ProfileHistory } from '../engine/analysis/profile';
 import { instrumentKeys } from '../engine/analysis/keyMastery';
 import { familyById } from '../engine/drills/plan';
@@ -36,7 +37,8 @@ async function drillItemsNow(given?: Record<string, ItemState>): Promise<Record<
   const sim = typeof location !== 'undefined' && new URLSearchParams(location.search).has('sim');
   if (sim) return {};
   try {
-    drillCache = (await defaultKV().get<Progress>('progress'))?.drillItems ?? {};
+    const p = await defaultKV().get<Progress>('progress');
+    drillCache = withGameKeys(p?.drillItems, p?.gameKeys);
   } catch {
     drillCache = {};
   }
@@ -44,7 +46,7 @@ async function drillItemsNow(given?: Record<string, ItemState>): Promise<Record<
 }
 
 /** A skill's name for the profile rows (the drill family's title). */
-export const skillTitle = (f: FamilyId) => familyById(f)?.title ?? { en: f, he: f };
+export const skillTitle = (f: FamilyId) => familyById(f)?.title ?? gameKeyTitle(f) ?? { en: f, he: f };
 
 /**
  * Recompute the profile from the current measures and write this week's snapshot.

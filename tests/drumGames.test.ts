@@ -68,7 +68,9 @@ describe('drum games P1', () => {
   it('wired: tiers, the drums games list, path game steps for drums only', () => {
     for (const g of DRUM_GAMES) {
       expect(Object.keys(GAME_TIERS[g].tiers)).toEqual(TIERS);
-      expect(COURSE_GAMES.drums).toContain(g);
+      // AUDIT-GAMES §10: Odd-meter Echo is a mode of Groove Echo (its id, tiers and path step stay).
+      if (g === 'odd-echo') expect(COURSE_GAMES.drums).not.toContain(g);
+      else expect(COURSE_GAMES.drums).toContain(g);
       expect(GAME_STEPS[g].forPlays).toEqual(['drums']);
       for (const c of ['keys', 'guitar', 'bass', 'ear'] as const) expect(COURSE_GAMES[c]).not.toContain(g);
     }

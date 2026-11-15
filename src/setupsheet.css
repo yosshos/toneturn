@@ -1,0 +1,63 @@
+/* Game setup "More" chip and sheet (AUDIT-GAMES fix #4). v2: ink outline, hard offset shadow, no glow. */
+.setup-more-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 2.5px solid var(--outline);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 2px 2px 0 var(--outline);
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  justify-self: start;
+  max-width: 100%;
+}
+.setup-more-chip .sm-sum {
+  font-weight: 500;
+  color: var(--ink);
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.setup-more-chip .sm-dots {
+  font-weight: 900;
+}
+.setup-more-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.setup-sheet {
+  max-height: 86vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 2.5px solid var(--outline);
+  border-bottom: 0;
+}
+.setup-sheet .menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.setup-sheet h2 {
+  font-size: 1.15rem;
+}
+.setup-sheet-body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+/* A row of setup controls that share one line (tier label + More chip). */
+.setup-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}

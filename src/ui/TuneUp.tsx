@@ -1,6 +1,7 @@
 // Tune-up (spec AE §8, R7): a string is out of tune; the in-tune reference sounds together with it so the
 // beats are audible. Turn the peg (drag, or the slider / arrow keys) until the beats vanish.
 
+import { IsoMix } from './Iso';
 import { TuneUpArt } from './GameArt';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { centsLeft, isTuneUpSave, makeRounds, MAX_SCORE, midiHz, PEG_RANGE, ROUNDS, roundPoints, stringNamesOf, toneHz, type TuneInst, type TuneRound, type TuneUpSave } from '../engine/tuneUp';
@@ -279,7 +280,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
             })}
           </ol>
           <p className="g2-lead">
-            {tx.string(round.string, stringNamesOf(inst)[round.string - 1])}
+            <IsoMix text={tx.string(round.string, stringNamesOf(inst)[round.string - 1])} />
             <br />
             <small className="g2-dim">{round.kind === 'chord' ? tx.refChord(round.chordName ?? '') : round.kind === 'harmonic' ? tx.refHarm(round.refString) : tx.refFret(round.refString, round.refFret)}</small>
           </p>
@@ -324,7 +325,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
               <button className="btn" onClick={() => void sound(round, peg)}>
                 ♪ {tx.pluck}
               </button>
-              <button className="btn mega" onClick={submit}>
+              <button className="btn primary mega" onClick={submit}>
                 ✓ {tx.done}
               </button>
             </div>

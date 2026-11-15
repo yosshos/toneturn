@@ -2,6 +2,7 @@
 // left). A count-in bar, two guide bars where both voices sound, then only the bar's 1 clicks — the hands keep the
 // polyrhythm alone. The engine is src/engine/polyLock.ts. The pads are physical (left pad = left hand) in both languages.
 
+import { IsoMix } from './Iso';
 import '../polylock.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { barBeatsOf, gradePoly, isPolySave, newPolySave, polyBacking, polyDone, polyPattern, polyResult, polyRounds, polyWindow, POLY_BARS, type Lane, type PolyGrade, type PolySave, type PolyTap } from '../engine/polyLock';
@@ -11,6 +12,7 @@ import { midi as midiInput } from '../speech/midi';
 import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -18,7 +20,7 @@ const TX = {
   title: { en: 'Polyrhythm Lock', he: 'נעילת פולי־ריתם' },
   back: { en: 'Back', he: 'חזרה' },
   blurb: { en: 'Two hands, two pulses. The left pad keeps the slow pulse, the right pad the fast one. Two bars with a guide, then you hold it alone for six.', he: 'שתי ידיים, שתי פעימות. הפד השמאלי מחזיק את הפעימה האיטית, הימני את המהירה. שתי תיבות עם ליווי, ואז שש תיבות לבד.' },
-  how: { en: 'Tap the pads, or keys F and J, or a MIDI keyboard (below middle C = left).', he: 'מקישים על הפדים, או על המקשים F ו־J, או על מקלדת MIDI (מתחת לדו האמצעי = שמאל).' },
+  how: { en: 'Tap the pads, or keys F and J, or a MIDI keyboard (below middle C = left).', he: 'מקישים על הפדים, או על המקשים F או J, או על מקלדת MIDI (מתחת לדו האמצעי = שמאל).' },
   start: { en: 'Play', he: 'לנגן' },
   cont: { en: 'Continue', he: 'להמשיך' },
   newRun: { en: 'New run', he: 'ריצה חדשה' },
@@ -211,8 +213,11 @@ export function PolyLock({ lang, settings, saved, onSave, onExit, onResult, best
       {phase === 'setup' && (
         <section className="g2-card">
           <p>{tx(TX.blurb, lang)}</p>
-          <p className="g2-dim">{tx(TX.how, lang)}</p>
+          <p className="g2-dim">
+            <IsoMix text={tx(TX.how, lang)} />
+          </p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="polylock" />}
+          <InputCheck mode="midi" lang={lang} />
           {!!best && (
             <p className="g2-best">
               {tx(TX.best, lang)}: <b dir="ltr">{best}</b>

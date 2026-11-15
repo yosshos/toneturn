@@ -1,5 +1,6 @@
 // Transcription Race (0.70, GAMES_TIERS_PLAN §4): hear a phrase, write it on the keys (tap or MIDI), submit. Five
 // phrases; note-by-note accuracy × a time bonus. Engine: src/engine/transcribeRace.ts.
+import { IsoMix } from './Iso';
 import '../advgames.css';
 import '../transcribe.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,6 +24,8 @@ import {
 } from '../engine/transcribeRace';
 import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
 import { midi as midiInput } from '../speech/midi';
+import { InputCheck } from './InputCheck';
+import { Icon } from './icons';
 import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { KeysPad } from './Instrument';
@@ -246,9 +249,12 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
       <main className={`panel-screen g2 tr ${calm ? 'g2-calm' : ''}`} data-game="transcribe" data-phase="setup">
         <G2Head title={tx.title} backLabel={tx.back} onBack={back} />
         <section className="g2-card">
-          <p>{tx.blurb}</p>
+          <p>
+            <IsoMix text={tx.blurb} />
+          </p>
           <p className="g2-dim">{tx.rules}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="transcribe" />}
+          <InputCheck mode="midi" lang={lang} />
           {!!best && (
             <p className="g2-best">
               {tx.best}: <b dir="ltr">{best}</b>
@@ -358,11 +364,15 @@ export function TranscribeRace({ lang, settings, saved, onSave, onExit, onResult
         </button>
       ) : (
         <div className="tr-tools">
-          <button type="button" className={`btn ${playing ? 'on' : ''}`} onClick={replay} data-tr-replay>
-            {tx.replay}
+          {/* Icon buttons (the words are their labels): three word buttons broke mid-word at 320 px. */}
+          <button type="button" className={`btn tr-icon ${playing ? 'on' : ''}`} onClick={replay} data-tr-replay aria-label={tx.replay} title={tx.replay}>
+            <Icon k="repeat" size={22} />
           </button>
-          <button type="button" className="btn" onClick={() => setEntered((e) => e.slice(0, -1))} disabled={!entered.length}>
-            {tx.undo}
+          <button type="button" className="btn tr-icon" onClick={() => setEntered((e) => e.slice(0, -1))} disabled={!entered.length} aria-label={tx.undo} title={tx.undo} data-tr-undo>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="tr-undo-ico">
+              <path d="M9 14 4 9l5-5" />
+              <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+            </svg>
           </button>
           <button type="button" className="btn primary" onClick={submit} disabled={!entered.length} data-tr-submit>
             {tx.submit}

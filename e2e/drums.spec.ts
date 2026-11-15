@@ -177,7 +177,7 @@ test.describe('drums course', () => {
     await expect(page.locator('[data-hub="songs"]')).toHaveCount(0);
     await page.locator('[data-hub="games"]').click();
     await page.locator('[data-cat="all"]').click();
-    await expect(page.locator('.game-card.groove')).toBeVisible();
+    await expect(page.locator('.game-card.groove-echo')).toBeVisible(); // AUDIT-GAMES §10: the groove trainer is in Tools; Groove Echo leads
     await expect(page.locator('.game-card.highway')).toBeVisible();
     await expect(page.locator('.game-card.rush-chord')).toHaveCount(0);
     await page.goto('about:blank');

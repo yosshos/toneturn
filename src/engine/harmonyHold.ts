@@ -79,7 +79,8 @@ function toneOfPc(c: { root: number; ints: number[] }, p: number): ToneId {
 export function makeHoldTake(seed: number, level: number): HoldTake {
   const r = rng(seed ^ 0x2c1b3c6d);
   const lv = Math.max(1, Math.min(6, Math.round(level) || 1));
-  const key = pick(r, [0, 2, 3, 5, 7, 8, 9, 10]);
+  // All 12 keys (games fix: was 8). The held note is a pitch class: the take places it inside the singer's range.
+  const key = Math.floor(r() * 12);
   let chords: HoldChord[];
   if (lv === 1) {
     // one note held: the tonic (I, IV, vi, iv, ♭VI all hold it) or the 5th (I, iii, i, ♭III)

@@ -3,6 +3,7 @@
 // between, every note on the grid. Three takes per run; the engine is src/engine/bhInTime.ts. MIDI keyboards are
 // measured; the on-screen keys are for practice (detail.input = 'touch'). Keys and bars stay physical LTR.
 
+import { IsoMix } from './Iso';
 import '../bhtime.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -30,6 +31,7 @@ import { G2Head, prefersCalm } from './Flight';
 import type { GameScreenProps } from './gameProps';
 import { piano } from './services';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 
 type Lang = 'he' | 'en';
 const TEXT = {
@@ -233,7 +235,9 @@ export function BhInTime({ lang, settings, saved, onSave, onExit, onResult, best
     const r = runResult(run);
     setFinal({ ...r, record: r.score > 0 && r.score > (best ?? 0) });
     onSave(null);
-    onResult({ game: 'bhtime', score: r.score, detail: { accuracy: r.accuracy, input: run.input, bars: take?.bars.length ?? 4, level: run.level, bpm: run.bpm, takes: run.takes, rounds: run.takes.length, ...(run.tier ? { tier: run.tier } : {}) } });
+    // Key mastery (AUDIT-GAMES §1): each measured take (MIDI) counts in its key — the takes are seeded, so rebuilt here.
+    const keyTakes = run.input === 'midi' ? run.takes.map((acc, i) => ({ key: makeTake(run.level, run.bpm, takeSeed(run.seed, i)).key, acc, bpm: run.bpm })) : [];
+    onResult({ game: 'bhtime', score: r.score, detail: { accuracy: r.accuracy, input: run.input, bars: take?.bars.length ?? 4, level: run.level, bpm: run.bpm, takes: run.takes, rounds: run.takes.length, ...(run.tier ? { tier: run.tier } : {}), ...(keyTakes.length ? { keyInst: 'piano', keyTakes } : {}) } });
     setPhase('over');
   };
 
@@ -264,10 +268,13 @@ export function BhInTime({ lang, settings, saved, onSave, onExit, onResult, best
       {phase === 'setup' && (
         <section className="g2-card">
           <p>{tx.blurb}</p>
-          <p className="g2-dim">{tx.refresher}</p>
+          <p className="g2-dim">
+            <IsoMix text={tx.refresher} />
+          </p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="bhtime" />}
+          <InputCheck mode="midi" lang={lang} />
           <p className="g2-dim bht-input" data-bh-input={hasMidi ? 'midi' : 'touch'}>
-            {hasMidi ? tx.midi : tx.touch}
+            <IsoMix text={hasMidi ? tx.midi : tx.touch} />
           </p>
           {!!best && (
             <p className="g2-best">

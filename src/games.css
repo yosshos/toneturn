@@ -150,15 +150,23 @@
   font-weight: 900;
 }
 .turn-banner.turn {
-  background: var(--pc);
-  color: #2a1747;
+  /* v2: "Your turn!" is the now-cue — ink on a lemon chip with the ink outline and hard shadow (was mint at 1.53:1). */
+  background: var(--lemon, #ffd43b);
+  color: var(--ink-c, #1e1033);
+  border: 2.5px solid var(--ink-c, #1e1033);
+  box-shadow: 3px 3px 0 var(--ink-c, #1e1033);
   animation: pop 0.4s ease;
 }
 .turn-banner.turn .dot {
-  background: #2a1747;
+  background: var(--pc);
+  border: 2px solid var(--ink-c, #1e1033);
 }
 .turn-banner.respond {
-  color: var(--pc);
+  color: var(--ink);
+}
+.turn-banner.respond .dot {
+  background: var(--pc);
+  border: 2px solid var(--ink-c, #1e1033);
 }
 
 .pads {
@@ -458,16 +466,64 @@
 /* ---------------------------------------------------------------- Drum Echo: kick & snare pads */
 .drum-pads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; width: 100%; max-width: 560px; box-sizing: border-box; margin-inline: auto; }
 .tap-pad.drum-pad { min-width: 0; width: 100%; box-sizing: border-box; aspect-ratio: auto; letter-spacing: 0; }
-.tap-pad.drum-pad { position: relative; display: grid; place-items: center; align-content: center; gap: 4px; min-height: clamp(170px, 30vh, 260px); border-radius: 32px; color: #fff; font-size: clamp(1.4rem, 5vw, 2rem); box-shadow: 0 10px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.22); transition: transform .05s, box-shadow .05s, filter .2s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-.tap-pad.drum-pad.kick { background: radial-gradient(120% 100% at 50% 10%, #ff8a3d, #b3301f 70%, #5a1410); }
-.tap-pad.drum-pad.snare { background: radial-gradient(120% 100% at 50% 10%, #5ee7ff, #2a6fdb 70%, #142b66); }
-.tap-pad.drum-pad:not(.live) { filter: saturate(.55) brightness(.8); }
-.tap-pad.drum-pad:active { transform: translateY(7px) scale(.985); box-shadow: 0 3px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.18); filter: brightness(1.25); }
-.tap-pad.drum-pad small { font-size: .8rem; opacity: .7; font-weight: 600; }
-.drum-face { width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,.85), rgba(255,255,255,.35) 45%, rgba(255,255,255,.08) 70%); box-shadow: 0 0 0 5px rgba(255,255,255,.25), inset 0 -4px 10px rgba(0,0,0,.25); }
+:root[data-theme] .tap-pad.drum-pad { position: relative; display: grid; place-items: center; align-content: center; gap: 4px; min-height: clamp(170px, 30vh, 260px); border-radius: 24px; color: var(--ink-c, #1e1033); font-size: clamp(1.4rem, 5vw, 2rem); border: 2.5px solid var(--ink-c, #1e1033); box-shadow: 4px 4px 0 var(--ink-c, #1e1033); transition: transform .05s, box-shadow .05s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* v2: flat rhythm-domain pads (pink), ink outline + hard offset shadow; no radial gradients, no glow. */
+:root[data-theme] .tap-pad.drum-pad.kick { background: var(--pink, #ff5fa2); }
+:root[data-theme] .tap-pad.drum-pad.snare { background: #ffc2dc; }
+:root[data-theme] .tap-pad.drum-pad:not(.live) { opacity: .6; }
+:root[data-theme] .tap-pad.drum-pad:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink-c, #1e1033); }
+.tap-pad.drum-pad small { font-size: .8rem; font-weight: 600; }
+.drum-face { width: 56px; height: 56px; border-radius: 50%; background: var(--paper, #fbf7ff); border: 2.5px solid var(--ink-c, #1e1033); }
 .tap-pad.drum-pad:active .drum-face { animation: drum-hit .18s ease-out; }
 @keyframes drum-hit { 0% { transform: scale(.82); } 100% { transform: scale(1); } }
 .onset.kick:not(.good):not(.miss):not(.ok) { background: #ff7a3a; }
 .onset.snare { border-radius: 3px; }
 .onset.snare:not(.good):not(.miss):not(.ok) { background: #4cc9ff; }
 @media (prefers-reduced-motion: reduce) { .tap-pad.drum-pad:active .drum-face { animation: none; } }
+
+/* AUDIT-GAMES fix #4 — Echo Chain / Beat Echo on one phone screen (320×720): compact game cards on the setup, tighter
+   rhythm on the play stage. */
+@media (max-height: 820px), (max-width: 420px) {
+  .game-setup .game-cards .game-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 10px;
+    padding: 8px 10px;
+  }
+  .game-setup .game-cards .game-card > :first-child {
+    grid-row: span 2;
+    width: 34px;
+    height: 34px;
+  }
+  .game-setup .game-cards .game-card b {
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+  .game-setup .game-cards .game-card small:not(.best-chip) {
+    display: none;
+  }
+  .game-setup .game-cards .game-card .best-chip {
+    grid-column: 2;
+    margin-top: 0;
+  }
+}
+@media (max-height: 780px) {
+  main.game .game-stage {
+    gap: 8px;
+    padding-top: 0;
+  }
+  main.game .turn-banner {
+    min-height: 42px;
+    padding: 4px 18px;
+    font-size: 1.2rem;
+  }
+}
+
+/* AUDIT-GAMES fix #5 — buttons never break inside a word at 320 px: the Technique instrument chips wrap as whole
+   chips (were "Pi / a / no"). Scoped here so drills.css stays with the course-UI work. */
+.drill-inst {
+  flex-wrap: wrap;
+}
+.drill-inst .chip {
+  white-space: nowrap;
+}

@@ -16,6 +16,8 @@ import type { ExamDef } from '../content/bagrut';
 import { EXAM_PREP_NAME } from './CourseSwitcher';
 import { repGoal, repResults } from '../engine/repertoire';
 import '../repertoire.css';
+import '../todaypm.css';
+import { dayKey, doneOn, meanAbs, trend } from '../engine/pitchMemory';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -77,7 +79,41 @@ function RepGoalCard({ progress, course, lang, onOpen }: { progress: Progress; c
   );
 }
 
-export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void }) {
+/** The courses whose Today shows the daily pitch-memory card (it was a game in their lists). */
+export const PITCH_MEMORY_COURSES: CourseId[] = ['ear', 'voice'];
+
+/**
+ * Pitch Memory as a daily ritual (AUDIT-GAMES §9, was a games-list entry): today's note from memory — done or waiting —
+ * and the last 14 days as a flat bar trend (taller = closer). Opens the Pitch Memory screen.
+ */
+export function PitchMemoryCard({ progress, lang, onOpen }: { progress: Progress; lang: 'he' | 'en'; onOpen: () => void }) {
+  const he = lang === 'he';
+  const log = progress.pitchMemory ?? [];
+  const now = new Date();
+  const today = doneOn(log, dayKey(now));
+  const pts = trend(log, now, 14);
+  const mean = meanAbs(trend(log, now));
+  return (
+    <button type="button" className="tc-card tc-pm" onClick={onOpen} data-today-pitchmemory={today ? 'done' : 'open'}>
+      <small>{he ? 'זיכרון צליל · פעם ביום' : 'Pitch memory · once a day'}</small>
+      <b>{today ? (he ? 'היום: ' : 'Today: ') : he ? 'הצליל שלכם, מהזיכרון' : 'Your note, from memory'}{today && <bdi dir="ltr">{today.cents > 0 ? '+' : ''}{Math.round(today.cents)}¢</bdi>}</b>
+      <span className="pm-trend" aria-hidden="true">
+        {pts.map((p) => (
+          <i key={p.day} className={p.cents === null ? 'none' : ''} style={p.cents === null ? undefined : { height: `${Math.max(12, 100 - Math.min(100, Math.abs(p.cents)))}%` }} />
+        ))}
+      </span>
+      <small className="tc-hint">
+        {mean !== null ? (
+          <>
+            {he ? 'סטייה ממוצעת' : 'Average error'} <bdi dir="ltr">{Math.round(mean)}¢</bdi>
+          </>
+        ) : he ? 'היום הראשון — המגמה מתחילה כאן' : 'Day one — the trend starts here'}
+      </small>
+    </button>
+  );
+}
+
+export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -131,6 +167,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
       </section>
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
+      {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">
           <h2 id="tq-title">{he ? 'משימות היום' : "Today's quests"}</h2>

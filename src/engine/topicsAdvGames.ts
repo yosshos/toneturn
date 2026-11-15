@@ -309,12 +309,12 @@ TOPIC_TAGS['jazz-chains'] = tg(['cadences', 'progression', 0.7], ['chords', 'sev
 // ================================================================ name-standard (Name That Standard)
 
 /** The tunes of the game (forms, studies and vamps in standards.ts are left out) and their short names. */
-export const NTS_TUNES: { id: string; name?: string; level: number; like?: string[] }[] = [
-  { id: 'blues-f', name: 'Jazz blues', level: 1, like: ['bird-blues', 'minor-blues'] },
-  { id: 'minor-blues', name: 'Minor blues', level: 1, like: ['blues-f'] },
-  { id: 'bird-blues', name: 'Bird blues (Blues for Alice changes)', level: 1, like: ['blues-f'] },
-  { id: 'rhythm-full', name: 'Rhythm changes', level: 1, like: ['a-train'] },
-  { id: 'autumn', level: 1, like: ['blue-bossa', 'never-another'] },
+export const NTS_TUNES: { id: string; name?: string; he?: string; level: number; like?: string[] }[] = [
+  { id: 'blues-f', name: 'Jazz blues', he: 'בלוז ג׳אז', level: 1, like: ['bird-blues', 'minor-blues'] },
+  { id: 'minor-blues', name: 'Minor blues', he: 'בלוז מינורי', level: 1, like: ['blues-f'] },
+  { id: 'bird-blues', name: 'Bird blues', he: 'בלוז בירד', level: 1, like: ['blues-f'] },
+  { id: 'rhythm-full', name: 'Rhythm changes', he: 'ריתם צ׳יינג׳ס', level: 1, like: ['a-train'] },
+  { id: 'autumn', he: 'עלי שלכת', level: 1, like: ['blue-bossa', 'never-another'] },
   { id: 'satin', level: 2, like: ['tune-up', 'misty'] },
   { id: 'blue-bossa', level: 2, like: ['autumn', 'song-father'] },
   { id: 'misty', level: 2, like: ['satin', 'never-another'] },
@@ -386,8 +386,10 @@ TOPIC_GEN['name-standard'] = {
     const transpose = lv >= 4 ? pickR(rnd, [-5, -3, -2, 2, 3, 5]) : 0;
     const names: Names = {};
     for (const k of choices) {
-      const n = ntsName(NTS_TUNES.find((x) => x.id === k)!);
-      names[k] = { en: n, he: n };
+      // AUDIT-GAMES §6: the Hebrew name where one exists; otherwise the tune's title (isolated LTR on screen).
+      const tune = NTS_TUNES.find((x) => x.id === k)!;
+      const n = ntsName(tune);
+      names[k] = { en: n, he: tune.he ?? n };
     }
     return choiceQ({
       id, topic: 'name-standard', level: lv, seed, skill: 'cadences', difficulty: [1150, 1250, 1380, 1520][lv - 1],

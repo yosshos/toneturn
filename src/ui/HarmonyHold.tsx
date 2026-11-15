@@ -14,6 +14,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -228,6 +229,7 @@ export function HarmonyHold({ lang, settings, saved, onSave, onExit, onResult, b
         <section className="g2-card">
           <p>{tx(TX.blurb, lang)}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="harmonyhold" />}
+          <InputCheck mode="mic" lang={lang} />
           {!!best && (
             <p className="g2-best">
               {tx(TX.best, lang)}: <b dir="ltr">{best}</b>

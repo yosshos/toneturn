@@ -150,7 +150,8 @@
   line-height: 1;
 }
 .rush-lives .on {
-  color: var(--coral);
+  /* AUDIT-GAMES: the breath marks were coral at 2.35:1 on paper */
+  color: var(--purple, #6d28d9);
 }
 .rush-lives .off {
   color: var(--ink-dim);
@@ -251,6 +252,17 @@
   font-weight: 700;
   font-size: 1.05rem;
 }
+/* Progression Detective (AUDIT-GAMES §5): a progression never breaks inside itself — one chip per line. */
+.rush-answers.prog {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.rush-answers.prog .rush-ans {
+  white-space: nowrap;
+  min-height: 48px;
+  padding: 8px 10px;
+  font-size: 1rem;
+}
 .rush-ans:active:not(:disabled) {
   transform: translateY(4px);
   box-shadow: 0 1px 0 #0b0c19;
@@ -332,7 +344,7 @@
   text-align: center;
   font-size: 2.4rem;
   color: var(--gold);
-  text-shadow: 0 0 18px color-mix(in srgb, var(--gold) 60%, transparent);
+  text-shadow: none; /* v2: no glow */
   animation: rush-burst 0.9s ease-out forwards;
 }
 .rush-lvlup {

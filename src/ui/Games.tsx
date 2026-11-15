@@ -1,4 +1,5 @@
 import { DOMAIN_COLOR, Glyph } from './Glyph';
+import { IsoMix } from './Iso';
 import { EchoArt } from './GameArt';
 import { NotesView } from './NotesView';
 import { TalkToggle } from './TalkToggle';
@@ -16,6 +17,8 @@ import { MicIcon, Note, PermissionPanel } from './bits';
 import { makeGameAdapters, piano, store } from './services';
 import { calibrationOffset } from '../engine/memory';
 import { TierChips } from './TierChips';
+import { InputCheck } from './InputCheck';
+import { SetupSheet } from './SetupSheet';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { midi as midiInput } from '../speech/midi';
 
@@ -56,7 +59,6 @@ export function GameSetup({
   onStart,
   settings,
   onSettings,
-  onTrueFalse,
   tiers,
 }: {
   t: Strings;
@@ -127,15 +129,7 @@ export function GameSetup({
           </button>
         ))}
       </div>
-      {onTrueFalse && !tinfo && (
-        <button className="game-card truefalse games-tf" onClick={onTrueFalse}>
-          <span className="duel-icon" aria-hidden="true">
-            ✓✗
-          </span>
-          <b>{t.trueFalse}</b>
-          <small>{t.tfBlurb}</small>
-        </button>
-      )}
+      {/* AUDIT-GAMES §5: the Truth or Bluff card here duplicated its own games-list card — removed. */}
 
       <section className="set-card">
         <fieldset className="seg-field">
@@ -143,17 +137,22 @@ export function GameSetup({
           <div className="seg" role="radiogroup" aria-label={t.answerWith}>
             {inputs.map(([v, l]) => (
               <button key={v} type="button" role="radio" aria-checked={effInput === v} className={effInput === v ? 'on' : ''} disabled={noPads && v === 'pads'} onClick={() => setInput(v)}>
-                {(v === 'sing' || v === 'knock') && <MicIcon />} {l}
+                {(v === 'sing' || v === 'knock') && <MicIcon />} <IsoMix text={l} />
               </button>
             ))}
           </div>
           {input === 'knock' && <p className="field-hint">{t.knockHint}</p>}
-          {kind === 'rhythm' && input === 'tap' && <Calibrate t={t} latency={settings.tapLatencyMs} onDone={(ms) => onSettings({ tapLatencyMs: ms })} />}
           {effInput === 'sing' && <p className="field-hint">{noPads ? NO_PADS_HINT[settings.uiLang] : t.singHint}</p>}
           {effInput === 'midi' && <p className="field-hint">{MIDI_TX.hint[settings.uiLang]}</p>}
+          {(effInput === 'sing' || effInput === 'midi' || effInput === 'knock') && (
+            <InputCheck key={effInput} mode={effInput === 'midi' ? 'midi' : effInput === 'knock' ? 'drum-mic' : 'mic'} lang={settings.uiLang} />
+          )}
         </fieldset>
 
         {tinfo && <TierChips lang={settings.uiLang} info={tinfo} value={tier} onChange={setTier} game={kind} />}
+        {/* AUDIT-GAMES fix #4: one screen at 320×720 — players, tempo, calibration and the extras open in a sheet. */}
+        <SetupSheet lang={settings.uiLang} id="echo" summary={`${count} · ${t.players}`}>
+          {kind === 'rhythm' && input === 'tap' && <Calibrate t={t} latency={settings.tapLatencyMs} onDone={(ms) => onSettings({ tapLatencyMs: ms })} />}
         {kind === 'rhythm' && !tinfo && (
           <fieldset className="seg-field">
             <legend>{t.tempo}</legend>
@@ -198,9 +197,6 @@ export function GameSetup({
             ))}
           </div>
         )}
-      </section>
-
-      <section className="set-card">
         {kind === 'melody' && effInput === 'sing' && (
           <fieldset className="seg-field">
             <legend>{t.echoTolerance}</legend>
@@ -250,6 +246,7 @@ export function GameSetup({
             </div>
           </fieldset>
         )}
+        </SetupSheet>
       </section>
 
       {best > 0 && count === 1 && (
@@ -568,7 +565,11 @@ export function GameScreen({
                   </span>
                 </div>
               )}
-              {v.input === 'tap' && <p className="hint">{drums ? t.drumKeyHint : t.tapKeyHint}</p>}
+              {v.input === 'tap' && (
+                <p className="hint">
+                  <IsoMix text={drums ? t.drumKeyHint : t.tapKeyHint} />
+                </p>
+              )}
             </>
           )}
 

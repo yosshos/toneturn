@@ -37,6 +37,8 @@ const TX = {
     test: 'Test the mic',
     hit: 'Hit',
     noDevice: 'No MIDI device',
+    keysLabel: 'Keys:',
+    padsLabel: 'Pads:',
     mic: 'Microphone',
     hints: {
       permission: 'Allow the microphone (the icon in the address bar).',
@@ -60,6 +62,8 @@ const TX = {
     test: 'לבדוק מיקרופון',
     hit: 'מכה',
     noDevice: 'אין התקן MIDI',
+    keysLabel: 'מקלדת:',
+    padsLabel: 'פדים:',
     mic: 'מיקרופון',
     hints: {
       permission: 'אשרו את המיקרופון (הסמל בשורת הכתובת).',
@@ -226,6 +230,12 @@ function useElapsed(from: number, stop: boolean): number {
   return from ? now - from : 0;
 }
 
+/** Latin product words ("MIDI", "Chrome") inside a sentence, isolated in <bdi> so a Hebrew line keeps its order. */
+function MidiWord({ text }: { text: string }) {
+  const parts = text.split(/(MIDI|Chrome)/);
+  return <>{parts.map((p, i) => (i % 2 ? <bdi key={i}>{p}</bdi> : p))}</>;
+}
+
 function Meter({ bars }: { bars: number }) {
   return (
     <span className="ic-meter" aria-hidden="true" dir="ltr">
@@ -247,7 +257,7 @@ function Links({ mode, lang, alsoMidi }: { mode: InputCheckMode; lang: Lang; als
     <span className="ic-links">
       {alsoMidi && !isMidiMode(mode) && (
         <a className="ic-link" href="#/settings/midi" title={tx.midiWhy} aria-label={tx.midiWhy} data-ic-link="midi">
-          {tx.midiLink}
+          <bdi>{tx.midiLink}</bdi>
         </a>
       )}
       <a className="ic-gear" href={settingsHref(mode)} aria-label={isMidiMode(mode) ? tx.midiSettings : tx.micSettings} title={isMidiMode(mode) ? tx.midiSettings : tx.micSettings} data-ic-link={isMidiMode(mode) ? 'midi' : 'input'}>
@@ -304,7 +314,7 @@ function MicStrip({ mode, lang, alsoMidi, className }: { mode: InputCheckMode; l
           </>
         ) : hint ? (
           <span className="ic-hint" data-ic-hint={hint}>
-            {tx.hints[hint]}
+            <MidiWord text={tx.hints[hint]} />
           </span>
         ) : (
           <span className="ic-dim">{tx.listening}</span>
@@ -326,9 +336,16 @@ function MidiStrip({ mode, lang, className, noteName }: { mode: InputCheckMode; 
   return (
     <div className={`input-check midi ${className}`} data-input-check={mode} data-ic-state={state} data-ic-notes={m.blink} role="status" aria-live="polite">
       <Led n={m.blink} />
-      <span className="ic-dev">
-        <bdi>{m.devices.length ? m.devices.join(', ') : tx.noDevice}</bdi>
-      </span>
+      {m.devices.length ? (
+        <span className="ic-dev" data-ic-dev="1">
+          <span className="ic-dev-label">{drums ? tx.padsLabel : tx.keysLabel}</span> <bdi>{m.devices.join(', ')}</bdi>
+        </span>
+      ) : hint ? null : (
+        // No device: the hint (after a quiet wait) says what to do, so the bare "no device" line gives way to it.
+        <span className="ic-dev">
+          <MidiWord text={tx.noDevice} />
+        </span>
+      )}
       <span className="ic-line">
         {gotIt && m.last ? (
           <>
@@ -343,7 +360,7 @@ function MidiStrip({ mode, lang, className, noteName }: { mode: InputCheckMode; 
           </>
         ) : hint ? (
           <span className="ic-hint" data-ic-hint={hint}>
-            {tx.hints[hint]}
+            <MidiWord text={tx.hints[hint]} />
           </span>
         ) : (
           <span className="ic-dim">{tx.listening}</span>

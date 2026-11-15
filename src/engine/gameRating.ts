@@ -21,6 +21,19 @@ const T2 = (a: [SkillId, string, number], b: [SkillId, string, number]): Tag[] =
   { skill: b[0], sub: `${b[0]}/${b[1]}`, w: b[2] },
 ];
 
+/** The duel's question sets (tournament.ts SetKind) → the skill they train. */
+const DUEL_TAGS: Record<string, Tag[]> = {
+  mixed: T('degrees', 'diatonic'),
+  degrees: T('degrees', 'diatonic'),
+  chords: T('chords', 'quality'),
+  intervals: T('intervals', 'melodic'),
+  modes: T('modes', 'scales'),
+  'wrong-notes': T('dictation', 'melodic'),
+  truefalse: T('theory', 'harmony'),
+  beat: T('rhythm-dictation', 'dictate'),
+  jazz: T('cadences', 'progression'),
+};
+
 /** The skills each game trains (primary first) and its difficulty by level. */
 const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff: (d: Record<string, unknown>) => number }> = {
   highway: { tags: () => T2(['rhythm-reading', 'read', 0.7], ['timing', 'precision', 0.3]), diff: (d) => 850 + 90 * (Number(d.level) || 1) },
@@ -42,6 +55,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   'rush-scale': { tags: () => T('modes', 'scales'), diff: () => 1150 },
   'rush-standard': { tags: () => T2(['cadences', 'standards', 0.7], ['form', 'standards', 0.3]), diff: () => 1250 },
   reharm: { tags: () => T('cadences', 'reharm'), diff: () => 1300 },
+  // AUDIT-GAMES §9: the duel on this device credits its owner (player 1) in the skill of the set played.
+  duel: { tags: (d) => DUEL_TAGS[String(d.kind)] ?? T('degrees', 'diatonic'), diff: () => 1000 },
   // The groove trainer's level test (0.70): time held through silent bars.
   groove: { tags: () => T2(['timing', 'pocket', 0.5], ['tempo', 'hold', 0.5]), diff: (d) => 900 + 60 * (Number(d.bars) || 1) },
   transcribe: { tags: () => T2(['dictation', 'melodic', 0.7], ['sequences', 'melody', 0.3]), diff: () => 1200 },

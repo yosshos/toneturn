@@ -2,6 +2,7 @@
 // and Progression Detective (3 lives, no clock). The engine is src/engine/rush.ts. Pictures stay physical LTR;
 // only the chrome mirrors in Hebrew.
 
+import { IsoMix } from './Iso';
 import '../rush.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -37,6 +38,8 @@ import { NoteStaff } from './NoteViews';
 import { G2Head, prefersCalm } from './Flight';
 import { piano } from './services';
 import { TierChips } from './TierChips';
+import { RushResultCard } from './GameResult';
+import { InputCheck } from './InputCheck';
 import { startTier, tierAllowed, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { judgeStrum } from '../engine/chordFinder';
 import { useStrums } from './strumListen';
@@ -58,16 +61,16 @@ export interface RushProps {
 }
 
 /** Cards for the games list: route id, icon, hue, names. */
-export const RUSH_GAMES: { mode: RushMode; icon: string; hue: string; en: [string, string]; he: [string, string] }[] = [
-  { mode: 'chord', icon: '🎹', hue: 'var(--hue-reading)', en: ['Chord Rush', 'See a chord, name it — 60 seconds.'], he: ['מרוץ אקורדים', 'רואים אקורד, נותנים לו שם — 60 שניות.'] },
-  { mode: 'note', icon: '𝄞', hue: 'var(--hue-reading)', en: ['Note Rush', 'Read notes on the staff against the clock.'], he: ['מרוץ תווים', 'קוראים תווים על החמשה נגד השעון.'] },
-  { mode: 'fretboard', icon: '🎸', hue: 'var(--hue-instrument)', en: ['Fretboard Rush', 'Find the note on the neck — fast.'], he: ['מרוץ הצוואר', 'מוצאים את התו על הצוואר — מהר.'] },
-  { mode: 'interval', icon: '↕', hue: 'var(--hue-pitch)', en: ['Interval Rush', 'Name intervals by ear against the clock.'], he: ['מרוץ מרווחים', 'מזהים מרווחים בשמיעה נגד השעון.'] },
-  { mode: 'keysig', icon: '♯', hue: 'var(--hue-reading)', en: ['Key Signature Rush', 'Which key is it? 60 seconds.'], he: ['מרוץ סימני היתק', 'איזה סולם זה? 60 שניות.'] },
-  { mode: 'progression', icon: '🔍', hue: 'var(--hue-creative)', en: ['Progression Detective', 'Name the chord progression. Three lives.'], he: ['בלש המהלכים', 'מזהים את מהלך האקורדים. שלושה חיים.'] },
-  { mode: 'voicing', icon: '', hue: 'var(--hue-pitch)', en: ['Voicing Spy', 'Hear a chord, name its voicing. Three lives.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג. שלושה חיים.'] },
-  { mode: 'scale', icon: '', hue: 'var(--hue-pitch)', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
-  { mode: 'standard', icon: '', hue: 'var(--hue-pitch)', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
+export const RUSH_GAMES: { mode: RushMode; hue: string; en: [string, string]; he: [string, string] }[] = [
+  { mode: 'chord', hue: 'var(--hue-reading)', en: ['Chord Rush', 'See a chord, name it — 60 seconds.'], he: ['מרוץ אקורדים', 'רואים אקורד, נותנים לו שם — 60 שניות.'] },
+  { mode: 'note', hue: 'var(--hue-reading)', en: ['Note Rush', 'Read notes on the staff against the clock.'], he: ['מרוץ תווים', 'קוראים תווים על החמשה נגד השעון.'] },
+  { mode: 'fretboard', hue: 'var(--hue-instrument)', en: ['Fretboard Rush', 'Find the note on the neck — fast.'], he: ['מרוץ הצוואר', 'מוצאים את התו על הצוואר — מהר.'] },
+  { mode: 'interval', hue: 'var(--hue-pitch)', en: ['Interval Rush', 'Name intervals by ear against the clock.'], he: ['מרוץ מרווחים', 'מזהים מרווחים בשמיעה נגד השעון.'] },
+  { mode: 'keysig', hue: 'var(--hue-reading)', en: ['Key Signature Rush', 'Which key is it? 60 seconds.'], he: ['מרוץ סימני היתק', 'איזה סולם זה? 60 שניות.'] },
+  { mode: 'progression', hue: 'var(--hue-creative)', en: ['Progression Detective', 'Name the chord progression. Three lives.'], he: ['בלש המהלכים', 'מזהים את מהלך האקורדים. שלושה חיים.'] },
+  { mode: 'voicing', hue: 'var(--hue-pitch)', en: ['Voicing Spy', 'Hear a chord, name its voicing. Three lives.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג. שלושה חיים.'] },
+  { mode: 'scale', hue: 'var(--hue-pitch)', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
+  { mode: 'standard', hue: 'var(--hue-pitch)', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
 ];
 
 const T = {
@@ -376,7 +379,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               <legend>{tx(T.picture, lang)}</legend>
               <div className="rush-seg" role="radiogroup">
                 {(['keys', 'staff', 'neck', 'mixed', ...(settings.activeCourse === 'guitar' ? ['play'] : [])] as RushPicture[]).map((p) => (
-                  <button key={p} type="button" role="radio" aria-checked={picture === p} className={`rush-opt ${picture === p ? 'on' : ''}`} onClick={() => setPicture(p)}>
+                  <button key={p} type="button" role="radio" aria-checked={picture === p} className={`rush-opt ${picture === p ? 'on' : ''}`} onClick={() => setPicture(p)} data-picture={p}>
                     {tx(T.pics[p], lang)}
                   </button>
                 ))}
@@ -405,6 +408,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
               {tx(T.best, lang)}: <b>{best}</b>
             </p>
           ) : null}
+          {played && <InputCheck mode="mic" lang={lang} />}
           <p className="g2-dim">
             {played ? (
               tx(T.playHint, lang)
@@ -440,40 +444,21 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
     return (
       <main className={`rush rush-over ${calm ? 'calm' : ''}`}>
         <G2Head title={title} backLabel={tx(T.back, lang)} onBack={exit} />
-        <section className="g2-card rush-card rush-result" aria-live="polite">
-          <h2>{tx(streak ? T.caseClosed : rounds ? T.tenDone : T.timeUp, lang)}</h2>
-          <p className="rush-final">
-            <span>{tx(T.score, lang)}</span>
-            <b>{st.score}</b>
-          </p>
-          {newBest ? <p className="rush-newbest">{tx(T.newBest, lang)}</p> : best ? <p className="g2-dim">{tx(T.best, lang)}: {best}</p> : null}
-          <dl className="rush-stats">
-            <div>
-              <dt>{tx(T.right, lang)}</dt>
-              <dd>{st.right}</dd>
-            </div>
-            <div>
-              <dt>{tx(T.wrong, lang)}</dt>
-              <dd>{st.wrong}</dd>
-            </div>
-            <div>
-              <dt>{tx(T.maxCombo, lang)}</dt>
-              <dd>{st.maxCombo}</dd>
-            </div>
-            <div>
-              <dt>{tx(T.reached, lang)}</dt>
-              <dd>{st.level}</dd>
-            </div>
-          </dl>
-          <div className="g2-row">
-            <button className="btn primary" onClick={startNew}>
-              {tx(T.again, lang)}
-            </button>
-            <button className="btn ghost" onClick={exit}>
-              {tx(T.back, lang)}
-            </button>
-          </div>
-        </section>
+        <RushResultCard
+          lang={lang}
+          heading={tx(streak ? T.caseClosed : rounds ? T.tenDone : T.timeUp, lang)}
+          score={st.score}
+          best={best}
+          newBest={!!newBest}
+          right={st.right}
+          wrong={st.wrong}
+          stats={[
+            { label: tx(T.maxCombo, lang), value: st.maxCombo },
+            { label: tx(T.reached, lang), value: st.level },
+          ]}
+          onAgain={startNew}
+          onBack={exit}
+        />
       </main>
     );
   }
@@ -552,7 +537,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       </section>
 
       {item.kind === 'choice' ? (
-        <div className={`rush-answers n${item.q.choices.length}`}>
+        <div className={`rush-answers n${item.q.choices.length} ${mode === 'progression' ? 'prog' : ''}`}>
           {item.q.choices.map((c, i) => {
             const n = item.q.names[c];
             const cls = fb ? (c === item.q.answer ? 'ok' : c === fb.chosen ? 'bad' : 'dim') : '';
@@ -565,7 +550,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
                     {lang === 'he' && <small dir="rtl">{n.he}</small>}
                   </span>
                 ) : (
-                  <span>{n[lang]}</span>
+                  <span>{lang === 'he' ? <IsoMix text={n.he} /> : n.en}</span>
                 )}
               </button>
             );
@@ -582,7 +567,7 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
       )}
 
       <p className="rush-live" aria-live="assertive">
-        {fb ? (fb.correct ? tx(T.rightFb, lang) : item.kind === 'choice' ? `${tx(T.answerWas, lang)} ${item.q.names[item.q.answer][lang]}` : item.kind === 'strum' ? (fb.heard ? `${tx(T.heard, lang)}: ${fb.heard}` : '') : `${tx(T.answerWas, lang)} ${tx(item.target.name, lang)}`) : ''}
+        {fb ? (fb.correct ? tx(T.rightFb, lang) : item.kind === 'choice' ? <>{tx(T.answerWas, lang)} <IsoMix text={item.q.names[item.q.answer][lang]} /></> : item.kind === 'strum' ? (fb.heard ? `${tx(T.heard, lang)}: ${fb.heard}` : '') : `${tx(T.answerWas, lang)} ${tx(item.target.name, lang)}`) : ''}
       </p>
     </main>
   );

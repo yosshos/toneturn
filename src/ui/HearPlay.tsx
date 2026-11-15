@@ -98,7 +98,7 @@ async function takeItem(c: TakeCtx<HearItem>): Promise<TakeOutcome | 'mic-error'
 function HearBoard({ item, phase, outcome, cell, lang }: { item: HearItem; save: TakeSave; phase: TakePhase; outcome: TakeOutcome | null; cell: number; lang: Lang }) {
   const reveal = phase === 'review';
   const key = lang === 'he' ? `${KEY_HE[item.key]} מז׳ור` : `${PC[item.key]} major`;
-  const cells = item.game === 'rootsear' && item.chords ? item.chords.map((ch, i) => ({ top: reveal ? chordName(ch) : '?', sub: reveal ? PC[((item.notes[i].midi % 12) + 12) % 12] : '' })) : item.notes.map((n) => ({ top: reveal ? midiName(n.midi) : '?', sub: '' }));
+  const cells = item.game === 'rootsear' && item.chords ? item.chords.map((ch, i) => ({ top: reveal ? chordName(ch) : '?', sub: reveal ? (lang === 'he' ? KEY_HE : PC)[((item.notes[i].midi % 12) + 12) % 12] : '' })) : item.notes.map((n) => ({ top: reveal ? midiName(n.midi) : '?', sub: '' }));
   return (
     <div className="inst-board">
       <p className="inst-meta" dir="ltr">
@@ -144,6 +144,7 @@ function playbackCfg(inst: PlaybackInst): TakeGameCfg<HearItem> {
     hear: (c) => hearItem(c),
     take: takeItem,
     board: (p) => <HearBoard {...p} />,
+    keyOf: (it) => ({ key: it.key, inst: inst === 'keys' ? 'piano' : inst }),
   };
 }
 
@@ -163,6 +164,7 @@ const ROOTS: TakeGameCfg<HearItem> = {
   hear: (c) => hearItem(c),
   take: takeItem,
   board: (p) => <HearBoard {...p} />,
+  keyOf: (it, settings) => ({ key: it.key, inst: settings.activeCourse === 'guitar' ? 'guitar' : 'bass' }),
 };
 
 export function PlayItBack(p: GameScreenProps) {

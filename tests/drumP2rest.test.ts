@@ -7,7 +7,7 @@ import { analyzeDrumTake, type DrumTakeHit } from '../src/engine/drills/drumAnal
 import { expTimeMs } from '../src/engine/drills/analyze';
 import type { Drill, ItemState, TakeMetrics } from '../src/engine/drills/types';
 import { LATIN_TEACHER_CHECK } from '../src/engine/drills/drumLatin2';
-import { RUSH_TIERS, RUDIMENTS, rudimentHits, rushRound, scoreRush, stickingOf, zoneHand, zonesFor, zonesOf, ZONE_VOICE, type StickZones } from '../src/engine/rudimentRush';
+import { isGraced, RUSH_TIERS, RUDIMENTS, rudimentHits, rushRound, scoreRush, stickingOf, zoneHand, zonesFor, zonesOf, ZONE_VOICE, type StickZones } from '../src/engine/rudimentRush';
 import { DRUM_GAMES, drumRound, scoreRound } from '../src/engine/drumGames';
 import { decodeGrooveCode, drumLevel, encodeGrooveCode, GROOVE_POOL, grooveOffRounds, grooveRunDetail, grooveWinner, LEVEL_FROM, newGrooveSeed, scoreGrooveRound, tempoReached } from '../src/engine/grooveOff';
 import { chokeCheck, chokeOnsets, withChoke } from '../src/engine/drills/drumChoke';
@@ -28,7 +28,12 @@ function noise(seed: number): () => number {
 /** A take playing the drill as written (jitter `sd` ms); `voiceOf` may swap what each note is played on. */
 function take(d: Drill, bpm: number, sd = 0, seed = 5, voiceOf?: (n: Drill['notes'][number]) => DrumTakeHit['voice']): DrumTakeHit[] {
   const g = noise(seed);
-  return d.notes.map((n) => ({ voice: voiceOf ? voiceOf(n) : n.voice!, on: expTimeMs(d, n.beat, bpm) + (sd ? g() * sd : 0), vel: n.ghost ? 34 : n.accent ? 116 : 78, hat: n.voice === 'hihat' ? 'closed' : null }));
+  return d.notes.flatMap((n) => {
+    const main: DrumTakeHit = { voice: voiceOf ? voiceOf(n) : n.voice!, on: expTimeMs(d, n.beat, bpm) + (sd ? g() * sd : 0), vel: n.ghost ? 34 : n.accent ? 116 : 78, hat: n.voice === 'hihat' ? 'closed' : null };
+    // Flams / drags: the grace hit(s) on the same drum, 25 ms apart before the stroke, softer.
+    const graces: DrumTakeHit[] = Array.from({ length: n.grace ?? 0 }, (_, k) => ({ ...main, on: main.on - 25 * ((n.grace ?? 0) - k), vel: 40 }));
+    return [...graces, main];
+  });
 }
 
 describe('d-latin 8–10: mambo, songo, Mozambique (awaiting a teacher check)', () => {
@@ -87,7 +92,8 @@ describe('Rudiment Rush', () => {
     for (const rd of RUDIMENTS) {
       const hs = rudimentHits(rd, 'hat-snare');
       expect(hs.length, rd.id).toBeGreaterThan(5);
-      for (const h of hs) expect(h.v).toBe(ZONE_VOICE['hat-snare'][h.h!]);
+      // Flams and drags are played on one surface (their grace note is the other hand on the same drum).
+      for (const h of hs) expect(h.v).toBe(isGraced(rd) ? 'snare' : ZONE_VOICE['hat-snare'][h.h!]);
       for (const h of hs) expect(h.b + (h.d ?? 0), rd.id).toBeLessThanOrEqual(8 + 1e-6);
     }
     // The paradiddle: R L R R L R L L.
@@ -147,6 +153,39 @@ describe('Rudiment Rush', () => {
     const hi = drumRound('rudiment-rush', 'mf', 1, 9, { ups: 3, zones: 'hat-snare' });
     const p = (r: typeof lo) => scoreRound(r, analyzeDrumTake(r.drill, r.bpm, take(r.drill, r.bpm, 2))).points;
     expect(p(hi)).toBeGreaterThan(p(lo));
+  });
+  it('flams and drags (mf–ff): one surface by MIDI, the grace notes measured; never on a pad or a microphone kit', () => {
+    for (const t of ['pp', 'p', 'mp'] as const) expect(RUSH_TIERS[t].pool.some((id) => isGraced(RUDIMENTS.find((r) => r.id === id)!)), t).toBe(false);
+    for (const t of ['mf', 'f', 'ff'] as const) {
+      const ids = RUSH_TIERS[t].pool.filter((id) => isGraced(RUDIMENTS.find((r) => r.id === id)!));
+      expect(ids.length, t).toBeGreaterThanOrEqual(2);
+      expect(ids.some((id) => /flam/i.test(id)) && ids.some((id) => /drag|ratamacue/i.test(id)), t).toBe(true);
+    }
+    // Flam tap: lR R rL L — a grace note on every accented stroke.
+    const ft = rudimentHits(RUDIMENTS.find((r) => r.id === 'flamTap')!, 'hat-snare').slice(0, 4);
+    expect(ft.map((h) => `${h.grace ?? ''}${h.h}`).join(' ')).toBe('1R R 1L L');
+    // A seed that lands on a graced rudiment by MIDI: one surface, flam goal, sticking a self-check; a clean take passes.
+    let found = false;
+    for (let seed = 1; seed < 60 && !found; seed++) {
+      const r = drumRound('rudiment-rush', 'mf', 0, seed, { zones: 'hat-snare', midi: true });
+      if (!isGraced(r.rush!.rudiment)) continue;
+      found = true;
+      expect(r.drill.notes.every((n) => n.voice === 'snare')).toBe(true);
+      expect(r.drill.notes.some((n) => n.grace)).toBe(true);
+      expect(r.drill.goal.drum?.flam).toBe(0.9);
+      expect(r.drill.drum?.mic).toBe(false);
+      const m = analyzeDrumTake(r.drill, r.bpm, take(r.drill, r.bpm, 2));
+      const sc = scoreRush(r.rush!, m, 'mf');
+      expect(sc.ok).toBe(true);
+      expect(sc.sticking).toBe(null);
+    }
+    expect(found).toBe(true);
+    // A pad, or an acoustic kit by microphone, never gets one.
+    for (let seed = 1; seed < 40; seed++)
+      for (let k = 0; k < 5; k++) {
+        expect(isGraced(drumRound('rudiment-rush', 'ff', k, seed, { zones: 'pad' }).rush!.rudiment)).toBe(false);
+        expect(isGraced(drumRound('rudiment-rush', 'ff', k, seed, { zones: 'hat-snare', midi: false }).rush!.rudiment)).toBe(false);
+      }
   });
   it('hat-snare is offered on an acoustic kit by microphone', () => {
     expect(drumRound('rudiment-rush', 'pp', 0, 1, { zones: 'hat-snare' }).drill.drum?.acousticOk).toBe(true);

@@ -207,6 +207,12 @@ export function earnAwards(awards: Awards | undefined, list: Achievement[], at: 
  * S7, first launch of 0.38: award everything already earned silently, dated "before 0.38".
  * Returns the awards and the count for the single summary toast (0 = no toast).
  */
+/** The first-launch toast (AUDIT-GAMES §6): in the shown language, singular for one award. */
+export function firstAwardsLine(count: number, lang: 'en' | 'he'): string {
+  if (lang === 'he') return count === 1 ? 'פרס אחד מלפני כן מחכה בפרסים שלכם' : `${count} פרסים מלפני כן מחכים בפרסים שלכם`;
+  return count === 1 ? 'An award from before is in your Awards' : `${count} awards from before are in your Awards`;
+}
+
 export function firstLaunchAwards(p: Progress, x: AchievementExtra, at: string): { awards: Awards; count: number } {
   const ps = p as ProgressStats;
   const { awards, newly } = earnAwards(ps.awards, achievements(p, x), at, { pre: true });

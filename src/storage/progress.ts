@@ -1,6 +1,7 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { addGameKeyTakes, isKeyGame, keyTakesOf } from '../engine/gameKeys';
 import { coursesFromProfile, migrateExamCourse } from '../engine/courses';
 import { placementResults } from '../engine/placement';
 import { isLog, logMinutes } from '../engine/practiceLog';
@@ -99,6 +100,8 @@ export interface Progress {
   pitchMemory?: { day: string; cents: number; note: number }[];
   /** Technique drills: progress per item (spec AI §10). */
   drillItems?: Record<string, import('../engine/drills/types').ItemState>;
+  /** AUDIT-GAMES §1: key cells of the key-relative games (gameKeys.ts), read with the drill items for key mastery. */
+  gameKeys?: Record<string, import('../engine/drills/types').ItemState>;
   /** Game tiers (GAMES_TIERS_PLAN): cleared tier, last runs and bests per tier, per game. */
   gameTiers?: GameTiers;
   /** XP games gave per local day (the 100-a-day cap). */
@@ -829,7 +832,10 @@ export class ProgressStore {
     // Single-player games count (0.38): rated answers in the skills they train → ratings, stats, and the path's evidence.
     const at = new Date().toISOString();
     const evs = gameEvents(game, score, memory ? { ...(detail ?? {}), cents: memory.cents } : detail, at, Date.now().toString(36)).filter((e) => !(p.ratingEvents ?? []).some((x) => x.id === e.id));
-    const base: Progress = { ...p, bests, ...(pitchMemory ? { pitchMemory } : {}), ...(counts ? { counts } : {}) };
+    // AUDIT-GAMES §1: a key-relative game's takes write key cells (key mastery), like drill takes.
+    const kt = isKeyGame(game) ? keyTakesOf(d) : null;
+    const gameKeys = kt ? addGameKeyTakes(p.gameKeys, game, kt.inst, kt.takes, at) : p.gameKeys;
+    const base: Progress = { ...p, bests, ...(pitchMemory ? { pitchMemory } : {}), ...(counts ? { counts } : {}), ...(gameKeys ? { gameKeys } : {}) };
     const next0: Progress = evs.length ? { ...base, ...withEvents(p, evs) } : base;
     let next: Progress = evs.length ? { ...next0, ...statsAfterEvents(base, evs, ratingsOf(next0)) } : next0;
     if (evs.length) next.snapshots = snapshot(next, new Date());

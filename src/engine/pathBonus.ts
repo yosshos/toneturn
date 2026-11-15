@@ -21,7 +21,7 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'transcribe', course: 'ear', domain: 'memory', skill: 'dictation', sub: 'dictation/melodic', difficulty: 1050, title: { en: 'Transcription Race', he: 'מרוץ התמלול' } },
   { game: 'rush-voicing', course: 'jazz', domain: 'pitch', skill: 'chords', sub: 'chords/voicing', difficulty: 1000, title: { en: 'Voicing Spy', he: 'מרגל הוויסינגים' } },
   { game: 'rush-standard', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/standards', difficulty: 1050, title: { en: 'Name That Standard', he: 'זהו את הסטנדרט' } },
-  { game: 'reharm', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1100, title: { en: 'Reharm Spotter', he: 'גלאי הרה־הרמוניזציה' } },
+  { game: 'reharm', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1100, title: { en: 'Reharm Spotter', he: 'גלאי ההרמוניה' } },
   { game: 'bhtime', course: 'keys', domain: 'instrument', skill: 'instrument', sub: 'instrument/piano-tech', difficulty: 1050, title: { en: 'Barry Harris in Time', he: 'בארי האריס בזמן' } },
   { game: 'polylock', course: 'keys', domain: 'instrument', skill: 'instrument', sub: 'instrument/piano-tech', difficulty: 1000, title: { en: 'Polyrhythm Lock', he: 'נעילת פולי־ריתם' } },
   { game: 'polylock', course: 'drums', domain: 'instrument', skill: 'instrument', sub: 'instrument/drum-tech', difficulty: 1000, title: { en: 'Polyrhythm Lock', he: 'נעילת פולי־ריתם' } },

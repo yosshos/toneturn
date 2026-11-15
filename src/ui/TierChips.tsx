@@ -2,6 +2,7 @@
 // tier preselected, lower tiers free (warm-up), one tier above open ("try" — rated), the rest locked with a one-line
 // reason. One line under the row says what the picked tier holds. Fits a phone row at 320 px.
 import '../tiers.css';
+import { IsoMix } from './Iso';
 import { lockReason, tierAllowed, tierDef, tierIndex, TIERS, type DynName, type TierInfo } from '../engine/gameTiers';
 
 type Lang = 'he' | 'en';
@@ -58,7 +59,7 @@ export function TierChips({ lang, info, value, onChange, game }: { lang: Lang; i
         })}
       </div>
       <p className="tier-line">
-        {def?.label[lang]}
+        {def ? lang === 'he' ? <IsoMix text={def.label.he} /> : def.label.en : null}
         {note ? <span className="tier-note"> · {note}</span> : null}
       </p>
     </fieldset>

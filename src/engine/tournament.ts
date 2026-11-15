@@ -222,3 +222,18 @@ export function shareText(day: string, round: RoundResult[], points: number, lan
     .join('');
   return lang === 'en' ? `The 7th Sense Daily ${day}\n${squares}  ${points.toLocaleString('en')} pts` : `החוש ה־7 · יומי ${day}\n${squares}  ${points.toLocaleString('he')} נק׳`;
 }
+
+// ---------------------------------------------------------------- the duel's record (AUDIT-GAMES §9)
+
+/** A finished duel, from the device owner's side (player 1): XP, rating, tier and the board follow. */
+export interface DuelOutcome {
+  score: number;
+  detail: { right: number; wrong: number; kind: SetKind; rounds: number; tier: string; runId: string; won: boolean };
+}
+/** The owner's (player 1's) result of a finished duel (the controller's view: standings and per-round answers). */
+export function duelOutcome(v: { standings: { player: number; points: number }[]; results: { answers: { correct: boolean }[] }[] }, kind: SetKind, tier: string, seed: number): DuelOutcome {
+  const me = v.standings.find((s) => s.player === 0);
+  const right = v.results.filter((r) => r.answers[0]?.correct).length;
+  const top = Math.max(...v.standings.map((s) => s.points));
+  return { score: me?.points ?? 0, detail: { right, wrong: v.results.length - right, kind, rounds: v.results.length, tier, runId: `${(seed >>> 0).toString(36)}-${Date.now().toString(36)}`, won: !!me && me.points === top } };
+}

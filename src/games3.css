@@ -109,7 +109,7 @@
   height: 56vh;
   overflow: hidden;
   border-radius: 22px;
-  background: linear-gradient(180deg, var(--bg) 0%, var(--card) 70%, var(--card-2) 100%);
+  background: var(--card);
   border: 2px solid var(--line);
   display: grid;
   grid-template-columns: repeat(var(--lanes, 1), 1fr);
@@ -148,41 +148,54 @@
   transform: translateY(50%);
   border-radius: 10px;
   background: var(--g3-lane-0);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-0) 60%, transparent), inset 0 -3px 0 rgb(0 0 0 / 0.25);
+  box-shadow: none;
 }
 .hw-road { --lanes: 1; }
 .hw-road.lanes-3 { --lanes: 3; }
 .hw-road.lanes-4 { --lanes: 4; }
 .hw-road.lanes-5 { --lanes: 5; }
-.hw-note.lane-1 { background: var(--g3-lane-1); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-1) 60%, transparent); }
-.hw-note.lane-2 { background: var(--g3-lane-2); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-2) 60%, transparent); }
-.hw-note.lane-3 { background: var(--g3-lane-3); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-3) 60%, transparent); }
-.hw-note.lane-4 { background: var(--g3-lane-4); box-shadow: 0 0 14px color-mix(in srgb, var(--g3-lane-4) 60%, transparent); }
+.hw-note.lane-1 { background: var(--g3-lane-1); }
+.hw-note.lane-2 { background: var(--g3-lane-2); }
+.hw-note.lane-3 { background: var(--g3-lane-3); }
+.hw-note.lane-4 { background: var(--g3-lane-4); }
 .hw-road.lanes-1 .hw-note,
 .hw-road:not(.lanes-3):not(.lanes-4):not(.lanes-5) .hw-note {
   left: 22%;
   width: 56%;
   background: var(--mint);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--mint) 55%, transparent);
+  box-shadow: none;
 }
 .hw-note.is-perfect,
 .hw-note.is-good {
-  opacity: 0;
-  transition: opacity 0.18s, transform 0.18s;
+  transition: transform 0.18s;
   transform: translateY(50%) scale(1.25);
 }
 .hw-note.is-miss {
-  opacity: 0.25;
-  filter: grayscale(1);
+  opacity: 0.55;
 }
+/* Per-note marks (games fix): the grade sits on the note itself — ✓ perfect, ~ good, ✕ miss — instead of a text flash. */
+.hw-note::before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 900 1rem/1 Rubik, sans-serif;
+  color: var(--ink-c, #1e1033);
+  pointer-events: none;
+}
+.hw-note.is-perfect::before { content: '✓'; }
+.hw-note.is-good::before { content: '~'; }
+.hw-note.is-miss::before { content: '✕'; }
 .hw-hitline {
   position: absolute;
   inset-inline: 0;
   bottom: 16%;
-  height: 4px;
-  margin-bottom: -2px;
-  background: var(--mint);
-  box-shadow: 0 0 16px var(--mint);
+  height: 8px;
+  margin-bottom: -4px;
+  background: var(--lemon, #ffd43b);
+  border-block: 2.5px solid var(--ink-c, #1e1033);
+  box-sizing: border-box;
+  box-shadow: none;
   pointer-events: none;
 }
 .hw-flash {
@@ -195,7 +208,7 @@
   pointer-events: none;
   animation: hw-pop 0.5s ease-out both;
 }
-.hw-flash.perfect { color: var(--gold); }
+.hw-flash.perfect { color: var(--ink); }
 .hw-flash.good { color: var(--mint); }
 .hw-flash.miss,
 .hw-flash.wrong { color: var(--coral); }
@@ -263,7 +276,7 @@
   border: 1px solid var(--line);
   font-size: 0.9rem;
 }
-.g3-stats li.perfect { border-color: var(--gold); }
+.g3-stats li.perfect { border-color: var(--purple, #6d28d9); }
 .g3-stats li.good { border-color: var(--mint); }
 .g3-stats li.miss { border-color: var(--coral); }
 
@@ -644,3 +657,6 @@
   .hw-setup .field-hint { margin-block: 2px 0; }
   .hw-setup .btn.mega { min-height: 46px; }
 }
+
+/* Games fix: the Highway setup's tap-delay note is ink, not mustard. */
+:root[data-theme] .g3 .field-hint.warn { color: var(--ink); }
