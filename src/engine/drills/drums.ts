@@ -17,6 +17,7 @@ import { generateCount, generateForm, generateNotation, generateReadMore } from 
 import { generateMore } from './drumMore';
 import { drumFirstFamily, generateDrumFirst } from './drumFirst'; // AUDIT-6 Stage B: the drums' first steps
 import { drumTopFamilies, generateDrumTop } from './drumTop';
+import { gateFamilies } from '../verifiedContent';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -919,7 +920,11 @@ export function generateDrums(spec: DrillSpec): Drill {
 }
 
 /** The v1 families (DRUMS_CURRICULUM §4.3): F1 L1–5, F2 L1–6, F3 L1–4, F4 L1–6, F5 L1–8, F9 L1–5, F14 L1–5. */
-export function drumFamilies(): DrumFamilyDef[] {
+/** The drums families as shown (levels hidden until verified left out). */
+export const drumFamilies = (): DrumFamilyDef[] => gateFamilies(allDrumFamilies());
+
+/** Every built drums family, hidden-until-verified levels included (their content tests; saved ids). */
+export function allDrumFamilies(): DrumFamilyDef[] {
   const sp =
     (family: DrumFamilyId) =>
     (kind: string, option: number): SpecTemplate => ({ family, kind, option, hands: 'RL', instrument: 'drums' });

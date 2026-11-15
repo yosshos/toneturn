@@ -3,6 +3,7 @@
 // (each submission: score, minutes, metrics → a short comment and a mark); the class heat map (students × skills,
 // practice minutes, who is behind); the student's assignment list with the teacher's comments; the parent link and
 // the parent digest page.
+import { topicVerified } from '../engine/verifiedContent';
 import { useEffect, useMemo, useState } from 'react';
 import type { TeachingClass } from '../cloud/classes';
 import { EXTRA_ASSIGNABLE } from '../cloud/classes';
@@ -71,7 +72,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const tx = TX[lang];
   const [kind, setKind] = useState<AssignKind>('topic');
   const [lesson, setLesson] = useState<string>(LESSON_ORDER[0]);
-  const topics = useMemo(() => Object.keys(TOPIC_GEN).sort((a, b) => TOPIC_GEN[a].title[lang].localeCompare(TOPIC_GEN[b].title[lang])), [lang]);
+  const topics = useMemo(() => Object.keys(TOPIC_GEN).filter((id) => topicVerified(id)).sort((a, b) => TOPIC_GEN[a].title[lang].localeCompare(TOPIC_GEN[b].title[lang])), [lang]);
   const [topic, setTopic] = useState(topics[0]);
   const [topicLv, setTopicLv] = useState(1);
   const levels = useMemo(() => catalog().flatMap((f) => f.levels.map((l) => ({ id: l.id, title: `${f.title[lang]} · ${l.title[lang]}` }))), [lang]);

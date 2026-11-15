@@ -4,6 +4,7 @@
 // too few takes is "untried", never "weak" (the same rule as the profile: no judgement without enough measures).
 // Plus a per-instrument summary across skills ("your weakest keys on piano: D♭, F♯, B"). Pure.
 
+import { itemIdVerified } from '../verifiedContent';
 import type { FamilyId, ItemState } from '../drills/types';
 
 export type KeyStatus = 'untried' | 'weak' | 'ok' | 'strong';
@@ -110,7 +111,7 @@ export type SkillBy = 'family' | 'kind';
 
 /** Key mastery of every skill with takes. `by: 'kind'` splits a family into its drill kinds (scale, arpeggio, ii–V …). */
 export function keyMastery(items: Record<string, ItemState> | ItemState[], now: number | string = Date.now(), by: SkillBy = 'family'): SkillKeys[] {
-  const list = (Array.isArray(items) ? items : Object.values(items)).filter((s) => s && s.takes > 0 && instrumentOf(s.family) !== null);
+  const list = (Array.isArray(items) ? items : Object.values(items)).filter((s) => s && s.takes > 0 && instrumentOf(s.family) !== null && itemIdVerified(s.itemId));
   // The variant's best clean tempo in any key (the reference when an item has no target).
   const top = new Map<string, number>();
   for (const s of list) top.set(variantOf(s.itemId), Math.max(top.get(variantOf(s.itemId)) ?? 0, s.cleanBpm));

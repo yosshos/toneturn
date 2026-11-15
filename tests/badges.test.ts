@@ -122,15 +122,21 @@ describe('guitar technique badges', () => {
   it('every guitar family has one level badge per catalogue level, EN + HE, and a glyph group', () => {
     expect(GUITAR_BADGE_FAMILIES.slice().sort()).toEqual(cat.map((f) => f.id).sort());
     for (const f of cat) {
-      expect(familyLevelCount(f.id), f.id).toBe(f.levels.length);
-      expect(f.levels.length).toBeLessThanOrEqual(13);
-      for (let lv = 1; lv <= f.levels.length; lv++) {
+      // by level number: levels hidden until verified (src/engine/verifiedContent.ts) leave gaps and have no badge
+      const top = Math.max(...f.levels.map((l) => l.level));
+      expect(familyLevelCount(f.id), f.id).toBeGreaterThanOrEqual(top);
+      expect(top).toBeLessThanOrEqual(13);
+      for (let lv = 1; lv <= top; lv++) {
         const b = BADGE_BY_ID[`tech:${f.id}:${lv}`];
+        if (!f.levels.some((l) => l.level === lv)) {
+          expect(b, `${f.id}:${lv} hidden`).toBeUndefined();
+          continue;
+        }
         expect(b, `${f.id}:${lv}`).toBeDefined();
         expect(b.group).toBe(f.id);
-        expect(b.desc.en).toContain(`of ${f.levels.length}`);
+        expect(b.desc.en).toContain(`of ${familyLevelCount(f.id)}`);
       }
-      expect(BADGE_BY_ID[`tech:${f.id}:${f.levels.length + 1}`]).toBeUndefined();
+      expect(BADGE_BY_ID[`tech:${f.id}:${top + 1}`]).toBeUndefined();
       expect(HEB.test(FAMILY_NAME[f.id as keyof typeof FAMILY_NAME].he)).toBe(true);
     }
   });

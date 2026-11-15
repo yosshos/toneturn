@@ -30,6 +30,7 @@ import { spansOfChart } from '../ruleCards';
 import { genKeysCtx, keysCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
+import { gateFamilies } from '../verifiedContent';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -5358,7 +5359,7 @@ export function catalog(): FamilyDef[] {
   const FOURS = [10, 3, 8, 1, 6, 11, 4, 9, 2, 7, 0, 5].reverse(); // C F B♭ … up the cycle of 4ths
   const cyc4 = FOURS.slice(FOURS.indexOf(0)).concat(FOURS.slice(0, FOURS.indexOf(0)));
   // The owner's rule: jazz / theory families in all 12 keys (keys12.ts), the listed keys first.
-  return widenFamilies([
+  return gateFamilies(widenFamilies([
     // AUDIT-6 Stage B: the first steps at the piano grew to 11 levels (keysFirst.ts; levels 1–3 unchanged).
     keysFirstFamily(),
     {
@@ -6167,7 +6168,7 @@ export function catalog(): FamilyDef[] {
     improHabitsFamily(),
     // AUDIT-6 Stage B: graded sight-reading, ~800–1400 (keysFirst.ts).
     keysReadFamily(),
-  ]);
+  ]));
 }
 
 // For harrisLineDrills.ts: the k-harrisline family builds its drills with the same line / chord / free-bar machinery.

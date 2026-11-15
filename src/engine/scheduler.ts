@@ -8,6 +8,7 @@
 // The exercise is the topic level that trains the sub-skill most (its tag weight) at the player's level
 // (the hardest level not above R + 50). Pure: a function of ratings, sub-skill stats, the track and the day.
 
+import { topicVerified } from './verifiedContent';
 import type { SkillId } from './lesson';
 import { priorityBoost, type Track } from './intake';
 import { domainOf, START_RATING, type DomainId, type Ratings } from './rating';
@@ -127,6 +128,7 @@ export function exerciseFor(sub: string, ratings: Ratings): { topic: string; lev
   for (const [topic, T] of Object.entries(TOPIC_GEN)) {
     if (topic.startsWith('bh-') || topic === 'chromatic-added') continue; // Barry Harris: its own track
     for (let level = 1; level <= T.levels.length; level++) {
+      if (!topicVerified(topic, level)) continue;
       const w = tagsAt(topic, level).find((t) => t.sub === sub)?.w ?? 0;
       if (w < 0.5) continue;
       const d = levelDifficulty(topic, level);

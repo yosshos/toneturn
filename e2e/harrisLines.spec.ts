@@ -40,7 +40,6 @@ const problems = (page: Page) =>
     return out;
   });
 
-const range = (n: number, p: string) => Array.from({ length: n }, (_, i) => `${p}-${i + 1}`);
 
 for (const lang of ['en', 'he'] as const) {
   test(`Harris lines by ear: the topic's levels fit one screen (${lang})`, async ({ page }) => {
@@ -49,7 +48,8 @@ for (const lang of ['en', 'he'] as const) {
       await page.locator('.sheet-backdrop .btn.ghost').first().click();
     });
     const bad: string[] = [];
-    for (let l = 1; l <= 5; l++) {
+    // levels 1, 2 and 5 are hidden until verified (src/engine/verifiedContent.ts)
+    for (const l of [3, 4]) {
       await page.goto(`/?sim=1&brief=1&lang=${lang}#/topic/bh-line-ear/${l}`);
       await page.locator('main.lesson').waitFor({ timeout: 15_000 });
       await page.locator('[data-brief-play]').click({ timeout: 5000 }).catch(() => {});
@@ -64,9 +64,10 @@ for (const lang of ['en', 'he'] as const) {
   });
 
   for (const [plays, family, levels] of [
-    ['keys', 'k-harrisline', range(32, 'k-harrisline')],
-    ['guitar', 'g-harrisline', range(10, 'g-harrisline')],
-    ['bass', 'b-harrisline', range(10, 'b-harrisline')],
+    // the levels on show; the rest are hidden until verified (src/engine/verifiedContent.ts)
+    ['keys', 'k-harrisline', [4, 7, 8, 9, 10, 12, 13, 14, 16, 25, 28, 30].map((n) => `k-harrisline-${n}`)],
+    ['guitar', 'g-harrisline', [2, 3, 4, 7, 8].map((n) => `g-harrisline-${n}`)],
+    ['bass', 'b-harrisline', [2, 3, 4, 7, 8].map((n) => `b-harrisline-${n}`)],
   ] as const)
     test(`Harris lines: ${family} run screens fit one screen (${lang})`, async ({ page }) => {
       test.setTimeout(600_000);

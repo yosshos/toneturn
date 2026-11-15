@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { catalog, generate } from '../src/engine/drills/generate';
 import { generateGuitar, guitarCatalog } from '../src/engine/drills/guitar';
 import { hasRubato } from '../src/engine/drills/rubato';
-import { HL_LEVEL_IDS, HL_ROWS } from '../src/engine/drills/harrisLineDrills';
+import { harrisLineFamily, HL_LEVEL_IDS, HL_ROWS } from '../src/engine/drills/harrisLineDrills';
 import type { Drill, DrillSpec } from '../src/engine/drills/types';
 
 const mod12 = (n: number) => ((n % 12) + 12) % 12;
@@ -15,14 +15,16 @@ describe('k-harrisline, g-harrisline, b-harrisline drills', () => {
   const gFam = guitarCatalog().find((f) => f.id === 'g-harrisline')!;
   const bFam = guitarCatalog().find((f) => f.id === 'b-harrisline')!;
   it('counts: 32 keys levels (rated ~1100–1750, in rating order), 10 guitar, 10 bass', () => {
-    expect(keysFam.levels.length).toBe(32);
+    // 32 built; 12 on show while the rest is hidden until verified (src/engine/verifiedContent.ts)
+    expect(harrisLineFamily().levels.length).toBe(32);
+    expect(keysFam.levels.length).toBe(12);
     expect(HL_ROWS.length).toBe(32);
     const r = HL_ROWS.map((x) => x.rating);
     expect(r).toEqual([...r].sort((a, b) => a - b));
     expect(r[0]).toBe(1100);
     expect(r[r.length - 1]).toBe(1750);
-    expect(gFam.levels.length).toBe(10);
-    expect(bFam.levels.length).toBe(10);
+    expect(gFam.levels.length).toBe(5);
+    expect(bFam.levels.length).toBe(5);
     expect(HL_LEVEL_IDS.keys[0]).toBe('k-harrisline-1');
     expect(HL_LEVEL_IDS.guitar[9]).toBe('g-harrisline-10');
   });
@@ -33,7 +35,8 @@ describe('k-harrisline, g-harrisline, b-harrisline drills', () => {
   ];
   for (const [fid, gen, lo, hi] of fams)
     it(`${fid}: every item in all 12 keys — notes in range, the key in the item id, line items start in free time`, { timeout: 120000 }, () => {
-      const fam = fid === 'k-harrisline' ? keysFam : fid === 'g-harrisline' ? gFam : bFam;
+      // keys: every built level (hidden ones too: their content stays correct for when they are switched on)
+      const fam = fid === 'k-harrisline' ? harrisLineFamily() : fid === 'g-harrisline' ? gFam : bFam;
       for (const lv of fam.levels) {
         expect(Array.isArray(lv.keys) && new Set(lv.keys).size, lv.id).toBe(12);
         for (const sp of lv.specs)

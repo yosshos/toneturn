@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { topicVerified } from '../engine/verifiedContent';
 import { TOPIC_GEN } from '../engine/topics';
 import { TOPIC_GROUPS } from '../engine/topicGroups';
 import { Glyph } from './Glyph';
@@ -122,12 +123,13 @@ export function PathExtras({
               <Glyph kind={g.icon || 'contour'} color="#A78BFA" size={22} /> {g.title[lang]}
             </summary>
             {g.topics
-              .filter((id) => TOPIC_GEN[id])
+              .filter((id) => TOPIC_GEN[id] && topicVerified(id))
               .map((id) => (
                 <div key={id} className="modes-row">
                   <b>{TOPIC_GEN[id].title[lang]}</b>
                   <div className="modes-levels" role="group" aria-label={TOPIC_GEN[id].title[lang]}>
                     {TOPIC_GEN[id].levels.map((lv, i) => {
+                      if (!topicVerified(id, i + 1)) return null;
                       const m = marks.get(`${id}:${i + 1}`);
                       return (
                         <button key={i} className={`chip ${m === 'done' ? 'done' : m === 'current' ? 'on' : m === 'ahead' ? 'ahead' : ''}`} data-topic={id} data-mark={m} title={m === 'ahead' ? (he ? 'לפני המסלול' : 'Ahead of the path') : undefined} onClick={() => onTopic(id, i + 1)}>

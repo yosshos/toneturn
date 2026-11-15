@@ -17,7 +17,8 @@ describe('level test sections', () => {
   for (const emph of ['classical', 'jazz', 'both'] as const)
     it(`every step of the ${emph} piano test is a real level that generates in its key`, () => {
       const cat = families('piano');
-      for (const st of pianoStrands(emph))
+      // the test as shown (strandsFor): rungs on levels hidden until verified are left out
+      for (const st of strandsFor('piano', emph))
         for (const r of st.rungs) {
           const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
           expect(lv, r.level).toBeTruthy();
@@ -26,7 +27,8 @@ describe('level test sections', () => {
           for (const [fam, v] of Object.entries(r.places)) {
             const f = cat.find((x) => x.id === fam);
             expect(f, fam).toBeTruthy();
-            expect(v).toBeLessThanOrEqual(f!.levels.length);
+            // by level number: levels hidden until verified leave gaps (src/engine/verifiedContent.ts)
+            expect(v).toBeLessThanOrEqual(Math.max(...f!.levels.map((l) => l.level)));
           }
         }
     });
@@ -43,7 +45,8 @@ describe('level test sections', () => {
           for (const [fam, v] of Object.entries(r.places)) {
             const f = cat.find((x) => x.id === fam);
             expect(f, `${r.level} → ${fam}`).toBeTruthy();
-            expect(v, `${r.level} → ${fam}`).toBeLessThanOrEqual(f!.levels.length);
+            // a place above the top shown level (the rest hidden until verified) is capped by testStart
+            expect(testStart(inst, { [fam]: v })[fam as never], `${r.level} → ${fam}`).toBeLessThanOrEqual(Math.max(...f!.levels.map((l) => l.level)));
           }
         }
     });

@@ -167,8 +167,10 @@ describe('free comping by rule', () => {
 
 describe('the four families', () => {
   const fams = catalog().filter((f) => (SP_FAMILIES as string[]).includes(f.id));
-  it('counts: k-lh 18, k-tex 20, k-comp 7, k-impro 7 levels', () => {
-    expect(fams.map((f) => [f.id, f.levels.length])).toEqual([['k-lh', 18], ['k-tex', 20], ['k-comp', 7], ['k-impro', 7]]);
+  it('counts: k-lh 18, k-tex 20, k-comp 7, k-impro 7 levels built; on show without the hidden-until-verified ones', () => {
+    // src/engine/verifiedContent.ts: tenths, stride variations, the shuttle (k-lh); the Beat-3 call, drop-2 sidesteps,
+    // the inner voice (k-tex); the Beat-3 Charleston, Basie, push-off, accents (k-comp)
+    expect(fams.map((f) => [f.id, f.levels.length])).toEqual([['k-lh', 10], ['k-tex', 17], ['k-comp', 3], ['k-impro', 7]]);
     expect(LH_ROWS.length + TEX_ROWS.length + COMP_ROWS.length + IMPRO_ROWS.length).toBe(52);
   });
   it('every item generates in all 12 keys, the key in its id, notes on the keyboard', () => {
@@ -192,8 +194,8 @@ describe('the four families', () => {
     const one = (id: string, i = 0) => generate({ ...catalog().flatMap((f) => f.levels).find((l) => l.id === id)!.specs[i], key: 0 });
     expect(hasRubato(one('k-lh-3'))).toBe(true);
     expect(hasRubato(one('k-tex-6'))).toBe(true);
-    expect(hasRubato(one('k-comp-1'))).toBe(false);
-    expect(one('k-comp-1').click).toBe('24');
+    expect(hasRubato(one('k-comp-2'))).toBe(false);
+    expect(one('k-comp-2').click).toBe('24');
     const stop: Drill = one('k-tex-15');
     expect(stop.rubatoOnly).toBe(true);
     expect(stop.spec.target).toBe(stop.spec.tempo);
@@ -236,7 +238,9 @@ describe('wiring', () => {
     for (const g of glyphs) expect(Object.entries(FAMILY_GLYPH).filter(([, v]) => v === g)).toHaveLength(1);
     expect(SP_FAMILIES.map((f) => familyLevelCount(f))).toEqual([18, 20, 7, 7]);
     expect(familyLevelCount('k-harm')).toBe(8);
-    for (const id of ['sp-registers', 'sp-mango', 'sp-shells', 'sp-stride', 'sp-shared', 'sp-comping', 'sp-phrasing']) expect(MINI_LESSONS[id], id).toBeDefined();
+    // sp-stride is hidden until verified (its tenths, variations and shuttle): src/engine/verifiedContent.ts
+    for (const id of ['sp-registers', 'sp-mango', 'sp-shells', 'sp-shared', 'sp-comping', 'sp-phrasing']) expect(MINI_LESSONS[id], id).toBeDefined();
+    expect(MINI_LESSONS['sp-stride']).toBeUndefined();
     for (let i = 1; i <= 18; i++) expect(MINI_LESSONS[UNITS[`tech:k-lh-${i}`]], `k-lh-${i}`).toBeDefined();
     for (const t of ['lh-tex-ear', 'solo-tex-ear', 'comp-rhythm-ear']) {
       expect(TOPIC_GEN[t], t).toBeDefined();

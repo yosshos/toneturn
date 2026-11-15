@@ -10,11 +10,15 @@
 // chord tone below two steps down): triad inner = T−2; drop 2 inner = T−6, T−4; drop 3 inner = T−6, T−2;
 // drop 2&4 inner = T−10, T−4. Floors 4, 5 and 9 may add any tones of the same chord between the outer voices.
 //
-// Levels (tiers pp → ff):
-//   1 floors 2–3 from the tonic (major 6-dim) · 2 floors 2–5 from any tone of the 6 chord (taking the elevator up a
-//   floor = contrary motion) · 3 the minor 6-dim scale, floors 2–6 · 4 reach floor N with the melody note on top
-//   (major or minor, floors 3–8) · 5 borrowing (E22): move the top 1–3 voices of a floor up one scale step into the
-//   other chord (oblique motion) · 6 all four scales (with the dominant 7th-dim and 7♭5-dim), melody on top, floors to 9.
+// Floors are built FROM THE TONIC only (owner 2026-11-15: that is how Echols builds them; from the tonic the outer voices
+// are always 3rds, 5ths, 6ths, 8ths, 10ths, 11ths, 13ths or double octaves (by letter name), on all four scales — from
+// other degrees they are not).
+//
+// Levels (tiers pp → ff), every one from a unison on the tonic:
+//   1 floors 2–3 (major 6-dim) · 2 floors 2–5, and "up one floor" from the floor below (contrary motion) · 3 the minor
+//   6-dim scale, floors 2–6 · 4 the whole ride, major or minor, floors 3–9 · 5 borrowing (E22): move the top 1–3 voices
+//   of a floor up one scale step into the other chord (oblique motion) · 6 all four scales (with the dominant 7th-dim
+//   and 7♭5-dim), floors to 9.
 // Every case is in a seeded key from all 12. Answers are notes (MIDI numbers); a case is right when the voicing is.
 // Pure.
 
@@ -112,36 +116,26 @@ export function elevatorCase(seed: number, i: number, level: number): ElevatorCa
   const r = rng(caseSeed(seed, i));
   r();
   const t = tonicOf(Math.floor(r() * 12) + 5 * i);
-  if (lv === 1) {
-    const floor = pickR(r, [2, 3]);
-    return mk(lv, t, 'major', 'floor', floor, 0);
-  }
+  // From the tonic only (s0 = 0): see the header.
+  if (lv === 1) return mk(lv, t, 'major', 'floor', pickR(r, [2, 3]), 0);
   if (lv === 2) {
-    const s0 = pickR(r, [0, 2, 4, 6]);
     const floor = pickR(r, [2, 3, 4, 5]);
-    return mk(lv, t, 'major', floor > 2 && r() < 0.5 ? 'next' : 'floor', floor, s0);
+    return mk(lv, t, 'major', floor > 2 && r() < 0.5 ? 'next' : 'floor', floor, 0);
   }
-  if (lv === 3) {
-    const s0 = pickR(r, [0, 2, 4, 6, 1, 3]);
-    return mk(lv, t, 'minor', 'floor', pickR(r, [2, 3, 4, 5, 6]), s0);
-  }
+  if (lv === 3) return mk(lv, t, 'minor', 'floor', pickR(r, [2, 3, 4, 5, 6]), 0);
   if (lv === 4) {
     const sc = pickR(r, ['major', 'minor'] as SixDimScale[]);
-    const floor = pickR(r, [3, 4, 5, 6, 7, 8]);
-    const top = pickR(r, [8, 9, 10, 11, 12]);
-    return mk(lv, t, sc, 'melody', floor, top - (floor - 1));
+    const floor = pickR(r, [3, 4, 5, 6, 7, 8, 9]);
+    return mk(lv, t, sc, r() < 0.5 ? 'next' : 'floor', floor, 0);
   }
   if (lv === 5) {
     const sc = pickR(r, ['major', 'minor'] as SixDimScale[]);
     const floor = pickR(r, [3, 7]);
-    const s0 = pickR(r, [0, 2, 4, 6]);
     const borrow = floor === 3 ? pickR(r, [1, 2]) : pickR(r, [1, 2, 3]);
-    return mk(lv, t, sc, 'borrow', floor, s0, borrow);
+    return mk(lv, t, sc, 'borrow', floor, 0, borrow);
   }
   const sc = pickR(r, ['major', 'minor', 'dom', 'domb5'] as SixDimScale[]);
-  const floor = pickR(r, [3, 5, 6, 7, 8, 9]);
-  const top = pickR(r, [9, 10, 11, 12]);
-  return mk(lv, t, sc, 'melody', floor, top - (floor - 1));
+  return mk(lv, t, sc, r() < 0.4 ? 'next' : 'floor', pickR(r, [3, 5, 6, 7, 8, 9]), 0);
 }
 
 function mk(level: number, t: number, scale: SixDimScale, kind: ElevatorCase['kind'], floor: number, s0: number, borrow?: number): ElevatorCase {

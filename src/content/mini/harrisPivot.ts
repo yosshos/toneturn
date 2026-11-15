@@ -32,7 +32,7 @@ export const PIVOT_LESSON: MiniLesson = {
       show: { notes: straightArp(C, 'maj7'), key: 'C', text: { en: '1 3 5 7', he: '1 3 5 7' } },
     },
     {
-      say: { en: 'A pivot moves some of its notes an octave. The order stays, the shape changes. Barry Harris’s favourite: the root on top, then drop to the 3rd and climb.', he: 'פיבוט מזיז חלק מהצלילים אוקטבה. הסדר נשאר, הצורה משתנה. האהוב על בארי האריס: היסוד למעלה, ואז ירידה לטרצה ועלייה.' },
+      say: { en: 'A pivot moves some of its notes an octave. The order stays, the shape changes. The classic one: the root on top, then drop to the 3rd and climb.', he: 'פיבוט מזיז חלק מהצלילים אוקטבה. הסדר נשאר, הצורה משתנה. הקלאסי: היסוד למעלה, ואז ירידה לטרצה ועלייה.' },
       play: [notes(MAJ7)],
       show: { notes: MAJ7, key: 'C', text: { en: '1 ↓ 3 5 7', he: '1 ↓ 3 5 7' } },
     },

@@ -5,6 +5,7 @@
 // steps; ✓ ("you already know this") is derived from evidence with every safeguard of §6 / §13; nothing derived is
 // stored — only facts (done steps, test-out events, frozen units).
 
+import { gameVerified, topicVerified } from './verifiedContent';
 import { K_HARM_DIFF } from './drills/harmLadder';
 import { K_INDEP_DIFF } from './drills/indepDrills';
 import { questionTags } from './taxonomy';
@@ -276,12 +277,14 @@ let CAT_KEY = '';
 export function stepCatalogue(): PathStep[] {
   // AUDIT-6 X1: game-only topics are never path steps, whichever module registered them (Rush used to add 19 jazz
   // steps to the Ear path in the app only); they don't count in the key either.
-  const pathTopics = Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly);
+  // Hidden until verified (verifiedContent.ts): whole topics left out here, single levels in the loop below.
+  const pathTopics = Object.entries(TOPIC_GEN).filter(([id, t]) => !t.gameOnly && topicVerified(id));
   const key = pathTopics.map(([k, t]) => `${k}${t.levels.length}`).sort().join(',');
   if (CATALOGUE && CAT_KEY === key) return CATALOGUE;
   const out: PathStep[] = [];
   for (const [topic, T] of pathTopics) {
     for (let level = 1; level <= T.levels.length; level++) {
+      if (!topicVerified(topic, level)) continue;
       let q: Question;
       try {
         q = T.gen(4242, level, 'cat') as Question;
@@ -1252,6 +1255,7 @@ const AREA_GAMES: Record<DomainId, string[]> = {
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }, diff = Infinity): string | null {
   const ok = AREA_GAMES[area].filter((g) => {
+    if (!gameVerified(g)) return false;
     const s = GAME_STEPS[g];
     if (s.minDiff && diff < s.minDiff) return false;
     if (inp.course && !inCourse({ domain: s.domain, sung: !!s.needsMic && s.domain === 'voice', forPlays: s.forPlays }, inp.course)) return false;

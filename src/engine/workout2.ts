@@ -2,6 +2,7 @@
 // theirs to edit — total time, minutes per block, order, remove / add / swap, presets, today-only or default.
 // The path is WHAT to learn, the workout is HOW MUCH TODAY (§9): blocks serve path steps first. Pure.
 
+import { gameVerified } from './verifiedContent';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
 import { pendingChecks, type Goal, type PathStep, type PathView, type UnitStep } from './path';
@@ -86,7 +87,7 @@ export const WORKOUT_GAMES: Record<CourseId, string[]> = {
 };
 /** The day's game for a course (deterministic per local day; Highway without a course). */
 export function workoutGame(course?: CourseId, day?: string): string {
-  const xs = course ? WORKOUT_GAMES[course] : null;
+  const xs = course ? WORKOUT_GAMES[course].filter(gameVerified) : null;
   if (!xs?.length) return 'highway';
   const d = day ? Math.floor(Date.parse(`${day}T12:00:00Z`) / 86400000) : 0;
   return xs[((Number.isFinite(d) ? d : 0) % xs.length + xs.length) % xs.length];

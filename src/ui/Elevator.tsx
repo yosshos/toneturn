@@ -149,7 +149,7 @@ const CFG: CaseGameCfg<'elevator'> = {
   game: 'elevator',
   className: 'el',
   title: { en: 'Elevator', he: 'המעלית' },
-  blurb: { en: 'Echols’s Elevator on the 6-dim scale: from a unison the top voice steps up, the bottom down, the middle from the same chord. Build the floor. Three lives.', he: 'המעלית של אקולס בסולם 6־דים: מיוניסון הקול העליון עולה, התחתון יורד, והאמצע מאותו אקורד. בונים את הקומה. שלושה חיים.' },
+  blurb: { en: 'Echols’s Elevator on the 6-dim scale: from a unison on the tonic the top voice steps up, the bottom down, the middle from the same chord. Build the floor. Three lives.', he: 'המעלית של אקולס בסולם 6־דים: מיוניסון על הטוניקה הקול העליון עולה, התחתון יורד, והאמצע מאותו אקורד. בונים את הקומה. שלושה חיים.' },
   inputFor: () => 'keys',
   board: (c) => <Board {...c} />,
   base: 12,

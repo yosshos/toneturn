@@ -377,7 +377,10 @@ export function drumStrands(): Strand[] {
 
 /** The sections of an instrument's test. */
 export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis']): Strand[] {
-  return instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis);
+  const all = instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis);
+  // Hidden until verified (verifiedContent.ts): a rung whose level is not in the catalogue any more is left out.
+  const shown = new Set(families(instrument).flatMap((f) => f.levels.map((l) => l.id)));
+  return all.map((st) => (st.rungs.every((x) => shown.has(x.level)) ? st : { ...st, rungs: st.rungs.filter((x) => shown.has(x.level)) })).filter((st) => st.rungs.length > 0);
 }
 
 /** The search through one section. lo = the hardest clean step (−1: none), hi = the easiest missed one (n: none). */
@@ -441,7 +444,8 @@ export function strandPlaces(strand: Strand, s: StrandState): Partial<Record<Fam
 /** Every family of the instrument gets a start level: what the sections proved, else level 1 (capped to the family). */
 export function testStart(instrument: NonNullable<DrillSettings['instrument']>, placed: Partial<Record<FamilyId, number>>): Partial<Record<FamilyId, number>> {
   const out: Partial<Record<FamilyId, number>> = {};
-  for (const f of families(instrument)) out[f.id] = Math.max(1, Math.min(f.levels.length, Math.round(placed[f.id] ?? 1)));
+  // capped to the family's top level number (levels hidden until verified leave gaps in the numbers)
+  for (const f of families(instrument)) out[f.id] = Math.max(1, Math.min(Math.max(...f.levels.map((l) => l.level)), Math.round(placed[f.id] ?? 1)));
   return out;
 }
 

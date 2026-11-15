@@ -18,6 +18,7 @@
 //
 // Pure and deterministic. Own exercises generated from the rules; nothing copied.
 
+import { isVerified } from '../verifiedContent';
 import type { Drill, DrillGoal, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { autoFingering, itemIdOf, rhBase, sixLinePair } from './generate';
@@ -683,14 +684,15 @@ export function pianoScaleHarmFamily(): FamilyDef {
   LV('Minor ii–V–i: the half-diminished and the V as minor 6ths, then the diminished — voicings and lines', 'ii–V–i מינורי: החצי־מוקטן וה־V כמינור 6, ואז הדימיניש — קולות וקווים', [sf('sf-minor', 0), sf('sf-minor', 1, 'R')], [40, 100], 1700);
   // BARRY-HARRIS-METHOD.md Part D (D3, D4, D6, D7, D11, D12) and drop 2&4 on the four key scales.
   const pd = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-sharm', kind, hands, option });
-  LV('The elevator: from a unison on every degree up the nine floors and back (6th-diminished); then floors and moves mixed', 'המעלית: מיוניסון על כל דרגה במעלה תשע הקומות וחזרה (שישית־מוקטן); ואז קומות ומעברים מעורבים', [...[0, 1, 2, 3, 4, 5, 6, 7].map((x) => pd('cm-expand', x)), pd('cm-elevator', 0)], [40, 72], 1450);
+  // The elevator from the tonic only (owner 2026-11-15: how Echols builds it; the outer-voice interval rule holds there).
+  LV('The elevator: from a unison on the tonic up the nine floors and back (6th-diminished)', 'המעלית: מיוניסון על הטוניקה במעלה תשע הקומות וחזרה (שישית־מוקטן)', [pd('cm-expand', 0), pd('cm-elevator', 0)], [40, 72], 1450);
   LV('The 7th-dim and 7♭5-dim scales in drop 2 and drop 3 over V7 → I', 'סולמות השביעית־מוקטן ו־7♭5־מוקטן בדרופ 2 ובדרופ 3 על V7 ← I', [0, 1, 2, 3].map((o) => pd('v7-d2', o)), [40, 72], 1500);
   LV('Drop 2&4 on the four key scales', 'דרופ 2 ו־4 על ארבעת סולמות המפתח', H_HARRIS.map((i) => ({ family: 'k-sharm' as FamilyId, kind: 'hl-d24', hands: 'RL' as const, option: i })), [40, 72], 1620);
   LV('The sixth on the fifth: the major 6 on the 5th over the root', 'השישית על הקווינטה: מז׳ור 6 על הקווינטה מעל היסוד', [pd('sixth5', 0), pd('sixth5', 1)], [40, 72], 1460);
   LV("Harris's moves: the first movement, the next move, major – minor – minor/6", 'המהלכים של האריס: התנועה הראשונה, המהלך הבא, מז׳ור – מינור – מינור/6', [pd('mv-first', 0), pd('mv-next', 0, 'R'), pd('mv-mmm', 0)], [40, 72], 1500);
   LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; יסוד הדומיננט מושאל אל הדימיניש', [{ family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
   LV("The four related dominants over a shell; the tritone's minor resolving", 'ארבע הדומיננטות הקרובות מעל שלד; המינור של הטריטון נפתר', [pd('shell4', 0), pd('tm-res', 0)], [40, 72], 1680);
-  LV('The elevator in minor 6th-diminished; borrowing through the elevator', 'המעלית במינור שישית־מוקטן; השאלה דרך המעלית', [...[0, 2, 4, 6].map((x) => pd('cm-expand', 8 + x)), pd('cm-elevator', 1), pd('el-borrow', 0), pd('el-borrow', 1)], [40, 72], 1480);
+  LV(isVerified('item:el-borrow') ? 'The elevator in minor 6th-diminished; borrowing through the elevator' : 'The elevator in minor 6th-diminished, from the tonic', isVerified('item:el-borrow') ? 'המעלית במינור שישית־מוקטן; השאלה דרך המעלית' : 'המעלית במינור שישית־מוקטן, מהטוניקה', [pd('cm-expand', 8), pd('cm-elevator', 1), pd('el-borrow', 0), pd('el-borrow', 1)], [40, 72], 1480);
   LV('The voicing ladder: thirds, triads, shells, octave chords on the 6th-diminished scales', 'סולם הקולות: טרצות, משולשים, שלדים, אקורדי אוקטבה על סולמות השישית־מוקטן', [0, 1, 2, 3, 6, 7].map((x) => pd('vl-ladder', x)), [40, 80], 1420);
   LV('A substitute on each V of a tune: itself, the family, the important minor, the tritone’s minor', 'תחליף על כל V של שיר: עצמו, המשפחה, המינור החשוב, המינור של הטריטון', [pd('sub-tune', 0), pd('sub-tune', 1)], [50, 100], 1690);
   return { id: 'k-sharm', title: t('Scale harmonization and borrowing', 'הרמוניזציה של סולמות והשאלה'), style: 'both', levels };
@@ -1004,7 +1006,7 @@ export function guitarSixFiveLevels(from: number): GuitarLevelDef[] {
   const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number], sub: string): GuitarLevelDef => ({ id: `g-harris-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: 'major', tempo, sub, grade: 9 });
   return [
     L(from, "Eight expressions of one dominant, each to I6; Harris's moves; the sixth on the fifth; the minor ii–V–i", 'שמונה ביטויים לדומיננט אחד, כל אחד אל I6; המהלכים של האריס; השישית על הקווינטה; ii–V–i מינורי', [g('sf-voice', 0), g('sf-voice', 1), g('mv-first', 0), g('mv-next', 0), g('mv-mmm', 0), g('sixth5', 0), g('sf-minor', 0)], [40, 72], 'halves'),
-    L(from + 1, 'The expressions’ scales over V–I; contrary motion and the elevator; the 7th-dim scales over V7 → I', 'סולמות הביטויים על V–I; תנועה נגדית והמעלית; סולמות השביעית־מוקטן על V7 ← I', [g('sf-line', 0), g('sf-line', 2), g('sf-line', 4), g('sf-line', 6), g('sf-line', 8), g('sf-line', 9), g('cm-expand', 0), g('cm-expand', 4), g('cm-elevator', 0), g('v7-d2', 0), g('v7-d2', 1), g('vl-ladder', 2)], [60, 120], '8ths'),
+    L(from + 1, 'The expressions’ scales over V–I; contrary motion and the elevator; the 7th-dim scales over V7 → I', 'סולמות הביטויים על V–I; תנועה נגדית והמעלית; סולמות השביעית־מוקטן על V7 ← I', [g('sf-line', 0), g('sf-line', 2), g('sf-line', 4), g('sf-line', 6), g('sf-line', 8), g('sf-line', 9), g('cm-expand', 0), g('cm-elevator', 0), g('v7-d2', 0), g('v7-d2', 1), g('vl-ladder', 2)], [60, 120], '8ths'),
     L(from + 2, "Comping with the substitutions; the related dominants over a shell; the tritone's minor; borrowing", 'ליווי עם התחליפים; הדומיננטות הקרובות מעל שלד; המינור של הטריטון; השאלה', [g('sf-comp', 0), g('sf-comp', 1), g('shell4', 0), g('tm-res', 0), g('sf-borrow', 0), g('sf-borrow', 1), g('bw-three', 3), g('bw-root', 0), g('sub-tune', 0), g('el-borrow', 0)], [50, 100], 'quarters'),
   ];
 }
@@ -1030,7 +1032,8 @@ const chordBelow = (d: (k: number) => number, idx: number, n: number) => Array.f
  * voice down, one scale step a floor, the middle filled from the same chord — 9 floors: unison, 3rds, triads, 6ths,
  * octaves, drop 2, drop 3, drop 2&4, double octave — climbed and come down again (Kingstone's "expand and contract").
  * Offsets from s per floor (C6-dim from C: C | B D | A C E | G♯ B F | G C E G | F B D G♯ | E C G A | D G♯ F B | C C E C).
- * verify: the inner voices of floors 4–9 follow the sourced table, partly unverified against Echols's own pages.
+ * Built from the tonic only (owner 2026-11-15, verified: Echols builds the floors from the tonic; the cm-expand levels use
+ * options 0 and 8 — the other start degrees stay generatable for saved ids but are in no level).
  */
 export const ELEVATOR_FLOORS: number[][] = [[0], [-1, 1], [-2, 0, 2], [-3, -1, 3], [-4, 0, 2, 4], [-5, -1, 1, 5], [-6, 0, 4, 6], [-7, -3, 3, 7], [-8, 0, 2, 8]];
 export const FLOOR_T = [t('unison', 'יוניסון'), t('3rds', 'טרצות'), t('triads', 'משולשים'), t('6ths', 'סקסטות'), t('octaves', 'אוקטבות'), t('drop 2', 'דרופ 2'), t('drop 3', 'דרופ 3'), t('drop 2&4', 'דרופ 2 ו־4'), t('double octave', 'אוקטבה כפולה')];

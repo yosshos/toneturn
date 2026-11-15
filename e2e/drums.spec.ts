@@ -318,19 +318,17 @@ test.describe('drums course', () => {
         await expect(page.locator('.drum-score').first()).toBeVisible();
         await fitsScreen(page);
       });
-    // DRUMS P2 rest: mambo / songo / Mozambique (with the teacher-check note), Rudiment Rush, Groove-off.
-    for (const [lv, lang] of [
-      ['d-latin-8', 'en'],
-      ['d-latin-9', 'he'],
-      ['d-latin-10', 'en'],
-    ] as const)
-      test(`${lv} (${lang}) fits one screen and says the pattern is not teacher-checked yet`, async ({ page }) => {
-        await stubKit(page);
-        await seed(page, { kit: eKit, lang });
-        await openLevel(page, 'd-latin', lv);
-        await expect(page.locator('[data-teacher-check]').first()).toBeVisible();
-        await fitsScreen(page);
-      });
+    // DRUMS P2 rest: mambo / songo / Mozambique are hidden until a teacher checks them (src/engine/verifiedContent.ts):
+    // the Latin family shows levels 1–7 only. Rudiment Rush, Groove-off.
+    test('d-latin 8–10 (mambo, songo, Mozambique) are hidden until a teacher checks them', async ({ page }) => {
+      await stubKit(page);
+      await seed(page, { kit: eKit });
+      await page.goto('/?unlock#/drills');
+      await page.locator('[data-topic="all"]').click();
+      await page.locator('[data-family="d-latin"]').click();
+      await expect(page.locator('[data-level="d-latin-7"]')).toBeVisible();
+      for (const lv of ['d-latin-8', 'd-latin-9', 'd-latin-10']) await expect(page.locator(`[data-level="${lv}"]`)).toHaveCount(0);
+    });
     test('Rudiment Rush: the sticking zones on the setup, then the first round fits one screen', async ({ page }) => {
       await stubKit(page);
       await seed(page, { kit: eKit });

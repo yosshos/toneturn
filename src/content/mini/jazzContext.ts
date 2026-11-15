@@ -39,7 +39,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G7 · B♭7 · D♭7 · E7', he: 'G7 · B♭7 · D♭7 · E7' } },
       },
       {
-        say: { en: 'Barry Harris called these four dominants brothers. Their roots are a minor third apart, and every one of them resolves to C.', he: 'בארי האריס קרא לארבעת הדומיננטים האלה אחים. השורשים שלהם במרחק טרצה קטנה, וכל אחד מהם נפתר לדו.' },
+        say: { en: 'These four dominants are one family (Barry Harris: the related dominants). Their roots are a minor third apart, and every one of them resolves to C.', he: 'ארבעת הדומיננטים האלה הם משפחה אחת (אצל בארי האריס: הדומיננטים הקרובים). השורשים שלהם במרחק טרצה קטנה, וכל אחד מהם נפתר לדו.' },
         play: [chord(BB7, 0.9), chord(CMAJ7), rest(0.2), chord(DB7, 0.9), chord(CMAJ7), rest(0.2), chord(E7, 0.9), chord(CMAJ7)],
       },
       {

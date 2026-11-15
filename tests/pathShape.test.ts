@@ -136,7 +136,7 @@ describe('the known misplacements now sit in their grade band (AUDIT-6)', () => 
     ['vocal:2001', G(1), G(3) + 20], // arpeggios: RSL G1–G3
     ['vocal:405', 1400, 1650], // sight-singing 5 (items 1450–1550)
     ['vocal:1104', 1200, 1450], // swing eighths (sat at 980)
-    ['vocal:308', 1200, 1450], // Barry Harris lines 8 (sat at 1610)
+    // vocal:308 (Barry Harris lines 8) is hidden until verified (src/engine/verifiedContent.ts)
     // jazz
     ['topic:swing-ratio:1', 760, 850],
   ];
@@ -178,9 +178,8 @@ describe('the Jazz beginner band is real jazz (AUDIT-6 J-W1, J-W2)', () => {
     expect(ids).toContain('topic:guide-tones:1');
     // No expression filler any more.
     expect(ids.some((id) => /topic:(mood|dynamics|articulation):/.test(id))).toBe(false);
-    // Comping: the two-choice level comes before the three-choice one.
-    const d = (id: string) => byId().get(id)!.difficulty;
-    expect(d('topic:comping:1')).toBeLessThan(d('topic:comp-rhythm-ear:1'));
+    // Comping rhythms by ear (comp-rhythm-ear) are hidden until verified: src/engine/verifiedContent.ts
+    expect(ids).not.toContain('topic:comp-rhythm-ear:1');
   });
   it('a pianist plays shells and a first solo over a blues in the beginner band', () => {
     const ids = beginner(['keys']);
