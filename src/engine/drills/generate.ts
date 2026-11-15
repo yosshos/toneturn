@@ -20,6 +20,7 @@ import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by 
 import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry Harris lines (BARRY-HARRIS-METHOD Part D)
 import { COLOR_RH_KINDS, colorReharmLevels, ctoneFamily, genColor, mediantFamily, organFamily } from './colorDrills'; // HARMONY-REHARM
 import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
+import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
@@ -5085,6 +5086,8 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-harrisline') return genHarrisLine(s);
   // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): k-lh, k-tex, k-comp, k-impro.
   if (isSoloPianoFamily(s.family)) return genSoloPiano(s);
+  // AUDIT-6 Stage B: k-first 4–11 and graded sight-reading (keysFirst.ts).
+  if (s.family === 'k-read' || (s.family === 'k-first' && KEYS_FIRST_KINDS.has(s.kind))) return genKeysFirst(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5354,20 +5357,10 @@ export function catalog(): FamilyDef[] {
   });
   const FOURS = [10, 3, 8, 1, 6, 11, 4, 9, 2, 7, 0, 5].reverse(); // C F B♭ … up the cycle of 4ths
   const cyc4 = FOURS.slice(FOURS.indexOf(0)).concat(FOURS.slice(0, FOURS.indexOf(0)));
-  // AUDIT-CONTENT-THEORY §ז.2: the first steps, in C, in quarter notes, slow — each opens with its quick lesson.
-  const fs = (kind: string, hands: SpecTemplate['hands'], o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-first', kind, hands, perBeat: 1, ...o });
   // The owner's rule: jazz / theory families in all 12 keys (keys12.ts), the listed keys first.
   return widenFamilies([
-    {
-      id: 'k-first',
-      title: t('First steps at the piano', 'צעדים ראשונים בפסנתר'),
-      style: 'both',
-      levels: [
-        JT('k-first', 1, 'Posture and finger numbers: five fingers in C', 'ישיבה ומספרי אצבעות: חמש אצבעות בדו', [fs('five', 'R'), fs('five', 'L')], [0], [50, 72]),
-        JT('k-first', 2, 'C position, hands together', 'עמדת דו, ידיים יחד', [fs('five', 'RL'), fs('five', 'RL', { option: 1 })], [0], [50, 72]),
-        JT('k-first', 3, 'The thumb passes under', 'האגודל עובר מתחת', [fs('thumb-under', 'R'), fs('thumb-under', 'L')], [0], [48, 66]),
-      ],
-    },
+    // AUDIT-6 Stage B: the first steps at the piano grew to 11 levels (keysFirst.ts; levels 1–3 unchanged).
+    keysFirstFamily(),
     {
       id: 'scales',
       title: t('Scales', 'סולמות'),
@@ -6172,6 +6165,8 @@ export function catalog(): FamilyDef[] {
     soloTexFamily(),
     compVocabFamily(),
     improHabitsFamily(),
+    // AUDIT-6 Stage B: graded sight-reading, ~800–1400 (keysFirst.ts).
+    keysReadFamily(),
   ]);
 }
 

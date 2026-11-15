@@ -1406,6 +1406,47 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-6 Stage B: the first steps on the guitar (a pick over one open string), the bass (a strap across four strings),
+// the drums (a drum head under one stick), graded sight-reading at the piano (notes on a staff with a reading arrow)
+// and riffs by grade (two power-chord dots and a riff line).
+Object.assign(GLYPHS, {
+  gfirst: (
+    <>
+      <path d="M-26 -4 H26" stroke={I} strokeWidth={1.6} />
+      <path d="M0 18C-7 11-14 2-14-5c0-6 6-9 14-9s14 3 14 9C14 2 7 11 0 18z" {...sw} strokeLinejoin="round" />
+    </>
+  ),
+  bfirst: (
+    <>
+      <path d="M-15 -24 V24 M-5 -24 V24 M5 -24 V24 M15 -24 V24" stroke={I} strokeWidth={1.6} />
+      <path d="M-26 14 Q0 -22 26 14" {...sw} strokeWidth={4.4} />
+    </>
+  ),
+  dfirst: (
+    <>
+      <ellipse cx={0} cy={10} rx={20} ry={7} fill="none" stroke={I} strokeWidth={3} />
+      <path d="M-4 6 L18 -20" {...sw} />
+      <circle cx={18} cy={-20} r={3} fill={I} />
+    </>
+  ),
+  kread: (
+    <>
+      <path d="M-26 -10 H26 M-26 0 H26 M-26 10 H26" stroke={I} strokeWidth={1.4} />
+      {head(-12, 5, 5.5, 4)}
+      {head(4, -5, 5.5, 4)}
+      <path d="M-24 20 H18 M12 15 L18 20 L12 25" {...sw} strokeWidth={2.6} />
+    </>
+  ),
+  griff: (
+    <>
+      <path d="M-26 -12 H26 M-26 0 H26" stroke={I} strokeWidth={1.4} />
+      <circle cx={-14} cy={0} r={4.4} fill={I} />
+      <circle cx={-6} cy={-12} r={4.4} fill={I} />
+      <path d="M2 16 Q8 4 14 16 T26 16" {...sw} strokeWidth={2.8} />
+      <path d="M-24 16 H-2" stroke={I} strokeWidth={2.8} strokeLinecap="round" />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

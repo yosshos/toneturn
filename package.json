@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:https": "vite --mode https --host",
     "build": "tsc -b && vite build",
+    "build:openstudio": "tsc -b && vite build --mode openstudio --outDir dist-openstudio",
     "preview": "vite preview",
     "preview:https": "vite preview --mode https --host",
     "typecheck": "tsc -b",

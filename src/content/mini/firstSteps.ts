@@ -198,9 +198,10 @@ export const LESSONS: MiniLesson[] = [
 export const UNITS: Record<string, string> = {
   'tech:k-first-1': 'first-piano',
   'tech:k-first-3': 'first-thumb',
-  'tech:g-chords-1': 'first-guitar',
-  'tech:g-rhythm-1': 'first-strum',
-  'tech:d-time-1': 'first-sticks',
-  'tech:d-rock-1': 'first-rock',
+  // AUDIT-6 Stage B: the guitar's and the drums' lessons open their measured first steps now (g-first, d-first).
+  'tech:g-first-1': 'first-guitar',
+  'tech:g-first-6': 'first-strum',
+  'tech:d-first-1': 'first-sticks',
+  'tech:d-first-5': 'first-rock',
   'vocal:2101': 'first-voice',
 };

@@ -16,6 +16,8 @@ import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
+import { InputCheck, InputWatchdog } from './InputCheck';
+import type { InputCheckMode } from '../engine/inputCheck';
 import { tuningById } from '../engine/fretboard';
 import { bandBass } from '../engine/drills/bassBand';
 import { drillBandHits, drillDrumHits, unisonLine } from '../engine/drills/bandTimeline';
@@ -474,6 +476,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const useMidi = drum ? drumMidi : midi.devices.length > 0;
   // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
   const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
+  // Input check (owner 2026-11-15): the strip above Play shows the signal arriving; the watchdog speaks up mid-take.
+  const checkMode: InputCheckMode | null = drumBlocked || pianoBlocked ? null : drum ? (drumMidi ? 'drum-midi' : 'drum-mic') : useMidi ? 'midi' : 'mic';
+  const [arm, setArm] = useState<{ start: number; due: number | null } | null>(null);
   useEffect(() => () => ac.current?.abort(), []);
   // HARMONY-REHARM §6: an item with its own sound (k-organ: the tonewheel organ) plays on it, then the player's sound comes back.
   useEffect(() => {
@@ -618,6 +623,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       });
     }
     setPhase('count');
+    const armStart = performance.now();
+    const firstBeat = drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : 0;
+    setArm({ start: armStart, due: null });
     // The score's now-cue glides between the clicks (owner 2026-11-13: it sat off the notes): a continuous beat from the
     // last heard click and the beat's length, about 30 times a second; the staff turns it into a place on the line.
     let lastBeat: { i: number; t: number; dt: number } | null = null;
@@ -645,11 +653,13 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         },
         (perf) => {
           zero = perf;
+          setArm({ start: armStart, due: perf + bms(firstBeat) });
         },
       );
     } catch {
       /* stopped */
     } finally {
+      setArm(null);
       window.clearInterval(smooth);
       offMidi();
       offCC?.();
@@ -713,7 +723,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   return (
     <div className="drill-take">
       {/* 0.91 (one screen): when the take is blocked without MIDI, the warning below says it — no second MIDI line. */}
-      {!useMidi && !isGuitarDrill(drill) && !drum && !pianoBlocked && <p className="field-hint">{tx.midiOff}</p>}
+      {/* Input check: the microphone strip's MIDI link says what MIDI adds (it replaced the old MIDI hint line). */}
+      {checkMode && phase !== 'ready' && <InputWatchdog lang={lang} mode={checkMode} arm={arm} />}
       {drumBlocked && (
         <p className="kit-warn" data-drum-needs-kit="1">
           {acKit
@@ -790,6 +801,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               {lang === 'he' ? 'התבנית עוד לא נבדקה בידי מורה.' : 'Pattern not yet teacher-checked.'}
             </p>
           )}
+          {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
           <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={drumBlocked || pianoBlocked}>
             ▶ {tx.play}
           </button>

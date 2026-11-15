@@ -13,6 +13,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { GameScreenProps } from './gameProps';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
+import { InputCheck, InputWatchdog } from './InputCheck';
 import { piano } from './services';
 
 type Lang = 'he' | 'en';
@@ -67,6 +68,9 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
   const [tier, setTier] = useState<DynName>(() => (resumable?.tier && tierInfo && tierAllowed(tierInfo, resumable.tier) ? resumable.tier : tierInfo ? startTier(tierInfo) : 'mp'));
   const [input, setInput] = useState<Input>(inst === 'keys' ? 'midi' : 'mic');
   const [phase, setPhase] = useState<Phase>('setup');
+  // Input check: the watchdog is armed when the riff's play phase begins.
+  const [armAt, setArmAt] = useState(0);
+  useEffect(() => setArmAt(phase === 'play' ? performance.now() : 0), [phase]);
   const [run, setRun] = useState<RiffSave | null>(null);
   const [grade, setGrade] = useState<TakeGrade | null>(null);
   const [cell, setCell] = useState(-1);
@@ -262,6 +266,7 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
               ))}
             </div>
           </fieldset>
+          <InputCheck key={input} mode={input} lang={lang} />
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="riffecho" />}
           {!!best && (
             <p className="g2-best">
@@ -361,9 +366,11 @@ export function RiffEcho({ lang, settings, saved, onSave, onExit, onResult, best
               {grade.score < RIFF_PASS ? ` · ${tx(TX.lifeLost, lang)}` : ''}
             </p>
           )}
+          {phase === 'play' && armAt > 0 && <InputWatchdog lang={lang} mode={input} arm={{ start: armAt, due: armAt }} />}
           <div className="g2-col riff-actions">
             {phase === 'ready' && (
               <>
+                <InputCheck key={input} mode={input} lang={lang} />
                 <button className="btn" onClick={() => void hear()} data-riff-hear>
                   {tx(TX.listen, lang)}
                 </button>

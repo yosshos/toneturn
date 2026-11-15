@@ -42,6 +42,10 @@ export type FamilyId =
   | 'k-impro'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
+  // AUDIT-6 Stage B: graded sight-reading at the piano (keysFirst.ts); the guitar's first steps and riffs per grade.
+  | 'k-read'
+  | 'g-first'
+  | 'g-riff'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
@@ -99,7 +103,9 @@ export type FamilyId =
 
 export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin'
   // DRUMS_NICHE_PLAN (P1): songs and song forms, prog / fusion, and reading / theory played on the kit.
-  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form';
+  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form'
+  // AUDIT-6 Stage B: the drums' first steps (drumFirst.ts).
+  | 'd-first';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */
@@ -157,7 +163,9 @@ export type BassFamilyId =
   | 'b-tune'
   // AUDIT-DEPTH-3: improvising with the vocabulary under rule cards (b-solo) and jazz in context (b-ctx) on the bass.
   | 'b-solo'
-  | 'b-ctx';
+  | 'b-ctx'
+  // AUDIT-6 Stage B: the bass's first steps (bassFirst.ts).
+  | 'b-first';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -356,8 +364,8 @@ export interface Drill {
   drumWrite?: { kind: 'grid'; sub: number; beats: number; lanes: { voice: DrumVoice; steps: boolean[] }[] } | { kind: 'pick'; options: { en: string; he: string }[]; answer: number };
   /** Eighth-pulse meters (pulse 8): the beat groups of a bar in eighths (9/8 = 2+2+2+3); the click sounds on each group's first eighth and the staff beams by group. */
   groups?: number[];
-  /** B3 / B10 / B11: what the score shows — notation only (reading), only the chord chart (free choice; a model line is opt-in), or nothing until the result (ear). */
-  show?: 'staff' | 'chart' | 'none';
+  /** B3 / B10 / B11: what the score shows — notation only (reading), only the chord chart (free choice; a model line is opt-in), or nothing until the result (ear); 'tab' = TAB only, whatever the player's view (AUDIT-6: TAB reading). */
+  show?: 'staff' | 'chart' | 'none' | 'tab';
   /** B3: with show 'chart', the notes before this beat are written out (written bars, then free bars). */
   freeFrom?: number;
   /** B7: eighth-note meters (7/8, 10/8): one drill beat is an eighth and the tempo counts eighths (♪ = bpm). */
@@ -577,6 +585,8 @@ export interface DrumGoal {
   alt?: { voices: DrumVoice[]; vel: number; cv: number };
   /** Improvised zones (d-fills 9): beat ranges with nothing written, where at least `min` hits (any drums) must be played. */
   impro?: { zones: [number, number][]; min: number };
+  /** The buzz roll (AUDIT-6, d-first 8): every written stroke buzzes — at least `min` bounces (hits) inside it — on ≥ `share` of the strokes. */
+  buzz?: { min: number; share: number };
   /**
    * Crash chokes (drumChoke.ts): each crash at these beats grabbed before `by` beats pass. Measured only when the kit
    * sends chokes (polyphonic aftertouch, 0xA0 — Roland and others); a kit that sends none is never failed for it.
@@ -848,6 +858,8 @@ export interface DrumMetrics {
   alt?: { vel: number | null; cv: number | null };
   /** Improvised zones: hits played in each. */
   impro?: number[];
+  /** The buzz roll: share of the strokes that buzzed (≥ goal.buzz.min bounces). */
+  buzz?: number | null;
   /** Crash chokes: grabbed in time / asked; measured false = the kit sent no choke at all. */
   choke?: { ok: number; of: number; measured: boolean };
   /** Foot splashes played as splashes / written; measured false = the kit sent no splash note and no CC4. */

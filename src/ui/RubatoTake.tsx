@@ -11,6 +11,7 @@ import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { piano } from './services';
+import { InputCheck, InputWatchdog } from './InputCheck';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -23,6 +24,9 @@ const QUIET_MS = 5000;
 export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean }) {
   const tx = TX[lang];
   const [on, setOn] = useState(false);
+  // Input check: free time has no first-note time, so the watchdog gives the player 2 s to begin, then its usual wait.
+  const [armAt, setArmAt] = useState(0);
+  const checkMode = midi.devices.length ? 'midi' : 'mic';
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
   const start = async () => {
@@ -30,6 +34,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
     setOn(true);
     onBeat?.(0);
     const zero = performance.now();
+    setArmAt(zero);
     const notes: PlayedNote[] = [];
     const open = new Map<number, PlayedNote>();
     const frames: GFrame[] = [];
@@ -130,6 +135,8 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   return (
     <div className="drill-take rubato" data-rubato-take={on ? 'on' : 'ready'}>
       <p className="field-hint">{on ? tx.listening : tx.hint}</p>
+      {on && <InputWatchdog lang={lang} mode={checkMode} arm={armAt ? { start: armAt, due: armAt + 2000 } : null} />}
+      {!on && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
       {on ? (
         <button className="btn primary" onClick={() => doneRef.current?.()} data-rubato-done="1">
           {tx.done}

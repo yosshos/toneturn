@@ -442,6 +442,18 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
       return hits.filter((h, j) => !usedHit.has(j) && h.on >= t0 && h.on < t1).length;
     });
   }
+  // The buzz roll (AUDIT-6, d-first 8): the hits from each stroke to the next (at most 400 ms) — the stroke and its
+  // bounces; a stroke buzzed with at least goal.buzz.min of them.
+  let buzz: number | null | undefined;
+  if (goal.buzz) {
+    const ok = exp.map((e, i) => {
+      if (!mExp.has(i)) return false;
+      const next = exp[i + 1]?.t ?? e.t + 400;
+      const t1 = e.t + Math.min(400, Math.max(60, next - e.t - W / 2));
+      return hits.filter((h) => h.on >= e.t - W && h.on < t1 && cls(h.voice) === cls(e.n.voice)).length >= goal.buzz!.min;
+    });
+    buzz = exp.length ? ok.filter(Boolean).length / exp.length : null;
+  }
   if (goal.song) {
     const spans = drill.form ? expandForm(drill.form, drill.pulse) : [];
     const sections = spans.map((sp) => {
@@ -543,11 +555,12 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     max('altVel', alt.vel, goal.alt.vel);
     max('altCv', alt.cv, goal.alt.cv);
   }
+  if (goal.buzz) rules.push({ id: 'buzz', amt: buzz == null ? 9 : buzz < goal.buzz.share ? (goal.buzz.share - buzz) / goal.buzz.share : 0 });
   if (goal.impro && impro) impro.forEach((n, k) => rules.push({ id: `impro:${k}`, amt: n < goal.impro!.min ? (goal.impro!.min - n) / goal.impro!.min : 0 }));
   const missed = rules.filter((r) => r.amt > 0);
   const verdict: Verdict = !hits.length ? 'not' : !missed.length ? 'clean' : missed.length === 1 && missed[0].amt < 0.25 ? 'almost' : 'not';
 
-  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}), ...(goal.linear ? { coincide } : {}), ...(goal.poly ? { polyErr } : {}), ...(song ? { song } : {}), ...(modErr ? { modErr } : {}), ...(swell ? { swell } : {}), ...(pk ? { pocket, pocketMean } : {}), ...(endure ? { endure } : {}), ...(alt ? { alt } : {}), ...(impro ? { impro } : {}) };
+  const dm: DrumMetrics = { limbs, voices, hitRate, wrongVoice: wrong / nExp, extra, windowMs: Math.round(W), velCv, balance, levels, accentGap, tapCv, accentPos, ghost, ratio, hatOpen, hatClosed, landing, gapMean, flam, flamGap, flamSd, swing, swingSd, missed: missed.sort((a, b) => b.amt - a.amt).map((r) => r.id), ...(unsure !== null ? { unsure } : {}), ...(goal.linear ? { coincide } : {}), ...(goal.poly ? { polyErr } : {}), ...(song ? { song } : {}), ...(modErr ? { modErr } : {}), ...(swell ? { swell } : {}), ...(pk ? { pocket, pocketMean } : {}), ...(endure ? { endure } : {}), ...(alt ? { alt } : {}), ...(impro ? { impro } : {}), ...(buzz !== undefined ? { buzz } : {}) };
   return {
     bpm,
     nps: npsOf(drill, bpm),
@@ -702,6 +715,8 @@ export function drumWhy(d: DrumMetrics, v: Verdict): { en: string; he: string } 
       return { en: 'The feet are not even — one comes early, the other late.', he: 'הרגליים לא אחידות — אחת מקדימה והשנייה מאחרת.' };
     case 'impro':
       return { en: 'Play a fill in the empty beats.', he: 'נגנו מעבר בפעמות הריקות.' };
+    case 'buzz':
+      return { en: `${Math.round((d.buzz ?? 0) * 100)} % of the strokes buzzed — press into the head and let it bounce.`, he: `${Math.round((d.buzz ?? 0) * 100)}% מהמכות עשו באז — לחצו לתוך העור ותנו למקל לקפץ.` };
     case 'gap':
       return { en: `Without the click you drift ${ms(d.gapMean ?? 0)} ms ${(d.gapMean ?? 0) > 0 ? 'late' : 'early'}.`, he: `בלי הקליק אתם ${(d.gapMean ?? 0) > 0 ? 'נגררים' : 'ממהרים'} ב-${ms(d.gapMean ?? 0)} מ״ש.` };
     default:

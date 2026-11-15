@@ -70,6 +70,14 @@ Useful URLs
 
 Also **https://yosshos.github.io/toneturn/** — GitHub Actions on every push to `main` (typecheck + unit tests + build with `BASE_PATH=/toneturn/`).
 
+## Partner demo build (private)
+
+The same code, re-themed for a partner pitch (docs/SPEC-PARTNER-PITCH.md). `src/partner/` holds the registry: theme tokens over the v2 colours, the wordmark, the course subset, copy overrides, the mascot set ("your teacher here" frames) and the illustrative course map. With no `VITE_PARTNER` the app is unchanged.
+
+- `npm run build:openstudio` builds the Open Studio demo into `dist-openstudio/` (`.env.openstudio` sets `VITE_PARTNER=openstudio`): piano and guitar only, the depth page on Home, no logo or teachers' likenesses.
+- Deploy to a **separate, private Netlify site** (the owner creates it; never link it from the main app): in Netlify, *Add new site → Import from Git* with this repo, build command `npm run build:openstudio`, publish directory `dist-openstudio`, the same `VITE_SUPABASE_*` env vars if sign-in is wanted (and add the site's URL to the Supabase allow-list). Turn on *Site protection → password* (or keep the URL unshared), and leave it out of search: the build adds `noindex, nofollow`. Or drag-and-drop `dist-openstudio/` in Netlify's *Deploys* page for a one-off.
+- The depth page is also in the normal app: Settings → "What's inside" (`#/depth`).
+
 ## Practice tools (0.6)
 
 - **Find my level** — optional 9-question adaptive placement → **Skill Map** (radar: unmeasured / provisional / measured, text list, diagnosis, one recommendation, 4-week comparison).

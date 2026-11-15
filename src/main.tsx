@@ -29,8 +29,12 @@ import './coursestart.css';
 import './pulse.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
+import { installPartner } from './partner';
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);
+
+// A partner build (VITE_PARTNER) paints its tokens before the first render; the normal app: no-op.
+installPartner();
 
 createRoot(document.getElementById('root')!).render(<App />);

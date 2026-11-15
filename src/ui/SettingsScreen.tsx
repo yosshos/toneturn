@@ -43,6 +43,8 @@ interface Props {
   onMixer?: () => void;
   /** Plans and prices (0.54). */
   onPlans?: () => void;
+  /** What's inside: the depth page (src/partner/Depth.tsx). */
+  onDepth?: () => void;
   /** The owner's control panel (admins only). */
   onAdmin?: () => void;
   /** My ratings: the profile card shows my level in each course. */
@@ -209,7 +211,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
   );
 }
 
-export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin, ratings }: Props) {
+export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIntake, onMixer, onPlans, onAdmin, onDepth, ratings }: Props) {
   const [talk, setTalkOn] = useTalk();
   const kokoro = useNarratorStatus();
   const [busy, setBusy] = useState(false);
@@ -345,6 +347,11 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                   </button>
                 ))}
               </div>
+              {onDepth && (
+                <button type="button" className="btn ghost small set-depth" onClick={onDepth} data-open-depth="1">
+                  {he ? 'מה יש בפנים: העומק והמפות' : 'What’s inside: depth and maps'}
+                </button>
+              )}
               {!wide && <p className="set-foot">{he ? `גרסה ${APP_VERSION}` : `Version ${APP_VERSION}`}</p>}
             </>
           )}
