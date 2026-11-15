@@ -5,6 +5,7 @@
 
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS, type VocalItem, type VocalLevel } from './vocal';
 import { SONGBOOK, songNotes } from '../content/songbook';
+import { VOICE_TOP_FAMILIES, VOICE_TOP_LEVELS, VOICE_TOP_NAMES } from './voiceTop';
 
 type Bi = { en: string; he: string };
 type Item = Omit<VocalItem, 'id' | 'level'>;
@@ -461,7 +462,7 @@ export const FIRST_LEVELS: VocalLevel[] = [
 ];
 
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...VOICE_TOP_LEVELS, ...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -506,6 +507,9 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   // Harris stays last in the list).
   { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
+  // STAGE C (AUDIT-6 §3.5): the top ladder — altered arpeggios, wide leaps, runs, quick study, one part from the score,
+  // style studies, scat on rhythm changes, the top of the range (voiceTop.ts; placed by VOICE_TOP_DIFF).
+  ...VOICE_TOP_FAMILIES,
 ];
 
 /** The families' level order before P3 put new levels in (a level that was open then stays open). */
@@ -631,6 +635,7 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1206: { en: 'Sevenths and the octave', he: 'ספטימות ואוקטבה' },
   1207: { en: 'Ninths', he: 'נונות' },
   1309: { en: 'One phrase of a song', he: 'משפט אחד משיר' },
+  ...VOICE_TOP_NAMES,
 };
 
 // ---------------------------------------------------------------- rating tags of the new families
@@ -674,7 +679,22 @@ export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'sca
     case 'v-harmony':
       return { skill: 'singing', tags: T3(['singing', 'harmony', 1]) };
     case 'v-sight':
+    case 'v-part':
       return { skill: 'sight', tags: T3(['sight', 'sing', 0.6], ['singing', 'sequence', 0.4]) };
+    // STAGE C: the top ladder.
+    case 'v-arp2':
+    case 'v-leaps':
+      return { skill: 'singing', tags: T3(['singing', 'intervals', 0.6], ['singing', 'sequence', 0.4]) };
+    case 'v-runs':
+      return { skill: 'agility', tags: T3(['agility', 'runs', 0.7], ['timing', 'precision', 0.3]) };
+    case 'v-quick':
+    case 'v-scat2':
+      if (item.kind === 'scat') return { skill: 'improv', tags: T3(['improv', 'play', 0.6], ['singing', 'harmony', 0.25], ['timing', 'precision', 0.15]) };
+      return { skill: 'sight', tags: T3(['sight', 'sing', 0.5], ['singing', 'songs', 0.3], ['improv', 'play', 0.2]) };
+    case 'v-style':
+      return { skill: 'singing', tags: T3(['singing', 'songs', 0.6], ['expression', 'articulation', 0.2], ['timing', 'precision', 0.2]) };
+    case 'v-top':
+      return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
     default:
       return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
   }

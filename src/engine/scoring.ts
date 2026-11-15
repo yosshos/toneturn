@@ -52,6 +52,7 @@ export function pitchAccuracy(cents: number | null): number {
 export function accuracyFor(q: Question, answer: Answer, sung?: SungResult): number {
   if (q.kind === 'place') return gradePlace(q, String(answer)).score;
   if (q.kind === 'grid') return gradeGrid(q, String(answer)).score;
+  if (q.kind === 'choice' && q.partial) return answer === q.answer ? 1 : (q.partial[String(answer)] ?? 0);
   if (q.kind === 'sing') {
     if (!sung || sung.status === 'wrong' || sung.status === 'unclear') return 0;
     return pitchAccuracy(sung.cents);

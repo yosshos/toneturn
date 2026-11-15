@@ -1406,6 +1406,187 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// STAGE C (AUDIT-6): the advanced endings — a symbol for every new family and topic.
+const strings3 = <path d="M-26 22 H26 M-26 10 H26 M-26 -2 H26" stroke={I} strokeWidth={1.4} />;
+const sticks = (x: number) => <path d={`M${x - 12} 22 L${x + 8} -22`} {...sw} strokeWidth={3} />;
+Object.assign(GLYPHS, {
+  /** Speed technique: a run of 16ths under a speed streak. */
+  gspeed: (
+    <>
+      {strings3}
+      <path d="M-24 -14 H-6 M-20 -20 H0" stroke={I} strokeWidth={2.4} strokeLinecap="round" />
+      {head(2, 10, 4.6, 3.3)}
+      {head(12, 4, 4.6, 3.3)}
+      {head(22, -2, 4.6, 3.3)}
+    </>
+  ),
+  /** Fusion and outside: a line that steps out a half step and comes back. */
+  gfusion: (
+    <>
+      {strings3}
+      <path d="M-24 18 L-12 6 L-4 -14 L6 -14 L14 6 L24 -6" {...sw} strokeWidth={2.8} strokeLinejoin="round" />
+    </>
+  ),
+  /** Chord-melody arranging: a melody note on top of a stacked chord, an arrow into a second one. */
+  gcmarr: (
+    <>
+      {head(-14, 14, 5, 3.6)}
+      {head(-14, 4, 5, 3.6)}
+      {head(-12, -10, 6, 4.4)}
+      <path d="M-4 0 H8 M4 -4 L8 0 L4 4" {...sw} strokeWidth={2.4} />
+      {head(18, 12, 5, 3.6)}
+      {head(18, 2, 5, 3.6)}
+      {head(20, -14, 6, 4.4)}
+    </>
+  ),
+  /** Solo jazz guitar: walking quarters low, a shell above on the "and". */
+  gsolojazz: (
+    <>
+      {strings3}
+      {head(-18, 18, 4.4, 3.2)}
+      {head(-4, 14, 4.4, 3.2)}
+      {head(10, 18, 4.4, 3.2)}
+      {head(4, -12, 4.4, 3.2)}
+      {head(4, -20, 4.4, 3.2)}
+    </>
+  ),
+  /** Harris lines at tempo: the falling line with a speed streak. */
+  ghlfast: (
+    <>
+      <path d="M-22 -16 L-10 -6 L-2 -10 L8 2 L20 18" {...sw} strokeWidth={2.8} strokeLinejoin="round" />
+      <path d="M-26 6 H-14 M-24 14 H-10" stroke={I} strokeWidth={2.2} strokeLinecap="round" />
+    </>
+  ),
+  /** PAS rudiments: two crossed sticks over a roll's tremolo slashes. */
+  dpas: (
+    <>
+      {sticks(-6)}
+      {sticks(10)}
+      <path d="M-20 4 L-6 -2 M-20 12 L-6 6 M-20 20 L-6 14" stroke={I} strokeWidth={2.4} />
+    </>
+  ),
+  dstick: mark('RLRR'),
+  /** Syncopation, interpreted: a syncopated rhythm with an accent over the tie. */
+  dsynco: (
+    <>
+      {head(-16, 12, 5, 3.6)}
+      {head(4, 12, 5, 3.6)}
+      {head(18, 12, 5, 3.6)}
+      <path d="M-11 10 V-14 M9 10 V-14 M23 10 V-14 M9 -14 H23" {...sw} strokeWidth={2.4} />
+      <path d="M-12 20 Q-4 26 4 20" {...sw} strokeWidth={2} />
+      <path d="M-6 -22 L2 -18 L-6 -14" {...sw} strokeWidth={2} />
+    </>
+  ),
+  /** Jazz independence: the ride's spang-a-lang over a moving snare note. */
+  dchapin: (
+    <>
+      <path d="M-24 -16 H24" stroke={I} strokeWidth={1.6} />
+      <path d="M-18 -22 L-14 -10 M-6 -22 L-2 -10 M2 -22 L6 -10 M14 -22 L18 -10" stroke={I} strokeWidth={2.4} />
+      {head(-8, 12, 5.4, 3.8)}
+      {head(12, 16, 5.4, 3.8)}
+      <path d="M-2 8 L8 12" stroke={I} strokeWidth={2} strokeDasharray="2 3" />
+    </>
+  ),
+  /** Linear funk: hat, snare, kick one after the other on three lines, never together. */
+  dlinear: (
+    <>
+      <path d="M-26 -14 H26 M-26 2 H26 M-26 18 H26" stroke={I} strokeWidth={1.2} />
+      <path d="M-20 -18 L-14 -10 M-14 -18 L-20 -10" stroke={I} strokeWidth={2.4} />
+      {head(-4, 2, 4.6, 3.3)}
+      {head(8, 18, 4.6, 3.3)}
+      <path d="M16 -18 L22 -10 M22 -18 L16 -10" stroke={I} strokeWidth={2.4} />
+    </>
+  ),
+  /** Brushes: a fan of wires and a circular sweep. */
+  dbrush: (
+    <>
+      <path d="M-20 22 L-4 -2 M-20 22 L0 2 M-20 22 L-8 -6" {...sw} strokeWidth={2} />
+      <path d="M6 -4 A12 9 0 1 1 6 14" {...sw} strokeWidth={2.6} />
+      <path d="M2 10 L6 14 L10 10" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  doddtempo: mark('7/8♩'),
+  /** Soloing over a form: four bars of time, four bars free (trading). */
+  dtrade: (
+    <>
+      <path d="M-26 -4 H26 M-26 10 H26" stroke={I} strokeWidth={1.4} />
+      <path d="M-26 -10 V16 M0 -10 V16 M26 -10 V16" stroke={I} strokeWidth={2} />
+      <path d="M-22 3 L-18 -1 M-14 3 L-10 -1 M-6 3 L-2 -1" stroke={I} strokeWidth={2.2} />
+      <path d="M4 6 Q10 -12 14 4 T24 0" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Altered arpeggios: a stack of minor 3rds (the diminished seventh) climbing. */
+  varp2: (
+    <>
+      {head(-16, 16, 4.6, 3.3)}
+      {head(-5, 6, 4.6, 3.3)}
+      {head(6, -4, 4.6, 3.3)}
+      {head(17, -14, 4.6, 3.3)}
+      <text x={-20} y={-10} fontSize={14} fontFamily="'Noto Music', sans-serif" fill={I}>°</text>
+    </>
+  ),
+  /** Wide leaps: a low note and a high one, a long arc between. */
+  vleaps: (
+    <>
+      {head(-16, 16, 6, 4.4)}
+      {head(16, -16, 6, 4.4)}
+      <path d="M-10 10 Q-6 -24 10 -18" {...sw} strokeWidth={2.6} />
+    </>
+  ),
+  /** Advanced runs: a rising run of small notes into a long one. */
+  vruns: (
+    <>
+      {head(-20, 14, 3.6, 2.6)}
+      {head(-12, 8, 3.6, 2.6)}
+      {head(-4, 2, 3.6, 2.6)}
+      {head(4, -4, 3.6, 2.6)}
+      {head(16, -12, 6.4, 4.6)}
+      <path d="M-22 22 Q-2 18 12 -4" stroke={I} strokeWidth={1.6} fill="none" />
+    </>
+  ),
+  vquick: mark('4+4+4'),
+  /** One part from the score: two staves, the lower one sung (a mouth arc). */
+  vpart: (
+    <>
+      <path d="M-26 -16 H26 M-26 -8 H26 M-26 8 H26 M-26 16 H26" stroke={I} strokeWidth={1.2} />
+      {head(-10, -12, 4.6, 3.3)}
+      {head(8, -16, 4.6, 3.3)}
+      {head(-4, 12, 4.6, 3.3)}
+      <path d="M14 10 Q20 22 26 10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  vstyle: mark('R&B'),
+  vscat2: mark('I6–V'),
+  /** Top of the range: a note above the highest line, an arrow up to a ceiling. */
+  vtop: (
+    <>
+      <path d="M-24 -20 H24" stroke={I} strokeWidth={3} />
+      <path d="M-24 16 H24 M-24 8 H24" stroke={I} strokeWidth={1.2} />
+      {head(-6, -10, 6, 4.4)}
+      <path d="M14 18 V-12 M8 -6 L14 -12 L20 -6" {...sw} strokeWidth={2.6} />
+    </>
+  ),
+  /** Three voices, the lowest: three note heads stacked, the bottom one ringed. */
+  threevoice: (
+    <>
+      {head(-4, -14, 5, 3.6)}
+      {head(-4, 0, 5, 3.6)}
+      {head(-4, 14, 5, 3.6)}
+      <ellipse cx={-4} cy={14} rx={11} ry={8} {...sw} strokeWidth={2.2} />
+      <path d="M8 -18 V12" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  onehear: mark('1×'),
+  /** Describe the piece: a short score line with three ticked features. */
+  features: (
+    <>
+      <path d="M-26 -14 H6 M-26 -4 H6" stroke={I} strokeWidth={1.4} />
+      <text x={-24} y={16} fontSize={14} fontFamily="'Noto Music', serif" fontStyle="italic" fill={I}>p</text>
+      <path d="M-12 12 H2 M-12 12 L-4 8 M-12 12 L-4 16" stroke={I} strokeWidth={1.8} fill="none" />
+      <path d="M12 -12 L16 -8 L24 -18 M12 2 L16 6 L24 -4 M12 16 L16 20 L24 10" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

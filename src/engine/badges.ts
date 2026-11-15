@@ -345,10 +345,10 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
 export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -378,6 +378,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-ctx': { en: 'Jazz in context', he: 'ג׳אז בהקשר' },
   'k-harrisline': { en: 'Barry Harris lines', he: 'הקווים של בארי האריס' },
   'g-harrisline': { en: 'Barry Harris lines on guitar', he: 'הקווים של בארי האריס בגיטרה' },
+  'g-speed': { en: 'Speed technique', he: 'טכניקת מהירות' },
+  'g-fusion': { en: 'Fusion and outside', he: 'פיוז׳ן ובחוץ' },
+  'g-cmarr': { en: 'Chord-melody arranging', he: 'עיבוד אקורד-מלודיה' },
+  'g-solojazz': { en: 'Solo jazz guitar', he: 'גיטרת ג׳אז סולו' },
+  'g-hlfast': { en: 'Harris lines at tempo', he: 'קווי האריס בטמפו' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -451,6 +456,11 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-ctx': 'brothers',
   'k-harrisline': 'bhline',
   'g-harrisline': 'gbhline',
+  'g-speed': 'gspeed',
+  'g-fusion': 'gfusion',
+  'g-cmarr': 'gcmarr',
+  'g-solojazz': 'gsolojazz',
+  'g-hlfast': 'ghlfast',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -547,6 +557,12 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // Barry Harris lines: one title per level (keys 32, guitar 10).
   'k-harrisline': [['Chromatic Arpeggio Descender', 'יורד הארפג׳ים הכרומטיים'], ['ABC Thirds', 'טרצות האלף־בית'], ['Dominant Eight Ways', 'הדומיננט בשמונה דרכים'], ['Important Arpeggios', 'הארפג׳ים החשובים'], ['Blues Outliner', 'משרטט הבלוז'], ["Barry's Chromatic Scale", 'הסולם הכרומטי של בארי'], ['Major Rule', 'חוק המז׳ור'], ['Upbeat Comper', 'מלווה הקצב החלש'], ['On the Ands', 'על ה"וְ"'], ['Rhythm Outliner', 'משרטט הריתם'], ['Dominant Chromatic', 'כרומטי דומיננטי'], ['Three Extra Notes', 'שלושה צלילים נוספים'], ['Flat-Seven Pivot', 'פיבוט ה־♭7'], ['Cherokee Outliner', 'משרטט צ׳רוקי'], ['Minor-Six Chromatic', 'כרומטי מינור שש'], ['Minor Rule', 'חוק המינור'], ['Five-Four-Three-Two', 'חמש־ארבע־שלוש־שתיים'], ['Tunisia Outliner', 'משרטט תוניסיה'], ['Chromatic in Two Voices', 'כרומטי בשני קולות'], ['Three to Flat Nine', 'שלוש עד ♭9'], ['Seven Down to Three', 'שבע למטה לשלוש'], ['Major Phrases', 'משפטי מז׳ור'], ['Minor Phrases', 'משפטי מינור'], ['Six in Four', 'שש בתוך ארבע'], ['Triplet Ruler', 'שליט הטריולות'], ['Line Composer', 'מלחין הקווים'], ['Lick Builder', 'בונה הליק'], ['Miscellaneous Rule', 'החוק השונה'], ['Phrases in the Outline', 'משפטים במתאר'], ['Giant Steps Outliner', 'משרטט הצעדים הגדולים'], ['ii–V–I Composer', 'מלחין ii–V–I'], ['Lines in a Tune', 'קווים בתוך שיר']],
   'g-harrisline': [['Chromatic Scale on the Neck', 'הסולם הכרומטי על הצוואר'], ['Outliner on the Neck', 'משרטט על הצוואר'], ['Important Arpeggios on the Neck', 'הארפג׳ים החשובים על הצוואר'], ['Rules from Every Degree', 'חוקים מכל דרגה'], ['Five-Four-Three-Two Guitarist', 'גיטריסט 5-4-3-2'], ['Seven Down on the Neck', 'שבע למטה על הצוואר'], ['Extra-Note Guitarist', 'גיטריסט הצלילים הנוספים'], ['Upbeat Guitarist', 'גיטריסט הקצב החלש'], ['Guitar Line Composer', 'מלחין קווים בגיטרה'], ['ABC Guitarist', 'גיטריסט ה־ABC']],
+  // STAGE C (AUDIT-6): the guitar above grade 8 — one title per level.
+  'g-speed': [['Sixteenth-Note Shredder', 'מפרק השש-עשריות'], ['Legato at Speed', 'לגאטו במהירות'], ['Sweep at Speed', 'סוויפ במהירות'], ['Tapping at Concert Tempo', 'טאפינג בטמפו של הופעה'], ['Skips and Tremolo at Speed', 'דילוגים וטרמולו במהירות']],
+  'g-fusion': [['Fusion Legato at Tempo', 'לגאטו פיוז׳ן בטמפו'], ['Four Notes a String', 'ארבעה צלילים במיתר'], ['Half-Step Side-Slipper', 'מחליק חצי הטון'], ['Altered Triad Pair', 'זוג המשולשים האלטרד'], ['Outside over the Vamp', 'בחוץ מעל הוואמפ']],
+  'g-cmarr': [['Melody over a Walking Bass', 'מנגינה מעל בס מהלך'], ['Reharmonised Chorus', 'פזמון בהרמון מחדש'], ['Intro, Chorus, Tag', 'פתיחה, פזמון, תג'], ['Two-Chorus Arranger', 'מעבד שני הפזמונים'], ['Rubato Ballad Arranger', 'מעבד בלדת הרובאטו']],
+  'g-solojazz': [['Walking ii–V–I Soloist', 'סולן ii–V–I מהלך'], ['Solo Blues Guitarist', 'גיטריסט בלוז סולו'], ['Solo Rhythm Changes', 'ריתם צ׳יינג׳ס סולו'], ['Three-Voice Head', 'שיר בשלושה קולות']],
+  'g-hlfast': [['Chromatic at Bebop Tempo', 'כרומטי בטמפו ביבופ'], ['Rules at Tempo', 'חוקים בטמפו'], ['Seven Down at Tempo', 'שבע למטה בטמפו'], ['Outlines at Tempo', 'מתארים בטמפו'], ['Composer at Bebop Tempo', 'מלחין בטמפו ביבופ']],
   // Phrases by ear: keys 7 titles, guitar one per level.
   'k-phrase': [['Chord-Tone Echo', 'הד צלילי האקורד'], ['Approach by Ear', 'גישה בשמיעה'], ['Enclosure by Ear', 'כיתור בשמיעה'], ['Bebop-Scale Ear', 'אוזן סולם הביבופ'], ['ii–V–I by Ear', 'ii–V–I בשמיעה'], ['Altered by Ear', 'אלטרד בשמיעה'], ['Solo Phrases by Ear', 'משפטי סולו בשמיעה']],
   'g-phrase': [['Chord-Tone Echo on the Neck', 'הד צלילי האקורד על הצוואר'], ['Approach by Ear on the Neck', 'גישה בשמיעה על הצוואר'], ['Enclosure by Ear on the Neck', 'כיתור בשמיעה על הצוואר'], ['Bebop-Scale Ear on the Neck', 'אוזן סולם הביבופ על הצוואר'], ['ii–V–I by Ear on the Neck', 'ii–V–I בשמיעה על הצוואר'], ['Altered by Ear on the Neck', 'אלטרד בשמיעה על הצוואר'], ['Solo Phrase by Ear on the Neck', 'משפט סולו בשמיעה על הצוואר'], ['A Chorus by Ear on the Neck', 'סבב בשמיעה על הצוואר']],

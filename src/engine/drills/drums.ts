@@ -15,6 +15,7 @@ import { generateSong } from './drumSong';
 import { generateProg } from './drumProg';
 import { generateCount, generateForm, generateNotation, generateReadMore } from './drumTheory';
 import { generateMore } from './drumMore';
+import { drumTopFamilies, generateDrumTop } from './drumTop';
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -862,6 +863,9 @@ export const isDrumFamily = (f: string): boolean => f.startsWith('d-');
 /** Build a drum drill (any 'd-' family). */
 export function generateDrums(spec: DrillSpec): Drill {
   const s: DrillSpec = { ...spec, key: 0, instrument: 'drums' };
+  // STAGE C (AUDIT-6 DA-10): the advanced families past 1400 (drumTop.ts).
+  const top = generateDrumTop(s);
+  if (top) return top;
   // DRUMS_NICHE_PLAN P2: the rest of the curriculum (drumMore.MORE_FROM: the levels past each family's first ones).
   const more = generateMore(s);
   if (more) return more;
@@ -1148,6 +1152,9 @@ export function drumFamilies(): DrumFamilyDef[] {
       L('d-form', 4, 'AABA: the 32-bar form', 'AABA: הצורה של 32 תיבות', 'aaba', 3, [120, 160], '1/8T', false),
       L('d-form', 5, 'Repeats and endings', 'חזרות וסיומות', 'endings', 3, [80, 110], '1/8', false),
     ]),
+    // STAGE C (AUDIT-6 DA-10): rudiments, stickings, syncopation, independence, linear funk, brushes, odd meters at
+    // tempo, soloing over a form — the advanced band (drumTop.ts, placed by DRUM_TOP_DIFF).
+    ...drumTopFamilies(),
   ];
 }
 

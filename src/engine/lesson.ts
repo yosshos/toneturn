@@ -94,6 +94,8 @@ interface QBase {
   aid?: 'keymap' | 'target' | 'lookup';
   /** Rated as this skill instead of the one its kind implies (e.g. naming notes in a new key = transposition). */
   skillAs?: SkillId;
+  /** STAGE C single-hearing playback (RCM L10): the stimulus plays once — no replay until the answer is in. */
+  once?: boolean;
 }
 
 export interface DegreeQuestion extends QBase {
@@ -433,6 +435,8 @@ export interface ChoiceQuestion extends QBase {
    * (root pitch class, quality); the strum is recognised among these only (closed set), the buttons stay as fallback.
    */
   strum?: Record<string, { root: number; quality: 'M' | 'm' | '7' }>;
+  /** STAGE C (describe the piece): credit for a wrong choice — the share of the features it gets right (rating accuracy only). */
+  partial?: Record<string, number>;
 }
 
 /** A drawn instrument picture (spec AE §3.1). Strings are numbered from the highest (1). */

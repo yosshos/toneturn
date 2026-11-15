@@ -85,6 +85,8 @@ export type FamilyId =
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
   | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
   | 'g-phrase' // phrases by ear on the guitar (phraseDrills.ts)
+  // STAGE C (AUDIT-6): the guitar above grade 8 — speed, fusion, chord-melody arranging, solo jazz guitar, Harris lines at tempo (guitarTop.ts).
+  | 'g-speed' | 'g-fusion' | 'g-cmarr' | 'g-solojazz' | 'g-hlfast'
   | 'g-harrisline' // Barry Harris lines on the neck (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts)
   | 'g-ctone' // HARMONY-REHARM §2: one note, many chords on the neck (colorDrills.ts)
   | 'g-color' // HARMONY-REHARM §3–5: mediants, modal interchange, planing, side-slip, sus on the neck (colorDrills.ts)
@@ -99,7 +101,9 @@ export type FamilyId =
 
 export type DrumFamilyId = 'd-strokes' | 'd-rolls' | 'd-diddles' | 'd-time' | 'd-rock' | 'd-fills' | 'd-read' | 'd-funk' | 'd-shuffle' | 'd-indep' | 'd-mideast' | 'd-feet' | 'd-ear' | 'd-jazz' | 'd-latin'
   // DRUMS_NICHE_PLAN (P1): songs and song forms, prog / fusion, and reading / theory played on the kit.
-  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form';
+  | 'd-song' | 'd-prog' | 'd-count' | 'd-notation' | 'd-form'
+  // STAGE C (AUDIT-6 DA-10): the advanced drum families (drumTop.ts).
+  | 'd-pas' | 'd-stick' | 'd-synco' | 'd-chapin' | 'd-linear' | 'd-brush' | 'd-oddtempo' | 'd-trade';
 /** A drum voice (DRUMS_CURRICULUM §3): what a hit is, whatever note the kit sends for it. */
 export type DrumVoice = 'kick' | 'snare' | 'rim' | 'hihat' | 'hhOpen' | 'hhPedal' | 'ride' | 'crash' | 'tom1' | 'tom2' | 'tom3';
 /** The limb that plays a drum note (sticking R / L stays in `hand`; feet are RF / LF). */

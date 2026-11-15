@@ -673,7 +673,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                 {lang === 'he' ? 'המשך' : 'Continue'}
               </button>
             )}
-            <button className="btn small ctl-btn" onClick={() => ctrl.repeat()}>
+            <button className="btn small ctl-btn" onClick={() => ctrl.repeat()} disabled={!!q.once && !v.awaitNext} data-once={q.once ? '1' : undefined}>
               <CtlIcon k="repeat" /> {t.repeat}
             </button>
             <button className="btn small ctl-btn" onClick={() => ctrl.skip()}>

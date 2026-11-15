@@ -174,7 +174,7 @@ export function grade(
   if (isResolved(rec)) return [s, { kind: 'stale' }];
   const q = s.lesson.questions[questionIndex];
   const correct = answer === q.answer || (q.kind === 'place' && gradePlace(q, String(answer)).score === 1) || sameSounds(answer, q.answer);
-  const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : q.kind === 'grid' ? gradeGrid(q, String(answer)).score : correct ? 1 : 0);
+  const accuracy = ev.accuracy ?? (q.kind === 'place' ? gradePlace(q, String(answer)).score : q.kind === 'grid' ? gradeGrid(q, String(answer)).score : q.kind === 'choice' && q.partial && !correct ? (q.partial[String(answer)] ?? 0) : correct ? 1 : 0);
   const attempts: Attempt[] = [
     ...rec.attempts,
     { answer, correct, via, accuracy, timeMs: ev.timeMs ?? null, modality: ev.modality ?? (via === 'voice' ? 'voice' : 'buttons'), precision: ev.precision },

@@ -22,6 +22,9 @@ import { VOICE_FAMILIES } from './voiceFamilies';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
+import { GUITAR_TOP_RANK } from './drills/guitarTop';
+import { DRUM_TOP_DIFF } from './drills/drumTop';
+import { VOICE_TOP_DIFF } from './voiceTop';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -461,6 +464,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...SP_LEVEL_DIFF,
   // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
   'k-harm-8': 1780,
+  // STAGE C (AUDIT-6 DA-10): the advanced drum families, each level at its own rating (1420–1880).
+  ...DRUM_TOP_DIFF,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -517,6 +522,8 @@ GUITAR_RANK['g-harrisline'] = 6;
 // HARMONY-REHARM: one note many chords and colour harmony on the neck, with the theory families.
 GUITAR_RANK['g-ctone'] = 6;
 GUITAR_RANK['g-color'] = 6;
+// STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
+Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -524,8 +531,13 @@ GUITAR_RANK['g-color'] = 6;
  * are unchanged (saved progress keys stay valid); other instruments' difficulties rise with the level, so nothing moves.
  */
 export const ladderOrder = (a: PathStep, b: PathStep): number => a.difficulty - b.difficulty || a.ladder!.level - b.ladder!.level;
-/** A guitar level's path difficulty from its grade (0 = Debut … 9 = beyond grade 8): 700 + 90·grade + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
-export const guitarPathDifficulty = (family: string, grade: number): number => 700 + 90 * grade + 8 * (GUITAR_RANK[family] ?? 5);
+/**
+ * A guitar grade's base rating: 700 + 90·grade to grade 8 (Debut … RSL 8), then the diploma grades (STAGE C, AUDIT-6
+ * GA-4) a hundred apart from 1590: grade 9 ≈ 1590–1670, 10 ≈ 1690–1770, 11 ≈ 1790–1870 — all under PATH_CAP.
+ */
+export const guitarGradeBase = (grade: number): number => (grade <= 8 ? 700 + 90 * grade : 1590 + 100 * (Math.min(11, grade) - 9));
+/** A guitar level's path difficulty from its grade (0 = Debut … 8, 9–11 = diploma): the grade's base + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
+export const guitarPathDifficulty = (family: string, grade: number): number => guitarGradeBase(grade) + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */
 function ladderSteps(): PathStep[] {
   const out: PathStep[] = [];
@@ -548,7 +560,7 @@ function ladderSteps(): PathStep[] {
   }
   for (const pr of VOCAL_PROGRAMS)
     pr.refs.forEach((n, i) => {
-      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
+      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: VOICE_TOP_DIFF[n] ?? diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
     });
   return out;
 }
