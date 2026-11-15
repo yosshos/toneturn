@@ -86,6 +86,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   repertoire: 'repstep', 'rush-voicing': 'voicingspy', 'rush-scale': 'scalerush', 'rush-standard': 'standard', reharm: 'reharmspot', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',
   // 0.76: instrument, voice and drum games (their Arcade symbols).
   tuneup: 'tuneup', playback: 'playback', voicingsprint: 'vsprint', changerace: 'changerace', walkchanges: 'walkchanges', rootsear: 'rootsear', harmonyhold: 'harmonyhold', singinterval: 'singinterval', kitread: 'kitread', namegroove: 'namegroove',
+  // AUDIT-GAMES §4.2 new games (their Arcade symbols).
+  guidetone: 'guidetone', call5432: 'call5432', enclosure: 'enclosure', crossword: 'crossword', holdnote: 'holdnote',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

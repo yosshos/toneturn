@@ -39,6 +39,12 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'bhtime', name: l('Barry Harris in Time', 'בארי האריס בזמן'), course: 'jazz', alsoIn: ['keys'], titles: [l('Sixth on Time', 'שישית בזמן'), l('Diminished in Motion', 'מוקטן בתנועה'), l('Barry Harris Fluency', 'שטף בארי האריס')] },
   { game: 'riffecho', name: l('Odd-Meter Riff Echo', 'הד ריפים במשקל עקום'), course: 'keys', alsoIn: ['guitar', 'bass'], titles: [l('Riff in Six', 'ריף בשש'), l('Riff in Seven', 'ריף בשבע'), l('Odd-Meter Fluency', 'שטף במשקלים עקומים')] },
   { game: 'polylock', name: l('Polyrhythm Lock', 'נעילת פולי־ריתם'), course: 'drums', alsoIn: ['ear', 'keys'], titles: [l('Three Against Two', 'שלוש נגד שתיים'), l('Five Against Four', 'חמש נגד ארבע'), l('Polyrhythm Independence', 'עצמאות פולי־ריתמית')] },
+  // AUDIT-GAMES §4.2 new games.
+  { game: 'guidetone', name: l('Guide-Tone Runner', 'רץ הצלילים המובילים'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Thirds and Sevenths', 'טרצות וספטימות'), l('Through the Blues', 'דרך הבלוז'), l('Guide-Tone Fluency', 'שטף צלילים מובילים')] },
+  { game: 'call5432', name: l('5-4-3-2 Call', 'קריאת 5-4-3-2'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Knows the Numbers', 'מכיר את המספרים'), l('On the Changes', 'על המהלך'), l('Barry Harris Phrases', 'המשפטים של בארי האריס')] },
+  { game: 'enclosure', name: l('Enclosure Target', 'מטרת הכיתור'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Lands the Target', 'נוחת על המטרה'), l('Bebop Enclosures', 'כיתורי ביבופ'), l('Through the Changes', 'דרך המהלך')] },
+  { game: 'crossword', name: l('Changes Crossword', 'תשבץ המהלכים'), course: 'ear', alsoIn: ['jazz'], titles: [l('Hears the Roots', 'שומע את היסודות'), l('Borrowed and Bent', 'שאולים ומוטים'), l('Changes by Ear', 'מהלכים בשמיעה')] },
+  { game: 'holdnote', name: l('Hold the Note', 'להחזיק את הצליל'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('One Note, Many Chords', 'צליל אחד, הרבה אקורדים'), l('Tension Reader', 'קורא טנשנים'), l('Eight Ways', 'שמונה דרכים')] },
 ];
 
 const TIERS: { t: DynName; tone: RankTier }[] = [

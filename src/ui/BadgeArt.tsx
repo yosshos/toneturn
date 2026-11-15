@@ -1269,6 +1269,52 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M2 12h20')}
     </>
   ),
+  // AUDIT-GAMES §4.2 new games.
+  // Guide-Tone Runner: a 7th stepping down to a 3rd over a beat line.
+  'special:game:guidetone': () => (
+    <>
+      {dot(7, 7, 2)}
+      {dot(15, 11, 2)}
+      {p('M9 8 L13 10', false)}
+      {p('M3 18h18 M5 15v6 M12 15v6 M19 15v6', false)}
+    </>
+  ),
+  // 5-4-3-2 Call: four steps down.
+  'special:game:call5432': () => (
+    <>
+      {dot(5, 6, 1.7)}
+      {dot(10, 10, 1.7)}
+      {dot(15, 14, 1.7)}
+      {dot(20, 18, 1.7)}
+      {p('M3 21h18', false)}
+    </>
+  ),
+  // Enclosure Target: a ringed target with notes above and below.
+  'special:game:enclosure': () => (
+    <>
+      <circle cx="14" cy="12" r="5" />
+      {dot(14, 12, 1.6)}
+      {dot(5, 6, 1.4)}
+      {dot(5, 18, 1.4)}
+      {p('M6.5 7 L9.5 9.5 M6.5 17 L9.5 14.5', false)}
+    </>
+  ),
+  // Changes Crossword: a small grid, two squares filled.
+  'special:game:crossword': () => (
+    <>
+      {p('M3 7h18v10H3z M7.5 7v10 M12 7v10 M16.5 7v10 M3 12h18', false)}
+      {p('M3 7h4.5v5H3z', true)}
+      {p('M12 12h4.5v5H12z', true)}
+    </>
+  ),
+  // Hold the Note: a held line, three chord stacks under it.
+  'special:game:holdnote': () => (
+    <>
+      {p('M3 6h18', false)}
+      {dot(12, 6, 2)}
+      {p('M6 11v8 M12 11v8 M18 11v8', false)}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>

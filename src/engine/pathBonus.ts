@@ -27,6 +27,12 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'polylock', course: 'drums', domain: 'instrument', skill: 'instrument', sub: 'instrument/drum-tech', difficulty: 1000, title: { en: 'Polyrhythm Lock', he: 'נעילת פולי־ריתם' } },
   { game: 'riffecho', course: 'guitar', domain: 'instrument', skill: 'instrument', sub: 'instrument/guitar-tech', difficulty: 1050, title: { en: 'Odd-Meter Riff Echo', he: 'הד ריפים במשקל אי־זוגי' } },
   { game: 'riffecho', course: 'bass', domain: 'instrument', skill: 'instrument', sub: 'instrument/bass-tech', difficulty: 1050, title: { en: 'Odd-Meter Riff Echo', he: 'הד ריפים במשקל אי־זוגי' } },
+  // AUDIT-GAMES §4.2 new games in the Jazz course (the instrument and ear courses have them in their units, path.ts).
+  { game: 'guidetone', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1050, title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' } },
+  { game: 'crossword', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/dictation', difficulty: 1100, title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' } },
+  { game: 'holdnote', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1150, title: { en: 'Hold the Note', he: 'להחזיק את הצליל' } },
+  { game: 'enclosure', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1150, title: { en: 'Enclosure Target', he: 'מטרת הכיתור' } },
+  { game: 'call5432', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/answer', difficulty: 1250, title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' } },
 ];
 
 const PLAYS: Partial<Record<CourseId, string[]>> = { keys: ['keys', 'piano'], guitar: ['guitar'], bass: ['bass'], drums: ['drums'] };

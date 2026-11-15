@@ -18,7 +18,9 @@ const ALL: CourseId[] = COURSES.map((c) => c.id);
 describe('bonus game steps', () => {
   it('all eight advanced games are steps, each step in exactly one course, opening at tier mp', () => {
     const games = new Set(BONUS_GAMES.map((g) => g.game));
-    expect([...games].sort()).toEqual(['bhtime', 'polylock', 'reharm', 'riffecho', 'rush-scale', 'rush-standard', 'rush-voicing', 'transcribe']);
+    // the eight advanced games, plus the AUDIT-GAMES §4.2 new games in the Jazz course
+    expect([...games]).toEqual(expect.arrayContaining(['bhtime', 'polylock', 'reharm', 'riffecho', 'rush-scale', 'rush-standard', 'rush-voicing', 'transcribe']));
+    expect([...games]).toEqual(expect.arrayContaining(['guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote']));
     const steps = bonusSteps();
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
     for (const s of steps) {

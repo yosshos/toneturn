@@ -552,8 +552,8 @@ export function gradeChanges(chords: Chord[], strums: StrumHit[], bpm: number): 
 
 // ---------------------------------------------------------------- the take-based run (Play It Back, Roots by Ear, Walk, Changes)
 
-export type TakeGame = 'playback' | 'rootsear' | 'walkchanges' | 'changerace';
-export const TAKES_PER_RUN: Record<TakeGame, number> = { playback: 6, rootsear: 8, walkchanges: 4, changerace: 4 };
+export type TakeGame = 'playback' | 'rootsear' | 'walkchanges' | 'changerace' | 'call5432' | 'enclosure';
+export const TAKES_PER_RUN: Record<TakeGame, number> = { playback: 6, rootsear: 8, walkchanges: 4, changerace: 4, call5432: 6, enclosure: 8 };
 export const TAKE_LIVES = 3;
 /** A take under this costs a life. */
 export const TAKE_PASS = 70;

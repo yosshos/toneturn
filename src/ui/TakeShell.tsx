@@ -16,6 +16,7 @@ import type { MeasuredInput } from './instCapture';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
 import { InputCheck, InputWatchdog } from './InputCheck';
+import { RushResultCard } from './GameResult';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -51,6 +52,8 @@ export interface TakeGameCfg<I> {
   board: (p: { item: I; save: TakeSave; phase: TakePhase; outcome: TakeOutcome | null; cell: number; lang: Lang }) => ReactNode;
   /** AUDIT-GAMES §1: the take's key (tonic pitch class) and instrument, for key mastery; null = no key (open chords). */
   keyOf?: (item: I, settings: Settings, save: TakeSave, i: number) => { key: number; inst: KeyInstrument } | null;
+  /** End on the shared Rush result card (score, takes passed / missed, accuracy) instead of the plain results. */
+  card?: boolean;
 }
 
 const TX = {
@@ -294,7 +297,21 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
         </>
       )}
 
-      {phase === 'over' && final && (
+      {phase === 'over' && final && cfg.card && run && (
+        <RushResultCard
+          lang={lang}
+          heading={tx(TX.over, lang)}
+          score={final.score}
+          best={best}
+          newBest={final.score > 0 && final.score > (best ?? 0)}
+          right={run.takes.filter((x) => x >= TAKE_PASS).length}
+          wrong={run.takes.filter((x) => x < TAKE_PASS).length}
+          stats={[{ label: tx(TX.accuracy, lang), value: <span dir="ltr">{final.detail.accuracy}%</span> }]}
+          onAgain={() => ((autoFirst.current = true), begin(false))}
+          onBack={back}
+        />
+      )}
+      {phase === 'over' && final && !cfg.card && (
         <section className="g2-card" aria-live="polite">
           <h2>{tx(TX.over, lang)}</h2>
           <p className="inst-final">

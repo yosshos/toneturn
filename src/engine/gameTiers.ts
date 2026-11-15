@@ -693,6 +693,86 @@ GAME_TIERS.namegroove = {
   },
 };
 
+// ---------------------------------------------------------------- AUDIT-GAMES §4.2 new games (#1–#5)
+
+/** The instrument course's technique rating (the jazz / ear courses: the improvising rating). */
+const playedSource = (c: CourseId): SkillId | CourseSub => (c === 'keys' ? 'instrument/piano-tech' : c === 'guitar' ? 'instrument/guitar-tech' : c === 'bass' ? 'instrument/bass-tech' : 'improv');
+
+/** Guide-Tone Runner: a 3rd or 7th on every change, in time — one miss ends the run (target = changes in a row). */
+GAME_TIERS.guidetone = {
+  game: 'guidetone',
+  source: playedSource,
+  clear: 'chain',
+  tiers: {
+    pp: { label: L('ii–V–I in one key', 'ii–V–I בסולם אחד'), levels: [1], params: { bpm: 80 }, target: 9 },
+    p: { label: L('ii–V–I round the cycle of 4ths', 'ii–V–I במעגל הקוורטות'), levels: [2], params: { bpm: 88 }, target: 12 },
+    mp: { label: L('Minor ii–V–i', 'ii–V–i מינורי'), levels: [3], params: { bpm: 88 }, target: 9 },
+    mf: { label: L('Jazz blues', 'בלוז ג׳אז'), levels: [4], params: { bpm: 100 }, target: 20 },
+    f: { label: L('Rhythm changes A: two chords a bar', 'ריתם צ׳יינג׳ס A: שני אקורדים בתיבה'), levels: [5], params: { bpm: 96 }, target: 16 },
+    ff: { label: L('Standards’ A sections, faster', 'חלקי A של סטנדרטים, מהר יותר'), levels: [6], params: { bpm: 120 }, target: 16 },
+  },
+};
+
+/** 5-4-3-2 Call: a number and a chord are called — play that Barry Harris phrase (rubato, then with the band). */
+GAME_TIERS.call5432 = {
+  game: 'call5432',
+  source: playedSource,
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Major, rubato', 'מז׳ור, רובאטו'), levels: [1], target: 80 },
+    p: { label: L('Dominant 7th, rubato', 'ספט דומיננטי, רובאטו'), levels: [2], target: 80 },
+    mp: { label: L('Minor, rubato', 'מינור, רובאטו'), levels: [3], target: 80 },
+    mf: { label: L('Mixed numbers and chords', 'מספרים ואקורדים מעורבים'), levels: [4], target: 80 },
+    f: { label: L('Called on the V or the I of a ii–V–I', 'נקרא על ה־V או ה־I של ii–V–I'), levels: [5], params: { bpm: 92 }, target: 80 },
+    ff: { label: L('In time with the band', 'בזמן עם הלהקה'), levels: [6], params: { bpm: 108 }, target: 80 },
+  },
+};
+
+/** Enclosure Target: approach a chord tone with the named enclosure and land it on the beat. */
+GAME_TIERS.enclosure = {
+  game: 'enclosure',
+  source: playedSource,
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Half step below into the root, rubato', 'חצי טון מתחת אל השורש, רובאטו'), levels: [1], target: 80 },
+    p: { label: L('Half step above and below, on the beat', 'חצי טון מעל ומתחת, על הפעמה'), levels: [2], params: { bpm: 80 }, target: 80 },
+    mp: { label: L('Scale step above, half step below', 'צעד בסולם מעל, חצי טון מתחת'), levels: [3], params: { bpm: 88 }, target: 80 },
+    mf: { label: L('The 4-note bebop enclosure', 'כיתור ביבופ בארבעה צלילים'), levels: [4], params: { bpm: 92 }, target: 80 },
+    f: { label: L('Delayed resolution', 'פתרון מושהה'), levels: [5], params: { bpm: 96 }, target: 80 },
+    ff: { label: L('Through ii–V–I: the 3rds on beat 1', 'דרך ii–V–I: הטרצות בפעמה 1'), levels: [6], params: { bpm: 104 }, target: 80 },
+  },
+};
+
+/** Changes Crossword: hear 4 bars, fill root / quality / bass; right parts lock, one fix pass (partial credit). */
+GAME_TIERS.crossword = {
+  game: 'crossword',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('I, IV, V and vi', 'I, IV, V ו־vi'), levels: [1], target: 80 },
+    p: { label: L('ii–V with sevenths', 'ii–V עם ספטים'), levels: [2], target: 80 },
+    mp: { label: L('Secondary dominants, the bass', 'דומיננטות משניות, הבס'), levels: [3], target: 80 },
+    mf: { label: L('Borrowed chords', 'אקורדים שאולים'), levels: [4], target: 80 },
+    f: { label: L('Tritone subs', 'תחליפי טריטון'), levels: [5], target: 80 },
+    ff: { label: L('A standard’s A section, 8 bars', 'חלק A של סטנדרט, 8 תיבות'), levels: [6], target: 80 },
+  },
+};
+
+/** Hold the Note: one note, many chords — which chords keep it and what it is over them; fast. */
+GAME_TIERS.holdnote = {
+  game: 'holdnote',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Which triad has the note', 'באיזה משולש יש את הצליל'), levels: [1], target: 85 },
+    p: { label: L('Which 7th chord', 'באיזה ספטאקורד'), levels: [2], target: 85 },
+    mp: { label: L('Its degree in the chord', 'הדרגה שלו באקורד'), levels: [3], target: 85 },
+    mf: { label: L('Tensions: 9, 11, 13, ♭9, ♯11', 'טנשנים: 9, 11, 13, ♭9, ♯11'), levels: [4], target: 85 },
+    f: { label: L('A 4-bar chain: which bar drops it', 'שרשרת 4 תיבות: באיזו תיבה הוא נעלם'), levels: [5], target: 85 },
+    ff: { label: L('8 ways, no repeats (tap or play)', '8 דרכים, בלי חזרות (הקשה או נגינה)'), levels: [6], target: 85 },
+  },
+};
+
 /** Games whose on-screen (touch) input is practice only: it never clears a tier. */
 export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval']);
 

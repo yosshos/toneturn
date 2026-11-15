@@ -1,0 +1,475 @@
+/* AUDIT-GAMES §4.2 new games: Guide-Tone Runner, 5-4-3-2 Call, Enclosure Target, Changes Crossword, Hold the Note.
+   v2 language: ink outlines, flat fills, lemon only as the now-cue (with ink), no gradients or glows. Every play screen
+   fits one phone screen at 320 × 720 (en and he). Logical properties only. */
+
+.ng.g2 {
+  gap: 10px;
+}
+.ng .ng-sym {
+  font-family: var(--display);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- shared: feedback with "Why?" */
+.ng-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-block-size: 1.6em;
+}
+.ng-line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  text-align: center;
+}
+.ng-feedback.ok .ng-line b {
+  color: var(--mint-deep, #0b7a6d);
+}
+.ng-feedback.bad .ng-line b {
+  color: var(--ink);
+}
+.ng-why {
+  display: inline-flex;
+  align-items: center;
+  block-size: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  border: 2px solid var(--outline, var(--ink));
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.ng-detail {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--outline, var(--ink));
+  background: var(--card);
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- shared: beat dots with the now-cue */
+.ng-beats {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ng-beats i {
+  flex: 0 1 18px;
+  min-inline-size: 8px;
+  block-size: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  background: var(--card-2);
+}
+.ng-beats i.count {
+  background: transparent;
+  border-style: dashed;
+}
+.ng-beats i.bar {
+  border-inline-start: 3px solid var(--ink);
+}
+.ng-beats i.target {
+  border-color: var(--purple);
+  border-width: 2.5px;
+}
+.ng-beats i.now {
+  background: var(--now, var(--lemon));
+  border-color: var(--ink);
+}
+.ng-beats i.hit {
+  background: var(--ok);
+}
+.ng-beats i.miss {
+  background: var(--bad, var(--red));
+}
+
+/* ---------------------------------------------------------------- Guide-Tone Runner */
+.gtr-now {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'cur next' 'hint next';
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 14px;
+  border: 2.5px solid var(--outline, var(--ink));
+  border-radius: 16px;
+  background: var(--card);
+  min-block-size: 76px;
+}
+.gtr-now.hit {
+  background: var(--ok-soft);
+}
+.gtr-cur {
+  grid-area: cur;
+  font-size: 2.1rem;
+  line-height: 1.1;
+}
+.gtr-hint {
+  grid-area: hint;
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+.gtr-next {
+  grid-area: next;
+  color: var(--ink-dim);
+  font-size: 1.1rem;
+}
+.gtr-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+.gtr-cell {
+  padding: 4px 2px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  text-align: center;
+  font-family: var(--display);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gtr-cell.now {
+  outline: 2px solid var(--ink);
+}
+.gtr-cell.hit {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+}
+.gtr-cell.miss {
+  background: var(--bad-soft, #ffe1ee);
+  border-color: var(--bad, var(--red));
+}
+
+/* ---------------------------------------------------------------- 5-4-3-2 Call and Enclosure Target */
+.c5-call {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.c5-num {
+  display: grid;
+  place-items: center;
+  inline-size: 64px;
+  block-size: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--lilac);
+  color: var(--ink-c, var(--ink));
+  font-family: var(--display);
+  font-size: 2.2rem;
+}
+.c5-on {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.c5-on small {
+  color: var(--ink-dim);
+}
+.c5-sym {
+  font-size: 1.7rem;
+}
+.c5-notes,
+.c5-mode {
+  margin: 0;
+  text-align: center;
+}
+.c5-notes {
+  font-size: 1.05rem;
+}
+.c5-chart {
+  display: flex;
+  gap: 4px;
+}
+.c5-bar {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  padding: 4px 2px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  text-align: center;
+  font-family: var(--display);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.c5-bar.called {
+  border: 2.5px solid var(--purple);
+  background: var(--card);
+}
+.c5-marks {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.c5-marks i {
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--card-2);
+}
+.c5-marks i.hit {
+  background: var(--ok);
+}
+.c5-marks i.late {
+  background: var(--lilac);
+}
+.c5-marks i.miss {
+  background: var(--bad, var(--red));
+}
+.enc-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.enc-target {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid var(--outline, var(--ink));
+  background: var(--card);
+}
+.enc-target.hit {
+  background: var(--ok-soft);
+}
+.enc-target.miss,
+.enc-target.shape,
+.enc-target.late {
+  background: var(--bad-soft, #ffe1ee);
+}
+.enc-note {
+  display: grid;
+  place-items: center;
+  inline-size: 50px;
+  block-size: 50px;
+  border-radius: 50%;
+  border: 3px solid var(--purple);
+  font-size: 1.5rem;
+  flex: none;
+}
+.enc-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+.enc-what small {
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------------- Changes Crossword */
+.cw-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cw-top .btn {
+  min-block-size: 40px;
+}
+.cw-score small {
+  color: var(--ink-dim);
+}
+.cw-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.cw-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 2px;
+  min-block-size: 50px;
+  border-radius: 10px;
+  border: 2px solid var(--line-strong, var(--line));
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.cw-bar small {
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+}
+.cw-bar span {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cw-bar.sel {
+  border: 3px solid var(--ink);
+  background: var(--card-2);
+}
+.cw-bar.locked {
+  border-color: var(--purple);
+}
+.cw-bar.ok {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+}
+.cw-bar.bad {
+  background: var(--bad-soft, #ffe1ee);
+  border-color: var(--bad, var(--red));
+}
+.cw-bar:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.cw-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cw-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.cw-row .chip {
+  flex: 1 0 auto;
+  min-inline-size: 40px;
+  min-block-size: 36px;
+  padding: 0 6px;
+  font-family: var(--display);
+}
+.cw-row.roots .chip {
+  flex: 0 0 calc((100% - 20px) / 6);
+  min-inline-size: 0;
+}
+.cw-row .chip.on {
+  background: var(--lilac);
+  color: var(--ink-c, var(--ink));
+  border-color: var(--ink);
+}
+.cw-row .chip:disabled {
+  opacity: 0.55;
+}
+.cw-row.bass {
+  align-items: center;
+}
+.cw-row-label {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.cw-row.bass .chip {
+  font-family: var(--font);
+}
+
+/* ---------------------------------------------------------------- Hold the Note */
+.hn-clock {
+  block-size: 4px;
+  border-radius: 2px;
+  background: var(--card-2);
+  overflow: hidden;
+}
+.hn-clock i {
+  display: block;
+  block-size: 100%;
+  background: var(--ink-dim);
+  transition: inline-size 0.2s linear;
+}
+.hn-held {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  inline-size: 84px;
+  block-size: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--sky);
+  color: var(--ink-c, var(--ink));
+  font-size: 1.9rem;
+  cursor: pointer;
+  transform: rotate(-14deg);
+}
+.hn-held .ng-sym {
+  transform: rotate(14deg);
+}
+.hn-chord {
+  margin: 0;
+  text-align: center;
+  font-size: 1.6rem;
+}
+.hn-ask {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+}
+.hn-choices .btn {
+  font-family: var(--display);
+  font-size: 1.1rem;
+}
+.hn-chain {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.hn-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-block-size: 58px;
+  padding: 4px 2px;
+}
+.hn-bar small {
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+}
+.hn-bar span {
+  font-family: var(--display);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.hn-bar.ok,
+.hn-ways .chip.ok {
+  outline: 3px solid var(--ok);
+  background: var(--ok-soft);
+}
+.hn-bar.bad,
+.hn-ways .chip.bad {
+  outline: 3px solid var(--bad, var(--red));
+}
+.hn-ways {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.hn-ways .chip {
+  min-block-size: 40px;
+  padding: 0 2px;
+  font-family: var(--display);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+.hn-ways .chip:disabled {
+  opacity: 1;
+}
