@@ -29,12 +29,16 @@ export interface MarkSpot {
   text?: string;
 }
 
-/** The layer of marks over an SVG (replaces an older layer). */
-export function drawMarks(svg: SVGSVGElement | null, spots: MarkSpot[], kind: 'staff' | 'tab'): void {
+/**
+ * The layer of marks over an SVG (replaces an older layer of the same name). `layer`: 'mk-layer' for the review's
+ * marks, 'mk-live' for the marks drawn while the take runs (slice 5) — a separate layer, so the engraved music is never
+ * redrawn per note.
+ */
+export function drawMarks(svg: SVGSVGElement | null, spots: MarkSpot[], kind: 'staff' | 'tab', layer: 'mk-layer' | 'mk-live' = 'mk-layer'): void {
   if (!svg) return;
-  svg.querySelector('g.mk-layer')?.remove();
+  svg.querySelector(`g.${layer}`)?.remove();
   if (!spots.length) return;
-  const g = el('g', { 'data-marks': spots.length }, 'mk-layer');
+  const g = el('g', { 'data-marks': spots.length }, layer);
   for (const s of spots) {
     const one = el('g', { 'data-mark': s.mark }, `mk ${s.mark}`);
     const rx = s.hw;

@@ -280,42 +280,6 @@
   filter: none;
 }
 
-/* ---------------------------------------------------------------- colour-blind friendly feedback (Settings → Display) */
-:root[data-cvd='on'] {
-  --cvd-ok: #3b8ff0;
-  --cvd-bad: #f08a24;
-}
-:root[data-cvd='on'] .lesson .pill.correct,
-:root[data-cvd='on'] .pill.correct {
-  background: var(--cvd-ok);
-}
-:root[data-cvd='on'] .lesson .pill.revealed,
-:root[data-cvd='on'] .pill.revealed {
-  background: var(--cvd-bad);
-}
-:root[data-cvd='on'] .feedback.correct b,
-:root[data-cvd='on'] .feedback.correct-retry b {
-  color: var(--cvd-ok);
-}
-:root[data-cvd='on'] .feedback.retry b,
-:root[data-cvd='on'] .feedback.reveal b {
-  color: var(--cvd-bad);
-}
-:root[data-cvd='on'] .orb.correct,
-:root[data-cvd='on'] .orb.correct-retry {
-  background: radial-gradient(circle at 35% 30%, #cfe3ff, var(--cvd-ok) 58%, #1f5fb8);
-}
-:root[data-cvd='on'] .orb.retry,
-:root[data-cvd='on'] .orb.reveal {
-  background: radial-gradient(circle at 35% 30%, #ffe0bf, var(--cvd-bad) 58%, #b85f10);
-}
-:root[data-cvd='on'] .answer.right {
-  background: var(--cvd-ok);
-}
-:root[data-cvd='on'] .answer.wrongpick {
-  background: var(--cvd-bad);
-}
-
 /* ================================================================ mature chrome (owner: still old, neon and busy)
    The themes above change colours; these rules change the shapes on app screens to match the Calm-night mockup:
    flat surfaces, hairline borders, no glow / 3D drop shadows / neon gradients, modest primary buttons.

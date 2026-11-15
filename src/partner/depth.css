@@ -37,8 +37,6 @@
 .dp-eyebrow {
   font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--accent) !important;
 }
 .dp-teacher {
@@ -72,8 +70,10 @@
 .dp-tile b {
   display: block;
   font-family: var(--display);
-  font-size: 1.6rem;
+  /* a count never breaks inside the number ("38,49 / 0" at 320 px) */
+  font-size: clamp(1.25rem, 7.2vw, 1.6rem);
   line-height: 1.1;
+  white-space: nowrap;
   color: var(--ink);
 }
 .dp-tile span {

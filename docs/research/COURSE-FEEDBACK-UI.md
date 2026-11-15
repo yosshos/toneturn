@@ -597,10 +597,11 @@ Remove the colour-blind opt-in (`MARK_CVD`): the new palette *is* the safe one (
 - [ ] Headphones gate → once-per-session sheet (`DrillTake.tsx:748-775`).
 
 ### Slice 5: Live marks and the pocket meter (impact H, effort H)
-- [ ] `src/engine/drills/liveGrade.ts` (new): match each incoming onset to the nearest expected note within the window (the same matcher `analyzeTake` uses, run incrementally), emit `{index, mark, dev}`. Test: the live results equal the final `perNote` on recorded fixtures.
-- [ ] `DrillTake.tsx:600-660`: feed MIDI notes, mic onsets and drum hits into `liveGrade`; expose `onMark` to `DrillRun` → `DrillScore` → `NoteStaff` / `TabLine` / `LaneLine` (marks by index, drawn as an overlay so VexFlow doesn't redraw per note).
-- [ ] `src/ui/PocketMeter.tsx` (new): window box, needle (mean of the last 6), beat cells, streak count; R/L rows (keys) and limb rows (drums). It replaces `.drill-beat` (`DrillTake.tsx:733-736`).
-- [ ] Setting "Live marks" in `DrillSettingsView` (`Drills.tsx:1072`).
+**Shipped (after 0.95).** `liveGrade.ts` re-runs the take's own analysis on what was played so far (a few times a second) and shows a note once settled (80 ms after a matched onset; a miss after its half-beat window), so the live marks of a finished take are the review's marks. Marks are drawn on their own SVG layer (`mk-live`), never redrawing VexFlow; drums use the same map. `PocketMeter.tsx` replaces `.drill-beat` (keeps the class and a keyed child per beat). Setting "Live marks: Always / While learning / Never" (default while learning = free / quarters steps and until 2 clean takes count); level tests are calm. Not live: acoustic-kit and piano-chord-by-mic takes (meter beats only), improvised / phrase / voicing-choice / ear items, the free-time take (no clock). Not built: the first-head pulse in the count-in, velocity bars, the ⇆ hands chip, the "last take" ghost overlay.
+- [x] `src/engine/drills/liveGrade.ts` (new): match each incoming onset to the nearest expected note within the window (the same matcher `analyzeTake` uses, run incrementally), emit `{index, mark, dev}`. Test: the live results equal the final `perNote` on recorded fixtures.
+- [x] `DrillTake.tsx:600-660`: feed MIDI notes, mic onsets and drum hits into `liveGrade`; expose `onMark` to `DrillRun` → `DrillScore` → `NoteStaff` / `TabLine` / `LaneLine` (marks by index, drawn as an overlay so VexFlow doesn't redraw per note).
+- [x] `src/ui/PocketMeter.tsx` (new): window box, needle (mean of the last 6), beat cells, streak count; R/L rows (keys) and limb rows (drums). It replaces `.drill-beat` (`DrillTake.tsx:733-736`).
+- [x] Setting "Live marks" in `DrillSettingsView` (`Drills.tsx:1072`).
 
 ### Slice 6: Drums lanes, notation and Highway (impact M, effort M)
 - [ ] `DrumViews.tsx:386-462` `LaneLine`: 22 px lanes, icon names, ✕/●/( ) heads, kick bar, marks and ticks.
@@ -621,10 +622,11 @@ Remove the colour-blind opt-in (`MARK_CVD`): the new palette *is* the safe one (
 - [ ] Recap: "Drill these 3", and the streak sheet after the recap (`Recap.tsx`, `App.tsx` streak trigger).
 
 ### Slice 8: Jazz chart, rule chips, per-bar targets (impact M, effort M)
-- [ ] `src/ui/ChordChart.tsx` (new, shared): 4-per-row grid, lemon now strip + in-bar progress underline, loop hatch, corner tabs, per-bar sub-line (target / landed).
+**Shipped (after 0.95), first part.** `ChordChart.tsx` ("דף אקורדים") + `chartCells.ts` replace `ChartView`, the `EarCard` bars and the `.song-chart` lists; rule chips carry numbers, a broken bar's corner tab shows those numbers; target cards (`guide-target`, `three-on-one`) print "→ F/C" before the take and the landed note after; `m.improv[].bars` (from the cards' `miss` beats) and `m.landings`. A rule-card take's review shows the chart in place of the landings staff, with "Rules kept n/m bars". Still open: the reharm `rh-bars` and the chart player's `ch-bar` on the shared chart, note-role dots, the improv-studio segment control and waveform progress, the key-map recolour.
+- [x] `src/ui/ChordChart.tsx` (new, shared): 4-per-row grid, lemon now strip + in-bar progress underline, loop hatch, corner tabs, per-bar sub-line (target / landed).
   - Replace `ChartView` (`DrillTake.tsx:146`), the `EarCard` bars (`:177`), the `.song-chart` list (`DrillTake.tsx:331-345`), the reharm `rh-bars` (`ReharmStudio.tsx:95-118`), and later the chart player's `ch-bar` (`Charts.tsx:470-480`).
-- [ ] Rule chip strip from `drill.goal.free` / `RuleSet`, with glyphs (`ImprovRules.tsx` `RULE_NAME`).
-- [ ] Per-bar rule result: carry `bars[].breaks` (as in `rulesRep`) into `m.improv` for drill takes (`src/engine/drills/ctFreeAnalyze.ts` / `freeCompAnalyze.ts`) and draw the corner tabs.
+- [x] Rule chip strip from `drill.goal.free` / `RuleSet`, with glyphs (`ImprovRules.tsx` `RULE_NAME`).
+- [x] Per-bar rule result: carry `bars[].breaks` (as in `rulesRep`) into `m.improv` for drill takes (`src/engine/drills/ctFreeAnalyze.ts` / `freeCompAnalyze.ts`) and draw the corner tabs.
 - [ ] Improv studio tabs as a 4-segment control (`ImprovStudio.tsx`); waveform-bar progress in `ChallengeList` (`ImprovRules.tsx:104`).
 - [ ] The key map recolour and bigger cells (`KeyMap12.tsx`, `drills.css:576-582`, `Drills.tsx:640-660`).
 

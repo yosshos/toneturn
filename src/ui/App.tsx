@@ -511,8 +511,7 @@ export function App() {
     // 0.65: the drums course reads the e-kit in drum mode (raw notes, CC4 hi-hat, the learned kit map).
     midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert, drums: s.activeCourse === 'drums', ...(s.drumKit ? { kit: s.drumKit } : {}) });
     document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
-    document.documentElement.dataset.cvd = s.cvd ? 'on' : 'off';
-  }, [s.mixer, s.textScale, s.cvd, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert, s.activeCourse, s.drumKit]);
+  }, [s.mixer, s.textScale, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert, s.activeCourse, s.drumKit]);
   // MIDI keys sounded through the app (0.50), everywhere — on by default (most MIDI keyboards have no speakers).
   useEffect(() => {
     piano.setLiveOptions({ volume: s.midiVolume ?? 1, curve: s.midiCurve ?? 'normal' });

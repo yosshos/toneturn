@@ -63,7 +63,7 @@ test.describe('keys course', () => {
     await expect(page.locator('[data-topic="styles"]')).toContainText('Jazz piano');
     await openLevel(page, 'k-bebop', 'k-bebop-8');
     await expect(page.locator('[data-ear-card]')).toBeVisible();
-    await expect(page.locator('.ear-bars .ear-chord').first()).toBeVisible();
+    await expect(page.locator('[data-ear-bars] .cc-chord').first()).toBeVisible();
     expect(await overflow(page)).toBeLessThanOrEqual(4);
   });
 

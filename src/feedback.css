@@ -48,13 +48,13 @@
   background: var(--card);
   border: 2px dashed var(--outline);
   color: var(--ink);
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  display: flow-root;
 }
+/* the glyph floats at the line start: a flex box made every text run and <bdi> its own column ("M I D I" stacked) */
 .kit-warn::before {
   content: 'i';
-  flex: none;
+  float: inline-start;
+  margin-inline-end: 8px;
   display: inline-grid;
   place-items: center;
   width: 18px;
@@ -179,3 +179,59 @@
 /* after a take the review needs the room: tab + staff together (guitar / bass) come back to a compact size */
 .drills-screen[data-drills='run'] .drill-run:has(.take-review):has(.drill-tab) .drill-staff svg { max-height: 84px; }
 .drills-screen[data-drills='run'] .drill-run:has(.take-review):has(.drill-tab) .drill-staff .tab-pager { min-height: 0; }
+
+/* ---------------------------------------------------------------- the pocket meter and live marks (slice 5) */
+.drill-beat.pocket { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 360px; min-height: 30px; font-size: 1rem; font-family: var(--font); }
+.pocket .pm-track { flex: 1 1 auto; min-width: 0; width: 100%; overflow: visible; }
+.pocket .pm-axis { stroke: var(--line-strong); stroke-width: 1.5; }
+.pocket .pm-win { fill: var(--card-2); stroke: var(--ink-c); stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.pocket .pm-end { fill: var(--ink-c); }
+.pocket .pm-lab { font: 700 9px var(--font); fill: var(--ink-c); }
+.pocket .pm-needle { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1.3; vector-effect: non-scaling-stroke; transition: cx 120ms linear; }
+.pocket .pm-needle.early { fill: var(--tangerine); }
+.pocket .pm-needle.late { fill: var(--purple); }
+.pocket .pm-beats { display: inline-flex; gap: 3px; flex: none; }
+.pocket .pm-beats i { width: 8px; height: 12px; border: 1.5px solid var(--ink-c); border-radius: 2px; background: var(--card); }
+.pocket .pm-beats i.on { background: var(--now); }
+.pocket .pm-lead { flex: none; min-width: 48px; text-align: end; font-family: var(--display); font-size: 14px; color: var(--ink); white-space: nowrap; }
+.pocket .pm-count { font-weight: 400; font-size: 1.25rem; line-height: 1; }
+html[data-motion='reduced'] .pocket .pm-needle { transition: none; }
+.mk-live { pointer-events: none; }
+
+/* ---------------------------------------------------------------- the chord chart, דף אקורדים (slice 8) */
+.chord-chart { display: grid; gap: 6px; width: 100%; max-width: 560px; margin-inline: auto; }
+.cc-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; border-left: 2.5px solid var(--ink-c); }
+.cc-bar { position: relative; display: grid; align-content: center; justify-items: start; gap: 1px; min-width: 0; min-height: 52px; padding: 8px 6px 6px; border-right: 2.5px solid var(--ink-c); background: var(--card); overflow: hidden; }
+.chord-chart.compact .cc-bar { min-height: 30px; padding: 5px 5px 4px; }
+.cc-chord { font-family: var(--display); font-size: 18px; line-height: 1.1; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.chord-chart.compact .cc-chord { font-size: 15px; }
+.cc-slash { color: color-mix(in srgb, var(--ink-c) 40%, transparent); letter-spacing: 2px; font-size: 0.8rem; white-space: nowrap; }
+.cc-sub { font-size: 0.72rem; line-height: 1.1; color: var(--ink-soft); white-space: nowrap; }
+.cc-sub.target { color: var(--ink); font-weight: 700; }
+.cc-sub.hit, .cc-sub.miss { display: inline-block; padding: 0 4px; border: 1.5px solid var(--ink-c); border-radius: 6px; color: var(--ink-c); font-weight: 700; }
+.cc-sub.hit { background: var(--teal); }
+.cc-sub.miss { background: var(--pink); }
+.cc-bar.band { background: var(--bg-2); }
+.cc-bar.band .cc-chord { color: var(--ink-soft); }
+/* now: a lemon strip on top with an ink edge, and a lemon underline that fills across the bar in time */
+.cc-bar.now::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--now); border-bottom: 1.5px solid var(--ink-c); }
+.cc-progress { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--now); border-top: 1.5px solid var(--ink-c); transition: width 60ms linear; }
+html[data-motion='reduced'] .cc-progress { transition: none; }
+/* a loop selection: lilac hatching, never lemon */
+.cc-bar.loop { background-color: color-mix(in srgb, var(--lilac) 30%, var(--card)); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M-2 2l4-4M0 8l8-8M6 10l4-4' stroke='%239b7fd4' stroke-width='3'/%3E%3C/svg%3E"); }
+/* the corner tab after a take: teal check kept, pink with the broken rules' numbers */
+.cc-tab { position: absolute; top: 0; right: 0; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; font: 700 10px/1 var(--font); color: var(--ink-c); border-left: 1.5px solid var(--ink-c); border-bottom: 1.5px solid var(--ink-c); border-bottom-left-radius: 6px; }
+.cc-tab.ok { background: var(--teal); }
+.cc-tab.bad { background: var(--pink); }
+/* the rules on screen: a number each, the same number in a broken bar's corner */
+.rc-n { display: inline-grid; place-items: center; width: 16px; height: 16px; margin-inline-end: 4px; border-radius: 50%; background: var(--ink-c); color: var(--card); font: 700 10px/1 var(--font); font-style: normal; }
+.rules-kept { margin: 0; font-size: 0.85rem; color: var(--ink); }
+@media (max-width: 400px) { .cc-chord { font-size: 16px; } .chord-chart.compact .cc-chord { font-size: 14px; } }
+@media (max-width: 400px) { .ear-card { padding: 10px 8px; } }
+.cc-chord .cc-q { font-family: var(--font); font-weight: 600; font-size: 0.68em; letter-spacing: -0.01em; }
+.take-review .drill-rh .miss { color: var(--ink); text-decoration: underline 2px var(--pink); text-underline-offset: 3px; }
+.take-review .drill-rh .ok { color: var(--ink); }
+@media (max-width: 400px) { .cc-bar { min-height: 44px; padding: 7px 5px 4px; } }
+.chord-chart.compact { gap: 3px; }
+.chord-chart.compact .cc-bar { min-height: 26px; padding: 4px 5px 3px; }
+.drill-beat.pocket { min-height: 26px; }

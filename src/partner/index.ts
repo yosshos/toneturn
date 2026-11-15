@@ -61,6 +61,8 @@ export function themeCss(p: PartnerConfig | null = ACTIVE_PARTNER): string {
     block(r, { '--font': th.font, '--display': th.display, '--radius': th.radius, '--stroke': th.stroke }),
     `${r}[data-theme] h1, ${r}[data-theme] h2 { font-weight: ${th.headingWeight}; letter-spacing: -0.01em; }`,
     `${r} body { font-family: var(--font); }`,
+    // The welcome's second button on one line at 320 px (the partner's wider sans wrapped it).
+    `${r} .ob-welcome .ob-account { white-space: nowrap; font-size: 1rem; padding-inline: 12px; }`,
   ].join('\n');
 }
 

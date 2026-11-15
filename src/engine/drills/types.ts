@@ -738,7 +738,9 @@ export interface NoteResult {
 /** Everything measured in one take (spec AI §6). Missing metrics are null (not applicable to the drill). */
 export interface TakeMetrics {
   /** AUDIT-DEPTH-3 C5: the rule cards of an improvised take (goal.improv): notes that kept each card / notes judged. */
-  improv?: { card: string; ok: number; total: number; pass: boolean }[];
+  improv?: { card: string; ok: number; total: number; pass: boolean; /** Slice 8: the bars (0-based) where the card was broken. */ bars?: number[] }[];
+  /** Slice 8 (target cards: a guide tone on each change …): per change, its bar, the pitch classes asked for, the note landed on (MIDI; null = a rest) and whether it is one of them. */
+  landings?: { bar: number; target: number[]; landed: number | null; hit: boolean }[];
   /** Siskind / MTNA rubric (phraseOrg.ts): phrase organisation and note choice of an improvised take. */
   phraseOrg?: import('../phraseOrg').PhraseOrgReport;
   /** Play one / rest one (goal.playRest): bars that kept the pattern / bars. */
@@ -983,6 +985,8 @@ export interface DrillSettings {
    * levels. Absent = migrated from the old `guitarStyle` (guitar.ts guitarAddOnsOf). The bass course still reads guitarStyle.
    */
   guitarAddOns?: GuitarAddOn[];
+  /** COURSE-FEEDBACK-UI slice 5: marks on the score while a take runs — always, while an item is learned (absent), never. */
+  liveMarks?: 'always' | 'learning' | 'never';
 }
 /** Guitar add-ons (tick boxes): jazz (g-jazz, g-harris, impro 5–6, bossa / Freddie Green), flamenco, fingerstyle / classical, prog / fusion. */
 export type GuitarAddOn = 'jazz' | 'flamenco' | 'fingerstyle' | 'prog';

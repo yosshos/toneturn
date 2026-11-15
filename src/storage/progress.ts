@@ -210,9 +210,9 @@ export interface Settings {
   cues?: boolean;
   ttsRate?: number;
   haptics?: boolean;
-  /** Display (0.41): text size (root scale) and colour-blind friendly feedback colours. */
+  /** Display (0.41): text size (root scale). The colour-blind opt-in was removed: the v2 mark palette (teal / pink heads,
+   *  tangerine / purple ticks, each with a shape twin) is the safe one for everybody (COURSE-FEEDBACK-UI §4.1). */
   textScale?: number;
-  cvd?: boolean;
   /** Profile (SPEC-SOCIAL §1): nickname, country flag, picture (instrument icon + colour, or a cropped photo). */
   nickname?: string;
   /** Today's "choose a nickname" row was dismissed. */

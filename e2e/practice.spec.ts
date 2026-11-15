@@ -75,7 +75,7 @@ test.describe('practice hub', () => {
     await page.locator('[data-practise-voicing]').selectOption('drop2');
     await page.locator('[data-practise-go]').click();
     await expect(page.locator('.drill-run')).toBeVisible();
-    await expect(page.locator('.song-chart li')).toHaveCount(32);
+    await expect(page.locator('[data-song-chart="32"]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
     await expect(page.locator('[data-standards]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();
