@@ -241,8 +241,8 @@ deepen(
         stimulus: [...vamp, rest(0.3), { kind: 'note', midi: t + M.steps[d], duration: 1.4 }],
       });
     }
-    // Level 4: a minor cadence (i iv V i), then a note that may be chromatic.
-    const cad: Stimulus[] = [chordStim([t - 12, t + 3, t + 7], 0.7), chordStim([t - 7, t + 5, t + 8], 0.7), chordStim([t - 5, t + 4, t + 7, t + 10], 0.7), chordStim([t - 12, t + 3, t + 7], 1.1), rest(0.3)];
+    // Level 4: a minor cadence (i iv V7 i — iv = F A♭ C, V7 = G B D F in C minor), then a note that may be chromatic.
+    const cad: Stimulus[] = [chordStim([t - 12, t + 3, t + 7], 0.7), chordStim([t - 7, t, t + 5, t + 8], 0.7), chordStim([t - 5, t - 1, t + 2, t + 5], 0.7), chordStim([t - 12, t + 3, t + 7], 1.1), rest(0.3)];
     const chrom = MINOR_CHROM.filter((c) => c.chrom);
     const dia = MINOR_CHROM.filter((c) => !c.chrom);
     const ans = rnd() < 0.65 ? pickR(rnd, chrom) : pickR(rnd, dia);
