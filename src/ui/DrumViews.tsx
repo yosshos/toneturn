@@ -347,14 +347,14 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking }: { drill: 
           <g key={i} className={`dn ${m ?? ''}`} data-voice={n.voice}>
             {STEP[n.voice!] >= 10 && <line x1={x - 7} x2={x + 7} y1={20} y2={20} className="dn-line" />}
             {XHEAD.has(n.voice!) ? (
-              <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="dn-x" />
+              <path d={`M${x - 5} ${y - 5}l10 10M${x + 5} ${y - 5}l-10 10`} className="dn-x" />
             ) : half ? (
-              <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-stem" />
+              <ellipse cx={x} cy={y} rx={5.6} ry={4.1} transform={`rotate(-20 ${x} ${y})`} className="dn-stem" />
             ) : (
-              <ellipse cx={x} cy={y} rx={4.6} ry={3.4} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />
+              <ellipse cx={x} cy={y} rx={5.6} ry={4.1} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />
             )}
             <Tick marks={marks} k={n.key} x={x} y={y} edge={6.5} />
-            {m === 'wrong' && <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="mk-x" />}
+            {m === 'wrong' && <path d={`M${x - 5} ${y - 5}l10 10M${x + 5} ${y - 5}l-10 10`} className="mk-x" />}
             {n.grace && (
               // Grace note(s): small heads just before the stroke, the flam's with a slash.
               <g className="dn-grace">

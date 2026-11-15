@@ -140,11 +140,11 @@ export type { NoteMark };
 import { drawMarks, type MarkSpot } from './markLayer';
 /** A ghost head's key: the note really played, spelled in the staff's key. */
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts }: { /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts, spacing = 44, ahead = false }: { /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const n = chord ? 1 : notes.length;
-      const width = Math.max(220, 90 + n * 44);
+      const width = Math.max(220, 90 + n * spacing);
       const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
       renderer.resize(width, 120);
       const ctx = renderer.getContext();
@@ -228,10 +228,10 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       }
       return [...sn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [notes.join(','), chord, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
+    [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
   return (
-    <div className="note-staff" role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
+    <div className={`note-staff ${ahead ? 'ahead' : ''}`} role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
       <div className="svg-wrap">
         <div ref={ref} />
         <NowColumn xs={xs} now={now} />
@@ -283,14 +283,15 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40 }: { /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false }: { /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
-      const width = Math.max(220, 60 + cols.length * 40);
+      const width = Math.max(220, 60 + cols.length * spacing);
       const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
-      renderer.resize(width, strings === 4 ? 120 : 140);
+      // COURSE-FEEDBACK-UI §4.3: less empty band above the strings (two lines of room for technique marks).
+      renderer.resize(width, strings === 4 ? 96 : 122);
       const ctx = renderer.getContext();
-      const stave = new VF.TabStave(4, 0, width - 8, { num_lines: strings });
+      const stave = new VF.TabStave(4, 0, width - 8, { num_lines: strings, space_above_staff_ln: 2 });
       stave.addTabGlyph();
       stave.setContext(ctx).draw();
       // Mixed meters: which bar each column starts, so a bar line goes before the first column of every later bar and
@@ -317,6 +318,23 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40 }: {
       } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
+      // Bass "lock with the kick": a short ink bar under each column the kick lands on.
+      const svgK = el.querySelector('svg');
+      if (svgK && cols.some((c) => c.kick)) {
+        const yb = stave.getYForLine(strings - 1) + 14;
+        tn.forEach((x, i) => {
+          if (!cols[i].kick) return;
+          const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          const cx = headX(x);
+          r.setAttribute('x', String(cx - 6));
+          r.setAttribute('y', String(yb));
+          r.setAttribute('width', '12');
+          r.setAttribute('height', '4');
+          r.setAttribute('rx', '1.5');
+          r.setAttribute('class', 'tab-kick');
+          svgK.appendChild(r);
+        });
+      }
       // COURSE-FEEDBACK-UI §4.1: each marked digit on a chip (teal right, pink wrong, dashed missed) + the timing tick.
       if (marks?.some(Boolean)) {
         const spots: MarkSpot[] = [];
@@ -333,10 +351,10 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40 }: {
       }
       return [...tn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [JSON.stringify(cols), (marks ?? []).join(','), win, strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
+    [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );
   return (
-    <div className="guitar-tab" role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
+    <div className={`guitar-tab ${ahead ? 'ahead' : ''}`} data-kicks={cols.filter((c) => c.kick).length || undefined} role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
       <div className="svg-wrap">
         <div ref={ref} />
         <NowColumn xs={xs} now={now} />

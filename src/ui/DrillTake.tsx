@@ -48,6 +48,20 @@ const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B�
 const TECH_SYM: Partial<Record<NonNullable<ExpNote['technique']>, string>> = { hammer: 'h', pull: 'p', slide: '/', bend: 'b', prebend: 'pb', release: 'r', vibrato: '~', tap: 'T', harmonic: 'harm', mute: 'PM', dead: 'X', 'strum-down': '↓', 'strum-up': '↑', 'rest-stroke': 'apoy.', rasgueado: 'rasg.' };
 const STROKE_SYM: Record<string, string> = { D: '⊓', U: 'V', p: 'p', i: 'i', m: 'm', a: 'a', c: 'c' };
 
+/** A phone-width screen (the score as hero: one bar a line, tighter note spacing). */
+export const phone = (): boolean => typeof window !== 'undefined' && window.innerWidth < 400;
+/** 8+ notes in a bar (drill beats per bar `bar`) on a phone: one bar a line. */
+export function denseOnPhone(drill: Drill, bar: number): boolean {
+  if (!phone() || !bar) return false;
+  const per = new Map<number, number>();
+  for (const n of drill.notes) {
+    if (n.chordId !== undefined && drill.notes.some((o) => o.chordId === n.chordId && o !== n && o.beat === n.beat && drill.notes.indexOf(o) < drill.notes.indexOf(n))) continue;
+    const b = Math.floor(n.beat / bar + 1e-6);
+    per.set(b, (per.get(b) ?? 0) + 1);
+  }
+  return Math.max(0, ...per.values()) >= 8;
+}
+
 /** A bass drill (bass course, the old g-bass family, or a bass custom drill). */
 export const isBassDrill = (d: Drill): boolean => d.spec.instrument === 'bass' || d.spec.family === 'g-bass' || d.spec.family.startsWith('b-');
 /** Drill beats → quarter notes (eighth-note meters count eighths). */
@@ -110,8 +124,10 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
     cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark, dev });
   }
   const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : isBassDrill(drill) ? 4 : 6;
+  // Bass "lock with the kick": where the kick lands, marked under the tab column that falls on it.
+  const kicks = new Set(isBassDrill(drill) && drill.drums ? drillDrumHits(drill).filter((h) => h.d === 'k').map((h) => Math.round(h.beat * 1e3)) : []);
   // B2 (0.64): the whole drill, two bars a line (bar lines where the music has them), in a window that follows the beat.
-  const perLine = (drill.meter || 4) * 2;
+  const perLine = (drill.meter || 4) * (denseOnPhone(drill, drill.meter || 4) || (phone() && cols.length > 12) ? 1 : 2);
   // Mixed meters (prog timeline, GUITAR_DEEPENING P2): lines of whole bars from the time map, bar lines at each bar's
   // real length and the time signature where it changes — not a constant bar.
   const sl = hasTimeline(drill) ? staffLines(drill, 8) : null;
@@ -130,7 +146,9 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
           <TabLine
             key={from + i}
             now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
-            cols={l.map(({ mark: _m, at: _a, ...c }) => c)}
+            cols={l.map(({ mark: _m, at: _a, ...c }) => ({ ...c, ...(kicks.has(Math.round(_a * 1e3)) ? { kick: true } : {}) }))}
+            spacing={phone() ? 30 : 40}
+            ahead={beat >= 0 && !result && lineOf(beat) !== from + i}
             marks={result ? l.map((c) => c.mark) : undefined}
             win={timingMs}
             strings={strings}
@@ -275,7 +293,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
   // Positions are in quarter notes (eighth-note meters: beats × ½).
   const meter = (drill.meter || 4) * qk;
   const sig = drill.pulse === 8 ? `${drill.meter}/8` : undefined;
-  const per = meter * (meter >= 6 ? 1 : 2);
+  // COURSE-FEEDBACK-UI §4.1 (the score as hero): on a phone, one bar a line when a bar holds 8+ notes, so heads read
+  // at ~9 px instead of ~5 px.
+  const per = meter * (meter >= 6 || denseOnPhone(drill, meter / qk) ? 1 : 2);
   const bq = (n: ExpNote) => n.beat * qk;
   const dq = (n: ExpNote) => n.dur * qk;
   // Mixed meters / a tempo map (prog timeline): lines of whole bars from the engine, bar lines and time signatures per bar.
@@ -328,9 +348,13 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo }
       // The now-cue: the item (note or rest) the running take is on, in this line.
       const cur = beat >= 0 && !result ? beat * qk : -1;
       const now = cur >= lineStart - 0.03 && cur < lineEnd - 0.03 ? glidePos(items.map((x) => x.at), lineEnd, cur) : -1;
+      // Look-ahead: while playing, every line but the one being played is drawn faded.
+      const ahead = beat >= 0 && !result && now < 0;
       return (
         <NoteStaff
           now={now}
+          ahead={ahead}
+          spacing={phone() ? 32 : 44}
           key={`${clef}${li}`}
           notes={items.map((x) => (x.n ? x.n.pitch + shift : 71))}
           rests={items.map((x) => !x.n)}
@@ -788,7 +812,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       )}
       {phase === 'ready' && askDrums ? (
         // B5: the headphones gate — where the sound goes, so the mic hears only the player's instrument. Not a pass of anything.
-        <div className="drums-gate" data-drums-gate="1">
+        <div className="sheet-backdrop drums-gate-backdrop">
+        <div className="sheet drums-gate" data-drums-gate="1" role="dialog" aria-modal="true">
           <p className="field-hint">
             {drum
               ? lang === 'he'
@@ -810,6 +835,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               {lang === 'he' ? 'רמקול: רק קליק' : 'Speaker: click only'}
             </button>
           </div>
+        </div>
         </div>
       ) : phase === 'ready' && prep.left > 0 ? (
         // RSL Quick Study Piece: time to read the score first (the player may start sooner).

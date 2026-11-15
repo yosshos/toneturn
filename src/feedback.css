@@ -99,7 +99,7 @@
 :root[data-theme] .hw-flash.late { background: var(--lilac); }
 
 /* ---------------------------------------------------------------- the review after a take (TakeReview, slice 2) */
-.take-review { display: grid; gap: 8px; padding: 10px 12px 8px; }
+.take-review { display: grid; gap: 6px; padding: 8px 12px 6px; }
 .take-review .tr-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin: 0; font-family: var(--display); font-size: 1.15rem; line-height: 1.2; color: var(--ink); }
 .take-review .tr-verdict b { font-weight: 400; font-size: 1.25rem; }
 .take-review .tr-sep { color: var(--ink-dim); }
@@ -109,7 +109,7 @@
 .tr-medal.v-not { background: var(--card); border-style: dashed; }
 .take-review .tr-why-line { margin: 0; font-size: 0.85rem; line-height: 1.3; color: var(--ink-soft); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .tr-chips { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; }
-.tr-chips li { display: grid; justify-items: center; align-content: center; gap: 1px; min-width: 0; min-height: 56px; padding: 4px 4px 3px; border: 2px solid var(--outline); border-radius: 12px; background: var(--card); }
+.tr-chips li { display: grid; justify-items: center; align-content: center; gap: 1px; min-width: 0; min-height: 50px; padding: 3px 4px 2px; border: 2px solid var(--outline); border-radius: 12px; background: var(--card); }
 .tr-chips small { font-size: 0.72rem; color: var(--ink-soft); line-height: 1.1; }
 .tr-chips b { font-family: var(--display); font-weight: 400; font-size: 1.05rem; line-height: 1.1; color: var(--ink); white-space: nowrap; }
 .tr-chips .tr-unit { font-family: var(--font); font-size: 0.7rem; color: var(--ink-soft); }
@@ -137,7 +137,7 @@
 
 /* ---------------------------------------------------------------- the error map and the loop (slice 3) */
 .error-map { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr)); gap: 3px; }
-.em-cell { position: relative; display: grid; justify-items: center; gap: 1px; width: 100%; min-height: 34px; padding: 3px 0 0; border: 0; background: transparent; cursor: pointer; font: inherit; }
+.em-cell { position: relative; display: grid; justify-items: center; gap: 1px; width: 100%; min-height: 30px; padding: 2px 0 0; border: 0; background: transparent; cursor: pointer; font: inherit; }
 .em-cell i { display: block; width: 100%; height: 16px; border: 2px solid var(--outline); border-radius: 5px; background: var(--teal); }
 .em-cell.early i { background: var(--tangerine); }
 .em-cell.late i { background: var(--purple); }
@@ -152,3 +152,30 @@
 .loop-passes { display: inline-flex; gap: 3px; }
 .loop-passes i { width: 14px; height: 10px; border-radius: 50%; transform: rotate(-20deg); border: 2px solid var(--ink-c); background: var(--card); }
 .loop-passes i.on { background: var(--teal); }
+
+/* ---------------------------------------------------------------- the score as hero (slice 4) */
+.drills-screen[data-drills='run'] .drill-staff .note-staff,
+.drills-screen[data-drills='run'] .drill-tab .guitar-tab { background: var(--card); border: var(--stroke) solid var(--outline); border-radius: 14px; box-shadow: var(--shadow-s); overflow: hidden; }
+.drills-screen[data-drills='run'] .drill-staff .note-staff svg,
+.drills-screen[data-drills='run'] .drill-tab .guitar-tab svg { max-height: none; }
+.note-staff.ahead, .guitar-tab.ahead { opacity: 0.4; transition: opacity 0.2s; }
+.tab-kick { fill: var(--ink-c); }
+.drill-staff .note-staff svg text, .drill-tab .guitar-tab svg text { fill: var(--ink-c); }
+/* the tempo ladder: the count, then the steps as chips */
+.tempo-ladder { display: flex; align-items: center; gap: 8px; margin: 0; flex-wrap: nowrap; min-width: 0; }
+.tl-count { font-size: 0.85rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; flex: none; }
+.tl-chips { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; min-width: 0; overflow: hidden; }
+.tl-chip { padding: 2px 9px; border: 2px solid var(--line-strong); border-radius: 999px; font-size: 0.8rem; line-height: 1.4; color: var(--ink-soft); background: var(--card); white-space: nowrap; }
+.tl-chip.cur { border-color: var(--ink-c); background: var(--ink-c); color: var(--paper); font-weight: 700; }
+.tl-chip.passed { border-color: var(--outline); background: var(--teal); color: var(--ink-c); }
+/* rule-card items: the rules on screen, one line that scrolls sideways */
+.rule-chips { list-style: none; margin: 0; padding: 0 0 2px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.rule-chips li { flex: none; padding: 2px 9px; border: 2px solid var(--outline); border-radius: 10px; background: var(--card-2); font-size: 0.78rem; color: var(--ink); white-space: nowrap; }
+/* 8-bar forms read as 4 bars a row (was 3 + 3 + 2) */
+.ear-bars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ear-bars li, .ear-bars.dense li { flex: none; min-width: 0; }
+/* the headphones question as a sheet: it no longer pushes Play off the screen */
+.drums-gate-backdrop .sheet.drums-gate { display: grid; gap: 10px; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+/* after a take the review needs the room: tab + staff together (guitar / bass) come back to a compact size */
+.drills-screen[data-drills='run'] .drill-run:has(.take-review):has(.drill-tab) .drill-staff svg { max-height: 84px; }
+.drills-screen[data-drills='run'] .drill-run:has(.take-review):has(.drill-tab) .drill-staff .tab-pager { min-height: 0; }

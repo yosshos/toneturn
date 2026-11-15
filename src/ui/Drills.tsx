@@ -1034,17 +1034,40 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const pickBar = (i: number) => setSel((cur) => (cur && cur[0] === cur[1] && cur[0] !== i ? [Math.min(cur[0], i), Math.max(cur[0], i)] : [i, i]));
   return (
     <div className="drill-run" data-drill={drill.itemId}>
-      <p className="drill-goal">
-        {i + 1} / {queue.length}
-        {stage !== 'free' && (
-          <>
-            {' · '}
-            <span dir="ltr">
-              {drill.pulse === 8 && stage !== 'quarters' ? '♪' : '♩'} {stage === 'quarters' ? QUARTERS_BPM : bpm}
-            </span>
-          </>
-        )}
-      </p>
+      <div className="drill-goal tempo-ladder" data-tempo-step={stage ?? 'tempo'}>
+        <span className="tl-count">
+          <bdi dir="ltr">
+            {i + 1}/{queue.length}
+          </bdi>
+        </span>
+        {/* COURSE-FEEDBACK-UI §4.1: the tempo steps as chips — free → quarters → tempo (current ink, passed ✓). */}
+        <ol className="tl-chips" aria-label={he ? 'שלבי טמפו' : 'tempo steps'}>
+          {(rubatoOnly ? ['free'] : noRubato || !hasRubato(drill) ? ['tempo'] : ['free', 'quarters', 'tempo']).map((k, j, all) => {
+            const cur = (stage ?? 'tempo') === k;
+            const passed = all.indexOf(stage ?? 'tempo') > j;
+            return (
+              <li key={k} className={`tl-chip ${cur ? 'cur' : ''} ${passed ? 'passed' : ''}`} aria-current={cur ? 'step' : undefined} data-step={k}>
+                {passed && <span aria-hidden="true">✓ </span>}
+                {k === 'free' ? (
+                  he ? (rubatoOnly ? 'רובאטו' : 'חופשי') : rubatoOnly ? 'Rubato' : 'Free'
+                ) : (
+                  <bdi dir="ltr">
+                    {k === 'tempo' && drill.pulse === 8 ? '♪' : '♩'} {k === 'quarters' ? QUARTERS_BPM : bpm}
+                  </bdi>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      {drill.goal.improv?.cards.length ? (
+        // Rule-card items: the rules on screen (they were only in the truncated title).
+        <ul className="rule-chips" aria-label={he ? 'כללים' : 'rules'} data-rule-chips={drill.goal.improv.cards.length}>
+          {drill.goal.improv.cards.map((c) => (
+            <li key={c}>{(RULE_NAME as Record<string, { en: string; he: string }>)[c]?.[lang] ?? c}</li>
+          ))}
+        </ul>
+      ) : null}
       {std && <ListenOriginal id={std.ref.id} lang={lang} practiceKey={std.key} compact />}
       {/* BASS_NICHE_PLAN J4: a drill with a form shows its road map (sections, the bar being played, a cue a bar ahead). */}
       {drill.form && <RoadMapStrip drill={drill} beat={res ? -1 : beat} bpm={bpm} lang={lang} />}

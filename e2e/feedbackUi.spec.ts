@@ -255,3 +255,28 @@ for (const lang of ['en', 'he'] as const)
     await expect(page.locator('[data-loop]')).toHaveCount(0);
     await expect(page.locator('[data-drill-play]')).toBeVisible();
   });
+
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of [...RUNS, ['bass', 'b-pocket', 'b-pocket-1'] as [Plays, string, string]])
+    test(`the score as hero: big heads / digits, tempo steps, one screen (${plays}, ${lang})`, async ({ page }) => {
+      await seed(page, lang, plays, { headphones: false });
+      await openLevel(page, lang, family, level);
+      await page.waitForTimeout(800);
+      const r = await page.evaluate(() => {
+        const heads = [...document.querySelectorAll('.drill-staff .vf-notehead')].map((e) => e.getBoundingClientRect().height);
+        const digits = [...document.querySelectorAll('.drill-tab .guitar-tab svg text')].map((e) => e.getBoundingClientRect().height).filter((h) => h > 0);
+        const drum = [...document.querySelectorAll('.dn-head, .dn-x, .dl-hit')].map((e) => e.getBoundingClientRect().height);
+        return { head: heads.length ? Math.max(...heads) : 0, digit: digits.length ? Math.max(...digits) : 0, drum: drum.length ? Math.max(...drum) : 0, kicks: document.querySelectorAll('.tab-kick').length, chips: document.querySelectorAll('.tl-chip').length };
+      });
+      if (plays === 'keys') expect(r.head, 'note head px').toBeGreaterThanOrEqual(8);
+      if (plays === 'guitar' || plays === 'bass') expect(r.digit, 'tab digit px').toBeGreaterThanOrEqual(10);
+      if (plays === 'drums') expect(r.drum).toBeGreaterThanOrEqual(7);
+      if (plays === 'bass') expect(r.kicks, 'kick marks under the tab').toBeGreaterThan(0);
+      expect(r.chips).toBeGreaterThan(0);
+      const o = await overflow(page);
+      expect(o.tall).toBeLessThanOrEqual(2);
+      expect(o.wide).toBeLessThanOrEqual(1);
+      await expect(page.locator('[data-drums-gate]')).toHaveCount(0);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `${plays}-ready-${lang}`);
+    });
