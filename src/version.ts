@@ -18,6 +18,24 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.92.0',
+    date: '2026-11-15',
+    en: [
+      'Barry Harris, from the sources: the 6th-diminished scale now goes up and down in its own scale; all four of Barry’s key scales (major 6, minor 6, dominant 7 and 7♭5 diminished); the scale of chords in moving inversions, drop 2, drop 3 and drop 2&4; borrowing with one, two and three voices; Thomas Echols’s nine-floor elevator; Harris’s named moves; the important minor and the tritone’s minor — eight ways to play one dominant.',
+      'Barry Harris lines: his chromatic scale, scale outlines of tunes in Chris Parks’s order, the 5-4-3-2 phrases, the three important arpeggios, seven down to the 3rd, the triplet and miscellaneous rules, and upbeat comping — on keys, guitar and bass.',
+      'Every scale and mode in every key, hands separate, together and in contrary motion, then harmonized: notes, 3rds, triads, 7ths, drop 2 and drop 3. Hand-independence studies for piano and a fuller guitar technique set.',
+      'Improvise as a path step, checked by 48 rule cards (Harris rules, enclosures, triad pairs, a lick you learned, rhythm and shape); write your own solo chorus and play it; comp and solo at once; the brothers, backdoor, Coltrane sub, intros and endings in context.',
+      'Heads: original tunes to harmonize (shells, close, drop 2, drop 3), chord-melody on guitar, a step-by-step comping ladder per tune, and a reharm studio that checks each choice against the melody.',
+    ],
+    he: [
+      'בארי האריס, מתוך המקורות: סולם השישית־מוקטן עולה ויורד בסולם שלו; כל ארבעת סולמות המפתח של בארי (מז׳ור 6, מינור 6, דומיננט 7 ו־7♭5 מוקטן); סולם האקורדים בהיפוכים זזים, drop 2, drop 3 ו־drop 2&4; השאלה בקול אחד, שניים ושלושה; המעלית של תומס אקולס בתשע קומות; המהלכים של האריס בשמם; המינור החשוב והמינור של הטריטון — שמונה דרכים לנגן דומיננט אחד.',
+      'קווי האריס: הסולם הכרומטי שלו, קווי מתאר של שירים לפי הסדר של כריס פארקס, פרייזי 5-4-3-2, שלושת הארפג׳ים החשובים, שבע למטה לטרצה, כללי הטריולות והכלל ה"שונה", וליווי על האוף־ביט — בקלידים, בגיטרה ובבס.',
+      'כל סולם ומודוס בכל סולם, ידיים בנפרד, יחד ובתנועה נגדית, ואז בהרמוניזציה: צלילים, טרצות, משולשים, ספטימות, drop 2 ו־drop 3. תרגילי עצמאות ידיים לפסנתר וסט טכניקה מלא יותר לגיטרה.',
+      'אלתור כצעד במסלול, נבדק לפי 48 כרטיסי חוקים (כללי האריס, enclosures, זוגות משולשים, ליק שלמדתם, קצב וצורה); לכתוב כורוס סולו משלכם ולנגן אותו; ללוות ולאלתר יחד; האחים, דלת אחורית, תחליף קולטריין, פתיחות וסיומים בהקשר.',
+      'מלודיות: שירים מקוריים להרמוניזציה (שלדים, צפוף, drop 2, drop 3), chord-melody בגיטרה, סולם ליווי שלב אחרי שלב לכל שיר, וסטודיו רה־הרמוניזציה שבודק כל בחירה מול המלודיה.',
+    ],
+  },
+  {
     version: '0.91.0',
     date: '2026-11-14',
     en: [
