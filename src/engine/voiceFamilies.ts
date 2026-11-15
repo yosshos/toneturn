@@ -3,6 +3,7 @@
 // new number bases (600 breath, 700 pitch, 800 range, 900 dynamics, 1000 vibrato, 1100 time, 1200 ear, 1300 songs,
 // 1400 standards, 1500 scat, 1600 agility, 1700 harmony, 1800 inflections, 1900 sight). Pure data.
 
+import { vocalVerified } from './verifiedContent';
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS, type VocalItem, type VocalLevel } from './vocal';
 import { SONGBOOK, songNotes } from '../content/songbook';
 import { VOICE_TOP_FAMILIES, VOICE_TOP_LEVELS, VOICE_TOP_NAMES } from './voiceTop';
@@ -525,7 +526,7 @@ const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base +
  * in their curated place and the path keeps the family rising (levelPlacement.monotoneFamily).
  * Step ids (`vocal:<n>`) are unchanged; only the order moved.
  */
-export const VOICE_FAMILIES: VoiceFamily[] = [
+const ALL_VOICE_FAMILIES: VoiceFamily[] = [
   // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
   // P2 levels sit where they teach (my song before the performance take); old levels keep opening by number.
   // P3: F13 L1 (echo one phrase of a simple song) opens the family.
@@ -557,6 +558,8 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: [301, 303, 302, 308, 304, 309, 310, 305, 306, 307], stage: 'D' },
 ];
+/** The families as shown: levels hidden until verified (verifiedContent.ts) left out; saved progress keeps their refs. */
+export const VOICE_FAMILIES: VoiceFamily[] = ALL_VOICE_FAMILIES.map((f) => (f.refs.every(vocalVerified) ? f : { ...f, refs: f.refs.filter(vocalVerified) })).filter((f) => f.refs.length > 0);
 
 /** The families' level order before P3 put new levels in (a level that was open then stays open). */
 const FORMER_REFS: Record<string, number[]> = { 'v-agility': [1601, 1602], 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202], 'v-time': [9, 1101, 1102, 1103, 1104, 1105, 1106, 1107] };

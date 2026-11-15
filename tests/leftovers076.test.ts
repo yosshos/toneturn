@@ -1,5 +1,6 @@
 // Small leftovers (DRUMS_NICHE_PLAN "Not built", guitar, bass): game badges and quests, the foot splash, the drum
 // speed records, the drum-style topic, the guitar trade's model line.
+import { gameVerified } from '../src/engine/verifiedContent';
 import { describe, expect, it } from 'vitest';
 import { BADGES, BADGE_BY_ID, badgeInCourse } from '../src/engine/badges';
 import { GAME_BADGE_GAMES } from '../src/engine/gameBadges';
@@ -21,7 +22,8 @@ describe('game badges', () => {
   it('three per game (mp, f, ff), drawn, no emoji, in the right course', () => {
     // 12 at 0.76; the AUDIT-GAMES §4.2 new games add theirs
     expect(GAME_BADGE_GAMES.length).toBeGreaterThanOrEqual(12);
-    for (const g of GAME_BADGE_GAMES)
+    // a game hidden until verified (src/engine/verifiedContent.ts) has no badges on show
+    for (const g of GAME_BADGE_GAMES.filter((x) => gameVerified(x.game)))
       for (const t of ['mp', 'f', 'ff']) {
         const b = BADGE_BY_ID[`special:game:${g.game}:${t}`];
         expect(b, `${g.game}:${t}`).toBeDefined();

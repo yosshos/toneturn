@@ -1,6 +1,7 @@
 // Search everything (SPEC-DESKTOP §3.2, 0.53): Ctrl/⌘ K opens a palette — screens, every practice topic (in both
 // languages), the songbook, tools and settings pages. Arrow keys move, Enter opens, Esc closes. Desktop staple; it also
 // works on a tablet with a keyboard.
+import { topicVerified } from '../engine/verifiedContent';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TOPIC_GEN } from '../engine/topics';
 import { SONGBOOK } from '../content/songbook';
@@ -61,6 +62,7 @@ export function buildIndex(lang: Lang): (PaletteHit & { hay: string })[] {
   for (const n of NAV) out.push({ kind: 'nav', id: n.id, title: n[lang], sub: lang === 'he' ? 'מסך' : 'Screen', hay: norm(`${n.en} ${n.he}`) });
   for (const st of SETTINGS) out.push({ kind: 'settings', id: st.id, title: st[lang], sub: lang === 'he' ? 'הגדרות' : 'Settings', hay: norm(`${st.en} ${st.he} settings הגדרות`) });
   for (const [id, T] of Object.entries(TOPIC_GEN)) {
+    if (!topicVerified(id)) continue;
     out.push({ kind: 'topic', id, title: T.title[lang], sub: T.levels.map((l) => l[lang]).slice(0, 3).join(' · '), hay: norm(`${T.title.en} ${T.title.he} ${T.levels.map((l) => `${l.en} ${l.he}`).join(' ')} ${id}`) });
   }
   for (const s of SONGBOOK) out.push({ kind: 'song', id: s.id, title: s.title[lang], sub: `${s.title[other]} · ${s.credit}`, hay: norm(`${s.title.en} ${s.title.he} ${s.credit}`) });

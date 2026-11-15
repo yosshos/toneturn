@@ -35,6 +35,7 @@ import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases
 import { generateGuitarHead, guitarChordMelodyFamily, guitarTuneFamily } from './headDrills';
 import { genGuitarSolo, guitarSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { genGuitarCtx, guitarCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
+import { gateFamilies } from '../verifiedContent';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2728,7 +2729,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     ...drumFamilies(),
   ];
   // The owner's rule: jazz / theory families (guitar and bass) in all 12 keys (keys12.ts), the listed keys first.
-  return widenFamilies(list.map((f) => (f.instruments.includes('guitar') && !f.retired ? applyGuitarMeta(f) : f)));
+  // Hidden until verified (verifiedContent.ts): unconfirmed items / levels left out.
+  return gateFamilies(widenFamilies(list.map((f) => (f.instruments.includes('guitar') && !f.retired ? applyGuitarMeta(f) : f))));
 }
 
 /** Distinct onsets per beat of a drill (notes per beat, chords counted once). */

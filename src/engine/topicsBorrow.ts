@@ -114,7 +114,8 @@ function chordsStim(chs: number[][], each = 0.9): Stimulus {
 const bassIn = (pc: number) => 36 + mod12(pc - 36);
 
 TOPIC_GEN['bh-sixfive'] = {
-  title: { en: 'Barry Harris: eight expressions of one dominant', he: 'בארי האריס: שמונה ביטויים לדומיננט אחד' },
+  // Not "Barry Harris:" — the eight-row table is the app's arrangement of his two ideas (BARRY-HARRIS-THEORY §4).
+  title: { en: 'Eight expressions of one dominant', he: 'שמונה ביטויים לדומיננט אחד' },
   skill: 'chords',
   levels: [
     { en: 'Natural or altered over the V?', he: 'טבעי או אלטרד על ה־V?' },

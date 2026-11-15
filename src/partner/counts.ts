@@ -1,4 +1,5 @@
 // The depth page's numbers (docs/SPEC-PARTNER-PITCH.md §3.3), computed from the live catalogues — never typed in.
+import { topicLevelsShown, topicVerified } from '../engine/verifiedContent'; // levels hidden until verified are not counted
 import { families, familyById, levelKeys } from '../engine/drills/plan';
 import { VOICE_FAMILIES } from '../engine/voiceFamilies';
 import { stepCatalogue } from '../engine/path';
@@ -83,7 +84,7 @@ export function depthCounts(): DepthCounts {
 /** Levels in a drill family (0 = unknown id). */
 export const familyLevels = (id: string): number => familyById(id as FamilyId)?.levels.length ?? 0;
 /** Levels of a topic (0 = no such topic). */
-export const topicLevels = (id: string): number => TOPIC_GEN[id]?.levels.length ?? 0;
+export const topicLevels = (id: string): number => topicLevelsShown(id, TOPIC_GEN[id]?.levels.length ?? 0).length;
 /** The display name of a link's target. */
 export function linkTitle(l: DepthLink, lang: 'en' | 'he'): string {
   if (l.kind === 'family') return familyById(l.id as FamilyId)?.title[lang] ?? l.id;
@@ -94,7 +95,7 @@ export const linkResolves = (l: DepthLink): boolean => (l.kind === 'family' ? fa
 /** The levels behind a set of links (families: levels; topics: path levels). */
 export const linksLevels = (ls: DepthLink[]): number => ls.reduce((n, l) => n + (l.kind === 'family' ? familyLevels(l.id) : topicLevels(l.id)), 0);
 /** A topic group's size (TOPIC_GROUPS). */
-export const groupTopics = (id: string): number => TOPIC_GROUPS.find((g) => g.id === id)?.topics.length ?? 0;
+export const groupTopics = (id: string): number => TOPIC_GROUPS.find((g) => g.id === id)?.topics.filter((t) => topicVerified(t)).length ?? 0;
 
 export interface MatrixRow {
   type: string;

@@ -1,4 +1,5 @@
 // The voice course (docs/research/VOICE_CURRICULUM.md): placement, families, measured rules.
+import { vocalVerified } from '../src/engine/verifiedContent';
 import { describe, expect, it } from 'vitest';
 import { stepCatalogue } from '../src/engine/path';
 import { synthDahs, synthLine, swingRatioOf, timeFeel, voiceOnsets, driftOf, feelVerdict } from '../src/engine/voiceTime';
@@ -109,7 +110,9 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
   it('every old level is re-homed exactly once, by number — none renumbered, none lost', () => {
     const old = [...LADDER.map((_, i) => i + 1), ...MODE_LEVELS.map((_, i) => 101 + i), ...HARMONY_LEVELS.map((_, i) => 201 + i), ...BARRY_LEVELS.map((_, i) => 301 + i), ...SIGHT_LEVELS.map((_, i) => 401 + i), ...ORNAMENT_LEVELS.map((_, i) => 501 + i)];
     const all = VOICE_FAMILIES.flatMap((f) => f.refs);
-    for (const n of old) expect(all.filter((x) => x === n).length, `level ${n}`).toBe(1);
+    // once each; Barry Harris lines 8–10 (308–310) are hidden until verified (src/engine/verifiedContent.ts)
+    for (const n of old) expect(all.filter((x) => x === n).length, `level ${n}`).toBe(vocalVerified(n) ? 1 : 0);
+    expect(old.filter((n) => !vocalVerified(n))).toEqual([308, 309, 310]);
     expect(new Set(all).size).toBe(all.length);
     for (const n of all) expect(vocalLevelByRef(n), `level ${n}`).toBeDefined();
   });

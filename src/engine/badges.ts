@@ -15,6 +15,7 @@
 import type { SkillId } from './lesson';
 import type { BassFamilyId, DrumFamilyId, FamilyId } from './drills/types';
 import { guitarCatalog, type GuitarLevelDef } from './drills/guitar';
+import { catalog } from './drills/generate';
 import { BASS_SUMMITS } from './drills/bassNiche';
 import { SETLIST } from './drills/bassNiche2';
 import { DOMAINS, PROVISIONAL_UNTIL, SKILLS, type DomainId, type Ratings } from './rating';
@@ -883,11 +884,16 @@ export function keysEarClean(clean: Record<string, number> | undefined): number 
   return kinds.size;
 }
 
+/** Level numbers on show per family (levels hidden until verified, verifiedContent.ts, have no badge on show). */
+const SHOWN_LEVELS: Map<string, Set<number>> = new Map([...catalog(), ...guitarCatalog()].map((f) => [f.id, new Set(f.levels.map((l) => l.level))]));
+const levelShown = (f: string, lv: number): boolean => !SHOWN_LEVELS.has(f) || SHOWN_LEVELS.get(f)!.has(lv);
+
 const techniqueBadges: Badge[] = [
   ...keysEarBadges(),
   ...BADGE_FAMILIES.flatMap((f) =>
-    FAMILY_TITLES[f].map(([en, he], i) => {
+    FAMILY_TITLES[f].flatMap(([en, he], i) => {
       const lv = i + 1;
+      if (!levelShown(f, lv)) return [];
       return {
         id: `tech:${f}:${lv}`,
         cat: 'technique' as const,

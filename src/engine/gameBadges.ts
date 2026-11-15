@@ -6,6 +6,7 @@
 // Ids: special:game:<game>:<tier>. group = the game's home course (badgeCourse), alsoIn = the other courses that list
 // the game in courseRows.COURSE_GAMES.
 
+import { gameVerified } from './verifiedContent';
 import type { CourseId } from './courses';
 import type { RankTier } from './ranks';
 import { tierIndex, tierKey, type DynName, type GameTiers } from './gameTiers';
@@ -79,7 +80,8 @@ export interface GameBadgeSeed {
 
 /** Three badges per game (mp, f, ff). Progress: tiers cleared towards the target tier. */
 export function gameBadgeSeeds(): GameBadgeSeed[] {
-  return GAME_BADGE_GAMES.flatMap((g) =>
+  // Hidden until verified (verifiedContent.ts): a hidden game has no badges on show.
+  return GAME_BADGE_GAMES.filter((g) => gameVerified(g.game)).flatMap((g) =>
     TIERS.map(({ t, tone }, i) => {
       const want = tierIndex(t);
       const title = g.titles[i];

@@ -202,7 +202,8 @@ describe('drills: generate', () => {
     for (const oct of [1, 2, 3, 4]) expect(scaleSpecs.some((sp) => sp.octaves === oct), `${oct} octaves`).toBe(true);
     // No family is thin: every piano family has at least 7 levels (the three first steps at the piano excepted —
     // AUDIT-CONTENT-THEORY §ז.2: posture and finger numbers, C position, the thumb passing under).
-    for (const fam of catalog().filter((f) => f.id !== 'k-first')) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
+    // k-comp is thinned to 3 while its named rhythms are hidden until verified (src/engine/verifiedContent.ts).
+    for (const fam of catalog().filter((f) => f.id !== 'k-first' && f.id !== 'k-comp')) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
   });
 
   it('coverage additions: exact shapes', () => {

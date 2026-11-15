@@ -1334,7 +1334,9 @@ export function App() {
   /** The depth page (src/partner): a family opens its first level's drills; a topic opens its lesson. Back returns there. */
   const openDepthLink = (l: DepthLink) => {
     if (l.kind === 'topic') return openTopic(l.id, l.level ?? 1);
-    const lv = familyById(l.id as FamilyId)?.levels[(l.level ?? 1) - 1];
+    // by level number (levels hidden until verified leave gaps), else the family's first shown level
+    const fam = familyById(l.id as FamilyId);
+    const lv = fam?.levels.find((x) => x.level === (l.level ?? 1)) ?? fam?.levels[0];
     if (!lv || !settings) return;
     chartQueue.current = levelDrills(lv, drillSettingsOf(settings).keyOrder);
     drillFrom.current = 'depth';

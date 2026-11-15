@@ -1,7 +1,7 @@
 // DRUMS_NICHE_PLAN P2, the rest of the not-built list: mambo / songo / Mozambique (d-latin 8–10, teacher check
 // pending), Rudiment Rush (two-zone sticking), the drum level from the ladder and the Groove-off duel, the crash choke.
 import { describe, expect, it } from 'vitest';
-import { drumFamilies, type DrumLevelDef } from '../src/engine/drills/drums';
+import { allDrumFamilies, drumFamilies, type DrumLevelDef } from '../src/engine/drills/drums';
 import { levelDrills } from '../src/engine/drills/plan';
 import { analyzeDrumTake, type DrumTakeHit } from '../src/engine/drills/drumAnalyze';
 import { expTimeMs } from '../src/engine/drills/analyze';
@@ -18,7 +18,9 @@ import { NOTE_VOICE, VOICE_NOTE } from '../src/engine/drumKit';
 import { generate } from '../src/engine/drills/generate';
 
 const FAMS = drumFamilies();
-const latin = FAMS.find((f) => f.id === 'd-latin')!;
+// d-latin 8–10 are hidden until a teacher checks them (src/engine/verifiedContent.ts): their content is tested on the
+// unfiltered catalogue, and the shown one leaves them out.
+const latin = allDrumFamilies().find((f) => f.id === 'd-latin')!;
 
 function noise(seed: number): () => number {
   let s = seed >>> 0;
@@ -41,6 +43,9 @@ describe('d-latin 8–10: mambo, songo, Mozambique (awaiting a teacher check)', 
     expect(latin.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     for (const l of latin.levels as DrumLevelDef[]) expect(!!l.needsTeacherCheck, l.id).toBe(LATIN_TEACHER_CHECK.has(l.id));
     expect(latin.levels.slice(7).map((l) => l.title.en)).toEqual(['Mambo bell over the clave', 'Songo', 'Mozambique']);
+  });
+  it('hidden until verified: the shown catalogue leaves 8–10 out', () => {
+    expect(FAMS.find((f) => f.id === 'd-latin')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
   it('every item generates on the kit (not mic), with the band, the teacher-check flag, notes inside their bars', () => {
     for (const lv of latin.levels.slice(7)) {

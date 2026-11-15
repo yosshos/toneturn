@@ -9,6 +9,7 @@
 //
 // Each step belongs to one course only (inCourse by domain / pack / instrument), so courses don't duplicate them.
 
+import { gameVerified } from './verifiedContent';
 import type { CourseId } from './courses';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
@@ -50,7 +51,7 @@ function courseShape(course: CourseId): Pick<PathStep, 'forPlays' | 'pack' | 'su
 }
 
 export function bonusSteps(): PathStep[] {
-  return BONUS_GAMES.map((g) => ({
+  return BONUS_GAMES.filter((g) => gameVerified(g.game)).map((g) => ({
     id: `bonus:${g.course}:${g.game}`,
     kind: 'game' as const,
     game: g.game,

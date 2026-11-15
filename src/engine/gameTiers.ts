@@ -755,7 +755,7 @@ GAME_TIERS.compcaller = {
   },
 };
 
-/** Elevator (Keys, Guitar): Echols's floors on the 6th-diminished scales — build the voicing, then play it. */
+/** Elevator (Keys, Guitar): Echols's floors on the 6th-diminished scales, from the tonic — build the voicing, then play it. */
 GAME_TIERS.elevator = {
   game: 'elevator',
   source: (c) => (c === 'keys' ? 'instrument/piano-tech' : c === 'guitar' ? 'instrument/guitar-tech' : 'chords'),
@@ -764,7 +764,7 @@ GAME_TIERS.elevator = {
     pp: { label: L('Floors 2–3 in the 6-dim scale', 'קומות 2–3 בסולם 6־דים'), levels: [1], params: { cases: 8, run: 10 } },
     p: { label: L('Up a floor: contrary motion', 'קומה למעלה: תנועה נגדית'), levels: [2], params: { cases: 8, run: 10 } },
     mp: { label: L('The minor 6-dim scale', 'סולם m6־דים'), levels: [3], params: { cases: 8, run: 10 } },
-    mf: { label: L('Reach floor N under the melody', 'להגיע לקומה N מתחת למנגינה'), levels: [4], params: { cases: 8, run: 10 } },
+    mf: { label: L('The whole ride: floors 3–9', 'כל הנסיעה: קומות 3–9'), levels: [4], params: { cases: 8, run: 10 } },
     f: { label: L('Borrowing: 1–3 voices', 'שאילה: 1–3 קולות'), levels: [5], params: { cases: 8, run: 10 } },
     ff: { label: L('All four scales, floors to 9', 'כל ארבעת הסולמות, עד קומה 9'), levels: [6], params: { cases: 8, run: 10 } },
   },

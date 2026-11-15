@@ -18,6 +18,9 @@
 // generate.ts first: it loads headDrills in the order the soloPianoDrills tables expect (a load-order cycle).
 import './generate';
 import type { Drill, DrillSpec, FamilyId } from './types';
+import { isVerified } from '../verifiedContent';
+/** A row's two titles naming only what is on show (items hidden until verified: verifiedContent.ts). */
+const pickT = (shown: boolean, full: [string, string], short: [string, string]): [string, string] => (shown ? full : short);
 import type { LevelDef, SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
 import { finish, generateGuitar, guitarItemId, NAMES, place, SIG, windowScale, type Ev, type GN, type GuitarFamilyDef, type GuitarLevelDef, type GuitarStyle, type T2 } from './guitar';
@@ -116,9 +119,9 @@ export const SOLOJAZZ_ROWS = (): Row[] => {
 export const HLFAST_ROWS = (): Row[] => {
   const S = (kind: string, option: number) => sp('g-hlfast', `g-harrisline>${kind}`, { option });
   return [
-    ["Barry's chromatic scales and the outlines at bebop tempo", 'הסולמות הכרומטיים של בארי והמתארים בטמפו ביבופ', [S('hl-chrom', 0), S('hl-chrom', 1), S('hl-chrom', 2), S('hl-outline', 0), S('hl-outline', 1)], CYC4, [140, 220], '8ths', 9],
-    ['The rules from every degree and 5-4-3-2, at tempo', 'החוקים מכל דרגה ו-5-4-3-2, בטמפו', [S('hl-rules', 4), S('hl-rules', 9), S('hl-rules', 13), S('hl-5432', 0), S('hl-5432', 2), S('hl-lick', 0)], CYC4, [150, 230], '8ths', 10],
-    ['Seven down, 3 to ♭9 and the triplet rules, at tempo', 'שבע למטה, 3 עד ♭9 וחוקי הטריולה, בטמפו', [S('hl-sevendown', 0), S('hl-sevendown', 1), S('hl-3b9', 1), S('hl-triplet', 1), S('hl-triplet', 3)], CYC4, [150, 230], '8ths and triplets', 10],
+    [...pickT(isVerified('item:hl-chrom'), ["Barry's chromatic scales and the outlines at bebop tempo", 'הסולמות הכרומטיים של בארי והמתארים בטמפו ביבופ'], ['The outlines at bebop tempo', 'המתארים בטמפו ביבופ']), [S('hl-chrom', 0), S('hl-chrom', 1), S('hl-chrom', 2), S('hl-outline', 0), S('hl-outline', 1)], CYC4, [140, 220], '8ths', 9],
+    [...pickT(isVerified('item:hl-5432:0'), ['The rules from every degree and 5-4-3-2, at tempo', 'החוקים מכל דרגה ו-5-4-3-2, בטמפו'], ['The rules from every degree, at tempo', 'החוקים מכל דרגה, בטמפו']), [S('hl-rules', 4), S('hl-rules', 9), S('hl-rules', 13), S('hl-5432', 0), S('hl-5432', 2), S('hl-lick', 0)], CYC4, [150, 230], '8ths', 10],
+    [...pickT(isVerified('item:hl-sevendown') && isVerified('item:hl-3b9'), ['Seven down, 3 to ♭9 and the triplet rules, at tempo', 'שבע למטה, 3 עד ♭9 וחוקי הטריולה, בטמפו'], ['The triplet rules, at tempo', 'חוקי הטריולה, בטמפו']), [S('hl-sevendown', 0), S('hl-sevendown', 1), S('hl-3b9', 1), S('hl-triplet', 1), S('hl-triplet', 3)], CYC4, [150, 230], '8ths and triplets', 10],
     ['Lines through whole outlines at tempo', 'קווים לאורך מתארים שלמים בטמפו', [2, 3, 4, 5].map((o) => S('hl-outline', o)), CYC4, [160, 240], '8ths', 11],
     ['Compose a line at bebop tempo', 'לחבר קו בטמפו ביבופ', [S('hl-compose', 0), S('hl-compose', 1), S('hl-compose', 2)], CYC4, [130, 210], 'free 8ths', 11],
   ];
