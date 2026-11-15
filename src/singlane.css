@@ -62,10 +62,115 @@
   stroke: var(--outline);
   stroke-width: 2.5;
 }
-.sl-outline.golden {
+.sl-outline.sel {
+  stroke-width: 3.5;
+}
+/* money notes: a second, thin ink outline 2 px outside the first */
+.sl-outline-2 {
+  fill: none;
+  stroke: var(--outline);
+  stroke-width: 1;
+}
+/* the review: the vibrato centre through the curve, per-note chips, tap columns, the playhead */
+.sl-centre {
+  fill: none;
+  stroke: var(--ink);
   stroke-width: 1.2;
-  outline: none;
-  filter: none;
+  stroke-dasharray: 4 3;
+  opacity: 0.75;
+}
+.sl-chip rect {
+  fill: var(--card);
+  stroke: var(--outline);
+  stroke-width: 1.5;
+}
+.sl-chip text {
+  font: 800 10px var(--font);
+  fill: var(--ink);
+}
+.sl-chip.in rect {
+  fill: var(--teal);
+}
+.sl-chip.in text {
+  fill: var(--ink-c, #1e1033);
+}
+.sl-chip.sharp rect {
+  stroke: var(--tangerine);
+  stroke-width: 2;
+}
+.sl-chip.flat rect {
+  stroke: var(--purple);
+  stroke-width: 2;
+}
+.sl-chip.miss rect,
+.sl-chip.oct rect {
+  stroke-dasharray: 3 2;
+}
+.sl-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.note-detail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 4px 0;
+  padding: 6px 10px;
+  border: 2px solid var(--outline);
+  border-radius: 14px;
+  background: var(--card);
+  font-size: 0.82rem;
+}
+.note-detail .nd-name {
+  font-family: var(--display);
+  font-size: 1.3rem;
+}
+.note-detail .nd-name sub {
+  font-size: 0.55em;
+  vertical-align: baseline;
+}
+.note-detail .cents-chip {
+  margin: 0;
+  min-width: 56px;
+  height: 28px;
+}
+.note-detail .nd-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: var(--ink-soft);
+}
+.note-detail .nd-miss {
+  font-weight: 800;
+}
+.note-detail {
+  position: relative;
+  padding-inline-end: 38px;
+}
+.note-detail .nd-close {
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 5px;
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  font-size: 1rem;
+}
+@media (max-height: 900px) {
+  .panel-screen.vocal .vocal-actions .btn.ghost {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 4px 10px;
+    font-size: 0.9rem;
+  }
+}
+.take-card .listen-btn {
+  margin-top: 6px;
+  min-height: 36px;
+  padding: 4px 14px;
 }
 .sl-fill.in {
   fill: var(--teal);

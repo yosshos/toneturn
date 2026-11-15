@@ -61,6 +61,19 @@ for (const lang of ['en', 'he'] as const) {
       await expect(page.locator('.take-score b')).toContainText('%');
       expect(await overflow(page), 'review screen').toBeLessThanOrEqual(2);
       if (SHOTS) await page.screenshot({ path: `docs/voice-ui-shots/s1-${c.name}-review-${lang}.png` });
+      if (c.name === 'melody') {
+        // slice 2: per-note chips over the blocks, a money note's double outline, tap a note for its detail
+        await expect(page.locator('.sl-chip').first()).toBeVisible();
+        expect(await page.locator('.sl-chip').count()).toBe(5);
+        await expect(page.locator('.sl-outline-2')).toHaveCount(1);
+        await expect(page.locator('.sl-centre')).toHaveAttribute('d', /L/);
+        await page.locator('.sl-hit').nth(3).click();
+        await expect(page.locator('.note-detail')).toBeVisible();
+        expect(await overflow(page), 'note detail').toBeLessThanOrEqual(2);
+        if (SHOTS) await page.screenshot({ path: `docs/voice-ui-shots/s2-melody-note-${lang}.png` });
+        await page.locator('.note-detail .nd-close').click();
+        await expect(page.locator('.note-detail')).toHaveCount(0);
+      }
     });
   }
 }

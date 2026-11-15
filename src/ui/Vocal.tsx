@@ -67,9 +67,9 @@ import { VoiceLevelTest } from './VoiceLevelTest';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
-import { SingLane, SingMeters, SingReadout } from './SingLane';
+import { NoteDetailRow, SingLane, SingMeters, SingReadout } from './SingLane';
 import { SingFeed, type LaneTarget } from './singFeed';
-import { zoneTolerance } from '../engine/vocalLive';
+import { moneyNotes, noteDetail, zoneTolerance } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
 
@@ -802,6 +802,12 @@ function VocalSession({
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
   const feed = useMemo(() => new SingFeed(), []);
   const [why, setWhy] = useState(false);
+  // The review: the tapped note, and the take played back under a moving playhead.
+  const [sel, setSel] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const player = useRef<HTMLAudioElement | null>(null);
+  const playOffset = useRef(0);
+  useEffect(() => () => player.current?.pause(), []);
   useEffect(() => {
     if (test?.autoStart) void take();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -858,6 +864,9 @@ function VocalSession({
     setAudioUrl(null);
     setPulseClock(null);
     setWhy(false);
+    setSel(null);
+    player.current?.pause();
+    setPlaying(false);
     feed.reset();
     feed.latency = pulse && !SIMULATED ? (settings.micLatencyMs ?? 0) / 1000 : 0;
     await piano.unlock();
@@ -929,6 +938,7 @@ function VocalSession({
         void piano.play(lineAccompaniment(acc, chordsAbs, beat), acc.length * beat + 0.3, c.signal).catch(() => {});
       }
       tStart = lastT;
+      playOffset.current = tStart;
       stage = 'sing';
       setPhase('singing');
       startTicking();
@@ -967,6 +977,7 @@ function VocalSession({
       startTicking();
       // Timed takes: a bar of count-in, then the click (if on) and the lit notes carry the singer through.
       const lead = pulse ? pulse.countIn * pulse.beat : 0;
+      playOffset.current = lead + feed.latency;
       const clickCtl = new AbortController();
       c.signal.addEventListener('abort', () => clickCtl.abort());
       captureT0.current = performance.now() + lead * 1000;
@@ -981,10 +992,19 @@ function VocalSession({
       };
       if (SIMULATED) {
         const sim = simulatedFrames(item, targets, noteIdx);
+        let rtSim: SungFrame[] | null = null;
         if (SIM_RT) {
-          // Real time, lined up with the lane (the simulated melody starts 0.3 s in).
+          // Real time, lined up with the lane (the simulated melody starts 0.3 s in). A demo singer: on melodies one
+          // note a little sharp and one flat, so the review shows every chip state.
           const shift = pulse ? 0.3 : 0;
-          await paceFrames(shift ? sim.map((f) => ({ ...f, t: f.t - shift })) : sim, captureT0.current, c.signal, keep);
+          const demo = pulse ? sim.map((f) => {
+            const t = f.t - shift;
+            const k = pulse.onsets.findIndex((o, j) => t >= o && t < (pulse.onsets[j + 1] ?? Infinity));
+            const off = k === 2 ? 28 : k === 3 ? -48 : 0;
+            return { ...f, t, hz: f.hz && off ? f.hz * 2 ** (off / 1200) : f.hz };
+          }) : sim;
+          rtSim = demo;
+          await paceFrames(demo, captureT0.current, c.signal, keep);
           clickCtl.abort();
           if (c.signal.aborted && !stopped.current) {
             clearInterval(tick);
@@ -997,7 +1017,7 @@ function VocalSession({
           // The simulator runs through the count-in and the first notes too (the now-cue is part of the take).
           await new Promise((r) => setTimeout(r, 300 + (pulse ? (lead + Math.min(pulse.length, 1.5)) * 1000 : 0)));
         }
-        got = sim;
+        got = rtSim ?? sim;
       } else {
         const r = await new BrowserPitchCapture().sing({
           signal: c.signal,
@@ -1027,7 +1047,8 @@ function VocalSession({
     piano.stopDrone();
     setPulseClock(null);
     setFrames(got ?? []);
-    feed.load(SIM_RT && pulse && got ? got.map((f) => ({ ...f, t: f.t - 0.3 })) : got ?? []);
+    feed.load(got ?? []);
+    setSel(null);
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
     if (audio) setAudioUrl(URL.createObjectURL(audio));
@@ -1167,6 +1188,31 @@ function VocalSession({
   const laneTargets: LaneTarget[] = pulse
     ? shownTargets.map((m, k) => ({ midi: m, start: pulse.onsets[k], dur: (pulse.onsets[k + 1] ?? pulse.length) - pulse.onsets[k] }))
     : shownTargets.map((m) => ({ midi: m }));
+  if (pulse) for (const k of moneyNotes(shownTargets, laneTargets.map((x) => x.dur ?? 0))) laneTargets[k].golden = true;
+  const melNotes = phase === 'result' && grade && !grade.unclear && pulse ? grade.melody?.notes ?? null : null;
+  const playClock = playing ? () => (player.current ? player.current.currentTime - playOffset.current : null) : null;
+  const togglePlay = () => {
+    if (!audioUrl) return;
+    if (playing) {
+      player.current?.pause();
+      setPlaying(false);
+      return;
+    }
+    const a = player.current && player.current.src === audioUrl ? player.current : new Audio(audioUrl);
+    player.current = a;
+    a.currentTime = 0;
+    a.onended = () => setPlaying(false);
+    void a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+  };
+  const detail = (() => {
+    if (sel === null || !melNotes?.[sel]) return null;
+    const n = melNotes[sel];
+    const tg = laneTargets[sel];
+    const first = melNotes.findIndex((x) => x.start !== null);
+    const t0 = first >= 0 ? melNotes[first].start! - (laneTargets[first].start ?? 0) : 0;
+    const onsetMs = n.start !== null && tg.start !== undefined && sel !== first ? Math.round((n.start - (t0 + tg.start)) * 1000) : null;
+    return { d: noteDetail(n, feed.track(n.target), tg.dur ?? 0.5, onsetMs), golden: !!tg.golden, label: noteLabel(n.target, settings) };
+  })();
   const shownIdx = hidden ? shownTargets.map((m, k) => (visible.includes(m) ? k : -1)).filter((k) => k >= 0) : null;
   const holdItem = HOLD_KINDS.includes(item.kind);
   const strong = !!grade && !grade.unclear && grade.score >= STRONG;
@@ -1258,7 +1304,7 @@ function VocalSession({
           </button>
           </div>
         </div>
-      ) : (pulse && phase !== 'result') || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
+      ) : (pulse && phase !== 'result') || (phase === 'result' && !!melNotes) || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
       <p className="vocal-targets" dir="ltr">
         {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
@@ -1295,11 +1341,16 @@ function VocalSession({
         settings={settings}
         beat={pulse?.beat}
         countIn={pulse?.countIn}
-        compact={phase === 'result'}
+        compact={phase === 'result' && !pulse}
+        notes={melNotes}
+        selected={sel}
+        onSelect={melNotes ? setSel : undefined}
+        playClock={playClock}
         label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`}
       />
       <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
+      {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} lang={lang} onClose={() => setSel(null)} />}
       {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && holdItem && grade && !grade.unclear)) && (
         <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} />
       )}
@@ -1350,10 +1401,9 @@ function VocalSession({
             </>
           )}
           {audioUrl && (
-            <div className="listen-back">
-              <span>{t.vocalListenBack}</span>
-              <audio controls src={audioUrl} />
-            </div>
+            <button className="btn ghost listen-btn" onClick={togglePlay} aria-pressed={playing}>
+              <Icon k={playing ? 'pause' : 'play'} /> {playing ? SING_TX.pause[lang] : SING_TX.listen[lang]}
+            </button>
           )}
         </section>
       )}

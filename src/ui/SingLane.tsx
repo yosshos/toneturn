@@ -5,7 +5,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { chipCents, octaveFold, zoneState, type ZoneState } from '../engine/pitchDisplay';
-import { bestStretch, sliceSteadiness } from '../engine/vocalLive';
+import { bestStretch, centreLine, sliceSteadiness, type NoteDetail } from '../engine/vocalLive';
+import type { MelodyNote } from '../engine/vocal';
 import type { Settings } from '../storage/progress';
 import { noteLabel } from './Vocal';
 import { targetAt, type LaneTarget, type SingFeed } from './singFeed';
@@ -80,9 +81,15 @@ export interface SingLaneProps {
   countIn?: number;
   compact?: boolean;
   children?: ReactNode;
+  /** Review: the graded notes (per-note chips) and the tap-a-note selection. */
+  notes?: (MelodyNote | null)[] | null;
+  selected?: number | null;
+  onSelect?: (i: number | null) => void;
+  /** Review playback: the take time under the playhead (s), or null when not playing. */
+  playClock?: (() => number | null) | null;
 }
 
-export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, settings, label, beat, countIn = 0, compact }: SingLaneProps) {
+export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, settings, label, beat, countIn = 0, compact, notes, selected, onSelect, playClock }: SingLaneProps) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 320, h: 170 });
   useLayoutEffect(() => {
@@ -102,16 +109,19 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
   const midis = targets.map((x) => x.midi);
   const range = settings.voiceRange;
   const [lo, hi] = useMemo(() => {
-    let a = Math.floor(Math.min(...midis)) - 3;
-    let b = Math.ceil(Math.max(...midis)) + 3;
-    if (b - a < 7) {
-      const add = 7 - (b - a);
+    // Live: the targets ± 3 semitones (≥ 7); the review zooms in on the take (± 1.5, ≥ 5).
+    const padS = live ? 3 : 1.5;
+    const minS = live ? 7 : 5;
+    let a = Math.floor(Math.min(...midis) - padS);
+    let b = Math.ceil(Math.max(...midis) + padS);
+    if (b - a < minS) {
+      const add = minS - (b - a);
       a -= Math.floor(add / 2);
       b += Math.ceil(add / 2);
     }
     return [a, b];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [midis.join()]);
+  }, [midis.join(), live]);
   const sh = (h - 2 * PAD) / (hi - lo);
   const y = (m: number) => PAD + (hi - m) * sh;
   const timed = targets.some((x) => x.start !== undefined);
@@ -147,12 +157,14 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
   const edgeUpT = useRef<SVGTextElement>(null);
   const edgeDownT = useRef<SVGTextElement>(null);
   const curStrip = useRef<SVGRectElement>(null);
+  const centre = useRef<SVGPathElement>(null);
+  const playhead = useRef<SVGGElement>(null);
   const ticks = useRef<SVGGElement>(null);
   const runs = useRef<{ n: number; list: Run[]; epoch: number }>({ n: 0, list: [], epoch: -1 });
   const t0Hold = useRef<{ epoch: number; t0: number } | null>(null);
 
   useEffect(() => {
-    const centre = (Math.min(...midis) + Math.max(...midis)) / 2;
+    const centreM = (Math.min(...midis) + Math.max(...midis)) / 2;
     const draw = () => {
       const now = reviewFit ? reviewFit.t0 + reviewFit.span : feed.now();
       // The content transform: x(t) = tx + t · pps.
@@ -218,7 +230,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
           continue;
         }
         const tg = targetAt(targets, p.t, p.m);
-        const ref = tg ? tg.midi : centre;
+        const ref = tg ? tg.midi : centreM;
         const fold = octaveFold(p.m, ref);
         const m = p.m + fold;
         cur = { m, fold, t: p.t };
@@ -281,9 +293,31 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
       }
       // Count-in ticks fill lemon as the clock passes them.
       if (ticks.current) ticks.current.querySelectorAll('rect').forEach((r) => r.classList.toggle('on', now >= Number(r.dataset.t)));
+      // Review: the vibrato centre (dashed) through the curve, and the playback playhead.
+      if (centre.current) {
+        if (reviewFit) {
+          const cl = centreLine(pts.map((p) => ({ t: p.t, m: p.m === null ? null : p.m + octaveFold(p.m, (targetAt(targets, p.t, p.m) ?? { midi: centreM }).midi) })));
+          let d = '';
+          let down = false;
+          for (const q of cl) {
+            if (q.m === null || q.m > hi - 0.1 || q.m < lo + 0.1) {
+              down = false;
+              continue;
+            }
+            d += `${down ? 'L' : 'M'}${(q.t * pps).toFixed(1)} ${y(q.m).toFixed(1)}`;
+            down = true;
+          }
+          centre.current.setAttribute('d', d);
+        } else centre.current.setAttribute('d', '');
+      }
+      if (playhead.current) {
+        const at = playClock ? playClock() : null;
+        playhead.current.style.display = at === null ? 'none' : '';
+        if (at !== null) playhead.current.setAttribute('transform', `translate(${(tx + at * pps).toFixed(1)} 0)`);
+      }
     };
     draw();
-    if (!live) return;
+    if (!live && !playClock) return;
     let id = 0;
     const loop = () => {
       draw();
@@ -292,7 +326,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live, w, h, pps, lo, hi, targets, tol, reviewFit, timed, mode, span, shownIdx?.join()]);
+  }, [live, w, h, pps, lo, hi, targets, tol, reviewFit, timed, mode, span, shownIdx?.join(), playClock]);
 
   // ---- static layer
   const rows: number[] = [];
@@ -343,7 +377,13 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
             <path ref={fillClose} className="sl-fill close" />
             <path ref={fillIn} className="sl-fill in" />
             {targets.map((tg, i) =>
-              tg.start !== undefined && shown(i) ? <rect key={`o${i}`} x={tg.start * pps + 1} width={Math.max(4, (tg.dur ?? 0.5) * pps - 3)} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-outline${tg.golden ? ' golden' : ''}`} /> : null,
+              tg.start !== undefined && shown(i) ? (
+                <g key={`o${i}`}>
+                  <rect x={tg.start * pps + 1} width={Math.max(4, (tg.dur ?? 0.5) * pps - 3)} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-outline${selected === i ? ' sel' : ''}`} />
+                  {/* a money note: 2.5 px ink + 2 px gap + 1 px ink (a double outline, not gold) */}
+                  {tg.golden && <rect x={tg.start * pps - 2.5} width={Math.max(4, (tg.dur ?? 0.5) * pps + 4)} y={y(tg.midi + 0.5) - 2.5} height={sh + 5} rx="8.5" className="sl-outline-2" />}
+                </g>
+              ) : null,
             )}
             {live && beat && countIn > 0 && (
               <g ref={ticks}>
@@ -355,6 +395,25 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
             <path ref={trInk} className="sl-trail" />
             <path ref={trUp} className="sl-trail up" />
             <path ref={trDown} className="sl-trail down" />
+            <path ref={centre} className="sl-centre" />
+            {!live &&
+              notes &&
+              targets.map((tg, i) => {
+                const n = notes[i];
+                if (tg.start === undefined || !n) return null;
+                const cx = (tg.start + (tg.dur ?? 0.5) / 2) * pps;
+                const st = n.octave ? 'oct' : n.cents === null ? 'miss' : Math.abs(n.cents) <= tol ? 'in' : n.cents > 0 ? 'sharp' : 'flat';
+                const txt = st === 'oct' ? '8va' : st === 'miss' ? '–' : st === 'in' ? '✓' : `${n.cents! > 0 ? '+' : '−'}${Math.abs(chipCents(n.cents!))}`;
+                const top = y(tg.midi + 0.5);
+                const cy = top - 9 < 2 ? y(tg.midi - 0.5) + 9 : top - 9;
+                const wChip = Math.max(20, txt.length * 6.5 + 8);
+                return (
+                  <g key={`c${i}`} className={`sl-chip ${st}`} transform={`translate(${cx.toFixed(1)} ${cy.toFixed(1)})`}>
+                    <rect x={-wChip / 2} y="-7.5" width={wChip} height="15" rx="7.5" />
+                    <text y="3.8" textAnchor="middle">{txt}</text>
+                  </g>
+                );
+              })}
           </g>
         </g>
         {/* untimed blocks' outlines over their fill */}
@@ -373,6 +432,29 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
           ) : (
             <line key={`k${m}`} x1={G - 12} x2={G - 9} y1={y(m)} y2={y(m)} className="sl-tickmark" />
           ),
+        )}
+        {!live && onSelect && timed && (
+          <g className="sl-hits">
+            {targets.map((tg, i) =>
+              tg.start !== undefined ? (
+                <rect
+                  key={`h${i}`}
+                  x={(reviewFit ? G - reviewFit.t0 * pps : 0) + tg.start * pps}
+                  width={Math.max(10, (tg.dur ?? 0.5) * pps)}
+                  y="0"
+                  height={h}
+                  className="sl-hit"
+                  onClick={() => onSelect(selected === i ? null : i)}
+                />
+              ) : null,
+            )}
+          </g>
+        )}
+        {!live && (
+          <g ref={playhead} className="sl-now sl-playhead" style={{ display: 'none' }}>
+            <line x1="0" x2="0" y1="0" y2={h} className="edge" />
+            <line x1="0" x2="0" y1="0" y2={h} className="core" />
+          </g>
         )}
         {live && (
           <>
@@ -521,6 +603,34 @@ export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lan
     <div className="sing-meters">
       {meter && <ZoneMeter cents={cents} tol={tol} />}
       {barsEl}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ the review's tap-a-note detail (§4.13)
+
+export function NoteDetailRow({ label, d, golden, tol, lang, onClose }: { label: string; d: NoteDetail; golden: boolean; tol: number; lang: 'he' | 'en'; onClose: () => void }) {
+  const st = d.octave ? 'none' : zoneState(d.cents, tol);
+  const items: [string, string][] = [];
+  if (d.settleMs !== null) items.push([SING_TX.settle[lang], `${d.settleMs} ms`]);
+  if (d.overshoot > 10) items.push(['↗', `${d.overshoot} ¢`]);
+  if (d.onsetMs !== null && Math.abs(d.onsetMs) > 60) items.push([d.onsetMs > 0 ? SING_TX.late[lang] : SING_TX.early[lang], `${Math.abs(d.onsetMs)} ms`]);
+  if (golden && d.wobble !== null) items.push([SING_TX.steady[lang], `±${d.wobble} ¢`]);
+  if (golden && d.vibrato) items.push([SING_TX[d.vibrato.state === 'vibrato' ? 'vibrato' : d.vibrato.state === 'unsteady' ? 'unsteady' : 'straight'][lang], d.vibrato.state === 'straight' ? '' : `${d.vibrato.rate.toFixed(1)} Hz ±${d.vibrato.extent} ¢`]);
+  return (
+    <div className="note-detail" role="group" aria-label={label}>
+      <NoteName label={label} className="nd-name" />
+      {d.octave ? <span className="cents-chip flat">8va</span> : d.cents === null ? <span className="nd-miss">{SING_TX.missed[lang]}</span> : <CentsChip cents={d.cents} state={st} lang={lang} />}
+      <span className="nd-items">
+        {items.map(([k, v]) => (
+          <span key={k}>
+            {k} <b dir="ltr">{v}</b>
+          </span>
+        ))}
+      </span>
+      <button className="icon-btn nd-close" onClick={onClose} aria-label="×">
+        ×
+      </button>
     </div>
   );
 }

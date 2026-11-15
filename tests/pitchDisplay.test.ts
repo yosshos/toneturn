@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DisplaySmoother, NoteNamer, octaveFold, smoothTrack, zoneState, ZONE_LOOK, chipCents } from '../src/engine/pitchDisplay';
 import { centsTrack, synthHold, synthMelody } from '../src/engine/vocal';
 import { midiToHz } from '../src/engine/pitch';
-import { bestStretch, liveVibrato, sliceSteadiness, steadyLevel, zoneTolerance } from '../src/engine/vocalLive';
+import { bestStretch, centreLine, liveVibrato, moneyNotes, noteDetail, sliceSteadiness, steadyLevel, zoneTolerance } from '../src/engine/vocalLive';
 import type { SungFrame } from '../src/engine/sing';
 import { VoiceCheckState, levelOf } from '../src/engine/voiceCheck';
 
@@ -170,5 +170,30 @@ describe('voice check', () => {
     expect(b.hint(4.95)).toBe(true);
     expect(levelOf(0.00001)).toBe(0);
     expect(levelOf(1)).toBe(1);
+  });
+});
+
+describe('melody review helpers', () => {
+  it('money notes: long notes first, else the single top note; never more than two', () => {
+    expect(moneyNotes([60, 62, 64, 62, 60], [0.5, 0.5, 0.5, 0.5, 0.5])).toEqual([2]);
+    expect(moneyNotes([60, 64, 62, 64], [0.5, 0.5, 0.5, 0.5])).toEqual([]);
+    expect(moneyNotes([60, 62, 64, 60], [0.5, 0.5, 0.5, 1.5])).toEqual([3]);
+    expect(moneyNotes([60, 67, 64, 62, 60], [0.5, 1.2, 0.5, 1.2, 1.5]).length).toBeLessThanOrEqual(2);
+    expect(moneyNotes([60, 62], [1, 1])).toEqual([]);
+  });
+  it('the vibrato centre line runs through the wave and breaks with the line', () => {
+    const pts = synthHold(62, { seconds: 2, vibRate: 5.6, vibExtent: 40 }).map((f) => ({ t: f.t, m: f.hz ? 69 + 12 * Math.log2(f.hz / 440) : null }));
+    const cl = centreLine(pts);
+    expect(cl[0].m).toBeNull();
+    const mid = cl.filter((p) => p.m !== null && p.t > 0.8 && p.t < 1.6).map((p) => Math.abs(p.m! - 62) * 100);
+    expect(Math.max(...mid)).toBeLessThan(12);
+  });
+  it('a note detail reads stability and vibrato over the note', () => {
+    const tr = centsTrack(synthHold(62, { seconds: 2, vibRate: 5.6, vibExtent: 35 }), 62);
+    const d = noteDetail({ target: 62, cents: 2, settleMs: 40, overshoot: 0, start: 0.3 }, tr, 2, 20);
+    expect(d.vibrato?.state).toBe('vibrato');
+    expect(d.wobble).not.toBeNull();
+    expect(d.wobble!).toBeLessThanOrEqual(12);
+    expect(noteDetail({ target: 62, cents: null, settleMs: null, overshoot: 0, start: null }, tr, 1, null).wobble).toBeNull();
   });
 });
