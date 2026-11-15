@@ -446,7 +446,7 @@ TOPIC_GEN['chord-scale'] = {
     const names: ChoiceQuestion['names'] = {};
     for (const p of pool) names[p] = SCALES[p];
     const base = 48 + spPc(root);
-    return choiceQ({ id, topic: 'chord-scale', level, seed, skill: 'theory', difficulty: 1550, ask: { en: `${sym} (${j.hint.en}) — which scale?`, he: `${sym} (${j.hint.he}) — איזה סולם?` }, text: { en: sym, he: sym }, names, answer: j.scale, choices: pool, stimulus: [chordStim(j.quality.map((s) => base + s), 1.6)] });
+    return choiceQ({ id, topic: 'chord-scale', level, seed, skill: 'theory', difficulty: 1450, ask: { en: `${sym} (${j.hint.en}) — which scale?`, he: `${sym} (${j.hint.he}) — איזה סולם?` }, text: { en: sym, he: sym }, names, answer: j.scale, choices: pool, stimulus: [chordStim(j.quality.map((s) => base + s), 1.6)] });
   },
 };
 
@@ -488,7 +488,7 @@ TOPIC_GEN['note-reading'] = {
     }
     return choiceQ({
       // AUDIT-CONTENT-THEORY §ב.1: the treble clef sits before the steps that read from the staff (dictation, chords, spelling).
-      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: level === 1 ? 950 : 1000 + 120 * level,
+      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: [950, 1120, 1280, 1430, 1560][level - 1] ?? 1560,
       ask: { en: 'Which note is this?', he: 'איזה תו זה?' },
       names, answer: spEn(ans), choices: opts.map(spEn), stimulus: [], choiceStim,
       show: { midis: [m], clef: r.clef, key: null },

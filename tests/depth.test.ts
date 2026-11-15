@@ -8,7 +8,7 @@ const DEEP = ['form', 'chromatic-added', 'bh-keys', 'bh-tone', 'bh-convert-2', '
 
 describe('topic depth (0.48)', () => {
   it('every topic has at least three levels', () => {
-    for (const [k, t] of Object.entries(TOPIC_GEN)) expect(t.levels.length, k).toBeGreaterThanOrEqual(3);
+    for (const [k, t] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly)) expect(t.levels.length, k).toBeGreaterThanOrEqual(3);
   });
   it('the deepened topics build sound, deterministic items on every level', () => {
     for (const k of DEEP) {

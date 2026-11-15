@@ -517,7 +517,13 @@ export interface VoiceFamily {
 
 const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base + i + 1);
 
-/** The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). */
+/**
+ * The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). AUDIT-6 V-W1: each
+ * family's levels follow their items' ratings (levelPlacement.voiceItemRating) — arpeggios after the first scales (RSL
+ * G1–G3), Barry Harris's lines (308–310) before the harder rule levels; small inversions (the singer's leaps) stay
+ * in their curated place and the path keeps the family rising (levelPlacement.monotoneFamily).
+ * Step ids (`vocal:<n>`) are unchanged; only the order moved.
+ */
 export const VOICE_FAMILIES: VoiceFamily[] = [
   // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
   // P2 levels sit where they teach (my song before the performance take); old levels keep opening by number.
@@ -528,24 +534,24 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   // AUDIT-CONTENT-THEORY §ב.5: the family opened on its hardest level (old ladder 9, 16ths at ♩66–80); it now sits after
   // the swing and on-top / laid-back levels, and the family opens on the click.
-  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113], stage: 'A' },
+  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1108, 1106, 1109, 1107, 1110, 1111, 1112, 1113], stage: 'A' },
   // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
   // §ב.5: sevenths, the octave and ninths after the tensions (appended: saved placement starts keep their levels).
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202, 1206, 1207], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
-  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level), ...READ_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 11, ...VIB_LEVELS.map((l) => l.level)], stage: 'B' },
+  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [101, 102, ...ARPEGGIO_LEVELS.map((l) => l.level), 103, 104, 105, 107, 106, ...nums(100, MODE_LEVELS).slice(7)], stage: 'B' },
+  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [401, 402, 403, 404, 1903, 1901, 1904, ...nums(400, SIGHT_LEVELS).slice(4), 1902], stage: 'B' },
+  { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 1001, 1002, 1004, 11, 1003, 1005], stage: 'B' },
   // AUDIT-5 V-11: runs, turns and melisma (60 → 120 %) before the two bebop lines, which stay the top levels.
   { id: 'v-agility', title: { en: 'Agility & bebop lines', he: 'גמישות וקווי ביבופ' }, refs: [...RUN_LEVELS, ...AGILITY_LEVELS].map((l) => l.level), stage: 'C', before: RUN_LEVELS.length },
-  { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [...nums(200, HARMONY_LEVELS), ...HARMONY_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [...nums(500, ORNAMENT_LEVELS), ...INFLECT_LEVELS.map((l) => l.level)], stage: 'C' },
-  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1408, 1406, 1407, 1409, 1410], stage: 'C' },
+  { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [201, 202, 203, 204, 1701, 205, 1702, 1703], stage: 'B' },
+  { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [501, 502, 1801, 503, 1802, 504], stage: 'C' },
+  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1406, 1408, 1407, 1409, 1410], stage: 'C' },
   { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
   // AUDIT-CONTENT-THEORY §ז.2: the first steps open the voice path (VOICE_LATER puts them first; listed here so Barry
   // Harris stays last in the list).
   { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
-  { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
+  { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: [301, 303, 302, 308, 304, 309, 310, 305, 306, 307], stage: 'D' },
 ];
 
 /** The families' level order before P3 put new levels in (a level that was open then stays open). */

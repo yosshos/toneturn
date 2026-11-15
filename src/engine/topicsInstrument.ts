@@ -606,7 +606,8 @@ TOPIC_GEN['bass-shapes'] = {
   gen(seed, level, id) {
     const [topic, lv] = BASS_SHAPE_SRC[level - 1];
     const q = TOPIC_GEN[topic].gen(seed, lv, id) as PlaceQuestion;
-    return { ...q, topic: 'bass-shapes', level };
+    // AUDIT-6: walking approach notes at 1300, not 1400 (no +250 jump after the arpeggio shapes).
+    return { ...q, topic: 'bass-shapes', level, ...(level === 3 ? { difficulty: Math.min(q.difficulty, 1300) } : {}) };
   },
 };
 TOPIC_TAGS['bass-shapes'] = (l) => (l === 3 ? tg(['instrument', 'fretboard', 0.6], ['cadences', 'progression', 0.4]) : tg(['instrument', 'fretboard', 0.6], ['chords', 'quality', 0.4]));

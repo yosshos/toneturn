@@ -399,7 +399,7 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
   const area = (d: DomainId) => ({ label: AREA_NAME_SHORT[d][lang], v: domainValue(ratings, d)?.v ?? null });
   const skill = (k: SkillId, he: string, en: string) => ({ label: lang === 'he' ? he : en, v: ratings[k]?.n ? Math.max(0, Math.min(1, (ratings[k]!.r - 600) / 1000)) : null });
   if (course === 'ear') return (['pitch', 'reading', 'time', 'memory', 'voice', 'creative'] as DomainId[]).map(area);
-  if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('transpose', 'טרנספוזיציה', 'Transpose'), skill('expression', 'הבעה', 'Expression')];
+  if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('rhythm-dictation', 'סווינג', 'Swing'), skill('form', 'צורות', 'Forms')];
   if (course === 'voice') {
     const passed = progress.vocal?.passed ?? [];
     // VOICE_CURRICULUM: the 16 families on six axes (the five meters of every take, plus jazz).

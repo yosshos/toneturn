@@ -265,7 +265,7 @@ TOPIC_GEN['comping'] = {
       choiceStim[p] = [compBars(p, chords.slice(0, 2), bpm)];
     }
     return choiceQ({
-      id, topic: 'comping', level, seed, skill: 'rhythm-dictation', difficulty: 1150 + 150 * level,
+      id, topic: 'comping', level, seed, skill: 'rhythm-dictation', difficulty: [900, 1150, 1400][level - 1] ?? 1400,
       ask: { en: 'Bass and hi-hat keep time — which rhythm is the piano comping?', he: 'הבס וההיי־האט שומרים על הזמן — באיזה מקצב הפסנתר מלווה?' },
       names, answer, choices: pool, stimulus: [compBars(answer, chords, bpm)], choiceStim,
     });
@@ -359,7 +359,7 @@ TOPIC_GEN['guide-tones'] = {
       b: nm('From the 3rd: 3 → 7 → 3', 'מהטרצה: 3 ← 7 ← 3', 'three seven three', 'from the third'),
     };
     return choiceQ({
-      id, topic: 'guide-tones', level, seed, skill: 'sequences', difficulty: 1300 + 120 * level,
+      id, topic: 'guide-tones', level, seed, skill: 'sequences', difficulty: [950, 1150, 1350][level - 1] ?? 1350,
       ask: minor ? { en: 'Minor ii–V–i in shells — which guide-tone line is on top?', he: 'ii–V–i מינורי בקונכיות — איזה קו צלילים מנחים למעלה?' } : { en: 'ii–V–I in shells — which guide-tone line is on top?', he: 'ii–V–I בקונכיות — איזה קו צלילים מנחים למעלה?' },
       names, answer: a ? 'a' : 'b', choices: ['a', 'b'], stimulus: voice(a), choiceStim: { a: voice(true), b: voice(false) },
     });

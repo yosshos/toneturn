@@ -1,6 +1,8 @@
-// Content for the advanced games and the top tiers (GAMES_TIERS_PLAN §2.4 / §4, 0.70). Game-only topics: they feed
-// Rush rungs (Voicing Spy, Scale & Mode Rush, Name That Standard, Chord Rush ff, Progression Detective ff) and are
-// registered by engine/rush.ts, not the lesson catalogue. Own material only: voicings, progressions and scales are
+// Content for the advanced games and the top tiers (GAMES_TIERS_PLAN §2.4 / §4, 0.70). They feed Rush rungs (Voicing
+// Spy, Scale & Mode Rush, Name That Standard, Chord Rush ff, Progression Detective ff). AUDIT-6 X1: registered with
+// the lesson topics (topics.ts imports this module), so the path no longer depends on whether Rush was loaded. The
+// jazz-ear topics (voicing types by ear, ii–V chains) are Jazz path steps (path.ts PACK_TOPICS); Name That
+// Standard, the melodic-minor modes and altered-chord reading stay game-only (`gameOnly`). Own material only: voicings, progressions and scales are
 // built from rules; Name That Standard plays our own comping of the chord-only charts in standards.ts (no melody,
 // no riff — STANDARDS_LEGAL.md tier 2). Pure, seeded.
 
@@ -137,6 +139,8 @@ export function modeOverChord(tonic: number, mode: string, each = 0.2): Stimulus
 const MM_LEVELS = [['lyddom', 'altered', 'loc2'], Object.keys(MM)];
 TOPIC_GEN['mm-modes'] = {
   title: { en: 'Melodic-minor modes over a chord', he: 'מודוסים של מינור מלודי מעל אקורד' },
+  // AUDIT-6 X1: two levels and a sub-skill outside the taxonomy — Scale & Mode Rush only (chord-scale 3 is the path's).
+  gameOnly: true,
   skill: 'modes',
   levels: [
     { en: 'Lydian dominant, altered or locrian ♮2?', he: 'לידי דומיננטי, אלטרד או לוקרי ♮2?' },
@@ -181,6 +185,9 @@ const US: { up: number; en: string }[] = [
 const spell = (pc: number) => pcName(pc);
 TOPIC_GEN['chord-read-alt'] = {
   title: { en: 'Read altered and upper-structure chords', he: 'קריאת אקורדים אלטרד ומבנים עליונים' },
+  // AUDIT-6 X1: reading symbols at speed (a sub-skill outside the taxonomy) — Chord Rush ff only; the path reads
+  // altered chords in chord-read and hears them in extensions.
+  gameOnly: true,
   skill: 'chords',
   levels: [
     { en: 'Altered dominants: 7♭9, 7♯9, 7♯11, 7alt, 13♭9', he: 'דומיננטות אלטרד: 7♭9, 7♯9, 7♯11, 7alt, 13♭9' },
@@ -356,6 +363,8 @@ export function ntsStim(t: StandardChanges, from: number, transpose: number): St
 }
 TOPIC_GEN['name-standard'] = {
   title: { en: 'Name the standard by its changes', he: 'לזהות סטנדרט לפי המהלך' },
+  // AUDIT-6 X1: naming a tune from a fixed list is memorising, not a skill to place on a path — Name That Standard only.
+  gameOnly: true,
   skill: 'cadences',
   levels: [
     { en: 'Blues forms, rhythm changes, Autumn Leaves', he: 'צורות בלוז, ריתם צ׳יינג׳ס, עלי שלכת' },

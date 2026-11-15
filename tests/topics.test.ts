@@ -7,7 +7,7 @@ import { parseNamedChoice } from '../src/engine/parser';
 import { renderStimulus } from '../src/engine/lesson';
 
 describe('topic generators (spec T–V)', () => {
-  for (const [topic, T] of Object.entries(TOPIC_GEN)) {
+  for (const [topic, T] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly)) {
     it(`${topic}: every level is sound, deterministic, rebuildable and speakable`, () => {
       for (let level = 1; level <= T.levels.length; level++)
         for (let seed = 1; seed < 40; seed++) {
@@ -85,7 +85,7 @@ describe('written theory spells correctly (spec U.11)', () => {
 import { MODE_STEPS } from '../src/engine/modes';
 describe('choices are always distinguishable', () => {
   it('no topic offers two scales with the same notes', () => {
-    for (const [topic, T] of Object.entries(TOPIC_GEN))
+    for (const [topic, T] of Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly))
       for (let level = 1; level <= T.levels.length; level++)
         for (let seed = 1; seed < 20; seed++) {
           const q = T.gen(seed * 104729, level, 'x');
