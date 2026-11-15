@@ -46,13 +46,13 @@ const r = (level: string, key: number, places: Rung['places']): Rung => ({ level
 // Keys move from step to step (owner: "it only tested me in C").
 const HANDS: Rung[] = [
   r('scales-1', 7, { scales: 2, fingers: 1, arpeggios: 1, control: 1 }),
-  // AUDIT-SCALES: the harmonization ladder (k-harm) and hand independence (k-indep) are placed by the hands steps; the
+  // AUDIT-SCALES: the harmonization ladder (k-sharm) and hand independence (k-indep) are placed by the hands steps; the
   // 3-against-2 step is their own.
-  r('scales-3', 2, { scales: 4, fingers: 2, arpeggios: 2, control: 2, 'k-harm': 2 }),
-  r('arpeggios-3', 5, { scales: 5, fingers: 3, arpeggios: 4, control: 3, 'k-harm': 4, 'k-indep': 1 }),
-  r('scales-5', 9, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-harm': 6, 'k-indep': 2 }),
-  r('k-indep-5', 3, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-harm': 8, 'k-indep': 4 }),
-  r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-harm': 12, 'k-indep': 5 }),
+  r('scales-3', 2, { scales: 4, fingers: 2, arpeggios: 2, control: 2, 'k-sharm': 2 }),
+  r('arpeggios-3', 5, { scales: 5, fingers: 3, arpeggios: 4, control: 3, 'k-sharm': 4, 'k-indep': 1 }),
+  r('scales-5', 9, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 6, 'k-indep': 2 }),
+  r('k-indep-5', 3, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 8, 'k-indep': 4 }),
+  r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),

@@ -626,7 +626,7 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M6.6 17.4V11 M12.6 15.4V10 M18.6 17.4V11 M6.6 11l12 0', false)}
     </>
   ),
-  'family:k-harm': () => (
+  'family:k-sharm': () => (
     <>
       {head(5, 19, 1.8)}
       {head(5, 15, 1.8)}

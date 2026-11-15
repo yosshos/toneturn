@@ -45,7 +45,7 @@ const RUNS: ['keys' | 'guitar', string, string[]][] = [
   ['keys', 'scales', ['scales-16', 'scales-21', 'scales-30', 'scales-33']],
   ['keys', 'harris', ['harris-1', 'harris-25', 'harris-26']],
   ['keys', 'k-indep', ['k-indep-1', 'k-indep-3', 'k-indep-4', 'k-indep-5', 'k-indep-8']],
-  ['keys', 'k-harm', ['k-harm-1', 'k-harm-5', 'k-harm-9', 'k-harm-13', 'k-harm-15', 'k-harm-19', 'k-harm-23', 'k-harm-24', 'k-harm-26', 'k-harm-27', 'k-harm-29', 'k-harm-30', 'k-harm-32', 'k-harm-33', 'k-harm-34', 'k-harm-35', 'k-harm-36', 'k-harm-37', 'k-harm-39', 'k-harm-40', 'k-harm-41', 'k-harm-42']],
+  ['keys', 'k-sharm', ['k-sharm-1', 'k-sharm-5', 'k-sharm-9', 'k-sharm-13', 'k-sharm-15', 'k-sharm-19', 'k-sharm-23', 'k-sharm-24', 'k-sharm-26', 'k-sharm-27', 'k-sharm-29', 'k-sharm-30', 'k-sharm-32', 'k-sharm-33', 'k-sharm-34', 'k-sharm-35', 'k-sharm-36', 'k-sharm-37', 'k-sharm-39', 'k-sharm-40', 'k-sharm-41', 'k-sharm-42']],
   ['guitar', 'g-harm', ['g-harm-1', 'g-harm-3', 'g-harm-5', 'g-harm-8', 'g-harm-10', 'g-harm-12']],
   ['guitar', 'g-scales', ['g-scales-11', 'g-scales-12']],
   ['guitar', 'g-rhythm', ['g-rhythm-11']],

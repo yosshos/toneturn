@@ -170,8 +170,8 @@ describe('hand independence (k-indep)', () => {
   });
 });
 
-describe('the harmonization ladder (k-harm, g-harm)', () => {
-  const kf = CAT.find((f) => f.id === 'k-harm')!;
+describe('the harmonization ladder (k-sharm, g-harm)', () => {
+  const kf = CAT.find((f) => f.id === 'k-sharm')!;
   const gf = GCAT.find((f) => f.id === 'g-harm')!;
   it('42 piano levels and 13 guitar levels, every item in every key, a perfect take clean (piano)', () => {
     expect(kf.levels).toHaveLength(42);
@@ -191,17 +191,17 @@ describe('the harmonization ladder (k-harm, g-harm)', () => {
   });
   it('Harris scales: the 7th chords alternate the chord and the diminished in moving inversions', () => {
     for (const i of H_HARRIS) {
-      const d = generate({ family: 'k-harm', kind: 'hl-7b', key: 0, hands: 'R', option: i });
+      const d = generate({ family: 'k-sharm', kind: 'hl-7b', key: 0, hands: 'R', option: i });
       const sets = d.goal.chordSets!.map((c) => c.required.join(','));
       const dim = '2,5,8,11';
       sets.slice(0, 9).forEach((x, k) => (k % 2 === 0 ? expect(x).not.toBe(dim) : expect(x).toBe(dim)));
     }
-    expect(generate({ family: 'k-harm', kind: 'hl-7b', key: 0, hands: 'R', option: 9 }).goal.chordSets![0].required).toEqual([0, 4, 7, 9]);
-    expect(generate({ family: 'k-harm', kind: 'hl-7b', key: 0, hands: 'R', option: 12 }).goal.chordSets![0].required).toEqual([0, 4, 6, 10]);
+    expect(generate({ family: 'k-sharm', kind: 'hl-7b', key: 0, hands: 'R', option: 9 }).goal.chordSets![0].required).toEqual([0, 4, 7, 9]);
+    expect(generate({ family: 'k-sharm', kind: 'hl-7b', key: 0, hands: 'R', option: 12 }).goal.chordSets![0].required).toEqual([0, 4, 6, 10]);
   });
   it('piano drop 2 / drop 3: the dropped voice in the LH, three notes in the RH', () => {
     for (const kind of ['hl-d2', 'hl-d3']) {
-      const d = generate({ family: 'k-harm', kind, key: 5, hands: 'RL', option: 1 });
+      const d = generate({ family: 'k-sharm', kind, key: 5, hands: 'RL', option: 1 });
       const byId = new Map<number, string[]>();
       for (const n of d.notes) byId.set(n.chordId!, [...(byId.get(n.chordId!) ?? []), n.hand]);
       for (const hs of byId.values()) expect(hs.sort().join('')).toBe('LRRR');
@@ -229,14 +229,14 @@ describe('the harmonization ladder (k-harm, g-harm)', () => {
         }
   });
   it('the path places them by difficulty: lines ~900–1100, triads / 7ths 1100–1350, drops and borrowing 1350–1650', () => {
-    expect(KEYS_LEVEL_DIFF['k-harm-1']).toBe(900);
+    expect(KEYS_LEVEL_DIFF['k-sharm-1']).toBe(900);
     for (let n = 1; n <= 25; n++) {
-      const d = KEYS_LEVEL_DIFF[`k-harm-${n}`];
-      expect(d >= 900 && d <= 1650, `k-harm-${n}`).toBe(true);
+      const d = KEYS_LEVEL_DIFF[`k-sharm-${n}`];
+      expect(d >= 900 && d <= 1650, `k-sharm-${n}`).toBe(true);
     }
-    expect(KEYS_LEVEL_DIFF['k-harm-15']).toBeGreaterThanOrEqual(1350);
+    expect(KEYS_LEVEL_DIFF['k-sharm-15']).toBeGreaterThanOrEqual(1350);
     const steps = stepCatalogue();
-    expect(steps.find((s) => s.id === 'tech:k-harm-1')!.difficulty).toBe(900);
+    expect(steps.find((s) => s.id === 'tech:k-sharm-1')!.difficulty).toBe(900);
     expect(steps.find((s) => s.id === 'tech:k-indep-1')!.difficulty).toBe(1000);
   });
 });
@@ -259,7 +259,7 @@ describe('Barry Harris borrowing (oblique motion)', () => {
       }
   });
   it('the feedback names the voice that did not return', () => {
-    const d = generate({ family: 'k-harm', kind: 'bw-one', key: 0, hands: 'R', option: 1 });
+    const d = generate({ family: 'k-sharm', kind: 'bw-one', key: 0, hands: 'R', option: 1 });
     expect(analyzeTake(d, d.startBpm, perfect(d)).verdict).toBe('clean');
     const firstRet = d.notes.find((n) => n.ret)!;
     const take = perfect(d).filter((p) => !(p.pitch === firstRet.pitch && Math.abs(p.on - expTimeMs(d, firstRet.beat, d.startBpm)) < 1));
@@ -277,14 +277,14 @@ describe('Barry Harris borrowing (oblique motion)', () => {
 
 describe('wiring', () => {
   it('glyphs, badges, lessons for the new families', () => {
-    for (const f of ['k-indep', 'k-harm', 'g-harm']) expect(FAMILY_GLYPH[f], f).toBeDefined();
-    expect(new Set(['k-indep', 'k-harm', 'g-harm'].map((f) => FAMILY_GLYPH[f])).size).toBe(3);
+    for (const f of ['k-indep', 'k-sharm', 'g-harm']) expect(FAMILY_GLYPH[f], f).toBeDefined();
+    expect(new Set(['k-indep', 'k-sharm', 'g-harm'].map((f) => FAMILY_GLYPH[f])).size).toBe(3);
     expect(familyLevelCount('k-indep')).toBe(8);
-    expect(familyLevelCount('k-harm')).toBe(42);
+    expect(familyLevelCount('k-sharm')).toBe(42);
     expect(familyLevelCount('g-harm')).toBe(13);
     for (const id of ['hand-independence', 'scale-harm', 'bh-four-dim', 'bh-borrow']) expect(MINI_LESSONS[id], id).toBeDefined();
     expect(UNIT_LESSON['tech:k-indep-1']).toBe('hand-independence');
-    expect(UNIT_LESSON['tech:k-harm-19']).toBe('bh-borrow');
+    expect(UNIT_LESSON['tech:k-sharm-19']).toBe('bh-borrow');
   });
   it('every new guitar technique level runs in 12 keys inside the neck', () => {
     for (const id of ['g-scales-11', 'g-scales-12', 'g-lead-11', 'g-picking-10', 'g-rhythm-11', ...Array.from({ length: 13 }, (_, i) => `g-harm-${i + 1}`)]) {
@@ -298,7 +298,7 @@ describe('wiring', () => {
     }
   });
   it('every new piano level spans 12 keys', () => {
-    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 42 }, (_, i) => `k-harm-${i + 1}`)]) {
+    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 42 }, (_, i) => `k-sharm-${i + 1}`)]) {
       const l = lv(id);
       expect(Array.isArray(l.keys) ? new Set(l.keys).size : 12, id).toBe(12);
     }
@@ -319,7 +319,7 @@ describe('eight expressions of one dominant (BARRY-HARRIS-THEORY.md §4)', () =>
     for (let i = 0; i < 7; i++) expect(exprOf(V, i).bass).toBe(7);
   });
   it('the voicings: each expression over its bass, each resolving to C6', () => {
-    const d = generate({ family: 'k-harm', kind: 'sf-voice', key: 0, hands: 'RL', option: 1 });
+    const d = generate({ family: 'k-sharm', kind: 'sf-voice', key: 0, hands: 'RL', option: 1 });
     const req = d.goal.chordSets!.map((c) => c.required);
     expect(req[0]).toEqual([2, 5, 7, 9, 11]);
     expect(req[1]).toEqual([0, 4, 7, 9]);
@@ -327,16 +327,16 @@ describe('eight expressions of one dominant (BARRY-HARRIS-THEORY.md §4)', () =>
     expect(req[6]).toEqual([2, 4, 6, 8, 11]);
     const bass = (id: number) => Math.min(...d.notes.filter((n) => n.chordId === d.goal.chordSets![id].chordId).map((n) => n.pitch)) % 12;
     expect([0, 2, 4, 6, 1].map(bass)).toEqual([7, 7, 7, 4, 0]);
-    expect(generate({ family: 'k-harm', kind: 'sf-voice', key: 0, hands: 'RL', option: 2 }).goal.chordSets).toHaveLength(16);
+    expect(generate({ family: 'k-sharm', kind: 'sf-voice', key: 0, hands: 'RL', option: 2 }).goal.chordSets).toHaveLength(16);
   });
   it('lines: each expression’s chord tones on the beats, every key; the minor ii–V–i voicings', () => {
     for (let key = 0; key < 12; key++)
       for (const [kind, option] of [...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((o) => ['sf-line', o] as const), ['sf-minor', 1] as const]) {
-        const d = generate({ family: 'k-harm', kind, key, hands: 'R', option });
+        const d = generate({ family: 'k-sharm', kind, key, hands: 'R', option });
         expect(d.goal.chordTonesOnBeats).toBe(true);
         expect(analyzeTake(d, d.startBpm, perfect(d)).verdict, d.itemId).toBe('clean');
       }
-    const m = generate({ family: 'k-harm', kind: 'sf-minor', key: 0, hands: 'RL', option: 0 });
+    const m = generate({ family: 'k-sharm', kind: 'sf-minor', key: 0, hands: 'RL', option: 0 });
     expect(m.goal.chordSets!.slice(0, 3).map((c) => c.required)).toEqual([[0, 2, 5, 8], [3, 5, 7, 8, 11], [0, 3, 7, 9]]);
     expect(m.goal.chordSets![4].required).toEqual([2, 5, 7, 8, 11]);
   });
@@ -425,7 +425,7 @@ describe("Harris's moves, contrary motion, the true sixth on the fifth (BARRY-HA
       }
   });
   it('every Part D item: every key, a perfect take clean, on piano; inside the neck on guitar', () => {
-    for (const lvlId of ['k-harm-33', 'k-harm-34', 'k-harm-35', 'k-harm-36', 'k-harm-37', 'k-harm-38', 'k-harm-39'])
+    for (const lvlId of ['k-sharm-33', 'k-sharm-34', 'k-sharm-35', 'k-sharm-36', 'k-sharm-37', 'k-sharm-38', 'k-sharm-39'])
       for (const sp of lv(lvlId).specs)
         for (let key = 0; key < 12; key++) {
           const d = generate({ ...sp, key } as DrillSpec);

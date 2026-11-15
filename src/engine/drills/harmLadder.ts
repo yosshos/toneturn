@@ -1,4 +1,4 @@
-// AUDIT-SCALES (owner 2026-11-14): the scale-harmonization ladder and Barry Harris borrowing, on piano (`k-harm`) and
+// AUDIT-SCALES (owner 2026-11-14): the scale-harmonization ladder and Barry Harris borrowing, on piano (`k-sharm`) and
 // guitar (`g-harm`). Every scale — major, the seven modes, harmonic and melodic minor, and Barry Harris's four
 // diminished scales — is played UP and DOWN the whole scale: note by note, in diatonic 3rds (broken, then together),
 // triads and 7th chords on every degree (arpeggiated, then block), and the 7th chords as drop 2 and drop 3.
@@ -632,17 +632,17 @@ function genBorrowGuitar(s: DrillSpec, tu: Tuning, key: number): Drill {
 // ───────────────────────────── catalogues ─────────────────────────────
 
 /** Path difficulty of the piano levels (path.ts KEYS_LEVEL_DIFF): lines and 3rds ~900–1100, triads and 7ths 1100–1350, drops and borrowing 1350–1650. */
-export const K_HARM_DIFF: Record<string, number> = Object.fromEntries([900, 940, 980, 1010, 1050, 1090, 1110, 1140, 1170, 1200, 1230, 1260, 1300, 1340, 1380, 1450, 1520, 1600, 1360, 1400, 1440, 1480, 1540, 1600, 1650, 1560, 1580, 1600, 1620, 1640, 1670, 1700, 1450, 1500, 1620, 1460, 1500, 1520, 1680, 1480, 1420, 1690].map((d, i) => [`k-harm-${i + 1}`, d]));
+export const K_HARM_DIFF: Record<string, number> = Object.fromEntries([900, 940, 980, 1010, 1050, 1090, 1110, 1140, 1170, 1200, 1230, 1260, 1300, 1340, 1380, 1450, 1520, 1600, 1360, 1400, 1440, 1480, 1540, 1600, 1650, 1560, 1580, 1600, 1620, 1640, 1670, 1700, 1450, 1500, 1620, 1460, 1500, 1520, 1680, 1480, 1420, 1690].map((d, i) => [`k-sharm-${i + 1}`, d]));
 
 export function pianoHarmFamily(): FamilyDef {
   const levels: LevelDef[] = [];
   const LV = (en: string, he: string, specs: SpecTemplate[], tempo: [number, number], diff: number) => {
     const level = levels.length + 1;
-    const id = `k-harm-${level}`;
+    const id = `k-sharm-${level}`;
     void diff;
     levels.push({ id, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: 'major', tempo });
   };
-  const hl = (step: HStep, scales: number[], o: Partial<SpecTemplate> = {}): SpecTemplate[] => scales.map((i) => ({ family: 'k-harm' as FamilyId, kind: `hl-${step}`, hands: 'R' as const, option: i, ...o }));
+  const hl = (step: HStep, scales: number[], o: Partial<SpecTemplate> = {}): SpecTemplate[] => scales.map((i) => ({ family: 'k-sharm' as FamilyId, kind: `hl-${step}`, hands: 'R' as const, option: i, ...o }));
   const M = H_MODES;
   const O = H_OTHERS;
   LV('Note by note, 2 octaves up and down: major and the modes', 'צליל אחר צליל, 2 אוקטבות עולה ויורד: מז׳ור והמודוסים', hl('line', M), [60, 120], 900);
@@ -664,7 +664,7 @@ export function pianoHarmFamily(): FamilyDef {
   LV('Drop 3 up and down the scale: major and the modes', 'דרופ 3 לאורך הסולם: מז׳ור והמודוסים', hl('d3', M, { hands: 'RL' }), [40, 72], 1520);
   LV('Drop 3: harmonic and melodic minor, the Harris scales', 'דרופ 3: מינור הרמוני ומלודי, סולמות האריס', hl('d3', O, { hands: 'RL' }), [40, 72], 1600);
   // Borrowing (oblique motion) on the four Harris scales
-  const bw = (kind: string, option: number, hands: 'R' | 'RL' = 'R'): SpecTemplate => ({ family: 'k-harm', kind: `bw-${kind}`, hands, option });
+  const bw = (kind: string, option: number, hands: 'R' | 'RL' = 'R'): SpecTemplate => ({ family: 'k-sharm', kind: `bw-${kind}`, hands, option });
   LV('Borrowing: one voice steps to the other chord and returns — soprano, alto, tenor, bass (6th-diminished)', 'השאלה: קול אחד עובר לאקורד השני וחוזר — סופרן, אלט, טנור, בס (שישית-מוקטן)', [0, 1, 2, 3].map((v) => bw('one', v)), [40, 72], 1360);
   LV('Borrowing, one voice: minor 6th, dominant 7th and 7♭5 diminished scales', 'השאלה, קול אחד: סולמות מינור 6, דומיננט 7 ו־7♭5 מוקטן', [1, 2, 3].flatMap((sc) => [0, 3].map((v) => bw('one', sc * 10 + v))), [40, 72], 1400);
   LV('Two voices borrow together and return', 'שני קולות שואלים יחד וחוזרים', [0, 1, 2].flatMap((p) => [bw('two', p), bw('two', 10 + p)]), [40, 72], 1440);
@@ -673,7 +673,7 @@ export function pianoHarmFamily(): FamilyDef {
   LV('Borrowing in drop 2', 'השאלה בדרופ 2', [bw('one-d2', 1, 'RL'), bw('two-d2', 0, 'RL'), bw('chord-d2', 0, 'RL'), bw('scale-d2', 0, 'RL'), bw('walk-d2', 0, 'RL'), bw('walk-d2', 10, 'RL'), bw('walk-d2', 20, 'RL'), bw('walk-d2', 30, 'RL'), bw('iivi-d2', 0, 'RL')], [40, 66], 1600);
   LV('Borrowing in drop 3', 'השאלה בדרופ 3', [bw('one-d3', 2, 'RL'), bw('two-d3', 1, 'RL'), bw('chord-d3', 0, 'RL'), bw('scale-d3', 0, 'RL'), bw('walk-d3', 0, 'RL'), bw('walk-d3', 10, 'RL'), bw('walk-d3', 20, 'RL'), bw('walk-d3', 30, 'RL'), bw('std-d3', 0, 'RL')], [40, 66], 1650);
   // Eight expressions of one dominant (BARRY-HARRIS-THEORY.md §4) — after the four diminished scales.
-  const sf = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-harm', kind, hands, option });
+  const sf = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-sharm', kind, hands, option });
   LV('Eight expressions of one dominant: the four brothers, the four minor 6ths, then all eight in drop 2, each to I6', 'שמונה ביטויים לדומיננט אחד: ארבעת האחים, ארבעת המינור 6, ואז כל השמונה בדרופ 2, כל אחד אל I6', [sf('sf-voice', 0), sf('sf-voice', 1), sf('sf-voice', 2)], [40, 72], 1560);
   LV('Each brother’s 7th-diminished scale over V–I', 'סולם השביעית־מוקטן של כל אח על V–I', [0, 1, 2, 3].map((o) => sf('sf-line', o, 'R')), [60, 120], 1580);
   LV('Each minor 6th’s scale over V–I', 'הסולם של כל מינור 6 על V–I', [4, 5, 6, 7].map((o) => sf('sf-line', o, 'R')), [60, 120], 1600);
@@ -682,18 +682,18 @@ export function pianoHarmFamily(): FamilyDef {
   LV('Borrowing inside the substitutions: the minor 6th and the tritone brother', 'השאלה בתוך התחליפים: המינור 6 והאח בטריטון', [sf('sf-borrow', 0, 'R'), sf('sf-borrow', 1, 'R')], [40, 72], 1670);
   LV('Minor ii–V–i: the half-diminished and the V as minor 6ths, then the diminished — voicings and lines', 'ii–V–i מינורי: החצי־מוקטן וה־V כמינור 6, ואז הדימיניש — קולות וקווים', [sf('sf-minor', 0), sf('sf-minor', 1, 'R')], [40, 100], 1700);
   // BARRY-HARRIS-METHOD.md Part D (D3, D4, D6, D7, D11, D12) and drop 2&4 on the four key scales.
-  const pd = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-harm', kind, hands, option });
+  const pd = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-sharm', kind, hands, option });
   LV('The elevator: from a unison on every degree up the nine floors and back (6th-diminished); then floors and moves mixed', 'המעלית: מיוניסון על כל דרגה במעלה תשע הקומות וחזרה (שישית־מוקטן); ואז קומות ומעברים מעורבים', [...[0, 1, 2, 3, 4, 5, 6, 7].map((x) => pd('cm-expand', x)), pd('cm-elevator', 0)], [40, 72], 1450);
   LV('The 7th-dim and 7♭5-dim scales in drop 2 and drop 3 over V7 → I', 'סולמות השביעית־מוקטן ו־7♭5־מוקטן בדרופ 2 ובדרופ 3 על V7 ← I', [0, 1, 2, 3].map((o) => pd('v7-d2', o)), [40, 72], 1500);
-  LV('Drop 2&4 on the four key scales', 'דרופ 2 ו־4 על ארבעת סולמות המפתח', H_HARRIS.map((i) => ({ family: 'k-harm' as FamilyId, kind: 'hl-d24', hands: 'RL' as const, option: i })), [40, 72], 1620);
+  LV('Drop 2&4 on the four key scales', 'דרופ 2 ו־4 על ארבעת סולמות המפתח', H_HARRIS.map((i) => ({ family: 'k-sharm' as FamilyId, kind: 'hl-d24', hands: 'RL' as const, option: i })), [40, 72], 1620);
   LV('The sixth on the fifth: the major 6 on the 5th over the root', 'השישית על הקווינטה: מז׳ור 6 על הקווינטה מעל היסוד', [pd('sixth5', 0), pd('sixth5', 1)], [40, 72], 1460);
   LV("Harris's moves: the first movement, the next move, major – minor – minor/6", 'המהלכים של האריס: התנועה הראשונה, המהלך הבא, מז׳ור – מינור – מינור/6', [pd('mv-first', 0), pd('mv-next', 0, 'R'), pd('mv-mmm', 0)], [40, 72], 1500);
-  LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; יסוד הדומיננט מושאל אל הדימיניש', [{ family: 'k-harm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-harm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-harm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-harm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
+  LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; יסוד הדומיננט מושאל אל הדימיניש', [{ family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
   LV("The four related dominants over a shell; the tritone's minor resolving", 'ארבע הדומיננטות הקרובות מעל שלד; המינור של הטריטון נפתר', [pd('shell4', 0), pd('tm-res', 0)], [40, 72], 1680);
   LV('The elevator in minor 6th-diminished; borrowing through the elevator', 'המעלית במינור שישית־מוקטן; השאלה דרך המעלית', [...[0, 2, 4, 6].map((x) => pd('cm-expand', 8 + x)), pd('cm-elevator', 1), pd('el-borrow', 0), pd('el-borrow', 1)], [40, 72], 1480);
   LV('The voicing ladder: thirds, triads, shells, octave chords on the 6th-diminished scales', 'סולם הקולות: טרצות, משולשים, שלדים, אקורדי אוקטבה על סולמות השישית־מוקטן', [0, 1, 2, 3, 6, 7].map((x) => pd('vl-ladder', x)), [40, 80], 1420);
   LV('A substitute on each V of a tune: itself, the family, the important minor, the tritone’s minor', 'תחליף על כל V של שיר: עצמו, המשפחה, המינור החשוב, המינור של הטריטון', [pd('sub-tune', 0), pd('sub-tune', 1)], [50, 100], 1690);
-  return { id: 'k-harm', title: t('Scale harmonization and borrowing', 'הרמוניזציה של סולמות והשאלה'), style: 'both', levels };
+  return { id: 'k-sharm', title: t('Scale harmonization and borrowing', 'הרמוניזציה של סולמות והשאלה'), style: 'both', levels };
 }
 
 export function guitarHarmLevels(): GuitarLevelDef[] {

@@ -17,5 +17,5 @@ const pc = catalog();
 const gc = guitarCatalog();
 out.push(`| Scale | ${H_STEPS.map((s) => `${s} piano / guitar`).join(' | ')} |`);
 out.push(`|---|${H_STEPS.map(() => '---').join('|')}|`);
-H_SCALES.forEach((sc, i) => out.push(`| ${sc.name.en} | ${H_STEPS.map((st) => `${where(pc, 'k-harm', `hl-${st}`, i)} / ${where(gc, 'g-harm', `hl-${st}`, i)}`).join(' | ')} |`));
+H_SCALES.forEach((sc, i) => out.push(`| ${sc.name.en} | ${H_STEPS.map((st) => `${where(pc, 'k-sharm', `hl-${st}`, i)} / ${where(gc, 'g-harm', `hl-${st}`, i)}`).join(' | ')} |`));
 console.log(out.join('\n'));

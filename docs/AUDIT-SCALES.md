@@ -96,7 +96,7 @@ by microphone); **a touch per hand** (`goal.handArt`, legato / staccato per hand
 New guitar items run in all 12 keys inside frets 0–22. Older guitar levels that list fewer keys (g-lead, g-picking 1,
 g-fretting …) were left as they are.
 
-## 5. The harmonization ladder (piano `k-harm` 1–18, guitar `g-harm` 1–9) — all added
+## 5. The harmonization ladder (piano `k-sharm` 1–18, guitar `g-harm` 1–9) — all added
 
 13 scales — major, the six other modes, harmonic and melodic minor, Barry Harris's four diminished scales (major 6th,
 minor 6th, dominant 7th, 7♭5) — × 9 steps, each up and down: note by note; 3rds broken; 3rds together; triads
@@ -110,33 +110,33 @@ note, chords by pitch-class sets (`goal.chordSets`). Path: lines and 3rds 900–
 
 | Scale | line piano / guitar | 3b piano / guitar | 3t piano / guitar | ta piano / guitar | tb piano / guitar | 7a piano / guitar | 7b piano / guitar | d2 piano / guitar | d3 piano / guitar |
 |---|---|---|---|---|---|---|---|---|---|
-| major | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9, k-harm-10 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| dorian | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| phrygian | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| lydian | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| mixolydian | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| aeolian (natural minor) | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| locrian | k-harm-1 / g-harm-1 | k-harm-3 / g-harm-2 | k-harm-5 / g-harm-3 | k-harm-7 / g-harm-4 | k-harm-9 / g-harm-5 | k-harm-11 / g-harm-6 | k-harm-13 / g-harm-7 | k-harm-15 / g-harm-8 | k-harm-17 / g-harm-9 |
-| harmonic minor | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
-| melodic minor | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
-| 6th-diminished | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
-| minor 6th-diminished | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
-| dominant 7th-diminished | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
-| 7♭5-diminished | k-harm-2 / g-harm-1 | k-harm-4 / g-harm-2 | k-harm-6 / g-harm-3 | k-harm-8 / g-harm-4 | k-harm-10 / g-harm-5 | k-harm-12 / g-harm-6 | k-harm-14 / g-harm-7 | k-harm-16 / g-harm-8 | k-harm-18 / g-harm-9 |
+| major | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9, k-sharm-10 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| dorian | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| phrygian | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| lydian | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| mixolydian | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| aeolian (natural minor) | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| locrian | k-sharm-1 / g-harm-1 | k-sharm-3 / g-harm-2 | k-sharm-5 / g-harm-3 | k-sharm-7 / g-harm-4 | k-sharm-9 / g-harm-5 | k-sharm-11 / g-harm-6 | k-sharm-13 / g-harm-7 | k-sharm-15 / g-harm-8 | k-sharm-17 / g-harm-9 |
+| harmonic minor | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
+| melodic minor | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
+| 6th-diminished | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
+| minor 6th-diminished | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
+| dominant 7th-diminished | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
+| 7♭5-diminished | k-sharm-2 / g-harm-1 | k-sharm-4 / g-harm-2 | k-sharm-6 / g-harm-3 | k-sharm-8 / g-harm-4 | k-sharm-10 / g-harm-5 | k-sharm-12 / g-harm-6 | k-sharm-14 / g-harm-7 | k-sharm-16 / g-harm-8 | k-sharm-18 / g-harm-9 |
 
 ## 6. Barry Harris borrowing (oblique motion) — added
 
 Walking the scale of chords (chord / B°7 alternating in close position, one octave up and down), one or two voices step
 to another chord's note and return while the others hold. All four Harris scales.
 
-| Step | Piano (`k-harm`) | Guitar (`g-harm`, string sets) |
+| Step | Piano (`k-sharm`) | Guitar (`g-harm`, string sets) |
 |---|---|---|
-| 1. one voice borrows a step down (soprano, alto, tenor, bass) | k-harm-19, 20 | g-harm-10 |
-| 2. two voices together | k-harm-21 | g-harm-11 |
-| 3. from the chord above; from another diminished (a half step outside the scale) | k-harm-22 | g-harm-11 |
-| 4. a passing run through the scale (soprano up, bass down) | k-harm-22 | g-harm-11 |
-| 5. every degree while walking; ii–V–I (major, minor); a standard's turnaround (the dominant borrows two voices from the diminished) | k-harm-23 | g-harm-12 |
-| 6. drop 2 and drop 3 versions | k-harm-24, 25 | g-harm-10–12 (drop 2 on 4-3-2-1), g-harm-13 (5-4-3-2, 6-5-4-3, 6-4-3-2, 5-3-2-1) |
+| 1. one voice borrows a step down (soprano, alto, tenor, bass) | k-sharm-19, 20 | g-harm-10 |
+| 2. two voices together | k-sharm-21 | g-harm-11 |
+| 3. from the chord above; from another diminished (a half step outside the scale) | k-sharm-22 | g-harm-11 |
+| 4. a passing run through the scale (soprano up, bass down) | k-sharm-22 | g-harm-11 |
+| 5. every degree while walking; ii–V–I (major, minor); a standard's turnaround (the dominant borrows two voices from the diminished) | k-sharm-23 | g-harm-12 |
+| 6. drop 2 and drop 3 versions | k-sharm-24, 25 | g-harm-10–12 (drop 2 on 4-3-2-1), g-harm-13 (5-4-3-2, 6-5-4-3, 6-4-3-2, 5-3-2-1) |
 | Ear: which voice borrowed, from where | topic `bh-borrow` L1–2 | — |
 
 Grading: each chord by its pitch-class set; the borrowed note and the return note for note, the feedback naming the
@@ -164,15 +164,15 @@ the third dim **D° (= B°7)** is G7♭9 rootless. (Checked in tests/auditScales
 
 Related: Dm7 → F6, Dø → Fm6, G7♭9 → A♭°7 (consistent with `sixLinePair` / `sixPair` in generate.ts).
 
-| Drill | Piano (`k-harm`) | Guitar (`g-harris`, jazz add-on) |
+| Drill | Piano (`k-sharm`) | Guitar (`g-harris`, jazz add-on) |
 |---|---|---|
-| Each expression over its bass → C6: the brothers, the m6s, then all eight in drop 2 | k-harm-26 | g-harris-11 (drop 2, 4-3-2-1) |
-| Each brother's 7th-dim scale over V–I | k-harm-27 | g-harris-12 (G7, D♭7) |
-| Each m6's scale over V–I | k-harm-28 | g-harris-12 (Dm6, A♭m6) |
-| Mixing per bar; the important minor over the whole ii–V | k-harm-29 | g-harris-12 |
-| Comping a turnaround (natural, then altered) and a jazz blues | k-harm-30 | g-harris-13 |
-| Borrowing inside the important minor and inside the tritone brother's scale | k-harm-31 | g-harris-13 |
-| Minor ii–V–i: Dø as Fm6, G7♭9 as A♭m6 then A♭°7, Cm6; lines | k-harm-32 | g-harris-11, 12 |
+| Each expression over its bass → C6: the brothers, the m6s, then all eight in drop 2 | k-sharm-26 | g-harris-11 (drop 2, 4-3-2-1) |
+| Each brother's 7th-dim scale over V–I | k-sharm-27 | g-harris-12 (G7, D♭7) |
+| Each m6's scale over V–I | k-sharm-28 | g-harris-12 (Dm6, A♭m6) |
+| Mixing per bar; the important minor over the whole ii–V | k-sharm-29 | g-harris-12 |
+| Comping a turnaround (natural, then altered) and a jazz blues | k-sharm-30 | g-harris-13 |
+| Borrowing inside the important minor and inside the tritone brother's scale | k-sharm-31 | g-harris-13 |
+| Minor ii–V–i: Dø as Fm6, G7♭9 as A♭m6 then A♭°7, Cm6; lines | k-sharm-32 | g-harris-11, 12 |
 | Ear: natural or altered; which family (dominant or m6); which of the eight (4 choices) | topic `bh-sixfive` L1–3 | — |
 
 Path 1560–1700 (after the four diminished scales and borrowing). Lesson: `bh-six-over` gains the eight expressions
@@ -188,27 +188,27 @@ none of the m6-over-V material carries that name. Dominants from a dim are half-
 dim note); voicings are drop 2, drop 3 and drop 2&4 ("spread" is not used as a Harris term; the contrary-motion form is
 Kingstone's "expand and contract").
 
-| Part D | Drill | Piano (`k-harm`) | Guitar |
+| Part D | Drill | Piano (`k-sharm`) | Guitar |
 |---|---|---|---|
-| D3 | Echols's Elevator, the exact nine floors (BARRY-HARRIS-METHOD.md F1.2): from a unison on every degree, up to the double octave and back (C6-dim: C · B D · A C E · G♯ B F · G C E G · F B D G♯ · E C G A · D G♯ F B · C C E C; inner voices of floors 4–9 marked verify in code); then a melody a floor higher each note and along the drop 2 floor (floors and moves mixed); Cm6-dim | k-harm-33, k-harm-40 | g-harris-12 |
-| D4 | the 7th-dim and 7♭5-dim scales of chords of the V in drop 2 and drop 3 over V7 → I (the brothers' dim, C°, between) | k-harm-34 (and the ladder: k-harm 12–18) | g-harris-12; g-harm 7–9 |
-| — | drop 2&4 on the four key scales | k-harm-35 | g-harm-9 (strings 6-5-3-2, 5-4-2-1) |
-| D6 | the true sixth on the fifth: G6 / F♯°7 scale of chords over a C bass (close, drop 2) | k-harm-36 | g-harris-11 |
-| D7 | first movement Dm6 → B°7 → G7 → C6; next move (raise two neighbouring dim notes, return, lower them, all four pairs); major – minor – minor/6 (bass C B A A♭ G F♯) | k-harm-37 | g-harris-11 |
+| D3 | Echols's Elevator, the exact nine floors (BARRY-HARRIS-METHOD.md F1.2): from a unison on every degree, up to the double octave and back (C6-dim: C · B D · A C E · G♯ B F · G C E G · F B D G♯ · E C G A · D G♯ F B · C C E C; inner voices of floors 4–9 marked verify in code); then a melody a floor higher each note and along the drop 2 floor (floors and moves mixed); Cm6-dim | k-sharm-33, k-sharm-40 | g-harris-12 |
+| D4 | the 7th-dim and 7♭5-dim scales of chords of the V in drop 2 and drop 3 over V7 → I (the brothers' dim, C°, between) | k-sharm-34 (and the ladder: k-sharm 12–18) | g-harris-12; g-harm 7–9 |
+| — | drop 2&4 on the four key scales | k-sharm-35 | g-harm-9 (strings 6-5-3-2, 5-4-2-1) |
+| D6 | the true sixth on the fifth: G6 / F♯°7 scale of chords over a C bass (close, drop 2) | k-sharm-36 | g-harris-11 |
+| D7 | first movement Dm6 → B°7 → G7 → C6; next move (raise two neighbouring dim notes, return, lower them, all four pairs); major – minor – minor/6 (bass C B A A♭ G F♯) | k-sharm-37 | g-harris-11 |
 | D7 ear | which move; one dim note down → which dominant; two notes up → which 6 chord | topic `bh-moves` L1–3 | — |
-| D11 | borrowing with three voices; the dominant root borrowed into the dim (the voice on ♭6 falls to 5: maj7 colour) | k-harm-38 (two voices: k-harm-21) | g-harris-13 |
-| D12 | the four related dominants voiced over the V's shell, floating up the dim and back, to I6; the tritone's minor moving up its scale of chords over the V's bass, resolving | k-harm-39 | g-harris-13 |
+| D11 | borrowing with three voices; the dominant root borrowed into the dim (the voice on ♭6 falls to 5: maj7 colour) | k-sharm-38 (two voices: k-sharm-21) | g-harris-13 |
+| D12 | the four related dominants voiced over the V's shell, floating up the dim and back, to I6; the tritone's minor moving up its scale of chords over the V's bass, resolving | k-sharm-39 | g-harris-13 |
 | D18 | guitar drop 3 and drop 2&4 6-dim voicings on string sets | — | g-harm-9 (drop 3 6-4-3-2 / 5-3-2-1, drop 2&4 6-5-3-2 / 5-4-2-1); passing / auxiliary chords and whole forms on guitar not built (see below) |
 
 ## 6d. Echols's frameworks (BARRY-HARRIS-METHOD.md Part F, items 1, 4, 5, 8, 9, 10) — added
 
 | Item | Drill | Piano | Guitar / ear |
 |---|---|---|---|
-| 1 / 4 | the Elevator, nine floors, every degree, C6-dim then Cm6-dim; floor and elevator moves mixed | k-harm-33, k-harm-40 | g-harris-12 |
-| 5 | the voicing ladder: thirds → triads → shells → octave chords on the 6-dim scales (shell / octave-chord shapes marked verify) | k-harm-41 | g-harris-12 (shells) |
-| 8 | a substitute on each V of a tune (I–VI7–ii–V–iii–VI7–ii–V–I): itself, the family, the important minor, the tritone's minor — pass by pass, then mixed | k-harm-42 | g-harris-13; ear `bh-sixfive` L4 |
-| 9 | borrowing through the Elevator: the soprano holds, the other voices take the next floor's shape and return (inferred, marked verify) | k-harm-40 | g-harris-13 |
-| 10 | arpeggiating the scale of chords | k-harm 11–12 (7th arpeggios, the Harris scales chord / dim in turn) | g-harm-6 |
+| 1 / 4 | the Elevator, nine floors, every degree, C6-dim then Cm6-dim; floor and elevator moves mixed | k-sharm-33, k-sharm-40 | g-harris-12 |
+| 5 | the voicing ladder: thirds → triads → shells → octave chords on the 6-dim scales (shell / octave-chord shapes marked verify) | k-sharm-41 | g-harris-12 (shells) |
+| 8 | a substitute on each V of a tune (I–VI7–ii–V–iii–VI7–ii–V–I): itself, the family, the important minor, the tritone's minor — pass by pass, then mixed | k-sharm-42 | g-harris-13; ear `bh-sixfive` L4 |
+| 9 | borrowing through the Elevator: the soprano holds, the other voices take the next floor's shape and return (inferred, marked verify) | k-sharm-40 | g-harris-13 |
+| 10 | arpeggiating the scale of chords | k-sharm 11–12 (7th arpeggios, the Harris scales chord / dim in turn) | g-harm-6 |
 | 10 | the 16 chords around one dim (C°7 down to B°7: 4 dom7, 4 major 6, 2 dom7♭5, 4 minor 6, 2 dim) | — | ear topic `bh-tesseract` L1–3 (how many notes moved, which chord, one note down = dominant / up = minor 6th) |
 
 Not built: the interactive 16-chord explorer screen (pick a dim, see and hear its 16 chords). The ear topic covers the
@@ -222,7 +222,7 @@ same set as questions; the explorer is a UI screen left for a later round.
 | Rootless A/B | voicings 4, 13, 17 | g-theory 1 | good on piano; one guitar level |
 | Quartal | voicings 7, 8; k-reharm 10 | g-theory 2 | good |
 | Upper structures | jazz 4; k-theory 2; k-reharm 8; voicings 16 | g-arps 7; g-theory 4 | good |
-| Block chords / locked hands | harris 9–10; jazz 8; voicings 15; k-harm 13–18 | g-harris 2, 7; g-harm 7–9 | good |
+| Block chords / locked hands | harris 9–10; jazz 8; voicings 15; k-sharm 13–18 | g-harris 2, 7; g-harm 7–9 | good |
 | Open / two-hand voicings ("spread" in the app; not a Harris term) | k-sixdim 4; voicings 16 | — | **thin** |
 | Guide-tone lines | jazz 1, 7 | g-jazz 5, 9; g-impro 4 | good |
 | Comping rhythms | voicings 11, 14 | g-jazz 1, 8 | medium |

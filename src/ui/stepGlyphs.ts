@@ -42,7 +42,7 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter on the keys, meter & cross-rhythm on the guitar.
   'k-rhythm': 'krhythm', 'g-meter': 'gmeter',
   // AUDIT-SCALES: hand independence, the scale-harmonization ladder on the keys and on the neck.
-  'k-indep': 'indep', 'k-harm': 'harmlad', 'g-harm': 'gharmlad',
+  'k-indep': 'indep', 'k-sharm': 'harmlad', 'g-harm': 'gharmlad',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

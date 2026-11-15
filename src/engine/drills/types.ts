@@ -33,7 +33,7 @@ export type FamilyId =
   | 'g-keys'
   // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder (piano, guitar).
   | 'k-indep'
-  | 'k-harm'
+  | 'k-sharm'
   | 'g-harm'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.

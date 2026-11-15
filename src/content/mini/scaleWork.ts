@@ -1,5 +1,5 @@
 // AUDIT-SCALES (owner 2026-11-14): the quick lessons for the new technique — hand independence (k-indep), harmonizing a
-// scale (k-harm / g-harm), Barry Harris's four diminished scales and borrowing (oblique motion) — and the steps added to
+// scale (k-sharm / g-harm), Barry Harris's four diminished scales and borrowing (oblique motion) — and the steps added to
 // the 6th-diminished lesson (bh-scale in mini/jazz.ts): the scale goes up AND down in the same eight notes. Every example
 // follows the same rules as the drills (harmLadder.ts). See ../miniTypes.ts for the format.
 import type { Stimulus } from '../../engine/lesson';
@@ -260,20 +260,20 @@ export const LESSONS: MiniLesson[] = [
 
 export const UNITS: Record<string, string> = {
   'tech:k-indep-1': 'hand-independence',
-  'tech:k-harm-1': 'scale-harm',
+  'tech:k-sharm-1': 'scale-harm',
   'tech:g-harm-1': 'scale-harm',
   'tech:harris-26': 'bh-four-dim',
-  'tech:k-harm-19': 'bh-borrow',
+  'tech:k-sharm-19': 'bh-borrow',
   'tech:g-harm-10': 'bh-borrow',
   'topic:bh-borrow': 'bh-borrow',
   // The eight expressions (important minor, tritone's minor, the brothers) and the true sixth on the fifth are taught in
   // bh-six-over (mini/jazz.ts); Harris's moves in bh-convert; contrary motion with the scale of chords (bh-block).
-  'tech:k-harm-36': 'bh-six-over',
-  'tech:k-harm-37': 'bh-convert',
+  'tech:k-sharm-36': 'bh-six-over',
+  'tech:k-sharm-37': 'bh-convert',
   'topic:bh-moves': 'bh-convert',
   'topic:bh-tesseract': 'bh-convert',
-  'tech:k-harm-33': 'bh-block',
+  'tech:k-sharm-33': 'bh-block',
   'topic:bh-sixfive': 'bh-six-over',
-  'tech:k-harm-26': 'bh-six-over',
+  'tech:k-sharm-26': 'bh-six-over',
   'tech:g-harris-11': 'bh-six-over',
 };

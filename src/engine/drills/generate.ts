@@ -5010,7 +5010,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
   // AUDIT-SCALES: the harmonization ladder + Barry Harris borrowing, hand independence.
-  if (s.family === 'k-harm') return genHarmPiano(s);
+  if (s.family === 'k-sharm') return genHarmPiano(s);
   if (s.family === 'k-indep') return genIndep(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {

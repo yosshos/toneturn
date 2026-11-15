@@ -402,7 +402,7 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...K_INDEP_DIFF,
   ...K_HARM_DIFF,
 };
-export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, 'k-indep': 3, 'k-harm': 3, ...KEYS_JAZZ_LATER };
+export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, 'k-indep': 3, 'k-sharm': 3, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
 /**
