@@ -600,7 +600,7 @@ deepen('swing-ratio', [
       names[k] = S[k][1];
       choiceStim[k] = [swing(S[k][0], beat, 8)];
     }
-    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1750, ask: { en: 'A fast tempo — how are the eighth notes played?', he: 'טמפו מהיר — איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(S[answer][0], beat, 16)], choiceStim });
+    return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1200, ask: { en: 'A fast tempo — how are the eighth notes played?', he: 'טמפו מהיר — איך מנוגנות השמיניות?' }, names, answer, choices: pool, stimulus: [swing(S[answer][0], beat, 16)], choiceStim });
   }
   const pool = ['top', 'back', 'rush'];
   const answer = pickR(rnd, pool);
@@ -610,7 +610,7 @@ deepen('swing-ratio', [
     back: nm('Laid back (a little behind)', 'לייד־בק (קצת מאחור)', 'laid back', 'behind', 'מאחור'),
     rush: nm('Rushing (getting earlier)', 'ממהר (מקדים יותר ויותר)', 'rushing', 'rush', 'ממהר'),
   };
-  return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1850, ask: { en: 'Bass and hi-hat keep time. Where does the piano sit?', he: 'הבס וההיי־הט שומרים על הזמן. איפה יושב הפסנתר?' }, names, answer, choices: pool, stimulus: [feel(answer, beat, 12)], choiceStim: Object.fromEntries(pool.map((p) => [p, [feel(p, beat, 12)]])) });
+  return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1400, ask: { en: 'Bass and hi-hat keep time. Where does the piano sit?', he: 'הבס וההיי־הט שומרים על הזמן. איפה יושב הפסנתר?' }, names, answer, choices: pool, stimulus: [feel(answer, beat, 12)], choiceStim: Object.fromEntries(pool.map((p) => [p, [feel(p, beat, 12)]])) });
 });
 
 // ---------------------------------------------------------------- syncopation 3–4

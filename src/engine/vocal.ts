@@ -712,6 +712,10 @@ export interface VocalItem {
   curve?: 'cresc' | 'decresc' | 'swell';
   /** Sight-singing: the written length of each note, in beats (spec V.1). */
   durs?: number[];
+  /** Sight-singing: the generator level (1–5) that writes this item a fresh melody every session. */
+  sightGen?: number;
+  /** Agility (v-agility): a run, turn or melisma at a share of its full tempo (60 / 80 / 100 / 120 %). */
+  run?: { pct: number; shape: 'run' | 'penta' | 'blues' | 'turn' | 'melisma' };
   /** Harmony line: a chord per sung note instead of a melody (semitones from the line's base). */
   chords?: number[][];
   /** Played once before the take (semitones from the sung note) — e.g. the whole diminished chord. */
@@ -1069,8 +1073,17 @@ export function gradeSight(item: VocalItem, frames: SungFrame[], targets: number
   return { ...g, score: Math.round(g.score * (0.4 + 0.6 * m.hit) * 1000) / 1000 };
 }
 
-/** Deterministic sight-singing melodies per level: steps (from the tonic) and note lengths in beats. */
-function sightMelody(seed: number, level: number): { steps: number[]; durs: number[] } {
+/**
+ * A seeded sight-singing melody per level: steps (from the tonic) and note lengths in beats. Every session draws a
+ * fresh one (`sessionSightItem`), so there is nothing to memorize.
+ *  (The tonic is played first; every line starts on a note of the tonic triad and ends on the tonic.)
+ *  L1  6 notes, steps and do–mi–sol skips, inside do–la.
+ *  L2  7 notes, steps and 3rds, up to the octave.
+ *  L3  8 notes, leaps up to a 6th, ti below to the octave, eighths.
+ *  L4–L5  the same in minor. Minor is melodic (raised 6 and 7 going up into the tonic, natural coming down), so a
+ *  line never moves ♭6–♮7: the augmented 2nd is not taught at these levels. No tritone leaps at any level.
+ */
+export function sightMelody(seed: number, level: number): { steps: number[]; durs: number[] } {
   let a = seed >>> 0;
   const rnd = () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -1079,33 +1092,93 @@ function sightMelody(seed: number, level: number): { steps: number[]; durs: numb
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-  const major = [0, 2, 4, 5, 7, 9, 11, 12];
-  const minor = [0, 2, 3, 5, 7, 8, 11, 12];
-  const scale = level >= 4 ? minor : major;
-  const n = level === 1 ? 4 : level === 2 ? 6 : 8;
-  const maxLeap = level <= 1 ? 1 : level === 2 ? 2 : 4;
-  let d = 0;
-  const degs = [0];
-  for (let i = 1; i < n; i++) {
-    const step = Math.max(-maxLeap, Math.min(maxLeap, Math.round((rnd() * 2 - 1) * maxLeap) || 1));
-    const prev = d;
-    d = Math.max(0, Math.min(7, d + step));
-    if (d === prev) d = prev === 7 ? 6 : prev + 1; // no repeated notes (each onset must be heard)
-    degs.push(d);
+  const pickOf = <T,>(xs: readonly T[]): T => xs[Math.floor(rnd() * xs.length)];
+  const minor = level >= 4;
+  const n = level === 1 ? 6 : level === 2 ? 7 : 8;
+  const maxLeap = level <= 2 ? 2 : 5;
+  const lo = level >= 3 ? -1 : 0;
+  const hi = level === 1 ? 5 : 7;
+  const starts = level >= 3 ? [0, 0, 2, 4, 7] : [0, 0, 2, 4];
+  for (let tries = 0; tries < 200; tries++) {
+    let d = pickOf(starts);
+    const degs = [d];
+    for (let i = 1; i < n - 1; i++) {
+      let mag = rnd() < 0.6 ? 1 : 1 + Math.floor(rnd() * maxLeap);
+      let dir = rnd() < 0.5 ? -1 : 1;
+      if (d + dir * mag < lo || d + dir * mag > hi) dir = -dir;
+      // L1 skips only inside the tonic triad (do–mi–sol).
+      if (level === 1 && mag === 2 && (d % 2 !== 0 || d + dir * 2 > 4)) mag = 1;
+      const next = d + dir * mag;
+      if (next < lo || next > hi) break;
+      degs.push((d = next));
+    }
+    if (degs.length !== n - 1) continue;
+    // End on the tonic (or the octave), moving into it by step or 3rd, or from the dominant.
+    const ends = [0, 7].filter((e) => e !== d && e <= hi && (Math.abs(e - d) <= 2 || d === 4));
+    if (!ends.length) continue;
+    degs.push(pickOf(ends));
+    const steps = degs.map((x, i) => sightSemis(x, degs[i + 1], degs[i + 2], minor));
+    if (!sightLineOk(degs, steps, minor)) continue;
+    return { steps, durs: sightRhythm(n, level, rnd) };
   }
-  const end = rnd() < 0.5 ? 0 : 4; // end on 1 or 5 (moving into it)
-  degs[degs.length - 1] = degs[degs.length - 2] === end ? (end === 0 ? 4 : 0) : end;
-  const pool = level <= 2 ? [1, 1, 2] : level === 3 ? [0.5, 0.5, 1, 1, 2] : [0.5, 1, 1, 1.5, 2];
-  let durs = degs.map(() => pool[Math.floor(rnd() * pool.length)]);
-  // Dotted quarters are followed by an eighth (stay on the beat grid).
-  durs = durs.map((x, i) => (i > 0 && durs[i - 1] === 1.5 ? 0.5 : x));
-  durs[durs.length - 1] = 2;
-  return { steps: degs.map((k) => scale[k]), durs };
+  const safe = [...[0, 1, 2, 1, 2, 1, 2, 1].slice(0, n - 1), 0];
+  return { steps: safe.map((x, i) => sightSemis(x, safe[i + 1], safe[i + 2], minor)), durs: [...Array(n - 1).fill(1), 2] };
+}
+
+/** A scale degree's semitones (0 = tonic, 7 = octave, negatives below); minor is melodic stepping up into the tonic, natural elsewhere. */
+function sightSemis(d: number, next: number | undefined, next2: number | undefined, minor: boolean): number {
+  const idx = ((d % 7) + 7) % 7;
+  const oct = 12 * Math.floor(d / 7);
+  if (!minor) return oct + [0, 2, 4, 5, 7, 9, 11][idx];
+  // The leading tone only where it steps up into the tonic; the subtonic everywhere else.
+  const raised7 = (x: number, nx: number | undefined) => ((x % 7) + 7) % 7 === 6 && nx === x + 1;
+  if (idx === 6) return oct + (raised7(d, next) ? 11 : 10);
+  if (idx === 5) return oct + (next === d + 1 && raised7(next, next2) ? 9 : 8);
+  return oct + [0, 2, 3, 5, 7][idx];
+}
+
+/** The sizes (semitones) a melodic interval of each degree span may have: major / minor / perfect only. */
+const SIGHT_SIZES: number[][] = [[0], [1, 2], [3, 4], [5], [7], [8, 9], [10, 11], [12]];
+
+/** Only major, minor and perfect intervals: no augmented 2nd, no tritone, no augmented 5th; a minor line shows its ♭3. */
+export function sightLineOk(degs: number[], steps: number[], minor: boolean): boolean {
+  for (let i = 1; i < steps.length; i++) {
+    const s = Math.abs(steps[i] - steps[i - 1]);
+    const span = Math.abs(degs[i] - degs[i - 1]);
+    if (span === 0 || !SIGHT_SIZES[span]?.includes(s)) return false;
+  }
+  return !minor || steps.some((s) => ((s % 12) + 12) % 12 === 3);
+}
+
+/** Note lengths on the beat grid: an off-beat note is an eighth (so a dotted quarter takes one), the last is a half. */
+function sightRhythm(n: number, level: number, rnd: () => number): number[] {
+  const pool = level <= 2 ? [1, 2] : level === 3 ? [0.5, 0.5, 1, 1, 2] : [0.5, 1, 1, 1.5, 2];
+  const durs: number[] = [];
+  let pos = 0;
+  for (let i = 0; i < n - 1; i++) {
+    const off = pos % 1 !== 0;
+    let x = off ? 0.5 : pool[Math.floor(rnd() * pool.length)];
+    // The note before the last ends on a beat.
+    if (i === n - 2 && (pos + x) % 1 !== 0) x = off ? 0.5 : 1;
+    durs.push(x);
+    pos += x;
+  }
+  durs.push(2);
+  return durs;
+}
+
+const hashId = (id: string) => [...id].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0, 7);
+
+/** A sight item with a fresh melody for this session: same id (for scheduling), level, tempo and difficulty. */
+export function sessionSightItem(item: VocalItem, seed: number): VocalItem {
+  if (item.kind !== 'sight' || !item.sightGen) return item;
+  const m = sightMelody((seed ^ hashId(item.id)) >>> 0, item.sightGen);
+  return { ...item, steps: m.steps, durs: m.durs };
 }
 
 const SIGHT = (level: number, seed: number, bpm: number, difficulty: number): Omit<VocalItem, 'id' | 'level'> => {
   const m = sightMelody(seed, level);
-  return { kind: 'sight', seconds: 10, reference: 'before', at: 0.3, steps: m.steps, durs: m.durs, bpm, difficulty };
+  return { kind: 'sight', seconds: 10, reference: 'before', at: 0.3, steps: m.steps, durs: m.durs, bpm, difficulty, sightGen: level };
 };
 export const SIGHT_LEVELS: VocalLevel[] = [
   L(1, 0.6, [SIGHT(1, 11, 72, 1050), SIGHT(1, 12, 72, 1050), SIGHT(1, 13, 72, 1100)]),

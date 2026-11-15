@@ -61,7 +61,7 @@ import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByR
 import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
 import { partEvents, sessionKeyItem } from '../engine/voiceTop';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
-import { MORE_INSTR, METRIC_NAMES, TONE_NAMES, VT } from '../content/voiceCourseText';
+import { MORE_INSTR, METRIC_NAMES, RUN_INSTR, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { restTakes, TimedSession, type VoiceTestMode } from './VoiceTimed';
 import { restAdvice } from '../engine/voiceP2';
 import { VoiceLevelTest } from './VoiceLevelTest';
@@ -1182,7 +1182,13 @@ function VocalSession({
           : item.bh
             ? barryInstruction(item, shownTargets[0], t, settings)
           : isSight(item)
-            ? t.sightInstr
+            ? item.more?.parts
+              ? settings.uiLang === 'he'
+                ? 'שירו את הקול שלכם; השני מתנגן.'
+                : 'Sing your part; the other one plays.'
+              : t.sightInstr
+          : item.run
+            ? fill(RUN_INSTR[item.run.shape][settings.uiLang === 'en' ? 'en' : 'he'], { pct: item.run.pct })
           : item.kind === 'ornament'
             ? t.ornInstr[item.orn ?? 'grace']
           : item.kind === 'dynamic'

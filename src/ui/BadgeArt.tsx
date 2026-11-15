@@ -723,6 +723,49 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(18, 19, 2)}
     </>
   ),
+  // STAGE C (AUDIT-6): the guitar above grade 8 — a run of 16ths with a speed streak; a line stepping out and back; a
+  // melody note over a stacked chord; walking quarters under a shell; the Harris line with a streak.
+  'family:g-speed': () => (
+    <>
+      <path d="M2 4h20 M2 7h20" strokeWidth={0.8} />
+      {p('M3 12h6 M2 15h5', false)}
+      {head(11, 19, 1.7)}
+      {head(15, 16, 1.7)}
+      {head(19, 13, 1.7)}
+    </>
+  ),
+  'family:g-fusion': () => (
+    <>
+      <path d="M2 3h20 M2 6h20" strokeWidth={0.8} />
+      {p('M3 20 L7 15 L10 10 L14 10 L17 15 L21 12', false)}
+    </>
+  ),
+  'family:g-cmarr': () => (
+    <>
+      {head(7, 19, 1.6)}
+      {head(7, 15, 1.6)}
+      {head(8, 9, 2)}
+      {head(17, 18, 1.6)}
+      {head(17, 14, 1.6)}
+      {head(18, 6, 2)}
+    </>
+  ),
+  'family:g-solojazz': () => (
+    <>
+      <path d="M2 3h20" strokeWidth={0.8} />
+      {head(5, 20, 1.6)}
+      {head(11, 18, 1.6)}
+      {head(17, 20, 1.6)}
+      {head(14, 9, 1.6)}
+      {head(14, 6, 1.6)}
+    </>
+  ),
+  'family:g-hlfast': () => (
+    <>
+      {p('M5 5 L9 9 L12 8 L16 13 L20 20', false)}
+      {p('M2 14h5 M3 17h5', false)}
+    </>
+  ),
   // HARMONY-REHARM: a held note tied over three chords; two triads a 3rd apart sharing a note; drawbars over a walk.
   'family:k-ctone': () => (
     <>

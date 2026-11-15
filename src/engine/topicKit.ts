@@ -16,6 +16,11 @@ export interface TopicDef {
   forPlays?: string[];
   /** Per level (index = level − 1): the instruments of that level when it differs from forPlays (guitar-only shapes vs bass-only lines in one topic). */
   levelPlays?: (string[] | undefined)[];
+  /**
+   * A game-only topic (AUDIT-6 X1): it feeds a game's rungs but is never a path step, whatever module registered it
+   * first — path.stepCatalogue() skips it, so the path is the same whether or not the game's module is loaded.
+   */
+  gameOnly?: boolean;
 }
 
 export const TOPIC_GEN: Record<string, TopicDef> = {};

@@ -26,6 +26,7 @@ import type { Drill, DrillSpec, DrumFamilyId, DrumGoal, DrumVoice } from './type
 import type { SpecTemplate } from './generate';
 import { bar, drumItemId, finish, generateDrums, hands, levelOfKind, line, rep, rnd, type DH, type DrumFamilyDef, type DrumLevelDef, type Lanes } from './drums';
 import { drumBand } from './drumStyles';
+import { DRUM_TOP_PLACEMENT } from '../stageCPlacement';
 
 const t = (en: string, he: string) => ({ en, he });
 type T2 = { en: string; he: string };
@@ -34,74 +35,74 @@ export const DRUM_TOP_FAMILIES = ['d-pas', 'd-stick', 'd-synco', 'd-chapin', 'd-
 export type DrumTopFamily = (typeof DRUM_TOP_FAMILIES)[number];
 export const isDrumTopFamily = (f: string): f is DrumTopFamily => (DRUM_TOP_FAMILIES as readonly string[]).includes(f);
 
-/** A level row: [name, en, he, tempo, sub, mic, rating]. Three variants each. */
-type Row = [string, string, string, [number, number], string, boolean, number];
+/** A level row: [name, en, he, tempo, sub, mic]. Three variants each; the ratings are in stageCPlacement.ts. */
+type Row = [string, string, string, [number, number], string, boolean];
 
 const ROWS: Record<DrumTopFamily, Row[]> = {
   'd-pas': [
-    ['buzz', 'Buzz roll (multiple bounce)', 'גלגול באז (ריבוי ניתורים)', [60, 100], '1/16', true, 1420],
-    ['triple', 'Triple-stroke roll', 'גלגול שלוש מכות', [60, 100], '1/8T', true, 1450],
-    ['triplepara', 'Triple paradiddle', 'פאראדידל משולש', [70, 120], '1/16', true, 1470],
-    ['roll1011', '10- and 11-stroke rolls', 'גלגולים של 10 ו-11 מכות', [70, 110], '1/16', true, 1500],
-    ['roll1315', '13- and 15-stroke rolls', 'גלגולים של 13 ו-15 מכות', [70, 110], '1/16', true, 1530],
-    ['roll17', '17-stroke roll and combined rolls', 'גלגול 17 מכות וגלגולים משולבים', [70, 110], '1/16', true, 1560],
-    ['pataflafla', 'Pataflafla', 'פאטאפלאפלה', [60, 100], '1/16', false, 1590],
-    ['flamacue', 'Flamacue and inverted flam tap', 'פלאמקיו ופלאם טאפ הפוך', [60, 100], '1/16', false, 1620],
-    ['flammill', 'Flam paradiddle-diddle, single flammed mill', 'פלאם פאראדידל-דידל, מיל עם פלאם', [60, 100], '1/16', false, 1650],
-    ['dblrat', 'Double ratamacue', 'רטמקיו כפול', [60, 100], '1/16', false, 1680],
-    ['trirat', 'Triple ratamacue', 'רטמקיו משולש', [60, 100], '1/16', false, 1710],
-    ['drags', 'Lesson 25, single dragadiddle, double drag tap', 'שיעור 25, דראגדידל, דראג טאפ כפול', [60, 100], '1/16', false, 1740],
+    ['buzz', 'Buzz roll (multiple bounce)', 'גלגול באז (ריבוי ניתורים)', [60, 100], '1/16', true],
+    ['triple', 'Triple-stroke roll', 'גלגול שלוש מכות', [60, 100], '1/8T', true],
+    ['triplepara', 'Triple paradiddle', 'פאראדידל משולש', [70, 120], '1/16', true],
+    ['roll1011', '10- and 11-stroke rolls', 'גלגולים של 10 ו-11 מכות', [70, 110], '1/16', true],
+    ['roll1315', '13- and 15-stroke rolls', 'גלגולים של 13 ו-15 מכות', [70, 110], '1/16', true],
+    ['roll17', '17-stroke roll and combined rolls', 'גלגול 17 מכות וגלגולים משולבים', [70, 110], '1/16', true],
+    ['pataflafla', 'Pataflafla', 'פאטאפלאפלה', [60, 100], '1/16', false],
+    ['flamacue', 'Flamacue and inverted flam tap', 'פלאמקיו ופלאם טאפ הפוך', [60, 100], '1/16', false],
+    ['flammill', 'Flam paradiddle-diddle, single flammed mill', 'פלאם פאראדידל-דידל, מיל עם פלאם', [60, 100], '1/16', false],
+    ['dblrat', 'Double ratamacue', 'רטמקיו כפול', [60, 100], '1/16', false],
+    ['trirat', 'Triple ratamacue', 'רטמקיו משולש', [60, 100], '1/16', false],
+    ['drags', 'Lesson 25, single dragadiddle, double drag tap', 'שיעור 25, דראגדידל, דראג טאפ כפול', [60, 100], '1/16', false],
   ],
   'd-stick': [
-    ['perm4', 'Every 4-note sticking in 8ths', 'כל אצבוע של 4 תווים בשמיניות', [100, 168], '1/8', true, 1440],
-    ['perm4x16', 'Every 4-note sticking in 16ths', 'כל אצבוע של 4 תווים בשש-עשריות', [80, 132], '1/16', true, 1500],
-    ['perm8', '8-note stickings in 16ths', 'אצבועים של 8 תווים בשש-עשריות', [80, 126], '1/16', true, 1560],
-    ['perm6', '6-note stickings in triplets', 'אצבועים של 6 תווים בטריולות', [80, 132], '1/8T', true, 1620],
-    ['permacc', 'Stickings with a moving accent', 'אצבועים עם הדגשה נודדת', [76, 120], '1/16', true, 1690],
-    ['permkit', 'Stickings around the kit', 'אצבועים סביב המערכת', [80, 126], '1/16', false, 1770],
+    ['perm4', 'Every 4-note sticking in 8ths', 'כל אצבוע של 4 תווים בשמיניות', [100, 168], '1/8', true],
+    ['perm4x16', 'Every 4-note sticking in 16ths', 'כל אצבוע של 4 תווים בשש-עשריות', [80, 132], '1/16', true],
+    ['perm8', '8-note stickings in 16ths', 'אצבועים של 8 תווים בשש-עשריות', [80, 126], '1/16', true],
+    ['perm6', '6-note stickings in triplets', 'אצבועים של 6 תווים בטריולות', [80, 132], '1/8T', true],
+    ['permacc', 'Stickings with a moving accent', 'אצבועים עם הדגשה נודדת', [76, 120], '1/16', true],
+    ['permkit', 'Stickings around the kit', 'אצבועים סביב המערכת', [80, 126], '1/16', false],
   ],
   'd-synco': [
-    ['rock', 'Syncopated line on the kick, rock', 'קו מסונכפ בקיק, רוק', [80, 126], '1/8', false, 1450],
-    ['hits', 'The line as band hits', 'הקו כמכות להקה', [90, 132], '1/8', false, 1500],
-    ['funk', 'The line on the kick, 16th funk', 'הקו בקיק, פאנק בשש-עשריות', [76, 108], '1/16', false, 1560],
-    ['jazz', 'The line as jazz comping on the snare', 'הקו כקומפינג ג׳אז בסנר', [110, 176], '1/8T', false, 1610],
-    ['split', 'Jazz: long notes kick, short notes snare', 'ג׳אז: ארוכים בקיק, קצרים בסנר', [110, 176], '1/8T', false, 1670],
-    ['accents', 'The line as accents in a ghost-note stream', 'הקו כהדגשות בזרם תווי רפאים', [70, 104], '1/16', true, 1730],
+    ['rock', 'Syncopated line on the kick, rock', 'קו מסונכפ בקיק, רוק', [80, 126], '1/8', false],
+    ['hits', 'The line as band hits', 'הקו כמכות להקה', [90, 132], '1/8', false],
+    ['funk', 'The line on the kick, 16th funk', 'הקו בקיק, פאנק בשש-עשריות', [76, 108], '1/16', false],
+    ['jazz', 'The line as jazz comping on the snare', 'הקו כקומפינג ג׳אז בסנר', [110, 176], '1/8T', false],
+    ['split', 'Jazz: long notes kick, short notes snare', 'ג׳אז: ארוכים בקיק, קצרים בסנר', [110, 176], '1/8T', false],
+    ['accents', 'The line as accents in a ghost-note stream', 'הקו כהדגשות בזרם תווי רפאים', [70, 104], '1/16', true],
   ],
   'd-chapin': [
-    ['snare', 'Ride and foot: the snare ladder', 'רייד ורגל: סולם הסנר', [110, 176], '1/8T', false, 1460],
-    ['kick', 'Ride and foot: the kick ladder', 'רייד ורגל: סולם הקיק', [110, 176], '1/8T', false, 1520],
-    ['pairs', 'Snare and kick figures together', 'דמויות סנר וקיק יחד', [110, 176], '1/8T', false, 1580],
-    ['two', 'Two lines read at once', 'שני קווים בקריאה אחת', [110, 176], '1/8T', false, 1640],
-    ['fillin', 'Kick line, snare fills the gaps', 'קו בקיק, הסנר ממלא את הרווחים', [110, 168], '1/8T', false, 1700],
-    ['four', 'Four-way: the foot on every beat', 'ארבע גפיים: הרגל על כל פעמה', [120, 200], '1/8T', false, 1780],
+    ['snare', 'Ride and foot: the snare ladder', 'רייד ורגל: סולם הסנר', [110, 176], '1/8T', false],
+    ['kick', 'Ride and foot: the kick ladder', 'רייד ורגל: סולם הקיק', [110, 176], '1/8T', false],
+    ['pairs', 'Snare and kick figures together', 'דמויות סנר וקיק יחד', [110, 176], '1/8T', false],
+    ['two', 'Two lines read at once', 'שני קווים בקריאה אחת', [110, 176], '1/8T', false],
+    ['fillin', 'Kick line, snare fills the gaps', 'קו בקיק, הסנר ממלא את הרווחים', [110, 168], '1/8T', false],
+    ['four', 'Four-way: the foot on every beat', 'ארבע גפיים: הרגל על כל פעמה', [120, 200], '1/8T', false],
   ],
   'd-linear': [
-    ['groups', 'Linear groups of 3 and 4', 'קבוצות ליניאריות של 3 ו-4', [70, 110], '1/16', false, 1470],
-    ['ghost', 'Linear groove with ghost notes', 'גרוב ליניארי עם תווי רפאים', [76, 108], '1/16', false, 1540],
-    ['barks', 'Linear groove with open-hat barks', 'גרוב ליניארי עם פתיחות היי־האט', [80, 110], '1/16', false, 1610],
-    ['fill32', 'Linear 32nd-note fills, land on 1', 'מעברים ליניאריים בשלושים-ושתיים, נחיתה על 1', [60, 90], '1/32', false, 1690],
-    ['displace', 'Displaced linear grooves at tempo', 'גרובים ליניאריים מוזזים בטמפו', [84, 112], '1/16', false, 1770],
+    ['groups', 'Linear groups of 3 and 4', 'קבוצות ליניאריות של 3 ו-4', [70, 110], '1/16', false],
+    ['ghost', 'Linear groove with ghost notes', 'גרוב ליניארי עם תווי רפאים', [76, 108], '1/16', false],
+    ['barks', 'Linear groove with open-hat barks', 'גרוב ליניארי עם פתיחות היי־האט', [80, 110], '1/16', false],
+    ['fill32', 'Linear 32nd-note fills, land on 1', 'מעברים ליניאריים בשלושים-ושתיים, נחיתה על 1', [60, 90], '1/32', false],
+    ['displace', 'Displaced linear grooves at tempo', 'גרובים ליניאריים מוזזים בטמפו', [84, 112], '1/16', false],
   ],
   'd-brush': [
-    ['ballad', 'Brushes ballad in 2', 'בלדה במברשות בשתיים', [52, 72], '1/8T', false, 1450],
-    ['medium', 'Brushes, medium swing', 'מברשות, סווינג בינוני', [100, 150], '1/8T', false, 1530],
-    ['accents', 'Brushes with comping accents', 'מברשות עם הדגשות קומפינג', [100, 150], '1/8T', false, 1610],
-    ['up', 'Up-tempo brushes', 'מברשות בטמפו מהיר', [180, 240], '1/8', false, 1710],
+    ['ballad', 'Brushes ballad in 2', 'בלדה במברשות בשתיים', [52, 72], '1/8T', false],
+    ['medium', 'Brushes, medium swing', 'מברשות, סווינג בינוני', [100, 150], '1/8T', false],
+    ['accents', 'Brushes with comping accents', 'מברשות עם הדגשות קומפינג', [100, 150], '1/8T', false],
+    ['up', 'Up-tempo brushes', 'מברשות בטמפו מהיר', [180, 240], '1/8', false],
   ],
   'd-oddtempo': [
-    ['54', '5/4 grooves and fills at tempo', 'גרובים ומעברים ב-5/4 בטמפו', [110, 168], '1/8', false, 1480],
-    ['78', '7/8 at tempo', '7/8 בטמפו', [240, 320], '1/8', false, 1550],
-    ['74', '7/4 and 9/8', '7/4 ו-9/8', [100, 160], '1/8', false, 1620],
-    ['1113', '11/8 and 13/8 with fills', '11/8 ו-13/8 עם מעברים', [220, 300], '1/8', false, 1700],
-    ['switch', 'A song in changing meters, at tempo', 'שיר במשקלים מתחלפים, בטמפו', [220, 280], '1/8', false, 1800],
+    ['54', '5/4 grooves and fills at tempo', 'גרובים ומעברים ב-5/4 בטמפו', [110, 168], '1/8', false],
+    ['78', '7/8 at tempo', '7/8 בטמפו', [240, 320], '1/8', false],
+    ['74', '7/4 and 9/8', '7/4 ו-9/8', [100, 160], '1/8', false],
+    ['1113', '11/8 and 13/8 with fills', '11/8 ו-13/8 עם מעברים', [220, 300], '1/8', false],
+    ['switch', 'A song in changing meters, at tempo', 'שיר במשקלים מתחלפים, בטמפו', [220, 280], '1/8', false],
   ],
   'd-trade': [
-    ['blues4', 'Trading 4s on the blues', 'חילופי 4 על הבלוז', [120, 180], '1/8T', false, 1500],
-    ['aaba8', 'Trading 8s on AABA', 'חילופי 8 על AABA', [120, 180], '1/8T', false, 1590],
-    ['up4', 'Trading 4s up-tempo', 'חילופי 4 בטמפו מהיר', [200, 260], '1/8T', false, 1680],
-    ['blues', 'A solo chorus over the blues, the band playing', 'סבב סולו על הבלוז, הלהקה מנגנת', [110, 170], '1/8T', false, 1780],
-    ['aaba', 'A solo chorus over AABA with set-up hits', 'סבב סולו על AABA עם מכות הכנה', [120, 180], '1/8T', false, 1880],
+    ['blues4', 'Trading 4s on the blues', 'חילופי 4 על הבלוז', [120, 180], '1/8T', false],
+    ['aaba8', 'Trading 8s on AABA', 'חילופי 8 על AABA', [120, 180], '1/8T', false],
+    ['up4', 'Trading 4s up-tempo', 'חילופי 4 בטמפו מהיר', [200, 240], '1/8T', false],
+    ['blues', 'A solo chorus over the blues, the band playing', 'סבב סולו על הבלוז, הלהקה מנגנת', [110, 170], '1/8T', false],
+    ['aaba', 'A solo chorus over AABA with set-up hits', 'סבב סולו על AABA עם מכות הכנה', [120, 180], '1/8T', false],
   ],
 };
 
@@ -117,8 +118,8 @@ const TITLES: Record<DrumTopFamily, T2> = {
 };
 export const drumTopTitle = (f: DrumTopFamily): T2 => TITLES[f];
 
-/** STAGE C path ratings: every new level at its own rating (plugged into path.ts KEYS_LEVEL_DIFF). */
-export const DRUM_TOP_DIFF: Record<string, number> = Object.fromEntries(DRUM_TOP_FAMILIES.flatMap((f) => ROWS[f].map((r, i) => [`${f}-${i + 1}`, r[6]])));
+/** STAGE C path ratings of the drum levels (stageCPlacement.ts, plugged into levelPlacement PLACEMENT_TABLES). */
+export const DRUM_TOP_DIFF: Record<string, number> = DRUM_TOP_PLACEMENT;
 
 /** The eight families (drumFamilies appends them). */
 export function drumTopFamilies(): DrumFamilyDef[] {

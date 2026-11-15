@@ -328,8 +328,8 @@ export const LESSONS: MiniLesson[] = [
     emoji: '🧩',
     title: { en: 'Blues and rhythm changes', he: 'בלוז וריתם צ׳יינג׳ס' },
     takeaway: {
-      en: 'The jazz blues adds ii–Vs to the twelve bars; the Bird blues fills every bar with them. Rhythm changes has A sections of fast turnarounds and a bridge of dominants around the cycle.',
-      he: 'בלוז הג׳אז מוסיף ii–V לשתים־עשרה התיבות; הבלוז של בירד ממלא בהם כל תיבה. בריתם צ׳יינג׳ס חלקי A בנויים מטרנאראונדים מהירים, והגשר מדומיננטים במעגל.',
+      en: 'The jazz blues adds ii–Vs to the twelve bars; the Bird blues replaces most bars with ii–Vs. Rhythm changes has A sections of fast turnarounds and a bridge of dominants around the cycle.',
+      he: 'בלוז הג׳אז מוסיף ii–V לשתים־עשרה התיבות; הבלוז של בירד מחליף את רוב התיבות ב־ii–V. בריתם צ׳יינג׳ס חלקי A בנויים מטרנאראונדים מהירים, והגשר מדומיננטים במעגל.',
     },
     steps: [
       {

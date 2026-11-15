@@ -9,6 +9,7 @@ import { levelDrills } from '../src/engine/drills/plan';
 import { generate } from '../src/engine/drills/generate';
 import { clickPlan } from '../src/engine/drills/timeline';
 import { stepCatalogue } from '../src/engine/path';
+import { LEVEL_PLACEMENT } from '../src/engine/levelPlacement';
 import { ACOUSTIC_LEVELS } from '../src/engine/drumAcoustic';
 import type { Drill } from '../src/engine/drills/types';
 import { drumRound, scoreRound } from '../src/engine/drumGames';
@@ -96,7 +97,8 @@ describe('the rest of the curriculum: catalogue', () => {
       expect(st, lv.id).toBeTruthy();
       expect(st.forPlays).toContain('drums');
       const prev = steps.get(`tech:${lv.id.replace(/-\d+$/, '')}-${lv.level - 1}`)!;
-      expect(st.difficulty, lv.id).toBeGreaterThan(prev.difficulty);
+      // AUDIT-6: a level placed at its RSL grade (levelPlacement.ts) may open before a lower number.
+      if (LEVEL_PLACEMENT[lv.id] === undefined && LEVEL_PLACEMENT[prev.ladder!.ref] === undefined) expect(st.difficulty, lv.id).toBeGreaterThan(prev.difficulty);
       expect(ACOUSTIC_LEVELS.has(lv.id), lv.id).toBe(false);
     }
   });

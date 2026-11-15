@@ -57,7 +57,18 @@ export function bonusSteps(): PathStep[] {
 }
 
 /** A repertoire tier's place on the path: Foundations with the beginner units … Advanced with the advanced ones. */
-export const REP_TIER_DIFF: Record<RepTier, number> = { 1: 820, 2: 980, 3: 1180, 4: 1380 };
+export const REP_TIER_DIFF: Record<RepTier, number> = { 1: 760, 2: 900, 3: 1160, 4: 1420 };
+/**
+ * AUDIT-6 §5: each tier's band on the path (its items spread evenly through it, in catalogue order) — the steps sat in
+ * four clumps (820 / 980 / 1180 / 1380 + 6 an item) and stopped at 1410. Advanced now reaches 1880.
+ */
+export const REP_TIER_BAND: Record<RepTier, [number, number]> = { 1: [760, 880], 2: [900, 1140], 3: [1160, 1400], 4: [1420, 1880] };
+/**
+ * Items placed by what they ask rather than by their catalogue order (inside their tier's band, so a tier stays below
+ * the next): ii–V–I through all twelve keys, the minor ii–V–i cycle and the jazz blues in F are intermediate jazz
+ * tasks — out of the beginner band (they sat at 986–998).
+ */
+export const REP_ITEM_AT: Record<string, number> = { 'blues-f': 1060, 'two-five-keys': 1110, 'minor-two-five-keys': 1140 };
 const REP_AREA: Record<CourseId, Pick<PathStep, 'domain' | 'skill' | 'sub'>> = {
   ear: { domain: 'memory', skill: 'sequences', sub: 'sequences/melody' },
   jazz: { domain: 'creative', skill: 'improv', sub: 'improv/repertoire' },
@@ -72,15 +83,19 @@ export function repSteps(): PathStep[] {
   const out: PathStep[] = [];
   for (const [course, items] of Object.entries(REPERTOIRE) as [CourseId, (typeof REPERTOIRE)[CourseId]][]) {
     const seen: Partial<Record<RepTier, number>> = {};
+    const count = (t: RepTier) => items.filter((x) => x.tier === t).length;
     for (const it of items) {
       const k = (seen[it.tier] = (seen[it.tier] ?? 0) + 1);
+      const [lo, hi] = REP_TIER_BAND[it.tier];
+      const n = count(it.tier);
+      const at = REP_ITEM_AT[it.id] ?? Math.round(n > 1 ? lo + ((hi - lo) * (k - 1)) / (n - 1) : lo);
       out.push({
         id: `rep:${course}:${it.id}`,
         kind: 'game',
         game: 'repertoire',
         rep: { course, id: it.id },
         ...REP_AREA[course],
-        difficulty: REP_TIER_DIFF[it.tier] + 6 * (k - 1),
+        difficulty: Math.min(hi, Math.max(lo, at)),
         choices: 0,
         ...courseShape(course),
         title: { en: `Repertoire · ${it.title.en}`, he: `רפרטואר · ${it.title.he}` },

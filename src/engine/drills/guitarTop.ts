@@ -15,6 +15,8 @@
 // ladder. Levels that reuse an existing generator name it in their kind ("g-picking>3nps"); the drill keeps this
 // family's id and item id. Pure. Imports guitar.ts helpers only inside functions (guitar.ts imports this module).
 
+// generate.ts first: it loads headDrills in the order the soloPianoDrills tables expect (a load-order cycle).
+import './generate';
 import type { Drill, DrillSpec, FamilyId } from './types';
 import type { LevelDef, SpecTemplate } from './generate';
 import { noteAt, type Tuning } from '../fretboard';
@@ -42,10 +44,11 @@ export const isGuitarTopFamily = (f: string): f is GuitarTopFamily => (GUITAR_TO
  * the Coltrane reharm of a head with its melody, and writing and playing a whole solo chorus.
  */
 export const GUITAR_GRADE_UP: Record<string, number> = {
-  'g-solo-8': 9, 'g-solo-9': 9, 'g-impro-7': 9, 'g-bebop-9': 9, 'g-theory-5': 9, 'g-harris-10': 9, 'g-harrisline-7': 9,
+  'g-solo-8': 9, 'g-solo-9': 9, 'g-impro-7': 9, 'g-theory-5': 9, 'g-harris-10': 9, 'g-harrisline-7': 9,
   'g-harris-11': 10, 'g-harris-12': 10, 'g-harris-13': 10, 'g-theory-6': 10, 'g-ctx-8': 10, 'g-cmel-6': 10, 'g-harrisline-9': 10,
   'g-picking-8': 10, 'g-legato-8': 10, 'g-phrase-8': 10, 'g-harm-13': 10, 'g-jazz-12': 10,
-  'g-theory-3': 11, 'g-tune-9': 11, 'g-solo-10': 11,
+  'g-tune-9': 10,
+  'g-theory-3': 11, 'g-solo-10': 11,
 };
 
 /** Teaching rank inside a grade (path.ts GUITAR_RANK): the hands first, then the comping textures, the lines last. */
@@ -73,7 +76,7 @@ export const SPEED_ROWS = (): Row[] => {
     ['3nps scales in 16ths at speed', 'סולמות 3 צלילים במיתר בשש-עשריות במהירות', [S('g-picking>3nps', { option: 0, perBeat: 4, stretch: true }), S('g-picking>3nps-economy', { option: 1, perBeat: 4, stretch: true }), S('g-picking>3nps', { option: 4, perBeat: 4, stretch: true })], G12, [96, 144], '16ths', 9],
     ['3nps legato in 16ths at speed', 'לגאטו 3 צלילים במיתר בשש-עשריות במהירות', [0, 1, 4].map((o) => S('g-legato>3nps-legato', { option: o, perBeat: 4, stretch: true })), G12, [96, 144], '16ths', 10],
     ['Sweeps at speed: 3 and 5 strings, major and minor', 'סוויפ במהירות: 3 ו-5 מיתרים, מז׳ור ומינור', [S('g-picking>sweep5'), S('g-picking>sweep5', { minor: true }), S('g-picking>sweep3'), S('g-picking>sweep3', { minor: true })], G12, [80, 132], 'triplets / 16ths', 10],
-    ['Tapped arpeggios and sweeps at concert tempo', 'ארפג׳ים בטאפינג וסוויפ בטמפו של הופעה', [S('g-legato>tap'), S('g-legato>tap', { minor: true }), S('g-picking>sweep5', { minor: true })], G12, [100, 152], 'triplets / 16ths', 11],
+    ['Tapped arpeggios and sweeps at concert tempo', 'ארפג׳ים בטאפינג וסוויפ בטמפו של הופעה', [S('g-legato>tap'), S('g-legato>tap', { minor: true }), S('g-picking>sweep5', { minor: true, option: 1 })], G12, [100, 152], 'triplets / 16ths', 11],
     ['String skipping and tremolo at speed', 'דילוג מיתרים וטרמולו במהירות', [S('g-picking>skip'), S('g-picking>skip', { option: 1 }), S('g-picking>tremolo', { option: 1 }), S('g-picking>tremolo', { option: 2 })], G12, [110, 168], '16ths', 11],
   ];
 };
@@ -92,7 +95,7 @@ export const FUSION_ROWS = (): Row[] => {
 export const CMARR_ROWS = (): Row[] => {
   const S = (kind: string) => SERVED.map((idx) => sp('g-cmarr', kind, { option: opt(idx) }));
   return [
-    ['The melody over a walking bass', 'המנגינה מעל בס מהלך', S('ar-walk'), HEAD_KEYS, [56, 104], 'melody + walking quarters', 9],
+    ['The melody over the bass line, a whole chorus', 'המנגינה מעל קו הבס, פזמון שלם', S('ar-walk'), HEAD_KEYS, [56, 104], 'melody + walking quarters', 9],
     ['A reharmonised chorus in drop 2', 'פזמון בהרמון מחדש בדרופ 2', S('ar-reharm'), HEAD_KEYS, [56, 100], 'chord-melody', 10],
     ['Intro, chorus and a tag ending', 'פתיחה, פזמון וסיום בתג', S('ar-intro'), HEAD_KEYS, [56, 100], 'chord-melody', 10],
     ['Two choruses: as written, then reharmonised', 'שני פזמונים: כפי שנכתב, ואז בהרמון מחדש', S('ar-two'), HEAD_KEYS, [56, 100], 'chord-melody', 11],
@@ -106,7 +109,7 @@ export const SOLOJAZZ_ROWS = (): Row[] => {
     ['Walking bass and guide tones through ii–V–I, at tempo', 'בס מהלך וצלילים מנחים ב-ii–V–I, בטמפו', [S('g-jazz>solo-texture', { option: 0, swing: true }), S('g-jazz>solo-texture', { option: 1, swing: true })], CYC4, [100, 160], 'quarters + 8ths', 9],
     ['Walking bass with shells on the blues', 'בס מהלך עם קונכיות על הבלוז', [S('sj-blues', { option: 0, swing: true }), S('sj-blues', { option: 1, swing: true })], CYC4, [90, 150], 'quarters + 8ths', 10],
     ['Walking bass with shells on rhythm changes', 'בס מהלך עם קונכיות על ריתם צ׳יינג׳ס', [S('sj-rhythm', { option: 0, swing: true }), S('sj-rhythm', { option: 1, swing: true })], CYC4, [100, 170], 'quarters + 8ths', 10],
-    ['A whole head: melody, guide tones and a walking bass', 'שיר שלם: מנגינה, צלילים מנחים ובס מהלך', SERVED.map((idx) => S('sj-head', { option: opt(idx) })), HEAD_KEYS, [56, 100], 'three voices', 11],
+    ['A whole head solo: two choruses, guide tones then drop 2', 'שיר שלם סולו: שני פזמונים, צלילים מנחים ואז דרופ 2', SERVED.map((idx) => S('sj-head', { option: opt(idx) })), HEAD_KEYS, [56, 100], 'three voices', 11],
   ];
 };
 
@@ -190,8 +193,9 @@ const sixteenths = (gns: GN[], last = 1): Ev[] => gns.map((g, i) => ({ beat: i /
 /** Four notes a string (stretch legato): op 0 the major scale up and down strings 6 → 1, op 1 the Dorian from the 2nd. */
 function fourNps(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
-  const ints = s.option === 1 ? [0, 2, 3, 5, 7, 9, 10] : MAJ;
-  const tonic = s.option === 1 ? mod(key + 2, 12) : key;
+  // op 1: the melodic minor (jazz minor) — a different set of notes from the major of the same key.
+  const ints = s.option === 1 ? [0, 2, 3, 5, 7, 9, 11] : MAJ;
+  const tonic = key;
   // From the lowest scale note at frets 1–3 of the 6th string, so the 24 notes stay under the 20th fret.
   let start = noteAt(tu, 6, 1);
   while (!ints.includes(mod(start - tonic, 12))) start++;
@@ -207,7 +211,7 @@ function fourNps(s: DrillSpec, tu: Tuning): Drill {
   }
   const down = [...up].reverse().map((g, i, arr) => ({ ...g, tech: i === 0 || arr[i - 1].s !== g.s ? ('pick' as const) : ('pull' as const) }));
   const gns = [...up, ...down.slice(1)];
-  const title = s.option === 1 ? tt('Four notes a string: Dorian, hammer up, pull down', 'ארבעה צלילים במיתר: דורי, הקשות למעלה, משיכות למטה', tonic) : tt('Four notes a string: major, hammer up, pull down', 'ארבעה צלילים במיתר: מז׳ור, הקשות למעלה, משיכות למטה', key);
+  const title = s.option === 1 ? tt('Four notes a string: melodic minor, hammer up, pull down', 'ארבעה צלילים במיתר: מינור מלודי, הקשות למעלה, משיכות למטה', key) : tt('Four notes a string: major, hammer up, pull down', 'ארבעה צלילים במיתר: מז׳ור, הקשות למעלה, משיכות למטה', key);
   return finish(s, tu, sixteenths(gns), { title, bpm: 70 });
 }
 
@@ -350,35 +354,6 @@ function soloForm(s: DrillSpec, tu: Tuning): Drill {
   return { ...d, chart: text.split('|').map((x) => x.trim().replace(/b/g, '♭')) };
 }
 
-/** Merge events that start together (a bass note under a melody note sounds as one chord). */
-function merge(evs: Ev[]): Ev[] {
-  const by = new Map<string, Ev>();
-  for (const e of evs) {
-    const k = e.beat.toFixed(4);
-    const cur = by.get(k);
-    if (!cur) by.set(k, { ...e, notes: [...e.notes] });
-    else {
-      for (const n of e.notes) if (!cur.notes.some((x) => x.s === n.s)) cur.notes.push(n);
-      cur.dur = Math.max(cur.dur, e.dur);
-    }
-  }
-  return [...by.values()].sort((a, b) => a.beat - b.beat);
-}
-
-/** Bass quarters under a melody (on strings 6–5, under the melody's string). */
-function walkUnder(tu: Tuning, mel: Ev[], chords: ChartChordEv[], beats: number, b0 = 0): Ev[] {
-  const line = walkLine(chords, beats);
-  const out: Ev[] = [];
-  line.forEach((m, b) => {
-    const top = [...mel].reverse().find((e) => e.beat <= b + b0 + 1e-6);
-    const near = top?.notes[0]?.f || 5;
-    const strs = [6, 5, 4].filter((x) => !top || top.notes.every((n) => n.s < x || Math.abs(top.beat - (b + b0)) > 1e-6));
-    const g = place(tu, m, strs.length ? strs : [6, 5], Math.max(0, near - 5), near + 4) ?? bassAt(tu, m, near);
-    out.push({ beat: b + b0, dur: 1, notes: [{ ...g, stroke: 'p', ct: false }] });
-  });
-  return out;
-}
-
 /** Chord-melody arranging and the solo head (option = head index × 16). */
 function arrange(s: DrillSpec, tu: Tuning): Drill {
   const { head } = decodeHead(s.option);
@@ -393,15 +368,18 @@ function arrange(s: DrillSpec, tu: Tuning): Drill {
   let rubato = false;
   switch (s.kind) {
     case 'ar-walk': {
-      const mel = chordMelodyEvs(tu, hi.notes, plain, 'mel');
-      evs = merge([...mel, ...walkUnder(tu, mel, plain, beats)]);
-      what = t('melody over a walking bass', 'מנגינה מעל בס מהלך');
+      // The melody with the bass on the chords' downbeats, a whole chorus (the walking quarters are g-solojazz's).
+      evs = chordMelodyEvs(tu, hi.notes, plain, 'bass');
+      what = t('melody over the bass line, a whole chorus', 'מנגינה מעל קו הבס, פזמון שלם');
       break;
     }
     case 'sj-head': {
-      const mel = chordMelodyEvs(tu, hi.notes, plain, 'guide');
-      evs = merge([...mel, ...walkUnder(tu, mel, plain, beats)]);
-      what = t('melody, guide tones, walking bass', 'מנגינה, צלילים מנחים, בס מהלך');
+      // The whole head solo: the melody with a guide tone under it (as the comp would sound), then the drop-2 chorus.
+      const one = chordMelodyEvs(tu, hi.notes, plain, 'guide');
+      const two = chordMelodyEvs(tu, hi.notes.map((n) => ({ ...n, beat: n.beat + beats })), plain.map((c) => ({ ...c, bar: c.bar + hi.bars.length })), 'drop2');
+      evs = [...one, ...two];
+      chart = [...hi.bars, ...hi.bars];
+      what = t('a whole head solo: guide tones, then drop 2', 'שיר שלם סולו: צלילים מנחים, ואז דרופ 2');
       break;
     }
     case 'ar-reharm':

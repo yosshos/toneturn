@@ -29,7 +29,9 @@ function noise(seed: number): () => number {
 /** A human take: timing jitter `sd` ms, velocities in their bands with a little spread. */
 function humanHits(d: Drill, bpm: number, sd: number, seed = 7): DrumTakeHit[] {
   const g = noise(seed);
-  return d.notes.flatMap((n) => {
+  // STAGE C (d-trade): the improvised bars get a stroke on every beat (nothing is written there).
+  const impro: DrumTakeHit[] = (d.goal.drum?.impro?.zones ?? []).flatMap(([a, b]) => Array.from({ length: Math.floor(b - a) }, (_, k) => ({ voice: 'snare' as const, on: expTimeMs(d, a + k + 0.25, bpm) + g() * sd, vel: 78 })));
+  return [...impro, ...d.notes.flatMap((n) => {
     const base = n.ghost ? 34 : n.accent ? 116 : n.dyn === 'p' ? 44 : n.dyn === 'f' ? 114 : 78;
     const j = g() * sd;
     // Flams / drags: grace hits 25 ms apart before the stroke (their gap jitters by 2 ms), soft.
@@ -41,7 +43,7 @@ function humanHits(d: Drill, bpm: number, sd: number, seed = 7): DrumTakeHit[] {
       open: n.voice === 'hhOpen' ? 1 : 0,
       hat: n.voice === 'hhOpen' ? 'open' : n.voice === 'hihat' ? 'closed' : null,
     } as DrumTakeHit];
-  });
+  })].sort((a, b) => a.on - b.on);
 }
 
 describe('drum analysis with human takes', () => {

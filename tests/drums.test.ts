@@ -12,19 +12,23 @@ import { VOICE_NOTE } from '../src/engine/drumKit';
 
 const FAMS = drumFamilies();
 // DRUMS P2 (drumMore.ts) added the rest of the curriculum: strokes 8, rolls 10, diddles 10, time 9, rock 9, fills 8, read 11, funk 8, shuffle 8, indep 8, feet 8.
-const V1: Record<string, number> = { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 10, 'd-song': 8, 'd-prog': 11, 'd-count': 5, 'd-notation': 5, 'd-form': 5 };
+const V1: Record<string, number> = { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 10, 'd-time': 9, 'd-rock': 9, 'd-fills': 8, 'd-read': 11, 'd-funk': 8, 'd-shuffle': 8, 'd-indep': 8, 'd-mideast': 9, 'd-feet': 8, 'd-ear': 8, 'd-jazz': 12, 'd-latin': 10, 'd-song': 8, 'd-prog': 11, 'd-count': 5, 'd-notation': 5, 'd-form': 5,
+  // STAGE C (AUDIT-6 DA-10): the advanced families past 1400.
+  'd-pas': 12, 'd-stick': 6, 'd-synco': 6, 'd-chapin': 6, 'd-linear': 5, 'd-brush': 4, 'd-oddtempo': 5, 'd-trade': 5 };
 const HE = /[֐-׿]/;
 const allDrills = (): { lv: DrumLevelDef; d: Drill }[] => FAMS.flatMap((f) => f.levels.filter((lv) => lv.level < (MORE_FROM[f.id] ?? 99)).flatMap((lv) => levelDrills(lv, 'fifths-up').map((d) => ({ lv, d }))));
 
 /** A perfect take: every note on time, the right voice, velocities in their bands, the hat open where written. */
+/** STAGE C (d-trade): the improvised bars of a take — a stroke on every beat of each free zone (nothing is written there). */
+const improHits = (d: Drill, bpm: number): DrumTakeHit[] => (d.goal.drum?.impro?.zones ?? []).flatMap(([a, b]) => Array.from({ length: Math.floor(b - a) }, (_, k) => ({ voice: 'snare' as const, on: expTimeMs(d, a + k + 0.25, bpm), vel: 78 })));
 export function perfectHits(d: Drill, bpm: number): DrumTakeHit[] {
-  return d.notes.flatMap((n) => [...graceHits(d, n, bpm, 0), {
+  return [...improHits(d, bpm), ...d.notes.flatMap((n) => [...graceHits(d, n, bpm, 0), {
     voice: n.voice ?? 'snare',
     on: expTimeMs(d, n.beat, bpm),
     vel: n.ghost ? 35 : n.accent ? 116 : n.dyn === 'p' ? 45 : n.dyn === 'f' ? 112 : 78,
     open: n.voice === 'hhOpen' ? 1 : 0,
     hat: n.voice === 'hhOpen' ? 'open' : n.voice === 'hihat' ? 'closed' : null,
-  } as DrumTakeHit]);
+  } as DrumTakeHit])].sort((a, b) => a.on - b.on);
 }
 /** A flam's / drag's grace hits: 25 ms apart before the stroke, soft. */
 export function graceHits(d: Drill, n: Drill['notes'][number], bpm: number, jitter: number): DrumTakeHit[] {
@@ -41,7 +45,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       expect(HE.test(f.title.he)).toBe(true);
     }
     // In the shared catalogue, found by id, and only for the drums instrument.
-    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(20);
+    expect(guitarCatalog().filter((f) => f.id.startsWith('d-')).length).toBe(28);
     expect(familyById('d-rock')?.levels.length).toBe(9);
     expect(shownFamilies({ emphasis: 'both', instrument: 'drums' }).map((f) => f.id)).toEqual(Object.keys(V1));
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).some((f) => f.id.startsWith('d-'))).toBe(false);
@@ -80,7 +84,7 @@ describe('drums v1 catalogue (DRUMS_CURRICULUM §4.3)', () => {
       if (lv.mic) expect(d.notes.every((n) => n.voice === 'snare'), d.itemId).toBe(true);
     }
     const mic = shownFamilies({ emphasis: 'both', instrument: 'drums', drumMic: true });
-    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read', 'd-funk', 'd-ear', 'd-count', 'd-notation']);
+    expect(mic.map((f) => f.id)).toEqual(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-read', 'd-funk', 'd-ear', 'd-count', 'd-notation', 'd-pas', 'd-stick', 'd-synco']);
     expect(mic.find((f) => f.id === 'd-read')!.levels.length).toBe(5);
   });
 

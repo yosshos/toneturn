@@ -18,13 +18,12 @@ import { inCourse, isKeysForAll, type CourseId } from './courses';
 import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
-import { VOICE_FAMILIES } from './voiceFamilies';
+import { VOICE_FAMILIES, vocalLevelByRef } from './voiceFamilies';
+import { DRUM_STAGGER, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from './levelPlacement';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
 import { GUITAR_TOP_RANK } from './drills/guitarTop';
-import { DRUM_TOP_DIFF } from './drills/drumTop';
-import { VOICE_TOP_DIFF } from './voiceTop';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -247,10 +246,25 @@ const PACK_TOPICS: Record<string, Pack> = {
   'ct-degree': 'jazz', mediants: 'jazz', 'pedal-ear': 'jazz', 'approach-chord': 'jazz', 'counter-line': 'jazz', 'modern-color': 'jazz', 'func-color': 'jazz', 'modal-mix': 'jazz',
   // Solo jazz piano by ear (Siskind, SISKIND-SOLO-PIANO C1–C3).
   'lh-tex-ear': 'jazz', 'solo-tex-ear': 'jazz', 'comp-rhythm-ear': 'jazz',
+  // AUDIT-6 §2–3 (course membership rule, courses.ts inCourse): the jazz ear that sat in Ear — the advanced games'
+  // jazz-ear topics (voicing types by ear, ii–V chains), rootless and upper-structure voicings, reading a standard's
+  // lead sheet — and the Jazz beginner band's blues on-ramp.
+  'voicing-type': 'jazz', 'jazz-chains': 'jazz', 'upper-rootless': 'jazz', 'chart-analysis': 'jazz', 'blues-ear': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
 };
+/**
+ * AUDIT-6 §3: single levels of a mixed topic that are jazz ear (`topic:level`): the jazz voicings, altered and upper
+ * extensions, the jazz grids (tritone subs and backdoor, the 12-bar jazz blues, the 32-bar AABA), the bebop scales,
+ * jazz progressions and "which jazz form?". The topic's other levels stay in Ear.
+ */
+export const PACK_LEVELS: Record<string, Pack> = Object.fromEntries([
+  'voicings:3', 'voicings:4', 'voicings:5',
+  ...[2, 3, 4, 5, 6, 7, 8].map((l) => `extensions:${l}`),
+  'grid-dictation:5', 'grid-dictation:7', 'grid-dictation:8',
+  'scale-types:5', 'progressions:2', 'next-chord:2', 'song-form:6',
+].map((k) => [k, 'jazz' as Pack]));
 const PACK_LESSONS: Partial<Record<string, Pack>> = { 'jazz-1': 'jazz', 'jazz-2': 'jazz', runs: undefined };
 const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
 
@@ -259,10 +273,13 @@ let CAT_KEY = '';
 
 /** Every step there is (all players). Rebuilt when topics are registered later (key = topic/level count). */
 export function stepCatalogue(): PathStep[] {
-  const key = Object.entries(TOPIC_GEN).map(([k, t]) => `${k}${t.levels.length}`).join(',');
+  // AUDIT-6 X1: game-only topics are never path steps, whichever module registered them (Rush used to add 19 jazz
+  // steps to the Ear path in the app only); they don't count in the key either.
+  const pathTopics = Object.entries(TOPIC_GEN).filter(([, t]) => !t.gameOnly);
+  const key = pathTopics.map(([k, t]) => `${k}${t.levels.length}`).sort().join(',');
   if (CATALOGUE && CAT_KEY === key) return CATALOGUE;
   const out: PathStep[] = [];
-  for (const [topic, T] of Object.entries(TOPIC_GEN)) {
+  for (const [topic, T] of pathTopics) {
     for (let level = 1; level <= T.levels.length; level++) {
       let q: Question;
       try {
@@ -284,7 +301,7 @@ export function stepCatalogue(): PathStep[] {
         domain: domainOf(skill),
         difficulty: q.difficulty,
         choices: q.kind === 'choice' ? q.choices.length : 0,
-        pack: PACK_TOPICS[topic] ?? (topic === 'absolute' ? 'absolute' : undefined),
+        pack: PACK_LEVELS[`${topic}:${level}`] ?? PACK_TOPICS[topic] ?? (topic === 'absolute' ? 'absolute' : undefined),
         forPlays: T.levelPlays?.[level - 1] ?? T.forPlays,
         sung,
         mic,
@@ -464,8 +481,6 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...SP_LEVEL_DIFF,
   // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
   'k-harm-8': 1780,
-  // STAGE C (AUDIT-6 DA-10): the advanced drum families, each level at its own rating (1420–1880).
-  ...DRUM_TOP_DIFF,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -473,7 +488,14 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
  */
 export const PATH_CAP = 1900;
 /** Families whose level order on the path is not their number order (placed by grade, or by KEYS_LEVEL_DIFF). */
-export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro'];
+export const NON_MONOTONE_FAMILIES = [
+  // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
+  'g-ctx',
+  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+  // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
+  // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
+  // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).
+  'control', 'arpeggios', 'cadences', 'k-rhythm', 'b-styles', 'b-scale', 'b-walk', 'b-ext', 'd-diddles', 'd-count', 'd-read'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;
@@ -544,7 +566,7 @@ function ladderSteps(): PathStep[] {
   const diff = (i: number) => 700 + i * 70;
   for (const f of catalog())
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: Math.min(PATH_CAP, KEYS_LEVEL_DIFF[lv.id] ?? Math.round(diff(i * spreadOf(f.id, f.levels.length, KEYS_LATER[f.id] ?? 0) + (KEYS_LATER[f.id] ?? 0)))), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: 'piano' }, skill: 'instrument', sub: 'instrument/piano-tech', domain: 'instrument', difficulty: Math.min(PATH_CAP, LEVEL_PLACEMENT[lv.id] ?? KEYS_LEVEL_DIFF[lv.id] ?? Math.round(diff(i * spreadOf(f.id, f.levels.length, KEYS_LATER[f.id] ?? 0) + (KEYS_LATER[f.id] ?? 0)))), choices: 0, forPlays: ['keys', 'piano'], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   for (const f of guitarCatalog()) {
     // Drums (0.65): the drum families are path steps of the drums course (forPlays 'drums' → inCourse).
@@ -553,16 +575,29 @@ function ladderSteps(): PathStep[] {
     const from = DRUM_LATER[f.id] ?? 0;
     // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
     // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
-    const gDiff = (lv: { grade?: number; id?: string }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : (KEYS_LEVEL_DIFF[lv.id ?? ''] ?? Math.min(PATH_CAP, Math.round(diff(i * spreadOf(f.id, f.levels.length, from) + from)))));
+    // AUDIT-6 (levelPlacement.ts): a curated per-level rating wins; then the guitar grade; then the index placement
+    // (the drums staggered by family so their families no longer share the same rungs).
+    const stagger = inst === 'drums' ? DRUM_STAGGER[f.id] ?? 0 : 0;
+    const gDiff = (lv: { grade?: number; id?: string }, i: number) => Math.min(PATH_CAP, LEVEL_PLACEMENT[lv.id ?? ''] ?? (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : (KEYS_LEVEL_DIFF[lv.id ?? ''] ?? Math.round(diff(i * spreadOf(f.id, f.levels.length, from) + from) + stagger))));
     f.levels.forEach((lv, i) =>
       out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number; id?: string }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   }
-  for (const pr of VOCAL_PROGRAMS)
+  // AUDIT-6 V-W1: a vocal level sits where its items' ratings put it (levelPlacement.voiceItemRating), or at its
+  // curated place; the family keeps rising in its teaching order. The old index placement is only the fallback.
+  for (const pr of VOCAL_PROGRAMS) {
+    const ds = monotoneFamily(pr.refs.map((n, i) => Math.min(PATH_CAP, LEVEL_PLACEMENT[`vocal:${n}`] ?? vocalItemsRating(n) ?? diff(i + (VOICE_LATER[pr.id] ?? 0)))));
     pr.refs.forEach((n, i) => {
-      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: VOICE_TOP_DIFF[n] ?? diff(i + (VOICE_LATER[pr.id] ?? 0)), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
+      out.push({ id: `vocal:${n}`, kind: 'vocal', ladder: { family: pr.id, level: i + 1, ref: String(n) }, skill: 'singing', sub: 'singing/vocal-ladder', domain: 'voice', difficulty: Math.min(PATH_CAP, ds[i]), choices: 0, sung: true, mic: true, title: { en: `${pr.title.en} · ${i + 1}`, he: `${pr.title.he} · ${i + 1}` } });
     });
+  }
   return out;
+}
+
+/** A vocal level's path rating from its items' mean rating (none when its items carry no rating). */
+export function vocalItemsRating(n: number): number | undefined {
+  const ds = (vocalLevelByRef(n)?.items ?? []).map((x) => (x as { difficulty?: number }).difficulty).filter((x): x is number => typeof x === 'number');
+  return ds.length ? voiceItemRating(ds.reduce((a, b) => a + b, 0) / ds.length) : undefined;
 }
 
 /**
@@ -599,6 +634,8 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   // Ladder steps only where the course asked for them (and only for its families / programs).
   if (s.ladder && !inp.ladderFamilies?.includes(s.ladder.family)) return false;
   if (s.ladder && inp.ladderHidden?.includes(s.ladder.ref)) return false;
+  // AUDIT-6: the Jazz course's sung families (scat, standards) only for a player who sings (the voice is their instrument).
+  if (inp.course === 'jazz' && s.kind === 'vocal' && !inp.plays.includes('voice')) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
   if (s.sung && (inp.leaveOut.includes('voice') || inp.noSing)) return false;
   if (s.mic && inp.noMic) return false;

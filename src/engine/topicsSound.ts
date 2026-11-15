@@ -172,7 +172,7 @@ TOPIC_GEN['filter-ear'] = {
       const base: Base = { source: 'pink', seed: seedOf(rnd) };
       const f = pickR(rnd, [1000, 1600, 2000]);
       const names: Names = { highpass: nm('High-pass (thinner)', 'היי-פאס (דק יותר)', 'high pass', 'high-pass', 'thinner'), lowpass: nm('Low-pass (darker)', 'לואו-פאס (כהה יותר)', 'low pass', 'low-pass', 'darker') };
-      return make(T, id, seed, level, 900, abItem({ en: 'B is filtered. High-pass or low-pass?', he: 'B מסונן. היי-פאס או לואו-פאס?' }, names, ['highpass', 'lowpass'], type, S(base, {}), (c) => S(base, { eq: [filt(f, c as 'highpass' | 'lowpass')] })));
+      return make(T, id, seed, level, 950, abItem({ en: 'B is filtered. High-pass or low-pass?', he: 'B מסונן. היי-פאס או לואו-פאס?' }, names, ['highpass', 'lowpass'], type, S(base, {}), (c) => S(base, { eq: [filt(f, c as 'highpass' | 'lowpass')] })));
     }
     const base: Base = level === 2 ? { source: 'pink', seed: seedOf(rnd) } : { source: 'loop', seed: seedOf(rnd), bpm: bpmOf(rnd) };
     const text: Bi = { en: `A ${tEn} filter`, he: `פילטר ${tHe}` };
@@ -181,12 +181,12 @@ TOPIC_GEN['filter-ear'] = {
       const i = Math.floor(rnd() * list.length);
       const opts = windowAround(rnd, list, i, 4);
       const names: Names = Object.fromEntries(opts.map((f) => [fid(f), hzName(f)]));
-      return make(T, id, seed, level, 1200, abItem({ en: `A is plain, B went through a ${tEn} filter. Where is the cut-off?`, he: `A נקי, B עבר פילטר ${tHe}. איפה תדר החיתוך?` }, names, opts.map(fid), fid(list[i]), S(base, {}), (c) => S(base, { eq: [filt(+c.slice(1))] }), text));
+      return make(T, id, seed, level, 1150, abItem({ en: `A is plain, B went through a ${tEn} filter. Where is the cut-off?`, he: `A נקי, B עבר פילטר ${tHe}. איפה תדר החיתוך?` }, names, opts.map(fid), fid(list[i]), S(base, {}), (c) => S(base, { eq: [filt(+c.slice(1))] }), text));
     }
     const i = Math.floor(rnd() * FILTER_STEPS.length);
     const opts = windowAround(rnd, FILTER_STEPS, i, 5);
     const names: Names = Object.fromEntries(opts.map((f) => [fid(f), hzName(f)]));
-    return make(T, id, seed, level, 1450, oneItem({ en: `This mix has a ${tEn} filter. Try the cut-offs: which one matches it?`, he: `במיקס הזה יש פילטר ${tHe}. נסו את תדרי החיתוך: איזה מתאים?` }, names, opts.map(fid), fid(FILTER_STEPS[i]), (c) => S(base, { eq: [filt(+c.slice(1))] }), text));
+    return make(T, id, seed, level, 1350, oneItem({ en: `This mix has a ${tEn} filter. Try the cut-offs: which one matches it?`, he: `במיקס הזה יש פילטר ${tHe}. נסו את תדרי החיתוך: איזה מתאים?` }, names, opts.map(fid), fid(FILTER_STEPS[i]), (c) => S(base, { eq: [filt(+c.slice(1))] }), text));
   },
 };
 
@@ -218,7 +218,7 @@ TOPIC_GEN['tone-hz'] = {
     }
     const names: Names = Object.fromEntries(opts.map((f) => [fid(f), hzName(f)]));
     const tone = (c: string): FxSpec => S({ source: 'sine', seed: 0, sineHz: +c.slice(1) }, {}, null);
-    return make('tone-hz', id, seed, level, [1000, 1300, 1600][level - 1], oneItem({ en: 'A pure tone. What is its frequency?', he: 'צליל טהור. מה התדר שלו?' }, names, opts.map(fid), fid(ans), tone));
+    return make('tone-hz', id, seed, level, [1000, 1250, 1500][level - 1], oneItem({ en: 'A pure tone. What is its frequency?', he: 'צליל טהור. מה התדר שלו?' }, names, opts.map(fid), fid(ans), tone));
   },
 };
 

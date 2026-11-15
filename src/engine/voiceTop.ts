@@ -18,6 +18,7 @@
 // loose timing grade, the cents pass of its grader, and a miss waits for Continue (the session runner). Pure data.
 
 import type { VocalItem, VocalLevel } from './vocal';
+import { VOICE_TOP_PLACEMENT } from './stageCPlacement';
 
 type Bi = { en: string; he: string };
 type Item = Omit<VocalItem, 'id' | 'level'>;
@@ -166,9 +167,9 @@ export const VOICE_TOP_NAMES: Record<number, Bi> = {
   2231: { en: 'Read, vary, improvise', he: 'לקרוא, לגוון, לאלתר' },
   2232: { en: 'Quick study in swing', he: 'לימוד מהיר בסווינג' },
   2233: { en: 'Quick study, minor bossa', he: 'לימוד מהיר, בוסה במינור' },
-  2241: { en: 'The upper part from the score', he: 'הקול העליון מהתווים' },
-  2242: { en: 'The lower part from the score', he: 'הקול התחתון מהתווים' },
-  2243: { en: 'The middle of three parts', he: 'האמצעי מבין שלושה קולות' },
+  2241: { en: 'The top part', he: 'הקול העליון' },
+  2242: { en: 'The lower part', he: 'הקול התחתון' },
+  2243: { en: 'The middle part of three', he: 'הקול האמצעי מבין שלושה' },
   2251: { en: 'Pop and R&B', he: 'פופ ו-R&B' },
   2252: { en: 'Soul', he: 'סול' },
   2253: { en: 'Musical theatre', he: 'תיאטרון מוזיקלי' },
@@ -180,17 +181,9 @@ export const VOICE_TOP_NAMES: Record<number, Bi> = {
   2273: { en: 'The top-floor goal', he: 'יעד הקומה העליונה' },
 };
 
-/** STAGE C path ratings of the new vocal levels (path.ts uses them instead of the family index). */
-export const VOICE_TOP_DIFF: Record<number, number> = {
-  2201: 1720, 2202: 1780, 2203: 1840,
-  2211: 1730, 2212: 1790, 2213: 1850,
-  2221: 1740, 2222: 1800, 2223: 1860,
-  2231: 1720, 2232: 1800, 2233: 1880,
-  2241: 1720, 2242: 1790, 2243: 1860,
-  2251: 1700, 2252: 1760, 2253: 1820,
-  2261: 1760, 2262: 1830, 2263: 1890,
-  2271: 1730, 2272: 1800, 2273: 1880,
-};
+
+/** The same ratings by level number. */
+export const VOICE_TOP_DIFF: Record<number, number> = Object.fromEntries(Object.entries(VOICE_TOP_PLACEMENT).map(([k, v]) => [Number(k.slice(6)), v]));
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 /**

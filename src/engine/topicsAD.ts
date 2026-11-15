@@ -398,7 +398,7 @@ TOPIC_GEN['meter-feel'] = {
       };
       choiceStim['34'] = [six([2, 2, 2])];
       choiceStim['68'] = [six([3, 3])];
-      return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1250, ask: { en: 'Six quick notes per bar — grouped 2+2+2 (3/4) or 3+3 (6/8)?', he: 'שישה צלילים מהירים בתיבה — 2+2+2 (3/4) או 3+3 (6/8)?' }, names, answer, choices: ['34', '68'], stimulus: choiceStim[answer], choiceStim });
+      return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1100, ask: { en: 'Six quick notes per bar — grouped 2+2+2 (3/4) or 3+3 (6/8)?', he: 'שישה צלילים מהירים בתיבה — 2+2+2 (3/4) או 3+3 (6/8)?' }, names, answer, choices: ['34', '68'], stimulus: choiceStim[answer], choiceStim });
     }
     // Hemiola: two bars of 3/4 felt as one bar of 3/2 (accents every 2 quarters) before the cadence.
     const answer = pickR(rnd, ['yes', 'no']);
@@ -422,7 +422,7 @@ TOPIC_GEN['meter-feel'] = {
     };
     choiceStim.yes = [mk(true)];
     choiceStim.no = [mk(false)];
-    return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1550, ask: { en: 'Near the end: a hemiola, or not?', he: 'לקראת הסוף: המיולה, או לא?' }, names, answer, choices: ['yes', 'no'], stimulus: choiceStim[answer], choiceStim });
+    return choiceQ({ id, topic: 'meter-feel', level, seed, skill: 'meter', difficulty: 1300, ask: { en: 'Near the end: a hemiola, or not?', he: 'לקראת הסוף: המיולה, או לא?' }, names, answer, choices: ['yes', 'no'], stimulus: choiceStim[answer], choiceStim });
   },
 };
 
@@ -520,7 +520,7 @@ TOPIC_GEN['voice-count'] = {
     const names: Names = { '1': nm('One', 'אחד', 'one'), '2': nm('Two', 'שניים', 'two'), '3': nm('Three', 'שלושה', 'three'), '4': nm('Four', 'ארבעה', 'four') };
     const sub: Names = {};
     for (const k of pool) sub[k] = names[k];
-    return choiceQ({ id, topic: 'voice-count', level, seed, skill: 'form', difficulty: [900, 1150, 1300][level - 1], ask: level < 3 ? { en: 'How many notes are sounding together?', he: 'כמה צלילים נשמעים ביחד?' } : { en: 'How many separate lines are moving?', he: 'כמה קווים נפרדים נעים?' }, names: sub, answer, choices: pool, stimulus: [stim] });
+    return choiceQ({ id, topic: 'voice-count', level, seed, skill: 'form', difficulty: [900, 1080, 1250][level - 1], ask: level < 3 ? { en: 'How many notes are sounding together?', he: 'כמה צלילים נשמעים ביחד?' } : { en: 'How many separate lines are moving?', he: 'כמה קווים נפרדים נעים?' }, names: sub, answer, choices: pool, stimulus: [stim] });
   },
 };
 
@@ -628,7 +628,7 @@ TOPIC_GEN['voice-leading'] = {
       const txt = `${nmOf(upA)} → ${nmOf(upB)}\n${nmOf(lowA)} → ${nmOf(lowB)}`;
       const txtHe = `${nmHe(upA)} ← ${nmHe(upB)}\n${nmHe(lowA)} ← ${nmHe(lowB)}`;
       const names: Names = { p5: nm('Parallel fifths', 'קווינטות מקבילות', 'fifths'), p8: nm('Parallel octaves', 'אוקטבות מקבילות', 'octaves'), ok: nm('Fine — no parallels', 'תקין — אין מקבילות', 'fine', 'none') };
-      return choiceQ({ id, topic: 'voice-leading', level, seed, skill: 'theory', difficulty: 1400, ask: { en: 'Upper and lower voice move together. What do you see?', he: 'הקול העליון והתחתון זזים יחד. מה רואים?' }, text: { en: txt, he: txtHe }, names, answer: kind, choices: ['p5', 'p8', 'ok'], stimulus: [] });
+      return choiceQ({ id, topic: 'voice-leading', level, seed, skill: 'theory', difficulty: 1320, ask: { en: 'Upper and lower voice move together. What do you see?', he: 'הקול העליון והתחתון זזים יחד. מה רואים?' }, text: { en: txt, he: txtHe }, names, answer: kind, choices: ['p5', 'p8', 'ok'], stimulus: [] });
     }
     const root = (key + 7) % 12; // V7 in the key
     const sev = (root + 10) % 12;
@@ -636,7 +636,7 @@ TOPIC_GEN['voice-leading'] = {
     const opts = shuffleR(rnd, [right, (sev + 1) % 12, (sev + 2) % 12, (sev + 10) % 12]);
     const names: Names = {};
     opts.forEach((p) => (names[`n${p}`] = nm(nmOf(p), nmHe(p))));
-    return choiceQ({ id, topic: 'voice-leading', level, seed, skill: 'theory', difficulty: 1520, ask: { en: `${nmOf(root)}7 → ${nmOf(key)}: the seventh (${nmOf(sev)}) resolves to…`, he: `${nmOf(root)}7 ← ${nmOf(key)}: הספטימה (${nmHe(sev)}) נפתרת ל…` }, text: { en: `${nmOf(root)}7 → ${nmOf(key)}`, he: `${nmOf(root)}7 → ${nmOf(key)}` }, names, answer: `n${right}`, choices: opts.map((p) => `n${p}`), stimulus: [] });
+    return choiceQ({ id, topic: 'voice-leading', level, seed, skill: 'theory', difficulty: 1480, ask: { en: `${nmOf(root)}7 → ${nmOf(key)}: the seventh (${nmOf(sev)}) resolves to…`, he: `${nmOf(root)}7 ← ${nmOf(key)}: הספטימה (${nmHe(sev)}) נפתרת ל…` }, text: { en: `${nmOf(root)}7 → ${nmOf(key)}`, he: `${nmOf(root)}7 → ${nmOf(key)}` }, names, answer: `n${right}`, choices: opts.map((p) => `n${p}`), stimulus: [] });
   },
 };
 

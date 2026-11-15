@@ -155,7 +155,7 @@ TOPIC_GEN['three-voice'] = {
     });
   },
 };
-TOPIC_TAGS['three-voice'] = tg(['dictation', 'two-part', 0.4], ['dictation', 'bass', 0.3], ['form', 'voices', 0.3]);
+TOPIC_TAGS['three-voice'] = tg(['dictation', 'two-part', 0.6], ['form', 'voices', 0.4]);
 
 // ======================================================================= one-hearing: playback after one hearing
 
@@ -227,7 +227,7 @@ TOPIC_GEN['one-hearing'] = {
     });
   },
 };
-TOPIC_TAGS['one-hearing'] = tg(['dictation', 'melodic', 0.5], ['sequences', 'melody', 0.3], ['dictation', 'bass', 0.2]);
+TOPIC_TAGS['one-hearing'] = tg(['dictation', 'melodic', 0.6], ['sequences', 'melody', 0.4]);
 
 // ======================================================================= features: describe the piece
 
@@ -321,7 +321,7 @@ TOPIC_GEN['features'] = {
     let guard = 0;
     while (opts.size < 4 && guard++ < 200) {
       const c = { ...right };
-      const nChange = feats.length >= 3 && rnd() < 0.3 ? 2 : 1;
+      const nChange = (feats.length >= 3 && rnd() < 0.3) || (feats.length === 2 && opts.size === 3) ? 2 : 1;
       for (const f of shuffleR(rnd, feats).slice(0, nChange)) c[f] = pickR(rnd, values(f).filter((x) => x !== right[f]));
       opts.set(keyOf(c), c);
     }
@@ -348,4 +348,4 @@ TOPIC_GEN['features'] = {
     return q;
   },
 };
-TOPIC_TAGS['features'] = tg(['expression', 'dynamics', 0.3], ['expression', 'articulation', 0.25], ['form', 'style', 0.25], ['tempo', 'compare', 0.2]);
+TOPIC_TAGS['features'] = tg(['form', 'style', 0.5], ['expression', 'dynamics', 0.3], ['tempo', 'compare', 0.2]);

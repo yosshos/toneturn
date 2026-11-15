@@ -952,7 +952,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'theory',
     emoji: '🏛️',
     title: { en: 'Roman numerals', he: 'ספרות רומיות' },
-    takeaway: { en: 'The numeral is the scale step of the root; the case is the quality: in major I ii iii IV V vi vii°, in harmonic minor i ii° III+ iv V VI vii°.', he: 'הספרה היא הדרגה של השורש; הגודל הוא האיכות: במז׳ור I ii iii IV V vi vii°, במינור הרמוני i ii° III+ iv V VI vii°.' },
+    takeaway: { en: 'The numeral is the scale step of the root; the case is the quality: in major I ii iii IV V vi vii°, in minor i ii° III iv V VI VII vii° (V and vii° take the raised 7th).', he: 'הספרה היא הדרגה של השורש; הגודל הוא האיכות: במז׳ור I ii iii IV V vi vii°, במינור i ii° III iv V VI VII vii° (ב־V וב־vii° דרגה 7 מוגבהת).' },
     steps: [
       {
         say: { en: 'Hi {name}! A Roman numeral names a chord by the scale step its root sits on. In C major, a chord on D is chord two.', he: 'היי {name}! ספרה רומית נותנת לאקורד שם לפי הדרגה שעליה יושב השורש שלו. בדו מז׳ור, אקורד על רה הוא אקורד שתיים.' },
@@ -970,14 +970,14 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [71, 74, 77], chord: true, key: 'C', text: { en: 'vii° → I', he: 'vii° → I' } },
       },
       {
-        say: { en: 'Minor keys use harmonic minor, with a raised seventh. In A minor: i, ii°, III+, iv, V, VI, vii°. That G♯ makes V major.', he: 'בסולמות מינוריים משתמשים במינור ההרמוני, עם דרגה 7 מוגבהת. בלה מינור: i, ii°, III+, iv, V, VI, vii°. הסול דיאז הופך את V למז׳ורי.' },
+        say: { en: 'In minor, steps six and seven vary. III, VI and VII come from natural minor; V and vii° take the raised seventh. In A minor: i, ii°, III, iv, V, VI, VII, vii°. That G♯ makes V major.', he: 'במינור הדרגות 6 ו־7 משתנות. III, ‏VI ו־VII באים מהמינור הטבעי; V ו־vii° לוקחים את דרגה 7 המוגבהת. בלה מינור: i, ii°, III, iv, V, VI, VII, vii°. הסול דיאז הופך את V למז׳ורי.' },
         play: [ch([57, 60, 64], 1), ch([52, 56, 59], 1), ch([57, 60, 64], 1.4)],
         show: { notes: [52, 56, 59], chord: true, key: 'C', text: { en: 'A minor: V = E G♯ B', he: 'לה מינור: V = מי סול♯ סי' } },
       },
       {
-        say: { en: 'And III+ is augmented: C, E, G♯. Strange and shiny.', he: 'ו־III+ הוא מוגדל: דו, מי, סול דיאז. מוזר ומבריק.' },
-        play: [ch([60, 64, 68], 1.6)],
-        show: { notes: [60, 64, 68], chord: true, key: 'C', text: { en: 'III+ = C E G♯', he: 'III+ = דו מי סול♯' } },
+        say: { en: 'Two sevenths, two chords. VII is G, B, D, a step below home. vii° is G♯, B, D, and it leads home.', he: 'שתי דרגות 7, שני אקורדים. VII הוא סול, סי, רה, טון מתחת לבית. vii° הוא סול דיאז, סי, רה, והוא מוביל הביתה.' },
+        play: [ch([55, 59, 62], 1), ch([57, 60, 64], 1), ch([56, 59, 62], 1), ch([57, 60, 64], 1.4)],
+        show: { notes: [56, 59, 62], chord: true, key: 'C', text: { en: 'VII = G B D · vii° = G♯ B D', he: 'VII = סול סי רה · vii° = סול♯ סי רה' } },
       },
       {
         say: { en: 'A secondary dominant borrows a V for another chord. V/V in C is D7, the dominant of G: a sudden push toward V.', he: 'דומיננטה משנית שואלת V בשביל אקורד אחר. V/V בדו מז׳ור הוא D7, הדומיננטה של סול: דחיפה פתאומית לכיוון V.' },
@@ -985,7 +985,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [54, 57, 60, 62], chord: true, key: 'C', text: { en: 'V/V = D7 → G', he: 'V/V = D7 → G' } },
       },
       {
-        say: { en: 'Your turn! I name the key, often play a cadence, then one chord. Find its step and its quality, then pick the numeral.', he: 'תורכם! אני אומר את הסולם, לרוב מנגן קדנצה, ואז אקורד אחד. מצאו את הדרגה ואת האיכות, ובחרו את הספרה.' },
+        say: { en: 'Your turn! I name the key, play a cadence, then one chord. Find its step and its quality, then pick the numeral.', he: 'תורכם! אני אומר את הסולם, מנגן קדנצה, ואז אקורד אחד. מצאו את הדרגה ואת האיכות, ובחרו את הספרה.' },
         play: [cad('G'), ch([57, 60, 64], 1.5)],
         show: { notes: [57, 60, 64], chord: true, key: 'G', text: { en: 'G major: ?', he: 'סול מז׳ור: ?' } },
       },

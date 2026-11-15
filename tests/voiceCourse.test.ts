@@ -12,7 +12,8 @@ const step = (ref: string) => vocal().find((s) => s.ladder!.ref === ref)!;
 describe('voice path placement (VOICE_CURRICULUM §8, VOICE_LATER)', () => {
   it('Barry Harris L1, harmony L1 and modes L1 no longer sit next to "hold a note" L1', () => {
     const hold = step('1').difficulty;
-    expect(step('301').difficulty).toBeGreaterThanOrEqual(hold + 6 * 70);
+    // AUDIT-6 V-W1: placed by their items now — Barry Harris L1 still well after the first held note.
+    expect(step('301').difficulty).toBeGreaterThanOrEqual(hold + 300);
     expect(step('201').difficulty).toBeGreaterThan(hold);
     expect(step('101').difficulty).toBeGreaterThan(hold);
   });
@@ -114,7 +115,7 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
   });
   // + the first steps (AUDIT-CONTENT-THEORY §ז.2).
   it('15 families + Barry Harris + the first steps, each with its own symbol on the voice path; every step of the path has one', () => {
-    expect(VOICE_FAMILIES.length).toBe(17);
+    expect(VOICE_FAMILIES.length).toBe(25); // + the 8 STAGE C families of the top ladder
     const glyphs = VOICE_FAMILIES.map((f) => FAMILY_GLYPH[f.id]);
     for (const g of glyphs) expect(GLYPHS[g], g).toBeDefined();
     const steps = stepCatalogue().filter((s) => inCourse(s, 'voice'));

@@ -172,7 +172,46 @@ export const SCAT_LEVELS: VocalLevel[] = [
   lv(1504, 0.56, [SCAT('approach', TWO_FIVE, 112, 1550), SCAT('approach', BLUES, 126, 1600)]),
 ];
 
-// ---------------------------------------------------------------- F6 agility: a bebop line (1600)
+// ---------------------------------------------------------------- F6 agility: runs, turns, melisma, bebop lines (1600)
+
+/** Full tempo (100 %) of a run: sixteenths at ♩80, 5⅓ notes a second. */
+export const RUN_FULL_BPM = 80;
+/**
+ * A run heard, then sung back on one vowel, at `pct` % of full tempo: sixteenths on the pulse (count-in, click and
+ * now-cue), graded by the melody grader (notes, timing, joins; lenient below 1300 like every sung melody).
+ */
+const RUN = (steps: number[], pct: number, shape: NonNullable<VocalItem['run']>['shape'], difficulty: number, at = 0.35): Item => {
+  const bpm = Math.round((RUN_FULL_BPM * pct) / 100);
+  return { kind: 'melody', seconds: Math.ceil((steps.length * 60) / bpm / 4) + 3, reference: 'before', at, steps, bpm, perBeat: 4, run: { pct, shape }, difficulty };
+};
+const UP5 = [0, 2, 4, 5, 7];
+const DOWN5 = [7, 5, 4, 2, 0];
+const UPDOWN9 = [0, 2, 4, 5, 7, 5, 4, 2, 0];
+const DOWNUP9 = [7, 5, 4, 2, 0, 2, 4, 5, 7];
+const MIN_PENTA_DOWN = [12, 10, 7, 5, 3, 0];
+const MAJ_PENTA_9 = [0, 2, 4, 7, 9, 7, 4, 2, 0];
+const RNB_LICK = [12, 10, 7, 5, 3, 5, 3, 0];
+const BLUES_DOWN = [12, 10, 7, 6, 5, 3, 0];
+const BLUES_UP = [0, 3, 5, 6, 7, 10, 12];
+const GOSPEL_BLUES = [10, 12, 10, 7, 6, 5, 3, 0];
+const TURN_1 = [0, 2, 0, -1, 0];
+const TURN_5_RUN = [7, 9, 7, 5, 7, 5, 4, 2, 0];
+const TURNS_UP = [2, 0, -1, 0, 5, 4, 2, 4, 9, 7, 5, 7];
+const MELISMA_UP = [0, 2, 4, 5, 2, 4, 5, 7, 4, 5, 7, 9, 7];
+const MELISMA_DOWN = [12, 11, 9, 7, 11, 9, 7, 5, 9, 7, 5, 4, 0];
+
+/** Agility before the bebop lines (AUDIT-5 V-11): 5 → 9-note runs, pentatonic and blues runs, turns, melisma; 60 → 120 %. */
+export const RUN_LEVELS: VocalLevel[] = [
+  lv(1603, 0.6, [RUN(UP5, 60, 'run', 1200), RUN(DOWN5, 60, 'run', 1200), RUN(UP5, 80, 'run', 1250), RUN(DOWN5, 80, 'run', 1250)]),
+  lv(1604, 0.58, [RUN(UP5, 100, 'run', 1300), RUN(DOWN5, 100, 'run', 1300), RUN(UP5, 120, 'run', 1350), RUN(DOWN5, 120, 'run', 1350)]),
+  lv(1605, 0.58, [RUN(UPDOWN9, 60, 'run', 1300), RUN(DOWNUP9, 60, 'run', 1300), RUN(UPDOWN9, 80, 'run', 1350), RUN(DOWNUP9, 80, 'run', 1350)]),
+  lv(1606, 0.56, [RUN(UPDOWN9, 100, 'run', 1400), RUN(DOWNUP9, 100, 'run', 1400), RUN(UPDOWN9, 120, 'run', 1450), RUN(DOWNUP9, 120, 'run', 1450)]),
+  lv(1607, 0.56, [RUN(MIN_PENTA_DOWN, 80, 'penta', 1350, 0.3), RUN(MAJ_PENTA_9, 80, 'penta', 1400), RUN(MIN_PENTA_DOWN, 100, 'penta', 1400, 0.3), RUN(RNB_LICK, 120, 'penta', 1450, 0.3)]),
+  lv(1608, 0.56, [RUN(BLUES_DOWN, 80, 'blues', 1400, 0.3), RUN(BLUES_UP, 100, 'blues', 1450, 0.3), RUN(GOSPEL_BLUES, 100, 'blues', 1450, 0.3), RUN(BLUES_DOWN, 120, 'blues', 1500, 0.3)]),
+  lv(1609, 0.56, [RUN(TURN_1, 80, 'turn', 1400, 0.4), RUN(TURN_5_RUN, 80, 'turn', 1450), RUN(TURN_1, 100, 'turn', 1450, 0.4), RUN(TURNS_UP, 100, 'turn', 1500, 0.3)]),
+  lv(1610, 0.55, [RUN(MELISMA_UP, 60, 'melisma', 1400, 0.3), RUN(MELISMA_DOWN, 80, 'melisma', 1450, 0.3), RUN(MELISMA_UP, 100, 'melisma', 1500, 0.3)]),
+  lv(1611, 0.55, [RUN(MELISMA_DOWN, 100, 'melisma', 1500, 0.3), RUN(MELISMA_UP, 120, 'melisma', 1550, 0.3), RUN(MELISMA_DOWN, 120, 'melisma', 1550, 0.3)]),
+];
 
 export const AGILITY_LEVELS: VocalLevel[] = [
   lv(1601, 0.7, [SONG('bop-line', { band: true, rhythm: true, need: 0.7, tol: 45 }, 1450), SONG('bop-line-2', { band: true, rhythm: true, need: 0.7, tol: 45 }, 1500)]),
@@ -462,7 +501,7 @@ export const FIRST_LEVELS: VocalLevel[] = [
 ];
 
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...VOICE_TOP_LEVELS, ...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...VOICE_TOP_LEVELS, ...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...RUN_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -479,7 +518,13 @@ export interface VoiceFamily {
 
 const nums = (base: number, levels: VocalLevel[]) => levels.map((_, i) => base + i + 1);
 
-/** The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). */
+/**
+ * The 15 families + Barry Harris, in teaching order (= path order: the first ones open first). AUDIT-6 V-W1: each
+ * family's levels follow their items' ratings (levelPlacement.voiceItemRating) — arpeggios after the first scales (RSL
+ * G1–G3), Barry Harris's lines (308–310) before the harder rule levels; small inversions (the singer's leaps) stay
+ * in their curated place and the path keeps the family rising (levelPlacement.monotoneFamily).
+ * Step ids (`vocal:<n>`) are unchanged; only the order moved.
+ */
 export const VOICE_FAMILIES: VoiceFamily[] = [
   // The on-ramp first (owner: "every great jazz singer can sing a simple song perfectly — start here"), with the breath.
   // P2 levels sit where they teach (my song before the performance take); old levels keep opening by number.
@@ -490,30 +535,31 @@ export const VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-range', title: { en: 'Range & registers', he: 'מנעד ורגיסטרים' }, refs: [4, 6, ...RANGE_LEVELS.map((l) => l.level)], stage: 'A' },
   // AUDIT-CONTENT-THEORY §ב.5: the family opened on its hardest level (old ladder 9, 16ths at ♩66–80); it now sits after
   // the swing and on-top / laid-back levels, and the family opens on the click.
-  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113], stage: 'A' },
+  { id: 'v-time', title: { en: 'Time feel', he: 'תחושת זמן' }, refs: [1101, 1102, 1103, 1104, 1105, 9, 1108, 1106, 1109, 1107, 1110, 1111, 1112, 1113], stage: 'A' },
   // P3: F10 L1 echo, L3 intervals and L5 audiation as sung levels, where the plan puts them (L2 = ladder 8).
   // §ב.5: sevenths, the octave and ninths after the tensions (appended: saved placement starts keep their levels).
   { id: 'v-ear', title: { en: "The singer's ear", he: 'האוזן של הזמר' }, refs: [1203, 8, 1204, 1201, 1205, 1202, 1206, 1207], stage: 'A', before: 1 },
   { id: 'v-dyn', title: { en: 'Dynamics', he: 'דינמיקה' }, refs: [901, 5, ...DYN_LEVELS.slice(1).map((l) => l.level)], stage: 'B' },
-  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [...nums(100, MODE_LEVELS), ...ARPEGGIO_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [...nums(400, SIGHT_LEVELS), ...SIGHT_MORE_LEVELS.map((l) => l.level), ...READ_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 11, ...VIB_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-agility', title: { en: 'Agility & bebop lines', he: 'גמישות וקווי ביבופ' }, refs: AGILITY_LEVELS.map((l) => l.level), stage: 'C' },
-  { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [...nums(200, HARMONY_LEVELS), ...HARMONY_MORE_LEVELS.map((l) => l.level)], stage: 'B' },
-  { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [...nums(500, ORNAMENT_LEVELS), ...INFLECT_LEVELS.map((l) => l.level)], stage: 'C' },
-  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1408, 1406, 1407, 1409, 1410], stage: 'C' },
+  { id: 'v-scale', title: { en: 'Scales & modes', he: 'סולמות ומודוסים בשירה' }, refs: [101, 102, ...ARPEGGIO_LEVELS.map((l) => l.level), 103, 104, 105, 107, 106, ...nums(100, MODE_LEVELS).slice(7)], stage: 'B' },
+  { id: 'v-sight', title: { en: 'Sight-singing', he: 'שירה מתווים' }, refs: [401, 402, 403, 404, 1903, 1901, 1904, ...nums(400, SIGHT_LEVELS).slice(4), 1902], stage: 'B' },
+  { id: 'v-vib', title: { en: 'Vibrato control', he: 'שליטה בוויברטו' }, refs: [3, 10, 1001, 1002, 1004, 11, 1003, 1005], stage: 'B' },
+  // AUDIT-5 V-11: runs, turns and melisma (60 → 120 %) before the two bebop lines, which stay the top levels.
+  { id: 'v-agility', title: { en: 'Agility & bebop lines', he: 'גמישות וקווי ביבופ' }, refs: [...RUN_LEVELS, ...AGILITY_LEVELS].map((l) => l.level), stage: 'C', before: RUN_LEVELS.length },
+  { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [201, 202, 203, 204, 1701, 205, 1702, 1703], stage: 'B' },
+  { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [501, 502, 1801, 503, 1802, 504], stage: 'C' },
+  { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1406, 1408, 1407, 1409, 1410], stage: 'C' },
   { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
   // AUDIT-CONTENT-THEORY §ז.2: the first steps open the voice path (VOICE_LATER puts them first; listed here so Barry
   // Harris stays last in the list).
-  { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
-  { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: nums(300, BARRY_LEVELS), stage: 'D' },
   // STAGE C (AUDIT-6 §3.5): the top ladder — altered arpeggios, wide leaps, runs, quick study, one part from the score,
-  // style studies, scat on rhythm changes, the top of the range (voiceTop.ts; placed by VOICE_TOP_DIFF).
+  // style studies, scat on rhythm changes, the top of the range (voiceTop.ts; placed by VOICE_TOP_PLACEMENT).
   ...VOICE_TOP_FAMILIES,
+  { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
+  { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: [301, 303, 302, 308, 304, 309, 310, 305, 306, 307], stage: 'D' },
 ];
 
 /** The families' level order before P3 put new levels in (a level that was open then stays open). */
-const FORMER_REFS: Record<string, number[]> = { 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202], 'v-time': [9, 1101, 1102, 1103, 1104, 1105, 1106, 1107] };
+const FORMER_REFS: Record<string, number[]> = { 'v-agility': [1601, 1602], 'v-songs': [1301, 1302, 1303, 1304, 1305, 1306, 1308, 1307], 'v-ear': [8, 1201, 1202], 'v-time': [9, 1101, 1102, 1103, 1104, 1105, 1106, 1107] };
 
 /**
  * Whether a level of a family is open: the family's first, or the one before it (in the family, or by the old
@@ -612,6 +658,15 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1503: { en: 'Landing on chord tones', he: 'נחיתה על צלילי אקורד' },
   1504: { en: 'Chromatic approach', he: 'גישה כרומטית' },
   1601: { en: 'A bebop line', he: 'קו ביבופ' },
+  1603: { en: 'Five-note runs, slow', he: 'ראנים של חמישה צלילים, לאט' },
+  1604: { en: 'Five-note runs at tempo', he: 'ראנים של חמישה צלילים בטמפו' },
+  1605: { en: 'Nine-note runs, slow', he: 'ראנים של תשעה צלילים, לאט' },
+  1606: { en: 'Nine-note runs at tempo', he: 'ראנים של תשעה צלילים בטמפו' },
+  1607: { en: 'Pentatonic runs', he: 'ראנים פנטטוניים' },
+  1608: { en: 'Blues runs', he: 'ראנים של בלוז' },
+  1609: { en: 'Turns', he: 'טרנים' },
+  1610: { en: 'A melisma', he: 'מליסמה' },
+  1611: { en: 'Melisma at 120%', he: 'מליסמה ב־120%' },
   1505: { en: 'Tensions in the line', he: 'מתחים בקו' },
   1506: { en: 'Two styles: bossa and blues', he: 'שני סגנונות: בוסה ובלוז' },
   1901: { en: 'Reading in the bass clef', he: 'קריאה במפתח פה' },
