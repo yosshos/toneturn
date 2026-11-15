@@ -364,7 +364,7 @@ export interface MelodyNote {
 export interface MelodyMetrics {
   unclear: boolean;
   notes: MelodyNote[];
-  hit: number; // share of notes within ±50 ¢
+  hit: number; // share of notes inside the pass band (passCents: ±65 ¢ below 1300, ±60 ¢ from 1300)
   intonation: number; // mean |cents| of the hit notes
   transitionMs: number; // mean settle time from the start of each note (after the first)
   overshoot: number; // mean overshoot (cents)
@@ -375,7 +375,20 @@ export interface MelodyMetrics {
 
 const fold = (c: number) => ((((c + 600) % 1200) + 1200) % 1200) - 600;
 
-export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[], hitCents = 50): MelodyMetrics {
+/**
+ * Owner 2026-11-13: "it stops me on an eighth of a tone — the most important part is timing". Up to the middle
+ * of the course a melody is graded on the right notes and on landing with the pulse; intonation and smooth joins
+ * are shown and taught, with gentler bands, and weigh less. Harder items keep the strict bands.
+ */
+export const LENIENT_BELOW = 1300;
+/** Owner 2026-11-15: one pass band for every sung note — ±65 ¢ below 1300 (lenient), ±60 ¢ from 1300 up. */
+export const PASS_CENTS = { lenient: 65, strict: 60 } as const;
+/** The pass band (± cents) of a sung note in an item of this rating (no rating = the lenient middle, 1200). */
+export function passCents(difficulty?: number): number {
+  return (difficulty ?? 1200) < LENIENT_BELOW ? PASS_CENTS.lenient : PASS_CENTS.strict;
+}
+
+export function melodyMetrics(frames: SungFrame[], targets: number[], beatSec?: number, onsets?: number[], hitCents: number = PASS_CENTS.strict): MelodyMetrics {
   const segs = segmentNotes(frames);
   const empty: MelodyMetrics = { unclear: true, notes: targets.map((t) => ({ target: t, cents: null, settleMs: null, overshoot: 0, start: null })), hit: 0, intonation: 0, transitionMs: 0, overshoot: 0, legato: 0, timingMs: null, octaveOff: 0 };
   if (!segs.length) return empty;
@@ -613,7 +626,7 @@ export interface SongSpec {
   /** Every phrase at or above this (the pass rule). */
   need: number;
   bpm?: number;
-  /** Pitch tolerance (cents), default 50. */
+  /** Pitch tolerance (cents); default = the item's pass band (passCents: 65 below 1300, 60 from 1300). */
   tol?: number;
   /** Chorus at least 3 dB louder than the verse. */
   chorus?: boolean;
@@ -1065,7 +1078,7 @@ export function gradeSight(item: VocalItem, frames: SungFrame[], targets: number
   const beat = 60 / (item.bpm ?? 72);
   const durs = item.durs ?? targets.map(() => 1);
   const onsets = durs.map((_, i) => durs.slice(0, i).reduce((a, b) => a + b, 0) * beat);
-  const m = melodyMetrics(frames, targets, undefined, onsets);
+  const m = melodyMetrics(frames, targets, undefined, onsets, passCents(item.difficulty));
   if (m.unclear) return { ...UNCLEAR, melody: m };
   const out: MetricScore[] = [M('hit', m.hit * 100, '%', m.hit, 3), M('intonation', m.intonation, '¢', bandScore(m.intonation, BANDS.intonation), 1.5)];
   if (m.timingMs !== null) out.push(M('timing', m.timingMs, 'ms', bandScore(m.timingMs, [60, 110, 200]), 2));
@@ -1525,13 +1538,8 @@ export function gradeGlide(frames: SungFrame[], from: number, to: number): TakeG
   );
 }
 
-/**
- * Owner 2026-11-13: "it stops me on an eighth of a tone — the most important part is timing". Up to the middle
- * of the course a melody is graded on the right notes and on landing with the pulse; intonation and smooth joins
- * are shown and taught, with gentler bands, and weigh less. Harder items keep the strict bands.
- */
-export const LENIENT_BELOW = 1300;
-const LENIENT = { hitCents: 65, intonation: [15, 30, 50] as [number, number, number], transitionMs: [150, 300, 550] as [number, number, number], timingMs: [60, 120, 220] as [number, number, number] };
+/** The gentler bands below LENIENT_BELOW (the pass band itself is passCents). */
+const LENIENT = { intonation: [15, 30, 50] as [number, number, number], transitionMs: [150, 300, 550] as [number, number, number], timingMs: [60, 120, 220] as [number, number, number] };
 
 /** The grid a melodic item is sung on (same as the take's pulse): seconds per note. */
 export function melodyGrid(item: VocalItem): number {
@@ -1542,7 +1550,7 @@ export function melodyGrid(item: VocalItem): number {
 export function gradeMelody(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
   const lenient = (item.difficulty ?? 1200) < LENIENT_BELOW;
   // Every melody is sung on a pulse now (count-in, click, now-chip), so every melody is timed.
-  const m = melodyMetrics(frames, targets, item.ear ? (item.kind === 'rhythmic' || item.kind === 'staccato' ? melodyGrid(item) : undefined) : melodyGrid(item), undefined, lenient ? LENIENT.hitCents : 50);
+  const m = melodyMetrics(frames, targets, item.ear ? (item.kind === 'rhythmic' || item.kind === 'staccato' ? melodyGrid(item) : undefined) : melodyGrid(item), undefined, passCents(item.difficulty));
   if (m.unclear) return { ...UNCLEAR, melody: m };
   const out: MetricScore[] = [M('hit', m.hit * 100, '%', m.hit, 2.5), M('intonation', m.intonation, '¢', bandScore(m.intonation, lenient ? LENIENT.intonation : BANDS.intonation), lenient ? 0.75 : 1.5)];
   if (item.kind === 'staccato') {
@@ -1561,7 +1569,7 @@ export function gradeMelody(item: VocalItem, frames: SungFrame[], targets: numbe
 
 /** A phrase where only some notes carry vibrato: right notes + vibrato exactly where asked. */
 export function gradeVibratoNotes(item: VocalItem, frames: SungFrame[], targets: number[]): TakeGrade {
-  const m = melodyMetrics(frames, targets);
+  const m = melodyMetrics(frames, targets, undefined, undefined, passCents(item.difficulty));
   if (m.unclear) return { ...UNCLEAR, melody: m };
   const flags = item.vibNotes ?? [];
   let right = 0;

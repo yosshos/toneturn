@@ -94,6 +94,12 @@
 .sl-chip.in text {
   fill: var(--ink-c, #1e1033);
 }
+/* off centre but inside the pass band: it passes — a teal-tinted chip with the number */
+.sl-chip.ok rect {
+  fill: color-mix(in srgb, var(--teal) 30%, var(--card));
+  stroke: var(--teal);
+  stroke-width: 2;
+}
 .sl-chip.sharp rect {
   stroke: var(--tangerine);
   stroke-width: 2;
@@ -314,6 +320,13 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.cents-chip.ok {
+  background: color-mix(in srgb, var(--teal) 30%, var(--card));
+  border-color: var(--teal);
+}
+.cents-chip.ok .mk {
+  color: var(--ink-dim);
+}
 .cents-chip.sharp {
   border-color: var(--tangerine);
   box-shadow: inset 0 0 0 1.5px var(--tangerine);
@@ -409,7 +422,24 @@
   background: color-mix(in srgb, var(--teal) 22%, var(--card));
   transition: background-color 0.15s ease-out;
 }
-.zone-meter.in .zm-zone {
+.zone-meter.in .zm-zone,
+.zone-meter.ok .zm-zone {
+  background: color-mix(in srgb, var(--teal) 45%, var(--card));
+}
+.zone-meter.in:not(.banded) .zm-zone {
+  background: var(--teal);
+}
+/* the dead centre inside the pass band: the stamp look */
+.zm-centre {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  border-radius: 5px;
+  border: 1.5px solid var(--outline);
+  background: transparent;
+  transition: background-color 0.15s ease-out;
+}
+.zone-meter.in .zm-centre {
   background: var(--teal);
 }
 .zm-mid {
@@ -594,7 +624,8 @@
 @media (prefers-reduced-motion: reduce) {
   .zm-needle,
   .cents-chip,
-  .zm-zone {
+  .zm-zone,
+  .zm-centre {
     transition: none;
   }
 }

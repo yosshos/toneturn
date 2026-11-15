@@ -13,7 +13,7 @@ import { SingFeed } from './singFeed';
 import { paceFrames, SIM_RT } from './simRt';
 import { NoVoiceBanner } from './VoiceCheck';
 import { prefersCalm } from './Flight';
-import { zoneTolerance } from '../engine/vocalLive';
+import { zonePass, zoneTolerance } from '../engine/vocalLive';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { BleedGate } from '../engine/bleed';
 import { atRange, type TakeGrade, type VocalItem, type VoiceRange } from '../engine/vocal';
@@ -22,7 +22,7 @@ import type { NoteEvent } from '../engine/lesson';
 import { chartBacking, chordAtBeat, parseChart, transposeChart } from '../engine/charts';
 import { sheetNotes, songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
 import { feelVerdict, swingBand, synthDahs, synthLine, voiceOnsets, type TimeFeel } from '../engine/voiceTime';
-import { collaParts, collaSections, gradeCollaMulti, gradeCollaSong, synthCollaSections, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns } from '../engine/voiceGrade';
+import { collaParts, collaSections, gradeCollaMulti, gradeCollaSong, synthCollaSections, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns, songTol } from '../engine/voiceGrade';
 import { familyOfRef, NEW_LEVEL_NAMES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
 import { Follower, paceOf, rejoinAt, restAdvice, stretchSegment, sungLine, synthColla, synthRubato, synthTrade, tradeOpening, tradeReply, type RestTake } from '../engine/voiceP2';
 import type { PNote } from '../engine/improvPhrasing';
@@ -327,6 +327,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
                 mode="song"
                 seconds={0}
                 tol={zoneTolerance(item)}
+                pass={item.song ? songTol(item) : zonePass(item)}
                 live={busy}
                 settings={settings}
                 beat={plan?.beat}

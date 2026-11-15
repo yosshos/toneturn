@@ -14,7 +14,9 @@ export const SING_TX = {
   sagging: { en: 'sagging', he: 'שוקע' },
   listen: { en: 'Listen', he: 'האזנה' },
   pause: { en: 'Pause', he: 'עצירה' },
-  inZone: { en: 'in the zone', he: 'באזור' },
+  // owner 2026-11-15: inside the pass band = in tune (it passes); the tight centre is only the stamp
+  inZone: { en: 'in tune', he: 'מכוון' },
+  centre: { en: 'dead centre', he: 'בול במרכז' },
   missed: { en: 'missed', he: 'פוספס' },
   note: { en: 'Note', he: 'צליל' },
   settle: { en: 'settle', he: 'התייצבות' },
