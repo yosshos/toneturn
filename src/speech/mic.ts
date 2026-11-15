@@ -22,9 +22,24 @@ export async function listMics(): Promise<{ id: string; label: string }[]> {
 /** Whether capture has opened successfully on this page load (used to split recognizer errors). */
 export const captureOk = () => captureSucceeded;
 
+/**
+ * The input check's own capture (src/ui/InputCheck.tsx), registered with its release: any other capture opening (a take,
+ * a recognizer) releases it first, so there is never a second audio graph on the microphone next to the exercise's.
+ */
+let checkRelease: (() => void) | null = null;
+export const registerCheckCapture = (release: (() => void) | null) => {
+  checkRelease = release;
+};
+
 export async function openCapture(
   constraints: MediaTrackConstraints = { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+  o: { check?: boolean } = {},
 ): Promise<{ ok: true; stream: MediaStream } | { ok: false; error: AccessError }> {
+  if (!o.check && checkRelease) {
+    const release = checkRelease;
+    checkRelease = null;
+    release();
+  }
   const env = await gatherEnv();
   if (!navigator.mediaDevices?.getUserMedia) {
     return { ok: false, error: { stage: 'capture', code: env.secure ? 'unsupported' : 'insecure-context', raw: 'navigator.mediaDevices.getUserMedia is unavailable' } };

@@ -53,7 +53,9 @@ import { Recap } from './Recap';
 import { AiExplain } from './AiExplain';
 import { LiveRhythmStaff, RhythmStaff, useRhythmNow } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
-import { makeAdapters, piano, SIMULATED, store } from './services';
+import { isMidiEnabled, makeAdapters, piano, SIMULATED, store } from './services';
+import { InputCheck } from './InputCheck';
+import type { InputCheckMode } from '../engine/inputCheck';
 
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
@@ -452,7 +454,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           </button>
         </section>
       ) : v.stage === 'starting' && brief && !briefSeen ? (
-        <ExerciseBrief brief={brief} lang={lang} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} onExplain={() => openAi('explain', 'topic')} />
+        <ExerciseBrief brief={brief} lang={lang} input={briefInput(lesson.questions[0], v.mode === 'voice')} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} onExplain={() => openAi('explain', 'topic')} />
       ) : v.stage === 'starting' ? (
         <section className="paused-card">
           <h2>{withNote(meta.title[lang], bb)}</h2>
@@ -1543,8 +1545,19 @@ function howText(kind: string | undefined, lang: 'en' | 'he'): string {
   return he ? 'מקשיבים — ובוחרים את התשובה.' : 'Listen, then choose the answer.';
 }
 
+/**
+ * What the exercise listens to, for the brief's input check: sung (or played-back) items by microphone — or by MIDI
+ * when it is on and the item is played, not sung (the same routing as services.ts RoutedPitch); spoken answers (voice
+ * mode) by microphone; tap and choice answers need no check (null).
+ */
+function briefInput(q: Question | undefined, voiceMode: boolean): InputCheckMode | null {
+  const sung = !!q && (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run');
+  if (sung) return isMidiEnabled() && !sungSkill(q) ? 'midi' : 'mic';
+  return voiceMode ? 'mic' : null;
+}
+
 /** The brief before a topic exercise: never starts playing on its own. */
-function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void }) {
+function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; input?: InputCheckMode | null; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void }) {
   const he = lang === 'he';
   const [kept, setKept] = useState(false);
   return (
@@ -1558,6 +1571,7 @@ function ExerciseBrief({ brief, lang, how, refresher, onRefresher, onPlay, voice
           {he ? 'הסבר מעמיק על הנושא' : 'Explain this topic in depth'}
         </button>
       )}
+      {input && <InputCheck mode={input} lang={lang} className="ex-input" />}
       <div className="ex-actions">
         {refresher && onRefresher && (
           <button className="btn ghost ex-learn" onClick={() => onRefresher(refresher, () => undefined)} data-brief-learn="1">
