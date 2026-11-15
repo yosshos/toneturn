@@ -693,8 +693,85 @@ GAME_TIERS.namegroove = {
   },
 };
 
+// ---------------------------------------------------------------- new games (AUDIT-GAMES §4.2, 2026-11-15)
+
+/** Border Control (Ear, Jazz): a key move by ear — stamp the means and the new key (two stamps a case, 8 cases). */
+GAME_TIERS.bordercontrol = {
+  game: 'bordercontrol',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Pivot chord or direct', 'אקורד ציר או ישירות'), levels: [1], params: { cases: 8 }, target: 80 },
+    p: { label: L('+ a ii–V of the new key', '+ ii–V של הסולם החדש'), levels: [2], params: { cases: 8 }, target: 80 },
+    mp: { label: L('+ the common diminished', '+ הדימיניש המשותף'), levels: [3], params: { cases: 8 }, target: 80 },
+    mf: { label: L('+ a tritone sub into it', '+ תחליף טריטון לתוכו'), levels: [4], params: { cases: 8 }, target: 80 },
+    f: { label: L('All five, distant keys', 'כל החמישה, סולמות רחוקים'), levels: [5], params: { cases: 8 }, target: 80 },
+    ff: { label: L('A tune’s key centres', 'המרכזים הטונליים של שיר'), levels: [6], params: { cases: 8 }, target: 80 },
+  },
+};
+
+/** Which Brother? (Jazz, Keys): Barry Harris's family of dominants — by ear (pp–mp), then on the keys (mf–ff). */
+GAME_TIERS.whichbrother = {
+  game: 'whichbrother',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : 'chords'),
+  clear: 'streak',
+  tiers: {
+    pp: { label: L('V7 or its tritone brother, into I', 'V7 או אח הטריטון שלו, אל I'), levels: [1], params: { cases: 8, run: 10 } },
+    p: { label: L('All four brothers', 'כל ארבעת האחים'), levels: [2], params: { cases: 8, run: 10 } },
+    mp: { label: L('The dim move: which brother is born?', 'מהלך הדים: איזה אח נולד?'), levels: [3], params: { cases: 8, run: 10 } },
+    mf: { label: L('Play the brother a half step into I', 'לנגן את האח שנוחת חצי טון אל I'), levels: [4], params: { cases: 8, run: 10 } },
+    f: { label: L('Play a named brother', 'לנגן אח בשמו'), levels: [5], params: { cases: 8, run: 10 } },
+    ff: { label: L('Hear a brother, play it back', 'שומעים אח ומנגנים אותו'), levels: [6], params: { cases: 8, run: 10 } },
+  },
+};
+
+/** Run Catcher (Voice): a run heard, then sung back in time; the tempo climbs 10 % per clean catch. */
+GAME_TIERS.runcatcher = {
+  game: 'runcatcher',
+  source: () => 'agility',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('3-note turns', 'סיבובים של 3 צלילים'), levels: [1], target: 75 },
+    p: { label: L('5-note runs and turns', 'ראנים וסיבובים של 5'), levels: [2], target: 75 },
+    mp: { label: L('Pentatonic and blues runs', 'ראנים פנטטוניים ובלוז'), levels: [3], target: 75 },
+    mf: { label: L('R&B melisma, gospel licks', 'מליסמות R&B, ליקים של גוספל'), levels: [4], target: 75 },
+    f: { label: L('Bebop lines', 'קווי ביבופ'), levels: [5], target: 75 },
+    ff: { label: L('All of them, up to 130 %', 'הכול, עד 130%'), levels: [6], target: 75 },
+  },
+};
+
+/** Comp Caller (Keys, Guitar, Jazz): comp the called rhythm on the chart, switched on the bar. */
+GAME_TIERS.compcaller = {
+  game: 'compcaller',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : c === 'guitar' ? 'instrument/guitar-tech' : 'improv'),
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Charleston and reverse', 'צ׳רלסטון והפוך'), levels: [1], params: { bpm: 100 }, target: 75 },
+    p: { label: L('+ Beat-3 Charleston', '+ צ׳רלסטון מ־3'), levels: [2], params: { bpm: 110 }, target: 75 },
+    mp: { label: L('Basie, push-off, lead-in', 'בייסי, פוש־אוף, כניסה'), levels: [3], params: { bpm: 120 }, target: 75 },
+    mf: { label: L('+ Red Garland', '+ רד גרלנד'), levels: [4], params: { bpm: 130 }, target: 75 },
+    f: { label: L('Two-bar patterns, anticipations', 'תבניות דו־תיבתיות, הקדמות'), levels: [5], params: { bpm: 140 }, target: 75 },
+    ff: { label: L('Everything, called at ♩160', 'הכול, ב־♩160'), levels: [6], params: { bpm: 160 }, target: 75 },
+  },
+};
+
+/** Elevator (Keys, Guitar): Echols's floors on the 6th-diminished scales — build the voicing, then play it. */
+GAME_TIERS.elevator = {
+  game: 'elevator',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : c === 'guitar' ? 'instrument/guitar-tech' : 'chords'),
+  clear: 'streak',
+  tiers: {
+    pp: { label: L('Floors 2–3 in the 6-dim scale', 'קומות 2–3 בסולם 6־דים'), levels: [1], params: { cases: 8, run: 10 } },
+    p: { label: L('Up a floor: contrary motion', 'קומה למעלה: תנועה נגדית'), levels: [2], params: { cases: 8, run: 10 } },
+    mp: { label: L('The minor 6-dim scale', 'סולם m6־דים'), levels: [3], params: { cases: 8, run: 10 } },
+    mf: { label: L('Reach floor N under the melody', 'להגיע לקומה N מתחת למנגינה'), levels: [4], params: { cases: 8, run: 10 } },
+    f: { label: L('Borrowing: 1–3 voices', 'שאילה: 1–3 קולות'), levels: [5], params: { cases: 8, run: 10 } },
+    ff: { label: L('All four scales, floors to 9', 'כל ארבעת הסולמות, עד קומה 9'), levels: [6], params: { cases: 8, run: 10 } },
+  },
+};
+
 /** Games whose on-screen (touch) input is practice only: it never clears a tier. */
-export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval']);
+export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'whichbrother', 'compcaller']);
 
 // Social sets (duel, ghost, rooms, daily): the tier picks the items (engine/tournament.ts tournamentItem).
 const SOCIAL_LABEL: Record<DynName, Bi> = {

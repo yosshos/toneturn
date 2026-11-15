@@ -84,6 +84,12 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   singinterval: { tags: () => T2(['singing', 'intervals', 0.6], ['intervals', 'sung', 0.4]), diff: () => 1050 },
   kitread: { tags: () => T2(['rhythm-reading', 'drums', 0.7], ['rhythm', 'kit-ear', 0.3]), diff: () => 1050 },
   namegroove: { tags: () => T2(['rhythm', 'style', 0.7], ['instrument', 'drum-ear', 0.3]), diff: () => 1050 },
+  // AUDIT-GAMES §4.2 new games (2026-11-15; always tiered, `diff` is a fallback).
+  bordercontrol: { tags: () => T('cadences', 'modulation'), diff: () => 1300 },
+  whichbrother: { tags: (d) => (Number(d.level) >= 4 ? T2(['chords', 'barry', 0.6], ['instrument', 'piano-voicing', 0.4]) : T('chords', 'barry')), diff: () => 1200 },
+  runcatcher: { tags: () => T2(['agility', 'runs', 0.7], ['timing', 'precision', 0.3]), diff: () => 1300 },
+  compcaller: { tags: () => T2(['rhythm-dictation', 'syncopation', 0.5], ['timing', 'precision', 0.5]), diff: () => 1150 },
+  elevator: { tags: () => T2(['chords', 'barry', 0.6], ['theory', 'voice-leading', 0.4]), diff: () => 1300 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

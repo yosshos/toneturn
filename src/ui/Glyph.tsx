@@ -1205,6 +1205,62 @@ Object.assign(GLYPHS, {
       <path d="M15 -16 Q27 0 15 16" {...sw} strokeWidth={2} />
     </>
   ),
+  /** Border Control (AUDIT-GAMES §4.2): a border line crossed by a note, with the two stamps. */
+  bordercontrol: (
+    <>
+      <path d="M0 -26 V26" {...sw} strokeWidth={2.2} strokeDasharray="5 5" />
+      {head(-14, 8, 6, 4.4)}
+      {head(14, -8, 6, 4.4)}
+      <path d="M-8 2 Q0 -12 8 -6" {...sw} strokeWidth={2.4} />
+      <circle cx={-16} cy={-14} r={5} {...sw} strokeWidth={2.2} />
+      <circle cx={16} cy={14} r={5} {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  /** Which Brother? the family of four dominants on a ring, a minor third apart; one filled. */
+  whichbrother: (
+    <>
+      <circle r={17} {...sw} strokeWidth={2.4} />
+      {head(0, -17, 6, 4.4)}
+      <circle cx={17} cy={0} r={4} {...sw} strokeWidth={2.4} />
+      <circle cx={0} cy={17} r={4} {...sw} strokeWidth={2.4} />
+      <circle cx={-17} cy={0} r={4} {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Run Catcher: a run of small heads rising into a catching arc. */
+  runcatcher: (
+    <>
+      {head(-20, 14, 4.4, 3.2)}
+      {head(-10, 7, 4.4, 3.2)}
+      {head(0, 0, 4.4, 3.2)}
+      {head(10, -7, 4.4, 3.2)}
+      <path d="M-22 -14 Q0 -30 22 -12" {...sw} strokeWidth={2.6} />
+      <path d="M16 -16 L22 -12 L21 -19" {...sw} strokeWidth={2.4} strokeLinejoin="round" />
+    </>
+  ),
+  /** Comp Caller: a bar with two off-beat chord stabs (stacked heads) and the call mark above the next bar. */
+  compcaller: (
+    <>
+      <path d="M-26 -16 V18 M26 -16 V18" {...sw} strokeWidth={2} />
+      {head(-10, 12, 4.6, 3.4)}
+      {head(-10, 4, 4.6, 3.4)}
+      {head(10, 12, 4.6, 3.4)}
+      {head(10, 4, 4.6, 3.4)}
+      <path d="M-5 10 V-12 M15 10 V-12" {...sw} strokeWidth={2.4} />
+      <path d="M-18 -22 L-8 -22 M2 -22 L12 -22" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Elevator: the shaft's floors and two voices stepping apart from a unison (contrary motion). */
+  elevator: (
+    <>
+      <path d="M-24 -18 H24 M-24 0 H24 M-24 18 H24" stroke={I} strokeWidth={1.8} />
+      {head(0, 0, 5, 3.6)}
+      {head(-12, -18, 5, 3.6)}
+      {head(12, -18, 5, 3.6)}
+      {head(-12, 18, 5, 3.6)}
+      {head(12, 18, 5, 3.6)}
+      <path d="M-4 -4 L-10 -13 M4 -4 L10 -13 M-4 4 L-10 13 M4 4 L10 13" {...sw} strokeWidth={2.2} />
+    </>
+  ),
   kitread: (
     <g {...sw} strokeWidth={1.8}>
       <path d="M-14 -12 H26 M-14 -4 H26 M-14 4 H26 M-14 12 H26" />

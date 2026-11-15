@@ -27,6 +27,10 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'polylock', course: 'drums', domain: 'instrument', skill: 'instrument', sub: 'instrument/drum-tech', difficulty: 1000, title: { en: 'Polyrhythm Lock', he: 'נעילת פולי־ריתם' } },
   { game: 'riffecho', course: 'guitar', domain: 'instrument', skill: 'instrument', sub: 'instrument/guitar-tech', difficulty: 1050, title: { en: 'Odd-Meter Riff Echo', he: 'הד ריפים במשקל אי־זוגי' } },
   { game: 'riffecho', course: 'bass', domain: 'instrument', skill: 'instrument', sub: 'instrument/bass-tech', difficulty: 1050, title: { en: 'Odd-Meter Riff Echo', he: 'הד ריפים במשקל אי־זוגי' } },
+  // AUDIT-GAMES §4.2 new games (2026-11-15): the jazz course's steps (the other courses get them as unit games).
+  { game: 'bordercontrol', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/modulation', difficulty: 1100, title: { en: 'Border Control', he: 'ביקורת גבולות' } },
+  { game: 'whichbrother', course: 'jazz', domain: 'pitch', skill: 'chords', sub: 'chords/barry', difficulty: 1050, title: { en: 'Which Brother?', he: 'איזה אח?' } },
+  { game: 'compcaller', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/play', difficulty: 1100, title: { en: 'Comp Caller', he: 'קורא הליווי' } },
 ];
 
 const PLAYS: Partial<Record<CourseId, string[]>> = { keys: ['keys', 'piano'], guitar: ['guitar'], bass: ['bass'], drums: ['drums'] };

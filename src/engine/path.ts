@@ -1226,15 +1226,21 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   namegroove: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Name That Groove', he: 'זהו את הגרוב' }, forPlays: ['drums'], minDiff: 850 },
   singinterval: { domain: 'voice', skill: 'singing', sub: 'intervals', title: { en: 'Interval Sing', he: 'ספרינט שירה' }, needsMic: true, minDiff: 850 },
   harmonyhold: { domain: 'voice', skill: 'singing', sub: 'harmony', title: { en: 'Harmony Hold', he: 'להחזיק הרמוניה' }, needsMic: true, minDiff: 1000 },
+  // AUDIT-GAMES §4.2 new games (2026-11-15); the jazz course gets its own as bonus steps (pathBonus.ts).
+  bordercontrol: { domain: 'pitch', skill: 'cadences', sub: 'modulation', title: { en: 'Border Control', he: 'ביקורת גבולות' }, minDiff: 1050 },
+  whichbrother: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Which Brother?', he: 'איזה אח?' }, forPlays: ['keys', 'piano'], minDiff: 1050 },
+  runcatcher: { domain: 'voice', skill: 'agility', sub: 'runs', title: { en: 'Run Catcher', he: 'תופסים ראן' }, needsMic: true, minDiff: 950 },
+  compcaller: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Comp Caller', he: 'קורא הליווי' }, forPlays: ['keys', 'piano', 'guitar'], minDiff: 1000 },
+  elevator: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Elevator', he: 'המעלית' }, forPlays: ['keys', 'piano', 'guitar'], minDiff: 1100 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
-  pitch: ['rush-interval', 'rush-chord', 'rush-progression'],
+  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
-  voice: ['flight', 'singinterval', 'harmonyhold'],
+  voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }, diff = Infinity): string | null {

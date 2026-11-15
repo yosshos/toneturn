@@ -39,6 +39,12 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'bhtime', name: l('Barry Harris in Time', 'בארי האריס בזמן'), course: 'jazz', alsoIn: ['keys'], titles: [l('Sixth on Time', 'שישית בזמן'), l('Diminished in Motion', 'מוקטן בתנועה'), l('Barry Harris Fluency', 'שטף בארי האריס')] },
   { game: 'riffecho', name: l('Odd-Meter Riff Echo', 'הד ריפים במשקל עקום'), course: 'keys', alsoIn: ['guitar', 'bass'], titles: [l('Riff in Six', 'ריף בשש'), l('Riff in Seven', 'ריף בשבע'), l('Odd-Meter Fluency', 'שטף במשקלים עקומים')] },
   { game: 'polylock', name: l('Polyrhythm Lock', 'נעילת פולי־ריתם'), course: 'drums', alsoIn: ['ear', 'keys'], titles: [l('Three Against Two', 'שלוש נגד שתיים'), l('Five Against Four', 'חמש נגד ארבע'), l('Polyrhythm Independence', 'עצמאות פולי־ריתמית')] },
+  // AUDIT-GAMES §4.2 new games (2026-11-15).
+  { game: 'bordercontrol', name: l('Border Control', 'ביקורת גבולות'), course: 'jazz', alsoIn: ['ear'], titles: [l('Hears the Pivot', 'שומע את הציר'), l('Through the Diminished', 'דרך הדימיניש'), l('Key Centre Reader', 'קורא מרכזים טונליים')] },
+  { game: 'whichbrother', name: l('Which Brother?', 'איזה אח?'), course: 'jazz', alsoIn: ['keys'], titles: [l('Knows the Family', 'מכיר את המשפחה'), l('Names the Brother', 'קורא לאח בשמו'), l('Family Pianist', 'פסנתרן המשפחה')] },
+  { game: 'runcatcher', name: l('Run Catcher', 'תופסים ראן'), course: 'voice', titles: [l('Quick Turns', 'סיבובים מהירים'), l('Melisma in Time', 'מליסמה בזמן'), l('Bebop Voice', 'קול ביבופ')] },
+  { game: 'compcaller', name: l('Comp Caller', 'קורא הליווי'), course: 'keys', alsoIn: ['guitar', 'jazz'], titles: [l('On the Charleston', 'על הצ׳רלסטון'), l('Switches on the Bar', 'מחליף על התיבה'), l('Comping Vocabulary', 'אוצר מילים בליווי')] },
+  { game: 'elevator', name: l('Elevator', 'המעלית'), course: 'keys', alsoIn: ['guitar'], titles: [l('First Floors', 'קומות ראשונות'), l('Contrary Motion', 'תנועה נגדית'), l('Rides Every Floor', 'עולה לכל הקומות')] },
 ];
 
 const TIERS: { t: DynName; tone: RankTier }[] = [

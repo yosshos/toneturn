@@ -19,7 +19,8 @@ import { identifyChord } from '../src/engine/chordFinder';
 
 describe('game badges', () => {
   it('three per game (mp, f, ff), drawn, no emoji, in the right course', () => {
-    expect(GAME_BADGE_GAMES.length).toBe(12);
+    // 12 at 0.76; the AUDIT-GAMES §4.2 new games add theirs
+    expect(GAME_BADGE_GAMES.length).toBeGreaterThanOrEqual(12);
     for (const g of GAME_BADGE_GAMES)
       for (const t of ['mp', 'f', 'ff']) {
         const b = BADGE_BY_ID[`special:game:${g.game}:${t}`];
@@ -30,7 +31,7 @@ describe('game badges', () => {
         expect(r.key).toBe(`special:game:${g.game}`);
         expect(badgeInCourse(b, g.course)).toBe(true);
       }
-    expect(new Set(GAME_BADGE_GAMES.map((g) => resolveGlyph({ id: `special:game:${g.game}:f`, cat: 'special' }).glyph)).size).toBe(12);
+    expect(new Set(GAME_BADGE_GAMES.map((g) => resolveGlyph({ id: `special:game:${g.game}:f`, cat: 'special' }).glyph)).size).toBe(new Set(GAME_BADGE_GAMES.map((g) => g.game)).size);
     expect(badgeInCourse(BADGE_BY_ID['special:game:time-lock:f'], 'drums')).toBe(true);
     expect(badgeInCourse(BADGE_BY_ID['special:game:time-lock:f'], 'jazz')).toBe(false);
   });

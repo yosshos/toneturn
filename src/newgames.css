@@ -1,0 +1,293 @@
+/* The 2026-11-15 new games (AUDIT-GAMES §4.2): Border Control, Which Brother?, Elevator (CaseShell), Run Catcher,
+   Comp Caller. v2 design language: flat fills, hard outlines, no glows or gradients, no yellow; logical properties
+   (LTR + RTL); every play screen fits 320 × 720 without scrolling. */
+
+.ng {
+  gap: 8px;
+}
+.ng-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-inline-size: 0;
+}
+.ng-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ng-foot .adv-line,
+.ng .adv-line {
+  margin: 0;
+  min-block-size: 1.3em;
+  text-align: center;
+}
+.ng-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-inline-size: 0;
+}
+.ng-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  background: var(--card-2);
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ng-replay {
+  min-block-size: 40px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+.ng-replay.on {
+  outline: 2px solid var(--purple, #6d28d9);
+}
+.ng-ask {
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.ng-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.ng-grid .btn {
+  min-block-size: 44px;
+  min-inline-size: 0;
+  padding-inline: 8px;
+  font-size: 0.92rem;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+.ng-grid .btn.on {
+  outline: 3px solid var(--purple, #6d28d9);
+}
+.ng-grid .btn.ok {
+  outline: 3px solid var(--ok);
+}
+.ng-grid .btn.bad {
+  outline: 3px solid var(--red);
+}
+.ng-grid.n5 .btn:last-child {
+  grid-column: 1 / -1;
+}
+.ng-two {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-block-size: 64px !important;
+}
+.ng-two b {
+  font-size: 1.25rem;
+}
+.ng-two small {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+.ng-held {
+  font-variant-numeric: tabular-nums;
+}
+.ng-why {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft, var(--ink-dim));
+}
+.ng-why summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--ink);
+}
+.ng-why p {
+  margin: 4px 0 0;
+}
+.ng .keys-pad {
+  block-size: 112px;
+}
+
+/* Elevator: the floor panel (1–9), the asked floor filled */
+.el-floors {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+}
+.el-floors span {
+  display: grid;
+  place-items: center;
+  block-size: 30px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  background: var(--card-2);
+  color: var(--ink-dim);
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.el-floors span.on {
+  background: var(--purple, #6d28d9);
+  border-color: var(--purple, #6d28d9);
+  color: #fff;
+}
+.el-floors span.from {
+  border-color: var(--purple, #6d28d9);
+  color: var(--ink);
+}
+
+/* Run Catcher: the count-in dots and the run's note cells (height follows the pitch) */
+.rc-beats,
+.cc-beats {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.rc-beats i,
+.cc-beats i {
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-dim);
+}
+.rc-beats i.on,
+.cc-beats i.on {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.rc-cells {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: 3px;
+  block-size: 120px;
+  padding-block-start: 4px;
+}
+.rc-cell {
+  display: grid;
+  place-items: center;
+  block-size: 34px;
+  margin-block-end: var(--h, 0);
+  border-radius: 8px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  background: var(--card-2);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+.rc-cell.now {
+  background: var(--purple, #6d28d9);
+  border-color: var(--purple, #6d28d9);
+  color: #fff;
+}
+.rc-cell.ok {
+  outline: 3px solid var(--ok);
+}
+.rc-cell.off,
+.rc-cell.miss {
+  outline: 3px solid var(--red);
+}
+
+/* Comp Caller: the bars (chord, called rhythm, its count) and the 8th-note slots of the bar now */
+.cc-bars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.cc-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 2px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  background: var(--card-2);
+  color: var(--ink);
+  min-inline-size: 0;
+}
+.cc-bar b {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.cc-bar small {
+  font-size: 0.64rem;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-inline-size: 100%;
+}
+.cc-bar em {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.cc-bars.n8 .cc-bar {
+  padding-block: 4px;
+}
+.cc-bar.now {
+  background: var(--purple, #6d28d9);
+  border-color: var(--purple, #6d28d9);
+  color: #fff;
+}
+.cc-bar.now em {
+  color: #fff;
+}
+.cc-bar.call {
+  outline: 2px dashed var(--purple, #6d28d9);
+}
+.cc-bar.ok {
+  outline: 3px solid var(--ok);
+}
+.cc-bar.bad {
+  outline: 3px solid var(--red);
+}
+.cc-slots {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 3px;
+}
+.cc-slots span {
+  display: grid;
+  place-items: center;
+  block-size: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--line-strong, var(--line));
+  color: var(--ink-dim);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.cc-slots span.hit {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card, #fff);
+}
+.cc-slots span.now {
+  outline: 3px solid var(--purple, #6d28d9);
+}
+.cc .inst-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+}
+.cc-pad {
+  min-block-size: 72px;
+  touch-action: manipulation;
+}

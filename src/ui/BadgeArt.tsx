@@ -1269,6 +1269,55 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M2 12h20')}
     </>
   ),
+  // Border Control: a border line with a stamp ring crossing it.
+  'special:game:bordercontrol': () => (
+    <>
+      {p('M12 2v20', false)}
+      <circle cx="12" cy="12" r="6" />
+      {p('M9 12h6 M12 9v6')}
+      {p('M3 18h4 M17 6h4', false)}
+    </>
+  ),
+  // Which Brother?: four dots on a ring (the family, minor thirds apart), one filled.
+  'special:game:whichbrother': () => (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      {dot(12, 4.5, 2.2)}
+      <circle cx="19.5" cy="12" r="1.8" />
+      <circle cx="12" cy="19.5" r="1.8" />
+      <circle cx="4.5" cy="12" r="1.8" />
+    </>
+  ),
+  // Run Catcher: a fast run of note heads caught in an arc.
+  'special:game:runcatcher': () => (
+    <>
+      {head(4, 18, 1.7)}
+      {head(8, 14, 1.7)}
+      {head(12, 11, 1.7)}
+      {head(16, 9, 1.7)}
+      {p('M3 6 Q12 -1 21 8')}
+      {p('M18.5 6.5 L21 8 L20.6 5', false)}
+    </>
+  ),
+  // Comp Caller: a bar with two off-beat chord stabs and a call mark.
+  'special:game:compcaller': () => (
+    <>
+      {p('M3 5v14 M21 5v14', false)}
+      {p('M3 19h18', false)}
+      {p('M8 16V9 M15 16V7')}
+      {head(7, 16, 2.2)}
+      {head(14, 16, 2.2)}
+      {p('M17.5 4 L20 2.5', false)}
+    </>
+  ),
+  // Elevator: a shaft with floors and the two voices moving apart.
+  'special:game:elevator': () => (
+    <>
+      {p('M5 3v18 M19 3v18', false)}
+      {p('M5 8h14 M5 13h14 M5 18h14', false)}
+      {p('M12 11 L9 6 M12 11 L15 6 M12 15 L9 20 M12 15 L15 20')}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>
