@@ -427,6 +427,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // AUDIT-SCALES (owner 2026-11-14): the scale matrix (one-octave hands together and minor scales early, the modes after
   // the jazz scales, 4 octaves last, under PATH_CAP), the Harris diminished scales up and down, hand independence, the
   // scale-harmonization ladder (lines / 3rds ~900–1100, triads / 7ths 1100–1350, drops, borrowing, Harris 1350–1700).
+  // scales 1–15 keep their places (700 + 70 a level), so the 18 new levels don't squeeze them under PATH_CAP.
+  ...Object.fromEntries(Array.from({ length: 15 }, (_, i) => [`scales-${i + 1}`, 700 + 70 * i])),
   'scales-16': 920, 'scales-17': 990, 'scales-18': 1060,
   'scales-19': 1530, 'scales-20': 1570, 'scales-21': 1610, 'scales-22': 1650, 'scales-23': 1690, 'scales-24': 1730, 'scales-25': 1770, 'scales-26': 1810, 'scales-27': 1850,
   'scales-28': 1490, 'scales-29': 1510, 'scales-30': 1860, 'scales-31': 1870, 'scales-32': 1885, 'scales-33': 1900,
