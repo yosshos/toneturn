@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.95.0',
+    date: '2026-11-15',
+    en: [
+      'Games, cleaned up: every game fits one phone screen, setup extras moved into a small “More” sheet, flat readable colours, and the input check before every mic or MIDI game.',
+      'Games count more: ten games are now steps on the path, the workout rotates a game a day, and key-based games feed your per-key mastery; more games run in all 12 keys.',
+      'Hebrew everywhere in the games, a shared result card, per-note marks on the Highway, Rudiment Rush flams and drags, and Duel now records XP and a board.',
+    ],
+    he: [
+      'המשחקים מסודרים: כל משחק נכנס במסך טלפון אחד, הגדרות נוספות עברו לחלונית "עוד" קטנה, צבעים שטוחים וקריאים, ובדיקת קלט לפני כל משחק מיקרופון או MIDI.',
+      'המשחקים נחשבים יותר: עשרה משחקים הם עכשיו צעדים במסלול, האימון היומי מחליף משחק בכל יום, ומשחקים לפי סולם מזינים את שליטת הסולמות; יותר משחקים בכל 12 הסולמות.',
+      'עברית מלאה במשחקים, כרטיס תוצאה אחיד, סימון לכל צליל בכביש המהיר, פלאמים ודראגים ב־Rudiment Rush, והדו־קרב רושם עכשיו XP וטבלה.',
+    ],
+  },
+  {
     version: '0.94.0',
     date: '2026-11-15',
     en: [
