@@ -40,6 +40,8 @@ import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend } from './DrillTake';
 import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the one-screen review
+import { ErrorMap, barMarks, worstBar } from './ErrorMap'; // slice 3: loop the spot
+import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
 import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
@@ -872,6 +874,11 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // asked for after a badly missed timed take.
   const [oneFree, setOneFree] = useState(false);
   const [stageRes, setStageRes] = useState<{ m: TakeMetrics; stage: RubatoStage } | null>(null);
+  // Loop the spot (COURSE-FEEDBACK-UI slice 3): bars picked on the error map, played at −10 % until 2 clean passes.
+  // Loop takes are practice: they never move the item's ladder or level.
+  const [sel, setSel] = useState<[number, number] | null>(null);
+  const [loop, setLoop] = useState<{ from: number; to: number; passes: number } | null>(null);
+  const [loopRes, setLoopRes] = useState<TakeMetrics | null>(null);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -899,6 +906,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
     onTake(lad.state, drillEvents(drill, m, new Date().toISOString(), session.current, n), drillXp(m), takeInfo(drill, m));
+    setSel(null);
     setRes({ m, lad });
     if (lad.next.action === 'next-key' || lad.next.action === 'next-drill') {
       // Continuous: move on right after showing the result briefly.
@@ -967,6 +975,63 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       </div>
     );
   }
+  const exitLoop = () => (setLoop(null), setLoopRes(null), setRes(null), setAgain(false), setTake((t) => t + 1));
+  if (loop) {
+    const ld = sliceDrill(drill, loop.from, loop.to);
+    const lb = loopBpm(bpm);
+    const label = loop.from === loop.to ? `${loop.from + 1}` : `${loop.from + 1}–${loop.to + 1}`;
+    const whole = he ? 'כל התרגיל' : 'Whole item';
+    const passed = loop.passes >= LOOP_PASSES;
+    return (
+      <div className="drill-run" data-drill={drill.itemId} data-loop={label} data-loop-passes={loop.passes}>
+        <p className="loop-bar" data-loop-bar="1">
+          <b>{he ? 'לולאה' : 'Loop'}</b>
+          <span>
+            {loop.from === loop.to ? (he ? 'תיבה' : 'bar') : he ? 'תיבות' : 'bars'} <bdi dir="ltr">{label}</bdi> · <bdi dir="ltr">♩ {lb}</bdi>
+          </span>
+          <span className="loop-passes" aria-label={he ? `${loop.passes} מתוך ${LOOP_PASSES} נקיים` : `${loop.passes} of ${LOOP_PASSES} clean`}>
+            {Array.from({ length: LOOP_PASSES }, (_, k) => (
+              <i key={k} className={k < loop.passes ? 'on' : ''} />
+            ))}
+          </span>
+          <button className="link" onClick={exitLoop} data-loop-exit="1">
+            {whole}
+          </button>
+        </p>
+        <DrillScore drill={ld} ds={ds} result={loopRes} beat={loopRes ? -1 : beat} lang={lang} bpm={lb} />
+        {!loopRes && (
+          <DrillTake
+            key={`loop:${loop.from}-${loop.to}:${take}`}
+            autoStart={again}
+            drill={ld}
+            bpm={lb}
+            lang={lang}
+            cal={cal}
+            onDone={(m) => (setBeat(-1), setLoopRes(m), setLoop((l) => (l ? { ...l, passes: l.passes + (m.verdict === 'clean' ? 1 : 0) } : l)))}
+            onBeat={setBeat}
+            drumsOk={headphones}
+            onDrums={onHeadphones}
+            kit={kit}
+          />
+        )}
+        {loopRes && (
+          <TakeReview
+            m={loopRes}
+            lang={lang}
+            next={passed ? (he ? `${LOOP_PASSES} נקיים — בחזרה לכל התרגיל` : `${LOOP_PASSES} clean — back to the whole item`) : he ? `נקי ${loop.passes}/${LOOP_PASSES} ב־♩ ${lb}` : `Clean ${loop.passes}/${LOOP_PASSES} at ♩ ${lb}`}
+            onAgain={() => (setLoopRes(null), setAgain(true), setTake((t) => t + 1))}
+            onNext={exitLoop}
+            nextLabel={whole}
+          />
+        )}
+      </div>
+    );
+  }
+  // The error map of the last take (one cell a bar) and the bars Loop plays: the picked ones, or the worst bar.
+  const bm = res ? barMarks(takeDrill, res.m) : [];
+  const wb = worstBar(bm);
+  const loopSel: [number, number] | null = sel ?? (wb !== null ? [wb, wb] : null);
+  const pickBar = (i: number) => setSel((cur) => (cur && cur[0] === cur[1] && cur[0] !== i ? [Math.min(cur[0], i), Math.max(cur[0], i)] : [i, i]));
   return (
     <div className="drill-run" data-drill={drill.itemId}>
       <p className="drill-goal">
@@ -1033,10 +1098,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
       {res && (
         <>
+          <ErrorMap marks={bm} sel={loopSel} onPick={pickBar} lang={lang} />
           <TakeReview
             m={res.m}
             lang={lang}
             next={res.lad.message[lang]}
+            onLoop={loopSel && bm.length > 1 && !stage ? () => (setLoop({ from: loopSel[0], to: loopSel[1], passes: 0 }), setLoopRes(null), setAgain(true), setTake((t) => t + 1)) : undefined}
+            loopLabel={loopSel ? (loopSel[0] === loopSel[1] ? `${loopSel[0] + 1}` : `${loopSel[0] + 1}–${loopSel[1] + 1}`) : undefined}
             onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}

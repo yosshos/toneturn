@@ -227,3 +227,31 @@ test('a weak take is soft: the total and one suggestion, no chips', async ({ pag
   await expect(page.locator('.tr-suggest')).toBeVisible();
   await shot(page, 'keys-review-weak-en');
 });
+
+for (const lang of ['en', 'he'] as const)
+  test(`loop the spot: tap a bar, loop it at −10 % until 2 clean passes, back to the whole item (${lang})`, async ({ page }) => {
+    await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+    await seed(page, lang, 'keys');
+    await openLevel(page, lang, 'scales', 'scales-1');
+    await fakeTakeRun(page, 'mixed');
+    await expect(page.locator('[data-error-map]')).toBeVisible();
+    expect(await overflow(page)).toMatchObject({ wide: 0 });
+    expect((await overflow(page)).tall).toBeLessThanOrEqual(2);
+    await shot(page, `keys-errormap-${lang}`);
+    await page.locator('.em-cell[data-bar="1"]').click();
+    await expect(page.locator('.em-cell[data-bar="1"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-loop-start]')).toContainText('2');
+    // the loop takes are clean
+    await page.evaluate(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'clean'));
+    await page.locator('[data-loop-start]').click();
+    await expect(page.locator('[data-loop="2"]')).toBeVisible();
+    await expect(page.locator('[data-loop-bar]')).toContainText('♩ 59');
+    await expect(page.locator('[data-loop-passes="1"]')).toBeVisible();
+    await shot(page, `keys-loop-${lang}`);
+    expect((await overflow(page)).tall).toBeLessThanOrEqual(2);
+    await page.locator('.take-review [data-again]').click();
+    await expect(page.locator('[data-loop-passes="2"]')).toBeVisible();
+    await page.locator('.take-review [data-next]').click();
+    await expect(page.locator('[data-loop]')).toHaveCount(0);
+    await expect(page.locator('[data-drill-play]')).toBeVisible();
+  });

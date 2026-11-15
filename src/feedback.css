@@ -134,3 +134,21 @@
 .sr-summary { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .take-review .drill-rh { margin: 0; font-size: 0.82rem; }
 .tempo-iso { unicode-bidi: isolate; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- the error map and the loop (slice 3) */
+.error-map { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 8), minmax(0, 1fr)); gap: 3px; }
+.em-cell { position: relative; display: grid; justify-items: center; gap: 1px; width: 100%; min-height: 34px; padding: 3px 0 0; border: 0; background: transparent; cursor: pointer; font: inherit; }
+.em-cell i { display: block; width: 100%; height: 16px; border: 2px solid var(--outline); border-radius: 5px; background: var(--teal); }
+.em-cell.early i { background: var(--tangerine); }
+.em-cell.late i { background: var(--purple); }
+.em-cell.wrong i { background: var(--pink); }
+.em-cell.missed i { background: var(--card); border-style: dashed; }
+.em-cell.empty i { background: var(--card-2); border-color: var(--line-strong); }
+.em-cell small { font-size: 10px; line-height: 1; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.em-cell.sel i { outline: 3px solid var(--ink-c); outline-offset: 1px; }
+.em-cell.sel small { color: var(--ink); font-weight: 700; }
+.loop-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 10px; margin: 0; padding: 6px 10px; border: 2px solid var(--outline); border-radius: 12px; background: var(--card); font-size: 0.85rem; color: var(--ink); }
+.loop-bar b { font-family: var(--display); font-weight: 400; }
+.loop-passes { display: inline-flex; gap: 3px; }
+.loop-passes i { width: 14px; height: 10px; border-radius: 50%; transform: rotate(-20deg); border: 2px solid var(--ink-c); background: var(--card); }
+.loop-passes i.on { background: var(--teal); }
