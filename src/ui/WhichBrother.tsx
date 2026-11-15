@@ -10,6 +10,7 @@ import {
   brotherRoot,
   brotherVoicing,
   brotherWhy,
+  dimMoveReveal,
   dimMoveVoicings,
   domName,
   isPlayLevel,
@@ -49,7 +50,7 @@ const ev = (notes: number[], start: number, dur: number, vel = 0.5): NoteEvent[]
 function soundOf(c: BrotherCase): { events: NoteEvent[]; length: number } {
   const t = tonicVoicing(c.tonic);
   if (c.level === 3) {
-    const [d, born] = dimMoveVoicings(c.tonic, c.answer);
+    const [d, born] = dimMoveVoicings(c.tonic, c.answer, c.low);
     return { events: [...ev(d, 0, 1.1), ...ev(born, 1.25, 1.1), ...ev(t, 2.5, 1.5, 0.45)], length: 4.1 };
   }
   const dom: Brother = c.level === 6 ? c.answer : c.level >= 4 ? c.of : c.answer;
@@ -133,6 +134,8 @@ function Board({ run, idx, input, lang, done, answer }: BoardCtx<'whichbrother'>
     answered.current = true;
     ac.current?.abort();
     setPick(b);
+    // mp: the born brother again, now with its root low in the bass (the confirmation)
+    if (c.level === 3) void piano.play(ev(dimMoveReveal(c.tonic, c.answer, c.low), 0.15, 1.3), 1.6, new AbortController().signal).catch(() => {});
     answer({ got: b === c.answer ? 1 : 0, of: 1, was: domName(brotherRoot(c.tonic, c.answer)), why });
   };
   const tap = (m: number) => {
