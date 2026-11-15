@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.96.0',
+    date: '2026-11-15',
+    en: [
+      'Nine new games: Guide-Tone Runner, Enclosure Target, Changes Crossword, Hold the Note, Border Control, Which Brother?, Run Catcher, Comp Caller and Elevator — each on the path, in the workout and in key mastery.',
+      'Live feedback while you play: each note marked early or late as it sounds, a pocket meter in place of “Go!”, and a clean chord chart for every jazz item.',
+      'A practice diary: real measured practice time, how clean your takes were over the weeks, a journal with notes and search, and a nudge when an item stops improving. Only measured practice keeps the streak.',
+      'Drums are out of beta. Material we could not verify against its sources is hidden until it is checked.',
+    ],
+    he: [
+      'תשעה משחקים חדשים: רץ הצלילים המובילים, מטרת הכיתור, תשבץ המהלכים, להחזיק את הצליל, ביקורת גבולות, איזה אח?, תופסים ראן, קורא הליווי והמעלית — כל אחד במסלול, באימון ובשליטת הסולמות.',
+      'משוב חי בזמן הנגינה: כל צליל מסומן מוקדם או מאוחר כשהוא נשמע, מד כיס במקום "קדימה!", ודף אקורדים נקי לכל תרגיל ג׳אז.',
+      'יומן תרגול: זמן תרגול אמיתי שנמדד, כמה נקיים היו הביצועים לאורך השבועות, יומן עם הערות וחיפוש, ותזכורת כשתרגיל מפסיק להשתפר. רק תרגול מדוד שומר על הרצף.',
+      'התופים יצאו מבטא. חומר שלא הצלחנו לאמת מול המקורות מוסתר עד שייבדק.',
+    ],
+  },
+  {
     version: '0.95.0',
     date: '2026-11-15',
     en: [
