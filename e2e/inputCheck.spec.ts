@@ -56,6 +56,8 @@ const oneRow = async (page: Page) => {
 
 const openScales = async (page: Page, lang: 'en' | 'he') => {
   await page.goto(`/?unlock=all&lang=${lang}#/drills`);
+  // the hub first (the topic filter, when the course has one, renders with it)
+  await expect(page.locator('[data-family], [data-topic]').first()).toBeVisible();
   const all = page.locator('[data-topic="all"]');
   if (await all.count()) await all.click();
   await page.locator('[data-family="scales"]').click();
