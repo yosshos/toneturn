@@ -23,6 +23,8 @@ import {
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
+import { canComplete, completeStep, LICK_CONCEPTS, LICK_STEPS, loadLickFlows, newLickFlow, saveLickFlows, stepCards, withKeyStars, type LickConcept, type LickFlow, type LickStepN } from '../engine/practiceMethod';
+import { RULE_NAME } from '../engine/improvRules';
 
 type Lang = 'he' | 'en';
 export type TakeFn = (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => void;
@@ -339,7 +341,7 @@ export function UseIt({ lang, settings, lick, inst, onResult }: { lang: Lang; se
   );
 }
 
-type View = { k: 'lib' } | { k: 'lick'; id: string } | { k: 'run'; id: string; queue: Drill[]; review?: boolean; byEar?: boolean } | { k: 'useit'; id: string } | { k: 'reviewRun'; queue: Drill[]; ids: string[] };
+type View = { k: 'lib' } | { k: 'lick'; id: string } | { k: 'run'; id: string; queue: Drill[]; review?: boolean; byEar?: boolean } | { k: 'useit'; id: string } | { k: 'reviewRun'; queue: Drill[]; ids: string[] } | { k: 'absorb'; id: string };
 
 export interface LickTrainerProps {
   lang: Lang;
@@ -447,6 +449,15 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
       </main>
     );
   }
+  if (view.k === 'absorb') {
+    const l = lickById(view.id, own)!;
+    return (
+      <main className="panel-screen lk-screen" data-licks="absorb" data-lick={l.id}>
+        {head(`${lang === 'he' ? 'לספוג' : 'Absorb'} · ${l.name[lang]}`, () => setView({ k: 'lick', id: l.id }))}
+        <AbsorbFlow lang={lang} lickId={l.id} stars={lickStars(l, inst, itemsNow)} onPractise={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} />
+      </main>
+    );
+  }
   if (view.k === 'lick') {
     const l = lickById(view.id, own)!;
     const stars = lickStars(l, inst, itemsNow);
@@ -471,6 +482,9 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
           </button>
           <button className="btn" disabled={stars < LICK_KNOWN_STARS} onClick={() => setView({ k: 'useit', id: l.id })} data-lick-useit="1" title={stars < LICK_KNOWN_STARS ? tx.locked : undefined}>
             {tx.useIt}
+          </button>
+          <button className="btn" onClick={() => setView({ k: 'absorb', id: l.id })} data-lick-absorb="1">
+            {lang === 'he' ? 'לספוג' : 'Absorb'}
           </button>
           <button className="btn ghost" onClick={() => onSettings({ lickBook: { ...book, mine: mine ? (book.mine ?? []).filter((x) => x !== l.id) : [...(book.mine ?? []), l.id] } })} data-lick-mine={mine ? 'on' : 'off'}>
             {mine ? tx.remove : tx.add}
@@ -543,5 +557,71 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         })}
       </ul>
     </main>
+  );
+}
+
+/**
+ * The 7-step flow for making a lick your own (practiceMethod.ts; Siskind's "7-Step Program to Improvised Bliss",
+ * coursepack): one row per step, the current one with its action. Step 2 is the 12-key trainer (done at 3 stars);
+ * step 3 tags the concept; steps 4–7 name the rule cards that check it. Stored on the device.
+ */
+function AbsorbFlow({ lang, lickId, stars, onPractise }: { lang: Lang; lickId: string; stars: number; onPractise: () => void }) {
+  const he = lang === 'he';
+  const [all, setAll] = useState<Record<string, LickFlow>>(() => loadLickFlows());
+  const [pick, setPick] = useState<LickConcept | undefined>(undefined);
+  const today = new Date().toISOString().slice(0, 10);
+  const f = withKeyStars(all[lickId] ?? newLickFlow(), stars, LICK_KNOWN_STARS, today);
+  const put = (nf: LickFlow) => {
+    const m = { ...all, [lickId]: nf };
+    setAll(m);
+    saveLickFlows(m);
+  };
+  useEffect(() => {
+    // step 2 done by the 12-key trainer: keep it
+    if (f.step !== (all[lickId]?.step ?? 1)) put(f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.step]);
+  return (
+    <ol className="lk-flow" data-lick-flow={f.step} style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4 }}>
+      {LICK_STEPS.map((x) => {
+        const done = !!f.done[x.n];
+        const now = x.n === f.step;
+        const cards = stepCards(x.n, f.concept);
+        return (
+          <li key={x.n} data-flow-step={x.n} data-flow-state={done ? 'done' : now ? 'now' : 'later'} style={{ opacity: done || now ? 1 : 0.55 }}>
+            <b dir="ltr">{done ? '✓' : x.n}</b> <b>{x.title[lang]}</b> <small className="field-hint">{x.how[lang]}</small>
+            {x.n === 3 && (now || f.concept) && (
+              <span className="chips" role="radiogroup" style={{ marginTop: 2 }}>
+                {LICK_CONCEPTS.map((c) => {
+                  const on = (now ? (pick ?? f.concept) : f.concept) === c.id;
+                  return (
+                    <button key={c.id} role="radio" aria-checked={on} className={`chip ${on ? 'on' : ''}`} disabled={!now} onClick={() => setPick(c.id)} data-flow-concept={c.id}>
+                      {c.name[lang]}
+                    </button>
+                  );
+                })}
+              </span>
+            )}
+            {cards.length > 0 && (now || done) && (
+              <small className="field-hint" data-flow-cards={cards.join(',')}>
+                {' · '}
+                {cards.map((id) => (RULE_NAME as Record<string, { en: string; he: string }>)[id]?.[lang] ?? id).join(', ')}
+              </small>
+            )}
+            {now && x.n === 2 && (
+              <button className="btn small" onClick={onPractise} data-flow-practise="1">
+                {he ? 'לתרגל בסולמות' : 'Practise in keys'}
+              </button>
+            )}
+            {now && x.n !== 2 && (
+              <button className="btn small primary" disabled={!canComplete(f, x.n as LickStepN, pick)} onClick={() => put(completeStep(f, x.n as LickStepN, today, pick))} data-flow-done={x.n}>
+                {he ? 'בוצע' : 'Done'}
+              </button>
+            )}
+          </li>
+        );
+      })}
+      {f.step > 7 && <li className="field-hint" data-flow-complete="1">{he ? 'הליק שלכם.' : 'The lick is yours.'}</li>}
+    </ol>
   );
 }

@@ -5,9 +5,11 @@ import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, 
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
+import { analyzeFreeCompTake } from './freeCompAnalyze';
 import { analyzePhraseTake } from './phraseGrade';
 import { RULE_NAME, ruleCheck } from '../improvRules';
 import { RULE_CARDS, cardKept, type CNote } from '../ruleCards';
+import { phraseOrg, playRestCheck, PHRASE_BAND_NAME, type PhraseOrgReport } from '../phraseOrg';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 /** Borrowing feedback: the voices of a 4-note chord, top to bottom. */
@@ -308,6 +310,43 @@ export function improvChecks(drill: Drill, bpm: number, played0: PlayedNote[]): 
   return out;
 }
 
+/** Is this take improvised (rule cards, free bars, a free right hand, or a phrasing rule)? */
+export const isImprovised = (drill: Drill): boolean => !!(drill.goal.improv || drill.goal.free || drill.goal.phrase || drill.goal.playRest || drill.freeAbove !== undefined);
+
+/**
+ * Siskind / MTNA rubric (phraseOrg.ts): the phrasing report of an improvised take (null for written takes). With free
+ * bars, the windows are joined end to end (the band's bars between them are not the player's rests).
+ */
+export function improvPhrasing(drill: Drill, bpm: number, played0: PlayedNote[]): { report: PhraseOrgReport; playRest?: { ok: number; total: number } } | null {
+  if (!isImprovised(drill)) return null;
+  const meter = drill.meter || 4;
+  let notes = improvNotes(drill, bpm, played0).map((n) => ({ beat: n.beat, dur: n.dur, midi: n.midi }));
+  let totalBeats = drill.beats;
+  let spans = drill.goal.improv?.spans;
+  const wins = drill.freeAbove === undefined && drill.goal.free ? drill.goal.free.windows : null;
+  if (wins?.length) {
+    const ws = [...wins].sort((a, b) => a[0] - b[0]);
+    let off = 0;
+    const mapped: typeof notes = [];
+    const ms: NonNullable<typeof spans> = [];
+    for (const [a, b] of ws) {
+      for (const n of notes) if (n.beat >= a - 0.25 && n.beat < b) mapped.push({ ...n, beat: Math.max(0, n.beat - a + off) });
+      for (const sp of spans ?? []) {
+        const lo = Math.max(sp.at, a);
+        const hi = Math.min(sp.at + sp.beats, b);
+        if (hi > lo) ms.push({ ...sp, at: lo - a + off, beats: hi - lo });
+      }
+      off += b - a;
+    }
+    notes = mapped;
+    if (spans) spans = ms;
+    totalBeats = off;
+  }
+  const report = phraseOrg(notes, { totalBeats, meter, ...(spans ? { spans } : {}) });
+  const pr = drill.goal.playRest;
+  return { report, ...(pr ? { playRest: playRestCheck(notes, { play: pr.play, rest: pr.rest, meter, totalBeats }) } : {}) };
+}
+
 // ───────────────────────────── per-hand onset series ─────────────────────────────
 
 interface Onset {
@@ -389,6 +428,9 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
   // Phrases by ear (phraseDrills.ts): note by note with the transcription coach's comparer, partial credit.
   if (drill.phrase) return analyzePhraseTake(drill, bpm, played0);
+  // Free comping by rule (Siskind, soloPiano.ts): the player's own rhythm, graded by density / variety / repeats /
+  // anticipations — the written notes are only a model.
+  if (drill.goal.freeComp) return analyzeFreeCompTake(drill, bpm, played0);
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
   const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
@@ -856,6 +898,43 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       he: `כלל לא נשמר: ${nm.he} (${c.ok}/${c.total})`,
     });
   }
+  // Siskind / MTNA rubric (phraseOrg.ts): the phrasing of every improvised take is reported; goal.phrase and
+  // goal.playRest turn it into a pass rule.
+  const po = improvPhrasing(drill, bpm, played0);
+  if (po && goal.phrase && !goal.phrase.pass.includes(po.report.band))
+    F.push({
+      sev: 1.4,
+      en: `Phrasing ${PHRASE_BAND_NAME[po.report.band].en}: ${po.report.tip.en}`,
+      he: `משפטים: ${PHRASE_BAND_NAME[po.report.band].he}. ${po.report.tip.he}`,
+    });
+  if (po?.playRest) {
+    const sh = po.playRest.total ? po.playRest.ok / po.playRest.total : 0;
+    if (sh < 0.85)
+      F.push({
+        sev: sh < 0.6 ? 2 : 1.4,
+        en: `Play / rest pattern kept in ${po.playRest.ok} of ${po.playRest.total} bars`,
+        he: `תבנית הנגינה והמנוחה נשמרה ב־${po.playRest.ok} מתוך ${po.playRest.total} תיבות`,
+      });
+  }
+  // Siskind's registers (soloPiano.ts, [PSJP-A]): a written note missed but its pitch class played an octave or two
+  // away, near its beat — the voicing was played in the wrong register ("muddy" below C3, "thin" above G4).
+  if (goal.register) {
+    let low = 0;
+    let high = 0;
+    exp.forEach((e, i) => {
+      if (ok[i]) return;
+      const near = played.find((p) => p.pitch !== e.pitch && mod12(p.pitch) === mod12(e.pitch) && Math.abs(p.on - T[i]) <= beatMs / 2);
+      if (!near) return;
+      if (near.pitch < e.pitch) low++;
+      else high++;
+    });
+    if (low + high > 0)
+      F.push({
+        sev: 1.3,
+        en: low >= high ? `Too low (${low} notes): muddy — keep the 3rd and 7th between C3 and G4` : `Too high (${high} notes): thin — keep the 3rd and 7th between C3 and G4`,
+        he: low >= high ? `נמוך מדי (${low} צלילים): עכור — טרצה וספטימה בין C3 ל־G4` : `גבוה מדי (${high} צלילים): דק — טרצה וספטימה בין C3 ל־G4`,
+      });
+  }
   if (hesitations > 0)
     F.push({
       sev: hesitations === 1 ? 1.4 : 2,
@@ -961,5 +1040,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),
     ...(drill.goal.improv ? { improv } : {}),
+    ...(po ? { phraseOrg: po.report } : {}),
+    ...(po?.playRest ? { playRest: po.playRest } : {}),
   };
 }

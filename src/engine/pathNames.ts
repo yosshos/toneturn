@@ -179,6 +179,10 @@ const SHORT: Record<string, L2> = {
   'key-centres': { en: 'Key centres', he: 'מרכזים טונליים' },
   // AUDIT-DEPTH-3 C1/C3
   'melody-fit': { en: 'Melody vs chords', he: 'מנגינה מול אקורדים' },
+  // Solo jazz piano by ear (Siskind)
+  'lh-tex-ear': { en: 'Left hand by ear', he: 'יד שמאל בשמיעה' },
+  'solo-tex-ear': { en: 'Solo textures', he: 'מרקמי סולו' },
+  'comp-rhythm-ear': { en: 'Comping rhythms', he: 'מקצבי ליווי' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

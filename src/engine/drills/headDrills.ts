@@ -32,6 +32,7 @@ import { keyLabel, sharpKey, type Home } from '../stdKey';
 import { HEADS, servedHeads, type Head } from '../../content/heads';
 import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
+import { sharedHands, splitShared } from '../soloPiano';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -135,12 +136,23 @@ export function cleanPath(g: VLGoal): number[][] {
   return path;
 }
 
+/**
+ * Shared hands (Siskind [PSJP-A]: the melody about the two octaves above middle C): the hands can only share the chord
+ * under a melody in the lower of them, so a head sitting high (its mean above A4) moves down an octave for this style when it stays above A3.
+ */
+function sharedRegister(hi: HeadIn, type: string): HeadIn {
+  if (type !== 'shared' || !hi.notes.length) return hi;
+  const mean = hi.notes.reduce((a, n) => a + n.pitch, 0) / hi.notes.length;
+  const low = Math.min(...hi.notes.map((n) => n.pitch)) - 12;
+  return mean > 69 && low >= 57 ? { ...hi, notes: hi.notes.map((n) => ({ ...n, pitch: n.pitch - 12 })) } : hi;
+}
+
 /** The voice-leading goal of a harmonising item (one phrase in one style). */
 export function harmPlan(s: DrillSpec): { hi: HeadIn; goal: VLGoal; phrase: number; path: number[][] } {
   const { head, phrase } = decodeHead(s.option);
   const style = HARM_STYLES[s.kind.slice(3)];
   if (!style) throw new Error(`Unknown harmonisation style: ${s.kind}`);
-  const hi = headIn(head, s.key, 'piano');
+  const hi = sharedRegister(headIn(head, s.key, 'piano'), style.type);
   const g0 = { type: style.type, lo: style.lo, hi: style.hi, over: style.over };
   // A note no voicing of the style fits in its register stays a single melody note (left out of the item).
   const evs = harmEvents(hi, phrase * 4, phrase * 4 + 4, style).filter((e) => candidates(e.chord, g0).length > 0);
@@ -152,7 +164,8 @@ export function harmPlan(s: DrillSpec): { hi: HeadIn; goal: VLGoal; phrase: numb
     tol: style.tol,
     lo: style.lo,
     hi: style.hi,
-    bass: true,
+    // a shared-hands voicing carries its own bass (Siskind: the LH pinky holds it)
+    bass: style.type !== 'shared',
     flats: !sharpKey(hi.tonic),
     ...(style.over ? { over: true } : {}),
   };
@@ -165,6 +178,19 @@ function genHarm(s: DrillSpec): Drill {
   const style = HARM_STYLES[s.kind.slice(3)];
   const notes: ExpNote[] = [];
   let bassPrev = 46;
+  if (style.type === 'shared') {
+    // Siskind's hands (soloPiano.ts): LH = the bass part and the two lowest shared notes, RH = the rest and the melody.
+    path.forEach((v, k) => {
+      const beat = goal.at[k];
+      const dur = r6(Math.max(0.5, (goal.at[k + 1] ?? 16) - beat));
+      const hands = sharedHands(v, goal.chords[k].melody!);
+      const { bass, inner } = splitShared(v);
+      const lh = hands?.lh ?? [...bass, ...inner.slice(0, 2)];
+      const rh = hands?.rh ?? [...inner.slice(2), goal.chords[k].melody!];
+      lh.forEach((p) => notes.push({ pitch: p, beat, dur, hand: 'L', chordId: k + 1 }));
+      rh.forEach((p) => notes.push({ pitch: p, beat, dur, hand: 'R', chordId: k + 1, ...(p === goal.chords[k].melody ? { accent: true } : {}) }));
+    });
+  } else
   path.forEach((v, k) => {
     const beat = goal.at[k];
     const dur = r6(Math.max(0.5, (goal.at[k + 1] ?? 16) - beat));

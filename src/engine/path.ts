@@ -20,6 +20,7 @@ import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES } from './voiceFamilies';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
+import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -238,6 +239,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-borrow': 'jazz', 'bh-sixfive': 'jazz', 'bh-moves': 'jazz', 'bh-tesseract': 'jazz',
   // Barry Harris lines by ear (BARRY-HARRIS-METHOD Part D).
   'bh-line-ear': 'jazz',
+  // Solo jazz piano by ear (Siskind, SISKIND-SOLO-PIANO C1–C3).
+  'lh-tex-ear': 'jazz', 'solo-tex-ear': 'jazz', 'comp-rhythm-ear': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -410,7 +413,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // jazz in context (brothers, backdoor, superimposition, Coltrane sub, intros / endings, ballads) ~1330–1880.
   'k-solo': 7, 'k-ctx': 9,
   // Barry Harris lines: every level is placed by KEYS_LEVEL_DIFF; this is only the fallback.
-  'k-harrisline': 6 };
+  'k-harrisline': 6,
+  // Solo jazz piano (Siskind): every level is placed by KEYS_LEVEL_DIFF; these are only the fallbacks.
+  'k-lh': 1, 'k-tex': 4, 'k-comp': 8, 'k-impro': 1 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -442,6 +447,11 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...K_HARM_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
+  // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): the left hand ~760–1620, textures 1000–1900,
+  // comping vocabulary 1250–1650, improvisation habits 780–1200 — each level at its own rating.
+  ...SP_LEVEL_DIFF,
+  // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
+  'k-harm-8': 1780,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -449,7 +459,7 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
  */
 export const PATH_CAP = 1900;
 /** Families whose level order on the path is not their number order (placed by grade, or by KEYS_LEVEL_DIFF). */
-export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline'];
+export const NON_MONOTONE_FAMILIES = ['harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-lh', 'k-tex', 'k-comp', 'k-impro'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;

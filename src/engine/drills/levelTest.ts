@@ -72,12 +72,17 @@ const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-4', 5, { cadences: 5, 'k-vl': 3 }),
   r('cadences-5', 9, { cadences: 6, 'k-vl': 4 }),
 ];
+// Solo jazz piano (Siskind, soloPianoDrills.ts): the left-hand ladder, the textures, the comping vocabulary and the
+// improvisation habits are placed by the comping steps; shell stride (k-lh 8) and RH notes under the melody (k-tex 6)
+// are steps of their own.
 const COMP_JAZZ: Rung[] = [
-  r('accomp-1', 0, { accomp: 2 }),
-  r('voicings-6', 5, { accomp: 3, voicings: 7 }),
-  r('voicings-11', 10, { accomp: 4, voicings: 12 }),
-  r('accomp-3', 7, { accomp: 5 }),
-  r('voicings-14', 7, { accomp: 9, voicings: 15 }),
+  r('accomp-1', 0, { accomp: 2, 'k-lh': 1 }),
+  r('voicings-6', 5, { accomp: 3, voicings: 7, 'k-lh': 5, 'k-impro': 2 }),
+  r('k-lh-8', 7, { accomp: 3, voicings: 7, 'k-lh': 8, 'k-tex': 2, 'k-impro': 2 }),
+  r('voicings-11', 10, { accomp: 4, voicings: 12, 'k-lh': 9, 'k-tex': 4, 'k-comp': 2, 'k-impro': 5 }),
+  r('accomp-3', 7, { accomp: 5, 'k-lh': 8, 'k-tex': 2 }),
+  r('k-tex-6', 3, { accomp: 5, voicings: 12, 'k-lh': 12, 'k-tex': 6, 'k-comp': 3, 'k-impro': 5 }),
+  r('voicings-14', 7, { accomp: 9, voicings: 15, 'k-lh': 14, 'k-tex': 8, 'k-comp': 5, 'k-impro': 5 }),
 ];
 const COMP_CLASSICAL: Rung[] = [
   r('accomp-1', 0, { accomp: 2, control: 4 }),

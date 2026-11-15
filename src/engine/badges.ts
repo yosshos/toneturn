@@ -344,7 +344,7 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-lh', 'k-tex', 'k-comp', 'k-impro'];
 export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
@@ -407,6 +407,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   // AUDIT-DEPTH-3: heads — harmonise a melody, chord-melody, comp a head and reharmonise it.
   'k-harm': { en: 'Harmonise a melody', he: 'הרמון מנגינה' },
   'k-tune': { en: 'Tunes: comp the head', he: 'שירים: ליווי השיר' },
+  // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C).
+  'k-lh': { en: 'Solo left hand', he: 'יד שמאל לסולו' },
+  'k-tex': { en: 'Solo textures', he: 'מרקמי סולו' },
+  'k-comp': { en: 'Comping vocabulary', he: 'אוצר מילים לליווי' },
+  'k-impro': { en: 'Improv habits', he: 'הרגלי אלתור' },
   'g-cmel': { en: 'Chord-melody', he: 'אקורד-מלודיה' },
   'g-tune': { en: 'Tunes on the neck', he: 'שירים על הצוואר' },
 };
@@ -466,6 +471,10 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-keys': 'gkeymove',
   'k-harm': 'harmmel',
   'k-tune': 'tunecomp',
+  'k-lh': 'lhshell',
+  'k-tex': 'mango',
+  'k-comp': 'compvoc',
+  'k-impro': 'phrasing',
   'g-cmel': 'chordmel',
   'g-tune': 'gtunecomp',
 };
@@ -534,8 +543,13 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-ctx': [['Brother Lines', 'קווי האחים'], ['Brother Comping', 'ליווי האחים'], ['All Four Brothers', 'כל ארבעת האחים'], ['Brothers in Forms', 'אחים בצורות'], ['Backdoor Guitarist', 'גיטריסט הדלת האחורית'], ['Triad Pairs in Context', 'זוגות משולשים בהקשר'], ['Pentatonic Superimposer', 'מניח הפנטטוניות'], ['Coltrane Changes, Guitar', 'שינויי קולטריין בגיטרה'], ['Intro Player', 'נגן הפתיחות'], ['Ending Player', 'נגן הסיומים'], ['Ballad Guitarist', 'גיטריסט הבלדות']],
   'k-keys': [['Turnaround Player', 'מנגן הטרנאראונדים'], ['Bridge Crosser', 'חוצה הגשר'], ['Key Jumper', 'קופץ הסולמות'], ['Pivot Finder', 'מוצא הציר'], ['Through the Diminished', 'דרך הדימיניש'], ['Four Doors', 'ארבע דלתות'], ['Master of Keys', 'אמן הסולמות']],
   'g-keys': [['Turnaround Comper', 'מלווה הטרנאראונדים'], ['Ladybird Player', 'נגן הלידיבירד'], ['Bridge on the Neck', 'הגשר על הצוואר'], ['Lift Up a Step', 'הרמה בצעד'], ['Two-Five Mover', 'מעביר ה־ii–V'], ['Pivot on the Strings', 'ציר על המיתרים'], ['One Diminished, Four Keys', 'דימיניש אחד, ארבעה סולמות'], ['Diminished Door', 'דלת הדימיניש'], ['Every Key by Diminished', 'כל סולם דרך דימיניש'], ['Seven-Flat-Nine', 'שבע במול תשע'], ['Tritone Mover', 'מעביר הטריטון'], ['Key-to-Key Liner', 'קווים מסולם לסולם']],
+  // Solo jazz piano (Siskind): one title per level of k-lh (18), k-tex (20), k-comp (7), k-impro (5).
+  'k-lh': [['Low Bass', 'בס נמוך'], ['Six Registers', 'שישה רגיסטרים'], ['Bud Powell Shells', 'השלדים של באד פאוול'], ['Third-Seventh Shuttle', 'טרצה וספטימה לסירוגין'], ['Type A Shell', 'שלד מסוג A'], ['Type B Shell', 'שלד מסוג B'], ['Rolled Bass', 'בס מתגלגל'], ['Shell Strider', 'צועד בשלדים'], ['Strong-Beat Shells', 'שלדים על החזקות'], ['Walking Tenths', 'דצימות מהלכות'], ['Head in Tenths', 'שיר בדצימות'], ['Peace Piece Pattern', 'תבנית השלווה'], ['Three-Three-Two', 'שלוש־שלוש־שתיים'], ['Anticipated Stride', 'סטרייד מקדים'], ['Three Against Four', 'שלוש נגד ארבע'], ['Left-Hand Break', 'הפסקת יד שמאל'], ['Stride Comper', 'מלווה סטרייד'], ['Evans Shuttle', 'השאטל של אוונס']],
+  'k-tex': [['Melody and Bass', 'מנגינה ובס'], ['Melody over Shells', 'מנגינה מעל שלדים'], ['Melody over Bass Shells', 'מנגינה מעל שלדי בס'], ['Call and Response', 'שאלה ותשובה'], ['Melody over Shell Stride', 'מנגינה מעל סטרייד'], ['Notes Under the Melody', 'צלילים מתחת למנגינה'], ['Right-Hand Shuttle', 'שאטל ביד ימין'], ['Filled Octaves', 'אוקטבות ממולאות'], ['Drape and Line', 'עטיפה וקו'], ['Closed Position', 'מצב צמוד ללא בס'], ['Sidestep Blocks', 'בלוקים בצעד צד'], ['So What Melody', 'מנגינת סו וואט'], ['Stride Under a Tune', 'סטרייד מתחת לשיר'], ['Shared Hands', 'ידיים משותפות'], ['Stop-Start Rubato', 'רובאטו עוצר וזז'], ['Repeated Quarters', 'רבעים חוזרים'], ['Stride Ballad', 'בלדת סטרייד'], ['Inner Voices', 'קולות פנימיים'], ['Four Voices', 'ארבעה קולות'], ['Mango Juggler', 'מלהטט המנגו']],
+  'k-comp': [['Beat-Three Charleston', 'צ׳רלסטון מהשלוש'], ['Lead-In Comper', 'מלווה בכניסות'], ['Basie Comper', 'מלווה בייסי'], ['Push-Off', 'דחיפה קדימה'], ['Accent Comper', 'מלווה בהדגשות'], ['Two-Bar Patterns', 'תבניות דו־תיבתיות'], ['Free Comper', 'מלווה חופשי']],
+  'k-impro': [['Drone Melodist', 'מלודיסט הדרון'], ['Two and Rest', 'שתיים ומנוחה'], ['Play One, Rest One', 'אחת מנגנים, אחת נחים'], ['Dorian Drone', 'דרון דורי'], ['Play Two, Rest Two', 'שתיים מנגנים, שתיים נחים'], ['Hands in Dialogue', 'ידיים בשיחה'], ['Twos and Ones', 'שתיים ואחת']],
   // AUDIT-DEPTH-3: heads — piano 7 titles, guitar one per level.
-  'k-harm': [['Melody Reader', 'קורא המנגינה'], ['Shells Under a Tune', 'שלדים מתחת לשיר'], ['Four-Way Close', 'ארבעה קולות צמודים'], ['Drop-2 Harmoniser', 'מהרמן בדרופ 2'], ['Drop-3 Harmoniser', 'מהרמן בדרופ 3'], ['Phrase by Phrase', 'משפט אחר משפט'], ['Melody Harmoniser', 'מהרמן המנגינות']],
+  'k-harm': [['Melody Reader', 'קורא המנגינה'], ['Shells Under a Tune', 'שלדים מתחת לשיר'], ['Four-Way Close', 'ארבעה קולות צמודים'], ['Drop-2 Harmoniser', 'מהרמן בדרופ 2'], ['Drop-3 Harmoniser', 'מהרמן בדרופ 3'], ['Phrase by Phrase', 'משפט אחר משפט'], ['Melody Harmoniser', 'מהרמן המנגינות'], ['Shared-Hands Harmoniser', 'מהרמן בשתי ידיים']],
   'k-tune': [['Roots of the Tune', 'יסודות השיר'], ['Guide-Tone Comper', 'מלווה בצלילים מנחים'], ['Shells Through a Tune', 'שלדים לאורך שיר'], ['Rootless Comper', 'מלווה בלי יסוד'], ['Melody and Comp', 'מנגינה וליווי'], ['Head Reharmoniser', 'מהרמן השירים'], ['Coltrane Reharm', 'הרמון קולטריין']],
   'g-cmel': [['Melody in Position', 'מנגינה בפוזיציה'], ['Bass and Melody', 'בס ומנגינה'], ['Two Voices', 'שני קולות'], ['Drop 2 Under the Tune', 'דרופ 2 מתחת לשיר'], ['Passing Diminished', 'דימיניש עובר'], ['Chord-Melody Chorus', 'פזמון אקורד-מלודיה']],
   'g-tune': [['Roots on the Neck', 'יסודות על הצוואר'], ['Guide Tones on the Neck', 'צלילים מנחים על הצוואר'], ['Shells on the Neck', 'שלדים על הצוואר'], ['Rootless on the Neck', 'בלי יסוד על הצוואר'], ['Drop 2 Through a Tune', 'דרופ 2 לאורך שיר'], ['Melody and Comp on the Neck', 'מנגינה וליווי על הצוואר'], ['Tritone Reharm', 'הרמון טריטון'], ['Backdoor Reharm', 'הרמון דלת אחורית'], ['Coltrane on the Neck', 'קולטריין על הצוואר']],

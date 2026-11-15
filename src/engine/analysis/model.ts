@@ -25,7 +25,11 @@ export interface PlayerModel {
   stats: Record<string, Stat>;
   takes: number;
   updated: string;
+  /** Siskind / MTNA rubric (phraseOrg.ts): the phrasing band of the last improvised takes, oldest first (≤ PHRASING_KEEP). */
+  phrasing?: import('../phraseOrg').PhraseBand[];
 }
+/** Improvised takes whose phrasing band the model keeps. */
+export const PHRASING_KEEP = 20;
 export const emptyModel = (): PlayerModel => ({ v: 1, stats: {}, takes: 0, updated: '' });
 
 /** ⚙ The weight of the newest note never drops below 1/HALF — older evidence fades over a few hundred notes. */
@@ -92,7 +96,8 @@ export function addTake(model: PlayerModel, drill: Drill, m: TakeMetrics, bpm: n
       stats[key] = s;
     }
   });
-  return { v: 1, stats, takes: model.takes + 1, updated: at };
+  const phrasing = m.phraseOrg ? [...(model.phrasing ?? []), m.phraseOrg.band].slice(-PHRASING_KEEP) : model.phrasing;
+  return { v: 1, stats, takes: model.takes + 1, updated: at, ...(phrasing ? { phrasing } : {}) };
 }
 
 // ---------------------------------------------------------------- findings

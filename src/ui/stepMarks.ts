@@ -156,6 +156,10 @@ export const TOPIC_MARK: Record<string, string> = {
   'modulation-means': '°7→',
   // AUDIT-DEPTH-3 C1/C3: the melody note against the (new) chord.
   'melody-fit': '♪/7',
+  // Solo jazz piano by ear (Siskind): the 10th, the three mangos, the Charleston's "1 2+".
+  'lh-tex-ear': '1+10',
+  'solo-tex-ear': '3/2',
+  'comp-rhythm-ear': '1·2+',
   'key-centres': 'I→I→I',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',

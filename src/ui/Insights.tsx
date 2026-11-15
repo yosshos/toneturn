@@ -280,6 +280,11 @@ function ProfileCard({ profile, lang, tx, shows, act, nearMastery }: { nearMaste
     <section className="set-card in-profile" data-profile={profile.ready ? 'ready' : 'building'}>
       <h2>{tx.profile}</h2>
       <small className="field-hint">{tx.profileHint}</small>
+      {profile.phrasing && (
+        <p className="field-hint" data-profile-phrasing="1">
+          {profile.phrasing[lang]}
+        </p>
+      )}
       {empty ? (
         <p className="field-hint">{profile.ready ? tx.clear : tx.building}</p>
       ) : (

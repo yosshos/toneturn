@@ -41,6 +41,7 @@ import './topicsBorrow';
 import './topicsHeads'; // AUDIT-DEPTH-3 C1/C3: a melody note against the chord; which reharm device
 // Barry Harris lines by ear (BARRY-HARRIS-METHOD Part D): the chromatic scale's skip-back, the rules, the arpeggios.
 import './topicsHarrisLines';
+import './topicsSoloPiano'; // Siskind: the solo left hand, solo textures, comping rhythms by ear
 import './topicsKeyMoves'; // AUDIT-GAPS-2 #5/#19: modulation by ear — how (pivot, common dim, ii–V, tritone, direct), where to, a tune's key centres
 import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import './topicsGrid'; // Progressions by ear on the grid (progGrid.ts): root + quality + bass / colour per bar, partial credit, 1100–1850

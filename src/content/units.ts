@@ -36,6 +36,7 @@ import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
 import { UNITS as SOLO_RULES } from './mini/soloRules';
 import { UNITS as JAZZ_CONTEXT } from './mini/jazzContext';
 import { UNITS as HARRIS_LINES } from './mini/harrisLines'; // Barry Harris lines (Part D)
+import { UNITS as SOLO_PIANO } from './mini/soloPiano'; // Siskind: solo jazz piano
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -65,6 +66,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HARRIS_PIVOT,
   ...SCALE_WORK,
   ...HARRIS_LINES,
+  ...SOLO_PIANO,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

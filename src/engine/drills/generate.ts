@@ -18,6 +18,7 @@ import { genHarmPiano, pianoScaleHarmFamily } from './harmLadder'; // AUDIT-SCAL
 import { genIndep, indepFamily } from './indepDrills'; // AUDIT-SCALES §3: hand independence
 import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
 import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry Harris lines (BARRY-HARRIS-METHOD Part D)
+import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
@@ -5079,6 +5080,8 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-solo') return genKeysSolo(s);
   if (s.family === 'k-ctx') return genKeysCtx(s);
   if (s.family === 'k-harrisline') return genHarrisLine(s);
+  // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): k-lh, k-tex, k-comp, k-impro.
+  if (isSoloPianoFamily(s.family)) return genSoloPiano(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -6152,6 +6155,12 @@ export function catalog(): FamilyDef[] {
     // Barry Harris lines (docs/research/BARRY-HARRIS-METHOD.md Part D): the chromatic scale, scale outlines, 5-4-3-2,
     // the important arpeggios, seven down to the 3rd, the triplet and miscellaneous rules, upbeats, compose a line.
     harrisLineFamily(),
+    // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C): the left hand for solo piano, the
+    // texture ladder through the heads, the comping vocabulary, improvisation habits (soloPianoDrills.ts).
+    soloLhFamily(),
+    soloTexFamily(),
+    compVocabFamily(),
+    improHabitsFamily(),
   ]);
 }
 

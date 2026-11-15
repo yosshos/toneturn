@@ -278,7 +278,7 @@ export const toggleLock = (bs: Block[], id: string): Block[] => bs.map((b) => (b
 /** "Less today": −50 % (≥ 1). */
 
 
-export type Preset = 'suggested' | 'ear' | 'rhythm' | 'reading' | 'voice' | 'instrument' | 'quick5' | 'mistakes';
+export type Preset = 'suggested' | 'ear' | 'rhythm' | 'reading' | 'voice' | 'instrument' | 'quick5' | 'mistakes' | 'four-slot';
 /** A preset replaces the blocks and keeps the total (§4). */
 export function preset(p: Preset, totalMin: number, suggested: Block[]): Block[] {
   const T = Math.max(LIMITS.minTotal, totalMin);
@@ -304,6 +304,20 @@ export function preset(p: Preset, totalMin: number, suggested: Block[]): Block[]
       ];
     case 'mistakes':
       return rescale([{ id: 'warmup-1', target: { kind: 'warmup' }, minutes: 2 }, { id: 'mistakes-1', target: { kind: 'mistakes' }, minutes: 6 }], T);
+    case 'four-slot':
+      // Siskind's self-generating session (SISKIND-SOLO-PIANO A11, C6; "How do I Practice Jazz and Improvisation?",
+      // Gv7tgujQxUI): technique → repetition and transposition → tunes → the recorded history. Tunes run the head
+      // levels practiceMethod.ts `tuneSlotLevels` picks from what slot 2 worked on (block id 'tunes-'); Recordings is an
+      // off-app listening card (block id 'listen-'). The split of minutes is ours.
+      return rescale(
+        [
+          { id: 'area-1', target: { kind: 'area', area: 'instrument' }, minutes: 3 },
+          { id: 'strengthen-1', target: { kind: 'strengthen' }, minutes: 3 },
+          { id: 'tunes-1', target: { kind: 'game', game: 'drills' }, minutes: 3 },
+          { id: 'listen-1', target: { kind: 'practice' }, minutes: 2 },
+        ],
+        Math.max(T, 4 * LIMITS.minBlock),
+      );
     default:
       return rescale(suggested.map((b) => ({ ...b })), T);
   }

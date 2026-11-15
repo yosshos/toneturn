@@ -6,6 +6,7 @@ import { useState } from 'react';
 import type { CourseId } from '../engine/courses';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, repStatus, repertoireFor, tierName, wayLabel, type RepItem, type RepTier, type RepWay } from '../engine/repertoire';
 import { ListenOriginal } from './ListenOriginal';
+import { loadMemo, memoProgress, MEMO_STEPS, moveTune, saveMemo, toggleMemoStep, TUNE_LISTS, tunesIn, type MemoState, type TuneList } from '../engine/practiceMethod';
 import '../repertoire.css';
 
 type Lang = 'he' | 'en';
@@ -37,8 +38,16 @@ export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, o
   };
   const [tier, setTier] = useState<RepTier>(goal.next?.tier ?? 1);
   const item = open ? repItem(course, open) : undefined;
+  // Memorising tunes (practiceMethod.ts, Siskind's "How to Memorize a Jazz Standard"): the three lists, on the device.
+  const [memo, setMemoRaw] = useState<MemoState>(() => loadMemo());
+  const setMemo = (m: MemoState) => {
+    setMemoRaw(m);
+    saveMemo(m);
+  };
+  const [lists, setLists] = useState(false);
 
-  if (item) return <ItemPage lang={lang} course={course} item={item} res={res} onBack={() => setOpen(null)} onOpen={setOpen} onWay={onWay} />;
+  if (item) return <ItemPage lang={lang} course={course} item={item} res={res} onBack={() => setOpen(null)} onOpen={setOpen} onWay={onWay} memo={memo} setMemo={setMemo} />;
+  if (lists) return <ListsPage lang={lang} course={course} memo={memo} onBack={() => setLists(false)} onOpen={setOpen} />;
 
   const items = repertoireFor(course).filter((x) => x.tier === tier);
   const title = he ? 'רפרטואר' : 'Repertoire';
@@ -102,6 +111,9 @@ export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, o
           );
         })}
       </ul>
+      <button className="link rep-songbook" onClick={() => setLists(true)} data-rep-lists="1">
+        {he ? 'שלוש הרשימות: יודעים · לומדים · הבא' : 'Three lists: know · learning · next'}
+      </button>
       {onSongbook && (
         <button className="link rep-songbook" onClick={onSongbook} data-rep-songbook="1">
           {he ? 'כל שירי נחלת הכלל — לפי האקורדים שאתם מכירים' : 'All public-domain songs — by the chords you know'}
@@ -111,8 +123,11 @@ export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, o
   );
 }
 
-function ItemPage({ lang, course, item, res, onBack, onOpen, onWay }: { lang: Lang; course: CourseId; item: RepItem; res: ReturnType<typeof repResults>; onBack: () => void; onOpen: (id: string) => void; onWay: (item: RepItem, way: RepWay) => void }) {
+function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMemo }: { lang: Lang; course: CourseId; item: RepItem; res: ReturnType<typeof repResults>; onBack: () => void; onOpen: (id: string) => void; onWay: (item: RepItem, way: RepWay) => void; memo: MemoState; setMemo: (m: MemoState) => void }) {
   const he = lang === 'he';
+  const [memoOpen, setMemoOpen] = useState(false);
+  if (memoOpen) return <MemoPage lang={lang} item={item} memo={memo} setMemo={setMemo} onBack={() => setMemoOpen(false)} onWay={onWay} />;
+  const mp = memoProgress(memo, item.id);
   const r = res[item.id];
   const st = repStatus(r);
   const to = item.leads?.to ? repItem(course, item.leads.to) : undefined;
@@ -163,6 +178,9 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay }: { lang: La
           </button>
         ))}
       </div>
+      <button className="link" onClick={() => setMemoOpen(true)} data-rep-memo={mp.done}>
+        {he ? 'לשנן' : 'Memorise'} <span dir="ltr">{mp.done}/{MEMO_STEPS.length}</span>
+      </button>
       {/* "Listen to the original" (src/content/references.ts, 0.70.2): standards only — the songbook tunes have no entry. */}
       {item.ref?.kind === 'standard' && (
         <div className="rep-refs" data-rep-ref={item.ref.id}>
@@ -172,6 +190,84 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay }: { lang: La
       <p className="rep-legal">
         {item.legal === 'pd' ? (he ? 'מנגינה מנחלת הכלל' : 'Public-domain melody') : item.legal === 'chords' ? (he ? 'מהלך אקורדים בלבד — בלי המנגינה' : 'Chord changes only — no melody') : he ? 'חומר מקורי של האפליקציה' : 'Our own material'}
       </p>
+    </main>
+  );
+}
+
+/** The three lists (Siskind: know / learning / next), tunes by title; tap opens the tune. */
+function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course: CourseId; memo: MemoState; onBack: () => void; onOpen: (id: string) => void }) {
+  const he = lang === 'he';
+  return (
+    <main className="rep-screen" data-rep-listpage="1">
+      <header className="screen-head">
+        <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
+          <span className="flip-rtl">‹</span>
+        </button>
+        <h1>{he ? 'שלוש הרשימות' : 'Three lists'}</h1>
+      </header>
+      {TUNE_LISTS.map((l) => {
+        const ids = tunesIn(memo, l.id).filter((id) => repItem(course, id));
+        return (
+          <section key={l.id} className="rep-leads" data-rep-list={l.id}>
+            <small>
+              {l.name[lang]} <span dir="ltr">· {ids.length}</span>
+            </small>
+            <span className="rep-from">
+              {ids.length ? (
+                ids.map((id) => (
+                  <button key={id} className="chip" onClick={() => onOpen(id)}>
+                    {repItem(course, id)!.title[lang]}
+                  </button>
+                ))
+              ) : (
+                <span className="field-hint">{he ? 'ריק' : 'Empty'}</span>
+              )}
+            </span>
+          </section>
+        );
+      })}
+    </main>
+  );
+}
+
+/** One tune's memorising steps (tick each) and which list it is on. The write step opens harmonic dictation. */
+function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; item: RepItem; memo: MemoState; setMemo: (m: MemoState) => void; onBack: () => void; onWay: (item: RepItem, way: RepWay) => void }) {
+  const he = lang === 'he';
+  const today = new Date().toISOString().slice(0, 10);
+  const cur = memo.steps[item.id] ?? {};
+  const list: TuneList | undefined = memo.lists[item.id];
+  return (
+    <main className="rep-screen rep-item" data-rep-memopage={item.id}>
+      <header className="screen-head">
+        <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
+          <span className="flip-rtl">‹</span>
+        </button>
+        <h1>{item.title[lang]}</h1>
+      </header>
+      <div className="chips" role="radiogroup" aria-label={he ? 'רשימה' : 'List'}>
+        {TUNE_LISTS.map((l) => (
+          <button key={l.id} role="radio" aria-checked={list === l.id} className={`chip ${list === l.id ? 'on' : ''}`} onClick={() => setMemo(moveTune(memo, item.id, l.id))} data-memo-list={l.id}>
+            {l.name[lang]}
+          </button>
+        ))}
+      </div>
+      <ul className="rep-list">
+        {MEMO_STEPS.map((x) => (
+          <li key={x.id}>
+            <label className="toggle-row" data-memo-step={x.id}>
+              <input type="checkbox" checked={!!cur[x.id]} onChange={() => setMemo(toggleMemoStep(memo, item.id, x.id, today))} />
+              <span>
+                <b>{x.title[lang]}</b> <small className="field-hint">{x.how[lang]}</small>
+              </span>
+            </label>
+            {x.topic && (
+              <button className="link" onClick={() => onWay(item, { k: 'topic', topic: x.topic!, level: 1 })} data-memo-topic={x.topic}>
+                {he ? 'לתרגל' : 'Practise'} ›
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }

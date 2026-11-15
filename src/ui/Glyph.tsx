@@ -1297,6 +1297,45 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Solo jazz piano after Jeremy Siskind (soloPianoDrills.ts): k-lh — a low bass note under a two-note shell; k-tex —
+// three mangos (bass, chords, melody) over two hands; k-comp — a short chord on the "and" after a rest; k-impro —
+// phrases with rests between them (the MTNA phrasing rubric).
+Object.assign(GLYPHS, {
+  lhshell: (
+    <>
+      {head(-14, 18, 6.5, 4.6)}
+      {head(8, -2, 5.5, 4)}
+      {head(8, -14, 5.5, 4)}
+      <path d="M-8 16 V-20 M14 -4 V-26" {...sw} strokeWidth={2.6} />
+      <path d="M-24 8 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  mango: (
+    <>
+      <circle cx={-14} cy={-12} r={7} fill="none" stroke={I} strokeWidth={3} />
+      <circle cx={2} cy={-18} r={7} fill="none" stroke={I} strokeWidth={3} />
+      <circle cx={18} cy={-10} r={7} fill="none" stroke={I} strokeWidth={3} />
+      <path d="M-22 16 Q-12 6 -2 16 M4 16 Q14 6 24 16" {...sw} strokeWidth={3} />
+    </>
+  ),
+  compvoc: (
+    <>
+      <path d="M-24 4 L-18 -8 L-12 4 L-18 16 Z" fill={I} />
+      {head(6, 10, 5.5, 4)}
+      {head(6, 1, 5.5, 4)}
+      {head(6, -8, 5.5, 4)}
+      <path d="M12 8 V-24 L22 -16" {...sw} strokeWidth={2.6} />
+    </>
+  ),
+  phrasing: (
+    <>
+      <path d="M-26 8 Q-18 -10 -8 6" {...sw} strokeWidth={3} />
+      <path d="M-2 0 H4" stroke={I} strokeWidth={3} />
+      <path d="M8 10 Q16 -14 26 2" {...sw} strokeWidth={3} />
+      <path d="M-24 20 V14 M-6 20 V14 M12 20 V14" stroke={I} strokeWidth={2} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

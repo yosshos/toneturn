@@ -72,6 +72,8 @@ export interface Profile {
   ready: boolean;
   /** Key mastery: the short weak-keys line for the coach ('' / absent when nothing is weak). */
   keyLine?: string;
+  /** Siskind / MTNA rubric: one line on the phrasing of the last improvised takes (phraseOrg.ts phrasingSummary). */
+  phrasing?: { en: string; he: string };
 }
 
 /** A finding needs at least this confidence to be called a pattern (the models already demand enough notes). */
