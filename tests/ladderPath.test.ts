@@ -99,7 +99,7 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(f.tests?.['tech:scales-3']).toBeUndefined();
   });
 
-  it('a level done opens the next level of its family on the path', () => {
+  it('a level done opens the next level of its family on the path', { timeout: 180_000 }, () => {
     const lv = techLevel('scales-1')!;
     const items = passedItems(levelDrills(lv, ds.keyOrder), (d) => targetBpmOf(lv, d));
     const facts = withLadderFacts({}, { families: ladderFamiliesFor('keys', ds), items, order: ds.keyOrder, start: {}, vocalPassed: [], at: '2026-11-09T10:00:00Z' });

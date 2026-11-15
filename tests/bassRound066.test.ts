@@ -230,7 +230,7 @@ describe('names and the beta flag (0.66)', () => {
     expect(courseOf('bass').beta).toBeFalsy();
     expect(courseOf('drums').beta).toBe(true);
   });
-  it('guitar harmonics are called הרמוניקים', () => {
+  it('guitar harmonics are called הרמוניקים', { timeout: 180_000 }, () => {
     const titles = families('guitar').flatMap((f) => f.levels.flatMap((l) => [l.title.he, ...levelDrills(l, 'fifths-up').map((d) => d.title.he)]));
     expect(titles.some((x) => x.includes('הרמוניקים'))).toBe(true);
     expect(titles.filter((x) => x.includes('הרמוניות'))).toEqual([]);

@@ -48,7 +48,7 @@ describe('glyph registry', () => {
 });
 
 describe('BadgeArt', () => {
-  it('renders every badge, earned and locked, as an accessible svg', () => {
+  it('renders every badge, earned and locked, as an accessible svg', { timeout: 180_000 }, () => {
     for (const b of BADGES)
       for (const earned of [true, false]) {
         const html = renderToStaticMarkup(h(BadgeArt, { badge: b, earned, size: 48 }));

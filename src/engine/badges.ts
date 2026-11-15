@@ -344,11 +344,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-mediant', 'k-organ'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -363,6 +363,11 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-sixdim': { en: 'Barry Harris harmony', he: 'ההרמוניה של בארי האריס' },
   'k-bebop': { en: 'Bebop lines', he: 'קווי ביבופ' },
   'k-reharm': { en: 'Jazz piano harmony', he: 'הרמוניה של פסנתר ג׳אז' },
+  'k-ctone': { en: 'One note, many chords', he: 'צליל אחד, הרבה אקורדים' },
+  'k-mediant': { en: 'Chromatic mediants', he: 'מדיאנטות כרומטיות' },
+  'k-organ': { en: 'Organ comping', he: 'ליווי באורגן' },
+  'g-ctone': { en: 'One note, many chords on guitar', he: 'צליל אחד, הרבה אקורדים בגיטרה' },
+  'g-color': { en: 'Colour harmony on guitar', he: 'הרמוניית צבע בגיטרה' },
   'k-theory': { en: 'Theory you play', he: 'תאוריה בביצוע' },
   'k-vocab': { en: 'Bebop vocabulary', he: 'שפת הביבופ' },
   'k-indep': { en: 'Hand independence', he: 'עצמאות הידיים' },
@@ -425,6 +430,12 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-sixdim': 'sixdim',
   'k-bebop': 'bebop',
   'k-reharm': 'reharm',
+  // HARMONY-REHARM: a held note over moving chords; two triads a 3rd apart; drawbars; the same on the neck.
+  'k-ctone': 'ctone',
+  'k-mediant': 'mediant',
+  'k-organ': 'organ',
+  'g-ctone': 'gctone',
+  'g-color': 'gcolor',
   'k-theory': 'tpair',
   'k-vocab': 'enclose',
   'k-indep': 'indep',
@@ -483,6 +494,12 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // PIANO_JAZZ: one title for each of the first seven levels.
   'k-sixdim': [['Scale-of-Chords Climber', 'מטפס סולם האקורדים'], ['Borrowed Diminished Notes', 'צלילים מושאלים מהמוקטן'], ['Oblique Mover', 'נע באלכסון'], ['Spread Builder', 'בונה הפריסות'], ['Passing-Chord Weaver', 'אורג האקורדים העוברים'], ['Minor-Sixth Mover', 'מניע המינור שש'], ['Diminished Mastery', 'שליטה במוקטן']],
   'k-bebop': [['Changes Runner', 'רץ על המהלכים'], ['Minor-Key Hunter', 'צייד המינור'], ['Altered Explorer', 'חוקר האלטרד'], ['Blues Liner', 'מותח קווי בלוז'], ['Rhythm Changes', 'ריתם צ׳יינג׳ס'], ['Standards Player', 'נגן הסטנדרטים'], ['Two-Handed Bebop', 'ביבופ בשתי ידיים']],
+  // HARMONY-REHARM: one title per level.
+  'k-ctone': [['Common-Tone Triads', 'משולשי הצליל המשותף'], ['Common-Tone Sevenths', 'ספטאקורדי הצליל המשותף'], ['Held-Note Drop 2', 'דרופ 2 מתחת לצליל'], ['Tension on Top', 'טנשן למעלה'], ['Common-Tone Phrase', 'משפט בצליל משותף'], ['Counter-Line Pianist', 'פסנתרן הקו הנגדי'], ['One Note, Eight Chords', 'צליל אחד, שמונה אקורדים']],
+  'k-mediant': [['Third Relations', 'יחסי טרצה'], ['Minor-Third Mediants', 'מדיאנטות בטרצה קטנה'], ['Cycle of Thirds', 'מעגל הטרצות'], ['Doubly Chromatic Mediants', 'מדיאנטות כרומטיות כפולות'], ['Mediant Sevenths', 'ספטאקורדי מדיאנטה'], ['The Coltrane Link', 'החיבור לקולטריין'], ['Octatonic Cycle', 'המעגל האוקטטוני'], ['Hexatonic Voice Leader', 'מוביל הקולות ההקסטוני']],
+  'k-organ': [['Organ Half Notes', 'חצאים באורגן'], ['Organ Walker', 'מהלך האורגן'], ['Inner-Voice Organist', 'אורגניסט הקול הפנימי'], ['Minor-Blues Organist', 'אורגניסט הבלוז המינורי'], ['Texture Shaper', 'מעצב המרקם'], ['Organ Balladeer', 'בלדות באורגן'], ['Held-Third Ballad', 'בלדת הטרצה הנשארת']],
+  'g-ctone': [['Held Note on the Neck', 'צליל נשאר על הצוואר'], ['Drop 2 Under the Note', 'דרופ 2 מתחת לצליל על הצוואר'], ['Middle-String Common Tone', 'צליל משותף על המיתרים האמצעיים'], ['Tensions on the Neck', 'טנשנים על הצוואר'], ['Common-Tone Guitarist', 'גיטריסט הצליל המשותף']],
+  'g-color': [['Borrowed iv on the Neck', 'iv שאול על הצוואר'], ['Flat Six, Flat Seven', '♭VI, ♭VII על הצוואר'], ['Mediant Guitarist', 'גיטריסט המדיאנטות'], ['Thirds Cycles on the Neck', 'מעגלי טרצות על הצוואר'], ['Mediant Drop 2', 'דרופ 2 מדיאנטי'], ['Minor Plagal Guitarist', 'גיטריסט הפלגלית המינורית'], ['Half-Diminished Two', 'ה־ii החצי מוקטן'], ['Dameron Turnaround', 'הטרנאראונד של דמרון'], ['Borrowing in Minor', 'השאלה במינור'], ['Planing Guitarist', 'גיטריסט הפליינינג'], ['Side-Slipper', 'מחליק הצידה'], ['Sus Reharmonizer', 'מהרמן הסאס']],
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
   // THEORY_PLAY: one title for each of the seven levels.
   'k-theory': [['Pentatonic Painter', 'צייר הפנטטוני'], ['Upper-Structure Builder', 'בונה המבנים העליונים'], ['Dominant Colourist', 'צבעי הדומיננט'], ['Triad-Pair Player', 'נגן זוגות המשולשים'], ['Line-Cliché Reharmoniser', 'מחדש בליין קלישה'], ['Hexatonic Liner', 'קווי ההקסטוניק'], ['Colours Through ii–V–I', 'צבעים לאורך ii–V–I']],

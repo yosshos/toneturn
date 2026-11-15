@@ -64,6 +64,8 @@ export const RH_SETS: Record<string, Device[]> = {
   'tn-rh1': ['tritone', 'iiV'],
   'tn-rh2': ['backdoor', 'pdim', 'cliche'],
   'tn-rh3': ['coltrane'],
+  // HARMONY-REHARM §4: the borrowed chords (modal interchange) — the minor plagal ending, iv(m6), ♭VI, iiø7, ♭VII7.
+  'tn-rh4': ['minorPlagal', 'minorIV', 'iiHalfDim', 'bVI', 'bVII'],
   'tn-rhmel': ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche'],
 };
 /** A head's chart for a kind: as written, a preset reharm (autoPlan), or the player's own plan (`~<code>` in the kind). */
@@ -234,6 +236,7 @@ const TUNE_WHAT: Record<string, T2> = {
   'tn-rh1': t('reharm: tritone subs, extra ii–Vs', 'הרמון מחדש: טריטון, ii–V נוסף'),
   'tn-rh2': t('reharm: backdoor, passing dim, cliché', 'הרמון מחדש: דלת אחורית, דימיניש, קלישאה'),
   'tn-rh3': t('reharm: Coltrane subs', 'הרמון מחדש: תחליפי קולטריין'),
+  'tn-rh4': t('reharm: borrowed chords', 'הרמון מחדש: אקורדים שאולים'),
   'tn-rhmel': t('the melody over the reharm', 'המנגינה מעל ההרמון החדש'),
   'tn-own': t('my reharm', 'ההרמון שלי'),
   'tn-ownmel': t('the melody over my reharm', 'המנגינה מעל ההרמון שלי'),
@@ -683,6 +686,8 @@ const TUNE_PIANO: [string, string, string][] = [
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף'],
   ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה'],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו'],
+  // HARMONY-REHARM §4: modal interchange inside a head (the borrowed devices of reharm.ts, checked against the melody).
+  ['tn-rh4', 'Reharm: borrowed chords — iv, ♭VI, ♭VII7, iiø7, minor plagal', 'הרמון מחדש: אקורדים שאולים — iv, ♭VI, ♭VII7, iiø7, פלגלית מינורית'],
 ];
 
 /** k-tune: comp a head (piano, path ~1330 → 1780). */

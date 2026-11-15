@@ -204,7 +204,8 @@ describe('reharmonise a head (C3): the melody checked against each new chord', (
           const r = applyPlan(hi.text, autoPlan(hi.text, hi.tonic, set, hi.notes), hi.tonic, hi.notes);
           expect(r.conflicts, `${HEADS[i].id} ${kind} ${key}`).toEqual([]);
           expect(parseChart(r.text).errors).toEqual([]);
-          if (kind !== 'tn-rh3') expect(r.changed.length, `${HEADS[i].id} ${kind}`).toBeGreaterThan(0);
+          // Coltrane needs a ii–V into a major I; the borrowed set a major key with a IV, a held I or a V into I.
+          if (kind !== 'tn-rh3' && kind !== 'tn-rh4') expect(r.changed.length, `${HEADS[i].id} ${kind}`).toBeGreaterThan(0);
         }
       }
   });
@@ -214,7 +215,8 @@ describe('reharmonise a head (C3): the melody checked against each new chord', (
     expect(checkMelody([{ pitch: 65, beat: 2, dur: 1 }], 'Cmaj7', C).length).toBe(1);
   });
   it('every device name is in the set the studio offers', () => {
-    expect(DEVICES).toEqual(['tritone', 'iiV', 'backdoor', 'pdim', 'cliche', 'coltrane']);
+    // HARMONY-REHARM §4: the borrowed devices (modal interchange) follow the functional ones.
+    expect(DEVICES).toEqual(['tritone', 'iiV', 'backdoor', 'pdim', 'cliche', 'coltrane', 'minorIV', 'bVI', 'bVII', 'iiHalfDim', 'minorPlagal']);
   });
 });
 
@@ -292,13 +294,13 @@ describe('12 keys, the ladders and the path', () => {
     expect(b.notes.map((n) => pc(n.pitch - a.notes[0].pitch))[0]).toBe(2);
     expect(headIn(h, 6).text).not.toMatch(/##|bb/);
   });
-  it('counts: k-harm 7, k-tune 9, g-cmel 6, g-tune 9, b-tune 7 levels', () => {
+  it('counts: k-harm 7, k-tune 10, g-cmel 6, g-tune 9, b-tune 7 levels', () => {
     const n = (id: string) => [...pianoFams(), ...guitarFams()].find((f) => f.id === id)!.levels.length;
-    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([7, 9, 6, 9, 7]);
+    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([7, 10, 6, 9, 7]);
   });
   it('the path places them by difficulty inside 1300–1800', () => {
     const steps = stepCatalogue().filter((s) => s.ladder && [...FAMS, ...GFAMS].includes(s.ladder.family));
-    expect(steps.length).toBe(7 + 9 + 6 + 9 + 7);
+    expect(steps.length).toBe(7 + 10 + 6 + 9 + 7);
     for (const s of steps) {
       expect(s.difficulty, s.id).toBeGreaterThanOrEqual(1300);
       expect(s.difficulty, s.id).toBeLessThanOrEqual(1800);

@@ -13,9 +13,17 @@ import { chordKind, type HNote } from './heads';
 type T2 = { en: string; he: string };
 const pc = (n: number): number => ((n % 12) + 12) % 12;
 
-/** The devices, from the first reharm level to the top one (Coltrane). */
-export type Device = 'tritone' | 'iiV' | 'backdoor' | 'pdim' | 'cliche' | 'coltrane';
-export const DEVICES: Device[] = ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche', 'coltrane'];
+/**
+ * The devices, from the first reharm level to the top one (Coltrane), then the borrowed chords of modal interchange
+ * (HARMONY-REHARM §4, docs/research/REHARM-AND-COLOR.md C.3): iv(m6) for a IV bar, ♭VImaj7 for a held tonic bar,
+ * ♭VII7 for a V7 bar, iiø7 for a ii before its V, and the minor plagal ending (ivm6 straight to I) for a V bar.
+ */
+export type Device = 'tritone' | 'iiV' | 'backdoor' | 'pdim' | 'cliche' | 'coltrane' | 'minorIV' | 'bVI' | 'bVII' | 'iiHalfDim' | 'minorPlagal';
+/** The functional devices (the reharm levels and tests list them in this order). */
+export const DEVICES_FUNCTIONAL: Device[] = ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche', 'coltrane'];
+/** The borrowed devices (modal interchange): colour, not direction. */
+export const DEVICES_BORROWED: Device[] = ['minorIV', 'bVI', 'bVII', 'iiHalfDim', 'minorPlagal'];
+export const DEVICES: Device[] = [...DEVICES_FUNCTIONAL, ...DEVICES_BORROWED];
 export const DEVICE_NAME: Record<Device, T2> = {
   tritone: { en: 'Tritone sub', he: 'תחליף טריטון' },
   iiV: { en: 'Extra ii–V', he: 'ii–V נוסף' },
@@ -23,9 +31,14 @@ export const DEVICE_NAME: Record<Device, T2> = {
   pdim: { en: 'Passing dim', he: 'דימיניש עובר' },
   cliche: { en: 'Line cliché', he: 'קו קלישאה' },
   coltrane: { en: 'Coltrane sub', he: 'תחליף קולטריין' },
+  minorIV: { en: 'Minor iv', he: 'iv מינורי' },
+  bVI: { en: '♭VI', he: '♭VI' },
+  bVII: { en: '♭VII7', he: '♭VII7' },
+  iiHalfDim: { en: 'iiø7', he: 'iiø7' },
+  minorPlagal: { en: 'Minor plagal', he: 'פלגלית מינורית' },
 };
 /** One letter per device in a plan code ("3T5I": bar 4 tritone, bar 6 extra ii–V). */
-const LETTER: Record<Device, string> = { tritone: 'T', iiV: 'I', backdoor: 'B', pdim: 'P', cliche: 'C', coltrane: 'J' };
+const LETTER: Record<Device, string> = { tritone: 'T', iiV: 'I', backdoor: 'B', pdim: 'P', cliche: 'C', coltrane: 'J', minorIV: 'F', bVI: 'S', bVII: 'K', iiHalfDim: 'H', minorPlagal: 'N' };
 
 type Ch = Pick<ChartChordEv, 'root' | 'iv' | 'sym' | 'beats' | 'at' | 'bar'>;
 
@@ -130,6 +143,46 @@ export function deviceBars(bars: Ch[][], i: number, d: Device, h: Home): string[
       const I1 = bars[i + 1]?.[0];
       if (bar.length >= 2 && intoI(bar, I1)) return [cyc(I1)];
       return null;
+    }
+    // ── modal interchange: borrowed from the parallel minor (major keys only; the tonic is the head's key) ──
+    case 'minorIV': {
+      // A whole bar of IV (major) becomes iv m6: Fmaj7 → Fm6 in C.
+      if (h.minor || !one || !isMajor(one) || pc(one.root - h.key) !== 5) return null;
+      return [[sym(one.root, 'm6', h)]];
+    }
+    case 'bVI': {
+      // The second bar of a held tonic becomes ♭VImaj7 (C | C → C | A♭maj7): the colour of the minor's sixth degree.
+      const prev = bars[i - 1];
+      if (h.minor || !one || !isMajor(one) || pc(one.root - h.key) !== 0 || prev?.length !== 1 || prev[0].root !== one.root || !isMajor(prev[0])) return null;
+      return [[sym(h.key + 8, 'maj7', h)]];
+    }
+    case 'bVII': {
+      // A whole bar of V7 into the major tonic becomes ♭VII7 (the backdoor dominant alone): G7 → B♭7.
+      const nx = nextFirst(bars, i);
+      if (h.minor || !one || !isDom(one) || pc(one.root - h.key) !== 7 || !nx || !isMajor(nx) || pc(nx.root - h.key) !== 0) return null;
+      return [[sym(h.key + 10, '7', h)]];
+    }
+    case 'iiHalfDim': {
+      // Every ii m7 that goes to its V7 in the bar (or across the bar line) becomes iiø7 (Dm7 → Dm7♭5): the minor's ii.
+      if (h.minor) return null;
+      let hit = false;
+      const out = bar.map((c, k) => {
+        const nx = after(bars, i, k);
+        if (chordKind(c.iv) === 'min' && pc(c.root - h.key) === 2 && nx && isDom(nx) && pc(nx.root - c.root) === 5) {
+          hit = true;
+          return sym(c.root, 'm7b5', h);
+        }
+        return c.sym;
+      });
+      return hit ? [out] : null;
+    }
+    case 'minorPlagal': {
+      // A whole bar of V7 (or ii–V) into the major tonic becomes ivm6, going straight to I: G7 | C → Fm6 | C.
+      const last = bar[bar.length - 1];
+      const nx = nextFirst(bars, i);
+      if (h.minor || !isDom(last) || pc(last.root - h.key) !== 7 || !nx || !isMajor(nx) || pc(nx.root - h.key) !== 0) return null;
+      if (bar.slice(0, -1).some((c) => !(pc(c.root - last.root) === 7 && chordKind(c.iv) === 'min'))) return null;
+      return [[sym(h.key + 5, 'm6', h)]];
     }
   }
 }

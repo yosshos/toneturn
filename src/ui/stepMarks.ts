@@ -143,6 +143,16 @@ export const TOPIC_MARK: Record<string, string> = {
   'bh-tesseract': '°×16',
   // Barry Harris lines by ear: the chromatic scale's skip back (E G F)
   'bh-line-ear': 'EGF',
+  // HARMONY-REHARM: one note many chords (F as the 3rd), a mediant jump, a pedal under a slash chord, the half-step
+  // approach, the counter-line's first slash, a sus as IV over V, pull vs paint
+  'ct-degree': 'F=3',
+  mediants: 'C→A♭',
+  'pedal-ear': 'X/G',
+  'approach-chord': '½↓',
+  'counter-line': 'C/B',
+  'modern-color': 'F/G',
+  'func-color': 'F|C',
+  'modal-mix': 'IV→iv',
   'function-ear': 'T·D',
   'modal-cadence': '♭VII',
   'borrowed-ext': '♭VI',
