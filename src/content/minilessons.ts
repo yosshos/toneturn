@@ -31,7 +31,7 @@ import { LESSONS as GUITAR } from './mini/guitar';
 import { LESSONS as MY_SONG } from './mini/mySong';
 import { LESSONS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEORY R-1…R-5
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK].map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK, ...HARRIS_LINES].map((l) => [l.id, l]));
 // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): one lesson per stage of k-vl / g-vl.
 import { LESSONS as VOICE_LEAD } from './mini/voiceLead';
 
@@ -58,6 +58,8 @@ import { LESSONS as HEADS_LESSONS } from './mini/heads';
 // AUDIT-DEPTH-3: improvising under rule cards (k/g/b-solo) and jazz in context (k/g/b-ctx).
 import { LESSONS as SOLO_RULES } from './mini/soloRules';
 import { LESSONS as JAZZ_CONTEXT } from './mini/jazzContext';
+// Barry Harris lines (BARRY-HARRIS-METHOD Part D): the chromatic scale, line devices, upbeats and compose.
+import { LESSONS as HARRIS_LINES } from './mini/harrisLines';
 
 
 /** The mini-lesson that opens a unit, if there is one. */

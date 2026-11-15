@@ -704,6 +704,25 @@ export const GLYPHS: Record<string, Glyph> = {
       {dot(12, 11, 2.4)}
     </>
   ),
+  // Barry Harris lines: a falling line of note heads, a small chromatic head between (chord tones on the beats).
+  'family:k-harrisline': () => (
+    <>
+      {head(5, 6, 2)}
+      {head(11, 11, 2)}
+      {head(14.5, 13.5, 1.3)}
+      {head(18, 16, 2)}
+      {p('M3 21h18', false)}
+    </>
+  ),
+  'family:g-harrisline': () => (
+    <>
+      <path d="M2 2h20 M2 5h20" strokeWidth={0.8} />
+      {head(5, 9, 2)}
+      {head(11, 14, 2)}
+      {head(14.5, 16.5, 1.3)}
+      {head(18, 19, 2)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory':() => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (

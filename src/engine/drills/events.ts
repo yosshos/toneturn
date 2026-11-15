@@ -85,6 +85,7 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'b-odd') return drill.spec.kind === 'displace' ? { skill: 'timing', sub: 'timing/subdivide', w: 0.4 } : { skill: 'meter', sub: 'meter/odd', w: 0.4 };
   if (f === 'b-poly') return drill.tempoMap?.length || drill.spec.kind === 'four3' ? { skill: 'timing', sub: 'timing/subdivide', w: 0.4 } : { skill: 'meter', sub: 'meter/odd', w: 0.4 };
   if (f === 'b-prog') return drill.pulse === 8 ? { skill: 'meter', sub: 'meter/odd', w: 0.3 } : { skill: 'timing', sub: 'timing/steady', w: 0.3 };
+  if (f === 'b-harrisline') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
   if (f === 'b-barry') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
   if (f === 'b-jform') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'b-impro' && (drill.spec.kind === 'trade4' || drill.spec.kind === 'answer')) return { skill: 'improv', sub: 'improv/answer', w: 0.3 };
@@ -130,6 +131,7 @@ function secondTag(drill: Drill): Tags[number] | null {
     return { skill: 'dictation', sub: 'dictation/melodic', w: 0.5 };
   }
   // Jazz guitar, Barry Harris on the neck, prog / fusion (§4.2–4.3).
+  if (f === 'g-harrisline') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
   if (f === 'g-harris') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
   // THEORY_PLAY: lines rate improvising vocabulary, the rest voicings.
   if (f === 'g-theory') return drill.spec.kind === 'tp-lines' ? { skill: 'improv', sub: 'improv/vocab', w: 0.3 } : drill.spec.kind === 'tp-cliche' ? { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
@@ -149,6 +151,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'harris') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
   // PIANO_JAZZ: Barry Harris harmony, jazz-piano harmony (voicings; reharmonising rates progressions), bebop lines
   // (playing along; trading fours is call and response).
+  // Barry Harris lines (harrisLineDrills.ts): lines, so mostly the instrument; a share for Barry Harris.
+  if (f === 'k-harrisline') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
   if (f === 'k-sixdim') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): the theory share is voice leading.
   if (f === 'k-vl' || f === 'g-vl') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };

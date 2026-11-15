@@ -978,6 +978,33 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Barry Harris lines (harrisLineDrills.ts): a falling line of note heads on beat ticks, a small chromatic head between
+// (chord tones on the beats); over strings on the guitar, over the bass's two low strings on the bass.
+const bhl = (
+  <>
+    <path d="M-24 22 V16 M-6 22 V16 M12 22 V16" stroke={I} strokeWidth={2.2} />
+    {head(-20, -14, 5, 3.6)}
+    {head(-2, -3, 5, 3.6)}
+    {head(7, 3, 3, 2.2)}
+    {head(16, 9, 5, 3.6)}
+    <path d="M-15 -11 L-7 -6 M3 0 L11 6" {...sw} strokeWidth={2} />
+  </>
+);
+Object.assign(GLYPHS, {
+  bhline: bhl,
+  gbhline: (
+    <>
+      <path d="M-26 -24 H26 M-26 -19 H26" stroke={I} strokeWidth={1.3} />
+      {bhl}
+    </>
+  ),
+  bbhline: (
+    <>
+      <path d="M-26 -24 H26" stroke={I} strokeWidth={3} />
+      {bhl}
+    </>
+  ),
+});
 // PIANO_JAZZ P2 path wiring: a repertoire step (a lead sheet with a bookmark), the Transcription Race as a bonus step
 // (a staff with a stopwatch — the transcription coach keeps its pencil) and the Reharm Spotter as a bonus step (a chord,
 // a magnifier on the changed one — the k-reharm family keeps its chord-to-chord arrow).

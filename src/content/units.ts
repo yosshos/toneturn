@@ -35,6 +35,7 @@ import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
 // AUDIT-DEPTH-3: improvising under rule cards and jazz in context.
 import { UNITS as SOLO_RULES } from './mini/soloRules';
 import { UNITS as JAZZ_CONTEXT } from './mini/jazzContext';
+import { UNITS as HARRIS_LINES } from './mini/harrisLines'; // Barry Harris lines (Part D)
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -63,6 +64,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HARMONY3,
   ...HARRIS_PIVOT,
   ...SCALE_WORK,
+  ...HARRIS_LINES,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

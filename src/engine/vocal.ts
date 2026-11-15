@@ -1000,6 +1000,25 @@ export const BARRY_LEVELS: VocalLevel[] = [
     { kind: 'harmony-line', seconds: 9, reference: 'during', at: 0.3, steps: SIXDIM, chords: SIXDIM.map((n) => sixChordBelow(n).map((x) => x + n)), bpm: 66, perBeat: 1, difficulty: 1500 },
     { kind: 'harmony-line', seconds: 9, reference: 'during', at: 0.35, steps: SIXDIM.slice().reverse(), chords: SIXDIM.slice().reverse().map((n) => sixChordBelow(n).map((x) => x + n)), bpm: 66, perBeat: 1, difficulty: 1550 },
   ]),
+  // Barry Harris lines (BARRY-HARRIS-METHOD Part D; the notes are harrisLines.ts's, as steps above the tonic). D1: Barry's
+  // chromatic scale — scale degrees on the beats, a skip back at each half step (up in major, down (verify), up in dominant).
+  L(8, 0.56, [
+    { kind: 'rhythmic', seconds: 9, reference: 'before', at: 0.2, steps: [0, 1, 2, 3, 4, 7, 5, 6, 7, 8, 9, 10, 11, 14, 12], bpm: 66, perBeat: 2, difficulty: 1300 },
+    { kind: 'rhythmic', seconds: 9, reference: 'before', at: 0.25, steps: [12, 9, 11, 10, 9, 8, 7, 6, 5, 2, 4, 3, 2, 1, 0], bpm: 66, perBeat: 2, difficulty: 1350 },
+    { kind: 'rhythmic', seconds: 9, reference: 'before', at: 0.2, steps: [0, 1, 2, 3, 4, 7, 5, 6, 7, 8, 9, 12, 10, 11, 12], bpm: 66, perBeat: 2, difficulty: 1400 },
+  ]),
+  // D5: the 5-4-3-2 phrases on the dominant (Workbook 1; notes per a workshop attendee — verify).
+  L(9, 0.56, [
+    { kind: 'rhythmic', seconds: 6, reference: 'before', at: 0.15, steps: [7, 11, 12, 17, 16], bpm: 76, perBeat: 2, difficulty: 1400 },
+    { kind: 'rhythmic', seconds: 6, reference: 'before', at: 0.3, steps: [7, 5, 2, 3, 4], bpm: 76, perBeat: 2, difficulty: 1420 },
+    { kind: 'rhythmic', seconds: 6, reference: 'before', at: 0.25, steps: [4, 7, 10, 14], bpm: 76, perBeat: 2, difficulty: 1450 },
+    { kind: 'rhythmic', seconds: 6, reference: 'before', at: 0.2, steps: [14, 10, 11, 12], bpm: 76, perBeat: 2, difficulty: 1450 },
+  ]),
+  // D9: seven down to the 3rd — over Dø–G7 in C minor, B♭7 up from B♭ to A♭ and down, landing on B, then C.
+  L(10, 0.55, [
+    { kind: 'rhythmic', seconds: 7, reference: 'before', at: 0.35, steps: [8, 7, 5, 3, 2, 0, -1, 0], bpm: 72, perBeat: 2, difficulty: 1420 },
+    { kind: 'rhythmic', seconds: 10, reference: 'before', at: 0.3, steps: [-2, 0, 2, 3, 5, 7, 8, 7, 5, 3, 2, 0, -1, 0], bpm: 72, perBeat: 2, difficulty: 1460 },
+  ]),
 ].map((lv) => ({ ...lv, items: lv.items.map((it) => ({ ...it, id: it.id.replace(/^v/, 'bh') })) }));
 
 /**

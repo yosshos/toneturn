@@ -28,6 +28,7 @@ import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: 
 import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by ear
 import { bassSoloFamily, genBassSolo } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { bassCtxFamily, genBassCtx } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
+import { bassHarrisLineFamily, genBassHarrisLine } from './harrisLineDrills'; // Barry Harris lines (Part D)
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
@@ -2493,6 +2494,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
       return genBassSolo(s, tu);
     case 'b-ctx':
       return genBassCtx(s, tu);
+    // Barry Harris lines (harrisLineDrills.ts).
+    case 'b-harrisline':
+      return genBassHarrisLine(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2769,6 +2773,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     // AUDIT-DEPTH-3: jazz in context (brothers, backdoor, superimposition, the Coltrane sub) and improvising under rule cards.
     bassCtxFamily(L, fam),
     bassSoloFamily(L, fam),
+    // Barry Harris lines on the bass (jazz track, BARRY-HARRIS-METHOD Part D): harrisLineDrills.ts.
+    bassHarrisLineFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

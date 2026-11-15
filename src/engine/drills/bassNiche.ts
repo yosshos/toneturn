@@ -34,6 +34,8 @@ type Rules = NonNullable<BassGoal['rules']>;
 export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-swing': 'jazz',
   'b-barry': 'jazz',
+  // Barry Harris lines (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
+  'b-harrisline': 'jazz',
   'b-jform': 'jazz',
   'b-latin': 'jazz',
   'b-odd': 'prog',

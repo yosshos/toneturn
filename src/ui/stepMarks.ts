@@ -141,6 +141,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'bh-moves': '°→7→6',
   // the 16 chords around one diminished (Echols's tesseract)
   'bh-tesseract': '°×16',
+  // Barry Harris lines by ear: the chromatic scale's skip back (E G F)
+  'bh-line-ear': 'EGF',
   'function-ear': 'T·D',
   'modal-cadence': '♭VII',
   'borrowed-ext': '♭VI',

@@ -99,14 +99,16 @@ const EAR: Rung[] = [
 ];
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab) is placed by the lines steps, and its enclosures are a step of their own.
 const LINES: Rung[] = [
-  r('harris-1', 0, { harris: 2, jazz: 1, 'k-vocab': 2 }),
-  r('harris-7', 5, { harris: 8, jazz: 2, 'k-vocab': 4 }),
-  r('k-vocab-5', 8, { harris: 8, jazz: 2, 'k-vocab': 6 }),
-  r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2, 'k-vocab': 6 }),
-  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8 }),
+  r('harris-1', 0, { harris: 2, jazz: 1, 'k-vocab': 2, 'k-harrisline': 3 }),
+  r('harris-7', 5, { harris: 8, jazz: 2, 'k-vocab': 4, 'k-harrisline': 6 }),
+  r('k-vocab-5', 8, { harris: 8, jazz: 2, 'k-vocab': 6, 'k-harrisline': 10 }),
+  // Barry Harris lines (Part D): the 5-4-3-2 phrases on the dominant (~1420) are a step of their own.
+  r('k-harrisline-17', 3, { harris: 8, jazz: 2, 'k-vocab': 6, 'k-harrisline': 18 }),
+  r('k-bebop-1', 10, { harris: 10, jazz: 4, 'k-bebop': 2, 'k-vocab': 6, 'k-harrisline': 18 }),
+  r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-harrisline': 22 }),
   // AUDIT-DEPTH-3: a brother for the V (jazz in context), then improvising with enclosures under the rule cards.
-  r('k-ctx-2', 5, { harris: 14, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-ctx': 3 }),
-  r('k-solo-4', 10, { harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5 }),
+  r('k-ctx-2', 5, { harris: 14, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-ctx': 3, 'k-harrisline': 22 }),
+  r('k-solo-4', 10, { harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
@@ -176,7 +178,7 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3, 'g-bebop': 3 }),
   r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5 }),
   // AUDIT-GAPS-2: bebop lines on the neck (grade 7).
-  r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8 }),
+  r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8, 'g-harrisline': 5 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
   r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8 }),
   // AUDIT-DEPTH-3: chord-melody, drop 2 under a head's melody.
@@ -231,7 +233,7 @@ const B_WALK: Rung[] = [
   r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2 }),
   r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 2, 'b-bebop': 2 }),
   // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
-  r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7 }),
+  r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7, 'b-harrisline': 5 }),
   // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
   r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3 }),
   // AUDIT-DEPTH-3: walking through the brothers, then a solo that implies the roots.

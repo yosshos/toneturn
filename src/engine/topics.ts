@@ -39,6 +39,8 @@ import './topicsPivotArp';
 // AUDIT-SCALES: Barry Harris borrowing by ear (which voice, from where).
 import './topicsBorrow';
 import './topicsHeads'; // AUDIT-DEPTH-3 C1/C3: a melody note against the chord; which reharm device
+// Barry Harris lines by ear (BARRY-HARRIS-METHOD Part D): the chromatic scale's skip-back, the rules, the arpeggios.
+import './topicsHarrisLines';
 import './topicsKeyMoves'; // AUDIT-GAPS-2 #5/#19: modulation by ear — how (pivot, common dim, ii–V, tritone, direct), where to, a tune's key centres
 import './topicsVoiceLeadEar'; // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear (which voice moved, held notes, smooth or jumpy, drop 2)
 import './topicsGrid'; // Progressions by ear on the grid (progGrid.ts): root + quality + bass / colour per bar, partial credit, 1100–1850
@@ -373,7 +375,8 @@ TOPIC_GEN['bh-lines'] = {
     }
     if (level === 2) {
       const deg = pickR(rnd, [1, 2, 3, 4, 5, 6, 7]);
-      const options: HalfStepRule[] = deg === 1 ? ['none', 'one'] : [1, 3, 5, 7].includes(deg) ? ['none', 'one', 'three'] : ['none', 'two'];
+      // Parks (video 5) also allows three half steps from the root; Goren lists only 3, 5, 7 — both are counted here.
+      const options: HalfStepRule[] = deg === 1 ? ['none', 'one', 'three'] : [1, 3, 5, 7].includes(deg) ? ['none', 'one', 'three'] : ['none', 'two'];
       const rule = pickR(rnd, options);
       const choices: HalfStepRule[] = ['none', 'one', 'two', 'three'];
       return choiceQ({

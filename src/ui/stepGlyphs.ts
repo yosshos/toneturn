@@ -16,6 +16,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-vocab': 'enclose', 'g-bebop': 'genclose', 'b-bebop': 'benclose',
   // Phrases by ear: an ear and a rising line, on the keys, the neck and the bass.
   'k-phrase': 'phrase', 'g-phrase': 'gphrase', 'b-phrase': 'bphrase',
+  // Barry Harris lines: a falling line, chord tones on the beat ticks (keys, neck, bass).
+  'k-harrisline': 'bhline', 'g-harrisline': 'gbhline', 'b-harrisline': 'bbhline',
   // AUDIT-CONTENT-THEORY §ז.2: the first steps — sitting at the piano; matching a held note (the drone) for the voice.
   'k-first': 'person', 'v-first': 'drone',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.

@@ -164,6 +164,7 @@ const SHORT: Record<string, L2> = {
   'bh-sixfive': { en: 'Eight on the V', he: 'שמונה על ה־V' },
   'bh-moves': { en: 'Harris moves', he: 'המהלכים של האריס' },
   'bh-tesseract': { en: '16 around a dim', he: '16 סביב דימיניש' },
+  'bh-line-ear': { en: 'Harris lines by ear', he: 'קווי האריס בשמיעה' },
   'function-ear': { en: 'T · PD · D', he: 'T · PD · D' },
   'modal-cadence': { en: 'Modal cadences', he: 'קדנצות מודאליות' },
   'borrowed-ext': { en: 'Borrowed colours', he: 'צבעים שאולים' },
