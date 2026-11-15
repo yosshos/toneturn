@@ -54,3 +54,25 @@
   line-height: 1.2;
   white-space: normal;
 }
+
+/* The reharm studio (AUDIT-DEPTH-3 C3, COURSE-FEEDBACK-UI hotfix): one bar per row — the number, the chords (never broken
+   inside a symbol) and the device chips, which wrap as whole chips. Nothing is wider than the phone. */
+.rh-studio { display: grid; gap: 8px; min-width: 0; max-width: 100%; box-sizing: border-box; padding: 10px; margin: 8px 0; border: var(--stroke, 2.5px) solid var(--outline, currentColor); border-radius: 16px; background: var(--card); box-shadow: var(--shadow-s, none); }
+.rh-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; min-width: 0; }
+.rh-top select, .rh-nav select { width: 100%; min-width: 0; text-overflow: ellipsis; }
+.rh-nav { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; align-items: center; min-width: 0; }
+.rh-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.rh-list li { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 4px 8px; align-items: center; min-width: 0; padding: 6px 8px; border-radius: 10px; border: 1.5px solid var(--line-strong, var(--line)); background: var(--card-2); }
+.rh-list li.changed { border: var(--stroke, 2.5px) solid var(--outline, currentColor); }
+.rh-list li.changed::after { content: ''; position: absolute; inset-block-start: -1px; inset-inline-end: -1px; width: 14px; height: 14px; border-start-end-radius: 9px; border-end-start-radius: 6px; background: var(--purple, #6d28d9); }
+.rh-n { font-size: 0.8rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.rh-chords { display: flex; flex-wrap: wrap; gap: 0 10px; min-width: 0; font-family: var(--display); font-weight: 400; font-size: 1.05rem; line-height: 1.25; }
+.rh-chords bdi { white-space: nowrap; }
+.rh-devs { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.rh-devs .chip { white-space: nowrap; word-break: keep-all; overflow-wrap: normal; max-width: 100%; font-size: 0.8rem; padding: 3px 9px; min-height: 30px; }
+.rh-studio .tab-pager { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin: 0; }
+.rh-studio .tab-pager .icon-btn { flex: none; width: 40px; height: 40px; }
+.rh-studio .tab-pager small { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rh-check { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.rh-go { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; min-width: 0; }
+.rh-go .btn { min-width: 0; white-space: normal; line-height: 1.15; padding-inline: 8px; overflow-wrap: normal; word-break: keep-all; }

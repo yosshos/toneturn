@@ -12,6 +12,7 @@ import { headIn } from '../engine/heads';
 import { applicable, applyPlan, DEVICE_NAME, planCode, type Device, type Plan } from '../engine/reharm';
 import { SERVED } from '../engine/drills/headDrills';
 import { keyLabel } from '../engine/stdKey';
+import '../reharm.css';
 
 type Lang = 'en' | 'he';
 const FAMS: FamilyId[] = ['k-tune', 'g-tune', 'b-tune'];
@@ -81,6 +82,11 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
             </option>
           ))}
         </select>
+        <button className="icon-btn" aria-label={L('Close', 'סגירה')} onClick={() => setOpen(false)}>
+          ×
+        </button>
+      </div>
+      <div className="rh-nav">
         <select aria-label={L('Key', 'סולם')} value={key} onChange={(e) => (setKey(Number(e.target.value)), setPlan({}))} dir="ltr">
           {Array.from({ length: 12 }, (_, k) => (
             <option key={k} value={k}>
@@ -88,11 +94,19 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
             </option>
           ))}
         </select>
-        <button className="icon-btn" aria-label={L('Close', 'סגירה')} onClick={() => setOpen(false)}>
-          ×
-        </button>
+        <div className="tab-pager" dir="ltr">
+          <button className="icon-btn" aria-label="Previous bars" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            ‹
+          </button>
+          <small>
+            {first + 1}–{Math.min(hi.bars.length, first + PER)} / {hi.bars.length}
+          </small>
+          <button className="icon-btn" aria-label="Next bars" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>
+            ›
+          </button>
+        </div>
       </div>
-      <ol className="rh-bars" dir="ltr">
+      <ol className="rh-list" dir="ltr">
         {hi.bars.slice(first, first + PER).map((_, j) => {
           const b = first + j;
           const opts = applicable(hi.text, b, hi.tonic);
@@ -101,9 +115,17 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
           return (
             <li key={b} className={changed ? 'changed' : ''} data-rh-bar={b}>
               <span className="rh-n">{b + 1}</span>
-              <b className="rh-chords">{pretty(r.bars[b])}</b>
+              <b className="rh-chords">
+                {/* One chord never breaks inside its symbol; a bar of two chords may wrap between them. */}
+                {pretty(r.bars[b])
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .map((c, k) => (
+                    <bdi key={k}>{c}</bdi>
+                  ))}
+              </b>
               {!covered && (
-                <span className="rh-devs">
+                <span className="rh-devs" dir={lang === 'he' ? 'rtl' : 'ltr'}>
                   {opts.map((d) => (
                     <button key={d} className={`chip ${plan[b] === d ? 'on' : ''}`} aria-pressed={plan[b] === d} onClick={() => choose(b, plan[b] === d ? null : d)} data-rh-device={d}>
                       {DEVICE_NAME[d][lang]}
@@ -115,17 +137,6 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
           );
         })}
       </ol>
-      <div className="tab-pager" dir="ltr">
-        <button className="icon-btn" aria-label="Previous bars" disabled={page === 0} onClick={() => setPage(page - 1)}>
-          ‹
-        </button>
-        <small>
-          {first + 1}–{Math.min(hi.bars.length, first + PER)} / {hi.bars.length}
-        </small>
-        <button className="icon-btn" aria-label="Next bars" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>
-          ›
-        </button>
-      </div>
       <p className="rh-check" data-rh-conflicts={r.conflicts.length}>
         {r.conflicts.length ? r.conflicts[0].line[lang] + (r.conflicts.length > 1 ? L(` (+${r.conflicts.length - 1} more)`, ` (ועוד ${r.conflicts.length - 1})`) : '') : r.changed.length ? L('The melody fits every new chord.', 'המנגינה מתאימה לכל אקורד חדש.') : L('Pick a device on a bar.', 'בחרו תחבולה בתיבה.')}
       </p>
