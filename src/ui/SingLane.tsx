@@ -1,0 +1,526 @@
+// The live singing view (docs/research/VOICE-FEEDBACK-UI.md §4): the pitch lane, the note readout, the zone meter
+// and the steadiness bars. Time runs left → right in both languages; lemon only marks "now"; teal = in the zone,
+// hatched teal = close, tangerine ▲ = sharp, purple ▼ = flat (every colour has a shape or position twin).
+// The lane draws from a SingFeed in one requestAnimationFrame loop; the read-outs sample it at ≤ 10 Hz.
+
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { chipCents, octaveFold, zoneState, type ZoneState } from '../engine/pitchDisplay';
+import { bestStretch, sliceSteadiness } from '../engine/vocalLive';
+import type { Settings } from '../storage/progress';
+import { noteLabel } from './Vocal';
+import { targetAt, type LaneTarget, type SingFeed } from './singFeed';
+import { SING_TX } from '../content/singLaneText';
+import '../singlane.css';
+
+const G = 30; // gutter (note ruler)
+const PAD = 8;
+
+/** Re-render at `hz` while `on` (the read-outs: never once per frame). */
+export function useTick(hz: number, on: boolean): number {
+  const [n, set] = useState(0);
+  useEffect(() => {
+    if (!on) return;
+    const id = window.setInterval(() => set((x) => x + 1), 1000 / hz);
+    return () => window.clearInterval(id);
+  }, [hz, on]);
+  return n;
+}
+
+/** "B♭4" → ["B♭", "4"]: the octave is drawn small. */
+export function splitOctave(label: string): [string, string] {
+  const m = /^(.*?)(-?\d+)$/.exec(label);
+  return m ? [m[1], m[2]] : [label, ''];
+}
+
+/** SVG text has no isolates: left-to-right marks keep "מי♭4" in name, accidental, octave order. */
+export const ltrLabel = (label: string) => '‎' + label.replace(/([♭♯𝄪𝄫]|\d+$)/gu, '‎$1');
+
+/** A note name, LTR-isolated, accidentals in the music font, octave as a small digit. */
+export function NoteName({ label, className }: { label: string; className?: string }) {
+  const [name, oct] = splitOctave(label);
+  const parts = name.split(/([♭♯𝄪𝄫])/).filter(Boolean);
+  return (
+    <bdi className={className} dir="ltr">
+      {/* each part isolated, so a Hebrew syllable, its accidental and the octave keep their LTR order */}
+      {parts.map((p, i) => (/[♭♯𝄪𝄫]/.test(p) ? <span key={i} className="acc">{p}</span> : <bdi key={i}>{p}</bdi>))}
+      {oct && <sub>{oct}</sub>}
+    </bdi>
+  );
+}
+
+/** The tilted note head (the v2 motif) as an SVG group centred on 0,0. */
+function Head({ r = 6, className }: { r?: number; className?: string }) {
+  return <ellipse className={className} rx={r} ry={r * 0.72} transform="rotate(-22)" />;
+}
+
+export type LaneMode = 'hold' | 'melody' | 'song';
+
+interface Run {
+  ti: number;
+  kind: 'in' | 'close';
+  t0: number;
+  t1: number;
+}
+
+export interface SingLaneProps {
+  feed: SingFeed;
+  targets: LaneTarget[];
+  mode: LaneMode;
+  /** Item length (s): the hold window. */
+  seconds: number;
+  tol: number;
+  /** Drawing live (rAF) or frozen (the review: the whole take fits). */
+  live: boolean;
+  /** Blind / hidden task: only these target indexes are drawn until the review. */
+  shownIdx?: number[] | null;
+  settings: Settings;
+  label: string;
+  /** Beat (s) for the grid and the count-in ticks of timed takes. */
+  beat?: number;
+  countIn?: number;
+  compact?: boolean;
+  children?: ReactNode;
+}
+
+export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, settings, label, beat, countIn = 0, compact }: SingLaneProps) {
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 320, h: 170 });
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const read = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) setSize((s) => (Math.abs(s.w - r.width) > 0.5 || Math.abs(s.h - r.height) > 0.5 ? { w: r.width, h: r.height } : s));
+    };
+    read();
+    if (typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const { w, h } = size;
+  const midis = targets.map((x) => x.midi);
+  const range = settings.voiceRange;
+  const [lo, hi] = useMemo(() => {
+    let a = Math.floor(Math.min(...midis)) - 3;
+    let b = Math.ceil(Math.max(...midis)) + 3;
+    if (b - a < 7) {
+      const add = 7 - (b - a);
+      a -= Math.floor(add / 2);
+      b += Math.ceil(add / 2);
+    }
+    return [a, b];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [midis.join()]);
+  const sh = (h - 2 * PAD) / (hi - lo);
+  const y = (m: number) => PAD + (hi - m) * sh;
+  const timed = targets.some((x) => x.start !== undefined);
+  const laneW = Math.max(40, w - G);
+  // Seconds → px, and the review's fitted window.
+  const reviewFit = useMemo(() => {
+    if (live) return null;
+    const vs = feed.pts.filter((p) => p.m !== null);
+    const starts = targets.filter((x) => x.start !== undefined).map((x) => x.start!);
+    const ends = targets.filter((x) => x.start !== undefined).map((x) => x.start! + (x.dur ?? 0.5));
+    const a = Math.min(starts.length ? Math.min(...starts) : Infinity, vs.length ? vs[0].t : Infinity);
+    const b = Math.max(ends.length ? Math.max(...ends) : -Infinity, vs.length ? vs[vs.length - 1].t : -Infinity);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return { t0: 0, span: Math.max(2, seconds + 1) };
+    return { t0: a - 0.25, span: b - a + 0.5 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, feed.version, targets]);
+  const span = reviewFit ? reviewFit.span : mode === 'hold' && !timed ? Math.max(3, seconds + 1.5) : 4;
+  const pps = laneW / span;
+  const shown = (i: number) => !shownIdx || shownIdx.includes(i);
+
+  // ---- dynamic layer (refs, rAF)
+  const grp = useRef<SVGGElement>(null);
+  const fillIn = useRef<SVGPathElement>(null);
+  const fillClose = useRef<SVGPathElement>(null);
+  const trInk = useRef<SVGPathElement>(null);
+  const trUp = useRef<SVGPathElement>(null);
+  const trDown = useRef<SVGPathElement>(null);
+  const head = useRef<SVGGElement>(null);
+  const tag = useRef<SVGTextElement>(null);
+  const nowLine = useRef<SVGGElement>(null);
+  const edgeUp = useRef<SVGGElement>(null);
+  const edgeDown = useRef<SVGGElement>(null);
+  const edgeUpT = useRef<SVGTextElement>(null);
+  const edgeDownT = useRef<SVGTextElement>(null);
+  const curStrip = useRef<SVGRectElement>(null);
+  const ticks = useRef<SVGGElement>(null);
+  const runs = useRef<{ n: number; list: Run[]; epoch: number }>({ n: 0, list: [], epoch: -1 });
+  const t0Hold = useRef<{ epoch: number; t0: number } | null>(null);
+
+  useEffect(() => {
+    const centre = (Math.min(...midis) + Math.max(...midis)) / 2;
+    const draw = () => {
+      const now = reviewFit ? reviewFit.t0 + reviewFit.span : feed.now();
+      // The content transform: x(t) = tx + t · pps.
+      let tx: number;
+      if (reviewFit) tx = G - reviewFit.t0 * pps;
+      else if (timed || mode !== 'hold') tx = G + 0.3 * laneW - now * pps;
+      else {
+        // Holds: the lane stands still and the now-line travels (scrolls only past the window's end).
+        let t0 = feed.onset !== null ? feed.onset - 0.4 : now - 0.4;
+        if (t0Hold.current && t0Hold.current.epoch === feed.epoch && feed.onset !== null) t0 = t0Hold.current.t0;
+        if (now - t0 > span * 0.92) t0 = now - span * 0.92;
+        if (feed.onset !== null) t0Hold.current = { epoch: feed.epoch, t0 };
+        tx = G - t0 * pps;
+      }
+      const nowX = reviewFit ? -100 : tx + now * pps;
+      grp.current?.setAttribute('transform', `translate(${tx.toFixed(2)} 0)`);
+      nowLine.current?.setAttribute('transform', `translate(${nowX.toFixed(2)} 0)`);
+      // Fill runs (incremental).
+      const pts = feed.pts;
+      const R = runs.current;
+      if (pts.length < R.n || R.epoch !== feed.epoch) {
+        R.n = 0;
+        R.list = [];
+        R.epoch = feed.epoch;
+      }
+      for (; R.n < pts.length; R.n++) {
+        const p = pts[R.n];
+        if (p.m === null) continue;
+        const tg = targetAt(targets, p.t, p.m);
+        if (!tg) continue;
+        const ti = targets.indexOf(tg);
+        if (!shown(ti) && live) continue;
+        if (tg.start !== undefined && (p.t < tg.start || p.t > tg.start + (tg.dur ?? 0.5))) continue;
+        const c = (p.m + octaveFold(p.m, tg.midi) - tg.midi) * 100;
+        const kind = Math.abs(c) <= tol ? 'in' : Math.abs(c) <= 50 ? 'close' : null;
+        if (!kind) continue;
+        const last = R.list[R.list.length - 1];
+        if (last && last.ti === ti && last.kind === kind && p.t - last.t1 <= 0.09) last.t1 = p.t;
+        else R.list.push({ ti, kind, t0: last && last.ti === ti && p.t - last.t1 <= 0.09 ? last.t1 : p.t - 0.02, t1: p.t });
+      }
+      const rect = (r: Run) => {
+        const tg = targets[r.ti];
+        const top = y(tg.midi + 0.5) + 1.5;
+        const bot = y(tg.midi - 0.5) - 1.5;
+        const x0 = tg.start !== undefined ? Math.max(r.t0, tg.start) * pps : r.t0 * pps;
+        const x1 = r.t1 * pps;
+        return `M${x0.toFixed(1)} ${top.toFixed(1)}H${x1.toFixed(1)}V${bot.toFixed(1)}H${x0.toFixed(1)}Z`;
+      };
+      fillIn.current?.setAttribute('d', R.list.filter((r) => r.kind === 'in').map(rect).join(''));
+      fillClose.current?.setAttribute('d', R.list.filter((r) => r.kind === 'close').map(rect).join(''));
+      // The trail: ink in the zone (or between notes), tangerine above, purple below; breaks on silence and off-lane.
+      const from = reviewFit ? -Infinity : (G - tx) / pps - 0.5;
+      const paths = { ink: [] as string[], up: [] as string[], down: [] as string[] };
+      let pen: keyof typeof paths | null = null;
+      let lastXY = '';
+      let cur: { m: number; fold: number; t: number } | null = null;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        if (p.t < from) continue;
+        if (p.m === null) {
+          pen = null;
+          cur = null;
+          continue;
+        }
+        const tg = targetAt(targets, p.t, p.m);
+        const ref = tg ? tg.midi : centre;
+        const fold = octaveFold(p.m, ref);
+        const m = p.m + fold;
+        cur = { m, fold, t: p.t };
+        if (m > hi - 0.1 || m < lo + 0.1) {
+          pen = null;
+          continue;
+        }
+        const inBlock = tg && (tg.start === undefined || (p.t >= tg.start - 0.05 && p.t <= tg.start + (tg.dur ?? 0.5)));
+        const c = tg ? (m - tg.midi) * 100 : 0;
+        const col: keyof typeof paths = !inBlock || Math.abs(c) <= tol || Math.abs(c) > 150 ? 'ink' : c > 0 ? 'up' : 'down';
+        const xy = `${(p.t * pps).toFixed(1)} ${y(m).toFixed(1)}`;
+        if (pen === col) paths[col].push(`L${xy}`);
+        else {
+          if (pen && lastXY) paths[pen].push(`L${xy}`);
+          paths[col].push(`M${pen ? lastXY : xy}L${xy}`);
+          pen = col;
+        }
+        lastXY = xy;
+      }
+      trInk.current?.setAttribute('d', paths.ink.join(''));
+      trUp.current?.setAttribute('d', paths.up.join(''));
+      trDown.current?.setAttribute('d', paths.down.join(''));
+      // The head on the now-line, the octave tag, the edge chevrons.
+      const fresh = !reviewFit && cur && now - cur.t < 0.2;
+      const onLane = fresh && cur!.m <= hi - 0.1 && cur!.m >= lo + 0.1;
+      if (head.current) {
+        head.current.style.display = onLane ? '' : 'none';
+        if (onLane) head.current.setAttribute('transform', `translate(${nowX.toFixed(1)} ${y(cur!.m).toFixed(1)})`);
+      }
+      if (tag.current) tag.current.textContent = onLane && cur!.fold ? (cur!.fold < 0 ? '8va' : '8vb') : '';
+      const above = fresh && cur!.m > hi - 0.1;
+      const below = fresh && cur!.m < lo + 0.1;
+      if (edgeUp.current) {
+        edgeUp.current.style.display = above ? '' : 'none';
+        if (above) {
+          edgeUp.current.setAttribute('transform', `translate(${nowX.toFixed(1)} 0)`);
+          edgeUpT.current!.textContent = `+${Math.round(cur!.m - (lo + hi) / 2)}`;
+        }
+      }
+      if (edgeDown.current) {
+        edgeDown.current.style.display = below ? '' : 'none';
+        if (below) {
+          edgeDown.current.setAttribute('transform', `translate(${nowX.toFixed(1)} 0)`);
+          edgeDownT.current!.textContent = `−${Math.round((lo + hi) / 2 - cur!.m)}`;
+        }
+      }
+      // The current block's lemon top strip (now).
+      if (curStrip.current) {
+        const tg = live ? targetAt(targets, now, cur?.m ?? null) : null;
+        const ti = tg ? targets.indexOf(tg) : -1;
+        const on = tg && shown(ti) && (tg.start === undefined ? feed.onset !== null : now >= tg.start - 0.05 && now <= tg.start + (tg.dur ?? 0.5));
+        curStrip.current.style.display = on ? '' : 'none';
+        if (on && tg) {
+          const x0 = tg.start !== undefined ? tx + tg.start * pps : G;
+          const x1 = tg.start !== undefined ? tx + (tg.start + (tg.dur ?? 0.5)) * pps - 2 : w;
+          curStrip.current.setAttribute('x', (x0 + 3).toFixed(1));
+          curStrip.current.setAttribute('width', Math.max(0, x1 - x0 - 6).toFixed(1));
+          curStrip.current.setAttribute('y', (y(tg.midi + 0.5) + 1.25).toFixed(1));
+        }
+      }
+      // Count-in ticks fill lemon as the clock passes them.
+      if (ticks.current) ticks.current.querySelectorAll('rect').forEach((r) => r.classList.toggle('on', now >= Number(r.dataset.t)));
+    };
+    draw();
+    if (!live) return;
+    let id = 0;
+    const loop = () => {
+      draw();
+      id = requestAnimationFrame(loop);
+    };
+    id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, w, h, pps, lo, hi, targets, tol, reviewFit, timed, mode, span, shownIdx?.join()]);
+
+  // ---- static layer
+  const rows: number[] = [];
+  for (let m = lo; m <= hi; m++) rows.push(m);
+  const named = new Set(midis.map((m) => Math.round(m)));
+  const zone = (m: number) => ({ y: y(m + tol / 100), h: Math.max(2, y(m - tol / 100) - y(m + tol / 100)) });
+  const lastEnd = timed ? Math.max(...targets.map((x) => (x.start ?? 0) + (x.dur ?? 0.5))) : 0;
+  const beats: number[] = [];
+  if (beat && timed) for (let tb = 0; tb <= lastEnd + 1e-6; tb += beat) beats.push(tb);
+  return (
+    <figure className={`sing-lane${compact ? ' compact' : ''}${live ? ' is-live' : ' is-review'}`} aria-label={label} ref={box} dir="ltr">
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+        <defs>
+          <pattern id="sl-hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+            <rect width="6" height="6" className="sl-hatch-bg" />
+            <rect width="2.5" height="6" className="sl-hatch-ink" />
+          </pattern>
+          <clipPath id="sl-clip">
+            <rect x={G} y="0" width={laneW} height={h} />
+          </clipPath>
+        </defs>
+        {/* semitone rows */}
+        {rows.map((m) => (
+          <line key={m} x1={G} x2={w} y1={y(m - 0.5)} y2={y(m - 0.5)} className={`sl-row${((m % 12) + 12) % 12 === 0 ? ' c' : ''}`} />
+        ))}
+        {/* untimed targets: bands across the lane */}
+        {targets.map((tg, i) =>
+          tg.start === undefined && shown(i) ? (
+            <g key={`b${i}`}>
+              <rect x={G + 3} width={laneW - 6} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-block${tg.golden ? ' golden' : ''}`} />
+              <rect x={G + 4} width={laneW - 8} {...zone(tg.midi)} className="sl-zone" />
+            </g>
+          ) : null,
+        )}
+        <g clipPath="url(#sl-clip)">
+          <g ref={grp}>
+            {beats.map((tb, k) => (
+              <line key={`g${k}`} x1={tb * pps} x2={tb * pps} y1={0} y2={h} className="sl-beat" />
+            ))}
+            {targets.map((tg, i) =>
+              tg.start !== undefined && shown(i) ? (
+                <g key={`t${i}`}>
+                  <rect x={tg.start * pps + 1} width={Math.max(4, (tg.dur ?? 0.5) * pps - 3)} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-block${tg.golden ? ' golden' : ''}`} />
+                  <rect x={tg.start * pps + 2} width={Math.max(2, (tg.dur ?? 0.5) * pps - 5)} {...zone(tg.midi)} className="sl-zone" />
+                </g>
+              ) : null,
+            )}
+            <path ref={fillClose} className="sl-fill close" />
+            <path ref={fillIn} className="sl-fill in" />
+            {targets.map((tg, i) =>
+              tg.start !== undefined && shown(i) ? <rect key={`o${i}`} x={tg.start * pps + 1} width={Math.max(4, (tg.dur ?? 0.5) * pps - 3)} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-outline${tg.golden ? ' golden' : ''}`} /> : null,
+            )}
+            {live && beat && countIn > 0 && (
+              <g ref={ticks}>
+                {Array.from({ length: countIn }, (_, k) => (
+                  <rect key={k} data-t={-(countIn - k) * beat} x={-(countIn - k) * beat * pps - 5} y={PAD} width="10" height="10" rx="2" className="sl-tick" />
+                ))}
+              </g>
+            )}
+            <path ref={trInk} className="sl-trail" />
+            <path ref={trUp} className="sl-trail up" />
+            <path ref={trDown} className="sl-trail down" />
+          </g>
+        </g>
+        {/* untimed blocks' outlines over their fill */}
+        {targets.map((tg, i) => (tg.start === undefined && shown(i) ? <rect key={`uo${i}`} x={G + 3} width={laneW - 6} y={y(tg.midi + 0.5) + 1} height={sh - 2} rx="6" className={`sl-outline${tg.golden ? ' golden' : ''}`} /> : null))}
+        <rect ref={curStrip} height="4" rx="2" className="sl-now-strip" style={{ display: 'none' }} />
+        {/* gutter: the note ruler and the comfortable range */}
+        <rect x="0" y="0" width={G - 2} height={h} className="sl-gutter" />
+        {range && (
+          <rect x={G - 7} width="4" y={y(Math.min(hi, range.high) + 0.5)} height={Math.max(0, y(Math.max(lo, range.low) - 0.5) - y(Math.min(hi, range.high) + 0.5))} className="sl-range" />
+        )}
+        {rows.map((m) =>
+          named.has(m) || ((m % 12) + 12) % 12 === 0 ? (
+            <text key={`n${m}`} x={G - 10} y={y(m) + 3.5} className={`sl-name${named.has(m) ? ' tg' : ''}`} textAnchor="end">
+              {ltrLabel(noteLabel(m, settings))}
+            </text>
+          ) : (
+            <line key={`k${m}`} x1={G - 12} x2={G - 9} y1={y(m)} y2={y(m)} className="sl-tickmark" />
+          ),
+        )}
+        {live && (
+          <>
+            <g ref={nowLine} className="sl-now">
+              <line x1="0" x2="0" y1="0" y2={h} className="edge" />
+              <line x1="0" x2="0" y1="0" y2={h} className="core" />
+            </g>
+            <g ref={head} className="sl-head" style={{ display: 'none' }}>
+              <Head r={compact ? 5 : 7} />
+              <text ref={tag} x="8" y="-8" className="sl-tag" />
+            </g>
+            <g ref={edgeUp} className="sl-edge" style={{ display: 'none' }}>
+              <path d="M-7 13 L0 4 L7 13 Z" />
+              <text ref={edgeUpT} x="10" y="14" />
+            </g>
+            <g ref={edgeDown} className="sl-edge" style={{ display: 'none' }}>
+              <path d={`M-7 ${h - 13} L0 ${h - 4} L7 ${h - 13} Z`} />
+              <text ref={edgeDownT} x="10" y={h - 6} />
+            </g>
+          </>
+        )}
+      </svg>
+      <figcaption className="sr-only">{label}</figcaption>
+    </figure>
+  );
+}
+
+// ------------------------------------------------------------------ note readout + cents chip (§4.4)
+
+export function SingReadout({ feed, targets, tol, settings, live, lang }: { feed: SingFeed; targets: LaneTarget[]; tol: number; settings: Settings; live: boolean; lang: 'he' | 'en' }) {
+  useTick(10, live);
+  const p = live ? feed.last() : null;
+  const fresh = p && feed.now() - p.t < 0.25;
+  const tg = targetAt(targets, feed.now(), p?.m ?? null);
+  const sung = live ? feed.shown : null;
+  const cents = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  const st = zoneState(cents, tol);
+  const sameNote = sung !== null && tg && Math.round(tg.midi) === sung;
+  return (
+    <div className="sing-readout" aria-hidden="true">
+      <div className={`sr-note${sung === null ? ' silent' : ''}`}>{sung === null ? '–' : <NoteName label={noteLabel(sung, settings)} />}</div>
+      {tg && !sameNote && (
+        <div className="sr-target">
+          <span className="flip-rtl">→</span> <NoteName label={noteLabel(Math.round(tg.midi), settings)} />
+        </div>
+      )}
+      <CentsChip cents={cents} state={st} lang={lang} />
+    </div>
+  );
+}
+
+export function CentsChip({ cents, state, lang }: { cents: number | null; state: ZoneState; lang: 'he' | 'en' }) {
+  if (state === 'none' || cents === null) return <span className="cents-chip idle" />;
+  if (state === 'in')
+    return (
+      <span className="cents-chip in" title={lang === 'he' ? 'באזור' : 'in the zone'}>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <ellipse cx="9" cy="15" rx="5" ry="3.6" transform="rotate(-22 9 15)" className="nh" />
+          <path d="M11 13 L15 17 L22 6" className="ck" />
+        </svg>
+      </span>
+    );
+  const sharp = cents > 0;
+  const v = chipCents(cents);
+  return (
+    <span className={`cents-chip ${sharp ? 'sharp' : 'flat'}`} dir="ltr">
+      <span className="mk">{sharp ? '▲' : '▼'}</span>
+      {sharp ? '+' : '−'}
+      {Math.abs(v)}
+      <small>¢</small>
+    </span>
+  );
+}
+
+// ------------------------------------------------------------------ zone meter (§4.5)
+
+/** Non-linear: ±50 ¢ fills the middle 70 %, ±50–150 ¢ the outer 30 % (wild misses never leave the bar). */
+export const meterPos = (c: number) => {
+  const a = Math.abs(c);
+  const d = a <= 50 ? (a / 50) * 35 : 35 + Math.min(1, (a - 50) / 100) * 15;
+  return 50 + Math.sign(c) * d;
+};
+
+export function ZoneMeter({ cents, tol }: { cents: number | null; tol: number }) {
+  const st = zoneState(cents, tol);
+  const side = st === 'sharp' || st === 'close-sharp' ? 'sharp' : st === 'flat' || st === 'close-flat' ? 'flat' : '';
+  return (
+    <div className={`zone-meter ${st === 'in' ? 'in' : ''} ${side}`} dir="ltr" aria-hidden="true">
+      <span className="zm-g flat-g">♭</span>
+      <span className="zm-track">
+        <span className="zm-tint" />
+        <span className="zm-t50" style={{ left: `${meterPos(-50)}%` }} />
+        <span className="zm-t50" style={{ left: `${meterPos(50)}%` }} />
+        <span className="zm-zone" style={{ left: `${meterPos(-tol)}%`, width: `${meterPos(tol) - meterPos(-tol)}%` }} />
+        <span className="zm-mid" />
+        {cents !== null && (
+          <span className="zm-needle" style={{ left: `${meterPos(cents)}%` }}>
+            <svg viewBox="-9 -9 18 18" width="18" height="18">
+              <Head r={6.5} />
+            </svg>
+          </span>
+        )}
+      </span>
+      <span className="zm-g sharp-g">♯</span>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ steadiness bars (§4.7)
+
+export function SustainBars({ levels, cur, seconds, sung, best, lang }: { levels: number[]; cur: number; seconds: number; sung: number; best?: number; lang: 'he' | 'en' }) {
+  return (
+    <div className="sustain-bars" aria-hidden="true">
+      <span className="sb-bars">
+        {levels.map((l, k) => (
+          <span key={k} className={`sb l${l}${k === cur ? ' now' : ''}`} />
+        ))}
+      </span>
+      <small className="sb-label" dir="ltr">
+        {best !== undefined && best > 0 ? `${SING_TX.best[lang]} ${best.toFixed(1)} s · ` : ''}
+        {Math.min(sung, seconds).toFixed(1)} / {seconds} s
+      </small>
+    </div>
+  );
+}
+
+/** The live meter row: the zone meter (and, for holds, the steadiness bars) sampled at 10 Hz. */
+export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lang }: { feed: SingFeed; targets: LaneTarget[]; tol: number; seconds: number; live: boolean; bars: boolean; meter: boolean; lang: 'he' | 'en' }) {
+  useTick(10, live);
+  const p = live ? feed.last() : null;
+  const now = feed.now();
+  const fresh = p && now - p.t < 0.25;
+  const tg = targetAt(targets, now, p?.m ?? null);
+  const cents = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  let barsEl: ReactNode = null;
+  if (bars && tg) {
+    const slice = Math.max(0.25, seconds / 40);
+    const n = Math.max(4, Math.round(seconds / slice));
+    const on = feed.onset;
+    const levels = on === null ? new Array(n).fill(0) : sliceSteadiness(feed.track(tg.midi), on, n, slice);
+    const sung = on === null ? 0 : (live ? now : (feed.pts[feed.pts.length - 1]?.t ?? on)) - on;
+    const cur = live && on !== null ? Math.min(n - 1, Math.floor(sung / slice)) : -1;
+    barsEl = <SustainBars levels={levels} cur={cur} seconds={seconds} sung={Math.max(0, sung)} best={live ? undefined : bestStretch(levels, slice)} lang={lang} />;
+  }
+  return (
+    <div className="sing-meters">
+      {meter && <ZoneMeter cents={cents} tol={tol} />}
+      {barsEl}
+    </div>
+  );
+}

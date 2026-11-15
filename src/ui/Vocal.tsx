@@ -67,6 +67,24 @@ import { VoiceLevelTest } from './VoiceLevelTest';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
+import { SingLane, SingMeters, SingReadout } from './SingLane';
+import { SingFeed, type LaneTarget } from './singFeed';
+import { zoneTolerance } from '../engine/vocalLive';
+import { SING_TX } from '../content/singLaneText';
+import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
+
+/** The simulator feeds its take in real time (?sim=1&simrt=1): screenshots and e2e see the live view. */
+const SIM_RT = SIMULATED && typeof location !== 'undefined' && new URLSearchParams(location.search).has('simrt');
+
+/** Push frames at their own pace from `zero` (performance.now() of t = 0); resolves early when aborted. */
+async function paceFrames(frames: SungFrame[], zero: number, signal: AbortSignal, push: (f: SungFrame) => void): Promise<void> {
+  let k = 0;
+  while (k < frames.length && !signal.aborted) {
+    const at = (performance.now() - zero) / 1000;
+    while (k < frames.length && frames[k].t <= at) push(frames[k++]);
+    await new Promise((r) => setTimeout(r, 16));
+  }
+}
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -181,6 +199,11 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 const TREND_KEYS: MetricKey[] = ['intonation', 'stability', 'settle', 'duration', 'vibratoRegularity', 'transition', 'timing', 'landing'];
+
+/** Sustained items: the steadiness bars replace the old time-only hold meter. */
+const HOLD_KINDS: VocalItem['kind'][] = ['hold', 'straight', 'vibrato-delayed', 'vibrato-onoff', 'vibrato-steady', 'vibrato-rate', 'vibrato-width', 'vibrato-alternate', 'vibrato-register', 'vibrato-messa', 'messa', 'range', 'dynamic', 'breath-hold', 'fine-tune', 'edge', 'vibrato-jazz', 'vibrato-widen'];
+/** A take at or above this reads as strong: no correction line, no "Why?". */
+const STRONG = 0.8;
 
 const isInstrument = (s: Settings) => !!s.instrument && s.instrument !== 'voice';
 
@@ -777,6 +800,8 @@ function VocalSession({
     }
   });
   const best = useRef<Record<string, { score: number; take: VocalTake }>>(saved?.best ?? {});
+  const feed = useMemo(() => new SingFeed(), []);
+  const [why, setWhy] = useState(false);
   useEffect(() => {
     if (test?.autoStart) void take();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -832,6 +857,9 @@ function VocalSession({
     setOnsetAt(null);
     setAudioUrl(null);
     setPulseClock(null);
+    setWhy(false);
+    feed.reset();
+    feed.latency = pulse && !SIMULATED ? (settings.micLatencyMs ?? 0) / 1000 : 0;
     await piano.unlock();
     const ref = referenceEvents(item, shownTargets);
     setPhase('listening');
@@ -860,7 +888,7 @@ function VocalSession({
         // Fine tuning sings INTO the drone: it keeps sounding (the bleed gate keeps it out of the measurement).
         if (item.reference === 'during' && !headphones && !item.kind.startsWith('harmony') && item.kind !== 'fine-tune') piano.stopDrone();
       }
-      if (buf.length % 3 === 0) setFrames(buf.slice());
+      feed.push(f);
     };
 
     if (needGate) {
@@ -942,6 +970,7 @@ function VocalSession({
       const clickCtl = new AbortController();
       c.signal.addEventListener('abort', () => clickCtl.abort());
       captureT0.current = performance.now() + lead * 1000;
+      feed.zeroWall = captureT0.current;
       if (pulse) {
         const pc = pulseClicks(pulse, clickOn);
         setPulseClock({ pulse, zero: captureT0.current });
@@ -952,9 +981,22 @@ function VocalSession({
       };
       if (SIMULATED) {
         const sim = simulatedFrames(item, targets, noteIdx);
-        for (const f of sim) keep(f);
-        // The simulator runs through the count-in and the first notes too (the now-cue is part of the take).
-        await new Promise((r) => setTimeout(r, 300 + (pulse ? (lead + Math.min(pulse.length, 1.5)) * 1000 : 0)));
+        if (SIM_RT) {
+          // Real time, lined up with the lane (the simulated melody starts 0.3 s in).
+          const shift = pulse ? 0.3 : 0;
+          await paceFrames(shift ? sim.map((f) => ({ ...f, t: f.t - shift })) : sim, captureT0.current, c.signal, keep);
+          clickCtl.abort();
+          if (c.signal.aborted && !stopped.current) {
+            clearInterval(tick);
+            piano.stopDrone();
+            setPulseClock(null);
+            return;
+          }
+        } else {
+          for (const f of sim) keep(f);
+          // The simulator runs through the count-in and the first notes too (the now-cue is part of the take).
+          await new Promise((r) => setTimeout(r, 300 + (pulse ? (lead + Math.min(pulse.length, 1.5)) * 1000 : 0)));
+        }
         got = sim;
       } else {
         const r = await new BrowserPitchCapture().sing({
@@ -985,6 +1027,7 @@ function VocalSession({
     piano.stopDrone();
     setPulseClock(null);
     setFrames(got ?? []);
+    feed.load(SIM_RT && pulse && got ? got.map((f) => ({ ...f, t: f.t - 0.3 })) : got ?? []);
     const g = got ? (MORE_KINDS.includes(item.kind) ? gradeMore(item, got, range) : gradeTake(item, got, range, style, noteIdx)) : { unclear: true, score: 0, metrics: [], weakest: null };
     setGrade(g);
     if (audio) setAudioUrl(URL.createObjectURL(audio));
@@ -1067,6 +1110,7 @@ function VocalSession({
       setPhase('ready');
       setGrade(null);
       setFrames([]);
+      feed.reset();
       return;
     }
     if (i < items.length - 1) {
@@ -1077,6 +1121,7 @@ function VocalSession({
       setPhase('ready');
       setGrade(null);
       setFrames([]);
+      feed.reset();
       return;
     }
     void finishSession();
@@ -1117,6 +1162,15 @@ function VocalSession({
   // Ear items (P3): only the given note — none for audiation — until the take is graded.
   const hidden = (item.kind === 'scale' && item.scale?.hear === 'tonic' && phase !== 'result') || (!!item.ear && phase !== 'result');
   const visible = hidden ? (item.ear ? earShown(item, shownTargets) : shownTargets.slice(0, 1)) : shownTargets;
+  const lang = settings.uiLang === 'en' ? 'en' : 'he';
+  const tol = zoneTolerance(item);
+  const laneTargets: LaneTarget[] = pulse
+    ? shownTargets.map((m, k) => ({ midi: m, start: pulse.onsets[k], dur: (pulse.onsets[k + 1] ?? pulse.length) - pulse.onsets[k] }))
+    : shownTargets.map((m) => ({ midi: m }));
+  const shownIdx = hidden ? shownTargets.map((m, k) => (visible.includes(m) ? k : -1)).filter((k) => k >= 0) : null;
+  const holdItem = HOLD_KINDS.includes(item.kind);
+  const strong = !!grade && !grade.unclear && grade.score >= STRONG;
+  const weakestScore = grade && grade.weakest ? Math.min(...grade.metrics.filter((m) => m.key === grade.weakest).map((m) => m.score)) : 1;
   const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
 
   if (phase === 'summary' && summary)
@@ -1186,8 +1240,8 @@ function VocalSession({
         <p className="vib-notes" dir="ltr" aria-label={t.vocalVibMarks}>
           {targets.map((m, k) => (
             <span key={k} className={item.vibNotes?.[k] ? 'vib' : ''}>
-              {noteLabel(m, settings)}
-              {item.vibNotes?.[k] ? ' 〰' : ''}
+              <bdi>{noteLabel(m, settings)}</bdi>
+              {item.vibNotes?.[k] ? <Icon k="wave" /> : null}
             </span>
           ))}
         </p>
@@ -1204,12 +1258,18 @@ function VocalSession({
           </button>
           </div>
         </div>
-      ) : pulse && phase !== 'result' ? null : (
+      ) : (pulse && phase !== 'result') || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
       <p className="vocal-targets" dir="ltr">
         {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
       )}
-      {pulse && phase !== 'result' && !isSight(item) && (
+      {/* While singing, the lane carries the notes; the beat light keeps the count-in and the pulse (timing-cue rule). */}
+      {pulse && phase === 'singing' && !isSight(item) && (
+        <div className="pulse-wrap compact sing-beat">
+          <PulseNotes clock={pulseClock} count={0} labels={null} beatOnly />
+        </div>
+      )}
+      {pulse && phase !== 'result' && phase !== 'singing' && !isSight(item) && (
         <div className="pulse-wrap">
           <PulseNotes clock={pulseClock} count={targets.length} labels={hiddenTask ? null : isSight(item) ? null : targets.map((m) => noteLabel(m, settings))} />
           <button className={`chip pn-click${clickOn ? ' on' : ''}`} aria-pressed={clickOn} onClick={() => (setClickOn(!clickOn), saveClick(!clickOn))}>
@@ -1217,20 +1277,32 @@ function VocalSession({
           </button>
         </div>
       )}
-      {phase !== 'result' && (item.kind === 'hold' || item.kind === 'straight' || item.kind.startsWith('vibrato') || item.kind === 'messa' || item.kind === 'range' || item.kind === 'dynamic' || item.kind === 'breath-hold' || item.kind === 'fine-tune' || item.kind === 'edge') && (
-        <div className="hold-meter" aria-hidden="true">
-          <span style={{ width: `${Math.min(100, ((sinceOnset ?? 0) / item.seconds) * 100)}%` }} />
-          <small>{fill(t.vocalHoldFor, { s: item.seconds })}</small>
-        </div>
-      )}
+      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} />}
       {cue && (
         <p className={`vocal-cue ${cue === t.vocalNowVibrato ? 'vib' : ''}`} aria-live="assertive">
           {cue}
         </p>
       )}
-      <div className={phase === 'result' ? 'trace-compact' : undefined}>
-      <PitchTrace frames={frames} targets={shownTargets} bands={hidden ? visible : undefined} seconds={item.seconds} label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`} />
+      <div className="sing-lane-wrap">
+      <SingLane
+        feed={feed}
+        targets={laneTargets}
+        mode={pulse ? 'melody' : 'hold'}
+        seconds={item.seconds}
+        tol={tol}
+        live={phase === 'singing'}
+        shownIdx={shownIdx}
+        settings={settings}
+        beat={pulse?.beat}
+        countIn={pulse?.countIn}
+        compact={phase === 'result'}
+        label={`${visible.map((m) => noteLabel(m, settings)).join(' – ')}`}
+      />
+      <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
+      {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && holdItem && grade && !grade.unclear)) && (
+        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} />
+      )}
       {item.reference === 'during' && (
         <label className="toggle-row">
           <input
@@ -1250,19 +1322,30 @@ function VocalSession({
       )}
 
       {phase === 'result' && grade && (
-        <section className="take-card" aria-live="polite">
+        <section className={`take-card${strong ? ' strong' : ''}`} aria-live="polite">
           {grade.unclear ? (
             <p>{t.vocalUnclear}</p>
           ) : (
             <>
               <div className="take-score">
-                {t.vocalScore}: <b>{Math.round(grade.score * 100)}%</b>
+                <span>
+                  {t.vocalScore}: <b dir="ltr">{Math.round(grade.score * 100)}%</b>
+                </span>
+                {strong && <span className="take-stamp">{grade.score >= 0.9 ? SING_TX.clean[lang] : SING_TX.good[lang]}</span>}
+                {!strong && grade.metrics.length > 0 && (
+                  <button className="why-btn" aria-expanded={why} onClick={() => setWhy((w) => !w)} data-why="1">
+                    {SING_TX.why[lang]}
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" aria-hidden="true">
+                      <path d={why ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+                    </svg>
+                  </button>
+                )}
               </div>
-              <MetricBars t={t} g={grade} />
               {grade.chordMade && <p className="take-remark">{fill(t.barryMade, { chord: `${pcLabel(grade.chordMade.root)}${grade.chordMade.kind === 'dom7' ? '7' : 'm6'}` })}</p>}
               {item.bh?.mode === 'free' && !grade.chordMade && <p className="take-remark">{t.barryNotHalfStep}</p>}
-              {remarkLine && <p className="take-remark"><Icon k="target" /> {remarkLine}</p>}
-              {tipKey && <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p>}
+              {/* One line that matches the score: a strong take gets no correction; a weak one its single most useful remark. */}
+              {!strong && (remarkLine ? <p className="take-remark"><Icon k="target" /> {remarkLine}</p> : tipKey && weakestScore < 0.8 ? <p className="take-tip"><Icon k="tip" /> {t.vocalTips[tipKey]}</p> : null)}
+              {!strong && why && <MetricBars t={t} g={grade} />}
               {memoryItem(item) && refs > 0 && <p className="field-hint"><Icon k="repeat" /> {fill(t.refCost, { n: refs, p: Math.round((1 - memoryFactor(refs)) * 100) })}</p>}
             </>
           )}
@@ -1275,6 +1358,7 @@ function VocalSession({
         </section>
       )}
 
+      <VoiceCheck settings={settings} lang={lang} active={phase === 'ready' && !isInstrument(settings)} />
       <div className="vocal-actions">
         {phase === 'ready' && (
           <button className="btn mega" onClick={() => void take()}>
@@ -1308,7 +1392,7 @@ function VocalSession({
               ctl.current?.abort();
             }}
           >
-            ■ {phase === 'listening' ? `${t.vocalListen}…` : t.vocalStop}
+            <Icon k="stop" /> {phase === 'listening' ? `${t.vocalListen}…` : t.vocalStop}
           </button>
         )}
         {phase === 'result' && test && (
