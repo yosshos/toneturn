@@ -137,7 +137,7 @@ export const headX = (x: any): number => {
 import type { NoteMark } from '../engine/noteMarks';
 import { glidePos, nowX } from '../engine/playhead';
 export type { NoteMark };
-import { drawMarks, type MarkSpot } from './markLayer';
+import { drawCue, drawMarks, type MarkSpot } from './markLayer';
 /** Marks while a take runs (slice 5): one per drawn item (undefined = not settled yet), with the offset for the tick. */
 export interface LiveMarks {
   marks: NoteMark[];
@@ -146,7 +146,7 @@ export interface LiveMarks {
 /** A drawn head (or tab digit): its centre and half-width in the SVG's units. */
 type MarkGeo = { x: number; y: number; hw: number; text?: string };
 /** Draw the live marks over the engraved music (their own layer), again after every redraw of the music. */
-function useLiveLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.RefObject<MarkGeo[][]>, live: LiveMarks | undefined, win: number, xs: number[], kind: 'staff' | 'tab') {
+function useLiveLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.RefObject<MarkGeo[][]>, live: LiveMarks | undefined, win: number, xs: number[], kind: 'staff' | 'tab', layer: 'mk-live' | 'mk-prior' = 'mk-live') {
   const key = live ? live.marks.map((m, i) => (m ? `${m}${Math.round(live.devs[i] ?? 0)}` : '')).join(',') : '';
   useEffect(() => {
     const svg = ref.current?.querySelector('svg') ?? null;
@@ -156,13 +156,23 @@ function useLiveLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.Re
       if (!mk) return;
       for (const g of geo.current?.[i] ?? []) spots.push({ mark: mk, x: g.x, y: g.y, hw: g.hw, dev: live.devs[i] ?? null, win, ...(g.text !== undefined ? { text: g.text } : {}) });
     });
-    drawMarks(svg, spots, kind, 'mk-live');
+    drawMarks(svg, spots, kind, layer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, xs, win]);
 }
+/** The count-in cue on one item (its first head / digit), again after every redraw of the music. */
+function useCueLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.RefObject<MarkGeo[][]>, cue: number | undefined, xs: number[], kind: 'staff' | 'tab') {
+  useEffect(() => {
+    const svg = ref.current?.querySelector('svg') ?? null;
+    if (!svg) return;
+    const g = cue !== undefined && cue >= 0 ? geo.current?.[cue]?.[0] : undefined;
+    drawCue(svg, g ?? null, kind);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cue, xs]);
+}
 /** A ghost head's key: the note really played, spelled in the staff's key. */
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live }: { /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live, cue, prior }: { /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** The count-in: this item's head pulses once (index into notes). */ cue?: number; /** The last take's ticks, faded, under this take's marks (per item). */ prior?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
@@ -265,6 +275,8 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
     [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
   );
   useLiveLayer(ref, geo, live, win, xs, 'staff');
+  useLiveLayer(ref, geo, prior, win, xs, 'staff', 'mk-prior');
+  useCueLayer(ref, geo, cue, xs, 'staff');
   return (
     <div className={`note-staff ${ahead ? 'ahead' : ''}`} role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
       <div className="svg-wrap">
@@ -318,7 +330,7 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live }: { /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live, cue, prior }: { /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** The count-in: this column's digit pulses once. */ cue?: number; /** The last take's ticks, faded (per column). */ prior?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
@@ -396,6 +408,8 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
     [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
   );
   useLiveLayer(ref, geo, live, win, xs, 'tab');
+  useLiveLayer(ref, geo, prior, win, xs, 'tab', 'mk-prior');
+  useCueLayer(ref, geo, cue, xs, 'tab');
   return (
     <div className={`guitar-tab ${ahead ? 'ahead' : ''}`} data-kicks={cols.filter((c) => c.kick).length || undefined} role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
       <div className="svg-wrap">

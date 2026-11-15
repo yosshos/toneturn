@@ -14,12 +14,14 @@ const T = {
   he: { rules: 'כללים', notes: 'צלילים', intervals: 'מרווחים', rhythm: 'קצב', shape: 'משפטים', vocab: 'אוצר מילים', extra: 'מגע',  free: 'חופשי', library: 'אתגרים', random: 'אתגר אקראי', close: 'סגירה', custom: 'שילוב משלכם', level: 'רמה' },
 };
 
+/** A challenge's level as 5 waveform bars (the v2 progress motif, 14 px tall; COURSE-FEEDBACK-UI §4.7). */
+const WAVE = [5, 8, 11, 14, 10];
 const dots = (n: number) => (
-  <span className="ir-level" aria-label={`${n}/5`}>
-    {[1, 2, 3, 4, 5].map((k) => (
-      <i key={k} className={k <= n ? 'on' : ''} />
+  <svg className="ir-wave" viewBox="0 0 30 14" role="img" aria-label={`${n}/5`} data-level={n}>
+    {WAVE.map((h, k) => (
+      <rect key={k} x={k * 6 + 0.5} y={14 - h} width={4.5} height={h - 0.5} rx={1.2} className={k < n ? 'on' : ''} />
     ))}
-  </span>
+  </svg>
 );
 
 /** The four rule pickers, the active rules explained, and the way into the challenge library. */

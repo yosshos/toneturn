@@ -40,6 +40,11 @@ export interface LiveTake {
   rows: PocketRow[];
   /** Settled notes in a row inside the window (reset by any other mark). */
   streak: number;
+  /**
+   * Hands together (keys, both hands): RH − LH onset gap over the settled beats where both hands played — `abs` the mean
+   * size (the review's handsAbs), `mean` its sign (+ = the left hand first). Null with one hand or no shared beat yet.
+   */
+  hands: { abs: number; mean: number } | null;
   /** Settled notes so far / all expected. */
   done: number;
   total: number;
@@ -83,7 +88,26 @@ export function liveGrade(drill: Drill, m: Pick<TakeMetrics, 'perNote' | 'nps' |
   let streak = 0;
   for (let k = byT.length - 1; k >= 0 && byT[k].mark === 'ok'; k--) streak++;
   const rows: PocketRow[] = pocketRowKeys(drill).map((key) => ({ key, mean: lastMean(byT.filter((s) => (key === 'R' || key === 'L' ? s.r.exp.hand === key : limbOf(s.r.exp) === key))) }));
-  return { perNote: settled.map((s) => s.r), win, mean: lastMean(byT), rows, streak, done: settled.length, total: m.perNote.length };
+  return { perNote: settled.map((s) => s.r), win, mean: lastMean(byT), rows, streak, hands: handsGap(settled.map((s) => ({ r: s.r, t: s.t }))), done: settled.length, total: m.perNote.length };
+}
+
+/** The ⇆ chip shows only when the hands are further apart than this (ms, §4.1). */
+export const HANDS_CHIP_MS = 30;
+
+/** RH − LH onset gap on the beats both hands played (each hand's mean onset there), as `abs` and `mean`. */
+export function handsGap(xs: { r: NoteResult; t: number }[]): { abs: number; mean: number } | null {
+  const at = new Map<number, { R: number[]; L: number[] }>();
+  for (const { r, t } of xs) {
+    if (!r.played || r.dev === null || (r.exp.hand !== 'R' && r.exp.hand !== 'L') || r.exp.voice) continue;
+    const k = Math.round(t);
+    const g = at.get(k) ?? { R: [], L: [] };
+    g[r.exp.hand].push(r.played.on);
+    at.set(k, g);
+  }
+  const avg = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
+  const ds = [...at.values()].filter((g) => g.R.length && g.L.length).map((g) => avg(g.R) - avg(g.L));
+  if (!ds.length) return null;
+  return { abs: avg(ds.map(Math.abs)), mean: avg(ds) };
 }
 
 /** The meter's rows: drums by limb (only the limbs the groove uses), keys hands together by hand; none for one part. */

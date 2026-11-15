@@ -207,7 +207,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
 }
-.cc-bar {
+.cc-bars .cc-bar {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -219,11 +219,11 @@
   color: var(--ink);
   min-inline-size: 0;
 }
-.cc-bar b {
+.cc-bars .cc-bar b {
   font-size: 0.95rem;
   white-space: nowrap;
 }
-.cc-bar small {
+.cc-bars .cc-bar small {
   font-size: 0.64rem;
   letter-spacing: -0.01em;
   font-weight: 700;
@@ -232,7 +232,7 @@
   text-overflow: ellipsis;
   max-inline-size: 100%;
 }
-.cc-bar em {
+.cc-bars .cc-bar em {
   font-style: normal;
   font-size: 0.7rem;
   color: var(--ink-dim);
@@ -241,21 +241,21 @@
 .cc-bars.n8 .cc-bar {
   padding-block: 4px;
 }
-.cc-bar.now {
+.cc-bars .cc-bar.now {
   background: var(--purple, #6d28d9);
   border-color: var(--purple, #6d28d9);
   color: #fff;
 }
-.cc-bar.now em {
+.cc-bars .cc-bar.now em {
   color: #fff;
 }
-.cc-bar.call {
+.cc-bars .cc-bar.call {
   outline: 2px dashed var(--purple, #6d28d9);
 }
-.cc-bar.ok {
+.cc-bars .cc-bar.ok {
   outline: 3px solid var(--ok);
 }
-.cc-bar.bad {
+.cc-bars .cc-bar.bad {
   outline: 3px solid var(--red);
 }
 .cc-slots {

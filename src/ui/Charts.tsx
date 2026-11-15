@@ -25,6 +25,7 @@ import { improvCaptureOpts } from '../engine/drills/bassNiche';
 import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 import { ListenIcons, ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
+import { ChordChart } from './ChordChart';
 
 export interface MyChart {
   id: string;
@@ -437,7 +438,6 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   };
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const cur = beat >= 0 ? chordAtBeat(parsed, meter, beat) : null;
-  const curBar = beat >= 0 ? Math.floor(beat / meter) : -1;
   // Reference recordings: the practice key follows the chart's transposition (its first root against the standard's).
   const stdRef = referenceOf(chart.std);
   const stdText = chart.std ? STANDARD_CHANGES.find((x) => x.id === chart.std)?.text : undefined;
@@ -470,28 +470,23 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           }
         />
       )}
-      <div className="ch-grid" dir="ltr" style={{ ['--cols' as string]: Math.min(4, Math.max(1, parsed.bars)) }}>
-        {barChords.map((cs, i) => (
-          <span
-            key={i}
-            className={`ch-bar ${i === curBar ? 'now' : ''} ${rulesRep && !playing && rulesRep.bars.some((x, j) => j % parsed.bars === i && x.breaks > 0) ? 'broke' : ''}`}
-            data-bar={i}
-            role={rules.note === 'scale' && !playing ? 'button' : undefined}
-            tabIndex={rules.note === 'scale' && !playing ? 0 : undefined}
-            onClick={() => rules.note === 'scale' && !playing && setPickBar(i)}
-          >
-            <span className="ch-chords">
-              {cs.map((c, k) => (
-                <b key={k} className={cur === c ? 'on' : ''}>
-                  {c.sym}
-                </b>
-              ))}
-            </span>
-            {rules.note === 'scale' && cs[0] && (
-              <small className={`ch-scale ${scales[i] ? 'set' : ''}`}>{scales[i] || cs.length === 1 ? MODE_NAMES[scales[i] ?? autoScale(cs[0].iv)][lang].replace(/ \(.*\)$/, '') : rx.auto}</small>
-            )}
-          </span>
-        ))}
+      {/* COURSE-FEEDBACK-UI §4.7: the shared chord chart — four bars a row, the bar being played lit (lemon strip and an
+          underline across the bar), a pink corner tab on a bar that broke a rule; with "scale" rules each bar names its
+          scale and opens the scale picker. Long charts scroll inside the grid; while playing, the rows around now. */}
+      <div className="ch-grid">
+        <ChordChart
+          cells={barChords.map((cs, i) => ({
+            chord: cs.map((c) => c.sym).join(' ') || null,
+            ...(rulesRep && !playing && rulesRep.bars.some((_x, j) => j % parsed.bars === i) ? { tab: { kind: rulesRep.bars.some((x, j) => j % parsed.bars === i && x.breaks > 0) ? ('bad' as const) : ('ok' as const), rules: [] } } : {}),
+            ...(rules.note === 'scale' && cs[0] ? { note: scales[i] || cs.length === 1 ? MODE_NAMES[scales[i] ?? autoScale(cs[0].iv)][lang].replace(/ \(.*\)$/, '') : rx.auto, noteSet: !!scales[i] } : {}),
+          }))}
+          meter={meter}
+          beat={beat}
+          maxRows={playing ? 4 : Math.max(1, Math.ceil(parsed.bars / 4))}
+          lang={lang}
+          onBar={rules.note === 'scale' && !playing ? (i) => setPickBar(i) : undefined}
+          attrs={{ 'data-chart-bars': parsed.bars, ...(cur ? { 'data-chart-now': cur.sym } : {}) }}
+        />
       </div>
       <textarea className="ch-text" dir="ltr" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={tx.chords} aria-label={tx.chords} data-chart-text="1" />
       {parsed.errors.length > 0 && (

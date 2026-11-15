@@ -46,12 +46,21 @@ function marksOf(result?: TakeMetrics | null, live?: LiveTake | null): Map<strin
   return out;
 }
 /** The timing tick beside a head at (x, y): tangerine on the left (early), purple on the right (late). */
-function Tick({ marks, k, x, y, edge }: { marks: Map<string, NoteMark>; k: string; x: number; y: number; edge: number }) {
+function Tick({ marks, k, x, y, edge, prior = false }: { marks: Map<string, NoteMark>; k: string; x: number; y: number; edge: number; /** The last take's tick (faded, drawn under this take's). */ prior?: boolean }) {
   const m = marks.get(k);
   if (m !== 'early' && m !== 'late') return null;
   const d = DEVS.get(marks);
   const len = tickLen(d?.dev.get(k) ?? 0, d?.win ?? 40);
-  return <rect x={m === 'early' ? x - edge - len : x + edge} y={y - 1.6} width={len} height={3.2} rx={1.1} className={`mk-tick ${m}`} />;
+  return <rect x={m === 'early' ? x - edge - len : x + edge} y={y - 1.6} width={len} height={3.2} rx={1.1} className={`mk-tick ${m} ${prior ? 'dn-prior' : ''}`} data-prior={prior ? 1 : undefined} />;
+}
+/** The count-in cue on a drum head (§4.1): a pulse once, or a static outline with reduced motion. */
+function DrumCue({ x, y, r }: { x: number; y: number; r: number }) {
+  return (
+    <g className="mk-cue" data-cue="1">
+      <circle cx={x} cy={y} r={r * 1.7} className="dn-cue dn-cue-ring" />
+      <circle cx={x} cy={y} r={r + 1.5} className="dn-cue dn-cue-pulse" />
+    </g>
+  );
 }
 
 /** One line of the score: its drill-beat range and bars (a time signature where it changes, beam groups for x/8 bars). */
@@ -95,7 +104,7 @@ function shownNotes(drill: Drill): ShownNote[] {
 }
 
 /** The drill's notes, two bars a line (one for dense rudiments), in a window of two lines that follows the take (B2, one screen). */
-export function DrumScore({ drill, view, result, beat = -1, lang, live }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang; /** Slice 5: the running take's settled hits. */ live?: LiveTake | null }) {
+export function DrumScore({ drill, view, result, beat = -1, lang, live, cue = false, prior }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang; /** Slice 5: the running take's settled hits. */ live?: LiveTake | null; /** The count-in is running: the first hit's head pulses. */ cue?: boolean; /** The last take of this item: its ticks, faded, under the review's. */ prior?: TakeMetrics | null }) {
   const meter = drill.meter || 4;
   // Eighth-pulse meters: a drill beat is an eighth — measure the density in quarters.
   const q = drill.pulse === 8 ? 0.5 : 1;
@@ -104,6 +113,8 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live }: { dril
   const lines = geo.length;
   const lineOf = (b: number) => Math.max(0, geo.findIndex((l) => b >= l.from - 1e-6 && b < l.to - 1e-6));
   const marks = marksOf(result, live);
+  const pmarks = result && prior ? marksOf(prior) : null;
+  const cueBeat = cue && !result && drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : null;
   const firstBad = result ? drill.notes.findIndex((n) => (marks.get(noteKey(n)) ?? 'ok') !== 'ok') : -1;
   // The window follows the line the take is in (lines may differ in length on a timeline drill).
   const { from, pager } = useLineWindow(lines, beat >= 0 ? lineOf(beat) : -1, 1, firstBad >= 0 ? lineOf(drill.notes[firstBad].beat) : 0);
@@ -113,7 +124,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live }: { dril
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
       {drill.form && <DrumRoadMap drill={drill} beat={beat} lang={lang} />}
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} beat={beat} lang={lang} />,
+        view === 'staff' ? <StaffLine key={li} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} lang={lang} />,
       )}
       {pager}
       {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
@@ -187,7 +198,7 @@ const yOf = (step: number) => 60 - step * 4;
 /** Gap-click drills (Time Lock, the gap-click drills): is this bar one of the silent ones (no click)? */
 export const silentBar = (drill: Drill, bar: number): boolean => drill.click === 'gap' && !!drill.gap && bar % (drill.gap[0] + drill.gap[1]) >= drill.gap[0];
 
-function StaffLine({ drill, notes, line, geo, marks, beat, sticking, lang }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; sticking: boolean; lang: Lang }) {
+function StaffLine({ drill, notes, line, geo, marks, pmarks, cueBeat, beat, sticking, lang }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; sticking: boolean; lang: Lang }) {
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const repeat = new Set(drill.drum?.repeatBars ?? []);
@@ -387,7 +398,9 @@ function StaffLine({ drill, notes, line, geo, marks, beat, sticking, lang }: { d
             ) : (
               <ellipse cx={x} cy={y} rx={5.6} ry={4.1} transform={`rotate(-20 ${x} ${y})`} className="dn-head" />
             )}
+            {pmarks && <Tick marks={pmarks} k={n.key} x={x} y={y} edge={6.5} prior />}
             <Tick marks={marks} k={n.key} x={x} y={y} edge={6.5} />
+            {cueBeat !== null && cueBeat !== undefined && Math.abs(n.beat - cueBeat) < 1e-6 && <DrumCue x={x} y={y} r={5} />}
             {m === 'wrong' && <path d={`M${x - 5} ${y - 5}l10 10M${x + 5} ${y - 5}l-10 10`} className="mk-x" />}
             {n.grace && (
               // Grace note(s): small heads just before the stroke, the flam's with a slash.
@@ -434,7 +447,7 @@ const LANE_NAME: Record<DrumVoice, { en: string; he: string }> = {
 };
 const laneOf = (v: DrumVoice): DrumVoice => (v === 'hhOpen' ? 'hihat' : v === 'rim' ? 'snare' : v);
 
-function LaneLine({ drill, line, geo, marks, beat, lang }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; beat: number; lang: Lang }) {
+function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, lang }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; lang: Lang }) {
   // Lane names are words, not abbreviations: a wider name column than the staff's.
   const LX0 = 46;
   const lanes = LANE_ORDER.filter((v) => drill.notes.some((n) => n.voice && laneOf(n.voice) === v));
@@ -467,7 +480,9 @@ function LaneLine({ drill, line, geo, marks, beat, lang }: { drill: Drill; line:
         return (
           <g key={i}>
             <circle cx={xOf(n.beat)} cy={y} r={r} className={`dl-hit ${m ?? ''} ${n.ghost ? 'ghost' : ''} ${n.voice === 'hhOpen' ? 'open' : ''}`} data-voice={n.voice} />
+            {pmarks && <Tick marks={pmarks} k={noteKey(n)} x={xOf(n.beat)} y={y} edge={r + 1.5} prior />}
             <Tick marks={marks} k={noteKey(n)} x={xOf(n.beat)} y={y} edge={r + 1.5} />
+            {cueBeat !== null && cueBeat !== undefined && Math.abs(n.beat - cueBeat) < 1e-6 && <DrumCue x={xOf(n.beat)} y={y} r={r} />}
           </g>
         );
       })}

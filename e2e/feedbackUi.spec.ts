@@ -53,16 +53,27 @@ for (const lang of ['en', 'he'] as const) {
     const panel = page.locator('[data-reharm-studio="panel"]');
     await expect(panel).toBeVisible();
     await panel.scrollIntoViewIfNeeded();
+    // Slice 8: the bars are on the shared chord chart, four a row; a tapped bar opens its devices in a sheet.
+    const chart = panel.locator('[data-rh-chart]');
+    await expect(chart).toBeVisible();
+    await expect(chart.locator('.cc-row').first().locator('.cc-bar')).toHaveCount(4);
+    const counts = async () => ((await chart.getAttribute('data-rh-devices')) ?? '').split(',').map(Number);
+    for (let i = 0; i < 8 && !(await counts()).some((n) => n > 0); i++) await page.locator('[aria-label="Next bars"]').click();
+    await panel.evaluate((e) => e.scrollIntoView({ block: 'start' }));
+    await shot(page, `s8-reharm-chart-${lang}`);
+    await chart.locator('.cc-bar').nth((await counts()).findIndex((n) => n > 0)).click();
+    const sheet = page.locator('[data-rh-sheet]');
+    await expect(sheet).toBeVisible();
     const r = await page.evaluate(() => {
       const el = document.querySelector('[data-reharm-studio="panel"]') as HTMLElement;
       const box = el.getBoundingClientRect();
-      const inside = [...el.querySelectorAll('button, select, .rh-chords bdi')].every((b) => {
+      const inside = [...el.querySelectorAll('button, select, .cc-chord'), ...document.querySelectorAll('[data-rh-sheet] .chip')].every((b) => {
         const q = b.getBoundingClientRect();
         return q.left >= -1 && q.right <= innerWidth + 1;
       });
       // A chip on one line: its height is about one line of text (no letter-per-line wrap).
-      const chips = [...el.querySelectorAll('.rh-devs .chip')].map((c) => (c as HTMLElement).getBoundingClientRect().height);
-      const chords = [...el.querySelectorAll('.rh-chords bdi')].map((c) => (c as HTMLElement).getBoundingClientRect().height);
+      const chips = [...document.querySelectorAll('[data-rh-sheet] .rh-devs .chip')].map((c) => (c as HTMLElement).getBoundingClientRect().height);
+      const chords = [...el.querySelectorAll('.cc-chord')].map((c) => (c as HTMLElement).getBoundingClientRect().height);
       return { wide: document.documentElement.scrollWidth - document.documentElement.clientWidth, left: box.left, right: box.right, inside, chips, chords };
     });
     expect(r.wide).toBeLessThanOrEqual(1);
@@ -70,8 +81,13 @@ for (const lang of ['en', 'he'] as const) {
     expect(r.right).toBeLessThanOrEqual(320);
     expect(r.inside).toBe(true);
     expect(r.chips.length).toBeGreaterThan(0);
-    for (const h of r.chips) expect(h).toBeLessThan(40);
+    for (const h of r.chips) expect(h).toBeLessThan(44);
     for (const h of r.chords) expect(h).toBeLessThan(34);
+    await page.waitForTimeout(500);
+    await shot(page, `s8-reharm-sheet-${lang}`);
+    await sheet.locator('[data-rh-device]').first().click();
+    await expect(sheet).toHaveCount(0);
+    await expect(chart.locator('.cc-tab.changed').first()).toBeVisible();
     await panel.evaluate((e) => e.scrollIntoView({ block: 'start' }));
     await shot(page, `jazz-reharm-panel-${lang}-after`);
   });
@@ -373,3 +389,180 @@ for (const lang of ['en', 'he'] as const)
       if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
       await shot(page, `s8-${plays}-${level}-after-${lang}`);
     });
+
+// ───────────────────────────── slice 5, the rest ─────────────────────────────
+const liveInit = (speed: number) => async (page: Page) =>
+  page.addInitScript((s) => {
+    (window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed';
+    (window as unknown as { __fakeLive?: number }).__fakeLive = s;
+  }, speed);
+const fits = async (page: Page, what: string) => {
+  const o = await overflow(page);
+  expect(o.tall, `${what}: taller than the screen`).toBeLessThanOrEqual(2);
+  expect(o.wide, `${what}: sideways`).toBeLessThanOrEqual(1);
+};
+
+// The count-in: the first note head (tab digit, drum head) pulses once; gone once the take runs.
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of [...RUNS, ['bass', 'b-pocket', 'b-pocket-1'] as [Plays, string, string]])
+    test(`count-in: the first note head pulses (${plays}, ${lang})`, async ({ page }) => {
+      await liveInit(0.5)(page);
+      await seed(page, lang, plays, { headphones: false });
+      await openLevel(page, lang, family, level);
+      await expect(page.locator('.mk-cue')).toHaveCount(0);
+      await page.locator('[data-drill-play]').click();
+      await expect(page.locator('[data-pocket="count"]')).toBeVisible();
+      await expect(page.locator('.mk-cue').first()).toBeVisible();
+      const box = await page.locator('.mk-cue').first().boundingBox();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+      await fits(page, 'count-in');
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s5-cue-${plays}-${lang}`);
+      await expect(page.locator('[data-pocket="play"]')).toBeVisible({ timeout: 20_000 });
+      await expect(page.locator('.mk-cue')).toHaveCount(0);
+    });
+
+// Hands together: the ⇆ chip between the R and L rows of the meter, only when the hands are > 30 ms apart.
+for (const lang of ['en', 'he'] as const)
+  test(`hands together: the ⇆ chip in the pocket meter (keys scales-3, ${lang})`, async ({ page }) => {
+    await liveInit(1.5)(page);
+    await seed(page, lang, 'keys');
+    await openLevel(page, lang, 'scales', 'scales-3');
+    await page.locator('[data-drill-play]').click();
+    await expect(page.locator('[data-pocket="play"][data-pocket-rows="2"]')).toBeVisible({ timeout: 15_000 });
+    const chip = page.locator('.pocket [data-hands]');
+    await expect(chip).toBeVisible({ timeout: 20_000 });
+    expect(Number(await chip.getAttribute('data-hands'))).toBeGreaterThan(30);
+    const b = await chip.boundingBox();
+    expect(b!.x + b!.width).toBeLessThanOrEqual(320);
+    await fits(page, 'hands chip');
+    if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+    await shot(page, `s5-hands-keys-${lang}`);
+  });
+
+// Velocity bars: only on loudness / accent goals; hollow targets before the take, bars filling as it is played.
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of [
+    ['keys', 'control', 'control-3'],
+    ['drums', 'd-strokes', 'd-strokes-1'],
+  ] as [Plays, string, string][])
+    test(`velocity bars under the score (${plays} ${level}, ${lang})`, async ({ page }) => {
+      await liveInit(1.5)(page);
+      await seed(page, lang, plays, { headphones: false });
+      await openLevel(page, lang, family, level);
+      const vb = page.locator('[data-vel-bars]');
+      await expect(vb).toBeVisible();
+      expect(await vb.getAttribute('data-vel-played')).toBe('0');
+      if (plays === 'keys') expect(await vb.locator('.vb-target').count()).toBeGreaterThan(0);
+      await fits(page, 'velocity before');
+      await page.locator('[data-drill-play]').click();
+      await expect.poll(async () => Number(await vb.getAttribute('data-vel-played')), { timeout: 20_000 }).toBeGreaterThan(1);
+      await fits(page, 'velocity during');
+      // (the keys control items' Hebrew titles carry "C … mf" outside <bdi>: content strings, not this row)
+      if (lang === 'he' && plays !== 'keys') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s5-velocity-${plays}-${lang}`);
+    });
+test('velocity bars stay hidden on an item without a loudness goal', async ({ page }) => {
+  await seed(page, 'en', 'keys');
+  await openLevel(page, 'en', 'scales', 'scales-1');
+  await expect(page.locator('[data-pocket="ready"]')).toBeVisible();
+  await expect(page.locator('[data-vel-bars]')).toHaveCount(0);
+});
+
+// The take overlay: after a second take of the same item, "Last take" draws the previous take's ticks faded.
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of [...RUNS, ['bass', 'b-pocket', 'b-pocket-1'] as [Plays, string, string]])
+    test(`last take: the previous take's ticks under this one's (${plays}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+      await seed(page, lang, plays, { headphones: false });
+      await openLevel(page, lang, family, level);
+      await fakeTakeRun(page, 'mixed');
+      await expect(page.locator('[data-last-take]')).toHaveCount(0);
+      await page.locator('.take-review [data-again]').click();
+      // (a drum item without a kit doesn't start by itself: the dev take needs one more press)
+      await page.waitForTimeout(400);
+      if (await page.locator('[data-drill-play]').isVisible().catch(() => false)) await page.locator('[data-drill-play]').click();
+      await expect(page.locator('.drill-result')).toBeVisible({ timeout: 20_000 });
+      const toggle = page.locator('[data-last-take]');
+      await expect(toggle).toHaveAttribute('data-last-take', 'off');
+      await expect(page.locator('.mk-prior, [data-prior]')).toHaveCount(0);
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('data-last-take', 'on');
+      // (the drum dev take's off-time hits fall outside the drum window — missed, not early / late — so no drum ticks)
+      if (plays !== 'drums') await expect.poll(() => page.locator('.mk-prior .mk-tick, [data-prior]').count()).toBeGreaterThan(0);
+      await fits(page, 'review with the last take');
+      const next = await page.locator('.take-review [data-next]').boundingBox();
+      expect(next!.y + next!.height).toBeLessThanOrEqual(720);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s5-lasttake-${plays}-${lang}`);
+    });
+
+// ───────────────────────────── slice 8, the rest ─────────────────────────────
+// Note roles: while a rule-card take runs, a dot a note under the bar (chord tone / tension / outside).
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of CHARTS.filter(([, , l]) => l !== 'b-walk-7'))
+    test(`note-role dots on the chart while the take runs (${plays} ${level}, ${lang})`, async ({ page }) => {
+      await liveInit(1.5)(page);
+      await seed(page, lang, plays, { headphones: false, drills: { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: plays === 'keys' ? 'piano' : plays, guitarAddOns: ['jazz'], bassTrack: 'both' } });
+      await openLevel(page, lang, family, level);
+      await expect(page.locator('.cc-dot')).toHaveCount(0);
+      const speaker = page.locator('[data-drums-choice="speaker"]');
+      if (await speaker.isVisible().catch(() => false)) await speaker.click();
+      await page.locator('[data-drill-play]').click();
+      await expect.poll(() => page.locator('[data-chord-chart] .cc-dot').count(), { timeout: 20_000 }).toBeGreaterThan(0);
+      const roles = await page.locator('[data-chord-chart] .cc-dots').first().getAttribute('data-dots');
+      expect(roles!.split(' ').every((r) => ['chord', 'tension', 'outside'].includes(r))).toBe(true);
+      await fits(page, 'note roles');
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s8-roles-${plays}-${level}-${lang}`);
+      await expect(page.locator('.drill-result')).toBeVisible({ timeout: 40_000 });
+      await expect(page.locator('.cc-dot')).toHaveCount(0);
+    });
+
+// The chart player on the shared chart: four a row, the bar being played lit, no sideways scroll.
+for (const lang of ['en', 'he'] as const)
+  test(`the chart player uses the shared chord chart (${lang})`, async ({ page }) => {
+    await seed(page, lang, 'keys');
+    await page.goto(`/?unlock=all&sim=1&lang=${lang}#/charts`);
+    await page.locator('[data-chart-template]').first().click();
+    const chart = page.locator('[data-chart-player] [data-chord-chart]');
+    await expect(chart).toBeVisible();
+    expect(await chart.locator('.cc-row').first().locator('.cc-bar').count()).toBeLessThanOrEqual(4);
+    expect(await chart.locator('.cc-chord').evaluateAll((els) => els.every((e) => e.tagName === 'BDI'))).toBe(true);
+    await page.locator('[data-chart-play]').click();
+    await expect(chart.locator('.cc-bar.now')).toBeVisible({ timeout: 15_000 });
+    expect((await overflow(page)).wide).toBeLessThanOrEqual(1);
+    await chart.evaluate((e) => e.scrollIntoView({ block: 'start' }));
+    if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+    await shot(page, `s8-chart-player-${lang}`);
+    await page.locator('[data-chart-stop]').click();
+  });
+
+// The improvisation studio: the modes as one segmented control (short labels on one line), challenge levels as waveform bars.
+for (const lang of ['en', 'he'] as const)
+  test(`the improv studio: a segmented control and waveform levels (${lang})`, async ({ page }) => {
+    await seed(page, lang, 'keys');
+    await page.goto(`/?unlock=all&lang=${lang}#/improv`);
+    const seg = page.locator('.is-seg');
+    await expect(seg).toBeVisible();
+    const g = await seg.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const bs = [...el.querySelectorAll('button')].map((b) => ({ h: b.getBoundingClientRect().height, over: b.scrollWidth > b.clientWidth + 1 }));
+      return { right: r.right, left: r.left, bs };
+    });
+    expect(g.bs.length).toBeGreaterThanOrEqual(4);
+    expect(g.left).toBeGreaterThanOrEqual(0);
+    expect(g.right).toBeLessThanOrEqual(320);
+    for (const b of g.bs) {
+      expect(b.h, 'one line').toBeLessThan(48);
+      expect(b.over, 'label fits').toBe(false);
+    }
+    await expect(page.locator('.ir-wave').first()).toBeVisible();
+    expect(await page.locator('.ir-level').count()).toBe(0);
+    expect((await overflow(page)).wide).toBeLessThanOrEqual(1);
+    if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+    await shot(page, `s8-improv-studio-${lang}`);
+    await page.locator('[data-is-mode="trade"]').click();
+    await expect(page.locator('[data-is-mode="trade"]')).toHaveAttribute('aria-selected', 'true');
+  });

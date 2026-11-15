@@ -544,19 +544,22 @@ button.heat-cell {
 .vl-lessons > small { color: var(--ink-dim); }
 .vl-lesson-row { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* Key mastery (owner 2026-11-14): the 12-key map of a skill, fifths order, LTR; a quiet bar under weak keys. */
-.km12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; direction: ltr; min-width: 0; }
-.km-cell { position: relative; display: grid; place-items: center; height: 28px; min-width: 0; padding: 0; border: 1px solid transparent; border-radius: 6px; background: var(--card-2); color: var(--ink); font: inherit; font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; overflow: hidden; }
+/* Key mastery (owner 2026-11-14; COURSE-FEEDBACK-UI §4.2 recolour): the 12-key map of a skill, fifths order, LTR.
+   Fills in the v2 dynamic scale: untried = dashed outline; fine = lilac 35 %; strong = purple with paper text;
+   weak = paper with a pink ✕ corner tab. 22 × 32 px cells (12 × 22 + 11 × 2 = 286 px), 13 px Secular One. */
+.km12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; direction: ltr; min-width: 0; max-width: 360px; }
+.km-cell { position: relative; display: grid; place-items: center; height: 32px; min-width: 0; padding: 0; border: 1.5px solid var(--outline); border-radius: 6px; background: var(--card); color: var(--ink); font: 400 13px/1 var(--display); white-space: nowrap; overflow: hidden; }
 button.km-cell { cursor: pointer; }
 button.km-cell:disabled { cursor: default; opacity: 0.45; }
 button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-.km-cell.st-untried { border: 1px dashed var(--line); background: transparent; color: var(--ink-dim); }
-.km-cell.st-ok { background: color-mix(in srgb, var(--ok) 35%, var(--card-2)); }
-.km-cell.st-strong { background: color-mix(in srgb, var(--ok) 70%, var(--card-2)); color: var(--ink-c); }
-.km-cell.st-weak { background: var(--card-2); }
-.km-cell.st-weak::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 3px; height: 2px; border-radius: 1px; background: var(--bad); }
-.km12.compact .km-cell { height: 8px; border-radius: 3px; }
-.km12.compact .km-cell.st-weak::after { left: 0; right: 0; bottom: 0; }
+.km-cell.st-untried { border: 1.5px dashed var(--line-strong); background: transparent; color: var(--ink-soft); }
+.km-cell.st-ok { background: color-mix(in srgb, var(--lilac) 35%, var(--card)); }
+.km-cell.st-strong { background: var(--purple); border-color: var(--purple); color: var(--paper); }
+.km-cell.st-weak { background: var(--card); }
+.km-cell.st-weak::after { content: '✕'; position: absolute; top: 0; right: 0; width: 9px; height: 9px; display: grid; place-items: center; border-left: 1px solid var(--ink-c); border-bottom: 1px solid var(--ink-c); border-bottom-left-radius: 4px; background: var(--pink); color: var(--ink-c); font: 700 6px/1 var(--font); }
+.km12.compact .km-cell { height: 8px; border-radius: 3px; border-width: 1px; }
+.km12.compact .km-cell.st-weak { background: var(--pink); border-color: var(--ink-c); }
+.km12.compact .km-cell.st-weak::after { content: none; }
 .km-block { display: grid; gap: 6px; min-width: 0; margin-bottom: 10px; }
 .km-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; min-width: 0; }
 .km-head b { font-size: 14px; }
