@@ -865,6 +865,26 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'family:k-tune': () => p('M3 5v14 M12 5v14 M21 5v14 M6 16l2.5-7 M9 16l2.5-7 M15 16l2.5-7 M18 16l2.5-7', false),
+  // AUDIT-6 Stage B: the first steps at the piano (a hand of five keys), sight-reading (notes on a staff, an arrow),
+  // the guitar's first steps (a pick over a string), riffs by grade (power-chord dots and a riff line).
+  'family:k-first': () => p('M4 20V9 M8 20V6 M12 20V5 M16 20V6 M20 20V10 M2 20h20', false),
+  'family:k-read': () => (
+    <>
+      {p('M2 6h20 M2 11h20 M2 16h20', false)}
+      {head(8, 13.5, 2)}
+      {head(15, 8.5, 2)}
+      {p('M3 21h15 M15 19l3 2-3 2', false)}
+    </>
+  ),
+  'family:g-first': () => p('M2 9h20 M12 21c-3-3-6-7-6-10 0-3 3-4 6-4s6 1 6 4c0 3-3 7-6 10z', false),
+  'family:g-riff': () => (
+    <>
+      {p('M2 7h20 M2 12h20', false)}
+      {head(6, 12, 2)}
+      {head(10, 7, 2)}
+      {p('M13 19c1.5-3 3-3 4.5 0s3 3 4.5 0 M2 19h9', false)}
+    </>
+  ),
   // Solo jazz piano (Siskind): a bass note under a two-note shell; three mangos over two hands; a hit on the "and";
   // phrases with a rest between them.
   'family:k-lh': () => (

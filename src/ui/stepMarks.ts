@@ -175,6 +175,11 @@ export const TOPIC_MARK: Record<string, string> = {
   'lh-tex-ear': '1+10',
   'solo-tex-ear': '3/2',
   'comp-rhythm-ear': '1·2+',
+  // AUDIT-6 Stage B: the Ear course's beginnings — a rhythm echoed back, intervals down, root / 3rd / 5th, the changed note.
+  'rhythm-echo': '♩♪→',
+  'intervals-down': 'P5↓',
+  'chord-member': 'R35',
+  'melody-change': '♪≠♪',
   'key-centres': 'I→I→I',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',

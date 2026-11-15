@@ -18,6 +18,8 @@
 // Keep every rating ≤ PATH_CAP (1900); tests/pathShape.test.ts checks gaps, density and the known misplacements.
 
 /** RSL / ABRSM / Trinity grade (0 = Debut / Initial … 8; 9+ = beyond grade 8) → path rating: the guitar formula. */
+import { FIRST_STEPS_DIFF } from './drills/firstStepsDiff';
+
 export const G = (grade: number): number => Math.round(700 + 90 * grade);
 
 // ---------------------------------------------------------------- keys (AUDIT-6-LEVELS-INSTRUMENTS §1.5 pri 1)
@@ -142,7 +144,8 @@ export const VOICE_PLACEMENT: Record<string, number> = {
 // ---------------------------------------------------------------- the table
 
 /** Every curated table, merged (a later one wins). Stage B / C: add your exported table here. */
-const PLACEMENT_TABLES: Record<string, number>[] = [KEYS_PLACEMENT, BASS_PLACEMENT, DRUM_PLACEMENT, VOICE_PLACEMENT];
+// AUDIT-6 Stage B: the first steps (keys, guitar, bass, drums), riffs by grade, graded sight-reading (firstStepsDiff.ts).
+const PLACEMENT_TABLES: Record<string, number>[] = [KEYS_PLACEMENT, BASS_PLACEMENT, DRUM_PLACEMENT, VOICE_PLACEMENT, FIRST_STEPS_DIFF];
 export const LEVEL_PLACEMENT: Record<string, number> = Object.assign({}, ...PLACEMENT_TABLES);
 
 /**

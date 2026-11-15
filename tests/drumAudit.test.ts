@@ -34,7 +34,9 @@ function humanHits(d: Drill, bpm: number, sd: number, seed = 7): DrumTakeHit[] {
     const j = g() * sd;
     // Flams / drags: grace hits 25 ms apart before the stroke (their gap jitters by 2 ms), soft.
     const graces: DrumTakeHit[] = Array.from({ length: n.grace ?? 0 }, (_, k) => ({ voice: n.voice ?? 'snare', on: expTimeMs(d, n.beat, bpm) + j - (25 + g() * 2) * ((n.grace ?? 0) - k), vel: 40 }));
-    return [...graces, {
+    // The buzz roll (d-first 8, AUDIT-6): the stroke's bounces, ~25 ms apart, fading.
+    const bounces: DrumTakeHit[] = d.goal.drum?.buzz ? [1, 2, 3].map((k) => ({ voice: n.voice ?? 'snare', on: expTimeMs(d, n.beat, bpm) + j + k * (25 + g()), vel: 60 - 10 * k })) : [];
+    return [...graces, ...bounces, {
       voice: n.voice ?? 'snare',
       on: expTimeMs(d, n.beat, bpm) + j,
       vel: Math.max(1, Math.min(127, Math.round(base + g() * (n.ghost ? 1.5 : 3)))),

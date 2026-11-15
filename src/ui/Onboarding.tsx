@@ -9,7 +9,8 @@
 //   Then the first course starts (SPEC-COURSE-START, 2026-11-11): its welcome card asks "Where are you?" (that also sets
 //   the level here), the setup is a musical moment, a taste lesson, a measured first win — no level test before music.
 import { Toni } from './Toni';
-import { COURSES, courseOf, type CourseId } from '../engine/courses';
+import { courseOf, type CourseId } from '../engine/courses';
+import { copy, defaultCourse, visibleCourses, wordmark } from '../partner';
 import { KIT_NOTICE } from '../engine/drumKit';
 import { Glyph } from './Glyph';
 import { useEffect, useRef, useState } from 'react';
@@ -61,7 +62,7 @@ export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lan
   return (
     <div className="splash" onPointerDown={finish} role="presentation" data-splash="1">
       <SplashLogo onDark />
-      <div className="splash-word">{lang === 'he' ? 'החוש השביעי' : 'The 7th Sense'}</div>
+      <div className="splash-word">{wordmark(lang)}</div>
       <div className="splash-slogan">{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</div>
       <svg className="splash-staff" viewBox="0 0 390 130" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0 2H390M0 32H390M0 62H390M0 92H390M0 122H390" stroke="rgb(255 255 255 / 0.22)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
@@ -157,7 +158,7 @@ export function quickIntake(goal: Goal, inst: string, music: Level4): IntakeResu
 /** The intake for a set of courses at a music level: the goal follows the first course, the instrument the first
  *  instrument course (onboarding, and the first course's self-report that refines the level). */
 export function onboardingIntake(picked: CourseId[], music: Level4): IntakeResult {
-  const first = picked[0] ?? 'ear';
+  const first = picked[0] ?? defaultCourse();
   const inst = picked.find((c) => c === 'keys' || c === 'guitar' || c === 'bass' || c === 'drums') ?? (picked.includes('voice') ? 'voice' : 'none');
   return quickIntake(courseOf(first).goal, inst, music);
 }
@@ -166,12 +167,12 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
   const tx = TX[lang];
   const [step, setStep] = useState<Step>('welcome');
   const [picked, setPicked] = useState<CourseId[]>([]);
-  const first = picked[0] ?? 'ear';
+  const first = picked[0] ?? defaultCourse();
   const togglePick = (c: CourseId) => setPicked((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   // The first course starts with its welcome card; its "Where are you?" refines the level (0 until then).
   const finish = () => {
     const r = onboardingIntake(picked, 0);
-    onDone({ ...r, patch: { ...r.patch, courses: picked.length ? picked : ['ear'], activeCourse: first, courseStart: { [first]: { fromOnboarding: true } } } });
+    onDone({ ...r, patch: { ...r.patch, courses: picked.length ? picked : [defaultCourse()], activeCourse: first, courseStart: { [first]: { fromOnboarding: true } } } });
   };
   const [taste, setTaste] = useState<{ hi: 0 | 1; heard: boolean; said: 'right' | 'wrong' | null }>(() => ({ hi: Math.random() < 0.5 ? 0 : 1, heard: false, said: null }));
   const i = ORDER.indexOf(step);
@@ -224,13 +225,13 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
         <section className="ob-welcome">
           <div className="ob-brand">
             <SplashLogo size={44} />
-            <span className="ob-word">{lang === 'he' ? 'החוש השביעי' : 'The 7th Sense'}</span>
+            <span className="ob-word">{wordmark(lang)}</span>
           </div>
           <div className="ob-hero">
             <Toni state="draw" size={200} />
           </div>
-          <h1>{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</h1>
-          <p>{lang === 'he' ? 'שמיעה, שירה ונגינה, עשר דקות ביום.' : 'Ear, voice and playing, ten minutes a day.'}</p>
+          <h1>{copy('ob.slogan', lang, { he: 'לשמוע. להבין. לבצע.', en: 'Hear. Understand. Perform.' })}</h1>
+          <p>{copy('ob.sub', lang, { he: 'שמיעה, שירה ונגינה, עשר דקות ביום.', en: 'Ear, voice and playing, ten minutes a day.' })}</p>
           <div className="ob-actions">
             <button className="btn primary ob-cta" onClick={next} data-ob="start">
               {tx.start}
@@ -280,7 +281,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
           <h1>{lang === 'he' ? 'מה בא לך ללמוד?' : 'What would you like to learn?'}</h1>
           <p className="field-hint">{lang === 'he' ? 'אפשר לבחור כמה. כל קורס הוא מסלול נפרד, ומחליפים ביניהם בלחיצה.' : 'Pick as many as you like. Each course is its own path; switch with one tap.'}</p>
           <div className="ob-course-grid" role="group">
-            {COURSES.filter((c) => c.id !== 'bass').map((c) => {
+            {visibleCourses().filter((c) => c.id !== 'bass').map((c) => {
               const on = picked.includes(c.id);
               return (
                 <button key={c.id} className={`ob-course ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => togglePick(c.id)} data-ob={`course-${c.id}`}>
@@ -292,7 +293,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
             })}
           </div>
           {/* 0.66 (owner): a course's need, shown once it is picked (drums: an e-kit by MIDI is recommended). */}
-          {COURSES.filter((c) => c.note && picked.includes(c.id)).map((c) => (
+          {visibleCourses().filter((c) => c.note && picked.includes(c.id)).map((c) => (
             <p key={c.id} className="kit-notice ob-course-note" data-course-note={c.id}>
               <b>{c.id === 'drums' ? KIT_NOTICE[lang] : c.note![lang]}</b>
             </p>

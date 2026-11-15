@@ -3,6 +3,7 @@
 
 import type { SungFrame } from '../engine/sing';
 import type { PitchCapture, SingCaptureResult, SingOptions } from '../game/adapters';
+import { notifyInput } from '../engine/inputCheck';
 import { DEFAULT_KIT, hatState, hatVoice, openness, voiceOf, VOICE_NOTE, type DrumVoice, type HatState, type KitProfile } from '../engine/drumKit';
 
 /**
@@ -118,6 +119,7 @@ export class MidiInput {
     const vel = isCC && raw === 64 && this.opts.pedalInvert ? 127 - vel0 : vel0;
     const cmd = status & 0xf0;
     if (cmd === 0x90 && vel > 0) {
+      notifyInput('midi', at);
       this.held.set(note, at);
       this.listeners.forEach((l) => l(note, true, at, vel));
     } else if (cmd === 0x80 || (cmd === 0x90 && vel === 0)) {
@@ -146,6 +148,7 @@ export class MidiInput {
         if (at - this.pedal.lastChick <= 40) return;
       }
       const voice = v0 ? hatVoice(v0, open) : null;
+      notifyInput('midi', at);
       const hit: DrumHitEvent = { note, voice, vel: v, at, open, hat: voice === 'hihat' || voice === 'hhOpen' ? (open === null ? (voice === 'hhOpen' ? 'open' : 'closed') : hatState(open)) : null };
       this.held.set(note, at);
       this.listeners.forEach((l) => l(note, true, at, v));

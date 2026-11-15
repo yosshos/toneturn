@@ -39,6 +39,8 @@ import { midi as midiInput } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { piano } from './services';
 import { TierChips } from './TierChips';
+import { InputCheck, InputWatchdog } from './InputCheck';
+import { voiceOf } from '../engine/drumKit';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 
 /** A tier sets the level of each song chip (its levels in turn), the tempo and the pitch lanes (GAMES_TIERS_PLAN). */
@@ -342,6 +344,8 @@ export function Highway({
   const padEls = useRef<(HTMLSpanElement | null)[]>([]);
   const song = useMemo(() => highwaySong(opts), [opts]);
   const [stage, setStage] = useState<Stage>('setup');
+  // Input check: the setup screen's strip (pitch by mic or MIDI, the kit by MIDI), the watchdog while the song runs.
+  const [arm, setArm] = useState<{ start: number; due: number } | null>(null);
   const [run, setRun] = useState<HighwayRun>(() => newRun(song));
   const [section, setSection] = useState(0);
   const [flash, setFlash] = useState<{ text: string; cls: string; n: number } | null>(null);
@@ -583,6 +587,7 @@ export function Highway({
     originRef.current = performance.now() + 120 + bt.responseAt * 1000 - offsetMs;
     playingRef.current = true;
     setStage('play');
+    setArm(kitMode || pitch ? { start: performance.now(), due: originRef.current + offsetMs } : null);
     const tl = { clicks: bt.clicks, wood: bt.kit.map((k) => k.t), drums: bt.kit.map((k) => k.d), responseAt: bt.responseAt, responseEnd: bt.responseEnd };
     const done = piano.playTimeline(tl, ac.signal, undefined, (perf) => {
       originRef.current = perf - offsetMs;
@@ -639,18 +644,26 @@ export function Highway({
             {/* kit lanes: the connection line below says what to do (one screen) */}
             {opts.mode !== 'kit' && <p className="field-hint">{opts.mode === 'tap' ? tx(T.tapHint) : useMidi ? tx(T.midiHint) : tx(T.pitchHint)}</p>}
             {opts.mode === 'tap' && !settings.tapLatencyMs && <p className="field-hint warn">{tx(T.calibrate)}</p>}
-            {opts.mode === 'kit' && (
-              <p className={`field-hint ${kitLink.state === 'ok' ? '' : kitLink.state === 'checking' ? '' : 'warn'}`} data-kit-link={kitLink.state}>
-                {kitLink.state === 'ok' ? (
-                  <>
-                    {tx(T.linkOk)} <bdi>{kitLink.devices.join(', ')}</bdi> · <span ref={lastHitRef}>{tx(T.linkHit)}</span>
-                  </>
-                ) : (
-                  tx(kitLink.state === 'checking' ? T.linkChecking : kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)
-                )}
+            {/* A connected kit: the input check strip is the connection line (device, a light on every hit, the pad hit). */}
+            {opts.mode === 'kit' && kitLink.state !== 'ok' && (
+              <p className={`field-hint ${kitLink.state === 'checking' ? '' : 'warn'}`} data-kit-link={kitLink.state}>
+                {tx(kitLink.state === 'checking' ? T.linkChecking : kitLink.state === 'unsupported' ? T.linkUnsupported : kitLink.state === 'denied' ? T.linkDenied : T.linkNone)}
               </p>
             )}
+            {opts.mode === 'kit' && kitLink.state === 'ok' && (
+              <InputCheck
+                key="kit"
+                mode="drum-midi"
+                lang={lang}
+                className="hw-kit-check"
+                noteName={(n) => {
+                  const lane = kitLaneOf(voiceOf(n, midiInput.opts.kit));
+                  return lane === null ? (lang === 'he' ? 'לא ממופה' : 'not mapped') : KIT_NAME[KIT_LANES[lane]][lang];
+                }}
+              />
+            )}
           </fieldset>
+          {opts.mode === 'pitch' && <InputCheck key={opts.mode} mode={useMidi ? 'midi' : 'mic'} lang={lang} />}
           {tierInfo ? (
             <TierChips lang={lang} info={tierInfo} value={opts.tier ?? startTier(tierInfo)} onChange={(t) => set({ tier: t })} game="highway" />
           ) : (
@@ -964,6 +977,7 @@ export function Highway({
         )}
       </header>
 
+      {stage === 'play' && arm && <InputWatchdog lang={lang} mode={opts.mode === 'kit' ? 'drum-midi' : useMidi ? 'midi' : 'mic'} arm={arm} />}
       {stage === 'paused' ? (
         <section className="paused-card">
           <h2>{tx(T.paused)}</h2>

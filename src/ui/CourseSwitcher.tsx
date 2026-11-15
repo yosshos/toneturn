@@ -2,7 +2,8 @@
 // path, the daily workout and Practice follow it. Adding a course switches to it (its placement test is offered on
 // its first visit to the path).
 import { useState } from 'react';
-import { COURSES, courseOf, type CourseId } from '../engine/courses';
+import { courseOf, type CourseId } from '../engine/courses';
+import { visibleCourses } from '../partner';
 import { Glyph } from './Glyph';
 
 type Lang = 'he' | 'en';
@@ -23,7 +24,7 @@ export function CourseChip({ active, lang, onOpen, variant = 'top' }: { active: 
 export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: CourseId[]; active: CourseId; lang: Lang; onPick: (c: CourseId) => void; onClose: () => void }) {
   const [adding, setAdding] = useState(false);
   const he = lang === 'he';
-  const others = COURSES.filter((c) => !mine.includes(c.id));
+  const others = visibleCourses().filter((c) => !mine.includes(c.id));
   const row = (id: CourseId, isNew = false) => {
     const c = courseOf(id);
     const on = id === active;

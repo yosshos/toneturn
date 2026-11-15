@@ -15,6 +15,7 @@ import { generateSong } from './drumSong';
 import { generateProg } from './drumProg';
 import { generateCount, generateForm, generateNotation, generateReadMore } from './drumTheory';
 import { generateMore } from './drumMore';
+import { drumFirstFamily, generateDrumFirst } from './drumFirst'; // AUDIT-6 Stage B: the drums' first steps
 
 const t = (en: string, he: string): T2 => ({ en, he });
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
@@ -906,6 +907,8 @@ export function generateDrums(spec: DrillSpec): Drill {
       return generateNotation(s);
     case 'd-form':
       return generateForm(s);
+    case 'd-first':
+      return generateDrumFirst(s);
     default:
       throw new Error(`Not a drum family: ${s.family}`);
   }
@@ -928,6 +931,8 @@ export function drumFamilies(): DrumFamilyDef[] {
   });
   const fam = (id: DrumFamilyId, en: string, he: string, levels: DrumLevelDef[]): DrumFamilyDef => ({ id, title: t(en, he), style: 'classical', genres: ['all'], instruments: ['drums'], levels });
   return [
+    // AUDIT-6 Stage B: the first steps (drumFirst.ts), ~700–880 on the path.
+    drumFirstFamily(),
     fam('d-strokes', 'Strokes & dynamics', 'מכות ודינמיקה', [
       L('d-strokes', 1, 'Even quarters, one hand at a time', 'רבעים שווים, יד אחת בכל פעם', 'quarters', 3, [60, 90], '1/4', true),
       L('d-strokes', 2, 'Even 8ths, one dynamic', 'שמיניות שוות בעוצמה אחת', 'eighths', 3, [60, 100], '1/8', true),

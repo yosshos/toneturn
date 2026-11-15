@@ -52,6 +52,8 @@ import './topicsReharmColor';
 // not Rush (App.tsx) was loaded; the game-only ones are marked `gameOnly` and stepCatalogue skips them.
 import './topicsAdvGames';
 import './topicsTopTiers';
+// AUDIT-6 Stage B: the Ear course's beginnings — rhythm echo, descending intervals early, root / 3rd / 5th, which note changed.
+import './topicsEarStart';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris
