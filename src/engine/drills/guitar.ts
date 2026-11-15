@@ -13,6 +13,7 @@ import { BASS_PROBES } from './bassProbes';
 import { drumFamilies } from './drums';
 import { widenFamilies } from './keys12';
 import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } from './guitarMeta';
+import { generateGuitarTop, guitarTopFamilies, topGrade } from './guitarTop';
 import { core2Levels, generateCore2 } from './guitarCore2';
 import { generateTech, techLevels } from './guitarTech'; // AUDIT-SCALES §4: guitar technique gaps
 import { genHarmGuitar, guitarHarmLevels, guitarSixFiveLevels, PART_D_KINDS } from './harmLadder'; // AUDIT-SCALES: the harmonization ladder on the neck
@@ -2362,6 +2363,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
   // Natural harmonics sit at fixed frets: one item for every key of its level (plan.levelDrills keeps it once).
   const s: DrillSpec = { ...spec, key: spec.family === 'g-lead' && spec.kind === 'harmonics' ? HARMONICS_KEY : mod(spec.key, 12) };
   const tu = tuningOf(s);
+  // STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
+  const top = generateGuitarTop(s, tu);
+  if (top) return top;
   // GUITAR_DEEPENING §4.1 (Batch C): the new core kinds live in guitarCore2.ts.
   const more = generateCore2(s, tu);
   if (more) return more;
@@ -2694,6 +2698,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // AUDIT-DEPTH-3: jazz in context and improvising under rule cards on the neck (the jazz add-on).
     guitarCtxFamily(LT, fam),
     guitarSoloFamily(LT, fam),
+    // STAGE C (AUDIT-6 GA-4): speed, fusion and outside, chord-melody arranging, solo jazz guitar, Harris lines at tempo.
+    ...guitarTopFamilies(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {
@@ -2739,7 +2745,7 @@ function applyGuitarMeta(f: GuitarFamilyDef): GuitarFamilyDef {
   const levels = [...f.levels, ...extra].map((lv): GuitarLevelDef => {
     const meta = GUITAR_META[lv.id];
     if (!meta) {
-      const grade = lv.grade ?? 5;
+      const grade = topGrade(lv.id, lv.grade ?? 5);
       const addOn = lv.addOn ?? famAddOn;
       return { ...lv, grade, exam: lv.exam ?? examOfGrade(grade), ...(addOn ? { addOn } : {}) };
     }
@@ -2750,7 +2756,8 @@ function applyGuitarMeta(f: GuitarFamilyDef): GuitarFamilyDef {
       return { ...x, ...(it.tempo !== undefined ? { tempo: it.tempo } : {}), ...(it.target !== undefined && it.target !== meta.tempo[1] ? { target: it.target } : {}) };
     });
     const addOn = meta.addOn ?? lv.addOn ?? famAddOn;
-    return { ...lv, specs, tempo: meta.tempo, sub: meta.sub, grade: meta.grade, exam: examOfGrade(meta.grade), ...(addOn ? { addOn } : {}), ...(meta.country ? { country: true } : {}) };
+    const grade = topGrade(lv.id, meta.grade);
+    return { ...lv, specs, tempo: meta.tempo, sub: meta.sub, grade, exam: examOfGrade(grade), ...(addOn ? { addOn } : {}), ...(meta.country ? { country: true } : {}) };
   });
   return { ...f, levels, ...(famAddOn ? { addOn: famAddOn } : {}) };
 }

@@ -166,6 +166,10 @@ const SHORT: Record<string, L2> = {
   'bh-moves': { en: 'Harris moves', he: 'המהלכים של האריס' },
   'bh-tesseract': { en: '16 around a dim', he: '16 סביב דימיניש' },
   'bh-line-ear': { en: 'Harris lines by ear', he: 'קווי האריס בשמיעה' },
+  // STAGE C (AUDIT-6): the advanced ear gaps.
+  'three-voice': { en: 'Lowest of three', he: 'התחתון מבין שלושה' },
+  'one-hearing': { en: 'One hearing', he: 'השמעה אחת' },
+  features: { en: 'Describe it', he: 'תארו את הקטע' },
   // HARMONY-REHARM
   'ct-degree': { en: 'One note', he: 'צליל אחד' },
   mediants: { en: 'Mediants', he: 'מדיאנטות' },

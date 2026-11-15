@@ -151,6 +151,8 @@ const G_HANDS: Rung[] = [
   r('g-picking-3', 7, { 'g-fretting': 4, 'g-picking': 4, 'g-scales': 4, 'g-arps': 2, 'g-legato': 2 }),
   r('g-scales-5', 2, { 'g-fretting': 5, 'g-picking': 5, 'g-scales': 6, 'g-arps': 4, 'g-legato': 3, 'g-harm': 2 }),
   r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5, 'g-harm': 5 }),
+  // STAGE C (AUDIT-6 GA-4): 3nps in 16ths at speed places the speed and fusion families above grade 8.
+  r('g-speed-1', 7, { 'g-fretting': 6, 'g-picking': 9, 'g-scales': 10, 'g-arps': 7, 'g-legato': 7, 'g-harm': 8, 'g-speed': 2, 'g-fusion': 1 }),
 ];
 const G_CHORDS: Rung[] = [
   // AUDIT-6 Stage B: the first chord change (g-first 5) before the open-chord check.
@@ -213,6 +215,8 @@ const G_JAZZ: Rung[] = [
   // AUDIT-DEPTH-3: a brother for the V on the neck, then improvising by the rules.
   r('g-ctx-1', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5, 'g-ctx': 2 }),
   r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4 }),
+  // STAGE C: Harris lines at bebop tempo places the diploma jazz families (lines at tempo, solo guitar, arranging).
+  r('g-hlfast-1', 0, { 'g-jazz': 12, 'g-harris': 10, 'g-theory': 5, 'g-keys': 12, 'g-bebop': 12, 'g-cmel': 6, 'g-tune': 8, 'g-ctx': 8, 'g-solo': 8, 'g-harrisline': 9, 'g-hlfast': 2, 'g-solojazz': 2, 'g-cmarr': 1 }),
 ];
 
 /**
@@ -314,6 +318,8 @@ const D_HANDS: Rung[] = [
   r('d-rolls-3', 0, { 'd-strokes': 4, 'd-rolls': 4, 'd-diddles': 2, 'd-time': 3 }),
   r('d-rolls-4', 0, { 'd-strokes': 5, 'd-rolls': 5, 'd-diddles': 3, 'd-time': 4 }),
   r('d-rolls-7', 0, { 'd-strokes': 6, 'd-rolls': 8, 'd-diddles': 5, 'd-time': 6 }),
+  // STAGE C (AUDIT-6 DA-10): the buzz roll places the PAS rudiments and the stickings at tempo.
+  r('d-pas-1', 0, { 'd-strokes': 8, 'd-rolls': 10, 'd-diddles': 8, 'd-time': 8, 'd-pas': 2, 'd-stick': 2 }),
 ];
 const D_GROOVES: Rung[] = [
   r('d-rock-1', 0, { 'd-rock': 2, 'd-feet': 1, 'd-time': 2 }),
@@ -321,6 +327,8 @@ const D_GROOVES: Rung[] = [
   r('d-rock-5', 0, { 'd-rock': 6, 'd-feet': 3, 'd-shuffle': 2, 'd-funk': 1 }),
   r('d-funk-2', 0, { 'd-rock': 7, 'd-feet': 4, 'd-shuffle': 3, 'd-funk': 3 }),
   r('d-funk-4', 0, { 'd-rock': 8, 'd-feet': 5, 'd-shuffle': 4, 'd-funk': 5, 'd-jazz': 1 }),
+  // STAGE C: a linear groove places linear funk, the syncopation interpretations and the odd meters at tempo.
+  r('d-linear-1', 0, { 'd-rock': 9, 'd-feet': 6, 'd-shuffle': 6, 'd-funk': 8, 'd-jazz': 4, 'd-linear': 2, 'd-synco': 2, 'd-oddtempo': 1 }),
 ];
 const D_FILLS: Rung[] = [
   r('d-fills-1', 0, { 'd-fills': 2 }),
@@ -342,6 +350,8 @@ const D_INDEP: Rung[] = [
   r('d-indep-2', 0, { 'd-indep': 3 }),
   r('d-indep-3', 0, { 'd-indep': 4 }),
   r('d-indep-5', 0, { 'd-indep': 6 }),
+  // STAGE C: the jazz snare ladder places the independence ladders, brushes and trading.
+  r('d-chapin-1', 0, { 'd-indep': 8, 'd-chapin': 2, 'd-brush': 1, 'd-trade': 1 }),
 ];
 const D_EAR: Rung[] = [
   r('d-ear-1', 0, { 'd-ear': 2 }),

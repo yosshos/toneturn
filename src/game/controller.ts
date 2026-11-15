@@ -453,6 +453,8 @@ export class LessonController {
     // (rhythm tapping: stimulus []) replay their reference rhythm instead — Repeat is never a dead button (0.68.1).
     if (this.view.awaitNext) return this.sidePlay(this.repeatStimulus(currentQuestion(this.s)));
     if (isResolved(this.s.records[this.s.index])) return;
+    // STAGE C single-hearing playback: the phrase is heard once; Repeat waits for the answer.
+    if (currentQuestion(this.s).once) return;
     this.s = noteReplay(this.s);
     this.restart((sig) => this.runAll(sig, { replayOnly: true }));
   }
@@ -1225,6 +1227,7 @@ export class LessonController {
         this.patch({ heard: parsed.heard || res.alternatives[0] || '', interim: '' });
         this.emit('heard', { alternatives: res.alternatives, parsed });
         if (parsed.kind === 'command') {
+          if (parsed.command === 'repeat' && q.once) continue;
           if (parsed.command === 'repeat') {
             this.s = noteReplay(this.s);
             this.setSession(newTurn(this.s, 'playback'), { feedback: null });

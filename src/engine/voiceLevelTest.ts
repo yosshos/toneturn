@@ -10,7 +10,8 @@ import { VOICE_FAMILIES, vocalLevelByRef } from './voiceFamilies';
 type Bi = { en: string; he: string };
 
 /** The sections, in test order: in tune, in time, a song, the ear, reading, scales, agility. */
-export const VOICE_TEST_FAMILIES = ['v-pitch', 'v-time', 'v-songs', 'v-ear', 'v-sight', 'v-scale', 'v-agility'] as const;
+// STAGE C (AUDIT-6 §3.5): the altered arpeggios and the advanced runs test the top of the ladder.
+export const VOICE_TEST_FAMILIES = ['v-pitch', 'v-time', 'v-songs', 'v-ear', 'v-sight', 'v-scale', 'v-agility', 'v-arp2', 'v-runs'] as const;
 
 /** Kinds a single take can't measure here (several takes, free shapes, not measured, or set up by hand). */
 const SKIP: VocalKind[] = ['range', 'vibrato-register', 'scat'];

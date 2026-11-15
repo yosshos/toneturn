@@ -279,7 +279,7 @@ describe('guitar drills: analysis', () => {
       else expect(m.accuracy, d.itemId).toBe(1);
       if (d.goal.chordTonesOnBeats && !d.goal.bass?.rules) expect(m.chordToneOnBeats, d.itemId).toBe(1); // rule-judged lines (A5) supersede it
     }
-  }, 180_000); // AUDIT-6 Stage B: + the guitar and bass first steps, riffs in 12 keys
+  }, 400_000); // AUDIT-6 Stage B + STAGE C families
 
   it('a strum heard as separate string onsets (and noise without pitch) counts as one clean chord', () => {
     const d = generate({ family: 'g-chords', kind: 'one-minute', key: 0, hands: 'R', option: 0, perBeat: 0.25 });

@@ -315,9 +315,9 @@ function gtake(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
 const chordsOf = (d: Drill) => [...new Set(d.notes.map((n) => n.chordId).filter((x) => x !== undefined))].map((id) => d.notes.filter((n) => n.chordId === id));
 
 describe('g-theory: theory you play on guitar', () => {
-  it('7 levels at grades 7–9, the jazz add-on, a lesson on its first step, its own symbol', () => {
+  it('7 levels at grades 7–11 (Giant Steps at the diploma grade, STAGE C), the jazz add-on, a lesson on its first step, its own symbol', () => {
     expect(GT().levels).toHaveLength(7);
-    for (const lv of GT().levels) expect(lv.grade! >= 7 && lv.grade! <= 9, lv.id).toBe(true);
+    for (const lv of GT().levels) expect(lv.grade! >= 7 && lv.grade! <= 11, lv.id).toBe(true);
     expect(MINI_LESSONS[UNIT_LESSON['tech:g-theory']]).toBeDefined();
     expect(GLYPHS[FAMILY_GLYPH['g-theory']]).toBeDefined();
     expect(stepCatalogue().find((s) => s.id === 'tech:g-theory-1')!.difficulty).toBeGreaterThan(1400);

@@ -58,6 +58,10 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-lh': 'lhshell', 'k-tex': 'mango', 'k-comp': 'compvoc', 'k-impro': 'phrasing',
   // AUDIT-6 Stage B: the first steps on guitar, bass and drums, graded sight-reading, riffs by grade.
   'g-first': 'gfirst', 'b-first': 'bfirst', 'd-first': 'dfirst', 'k-read': 'kread', 'g-riff': 'griff',
+  // STAGE C (AUDIT-6): the advanced endings — guitar above grade 8, drums past 1400, the voice's top ladder.
+  'g-speed': 'gspeed', 'g-fusion': 'gfusion', 'g-cmarr': 'gcmarr', 'g-solojazz': 'gsolojazz', 'g-hlfast': 'ghlfast',
+  'd-pas': 'dpas', 'd-stick': 'dstick', 'd-synco': 'dsynco', 'd-chapin': 'dchapin', 'd-linear': 'dlinear', 'd-brush': 'dbrush', 'd-oddtempo': 'doddtempo', 'd-trade': 'dtrade',
+  'v-arp2': 'varp2', 'v-leaps': 'vleaps', 'v-runs': 'vruns', 'v-quick': 'vquick', 'v-part': 'vpart', 'v-style': 'vstyle', 'v-scat2': 'vscat2', 'v-top': 'vtop',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

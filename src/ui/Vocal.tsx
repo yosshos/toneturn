@@ -59,6 +59,7 @@ import { piano, SIMULATED, store } from './services';
 import { TIMED_KINDS } from '../engine/vocal';
 import { familyOfRef, isNewLevel, NEW_LEVEL_NAMES, VOICE_FAMILIES, vocalLevelByRef, voiceItemTags, voiceLevelUnlocked } from '../engine/voiceFamilies';
 import { earInstruction, earReference, earReplayNote, earShown, sessionEarItem } from '../engine/voiceEar';
+import { partEvents, sessionKeyItem } from '../engine/voiceTop';
 import { gradeMore, moreReference, simulateMore, MORE_KINDS } from '../engine/vocalMore';
 import { MORE_INSTR, METRIC_NAMES, RUN_INSTR, TONE_NAMES, VT } from '../content/voiceCourseText';
 import { restTakes, TimedSession, type VoiceTestMode } from './VoiceTimed';
@@ -375,7 +376,8 @@ type View =
 const openLevel = (level: number, range: VoiceRange): View => {
   // Echo and audiation items get a fresh melody every session (no memorizable items); ids stay.
   const seed = Date.now() >>> 0;
-  const items = levelDef(level).items.map((it) => sessionEarItem(it, seed)).filter((it) => itemFits(it, range));
+  // STAGE C: key-relative items take this session's key (all 12 in turn).
+  const items = levelDef(level).items.map((it, k) => sessionKeyItem(sessionEarItem(it, seed), seed, k)).filter((it) => itemFits(it, range));
   return isTimedLevel(level) ? { kind: 'timed', level, items: levelDef(level).items } : { kind: 'session', level, items };
 };
 
@@ -868,7 +870,7 @@ function VocalSession({
     const melodic = ['melody', 'leap', 'rhythmic', 'staccato', 'glide', 'harmony-line', 'sight', 'breath-phrase', 'breath-plan', 'drift-phrase', 'siren', 'terraced-scale', 'terraced', 'accents', 'arc'].includes(item.kind) || (item.kind === 'inflect' && item.more?.shape === 'ghost');
     // The app keeps sounding while the player sings (harmony, a held reference): without headphones the
     // microphone hears it too — a bleed gate learns its level first and drops it (spec P.0).
-    const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during';
+    const sounding = item.kind === 'harmony-hold' || item.kind === 'harmony-line' || item.reference === 'during' || !!item.more?.parts;
     const needGate = sounding && !headphones && !SIMULATED;
     const buf: SungFrame[] = [];
     let onset: number | null = null;
@@ -892,12 +894,13 @@ function VocalSession({
     };
 
     if (needGate) {
-      const gate = new BleedGate(item.kind === 'harmony-line' || item.kind === 'harmony-hold' ? acc : [shownTargets[0]]);
+      const partNotes = item.more?.parts ? partEvents(item, targets, 0, 60 / (item.bpm ?? 72)) : [];
+      const gate = new BleedGate(item.kind === 'harmony-line' || item.kind === 'harmony-hold' ? acc : partNotes.length ? [...new Set(partNotes.map((e) => e.midi))] : [shownTargets[0]]);
       let stage: 'cal' | 'pre' | 'sing' = 'cal';
       let lastT = 0;
       let tStart = 0;
       const beat = 60 / (item.bpm ?? 72);
-      const extra = CALIBRATE_SEC + (item.kind === 'harmony-line' ? 4 * beat : 0) + 1;
+      const extra = CALIBRATE_SEC + (item.kind === 'harmony-line' || partNotes.length ? 4 * beat : 0) + 1;
       const capture = new BrowserPitchCapture().sing({
         signal: c.signal,
         maxMs: (item.seconds + 4 + extra) * 1000,
@@ -917,9 +920,18 @@ function VocalSession({
       if (item.pre) await piano.play(item.pre.map((x) => ({ midi: shownTargets[0] + x, start: 0, duration: 1.2, velocity: 0.6 })), 1.4, c.signal).catch(() => {});
       if (item.kind === 'harmony-hold') piano.startDrone(acc, 0.12);
       else if (item.kind === 'harmony-line') piano.startDrone(item.chords ? acc.slice(0, 1) : [acc[0]], 0.12);
-      else piano.startDrone([shownTargets[0]], 0.12);
+      else piano.startDrone(partNotes.length ? [partNotes[0].midi] : [shownTargets[0]], 0.12);
       await new Promise((r) => setTimeout(r, CALIBRATE_SEC * 1000 + 150));
       gate.finishCalibration();
+      if (partNotes.length) {
+        // One part from the score: a bar of count-in, then the other parts play while the player reads and sings.
+        piano.stopDrone();
+        stage = 'pre';
+        setPhase('listening');
+        const clicks = [0, 1, 2, 3].map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.8, perc: (k === 0 ? 'accent' : 'click') as 'accent' | 'click' }));
+        await piano.play(clicks, 4 * beat, c.signal).catch(() => {});
+        void piano.play(partNotes, Math.max(...partNotes.map((e) => e.start + e.duration)) + 0.3, c.signal).catch(() => {});
+      }
       if (item.kind === 'harmony-line') {
         piano.stopDrone();
         stage = 'pre';
@@ -974,7 +986,10 @@ function VocalSession({
       if (pulse) {
         const pc = pulseClicks(pulse, clickOn);
         setPulseClock({ pulse, zero: captureT0.current });
-        void piano.play(pc.events, pc.length, clickCtl.signal).catch(() => {});
+        // STAGE C one part from the score: the other parts sound in time with the take (with headphones; without, the
+        // bleed-gated take below plays them).
+        const parts = item.more?.parts ? partEvents(item, targets, lead, pulse.beat) : [];
+        void piano.play([...pc.events, ...parts], Math.max(pc.length, ...parts.map((e) => e.start + e.duration + 0.2)), clickCtl.signal).catch(() => {});
       }
       const keepShifted = (f: SungFrame) => {
         if (f.t >= lead - 0.4) keep(lead ? { ...f, t: f.t - lead } : f);
@@ -1221,7 +1236,11 @@ function VocalSession({
           : item.bh
             ? barryInstruction(item, shownTargets[0], t, settings)
           : isSight(item)
-            ? t.sightInstr
+            ? item.more?.parts
+              ? settings.uiLang === 'he'
+                ? 'שירו את הקול שלכם; השני מתנגן.'
+                : 'Sing your part; the other one plays.'
+              : t.sightInstr
           : item.run
             ? fill(RUN_INSTR[item.run.shape][settings.uiLang === 'en' ? 'en' : 'he'], { pct: item.run.pct })
           : item.kind === 'ornament'

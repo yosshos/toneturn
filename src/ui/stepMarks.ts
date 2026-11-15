@@ -190,6 +190,10 @@ export const TOPIC_MARK: Record<string, string> = {
 
 /** Topics that keep a drawn symbol (GLYPHS) instead of a mark. */
 export const TOPIC_DRAWN: Record<string, string> = {
+  // STAGE C (AUDIT-6): the lowest of three voices, one hearing, describe the piece.
+  'three-voice': 'threevoice',
+  'one-hearing': 'onehear',
+  features: 'features',
   'basics-contour': 'contour',
   'basics-beat': 'pulse',
   octave: 'octave',
