@@ -20,6 +20,13 @@
 /** RSL / ABRSM / Trinity grade (0 = Debut / Initial … 8; 9+ = beyond grade 8) → path rating: the guitar formula. */
 export const G = (grade: number): number => Math.round(700 + 90 * grade);
 
+/**
+ * STAGE C (AUDIT-6 GA-4): a guitar grade's base rating — G(grade) to grade 8, then the diploma grades a hundred apart
+ * from 1590 so their top rank (+ 8 · 10, path.ts guitarPathDifficulty) stays under PATH_CAP: grade 9 ≈ 1590–1670,
+ * 10 ≈ 1690–1770, 11 ≈ 1790–1870. A curated LEVEL_PLACEMENT entry still overrides a guitar level's grade.
+ */
+export const guitarGradeBase = (grade: number): number => (grade <= 8 ? G(grade) : 1590 + 100 * (Math.min(11, grade) - 9));
+
 import { DRUM_TOP_PLACEMENT, VOICE_TOP_PLACEMENT } from './stageCPlacement';
 
 // ---------------------------------------------------------------- keys (AUDIT-6-LEVELS-INSTRUMENTS §1.5 pri 1)
@@ -145,7 +152,7 @@ export const VOICE_PLACEMENT: Record<string, number> = {
 
 /** Every curated table, merged (a later one wins). Stage B / C: add your exported table here. */
 // STAGE C (AUDIT-6 DA-10, voice §3.5): the drums past 1400 and the voice's top ladder, beyond grade 8 (G(8) + …).
-// The guitar's diploma grades 9–11 live in path.ts guitarGradeBase.
+// The guitar's diploma grades 9–11: guitarGradeBase above.
 const PLACEMENT_TABLES: Record<string, number>[] = [KEYS_PLACEMENT, BASS_PLACEMENT, DRUM_PLACEMENT, VOICE_PLACEMENT, DRUM_TOP_PLACEMENT, VOICE_TOP_PLACEMENT];
 export const LEVEL_PLACEMENT: Record<string, number> = Object.assign({}, ...PLACEMENT_TABLES);
 

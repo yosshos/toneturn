@@ -19,7 +19,7 @@ import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES, vocalLevelByRef } from './voiceFamilies';
-import { DRUM_STAGGER, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from './levelPlacement';
+import { DRUM_STAGGER, guitarGradeBase, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from './levelPlacement';
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
@@ -553,11 +553,8 @@ Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
  * are unchanged (saved progress keys stay valid); other instruments' difficulties rise with the level, so nothing moves.
  */
 export const ladderOrder = (a: PathStep, b: PathStep): number => a.difficulty - b.difficulty || a.ladder!.level - b.ladder!.level;
-/**
- * A guitar grade's base rating: 700 + 90·grade to grade 8 (Debut … RSL 8), then the diploma grades (STAGE C, AUDIT-6
- * GA-4) a hundred apart from 1590: grade 9 ≈ 1590–1670, 10 ≈ 1690–1770, 11 ≈ 1790–1870 — all under PATH_CAP.
- */
-export const guitarGradeBase = (grade: number): number => (grade <= 8 ? 700 + 90 * grade : 1590 + 100 * (Math.min(11, grade) - 9));
+/** A guitar grade's base rating (levelPlacement.guitarGradeBase: G(grade) to 8, the diploma grades 9–11 above it). */
+export { guitarGradeBase };
 /** A guitar level's path difficulty from its grade (0 = Debut … 8, 9–11 = diploma): the grade's base + 8·rank (rank ≤ 10, so a grade always outranks the rank). */
 export const guitarPathDifficulty = (family: string, grade: number): number => guitarGradeBase(grade) + 8 * (GUITAR_RANK[family] ?? 5);
 /** Every level of every technique family and vocal program as a path step (0.61, owner: technique inside the course path). */

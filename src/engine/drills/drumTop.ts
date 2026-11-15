@@ -100,7 +100,7 @@ const ROWS: Record<DrumTopFamily, Row[]> = {
   'd-trade': [
     ['blues4', 'Trading 4s on the blues', 'חילופי 4 על הבלוז', [120, 180], '1/8T', false],
     ['aaba8', 'Trading 8s on AABA', 'חילופי 8 על AABA', [120, 180], '1/8T', false],
-    ['up4', 'Trading 4s up-tempo', 'חילופי 4 בטמפו מהיר', [200, 240], '1/8T', false],
+    ['up4', 'Trading 4s up-tempo', 'חילופי 4 בטמפו מהיר', [160, 200], '1/8T', false],
     ['blues', 'A solo chorus over the blues, the band playing', 'סבב סולו על הבלוז, הלהקה מנגנת', [110, 170], '1/8T', false],
     ['aaba', 'A solo chorus over AABA with set-up hits', 'סבב סולו על AABA עם מכות הכנה', [120, 180], '1/8T', false],
   ],
@@ -699,7 +699,7 @@ const AABA = [...AABA_A, ...AABA_A, ...AABA_B, ...AABA_A];
  */
 function formTake(s: DrillSpec, plan: [number, 'time' | 'solo'][], chart: string[], o: { bpm: number; fast?: boolean; bandPlays?: boolean; hitsAt?: number[]; title: T2; perBar?: number }): Drill {
   const op = s.option ?? 0;
-  const time: Lanes = op === 1 ? { r: RIDE, p: FOOT24, k: 'g..g..g..g..' } : op === 2 ? { r: RIDE, p: FOOT24, s: '.....x.....x' } : { r: RIDE, p: FOOT24 };
+  const time: Lanes = op === 1 ? { r: RIDE, p: FOOT24, k: 'g..g..g..g..' } : op === 2 ? { r: RIDE, p: FOOT24, s: '.....x.....x', k: 'x.....x.....' } : { r: RIDE, p: FOOT24 };
   const hits: DH[] = [];
   const zones: [number, number][] = [];
   const rests: [number, number][] = [];
@@ -757,7 +757,7 @@ function genTrade(s: DrillSpec, lv: number, op: number): Drill {
     case 2:
       return formTake(s, [[8, 'time'], [8, 'solo'], [8, 'time'], [8, 'solo']], AABA, { bpm: 120, title: ttl('Trading 8s on AABA', 'חילופי 8 על AABA') });
     case 3:
-      return formTake(s, [[4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo']], AABA, { bpm: 200, fast: true, title: ttl('Trading 4s up-tempo on AABA', 'חילופי 4 בטמפו מהיר על AABA'), perBar: 4 });
+      return formTake(s, [[4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo'], [4, 'time'], [4, 'solo']], AABA, { bpm: 160, fast: true, title: ttl('Trading 4s up-tempo on AABA', 'חילופי 4 בטמפו מהיר על AABA'), perBar: 4 });
     case 4:
       // A chorus of time, then a chorus of solo over the blues with the band comping: land each 4-bar phrase.
       return formTake(s, [[12, 'time'], [4, 'solo'], [4, 'solo'], [4, 'solo'], [12, 'time']], [...BLUES, ...BLUES, ...BLUES], { bpm: 110, bandPlays: true, title: ttl('A solo chorus over the blues, the band playing', 'סבב סולו על הבלוז, הלהקה מנגנת') });
