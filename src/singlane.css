@@ -794,3 +794,91 @@
 .phrase-strip .ps.weak {
   border-style: dashed;
 }
+
+/* ---------------------------------------------------------------- the vibrato chip */
+.sm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sm-row .sustain-bars {
+  flex: 1;
+  min-width: 0;
+}
+.sm-fill {
+  flex: 1;
+}
+.vib-chip {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  width: 96px;
+  padding: 2px 4px 1px;
+  border: 2.5px solid var(--outline);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  transition: background-color 0.15s ease-out;
+}
+.vib-chip svg {
+  display: block;
+}
+.vib-chip small {
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.vib-chip .vc-note {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.vib-chip .hi {
+  color: var(--tangerine);
+}
+.vib-chip .lo {
+  color: var(--purple);
+}
+:root[data-theme='dark'] .vib-chip .lo {
+  color: var(--lilac);
+}
+.vc-wave {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.vc-ghost {
+  fill: none;
+  stroke: var(--purple);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+  opacity: 0.7;
+}
+.vib-chip.in {
+  background: var(--teal);
+}
+.vib-chip.in small,
+.vib-chip.in .vc-wave {
+  color: var(--ink-c, #1e1033);
+  stroke: var(--ink-c, #1e1033);
+}
+.vib-chip.unsteady .vc-wave {
+  stroke-dasharray: 5 2;
+}
+/* the cue changed: the outline flashes lemon for 300 ms (now) */
+.vib-chip.flash {
+  animation: vc-flash 0.3s steps(1, end);
+}
+@keyframes vc-flash {
+  0% {
+    border-color: var(--lemon);
+    box-shadow: 0 0 0 2px var(--outline);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vib-chip.flash {
+    animation: none;
+  }
+}

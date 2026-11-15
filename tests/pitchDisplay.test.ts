@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DisplaySmoother, NoteNamer, octaveFold, smoothTrack, zoneState, ZONE_LOOK, chipCents } from '../src/engine/pitchDisplay';
 import { centsTrack, synthHold, synthMelody } from '../src/engine/vocal';
 import { midiToHz } from '../src/engine/pitch';
-import { bestStretch, centreLine, liveVibrato, moneyNotes, noteDetail, sliceSteadiness, steadyLevel, zoneTolerance } from '../src/engine/vocalLive';
+import { bestStretch, centreLine, liveVibrato, moneyNotes, noteDetail, readCents, sliceSteadiness, steadyLevel, vibratoOff, vibratoWave, zoneTolerance } from '../src/engine/vocalLive';
 import type { SungFrame } from '../src/engine/sing';
 import { VoiceCheckState, levelOf } from '../src/engine/voiceCheck';
 
@@ -195,5 +195,38 @@ describe('melody review helpers', () => {
     expect(d.wobble).not.toBeNull();
     expect(d.wobble!).toBeLessThanOrEqual(12);
     expect(noteDetail({ target: 62, cents: null, settleMs: null, overshoot: 0, start: null }, tr, 1, null).wobble).toBeNull();
+  });
+});
+
+describe('vibrato chip', () => {
+  it('draws rate as cycles per box and width as height (±50 ¢ fills it)', () => {
+    const pts = (d: string) => d.slice(1).split('L').map((q) => q.split(' ').map(Number));
+    const ys = (d: string) => pts(d).map((p) => p[1]);
+    const crossings = (d: string) => {
+      const sg = ys(d).map((v) => Math.sign(Math.round((v - 13) * 10))).filter((v) => v !== 0);
+      let n = 0;
+      for (let k = 1; k < sg.length; k++) if (sg[k] !== sg[k - 1]) n++;
+      return n + 1;
+    };
+    const w6 = vibratoWave(6, 40, 84, 26, false, 240);
+    expect(Math.round(crossings(w6) / 2)).toBe(6);
+    const amp = (d: string) => (Math.max(...ys(d)) - Math.min(...ys(d))) / 2;
+    expect(amp(vibratoWave(6, 50, 84, 26))).toBeCloseTo(11, 0);
+    expect(amp(vibratoWave(6, 25, 84, 26))).toBeCloseTo(5.5, 0);
+    expect(amp(vibratoWave(6, 200, 84, 26))).toBeCloseTo(11, 0);
+    expect(ys(vibratoWave(5, 40, 84, 26, true)).length).toBe(49);
+  });
+  it('flags the parameter outside the goal', () => {
+    const g = { rate: [4.5, 7] as [number, number], extent: [20, 50] as [number, number] };
+    expect(vibratoOff({ state: 'vibrato', rate: 5.6, extent: 30 }, g)).toEqual({ rate: 0, extent: 0 });
+    expect(vibratoOff({ state: 'vibrato', rate: 7.6, extent: 15 }, g)).toEqual({ rate: 1, extent: -1 });
+  });
+  it('the needle reads the vibrato centre, not the wave', () => {
+    const tr = centsTrack(synthHold(62, { seconds: 2.5, cents: 8, vibRate: 5.6, vibExtent: 45 }), 62);
+    const last = tr[tr.length - 1].c;
+    const c = readCents(tr, last)!;
+    expect(Math.abs(c - 8)).toBeLessThan(10);
+    const straight = centsTrack(synthHold(62, { seconds: 2, cents: 12 }), 62);
+    expect(readCents(straight, 12)).toBe(12);
   });
 });

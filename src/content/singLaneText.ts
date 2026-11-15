@@ -23,4 +23,6 @@ export const SING_TX = {
   early: { en: 'early', he: 'מוקדם' },
   late: { en: 'late', he: 'מאוחר' },
   octave: { en: 'wrong octave', he: 'אוקטבה אחרת' },
+  even: { en: 'even cycles', he: 'גלים אחידים' },
+  wanders: { en: 'rate wanders', he: 'קצב משתנה' },
 } satisfies Record<string, T>;

@@ -5,7 +5,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { chipCents, octaveFold, zoneState, type ZoneState } from '../engine/pitchDisplay';
-import { bestStretch, centreLine, sliceSteadiness, type NoteDetail } from '../engine/vocalLive';
+import { bestStretch, centreLine, liveVibrato, readCents, sliceSteadiness, vibratoOff, vibratoWave, type LiveVibrato, type NoteDetail, type VibratoGoal } from '../engine/vocalLive';
 import type { MelodyNote } from '../engine/vocal';
 import type { Settings } from '../storage/progress';
 import { noteLabel } from './Vocal';
@@ -501,7 +501,8 @@ export function SingReadout({ feed, targets, tol, settings, live, lang }: { feed
   const fresh = p && feed.now() - p.t < 0.25;
   const tg = targetAt(targets, feed.now(), p?.m ?? null);
   const sung = live ? feed.shown : null;
-  const cents = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  const raw = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  const cents = tg && raw !== null ? readCents(feed.track(tg.midi, feed.now() - 1.2), raw) : raw;
   const st = zoneState(cents, tol);
   const sameNote = sung !== null && tg && Math.round(tg.midi) === sung;
   return (
@@ -585,21 +586,25 @@ export function SustainBars({ levels, cur, seconds, sung, best, lang }: { levels
         ))}
       </span>
       <small className="sb-label" dir="ltr">
-        {best !== undefined && best > 0 ? `${SING_TX.best[lang]} ${best.toFixed(1)} s · ` : ''}
-        {Math.min(sung, seconds).toFixed(1)} / {seconds} s
+        {/* review: the longest steady stretch; live: time so far */}
+        {best !== undefined ? `${SING_TX.best[lang]} ${best.toFixed(1)} s` : `${Math.min(sung, seconds).toFixed(1)} / ${seconds} s`}
       </small>
     </div>
   );
 }
 
 /** The live meter row: the zone meter (and, for holds, the steadiness bars) sampled at 10 Hz. */
-export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lang }: { feed: SingFeed; targets: LaneTarget[]; tol: number; seconds: number; live: boolean; bars: boolean; meter: boolean; lang: 'he' | 'en' }) {
-  useTick(10, live);
+export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lang, vib, cue, frozenVib }: { feed: SingFeed; targets: LaneTarget[]; tol: number; seconds: number; live: boolean; bars: boolean; meter: boolean; lang: 'he' | 'en'; vib?: VibratoGoal | false | null; cue?: string | null; frozenVib?: (LiveVibrato & { note?: string }) | null }) {
+  const tick = useTick(10, live);
   const p = live ? feed.last() : null;
   const now = feed.now();
   const fresh = p && now - p.t < 0.25;
   const tg = targetAt(targets, now, p?.m ?? null);
-  const cents = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  const raw = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
+  const cents = tg && raw !== null ? readCents(feed.track(tg.midi, now - 1.2), raw) : raw;
+  // The vibrato chip updates at 4 Hz (every third tick of the 10 Hz meters).
+  const vibRef = useRef<LiveVibrato>({ state: 'none', rate: 0, extent: 0 });
+  if (vib !== false && vib !== undefined && live && tg && tick % 3 === 0) vibRef.current = liveVibrato(feed.track(tg.midi, now - 1.2), 0.9);
   let barsEl: ReactNode = null;
   if (bars && tg) {
     const slice = Math.max(0.25, seconds / 40);
@@ -610,11 +615,59 @@ export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lan
     const cur = live && on !== null ? Math.min(n - 1, Math.floor(sung / slice)) : -1;
     barsEl = <SustainBars levels={levels} cur={cur} seconds={seconds} sung={Math.max(0, sung)} best={live ? undefined : bestStretch(levels, slice)} lang={lang} />;
   }
+  const chip = vib === false || vib === undefined ? null : <VibratoChip v={live ? vibRef.current : frozenVib ?? { state: 'none', rate: 0, extent: 0 }} goal={vib} cue={cue ?? null} lang={lang} note={live ? undefined : frozenVib?.note} />;
   return (
     <div className="sing-meters">
       {meter && <ZoneMeter cents={cents} tol={tol} />}
-      {barsEl}
+      {chip ? (
+        <div className="sm-row">
+          {barsEl ?? <span className="sm-fill" />}
+          {chip}
+        </div>
+      ) : (
+        barsEl
+      )}
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ the vibrato chip (§4.6)
+
+/** A 1 s box drawing the measured vibrato (cycles = rate, height = width), the goal as a dashed ghost behind it. */
+export function VibratoChip({ v, goal, cue, lang, note }: { v: LiveVibrato; goal: VibratoGoal | null; cue: string | null; lang: 'he' | 'en'; note?: string }) {
+  const W = 84;
+  const H = 26;
+  const ghost = goal ? vibratoWave((goal.rate[0] + goal.rate[1]) / 2, (goal.extent[0] + goal.extent[1]) / 2, W, H) : null;
+  const on = v.state === 'vibrato' || v.state === 'unsteady';
+  const off = on && goal ? vibratoOff(v, goal) : null;
+  const inBand = !!off && off.rate === 0 && off.extent === 0;
+  const wave = on ? vibratoWave(v.rate, v.extent, W, H, v.state === 'unsteady') : `M0 ${H / 2}H${W}`;
+  const mk = (x: -1 | 0 | 1) => (x > 0 ? '▲' : x < 0 ? '▼' : '');
+  return (
+    <span key={cue ?? ''} className={`vib-chip ${v.state}${inBand ? ' in' : ''}${cue ? ' flash' : ''}`} aria-hidden="true" data-vib={v.state}>
+      <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H}>
+        {ghost && <path d={ghost} className="vc-ghost" />}
+        <path d={wave} className="vc-wave" />
+      </svg>
+      <small dir="ltr">
+        {on ? (
+          <>
+            <span className={off?.rate ? (off.rate > 0 ? 'hi' : 'lo') : ''}>
+              {mk(off?.rate ?? 0)}
+              {v.rate.toFixed(1)} Hz
+            </span>{' '}
+            <span className={off?.extent ? (off.extent > 0 ? 'hi' : 'lo') : ''}>
+              {mk(off?.extent ?? 0)}±{v.extent}¢
+            </span>
+          </>
+        ) : v.state === 'straight' ? (
+          SING_TX.straight[lang]
+        ) : (
+          '–'
+        )}
+      </small>
+      {note && <small className="vc-note">{note}</small>}
+    </span>
   );
 }
 

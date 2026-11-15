@@ -23,6 +23,8 @@ import { displayNote, hzToMidi, type PitchClass } from '../engine/pitch';
 import type { SungFrame } from '../engine/sing';
 import {
   DEFAULT_RANGE,
+  EXTENT_BAND,
+  WIDTH_BAND,
   gradeTake,
   itemFits,
   itemTargets,
@@ -67,9 +69,9 @@ import { VoiceLevelTest } from './VoiceLevelTest';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
-import { NoteDetailRow, SingLane, SingMeters, SingReadout } from './SingLane';
+import { ltrLabel, NoteDetailRow, SingLane, SingMeters, SingReadout } from './SingLane';
 import { SingFeed, type LaneTarget } from './singFeed';
-import { moneyNotes, noteDetail, zoneTolerance } from '../engine/vocalLive';
+import { moneyNotes, noteDetail, zoneTolerance, type VibratoGoal } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
 
@@ -1204,6 +1206,26 @@ function VocalSession({
   })();
   const shownIdx = hidden ? shownTargets.map((m, k) => (visible.includes(m) ? k : -1)).filter((k) => k >= 0) : null;
   const holdItem = HOLD_KINDS.includes(item.kind);
+  // The vibrato chip: holds, vibrato items and messa di voce (never staccato, fast melodies or songs).
+  const vibItem = item.kind.startsWith('vibrato') && item.kind !== 'vibrato-notes' || item.kind === 'messa' || item.kind === 'hold' || item.kind === 'straight';
+  const vibGoal: VibratoGoal | false | null = !vibItem
+    ? false
+    : item.kind === 'vibrato-rate'
+      ? { rate: [(item.vibRate ?? 5.5) - 0.4, (item.vibRate ?? 5.5) + 0.4], extent: EXTENT_BAND[style] }
+      : item.kind === 'vibrato-width'
+        ? { rate: [4.5, 7], extent: WIDTH_BAND[item.vibWidth ?? 'narrow'] }
+        : item.kind.startsWith('vibrato')
+          ? { rate: [4.5, 7], extent: EXTENT_BAND[style] }
+          : null;
+  const hv = grade && !grade.unclear ? grade.hold?.vibrato : undefined;
+  const frozenVib = vibItem && hv
+    ? {
+        state: (hv.present ? (hv.regularity > 0.35 ? 'unsteady' : 'vibrato') : 'straight') as 'vibrato' | 'unsteady' | 'straight',
+        rate: Math.round(hv.rate * 10) / 10,
+        extent: Math.round(hv.extent / 5) * 5,
+        note: hv.present ? (hv.jitter <= 0.1 ? SING_TX.even[lang] : `${SING_TX.wanders[lang]} ${Math.round(hv.jitter * 100)}%`) : undefined,
+      }
+    : null;
   const strong = !!grade && !grade.unclear && grade.score >= STRONG;
   const weakestScore = grade && grade.weakest ? Math.min(...grade.metrics.filter((m) => m.key === grade.weakest).map((m) => m.score)) : 1;
   const title = level === 'warmup' ? t.vocalWarmup : isNewLevel(level) ? levelName(level, t, settings.uiLang === 'en' ? 'en' : 'he') : level > ORNAMENT_BASE ? `${t.ornTitle} · ${t.ornLevelNames[level - ORNAMENT_BASE - 1]}` : level > SIGHT_BASE ? `${t.sightTitle} · ${t.sightLevelNames[level - SIGHT_BASE - 1]}` : level > BARRY_BASE ? `${t.barryTitle} · ${t.barryLevelNames[level - BARRY_BASE - 1]}` : level > HARMONY_BASE ? `${t.harmonyTitle} · ${t.harmonyLevelNames[level - HARMONY_BASE - 1]}` : level > MODES_BASE ? `${t.modesTitle} · ${t.modesLevelNames[level - MODES_BASE - 1]}` : `${fill(t.vocalLevel, { n: level })} · ${t.vocalLevelNames[level - 1]}`;
@@ -1281,7 +1303,6 @@ function VocalSession({
           ))}
         </p>
       )}
-      {item.kind === 'vibrato-rate' && phase === 'singing' && <div className="vib-pulse" style={{ animationDuration: `${1 / (item.vibRate ?? 5.5)}s` }} aria-hidden="true" />}
       {isSight(item) ? (
         <div className="sight-score">
           <NotesView midis={shownTargets} keyPc={pc(sightKeyName(item, shownTargets[0]))} settings={settings} durs={item.durs} clef={item.more?.clef ?? (range.low <= 45 ? 'bass' : undefined)} now={pulseNow} />
@@ -1295,7 +1316,7 @@ function VocalSession({
         </div>
       ) : (pulse && phase !== 'result') || (phase === 'result' && !!melNotes) || (phase === 'singing' && !visible.some((m) => Math.abs(m - Math.round(m)) > 0.2)) ? null : (
       <p className="vocal-targets" dir="ltr">
-        {visible.map((m) => (Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
+        {visible.map((m) => ltrLabel(Math.abs(m - Math.round(m)) > 0.2 ? `${noteLabel(Math.ceil(m), settings)}¼↓` : noteLabel(m, settings))).join(' – ')}
       </p>
       )}
       {/* While singing, the lane carries the notes; the beat light keeps the count-in and the pulse (timing-cue rule). */}
@@ -1340,8 +1361,8 @@ function VocalSession({
       <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
       {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} lang={lang} onClose={() => setSel(null)} />}
-      {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && holdItem && grade && !grade.unclear)) && (
-        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} />
+      {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && (holdItem || !!frozenVib) && grade && !grade.unclear)) && (
+        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result'} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
       )}
       {item.reference === 'during' && (
         <label className="toggle-row">
