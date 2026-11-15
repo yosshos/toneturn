@@ -46,10 +46,13 @@ const r = (level: string, key: number, places: Rung['places']): Rung => ({ level
 // Keys move from step to step (owner: "it only tested me in C").
 const HANDS: Rung[] = [
   r('scales-1', 7, { scales: 2, fingers: 1, arpeggios: 1, control: 1 }),
-  r('scales-3', 2, { scales: 4, fingers: 2, arpeggios: 2, control: 2 }),
-  r('arpeggios-3', 5, { scales: 5, fingers: 3, arpeggios: 4, control: 3 }),
-  r('scales-5', 9, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1 }),
-  r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3 }),
+  // AUDIT-SCALES: the harmonization ladder (k-harm) and hand independence (k-indep) are placed by the hands steps; the
+  // 3-against-2 step is their own.
+  r('scales-3', 2, { scales: 4, fingers: 2, arpeggios: 2, control: 2, 'k-harm': 2 }),
+  r('arpeggios-3', 5, { scales: 5, fingers: 3, arpeggios: 4, control: 3, 'k-harm': 4, 'k-indep': 1 }),
+  r('scales-5', 9, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-harm': 6, 'k-indep': 2 }),
+  r('k-indep-5', 3, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-harm': 8, 'k-indep': 4 }),
+  r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-harm': 12, 'k-indep': 5 }),
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),
@@ -117,8 +120,8 @@ const G_HANDS: Rung[] = [
   r('g-fretting-1', 9, { 'g-fretting': 2, 'g-picking': 1, 'g-scales': 1 }),
   r('g-scales-1', 9, { 'g-fretting': 2, 'g-picking': 2, 'g-scales': 2, 'g-arps': 1, 'g-legato': 1 }),
   r('g-picking-3', 7, { 'g-fretting': 4, 'g-picking': 4, 'g-scales': 4, 'g-arps': 2, 'g-legato': 2 }),
-  r('g-scales-5', 2, { 'g-fretting': 5, 'g-picking': 5, 'g-scales': 6, 'g-arps': 4, 'g-legato': 3 }),
-  r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5 }),
+  r('g-scales-5', 2, { 'g-fretting': 5, 'g-picking': 5, 'g-scales': 6, 'g-arps': 4, 'g-legato': 3, 'g-harm': 2 }),
+  r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5, 'g-harm': 5 }),
 ];
 const G_CHORDS: Rung[] = [
   r('g-chords-1', 7, { 'g-chords': 2 }),

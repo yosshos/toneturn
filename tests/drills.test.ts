@@ -138,7 +138,7 @@ describe('drills: generate', () => {
       }
     }
     expect(count).toBeGreaterThan(500);
-  }, 120_000);
+  }, 300_000); // AUDIT-SCALES: the catalogue grew by ~4,000 item × key drills (scales 16–33, k-harm, k-indep)
 
   it('a perfect take of every catalogue item in every key is clean', () => {
     for (const fam of catalog())

@@ -404,7 +404,7 @@ describe('guitar drills: plan', () => {
     expect(fl).not.toContain('g-jazz');
     // rock / metal → core only: every core rhythm level (no genre filter on guitar any more), no add-on levels.
     const metal = shownFamilies({ emphasis: 'both', instrument: 'guitar', guitarStyle: 'metal' });
-    expect(metal.find((f) => f.id === 'g-rhythm')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10]);
+    expect(metal.find((f) => f.id === 'g-rhythm')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10, 11]);
     expect(metal.map((f) => f.id)).not.toContain('g-prog');
   });
 

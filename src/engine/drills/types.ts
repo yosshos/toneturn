@@ -31,6 +31,10 @@ export type FamilyId =
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
+  // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder (piano, guitar).
+  | 'k-indep'
+  | 'k-harm'
+  | 'g-harm'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -118,7 +122,9 @@ export type Articulation = 'legato' | 'staccato' | 'portato';
 export type DynamicsGoal = 'even-mf' | 'even-p' | 'even-f' | 'even-pp' | 'even-ff' | 'cresc' | 'accent3' | 'accent4' | 'voicing';
 export type Variant = 'even' | 'dotted' | 'rev-dotted' | 'groups3' | 'groups4' | 'accent-shift';
 export type Motion = 'parallel' | 'contrary' | 'third' | 'sixth' | 'tenth' | 'formula';
-export type ScaleType = 'major' | 'harmonic' | 'melodic' | 'natural' | 'chromatic' | 'mixolydian' | 'bebop-dom' | 'six-dim' | 'blues' | 'pentatonic';
+export type ScaleType = 'major' | 'harmonic' | 'melodic' | 'natural' | 'chromatic' | 'mixolydian' | 'bebop-dom' | 'six-dim' | 'blues' | 'pentatonic'
+  // AUDIT-SCALES: the other modes and the minor 6th-diminished scale (Cm6 + B°7) as scale items.
+  | 'dorian' | 'phrygian' | 'lydian' | 'locrian' | 'six-dim-m';
 export type KeyOrder = 'chromatic-up' | 'chromatic-down' | 'fifths-up' | 'fifths-down' | 'difficulty';
 
 /** One expected note of a drill. */
@@ -137,6 +143,12 @@ export interface ExpNote {
   accent?: boolean;
   /** Chord tone of the current harmony (Barry Harris, improvisation checks). */
   chordTone?: boolean;
+  /** Hand independence (k-indep): a held note — kept down for its whole written length (goal.holds, MIDI only). */
+  hold?: boolean;
+  /** Borrowing (Barry Harris): the voice of a 4-note chord this note belongs to (0 = top … 3 = bottom), for feedback. */
+  vox?: number;
+  /** Borrowing: the voice's return to its chord tone after the borrowed note. */
+  ret?: boolean;
   /**
    * PIANO_JAZZ (trading fours): a landing inside the player's free bars — any of these pitch classes (the chord's tones),
    * any octave, near this beat. The written pitch is only the model line's note.
@@ -370,6 +382,10 @@ export interface DrillGoal {
   articulation?: Articulation;
   /** Chord tones must land on the beats (Barry Harris family). */
   chordTonesOnBeats?: boolean;
+  /** Hand independence: notes marked `hold` must be kept down ≥ this share of their written length (0.8). MIDI only. */
+  holds?: number;
+  /** Hand independence: a different touch per hand (legato in one, staccato in the other). MIDI only. */
+  handArt?: { R?: Articulation; L?: Articulation };
   /** Voicing / chord correctness instead of exact pitches (voicing families): allowed pitch classes per chordId. */
   chordSets?: { chordId: number; required: number[]; allowed: number[] }[];
   /**

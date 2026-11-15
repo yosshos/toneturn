@@ -131,6 +131,14 @@ export const TOPIC_MARK: Record<string, string> = {
   'bh-m6-bass': 'm6=9',
   // BH-G: the pivot (the root on top, a drop, the climb)
   'bh-pivot-arp': '1↓357',
+  // AUDIT-SCALES: borrowing (one voice steps away and back over held voices)
+  'bh-borrow': '6↘°↗6',
+  // AUDIT-SCALES: eight expressions of one dominant (4 brothers + 4 minor 6ths)
+  'bh-sixfive': 'V×8',
+  // Harris's moves (first movement, next move, major–minor–minor/6)
+  'bh-moves': '°→7→6',
+  // the 16 chords around one diminished (Echols's tesseract)
+  'bh-tesseract': '°×16',
   'function-ear': 'T·D',
   'modal-cadence': '♭VII',
   'borrowed-ext': '♭VI',

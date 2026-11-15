@@ -14,6 +14,8 @@ import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
 import { ARP_QUALITIES, ARP_SYM, mirrorArp, pivotArp, pivotEnclosureLine, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
+import { genHarmPiano, pianoHarmFamily } from './harmLadder'; // AUDIT-SCALES: harmonization ladder, borrowing
+import { genIndep, indepFamily } from './indepDrills'; // AUDIT-SCALES §3: hand independence
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -38,6 +40,11 @@ export const SCALE_INTERVALS: Record<ScaleType, number[]> = {
   'six-dim': [0, 2, 4, 5, 7, 8, 9, 11],
   blues: [0, 3, 5, 6, 7, 10],
   pentatonic: [0, 2, 4, 7, 9],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  lydian: [0, 2, 4, 6, 7, 9, 11],
+  locrian: [0, 1, 3, 5, 6, 8, 10],
+  'six-dim-m': [0, 2, 3, 5, 7, 8, 9, 11],
 };
 
 /** Intervals for a direction: melodic minor comes down natural. */
@@ -194,6 +201,95 @@ function chromaticFinger(hand: Hand, pitch: number, first: boolean): number {
   return pc === 4 || pc === 11 ? 2 : 1;
 }
 
+/**
+ * Fingering for any scale without a table row (AUDIT-SCALES: the modes, pentatonic, blues, 6th-diminished, bebop): the
+ * octave is cut into groups that each start (RH, going up) or end (LH, going up) on the thumb — groups of 2–4 notes,
+ * the thumb never on a black key (a group on black keys only starts on finger 2, as in G♭ pentatonic: 2 3 4 · 2 3),
+ * as few crossings as possible, a crossing from a black key onto a white one preferred, the tonic on the thumb when it
+ * can be. One finger per pitch class in the middle of a run; at the top the RH's thumb note becomes the next finger
+ * after the group below it (C major: 5), at the bottom the LH's likewise (C major: 5, B major: 4). Help only, never graded.
+ */
+export interface AutoFing {
+  /** Finger per scale index (0 = tonic) in the middle of a run. */
+  r: number[];
+  l: number[];
+  /** The finger when this index is the RH's top note / the LH's bottom note. */
+  rTop: number[];
+  lBottom: number[];
+}
+const AUTO_FING = new Map<string, AutoFing>();
+export function autoFingering(tonic: number, ints: number[]): AutoFing {
+  const id = `${mod(tonic, 12)}:${ints.join(',')}`;
+  const hit = AUTO_FING.get(id);
+  if (hit) return hit;
+  const n = ints.length;
+  const black = ints.map((x) => isBlack(tonic + x));
+  type Plan = { score: number; fing: number[]; groups: { start: number; size: number; first: number }[] };
+  // side 'R': groups start on the anchor (finger f, then f+1 …); side 'L': groups end on the anchor (… f+1, f).
+  const solve = (side: 'R' | 'L'): Plan => {
+    let best: Plan | null = null;
+    for (let mask = 1; mask < 1 << n; mask++) {
+      const anchors = Array.from({ length: n }, (_, i) => i).filter((i) => mask & (1 << i));
+      let score = 0;
+      let ok = true;
+      const fing = new Array<number>(n).fill(0);
+      const groups: Plan['groups'] = [];
+      anchors.forEach((a, gi) => {
+        const b = anchors[(gi + 1) % anchors.length];
+        const size = anchors.length === 1 ? n : mod(b - a, n) || n;
+        // R: the group is a, a+1 … (anchor first); L: the group is a+1 … b (anchor last) — expressed from its anchor.
+        const anchor = side === 'R' ? a : b;
+        const start = side === 'R' ? a : mod(a + 1, n);
+        let f = 1;
+        if (black[anchor]) {
+          if (size <= 3) {
+            f = 2;
+            score += 4;
+          } else score += 100;
+        }
+        if (size < 2 || f + size - 1 > 4) ok = false;
+        if (size === 2) score += 3;
+        score += 1;
+        for (let j = 0; j < size; j++) {
+          const idx = mod(start + j, n);
+          fing[idx] = side === 'R' ? f + j : f + (size - 1 - j);
+        }
+        // a crossing from a black key onto a white thumb
+        const before = side === 'R' ? mod(anchor - 1, n) : mod(anchor + 1, n);
+        if (black[before] && !black[anchor] && f === 1) score -= 0.25;
+        if (anchor === 0 && f === 1) score -= 0.5;
+        groups.push({ start, size, first: side === 'R' ? f : f + size - 1 });
+      });
+      if (!ok) continue;
+      // never the same finger on two neighbouring notes (a group ending on 2 next to one starting on 2)
+      if (fing.some((x, i) => x === fing[(i + 1) % n])) continue;
+      // the 4-note group next to the tonic (RH: the group under the top tonic, so it ends on 5; LH: the group above the
+      // bottom tonic, so it starts on 5) — C major RH 1 2 3 1 2 3 4 5, LH 5 4 3 2 1 3 2 1
+      const nearTonic = side === 'R' ? groups.find((g) => mod(g.start + g.size, n) === 0) : groups.find((g) => g.start === mod(1, n));
+      if (nearTonic && nearTonic.size === 4) score -= 0.6;
+      if (!best || score < best.score) best = { score, fing, groups };
+    }
+    return best!;
+  };
+  const R = solve('R');
+  const Lp = solve('L');
+  const rTop = R.fing.map((f, i) => {
+    const gi = R.groups.findIndex((g) => g.start === i);
+    if (gi < 0) return f;
+    const prev = R.groups[mod(gi - 1, R.groups.length)];
+    return Math.min(5, prev.first + prev.size);
+  });
+  const lBottom = Lp.fing.map((f, i) => {
+    const endsHere = Lp.groups.findIndex((g) => mod(g.start + g.size - 1, n) === i);
+    if (endsHere < 0) return f;
+    const next = Lp.groups[mod(endsHere + 1, Lp.groups.length)];
+    return Math.min(5, next.first + 1);
+  });
+  const out = { r: R.fing, l: Lp.fing, rTop, lBottom };
+  AUTO_FING.set(id, out);
+  return out;
+}
+
 // ───────────────────────────── note buffer ─────────────────────────────
 
 interface SN {
@@ -290,7 +386,12 @@ const SCALE_T: Record<ScaleType, T2> = {
   'bebop-dom': t('bebop dominant', 'ביבופ דומיננטי'),
   'six-dim': t('6th-diminished', 'שישית-מוקטן'),
   blues: t('blues', 'בלוז'),
-  pentatonic: t('pentatonic', 'פנטטוני'),
+  pentatonic: t('major pentatonic', 'פנטטוני מז׳ורי'),
+  dorian: t('dorian', 'דורי'),
+  phrygian: t('phrygian', 'פריגי'),
+  lydian: t('lydian', 'לידי'),
+  locrian: t('locrian', 'לוקרי'),
+  'six-dim-m': t('minor 6th-diminished', 'מינור שישית-מוקטן'),
 };
 const MOTION_T: Record<Motion, T2> = {
   parallel: t('parallel', 'מקביל'),
@@ -357,6 +458,9 @@ function keySigOf(s: DrillSpec): string {
   const type = scaleTypeOf(s);
   if (type === 'chromatic') return 'C';
   if (type === 'mixolydian' || type === 'bebop-dom') return SIG[mod(s.key + 5, 12)];
+  // The modes: the key signature of the parent major scale (D dorian → C).
+  const parent: Partial<Record<ScaleType, number>> = { dorian: 10, phrygian: 8, lydian: 7, locrian: 1 };
+  if (parent[type] !== undefined) return SIG[mod(s.key + parent[type]!, 12)];
   if (s.minor) return SIG[mod(s.key + 3, 12)];
   return SIG[mod(s.key, 12)];
 }
@@ -458,6 +562,7 @@ function genScale(s: DrillSpec): Drill {
     tL = tR - 24;
   }
   const row = type === 'chromatic' ? null : fingRowFor(type, s.key);
+  const auto = type === 'chromatic' || row ? null : autoFingering(s.key, up);
   const rowDown = type === 'chromatic' ? null : fingRowFor(type, s.key, true);
   const handsUsed: Hand[] = s.hands === 'RL' ? ['R', 'L'] : [s.hands];
   const kOf = (h: Hand, i: number) => (h === 'R' ? path[i][0] + oR : path[i][1] + oL);
@@ -485,6 +590,10 @@ function genScale(s: DrillSpec): Drill {
         // direction the hand is moving (the LH in contrary motion moves down while the RH goes up).
         const goingDown = down || (pk === null && path.length > 1 && kOf(h, 1) < k);
         finger = scaleFinger(goingDown ? rowDown : row, h, k, mod(lo, 7) === 0 ? lo : Number.NaN, mod(hi, 7) === 0 ? hi : Number.NaN, rowDown);
+      } else if (auto) {
+        const [lo, hi] = ranges[h];
+        const d = mod(k, n);
+        finger = h === 'R' ? (k === hi ? auto.rTop[d] : auto.r[d]) : k === lo ? auto.lBottom[d] : auto.l[d];
       }
       if (octavesKind) {
         const top = p + 12;
@@ -1293,7 +1402,6 @@ function genPoly(s: DrillSpec): Drill {
 
 // ───────────────────────────── H: Barry Harris ─────────────────────────────
 
-const MAJ_CT = [0, 4, 7, 9, 11];
 const DOM_CT = [0, 4, 7, 10];
 /** The descending dominant scale with the half step between root and ♭7 (the root → ♮7 → ♭7 rule). */
 const DOM_DESC = [0, 2, 4, 5, 7, 9, 10, 11];
@@ -1329,6 +1437,20 @@ const eighths = (ps: number[], cts?: (p: number) => boolean, start = 0) =>
     ct: cts ? cts(p) : undefined,
   }));
 
+/**
+ * The 6th-diminished scale up and down (Barry Harris): `octaves` octaves up from `tonic` and back in the same eight
+ * notes. Index k even = a tone of the 6 chord (1 3 5 6, or 1 ♭3 5 6 in minor), odd = a tone of the diminished 7th on
+ * the 7th degree (7 2 4 ♭6). In 8ths from the tonic on beat 1, every even index lands on a beat going up and coming down.
+ */
+export function sixDimUpDown(tonic: number, minor = false, octaves = 2): number[] {
+  const six = minor ? [0, 2, 3, 5, 7, 8, 9, 11] : SCALE_INTERVALS['six-dim'];
+  const N = 8 * octaves;
+  const out: number[] = [];
+  for (let k = 0; k <= N; k++) out.push(degPitch(tonic, six, k));
+  for (let k = N - 1; k >= 0; k--) out.push(degPitch(tonic, six, k));
+  return out;
+}
+
 function genHarris(s: DrillSpec): Drill {
   const key = mod(s.key, 12);
   const kn = keyName(key);
@@ -1338,15 +1460,31 @@ function genHarris(s: DrillSpec): Drill {
   const H = (n: number, en: string, he: string) => t(`Barry Harris H${n}: ${en}`, `בארי האריס H${n}: ${he}`);
   switch (s.kind) {
     case 'h1-linear': {
-      const ps: number[] = [];
-      for (let k = 0; k <= 14; k++) ps.push(degPitch(base, maj, k));
-      for (const o of [1, 0]) for (const x of [11, 9, 8, 7, 5, 4, 2, 0]) ps.push(base + 12 * o + x);
-      return lineDrill(
-        s,
-        eighths(ps, isCt(MAJ_CT)),
-        title([H(1, `the ${kn} linear scale (♭6 passing tone down)`, `הסולם הלינארי של ${kn} (♭6 מעבר בירידה)`)], s),
-        { chordTonesOnBeats: true },
-      );
+      // The 6th-diminished scale (owner 2026-11-14): the 6 chord's tones alternating with the diminished 7th a half step
+      // under its root (C6 + B°7 = C D E F G A♭ A B), UP and DOWN in the same eight notes, two octaves in 8ths, so the
+      // 6 chord's tones fall on the beats both ways. (It was the plain major scale up with a ♭6 passing tone only on the
+      // way down — not how Harris taught it.) Option 1: the minor 6th-diminished scale (Cm6 + B°7 = C D E♭ F G A♭ A B).
+      // Item ids are unchanged (h1-linear, no option = the major scale), so saved progress stays valid.
+      const minor6 = s.option === 1;
+      const dimN = `${keyName(key + 11)}°7`;
+      if ((s.option ?? 0) >= 2) {
+        // Options 2 / 3: the dominant 7th-diminished (C7 + B°7: C D E F G A♭ B♭ B) and the 7♭5-diminished scale
+        // (C7♭5 + B°7: C D E F G♭ A♭ B♭ B) — the dominant's tones on the beats, up and down.
+        const flat5 = s.option === 3;
+        const ints = flat5 ? [0, 2, 4, 5, 6, 8, 10, 11] : [0, 2, 4, 5, 7, 8, 10, 11];
+        const ps2: number[] = [];
+        for (let k = 0; k <= 16; k++) ps2.push(degPitch(base, ints, k));
+        for (let k = 15; k >= 0; k--) ps2.push(degPitch(base, ints, k));
+        const sym = flat5 ? '7♭5' : '7';
+        const ttl2 = H(1, `the ${kn} ${flat5 ? '7♭5' : 'dominant 7th'}-diminished scale, up and down (${kn}${sym} + ${dimN})`, `סולם ${kn} ${flat5 ? 'שביעית♭5' : 'דומיננט שביעית'}־מוקטן, עולה ויורד (${kn}${sym} + ${dimN})`);
+        return lineDrill(s, eighths(ps2, isCt(flat5 ? [0, 4, 6, 10] : [0, 4, 7, 10])), title([ttl2], s), { chordTonesOnBeats: true }, SIG[mod(key + 5, 12)]);
+      }
+      const ps = sixDimUpDown(base, minor6, 2);
+      const ct = minor6 ? [0, 3, 7, 9] : [0, 4, 7, 9];
+      const ttl = minor6
+        ? H(1, `the ${keyName(key, true)} minor 6th-diminished scale, up and down (${keyName(key, true)}m6 + ${dimN})`, `סולם ${keyName(key, true)} מינור השישית־מוקטן, עולה ויורד (${keyName(key, true)}m6 + ${dimN})`)
+        : H(1, `the ${kn} 6th-diminished scale, up and down (${kn}6 + ${dimN})`, `סולם ${kn} השישית־מוקטן, עולה ויורד (${kn}6 + ${dimN})`);
+      return lineDrill(s, eighths(ps, isCt(ct)), title([ttl], s), { chordTonesOnBeats: true }, SIG[minor6 ? mod(key + 3, 12) : key]);
     }
     case 'h2-dominant': {
       const op = Math.min(3, Math.max(0, s.option ?? 0));
@@ -1585,7 +1723,7 @@ function genHarris(s: DrillSpec): Drill {
       ][o];
       const { line, next } = ruleDown(pitchIn(key + sp.from, 79), sp.ct.map((x) => mod(x + key, 12)), sp.sc.map((x) => mod(x + key, 12)), 6);
       line.push({ p: next, beat: 6, dur: 1, ct: true });
-      return lineDrill(s, line, title([H(14, `the half-step rule — ${sp.en}, chord tones on the beats`, `חוק חצי הטון — ${sp.he}, צלילי אקורד על הפעמות`)], s), { chordTonesOnBeats: true }, sp.sig);
+      return lineDrill(s, line, title([H(14, `the half-step rule, a descending line — ${sp.en}, chord tones on the beats`, `חוק חצי הטון, קו יורד — ${sp.he}, צלילי אקורד על הפעמות`)], s), { chordTonesOnBeats: true }, sp.sig);
     }
     case 'h15-iivi': {
       // ii–V–I lines by the rules (PIANO_JAZZ): each chord an arpeggio up from a chord tone, then the scale down by the
@@ -4871,6 +5009,9 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-theory') return genTheoryPlay(s);
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
+  // AUDIT-SCALES: the harmonization ladder + Barry Harris borrowing, hand independence.
+  if (s.family === 'k-harm') return genHarmPiano(s);
+  if (s.family === 'k-indep') return genIndep(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5052,6 +5193,27 @@ export function catalog(): FamilyDef[] {
     ...o,
   });
   const HS = (o: Partial<SpecTemplate>): SpecTemplate[] => [sc({ ...o, hands: 'R' }), sc({ ...o, hands: 'L' })];
+  // AUDIT-SCALES: scales 19–29 — per mode / scale, each hand at 1 and 2 octaves, then hands together parallel and contrary.
+  const HT4 = (o: Partial<SpecTemplate>): SpecTemplate[] => [sc({ ...o, hands: 'RL', octaves: 1 }), sc({ ...o, hands: 'RL', octaves: 1, motion: 'contrary' }), sc({ ...o, hands: 'RL', octaves: 2 }), sc({ ...o, hands: 'RL', octaves: 2, motion: 'contrary' })];
+  const MODE_LEVELS = (from: number): LevelDef[] => {
+    const two = (sc0: ScaleType, en: string, he: string): [string, string, SpecTemplate[], string, string, SpecTemplate[]] => [
+      `${en}: each hand, one and two octaves`, `${he}: כל יד, אוקטבה ושתיים`, [...HS({ scale: sc0, octaves: 1 }), ...HS({ scale: sc0, octaves: 2 })],
+      `${en}: hands together, parallel and contrary`, `${he}: ידיים יחד, מקביל ונגדי`, HT4({ scale: sc0 }),
+    ];
+    // Scales whose RH 2-octave item already exists (scales 12): one level with the rest.
+    const one = (sc0: ScaleType, en: string, he: string): [string, string, SpecTemplate[]] => [`${en}: each hand, then hands together, parallel and contrary`, `${he}: כל יד, ואז ידיים יחד, מקביל ונגדי`, [...HS({ scale: sc0, octaves: 1 }), sc({ scale: sc0, hands: 'L', octaves: 2 }), ...HT4({ scale: sc0 })]];
+    const rows: [string, string, SpecTemplate[]][] = [];
+    const push2 = (x: ReturnType<typeof two>) => rows.push([x[0], x[1], x[2]], [x[3], x[4], x[5]]);
+    push2(two('dorian', 'Dorian', 'דורי'));
+    rows.push(one('mixolydian', 'Mixolydian', 'מיקסולידי'));
+    push2(two('lydian', 'Lydian', 'לידי'));
+    push2(two('phrygian', 'Phrygian', 'פריגי'));
+    push2(two('locrian', 'Locrian', 'לוקרי'));
+    rows.push(one('pentatonic', 'Major pentatonic', 'פנטטוני מז׳ורי'));
+    rows.push(one('blues', 'Blues scale', 'סולם בלוז'));
+    // pentatonic and blues (5 and 6 notes an octave) a grade lower at the top: one octave hands together turns quickly
+    return rows.map(([en, he, specs], i) => L('scales', from + i, en, he, specs, 'major', /pentatonic|Blues/.test(en) ? [SN[2], SN[3]] : [SN[2], SN[4]]));
+  };
   const ar = (o: Partial<SpecTemplate>): SpecTemplate => ({
     family: 'arpeggios',
     kind: 'arp-triad',
@@ -5218,6 +5380,45 @@ export function catalog(): FamilyDef[] {
           sc({ hands: 'RL', octaves: 3, scale: 'chromatic' }),
         ], 'major', [SN[3], SN[5]]),
         L('scales', 15, 'Melodic and natural minor, each hand', 'מינור מלודי וטבעי, כל יד', [...HS({ minor: true, scale: 'melodic', octaves: 2 }), ...HS({ minor: true, scale: 'natural', octaves: 2 })], 'minor', [SN[2], SN[3]]),
+        // AUDIT-SCALES (owner 2026-11-14): every scale type × RH / LH / hands together parallel / contrary × 1, 2, 4
+        // octaves in all 12 keys (docs/AUDIT-SCALES.md, scaleMatrix.ts). Contrary motion starts on one shared note and
+        // both hands go outward and back; parallel motion is an octave apart. Placed on the path by KEYS_LEVEL_DIFF.
+        L('scales', 16, 'Major and harmonic minor, one octave hands together: parallel and contrary', 'מז׳ור ומינור הרמוני, אוקטבה אחת בידיים יחד: מקביל ונגדי', [
+          sc({ hands: 'RL', octaves: 1 }),
+          sc({ hands: 'RL', octaves: 1, motion: 'contrary' }),
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'harmonic' }),
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'harmonic', motion: 'contrary' }),
+        ], 'major', [SN[1], SN[3]]),
+        L('scales', 17, 'Minor scales, one octave, each hand', 'סולמות מינור, אוקטבה אחת, כל יד', [...HS({ minor: true, scale: 'harmonic', octaves: 1 }), ...HS({ minor: true, scale: 'natural', octaves: 1 }), ...HS({ minor: true, scale: 'melodic', octaves: 1 })], 'minor', [SN[1], SN[3]]),
+        L('scales', 18, 'Natural and melodic minor hands together, parallel and contrary', 'מינור טבעי ומלודי בידיים יחד, מקביל ונגדי', [
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'natural' }),
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'natural', motion: 'contrary' }),
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'melodic' }),
+          sc({ hands: 'RL', octaves: 1, minor: true, scale: 'melodic', motion: 'contrary' }),
+          sc({ hands: 'RL', octaves: 2, minor: true, scale: 'natural', motion: 'contrary' }),
+        ], 'minor', [SN[2], SN[3]]),
+        ...MODE_LEVELS(19),
+        L('scales', 30, '6th-diminished: one octave each hand, hands together, contrary motion', 'שישית-מוקטן: אוקטבה אחת בכל יד, ידיים יחד, תנועה נגדית', [
+          ...HS({ scale: 'six-dim', octaves: 1 }),
+          sc({ hands: 'RL', scale: 'six-dim', octaves: 1 }),
+          sc({ hands: 'RL', scale: 'six-dim', octaves: 1, motion: 'contrary' }),
+          sc({ hands: 'RL', scale: 'six-dim', octaves: 2, motion: 'contrary' }),
+        ], 'major', [SN[2], SN[4]]),
+        L('scales', 31, 'Minor 6th-diminished: one octave each hand, hands together, contrary motion', 'מינור שישית-מוקטן: אוקטבה אחת בכל יד, ידיים יחד, תנועה נגדית', [
+          ...HS({ scale: 'six-dim-m', minor: true, octaves: 1 }),
+          sc({ hands: 'RL', scale: 'six-dim-m', minor: true, octaves: 1 }),
+          sc({ hands: 'RL', scale: 'six-dim-m', minor: true, octaves: 1, motion: 'contrary' }),
+          sc({ hands: 'RL', scale: 'six-dim-m', minor: true, octaves: 2, motion: 'contrary' }),
+        ], 'minor', [SN[2], SN[4]]),
+        L('scales', 32, 'The modes, 4 octaves hands together in 16ths', 'המודוסים, 4 אוקטבות בידיים יחד בשש-עשריות', (['dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian'] as ScaleType[]).map((x) => sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: x })), 'major', [SN[3], SN[7]]),
+        L('scales', 33, '4 octaves hands together: natural and melodic minor, pentatonic, blues, 6th-diminished', '4 אוקטבות בידיים יחד: מינור טבעי ומלודי, פנטטוני, בלוז, שישית-מוקטן', [
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, minor: true, scale: 'natural' }),
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, minor: true, scale: 'melodic' }),
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'pentatonic' }),
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'blues' }),
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'six-dim' }),
+          sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'six-dim-m', minor: true }),
+        ], 'major', [SN[3], SN[7]]),
       ],
     },
     {
@@ -5552,7 +5753,9 @@ export function catalog(): FamilyDef[] {
       title: t('Barry Harris', 'בארי האריס'),
       style: 'jazz',
       levels: [
-        L('harris', 1, 'The linear scale', 'הסולם הלינארי', [h('h1-linear'), h('h1-linear', { hands: 'L' }), h('h1-linear', { hands: 'RL' })], cyc4),
+        // Owner 2026-11-14: the 6th-diminished scale up AND down (was "the linear scale": major up, ♭6 only coming down).
+        // Level and item ids kept so saved progress stays valid.
+        L('harris', 1, 'The 6th-diminished scale, up and down', 'סולם השישית־מוקטן, עולה ויורד', [h('h1-linear'), h('h1-linear', { hands: 'L' }), h('h1-linear', { hands: 'RL' })], cyc4),
         L(
           'harris',
           2,
@@ -5606,7 +5809,7 @@ export function catalog(): FamilyDef[] {
         ], cyc4),
         L('harris', 13, 'Diminished moves: four keys from one chord', 'תנועות הדימיניש: ארבעה סולמות מאקורד אחד', [h('h13-dimmoves'), h('h13-dimmoves', { option: 1 })], cyc4),
         // PIANO_JAZZ: the half-step rules from any start, and ii–V–I lines by the rules.
-        L('harris', 14, 'The half-step rules: chord tones on the beats from any start', 'חוקי חצי הטון: צלילי אקורד על הפעמות מכל התחלה', [...[0, 1, 2, 3].map((o) => h('h14-rules', { option: o, swing: true })), h('h14-rules', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
+        L('harris', 14, 'The half-step rules on descending lines: chord tones on the beats from any start', 'חוקי חצי הטון בקווים יורדים: צלילי אקורד על הפעמות מכל התחלה', [...[0, 1, 2, 3].map((o) => h('h14-rules', { option: o, swing: true })), h('h14-rules', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
         L('harris', 15, 'ii–V–I lines by the rules, major and minor', 'שורות ii–V–I לפי החוקים, מז׳ור ומינור', [h('h15-iivi', { swing: true }), h('h15-iivi', { option: 1, swing: true })], cyc4, [2.33, 4]),
         // PIANO_JAZZ P2: Barry's chromatic lines — the family of dominants as lines, the chromatic scale with the rules, the sixth on the fifth.
         L('harris', 16, 'The family of dominants as lines: a half step into each chord', 'משפחת הדומיננטות כקווים: חצי טון לכל אקורד', [h('h16-chains', { swing: true }), h('h16-chains', { option: 1, swing: true }), h('h16-chains', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
@@ -5621,6 +5824,10 @@ export function catalog(): FamilyDef[] {
         L('harris', 22, 'The pivot through ii–V–I, the scale down by the rules', 'הפיבוט דרך ii–V–I, הסולם למטה לפי החוקים', [h('h21-pivotiivi'), h('h21-pivotiivi', { option: 1 })], cyc4, [2.33, 4]),
         L('harris', 23, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', [h('h22-scalepivot'), h('h22-scalepivot', { option: 1 })], cyc4, [2.33, 4]),
         L('harris', 24, 'Pivot and enclosure down the bebop scale', 'פיבוט וכיתור במורד סולם הביבופ', [h('h23-pivotencl'), h('h23-pivotencl', { option: 1 })], cyc4, [2.33, 4]),
+        // Owner 2026-11-14: the minor 6th-diminished scale (m6 + the diminished a half step under the root), up and down.
+        L('harris', 25, 'The minor 6th-diminished scale, up and down', 'סולם מינור השישית־מוקטן, עולה ויורד', [h('h1-linear', { option: 1 }), h('h1-linear', { option: 1, hands: 'L' }), h('h1-linear', { option: 1, hands: 'RL' })], cyc4),
+        // The other two of Barry Harris's four diminished scales: dominant 7th-diminished and 7♭5-diminished.
+        L('harris', 26, 'The dominant diminished scales (7 and 7♭5), up and down', 'סולמות הדימיניש של הדומיננט (7 ו־7♭5), עולים ויורדים', [2, 3].flatMap((o) => [h('h1-linear', { option: o }), h('h1-linear', { option: o, hands: 'L' }), h('h1-linear', { option: o, hands: 'RL' })]), cyc4),
       ],
     },
     {
@@ -5851,5 +6058,8 @@ export function catalog(): FamilyDef[] {
     pianoKeyMoveFamily(),
     // AUDIT-GAPS-2 High #1–#3, #7, #8: bebop vocabulary — approach notes, enclosures, Harris lines, time (vocabDrills.ts).
     keysVocabFamily(),
+    // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder with borrowing.
+    indepFamily(),
+    pianoHarmFamily(),
   ]);
 }

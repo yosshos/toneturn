@@ -164,7 +164,7 @@ hand) · leaps (stride / waltz bass, RH octave jumps: hit rate and landing laten
 
 | Level | Drill | Auto-check |
 |---|---|---|
-| H1 | the **linear scale**: major scale in 8ths from the root, up and down, chord tones (1-3-5-7 of the scale's 6th / dominant chord) on the beats | pitch sequence + chord tones on beats |
+| H1 | the **6th-diminished scale** (C6 + B°7: C D E F G A♭ A B) in 8ths from the root, **up and down in the same eight notes** (not the major scale up with a ♭6 only coming down — fixed 2026-11-14, docs/AUDIT-SCALES.md), the 6 chord's tones on the beats both ways; the minor (Cm6 + B°7), dominant (C7 + B°7) and 7♭5 versions in H25–H26 | pitch sequence + chord tones on beats |
 | H2 | **the dominant 7th scale descending from each chord tone** (1, 3, 5, 7) with the **half-step rule** (from the root: 1 – ♮7 – ♭7 so the ♭7 lands on a beat) | chord tones of the dom7 on every beat |
 | H3 | **triad arpeggios** on each degree of the scale (up), then down the scale | sequence match |
 | H4 | **"chords"** in Harris's sense — 4-note: 1-3-5-7 from each degree, and the **"3 to 9"** arpeggio (3-5-7-9), then down the scale | sequence match, chord tones on beats |

@@ -134,11 +134,11 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'The 6th chord and the diminished make an 8-note scale; on the dominant scale, chord tones land on the beats.', he: 'אקורד השישית והמוקטן יוצרים סולם של 8 צלילים; בסולם הדומיננטה צלילי האקורד נוחתים על הפעמות.' },
     steps: [
       {
-        say: { en: 'Barry Harris adds one note to the major scale: the raised 5th. C, D, E, F, G, G sharp, A, B.', he: 'בארי האריס מוסיף צליל אחד לסולם המז׳ורי: הקווינטה המוגבהת. דו, רה, מי, פה, סול, סול דיאז, לה, סי.' },
+        say: { en: 'Barry Harris adds one note to the major scale: the ♭6. C, D, E, F, G, A flat, A, B — the C6 chord and B°7 in turn.', he: 'בארי האריס מוסיף צליל אחד לסולם המז׳ורי: ה־♭6. דו, רה, מי, פה, סול, לה במול, לה, סי — אקורד C6 ו־B°7 לסירוגין.' },
         play: [notes([60, 62, 64, 65, 67, 68, 69, 71, 72], 0.3)],
       },
       {
-        say: { en: 'Now every chord tone of C6 falls on a beat and every other note sits between: the line swings by itself.', he: 'עכשיו כל צליל של C6 נופל על פעמה וכל צליל אחר יושב ביניהם: הקו מסווינג מעצמו.' },
+        say: { en: 'Up or down, every chord tone of C6 falls on a beat and every other note sits between: the line swings by itself.', he: 'בעלייה ובירידה, כל צליל של C6 נופל על פעמה וכל צליל אחר יושב ביניהם: הקו מסווינג מעצמו.' },
         play: [notes([72, 71, 69, 68, 67, 65, 64, 62, 60], 0.3)],
       },
       {

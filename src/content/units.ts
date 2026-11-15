@@ -23,6 +23,7 @@ import { UNITS as FIRST_STEPS } from './mini/firstSteps';
 import { UNITS as HARRIS2 } from './mini/harris2';
 import { UNITS as HARMONY3 } from './mini/harmony3';
 import { UNITS as HARRIS_PIVOT } from './mini/harrisPivot'; // BH-G
+import { UNITS as SCALE_WORK } from './mini/scaleWork'; // AUDIT-SCALES
 import { UNITS as VL_EAR } from './mini/vlEar';
 import { UNITS as KEY_MOVES } from './mini/keyMoves';
 // AUDIT-GAPS-2: bebop vocabulary (k-vocab, g-bebop, b-bebop).
@@ -54,6 +55,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HARRIS2,
   ...HARMONY3,
   ...HARRIS_PIVOT,
+  ...SCALE_WORK,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

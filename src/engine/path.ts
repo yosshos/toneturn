@@ -5,6 +5,8 @@
 // steps; ✓ ("you already know this") is derived from evidence with every safeguard of §6 / §13; nothing derived is
 // stored — only facts (done steps, test-out events, frozen units).
 
+import { K_HARM_DIFF } from './drills/harmLadder';
+import { K_INDEP_DIFF } from './drills/indepDrills';
 import { questionTags } from './taxonomy';
 import { SUB_PREREQ, IMPORTANCE } from './scheduler';
 import { DOMAINS, domainOf, evidence, expected, type DomainId, type RatingEvent, type Ratings } from './rating';
@@ -219,6 +221,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-three-dim': 'jazz', 'bh-dim-roles': 'jazz', 'bh-m6-bass': 'jazz', 'jazz-dictation': 'jazz', planing: 'jazz',
   // BH-G: the pivot (Barry Harris's pivot arpeggio).
   'bh-pivot-arp': 'jazz',
+  // AUDIT-SCALES: Barry Harris borrowing by ear.
+  'bh-borrow': 'jazz', 'bh-sixfive': 'jazz', 'bh-moves': 'jazz', 'bh-tesseract': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -386,8 +390,19 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * a later-added easier level opens before the harder ones after it). BH-G: the pivot sits at ~1450–1650,
  * between the Harris lines' block chords (harris 7) and the brothers (harris 8).
  */
-export const KEYS_LEVEL_DIFF: Record<string, number> = { 'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650 };
-export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
+export const KEYS_LEVEL_DIFF: Record<string, number> = {
+  'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650,
+  // AUDIT-SCALES (owner 2026-11-14): the scale matrix (one-octave hands together and minor scales early, the modes after
+  // the jazz scales, 4 octaves last), the Harris diminished scales up and down, hand independence, the harmonization
+  // ladder (lines / 3rds ~900–1100, triads / 7ths 1100–1350, drops and borrowing 1350–1650).
+  'scales-16': 920, 'scales-17': 990, 'scales-18': 1060,
+  'scales-19': 1530, 'scales-20': 1570, 'scales-21': 1610, 'scales-22': 1650, 'scales-23': 1690, 'scales-24': 1730, 'scales-25': 1770, 'scales-26': 1810, 'scales-27': 1850,
+  'scales-28': 1490, 'scales-29': 1510, 'scales-30': 1880, 'scales-31': 1920, 'scales-32': 1990, 'scales-33': 2030,
+  'harris-25': 1020, 'harris-26': 1100,
+  ...K_INDEP_DIFF,
+  ...K_HARM_DIFF,
+};
+export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, 'k-indep': 3, 'k-harm': 3, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
 /**

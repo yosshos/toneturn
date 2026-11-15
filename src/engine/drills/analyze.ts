@@ -7,6 +7,9 @@ import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
+/** Borrowing feedback: the voices of a 4-note chord, top to bottom. */
+const VOICE_EN = ['Soprano', 'Alto', 'Tenor', 'Bass'];
+const VOICE_HE = ['הסופרן', 'האלט', 'הטנור', 'הבס'];
 const EPS = 1e-6;
 
 function mean(xs: number[]): number {
@@ -322,7 +325,7 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: 
   // Voice leading on the piano: the microphone hears the chord, not which voicing (octave, inversion) was chosen.
   if (drill.goal.vl && !drill.goal.vl.strings && drill.spec?.instrument !== 'guitar') out.push('voicing');
   if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
-  if (drill.goal.articulation) out.push('articulation');
+  if (drill.goal.articulation || drill.goal.handArt) out.push('articulation');
   if (drill.goal.pedal) out.push('pedal');
   return out;
 }
@@ -507,6 +510,40 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     if (kots.length) {
       kot = median(kots);
       kdr = median(kdrs);
+    }
+  }
+
+  // Hand independence (k-indep): held notes kept down; a different touch per hand.
+  let holdShort = 0;
+  let holdN = 0;
+  if (goal.holds && !opts.mic) {
+    exp.forEach((n, i) => {
+      const j = match[i];
+      if (!n.hold || j === null || played[j].off === null) return;
+      holdN++;
+      const need = goal.holds! * n.dur * beatMs;
+      if (played[j].off! - played[j].on < need) holdShort++;
+    });
+  }
+  const handArt: { hand: Hand; art: 'legato' | 'staccato' | 'portato'; kot: number | null; kdr: number | null }[] = [];
+  if (goal.handArt) {
+    for (const h of ['R', 'L'] as Hand[]) {
+      const art = goal.handArt[h];
+      if (!art) continue;
+      const os = series[h].filter((o) => o.idx.length === 1);
+      const kots: number[] = [];
+      const kdrs: number[] = [];
+      for (let k = 1; k < os.length; k++) {
+        const ja = match[os[k - 1].idx[0]];
+        const jb = match[os[k].idx[0]];
+        if (ja === null || jb === null) continue;
+        const a = played[ja];
+        const b = played[jb];
+        if (a.off === null || b.on <= a.on) continue;
+        kots.push(a.off - b.on);
+        kdrs.push((a.off - a.on) / (b.on - a.on));
+      }
+      handArt.push({ hand: h, art, kot: kots.length ? median(kots) : null, kdr: kdrs.length ? median(kdrs) : null });
     }
   }
 
@@ -698,6 +735,33 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       en: `Portato length off (${pct(kdr)}%)`,
       he: `אורך הפורטטו לא מדויק (${pct(kdr)}%)`,
     });
+  }
+  if (holdN > 0 && holdShort > 0) {
+    // Borrowing: name the voice that let go (oblique motion — the other voices hold).
+    const v = exp.find((n, i) => n.hold && n.vox !== undefined && match[i] !== null && played[match[i]!].off !== null && played[match[i]!].off! - played[match[i]!].on < goal.holds! * n.dur * beatMs)?.vox;
+    F.push({
+      sev: 1 + (holdShort / holdN) * 4,
+      en: v !== undefined ? `${VOICE_EN[v]} didn't hold (${holdShort} of ${holdN} held notes let go early)` : `Held notes let go early (${holdShort} of ${holdN})`,
+      he: v !== undefined ? `${VOICE_HE[v]} לא החזיק (${holdShort} מתוך ${holdN} צלילים מוחזקים שוחררו מוקדם)` : `צלילים מוחזקים שוחררו מוקדם (${holdShort} מתוך ${holdN})`,
+    });
+  }
+  // Borrowing: a borrowed or returning note missed — name the voice.
+  {
+    const miss = exp.findIndex((n, i) => n.vox !== undefined && n.chordId === undefined && !ok[i]);
+    if (miss >= 0) {
+      const n = exp[miss];
+      F.push({
+        sev: 2,
+        en: n.ret ? `${VOICE_EN[n.vox!]} didn't return` : `${VOICE_EN[n.vox!]} didn't move to the borrowed note`,
+        he: n.ret ? `${VOICE_HE[n.vox!]} לא חזר` : `${VOICE_HE[n.vox!]} לא עבר לצליל המושאל`,
+      });
+    }
+  }
+  for (const ha of handArt) {
+    const hn = ha.hand === 'R' ? 'RH' : 'LH';
+    const hh = ha.hand === 'R' ? 'יד ימין' : 'יד שמאל';
+    if (ha.art === 'legato' && ha.kot !== null && ha.kot < 0) F.push({ sev: -ha.kot / 10, en: `${hn} not legato (gaps ${Math.round(-ha.kot)} ms)`, he: `${hh} לא לגאטו (רווחים של ${Math.round(-ha.kot)} ms)` });
+    if (ha.art === 'staccato' && ha.kdr !== null) F.push({ sev: ha.kdr / 0.5, en: `${hn} staccato too long (${pct(ha.kdr)}%)`, he: `${hh}: סטקטו ארוך מדי (${pct(ha.kdr)}%)` });
   }
   if (chordToneOnBeats !== null)
     F.push({

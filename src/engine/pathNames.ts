@@ -159,6 +159,10 @@ const SHORT: Record<string, L2> = {
   'bh-m6-bass': { en: 'm6 = 9', he: 'm6 = 9' },
   // BH-G: the pivot (Barry Harris's pivot arpeggio)
   'bh-pivot-arp': { en: 'The pivot', he: 'הפיבוט' },
+  'bh-borrow': { en: 'Borrowing', he: 'השאלה' },
+  'bh-sixfive': { en: 'Eight on the V', he: 'שמונה על ה־V' },
+  'bh-moves': { en: 'Harris moves', he: 'המהלכים של האריס' },
+  'bh-tesseract': { en: '16 around a dim', he: '16 סביב דימיניש' },
   'function-ear': { en: 'T · PD · D', he: 'T · PD · D' },
   'modal-cadence': { en: 'Modal cadences', he: 'קדנצות מודאליות' },
   'borrowed-ext': { en: 'Borrowed colours', he: 'צבעים שאולים' },

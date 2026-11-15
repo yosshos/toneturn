@@ -39,7 +39,7 @@ export function humanTake(d: Drill, bpm: number, sd: number, seed = 7, shift = 0
     if (dyn === 'cresc') vel = 45 + 55 * ((n.pitch - (top - 24)) / 24) + g() * 2;
     const next = ordered.find((o) => o.hand === n.hand && o.beat > n.beat + 1e-6);
     const gap = next ? (next.beat - n.beat) * beatMs : n.dur * beatMs;
-    const art = d.goal.articulation;
+    const art = d.goal.handArt?.[n.hand] ?? d.goal.articulation;
     const off = art === 'legato' ? on + gap + 15 : art === 'staccato' ? on + 0.3 * gap : art === 'portato' ? on + 0.7 * gap : on + 0.9 * n.dur * beatMs;
     out.push({ pitch: n.pitch + shift, on, off, vel: Math.max(1, Math.min(127, Math.round(vel))) });
   });

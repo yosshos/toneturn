@@ -45,7 +45,7 @@ export const EXTRA_SCALES: Record<ExtraMode, number[]> = {
 const MODE_FALLBACK: Record<ExtraMode, ScaleType> = { dorian: 'natural', phrygian: 'natural', lydian: 'major', locrian: 'natural', altered: 'melodic', 'whole-tone': 'chromatic', 'dim-hw': 'chromatic', 'dim-wh': 'chromatic', 'harmonic-major': 'major' };
 
 /** Scales offered by the creator, in menu order. */
-export const CREATOR_SCALES: CreatorScale[] = ['major', 'natural', 'harmonic', 'melodic', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian', 'harmonic-major', 'altered', 'whole-tone', 'dim-hw', 'dim-wh', 'bebop-dom', 'six-dim', 'blues', 'pentatonic', 'chromatic'];
+export const CREATOR_SCALES: CreatorScale[] = ['major', 'natural', 'harmonic', 'melodic', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'locrian', 'harmonic-major', 'altered', 'whole-tone', 'dim-hw', 'dim-wh', 'bebop-dom', 'six-dim', 'six-dim-m', 'blues', 'pentatonic', 'chromatic'];
 export const SCALE_NAMES: Record<CreatorScale, T2> = {
   major: t2('Major', 'מז׳ור'),
   natural: t2('Natural minor', 'מינור טבעי'),
@@ -63,6 +63,7 @@ export const SCALE_NAMES: Record<CreatorScale, T2> = {
   'dim-wh': t2('Diminished (whole–half)', 'מוקטן (שלם–חצי)'),
   'bebop-dom': t2('Bebop dominant', 'ביבופ דומיננטי'),
   'six-dim': t2('Sixth-diminished (Barry Harris)', 'שישית-מוקטן (בארי האריס)'),
+  'six-dim-m': t2('Minor sixth-diminished (Barry Harris)', 'מינור שישית-מוקטן (בארי האריס)'),
   blues: t2('Blues', 'בלוז'),
   pentatonic: t2('Pentatonic', 'פנטטוני'),
   chromatic: t2('Chromatic', 'כרומטי'),

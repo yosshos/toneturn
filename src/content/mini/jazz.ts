@@ -7,6 +7,7 @@ import { PROGRESSIONS } from '../../engine/jazz';
 import { backingTrack, type ChartId } from '../../engine/perform';
 // BH-G: the pivot (the pivot arpeggio) comes just before the scale line with a pivot.
 import { PIVOT_LESSON } from './harrisPivot';
+import { BH_MORE, BH_UP_DOWN } from './scaleWork'; // AUDIT-SCALES: up and down, the four scales, borrowing
 
 const C = { letter: 'C' as const, acc: 0 as const };
 const chord = (midis: number[], duration = 1.2, arpeggio?: boolean): Stimulus => ({ kind: 'chord', midis, duration, ...(arpeggio ? { arpeggio } : {}) });
@@ -447,6 +448,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes(SIXDIM_C)],
         show: { notes: SIXDIM_C, key: 'C', text: { en: 'C D E F G A♭ A B', he: 'C D E F G A♭ A B' } },
       },
+      ...BH_UP_DOWN,
       {
         say: { en: 'Here is the magic: give every scale note its chord, and they alternate — 6 chord, diminished, 6 chord. Rest, tension, rest.', he: 'וזה הקסם: נותנים לכל צליל בסולם את האקורד שלו, והם מתחלפים — אקורד 6, דימיניש, אקורד 6. מנוחה, מתח, מנוחה.' },
         play: HARMONISED.map((c, i) => chord(c, i === HARMONISED.length - 1 ? 1.4 : 0.7)),
@@ -479,6 +481,7 @@ export const LESSONS: MiniLesson[] = [
         play: [line(SIXDIM_C, 120, 1)],
         show: { notes: SIXDIM_C, key: 'C', text: { en: 'C E G A on the beats', he: 'C E G A על הפעמות' } },
       },
+      ...BH_MORE,
       {
         say: { en: 'The harmonized scale in full: each scale note on top, its chord underneath. Notes from C6 get an inversion of C6; notes from the diminished get B°7. Up the whole octave:', he: 'הסולם המהורמן במלואו: כל צליל בסולם למעלה, והאקורד שלו מתחתיו. צלילים מ־C6 מקבלים היפוך של C6; צלילים מהדימיניש מקבלים B°7. לאורך כל האוקטבה:' },
         play: HARMONISED_FULL.map((c, i) => chord(c, i === HARMONISED_FULL.length - 1 ? 1.2 : 0.55)),
@@ -869,7 +872,14 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Dm7 = F6 · Dm7♭5 = Fm6', he: 'Dm7 = F6 · Dm7♭5 = Fm6' } },
       },
       {
-        say: { en: 'Practice the table in one key until it is automatic, then play ii–V–I around the circle as major 6, minor 6, major 6 — in C: F6, Dm6, C6.', he: 'תרגלו את הטבלה בסולם אחד עד שזה אוטומטי, ואז נגנו ii–V–I סביב המעגל כמז׳ור 6, מינור 6, מז׳ור 6 — בדו: F6, Dm6, C6.' },
+        say: { en: 'One dominant, eight expressions: the four brothers G7, B♭7, D♭7, E7 share one diminished in their scales; the four minor 6ths on their 5ths, Dm6, Fm6, A♭m6, Bm6, share another. Dm6, the important minor, is natural; A♭m6, the tritone’s minor, is altered.', he: 'דומיננט אחד, שמונה ביטויים: ארבעת האחים G7, ‏B♭7, ‏D♭7, ‏E7 חולקים דימיניש אחד בסולמות שלהם; ארבעת המינור 6 על הקווינטות, ‏Dm6, ‏Fm6, ‏A♭m6, ‏Bm6, חולקים אחר. ‏Dm6, המינור החשוב, טבעי; ‏A♭m6, המינור של הטריטון, אלטרד.' },
+        play: [chord([43, 59, 62, 65, 69], 0.8), chord([43, 62, 65, 69, 71], 0.8), chord([43, 63, 65, 68, 71], 0.8), chord([43, 59, 61, 65, 68], 0.8)],
+        show: { text: { en: 'G7 · Dm6/G · A♭m6/G · D♭7/G', he: 'G7 · Dm6/G · A♭m6/G · D♭7/G' } },
+      },
+      {
+        say: { en: 'Resolving to C6: Dm6 moves by step; in A♭m6 the altered tones fall a half step. Dm6 also serves the whole ii–V.', he: 'הפתרון ל־C6: ‏Dm6 זז בצעדים; ב־A♭m6 הצלילים האלטרד יורדים חצי טון. ‏Dm6 משרת גם את כל ה־ii–V.' },
+        play: [chord([43, 62, 65, 69, 71], 0.8), chord([48, 64, 67, 69, 72], 0.9), rest(0.3), chord([43, 63, 65, 68, 71], 0.8), chord([48, 62, 64, 67, 72], 0.9)],
+        show: { text: { en: 'Dm6/G → C6 · A♭m6/G → C', he: 'Dm6/G → C6 · A♭m6/G → C' } },
       },
       {
         say: { en: 'To keep: maj7 → 6 on the root; m7 → major 6 up a minor third; 7 → minor 6 on the 5th; m7♭5 → minor 6 up a minor third; altered → minor 6 up a half step; sus → major 6 down a whole step.', he: 'לזכור: maj7 → 6 על השורש; m7 → מז׳ור 6 טרצה קטנה למעלה; 7 → מינור 6 על הקווינטה; m7♭5 → מינור 6 טרצה קטנה למעלה; אלטרד → מינור 6 חצי טון למעלה; סאס → מז׳ור 6 טון שלם למטה.' },
@@ -1200,7 +1210,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1–2 · 2–3 · 4–5 · 5–6 · 6–7', he: '1–2 · 2–3 · 4–5 · 5–6 · 6–7' } },
       },
       {
-        say: { en: 'Why add a note at all: a seven-note scale in eighth notes drifts against the beat. Eight notes fill a 4/4 bar exactly. Coming down with A♭ added, C, A, G, E and C land on the beats.', he: 'למה להוסיף צליל בכלל: סולם של שבעה צלילים בשמיניות זוחל ביחס לפעמה. שמונה צלילים ממלאים בדיוק תיבה של 4/4. בירידה עם לה במול מוסף, דו, לה, סול, מי ודו נוחתים על הפעמות.' },
+        say: { en: 'Why add a note at all: a seven-note scale in eighth notes drifts against the beat. Eight notes fill a 4/4 bar exactly. With A♭ added, going up or coming down, C, E, G and A land on the beats.', he: 'למה להוסיף צליל בכלל: סולם של שבעה צלילים בשמיניות זוחל ביחס לפעמה. שמונה צלילים ממלאים בדיוק תיבה של 4/4. עם לה במול מוסף, בעלייה ובירידה, דו, מי, סול ולה נוחתים על הפעמות.' },
         play: [line([72, 71, 69, 68, 67, 65, 64, 62, 60], 120)],
         show: { notes: [72, 71, 69, 68, 67, 65, 64, 62, 60], key: 'C', text: { en: 'C · A · G · E · C on the beats', he: 'C · A · G · E · C על הפעמות' } },
       },

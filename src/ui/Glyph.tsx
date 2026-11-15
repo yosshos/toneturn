@@ -1113,6 +1113,48 @@ Object.assign(GLYPHS, {
       <path d="M-26 21 H26" stroke={I} strokeWidth={3.2} />
     </>
   ),
+  // AUDIT-SCALES (owner 2026-11-14)
+  /** Hand independence: a held whole note above, a running figure below — two hands, two rhythms. */
+  indep: (
+    <>
+      <ellipse cx={-10} cy={-12} rx={7} ry={4.6} fill="none" stroke={I} strokeWidth={2.6} transform="rotate(-20 -10 -12)" />
+      <path d="M-4 -12 H24" stroke={I} strokeWidth={2.4} strokeDasharray="4 3" />
+      {head(-18, 16, 4.2, 3)}
+      {head(-6, 12, 4.2, 3)}
+      {head(6, 16, 4.2, 3)}
+      {head(18, 12, 4.2, 3)}
+      <path d="M-14.5 15V2M-2.5 11V-2M9.5 15V2M21.5 11V-2" {...sw} strokeWidth={2.2} />
+      <path d="M-14.5 2L-2.5 -2M9.5 2L21.5 -2" stroke={I} strokeWidth={3.6} />
+    </>
+  ),
+  /** The harmonization ladder: stacked 3rds climbing a step at a time, a chord on every degree. */
+  harmlad: (
+    <>
+      {head(-16, 18, 4.4, 3.2)}
+      {head(-16, 9, 4.4, 3.2)}
+      {head(-16, 0, 4.4, 3.2)}
+      {head(0, 13, 4.4, 3.2)}
+      {head(0, 4, 4.4, 3.2)}
+      {head(0, -5, 4.4, 3.2)}
+      {head(16, 8, 4.4, 3.2)}
+      {head(16, -1, 4.4, 3.2)}
+      {head(16, -10, 4.4, 3.2)}
+      <path d="M-24 -18 L24 -26" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  /** The ladder on the neck: four strings, a voicing climbing across them. */
+  gharmlad: (
+    <>
+      <path d="M-26 -15 H26 M-26 -5 H26 M-26 5 H26 M-26 15 H26" stroke={I} strokeWidth={1.6} />
+      <circle cx={-16} cy={15} r={3.6} fill={I} />
+      <circle cx={-12} cy={5} r={3.6} fill={I} />
+      <circle cx={-16} cy={-5} r={3.6} fill={I} />
+      <circle cx={10} cy={5} r={3.6} fill={I} />
+      <circle cx={14} cy={-5} r={3.6} fill={I} />
+      <circle cx={10} cy={-15} r={3.6} fill={I} />
+      <path d="M-6 -20 L4 -24" {...sw} strokeWidth={2.4} />
+    </>
+  ),
 });
 export type GlyphKind = keyof typeof GLYPHS;
 

@@ -14,6 +14,8 @@ import { drumFamilies } from './drums';
 import { widenFamilies } from './keys12';
 import { ADDON_FAMILY, examOfGrade, GUITAR_META, guitarAddOnsOf, itemTempo } from './guitarMeta';
 import { core2Levels, generateCore2 } from './guitarCore2';
+import { generateTech, techLevels } from './guitarTech'; // AUDIT-SCALES §4: guitar technique gaps
+import { genHarmGuitar, guitarHarmLevels, guitarSixFiveLevels, PART_D_KINDS } from './harmLadder'; // AUDIT-SCALES: the harmonization ladder on the neck
 import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT-CONTENT-THEORY R-4/R-5
 import { generateGuitarEar } from './guitarEar';
@@ -2354,6 +2356,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
   // GUITAR_DEEPENING §4.1 (Batch C): the new core kinds live in guitarCore2.ts.
   const more = generateCore2(s, tu);
   if (more) return more;
+  const tech = generateTech(s, tu);
+  if (tech) return tech;
+  if (s.family === 'g-harm' || (s.family === 'g-harris' && (s.kind.startsWith('sf-') || s.kind.startsWith('bw-') || PART_D_KINDS.includes(s.kind)))) return genHarmGuitar(s, tu);
   // AUDIT-CONTENT-THEORY R-1/R-5: the g-meter kinds (hemiola, displacement, 5:4 / 7:4) also serve the bass's b-time 11–12.
   if (s.kind.startsWith('gm-')) return generateGuitarMeter(s, tu);
   switch (s.family) {
@@ -2593,7 +2598,12 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-harris', 8, 'The pivot on string sets: maj7, m7, 7, then ii–V–I', 'הפיבוט על קבוצות מיתרים: maj7, ‏m7, ‏7, ואז ii–V–I', range(4).map((o) => H('pivot-arp', { option: o })), CYC4, [60, 120], '8ths', 8),
       LT('g-harris', 9, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', range(2).map((o) => H('scale-pivot', { option: o })), CYC4, [60, 120], '8ths', 8),
       LT('g-harris', 10, 'Pivot and enclosure down the bebop scale', 'פיבוט וכיתור במורד סולם הביבופ', range(2).map((o) => H('pivot-encl', { option: o })), CYC4, [60, 120], '8ths', 8),
+      // AUDIT-SCALES (owner 2026-11-14): eight expressions of one dominant, Harris's moves, BARRY-HARRIS-METHOD Part D (harmLadder.ts).
+      ...guitarSixFiveLevels(11),
     ]),
+    // AUDIT-SCALES (owner 2026-11-14): every scale harmonized up and down the neck — lines, 3rds, triads, 7ths, drop 2 /
+    // drop 3 on every string set — and Barry Harris borrowing (the borrowing levels are in the jazz add-on).
+    fam('g-harm', 'Scale harmonization on the neck', 'הרמוניזציה של סולמות על הצוואר', 'classical', ['all'], guitarHarmLevels().map((lv) => (lv.level >= 10 ? { ...lv, addOn: 'jazz' as const } : lv))),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),
       L('g-reading', 2, 'Position I, all strings', 'מצב I, כל המיתרים', [RD('position', { position: 1 })], [0, 7, 5]),
@@ -2669,7 +2679,7 @@ const onsetsPerBeat = (d: Drill): number => new Set(d.notes.map((n) => n.beat)).
  * differs from the level's).
  */
 function applyGuitarMeta(f: GuitarFamilyDef): GuitarFamilyDef {
-  const extra = core2Levels()[f.id] ?? [];
+  const extra = [...(core2Levels()[f.id] ?? []), ...(techLevels()[f.id] ?? [])];
   const famAddOn = f.addOn ?? ADDON_FAMILY[f.id];
   const levels = [...f.levels, ...extra].map((lv): GuitarLevelDef => {
     const meta = GUITAR_META[lv.id];

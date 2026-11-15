@@ -615,6 +615,41 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M7.5 7l6.5 3.6 M7.5 17l6.5 -3.6', false)}
     </>
   ),
+  // AUDIT-SCALES: hand independence — a held whole note over a running pair; the ladder — stacked 3rds climbing; on the neck.
+  'family:k-indep': () => (
+    <>
+      <ellipse cx={8} cy={6} rx={3} ry={2} fill="none" />
+      {p('M12 6h9', false)}
+      {head(5, 18, 1.8)}
+      {head(11, 16, 1.8)}
+      {head(17, 18, 1.8)}
+      {p('M6.6 17.4V11 M12.6 15.4V10 M18.6 17.4V11 M6.6 11l12 0', false)}
+    </>
+  ),
+  'family:k-harm': () => (
+    <>
+      {head(5, 19, 1.8)}
+      {head(5, 15, 1.8)}
+      {head(5, 11, 1.8)}
+      {head(12, 16, 1.8)}
+      {head(12, 12, 1.8)}
+      {head(12, 8, 1.8)}
+      {head(19, 13, 1.8)}
+      {head(19, 9, 1.8)}
+      {head(19, 5, 1.8)}
+    </>
+  ),
+  'family:g-harm': () => (
+    <>
+      <path d="M2 6h20 M2 11h20 M2 16h20 M2 21h20" strokeWidth={0.8} />
+      {dot(6, 21, 1.6)}
+      {dot(8, 16, 1.6)}
+      {dot(6, 11, 1.6)}
+      {dot(16, 16, 1.6)}
+      {dot(18, 11, 1.6)}
+      {dot(16, 6, 1.6)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory': () => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (
