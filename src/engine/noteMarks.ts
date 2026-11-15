@@ -16,7 +16,8 @@ export const worstMark = (ms: NoteMark[]): NoteMark => MARK_ORDER.find((w) => ms
 export function markOf(r: NoteResult | undefined, timingMs: number): NoteMark {
   if (!r) return undefined;
   if (!r.played) return 'missed';
-  if (!r.ok) return 'wrong';
+  // Not ok but the right note (a drum hit matched beyond the timing window): a timing error, not a wrong note.
+  if (!r.ok) return r.dev !== null && Math.abs(r.dev) > timingMs && r.played.pitch === r.exp.pitch ? (r.dev < 0 ? 'early' : 'late') : 'wrong';
   if (r.dev !== null && Math.abs(r.dev) > timingMs) return r.dev < 0 ? 'early' : 'late';
   return 'ok';
 }

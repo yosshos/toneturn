@@ -1,7 +1,9 @@
 // COURSE-FEEDBACK-UI slices 5 and 8, the rest: the hands-together gap (the ⇆ chip), velocity bars, note roles on the
 // chord chart, and the "changed" tab not counting as a kept / broken bar.
 import { describe, expect, it } from 'vitest';
-import { generate } from '../src/engine/drills/generate';
+import { FSI, PDI, generate, isoLatin } from '../src/engine/drills/generate';
+import { markOf } from '../src/engine/noteMarks';
+import { fakeTake } from '../src/ui/fakeTake';
 import { analyzeTake, expTimeMs, improvNotes } from '../src/engine/drills/analyze';
 import { HANDS_CHIP_MS, handsGap, liveGrade } from '../src/engine/drills/liveGrade';
 import { velBars, velBarsShown, velStep, velTarget } from '../src/engine/drills/velBars';
@@ -66,6 +68,31 @@ describe('velocity bars', () => {
     const bars = velBars(mf, m.perNote, CAL);
     expect(bars.slice(0, 3).map((b) => b.step)).toEqual([1, 3, 4]);
     expect(bars[3].step).toBeNull();
+  });
+});
+
+describe('follow-ups', () => {
+  it('a drum hit matched beyond the window is early / late (a tick), a wrong drum stays wrong', () => {
+    const exp = { pitch: 38, beat: 0, dur: 1, hand: 'R' as const, voice: 'snare' as const };
+    expect(markOf({ exp, played: { pitch: 38, on: -60, off: null, vel: 80 }, dev: -60, ok: false }, 40)).toBe('early');
+    expect(markOf({ exp, played: { pitch: 38, on: 70, off: null, vel: 80 }, dev: 70, ok: false }, 40)).toBe('late');
+    expect(markOf({ exp, played: { pitch: 36, on: 5, off: null, vel: 80 }, dev: 5, ok: false }, 40)).toBe('wrong');
+  });
+  it("the dev drum take's off-time hits are matched and ticked, not missed + extra", () => {
+    const d = generate({ family: 'd-rock', kind: '1:rock', option: 0, key: 0, hands: 'RL', instrument: 'drums' } as never);
+    const f = fakeTake(d, 70, CAL, 'mixed');
+    const w = f.m.drum!.windowMs;
+    const marks = f.m.perNote.map((r) => markOf(r, w));
+    expect(marks).toContain('early');
+    expect(marks).toContain('late');
+  });
+  it('Hebrew keys titles isolate their Latin runs (key, dynamic mark)', () => {
+    expect(isoLatin("C מז'ור · אחיד mf")).toBe(`${FSI}C${PDI} מז'ור · אחיד ${FSI}mf${PDI}`);
+    expect(isoLatin('D♭ מז׳ור')).toBe(`${FSI}D♭${PDI} מז׳ור`);
+    const mf = generate({ family: 'scales', kind: 'scale', key: 0, hands: 'R', scale: 'major', octaves: 2, dynamics: 'even-mf' } as never);
+    expect(mf.title.he).toContain(`${FSI}mf${PDI}`);
+    expect(mf.title.he.replace(/⁨[^⁩]*⁩/g, '')).not.toMatch(/[A-Za-z]/);
+    expect(mf.title.en).not.toContain(FSI);
   });
 });
 

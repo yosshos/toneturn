@@ -42,6 +42,7 @@ import { STRINGS } from '../i18n/strings';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend } from './DrillTake';
+import { BidiText, plainText } from './BidiText';
 import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the one-screen review
 import { ErrorMap, barMarks, worstBar } from './ErrorMap'; // slice 3: loop the spot
 import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
@@ -242,7 +243,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <button className="icon-btn" onClick={back} aria-label="Back">
         <span className="flip-rtl">‹</span>
       </button>
-      <h1 title={typeof title === 'string' ? title : undefined}>{title}</h1>
+      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });

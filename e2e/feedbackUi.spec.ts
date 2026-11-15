@@ -459,8 +459,7 @@ for (const lang of ['en', 'he'] as const)
       await page.locator('[data-drill-play]').click();
       await expect.poll(async () => Number(await vb.getAttribute('data-vel-played')), { timeout: 20_000 }).toBeGreaterThan(1);
       await fits(page, 'velocity during');
-      // (the keys control items' Hebrew titles carry "C … mf" outside <bdi>: content strings, not this row)
-      if (lang === 'he' && plays !== 'keys') expect(await latinLeft(page)).toEqual([]);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
       await shot(page, `s5-velocity-${plays}-${lang}`);
     });
 test('velocity bars stay hidden on an item without a loudness goal', async ({ page }) => {
@@ -489,8 +488,7 @@ for (const lang of ['en', 'he'] as const)
       await expect(page.locator('.mk-prior, [data-prior]')).toHaveCount(0);
       await toggle.click();
       await expect(toggle).toHaveAttribute('data-last-take', 'on');
-      // (the drum dev take's off-time hits fall outside the drum window — missed, not early / late — so no drum ticks)
-      if (plays !== 'drums') await expect.poll(() => page.locator('.mk-prior .mk-tick, [data-prior]').count()).toBeGreaterThan(0);
+      await expect.poll(() => page.locator('.mk-prior .mk-tick, [data-prior]').count()).toBeGreaterThan(0);
       await fits(page, 'review with the last take');
       const next = await page.locator('.take-review [data-next]').boundingBox();
       expect(next!.y + next!.height).toBeLessThanOrEqual(720);
@@ -565,4 +563,62 @@ for (const lang of ['en', 'he'] as const)
     await shot(page, `s8-improv-studio-${lang}`);
     await page.locator('[data-is-mode="trade"]').click();
     await expect(page.locator('[data-is-mode="trade"]')).toHaveAttribute('aria-selected', 'true');
+  });
+
+// Hands together, one screen: the first hands-together level of every keys family. One system at a time (RH + LH of the
+// same bars, paged), no staff card scrolled away inside the score box or covered by the pocket meter, at 320×720.
+const HT_LEVELS: [string, string][] = [
+  ['k-first', 'k-first-2'], ['scales', 'scales-3'], ['arpeggios', 'arpeggios-3'], ['cadences', 'cadences-1'], ['fingers', 'fingers-2'],
+  ['control', 'control-7'], ['advanced', 'advanced-2'], ['k-sixdim', 'k-sixdim-3'], ['voicings', 'voicings-9'], ['k-reharm', 'k-reharm-1'],
+  ['k-theory', 'k-theory-2'], ['jazz', 'jazz-4'], ['k-bebop', 'k-bebop-7'], ['accomp', 'accomp-6'], ['k-rhythm', 'k-rhythm-1'],
+  ['k-indep', 'k-indep-4'], ['k-sharm', 'k-sharm-13'], ['k-tune', 'k-tune-5'], ['k-ctx', 'k-ctx-12'], ['k-harrisline', 'k-harrisline-8'],
+  ['k-ctone', 'k-ctone-4'], ['k-mediant', 'k-mediant-6'], ['k-organ', 'k-organ-1'], ['k-tex', 'k-tex-1'], ['k-read', 'k-read-4'],
+];
+for (const lang of ['en', 'he'] as const)
+  test(`hands together: no staff card covered by the meter or scrolled away, every keys family (${lang})`, async ({ page }) => {
+    test.setTimeout(600_000);
+    await seed(page, lang, 'keys');
+    const checked: string[] = [];
+    for (const [family, level] of HT_LEVELS) {
+      await page.goto('about:blank');
+      await page.goto(`/?unlock=all&lang=${lang}#/drills`);
+      await page.locator('[data-topic="all"]').click();
+      const fam = page.locator(`[data-family="${family}"]`);
+      // (a family hidden in this build, e.g. by the verified-content gate, is skipped)
+      if (!(await fam.isVisible({ timeout: 3000 }).catch(() => false))) continue;
+      await fam.click();
+      const card = page.locator(`[data-level="${level}"]`);
+      if (!(await card.count())) continue;
+      await card.scrollIntoViewIfNeeded();
+      if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
+      const start = page.locator(`[data-level-start="${level}"]`);
+      if (!(await start.isVisible({ timeout: 3000 }).catch(() => false))) continue;
+      await start.click();
+      await page.locator('[data-brief-play]').click({ timeout: 3000 }).catch(() => {});
+      if (!(await page.locator('[data-drills="run"]').isVisible({ timeout: 8000 }).catch(() => false))) continue;
+      await page.waitForTimeout(700);
+      const g = await page.evaluate(() => {
+        const banner = document.querySelector('.sim-banner') as HTMLElement | null;
+        if (banner) banner.style.display = 'none';
+        const box = document.querySelector('.drill-staff') as HTMLElement | null;
+        const pocket = document.querySelector('.pocket') as HTMLElement | null;
+        const cards = [...document.querySelectorAll('.drill-staff .note-staff')].map((e) => e.getBoundingClientRect());
+        return {
+          cards: cards.length,
+          inner: box ? box.scrollHeight - box.clientHeight : 0,
+          boxBottom: box ? box.getBoundingClientRect().bottom : 0,
+          lowest: cards.length ? Math.max(...cards.map((c) => c.bottom)) : 0,
+          pocketTop: pocket ? pocket.getBoundingClientRect().top : 9999,
+          tall: document.scrollingElement!.scrollHeight - innerHeight,
+        };
+      });
+      if (!g.cards) continue;
+      checked.push(level);
+      expect(g.inner, `${level}: staff cards scroll inside the score box`).toBeLessThanOrEqual(2);
+      expect(g.lowest, `${level}: a staff card is cut off by the score box`).toBeLessThanOrEqual(g.boxBottom + 1);
+      expect(g.lowest, `${level}: a staff card is covered by the meter`).toBeLessThanOrEqual(g.pocketTop + 1);
+      expect(g.tall, `${level}: taller than the screen`).toBeLessThanOrEqual(2);
+      if (level === 'scales-3') await shot(page, `s5-hands-together-${lang}`);
+    }
+    expect(checked.length, `checked ${checked.join(', ')}`).toBeGreaterThanOrEqual(10);
   });

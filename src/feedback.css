@@ -300,3 +300,9 @@ html[data-motion='reduced'] .dn-cue-ring { opacity: 1; }
 .ir-wave { width: 30px; height: 14px; flex: none; }
 .ir-wave rect { fill: var(--card-2); stroke: var(--ink-c); stroke-width: 0.9; }
 .ir-wave rect.on { fill: var(--purple); }
+/* hands together (one screen): one system — the RH and LH lines of the same bars — slightly shorter, with the chords and
+   the pager, inside the score box with no inner scroll */
+.drills-screen[data-drills='run'] .drill-staff.ht .note-staff svg { max-height: clamp(62px, 11.5vh, 140px); }
+.drills-screen[data-drills='run'] .drill-staff.ht { gap: 4px; }
+.drills-screen[data-drills='run'] .drill-staff.ht .tab-pager { min-height: 36px; }
+.drills-screen[data-drills='run'] .drill-staff.ht .tab-pager .icon-btn { width: 36px; height: 36px; }

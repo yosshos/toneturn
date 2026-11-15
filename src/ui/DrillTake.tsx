@@ -103,25 +103,25 @@ const qOf = (d: Drill): number => (d.pulse === 8 ? 0.5 : 1);
  * the whole drill is reachable and still fits one phone screen. Idle: small ‹ › page buttons; after a take it opens
  * on the first line with a mistake.
  */
-export function useLineWindow(lines: number, beat: number, perLine: number, focus: number): { from: number; pager: React.ReactNode } {
+export function useLineWindow(lines: number, beat: number, perLine: number, focus: number, size = 2): { from: number; pager: React.ReactNode } {
   const [page, setPage] = useState(0);
   const [lastFocus, setLastFocus] = useState(focus);
   if (focus !== lastFocus) {
     setLastFocus(focus);
-    setPage(Math.max(0, Math.min(lines - 2, focus)));
+    setPage(Math.max(0, Math.min(lines - size, focus)));
   }
-  const follow = beat >= 0 ? Math.max(0, Math.min(lines - 2, Math.floor(beat / perLine + 1e-6))) : null;
-  const from = follow ?? Math.max(0, Math.min(page, lines - 2));
+  const follow = beat >= 0 ? Math.max(0, Math.min(lines - size, Math.floor(beat / perLine + 1e-6))) : null;
+  const from = follow ?? Math.max(0, Math.min(page, lines - size));
   const pager =
-    lines > 2 && follow === null ? (
+    lines > size && follow === null ? (
       <div className="tab-pager" dir="ltr">
-        <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - 2))}>
+        <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - size))}>
           ‹
         </button>
         <small>
-          {from + 1}–{Math.min(lines, from + 2)} / {lines}
+          {size > 1 ? `${from + 1}–${Math.min(lines, from + size)}` : from + 1} / {lines}
         </small>
-        <button className="icon-btn" aria-label="Next lines" disabled={from + 2 >= lines} onClick={() => setPage(Math.min(lines - 2, from + 2))}>
+        <button className="icon-btn" aria-label="Next lines" disabled={from + size >= lines} onClick={() => setPage(Math.min(lines - size, from + size))}>
           ›
         </button>
       </div>
@@ -316,7 +316,11 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   // The count-in cue: the first note's beat (both staves pulse when both hands start together).
   const firstBeat = cue && !result && drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : null;
   // A long item (a whole head, AUDIT-DEPTH-3): two lines at a time with a pager, like the bass (one phone screen).
-  const paged = bass || !!drill.paged;
+  // Hands together (one phone screen at 320×720): one system at a time — the RH line and the LH line of the same bars —
+  // paged like the bass, never four or more staff cards in a scrolling box.
+  const ht = !bass && rh.length > 0 && lh.length > 0;
+  const paged = bass || !!drill.paged || ht;
+  const winSize = ht ? 1 : 2;
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
   /** Under a marked note (0.52): what was really played — the note name for a wrong pitch, ms early / late off time. */
@@ -346,13 +350,13 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
-  const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0);
+  const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0, winSize);
   const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
     const all = shown(ns);
     const lines: (typeof all)[] = [];
     for (const n of all) (lines[lineOf(n)] ??= []).push(n);
     return lines.map((xs, li) => {
-      if (!xs || (windowed && (li < win.from || li >= win.from + 2))) return null;
+      if (!xs || (windowed && (li < win.from || li >= win.from + winSize))) return null;
       const fing = fingering && xs.some((n) => n.finger);
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
@@ -421,14 +425,14 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     });
   };
   return (
-    <div className="drill-staff" data-clef={rhClef}>
+    <div className={`drill-staff ${ht ? 'ht' : ''}`} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
       {/* Slice 8: the chords over the staff in the shared chart (compact: four bars a row, the bar being played lit). */}
       {drill.chart && !paged && <ChordChart cells={drill.chart.map((c, i) => ({ chord: c, ...(!result && roles?.[i]?.length ? { dots: roles[i] } : {}) }))} meter={drill.meter || 4} beat={result ? -1 : beat} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />}
       {drill.chart &&
         paged &&
         (() => {
           const a = sl ? sl.slice(0, win.from).reduce((x, l) => x + l.bars.length, 0) : (win.from * per) / meter;
-          const z = sl ? sl.slice(0, win.from + 2).reduce((x, l) => x + l.bars.length, 0) : ((win.from + 2) * per) / meter;
+          const z = sl ? sl.slice(0, win.from + winSize).reduce((x, l) => x + l.bars.length, 0) : ((win.from + winSize) * per) / meter;
           return <ChordChart cells={drill.chart.slice(a, z).map((c, i) => ({ chord: c, ...(!result && roles?.[a + i]?.length ? { dots: roles[a + i] } : {}) }))} first={a} meter={drill.meter || 4} beat={result || beat < 0 ? -1 : beat - a * (drill.meter || 4)} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />;
         })()}
       {draw(rh, rhClef, paged)}
