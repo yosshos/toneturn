@@ -1232,15 +1232,22 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   runcatcher: { domain: 'voice', skill: 'agility', sub: 'runs', title: { en: 'Run Catcher', he: 'תופסים ראן' }, needsMic: true, minDiff: 950 },
   compcaller: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Comp Caller', he: 'קורא הליווי' }, forPlays: ['keys', 'piano', 'guitar'], minDiff: 1000 },
   elevator: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Elevator', he: 'המעלית' }, forPlays: ['keys', 'piano', 'guitar'], minDiff: 1100 },
+  // AUDIT-GAMES §4.2 new games: the played ones in the instrument courses' units, the ear ones in the Ear course's
+  // pitch units (each from its difficulty floor); the Jazz course has them as bonus steps (pathBonus.ts).
+  guidetone: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1000 },
+  enclosure: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Enclosure Target', he: 'מטרת הכיתור' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1050 },
+  call5432: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1150 },
+  crossword: { domain: 'pitch', skill: 'cadences', sub: 'dictation', title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' }, minDiff: 1000 },
+  holdnote: { domain: 'pitch', skill: 'cadences', sub: 'reharm', title: { en: 'Hold the Note', he: 'להחזיק את הצליל' }, minDiff: 1050 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
-  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol'],
+  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
   voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher'],
   reading: ['rush-note', 'rush-keysig'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'enclosure', 'call5432'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }, diff = Infinity): string | null {

@@ -76,12 +76,12 @@ export interface SuggestInput {
  * tiered games — it was always Rhythm Highway.
  */
 export const WORKOUT_GAMES: Record<CourseId, string[]> = {
-  ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note', 'bordercontrol'],
-  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller'],
+  ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note', 'bordercontrol', 'crossword'],
+  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller', 'crossword', 'holdnote'],
   voice: ['flight', 'singinterval', 'rush-interval', 'runcatcher'],
-  keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller'],
-  guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller'],
-  bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear'],
+  keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller', 'guidetone'],
+  guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller', 'guidetone'],
+  bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear', 'guidetone'],
   drums: ['highway', 'groove-echo', 'kitread', 'time-lock'],
 };
 /** The day's game for a course (deterministic per local day; Highway without a course). */

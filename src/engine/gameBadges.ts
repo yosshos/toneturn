@@ -45,6 +45,12 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'runcatcher', name: l('Run Catcher', 'תופסים ראן'), course: 'voice', titles: [l('Quick Turns', 'סיבובים מהירים'), l('Melisma in Time', 'מליסמה בזמן'), l('Bebop Voice', 'קול ביבופ')] },
   { game: 'compcaller', name: l('Comp Caller', 'קורא הליווי'), course: 'keys', alsoIn: ['guitar', 'jazz'], titles: [l('On the Charleston', 'על הצ׳רלסטון'), l('Switches on the Bar', 'מחליף על התיבה'), l('Comping Vocabulary', 'אוצר מילים בליווי')] },
   { game: 'elevator', name: l('Elevator', 'המעלית'), course: 'keys', alsoIn: ['guitar'], titles: [l('First Floors', 'קומות ראשונות'), l('Contrary Motion', 'תנועה נגדית'), l('Rides Every Floor', 'עולה לכל הקומות')] },
+  // AUDIT-GAMES §4.2 new games.
+  { game: 'guidetone', name: l('Guide-Tone Runner', 'רץ הצלילים המובילים'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Thirds and Sevenths', 'טרצות וספטימות'), l('Through the Blues', 'דרך הבלוז'), l('Guide-Tone Fluency', 'שטף צלילים מובילים')] },
+  { game: 'call5432', name: l('5-4-3-2 Call', 'קריאת 5-4-3-2'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Knows the Numbers', 'מכיר את המספרים'), l('On the Changes', 'על המהלך'), l('Barry Harris Phrases', 'המשפטים של בארי האריס')] },
+  { game: 'enclosure', name: l('Enclosure Target', 'מטרת הכיתור'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Lands the Target', 'נוחת על המטרה'), l('Bebop Enclosures', 'כיתורי ביבופ'), l('Through the Changes', 'דרך המהלך')] },
+  { game: 'crossword', name: l('Changes Crossword', 'תשבץ המהלכים'), course: 'ear', alsoIn: ['jazz'], titles: [l('Hears the Roots', 'שומע את היסודות'), l('Borrowed and Bent', 'שאולים ומוטים'), l('Changes by Ear', 'מהלכים בשמיעה')] },
+  { game: 'holdnote', name: l('Hold the Note', 'להחזיק את הצליל'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('One Note, Many Chords', 'צליל אחד, הרבה אקורדים'), l('Tension Reader', 'קורא טנשנים'), l('Eight Ways', 'שמונה דרכים')] },
 ];
 
 const TIERS: { t: DynName; tone: RankTier }[] = [

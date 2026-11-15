@@ -31,6 +31,12 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'bordercontrol', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/modulation', difficulty: 1100, title: { en: 'Border Control', he: 'ביקורת גבולות' } },
   { game: 'whichbrother', course: 'jazz', domain: 'pitch', skill: 'chords', sub: 'chords/barry', difficulty: 1050, title: { en: 'Which Brother?', he: 'איזה אח?' } },
   { game: 'compcaller', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/play', difficulty: 1100, title: { en: 'Comp Caller', he: 'קורא הליווי' } },
+  // AUDIT-GAMES §4.2 new games in the Jazz course (the instrument and ear courses have them in their units, path.ts).
+  { game: 'guidetone', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1050, title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' } },
+  { game: 'crossword', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/dictation', difficulty: 1100, title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' } },
+  { game: 'holdnote', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1150, title: { en: 'Hold the Note', he: 'להחזיק את הצליל' } },
+  { game: 'enclosure', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1150, title: { en: 'Enclosure Target', he: 'מטרת הכיתור' } },
+  { game: 'call5432', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/answer', difficulty: 1250, title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' } },
 ];
 
 const PLAYS: Partial<Record<CourseId, string[]>> = { keys: ['keys', 'piano'], guitar: ['guitar'], bass: ['bass'], drums: ['drums'] };

@@ -21,6 +21,7 @@ describe('bonus game steps', () => {
     expect([...games]).toEqual(expect.arrayContaining(['bhtime', 'polylock', 'reharm', 'riffecho', 'rush-scale', 'rush-standard', 'rush-voicing', 'transcribe']));
     // AUDIT-GAMES §4.2 new games: the jazz course's bonus steps
     expect([...games]).toEqual(expect.arrayContaining(['bordercontrol', 'whichbrother', 'compcaller']));
+    expect([...games]).toEqual(expect.arrayContaining(['guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote']));
     const steps = bonusSteps();
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
     for (const s of steps) {

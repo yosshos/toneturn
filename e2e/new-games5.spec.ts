@@ -151,7 +151,7 @@ for (const lang of ['en', 'he'] as const)
       await g.step(page);
       await page.locator('[data-ng-next]').waitFor();
       // open "Why?" when there is one (a wrong answer)
-      const why = page.locator('.ng-why summary');
+      const why = page.locator('.ng-whyd summary');
       if (await why.count()) await why.first().click();
       await check('reveal');
       await shot(page, `${g.route}-${lang}-3reveal`);

@@ -297,7 +297,7 @@ export function RunCatcher({ lang, settings, saved, onSave, onExit, onResult, be
             )}
           </p>
           {phase === 'review' && lastPct !== null && lastPct < RC_CLEAN && (
-            <details className="ng-why">
+            <details className="ng-whyd">
               <summary>{tx(TX.why, lang)}</summary>
               <p>{tx(TX.whyText, lang)}</p>
             </details>

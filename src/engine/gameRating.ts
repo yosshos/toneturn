@@ -90,6 +90,12 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   runcatcher: { tags: () => T2(['agility', 'runs', 0.7], ['timing', 'precision', 0.3]), diff: () => 1300 },
   compcaller: { tags: () => T2(['rhythm-dictation', 'syncopation', 0.5], ['timing', 'precision', 0.5]), diff: () => 1150 },
   elevator: { tags: () => T2(['chords', 'barry', 0.6], ['theory', 'voice-leading', 0.4]), diff: () => 1300 },
+  // AUDIT-GAMES §4.2 new games (always tiered; `diff` is a fallback).
+  guidetone: { tags: () => T2(['improv', 'vocab', 0.6], ['chords', 'seventh', 0.4]), diff: () => 1100 },
+  call5432: { tags: () => T2(['improv', 'answer', 0.6], ['improv', 'vocab', 0.4]), diff: () => 1300 },
+  enclosure: { tags: () => T2(['improv', 'vocab', 0.6], ['timing', 'precision', 0.4]), diff: () => 1150 },
+  crossword: { tags: () => T2(['cadences', 'dictation', 0.7], ['cadences', 'progression', 0.3]), diff: () => 1150 },
+  holdnote: { tags: () => T2(['cadences', 'reharm', 0.6], ['chords', 'extension', 0.4]), diff: () => 1150 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

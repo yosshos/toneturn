@@ -617,7 +617,7 @@ export const GAME_CATS: { id: GameCat; en: string; he: string }[] = [
   { id: 'instrument', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -666,6 +666,12 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'runcatcher', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Run Catcher', 'Hear a run, sing it back in time — faster after every clean catch.'], he: ['תופסים ראן', 'שומעים ראן ושרים אותו בחזרה בזמן — מהר יותר אחרי כל תפיסה נקייה.'] },
   { id: 'compcaller', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Comp Caller', 'Comp the called rhythm on the changes, switched on the bar.'], he: ['קורא הליווי', 'מלווים במקצב שנקרא על המהלך, ומחליפים על התיבה.'] },
   { id: 'elevator', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Elevator', 'Echols’s floors on the 6-dim scale: build the voicing, then play it.'], he: ['המעלית', 'הקומות של אקולס בסולם 6־דים: בונים את הוויסינג ומנגנים אותו.'] },
+  // AUDIT-GAMES §4.2 new games.
+  { id: 'guidetone', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Guide-Tone Runner', 'A 3rd or 7th on every change, in time. One miss ends the run.'], he: ['רץ הצלילים המובילים', 'טרצה או ספטימה על כל החלפה, בזמן. החטאה אחת מסיימת.'] },
+  { id: 'call5432', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['5-4-3-2 Call', 'A number is called: play that Barry Harris phrase.'], he: ['קריאת 5-4-3-2', 'נקרא מספר: מנגנים את המשפט של בארי האריס.'] },
+  { id: 'enclosure', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Enclosure Target', 'Enclose the chord tone, land it on the beat.'], he: ['מטרת הכיתור', 'מכתרים את צליל האקורד ונוחתים עליו בפעמה.'] },
+  { id: 'crossword', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Changes Crossword', 'Hear the bars, fill root, quality and bass.'], he: ['תשבץ המהלכים', 'שומעים את התיבות וממלאים שורש, סוג ובס.'] },
+  { id: 'holdnote', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Hold the Note', 'One note, many chords: which keep it? Fast.'], he: ['להחזיק את הצליל', 'צליל אחד, הרבה אקורדים: מי שומר עליו? מהר.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -964,6 +970,7 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
   playback: 'playback', voicingsprint: 'vsprint', changerace: 'changerace', walkchanges: 'walkchanges', rootsear: 'rootsear', harmonyhold: 'harmonyhold', singinterval: 'singinterval', kitread: 'kitread', namegroove: 'namegroove',
   // AUDIT-GAMES §4.2 new games (2026-11-15).
   bordercontrol: 'bordercontrol', whichbrother: 'whichbrother', runcatcher: 'runcatcher', compcaller: 'compcaller', elevator: 'elevator',
+  guidetone: 'guidetone', call5432: 'call5432', enclosure: 'enclosure', crossword: 'crossword', holdnote: 'holdnote',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 

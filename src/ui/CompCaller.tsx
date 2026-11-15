@@ -419,7 +419,7 @@ export function CompCaller({ lang, settings, saved, onSave, onExit, onResult, be
             )}
           </p>
           {phase === 'review' && out && out.score < COMP_PASS && (
-            <details className="ng-why">
+            <details className="ng-whyd">
               <summary>{tx(TX.why, lang)}</summary>
               <p>
                 <IsoMix text={tx(TX.whyText, lang)} />

@@ -1694,6 +1694,57 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-GAMES §4.2 new games: one drawn symbol each.
+Object.assign(GLYPHS, {
+  // Guide-Tone Runner: a 7th falling to the next 3rd over a beat line with ticks.
+  guidetone: (
+    <>
+      {head(-13, -9, 5.6, 4.2)}
+      {head(9, -1, 5.6, 4.2)}
+      <path d="M-6 -7 L3 -3" {...sw} strokeWidth={2.4} />
+      <path d="M-26 16 H26" {...sw} strokeWidth={2.6} />
+      <path d="M-20 11 V21 M-4 11 V21 M12 11 V21" {...sw} strokeWidth={2} />
+    </>
+  ),
+  // 5-4-3-2 Call: four heads stepping down, a call mark before them.
+  call5432: (
+    <>
+      <path d="M-28 -18 Q-22 -10 -28 -2" {...sw} strokeWidth={2.2} />
+      {head(-14, -14, 4.8, 3.6)}
+      {head(-3, -5, 4.8, 3.6)}
+      {head(8, 4, 4.8, 3.6)}
+      {head(19, 13, 4.8, 3.6)}
+      <path d="M-9 -15 V-26" {...sw} strokeWidth={2} />
+    </>
+  ),
+  // Enclosure Target: a head inside a ring, approached from above and below.
+  enclosure: (
+    <>
+      <circle cx={8} cy={0} r={11} {...sw} strokeWidth={2.4} />
+      {head(8, 0, 5.2, 3.8)}
+      {head(-18, -12, 4.2, 3.2)}
+      {head(-18, 12, 4.2, 3.2)}
+      <path d="M-12 -9 L-4 -4 M-12 9 L-4 4" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  // Changes Crossword: a 4 × 2 grid with two filled squares.
+  crossword: (
+    <g {...sw} strokeWidth={2.2}>
+      <path d="M-26 -16 H26 V16 H-26 Z M-13 -16 V16 M0 -16 V16 M13 -16 V16 M-26 0 H26" />
+      <rect x={-26} y={-16} width={13} height={16} fill={I} stroke="none" />
+      <rect x={0} y={0} width={13} height={16} fill={I} stroke="none" />
+    </g>
+  ),
+  // Hold the Note: one held head on a long line, three chord stacks moving under it.
+  holdnote: (
+    <>
+      <path d="M-28 -12 H-9 M9 -12 H28" {...sw} strokeWidth={2.6} />
+      {head(0, -12, 6.4, 4.6)}
+      <path d="M-20 4 V18 M0 4 V18 M20 4 V18" {...sw} strokeWidth={2.2} />
+      <path d="M-25 8 H-15 M-25 14 H-15 M-5 6 H5 M-5 12 H5 M-5 18 H5 M15 10 H25 M15 16 H25" {...sw} strokeWidth={2} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

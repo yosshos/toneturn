@@ -239,7 +239,7 @@ export function CaseShell<G extends string>({ cfg, lang, settings, saved, onSave
               ) : null}
             </p>
             {verdict && !verdict.ok && whyText && (
-              <details className="ng-why">
+              <details className="ng-whyd">
                 <summary>{tx(TX.why, lang)}</summary>
                 <p>
                   <IsoMix text={whyText} />
