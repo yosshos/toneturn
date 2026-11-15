@@ -28,6 +28,8 @@ export type FamilyId =
   | 'k-vocab'
   // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back (phraseDrills.ts).
   | 'k-phrase'
+  // Barry Harris lines (BARRY-HARRIS-METHOD Part D): chromatic scale, outlines, 5-4-3-2, rules, upbeats (harrisLineDrills.ts).
+  | 'k-harrisline'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -56,6 +58,7 @@ export type FamilyId =
   | 'g-harris' // Barry Harris applied to guitar (barry.ts)
   | 'g-bebop' // AUDIT-GAPS-2: bebop vocabulary and lines over forms on the neck (vocabDrills.ts)
   | 'g-phrase' // phrases by ear on the guitar (phraseDrills.ts)
+  | 'g-harrisline' // Barry Harris lines on the neck (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -107,6 +110,8 @@ export type BassFamilyId =
   | 'b-bebop'
   // Phrases by ear on the bass (phraseDrills.ts).
   | 'b-phrase'
+  // Barry Harris lines on the bass (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
+  | 'b-harrisline'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'

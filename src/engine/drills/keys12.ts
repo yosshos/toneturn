@@ -23,11 +23,11 @@ export function all12(keys: number[]): number[] {
  */
 export const TWELVE_KEY_FAMILIES: string[] = [
   // piano
-  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear',
+  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear', 'k-harrisline',
   // guitar
-  'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl',
+  'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl', 'g-harrisline',
   // bass (the jazz track)
-  'b-barry', 'b-impro', 'b-walk', 'b-swing', 'b-jform', 'b-latin', 'b-std',
+  'b-barry', 'b-harrisline', 'b-impro', 'b-walk', 'b-swing', 'b-jform', 'b-latin', 'b-std',
 ];
 /** Single levels of other families that are key-relative jazz material (g-rhythm 6: bossa, Freddie Green, clave). */
 export const TWELVE_KEY_LEVELS: string[] = ['g-rhythm-6'];

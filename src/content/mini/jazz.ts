@@ -906,7 +906,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '+1 = back on the beat', he: '+1 = חזרה לפעמה' } },
       },
       {
-        say: { en: 'Start on 3, 5 or ♭7 and you may add three: between 3 and 2, 2 and 1, 1 and ♭7. Each one only once.', he: 'מתחילים על 3, 5 או ♭7 ואפשר להוסיף שלושה: בין 3 ל־2, בין 2 ל־1, ובין 1 ל־♭7. כל אחד רק פעם אחת.' },
+        say: { en: 'Start on 3, 5 or ♭7 and you may add three: between 3 and 2, 2 and 1, 1 and ♭7. Each one only once. Parks allows three from the root as well.', he: 'מתחילים על 3, 5 או ♭7 ואפשר להוסיף שלושה: בין 3 ל־2, בין 2 ל־1, ובין 1 ל־♭7. כל אחד רק פעם אחת. פארקס מתיר שלושה גם מהיסוד.' },
         play: [chord(C7, 0.8), rest(0.2), line(FROM_3_THREE)],
         show: { notes: FROM_3_THREE, key: 'C', text: { en: '3–2 · 2–1 · 1–♭7', he: '3–2 · 2–1 · 1–♭7' } },
       },
@@ -947,7 +947,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [67, 65, 64, 63, 62, 61, 60, 59, 58, 57, 55], key: 'C', text: { en: '3–2 · 2–1 · 1–♭7', he: '3–2 · 2–1 · 1–♭7' } },
       },
       {
-        say: { en: 'How to hear it: tap the beat while the line falls and notice what lands on each tap. A good line sounds anchored, with chord tones on the taps. Also listen for the chromatic slides: one extra note, or a longer run of half steps.', he: 'איך שומעים: הקישו את הפעמה בזמן שהקו יורד, ושימו לב מה נוחת על כל הקשה. קו טוב נשמע מעוגן, עם צלילי אקורד על ההקשות. הקשיבו גם להחלקות הכרומטיות: צליל נוסף אחד, או ריצה ארוכה יותר של חצאי טונים.' },
+        say: { en: 'How to hear it: tap the beat while the line falls. A good line sounds anchored, with chord tones on the taps.', he: 'איך שומעים: הקישו את הפעמה בזמן שהקו יורד. קו טוב נשמע מעוגן, עם צלילי אקורד על ההקשות.' },
       },
       {
         say: { en: 'Common mistake: adding the half step in the wrong spot. Put A♭ between A and G instead, and A — not a chord tone — still lands on a beat. Add it between 1 and ♭7, where the problem starts.', he: 'טעות נפוצה: להוסיף את חצי הטון במקום הלא נכון. שימו לה במול בין לה לסול, ולה — שאינו צליל אקורד — עדיין נוחת על פעמה. הוסיפו אותו בין 1 ל־♭7, איפה שהבעיה מתחילה.' },
@@ -955,10 +955,20 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'A A♭ G ✗ · C B B♭ ✓', he: 'A A♭ G ✗ · C B B♭ ✓' } },
       },
       {
-        say: { en: 'Practice slowly with a metronome on 2 and 4. Start from every degree of C7, sing or play the line in eighths, and say which half steps you will add before you start.', he: 'תרגלו לאט עם מטרונום על 2 ו־4. התחילו מכל דרגה של C7, שירו או נגנו את הקו בשמיניות, ואמרו מראש אילו חצאי טונים תוסיפו.' },
+        say: { en: 'Practise slowly, the click on 2 and 4, from every degree of C7.', he: 'תרגלו לאט, הקליק על 2 ו־4, מכל דרגה של C7.' },
       },
       {
         say: { en: 'In real music: the line from 1 with B added is what David Baker later called the dominant bebop scale. Charlie Parker’s and Bud Powell’s lines are full of these passing half steps.', he: 'במוזיקה אמיתית: הקו מ־1 עם סי מוסף הוא מה שדייוויד בייקר כינה מאוחר יותר סולם ביבופ דומיננטי. הקווים של צ׳רלי פרקר ובאד פאוול מלאים בחצאי טונים עוברים כאלה.' },
+      },
+      {
+        say: { en: 'Major works the same way with the 6 chord’s tones: the one half step goes between 6 and 5. Minor uses the flat 3rd; from the root it is the minor 6th-diminished scale.', he: 'במז׳ור זה עובד אותו דבר עם צלילי אקורד ה־6: חצי הטון האחד בא בין 6 ל־5. במינור עם הטרצה הקטנה; מהיסוד זה סולם המינור שישית־מוקטן.' },
+        play: [chord([48, 52, 55, 57], 0.8), rest(0.2), line([72, 71, 69, 68, 67, 65, 64, 62, 60])],
+        show: { notes: [72, 71, 69, 68, 67, 65, 64, 62, 60], key: 'C', text: { en: 'C6: 6–5', he: 'C6: 6–5' } },
+      },
+      {
+        say: { en: 'The miscellaneous rule: go up from a note, then come down by its rule; an extra note that would fall on a beat goes to the bottom. Triplets: an eighth triplet follows its middle note, a sixteenth triplet its first.', he: 'החוק השונה: עולים מצליל, ואז יורדים לפי החוק שלו; צליל נוסף שהיה נופל על פעמה עובר לתחתית. טריולות: טריולת שמיניות הולכת לפי הצליל האמצעי, טריולת שש־עשריות לפי הראשון.' },
+        play: [chord(C7, 0.8), rest(0.2), line([67, 69, 70, 72, 70, 69, 67, 65, 64, 62, 60, 59, 58])],
+        show: { text: { en: 'G A B♭ C | B♭ A G F E D C B B♭', he: 'G A B♭ C | B♭ A G F E D C B B♭' } },
       },
       {
         say: { en: 'To keep: chord tones on the beat. From a chord tone add one, or three; from a non-chord tone none, or two. The first fix is always between 1 and ♭7.', he: 'לזכור: צלילי אקורד על הפעמה. מצליל אקורד מוסיפים אחד, או שלושה; מצליל שאינו באקורד אפס, או שניים. התיקון הראשון תמיד בין 1 ל־♭7.' },
@@ -1630,9 +1640,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G7♭9 · B♭7♭9 · D♭7♭9 · E7♭9', he: 'G7♭9 · B♭7♭9 · D♭7♭9 · E7♭9' } },
       },
       {
-        say: { en: 'Barry’s advice: think of the 6 chord. For Dm7 think F6, for Bm7♭5 think Dm6, and for G7 think of a diminished chord.', he: 'העצה של בארי: חשבו על אקורד ה־6. על Dm7 חשבו F6, על Bm7♭5 חשבו Dm6, ועל G7 חשבו על דימיניש.' },
+        say: { en: 'Barry’s advice: think of the 6 chord. For Dm7 think F6, for Bm7♭5 think Dm6, and for G7 think Dm6, the important minor. The diminished belongs to G7♭9.', he: 'העצה של בארי: חשבו על אקורד ה־6. על Dm7 חשבו F6, על Bm7♭5 חשבו Dm6, ועל G7 חשבו Dm6, המינור החשוב. הדימיניש שייך ל־G7♭9.' },
         play: [chord([50, 65, 69, 72, 74], 1.5)],
-        show: { text: { en: 'Dm7 → F6 · Bm7♭5 → Dm6 · G7 → °7', he: 'Dm7 → F6 · Bm7♭5 → Dm6 · G7 → °7' } },
+        show: { text: { en: 'Dm7 → F6 · Bm7♭5 → Dm6 · G7 → Dm6 · G7♭9 → °7', he: 'Dm7 → F6 · Bm7♭5 → Dm6 · G7 → Dm6 · G7♭9 → °7' } },
       },
       {
         say: { en: 'Your turn. First on paper: which chord has the same four notes? Then by ear: the same notes over a bass. Hum the bass — it names the chord.', he: 'תורכם. קודם על הנייר: לאיזה אקורד יש אותם ארבעה צלילים? אחר כך בשמיעה: אותם צלילים מעל בס. זמזמו את הבס — הוא קובע את השם.' },

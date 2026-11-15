@@ -18,6 +18,7 @@ import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT-CONTENT-THEORY R-4/R-5
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
+import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
@@ -2362,6 +2363,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarEar(s, tu);
     case 'g-harris':
       return generateHarris(s, tu);
+    // Barry Harris lines (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts).
+    case 'g-harrisline':
+      return genGuitarHarrisLine(s, tu);
     case 'g-theory':
       return generateTheoryGuitar(s, tu);
     case 'g-bebop':
@@ -2597,6 +2601,9 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-harris', 9, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', range(2).map((o) => H('scale-pivot', { option: o })), CYC4, [60, 120], '8ths', 8),
       LT('g-harris', 10, 'Pivot and enclosure down the bebop scale', 'פיבוט וכיתור במורד סולם הביבופ', range(2).map((o) => H('pivot-encl', { option: o })), CYC4, [60, 120], '8ths', 8),
     ]),
+    // Barry Harris lines (BARRY-HARRIS-METHOD Part D): the chromatic scale, outlines, 5-4-3-2, the important arpeggios,
+    // seven down, the rules, upbeats, compose a line — all 12 keys (harrisLineDrills.ts).
+    guitarHarrisLineFamily(LT, fam),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),
       L('g-reading', 2, 'Position I, all strings', 'מצב I, כל המיתרים', [RD('position', { position: 1 })], [0, 7, 5]),

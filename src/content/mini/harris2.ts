@@ -239,7 +239,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([50, 65, 68, 72, 74], 1), chord([43, 59, 65, 67, 71], 1), chord([48, ...Cm6], 1.4)],
       },
       {
-        say: { en: 'Bass players and pianists share this: the pianist keeps one m6 shape while the bass chooses the chord. It is the reason Barry calls the minor 6th the most useful chord.', he: 'בסיסטים ופסנתרנים חולקים את זה: הפסנתרן שומר על צורת m6 אחת והבס בוחר את האקורד. זו הסיבה שבארי קורא למינור 6 האקורד השימושי ביותר.' },
+        say: { en: 'Bass players and pianists share this: the pianist keeps one m6 shape while the bass chooses the chord. One shape, three chords: that is why the minor 6th is so useful.', he: 'בסיסטים ופסנתרנים חולקים את זה: הפסנתרן שומר על צורת m6 אחת והבס בוחר את האקורד. צורה אחת, שלושה אקורדים: לכן המינור 6 כל כך שימושי.' },
       },
       {
         say: { en: 'A common slip: calling Cm6 over F a D chord. Count from the bass, not from the top: F under C E♭ G A is F9.', he: 'טעות נפוצה: לקרוא ל־Cm6 מעל פה אקורד של רה. סופרים מהבס, לא מלמעלה: פה מתחת לדו מי במול סול לה הוא F9.' },

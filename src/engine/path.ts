@@ -17,6 +17,7 @@ import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
 import { VOICE_FAMILIES } from './voiceFamilies';
+import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -231,6 +232,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-three-dim': 'jazz', 'bh-dim-roles': 'jazz', 'bh-m6-bass': 'jazz', 'jazz-dictation': 'jazz', planing: 'jazz',
   // BH-G: the pivot (Barry Harris's pivot arpeggio).
   'bh-pivot-arp': 'jazz',
+  // Barry Harris lines by ear (BARRY-HARRIS-METHOD Part D).
+  'bh-line-ear': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   'set-classes': 'post-tonal', counterpoint: 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
@@ -391,7 +394,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // AUDIT-GAPS-2: bebop vocabulary from the swing on-ramp (~980) to the click that moves (~1610).
   'k-vocab': 4,
   // Phrases by ear: ~1200 (one bar of chord tones) to ~1900 (8 bars over a form), a level every 100 (LADDER_SPREAD).
-  'k-phrase': 50 / 7 };
+  'k-phrase': 50 / 7,
+  // Barry Harris lines: every level is placed by KEYS_LEVEL_DIFF; this is only the fallback.
+  'k-harrisline': 6 };
 /**
  * PIANO_AUDIT I2: every piano family's level 1 sat at the same difficulty as scales L1 — octaves (advanced L1), Barry
  * Harris lines and rootless voicings came in the first unit. Now the basics lead (scales, five-finger, the pianist's
@@ -402,7 +407,9 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
  * a later-added easier level opens before the harder ones after it). BH-G: the pivot sits at ~1450–1650,
  * between the Harris lines' block chords (harris 7) and the brothers (harris 8).
  */
-export const KEYS_LEVEL_DIFF: Record<string, number> = { 'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650 };
+export const KEYS_LEVEL_DIFF: Record<string, number> = { 'harris-19': 1440, 'harris-20': 1480, 'harris-21': 1520, 'harris-22': 1560, 'harris-23': 1600, 'harris-24': 1650,
+  // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
+  ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF };
 export const KEYS_LATER: Record<string, number> = { 'k-first': -2, scales: 0, fingers: 0, 'k-ear': 0, arpeggios: 1, cadences: 1, control: 1, accomp: 2, voicings: 3, harris: 4, jazz: 4, advanced: 6, ...KEYS_JAZZ_LATER };
 // AUDIT-CONTENT-THEORY R-1/R-2/R-5: rhythm & meter on the keys starts after the first scale levels.
 KEYS_LATER['k-rhythm'] = 3;
@@ -433,6 +440,8 @@ export const LADDER_SPREAD: Record<string, number> = { 'k-keys': 0.4, 'b-keys': 
 GUITAR_RANK['g-bebop'] = 7;
 // Phrases by ear on the neck: with the guitarist's ear (grades 6–9).
 GUITAR_RANK['g-phrase'] = 5;
+// Barry Harris lines on the neck: with the Harris family (grades 6–9).
+GUITAR_RANK['g-harrisline'] = 6;
 /**
  * The order of a family's levels on the path: by path difficulty, then level number. AUDIT-CONTENT-THEORY §ב.3: guitar
  * levels sit by grade, but the family's next level used to be the next number, so a later-added easier level (picking 4
@@ -457,9 +466,9 @@ function ladderSteps(): PathStep[] {
     const from = DRUM_LATER[f.id] ?? 0;
     // GUITAR_DEEPENING §5 (owner 2026-11-11): guitar levels sit by their RSL-equivalent grade, families interleaved
     // inside a grade by teaching rank (sweep picking at grade 8 after 3nps scales at 7; 3nps picking with 3nps scales).
-    const gDiff = (lv: { grade?: number }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : diff(i * (LADDER_SPREAD[f.id] ?? 1) + from));
+    const gDiff = (lv: { grade?: number; id?: string }, i: number) => (inst === 'guitar' && lv.grade !== undefined ? guitarPathDifficulty(f.id, lv.grade) : (KEYS_LEVEL_DIFF[lv.id ?? ''] ?? diff(i * (LADDER_SPREAD[f.id] ?? 1) + from)));
     f.levels.forEach((lv, i) =>
-      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
+      out.push({ id: `tech:${lv.id}`, kind: 'tech', ladder: { family: f.id, level: lv.level, ref: lv.id, instrument: inst }, skill: 'instrument', sub: `instrument/${inst === 'drums' ? 'drum' : inst}-tech`, domain: 'instrument', difficulty: gDiff(lv as { grade?: number; id?: string }, i), choices: 0, forPlays: [...f.instruments], title: { en: `${f.title.en} · ${lv.title.en}`, he: `${f.title.he} · ${lv.title.he}` } }),
     );
   }
   for (const pr of VOCAL_PROGRAMS)

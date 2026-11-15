@@ -133,6 +133,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'bh-m6-bass': 'm6=9',
   // BH-G: the pivot (the root on top, a drop, the climb)
   'bh-pivot-arp': '1↓357',
+  // Barry Harris lines by ear: the chromatic scale's skip back (E G F)
+  'bh-line-ear': 'EGF',
   'function-ear': 'T·D',
   'modal-cadence': '♭VII',
   'borrowed-ext': '♭VI',

@@ -44,8 +44,8 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([60, 64, 67, 69], 0.8), chord([60, 64, 68, 69], 0.8), chord([60, 64, 67, 69])],
       },
       {
-        say: { en: 'Lower one note of a diminished chord a half step and you get a dominant 7th. Raise one a whole step and you get a dominant with a flat 9 on that note (its 7th drops out).', he: 'מורידים צליל אחד של אקורד מוקטן בחצי טון ומקבלים ספטאקורד דומיננטי. מרימים אחד בטון שלם ומקבלים דומיננט עם ♭9 על הצליל הזה (בלי הספטימה).' },
-        play: [chord([59, 62, 65, 68], 0.8), chord([59, 62, 67, 68], 0.8), chord([60, 64, 67, 69])],
+        say: { en: 'Lower one note of a diminished chord a half step and you get a dominant 7th. Keep the diminished and put a bass a half step below any of its notes: a dominant with a flat 9. Barry’s moves are all half steps.', he: 'מורידים צליל אחד של אקורד מוקטן בחצי טון ומקבלים ספטאקורד דומיננטי. משאירים את המוקטן ושמים בס חצי טון מתחת לאחד הצלילים שלו: דומיננט עם ♭9. כל התנועות של בארי הן בחצאי טונים.' },
+        play: [chord([59, 62, 65, 68], 0.8), chord([59, 62, 65, 67], 0.8), chord([43, 59, 62, 65, 68], 0.9), chord([60, 64, 67, 69])],
       },
       {
         say: { en: 'Any chord of a tune can move this way. A minor 7th is the 6th chord a minor third up: D minor 7 is F6. A dominant is the minor 6th on its fifth.', he: 'כל אקורד בשיר יכול לזוז כך. מינור 7 הוא אקורד השישית טרצה קטנה מעליו: רה מינור 7 הוא F6. דומיננט הוא מינור 6 על הקווינטה שלו.' },

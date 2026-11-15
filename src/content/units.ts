@@ -30,6 +30,7 @@ import { UNITS as BEBOP_VOCAB } from './mini/bebopVocab';
 // Phrases by ear (k-phrase, g-phrase, b-phrase).
 import { UNITS as PHRASES_BY_EAR } from './mini/phrasesByEar';
 import { UNITS as PROG_GRID } from './mini/progGrid'; // progressions by ear
+import { UNITS as HARRIS_LINES } from './mini/harrisLines'; // Barry Harris lines (Part D)
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -57,6 +58,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HARRIS2,
   ...HARMONY3,
   ...HARRIS_PIVOT,
+  ...HARRIS_LINES,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

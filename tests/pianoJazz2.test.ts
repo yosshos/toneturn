@@ -60,7 +60,7 @@ describe('PIANO_JAZZ P2 content', () => {
       }
   });
 
-  it('h17 the chromatic scale with the rules: every half step, a chord tone on every beat, the beat split by the gap', () => {
+  it('h17 chromatic runs between chord tones: every half step, a chord tone on every beat, the beat split by the gap', () => {
     const cts = [[0, 4, 7, 10], [0, 4, 7, 9], [0, 3, 7, 9]];
     for (const o of [0, 1, 2])
       for (let key = 0; key < 12; key++) {
@@ -84,7 +84,7 @@ describe('PIANO_JAZZ P2 content', () => {
     expect(lh.notes.every((n) => n.hand === 'L' && n.pitch <= 60)).toBe(true);
   });
 
-  it('h18 the sixth on the fifth: the 6th chord on the beats, its diminished between, stepping through the scale', () => {
+  it('h18 the important minor: the 6th chord on the beats, its diminished between, stepping through the scale', () => {
     expect(new Set(sixLinePair(7, '7').home)).toEqual(new Set([2, 5, 9, 11])); // G7 = Dm6
     expect(new Set(sixLinePair(2, 'm7').home)).toEqual(new Set([5, 9, 0, 2])); // Dm7 = F6
     expect(new Set(sixLinePair(2, 'hd7').home)).toEqual(new Set([5, 8, 0, 2])); // Dø = Fm6

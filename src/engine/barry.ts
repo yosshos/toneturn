@@ -8,7 +8,8 @@
 //    tone one half step between 1 and ♭7; from a non-chord tone none; from 3, 5 or 7 three (3–2, 2–1,
 //    1–♭7); from 2, 4 or 6 two (2–1, 1–♭7);
 //  - pivot: break a line by moving the next note an octave (up or down).
-// Sources: "Exploring the Diminished" (Hague workshop transcription, 2003); Josh Walsh, "Half Step Rules for
+// Sources: V. Marijt, "Exploring the Diminished" (MA paper, 2014), quoting a 2003 Hague workshop fragment transcribed
+// by Rees; Josh Walsh, "Half Step Rules for
 // Dominant Chords" (jazz-library.com); Jens Larsen on the chromatic scale and pivots; Barry Harris Workshop
 // video part 2 (jazzworkshops.com).
 
@@ -54,7 +55,11 @@ export const SIX_OVER: Record<'maj7' | 'm7' | 'm7b5' | '7' | '7alt' | '7sus', { 
 const DOM = [0, 2, 4, 5, 7, 9, 10];
 export type HalfStepRule = 'none' | 'one' | 'two' | 'three';
 
-/** The rule Barry's students list for a starting degree (1–7) — the default line from that note. */
+/**
+ * The rule Barry's students list for a starting degree (1–7) — the default line from that note. Three extra half steps
+ * from 3, 5 or ♭7 (Goren); Parks (Things I've Learned, video 5) allows three from the root too — kept as an option in
+ * the bh-lines topic, while the default here stays 3 / 5 / 7.
+ */
 export const ruleFor = (deg: number, extended = false): HalfStepRule => ([1, 3, 5, 7].includes(deg) ? (extended && deg !== 1 ? 'three' : 'one') : extended ? 'two' : 'none');
 
 /**

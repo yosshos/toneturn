@@ -241,6 +241,7 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'bh-three-dim': { en: 'The scale’s diminished shares no note with the 6 chord: it sits on the 7th degree (C6 → B°7). The m6 grows from the diminished on its own root.', he: 'לדימיניש של הסולם אין צליל משותף עם אקורד ה־6: הוא יושב על הדרגה השביעית (C6 → B°7). ה־m6 נוצר מהדימיניש שעל היסוד שלו.' },
   'bh-dim-roles': { en: 'Bass by half steps into a new chord = passing; bass holds and the chord comes back = auxiliary; it stands for V and goes home = dominant.', he: 'בס בחצאי טונים אל אקורד חדש = עובר; בס נשאר והאקורד חוזר = עזר; במקום V והביתה = דומיננטי.' },
   // BH-G: the pivot
+  'bh-line-ear': { en: 'Find the scale degrees on the beats first; the skip-back is the note that jumps past a half step and comes back.', he: 'מצאו קודם את דרגות הסולם על הפעמות; הדילוג חזרה הוא הצליל שקופץ מעבר לחצי טון וחוזר.' },
   'bh-pivot-arp': { en: 'A pivot leaps down from the top note, then climbs. A minor 6th down means a major 3rd, a major 6th a minor 3rd.', he: 'פיבוט קופץ למטה מהצליל העליון, ואז עולה. סקסטה קטנה למטה פירושה טרצה גדולה, סקסטה גדולה פירושה טרצה קטנה.' },
   'bh-m6-bass': { en: 'The bass names it: on the root an m6, a minor 3rd below a m7♭5, a 5th below a 9 chord.', he: 'הבס קובע: על היסוד m6, טרצה קטנה מתחת m7♭5, קווינטה מתחת אקורד 9.' },
   'function-ear': { en: 'At rest = tonic; leaning away, ready to move on = pre-dominant; pulling hard to home = dominant.', he: 'נח = טוניקה; נוטה הלאה ומוכן לזוז = סובדומיננטה; מושך חזק הביתה = דומיננטה.' },

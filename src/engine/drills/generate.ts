@@ -15,6 +15,7 @@ import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT
 import { ARP_QUALITIES, ARP_SYM, mirrorArp, pivotArp, pivotEnclosureLine, scalePivotLine, straightArp, type ArpQuality } from '../pivotArp'; // BH-G: the pivot
 import { genKeysVocab, keysVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
+import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry Harris lines (BARRY-HARRIS-METHOD Part D)
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // THEORY_PLAY: the k-theory family's music.
@@ -3515,9 +3516,11 @@ export const H18_FORMS: [number, string][][] = [
  * Barry Harris chromatic lines (PIANO_JAZZ §5 P1). Own material, generated from the rules:
  * - h16: the family of dominants as lines — each dominant a bar, the scale down by the half-step rules (chord tones on
  *   the beats), and the last 8th of every bar a half step into a chord tone of the next chord (the approach);
- * - h17: the chromatic scale with the rules — a chord tone on every beat and every half step between: the beat splits
+ * - h17: chromatic runs between chord tones — a chord tone on every beat and every half step between: the beat splits
  *   into as many notes as the gap needs (2 = 8ths, 3 = triplets, 4 = 16ths); the LH plays it in the bass;
- * - h18: "the sixth on the fifth" — each chord as its 6th chord, the line stepping through its 6th-diminished scale.
+ * - h18: the important minor — each chord as its 6th chord (G7 as Dm6, Harris's "important minor"), the line stepping
+ *   through its 6th-diminished scale. Not "the sixth on the fifth", which is G6 over Cmaj7 (BARRY-HARRIS-THEORY §7).
+ * Barry's own chromatic scale (scale degrees on the beats, a skip back at each half step) is k-harrisline (harrisLines.ts).
  */
 function harrisChromatic(s: DrillSpec): Drill {
   const key = mod(s.key, 12);
@@ -3575,7 +3578,7 @@ function harrisChromatic(s: DrillSpec): Drill {
     return lineDrill(
       s,
       line,
-      title([H(17, `the chromatic scale with the rules — ${sp.en}${bass ? ' in the bass' : ''}: a chord tone on every beat (8ths, triplets, 16ths between)`, `הסולם הכרומטי לפי החוקים — ${sp.en}${bass ? ' בבס' : ''}: צליל אקורד על כל פעמה (שמיניות, טריולות, שש-עשריות ביניהן)`)], s),
+      title([H(17, `chromatic runs between chord tones — ${sp.en}${bass ? ' in the bass' : ''}: a chord tone on every beat (8ths, triplets, 16ths between)`, `ריצות כרומטיות בין צלילי אקורד — ${sp.en}${bass ? ' בבס' : ''}: צליל אקורד על כל פעמה (שמיניות, טריולות, שש-עשריות ביניהן)`)], s),
       { chordTonesOnBeats: true },
       sp.sig,
     );
@@ -3615,7 +3618,7 @@ function harrisChromatic(s: DrillSpec): Drill {
   const seen = new Set<string>();
   const pairs = H18_FORMS[o].filter(([d, q]) => !seen.has(`${d}${q}`) && seen.add(`${d}${q}`)).map(([d, q]) => `${chord(d, q)} = ${as(d, q)}`).join(', ');
   const ttl = [
-    H(18, `the sixth on the fifth: ${pairs} — the 6th chord's tones on the beats, its diminished between`, `השישית על הקווינטה: ${pairs} — צלילי אקורד השישית על הפעמות, המוקטן ביניהם`),
+    H(18, `the important minor: ${pairs} — the 6th chord's tones on the beats, its diminished between`, `המינור החשוב: ${pairs} — צלילי אקורד השישית על הפעמות, המוקטן ביניהם`),
     H(18, `ii–V–I in ${kn} as 6th chords: ${pairs} — each chord's 6th-diminished scale`, `ii–V–I ב-${kn} כאקורדי שישית: ${pairs} — סולם השישית-מוקטן של כל אקורד`),
     H(18, `minor ii–V–i in ${km} as 6th chords: ${pairs} — each chord's 6th-diminished scale`, `ii–V–i מינורי ב-${km} כאקורדי שישית: ${pairs} — סולם השישית-מוקטן של כל אקורד`),
   ][o];
@@ -4912,6 +4915,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
   if (s.family === 'k-phrase') return genKeysPhrase(s);
+  if (s.family === 'k-harrisline') return genHarrisLine(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -5651,10 +5655,11 @@ export function catalog(): FamilyDef[] {
         // PIANO_JAZZ: the half-step rules from any start, and ii–V–I lines by the rules.
         L('harris', 14, 'The half-step rules: chord tones on the beats from any start', 'חוקי חצי הטון: צלילי אקורד על הפעמות מכל התחלה', [...[0, 1, 2, 3].map((o) => h('h14-rules', { option: o, swing: true })), h('h14-rules', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
         L('harris', 15, 'ii–V–I lines by the rules, major and minor', 'שורות ii–V–I לפי החוקים, מז׳ור ומינור', [h('h15-iivi', { swing: true }), h('h15-iivi', { option: 1, swing: true })], cyc4, [2.33, 4]),
-        // PIANO_JAZZ P2: Barry's chromatic lines — the family of dominants as lines, the chromatic scale with the rules, the sixth on the fifth.
+        // PIANO_JAZZ P2: Barry's chromatic lines — the family of dominants as lines, chromatic runs between chord tones, the
+        // important minor (renamed per BARRY-HARRIS-METHOD Part D0a, ids kept; Barry's chromatic scale is k-harrisline).
         L('harris', 16, 'The family of dominants as lines: a half step into each chord', 'משפחת הדומיננטות כקווים: חצי טון לכל אקורד', [h('h16-chains', { swing: true }), h('h16-chains', { option: 1, swing: true }), h('h16-chains', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
-        L('harris', 17, 'The chromatic scale with the rules: a chord tone on every beat', 'הסולם הכרומטי לפי החוקים: צליל אקורד על כל פעמה', [...[0, 1, 2].map((o) => h('h17-chromatic', { option: o, perBeat: 3 })), h('h17-chromatic', { hands: 'L', perBeat: 3 })], cyc4, [2.33, 4]),
-        L('harris', 18, "The sixth on the fifth: lines through each chord's 6th-diminished scale", 'השישית על הקווינטה: קווים בסולם השישית-מוקטן של כל אקורד', [0, 1, 2].map((o) => h('h18-sixfive', { option: o, swing: true })), cyc4, [2.33, 4]),
+        L('harris', 17, 'Chromatic runs between chord tones', 'ריצות כרומטיות בין צלילי אקורד', [...[0, 1, 2].map((o) => h('h17-chromatic', { option: o, perBeat: 3 })), h('h17-chromatic', { hands: 'L', perBeat: 3 })], cyc4, [2.33, 4]),
+        L('harris', 18, "The important minor: lines through each chord's 6th-dim scale", 'המינור החשוב: קווים בסולם השישית־מוקטן של כל אקורד', [0, 1, 2].map((o) => h('h18-sixfive', { option: o, swing: true })), cyc4, [2.33, 4]),
         // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot — the root on top, drop to the next chord tone, climb; then inside a
         // scale line and with enclosures. New technique items: rubato first, then quarters, then the tempo ladder
         // (rubato.ts); all 12 keys (cyc4). Path ~1450–1650 (path.ts KEYS_LEVEL_DIFF).
@@ -5904,5 +5909,11 @@ export function catalog(): FamilyDef[] {
     keysVocabFamily(),
     // Phrases by ear (owner 2026-11-14): hear a phrase over its chords, play it back — chord tones to 8 bars over a form.
     keysPhraseFamily(),
+    // Barry Harris lines (docs/research/BARRY-HARRIS-METHOD.md Part D): the chromatic scale, scale outlines, 5-4-3-2,
+    // the important arpeggios, seven down to the 3rd, the triplet and miscellaneous rules, upbeats, compose a line.
+    harrisLineFamily(),
   ]);
 }
+
+// For harrisLineDrills.ts: the k-harrisline family builds its drills with the same line / chord / free-bar machinery.
+export { Buf, finish as pianoFinish, lineDrill, chordDrill, title as pianoTitle };

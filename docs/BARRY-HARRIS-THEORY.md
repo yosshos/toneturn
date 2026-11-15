@@ -182,6 +182,31 @@ Every step runs rubato first, then the tempo ladder, on piano and guitar (and ba
 - **Contrary motion:** from a unison, the outer voices step apart and the middle fills in, 6 and dim alternating.
   - Echols's Elevator: floors are voicing types. Moving along a floor is parallel motion; moving between floors is contrary.
 
+## 11. Line devices in the app (2026-11-15)
+
+Built from §8–§9 and docs/research/BARRY-HARRIS-METHOD.md Parts D–F. The notes are generated in `src/engine/harrisLines.ts`; the drills are in `src/engine/drills/harrisLineDrills.ts`.
+
+**Where they live**
+- Keys: `k-harrisline` (32 levels, ~1100–1750).
+- Guitar: `g-harrisline` (10 levels, grades 6–9).
+- Bass: `b-harrisline` (10 levels).
+- Voice: `v-barry` levels 8–10 (the chromatic scale, the 5-4-3-2 phrases, seven down to the 3rd).
+- Ear: the topic `bh-line-ear`.
+- Lessons: `bh-chromatic`, `bh-line-devices` and `bh-upbeats`, plus the extended `bh-lines`.
+- Every item runs in all 12 keys and starts rubato.
+
+**Renames (ids kept)**
+- harris-17 is now "Chromatic runs between chord tones".
+- harris-18 is now "The important minor: lines through each chord's 6th-dim scale".
+
+**Still (verify)**
+- **The descending chromatic scale.** It mirrors the ascending one: at a half step, go to the scale note below and come back up (C A B B♭ A A♭ G G♭ F D E E♭ D D♭ C). Otto's variation approaches from below, but the sources do not print the notes.
+- **The 5-4-3-2 phrases.** The notes come from a workshop attendee's notes [54]. The minor versions are derived (the dominant shapes with ♭3). The combined lick is unchecked too.
+- **The dominant eight ways (Parks, F7).** The app reads it as: up from each degree 1–7, then down by that degree's rule; the eighth goes down from the octave with three half steps.
+- **The chromatic scale in two voices (Echols, LL 8).** A second voice two scale steps below (3rds) or above (6ths) in the 6-dim scale, along one floor.
+- **Tune charts.** Cherokee, How High the Moon and Night in Tunisia were typed from the standard changes and need checking against a fake book. The app uses chord charts only, never melodies.
+- **The blues outline's bar details** (§9 "Scale outline").
+
 ## Sources
 
 - Rees, Workshop Video 1–2 (table of contents), and *Keyboard* 10/1998 and 11/1998.
