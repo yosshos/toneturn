@@ -29,7 +29,9 @@ describe('upper structures and rootless voicings (Ear & theory)', () => {
     const base = { track: 'pro', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [], packs: ['jazz'], plays: [], minutes: 10, ratings: {}, events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-12T10:00:00Z') } as never;
     const steps = stepCatalogue().filter((s) => s.topic === 'upper-rootless');
     expect(steps.length).toBe(4);
-    expect(steps.every((s) => eligible(s, courseInput(base, 'ear')))).toBe(true);
+    // AUDIT-6 §3: rootless and upper-structure voicings are jazz ear — on the Jazz path, not Ear.
+    expect(steps.every((s) => eligible(s, courseInput(base, 'jazz')))).toBe(true);
+    expect(steps.some((s) => eligible(s, courseInput(base, 'ear')))).toBe(false);
     expect(GLYPHS[TOPIC_GLYPH['upper-rootless']]).toBeDefined();
     expect(hasShortName('upper-rootless')).toBe(true);
     expect(MINI_LESSONS['upper-rootless']).toBeDefined();

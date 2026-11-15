@@ -95,7 +95,8 @@ export const TOPIC_MARK: Record<string, string> = {
   nashville: '1·4·5',
   transpose: 'key',
   'transpose-adv': 'alto',
-  transposition: 'B♭',
+  // AUDIT-6: in Ear now, next to the B♭ lesson — concert to written.
+  transposition: 'C→B♭',
   'melodic-transform': 'inv',
   displacement: '→♩',
   'displacement-3': '6/8',
@@ -122,6 +123,10 @@ export const TOPIC_MARK: Record<string, string> = {
   'guide-line': '7–3',
   'jazz-phrase': 'lick',
   'jazz-form': '12',
+  'blues-ear': 'I–IV',
+  // AUDIT-6 X1: the advanced games' jazz-ear topics, now Jazz path steps.
+  'voicing-type': 'drop 2',
+  'jazz-chains': 'ii–V…',
   // THEORY_PLAY (TP-1…TP-4)
   'triad-pairs': '△△',
   'pent-super': '5/7',

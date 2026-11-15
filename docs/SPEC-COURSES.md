@@ -72,3 +72,29 @@ Each course feeds its own path and map. XP, the league and the streak stay globa
 2. UI: the course chip and switcher on phone and wide, a course-scoped Today, Path and Practice, and the "add course" flow with placement.
 3. Games tagged by course, and the skill map filtered by course.
 4. A crawl of every screen on phone and wide, checking that no screen still shows mixed content.
+
+## Course membership (AUDIT-6 Stage A, 2026-11-15)
+
+The rule lives in `inCourse()` (`src/engine/courses.ts`), with the jazz list in `path.ts` (`PACK_TOPICS`, `PACK_LEVELS`).
+
+- **Instrument courses** (keys, guitar, bass, drums): every step whose `forPlays` names the instrument.
+- **Voice**: every sung step (and the vocal ladders).
+- **Jazz**: the jazz pack plus the improvising skill (licks, call and response, jazz repertoire). The jazz pack is jazz ear and jazz harmony:
+  - swing feel, the blues on-ramp (`blues-ear`), shells and guide tones, comping;
+  - rootless and upper-structure voicings, voicing types by ear;
+  - the jazz grids (tritone subs and backdoor, the 12-bar jazz blues, the 32-bar AABA), bebop scales, jazz progressions, ii–V chains, reading a lead sheet;
+  - Barry Harris, reharm and colour, jazz forms and jazz dictation.
+  A mixed topic can send single levels to Jazz (`PACK_LEVELS`, for example `voicings:3–5`, `extensions:2–8`, `grid-dictation:5/7/8`). Its other levels stay in Ear.
+- **Jazz also teaches the performed jazz families** (`JAZZ_LADDER_FAMILIES`): k-impro, k-lh, voicings, jazz, k-comp, k-solo (piano); g-impro, g-jazz, g-solo (guitar); b-walk, b-impro, b-swing (bass); d-jazz (drums); v-scat, v-standards (voice, only when the player sings). A player gets the families of the instruments they play. These steps keep the same step id in both courses. Their facts come from the measured takes, so the progress is shared and a result still counts for one course (`courseOfResult`).
+- **Ear**: everything else that is heard, read or written. This includes expression (mood, dynamics, articulation, character: the ABRSM aural "features"), Nashville numbers, transposition, and melodic and rhythmic transformations. The `creative` area used to pull these into Jazz.
+- **Game-only topics** (`TopicDef.gameOnly`: Name That Standard, Interval Sprint cells, melodic-minor modes, altered-chord reading) are never path steps. `stepCatalogue()` skips them, so the path is the same whether or not a game's module is loaded.
+
+## Level placement (AUDIT-6 Stage A)
+
+Each technique or vocal level sits on its course path at a rating for what it asks. The rating comes from `src/engine/levelPlacement.ts`, in this order:
+
+1. **`LEVEL_PLACEMENT`**: curated per-level ratings, one table per instrument. Each entry cites its syllabus grade, and `G(grade) = 700 + 90·grade` (Debut 700, G3 970, G8 1420).
+2. **Vocal levels**: placed from their items' mean rating (`voiceItemRating`). Each family keeps rising in its teaching order.
+3. **Otherwise** the old index placement. Drums are staggered by family (`DRUM_STAGGER`), so the families no longer share the same rungs.
+
+Other work streams add their own exported table to `PLACEMENT_TABLES`. `tests/pathShape.test.ts` guards every course: no gap over 150, a minimum density per band, the known misplacements in their grade band, a real Jazz beginner band, and a catalogue that doesn't depend on module load order.

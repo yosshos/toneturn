@@ -163,6 +163,15 @@ const KEYS: RepItem[] = [
   C('stella', 4, b('Half-diminished ii–Vs, 32 bars', 'ii–V חצי־מוקטנים, 32 תיבות'), [PIANO('stella', 'rootless', 'whole'), CH('stella')]),
   C('solar', 4, b('Minor-major to major: keys a step apart', 'ממינור־מז׳ור למז׳ור: סולמות במרחק טון'), [PIANO('solar', 'rootless', 'charleston'), CH('solar')], TO.coltrane('giant')),
   C('giant', 4, b('Coltrane changes: three keys a major third apart', 'קולטריין צ׳יינג׳ס: שלושה סולמות במרחק טרצה גדולה'), [PIANO('giant-slow', 'shell', 'whole'), PIANO('giant', 'rootless', 'whole'), CH('giant')]),
+  // AUDIT-6 §5: the advanced tier reaches past 1400 — more standards comped from their chord charts.
+  C('tune-up', 4, b('ii–V–Is down a whole step', 'ii–V–I שיורדים בטון שלם'), [PIANO('tune-up', 'rootless', 'charleston'), CH('tune-up')]),
+  C('never-another', 4, b('Back-cycling dominants over 32 bars', 'דומיננטות במעגל לאחור על 32 תיבות'), [PIANO('never-another', 'rootless', 'charleston'), CH('never-another')]),
+  C('miss-jones', 4, b('A bridge in keys a major third apart', 'גשר בסולמות במרחק טרצה גדולה'), [PIANO('miss-jones', 'rootless', 'whole'), CH('miss-jones')]),
+  C('ladybird', 4, b('Tritone subs and the Lady Bird turnaround', 'תחליפי טריטון והטרנאראונד של Lady Bird'), [PIANO('ladybird', 'rootless', 'charleston'), CH('ladybird')]),
+  C('valentine', 4, b('A minor ballad with a line cliché', 'בלדה מינורית עם קו כרומטי'), [PIANO('valentine', 'two-hand', 'whole'), CH('valentine')]),
+  C('maiden', 4, b('Modal: sus chords that move', 'מודאלי: אקורדי sus שזזים'), [PIANO('maiden', 'quartal', 'charleston'), CH('maiden')]),
+  C('coltrane-subs', 4, b('Coltrane substitutions on a ii–V–I', 'תחליפי קולטריין על ii–V–I'), [PIANO('coltrane-subs', 'rootless', 'whole'), CH('coltrane-subs')]),
+  C('fast-aaba-cycle', 4, b('Up tempo: a ii–V cycle bridge', 'טמפו מהיר: גשר של מעגל ii–V'), [PIANO('fast-aaba-cycle', 'rootless', 'charleston'), CH('fast-aaba-cycle')]),
 ];
 
 const JAZZ: RepItem[] = [
@@ -182,6 +191,16 @@ const JAZZ: RepItem[] = [
   C('bird-blues', 4, b('Bird blues: a ii–V in every bar', 'בלוז בירד: ii–V בכל תיבה'), [CH('bird-blues'), T('jazz-form', 3)]),
   C('ladybird', 4, b('Tritone subs and the Ladybird turnaround', 'תחליפי טריטון והטרנאראונד של Lady Bird'), [CH('ladybird'), T('turnarounds', 3)]),
   C('giant', 4, b('Coltrane changes: three tonal centres', 'קולטריין צ׳יינג׳ס: שלושה מרכזים טונאליים'), [CH('giant-slow'), CH('giant'), T('jazz-changes', 5)]),
+  // AUDIT-6 §5: the advanced tier reaches past 1400 — more standards and the hardest forms, from their chord charts.
+  C('tune-up', 4, b('ii–V–Is down a whole step', 'ii–V–I שיורדים בטון שלם'), [CH('tune-up'), PIANO('tune-up', 'rootless', 'charleston')]),
+  C('never-another', 4, b('Back-cycling dominants over 32 bars', 'דומיננטות במעגל לאחור על 32 תיבות'), [CH('never-another'), PIANO('never-another', 'rootless', 'charleston')]),
+  C('stella', 4, b('Half-diminished ii–Vs, 32 bars', 'ii–V חצי־מוקטנים, 32 תיבות'), [CH('stella'), PIANO('stella', 'rootless', 'whole')]),
+  C('solar', 4, b('Minor-major to major: keys a step apart', 'ממינור־מז׳ור למז׳ור: סולמות במרחק טון'), [CH('solar'), PIANO('solar', 'rootless', 'charleston')]),
+  C('miss-jones', 4, b('A bridge in keys a major third apart', 'גשר בסולמות במרחק טרצה גדולה'), [CH('miss-jones'), PIANO('miss-jones', 'rootless', 'whole')]),
+  C('maiden', 4, b('Modal: sus chords that move', 'מודאלי: אקורדי sus שזזים'), [CH('maiden'), PIANO('maiden', 'quartal', 'charleston')]),
+  C('valentine', 4, b('A minor ballad with a line cliché', 'בלדה מינורית עם קו כרומטי'), [CH('valentine'), PIANO('valentine', 'rootless', 'whole')]),
+  C('coltrane-subs', 4, b('Coltrane substitutions on a ii–V–I', 'תחליפי קולטריין על ii–V–I'), [CH('coltrane-subs')]),
+  C('fast-aaba-cycle', 4, b('Up tempo: a ii–V cycle bridge', 'טמפו מהיר: גשר של מעגל ii–V'), [CH('fast-aaba-cycle')]),
 ];
 
 const EAR: RepItem[] = [
@@ -243,6 +262,12 @@ const GUITAR: RepItem[] = [
   C('bird-blues', 4, b('Bird blues: guide tones through the form', 'בלוז בירד: צלילים מנחים לאורך הצורה'), [GS('bird-blues'), L('g-impro-4'), CH('bird-blues')]),
   C('giant', 4, b('Coltrane changes: chord melody and guide tones', 'קולטריין צ׳יינג׳ס: אקורד־מלודיה וצלילים מנחים'), [GS('giant-slow'), L('g-jazz-7'), CH('giant-slow')]),
   O('compas', 4, b('12-beat compás', 'קומפאס של 12 פעמות'), b('Odd groupings: 3+3+2+2+2', 'חלוקות לא זוגיות: 3+3+2+2+2'), [L('g-flamenco-5')], undefined, { standard: true }),
+  // AUDIT-6 §5: the advanced tier reaches past 1400 — whole charts with the band, comped as in g-jazz 13.
+  O('tune-up', 4, b('Tune Up', 'Tune Up'), b('ii–V–Is down a whole step, comped', 'ii–V–I שיורדים בטון שלם, בליווי'), [CH('tune-up'), L('g-jazz-13')], undefined, { standard: true }),
+  O('stella', 4, b('Stella by Starlight', 'Stella by Starlight'), b('Half-diminished ii–Vs, drop 2', 'ii–V חצי־מוקטנים, דרופ 2'), [CH('stella'), L('g-jazz-4')], undefined, { standard: true }),
+  O('ladybird', 4, b('Lady Bird', 'Lady Bird'), b('Tritone subs on the neck', 'תחליפי טריטון על הצוואר'), [CH('ladybird'), L('g-jazz-11')], undefined, { standard: true }),
+  O('solar', 4, b('Solar', 'Solar'), b('Keys a step apart: guide tones', 'סולמות במרחק טון: צלילים מנחים'), [CH('solar'), L('g-jazz-5')], undefined, { standard: true }),
+  O('never-another', 4, b('There Will Never Be Another You', 'There Will Never Be Another You'), b('Chord melody over a long form', 'אקורד־מלודיה על צורה ארוכה'), [CH('never-another'), L('g-jazz-10')], undefined, { standard: true }),
 ];
 
 const BASS_ITEMS: RepItem[] = [
@@ -264,6 +289,13 @@ const BASS_ITEMS: RepItem[] = [
   C('bird-blues', 4, b('Bird blues: a ii–V in every bar', 'בלוז בירד: ii–V בכל תיבה'), [BASS('bird-blues'), CH('bird-blues')]),
   C('stella', 4, b('Half-diminished ii–Vs, 32 bars', 'ii–V חצי־מוקטנים, 32 תיבות'), [BASS('stella'), CH('stella')]),
   C('giant', 4, b('Coltrane changes, walked', 'קולטריין צ׳יינג׳ס, בווקינג'), [BASS('giant'), CH('giant-slow')]),
+  // AUDIT-6 §5: the advanced tier reaches past 1400 — more standards walked from their chord charts.
+  C('tune-up', 4, b('ii–V–Is down a whole step', 'ii–V–I שיורדים בטון שלם'), [BASS('tune-up'), CH('tune-up')]),
+  C('never-another', 4, b('Long form, back-cycling dominants', 'צורה ארוכה, דומיננטות במעגל לאחור'), [BASS('never-another'), CH('never-another')]),
+  C('ladybird', 4, b('Tritone subs walked', 'תחליפי טריטון בווקינג'), [BASS('ladybird'), CH('ladybird')]),
+  C('miss-jones', 4, b('A bridge in keys a major third apart', 'גשר בסולמות במרחק טרצה גדולה'), [BASS('miss-jones'), CH('miss-jones')]),
+  C('solar', 4, b('Minor-major to major, every two bars', 'ממינור־מז׳ור למז׳ור, כל שתי תיבות'), [BASS('solar'), CH('solar')]),
+  C('valentine', 4, b('A minor ballad: the line cliché in the bass', 'בלדה מינורית: קו כרומטי בבס'), [BASS('valentine'), CH('valentine')]),
 ];
 
 const DRUMS: RepItem[] = [

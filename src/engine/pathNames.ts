@@ -153,6 +153,7 @@ const SHORT: Record<string, L2> = {
   'guide-line': { en: 'Guide line', he: 'קו מנחה' },
   'jazz-phrase': { en: 'Transcribe', he: 'תמלול' },
   'jazz-form': { en: 'Jazz forms', he: 'צורות ג׳אז' },
+  'blues-ear': { en: 'Blues form', he: 'צורת הבלוז' },
   'upper-rootless': { en: 'Upper structures', he: 'מבנים עליונים' },
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2)
   'bh-three-dim': { en: 'Three diminished', he: 'שלושה דימינישים' },

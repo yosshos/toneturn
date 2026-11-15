@@ -75,7 +75,9 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     const d = (id: string) => stepCatalogue().find((s) => s.id === `tech:${id}`)!.difficulty;
     expect(d('b-std-1')).toBeGreaterThan(d('b-walk-11'));
     expect(d('b-ext-1')).toBeGreaterThan(d('b-legato-5'));
-    expect(d('b-walk-19')).toBeGreaterThan(d('b-walk-18'));
+    // AUDIT-6: the jazz waltz is intermediate walking (Friedland): after rhythm changes, not after the two-chorus solo.
+    expect(d('b-walk-19')).toBeGreaterThan(d('b-walk-10'));
+    expect(d('b-walk-19')).toBeLessThan(d('b-walk-15'));
     for (const f of ['b-std', 'b-ext']) {
       expect(GLYPHS[FAMILY_GLYPH[f]], f).toBeDefined();
       expect(Object.entries(FAMILY_GLYPH).filter(([k, g]) => k !== f && g === FAMILY_GLYPH[f]).map(([k]) => k), f).toEqual([]);
