@@ -8,13 +8,18 @@
 
 import type { Verdict } from './types';
 import { tuningById } from '../fretboard';
+import { sharedCandidates, sharedPalette, sharedRules, splitShared, type SQ } from '../soloPiano';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 
 // '7b9r' (key-to-key moves, AUDIT-GAPS-2 #6): a diminished 7th with one note raised a whole step — root, ♭9, 3, 5.
 export type VLQuality = 'M' | 'm' | 'dim' | 'maj7' | '7' | 'm7' | 'm7b5' | 'dim7' | '6' | 'm6' | '7b9' | '7b9r';
-/** What the voicing must be: a close triad, a close 4-note chord, drop 2, drop 3, the 3rd + 7th, or a two-hand spread (LH 1–7, RH 3–5–9). */
-export type VLType = 'triad' | 'close' | 'drop2' | 'drop3' | 'guide' | 'spread';
+/**
+ * What the voicing must be: a close triad, a close 4-note chord, drop 2, drop 3, the 3rd + 7th, a two-hand spread (LH
+ * 1–7, RH 3–5–9), or a shared-hands voicing under a melody (Siskind, soloPiano.ts: the root (+ 5th) in the bass, three
+ * or four shared notes with the 3rd and 7th, graded by his four rules — 3 and 7, no doubling, even spacing, no ♭9).
+ */
+export type VLType = 'triad' | 'close' | 'drop2' | 'drop3' | 'guide' | 'spread' | 'shared';
 
 export interface VLChord {
   /** Root pitch class. */
@@ -96,6 +101,7 @@ export const chordSymbol = (c: VLChord, flats = true): string => c.name ?? pcNam
 /** The pitch classes a voicing of this type is built from. */
 export function typePcs(c: VLChord, type: VLType): number[] {
   const Q = QUAL[c.q];
+  if (type === 'shared') return [mod12(c.root), mod12(c.root + Q.third), mod12(c.root + (Q.seventh ?? 7))];
   if (type === 'guide') return [mod12(c.root + Q.third), mod12(c.root + (Q.seventh ?? 7))];
   if (type === 'triad') return Q.ints.slice(0, 3).map((i) => mod12(c.root + i));
   return Q.ints.map((i) => mod12(c.root + i));
@@ -152,7 +158,9 @@ const fitsGoalStrings = (v: number[], g: Pick<VLGoal, 'strings' | 'tuning'>): bo
  * The measured voices of a full voicing: a LH root in bass mode is not measured, and a spread's left hand (root + 7th)
  * moves with the root — only its right hand (3–5–9) is led by step.
  */
-export const measuredOf = (v: number[], type: VLType): number[] => (type === 'spread' ? sortN(v).slice(2) : sortN(v));
+export const measuredOf = (v: number[], type: VLType): number[] => (type === 'spread' ? sortN(v).slice(2) : type === 'shared' ? splitShared(v).inner : sortN(v));
+/** The VL qualities a shared-hands voicing is built on (soloPiano.ts qualities). */
+const SHARED_Q: Partial<Record<VLQuality, SQ>> = { maj7: 'maj7', '7': '7', m7: 'm7', m7b5: 'm7b5', dim7: 'dim7', '6': '6', m6: 'm6', '7b9': '7' };
 
 const cache = new Map<string, number[][]>();
 /** Every voicing of a chord that satisfies the goal's type, register, melody and string sets (full voicings; spread with its bass). */
@@ -177,6 +185,9 @@ export function candidates(c: VLChord, g: Pick<VLGoal, 'type' | 'lo' | 'hi' | 's
       const y = x + (mod12(other - x) || 12);
       if (y <= g.hi && y - x <= 11) out.push([x, y]);
     }
+  } else if (g.type === 'shared') {
+    const sq = SHARED_Q[c.q];
+    out = sq && c.melody !== undefined ? sharedCandidates({ root: c.root, q: sq }, c.melody) : [];
   } else if (g.type === 'spread' && Q.spread) {
     for (let b = 36; b <= 52; b++) {
       if (mod12(b) !== mod12(c.root)) continue;
@@ -194,7 +205,7 @@ export function candidates(c: VLChord, g: Pick<VLGoal, 'type' | 'lo' | 'hi' | 's
 
 // ───────────────────────────── classification ─────────────────────────────
 
-export type VLKind = 'ok' | 'empty' | 'wrong' | 'missing' | 'type' | 'bass' | 'melody' | 'strings';
+export type VLKind = 'ok' | 'empty' | 'wrong' | 'missing' | 'type' | 'bass' | 'melody' | 'strings' | 'double' | 'spacing' | 'flat9';
 export interface VLClass {
   ok: boolean;
   kind: VLKind;
@@ -218,12 +229,27 @@ export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 
     if (!ps.length) return res('empty', [], null);
   }
   const Q = QUAL[c.q];
-  const hasBass = !!g.bass || g.type === 'spread';
+  const hasBass = !!g.bass || g.type === 'spread' || g.type === 'shared';
   const bass = hasBass ? ps[0] : null;
   const rest = hasBass ? ps.slice(1) : ps;
   // A diminished 7th is symmetrical: any of its notes may be the bass (B°7 = D°7 = F°7 = A♭°7).
   const dimBassOk = c.q === 'dim7' && bass !== null && Q.ints.some((i) => mod12(c.root + i) === mod12(bass));
   if (bass !== null && mod12(bass) !== mod12(c.root) && !dimBassOk) return res('bass', rest, bass);
+  if (g.type === 'shared') {
+    // Siskind's four rules on the whole voicing (the melody included: it must not be doubled).
+    const sq = SHARED_Q[c.q] ?? 'maj7';
+    const { inner } = splitShared(ps);
+    const pal = [mod12(c.root), ...sharedPalette({ root: c.root, q: sq }).map((x) => mod12(c.root + x))];
+    const wrongPcs = [...new Set(inner.map(mod12).filter((p) => !pal.includes(p)))];
+    if (wrongPcs.length) return res('wrong', inner, bass, wrongPcs);
+    const full = c.melody !== undefined && over ? [...ps, c.melody] : ps;
+    const chk = sharedRules(full, { root: c.root, q: sq });
+    if (!chk.has37) return res('missing', inner, bass, [], typePcs(c, 'shared').slice(1).filter((p) => !full.map(mod12).includes(p)));
+    if (!chk.noDouble) return res('double', inner, bass);
+    if (!chk.noMinor9) return res('flat9', inner, bass);
+    if (!chk.even) return res('spacing', inner, bass);
+    return res('ok', inner, bass);
+  }
   let allowed: number[];
   let required: number[];
   if (g.type === 'spread') {
@@ -445,6 +471,7 @@ const TYPE_NAME: Record<VLType, { en: string; he: string }> = {
   drop3: { en: 'drop 3', he: 'דרופ 3' },
   guide: { en: 'the 3rd and 7th', he: 'טרצה וספטימה' },
   spread: { en: 'LH 1–7, RH 3–5–9', he: 'שמאל 1–7, ימין 3–5–9' },
+  shared: { en: 'a shared-hands voicing', he: 'וויסינג בשתי ידיים' },
 };
 export const typeName = (t: VLType): { en: string; he: string } => TYPE_NAME[t];
 
@@ -462,6 +489,10 @@ export function stepLine(s: VLStep, g: VLGoal): { en: string; he: string } | nul
   if (k.kind === 'missing') return { en: `${sym}: missing ${list(k.missingPcs).en}`, he: `${sym}: חסר ${list(k.missingPcs).he}` };
   if (k.kind === 'type') return { en: `${sym}: not ${TYPE_NAME[g.type].en}`, he: `${sym}: לא ${TYPE_NAME[g.type].he}` };
   if (k.kind === 'melody') return { en: `${sym}: the melody note on top`, he: `${sym}: צליל המנגינה למעלה` };
+  // Siskind's shared-hands rules (soloPiano.ts sharedRules).
+  if (k.kind === 'double') return { en: `${sym}: a doubled note — each note once`, he: `${sym}: צליל כפול — כל צליל פעם אחת` };
+  if (k.kind === 'flat9') return { en: `${sym}: a minor 9th — move one note`, he: `${sym}: נונה קטנה — להזיז צליל` };
+  if (k.kind === 'spacing') return { en: `${sym}: space the notes evenly`, he: `${sym}: לפזר את הצלילים באופן שווה` };
   if (k.kind === 'strings') return { en: `${sym}: not on strings ${g.strings!.map((x) => x.join('-')).join(' / ')}`, he: `${sym}: לא על מיתרים ${g.strings!.map((x) => x.join('-')).join(' / ')}` };
   if (s.firstOff) return { en: 'Start from the written voicing', he: 'להתחיל מהקול הכתוב' };
   if (s.excess !== null && s.excess > g.tol && s.jump) {

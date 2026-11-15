@@ -7,6 +7,7 @@ import { familyById } from '../engine/drills/plan';
 import type { FamilyId, ItemState } from '../engine/drills/types';
 import type { Progress } from './progress';
 import { loadGroove, loadModel } from './analysis';
+import { phrasingSummary } from '../engine/phraseOrg';
 import { loadConfusions, topConfusions } from './confusion';
 import { defaultKV, indexedKV, memoryKV, type KV } from './kv';
 
@@ -59,7 +60,8 @@ export function refreshProfile(ear: { day: string; r: number }[] = [], now = new
     cache = withSnapshot(h, items, c, now);
     await kv.set('history', cache);
     // All rows: the screen keeps the active course's and cuts them to size.
-    return { ...buildProfile(items, cache, c, { strengths: 20, patterns: 20, gone: 20 }), keyLine: keyLineOf(keys, skillTitle) };
+    const phrasing = phrasingSummary(model.phrasing ?? []);
+    return { ...buildProfile(items, cache, c, { strengths: 20, patterns: 20, gone: 20 }), keyLine: keyLineOf(keys, skillTitle), ...(phrasing ? { phrasing } : {}) };
   });
   chain = run.catch(() => {});
   return run;

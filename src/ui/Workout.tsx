@@ -16,6 +16,7 @@ import { DOMAIN_HUE, GAMES2 } from './Arcade';
 import { useCourse } from './courseContext';
 import { COURSE_AREAS } from '../engine/courses';
 import { piano } from './services';
+import { slotLabelOf, type ListenCard } from '../engine/practiceMethod';
 
 type Lang = 'he' | 'en';
 const W = {
@@ -50,7 +51,7 @@ const W = {
     remove: 'Remove',
     cantFit: 'That doesn’t fit — unlock a block first',
     done: 'Done',
-    presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes' } as Record<Preset, string>,
+    presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes', 'four-slot': 'Four-slot session' } as Record<Preset, string>,
     ctx: { nomic: 'No mic', quiet: 'Quiet place', noinst: 'No instrument' },
     // SPEC-PATH-ROLE §3: three blocks — New (the path), Strengthen (depth on what is opened), Review.
     kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen' } as Record<string, string>,
@@ -98,7 +99,7 @@ const W = {
     remove: 'להסיר',
     cantFit: 'זה לא נכנס — שחררו קודם בלוק נעול',
     done: 'סיום',
-    presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות' } as Record<Preset, string>,
+    presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות', 'four-slot': 'אימון בארבעה חלקים' } as Record<Preset, string>,
     ctx: { nomic: 'בלי מיקרופון', quiet: 'מקום שקט', noinst: 'בלי כלי' },
     kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק' } as Record<string, string>,
     blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם' } as Record<string, string>,
@@ -117,8 +118,11 @@ const W = {
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
-export function blockLabel(t: Strings, b: BlockTarget, lang: Lang): string {
+export function blockLabel(t: Strings, b: BlockTarget, lang: Lang, id?: string): string {
   const tx = W[lang];
+  // The four-slot session's Tunes and Recordings blocks (practiceMethod.ts) are named by their block id.
+  const slot = slotLabelOf(id);
+  if (slot) return slot[lang];
   switch (b.kind) {
     case 'area':
       return t.domainNames[b.area];
@@ -194,7 +198,7 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
         {blocks.map((b, i) => (
           <span key={b.id} className={i < at ? 'done' : i === at || (at < 0 && i === 0) ? 'now' : ''}>
             {i > 0 && ' · '}
-            {blockLabel(t, b.target, lang)}
+            {blockLabel(t, b.target, lang, b.id)}
           </span>
         ))}
         <span>
@@ -231,7 +235,7 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
 }
 
 /** An area preset belongs to the courses that practise that area (no "voice focus" in the guitar course). */
-const PRESET_AREA: Partial<Record<Preset, DomainId>> = { ear: 'pitch', rhythm: 'time', reading: 'reading', voice: 'voice', instrument: 'instrument' };
+const PRESET_AREA: Partial<Record<Preset, DomainId>> = { ear: 'pitch', rhythm: 'time', reading: 'reading', voice: 'voice', instrument: 'instrument', 'four-slot': 'instrument' };
 
 /** The editor (W17): sticky total, per block − / + · ✕ · drag; ⋯ for lock and swap; Add; presets; save as default. */
 export function WorkoutEditor({
@@ -364,7 +368,7 @@ export function WorkoutEditor({
                 ⋮⋮
               </span>
               <span className="wk-name">
-                <b>{blockLabel(t, b.target, lang)}</b>
+                <b>{blockLabel(t, b.target, lang, b.id)}</b>
                 {path !== null && <small dir="auto">{path > 0 ? fill(tx.pathSteps, { n: path }) : tx.free}</small>}
                 {path === null && tx.blockSub[b.target.kind] && (
                   <small dir="auto" data-leads-to={b.target.kind === 'strengthen' && leadsTo ? '1' : undefined}>
@@ -436,8 +440,8 @@ export function WorkoutEditor({
       </button>
 
       <div className="wk-presets" role="group">
-        {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'mistakes', 'quick5'] as Preset[]).filter((p) => !PRESET_AREA[p] || courseAreas.includes(PRESET_AREA[p]!)).map((p) => (
-          <button key={p} className="chip" onClick={() => change(preset(p, T, suggested), tx.presets[p])}>
+        {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'four-slot', 'mistakes', 'quick5'] as Preset[]).filter((p) => !PRESET_AREA[p] || courseAreas.includes(PRESET_AREA[p]!)).map((p) => (
+          <button key={p} className="chip" onClick={() => change(preset(p, T, suggested), tx.presets[p])} data-preset={p}>
             {tx.presets[p]}
           </button>
         ))}
@@ -501,7 +505,7 @@ export function WorkoutEditor({
 }
 
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback }: { t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen }: { t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -547,13 +551,29 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
   return (
     <main className="wk-run" style={{ ['--hue' as string]: hueOf(b.target) }}>
       <BlockBar blocks={run.blocks} run={run} />
-      <h1>{blockLabel(t, b.target, lang)}</h1>
+      <h1>{blockLabel(t, b.target, lang, b.id)}</h1>
       <p className="wk-timer" dir="ltr">
         {mm}:{String(ss).padStart(2, '0')}
       </p>
       {b.target.kind === 'practice' ? (
         <>
-          <p className="field-hint">{tx.practiceHint}</p>
+          {b.id.startsWith('listen-') && listen ? (
+            <div className="wk-listen" data-listen-card={listen.concept ?? 'any'}>
+              <p className="field-hint">
+                <b>{lang === 'he' ? 'להקשיב: ' : 'Put on: '}</b>
+                {listen.who[lang]}
+              </p>
+              <ol className="field-hint">
+                {listen.prompts.map((q, i) => (
+                  <li key={i}>{q[lang]}</li>
+                ))}
+              </ol>
+            </div>
+          ) : (
+            <p className="field-hint">{tx.practiceHint}</p>
+          )}
+          {!b.id.startsWith('listen-') && (
+            <>
           <label className="toggle-row">
             <input type="checkbox" checked={metro} onChange={(e) => setMetro(e.target.checked)} />
             <span>
@@ -561,6 +581,8 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
             </span>
           </label>
           <input type="range" min={40} max={200} value={bpm} onChange={(e) => setBpm(Number(e.target.value))} aria-label={tx.metronome} />
+            </>
+          )}
           <textarea className="wk-note" placeholder={tx.note} value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
           <button className="btn primary" onClick={() => onBlockDone(now - t0)}>
             ✓ {tx.blockDone}

@@ -34,6 +34,12 @@ export type FamilyId =
   | 'k-ctone'
   | 'k-mediant'
   | 'k-organ'
+  // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C, soloPianoDrills.ts): the left hand
+  // for solo piano, solo-piano textures through the heads, the comping vocabulary, improvisation habits.
+  | 'k-lh'
+  | 'k-tex'
+  | 'k-comp'
+  | 'k-impro'
   // AUDIT-CONTENT-THEORY §ז.2: first steps at the piano — posture, finger numbers, C position, the thumb passing under.
   | 'k-first'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
@@ -289,6 +295,11 @@ export interface Drill {
   chart?: string[];
   /** A long item (a whole head): the staff and the chart show two lines at a time, with a pager (one phone screen). */
   paged?: boolean;
+  /**
+   * Always in free time (Siskind's stop-start rubato ballad, soloPianoDrills.ts): every take is a free-time take
+   * (rubato.ts), graded on the notes only, and it counts toward the level (the item's target equals its start tempo).
+   */
+  rubatoOnly?: boolean;
   /** Chart drills, improv mode (owner 2026-11-08): notes at or above this pitch are the free right hand — not graded. */
   freeAbove?: number;
   spec: DrillSpec;
@@ -454,6 +465,13 @@ export interface DrillGoal {
   /** The prog engine's measures (progAnalyze.ts `withProg`); each can only lower the verdict. */
   prog?: ProgGoal;
   free?: { windows: [number, number][]; scale: { from: number; to: number; pcs: number[] }[]; minPerBar: number; model: { beat: number; dur: number; pitch: number; /** Guitar: where the model's note sits (tab). */ string?: number; fret?: number }[] };
+  /**
+   * Free comping by rule (Siskind, soloPiano.ts freeCompCheck; k-comp): the written notes are only a model — the player
+   * varies the rhythm; the take is graded by the density band, rhythm variety, repeats and anticipations.
+   */
+  /** Siskind's registers (soloPiano.ts): a missed note played an octave away gets the "muddy" / "thin" feedback line. */
+  register?: boolean;
+  freeComp?: { chords: { beat: number; beats: number; root: number; q: import('../soloPiano').SQ }[]; bars: number };
   /** Voice leading (k-vl / g-vl, voiceLead.ts): the learner chooses each voicing from chord symbols; graded by type + smallest motion. */
   vl?: import('./voiceLead').VLGoal;
   /**
@@ -467,6 +485,10 @@ export interface DrillGoal {
    * `drill.freeAbove` (piano: the LH comps, the RH improvises), else those inside `free.windows`. `spans` = the chords
    * in drill beats (root pitch class, intervals above it); each card must reach its pass share.
    */
+  /** Siskind / MTNA rubric (phraseOrg.ts): the phrasing bands that pass; any other band caps the verdict at 'almost'. */
+  phrase?: { pass: import('../phraseOrg').PhraseBand[] };
+  /** Play one / rest one (play 1, rest 1), play two / rest two (2, 2): bars of playing, then bars of rest (phraseOrg.ts playRestCheck). */
+  playRest?: { play: number; rest: number };
   improv?: { cards: string[]; spans: { at: number; beats: number; root: number; iv: number[] }[]; /** Mastered lick ids for the use-a-lick card (empty = the whole library). */ licks?: string[]; /** A line that keeps the cards (the improvised part only; tests and the result's model). */ model?: { beat: number; dur: number; pitch: number }[] };
 }
 
@@ -703,6 +725,10 @@ export interface NoteResult {
 export interface TakeMetrics {
   /** AUDIT-DEPTH-3 C5: the rule cards of an improvised take (goal.improv): notes that kept each card / notes judged. */
   improv?: { card: string; ok: number; total: number; pass: boolean }[];
+  /** Siskind / MTNA rubric (phraseOrg.ts): phrase organisation and note choice of an improvised take. */
+  phraseOrg?: import('../phraseOrg').PhraseOrgReport;
+  /** Play one / rest one (goal.playRest): bars that kept the pattern / bars. */
+  playRest?: { ok: number; total: number };
   /** Piano by microphone (PIANO_AUDIT A2): what the goal needs that the mic can't measure — the take doesn't count. */
   unmeasured?: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[];
   bpm: number;

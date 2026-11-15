@@ -238,5 +238,11 @@ export function harmEvents(hi: HeadIn, fromBar: number, toBar: number, style: Ha
   return out;
 }
 
+// Shared-hands melody harmonisation (Siskind, docs/research/SISKIND-SOLO-PIANO.md A5 and C7 #3; "Pro-Level Voicings for
+// Solo Piano Jazz Ballads", ExcZLksoxoA): the melody on top in the RH, the root (+ 5th) at the bottom in the LH, the
+// thumbs and index fingers sharing the chord between — graded by his four rules (soloPiano.ts sharedRules) through
+// voiceLead.ts's 'shared' type. Registered after drop 3, so it becomes k-harm level 8 (`hm-shared`).
+registerHarmStyle({ id: 'shared', name: { en: 'Shared hands under the melody', he: 'שתי ידיים מתחת למנגינה' }, type: 'shared', over: true, lo: 36, hi: 84, tol: 4 }, 'drop3');
+
 /** Every head by id, for lookups from item options (option = index in HEADS). */
 export const headAt = (i: number): Head => HEADS[((i % HEADS.length) + HEADS.length) % HEADS.length];

@@ -4,6 +4,7 @@
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { NOTE_BAND_NAME, PHRASE_BAND_NAME } from '../engine/phraseOrg';
 import { refreshProfile } from '../storage/profile';
 import { keyList, skillKeysOf, type KeyCell } from '../engine/analysis/keyMastery';
 import { KeyMap12 } from './KeyMap12';
@@ -98,7 +99,7 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', 'k-phrase': '#8fd0ff', 'k-harrisline': '#6cc8ff', 'k-ctone': '#ffb86b', 'k-mediant': '#b98cff', 'k-organ': '#ffd36b', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a', 'k-solo': '#8fe3a8', 'k-ctx': '#7cc4ff', 'k-indep': '#ffb35c', 'k-sharm': '#8fe08a' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--mint)', arpeggios: '#7c8cff', cadences: '#c38cff', fingers: 'var(--gold)', control: '#ff8a5c', advanced: '#ff6b9a', harris: '#5cd6ff', jazz: '#5cffb0', voicings: '#ffd15c', accomp: '#b0ff5c', 'k-ear': '#8fb8ff', 'k-sixdim': '#5cc2ff', 'k-bebop': '#4fe0a0', 'k-reharm': '#ffc04d', 'k-theory': '#c9a0ff', 'k-vocab': '#6fd3c0', 'k-phrase': '#8fd0ff', 'k-harrisline': '#6cc8ff', 'k-ctone': '#ffb86b', 'k-mediant': '#b98cff', 'k-organ': '#ffd36b', custom: '#e0e0ff', 'k-vl': '#9fd0ff', 'k-keys': '#7fd6c8', 'k-harm': '#a8c8ff', 'k-tune': '#ffb08a', 'k-solo': '#8fe3a8', 'k-ctx': '#7cc4ff', 'k-indep': '#ffb35c', 'k-sharm': '#8fe08a', 'k-lh': '#b4c8ff', 'k-tex': '#ffc8a0', 'k-comp': '#ffe08a', 'k-impro': '#9fe8c8' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -418,6 +419,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-keys': 'chords', 'g-keys': 'chords', 'b-keys': 'chords',
   // AUDIT-DEPTH-3: heads — harmonising and chord-melody are harmony you play; comping a head is a style.
   'k-harm': 'chords', 'g-cmel': 'chords', 'k-tune': 'styles', 'g-tune': 'styles', 'b-tune': 'styles',
+  // Solo jazz piano (Siskind): the left hand and the comping vocabulary with chords, textures and improv habits as styles.
+  'k-lh': 'chords', 'k-comp': 'chords', 'k-tex': 'styles', 'k-impro': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
@@ -906,9 +909,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // A goal the microphone can't measure (loudness, pedal) waits for a MIDI keyboard in the timed take; automated runs
   // (e2e) keep the timed take unless ?rubato is in the address (the brief page's rule).
   const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF || !!atTarget;
-  const stage: RubatoStage | null = noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
+  // Siskind's stop-start rubato ballad (Drill.rubatoOnly): always in free time — unless the microphone can't follow its chords.
+  const rubatoOnly = !!drill.rubatoOnly && !micChords;
+  const stage: RubatoStage | null = rubatoOnly ? 'free' : noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
   const stageDone = (m: TakeMetrics, st: RubatoStage) => {
+    // A rubato-only item: the free take is the take (it counts; its target is its start tempo, off the ladder).
+    if (rubatoOnly) return done({ ...m, bpm: bpm }, []);
     const before = stateOf(drill);
     const next = oneFree ? before : withStageTake(before, st, m);
     local.current[drill.itemId] = next;
@@ -921,7 +928,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   };
   const freeN = Math.min(RUBATO_CLEAN, (stateOf(drill).rubato?.free ?? 0) + 1);
   const he = lang === 'he';
-  const stageTx = stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;
+  const stageTx = rubatoOnly ? (he ? 'רובאטו: אקורד, עצירה, ואז המנגינה — בלי קצב' : 'Rubato: a chord, a stop, then the melody — no pulse') : stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;
   if (stageRes) {
     const nextStage = rubatoStage(stateOf(drill), drill);
     const line =
@@ -975,7 +982,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {stageTx && !res && (
         <p className="drill-stage" data-rubato-stage={stage}>
           <b>{stageTx}</b>
-          {!oneFree && (
+          {!oneFree && !rubatoOnly && (
             <button
               className="link"
               onClick={() => {
@@ -1033,6 +1040,21 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
                   {(RULE_NAME as Record<string, { en: string; he: string }>)[c.card]?.[lang] ?? c.card} <b dir="ltr">{c.ok}/{c.total}</b>
                 </span>
               ))}
+            </p>
+          )}
+          {/* Siskind / MTNA rubric (phraseOrg.ts): phrasing and note choice of an improvised take, one line; the tip only at the two unacceptable ends. */}
+          {res.m.phraseOrg && (
+            <p className="drill-rh" data-phrase-band={res.m.phraseOrg.band} data-note-band={res.m.phraseOrg.noteBand ?? undefined}>
+              <span className={res.m.phraseOrg.band === 'organized' || res.m.phraseOrg.band === 'varied' ? 'ok' : 'miss'}>
+                {lang === 'he' ? 'משפטים' : 'Phrasing'}: {PHRASE_BAND_NAME[res.m.phraseOrg.band][lang]}
+              </span>
+              {res.m.phraseOrg.noteBand && (
+                <span className={res.m.phraseOrg.noteBand === 'colourful' ? 'ok' : 'miss'}>
+                  {' · '}
+                  {lang === 'he' ? 'צלילים' : 'Notes'}: {NOTE_BAND_NAME[res.m.phraseOrg.noteBand][lang]}
+                </span>
+              )}
+              {(res.m.phraseOrg.band === 'monotonous' || res.m.phraseOrg.band === 'random') && <small> — {res.m.phraseOrg.tip[lang]}</small>}
             </p>
           )}
           <TakeResult

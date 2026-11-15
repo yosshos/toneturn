@@ -53,6 +53,12 @@ function secondTag(drill: Drill): Tags[number] | null {
   }
   // AUDIT-DEPTH-3: improvising under rule cards feeds improvising (the written chorus the vocabulary); jazz in context
   // feeds the Barry sub through the brothers, improvising vocabulary otherwise.
+  // Solo jazz piano (Siskind, soloPianoDrills.ts): the improvisation habits rate improvising, the comping vocabulary the
+  // backbeat time, the left hand and the textures voicings (shared hands and four voices: voice leading).
+  if (f === 'k-impro') return { skill: 'improv', sub: 'improv/play', w: 0.4 };
+  if (f === 'k-comp') return { skill: 'timing', sub: 'timing/backbeat', w: 0.3 };
+  if (f === 'k-lh') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  if (f === 'k-tex') return /^tx-(shared|4v|inner)/.test(drill.spec.kind) ? { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 } : { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
   if (f === 'k-solo' || f === 'g-solo' || f === 'b-solo') return { skill: 'improv', sub: drill.spec.kind === 'sl-chorus' ? 'improv/vocab' : 'improv/play', w: 0.4 };
   if (f === 'k-ctx' || f === 'g-ctx' || f === 'b-ctx') return drill.spec.kind.startsWith('cx-bro') ? { skill: 'chords', sub: 'chords/barry', w: 0.3 } : { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
   if (f === 'd-time') return { skill: 'timing', sub: drill.click === '24' || drill.click === 'and' ? 'timing/backbeat' : drill.click === 'gap' || drill.click === 'one' ? 'timing/gap' : 'timing/subdivide', w: 0.4 };

@@ -165,7 +165,9 @@ export function analyzeVoiceLeadTake(drill: Drill, bpm: number, played: PlayedNo
     F.push({ sev: timingSD / th.sd, en: `Timing unsteady (SD ${Math.round(timingSD)} ms)`, he: `תזמון לא יציב (סטיית תקן ${Math.round(timingSD)} ms)` });
   if (worst !== null && worst > 2.5 * th.sd) F.push({ sev: worst / (2.5 * th.sd), en: `One chord far off the beat (${Math.round(worst)} ms)`, he: `אקורד אחד רחוק מהפעמה (${Math.round(worst)} ms)` });
   // Two hands and held tones: a chord's struck notes together within 40 ms.
-  if (chordSpread !== null) F.push({ sev: chordSpread / 40, en: `Chord notes not together (${Math.round(chordSpread)} ms)`, he: `צלילי האקורד לא יחד (${Math.round(chordSpread)} ms)` });
+  // Shared-hands voicings (Siskind): two hands, five to seven notes, the bass may come first ("not simultaneous" [PSJP-B]).
+  const spreadLim = g.type === 'shared' ? 60 : 40;
+  if (chordSpread !== null) F.push({ sev: chordSpread / spreadLim, en: `Chord notes not together (${Math.round(chordSpread)} ms)`, he: `צלילי האקורד לא יחד (${Math.round(chordSpread)} ms)` });
   if (hesitations > 0) F.push({ sev: hesitations === 1 ? 1.4 : 2, en: `${hesitations} hesitation${hesitations === 1 ? '' : 's'}`, he: `${hesitations} היסוסים` });
 
   const worstF = F.reduce<Factor | null>((a, b) => (!a || b.sev > a.sev ? b : a), null);

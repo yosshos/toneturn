@@ -31,6 +31,7 @@ import { catalog, generate } from '../engine/drills/generate';
 import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
+import { listenCard, tuneSlotLevels } from '../engine/practiceMethod';
 import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
 import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
@@ -2473,6 +2474,7 @@ export function App() {
       {route === 'workoutrun' && wrun && (
         <WorkoutRunScreen
           t={t}
+          listen={listenCard(tuneSlotLevels(progress.drillItems ?? {}).concept)}
           lang={s.uiLang}
           run={wrun}
           onGo={() => {
@@ -2491,6 +2493,22 @@ export function App() {
             if (b.target.kind !== 'game' && b.target.kind !== 'vocal') return runCurrent(wrun);
             // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
             saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
+            // The four-slot session's Tunes block (practiceMethod.ts): the head levels for what slot 2 worked on.
+            if (b.id.startsWith('tunes-') && settings) {
+              const levels = [...catalog(), ...guitarCatalog()].flatMap((f) => f.levels);
+              let q: Drill[] = [];
+              for (const id of tuneSlotLevels(progress.drillItems ?? {}).levels) {
+                const lv = levels.find((l) => l.id === id);
+                if (!lv) continue;
+                try {
+                  q = levelDrills(lv, drillSettingsOf(settings).keyOrder).slice(0, 6);
+                } catch {
+                  q = [];
+                }
+                if (q.length) break;
+              }
+              chartQueue.current = q.length ? q : null;
+            }
             if (b.target.kind === 'game') {
               if (b.target.game === 'licks') lickReview.current = true;
               if (b.target.game === 'drills') {

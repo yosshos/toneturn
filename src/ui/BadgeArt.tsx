@@ -865,6 +865,34 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'family:k-tune': () => p('M3 5v14 M12 5v14 M21 5v14 M6 16l2.5-7 M9 16l2.5-7 M15 16l2.5-7 M18 16l2.5-7', false),
+  // Solo jazz piano (Siskind): a bass note under a two-note shell; three mangos over two hands; a hit on the "and";
+  // phrases with a rest between them.
+  'family:k-lh': () => (
+    <>
+      {head(6, 19, 2.6)}
+      {head(15, 10, 2.4)}
+      {head(15, 5, 2.4)}
+      {p('M8.4 18V4 M17.4 9V1 M2 14H22', false)}
+    </>
+  ),
+  'family:k-tex': () => (
+    <>
+      <circle cx={6} cy={8} r={3} fill="none" />
+      <circle cx={12} cy={5} r={3} fill="none" />
+      <circle cx={18} cy={8} r={3} fill="none" />
+      {p('M3 19q4.5-5 9 0 M12 19q4.5-5 9 0', false)}
+    </>
+  ),
+  'family:k-comp': () => (
+    <>
+      {p('M3 12l2.5-5 2.5 5-2.5 5z', true)}
+      {head(15, 17, 2.4)}
+      {head(15, 12, 2.4)}
+      {head(15, 7, 2.4)}
+      {p('M17.4 16V2 l4 3', false)}
+    </>
+  ),
+  'family:k-impro': () => p('M2 14q4-9 8-1 M11.5 10h2 M15 15q4-11 7-3 M3 21v-3 M12 21v-3 M20 21v-3', false),
   'family:g-cmel': () => (
     <>
       {head(9, 16, 2.4)}
