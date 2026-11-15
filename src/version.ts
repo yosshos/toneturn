@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.94.0',
+    date: '2026-11-15',
+    en: [
+      'Every take, clearer: the score is the hero (bigger notes and tab, look-ahead while you play), each note marked early or late, and a short review — one verdict, three chips (notes, time, evenness), one suggestion. Tap a bar under the score to loop just that spot slower until it’s clean.',
+      'Check your input first: before every exercise you see the mic level or your MIDI keys arrive, and a quiet banner tells you if nothing is heard during the take.',
+      'Singing: a vibrato readout, a note-by-note review after the take, sight-singing shows the score only while you sing, and one fair pass band everywhere (a note within 60 cents passes; 65 for beginners).',
+      'More of every course: first steps for keys, guitar, bass and drums; guitar grades 9–11; 49 drum levels; a top ladder for singers; three-voice and one-hearing ear training.',
+    ],
+    he: [
+      'כל ביצוע ברור יותר: התווים במרכז (תווים וטאב גדולים יותר, מבט קדימה בזמן הנגינה), כל צליל מסומן מוקדם או מאוחר, וסיכום קצר — שורת תוצאה, שלושה צ׳יפים (צלילים, זמן, אחידות), והצעה אחת. נגיעה בתיבה מתחת לתווים מנגנת בלופ רק את המקום הזה, לאט יותר, עד שהוא נקי.',
+      'בדיקת קלט קודם: לפני כל תרגיל רואים את עוצמת המיקרופון או את קלידי ה־MIDI נקלטים, ובזמן הביצוע שורה שקטה אומרת אם לא שומעים כלום.',
+      'שירה: מד ויברטו, סיכום צליל אחר צליל אחרי הביצוע, בשירה מדף התווים מוצגים רק בזמן השירה, ותחום מעבר הוגן אחד בכל מקום (צליל בטווח 60 סנט עובר; 65 למתחילים).',
+      'יותר בכל קורס: צעדים ראשונים לקלידים, גיטרה, בס ותופים; כיתות 9–11 בגיטרה; 49 שלבי תופים; סולם עליון לזמרים; אימון שמיעה בשלושה קולות ובהשמעה אחת.',
+    ],
+  },
+  {
     version: '0.93.0',
     date: '2026-11-15',
     en: [
