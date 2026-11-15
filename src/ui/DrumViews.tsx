@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Drill, DrumVoice, ExpNote, TakeMetrics } from '../engine/drills/types';
 import { markOf, tickLen, type NoteMark } from '../engine/noteMarks';
+import type { LiveTake } from '../engine/drills/liveGrade';
 import { barsPerLine, beamBeats, dotted, eighthGroupOf, restsOf, type RestKind } from '../engine/drumNotation';
 import { calibrateVel, classOf, DEFAULT_KIT, kitKind, pedalRange, PRESETS, slowOutput, voiceOf, VOICE_NAME, wizardDone, wizardHit, wizardSkip, wizardStart, WIZARD_PADS, QUICK_PADS, type WizardPad, type AcousticCal, type AcousticVoice, type KitKind, type KitPreset, type KitProfile, type WizardState, KIT_NOTICE } from '../engine/drumKit';
 import { buildCal, CAL_HITS, CAL_ORDER, OnsetTracker } from '../engine/drumAcoustic';
@@ -32,11 +33,12 @@ const noteKey = (n: ExpNote) => `${n.voice}:${n.beat}`;
 
 /** Each marked hit's offset (ms) and the window, for the early / late tick (COURSE-FEEDBACK-UI §4.1). */
 const DEVS = new WeakMap<Map<string, NoteMark>, { dev: Map<string, number | null>; win: number }>();
-function marksOf(result?: TakeMetrics | null): Map<string, NoteMark> {
+function marksOf(result?: TakeMetrics | null, live?: LiveTake | null): Map<string, NoteMark> {
   const out = new Map<string, NoteMark>();
   const dev = new Map<string, number | null>();
-  const w = result?.drum?.windowMs ?? 40;
-  for (const r of result?.perNote ?? []) {
+  // Slice 5: while the take runs, the settled hits (the same rule and window as the review).
+  const w = result ? (result.drum?.windowMs ?? 40) : (live?.win ?? 40);
+  for (const r of result ? result.perNote : (live?.perNote ?? [])) {
     out.set(noteKey(r.exp), markOf(r, w));
     dev.set(noteKey(r.exp), r.dev);
   }
@@ -93,7 +95,7 @@ function shownNotes(drill: Drill): ShownNote[] {
 }
 
 /** The drill's notes, two bars a line (one for dense rudiments), in a window of two lines that follows the take (B2, one screen). */
-export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang }) {
+export function DrumScore({ drill, view, result, beat = -1, lang, live }: { drill: Drill; view: 'staff' | 'lanes'; result?: TakeMetrics | null; beat?: number; lang: Lang; /** Slice 5: the running take's settled hits. */ live?: LiveTake | null }) {
   const meter = drill.meter || 4;
   // Eighth-pulse meters: a drill beat is an eighth — measure the density in quarters.
   const q = drill.pulse === 8 ? 0.5 : 1;
@@ -101,7 +103,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang }: { drill: Dri
   const geo = scoreLines(drill, bars);
   const lines = geo.length;
   const lineOf = (b: number) => Math.max(0, geo.findIndex((l) => b >= l.from - 1e-6 && b < l.to - 1e-6));
-  const marks = marksOf(result);
+  const marks = marksOf(result, live);
   const firstBad = result ? drill.notes.findIndex((n) => (marks.get(noteKey(n)) ?? 'ok') !== 'ok') : -1;
   // The window follows the line the take is in (lines may differ in length on a timeline drill).
   const { from, pager } = useLineWindow(lines, beat >= 0 ? lineOf(beat) : -1, 1, firstBad >= 0 ? lineOf(drill.notes[firstBad].beat) : 0);

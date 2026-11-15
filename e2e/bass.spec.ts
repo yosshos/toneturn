@@ -32,6 +32,8 @@ test.describe('bass course', () => {
 
   test('free walking shows only the chart; the model line is opt-in', async ({ page }) => {
     await open(page, 'b-walk', 'b-walk-7');
+    // the headphones question is a sheet over the run screen (COURSE-FEEDBACK-UI S4): answer it first
+    await page.locator('[data-drums-choice="speaker"]').click();
     await expect(page.locator('[data-chart-only]')).toBeVisible();
     await expect(page.locator('[data-drills="run"] .drill-tab')).toHaveCount(0);
     await fitsScreen(page);
@@ -46,10 +48,11 @@ test.describe('bass course', () => {
     await fitsScreen(page);
     await open(page, 'b-walk', 'b-walk-2');
     const tab = page.locator('[data-drills="run"] .drill-tab');
-    await expect(tab).toHaveAttribute('data-tab-lines', '7');
-    await expect(tab.locator('.tab-pager small')).toHaveText('1–2 / 7');
+    // COURSE-FEEDBACK-UI S4 (the score as hero): on a phone a dense walking line is one bar a line.
+    await expect(tab).toHaveAttribute('data-tab-lines', '13');
+    await expect(tab.locator('.tab-pager small')).toHaveText('1–2 / 13');
     await tab.locator('.tab-pager button').last().click();
-    await expect(tab.locator('.tab-pager small')).toHaveText('3–4 / 7');
+    await expect(tab.locator('.tab-pager small')).toHaveText('3–4 / 13');
     await fitsScreen(page);
   });
 

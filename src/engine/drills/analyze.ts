@@ -9,7 +9,7 @@ import { analyzeHeldChoiceTake } from './ctFreeAnalyze';
 import { analyzeFreeCompTake } from './freeCompAnalyze';
 import { analyzePhraseTake } from './phraseGrade';
 import { RULE_NAME, ruleCheck } from '../improvRules';
-import { RULE_CARDS, cardKept, type CNote } from '../ruleCards';
+import { RULE_CARDS, TARGET_CARDS, cardKept, changeLandings, targetPcs, type CNote } from '../ruleCards';
 import { phraseOrg, playRestCheck, PHRASE_BAND_NAME, type PhraseOrgReport } from '../phraseOrg';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
@@ -306,9 +306,25 @@ export function improvChecks(drill: Drill, bpm: number, played0: PlayedNote[]): 
       continue;
     }
     const pass = RULE_CARDS[card] ? cardKept(card, c) : c.ok / c.total >= 0.8 - 1e-9;
-    out.push({ card, ok: c.ok, total: c.total, pass });
+    // Slice 8: where the card broke, by bar (the chart's corner tabs).
+    const bars = c.miss?.length ? [...new Set(c.miss.map((b) => Math.floor(b / ctx.meter + 1e-6)))].sort((a, b) => a - b) : undefined;
+    out.push({ card, ok: c.ok, total: c.total, pass, ...(bars ? { bars } : {}) });
   }
   return out;
+}
+
+/** Slice 8: the note landed on at each chord change, for the target cards of an improvised take (empty without one). */
+export function improvLandings(drill: Drill, bpm: number, played0: PlayedNote[]): NonNullable<TakeMetrics['landings']> {
+  const g = drill.goal.improv;
+  const want = g?.cards.map((c) => TARGET_CARDS[c]).find(Boolean);
+  if (!g || !want) return [];
+  const meter = drill.meter || 4;
+  const ctx = { notes: improvNotes(drill, bpm, played0), spans: g.spans, meter, bpm };
+  return changeLandings(ctx).map((l) => {
+    const target = targetPcs(l.span, want);
+    const landed = l.landed ? l.landed.midi : null;
+    return { bar: Math.floor(l.at / meter + 1e-6), target, landed, hit: landed !== null && target.includes(((landed % 12) + 12) % 12) };
+  });
 }
 
 /** Is this take improvised (rule cards, free bars, a free right hand, or a phrasing rule)? */
@@ -1045,6 +1061,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),
     ...(drill.goal.improv ? { improv } : {}),
+    ...(drill.goal.improv ? (() => { const l = improvLandings(drill, bpm, played0); return l.length ? { landings: l } : {}; })() : {}),
     ...(po ? { phraseOrg: po.report } : {}),
     ...(po?.playRest ? { playRest: po.playRest } : {}),
   };

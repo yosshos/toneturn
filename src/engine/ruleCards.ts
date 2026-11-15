@@ -197,6 +197,21 @@ function atChange(ns: CNote[], at: number): CNote | null {
   if (near.length) return near[0];
   return ns.find((n) => n.beat < at && n.beat + n.dur > at + 0.1) ?? null;
 }
+/**
+ * Target cards (COURSE-FEEDBACK-UI §4.7): the chord tones a card asks for at each change — printed under the chord
+ * before the take ("→ E"), and the note really landed on after it.
+ */
+export const TARGET_CARDS: Record<string, ('third' | 'seventh')[]> = { 'guide-target': ['third', 'seventh'], 'three-on-one': ['third'] };
+/** The note heard at each chord change (null: a rest there), with the change's chord. */
+export function changeLandings(ctx: CardCtx): { at: number; span: CSpan; landed: CNote | null }[] {
+  const ns = line(ctx);
+  return changes(ctx).map((s) => ({ at: s.at, span: s, landed: atChange(ns, s.at) }));
+}
+/** The target pitch classes of a chord for a target card (absolute, 0–11). */
+export function targetPcs(span: Pick<CSpan, 'root' | 'iv'>, want: ('third' | 'seventh')[]): number[] {
+  const t = tonesOf(span.iv);
+  return want.map((w) => t[w]).filter((x): x is number => x !== undefined).map((x) => mod12(span.root + x));
+}
 /** Judge the note at every chord change (changes where nothing sounds are not judged: a rest). */
 function eachChange(ctx: CardCtx, ok: (n: CNote, s: CSpan) => boolean, ns = line(ctx)): CardCheck {
   const items: { ok: boolean; beat: number }[] = [];

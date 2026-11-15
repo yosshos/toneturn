@@ -280,3 +280,96 @@ for (const lang of ['en', 'he'] as const)
       if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
       await shot(page, `${plays}-ready-${lang}`);
     });
+
+// Slice 5: live marks and the pocket meter — the take played out in time (dev-only synthesized input, no audio).
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of [...RUNS, ['bass', 'b-pocket', 'b-pocket-1'] as [Plays, string, string]])
+    test(`live marks and the pocket meter during the take, one screen (${plays}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => {
+        (window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed';
+        (window as unknown as { __fakeLive?: number }).__fakeLive = 1.5;
+      });
+      await seed(page, lang, plays, { headphones: false });
+      await openLevel(page, lang, family, level);
+      await expect(page.locator('[data-pocket="ready"]')).toBeVisible();
+      await page.locator('[data-drill-play]').click();
+      // the count-in fills the beat cells, then the take runs
+      await expect(page.locator('[data-pocket="count"]')).toBeVisible();
+      await expect(page.locator('[data-pocket="play"]')).toBeVisible({ timeout: 10_000 });
+      const liveSel = '.mk-live .mk, .drum-score .dn.ok, .drum-score .dn.early, .drum-score .dn.late, .drum-score .dn.wrong, .drum-score .dn.missed, .drum-score .dl-hit.ok';
+      await expect.poll(() => page.locator(liveSel).count(), { timeout: 15_000 }).toBeGreaterThan(1);
+      await expect(page.locator('[data-pocket="play"][data-pocket-mean]')).toBeVisible();
+      // still playing: no review yet, the playhead on the score, and the screen fits
+      await expect(page.locator('.drill-result')).toHaveCount(0);
+      const o = await overflow(page);
+      expect(o.tall, 'take taller than the screen').toBeLessThanOrEqual(2);
+      expect(o.wide).toBeLessThanOrEqual(1);
+      if (plays !== 'drums') await expect(page.locator('.staff-now').first()).toBeVisible();
+      if (plays === 'drums') expect(Number(await page.locator('[data-pocket="play"]').getAttribute('data-pocket-rows'))).toBeGreaterThan(1);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s5-${plays}-live-${lang}`);
+      // the take ends in the review, whose marks are the take's
+      await expect(page.locator('.drill-result')).toBeVisible({ timeout: 40_000 });
+      await expect(page.locator('.mk-live')).toHaveCount(0);
+    });
+
+test('live marks: "Never" in the drill settings keeps the take calm (the meter only)', async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed';
+    (window as unknown as { __fakeLive?: number }).__fakeLive = 2;
+  });
+  await seed(page, 'en', 'keys', { drills: { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: 'piano', liveMarks: 'never' } });
+  await openLevel(page, 'en', 'scales', 'scales-1');
+  await page.locator('[data-drill-play]').click();
+  await expect(page.locator('[data-pocket="play"][data-pocket-mean]')).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(800);
+  await expect(page.locator('.mk-live .mk')).toHaveCount(0);
+});
+
+// Slice 8: the chord chart (דף אקורדים) — four bars a row, chords in <bdi>, a rule's target under each chord before the
+// take; after it a corner tab per bar and "Rules kept n/m bars"; one screen at 320×720.
+const CHARTS: [Plays, string, string][] = [
+  ['keys', 'k-solo', 'k-solo-1'],
+  ['guitar', 'g-solo', 'g-solo-1'],
+  ['bass', 'b-solo', 'b-solo-2'],
+  ['bass', 'b-walk', 'b-walk-7'],
+];
+for (const lang of ['en', 'he'] as const)
+  for (const [plays, family, level] of CHARTS)
+    test(`the chord chart: four a row, targets, corner tabs after the take, one screen (${plays} ${level}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+      await seed(page, lang, plays, { headphones: false, drills: { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: plays === 'keys' ? 'piano' : plays, guitarAddOns: ['jazz'], bassTrack: 'both' } });
+      await openLevel(page, lang, family, level);
+      const chart = page.locator('[data-chord-chart]').first();
+      await expect(chart).toBeVisible();
+      await expect(chart).toHaveAttribute('aria-label', lang === 'he' ? 'דף אקורדים' : 'Chord chart');
+      const g = await chart.evaluate((el) => {
+        const row = el.querySelector('.cc-row')!;
+        const cells = [...row.querySelectorAll('.cc-bar')].map((c) => c.getBoundingClientRect());
+        const chords = [...el.querySelectorAll('.cc-chord')];
+        return { n: cells.length, w: cells.map((c) => c.width), inBdi: chords.every((c) => c.tagName === 'BDI'), chords: chords.length, targets: el.querySelectorAll('.cc-sub.target').length, right: el.getBoundingClientRect().right };
+      });
+      expect(g.n).toBe(4);
+      for (const w of g.w) expect(w, 'bar cell width').toBeGreaterThanOrEqual(52);
+      expect(g.inBdi).toBe(true);
+      expect(g.chords).toBeGreaterThan(0);
+      expect(g.right).toBeLessThanOrEqual(320);
+      if (level !== 'b-walk-7') expect(g.targets + (await page.locator('[data-rule-n]').count())).toBeGreaterThan(0);
+      if (family === 'k-solo' || family === 'g-solo') expect(g.targets, 'guide-tone targets under the chords').toBeGreaterThan(0);
+      let o = await overflow(page);
+      expect(o.tall).toBeLessThanOrEqual(2);
+      expect(o.wide).toBeLessThanOrEqual(1);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s8-${plays}-${level}-before-${lang}`);
+      await fakeTakeRun(page, 'mixed');
+      if (level !== 'b-walk-7') {
+        await expect(page.locator('[data-rule-chart] .cc-tab').first()).toBeVisible();
+        await expect(page.locator('[data-rules-kept]')).toBeVisible();
+      }
+      o = await overflow(page);
+      expect(o.tall, 'review taller than the screen').toBeLessThanOrEqual(2);
+      const next = await page.locator('.take-review [data-next]').boundingBox();
+      expect(next!.y + next!.height).toBeLessThanOrEqual(720);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `s8-${plays}-${level}-after-${lang}`);
+    });

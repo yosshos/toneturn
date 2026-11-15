@@ -677,10 +677,6 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               ]}
               onChange={(v) => onChange({ textScale: Number(v) })}
             />
-            <label className="check">
-              <input type="checkbox" checked={!!s.cvd} onChange={(e) => onChange({ cvd: e.target.checked })} data-cvd="1" />
-              {lang === 'he' ? 'צבעים ידידותיים לעיוורון צבעים (כחול / כתום במקום ירוק / אדום)' : 'Color-blind friendly (blue / orange instead of green / red)'}
-            </label>
           </section>
           <section className="set-card">
             <fieldset className="seg-field views-field">

@@ -8,6 +8,9 @@ import { NOTE_BAND_NAME, PHRASE_BAND_NAME } from '../engine/phraseOrg';
 import { refreshProfile } from '../storage/profile';
 import { keyList, skillKeysOf, type KeyCell } from '../engine/analysis/keyMastery';
 import { KeyMap12 } from './KeyMap12';
+import { liveMarksOn, type LiveMarksPref, type LiveTake } from '../engine/drills/liveGrade';
+import { chartCells, rulesKept } from '../engine/drills/chartCells';
+import { ChordChart } from './ChordChart';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
@@ -123,27 +126,30 @@ export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { a
  * drills force notation (B10); free-choice drills show only the chord chart, with an opt-in model line (B3); ear drills
  * show what to do until the result (B11). `beat` = the running take's beat, for the moving window (B2).
  */
-export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang; /** The take's tempo (phrases by ear: the call's replay). */ bpm?: number }) {
+export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, live, loop }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang; /** The take's tempo (phrases by ear: the call's replay). */ bpm?: number; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** Slice 8: bars picked on the error map, hatched on a chart. */ loop?: [number, number] | null }) {
   const [model, setModel] = useState(false);
   // Ear drills (bass B11, the drummer's ear): what to do and which bars are yours, until the result.
   // The pianist's ear (PIANO_AUDIT §3) too: the answer stays hidden until the result.
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
   // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
-  if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} />;
+  if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} live={live} />;
   // PIANO_JAZZ P2: trading fours — after the result, a model line for your bars on request (it replaces the landings
   // staff, so the card still fits one screen).
   const tradeModel = !isGuitarDrill(drill) && result ? drill.goal.free?.model : undefined;
+  // Slice 8: a rule-card take's result is the chart — a corner tab per bar (kept / the rules broken) and the note landed
+  // on under each chord — in place of the landings staff; the model line stays one tap away.
+  const ruleChart = result && drill.goal.improv && drill.chart?.length ? <ChordChart cells={chartCells(drill, result)} meter={drill.meter || 4} lang={lang} maxRows={4} size="compact" loop={loop} attrs={{ 'data-rule-chart': 1 }} /> : null;
   if (tradeModel?.length)
     return (
       <>
-        {model ? <DrillStaff drill={{ ...drill, notes: tradeModel.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as const })) }} /> : <DrillStaff drill={drill} fingering={ds.showFingering} result={result} />}
+        {model ? <DrillStaff drill={{ ...drill, notes: tradeModel.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as const })) }} lang={lang} /> : (ruleChart ?? <DrillStaff drill={drill} fingering={ds.showFingering} result={result} lang={lang} />)}
         <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
           {model ? (lang === 'he' ? 'בחזרה לנחיתות שלכם' : 'Back to your landings') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
         </button>
       </>
     );
   if (!isGuitarDrill(drill) && drill.goal.vl) return <VoiceLeadScore drill={drill} result={result} beat={beat} lang={lang} />;
-  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} />;
+  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} live={live} lang={lang} />;
   if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
   // AUDIT-6 TAB reading: show 'tab' draws TAB only, whatever the player's view.
   const view = drill.show === 'staff' ? 'staff' : drill.show === 'tab' ? 'tab' : (ds.guitarView ?? 'tab');
@@ -160,10 +166,12 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm }: {
             {view !== 'tab' && <DrillStaff drill={md} />}
           </>
         ) : (
-          <>
-            {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} />}
-            {view !== 'tab' && <DrillStaff drill={drill} result={result} />}
-          </>
+          (ruleChart ?? (
+            <>
+              {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} />}
+              {view !== 'tab' && <DrillStaff drill={drill} result={result} lang={lang} />}
+            </>
+          ))
         )}
         <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
           {model ? (lang === 'he' ? 'בחזרה לנחיתות שלכם' : 'Back to your landings') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
@@ -176,9 +184,9 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm }: {
   const written = upTo === undefined || upTo > 0;
   return (
     <>
-      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} />}
-      {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} />}
-      {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} />}
+      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} />}
+      {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} live={live} lang={lang} />}
+      {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} result={result} loop={loop} lang={lang} compact={written} />}
       {drill.show === 'chart' && (
         <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
           {model ? (lang === 'he' ? 'להסתיר את קו הדוגמה' : 'Hide the model line') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
@@ -879,6 +887,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [sel, setSel] = useState<[number, number] | null>(null);
   const [loop, setLoop] = useState<{ from: number; to: number; passes: number } | null>(null);
   const [loopRes, setLoopRes] = useState<TakeMetrics | null>(null);
+  // Slice 5: the running take's settled notes, drawn on the score while it is played (practice; calm = none).
+  const [live, setLive] = useState<LiveTake | null>(null);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -926,6 +936,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const rubatoOnly = !!drill.rubatoOnly && !micChords;
   const stage: RubatoStage | null = rubatoOnly ? 'free' : noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
+  // Practice or calm (§4.1): live marks while the item is learned (free / quarters steps, its first clean takes at tempo).
+  const liveOn = liveMarksOn(ds.liveMarks, { learningStep: stage !== null, cleanTakes: stateOf(drill).passLog?.length ?? (stateOf(drill).cleanBpm > 0 ? 2 : 0) });
   const stageDone = (m: TakeMetrics, st: RubatoStage) => {
     // A rubato-only item: the free take is the take (it counts; its target is its start tempo, off the ladder).
     if (rubatoOnly) return done({ ...m, bpm: bpm }, []);
@@ -998,7 +1010,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             {whole}
           </button>
         </p>
-        <DrillScore drill={ld} ds={ds} result={loopRes} beat={loopRes ? -1 : beat} lang={lang} bpm={lb} />
+        <DrillScore drill={ld} ds={ds} result={loopRes} beat={loopRes ? -1 : beat} lang={lang} bpm={lb} live={loopRes ? null : live} />
         {!loopRes && (
           <DrillTake
             key={`loop:${loop.from}-${loop.to}:${take}`}
@@ -1012,6 +1024,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             drumsOk={headphones}
             onDrums={onHeadphones}
             kit={kit}
+            liveMarks={ds.liveMarks !== 'never'}
+            onLive={setLive}
           />
         )}
         {loopRes && (
@@ -1063,8 +1077,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {drill.goal.improv?.cards.length ? (
         // Rule-card items: the rules on screen (they were only in the truncated title).
         <ul className="rule-chips" aria-label={he ? 'כללים' : 'rules'} data-rule-chips={drill.goal.improv.cards.length}>
-          {drill.goal.improv.cards.map((c) => (
-            <li key={c}>{(RULE_NAME as Record<string, { en: string; he: string }>)[c]?.[lang] ?? c}</li>
+          {drill.goal.improv.cards.map((c, k) => (
+            <li key={c} data-rule-n={k + 1}>
+              {/* Slice 8: the rule's number — the same number marks a bar that broke it on the chart. */}
+              {drill.goal.improv!.cards.length > 1 && <i className="rc-n" aria-hidden="true">{k + 1}</i>}
+              {(RULE_NAME as Record<string, { en: string; he: string }>)[c]?.[lang] ?? c}
+            </li>
           ))}
         </ul>
       ) : null}
@@ -1090,7 +1108,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           )}
         </p>
       )}
-      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} />
+      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} live={res ? null : live} loop={res ? loopSel : null} />
       {drill.spec.kind === 'sl-chorus' && !res && (
         <p className="drill-stage">
           <button className="btn small ghost" onClick={() => setChorusEd(true)} data-chorus-open="1">
@@ -1114,8 +1132,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         />
       )}
       {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
-      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
-      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} />}
+      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} />}
+      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
@@ -1133,17 +1151,42 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onNext={() => go(i + 1)}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           >
-          {/* AUDIT-DEPTH-3 C5: the rule cards of an improvised take, one compact line. */}
-          {res.m.improv && res.m.improv.length > 0 && (
-            <p className="drill-rh" data-improv-cards={res.m.improv.filter((c) => c.pass).length}>
-              {res.m.improv.map((c, k) => (
-                <span key={c.card} className={c.pass ? 'ok' : 'miss'} data-card={c.card} data-card-pass={c.pass ? '1' : '0'}>
-                  {k > 0 ? ' · ' : ''}
-                  {(RULE_NAME as Record<string, { en: string; he: string }>)[c.card]?.[lang] ?? c.card} <b dir="ltr">{c.ok}/{c.total}</b>
-                </span>
-              ))}
-            </p>
-          )}
+          {/* AUDIT-DEPTH-3 C5 + slice 8: the rule cards of an improvised take, one compact line. With the chart on screen:
+              "Rules kept in 6/8 bars" (its corner tabs counted), then each rule by its number (the chips name them). */}
+          {res.m.improv &&
+            res.m.improv.length > 0 &&
+            (() => {
+              const rk = drill.goal.improv && drill.chart?.length ? rulesKept(chartCells(takeDrill, res.m)) : null;
+              const cards = drill.goal.improv?.cards ?? [];
+              return (
+                <p className="drill-rh" data-improv-cards={res.m.improv.filter((c) => c.pass).length} {...(rk ? { 'data-rules-kept': `${rk.kept}/${rk.of}` } : {})}>
+                  {rk && (
+                    <span className="rules-kept">
+                      {he ? 'הכללים נשמרו ב־' : 'Rules kept in '}
+                      <bdi dir="ltr">
+                        {rk.kept}/{rk.of}
+                      </bdi>{' '}
+                      {he ? 'תיבות' : 'bars'}
+                    </span>
+                  )}
+                  {res.m.improv.map((c, k) => (
+                    <span key={c.card} className={c.pass ? 'ok' : 'miss'} data-card={c.card} data-card-pass={c.pass ? '1' : '0'}>
+                      {k > 0 || rk ? ' · ' : ''}
+                      {rk && cards.length > 1 ? (
+                        <i className="rc-n" aria-label={(RULE_NAME as Record<string, { en: string; he: string }>)[c.card]?.[lang] ?? c.card}>
+                          {cards.indexOf(c.card) + 1}
+                        </i>
+                      ) : (
+                        <>{(RULE_NAME as Record<string, { en: string; he: string }>)[c.card]?.[lang] ?? c.card} </>
+                      )}
+                      <b dir="ltr">
+                        {c.ok}/{c.total}
+                      </b>
+                    </span>
+                  ))}
+                </p>
+              );
+            })()}
           {/* Siskind / MTNA rubric (phraseOrg.ts): phrasing and note choice of an improvised take, one line; the tip only at the two unacceptable ends. */}
           {res.m.phraseOrg && (
             <p className="drill-rh" data-phrase-band={res.m.phraseOrg.band} data-note-band={res.m.phraseOrg.noteBand ?? undefined}>
@@ -1198,6 +1241,16 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
         <div className="row">
           <span>{tx.cont}</span>
           {seg('continuous', { off: tx.conts.off, 'raise-tempo': tx.conts['raise-tempo'], 'next-drill': tx.conts['next-drill'] })}
+        </div>
+        <div className="row" data-live-marks-row="1">
+          <span>{lang === 'he' ? 'סימונים בזמן הנגינה' : 'Live marks'}</span>
+          <div className="chips" role="radiogroup">
+            {(['always', 'learning', 'never'] as LiveMarksPref[]).map((v) => (
+              <button key={v} role="radio" aria-checked={(ds.liveMarks ?? 'learning') === v} className={`chip ${(ds.liveMarks ?? 'learning') === v ? 'on' : ''}`} onClick={() => onChange({ liveMarks: v })} data-live-marks={v}>
+                {v === 'always' ? (lang === 'he' ? 'תמיד' : 'Always') : v === 'learning' ? (lang === 'he' ? 'בזמן הלמידה' : 'While learning') : lang === 'he' ? 'אף פעם' : 'Never'}
+              </button>
+            ))}
+          </div>
         </div>
         {toggle('inPath', tx.inPath)}
         {toggle('inWorkout', tx.inWorkout)}
@@ -1269,6 +1322,16 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
           {lang === 'he' ? 'מיקרופון בלבד (בלי MIDI): להסתיר שלבים שצריכים MIDI' : 'Microphone only (no MIDI): hide levels that need MIDI'}
         </label>
       )}
+      <div className="row" data-live-marks-row="1">
+        <span>{lang === 'he' ? 'סימונים בזמן הנגינה' : 'Live marks'}</span>
+        <div className="chips" role="radiogroup">
+          {(['always', 'learning', 'never'] as LiveMarksPref[]).map((v) => (
+            <button key={v} role="radio" aria-checked={(ds.liveMarks ?? 'learning') === v} className={`chip ${(ds.liveMarks ?? 'learning') === v ? 'on' : ''}`} onClick={() => onChange({ liveMarks: v })} data-live-marks={v}>
+              {v === 'always' ? (lang === 'he' ? 'תמיד' : 'Always') : v === 'learning' ? (lang === 'he' ? 'בזמן הלמידה' : 'While learning') : lang === 'he' ? 'אף פעם' : 'Never'}
+            </button>
+          ))}
+        </div>
+      </div>
       {toggle('inPath', tx.inPath)}
       {toggle('inWorkout', tx.inWorkout)}
       <label className="row" data-focus-weak-keys="1">

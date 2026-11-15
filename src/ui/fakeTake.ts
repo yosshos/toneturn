@@ -10,8 +10,18 @@ import { isDrumDrill, isGuitarDrill } from '../engine/drills/events';
 
 type Pattern = 'clean' | 'mixed' | 'weak';
 export const fakeTakeOn = (): Pattern | null => (import.meta.env.DEV && typeof window !== 'undefined' ? ((window as unknown as { __fakeTake?: Pattern }).__fakeTake ?? null) : null);
+/**
+ * With `window.__fakeLive` set too, the synthesized take is played out in time (count-in, beats, the onsets arriving
+ * at their moments, no audio), so the live marks and the pocket meter can be seen and tested. The value is the speed
+ * (1 = the drill's tempo; 2 = twice as fast).
+ */
+export const fakeLiveOn = (): number | null => {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+  const v = (window as unknown as { __fakeLive?: number | boolean }).__fakeLive;
+  return v ? (typeof v === 'number' ? v : 1) : null;
+};
 
-export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, pattern: Pattern): { m: TakeMetrics; played: PlayedNote[] } {
+export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, pattern: Pattern): { m: TakeMetrics; played: PlayedNote[]; /** Drums: the hits (for a live replay). */ hits?: DrumTakeHit[] } {
   const off = (i: number): { skip?: boolean; dPitch?: number; dt?: number } => {
     if (pattern === 'clean') return { dt: ((i * 7) % 5) - 2 };
     if (pattern === 'weak') return i % 5 === 0 ? { dt: 10 } : i % 5 === 1 ? { dPitch: 2 } : { skip: true };
@@ -28,7 +38,7 @@ export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, patte
       if (o.skip || !n.voice) return;
       hits.push({ voice: o.dPitch ? (n.voice === 'snare' ? 'kick' : 'snare') : n.voice, on: expTimeMs(drill, n.beat, bpm) + (o.dt ?? 0), vel: n.accent ? 110 : n.ghost ? 30 : 80 });
     });
-    return { m: analyzeDrumTake(drill, bpm, hits), played: hits.map((h) => ({ pitch: 38, on: h.on, off: null, vel: h.vel })) };
+    return { m: analyzeDrumTake(drill, bpm, hits), played: hits.map((h) => ({ pitch: 38, on: h.on, off: null, vel: h.vel })), hits };
   }
   const played: PlayedNote[] = [];
   drill.notes.forEach((n, i) => {
