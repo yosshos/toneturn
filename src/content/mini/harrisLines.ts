@@ -63,7 +63,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes(CHROM_UP.slice(3, 9)), rest(), notes(CHROM_UP.slice(11))],
       },
       {
-        say: { en: 'Coming down, the app mirrors the rule: at a half step it goes to the note below and comes back up. The sources do not print this version, so treat it as a working form.', he: 'בירידה האפליקציה משקפת את החוק: בחצי טון יורדים לצליל שמתחת וחוזרים למעלה. המקורות לא מדפיסים את הגרסה הזו, אז זו צורת עבודה.' },
+        say: { en: 'Coming down, the same rule: at a half step go to the scale note below and come back up. The scale’s own notes stay on the beats.', he: 'בירידה, אותו חוק: בחצי טון יורדים לצליל הסולם שמתחת וחוזרים למעלה. הצלילים של הסולם נשארים על הפעמות.' },
         play: [notes(CHROM_DOWN)],
         show: { notes: CHROM_DOWN, key: 'C', text: { en: 'C A B B♭ A …', he: 'C A B B♭ A …' } },
       },
@@ -72,7 +72,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes(ps(chromaticScale(60, 'm6dim', 'up').line))],
       },
       ...gated('bh-chrom2', {
-        say: { en: 'Then two voices: the same scale in 3rds or 6ths along one floor of the 6th-diminished scale, as Echols teaches it.', he: 'ואחר כך שני קולות: אותו סולם בטרצות או בסקסטות באותה קומה של סולם השישית־מוקטן, כמו שאקולס מלמד.' },
+        say: { en: 'Then two voices: the same chromatic scale with a second voice a 3rd, a 6th or a 10th below, both moving together. Later, every other interval.', he: 'ואחר כך שני קולות: אותו סולם כרומטי עם קול שני טרצה, סקסטה או דצימה מתחת, ושניהם זזים יחד. אחר כך, כל שאר המרווחים.' },
       }),
       {
         say: { en: 'To keep: degrees on the beats, chromatic notes between, and at a half step skip past and come back.', he: 'לזכור: דרגות על הפעמות, צלילים כרומטיים ביניהן, ובחצי טון מדלגים הלאה וחוזרים.' },
@@ -155,7 +155,7 @@ export const LESSONS: MiniLesson[] = [
         },
       ]),
       ...gatedOr('parks-eight', {
-        say: { en: 'Parks warms up with the dominant scale eight ways on F7: up from each degree, then down by that degree’s rule. The three important arpeggios come right after, then the rules, and only then a whole tune.', he: 'פארקס מתחמם עם הסולם הדומיננטי בשמונה דרכים על F7: למעלה מכל דרגה, ואז למטה לפי החוק של אותה דרגה. שלושת הארפג׳ים החשובים באים מיד אחר כך, אחריהם החוקים, ואז שיר.' },
+        say: { en: 'The dominant rule from every degree: start on each degree in turn, on the beat, and come down the scale. From 1, 3, 5 or flat 7 add one half step; from 3, 5 or flat 7 you may add three; from 2, 4 or 6 add none, or two.', he: 'חוק הדומיננט מכל דרגה: מתחילים מכל דרגה בתורה, על הפעמה, ויורדים בסולם. מ־1, 3, 5 או ♭7 מוסיפים חצי טון אחד; מ־3, 5 או ♭7 אפשר גם שלושה; מ־2, 4 או 6 אף אחד, או שניים.' },
       }, [
         {
           say: { en: 'Practise each device round the cycle of fourths: C7, F7, B flat 7, and on through all twelve keys. Free time first, then the click, then a whole tune.', he: 'מתרגלים כל כלי לפי מעגל הקוורטות: C7, ‏F7, ‏B♭7, וכך הלאה בכל שנים־עשר הסולמות. קודם בזמן חופשי, אחר כך עם הקליק, ואז שיר שלם.' },

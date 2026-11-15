@@ -30,7 +30,7 @@ const hidden = hiddenContentIds();
 const of = (prefix: string) => hidden.filter((h) => h.startsWith(prefix)).map((h) => h.slice(prefix.length));
 
 describe('the registry', () => {
-  it('every claim has an id, a reason and content; ids are unique; nothing is switched on by default', () => {
+  it('every claim has an id, a reason and content; ids are unique; switched-on ids are real claims', () => {
     const ids = UNVERIFIED_CLAIMS.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const c of UNVERIFIED_CLAIMS) {
@@ -38,8 +38,10 @@ describe('the registry', () => {
       expect(c.hides.length).toBeGreaterThan(0);
       for (const h of c.hides) expect(h).toMatch(/^(item|level|vocal|topic|lesson|card|game):/);
     }
-    expect(SWITCHED_ON.size).toBe(0);
-    expect(hidden.length).toBeGreaterThan(40);
+    for (const id of SWITCHED_ON) expect(ids.includes(id) || id.includes(':'), id).toBe(true);
+    // a not-pursued claim is never switched on
+    for (const c of UNVERIFIED_CLAIMS) if (c.notPursued || c.unsourced) expect(SWITCHED_ON.has(c.id), c.id).toBe(false);
+    expect(hidden.length).toBeGreaterThan(25);
   });
   it('every hidden id names real content (no typos that would hide nothing)', () => {
     const kinds = new Set<string>();
@@ -97,13 +99,12 @@ describe('hidden everywhere', () => {
     const ids = new Set(ALL_LEVELS.map((l) => l.id));
     for (const inst of ['piano', 'guitar', 'bass', 'drums'] as const)
       for (const st of strandsFor(inst, 'both')) for (const r of st.rungs) expect(ids.has(r.level), `${inst} ${r.level}`).toBe(true);
-    expect(strandsFor('piano', 'jazz').flatMap((s) => s.rungs).some((r) => r.level === 'k-harrisline-17')).toBe(false);
+    expect(strandsFor('piano', 'jazz').flatMap((s) => s.rungs).some((r) => r.level === 'k-harrisline-17')).toBe(false); // the 5-4-3-2 phrases
   });
   it('depth counts: hidden levels and topic levels are not counted', () => {
     expect(familyLevels('k-harrisline')).toBe(catalog().find((f) => f.id === 'k-harrisline')!.levels.length);
     expect(familyLevels('k-harrisline')).toBeLessThan(HL_ROWS.length);
-    expect(topicLevels('bh-line-ear')).toBe(2);
-    expect(topicLevels('comp-rhythm-ear')).toBe(0);
+    expect(topicLevels('comp-rhythm-ear')).toBe(2);
     expect(topicLevels('lh-tex-ear')).toBe(1);
     const c = depthCounts();
     expect(c.lessons).toBe(Object.keys(MINI_LESSONS).length);
@@ -114,10 +115,10 @@ describe('every verify-marked item is hidden unless switched on', () => {
   // The `verify` marks in src/engine (harrisLines, harrisLineDrills, harmLadder, soloPiano, soloPianoDrills, vocal) and
   // the drums' teacher-check levels.
   const VERIFY_MARKED: [string, number?][] = [
-    ['hl-chrom'], ['hl-chrom2'], ['hl-eight'], ['hl-5432'], ['hl-lick'], ['hl-outline', 0], ['hl-outline', 2], ['hl-outline', 4], ['hl-outline', 5],
-    ['el-borrow'], ['cm-elevator'], ['vl-ladder', 2], ['vl-ladder', 3], ['vl-ladder', 6], ['vl-ladder', 7],
-    ['lh-bpalt', 1], ['lh-shB', 1], ['lh-strong', 1], ['lh-var1'], ['lh-332'], ['lh-var2'], ['lh-34'], ['lh-scomp', 1], ['lh-scomp', 2], ['lh-scomp', 3], ['lh-scomp', 4],
-    ['lh-shuttle'], ['tx-call'], ['tx-drop2'], ['tx-inner'], ['cp-beat3'], ['cp-basie'], ['cp-pushoff'], ['cp-accent'],
+    ['hl-5432'], ['hl-lick'], ['hl-outline', 0], ['hl-arps-down'], ['hl-feel6'], ['hl-compose'], ['hl-3b9'],
+    ['el-borrow'], ['cm-elevator'], ['vl-ladder', 0], ['vl-ladder', 1], ['vl-ladder', 3], ['vl-ladder', 7],
+    ['lh-bpalt', 1], ['lh-shB', 1], ['lh-strong', 1], ['lh-var1'], ['lh-332'], ['lh-var2'], ['lh-34'], ['lh-scomp', 3], ['lh-walk10', 2], ['lh-head10'],
+    ['lh-shuttle'], ['tx-drop2'], ['tx-inner'], ['cp-basie'], ['cp-pushoff'], ['cp-accent'],
   ];
   it('no catalogue spec of a verify-marked kind / option', () => {
     for (const [k, op] of VERIFY_MARKED) {
@@ -125,8 +126,57 @@ describe('every verify-marked item is hidden unless switched on', () => {
       expect(ALL_SPECS.some((s) => baseKind(s.kind) === k && (op === undefined || s.option === op)), `${k} ${op}`).toBe(false);
     }
     for (const l of ['d-latin-8', 'd-latin-9', 'd-latin-10']) expect(ALL_LEVELS.some((x) => x.id === l), l).toBe(false);
-    for (const v of [308, 309, 310]) expect(VOICE_FAMILIES.some((f) => f.refs.includes(v)), String(v)).toBe(false);
+    expect(VOICE_FAMILIES.some((f) => f.refs.includes(309)), '309').toBe(false);
     expect(gameVerified('call5432')).toBe(false);
+  });
+});
+
+describe('switched on 2026-11-15 (the owner\'s answers and the re-research): back everywhere', () => {
+  const ON: [string, number?][] = [
+    ['hl-chrom', 0], ['hl-chrom', 1], ['hl-chrom', 2], ['hl-chrom2', 0], ['hl-chrom2', 2], ['hl-chrom2', 6], ['hl-eight', 0], ['hl-eight', 12],
+    ['hl-sevendown', 0], ['hl-imp-scale', 3], ['hl-imp-scale', 4], ['hl-abc', 2], ['hl-abc', 3], ['hl-outline', 2], ['hl-outline', 4], ['hl-outline', 5],
+    ['vl-ladder', 2], ['vl-ladder', 6], ['vl-ladder', 8], ['vl-ladder', 9], ['cp-beat3', 0], ['tx-call', 0], ['lh-scomp', 1], ['lh-scomp', 2], ['lh-scomp', 4],
+    ['lh-walk10', 0], ['lh-walk10', 1],
+  ];
+  it('in the catalogues (keys, guitar, bass), every key', () => {
+    for (const [k, op] of ON) {
+      expect(itemVerified(k, op), `${k} ${op}`).toBe(true);
+      expect(ALL_SPECS.some((s) => baseKind(s.kind) === k && s.option === op), `${k} ${op}`).toBe(true);
+    }
+    const hl = catalog().find((f) => f.id === 'k-harrisline')!;
+    expect(hl.levels.find((l) => l.specs.some((s) => s.kind === 'hl-chrom'))!.keys).toHaveLength(12);
+    for (const fam of ['g-harrisline', 'b-harrisline']) {
+      const f = ALL_FAMS.find((x) => x.id === fam)!;
+      expect(f.levels.some((l) => l.specs.some((s) => baseKind(s.kind) === 'hl-chrom')), fam).toBe(true);
+    }
+  });
+  it('the path, the ear topic levels, the voice levels, lessons and the depth counts', () => {
+    const cat = stepCatalogue();
+    for (const [topic, lv] of [['bh-line-ear', 1], ['bh-line-ear', 2], ['bh-line-ear', 5], ['comp-rhythm-ear', 1], ['comp-rhythm-ear', 3]] as const)
+      expect(cat.some((s) => s.topic === topic && s.level === lv), `${topic} ${lv}`).toBe(true);
+    expect(cat.some((s) => s.topic === 'comp-rhythm-ear' && s.level === 2)).toBe(false);
+    for (const v of [308, 310]) expect(VOICE_FAMILIES.some((f) => f.refs.includes(v)), String(v)).toBe(true);
+    expect(MINI_LESSONS['bh-chromatic']).toBeTruthy();
+    expect(topicLevels('bh-line-ear')).toBe(5);
+    const c = depthCounts();
+    expect(c.lessons).toBe(Object.keys(MINI_LESSONS).length);
+    // the chromatic scale and seven down are tech steps on the path
+    const tech = new Set(cat.filter((s) => s.kind === 'tech').map((s) => s.id.replace(/^tech:/, '')));
+    const hl = catalog().find((f) => f.id === 'k-harrisline')!;
+    const chromLv = hl.levels.find((l) => l.specs.some((s) => s.kind === 'hl-chrom'))!.id;
+    expect(tech.has(chromLv), chromLv).toBe(true);
+  });
+  it('the level test can reach the switched-on Harris levels; key mastery counts them', () => {
+    const ids = new Set(ALL_LEVELS.map((l) => l.id));
+    for (const st of strandsFor('piano', 'jazz')) for (const r of st.rungs) expect(ids.has(r.level), r.level).toBe(true);
+    const spec = { family: 'k-harrisline' as const, kind: 'hl-chrom', key: 5, hands: 'R' as const, option: 0, tempo: 60 };
+    expect(itemIdVerified(itemIdOf(spec as never))).toBe(true);
+  });
+  it('the lessons speak of the confirmed forms only', () => {
+    const say = JSON.stringify(MINI_LESSONS['bh-chromatic']);
+    expect(say).not.toContain('working form');
+    expect(say).toContain('a 3rd, a 6th or a 10th below');
+    expect(JSON.stringify(MINI_LESSONS['bh-line-devices'])).toContain('Seven down to the 3rd: over');
   });
 });
 
@@ -147,7 +197,6 @@ describe('verified content unaffected', () => {
     const say = JSON.stringify(MINI_LESSONS['bh-line-devices']);
     expect(say).toContain('three important arpeggios');
     expect(say).not.toContain('5-4-3-2 phrases, from Workbook 1');
-    expect(say).not.toContain('Seven down to the 3rd: over');
   });
   it('the elevator levels start from the tonic only (cm-expand options 0 and 8)', () => {
     const ops = ALL_SPECS.filter((s) => baseKind(s.kind) === 'cm-expand').map((s) => s.option);

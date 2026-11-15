@@ -5,7 +5,9 @@ import {
   abcThirds,
   arpIntoScale,
   chromaticTwoVoices,
-  eightWays,
+  DOM_RULE_WAYS,
+  CHROM_SCALE,
+  ruleDrillLine,
   outlineFromChart,
   TUNE_CHARTS,
   chromaticArpsDown,
@@ -140,15 +142,41 @@ describe('Part F: tune outlines in Parks\'s order, two voices, the dominant eigh
         for (const n of line) if (Number.isInteger(n.beat)) expect(n.ct, `${c.name.en} ${k} ${n.beat}`).toBe(true);
       }
   });
-  it('the chromatic scale in two voices: along one floor (the A–G pair of the 6 chord is the floor of 2nds)', () => {
-    const { pairs } = chromaticTwoVoices(60, 'sixdim', 'up', '3rds');
-    for (const [a, b] of pairs) expect([2, 3, 4]).toContain(a - b);
-    const six = chromaticTwoVoices(60, 'sixdim', 'up', '6ths').pairs;
-    for (const [a, b] of six) expect([8, 9, 10]).toContain(a - b);
+  it('the chromatic scale in two voices: a diatonic 3rd / 6th / 10th under every scale degree, chromatics in parallel', () => {
+    const SPAN = { '3rds': [3, 4], '6ths': [8, 9], '10ths': [15, 16], '2nds': [1, 2], '4ths': [5, 6], '5ths': [6, 7], '7ths': [10, 11], octaves: [12] } as const;
+    for (const kind of ['maj', 'dom'] as const)
+      for (const iv of Object.keys(SPAN) as (keyof typeof SPAN)[])
+        for (let k = 0; k < 12; k++) {
+          const { pairs, line } = chromaticTwoVoices(60 + k, kind, iv);
+          expect(pairs.length).toBe(line.length);
+          pairs.forEach(([a, b], i) => {
+            expect(a).toBe(line[i].p);
+            // every interval is the diatonic one (a chromatic pair copies the next pair's interval)
+            expect(SPAN[iv] as readonly number[], `${kind} ${iv} ${k} ${i}`).toContain(a - b);
+            // the lower voice of a scale degree is itself in the scale
+            if (CHROM_SCALE[kind].includes(mod12(a - 60 - k))) expect(CHROM_SCALE[kind]).toContain(mod12(b - 60 - k));
+          });
+        }
+    // C major in 3rds: C/A, C♯/A♯, D/B, D♯/B, E/C, G/E, F/D
+    const { pairs } = chromaticTwoVoices(60, 'maj', '3rds');
+    expect(pairs.slice(0, 7).map(([a, b]) => `${N[mod12(a)]}/${N[mod12(b)]}`).join(' ')).toBe('C/A C♯/B♭ D/B E♭/B E/C G/E F/D');
   });
-  it('the dominant eight ways: up from each degree, down by its rule (verify)', () => {
-    expect(ln(eightWays(65, 0)).startsWith('F G A B♭ C D E♭ F E E♭ D')).toBe(true);
-    expect(eightWays(65, 7).length).toBe(11);
+  it('the dominant rules from every degree (Barry\'s half-step rules, §8)', () => {
+    // each degree once; one from 1, one or three from 3 / 5 / ♭7, none or two from 2 / 4 / 6
+    const allowed: Record<number, number[]> = { 0: [1], 4: [1, 3], 7: [1, 3], 10: [1, 3], 2: [0, 2], 5: [0, 2], 9: [0, 2] };
+    for (const [deg, count] of DOM_RULE_WAYS) expect(allowed[deg], `${deg} ${count}`).toContain(count);
+    expect(new Set(DOM_RULE_WAYS.map((w) => w[0])).size).toBe(7);
+    const line = (deg: number, c: 0 | 1 | 2 | 3) => names(ruleDrillLine(60, 'dom', deg + 12, c).slice(0, 12).map((n) => n.p));
+    expect(line(0, 1).startsWith('C B♭ A G F E D C B B♭')).toBe(false); // the 1–♭7 half step: C B B♭
+    expect(line(0, 1).startsWith('C B B♭ A G F E D C')).toBe(true);
+    expect(line(4, 3).startsWith('E E♭ D C♯ C B B♭ A G')).toBe(true);
+    expect(line(10, 1).startsWith('B♭ A G F E D C B B♭')).toBe(true);
+    expect(line(2, 0).startsWith('D C B♭ A G F E D C')).toBe(true);
+    expect(line(2, 2).startsWith('D C♯ C B B♭ A G F E')).toBe(true);
+    // in every key, from a chord tone with one half step, the chord tones land on every beat (with three, the run's middle note falls on a beat until the chord tones resume)
+    for (const [deg, count] of DOM_RULE_WAYS.filter(([d, c]) => RULE_CT.dom.includes(d) && c === 1))
+      for (let k = 0; k < 12; k++)
+        for (const n of ruleDrillLine(60 + k, 'dom', deg + 12, count)) if (Number.isInteger(n.beat)) expect(RULE_CT.dom, `${deg} ${count} ${k} ${n.beat}`).toContain(mod12(n.p - 60 - k));
   });
 });
 
@@ -207,9 +235,23 @@ describe('rhythm, arpeggios down, the ABCs, compose (D16, D19, D17)', () => {
   it('major arpeggios chromatically down: C G E C, B F♯ D♯ B …', () => {
     expect(ln(chromaticArpsDown(60, 2, 0)).startsWith('C G E C B F♯ E♭ B')).toBe(true);
   });
-  it('the ABCs: 3rds with a half step below, as transcribed from the 7th (B C E | C♯ D F | D♯ E G)', () => {
-    expect(ln(abcThirds(60, 'half')).startsWith('B C E C♯ D F E♭ E G')).toBe(true);
+  it('the ABCs: note by note, in 3rds, then a half step below the first note of each 3rd, up and down', () => {
+    expect(ln(abcThirds(60, 'notes'))).toBe('C D E F G A B C B A G F E D C');
     expect(ln(abcThirds(60, 'plain')).startsWith('C E D F E G')).toBe(true);
+    expect(ln(abcThirds(60, 'half-up'))).toBe('B C E C♯ D F E♭ E G E F A F♯ G B A♭ A C B♭ B D B C E C');
+    expect(ln(abcThirds(60, 'half-down'))).toBe('B C A B♭ B G A♭ A F F♯ G E E F D E♭ E C C♯ D B C');
+    // triplets: three notes a beat, the half step on the beat
+    const l = abcThirds(60, 'half-up');
+    expect(l.slice(0, 3).map((n) => n.beat)).toEqual([0, 0.333333, 0.666667]);
+    // every key: the first note of each cell is a half step below the second, the third a diatonic 3rd from it
+    for (let k = 0; k < 12; k++)
+      for (const shape of ['half-up', 'half-down'] as const) {
+        const x = abcThirds(60 + k, shape);
+        for (let i = 0; i + 2 < x.length - 1; i += 3) {
+          expect(x[i + 1].p - x[i].p).toBe(1);
+          expect([3, 4]).toContain(Math.abs(x[i + 2].p - x[i + 1].p));
+        }
+      }
   });
   it('the model line over a move puts a chord tone on every beat', () => {
     for (const m of Object.values(MOVES)) {
@@ -221,5 +263,28 @@ describe('rhythm, arpeggios down, the ABCs, compose (D16, D19, D17)', () => {
         at += beats;
       }
     }
+  });
+});
+
+describe("Barry's chromatic scale, owner-confirmed (2026-11-15): every scale tone on a beat", () => {
+  it('major, dominant and minor 6-dim, up, down and up-and-down, in all 12 keys', () => {
+    for (const kind of ['maj', 'dom', 'm6dim'] as const)
+      for (let k = 0; k < 12; k++) {
+        const root = 60 + k;
+        const sc = CHROM_SCALE[kind];
+        const inSc = (p: number) => sc.includes(mod12(p - root));
+        const forms = [chromaticScale(root, kind, 'up').line, chromaticScale(root, kind, 'down').line, chromaticUpDown(root, kind)];
+        for (const line of forms) {
+          // every note on a beat is a scale tone (the chromatic notes and the skips fall between)
+          for (const n of line) if (Number.isInteger(n.beat)) expect(inSc(n.p), `${kind} ${k} ${n.beat}`).toBe(true);
+          // and every scale degree of the octave lands on a beat
+          const onBeat = new Set(line.filter((n) => Number.isInteger(n.beat)).map((n) => mod12(n.p - root)));
+          for (const d of sc) expect(onBeat.has(d), `${kind} ${k} degree ${d}`).toBe(true);
+          // in even 8ths
+          line.forEach((n, i) => expect(n.beat).toBeCloseTo(i / 2));
+        }
+      }
+    expect(ln(chromaticScale(60, 'maj', 'down').line)).toBe('C A B B♭ A A♭ G F♯ F D E E♭ D C♯ C');
+    expect(ln(chromaticScale(60, 'dom', 'up').line)).toBe('C C♯ D E♭ E G F F♯ G A♭ A C B♭ B C');
   });
 });

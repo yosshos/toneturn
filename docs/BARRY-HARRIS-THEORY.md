@@ -155,12 +155,13 @@ Every step runs rubato first, then the tempo ladder, on piano and guitar (and ba
 - **3-to-9** is E G B♭ D.
 - **3-to-♭9** is E G B♭ D♭. It is the dim on the 3rd, shared by all four related dominants.
 
-**Phrases:** the **5-4-3-2 phrases** (Workbook 1). See docs/research/BARRY-HARRIS-METHOD.md A2.9; the exact notes still need checking against the workbook.
+**Phrases:** the **5-4-3-2 phrases** (Workbook 1). See docs/research/BARRY-HARRIS-METHOD.md A2.9. The exact notes were never checked against the workbook; not pursued (owner: specific licks don't matter).
 
 **Barry's chromatic scale:**
 - The scale degrees fall on the beats, with chromatic notes between them.
 - At an existing half step, skip to the note above and come back.
 - Ascending in C: C C♯ D D♯ E G F F♯ G G♯ A A♯ B D C.
+- Descending in C: C A B B♭ A A♭ G G♭ F D E E♭ D D♭ C (owner-confirmed 2026-11-15, with the dominant and minor 6-dim forms).
 
 **Minor and dominant devices:**
 - **Seven down to the 3rd:** over Dø–G7, play B♭7 (the m7♭5's dominant, a major 3rd down) up and down, landing on B.
@@ -200,24 +201,59 @@ Built from §8–§9 and docs/research/BARRY-HARRIS-METHOD.md Parts D–F. The n
 - harris-17 is now "Chromatic runs between chord tones".
 - harris-18 is now "The important minor: lines through each chord's 6th-dim scale".
 
+**Confirmed by the owner (2026-11-15)**
+- **The descending chromatic scale.** It mirrors the ascending one: at a half step, go to the scale note below and come back up (C A B B♭ A A♭ G G♭ F D E E♭ D D♭ C). All forms (major, dominant, minor 6-dim) are confirmed.
+- **The chromatic scale in two voices.** A second voice a diatonic 3rd, 6th or 10th below (usually), or any other interval, on the major or dominant chromatic scale. A chromatic note moves both voices in parallel.
+- **The dominant rule from every degree** (the old "Parks eight ways"). It is the §8 rule, from each degree in turn.
+- **The ABCs.** Note by note, then in 3rds, then each 3rd with a half step below its first note, up and down.
+
 **Still (verify)**
-- **The descending chromatic scale.** It mirrors the ascending one: at a half step, go to the scale note below and come back up (C A B B♭ A A♭ G G♭ F D E E♭ D D♭ C). Otto's variation approaches from below, but the sources do not print the notes.
-- **The 5-4-3-2 phrases.** The notes come from a workshop attendee's notes [54]. The minor versions are derived (the dominant shapes with ♭3). The combined lick is unchecked too.
-- **The dominant eight ways (Parks, F7).** The app reads it as: up from each degree 1–7, then down by that degree's rule; the eighth goes down from the octave with three half steps.
-- **The chromatic scale in two voices (Echols, LL 8).** A second voice two scale steps below (3rds) or above (6ths) in the 6-dim scale, along one floor.
-- **Tune charts.** Cherokee, How High the Moon and Night in Tunisia were typed from the standard changes and need checking against a fake book. The app uses chord charts only, never melodies.
-- **The blues outline's bar details** (§9 "Scale outline").
+- **The 5-4-3-2 phrases.** The notes come from a workshop attendee's notes [54], the minor versions are derived, and the combined lick is unchecked. They are not pursued.
+- **The blues outline's bar details** (§9 "Scale outline"). Not pursued.
 
-## 12. Hidden until verified (2026-11-15)
+## 12. Hidden until verified (2026-11-15; owner's answers the same day)
 
-The owner's rule: anything not 100% certain is not shown. Every item above marked **(verify)**, and every item resting on one secondary source, an attendee's notes, an inference or a derivation, is hidden from users through one registry, `src/engine/verifiedContent.ts` (`UNVERIFIED_CLAIMS`). Hidden content disappears everywhere at once: path, map, Drills, games, workout, key mastery, badges, level test, lessons and the depth page. The code and the player's saved progress stay.
+The owner's rule: anything not 100% certain is not shown. One registry, `src/engine/verifiedContent.ts`, controls it:
+- `UNVERIFIED_CLAIMS` lists every claim and what it hides.
+- `SWITCHED_ON` lists what has been confirmed.
+- Hidden content disappears everywhere at once: path, map, Drills, games, workout, key mastery, badges, level test, lessons and the depth page. The code and the player's saved progress stay.
+- The question, answer and sources per item are in `docs/THEORY-QUESTIONS.md`.
 
-- **The exact question per item** (what we have, the source, what to look for and where): `docs/THEORY-QUESTIONS.md`.
-- **To switch an item on** once it is confirmed: add its claim id to `SWITCHED_ON` in the registry.
-- **Hidden now (Harris lines):** the chromatic scale (all forms) and its two-voice form; the blues outline; the Cherokee, How High the Moon and Night in Tunisia charts; Parks's dominant eight ways; seven down to the 3rd; 3 to ♭9; the ♭7-major pivot; the ABCs and chromatic arpeggios; feel 6 in 4; compose a line.
-- **Hidden, not pursued:** the 5-4-3-2 phrases, their minor forms and the combined lick (owner: specific licks don't matter). The "5-4-3-2 Call" game is hidden with them.
-- **Echols:** the Elevator is verified from the tonic (§10). Still hidden: the elevator under a melody, borrowing through the elevator, the voicing ladder.
-- **Shown (sourced):** the three important arpeggios, the arpeggio into the scale, the major and minor rules, the triplet and miscellaneous rules, upbeat comping, the scale outlines of rhythm changes, Donna Lee, All the Things You Are and Giant Steps, and everything in §1–§10 not marked (verify).
+**Switched on (owner, 2026-11-15)**
+- The chromatic scale in all forms. A test checks that every scale tone is on a beat.
+- Seven down to the 3rd.
+- The ♭7-major pivot, taught with the three important arpeggios (on 1, the minor on 5, the major on ♭7).
+- The Cherokee, How High the Moon and Night in Tunisia charts. They were checked against iReal / jazzadvice and a lead sheet. Cherokee now has its real two-bar chords; How High the Moon has its ii–V into Gm7.
+
+**Rebuilt and switched on**
+- The dominant rule from every degree (§8). Three independent handouts confirm it; three from the root is left out.
+- The ABCs.
+- The chromatic scale in two voices: 3rds, 6ths and 10ths, then every interval.
+- Echols's shells on the 6-dim scales: upper C-G-A = drop 3 without the left hand; lower C-E-A = drop 2 without the left hand.
+- Outside Harris: the standard comping rhythms (Charleston, reverse, Charleston on 3, Red Garland, anticipation, lead-in) and walking 10ths.
+
+**Hidden, not pursued**
+- The 5-4-3-2 phrases, their minor forms and the combined lick, with the "5-4-3-2 Call" game.
+- The blues outline.
+- Feel 6 in 4.
+- Compose a line: it duplicates the app's rule-based improv.
+- Major arpeggios chromatically down: no second source.
+
+**Still open**
+- 3 to ♭9 (B D F A♭ over G7) as a line device like 3 to 9. The question is rewritten in plain words.
+- Echols's octave chord, and the ladder's "thirds" and "triads".
+
+**Omitted for lack of verified knowledge**
+- The elevator under a melody, and borrowing through the elevator.
+- The Siskind-specific items: the Basie rhythm, the push-off, accent comping, the shuttle, the stride variations, a tune in 10ths, the left-hand forms and the textures.
+- The Latin kit patterns.
+
+**Shown (sourced)**
+- The three important arpeggios and the arpeggio into the scale.
+- The major and minor rules, the triplet rules and the miscellaneous rule.
+- Upbeat comping.
+- The scale outlines of rhythm changes, Donna Lee, All the Things You Are, Giant Steps, Cherokee, How High the Moon and Night in Tunisia.
+- Everything in §1–§10 not marked (verify).
 
 ## Sources
 

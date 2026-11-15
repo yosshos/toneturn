@@ -112,7 +112,7 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
     const all = VOICE_FAMILIES.flatMap((f) => f.refs);
     // once each; Barry Harris lines 8–10 (308–310) are hidden until verified (src/engine/verifiedContent.ts)
     for (const n of old) expect(all.filter((x) => x === n).length, `level ${n}`).toBe(vocalVerified(n) ? 1 : 0);
-    expect(old.filter((n) => !vocalVerified(n))).toEqual([308, 309, 310]);
+    expect(old.filter((n) => !vocalVerified(n))).toEqual([309]); // the 5-4-3-2 phrases (not pursued); 308, 310 switched on 2026-11-15
     expect(new Set(all).size).toBe(all.length);
     for (const n of all) expect(vocalLevelByRef(n), `level ${n}`).toBeDefined();
   });

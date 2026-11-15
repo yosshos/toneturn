@@ -8,10 +8,16 @@
 //   Level 1 (pp) Charleston ↔ reverse, ♩100 · 2 (p) + Beat-3, ♩110 · 3 (mp) Basie / push-off / lead-in, ♩120
 //   Level 4 (mf) + Red Garland, ♩130 · 5 (f) two-bar patterns and anticipations, 8 bars, ♩140 · 6 (ff) all, ♩160
 // Charts are ii–V–I material in a seeded key from all 12. Pure: the chart, the expected hits, the grader.
+// Hidden until verified (verifiedContent.ts, 2026-11-15): the Basie rhythm and the push-off are not sourced as
+// placements (siskind-comp-rhythms), so no level calls them; a pool that would shrink below two takes the sourced
+// fallback (anticipation, Charleston on 3, Charleston). The rest is standard pedagogy: Charleston, reverse
+// Charleston, Charleston on 3, Red Garland, anticipation (docs/THEORY-QUESTIONS.md §15), lead-in (Siskind's own
+// definition: a chord on the "and" of 3 or on 4 into the next bar).
 
 import { pickR, rng } from './topicKit';
 import { caseSeed, mod12 } from './caseRun';
 import type { DynName } from './courseSocial';
+import { isVerified } from './verifiedContent';
 
 type Bi = { en: string; he: string };
 export type CompQ = 'maj7' | 'm7' | '7' | 'm7b5' | '6';
@@ -37,7 +43,7 @@ export const RHYTHMS: Record<RhythmId, { at: number; next?: boolean }[][]> = {
 export const RHYTHM_NAME: Record<RhythmId, Bi> = {
   charleston: { en: 'Charleston', he: 'צ׳רלסטון' },
   reverse: { en: 'Reverse', he: 'הפוך' },
-  beat3: { en: 'Beat 3', he: 'מ־3' },
+  beat3: { en: 'Charleston on 3', he: 'צ׳רלסטון על 3' },
   basie: { en: 'Basie', he: 'בייסי' },
   pushoff: { en: 'Push-off', he: 'פוש־אוף' },
   leadin: { en: 'Lead-in', he: 'כניסה' },
@@ -49,7 +55,17 @@ export const RHYTHM_NAME: Record<RhythmId, Bi> = {
 export const rhythmCount = (id: RhythmId, barInPattern = 0) =>
   RHYTHMS[id][barInPattern % RHYTHMS[id].length].map((h) => `${Math.floor(h.at) + 1}${h.at % 1 ? '+' : ''}`).join(' · ');
 
-const POOLS: Record<number, RhythmId[]> = {
+/** Rhythms hidden until verified: the registry's content id per rhythm (none = sourced). */
+const RHYTHM_GATE: Partial<Record<RhythmId, string>> = { basie: 'item:cp-basie', pushoff: 'item:cp-pushoff' };
+/** Is a rhythm on show (not hidden by an unconfirmed claim)? */
+export const rhythmShown = (id: RhythmId): boolean => !RHYTHM_GATE[id] || isVerified(RHYTHM_GATE[id]!);
+const FALLBACK: RhythmId[] = ['anticip', 'beat3', 'charleston'];
+/** The rhythms a level calls: its pool without hidden rhythms (the fallback when fewer than two remain). */
+export function poolOf(level: number): RhythmId[] {
+  const p = (BASE_POOLS[level] ?? BASE_POOLS[1]).filter(rhythmShown);
+  return p.length >= 2 ? p : [...new Set([...p, ...FALLBACK])];
+}
+const BASE_POOLS: Record<number, RhythmId[]> = {
   1: ['charleston', 'reverse'],
   2: ['charleston', 'reverse', 'beat3'],
   3: ['basie', 'pushoff', 'leadin'],
@@ -88,7 +104,7 @@ export function compItem(seed: number, i: number, level: number): CompItem {
   const bars = barsFor(lv);
   const tpl = [...pickR(r, CHARTS), ...(bars > 4 ? pickR(r, CHARTS) : [])];
   const chords = tpl.slice(0, bars).map(([d, q], bar) => ({ root: mod12(key + d), q, bar }));
-  const pool = POOLS[lv];
+  const pool = poolOf(lv);
   const calls: CompItem['calls'] = [];
   let prev: RhythmId | null = null;
   while (calls.length < bars) {

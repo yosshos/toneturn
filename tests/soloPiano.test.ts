@@ -168,9 +168,10 @@ describe('free comping by rule', () => {
 describe('the four families', () => {
   const fams = catalog().filter((f) => (SP_FAMILIES as string[]).includes(f.id));
   it('counts: k-lh 18, k-tex 20, k-comp 7, k-impro 7 levels built; on show without the hidden-until-verified ones', () => {
-    // src/engine/verifiedContent.ts: tenths, stride variations, the shuttle (k-lh); the Beat-3 call, drop-2 sidesteps,
-    // the inner voice (k-tex); the Beat-3 Charleston, Basie, push-off, accents (k-comp)
-    expect(fams.map((f) => [f.id, f.levels.length])).toEqual([['k-lh', 10], ['k-tex', 17], ['k-comp', 3], ['k-impro', 7]]);
+    // src/engine/verifiedContent.ts: a head in 10ths, stride variations, the shuttle (k-lh); drop-2 sidesteps, the inner
+    // voice (k-tex); Basie, push-off, accents (k-comp). Switched on 2026-11-15: walking 10ths, the call on the Charleston
+    // on 3, the Charleston on 3.
+    expect(fams.map((f) => [f.id, f.levels.length])).toEqual([['k-lh', 11], ['k-tex', 18], ['k-comp', 4], ['k-impro', 7]]);
     expect(LH_ROWS.length + TEX_ROWS.length + COMP_ROWS.length + IMPRO_ROWS.length).toBe(52);
   });
   it('every item generates in all 12 keys, the key in its id, notes on the keyboard', () => {

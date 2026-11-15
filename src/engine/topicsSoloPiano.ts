@@ -5,8 +5,9 @@
 //                    shuttle)  3 where's the anticipation? (which bar's bass comes early)
 //   solo-tex-ear     name the texture: 1 melody + bass / shell stride / stride  2 RH shuttle / drape / closed position
 //                    3 shared hands / repeated-quarter ballad / stop-start rubato
-//   comp-rhythm-ear  which comping rhythm? 1 Charleston / reverse / Beat-3 Charleston  2 Count Basie / push-off /
-//                    lead-in  3 Red Garland / two-bar pattern / anticipation
+//   comp-rhythm-ear  which comping rhythm? 1 Charleston / reverse / Charleston on 3  2 Count Basie / push-off /
+//                    lead-in (hidden until verified: Basie and push-off placements are unsourced)  3 Red Garland /
+//                    two-bar pattern / anticipation
 
 import type { ChoiceQuestion, Stimulus } from './lesson';
 import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, nm } from './topicKit';
@@ -205,7 +206,7 @@ TOPIC_TAGS['solo-tex-ear'] = tg(['chords', 'voicing', 1]);
 const RHY: Record<string, { name: ReturnType<typeof nm>; bars: { at: number; next?: boolean }[][] }> = {
   charleston: { name: nm('Charleston', 'צ׳רלסטון', 'charleston'), bars: [[{ at: 0 }, { at: 1.5 }]] },
   reverse: { name: nm('Reverse Charleston', 'צ׳רלסטון הפוך', 'reverse'), bars: [[{ at: 0.5 }, { at: 2 }]] },
-  beat3: { name: nm('Beat-3 Charleston', 'צ׳רלסטון מ־3', 'beat three'), bars: [[{ at: 2 }, { at: 3.5 }]] },
+  beat3: { name: nm('Charleston on 3', 'צ׳רלסטון על 3', 'beat three'), bars: [[{ at: 2 }, { at: 3.5 }]] },
   basie: { name: nm('Count Basie', 'קאונט בייסי', 'basie'), bars: [[{ at: 1 }, { at: 3 }]] },
   pushoff: { name: nm('Push-off', 'פוש־אוף', 'push off'), bars: [[{ at: 1 }, { at: 3 }, { at: 3.5 }]] },
   leadin: { name: nm('Lead-in', 'כניסה מקדימה', 'lead in'), bars: [[{ at: 0 }, { at: 3, next: true }]] },
@@ -235,7 +236,7 @@ TOPIC_GEN['comp-rhythm-ear'] = {
   title: { en: 'Comping rhythms by ear', he: 'מקצבי ליווי בשמיעה' },
   skill: 'rhythm-dictation',
   levels: [
-    { en: 'Charleston, reverse or Beat-3?', he: 'צ׳רלסטון, הפוך או מ־3?' },
+    { en: 'Charleston, reverse or Charleston on 3?', he: 'צ׳רלסטון, הפוך או צ׳רלסטון על 3?' },
     { en: 'Basie, push-off or lead-in?', he: 'בייסי, פוש־אוף או כניסה מקדימה?' },
     { en: 'Red Garland, two-bar or anticipation?', he: 'רד גרלנד, דו־תיבתי או הקדמה?' },
   ],
