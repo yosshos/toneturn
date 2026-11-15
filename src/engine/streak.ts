@@ -54,6 +54,25 @@ export interface StreakState {
   repairable: { lost: number; brokeOn: string } | null;
   /** Next milestone and how many days remain. */
   next: { days: number; left: number } | null;
+  /** AUDIT-5 #4, weekly-target mode: days off that the week's target covers (they neither break nor add). */
+  restDays?: string[];
+}
+
+/** Weekly-target mode (AUDIT-5 #4): N practice days a week; the other days are rest days while the week still makes
+ * (or made) its target. 0 / absent = the daily streak. */
+export const WEEKLY_TARGETS = [3, 4, 5, 6] as const;
+
+/** Practice days in a Monday week, and whether a missed day in it is a rest day (the target met, or still in reach). */
+export function weekCovers(days: Set<string>, day: string, today: string, target: number): boolean {
+  const w = weekOf(day);
+  let done = 0;
+  let left = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(w, i);
+    if (days.has(d) && d <= today) done++;
+    else if (d >= today) left++;
+  }
+  return done >= target || (w === weekOf(today) && done + left >= target);
 }
 
 /**
@@ -63,7 +82,9 @@ export interface StreakState {
  * - A missed day uses a freeze if one is equipped; otherwise the streak breaks.
  * - A repair bought within REPAIR_WINDOW_DAYS after a break restores the lost streak (the missed days count as repaired).
  */
-export function streakState(practiceDays: Iterable<string>, purchases: Purchase[], today: string): StreakState {
+export function streakState(practiceDays: Iterable<string>, purchases: Purchase[], today: string, opts: { weeklyTarget?: number } = {}): StreakState {
+  const target = opts.weeklyTarget && opts.weeklyTarget > 0 && opts.weeklyTarget < 7 ? opts.weeklyTarget : 0;
+  const restDays: string[] = [];
   const days = new Set(practiceDays);
   const sorted = [...days].filter((d) => d <= today).sort();
   const empty: StreakState = { count: 0, practicedToday: false, freezes: 0, freezeDays: [], repairedDays: [], milestones: [], best: 0, repairable: null, next: { days: MILESTONES[0], left: MILESTONES[0] } };
@@ -98,7 +119,8 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
       count++;
       if (MILESTONES.includes(count)) milestones.push({ days: count, day: d });
     } else if (d !== today) {
-      if (count > 0 && freezes > 0) {
+      if (count > 0 && target && weekCovers(days, d, today, target)) restDays.push(d);
+      else if (count > 0 && freezes > 0) {
         freezes--;
         freezeDays.push(d);
       } else if (count > 0 || broke) {
@@ -121,6 +143,7 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
     best,
     repairable,
     next: nextDays ? { days: nextDays, left: nextDays - count } : null,
+    ...(target ? { restDays } : {}),
   };
 }
 

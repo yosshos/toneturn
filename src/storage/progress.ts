@@ -20,11 +20,25 @@ export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? ta
 import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
 import { gameEvents } from '../engine/gameRating';
-import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, tierDifficulty, tierKey, tierSpec, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
+import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, TIERS, tierDifficulty, tierKey, tierSpec, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
 import { medalFor, weekId, type Medal } from '../engine/adaptive';
 import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
 import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from '../engine/fsrs';
+import { bookDrillTake, bookGameRun, bookResult } from './practice';
+
+/** AUDIT-5 #4: from this day on, only measured practice makes a streak day — minutes logged away from the app (the
+ * practice log, the workout's off-app block) still count as practice time, but no longer as a streak day. Days before
+ * it keep the rule they were earned under. */
+export const MEASURED_STREAK_FROM = '2026-11-15';
+/** Practice bookkeeping must never stop a result from being saved. */
+const safe = <T,>(f: () => T, fallback: T): T => {
+  try {
+    return f();
+  } catch {
+    return fallback;
+  }
+};
 
 export const PROGRESS_VERSION = 1;
 
@@ -48,8 +62,10 @@ export interface LessonResult {
   course?: import('../engine/courses').CourseId;
   /** Weekly puzzle outcome (only for lessonId "weekly-puzzle"). */
   puzzle?: { week: string; band: string; medal: Medal };
-  /** AUDIT-5: the player's own note on an off-app practice block ("What did you work on?"). */
+  /** AUDIT-5: the player's own note on an off-app practice block ("What did you work on?") or a log entry. */
   note?: string;
+  /** AUDIT-5 #1: active practice time of the session (idle-trimmed, storage/practice.ts); logs: their minutes. */
+  durationMs?: number;
 }
 
 export interface Progress {
@@ -375,6 +391,8 @@ export interface Settings {
   avatars?: unknown;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
+  /** AUDIT-5 #4: weekly-target streak — practice days a week (3–6); absent / 0 = every day. */
+  streakWeekly?: number;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -779,6 +797,7 @@ export class ProgressStore {
       next = applyGameRun(next, { game: kind, tier, score: best, detail: { best, rounds: log.length }, runId: `${kind}-${seed}`, course: await this.course() }, now).progress;
     }
     await this.kv.set('progress', next);
+    safe(() => bookGameRun(kind, { right: log.filter((x) => x.pass).length, of: log.length, edge: !!tier }), undefined);
     return next;
   }
 
@@ -805,6 +824,15 @@ export class ProgressStore {
     const next0: Progress = fresh.length ? { ...base, ...withEvents(p, fresh) } : base;
     const next: Progress = fresh.length ? { ...next0, ...statsAfterEvents(base, fresh, ratingsOf(next0)) } : next0;
     if (fresh.length) next.snapshots = snapshot(next, new Date());
+    await this.kv.set('progress', next);
+    safe(() => bookDrillTake(state, prev, m?.verdict), undefined);
+    return next;
+  }
+
+  /** Replace a drill item's state without counting a take (AUDIT-5 #5: a plateau's step back on the tempo ladder). */
+  async setDrillItem(state: import('../engine/drills/types').ItemState): Promise<Progress> {
+    const p = await this.loadProgress();
+    const next: Progress = { ...p, drillItems: { ...(p.drillItems ?? {}), [state.itemId]: state } };
     await this.kv.set('progress', next);
     return next;
   }
@@ -842,6 +870,9 @@ export class ProgressStore {
     // A tiered run (GAMES_TIERS_PLAN P1): the tier state, and the game's XP with the course.
     if (isTier(d.tier)) next = applyGameRun(next, { game, tier: d.tier, score, detail: d, runId: `${game}-${typeof d.runId === 'string' ? d.runId : Date.now().toString(36)}`, course: await this.course() }).progress;
     await this.kv.set('progress', next);
+    const right = typeof d.right === 'number' ? d.right : undefined;
+    const of = right !== undefined ? right + (typeof d.wrong === 'number' ? d.wrong : 0) : undefined;
+    safe(() => bookGameRun(game, { right, of, pass: score > 0, edge: isTier(d.tier) && TIERS.indexOf(d.tier as DynName) > TIERS.indexOf(p.gameTiers?.[tierKey(game)]?.cleared ?? (null as unknown as DynName)) }), undefined);
     return next;
   }
 
@@ -859,7 +890,10 @@ export class ProgressStore {
   async recordTierRun(game: string, tier: DynName, score: number, detail: Record<string, unknown>, runId: string, now = new Date()): Promise<Progress> {
     const p = await this.loadProgress();
     const next = applyGameRun(p, { game, tier, score, detail, runId: `${game}-${runId}`, course: await this.course() }, now).progress;
-    if (next !== p) await this.kv.set('progress', next);
+    if (next !== p) {
+      await this.kv.set('progress', next);
+      safe(() => bookGameRun(game, { pass: score > 0, edge: true }), undefined);
+    }
     return next;
   }
 
@@ -930,7 +964,8 @@ export class ProgressStore {
   async recordVocal(r: LessonResult, takes: VocalTake[], opts: { passedLevel?: number | null; rangeMap?: Record<string, number> } = {}, now = new Date()): Promise<Progress> {
     const p = await this.loadProgress();
     if (p.applied.includes(`complete:${r.sessionId}`)) return p;
-    const next = applyResult(p, await this.withCourse(r), now);
+    const r1 = await this.withCourse(r);
+    const next = applyResult(p, safe(() => bookResult(r1, lessonMastered(p, r.lessonId)), r1), now);
     const v: VocalProgress = next.vocal ?? { best: {}, passed: [], takes: [] };
     const best = { ...v.best };
     for (const t of takes) best[t.item] = Math.max(best[t.item] ?? 0, t.score);
@@ -984,7 +1019,10 @@ export class ProgressStore {
   /** Read-modify-write; safe to call repeatedly for the same session. */
   async recordCompletion(r: LessonResult, now = new Date()): Promise<Progress> {
     const p = await this.loadProgress();
-    const next = applyResult(p, await this.withCourse(r), now);
+    if (p.applied.includes(`complete:${r.sessionId}`)) return p;
+    const r1 = await this.withCourse(r);
+    // AUDIT-5 #1: the session's measured time rides on the result (durationMs); logs book their minutes off-app.
+    const next = applyResult(p, safe(() => bookResult(r1, lessonMastered(p, r.lessonId)), r1), now);
     if (next !== p) await this.kv.set('progress', next);
     return next;
   }
@@ -1005,30 +1043,38 @@ export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonN
   const day = localDay(new Date(r.completedAt));
   const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
   const good = r.lessonId !== 'weekly-puzzle' && r.total > 0 && r.firstTry / r.total >= 0.8;
+  // AUDIT-5 #4: logged minutes are practice time, not a measured practice day.
+  const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM);
   const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + (r.xpCounted ? 0 : r.xp) };
   const keys = Object.keys(xpByDay).sort();
   if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
-  return { days: s.days.includes(day) ? s.days : [...s.days, day].slice(-800), goodSessions: s.goodSessions + (good ? 1 : 0), xpByDay };
+  return { days: s.days.includes(day) || !counts ? s.days : [...s.days, day].slice(-800), goodSessions: s.goodSessions + (good ? 1 : 0), xpByDay };
 }
 
 /** Days counted early by markPracticeDay (five answers in) in this run: the first finished session still celebrates them. */
 export const provisionalDays = new Set<string>();
 
-/** Every local day with qualifying practice: sessions, daily challenge first plays, memory games. */
+/** Every local day with qualifying practice: sessions, daily challenge first plays, memory games, and (AUDIT-5 #4)
+ * days with enough measured minutes (the app marks those with markPracticeDay). From MEASURED_STREAK_FROM on, minutes
+ * logged away from the app no longer make a day on their own. */
 export function practiceDays(p: Progress): Set<string> {
   const out = new Set<string>(p.stats?.days ?? []);
-  for (const h of p.history) out.add(localDay(new Date(h.completedAt)));
+  for (const h of p.history) {
+    const d = localDay(new Date(h.completedAt));
+    if (isLog(h.lessonId) && d >= MEASURED_STREAK_FROM) continue;
+    out.add(d);
+  }
   for (const d of Object.keys(p.daily ?? {})) out.add(d);
   for (const e of p.ratingEvents ?? []) if (e.id.startsWith('g:')) out.add(localDay(new Date(e.at)));
   return out;
 }
 
-export function streakOf(p: Progress, purchases: Purchase[], now = new Date()): StreakState {
-  return streakState(practiceDays(p), purchases, localDay(now));
+export function streakOf(p: Progress, purchases: Purchase[], now = new Date(), weeklyTarget?: number): StreakState {
+  return streakState(practiceDays(p), purchases, localDay(now), weeklyTarget ? { weeklyTarget } : {});
 }
 
-export function gemsOf(p: Progress, purchases: Purchase[], now = new Date()) {
-  const st = streakOf(p, purchases, now);
+export function gemsOf(p: Progress, purchases: Purchase[], now = new Date(), weeklyTarget?: number) {
+  const st = streakOf(p, purchases, now, weeklyTarget);
   // Older data (before stats existed) still counts from the history.
   const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && h.total > 0 && h.firstTry / h.total >= 0.8).length;
   const xpByDay: Record<string, number> = { ...(p.stats?.xpByDay ?? {}) };

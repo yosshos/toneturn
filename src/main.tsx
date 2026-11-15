@@ -28,6 +28,7 @@ import './drums.css';
 import './coursestart.css';
 import './pulse.css';
 import './feedback.css';
+import './practice.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';

@@ -1,0 +1,89 @@
+/* Practice diary (AUDIT-5): time, quality ledger, plateaus, journal. v2 language: flat fills, ink text, no yellow on
+   white. Quality classes: edge = accent purple, clean at the goal = teal, review = sky, run-through = lilac,
+   away from the app = the strong line colour. */
+
+.pdiary { --pd-edge: var(--purple, #6d28d9); --pd-cons: var(--teal, #12c9b4); --pd-rev: var(--sky, #3ab8ff); --pd-run: var(--lilac, #a78bfa); --pd-off: var(--line-strong, #c9b8ec); }
+:root[data-theme='dark'] .pdiary { --pd-edge: #c4b5fd; }
+.pdiary .pd-tab { display: grid; gap: 12px; min-width: 0; }
+.pdiary .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pdiary h2 { margin: 0 0 6px; font-size: 1rem; }
+
+.pd-hero { display: grid; gap: 4px; }
+.pd-big { font-family: var(--display, inherit); font-size: 2rem; line-height: 1.1; }
+.pd-line { margin: 6px 0 0; font-size: 0.9rem; }
+
+.pd-weeks { width: 100%; height: auto; margin-top: 8px; display: block; }
+.pd-col-q { fill: var(--pd-edge); }
+.pd-col-r { fill: var(--pd-run); }
+.pd-col-o { fill: var(--pd-off); }
+.pd-col-lab { font-size: 9px; fill: var(--ink-dim); }
+.pd-axis { stroke: var(--line); stroke-width: 1; }
+
+.pd-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pd-rows li { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 3px; align-items: baseline; min-width: 0; }
+.pd-row-main { display: grid; min-width: 0; }
+.pd-row-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pd-row-main small { color: var(--ink-dim); overflow-wrap: anywhere; }
+.pd-share { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--card-2); overflow: hidden; }
+.pd-share i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+
+.pd-qbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1.5px solid var(--outline); }
+.pd-qbar i { display: block; min-width: 3px; }
+.pd-q-edge { background: var(--pd-edge); }
+.pd-q-consolidation { background: var(--pd-cons); }
+.pd-q-review { background: var(--pd-rev); }
+.pd-q-run { background: var(--pd-run); }
+.pd-q-offapp { background: var(--pd-off); }
+.pd-legend { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 0.85rem; }
+.pd-legend li { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.pd-sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--outline); }
+
+.pd-tag { display: inline-block; padding: 0 6px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; border: 1px solid var(--outline); }
+.pd-tag.plateau { background: var(--card-2); color: var(--ink); }
+.pd-tag.fading { background: var(--bad-soft); color: var(--ink); }
+.pd-plateaus .in-text small { overflow-wrap: anywhere; }
+
+.pd-items { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.pd-items li { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 8px; min-width: 0; }
+.pd-items li:first-child { border-top: 0; padding-top: 0; }
+.pd-items .in-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.pd-strip { display: inline-flex; gap: 2px; flex-shrink: 0; }
+.pd-sq { width: 9px; height: 14px; border-radius: 2px; border: 1px solid var(--line-strong); background: var(--card); }
+.pd-sq.lo { background: var(--bad-soft); border-color: var(--bad); }
+.pd-sq.mid { background: var(--ok-soft); border-color: var(--ok); }
+.pd-sq.hi { background: var(--ok); border-color: var(--ok); }
+
+.pd-next p { margin: 2px 0 0; font-weight: 600; }
+.pd-next small { color: var(--ink-dim); }
+.pd-write { display: grid; gap: 8px; }
+.pd-text,
+.pd-search,
+.plog-note {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.plog-note { margin-top: 12px; min-height: 44px; }
+.pd-write-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pd-write-row .toggle-row { margin: 0; }
+
+.pd-days { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pd-day { background: var(--card); border: var(--stroke, 2px) solid var(--outline); border-radius: 14px; padding: 10px 12px; display: grid; gap: 6px; min-width: 0; }
+.pd-day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pd-day-head small { color: var(--ink-dim); }
+.pd-day-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 0.88rem; }
+.pd-day-items li { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
+.pd-day-items li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-day-items li small { color: var(--ink-dim); flex-shrink: 0; }
+.pd-off { margin: 0; color: var(--ink-dim); }
+.pd-note { position: relative; background: var(--card-2); border-radius: 10px; padding-block: 6px; padding-inline: 10px 40px; }
+.pd-note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pd-note.next { border-inline-start: 4px solid var(--accent); }
+.pd-del { position: absolute; inset-inline-end: 2px; top: 2px; width: 30px; height: 30px; min-height: 30px; font-size: 0.8rem; }
+.pd-keyt { margin-inline-end: 8px; white-space: nowrap; }
