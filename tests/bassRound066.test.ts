@@ -226,9 +226,9 @@ describe('names and the beta flag (0.66)', () => {
     expect(t('b-fret')).toBe('יד לוחצת');
     for (const f of families('bass')) for (const l of [f.title.he, ...f.levels.map((x) => x.title.he)]) expect(l, l).not.toMatch(/יד (ימין|שמאל)/);
   });
-  it('the bass course is out of beta; drums stays beta', () => {
+  it('the bass course is out of beta; drums too since 0.96', () => {
     expect(courseOf('bass').beta).toBeFalsy();
-    expect(courseOf('drums').beta).toBe(true);
+    expect(courseOf('drums').beta).toBeFalsy();
   });
   it('guitar harmonics are called הרמוניקים', { timeout: 180_000 }, () => {
     const titles = families('guitar').flatMap((f) => f.levels.flatMap((l) => [l.title.he, ...levelDrills(l, 'fifths-up').map((d) => d.title.he)]));
