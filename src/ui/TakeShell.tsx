@@ -13,6 +13,7 @@ import type { GameScreenProps } from './gameProps';
 import type { MeasuredInput } from './instCapture';
 import { G2Head, prefersCalm } from './Flight';
 import { TierChips } from './TierChips';
+import { InputCheck, InputWatchdog } from './InputCheck';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -85,6 +86,9 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
   const [final, setFinal] = useState<ReturnType<typeof takeRunResult> | null>(null);
   const acRef = useRef<AbortController | null>(null);
   const total = TAKES_PER_RUN[cfg.game];
+  // Input check: the watchdog is armed when the take's play phase begins (its first note is due right after the count-in).
+  const [armAt, setArmAt] = useState(0);
+  useEffect(() => setArmAt(phase === 'play' ? performance.now() : 0), [phase]);
 
   const stop = () => {
     acRef.current?.abort();
@@ -197,6 +201,7 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
               </div>
             </fieldset>
           )}
+          <InputCheck key={input} mode={input} lang={lang} />
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={cfg.game} />}
           {!!best && (
             <p className="g2-best">
@@ -259,9 +264,11 @@ export function TakeShell<I>({ cfg, lang, settings, saved, onSave, onExit, onRes
               {outcome.score < TAKE_PASS ? ` · ${tx(TX.lifeLost, lang)}` : ''}
             </p>
           )}
+          {phase === 'play' && armAt > 0 && <InputWatchdog lang={lang} mode={input} arm={{ start: armAt, due: armAt }} />}
           <div className="g2-col inst-actions">
             {phase === 'ready' && (
               <>
+                <InputCheck key={input} mode={input} lang={lang} />
                 {cfg.hear && (
                   <button className="btn" onClick={() => void hear()} data-take-hear>
                     {tx(TX.listen, lang)}

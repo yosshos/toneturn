@@ -188,6 +188,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   }
   if (f === 'k-bebop') return { skill: 'improv', sub: drill.spec.kind === 'bb-trade' ? 'improv/answer' : 'improv/play', w: 0.3 };
   if (f === 'control' && drill.spec.kind === 'reading') return { skill: 'sight', sub: 'sight/read', w: 0.4 };
+  // AUDIT-6 Stage B: graded sight-reading at the piano, and the first steps' reading levels (k-first 7–8).
+  if (f === 'k-read' || (f === 'k-first' && drill.spec.kind === 'kf-read')) return { skill: 'sight', sub: 'sight/read', w: 0.4 };
   if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   return null;
 }

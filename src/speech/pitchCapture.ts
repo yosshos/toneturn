@@ -6,6 +6,7 @@ import { rms, spectralCentroid, yin } from '../engine/yin';
 import { openCapture, stopStream } from './mic';
 import { chromaFromSpectrum } from '../engine/chroma';
 import { bandPowersFromDb } from '../engine/drumAcoustic';
+import { isPulseFrame, notifyInput } from '../engine/inputCheck';
 
 export class BrowserPitchCapture implements PitchCapture {
   async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma, minHz, fftSize, centroid, bands }: SingOptions): Promise<SingCaptureResult> {
@@ -90,6 +91,8 @@ export class BrowserPitchCapture implements PitchCapture {
           f.bands = bandPowersFromDb(specB, ctx.sampleRate, anB.fftSize);
         }
         frames.push(f);
+        // The input check's watchdog: a clear signal reached the microphone.
+        if (!quiet && isPulseFrame(f)) notifyInput('mic');
         onFrame?.(f);
         const voiced = !!f.hz && f.confidence > 0.8;
         if (voiced) {

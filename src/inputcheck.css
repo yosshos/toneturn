@@ -1,0 +1,213 @@
+/* Input check strip + watchdog (src/ui/InputCheck.tsx). v2 language: ink outlines (2.5px), flat fills, no gradients,
+   no glow; lemon only for "now" (the activity light), never under text. One row, about 44 px. */
+
+.input-check {
+  container-type: inline-size;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  max-height: 46px;
+  box-sizing: border-box;
+  padding: 3px 6px 3px 10px;
+  margin: 4px 0;
+  width: 100%;
+  border: var(--stroke, 2.5px) solid var(--outline, #1e1033);
+  border-radius: 14px;
+  background: var(--card, #fff);
+  color: var(--ink, #1e1033);
+  font-size: 13px;
+  line-height: 1.2;
+  overflow: hidden;
+}
+:root[dir='rtl'] .input-check {
+  padding: 3px 10px 3px 6px;
+}
+.input-check .ic-icon {
+  display: inline-flex;
+  color: var(--accent, #6d28d9);
+  flex: none;
+}
+
+/* level meter: hard-edged bars, lit = purple, unlit = a pale line colour */
+.ic-meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 22px;
+  flex: none;
+}
+.ic-meter i {
+  display: block;
+  width: 3px;
+  background: var(--line-strong, #c9b8ec);
+  border-radius: 0;
+}
+.ic-meter i.on {
+  background: var(--accent, #6d28d9);
+}
+
+/* the activity light: an ink-outlined dot that flashes lemon ("now") on each note-on / hit */
+.ic-led {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: var(--stroke, 2.5px) solid var(--outline, #1e1033);
+  background: var(--card-2, #f6f0ff);
+  box-sizing: border-box;
+}
+.ic-led.blink {
+  animation: ic-blink 0.32s steps(1, end) 1;
+}
+@keyframes ic-blink {
+  0% {
+    background: var(--now, #ffd43b);
+  }
+  100% {
+    background: var(--card-2, #f6f0ff);
+  }
+}
+.ic-led.warn {
+  background: var(--bad, #ff5fa2);
+}
+
+.ic-dev {
+  flex: 0 1 auto;
+  min-width: 3em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.ic-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+}
+.ic-line b {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ic-check {
+  color: var(--accent, #6d28d9);
+  flex: none;
+}
+.ic-note {
+  flex: none;
+  font-weight: 700;
+  padding: 0 6px;
+  border: 1.5px solid var(--outline, #1e1033);
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.ic-dim {
+  color: var(--ink-dim, #5b4a86);
+  white-space: nowrap;
+}
+.ic-hint {
+  color: var(--ink-soft, #3b2a5c);
+  font-size: 12px;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ic-vel {
+  display: inline-block;
+  flex: none;
+  width: 24px;
+  height: 10px;
+  border: 1.5px solid var(--outline, #1e1033);
+  border-radius: 2px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.ic-vel i {
+  display: block;
+  height: 100%;
+  background: var(--accent, #6d28d9);
+}
+.ic-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  margin-inline-start: auto;
+}
+.ic-gear,
+.ic-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 32px;
+  color: var(--accent, #6d28d9);
+  font-weight: 700;
+  font-size: 12px;
+  text-decoration: none;
+  border-radius: 10px;
+}
+.ic-gear:focus-visible,
+.ic-link:focus-visible,
+.ic-test:focus-visible {
+  outline: var(--stroke, 2.5px) solid var(--accent, #6d28d9);
+  outline-offset: 1px;
+}
+.ic-test {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent, #6d28d9);
+  background: none;
+  border: 1.5px solid var(--accent, #6d28d9);
+  border-radius: 10px;
+  padding: 4px 10px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* the watchdog: a small banner pinned under the header, never covering the controls, never blocking */
+.input-watchdog {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 6px 12px;
+  border: var(--stroke, 2.5px) solid var(--outline, #1e1033);
+  border-radius: 14px;
+  background: var(--card, #fff);
+  color: var(--ink, #1e1033);
+  box-shadow: var(--shadow-s, 3px 3px 0 #1e1033);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* a phone's narrow strip: the meter and the light carry the signal, so the mic glyph goes; the device name ellipsizes */
+@container (max-width: 300px) {
+  .input-check .ic-icon {
+    display: none;
+  }
+}
+.midi .ic-line {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ic-led.blink {
+    animation-duration: 0.5s;
+  }
+}

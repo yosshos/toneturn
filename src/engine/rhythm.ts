@@ -282,6 +282,25 @@ export function readTimeline(r: Rhythm, bpm: number, silentAfterBars?: number) {
   return { clicks, wood: [] as number[], responseAt, responseEnd: responseAt + totalBeats(r) * b + b * 0.6 };
 }
 
+/**
+ * Rhythm echo (AUDIT-6, the rhythm-echo topic): hear it, then tap it back without seeing it. A bar of clicks, the
+ * rhythm on the snare over the clicks, a count-in bar (woodblock, counted down), then the answer — graded like reading
+ * (gradeReading, from `responseAt`). `countFrom` = the index of the answer's count-in click.
+ */
+export function echoTimeline(r: Rhythm, bpm: number) {
+  const m = meterOf(r);
+  const b = 60 / bpm;
+  const pulse = b * pulseBeats(m);
+  const perBar = countInPulses(m);
+  const demo = Math.round(totalBeats(r) / pulseBeats(m));
+  const countFrom = perBar + demo;
+  const clicks = Array.from({ length: 2 * perBar + 2 * demo }, (_, i) => ({ t: i * pulse, accent: i % perBar === 0, ...(i >= countFrom && i < countFrom + perBar ? { count: true } : {}) }));
+  const wood = onsetBeats(r).map((x) => perBar * pulse + x * b);
+  const drums = wood.map(() => 's' as const);
+  const responseAt = (countFrom + perBar) * pulse;
+  return { clicks, wood, drums, responseAt, responseEnd: responseAt + totalBeats(r) * b + b * 0.6, countFrom, perBar };
+}
+
 // ---------------------------------------------------------------- grading a performance
 
 /** Distance (in beats) from a right onset to the nearest plausible wrong one, per level (spec G.5). */

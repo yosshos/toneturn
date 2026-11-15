@@ -23,6 +23,7 @@ import { DRUM_STAGGER, LEVEL_PLACEMENT, monotoneFamily, voiceItemRating } from '
 import { B_LEVEL_DIFF, HL_LEVEL_DIFF } from './drills/harrisLineDrills';
 import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
+import { FIRST_RANK, NEW_FIRST_FAMILIES } from './drills/firstStepsDiff'; // AUDIT-6 Stage B
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 
 // ---------------------------------------------------------------- types
@@ -391,12 +392,12 @@ const DRUM_LATER: Record<string, number> = { 'd-funk': 3, 'd-shuffle': 3, 'd-mid
  * AUDIT-CONTENT-THEORY §ב: the first steps first; drums count before the groove; bass time before the hands.
  */
 export const LADDER_RANK: Record<string, number> = {
-  'k-first': -1, 'v-first': -1,
+  'k-first': -1, 'v-first': -1, ...FIRST_RANK,
   'd-time': 0, 'd-rock': 1, 'd-strokes': 2, 'd-notation': 3,
   'b-time': 0, 'b-pluck': 1, 'b-chord': 2, 'b-pocket': 3, 'b-length': 4, 'b-fret': 5, 'b-walk': 6,
 };
 /** The first-steps families (AUDIT-CONTENT-THEORY §ז.2): their levels count ✓ for a player who already plays past them. */
-export const FIRST_STEP_FAMILIES = ['k-first', 'v-first'];
+export const FIRST_STEP_FAMILIES = ['k-first', 'v-first', ...NEW_FIRST_FAMILIES];
 /** Levels that wait for another family's level on the path: one-octave scales after the thumb passes under. */
 export const LADDER_AFTER: Record<string, string> = { 'tech:scales-1': 'tech:k-first-3' };
 /** An unstarted family this far (two ladder steps) below everything started opens at once: a gap the old order left. */

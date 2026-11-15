@@ -384,6 +384,8 @@ export function buildCal(samples: Partial<Record<AcousticVoice, number[][]>>): {
  * soft snare between) and at most a hi-hat: all in. New families are left out until checked.
  */
 export const ACOUSTIC_LEVELS = new Set([
+  // AUDIT-6 Stage B: the first rock beat (kick, snare, closed hat in quarters).
+  'd-first-5',
   'd-rock-1', 'd-rock-2', 'd-rock-4', 'd-rock-5', 'd-rock-7', 'd-rock-8',
   'd-fills-1', 'd-fills-2', 'd-fills-3',
   'd-funk-2', 'd-funk-3',
