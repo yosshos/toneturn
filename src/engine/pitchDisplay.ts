@@ -214,16 +214,43 @@ export class NoteNamer {
 
 export type ZoneState = 'in' | 'close-sharp' | 'close-flat' | 'sharp' | 'flat' | 'none';
 
-/** Where a pitch sits against the zone: in (≤ tol), close (≤ 50 ¢), or out, with its side. */
-export function zoneState(cents: number | null, tol: number): ZoneState {
+/**
+ * Where a pitch sits (owner 2026-11-15: the display agrees with grading): `in` = dead centre (≤ `centre`, the
+ * stamp / bonus look), `close-*` = off centre but inside the pass band (≤ `pass`: it passes), `sharp` / `flat` =
+ * outside the pass band (it fails). Voice items pass the grader's band (passCents: 65 ¢ below 1300, 60 ¢ from
+ * 1300); the voice games keep their own window and the ±50 ¢ default.
+ */
+export function zoneState(cents: number | null, centre: number, pass = 50): ZoneState {
   if (cents === null || !Number.isFinite(cents)) return 'none';
   const a = Math.abs(cents);
-  if (a <= tol) return 'in';
-  if (a <= 50) return cents > 0 ? 'close-sharp' : 'close-flat';
+  if (a <= centre) return 'in';
+  if (a <= Math.max(pass, centre)) return cents > 0 ? 'close-sharp' : 'close-flat';
   return cents > 0 ? 'sharp' : 'flat';
 }
 
-/** The colour token and the shape twin of each state (colour never carries meaning alone). */
+/** Does a zone state pass (dead centre or inside the band)? */
+export const zonePasses = (s: ZoneState) => s === 'in' || s === 'close-sharp' || s === 'close-flat';
+
+/** A per-note cents chip: the dead centre shows a tick only; off centre the number shows, coloured pass / fail. */
+export interface ChipLook {
+  tier: 'centre' | 'pass' | 'fail' | 'none';
+  /** Signed, rounded cents ('+15', '−50'); null for the centre tick and for no reading. */
+  text: string | null;
+  side: 1 | -1 | 0;
+}
+
+export function chipLook(cents: number | null, centre: number, pass: number): ChipLook {
+  const st = zoneState(cents, centre, pass);
+  if (st === 'none') return { tier: 'none', text: null, side: 0 };
+  if (st === 'in') return { tier: 'centre', text: null, side: 0 };
+  const c = cents!;
+  const tier = zonePasses(st) ? 'pass' : 'fail';
+  // Rounded to 5 ¢, and never across the band: a failing note never reads as a number inside it.
+  const a = tier === 'fail' ? Math.max(Math.abs(chipCents(c)), Math.ceil(Math.abs(c) / 5) * 5) : Math.abs(chipCents(c));
+  return { tier, text: `${c > 0 ? '+' : '−'}${a}`, side: c > 0 ? 1 : -1 };
+}
+
+/** The colour token and the shape twin of each state (colour never carries meaning alone): teal = dead centre, hatched teal = passes off centre, tangerine / purple = outside the band. */
 export const ZONE_LOOK: Record<ZoneState, { color: 'teal' | 'teal-hatch' | 'tangerine' | 'purple' | 'none'; mark: '✓' | '▲' | '▼' | '' }> = {
   in: { color: 'teal', mark: '✓' },
   'close-sharp': { color: 'teal-hatch', mark: '▲' },

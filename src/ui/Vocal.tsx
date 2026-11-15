@@ -72,7 +72,7 @@ import { Glyph, DOMAIN_COLOR } from './Glyph';
 import { FAMILY_GLYPH } from './stepGlyphs';
 import { ltrLabel, NoteDetailRow, SingLane, SingMeters, SingReadout } from './SingLane';
 import { SingFeed, type LaneTarget } from './singFeed';
-import { moneyNotes, noteDetail, zoneTolerance, type VibratoGoal } from '../engine/vocalLive';
+import { moneyNotes, noteDetail, zonePass, zoneTolerance, type VibratoGoal } from '../engine/vocalLive';
 import { SING_TX } from '../content/singLaneText';
 import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
 import { prefersCalm } from './Flight';
@@ -1195,6 +1195,7 @@ function VocalSession({
   const visible = hidden ? (item.ear ? earShown(item, shownTargets) : shownTargets.slice(0, 1)) : shownTargets;
   const lang = settings.uiLang === 'en' ? 'en' : 'he';
   const tol = zoneTolerance(item);
+  const pass = zonePass(item);
   const laneTargets: LaneTarget[] = pulse
     ? shownTargets.map((m, k) => ({ midi: m, start: pulse.onsets[k], dur: (pulse.onsets[k + 1] ?? pulse.length) - pulse.onsets[k] }))
     : shownTargets.map((m) => ({ midi: m }));
@@ -1358,7 +1359,7 @@ function VocalSession({
           </button>
         </div>
       )}
-      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} settings={settings} live={phase === 'singing'} lang={lang} hideTarget={isSight(item) || hiddenTask} />}
+      {phase !== 'result' && phase !== 'ready' && <SingReadout feed={feed} targets={laneTargets} tol={tol} pass={pass} settings={settings} live={phase === 'singing'} lang={lang} hideTarget={isSight(item) || hiddenTask} />}
       {cue && (
         <p className={`vocal-cue ${cue === t.vocalNowVibrato ? 'vib' : ''}`} aria-live="assertive">
           {cue}
@@ -1373,6 +1374,7 @@ function VocalSession({
         mode={pulse ? 'melody' : 'hold'}
         seconds={item.seconds}
         tol={tol}
+        pass={pass}
         live={phase === 'singing'}
         shownIdx={shownIdx}
         settings={settings}
@@ -1390,9 +1392,9 @@ function VocalSession({
       />}
       <NoVoiceBanner feed={feed} live={phase === 'singing'} from={0} lang={lang} />
       </div>
-      {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} lang={lang} onClose={() => setSel(null)} />}
+      {detail && <NoteDetailRow label={detail.label} d={detail.d} golden={detail.golden} tol={tol} pass={pass} lang={lang} onClose={() => setSel(null)} />}
       {((phase !== 'result' && phase !== 'ready') || (phase === 'result' && (holdItem || !!frozenVib) && grade && !grade.unclear)) && (
-        <SingMeters feed={feed} targets={laneTargets} tol={tol} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result' && !isSight(item)} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
+        <SingMeters feed={feed} targets={laneTargets} tol={tol} pass={pass} seconds={item.seconds} live={phase === 'singing'} bars={holdItem} meter={phase !== 'result' && !isSight(item)} lang={lang} vib={vibGoal} cue={cue} frozenVib={frozenVib} />
       )}
       {item.reference === 'during' && (
         <label className="toggle-row">

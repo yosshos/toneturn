@@ -2,7 +2,7 @@
 // Steadiness per slice (vibrato removed, so a healthy vibrato reads steady), the zone tolerance per item,
 // and the live vibrato estimate for the vibrato chip.
 
-import { BANDS, trend, vibratoOf, type TrackPoint, type VocalItem } from './vocal';
+import { BANDS, passCents, trend, vibratoOf, type TrackPoint, type VocalItem } from './vocal';
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const std = (xs: number[]) => {
@@ -10,7 +10,10 @@ const std = (xs: number[]) => {
   return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)));
 };
 
-/** In-zone tolerance (± cents) by level: ±35 beginner, ±20 middle, ±10 fine-tune and advanced (BANDS.intonation). */
+/**
+ * The dead-centre tier (± cents) by level: ±35 beginner, ±20 middle, ±10 fine-tune and advanced (BANDS.intonation).
+ * Only the stamp / bonus look: a note outside it but inside zonePass still passes (owner 2026-11-15).
+ */
 export function zoneTolerance(item: Pick<VocalItem, 'kind' | 'difficulty'>): number {
   const [exc, good, fair] = BANDS.intonation;
   if (item.kind === 'fine-tune' || item.kind === 'micro') return exc;
@@ -18,6 +21,15 @@ export function zoneTolerance(item: Pick<VocalItem, 'kind' | 'difficulty'>): num
   if (d < 1300) return fair;
   if (d < 1700) return good;
   return exc;
+}
+
+/**
+ * The pass band shown (± cents), the same as grading: passCents (65 ¢ below 1300, 60 ¢ from 1300). Fine-tune and
+ * micro items are graded on intonation alone (nothing past the fair band scores), so their band is that fair band.
+ */
+export function zonePass(item: Pick<VocalItem, 'kind' | 'difficulty'>): number {
+  if (item.kind === 'fine-tune' || item.kind === 'micro') return BANDS.intonation[2];
+  return passCents(item.difficulty);
 }
 
 /**

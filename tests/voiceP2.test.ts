@@ -136,7 +136,8 @@ describe('F14 L6 colla voce: the follower', () => {
     const it0 = STANDARD_MORE_LEVELS[0].items[0];
     const good = gradeRubatoSong(it0, synthRubato(tg, p.notes.map((n) => n.dur)), p, 0, p.bars - 1);
     expect(good.grade.score).toBeGreaterThanOrEqual(STANDARD_MORE_LEVELS[0].pass);
-    const sour = gradeRubatoSong(it0, synthRubato(tg, p.notes.map((n) => n.dur), { cents: 60 }), p, 0, p.bars - 1);
+    // 75 ¢: outside the pass band (owner 2026-11-15: 60 ¢ from 1300, 65 ¢ below — 60 ¢ now passes)
+    const sour = gradeRubatoSong(it0, synthRubato(tg, p.notes.map((n) => n.dur), { cents: 75 }), p, 0, p.bars - 1);
     expect(sour.grade.score).toBeLessThan(STANDARD_MORE_LEVELS[0].pass);
   });
 });

@@ -4,7 +4,7 @@
 import { hzToMidi } from './pitch';
 import type { SungFrame } from './sing';
 import type { SongOpening } from './songs';
-import type { VoiceRange } from './vocal';
+import { passCents, type VoiceRange } from './vocal';
 
 export interface RollNote {
   midi: number;
@@ -34,13 +34,13 @@ export function songTimeline(song: SongOpening, range: VoiceRange, bpm: number):
 }
 
 export interface SingAlongGrade {
-  /** Per note: share of its frames within ±50 ¢ (octave-folded); null when no voice. */
+  /** Per note: share of its frames inside the pass band (passCents, octave-folded); null when no voice. */
   notes: (number | null)[];
   total: number; // 0..1, unsung notes count as 0
 }
 
 /** Score a take: frames are timed from the first note's start (t = 0). */
-export function gradeSingAlong(frames: SungFrame[], notes: RollNote[], tolCents = 50): SingAlongGrade {
+export function gradeSingAlong(frames: SungFrame[], notes: RollNote[], tolCents = passCents()): SingAlongGrade {
   const per = notes.map((n) => {
     const inNote = frames.filter((f) => f.t >= n.start + Math.min(0.12, n.dur * 0.25) && f.t <= n.start + n.dur - 0.04 && f.hz && f.confidence >= 0.8);
     if (inNote.length < 3) return null;

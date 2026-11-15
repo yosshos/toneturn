@@ -1,10 +1,11 @@
 // The live singing view (docs/research/VOICE-FEEDBACK-UI.md §4): the pitch lane, the note readout, the zone meter
-// and the steadiness bars. Time runs left → right in both languages; lemon only marks "now"; teal = in the zone,
-// hatched teal = close, tangerine ▲ = sharp, purple ▼ = flat (every colour has a shape or position twin).
+// and the steadiness bars. Time runs left → right in both languages; lemon only marks "now"; teal = dead centre (the
+// stamp), hatched teal = off centre but inside the pass band (passes), tangerine ▲ / purple ▼ = outside the band
+// (every colour has a shape or position twin). The pass band is the grader's own (zonePass = passCents).
 // The lane draws from a SingFeed in one requestAnimationFrame loop; the read-outs sample it at ≤ 10 Hz.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { chipCents, octaveFold, zoneState, type ZoneState } from '../engine/pitchDisplay';
+import { chipLook, octaveFold, zonePasses, zoneState } from '../engine/pitchDisplay';
 import { bestStretch, centreLine, liveVibrato, readCents, sliceSteadiness, vibratoOff, vibratoWave, type LiveVibrato, type NoteDetail, type VibratoGoal } from '../engine/vocalLive';
 import type { MelodyNote } from '../engine/vocal';
 import type { Settings } from '../storage/progress';
@@ -69,7 +70,10 @@ export interface SingLaneProps {
   mode: LaneMode;
   /** Item length (s): the hold window. */
   seconds: number;
+  /** The dead-centre tier (± cents): the stamp / bonus look only. */
   tol: number;
+  /** The pass band (± cents), the grader's own (zonePass); a note inside it never shows as failing. */
+  pass?: number;
   /** Drawing live (rAF) or frozen (the review: the whole take fits). */
   live: boolean;
   /** Blind / hidden task: only these target indexes are drawn until the review. */
@@ -95,7 +99,7 @@ export interface SingLaneProps {
   calm?: boolean;
 }
 
-export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, settings, label, beat, countIn = 0, compact, notes, selected, onSelect, playClock, blind, fermata, calm }: SingLaneProps) {
+export function SingLane({ feed, targets, mode, seconds, tol, pass = 50, live, shownIdx, settings, label, beat, countIn = 0, compact, notes, selected, onSelect, playClock, blind, fermata, calm }: SingLaneProps) {
   const box = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 320, h: 170 });
   useLayoutEffect(() => {
@@ -213,7 +217,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
         if (!shown(ti) && live) continue;
         if (tg.start !== undefined && (p.t < tg.start || p.t > tg.start + (tg.dur ?? 0.5))) continue;
         const c = (p.m + octaveFold(p.m, tg.midi) - tg.midi) * 100;
-        const kind = Math.abs(c) <= tol ? 'in' : Math.abs(c) <= 50 ? 'close' : null;
+        const kind = Math.abs(c) <= tol ? 'in' : Math.abs(c) <= Math.max(pass, tol) ? 'close' : null;
         if (!kind) continue;
         const last = R.list[R.list.length - 1];
         if (last && last.ti === ti && last.kind === kind && p.t - last.t1 <= 0.09) last.t1 = p.t;
@@ -267,7 +271,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
         }
         const inBlock = tg && (tg.start === undefined || (p.t >= tg.start - 0.05 && p.t <= tg.start + (tg.dur ?? 0.5)));
         const c = tg ? (m - tg.midi) * 100 : 0;
-        const col: keyof typeof paths = !inBlock || Math.abs(c) <= tol || Math.abs(c) > 150 ? 'ink' : c > 0 ? 'up' : 'down';
+        const col: keyof typeof paths = !inBlock || Math.abs(c) <= Math.max(pass, tol) || Math.abs(c) > 150 ? 'ink' : c > 0 ? 'up' : 'down';
         const xy = `${(p.t * pps).toFixed(1)} ${y(m).toFixed(1)}`;
         if (pen === col) paths[col].push(`L${xy}`);
         else {
@@ -353,7 +357,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [live, w, h, pps, lo, hi, targets, tol, reviewFit, timed, mode, span, shownIdx?.join(), playClock]);
+  }, [live, w, h, pps, lo, hi, targets, tol, pass, reviewFit, timed, mode, span, shownIdx?.join(), playClock]);
 
   // ---- static layer
   const rows: number[] = [];
@@ -445,8 +449,10 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
                 const n = notes[i];
                 if (tg.start === undefined || !n) return null;
                 const cx = (tg.start + (tg.dur ?? 0.5) / 2) * pps;
-                const st = n.octave ? 'oct' : n.cents === null ? 'miss' : Math.abs(n.cents) <= tol ? 'in' : n.cents > 0 ? 'sharp' : 'flat';
-                const txt = st === 'oct' ? '8va' : st === 'miss' ? '–' : st === 'in' ? '✓' : `${n.cents! > 0 ? '+' : '−'}${Math.abs(chipCents(n.cents!))}`;
+                // dead centre = a tick (the stamp look); off centre the number, coloured pass (teal) or fail (▲ / ▼ side)
+                const lk = chipLook(n.cents, tol, pass);
+                const st = n.octave ? 'oct' : n.cents === null ? 'miss' : lk.tier === 'centre' ? 'in' : lk.tier === 'pass' ? 'ok' : n.cents > 0 ? 'sharp' : 'flat';
+                const txt = st === 'oct' ? '8va' : st === 'miss' ? '–' : st === 'in' ? '✓' : lk.text!;
                 const top = y(tg.midi + 0.5);
                 const cy = top - 9 < 2 ? y(tg.midi - 0.5) + 9 : top - 9;
                 const wChip = Math.max(20, txt.length * 6.5 + 8);
@@ -536,7 +542,7 @@ export function SingLane({ feed, targets, mode, seconds, tol, live, shownIdx, se
 
 // ------------------------------------------------------------------ note readout + cents chip (§4.4)
 
-export function SingReadout({ feed, targets, tol, settings, live, lang, hideTarget }: { feed: SingFeed; targets: LaneTarget[]; tol: number; settings: Settings; live: boolean; lang: 'he' | 'en'; hideTarget?: boolean }) {
+export function SingReadout({ feed, targets, tol, pass = 50, settings, live, lang, hideTarget }: { feed: SingFeed; targets: LaneTarget[]; tol: number; pass?: number; settings: Settings; live: boolean; lang: 'he' | 'en'; hideTarget?: boolean }) {
   useTick(8, live);
   const p = live ? feed.last() : null;
   const fresh = p && feed.now() - p.t < 0.25;
@@ -544,12 +550,12 @@ export function SingReadout({ feed, targets, tol, settings, live, lang, hideTarg
   const sung = live ? feed.shown : null;
   const raw = fresh && tg ? (p!.m! + octaveFold(p!.m!, tg.midi) - tg.midi) * 100 : null;
   const cents = tg && raw !== null ? readCents(feed.track(tg.midi, feed.now() - 1.2), raw) : raw;
-  const st = zoneState(cents, tol);
+  const st = zoneState(cents, tol, pass);
   const sameNote = sung !== null && tg && Math.round(tg.midi) === sung;
   // Screen readers hear discrete events only: the note and whether it is in tune, at most once a second.
   const said = useRef<{ at: number; text: string }>({ at: 0, text: '' });
   if (live && sung !== null) {
-    const text = `${noteLabel(sung, settings)}${st === 'in' ? `, ${SING_TX.inZone[lang]}` : ''}`;
+    const text = `${noteLabel(sung, settings)}${st === 'in' ? `, ${SING_TX.centre[lang]}` : zonePasses(st) ? `, ${SING_TX.inZone[lang]}` : ''}`;
     const wall = typeof performance !== 'undefined' ? performance.now() : 0;
     if (text !== said.current.text && wall - said.current.at >= 1000) said.current = { at: wall, text };
   }
@@ -563,30 +569,30 @@ export function SingReadout({ feed, targets, tol, settings, live, lang, hideTarg
           <span className="flip-rtl">→</span> <NoteName label={noteLabel(Math.round(tg.midi), settings)} />
         </div>
       )}
-      <CentsChip cents={cents} state={st} lang={lang} />
+      <CentsChip cents={cents} tol={tol} pass={pass} lang={lang} />
     </div>
     </>
   );
 }
 
-export function CentsChip({ cents, state, lang }: { cents: number | null; state: ZoneState; lang: 'he' | 'en' }) {
-  if (state === 'none' || cents === null) return <span className="cents-chip idle" />;
-  if (state === 'in')
+/** The cents chip: a tick at dead centre; off centre the number, teal when it passes, ▲ / ▼ colours when it fails. */
+export function CentsChip({ cents, tol, pass, lang }: { cents: number | null; tol: number; pass: number; lang: 'he' | 'en' }) {
+  const lk = chipLook(cents, tol, pass);
+  if (lk.tier === 'none' || cents === null) return <span className="cents-chip idle" />;
+  if (lk.tier === 'centre')
     return (
-      <span className="cents-chip in" title={lang === 'he' ? 'באזור' : 'in the zone'}>
+      <span className="cents-chip in" data-tier="centre" title={SING_TX.centre[lang]}>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <ellipse cx="9" cy="15" rx="5" ry="3.6" transform="rotate(-22 9 15)" className="nh" />
           <path d="M11 13 L15 17 L22 6" className="ck" />
         </svg>
       </span>
     );
-  const sharp = cents > 0;
-  const v = chipCents(cents);
+  const sharp = lk.side > 0;
   return (
-    <span className={`cents-chip ${sharp ? 'sharp' : 'flat'}`} dir="ltr">
+    <span className={`cents-chip ${lk.tier === 'pass' ? 'ok' : sharp ? 'sharp' : 'flat'}`} dir="ltr" data-tier={lk.tier} title={lk.tier === 'pass' ? SING_TX.inZone[lang] : undefined}>
       <span className="mk">{sharp ? '▲' : '▼'}</span>
-      {sharp ? '+' : '−'}
-      {Math.abs(v)}
+      {lk.text}
       <small>¢</small>
     </span>
   );
@@ -601,17 +607,19 @@ export const meterPos = (c: number) => {
   return 50 + Math.sign(c) * d;
 };
 
-export function ZoneMeter({ cents, tol }: { cents: number | null; tol: number }) {
-  const st = zoneState(cents, tol);
-  const side = st === 'sharp' || st === 'close-sharp' ? 'sharp' : st === 'flat' || st === 'close-flat' ? 'flat' : '';
+/** The zone meter: the pass band (`pass`, default = `tol`: the voice games' own window) with the dead centre inside it. */
+export function ZoneMeter({ cents, tol, pass = tol }: { cents: number | null; tol: number; pass?: number }) {
+  const band = Math.max(pass, tol);
+  const st = zoneState(cents, tol, band);
+  // the side tint only when the note fails (outside the band); inside the band it passes, so no warning colour
+  const side = st === 'sharp' ? 'sharp' : st === 'flat' ? 'flat' : '';
   return (
-    <div className={`zone-meter ${st === 'in' ? 'in' : ''} ${side}`} dir="ltr" aria-hidden="true">
+    <div className={`zone-meter ${st === 'in' ? 'in' : zonePasses(st) ? 'ok' : ''}${band > tol ? ' banded' : ''} ${side}`} dir="ltr" aria-hidden="true">
       <span className="zm-g flat-g">♭</span>
       <span className="zm-track">
         <span className="zm-tint" />
-        <span className="zm-t50" style={{ left: `${meterPos(-50)}%` }} />
-        <span className="zm-t50" style={{ left: `${meterPos(50)}%` }} />
-        <span className="zm-zone" style={{ left: `${meterPos(-tol)}%`, width: `${meterPos(tol) - meterPos(-tol)}%` }} />
+        <span className="zm-zone" style={{ left: `${meterPos(-band)}%`, width: `${meterPos(band) - meterPos(-band)}%` }} />
+        {band > tol && <span className="zm-centre" style={{ left: `${meterPos(-tol)}%`, width: `${meterPos(tol) - meterPos(-tol)}%` }} />}
         <span className="zm-mid" />
         {cents !== null && (
           <span className="zm-needle" style={{ left: `${meterPos(cents)}%` }}>
@@ -645,7 +653,7 @@ export function SustainBars({ levels, cur, seconds, sung, best, lang }: { levels
 }
 
 /** The live meter row: the zone meter (and, for holds, the steadiness bars) sampled at 10 Hz. */
-export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lang, vib, cue, frozenVib }: { feed: SingFeed; targets: LaneTarget[]; tol: number; seconds: number; live: boolean; bars: boolean; meter: boolean; lang: 'he' | 'en'; vib?: VibratoGoal | false | null; cue?: string | null; frozenVib?: (LiveVibrato & { note?: string }) | null }) {
+export function SingMeters({ feed, targets, tol, pass = 50, seconds, live, bars, meter, lang, vib, cue, frozenVib }: { feed: SingFeed; targets: LaneTarget[]; tol: number; pass?: number; seconds: number; live: boolean; bars: boolean; meter: boolean; lang: 'he' | 'en'; vib?: VibratoGoal | false | null; cue?: string | null; frozenVib?: (LiveVibrato & { note?: string }) | null }) {
   const tick = useTick(8, live);
   const p = live ? feed.last() : null;
   const now = feed.now();
@@ -669,7 +677,7 @@ export function SingMeters({ feed, targets, tol, seconds, live, bars, meter, lan
   const chip = vib === false || vib === undefined ? null : <VibratoChip v={live ? vibRef.current : frozenVib ?? { state: 'none', rate: 0, extent: 0 }} goal={vib} cue={cue ?? null} lang={lang} note={live ? undefined : frozenVib?.note} />;
   return (
     <div className="sing-meters">
-      {meter && <ZoneMeter cents={cents} tol={tol} />}
+      {meter && <ZoneMeter cents={cents} tol={tol} pass={pass} />}
       {chip ? (
         <div className="sm-row">
           {barsEl ?? <span className="sm-fill" />}
@@ -724,8 +732,7 @@ export function VibratoChip({ v, goal, cue, lang, note }: { v: LiveVibrato; goal
 
 // ------------------------------------------------------------------ the review's tap-a-note detail (§4.13)
 
-export function NoteDetailRow({ label, d, golden, tol, lang, onClose }: { label: string; d: NoteDetail; golden: boolean; tol: number; lang: 'he' | 'en'; onClose: () => void }) {
-  const st = d.octave ? 'none' : zoneState(d.cents, tol);
+export function NoteDetailRow({ label, d, golden, tol, pass = 50, lang, onClose }: { label: string; d: NoteDetail; golden: boolean; tol: number; pass?: number; lang: 'he' | 'en'; onClose: () => void }) {
   const items: [string, string][] = [];
   if (d.settleMs !== null) items.push([SING_TX.settle[lang], `${d.settleMs} ms`]);
   if (d.overshoot > 10) items.push(['↗', `${d.overshoot} ¢`]);
@@ -735,7 +742,7 @@ export function NoteDetailRow({ label, d, golden, tol, lang, onClose }: { label:
   return (
     <div className="note-detail" role="group" aria-label={label}>
       <NoteName label={label} className="nd-name" />
-      {d.octave ? <span className="cents-chip flat">8va</span> : d.cents === null ? <span className="nd-miss">{SING_TX.missed[lang]}</span> : <CentsChip cents={d.cents} state={st} lang={lang} />}
+      {d.octave ? <span className="cents-chip flat">8va</span> : d.cents === null ? <span className="nd-miss">{SING_TX.missed[lang]}</span> : <CentsChip cents={d.cents} tol={tol} pass={pass} lang={lang} />}
       <span className="nd-items">
         {items.map(([k, v]) => (
           <span key={k}>

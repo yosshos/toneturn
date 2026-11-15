@@ -2,7 +2,7 @@
 // (seconds from the first beat after the count-in / the first sung bar), with the microphone delay removed.
 
 import type { SungFrame } from './sing';
-import { bandScore, finish, holdMetrics, inBandScore, M, reachScore, UNCLEAR, type MetricScore, type TakeGrade, type VocalItem } from './vocal';
+import { bandScore, finish, holdMetrics, inBandScore, M, passCents, reachScore, UNCLEAR, type MetricScore, type TakeGrade, type VocalItem } from './vocal';
 import { swingBand, swingRatioOf, timeFeel, voiceOnsets, type TimeFeel } from './voiceTime';
 import { gradeSongTake, pitchChanges, type PhraseScore, type PlanNote, type SongGrade, type SongPlan } from './voiceSongs';
 import { chordAtBeat, parseChart, transposeChart } from './charts';
@@ -90,6 +90,9 @@ export function gradeTime(item: VocalItem, onsets: number[]): TimeResult {
   }
 }
 
+/** A song's pitch tolerance: its own rule (a stricter song sets one), else the item's pass band (passCents). */
+export const songTol = (item: VocalItem): number => item.song?.tol ?? passCents(item.difficulty);
+
 export interface SongResult {
   grade: TakeGrade;
   song: SongGrade;
@@ -98,7 +101,7 @@ export interface SongResult {
 /** A band-song take of bars [from, to] (frames from the first sung bar, delay removed). */
 export function gradeSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number): SongResult {
   const s = item.song!;
-  const g = s.interpretFrom !== undefined ? gradeSplitTake(frames, plan, from, to, s.interpretFrom, s) : gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
+  const g = s.interpretFrom !== undefined ? gradeSplitTake(frames, plan, from, to, s.interpretFrom, s, songTol(item)) : gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: songTol(item), rhythm: s.rhythm, need: s.need });
   if (!g.phrases.length || g.phrases.every((p) => p.sung === 0)) return { grade: UNCLEAR, song: g };
   const out: MetricScore[] = [M('phrases', g.mean * 100, '%', g.mean, 4)];
   const worst = g.phrases.reduce((w, p) => Math.min(w, p.score), 1);
@@ -177,11 +180,11 @@ export function gradeSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, 
 export function gradeRubatoSong(item: VocalItem, frames: SungFrame[], plan: SongPlan, from: number, to: number): SongResult & { follow: number } {
   const s = item.song!;
   const sel = plan.notes.filter((n) => n.bar >= from && n.bar <= to);
-  const r = gradeRubato(frames, sel.map((n) => n.midi), sel.map((n) => n.phrase), s.tol ?? 50);
+  const r = gradeRubato(frames, sel.map((n) => n.midi), sel.map((n) => n.phrase), songTol(item));
   const phrases = r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes }));
   const mean = phrases.length ? phrases.reduce((a, p) => a + p.score, 0) / phrases.length : 0;
   const r3 = (x: number) => Math.round(x * 1000) / 1000;
-  const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest: phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0, feel: null, drift: null, chorusDb: null, notePitch: r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)) };
+  const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest: phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0, feel: null, drift: null, chorusDb: null, notePitch: r.cents.map((c) => (c === null ? null : Math.abs(c) <= songTol(item) ? 1 : 0)) };
   if (r.follow === 0) return { grade: UNCLEAR, song, follow: 0 };
   const base = finish([M('phrases', mean * 100, '%', mean, 4), M('follow', r.follow * 100, '%', reachScore(r.follow, 0.9), 2)], {});
   let score = Math.min(song.score, base.score);
@@ -209,7 +212,7 @@ export function gradeCollaSong(item: VocalItem, frames: SungFrame[], plan: SongP
   const s = item.song!;
   const { split, free, tempo } = collaParts(plan, from, to, s.freeUntil ?? 1);
   const countAt = rejoin === null ? Infinity : rejoin - plan.meter * plan.beat;
-  const r = gradeRubato(frames.filter((f) => f.t < countAt), free.map((n) => n.midi), free.map((n) => n.phrase), s.tol ?? 50);
+  const r = gradeRubato(frames.filter((f) => f.t < countAt), free.map((n) => n.midi), free.map((n) => n.phrase), songTol(item));
   const freePh: PhraseScore[] = r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes }));
   let tempoPh: PhraseScore[];
   let feel: SongGrade['feel'] = null;
@@ -217,7 +220,7 @@ export function gradeCollaSong(item: VocalItem, frames: SungFrame[], plan: SongP
   let tempoPitch: (number | null)[] = tempo.map(() => null);
   if (rejoin !== null) {
     const shifted = frames.filter((f) => f.t >= countAt).map((f) => ({ ...f, t: f.t - rejoin }));
-    const g = gradeSongTake(shifted, plan, { fromBar: split, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
+    const g = gradeSongTake(shifted, plan, { fromBar: split, toBar: to, tol: songTol(item), rhythm: s.rhythm, need: s.need });
     tempoPh = g.phrases;
     feel = g.feel;
     tempoPitch = g.notePitch;
@@ -228,7 +231,7 @@ export function gradeCollaSong(item: VocalItem, frames: SungFrame[], plan: SongP
   const mean = phrases.length ? phrases.reduce((a, p) => a + p.score, 0) / phrases.length : 0;
   const r3 = (x: number) => Math.round(x * 1000) / 1000;
   const weakest = phrases.length ? phrases.reduce((w, p) => (p.score < w.score ? p : w), phrases[0]).i : 0;
-  const notePitch = [...r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)), ...tempoPitch];
+  const notePitch = [...r.cents.map((c) => (c === null ? null : Math.abs(c) <= songTol(item) ? 1 : 0)), ...tempoPitch];
   const song: SongGrade = { phrases, score: r3(phrases.some((p) => p.score < s.need) ? Math.min(mean, s.need - 0.01) : mean), mean: r3(mean), weakest, feel, drift: null, chorusDb: null, notePitch };
   if (r.follow === 0) return { grade: UNCLEAR, song, follow: 0, reentry };
   const beatMs = plan.beat * 1000;
@@ -299,11 +302,11 @@ export function gradeCollaMulti(item: VocalItem, frames: SungFrame[], plan: Song
       if (broken) return zero(sec);
       const next = secs[k + 1] ? rejoins[t] : undefined;
       const end = next === undefined ? Infinity : next === null ? Infinity : next - bar;
-      const r = gradeRubato(frames.filter((f) => f.t >= open && f.t < end), sec.notes.map((n) => n.midi), sec.notes.map((n) => n.phrase), s.tol ?? 50);
+      const r = gradeRubato(frames.filter((f) => f.t >= open && f.t < end), sec.notes.map((n) => n.midi), sec.notes.map((n) => n.phrase), songTol(item));
       if (k === 0) firstFollow = r.follow;
       reached += Math.round(r.follow * sec.notes.length);
       phrases.push(...r.phrases.map((p) => ({ i: p.i, pitch: p.score, time: null, breath: 1, score: p.score, sung: p.reached, notes: p.notes })));
-      notePitch.push(...r.cents.map((c) => (c === null ? null : Math.abs(c) <= (s.tol ?? 50) ? 1 : 0)));
+      notePitch.push(...r.cents.map((c) => (c === null ? null : Math.abs(c) <= songTol(item) ? 1 : 0)));
       return;
     }
     const r = rejoins[t++] ?? null;
@@ -314,7 +317,7 @@ export function gradeCollaMulti(item: VocalItem, frames: SungFrame[], plan: Song
     }
     const len = (sec.toBar - sec.fromBar + 1) * bar;
     const shifted = frames.filter((f) => f.t >= r - bar && f.t < r + len).map((f) => ({ ...f, t: f.t - r }));
-    const g = gradeSongTake(shifted, plan, { fromBar: sec.fromBar, toBar: sec.toBar, tol: s.tol, rhythm: s.rhythm, need: s.need });
+    const g = gradeSongTake(shifted, plan, { fromBar: sec.fromBar, toBar: sec.toBar, tol: songTol(item), rhythm: s.rhythm, need: s.need });
     phrases.push(...g.phrases);
     notePitch.push(...g.notePitch);
     feel ??= g.feel;
@@ -422,12 +425,12 @@ export function longNoteSteadiness(frames: SungFrame[], plan: SongPlan, from: nu
 // ---------------------------------------------------------------- P2 song rules (F14 L9–L10, F15 L3, F15 L7)
 
 /** F14 L9: the phrases before `split` graded as written (time counts), the rest interpreted (no time grid, pitch only). */
-function gradeSplitTake(frames: SungFrame[], plan: SongPlan, from: number, to: number, split: number, s: NonNullable<VocalItem['song']>): SongGrade {
+function gradeSplitTake(frames: SungFrame[], plan: SongPlan, from: number, to: number, split: number, s: NonNullable<VocalItem['song']>, tol: number): SongGrade {
   const ph = plan.phrases[split];
-  if (!ph || ph.fromBar <= from || ph.fromBar > to) return gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol: s.tol, rhythm: s.rhythm, need: s.need });
-  const a = gradeSongTake(frames, plan, { fromBar: from, toBar: ph.fromBar - 1, tol: s.tol, rhythm: s.rhythm, need: s.need });
+  if (!ph || ph.fromBar <= from || ph.fromBar > to) return gradeSongTake(frames, plan, { fromBar: from, toBar: to, tol, rhythm: s.rhythm, need: s.need });
+  const a = gradeSongTake(frames, plan, { fromBar: from, toBar: ph.fromBar - 1, tol, rhythm: s.rhythm, need: s.need });
   const shift = (ph.fromBar - from) * plan.meter * plan.beat;
-  const b = gradeSongTake(frames.map((f) => ({ ...f, t: f.t - shift })), plan, { fromBar: ph.fromBar, toBar: to, tol: s.tol ?? 60, rhythm: false, need: s.need - 0.1 });
+  const b = gradeSongTake(frames.map((f) => ({ ...f, t: f.t - shift })), plan, { fromBar: ph.fromBar, toBar: to, tol: s.tol ?? Math.max(tol, 60), rhythm: false, need: s.need - 0.1 });
   const phrases = [...a.phrases, ...b.phrases];
   const mean = phrases.length ? phrases.reduce((x, p) => x + p.score, 0) / phrases.length : 0;
   const capped = a.phrases.some((p) => p.score < s.need) || b.phrases.some((p) => p.score < s.need - 0.1) ? Math.min(mean, s.need - 0.01) : mean;

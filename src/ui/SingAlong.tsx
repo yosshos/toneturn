@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { gradeSingAlong, songTimeline, type SingAlongGrade } from '../engine/singalong';
 import type { SungFrame } from '../engine/sing';
 import { SONGS, type SongOpening } from '../engine/songs';
-import { DEFAULT_RANGE } from '../engine/vocal';
+import { DEFAULT_RANGE, passCents } from '../engine/vocal';
 import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
@@ -154,7 +154,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
         {noteLabel(tl.tonic, settings, keyPc)} · ♩ = {BPM}
       </p>
       <div className="sing-lane-wrap">
-        <SingLane feed={feed} targets={tl.notes.map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }))} mode="song" seconds={0} tol={35} live={phase === 'count' || phase === 'singing'} settings={settings} beat={60 / BPM} compact={phase === 'done'} fermata={phase === 'done' && !!grade && grade.total >= 0.9} calm={prefersCalm(settings)} label={song.title[lang]} />
+        <SingLane feed={feed} targets={tl.notes.map((n) => ({ midi: n.midi, start: n.start, dur: n.dur }))} mode="song" seconds={0} tol={35} pass={passCents()} live={phase === 'count' || phase === 'singing'} settings={settings} beat={60 / BPM} compact={phase === 'done'} fermata={phase === 'done' && !!grade && grade.total >= 0.9} calm={prefersCalm(settings)} label={song.title[lang]} />
         <LaneNote feed={feed} live={phase === 'singing'} settings={settings} />
         <NoVoiceBanner feed={feed} live={phase === 'singing'} from={tl.notes[0]?.start ?? 0} lang={lang === 'en' ? 'en' : 'he'} />
       </div>
