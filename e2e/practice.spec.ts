@@ -53,7 +53,7 @@ test.describe('practice hub', () => {
     // Charts: a template opens, plays and highlights a bar; transpose changes the text.
     await page.locator('[data-hub="charts"]').click();
     await page.locator('[data-chart-template="pop-four"]').click();
-    await expect(page.locator('.ch-bar')).toHaveCount(4);
+    await expect(page.locator('.ch-grid .cc-bar')).toHaveCount(4);
     await page.locator('[data-chart-up]').click();
     await expect(page.locator('[data-chart-text]')).toHaveValue('Db | Ab | Bbm | Gb');
     await page.locator('[data-chart-play]').click();
@@ -64,7 +64,7 @@ test.describe('practice hub', () => {
     await page.locator('[data-rule="rhythm"]').selectOption('eighths');
     await page.locator('[data-bar="0"]').click();
     await page.locator('[data-scale="lydian"]').click();
-    await expect(page.locator('[data-bar="0"] .ch-scale.set')).toBeVisible();
+    await expect(page.locator('[data-bar="0"] .cc-sub.set')).toBeVisible();
     await expect(page.locator('[data-chart-improv]')).toBeVisible();
     await page.locator('[data-chart-save]').click();
     await page.locator('.screen-head .icon-btn').first().click();

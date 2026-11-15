@@ -5,7 +5,7 @@
 import type { Drill, DrillCalibration, PlayedNote, TakeMetrics } from '../engine/drills/types';
 import { analyzeTake, expTimeMs } from '../engine/drills/analyze';
 import { analyzeGuitarTake } from '../engine/drills/guitarAnalyze';
-import { analyzeDrumTake, type DrumTakeHit } from '../engine/drills/drumAnalyze';
+import { analyzeDrumTake, drumWindow, type DrumTakeHit } from '../engine/drills/drumAnalyze';
 import { isDrumDrill, isGuitarDrill } from '../engine/drills/events';
 
 type Pattern = 'clean' | 'mixed' | 'weak';
@@ -33,8 +33,12 @@ export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, patte
   };
   if (isDrumDrill(drill)) {
     const hits: DrumTakeHit[] = [];
+    // The early / late hits land just outside the drum timing window but inside its match window (1.6 × W), so they
+    // are matched and marked early / late (a tick), never missed + extra.
+    const W = drumWindow(drill, bpm);
     drill.notes.forEach((n, i) => {
-      const o = off(i);
+      const o0 = off(i);
+      const o = o0.dt !== undefined && Math.abs(o0.dt) > 50 ? { ...o0, dt: Math.sign(o0.dt) * W * 1.35 } : o0;
       if (o.skip || !n.voice) return;
       hits.push({ voice: o.dPitch ? (n.voice === 'snare' ? 'kick' : 'snare') : n.voice, on: expTimeMs(drill, n.beat, bpm) + (o.dt ?? 0), vel: n.accent ? 110 : n.ghost ? 30 : 80 });
     });

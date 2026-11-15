@@ -9,7 +9,7 @@ import { refreshProfile } from '../storage/profile';
 import { keyList, skillKeysOf, type KeyCell } from '../engine/analysis/keyMastery';
 import { KeyMap12 } from './KeyMap12';
 import { liveMarksOn, type LiveMarksPref, type LiveTake } from '../engine/drills/liveGrade';
-import { chartCells, rulesKept } from '../engine/drills/chartCells';
+import { chartCells, noteRoles, rulesKept } from '../engine/drills/chartCells';
 import { ChordChart } from './ChordChart';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
@@ -42,6 +42,7 @@ import { STRINGS } from '../i18n/strings';
 import { isGuitarDrill } from '../engine/drills/events';
 import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend } from './DrillTake';
+import { BidiText, plainText } from './BidiText';
 import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the one-screen review
 import { ErrorMap, barMarks, worstBar } from './ErrorMap'; // slice 3: loop the spot
 import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
@@ -126,13 +127,14 @@ export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { a
  * drills force notation (B10); free-choice drills show only the chord chart, with an opt-in model line (B3); ear drills
  * show what to do until the result (B11). `beat` = the running take's beat, for the moving window (B2).
  */
-export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, live, loop }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang; /** The take's tempo (phrases by ear: the call's replay). */ bpm?: number; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** Slice 8: bars picked on the error map, hatched on a chart. */ loop?: [number, number] | null }) {
+export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, live, loop, cue = false, prior, heard }: { drill: Drill; ds: DrillSettings; result?: TakeMetrics | null; beat?: number; lang?: Lang; /** The take's tempo (phrases by ear: the call's replay). */ bpm?: number; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** Slice 8: bars picked on the error map, hatched on a chart. */ loop?: [number, number] | null; /** Slice 5: the count-in is running — the first note head pulses once. */ cue?: boolean; /** Slice 5: the last take of this item, its ticks faded under the review's ("Last take"). */ prior?: TakeMetrics | null; /** Slice 8: the improvised notes heard so far (rule-card items) — note-role dots on the chart. */ heard?: { beat: number; midi: number }[] | null }) {
+  const roles = useMemo(() => (heard && !result && drill.goal.improv ? noteRoles(drill, heard) : null), [heard, result, drill]);
   const [model, setModel] = useState(false);
   // Ear drills (bass B11, the drummer's ear): what to do and which bars are yours, until the result.
   // The pianist's ear (PIANO_AUDIT §3) too: the answer stays hidden until the result.
-  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
+  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} roles={roles} />;
   // Drums (0.65): a percussion staff (reading always), or lanes by the setting.
-  if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} live={live} />;
+  if (isDrumDrill(drill)) return <DrumScore drill={drill} view={drill.show === 'staff' ? 'staff' : (ds.drumView ?? 'staff')} result={result} beat={beat} lang={lang} live={live} cue={cue} prior={prior} />;
   // PIANO_JAZZ P2: trading fours — after the result, a model line for your bars on request (it replaces the landings
   // staff, so the card still fits one screen).
   const tradeModel = !isGuitarDrill(drill) && result ? drill.goal.free?.model : undefined;
@@ -149,8 +151,8 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
       </>
     );
   if (!isGuitarDrill(drill) && drill.goal.vl) return <VoiceLeadScore drill={drill} result={result} beat={beat} lang={lang} />;
-  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} live={live} lang={lang} />;
-  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} />;
+  if (!isGuitarDrill(drill)) return <DrillStaff drill={drill} fingering={ds.showFingering} result={result} beat={beat} live={live} lang={lang} cue={cue} prior={prior} roles={roles} />;
+  if (drill.show === 'none' && !result) return <EarCard drill={drill} beat={beat} lang={lang} bpm={bpm} roles={roles} />;
   // AUDIT-6 TAB reading: show 'tab' draws TAB only, whatever the player's view.
   const view = drill.show === 'staff' ? 'staff' : drill.show === 'tab' ? 'tab' : (ds.guitarView ?? 'tab');
   // The guitar trade (g-impro 7), like the piano's: after the result, a model line for your bars on request — in the
@@ -184,9 +186,9 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
   const written = upTo === undefined || upTo > 0;
   return (
     <>
-      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} />}
-      {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} live={live} lang={lang} />}
-      {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} result={result} loop={loop} lang={lang} compact={written} />}
+      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} cue={cue} prior={prior} />}
+      {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} live={live} lang={lang} cue={cue && view === 'staff'} prior={prior} roles={roles} />}
+      {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} result={result} loop={loop} lang={lang} compact={written} roles={roles} />}
       {drill.show === 'chart' && (
         <button className="link model-toggle" onClick={() => setModel(!model)} aria-pressed={model} data-model-line={model ? 'on' : 'off'}>
           {model ? (lang === 'he' ? 'להסתיר את קו הדוגמה' : 'Hide the model line') : lang === 'he' ? 'להציג קו לדוגמה' : 'Show a model line'}
@@ -241,7 +243,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <button className="icon-btn" onClick={back} aria-label="Back">
         <span className="flip-rtl">‹</span>
       </button>
-      <h1 title={typeof title === 'string' ? title : undefined}>{title}</h1>
+      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });
@@ -889,6 +891,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [loopRes, setLoopRes] = useState<TakeMetrics | null>(null);
   // Slice 5: the running take's settled notes, drawn on the score while it is played (practice; calm = none).
   const [live, setLive] = useState<LiveTake | null>(null);
+  // Slice 5: the count-in is running (the first head pulses); slice 8: the improvised notes heard (note-role dots).
+  const [counting, setCounting] = useState(false);
+  const [heard, setHeard] = useState<{ beat: number; midi: number }[] | null>(null);
+  // Slice 5, take overlay: the previous take of the same item; "Last take" draws its ticks faded under this one's.
+  const lastTake = useRef<{ id: string; m: TakeMetrics } | null>(null);
+  const [prior, setPrior] = useState<TakeMetrics | null>(null);
+  const [ghost, setGhost] = useState(false);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -916,6 +925,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
     onTake(lad.state, drillEvents(drill, m, new Date().toISOString(), session.current, n), drillXp(m), takeInfo(drill, m));
+    setPrior(lastTake.current?.id === drill.itemId ? lastTake.current.m : null);
+    lastTake.current = { id: drill.itemId, m };
     setSel(null);
     setRes({ m, lad });
     if (lad.next.action === 'next-key' || lad.next.action === 'next-drill') {
@@ -1010,7 +1021,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             {whole}
           </button>
         </p>
-        <DrillScore drill={ld} ds={ds} result={loopRes} beat={loopRes ? -1 : beat} lang={lang} bpm={lb} live={loopRes ? null : live} />
+        <DrillScore drill={ld} ds={ds} result={loopRes} beat={loopRes ? -1 : beat} lang={lang} bpm={lb} live={loopRes ? null : live} cue={!loopRes && counting} />
         {!loopRes && (
           <DrillTake
             key={`loop:${loop.from}-${loop.to}:${take}`}
@@ -1026,6 +1037,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             kit={kit}
             liveMarks={ds.liveMarks !== 'never'}
             onLive={setLive}
+            onCount={setCounting}
           />
         )}
         {loopRes && (
@@ -1108,7 +1120,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           )}
         </p>
       )}
-      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} live={res ? null : live} loop={res ? loopSel : null} />
+      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} live={res ? null : live} loop={res ? loopSel : null} cue={!res && counting} prior={res && ghost ? prior : null} heard={res ? null : heard} />
       {drill.spec.kind === 'sl-chorus' && !res && (
         <p className="drill-stage">
           <button className="btn small ghost" onClick={() => setChorusEd(true)} data-chorus-open="1">
@@ -1132,8 +1144,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         />
       )}
       {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
-      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} />}
-      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} />}
+      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} />}
+      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} onHeard={setHeard} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
@@ -1149,6 +1161,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))}
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
+            lastTake={prior ? { on: ghost, onToggle: () => setGhost((g) => !g) } : undefined}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           >
           {/* AUDIT-DEPTH-3 C5 + slice 8: the rule cards of an improvised take, one compact line. With the chart on screen:

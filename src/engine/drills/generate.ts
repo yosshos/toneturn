@@ -449,11 +449,20 @@ function extras(s: DrillSpec): T2[] {
   if (s.swing) out.push(t('swing', 'סווינג'));
   return out;
 }
+/**
+ * Hebrew titles: every Latin run (a key, a chord symbol, a dynamic mark — "C", "D♭", "mf") is wrapped in Unicode
+ * isolates (FSI … PDI), the plain-text form of <bdi>, so it never reorders the Hebrew around it; the run screen's header
+ * turns the isolated runs into <bdi> elements (BidiText).
+ */
+export const FSI = '⁨';
+export const PDI = '⁩';
+export const isoLatin = (he: string): string => he.replace(/[A-Za-z][A-Za-z0-9♭♯#°ø+/]*(?: [A-Za-z0-9♭♯#][A-Za-z0-9♭♯#°ø+/]*)*/g, (m) => `${FSI}${m}${PDI}`);
+
 function title(parts: (T2 | string | null | undefined)[], s: DrillSpec): T2 {
   const all = [...parts.filter((x): x is T2 | string => !!x), HANDS_T[s.hands], ...extras(s)];
   return {
     en: all.map((x) => (typeof x === 'string' ? x : x.en)).join(' · '),
-    he: all.map((x) => (typeof x === 'string' ? x : x.he)).join(' · '),
+    he: isoLatin(all.map((x) => (typeof x === 'string' ? x : x.he)).join(' · ')),
   };
 }
 

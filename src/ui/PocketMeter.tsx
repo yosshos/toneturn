@@ -5,7 +5,7 @@
 // are small cells at the end (count-in: they fill lemon one by one; then the current beat is lemon), and a quiet count
 // of notes in a row inside the window. The strip is LTR like the music and aria-hidden (the count-in is spoken once).
 
-import type { LiveTake, PocketRow } from '../engine/drills/liveGrade';
+import { HANDS_CHIP_MS, type LiveTake, type PocketRow } from '../engine/drills/liveGrade';
 
 type Lang = 'he' | 'en';
 const W = 200;
@@ -33,6 +33,7 @@ export function PocketMeter({ live, phase, beat, meter, lang, idle, rows: rowKey
   const inPlay = phase === 'play' ? (((beat - meter) % meter) + meter) % meter : -1;
   const counted = phase === 'count' ? beat + 1 : 0;
   const he = lang === 'he';
+  const hands = phase === 'play' && rows.some((r) => r.key === 'L') && live?.hands && live.hands.abs > HANDS_CHIP_MS ? live.hands : null;
   return (
     <div className={`drill-beat pocket ${phase}`} dir="ltr" data-pocket={phase} data-pocket-rows={rows.length || undefined} data-pocket-mean={live?.mean === null || live?.mean === undefined ? undefined : Math.round(live.mean)} data-streak={live?.streak ?? undefined}>
       {/* The count-in, spoken once a beat (the strip itself is hidden from screen readers). */}
@@ -59,6 +60,15 @@ export function PocketMeter({ live, phase, beat, meter, lang, idle, rows: rowKey
           );
         })}
       </svg>
+      {/* Hands together (§4.1): the RH − LH gap as a small ⇆ chip between the R and L rows, only outside 30 ms; the
+          leading hand's letter beside it. */}
+      {hands && (
+        <span className="pm-hands" data-hands={Math.round(hands.abs)} data-hands-lead={hands.mean > 0 ? 'L' : 'R'}>
+          <span aria-hidden="true">⇆</span>
+          <b>{Math.round(hands.abs)}</b>
+          <small>{ROW_LABEL[lang][hands.mean > 0 ? 'L' : 'R']}</small>
+        </span>
+      )}
       {/* Keyed by the click: a new child each beat (the e2e kit tests listen for it). */}
       <span className="pm-beats" key={beat} aria-hidden="true">
         {Array.from({ length: cells }, (_, k) => (

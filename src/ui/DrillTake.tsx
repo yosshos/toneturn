@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
-import { analyzeTake, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
+import { analyzeTake, improvNotes, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
 import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { markOf, worstMark } from '../engine/noteMarks';
@@ -34,8 +34,10 @@ import type { NoteEvent } from '../engine/lesson';
 import { fakeTake, fakeTakeOn, fakeLiveOn } from './fakeTake';
 import { liveGrade, liveMarkable, pocketRowKeys, type LiveTake } from '../engine/drills/liveGrade';
 import { PocketMeter } from './PocketMeter';
+import { VelocityBars } from './VelocityBars';
+import { velBars, velBarsShown } from '../engine/drills/velBars';
 import { ChordChart } from './ChordChart';
-import { chartCells, type ChartCell } from '../engine/drills/chartCells';
+import { chartCells, type ChartCell, type NoteRole } from '../engine/drills/chartCells';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -43,6 +45,23 @@ function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> |
   const m = new Map<string, NoteResult>();
   for (const r of live.perNote) m.set(noteKey(r.exp), r);
   return m;
+}
+
+/**
+ * The last take's ticks (§4.1 take overlay): per drawn item, its mark and offset in the previous take of the same item,
+ * measured against that take's window. A chord: its worst note's.
+ */
+function priorFor(prior: TakeMetrics | null | undefined) {
+  if (!prior) return null;
+  const by = new Map<string, NoteResult>();
+  for (const r of prior.perNote) by.set(noteKey(r.exp), r);
+  const win = thresholds(tempoBand(prior.nps)).sd * 2;
+  const at = (group: ExpNote[]): { mk: NoteMark; dev: number | null } => {
+    const ms = group.map((x) => markOf(by.get(noteKey(x)), win));
+    const mk = worstMark(ms);
+    return { mk, dev: mk === 'early' || mk === 'late' ? (by.get(noteKey(group[ms.indexOf(mk)]))?.dev ?? null) : null };
+  };
+  return { at, win };
 }
 
 type Lang = 'he' | 'en';
@@ -84,25 +103,25 @@ const qOf = (d: Drill): number => (d.pulse === 8 ? 0.5 : 1);
  * the whole drill is reachable and still fits one phone screen. Idle: small ‹ › page buttons; after a take it opens
  * on the first line with a mistake.
  */
-export function useLineWindow(lines: number, beat: number, perLine: number, focus: number): { from: number; pager: React.ReactNode } {
+export function useLineWindow(lines: number, beat: number, perLine: number, focus: number, size = 2): { from: number; pager: React.ReactNode } {
   const [page, setPage] = useState(0);
   const [lastFocus, setLastFocus] = useState(focus);
   if (focus !== lastFocus) {
     setLastFocus(focus);
-    setPage(Math.max(0, Math.min(lines - 2, focus)));
+    setPage(Math.max(0, Math.min(lines - size, focus)));
   }
-  const follow = beat >= 0 ? Math.max(0, Math.min(lines - 2, Math.floor(beat / perLine + 1e-6))) : null;
-  const from = follow ?? Math.max(0, Math.min(page, lines - 2));
+  const follow = beat >= 0 ? Math.max(0, Math.min(lines - size, Math.floor(beat / perLine + 1e-6))) : null;
+  const from = follow ?? Math.max(0, Math.min(page, lines - size));
   const pager =
-    lines > 2 && follow === null ? (
+    lines > size && follow === null ? (
       <div className="tab-pager" dir="ltr">
-        <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - 2))}>
+        <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - size))}>
           ‹
         </button>
         <small>
-          {from + 1}–{Math.min(lines, from + 2)} / {lines}
+          {size > 1 ? `${from + 1}–${Math.min(lines, from + size)}` : from + 1} / {lines}
         </small>
-        <button className="icon-btn" aria-label="Next lines" disabled={from + 2 >= lines} onClick={() => setPage(Math.min(lines - 2, from + 2))}>
+        <button className="icon-btn" aria-label="Next lines" disabled={from + size >= lines} onClick={() => setPage(Math.min(lines - size, from + size))}>
           ›
         </button>
       </div>
@@ -111,13 +130,14 @@ export function useLineWindow(lines: number, beat: number, perLine: number, focu
 }
 
 /** Guitar / bass drill as tab (spec AJ): string / fret, technique marks above, fingers or strokes below, result colours. */
-export function DrillTab({ drill, fingering = false, picking = false, result, beat = -1, upTo, live }: { /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null; /** Beat of the running take (−1 idle): the window follows it. */ beat?: number; /** Only the notes before this beat (the written bars of a free-choice drill). */ upTo?: number }) {
+export function DrillTab({ drill, fingering = false, picking = false, result, beat = -1, upTo, live, cue = false, prior }: { /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** The count-in is running: the first digit pulses. */ cue?: boolean; /** The last take of this item (its ticks, faded, under the review's). */ prior?: TakeMetrics | null; drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null; /** Beat of the running take (−1 idle): the window follows it. */ beat?: number; /** Only the notes before this beat (the written bars of a free-choice drill). */ upTo?: number }) {
   const ns = upTo === undefined ? drill.notes : drill.notes.filter((n) => n.beat < upTo - 1e-6);
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
   const timingMs = result ? thresholds(tempoBand(result.nps)).sd * 2 : 0;
   const lv = result ? null : liveIndex(live);
-  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; at: number; top?: string; bottom?: string; mark?: NoteMark; dev?: number | null; lmark?: NoteMark; ldev?: number | null }[] = [];
+  const pf = result ? priorFor(prior) : null;
+  const cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; at: number; top?: string; bottom?: string; mark?: NoteMark; dev?: number | null; lmark?: NoteMark; ldev?: number | null; pmark?: NoteMark; pdev?: number | null }[] = [];
   const seen = new Set<number>();
   const k = qOf(drill);
   for (const n of ns) {
@@ -138,8 +158,11 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
     const lms = lv ? group.map((x) => (lv.has(noteKey(x)) ? markOf(lv.get(noteKey(x)), live!.win) : null)) : [];
     const lmark = lv && lms.every((x) => x !== null) ? worstMark(lms as NoteMark[]) : undefined;
     const ldev = lmark === 'early' || lmark === 'late' ? (lv!.get(noteKey(group[lms.indexOf(lmark)]))?.dev ?? null) : null;
-    cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark, dev, lmark, ldev });
+    const pr = pf ? pf.at(group) : null;
+    cols.push({ pos, dur: Math.max(0.25, n.dur * k), at: n.beat, top: tech, bottom, mark, dev, lmark, ldev, pmark: pr?.mk, pdev: pr?.dev ?? null });
   }
+  // The count-in cue: the column of the first note.
+  const firstCol = cols.length ? cols.reduce((a, c) => (c.at < a.at ? c : a)) : null;
   const strings = drill.spec.tuning ? tuningById(drill.spec.tuning).open.length : isBassDrill(drill) ? 4 : 6;
   // Bass "lock with the kick": where the kick lands, marked under the tab column that falls on it.
   const kicks = new Set(isBassDrill(drill) && drill.drums ? drillDrumHits(drill).filter((h) => h.d === 'k').map((h) => Math.round(h.beat * 1e3)) : []);
@@ -163,8 +186,10 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
           <TabLine
             key={from + i}
             now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
-            cols={l.map(({ mark: _m, at: _a, lmark: _lm, ldev: _ld, ...c }) => ({ ...c, ...(kicks.has(Math.round(_a * 1e3)) ? { kick: true } : {}) }))}
+            cols={l.map(({ mark: _m, at: _a, lmark: _lm, ldev: _ld, pmark: _pm, pdev: _pd, ...c }) => ({ ...c, ...(kicks.has(Math.round(_a * 1e3)) ? { kick: true } : {}) }))}
             live={lv ? { marks: l.map((c) => c.lmark), devs: l.map((c) => c.ldev ?? null) } : undefined}
+            prior={pf ? { marks: l.map((c) => c.pmark), devs: l.map((c) => c.pdev ?? null) } : undefined}
+            cue={cue && !result && firstCol && l.includes(firstCol) ? l.indexOf(firstCol) : undefined}
             spacing={phone() ? 30 : 40}
             ahead={beat >= 0 && !result && lineOf(beat) !== from + i}
             marks={result ? l.map((c) => c.mark) : undefined}
@@ -185,16 +210,18 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
  * B3: a free-choice drill shows only its chord chart — bars with the chord and one slash a beat, the bar being played
  * marked. From `fromBeat` on (a written start comes before it in notation / tab).
  */
-export function ChartView({ drill, beat = -1, fromBeat = 0, result, loop, lang = 'en', compact = false }: { /** Under written bars (notation / tab above it): the compact chart, one screen. */ compact?: boolean; drill: Drill; beat?: number; fromBeat?: number; /** After the take: the bars' rule results (slice 8). */ result?: TakeMetrics | null; /** Bars picked on the error map for a loop (hatched). */ loop?: [number, number] | null; lang?: Lang }) {
+export function ChartView({ drill, beat = -1, fromBeat = 0, result, loop, lang = 'en', compact = false, roles }: { /** Note-role dots per bar while the take runs (§4.7). */ roles?: NoteRole[][] | null; /** Under written bars (notation / tab above it): the compact chart, one screen. */ compact?: boolean; drill: Drill; beat?: number; fromBeat?: number; /** After the take: the bars' rule results (slice 8). */ result?: TakeMetrics | null; /** Bars picked on the error map for a loop (hatched). */ loop?: [number, number] | null; lang?: Lang }) {
   const meter = drill.meter || 4;
   const first = Math.floor(fromBeat / meter + 1e-6);
   // Slice 8: the shared chord chart — four bars a row, the rows around the bar being played (one screen).
-  const cells = chartCells(drill, result).slice(first);
+  const cells = chartCells(drill, result)
+    .map((c, i) => (!result && roles?.[i]?.length ? { ...c, dots: roles[i] } : c))
+    .slice(first);
   return <ChordChart cells={cells} meter={meter} beat={beat >= 0 ? beat - first * meter : -1} first={first} lang={lang} size={compact ? 'compact' : 'full'} loop={loop ? [loop[0] - first, loop[1] - first] : null} attrs={{ 'data-chart-only': 1 }} />;
 }
 
 /** B11: an ear drill before its result — what to do, and which bars the band plays and which are yours. */
-export function EarCard({ drill, beat = -1, lang, bpm }: { drill: Drill; beat?: number; lang: Lang; bpm?: number }) {
+export function EarCard({ drill, beat = -1, lang, bpm, roles }: { drill: Drill; beat?: number; lang: Lang; bpm?: number; /** Note-role dots per bar while a rule-card take runs (§4.7). */ roles?: NoteRole[][] | null }) {
   const meter = drill.meter || 4;
   const bars = Math.ceil(drill.beats / meter - 1e-6);
   const band = (bar: number) => (drill.listen?.windows ?? []).some(([a, b]) => bar * meter >= a - 1e-6 && bar * meter < b - 1e-6);
@@ -242,7 +269,8 @@ export function EarCard({ drill, beat = -1, lang, bpm }: { drill: Drill; beat?: 
         cells={Array.from({ length: bars }, (_, i): ChartCell => {
           const c = drill.chart ? chartCells(drill)[i] : undefined;
           const role = band(i) ? 'band' : 'you';
-          return c ? { ...c, role, ...(role === 'band' ? { target: undefined } : {}) } : { role, ...(dense ? { chord: undefined } : {}) };
+          const dots = role === 'you' && roles?.[i]?.length ? { dots: roles[i] } : {};
+          return c ? { ...c, role, ...(role === 'band' ? { target: undefined } : {}), ...dots } : { role, ...(dense ? { chord: undefined } : {}), ...dots };
         })}
         meter={meter}
         beat={beat}
@@ -254,7 +282,7 @@ export function EarCard({ drill, beat = -1, lang, bpm }: { drill: Drill; beat?: 
   );
 }
 
-export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, live, lang = 'en' }: { lang?: Lang; drill: Drill; fingering?: boolean; result?: TakeMetrics | null; beat?: number; upTo?: number; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null }) {
+export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, live, lang = 'en', cue = false, prior, roles }: { lang?: Lang; drill: Drill; fingering?: boolean; result?: TakeMetrics | null; beat?: number; upTo?: number; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** The count-in is running: the first note head pulses. */ cue?: boolean; /** The last take of this item (its ticks, faded, under the review's). */ prior?: TakeMetrics | null; /** Note-role dots per bar of the chord chart over the staff (played notes, live). */ roles?: NoteRole[][] | null }) {
   // B1 (0.64): bass is written in the bass clef an octave above where it sounds (standard bass notation); the
   // upright's upper register in the tenor clef. B7: eighth-note meters are drawn in eighths with an x/8 signature.
   const bass = isBassDrill(drill);
@@ -284,8 +312,15 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     return { mk, dev: mk === 'early' || mk === 'late' ? (lv.get(noteKey(group[ms.indexOf(mk)]))?.dev ?? null) : null };
   };
   const lh = drill.notes.filter((n) => n.hand === 'L');
+  const pf = result ? priorFor(prior) : null;
+  // The count-in cue: the first note's beat (both staves pulse when both hands start together).
+  const firstBeat = cue && !result && drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : null;
   // A long item (a whole head, AUDIT-DEPTH-3): two lines at a time with a pager, like the bass (one phone screen).
-  const paged = bass || !!drill.paged;
+  // Hands together (one phone screen at 320×720): one system at a time — the RH line and the LH line of the same bars —
+  // paged like the bass, never four or more staff cards in a scrolling box.
+  const ht = !bass && rh.length > 0 && lh.length > 0;
+  const paged = bass || !!drill.paged || ht;
+  const winSize = ht ? 1 : 2;
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
   /** Under a marked note (0.52): what was really played — the note name for a wrong pitch, ms early / late off time. */
@@ -315,18 +350,19 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
-  const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0);
+  const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0, winSize);
   const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
     const all = shown(ns);
     const lines: (typeof all)[] = [];
     for (const n of all) (lines[lineOf(n)] ??= []).push(n);
     return lines.map((xs, li) => {
-      if (!xs || (windowed && (li < win.from || li >= win.from + 2))) return null;
+      if (!xs || (windowed && (li < win.from || li >= win.from + winSize))) return null;
       const fing = fingering && xs.some((n) => n.finger);
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
       const devs = result ? xs.map((n) => byKey.get(noteKey(n))?.dev ?? null) : undefined;
       const lives = lv ? xs.map((n) => liveFor(n, ns)) : null;
+      const priors = pf ? xs.map((n) => pf.at(n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId))) : null;
       const ghosts = result ? xs.map((n) => { const p = byKey.get(noteKey(n))?.played; return p && p.pitch !== n.pitch ? p.pitch + shift : null; }) : undefined;
       // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
       // `at`: where the item really starts (quarter notes). The written value is rounded to a standard one (a triplet is
@@ -378,6 +414,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           ghosts={ghosts ? items.map((x) => (x.n ? ghosts[idx(x.n)] : null)) : undefined}
           win={result ? timingMs : (live?.win ?? timingMs)}
           live={lives ? { marks: items.map((x) => (x.n ? lives[idx(x.n)].mk : undefined)), devs: items.map((x) => (x.n ? lives[idx(x.n)].dev : null)) } : undefined}
+          prior={priors ? { marks: items.map((x) => (x.n ? priors[idx(x.n)].mk : undefined)), devs: items.map((x) => (x.n ? priors[idx(x.n)].dev : null)) } : undefined}
+          cue={firstBeat !== null ? (() => { const c = items.findIndex((x) => x.n && Math.abs(x.n.beat - firstBeat) < 1e-6); return c >= 0 ? c : undefined; })() : undefined}
           meter={meter}
           timeSig={li === 0 || (windowed && li === win.from) || !!sl?.[li].bars[0].sig}
           sig={sl ? sl[li].bars[0].cur : sig}
@@ -387,15 +425,15 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     });
   };
   return (
-    <div className="drill-staff" data-clef={rhClef}>
+    <div className={`drill-staff ${ht ? 'ht' : ''}`} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
       {/* Slice 8: the chords over the staff in the shared chart (compact: four bars a row, the bar being played lit). */}
-      {drill.chart && !paged && <ChordChart cells={drill.chart.map((c) => ({ chord: c }))} meter={drill.meter || 4} beat={result ? -1 : beat} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />}
+      {drill.chart && !paged && <ChordChart cells={drill.chart.map((c, i) => ({ chord: c, ...(!result && roles?.[i]?.length ? { dots: roles[i] } : {}) }))} meter={drill.meter || 4} beat={result ? -1 : beat} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />}
       {drill.chart &&
         paged &&
         (() => {
           const a = sl ? sl.slice(0, win.from).reduce((x, l) => x + l.bars.length, 0) : (win.from * per) / meter;
-          const z = sl ? sl.slice(0, win.from + 2).reduce((x, l) => x + l.bars.length, 0) : ((win.from + 2) * per) / meter;
-          return <ChordChart cells={drill.chart.slice(a, z).map((c) => ({ chord: c }))} first={a} meter={drill.meter || 4} beat={result || beat < 0 ? -1 : beat - a * (drill.meter || 4)} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />;
+          const z = sl ? sl.slice(0, win.from + winSize).reduce((x, l) => x + l.bars.length, 0) : ((win.from + winSize) * per) / meter;
+          return <ChordChart cells={drill.chart.slice(a, z).map((c, i) => ({ chord: c, ...(!result && roles?.[a + i]?.length ? { dots: roles[a + i] } : {}) }))} first={a} meter={drill.meter || 4} beat={result || beat < 0 ? -1 : beat - a * (drill.meter || 4)} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />;
         })()}
       {draw(rh, rhClef, paged)}
       {draw(lh, 'bass', paged)}
@@ -513,7 +551,7 @@ function usePrep(drill: Drill): { left: number; skip: () => void } {
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false, liveMarks = false, onLive }: { /** Slice 5: grade each note as it is played and hand the marks to the score (practice); off = calm (the meter only). */ liveMarks?: boolean; /** The running take's settled notes (null when it ends). */ onLive?: (l: LiveTake | null) => void; /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false, liveMarks = false, onLive, onCount, onHeard }: { /** The count-in is running (true) or not: the score's first head pulses. */ onCount?: (on: boolean) => void; /** Rule-card items (§4.7 note roles): the improvised notes heard so far, in beats (null when the take ends). */ onHeard?: (notes: { beat: number; midi: number }[] | null) => void; /** Slice 5: grade each note as it is played and hand the marks to the score (practice); off = calm (the meter only). */ liveMarks?: boolean; /** The running take's settled notes (null when it ends). */ onLive?: (l: LiveTake | null) => void; /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);
@@ -522,6 +560,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const [pocket, setPocket] = useState<LiveTake | null>(null);
   const markable = liveMarkable(drill);
   const rowKeys = useMemo(() => pocketRowKeys(drill), [drill]);
+  // Velocity bars (§4.1): only for an item with a loudness, accent or velocity-evenness goal.
+  const velOn = useMemo(() => velBarsShown(drill), [drill]);
+  // Note roles (§4.7): rule-card items report the improvised notes heard so far.
+  const hearRoles = !!onHeard && !!drill.goal.improv?.spans.length && !!drill.chart?.length;
+  useEffect(() => {
+    onCount?.(phase === 'count');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
   // Drums (0.65): an e-kit by MIDI, or a practice pad by microphone (single-surface items only — never self-report).
   const drum = isDrumDrill(drill);
   const drumMidi = drum && midi.devices.length > 0 && !kit?.mic;
@@ -594,11 +640,13 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             setPocket(l);
             if (liveMarks) onLive?.(l);
           }
+          if (now >= 0 && hearRoles) onHeard!(improvNotes(drill, bpm, f.played.filter((p) => p.on <= now)));
           if (i >= lastBeat) (window.clearInterval(id), res());
         }, 50);
       });
       setPocket(null);
       onLive?.(null);
+      if (hearRoles) onHeard!(null);
       setPhase('ready');
       if (abort.signal.aborted) return;
       return onDone(f.m, f.played);
@@ -757,6 +805,18 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           guitar ? 220 : 120,
         )
       : 0;
+    // Note roles (§4.7): the improvised notes heard so far (MIDI / piano microphone notes; guitar and bass by onsets).
+    const heardTimer = hearRoles
+      ? window.setInterval(() => {
+          if (!zero) return;
+          try {
+            const ps = guitar ? (frames.length ? detectOnsets(frames.slice(), onsetOptsFor(drill)) : notes.slice()) : notes.slice();
+            onHeard!(improvNotes(drill, bpm, ps));
+          } catch {
+            /* a frame mid-write: next tick */
+          }
+        }, 250)
+      : 0;
     setPhase('count');
     const armStart = performance.now();
     const firstBeat = drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : 0;
@@ -797,6 +857,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       setArm(null);
       window.clearInterval(smooth);
       window.clearInterval(liveTimer);
+      window.clearInterval(heardTimer);
+      if (hearRoles) onHeard!(null);
       setPocket(null);
       onLive?.(null);
       offMidi();
@@ -879,6 +941,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           {drill.goal.vl ? (lang === 'he' ? <>התרגיל הזה צריך מקלדת <bdi>MIDI</bdi>: המיקרופון לא שומע איזה קול בחרתם.</> : 'This one needs a MIDI keyboard: the microphone can’t hear which voicing you chose.') : lang === 'he' ? <>התרגיל הזה צריך מקלדת <bdi>MIDI</bdi>: המיקרופון לא מודד עוצמה, שחרור קלידים או פדל.</> : 'This one needs a MIDI keyboard: the microphone can’t measure loudness, key release or the pedal.'}
         </p>
       )}
+      {/* Slice 5: velocity bars under the score (loudness / accent / velocity-evenness goals only). */}
+      {velOn && <VelocityBars bars={velBars(drill, pocket?.perNote, cal)} />}
       {/* Slice 5: the pocket meter replaces "Go!" and the beat dot (count-in cells, the needle, the streak). */}
       <PocketMeter
         live={pocket}

@@ -86,8 +86,15 @@ test.describe('heads', () => {
       const comp = page.locator('[data-rh-play="comp"]');
       await expect(comp).toBeDisabled();
       // Find a page with a device to pick.
-      for (let i = 0; i < 8 && (await page.locator('[data-rh-device]').count()) === 0; i++) await page.locator('[aria-label="Next bars"]').click();
+      // (COURSE-FEEDBACK-UI §4.7: the bars are on the shared chord chart; a tapped bar opens its devices in a sheet.)
+      const chart = page.locator('[data-rh-chart]');
+      const counts = async () => ((await chart.getAttribute('data-rh-devices')) ?? '').split(',').map(Number);
+      for (let i = 0; i < 8 && !(await counts()).some((n) => n > 0); i++) await page.locator('[aria-label="Next bars"]').click();
+      await chart.locator('.cc-bar').nth((await counts()).findIndex((n) => n > 0)).click();
+      await expect(page.locator('[data-rh-sheet]')).toBeVisible();
       await page.locator('[data-rh-device]').first().click();
+      await expect(page.locator('[data-rh-sheet]')).toHaveCount(0);
+      await expect(chart.locator('.cc-tab.changed').first()).toBeVisible();
       await expect(comp).toBeEnabled();
       await comp.click();
       await expect(page.locator('[data-drills="run"]')).toBeVisible();

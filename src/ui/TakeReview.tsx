@@ -67,8 +67,11 @@ export function TakeReview({
   free = false,
   next,
   nextLabel,
+  lastTake,
   children,
 }: {
+  /** A previous take of the same item exists: the "Last take" toggle (its ticks faded under this take's). */
+  lastTake?: { on: boolean; onToggle: () => void };
   /** The Next button's word ("Whole item" after a loop). */
   nextLabel?: string;
   m: TakeMetrics;
@@ -187,9 +190,21 @@ export function TakeReview({
           </button>
         )}
       </div>
-      <button className="link tr-why" onClick={() => setWhy(true)} aria-haspopup="dialog" data-why="1">
-        {tx.why}
-      </button>
+      {lastTake ? (
+        // The take overlay (§4.1): the previous take's ticks, faded, under this one's — on the same notes.
+        <div className="tr-why-row">
+          <button className="link tr-why" onClick={() => setWhy(true)} aria-haspopup="dialog" data-why="1">
+            {tx.why}
+          </button>
+          <button className={`chip tr-last ${lastTake.on ? 'on' : ''}`} aria-pressed={lastTake.on} onClick={lastTake.onToggle} data-last-take={lastTake.on ? 'on' : 'off'}>
+            {lang === 'he' ? 'הנגינה הקודמת' : 'Last take'}
+          </button>
+        </div>
+      ) : (
+        <button className="link tr-why" onClick={() => setWhy(true)} aria-haspopup="dialog" data-why="1">
+          {tx.why}
+        </button>
+      )}
       {why && (
         <div className="sheet-backdrop" onClick={() => setWhy(false)}>
           <div className="sheet tr-sheet" role="dialog" aria-modal="true" aria-label={tx.why} onClick={(e) => e.stopPropagation()} data-why-sheet="1">

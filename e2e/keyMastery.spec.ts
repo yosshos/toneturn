@@ -63,7 +63,26 @@ for (const lang of ['en', 'he'] as const)
     expect(order[0][1]).toBeLessThan(order[11][1]);
     await expect(map).toContainText('D♭');
     await noSideScroll(page, 'family');
+    // COURSE-FEEDBACK-UI §4.2: 22 × 32 cells; weak = paper with a pink ✕ corner tab; strong = purple with paper text.
+    const geo = await map.evaluate((el) => {
+      const cells = [...el.querySelectorAll('button[data-key]')] as HTMLElement[];
+      const weak = cells.find((c) => c.dataset.keyStatus === 'weak')!;
+      const strong = cells.find((c) => c.dataset.keyStatus === 'strong');
+      return {
+        w: Math.min(...cells.map((c) => c.getBoundingClientRect().width)),
+        h: Math.min(...cells.map((c) => c.getBoundingClientRect().height)),
+        right: Math.max(...cells.map((c) => c.getBoundingClientRect().right)),
+        tab: getComputedStyle(weak, '::after').content,
+        strong: strong ? getComputedStyle(strong).backgroundColor : null,
+      };
+    });
+    expect(geo.w).toBeGreaterThanOrEqual(18);
+    expect(geo.h).toBeGreaterThanOrEqual(30);
+    expect(geo.right).toBeLessThanOrEqual(320);
+    expect(geo.tab).toContain('✕');
+    if (geo.strong) expect(geo.strong).toBe('rgb(109, 40, 217)');
     await map.screenshot({ path: `test-results/keymap-family-${lang}.png` });
+    if (process.env.SHOTS) await page.screenshot({ path: `docs/ui-shots-v3/s8-keymap-${lang}.png` });
     // A tap starts the skill in that key.
     await map.locator('button[data-key="6"]').click();
     await expect(page.locator('[data-drills="run"]')).toBeVisible();

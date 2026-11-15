@@ -2,7 +2,8 @@
 // key, then a device per bar from the ones that fit there (tritone sub, extra ii–V, backdoor, passing dim, line cliché,
 // Coltrane). Each change is checked against the melody at once (one short line per clash). Then play it: comp it
 // (piano / guitar), walk it (bass), or the melody over the new chords — an ordinary drill (kind tn-own~<plan>), so it
-// is measured and counts like any other take. Four bars a page: one phone screen.
+// is measured and counts like any other take. Eight bars a page on the shared chord chart (COURSE-FEEDBACK-UI §4.7):
+// tap a bar for its devices in a sheet. One phone screen.
 
 import { useMemo, useState } from 'react';
 import type { Drill, FamilyId } from '../engine/drills/types';
@@ -12,11 +13,12 @@ import { headIn } from '../engine/heads';
 import { applicable, applyPlan, DEVICE_NAME, planCode, type Device, type Plan } from '../engine/reharm';
 import { SERVED } from '../engine/drills/headDrills';
 import { keyLabel } from '../engine/stdKey';
+import { ChordChart } from './ChordChart';
 import '../reharm.css';
 
 type Lang = 'en' | 'he';
 const FAMS: FamilyId[] = ['k-tune', 'g-tune', 'b-tune'];
-const PER = 4;
+const PER = 8;
 const pretty = (s: string): string => s.replace(/([A-G])b/g, '$1♭').replace(/7b5/g, '7♭5').replace(/#/g, '♯');
 const store = (k: string, v?: string): string | null => {
   try {
@@ -36,6 +38,8 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
   const [key, setKey] = useState<number>(() => HEADS[idx]?.home.key ?? 0);
   const [plan, setPlan] = useState<Plan>({});
   const [page, setPage] = useState(0);
+  // The bar whose devices are open in the sheet.
+  const [bar, setBar] = useState<number | null>(null);
   const hi = useMemo(() => headIn(HEADS[idx], key), [idx, key]);
   const r = useMemo(() => applyPlan(hi.text, plan, hi.tonic, hi.notes), [hi, plan]);
   if (!FAMS.includes(family)) return null;
@@ -106,37 +110,55 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
           </button>
         </div>
       </div>
-      <ol className="rh-list" dir="ltr">
-        {hi.bars.slice(first, first + PER).map((_, j) => {
+      {/* COURSE-FEEDBACK-UI §4.7: the bars on the shared chord chart (four a row); a changed bar has a purple corner tab.
+          Tap a bar: its devices open in a sheet (one screen, no chip rows under every bar). */}
+      <ChordChart
+        cells={hi.bars.slice(first, first + PER).map((_, j) => {
           const b = first + j;
-          const opts = applicable(hi.text, b, hi.tonic);
-          const changed = r.changed.includes(b);
-          const covered = changed && plan[b] === undefined;
-          return (
-            <li key={b} className={changed ? 'changed' : ''} data-rh-bar={b}>
-              <span className="rh-n">{b + 1}</span>
-              <b className="rh-chords">
-                {/* One chord never breaks inside its symbol; a bar of two chords may wrap between them. */}
-                {pretty(r.bars[b])
-                  .split(/\s+/)
-                  .filter(Boolean)
-                  .map((c, k) => (
-                    <bdi key={k}>{c}</bdi>
-                  ))}
-              </b>
-              {!covered && (
-                <span className="rh-devs" dir={lang === 'he' ? 'rtl' : 'ltr'}>
+          return { chord: r.bars[b], ...(r.changed.includes(b) ? { tab: { kind: 'changed' as const, rules: [] } } : {}) };
+        })}
+        first={first}
+        meter={4}
+        maxRows={2}
+        lang={lang}
+        onBar={(j) => setBar(first + j)}
+        sel={bar !== null && bar >= first && bar < first + PER ? bar - first : null}
+        attrs={{ 'data-rh-chart': hi.bars.length, 'data-rh-devices': hi.bars.slice(first, first + PER).map((_, j) => applicable(hi.text, first + j, hi.tonic).length).join(',') }}
+      />
+      {bar !== null && (
+        <div className="sheet-backdrop" onClick={() => setBar(null)}>
+          <div className="sheet rh-sheet" role="dialog" aria-modal="true" aria-label={`${L('Bar', 'תיבה')} ${bar + 1}`} onClick={(e) => e.stopPropagation()} data-rh-sheet={bar}>
+            <div className="rh-sheet-head">
+              <h2>
+                <span>
+                  {L('Bar', 'תיבה')} {bar + 1}
+                </span>
+                <bdi dir="ltr" className="rh-chords">
+                  {pretty(r.bars[bar])}
+                </bdi>
+              </h2>
+              <button className="icon-btn" aria-label={L('Close', 'סגירה')} onClick={() => setBar(null)} data-rh-sheet-close="1">
+                ×
+              </button>
+            </div>
+            {(() => {
+              const opts = applicable(hi.text, bar, hi.tonic);
+              const covered = r.changed.includes(bar) && plan[bar] === undefined;
+              if (covered) return <p className="field-hint">{L('Changed by the device on the bar before.', 'שונתה בתחבולה של התיבה הקודמת.')}</p>;
+              if (!opts.length) return <p className="field-hint">{L('No device fits this bar.', 'אין תחבולה שמתאימה לתיבה הזאת.')}</p>;
+              return (
+                <span className="rh-devs">
                   {opts.map((d) => (
-                    <button key={d} className={`chip ${plan[b] === d ? 'on' : ''}`} aria-pressed={plan[b] === d} onClick={() => choose(b, plan[b] === d ? null : d)} data-rh-device={d}>
+                    <button key={d} className={`chip ${plan[bar] === d ? 'on' : ''}`} aria-pressed={plan[bar] === d} onClick={() => (choose(bar, plan[bar] === d ? null : d), setBar(null))} data-rh-device={d}>
                       {DEVICE_NAME[d][lang]}
                     </button>
                   ))}
                 </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+              );
+            })()}
+          </div>
+        </div>
+      )}
       <p className="rh-check" data-rh-conflicts={r.conflicts.length}>
         {r.conflicts.length ? r.conflicts[0].line[lang] + (r.conflicts.length > 1 ? L(` (+${r.conflicts.length - 1} more)`, ` (ועוד ${r.conflicts.length - 1})`) : '') : r.changed.length ? L('The melody fits every new chord.', 'המנגינה מתאימה לכל אקורד חדש.') : L('Pick a device on a bar.', 'בחרו תחבולה בתיבה.')}
       </p>

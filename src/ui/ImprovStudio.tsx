@@ -21,6 +21,11 @@ import type { RatingEvent } from '../engine/rating';
 
 type Lang = 'en' | 'he';
 type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
+/** The segmented control's short labels (COURSE-FEEDBACK-UI §4.7: Rules / Phrase / Vary / Trade). */
+const SEG: Record<'en' | 'he', Record<Mode, string>> = {
+  en: { rules: 'Rules', phrasing: 'Phrase', vary: 'Vary', trade: 'Trade', useit: 'Lick' },
+  he: { rules: 'כללים', phrasing: 'משפט', vary: 'וריאציה', trade: 'חילופים', useit: 'ליק' },
+};
 const TX = {
   en: {
     title: 'Improvisation studio', useit: 'Use a lick', useitHow: 'Pick one of your licks; the band plays its changes through four keys and the app listens for it in your solo.', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
@@ -233,10 +238,12 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
         </button>
         <h1>{tx.title}</h1>
       </header>
-      <div className="chips" role="tablist">
+      {/* COURSE-FEEDBACK-UI §4.7: the modes as one segmented control with short labels (fits 288 px); the full name is
+          the button's accessible name. */}
+      <div className="seg is-seg" role="tablist" aria-label={tx.title}>
         {([...(onOpenChart ? ['rules', 'phrasing', 'vary', 'trade'] : ['phrasing', 'vary', 'trade']), ...(myLicks.length ? ['useit'] : [])] as Mode[]).map((m) => (
-          <button key={m} role="tab" aria-selected={mode === m} className={`chip ${mode === m ? 'on' : ''}`} onClick={() => (stop(), setMode(m), setResult(null))} data-is-mode={m}>
-            {tx[m]}
+          <button key={m} role="tab" aria-selected={mode === m} aria-label={tx[m]} title={tx[m]} className={mode === m ? 'on' : ''} onClick={() => (stop(), setMode(m), setResult(null))} data-is-mode={m}>
+            {SEG[lang][m]}
           </button>
         ))}
       </div>
