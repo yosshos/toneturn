@@ -110,6 +110,8 @@ export function levelKeys(level: LevelDef, order: DrillSettings['keyOrder']): nu
 
 const genCache = new Map<string, Drill>();
 const gen = (spec: Parameters<typeof generate>[0]): Drill => {
+  // AUDIT-DEPTH-3 C6: the written solo chorus follows the player's saved plan, so it is never cached.
+  if (spec.kind === 'sl-chorus') return generate(spec);
   const k = JSON.stringify(spec);
   let d = genCache.get(k);
   if (!d) {

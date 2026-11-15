@@ -207,6 +207,8 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'bh-convert': { en: 'Lowered note = dominant (restless); raised note = minor 6 (dark, at rest).', he: 'צליל שירד = דומיננט (חסר מנוחה); צליל שעלה = מינור 6 (כהה ונח).' },
   'bh-convert-2': { en: 'Still restless? A dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
   'bh-keys': { en: 'Hum the first home note, then compare the new home with it.', he: 'זמזמו את צליל הבית הראשון, ואז השוו אליו את הבית החדש.' },
+  // AUDIT-DEPTH-3 #5: which brother replaced the V (BARRY-HARRIS-THEORY §2).
+  'bh-brothers:4': { en: 'Follow the bass from ii: up a 4th is V, a whole step below I is the backdoor ♭VII, a half step above I is ♭II, a major 3rd above I is III.', he: 'עקבו אחרי הבס מה־ii: קוורטה למעלה זה V, טון מתחת ל־I זה הדלת האחורית ♭VII, חצי טון מעל I זה ♭II, טרצה גדולה מעל I זה III.' },
   'bh-brothers': { en: 'Brothers have roots three or six semitones apart.', he: 'לאחים יש שורשים במרחק שלושה או שישה חצאי טונים.' },
   'bh-family': { en: 'A 6 chord is the minor 7 a minor third below it; listen to the bass to name it.', he: 'אקורד 6 הוא המינור 7 שטרצה קטנה מתחתיו; הקשיבו לבס כדי לתת שם.' },
   'bh-block': { en: 'Hum the top note: if it is 1, 3, 5 or 6 of the scale the chord is the 6 chord.', he: 'זמזמו את הצליל העליון: אם הוא 1, 3, 5 או 6 בסולם — זה אקורד ה־6.' },

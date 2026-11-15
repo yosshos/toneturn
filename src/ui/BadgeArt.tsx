@@ -668,8 +668,44 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(21, 5, 1.9)}
     </>
   ),
+  // AUDIT-DEPTH-3: improvising under rule cards — a free line rising out of a rule card; jazz in context — four
+  // brothers around one tonic (guitar: over a string).
+  'family:k-solo': () => (
+    <>
+      {p('M2 9h7v11H2z M3.6 13h3.8 M3.6 16h3.8', false)}
+      {p('M11 18c2-6 4-1 6-7 1-3 2.5-4 4-6', false)}
+      {head(20, 5, 2.2)}
+    </>
+  ),
+  'family:g-solo': () => (
+    <>
+      <path d="M2 22h20" strokeWidth={0.8} />
+      {p('M2 8h7v11H2z M3.6 12h3.8 M3.6 15h3.8', false)}
+      {p('M11 17c2-6 4-1 6-7 1-3 2.5-4 4-6', false)}
+      {head(20, 4, 2.2)}
+    </>
+  ),
+  'family:k-ctx': () => (
+    <>
+      {head(12, 4, 2)}
+      {head(20, 12, 2)}
+      {head(12, 20, 2)}
+      {head(4, 12, 2)}
+      {dot(12, 12, 2.4)}
+    </>
+  ),
+  'family:g-ctx': () => (
+    <>
+      <path d="M2 22.5h20" strokeWidth={0.8} />
+      {head(12, 3.5, 2)}
+      {head(20, 11, 2)}
+      {head(12, 18.5, 2)}
+      {head(4, 11, 2)}
+      {dot(12, 11, 2.4)}
+    </>
+  ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
-  'family:k-theory': () => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
+  'family:k-theory':() => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
   'family:k-reharm': () => (
     <>
       {head(5, 18, 2.2)}

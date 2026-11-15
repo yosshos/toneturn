@@ -28,6 +28,8 @@ import { genGuitarVocab, guitarVocabFamily } from './vocabDrills'; // AUDIT-GAPS
 import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases by ear
 // AUDIT-DEPTH-3 #4, C3/C4: chord-melody and a head comped on the neck (headDrills.ts).
 import { generateGuitarHead, guitarChordMelodyFamily, guitarTuneFamily } from './headDrills';
+import { genGuitarSolo, guitarSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
+import { genGuitarCtx, guitarCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2375,6 +2377,10 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return genGuitarVocab(s, tu);
     case 'g-phrase':
       return genGuitarPhrase(s, tu);
+    case 'g-solo':
+      return genGuitarSolo(s, tu);
+    case 'g-ctx':
+      return genGuitarCtx(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
     case 'g-meter':
@@ -2658,6 +2664,9 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // AUDIT-DEPTH-3 #4: chord-melody on the heads; C4/C3: a head comped on the neck, then reharmonised (jazz add-on).
     guitarChordMelodyFamily(),
     guitarTuneFamily(),
+    // AUDIT-DEPTH-3: jazz in context and improvising under rule cards on the neck (the jazz add-on).
+    guitarCtxFamily(LT, fam),
+    guitarSoloFamily(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
     // so old item ids, badges and frozen path units (tech:g-bass-*) stay valid.
     {

@@ -125,7 +125,7 @@ const ALL = (): { lv: LevelDef; d: Drill }[] => CAT.flatMap((f) => f.levels.flat
 describe('A3 piano analysis with human takes', () => {
   it('a steady human take is clean at every level target tempo (MIDI)', () => {
     const bad: string[] = [];
-    for (const { lv, d } of ALL()) {
+    for (const { lv, d } of ALL().filter((x) => !x.d.goal.improv)) { // rule-card improv (AUDIT-DEPTH-3 C5) is graded by its cards, not by written notes
       const bpm = targetBpmOf(lv, d);
       for (const seed of [1, 2]) {
         const m = analyzeTake(d, bpm, humanTake(d, bpm, steadySd(d, bpm), seed));
@@ -138,7 +138,7 @@ describe('A3 piano analysis with human takes', () => {
     const bad: string[] = [];
     // Phrases by ear (k-phrase) are graded by the transcription comparer — the right notes, in time on the player's own
     // pulse within a quarter of a beat — not by evenness: the jitter here is in time for them.
-    for (const { lv, d } of ALL().filter((x) => !x.d.phrase)) {
+    for (const { lv, d } of ALL().filter((x) => !x.d.phrase && !x.d.goal.improv)) {
       const bpm = targetBpmOf(lv, d);
       const sd = 2 * thresholds(tempoBand(npsOf(d, bpm))).sd;
       const onsets = new Set(d.notes.map((n) => n.beat)).size;

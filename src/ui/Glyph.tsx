@@ -1222,6 +1222,54 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-DEPTH-3: improvising under rule cards — a free line rising out of a rule card (piano); over strings (guitar),
+// over the bass's thick strings (bass). Jazz in context — the four brothers a minor 3rd apart around the one tonic.
+const soloArt = (
+  <>
+    <rect x={-25} y={-4} width={16} height={22} rx={2.5} {...sw} strokeWidth={2.4} />
+    <path d="M-21 3 H-13 M-21 9 H-13" {...sw} strokeWidth={2} />
+    <path d="M-6 12 C0 -2 4 10 10 -4 C13 -11 17 -9 20 -16" {...sw} strokeWidth={2.6} />
+    {head(19, -16, 5, 3.6)}
+  </>
+);
+const brothersArt = (
+  <>
+    {head(0, -17, 4.6, 3.3)}
+    {head(19, 0, 4.6, 3.3)}
+    {head(0, 17, 4.6, 3.3)}
+    {head(-19, 0, 4.6, 3.3)}
+    <circle cx={0} cy={0} r={5.5} fill={I} />
+    <path d="M0 -11 V-6 M13 0 H6 M0 11 V6 M-13 0 H-6" {...sw} strokeWidth={2.2} />
+  </>
+);
+Object.assign(GLYPHS, {
+  solo: soloArt,
+  gsolo: (
+    <>
+      {soloArt}
+      <path d="M-26 22 H26 M-26 26 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  bsolo: (
+    <>
+      {soloArt}
+      <path d="M-26 24 H26" stroke={I} strokeWidth={3.2} />
+    </>
+  ),
+  brothers: brothersArt,
+  gbrothers: (
+    <>
+      {brothersArt}
+      <path d="M-26 24 H26 M-26 28 H26" stroke={I} strokeWidth={1.4} />
+    </>
+  ),
+  bbrothers: (
+    <>
+      {brothersArt}
+      <path d="M-26 26 H26" stroke={I} strokeWidth={3.2} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

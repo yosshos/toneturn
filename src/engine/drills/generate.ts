@@ -21,6 +21,9 @@ import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, pr
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
 import { genHeadPiano, pianoHarmFamily, pianoTuneFamily } from './headDrills';
+import { genKeysSolo, keysSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
+import { spansOfChart } from '../ruleCards';
+import { genKeysCtx, keysCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
@@ -853,7 +856,21 @@ function genChart(s: DrillSpec): Drill {
   if (!d) throw new Error(`Unknown chart drill: ${s.kind}`);
   const evs: ChordEv[] = d.evs.map((e) => ({ beat: e.beat, dur: e.dur, notes: e.notes, required: e.required, allowed: e.allowed }));
   const sp: DrillSpec = { ...s, hands: evs.some((e) => e.notes.some((n) => n.hand === 'R')) ? 'RL' : 'L', swing: s.swing ?? true };
-  const drill = chordDrill(sp, evs, d.title, d.startBpm, {}, 'C', d.meter);
+  // AUDIT-DEPTH-3 C5: the improvising right hand (voicings 17, accomp 16) is graded by rule cards — inside the changes,
+  // a chord tone on every change, something played in most bars — not only shown against the chord-scales.
+  const improv = d.freeAbove !== undefined ? (() => {
+    const parsed = parseChart(d.text, d.meter);
+    const spans = spansOfChart(parsed, d.meter, parsed.bars);
+    // The model right hand: the chord's 3rd then its 5th above the split, on each chord.
+    const model = spans.flatMap((sp) => {
+      const third = d.freeAbove! + ((sp.root + (sp.iv.includes(3) && !sp.iv.includes(4) ? 3 : 4) - d.freeAbove! + 120) % 12);
+      const fifth = third + (sp.iv.includes(6) && !sp.iv.includes(7) ? 3 : sp.iv.includes(3) && !sp.iv.includes(4) ? 4 : 3);
+      const half = Math.min(2, sp.beats / 2);
+      return [{ beat: sp.at, dur: half, pitch: third }, { beat: sp.at + half, dur: half, pitch: fifth }];
+    });
+    return { cards: ['inside', 'target-ct', 'active'], spans, model };
+  })() : undefined;
+  const drill = chordDrill(sp, evs, d.title, d.startBpm, improv ? { improv } : {}, 'C', d.meter);
   return { ...drill, tonic: d.tonic, chart: d.text.split(' | '), ...(d.freeAbove !== undefined ? { freeAbove: d.freeAbove } : {}) };
 }
 
@@ -5056,6 +5073,8 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-indep') return genIndep(s);
   if (s.family === 'k-phrase') return genKeysPhrase(s);
   if (s.family === 'k-harm' || s.family === 'k-tune') return genHeadPiano(s);
+  if (s.family === 'k-solo') return genKeysSolo(s);
+  if (s.family === 'k-ctx') return genKeysCtx(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -6121,5 +6140,9 @@ export function catalog(): FamilyDef[] {
     pianoHarmFamily(),
     // AUDIT-DEPTH-3 C4 + C3/#2: a head comped step by step, then reharmonised and comped (headDrills.ts).
     pianoTuneFamily(),
+    // AUDIT-DEPTH-3 C5–C7: improvising under rule cards, the comp-and-solo duo, the written chorus (soloDrills.ts).
+    keysSoloFamily(),
+    // AUDIT-DEPTH-3 #5, #6: the brothers in context, backdoor, superimposition, the Coltrane sub, intros / endings, ballads.
+    keysCtxFamily(),
   ]);
 }

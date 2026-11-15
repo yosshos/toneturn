@@ -344,11 +344,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // The pianist's ear (k-ear) gets milestones by items played back clean (keysEarBadges), not tempo-band titles.
 // The first steps at the piano (k-first) are three short beginner levels: no family badges.
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'k-first' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune', 'k-indep', 'k-sharm'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-harm'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-harm', 'g-lead'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -369,6 +369,8 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-sharm': { en: 'Scale harmonization', he: 'הרמוניזציה של סולמות' },
   'g-harm': { en: 'Scale harmonization on the neck', he: 'הרמוניזציה של סולמות על הצוואר' },
   'k-phrase': { en: 'Phrases by ear', he: 'משפטים בשמיעה' },
+  'k-solo': { en: 'Improvise with your vocabulary', he: 'לאלתר עם אוצר המילים' },
+  'k-ctx': { en: 'Jazz in context', he: 'ג׳אז בהקשר' },
   'g-fretting': { en: 'Fretting hand', he: 'היד הלוחצת' },
   'g-picking': { en: 'Picking', he: 'פריטה' },
   'g-legato': { en: 'Legato', he: 'לגאטו' },
@@ -388,6 +390,8 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-theory': { en: 'Theory you play on guitar', he: 'תאוריה בביצוע בגיטרה' },
   'g-bebop': { en: 'Bebop on guitar', he: 'ביבופ בגיטרה' },
   'g-phrase': { en: 'Phrases by ear on guitar', he: 'משפטים בשמיעה בגיטרה' },
+  'g-solo': { en: 'Improvising on the neck', he: 'אלתור על הצוואר' },
+  'g-ctx': { en: 'Jazz in context on guitar', he: 'ג׳אז בהקשר בגיטרה' },
   'g-prog': { en: 'Prog and fusion', he: 'פרוג ופיוז׳ן' },
   // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter families.
   'k-rhythm': { en: 'Rhythm & meter', he: 'קצב ומשקל' },
@@ -425,6 +429,8 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-sharm': 'harmlad',
   'g-harm': 'gharmlad',
   'k-phrase': 'phrase',
+  'k-solo': 'solo',
+  'k-ctx': 'brothers',
   'g-fretting': 'fingers1234',
   'g-picking': 'pick',
   'g-legato': 'slur',
@@ -445,6 +451,8 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'g-theory': 'gtpair',
   'g-bebop': 'genclose',
   'g-phrase': 'gphrase',
+  'g-solo': 'gsolo',
+  'g-ctx': 'gbrothers',
   'g-prog': 'oddmeter',
   'k-rhythm': 'polylock',
   'g-meter': 'polymeter',
@@ -512,6 +520,11 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'g-bebop': [['Swing Guitarist', 'גיטריסט הסווינג'], ['Approach-Note Guitarist', 'גיטריסט צלילי הגישה'], ['Guitar Encloser', 'הכיתור בגיטרה'], ['Bebop Enclosure on the Neck', 'כיתור ביבופ על הצוואר'], ['Every Chord Tone on the Neck', 'כל צליל אקורד על הצוואר'], ['Digital-Pattern Guitarist', 'גיטריסט התבניות הדיגיטליות'], ['Minor and Altered Liner', 'קווי מינור ואלטרד'], ['Blues and Turnaround Liner', 'קווי בלוז וטרנאראונד'], ['Rhythm-Changes Guitarist', 'גיטריסט ריתם צ׳יינג׳ס'], ['Triplet-Rule Guitarist', 'גיטריסט חוקי הטריולה'], ['Make-It-Minor Guitarist', 'גיטריסט ההמרה למינור'], ['Guitarist on 2 and 4', 'גיטריסט על 2 ו-4']],
   'g-vl': [['String-Set Triads', 'משולשים על סטי מיתרים'], ['Drop 2 by Step', 'דרופ 2 בצעדים'], ['Drop 3 by Step', 'דרופ 3 בצעדים']],
   // AUDIT-GAPS-2: key changes and turnarounds — piano 7 titles, guitar one per level.
+  // AUDIT-DEPTH-3: improvising under rule cards and jazz in context — keys 7 titles, guitar one per level.
+  'k-solo': [['Guide-Tone Soloist', 'סולן הצלילים המנחים'], ['Approach Soloist', 'סולן צלילי הגישה'], ['By the Rules', 'לפי החוקים'], ['Enclosing Soloist', 'סולן הכיתורים'], ['Pivot Soloist', 'סולן הפיבוטים'], ['Comp and Solo', 'מלווה וסולן'], ['Your Own Chorus', 'הכורוס שלכם']],
+  'k-ctx': [['Four Brothers', 'ארבעת האחים'], ['Brother for the V', 'אח במקום ה־V'], ['Through the Backdoor', 'דרך הדלת האחורית'], ['Pairs and Pentatonics', 'זוגות ופנטטוניות'], ['Coltrane Sub', 'תחליף קולטריין'], ['In and Out', 'פתיחות וסיומים'], ['Ballad Player', 'נגן הבלדות']],
+  'g-solo': [['Guide-Tone Guitarist', 'גיטריסט הצלילים המנחים'], ['Approach Guitarist', 'גיטריסט הגישה'], ['Rules on the Neck', 'חוקים על הצוואר'], ['Enclosing Guitarist', 'גיטריסט הכיתורים'], ['Pivot Guitarist', 'גיטריסט הפיבוטים'], ['Pairs on the Neck', 'זוגות על הצוואר'], ['Lick User', 'משתמש הליקים'], ['Rule Mixer', 'משלב הכללים'], ['Chord and Line', 'אקורד וקו'], ['Chorus Writer', 'כותב הכורוס']],
+  'g-ctx': [['Brother Lines', 'קווי האחים'], ['Brother Comping', 'ליווי האחים'], ['All Four Brothers', 'כל ארבעת האחים'], ['Brothers in Forms', 'אחים בצורות'], ['Backdoor Guitarist', 'גיטריסט הדלת האחורית'], ['Triad Pairs in Context', 'זוגות משולשים בהקשר'], ['Pentatonic Superimposer', 'מניח הפנטטוניות'], ['Coltrane Changes, Guitar', 'שינויי קולטריין בגיטרה'], ['Intro Player', 'נגן הפתיחות'], ['Ending Player', 'נגן הסיומים'], ['Ballad Guitarist', 'גיטריסט הבלדות']],
   'k-keys': [['Turnaround Player', 'מנגן הטרנאראונדים'], ['Bridge Crosser', 'חוצה הגשר'], ['Key Jumper', 'קופץ הסולמות'], ['Pivot Finder', 'מוצא הציר'], ['Through the Diminished', 'דרך הדימיניש'], ['Four Doors', 'ארבע דלתות'], ['Master of Keys', 'אמן הסולמות']],
   'g-keys': [['Turnaround Comper', 'מלווה הטרנאראונדים'], ['Ladybird Player', 'נגן הלידיבירד'], ['Bridge on the Neck', 'הגשר על הצוואר'], ['Lift Up a Step', 'הרמה בצעד'], ['Two-Five Mover', 'מעביר ה־ii–V'], ['Pivot on the Strings', 'ציר על המיתרים'], ['One Diminished, Four Keys', 'דימיניש אחד, ארבעה סולמות'], ['Diminished Door', 'דלת הדימיניש'], ['Every Key by Diminished', 'כל סולם דרך דימיניש'], ['Seven-Flat-Nine', 'שבע במול תשע'], ['Tritone Mover', 'מעביר הטריטון'], ['Key-to-Key Liner', 'קווים מסולם לסולם']],
   // AUDIT-DEPTH-3: heads — piano 7 titles, guitar one per level.

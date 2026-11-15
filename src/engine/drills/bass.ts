@@ -26,6 +26,8 @@ import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_E
 import { extFamily, fusionLevels, generateBassNiche2, IMPRO_FUSION, NICHE2_EXAM, PICK_NICHE, pickTopLevels, standardsFamily, uprightTopLevels, WALK_NICHE, waltzLevels } from './bassNiche2';
 import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by ear
+import { bassSoloFamily, genBassSolo } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
+import { bassCtxFamily, genBassCtx } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
@@ -2486,6 +2488,11 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
       return genBassPhrase(s, tu);
     case 'b-tune':
       return generateBassHead(s, tu);
+    // AUDIT-DEPTH-3: improvising under rule cards, jazz in context.
+    case 'b-solo':
+      return genBassSolo(s, tu);
+    case 'b-ctx':
+      return genBassCtx(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2759,6 +2766,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassPhraseFamily(L, fam),
     // AUDIT-DEPTH-3 C3/C4: a head walked step by step, then its reharms (jazz track).
     bassTuneFamily(),
+    // AUDIT-DEPTH-3: jazz in context (brothers, backdoor, superimposition, the Coltrane sub) and improvising under rule cards.
+    bassCtxFamily(L, fam),
+    bassSoloFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

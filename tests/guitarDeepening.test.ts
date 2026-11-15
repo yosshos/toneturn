@@ -36,9 +36,8 @@ function take(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
 }
 
 describe('guitar deepening: catalogue', () => {
-  // + meter 6 (R-4) + voice leading 3 (g-vl) + theory you play 7 (g-theory) + Barry Harris 10 (HARRIS_2, BH-G) + key changes 12 (g-keys) + bebop 12 (g-bebop, AUDIT-GAPS-2).
-  it('221 guitar levels: 79 + ear 13 + jazz 6 + Barry Harris 10 + prog 8 + core 21 + meter 6 + voice leading 3 + theory you play 7 + key changes 12 + bebop 12 + phrases by ear 8 + chord-melody 6 + tunes 9 + AUDIT-SCALES technique 5 + harmonization 13 + Harris 3', () => {
-    expect(LEVELS.length).toBe(221);
+  it('242 guitar levels: 79 + ear 13 + jazz 6 + Barry Harris 10 + prog 8 + core 21 + meter 6 + voice leading 3 + theory you play 7 + key changes 12 + bebop 12 + phrases by ear 8 + chord-melody 6 + tunes 9 + in context 11 + solo 10 + AUDIT-SCALES technique 5 + harmonization 13 + Harris 3', () => {
+    expect(LEVELS.length).toBe(242);
     const n = (id: string) => GUITAR.find((f) => f.id === id)!.levels.length;
     expect([n('g-ear'), n('g-jazz'), n('g-harris'), n('g-prog')]).toEqual([13, 13, 13, 8]);
     for (const { lv } of LEVELS) expect(lv.title.en.length > 0 && /[֐-׿]/.test(lv.title.he), lv.id).toBe(true);
@@ -228,14 +227,14 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     expect(refs.length).toBe(pathOf(ds({ guitarAddOns: ['jazz'] })).length);
   });
 
-  it('each add-on adds its families and levels; all four give the full 221 minus country', () => {
+  it('each add-on adds its families and levels; all four give the full 242 minus country', () => {
     const jazz = pathOf(ds({ guitarAddOns: ['jazz'] })).map((s) => s.ladder!.ref);
     expect(jazz).toEqual(expect.arrayContaining(['g-jazz-12', 'g-harris-6', 'g-impro-6', 'g-rhythm-6']));
     expect(jazz.some((r) => r.startsWith('g-prog'))).toBe(false);
     const prog = pathOf(ds({ guitarAddOns: ['prog'] })).map((s) => s.ladder!.ref);
     expect(prog).toEqual(expect.arrayContaining(['g-prog-1', 'g-prog-8', 'g-picking-9', 'g-legato-8']));
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(220); // + AUDIT-SCALES 21 + g-meter 6 + g-vl 3 + g-theory 7 + g-harris 10 + g-keys 12 + g-bebop 12 + g-phrase 8 + g-ear 11–13 + g-cmel 6 + g-tune 9
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(221);
+    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(241); // + AUDIT-SCALES 21 + g-meter 6 + g-vl 3 + g-theory 7 + g-harris 10 + g-keys 12 + g-bebop 12 + g-phrase 8 + g-ear 11–13 + g-cmel 6 + g-tune 9 + g-ctx 11 + g-solo 10
+    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(242);
     // The Technique hub shows the same.
     expect(shownFamilies(ds({ guitarAddOns: [] })).map((f) => f.id)).not.toContain('g-jazz');
     expect(shownFamilies(ds({ guitarAddOns: ['fingerstyle'] })).map((f) => f.id)).toContain('g-fingerstyle');
