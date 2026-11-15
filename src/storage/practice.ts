@@ -223,7 +223,7 @@ export function bookDrillTake(state: ItemState, prev: ItemState | undefined, ver
   const clean = verdict === 'clean';
   const d = today();
   const last = state.history[state.history.length - 1];
-  const bpm = clean && last && last.at.slice(0, 10) === d ? last.bpm : undefined;
+  const bpm = clean && last && localDay(new Date(last.at)) === d ? last.bpm : undefined;
   const q: Quality = drillTakeQuality(state, clean, prev?.goalBpm ?? state.goalBpm);
   book({ kind: 'technique', skill: state.family, key: state.key, q }, { id: `d:${state.itemId}`, c: clean ? 1 : 0, bpm });
 }

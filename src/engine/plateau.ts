@@ -9,6 +9,7 @@
 
 import type { ItemState } from './drills/types';
 import { addDay, type ItemDay, type PlateauTry } from './practiceTime';
+import { localDay } from './stats';
 
 export const PLATEAU_WINDOW_DAYS = 21;
 /** Flat = the window's best is within this share of the best before it. */
@@ -34,7 +35,8 @@ export interface PlateauFinding {
   tried?: PlateauTry;
 }
 
-const dayOf = (iso: string) => iso.slice(0, 10);
+/** The local day of an ISO time (history times are UTC; the ledger's days are local). */
+const dayOf = (iso: string) => localDay(new Date(iso));
 const maxOf = (xs: number[]) => xs.reduce((a, x) => Math.max(a, x), 0);
 
 /** Passed at the level tempo (3 clean at ≥ 95 % of the target on 2 days): a passed item is not on a plateau. */
