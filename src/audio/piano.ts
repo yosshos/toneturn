@@ -2167,6 +2167,55 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const list = [...this.active.keys()];
     this.listeners.forEach((l) => l(list));
   }
+
+  /**
+   * My recordings v2 (SPEC-PHRASE-STUDIO §6.5): render note events offline with the instruments as they are set now
+   * (the sound, the loaded sample layers, the band's bass and kit, the mixer), for background / lock-screen playback.
+   * A clone of this engine on an OfflineAudioContext shares the decoded buffers (nothing is loaded twice) and builds
+   * its own graph; the live engine is not touched. Null when the browser has no OfflineAudioContext or it fails.
+   */
+  async renderOffline(events: NoteEvent[], seconds: number, o: { rate?: number; channels?: 1 | 2 } = {}): Promise<AudioBuffer | null> {
+    const G = globalThis as unknown as { OfflineAudioContext?: typeof OfflineAudioContext; webkitOfflineAudioContext?: typeof OfflineAudioContext };
+    const Ctx = G.OfflineAudioContext ?? G.webkitOfflineAudioContext;
+    if (!Ctx) return null;
+    const rate = o.rate ?? 22050;
+    const len = Math.max(1, Math.ceil((Math.min(900, seconds) + 0.6) * rate));
+    try {
+      const off = new Ctx(o.channels ?? 2, len, rate);
+      const r = Object.create(PianoEngine.prototype) as PianoEngine;
+      Object.assign(r, this);
+      // per-graph state of the clone: its own voices, timers, live and effect nodes (rebuilt lazily on `off`)
+      Object.assign(r, {
+        ctx: off as unknown as AudioContext,
+        voices: new Set(), timers: new Set(), active: new Map(), listeners: new Set(), fxPlaying: new Set(), live: new Map(), liveHeld: new Set(), liveSostenuto: new Set(),
+        liveSampleBus: null, liveSynthBus: null, pedalSend: null, leslie: null, tineTrem: null, drone: null, roomWet: null, delayNode: null, delayFb: null, strips: {}, sweepTimer: null, emitQueued: true, liveRoute: false,
+      });
+      r.build(r.ctx!);
+      const fx = events.filter((e) => e.fx);
+      const fxBufs = fx.length ? await Promise.all(fx.map((e) => renderFx(e.fx!))) : [];
+      let fi = 0;
+      const t0 = 0.05;
+      for (const e of events) {
+        if (e.start + t0 >= len / rate) continue;
+        if (e.fx) {
+          r.playFx(fxBufs[fi++], t0 + e.start);
+          continue;
+        }
+        if (e.perc) {
+          r.perc(e.perc, t0 + e.start, e.velocity);
+          continue;
+        }
+        if (e.inst === 'hum') {
+          r.hum(e.midi, e.velocity, t0 + e.start, e.duration);
+          continue;
+        }
+        if (!r.sample(e.midi, e.velocity, t0 + e.start, e.duration, voiceOf(e, r.courseVoice))) r.voice(e.midi, e.velocity, t0 + e.start, e.duration);
+      }
+      return await off.startRendering();
+    } catch {
+      return null;
+    }
+  }
 }
 
 /** Metronome hit → the kit sample piece. */

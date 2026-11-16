@@ -45,6 +45,8 @@ const NOT_PRACTICE = new Set([
   'intake', 'studio', 'home', 'path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'achievements', 'learned',
   'repertoire', 'workout', 'workoutrun', 'insights', 'welcome', 'coursestart', 'plans', 'admin', 'land', 'tuner', 'mixer', 'classes', 'exams',
   'depth', 'chordfinder', 'duel', 'diary', 'recordings',
+  // Encore v2: the teacher's phrase sheet and the student's assignment page (the practice itself runs in Encore)
+  'teach',
 ]);
 const ROUTE_KIND: Record<string, PracticeKind> = {
   lesson: 'lesson', daily: 'lesson', puzzle: 'lesson',

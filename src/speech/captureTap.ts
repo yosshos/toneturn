@@ -18,6 +18,8 @@ export interface CaptureSegment {
   audio(): Promise<Blob | null>;
   /** Resolves when the capture has ended (and its recorder flushed). */
   done: Promise<void>;
+  /** v2: the capture's own microphone stream (the whole-session recording mixes it in — no second getUserMedia). */
+  stream?: MediaStream;
 }
 
 export interface CaptureTap {

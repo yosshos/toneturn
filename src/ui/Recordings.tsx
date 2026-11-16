@@ -52,8 +52,15 @@ import { eventOfByte } from './recKeep';
 import { openEncoreFromTake } from './encoreBridge';
 import { piano } from './services';
 import { fmtDuration } from './Stats';
+// v2 (SPEC-PHRASE-STUDIO §6.5–6.6): playlists, background playback, export, A/B compare, whole-session recording
+import { AddToPlaylistSheet, ExportSheet, NowPlaying, PlaylistsScreen, playTakeInBackground, RX2, SessionRecToggle, XIcon } from './RecPlaylists';
+import { CompareScreen, ProgressChart } from './RecCompare';
+import { progressPoints } from '../engine/recCompare';
+import { refreshReserve, sessionAudioOf } from '../storage/recExtras';
+import { bgPlayer } from '../audio/bgPlayer';
 
 type Lang = 'en' | 'he';
+const RX2Compare = { en: 'Compare', he: 'להשוות' };
 
 // ───────────────────────────── small pieces ─────────────────────────────
 
@@ -171,12 +178,18 @@ export function RecordingsScreen({ lang, onBack }: { lang: Lang; onBack: () => v
     return () => removeEventListener('hashchange', on);
   }, []);
   // The retention policy runs when the library opens (and at app start).
-  useEffect(() => void runCleanup(), []);
+  useEffect(() => void runCleanup().then(() => refreshReserve()), []);
   const open = (id: string) => (location.hash = `/recordings/${encodeURIComponent(id)}`);
   const close = () => {
     if (history.length > 1 && takeIdFromHash()) history.back();
     else location.hash = '/recordings';
   };
+  // v2 routes: /recordings/compare/<a>[~<b>], /recordings/playlists, /recordings/playlist/<id>
+  const cmp = takeId ? /^compare\/([^~]+)(?:~(.+))?$/.exec(takeId) : null;
+  if (cmp) return <CompareScreen key={takeId!} lang={lang} a={cmp[1]} b={cmp[2] ?? null} onBack={close} onOpen={open} />;
+  if (takeId === 'playlists') return <PlaylistsScreen lang={lang} id={null} onBack={close} onOpenTake={open} />;
+  const pl = takeId ? /^playlist\/(.+)$/.exec(takeId) : null;
+  if (pl) return <PlaylistsScreen key={takeId!} lang={lang} id={pl[1]} onBack={close} onOpenTake={open} />;
   if (takeId) return <TakePlayer key={takeId} id={takeId} lang={lang} onBack={close} onOpen={open} />;
   return <Library lang={lang} onBack={onBack} onOpen={open} />;
 }
@@ -354,6 +367,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
     endSelect();
   };
   const [bulkFolder, setBulkFolder] = useState(false);
+  const [bulkList, setBulkList] = useState(false);
 
   return (
     <main className="panel-screen recordings" data-recordings="library" data-rec-bin={bin ? '1' : '0'}>
@@ -369,6 +383,9 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
             </button>
             <button className="icon-btn small" onClick={() => setFoldersOpen(true)} aria-label={RX.folders[lang]} data-rec-folders="1">
               <RIcon k="folder" />
+            </button>
+            <button className="icon-btn small" onClick={() => (location.hash = '/recordings/playlists')} aria-label={RX2.playlists[lang]} data-rec-playlists="1">
+              <XIcon k="list" />
             </button>
             <button className="icon-btn small rec-bin-btn" onClick={() => setBin(true)} aria-label={`${RX.bin[lang]} (${binCount})`} data-rec-binbtn={binCount}>
               <RIcon k="trash" />
@@ -406,6 +423,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
 
       {!bin && usage?.autoPrune && Date.now() - Date.parse(usage.autoPrune.at) < 7 * 86_400_000 && <p className="rec-note">{fillRx(RX.autoPruned[lang], { n: usage.autoPrune.n, b: mb(usage.budget) })}</p>}
       {!bin && usage && <StorageNotice lang={lang} u={usage} />}
+      {!bin && !selecting && <SessionRecToggle lang={lang} />}
 
       <div className="rec-timeline" data-rec-count={data.takes.length} data-rec-more={data.next ? '1' : '0'}>
         {data.ready && !data.takes.length && <p className="rec-empty">{facets.total || bin ? RX.emptyFilter[lang] : RX.empty[lang]}</p>}
@@ -435,6 +453,9 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
           <button className="icon-btn small" disabled={!sel.size} onClick={() => setBulkFolder(true)} aria-label={RX.folder[lang]} data-rec-bulk-folder="1">
             <RIcon k="folder" />
           </button>
+          <button className="icon-btn small" disabled={!sel.size} onClick={() => setBulkList(true)} aria-label={RX2.addTo[lang]} data-rec-bulk-playlist="1">
+            <XIcon k="list" />
+          </button>
           <button className="icon-btn small" disabled={!sel.size} onClick={() => void bulk({ deleted: true })} aria-label={RX.del[lang]} data-rec-bulk-delete="1">
             <RIcon k="trash" />
           </button>
@@ -445,6 +466,8 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       )}
 
       {menu && <TakeMenu lang={lang} take={menu} folders={folders} onClose={() => setMenu(null)} />}
+      {bulkList && <AddToPlaylistSheet lang={lang} takeIds={[...sel]} onClose={() => (setBulkList(false), endSelect())} />}
+      {!selecting && <NowPlaying lang={lang} />}
       {bulkFolder && (
         <FolderPicker
           lang={lang}
@@ -531,6 +554,11 @@ function SessionCard({ lang, session, takes, bin, selecting, sel, onSel, onOpen,
               )}
             </small>
           </div>
+          {session.audioId && (
+            <button className="icon-btn small rec-session-play" onClick={() => void playSessionAudio(session, lang)} aria-label={RX2.wholeSession[lang]} title={RX2.wholeSession[lang]} data-rec-session-audio={session.id}>
+              <RIcon k="play" size={14} fill />
+            </button>
+          )}
           {course && <span className="rec-pill">{RX.courses[course]?.[lang] ?? course}</span>}
         </header>
       )}
@@ -546,6 +574,12 @@ function SessionCard({ lang, session, takes, bin, selecting, sel, onSel, onOpen,
       )}
     </article>
   );
+}
+
+/** Play a whole-session recording in the background player. */
+async function playSessionAudio(session: RecSession, lang: Lang) {
+  bgPlayer.lang = lang;
+  await bgPlayer.playQueue([{ takeId: session.id, title: `${RX2.wholeSession[lang]} · ${clock(session.startedAt)}`, album: dayLabel(session.startedAt, lang), source: async () => (await sessionAudioOf(session.id))?.blob ?? null }], 0, { loop: 'off' });
 }
 
 function TakeRow({ lang, t, bin, selecting, checked, onSel, onOpen, onMenu }: { lang: Lang; t: RecTake; bin: boolean; selecting: boolean; checked: boolean; onSel: () => void; onOpen: () => void; onMenu: () => void }) {
@@ -881,6 +915,7 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
   const [mix, setMix] = useState<Mix>(band ? 'band' : 'me');
   const [menu, setMenu] = useState(false);
   const [history, setHistory] = useState<RecTake[] | null>(null);
+  const [sheet2, setSheet2] = useState<'list' | 'export' | null>(null);
   const [folders] = useRecordings(listFolders, [], [] as { name: string; count: number }[]);
   const lo = ab ? ab[0] : start;
   const hi = ab ? ab[1] : end;
@@ -1124,11 +1159,40 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
           </button>
         )}
       </div>
+      <div className="rec-actions2" data-rec-actions2="1">
+        <button className="icon-btn small" onClick={() => (stopAll(), (location.hash = `/recordings/compare/${encodeURIComponent(take.id)}`))} aria-label={RX2Compare[lang]} title={RX2Compare[lang]} data-rec-compare="1">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M7 4v16M17 4v16M3 8l4-4 4 4M13 16l4 4 4-4" />
+          </svg>
+        </button>
+        <button className="icon-btn small" onClick={() => setSheet2('list')} aria-label={RX2.addTo[lang]} title={RX2.addTo[lang]} data-rec-addlist="1">
+          <XIcon k="list" />
+        </button>
+        <button className="icon-btn small" disabled={!canPlay} onClick={() => (stopAll(), void playTakeInBackground(take, lang, ab, loopOn ? 'one' : 'off'))} aria-label={RX2.playBg[lang]} title={RX2.playBg[lang]} data-rec-bg="1">
+          <XIcon k="bg" />
+        </button>
+        <button className="icon-btn small" onClick={() => setSheet2('export')} aria-label={RX2.export[lang]} title={RX2.export[lang]} data-rec-export="1">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
+          </svg>
+        </button>
+      </div>
+      {sheet2 === 'list' && <AddToPlaylistSheet lang={lang} takeIds={[take.id]} onClose={() => setSheet2(null)} />}
+      {sheet2 === 'export' && <ExportSheet lang={lang} take={take} onClose={() => setSheet2(null)} />}
 
       {audioUrl && <audio ref={audioEl} src={audioUrl} preload="auto" onLoadedMetadata={(e) => Number.isFinite(e.currentTarget.duration) && setAudioDur(e.currentTarget.duration)} />}
       {menu && <TakeMenu lang={lang} take={take} folders={folders} onClose={() => setMenu(false)} onDeleted={() => (stopAll(), onBack())} />}
       {history && (
         <Sheet lang={lang} title={RX.allOfItem[lang]} onClose={() => setHistory(null)}>
+          <ProgressChart
+            lang={lang}
+            pts={progressPoints(history.map((h) => ({ id: h.id, at: h.at, notes: unpackNotes(h.notes).map((n) => ({ pitch: n.pitch, on: n.on })), bpm: h.bpm, result: h.result ?? null })))}
+            current={[take.id]}
+            onOpen={(id) => {
+              setHistory(null);
+              if (id !== take.id) (stopAll(), onOpen(id));
+            }}
+          />
           <ul className="rec-history">
             {history.map((h) => (
               <li key={h.id}>

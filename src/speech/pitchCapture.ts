@@ -66,6 +66,7 @@ export class BrowserPitchCapture implements PitchCapture {
     }
     const t0 = performance.now();
     const seg = tapped ? makeSegment(t0, rec, chunks) : null;
+    if (seg) seg.stream = r.stream;
     if (seg) announceSegment(seg);
     onCapturing?.();
 

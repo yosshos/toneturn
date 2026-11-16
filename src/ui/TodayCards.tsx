@@ -1,6 +1,7 @@
 // Today, under the workout (0.63, the design's Main board): the daily goal and the league side by side, then today's
 // two quests. Everything is read from what the player did today; the league card needs an account (else it invites).
 
+import { TeacherPhraseTodayCard } from './TeachPhrase';
 import { useEffect, useState } from 'react';
 import { myLeague, type League } from '../cloud/compete';
 import type { CourseId } from '../engine/courses';
@@ -170,6 +171,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
       {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
+      {onEncore && !examPrep && <TeacherPhraseTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
       {onEncore && !examPrep && <EncoreTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">

@@ -77,6 +77,9 @@ export interface RecPlaylist {
   takeIds: string[];
   loop: 'one' | 'all' | 'ab';
   ab?: [number, number];
+  /** v2: the take the A–B span belongs to (loop 'ab'); the playlist's order is takeIds. */
+  abTake?: string;
+  createdAt?: string;
 }
 
 export type RecKind = RecTake['kind'];
@@ -707,7 +710,8 @@ export async function saveTake(input: NewTake, audio?: Blob | null, opts: { now?
     let kept: AudioKept = hasAudio ? (prefs.keepAudio ? 'kept' : 'off') : 'none';
     if (kept === 'kept') {
       const takes = await allHeads();
-      const plan = budgetPlan(takes, audio!.size, prefs.budget);
+      // v2: rendered MIDI audio, bounced A–B clips and session recordings hold part of the budget (recExtras.ts)
+      const plan = budgetPlan(takes, audio!.size, prefs.budget - reservedBytes);
       if (!plan) kept = 'budget';
       else {
         if (plan.length) {
@@ -1007,6 +1011,8 @@ export interface StorageUsage {
   quotaAt?: string;
   /** No IndexedDB (private browsing): takes are kept only until the tab closes. */
   volatile?: boolean;
+  /** v2: bytes of rendered MIDI audio, bounced clips and session recordings (inside the budget). */
+  extraBytes?: number;
   /** navigator.storage.persisted() (null when the browser cannot tell). */
   persisted?: boolean | null;
   /** iPhone / iPad Safari, not installed to the Home Screen: storage may be cleared after 7 days unused. */
@@ -1035,6 +1041,7 @@ export async function storageUsage(): Promise<StorageUsage> {
     ...(ap ? { autoPrune: ap } : {}),
     ...(q ? { quotaAt: q.at } : {}),
     volatile: recordingsVolatile(),
+    extraBytes: reservedBytes,
     persisted: await persistedNow(),
     iosBrowser: isIOS() && !standalone(),
   };
@@ -1174,3 +1181,18 @@ export function _resetRecordings() {
   contextOf = () => ({ route: '', course: null });
   listeners.clear();
 }
+
+// ───────────────────────────── v2 extensions (recExtras.ts) ─────────────────────────────
+
+/** Bytes of the budget held by v2 extras (rendered MIDI audio, bounced clips, session recordings). */
+let reservedBytes = 0;
+export function setAudioReserve(bytes: number) {
+  reservedBytes = Math.max(0, bytes);
+}
+export const audioReserve = () => reservedBytes;
+/** The current store (recExtras.ts keeps playlists, renders and session audio in it). */
+export const recStore = (): RecordingStore => st();
+/** Tell the library something changed (recExtras.ts). */
+export const notifyRecordings = () => changed();
+/** Every take head (recExtras.ts: the starred playlist, budget checks). */
+export const allTakeHeads = (): Promise<TakeHead[]> => allHeads();
