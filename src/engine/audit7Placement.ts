@@ -26,8 +26,13 @@ export const AUDIT7_PLACEMENT: Record<string, number> = {
   // #11 the public-domain classical tier, one level a piece by its ABRSM grade.
   'k-classic-1': G(1) - 20, // 770: Ode to Joy, the theme (Initial–G1)
   'k-classic-2': G(1) + 40, // 830: Petzold, Minuet in G (G1)
-  'k-classic-3': G(3) + 20, // 990: Beethoven, Für Elise, the opening (G3)
-  'k-classic-4': G(5) + 40, // 1190: Bach, Prelude in C, bars 1–19 (G5)
+  'k-classic-3': G(2) + 30, // 910: Burgmüller, La Candeur, bars 1–8 (G2)
+  'k-classic-4': G(3) + 20, // 990: Beethoven, Für Elise, the opening (G3)
+  'k-classic-5': G(4) + 30, // 1090: Clementi, Sonatina Op. 36 No. 1, bars 1–15 (G4)
+  'k-classic-6': G(5) + 40, // 1190: Bach, Prelude in C, bars 1–19 (G5)
+  'k-classic-7': G(6) + 30, // 1270: Bach, Invention No. 8 in F, bars 1–12 (G6)
+  'k-classic-8': G(7) + 30, // 1360: Bach, Invention No. 13 in A minor, bars 1–6 (G7)
+  'k-classic-9': G(8) + 30, // 1450: Bach, Prelude in C minor BWV 847, bars 1–8 (G8)
   // #12 drums: the RSL I&I task (develop a groove, a solo break, back) at G4–G5; the triple-stroke roll and the triple
   // paradiddle at G4–G5 (they sat at 1450–1470), the 10- and 11-stroke rolls at G6, a grade after the 5/7/9 (d-rolls 6).
   'd-fills-9': G(4) + 60, // 1120

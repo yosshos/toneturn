@@ -411,6 +411,15 @@ export interface Drill {
   recognize?: { candidates: { root: number; quality: import('../chordRecognize').ChordQuality; bass?: number }[]; answer: number }[];
   /** Progressions by ear (harmonyGrade.ts): the answer's chords, graded per chord for root, colour and bass (partial credit). */
   harmony?: import('./harmonyGrade').HarmonyPlan;
+  /**
+   * Ornament signs (ornaments.ts): the staff draws one head with the sign over [beat, beat + dur) of that hand, and a
+   * legend says how it is played; the notes inside stay the written-out realisation the take is graded on.
+   */
+  ornaments?: import('../ornaments').Ornament[];
+  /** The time signature as printed when it is not meter/4 (a piece in alla breve: '2/2'); the bars stay `meter` beats. */
+  sigText?: string;
+  /** Pitch classes the score writes as sharps (a piece in A minor: G♯, not A♭); the staff spells them so. */
+  sharps?: number[];
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */

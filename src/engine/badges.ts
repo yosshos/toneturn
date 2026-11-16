@@ -615,7 +615,7 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // AUDIT-7 #10, #11: one title per level — k-pop (6), k-pedal (3), k-classic (one per piece).
   'k-pop': [['Pop Rhythm Chords', 'אקורדים בקצב פופ'], ['Broken-Pattern Player', 'נגן תבניות שבורות'], ['Ballad Pusher', 'דוחף הבלדה'], ['Rock Keys', 'קלידי רוק'], ['Skank Keys', 'קלידי סקאנק'], ['Lead-Sheet Player', 'נגן דפי אקורדים']],
   'k-pedal': [['Legato Pedal', 'פדל לגאטו'], ['Pedal on the Harmony', 'פדל על ההרמוניה'], ['Half-Pedal Touch', 'מגע של חצי פדל']],
-  'k-classic': [['Ode to Joy at the Keys', 'אודה לשמחה בקלידים'], ['Minuet in G', 'מינואט בסול'], ['Für Elise Opening', 'הפתיחה של לאליזה'], ['Prelude in C', 'פרלוד בדו']],
+  'k-classic': [['Ode to Joy at the Keys', 'אודה לשמחה בקלידים'], ['Minuet in G', 'מינואט בסול'], ['Burgmüller Candour', 'הכנות של בורגמילר'], ['Für Elise Opening', 'הפתיחה של לאליזה'], ['Clementi Sonatina', 'הסונטינה של קלמנטי'], ['Prelude in C', 'פרלוד בדו'], ['Invention in F', 'אינוונציה בפה'], ['Invention in A Minor', 'אינוונציה בלה מינור'], ['Prelude in C Minor', 'פרלוד בדו מינור']],
   // AUDIT-7 #2: one title per level of the jazz entry over the blues.
   'g-jblues': [['Blues Head', 'נושא בלוז'], ['Four to the Bar', 'ארבע לתיבה'], ['Blues Guide Tones', 'צלילים מנחים בבלוז'], ['Blues Charleston', 'צ׳רלסטון בבלוז']],
 };

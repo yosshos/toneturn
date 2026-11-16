@@ -2,7 +2,8 @@
 // note values (whole … sixteenth, dotted), long notes split with ties, gaps filled with rests. Pure; the ScoreView
 // draws it with VexFlow. Onsets are quantised to a 16th (triplets are rounded — later).
 
-import type { Piece, PieceHand } from './score';
+import type { Piece, PieceHand, PieceNote } from './score';
+import type { OrnKind } from '../ornaments';
 
 export interface LayoutEv {
   /** Onset inside the bar (quarter beats). */
@@ -17,6 +18,8 @@ export interface LayoutEv {
   tie: boolean;
   /** This event continues a tie (no new attack). */
   cont?: boolean;
+  /** An ornament sign over the head (Piece.ornaments): `refs` are its written-out notes. */
+  orn?: OrnKind;
 }
 export interface LayoutBar {
   index: number;
@@ -61,20 +64,33 @@ export function splitDur(at: number, len: number): number[] {
 }
 
 export function layoutPiece(p: Piece): LayoutBar[] {
+  // Ornament signs: the notes inside a sign (same hand) are drawn as ONE head, the written note, with the sign; marks
+  // and following still use every realisation note (refs).
+  type VN = { n: PieceNote; i: number; refs: number[]; orn?: OrnKind };
+  const hidden = new Set<number>();
+  const extra: VN[] = [];
+  for (const o of p.ornaments ?? []) {
+    const refs = p.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === o.hand && n.start >= o.beat - 1e-6 && n.start < o.beat + o.dur - 1e-6).map(({ i }) => i);
+    if (!refs.length) continue;
+    for (const i of refs) hidden.add(i);
+    extra.push({ n: { midi: o.pitch, start: o.beat, dur: o.dur, bar: p.notes[refs[0]].bar, hand: o.hand }, i: refs[0], refs, orn: o.kind });
+  }
+  const vnotes: VN[] = [...p.notes.map((n, i) => ({ n, i, refs: [i] })).filter(({ i }) => !hidden.has(i)), ...extra];
   return p.bars.map((b, bi) => {
     const hands = { R: [] as LayoutEv[], L: [] as LayoutEv[] };
     for (const h of ['R', 'L'] as PieceHand[]) {
       // notes sounding in this bar for this hand: starting here, or held over from earlier bars
-      const idx = p.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === h && n.start < b.start + b.beats - 1e-6 && n.start + n.dur > b.start + 1e-6);
+      const idx = vnotes.filter(({ n }) => n.hand === h && n.start < b.start + b.beats - 1e-6 && n.start + n.dur > b.start + 1e-6);
       // onset groups (chords) by quantised start inside the bar; held-over notes start at 0 as a continuation
-      const groups = new Map<number, { midis: number[]; refs: number[]; end: number; cont: boolean }>();
-      for (const { n, i } of idx) {
+      const groups = new Map<number, { midis: number[]; refs: number[]; end: number; cont: boolean; orn?: OrnKind }>();
+      for (const { n, refs, orn } of idx) {
         const held = n.start < b.start - 1e-6;
         const at = held ? 0 : Math.max(0, Math.min(b.beats - Q, q(n.start - b.start)));
         const end = Math.min(b.beats, q(n.start + n.dur - b.start));
         const g = groups.get(at) ?? { midis: [], refs: [], end: 0, cont: held };
         if (!g.midis.includes(n.midi)) g.midis.push(n.midi);
-        if (!held) g.refs.push(i);
+        if (!held) g.refs.push(...refs);
+        if (orn && !held) g.orn = orn;
         g.end = Math.max(g.end, end);
         g.cont = g.cont && held;
         groups.set(at, g);
@@ -98,7 +114,7 @@ export function layoutPiece(p: Piece): LayoutBar[] {
         const parts = splitDur(at, end - at);
         let p0 = at;
         parts.forEach((v, j) => {
-          evs.push({ at: p0, dur: v, midis: g.midis.slice().sort((x, y) => x - y), refs: j === 0 ? g.refs : [], tie: j < parts.length - 1 || crossesBar, ...(j > 0 || g.cont ? { cont: true } : {}) });
+          evs.push({ at: p0, dur: v, midis: g.midis.slice().sort((x, y) => x - y), refs: j === 0 ? g.refs : [], tie: j < parts.length - 1 || crossesBar, ...(j > 0 || g.cont ? { cont: true } : {}), ...(j === 0 && g.orn ? { orn: g.orn } : {}) });
           p0 += v;
         });
         pos = end;

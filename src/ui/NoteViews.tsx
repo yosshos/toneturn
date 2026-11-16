@@ -4,7 +4,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NoteView } from '../engine/aids';
-import { aidFor, contentNotes, guitarPosition, guitarPositions, spellMidi } from '../engine/aids';
+import { aidFor, contentNotes, guitarPosition, guitarPositions, spellIn } from '../engine/aids';
 import type { Question } from '../engine/lesson';
 import type { PitchClass } from '../engine/pitch';
 import { Keyboard } from './bits';
@@ -58,8 +58,8 @@ let vfPromise: Promise<VF> | null = null;
 const loadVF = () => (vfPromise ??= import('vexflow/bravura'));
 
 const keySpec = (k: PitchClass | null) => (k ? `${k.letter}${k.acc === -1 ? 'b' : k.acc === 1 ? '#' : ''}` : 'C');
-const vfKey = (m: number, k: PitchClass | null) => {
-  const s = spellMidi(m, k);
+const vfKey = (m: number, k: PitchClass | null, sharps?: readonly number[]) => {
+  const s = spellIn(m, k, sharps);
   return `${s.letter.toLowerCase()}${s.acc === -1 ? 'b' : s.acc === 1 ? '#' : ''}/${s.octave}`;
 };
 
@@ -172,7 +172,7 @@ function useCueLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.Ref
 }
 /** A ghost head's key: the note really played, spelled in the staff's key. */
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live, cue, prior }: { /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** The count-in: this item's head pulses once (index into notes). */ cue?: number; /** The last take's ticks, faded, under this take's marks (per item). */ prior?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, tieIn = false, extra, orns, sharps, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live, cue, prior }: { /** Pitch classes the score writes as sharps (a piece: G♯ in A minor), not flats. */ sharps?: readonly number[]; /** A tie into the first item from the line before (drawn from the staff's start). */ tieIn?: boolean; /** More heads on an item (a chord: the other notes of the same hand at the same time). */ extra?: (number[] | undefined)[]; /** An ornament sign over an item (a VexFlow ornament code: ornaments.ts VF_ORNAMENT). */ orns?: (string | undefined)[]; /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** The count-in: this item's head pulses once (index into notes). */ cue?: number; /** The last take's ticks, faded, under this take's marks (per item). */ prior?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
@@ -189,12 +189,16 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       stave.setDefaultLedgerLineStyle({ strokeStyle: '#1f1f24', lineWidth: 2.2 });
       stave.setContext(ctx).draw();
       const sn = chord
-        ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc)), duration: 'w', clef })]
+        ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc, sharps)), duration: 'w', clef })]
         : notes.map((m, i) => {
             const b = durs?.[i] ?? 1;
             const rest = !!rests?.[i];
-            const s = new VF.StaveNote({ keys: [rest ? (clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4') : vfKey(m, keyPc)], duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : '8') + (rest ? 'r' : ''), clef });
-            if (b === 1.5 || b === 3) VF.Dot.buildAndAttach([s], { all: true });
+            const heads = rest ? [clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4'] : [m, ...(extra?.[i] ?? [])].sort((x, y) => x - y).map((x) => vfKey(x, keyPc, sharps));
+            const s = new VF.StaveNote({ keys: heads, duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : b >= 0.5 ? '8' : b >= 0.25 ? '16' : '32') + (rest ? 'r' : ''), clef });
+            if (b === 1.5 || b === 3 || b === 0.75 || b === 0.375) VF.Dot.buildAndAttach([s], { all: true });
+            // an ornament sign over the head (the realisation is in the drill's notes, graded)
+            const o = orns?.[i];
+            if (o && !rest) s.addModifier(new VF.Ornament(o), 0);
             // a given label (what was played, a finger, ms off the click) under the note; the mark itself is drawn over it
             const lab = labels?.[i];
             if (lab) s.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
@@ -228,7 +232,9 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       new VF.Formatter().joinVoices([voice]).format([voice], width - (timeSig ? 110 : 90));
       voice.draw(ctx, stave);
       beams.forEach((bm) => bm.setContext(ctx).draw());
-      if (!chord && ties) ties.forEach((t, i) => t && sn[i + 1] && new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: [0], last_indices: [0] }).setContext(ctx).draw());
+      const tieIdx = (i: number) => Array.from({ length: 1 + (extra?.[i]?.length ?? 0) }, (_, k) => k);
+      if (!chord && ties) ties.forEach((t, i) => t && (sn[i + 1] ? new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: tieIdx(i), last_indices: tieIdx(i + 1) }) : new VF.StaveTie({ first_note: sn[i], first_indices: tieIdx(i), last_indices: tieIdx(i) })).setContext(ctx).draw());
+      if (!chord && tieIn && sn[0] && !rests?.[0]) new VF.StaveTie({ last_note: sn[0], first_indices: tieIdx(0), last_indices: tieIdx(0) }).setContext(ctx).draw();
       // Each head's place, for the live marks drawn over it while the take runs.
       geo.current = chord
         ? []
@@ -259,7 +265,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
           let ghostY: number | undefined;
           if (mk === 'wrong' && g !== null && g !== undefined) {
             try {
-              const gn = new VF.StaveNote({ keys: [vfKey(g, keyPc)], duration: 'q', clef });
+              const gn = new VF.StaveNote({ keys: [vfKey(g, keyPc, sharps)], duration: 'q', clef });
               gn.setStave(stave);
               ghostY = gn.getYs()[0];
             } catch {
@@ -272,18 +278,18 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       }
       return [...sn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(',')],
+    [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(','), tieIn, (sharps ?? []).join(','), (extra ?? []).map((x) => (x ?? []).join('+')).join(','), (orns ?? []).join(',')],
   );
   useLiveLayer(ref, geo, live, win, xs, 'staff');
   useLiveLayer(ref, geo, prior, win, xs, 'staff', 'mk-prior');
   useCueLayer(ref, geo, cue, xs, 'staff');
   return (
-    <div className={`note-staff ${ahead ? 'ahead' : ''}`} role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
+    <div className={`note-staff ${ahead ? 'ahead' : ''}`} role="img" aria-label={notes.map((m, i) => `${vfKey(m, keyPc, sharps)}${marks?.[i] ? ` ${marks[i]}` : ''}`).join(' ')}>
       <div className="svg-wrap">
         <div ref={ref} />
         <NowColumn xs={xs} now={now} />
       </div>
-      {failed && <p className="staff-fallback">{notes.map((m) => vfKey(m, keyPc)).join(' ')}</p>}
+      {failed && <p className="staff-fallback">{notes.map((m) => vfKey(m, keyPc, sharps)).join(' ')}</p>}
     </div>
   );
 }

@@ -38,6 +38,8 @@ import { VelocityBars } from './VelocityBars';
 import { velBars, velBarsShown } from '../engine/drills/velBars';
 import { ChordChart } from './ChordChart';
 import { chartCells, type ChartCell, type NoteRole } from '../engine/drills/chartCells';
+import { ornamentLegend, VF_ORNAMENT, type OrnKind } from '../engine/ornaments';
+import { spellIn } from '../engine/aids';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -290,14 +292,35 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const qk = qOf(drill);
   // The upright's thumb position reads the treble clef (ABRSM Gr 8), also an octave above the sound.
   const rhClef: 'treble' | 'bass' | 'tenor' = bass ? (drill.spec.kind === 'tenor' ? 'tenor' : drill.spec.kind === 'treble' ? 'treble' : 'bass') : 'treble';
-  const rh = drill.notes.filter((n) => n.hand === 'R' && (upTo === undefined || n.beat < upTo - 1e-6));
+  // Ornament signs (ornaments.ts): one head with the sign stands for its written-out notes; they are marked as one group.
+  const ornGroup = new Map<ExpNote, ExpNote[]>();
+  const ornCode = new Map<ExpNote, string>();
+  const withOrns = (ns: ExpNote[]): ExpNote[] => {
+    const os = (drill.ornaments ?? []).filter((o) => ns.some((n) => n.hand === o.hand));
+    if (!os.length) return ns;
+    const hidden = new Set<ExpNote>();
+    const add: ExpNote[] = [];
+    for (const o of os) {
+      const g = ns.filter((n) => n.hand === o.hand && n.beat >= o.beat - 1e-6 && n.beat < o.beat + o.dur - 1e-6);
+      if (!g.length) continue;
+      for (const n of g) hidden.add(n);
+      const d: ExpNote = { pitch: o.pitch, beat: o.beat, dur: o.dur, hand: o.hand };
+      ornGroup.set(d, g);
+      ornCode.set(d, VF_ORNAMENT[o.kind]);
+      add.push(d);
+    }
+    return [...ns.filter((n) => !hidden.has(n)), ...add].sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
+  };
+  /** The notes a drawn head stands for: an ornament's realisation, a chord's notes, or itself. */
+  const groupOf = (n: ExpNote, ns: ExpNote[]): ExpNote[] => ornGroup.get(n) ?? (n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId));
+  const rh = withOrns(drill.notes.filter((n) => n.hand === 'R' && (upTo === undefined || n.beat < upTo - 1e-6)));
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
   const timingMs = result ? thresholds(tempoBand(result.nps)).sd * 2 : 0;
   /** A chord shows its worst note's mark. */
   const markFor = (n: ExpNote, ns: ExpNote[]): NoteMark => {
     if (!result) return undefined;
-    const group = n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId);
+    const group = groupOf(n, ns);
     const ms = group.map((x) => markOf(byKey.get(noteKey(x)), timingMs));
     return worstMark(ms);
   };
@@ -305,13 +328,13 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   /** Live: a chord shows once all its notes are settled, with its worst note's mark. */
   const liveFor = (n: ExpNote, ns: ExpNote[]): { mk: NoteMark; dev: number | null } => {
     if (!lv) return { mk: undefined, dev: null };
-    const group = n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId);
+    const group = groupOf(n, ns);
     if (!group.every((x) => lv.has(noteKey(x)))) return { mk: undefined, dev: null };
     const ms = group.map((x) => markOf(lv.get(noteKey(x)), live!.win));
     const mk = worstMark(ms);
     return { mk, dev: mk === 'early' || mk === 'late' ? (lv.get(noteKey(group[ms.indexOf(mk)]))?.dev ?? null) : null };
   };
-  const lh = drill.notes.filter((n) => n.hand === 'L');
+  const lh = withOrns(drill.notes.filter((n) => n.hand === 'L'));
   const pf = result ? priorFor(prior) : null;
   // The count-in cue: the first note's beat (both staves pulse when both hands start together).
   const firstBeat = cue && !result && drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : null;
@@ -347,7 +370,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const lineAtQ = (q: number) => (sl ? Math.max(0, sl.findIndex((l) => q < l.to - 1e-6) < 0 ? sl.length - 1 : sl.findIndex((l) => q < l.to - 1e-6)) : Math.floor(q / per + 1e-6));
   const lineOf = (n: ExpNote) => lineAtQ(bq(n));
   // A song shows all of itself (≤ 96 notes); a bass drill all of itself in a moving window (B2); others their first 8 bars.
-  const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || bq(n) < meter * 8);
+  // A paged item (a piece's long section) all of itself too.
+  const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || drill.paged || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
   const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0, winSize);
@@ -355,6 +379,11 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     const all = shown(ns);
     const lines: (typeof all)[] = [];
     for (const n of all) (lines[lineOf(n)] ??= []).push(n);
+    // a line with no new note but a note tied over from the line before is still drawn (the tie's continuation)
+    for (let li = 0; li < nLines; li++) {
+      const ls = sl ? (sl[li]?.from ?? li * per) : li * per;
+      if (!lines[li] && all.some((n) => bq(n) < ls - 1e-6 && bq(n) + dq(n) > ls + 0.24)) lines[li] = [];
+    }
     return lines.map((xs, li) => {
       if (!xs || (windowed && (li < win.from || li >= win.from + winSize))) return null;
       const fing = fingering && xs.some((n) => n.finger);
@@ -362,32 +391,92 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
       const devs = result ? xs.map((n) => byKey.get(noteKey(n))?.dev ?? null) : undefined;
       const lives = lv ? xs.map((n) => liveFor(n, ns)) : null;
-      const priors = pf ? xs.map((n) => pf.at(n.chordId === undefined ? [n] : ns.filter((x) => x.chordId === n.chordId))) : null;
+      const priors = pf ? xs.map((n) => pf.at(groupOf(n, ns))) : null;
       const ghosts = result ? xs.map((n) => { const p = byKey.get(noteKey(n))?.played; return p && p.pitch !== n.pitch ? p.pitch + shift : null; }) : undefined;
       // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
       // `at`: where the item really starts (quarter notes). The written value is rounded to a standard one (a triplet is
       // drawn as an eighth), so the now-cue follows `at`, never a sum of written values (it drifted off the notes).
-      type It = { n: ExpNote | null; dur: number; at: number };
+      // 0.98: a length in 16ths is written exactly — 16ths, dotted 8ths, a note over the bar line as tied values (a piece's
+      // ties, Bach's 16ths); anything else (triplets) keeps the old rounding to 8ths.
+      type It = { n: ExpNote | null; dur: number; at: number; /** A tied continuation's pitch (n null, not a rest). */ p?: number; extra?: number[]; tie?: boolean; orn?: string };
       const items: It[] = [];
       const std = (d: number) => [4, 3, 2, 1.5, 1, 0.5].find((v) => v <= d + 1e-6) ?? 0.5;
+      const in16 = (d: number) => Math.abs(d * 4 - Math.round(d * 4)) < 1e-3;
+      const VALS16 = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25];
+      /** A length in 16ths as standard written values, longest first (tied). */
+      const split16 = (d: number): number[] => {
+        const out: number[] = [];
+        let g = d;
+        while (g > 0.24) {
+          const v = VALS16.find((x) => x <= g + 1e-6)!;
+          out.push(v);
+          g -= v;
+        }
+        return out;
+      };
       const pushRest = (gap: number, from: number) => {
         let g = gap;
         let at = from;
-        while (g > 0.49) {
-          const v = [4, 2, 1, 0.5].find((x) => x <= g + 1e-6)!;
+        const fine = in16(gap);
+        while (g > (fine ? 0.24 : 0.49)) {
+          const v = (fine ? [4, 2, 1, 0.5, 0.25] : [4, 2, 1, 0.5]).find((x) => x <= g + 1e-6)!;
           items.push({ n: null, dur: v, at });
           g -= v;
           at += v;
         }
       };
+      /** The end of the bar holding position q (quarter notes). */
+      // (a step past q, so a bar's own start gives its end — never q itself; a guard keeps every loop moving)
+      const barEndOf = (q: number) => Math.max(q + 0.25, barEnd(q + 1e-3));
+      const extraOf = (n: ExpNote) => (n.chordId === undefined ? undefined : ns.filter((x) => x.chordId === n.chordId && x !== n).map((x) => x.pitch + shift));
       const lineStart = sl ? sl[li].from : li * per;
       const lineEnd = sl ? sl[li].to : lineStart + per;
       const barEnd = (q: number) => (sl ? (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).from + (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).len : Math.ceil(q / meter - 1e-6) * meter);
-      if (bq(xs[0]) - lineStart > 0.49) pushRest(bq(xs[0]) - lineStart, lineStart);
+      // a note held over from the line before (a tie over the line's start): its rest of the length, tied in
+      const held = all.filter((n) => in16(dq(n)) && bq(n) < lineStart - 1e-6 && bq(n) + dq(n) > lineStart + 0.24 && !all.some((m) => bq(m) > bq(n) + 1e-6 && bq(m) < lineStart + 1e-6));
+      const carry = held[0];
+      let from0 = lineStart;
+      if (carry) {
+        const end = Math.min(lineEnd, bq(carry) + dq(carry), xs[0] ? bq(xs[0]) : lineEnd);
+        let a = lineStart;
+        while (end - a > 0.24) {
+          const be = Math.min(end, barEndOf(a));
+          for (const v of split16(be - a)) {
+            items.push({ n: null, p: carry.pitch + shift, extra: extraOf(carry), dur: v, at: a, tie: true });
+            a += v;
+          }
+          a = be;
+        }
+        const last = items[items.length - 1];
+        if (last && bq(carry) + dq(carry) <= lineEnd + 1e-6) last.tie = false;
+        from0 = a;
+      }
+      if (xs[0] && bq(xs[0]) - from0 > 0.24) pushRest(bq(xs[0]) - from0, from0);
       xs.forEach((n, i) => {
         const nextAt = xs[i + 1] ? bq(xs[i + 1]) : Math.min(lineEnd, barEnd(bq(n) + dq(n) - 1e-6));
+        const orn = ornCode.get(n);
+        if (in16(dq(n)) && in16(bq(n))) {
+          // exact: the written length up to the next note, split at each bar line into tied values
+          const end = Math.min(bq(n) + dq(n), nextAt, lineEnd);
+          let a = bq(n);
+          let first = true;
+          while (end - a > 0.24) {
+            const be = Math.min(end, barEndOf(a));
+            for (const v of split16(be - a)) {
+              items.push(first ? { n, dur: v, at: a, extra: extraOf(n), tie: true, ...(orn ? { orn } : {}) } : { n: null, p: n.pitch + shift, extra: extraOf(n), dur: v, at: a, tie: true });
+              first = false;
+              a += v;
+            }
+            a = be;
+          }
+          if (first) items.push({ n, dur: 0.25, at: bq(n), extra: extraOf(n), ...(orn ? { orn } : {}) });
+          // the last value is tied on only when the note goes on into the next line
+          else if (bq(n) + dq(n) <= lineEnd + 1e-6 || end < lineEnd - 1e-6) items[items.length - 1].tie = false;
+          if (nextAt - a > 0.24) pushRest(nextAt - a, a);
+          return;
+        }
         const d = std(Math.min(Math.max(0.5, dq(n)), Math.max(0.5, nextAt - bq(n))));
-        items.push({ n, dur: d, at: bq(n) });
+        items.push({ n, dur: d, at: bq(n), extra: extraOf(n), ...(orn ? { orn } : {}) });
         if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d), bq(n) + d);
       });
       const idx = (n: ExpNote) => xs.indexOf(n);
@@ -402,8 +491,13 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           ahead={ahead}
           spacing={phone() ? 32 : 44}
           key={`${clef}${li}`}
-          notes={items.map((x) => (x.n ? x.n.pitch + shift : 71))}
-          rests={items.map((x) => !x.n)}
+          notes={items.map((x) => (x.n ? x.n.pitch + shift : (x.p ?? 71)))}
+          rests={items.map((x) => !x.n && x.p === undefined)}
+          extra={items.some((x) => x.extra?.length) ? items.map((x) => x.extra) : undefined}
+          ties={items.some((x) => x.tie) ? items.map((x) => !!x.tie) : undefined}
+          tieIn={!!carry}
+          sharps={drill.sharps}
+          orns={items.some((x) => x.orn) ? items.map((x) => x.orn) : undefined}
           chord={false}
           keyPc={k}
           clef={clef}
@@ -418,7 +512,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           cue={firstBeat !== null ? (() => { const c = items.findIndex((x) => x.n && Math.abs(x.n.beat - firstBeat) < 1e-6); return c >= 0 ? c : undefined; })() : undefined}
           meter={meter}
           timeSig={li === 0 || (windowed && li === win.from) || !!sl?.[li].bars[0].sig}
-          sig={sl ? sl[li].bars[0].cur : sig}
+          sig={sl ? sl[li].bars[0].cur : (drill.sigText ?? sig)}
           bars={sl ? sl[li].bars.map((b) => ({ len: b.len, sig: b.sig })) : undefined}
         />
       );
@@ -438,7 +532,45 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       {draw(rh, rhClef, paged)}
       {draw(lh, 'bass', paged)}
       {paged && win.pager}
+      {drill.ornaments?.length ? <OrnamentLegend drill={drill} lang={lang} /> : null}
     </div>
+  );
+}
+
+/** A small picture of each ornament sign (LTR, like the music), for the legend under the staff. */
+function OrnIcon({ k }: { k: OrnKind }) {
+  return (
+    <svg className="orn-icon" viewBox="0 0 24 12" aria-hidden="true" style={{ direction: 'ltr' }}>
+      {k === 'trill' ? (
+        <text x={12} y={10} textAnchor="middle" fontStyle="italic" fontWeight={700} fontSize={11}>
+          tr
+        </text>
+      ) : k === 'turn' ? (
+        <path d="M4 8c0-3 4-4 6-1.5s2 3 4 3 4-1 4-3-3-3-4-1.5" fill="none" strokeWidth={1.8} strokeLinecap="round" />
+      ) : (
+        <>
+          <path d="M3 8l3-4 3 4 3-4 3 4 3-4 3 4" fill="none" strokeWidth={1.8} strokeLinejoin="round" />
+          {k === 'mordent' && <path d="M12 1v10" strokeWidth={1.6} />}
+        </>
+      )}
+    </svg>
+  );
+}
+
+/** How the signs on this staff are played (one line): each kind's name and the notes of its first use. */
+export function OrnamentLegend({ drill, lang }: { drill: Drill; lang: Lang }) {
+  // note names spelled in the key (F♯ in G, G♭ in D♭)
+  const k = keyName(drill.keySig);
+  const items = ornamentLegend(drill.ornaments ?? [], drill.notes, lang, (m) => { const sp = spellIn(m, k, drill.sharps); return sp.letter + (sp.acc === 1 ? '♯' : sp.acc === -1 ? '♭' : ''); });
+  return (
+    <p className="orn-legend" data-orn-legend={items.map((x) => x.kind).join(' ')}>
+      {items.map((x) => (
+        <span key={x.kind} className="orn-item">
+          <OrnIcon k={x.kind} />
+          {x.name} <bdi>{x.how}</bdi>
+        </span>
+      ))}
+    </p>
   );
 }
 

@@ -163,6 +163,19 @@ export function spellMidi(midi: number, key: PitchClass | null): { letter: strin
 }
 
 /**
+ * spellMidi, with the score's own spelling for chromatic notes: a pitch class in `sharps` that spellMidi would write
+ * with a flat is written as the sharp of the letter below (a piece's G♯ in A minor, F♯ in C minor — not A♭ / G♭).
+ */
+export function spellIn(midi: number, key: PitchClass | null, sharps?: readonly number[]): { letter: string; acc: -1 | 0 | 1; octave: number } {
+  const s = spellMidi(midi, key);
+  const pc = ((midi % 12) + 12) % 12;
+  if (!sharps?.includes(pc) || s.acc !== -1) return s;
+  const L = 'CDEFGAB';
+  const below = L[(L.indexOf(s.letter) + 6) % 7];
+  return { letter: below, acc: 1, octave: below === 'B' ? s.octave - 1 : s.octave };
+}
+
+/**
  * Positions for a passage played in one hand position (frets p … p+4, open strings allowed at p ≤ 1),
  * the lowest position that holds every note; notes that fit nowhere fall back to guitarPosition.
  */
