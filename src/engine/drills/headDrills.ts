@@ -30,7 +30,7 @@ import { voice, type Voiced } from './chartDrills';
 import { parseChart, type ChartChordEv } from '../charts';
 import { keyLabel, sharpKey, type Home } from '../stdKey';
 import { HEADS, servedHeads, type Head } from '../../content/heads';
-import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, type HarmStyle, type HeadIn, type HNote } from '../heads';
+import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, sixDimUnder, type HarmStyle, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
 import { sharedHands, splitShared } from '../soloPiano';
 
@@ -523,8 +523,14 @@ function guitarVoicing(tu: Tuning, c: ChartChordEv, mode: 'root' | 'guide' | 'sh
 
 // ───────────────────────────── guitar: chord-melody (g-cmel) and the melody + comp step ─────────────────────────────
 
-export type CmMode = 'mel' | 'bass' | 'guide' | 'drop2' | 'dim';
-const CM_MODE: Record<string, CmMode> = { 'cm-mel': 'mel', 'cm-bass': 'bass', 'cm-guide': 'guide', 'cm-drop2': 'drop2', 'cm-dim': 'dim', 'cm-chorus': 'dim', 'tn-melcomp': 'drop2' };
+/**
+ * mel / bass / guide / drop2 / dim: as before. six: 6-dim blocks in drop 2 under every melody note of an 8th or longer
+ * (C1 on the guitar: the bar's chord as its 6th chord, passing notes on its dim — heads.ts sixDimUnder). every: drop 2
+ * under every melody note of an 8th or longer (the chord containing it, else its dim). solo: the solo-guitar chorus —
+ * chord-melody (with passing dims) and walking-bass fills on the beats a long melody note leaves open.
+ */
+export type CmMode = 'mel' | 'bass' | 'guide' | 'drop2' | 'dim' | 'six' | 'every' | 'solo';
+const CM_MODE: Record<string, CmMode> = { 'cm-mel': 'mel', 'cm-bass': 'bass', 'cm-guide': 'guide', 'cm-drop2': 'drop2', 'cm-dim': 'dim', 'cm-chorus': 'dim', 'tn-melcomp': 'drop2', 'cm-six': 'six', 'cm-every': 'every', 'cm-solo': 'solo' };
 const CM_WHAT: Record<string, T2> = {
   'cm-mel': t('the melody in position', 'המנגינה בפוזיציה'),
   'cm-bass': t('melody + bass on the downbeats', 'מנגינה + בס על הפעמות'),
@@ -532,6 +538,9 @@ const CM_WHAT: Record<string, T2> = {
   'cm-drop2': t('drop 2 under the melody', 'דרופ 2 מתחת למנגינה'),
   'cm-dim': t('with passing diminished', 'עם דימיניש עובר'),
   'cm-chorus': t('a whole chorus', 'פזמון שלם'),
+  'cm-six': t('6-dim blocks in drop 2', 'בלוקים שש-מוקטן בדרופ 2'),
+  'cm-every': t('drop 2 under every note', 'דרופ 2 מתחת לכל צליל'),
+  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + בס מהלך'),
 };
 
 /** Place a melody note on the top strings near a fret (strings 1–3). */
@@ -549,10 +558,11 @@ function melodyPlace(tu: Tuning, m: number, near: number): P {
 export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[], mode: CmMode, b0 = 0): Ev[] {
   const evs: Ev[] = [];
   let near = 5;
+  const dense = mode === 'six' || mode === 'every';
   for (const n of notes) {
     const c = chordAt(chords, n.beat);
     const inBar = n.beat - Math.floor(n.beat / 4 + 1e-9) * 4;
-    const picked = Math.abs(inBar) < 1e-6 || Math.abs(inBar - 2) < 1e-6 || Math.abs(c.bar * 4 + c.at - n.beat) < 1e-6;
+    const picked = dense ? n.dur >= 0.5 - 1e-6 : Math.abs(inBar) < 1e-6 || Math.abs(inBar - 2) < 1e-6 || Math.abs(c.bar * 4 + c.at - n.beat) < 1e-6;
     const q = chordUnder(n.pitch, c);
     const single = (): Ev => {
       const p = melodyPlace(tu, n.pitch, near);
@@ -585,7 +595,8 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
       continue;
     }
     // Drop 2 under the melody note on the top string set (the melody on string 1; 5-4-3-2 when 4-3-2-1 has no fit).
-    const vc: VLChord | null = q ? { root: c.root, q, melody: n.pitch } : mode === 'dim' ? { root: pc(n.pitch), q: 'dim7', melody: n.pitch } : null;
+    const sd = mode === 'six' ? sixDimUnder(n.pitch, c) : null;
+    const vc: VLChord | null = mode === 'six' ? (sd ? { root: sd.root, q: sd.q, melody: n.pitch } : null) : q ? { root: c.root, q, melody: n.pitch } : mode === 'dim' || mode === 'every' || mode === 'solo' ? { root: pc(n.pitch), q: 'dim7', melody: n.pitch } : null;
     if (!vc) {
       evs.push(single());
       continue;
@@ -603,7 +614,24 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
       continue;
     }
     near = lowFretOf(shape) < 99 ? lowFretOf(shape) : near;
-    evs.push({ beat: n.beat - b0, dur: n.dur, notes: shape.map((p) => ({ ...p, stroke: 'D' as const, tech: 'strum-down' as const, ct: true, ...(noteAt(tu, p.s, p.f) === n.pitch ? { acc: true } : {}) })) });
+    // solo guitar: a long melody note leaves beats open — the chord on its first beat, then walking-bass notes
+    const fill = mode === 'solo' && n.dur >= 2 - 1e-6 && Number.isInteger(Math.round(n.beat * 1e6) / 1e6);
+    evs.push({ beat: n.beat - b0, dur: fill ? 1 : n.dur, notes: shape.map((p) => ({ ...p, stroke: 'D' as const, tech: 'strum-down' as const, ct: true, ...(noteAt(tu, p.s, p.f) === n.pitch ? { acc: true } : {}) })) });
+    if (fill) {
+      const next = chordAt(chords, n.beat + n.dur);
+      const tones = fourOf(c).map((x) => c.root + x);
+      const k = Math.floor(n.dur + 1e-6);
+      let prevB = 40 + pc(c.root - 40);
+      for (let j = 1; j < k; j++) {
+        // the last fill note leads into the next chord's root a half step below; the others are the chord's 3rd and 5th
+        const want = j === k - 1 ? pc(next.root - 1) : pc(tones[j % 2 === 1 ? 1 : 2]);
+        let b = 40 + pc(want - 40);
+        if (Math.abs(b + 12 - prevB) < Math.abs(b - prevB) && b + 12 <= 52) b += 12;
+        prevB = b;
+        const bp = place(tu, b, [6, 5, 4], Math.max(0, near - 4), near + 4) ?? place(tu, b, [6, 5, 4], 0, 12);
+        if (bp) evs.push({ beat: n.beat + j - b0, dur: 1, notes: [{ ...bp, stroke: 'D', ct: j !== k - 1 }] });
+      }
+    }
   }
   return evs;
 }
@@ -611,9 +639,9 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
 function genChordMelody(s: DrillSpec, tu: Tuning): Drill {
   const { head, phrase } = decodeHead(s.option);
   const hi = headIn(head, s.key, 'guitar');
-  const whole = s.kind === 'cm-chorus';
+  const whole = s.kind === 'cm-chorus' || s.kind === 'cm-solo';
   const from = whole ? 0 : phrase * 4;
-  const to = whole ? hi.bars.length : phrase * 4 + 4;
+  const to = whole ? hi.bars.length : Math.min(hi.bars.length, phrase * 4 + (s.kind === 'cm-every' ? 8 : 4));
   const evs = chordMelodyEvs(tu, notesIn(hi, from, to), hi.chords, CM_MODE[s.kind] ?? 'mel', from * 4);
   const d = finish(s, tu, evs, { title: titleOf(hi, CM_WHAT[s.kind] ?? CM_WHAT['cm-mel'], whole ? undefined : barsLabel(phrase)), bpm: head.feel === 'ballad' ? 56 : 66, evenness: false, keySig: sigOf(hi.tonic) });
   return { ...d, beats: Math.max(d.beats, (to - from) * 4), chart: chartOf(hi.bars.slice(from, to)), tonic: hi.tonic };
@@ -852,6 +880,10 @@ const CMEL: [string, string, string, number][] = [
   ['cm-drop2', 'Drop 2 under the melody, top four strings', 'דרופ 2 מתחת למנגינה, ארבעת המיתרים העליונים', 8],
   ['cm-dim', 'Passing diminished between the chords', 'דימיניש עובר בין האקורדים', 9],
   ['cm-chorus', 'A whole chorus of chord-melody', 'פזמון שלם של אקורד-מלודיה', 9],
+  // AUDIT-DEPTH-3 C1 on the guitar and #4: 6-dim blocks, drop 2 under every note (8 bars), the solo-guitar chorus.
+  ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 9],
+  ['cm-every', 'Drop 2 under every melody note, eight bars', 'דרופ 2 מתחת לכל צליל של המנגינה, שמונה תיבות', 10],
+  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומילויי בס מהלך', 10],
 ];
 export function guitarChordMelodyFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cmel';

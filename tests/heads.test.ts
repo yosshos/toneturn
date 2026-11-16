@@ -298,13 +298,13 @@ describe('12 keys, the ladders and the path', () => {
     expect(b.notes.map((n) => pc(n.pitch - a.notes[0].pitch))[0]).toBe(2);
     expect(headIn(h, 6).text).not.toMatch(/##|bb/);
   });
-  it('counts: k-harm 13, k-tune 10, g-cmel 6, g-tune 9, b-tune 7 levels', () => {
+  it('counts: k-harm 13, k-tune 10, g-cmel 9, g-tune 9, b-tune 7 levels', () => {
     const n = (id: string) => [...pianoFams(), ...guitarFams()].find((f) => f.id === id)!.levels.length;
-    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([13, 10, 6, 9, 7]);
+    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([13, 10, 9, 9, 7]);
   });
   it('the path places them by difficulty inside 1250–1800 (triads under a melody at 1250)', () => {
     const steps = stepCatalogue().filter((s) => s.ladder && [...FAMS, ...GFAMS].includes(s.ladder.family));
-    expect(steps.length).toBe(13 + 10 + 6 + 9 + 7);
+    expect(steps.length).toBe(13 + 10 + 9 + 9 + 7);
     for (const s of steps) {
       expect(s.difficulty, s.id).toBeGreaterThanOrEqual(1250);
       expect(s.difficulty, s.id).toBeLessThanOrEqual(1800);
