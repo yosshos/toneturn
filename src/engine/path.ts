@@ -489,6 +489,12 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`k-reharm-${i + 1}`, 700 + 70 * (6 + i)])),
   // The borrowed-chord reharm of a head (k-tune 10): before the Coltrane level, under the cap.
   'k-tune-10': 1700,
+  // AUDIT-DEPTH-3 C2: embellish the head — approach 1350, enclose 1420, pivots 1500, free 1600 (the doc's 1350–1650).
+  'k-tune-11': 1350, 'k-tune-12': 1420, 'k-tune-13': 1500, 'k-tune-14': 1600,
+  // C3 step 5 / #2 L6: a solo chorus over the reharm (after the reharm levels).
+  'k-tune-15': 1760,
+  // the same on the bass (the melody an octave or two down): inside the heads' band, after the walking levels' start.
+  'b-tune-8': 1400, 'b-tune-9': 1470, 'b-tune-10': 1550, 'b-tune-11': 1640,
   // HARMONY-REHARM still open: borrowed chords by ear on the bass, in the modal-mix band (ear 1100–1700).
   'b-ear-24': 1450,
   // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): the left hand ~760–1620, textures 1000–1900,
@@ -496,6 +502,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...SP_LEVEL_DIFF,
   // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
   'k-harm-8': 1780,
+  // AUDIT-DEPTH-3 C1, #1, #3 (heads.ts): triads under a melody first (1250), then the 6-dim ladder — blocks, drop 2,
+  // borrowing, a line that breaks into blocks at its peaks — 1450 → 1680 (inside the heads' band).
+  'k-harm-9': 1450, 'k-harm-10': 1520, 'k-harm-11': 1600, 'k-harm-12': 1680, 'k-harm-13': 1250,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -506,7 +515,7 @@ export const PATH_CAP = 1900;
 export const NON_MONOTONE_FAMILIES = [
   // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
   'g-ctx',
-  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).

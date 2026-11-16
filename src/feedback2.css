@@ -28,6 +28,9 @@
 /* an extra hit (no note due): pink disc, ink cross, in its lane */
 .drum-lanes .dl-extra-bg { fill: var(--pink); stroke: var(--ink-c); stroke-width: 1.2; }
 .drum-lanes .dl-extra .mk-x, .mk-extra-x { stroke: var(--ink-c); stroke-width: 1.8; stroke-linecap: round; fill: none; }
+/* an extra hit on a drum with no lane in the groove: the thin "other drum" strip above the lanes */
+.drum-lanes .dl-lane.l-other { fill: var(--card); stroke-dasharray: 3 2; }
+.drum-lanes .dl-other-label { fill: var(--ink-c); font: 700 10px var(--font); }
 .drum-lanes .dl-xbg { fill: transparent; stroke: none; }
 .drum-lanes .dl-xbg.ok, .drum-lanes .dl-xbg.early, .drum-lanes .dl-xbg.late { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1; }
 .drum-lanes .dl-xbg.wrong { fill: var(--pink); stroke: var(--ink-c); stroke-width: 1; }

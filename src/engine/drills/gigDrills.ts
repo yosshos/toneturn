@@ -33,8 +33,11 @@ import type { ChartChordEv } from '../charts';
 import { VQ_DEF, chartOf, nearestPc, mod12, type VChord, type VQ, type VN } from '../bebopVocab';
 import { HEADS, type Head } from '../../content/heads';
 import { headIn, type HeadIn } from '../heads';
-import { chordMelodyEvs, genHeadPiano } from './headDrills';
+import { chartFor, chordMelodyEvs, genHeadPiano } from './headDrills';
+import { parseChart } from '../charts';
 import { modelLine } from './soloDrills';
+import { generateGuitarEar } from './guitarEar';
+import { generateBassEar } from './bassEar';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -333,7 +336,21 @@ export function genKeysGig(s: DrillSpec): Drill {
 
 /** The tunes of the whole-tune levels: original heads (heads.ts), by id. */
 export const GIG_TUNES = ['back-porch', 'night-ferry'];
-export const GIG_SECTIONS = 5; // 0 whole, 1 intro, 2 head, 3 solo chorus, 4 ending
+export const GIG_SECTIONS = 6; // 0 whole, 1 intro, 2 head, 3 solo chorus, 4 ending, 5 head out
+/**
+ * The head out is a different harmonisation from the head in (owner 2026-11-16: variety on the second time through):
+ * the head's chart reharmonised (reharm.ts autoPlan with tritone subs, extra ii–Vs, backdoor, passing dim, line cliché —
+ * every new chord checked against the melody), played as
+ *   keys:   the melody over the reharm (k-tune's tn-rhmel: melody on top, the comp under it);
+ *   guitar: chord-melody in drop 2 under the melody notes, on the reharmonised chords (the head in has bass + melody);
+ *   bass:   walking the reharm in four (the head in is in two).
+ */
+export const OUT_KIND = 'tn-rhmel';
+/** The head-out chart of a tune plan (the reharm; the written chart when no device fits). */
+export function outChart(plan: TunePlan): { text: string; bars: string[]; chords: ChartChordEv[] } {
+  const r = chartFor(plan.hi, OUT_KIND);
+  return { text: r.text, bars: r.bars, chords: parseChart(r.text).chords };
+}
 export const tuneOpt = (tune: number, section: number): number => tune * 8 + section;
 const headOf = (tune: number): Head => HEADS.find((h) => h.id === GIG_TUNES[tune % GIG_TUNES.length])!;
 const SEC_NAME: Record<string, T2> = {
@@ -424,7 +441,7 @@ const sectionsGoal = (plan: TunePlan, only?: string): NonNullable<DrillGoal['sec
   plan.spans.filter((x) => !only || x.id === only).map((x) => ({ from: only ? 0 : x.from, to: only ? x.to - x.from : x.to, name: SEC_NAME[x.id] }));
 const tuneTitle = (plan: TunePlan, section: number): T2 => {
   const nm = plan.hi.head.title;
-  const what = section === 0 ? t('the whole tune: intro, head, solo chorus, head out, ending', 'השיר כולו: פתיחה, נושא, סבב סולו, נושא, סיום') : SEC_NAME[['', 'intro', 'head', 'solo', 'ending'][section]];
+  const what = section === 0 ? t('the whole tune: intro, head, solo chorus, head out, ending', 'השיר כולו: פתיחה, נושא, סבב סולו, נושא, סיום') : SEC_NAME[['', 'intro', 'head', 'solo', 'ending', 'out'][section]];
   const k = keyLabel(plan.tonic, plan.minor);
   return t(`${nm.en} · ${what.en} · ${k}`, `${nm.he} · ${what.he} · ${k}`);
 };
@@ -448,8 +465,8 @@ function genKeysTune(s: DrillSpec): Drill {
     cid = Math.max(cid, ...b.notes.map((n) => n.chordId ?? 0));
   };
   // The head: k-tune's melody + shells (graded note for note), moved to the section's start.
-  const headNotes = (b0: number): ExpNote[] => {
-    const d = genHeadPiano({ family: 'k-tune', kind: 'tn-melcomp', key: plan.hi.tonic.key, hands: 'RL', option: headIdx * 16 });
+  const headNotes = (b0: number, kind = 'tn-melcomp'): ExpNote[] => {
+    const d = genHeadPiano({ family: 'k-tune', kind, key: plan.hi.tonic.key, hands: 'RL', option: headIdx * 16 });
     const base = cid;
     const out = d.notes.map((n) => ({ ...n, beat: r6(n.beat + b0), ...(n.chordId !== undefined ? { chordId: n.chordId + base } : {}) }));
     cid = Math.max(cid, ...out.map((n) => n.chordId ?? 0));
@@ -463,6 +480,7 @@ function genKeysTune(s: DrillSpec): Drill {
   const introChart = chartOf(plan.intro, plan.minor ? plan.tonic + 3 : plan.tonic);
   const endChart = chartOf(plan.ending, plan.minor ? plan.tonic + 3 : plan.tonic);
   const headChart = plan.hi.bars.map((b) => b.replace(/([A-G])b/g, '$1♭').replace(/7b5/g, '7♭5').replace(/#/g, '♯'));
+  const outBars = outChart(plan).bars.map((b) => b.replace(/([A-G])b/g, '$1♭').replace(/7b5/g, '7♭5').replace(/#/g, '♯'));
   if (whole || section === 1) {
     add(hitsToNotes(pianoHits({ chords: plan.intro, what: 'comp', name: SEC_NAME.intro }), at('intro'), cid));
     chart.push(...introChart);
@@ -478,9 +496,10 @@ function genKeysTune(s: DrillSpec): Drill {
     for (const l of [landingOf(plan, at('solo'), solo, 62, 84, true), landingOf(plan, at('solo'), solo, 62, 84)]) notes.push({ pitch: l.pitch, beat: l.beat, dur: l.dur, hand: 'R', chordTone: true, land: l.land });
     chart.push(...headChart);
   }
-  if (whole) {
-    notes.push(...headNotes(at('out')));
-    chart.push(...headChart);
+  if (whole || section === 5) {
+    // The head out: the melody over the reharmonised changes.
+    notes.push(...headNotes(at('out'), OUT_KIND));
+    chart.push(...outBars);
   }
   if (whole || section === 4) {
     const b0 = at('ending');
@@ -540,7 +559,7 @@ function genKeysTune(s: DrillSpec): Drill {
 // ───────────────────────────── keys family ─────────────────────────────
 
 /** Guitar grades of g-gig 1–8 (the path places guitar levels by grade; keys and bass: ../gigPlacement.ts). */
-export const G_GIG_GRADE: number[] = [8, 8, 8, 8, 9, 10, 10, 11];
+export const G_GIG_GRADE: number[] = [8, 8, 8, 8, 9, 10, 10, 11, 11];
 
 export function keysGigFamily(): FamilyDef {
   const v = (kind: string, option: number, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-gig', kind, hands: 'R', swing: true, option, ...o });
@@ -560,9 +579,9 @@ export function keysGigFamily(): FamilyDef {
       JT(6, 'Ballad: LH 10ths and RH four notes together', 'בלדה: דצימות בשמאל וארבעה צלילים בימין יחד', B('gg-b2h', [0, 1]), [44, 66]),
       JT(7, 'The walk-down ending and a rubato ballad intro', 'סיום הירידה הדימינישית ופתיחת בלדה ברובאטו', [v('gg-end', 5, { hands: 'L' }), v('gg-intro', 3, { hands: 'RL', swing: false, target: 50, tempo: 50 })], [50, 130]),
       JT(8, 'The whole ballad chart in two hands', 'כל הבלדה בשתי ידיים', B('gg-b2h', [2]), [44, 66]),
-      JT(9, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 4]), [72, 126]),
+      JT(9, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), [72, 126]),
       JT(10, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), [72, 126]),
-      JT(11, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 4]), [72, 120]),
+      JT(11, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), [72, 120]),
       JT(12, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), [72, 120]),
     ],
   };
@@ -601,6 +620,8 @@ const hitsOf = (chords: VChord[], b0 = 0): { beat: number; dur: number; c: VChor
 
 export function genGuitarGig(s: DrillSpec, tu: Tuning): Drill {
   if (s.kind === 'gg-tune') return genGuitarTune(s, tu);
+  // Intros and endings by ear (progEar.ts): hear one, comp it back in drop 2 (graded per chord, harmonyGrade.ts).
+  if (s.kind === 'prog-intro' || s.kind === 'prog-ending') return generateGuitarEar(s, tu);
   const key = mod12(s.key);
   const it = gigItem(s.kind, key, s.option ?? 0);
   const comp = isComp(it.what);
@@ -651,9 +672,11 @@ function genGuitarTune(s: DrillSpec, tu: Tuning): Drill {
     }
     chart.push(...headChart);
   }
-  if (whole) {
-    evs.push(...chordMelodyEvs(tu, plan.hi.notes, plan.hi.chords, 'bass', -at('out')));
-    chart.push(...headChart);
+  if (whole || section === 5) {
+    // The head out: drop 2 under the melody notes on the reharmonised chords (the head in: bass + melody).
+    const out = outChart(plan);
+    evs.push(...chordMelodyEvs(tu, plan.hi.notes, out.chords, 'drop2', -at('out')));
+    chart.push(...out.bars.map((b) => b.replace(/([A-G])b/g, '$1♭').replace(/7b5/g, '7♭5').replace(/#/g, '♯')));
   }
   if (whole || section === 4) {
     const b0 = at('ending');
@@ -701,10 +724,12 @@ export function guitarGigFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
     LT('g-gig', 2, 'Endings: ♭VI–♭II–I, the tag ×3, the walk-down', 'סיומים: ♭VI–♭II–I, התג ×3, הירידה הדימינישית', [v('gg-end', 1), v('gg-end', 2), v('gg-end', 0), v('gg-end', 5)], GIG_KEYS, [70, 150], 'comping', G[1]),
     LT('g-gig', 3, 'The Dameron turnaround: drop 2 and a line', 'הטרנאראונד של דיימרון: דרופ 2 וקו', [v('gg-end', 3), v('gg-end', 4)], GIG_KEYS, [70, 150], 'comping', G[2]),
     LT('g-gig', 4, 'Ballad “Evening Lamp” in drop 2, and a rubato intro', 'הבלדה ״מנורת ערב״ בדרופ 2, ופתיחה ברובאטו', [v('gg-b2h', 0, { swing: false }), v('gg-b2h', 1, { swing: false }), v('gg-intro', 3, { swing: false, target: 50, tempo: 50 })], GIG_KEYS, [44, 66], 'ballad', G[3]),
-    LT('g-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 4]), GIG_KEYS, [72, 126], 'chord-melody', G[4]),
+    LT('g-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 126], 'chord-melody', G[4]),
     LT('g-gig', 6, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), GIG_KEYS, [72, 126], 'chord-melody', G[5]),
-    LT('g-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 4]), GIG_KEYS, [72, 120], 'chord-melody', G[6]),
+    LT('g-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 120], 'chord-melody', G[6]),
     LT('g-gig', 8, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), GIG_KEYS, [72, 120], 'chord-melody', G[7]),
+    // By ear (the guitar's own counterpart of the ear topic intro-ending): hear an intro or an ending, comp it back.
+    LT('g-gig', 9, 'Intros and endings by ear: comp them back in drop 2', 'פתיחות וסיומים בשמיעה: ללוות אותם בחזרה בדרופ 2', [v('prog-intro', 0, { position: 1, swing: false }), v('prog-ending', 1, { position: 1, swing: false })], GIG_KEYS, [60, 90], 'chords', G[8]),
   ]);
 }
 
@@ -714,6 +739,8 @@ const toBN = (ln: VN[], b0 = 0): BN[] => ln.map((n) => ({ b: r6(b0 + n.beat), d:
 
 export function genBassGig(s: DrillSpec, tu: Tuning): Drill {
   if (s.kind === 'gg-tune') return genBassTune(s, tu);
+  // Intros and endings by ear (bassEar.ts 'ie-ear'): hear one, walk its roots back.
+  if (s.kind === 'ie-ear') return generateBassEar(s, tu);
   const key = mod12(s.key);
   const it = gigItem(s.kind, key, s.option ?? 0);
   const ln = gigLine(it, 28, 52, `${s.family}:${s.kind}:${key}:${s.option ?? 0}`);
@@ -753,9 +780,11 @@ function genBassTune(s: DrillSpec, tu: Tuning): Drill {
     line.push(...toBN(walkOf(vcs, 28, 52), at('solo')));
     chart.push(...headChart);
   }
-  if (whole) {
-    line.push(...toBN(twoFeelOf(vcs, 28, 52), at('out')));
-    chart.push(...headChart);
+  if (whole || section === 5) {
+    // The head out: walking the reharmonised changes in four (the head in was in two).
+    const out = outChart(plan);
+    line.push(...toBN(walkOf(vchordsOf(out.chords), 28, 52), at('out')));
+    chart.push(...out.bars.map((b) => b.replace(/([A-G])b/g, '$1♭').replace(/7b5/g, '7♭5').replace(/#/g, '♯')));
   }
   if (whole || section === 4) {
     const b0 = at('ending');
@@ -776,7 +805,7 @@ function genBassTune(s: DrillSpec, tu: Tuning): Drill {
     evenness: false,
     goal: { chordTonesOnBeats: true, ...(whole ? { sections: sectionsGoal(plan) } : {}) },
     keySig: SIG[plan.minor ? mod12(plan.tonic + 3) : plan.tonic],
-    ...(whole || section === 3 ? { drums: { groove: 'swing' } } : {}),
+    ...(whole || section === 3 || section === 5 ? { drums: { groove: 'swing' } } : {}),
   });
   return { ...d, title: tuneTitle(plan, section), tonic: plan.hi.tonic, paged: true };
 }
@@ -793,9 +822,11 @@ export function bassGigFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
     L('b-gig', 2, 'Walking intros: the iii–VI7–ii–V7 vamp, a blues’s last four bars', 'פתיחות בהליכה: ואמפ iii–VI7–ii–V7, סוף של בלוז', vs('gg-walk', [0, 1]), GIG_KEYS, [70, 160], 'walking 4'),
     L('b-gig', 3, 'Walking endings: the tag ×3, ♭VI7–♭II7–I, the Dameron turnaround', 'סיומים בהליכה: התג ×3, ♭VI7–♭II7–I, הטרנאראונד של דיימרון', vs('gg-walk', [2, 3, 4]), GIG_KEYS, [70, 160], 'walking 4'),
     L('b-gig', 4, 'Walking the walk-down ending and ♭VImaj7–♭IImaj7–I', 'הליכה בסיום הירידה הדימינישית וב־♭VI–♭II–I במז׳ור 7', vs('gg-walk', [5, 6]), GIG_KEYS, [70, 160], 'walking 4'),
-    L('b-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 4]), GIG_KEYS, [72, 126], 'two-feel / walking'),
+    L('b-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 126], 'two-feel / walking'),
     L('b-gig', 6, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), GIG_KEYS, [72, 126], 'two-feel / walking'),
-    L('b-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 4]), GIG_KEYS, [72, 120], 'two-feel / walking'),
+    L('b-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 120], 'two-feel / walking'),
     L('b-gig', 8, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), GIG_KEYS, [72, 120], 'two-feel / walking'),
+    // By ear (the bass's own counterpart of the ear topic intro-ending): hear an intro or an ending, play its roots back.
+    L('b-gig', 9, 'Intros and endings by ear: play the roots back', 'פתיחות וסיומים בשמיעה: לנגן את היסודות בחזרה', [v('ie-ear', 0, { perBeat: 0.5, swing: false }), v('ie-ear', 1, { perBeat: 0.5, swing: false })], GIG_KEYS, [70, 110], 'halves'),
   ]);
 }

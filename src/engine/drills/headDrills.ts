@@ -30,8 +30,11 @@ import { voice, type Voiced } from './chartDrills';
 import { parseChart, type ChartChordEv } from '../charts';
 import { keyLabel, sharpKey, type Home } from '../stdKey';
 import { HEADS, servedHeads, type Head } from '../../content/heads';
-import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, type HeadIn, type HNote } from '../heads';
+import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, sixDimUnder, type HarmStyle, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
+import { embellish, keyScale, type EmbKind } from '../embellish';
+import { VQ_DEF, nearestPc, type VChord, type VQ } from '../bebopVocab';
+import { modelLine } from './soloDrills';
 import { sharedHands, splitShared } from '../soloPiano';
 
 type T2 = { en: string; he: string };
@@ -68,10 +71,12 @@ export const RH_SETS: Record<string, Device[]> = {
   // HARMONY-REHARM §4: the borrowed chords (modal interchange) — the minor plagal ending, iv(m6), ♭VI, iiø7, ♭VII7.
   'tn-rh4': ['minorPlagal', 'minorIV', 'iiHalfDim', 'bVI', 'bVII'],
   'tn-rhmel': ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche'],
+  // AUDIT-DEPTH-3 C3 step 5: a chorus of improvisation over the same reharm.
+  'tn-rhsolo': ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche'],
 };
 /** A head's chart for a kind: as written, a preset reharm (autoPlan), or the player's own plan (`~<code>` in the kind). */
 export function chartFor(hi: HeadIn, kind: string): { text: string; bars: string[]; reharm: boolean } {
-  const own = /^tn-own(?:mel)?~(.*)$/.exec(kind);
+  const own = /^tn-own(?:mel|solo)?~(.*)$/.exec(kind);
   if (own) {
     const r = applyPlan(hi.text, parsePlan(own[1]), hi.tonic, hi.notes);
     return { text: r.text, bars: r.bars, reharm: true };
@@ -99,7 +104,7 @@ export function cleanPath(g: VLGoal): number[][] {
   const full = (v: number[], k: number): number[] => {
     const out = g.over && g.chords[k].melody !== undefined ? [...v, g.chords[k].melody!] : [...v];
     if (!g.bass) return out;
-    let b = 36 + pc(g.chords[k].root - 36);
+    let b = 36 + pc((g.chords[k].bassPc ?? g.chords[k].root) - 36);
     while (b >= Math.min(...out)) b -= 12;
     return [b, ...out];
   };
@@ -174,8 +179,110 @@ export function harmPlan(s: DrillSpec): { hi: HeadIn; goal: VLGoal; phrase: numb
   return { hi, goal, phrase, path: cleanPath(goal) };
 }
 
+/**
+ * Styles written out note for note (graded by chord sets, not the voice-leading grader): borrowing (oblique motion: on
+ * a long melody note one inner voice goes to the dim and back while the rest holds) and the line that breaks into
+ * blocks at its peaks (the notes between the blocks are single melody notes). The blocks are the clean path of the
+ * 6-dim style (each a voicing the voice-leading grader passes).
+ */
+export const WRITTEN_STYLES = ['borrow', 'peaks'];
+
+/** The dim note a half step from a 6th-chord voice (every tone of a 6 / m6 chord has one: C→B, E→F, G→A♭, A→A♭). */
+export function borrowStep(p: number, dimRoot: number): number | null {
+  const dim = [0, 3, 6, 9].map((i) => pc(dimRoot + i));
+  for (const d of [-1, 1]) if (dim.includes(pc(p + d))) return p + d;
+  return null;
+}
+
+function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
+  const { hi, goal, phrase, path } = harmPlan(s);
+  const b0 = phrase * 16;
+  const notes: ExpNote[] = [];
+  const chordSets: NonNullable<DrillGoal['chordSets']> = [];
+  const mel = notesIn(hi, phrase * 4, phrase * 4 + 4).map((n) => ({ ...n, beat: r6(n.beat - b0) }));
+  // the melody notes without a block: single notes
+  // A block whose inner voice is a melody note sounding within a beat of it stays a single note (the take could not
+  // tell the two strikes of one pitch apart).
+  const clash = (k: number): boolean => {
+    const at = goal.at[k];
+    return mel.some((n) => Math.abs(n.beat - at) > 1e-6 && Math.abs(n.beat - at) <= 1 + 1e-6 && path[k].includes(n.pitch));
+  };
+  const skip = new Set(style.id === 'peaks' ? path.map((_, k) => k).filter(clash) : []);
+  const isBlock = (beat: number) => goal.at.some((a, k) => !skip.has(k) && Math.abs(a - beat) < 1e-6);
+  for (const n of mel) if (!isBlock(n.beat)) notes.push({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' });
+  let bassPrev = 46;
+  let id = 0;
+  path.forEach((v0, k) => {
+    if (skip.has(k)) return;
+    const c = goal.chords[k];
+    const beat = goal.at[k];
+    const m = mel.find((x) => Math.abs(x.beat - beat) < 1e-6)!;
+    const v = [...v0].sort((a, b) => a - b);
+    const nextEv = goal.at[k + 1] ?? 16;
+    const br = c.bassPc ?? c.root;
+    const opts = [36, 48].map((o) => o + pc(br - o)).filter((p) => p >= 36 && p <= 55 && p < v[0]);
+    let b = (opts.length ? opts : [36 + pc(br - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
+    while (b >= v[0]) b -= 12;
+    bassPrev = b;
+    // the block lasts as long as its melody note (peaks: the line goes on above the held bass)
+    const dur = r6(Math.min(m.dur, nextEv - beat));
+    const bassDur = dur;
+    const cid = ++id;
+    const lower = v.slice(0, -1);
+    let mover = -1;
+    let moved: number | null = null;
+    if (style.id === 'borrow' && c.q !== 'dim7' && dur >= 2 - 1e-6) {
+      // the inner voice nearest the melody that has a half-step dim neighbour (the top inner voice first)
+      for (let j = lower.length - 1; j >= 0 && mover < 0; j--) {
+        const q = borrowStep(lower[j], pc(c.root - 1));
+        // the voice must not sound again in the next block (a re-struck pitch right after the return blurs the take)
+        const nextV = path[k + 1] ?? [];
+        if (q !== null && !v.includes(q) && !nextV.includes(lower[j]) && !nextV.includes(q)) {
+          mover = j;
+          moved = q;
+        }
+      }
+    }
+    const t1 = 1;
+    const t2 = dur >= 3 - 1e-6 ? 1 : 0.5;
+    // borrowing: the block, then the block with one voice moved to the dim, then the block again (struck each time,
+    // as Barry's borrowing is practised: sd-borrow); the bass holds under all three
+    const borrow = mover >= 0 && moved !== null;
+    const first = borrow ? t1 : dur;
+    lower.forEach((p) => notes.push({ pitch: p, beat, dur: first, hand: 'R', chordId: cid }));
+    notes.push({ pitch: m.pitch, beat, dur: first, hand: 'R', chordId: cid });
+    notes.push({ pitch: b, beat, dur: bassDur, hand: 'L', chordId: cid });
+    const req = [...new Set([...v, b].map(pc))].sort((x, y) => x - y);
+    chordSets.push({ chordId: cid, required: req, allowed: req });
+    if (borrow) {
+      const moveV = lower.map((p, j) => (j === mover ? moved! : p));
+      for (const [at, len, vs] of [[r6(beat + t1), t2, moveV], [r6(beat + t1 + t2), r6(dur - t1 - t2), lower]] as [number, number, number[]][]) {
+        const id2 = ++id;
+        [...vs, m.pitch].forEach((p) => notes.push({ pitch: p, beat: at, dur: len, hand: 'R', chordId: id2 }));
+        const r2 = [...new Set([...vs, m.pitch].map(pc))].sort((x, y) => x - y);
+        chordSets.push({ chordId: id2, required: r2, allowed: r2 });
+      }
+    }
+  });
+  notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
+  return {
+    spec: { ...s, hands: 'RL' },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, style.name, barsLabel(phrase)),
+    notes,
+    beats: 16,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: true, chordSets },
+    startBpm: Math.round(s.tempo ?? (hi.head.feel === 'ballad' ? 56 : 66)),
+    chart: chartOf(hi.bars.slice(phrase * 4, phrase * 4 + 4)),
+    tonic: hi.tonic,
+  };
+}
+
 function genHarm(s: DrillSpec): Drill {
   if (s.kind === 'hm-mel') return pianoMelody(s);
+  if (WRITTEN_STYLES.includes(s.kind.slice(3))) return genHarmWritten(s, HARM_STYLES[s.kind.slice(3)]);
   const { hi, goal, phrase, path } = harmPlan(s);
   const style = HARM_STYLES[s.kind.slice(3)];
   const notes: ExpNote[] = [];
@@ -200,15 +307,16 @@ function genHarm(s: DrillSpec): Drill {
     const c = goal.chords[k];
     const rh = [...v, ...(goal.over ? [c.melody!] : [])].sort((a, b) => a - b);
     rh.forEach((p) => notes.push({ pitch: p, beat, dur, hand: 'R', chordId: id, ...(p === c.melody ? { accent: true } : {}) }));
-    const opts = [36, 48].map((o) => o + pc(c.root - o)).filter((p) => p >= 36 && p <= 55 && p < rh[0]);
-    let b = (opts.length ? opts : [36 + pc(c.root - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
+    const br = c.bassPc ?? c.root;
+    const opts = [36, 48].map((o) => o + pc(br - o)).filter((p) => p >= 36 && p <= 55 && p < rh[0]);
+    let b = (opts.length ? opts : [36 + pc(br - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
     while (b >= rh[0]) b -= 12;
     bassPrev = b;
     notes.push({ pitch: b, beat, dur, hand: 'L', chordId: id });
   });
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
   const chordSets: NonNullable<DrillGoal['chordSets']> = goal.chords.map((c, k) => {
-    const req = [...new Set([...typePcs(c, goal.type), pc(c.root), ...(goal.over ? [pc(c.melody!)] : [])])].sort((a, b) => a - b);
+    const req = [...new Set([...typePcs(c, goal.type), pc(c.bassPc ?? c.root), ...(goal.over ? [pc(c.melody!)] : [])])].sort((a, b) => a - b);
     return { chordId: k + 1, required: req, allowed: req };
   });
   return {
@@ -266,9 +374,15 @@ const TUNE_WHAT: Record<string, T2> = {
   'tn-rhmel': t('the melody over the reharm', 'המנגינה מעל ההרמון החדש'),
   'tn-own': t('my reharm', 'ההרמון שלי'),
   'tn-ownmel': t('the melody over my reharm', 'המנגינה מעל ההרמון שלי'),
+  'tn-rhsolo': t('a solo chorus over the reharm', 'סבב סולו על ההרמון החדש'),
+  'tn-ownsolo': t('a solo chorus over my reharm', 'סבב סולו על ההרמון שלי'),
   'tn-two': t('two-feel', 'בשתיים'),
   'tn-walk': t('walking', 'ווקינג'),
   'tn-appr': t('walking with approaches', 'ווקינג עם צלילי גישה'),
+  'em-appr': t('the melody, approached from below', 'המנגינה, עם גישה מלמטה'),
+  'em-encl': t('the melody, enclosed', 'המנגינה, עם כיתורים'),
+  'em-pivot': t('the melody, pivots on long notes', 'המנגינה, פיבוטים על צלילים ארוכים'),
+  'em-free': t('the melody, embellished freely', 'המנגינה, מקושטת בחופשיות'),
 };
 const whatOf = (kind: string): T2 => TUNE_WHAT[kind.split('~')[0]] ?? TUNE_WHAT['tn-root'];
 
@@ -439,8 +553,14 @@ function guitarVoicing(tu: Tuning, c: ChartChordEv, mode: 'root' | 'guide' | 'sh
 
 // ───────────────────────────── guitar: chord-melody (g-cmel) and the melody + comp step ─────────────────────────────
 
-export type CmMode = 'mel' | 'bass' | 'guide' | 'drop2' | 'dim';
-const CM_MODE: Record<string, CmMode> = { 'cm-mel': 'mel', 'cm-bass': 'bass', 'cm-guide': 'guide', 'cm-drop2': 'drop2', 'cm-dim': 'dim', 'cm-chorus': 'dim', 'tn-melcomp': 'drop2' };
+/**
+ * mel / bass / guide / drop2 / dim: as before. six: 6-dim blocks in drop 2 under every melody note of an 8th or longer
+ * (C1 on the guitar: the bar's chord as its 6th chord, passing notes on its dim — heads.ts sixDimUnder). every: drop 2
+ * under every melody note of an 8th or longer (the chord containing it, else its dim). solo: the solo-guitar chorus —
+ * chord-melody (with passing dims) and walking-bass fills on the beats a long melody note leaves open.
+ */
+export type CmMode = 'mel' | 'bass' | 'guide' | 'drop2' | 'dim' | 'six' | 'every' | 'solo';
+const CM_MODE: Record<string, CmMode> = { 'cm-mel': 'mel', 'cm-bass': 'bass', 'cm-guide': 'guide', 'cm-drop2': 'drop2', 'cm-dim': 'dim', 'cm-chorus': 'dim', 'tn-melcomp': 'drop2', 'cm-six': 'six', 'cm-every': 'every', 'cm-solo': 'solo' };
 const CM_WHAT: Record<string, T2> = {
   'cm-mel': t('the melody in position', 'המנגינה בפוזיציה'),
   'cm-bass': t('melody + bass on the downbeats', 'מנגינה + בס על הפעמות'),
@@ -448,6 +568,9 @@ const CM_WHAT: Record<string, T2> = {
   'cm-drop2': t('drop 2 under the melody', 'דרופ 2 מתחת למנגינה'),
   'cm-dim': t('with passing diminished', 'עם דימיניש עובר'),
   'cm-chorus': t('a whole chorus', 'פזמון שלם'),
+  'cm-six': t('6-dim blocks in drop 2', 'בלוקים שש-מוקטן בדרופ 2'),
+  'cm-every': t('drop 2 under every note', 'דרופ 2 מתחת לכל צליל'),
+  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + בס מהלך'),
 };
 
 /** Place a melody note on the top strings near a fret (strings 1–3). */
@@ -465,10 +588,11 @@ function melodyPlace(tu: Tuning, m: number, near: number): P {
 export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[], mode: CmMode, b0 = 0): Ev[] {
   const evs: Ev[] = [];
   let near = 5;
+  const dense = mode === 'six' || mode === 'every';
   for (const n of notes) {
     const c = chordAt(chords, n.beat);
     const inBar = n.beat - Math.floor(n.beat / 4 + 1e-9) * 4;
-    const picked = Math.abs(inBar) < 1e-6 || Math.abs(inBar - 2) < 1e-6 || Math.abs(c.bar * 4 + c.at - n.beat) < 1e-6;
+    const picked = dense ? n.dur >= 0.5 - 1e-6 : Math.abs(inBar) < 1e-6 || Math.abs(inBar - 2) < 1e-6 || Math.abs(c.bar * 4 + c.at - n.beat) < 1e-6;
     const q = chordUnder(n.pitch, c);
     const single = (): Ev => {
       const p = melodyPlace(tu, n.pitch, near);
@@ -501,7 +625,8 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
       continue;
     }
     // Drop 2 under the melody note on the top string set (the melody on string 1; 5-4-3-2 when 4-3-2-1 has no fit).
-    const vc: VLChord | null = q ? { root: c.root, q, melody: n.pitch } : mode === 'dim' ? { root: pc(n.pitch), q: 'dim7', melody: n.pitch } : null;
+    const sd = mode === 'six' ? sixDimUnder(n.pitch, c) : null;
+    const vc: VLChord | null = mode === 'six' ? (sd ? { root: sd.root, q: sd.q, melody: n.pitch } : null) : q ? { root: c.root, q, melody: n.pitch } : mode === 'dim' || mode === 'every' || mode === 'solo' ? { root: pc(n.pitch), q: 'dim7', melody: n.pitch } : null;
     if (!vc) {
       evs.push(single());
       continue;
@@ -519,7 +644,24 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
       continue;
     }
     near = lowFretOf(shape) < 99 ? lowFretOf(shape) : near;
-    evs.push({ beat: n.beat - b0, dur: n.dur, notes: shape.map((p) => ({ ...p, stroke: 'D' as const, tech: 'strum-down' as const, ct: true, ...(noteAt(tu, p.s, p.f) === n.pitch ? { acc: true } : {}) })) });
+    // solo guitar: a long melody note leaves beats open — the chord on its first beat, then walking-bass notes
+    const fill = mode === 'solo' && n.dur >= 2 - 1e-6 && Number.isInteger(Math.round(n.beat * 1e6) / 1e6);
+    evs.push({ beat: n.beat - b0, dur: fill ? 1 : n.dur, notes: shape.map((p) => ({ ...p, stroke: 'D' as const, tech: 'strum-down' as const, ct: true, ...(noteAt(tu, p.s, p.f) === n.pitch ? { acc: true } : {}) })) });
+    if (fill) {
+      const next = chordAt(chords, n.beat + n.dur);
+      const tones = fourOf(c).map((x) => c.root + x);
+      const k = Math.floor(n.dur + 1e-6);
+      let prevB = 40 + pc(c.root - 40);
+      for (let j = 1; j < k; j++) {
+        // the last fill note leads into the next chord's root a half step below; the others are the chord's 3rd and 5th
+        const want = j === k - 1 ? pc(next.root - 1) : pc(tones[j % 2 === 1 ? 1 : 2]);
+        let b = 40 + pc(want - 40);
+        if (Math.abs(b + 12 - prevB) < Math.abs(b - prevB) && b + 12 <= 52) b += 12;
+        prevB = b;
+        const bp = place(tu, b, [6, 5, 4], Math.max(0, near - 4), near + 4) ?? place(tu, b, [6, 5, 4], 0, 12);
+        if (bp) evs.push({ beat: n.beat + j - b0, dur: 1, notes: [{ ...bp, stroke: 'D', ct: j !== k - 1 }] });
+      }
+    }
   }
   return evs;
 }
@@ -527,9 +669,9 @@ export function chordMelodyEvs(tu: Tuning, notes: HNote[], chords: ChartChordEv[
 function genChordMelody(s: DrillSpec, tu: Tuning): Drill {
   const { head, phrase } = decodeHead(s.option);
   const hi = headIn(head, s.key, 'guitar');
-  const whole = s.kind === 'cm-chorus';
+  const whole = s.kind === 'cm-chorus' || s.kind === 'cm-solo';
   const from = whole ? 0 : phrase * 4;
-  const to = whole ? hi.bars.length : phrase * 4 + 4;
+  const to = whole ? hi.bars.length : Math.min(hi.bars.length, phrase * 4 + (s.kind === 'cm-every' ? 8 : 4));
   const evs = chordMelodyEvs(tu, notesIn(hi, from, to), hi.chords, CM_MODE[s.kind] ?? 'mel', from * 4);
   const d = finish(s, tu, evs, { title: titleOf(hi, CM_WHAT[s.kind] ?? CM_WHAT['cm-mel'], whole ? undefined : barsLabel(phrase)), bpm: head.feel === 'ballad' ? 56 : 66, evenness: false, keySig: sigOf(hi.tonic) });
   return { ...d, beats: Math.max(d.beats, (to - from) * 4), chart: chartOf(hi.bars.slice(from, to)), tonic: hi.tonic };
@@ -644,18 +786,196 @@ function genTuneBass(s: DrillSpec, tu: Tuning): Drill {
   return { ...d, tonic: hi.tonic };
 }
 
+// ───────────────────────────── embellish the melody (C2) ─────────────────────────────
+
+const EMB_KIND: Record<string, EmbKind> = { 'em-appr': 'approach', 'em-encl': 'enclose', 'em-pivot': 'pivot', 'em-free': 'free' };
+export const EMB_KINDS = Object.keys(EMB_KIND);
+/**
+ * The embellished head in a register: written items (approach, enclose, pivot) are graded note for note; the free kind
+ * grades the melody notes exactly and leaves the spans before the targets (and the open beats of long notes) free —
+ * any notes, at least one in each (goal.free), the written mix as the model.
+ */
+export function embPlan(hi: HeadIn, kind: string, shift = 0) {
+  const k = EMB_KIND[kind] ?? 'approach';
+  const notes = hi.notes.map((n) => ({ ...n, pitch: n.pitch + shift }));
+  const e = embellish(notes, hi.chords, k, keyScale(hi.tonic.key, hi.tonic.minor));
+  const free = k === 'free';
+  const inSpan = (b: number) => e.spans.some(([a, z]) => b >= a - 1e-6 && b < z - 1e-6);
+  const written = free ? e.notes.filter((n) => n.role === 'melody' && !inSpan(n.beat)) : e.notes;
+  const model = e.notes.filter((n) => n.role !== 'melody' || inSpan(n.beat)).map((n) => ({ beat: n.beat, dur: n.dur, pitch: n.pitch }));
+  const goalFree = free
+    ? { windows: e.spans.map(([a, z]) => [a, z] as [number, number]), scale: e.spans.map(([a, z]) => ({ from: a, to: z, pcs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] })), minPerBar: 1, model }
+    : undefined;
+  return { kind: k, written, spans: e.spans, free: goalFree, all: e.notes };
+}
+
+function genEmbPiano(s: DrillSpec): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const pl = embPlan(hi, s.kind);
+  const notes: ExpNote[] = pl.written.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as Hand }));
+  return {
+    spec: { ...s, hands: 'R' },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, whatOf(s.kind)),
+    notes,
+    beats: hi.bars.length * 4,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: false, ...(pl.free ? { free: pl.free } : {}) },
+    startBpm: Math.round(s.tempo ?? (head.feel === 'ballad' ? 56 : 72)),
+    chart: chartOf(hi.bars),
+    tonic: hi.tonic,
+    paged: true,
+  };
+}
+function genEmbGuitar(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'guitar');
+  const pl = embPlan(hi, s.kind);
+  let near = 5;
+  const evs: Ev[] = pl.written.map((n) => {
+    const p = melodyPlace(tu, n.pitch, near);
+    if (p.f > 0) near = p.f;
+    return { beat: n.beat, dur: n.dur, notes: [{ ...p, stroke: 'D' as const, ct: n.role === 'melody' }] };
+  });
+  const d = finish(s, tu, evs, { title: titleOf(hi, whatOf(s.kind)), bpm: head.feel === 'ballad' ? 56 : 72, evenness: false, keySig: sigOf(hi.tonic) });
+  return { ...d, beats: Math.max(d.beats, hi.bars.length * 4), goal: { ...d.goal, ...(pl.free ? { free: pl.free } : {}) }, chart: chartOf(hi.bars), tonic: hi.tonic, paged: true };
+}
+/** The bass plays the head an octave or two down (inside E1–C4 as far as it goes). */
+function genEmbBass(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const lo = Math.min(...hi.notes.map((n) => n.pitch)) - 1;
+  const hiP = Math.max(...hi.notes.map((n) => n.pitch)) + 2;
+  const shift = [-24, -36, -12].reduce((a, b) => {
+    const over = (k: number) => Math.max(0, 31 - (lo + k)) + Math.max(0, hiP + k - 60);
+    return over(b) < over(a) ? b : a;
+  });
+  const pl = embPlan(hi, s.kind, shift);
+  const line: BN[] = pl.written.map((n) => ({ b: n.beat, d: n.dur, p: n.pitch, ct: n.role === 'melody' }));
+  const d = drillOf(s, tu, line, {
+    en: `${head.title.en} · ${whatOf(s.kind).en}`,
+    he: `${head.title.he} · ${whatOf(s.kind).he}`,
+    keyName: keyLabel(hi.tonic),
+    keySig: sigOf(hi.tonic),
+    chart: chartOf(hi.bars),
+    evenness: false,
+  });
+  const fr = pl.free;
+  return { ...d, title: titleOf(hi, whatOf(s.kind)), goal: { ...d.goal, ...(fr ? { free: fr } : {}) }, tonic: hi.tonic, paged: true };
+}
+
+// ───────────────────────────── a solo chorus over the reharm (C3 step 5) ─────────────────────────────
+
+const SOLO_CARDS = ['target-ct', 'inside'];
+const isSoloKind = (kind: string): boolean => /^tn-(rh|own)solo(~|$)/.test(kind);
+/** A chart chord as a bebop-vocabulary chord (scales, model lines). */
+function vchordOf(c: ChartChordEv): VChord {
+  const has = (x: number) => c.iv.some((i) => pc(i) === x);
+  const q: VQ = has(3) && has(6) ? (has(10) ? 'hd7' : 'dim7') : has(3) ? (has(10) ? 'm7' : 'm6') : has(10) ? (has(13) || has(1) ? '7b9' : '7') : has(11) ? 'maj7' : '6';
+  return { r: pc(c.root), q, beats: c.beats };
+}
+/**
+ * One chorus improvised over the reharmonised head (the preset reharm, or the player's own plan): the free goal over
+ * the whole chorus (each chord's scale), the rule cards a chord tone on each change + inside the changes (analyze.ts
+ * goal.improv), a written landing on the first and the last chord, the band and drums. The model is a bebop line
+ * through the new changes (it keeps both cards; tests check it).
+ */
+export function soloPlan(hi: HeadIn, kind: string, lo: number, hiP: number) {
+  const { text, bars } = chartFor(hi, kind);
+  const chords = parseChart(text).chords;
+  const vcs = chords.map(vchordOf);
+  const total = bars.length * 4;
+  const scale = chords.map((c, i) => ({ from: c.bar * 4 + c.at, to: c.bar * 4 + c.at + c.beats, pcs: [...new Set([...VQ_DEF[vcs[i].q].sc, ...VQ_DEF[vcs[i].q].ct].map((x) => pc(vcs[i].r + x)))] }));
+  const spans = chords.map((c) => ({ at: c.bar * 4 + c.at, beats: c.beats, root: pc(c.root), iv: c.iv }));
+  const model = modelLine('bebop', vcs, lo, hiP, `solo:${hi.head.id}:${hi.tonic.key}:${kind}`).map((n) => ({ beat: n.beat, dur: n.dur, pitch: n.p }));
+  const land = (c: ChartChordEv, first: boolean) => {
+    const ct = [...new Set(VQ_DEF[vchordOf(c).q].ct.map((x) => pc(c.root + x)))].sort((a, b) => a - b);
+    const beat = c.bar * 4 + c.at;
+    const m = model.find((n) => Math.abs(n.beat - beat) < 1e-6);
+    // the first landing: the chord tone nearest the head's first melody note (each head starts its solo its own way)
+    const m0 = hi.notes[0]?.pitch ?? Math.round((lo + hiP) / 2);
+    const firstPc = ct.reduce((a, x) => (Math.abs(((x - pc(m0) + 18) % 12) - 6) < Math.abs(((a - pc(m0) + 18) % 12) - 6) ? x : a), ct[0]);
+    const pitch = first ? nearestPc(firstPc, Math.min(hiP - 1, Math.max(lo + 1, m0)), lo, hiP) : m && ct.includes(pc(m.pitch)) ? m.pitch : nearestPc(c.root, Math.round((lo + hiP) / 2), lo, hiP);
+    return { beat, dur: first ? 1 : c.beats, pitch, land: ct };
+  };
+  return {
+    bars,
+    total,
+    // landings: the first chord, the start of each 8-bar section after it (a head's own shape), the last chord
+    landings: [land(chords[0], true), ...[...new Set(Array.from({ length: Math.floor((bars.length - 1) / 8) }, (_, i) => chordAt(chords, (i + 1) * 32)))].map((c) => land(c, false)), land(chords[chords.length - 1], false)].filter((l, i, a) => a.findIndex((x) => Math.abs(x.beat - l.beat) < 1e-6) === i),
+    goal: { free: { windows: [[0, total]] as [number, number][], scale, minPerBar: 2, model }, improv: { cards: SOLO_CARDS, spans } },
+  };
+}
+function genSoloPiano(s: DrillSpec): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const sp = soloPlan(hi, s.kind, 60, 86);
+  const notes: ExpNote[] = sp.landings.map((l) => ({ pitch: l.pitch, beat: l.beat, dur: l.dur, hand: 'R' as Hand, chordTone: true, land: l.land }));
+  return {
+    spec: { ...s, hands: 'R', swing: true },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, whatOf(s.kind)),
+    notes,
+    beats: sp.total,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: false, ...sp.goal },
+    startBpm: Math.round(s.tempo ?? (head.feel === 'ballad' ? 60 : 96)),
+    chart: chartOf(sp.bars),
+    tonic: hi.tonic,
+    paged: true,
+    show: 'none',
+    band: { style: 'swing', bass: true },
+    drums: { groove: head.feel === 'ballad' ? 'ballad-brush' : 'swing' },
+  };
+}
+function genSoloGuitar(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'guitar');
+  const sp = soloPlan(hi, s.kind, 55, 79);
+  let near = 5;
+  const evs: Ev[] = sp.landings.map((l) => {
+    const p = melodyPlace(tu, l.pitch, near);
+    if (p.f > 0) near = p.f;
+    return { beat: l.beat, dur: l.dur, notes: [{ ...p, stroke: 'D' as const, ct: true }] };
+  });
+  const d = finish({ ...s, swing: true }, tu, evs, { title: titleOf(hi, whatOf(s.kind)), bpm: head.feel === 'ballad' ? 60 : 96, evenness: false, keySig: sigOf(hi.tonic) });
+  return {
+    ...d,
+    notes: d.notes.map((n) => {
+      const l = sp.landings.find((x) => Math.abs(x.beat - n.beat) < 1e-6);
+      return l ? { ...n, land: l.land } : n;
+    }),
+    beats: Math.max(d.beats, sp.total),
+    goal: { ...d.goal, evenness: false, hands: false, ...sp.goal },
+    chart: chartOf(sp.bars),
+    tonic: hi.tonic,
+    paged: true,
+    show: 'none',
+    band: { style: 'swing', bass: true },
+    drums: { groove: head.feel === 'ballad' ? 'ballad-brush' : 'swing' },
+  };
+}
+
 // ───────────────────────────── dispatch ─────────────────────────────
 
 /** Piano: k-harm and k-tune. */
 export function genHeadPiano(s: DrillSpec): Drill {
+  if (EMB_KIND[s.kind]) return genEmbPiano(s);
+  if (isSoloKind(s.kind)) return genSoloPiano(s);
   return s.family === 'k-harm' ? genHarm(s) : genTunePiano(s);
 }
 /** Guitar: g-cmel and g-tune. */
 export function generateGuitarHead(s: DrillSpec, tu: Tuning): Drill {
+  if (EMB_KIND[s.kind]) return genEmbGuitar(s, tu);
+  if (isSoloKind(s.kind)) return genSoloGuitar(s, tu);
   return s.family === 'g-cmel' ? genChordMelody(s, tu) : genTuneGuitar(s, tu);
 }
 /** Bass: b-tune. */
 export function generateBassHead(s: DrillSpec, tu: Tuning): Drill {
+  if (EMB_KIND[s.kind]) return genEmbBass(s, tu);
   return genTuneBass(s, tu);
 }
 
@@ -675,6 +995,65 @@ const reharmable = (idx: number, kind: string): boolean => {
 };
 const headsFor = (kind: string): number[] => (RH_SETS[kind] ? SERVED.filter((i) => reharmable(i, kind)) : SERVED);
 
+/** Can a style harmonise this phrase of a head in all 12 keys (two chords at least)? A head with a phrase the style
+ *  cannot set (a melody with no note its voicings fit) is left out of that level. */
+const HARMABLE = new Map<string, boolean>();
+function harmable(idx: number, kind: string, phrase: number): boolean {
+  const k = `${idx}|${kind}|${phrase}`;
+  if (!HARMABLE.has(k)) {
+    let ok = true;
+    for (let key = 0; key < 12 && ok; key++) {
+      try {
+        harmPlan({ family: 'k-harm', kind, key, hands: 'RL', option: opt(idx, phrase) });
+      } catch {
+        ok = false;
+      }
+    }
+    HARMABLE.set(k, ok);
+  }
+  return HARMABLE.get(k)!;
+}
+
+/** Blocks a written style sets in a head's phrase (all 12 keys: the fewest) — a line into blocks needs two at least. */
+const BLOCKS = new Map<string, number>();
+function blocksIn(idx: number, style: string): number {
+  const k = `${idx}|${style}`;
+  if (!BLOCKS.has(k)) {
+    let n = 99;
+    for (let key = 0; key < 12; key++) {
+      try {
+        const d = genHarm({ family: 'k-harm', kind: `hm-${style}`, key, hands: 'RL', option: opt(idx, phraseFor(idx, style)) });
+        n = Math.min(n, new Set(d.notes.map((x) => x.chordId).filter((x) => x !== undefined)).size);
+      } catch {
+        n = 0;
+      }
+    }
+    BLOCKS.set(k, n);
+  }
+  return BLOCKS.get(k)!;
+}
+
+/** A phrase with notes shorter than an 8th or a repeated note (a written style's blocks would sit a 16th from a repeated note: the take's
+ *  matcher cannot tell them apart, so those phrases stay out of the written styles). */
+function shortNotes(idx: number, phrase: number): boolean {
+  const hi = headIn(HEADS[idx], HEADS[idx].home.key, 'piano');
+  const ns = notesIn(hi, phrase * 4, phrase * 4 + 4);
+  // ... or one pitch struck again and again (a repeated-note melody: the same reason)
+  return ns.some((n, i) => n.dur < 0.5 - 1e-6 || (i > 1 && ns[i - 1].pitch === n.pitch && ns[i - 2].pitch === n.pitch));
+}
+
+/** The phrase a style's level uses for a head: phrase 0, or for borrowing the first phrase with a long 6th-chord note. */
+export function phraseFor(idx: number, style: string): number {
+  if (style !== 'borrow') return 0;
+  const head = HEADS[idx];
+  const hi = headIn(head, head.home.key, 'piano');
+  for (let p = 0; p < phraseCount(head); p++) {
+    const evs = harmEvents(hi, p * 4, p * 4 + 4, HARM_STYLES.borrow);
+    if (evs.length >= 2 && evs.some((e) => e.chord.q !== 'dim7' && e.note.dur >= 2 - 1e-6)) return p;
+  }
+  return 0;
+}
+
 /** Base harmonising levels (stable ids 1–7); registered styles beyond the base four follow as levels 8, 9 … */
 const BASE_STYLES = ['shell', 'close', 'drop2', 'drop3'];
 const HARM_TITLE: Record<string, T2> = {
@@ -689,15 +1068,17 @@ export function pianoHarmFamily(): FamilyDef {
   const fam: FamilyId = 'k-harm';
   const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number]): LevelDef =>
     ({ id: `${fam}-${level}`, level, title: t(en, he), specs, keys: HEAD_KEYS, tempo }) as LevelDef;
-  const phrase0 = (kind: string, tempo: number): SpecTemplate[] => SERVED.map((i) => ({ family: fam, kind, hands: 'RL', option: opt(i, 0), tempo }));
+  const phrase0 = (kind: string, tempo: number): SpecTemplate[] => SERVED.filter((i) => harmable(i, kind, 0)).map((i) => ({ family: fam, kind, hands: 'RL', option: opt(i, 0), tempo }));
   const levels: LevelDef[] = [
     L(1, 'The melody alone', 'המנגינה לבד', SERVED.map((i) => ({ family: fam, kind: 'hm-mel', hands: 'R', option: opt(i), tempo: 80 })), [80, 132]),
     ...BASE_STYLES.map((id, k) => L(k + 2, HARM_TITLE[id].en, HARM_TITLE[id].he, phrase0(`hm-${id}`, 60), [60, 100])),
-    L(6, 'The next phrases in drop 2', 'המשפטים הבאים בדרופ 2', SERVED.flatMap((i) => [1, 2].filter((p) => p < phraseCount(HEADS[i])).map((p) => ({ family: fam, kind: 'hm-drop2', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
-    L(7, 'The rest of the head in drop 3', 'שאר השיר בדרופ 3', SERVED.flatMap((i) => [2, 3].filter((p) => p < phraseCount(HEADS[i])).map((p) => ({ family: fam, kind: 'hm-drop3', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
+    L(6, 'The next phrases in drop 2', 'המשפטים הבאים בדרופ 2', SERVED.flatMap((i) => [1, 2].filter((p) => p < phraseCount(HEADS[i]) && harmable(i, 'hm-drop2', p)).map((p) => ({ family: fam, kind: 'hm-drop2', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
+    L(7, 'The rest of the head in drop 3', 'שאר השיר בדרופ 3', SERVED.flatMap((i) => [2, 3].filter((p) => p < phraseCount(HEADS[i]) && harmable(i, 'hm-drop3', p)).map((p) => ({ family: fam, kind: 'hm-drop3', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
   ];
-  // Plugged-in styles (heads.ts registerHarmStyle): one level each, after the base ladder.
-  for (const st of builtStyles().filter((x) => !BASE_STYLES.includes(x.id))) levels.push(L(levels.length + 1, st.name.en, st.name.he, phrase0(`hm-${st.id}`, 60), [60, 100]));
+  // Plugged-in styles (heads.ts registerHarmStyle): one level each, after the base ladder. Borrowing takes, per head,
+  // the first phrase with a long note to borrow on (phraseFor).
+  for (const st of builtStyles().filter((x) => !BASE_STYLES.includes(x.id)))
+    levels.push(L(levels.length + 1, st.name.en, st.name.he, SERVED.filter((i) => harmable(i, `hm-${st.id}`, phraseFor(i, st.id)) && !(WRITTEN_STYLES.includes(st.id) && (shortNotes(i, phraseFor(i, st.id)) || blocksIn(i, st.id) < 2))).map((i) => ({ family: fam, kind: `hm-${st.id}`, hands: 'RL' as const, option: opt(i, phraseFor(i, st.id)), tempo: 60 })), [60, 100]));
   return { id: fam, title: t('Harmonise a melody', 'הרמון מנגינה'), style: 'jazz', levels };
 }
 
@@ -714,6 +1095,13 @@ const TUNE_PIANO: [string, string, string][] = [
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו'],
   // HARMONY-REHARM §4: modal interchange inside a head (the borrowed devices of reharm.ts, checked against the melody).
   ['tn-rh4', 'Reharm: borrowed chords — iv, ♭VI, ♭VII7, iiø7, minor plagal', 'הרמון מחדש: אקורדים שאולים — iv, ♭VI, ♭VII7, iiø7, פלגלית מינורית'],
+  // AUDIT-DEPTH-3 C2: embellish the head (the melody notes on their beats; embellish.ts).
+  ['em-appr', 'Embellish: approach each downbeat from below', 'קישוט: גישה מלמטה לכל פעמה ראשונה'],
+  ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה'],
+  ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים'],
+  ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה'],
+  // AUDIT-DEPTH-3 C3 step 5 / #2 L6: the whole form reharmonised, then a chorus improvised over it.
+  ['tn-rhsolo', 'Solo over the reharm: a chorus with the band', 'סולו על ההרמון החדש: סבב עם הלהקה'],
 ];
 
 /** k-tune: comp a head (piano, path ~1330 → 1780). */
@@ -735,6 +1123,10 @@ const CMEL: [string, string, string, number][] = [
   ['cm-drop2', 'Drop 2 under the melody, top four strings', 'דרופ 2 מתחת למנגינה, ארבעת המיתרים העליונים', 8],
   ['cm-dim', 'Passing diminished between the chords', 'דימיניש עובר בין האקורדים', 9],
   ['cm-chorus', 'A whole chorus of chord-melody', 'פזמון שלם של אקורד-מלודיה', 9],
+  // AUDIT-DEPTH-3 C1 on the guitar and #4: 6-dim blocks, drop 2 under every note (8 bars), the solo-guitar chorus.
+  ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 10],
+  ['cm-every', 'Drop 2 under every melody note, eight bars', 'דרופ 2 מתחת לכל צליל של המנגינה, שמונה תיבות', 10],
+  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומילויי בס מהלך', 11],
 ];
 export function guitarChordMelodyFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cmel';
@@ -762,11 +1154,16 @@ const TUNE_GUITAR: [string, string, string, number][] = [
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף', 9],
   ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה', 9],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו', 9],
+  // (the guitar family stays within 13 levels: approaches and enclosures share a level)
+  ['em-appr', 'Embellish: approach and enclose each downbeat', 'קישוט: גישה וכיתור לכל פעמה ראשונה', 9],
+  ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים', 10],
+  ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה', 10],
+  ['tn-rhsolo', 'Solo over the reharm: a chorus with the band', 'סולו על ההרמון החדש: סבב עם הלהקה', 10],
 ];
 export function guitarTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-tune';
   const levels: GuitarLevelDef[] = TUNE_GUITAR.map(([kind, en, he, grade], i) => {
-    const kinds = kind === 'tn-rh3' ? ['tn-rh3', 'tn-rhmel'] : [kind];
+    const kinds = kind === 'tn-rh3' ? ['tn-rh3', 'tn-rhmel'] : kind === 'em-appr' ? ['em-appr', 'em-encl'] : [kind];
     return {
       id: `${fam}-${i + 1}`,
       level: i + 1,
@@ -790,11 +1187,15 @@ const TUNE_BASS: [string, string, string][] = [
   ['tn-rh1', 'Walk the reharm: tritone subs and extra ii–Vs', 'ווקינג על ההרמון החדש: טריטון ו־ii–V נוסף'],
   ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'ווקינג על ההרמון החדש: דלת אחורית, דימיניש, קלישאה'],
   ['tn-rh3', 'Walk the reharm: Coltrane subs', 'ווקינג על ההרמון החדש: קולטריין'],
+  ['em-appr', 'The melody on the bass, approached from below', 'המנגינה בבס, עם גישה מלמטה'],
+  ['em-encl', 'The melody on the bass, enclosed', 'המנגינה בבס, עם כיתורים'],
+  ['em-pivot', 'The melody on the bass, pivots on long notes', 'המנגינה בבס, פיבוטים על צלילים ארוכים'],
+  ['em-free', 'The melody on the bass, embellished freely', 'המנגינה בבס, מקושטת בחופשיות'],
 ];
 export function bassTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'b-tune';
   const levels: GuitarLevelDef[] = TUNE_BASS.map(([kind, en, he], i) => {
-    const walk = kind !== 'tn-root' && kind !== 'tn-two';
+    const walk = kind !== 'tn-root' && kind !== 'tn-two' && !EMB_KIND[kind];
     return {
       id: `${fam}-${i + 1}`,
       level: i + 1,
@@ -802,7 +1203,7 @@ export function bassTuneFamily(): GuitarFamilyDef {
       specs: headsFor(kind).map((idx): SpecTemplate => ({ family: fam, kind, hands: 'R', instrument: 'bass', option: opt(idx), ...(walk ? { perBeat: 1 } : {}), tempo: walk ? 80 : 70 })),
       keys: HEAD_KEYS,
       tempo: walk ? [80, 160] : [70, 120],
-      sub: walk ? 'quarters' : 'halves',
+      sub: EMB_KIND[kind] ? 'melody' : walk ? 'quarters' : 'halves',
     };
   });
   return { id: fam, title: t('Tunes on the bass', 'שירים בבס'), style: 'jazz', genres: ['all'], instruments: ['bass'], levels };

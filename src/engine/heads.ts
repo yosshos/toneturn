@@ -178,8 +178,8 @@ export interface HarmStyle {
   tol: number;
   /** The chord under one note, or null to leave the note out. Default: the chart chord containing the note (chordUnder). */
   chordFor?: (n: HarmNote) => VLChord | null;
-  /** Which notes get a chord. Default: notes on beats 1 and 3, and every note where a chord starts. */
-  pick?: (n: HarmNote) => boolean;
+  /** Which notes get a chord (`all`: the notes of the bars harmonised). Default: notes on beats 1 and 3, and every note where a chord starts. */
+  pick?: (n: HarmNote, all: HNote[]) => boolean;
   /** A planned style not built yet: no level uses it (a hook for another build). */
   todo?: boolean;
 }
@@ -205,12 +205,6 @@ export const HARM_STYLES: Record<string, HarmStyle> = {
   close: { id: 'close', name: { en: 'Four-way close', he: 'ארבעה קולות צמודים' }, type: 'close', over: false, lo: 52, hi: 88, tol: 2 },
   drop2: { id: 'drop2', name: { en: 'Drop 2 under the melody', he: 'דרופ 2 מתחת למנגינה' }, type: 'drop2', over: false, lo: 47, hi: 88, tol: 3 },
   drop3: { id: 'drop3', name: { en: 'Drop 3 under the melody', he: 'דרופ 3 מתחת למנגינה' }, type: 'drop3', over: false, lo: 47, hi: 88, tol: 3 },
-  // TODO (Barry Harris build, after its merge; docs/BARRY-HARRIS-THEORY.md §3, §5): 6-dim blocks — chord tones on the
-  // 6th chord Barry converts the chord to (Dm7 = F6, Dø = Fm6, G7 → Dm6), passing tones on the scale’s dim.
-  // Register with chordFor (6th chord / dim7) and a pick that takes every note.
-  sixdim: { id: 'sixdim', name: { en: '6-dim blocks', he: 'בלוקים שש-מוקטן' }, type: 'close', over: false, lo: 52, hi: 86, tol: 2, todo: true },
-  // TODO (Barry Harris build): borrowing on long melody notes — the melody holds, one inner voice to the dim and back.
-  borrow: { id: 'borrow', name: { en: 'Borrowing on melody notes', he: 'השאלה על צלילי המנגינה' }, type: 'drop2', over: false, lo: 45, hi: 86, tol: 3, todo: true },
 };
 
 /** Plug in (or replace) a harmonisation style. The head drills list every non-todo style in HARM_ORDER. */
@@ -219,7 +213,7 @@ export function registerHarmStyle(s: HarmStyle, after?: string): void {
   if (!HARM_ORDER.includes(s.id)) HARM_ORDER.splice(after && HARM_ORDER.includes(after) ? HARM_ORDER.indexOf(after) + 1 : HARM_ORDER.length, 0, s.id);
 }
 /** The order of the styles on the ladder (todo styles are skipped by the catalogue). */
-export const HARM_ORDER: string[] = ['shell', 'close', 'drop2', 'drop3', 'sixdim', 'borrow'];
+export const HARM_ORDER: string[] = ['shell', 'close', 'drop2', 'drop3'];
 /** The styles levels are built from. */
 export const builtStyles = (): HarmStyle[] => HARM_ORDER.map((id) => HARM_STYLES[id]).filter((s) => s && !s.todo);
 
@@ -228,10 +222,11 @@ export function harmEvents(hi: HeadIn, fromBar: number, toBar: number, style: Ha
   const pick = style.pick ?? defaultPick;
   const chordFor = style.chordFor ?? defaultChordFor;
   const out: { note: HNote; chord: VLChord; chart: ChartChordEv }[] = [];
-  for (const note of notesIn(hi, fromBar, toBar)) {
+  const all = notesIn(hi, fromBar, toBar);
+  for (const note of all) {
     const chart = chordAt(hi.chords, note.beat);
     const hn = { note, chord: chart };
-    if (!pick(hn)) continue;
+    if (!pick(hn, all)) continue;
     const c = chordFor(hn);
     if (c) out.push({ note, chord: c, chart });
   }
@@ -243,6 +238,101 @@ export function harmEvents(hi: HeadIn, fromBar: number, toBar: number, style: Ha
 // thumbs and index fingers sharing the chord between — graded by his four rules (soloPiano.ts sharedRules) through
 // voiceLead.ts's 'shared' type. Registered after drop 3, so it becomes k-harm level 8 (`hm-shared`).
 registerHarmStyle({ id: 'shared', name: { en: 'Shared hands under the melody', he: 'שתי ידיים מתחת למנגינה' }, type: 'shared', over: true, lo: 36, hi: 84, tol: 4 }, 'drop3');
+
+// ───────────────────────────── 6-dim blocks under a melody (Barry Harris; AUDIT-DEPTH-3 C1, #1) ─────────────────────────────
+// docs/BARRY-HARRIS-THEORY.md (owner-confirmed sections only): §3 — Dm7 = F6, Dø = Fm6, and over a dominant the m6 on
+// its 5th ("the important minor": G7 → Dm6); §5 — the four 6th-diminished scales: the 6th chord's tones on the beat, the
+// dim a half step below the 6th chord's root between (C6 / Cm6 → B°7); §6.3 — harmonisation: the chord alternates with
+// its dim, block, then drop 2; §6.4 — borrowing (oblique motion): one voice to the dim and back. So under each melody
+// note: a tone of the bar's 6th chord gets that 6th chord, a tone of its dim gets the dim; a note in neither (a
+// chromatic passing note) stays a single note. The bass keeps the chart's root (Dm7 voiced F6 over D).
+
+/** The 6th chord a chart chord converts to (root pc + quality), or null (no 6-dim conversion). */
+export function sixthOf(c: Pick<ChartChordEv, 'root' | 'iv'>): { root: number; q: '6' | 'm6' } | null {
+  switch (chordKind(c.iv)) {
+    case 'maj':
+      return { root: pc(c.root), q: '6' };
+    case 'min':
+      // a written m6 stays m6; a m7 is the 6 chord a minor 3rd up (Dm7 = F6)
+      return c.iv.some((i) => pc(i) === 9) && !c.iv.some((i) => pc(i) === 10) ? { root: pc(c.root), q: 'm6' } : { root: pc(c.root + 3), q: '6' };
+    case 'mmaj':
+      return { root: pc(c.root), q: 'm6' };
+    case 'half':
+      return { root: pc(c.root + 3), q: 'm6' }; // Dø = Fm6
+    case 'dom':
+      return { root: pc(c.root + 7), q: 'm6' }; // G7 → Dm6
+    default:
+      return null;
+  }
+}
+const LETTERS = 'CDEFGAB';
+const LETTER_PC = [0, 2, 4, 5, 7, 9, 11];
+/** A note name `steps` letters and `semis` semitones from the chart chord's root, spelled from its letter (Dm7 → F, B♭7 → F). */
+export function spellFrom(sym: string, steps: number, semis: number): string {
+  const m = /^([A-G])([#b♯♭]?)/.exec(sym);
+  const li = m ? LETTERS.indexOf(m[1]) : 0;
+  const acc = m && (m[2] === '#' || m[2] === '♯') ? 1 : m && m[2] ? -1 : 0;
+  const rootPc = LETTER_PC[li] + acc;
+  const nl = (((li + steps) % 7) + 7) % 7;
+  let d = pc(rootPc + semis - LETTER_PC[nl]);
+  if (d > 6) d -= 12;
+  return LETTERS[nl] + (d === 1 ? '♯' : d === 2 ? '𝄪' : d === -1 ? '♭' : d === -2 ? '𝄫' : '');
+}
+/** The chord under a melody note in 6-dim blocks: the 6th chord, its dim, or null. */
+export function sixDimUnder(melodyPitch: number, c: ChartChordEv): VLChord | null {
+  if (chordKind(c.iv) === 'dim') return [0, 3, 6, 9].includes(pc(melodyPitch - c.root)) ? { root: pc(c.root), q: 'dim7', melody: melodyPitch, name: symName(c.sym, 'dim7') } : null;
+  const six = sixthOf(c);
+  if (!six) return null;
+  const r = pc(melodyPitch - six.root);
+  const bassPc = pc(c.root);
+  // letters from the chart root to the 6th chord's root: same (maj, m6), a 3rd up (m7, ø), a 5th up (dom)
+  const up = pc(six.root - c.root);
+  const steps = up === 0 ? 0 : up === 3 ? 2 : 4;
+  const sixName = spellFrom(c.sym, steps, up);
+  if ((six.q === '6' ? [0, 4, 7, 9] : [0, 3, 7, 9]).includes(r)) return { root: six.root, q: six.q, melody: melodyPitch, bassPc, name: sixName + QUAL[six.q].label };
+  // the dim a half step under the 6th chord's root (C6 → B°7): one letter down
+  if ([11, 2, 5, 8].includes(r)) return { root: pc(six.root - 1), q: 'dim7', melody: melodyPitch, bassPc, name: spellFrom(c.sym, steps - 1, up - 1) + QUAL.dim7.label };
+  return null;
+}
+/** Every note of an 8th or longer gets a block (locked hands); shorter notes stay single. */
+const everyNote = (n: HarmNote): boolean => n.note.dur >= 0.5 - 1e-6;
+const sixChordFor = (n: HarmNote): VLChord | null => sixDimUnder(n.note.pitch, n.chord);
+
+registerHarmStyle({ id: 'sixdim', name: { en: '6-dim blocks under the melody', he: 'בלוקים שש-מוקטן מתחת למנגינה' }, type: 'close', over: false, lo: 52, hi: 88, tol: 3, chordFor: sixChordFor, pick: everyNote }, 'shared');
+registerHarmStyle({ id: 'sixdrop2', name: { en: '6-dim blocks in drop 2', he: 'בלוקים שש-מוקטן בדרופ 2' }, type: 'drop2', over: false, lo: 45, hi: 88, tol: 4, chordFor: sixChordFor, pick: everyNote }, 'sixdim');
+// Borrowing: the blocks of the 6-dim style; on a long melody note one inner voice goes to the dim and back while the
+// melody and the other voices hold (headDrills.ts writes the oblique motion out).
+registerHarmStyle({ id: 'borrow', name: { en: 'Borrowing on long melody notes', he: 'השאלה על צלילים ארוכים של המנגינה' }, type: 'close', over: false, lo: 52, hi: 88, tol: 3, chordFor: sixChordFor, pick: everyNote }, 'sixdrop2');
+// A single-note line that breaks into 6-dim blocks at its peaks: the highest note of each bar (an 8th or longer) is
+// blocked, the rest stay single notes (AUDIT-DEPTH-3 #1 L6).
+const peakPick = (n: HarmNote, all: HNote[]): boolean => {
+  if (n.note.dur < 0.5 - 1e-6) return false;
+  const bar = Math.floor(n.note.beat / 4 + 1e-9);
+  const inBar = all.filter((x) => Math.floor(x.beat / 4 + 1e-9) === bar && x.dur >= 0.5 - 1e-6);
+  const top = Math.max(...inBar.map((x) => x.pitch));
+  return n.note.pitch === top && inBar.find((x) => x.pitch === top) === n.note;
+};
+registerHarmStyle({ id: 'peaks', name: { en: 'A line that breaks into blocks at its peaks', he: 'קו שנפתח לבלוקים בשיאים שלו' }, type: 'close', over: false, lo: 52, hi: 88, tol: 6, chordFor: sixChordFor, pick: peakPick }, 'borrow');
+// Triads under the melody (AUDIT-DEPTH-3 #3 L1): the melody the top of a close triad of the chart chord (a 7th chord's
+// triad: Dm7 → Dm, G7 → G, Bø → B°); a note outside the triad stays single.
+const TRIAD_Q: Record<ChordKind, VLQuality | null> = { maj: 'M', min: 'm', mmaj: 'm', dom: 'M', half: 'dim', dim: 'dim' };
+registerHarmStyle(
+  {
+    id: 'triad',
+    name: { en: 'Triads under the melody', he: 'משולשים מתחת למנגינה' },
+    type: 'triad',
+    over: false,
+    lo: 52,
+    hi: 88,
+    tol: 2,
+    chordFor: (n) => {
+      const q = TRIAD_Q[chordKind(n.chord.iv)];
+      if (!q || !QUAL[q].ints.map((i) => pc(n.chord.root + i)).includes(pc(n.note.pitch))) return null;
+      return { root: pc(n.chord.root), q, melody: n.note.pitch, name: symName(n.chord.sym, q) };
+    },
+  },
+  'peaks',
+);
 
 /** Every head by id, for lookups from item options (option = index in HEADS). */
 export const headAt = (i: number): Head => HEADS[((i % HEADS.length) + HEADS.length) % HEADS.length];

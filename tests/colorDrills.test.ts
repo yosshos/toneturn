@@ -27,9 +27,9 @@ describe('colour harmony families: counts and wiring', () => {
     expect(GCAT.find((f) => f.id === 'g-ctone')!.levels).toHaveLength(GCT_ROWS.length);
     expect(GCAT.find((f) => f.id === 'g-color')!.levels).toHaveLength(GCOL_ROWS.length);
     // 12 colour levels + the open-string pedal ladder (HARMONY-REHARM still open, 3 levels)
-    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(15);
+    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(16); // 16: drop D (the low open D pedal)
     expect(GCAT.find((f) => f.id === 'b-counter')!.levels).toHaveLength(BC_ROWS.length);
-    expect(CT_ROWS.length + MD_ROWS.length + ORG_ROWS.length + RH_ROWS.length).toBe(34);
+    expect(CT_ROWS.length + MD_ROWS.length + ORG_ROWS.length + RH_ROWS.length).toBe(36); // + k-reharm 23–24 (AUDIT-DEPTH-3 #2: each device under the melody)
   });
   it('k-reharm 9 and 10 run in all 12 keys now', () => {
     for (const id of ['k-reharm-9', 'k-reharm-10']) expect((lv(id).keys as number[]).length, id).toBe(12);

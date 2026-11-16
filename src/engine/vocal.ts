@@ -646,6 +646,8 @@ export interface SongSpec {
   read?: 'band' | 'lead';
   /** F15 L3: embellish the head — keep the long notes, add neighbours and approaches (≥ 20 % more notes). */
   embellish?: boolean;
+  /** AUDIT-DEPTH-3 C2: the head embellished as written (voiceSongs.ts embellishPlan) — chromatic approaches or enclosures into each bar. */
+  written?: 'approach' | 'enclose';
   /** F15 L7: bebop syllable phrasing — swung eighths and the off-beats accented. */
   bop?: boolean;
   /** F14 L9: from this phrase on, the head is interpreted (the earlier phrases as written). */

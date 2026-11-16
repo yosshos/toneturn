@@ -127,9 +127,10 @@ describe('shared hands: his four rules', () => {
   });
   it('hm-shared is registered after drop 3: k-harm level 8, graded by the rules through voiceLead', () => {
     expect(HARM_STYLES.shared?.type).toBe('shared');
-    expect(builtStyles().map((s) => s.id)).toEqual(['shell', 'close', 'drop2', 'drop3', 'shared']);
+    // + the 6-dim styles and triads after it (AUDIT-DEPTH-3 C1: k-harm 9–13)
+    expect(builtStyles().map((s) => s.id).slice(0, 5)).toEqual(['shell', 'close', 'drop2', 'drop3', 'shared']);
     const f = pianoHarmFamily();
-    expect(f.levels).toHaveLength(8);
+    expect(f.levels).toHaveLength(13);
     expect(f.levels[7].specs[0].kind).toBe('hm-shared');
     const c = { root: 0, q: 'maj7' as const, melody: 64 };
     const g = { type: 'shared' as const, bass: false, over: true };
@@ -238,7 +239,7 @@ describe('wiring', () => {
     expect(new Set(glyphs).size).toBe(4);
     for (const g of glyphs) expect(Object.entries(FAMILY_GLYPH).filter(([, v]) => v === g)).toHaveLength(1);
     expect(SP_FAMILIES.map((f) => familyLevelCount(f))).toEqual([18, 20, 7, 7]);
-    expect(familyLevelCount('k-harm')).toBe(8);
+    expect(familyLevelCount('k-harm')).toBe(13);
     // sp-stride is hidden until verified (its tenths, variations and shuttle): src/engine/verifiedContent.ts
     for (const id of ['sp-registers', 'sp-mango', 'sp-shells', 'sp-shared', 'sp-comping', 'sp-phrasing']) expect(MINI_LESSONS[id], id).toBeDefined();
     expect(MINI_LESSONS['sp-stride']).toBeUndefined();

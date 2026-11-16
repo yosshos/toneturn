@@ -49,6 +49,7 @@ import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
 import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
+import { TuneLadder } from './TuneLadder'; // AUDIT-DEPTH-3 C4: one tune, step by step
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
 import { DrumWrite } from './DrumWrite';
@@ -376,6 +377,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <FamilyLesson family={view.f.id} settings={settings} />
         <VoiceLeadLessons family={view.f.id} settings={settings} />
         <ReharmStudio family={view.f.id} lang={lang} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <TuneLadder family={view.f.id} lang={lang} items={items} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );

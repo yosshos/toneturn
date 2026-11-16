@@ -40,7 +40,7 @@ function perfect(d: Drill, bpm: number): PlayedNote[] {
     out.push({ pitch: n.technique === 'dead' ? -1 : n.pitch, on, off: null, vel: 64 });
   }
   // Free bars judged by rule cards (AUDIT-DEPTH-3 improv items): the model line is the perfect answer there.
-  if (d.goal.improv) for (const m of d.goal.improv.model ?? d.goal.free?.model ?? []) if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 64 }));
+  if (d.goal.improv || d.goal.free) for (const m of d.goal.improv?.model ?? d.goal.free?.model ?? []) if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 64 }));
   return out.sort((a, b) => a.on - b.on);
 }
 
@@ -55,7 +55,7 @@ describe('guitar drills: catalogue', () => {
       // BASS_NICHE_PLAN P2: the bass ear runs to 21 (E5); progressions by ear take it to 23.
       // AUDIT-7 #7: g-scales has 15 (harmonic minor and the modes at grades 5–7, levels 13–15).
       // HARMONY-REHARM: b-ear 24 (borrowed chords by ear); g-color 13–15 (the open-string pedal).
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' || f.id === 'g-color' ? 15 : 13);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' ? 15 : f.id === 'g-color' ? 16 : 13);
       // numbered in order; a gap only where a level is hidden until verified (src/engine/verifiedContent.ts)
       f.levels.forEach((l, i) => expect(l.level).toBeGreaterThanOrEqual(i + 1));
       f.levels.forEach((l, i) => i > 0 && expect(l.level).toBeGreaterThan(f.levels[i - 1].level));

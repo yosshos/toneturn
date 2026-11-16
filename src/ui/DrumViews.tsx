@@ -547,7 +547,13 @@ function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, extras = [] 
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
-  const kickY = 3 + lanes.length * H;
+  const lineExtras = extras.filter((e) => e.voice && e.beat >= b0 - 1e-6 && e.beat < b0 + per - 1e-6);
+  // An extra hit on a drum that has no lane in this groove gets a thin "other drum" strip above the lanes (only on a
+  // line that has one, so the lanes keep their height otherwise).
+  const noLane = (v: DrumVoice) => (v === 'kick' ? !hasKick : !lanes.includes(laneOf(v)));
+  const OH = lineExtras.some((e) => noLane(e.voice!)) ? 13 : 0;
+  const top = 3 + OH;
+  const kickY = top + lanes.length * H;
   const h = kickY + (hasKick ? KH + 2 : 0) + 3;
   const xOf = (b: number) => LX0 + 8 + ((b - b0) / per) * (LW - LX0 - 18);
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
@@ -556,10 +562,18 @@ function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, extras = [] 
   const isCue = (n: ExpNote) => cueBeat !== null && cueBeat !== undefined && Math.abs(n.beat - cueBeat) < 1e-6;
   return (
     <svg className="drum-lanes" viewBox={`0 0 ${LW} ${h}`} role="img" aria-label="drum lanes" data-line={line} data-kick-bar={hasKick ? 1 : 0}>
+      {OH > 0 && (
+        <g data-other-lane="1">
+          <rect x={LX0} y={2} width={LW - LX0 - 4} height={OH - 3} rx={4} className="dl-lane l-other" />
+          <text x={LX0 - 4} y={2 + (OH - 3) / 2} className="dl-other-label" textAnchor="end" dominantBaseline="central">
+            +
+          </text>
+        </g>
+      )}
       {lanes.map((v, i) => (
         <g key={v}>
-          <rect x={LX0} y={3 + i * H} width={LW - LX0 - 4} height={H - 2} rx={5} className={`dl-lane l-${classOf(v)}`} />
-          <LaneIcon v={v} x={4} y={3 + i * H + (H - 2) / 2 - 9} />
+          <rect x={LX0} y={top + i * H} width={LW - LX0 - 4} height={H - 2} rx={5} className={`dl-lane l-${classOf(v)}`} />
+          <LaneIcon v={v} x={4} y={top + i * H + (H - 2) / 2 - 9} />
         </g>
       ))}
       {hasKick && (
@@ -588,7 +602,7 @@ function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, extras = [] 
           );
         }
         const li = lanes.indexOf(laneOf(n.voice!));
-        const y = 3 + li * H + (H - 2) / 2;
+        const y = top + li * H + (H - 2) / 2;
         const xh = XHEAD.has(n.voice!);
         const r = n.accent ? 6.5 : n.ghost ? 4.6 : 5.6;
         return (
@@ -610,18 +624,18 @@ function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, extras = [] 
           </g>
         );
       })}
-      {extras
-        .filter((e) => e.voice && e.beat >= b0 - 1e-6 && e.beat < b0 + per - 1e-6)
-        .map((e, i) => {
-          // an extra hit: a pink disc with an ink ✕ in its drum's lane (the kick strip for the kick; above the lanes when
-          // the drum has no lane in this groove)
+      {lineExtras.map((e, i) => {
+          // an extra hit: a pink disc with an ink ✕ in its drum's lane (the kick strip for the kick); a drum with no lane
+          // in this groove lands in the thin "other drum" strip above the lanes, never clipped
           const x = xOf(e.beat);
-          const li = e.voice === 'kick' ? -2 : lanes.indexOf(laneOf(e.voice!));
-          const y = li === -2 && hasKick ? kickY + KH / 2 : li >= 0 ? 3 + li * H + (H - 2) / 2 : 4;
+          const other = noLane(e.voice!);
+          const y = other ? 2 + (OH - 3) / 2 : e.voice === 'kick' ? kickY + KH / 2 : top + lanes.indexOf(laneOf(e.voice!)) * H + (H - 2) / 2;
+          const r = other ? 4.4 : 5.2;
+          const a = other ? 2.3 : 2.8;
           return (
-            <g key={`ex${i}`} className="dl-extra" data-extra={e.voice}>
-              <circle cx={x} cy={y} r={5.2} className="dl-extra-bg" />
-              <path d={`M${x - 2.8} ${y - 2.8}l5.6 5.6M${x + 2.8} ${y - 2.8}l-5.6 5.6`} className="mk-x" />
+            <g key={`ex${i}`} className="dl-extra" data-extra={e.voice} {...(other ? { 'data-extra-other': '1' } : {})}>
+              <circle cx={x} cy={y} r={r} className="dl-extra-bg" />
+              <path d={`M${x - a} ${y - a}l${2 * a} ${2 * a}M${x + a} ${y - a}l${-2 * a} ${2 * a}`} className="mk-x" />
             </g>
           );
         })}

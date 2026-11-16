@@ -170,7 +170,7 @@ function secondTag(drill: Drill): Tags[number] | null {
   // AUDIT-DEPTH-3 #11, #12, C8 (gigDrills.ts): the whole tune rates song form; the ballad voicings; intros / endings progressions.
   if (f === 'k-gig' || f === 'g-gig' || f === 'b-gig') {
     const k = drill.spec.kind;
-    if (k === 'gg-tune') return { skill: 'form', sub: 'form/song', w: 0.3 };
+    if (k === 'gg-tune' || k === 'prog-intro' || k === 'prog-ending' || k === 'ie-ear') return { skill: 'form', sub: 'form/song', w: 0.3 };
     if (k === 'gg-b10' || k === 'gg-brh' || k === 'gg-b2h' || k === 'gg-two') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
     return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   }

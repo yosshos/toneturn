@@ -16,7 +16,7 @@
 // (C4 = middle C, 1 beat by default), "r[:beats]" is a rest, "-[:beats]" holds the note before (a tie, also across a
 // bar line). Every bar adds up to 4 beats (tests check it). Chords: the chart syntax of src/engine/charts.ts.
 
-export type HeadForm = 'AABA' | 'ABAC' | 'blues' | 'minor' | 'ballad';
+export type HeadForm = 'AABA' | 'ABAC' | 'blues' | 'minor' | 'ballad' | 'song';
 
 export type HeadLicence =
   | { kind: 'pd-worldwide'; composers: { name: string; died: number }[]; published: number; source: string }
@@ -197,8 +197,63 @@ const MY_BLUE_HEAVEN: Head = {
   verify: true,
 };
 
+// ───────────────────────────── public domain worldwide, checked note for note (2026-11-16) ─────────────────────────────
+// 19th-century songs; the composers died well over 70 years ago. Each melody was read bar by bar from a Mutopia Project
+// LilyPond file whose licence line is "Public Domain" (\relative pitches resolved by hand; only the vocal line is used,
+// nothing of the layout); the URL is in `source`. Our own engraving and our own jazz chart. One change for a looping
+// chorus: the song's pickup is written at the end of the last bar (in place of the closing rest, or the last beat of
+// the final note), the way the next verse comes in.
+
+// Hard Times Come Again No More (Foster, 1854): verse 8 bars + refrain 8 bars, E♭ major; pickup E♭ F.
+const HARD_TIMES: Head = {
+  id: 'hard-times',
+  title: { en: 'Hard Times Come Again No More', he: 'Hard Times Come Again No More' },
+  form: 'song',
+  sections: [A8('Verse'), A8('Refrain')],
+  home: { key: 3 },
+  bpm: 72,
+  feel: 'ballad',
+  chords: 'Eb6 | Fm7 Bb7 | Eb6 Bb7 | Eb6 Bb7 | Eb6 | Fm7 Bb7 | Eb6 Bb7 | Eb6 Bb7 | Eb6 | Abmaj7 Eb6 | Eb6 Cm7 | F7 Bb7 | Eb6 | Fm7 Bb7 | Eb6 Bb7 | Eb6',
+  melody: [
+    'G4 G4:0.5 G4:0.5 G4:0.5 Bb4 G4:0.5 | F4:0.5 Eb4:0.5 Eb4:0.5 F4:0.5 G4 C5:0.75 Bb4:0.25 | Bb4 G4 G4:0.5 Eb4:0.5 F4:0.75 F4:0.25 | Eb4:2 r Eb4:0.5 F4:0.5',
+    'G4 G4:0.5 G4:0.5 G4:0.5 Bb4 G4:0.5 | F4:0.5 Eb4:0.5 Eb4:0.5 F4:0.5 G4 C5 | Bb4 G4 G4:0.5 Eb4:0.5 F4:0.75 F4:0.25 | Eb4:2 r G4:0.5 Ab4:0.5',
+    'Bb4 r:0.5 Bb4:0.5 Bb4 A4:0.5 Bb4:0.5 | C5:2 Bb4 r | Eb5 Bb4 C5 Bb4 | G4:0.5 G4:0.5 F4:0.75 Eb4:0.25 F4 Eb4:0.5 F4:0.5',
+    'G4 G4:0.5 G4:0.5 G4:0.5 Bb4 G4:0.5 | F4:0.75 Eb4:0.25 Eb4:0.5 F4:0.5 G4 C5 | Bb4 G4 G4:0.5 Eb4:0.5 F4:0.75 F4:0.25 | Eb4:3 Eb4:0.5 F4:0.5',
+  ].join(' | '),
+  licence: {
+    kind: 'pd-worldwide',
+    composers: [{ name: 'Stephen Collins Foster', died: 1864 }],
+    published: 1854,
+    source: 'https://www.mutopiaproject.org/ftp/FosterSC/hardtimes/hardtimes.ly — Public Domain licence line (Horace Waters edition); checked bar by bar 2026-11-16',
+  },
+};
+
+// There's Music in the Air (Root, 1857): 16 bars, A♭ major; pickup E♭.
+const MUSIC_IN_THE_AIR: Head = {
+  id: 'music-in-the-air',
+  title: { en: "There's Music in the Air", he: "There's Music in the Air" },
+  form: 'song',
+  sections: [A8('A'), A8('B')],
+  home: { key: 8 },
+  bpm: 112,
+  feel: 'swing',
+  chords: 'Ab6 | Dbmaj7 Ab6 | Bbm7 Eb7 | Ab6 | Ab6 | Dbmaj7 Ab6 | Bbm7 Eb7 | Ab6 | Dbmaj7 | Ab6 | Bbm7 Eb7 | Ab6 Ab7 | Dbmaj7 | Ab6 F7 | Bbm7 Eb7 | Ab6',
+  melody: [
+    'C5 C5 C5 C5 | Db5:2 C5:2 | Bb4:0.5 Bb4:0.5 Bb4:0.5 Bb4:0.5 C5 Bb4 | Ab4:3 Eb4',
+    'C5 C5 C5 C5 | Db5:2 C5:2 | Bb4:0.5 Bb4:0.5 Bb4:0.5 Bb4:0.5 C5 Bb4 | Ab4:3 r',
+    'F4 Ab4 Db5 F4 | Eb4 Ab4 C5:2 | C5 Bb4 G4 Eb4 | Bb4 Ab4 Eb4:2',
+    'F4 Ab4 Db5 F4 | Eb4 Ab4 C5 C5:0.5 C5:0.5 | C5 Bb4 G4 Eb4 | Ab4:3 Eb4',
+  ].join(' | '),
+  licence: {
+    kind: 'pd-worldwide',
+    composers: [{ name: 'George Frederick Root', died: 1895 }],
+    published: 1857,
+    source: 'https://www.mutopiaproject.org/ftp/RootGF/musicinair/musicinair.ly — Public Domain licence line (Boston: Russell and Richardson, 1857); checked bar by bar 2026-11-16',
+  },
+};
+
 /** Every head in the library, originals first (their order is the exercises' option order — never reorder). */
-export const HEADS: Head[] = [CORNER_BENCH, LONG_WAY, BACK_PORCH, NIGHT_FERRY, QUIET_HOURS, INDIANA, LOVE_ME_OR_LEAVE_ME, MEAN_TO_ME, MY_BLUE_HEAVEN];
+export const HEADS: Head[] = [CORNER_BENCH, LONG_WAY, BACK_PORCH, NIGHT_FERRY, QUIET_HOURS, INDIANA, LOVE_ME_OR_LEAVE_ME, MEAN_TO_ME, MY_BLUE_HEAVEN, HARD_TIMES, MUSIC_IN_THE_AIR];
 
 /**
  * The heads the exercises use: a melody, and not waiting for the owner's check. Their index in this list is the option
