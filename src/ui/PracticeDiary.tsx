@@ -19,7 +19,7 @@ import { addJournalNote, deleteJournalNote } from '../storage/practice';
 import { localDay, practiceDays, type Progress } from '../storage/progress';
 import { fmtDuration } from './Stats';
 import { fmtDay } from './Trends';
-import { RIcon } from './Recordings';
+import { DayRecordings, RIcon } from './Recordings';
 import { RX } from '../i18n/recordingsText';
 
 type Lang = 'en' | 'he';
@@ -288,6 +288,8 @@ function TimeTab({ lang, l, progress, today, skillNames, label, weeklyTarget, on
           <Rows lang={lang} rows={skills} />
         </section>
       )}
+      {/* §6.7: the span's recordings, day by day (compact rows into the player). */}
+      <DayRecordings lang={lang} from={from} to={to} asCard />
       <section className="set-card" data-pd-streak={weeklyTarget || 'daily'}>
         <h2>{DX.streakRule[lang]}</h2>
         <small className="field-hint">{DX.streakHint[lang]}</small>
@@ -492,6 +494,7 @@ function DayEntry({ d, lang, progress, label, onDelete }: { d: JournalDay; lang:
           )}
         </div>
       ))}
+      <DayRecordings lang={lang} from={d.day} perDay={4} />
       {d.notes.map((n) => (
         <div key={n.id} className={`pd-note ${n.next ? 'next' : ''}`} data-pd-note={n.id}>
           <p dir="auto">

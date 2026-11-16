@@ -7,6 +7,7 @@ import { openCapture, stopStream } from './mic';
 import { chromaFromSpectrum } from '../engine/chroma';
 import { bandPowersFromDb } from '../engine/drumAcoustic';
 import { isPulseFrame, notifyInput } from '../engine/inputCheck';
+import { announceSegment, captureTapsOn, captureTapsWantAudio, makeSegment } from './captureTap';
 
 export class BrowserPitchCapture implements PitchCapture {
   async sing({ signal, maxMs = 4500, silenceMs = 4000, endSilenceMs, hopMs, onCapturing, onFrame, record, ignoreFirstMs = 0, chroma, minHz, fftSize, centroid, bands }: SingOptions): Promise<SingCaptureResult> {
@@ -45,7 +46,9 @@ export class BrowserPitchCapture implements PitchCapture {
     const frames: SungFrame[] = [];
     const chunks: Blob[] = [];
     let rec: MediaRecorder | null = null;
-    if (record && typeof MediaRecorder !== 'undefined') {
+    // My recordings: a tap (recKeep — a drill take, a game on screen) may ask for this capture's audio too.
+    const tapped = captureTapsOn();
+    if ((record || (tapped && captureTapsWantAudio())) && typeof MediaRecorder !== 'undefined') {
       try {
         // My recordings (SPEC-PHRASE-STUDIO §6.2): mono Opus / AAC at ~48 kbps, about 0.36 MB a minute.
         try {
@@ -54,12 +57,16 @@ export class BrowserPitchCapture implements PitchCapture {
           rec = new MediaRecorder(r.stream);
         }
         rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-        rec.start();
+        // Tapped: one-second slices, so the audio so far can be read while the capture still runs.
+        if (tapped) rec.start(1000);
+        else rec.start();
       } catch {
         rec = null;
       }
     }
     const t0 = performance.now();
+    const seg = tapped ? makeSegment(t0, rec, chunks) : null;
+    if (seg) announceSegment(seg);
     onCapturing?.();
 
     return new Promise<SingCaptureResult>((resolve) => {
@@ -71,7 +78,8 @@ export class BrowserPitchCapture implements PitchCapture {
         const done = () => {
           stopStream(r.stream);
           void ctx.close();
-          resolve(res.kind === 'frames' && chunks.length ? { ...res, audio: new Blob(chunks, { type: chunks[0].type }) } : res);
+          seg?.finish();
+          resolve(res.kind === 'frames' && chunks.length && record ? { ...res, audio: new Blob(chunks, { type: chunks[0].type }) } : res);
         };
         if (rec && rec.state !== 'inactive') {
           rec.onstop = done;
@@ -96,6 +104,7 @@ export class BrowserPitchCapture implements PitchCapture {
           f.bands = bandPowersFromDb(specB, ctx.sampleRate, anB.fftSize);
         }
         frames.push(f);
+        seg?.frames.push(f);
         // The input check's watchdog: a clear signal reached the microphone.
         if (!quiet && isPulseFrame(f)) notifyInput('mic');
         onFrame?.(f);

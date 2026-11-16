@@ -39,7 +39,7 @@ export interface RecTake {
   durationMs: number;
   course: CourseId | null;
   instrument: LickInstrument | 'drums';
-  kind: 'drill' | 'lick' | 'phrase' | 'chart' | 'improv' | 'guided' | 'record' | 'piece' | 'vocal' | 'song' | 'level-test';
+  kind: 'drill' | 'lick' | 'phrase' | 'chart' | 'improv' | 'guided' | 'record' | 'piece' | 'vocal' | 'song' | 'level-test' | 'lesson' | 'game';
   /** drills / licks / phrases: the ItemState id */
   itemId?: string;
   /** auto title or the player's name */
@@ -209,7 +209,38 @@ export interface RecordingStore {
   all<T extends Row>(s: StoreName): Promise<T[]>;
   put<T extends Row>(s: StoreName, value: T): Promise<PutResult>;
   del(s: StoreName, id: string): Promise<void>;
+  /**
+   * The takes' light index rows (TakeHead), newest first, within `o`'s bounds on `at`; `visit` returns false to stop.
+   * Optional: without it the store's takes are read whole and indexed on the fly (the memory store, tests).
+   */
+  heads?(o: ScanOpts, visit: (h: TakeHead) => boolean | void): Promise<void>;
+  /** IndexedDB opened (false: private mode or blocked — the device store then keeps takes in memory). */
+  ready?(): Promise<boolean>;
 }
+
+/** Bounds on `at` (ISO): from inclusive; to exclusive unless `toInclusive`. */
+export interface ScanOpts {
+  from?: string;
+  to?: string;
+  toInclusive?: boolean;
+}
+
+/**
+ * A take's light index row (the 'heads' store): everything the library's filters, search, counts, the diary, cleanup
+ * and the budget need — without the notes, band, peaks. `q` is the take's search text (searchText), `nb` its notes bytes.
+ */
+export type TakeHead = Pick<
+  RecTake,
+  'id' | 'sessionId' | 'at' | 'durationMs' | 'course' | 'instrument' | 'kind' | 'itemId' | 'title' | 'sung' | 'source' | 'result' | 'audioId' | 'audioBytes' | 'star' | 'folder' | 'tags' | 'deletedAt' | 'prunedAt' | 'phraseIds' | 'sharedTo'
+> & { q: string; nb: number };
+
+const HEAD_KEYS = ['id', 'sessionId', 'at', 'durationMs', 'course', 'instrument', 'kind', 'itemId', 'title', 'sung', 'source', 'result', 'audioId', 'audioBytes', 'star', 'folder', 'tags', 'deletedAt', 'prunedAt', 'phraseIds', 'sharedTo'] as const;
+export function headOf(t: RecTake): TakeHead {
+  const h = { q: searchText(t), nb: (t.notes?.byteLength ?? 0) + (t.backing?.notes?.byteLength ?? 0) } as TakeHead;
+  for (const k of HEAD_KEYS) if (t[k] !== undefined) (h as unknown as Record<string, unknown>)[k] = t[k];
+  return h;
+}
+const inBounds = (at: string, o: ScanOpts) => (!o.from || at >= o.from) && (!o.to || (o.toInclusive ? at <= o.to : at < o.to));
 
 /** The in-memory store (tests, private mode). `quota` (bytes of audio) makes it refuse like a full device. */
 export function memoryRecordingStore(quota = Infinity): RecordingStore {
@@ -233,15 +264,28 @@ const isQuota = (e: unknown) => {
   return n === 'QuotaExceededError' || n === 'NS_ERROR_DOM_QUOTA_REACHED';
 };
 
-/** The IndexedDB store. */
+/** The IndexedDB store (v2: a 'heads' store — the takes' light index rows, by date — kept in step with 'takes'). */
 export function indexedRecordingStore(dbName = REC_DB): RecordingStore {
   let dbp: Promise<IDBDatabase | null> | null = null;
   const open = () =>
     (dbp ??= new Promise((resolve) => {
       try {
-        const req = indexedDB.open(dbName, 1);
+        const req = indexedDB.open(dbName, 2);
         req.onupgradeneeded = () => {
-          for (const s of STORES) if (!req.result.objectStoreNames.contains(s)) req.result.createObjectStore(s, { keyPath: 'id' });
+          const db = req.result;
+          for (const s of STORES) if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('heads')) {
+            const hs = db.createObjectStore('heads', { keyPath: 'id' });
+            hs.createIndex('at', 'at');
+            // v1 → v2: index the takes already kept.
+            const cur = req.transaction!.objectStore('takes').openCursor();
+            cur.onsuccess = () => {
+              const c = cur.result;
+              if (!c) return;
+              hs.put(headOf(c.value as RecTake));
+              c.continue();
+            };
+          }
         };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => resolve(null);
@@ -250,13 +294,15 @@ export function indexedRecordingStore(dbName = REC_DB): RecordingStore {
         resolve(null);
       }
     }));
-  const run = async <T,>(s: StoreName, mode: IDBTransactionMode, fn: (st: IDBObjectStore) => IDBRequest, done: (r: unknown) => T, fail: T, full: T = fail): Promise<T> => {
+  const run = async <T,>(s: StoreName, mode: IDBTransactionMode, fn: (st: IDBObjectStore, tx: IDBTransaction) => IDBRequest, done: (r: unknown) => T, fail: T, full: T = fail): Promise<T> => {
     const db = await open();
     if (!db) return fail;
     return new Promise<T>((resolve) => {
       try {
-        const tx = db.transaction(s, mode);
-        const req = fn(tx.objectStore(s));
+        // A take's write also writes its index row, in the same transaction.
+        const both = s === 'takes' && mode === 'readwrite' && db.objectStoreNames.contains('heads');
+        const tx = db.transaction(both ? ['takes', 'heads'] : s, mode);
+        const req = fn(tx.objectStore(s), tx);
         let result: unknown;
         req.onsuccess = () => (result = req.result);
         tx.oncomplete = () => resolve(done(result));
@@ -267,11 +313,56 @@ export function indexedRecordingStore(dbName = REC_DB): RecordingStore {
       }
     });
   };
+  const hasHeads = (tx: IDBTransaction) => tx.objectStoreNames.contains('heads');
   return {
     get: <T extends Row>(s: StoreName, id: string) => run(s, 'readonly', (st) => st.get(id), (r) => (r as T | undefined) ?? null, null as T | null),
     all: <T extends Row>(s: StoreName) => run(s, 'readonly', (st) => st.getAll(), (r) => (r as T[] | undefined) ?? [], [] as T[]),
-    put: (s, v) => run<PutResult>(s, 'readwrite', (st) => st.put(v), () => ({ ok: true }), { ok: false, reason: 'unavailable' }, { ok: false, reason: 'quota' }),
-    del: async (s, id) => void (await run(s, 'readwrite', (st) => st.delete(id), () => true, false)),
+    put: (s, v) =>
+      run<PutResult>(
+        s,
+        'readwrite',
+        (st, tx) => {
+          if (s === 'takes' && hasHeads(tx)) tx.objectStore('heads').put(headOf(v as unknown as RecTake));
+          return st.put(v);
+        },
+        () => ({ ok: true }),
+        { ok: false, reason: 'unavailable' },
+        { ok: false, reason: 'quota' },
+      ),
+    del: async (s, id) =>
+      void (await run(
+        s,
+        'readwrite',
+        (st, tx) => {
+          if (s === 'takes' && hasHeads(tx)) tx.objectStore('heads').delete(id);
+          return st.delete(id);
+        },
+        () => true,
+        false,
+      )),
+    heads: async (o, visit) => {
+      const db = await open();
+      if (!db || !db.objectStoreNames.contains('heads')) return;
+      await new Promise<void>((resolve) => {
+        try {
+          const tx = db.transaction('heads', 'readonly');
+          const range = o.from && o.to ? IDBKeyRange.bound(o.from, o.to, false, !o.toInclusive) : o.from ? IDBKeyRange.lowerBound(o.from) : o.to ? IDBKeyRange.upperBound(o.to, !o.toInclusive) : null;
+          const req = tx.objectStore('heads').index('at').openCursor(range, 'prev');
+          req.onsuccess = () => {
+            const c = req.result;
+            if (!c) return;
+            if (visit(c.value as TakeHead) === false) return;
+            c.continue();
+          };
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+          tx.onabort = () => resolve();
+        } catch {
+          resolve();
+        }
+      });
+    },
+    ready: async () => !!(await open()),
   };
 }
 
@@ -341,24 +432,72 @@ export function withOpfsAudio(base: RecordingStore): RecordingStore {
   };
 }
 
-/** The device store: IndexedDB (+ OPFS audio off iOS) when it exists, else memory. */
+/** True once the device store found no IndexedDB (private mode, blocked): takes then live only until the tab closes. */
+let volatileStore = false;
+export const recordingsVolatile = () => volatileStore;
+
+/** A store that switches to memory on its first use when the primary cannot open (private browsing). */
+export function fallbackStore(primary: RecordingStore): RecordingStore {
+  let pick: Promise<RecordingStore> | null = null;
+  const use = () =>
+    (pick ??= (async () => {
+      try {
+        if (!primary.ready || (await primary.ready())) return primary;
+      } catch {
+        /* fall through */
+      }
+      volatileStore = true;
+      return memoryRecordingStore();
+    })());
+  return {
+    get: async <T extends Row>(s: StoreName, id: string) => (await use()).get<T>(s, id),
+    all: async <T extends Row>(s: StoreName) => (await use()).all<T>(s),
+    put: async (s, v) => (await use()).put(s, v),
+    del: async (s, id) => (await use()).del(s, id),
+    heads: async (o, visit) => {
+      const u = await use();
+      return u.heads ? u.heads(o, visit) : headsOf(u, o, visit);
+    },
+    ready: async () => (await use()) === primary,
+  };
+}
+
+/** The device store: IndexedDB (+ OPFS audio off iOS) when it opens, else memory (private mode). */
 export function deviceRecordingStore(): RecordingStore {
   try {
     if (typeof indexedDB !== 'undefined') {
       const idb = indexedRecordingStore();
       const opfs = typeof navigator !== 'undefined' && typeof navigator.storage?.getDirectory === 'function' && typeof FileSystemFileHandle !== 'undefined' && 'createWritable' in FileSystemFileHandle.prototype && !isIOS();
-      return opfs ? withOpfsAudio(idb) : idb;
+      return fallbackStore(opfs ? { ...withOpfsAudio(idb), heads: idb.heads, ready: idb.ready } : idb);
     }
   } catch {
     /* fall through */
   }
+  volatileStore = true;
   return memoryRecordingStore();
+}
+
+/** A store's heads without an index: its takes read whole, newest first. */
+async function headsOf(s: RecordingStore, o: ScanOpts, visit: (h: TakeHead) => boolean | void): Promise<void> {
+  const all = (await s.all<RecTake>('takes')).filter((t) => inBounds(t.at, o)).sort((a, b) => b.at.localeCompare(a.at));
+  for (const t of all) if (visit(headOf(t)) === false) return;
 }
 
 // ───────────────────────────── module state: store, prefs, context, listeners ─────────────────────────────
 
 let store: RecordingStore | null = null;
 const st = () => (store ??= deviceRecordingStore());
+/** The current store's heads (newest first). */
+const scanHeads = (o: ScanOpts, visit: (h: TakeHead) => boolean | void): Promise<void> => {
+  const s = st();
+  return s.heads ? s.heads(o, visit) : headsOf(s, o, visit);
+};
+/** Every head in bounds (cleanup, the budget, usage, counts): light rows only. */
+async function allHeads(o: ScanOpts = {}): Promise<TakeHead[]> {
+  const out: TakeHead[] = [];
+  await scanHeads(o, (h) => void out.push(h));
+  return out;
+}
 /** Tests (and the simulator): another store. */
 export function setRecordingStore(s: RecordingStore | null) {
   store = s;
@@ -408,7 +547,7 @@ const uid = (p: string) => `${p}-${Date.now().toString(36)}-${Math.random().toSt
 // ───────────────────────────── pure helpers (tested) ─────────────────────────────
 
 /** A take that cleanup and the budget never touch. */
-export const isProtected = (t: RecTake) => !!t.star || !!t.folder || !!t.phraseIds?.length || !!t.sharedTo?.length;
+export const isProtected = (t: Pick<RecTake, 'star' | 'folder' | 'phraseIds' | 'sharedTo'>) => !!t.star || !!t.folder || !!t.phraseIds?.length || !!t.sharedTo?.length;
 
 /** The take's title in a language. */
 export const takeTitle = (t: Pick<RecTake, 'title'>, lang: 'en' | 'he') => (typeof t.title === 'string' ? t.title : t.title[lang] || t.title.en);
@@ -456,7 +595,9 @@ export interface TakeFilter {
   limit?: number;
 }
 
-export function matchesFilter(t: RecTake, f: TakeFilter): boolean {
+/** A take or its index row (the heads carry the search text already). */
+type Matchable = RecTake | TakeHead;
+export function matchesFilter(t: Matchable, f: TakeFilter): boolean {
   if (f.bin ? !t.deletedAt : !!t.deletedAt) return false;
   if (f.course && t.course !== f.course) return false;
   if (f.kind && !(Array.isArray(f.kind) ? f.kind.includes(t.kind) : t.kind === f.kind)) return false;
@@ -470,14 +611,14 @@ export function matchesFilter(t: RecTake, f: TakeFilter): boolean {
   if (f.from && t.at < f.from) return false;
   if (f.to && t.at >= f.to) return false;
   if (f.q) {
-    const hay = searchText(t);
+    const hay = 'q' in t && typeof t.q === 'string' ? t.q : searchText(t as RecTake);
     if (!f.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w))) return false;
   }
   return true;
 }
 
 /** What cleanup does now: purge bin takes older than BIN_DAYS; prune unprotected audio older than PRUNE_DAYS. */
-export function cleanupPlan(takes: readonly RecTake[], now: number): { purge: string[]; prune: string[] } {
+export function cleanupPlan(takes: readonly Pick<RecTake, 'id' | 'at' | 'deletedAt' | 'audioId' | 'star' | 'folder' | 'phraseIds' | 'sharedTo'>[], now: number): { purge: string[]; prune: string[] } {
   const purge: string[] = [];
   const prune: string[] = [];
   for (const t of takes) {
@@ -491,15 +632,15 @@ export function cleanupPlan(takes: readonly RecTake[], now: number): { purge: st
 }
 
 /** Audio bytes held by takes (the bin too: it is still on the device). */
-export const audioBytesOf = (takes: readonly RecTake[]) => takes.reduce((a, t) => a + (t.audioId ? (t.audioBytes ?? 0) : 0), 0);
+export const audioBytesOf = (takes: readonly Pick<RecTake, 'audioId' | 'audioBytes'>[]) => takes.reduce((a, t) => a + (t.audioId ? (t.audioBytes ?? 0) : 0), 0);
 /** Notes bytes (the packed notes plus a small row). */
-export const notesBytesOf = (takes: readonly RecTake[]) => takes.reduce((a, t) => a + (t.notes?.byteLength ?? 0) + (t.backing?.notes?.byteLength ?? 0) + 300, 0);
+export const notesBytesOf = (takes: readonly (RecTake | TakeHead)[]) => takes.reduce((a, t) => a + ('nb' in t ? t.nb : ((t as RecTake).notes?.byteLength ?? 0) + ((t as RecTake).backing?.notes?.byteLength ?? 0)) + 300, 0);
 
 /**
  * Room for `need` more bytes of audio under `budget`: the takes whose audio becomes notes only — bin first, then the
  * oldest unprotected — or null when even that is not enough (the new take then keeps its notes only).
  */
-export function budgetPlan(takes: readonly RecTake[], need: number, budget: number): string[] | null {
+export function budgetPlan(takes: readonly Pick<RecTake, 'id' | 'at' | 'deletedAt' | 'audioId' | 'audioBytes' | 'star' | 'folder' | 'phraseIds' | 'sharedTo'>[], need: number, budget: number): string[] | null {
   let used = audioBytesOf(takes);
   if (used + need <= budget) return [];
   const order = takes.filter((t) => t.audioId && (t.deletedAt || !isProtected(t))).sort((a, b) => (a.deletedAt ? 0 : 1) - (b.deletedAt ? 0 : 1) || a.at.localeCompare(b.at));
@@ -513,11 +654,11 @@ export function budgetPlan(takes: readonly RecTake[], need: number, budget: numb
 }
 
 /** Sessions with their (filtered) takes, newest first; a session without a matching take is left out. */
-export function groupBySession(takes: readonly RecTake[], sessions: readonly RecSession[]): { session: RecSession; takes: RecTake[] }[] {
-  const by = new Map<string, RecTake[]>();
+export function groupBySession<T extends Pick<RecTake, 'id' | 'at' | 'sessionId' | 'course'>>(takes: readonly T[], sessions: readonly RecSession[]): { session: RecSession; takes: T[] }[] {
+  const by = new Map<string, T[]>();
   for (const t of takes) by.set(t.sessionId, [...(by.get(t.sessionId) ?? []), t]);
   const known = new Map(sessions.map((s) => [s.id, s]));
-  const out: { session: RecSession; takes: RecTake[] }[] = [];
+  const out: { session: RecSession; takes: T[] }[] = [];
   for (const [id, ts] of by) {
     ts.sort((a, b) => b.at.localeCompare(a.at));
     const s = known.get(id) ?? { id, startedAt: ts[ts.length - 1].at, endedAt: ts[0].at, course: ts[0].course, route: '', measuredMs: 0, takeIds: ts.map((t) => t.id) };
@@ -565,7 +706,7 @@ export async function saveTake(input: NewTake, audio?: Blob | null, opts: { now?
     // Audio: allowed, under the budget (older unprotected audio makes room), and the device has room.
     let kept: AudioKept = hasAudio ? (prefs.keepAudio ? 'kept' : 'off') : 'none';
     if (kept === 'kept') {
-      const takes = await s.all<RecTake>('takes');
+      const takes = await allHeads();
       const plan = budgetPlan(takes, audio!.size, prefs.budget);
       if (!plan) kept = 'budget';
       else {
@@ -596,17 +737,123 @@ export async function saveTake(input: NewTake, audio?: Blob | null, opts: { now?
   }
 }
 
-/** Takes, newest first (deleted ones only with `bin`). */
-export async function listTakes(f: TakeFilter = {}): Promise<RecTake[]> {
+/** The matching index rows, newest first (scans the light 'heads' index, not the takes). */
+export async function listHeads(f: TakeFilter = {}): Promise<TakeHead[]> {
   await migrateOnce();
-  const all = (await st().all<RecTake>('takes')).filter((t) => matchesFilter(t, f)).sort((a, b) => b.at.localeCompare(a.at));
-  return f.limit ? all.slice(0, f.limit) : all;
+  const out: TakeHead[] = [];
+  await scanHeads({ from: f.from, to: f.to }, (h) => {
+    if (matchesFilter(h, f)) out.push(h);
+    if (f.limit && out.length >= f.limit) return false;
+  });
+  return out;
+}
+
+/** Full takes for index rows (in the rows' order; a row whose take vanished is left out). */
+async function takesFor(hs: readonly Pick<TakeHead, 'id'>[]): Promise<RecTake[]> {
+  const s = st();
+  return (await Promise.all(hs.map((h) => s.get<RecTake>('takes', h.id)))).filter((t): t is RecTake => !!t);
+}
+
+/** Takes, newest first (deleted ones only with `bin`). Use listTakesPage for the library's long lists. */
+export async function listTakes(f: TakeFilter = {}): Promise<RecTake[]> {
+  return takesFor(await listHeads(f));
+}
+
+/** How many takes match (the index only). */
+export async function countTakes(f: TakeFilter = {}): Promise<number> {
+  await migrateOnce();
+  let n = 0;
+  await scanHeads({ from: f.from, to: f.to }, (h) => void (matchesFilter(h, f) && n++));
+  return n;
+}
+
+/** Where the next page starts: the last page's oldest time, and the ids already shown at that time. */
+export interface PageCursor {
+  at: string;
+  ids: string[];
+}
+/** The library's page size. */
+export const TAKE_PAGE = 30;
+
+/**
+ * One page of matching takes, newest first: `limit` takes after `after` (the cursor of the page before), read from
+ * the date index — only the page's takes are read whole. `next` is null on the last page.
+ */
+export async function listTakesPage(f: TakeFilter = {}, o: { after?: PageCursor | null; limit?: number } = {}): Promise<{ takes: RecTake[]; next: PageCursor | null }> {
+  await migrateOnce();
+  const limit = Math.max(1, o.limit ?? TAKE_PAGE);
+  const after = o.after ?? null;
+  const seen = new Set(after?.ids ?? []);
+  const to = after ? (f.to && f.to <= after.at ? f.to : after.at) : f.to;
+  const inclusive = !!after && to === after.at;
+  const got: TakeHead[] = [];
+  let more = false;
+  await scanHeads({ from: f.from, to, toInclusive: inclusive }, (h) => {
+    if (after && h.at === after.at && seen.has(h.id)) return;
+    if (!matchesFilter(h, f)) return;
+    if (got.length >= limit) {
+      more = true;
+      return false;
+    }
+    got.push(h);
+  });
+  const takes = await takesFor(got);
+  if (!more || !got.length) return { takes, next: null };
+  const last = got[got.length - 1].at;
+  const ids = got.filter((h) => h.at === last).map((h) => h.id);
+  return { takes, next: { at: last, ids: after && after.at === last ? [...after.ids, ...ids] : ids } };
+}
+
+/** What the library's chips need to know about everything kept (the index only, never the takes). */
+export interface TakeFacets {
+  total: number;
+  bin: number;
+  courses: CourseId[];
+  sung: boolean;
+  played: boolean;
+  midi: boolean;
+  audio: boolean;
+  levelTest: boolean;
+}
+export async function takeFacets(): Promise<TakeFacets> {
+  await migrateOnce();
+  const f: TakeFacets = { total: 0, bin: 0, courses: [], sung: false, played: false, midi: false, audio: false, levelTest: false };
+  const courses = new Set<CourseId>();
+  await scanHeads({}, (h) => {
+    if (h.deletedAt) return void f.bin++;
+    f.total++;
+    if (h.course) courses.add(h.course);
+    if (h.sung) f.sung = true;
+    else f.played = true;
+    if (h.source !== 'mic') f.midi = true;
+    if (h.audioId) f.audio = true;
+    if (h.kind === 'level-test') f.levelTest = true;
+  });
+  f.courses = [...courses];
+  return f;
+}
+
+/** Sessions by id (the loaded page's sessions). */
+export async function getSessions(ids: readonly string[]): Promise<RecSession[]> {
+  const s = st();
+  return (await Promise.all([...new Set(ids)].map((id) => s.get<RecSession>('sessions', id)))).filter((x): x is RecSession => !!x);
 }
 
 /** Sessions that hold at least one matching take, newest first. */
 export async function listSessions(f: TakeFilter = {}): Promise<RecSession[]> {
-  const [takes, sessions] = await Promise.all([listTakes({ ...f, limit: undefined }), st().all<RecSession>('sessions')]);
-  return groupBySession(takes, sessions).map((g) => g.session);
+  const heads = await listHeads({ ...f, limit: undefined });
+  const sessions = await getSessions(heads.map((h) => h.sessionId));
+  return groupBySession(heads, sessions).map((g) => g.session);
+}
+
+/** The diary (§6.7): each local day's kept takes in [from, to) (ISO), newest first, as light rows. */
+export async function takesByDay(from: string, to: string, dayOf: (iso: string) => string): Promise<Map<string, TakeHead[]>> {
+  const out = new Map<string, TakeHead[]>();
+  for (const h of await listHeads({ from, to })) {
+    const d = dayOf(h.at);
+    out.set(d, [...(out.get(d) ?? []), h]);
+  }
+  return out;
 }
 
 export async function getSession(id: string): Promise<RecSession | null> {
@@ -667,7 +914,7 @@ export async function setTakeTags(id: string, tags: string[]): Promise<RecTake |
 /** The player's folders with their take counts (deleted takes left out). */
 export async function listFolders(): Promise<{ name: string; count: number }[]> {
   const m = new Map<string, number>();
-  for (const t of await listTakes()) if (t.folder) m.set(t.folder, (m.get(t.folder) ?? 0) + 1);
+  for (const t of await listHeads()) if (t.folder) m.set(t.folder, (m.get(t.folder) ?? 0) + 1);
   return [...m].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -698,7 +945,7 @@ export async function purgeTake(id: string): Promise<void> {
 }
 
 export async function emptyBin(): Promise<number> {
-  const bin = await listTakes({ bin: true });
+  const bin = await listHeads({ bin: true });
   for (const t of bin) await purgeTake(t.id);
   return bin.length;
 }
@@ -717,7 +964,7 @@ export async function updateTakes(ids: string[], p: { star?: boolean; folder?: s
 }
 
 /** The take's audio becomes notes only (the take stays in the timeline, marked). */
-async function pruneAudio(t: RecTake, now: number): Promise<void> {
+async function pruneAudio(t: Pick<RecTake, 'id' | 'audioId'>, now: number): Promise<void> {
   if (!t.audioId) return;
   await st().del('audio', t.audioId);
   await patch(t.id, { audioId: undefined, audioBytes: undefined, prunedAt: new Date(now).toISOString() });
@@ -731,7 +978,7 @@ export async function setTakePeaks(id: string, peaks: Uint8Array): Promise<void>
 /** Run the retention policy: purge the bin's old takes, prune old unstarred audio. */
 export async function runCleanup(now = Date.now()): Promise<{ purged: number; pruned: number }> {
   try {
-    const takes = await st().all<RecTake>('takes');
+    const takes = await allHeads();
     const plan = cleanupPlan(takes, now);
     for (const id of plan.purge) await purgeTake(id);
     for (const id of plan.prune) await pruneAudio(takes.find((t) => t.id === id)!, now);
@@ -758,9 +1005,16 @@ export interface StorageUsage {
   autoPrune?: { at: string; n: number };
   /** The last time the device refused to keep audio (full). */
   quotaAt?: string;
+  /** No IndexedDB (private browsing): takes are kept only until the tab closes. */
+  volatile?: boolean;
+  /** navigator.storage.persisted() (null when the browser cannot tell). */
+  persisted?: boolean | null;
+  /** iPhone / iPad Safari, not installed to the Home Screen: storage may be cleared after 7 days unused. */
+  iosBrowser?: boolean;
 }
 export async function storageUsage(): Promise<StorageUsage> {
-  const takes = await st().all<RecTake>('takes');
+  await st().ready?.();
+  const takes = await allHeads();
   let device: StorageUsage['device'] = null;
   try {
     const e = await navigator.storage?.estimate?.();
@@ -780,8 +1034,27 @@ export async function storageUsage(): Promise<StorageUsage> {
     device,
     ...(ap ? { autoPrune: ap } : {}),
     ...(q ? { quotaAt: q.at } : {}),
+    volatile: recordingsVolatile(),
+    persisted: await persistedNow(),
+    iosBrowser: isIOS() && !standalone(),
   };
 }
+
+async function persistedNow(): Promise<boolean | null> {
+  try {
+    return typeof navigator !== 'undefined' && navigator.storage?.persisted ? await navigator.storage.persisted() : null;
+  } catch {
+    return null;
+  }
+}
+/** Running as the installed app (Home Screen PWA). */
+const standalone = () => {
+  try {
+    return (typeof navigator !== 'undefined' && (navigator as Navigator & { standalone?: boolean }).standalone === true) || (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches);
+  } catch {
+    return false;
+  }
+};
 
 async function getMeta<T>(key: string): Promise<T | null> {
   const r = await st().get<{ id: string; v: T }>('meta', key);
@@ -796,7 +1069,7 @@ async function maybePersist(starred = false): Promise<void> {
   try {
     if (typeof navigator === 'undefined' || !navigator.storage?.persist) return;
     if (await getMeta('persistAsked')) return;
-    if (!starred && audioBytesOf(await st().all<RecTake>('takes')) < PERSIST_AT) return;
+    if (!starred && audioBytesOf(await allHeads()) < PERSIST_AT) return;
     await setMeta('persistAsked', true);
     await navigator.storage.persist();
   } catch {
@@ -896,6 +1169,7 @@ export function _resetRecordings() {
   migrated = null;
   oldReader = null;
   lastTakeId = null;
+  volatileStore = false;
   prefs = { keepNotes: true, keepAudio: true, budget: AUDIO_BUDGET };
   contextOf = () => ({ route: '', course: null });
   listeners.clear();

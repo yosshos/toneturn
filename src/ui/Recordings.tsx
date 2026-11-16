@@ -14,11 +14,12 @@ import {
   AUDIO_BUDGET,
   deleteTake,
   emptyBin,
+  countTakes,
+  getSessions,
   getTake,
   getTakeAudio,
   listFolders,
-  listSessions,
-  listTakes,
+  listTakesPage,
   notesSpan,
   PEAK_MS,
   renameTake,
@@ -34,9 +35,15 @@ import {
   unpackNotes,
   updateTakes,
   groupBySession,
+  takeFacets,
+  takesByDay,
+  TAKE_PAGE,
+  type TakeHead,
+  type PageCursor,
   type RecSession,
   type RecTake,
   type StorageUsage,
+  type TakeFacets,
   type TakeFilter,
 } from '../storage/recordings';
 import type { Settings } from '../storage/progress';
@@ -206,7 +213,75 @@ function useRecordings<T>(load: () => Promise<T>, deps: unknown[], init: T): [T,
   return [v, () => setN((x) => x + 1)];
 }
 
-const PAGE = 20;
+const NO_FACETS: TakeFacets = { total: 0, bin: 0, courses: [], sung: false, played: false, midi: false, audio: false, levelTest: false };
+
+/**
+ * The library's takes, a page (TAKE_PAGE) at a time from the date index: only the shown takes are read whole. A change
+ * in the store reloads as many as are shown; a new filter starts again at one page.
+ */
+function usePagedTakes(filter: TakeFilter) {
+  const [data, setData] = useState<{ takes: RecTake[]; sessions: RecSession[]; next: PageCursor | null; ready: boolean }>({ takes: [], sessions: [], next: null, ready: false });
+  const [n, setN] = useState(0);
+  const want = useRef(TAKE_PAGE);
+  const key = JSON.stringify(filter);
+  const lastKey = useRef(key);
+  const busy = useRef(false);
+  useEffect(() => subscribeRecordings(() => setN((x) => x + 1)), []);
+  useEffect(() => {
+    if (lastKey.current !== key) {
+      lastKey.current = key;
+      want.current = TAKE_PAGE;
+    }
+    let live = true;
+    void (async () => {
+      const r = await listTakesPage(filter, { limit: want.current });
+      const sessions = await getSessions(r.takes.map((t) => t.sessionId));
+      if (live) setData({ takes: r.takes, sessions, next: r.next, ready: true });
+    })();
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, n]);
+  const more = useCallback(async () => {
+    if (!data.next || busy.current) return;
+    busy.current = true;
+    try {
+      const r = await listTakesPage(filter, { after: data.next, limit: TAKE_PAGE });
+      const known = new Set(data.sessions.map((x) => x.id));
+      const sessions = await getSessions(r.takes.map((t) => t.sessionId).filter((id) => !known.has(id)));
+      want.current = data.takes.length + r.takes.length;
+      setData((d) => ({ takes: [...d.takes, ...r.takes.filter((t) => !d.takes.some((x) => x.id === t.id))], sessions: [...d.sessions, ...sessions], next: r.next, ready: true }));
+    } finally {
+      busy.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, key]);
+  return { ...data, more };
+}
+
+/** One calm line about where recordings live on this device (private window, a full device, iPhone not installed). */
+function StorageNotice({ lang, u }: { lang: Lang; u: StorageUsage }) {
+  if (u.volatile)
+    return (
+      <p className="rec-note" data-rec-notice="volatile">
+        {RX.volatile[lang]}
+      </p>
+    );
+  if (u.quotaAt && Date.now() - Date.parse(u.quotaAt) < 3 * 86_400_000)
+    return (
+      <p className="rec-note warn" data-rec-notice="quota">
+        {RX.quota[lang]}
+      </p>
+    );
+  if (u.iosBrowser && u.persisted !== true && u.takes > 0)
+    return (
+      <p className="rec-note" data-rec-notice="install">
+        {RX.installKeep[lang]}
+      </p>
+    );
+  return null;
+}
 
 function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onOpen: (id: string) => void }) {
   const [chip, setChipS] = useState<Chip>(() => {
@@ -226,46 +301,41 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
   };
   const [q, setQ] = useState('');
   const [bin, setBin] = useState(false);
-  const [pages, setPages] = useState(1);
   const [selecting, setSelecting] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<RecTake | null>(null);
   const [foldersOpen, setFoldersOpen] = useState(false);
   const [askEmpty, setAskEmpty] = useState(false);
   const filter = useMemo(() => (bin ? { bin: true, ...(q.trim() ? { q: q.trim() } : {}) } : filterOf(chip, q)), [chip, q, bin]);
-  const [data] = useRecordings(async () => {
-    const [takes, sessions, all] = await Promise.all([listTakes(filter), listSessions(filter), listTakes()]);
-    return { takes, sessions, all };
-  }, [filter], { takes: [] as RecTake[], sessions: [] as RecSession[], all: [] as RecTake[] });
+  const data = usePagedTakes(filter);
   const [usage] = useRecordings(storageUsage, [], null as StorageUsage | null);
   const [folders] = useRecordings(listFolders, [], [] as { name: string; count: number }[]);
-  const [binCount] = useRecordings(async () => (await listTakes({ bin: true })).length, [], 0);
+  const [facets] = useRecordings(takeFacets, [], NO_FACETS);
+  const binCount = facets.bin;
 
-  const groups = useMemo(() => groupBySession(data.takes, data.sessions), [data]);
-  const shown = groups.slice(0, pages * PAGE);
+  const groups = useMemo(() => groupBySession(data.takes, data.sessions), [data.takes, data.sessions]);
   const byDay: { day: string; label: string; items: typeof groups }[] = [];
-  for (const g of shown) {
+  for (const g of groups) {
     const k = dayKey(g.takes[0].at);
     const last = byDay[byDay.length - 1];
     if (last?.day === k) last.items.push(g);
     else byDay.push({ day: k, label: dayLabel(g.takes[0].at, lang), items: [g] });
   }
-  const courses = [...new Set(data.all.map((t) => t.course).filter((c): c is CourseId => !!c))];
-  const has = (p: (t: RecTake) => boolean) => data.all.some(p);
+  const courses = facets.courses;
   const chips: [Chip, ReactNode][] = [
     ['all', RX.all[lang]],
     ...courses.map((c) => [`c:${c}`, RX.courses[c]?.[lang] ?? c] as [Chip, ReactNode]),
-    ...(has((t) => t.sung) ? [['sung', RX.sung[lang]] as [Chip, ReactNode]] : []),
-    ...(has((t) => !t.sung) ? [['played', RX.played[lang]] as [Chip, ReactNode]] : []),
-    ...(has((t) => t.source !== 'mic') ? [['midi', <N key="m">MIDI</N>] as [Chip, ReactNode]] : []),
-    ...(has((t) => !!t.audioId) ? [['audio', RX.audio[lang]] as [Chip, ReactNode]] : []),
+    ...(facets.sung ? [['sung', RX.sung[lang]] as [Chip, ReactNode]] : []),
+    ...(facets.played ? [['played', RX.played[lang]] as [Chip, ReactNode]] : []),
+    ...(facets.midi ? [['midi', <N key="m">MIDI</N>] as [Chip, ReactNode]] : []),
+    ...(facets.audio ? [['audio', RX.audio[lang]] as [Chip, ReactNode]] : []),
     [
       'star',
       <span key="s" className="rec-chip-ic">
         <RIcon k="star" size={14} fill /> {RX.starred[lang]}
       </span>,
     ],
-    ...(has((t) => t.kind === 'level-test') ? [['test', RX.levelTest[lang]] as [Chip, ReactNode]] : []),
+    ...(facets.levelTest ? [['test', RX.levelTest[lang]] as [Chip, ReactNode]] : []),
     ...(chip.startsWith('f:') ? [[chip, <span key="f" className="rec-chip-ic"><RIcon k="folder" size={14} /> {chip.slice(2)}</span>] as [Chip, ReactNode]] : []),
   ];
   const toggleSel = (id: string) =>
@@ -335,10 +405,10 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       )}
 
       {!bin && usage?.autoPrune && Date.now() - Date.parse(usage.autoPrune.at) < 7 * 86_400_000 && <p className="rec-note">{fillRx(RX.autoPruned[lang], { n: usage.autoPrune.n, b: mb(usage.budget) })}</p>}
-      {!bin && usage?.quotaAt && Date.now() - Date.parse(usage.quotaAt) < 3 * 86_400_000 && <p className="rec-note warn">{RX.quota[lang]}</p>}
+      {!bin && usage && <StorageNotice lang={lang} u={usage} />}
 
-      <div className="rec-timeline" data-rec-count={data.takes.length}>
-        {!data.takes.length && <p className="rec-empty">{data.all.length || bin ? RX.emptyFilter[lang] : RX.empty[lang]}</p>}
+      <div className="rec-timeline" data-rec-count={data.takes.length} data-rec-more={data.next ? '1' : '0'}>
+        {data.ready && !data.takes.length && <p className="rec-empty">{facets.total || bin ? RX.emptyFilter[lang] : RX.empty[lang]}</p>}
         {byDay.map((d) => (
           <section key={d.day} className="rec-day">
             {!bin && <h2 className="rec-day-h">{d.label}</h2>}
@@ -347,8 +417,8 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
             ))}
           </section>
         ))}
-        {groups.length > shown.length && (
-          <button className="btn small ghost rec-more" onClick={() => setPages((p) => p + 1)}>
+        {data.next && (
+          <button className="btn small ghost rec-more" onClick={() => void data.more()} data-rec-loadmore="1">
             {RX.loadMore[lang]}
           </button>
         )}
@@ -416,7 +486,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       )}
       {askEmpty && (
         <Sheet lang={lang} title={RX.emptyBin[lang]} onClose={() => setAskEmpty(false)}>
-          <p>{fillRx(RX.emptyBinAsk[lang], { n: data.takes.length })}</p>
+          <p>{fillRx(RX.emptyBinAsk[lang], { n: binCount })}</p>
           <div className="rec-sheet-actions">
             <button className="btn ghost" onClick={() => setAskEmpty(false)}>
               {RX.cancel[lang]}
@@ -483,7 +553,7 @@ function TakeRow({ lang, t, bin, selecting, checked, onSel, onOpen, onMenu }: { 
   const glyph: IconName = t.sung ? 'voice' : t.source === 'mic' ? 'mic' : 'keys';
   const dur = t.durationMs > 0 ? mmss(t.durationMs / 1000) : '';
   return (
-    <li className={`rec-take ${checked ? 'sel' : ''}`} data-rec-take={t.id} data-rec-star={t.star ? '1' : '0'}>
+    <li className={`rec-take ${checked ? 'sel' : ''}`} data-rec-take={t.id} data-rec-star={t.star ? '1' : '0'} data-rec-audio={t.audioId ? '1' : '0'} data-rec-kind={t.kind}>
       {selecting ? (
         <input type="checkbox" className="rec-check" checked={checked} onChange={onSel} aria-label={takeTitle(t, lang)} />
       ) : (
@@ -1214,7 +1284,7 @@ export function RecLink({ lang, className = '' }: { lang: Lang; className?: stri
 
 /** The Progress screen's entry card (beside the practice diary): how many takes are kept, one tap to the library. */
 export function RecordingsEntryCard({ lang }: { lang: Lang }) {
-  const [n] = useRecordings(async () => (await listTakes()).length, [], 0);
+  const [n] = useRecordings(() => countTakes(), [], 0);
   return (
     <a className="set-card in-entry rec-entry" href="#/recordings" data-open-recordings="progress">
       <span className="in-entry-n">
@@ -1228,5 +1298,74 @@ export function RecordingsEntryCard({ lang }: { lang: Lang }) {
         ›
       </span>
     </a>
+  );
+}
+
+// ───────────────────────────── the practice diary's recordings (§6.7) ─────────────────────────────
+
+/** Local midnight of a 'YYYY-MM-DD' day as ISO, `plus` days later. */
+const dayStartIso = (day: string, plus = 0) => {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d + plus).toISOString();
+};
+
+/**
+ * The diary's compact list of a day's (or a span's) recordings: one row per take — glyph, name, time — linking to the
+ * player; a span shows its newest `maxDays` days with recordings, `perDay` rows each and "N more" into the library.
+ */
+export function DayRecordings({ lang, from, to = from, maxDays = 7, perDay = 3, title = true, asCard = false }: { lang: Lang; from: string; to?: string; maxDays?: number; perDay?: number; title?: boolean; /** In its own card with a heading (the Time tab); nothing at all when the span has no recordings. */ asCard?: boolean }) {
+  const [days] = useRecordings(
+    async () => {
+      const m = await takesByDay(dayStartIso(from), dayStartIso(to, 1), dayKey);
+      return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, maxDays);
+    },
+    [from, to, maxDays],
+    [] as [string, TakeHead[]][],
+  );
+  if (!days.length) return null;
+  const span = from !== to;
+  const list = (
+    <div className="rec-dayrecs" data-rec-day={span ? `${from}..${to}` : from}>
+      {title && !asCard && (
+        <small className="rec-dayrecs-h">
+          <RIcon k="voice" size={13} /> {RX.dayRecs[lang]}
+        </small>
+      )}
+      {days.map(([day, hs]) => (
+        <div key={day} className="rec-dayrecs-day">
+          {span && <span className="rec-dayrecs-d">{dayLabel(hs[0].at, lang)}</span>}
+          <ul className="rec-dayrecs-list">
+            {hs.slice(0, perDay).map((h) => (
+              <li key={h.id}>
+                <a className="rec-dayrec" href={`#/recordings/${encodeURIComponent(h.id)}`} data-rec-dayrec={h.id}>
+                  <span className="rec-glyph" aria-hidden="true">
+                    <RIcon k={h.audioId ? 'play' : h.sung ? 'voice' : h.source === 'mic' ? 'mic' : 'keys'} size={13} />
+                  </span>
+                  <span className="rec-dayrec-t">
+                    <Bidi text={takeTitle(h, lang)} />
+                  </span>
+                  <small>
+                    <N>{clock(h.at)}</N>
+                  </small>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {hs.length > perDay && (
+            <a className="link rec-dayrecs-more" href="#/recordings" data-open-recordings="diary-day">
+              {fillRx(RX.dayMore[lang], { n: hs.length - perDay })}
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+  return asCard ? (
+    <section className="set-card" data-rec-daycard="1">
+      <h2>{RX.dayRecs[lang]}</h2>
+      {list}
+    </section>
+  ) : (
+    list
   );
 }
