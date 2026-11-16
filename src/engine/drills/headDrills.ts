@@ -30,7 +30,7 @@ import { voice, type Voiced } from './chartDrills';
 import { parseChart, type ChartChordEv } from '../charts';
 import { keyLabel, sharpKey, type Home } from '../stdKey';
 import { HEADS, servedHeads, type Head } from '../../content/heads';
-import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, type HeadIn, type HNote } from '../heads';
+import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, type HarmStyle, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
 import { sharedHands, splitShared } from '../soloPiano';
 
@@ -99,7 +99,7 @@ export function cleanPath(g: VLGoal): number[][] {
   const full = (v: number[], k: number): number[] => {
     const out = g.over && g.chords[k].melody !== undefined ? [...v, g.chords[k].melody!] : [...v];
     if (!g.bass) return out;
-    let b = 36 + pc(g.chords[k].root - 36);
+    let b = 36 + pc((g.chords[k].bassPc ?? g.chords[k].root) - 36);
     while (b >= Math.min(...out)) b -= 12;
     return [b, ...out];
   };
@@ -174,8 +174,91 @@ export function harmPlan(s: DrillSpec): { hi: HeadIn; goal: VLGoal; phrase: numb
   return { hi, goal, phrase, path: cleanPath(goal) };
 }
 
+/**
+ * Styles written out note for note (graded by chord sets, not the voice-leading grader): borrowing (oblique motion: on
+ * a long melody note one inner voice goes to the dim and back while the rest holds) and the line that breaks into
+ * blocks at its peaks (the notes between the blocks are single melody notes). The blocks are the clean path of the
+ * 6-dim style (each a voicing the voice-leading grader passes).
+ */
+export const WRITTEN_STYLES = ['borrow', 'peaks'];
+
+/** The dim note a half step from a 6th-chord voice (every tone of a 6 / m6 chord has one: C→B, E→F, G→A♭, A→A♭). */
+export function borrowStep(p: number, dimRoot: number): number | null {
+  const dim = [0, 3, 6, 9].map((i) => pc(dimRoot + i));
+  for (const d of [-1, 1]) if (dim.includes(pc(p + d))) return p + d;
+  return null;
+}
+
+function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
+  const { hi, goal, phrase, path } = harmPlan(s);
+  const b0 = phrase * 16;
+  const notes: ExpNote[] = [];
+  const chordSets: NonNullable<DrillGoal['chordSets']> = [];
+  const mel = notesIn(hi, phrase * 4, phrase * 4 + 4).map((n) => ({ ...n, beat: r6(n.beat - b0) }));
+  const isEv = (beat: number) => goal.at.some((a) => Math.abs(a - beat) < 1e-6);
+  // the melody notes without a block: single notes
+  for (const n of mel) if (!isEv(n.beat)) notes.push({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' });
+  let bassPrev = 46;
+  let id = 0;
+  path.forEach((v0, k) => {
+    const c = goal.chords[k];
+    const beat = goal.at[k];
+    const m = mel.find((x) => Math.abs(x.beat - beat) < 1e-6)!;
+    const v = [...v0].sort((a, b) => a - b);
+    const nextEv = goal.at[k + 1] ?? 16;
+    const br = c.bassPc ?? c.root;
+    const opts = [36, 48].map((o) => o + pc(br - o)).filter((p) => p >= 36 && p <= 55 && p < v[0]);
+    let b = (opts.length ? opts : [36 + pc(br - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
+    while (b >= v[0]) b -= 12;
+    bassPrev = b;
+    // the block lasts as long as its melody note (peaks: the line goes on above the held bass)
+    const dur = r6(Math.min(m.dur, nextEv - beat));
+    const bassDur = r6(Math.max(dur, (style.id === 'peaks' ? nextEv : beat + dur) - beat));
+    const cid = ++id;
+    const lower = v.slice(0, -1);
+    let mover = -1;
+    let moved: number | null = null;
+    if (style.id === 'borrow' && c.q !== 'dim7' && dur >= 2 - 1e-6) {
+      // the inner voice nearest the melody that has a half-step dim neighbour (the top inner voice first)
+      for (let j = lower.length - 1; j >= 0 && mover < 0; j--) {
+        const q = borrowStep(lower[j], pc(c.root - 1));
+        if (q !== null && !v.includes(q)) {
+          mover = j;
+          moved = q;
+        }
+      }
+    }
+    const t1 = 1;
+    const t2 = dur >= 3 - 1e-6 ? 1 : 0.5;
+    lower.forEach((p, j) => notes.push({ pitch: p, beat, dur: j === mover ? t1 : dur, hand: 'R', chordId: cid }));
+    notes.push({ pitch: m.pitch, beat, dur, hand: 'R', chordId: cid, accent: true });
+    notes.push({ pitch: b, beat, dur: bassDur, hand: 'L', chordId: cid });
+    const req = [...new Set([...v, b].map(pc))].sort((x, y) => x - y);
+    chordSets.push({ chordId: cid, required: req, allowed: req });
+    if (mover >= 0 && moved !== null) {
+      notes.push({ pitch: moved, beat: r6(beat + t1), dur: t2, hand: 'R' });
+      notes.push({ pitch: lower[mover], beat: r6(beat + t1 + t2), dur: r6(dur - t1 - t2), hand: 'R' });
+    }
+  });
+  notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
+  return {
+    spec: { ...s, hands: 'RL' },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, style.name, barsLabel(phrase)),
+    notes,
+    beats: 16,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: true, chordSets },
+    startBpm: Math.round(s.tempo ?? (hi.head.feel === 'ballad' ? 56 : 66)),
+    chart: chartOf(hi.bars.slice(phrase * 4, phrase * 4 + 4)),
+    tonic: hi.tonic,
+  };
+}
+
 function genHarm(s: DrillSpec): Drill {
   if (s.kind === 'hm-mel') return pianoMelody(s);
+  if (WRITTEN_STYLES.includes(s.kind.slice(3))) return genHarmWritten(s, HARM_STYLES[s.kind.slice(3)]);
   const { hi, goal, phrase, path } = harmPlan(s);
   const style = HARM_STYLES[s.kind.slice(3)];
   const notes: ExpNote[] = [];
@@ -200,15 +283,16 @@ function genHarm(s: DrillSpec): Drill {
     const c = goal.chords[k];
     const rh = [...v, ...(goal.over ? [c.melody!] : [])].sort((a, b) => a - b);
     rh.forEach((p) => notes.push({ pitch: p, beat, dur, hand: 'R', chordId: id, ...(p === c.melody ? { accent: true } : {}) }));
-    const opts = [36, 48].map((o) => o + pc(c.root - o)).filter((p) => p >= 36 && p <= 55 && p < rh[0]);
-    let b = (opts.length ? opts : [36 + pc(c.root - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
+    const br = c.bassPc ?? c.root;
+    const opts = [36, 48].map((o) => o + pc(br - o)).filter((p) => p >= 36 && p <= 55 && p < rh[0]);
+    let b = (opts.length ? opts : [36 + pc(br - 36)]).sort((a, z) => Math.abs(a - bassPrev) - Math.abs(z - bassPrev))[0];
     while (b >= rh[0]) b -= 12;
     bassPrev = b;
     notes.push({ pitch: b, beat, dur, hand: 'L', chordId: id });
   });
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
   const chordSets: NonNullable<DrillGoal['chordSets']> = goal.chords.map((c, k) => {
-    const req = [...new Set([...typePcs(c, goal.type), pc(c.root), ...(goal.over ? [pc(c.melody!)] : [])])].sort((a, b) => a - b);
+    const req = [...new Set([...typePcs(c, goal.type), pc(c.bassPc ?? c.root), ...(goal.over ? [pc(c.melody!)] : [])])].sort((a, b) => a - b);
     return { chordId: k + 1, required: req, allowed: req };
   });
   return {
@@ -675,6 +759,37 @@ const reharmable = (idx: number, kind: string): boolean => {
 };
 const headsFor = (kind: string): number[] => (RH_SETS[kind] ? SERVED.filter((i) => reharmable(i, kind)) : SERVED);
 
+/** Can a style harmonise this phrase of a head in all 12 keys (two chords at least)? A head with a phrase the style
+ *  cannot set (a melody with no note its voicings fit) is left out of that level. */
+const HARMABLE = new Map<string, boolean>();
+function harmable(idx: number, kind: string, phrase: number): boolean {
+  const k = `${idx}|${kind}|${phrase}`;
+  if (!HARMABLE.has(k)) {
+    let ok = true;
+    for (let key = 0; key < 12 && ok; key++) {
+      try {
+        harmPlan({ family: 'k-harm', kind, key, hands: 'RL', option: opt(idx, phrase) });
+      } catch {
+        ok = false;
+      }
+    }
+    HARMABLE.set(k, ok);
+  }
+  return HARMABLE.get(k)!;
+}
+
+/** The phrase a style's level uses for a head: phrase 0, or for borrowing the first phrase with a long 6th-chord note. */
+export function phraseFor(idx: number, style: string): number {
+  if (style !== 'borrow') return 0;
+  const head = HEADS[idx];
+  const hi = headIn(head, head.home.key, 'piano');
+  for (let p = 0; p < phraseCount(head); p++) {
+    const evs = harmEvents(hi, p * 4, p * 4 + 4, HARM_STYLES.borrow);
+    if (evs.length >= 2 && evs.some((e) => e.chord.q !== 'dim7' && e.note.dur >= 2 - 1e-6)) return p;
+  }
+  return 0;
+}
+
 /** Base harmonising levels (stable ids 1–7); registered styles beyond the base four follow as levels 8, 9 … */
 const BASE_STYLES = ['shell', 'close', 'drop2', 'drop3'];
 const HARM_TITLE: Record<string, T2> = {
@@ -689,15 +804,17 @@ export function pianoHarmFamily(): FamilyDef {
   const fam: FamilyId = 'k-harm';
   const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number]): LevelDef =>
     ({ id: `${fam}-${level}`, level, title: t(en, he), specs, keys: HEAD_KEYS, tempo }) as LevelDef;
-  const phrase0 = (kind: string, tempo: number): SpecTemplate[] => SERVED.map((i) => ({ family: fam, kind, hands: 'RL', option: opt(i, 0), tempo }));
+  const phrase0 = (kind: string, tempo: number): SpecTemplate[] => SERVED.filter((i) => harmable(i, kind, 0)).map((i) => ({ family: fam, kind, hands: 'RL', option: opt(i, 0), tempo }));
   const levels: LevelDef[] = [
     L(1, 'The melody alone', 'המנגינה לבד', SERVED.map((i) => ({ family: fam, kind: 'hm-mel', hands: 'R', option: opt(i), tempo: 80 })), [80, 132]),
     ...BASE_STYLES.map((id, k) => L(k + 2, HARM_TITLE[id].en, HARM_TITLE[id].he, phrase0(`hm-${id}`, 60), [60, 100])),
-    L(6, 'The next phrases in drop 2', 'המשפטים הבאים בדרופ 2', SERVED.flatMap((i) => [1, 2].filter((p) => p < phraseCount(HEADS[i])).map((p) => ({ family: fam, kind: 'hm-drop2', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
-    L(7, 'The rest of the head in drop 3', 'שאר השיר בדרופ 3', SERVED.flatMap((i) => [2, 3].filter((p) => p < phraseCount(HEADS[i])).map((p) => ({ family: fam, kind: 'hm-drop3', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
+    L(6, 'The next phrases in drop 2', 'המשפטים הבאים בדרופ 2', SERVED.flatMap((i) => [1, 2].filter((p) => p < phraseCount(HEADS[i]) && harmable(i, 'hm-drop2', p)).map((p) => ({ family: fam, kind: 'hm-drop2', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
+    L(7, 'The rest of the head in drop 3', 'שאר השיר בדרופ 3', SERVED.flatMap((i) => [2, 3].filter((p) => p < phraseCount(HEADS[i]) && harmable(i, 'hm-drop3', p)).map((p) => ({ family: fam, kind: 'hm-drop3', hands: 'RL' as const, option: opt(i, p), tempo: 60 }))), [60, 100]),
   ];
-  // Plugged-in styles (heads.ts registerHarmStyle): one level each, after the base ladder.
-  for (const st of builtStyles().filter((x) => !BASE_STYLES.includes(x.id))) levels.push(L(levels.length + 1, st.name.en, st.name.he, phrase0(`hm-${st.id}`, 60), [60, 100]));
+  // Plugged-in styles (heads.ts registerHarmStyle): one level each, after the base ladder. Borrowing takes, per head,
+  // the first phrase with a long note to borrow on (phraseFor).
+  for (const st of builtStyles().filter((x) => !BASE_STYLES.includes(x.id)))
+    levels.push(L(levels.length + 1, st.name.en, st.name.he, SERVED.filter((i) => harmable(i, `hm-${st.id}`, phraseFor(i, st.id))).map((i) => ({ family: fam, kind: `hm-${st.id}`, hands: 'RL' as const, option: opt(i, phraseFor(i, st.id)), tempo: 60 })), [60, 100]));
   return { id: fam, title: t('Harmonise a melody', 'הרמון מנגינה'), style: 'jazz', levels };
 }
 

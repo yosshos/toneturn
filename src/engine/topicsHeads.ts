@@ -3,13 +3,17 @@
 //               2 a head's four bars, as written and then reharmonised: which device? (tritone sub, extra ii–V,
 //                 backdoor, passing dim, line cliché — the same app reharm the drills play)
 //               3 the same, but where: which bar did the reharm change?
+//               4 (C1) a block under a melody note: the 6th chord or its diminished? (the 6-dim blocks of k-harm 9–12:
+//                 the bar's chord as its 6th chord — Dm7 = F6, G7 → Dm6 — and the dim a half step under its root)
+//               5 (#1) a head's phrase as a single line, in 6-dim blocks (close, the melody on top) or in drop-2 blocks?
 // Pure, seeded generators like every topic. Only original heads are used (src/content/heads.ts servedHeads()).
 
 import type { ChoiceQuestion, Stimulus } from './lesson';
 import { TOPIC_GEN, rng, pickR, shuffleR, choiceQ, nm } from './topicKit';
 import { TOPIC_TAGS, tg } from './taxonomy';
 import { servedHeads } from '../content/heads';
-import { headIn } from './heads';
+import { headIn, harmEvents, HARM_STYLES, sixDimUnder } from './heads';
+import { optimalPath, type VLGoal } from './drills/voiceLead';
 import { applyPlan, autoPlan, deviceBars, barsOf, roleOf, DEVICE_NAME, type Device, type Role } from './reharm';
 import { parseChart } from './charts';
 import { voice, type Voiced } from './drills/chartDrills';
@@ -55,6 +59,59 @@ function phraseStim(text: string, notes: { pitch: number; beat: number; dur: num
   return evs(out, 16 * sec + 0.5);
 }
 
+// ---------------------------------------------------------------- level 4: 6th chord or dim under the note
+
+const SIX_CHARTS = ['maj7', 'm7', '7'];
+/** A close block (4 notes, the melody on top) of a 6th chord or a dim under a melody note, over the chart root. */
+function blockStim(chartRoot: number, chartQ: string, melody: number, prelude: number | null): Stimulus[] {
+  const names = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  const c = parseChart(`${names[chartRoot]}${chartQ}`).chords[0];
+  const out: Ev[] = [];
+  const bass = 36 + mod12(chartRoot - 36);
+  const block = (m: number, t: number, d: number) => {
+    const u = sixDimUnder(m, c)!;
+    const iv = u.q === 'dim7' ? [0, 3, 6, 9] : u.q === 'm6' ? [0, 3, 7, 9] : [0, 4, 7, 9];
+    const tones = iv.map((i) => mod12(u.root + i)).filter((x) => x !== mod12(m));
+    const below = tones.map((x) => m - (mod12(m - x) || 12)).sort((a, b) => a - b);
+    for (const p of [...below, m]) out.push({ midi: p, start: t, duration: d, velocity: p === m ? 0.75 : 0.45 });
+  };
+  out.push({ midi: bass, start: 0, duration: prelude !== null ? 2.6 : 1.6, velocity: 0.5 });
+  let t = 0;
+  if (prelude !== null) {
+    block(prelude, 0, 0.9);
+    t = 1;
+  }
+  block(melody, t, 1.5);
+  return [evs(out, t + 1.7)];
+}
+
+// ---------------------------------------------------------------- level 5: line, blocks or drop 2
+
+/** A head's phrase in a texture: the melody over LH shells, 6-dim close blocks, or 6-dim drop-2 blocks. */
+function textureStim(hi: ReturnType<typeof headIn>, phrase: number, texture: 'line' | 'blocks' | 'drop2'): Stimulus {
+  const sec = 60 / 120;
+  const b0 = phrase * 16;
+  const out: Ev[] = [];
+  const mel = hi.notes.filter((n) => n.beat >= b0 && n.beat < b0 + 16);
+  if (texture === 'line') return phraseStim(hi.text, hi.notes, phrase * 4);
+  const style = HARM_STYLES[texture === 'blocks' ? 'sixdim' : 'sixdrop2'];
+  const ev = harmEvents(hi, phrase * 4, phrase * 4 + 4, style);
+  const g: VLGoal = { chords: ev.map((e) => e.chord), at: ev.map((e) => e.note.beat - b0), type: style.type, tol: style.tol, lo: style.lo, hi: style.hi };
+  const path = optimalPath(g);
+  for (const n of mel) {
+    const k = ev.findIndex((e) => e.note === n);
+    const notes = k >= 0 && path[k] ? path[k] : [n.pitch];
+    for (const m of notes) out.push({ midi: m, start: (n.beat - b0) * sec, duration: n.dur * sec * 0.95, velocity: m === n.pitch ? 0.75 : 0.42 });
+  }
+  for (const c of hi.chords.filter((x) => x.bar >= phrase * 4 && x.bar < phrase * 4 + 4)) out.push({ midi: 36 + mod12(c.root - 36), start: (c.bar * 4 + c.at - b0) * sec, duration: c.beats * sec * 0.9, velocity: 0.5 });
+  return evs(out, 16 * sec + 0.5);
+}
+const TEXTURE_NAME: Names = {
+  line: nm('A single line', 'קו בודד', 'single line', 'line'),
+  blocks: nm('6-dim blocks (close)', 'בלוקים שש-מוקטן (צמודים)', 'blocks', 'block chords', 'locked hands'),
+  drop2: nm('Drop-2 blocks', 'בלוקים בדרופ 2', 'drop two', 'drop 2'),
+};
+
 TOPIC_GEN['melody-fit'] = {
   title: { en: 'Melody against the chords', he: 'המנגינה מול האקורדים' },
   skill: 'cadences',
@@ -62,9 +119,54 @@ TOPIC_GEN['melody-fit'] = {
     { en: 'Chord tone, tension or clash?', he: 'צליל אקורד, מתח או התנגשות?' },
     { en: 'A head reharmonised: which device?', he: 'שיר בהרמון חדש: איזו תחבולה?' },
     { en: 'Which bar changed?', he: 'איזו תיבה השתנתה?' },
+    { en: '6th chord or diminished under the note?', he: 'אקורד שש או מוקטן מתחת לצליל?' },
+    { en: 'A line, blocks or drop 2?', he: 'קו, בלוקים או דרופ 2?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
+    if (level === 4) {
+      const root = Math.floor(rnd() * 12);
+      const q = pickR(rnd, SIX_CHARTS);
+      const names0 = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+      const c = parseChart(`${names0[root]}${q}`).chords[0];
+      const answer = pickR(rnd, ['six', 'dim']);
+      const pool: number[] = [];
+      for (let m = 70; m <= 81; m++) {
+        const u = sixDimUnder(m, c);
+        if (u && (u.q === 'dim7') === (answer === 'dim')) pool.push(m);
+      }
+      const melody = pickR(rnd, pool);
+      // a 6th-chord block first (a chord tone a step away) sets the sound of the bar
+      const pre = [melody - 1, melody + 1, melody - 2, melody + 2, melody - 3, melody + 3].find((m) => m !== melody && !!sixDimUnder(m, c) && sixDimUnder(m, c)!.q !== 'dim7') ?? null;
+      const names: Names = { six: nm('The 6th chord', 'אקורד השש', 'sixth', 'six chord'), dim: nm('The diminished', 'המוקטן', 'diminished', 'dim') };
+      return choiceQ({
+        id, topic: 'melody-fit', level, seed, skill: 'chords', difficulty: 1450,
+        ask: { en: 'Blocks under a melody: is the last note harmonised with the 6th chord or the diminished?', he: 'בלוקים מתחת למנגינה: הצליל האחרון מהורמן באקורד השש או במוקטן?' },
+        names, answer, choices: ['six', 'dim'], stimulus: blockStim(root, q, melody, pre),
+      });
+    }
+    if (level === 5) {
+      const heads = servedHeads();
+      const answer = pickR(rnd, ['line', 'blocks', 'drop2'] as const);
+      for (let tries = 0; tries < 20; tries++) {
+        const h = pickR(rnd, heads);
+        const hi = headIn(h, Math.floor(rnd() * 12));
+        const phrase = 0;
+        if (harmEvents(hi, 0, 4, HARM_STYLES.sixdim).length < 3) continue;
+        let stim: Stimulus;
+        try {
+          stim = textureStim(hi, phrase, answer);
+        } catch {
+          continue;
+        }
+        return choiceQ({
+          id, topic: 'melody-fit', level, seed, skill: 'chords', difficulty: 1550,
+          ask: { en: 'Four bars of a head. How is the melody set?', he: 'ארבע תיבות של שיר. איך המנגינה מעובדת?' },
+          names: TEXTURE_NAME, answer, choices: ['line', 'blocks', 'drop2'], stimulus: [stim],
+        });
+      }
+      throw new Error('melody-fit 5: no head to set');
+    }
     if (level <= 1) {
       const q = pickR(rnd, QUALS);
       const root = pickR(rnd, [0, 2, 3, 5, 7, 8, 10]);
@@ -121,4 +223,4 @@ TOPIC_GEN['melody-fit'] = {
     throw new Error('melody-fit: no phrase to reharmonise');
   },
 };
-TOPIC_TAGS['melody-fit'] = (l) => (l >= 2 ? tg(['cadences', 'reharm', 0.8], ['chords', 'voicing', 0.2]) : tg(['cadences', 'reharm', 0.6], ['chords', 'voicing', 0.4]));
+TOPIC_TAGS['melody-fit'] = (l) => (l >= 4 ? tg(['chords', 'voicing', 0.7], ['cadences', 'reharm', 0.3]) : l >= 2 ? tg(['cadences', 'reharm', 0.8], ['chords', 'voicing', 0.2]) : tg(['cadences', 'reharm', 0.6], ['chords', 'voicing', 0.4]));

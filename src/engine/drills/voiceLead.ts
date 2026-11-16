@@ -29,6 +29,11 @@ export interface VLChord {
   melody?: number;
   /** The chord symbol as spelled in its own key (key-to-key moves: E7 → A6 after C6, B♭7 in E♭); default from root + flats. */
   name?: string;
+  /**
+   * The LH bass when it is not the root (6-dim blocks under a melody: Dm7 voiced as F6 keeps D in the bass, G7 voiced as
+   * Dm6 keeps G). Pitch class; default the root.
+   */
+  bassPc?: number;
 }
 
 /** The voice-leading goal of a drill (DrillGoal.vl). */
@@ -234,7 +239,7 @@ export function classify(played: number[], c: VLChord, g: Pick<VLGoal, 'type' | 
   const rest = hasBass ? ps.slice(1) : ps;
   // A diminished 7th is symmetrical: any of its notes may be the bass (B°7 = D°7 = F°7 = A♭°7).
   const dimBassOk = c.q === 'dim7' && bass !== null && Q.ints.some((i) => mod12(c.root + i) === mod12(bass));
-  if (bass !== null && mod12(bass) !== mod12(c.root) && !dimBassOk) return res('bass', rest, bass);
+  if (bass !== null && mod12(bass) !== mod12(c.bassPc ?? c.root) && !(dimBassOk && c.bassPc === undefined)) return res('bass', rest, bass);
   if (g.type === 'shared') {
     // Siskind's four rules on the whole voicing (the melody included: it must not be doubled).
     const sq = SHARED_Q[c.q] ?? 'maj7';
@@ -484,7 +489,7 @@ export function stepLine(s: VLStep, g: VLGoal): { en: string; he: string } | nul
   const list = (ps: number[]) => ({ en: ps.map((p) => nm(p).en).join(', '), he: ps.map((p) => nm(p).he).join(', ') });
   const k = s.cls;
   if (k.kind === 'empty') return { en: `${sym}: not played`, he: `${sym}: לא נוגן` };
-  if (k.kind === 'bass') return { en: `${sym}: ${nm(c.root).en} in the bass`, he: `${sym}: ${nm(c.root).he} בבס` };
+  if (k.kind === 'bass') return { en: `${sym}: ${nm(c.bassPc ?? c.root).en} in the bass`, he: `${sym}: ${nm(c.bassPc ?? c.root).he} בבס` };
   if (k.kind === 'wrong') return { en: `${sym}: ${list(k.wrongPcs).en} not in the chord`, he: `${sym}: ${list(k.wrongPcs).he} לא באקורד` };
   if (k.kind === 'missing') return { en: `${sym}: missing ${list(k.missingPcs).en}`, he: `${sym}: חסר ${list(k.missingPcs).he}` };
   if (k.kind === 'type') return { en: `${sym}: not ${TYPE_NAME[g.type].en}`, he: `${sym}: לא ${TYPE_NAME[g.type].he}` };

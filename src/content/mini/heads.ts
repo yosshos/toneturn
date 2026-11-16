@@ -172,6 +172,13 @@ export const LESSONS: MiniLesson[] = [
 
 export const UNITS: Record<string, string> = {
   'tech:k-harm': 'harmonize-melody',
+  // AUDIT-DEPTH-3 C1, #1, #3: the 6-dim conversions under a melody open with the Harris lesson on them (Dm7 as F6 with
+  // E°7, G7 as Dm6 with C♯°7), borrowing with the borrowing lesson, triads under a melody with this unit's lesson.
+  'tech:k-harm-9': 'bh-chords-move',
+  'tech:k-harm-10': 'bh-chords-move',
+  'tech:k-harm-11': 'bh-borrow',
+  'tech:k-harm-12': 'bh-chords-move',
+  'tech:k-harm-13': 'harmonize-melody',
   'tech:g-cmel': 'chord-melody',
   'tech:k-tune': 'reharm-tune',
   'tech:g-tune': 'reharm-tune',

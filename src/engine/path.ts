@@ -496,6 +496,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...SP_LEVEL_DIFF,
   // Siskind's shared hands as k-harm 8 (heads.ts hm-shared): after drop 3 (1750), inside the heads' 1300–1800 band.
   'k-harm-8': 1780,
+  // AUDIT-DEPTH-3 C1, #1, #3 (heads.ts): triads under a melody first (1250), then the 6-dim ladder — blocks, drop 2,
+  // borrowing, a line that breaks into blocks at its peaks — 1450 → 1680 (inside the heads' band).
+  'k-harm-9': 1450, 'k-harm-10': 1520, 'k-harm-11': 1600, 'k-harm-12': 1680, 'k-harm-13': 1250,
 };
 /**
  * AUDIT-DEPTH-3 §0: the top of the path scale. A family whose levels would run past it by index (accomp, voicings,
@@ -506,7 +509,7 @@ export const PATH_CAP = 1900;
 export const NON_MONOTONE_FAMILIES = [
   // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
   'g-ctx',
-  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).

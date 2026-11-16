@@ -126,11 +126,12 @@ describe('harmonise a melody (C1): the melody on top, graded by voiceLead.ts', (
     expect(chordUnder(70, { root: 0, iv: [0, 4, 7, 10] })).toBe('7');
   });
   it('styles plug in: a registered style becomes a level after the base ladder; todo hooks stay out', () => {
-    expect(HARM_STYLES.sixdim.todo).toBe(true);
-    expect(HARM_STYLES.borrow.todo).toBe(true);
+    // the Barry Harris styles are built now (AUDIT-DEPTH-3 C1: 6-dim blocks, drop 2, borrowing, the line into blocks)
+    expect(HARM_STYLES.sixdim.todo).toBeUndefined();
+    expect(HARM_STYLES.borrow.todo).toBeUndefined();
     const before = pianoHarmFamily().levels.length;
-    // 7 base levels + Siskind's shared hands (hm-shared, registered in heads.ts)
-    expect(before).toBe(8);
+    // 7 base levels + Siskind's shared hands + sixdim, sixdrop2, borrow, peaks, triad (registered in heads.ts)
+    expect(before).toBe(13);
     registerHarmStyle({ id: 'test-close', name: { en: 'Test', he: 'בדיקה' }, type: 'close', over: false, lo: 52, hi: 86, tol: 2 });
     try {
       const fam = pianoHarmFamily();
@@ -142,7 +143,7 @@ describe('harmonise a melody (C1): the melody on top, graded by voiceLead.ts', (
       delete HARM_STYLES['test-close'];
       HARM_ORDER.splice(HARM_ORDER.indexOf('test-close'), 1);
     }
-    expect(builtStyles().map((s) => s.id)).toEqual(['shell', 'close', 'drop2', 'drop3', 'shared']);
+    expect(builtStyles().map((s) => s.id)).toEqual(['shell', 'close', 'drop2', 'drop3', 'shared', 'sixdim', 'sixdrop2', 'borrow', 'peaks', 'triad']);
   });
   it('harmEvents picks the notes on beats 1 and 3 and where a chord starts', () => {
     const hi = headIn(HEADS[SERVED[0]], 5);
@@ -297,15 +298,15 @@ describe('12 keys, the ladders and the path', () => {
     expect(b.notes.map((n) => pc(n.pitch - a.notes[0].pitch))[0]).toBe(2);
     expect(headIn(h, 6).text).not.toMatch(/##|bb/);
   });
-  it('counts: k-harm 8, k-tune 10, g-cmel 6, g-tune 9, b-tune 7 levels', () => {
+  it('counts: k-harm 13, k-tune 10, g-cmel 6, g-tune 9, b-tune 7 levels', () => {
     const n = (id: string) => [...pianoFams(), ...guitarFams()].find((f) => f.id === id)!.levels.length;
-    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([8, 10, 6, 9, 7]);
+    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([13, 10, 6, 9, 7]);
   });
-  it('the path places them by difficulty inside 1300–1800', () => {
+  it('the path places them by difficulty inside 1250–1800 (triads under a melody at 1250)', () => {
     const steps = stepCatalogue().filter((s) => s.ladder && [...FAMS, ...GFAMS].includes(s.ladder.family));
-    expect(steps.length).toBe(8 + 10 + 6 + 9 + 7);
+    expect(steps.length).toBe(13 + 10 + 6 + 9 + 7);
     for (const s of steps) {
-      expect(s.difficulty, s.id).toBeGreaterThanOrEqual(1300);
+      expect(s.difficulty, s.id).toBeGreaterThanOrEqual(1250);
       expect(s.difficulty, s.id).toBeLessThanOrEqual(1800);
     }
   });
