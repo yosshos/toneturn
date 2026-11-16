@@ -6,12 +6,13 @@
 import { useRef, useState } from 'react';
 import type { Drill, ItemState, PlayedNote, TakeMetrics } from '../../engine/drills/types';
 import { applyTake, newItem, type LadderResult } from '../../engine/drills/ladder';
-import { hasQuarters, quartersDrill, QUARTERS_BPM, skipRubato, withStageTake } from '../../engine/drills/rubato';
+import { QUARTERS_BPM, skipRubato, withStageTake } from '../../engine/drills/rubato';
+import { passCents } from '../../engine/vocal';
 import { loopBpm, sliceDrill } from '../../engine/drills/slice';
 import type { RatingEvent } from '../../engine/rating';
 import type { Lick, LickBook, LickInstrument } from '../../engine/licks';
 import type { Settings } from '../../storage/progress';
-import { finalHand, keyOrder, keyStage, keyStartBpm, phraseDrill, phraseNeck, phraseRungs, planOf, type Hand } from '../../engine/encore/phrase';
+import { barSpanBeats, finalHand, keyOrder, keyStage, keyStartBpm, phraseDrill, phraseHasQuarters, phraseNeck, phraseQuartersDrill, phraseRungs, planOf, type Hand } from '../../engine/encore/phrase';
 import { midi } from '../../speech/midi';
 import { phraseTake, type TakeOutcome } from '../../engine/encore/connect';
 import { DrillTake } from '../DrillTake';
@@ -60,7 +61,9 @@ export function EncoreRun({
   const cal = calOf(settings);
   const local = useRef<Record<string, ItemState>>({});
   const all = (): Record<string, ItemState> => ({ ...items, ...local.current });
-  const drill: Drill = phraseDrill(l, keyPc, hand, { inst, startBpm: keyStartBpm(l, all(), keyPc, inst, hand), band: planOf(l).band });
+  const drill0: Drill = phraseDrill(l, keyPc, hand, { inst, startBpm: keyStartBpm(l, all(), keyPc, inst, hand), band: planOf(l).band });
+  // sung: the course's pass band at the phrase's own rating (passCents: 65 ¢ below 1300, 60 ¢ from 1300) — sungPitch.ts
+  const drill: Drill = inst === 'voice' ? { ...drill0, sungTolCents: passCents(badge(l, 'voice').D) } : drill0;
   const stateOf = () => local.current[drill.itemId] ?? items[drill.itemId] ?? newItem(drill);
   const plan = planOf(l);
   const [bpm, setBpm] = useState(() => Math.max(drill.startBpm, Math.min(plan.goalBpm, stateOf().goalBpm || drill.startBpm)));
@@ -75,8 +78,8 @@ export function EncoreRun({
   const n = useRef(0);
   const played = useRef<PlayedNote[]>([]);
   const book = useRef<LickBook | undefined>(settings.lickBook);
-  const stage = keyStage(l, all(), keyPc, inst, hand, hasQuarters(drill));
-  const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
+  const stage = keyStage(l, all(), keyPc, inst, hand, phraseHasQuarters(drill));
+  const takeDrill = stage === 'quarters' ? phraseQuartersDrill(drill) : drill;
   const order = keyOrder(l, plan, inst);
   const ki = order.indexOf(keyPc);
   const rungs = phraseRungs({ startBpm: drill.startBpm, goalBpm: plan.goalBpm });
@@ -104,11 +107,11 @@ export function EncoreRun({
           ? he
             ? 'בלי למהר — שוב.'
             : 'No rush — again.'
-          : keyStage(l, after, keyPc, inst, hand, hasQuarters(drill)) === 'quarters'
+          : keyStage(l, after, keyPc, inst, hand, phraseHasQuarters(drill)) === 'quarters'
             ? he
               ? 'עכשיו בזמן: ברבעים, ♩60.'
               : 'Now in time: quarters at ♩60.'
-            : keyStage(l, after, keyPc, inst, hand, hasQuarters(drill)) === null
+            : keyStage(l, after, keyPc, inst, hand, phraseHasQuarters(drill)) === null
               ? he
                 ? `מוכנים לטמפו: ♩${next.goalBpm || drill.startBpm}.`
                 : `Ready for tempo: ♩${next.goalBpm || drill.startBpm}.`
@@ -235,7 +238,7 @@ export function EncoreRun({
           onNext={nextAfter}
           onKeep={
             played.current.length >= 3 && res.stage === 'tempo'
-              ? () => keepPhrase({ kind: 'phrase', instrument: inst, title: l.name, source: midi.devices.length && inst === 'piano' ? 'midi' : 'mic', notes: played.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart ? { chart: drill.chart.join(' | ') } : {}) }, wb !== null ? { from: wb * drill.meter, to: (wb + 1) * drill.meter } : null)
+              ? () => keepPhrase({ kind: 'phrase', instrument: inst, title: l.name, source: midi.devices.length && inst === 'piano' ? 'midi' : 'mic', notes: played.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart ? { chart: drill.chart.join(' | ') } : {}) }, wb !== null ? barSpanBeats(l, wb) : null)
               : undefined
           }
         >

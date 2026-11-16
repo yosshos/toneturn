@@ -4,7 +4,7 @@
 
 import type { ItemState } from '../engine/drills/types';
 import type { LickBook, LickInstrument } from '../engine/licks';
-import { assignmentIdOf, isTeacherPhrase, pendingKeySubmissions, type KeySubmission } from '../engine/encore/assign';
+import { assignmentIdOf, isTeacherPhrase, pendingKeySubmissions, phraseInstOf, type KeySubmission } from '../engine/encore/assign';
 import { phrasesOf } from '../engine/encore/connect';
 
 export interface OutboxRow {
@@ -25,12 +25,13 @@ export interface OutboxState {
 export const emptyOutbox = (): OutboxState => ({ sent: {}, queue: [] });
 
 /** Queue the passed-but-unsent keys of every teacher phrase in the book. Pure: returns the new state and the new rows. */
-export function enqueuePassed(state: OutboxState, book: LickBook | undefined, items: Record<string, ItemState>, now: string, inst: LickInstrument = 'piano', minutes: (assignmentId: string) => number = () => 0): { state: OutboxState; added: OutboxRow[] } {
+export function enqueuePassed(state: OutboxState, book: LickBook | undefined, items: Record<string, ItemState>, now: string, inst?: LickInstrument, minutes: (assignmentId: string) => number = () => 0): { state: OutboxState; added: OutboxRow[] } {
   const added: OutboxRow[] = [];
   for (const l of phrasesOf(book).filter(isTeacherPhrase)) {
     const aid = assignmentIdOf(l)!;
     const known = [...(state.sent[aid] ?? []), ...state.queue.filter((q) => q.assignmentId === aid).map((q) => q.key)];
-    for (const s of pendingKeySubmissions(l, items, known, inst)) {
+    // each assignment on its own instrument (the teacher picks it; the old piano-only ones read piano)
+    for (const s of pendingKeySubmissions(l, items, known, inst ?? phraseInstOf(l))) {
       added.push({ id: `${aid}:${s.key}`, assignmentId: aid, key: s.key, score: s.score, minutes: Math.round(minutes(aid)), metrics: s.metrics, at: now });
     }
   }
@@ -104,7 +105,7 @@ export function flushOutbox(send: (r: OutboxRow) => Promise<unknown>): Promise<n
 }
 
 /** Queue what passed (device copy) and return the rows added. */
-export function queuePassed(book: LickBook | undefined, items: Record<string, ItemState>, inst: LickInstrument = 'piano', now = new Date().toISOString()): OutboxRow[] {
+export function queuePassed(book: LickBook | undefined, items: Record<string, ItemState>, inst?: LickInstrument, now = new Date().toISOString()): OutboxRow[] {
   const r = enqueuePassed(loadOutbox(), book, items, now, inst);
   if (r.added.length) saveOutbox(r.state);
   return r.added;

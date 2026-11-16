@@ -47,4 +47,4 @@ export function keyInstOf(course: CourseId | undefined, plays: string[] = []): K
 }
 
 /** The register a line is played in per instrument (MIDI): the mic hears any octave, MIDI too (pitch classes are graded). */
-export const LINE_RANGE: Record<KeyInstrument, [number, number]> = { piano: [60, 79], guitar: [52, 72], bass: [36, 55] };
+export const LINE_RANGE: Record<KeyInstrument, [number, number]> = { piano: [60, 79], guitar: [52, 72], bass: [36, 55], voice: [55, 72] };

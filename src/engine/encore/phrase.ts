@@ -6,6 +6,8 @@
 import type { Drill, DrillGoal, ExpNote, ItemState } from '../drills/types';
 import { itemPass, ladderStep } from '../drills/ladder';
 import { withBarPlan } from '../drills/timeline';
+import { hasQuarters, quartersDrill } from '../drills/rubato';
+import { notesPerBeat } from '../drills/analyze';
 import { keyName } from '../drills/generate';
 import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type LickChord, type LickContext, type LickInstrument, type LickNote, type PhrasePlan, type PhraseSource } from '../licks';
 import type { BeatNote } from './detect';
@@ -149,6 +151,46 @@ export function barEndBeat(l: Pick<Lick, 'pickup' | 'meter'>, bar: number): numb
   const m = l.meter ?? 4;
   const p = pickupOf(l);
   return p ? p + bar * m : (bar + 1) * m;
+}
+
+/** A bar's span in beats from the phrase's start (bar 0 = the pickup bar when there is one): the run review's Keep. */
+export function barSpanBeats(l: Pick<Lick, 'pickup' | 'meter'>, bar: number): { from: number; to: number } {
+  const m = l.meter ?? 4;
+  const p = pickupOf(l);
+  const b = Math.max(0, Math.floor(bar));
+  return { from: !p ? b * m : b === 0 ? 0 : p + (b - 1) * m, to: barEndBeat(l, b) };
+}
+
+/** A phrase drill whose only meter change is its pickup bar (withBarPlan: a short bar 0, one meter after it). */
+const pickupOnly = (d: Drill): boolean => !!d.meters?.length && d.meters.length <= 2 && d.meters[0].bar === 0 && !!d.meters[0].meter.pickup;
+
+/** The quarters stage (rubato → quarters → tempo) also for a phrase with a pickup bar. */
+export function phraseHasQuarters(drill: Drill): boolean {
+  return hasQuarters(pickupOnly(drill) ? { ...drill, meters: undefined } : drill);
+}
+
+/**
+ * The quarters-stage drill of a phrase (rubato.quartersDrill), keeping a pickup: the stretched pickup (p × notes per
+ * beat) ends on a bar line of the full meter, so the pickup bar becomes its remainder (none when it fills whole bars);
+ * when the stretch is not whole beats, rests before it make it so.
+ */
+export function phraseQuartersDrill(drill: Drill): Drill {
+  if (!pickupOnly(drill)) return quartersDrill(drill);
+  const k = notesPerBeat(drill);
+  if (k <= 1) return drill;
+  const m = drill.meter;
+  const p = drill.meters![0].meter.num * (4 / drill.meters![0].meter.den);
+  const plain = quartersDrill({ ...drill, meters: undefined });
+  const L = p * k;
+  const rest = L - Math.floor(L / m + 1e-9) * m;
+  if (Math.abs(rest - Math.round(rest)) < 1e-6) {
+    const r = Math.round(rest) % m;
+    if (!r) return { ...plain, meter: m, beats: Math.ceil(plain.beats / m - 1e-9) * m };
+    const bars = Math.max(1, Math.ceil((plain.beats - r) / m - 1e-9));
+    return withBarPlan({ ...plain, meter: m, beats: r + bars * m }, [{ num: r, den: 4, pickup: true }, [{ num: m, den: 4 }, bars]]);
+  }
+  const pad = m - rest;
+  return { ...plain, meter: m, notes: plain.notes.map((n) => ({ ...n, beat: Math.round((n.beat + pad) * 1e4) / 1e4 })), beats: Math.ceil((plain.beats + pad) / m - 1e-9) * m };
 }
 
 /** Total beats of a phrase: whole bars (after a pickup bar, when there is one). */

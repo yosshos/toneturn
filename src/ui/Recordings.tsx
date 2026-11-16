@@ -53,7 +53,7 @@ import { openEncoreFromTake } from './encoreBridge';
 import { piano } from './services';
 import { fmtDuration } from './Stats';
 // v2 (SPEC-PHRASE-STUDIO §6.5–6.6): playlists, background playback, export, A/B compare, whole-session recording
-import { AddToPlaylistSheet, ExportSheet, NowPlaying, PlaylistsScreen, playTakeInBackground, RX2, SessionRecToggle, XIcon } from './RecPlaylists';
+import { AddToPlaylistSheet, ExportSheet, exportFolderZip, NowPlaying, PlaylistsScreen, playTakeInBackground, RX2, SessionRecToggle, XIcon } from './RecPlaylists';
 import { CompareScreen, ProgressChart } from './RecCompare';
 import { progressPoints } from '../engine/recCompare';
 import { refreshReserve, sessionAudioOf } from '../storage/recExtras';
@@ -120,6 +120,7 @@ const ICONS = {
   voice: P(<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4" />),
   close: P(<path d="M6 6l12 12M18 6L6 18" />),
   restore: P(<path d="M5 12a7 7 0 1 0 2-5M5 4v4h4" />),
+  export: P(<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />),
 };
 type IconName = keyof typeof ICONS;
 export const RIcon = ({ k, size = 18, fill = false }: { k: IconName; size?: number; fill?: boolean }) => (
@@ -318,6 +319,14 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [menu, setMenu] = useState<RecTake | null>(null);
   const [foldersOpen, setFoldersOpen] = useState(false);
+  // a folder as one .zip (audio, or .mid for notes-only takes) — the share sheet or a download
+  const [zipping, setZipping] = useState<string | null>(null);
+  const zipFolder = async (name: string) => {
+    setZipping(RX2.zipping[lang]);
+    const r = await exportFolderZip(name, lang).catch(() => 'failed' as const);
+    setZipping(r === 'failed' ? RX2.exportFail[lang] : r === 'empty' ? RX2.zipEmpty[lang] : null);
+    if (r === 'failed' || r === 'empty') window.setTimeout(() => setZipping(null), 2500);
+  };
   const [askEmpty, setAskEmpty] = useState(false);
   const filter = useMemo(() => (bin ? { bin: true, ...(q.trim() ? { q: q.trim() } : {}) } : filterOf(chip, q)), [chip, q, bin]);
   const data = usePagedTakes(filter);
@@ -483,6 +492,11 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       {foldersOpen && (
         <Sheet lang={lang} title={RX.folders[lang]} onClose={() => setFoldersOpen(false)}>
           {!folders.length && <p className="field-hint">{RX.noFolder[lang]}</p>}
+          {zipping && (
+            <p className="rec-note" role="status" data-rec-zip-msg="1">
+              {zipping}
+            </p>
+          )}
           <ul className="rec-folders">
             {folders.map((f) => (
               <li key={f.name}>
@@ -501,6 +515,9 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
                   <b>
                     <N>{f.count}</N>
                   </b>
+                </button>
+                <button className="icon-btn small" disabled={zipping !== null} onClick={() => void zipFolder(f.name)} aria-label={`${RX2.exportZip[lang]}: ${f.name}`} data-rec-folder-zip={f.name}>
+                  <RIcon k="export" size={16} />
                 </button>
               </li>
             ))}

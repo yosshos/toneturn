@@ -59,6 +59,7 @@ import { isMidiEnabled, makeAdapters, piano, SIMULATED, store } from './services
 import { keepingPitch, type LessonTakeInfo } from './recKeep';
 import { InputCheck } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
+import { SessionRecToggle } from './SessionRecSwitch';
 
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
@@ -1715,6 +1716,8 @@ function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay
           )}
         </button>
       </div>
+      {/* §20.11: the whole-session recording also from the gate page of an exercise that listens */}
+      {(input || voice) && <SessionRecToggle lang={lang} className="ex-sessrec" />}
       {(onHide || onKeep) && (
         <div className="ex-links">
           {onKeep && (

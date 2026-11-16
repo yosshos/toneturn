@@ -80,3 +80,8 @@
 .rec-chart-dot.cur { stroke-width: 3; }
 .rec-chart-t { font: 700 12px var(--font); fill: var(--ink); }
 .rec-chart-d { font: 500 11px var(--font); fill: var(--ink-dim); }
+/* the same switch on an exercise's gate page (Lesson ExerciseBrief) */
+.rec-sesstog.ex-sessrec { margin-top: 10px; width: 100%; max-width: 300px; text-align: start; }
+/* a folder row with its .zip export */
+.rec-folders > li { display: flex; align-items: center; gap: 4px; }
+.rec-folders > li > .rec-folder-row { flex: 1; min-width: 0; }

@@ -44,3 +44,6 @@
 .ib-auto .ib-strip i.req { border: 1.5px solid var(--outline); }
 .ib-auto .ib-strip i.d { background: var(--accent); }
 .ib-auto .ib-mark { font-weight: 800; }
+/* the bars row on a narrow phone: the labels on one line; the "up to 16 bars" hint only where it fits (the steppers stop at 16) */
+.tp-bars small { white-space: nowrap; }
+@media (max-width: 360px) { .tp-bars .tiny { display: none; } }

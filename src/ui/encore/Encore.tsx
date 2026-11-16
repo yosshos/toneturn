@@ -32,6 +32,7 @@ import { midi } from '../../speech/midi';
 import { saveTake } from '../../storage/recordings';
 import { PianoRoll, type RollNote } from './PianoRoll';
 import { EncoreRun, type EncoreTakeFn } from './EncoreRun';
+import { isTeacherPhrase, phraseInstOf } from '../../engine/encore/assign';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 
 export interface EncoreProps {
@@ -65,6 +66,9 @@ export function EncoreScreen(p: EncoreProps) {
   const r = parseEncoreHash(hash);
   // v2: the course's instrument, the singer's range and the tunings for placement (§7.4)
   INST = lickInstrumentOf(settings);
+  // a teacher's phrase is practised on the instrument the teacher assigned (its plan, map and run), whatever the course
+  const routed = r.id ? (settings.lickBook?.own ?? []).find((x) => x.id === r.id!.split('~')[0]) : undefined;
+  if (routed && isTeacherPhrase(routed)) INST = phraseInstOf(routed);
   setInstrumentCtx({ range: settings.voiceRange ?? null, bassTuning: bassTuningOf(settings) ?? 'bass', guitarTuning: settings.tuning && settings.tuning !== 'upright' && !settings.tuning.startsWith('bass') ? settings.tuning : 'standard' });
   // The latest lick book (several writes can follow each other before the settings come back).
   const bookRef = useRef<LickBook>(settings.lickBook ?? {});
@@ -1000,6 +1004,13 @@ const PART_NAME: Record<string, { en: string; he: string }> = {
 
 // ───────────────────────────── The phrase: map and rank (§8.4) ─────────────────────────────
 
+/** The phrase as a MusicXML file in its home key, on this instrument (share sheet or download). */
+async function exportPhraseXml(l: Lick, lang: Lang) {
+  const [{ phraseMusicXml }, { shareOrDownload }] = await Promise.all([import('../../engine/encore/musicxml'), import('../RecPlaylists')]);
+  const name = (T(l.name, lang) || 'phrase').replace(/[^\p{L}\p{N} ._-]+/gu, ' ').trim().slice(0, 60) || 'phrase';
+  await shareOrDownload(new Blob([phraseMusicXml(l, { inst: INST })], { type: 'application/vnd.recordare.musicxml+xml' }), `${name}.musicxml`);
+}
+
 function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head: Head; l: Lick; items: Record<string, ItemState>; book: LickBook; onDelete: () => void }) {
   const he = lang === 'he';
   const hs = handsOf(l);
@@ -1025,6 +1036,9 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
         <div className="enc-card row wrap">
           <button className="btn small ghost" onClick={() => nav(`plan/${l.id}`)} data-phrase-plan="1">
             {he ? 'תוכנית' : 'Plan'}
+          </button>
+          <button className="btn small ghost" onClick={() => void exportPhraseXml(l, lang)} data-phrase-xml="1">
+            <bdi dir="ltr">MusicXML</bdi>
           </button>
           <button className="btn small ghost" onClick={onDelete} data-phrase-delete="1">
             {he ? 'מחיקה' : 'Delete'}

@@ -11,7 +11,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import '../encore.css';
 import '../teachphrase.css';
 import type { ItemState } from '../engine/drills/types';
-import type { Lick, LickBook } from '../engine/licks';
+import type { Lick, LickBook, LickInstrument } from '../engine/licks';
+import { lickInstrumentOf } from './LickTrainer';
 import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
 import { piano } from './services';
@@ -29,6 +30,7 @@ import {
   MAX_TEACHER_BARS,
   phraseEvents,
   phraseFromPlaying,
+  phraseInstOf,
   phraseSeconds,
   refBytes,
   requiredKeys,
@@ -51,6 +53,7 @@ const TX = {
     R: 'Right hand', L: 'Left hand', RL: 'Hands together', 'R-then-RL': 'One hand, then together', close: 'Close',
     task: 'Assignment', fromTeacher: 'From the teacher', until: 'due', teachersPlaying: "The teacher's playing", progress: 'Progress', of: 'of', next: 'Next', said: 'Teacher', cont: 'Continue', done: 'Every key passed — sent to the teacher.',
     subs: 'Sent', missing: 'This assignment is not on this device yet.', refresh: 'Refresh', locked: 'set by the teacher', back: 'Back', stop: 'Stop',
+    inst: 'Instrument', piano: 'Piano', guitar: 'Guitar', bass: 'Bass', voice: 'Voice', instHint: 'Each student plays it in their own position or range.',
   },
   he: {
     newTitle: 'משימה חדשה', phrase: 'משפט', play: 'לנגן עכשיו', mine: 'מהמשפטים שלי', listen: 'נגנו כשתרצו — נעצר אחרי 2.5 שניות של שקט.',
@@ -61,6 +64,7 @@ const TX = {
     R: 'יד ימין', L: 'יד שמאל', RL: 'שתי ידיים', 'R-then-RL': 'יד אחת ואז יחד', close: 'סגירה',
     task: 'משימה', fromTeacher: 'מהמורה', until: 'עד', teachersPlaying: 'הנגינה של המורה', progress: 'ההתקדמות', of: 'מתוך', next: 'הבא', said: 'המורה', cont: 'להמשיך', done: 'כל הסולמות עברו — נשלח למורה.',
     subs: 'נשלחו', missing: 'המשימה עוד לא במכשיר הזה.', refresh: 'לרענן', locked: 'נקבע על ידי המורה', back: 'חזרה', stop: 'לעצור',
+    inst: 'כלי', piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס', voice: 'קול', instHint: 'כל תלמיד מנגן בפוזיציה או במנעד שלו.',
   },
 };
 
@@ -147,6 +151,8 @@ interface SheetState {
   start: number | null;
   order: PhraseAssignPlan['order'];
   attach: boolean;
+  /** The instrument the class plays it on (null = the phrase's own, else the teacher's course instrument). */
+  inst?: LickInstrument | null;
 }
 const freshSheet = (): SheetState => ({ src: 'play', notes: [], pick: '', from: 0, to: MAX_TEACHER_BARS, goal: null, keys: 'all', picked: [], hands: null, due: '', strict: 'moderate', band: false, note: '', start: null, order: 'easiest', attach: false });
 
@@ -241,6 +247,7 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
   // ── the phrase: caught from the notes, or one of mine; then the bars ──
   const caught = useMemo(() => (s.src === 'play' && s.notes.length >= 3 ? phraseFromPlaying(s.notes) : null), [s.src, s.notes]);
   const base: Lick | null = s.src === 'play' ? (caught?.l ?? null) : (mine.find((l) => l.id === s.pick) ?? mine[0] ?? null);
+  const inst: LickInstrument = s.inst ?? (s.src === 'mine' && base?.instrument ? base.instrument : lickInstrumentOf(settings));
   const total = base ? phraseBars(base) : 0;
   const lo = Math.max(0, Math.min(s.from, Math.max(0, total - 1)));
   const hi = Math.max(lo + 1, Math.min(s.to, total, lo + MAX_TEACHER_BARS));
@@ -248,12 +255,13 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
   const def = l ? defaultAssignPlan(l) : null;
   const goal = s.goal ?? def?.goalBpm ?? 100;
   const home = l?.homeKey ?? 0;
-  const two = l ? twoHands(l) : false;
+  // hands are a piano matter: off the piano the phrase is one line
+  const two = l && inst === 'piano' ? twoHands(l) : false;
   const hands = two ? (s.hands ?? def?.hands ?? 'R-then-RL') : l && !l.notes.length ? 'L' : 'R';
   const keys: PhraseAssignPlan['keys'] = s.keys === 'all' ? 'all' : s.keys === 'home' ? [home] : s.picked.length ? s.picked : [home];
   const plan: PhraseAssignPlan = { goalBpm: goal, ...(s.start ? { startBpm: Math.min(s.start, goal) } : {}), keys, order: s.order, hands, band: s.band };
   const teacherName = settings.nickname?.trim() || undefined;
-  const a = l ? assignmentOf(l, plan, { teacher: teacherName, lang }) : null;
+  const a = l ? assignmentOf(l, plan, { teacher: teacherName, lang, inst }) : null;
   const ref = a ? encodePhraseRef(a) : '';
   const problem = a ? assignProblem(a, phraseRefLimit()) : 'empty';
 
@@ -339,6 +347,16 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
       </div>
 
       <div className="enc-card tp-kv">
+        <div className="tp-row" title={tx.instHint}>
+          <span>{tx.inst}</span>
+          <select value={inst} onChange={(e) => set({ inst: e.target.value as LickInstrument })} aria-label={tx.inst} data-teach-inst={inst}>
+            {(['piano', 'guitar', 'bass', 'voice'] as const).map((k) => (
+              <option key={k} value={k}>
+                {tx[k]}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="tp-row">
           <span>{tx.goal}</span>
           <span className="row" dir="ltr">
@@ -477,10 +495,10 @@ const dueText = (iso: string | null, lang: Lang) => {
 function progressOf(l: Lick | undefined, items: Record<string, ItemState>, sent: number[]) {
   if (!l) return null;
   const req = requiredKeys(l);
-  const passed = new Set([...passedKeys(l, items, 'piano', finalHand(l)), ...sent]);
+  const passed = new Set([...passedKeys(l, items, phraseInstOf(l), finalHand(l)), ...sent]);
   const done = req.filter((k) => passed.has(k));
-  const order = keyOrder(l, planOf(l)).filter((k) => req.includes(k));
-  const next = order.find((k) => !passed.has(k)) ?? nextKey(l, items);
+  const order = keyOrder(l, planOf(l), phraseInstOf(l)).filter((k) => req.includes(k));
+  const next = order.find((k) => !passed.has(k)) ?? nextKey(l, items, phraseInstOf(l));
   return { req, done, next, all: done.length >= req.length };
 }
 
@@ -574,9 +592,15 @@ export function StudentPhraseAssignment({ lang, id, book, items, onBack }: { lan
         <span className="ch gh" data-locked="keys">
           <LockGlyph /> {a.plan.keys === 'all' ? tx.all12 : a.plan.keys.length === 1 ? <KeyB k={a.plan.keys[0]} minor={a.minor} /> : <bdi dir="ltr">{a.plan.keys.length}</bdi>}
         </span>
-        <span className="ch gh" data-locked="hands">
-          <LockGlyph /> {handsTxt}
-        </span>
+        {a.instrument !== 'piano' ? (
+          <span className="ch gh" data-locked="inst">
+            <LockGlyph /> {tx[a.instrument]}
+          </span>
+        ) : (
+          <span className="ch gh" data-locked="hands">
+            <LockGlyph /> {handsTxt}
+          </span>
+        )}
         <span className="ch gh">{c.strictness === 'lenient' ? tx.lenient : c.strictness === 'strict' ? tx.strictS : tx.moderate}</span>
       </div>
       {p && (

@@ -7,6 +7,7 @@ import { splitDur } from '../engine/piece/layout';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
 import { analyzeTake, improvNotes, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
+import { sungMidi, sungTolOf } from '../engine/drills/sungPitch';
 import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { extraIndex, markOf, worstMark } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
@@ -952,6 +953,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       );
     } else if (!midi.devices.length && !drum) {
       micStop = new AbortController();
+      const sungSet = drill.sung ? drill.notes.map((n) => n.pitch) : [];
+      const sungTol = sungTolOf(drill);
       let cand: number | null = null;
       let since = 0;
       let last: number | null = null;
@@ -963,7 +966,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           cand = null;
           return;
         }
-        const m = Math.round(69 + 12 * Math.log2(f.hz / 440));
+        // a voice: within the course's pass band of a written note it is that note (sungPitch.ts), not ±50 ¢ rounding
+        const m = drill.sung ? sungMidi(f.hz, sungSet, sungTol) : Math.round(69 + 12 * Math.log2(f.hz / 440));
         if (m !== cand) {
           cand = m;
           since = now;

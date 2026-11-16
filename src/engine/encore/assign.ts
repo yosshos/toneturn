@@ -176,9 +176,29 @@ export const refBytes = (ref: string) => utf8(ref).length;
 // ───────────────────────────── teacher: make the assignment ─────────────────────────────
 
 /** A phrase (one of the teacher's, or just recorded) + the teacher's plan → the assignment. */
-export function assignmentOf(l: Lick, plan: PhraseAssignPlan, o: { teacher?: string; audio?: string; lang?: 'en' | 'he' } = {}): PhraseAssignment {
+export function assignmentOf(l: Lick, plan: PhraseAssignPlan, o: { teacher?: string; audio?: string; lang?: 'en' | 'he'; /** The instrument the class plays it on (the teacher picks it; default the phrase's own). */ inst?: LickInstrument } = {}): PhraseAssignment {
   // the name in the teacher's language (the class reads what the teacher sees)
   const name = typeof l.name === 'string' ? (l.name as string) : l.name[o.lang ?? 'he'] || l.name.he || l.name.en;
+  const instrument = o.inst ?? l.instrument ?? 'piano';
+  // off the piano the phrase is one line (its right hand; a left-hand-only phrase an octave up): hands do not apply
+  if (instrument !== 'piano') {
+    const rh = l.notes.length ? l.notes : (l.lh ?? []).map(([s, b, d]) => [s + 12, b, d] as LickNote);
+    return {
+      v: 1,
+      name,
+      homeKey: l.homeKey ?? 0,
+      minor: !!l.minor,
+      meter: l.meter ?? 4,
+      swing: l.swing ?? (l.straight === false ? 0.6 : 0.5),
+      chords: l.chords,
+      rh,
+      lh: [],
+      instrument,
+      plan: { ...plan, hands: 'R' },
+      ...(o.audio ? { audio: o.audio } : {}),
+      ...(o.teacher ? { teacher: o.teacher } : {}),
+    };
+  }
   return {
     v: 1,
     name,
@@ -189,7 +209,7 @@ export function assignmentOf(l: Lick, plan: PhraseAssignPlan, o: { teacher?: str
     chords: l.chords,
     rh: l.lh?.length || l.notes.length ? l.notes : [],
     lh: l.lh ?? [],
-    instrument: l.instrument ?? 'piano',
+    instrument,
     plan,
     ...(o.audio ? { audio: o.audio } : {}),
     ...(o.teacher ? { teacher: o.teacher } : {}),
@@ -270,6 +290,8 @@ export const teacherPhraseId = (assignmentId: string) => `${PHRASE_PREFIX}as-${a
 /** The assignment as the student's Encore phrase: the teacher's plan, target / keys / hands locked. */
 export function lickFromAssignment(a: PhraseAssignment, assignmentId: string, teacher: string, now = new Date().toISOString()): Lick {
   const rh = a.rh.length ? a.rh : a.lh.map(([s, b, d]) => [s - 12, b, d] as LickNote);
+  // off the piano: one line, the student's part-1 placement (neck position / singer's range) does the rest
+  const piano = a.instrument === 'piano';
   const base: Lick = {
     id: teacherPhraseId(assignmentId),
     v: 3,
@@ -279,7 +301,7 @@ export function lickFromAssignment(a: PhraseAssignment, assignmentId: string, te
     own: true,
     chords: a.chords,
     notes: rh,
-    ...(a.rh.length && a.lh.length ? { lh: a.lh } : {}),
+    ...(piano && a.rh.length && a.lh.length ? { lh: a.lh } : {}),
     meter: a.meter,
     swing: a.swing,
     straight: a.swing <= 0.54,
@@ -293,7 +315,7 @@ export function lickFromAssignment(a: PhraseAssignment, assignmentId: string, te
   const d = defaultPlan(base, a.plan.goalBpm * 0.8, a.instrument);
   const goal = a.plan.goalBpm;
   const start = Math.min(goal, a.plan.startBpm ?? Math.min(d.startBpm, Math.round(goal * 0.6)));
-  const hands = base.lh?.length ? a.plan.hands : a.plan.hands === 'L' ? 'L' : 'R';
+  const hands = base.lh?.length ? a.plan.hands : piano && a.plan.hands === 'L' ? 'L' : 'R';
   return { ...base, plan: { ...d, startBpm: Math.max(30, start), goalBpm: goal, keys: a.plan.keys, order: a.plan.order, hands, band: a.plan.band, locked: ['goalBpm', 'keys', 'hands'], inToday: true, inWorkout: true } };
 }
 
@@ -306,6 +328,8 @@ export function withAssignedPhrase(book: LickBook | undefined, l: Lick): LickBoo
 }
 
 export const isTeacherPhrase = (l: Lick): boolean => l.source?.kind === 'teacher';
+/** The instrument a teacher phrase is practised on (the assignment's; old assignments: piano). */
+export const phraseInstOf = (l: Pick<Lick, 'instrument'>): LickInstrument => l.instrument ?? 'piano';
 export const assignmentIdOf = (l: Lick): string | null => (l.source?.kind === 'teacher' ? l.source.assignmentId : null);
 /** The keys the teacher asked for (all 12 when 'all'). */
 export const requiredKeys = (l: Lick): number[] => {
@@ -316,7 +340,7 @@ export const requiredKeys = (l: Lick): number[] => {
 export interface KeySubmission {
   key: number;
   score: number;
-  metrics: { key: number; bpm: number; acc: number; timingSD: number | null; hands: Hand; takes: number; kind: 'phrase'; phrase: string };
+  metrics: { key: number; bpm: number; acc: number; timingSD: number | null; hands: Hand; takes: number; kind: 'phrase'; phrase: string; /** The instrument it was played on (absent on old submissions = piano). */ inst: LickInstrument };
 }
 
 /** Accuracy × timing factor (a spread under 25 ms costs nothing; 175 ms and more costs 40 %). */
@@ -326,7 +350,7 @@ export function phraseScore(acc: number, timingSD: number | null): number {
 }
 
 /** The submission of one passed key (null when the key is not passed at the target). */
-export function keySubmission(l: Lick, items: Record<string, ItemState>, key: number, inst: LickInstrument = 'piano'): KeySubmission | null {
+export function keySubmission(l: Lick, items: Record<string, ItemState>, key: number, inst: LickInstrument = phraseInstOf(l)): KeySubmission | null {
   const hand = finalHand(l);
   if (!keyPassed(l, items, key, inst, hand)) return null;
   const st = itemOf(l, items, key, inst, hand);
@@ -334,11 +358,11 @@ export function keySubmission(l: Lick, items: Record<string, ItemState>, key: nu
   const bpm = Math.max(st.cleanBpm ?? 0, ...(st.passLog ?? []).map((x) => x.bpm));
   const sd = st.ewma?.sd ? Math.round(st.ewma.sd) : null;
   const acc = Math.round((st.ewma?.acc ?? 1) * 1000) / 1000;
-  return { key: mod(key), score: phraseScore(acc, sd), metrics: { key: mod(key), bpm: Math.round(bpm), acc, timingSD: sd, hands: hand, takes: st.takes, kind: 'phrase', phrase: l.id } };
+  return { key: mod(key), score: phraseScore(acc, sd), metrics: { key: mod(key), bpm: Math.round(bpm), acc, timingSD: sd, hands: hand, takes: st.takes, kind: 'phrase', phrase: l.id, inst } };
 }
 
 /** Required keys passed but not sent yet (each passed key is submitted once). */
-export function pendingKeySubmissions(l: Lick, items: Record<string, ItemState>, sent: readonly number[], inst: LickInstrument = 'piano'): KeySubmission[] {
+export function pendingKeySubmissions(l: Lick, items: Record<string, ItemState>, sent: readonly number[], inst: LickInstrument = phraseInstOf(l)): KeySubmission[] {
   const done = new Set(sent.map(mod));
   return requiredKeys(l)
     .filter((k) => !done.has(k))
@@ -354,17 +378,18 @@ export function autoMark(score: number | null, strictness: Strictness): Mark {
 }
 
 /** A submission's key and tempo from its metrics (phrase submissions only). */
-export function submissionKey(metrics: Record<string, unknown> | undefined): { key: number; bpm: number } | null {
+export function submissionKey(metrics: Record<string, unknown> | undefined): { key: number; bpm: number; inst: LickInstrument } | null {
   if (!metrics || metrics.kind !== 'phrase' || typeof metrics.key !== 'number') return null;
-  return { key: mod(metrics.key), bpm: Number(metrics.bpm) || 0 };
+  return { key: mod(metrics.key), bpm: Number(metrics.bpm) || 0, inst: CH_INST[String(metrics.inst ?? 'p')[0]] ?? 'piano' };
 }
 
 /** The teacher's per-student strip: best score per key among the student's submissions. */
-export function keyStrip(subs: readonly { metrics?: Record<string, unknown>; score: number | null }[]): Map<number, { score: number; bpm: number }> {
+export function keyStrip(subs: readonly { metrics?: Record<string, unknown>; score: number | null }[], inst?: LickInstrument): Map<number, { score: number; bpm: number }> {
   const out = new Map<number, { score: number; bpm: number }>();
   for (const s of subs) {
     const k = submissionKey(s.metrics);
-    if (!k || s.score === null) continue;
+    // per instrument: a key passed on another instrument does not count for this assignment
+    if (!k || s.score === null || (inst && k.inst !== inst)) continue;
     const have = out.get(k.key);
     if (!have || s.score > have.score) out.set(k.key, { score: s.score, bpm: k.bpm });
   }

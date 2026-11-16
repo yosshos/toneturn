@@ -69,7 +69,7 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
   }
   if (a.kind === 'phrase') {
     const p = decodePhraseRef(a.ref);
-    return p ? `${assignTitle(p, lang)} · ${kName(p.homeKey, p.minor)}` : TX[lang].phrase;
+    return p ? `${assignTitle(p, lang)} · ${kName(p.homeKey, p.minor)}${p.instrument !== 'piano' ? ` · ${PHRASE_INST[p.instrument][lang]}` : ''}` : TX[lang].phrase;
   }
   if (a.kind === 'piece') return a.ref ?? TX[lang].piece;
   return assignmentTitle(a.lessonId, lang, t);
@@ -353,6 +353,8 @@ export function GradingInbox({ detail, lang, t, onChanged }: { detail: ClassDeta
 
 /** Phrase assignments in the teacher's inbox: one row per (assignment, student) with the 12-key strip, the automatic
  * mark from the best score per key and the strictness, and the teacher's override (a mark on the latest submission). */
+const PHRASE_INST = { piano: { en: 'Piano', he: 'פסנתר' }, guitar: { en: 'Guitar', he: 'גיטרה' }, bass: { en: 'Bass', he: 'בס' }, voice: { en: 'Voice', he: 'קול' } } as const;
+
 export function autoRows(d: ClassDetail) {
   const out: { a: AssignItem; user: string; name: string; req: number[]; strip: Map<number, { score: number; bpm: number }>; done: number; bestBpm: number; minutes: number; passed: boolean; mark: Mark; shown: Mark; overridden: boolean; last: AssignItem['submissions'][number] }[] = [];
   for (const a of d.assignments) {
@@ -363,7 +365,7 @@ export function autoRows(d: ClassDetail) {
     const byUser = new Map<string, AssignItem['submissions']>();
     for (const s of a.submissions) if (submissionKey(s.metrics)) byUser.set(s.userId ?? '?', [...(byUser.get(s.userId ?? '?') ?? []), s]);
     for (const [user, subs] of byUser) {
-      const strip = keyStrip(subs);
+      const strip = keyStrip(subs, p.instrument);
       const scores = req.map((k) => strip.get(k)?.score ?? 0);
       const done = req.filter((k) => strip.has(k)).length;
       // the assignment's automatic mark: the weakest required key (missing keys count as not yet)

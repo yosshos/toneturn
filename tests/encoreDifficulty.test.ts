@@ -149,20 +149,22 @@ describe('XP rules (§10.5, §10.7)', () => {
 
 describe('calibration against the built-in levels (§10.8)', () => {
   // A level's model difficulty = the median D of its items (every key, every variant) at their target tempo; the placed
-  // difficulty = LEVEL_PLACEMENT (grade-cited). Improvisation, pedalling and gig skills (accompanying, stamina) are
-  // placed by what they ask besides the notes, so they stay out.
+  // difficulty = LEVEL_PLACEMENT (grade-cited). Levels placed by a skill the notes don't show stay out (owner-approved,
+  // §10.8.7): improvisation, pedalling and gig skills (accompanying, stamina), the sight-reading quick-study levels
+  // (k-read 13–15: changing metres at sight, a lead sheet with band hits, any key with a 30-second look) and every level
+  // played with the band (the k-tpair vamp / ii–V / comping / blues / form levels).
   const rows: { id: string; fam: string; placed: number; D: number }[] = [];
   for (const fam of catalog())
     for (const lv of fam.levels) {
       const placed = LEVEL_PLACEMENT[lv.id];
-      if (!placed || /impro|pedal|gig/.test(lv.id)) continue;
+      if (!placed || /impro|pedal|gig/.test(lv.id) || /^k-read-1[3-5]$/.test(lv.id)) continue;
       let ds;
       try {
         ds = levelDrills(lv, 'fifths-up');
       } catch {
         continue;
       }
-      if (!ds[0]?.notes.length) continue;
+      if (!ds[0]?.notes.length || ds.some((d) => d.band)) continue;
       const Ds = ds.filter((d) => d.notes.length).map((d) => difficultyOf(drillInput(d), itemTargetBpm(d)).D).sort((a, b) => a - b);
       rows.push({ id: lv.id, fam: fam.id, placed, D: Ds[Ds.length >> 1] });
     }
@@ -179,23 +181,25 @@ describe('calibration against the built-in levels (§10.8)', () => {
     return 1 - (6 * a.reduce((s, x, i) => s + (x - b[i]) ** 2, 0)) / (n * (n * n - 1));
   };
   const mae = (rs: typeof rows) => rs.reduce((s, r) => s + Math.abs(r.placed - r.D), 0) / rs.length;
-  it('v2 keeps the order of the placed levels: ρ ≈ 0.84, mean error ≈ 144 over the grade-cited piano levels (v1: 0.59 / 240)', () => {
-    expect(rows.length).toBeGreaterThanOrEqual(70);
+  it('v2 keeps the order of the placed levels: ρ ≈ 0.81, mean error ≈ 123 over the 62 note-measurable piano levels (all 72: 0.84 / 144; v1: 0.59 / 240)', () => {
+    expect(rows.length).toBe(62);
+    expect(rows.some((r) => /^k-read-1[3-5]$/.test(r.id) || /^k-tpair-(9|1[1-6])$/.test(r.id))).toBe(false);
     const rho = spearman(rows);
     console.log(`encore difficulty calibration v${PHRASE_DIFF_V}: n=${rows.length} spearman=${rho.toFixed(3)} mae=${mae(rows).toFixed(0)}`);
     expect(PHRASE_DIFF_V).toBe(2);
-    expect(rho).toBeGreaterThanOrEqual(0.83);
-    expect(mae(rows)).toBeLessThanOrEqual(150);
+    expect(rho).toBeGreaterThanOrEqual(0.8);
+    expect(mae(rows)).toBeLessThanOrEqual(126);
   });
   it('per family (the locked v2 numbers; families of ≥ 3 levels)', () => {
-    // [family, ρ at least, mean error at most] — v2: k-classic 0.93 / 104, k-read 0.84 / 232, k-pop 0.71 / 117,
-    // k-first 0.68 / 126, k-tpair 0.61 / 147, scales 0.36 / 85, control 0.50 / 59.
+    // [family, ρ at least, mean error at most] — v2 on the note-measurable levels: k-classic 0.93 / 104, k-read 0.84 / 161
+    // (12 levels), k-pop 0.71 / 117, k-first 0.68 / 126, k-tpair −0.27 / 131 (9 levels without the band: spread across
+    // two hands and block chords are placed above what their notes show), scales 0.36 / 85, control 0.50 / 59.
     const locked: [string, number, number][] = [
       ['k-classic', 0.9, 115],
-      ['k-read', 0.8, 245],
+      ['k-read', 0.8, 170],
       ['k-pop', 0.65, 130],
       ['k-first', 0.6, 140],
-      ['k-tpair', 0.55, 160],
+      ['k-tpair', -0.35, 140],
       ['scales', 0.3, 95],
       ['control', 0.45, 70],
     ];

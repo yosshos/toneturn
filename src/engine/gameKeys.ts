@@ -1,7 +1,7 @@
 // AUDIT-GAMES §1 ("everything connects"): the key-relative measured games (Barry Harris in Time, Voicing Sprint, Walk
 // the Changes, Chord Change Race, Roots by Ear, Play It Back) write key cells for key mastery, the way drill takes do.
 // A game's takes in a key become one item state per game, instrument and key (`progress.gameKeys`), whose family id
-// carries the instrument prefix keyMastery.ts reads (k- piano, g- guitar, b- bass). Key mastery, the profile and
+// carries the instrument prefix keyMastery.ts reads (k- piano, g- guitar, b- bass, v- voice). Key mastery, the profile and
 // Insights read the drill items and these together (withGameKeys). Pure.
 
 import type { FamilyId, ItemState } from './drills/types';
@@ -22,10 +22,10 @@ export interface GameKeyTake {
 /** A take at or above this accuracy is clean (the take games' pass line). */
 export const GAME_KEY_CLEAN = 70;
 
-const PREFIX: Record<KeyInstrument, string> = { piano: 'k', guitar: 'g', bass: 'b' };
+const PREFIX: Record<KeyInstrument, string> = { piano: 'k', guitar: 'g', bass: 'b', voice: 'v' };
 /** The skill (family id) of a game on an instrument, e.g. `g-game-rootsear`. */
 export const gameKeyFamily = (game: string, inst: KeyInstrument): FamilyId => `${PREFIX[inst]}-game-${game}` as FamilyId;
-export const isGameKeyFamily = (f: string): boolean => /^[kgb]-game-/.test(f);
+export const isGameKeyFamily = (f: string): boolean => /^[kgbv]-game-/.test(f);
 const pc = (k: number) => ((Math.round(k) % 12) + 12) % 12;
 
 /** The item state after one take (a fresh state when none). Untimed games count a clean take as the target tempo. */
@@ -82,7 +82,7 @@ export const withGameKeys = (drills: Record<string, ItemState> | undefined, game
 export function keyTakesOf(detail: Record<string, unknown> | undefined): { inst: KeyInstrument; takes: GameKeyTake[] } | null {
   const inst = detail?.keyInst;
   const takes = detail?.keyTakes;
-  if ((inst !== 'piano' && inst !== 'guitar' && inst !== 'bass') || !Array.isArray(takes) || !takes.length) return null;
+  if ((inst !== 'piano' && inst !== 'guitar' && inst !== 'bass' && inst !== 'voice') || !Array.isArray(takes) || !takes.length) return null;
   return { inst, takes: (takes as GameKeyTake[]).filter((t) => t && typeof t.key === 'number' && typeof t.acc === 'number') };
 }
 

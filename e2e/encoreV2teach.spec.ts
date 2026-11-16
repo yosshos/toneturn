@@ -112,7 +112,7 @@ for (const lang of ['en', 'he'] as Lang[]) {
     await expect(page.locator('[data-teach-msg]')).toBeVisible();
     const db = await page.evaluate(() => JSON.parse(localStorage.getItem('tt.mockTeacher.db') ?? '{}'));
     expect(db.assignments).toHaveLength(1);
-    expect(db.assignments[0].kind).toBe('piece'); // before the migration a phrase travels as a 'piece' with the phrase code
+    expect(db.assignments[0].kind).toBe('phrase'); // the phrase migration is applied (PHRASE_ASSIGN_SYNCED): its own kind
     expect(db.assignments[0].ref.startsWith('phrase1:')).toBe(true);
     expect(db.assignments[0].strictness).toBe('strict');
 

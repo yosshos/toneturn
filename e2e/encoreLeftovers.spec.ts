@@ -142,13 +142,13 @@ test('Encore trim: the magnet shows a small badge when a suggested boundary pull
     const y = grip!.y + grip!.height / 2;
     await page.mouse.move(gx, y);
     await page.mouse.down();
-    // Shift: the eighth-note snap, where the magnet works (as when the handle is held)
-    await page.keyboard.down('Shift');
+    // the hold path (no keyboard): a handle held still for 300 ms snaps to beats, where the magnet works; moving on
+    // keeps the hold
+    await page.waitForTimeout(450);
     await page.mouse.move(target + 2, y, { steps: 6 });
     await page.mouse.move(target + 1, y);
     await expect(page.locator('[data-magnet]')).toBeVisible();
     await page.mouse.up();
-    await page.keyboard.up('Shift');
     expect(roll!.width).toBeGreaterThan(200);
     await check(page, lang, 'trim-magnet');
   }

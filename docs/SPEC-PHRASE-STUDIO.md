@@ -809,7 +809,19 @@ can be computed on all of them.
    part: the families' placements reflect things the notes don't show (sight-reading, playing with a band, curricular
    order), so the 90-point target is not met yet. Scores are never stored: every badge / preview / XP is computed when
    shown, so v1 phrases read v2 numbers on load.
-7. **Later**: compare with observed data (pass rates vs players' ratings; an item whose empirical difficulty — the
+7. **Done (owner-approved recommendation, 2026-11-16): the calibration set is the note-measurable levels.** Levels
+   placed by a skill the notes don't show leave the set, as improvisation / pedal / gig already did: the sight-reading
+   quick-study levels **k-read 13–15** (changing metres at sight, a lead sheet with band hits, any key with a 30-second
+   look) and every level **played with the band** (k-tpair 9, 11–16: vamp, ii–V–I, comping a chart, blues, side-slip,
+   8-bar form, symmetric pairs). 62 levels remain: Spearman ρ **0.81**, mean error **123** (k-classic 0.93 / 104,
+   k-read 0.84 / 161, k-pop 0.71 / 117, k-first 0.68 / 126, scales 0.36 / 85, control 0.50 / 59, k-tpair −0.27 / 131 on
+   its 9 band-free levels — "spread across two hands" (placed 1560, model 1032) and "block chords" (1640 / 1382) are
+   placed above what their notes show). A refit on the 62 (same coordinate search, same floors and anchor bands) found
+   no real gain (ρ 0.809, mean error 122), so the v2 weights stay (`PHRASE_DIFF_V = 2`; anchors unchanged: C–D–E 710 at
+   ♩100 ≈ 1 XP, two-hand bebop ≈ 1540 ≈ 10 XP; guitar / bass / voice terms untouched). The test locks n = 62, ρ ≥ 0.80,
+   mean error ≤ 126 and the per-family numbers. The 90-point target stays open: what remains is the families'
+   curricular order, which needs observed pass rates (8) rather than more note features.
+8. **Later**: compare with observed data (pass rates vs players' ratings; an item whose empirical difficulty — the
    rating at which players pass it half the time — drifts > 150 points from the model is listed for review).
 
 ### 10.9 In the UI
@@ -853,6 +865,13 @@ Then: **target tempo** (and optional start tempo), **keys** (all 12 / the ring p
 (the app's easiest-first or cycle of 4ths), **hands** (RH / LH / both / "one then both"), **due date**,
 **strictness** (lenient / moderate / strict → 0.6 / 0.75 / 0.9, `teacher.ts:110`), **with the band** (yes/no), a note.
 One sheet, no scrolling on a phone (the less-used fields sit behind "עוד אפשרויות").
+
+**Instrument (done 2026-11-16):** the sheet's first row picks the instrument the class plays it on — piano, guitar,
+bass or voice (default: the picked phrase's own, else the teacher's course instrument). It travels in the phrase code
+(`i`); off the piano the phrase is one line (hands do not apply). The student runs it on that instrument whatever
+course is open, with their own part-1 placement (same-shape neck position per key, the singer's range); progress,
+the key map and the submissions are per instrument (`metrics.inst`; the teacher's strip counts only the assignment's
+instrument; old submissions read piano).
 
 ### 10.2 The student
 
@@ -1247,6 +1266,13 @@ No new grader: each (phrase, key, hand) becomes a `Drill` through `lickDrill` (`
 the existing rubato/ladder/pass rules. "As played" phrases use their played onsets as the reference and a timing
 window ×1.5.
 
+**Sung phrases (done 2026-11-16).** A voice run uses the drill take's single microphone capture (never a second
+stream — iOS refuses one), so the SingLane grader (frames against a target lane) is not reused there. Instead the
+sung path's pitch rule matches the course's one pass band: a steady sung pitch within ±`passCents` (65 ¢ below 1300,
+60 ¢ from 1300 — the phrase's own rating) of a written note counts as that note, octave kept; anything else rounds to
+the nearest semitone as before (`engine/drills/sungPitch.ts`, `Drill.sungTolCents`). Timing keeps the voice's limits
+(`VOICE_TIMING`). Built-in sung licks get the same band at the course's middle value (65 ¢).
+
 ### 13.9 Risks and fallbacks
 
 | Risk | Fallback |
@@ -1349,6 +1375,12 @@ window ×1.5.
 - Recordings: folders/tags, search, bulk actions, playlists, **lock-screen/background playback** (rendered MIDI,
   bounced A–B, Media Session), **A/B compare**, export audio/MIDI, opt-in session recording, optional sync of notes.
 - "Use it" counted toward ff.
+
+**Closed 2026-11-16:** teacher phrases on guitar / bass / voice (§11.1); voice on the key-mastery map; the sung pitch
+band = passCents (§13.8); the whole-session switch also on an exercise's gate page; the quarters stage for pickup
+phrases and Keep's bar span after a pickup; calibration on the note-measurable levels (§10.8.7); a recordings folder
+as one .zip (stored, audio or .mid per take) and a phrase as MusicXML (from v3, the phrase screen's "⋯"). Still open:
+the optional sync of take notes (needs a server table and a restore path on another device — not started).
 
 ### v3 — "Challenges"
 

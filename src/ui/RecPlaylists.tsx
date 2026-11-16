@@ -12,7 +12,7 @@ import { addTakesTo, deletePlaylist, getPlaylist, listPlaylists, loopOf, moveInP
 import { backgroundSource, renderedBytes } from '../audio/renderTake';
 import { bgPlayer, installedApp, isIOSDevice, type BgItem, type BgLoop, type BgState } from '../audio/bgPlayer';
 import { midiFileOf } from '../engine/midiFile';
-import { sessionRecOn, sessionRecSupported, startSessionRec, stopSessionRec, subscribeSessionRec } from '../storage/sessionRec';
+import { uniqueNames, zipParts, type ZipEntry } from '../engine/zip';
 import { piano } from './services';
 import { bandEvents, Bidi, RIcon } from './Recordings';
 
@@ -60,6 +60,9 @@ export const RX2 = {
   wholeSession: { en: 'Whole session', he: 'כל האימון' },
   close: { en: 'Close', he: 'סגירה' },
   back: { en: 'Back', he: 'חזרה' },
+  exportZip: { en: 'Export the folder (.zip)', he: 'לייצא את התיקייה (zip)' },
+  zipping: { en: 'Packing the folder…', he: 'אורז את התיקייה…' },
+  zipEmpty: { en: 'Nothing to export in this folder.', he: 'אין מה לייצא בתיקייה הזו.' },
 };
 
 // ───────────────────────────── a take as a background item ─────────────────────────────
@@ -158,6 +161,26 @@ export function takeMidiBytes(t: RecTake, lang: Lang): Uint8Array {
 export async function exportTakeMidi(t: RecTake, lang: Lang) {
   const b = takeMidiBytes(t, lang);
   return shareOrDownload(new Blob([b as BlobPart], { type: 'audio/midi' }), takeFileName(t, lang, 'mid'));
+}
+
+/**
+ * A folder as one .zip (§6.5): each take's own audio, else (MIDI / notes only) its .mid — stored, not compressed. Takes
+ * are read one at a time; the archive is handed to the share sheet or downloaded. Stays a file the player shares.
+ */
+export async function exportFolderZip(folder: string, lang: Lang): Promise<'shared' | 'downloaded' | 'failed' | 'empty'> {
+  const heads = await listHeads({ folder });
+  const entries: ZipEntry[] = [];
+  for (const h of heads) {
+    const t = await getTake(h.id);
+    if (!t) continue;
+    const audio = t.audioId ? await getTakeAudio(t.id).catch(() => null) : null;
+    if (audio) entries.push({ name: takeFileName(t, lang, extOf(audio.type)), bytes: new Uint8Array(await audio.arrayBuffer()), date: new Date(t.at) });
+    else if (t.notes?.length) entries.push({ name: takeFileName(t, lang, 'mid'), bytes: takeMidiBytes(t, lang), date: new Date(t.at) });
+  }
+  if (!entries.length) return 'empty';
+  const names = uniqueNames(entries.map((e) => e.name));
+  const parts = zipParts(entries.map((e, i) => ({ ...e, name: names[i] })));
+  return shareOrDownload(new Blob(parts as BlobPart[], { type: 'application/zip' }), `${safeName(folder)}.zip`);
 }
 
 // ───────────────────────────── sheets ─────────────────────────────
@@ -537,32 +560,4 @@ export async function playTakeInBackground(t: RecTake, lang: Lang, ab: [number, 
 
 // ───────────────────────────── whole-session recording ─────────────────────────────
 
-export function SessionRecToggle({ lang }: { lang: Lang }) {
-  const [on, setOn] = useState(sessionRecOn());
-  const [busy, setBusy] = useState(false);
-  useEffect(() => subscribeSessionRec(() => setOn(sessionRecOn())), []);
-  if (!sessionRecSupported()) return null;
-  const flip = async () => {
-    setBusy(true);
-    try {
-      if (on) await stopSessionRec();
-      else {
-        await piano.unlock().catch(() => {});
-        await startSessionRec(() => piano.voiceOut());
-      }
-    } finally {
-      setBusy(false);
-      setOn(sessionRecOn());
-    }
-  };
-  return (
-    <label className={`rec-sesstog ${on ? 'on' : ''}`} title={RX2.sessionRecHint[lang]} data-rec-session-toggle={on ? 'on' : 'off'}>
-      <span className="enc-recdot-s" aria-hidden="true" />
-      <span className="grow">{on ? RX2.sessionRecOn[lang] : RX2.sessionRec[lang]}</span>
-      <input type="checkbox" className="rec-tog" checked={on} disabled={busy} onChange={() => void flip()} aria-describedby="rec-sess-hint" />
-      <span id="rec-sess-hint" className="sr-only">
-        {RX2.sessionRecHint[lang]}
-      </span>
-    </label>
-  );
-}
+export { SessionRecToggle } from './SessionRecSwitch';

@@ -8,7 +8,7 @@ import { itemIdVerified } from '../verifiedContent';
 import type { FamilyId, ItemState } from '../drills/types';
 
 export type KeyStatus = 'untried' | 'weak' | 'ok' | 'strong';
-export type KeyInstrument = 'piano' | 'guitar' | 'bass';
+export type KeyInstrument = 'piano' | 'guitar' | 'bass' | 'voice';
 type Bi = { en: string; he: string };
 
 export interface KeyCell {
@@ -70,13 +70,15 @@ const NO_KEYS = (f: string) => f.startsWith('d-') || f === 'custom' || f === 'tr
 /** The instrument a family belongs to (by its id), or null for families without keys. */
 export function instrumentOf(family: FamilyId): KeyInstrument | null {
   if (NO_KEYS(family)) return null;
+  // the voice's key cells (a sung key game: `v-game-…`; sung Encore phrases go by their item id, phraseInstrument)
+  if (family.startsWith('v-')) return 'voice';
   if (family.startsWith('b-') || family === 'g-bass') return 'bass';
   if (family.startsWith('g-')) return 'guitar';
   return 'piano';
 }
 
 /** Encore phrases (SPEC-PHRASE-STUDIO §9): `lick:enc-…:<inst>:<key>[:hand]` items have keys — their instrument. */
-export const phraseInstrument = (itemId: string): KeyInstrument | null => (/^lick:enc-[^:]+:(piano|guitar|bass):/.exec(itemId)?.[1] as KeyInstrument | undefined) ?? null;
+export const phraseInstrument = (itemId: string): KeyInstrument | null => (/^lick:enc-[^:]+:(piano|guitar|bass|voice):/.exec(itemId)?.[1] as KeyInstrument | undefined) ?? null;
 /** The instrument of a skill row (a family, or the player's own phrases on an instrument). */
 const skillInstrument = (s: Pick<SkillKeys, 'skill' | 'family'>): KeyInstrument | null => (s.skill.startsWith('licks:phrase:') ? (s.skill.split(':')[2] as KeyInstrument) : instrumentOf(s.family));
 
@@ -170,7 +172,7 @@ export const skillKeysOf = (family: FamilyId, items: Record<string, ItemState>, 
 export function instrumentKeys(items: Record<string, ItemState> | ItemState[], now: number | string = Date.now()): InstrumentKeys[] {
   const skills = keyMastery(items, now);
   const out: InstrumentKeys[] = [];
-  for (const inst of ['piano', 'guitar', 'bass'] as const) {
+  for (const inst of ['piano', 'guitar', 'bass', 'voice'] as const) {
     const ss = skills.filter((s) => skillInstrument(s) === inst && s.tried > 0);
     if (!ss.length) continue;
     const cells: KeyCell[] = Array.from({ length: 12 }, (_, key) => {
@@ -189,7 +191,7 @@ export function instrumentKeys(items: Record<string, ItemState> | ItemState[], n
   return out;
 }
 
-const INST: Record<KeyInstrument, Bi> = { piano: { en: 'piano', he: 'פסנתר' }, guitar: { en: 'guitar', he: 'גיטרה' }, bass: { en: 'bass', he: 'בס' } };
+const INST: Record<KeyInstrument, Bi> = { piano: { en: 'piano', he: 'פסנתר' }, guitar: { en: 'guitar', he: 'גיטרה' }, bass: { en: 'bass', he: 'בס' }, voice: { en: 'voice', he: 'קול' } };
 export const instrumentName = (i: KeyInstrument): Bi => INST[i];
 export const keyList = (keys: number[]): string => keys.map((k) => KEY_LABEL[k]).join(', ');
 

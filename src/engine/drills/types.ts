@@ -342,6 +342,8 @@ export interface Drill {
   tonic?: { key: number; minor?: boolean };
   /** Sung, not played (licks on the voice course): the microphone hears a voice, graded with the voice's timing tolerance (VOICE_TIMING). */
   sung?: boolean;
+  /** A sung drill's pitch pass band (± cents; default vocal.passCents()): sungPitch.ts. Encore sets the phrase's own. */
+  sungTolCents?: number;
   /** Songs (songDrills.ts): chord names per bar, shown above the staff as a chart. */
   chart?: string[];
   /** A long item (a whole head): the staff and the chart show two lines at a time, with a pager (one phone screen). */
