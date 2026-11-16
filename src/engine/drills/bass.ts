@@ -28,6 +28,7 @@ import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: 
 import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by ear
 import { bassSoloFamily, genBassSolo } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { bassCtxFamily, genBassCtx } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
+import { bassGigFamily, genBassGig } from './gigDrills'; // AUDIT-DEPTH-3 #11, #12, C8
 import { bassHarrisLineFamily, genBassHarrisLine } from './harrisLineDrills'; // Barry Harris lines (Part D)
 import { bassCounterFamily, genBassCounter } from './colorDrills'; // HARMONY-REHARM: the bass reharmonizes
 import type { LevelExamTag } from './types';
@@ -2508,6 +2509,8 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
       return genBassSolo(s, tu);
     case 'b-ctx':
       return genBassCtx(s, tu);
+    case 'b-gig':
+      return genBassGig(s, tu);
     // Barry Harris lines (harrisLineDrills.ts).
     case 'b-harrisline':
       return genBassHarrisLine(s, tu);
@@ -2793,6 +2796,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     // AUDIT-DEPTH-3: jazz in context (brothers, backdoor, superimposition, the Coltrane sub) and improvising under rule cards.
     bassCtxFamily(L, fam),
     bassSoloFamily(L, fam),
+    // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — the ballad in two, walked intros / endings, the whole tune.
+    bassGigFamily(L, fam),
     // Barry Harris lines on the bass (jazz track, BARRY-HARRIS-METHOD Part D): harrisLineDrills.ts.
     bassHarrisLineFamily(L, fam),
     // HARMONY-REHARM: the bass reharmonizes (jazz track) — pedals, borrowed and mediant roots, the counter-line.

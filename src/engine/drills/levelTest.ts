@@ -136,7 +136,7 @@ const LINES: Rung[] = [
   r('k-bebop-4', 0, { harris: 12, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-harrisline': 22 }),
   // AUDIT-DEPTH-3: a brother for the V (jazz in context), then improvising with enclosures under the rule cards.
   r('k-ctx-2', 5, { harris: 14, jazz: 6, 'k-bebop': 5, 'k-theory': 2, 'k-vocab': 8, 'k-ctx': 3, 'k-harrisline': 22 }),
-  r('k-solo-4', 10, { harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22 }),
+  r('k-solo-4', 10, { harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22, 'k-gig': 1 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
@@ -229,7 +229,7 @@ const G_JAZZ: Rung[] = [
   r('g-cmel-4', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5 }),
   // AUDIT-DEPTH-3: a brother for the V on the neck, then improvising by the rules.
   r('g-ctx-1', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5, 'g-ctx': 2 }),
-  r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4 }),
+  r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4, 'g-gig': 1 }),
   // STAGE C: Harris lines at bebop tempo places the diploma jazz families (lines at tempo, solo guitar, arranging).
   r('g-hlfast-1', 0, { 'g-jazz': 12, 'g-harris': 10, 'g-theory': 5, 'g-keys': 12, 'g-bebop': 12, 'g-cmel': 6, 'g-tune': 8, 'g-ctx': 8, 'g-solo': 8, 'g-harrisline': 9, 'g-hlfast': 2, 'g-solojazz': 2, 'g-cmarr': 1 }),
 ];
@@ -293,7 +293,7 @@ const B_WALK: Rung[] = [
   r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3 }),
   // AUDIT-DEPTH-3: walking through the brothers, then a solo that implies the roots.
   r('b-ctx-1', 7, { 'b-walk': 11, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3, 'b-ctx': 2 }),
-  r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2 }),
+  r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1 }),
 ];
 const B_READING: Rung[] = [
   // AUDIT-6 Stage B: bass TAB (b-first 7) before the bass clef.

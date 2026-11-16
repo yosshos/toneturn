@@ -704,6 +704,25 @@ export const GLYPHS: Record<string, Glyph> = {
       {dot(12, 11, 2.4)}
     </>
   ),
+  // AUDIT-DEPTH-3 #11, #12, C8, on the bandstand: the road map — an intro bracket, a note on the way, the final double bar.
+  'family:k-gig': () => (
+    <>
+      {p('M3 6v12 M3 6h3 M3 18h3', false)}
+      {head(10, 14, 2)}
+      {p('M12 14V5', false)}
+      <path d="M8 21h11" strokeWidth={0.8} />
+      {p('M18 6v12 M21 6v12', false)}
+    </>
+  ),
+  'family:g-gig': () => (
+    <>
+      <path d="M2 22.5h20" strokeWidth={0.8} />
+      {p('M3 5v12 M3 5h3 M3 17h3', false)}
+      {head(10, 13, 2)}
+      {p('M12 13V4', false)}
+      {p('M18 5v12 M21 5v12', false)}
+    </>
+  ),
   // Barry Harris lines: a falling line of note heads, a small chromatic head between (chord tones on the beats).
   'family:k-harrisline': () => (
     <>

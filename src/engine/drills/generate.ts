@@ -30,6 +30,7 @@ import { genHeadPiano, pianoHarmFamily, pianoTuneFamily } from './headDrills';
 import { genKeysSolo, keysSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { spansOfChart } from '../ruleCards';
 import { genKeysCtx, keysCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
+import { genKeysGig, keysGigFamily } from './gigDrills'; // AUDIT-DEPTH-3 #11, #12, C8
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import { gateFamilies } from '../verifiedContent';
@@ -5095,6 +5096,7 @@ export function generate(spec: DrillSpec): Drill {
   if (s.family === 'k-harm' || s.family === 'k-tune') return genHeadPiano(s);
   if (s.family === 'k-solo') return genKeysSolo(s);
   if (s.family === 'k-ctx') return genKeysCtx(s);
+  if (s.family === 'k-gig') return genKeysGig(s);
   if (s.family === 'k-harrisline') return genHarrisLine(s);
   // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): k-lh, k-tex, k-comp, k-impro.
   if (isSoloPianoFamily(s.family)) return genSoloPiano(s);
@@ -6186,6 +6188,8 @@ export function catalog(): FamilyDef[] {
     keysPopFamily(),
     keysPedalFamily(),
     keysClassicFamily(),
+    // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).
+    keysGigFamily(),
   ]));
 }
 

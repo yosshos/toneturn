@@ -55,14 +55,14 @@ Key to the columns:
 | Comping rhythms | 2 / 2 / — | standards | P, G | ✓ | ✓ | comping (3) | ✓ | **OK** | voicings 11/14; g-jazz 1/8 |
 | Walking bass | 4 / **1** / 20+ | ✓ | 3 | ✓ | standards | jazz-dictation 5, b-ear | ✓ | **DEEP B / OK P / SHALLOW G** | accomp 2/4/8, rh-solo; g-jazz-6 = 1 item (guitar.ts:2557); b-walk 1–20 |
 | Stride | 11 / — / — | ✓ | piano | ✓ | standards, melody (guide tones only) | — | ✓ | **DEEP** | accomp 3,4,9,11–18 |
-| Ballad / solo piano | 2+1 / 1 / — | one progression | P, G | ✓ | — | — | thin | **OK−** | rh-ballad (one I–vi–ii–V–iii–VI chain), rh-solo; g-jazz-12 |
+| Ballad / solo piano | 2+1 / 1 / — | one progression | P, G | ✓ | — | — | thin | **OK−** → **closed (2026-11-16)**: k-gig 2/4/6/8, g-gig 4, b-gig 1 | rh-ballad (one I–vi–ii–V–iii–VI chain), rh-solo; g-jazz-12 |
 | Voice leading | 8 / 3 / 1 | ✓ | 3 | ✓ | melody on top (4 motifs) | vl-ear (4) | ✓ | **OK** | k-vl 1–8, g-vl 1–3, b-chord-9 |
 | **Harmonise a melody** | 1+1 / 0 / — | 3–5-note motifs | piano | ✓ | **no real phrase; no 6-dim, drop 2 or borrowing** | harmonize (3, choice) | ✗ | **SHALLOW** | voiceLeadDrills.ts:97-102, 284; k-ear-7 (I/IV/V) |
 | **Chord-melody (guitar)** | — / 2 / — | generated top voice over ii–V–I–vi | G | ✓ | **no melody** | none | ✗ | **SHALLOW** | guitar.ts:2558, 2562; guitarJazz.ts:256-281 |
 | Classical harmony performed (cadences, N6, aug6) | 7 / 0 / 0 | progressions | piano | mostly ✓ | — | cadence-types, chromatic-harmony | ✓ | **OK piano** (low priority elsewhere) | cadences 1–7 |
 | Trading / soloing over a form | 1 / 1 / 4 | ✓ | 3 | ✓ | standards (bass) | — | ✓ | **OK** | bb-trade; g-impro-7; b-impro 12–14, b-walk-15 |
 | Improv under rules | studio, not a path step | forms | 3 | ✓ | any chart | — | levels 1–5 | **OK, but rules lack the drilled vocabulary** | improvRules.ts:30-33 (no Harris, pivot, triad-pair or enclosure-type rules); not in path.ts:1037 GAME_STEPS |
-| Intros / endings | 1 / 0 / 1 | — | P, B | ✓ | — | form-ear 3 | ✗ | **SHALLOW** (still open from GAPS-2 #13) | rh-borrowed (Dameron only); b-jform-5 |
+| Intros / endings | 1 / 0 / 1 | — | P, B | ✓ | — | form-ear 3 | ✗ | **SHALLOW** (still open from GAPS-2 #13) → **closed (2026-11-16)**: k-ctx 11–12, k-gig 1/3/5/7, g-gig 1–3, b-gig 2–4, ear intro-ending 1–3 | rh-borrowed (Dameron only); b-jform-5 |
 
 ---
 
@@ -80,8 +80,8 @@ Key to the columns:
 | 8 | **Coltrane on guitar; Coltrane sub over a ii–V** | g-theory-3 (1558): Giant Steps bars 1–8 in shells / drop-2, 2 items. Piano: lines + comp (jazz-9, k-bebop-10). Coltrane sub over a plain ii–V (Tune Up → Countdown) is ear-only (reharm-spot 4, jazz-chains 3) | Guitar: no arpeggios, digital patterns or lines through the cycle. All instruments: no performed Coltrane substitution | Guitar 1500 1-3-5-7 through the cycle in one position → 1550 1-2-3-5 → 1620 lines over GS bars 1–8 → 1700 whole GS chart. All: 1650 "Coltrane sub over a ii–V–I" (comp + line) | Med |
 | 9 | **Guitar Harris harmony** | g-harris 1–10 has scales, scale of chords on string sets, lines and pivots | No passing dims, aux dim, 6-dim ii–V–I or 6-dim form (piano has k-sixdim 5, 8–12). Skip any part the current Harris build already covers on guitar | Mirror k-sixdim 5, 8, 9, 11 on drop-2 string sets, 1400–1600 | Med |
 | 10 | **Guitar walking bass** | g-jazz-6 (1362), 1 item; g-jazz-12 (solo texture) | No approach types, blues, standards | 1250 roots + approach on ii–V–I → 1350 blues → 1450 walk + guide-tone stabs on a standard | Low |
-| 11 | **Ballad voicings / solo-ballad** | rh-ballad: one progression, 2 items | No ballad standard, no rubato ballad intro | 1350 → 1500: ballad chart (Misty, Valentine changes) with 10ths + RH 4-note, rubato first | Low |
-| 12 | **Intros / endings** | Dameron ending (rh-borrowed) | GAPS-2 #13, still open: last-4-bars intro, I–vi–ii–V vamp, III–VI–II–V tag ×3, Basie ending, ♭VI–♭II–I | as GAPS-2 | Med |
+| 11 | **Ballad voicings / solo-ballad** — **closed 2026-11-16 (§5)** | rh-ballad: one progression, 2 items | No ballad standard, no rubato ballad intro | 1350 → 1500: ballad chart (Misty, Valentine changes) with 10ths + RH 4-note, rubato first | Low |
+| 12 | **Intros / endings** — **closed 2026-11-16 (§5)** | Dameron ending (rh-borrowed) | GAPS-2 #13, still open: last-4-bars intro, I–vi–ii–V vamp, III–VI–II–V tag ×3, Basie ending, ♭VI–♭II–I | as GAPS-2 | Med |
 | 13 | **Line clichés** | tp-cliche 0–1, g-theory-7 | No ear item; never in a tune (My Funny Valentine-type minor A, Stella-like) | ear item "line cliché: where does the line move?" 1300; tune application 1450 | Low |
 
 ---
@@ -168,7 +168,7 @@ Key to the columns:
 - The LH comps shells/rootless on a Charleston (graded); the RH plays guide tones on 1 and 3 (graded), then free lines under rules.
 - Guitar: alternate 2 bars of chords with 2 bars of line (graded per section).
 
-**C8. Capstone arrangement** (piano, guitar). Rating 1700–1900.
+**C8. Capstone arrangement** (piano, guitar). Rating 1700–1900. **Closed 2026-11-16 (§5): k-gig 9–12, g-gig 5–8, b-gig 5–8.**
 - Intro (last 4 bars or a vamp) → head harmonised (C1 / chord-melody) → one solo chorus (C5) → head out → ending (Basie, tag, ♭VI–♭II–I).
 - Each section is graded by its existing checker. This needs #12 (intros / endings) first.
 
@@ -221,4 +221,12 @@ Low: guitar walking, ballads, line-cliché ear.
 - C6: the solo-chorus builder (`soloChorus.ts`, `SoloChorus.tsx`) and the chorus levels.
 - C7: the comp-and-solo duo on piano, guitar and bass.
 - #5, #6: `k-ctx` / `g-ctx` / `b-ctx` (`ctxDrills.ts`): the brothers (BARRY-HARRIS-THEORY §2) as lines, comping, all four, in a turnaround and a blues, on the bass; backdoor; triad pairs and pentatonics over forms; the Coltrane sub; intros, endings, ballad comping; ear bh-brothers 4.
-- Open: C1–C4, C8, #1–#4, the PD melodies (§3); `quote-head` waits for a melody source.
+- Open: C1–C4, #1–#4, the PD melodies (§3).
+
+## 6. Built (2026-11-16): on the bandstand (`gigDrills.ts`)
+
+New families `k-gig` (12 levels), `g-gig` (8, jazz add-on) and `b-gig` (8, jazz track), every item in all 12 keys; written items start in free time (rubato.ts) then the tempo ladder; the solo chorus and the whole tune run with the band and drums (count-in, click, now-cue). Path places keys and bass levels by `gigPlacement.ts`, guitar by grade (8 → 11).
+- **#12 intros / endings** (beyond k-ctx 11–12, which already had the I–vi–ii–V vamp, the last four bars, the Basie ending, ♭VI7–♭II7–I and the comped tag): the iii–VI7–ii–V7 vamp (comping, line), a blues's last four bars, a rubato ballad intro (free time only); the tag ×3 as a line, ♭VImaj7–♭IImaj7–Imaj7, ♭VI7–♭II7–Imaj7 as a line, the Dameron turnaround (Imaj7–♭IIImaj7–♭VImaj7–♭IImaj7) comped and as a line, the diminished walk-down (iii7–♭iii°7–ii7–V7–I). Guitar: drop 2 and lines (g-gig 1–3); bass: walked (b-gig 2–4). Ear: topic `intro-ending` (which intro, which ending, close relatives side by side), ~1330–1520.
+- **#11 ballad** at 1350–1500 on "Evening Lamp", our own 16-bar ballad changes (two chords a bar, a chart only): LH 10ths → RH four-note rootless voicings (A/B, above E♭4) over the root → both hands (A, B) → the whole chart; straight 8ths, ♩44–66. Guitar: drop 2 on 5-4-3-2 (g-gig 4); bass: the two-feel (b-gig 1).
+- **C8 the whole tune** on the original heads Back Porch Blues and Night Ferry: intro (the tune's last four bars, rootless comping) → the head (k-tune's melody + shells) → one solo chorus (free bars, rule cards: target-ct + inside on the blues; inside + `quote-head` on the minor tune, which now receives the head's melody) → the head out → the ending (the Basie ending in major, the iiø–V7♭9 tag ×3 in minor). Section items first, then the whole take; `goal.sections` grades each section by its own checker and names the one that slipped in the "Why" (analyze.ts). Guitar: drop-2 intro and ending, chord-melody head (g-cmel's bass-on-the-downbeat arrangement), free chorus. Bass: walked intro, head in two, a walking chorus behind the soloist, head out in two, the ending.
+- Wiring: glyphs `kgig` / `ggig` / `bgig` and the topic mark, badges (titles, icon, key mastery), XP skills (form/song, chords/voicing, cadences/progression), lessons `gig-endings`, `gig-ballad`, `gig-tune`, level-test rungs, workout through the path. Tests: `tests/gigDrills.test.ts`; e2e `e2e/gig.spec.ts`.

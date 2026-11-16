@@ -72,6 +72,9 @@ export type FamilyId =
   | 'k-ctx'
   | 'g-solo'
   | 'g-ctx'
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).
+  | 'k-gig'
+  | 'g-gig'
   | 'custom' // the player's own drills
   // Licks & transcription (docs/SPEC-LICKS-TRANSCRIPTION.md): lick items per key / instrument, transcribed phrases.
   | 'licks'
@@ -178,7 +181,9 @@ export type BassFamilyId =
   | 'b-first'
   // AUDIT-7 #15: riffs by grade and the broken-feel / ballad ladder on the bass (bassRiffFeel.ts).
   | 'b-riff'
-  | 'b-feel';
+  | 'b-feel'
+  // AUDIT-DEPTH-3 #11, #12, C8: the ballad in two, walked intros and endings, the whole tune (gigDrills.ts).
+  | 'b-gig';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -520,7 +525,12 @@ export interface DrillGoal {
   phrase?: { pass: import('../phraseOrg').PhraseBand[] };
   /** Play one / rest one (play 1, rest 1), play two / rest two (2, 2): bars of playing, then bars of rest (phraseOrg.ts playRestCheck). */
   playRest?: { play: number; rest: number };
-  improv?: { cards: string[]; spans: { at: number; beats: number; root: number; iv: number[] }[]; /** Mastered lick ids for the use-a-lick card (empty = the whole library). */ licks?: string[]; /** A line that keeps the cards (the improvised part only; tests and the result's model). */ model?: { beat: number; dur: number; pitch: number }[] };
+  improv?: { cards: string[]; spans: { at: number; beats: number; root: number; iv: number[] }[]; /** Mastered lick ids for the use-a-lick card (empty = the whole library). */ licks?: string[]; /** A line that keeps the cards (the improvised part only; tests and the result's model). */ model?: { beat: number; dur: number; pitch: number }[]; /** AUDIT-DEPTH-3 C8: the tune's melody for the quote-head card (beats, MIDI). */ melody?: { beat: number; midi: number }[] };
+  /**
+   * AUDIT-DEPTH-3 C8 (the whole tune, gigDrills.ts): the take's sections on the beat line (intro, head, solo chorus, head
+   * out, ending). Each is graded by its own checker as before; a section whose written notes slipped is named in the "Why".
+   */
+  sections?: { from: number; to: number; name: { en: string; he: string } }[];
 }
 
 /** Prog pass rules (PROG_ENGINE.md): metric modulation, unison lock, the road map. Absent fields are not checked. */
@@ -757,6 +767,8 @@ export interface NoteResult {
 /** Everything measured in one take (spec AI §6). Missing metrics are null (not applicable to the drill). */
 export interface TakeMetrics {
   /** AUDIT-DEPTH-3 C5: the rule cards of an improvised take (goal.improv): notes that kept each card / notes judged. */
+  /** AUDIT-DEPTH-3 C8 (goal.sections): written notes right / written notes per section, in play order. */
+  sections?: { name: { en: string; he: string }; ok: number; total: number }[];
   improv?: { card: string; ok: number; total: number; pass: boolean; /** Slice 8: the bars (0-based) where the card was broken. */ bars?: number[] }[];
   /** Slice 8 (target cards: a guide tone on each change …): per change, its bar, the pitch classes asked for, the note landed on (MIDI; null = a rest) and whether it is one of them. */
   landings?: { bar: number; target: number[]; landed: number | null; hit: boolean }[];

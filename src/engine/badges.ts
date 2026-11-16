@@ -346,11 +346,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // AUDIT-6 Stage B: the first steps at the piano grew to 11 levels and have their titles now (k-first), like the
 // guitar's (g-first); bass and drum first steps get the bass / drum milestones with their own names (bassBadges, drumBadges).
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic', 'k-gig'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-gig'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter', 'g-gig'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -437,6 +437,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-classic': { en: 'Classical pieces', he: 'יצירות קלאסיות' },
   // AUDIT-7 #2: the guitarist's jazz entry over the blues.
   'g-jblues': { en: 'Jazz on the blues', he: 'ג׳אז על הבלוז' },
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad, the whole tune.
+  'k-gig': { en: 'On the bandstand', he: 'על הבמה' },
+  'g-gig': { en: 'On the bandstand, guitar', he: 'על הבמה בגיטרה' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -519,6 +522,8 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-pedal': 'kpedal',
   'k-classic': 'kclassic',
   'g-jblues': 'gjblues',
+  'k-gig': 'kgig',
+  'g-gig': 'ggig',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -618,6 +623,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-classic': [['Ode to Joy at the Keys', 'אודה לשמחה בקלידים'], ['Minuet in G', 'מינואט בסול'], ['Burgmüller Candour', 'הכנות של בורגמילר'], ['Für Elise Opening', 'הפתיחה של לאליזה'], ['Clementi Sonatina', 'הסונטינה של קלמנטי'], ['Prelude in C', 'פרלוד בדו'], ['Invention in F', 'אינוונציה בפה'], ['Invention in A Minor', 'אינוונציה בלה מינור'], ['Prelude in C Minor', 'פרלוד בדו מינור']],
   // AUDIT-7 #2: one title per level of the jazz entry over the blues.
   'g-jblues': [['Blues Head', 'נושא בלוז'], ['Four to the Bar', 'ארבע לתיבה'], ['Blues Guide Tones', 'צלילים מנחים בבלוז'], ['Blues Charleston', 'צ׳רלסטון בבלוז']],
+  // AUDIT-DEPTH-3 #11, #12, C8 (gigDrills.ts).
+  'k-gig': [['Vamp Starter', 'פותח בוואמפ'], ['Ballad Tenths', 'דצימות בלדה'], ['Slide Home', 'מחליק הביתה'], ['Four Over Ten', 'ארבעה מעל דצימה'], ['Tag Player', 'נגן התג'], ['Whole Tune, Blues', 'שיר שלם, בלוז'], ['Whole Tune, Minor', 'שיר שלם, מינור']],
+  'g-gig': [['Intro Comper', 'מלווה הפתיחות'], ['Ending Comper', 'מלווה הסיומים'], ['Dameron on the Neck', 'דיימרון על הצוואר'], ['Ballad in Drop 2', 'בלדה בדרופ 2'], ['Blues Sections', 'קטעי הבלוז'], ['Whole Blues', 'הבלוז כולו'], ['Minor Sections', 'קטעי המינור'], ['Whole Minor Tune', 'שיר המינור כולו']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */
 export const familyLevelCount = (f: string): number => FAMILY_TITLES[f as BadgeFamily]?.length ?? 7;
