@@ -6,7 +6,7 @@ import type { ItemState, TakeMetrics } from '../drills/types';
 import type { RatingEvent } from '../rating';
 import { bookAfterTake, dueLicks, type Lick, type LickBook, type LickInstrument } from '../licks';
 import { capXp, completionBonus, dailyCap, keyBonus, novelty, phraseDifficulty, takeXp, type Stage } from './difficulty';
-import { finalHand, isPhrase, keyPassed, nextKey, passedKeys, phraseItemId, phraseRank, planOf, type Hand } from './phrase';
+import { finalHand, isPhrase, keyPassed, keysNeeded, nextKey, passedKeys, phraseItemId, phraseRank, planOf, type Hand } from './phrase';
 
 const mod = (n: number) => ((n % 12) + 12) % 12;
 const dayOf = (iso: string) => {
@@ -77,7 +77,7 @@ export function phraseTake(o: {
   const passedAfter = passedKeys(o.l, o.after, inst, fh);
   const d0 = phraseDifficulty(o.l, o.l.homeKey ?? 0, null, fh, inst).D0;
   const bonus = newlyPassed ? keyBonus(d0, passedAfter.length) : 0;
-  const yours = newlyPassed && passedAfter.length === 12;
+  const yours = newlyPassed && passedAfter.length >= keysNeeded(o.l, inst);
   const completion = yours ? completionBonus(d0) : 0;
   const cid = capId(o.l);
   const earned = earnedToday(o.book, cid, o.now);

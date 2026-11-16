@@ -15,7 +15,8 @@
 
 import type { Drill } from '../drills/types';
 import { LICK_Q, chordAt, type Lick, type LickChord, type LickInstrument } from '../licks';
-import { finalHand, phrasePitches, planOf, type Hand } from './phrase';
+import { finalHand, phraseNeck, phrasePitches, planOf, type Hand } from './phrase';
+import { neckStats, singerRange, voiceStats, type Placed, type Range } from './placement';
 
 export const PHRASE_DIFF_V = 1;
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
@@ -28,6 +29,9 @@ export interface DNote {
   beat: number;
   dur: number;
   hand: 'R' | 'L';
+  /** Guitar / bass: where the note is played (§7.4) — the physical cost reads it. */
+  string?: number;
+  fret?: number;
 }
 export interface DInput {
   notes: DNote[];
@@ -36,6 +40,8 @@ export interface DInput {
   tonic: number;
   minor?: boolean;
   meter: number;
+  /** Voice: the singer's range (§10.3). */
+  range?: Range & { brk?: number };
 }
 
 // ───────────────────────────── features (§10.2) ─────────────────────────────
@@ -342,6 +348,14 @@ export function phraseInput(l: Lick, key: number, hand: Hand = finalHand(l), ins
   if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ midi: p.rh[i], beat: n[1], dur: n[2], hand: 'R' }));
   if (hand !== 'R') (l.lh ?? []).forEach((n, i) => notes.push({ midi: p.lh[i], beat: n[1], dur: n[2], hand: 'L' }));
   if (hand === 'L' && !l.lh?.length) l.notes.forEach((n, i) => notes.push({ midi: p.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L' }));
+  if (inst !== 'piano') {
+    // off the piano a phrase is its main line, placed on the neck (guitar / bass) or in the singer's range (voice)
+    const line = notes.filter((n) => n.hand === 'R');
+    const nk = inst === 'guitar' || inst === 'bass' ? phraseNeck(l, key, inst) : null;
+    const neck = nk?.placed;
+    const out = (line.length ? line : notes).map((n, i) => ({ ...n, midi: n.midi + (nk?.shift ?? 0), hand: 'R' as const, ...(neck?.[i] ? { string: neck[i].string, fret: neck[i].fret } : {}) }));
+    return { notes: out, chords: l.chords, tonic: mod(key), minor: l.minor, meter: l.meter ?? 4, ...(inst === 'voice' ? { range: singerRange() } : {}) };
+  }
   return { notes, chords: l.chords, tonic: mod(key), minor: l.minor, meter: l.meter ?? 4 };
 }
 /** The model's input for a built-in drill (calibration). */
@@ -382,7 +396,7 @@ export function difficultyOf(inp: DInput, bpm: number | null, inst: LickInstrume
   const f = features(inp);
   const parts = materialParts(f);
   const M = material(f);
-  const P = inst === 'piano' ? pianoCost(inp.notes) * (f.trivial ? 0.5 : 1) : 0;
+  const P = physicalCost(inp, inst, bpm) * (f.trivial ? 0.5 : 1);
   const nps = bpm ? (onsetRate(inp) * bpm) / 60 : 0;
   const T = bpm ? tempoDemand(M, nps, inst, f.trivial) : 0;
   return { D: Math.round(clamp(700 + M + P + T, 700, 1900)), D0: Math.round(clamp(700 + M + P, 700, 1900)), M: Math.round(M), P: Math.round(P), T: Math.round(T), nps: Math.round(nps * 10) / 10, f, parts };
@@ -518,4 +532,69 @@ export function xpPreview(l: Lick, inst: LickInstrument = 'piano', keys?: number
   });
   const d0 = phraseDifficulty(l, home, null, finalHand(l), inst).D0;
   return { tempi, perKey, all12: completionBonus(d0), cap: dailyCap(d0) };
+}
+
+// ───────────────────────────── physical cost off the piano (v2, §10.3) ─────────────────────────────
+//
+// Separate terms per instrument; the piano's pianoCost and its calibration are untouched. Each is 0–250 points on the
+// phrase as placed in that key (phrase.ts phraseNeck for guitar / bass, the singer's range for the voice).
+
+/** Guitar / bass weights (points at saturation). The bass's wider frets make stretches and low positions dearer. */
+export const W_NECK = {
+  guitar: { shifts: 70, shiftSize: 30, skips: 55, stretch: 45, high: 25, low: 0 },
+  bass: { shifts: 70, shiftSize: 30, skips: 50, stretch: 65, high: 15, low: 20 },
+};
+/** Neck cost parts (the "Why?" list): shifts per bar and their size, string skips per note, stretches per bar, frets. */
+export function neckParts(placed: Placed[], bars: number, inst: 'guitar' | 'bass'): Record<keyof (typeof W_NECK)['guitar'], number> {
+  const w = W_NECK[inst];
+  const st = neckStats(placed);
+  const b = Math.max(1, bars);
+  return {
+    shifts: w.shifts * sat(st.shifts / b, 2),
+    shiftSize: st.shifts ? w.shiftSize * sat(st.shiftFrets / st.shifts, 7) : 0,
+    skips: w.skips * sat(st.skips / Math.max(1, st.n), 0.4),
+    stretch: w.stretch * sat(st.stretch / b, 2),
+    high: w.high * st.high,
+    low: w.low * st.low,
+  };
+}
+/** Guitar / bass physical cost (0–250) of a line with its strings and frets. Notes without a place cost nothing. */
+export function neckCost(notes: DNote[], meter: number, inst: 'guitar' | 'bass'): number {
+  const line = lineOf(notes.filter((n) => n.string !== undefined && n.fret !== undefined));
+  if (line.length < 2) return 0;
+  const end = Math.max(...notes.map((n) => n.beat + n.dur));
+  const parts = neckParts(line.map((n) => ({ string: n.string!, fret: n.fret! })), Math.ceil(end / meter - 1e-6), inst);
+  return clamp(Object.values(parts).reduce((a, x) => a + x, 0), 0, 250);
+}
+
+/** Voice weights (points at saturation). */
+export const W_VOICE = { tess: 60, top: 45, leap: 40, leapRate: 35, breath: 50, breaks: 20 };
+/**
+ * Voice cost parts against the singer's range at a tempo: tessitura (distance from the comfortable middle) and time in
+ * the top quarter, the largest leap and leaps per second, breath length (the longest stretch without a rest, beyond 6 s),
+ * register-break crossings when known. Notes outside the range are not scored here: that key is "out of range" (§7.4).
+ */
+export function voiceParts(notes: DNote[], range: Range & { brk?: number }, bpm: number): Record<keyof typeof W_VOICE, number> {
+  const st = voiceStats(lineOf(notes), range, bpm);
+  return {
+    tess: W_VOICE.tess * sat(Math.max(0, st.tess - 0.2), 0.7),
+    top: W_VOICE.top * sat(st.top, 0.5),
+    leap: W_VOICE.leap * sat(Math.max(0, st.maxLeap - 4), 8),
+    leapRate: W_VOICE.leapRate * sat(st.leapsPerSec, 1.5),
+    breath: W_VOICE.breath * sat(Math.max(0, st.breath - 6), 8),
+    breaks: W_VOICE.breaks * sat(st.breaks, 4),
+  };
+}
+/** The voice's tempo for the breath term when a difficulty is asked without one (D₀ for XP): a moderate ♩90. */
+export const VOICE_BREATH_BPM = 90;
+export function voiceCost(notes: DNote[], range: Range & { brk?: number }, bpm: number | null): number {
+  if (notes.length < 2) return 0;
+  return clamp(Object.values(voiceParts(notes, range, bpm ?? VOICE_BREATH_BPM)).reduce((a, x) => a + x, 0), 0, 250);
+}
+
+/** P per instrument (§10.3): piano (v1, pianoCost), guitar / bass on the neck, the voice in the singer's range. */
+export function physicalCost(inp: DInput, inst: LickInstrument, bpm: number | null = null): number {
+  if (inst === 'piano') return pianoCost(inp.notes);
+  if (inst === 'guitar' || inst === 'bass') return neckCost(inp.notes, inp.meter, inst);
+  return voiceCost(inp.notes, inp.range ?? singerRange(), bpm);
 }

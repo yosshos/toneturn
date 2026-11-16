@@ -20,7 +20,11 @@ import { catchTake, detectKeyChords, dotsOf, onsetEvents, type Caught, type Beat
 import { candidates, boundaries, clampSpan, snapHandle, spanBars, MAX_BARS } from '../../engine/encore/segment';
 import { isGhost, splitHands, wrongNoteFix, type QuantMode } from '../../engine/encore/quantise';
 import { badge, whyLine, xpPreview, gradeOf } from '../../engine/encore/difficulty';
-import { bestTempo, daysPractised, finalHand, handsOf, keyOrder, makePhrase, nextKey, overCeiling, passedKeys, phraseDrill, phraseMap, phraseRank, phraseRungs, planOf, promotion, RANK_NAME, roundToLadder, twoHands, type Hand } from '../../engine/encore/phrase';
+import { bestTempo, daysPractised, finalHand, forInstrument, handsOf, keyOrder, keysInRange, keysNeeded, makePhrase, nextKey, overCeiling, passedKeys, phraseDrill, phraseMap, phraseNeck, phraseRank, phraseRungs, planOf, promotion, RANK_NAME, roundToLadder, twoHands, type Hand } from '../../engine/encore/phrase';
+import { setInstrumentCtx, singerRange } from '../../engine/encore/placement';
+import { lickInstrumentOf } from '../LickTrainer';
+import { bassTuningOf } from '../../storage/progress';
+import { AudioRecordMode, TapTempo, audioTakeNote } from './AudioRecord';
 import { duePhrases } from '../../engine/encore/connect';
 import { chartChords, chordsFor, draftFrom, gridNotes, library, newPhraseId, patternToPhrase, takeOnGrid, type TrimState } from '../../engine/encore/library';
 import { ladderStep } from '../../engine/drills/ladder';
@@ -42,7 +46,9 @@ export interface EncoreProps {
 }
 
 const mod = (n: number) => ((n % 12) + 12) % 12;
-const INST: LickInstrument = 'piano';
+/** The open course's instrument (keys → piano; guitar, bass, voice; Jazz → the player's own): set on every render. */
+let INST: LickInstrument = 'piano';
+const INST_NAME: Record<LickInstrument, { en: string; he: string }> = { piano: { en: 'Piano', he: 'פסנתר' }, guitar: { en: 'Guitar', he: 'גיטרה' }, bass: { en: 'Bass', he: 'בס' }, voice: { en: 'Voice', he: 'קול' } };
 const nav = (path: string) => {
   location.hash = `/encore${path ? `/${path}` : ''}`;
 };
@@ -57,6 +63,9 @@ export function EncoreScreen(p: EncoreProps) {
     return () => window.removeEventListener('hashchange', on);
   }, []);
   const r = parseEncoreHash(hash);
+  // v2: the course's instrument, the singer's range and the tunings for placement (§7.4)
+  INST = lickInstrumentOf(settings);
+  setInstrumentCtx({ range: settings.voiceRange ?? null, bassTuning: bassTuningOf(settings) ?? 'bass', guitarTuning: settings.tuning && settings.tuning !== 'upright' && !settings.tuning.startsWith('bass') ? settings.tuning : 'standard' });
   // The latest lick book (several writes can follow each other before the settings come back).
   const bookRef = useRef<LickBook>(settings.lickBook ?? {});
   useEffect(() => {
@@ -73,8 +82,14 @@ export function EncoreScreen(p: EncoreProps) {
     if (m.verdict === 'skip') return p.onTake(st, [], 0, { ...m, verdict: 'not' });
     p.onTake(st, evs, xp, m);
   };
-  const byId = (id?: string) => (id ? (bookRef.current.own ?? []).find((l) => l.id === id) : undefined);
-  const savePhrase = (l: Lick) => {
+  // off the piano a two-hand phrase is practised as its main line (forInstrument); saving never drops its left hand
+  const byId = (id?: string) => {
+    const l = id ? (bookRef.current.own ?? []).find((x) => x.id === id) : undefined;
+    return l ? forInstrument(l, INST) : undefined;
+  };
+  const savePhrase = (l0: Lick) => {
+    const old = (bookRef.current.own ?? []).find((x) => x.id === l0.id);
+    const l = old?.lh?.length && !l0.lh?.length && INST !== 'piano' ? { ...l0, lh: old.lh } : l0;
     const own = [...(bookRef.current.own ?? []).filter((x) => x.id !== l.id), l];
     setBook({ ...bookRef.current, own });
   };
@@ -94,7 +109,7 @@ export function EncoreScreen(p: EncoreProps) {
   );
 
   // ─── views ───
-  if (r.view === 'record') return <RecordMode lang={lang} head={head} />;
+  if (r.view === 'record') return INST !== 'piano' || r.id === 'mic' || (!midi.devices.length && !settings.midiInput) ? <AudioRecordMode lang={lang} head={head} inst={INST} onMidi={INST === 'piano' && midi.devices.length ? () => nav('record') : undefined} /> : <RecordMode lang={lang} head={head} />;
   if (r.view === 'caught' && r.id) return <CaughtView lang={lang} head={head} takeId={r.id} />;
   if ((r.view === 'new' || r.view === 'context') && r.take)
     return <TrimFlow key={r.take} lang={lang} head={head} takeId={r.take} from={r.from} to={r.to} step={r.view === 'new' ? 'trim' : 'context'} settings={settings} onSave={(l) => (savePhrase(l), clearSlot(`encore:trim:${r.take}`), nav(`plan/${l.id}`))} />;
@@ -122,6 +137,7 @@ export function EncoreScreen(p: EncoreProps) {
             l={l}
             keyPc={key}
             hand={hand}
+            inst={INST}
             items={items}
             onTake={onTake}
             onBook={setBook}
@@ -357,7 +373,11 @@ function RecordMode({ lang, head }: { lang: Lang; head: Head }) {
   const span = Math.max(8, (notes.length ? Math.max(...notes.map((n) => n.off ?? now)) : 0) / 500 + 1);
   return (
     <main className="panel-screen enc-screen" data-encore="record" data-rec-state={state}>
-      {head(he ? 'הקלטה חופשית' : 'Free recording', <>{he ? 'פסנתר' : 'Piano'} · <bdi dir="ltr">MIDI</bdi></>, () => nav(''))}
+      {head(he ? 'הקלטה חופשית' : 'Free recording', <>{he ? 'פסנתר' : 'Piano'} · <bdi dir="ltr">MIDI</bdi></>, () => nav(''), (
+        <button className="link" onClick={() => nav('record/mic')} data-rec-mic="1">
+          {he ? 'מיקרופון' : 'Mic'}
+        </button>
+      ))}
       <div className="enc-card-flat enc-rec-bar row">
         <span className={`enc-recdot ${state === 'listening' ? 'on' : ''}`} aria-hidden="true" />
         <b className="grow">{state === 'listening' ? (he ? 'מקליט' : 'Recording') : he ? 'נגנו כשתרצו' : 'Play when you like'}</b>
@@ -471,6 +491,12 @@ function CaughtView({ lang, head, takeId }: { lang: Lang; head: Head; takeId: st
             </span>
           </div>
         )}
+        {!caught.grid.alt && caught.grid.conf < 0.3 && (
+          <div className="kv" data-tempo-tap="1">
+            <span className="t3">{he ? 'הטמפו לא ברור' : 'Tempo unclear'}</span>
+            <TapTempo lang={lang} onBpm={setBpm} />
+          </div>
+        )}
         <div className="kv">
           <span>{he ? 'משקל' : 'Meter'}</span>
           <span className="row">
@@ -486,6 +512,7 @@ function CaughtView({ lang, head, takeId }: { lang: Lang; head: Head; takeId: st
           </span>
         </div>
       </div>
+      {audioTakeNote(take, lang)}
       <small className="sr-only">{ev.length}</small>
       <div className="enc-foot">
         <button className="btn primary enc-full" onClick={go} data-caught-next="1">
@@ -545,7 +572,7 @@ function initialTrim(take: EncoreTake, from?: number, to?: number): { s: TrimSta
   }
   const sp = clampSpan(f, t, m, MAX_BARS);
   const key = over?.key ?? caught.key.best;
-  return { s: { takeId: take.id, from: sp.from, to: sp.to, view: 'roll', key: key.tonic, minor: key.minor, chordsOn: true, quant: caught.swing > 0.54 ? 'swing' : 'grid', split: null, name: '', bpm, meter: m, swing: caught.swing, edits: {}, t0, spanKey }, caught };
+  return { s: { takeId: take.id, from: sp.from, to: sp.to, view: 'roll', key: key.tonic, minor: key.minor, chordsOn: true, quant: caught.swing > 0.54 ? 'swing' : 'grid', split: take.instrument !== 'piano' || take.source === 'mic' ? -1 : null, name: '', bpm, meter: m, swing: caught.swing, edits: {}, t0, spanKey }, caught };
 }
 
 function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lang: Lang; head: Head; take: EncoreTake; from?: number; to?: number; step: 'trim' | 'context'; settings: Settings; onSave: (l: Lick) => void }) {
@@ -790,6 +817,7 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
   const rungs = phraseRungs(plan);
   const first = order[0] ?? l.homeKey ?? 0;
   const R = 70;
+  const inRange = INST === 'voice' ? keysInRange(l) : FIFTHS;
   return (
     <main className="panel-screen enc-screen" data-encore="plan" data-phrase={l.id}>
       {head(he ? 'תוכנית אימון' : 'Practice plan', <Bi text={T(l.name, lang)} />, () => nav(`phrase/${l.id}`))}
@@ -829,8 +857,9 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
             const x = 90 + R * Math.cos(a);
             const y = 90 + R * Math.sin(a);
             const on = keys.includes(k);
+            const outOf = INST === 'voice' && !inRange.includes(k);
             return (
-              <g key={k} onClick={() => !plan.locked?.includes('keys') && toggle(k)} className={`enc-rk ${on ? 'on' : ''} ${k === first ? 'first' : ''}`} role="checkbox" aria-checked={on} aria-label={kName(k)} data-ring-key={k}>
+              <g key={k} onClick={() => !plan.locked?.includes('keys') && toggle(k)} className={`enc-rk ${on && !outOf ? 'on' : ''} ${k === first ? 'first' : ''} ${outOf ? 'out' : ''}`} data-out={outOf ? 1 : undefined} role="checkbox" aria-checked={on} aria-label={kName(k)} data-ring-key={k}>
                 <ellipse cx={x} cy={y} rx={15} ry={11} transform={`rotate(-20 ${x} ${y})`} />
                 <text x={x} y={y + 4} textAnchor="middle">
                   {kName(k)}
@@ -853,6 +882,8 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
           ))}
         </div>
       </div>}
+      {(INST === 'guitar' || INST === 'bass') && <NeckLine lang={lang} l={l} order={order} onPosition={(v) => set({ position: v })} />}
+      {INST === 'voice' && <RangeLine lang={lang} l={l} />}
       {twoHands(l) && (
         <Seg<'R-then-RL' | 'RL' | 'R' | 'L'> value={plan.hands} label={he ? 'ידיים' : 'Hands'} onChange={(h) => set({ hands: h })} options={[{ k: 'R-then-RL', t: he ? 'יד אחת, ואז יחד' : 'One, then both' }, { k: 'RL', t: he ? 'יחד' : 'Together' }, { k: 'R', t: he ? 'ימין' : 'RH' }, { k: 'L', t: he ? 'שמאל' : 'LH' }]} />
       )}
@@ -883,7 +914,10 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
                 </li>
               ))}
             <li>
-              <span>{he ? 'פיזי · פסנתר' : 'Physical · piano'}</span>
+              <span>
+                {he ? 'פיזי · ' : 'Physical · '}
+                {INST_NAME[INST][lang]}
+              </span>
               <b dir="ltr">+{b.d.P}</b>
             </li>
             <li>
@@ -965,7 +999,7 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
         <Dyn rank={pr.rank} size={34} />
         <div className="grow col">
           <b className="t2">
-            <bdi dir="ltr">{passed}</bdi> {he ? 'מתוך' : 'of'} <bdi dir="ltr">12</bdi> {he ? 'סולמות ביעד' : 'keys at the target'}
+            <bdi dir="ltr">{passed}</bdi> {he ? 'מתוך' : 'of'} <bdi dir="ltr">{keysNeeded(l, INST)}</bdi> {he ? 'סולמות ביעד' : 'keys at the target'}
           </b>
           {pr.to !== null && (
             <>
@@ -1121,7 +1155,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
       <div className="row enc-facts">
         <div>
           <b className="enc-big" dir="ltr">
-            12
+            {keysNeeded(l, INST)}
           </b>
           <small className="tiny">{he ? 'סולמות' : 'keys'}</small>
         </div>
@@ -1274,3 +1308,54 @@ const SRC: Record<string, { en: string; he: string }> = {
   teacher: { en: 'From the teacher', he: 'מהמורה' },
   shared: { en: 'Shared', he: 'שיתוף' },
 };
+
+// ───────────────────────────── v2: guitar / bass position, voice range (§7.4) ─────────────────────────────
+
+/** Guitar / bass: the position per key in the plan's order ("A♭ · pos. 4") and "same position in every key" / "by key". */
+function NeckLine({ lang, l, order, onPosition }: { lang: Lang; l: Lick; order: number[]; onPosition: (v: 'same' | 'per-key') => void }) {
+  const he = lang === 'he';
+  const inst = INST as 'guitar' | 'bass';
+  const mode = planOf(l).position ?? 'same';
+  const pos = order.slice(0, 3).map((k) => ({ k, n: phraseNeck(l, k, inst) }));
+  // one row (the plan stays one screen): the first keys' positions, and one chip that switches same shape ↔ by key
+  return (
+    <div className="row enc-neckline" data-neck-mode={mode}>
+      <small className="t3 grow enc-poslist" data-neck-pos={pos.map((p) => p.n.pos).join(',')}>
+        {pos.map((p, i) => (
+          <span key={p.k}>
+            {i ? ' · ' : ''}
+            <KeyB k={p.k} minor={!!l.minor} /> {p.n.pos ? <>{he ? 'פוז׳' : 'pos.'} <bdi dir="ltr">{p.n.pos}</bdi></> : he ? 'פתוחה' : 'open'}
+          </span>
+        ))}
+      </small>
+      <button className="ch" onClick={() => onPosition(mode === 'same' ? 'per-key' : 'same')} aria-pressed={mode === 'same'} data-neck-toggle={mode}>
+        {mode === 'same' ? (he ? 'אותה צורה' : 'Same shape') : he ? 'לפי סולם' : 'By key'}
+      </button>
+    </div>
+  );
+}
+
+/** Voice: the singer's range and the keys outside it (excluded from "yours", with the reason in one line). */
+function RangeLine({ lang, l }: { lang: Lang; l: Lick }) {
+  const he = lang === 'he';
+  const r = singerRange();
+  const ok = keysInRange(l);
+  const name = (m: number) => `${['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'][((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`;
+  return (
+    <small className="t3 enc-rangeline" data-range-keys={ok.length}>
+      {he ? 'הטווח שלך' : 'Your range'} <bdi dir="ltr">{name(r.low)}–{name(r.high)}</bdi>
+      {r.estimated ? (he ? ' (משוער)' : ' (estimated)') : ''} ·{' '}
+      {ok.length === 12
+        ? he
+          ? 'כל 12 הסולמות בטווח'
+          : 'all 12 keys in range'
+        : ok.length
+          ? he
+            ? `${12 - ok.length} סולמות מחוץ לטווח — לא נדרשים ל״שלך״`
+            : `${12 - ok.length} keys out of range — not needed for “yours”`
+          : he
+            ? 'המשפט רחב מהטווח שלך'
+            : 'the phrase is wider than your range'}
+    </small>
+  );
+}
