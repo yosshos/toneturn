@@ -64,7 +64,7 @@ export async function signOut() {
 
 /** AUDIT-5: the result's measured time and note have columns once migration 20261202000000_toneturn_practice_time
  * is applied (the owner dry-runs it first). Until then they stay on this device (sync.ts keeps them on merge). */
-export const RESULT_EXTRAS_SYNCED = false;
+export const RESULT_EXTRAS_SYNCED = true; // migration 20261202000000 applied by the owner 2026-11-16
 
 interface ResultRow {
   session_id: string;

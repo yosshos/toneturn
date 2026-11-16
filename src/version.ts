@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.99.2',
+    date: '2026-11-16',
+    en: ['Your measured practice time and your notes now travel with your results to every device you sign in on.'],
+    he: ['זמן התרגול שנמדד וההערות שלכם עוברים עכשיו יחד עם התוצאות לכל מכשיר שאתם מחוברים בו.'],
+  },
+  {
     version: '0.99.1',
     date: '2026-11-16',
     en: ['A teacher can attach their own playing to a phrase assignment, and longer phrases (up to 16 bars) travel whole. When a phrase becomes yours, friends see it in their feed — grade and tempo only, never its name.'],
