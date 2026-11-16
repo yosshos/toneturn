@@ -20,7 +20,7 @@ import { atRange, type TakeGrade, type VocalItem, type VoiceRange } from '../eng
 import type { SungFrame } from '../engine/sing';
 import type { NoteEvent } from '../engine/lesson';
 import { chartBacking, chordAtBeat, parseChart, transposeChart } from '../engine/charts';
-import { sheetNotes, songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
+import { embellishPlan, sheetNotes, songBacking, songPlan, voiceSong, type SongGrade, type SongPlan } from '../engine/voiceSongs';
 import { feelVerdict, swingBand, synthDahs, synthLine, voiceOnsets, type TimeFeel } from '../engine/voiceTime';
 import { collaParts, collaSections, gradeCollaMulti, gradeCollaSong, synthCollaSections, gradeRubatoSong, gradeScat, gradeSong, gradeTime, MOTIF_ANSWER_AT, motifCell, phraseFalls, scatCentre, scatChart, scatTurns, songTol } from '../engine/voiceGrade';
 import { familyOfRef, NEW_LEVEL_NAMES, vocalLevelByRef, voiceItemTags } from '../engine/voiceFamilies';
@@ -471,7 +471,8 @@ export function songSpan(item: VocalItem, range: VoiceRange, loop: { phrase: num
   if (item.kind !== 'song' || !item.song) return { plan: null, span: null };
   const s = voiceSong(item.song.id);
   if (!s) return { plan: null, span: null };
-  const plan = songPlan(s, range, Math.round((item.song.bpm ?? s.bpm) * (loop?.scale ?? 1)));
+  const plain = songPlan(s, range, Math.round((item.song.bpm ?? s.bpm) * (loop?.scale ?? 1)));
+  const plan = item.song.written ? embellishPlan(plain, item.song.written) : plain;
   if (loop) {
     const ph = plan.phrases[loop.phrase];
     return { plan, span: { from: ph.fromBar, to: ph.toBar } };

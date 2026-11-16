@@ -412,6 +412,8 @@ export const SCAT_P2_LEVELS: VocalLevel[] = [
     P2SCAT({ mode: 'motif', chart: 'Dm7 | G7 | Cmaj7 | Cmaj7 | Dm7 | G7 | Cmaj7 | Cmaj7', style: 'swing', bpm: 112, cell: [[0.5, 7, 0.5], [1, 9, 1], [2, 4, 2]] }, 1350),
   ]),
   lv(1508, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: false, need: 0.55, embellish: true }, 1400), SONG('blue-window', { band: true, rhythm: false, need: 0.55, embellish: true }, 1450)]),
+  // AUDIT-DEPTH-3 C2: the head embellished as written — approaches, then enclosures, into every bar (in time, measured).
+  lv(1511, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: true, need: 0.6, written: 'approach' }, 1380), SONG('blue-window', { band: true, rhythm: true, need: 0.6, written: 'approach' }, 1420), SONG('slow-harbor', { band: true, rhythm: true, need: 0.6, written: 'enclose' }, 1500)]),
   lv(1509, 0.65, [SONG('bop-line', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1550), SONG('bop-line-2', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1600)]),
   lv(1510, 0.56, [P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 140, turn: 2 }, 1600), P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 160, turn: 4, loops: 2 }, 1700)]),
 ];
@@ -550,7 +552,7 @@ const ALL_VOICE_FAMILIES: VoiceFamily[] = [
   { id: 'v-harmony', title: { en: 'Harmony singing', he: 'שירה בהרמוניה' }, refs: [201, 202, 203, 204, 1701, 205, 1702, 1703], stage: 'B' },
   { id: 'v-inflect', title: { en: 'Ornaments & inflections', he: 'קישוטים וגוונים' }, refs: [501, 502, 1801, 503, 1802, 504], stage: 'C' },
   { id: 'v-standards', title: { en: 'Standards & ballads', he: 'סטנדרטים ובלדות' }, refs: [1401, 1402, 1403, 1404, 1405, 1406, 1408, 1407, 1409, 1410], stage: 'C' },
-  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
+  { id: 'v-scat', title: { en: 'Scat & improvisation', he: 'סקאט ואלתור' }, refs: [1501, 1507, 1508, 1511, 1502, 1503, 1504, 1509, 1505, 1506, 1510], stage: 'C' },
   // AUDIT-CONTENT-THEORY §ז.2: the first steps open the voice path (VOICE_LATER puts them first; listed here so Barry
   // Harris stays last in the list).
   // STAGE C (AUDIT-6 §3.5): the top ladder — altered arpeggios, wide leaps, runs, quick study, one part from the score,
@@ -689,6 +691,7 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1410: { en: 'Blues call and response', he: 'בלוז בקריאה ותשובה' },
   1507: { en: 'Develop a motif', he: 'לפתח מוטיב' },
   1508: { en: 'Embellish the head', he: 'לקשט את הנושא' },
+  1511: { en: 'Approach and enclose the head', he: 'גישות וכיתורים בנושא' },
   1509: { en: 'Bebop accents', he: 'הדגשות ביבופ' },
   1510: { en: 'Trading twos and fours', he: 'חילופי שתיים וארבע' },
   1203: { en: 'Sing it back', he: 'לשיר בחזרה' },

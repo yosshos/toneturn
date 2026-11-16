@@ -32,6 +32,7 @@ import { keyLabel, sharpKey, type Home } from '../stdKey';
 import { HEADS, servedHeads, type Head } from '../../content/heads';
 import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, sixDimUnder, type HarmStyle, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
+import { embellish, keyScale, type EmbKind } from '../embellish';
 import { sharedHands, splitShared } from '../soloPiano';
 
 type T2 = { en: string; he: string };
@@ -353,6 +354,10 @@ const TUNE_WHAT: Record<string, T2> = {
   'tn-two': t('two-feel', 'בשתיים'),
   'tn-walk': t('walking', 'ווקינג'),
   'tn-appr': t('walking with approaches', 'ווקינג עם צלילי גישה'),
+  'em-appr': t('the melody, approached from below', 'המנגינה, עם גישה מלמטה'),
+  'em-encl': t('the melody, enclosed', 'המנגינה, עם כיתורים'),
+  'em-pivot': t('the melody, pivots on long notes', 'המנגינה, פיבוטים על צלילים ארוכים'),
+  'em-free': t('the melody, embellished freely', 'המנגינה, מקושטת בחופשיות'),
 };
 const whatOf = (kind: string): T2 => TUNE_WHAT[kind.split('~')[0]] ?? TUNE_WHAT['tn-root'];
 
@@ -756,18 +761,101 @@ function genTuneBass(s: DrillSpec, tu: Tuning): Drill {
   return { ...d, tonic: hi.tonic };
 }
 
+// ───────────────────────────── embellish the melody (C2) ─────────────────────────────
+
+const EMB_KIND: Record<string, EmbKind> = { 'em-appr': 'approach', 'em-encl': 'enclose', 'em-pivot': 'pivot', 'em-free': 'free' };
+export const EMB_KINDS = Object.keys(EMB_KIND);
+/**
+ * The embellished head in a register: written items (approach, enclose, pivot) are graded note for note; the free kind
+ * grades the melody notes exactly and leaves the spans before the targets (and the open beats of long notes) free —
+ * any notes, at least one in each (goal.free), the written mix as the model.
+ */
+export function embPlan(hi: HeadIn, kind: string, shift = 0) {
+  const k = EMB_KIND[kind] ?? 'approach';
+  const notes = hi.notes.map((n) => ({ ...n, pitch: n.pitch + shift }));
+  const e = embellish(notes, hi.chords, k, keyScale(hi.tonic.key, hi.tonic.minor));
+  const free = k === 'free';
+  const inSpan = (b: number) => e.spans.some(([a, z]) => b >= a - 1e-6 && b < z - 1e-6);
+  const written = free ? e.notes.filter((n) => n.role === 'melody' && !inSpan(n.beat)) : e.notes;
+  const model = e.notes.filter((n) => n.role !== 'melody' || inSpan(n.beat)).map((n) => ({ beat: n.beat, dur: n.dur, pitch: n.pitch }));
+  const goalFree = free
+    ? { windows: e.spans.map(([a, z]) => [a, z] as [number, number]), scale: e.spans.map(([a, z]) => ({ from: a, to: z, pcs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] })), minPerBar: 1, model }
+    : undefined;
+  return { kind: k, written, spans: e.spans, free: goalFree, all: e.notes };
+}
+
+function genEmbPiano(s: DrillSpec): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const pl = embPlan(hi, s.kind);
+  const notes: ExpNote[] = pl.written.map((n) => ({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' as Hand }));
+  return {
+    spec: { ...s, hands: 'R' },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, whatOf(s.kind)),
+    notes,
+    beats: hi.bars.length * 4,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: false, ...(pl.free ? { free: pl.free } : {}) },
+    startBpm: Math.round(s.tempo ?? (head.feel === 'ballad' ? 56 : 72)),
+    chart: chartOf(hi.bars),
+    tonic: hi.tonic,
+    paged: true,
+  };
+}
+function genEmbGuitar(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'guitar');
+  const pl = embPlan(hi, s.kind);
+  let near = 5;
+  const evs: Ev[] = pl.written.map((n) => {
+    const p = melodyPlace(tu, n.pitch, near);
+    if (p.f > 0) near = p.f;
+    return { beat: n.beat, dur: n.dur, notes: [{ ...p, stroke: 'D' as const, ct: n.role === 'melody' }] };
+  });
+  const d = finish(s, tu, evs, { title: titleOf(hi, whatOf(s.kind)), bpm: head.feel === 'ballad' ? 56 : 72, evenness: false, keySig: sigOf(hi.tonic) });
+  return { ...d, beats: Math.max(d.beats, hi.bars.length * 4), goal: { ...d.goal, ...(pl.free ? { free: pl.free } : {}) }, chart: chartOf(hi.bars), tonic: hi.tonic, paged: true };
+}
+/** The bass plays the head an octave or two down (inside E1–C4 as far as it goes). */
+function genEmbBass(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const lo = Math.min(...hi.notes.map((n) => n.pitch)) - 1;
+  const hiP = Math.max(...hi.notes.map((n) => n.pitch)) + 2;
+  const shift = [-24, -36, -12].reduce((a, b) => {
+    const over = (k: number) => Math.max(0, 31 - (lo + k)) + Math.max(0, hiP + k - 60);
+    return over(b) < over(a) ? b : a;
+  });
+  const pl = embPlan(hi, s.kind, shift);
+  const line: BN[] = pl.written.map((n) => ({ b: n.beat, d: n.dur, p: n.pitch, ct: n.role === 'melody' }));
+  const d = drillOf(s, tu, line, {
+    en: `${head.title.en} · ${whatOf(s.kind).en}`,
+    he: `${head.title.he} · ${whatOf(s.kind).he}`,
+    keyName: keyLabel(hi.tonic),
+    keySig: sigOf(hi.tonic),
+    chart: chartOf(hi.bars),
+    evenness: false,
+  });
+  const fr = pl.free;
+  return { ...d, title: titleOf(hi, whatOf(s.kind)), goal: { ...d.goal, ...(fr ? { free: fr } : {}) }, tonic: hi.tonic, paged: true };
+}
+
 // ───────────────────────────── dispatch ─────────────────────────────
 
 /** Piano: k-harm and k-tune. */
 export function genHeadPiano(s: DrillSpec): Drill {
+  if (EMB_KIND[s.kind]) return genEmbPiano(s);
   return s.family === 'k-harm' ? genHarm(s) : genTunePiano(s);
 }
 /** Guitar: g-cmel and g-tune. */
 export function generateGuitarHead(s: DrillSpec, tu: Tuning): Drill {
+  if (EMB_KIND[s.kind]) return genEmbGuitar(s, tu);
   return s.family === 'g-cmel' ? genChordMelody(s, tu) : genTuneGuitar(s, tu);
 }
 /** Bass: b-tune. */
 export function generateBassHead(s: DrillSpec, tu: Tuning): Drill {
+  if (EMB_KIND[s.kind]) return genEmbBass(s, tu);
   return genTuneBass(s, tu);
 }
 
@@ -859,6 +947,11 @@ const TUNE_PIANO: [string, string, string][] = [
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו'],
   // HARMONY-REHARM §4: modal interchange inside a head (the borrowed devices of reharm.ts, checked against the melody).
   ['tn-rh4', 'Reharm: borrowed chords — iv, ♭VI, ♭VII7, iiø7, minor plagal', 'הרמון מחדש: אקורדים שאולים — iv, ♭VI, ♭VII7, iiø7, פלגלית מינורית'],
+  // AUDIT-DEPTH-3 C2: embellish the head (the melody notes on their beats; embellish.ts).
+  ['em-appr', 'Embellish: approach each downbeat from below', 'קישוט: גישה מלמטה לכל פעמה ראשונה'],
+  ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה'],
+  ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים'],
+  ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה'],
 ];
 
 /** k-tune: comp a head (piano, path ~1330 → 1780). */
@@ -881,9 +974,9 @@ const CMEL: [string, string, string, number][] = [
   ['cm-dim', 'Passing diminished between the chords', 'דימיניש עובר בין האקורדים', 9],
   ['cm-chorus', 'A whole chorus of chord-melody', 'פזמון שלם של אקורד-מלודיה', 9],
   // AUDIT-DEPTH-3 C1 on the guitar and #4: 6-dim blocks, drop 2 under every note (8 bars), the solo-guitar chorus.
-  ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 9],
+  ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 10],
   ['cm-every', 'Drop 2 under every melody note, eight bars', 'דרופ 2 מתחת לכל צליל של המנגינה, שמונה תיבות', 10],
-  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומילויי בס מהלך', 10],
+  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומילויי בס מהלך', 11],
 ];
 export function guitarChordMelodyFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cmel';
@@ -911,6 +1004,10 @@ const TUNE_GUITAR: [string, string, string, number][] = [
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף', 9],
   ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה', 9],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו', 9],
+  ['em-appr', 'Embellish: approach each downbeat from below', 'קישוט: גישה מלמטה לכל פעמה ראשונה', 9],
+  ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה', 9],
+  ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים', 10],
+  ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה', 10],
 ];
 export function guitarTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-tune';
@@ -939,11 +1036,15 @@ const TUNE_BASS: [string, string, string][] = [
   ['tn-rh1', 'Walk the reharm: tritone subs and extra ii–Vs', 'ווקינג על ההרמון החדש: טריטון ו־ii–V נוסף'],
   ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'ווקינג על ההרמון החדש: דלת אחורית, דימיניש, קלישאה'],
   ['tn-rh3', 'Walk the reharm: Coltrane subs', 'ווקינג על ההרמון החדש: קולטריין'],
+  ['em-appr', 'The melody on the bass, approached from below', 'המנגינה בבס, עם גישה מלמטה'],
+  ['em-encl', 'The melody on the bass, enclosed', 'המנגינה בבס, עם כיתורים'],
+  ['em-pivot', 'The melody on the bass, pivots on long notes', 'המנגינה בבס, פיבוטים על צלילים ארוכים'],
+  ['em-free', 'The melody on the bass, embellished freely', 'המנגינה בבס, מקושטת בחופשיות'],
 ];
 export function bassTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'b-tune';
   const levels: GuitarLevelDef[] = TUNE_BASS.map(([kind, en, he], i) => {
-    const walk = kind !== 'tn-root' && kind !== 'tn-two';
+    const walk = kind !== 'tn-root' && kind !== 'tn-two' && !EMB_KIND[kind];
     return {
       id: `${fam}-${i + 1}`,
       level: i + 1,
@@ -951,7 +1052,7 @@ export function bassTuneFamily(): GuitarFamilyDef {
       specs: headsFor(kind).map((idx): SpecTemplate => ({ family: fam, kind, hands: 'R', instrument: 'bass', option: opt(idx), ...(walk ? { perBeat: 1 } : {}), tempo: walk ? 80 : 70 })),
       keys: HEAD_KEYS,
       tempo: walk ? [80, 160] : [70, 120],
-      sub: walk ? 'quarters' : 'halves',
+      sub: EMB_KIND[kind] ? 'melody' : walk ? 'quarters' : 'halves',
     };
   });
   return { id: fam, title: t('Tunes on the bass', 'שירים בבס'), style: 'jazz', genres: ['all'], instruments: ['bass'], levels };

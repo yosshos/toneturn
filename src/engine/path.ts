@@ -489,6 +489,10 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`k-reharm-${i + 1}`, 700 + 70 * (6 + i)])),
   // The borrowed-chord reharm of a head (k-tune 10): before the Coltrane level, under the cap.
   'k-tune-10': 1700,
+  // AUDIT-DEPTH-3 C2: embellish the head — approach 1350, enclose 1420, pivots 1500, free 1600 (the doc's 1350–1650).
+  'k-tune-11': 1350, 'k-tune-12': 1420, 'k-tune-13': 1500, 'k-tune-14': 1600,
+  // the same on the bass (the melody an octave or two down): inside the heads' band, after the walking levels' start.
+  'b-tune-8': 1400, 'b-tune-9': 1470, 'b-tune-10': 1550, 'b-tune-11': 1640,
   // HARMONY-REHARM still open: borrowed chords by ear on the bass, in the modal-mix band (ear 1100–1700).
   'b-ear-24': 1450,
   // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): the left hand ~760–1620, textures 1000–1900,
@@ -509,7 +513,7 @@ export const PATH_CAP = 1900;
 export const NON_MONOTONE_FAMILIES = [
   // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
   'g-ctx',
-  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).

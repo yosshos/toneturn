@@ -134,6 +134,43 @@ export function songPlan(song: VoiceSong, range: VoiceRange, bpm = song.bpm): So
   return { song, tonic, bpm, beat, meter: song.meter, bars, notes, phrases, chartBars };
 }
 
+/**
+ * AUDIT-DEPTH-3 C2 on the voice: the head embellished as written. Every note on a bar's downbeat (with a note before it
+ * in the same phrase that can give up the time) gets a chromatic approach from below — an 8th before it ('approach'),
+ * or the scale step above then the half step below ('enclose'; an approach where only an 8th is free). Swung songs
+ * swing the 8th (the last third of the beat). The melody notes keep their pitch and onset.
+ */
+export function embellishPlan(plan: SongPlan, mode: 'approach' | 'enclose'): SongPlan {
+  const sw = plan.song.style === 'swing';
+  const eighth = plan.beat * (sw ? 1 / 3 : 0.5);
+  const bar = plan.beat * plan.meter;
+  const minor = !!plan.song.minor;
+  const scale = (minor ? [0, 2, 3, 5, 7, 8, 10, 11] : [0, 2, 4, 5, 7, 9, 11]).map((x) => (((plan.tonic + x) % 12) + 12) % 12);
+  const out: PlanNote[] = plan.notes.map((n) => ({ ...n }));
+  const add: PlanNote[] = [];
+  out.forEach((n, i) => {
+    if (i === 0) return;
+    const onBar = Math.abs(n.start / bar - Math.round(n.start / bar)) < 1e-6;
+    const prev = out[i - 1];
+    if (!onBar || prev.phrase !== n.phrase || Math.abs(prev.start + prev.dur - n.start) > 1e-3) return;
+    const room = prev.dur - plan.beat / 2;
+    const enc = mode === 'enclose' && room >= plan.beat - 1e-6;
+    if (!enc && room < eighth - 1e-6) return;
+    if (enc) {
+      const up = scale.includes((((n.midi + 1) % 12) + 12) % 12) ? n.midi + 1 : n.midi + 2;
+      prev.dur -= plan.beat;
+      add.push({ midi: up, start: n.start - plan.beat, dur: plan.beat - eighth, phrase: n.phrase, bar: prev.bar, fresh: false });
+      add.push({ midi: n.midi - 1, start: n.start - eighth, dur: eighth, phrase: n.phrase, bar: prev.bar, fresh: false });
+    } else {
+      prev.dur -= eighth;
+      add.push({ midi: n.midi - 1, start: n.start - eighth, dur: eighth, phrase: n.phrase, bar: prev.bar, fresh: false });
+    }
+  });
+  const notes = [...out, ...add].sort((a, b) => a.start - b.start);
+  const phrases = plan.phrases.map((ph) => ({ ...ph, notes: notes.map((x, k) => (x.phrase === ph.i ? k : -1)).filter((k) => k >= 0) }));
+  return { ...plan, notes, phrases };
+}
+
 /** Per melody token: is it tied to the next one ("~")? */
 export function tieFlags(melody: string): boolean[] {
   return melody
