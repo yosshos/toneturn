@@ -580,7 +580,8 @@ function genFret(s: DrillSpec, tu: Tuning): Drill {
         .map((x) => ({ s: x, f: mod(key - tu.open[x - 1], 12) + 12 }));
       const { s: str, f } = cands.reduce((a, b) => (b.f < a.f ? b : a));
       const R = noteAt(tu, str, f);
-      const sc = windowScale(tu, key, modeInts(0), f - 1, f + 4).filter((x) => noteAt(tu, x.s, x.f) >= R && noteAt(tu, x.s, x.f) <= R + 12);
+      // The window stops at the top fret (E♭: the root at A 18, the 3rd moves to the D string's 17th).
+      const sc = windowScale(tu, key, modeInts(0), f - 1, Math.min(f + 4, MAXF)).filter((x) => noteAt(tu, x.s, x.f) >= R && noteAt(tu, x.s, x.f) <= R + 12);
       const arp = [0, 4, 7, 12, 7, 4, 0].map((x) => R + x);
       const line: BN[] = [...sc, ...sc.slice(0, -1).reverse()].map((x, i) => ({ b: i / 2, d: 0.5, p: noteAt(tu, x.s, x.f), s: x.s, f: x.f }));
       const b0 = dur(line);
@@ -2963,9 +2964,9 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-arco', 9, 'Bowed study: Grades 6–8 style (shifts, 16ths)', 'אטיוד בקשת: סגנון שלבים 6–8 (מעברים, שש-עשריות)', [AR('etude', { option: 2 }), AR('etude', { option: 2, minor: true })], [7, 2, 4, 5], [60, 96], '16ths'),
     ]),
     fam('b-up-scales', 'Upright: scales and arpeggios', 'קונטרבס: סולמות וארפג׳יו', [
-      L('b-up-scales', 1, 'One-octave scales', 'סולמות באוקטבה אחת', [SS('scales', { option: 0, perBeat: 1 })], [7, 2, 9], [40, 52], Qn),
+      L('b-up-scales', 1, 'One-octave scales', 'סולמות באוקטבה אחת', [SS('scales', { option: 0, perBeat: 1 })], [7, 2, 9, 5], [40, 52], Qn),
       L('b-up-scales', 2, 'One-octave arpeggios', 'ארפג׳יו באוקטבה אחת', [SS('scales', { option: 1, perBeat: 1 })], [7, 2, 9, 5], [40, 56], Qn),
-      L('b-up-scales', 3, 'More keys: B♭, E♭, E', 'עוד סולמות: B♭, E♭, E', [SS('scales', { option: 0, perBeat: 1 }), SS('scales', { option: 1, perBeat: 1 })], [10, 3, 4], [44, 60], Qn),
+      L('b-up-scales', 3, 'The other keys: B♭, E♭, E and on', 'שאר הסולמות: B♭, E♭, E והלאה', [SS('scales', { option: 0, perBeat: 1 }), SS('scales', { option: 1, perBeat: 1 })], [10, 3, 4], [44, 60], Qn),
       L('b-up-scales', 4, 'Two-octave scales', 'סולמות בשתי אוקטבות', [SS('scales', { option: 2, perBeat: 1 })], [7, 9, 4], [48, 63], Qn),
       L('b-up-scales', 5, 'Two-octave arpeggios and dominant 7ths', 'ארפג׳יו בשתי אוקטבות וספטאקורד דומיננטי', [SS('scales', { option: 3, perBeat: 1 }), SS('scales', { option: 4, perBeat: 1 })], [7, 9, 4, 5], [48, 66], Qn),
       L('b-up-scales', 6, 'Diminished 7ths', 'ספטאקורד מוקטן', [SS('scales', { option: 5, perBeat: 1 })], [7, 9, 4, 2], [50, 69], Qn),

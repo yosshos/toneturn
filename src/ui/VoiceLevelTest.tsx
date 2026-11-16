@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { StrandState } from '../engine/drills/levelTest';
 import type { VoiceRange } from '../engine/vocal';
-import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voiceTake, type VoiceRung } from '../engine/voiceLevelTest';
+import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voiceTake, withFirstSteps, type VoiceRung } from '../engine/voiceLevelTest';
 import type { VoiceTestMode } from './VoiceTimed';
 import { SIMULATED } from './services';
 
@@ -136,7 +136,8 @@ export function VoiceLevelTest({
     const k = si + 1;
     if (k >= strands.length) {
       clearSaved();
-      return setSummary({ ...starts.current });
+      // The first steps are not a section: the passed steps of the others prove them (withFirstSteps).
+      return setSummary(withFirstSteps({ ...starts.current }));
     }
     setSi(k);
     setSt(voiceStartState(strands[k]));

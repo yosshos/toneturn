@@ -28,8 +28,8 @@ const Bidi = ({ text }: { text: string }) => {
   const parts = text.split(/([A-Za-z][A-Za-z0-9♭♯#'’.\-–]*(?:\s+[A-Za-z0-9♭♯#'’.\-–]+)*)/);
   return <>{parts.map((x, i) => (i % 2 ? <N key={i}>{x}</N> : x))}</>;
 };
-/** A duration in the reader's language, isolated (Hebrew "1 ש׳ 5 דק׳" keeps its order). */
-export const dur = (ms: number, lang: Lang) => (ms <= 0 ? '0' : ms < 60000 ? (lang === 'he' ? `${Math.round(ms / 1000)} שנ׳` : `${Math.round(ms / 1000)} s`) : fmtDuration(ms, lang));
+/** A duration in the reader's language, isolated (Hebrew "1 ש׳ 5 דק׳" keeps its order); Stats uses the same (Stats.Dur). */
+export const dur = (ms: number, lang: Lang) => (ms <= 0 ? '0' : fmtDuration(ms, lang));
 const Dur = ({ ms, lang }: { ms: number; lang: Lang }) => <bdi>{dur(ms, lang)}</bdi>;
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);

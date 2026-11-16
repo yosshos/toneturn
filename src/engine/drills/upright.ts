@@ -108,8 +108,12 @@ function genTreble(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
   const op = s.option ?? 0;
   const rnd = rng(`b-up-treble:${key}:${op}`);
-  const [lo, hi] = op === 1 ? [7, 19] : [12, 17];
-  const set = windowScale(tu, key, s.minor ? modeInts(5) : modeInts(0), lo, hi, [1, 2]);
+  const [lo, hi0] = op === 1 ? [7, 19] : [12, 17];
+  const ints = s.minor ? modeInts(5) : modeInts(0);
+  // D♭ has no tonic in the thumb window (D string 12 – G string 17): one more place up the G string (D♭5).
+  const hasTonic = (h: number) => windowScale(tu, key, ints, lo, h, [1, 2]).some((x) => mod(noteAt(tu, x.s, x.f) - key, 12) === 0);
+  const hi = hasTonic(hi0) ? hi0 : hi0 + 1;
+  const set = windowScale(tu, key, ints, lo, hi, [1, 2]);
   let i = Math.max(0, set.findIndex((x) => mod(noteAt(tu, x.s, x.f) - key, 12) === 0));
   const line: BN[] = [];
   const bars = 8;

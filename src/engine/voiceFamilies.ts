@@ -800,9 +800,11 @@ export function probeStarts(s: ProbeScores): Record<string, number> {
   const ok = (x: number | undefined) => (x ?? 0) >= 0.85;
   const jazz = ok(s.guide) && ok(s.echo) && ok(s.time) && ok(s.song);
   if (ok(s.hold)) out['v-breath'] = jazz ? 3 : 2;
-  // A clear hold and echo: the first steps (posture, SOVT, sliding onto a note) are ✓.
-  // AUDIT-7 #8: v-first 4–7 (match, rhythm back, five notes, a four-bar song) stay to do — the cautious rule.
-  if (ok(s.hold) && ok(s.echo)) out['v-first'] = 4;
+  // A clear hold and echo: the first steps (posture, SOVT, sliding onto a note) are ✓. AUDIT-7 #8 added v-first 4–7
+  // (match a note, a rhythm sung back, five notes echoed, a four-bar song): a clear pass of the probe item that asks
+  // the same proves them too, in order — matching with the hold and echo, the rhythm (and then the five-note echo)
+  // with the time item, the song with the song (0.97 leftovers: strong singers no longer keep them "to do").
+  if (ok(s.hold) && ok(s.echo)) out['v-first'] = ok(s.time) ? (ok(s.song) ? 8 : 7) : 5;
   if (ok(s.echo)) {
     out['v-pitch'] = jazz ? 4 : 3;
     out['v-ear'] = 2;
