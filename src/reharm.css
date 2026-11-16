@@ -76,3 +76,17 @@
 .rh-check { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
 .rh-go { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; min-width: 0; }
 .rh-go .btn { min-width: 0; white-space: normal; line-height: 1.15; padding-inline: 8px; overflow-wrap: normal; word-break: keep-all; }
+
+/* One tune, step by step (AUDIT-DEPTH-3 C4): the ladder of one head, one phone screen. */
+.tl-progress { display: flex; align-items: center; gap: 8px; margin: 0; }
+.tl-bar { flex: 1; block-size: 6px; border-radius: 3px; background: var(--card-2); border: 1px solid var(--line); overflow: hidden; }
+.tl-bar > span { display: block; block-size: 100%; background: var(--teal, var(--ok)); }
+.tl-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tl-step { inline-size: 100%; min-block-size: 40px; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.tl-step.open { border-color: var(--accent); }
+.tl-step.locked { color: var(--ink-soft); background: var(--card-2); cursor: default; }
+.tl-mark { inline-size: 24px; block-size: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 0.85rem; border: 1.5px solid currentColor; }
+.tl-step.done .tl-mark { background: var(--teal, var(--ok)); color: var(--ink); border-color: var(--ink); }
+.tl-step.locked .tl-mark { border-style: dashed; }
+.tl-name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
+.tl-keys { color: var(--ink-soft); }
