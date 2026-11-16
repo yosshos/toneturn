@@ -8,6 +8,7 @@ import type { VoiceRange } from '../engine/vocal';
 import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voiceTake, withFirstSteps, type VoiceRung } from '../engine/voiceLevelTest';
 import type { VoiceTestMode } from './VoiceTimed';
 import { SIMULATED } from './services';
+import { setRecScreenKind } from './recKeep';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -107,6 +108,11 @@ export function VoiceLevelTest({
   const [take, setTake] = useState(0);
   const [note, setNote] = useState<'clean' | 'almost' | 'not' | null>(null);
   const starts = useRef<Record<string, number>>({});
+  // My recordings: the test's sung takes are kept as level-test takes (tagged "מבחן רמה" in the library).
+  useEffect(() => {
+    setRecScreenKind('level-test');
+    return () => setRecScreenKind(null);
+  }, []);
   useEffect(() => {
     if (!started) return;
     try {

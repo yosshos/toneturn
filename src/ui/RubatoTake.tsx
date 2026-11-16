@@ -3,7 +3,7 @@
 // notes only (rubato.ts analyzeFree).
 
 import { useEffect, useRef, useState } from 'react';
-import { keepingTakes } from './recKeep';
+import { useKeptTakes } from './recKeep';
 import { analyzeFree, freeProgress } from '../engine/drills/rubato';
 import { captureOptsFor, detectOnsets, onsetOptsFor, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
@@ -23,7 +23,7 @@ const TX = {
 const QUIET_MS = 5000;
 
 export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean }) {
-  onDone = keepingTakes(drill, 0, onDone); // My recordings: free-time takes are kept too (no tempo)
+  onDone = useKeptTakes(drill, 0, onDone); // My recordings: free-time takes are kept too (no tempo)
   const tx = TX[lang];
   const [on, setOn] = useState(false);
   // Input check: free time has no first-note time, so the watchdog gives the player 2 s to begin, then its usual wait.

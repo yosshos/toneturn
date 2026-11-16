@@ -56,6 +56,7 @@ import { AiExplain } from './AiExplain';
 import { LiveRhythmStaff, RhythmStaff, useRhythmNow } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
 import { isMidiEnabled, makeAdapters, piano, SIMULATED, store } from './services';
+import { keepingPitch, type LessonTakeInfo } from './recKeep';
 import { InputCheck } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
 
@@ -103,6 +104,21 @@ const DRILL_MAX = 5;
 
 /** A task that measures the voice itself (singing in tune, technique, agility): always sung, into the microphone. */
 const sungSkill = (q: Question) => !(q.kind === 'sing-seq' && q.play) && (['singing', 'technique', 'agility'].includes(questionSkill(q)) || /^p:(singing|technique|agility):/.test(q.id));
+/** A sung (or played-back) question's take: its id and a short name; null for anything else. */
+function lessonTakeInfo(q: Question | undefined, midiOn: boolean, plays: boolean): LessonTakeInfo | null {
+  if (!q || (q.kind !== 'sing' && q.kind !== 'sing-seq' && q.kind !== 'sing-run')) return null;
+  const sung = sungSkill(q);
+  const playBack = q.kind === 'sing-seq' && !!q.play;
+  const what =
+    q.kind === 'sing-run'
+      ? { en: 'run', he: 'ריצה' }
+      : playBack
+        ? { en: 'play back', he: 'ניגון חוזר' }
+        : q.kind === 'sing-seq'
+          ? { en: `sing ${q.degrees.join(' ')}`, he: `שירה ${q.degrees.join(' ')}` }
+          : { en: 'sing', he: 'שירה' };
+  return { itemId: q.id, title: { en: `Lesson · ${what.en}`, he: `שיעור · ${what.he}` }, sung: !playBack && (sung || !plays), midi: midiOn && !sung };
+}
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
 export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, recent }: Props) {
@@ -138,6 +154,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         return !!q && sungSkill(q);
       },
     );
+    // My recordings (SPEC-PHRASE-STUDIO §6.1): each sung / played-back answer is kept (notes; the microphone's audio).
+    adapters.pitch = keepingPitch(adapters.pitch, () => lessonTakeInfo(c?.getView().question, isMidiEnabled(), !!settings.instrument && settings.instrument !== 'voice'));
     c = new LessonController(
       lesson,
       adapters,

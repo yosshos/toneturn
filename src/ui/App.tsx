@@ -205,7 +205,7 @@ import { PracticeDiaryScreen, DiaryEntryCard, plateausOf } from './PracticeDiary
 import { ConsentBody, RecordingsEntryCard, RecordingsScreen } from './Recordings';
 import { runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource } from '../storage/recordings';
 import { listTakes as listOldVocalTakes } from '../storage/takes';
-import { setRecKindHint, setRecRoute } from './recKeep';
+import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
 import { measuredMsOn } from '../engine/practiceTime';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
@@ -499,6 +499,13 @@ export function App() {
     setRecRoute(route, recCourse.current);
     setRecKindHint(route === 'drills' && drillFrom.current === 'test' ? 'level-test' : null);
   }, [route, settings?.activeCourse]); // eslint-disable-line react-hooks/exhaustive-deps
+  // My recordings: a game that takes MIDI or microphone input keeps each run's notes (and audio) as a take; quiz games
+  // (the rush family) and games that open no input keep nothing.
+  useEffect(() => {
+    const g = GAMES2.find((x) => x.id === route);
+    if (!g || g.id === 'drills' || route.startsWith('rush-')) return;
+    return armGameTap(route, { en: g.en[0], he: g.he[0] });
+  }, [route]);
   useEffect(() => setRecordingPrefs({ keepNotes: settings?.keepTakeNotes !== false, keepAudio: settings?.keepTakes !== false }), [settings?.keepTakeNotes, settings?.keepTakes]);
   useEffect(() => {
     setRecordingContext(() => ({ route: lastRoute.current, course: recCourse.current, measuredMs: measuredMsOn(loadLedger(), localDay(new Date())) }));
@@ -1628,6 +1635,7 @@ export function App() {
   };
   /** A tiered run's score goes to the week's game board (friends, per tier) when signed in. */
   const noteGameBest = (g: string, score: number, detail: unknown) => {
+    keepGameTake(g, detail);
     const tier = (detail as { tier?: unknown } | null)?.tier;
     if (user && isTier(tier)) void submitGameBest(g, tier, score);
     // A "beat my score" run: the result against the friend's score, once.

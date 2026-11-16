@@ -1067,7 +1067,8 @@ function VocalSession({
     if (!g.unclear && g.score >= 0.8) strongTakes.current[item.id] = (strongTakes.current[item.id] ?? 0) + 1;
     if (audio) setAudioUrl(URL.createObjectURL(audio));
     // My recordings (SPEC-PHRASE-STUDIO §6.1): every graded take keeps its sung notes, and its audio unless switched off.
-    if (got && !g.unclear && !test) {
+    // In a voice level test the take is kept too (VoiceLevelTest marks it 'level-test').
+    if (got && !g.unclear) {
       const lvT = (L: 'en' | 'he') => (level === 'warmup' ? STRINGS[L].vocalWarmup : `${RX.kinds.vocal[L]} · ${levelName(level, STRINGS[L], L)}`);
       keepVocalTake({ itemId: item.id, title: { en: lvT('en'), he: lvT('he') }, frames: got, audio, score: g.score, ...(item.bpm ? { bpm: item.bpm } : {}) });
     }
