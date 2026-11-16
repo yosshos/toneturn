@@ -412,10 +412,10 @@ export const SCAT_P2_LEVELS: VocalLevel[] = [
     P2SCAT({ mode: 'motif', chart: 'Dm7 | G7 | Cmaj7 | Cmaj7 | Dm7 | G7 | Cmaj7 | Cmaj7', style: 'swing', bpm: 112, cell: [[0.5, 7, 0.5], [1, 9, 1], [2, 4, 2]] }, 1350),
   ]),
   lv(1508, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: false, need: 0.55, embellish: true }, 1400), SONG('blue-window', { band: true, rhythm: false, need: 0.55, embellish: true }, 1450)]),
-  // AUDIT-DEPTH-3 C2: the head embellished as written — approaches, then enclosures, into every bar (in time, measured).
-  lv(1511, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: true, need: 0.6, written: 'approach' }, 1380), SONG('blue-window', { band: true, rhythm: true, need: 0.6, written: 'approach' }, 1420), SONG('slow-harbor', { band: true, rhythm: true, need: 0.6, written: 'enclose' }, 1500)]),
   lv(1509, 0.65, [SONG('bop-line', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1550), SONG('bop-line-2', { band: true, rhythm: true, need: 0.65, tol: 45, bop: true }, 1600)]),
   lv(1510, 0.56, [P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 140, turn: 2 }, 1600), P2SCAT({ mode: 'trade', chart: BLUES, style: 'swing', bpm: 160, turn: 4, loops: 2 }, 1700)]),
+  // AUDIT-DEPTH-3 C2: the head embellished as written — approaches, then enclosures, into every bar (in time, measured).
+  lv(1511, 0.6, [SONG('saints-jazz', { phrases: [0, 1], band: true, rhythm: true, need: 0.6, written: 'approach' }, 1380), SONG('blue-window', { band: true, rhythm: true, need: 0.6, written: 'approach' }, 1420), SONG('slow-harbor', { band: true, rhythm: true, need: 0.6, written: 'enclose' }, 1500)]),
 ];
 
 // ---------------------------------------------------------------- P3: the ear and first-song topics as sung levels

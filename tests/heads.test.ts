@@ -298,13 +298,13 @@ describe('12 keys, the ladders and the path', () => {
     expect(b.notes.map((n) => pc(n.pitch - a.notes[0].pitch))[0]).toBe(2);
     expect(headIn(h, 6).text).not.toMatch(/##|bb/);
   });
-  it('counts: k-harm 13, k-tune 15, g-cmel 9, g-tune 14, b-tune 11 levels', () => {
+  it('counts: k-harm 13, k-tune 15, g-cmel 9, g-tune 13, b-tune 11 levels', () => {
     const n = (id: string) => [...pianoFams(), ...guitarFams()].find((f) => f.id === id)!.levels.length;
-    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([13, 15, 9, 14, 11]);
+    expect([n('k-harm'), n('k-tune'), n('g-cmel'), n('g-tune'), n('b-tune')]).toEqual([13, 15, 9, 13, 11]);
   });
   it('the path places them by difficulty inside 1250–1800 (triads under a melody at 1250; the solo-guitar chorus up to the cap)', () => {
     const steps = stepCatalogue().filter((s) => s.ladder && [...FAMS, ...GFAMS].includes(s.ladder.family));
-    expect(steps.length).toBe(13 + 15 + 9 + 14 + 11);
+    expect(steps.length).toBe(13 + 15 + 9 + 13 + 11);
     for (const s of steps) {
       expect(s.difficulty, s.id).toBeGreaterThanOrEqual(1250);
       // the solo-guitar chorus (g-cmel 9, grade 11) is the one step above the band: under the path cap

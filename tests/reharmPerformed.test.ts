@@ -53,8 +53,8 @@ describe('#2 L1–L2: each device under the melody (k-reharm 23–24)', () => {
 
 describe('C3 step 5: a solo chorus over the reharm', () => {
   const lv = (fam: string, id: string) => [...catalog(), ...guitarCatalog()].find((f) => f.id === fam)!.levels.find((l) => l.id === id)!;
-  it('k-tune 15 and g-tune 14: every served head, all 12 keys, timed with the band, the reharmed chart', () => {
-    for (const [fam, id] of [['k-tune', 'k-tune-15'], ['g-tune', 'g-tune-14']] as const) {
+  it('k-tune 15 and g-tune 13: every served head, all 12 keys, timed with the band, the reharmed chart', () => {
+    for (const [fam, id] of [['k-tune', 'k-tune-15'], ['g-tune', 'g-tune-13']] as const) {
       const l = lv(fam, id);
       expect(l.specs.every((s) => s.kind === 'tn-rhsolo')).toBe(true);
       for (const d of levelDrills(l, 'fifths-up').slice(0, 24)) {
@@ -62,7 +62,7 @@ describe('C3 step 5: a solo chorus over the reharm', () => {
         expect(d.goal.improv?.cards).toEqual(['target-ct', 'inside']);
         expect(d.band).toBeDefined();
         expect(d.drums).toBeDefined();
-        expect(d.notes.filter((n) => n.land).length).toBe(2);
+        expect(d.notes.filter((n) => n.land).length).toBeGreaterThanOrEqual(3);
       }
     }
     expect(KEYS_LEVEL_DIFF['k-tune-15']).toBe(1760);

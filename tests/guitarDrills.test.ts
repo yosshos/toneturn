@@ -40,7 +40,7 @@ function perfect(d: Drill, bpm: number): PlayedNote[] {
     out.push({ pitch: n.technique === 'dead' ? -1 : n.pitch, on, off: null, vel: 64 });
   }
   // Free bars judged by rule cards (AUDIT-DEPTH-3 improv items): the model line is the perfect answer there.
-  if (d.goal.improv) for (const m of d.goal.improv.model ?? d.goal.free?.model ?? []) if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 64 }));
+  if (d.goal.improv || d.goal.free) for (const m of d.goal.improv?.model ?? d.goal.free?.model ?? []) if (!seen.has(`${m.pitch}@${m.beat}`)) (seen.add(`${m.pitch}@${m.beat}`), out.push({ pitch: m.pitch, on: expTimeMs(d, m.beat, bpm), off: expTimeMs(d, m.beat + m.dur * 0.9, bpm), vel: 64 }));
   return out.sort((a, b) => a.on - b.on);
 }
 

@@ -58,15 +58,16 @@ describe('the levels: k-tune 11–14, g-tune 10–13, b-tune 8–11', () => {
   it('levels and placement (1350–1600 on the keys)', () => {
     KINDS.forEach((k, j) => {
       expect(lvOf('k-tune', 11 + j).specs[0].kind).toBe(k);
-      expect(lvOf('g-tune', 10 + j).specs[0].kind).toBe(k);
       expect(lvOf('b-tune', 8 + j).specs[0].kind).toBe(k);
     });
+    // the guitar (13 levels at most): approaches and enclosures share g-tune 10
+    expect([10, 11, 12].map((n) => lvOf('g-tune', n).specs.map((s) => s.kind).filter((x, i, a) => a.indexOf(x) === i).join('+'))).toEqual(['em-appr+em-encl', 'em-pivot', 'em-free']);
     expect([11, 12, 13, 14].map((n) => KEYS_LEVEL_DIFF[`k-tune-${n}`])).toEqual([1350, 1420, 1500, 1600]);
   });
   it('every item generates in all 12 keys on keys, guitar and bass; the bass sits in its register', () => {
     for (const fam of ['k-tune', 'g-tune', 'b-tune'])
-      for (let j = 0; j < 4; j++) {
-        const lv = lvOf(fam, (fam === 'k-tune' ? 11 : fam === 'g-tune' ? 10 : 8) + j);
+      for (let j = fam === 'g-tune' ? 1 : 0; j < 4; j++) {
+        const lv = lvOf(fam, (fam === 'k-tune' ? 11 : fam === 'g-tune' ? 9 : 8) + j);
         for (const d of levelDrills(lv, 'fifths-up')) {
           expect(d.notes.length).toBeGreaterThan(8);
           if (fam === 'b-tune') expect(Math.max(...d.notes.map((n) => n.pitch))).toBeLessThanOrEqual(67);

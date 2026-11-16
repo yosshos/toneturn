@@ -125,7 +125,7 @@ const ALL = (): { lv: LevelDef; d: Drill }[] => CAT.flatMap((f) => f.levels.flat
 describe('A3 piano analysis with human takes', () => {
   it('a steady human take is clean at every level target tempo (MIDI)', { timeout: 120_000 }, () => {
     const bad: string[] = [];
-    for (const { lv, d } of ALL().filter((x) => !x.d.goal.improv)) { // rule-card improv (AUDIT-DEPTH-3 C5) is graded by its cards, not by written notes
+    for (const { lv, d } of ALL().filter((x) => !x.d.goal.improv && !x.d.goal.free)) { // free bars (embellish freely, AUDIT-DEPTH-3 C2) and rule-card improv (AUDIT-DEPTH-3 C5) is graded by its cards, not by written notes
       const bpm = targetBpmOf(lv, d);
       for (const seed of [1, 2]) {
         const m = analyzeTake(d, bpm, humanTake(d, bpm, steadySd(d, bpm), seed));

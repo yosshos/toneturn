@@ -200,12 +200,20 @@ function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
   const notes: ExpNote[] = [];
   const chordSets: NonNullable<DrillGoal['chordSets']> = [];
   const mel = notesIn(hi, phrase * 4, phrase * 4 + 4).map((n) => ({ ...n, beat: r6(n.beat - b0) }));
-  const isEv = (beat: number) => goal.at.some((a) => Math.abs(a - beat) < 1e-6);
   // the melody notes without a block: single notes
-  for (const n of mel) if (!isEv(n.beat)) notes.push({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' });
+  // A block whose inner voice is a melody note sounding within a beat of it stays a single note (the take could not
+  // tell the two strikes of one pitch apart).
+  const clash = (k: number): boolean => {
+    const at = goal.at[k];
+    return mel.some((n) => Math.abs(n.beat - at) > 1e-6 && Math.abs(n.beat - at) <= 1 + 1e-6 && path[k].includes(n.pitch));
+  };
+  const skip = new Set(style.id === 'peaks' ? path.map((_, k) => k).filter(clash) : []);
+  const isBlock = (beat: number) => goal.at.some((a, k) => !skip.has(k) && Math.abs(a - beat) < 1e-6);
+  for (const n of mel) if (!isBlock(n.beat)) notes.push({ pitch: n.pitch, beat: n.beat, dur: n.dur, hand: 'R' });
   let bassPrev = 46;
   let id = 0;
   path.forEach((v0, k) => {
+    if (skip.has(k)) return;
     const c = goal.chords[k];
     const beat = goal.at[k];
     const m = mel.find((x) => Math.abs(x.beat - beat) < 1e-6)!;
@@ -218,7 +226,7 @@ function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
     bassPrev = b;
     // the block lasts as long as its melody note (peaks: the line goes on above the held bass)
     const dur = r6(Math.min(m.dur, nextEv - beat));
-    const bassDur = r6(Math.max(dur, (style.id === 'peaks' ? nextEv : beat + dur) - beat));
+    const bassDur = dur;
     const cid = ++id;
     const lower = v.slice(0, -1);
     let mover = -1;
@@ -227,7 +235,9 @@ function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
       // the inner voice nearest the melody that has a half-step dim neighbour (the top inner voice first)
       for (let j = lower.length - 1; j >= 0 && mover < 0; j--) {
         const q = borrowStep(lower[j], pc(c.root - 1));
-        if (q !== null && !v.includes(q)) {
+        // the voice must not sound again in the next block (a re-struck pitch right after the return blurs the take)
+        const nextV = path[k + 1] ?? [];
+        if (q !== null && !v.includes(q) && !nextV.includes(lower[j]) && !nextV.includes(q)) {
           mover = j;
           moved = q;
         }
@@ -235,14 +245,23 @@ function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
     }
     const t1 = 1;
     const t2 = dur >= 3 - 1e-6 ? 1 : 0.5;
-    lower.forEach((p, j) => notes.push({ pitch: p, beat, dur: j === mover ? t1 : dur, hand: 'R', chordId: cid }));
-    notes.push({ pitch: m.pitch, beat, dur, hand: 'R', chordId: cid, accent: true });
+    // borrowing: the block, then the block with one voice moved to the dim, then the block again (struck each time,
+    // as Barry's borrowing is practised: sd-borrow); the bass holds under all three
+    const borrow = mover >= 0 && moved !== null;
+    const first = borrow ? t1 : dur;
+    lower.forEach((p) => notes.push({ pitch: p, beat, dur: first, hand: 'R', chordId: cid }));
+    notes.push({ pitch: m.pitch, beat, dur: first, hand: 'R', chordId: cid });
     notes.push({ pitch: b, beat, dur: bassDur, hand: 'L', chordId: cid });
     const req = [...new Set([...v, b].map(pc))].sort((x, y) => x - y);
     chordSets.push({ chordId: cid, required: req, allowed: req });
-    if (mover >= 0 && moved !== null) {
-      notes.push({ pitch: moved, beat: r6(beat + t1), dur: t2, hand: 'R' });
-      notes.push({ pitch: lower[mover], beat: r6(beat + t1 + t2), dur: r6(dur - t1 - t2), hand: 'R' });
+    if (borrow) {
+      const moveV = lower.map((p, j) => (j === mover ? moved! : p));
+      for (const [at, len, vs] of [[r6(beat + t1), t2, moveV], [r6(beat + t1 + t2), r6(dur - t1 - t2), lower]] as [number, number, number[]][]) {
+        const id2 = ++id;
+        [...vs, m.pitch].forEach((p) => notes.push({ pitch: p, beat: at, dur: len, hand: 'R', chordId: id2 }));
+        const r2 = [...new Set([...vs, m.pitch].map(pc))].sort((x, y) => x - y);
+        chordSets.push({ chordId: id2, required: r2, allowed: r2 });
+      }
     }
   });
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
@@ -875,13 +894,17 @@ export function soloPlan(hi: HeadIn, kind: string, lo: number, hiP: number) {
     const ct = [...new Set(VQ_DEF[vchordOf(c).q].ct.map((x) => pc(c.root + x)))].sort((a, b) => a - b);
     const beat = c.bar * 4 + c.at;
     const m = model.find((n) => Math.abs(n.beat - beat) < 1e-6);
-    const pitch = !first && m && ct.includes(pc(m.pitch)) ? m.pitch : nearestPc(c.root, Math.round((lo + hiP) / 2), lo, hiP);
+    // the first landing: the chord tone nearest the head's first melody note (each head starts its solo its own way)
+    const m0 = hi.notes[0]?.pitch ?? Math.round((lo + hiP) / 2);
+    const firstPc = ct.reduce((a, x) => (Math.abs(((x - pc(m0) + 18) % 12) - 6) < Math.abs(((a - pc(m0) + 18) % 12) - 6) ? x : a), ct[0]);
+    const pitch = first ? nearestPc(firstPc, Math.min(hiP - 1, Math.max(lo + 1, m0)), lo, hiP) : m && ct.includes(pc(m.pitch)) ? m.pitch : nearestPc(c.root, Math.round((lo + hiP) / 2), lo, hiP);
     return { beat, dur: first ? 1 : c.beats, pitch, land: ct };
   };
   return {
     bars,
     total,
-    landings: [land(chords[0], true), land(chords[chords.length - 1], false)],
+    // landings: the first chord, the start of each 8-bar section after it (a head's own shape), the last chord
+    landings: [land(chords[0], true), ...[...new Set(Array.from({ length: Math.floor((bars.length - 1) / 8) }, (_, i) => chordAt(chords, (i + 1) * 32)))].map((c) => land(c, false)), land(chords[chords.length - 1], false)].filter((l, i, a) => a.findIndex((x) => Math.abs(x.beat - l.beat) < 1e-6) === i),
     goal: { free: { windows: [[0, total]] as [number, number][], scale, minPerBar: 2, model }, improv: { cards: SOLO_CARDS, spans } },
   };
 }
@@ -991,6 +1014,34 @@ function harmable(idx: number, kind: string, phrase: number): boolean {
   return HARMABLE.get(k)!;
 }
 
+/** Blocks a written style sets in a head's phrase (all 12 keys: the fewest) — a line into blocks needs two at least. */
+const BLOCKS = new Map<string, number>();
+function blocksIn(idx: number, style: string): number {
+  const k = `${idx}|${style}`;
+  if (!BLOCKS.has(k)) {
+    let n = 99;
+    for (let key = 0; key < 12; key++) {
+      try {
+        const d = genHarm({ family: 'k-harm', kind: `hm-${style}`, key, hands: 'RL', option: opt(idx, phraseFor(idx, style)) });
+        n = Math.min(n, new Set(d.notes.map((x) => x.chordId).filter((x) => x !== undefined)).size);
+      } catch {
+        n = 0;
+      }
+    }
+    BLOCKS.set(k, n);
+  }
+  return BLOCKS.get(k)!;
+}
+
+/** A phrase with notes shorter than an 8th or a repeated note (a written style's blocks would sit a 16th from a repeated note: the take's
+ *  matcher cannot tell them apart, so those phrases stay out of the written styles). */
+function shortNotes(idx: number, phrase: number): boolean {
+  const hi = headIn(HEADS[idx], HEADS[idx].home.key, 'piano');
+  const ns = notesIn(hi, phrase * 4, phrase * 4 + 4);
+  // ... or one pitch struck again and again (a repeated-note melody: the same reason)
+  return ns.some((n, i) => n.dur < 0.5 - 1e-6 || (i > 1 && ns[i - 1].pitch === n.pitch && ns[i - 2].pitch === n.pitch));
+}
+
 /** The phrase a style's level uses for a head: phrase 0, or for borrowing the first phrase with a long 6th-chord note. */
 export function phraseFor(idx: number, style: string): number {
   if (style !== 'borrow') return 0;
@@ -1027,7 +1078,7 @@ export function pianoHarmFamily(): FamilyDef {
   // Plugged-in styles (heads.ts registerHarmStyle): one level each, after the base ladder. Borrowing takes, per head,
   // the first phrase with a long note to borrow on (phraseFor).
   for (const st of builtStyles().filter((x) => !BASE_STYLES.includes(x.id)))
-    levels.push(L(levels.length + 1, st.name.en, st.name.he, SERVED.filter((i) => harmable(i, `hm-${st.id}`, phraseFor(i, st.id))).map((i) => ({ family: fam, kind: `hm-${st.id}`, hands: 'RL' as const, option: opt(i, phraseFor(i, st.id)), tempo: 60 })), [60, 100]));
+    levels.push(L(levels.length + 1, st.name.en, st.name.he, SERVED.filter((i) => harmable(i, `hm-${st.id}`, phraseFor(i, st.id)) && !(WRITTEN_STYLES.includes(st.id) && (shortNotes(i, phraseFor(i, st.id)) || blocksIn(i, st.id) < 2))).map((i) => ({ family: fam, kind: `hm-${st.id}`, hands: 'RL' as const, option: opt(i, phraseFor(i, st.id)), tempo: 60 })), [60, 100]));
   return { id: fam, title: t('Harmonise a melody', 'הרמון מנגינה'), style: 'jazz', levels };
 }
 
@@ -1103,8 +1154,8 @@ const TUNE_GUITAR: [string, string, string, number][] = [
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף', 9],
   ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה', 9],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו', 9],
-  ['em-appr', 'Embellish: approach each downbeat from below', 'קישוט: גישה מלמטה לכל פעמה ראשונה', 9],
-  ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה', 9],
+  // (the guitar family stays within 13 levels: approaches and enclosures share a level)
+  ['em-appr', 'Embellish: approach and enclose each downbeat', 'קישוט: גישה וכיתור לכל פעמה ראשונה', 9],
   ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים', 10],
   ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה', 10],
   ['tn-rhsolo', 'Solo over the reharm: a chorus with the band', 'סולו על ההרמון החדש: סבב עם הלהקה', 10],
@@ -1112,7 +1163,7 @@ const TUNE_GUITAR: [string, string, string, number][] = [
 export function guitarTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-tune';
   const levels: GuitarLevelDef[] = TUNE_GUITAR.map(([kind, en, he, grade], i) => {
-    const kinds = kind === 'tn-rh3' ? ['tn-rh3', 'tn-rhmel'] : [kind];
+    const kinds = kind === 'tn-rh3' ? ['tn-rh3', 'tn-rhmel'] : kind === 'em-appr' ? ['em-appr', 'em-encl'] : [kind];
     return {
       id: `${fam}-${i + 1}`,
       level: i + 1,

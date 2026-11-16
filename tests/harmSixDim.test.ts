@@ -77,21 +77,19 @@ describe('k-harm 9–13: the new styles on every served head', () => {
           if (id === 'sixdim' || id === 'sixdrop2') for (const c of goal.chords) expect(['6', 'm6', 'dim7']).toContain(c.q);
         }
   });
-  it('borrowing: the melody holds while one inner voice goes a half step into the dim and back (oblique motion)', () => {
+  it('borrowing: block, the same block with one inner voice a half step into the dim, the block again (oblique motion)', () => {
     for (const d of levelDrills(lv(11), 'fifths-up')) {
-      const singles = d.notes.filter((n) => n.chordId === undefined && n.hand === 'R');
-      const { head, phrase } = decodeHead(d.spec.option);
-      const mel = notesIn(headIn(head, d.spec.key, 'piano'), phrase * 4, phrase * 4 + 4).map((n) => `${n.pitch}@${(n.beat - phrase * 16).toFixed(3)}`);
-      const borrowed = singles.filter((n) => !mel.includes(`${n.pitch}@${n.beat.toFixed(3)}`));
-      expect(borrowed.length, d.title.en).toBeGreaterThan(0);
-      for (const b of borrowed) {
-        // a block voice sounding just before, a half step away; the melody above it still held
-        const block = d.notes.filter((n) => n.chordId !== undefined && n.beat < b.beat && n.beat + n.dur >= b.beat - 1e-6);
-        const top = block.reduce((a, n) => (n.pitch > a.pitch ? n : a));
-        expect(top.beat + top.dur).toBeGreaterThan(b.beat);
+      const rh = (id: number) => d.notes.filter((n) => n.chordId === id && n.hand === 'R').map((n) => n.pitch).sort((a, b) => a - b);
+      const ids = [...new Set(d.notes.map((n) => n.chordId).filter((x): x is number => x !== undefined))].sort((a, b) => a - b);
+      let borrows = 0;
+      for (let i = 0; i + 2 < ids.length; i++) {
+        const [a, b, c] = [rh(ids[i]), rh(ids[i + 1]), rh(ids[i + 2])];
+        if (a.length !== 4 || b.length !== 4 || a.join() !== c.join() || a.join() === b.join()) continue;
+        const diff = a.map((p, j) => b[j] - p).filter((x) => x !== 0);
+        if (diff.length === 1 && Math.abs(diff[0]) === 1 && a[3] === b[3]) borrows++;
       }
+      expect(borrows, d.title.en).toBeGreaterThan(0);
       expect(d.goal.vl).toBeUndefined();
-      expect(d.goal.chordSets!.length).toBeGreaterThan(1);
     }
   });
   it('a line into blocks: one block a bar at its peak, every other melody note a single note', () => {

@@ -44,10 +44,12 @@ export function fourTones(c: Pick<ChartChordEv, 'iv'>): number[] {
   return [0, third, fifth, seventh];
 }
 
-/** The pivot arpeggio of a chord near a pitch: the root on top (at or above `near`), then 3rd, 5th, 7th below it, climbing. */
+/** The pivot arpeggio of a chord near a pitch: the root on top (the root nearest `near`), then 3rd, 5th, 7th below it, climbing. */
 export function pivotOf(c: Pick<ChartChordEv, 'root' | 'iv'>, near: number): number[] {
+  // the root nearest the held note (within a tritone), kept on a guitar's top string (E6 at most)
   let top = near + pc(c.root - near);
   if (top - near > 6) top -= 12;
+  if (top > 84) top -= 12;
   const [, t3, t5, t7] = fourTones(c);
   return [top, top - 12 + t3, top - 12 + t5, top - 12 + t7];
 }
