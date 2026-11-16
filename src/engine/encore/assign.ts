@@ -176,8 +176,9 @@ export const refBytes = (ref: string) => utf8(ref).length;
 // ───────────────────────────── teacher: make the assignment ─────────────────────────────
 
 /** A phrase (one of the teacher's, or just recorded) + the teacher's plan → the assignment. */
-export function assignmentOf(l: Lick, plan: PhraseAssignPlan, o: { teacher?: string; audio?: string } = {}): PhraseAssignment {
-  const name = typeof l.name === 'string' ? (l.name as string) : l.name.he || l.name.en;
+export function assignmentOf(l: Lick, plan: PhraseAssignPlan, o: { teacher?: string; audio?: string; lang?: 'en' | 'he' } = {}): PhraseAssignment {
+  // the name in the teacher's language (the class reads what the teacher sees)
+  const name = typeof l.name === 'string' ? (l.name as string) : l.name[o.lang ?? 'he'] || l.name.he || l.name.en;
   return {
     v: 1,
     name,

@@ -100,10 +100,10 @@ export function useTeacherPhrases(o: { enabled: boolean; route: string; book: Li
   const last = useRef(0);
   const bookRef = useRef(o.book);
   bookRef.current = o.book;
-  // fetch on Home / Encore / the assignment page, at most every 2 minutes; install the phrases into the lick book
+  // fetch on Home / Encore / the assignment page, at most every 30 seconds; install the phrases into the lick book
   useEffect(() => {
     if (!o.enabled || !['home', 'encore', 'teach', 'classes', 'friends'].includes(o.route)) return;
-    if (Date.now() - last.current < 120_000) return;
+    if (Date.now() - last.current < 30_000) return;
     last.current = Date.now();
     void refreshTeacherPhrases()
       .then((list) => {
@@ -113,6 +113,16 @@ export function useTeacherPhrases(o: { enabled: boolean; route: string; book: Li
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [o.enabled, o.route]);
+  // whenever the device copy changes (a refresh from the assignment page, another tab): install what is missing
+  useEffect(
+    () =>
+      subscribeTeacherPhrases(() => {
+        const b = bookWithTeacherPhrases(bookRef.current, cachedTeacherPhrases());
+        if (b && b !== bookRef.current) o.onBook(b);
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
   // every change of the drill items: queue the newly passed keys, then send what is queued
   useEffect(() => {
     if (!o.book?.own?.some((l) => l.source?.kind === 'teacher')) return;

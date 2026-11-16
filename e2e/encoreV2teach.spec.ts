@@ -27,7 +27,7 @@ const seed = async (page: Page, lang: Lang, extra: Record<string, unknown> = {})
   await page.evaluate(
     async ({ lang, extra }) => {
       const now = new Date().toISOString();
-      const progress = { version: 1, xp: 0, applied: [], lessons: {}, history: [], streak: { count: 1, lastDay: now.slice(0, 10) }, review: [], ...((extra.progress as object) ?? {}) };
+      const progress = { version: 1, xp: 10, applied: ['seed-1'], lessons: {}, history: [{ sessionId: 'seed-1', lessonId: 'bflat-two-homes', lessonVersion: 1, firstTry: 3, total: 3, xp: 10, missed: [], completedAt: new Date(Date.now() - 86_400_000).toISOString() }], streak: { count: 1, lastDay: now.slice(0, 10) }, review: [], ...((extra.progress as object) ?? {}) };
       const drills = { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: 'piano' };
       const settings = { version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, midiInput: true, nickname: 'Ronit', intake: { v: 1, at: now, music: 1, singing: 1, theory: 1, reading: 1, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 10, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false }, courses: ['ear', 'keys'], activeCourse: 'keys', courseStart: { keys: { legacy: true } }, seenVersion: '9.9.9', drills, ...((extra.settings as object) ?? {}) };
       await new Promise((res, rej) => {
@@ -189,9 +189,7 @@ test('a playlist plays in the background with Media Session metadata; the player
   test.setTimeout(240_000);
   await seed(page, 'en');
   await playOneTake(page, 'en');
-  await page.locator('[data-drill-play]').click();
-  await expect(page.locator('.drill-result')).toBeVisible({ timeout: 20_000 });
-  await page.waitForTimeout(800);
+  await playOneTake(page, 'en');
   await page.goto('/?lang=en#/recordings');
   const rows = page.locator('[data-rec-take]');
   await expect(rows).toHaveCount(2, { timeout: 10_000 });

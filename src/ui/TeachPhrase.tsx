@@ -253,7 +253,7 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
   const keys: PhraseAssignPlan['keys'] = s.keys === 'all' ? 'all' : s.keys === 'home' ? [home] : s.picked.length ? s.picked : [home];
   const plan: PhraseAssignPlan = { goalBpm: goal, ...(s.start ? { startBpm: Math.min(s.start, goal) } : {}), keys, order: s.order, hands, band: s.band };
   const teacherName = settings.nickname?.trim() || undefined;
-  const a = l ? assignmentOf(l, plan, { teacher: teacherName }) : null;
+  const a = l ? assignmentOf(l, plan, { teacher: teacherName, lang }) : null;
   const ref = a ? encodePhraseRef(a) : '';
   const problem = a ? assignProblem(a, phraseRefLimit()) : 'empty';
 
@@ -268,6 +268,8 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
       clearSlot(slotKey);
       setS(freshSheet());
       setMsg(tx.sent);
+      // a teacher who is also in the class (or the dev mock) sees it at once
+      void refreshTeacherPhrases().catch(() => {});
       onDone?.();
     } catch (e) {
       setMsg(/too long/.test(String(e)) ? tx.tooLong : String((e as Error).message));
