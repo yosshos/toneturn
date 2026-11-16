@@ -62,13 +62,18 @@ const fill = (s: string, v: Record<string, string | number>) => Object.entries(v
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(100 * x)}%`);
 const secs = (ms: number | null) => (ms === null ? '—' : `${(ms / 1000).toFixed(1)} s`);
 export function fmtDuration(ms: number, lang: Lang) {
-  if (ms < 60000) return `${Math.round(ms / 1000)} s`;
+  if (ms < 60000) return lang === 'he' ? `${Math.round(ms / 1000)} שנ׳` : `${Math.round(ms / 1000)} s`;
   const m = Math.round(ms / 60000);
   if (m < 60) return lang === 'he' ? `${m} דק׳` : `${m} min`;
   const h = Math.floor(m / 60);
   return lang === 'he' ? `${h} ש׳ ${m % 60} דק׳` : `${h} h ${m % 60} min`;
 }
 const N = ({ children }: { children: ReactNode }) => <bdi dir="ltr">{children}</bdi>;
+/**
+ * A duration isolated in its own direction, as the practice diary shows it: Hebrew "1 ש׳ 5 דק׳" reads right to left
+ * (wrapped as LTR text it showed reversed, "דק׳ 5 ש׳ 1"); English stays left to right.
+ */
+export const Dur = ({ ms, lang }: { ms: number; lang: Lang }) => <bdi data-dur="1">{fmtDuration(ms, lang)}</bdi>;
 
 // ======================================================================= strings
 
@@ -318,7 +323,7 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
       <Tile label={SX.items[lang]} value={<N>{tot.items}</N>} />
       <Tile label={SX.accuracy[lang]} value={<N>{pct(tot.accuracy)}</N>} />
       <Tile label={SX.speed[lang]} value={<N>{secs(tot.medianMs)}</N>} />
-      <Tile label={SX.time[lang]} value={<N>{tot.hasTime ? fmtDuration(tot.ms, lang) : '—'}</N>} />
+      <Tile label={SX.time[lang]} value={tot.hasTime ? <Dur ms={tot.ms} lang={lang} /> : '—'} />
       <Tile label={SX.xp[lang]} value={<N>{tot.xp}</N>} />
       <Tile label={SX.days[lang]} value={<N>{tot.days}</N>} />
     </div>
@@ -687,7 +692,7 @@ export function RecordsCard({ progress, lang }: { progress: Progress; lang: Lang
   const r = personalRecords(ps.records, ps.statsDays, practiceDays(progress));
   const d = (iso: string) => fmtDay(localDay(new Date(iso)), lang, true);
   const rows: [string, ReactNode, string | null][] = [
-    [SX.fastPerfect[lang], r.fastPerfect ? <N>{fmtDuration(r.fastPerfect.ms, lang)}</N> : '—', r.fastPerfect ? d(r.fastPerfect.at) : null],
+    [SX.fastPerfect[lang], r.fastPerfect ? <Dur ms={r.fastPerfect.ms} lang={lang} /> : '—', r.fastPerfect ? d(r.fastPerfect.at) : null],
     [SX.run[lang], r.run ? fill(SX.inARow[lang], { n: r.run.n }) : '—', r.run ? d(r.run.at) : null],
     [SX.bestDay[lang], r.bestDay ? <N>{`${pct(r.bestDay.acc)} · ${r.bestDay.items}`}</N> : '—', r.bestDay ? fmtDay(r.bestDay.day, lang, true) : null],
     [SX.longestStreak[lang], r.streak ? fill(SX.daysN[lang], { n: r.streak.n }) : '—', r.streak ? fmtDay(r.streak.end, lang, true) : null],
@@ -876,7 +881,7 @@ export function HistoryView({ t, lang, progress, onOpenSession, folded }: Progre
                   {(r.s as LessonResult & { durationMs?: number }).durationMs ? (
                     <>
                       {' · '}
-                      <N>{fmtDuration((r.s as LessonResult & { durationMs?: number }).durationMs!, lang)}</N>
+                      <Dur ms={(r.s as LessonResult & { durationMs?: number }).durationMs!} lang={lang} />
                     </>
                   ) : null}
                 </span>

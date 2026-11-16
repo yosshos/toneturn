@@ -110,7 +110,7 @@ const READING: Rung[] = [
   r('k-read-5', 5, { 'k-read': 6 }),
   r('k-read-6', 2, { 'k-read': 7 }),
   r('k-read-8', 10, { 'k-read': 9 }),
-  r('k-read-10', 7, { 'k-read': 10 }),
+  r('k-read-10', 7, { 'k-read': 11 }),
   // AUDIT-7 #4: grade 8 reading (ornaments) and the lead sheet with hits.
   r('k-read-12', 7, { 'k-read': 13 }),
   r('k-read-14', 5, { 'k-read': 15 }),
@@ -160,6 +160,9 @@ const G_HANDS: Rung[] = [
   r('g-scales-1', 9, { 'g-fretting': 2, 'g-picking': 2, 'g-scales': 2, 'g-arps': 1, 'g-legato': 1 }),
   r('g-picking-3', 7, { 'g-fretting': 4, 'g-picking': 4, 'g-scales': 4, 'g-arps': 2, 'g-legato': 2 }),
   r('g-scales-5', 2, { 'g-fretting': 5, 'g-picking': 5, 'g-scales': 6, 'g-arps': 4, 'g-legato': 3, 'g-harm': 2 }),
+  // 0.97 leftovers: the modes in position at grade 7 (g-scales 15; 13–14 at grades 5–6 sit below it), as hard as
+  // g-scales 6 — so it proves g-scales 1–6 and, by difficulty, 8, 9, 12–15 (testedLevelIds).
+  r('g-scales-15', 7, { 'g-fretting': 5, 'g-picking': 6, 'g-scales': 7, 'g-arps': 5, 'g-legato': 4, 'g-harm': 3 }),
   r('g-picking-6', 9, { 'g-fretting': 6, 'g-picking': 7, 'g-scales': 8, 'g-arps': 6, 'g-legato': 5, 'g-harm': 5 }),
   // STAGE C (AUDIT-6 GA-4): 3nps in 16ths at speed places the speed and fusion families above grade 8.
   r('g-speed-1', 7, { 'g-fretting': 6, 'g-picking': 9, 'g-scales': 10, 'g-arps': 7, 'g-legato': 7, 'g-harm': 8, 'g-speed': 2, 'g-fusion': 1 }),
@@ -463,6 +466,29 @@ export function testStart(instrument: NonNullable<DrillSettings['instrument']>, 
   const out: Partial<Record<FamilyId, number>> = {};
   // capped to the family's top level number (levels hidden until verified leave gaps in the numbers)
   for (const f of families(instrument)) out[f.id] = Math.max(1, Math.min(Math.max(...f.levels.map((l) => l.level)), Math.round(placed[f.id] ?? 1)));
+  return out;
+}
+
+/**
+ * The levels of a family a saved start marks done by test. A start N proves the levels numbered below N; and since
+ * levels are placed by difficulty, not by number (b-walk 19–21 and g-scales 13–15 were put in front later), every level
+ * at or below the hardest of those proven levels' difficulty is done too. Numbers alone would leave an easier level
+ * added later "to do" for a player who passed a harder rung. Pure: `diffOf` is the level's path rating.
+ */
+export function testedLevelIds(levels: readonly { id: string; level: number }[], start: number | undefined, diffOf: (id: string) => number | undefined): Set<string> {
+  const out = new Set<string>();
+  if (!start || start <= 1) return out;
+  let top = -Infinity;
+  for (const l of levels)
+    if (l.level < start) {
+      out.add(l.id);
+      const d = diffOf(l.id);
+      if (d !== undefined) top = Math.max(top, d);
+    }
+  for (const l of levels) {
+    const d = diffOf(l.id);
+    if (d !== undefined && d <= top) out.add(l.id);
+  }
   return out;
 }
 

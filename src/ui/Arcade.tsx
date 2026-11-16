@@ -25,7 +25,6 @@ import { CHANGELOG } from '../version';
 import { Changelog } from './Menu';
 import { lessonStates, NodeIcon, starsFor, TOTALS } from './Home';
 import { MicIcon, withNote } from './bits';
-import { GameIcon } from './Games';
 import { RankCrest } from './Badges';
 import { areaProgress, divFloor, divisionFor, MASTER_DIV, rankLabel, techniqueProgress, type RankProgress } from '../engine/ranks';
 import { techniqueOf } from '../engine/rankBadges';
@@ -617,61 +616,61 @@ export const GAME_CATS: { id: GameCat; en: string; he: string }[] = [
   { id: 'instrument', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator'; icon: string; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
-  { id: 'rush-chord', icon: '🎹', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
-  { id: 'rush-note', icon: '𝄞', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
-  { id: 'rush-keysig', icon: '♯', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
-  { id: 'rush-interval', icon: '↕', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Interval Sprint', 'Hear two notes, name the distance — beat the clock.'], he: ['ספרינט מרווחים', 'שומעים שני צלילים, קובעים את המרחק — נגד השעון.'] },
-  { id: 'rush-progression', icon: '🕵', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Progression Detective', 'Name the chords of what you hear. Three lives.'], he: ['בלש המהלכים', 'זהו את האקורדים של מה שאתם שומעים. שלושה חיים.'] },
-  { id: 'rush-fretboard', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Fretboard Sprint', 'Find the note on the neck — 60 seconds.'], he: ['ספרינט צוואר', 'מצאו את התו על הצוואר — 60 שניות.'] },
-  { id: 'peakhunter', icon: '🎛', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Peak Hunter', 'Find the boosted frequency.'], he: ['צייד הפיקים', 'מצאו את התדר שהוגבר.'] },
-  { id: 'highway', icon: '🛣', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Rhythm Highway', 'Tap the notes as they reach the line.'], he: ['כביש הקצב', 'הקישו על התווים כשהם מגיעים לקו.'] },
-  { id: 'flight', icon: '🕊', hue: 'var(--hue-voice)', cat: 'voice', en: ['Voice Flight', 'Sing or play to fly through the gates.'], he: ['טיסת קול', 'שירו או נגנו כדי לעוף בין השערים.'] },
-  { id: 'melodypuzzle', icon: '🧩', hue: 'var(--hue-memory)', cat: 'memory', en: ['Melody Puzzle', 'Put the notes of what you heard in order.'], he: ['פאזל מנגינה', 'סדרו את התווים של מה ששמעתם.'] },
-  { id: 'nametune', icon: '🎶', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Tune', 'Hear the opening, pick the song — fast.'], he: ['זהו את השיר', 'שומעים את הפתיחה, בוחרים את השיר — מהר.'] },
-  { id: 'drills', icon: '🎹', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Technique', 'Scales, Hanon, Barry Harris, voicings — with a tempo ladder and a MIDI analysis.'], he: ['טכניקה', 'סולמות, האנון, בארי האריס, וויסינגים — עם סולם טמפו וניתוח MIDI.'] },
-  { id: 'tuneup', icon: '🎸', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
-  { id: 'pitchmemory', icon: '🎯', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator'; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+  { id: 'rush-chord', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
+  { id: 'rush-note', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
+  { id: 'rush-keysig', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
+  { id: 'rush-interval', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Interval Sprint', 'Hear two notes, name the distance — beat the clock.'], he: ['ספרינט מרווחים', 'שומעים שני צלילים, קובעים את המרחק — נגד השעון.'] },
+  { id: 'rush-progression', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Progression Detective', 'Name the chords of what you hear. Three lives.'], he: ['בלש המהלכים', 'זהו את האקורדים של מה שאתם שומעים. שלושה חיים.'] },
+  { id: 'rush-fretboard', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Fretboard Sprint', 'Find the note on the neck — 60 seconds.'], he: ['ספרינט צוואר', 'מצאו את התו על הצוואר — 60 שניות.'] },
+  { id: 'peakhunter', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Peak Hunter', 'Find the boosted frequency.'], he: ['צייד הפיקים', 'מצאו את התדר שהוגבר.'] },
+  { id: 'highway', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Rhythm Highway', 'Tap the notes as they reach the line.'], he: ['כביש הקצב', 'הקישו על התווים כשהם מגיעים לקו.'] },
+  { id: 'flight', hue: 'var(--hue-voice)', cat: 'voice', en: ['Voice Flight', 'Sing or play to fly through the gates.'], he: ['טיסת קול', 'שירו או נגנו כדי לעוף בין השערים.'] },
+  { id: 'melodypuzzle', hue: 'var(--hue-memory)', cat: 'memory', en: ['Melody Puzzle', 'Put the notes of what you heard in order.'], he: ['פאזל מנגינה', 'סדרו את התווים של מה ששמעתם.'] },
+  { id: 'nametune', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Tune', 'Hear the opening, pick the song — fast.'], he: ['זהו את השיר', 'שומעים את הפתיחה, בוחרים את השיר — מהר.'] },
+  { id: 'drills', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Technique', 'Scales, Hanon, Barry Harris, voicings — with a tempo ladder and a MIDI analysis.'], he: ['טכניקה', 'סולמות, האנון, בארי האריס, וויסינגים — עם סולם טמפו וניתוח MIDI.'] },
+  { id: 'tuneup', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Tune-up', 'Turn the peg until the beats disappear.'], he: ['כיוון', 'סובבו את המפתח עד שהפעימות נעלמות.'] },
+  { id: 'pitchmemory', hue: 'var(--hue-creative)', cat: 'ear', en: ['Pitch Memory', 'Once a day: your note, from memory.'], he: ['זיכרון צליל', 'פעם ביום: הצליל שלכם, מהזיכרון.'] },
   // 0.70: advanced games for jazz and complex music (open at mp).
-  { id: 'rush-voicing', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Voicing Spy', 'Hear a chord, name its voicing: close, drop 2, rootless, quartal.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג: צפוף, דרופ 2, בלי שורש, קוורטלי.'] },
-  { id: 'reharm', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Reharm Spotter', 'Original, then reharmonised: find the bar, name the substitution.'], he: ['גלאי ההרמוניה', 'המקור ואז ההרמוניה החדשה: מוצאים את התיבה, נותנים שם לתחליף.'] },
-  { id: 'rush-standard', icon: '', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
-  { id: 'rush-scale', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
-  { id: 'transcribe', icon: '', hue: 'var(--hue-memory)', cat: 'memory', en: ['Transcription Race', 'Hear a phrase, write it on the keys — fast and right.'], he: ['מרוץ התמלול', 'שומעים משפט, כותבים אותו על הקלידים — מהר ונכון.'] },
-  { id: 'bhtime', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Barry Harris in Time', 'Play 8th-note lines over the changes — measured.'], he: ['בארי האריס בזמן', 'מנגנים קווי שמיניות מעל המהלך — במדידה.'] },
-  { id: 'riffecho', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-Meter Riff Echo', 'Hear a riff in 5, 7 or 11 — play it back.'], he: ['הד ריפים במשקל אי־זוגי', 'שומעים ריף ב־5, 7 או 11 — מנגנים אותו בחזרה.'] },
-  { id: 'polylock', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Polyrhythm Lock', 'Two hands, two pulses: 3 against 2 up to 7 against 4.'], he: ['נעילת פולי־ריתם', 'שתי ידיים, שתי פעימות: 3 נגד 2 ועד 7 נגד 4.'] },
+  { id: 'rush-voicing', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Voicing Spy', 'Hear a chord, name its voicing: close, drop 2, rootless, quartal.'], he: ['מרגל הוויסינגים', 'שומעים אקורד, מזהים את הוויסינג: צפוף, דרופ 2, בלי שורש, קוורטלי.'] },
+  { id: 'reharm', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Reharm Spotter', 'Original, then reharmonised: find the bar, name the substitution.'], he: ['גלאי ההרמוניה', 'המקור ואז ההרמוניה החדשה: מוצאים את התיבה, נותנים שם לתחליף.'] },
+  { id: 'rush-standard', hue: 'var(--hue-pitch)', cat: 'memory', en: ['Name That Standard', 'Hear the changes, name the tune — 10 rounds.'], he: ['זהו את הסטנדרט', 'שומעים את המהלך, מזהים את השיר — 10 סיבובים.'] },
+  { id: 'rush-scale', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Scale & Mode Rush', 'Hear a scale or mode, name it — 60 seconds.'], he: ['מרוץ סולמות ומודוסים', 'שומעים סולם או מודוס, נותנים שם — 60 שניות.'] },
+  { id: 'transcribe', hue: 'var(--hue-memory)', cat: 'memory', en: ['Transcription Race', 'Hear a phrase, write it on the keys — fast and right.'], he: ['מרוץ התמלול', 'שומעים משפט, כותבים אותו על הקלידים — מהר ונכון.'] },
+  { id: 'bhtime', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Barry Harris in Time', 'Play 8th-note lines over the changes — measured.'], he: ['בארי האריס בזמן', 'מנגנים קווי שמיניות מעל המהלך — במדידה.'] },
+  { id: 'riffecho', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-Meter Riff Echo', 'Hear a riff in 5, 7 or 11 — play it back.'], he: ['הד ריפים במשקל אי־זוגי', 'שומעים ריף ב־5, 7 או 11 — מנגנים אותו בחזרה.'] },
+  { id: 'polylock', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Polyrhythm Lock', 'Two hands, two pulses: 3 against 2 up to 7 against 4.'], he: ['נעילת פולי־ריתם', 'שתי ידיים, שתי פעימות: 3 נגד 2 ועד 7 נגד 4.'] },
   // Drum games P1 (DRUMS_NICHE_PLAN §3): only in the drums course (COURSE_GAMES).
-  { id: 'land', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Land It', 'A fill is called one bar ahead — play it, land crash + kick on 1.'], he: ['לנחות על 1', 'מעבר נקרא תיבה מראש — נגנו אותו ונחתו בקראש + קיק על 1.'] },
-  { id: 'groove-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Groove Echo', 'Hear a groove, play it back on the kit.'], he: ['הד לגרוב', 'שומעים גרוב ומנגנים אותו בחזרה על המערכת.'] },
-  { id: 'odd-echo', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-meter Echo', 'One bar of 7/8 or 9/8 — 2+2+3 or 3+2+2? Play it back.'], he: ['הד במשקל מוזר', 'תיבה של 7/8 או 9/8 — 2+2+3 או 3+2+2? נגנו אותה בחזרה.'] },
+  { id: 'land', hue: 'var(--hue-time)', cat: 'instrument', en: ['Land It', 'A fill is called one bar ahead — play it, land crash + kick on 1.'], he: ['לנחות על 1', 'מעבר נקרא תיבה מראש — נגנו אותו ונחתו בקראש + קיק על 1.'] },
+  { id: 'groove-echo', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Groove Echo', 'Hear a groove, play it back on the kit.'], he: ['הד לגרוב', 'שומעים גרוב ומנגנים אותו בחזרה על המערכת.'] },
+  { id: 'odd-echo', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Odd-meter Echo', 'One bar of 7/8 or 9/8 — 2+2+3 or 3+2+2? Play it back.'], he: ['הד במשקל מוזר', 'תיבה של 7/8 או 9/8 — 2+2+3 או 3+2+2? נגנו אותה בחזרה.'] },
   // DRUMS_NICHE_PLAN P2: one surface (a pad by microphone too).
-  { id: 'time-lock', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Time Lock', 'The click drops out for longer each round — keep the time.'], he: ['נעילת זמן', 'הקליק נעלם לזמן ארוך יותר בכל סבב — שמרו על הזמן.'] },
-  { id: 'ghost-control', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Ghost Control', 'Accents, normal strokes and ghost notes — each in its band.'], he: ['שליטה ברפאים', 'הדגשות, מכות רגילות ותווי רפאים — כל אחת בעוצמה שלה.'] },
-  { id: 'rudiment-rush', icon: '', hue: 'var(--hue-time)', cat: 'instrument', en: ['Rudiment Rush', 'Two clean bars of a rudiment — faster after every pass.'], he: ['מרוץ רודימנטים', 'שתי תיבות נקיות של רודימנט — מהר יותר אחרי כל מעבר.'] },
-  { id: 'groove-off', icon: '', hue: 'var(--hue-time)', cat: 'social', en: ['Groove-off', 'The same three grooves for you and a friend — measured, at your own time.'], he: ['קרב גרובים', 'אותם שלושה גרובים לכם ולחבר — במדידה, כל אחד בזמנו.'] },
+  { id: 'time-lock', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Time Lock', 'The click drops out for longer each round — keep the time.'], he: ['נעילת זמן', 'הקליק נעלם לזמן ארוך יותר בכל סבב — שמרו על הזמן.'] },
+  { id: 'ghost-control', hue: 'var(--hue-time)', cat: 'instrument', en: ['Ghost Control', 'Accents, normal strokes and ghost notes — each in its band.'], he: ['שליטה ברפאים', 'הדגשות, מכות רגילות ותווי רפאים — כל אחת בעוצמה שלה.'] },
+  { id: 'rudiment-rush', hue: 'var(--hue-time)', cat: 'instrument', en: ['Rudiment Rush', 'Two clean bars of a rudiment — faster after every pass.'], he: ['מרוץ רודימנטים', 'שתי תיבות נקיות של רודימנט — מהר יותר אחרי כל מעבר.'] },
+  { id: 'groove-off', hue: 'var(--hue-time)', cat: 'social', en: ['Groove-off', 'The same three grooves for you and a friend — measured, at your own time.'], he: ['קרב גרובים', 'אותם שלושה גרובים לכם ולחבר — במדידה, כל אחד בזמנו.'] },
   // 0.76: instrument, voice and drum games (GAMES_TIERS_PLAN §3), measured by MIDI or the microphone.
-  { id: 'playback', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Play It Back', 'Hear a phrase, play it back on your instrument.'], he: ['לנגן בחזרה', 'שומעים משפט ומנגנים אותו בחזרה על הכלי שלכם.'] },
-  { id: 'voicingsprint', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Voicing Sprint', 'A chord symbol appears — play the voicing. 60 seconds.'], he: ['ספרינט וויסינגים', 'מופיע סימן אקורד — מנגנים את הוויסינג. 60 שניות.'] },
-  { id: 'changerace', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Chord Change Race', 'Strum each chord right on its beat.'], he: ['מרוץ החלפות אקורדים', 'פורטים כל אקורד בדיוק על הפעמה שלו.'] },
-  { id: 'walkchanges', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Walk the Changes', 'Walk quarter notes over the chart — chord tones on 1 and 3.'], he: ['ללכת על המהלך', 'קו רבעים מעל המהלך — צלילי אקורד ב־1 וב־3.'] },
-  { id: 'rootsear', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Roots by Ear', 'Hear the chords, play their roots.'], he: ['שורשים מהאוזן', 'שומעים את האקורדים ומנגנים את השורשים.'] },
-  { id: 'harmonyhold', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Harmony Hold', 'Sing a chord tone while the chords move.'], he: ['להחזיק הרמוניה', 'שרים צליל של האקורד בזמן שהאקורדים זזים.'] },
-  { id: 'singinterval', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Sing the Interval Sprint', 'A note and an interval — sing the other note.'], he: ['ספרינט מרווחים בשירה', 'צליל ומרווח — שרים את הצליל השני.'] },
-  { id: 'kitread', icon: '', hue: 'var(--hue-reading)', cat: 'read', en: ['Kit Read Rush', 'Hear one bar, pick the written bar — fast.'], he: ['מרוץ קריאת תופים', 'שומעים תיבה ובוחרים את התיבה הכתובה — מהר.'] },
-  { id: 'namegroove', icon: '', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Name That Groove', 'Hear a groove, name its style — 10 rounds.'], he: ['זהו את הגרוב', 'שומעים גרוב ומזהים את הסגנון — 10 סיבובים.'] },
+  { id: 'playback', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Play It Back', 'Hear a phrase, play it back on your instrument.'], he: ['לנגן בחזרה', 'שומעים משפט ומנגנים אותו בחזרה על הכלי שלכם.'] },
+  { id: 'voicingsprint', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Voicing Sprint', 'A chord symbol appears — play the voicing. 60 seconds.'], he: ['ספרינט וויסינגים', 'מופיע סימן אקורד — מנגנים את הוויסינג. 60 שניות.'] },
+  { id: 'changerace', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Chord Change Race', 'Strum each chord right on its beat.'], he: ['מרוץ החלפות אקורדים', 'פורטים כל אקורד בדיוק על הפעמה שלו.'] },
+  { id: 'walkchanges', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Walk the Changes', 'Walk quarter notes over the chart — chord tones on 1 and 3.'], he: ['ללכת על המהלך', 'קו רבעים מעל המהלך — צלילי אקורד ב־1 וב־3.'] },
+  { id: 'rootsear', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Roots by Ear', 'Hear the chords, play their roots.'], he: ['שורשים מהאוזן', 'שומעים את האקורדים ומנגנים את השורשים.'] },
+  { id: 'harmonyhold', hue: 'var(--hue-voice)', cat: 'voice', en: ['Harmony Hold', 'Sing a chord tone while the chords move.'], he: ['להחזיק הרמוניה', 'שרים צליל של האקורד בזמן שהאקורדים זזים.'] },
+  { id: 'singinterval', hue: 'var(--hue-voice)', cat: 'voice', en: ['Interval Sing', 'A note and an interval — sing the other note.'], he: ['ספרינט שירה', 'צליל ומרווח — שרים את הצליל השני.'] },
+  { id: 'kitread', hue: 'var(--hue-reading)', cat: 'read', en: ['Kit Read Rush', 'Hear one bar, pick the written bar — fast.'], he: ['מרוץ קריאת תופים', 'שומעים תיבה ובוחרים את התיבה הכתובה — מהר.'] },
+  { id: 'namegroove', hue: 'var(--hue-time)', cat: 'rhythm', en: ['Name That Groove', 'Hear a groove, name its style — 10 rounds.'], he: ['זהו את הגרוב', 'שומעים גרוב ומזהים את הסגנון — 10 סיבובים.'] },
   // AUDIT-GAMES §4.2 new games (2026-11-15).
-  { id: 'bordercontrol', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Border Control', 'A key change by ear: stamp how it crossed and where it landed.'], he: ['ביקורת גבולות', 'מעבר סולם בשמיעה: חותמים איך עבר ולאן הגיע.'] },
-  { id: 'whichbrother', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Which Brother?', 'The family of dominants: hear which one resolves, then play it.'], he: ['איזה אח?', 'משפחת הדומיננטות: שומעים איזה מהם נפתר, ואז מנגנים אותו.'] },
-  { id: 'runcatcher', icon: '', hue: 'var(--hue-voice)', cat: 'voice', en: ['Run Catcher', 'Hear a run, sing it back in time — faster after every clean catch.'], he: ['תופסים ראן', 'שומעים ראן ושרים אותו בחזרה בזמן — מהר יותר אחרי כל תפיסה נקייה.'] },
-  { id: 'compcaller', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Comp Caller', 'Comp the called rhythm on the changes, switched on the bar.'], he: ['קורא הליווי', 'מלווים במקצב שנקרא על המהלך, ומחליפים על התיבה.'] },
-  { id: 'elevator', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Elevator', 'Echols’s floors on the 6-dim scale: build the voicing, then play it.'], he: ['המעלית', 'הקומות של אקולס בסולם 6־דים: בונים את הוויסינג ומנגנים אותו.'] },
+  { id: 'bordercontrol', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Border Control', 'A key change by ear: stamp how it crossed and where it landed.'], he: ['ביקורת גבולות', 'מעבר סולם בשמיעה: חותמים איך עבר ולאן הגיע.'] },
+  { id: 'whichbrother', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Which Brother?', 'The family of dominants: hear which one resolves, then play it.'], he: ['איזה אח?', 'משפחת הדומיננטות: שומעים איזה מהם נפתר, ואז מנגנים אותו.'] },
+  { id: 'runcatcher', hue: 'var(--hue-voice)', cat: 'voice', en: ['Run Catcher', 'Hear a run, sing it back in time — faster after every clean catch.'], he: ['תופסים ראן', 'שומעים ראן ושרים אותו בחזרה בזמן — מהר יותר אחרי כל תפיסה נקייה.'] },
+  { id: 'compcaller', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Comp Caller', 'Comp the called rhythm on the changes, switched on the bar.'], he: ['קורא הליווי', 'מלווים במקצב שנקרא על המהלך, ומחליפים על התיבה.'] },
+  { id: 'elevator', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Elevator', 'Echols’s floors on the 6-dim scale: build the voicing, then play it.'], he: ['המעלית', 'הקומות של אקולס בסולם 6־דים: בונים את הוויסינג ומנגנים אותו.'] },
   // AUDIT-GAMES §4.2 new games.
-  { id: 'guidetone', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Guide-Tone Runner', 'A 3rd or 7th on every change, in time. One miss ends the run.'], he: ['רץ הצלילים המובילים', 'טרצה או ספטימה על כל החלפה, בזמן. החטאה אחת מסיימת.'] },
-  { id: 'call5432', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['5-4-3-2 Call', 'A number is called: play that Barry Harris phrase.'], he: ['קריאת 5-4-3-2', 'נקרא מספר: מנגנים את המשפט של בארי האריס.'] },
-  { id: 'enclosure', icon: '', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Enclosure Target', 'Enclose the chord tone, land it on the beat.'], he: ['מטרת הכיתור', 'מכתרים את צליל האקורד ונוחתים עליו בפעמה.'] },
-  { id: 'crossword', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Changes Crossword', 'Hear the bars, fill root, quality and bass.'], he: ['תשבץ המהלכים', 'שומעים את התיבות וממלאים שורש, סוג ובס.'] },
-  { id: 'holdnote', icon: '', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Hold the Note', 'One note, many chords: which keep it? Fast.'], he: ['להחזיק את הצליל', 'צליל אחד, הרבה אקורדים: מי שומר עליו? מהר.'] },
+  { id: 'guidetone', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Guide-Tone Runner', 'A 3rd or 7th on every change, in time. One miss ends the run.'], he: ['רץ הצלילים המובילים', 'טרצה או ספטימה על כל החלפה, בזמן. החטאה אחת מסיימת.'] },
+  { id: 'call5432', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['5-4-3-2 Call', 'A number is called: play that Barry Harris phrase.'], he: ['קריאת 5-4-3-2', 'נקרא מספר: מנגנים את המשפט של בארי האריס.'] },
+  { id: 'enclosure', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Enclosure Target', 'Enclose the chord tone, land it on the beat.'], he: ['מטרת הכיתור', 'מכתרים את צליל האקורד ונוחתים עליו בפעמה.'] },
+  { id: 'crossword', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Changes Crossword', 'Hear the bars, fill root, quality and bass.'], he: ['תשבץ המהלכים', 'שומעים את התיבות וממלאים שורש, סוג ובס.'] },
+  { id: 'holdnote', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Hold the Note', 'One note, many chords: which keep it? Fast.'], he: ['להחזיק את הצליל', 'צליל אחד, הרבה אקורדים: מי שומר עליו? מהר.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -1023,16 +1022,16 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     const c = tierCard(tierInfo(key, ratingsNow, st, course, mine), st);
     return <TierBadge lang={lang} tier={c.tier} next={c.next} into={c.into} isNew={c.isNew} />;
   };
-  const cards: { key: string; hue: string; icon: React.ReactNode; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void; cat?: GameCat }[] = [
-    { key: 'melody', hue: 'var(--hue-memory)', icon: <GameIcon kind="melody" />, title: t.echoChain, blurb: t.echoChainBlurb, extra: best(progress.games?.melody), onClick: () => onGame('melody') },
-    { key: 'rhythm', hue: 'var(--hue-time)', icon: <GameIcon kind="rhythm" />, title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
-    { key: 'truefalse', hue: 'var(--hue-pitch)', icon: '✓✗', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
-    { key: 'ghost', hue: 'var(--hue-creative)', icon: '👻', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
-    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, icon: g.icon, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : course === 'bass' && BASS_BLURB[g.id] ? BASS_BLURB[g.id][lang] : (COURSE_BLURB[course]?.[g.id]?.[lang] ?? g[lang][1]), extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
+  const cards: { key: string; hue: string; title: string; blurb: string; extra?: React.ReactNode; onClick: () => void; cat?: GameCat }[] = [
+    { key: 'melody', hue: 'var(--hue-memory)', title: t.echoChain, blurb: t.echoChainBlurb, extra: best(progress.games?.melody), onClick: () => onGame('melody') },
+    { key: 'rhythm', hue: 'var(--hue-time)', title: t.beatEcho, blurb: t.beatEchoBlurb, extra: best(progress.games?.rhythm), onClick: () => onGame('rhythm') },
+    { key: 'truefalse', hue: 'var(--hue-pitch)', title: t.trueFalse, blurb: t.tfBlurb, extra: progress.tfBest && Object.keys(progress.tfBest).length ? best(Math.max(...Object.values(progress.tfBest))) : <span className="new-chip">{t.newChip}</span>, onClick: onTrueFalse },
+    { key: 'ghost', hue: 'var(--hue-creative)', title: t.ghostRace, blurb: t.ghostBlurb, onClick: onGhost },
+    ...(onGame2 ? GAMES2.map((g) => ({ key: g.id, cat: g.cat, hue: g.hue, title: g[lang][0], blurb: course === 'drums' && DRUMS_BLURB[g.id] ? DRUMS_BLURB[g.id][lang] : course === 'bass' && BASS_BLURB[g.id] ? BASS_BLURB[g.id][lang] : (COURSE_BLURB[course]?.[g.id]?.[lang] ?? g[lang][1]), extra: progress.bests?.[g.id] ? best(progress.bests[g.id]) : <span className="new-chip">{t.newChip}</span>, onClick: () => onGame2(g.id) })) : []),
     // The groove trainer (fading click, pocket, swing) is a drums-course game too (0.65).
-    ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', icon: '', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
-    { key: 'duel', hue: 'var(--hue-voice)', icon: '⚔', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
-    { key: 'daily', hue: 'var(--hue-reading)', icon: '📅', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
+    ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
+    { key: 'duel', hue: 'var(--hue-voice)', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
+    { key: 'daily', hue: 'var(--hue-reading)', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
   ].filter((c) => COURSE_GAMES[course].includes(c.key));
   // A category remembered from another course that has no games here shows them all.
   const catNow: GameCat | 'all' = cat !== 'all' && !cards.some((x) => (x.cat ?? CAT_OF[x.key] ?? 'social') === cat) ? 'all' : cat;

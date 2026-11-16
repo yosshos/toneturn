@@ -10,8 +10,19 @@ import { kitHiddenLevels } from './drumAcoustic';
 import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
-import { stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
+import { stepCatalogue, stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
+import { testedLevelIds } from './drills/levelTest';
 import { voiceStartNow } from './voiceFamilies';
+
+let DIFFS: Map<string, number> | null = null;
+/** A technique level's path rating (its placement by difficulty, levelPlacement.ts / path.ts). */
+export function techDifficulty(levelId: string): number | undefined {
+  if (!DIFFS) {
+    DIFFS = new Map();
+    for (const s of stepCatalogue()) if (s.kind === 'tech' && s.ladder) DIFFS.set(s.ladder.ref, s.difficulty);
+  }
+  return DIFFS.get(levelId);
+}
 
 let LEVELS: Map<string, LevelDef> | null = null;
 /** A technique level by its id ("scales-3", "g-bass-2"). */
@@ -118,10 +129,12 @@ export function withLadderFacts(
   for (const fam of [...catalog(), ...guitarCatalog()]) {
     if (!opts.families.includes(fam.id)) continue;
     const start = opts.start[fam.id as FamilyId] ?? 1;
+    // Levels the playing test proved are ✓ by test (they stay open to practise): below the start by number, and by
+    // difficulty every level at or below the hardest of them (levels put in front later count too).
+    const tested = testedLevelIds(fam.levels, start, techDifficulty);
     for (const lv of fam.levels) {
       const id = `tech:${lv.id}`;
-      // Levels below the playing test's start are ✓ by test (they stay open to practise).
-      if (lv.level < start && !tests[id]) tests[id] = opts.at;
+      if (tested.has(lv.id) && !tests[id]) tests[id] = opts.at;
       // SPEC-PATH-ROLE: a step is opened at 1 star (three keys clean at the base tempo). Facts only rise, so a ✓ given
       // under the old rule (three keys at the target tempo) is never taken away.
       const st = techStars(lv, opts.items, opts.order);

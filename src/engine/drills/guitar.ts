@@ -838,12 +838,15 @@ function genLegato(s: DrillSpec, tu: Tuning): Drill {
         [7, false],
       ];
       for (const [d, minor] of prog) {
-        // The octave tap stays on a 22-fret neck: a root at fret 12 pulls off to the open string instead.
+        // The octave tap stays on a 22-fret neck: a root at fret 12 pulls off to the open string instead; a root at
+        // fret 11 (no open string below it) moves to the 2nd string, where it sits at fret 4.
         const r1 = lowFret1(tu, key + d, 1);
-        const r = r1 + 12 > MAX_FRET ? r1 - 12 : r1;
+        const str = r1 === 11 ? 2 : 1;
+        const r0 = str === 1 ? r1 : lowFret1(tu, key + d, 2);
+        const r = r0 + 12 > MAX_FRET ? r0 - 12 : r0;
         const third = minor ? 3 : 4;
         for (let k = 0; k < 4; k++)
-          gns.push({ s: 1, f: r + (k % 2 === 0 ? 7 : 12), tech: 'tap' }, { s: 1, f: r, pos: Math.max(1, r), finger: 1, tech: 'pull' }, { s: 1, f: r + third, pos: Math.max(1, r), finger: third === 3 ? 3 : 4, tech: 'hammer' });
+          gns.push({ s: str, f: r + (k % 2 === 0 ? 7 : 12), tech: 'tap' }, { s: str, f: r, pos: Math.max(1, r), finger: 1, tech: 'pull' }, { s: str, f: r + third, pos: Math.max(1, r), finger: third === 3 ? 3 : 4, tech: 'hammer' });
       }
       title = t(`Tapped arpeggios I–vi–IV–V · ${NAMES[key]}`, `ארפג׳יו בטאפינג I–vi–IV–V · ${NAMES[key]}`);
       return finish(s, tu, seqEv(gns, 1 / 3), { title, bpm: bpmAt(3, 3) });
@@ -1525,25 +1528,27 @@ function genLead(s: DrillSpec, tu: Tuning): Drill {
     case 'double-stops': {
       // Diatonic 3rds on strings 3-2 (option 0) or 6ths on strings 3-1 (option 1), up an octave and back.
       const sixths = s.option === 1;
-      const hiStr = sixths ? 1 : 2;
-      // Up an octave from the tonic on string 3, inside a 22-fret neck (G: from the open strings).
-      const rf1 = lowFret1(tu, key, 3);
+      // Up an octave from the tonic on string 3, inside a 22-fret neck (G: from the open strings). F♯ (fret 11, no
+      // open string below it) moves down a string set: strings 4 & 3 / 4 & 2.
+      const lowStr = lowFret1(tu, key, 3) === 11 ? 4 : 3;
+      const hiStr = lowStr - (sixths ? 2 : 1);
+      const rf1 = lowFret1(tu, key, lowStr);
       const rf = rf1 + 12 > MAX_FRET ? rf1 - 12 : rf1;
-      const lowP = noteAt(tu, 3, rf);
+      const lowP = noteAt(tu, lowStr, rf);
       const sc = (k: number) => lowP + 12 * Math.floor(k / 7) + MAJOR[mod(k, 7)];
       const pairs: GN[][] = [];
       for (let k = 0; k <= 7; k++) {
         const a = sc(k);
         const b = sc(k + (sixths ? 5 : 2));
-        const fa = a - tu.open[2];
+        const fa = a - tu.open[lowStr - 1];
         const fb = b - tu.open[hiStr - 1];
         pairs.push([
-          { s: 3, f: fa },
+          { s: lowStr, f: fa },
           { s: hiStr, f: fb },
         ]);
       }
       for (const p of upDown(pairs)) push(1, ...p.map((x) => ({ ...x, stroke: 'D' as Stroke })));
-      title = sixths ? t(`Double stops in 6ths (strings 3 & 1) · ${NAMES[key]}`, `צלילים כפולים בסקסטות (מיתרים 3 ו-1) · ${NAMES[key]}`) : t(`Double stops in 3rds (strings 3 & 2) · ${NAMES[key]}`, `צלילים כפולים בטרצות (מיתרים 3 ו-2) · ${NAMES[key]}`);
+      title = sixths ? t(`Double stops in 6ths (strings ${lowStr} & ${hiStr}) · ${NAMES[key]}`, `צלילים כפולים בסקסטות (מיתרים ${lowStr} ו-${hiStr}) · ${NAMES[key]}`) : t(`Double stops in 3rds (strings ${lowStr} & ${hiStr}) · ${NAMES[key]}`, `צלילים כפולים בטרצות (מיתרים ${lowStr} ו-${hiStr}) · ${NAMES[key]}`);
       return finish(s, tu, evs, { title, bpm: 60, evenness: true });
     }
     case 'bb-box': {

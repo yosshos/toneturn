@@ -19,7 +19,7 @@ import { piano } from './services';
 
 type Lang = 'he' | 'en';
 const TX = {
-  title: { en: 'Sing the Interval Sprint', he: 'ספרינט מרווחים בשירה' },
+  title: { en: 'Interval Sing', he: 'ספרינט שירה' },
   back: { en: 'Back', he: 'חזרה' },
   blurb: { en: 'A note sounds and an interval is named: sing the other note and hold it steady. A wrong note or a long silence costs 3 seconds. 90 seconds.', he: 'נשמע צליל ונקרא מרווח: שרים את הצליל השני ומחזיקים אותו יציב. צליל שגוי או שתיקה ארוכה עולים 3 שניות. 90 שניות.' },
   start: { en: 'Start', he: 'להתחיל' },

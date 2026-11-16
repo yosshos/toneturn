@@ -253,8 +253,9 @@ function Cmp({ label, a, b, fmt, lowerBetter = false }: { label: string; a: numb
   return (
     <tr>
       <th scope="row">{label}</th>
-      <td dir="ltr">{a === null ? '—' : fmt(a)}</td>
-      <td dir="ltr">{b === null ? '—' : fmt(b)}</td>
+      {/* each value isolated: a Hebrew duration ("1 ש׳ 5 דק׳") keeps its own order inside the LTR column */}
+      <td dir="ltr">{a === null ? '—' : <bdi>{fmt(a)}</bdi>}</td>
+      <td dir="ltr">{b === null ? '—' : <bdi>{fmt(b)}</bdi>}</td>
       <td dir="ltr">{better === null ? '' : <span className={`trend-delta ${better ? 'up' : 'down'}`}>{d! > 0 ? '▲' : '▼'}</span>}</td>
     </tr>
   );

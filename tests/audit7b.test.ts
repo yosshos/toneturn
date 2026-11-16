@@ -317,8 +317,9 @@ describe('#8 #9 the voice: first steps, jazz entry, improvising in pop, pop and 
     }
     for (const l of AUDIT7_VOICE_LEVELS) for (const it of l.items) if (it.song) expect(voiceSong(it.song.id), `${it.id} ${it.song.id}`).toBeTruthy();
   });
-  it('the placement probe stays cautious: a clear hold and echo pass the old first steps, the new ones stay to do', () => {
-    expect(probeStarts({ hold: 0.9, echo: 0.9, time: 0.9, song: 0.9 })['v-first']).toBe(4);
+  it('the placement probe: a clear hold and echo pass the first steps up to matching; time and song the rest (0.97)', () => {
+    expect(probeStarts({ hold: 0.9, echo: 0.9, time: 0.4, song: 0.4 })['v-first']).toBe(5);
+    expect(probeStarts({ hold: 0.9, echo: 0.9, time: 0.9, song: 0.9 })['v-first']).toBe(8);
   });
 });
 

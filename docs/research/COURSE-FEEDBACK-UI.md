@@ -581,7 +581,7 @@ Remove the colour-blind opt-in (`MARK_CVD`): the new palette *is* the safe one (
 - [ ] `Drills.tsx:1024-1070`:
   - remove the duplicate ladder line and the `MarkLegend` row (the legend moves into "Why?");
   - pass `onLoop(fromBar, toBar)`.
-- [ ] Fix RTL: wrap the stat chips in `<bdi>`; no `dir="ltr"` around Hebrew words (`DrillTake.tsx:824`); "שוב ב־♩ 66" built with an isolated tempo span.
+- [x] Fix RTL: wrap the stat chips in `<bdi>`; no `dir="ltr"` around Hebrew words (`DrillTake.tsx:824`); "שוב ב־♩ 66" built with an isolated tempo span. (0.97 leftovers: the chips with Hebrew words are `dir="auto"` inside the LTR row; the tempo line is already an isolated `<bdi dir="ltr">`, and no "שוב ב־♩" string is left. Stats durations use the diary's isolation, `Stats.Dur`.)
 - [ ] e2e: the keys, drums and guitar result fits 320×720 with Next visible (extend `e2e/keys.spec.ts`, `drums.spec.ts`).
 
 ### Slice 3: Loop the spot (impact H, effort M)

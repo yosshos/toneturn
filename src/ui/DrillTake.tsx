@@ -1049,8 +1049,10 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = 
           {drumLimbLine(m.drum, m.wrong, lang)}
         </p>
       )}
+      {/* The chips run left to right; a chip with Hebrew words is its own direction (dir="auto"), so "83% תווים · 2
+          שגויים" keeps its order inside the LTR row (COURSE-FEEDBACK-UI slice 2, RTL). */}
       <div className="drill-stats" dir="ltr">
-        <span>
+        <span dir="auto">
           <b>{Math.round(m.accuracy * 100)}%</b> {tx.notes}
           {m.wrong ? ` · ${m.wrong} ${tx.wrong}` : ''}
           {m.missing ? ` · ${m.missing} ${tx.missing}` : ''}
@@ -1081,7 +1083,7 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = 
           </span>
         )}
         {(m as TakeMetrics & { guitar?: { ring: { chords: number; full: number } | null } }).guitar?.ring && (
-          <span data-ring="1">
+          <span data-ring="1" dir="auto">
             {lang === 'he' ? 'אקורדים מלאים' : 'full chords'}{' '}
             <b>
               {(m as TakeMetrics & { guitar: { ring: { chords: number; full: number } } }).guitar.ring.full}/{(m as TakeMetrics & { guitar: { ring: { chords: number; full: number } } }).guitar.ring.chords}

@@ -230,7 +230,8 @@ describe('the voice placement probe (§8)', () => {
     expect(pop['v-scat']).toBeUndefined();
     const jazz = probeStarts({ hold: 0.9, echo: 0.9, time: 0.9, song: 0.9, guide: 0.9 });
     expect(jazz['v-scat']).toBe(3);
-    expect(Math.max(...Object.values(jazz))).toBeLessThanOrEqual(4);
+    // (the first steps are all ✓ by a clear probe since 0.97: v-first is not one of the cautious one-or-two moves)
+    expect(Math.max(...Object.entries(jazz).filter(([f]) => f !== 'v-first').map(([, n]) => n))).toBeLessThanOrEqual(4);
   });
   it('levels before the probed start are ✓ by test on the path (open to practise), never "done"', () => {
     const f = withLadderFacts({}, { families: ['v-songs'], items: {}, order: 'fifths-up' as never, start: { 'v-songs': 3 } as never, vocalPassed: [], at: '2026-11-11T10:00:00Z' });
