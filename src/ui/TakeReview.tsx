@@ -139,15 +139,21 @@ export function TakeReview({
       <p className="tr-verdict" aria-live="polite">
         <span className={`tr-medal v-${m.verdict}`} aria-hidden="true" />
         <b>{word}</b>
-        <span className="tr-sep" aria-hidden="true">
-          ·
-        </span>
-        <span data-notes={`${r.notes.ok}/${r.notes.total}`}>
-          <bdi dir="ltr">
-            {r.notes.ok}/{r.notes.total}
-          </bdi>{' '}
-          {tx.notes}
-        </span>
+        {/* the count lives in the Notes chip below; repeated here it wrapped the verdict to a second line (a phone's
+            review is one screen: the hands-together pieces had no row to spare). A soft review has no chips: keep it. */}
+        {r.soft && (
+          <>
+            <span className="tr-sep" aria-hidden="true">
+              ·
+            </span>
+            <span data-notes={`${r.notes.ok}/${r.notes.total}`}>
+              <bdi dir="ltr">
+                {r.notes.ok}/{r.notes.total}
+              </bdi>{' '}
+              {tx.notes}
+            </span>
+          </>
+        )}
         {!r.soft && tend && (
           <>
             <span className="tr-sep" aria-hidden="true">
