@@ -43,6 +43,12 @@ export interface EncoreTake {
   /** Graded against written notes (a drill, a piece): Keep defaults to the looped / worst bars. */
   graded?: boolean;
   itemId?: string;
+  /** v2 audio takes (record mode by microphone, §14.2): each note's confidence 0..1, parallel to `notes`. */
+  conf?: number[];
+  /** Share of the take that sounded polyphonic (> 0.4: too polyphonic — chords by mic are v3). */
+  poly?: number;
+  /** Piano by microphone: only the top line was caught. */
+  topLine?: boolean;
 }
 
 const MEM_KEY = 'tt.encore.takes.v1';

@@ -11,7 +11,8 @@ import { loopBpm, sliceDrill } from '../../engine/drills/slice';
 import type { RatingEvent } from '../../engine/rating';
 import type { Lick, LickBook, LickInstrument } from '../../engine/licks';
 import type { Settings } from '../../storage/progress';
-import { finalHand, keyOrder, keyStage, keyStartBpm, phraseDrill, phraseRungs, planOf, type Hand } from '../../engine/encore/phrase';
+import { finalHand, keyOrder, keyStage, keyStartBpm, phraseDrill, phraseNeck, phraseRungs, planOf, type Hand } from '../../engine/encore/phrase';
+import { midi } from '../../speech/midi';
 import { phraseTake, type TakeOutcome } from '../../engine/encore/connect';
 import { DrillTake } from '../DrillTake';
 import { RubatoTake } from '../RubatoTake';
@@ -129,7 +130,12 @@ export function EncoreRun({
           </bdi>
         )}
       </span>
-      {hand !== 'R' || l.lh?.length ? <span className="ch gh">{hand === 'R' ? (he ? 'יד ימין' : 'RH') : hand === 'L' ? (he ? 'יד שמאל' : 'LH') : he ? 'שתי ידיים' : 'Hands'}</span> : null}
+      {(inst === 'guitar' || inst === 'bass') && (
+        <span className="ch gh" data-run-pos={phraseNeck(l, keyPc, inst).pos}>
+          {phraseNeck(l, keyPc, inst).pos ? <>{he ? 'פוז׳' : 'pos.'} <bdi dir="ltr">{phraseNeck(l, keyPc, inst).pos}</bdi></> : he ? 'פתוחה' : 'open'}
+        </span>
+      )}
+      {inst === 'piano' && (hand !== 'R' || l.lh?.length) ? <span className="ch gh">{hand === 'R' ? (he ? 'יד ימין' : 'RH') : hand === 'L' ? (he ? 'יד שמאל' : 'LH') : he ? 'שתי ידיים' : 'Hands'}</span> : null}
       <span className="grow" />
       <small className="tiny">
         {he ? 'סולם' : 'Key'} <bdi dir="ltr">{ki + 1}</bdi> {he ? 'מתוך' : 'of'} <bdi dir="ltr">{order.length}</bdi>
@@ -222,7 +228,7 @@ export function EncoreRun({
           onNext={nextAfter}
           onKeep={
             played.current.length >= 3 && res.stage === 'tempo'
-              ? () => keepPhrase({ kind: 'phrase', instrument: inst, title: l.name, source: 'midi', notes: played.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart ? { chart: drill.chart.join(' | ') } : {}) }, wb !== null ? { from: wb * drill.meter, to: (wb + 1) * drill.meter } : null)
+              ? () => keepPhrase({ kind: 'phrase', instrument: inst, title: l.name, source: midi.devices.length && inst === 'piano' ? 'midi' : 'mic', notes: played.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart ? { chart: drill.chart.join(' | ') } : {}) }, wb !== null ? { from: wb * drill.meter, to: (wb + 1) * drill.meter } : null)
               : undefined
           }
         >

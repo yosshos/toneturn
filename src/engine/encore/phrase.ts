@@ -8,6 +8,8 @@ import { itemPass, ladderStep } from '../drills/ladder';
 import { keyName } from '../drills/generate';
 import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type LickChord, type LickContext, type LickInstrument, type LickNote, type PhrasePlan, type PhraseSource } from '../licks';
 import type { BeatNote } from './detect';
+import { tuningById } from '../fretboard';
+import { instrumentCtx, neckPlace, neckStats, singerRange, voiceOctave, type NeckResult, type Range } from './placement';
 
 type T2 = { en: string; he: string };
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
@@ -157,7 +159,7 @@ export function phrasePitches(l: Lick, key: number, inst: LickInstrument = 'pian
   const t = tonic4(home) + shiftTo(home, key);
   const rh0 = l.notes.map((n) => t + n[0]);
   const lh0 = (l.lh ?? []).map((n) => t - 12 + n[0]);
-  const [lo, hi] = inst === 'piano' ? [21, 108] : windowOf(inst, range);
+  const [lo, hi] = inst === 'piano' ? [21, 108] : windowOf(inst, inst === 'voice' ? (range ?? singerRange()) : range);
   const cen = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
   let best = 0;
   let bestCost = Infinity;
@@ -216,15 +218,17 @@ export function phraseChart(l: Lick, key: number): string[] {
  */
 export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: { inst?: LickInstrument; startBpm?: number; band?: boolean } = {}): Drill {
   const inst = o.inst ?? 'piano';
+  if (inst !== 'piano' && hand !== 'R') hand = 'R';
   const k = mod(key);
   const ps = phrasePitches(l, k, inst);
+  const neck = inst === 'guitar' || inst === 'bass' ? phraseNeck(l, k, inst) : null;
   const chordToneOf = (semi: number, beat: number) => {
     if (!l.chords.length) return undefined;
     const c = l.chords[chordAt(l.chords, beat)];
     return LICK_Q[c[1]]?.ct.includes(mod(semi - c[0]));
   };
   const notes: ExpNote[] = [];
-  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i], beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]) }));
+  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : {}) }));
   if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]) }));
   // a one-hand phrase practised "left": its notes an octave down in the left hand
   if (hand === 'L' && !l.lh?.length) l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L' }));
@@ -244,7 +248,7 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
   const sig = ROOT_FLAT[minor ? mod(k + 3) : k];
   const plan = planOf(l);
   return {
-    spec: { family: 'licks', kind: `lick:${l.id}`, key: k, hands: hand, swing: (l.swing ?? (l.straight ? 0.5 : 0.62)) > 0.54, ...(minor ? { minor: true } : {}), ...(inst === 'guitar' || inst === 'bass' ? { instrument: inst } : {}) },
+    spec: { family: 'licks', kind: `lick:${l.id}`, key: k, hands: hand, swing: (l.swing ?? (l.straight ? 0.5 : 0.62)) > 0.54, ...(minor ? { minor: true } : {}), ...(inst === 'guitar' || inst === 'bass' ? { instrument: inst, tuning: tuningOf(inst).id } : {}) },
     itemId: phraseItemId(l, inst, k, hand),
     title: { en: `${l.name.en} · ${kn}`, he: `${l.name.he} · ${kn}` },
     notes,
@@ -283,7 +287,7 @@ export function pianoKeyCost(pitches: number[]): number {
 }
 export function keyCost(l: Lick, key: number, inst: LickInstrument = 'piano'): number {
   const p = phrasePitches(l, key, inst);
-  if (inst !== 'piano') return 0;
+  if (inst !== 'piano') return instKeyCost(l, key, inst, p.rh);
   return (pianoKeyCost(p.rh) * l.notes.length + pianoKeyCost(p.lh) * (l.lh?.length ?? 0)) / Math.max(1, l.notes.length + (l.lh?.length ?? 0));
 }
 
@@ -292,6 +296,10 @@ export function keyOrder(l: Lick, plan: PhrasePlan = planOf(l), inst: LickInstru
   const home = l.homeKey ?? 0;
   const chosen = plan.keys === 'all' ? Array.from({ length: 12 }, (_, i) => i) : plan.keys.map((k) => mod(k));
   const set = new Set(chosen);
+  if (inst === 'voice') {
+    const ok = keysInRange(l);
+    if (ok.length) for (const k of [...set]) if (!ok.includes(k)) set.delete(k);
+  }
   const fourths = [...LICK_KEYS.slice(LICK_KEYS.indexOf(home)), ...LICK_KEYS.slice(0, LICK_KEYS.indexOf(home))];
   let out: number[];
   if (plan.order === 'fourths') out = fourths;
@@ -422,7 +430,7 @@ export function phraseRank(l: Lick, items: Record<string, ItemState>, book?: Lic
   const home = keyOrder(l, planOf(l), inst)[0] ?? l.homeKey ?? 0;
   const passed = passedKeys(l, items, inst, hand);
   const n = passed.length;
-  if (n >= 12) {
+  if (n >= keysNeeded(l, inst)) {
     const used = (book?.used?.[l.id] ?? 0) >= 2;
     const r = book?.review?.[l.id];
     const reviewed = !!r && (r.reps ?? 0) >= 2 && Date.parse(r.last) - Date.parse(l.createdAt ?? r.last) >= 7 * 86400000;
@@ -445,8 +453,9 @@ export function promotion(l: Lick, items: Record<string, ItemState>, book?: Lick
   const n = passedKeys(l, items, inst).length;
   if (rank === 5) return { rank, to: 6, value: Math.min(0.95, ((book?.used?.[l.id] ?? 0) >= 2 ? 0.5 : 0) + ((book?.review?.[l.id]?.reps ?? 0) >= 2 ? 0.45 : 0)), need: 0 };
   if (rank <= 1) return { rank, to: rank + 1, value: rank === 1 ? 0.5 : 0, need: 1 };
-  const lo = RANK_KEYS[rank];
-  const hi = RANK_KEYS[rank + 1];
+  const need = keysNeeded(l, inst);
+  const lo = Math.min(RANK_KEYS[rank], need - 1);
+  const hi = rank + 1 >= 5 ? need : Math.min(RANK_KEYS[rank + 1], need);
   return { rank, to: rank + 1, value: Math.min(0.95, Math.max(0, (n - lo) / (hi - lo))), need: hi - n };
 }
 
@@ -488,3 +497,78 @@ export function autoName(ctx: LickContext | 'free', key: number, minor: boolean,
   const dated = from === 'lick' || from === 'pattern' ? '' : ` ${d}`;
   return { en: `${w.en} in ${k} · ${s.en}${dated}`, he: `${w.he} ב־${k} · ${s.he}${dated}` };
 }
+
+// ───────────────────────────── guitar, bass and voice (v2, §7.4, §13.7) ─────────────────────────────
+
+/** The tuning a phrase is placed on: the course's guitar / bass tuning (Encore sets it from the settings). */
+export const tuningOf = (inst: 'guitar' | 'bass') => tuningById(inst === 'bass' ? instrumentCtx().bassTuning : instrumentCtx().guitarTuning);
+const MAX_FRET: Record<'guitar' | 'bass', number> = { guitar: 19, bass: 17 };
+const tabOf = (neck: NeckResult, i: number): Partial<ExpNote> => {
+  const p = neck.placed[i];
+  if (!p) return {};
+  return p.fret > 0 ? { string: p.string, fret: p.fret, pos: neck.pos || Math.max(1, p.fret - 1), finger: Math.max(1, Math.min(4, p.fret - (neck.pos || p.fret) + 1)) } : { string: p.string, fret: 0 };
+};
+
+/**
+ * The phrase's line on the neck in a key (§7.4): the home key gets the shortest-path fingering; every other key keeps
+ * that shape moved by the transposition when it fits ("same position in every key", the default), else the closest
+ * playable fingering; `plan.position === 'per-key'` chooses each key's fingering on its own. Open strings in other keys
+ * only when the home key used them.
+ */
+export function phraseNeck(l: Lick, key: number, inst: 'guitar' | 'bass'): NeckResult & { shift: number } {
+  const tu = tuningOf(inst);
+  const home = l.homeKey ?? 0;
+  const base = { open: tu.open, maxFret: MAX_FRET[inst] };
+  const hp = phrasePitches(l, home, inst).rh;
+  const homeRes = neckPlace(hp, { ...base, allowOpen: true, perKey: true });
+  if (mod(key) === mod(home)) return { ...homeRes, shape: 'same', shift: 0 };
+  const ps = phrasePitches(l, key, inst).rh;
+  const usedOpen = homeRes.placed.some((p) => p.fret === 0);
+  const perKey = planOf(l).position === 'per-key';
+  const opts = { ...base, allowOpen: usedOpen, home: { pitches: hp, placed: homeRes.placed }, perKey };
+  const first = { ...neckPlace(ps, opts), shift: 0 };
+  if (perKey || first.shape === 'same') return first;
+  // the shape that does not fit in this octave (below the nut, say) may fit an octave up or down: same fingers
+  const lo = Math.min(...tu.open);
+  const hi = Math.max(...tu.open) + MAX_FRET[inst];
+  for (const sh of [12, -12]) {
+    const q = ps.map((p) => p + sh);
+    if (!q.length || Math.min(...q) < lo || Math.max(...q) > hi) continue;
+    const r = neckPlace(q, { ...opts, home: { pitches: hp, placed: homeRes.placed } });
+    if (r.shape === 'same') return { ...r, shift: sh };
+  }
+  return first;
+}
+
+/** The keys a voice phrase fits in the singer's range (every note inside at the best octave). */
+export function keysInRange(l: Lick, range?: Range | null): number[] {
+  const r = singerRange(range ?? instrumentCtx().range);
+  const home = l.homeKey ?? 0;
+  const t = tonic4(home);
+  return Array.from({ length: 12 }, (_, k) => k).filter((k) => voiceOctave(l.notes.map((n) => t + shiftTo(home, k) + n[0]), r).fits);
+}
+/** Keys at the target that make a phrase "yours": 12; for the voice every key in the singer's range (at least 1). */
+export const keysNeeded = (l: Lick, inst: LickInstrument = 'piano'): number => (inst === 'voice' ? Math.max(1, keysInRange(l).length) : 12);
+
+/**
+ * The easiest-first order's awkwardness off the piano (§7.3): guitar / bass — the placed line's shifts, string skips,
+ * stretches and high frets per note; voice — the distance from the comfortable middle of the range (and notes outside).
+ */
+export function instKeyCost(l: Lick, key: number, inst: LickInstrument, pitches: number[]): number {
+  if (!pitches.length) return 0;
+  if (inst === 'guitar' || inst === 'bass') {
+    const st = neckStats(phraseNeck(l, key, inst).placed);
+    return Math.round(((st.shifts * 1 + st.skips * 0.3 + st.stretch * 0.5) / Math.max(1, st.n) + st.high * 0.4 + (inst === 'bass' ? st.low * 0.1 : 0)) * 1000) / 1000;
+  }
+  if (inst === 'voice') {
+    const r = singerRange();
+    const mid = (r.low + r.high) / 2;
+    const half = Math.max(1, (r.high - r.low) / 2);
+    const out = pitches.filter((p) => p < r.low || p > r.high).length;
+    return Math.round((pitches.reduce((a, p) => a + Math.abs(p - mid) / half, 0) / pitches.length + out) * 1000) / 1000;
+  }
+  return 0;
+}
+
+/** A phrase as one instrument practises it: off the piano a two-hand phrase is its main line (the right hand). */
+export const forInstrument = (l: Lick, inst: LickInstrument): Lick => (inst !== 'piano' && l.lh?.length ? { ...l, lh: undefined } : l);

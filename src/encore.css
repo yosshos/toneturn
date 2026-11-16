@@ -187,3 +187,16 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
   .enc-card, .enc-card-flat { padding: 7px 10px; }
   .enc-map td.c { height: 14px; }
 }
+
+/* Encore v2 (SPEC-PHRASE-STUDIO §4.3 audio, §7.4): the level meter and pitch trace of record mode by microphone, the
+   guitar / bass position line and the voice range line on the plan, out-of-range keys on the ring (struck, not hidden). */
+.enc-level { width: 46px; height: 8px; border: 2px solid var(--outline); border-radius: 999px; overflow: hidden; background: var(--card-2); flex: none; }
+.enc-level i { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
+.enc-trace { width: 100%; height: auto; display: block; }
+.enc-trace-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.enc-neckline { gap: 6px; min-width: 0; }
+.enc-poslist { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.enc-rangeline { display: block; }
+.enc-rk.out ellipse { fill: var(--card-2); stroke-dasharray: 3 2; }
+.enc-rk.out text { fill: var(--ink-dim); text-decoration: line-through; }
+.enc-poly { margin: 0; }
