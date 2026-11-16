@@ -2,6 +2,7 @@
 // changing the pitch (the browser's preservesPitch), loop a passage A–B — for transcribing and learning by ear.
 
 import { useEffect, useRef, useState } from 'react';
+import { Icon } from './icons';
 
 const TX = {
   en: { title: 'Slow down', pick: 'Open an audio file', hint: 'Your own recordings only. The file stays on this device.', speed: 'Speed', setA: 'Set A', setB: 'Set B', clear: 'Clear loop', back: 'Back', play: 'Play', pause: 'Pause', other: 'Another file', loop: 'Loop' },
@@ -122,7 +123,7 @@ export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: ()
     <main className="panel-screen slowdown" data-slowdown="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>
@@ -163,7 +164,7 @@ export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: ()
             </button>
             {(a !== null || b !== null) && (
               <button className="icon-btn" onClick={() => (setA(null), setB(null))} aria-label={tx.clear}>
-                ✕
+                <Icon k="close" />
               </button>
             )}
             <button className="icon-btn" onClick={() => seek(t + 5)} aria-label="+5 s">
@@ -171,7 +172,7 @@ export function SlowDownScreen({ lang, onBack }: { lang: 'en' | 'he'; onBack: ()
             </button>
           </div>
           <button className="btn mega" onClick={toggle} data-slowdown-play="1">
-            {playing ? `■ ${tx.pause}` : `▶ ${tx.play}`}
+            <Icon k={playing ? 'pause' : 'play'} size={20} /> {playing ? tx.pause : tx.play}
           </button>
         </>
       )}

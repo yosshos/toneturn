@@ -21,6 +21,7 @@ import { lickById } from '../engine/licks';
 import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
@@ -151,7 +152,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
     setResult(
       <div className="is-result" data-is-result="phrasing">
         <p className={chk.ok ? 'ok' : 'no'}>
-          <b>{chk.ok ? '✓' : '✕'}</b> {chk.why[lang]}
+          <Icon k={chk.ok ? 'check' : 'close'} size={14} /> {chk.why[lang]}
         </p>
         <ul className="is-stats" dir="ltr">
           <li>
@@ -196,7 +197,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
     setResult(
       <div className="is-result" data-is-result="vary">
         <p className={v.ok ? 'ok' : 'no'}>
-          <b>{v.ok ? '✓' : '✕'}</b> {v.why[lang]}
+          <Icon k={v.ok ? 'check' : 'close'} size={14} /> {v.why[lang]}
         </p>
       </div>,
     );
@@ -243,7 +244,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
     <main className="panel-screen improv-studio" data-improv-studio="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (stop(), onBack())} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>
@@ -359,21 +360,21 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
       {mode === 'vary' && <p className="is-ask" data-is-ask={VARS[askIdx % VARS.length]}>{tx.asks[VARS[askIdx % VARS.length]]}</p>}
       {mode !== 'rules' && mode !== 'useit' && <div className="ch-step" dir="ltr">
         <small>{tx.tempo}</small>
-        <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 6))} disabled={running}>
-          −
+        <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 6))} disabled={running} aria-label="−">
+          <Icon k="minus" />
         </button>
         <b>{bpm}</b>
-        <button className="icon-btn" onClick={() => setBpm((b) => Math.min(220, b + 6))} disabled={running}>
-          +
+        <button className="icon-btn" onClick={() => setBpm((b) => Math.min(220, b + 6))} disabled={running} aria-label="+">
+          <Icon k="plus" />
         </button>
       </div>}
       {mode === 'rules' || mode === 'useit' ? null : running ? (
         <button className="btn primary" onClick={stop}>
-          ■ {tx.stop} {round ? `· ${tx.round} ${round}/3` : ''}
+          <Icon k="stop" /> {tx.stop} {round ? `· ${tx.round} ${round}/3` : ''}
         </button>
       ) : (
         <button className="btn primary" onClick={() => void (mode === 'phrasing' ? startPhrasing() : mode === 'vary' ? startVary() : startTrade())} data-is-start="1">
-          ▶ {tx.start}
+          <Icon k="play" /> {tx.start}
         </button>
       )}
       {midi.devices.length === 0 && mode !== 'rules' && mode !== 'useit' && (

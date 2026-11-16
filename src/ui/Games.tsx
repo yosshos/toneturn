@@ -21,6 +21,7 @@ import { InputCheck } from './InputCheck';
 import { SetupSheet } from './SetupSheet';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { midi as midiInput } from '../speech/midi';
+import { Icon } from './icons';
 
 export interface GameSetupValue {
   kind: GameKind;
@@ -109,7 +110,7 @@ export function GameSetup({
     <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.games}</h1>
       </header>
@@ -408,7 +409,7 @@ export function GameScreen({
     <main className={`game kind-${v.kind} stage-${v.stage}`} style={{ ['--pc' as string]: cur.color }}>
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (v.stage === 'paused' ? onExit() : c.pause())} aria-label={v.stage === 'paused' ? t.exit : t.pause}>
-          {v.stage === 'paused' ? '✕' : '❚❚'}
+          <Icon k={v.stage === 'paused' ? 'close' : 'pause'} />
         </button>
         <div className="chain-count" aria-live="polite">
           <small>{t.chain}</small>

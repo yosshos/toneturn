@@ -22,6 +22,7 @@ const DRUM_SHORT: Partial<Record<DrumVoice, { en: string; he: string }>> = {
 import { drumLimbLine } from '../engine/drills/drumAnalyze';
 import { EvennessStrip, MarkLegend, VelocityCurve } from './DrillTake';
 import { KeepButton } from './encore/bits';
+import { Icon } from './icons';
 import { RecLink } from './Recordings'; // My recordings: every take is kept (SPEC-PHRASE-STUDIO §6.3)
 
 type Lang = 'he' | 'en';
@@ -251,7 +252,7 @@ export function TakeReview({
             <header className="tr-sheet-head">
               <h2>{word}</h2>
               <button className="icon-btn" onClick={() => setWhy(false)} aria-label={tx.close}>
-                ✕
+                <Icon k="close" />
               </button>
             </header>
             {next && (

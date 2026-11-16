@@ -7,6 +7,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Strings } from '../i18n/strings';
 import { namingFor, type Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
+import { Icon } from './icons';
 
 const KEYS = ['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb'];
 
@@ -104,7 +105,7 @@ export function DroneScreen({ t, settings, onBack }: { t: Strings; settings: Set
           }}
           aria-label={t.back}
         >
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.dronePractice}</h1>
       </header>

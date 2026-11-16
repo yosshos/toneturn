@@ -7,6 +7,7 @@ import type { AreaId, MiniLesson } from '../content/miniTypes';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { GlossaryList, MiniLessonPlayer } from './MiniLesson';
+import { Icon } from './icons';
 
 export const AREAS: AreaId[] = ['ear', 'harmony', 'rhythm', 'theory', 'jazz', 'voice', 'world', 'play'];
 
@@ -44,7 +45,7 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
     <main className="panel-screen learned lessons2">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{he ? 'שיעורים' : 'Lessons'}</h1>
       </header>
@@ -95,8 +96,8 @@ export function LearnedScreen({ t, settings, name, onLearned, onBack }: { t: Str
                             <b>{l.title[lang]}</b>
                             {has && <small>{l.takeaway[lang]}</small>}
                           </span>
-                          <span className="ls-go flip-rtl" aria-hidden="true">
-                            ›
+                          <span className="ls-go" aria-hidden="true">
+                            <Icon k="fwd" />
                           </span>
                         </button>
                         {l.more?.length ? (

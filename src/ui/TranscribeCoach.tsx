@@ -16,6 +16,7 @@ import { keyName } from '../engine/drills/generate';
 import { LICK_KEYS, lickChart, lickDrill, lickFromPhrase, type LickBook } from '../engine/licks';
 import { comparePhrase, DEGREE_NAMES, gradeDegrees, heardOfPlayed, phraseBeats, phraseDegrees, phraseEvents, phraseFor, phraseStars, phraseXp, TX_LEVELS, type Phrase, type PhraseResult } from '../engine/transcribe';
 import { calOf, LickRun, lickInstrumentOf, Stars, type TakeFn } from './LickTrainer';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -65,7 +66,7 @@ export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTak
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1>{title}</h1>
     </header>
@@ -292,7 +293,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
           {play && (
             <div className={`tx-result v-${play.verdict}`} data-tx-verdict={play.verdict} data-tx-first={play.first ? play.first.i : -1}>
               <p className="tx-why">
-                <b>{play.verdict === 'clean' ? '✓' : '✕'}</b> {play.why[lang]}
+                <Icon k={play.verdict === 'clean' ? 'check' : 'close'} size={14} /> {play.why[lang]}
               </p>
               <p className="tx-bars" dir="ltr">
                 <span>

@@ -348,7 +348,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
       <header className="intake-head">
         {i > 0 ? (
           <button className="icon-btn" onClick={() => go(-1)} aria-label={t.back}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
         ) : (
           <span />
@@ -506,7 +506,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
                 <Icon k="mute" /> {q.noSing}
               </button>
               <button className={`chip ${a.noMic ? 'on' : ''}`} aria-pressed={!!a.noMic} data-mode="nomic" onClick={() => setA((x) => ({ ...x, noMic: !x.noMic }))}>
-                <Icon k="mic" />✕ {q.noMic}
+                <Icon k="mic" /><Icon k="close" size={12} /> {q.noMic}
               </button>
             </div>
             <button className="btn mega" onClick={() => go(1)}>
@@ -725,7 +725,7 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
               <Icon k="stop" /> {q.rangeStop}
             </button>
             <button className="btn ghost" onClick={restart} data-range-restart="1">
-              ↻ {q.rangeRestart}
+              <Icon k="again" /> {q.rangeRestart}
             </button>
           </div>
         </>
@@ -735,7 +735,7 @@ function RangeStep({ t, settings, range, onRange, onNext }: { t: Strings; settin
             ✓ {q.rangeKeep}
           </button>
           <button className="btn ghost" onClick={() => void start()} data-range-start="1">
-            ↻ {q.rangeAgain}
+            <Icon k="again" /> {q.rangeAgain}
           </button>
         </div>
       ) : (

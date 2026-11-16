@@ -72,3 +72,11 @@
 .chl-b { height: 62%; background: #1d1b22; border-radius: 0 0 4px 4px; z-index: 2; }
 .chl-w.next { background: var(--accent); }
 .chl-b.next { background: var(--accent); border-color: #1d1b22; }
+
+.chl-actions .btn.on {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}

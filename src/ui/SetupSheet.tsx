@@ -4,6 +4,7 @@
 
 import '../setupsheet.css';
 import { useEffect, useState, type ReactNode } from 'react';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 
@@ -46,7 +47,7 @@ export function SetupSheet({
         <span className="sm-label">{name}</span>
         {summary !== undefined && summary !== '' && <span className="sm-sum">{summary}</span>}
         <span className="sm-dots" aria-hidden="true">
-          ⋯
+          <Icon k="more" />
         </span>
       </button>
       {open && (
@@ -55,7 +56,7 @@ export function SetupSheet({
             <div className="menu-head">
               <h2>{title ?? name}</h2>
               <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label={tx.close}>
-                ✕
+                <Icon k="close" />
               </button>
             </div>
             <div className="setup-sheet-body">{children}</div>

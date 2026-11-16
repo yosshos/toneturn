@@ -10,8 +10,9 @@ import { topicMarks, type PathView } from '../engine/path';
 import { NodeIcon } from './Home';
 import { runLevelFor, MODE_ID_LEVELS, WRONG_NOTE_LEVELS } from '../engine/lesson';
 import { modesLevelFor } from '../engine/recommend';
+import { Icon } from './icons';
 
-const markText = (m: 'done' | 'current' | 'ahead' | undefined) => (m === 'done' ? ' ✓' : m === 'current' ? ' ▶' : '');
+const markText = (m: 'done' | 'current' | 'ahead' | undefined) => (m === 'done' ? <> <Icon k="check" size={12} /></> : m === 'current' ? <> <Icon k="play" size={12} /></> : null);
 
 /**
  * Below the road on the Path tab (SPEC-TODAY §4): "Practice rooms" (the free-practice tools) and "All topics" (moved
@@ -74,8 +75,8 @@ export function PathExtras({
       {extra?.badge ? (
         <span className="count-badge">{extra.badge}</span>
       ) : (
-        <span className="room-chev flip-rtl" aria-hidden="true">
-          ›
+        <span className="room-chev" aria-hidden="true">
+          <Icon k="fwd" />
         </span>
       )}
     </button>
@@ -111,7 +112,7 @@ export function PathExtras({
               return (
                 <button key={i} className={`chip ${rec ? 'on' : ''}`} onClick={() => onModes(i + 1)} title={t.modesByEarLevels[i]}>
                   {i + 1}. {t.modesByEarLevels[i]}
-                  {rec && ' ★'}
+                  {rec && <> <Icon k="star" size={12} /></>}
                 </button>
               );
             })}

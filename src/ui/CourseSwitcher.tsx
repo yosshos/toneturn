@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { courseOf, type CourseId } from '../engine/courses';
 import { visibleCourses } from '../partner';
 import { Glyph } from './Glyph';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 
@@ -14,9 +15,7 @@ export function CourseChip({ active, lang, onOpen, variant = 'top' }: { active: 
     <button className={`course-chip ${variant}`} onClick={onOpen} aria-haspopup="dialog" aria-label={lang === 'he' ? `קורס: ${c.name.he}. החלפה` : `Course: ${c.name.en}. Switch`} data-course-chip={c.id}>
       <Glyph kind={c.glyph} color={c.color} size={variant === 'side' ? 34 : 30} />
       <span className="cc-name">{variant === 'side' ? c.name[lang] : c.short[lang]}</span>
-      <svg className="cc-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-        <path d="M6 9l6 6 6-6" />
-      </svg>
+      <Icon k="down" size={14} className="cc-chev" />
     </button>
   );
 }
@@ -40,9 +39,7 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
           {isNew && <small>{he ? 'מתחילים במבחן מיקום קצר, או מההתחלה' : 'Starts with a short placement test, or from the beginning'}</small>}
         </span>
         {on && (
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M5 12l5 5 9-10" />
-          </svg>
+          <Icon k="check" size={22} />
         )}
       </button>
     );
@@ -59,9 +56,7 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
             <div className="course-list add">{others.map((c) => row(c.id, true))}</div>
           ) : (
             <button className="course-add" onClick={() => setAdding(true)} data-course-add="1">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
+              <Icon k="plus" size={18} />
               {he ? 'קורס חדש' : 'New course'}
             </button>
           ))}

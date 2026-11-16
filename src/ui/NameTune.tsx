@@ -7,6 +7,7 @@ import { G2Head, type Game2Props } from './Flight';
 import { TierChips } from './TierChips';
 import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
 import { piano } from './services';
+import { Icon } from './icons';
 
 const TEXT = {
   en: {
@@ -199,11 +200,11 @@ export function NameTune({ lang, saved, onSave, onExit, onResult, best, tier: ti
           </div>
           {phase === 'ask' ? (
             <button className="btn ghost" onClick={() => void play(false)}>
-              ↻ {tx.replay}
+              <Icon k="again" /> {tx.replay}
             </button>
           ) : (
             <button className="btn mega" onClick={next}>
-              {tx.next} <span className="flip-rtl">→</span>
+              {tx.next} <Icon k="fwd" />
             </button>
           )}
         </section>

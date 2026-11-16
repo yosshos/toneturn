@@ -15,6 +15,7 @@ import { createGrooveDuel, myGrooveDuels, submitGrooveDuel, type GrooveDuelRow }
 import { listFriends } from '../cloud/social';
 import { DrillTake } from './DrillTake';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -113,7 +114,7 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
   const head = (
     <header className="screen-head">
       <button className="icon-btn" onClick={play && !ended ? () => setPlay(null) : onExit} aria-label={tx(TX.back)}>
-        <span className="flip-rtl">←</span>
+        <Icon k="back" />
       </button>
       <h1>{tx(TX.title)}</h1>
     </header>

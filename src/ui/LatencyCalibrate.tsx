@@ -8,6 +8,7 @@ import { piano } from './services';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -150,7 +151,7 @@ export function LatencyCalibrate({ lang, values, onSave, sources = ['tap', 'midi
         </>
       ) : (
         <button className="btn primary" onClick={() => void run()} disabled={src === 'midi' && !midi.devices.length} data-lat-start="1">
-          ▶ {tx.start}
+          <Icon k="play" /> {tx.start}
         </button>
       )}
       {res && (

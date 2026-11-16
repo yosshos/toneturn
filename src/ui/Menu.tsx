@@ -6,6 +6,7 @@ import type { CloudUser } from '../cloud/cloud';
 import { cloudConfigured } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
+import { Icon, type IconKey } from './icons';
 
 interface Props {
   t: Strings;
@@ -18,93 +19,23 @@ interface Props {
   extra?: React.ReactNode;
 }
 
-/** Line icons for the menu rows (mature, clean UI — owner 2026-11-07: the old grid looked bad). */
-const MENU_ICON: Record<string, React.ReactNode> = {
-  level: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m15.5 8.5-2 5-5 2 2-5z" />
-    </>
-  ),
-  friends: (
-    <>
-      <circle cx="9" cy="9" r="3.4" />
-      <path d="M2.8 19.5c.6-3.1 3.1-5 6.2-5s5.6 1.9 6.2 5M16.3 5.8a3.2 3.2 0 0 1 0 6.3M17.4 14.7c2.2.5 3.6 2.2 3.9 4.8" />
-    </>
-  ),
-  class: (
-    <>
-      <path d="M3 9.5 12 5l9 4.5-9 4.5z" />
-      <path d="M7 11.5v4.2c1.4 1.3 3.1 1.9 5 1.9s3.6-.6 5-1.9v-4.2M21 9.5V15" />
-    </>
-  ),
-  medal: (
-    <>
-      <circle cx="12" cy="14.5" r="5" />
-      <path d="M9 3h6l-1.6 6.6M9 3l1.6 6.6M12 12.2v4.6" />
-    </>
-  ),
-  gear: (
-    <>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7" />
-    </>
-  ),
-  tuner: (
-    <>
-      <path d="M4.5 16a8 8 0 0 1 15 0" />
-      <path d="M12 16l3.5-6.5" />
-      <circle cx="12" cy="16" r="1.2" />
-    </>
-  ),
-  metronome: (
-    <>
-      <path d="M8.5 3h7l4 18h-15z" />
-      <path d="M12 16l4.5-9M6.5 16h11" />
-    </>
-  ),
-  drone: (
-    <>
-      <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4" />
-    </>
-  ),
-  note: (
-    <>
-      <path d="M9 18V6l10-2v12" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="16.5" cy="16" r="2.5" />
-    </>
-  ),
-  chart: (
-    <>
-      <rect x="3.5" y="5" width="17" height="14" rx="2" />
-      <path d="M9 5v14M15 5v14M3.5 12h17" />
-    </>
-  ),
-  groove: (
-    <>
-      <path d="M3 15c2 0 2-6 4.5-6S10 15 12 15s2.5-6 4.5-6S19 15 21 15" />
-      <path d="M3 20h18" />
-    </>
-  ),
-  slowdown: (
-    <>
-      <circle cx="12" cy="13" r="8" />
-      <path d="M12 9v4l2.5 2M9.5 2.5h5" />
-    </>
-  ),
-  mic: (
-    <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-    </>
-  ),
+/** The menu rows' symbols (Paper chrome cut, 2026-11-16). */
+const MENU_ICON: Record<string, IconKey> = {
+  level: 'compass',
+  friends: 'people',
+  class: 'cap',
+  medal: 'medal',
+  gear: 'settings',
+  tuner: 'gauge',
+  metronome: 'metronome',
+  drone: 'levels',
+  note: 'quaver',
+  chart: 'chordgrid',
+  groove: 'wave',
+  slowdown: 'clock',
+  mic: 'mic',
 };
-const MenuIcon = ({ k }: { k: string }) => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-    {MENU_ICON[k]}
-  </svg>
-);
+const MenuIcon = ({ k }: { k: string }) => <Icon k={MENU_ICON[k] ?? 'quaver'} size={20} />;
 
 export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, extra }: Props) {
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
@@ -138,7 +69,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
           <h2>{t.menu}</h2>
           {extra && <div className="menu-extra">{extra}</div>}
           <button className="icon-btn menu-close" onClick={onClose} aria-label={t.back}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
 
@@ -171,8 +102,8 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
                     <MenuIcon k={icon} />
                   </span>
                   <span className="ml-text">{label}</span>
-                  <span className="ml-chev flip-rtl" aria-hidden="true">
-                    ›
+                  <span className="ml-chev" aria-hidden="true">
+                    <Icon k="fwd" />
                   </span>
                 </button>
               ))}

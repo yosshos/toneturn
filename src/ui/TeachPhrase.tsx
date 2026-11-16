@@ -42,6 +42,7 @@ import { assignAudioUrl, assignItem, phraseRefLimit, PHRASE_ASSIGN_SYNCED, uploa
 import { cachedTeacherPhrases, refreshTeacherPhrases, sentKeysOf, subscribeTeacherPhrases, type CachedPhraseAssign } from './teacherPhraseSync';
 import { PianoRoll, type RollNote } from './encore/PianoRoll';
 import { Bi, KeyB, Seg, Tempo, kName, type Lang } from './encore/bits';
+import { Icon } from './icons';
 
 const TX = {
   en: {
@@ -72,32 +73,13 @@ const mod = (n: number) => ((n % 12) + 12) % 12;
 const SILENCE_MS = 2500;
 
 function LockGlyph() {
-  return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true" className="tp-lock">
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </svg>
-  );
+  return <Icon k="lock" size={11} className="tp-lock" />;
 }
 function PlayGlyph({ on }: { on: boolean }) {
-  return on ? (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <rect x="6" y="5" width="4" height="14" rx="1" />
-      <rect x="14" y="5" width="4" height="14" rx="1" />
-    </svg>
-  ) : (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M7 5l12 7-12 7z" />
-    </svg>
-  );
+  return <Icon k={on ? 'pause' : 'play'} size={16} />;
 }
 function AgainGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-      <path d="M4 12a8 8 0 1 0 2.4-5.7" />
-      <path d="M4 4v4h4" />
-    </svg>
-  );
+  return <Icon k="again" size={16} />;
 }
 
 /** Roll notes of a phrase (beats from its first bar). */
@@ -361,11 +343,11 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
           <span>{tx.goal}</span>
           <span className="row" dir="ltr">
             <button className="icon-btn small" onClick={() => stepGoal(-1)} aria-label="−" data-teach-goal-minus="1">
-              −
+              <Icon k="minus" />
             </button>
             <b data-teach-goal={goal}>♩{goal}</b>
             <button className="icon-btn small" onClick={() => stepGoal(1)} aria-label="+" data-teach-goal-plus="1">
-              +
+              <Icon k="plus" />
             </button>
           </span>
         </div>
@@ -468,11 +450,11 @@ function Stepper({ value, min, max, onChange, label }: { value: number; min: num
   return (
     <span className="tp-step" role="group" aria-label={label}>
       <button className="icon-btn small" disabled={value <= min} onClick={() => onChange(value - 1)} aria-label="−">
-        −
+        <Icon k="minus" />
       </button>
       <b>{value}</b>
       <button className="icon-btn small" disabled={value >= max} onClick={() => onChange(value + 1)} aria-label="+">
-        +
+        <Icon k="plus" />
       </button>
     </span>
   );
@@ -517,7 +499,7 @@ export function StudentPhraseAssignment({ lang, id, book, items, onBack }: { lan
       <main className="panel-screen enc-screen tp-screen" data-teach="student" data-teach-missing="1">
         <header className="screen-head enc-head">
           <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-            <span className="flip-rtl">‹</span>
+            <Icon k="back" />
           </button>
           <h1>{tx.task}</h1>
         </header>
@@ -549,7 +531,7 @@ export function StudentPhraseAssignment({ lang, id, book, items, onBack }: { lan
     <main className="panel-screen enc-screen tp-screen" data-teach="student" data-teach-assignment={c.id}>
       <header className="screen-head enc-head">
         <button className="icon-btn" onClick={() => (player.stop(), onBack())} aria-label={tx.back}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>
           {tx.task}

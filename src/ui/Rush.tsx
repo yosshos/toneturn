@@ -43,6 +43,7 @@ import { InputCheck } from './InputCheck';
 import { startTier, tierAllowed, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { judgeStrum } from '../engine/chordFinder';
 import { useStrums } from './strumListen';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -592,7 +593,7 @@ function ChoicePrompt({ item, mode, lang, settings, onReplay }: { item: Extract<
       </div>
       {hears(mode, item) && !rushNoReplay(item) && (
         <button type="button" className="btn rush-replay" onClick={onReplay}>
-          <span aria-hidden="true">▶</span> {T.play[lang]}
+          <Icon k="play" /> {T.play[lang]}
         </button>
       )}
     </>

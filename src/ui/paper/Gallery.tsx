@@ -1,6 +1,6 @@
 // Dev-only gallery of the Paper icon language (#/dev/glyphs): every glyph in its three cuts on light and dark cards,
 // the nav in the bar, path nodes, course icons and the badges. Query: ?only=a,b (names or prefixes ending in *),
-// &sec=glyphs|nav|badges (default all), &theme=light|dark. e2e/paperGallery.spec.ts screenshots it.
+// &sec=glyphs|nav|badges|chrome (default all), &theme=light|dark. e2e/paperGallery.spec.ts screenshots it.
 import { useEffect, useRef, useState } from 'react';
 import { BADGES } from '../../engine/badges';
 import { COURSES } from '../../engine/courses';
@@ -11,6 +11,8 @@ import { PAPER } from './index';
 import { navArt } from './art-core';
 import { motionsOf, playIcon, useAmbient } from './motion';
 import { PaperSvg } from './Paper';
+import { CHROME_KEYS } from './art-chrome';
+import { Icon } from '../icons';
 
 const q = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
 const NAV = ['home', 'path', 'arcade', 'skills', 'friends', 'tools', 'achievements'];
@@ -95,6 +97,37 @@ export function PaperGallery() {
               <small>ambient: now node</small>
             </span>
           </div>
+        </section>
+      )}
+      {(sec === 'all' || sec === 'chrome') && (
+        <section className="pg-chrome-sec">
+          <h2>chrome ({CHROME_KEYS.length})</h2>
+          <table className="pg-chrome">
+            <thead>
+              <tr>
+                <th />
+                {CHROME_SURFACES.map(([id]) => (
+                  <th key={id}>{id}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {CHROME_KEYS.filter(match).map((k) => (
+                <tr key={k} data-chrome={k}>
+                  <th>{k}</th>
+                  {CHROME_SURFACES.map(([id, cls, wrap]) => (
+                    <td key={id} className={wrap}>
+                      <span className={`pg-cbtn ${cls}`} data-surface={id} data-play="1">
+                        <Icon k={k} size={16} />
+                        <Icon k={k} size={20} />
+                        <Icon k={k} size={24} />
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
       {(sec === 'all' || sec === 'nav') && (
@@ -197,6 +230,17 @@ export function PaperGallery() {
   );
 }
 
+/** The button backgrounds a control symbol sits on: [name, the button's classes, the cell's surface class]. */
+export const CHROME_SURFACES: [string, string, string][] = [
+  ['card', 'icon-btn', ''],
+  ['outlined', 'btn small', ''],
+  ['purple', 'btn primary', ''],
+  ['lemon', 'btn mega', ''],
+  ['ink', 'chip on', ''],
+  ['danger', 'btn danger', ''],
+  ['dark bar', 'pg-bar-btn', 'pp-on-dark'],
+];
+
 const CSS = `
 .pg { padding: 16px; background: var(--bg); color: var(--ink); min-height: 100vh; font: 13px var(--font); }
 .pg h1 { font: 400 22px var(--display); margin: 0 0 8px; }
@@ -222,4 +266,11 @@ const CSS = `
 .pg-bar .tab { display: flex; flex-direction: column; align-items: center; padding: 6px 8px; min-height: 0 !important; }
 .pg-disc { width: 72px; height: 54px; border-radius: 50%; transform: rotate(-14deg); display: grid; place-items: center; border: 3px solid var(--outline); }
 .pg-disc > svg { transform: rotate(14deg); }
+.pg-chrome-sec { overflow-x: auto; }
+.pg-chrome { border-collapse: separate; border-spacing: 6px 4px; }
+.pg-chrome th { font-size: 11px; font-weight: 700; text-align: start; padding: 0 4px; white-space: nowrap; }
+.pg-chrome td { padding: 0; }
+.pg-cbtn { display: inline-flex !important; align-items: center; gap: 7px; padding: 6px 9px !important; min-height: 0 !important; min-width: 0 !important; width: auto !important; font-size: 13px !important; }
+.pg-chrome .pp-on-dark .pg-cbtn { background: #07030f; color: #fff; border-radius: 12px; }
+
 `;

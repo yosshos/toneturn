@@ -15,19 +15,8 @@ import type { Strings } from '../i18n/strings';
 import type { Progress, Settings } from '../storage/progress';
 import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
+import { Icon } from './icons';
 
-/** Small line icons for the Home chrome (stroke = currentColor). */
-const CompassIcon = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="8" />
-    <path d="M15.5 8.5l-2 5-5 2 2-5z" />
-  </svg>
-);
-const InstallIcon = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14" />
-  </svg>
-);
 
 interface Props {
   t: Strings;
@@ -174,7 +163,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {workout}
           {today}
           <button className="find-level-btn" onClick={() => (levelAreas.length > 1 ? setLevelSheet(true) : onFindLevel())} data-find-level="1">
-            <CompassIcon /> {t.findLevel}
+            <Icon k="compass" size={18} /> {t.findLevel}
           </button>
         </>
       )}
@@ -258,9 +247,7 @@ export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = fal
         <StreakChip t={t} st={streak} onOpen={onStreak} home={home} />
         <HeaderPwa t={t} />
         <button className={`icon-btn menu-btn ${whatsNew.unseen ? 'has-dot' : ''}`} onClick={onMenu} aria-label={whatsNew.unseen ? `${t.menu} · ${lang === 'he' ? 'יש חדש' : 'something new'}` : t.menu}>
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-            <path d="M4 7h16M4 12h16M4 17h10" />
-          </svg>
+          <Icon k="menu" size={22} />
         </button>
       </div>
     </header>
@@ -371,10 +358,7 @@ function HeaderPwa({ t }: { t: Strings }) {
     <>
       {p.updateReady && (
         <button className="icon-btn hdr-action update-btn" onClick={() => applyUpdate()} title={t.updateReady} aria-label={t.updateReady} data-update-btn="1">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
-            <path d="M19.5 4.5v4h-4" />
-          </svg>
+          <Icon k="again" size={20} />
           <span className="hdr-label">{t.updateShort}</span>
           <span className="hdr-dot" aria-hidden="true" />
         </button>
@@ -387,7 +371,7 @@ function HeaderPwa({ t }: { t: Strings }) {
           data-install-btn="1"
           onClick={() => (p.canInstall ? void promptInstall() : setHowTo(true))}
         >
-          <InstallIcon />
+          <Icon k="download" size={20} />
         </button>
       )}
       {howTo && (

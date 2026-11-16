@@ -420,7 +420,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       <main className="panel-screen vocal vtimed">
         <header className="screen-head">
           <button className="icon-btn" onClick={() => setTestLatSkip(true)} aria-label={t.back}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{VT.calTitle[settings.uiLang === 'en' ? 'en' : 'he']}</h1>
         </header>
@@ -470,7 +470,7 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
     <main className="panel-screen vocal">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.vocalTitle}</h1>
       </header>
@@ -718,7 +718,7 @@ function RangeCalibration({ t, settings, onDone }: { t: Strings; settings: Setti
     <main className="panel-screen vocal">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (ctl.current?.abort(), onDone(null))} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.vocalRangeTitle}</h1>
       </header>
@@ -1279,7 +1279,7 @@ function VocalSession({
     <main className="panel-screen vocal">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (ctl.current?.abort(), piano.stopDrone(), onExit())} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{test ? test.title : title}</h1>
       </header>
@@ -1437,9 +1437,7 @@ function VocalSession({
                 {!strong && grade.metrics.length > 0 && (
                   <button className="why-btn" aria-expanded={why} onClick={() => setWhy((w) => !w)} data-why="1">
                     {SING_TX.why[lang]}
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" aria-hidden="true">
-                      <path d={why ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-                    </svg>
+                    <Icon k={why ? 'up' : 'down'} size={12} />
                   </button>
                 )}
               </div>
@@ -1500,21 +1498,21 @@ function VocalSession({
           <>
             {grade?.unclear && (
               <button className="btn ghost" onClick={() => void take()}>
-                ↻ {t.vocalRetry}
+                <Icon k="again" /> {t.vocalRetry}
               </button>
             )}
             <button className="btn mega" onClick={() => test.onTake(!grade || grade.unclear ? 0 : grade.score, typeof level === 'number' ? levelDef(level).pass : 0.7)}>
-              {t.vocalNext} <span className="flip-rtl">→</span>
+              {t.vocalNext} <Icon k="fwd" />
             </button>
           </>
         )}
         {phase === 'result' && !test && (
           <>
             <button className="btn ghost" onClick={() => void take()}>
-              ↻ {t.vocalRetry}
+              <Icon k="again" /> {t.vocalRetry}
             </button>
             <button className="btn mega" onClick={next}>
-              {i === items.length - 1 && noteIdx === noteCount - 1 ? t.vocalDone : t.vocalNext} <span className="flip-rtl">→</span>
+              {i === items.length - 1 && noteIdx === noteCount - 1 ? t.vocalDone : t.vocalNext} <Icon k="fwd" />
             </button>
           </>
         )}

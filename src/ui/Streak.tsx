@@ -234,7 +234,7 @@ export function StreakSheet({
             <Flame lit={st.practicedToday} size={26} /> {fmt(t.dayStreak, { n: st.count })}
           </h2>
           <button className="icon-btn" onClick={onClose} aria-label={t.back}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
         {!st.practicedToday && st.count > 0 && <p className="streak-risk">{t.streakTodo}</p>}
@@ -274,12 +274,12 @@ export function StreakSheet({
           </div>
         )}
         <div className="cal-head">
-          <button className="icon-btn small" onClick={() => shift(-1)} aria-label="‹">
-            <span className="flip-rtl">‹</span>
+          <button className="icon-btn small" onClick={() => shift(-1)} aria-label={lang === 'he' ? 'החודש הקודם' : 'Previous month'}>
+            <Icon k="back" />
           </button>
           <b>{new Date(first + 'T12:00:00').toLocaleDateString(lang, { month: 'long', year: 'numeric' })}</b>
-          <button className="icon-btn small" onClick={() => shift(1)} aria-label="›" disabled={month >= today.slice(0, 7)}>
-            <span className="flip-rtl">›</span>
+          <button className="icon-btn small" onClick={() => shift(1)} aria-label={lang === 'he' ? 'החודש הבא' : 'Next month'} disabled={month >= today.slice(0, 7)}>
+            <Icon k="fwd" />
           </button>
         </div>
         <ol className="streak-cal" dir="ltr">
@@ -358,14 +358,11 @@ export function FreezeToast({ t, count, onClose }: { t: Strings; count: number; 
   return (
     <div className="freeze-toast" role="status">
       <span className="ice fermata" aria-hidden="true">
-        <svg viewBox="0 0 24 20" width="24" height="20">
-          <path d="M3 15a9 9 0 0 1 18 0" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-          <circle cx="12" cy="13" r="2.2" fill="currentColor" />
-        </svg>
+        <Icon k="fermata" size={24} />
       </span>
       <span>{fmt(t.freezeUsed, { n: count })}</span>
       <button className="icon-btn small" onClick={onClose} aria-label={t.done}>
-        ✕
+        <Icon k="close" />
       </button>
     </div>
   );

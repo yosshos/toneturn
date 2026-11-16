@@ -21,6 +21,7 @@ import { fmtDuration } from './Stats';
 import { fmtDay } from './Trends';
 import { DayRecordings, RIcon } from './Recordings';
 import { RX } from '../i18n/recordingsText';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 type L = { en: string; he: string };
@@ -504,7 +505,7 @@ function DayEntry({ d, lang, progress, label, onDelete }: { d: JournalDay; lang:
           {n.src && n.src !== 'diary' && <small className="field-hint">{n.src === 'workout' ? DX.srcWorkout[lang] : DX.srcLog[lang]}</small>}
           {(!n.src || n.src === 'diary') && (
             <button className="icon-btn pd-del" onClick={() => onDelete(n.id)} aria-label={DX.del[lang]}>
-              ✕
+              <Icon k="close" />
             </button>
           )}
         </div>
@@ -639,7 +640,7 @@ export function PracticeDiaryScreen({
     <main className="panel-screen pdiary" data-practice-diary="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={DX.back[lang]}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{DX.title[lang]}</h1>
         <a className="icon-btn small pd-rec" href="#/recordings" aria-label={RX.title[lang]} title={RX.title[lang]} data-open-recordings="diary">
@@ -699,8 +700,8 @@ export function DiaryEntryCard({ lang, onOpen }: { lang: Lang; onOpen: () => voi
           {r !== null ? ` · ${fill(DX.qMin[lang], { m: `${Math.round(r * 100)}%` })}` : ''}
         </small>
       </span>
-      <span className="flip-rtl" aria-hidden="true">
-        ›
+      <span aria-hidden="true">
+        <Icon k="fwd" />
       </span>
     </button>
   );

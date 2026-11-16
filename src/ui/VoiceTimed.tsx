@@ -240,7 +240,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       <main className="panel-screen vocal vtimed">
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={L(VT.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{L(VT.calTitle)}</h1>
         </header>
@@ -258,7 +258,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       <main className="panel-screen vocal vtimed">
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={L(VT.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{title}</h1>
         </header>
@@ -297,7 +297,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
     <main className="panel-screen vocal vtimed">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (ctl.current?.abort(), piano.stopAll(), onExit())} aria-label={L(VT.back)}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{test ? test.title : title}</h1>
       </header>
@@ -419,11 +419,11 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
           <>
             {take.grade.unclear && (
               <button className="btn ghost" onClick={() => void run()}>
-                ↻ {L(VT.retry)}
+                <Icon k="again" /> {L(VT.retry)}
               </button>
             )}
             <button className="btn mega" onClick={() => test.onTake(take.grade.unclear ? 0 : take.grade.score, lvDef.pass)}>
-              {L(VT.next)} <span className="flip-rtl">→</span>
+              {L(VT.next)} <Icon k="fwd" />
             </button>
           </>
         )}
@@ -432,26 +432,26 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
             {/* Songs: loop the weakest phrase slower, then at full tempo, then the whole song again (piece-coach ladder). */}
             {take.song && !item.song?.recital && !item.song?.rubato && !item.song?.mine && item.song?.freeUntil === undefined && !loop && weak && weak.score < need && plan && plan.phrases.length > 1 && (
               <button className="btn ghost" onClick={() => (setLoop({ phrase: weak.i, scale: 0.9 }), setPhase('ready'))}>
-                ↻ {fill(L(VT.loopWeak), { n: weak.i + 1 })}
+                <Icon k="again" /> {fill(L(VT.loopWeak), { n: weak.i + 1 })}
               </button>
             )}
             {loop && take.song && (take.song.phrases[0]?.score ?? 0) >= need && loop.scale < 1 && (
               <button className="btn ghost" onClick={() => (setLoop({ ...loop, scale: 1 }), setPhase('ready'))}>
-                ↻ {fill(L(VT.loopFull), { n: loop.phrase + 1 })}
+                <Icon k="again" /> {fill(L(VT.loopFull), { n: loop.phrase + 1 })}
               </button>
             )}
             {loop && (
               <button className="btn ghost" onClick={() => (setLoop(null), setPhase('ready'), setTake(null))}>
-                ↻ {L(VT.wholeAgain)}
+                <Icon k="again" /> {L(VT.wholeAgain)}
               </button>
             )}
             {!loop && !item.song?.recital && (
               <button className="btn ghost" onClick={() => void run()}>
-                ↻ {L(VT.retry)}
+                <Icon k="again" /> {L(VT.retry)}
               </button>
             )}
             <button className="btn mega" onClick={next}>
-              {i === items.length - 1 ? L(VT.done) : L(VT.next)} <span className="flip-rtl">→</span>
+              {i === items.length - 1 ? L(VT.done) : L(VT.next)} <Icon k="fwd" />
             </button>
           </>
         )}

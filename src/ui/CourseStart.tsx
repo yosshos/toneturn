@@ -13,6 +13,7 @@ import { KitSetup } from './DrumViews';
 import { Glyph } from './Glyph';
 import { Toni } from './Toni';
 import { piano, SIMULATED } from './services';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
@@ -50,7 +51,7 @@ function Head({ lang, onBack, step, of }: { lang: Lang; onBack: () => void; step
   return (
     <header className="ob-head">
       <button className="icon-btn" onClick={onBack} aria-label={lang === 'he' ? 'חזרה' : 'Back'}>
-        <span className="flip-rtl">←</span>
+        <Icon k="back" />
       </button>
       <div className="ob-progress" aria-hidden="true">
         {Array.from({ length: of }, (_, k) => (

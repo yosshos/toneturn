@@ -179,8 +179,8 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
       <div className="sheet profile-sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="ps-sheet-head">
           <h2>{title}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="✕">
-            ✕
+          <button className="icon-btn" onClick={onClose} aria-label={typeof document !== 'undefined' && document.documentElement.lang === 'he' ? 'סגירה' : 'Close'}>
+            <Icon k="close" />
           </button>
         </div>
         {children}
@@ -458,7 +458,7 @@ export function NickPrompt({ lang, s, onChange }: { lang: Lang; s: Settings; onC
           </span>
         </button>
         <button className="icon-btn" onClick={() => onChange({ hideNickPrompt: true })} aria-label={he ? 'לא עכשיו' : 'Not now'}>
-          ✕
+          <Icon k="close" />
         </button>
       </div>
       {open && <NicknameSheet lang={lang} onSave={(nickname) => onChange({ nickname, country: s.country === undefined ? deviceCountry() : s.country })} onClose={() => setOpen(false)} />}

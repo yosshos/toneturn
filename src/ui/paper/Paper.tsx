@@ -28,8 +28,38 @@ export const tv = (k: string) => `var(--p${k}, var(--${k}))`;
 
 const TEXT = { fontFamily: "'Secular One', Rubik, 'Noto Music', sans-serif", textAnchor: 'middle', direction: 'ltr' } as const;
 
+/**
+ * The chrome cut's tones (src/paper.css sets the ramp per surface): the sheet, its edge, the accent and its edge, and the
+ * cut-out (the surface colour). Without a ramp the sheet is the text colour and the edge the text colour, faded — so a
+ * control symbol always reads wherever its label reads.
+ */
+export const CHROME_TONE = {
+  s: 'var(--cs, currentColor)',
+  e: 'var(--ce, color-mix(in srgb, currentColor 40%, transparent))',
+  a: 'var(--ca, var(--cs, currentColor))',
+  ae: 'var(--cae, var(--ce, color-mix(in srgb, currentColor 40%, transparent)))',
+  l: 'var(--cl, var(--card, #ffffff))',
+} as const;
+const CHROME_SOLID: Partial<Record<Role, [string, string | null]>> = {
+  body: [CHROME_TONE.s, CHROME_TONE.e],
+  ink: [CHROME_TONE.s, CHROME_TONE.e],
+  mark: [CHROME_TONE.s, CHROME_TONE.e],
+  accent: [CHROME_TONE.a, CHROME_TONE.ae],
+  light: [CHROME_TONE.l, null],
+};
+const CHROME_STROKE: Partial<Record<Role, [string, string | null, number]>> = {
+  tube: [CHROME_TONE.s, CHROME_TONE.e, 6.5],
+  accentline: [CHROME_TONE.a, CHROME_TONE.ae, 6.5],
+  line: [CHROME_TONE.l, null, 2.6],
+  inkline: [CHROME_TONE.l, null, 2.6],
+  shine: [CHROME_TONE.l, null, 2.6],
+};
+/** The chrome cut's edge: deeper than the icons' 1.9, so the sheet's thickness still shows at 16 px (≈ 1 px). */
+export const CHROME_EDGE = 3;
+
 /** The drawing's parts with the Paper treatment applied, for the given cut. */
 export function paperParts(art: Art, cut: Cut = 'full', keyPrefix = ''): ReactNode[] {
+  if (cut === 'chrome') return chromeParts(art, keyPrefix);
   const out: ReactNode[] = [];
   const maxLod = cut === 'small' ? 0 : cut === 'full' ? 1 : 2;
   const edge = cut === 'small' ? 2.2 : 1.9;
@@ -59,6 +89,30 @@ export function paperParts(art: Art, cut: Cut = 'full', keyPrefix = ''): ReactNo
     // styles stay the only inline styles). Origin: a point on the grid (view-box), or the group's own box.
     const m = p.m ?? (i === nod ? AUTO_NOD : undefined);
     if (m) out.push(createElement('g', { key: `${k}m`, className: motionClass(m), ...(m.o ? { transformOrigin: `${m.o[0]} ${m.o[1]}` } : {}) }, own));
+    else out.push(...own);
+  });
+  return out;
+}
+/** The chrome cut: every part a sheet (or a strip of paper) with its edge below, in the surface's chrome ramp. */
+function chromeParts(art: Art, keyPrefix: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  art.parts.forEach((p: Part, i) => {
+    if ((p.lod ?? 0) > 0) return;
+    const k = `${keyPrefix}${i}`;
+    const own: ReactNode[] = [];
+    const solid = CHROME_SOLID[p.role];
+    const st = CHROME_STROKE[p.role];
+    if (solid) {
+      const [f, e] = solid;
+      if (e) own.push(createElement(p.t, { key: `${k}e`, className: 'pe', ...p.a, transform: shift(p.a.transform, CHROME_EDGE), style: { fill: e } }));
+      own.push(createElement(p.t, { key: k, ...p.a, style: { fill: f } }));
+    } else if (st) {
+      const [tone, e, w0] = st;
+      const common = { fill: 'none', strokeWidth: p.w ?? w0, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+      if (e) own.push(createElement(p.t, { key: `${k}e`, className: 'pe', ...p.a, ...common, transform: shift(p.a.transform, CHROME_EDGE), style: { stroke: e } }));
+      own.push(createElement(p.t, { key: k, ...p.a, ...common, style: { stroke: tone } }));
+    } else return;
+    if (p.m) out.push(createElement('g', { key: `${k}m`, className: motionClass(p.m), ...(p.m.o ? { transformOrigin: `${p.m.o[0]} ${p.m.o[1]}` } : {}) }, own));
     else out.push(...own);
   });
   return out;

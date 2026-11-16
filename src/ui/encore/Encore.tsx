@@ -41,6 +41,7 @@ import { CHALLENGES_ON } from '../../cloud/challenges';
 import { shareCodeOf } from '../../engine/encore/community';
 import { DEDICATION_XP } from '../../engine/encore/gifts';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
+import { Icon } from '../icons';
 
 export interface EncoreProps {
   lang: Lang;
@@ -109,7 +110,7 @@ export function EncoreScreen(p: EncoreProps) {
   const head = (title: React.ReactNode, sub?: React.ReactNode, back: () => void = () => history.back(), extra?: React.ReactNode) => (
     <header className="screen-head enc-head">
       <button className="icon-btn" onClick={back} aria-label={he ? 'חזרה' : 'Back'}>
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1>
         {title}
@@ -720,7 +721,7 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
         </div>
         <div className="row enc-play-row">
           <button className={`icon-btn ${playing ? 'on' : ''}`} onClick={() => void play()} aria-label={he ? 'לנגן' : 'Play'} data-trim-play="1">
-            {playing ? '■' : '▶'}
+            <Icon k={playing ? 'stop' : 'play'} />
           </button>
           {[0.5, 0.75, 1].map((x) => (
             <button key={x} className={`ch ${speed === x ? 'on' : ''}`} onClick={() => setSpeed(x)} data-speed={x}>
@@ -781,16 +782,16 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
         {pickedNote && picked !== null && (
           <div className="enc-pop row" data-note-pop={picked}>
             <button className="icon-btn" onClick={() => setS({ ...s, edits: { ...s.edits, [picked]: (typeof s.edits[picked] === 'number' ? (s.edits[picked] as number) : 0) + 1 } })} aria-label={he ? 'חצי טון למעלה' : 'Semitone up'}>
-              ▲
+              <Icon k="up" />
             </button>
             <button className="icon-btn" onClick={() => setS({ ...s, edits: { ...s.edits, [picked]: (typeof s.edits[picked] === 'number' ? (s.edits[picked] as number) : 0) - 1 } })} aria-label={he ? 'חצי טון למטה' : 'Semitone down'}>
-              ▼
+              <Icon k="down" />
             </button>
             <button className="ch" onClick={() => fix(picked)} data-wrong-fix="1">
               {he ? 'תו שגוי ← צליל אקורד' : 'Wrong note → chord tone'}
             </button>
             <button className="icon-btn" onClick={() => (setS({ ...s, edits: { ...s.edits, [picked]: 'x' } }), setPicked(null))} aria-label={he ? 'מחיקה' : 'Delete'}>
-              ✕
+              <Icon k="close" />
             </button>
           </div>
         )}
@@ -864,7 +865,7 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
       {head(he ? 'תוכנית אימון' : 'Practice plan', <Bi text={T(l.name, lang)} />, () => nav(`phrase/${l.id}`))}
       <div className="enc-card row enc-target">
         <button className="icon-btn" onClick={() => step(-1)} aria-label={he ? 'פחות' : 'Slower'} disabled={plan.locked?.includes('goalBpm')} data-goal-minus="1">
-          −
+          <Icon k="minus" />
         </button>
         <div className="grow enc-center">
           <div className="enc-big" data-goal={plan.goalBpm}>
@@ -876,7 +877,7 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
           </small>
         </div>
         <button className="icon-btn" onClick={() => step(1)} aria-label={he ? 'יותר' : 'Faster'} disabled={plan.locked?.includes('goalBpm')} data-goal-plus="1">
-          +
+          <Icon k="plus" />
         </button>
       </div>
       {overCeiling(l, plan.goalBpm) && <small className="t3">{he ? 'מהיר מאוד לכלי — אפשר, אבל בזהירות.' : 'Very fast for the instrument — allowed, but take care.'}</small>}
@@ -1036,7 +1037,7 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
     <main className="panel-screen enc-screen" data-encore="phrase" data-phrase={l.id} data-rank={pr.rank}>
       {head(<Bi text={T(l.name, lang)} />, undefined, () => nav('library'), (
         <button className="icon-btn" onClick={() => setMore(!more)} aria-label={he ? 'עוד' : 'More'} data-phrase-more="1">
-          ⋯
+          <Icon k="more" />
         </button>
       ))}
       {more && (
@@ -1255,7 +1256,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
       <div className="row enc-thenNow">
         <button className="enc-card col grow" onClick={() => void playPhrase(l.homeKey ?? 0, l.playedBpm ?? plan.startBpm, src?.notes)} data-then="1">
           <span className="icon-btn" aria-hidden="true">
-            ▶
+            <Icon k="play" />
           </span>
           <b className="t2">{he ? 'הניסיון הראשון' : 'The first take'}</b>
           <small className="tiny">
@@ -1272,7 +1273,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
         </button>
         <button className="enc-card col grow" onClick={() => void playPhrase(lastKey, plan.goalBpm)} data-now="1">
           <span className="icon-btn on" aria-hidden="true">
-            ▶
+            <Icon k="play" />
           </span>
           <b className="t2">{he ? 'היום' : 'Today'}</b>
           <small className="tiny">
@@ -1313,7 +1314,7 @@ function LibraryView({ lang, head, book, custom, items, onMakePhrase }: { lang: 
     <main className="panel-screen enc-screen enc-scroll" data-encore="library">
       {head(he ? 'המשפטים שלי' : 'My phrases', he ? 'הדרן' : 'Encore', () => nav(''), (
         <button className="icon-btn" onClick={() => nav('record')} aria-label={he ? 'הקלטה חדשה' : 'New recording'} data-lib-add="1">
-          +
+          <Icon k="plus" />
         </button>
       ))}
       <Seg value={tab} label={he ? 'סוג' : 'Kind'} onChange={setTab} options={[{ k: 'phrase', t: <>{he ? 'משפטים' : 'Phrases'} · <bdi dir="ltr">{nPh}</bdi></> }, { k: 'pattern', t: <>{he ? 'תבניות' : 'Patterns'} · <bdi dir="ltr">{all.length - nPh}</bdi></> }]} />

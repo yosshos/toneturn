@@ -2,7 +2,7 @@ import { APP_VERSION } from '../version';
 import { InstrumentArt } from './InstrumentArt';
 import { RecordingSettings } from './Recordings';
 import { Glyph, glyphForEmoji } from './Glyph';
-import { Icon } from './icons';
+import { Icon, type IconKey } from './icons';
 import { REGISTRATIONS } from '../audio/organ';
 import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
@@ -175,7 +175,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
           <Icon k="mute" /> {q.noSing}
         </button>
         <button type="button" className={`chip ${s.noMic ? 'on' : ''}`} aria-pressed={!!s.noMic} onClick={() => onChange({ noMic: !s.noMic })}>
-          <Icon k="mic" />✕ {q.noMic}
+          <Icon k="mic" /><Icon k="close" size={12} /> {q.noMic}
         </button>
       </div>
       {(s.pathHidden ?? []).length > 0 && (
@@ -199,7 +199,7 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
           setNote(L.rebuilt);
         }}
       >
-        ↻ {L.rebuild}
+        <Icon k="again" /> {L.rebuild}
       </button>
       {note && <p className="field-hint">{note}</p>}
       <Seg
@@ -296,7 +296,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
     <main className={`panel-screen settings ${wide ? 'settings-wide' : ''}`}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.settings}</h1>
       </header>
@@ -342,8 +342,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                       <b>{x.title}</b>
                       <small>{x.values}</small>
                     </span>
-                    <span className="ss-chev flip-rtl" aria-hidden="true">
-                      ›
+                    <span className="ss-chev" aria-hidden="true">
+                      <Icon k="fwd" />
                     </span>
                   </button>
                 ))}
@@ -360,7 +360,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       )}
       {!wide && sec && !q && (
         <button className="btn ghost small set-back" onClick={() => setSec(null)} data-set-back="1">
-          <span className="flip-rtl">←</span> {SECS.find((x) => x.id === sec)?.title}
+          <Icon k="back" /> {SECS.find((x) => x.id === sec)?.title}
         </button>
       )}
       {(wide || sec || q) && (
@@ -384,7 +384,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           <section className="set-card">{account}</section>
           <section className="set-card">
             <button className="btn small" onClick={() => void downloadMyData()} data-export="1">
-              ⬇ {lang === 'he' ? 'להוריד את הנתונים שלי (JSON)' : 'Download my data (JSON)'}
+              <Icon k="download" /> {lang === 'he' ? 'להוריד את הנתונים שלי (JSON)' : 'Download my data (JSON)'}
             </button>
           </section>
         </Group>
@@ -447,7 +447,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             />
             {talk && kokoro.state !== 'unavailable' && (
               <button className="btn small" onClick={preview} disabled={busy} data-narrator-preview="1">
-                ▶ {t.preview}
+                <Icon k="play" /> {t.preview}
               </button>
             )}
           </section>
@@ -720,7 +720,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
       {(wide || sec) && (
       <div className="row">
         <a className="btn" href="#/diagnostics">
-          {t.diagnostics} →
+          {t.diagnostics} <Icon k="fwd" />
         </a>
         <button className="btn primary grow" onClick={onBack}>
           {t.done}
@@ -756,64 +756,19 @@ const openGroups = (): string[] => {
 
 /** One settings category: a row that opens and closes (remembered on this device). `#/settings/<id>` opens it. */
 /** Monochrome line icons for the settings categories (mature, clean UI — owner 2026-11-07). */
-const SET_ICON: Record<string, ReactNode> = {
-  privacy: <path d="M12 3 5 6v5.5c0 4.2 3 7.8 7 9.5 4-1.7 7-5.3 7-9.5V6z" />,
-  account: (
-    <>
-      <circle cx="12" cy="8" r="3.6" />
-      <path d="M4.5 20c.8-3.6 3.8-5.6 7.5-5.6s6.7 2 7.5 5.6" />
-    </>
-  ),
-  language: (
-    <>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.4 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.4-3.5-8.5s1.1-5.9 3.5-8.5z" />
-    </>
-  ),
-  learning: (
-    <>
-      <circle cx="6" cy="18" r="2.2" />
-      <circle cx="18" cy="6" r="2.2" />
-      <path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8" />
-    </>
-  ),
-  instrument: (
-    <>
-      <path d="M9 18V6l10-2v12" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="16.5" cy="16" r="2.5" />
-    </>
-  ),
-  midi: (
-    <>
-      <rect x="2.5" y="6" width="19" height="12" rx="2" />
-      <path d="M7 6v7M12 6v7M17 6v7M5 13h4M10 13h4M15 13h4" />
-    </>
-  ),
-  input: (
-    <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-    </>
-  ),
-  sound: (
-    <>
-      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
-      <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
-    </>
-  ),
-  display: (
-    <>
-      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
-      <circle cx="12" cy="12" r="3" />
-    </>
-  ),
+/** The settings groups' symbols (Paper chrome cut, 2026-11-16). */
+const SET_ICON: Record<string, IconKey> = {
+  privacy: 'shield',
+  account: 'person',
+  language: 'globe',
+  learning: 'route',
+  instrument: 'quaver',
+  midi: 'pianokeys',
+  input: 'mic',
+  sound: 'speaker',
+  display: 'eye',
 };
-const SetIcon = ({ k }: { k: string }) => (
-  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {SET_ICON[k]}
-  </svg>
-);
+const SetIcon = ({ k }: { k: string }) => <Icon k={SET_ICON[k] ?? 'settings'} size={22} />;
 
 /** Settings on a computer (SPEC-DESKTOP §4, owner 2026-11-08): categories in a column, the chosen one as a page. */
 const PaneCtx = createContext<{ wide: boolean; active: string; groups: string[] } | null>(null);
@@ -886,7 +841,7 @@ function GroupAccordion({ id, icon, title, sub, children }: { id: string; icon: 
           <small>{sub}</small>
         </span>
         <span className="sg-chev" aria-hidden="true">
-          ›
+          <Icon k="fwd" />
         </span>
       </summary>
       {open && <div className="set-group-body">{children}</div>}
@@ -1027,7 +982,7 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
                 {he ? 'עוצמה' : 'velocity'} {last.vel}
               </span>
             )}
-            <span className={`mt-pedal ${pedal ? 'on' : ''}`}>{he ? 'פדל' : 'Pedal'} {pedal ? '⬇' : '—'}</span>
+            <span className={`mt-pedal ${pedal ? 'on' : ''}`}>{he ? 'פדל' : 'Pedal'} {pedal ? <Icon k="down" size={12} /> : '—'}</span>
           </div>
           <div className="midi-sound" data-midi-sound-panel="1">
             <label className="toggle-row">
@@ -1181,7 +1136,7 @@ function SoundSetting({ t, s, onChange }: { t: Strings; s: Settings; onChange: (
                     <small>{busy?.id === id ? `${Math.round((busy.done / busy.total) * 100)}%` : SOUND_NAME[id].note[lang]}</small>
                   </button>
                   <button type="button" className="sound-play" disabled={!!busy} onClick={() => void listen(id)} aria-label={`${he ? 'להשמיע' : 'Play'}: ${SOUND_NAME[id][lang]}`} data-sound-play={id}>
-                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z" fill="currentColor" /></svg>
+                    <Icon k="play" size={14} />
                   </button>
                 </div>
               ))}

@@ -12,6 +12,7 @@ import { TOPIC_GEN } from '../engine/topics';
 import { STRINGS, type Strings } from '../i18n/strings';
 import { dueReviews, lessonMastered, localDay, ratingsOf, type Progress, type Settings } from '../storage/progress';
 import { getTakeAudio, listTakes, thenAndNowOf, type RecTake } from '../storage/recordings';
+import { Icon } from './icons';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -158,7 +159,7 @@ export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings;
     <main className="panel-screen achievements">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.achievementsTitle}</h1>
       </header>

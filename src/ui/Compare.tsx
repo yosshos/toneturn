@@ -16,6 +16,7 @@ import { RankCrest } from './Badges';
 import { divisionFor } from '../engine/ranks';
 import { fmtDuration } from './Stats';
 import { FrameChips, langOf, useStatsFrame } from './Trends';
+import { Icon } from './icons';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(100 * x)}%`);
@@ -139,11 +140,11 @@ function Row({ k, a, b, lowerBetter = false }: { k: string; a: number | null | u
       <th scope="row">{k}</th>
       <td dir="ltr" className={lead === 'a' ? 'lead' : ''}>
         {a ?? '—'}
-        {lead === 'a' && <span aria-hidden="true"> ★</span>}
+        {lead === 'a' && <> <Icon k="star" size={14} /></>}
       </td>
       <td dir="ltr" className={lead === 'b' ? 'lead' : ''}>
         {b ?? '—'}
-        {lead === 'b' && <span aria-hidden="true"> ★</span>}
+        {lead === 'b' && <> <Icon k="star" size={14} /></>}
       </td>
     </tr>
   );

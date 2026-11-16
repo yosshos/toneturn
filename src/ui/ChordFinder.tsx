@@ -13,6 +13,7 @@ import type { Settings } from '../storage/progress';
 import { ChordBox } from './Instrument';
 import { piano } from './services';
 import { useStrums } from './strumListen';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -86,7 +87,7 @@ export function ChordFinder({ lang, settings, onBack }: { lang: Lang; settings: 
     <main className="cf-screen" data-tool="chordfinder">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx('back')}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{tx('title')}</h1>
       </header>

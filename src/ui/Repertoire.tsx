@@ -8,6 +8,7 @@ import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, repStatus, reper
 import { ListenOriginal } from './ListenOriginal';
 import { loadMemo, memoProgress, MEMO_STEPS, moveTune, saveMemo, toggleMemoStep, TUNE_LISTS, tunesIn, type MemoState, type TuneList } from '../engine/practiceMethod';
 import '../repertoire.css';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 
@@ -55,7 +56,7 @@ export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, o
     <main className="rep-screen" data-repertoire={course}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{title}</h1>
       </header>
@@ -136,7 +137,7 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMem
     <main className="rep-screen rep-item" data-rep-open={item.id}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{item.title[lang]}</h1>
       </header>
@@ -154,7 +155,7 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMem
           <p>{item.leads.text[lang]}</p>
           {to && (
             <button className="chip" onClick={() => onOpen(to.id)} data-rep-to={to.id}>
-              {to.title[lang]} ›
+              {to.title[lang]} <Icon k="fwd" />
             </button>
           )}
         </div>
@@ -201,7 +202,7 @@ function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course:
     <main className="rep-screen" data-rep-listpage="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{he ? 'שלוש הרשימות' : 'Three lists'}</h1>
       </header>
@@ -240,7 +241,7 @@ function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; it
     <main className="rep-screen rep-item" data-rep-memopage={item.id}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{item.title[lang]}</h1>
       </header>
@@ -262,7 +263,7 @@ function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; it
             </label>
             {x.topic && (
               <button className="link" onClick={() => onWay(item, { k: 'topic', topic: x.topic!, level: 1 })} data-memo-topic={x.topic}>
-                {he ? 'לתרגל' : 'Practise'} ›
+                {he ? 'לתרגל' : 'Practise'} <Icon k="fwd" />
               </button>
             )}
           </li>

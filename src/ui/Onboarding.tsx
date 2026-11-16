@@ -19,6 +19,7 @@ import { defaultPacks, type Goal } from '../engine/path';
 import type { Settings } from '../storage/progress';
 import type { IntakeResult } from './Intake';
 import { piano } from './services';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 
@@ -204,7 +205,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
       {step !== 'welcome' && (
         <header className="ob-head">
           <button className="icon-btn" onClick={back} aria-label={lang === 'he' ? 'חזרה' : 'Back'}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <div className="ob-progress" aria-hidden="true">
             {ORDER.slice(1).map((s, k) => (
@@ -247,10 +248,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
         <section className="ob-taste">
           <h1>{tx.tasteQ}</h1>
           <button className={`ob-listen ${taste.heard ? 'heard' : ''}`} onClick={() => void playTaste()} data-ob="listen" aria-label={tx.listen}>
-            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M4 10v4h4l5 4V6L8 10z" />
-              <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" />
-            </svg>
+            <Icon k="speaker" size={34} />
             <span>{tx.listen}</span>
           </button>
           <div className="ob-pair">

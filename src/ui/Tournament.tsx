@@ -115,7 +115,7 @@ export function DailyScreen({
     <main className="panel-screen daily">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.dailyChallenge}</h1>
       </header>
@@ -244,7 +244,7 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
     <main className="panel-screen duel-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.duel}</h1>
       </header>
@@ -375,7 +375,7 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     <main className="panel-screen ghost-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.ghostRace}</h1>
       </header>
@@ -606,7 +606,7 @@ export function TournamentPlay({
       <section className="t-center">
         <div className="t-top">
           <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
-            ✕
+            <Icon k="close" />
           </button>
           <span className="t-round" dir="ltr">
             {v.round + 1}/{v.rounds}

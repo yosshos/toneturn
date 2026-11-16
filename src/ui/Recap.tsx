@@ -301,11 +301,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
                 )}
               </span>
               <button className="btn small" onClick={() => onReplay(i)} aria-label={`${t.replay} ${i + 1}`}>
-                ▶ {t.replay}
+                <Icon k="play" /> {t.replay}
               </button>
               {onCompare && r.attempts.some((a) => !a.correct) && compareStimulus(q, r.attempts.find((a) => !a.correct)!.answer) && (
                 <button className="btn small ghost" onClick={() => onCompare(i)} aria-label={`${t.yoursVsRight} ${i + 1}`}>
-                  ▶ {t.yoursVsRight}
+                  <Icon k="play" /> {t.yoursVsRight}
                 </button>
               )}
             </li>
@@ -327,12 +327,12 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       <div className="recap-actions">
         {onNext && (
           <button className="btn mega" onClick={onNext}>
-            {nextLabel ?? t.nextLesson} <span className="flip-rtl">→</span>
+            {nextLabel ?? t.nextLesson} <Icon k="fwd" />
           </button>
         )}
         {secondary && (
           <button className="btn" onClick={secondary.open} data-recap-secondary="1">
-            {secondary.label} <span className="flip-rtl">→</span>
+            {secondary.label} <Icon k="fwd" />
           </button>
         )}
         {drill && (
@@ -357,7 +357,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
             ))}
           </span>
           <button className="btn mega rp-next" onClick={() => go(page + 1)} data-recap-next="1">
-            {lang === 'he' ? 'המשך' : 'Continue'} <span className="flip-rtl">→</span>
+            {lang === 'he' ? 'המשך' : 'Continue'} <Icon k="fwd" />
           </button>
         </div>
       )}

@@ -169,7 +169,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           </p>
           <p className="mini-takeaway">{lesson.takeaway[lang]}</p>
           <button className="btn mega" data-mini-go="1" onClick={() => (clearSlot(slotKey), onFinish(true))}>
-            {t.miniPractise} →
+            {t.miniPractise} <Icon k="fwd" />
           </button>
           {canDeep && (
             <button className="btn ghost mini-deep" data-mini-deep="1" onClick={goDeep}>
@@ -226,7 +226,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             </button>
           ) : (
             <button className="icon-btn big" aria-label={t.miniPlay} onClick={() => jump(phase === 'done' ? 0 : i)}>
-              {phase === 'done' ? '↻' : '▶'}
+              <Icon k={phase === 'done' ? 'again' : 'play'} size={22} />
             </button>
           )}
           {step.play?.length ? (
@@ -247,7 +247,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           </button>
         )}
         <button className="btn ghost mini-skip" data-mini-skip="1" onClick={() => (ctl.current?.abort(), clearSlot(slotKey), onFinish(learned()))}>
-          {phase === 'done' ? t.miniPractise : t.miniSkip} →
+          {phase === 'done' ? t.miniPractise : t.miniSkip} <Icon k="fwd" />
         </button>
       </div>
     </div>
@@ -292,7 +292,7 @@ export function TermCard({ term, lang, onReplay, onClose, closeLabel }: { term: 
         </button>
         {onClose && (
           <button className="btn ghost small" onClick={onClose} aria-label={closeLabel}>
-            ✕
+            <Icon k="close" />
           </button>
         )}
       </div>

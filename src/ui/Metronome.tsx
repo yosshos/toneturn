@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { clampBpm, DEFAULT_METRO, defaultAccents, DRUM_KITS, KIT_NAME, GROOVES, grooveHits, grooveSteps, groovesOf, STYLE_NAME, stepSeconds, tapBpm, tempoName, type DrumKit, type GrooveStyle, type MetroSettings } from '../engine/grooves';
 import type { Settings } from '../storage/progress';
 import { piano } from './services';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 
@@ -233,7 +234,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
     <main className="panel-screen metronome" data-metronome="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (stop(), onBack())} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{TX.title[lang]}</h1>
       </header>
@@ -267,7 +268,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
 
       <div className="mt-tempo">
         <button className="icon-btn mt-step" onClick={() => setBpm(m.bpm - 1)} aria-label="−1">
-          −
+          <Icon k="minus" />
         </button>
         <div className="mt-bpm">
           <b data-bpm={bpmShown}>{bpmShown}</b>
@@ -277,7 +278,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
           </small>
         </div>
         <button className="icon-btn mt-step" onClick={() => setBpm(m.bpm + 1)} aria-label="+1">
-          +
+          <Icon k="plus" />
         </button>
       </div>
       <input className="mt-slider" type="range" min={30} max={260} value={m.bpm} onChange={(e) => setBpm(Number(e.target.value))} aria-label="BPM" />
@@ -287,15 +288,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
           {TX.tap[lang]}
         </button>
         <button className={`mt-play ${running ? 'on' : ''}`} onClick={() => (running ? stop() : void start())} aria-label={running ? TX.stop[lang] : TX.start[lang]} data-metro-play="1">
-          {running ? (
-            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-              <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true">
-              <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
-            </svg>
-          )}
+          <Icon k={running ? 'stop' : 'play'} size={running ? 30 : 32} />
         </button>
         <span className="mt-meter-tag" aria-hidden="true">
           {groove ? grooveMeter(groove) : `${beats}/${den}`}

@@ -8,6 +8,7 @@ import { renderStimulus } from '../engine/lesson';
 import { GQ_LABEL, GX_LABEL, gradeGrid, gridKey, gridSlotsStimulus, gridStimulus, parseGrid, suffixOf, type GQ, type GridCell, type GridMark, type GX } from '../engine/progGrid';
 import { piano } from './services';
 import '../grid.css';
+import { Icon } from './icons';
 
 type Part = { root?: number; q?: GQ; x?: GX };
 
@@ -111,10 +112,10 @@ export function GridDictation({ q, lang, disabled, first, result, onSubmit }: { 
     <div className="grid-dictation" data-grid-dictation={q.level}>
       <div className="gd-tools">
         <button type="button" className="btn small ghost" onClick={() => void play(null)} data-gd-play="all">
-          ▶ {tx.all}
+          <Icon k="play" /> {tx.all}
         </button>
         <button type="button" className="btn small ghost" onClick={() => void play([cur])} data-gd-play="bar">
-          ▶ {tx.bar} <span dir="ltr">{cur + 1}</span>
+          <Icon k="play" /> {tx.bar} <span dir="ltr">{cur + 1}</span>
         </button>
         <button type="button" className={`btn small ghost${slow ? ' on' : ''}`} aria-pressed={slow} onClick={() => setSlow((s) => !s)} data-gd-slow="1">
           {tx.slow}

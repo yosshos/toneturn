@@ -203,11 +203,8 @@ export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 
           if (unseen) onSeen();
         }}
       >
-        {/* what is new: a plain line icon (0.52, mature language) */}
-        <svg className="gift-icon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <rect x="3.5" y="9" width="17" height="11.5" rx="2" />
-          <path d="M2.5 9h19M12 9v11.5M12 9c-1.6-3.6-5.4-3.4-5-1 .3 1.6 3.4 1 5 1zM12 9c1.6-3.6 5.4-3.4 5-1-.3 1.6-3.4 1-5 1z" />
-        </svg>
+        {/* what is new: the Paper chrome gift (2026-11-16) */}
+        <Icon k="gift" size={21} className="gift-icon" />
         {unseen && <span className="gift-dot" />}
       </button>
       {open && (
@@ -215,7 +212,7 @@ export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 
           <div className="gift-head">
             <b>{fill(t.newIn, { v: head.version })}</b>
             <button className="icon-btn small" aria-label={t.done} onClick={() => setOpen(false)}>
-              ✕
+              <Icon k="close" />
             </button>
           </div>
           {all ? (
@@ -231,7 +228,7 @@ export function WhatsNewButton({ t, lang, unseen, onSeen }: { t: Strings; lang: 
           )}
           {!all && (
             <button className="link gift-more" onClick={() => setAll(true)}>
-              {t.allChanges} <span className="flip-rtl">→</span>
+              {t.allChanges} <Icon k="fwd" />
             </button>
           )}
         </div>
@@ -260,9 +257,7 @@ export function MissionCard({ t, settings, lessonId, anyDone, todayXp, goalXp, o
           {settings.mode === 'voice' ? (
             <MicIcon />
           ) : (
-            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" className="flip-rtl">
-              <path d="M7 4.5 19 12 7 19.5z" fill="currentColor" />
-            </svg>
+            <Icon k="play" size={26} />
           )}
         </button>
         <div className="mission-goal">
@@ -408,7 +403,7 @@ function AreaSheet({ t, lang, progress, area, onClose, onPractice, learn }: { t:
             <RankCrest div={rp.div} size={32} lang={lang} /> {t.domainNames[area]}
           </h2>
           <button className="icon-btn" onClick={onClose} aria-label={t.back}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
         <div className="as-head">
@@ -438,16 +433,11 @@ function AreaSheet({ t, lang, progress, area, onClose, onPractice, learn }: { t:
                 <div className="as-btns">
                   {learn.has(k) && (
                     <button className="icon-btn small" onClick={() => learn.open(k)} aria-label={`${he ? 'ללמוד' : 'Learn'}: ${t.skillNames[k]}`} title={he ? 'ללמוד' : 'Learn'} data-learn={k}>
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
-                        <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
-                      </svg>
+                      <Icon k="book" size={18} />
                     </button>
                   )}
                   <button className="icon-btn small as-play" onClick={() => onPractice(k)} aria-label={`${he ? 'לתרגל' : 'Play'}: ${t.skillNames[k]}`} title={he ? 'לתרגל' : 'Play'} data-play={k}>
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                      <path d="M7 4.5v15l13-7.5z" />
-                    </svg>
+                    <Icon k="play" size={16} />
                   </button>
                 </div>
               </li>
@@ -539,7 +529,7 @@ export function PathScreen({ t, settings, progress, onStart, onPlacement }: { t:
                   <button className="node-btn" disabled={st === 'locked'} onClick={() => onStart(id)} aria-label={`${i + 1}. ${m.title[lang].replace(/\{[nk]\}/g, bb)}`}>
                     {st === 'current' && (
                       <span className="start-bubble" aria-hidden="true">
-                        {t.startLesson} <span className="flip-rtl">▶</span>
+                        {t.startLesson} <Icon k="play" />
                       </span>
                     )}
                     <span className="node-disc" aria-hidden="true">
@@ -729,167 +719,7 @@ export interface PracticeHub {
   /** SPEC-MY-SONG: practise over your own recording, measured with the course's own machinery. */
   mysong?: () => void;
 }
-const HUB_PATHS: Record<string, React.ReactNode> = {
-  // Encore: a note head between repeat signs.
-  encore: (
-    <>
-      <path d="M3 5v14M6 5v14M18 5v14M21 5v14" />
-      <circle cx="8.6" cy="10" r="0.6" />
-      <circle cx="8.6" cy="14" r="0.6" />
-      <circle cx="15.4" cy="10" r="0.6" />
-      <circle cx="15.4" cy="14" r="0.6" />
-      <ellipse cx="12" cy="12" rx="2.6" ry="1.9" transform="rotate(-20 12 12)" />
-    </>
-  ),
-  repertoire: (
-    <>
-      <path d="M4 19h16" />
-      <path d="M6 19V9M10 19V6M14 19v-8M18 19V4" />
-    </>
-  ),
-  songs: (
-    <>
-      <path d="M9 18V5l11-2v13" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="17.5" cy="16" r="2.5" />
-    </>
-  ),
-  drills: (
-    <>
-      <path d="M8 12h8" />
-      <rect x="5" y="7" width="3" height="10" rx="1" />
-      <rect x="16" y="7" width="3" height="10" rx="1" />
-      <path d="M2.5 9.5v5M21.5 9.5v5" />
-    </>
-  ),
-  lessons: (
-    <>
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
-      <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5M9 8h7M9 11.5h5" />
-    </>
-  ),
-  tuner: (
-    <>
-      <path d="M4.5 16a8 8 0 0 1 15 0" />
-      <path d="M12 16l3.5-6.5" />
-      <circle cx="12" cy="16" r="1.2" />
-    </>
-  ),
-  metronome: (
-    <>
-      <path d="M8.5 3h7l4 18h-15z" />
-      <path d="M12 16l4.5-9M6.5 16h11" />
-    </>
-  ),
-  drone: (
-    <>
-      <path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4M21 12h0" />
-    </>
-  ),
-  slowdown: (
-    <>
-      <circle cx="12" cy="13" r="8" />
-      <path d="M12 9v4l2.5 2M9.5 2.5h5" />
-    </>
-  ),
-  licks: (
-    <>
-      <path d="M4 17c3-6 5-6 8-2s5 4 8-3" />
-      <circle cx="12" cy="12" r="10" strokeDasharray="2 3" />
-    </>
-  ),
-  transcribe: (
-    <>
-      <path d="M6 9a5 5 0 0 1 10 0c0 3-3 3-3 6a2 2 0 0 1-4 0" />
-      <path d="M3 20h18" />
-      <circle cx="18" cy="17" r="1.6" />
-    </>
-  ),
-  improv: (
-    <>
-      <path d="M9 18V6l10-2v12" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <path d="M3 8c2-2 4-2 6 0" />
-    </>
-  ),
-  puzzle: (
-    <>
-      <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
-      <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
-      <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
-      <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
-    </>
-  ),
-  exams: (
-    <>
-      <path d="M7 3.5h8l3.5 3.5V20.5H7z" />
-      <path d="M10 11l1.8 1.8L15 9.5M10 16.5h5" />
-    </>
-  ),
-  groove: (
-    <>
-      <path d="M3 15c2 0 2-6 4.5-6S10 15 12 15s2.5-6 4.5-6S19 15 21 15" />
-      <path d="M3 20h18" />
-    </>
-  ),
-  charts: (
-    <>
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="M9 5v14M15 5v14M5.5 10h2M11 13h2M17 10h2" />
-    </>
-  ),
-  log: (
-    <>
-      <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
-      <path d="M8 8h8M8 12h5M14.5 16.5l1.5 1.5 3-3.5" />
-    </>
-  ),
-  pieces: (
-    <>
-      <path d="M6 3.5h9l3.5 3.5v13.5H6z" />
-      <path d="M9 9.5h6M9 13h6M9 16.5h3.5" />
-    </>
-  ),
-  chordfinder: (
-    <>
-      <rect x="6" y="3" width="12" height="18" rx="2" />
-      <path d="M9 3v18M12 3v18M15 3v18M6 8h12M6 13h12" />
-      <circle cx="12" cy="10.5" r="1.6" fill="currentColor" />
-    </>
-  ),
-  chordbuilder: (
-    <>
-      <path d="M4 18h16M4 13h16" />
-      <circle cx="7" cy="13" r="1.8" fill="currentColor" />
-      <circle cx="12" cy="9" r="1.8" fill="currentColor" />
-      <circle cx="17" cy="5" r="1.8" fill="currentColor" />
-      <path d="M7 13v5M12 9v9M17 5v13" />
-    </>
-  ),
-  mixer: (
-    <>
-      <path d="M6 4v16M12 4v16M18 4v16" />
-      <rect x="4" y="13" width="4" height="3" rx="1" />
-      <rect x="10" y="7" width="4" height="3" rx="1" />
-      <rect x="16" y="11" width="4" height="3" rx="1" />
-    </>
-  ),
-  mysong: (
-    <>
-      <path d="M9 17V5l10-2v12" />
-      <circle cx="6.5" cy="17" r="2.5" />
-      <circle cx="16.5" cy="15" r="2.5" />
-      <path d="M3 21h7" />
-    </>
-  ),
-  games: (
-    <>
-      <rect x="2.5" y="7" width="19" height="11" rx="5.5" />
-      <path d="M7.5 10.5v4M5.5 12.5h4M15.5 11.5h0M18 13.5h0" />
-    </>
-  ),
-};
-/** Practice-page cards and tools in the Paper language: each hub row → its glyph (HUB_PATHS: the old line drawing, kept as a fallback). */
+/** Practice-page cards and tools in the Paper language: each hub row → its glyph (a chrome note when a glyph is missing). */
 const HUB_ART: Record<string, string> = {
   encore: 'encore', repertoire: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
   slowdown: 'slow', licks: 'lick', transcribe: 'transcribe', improv: 'improv', puzzle: 'puzzle', exams: 'features', groove: 'groove', charts: 'roadmap',
@@ -899,9 +729,7 @@ const HubIcon = ({ k, size = 22 }: { k: string; size?: number }) =>
   PAPER[HUB_ART[k]] ? (
     <PaperSvg art={PAPER[HUB_ART[k]]} cut={size <= 24 ? 'small' : 'full'} width={size} className="hub-pp" />
   ) : (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {HUB_PATHS[k]}
-    </svg>
+    <Icon k="quaver" size={size} />
   );
 const HUB_TX = {
   songs: { en: ['Songs', 'Play and sing real songs'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים'] },
@@ -1085,7 +913,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       {hub && games ? (
         <header className="screen-head">
           <button className="icon-btn" onClick={() => showGames(false)} aria-label={t.back}>
-            <span className="flip-rtl">‹</span>
+            <Icon k="back" />
           </button>
           <h1>{HUB_TX.games[lang][0]}</h1>
           {onBoard && (
@@ -1195,7 +1023,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
           <b>{t.weeklyPuzzle}</b>
         </span>
         <span className="play-hero-go" aria-hidden="true">
-          <span className="flip-rtl">›</span>
+          <Icon k="fwd" />
         </span>
       </button>
       )}
@@ -1239,7 +1067,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       <button className="live-card" onClick={onOnline}>
         <span className="live-icon" aria-hidden="true">
           <span className="live-ping" />
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="12" cy="12" r="2" /><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8" /></svg>
+          <Icon k="live" size={22} />
         </span>
         <span className="live-text">
           <b>{t.online}</b>
@@ -1254,24 +1082,8 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
   );
 }
 
-/** Line icons for the Play tab (mature UI, 0.42): one per game category, plus the puzzle / duel / daily. */
-const CAT_PATHS: Record<string, string> = {
-  ear: 'M8 9a4 4 0 1 1 8 0c0 2.5-2 3.4-2.6 5.2-.5 1.6-1.3 3.3-3.4 3.3-1.4 0-2.4-.9-2.7-2M10.5 9a1.5 1.5 0 0 1 3 0',
-  rhythm: 'M4 9.5c0-1.4 3.6-2.5 8-2.5s8 1.1 8 2.5v6c0 1.4-3.6 2.5-8 2.5s-8-1.1-8-2.5zM4 9.5c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5M7 3.5l3.5 4M17 3.5l-3.5 4',
-  memory: 'M4 6h5v5H4zM15 6h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z',
-  read: 'M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8zM12 6.3v13',
-  voice: 'M9 4.5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0zM5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v3.5',
-  instrument: 'M14.5 3.5l6 6M17.5 6.5 11 13M11 13c-1.2-1.2-3.4-1-4.6.4-.9 1-.7 2.2-1.9 3-1.4.9-1.4 2.6-.2 3.8s2.9 1.2 3.8-.2c.8-1.2 2-1 3-1.9 1.4-1.2 1.6-3.4.4-4.6z',
-  social: 'M9 11a3.2 3.2 0 1 0 0-6.4A3.2 3.2 0 0 0 9 11zM2.8 19.5c.6-3.1 3.1-5 6.2-5s5.6 1.9 6.2 5M16.3 5.8a3.2 3.2 0 0 1 0 6.3M17.4 14.7c2.2.5 3.6 2.2 3.9 4.8',
-  duel: 'M5 19 14 10M14 10l2-5 3 3-5 2M19 19l-9-9M10 10 8 5 5 8l5 2M4 20l2-2M20 20l-2-2',
-  daily: 'M4 6.5h16v13H4zM4 10.5h16M8 4v4M16 4v4',
-  puzzle: 'M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v3h-3a2 2 0 1 0-4 0H5v-3a2 2 0 1 0 0-4z',
-};
+/** The Play tab's category mark (only the daily puzzle is left): its Paper glyph. */
 function CatIcon({ k }: { k: string }) {
   if (k === 'puzzle' && PAPER.puzzle) return <PaperSvg art={PAPER.puzzle} cut="small" width={24} />;
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d={CAT_PATHS[k] ?? CAT_PATHS.ear} />
-    </svg>
-  );
+  return <Icon k="quaver" size={22} />;
 }

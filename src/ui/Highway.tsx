@@ -44,6 +44,7 @@ import { SetupSheet } from './SetupSheet';
 import { IsoMix } from './Iso';
 import { voiceOf } from '../engine/drumKit';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+import { Icon } from './icons';
 
 /** A tier sets the level of each song chip (its levels in turn), the tempo and the pitch lanes (GAMES_TIERS_PLAN). */
 function withTier(o: HighwayOptions, t: DynName | undefined): HighwayOptions {
@@ -635,7 +636,7 @@ export function Highway({
       <main className="panel-screen g3 hw-setup">
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={tx(T.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{tx(T.title)}</h1>
         </header>
@@ -965,7 +966,7 @@ export function Highway({
     <main className={`g3 hw-play ${reduced ? 'calm' : ''}`}>
       <header className="lesson-top hw-top">
         <button className="icon-btn" onClick={() => (stage === 'paused' ? onExit() : pause())} aria-label={stage === 'paused' ? tx(T.exit) : tx(T.pause)}>
-          {stage === 'paused' ? '✕' : '❚❚'}
+          <Icon k={stage === 'paused' ? 'close' : 'pause'} />
         </button>
         <div className="hw-stat" aria-live="off">
           <small>{tx(T.accuracy)}</small>

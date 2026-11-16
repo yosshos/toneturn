@@ -93,7 +93,7 @@ export function ChallengeLibrary({ lang, current, onPick, onClose, best }: { lan
         <div className="menu-head">
           <h2>{t.library}</h2>
           <button className="icon-btn" onClick={onClose} aria-label={t.close}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
         <ChallengeList lang={lang} current={current} onPick={onPick} best={best} />

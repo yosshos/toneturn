@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LOG_KINDS, LOG_MINUTES, LOG_NAME, LOG_XP_PER_DAY, isLog, logKind, logMinutes, logXpOn, type LogKind } from '../engine/practiceLog';
 import { localDay, type Progress } from '../storage/progress';
+import { Icon } from './icons';
 
 const TX = {
   en: { title: 'Log practice', what: 'What did you practice?', long: 'How long?', note: 'A note (optional): what you worked on, what is next', min: 'min', save: 'Save', week: 'This week, away from the app', none: 'Nothing logged this week yet.', close: 'Close', xpCap: `Logged practice earns up to ${LOG_XP_PER_DAY} XP a day.`, other: 'Other' },
@@ -36,7 +37,7 @@ export function PracticeLogSheet({ lang, progress, onSave, onClose }: { lang: 'e
         <div className="menu-head">
           <h2 id="plog-title">{tx.title}</h2>
           <button className="icon-btn" onClick={onClose} aria-label={tx.close}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
         <p className="plog-q">{tx.what}</p>

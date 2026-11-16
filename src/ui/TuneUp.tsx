@@ -9,6 +9,7 @@ import { G2Head, prefersCalm, type Game2Props } from './Flight';
 import { TierChips } from './TierChips';
 import { startTier, tierAllowed, tierDef, type DynName } from '../engine/gameTiers';
 import { piano } from './services';
+import { Icon } from './icons';
 
 const TEXT = {
   en: {
@@ -345,7 +346,7 @@ export function TuneUp({ lang, settings, saved, onSave, onExit, onResult, best, 
                   <b dir="ltr">+{last.points}</b> {tx.pts}
                 </p>
                 <button className="btn mega" onClick={next}>
-                  {tx.next} <span className="flip-rtl">→</span>
+                  {tx.next} <Icon k="fwd" />
                 </button>
               </>
             )

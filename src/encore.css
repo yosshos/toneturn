@@ -209,3 +209,12 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
 .enc-rk.out ellipse { fill: var(--card-2); stroke-dasharray: 3 2; }
 .enc-rk.out text { fill: var(--ink-dim); text-decoration: line-through; }
 .enc-poly { margin: 0; }
+
+/* filled (accent) controls: the Paper chrome symbol in the button's text colour */
+.enc-screen .enc-pill.ac, .enc-screen .ch.on, .enc-seg button.on, .enc-play-row .icon-btn.on, .enc-ladder li.done {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}

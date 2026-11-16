@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { CHALLENGES_ON } from '../cloud/challenges';
 import { ReportsAdmin } from './Community';
 import { grantPlan, listPlans, loadPricing, myPlan, saleNow, salePrice, savePricing, type MyPlan, type PlanId, type Pricing } from '../cloud/pricing';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 const PLAN_NAME: Record<PlanId, { en: string; he: string }> = {
@@ -30,7 +31,7 @@ export function PlansScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
     <main className="panel-screen plans" data-plans="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{he ? 'מנויים' : 'Plans'}</h1>
       </header>
@@ -110,7 +111,7 @@ export function AdminScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
     <main className="panel-screen admin" data-admin="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{he ? 'ניהול מנויים ומחירים' : 'Plans & pricing'}</h1>
       </header>

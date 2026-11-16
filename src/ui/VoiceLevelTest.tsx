@@ -9,6 +9,7 @@ import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voice
 import type { VoiceTestMode } from './VoiceTimed';
 import { SIMULATED } from './services';
 import { setRecScreenKind } from './recKeep';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -162,8 +163,8 @@ export function VoiceLevelTest({
     return (
       <main className="panel-screen vocal vtimed" data-voice-test="1">
         <header className="screen-head">
-          <button className="icon-btn" onClick={onBack} aria-label="←">
-            <span className="flip-rtl">←</span>
+          <button className="icon-btn" onClick={onBack} aria-label={lang === 'he' ? 'חזרה' : 'Back'}>
+            <Icon k="back" />
           </button>
           <h1>{tx.title}</h1>
         </header>
@@ -177,7 +178,7 @@ export function VoiceLevelTest({
           {saved ? (
             <>
               <button className="btn mega" onClick={() => begin(saved)} data-test-resume="1">
-                ▶ {tx.resume.replace('{n}', String(saved.si + 1))}
+                <Icon k="play" /> {tx.resume.replace('{n}', String(saved.si + 1))}
               </button>
               <button className="btn ghost" onClick={() => begin(null)} data-test-start="1">
                 {tx.over}
@@ -185,7 +186,7 @@ export function VoiceLevelTest({
             </>
           ) : (
             <button className="btn mega" onClick={() => begin(null)} data-test-start="1">
-              ▶ {tx.start}
+              <Icon k="play" /> {tx.start}
             </button>
           )}
           <button className="btn ghost" onClick={onBack}>

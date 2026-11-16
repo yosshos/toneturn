@@ -7,6 +7,7 @@ import { CHANNELS, CHANNEL_NAME, DEFAULT_MIXER, dbOf, mixerOf, type ChannelId, t
 import { chartBacking, parseChart } from '../engine/charts';
 import type { Settings } from '../storage/progress';
 import { piano } from './services';
+import { Icon } from './icons';
 
 const TX = {
   en: { title: 'Mixer', hint: 'Each sound has its own channel: level, EQ and effects. Changes are heard at once.', test: 'Test the mix', stop: 'Stop', reset: 'Reset to default', mute: 'Mute', solo: 'Solo', vol: 'Level', pan: 'Pan', low: 'Low', mid: 'Mid', high: 'High', comp: 'Compressor', chorus: 'Chorus', reverb: 'Reverb', delay: 'Delay', room: 'Room', hall: 'Hall', eq: 'EQ', fx: 'Effects', delayTime: 'Delay time', feedback: 'Repeats', back: 'Back', more: 'EQ & effects' },
@@ -58,14 +59,14 @@ export function MixerScreen({ settings, onChange, onBack }: { settings: Settings
     <main className="panel-screen mixer" data-mixer="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>
       <p className="field-hint">{tx.hint}</p>
       <div className="mx-top">
         <button className="btn" onClick={() => void test()} data-mx-test="1">
-          {playing ? `■ ${tx.stop}` : `▶ ${tx.test}`}
+          <Icon k={playing ? 'stop' : 'play'} /> {playing ? tx.stop : tx.test}
         </button>
         <button className="btn ghost small" onClick={() => update(mixerOf(DEFAULT_MIXER))} data-mx-reset="1">
           {tx.reset}

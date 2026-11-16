@@ -7,6 +7,7 @@ import { EXAMS, type ExamDef } from '../content/bagrut';
 import { genTopic, rng } from '../engine/topicKit';
 import { TOPIC_GEN } from '../engine/topics';
 import type { LessonDef, Question } from '../engine/lesson';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -76,7 +77,7 @@ export function ExamsScreen({ lang, onBack, onPractise, onMock }: { lang: Lang; 
     <main className="panel-screen exams" data-exams="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>

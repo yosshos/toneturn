@@ -14,6 +14,7 @@ import { TierChips } from './TierChips';
 import { InputCheck } from './InputCheck';
 import { startTier, tierAllowed, type DynName, type TierInfo } from '../engine/gameTiers';
 import { accentsOf, BAND_PUSH_MS, GROOVE_FF_PARTS, grooveTierPlan, grooveTierScore, hiddenSwing, POCKET_BARS, POCKET_BPM, pocketPartScore, SWING_BPM, swingPartScore, matchTapsAt, tempoChangePlan, tempoChangeScore, type GrooveFfPart } from '../engine/grooveTier';
+import { Icon } from './icons';
 
 type Mode = 'fade' | 'pocket' | 'swing' | 'level';
 const TX = {
@@ -245,7 +246,7 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
     <main className="panel-screen groove-trainer" data-groove-trainer="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (stop(), onBack())} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>
@@ -270,12 +271,12 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
       )}
       <div className="ch-step gt-tempo" dir="ltr" hidden={mode === 'level'}>
         <small>{tx.tempo}</small>
-        <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 5))} disabled={running}>
-          −
+        <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 5))} disabled={running} aria-label="−">
+          <Icon k="minus" />
         </button>
         <b>{bpm}</b>
-        <button className="icon-btn" onClick={() => setBpm((b) => Math.min(200, b + 5))} disabled={running}>
-          +
+        <button className="icon-btn" onClick={() => setBpm((b) => Math.min(200, b + 5))} disabled={running} aria-label="+">
+          <Icon k="plus" />
         </button>
       </div>
       {mode === 'pocket' && (
@@ -306,10 +307,10 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
           </label>
           <div className="gt-row">
             <button className="btn ghost" onClick={() => void playSwing()} disabled={running} data-swing-listen="1">
-              ▶ {tx.listen}
+              <Icon k="play" /> {tx.listen}
             </button>
-            <button className="btn ghost" onClick={() => setHidden(0.52 + Math.round(Math.random() * 20) / 100)} disabled={running}>
-              ↻
+            <button className="btn ghost" onClick={() => setHidden(0.52 + Math.round(Math.random() * 20) / 100)} disabled={running} aria-label={lang === 'he' ? 'סווינג נסתר חדש' : 'A new hidden swing'}>
+              <Icon k="again" />
             </button>
           </div>
         </div>
@@ -326,11 +327,11 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
       </button>
       {running ? (
         <button className="btn mega" onClick={stop}>
-          ■ {tx.stop}
+          <Icon k="stop" /> {tx.stop}
         </button>
       ) : (
         <button className="btn mega" onClick={() => void (mode === 'fade' ? runFade() : mode === 'pocket' ? runPocket() : mode === 'level' ? runLevel() : runSwingTap())} data-groove-start="1">
-          ▶ {tx.start}
+          <Icon k="play" /> {tx.start}
         </button>
       )}
       {msg && (

@@ -16,6 +16,7 @@ import { TierChips } from './TierChips';
 import { kitKind, type KitProfile } from '../engine/drumKit';
 import { ZONE_NAME, zonesFor, zonesOf, type StickZones } from '../engine/rudimentRush';
 import { rushTopBpm } from '../engine/drumRecords';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -107,7 +108,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
       <main className="panel-screen dg-screen" data-drum-game={game}>
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{tx(DRUM_GAME_NAME[echoMode ? 'groove-echo' : game])}</h1>
         </header>
@@ -175,7 +176,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
       <main className="panel-screen dg-screen" data-drum-game={game}>
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{tx(DRUM_GAME_NAME[game])}</h1>
         </header>
@@ -208,7 +209,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
     <main className="panel-screen dg-screen dg-play" data-drum-game={game} data-dg-round={round + 1}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx(DRUM_GAME_NAME[game])}</h1>
       </header>

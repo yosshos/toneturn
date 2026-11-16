@@ -99,7 +99,7 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack, ti
     <main className="panel-screen online">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.online}</h1>
       </header>
@@ -270,7 +270,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
       <main className="panel-screen room-lobby">
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{t.online}</h1>
         </header>
@@ -366,7 +366,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
       <main className={`tournament big-screen stage-${v.phase}`}>
         <div className="t-top">
           <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
-            ✕
+            <Icon k="close" />
           </button>
           <span className="room-code small" dir="ltr">
             {s.code}
@@ -398,7 +398,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
       <section className="t-center">
         <div className="t-top">
           <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
-            ✕
+            <Icon k="close" />
           </button>
           <span className="t-answered" dir="auto">
             {!reveal && fmt(t.answeredN, { n: s.answered, m: s.players.length })}
@@ -483,8 +483,8 @@ function SeqInput({ t, disabled, onSubmit }: { t: Strings; disabled: boolean; on
         ))}
       </div>
       <div className="seq-actions">
-        <button className="btn ghost" disabled={disabled || !seq.length} onClick={() => setSeq((x) => x.slice(0, -1))}>
-          ⌫
+        <button className="btn ghost" disabled={disabled || !seq.length} onClick={() => setSeq((x) => x.slice(0, -1))} aria-label={t.backspace}>
+          <Icon k="backspace" />
         </button>
         <button className="btn primary" disabled={disabled || !seq.length} data-send="1" onClick={() => onSubmit(seq.join('-'))}>
           ✓ {t.send}

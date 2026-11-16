@@ -261,11 +261,7 @@ function Links({ mode, lang, alsoMidi }: { mode: InputCheckMode; lang: Lang; als
         </a>
       )}
       <a className="ic-gear" href={settingsHref(mode)} aria-label={isMidiMode(mode) ? tx.midiSettings : tx.micSettings} title={isMidiMode(mode) ? tx.midiSettings : tx.micSettings} data-ic-link={isMidiMode(mode) ? 'midi' : 'input'}>
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
-          <circle cx="16" cy="7" r="2" />
-          <circle cx="10" cy="17" r="2" />
-        </svg>
+        <Icon k="sliders" size={18} />
       </a>
     </span>
   );
