@@ -1,0 +1,37 @@
+/* Gifts between friends and the musicians' reactions (owner 2026-11-16). Same cards and type as Encore; quiet line
+   icons, no emoji, no yellow behind text. */
+
+.gift-allow { display: flex; align-items: center; gap: 8px; margin: 0; padding: 7px 10px; border-radius: 12px; border: 2px solid var(--line-strong); background: var(--card); color: var(--ink); font-weight: 600; font-size: 0.86rem; }
+.gift-allow.used, .gift-allow.practise-first { color: var(--ink-dim); }
+.gift-item, .gift-friend { gap: 6px; padding: 9px 11px; }
+.gift-item .ico, .gift-friend .ico { flex: none; }
+.gift-acts { gap: 6px; flex-wrap: wrap; }
+.gift-acts .btn { display: inline-flex; align-items: center; gap: 5px; padding-inline: 9px; }
+.gift-note { border-inline-start: 3px solid var(--line-strong); padding-inline-start: 8px; font-style: italic; }
+.gift-pick { gap: 10px; cursor: pointer; padding: 9px 11px; }
+.gift-pick.on { border-color: var(--ink); }
+.gift-pick input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.gift-note-field { gap: 4px; }
+
+/* reactions: four word chips, the first with the Encore glyph */
+.chl-react { gap: 6px; }
+.chl-react-b { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; }
+.chl-react-b.on { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.chl-react-counts { display: block; }
+.chl-head-btns { gap: 4px; }
+
+/* the live "together" mark */
+.together-chip { position: fixed; inset-inline-start: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 55; display: inline-flex; align-items: center; gap: 7px; max-width: calc(100vw - 20px); padding: 6px 12px 6px 9px; border-radius: 999px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); font: 700 0.8rem var(--font); box-shadow: 0 2px 0 var(--ink); }
+.together-chip .dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; flex: none; }
+.together-chip.live .dot { background: var(--ink); }
+.together-chip .t-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 40vw; }
+.together-chip button { background: none; border: 0; padding: 0 2px; color: inherit; font: inherit; cursor: pointer; }
+@media (prefers-reduced-motion: no-preference) {
+  .together-chip.live .dot { animation: together-pulse 2.4s ease-in-out infinite; }
+}
+@keyframes together-pulse {
+  50% { opacity: 0.35; }
+}
+
+/* the streak calendar: a day a friend's fermata held */
+.streak-cal li.fermata, .week-strip li.fermata { color: var(--ink); }

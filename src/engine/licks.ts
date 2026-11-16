@@ -113,7 +113,9 @@ export type PhraseSource =
   | { kind: 'piece'; pieceId: string; bars: [number, number] }
   | { kind: 'pattern'; drillId: string }
   | { kind: 'teacher'; assignmentId: string; teacher: string }
-  | { kind: 'shared'; code: string; by: string };
+  | { kind: 'shared'; code: string; by: string }
+  /** A friend dedicated it to me (engine/encore/gifts.ts): who, the gift, their note. */
+  | { kind: 'dedication'; giftId: string; by: string; note?: string };
 
 export const CONTEXTS: { id: LickContext; name: T2; short: T2 }[] = [
   { id: 'major-251', name: { en: 'Major ii–V–I', he: 'ii–V–I מז׳ורי' }, short: { en: 'ii–V–I', he: 'ii–V–I' } },

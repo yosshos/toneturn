@@ -59,6 +59,7 @@ export function dayLetter(day: string, lang: 'he' | 'en' = typeof document !== '
 function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: Strings }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
   const freeze = new Set(st.freezeDays);
+  const fermata = new Set(st.fermataDays ?? []);
   const run = runDays(st, today);
   return (
     <ol className="week-strip" dir="ltr" aria-label={t.thisWeek}>
@@ -66,9 +67,9 @@ function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: String
         const isToday = i === 6;
         const done = run.has(d);
         return (
-          <li key={d} className={`${done ? 'done' : ''} ${freeze.has(d) ? 'freeze' : ''} ${isToday ? 'today' : ''}`} style={{ ['--i' as string]: i }}>
+          <li key={d} className={`${done ? 'done' : ''} ${freeze.has(d) ? 'freeze' : ''} ${fermata.has(d) ? 'fermata' : ''} ${isToday ? 'today' : ''}`} style={{ ['--i' as string]: i }} data-held={fermata.has(d) ? 'fermata' : freeze.has(d) ? 'freeze' : undefined}>
             <span>{dayLetter(d)}</span>
-            <i aria-hidden="true">{freeze.has(d) ? <Icon k="snow" size={14} /> : done ? <Icon k="flame" size={14} /> : null}</i>
+            <i aria-hidden="true">{fermata.has(d) ? <Icon k="fermata" size={14} /> : freeze.has(d) ? <Icon k="snow" size={14} /> : done ? <Icon k="flame" size={14} /> : null}</i>
           </li>
         );
       })}
@@ -238,7 +239,14 @@ export function StreakSheet({
                   <Icon key={i} k="snow" />
                 ))}
               </span>
+              {(st.fermatas ?? 0) > 0 &&
+                Array.from({ length: st.fermatas ?? 0 }, (_, i) => <Icon key={`f${i}`} k="fermata" />)}
             </b>
+            {(st.fermatas ?? 0) > 0 && (
+              <small data-fermatas={st.fermatas}>
+                {lang === 'he' ? `פרמטות מחברים: ${st.fermatas}` : `Fermatas from friends: ${st.fermatas}`}
+              </small>
+            )}
           </div>
           <div>
             <small>{t.gems}</small>
@@ -266,9 +274,10 @@ export function StreakSheet({
           {Array.from({ length: nDays }, (_, i) => {
             const d = `${month}-${String(i + 1).padStart(2, '0')}`;
             const cls = freeze.has(d) ? 'freeze' : repaired.has(d) ? 'repaired' : practiced.has(d) ? 'done' : '';
+            const ferm = (st.fermataDays ?? []).includes(d);
             return (
-              <li key={d} className={`${cls} ${d === today ? 'today' : ''} ${milestoneDays.has(d) ? 'milestone' : ''}`} title={d}>
-                {cls === 'freeze' ? <Icon k="snow" size={14} /> : i + 1}
+              <li key={d} className={`${cls} ${ferm ? 'fermata' : ''} ${d === today ? 'today' : ''} ${milestoneDays.has(d) ? 'milestone' : ''}`} title={d} data-held={ferm ? 'fermata' : cls === 'freeze' ? 'freeze' : undefined} data-day={d}>
+                {ferm ? <Icon k="fermata" size={14} /> : cls === 'freeze' ? <Icon k="snow" size={14} /> : i + 1}
               </li>
             );
           })}

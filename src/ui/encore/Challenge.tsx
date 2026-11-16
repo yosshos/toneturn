@@ -58,7 +58,6 @@ import {
   reportShared,
   resolveReview,
   reviewList,
-  setBravo,
   sharePhrase,
   syncOne,
   uploadClip,
@@ -69,6 +68,8 @@ import {
   type SharedPhrase,
 } from '../../cloud/challenges';
 import { Bi, EncoreGlyph, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
+import { ReactionBar, ReactionCountsLine } from './Reactions';
+import { GiftIcon, GiftsView } from './Gifts';
 
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
 const mod = (n: number) => ((n % 12) + 12) % 12;
@@ -283,6 +284,7 @@ export function ChallengeScreen(p: ChallengeProps) {
   if (r.view === 'page') return <ChallengePage {...p} head={head} code={r.code} beat={r.beat} />;
   if (r.view === 'mine') return <MineView lang={lang} head={head} />;
   if (r.view === 'review') return <ReviewView lang={lang} head={head} />;
+  if (r.view === 'gifts') return <GiftsView {...p} head={head} friend={r.friend} dedicate={r.dedicate} />;
   return <GalleryView {...p} head={head} />;
 }
 type Head = (title: React.ReactNode, sub?: React.ReactNode, back?: () => void, extra?: React.ReactNode) => React.ReactNode;
@@ -556,7 +558,6 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
   const [beatInfo, setBeatInfo] = useState<{ from: string; bpm: number; keys: number } | null>(null);
   const [report, setReport] = useState<{ row: BoardRow | null } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [bravo, setBravoOn] = useState(false);
   const [tick, setTick] = useState(0);
   const [clip, setClip] = useState<string | null>(null);
   const player = usePlayer();
@@ -573,7 +574,6 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         if (!live) return;
         setOpened(o);
         if (o.kind === 'phrase') {
-          setBravoOn(o.p.myBravo);
           if (o.p.hasAudio) void clipUrl(o.p.id).then((u) => live && setClip(u));
         }
       })
@@ -789,26 +789,13 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
           {msg}
         </p>
       )}
+      {!ph.mine && <ReactionBar lang={lang} p={ph} />}
+      {ph.mine && <ReactionCountsLine lang={lang} counts={ph.reactions} />}
       <div className="row chl-actions">
-        {!ph.mine && (
-          <button
-            className={`btn ghost grow ${bravo ? 'on' : ''}`}
-            aria-pressed={bravo}
-            onClick={() => {
-              const on = !bravo;
-              setBravoOn(on);
-              void setBravo(ph.id, on).catch(() => setBravoOn(!on));
-            }}
-            data-chl-bravo={bravo ? 'on' : 'off'}
-          >
-            {bravo && <Icon d="check" size={13} />}
-            {L(lang, 'Bravo', 'בראבו')}
+        {!ph.mine && ph.friend && ph.ownerId && (
+          <button className="btn ghost grow" onClick={() => go(`gifts/${ph.ownerId}`)} data-chl-gift={ph.ownerId}>
+            {L(lang, 'Gift', 'מתנה')}
           </button>
-        )}
-        {ph.mine && ph.bravos !== undefined && (
-          <small className="t3 grow" data-chl-bravos={ph.bravos}>
-            {L(lang, `${ph.bravos} bravo`, `${ph.bravos} בראבו`)}
-          </small>
         )}
         {myRow && !myRow.flagged && (
           <button className="btn ghost grow" onClick={() => void sendBeat()} data-beat-link="">
@@ -880,9 +867,14 @@ function GalleryView({ lang, settings, items, head, onBack }: ChallengeProps & {
   return (
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="gallery">
       {head(L(lang, 'Encore challenges', 'אתגרי הדרן'), L(lang, 'Community · this week', 'קהילה · השבוע'), onBack, (
-        <button className="icon-btn" onClick={() => go('mine')} aria-label={L(lang, 'My shared phrases', 'המשפטים ששיתפתי')} data-chl-mine="1">
-          <EncoreGlyph size={15} />
-        </button>
+        <span className="row chl-head-btns">
+          <button className="icon-btn" onClick={() => go('gifts')} aria-label={L(lang, 'Gifts between friends', 'מתנות בין חברים')} data-chl-gifts="1">
+            <GiftIcon size={16} />
+          </button>
+          <button className="icon-btn" onClick={() => go('mine')} aria-label={L(lang, 'My shared phrases', 'המשפטים ששיתפתי')} data-chl-mine="1">
+            <EncoreGlyph size={15} />
+          </button>
+        </span>
       ))}
       <div className="chl-scroll-x" data-gfilters="1">
         {(['piano', 'guitar', 'bass', 'voice'] as LickInstrument[]).map((k) => chip(inst === k, INST[k][lang], () => setInst(inst === k ? null : k), `inst-${k}`))}
@@ -964,9 +956,10 @@ function MineView({ lang, head }: { lang: Lang; head: Head }) {
               <span className="enc-pill">{visName(p.visibility)}</span>
             </button>
             <small className="t3">
-              {L(lang, `${p.reached} reached the target`, `${p.reached} הגיעו ליעד`)} · {L(lang, `${p.bravos ?? 0} bravo`, `${p.bravos ?? 0} בראבו`)}
+              {L(lang, `${p.reached} reached the target`, `${p.reached} הגיעו ליעד`)}
               {p.status === 'held' && <> · {L(lang, 'held for review', 'מוחזק לבדיקה')}</>}
             </small>
+            <ReactionCountsLine lang={lang} counts={p.reactions} />
             {ask === p.id ? (
               <div className="row">
                 <button className="btn ghost grow" onClick={() => setAsk(null)}>

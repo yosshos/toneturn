@@ -4,8 +4,8 @@
 
 export interface SocialItem {
   id: number;
-  kind: 'nudge' | 'cheer' | 'friend_req' | 'duel_new' | 'duel_done' | 'quest' | string;
-  data?: { from?: string; mine?: number; theirs?: number } | null;
+  kind: 'nudge' | 'cheer' | 'friend_req' | 'duel_new' | 'duel_done' | 'quest' | 'gift' | 'together' | 'dedication_done' | string;
+  data?: { from?: string; mine?: number; theirs?: number; gift?: 'fermata' | 'dedication'; title?: string } | null;
   /** ISO time it was queued. */
   at: string;
 }
@@ -71,6 +71,15 @@ export function socialMessage(items: SocialItem[], lang: 'en' | 'he'): { title: 
   if (duelNew.length) parts.push(he ? `הזמנה לדו־קרב מ־${whoText(duelNew, lang)}` : `${whoText(duelNew, lang)} challenged you to a duel`);
   const done = count('duel_done');
   if (done) parts.push(he ? (done === 1 ? 'תוצאת דו־קרב מחכה לכם' : `${done} תוצאות דו־קרב מחכות לכם`) : done === 1 ? 'A duel result is in' : `${done} duel results are in`);
+  // gifts between friends (20261205000000): quiet, Hebrew first, no emoji
+  const together = from('together');
+  if (together.length) parts.push(he ? `${whoText(together, lang)} מזמין/ה לתרגל יחד עכשיו` : `${whoText(together, lang)} invited you to practise together now`);
+  const fermatas = items.filter((i) => i.kind === 'gift' && i.data?.gift === 'fermata').map((i) => i.data?.from ?? '');
+  if (fermatas.length) parts.push(he ? `פרמטה מ־${whoText(fermatas, lang)}: יום אחד ברצף שמור` : `A fermata from ${whoText(fermatas, lang)}: one streak day held`);
+  const dedications = items.filter((i) => i.kind === 'gift' && i.data?.gift !== 'fermata').map((i) => i.data?.from ?? '');
+  if (dedications.length) parts.push(he ? `${whoText(dedications, lang)} הקדיש/ה לך משפט` : `${whoText(dedications, lang)} dedicated a phrase to you`);
+  const dedDone = from('dedication_done');
+  if (dedDone.length) parts.push(he ? `${whoText(dedDone, lang)} השלים/ה את המשפט שהקדשת` : `${whoText(dedDone, lang)} completed the phrase you dedicated`);
   const nudges = from('nudge');
   if (nudges.length) parts.push(he ? `תזכורת להתאמן מ־${whoText(nudges, lang)}` : `${whoText(nudges, lang)} nudged you`);
   const reqs = from('friend_req');

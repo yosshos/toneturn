@@ -4,6 +4,9 @@ import type { ReactNode } from 'react';
 
 export type IconKey =
   | 'lock'
+  | 'fermata'
+  | 'gift'
+  | 'together'
   | 'flame'
   | 'gem'
   | 'snow'
@@ -116,6 +119,26 @@ const PATHS: Record<IconKey, ReactNode> = {
   // 2026-11-15: the vibrato mark (was the 〰 text glyph) and play for the take review.
   wave: <path d="M2 12c1.7-4 3.3-4 5 0s3.3 4 5 0 3.3-4 5 0 3.3 4 5 0" />,
   play: <path d="M7 5l12 7-12 7z" />,
+  // 2026-11-16, gifts between friends: the fermata (a held streak day), a gift, two beamed notes (practise together).
+  fermata: (
+    <>
+      <path d="M4 16a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="14.5" r="1.3" fill="currentColor" stroke="none" />
+    </>
+  ),
+  gift: (
+    <>
+      <rect x="4" y="10" width="16" height="10" rx="1.5" />
+      <path d="M3 7h18v3H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1.2C7 7 10 7 12 7zm0 0c1.5-3 5-3.5 5-1.2C17 7 14 7 12 7z" />
+    </>
+  ),
+  together: (
+    <>
+      <ellipse cx="7" cy="17" rx="2.6" ry="2" transform="rotate(-20 7 17)" />
+      <ellipse cx="17" cy="15" rx="2.6" ry="2" transform="rotate(-20 17 15)" />
+      <path d="M9.4 16.2V5.5l10 -2v11" />
+    </>
+  ),
 };
 
 /** A line icon, sized in px, coloured by the text around it. Decorative: the words beside it carry the meaning. */
