@@ -73,9 +73,9 @@ const latinOutsideBdi = (page: Page) =>
     return [...new Set(out)];
   });
 const check = async (page: Page, lang: Lang, what: string) => {
+  if (SHOTS) await page.screenshot({ path: `${SHOT_DIR}/phrase-${what}-${lang}.png` });
   await fits(page, `${what} (${lang})`);
   if (lang === 'he') expect(await latinOutsideBdi(page), `${what}: Latin outside bdi`).toEqual([]);
-  if (SHOTS) await page.screenshot({ path: `${SHOT_DIR}/${what}-${lang}.png` });
 };
 /** Play a phrase on the stub keyboard: ii–V–I-ish eighths in F at ♩120 (real time). */
 const playPhrase = async (page: Page) =>
@@ -169,7 +169,7 @@ test('Encore: "Keep this phrase" on a take review opens the trim screen on that 
   const playing = playPhrase(page);
   await expect(page.locator('[data-rec-state="listening"]')).toBeVisible();
   await playing;
-  await page.locator('[data-rec-stop]').click();
+  await expect(page.locator('[data-encore="caught"]')).toBeVisible({ timeout: 10_000 });
   await page.locator('[data-caught-next]').click();
   await page.locator('[data-trim-next]').click();
   await page.locator('[data-ctx-save]').click();
@@ -187,6 +187,43 @@ test('Encore: "Keep this phrase" on a take review opens the trim screen on that 
   const sel = await page.locator('[data-encore="trim"]').getAttribute('data-sel');
   await page.reload();
   await expect(page.locator('[data-encore="trim"]')).toHaveAttribute('data-sel', sel!);
+});
+
+test('Encore: "Practise this span" in the recordings player opens trim on that take, the A–B span selected', async ({ page }) => {
+  test.setTimeout(180_000);
+  await stubMidi(page);
+  await seed(page, 'en');
+  // a free recording (record mode keeps it in My recordings)
+  await open(page, 'en', 'encore/record');
+  const playing = playPhrase(page);
+  await expect(page.locator('[data-rec-state="listening"]')).toBeVisible();
+  await playing;
+  await expect(page.locator('[data-encore="caught"]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('[data-encore="caught"]')).toBeVisible();
+  // the shelf on Encore's home lists it
+  await page.goto('/?unlock=all&lang=en#/encore');
+  await expect(page.locator('[data-shelf-take]').first()).toBeVisible();
+  // My recordings → the player → A–B → Practise this span
+  await page.goto('/?lang=en#/recordings');
+  const rows = page.locator('[data-rec-take]');
+  await expect(rows.first()).toBeVisible({ timeout: 10_000 });
+  const id = (await rows.first().getAttribute('data-rec-take'))!;
+  await page.locator(`[data-rec-open="${id}"]`).click();
+  const player = page.locator('[data-recordings="player"]');
+  await expect(player).toBeVisible();
+  await page.locator('[data-rec-seta]').click();
+  const ab = (await player.getAttribute('data-rec-ab'))!.split(':').map(Number);
+  await page.locator('[data-rec-practise]').click();
+  await expect(page.locator('[data-encore="trim"]')).toBeVisible();
+  expect(page.url()).toContain(`take=${encodeURIComponent(id)}`);
+  const sel = (await page.locator('[data-encore="trim"]').getAttribute('data-sel'))!.split('-').map(Number);
+  expect(sel[1]).toBeGreaterThan(sel[0]);
+  expect(ab[1]).toBeGreaterThan(ab[0]);
+  await fits(page, 'trim from the player');
+  // and on through context to a saved phrase
+  await page.locator('[data-trim-next]').click();
+  await page.locator('[data-ctx-save]').click();
+  await expect(page.locator('[data-encore="plan"]')).toBeVisible();
 });
 
 test('Encore: the Practice page shows Encore first in Train; the sidebar has "הדרן"', async ({ page }) => {

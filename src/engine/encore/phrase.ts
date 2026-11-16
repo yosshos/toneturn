@@ -254,6 +254,8 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
     goal,
     startBpm: Math.max(30, Math.round(o.startBpm ?? plan.startBpm)),
     ...(l.chords.length ? { chart: phraseChart(l, k) } : {}),
+    // one phone screen: a phrase longer than two bars shows two lines at a time, following the take
+    ...(phraseBars(l) > 2 ? { paged: true } : {}),
     ...(inst === 'voice' ? { sung: true } : {}),
     ...(o.band && l.chords.length ? { band: { style: 'swing' as const, bass: true } } : {}),
   };

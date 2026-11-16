@@ -37,7 +37,6 @@ export function EncoreRun({
   onBook,
   onYours,
   onNextKey,
-  onClose,
 }: {
   lang: Lang;
   settings: Settings;
@@ -50,7 +49,7 @@ export function EncoreRun({
   onBook: (b: LickBook) => void;
   onYours: () => void;
   onNextKey: (key: number, hand: Hand) => void;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const he = lang === 'he';
   const hand = hand0 ?? finalHand(l);
@@ -189,7 +188,7 @@ export function EncoreRun({
     <div className="drill-run enc-run" data-drill={drill.itemId} data-run-stage={stage ?? 'tempo'}>
       {head}
       <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={stage === 'quarters' ? QUARTERS_BPM : bpm} live={res ? null : live} cue={!res && counting} loop={res && wb !== null ? [wb, wb] : null} />
-      {!res && strip}
+      {!res && !stage && strip}
       {!res && stage && (
         <p className="drill-stage enc-stage" data-rubato-stage={stage}>
           <b>{stage === 'free' ? (he ? 'בלי קצב — הצלילים בלבד' : 'Free time — the notes only') : he ? 'ברבעים, ♩60' : 'Quarters at ♩60'}</b>
@@ -229,11 +228,6 @@ export function EncoreRun({
         >
           {res.line && <p className="enc-after" data-after-line="1">{res.line}</p>}
         </TakeReview>
-      )}
-      {!res && (
-        <button className="link enc-close-run" onClick={onClose} data-run-close="1">
-          {he ? 'למפה של המשפט' : 'To the phrase map'}
-        </button>
       )}
     </div>
   );

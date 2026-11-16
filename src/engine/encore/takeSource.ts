@@ -1,22 +1,22 @@
-// Encore's thin adapter over a take (SPEC-PHRASE-STUDIO §12.2). Encore never reads a recordings store directly: it asks
-// this module for an EncoreTake — the fields of RecTake it needs, with the notes unpacked to milliseconds.
+// Encore's thin adapter over a take (SPEC-PHRASE-STUDIO §12.2). Encore asks this module for an EncoreTake — the fields
+// of RecTake it needs, with the notes unpacked to milliseconds.
 //
 // Two sources:
-//   1. The Recordings store (part A, src/storage/recordings.ts: listTakes / getTake). TODO(merge): when that module is on
-//      the branch, `fromStore` reads RecTake through it (unpacking `notes`), and `recentFreeTakes` lists the shelf. Until
-//      then both return nothing, and nothing here competes with that store.
+//   1. My recordings (src/storage/recordings.ts): `getTake` + `unpackNotes` for the route, `listTakes` of recent free
+//      takes (improv, record, guided, chart) for the shelf "from your recent playing".
 //   2. In-memory takes handed over by a take review ("Keep this phrase"): kept in localStorage (small: notes only, the
-//      last few), so Back or a reload returns to the same take (owner rule "never lose progress").
+//      last few), so Back or a reload returns to the same take (owner rule "never lose progress"). Every measured take is
+//      also in My recordings already (part A keeps them); the memory copy only makes Keep instant and offline-safe.
 //
-// The route `#/encore/new?take=<id>&from=<beat>&to=<beat>` (encoreBridge's openEncoreFromTake) resolves through
-// `getEncoreTake(id)`. `from` / `to` are beats from the take's beat 0 when the tempo is known, else seconds × 2 at ♩120
-// (the same thing: a beat of a ♩120 grid), so a span always means one thing.
+// The route `#/encore/new?take=<id>&from=<s>&to=<s>` (encoreBridge's openEncoreFromTake): `from` / `to` are SECONDS on
+// the take's timeline (notes' ms / 1000; beat 0 = 0 for takes with a known tempo; `from` may be negative — a pickup).
 
 import type { LickInstrument } from '../licks';
+import { getTake, listTakes, unpackNotes, type RecTake } from '../../storage/recordings';
 
 type T2 = { en: string; he: string };
 
-/** One played note: MIDI pitch, onset / release in ms from the take's start, velocity 1–127. */
+/** One played note: MIDI pitch, onset / release in ms on the take's timeline, velocity 1–127. */
 export interface RawNote {
   pitch: number;
   on: number;
@@ -28,7 +28,7 @@ export interface RawNote {
 export interface EncoreTake {
   id: string;
   at: string;
-  kind: 'drill' | 'lick' | 'phrase' | 'chart' | 'improv' | 'guided' | 'record' | 'piece' | 'vocal' | 'song' | 'level-test';
+  kind: RecTake['kind'];
   instrument: LickInstrument | 'drums';
   title: T2 | string;
   source: 'midi' | 'mic' | 'screen';
@@ -36,7 +36,7 @@ export interface EncoreTake {
   /** Known tempo (a click / band was playing): no tempo detection. */
   bpm?: number;
   meter?: number;
-  /** Beat 0 in ms from the take's start, when the tempo is known. */
+  /** Beat 0 in ms on the take's timeline, when the tempo is known. */
   t0?: number;
   /** The chord chart it was played over: bars separated by "|" (a bar may hold two chords, space separated). */
   chart?: string;
@@ -47,6 +47,7 @@ export interface EncoreTake {
 
 const MEM_KEY = 'tt.encore.takes.v1';
 const MEM_MAX = 6;
+const FREE_KINDS: RecTake['kind'][] = ['improv', 'record', 'guided', 'chart'];
 
 const ls = (): Storage | null => {
   try {
@@ -72,6 +73,7 @@ function writeMem(list: EncoreTake[]) {
   }
 }
 const live = new Map<string, EncoreTake>();
+const fromRec = new Map<string, EncoreTake>();
 
 /** Hand a take to Encore (from a review screen). Returns its id (prefixed "mem:"). */
 export function putMemoryTake(t: Omit<EncoreTake, 'id' | 'at'> & { id?: string; at?: string }): string {
@@ -82,40 +84,77 @@ export function putMemoryTake(t: Omit<EncoreTake, 'id' | 'at'> & { id?: string; 
   return id;
 }
 
-/** TODO(merge, part A): read RecTake from src/storage/recordings.ts (getTake) and unpack its notes. */
-async function fromStore(_id: string): Promise<EncoreTake | null> {
-  return null;
+/** A RecTake from My recordings as an EncoreTake (notes unpacked; t0 seconds → ms). */
+export function encoreTakeOf(r: RecTake): EncoreTake {
+  const notes: RawNote[] = unpackNotes(r.notes).map((n) => ({ pitch: n.pitch, on: n.on, off: n.off, vel: n.vel }));
+  return {
+    id: r.id,
+    at: r.at,
+    kind: r.kind,
+    instrument: r.instrument,
+    title: r.title,
+    source: r.source,
+    notes,
+    ...(r.bpm ? { bpm: r.bpm, meter: r.meter ?? 4, t0: (r.t0 ?? 0) * 1000 } : {}),
+    ...(r.chart ? { chart: r.chart } : {}),
+    ...(r.kind === 'drill' || r.kind === 'piece' || r.kind === 'lick' || r.kind === 'phrase' ? { graded: true } : {}),
+    ...(r.itemId ? { itemId: r.itemId } : {}),
+  };
 }
 
-/** A take by id: in memory first, then the Recordings store. */
+async function fromStore(id: string): Promise<EncoreTake | null> {
+  try {
+    const r = await getTake(id);
+    if (!r) return null;
+    const t = encoreTakeOf(r);
+    fromRec.set(id, t);
+    return t;
+  } catch {
+    return null;
+  }
+}
+
+/** A take by id: in memory first, then My recordings. */
 export async function getEncoreTake(id: string): Promise<EncoreTake | null> {
   if (live.has(id)) return live.get(id)!;
   const m = readMem().find((x) => x.id === id);
   if (m) return m;
   return fromStore(id);
 }
-export const getEncoreTakeSync = (id: string): EncoreTake | null => live.get(id) ?? readMem().find((x) => x.id === id) ?? null;
+/** Synchronously, when already loaded (memory, or a store take read before). */
+export const getEncoreTakeSync = (id: string): EncoreTake | null => live.get(id) ?? fromRec.get(id) ?? readMem().find((x) => x.id === id) ?? null;
 
-/** The shelf "from your recent playing": the last free takes (improv, record, guided). TODO(merge): listTakes from part A. */
-export function recentFreeTakes(n = 10): EncoreTake[] {
-  return readMem()
-    .filter((t) => t.kind === 'improv' || t.kind === 'record' || t.kind === 'guided' || t.kind === 'chart')
-    .slice(0, n);
+/** The shelf "from your recent playing": the last free takes in My recordings (improv, record, guided, chart) with notes. */
+export async function recentFreeTakes(n = 10): Promise<EncoreTake[]> {
+  let rec: EncoreTake[] = [];
+  try {
+    rec = (await listTakes({ kind: FREE_KINDS, limit: n * 2 })).filter((t) => (t.notes?.byteLength ?? 0) > 3).map(encoreTakeOf).filter((t) => t.notes.length >= 3);
+  } catch {
+    rec = [];
+  }
+  for (const t of rec) fromRec.set(t.id, t);
+  const mem = readMem().filter((t) => FREE_KINDS.includes(t.kind));
+  return [...rec, ...mem].sort((a, b) => b.at.localeCompare(a.at)).slice(0, n);
 }
 
-/** The Encore address for a take and an optional span (beats). */
+/** The Encore address for a take and an optional span (seconds on the take's timeline). */
 export function encoreTakeHash(takeId: string, span?: { from: number; to: number } | null): string {
   const q = new URLSearchParams({ take: takeId });
   if (span) {
-    q.set('from', String(Math.round(span.from * 100) / 100));
-    q.set('to', String(Math.round(span.to * 100) / 100));
+    q.set('from', String(Math.round(Math.min(span.from, span.to) * 1000) / 1000));
+    q.set('to', String(Math.round(Math.max(span.from, span.to) * 1000) / 1000));
   }
   return `#/encore/new?${q.toString()}`;
 }
 
-/** "Keep this phrase" from any review: the take goes to Encore, which opens the trim screen on it. */
-export function keepPhrase(t: Omit<EncoreTake, 'id' | 'at'>, span?: { from: number; to: number } | null): void {
+/**
+ * "Keep this phrase" from any review: the take goes to Encore, which opens the trim screen on it. `beats` (optional) is
+ * the span in beats of the take's grid (the looped / worst bars); it travels as seconds like every span.
+ */
+export function keepPhrase(t: Omit<EncoreTake, 'id' | 'at'>, beats?: { from: number; to: number } | null): void {
   const id = putMemoryTake(t);
+  const P = t.bpm ? 60000 / t.bpm : 500;
+  const span = beats ? { from: ((t.t0 ?? 0) + beats.from * P) / 1000, to: ((t.t0 ?? 0) + beats.to * P) / 1000 } : null;
   if (typeof location !== 'undefined') location.hash = encoreTakeHash(id, span).slice(1);
 }
 
@@ -126,6 +165,6 @@ export function parseEncoreHash(hash: string): { view: string; id?: string; take
   const [path, query = ''] = h.split('?');
   const parts = path.split('/').slice(1);
   const q = new URLSearchParams(query);
-  const num = (k: string) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : undefined);
+  const num = (k: string) => (q.has(k) && q.get(k) !== '' && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : undefined);
   return { view: parts[0] || 'home', ...(parts[1] ? { id: decodeURIComponent(parts[1]) } : {}), ...(q.get('take') ? { take: q.get('take')! } : {}), ...(num('from') !== undefined ? { from: num('from') } : {}), ...(num('to') !== undefined ? { to: num('to') } : {}) };
 }

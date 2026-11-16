@@ -131,6 +131,8 @@ export interface TrimState {
   edits: Record<number, number | 'x'>;
   /** Beat 0 of the take (ms). */
   t0: number;
+  /** The route's span this state was opened with ("from:to" in seconds; '' = none). */
+  spanKey?: string;
 }
 
 /** The take's notes on the trim state's grid (the player may have fixed the tempo or meter). */

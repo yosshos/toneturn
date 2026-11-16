@@ -152,7 +152,8 @@ describe('calibration against the built-in levels (§10.8)', () => {
   for (const fam of catalog())
     for (const lv of fam.levels) {
       const placed = LEVEL_PLACEMENT[lv.id];
-      if (!placed || /impro|pedal/.test(lv.id)) continue;
+      // improvisation, pedalling and gig skills (accompanying, stamina) are placed by what they ask besides the notes
+      if (!placed || /impro|pedal|gig/.test(lv.id)) continue;
       let ds;
       try {
         ds = levelDrills(lv, 'fifths-up');

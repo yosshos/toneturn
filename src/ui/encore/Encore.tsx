@@ -25,6 +25,7 @@ import { duePhrases } from '../../engine/encore/connect';
 import { chartChords, chordsFor, draftFrom, gridNotes, library, newPhraseId, patternToPhrase, takeOnGrid, type TrimState } from '../../engine/encore/library';
 import { ladderStep } from '../../engine/drills/ladder';
 import { midi } from '../../speech/midi';
+import { saveTake } from '../../storage/recordings';
 import { PianoRoll, type RollNote } from './PianoRoll';
 import { EncoreRun, type EncoreTakeFn } from './EncoreRun';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
@@ -112,7 +113,7 @@ export function EncoreScreen(p: EncoreProps) {
       const key = Number.isFinite(Number(k)) ? mod(Number(k)) : nextKey(l, items, INST);
       const hand = (['R', 'L', 'RL'].includes(h) ? h : handsOf(l)[0]) as Hand;
       return (
-        <main className="drills-screen enc-screen" data-encore="run" data-phrase={l.id}>
+        <main className="drills-screen enc-screen" data-encore="run" data-drills="run" data-phrase={l.id}>
           {head(<Bi text={T(l.name, lang)} />, <>{he ? 'בסולם' : 'in'} <KeyB k={key} minor={!!l.minor} /></>, () => nav(`phrase/${l.id}`))}
           <EncoreRun
             key={`${l.id}:${key}:${hand}`}
@@ -166,7 +167,6 @@ export function EncoreScreen(p: EncoreProps) {
   }
   // home
   const due = duePhrases(bookRef.current, items, 'today', undefined, INST, 2);
-  const shelf = recentFreeTakes(3);
   const lib = library(bookRef.current, settings.customDrills, items, INST);
   const nPh = lib.filter((x) => x.kind === 'phrase');
   const yours = nPh.filter((x) => x.rank >= 5).length;
@@ -201,34 +201,7 @@ export function EncoreScreen(p: EncoreProps) {
           ))}
         </section>
       )}
-      <section className="enc-block enc-card-flat" data-enc-shelf={shelf.length}>
-        <div className="row">
-          <b className="t2 grow">{he ? 'מהנגינה האחרונה שלך' : 'From your recent playing'}</b>
-        </div>
-        {shelf.length ? (
-          <ul className="enc-shelf">
-            {shelf.map((t) => (
-              <li key={t.id}>
-                <button className="enc-shelf-row" onClick={() => (location.hash = encoreTakeHash(t.id).slice(1))} data-shelf-take={t.id}>
-                  <span className="enc-thumb">
-                    <PianoRoll notes={t.notes.slice(0, 40).map((n) => ({ midi: n.pitch, beat: n.on / 500, dur: Math.max(0.2, ((n.off ?? n.on + 200) - n.on) / 500), vel: n.vel }))} from={0} to={Math.max(4, Math.min(...[40, ...t.notes.slice(0, 40).map((n) => (n.off ?? n.on) / 500 + 0.5)]))} height={38} barNums={false} label="" />
-                  </span>
-                  <span className="grow col">
-                    <b className="t2">
-                      <Bi text={T(t.title, lang)} />
-                    </b>
-                    <small className="t3">
-                      <bdi dir="ltr">{new Date(t.at).toLocaleDateString(he ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'numeric' })}</bdi> · <bdi dir="ltr">{t.notes.length}</bdi> {he ? 'תווים' : 'notes'}
-                    </small>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="t3">{he ? 'נגנו משהו — אלתור, הקלטה חופשית או תרגיל — ושמרו ממנו משפט.' : 'Play something — an improv, a free recording, a drill — and keep a phrase from it.'}</p>
-        )}
-      </section>
+      <Shelf lang={lang} />
       <button className="enc-block enc-card-soft enc-lib-sum" onClick={() => nav('library')} data-enc-libsum="1">
         <span className="row">
           <b className="t2 grow">{he ? 'המשפטים שלי' : 'My phrases'}</b>
@@ -261,6 +234,54 @@ export function EncoreScreen(p: EncoreProps) {
   );
 }
 
+/** "From your recent playing" (§4.2): the last free takes in My recordings; a tap opens the trim screen. */
+function Shelf({ lang }: { lang: Lang }) {
+  const he = lang === 'he';
+  const [shelf, setShelf] = useState<EncoreTake[]>([]);
+  useEffect(() => {
+    let on = true;
+    void recentFreeTakes(3).then((x) => on && setShelf(x));
+    return () => {
+      on = false;
+    };
+  }, []);
+  return (
+      <section className="enc-block enc-card-flat" data-enc-shelf={shelf.length}>
+        <div className="row">
+          <b className="t2 grow">{he ? 'מהנגינה האחרונה שלך' : 'From your recent playing'}</b>
+        </div>
+        {shelf.length ? (
+          <ul className="enc-shelf">
+            {shelf.map((t) => (
+              <li key={t.id}>
+                <button className="enc-shelf-row" onClick={() => (location.hash = encoreTakeHash(t.id).slice(1))} data-shelf-take={t.id}>
+                  <span className="enc-thumb">
+                    {(() => {
+                      const ns = t.notes.slice(0, 40);
+                      const s0 = Math.min(...ns.map((n) => n.on));
+                      const end = Math.max(...ns.map((n) => (n.off ?? n.on + 200) - s0)) / 500;
+                      return <PianoRoll notes={ns.map((n) => ({ midi: n.pitch, beat: (n.on - s0) / 500, dur: Math.max(0.2, ((n.off ?? n.on + 200) - n.on) / 500), vel: n.vel }))} from={0} to={Math.max(4, end)} height={38} barNums={false} label="" />;
+                    })()}
+                  </span>
+                  <span className="grow col">
+                    <b className="t2">
+                      <Bi text={T(t.title, lang)} />
+                    </b>
+                    <small className="t3">
+                      <bdi dir="ltr">{new Date(t.at).toLocaleDateString(he ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'numeric' })}</bdi> · <bdi dir="ltr">{t.notes.length}</bdi> {he ? 'תווים' : 'notes'}
+                    </small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="t3">{he ? 'נגנו משהו — אלתור, הקלטה חופשית או תרגיל — ושמרו ממנו משפט.' : 'Play something — an improv, a free recording, a drill — and keep a phrase from it.'}</p>
+        )}
+      </section>
+  );
+}
+
 type Head = (title: React.ReactNode, sub?: React.ReactNode, back?: () => void, extra?: React.ReactNode) => React.ReactNode;
 
 // ───────────────────────────── Record mode (§4.3, MIDI) ─────────────────────────────
@@ -290,7 +311,10 @@ function RecordMode({ lang, head }: { lang: Lang; head: Head }) {
       setState('armed');
       return;
     }
-    const id = putMemoryTake({ kind: 'record', instrument: 'piano', title: { en: 'Free recording', he: 'הקלטה חופשית' }, source: 'midi', notes: ns });
+    const title = { en: 'Free recording', he: 'הקלטה חופשית' };
+    const id = putMemoryTake({ kind: 'record', instrument: 'piano', title, source: 'midi', notes: ns });
+    // the take is kept in My recordings too (it shows on the shelf and in the timeline)
+    void saveTake({ durationMs: Math.round(Math.max(...ns.map((n) => n.off ?? n.on))), course: null, instrument: 'piano', kind: 'record', title, sung: false, source: 'midi', played: ns }).catch(() => {});
     nav(`caught/${encodeURIComponent(id)}`);
   };
   useEffect(() => {
@@ -499,13 +523,16 @@ function initialTrim(take: EncoreTake, from?: number, to?: number): { s: TrimSta
   const slot = loadSlot<TrimState>(`encore:trim:${take.id}`);
   const { caught } = takeOnGrid(take);
   const over = loadSlot<{ key: { tonic: number; minor: boolean }; bpm: number }>(`encore:caught:${take.id}`)?.data;
-  if (slot?.data && (from === undefined || (slot.data.from === from && slot.data.to === to))) return { s: slot.data, caught };
+  const spanKey = from === undefined ? '' : `${from}:${to}`;
+  if (slot?.data && (from === undefined || slot.data.spanKey === spanKey)) return { s: slot.data, caught };
   const bpm = over?.bpm ?? caught.grid.bpm;
   const t0 = caught.grid.t0;
   const notes = gridNotes(take, { bpm, meter: caught.meter, t0 });
   const m = caught.meter;
-  let f = from;
-  let t = to;
+  // the route's span is in seconds on the take's timeline → beats of the grid (to the beat)
+  const P = 60000 / bpm;
+  let f = from === undefined ? undefined : Math.round((from * 1000 - t0) / P);
+  let t = to === undefined ? undefined : Math.max((f ?? 0) + 1, Math.round((to * 1000 - t0) / P));
   if (f === undefined || t === undefined) {
     const c = candidates(notes, m)[0];
     if (c) {
@@ -518,7 +545,7 @@ function initialTrim(take: EncoreTake, from?: number, to?: number): { s: TrimSta
   }
   const sp = clampSpan(f, t, m, MAX_BARS);
   const key = over?.key ?? caught.key.best;
-  return { s: { takeId: take.id, from: sp.from, to: sp.to, view: 'roll', key: key.tonic, minor: key.minor, chordsOn: true, quant: caught.swing > 0.54 ? 'swing' : 'grid', split: null, name: '', bpm, meter: m, swing: caught.swing, edits: {}, t0 }, caught };
+  return { s: { takeId: take.id, from: sp.from, to: sp.to, view: 'roll', key: key.tonic, minor: key.minor, chordsOn: true, quant: caught.swing > 0.54 ? 'swing' : 'grid', split: null, name: '', bpm, meter: m, swing: caught.swing, edits: {}, t0, spanKey }, caught };
 }
 
 function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lang: Lang; head: Head; take: EncoreTake; from?: number; to?: number; step: 'trim' | 'context'; settings: Settings; onSave: (l: Lick) => void }) {

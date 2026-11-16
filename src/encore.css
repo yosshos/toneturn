@@ -10,9 +10,9 @@
 .enc-screen .tiny { font-size: 0.74rem; color: var(--ink-dim); font-weight: 600; }
 .enc-center { text-align: center; }
 .enc-center-row { justify-content: center; }
-.enc-head h1 { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
-.enc-head h1 > *:first-child, .enc-head h1 { white-space: nowrap; text-overflow: ellipsis; }
-.enc-sub { font: 500 0.74rem var(--font); color: var(--ink-dim); margin-top: -2px; }
+.enc-head { min-width: 0; }
+.enc-screen .enc-head h1 { display: block; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 1.25rem; line-height: 1.2; margin: 0; }
+.enc-sub { display: block; font: 500 0.74rem var(--font); color: var(--ink-dim); margin-top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .enc-head .icon-btn:last-child:not(:first-child) { margin-inline-start: auto; }
 
 .enc-card { background: var(--card); border: var(--stroke) solid var(--outline); border-radius: 16px; box-shadow: var(--shadow-s); padding: 9px 11px; color: var(--ink); text-align: start; font: inherit; }
@@ -129,7 +129,7 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
 .enc-meter i { display: block; height: 100%; background: var(--accent); }
 .enc-map { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; direction: ltr; }
 .enc-map th.k { font: 400 0.68rem var(--display); text-align: center; position: relative; padding: 0; }
-.enc-map th.r { font: 700 0.6rem var(--font); color: var(--ink-dim); text-align: right; padding-right: 3px; white-space: nowrap; width: 34px; }
+.enc-map th.r { font: 700 0.6rem var(--font); color: var(--ink-dim); text-align: right; padding-right: 3px; white-space: nowrap; width: 46px; overflow: visible; }
 .enc-map td.c { height: 18px; border: 2px solid var(--line-strong); border-radius: 5px; background: var(--card); padding: 0; }
 .enc-map td.c.clean { background: var(--accent); border-color: var(--outline); }
 .enc-map td.c.passed { background: var(--accent); border-color: var(--outline); background-image: radial-gradient(circle, var(--accent-ink) 0 2.5px, transparent 3px); }
@@ -145,7 +145,11 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
 .enc-ticks i { width: 3px; height: 13px; background: var(--ink); opacity: 0.7; }
 
 /* run */
-.enc-run { display: flex; flex-direction: column; gap: 8px; }
+.enc-run { display: flex; flex-direction: column; gap: 4px; }
+.enc-screen[data-encore='run'] { gap: 4px; }
+.enc-run .enc-stage { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0; font-size: 0.85rem; }
+.enc-run .enc-stage b { font-size: 0.9rem; }
+.enc-run .tab-pager { margin: 0; }
 .enc-run-head { display: flex; align-items: center; gap: 6px; }
 .enc-key { font-family: var(--display); font-weight: 400; }
 .enc-ladder { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; }

@@ -458,6 +458,20 @@ describe('the take adapter and the route (§12.2)', () => {
   });
 });
 
+describe('the adapter over My recordings (part A)', () => {
+  it('a RecTake reads as an EncoreTake: notes unpacked, t0 seconds → ms, graded kinds flagged', async () => {
+    const { packNotes } = await import('../src/storage/recordings');
+    const { encoreTakeOf } = await import('../src/engine/encore/takeSource');
+    const rec = { id: 'r1', sessionId: 's', at: '2026-11-16T10:00:00.000Z', durationMs: 2000, course: null, instrument: 'piano' as const, kind: 'drill' as const, title: 'x', sung: false, source: 'midi' as const, notes: packNotes([{ pitch: 60, on: 0, off: 400, vel: 80 }, { pitch: 64, on: 500, off: 900, vel: 90 }]), bpm: 120, meter: 4, t0: 0.25, chart: 'C | F' };
+    const t = encoreTakeOf(rec);
+    expect(t.notes).toEqual([{ pitch: 60, on: 0, off: 400, vel: 80 }, { pitch: 64, on: 500, off: 900, vel: 90 }]);
+    expect(t.t0).toBe(250);
+    expect(t.bpm).toBe(120);
+    expect(t.graded).toBe(true);
+    expect(t.chart).toBe('C | F');
+  });
+});
+
 describe('enharmonics and 12 keys', () => {
   it('every key builds a drill; keys are pitch classes (D♭ = C♯)', () => {
     const l = BEBOP();
