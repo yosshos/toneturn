@@ -43,6 +43,7 @@ import { families, specDrills } from '../engine/drills/plan';
 import { DrillStaff, DrillTab } from './DrillTake';
 import { piano } from './services';
 import { midi } from '../speech/midi';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type Inst = 'piano' | 'guitar' | 'bass';
@@ -80,8 +81,8 @@ const TX = {
     typeHintG: ' · h hammer · p pull · b bend · ~ vibrato · pm palm mute · s slide',
     recHint: 'Play the pattern in C. Below middle C = left hand. Rhythm is snapped to the nearest 8th / 16th / triplet.',
     noMidi: 'Connect a MIDI keyboard to record.',
-    recStart: '● Record',
-    recStop: '■ Stop',
+    recStart: 'Record',
+    recStop: 'Stop',
     recording: 'Recording…',
     grid: 'Snap to',
     grids: { auto: 'Auto', '8': '8ths', '16': '16ths', triplet: 'Triplets' } as Record<string, string>,
@@ -129,8 +130,8 @@ const TX = {
     stretch: 'Wide stretches',
     preview: 'Preview',
     inKey: 'in',
-    listen: '▶ Listen',
-    stopListen: '■ Stop',
+    listen: 'Listen',
+    stopListen: 'Stop',
     problems: 'To fix',
     unread: 'Can’t read',
     allGood: 'Ready — it works in every key.',
@@ -140,7 +141,7 @@ const TX = {
     paste: 'Paste a drill code',
     importBtn: 'Load',
     loaded: 'Loaded.',
-    tryAll: '▶ Run through the keys',
+    tryAll: 'Run through the keys',
     save: 'Save',
     del: 'Delete',
     notes: 'notes',
@@ -164,8 +165,8 @@ const TX = {
     typeHintG: ' · h האמר · p פול · b בנד · ~ ויברטו · pm השתקה · s סלייד',
     recHint: 'נגנו את התבנית בדו. מתחת לדו האמצעי = יד שמאל. הקצב מיושר לשמינית / שש-עשרית / טריולה הקרובה.',
     noMidi: 'חברו מקלדת MIDI כדי להקליט.',
-    recStart: '● הקלטה',
-    recStop: '■ עצירה',
+    recStart: 'הקלטה',
+    recStop: 'עצירה',
     recording: 'מקליט…',
     grid: 'יישור ל',
     grids: { auto: 'אוטומטי', '8': 'שמיניות', '16': 'שש-עשריות', triplet: 'טריולות' } as Record<string, string>,
@@ -213,8 +214,8 @@ const TX = {
     stretch: 'מתיחות רחבות',
     preview: 'תצוגה',
     inKey: 'ב',
-    listen: '▶ להאזין',
-    stopListen: '■ עצירה',
+    listen: 'להאזין',
+    stopListen: 'עצירה',
     problems: 'לתקן',
     unread: 'לא הצלחתי לקרוא',
     allGood: 'מוכן — עובד בכל הסולמות.',
@@ -224,7 +225,7 @@ const TX = {
     paste: 'הדביקו קוד של תרגיל',
     importBtn: 'לטעון',
     loaded: 'נטען.',
-    tryAll: '▶ לעבור בכל הסולמות',
+    tryAll: 'לעבור בכל הסולמות',
     save: 'שמירה',
     del: 'מחיקה',
     notes: 'תווים',
@@ -590,7 +591,7 @@ export function DrillCreator({ lang, edit, onSave, onDelete, onTry, instrument, 
               {chips(['auto', '8', '16', 'triplet'] as const, grid, (v) => tx.grids[v], setGrid)}
             </div>
             <button type="button" className={`btn ${rec ? 'primary' : ''}`} onClick={toggleRec} disabled={!midi.devices.length && !rec} data-creator-record="1">
-              {rec ? `${tx.recStop} — ${tx.recording}` : tx.recStart}
+              <Icon k={rec ? 'stop' : 'record'} /> {rec ? `${tx.recStop} — ${tx.recording}` : tx.recStart}
             </button>
           </>
         )}
@@ -632,7 +633,7 @@ export function DrillCreator({ lang, edit, onSave, onDelete, onTry, instrument, 
             ))}
           </select>
           <button type="button" className={`btn small ${playing ? 'primary' : ''}`} onClick={() => void listen()} disabled={!preview} data-creator-listen="1">
-            {playing ? tx.stopListen : tx.listen}
+            <Icon k={playing ? 'stop' : 'play'} /> {playing ? tx.stopListen : tx.listen}
           </button>
         </div>
         {preview && (
@@ -705,11 +706,11 @@ export function DrillCreator({ lang, edit, onSave, onDelete, onTry, instrument, 
           <span>{tx.seq}</span>
           <div className="dc-stepper" dir="ltr">
             <button type="button" className="chip" onClick={() => set({ sequenceSteps: Math.max(0, o.sequenceSteps - 1) })} aria-label="−">
-              −
+              <Icon k="minus" />
             </button>
             <b data-creator-seq="1">{o.sequenceSteps}</b>
             <button type="button" className="chip" onClick={() => set({ sequenceSteps: Math.min(14, o.sequenceSteps + 1) })} aria-label="+">
-              +
+              <Icon k="plus" />
             </button>
           </div>
           <small>{tx.times}</small>
@@ -822,7 +823,7 @@ export function DrillCreator({ lang, edit, onSave, onDelete, onTry, instrument, 
 
       <div className="drill-actions dc-actions">
         <button type="button" className="btn" disabled={!ok} onClick={() => onTry(c)} data-creator-try="1">
-          {tx.tryAll}
+          <Icon k="play" /> {tx.tryAll}
         </button>
         <button type="button" className="btn primary" disabled={!ok} onClick={() => onSave(c)} data-creator-save="1">
           {tx.save}

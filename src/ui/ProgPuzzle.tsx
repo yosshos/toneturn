@@ -4,6 +4,7 @@ import { dailyPuzzle, MAX_GUESSES, PUZZLE_CHORDS, puzzlePoints, scoreGuess, shar
 import type { Settings } from '../storage/progress';
 import { localDay } from '../storage/progress';
 import { piano } from './services';
+import { Icon } from './icons';
 
 const DEG: Record<PChord, [number, 'maj' | 'min']> = { I: [0, 'maj'], ii: [2, 'min'], iii: [4, 'min'], IV: [5, 'maj'], V: [7, 'maj'], vi: [9, 'min'], bVII: [10, 'maj'] };
 const label = (c: PChord) => c.replace('b', '♭');
@@ -68,7 +69,7 @@ export function ProgPuzzleScreen({ settings, onChange, onBack, onSolved }: { set
     <main className="panel-screen prog-puzzle" data-prog-puzzle={pz.n}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>
           {tx.title} <small dir="ltr">#{pz.n}</small>
@@ -76,7 +77,7 @@ export function ProgPuzzleScreen({ settings, onChange, onBack, onSolved }: { set
       </header>
       <p className="field-hint">{tx.how}</p>
       <button className="btn primary" onClick={() => void play(pz.chords)} data-pp-listen="1">
-        ▶ {tx.listen}
+        <Icon k="play" /> {tx.listen}
       </button>
       <div className="pp-grid" dir="ltr" aria-label={tx.title}>
         {Array.from({ length: MAX_GUESSES }, (_, r) => {
@@ -103,7 +104,7 @@ export function ProgPuzzleScreen({ settings, onChange, onBack, onSolved }: { set
           </div>
           <div className="pp-actions">
             <button className="btn ghost small" disabled={!cur.length} onClick={() => setCur(cur.slice(0, -1))} aria-label={tx.clear}>
-              ⌫
+              <Icon k="backspace" />
             </button>
             <button className="btn ghost small" disabled={cur.length !== 4} onClick={() => void play(cur)}>
               {tx.mine}
@@ -121,7 +122,7 @@ export function ProgPuzzleScreen({ settings, onChange, onBack, onSolved }: { set
               {copied ? tx.copied : tx.share}
             </button>
             <button className="btn ghost small" onClick={() => void play(pz.chords)}>
-              ▶ {tx.listen}
+              <Icon k="play" /> {tx.listen}
             </button>
           </div>
           <small className="field-hint">{tx.next}</small>

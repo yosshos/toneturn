@@ -124,3 +124,73 @@
 :root[data-theme] .pt-tile.pt-all .pt-icon {
   background: var(--card-2);
 }
+
+/* ---------------------------------------------------------------- the chrome cut (src/ui/paper/art-chrome.ts, icons.tsx)
+   The controls' symbols paint with a ramp per surface: --cs sheet · --ce its edge · --ca / --cae the accent (record,
+   heart) · --cl the cut-outs (the surface colour). Unset (initial) = the text colour with a faded edge (Paper.tsx), so a
+   symbol on a surface not listed here always reads wherever its label reads. tests/paperChrome.test.ts checks every ramp
+   against its surface (≥ 3:1), e2e/paperChrome.spec.ts measures the real screens. */
+.pp-chrome {
+  vertical-align: -0.18em;
+}
+/* light: purple paper on the paper background, cards and the outlined buttons */
+:root,
+:root[data-theme='light'] {
+  --cs: #6d28d9;
+  --ce: #3b1a7a;
+  --ca: #c42a62;
+  --cae: #7e1a3f;
+  --cl: var(--card);
+}
+/* dark: pale lilac paper on the dark cards and the dark bar */
+:root[data-theme='dark'],
+:root[data-theme='light'] :is(.tabbar, .side-nav, .pp-on-dark) {
+  --cs: #f3ecff;
+  --ce: #8f74d9;
+  --ca: #ff8fbd;
+  --cae: #b85a85;
+  --cl: var(--card);
+}
+:root[data-theme='light'] :is(.tabbar, .side-nav, .pp-on-dark) {
+  --cl: #1e1033;
+}
+/* the lemon "now" buttons (both themes) and lemon chips in the dark theme: purple paper, the deep rose accent */
+:root[data-theme] :is(.btn.mega, .pp-on-lemon, .ex-play) {
+  --cs: #6d28d9;
+  --ce: #3b1a7a;
+  --ca: #c42a62;
+  --cae: #7e1a3f;
+  --cl: var(--lemon);
+}
+/* purple fills (the primary button in light): white paper, lilac edge */
+:root[data-theme='light'] :is(.btn.primary:not(.mega), .pp-on-purple) {
+  --cs: #ffffff;
+  --ce: #b9a3e8;
+  --ca: #ffb3d4;
+  --cae: #c97aa0;
+  --cl: var(--accent);
+}
+/* lilac fills (the primary button in dark): deep purple paper */
+:root[data-theme='dark'] .btn.primary:not(.mega) {
+  --cs: #4a1d9a;
+  --ce: #1e1033;
+  --ca: #8e2050;
+  --cae: #4a0f2a;
+  --cl: var(--accent);
+}
+/* surfaces painted in other colours (pink danger, ink chips with lemon text, the high-contrast theme): the text colour */
+:root[data-theme='contrast'],
+:root[data-theme] :is(.btn.danger, .chip.on, .mode-switch button.on, .ps-seg button.on, .seg button.on, button.chip.on, .chip[aria-pressed='true'], .chip[aria-selected='true']) {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}
+:root[data-theme] .btn.mega svg.pp-chrome {
+  fill: none;
+}
+/* back / forward mirror in Hebrew (flip-rtl), except inside a left-to-right island (pagers, number strips) */
+[dir='ltr'] .ico.flip-rtl {
+  transform: none;
+}

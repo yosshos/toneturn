@@ -20,6 +20,7 @@ import { SetupSheet } from './SetupSheet';
 import { IsoMix } from './Iso';
 import { startTier, tierDef, tierDifficulty, type DynName, type TierInfo } from '../engine/gameTiers';
 import { PLAYER_COLORS } from '../engine/match';
+import { Icon } from './icons';
 
 type Mode = 'solo' | 'duel' | 'online';
 const PICK_KEY = 'toneturn.tfTopics';
@@ -190,7 +191,7 @@ export function TrueFalseScreen({
     <main className="panel-screen tf-setup">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.trueFalse}</h1>
       </header>
@@ -356,7 +357,7 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
     <main className={`tf-play ${flash ? (flash.ok ? 'flash-ok' : 'flash-no') : ''}`}>
       <div className="tf-top">
         <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
-          ✕
+          <Icon k="close" />
         </button>
         <span className="tf-score" dir="ltr">
           {score}
@@ -389,7 +390,7 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
       </div>
       {hasSound(fact) && (
         <button className="btn small" onClick={() => playFact(fact)}>
-          ↻ {t.repeat}
+          <Icon k="again" /> {t.repeat}
         </button>
       )}
     </main>
@@ -495,14 +496,14 @@ function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; 
       <section className="t-center">
         <div className="t-top">
           <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
-            ✕
+            <Icon k="close" />
           </button>
           <span className="t-round" dir="ltr">
             {round + 1}/{DUEL_ROUNDS}
           </span>
           {hasSound(fact) && (
             <button className="icon-btn" onClick={() => playFact(fact)} aria-label={t.repeat}>
-              ↻
+              <Icon k="again" />
             </button>
           )}
         </div>

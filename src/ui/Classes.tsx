@@ -10,6 +10,7 @@ import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { classDetail, myAssignments, type AssignItem, type ClassDetail } from '../cloud/teacher';
 import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
+import { Icon } from './icons';
 
 export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
@@ -49,7 +50,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenI
       {!embedded && (
         <header className="screen-head">
           <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{t.classes}</h1>
         </header>
@@ -236,7 +237,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
                 {who}/{c.students.length} ✓{a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
               </small>
               <button className="icon-btn small" aria-label={t.remove} disabled={busy} onClick={() => act(() => unassign(a.id)).then(loadDetail)}>
-                ✕
+                <Icon k="close" />
               </button>
             </li>
           );

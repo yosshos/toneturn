@@ -187,9 +187,7 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
           <span className="wk-bubble">{bubble}</span>
         </div>
         <button className="icon-btn wk-edit" onClick={onEdit} aria-label={tx.edit}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 20h4L19 9l-4-4L4 16z" />
-          </svg>
+          <Icon k="edit" size={18} />
         </button>
       </div>
       <h2 className="wk-title">
@@ -213,9 +211,7 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
         </p>
       )}
       <button className="btn mega wk-start" data-continue="1" onClick={onStart}>
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <path d="M7 4v16l13-8z" fill="currentColor" />
-        </svg>
+        <Icon k="play" size={16} />
         {active ? `${tx.cont} · ${fill(tx.left, { m: leftMin })}` : tx.start}
       </button>
       {goal && (
@@ -313,7 +309,7 @@ export function WorkoutEditor({
     <main className="wk-editor">
       <header className="wk-ed-head">
         <button className="icon-btn" onClick={onClose} aria-label={tx.done}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
         <button className="btn small primary" onClick={onClose}>
@@ -339,13 +335,13 @@ export function WorkoutEditor({
         </div>
         <div className="wk-stepper">
           <button className="icon-btn" onClick={() => setTotal(T - 5)} aria-label="−5">
-            −
+            <Icon k="minus" />
           </button>
           <b dir="ltr">
             {T} {tx.min}
           </b>
           <button className="icon-btn" onClick={() => setTotal(T + 5)} aria-label="+5">
-            +
+            <Icon k="plus" />
           </button>
         </div>
         {msg && <p className="field-hint" role="status">{msg}</p>}
@@ -379,15 +375,15 @@ export function WorkoutEditor({
               </span>
               <span className="wk-min">
                 <button className="icon-btn" aria-label="−1" disabled={b.minutes <= LIMITS.minBlock} onClick={() => change(setMinutes(bs, b.id, b.minutes - 1))}>
-                  −
+                  <Icon k="minus" />
                 </button>
                 <b dir="ltr">{b.minutes}′</b>
                 <button className="icon-btn" aria-label="+1" disabled={b.minutes >= LIMITS.maxBlock} onClick={() => change(setMinutes(bs, b.id, b.minutes + 1))}>
-                  +
+                  <Icon k="plus" />
                 </button>
               </span>
-              <button className="icon-btn wk-more" aria-label="⋯" onClick={() => setMenu(menu === b.id ? null : b.id)}>
-                ⋯
+              <button className="icon-btn wk-more" aria-label={lang === 'he' ? 'עוד' : 'More'} onClick={() => setMenu(menu === b.id ? null : b.id)}>
+                <Icon k="more" />
               </button>
               {menu === b.id && (
                 <div className="wk-menu" role="menu">
@@ -398,7 +394,7 @@ export function WorkoutEditor({
                     ↓ {lang === 'he' ? 'למטה' : 'Move down'}
                   </button>
                   <button role="menuitem" className="btn small ghost wk-x" disabled={bs.length <= 1} onClick={() => (change(remove(bs, b.id), tx.removed), setMenu(null))}>
-                    ✕ {tx.remove}
+                    <Icon k="close" /> {tx.remove}
                   </button>
                   <button role="menuitem" className="btn small ghost" onClick={() => (change(bs.map((x) => (x.id === b.id ? { ...x, locked: !x.locked } : x))), setMenu(null))}>
                     <Icon k="lock" /> {b.locked ? tx.unlock : tx.lock}
@@ -414,7 +410,7 @@ export function WorkoutEditor({
                         setMenu(null);
                       }}
                     >
-                      ⇄ {tx.swap}
+                      <Icon k="swap" /> {tx.swap}
                     </button>
                   )}
                 </div>
@@ -437,7 +433,7 @@ export function WorkoutEditor({
       )}
 
       <button className="btn wk-add" onClick={() => setAdding(true)} disabled={bs.length >= LIMITS.maxBlocks}>
-        ＋ {tx.add}
+        <Icon k="plus" /> {tx.add}
       </button>
 
       <div className="wk-presets" role="group">
@@ -450,7 +446,7 @@ export function WorkoutEditor({
 
       <div className="wk-default">
         <button className="btn small" onClick={() => (onSaveDefault(bs, 'all'), setMsg(tx.saved))}>
-          ★ {tx.saveDefault} · {tx.everyDay}
+          <Icon k="star" /> {tx.saveDefault} · {tx.everyDay}
         </button>
         <button className="btn small ghost" onClick={() => (onSaveDefault(bs, 'weekday'), setMsg(tx.saved))}>
           {tx.thisDay}
@@ -591,7 +587,7 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
         </>
       ) : (
         <button className="btn primary" onClick={onGo}>
-          ▶ {tx.go}
+          <Icon k="play" /> {tx.go}
         </button>
       )}
       <div className="wk-run-actions">

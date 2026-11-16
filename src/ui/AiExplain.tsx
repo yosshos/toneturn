@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { aiErrorText, askAi, type AiError } from '../cloud/ai';
+import { Icon } from './icons';
 
 type Turn = { role: 'user' | 'assistant'; text: string };
 const MAX_FOLLOWUPS = 4;
@@ -49,7 +50,7 @@ export function AiExplain({ kind, lang, naming, context, jazz, onClose }: { kind
         <header className="ai-head">
           <h2 id="ai-title">{kind === 'hint' ? tx.hint : tx.explain}</h2>
           <button className="icon-btn" onClick={onClose} aria-label={tx.close} data-ai-close="1">
-            ✕
+            <Icon k="close" />
           </button>
         </header>
         <div className="ai-body" ref={box}>

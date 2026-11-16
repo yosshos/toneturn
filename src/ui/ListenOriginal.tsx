@@ -3,6 +3,7 @@
 // When the recording's key differs from the practice key: a one-line note and, where the chart can transpose, a
 // "practise in X" button.
 import { keyLabel, keyName, referenceOf, sameKey, type RecKey, type Recording, type StandardRef } from '../content/references';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 
@@ -11,22 +12,12 @@ const TX = {
   he: { tune: 'להאזנה למקור', form: 'שיר מפורסם על הצורה הזאת', spotify: 'Spotify', youtube: 'YouTube', inKey: 'ההקלטה הזאת ב־', youIn: 'מתרגלים ב־', practise: 'לתרגל ב־', unsure: 'הסולם לא מאומת' },
 };
 
-/** Monochrome line marks in the app's icon style (24×24, currentColor) — generic, not the brands' logos. */
+/** Generic Paper marks (a record, a video) — not the brands' logos. */
 function SpotifyMark() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M7.5 9.5c3-1 6.5-.7 9 .8M8 12.5c2.5-.7 5.2-.4 7.2.7M8.6 15.3c1.9-.5 3.8-.3 5.4.5" />
-    </svg>
-  );
+  return <Icon k="vinyl" size={18} />;
 }
 function YouTubeMark() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2.5" y="5.5" width="19" height="13" rx="4" />
-      <path d="M10 9.2v5.6l4.8-2.8z" />
-    </svg>
-  );
+  return <Icon k="video" size={18} />;
 }
 
 /** The two link buttons for one recording. */

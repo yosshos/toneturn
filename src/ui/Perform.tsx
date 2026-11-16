@@ -92,7 +92,7 @@ export function PerformScreen({ t, settings, onBack, onProgress }: { t: Strings;
     <main className="panel-screen perform">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (stopAll(), onBack())} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.perfTitle}</h1>
       </header>
@@ -163,11 +163,11 @@ function Backing({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: C
       <ChartLine chart={chart} keyPc={keyPc} beat={beat} />
       {playing ? (
         <button className="btn mega" onClick={() => (ctl.current?.abort(), setPlaying(false))}>
-          ■ {t.perfStop}
+          <Icon k="stop" /> {t.perfStop}
         </button>
       ) : (
         <button className="btn mega" data-backing="play" onClick={() => void play()}>
-          ▶ {t.perfPlay}
+          <Icon k="play" /> {t.perfPlay}
         </button>
       )}
     </section>
@@ -235,7 +235,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
             {beat === null || beat < 4 ? t.perfListenBar : t.perfNowPlay}
           </p>
           <button className="btn ghost" onClick={() => (ctl.current?.abort(), setPhase('idle'))}>
-            ■ {t.perfStop}
+            <Icon k="stop" /> {t.perfStop}
           </button>
         </>
       ) : (
@@ -445,7 +445,7 @@ function MidiDrills({ t, settings, onProgress }: { t: Strings; settings: Setting
         </p>
       )}
       <button className="btn ghost" onClick={() => (setSeed((x) => x + 1), setMsg(null), setNotesOn([]), setBuilt([]))}>
-        ↻ {t.perfNext}
+        <Icon k="again" /> {t.perfNext}
       </button>
     </section>
   );
@@ -561,7 +561,7 @@ function GuitarTabDrill({ t, settings, ctl, onProgress }: { t: Strings; settings
             </>
           )}
           <button className="btn ghost" onClick={() => (setIdx((x) => x + 1), setGrade(null), setPhase('idle'))}>
-            ↻ {t.perfNext}
+            <Icon k="again" /> {t.perfNext}
           </button>
         </div>
       )}
@@ -651,7 +651,7 @@ function InnerClock({ t, ctl, onProgress }: { t: Strings; ctl: React.MutableRefO
         </button>
       ) : (
         <button className="btn mega" data-clock="go" onClick={() => void go()}>
-          ▶ {t.clockStart}
+          <Icon k="play" /> {t.clockStart}
         </button>
       )}
       {report && (

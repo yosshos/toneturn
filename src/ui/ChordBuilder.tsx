@@ -16,6 +16,7 @@ import { midi } from '../speech/midi';
 import { ChordBox, KeysPad, Neck } from './Instrument';
 import { piano } from './services';
 import { useStrums } from './strumListen';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const STD = TUNINGS[0];
@@ -59,7 +60,7 @@ export function ChordBuilder({ lang, settings, course, onBack, onResult }: { lan
     <main className="cf-screen cb-screen" data-tool="chordbuilder">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx('back')}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{tx('title')}</h1>
       </header>

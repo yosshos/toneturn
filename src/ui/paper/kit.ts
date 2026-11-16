@@ -40,8 +40,9 @@ export interface Part {
  *   wave     a flag rippling from its pole                                             loop    the note travelling between the repeat signs
  *   nod      a note head tipping on its stem                                           hop     a part hopping up once
  *   slide    a fader sliding up and back
+ *   nudge    a play / forward symbol nudging ahead and back (mirrored with r: back)
  */
-export type Anim = 'vibrate' | 'vibrate-x' | 'swing' | 'flicker' | 'rise' | 'pulse' | 'spin' | 'turn' | 'press' | 'strike' | 'dip' | 'wave' | 'loop' | 'nod' | 'hop' | 'slide';
+export type Anim = 'vibrate' | 'vibrate-x' | 'swing' | 'flicker' | 'rise' | 'pulse' | 'spin' | 'turn' | 'press' | 'strike' | 'dip' | 'wave' | 'loop' | 'nod' | 'hop' | 'slide' | 'nudge';
 export interface Motion {
   k: Anim;
   /** The origin on the 48 grid (a pivot, a grip, a source). Without it: the part's own box (centre; bottom for flicker). */
@@ -59,7 +60,8 @@ export interface Art {
   hue2: HueName;
   parts: Part[];
 }
-export type Cut = 'small' | 'full' | 'badge';
+/** small ≤ 24 px · full · badge ≥ 64 px · chrome: the controls' symbols (src/ui/paper/art-chrome.ts), painted in the surface's chrome ramp. */
+export type Cut = 'small' | 'full' | 'badge' | 'chrome';
 
 // ---------------------------------------------------------------- colour
 export const INK = '#1e1033';

@@ -19,6 +19,7 @@ import { DEFAULT_CAL } from './Drills';
 import { inputLatency } from '../engine/latency';
 import { midi } from '../speech/midi';
 import { PD_PIECES, pdToPiece } from '../content/classicalPD';
+import { Icon } from './icons';
 
 export interface StoredPiece {
   id: string;
@@ -141,7 +142,7 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
       <main className="panel-screen pieces" data-piece-setup="1">
         <header className="screen-head">
           <button className="icon-btn" onClick={() => setSetup(null)} aria-label={tx.back}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{tx.setup}</h1>
         </header>
@@ -154,12 +155,12 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
           <label className="pc-field">
             <span>{tx.target}</span>
             <span className="ch-step" dir="ltr">
-              <button className="icon-btn" onClick={() => setSetup({ ...setup, target: Math.max(30, setup.target - 4) })}>
-                −
+              <button className="icon-btn" onClick={() => setSetup({ ...setup, target: Math.max(30, setup.target - 4) })} aria-label="−">
+                <Icon k="minus" />
               </button>
               <b>{setup.target}</b>
-              <button className="icon-btn" onClick={() => setSetup({ ...setup, target: Math.min(240, setup.target + 4) })}>
-                +
+              <button className="icon-btn" onClick={() => setSetup({ ...setup, target: Math.min(240, setup.target + 4) })} aria-label="+">
+                <Icon k="plus" />
               </button>
             </span>
           </label>
@@ -188,7 +189,7 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
     <main className="panel-screen pieces" data-pieces="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>
@@ -314,7 +315,7 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
     <main className="panel-screen pieces pc-practice" data-piece-practice={sp.id}>
       <header className="screen-head">
         <button className="icon-btn" onClick={leave} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1 dir="auto">{p.title}</h1>
       </header>

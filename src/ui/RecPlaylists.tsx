@@ -279,24 +279,8 @@ export function ExportSheet({ lang, take, onClose }: { lang: Lang; take: RecTake
 
 // ───────────────────────────── the now-playing bar ─────────────────────────────
 
-const ICO = {
-  prev: <path d="M7 6v12M18 6l-8 6 8 6z" />,
-  next: <path d="M17 6v12M6 6l8 6-8 6z" />,
-  up: <path d="M6 14l6-6 6 6" />,
-  down: <path d="M6 10l6 6 6-6" />,
-  bg: (
-    <>
-      <rect x="6" y="3" width="12" height="18" rx="2.5" />
-      <path d="M10 15l2-1.2 2 1.2V9.5h-4z" />
-    </>
-  ),
-  list: <path d="M4 7h11M4 12h11M4 17h7M18 14v6M15 17h6" />,
-};
-export const XIcon = ({ k, size = 18 }: { k: keyof typeof ICO; size?: number }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-    {ICO[k]}
-  </svg>
-);
+const ICO = { prev: 'prev', next: 'next', up: 'up', down: 'down', bg: 'bglisten', list: 'playlist' } as const satisfies Record<string, IconKey>;
+export const XIcon = ({ k, size = 18 }: { k: keyof typeof ICO; size?: number }) => <Icon k={ICO[k]} size={size} />;
 const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
 
 export function NowPlaying({ lang }: { lang: Lang }) {
@@ -370,7 +354,7 @@ function PlaylistList({ lang, onBack }: { lang: Lang; onBack: () => void }) {
     <main className="panel-screen recordings rec-lists" data-recordings="playlists">
       <header className="screen-head rec-head">
         <button className="icon-btn" onClick={onBack} aria-label={RX2.back[lang]}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{RX2.playlists[lang]}</h1>
       </header>
@@ -430,7 +414,7 @@ function PlaylistView({ lang, id, onBack, onOpenTake }: { lang: Lang; id: string
       <main className="panel-screen recordings" data-recordings="playlist">
         <header className="screen-head rec-head">
           <button className="icon-btn" onClick={onBack} aria-label={RX2.back[lang]}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{RX2.playlists[lang]}</h1>
         </header>
@@ -457,7 +441,7 @@ function PlaylistView({ lang, id, onBack, onOpenTake }: { lang: Lang; id: string
     <main className="panel-screen recordings rec-playlist" data-recordings="playlist" data-rec-pl-loop={p.loop} data-rec-pl-n={ids.length}>
       <header className="screen-head rec-head">
         <button className="icon-btn" onClick={onBack} aria-label={RX2.back[lang]}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>
           <Bidi text={playlistName(p, lang)} />
@@ -561,3 +545,4 @@ export async function playTakeInBackground(t: RecTake, lang: Lang, ab: [number, 
 // ───────────────────────────── whole-session recording ─────────────────────────────
 
 export { SessionRecToggle } from './SessionRecSwitch';
+import { Icon, type IconKey } from './icons';

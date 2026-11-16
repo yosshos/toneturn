@@ -70,6 +70,7 @@ import {
 import { Bi, EncoreGlyph, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 import { ReactionBar, ReactionCountsLine } from './Reactions';
 import { GiftIcon, GiftsView } from './Gifts';
+import { Icon } from '../icons';
 
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
 const mod = (n: number) => ((n % 12) + 12) % 12;
@@ -81,23 +82,6 @@ const dateOf = (iso: string) => (iso ? iso.slice(5, 10).split('-').reverse().joi
 
 // ───────────────────────────── small pieces ─────────────────────────────
 
-function Icon({ d, size = 16 }: { d: 'play' | 'stop' | 'flag' | 'share' | 'send' | 'mic' | 'close' | 'check'; size?: number }) {
-  const p: Record<string, React.ReactNode> = {
-    play: <path d="M7 5l12 7-12 7z" fill="currentColor" />,
-    stop: <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />,
-    flag: <path d="M6 21V4m0 0h10l-2 4 2 4H6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />,
-    share: <path d="M12 15V4m0 0L8 8m4-4l4 4M5 13v6h14v-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
-    send: <path d="M4 12l16-7-6 16-3-6z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />,
-    mic: <path d="M12 3a3 3 0 013 3v5a3 3 0 01-6 0V6a3 3 0 013-3zm-6 8a6 6 0 0012 0M12 17v4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
-    close: <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />,
-    check: <path d="M5 12l5 5 9-10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />,
-  };
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" className="chl-ic">
-      {p[d]}
-    </svg>
-  );
-}
 
 /** The phrase on a small treble staff (heads by diatonic step, bar lines, chord names above). */
 export function MiniStaff({ code, w = 320, h = 92, chords = true }: { code: string; w?: number; h?: number; chords?: boolean }) {
@@ -210,7 +194,7 @@ function ReportSheet({ lang, row, onClose, onDone }: { lang: Lang; row: boolean;
         <div className="row">
           <b className="t2 grow">{L(lang, 'Report', 'דיווח')}</b>
           <button className="icon-btn" onClick={onClose} aria-label={L(lang, 'Close', 'סגירה')}>
-            <Icon d="close" />
+            <Icon k="close" />
           </button>
         </div>
         <div className="col chl-reasons" role="radiogroup">
@@ -254,7 +238,7 @@ export function ChallengeScreen(p: ChallengeProps) {
   const head = (title: React.ReactNode, sub?: React.ReactNode, back: () => void = () => history.back(), extra?: React.ReactNode) => (
     <header className="screen-head enc-head">
       <button className="icon-btn" onClick={back} aria-label={L(lang, 'Back', 'חזרה')}>
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1>
         {title}
@@ -430,7 +414,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
         <p className="t3">{L(lang, 'The link opens without an account too: hear it, see the notes, try it in free time. To appear on the board, sign in.', 'הקישור נפתח גם בלי חשבון: שומעים, רואים תווים, מנסים בלי קצב. כדי להופיע בלוח צריך להירשם.')}</p>
         <div className="enc-foot">
           <button className="btn primary enc-full" onClick={() => void shareOut()} data-share-out="1">
-            <Icon d="share" />
+            <Icon k="share" />
             {copied ? L(lang, 'Link copied', 'הקישור הועתק') : L(lang, 'Send the link', 'לשלוח את הקישור')}
           </button>
           <button className="btn ghost enc-full" onClick={() => go(`p/${done.code}`)} data-share-open="1">
@@ -456,13 +440,13 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
         <span className="ch gh">{INST[inst][lang]}</span>
         <span className="chl-level" data-share-level={payload.level}>
           <button className="ch" onClick={() => setLevel(Math.max(1, auto - 1, payload.level - 1))} disabled={payload.level <= Math.max(1, auto - 1)} aria-label={L(lang, 'Easier', 'קל יותר')}>
-            −
+            <Icon k="minus" />
           </button>
           <span className="tiny">
             {L(lang, 'Level', 'רמה')} <b>{payload.level}</b>
           </span>
           <button className="ch" onClick={() => setLevel(Math.min(5, auto + 1, payload.level + 1))} disabled={payload.level >= Math.min(5, auto + 1)} aria-label={L(lang, 'Harder', 'קשה יותר')}>
-            +
+            <Icon k="plus" />
           </button>
         </span>
       </div>
@@ -520,7 +504,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
       {cardUrl && <img className="chl-card-img sm" src={cardUrl} alt={L(lang, 'Share card', 'תמונת השיתוף')} />}
       <div className="enc-foot">
         <button className="btn primary enc-full" disabled={busy || problems.length > 0 || known === undefined} onClick={() => void send()} data-share-send="1">
-          <Icon d="share" />
+          <Icon k="share" />
           {vis === 'friends' ? L(lang, 'Share with friends', 'לשתף עם חברים') : vis === 'class' ? L(lang, 'Share with the class', 'לשתף עם הכיתה') : L(lang, 'Share with everyone', 'לשתף עם כולם')}
         </button>
       </div>
@@ -691,7 +675,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         <small className="tiny">{dateOf(r.at)}</small>
         {!r.me && (
           <button className="icon-btn chl-mini" onClick={() => setReport({ row: r })} aria-label={L(lang, 'Report', 'דיווח')} data-row-report={r.userId}>
-            <Icon d="flag" size={13} />
+            <Icon k="flag" size={13} />
           </button>
         )}
       </li>
@@ -708,7 +692,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         () => go(''),
         !ph.mine ? (
           <button className="icon-btn" onClick={() => setReport({ row: null })} aria-label={L(lang, 'Report', 'דיווח')} data-phrase-report="1">
-            <Icon d="flag" />
+            <Icon k="flag" />
           </button>
         ) : undefined,
       )}
@@ -723,13 +707,13 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         <div className="row">
           {a && (
             <button className="ch" onClick={() => (player.on === 'notes' ? player.stop() : void player.playNotes(a, ph.goalBpm))} aria-label={L(lang, 'Play', 'להשמיע')} data-chl-play="1">
-              <Icon d={player.on === 'notes' ? 'stop' : 'play'} size={12} />
+              <Icon k={player.on === 'notes' ? 'stop' : 'play'} size={12} />
               {L(lang, 'Play', 'להשמיע')}
             </button>
           )}
           {clip && (
             <button className="ch" onClick={() => (player.on === 'clip' ? player.stop() : void player.playClip(clip))} data-chl-clip="1">
-              <Icon d="mic" size={12} />
+              <Icon k="mic" size={12} />
               {L(lang, 'Their clip', 'הקליפ של היוצר')}
             </button>
           )}
@@ -799,7 +783,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         )}
         {myRow && !myRow.flagged && (
           <button className="btn ghost grow" onClick={() => void sendBeat()} data-beat-link="">
-            <Icon d="send" size={13} />
+            <Icon k="send" size={13} />
             {L(lang, 'Beat my tempo', 'לנצח את הטמפו שלי')}
           </button>
         )}
@@ -1159,13 +1143,13 @@ export function PhrasePublicScreen({ code, beat, lang, signedIn, onOpenInApp, on
             <div className="row">
               {a && (
                 <button className="ch" onClick={() => (player.on === 'notes' ? player.stop() : void player.playNotes(a, p.goalBpm))} data-public-play="1">
-                  <Icon d={player.on === 'notes' ? 'stop' : 'play'} size={12} />
+                  <Icon k={player.on === 'notes' ? 'stop' : 'play'} size={12} />
                   {L(lang, 'Play', 'להשמיע')}
                 </button>
               )}
               {clip && (
                 <button className="ch" onClick={() => (player.on === 'clip' ? player.stop() : void player.playClip(clip))} data-public-clip="1">
-                  <Icon d="mic" size={12} />
+                  <Icon k="mic" size={12} />
                   {L(lang, 'Their clip', 'הקליפ של היוצר')}
                 </button>
               )}
@@ -1197,7 +1181,7 @@ export function ShareButton({ lang, phraseId, className = 'btn ghost enc-full' }
   if (!CHALLENGES_ON()) return null;
   return (
     <button className={className} onClick={() => go(`share/${encodeURIComponent(phraseId)}`)} data-enc-share={phraseId}>
-      <Icon d="share" size={14} />
+      <Icon k="share" size={14} />
       {L(lang, 'Share as a challenge', 'לשתף כאתגר')}
     </button>
   );

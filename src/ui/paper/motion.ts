@@ -30,6 +30,7 @@ export const MOTION_MS: Record<Anim | 'lift', number> = {
   nod: 650,
   hop: 550,
   slide: 700,
+  nudge: 500,
   lift: 650,
 };
 /** Longest tap play (motion + the largest stagger) and the event's (× 1.3): the play classes clear after these. */

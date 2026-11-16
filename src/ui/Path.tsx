@@ -436,13 +436,11 @@ export function PathView2({
                   {x.fade ? (
                     <Icon k="repeat" />
                   ) : (
-                    <svg viewBox="0 0 24 24" width="12" height="12">
-                      <path d="M5 12.5l5 5 9-10" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <Icon k="check" size={12} />
                   )}
                 </span>
               )}
-              {st === 'refresh' && <span className="refresh-medal">↻</span>}
+              {st === 'refresh' && <span className="refresh-medal"><Icon k="again" size={12} /></span>}
             </span>
           )}
           <span className="node-text">
@@ -544,7 +542,7 @@ export function PathView2({
               <b dir="auto">{view.history.length === 1 ? tx.histOne : fill(tx.histMany, { n: view.history.length })}</b>
               <small dir="auto">{fill(tx.histSub, { n: view.history.reduce((a, u) => a + u.steps.length, 0) })}</small>
             </span>
-            <span className="hist-chev" aria-hidden="true">›</span>
+            <span className="hist-chev" aria-hidden="true"><Icon k="fwd" /></span>
           </summary>
           <ol className="hist-units">
             {view.history.map((u) => (
@@ -727,7 +725,7 @@ function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice }: { x: U
             <Iso text={title} />
           </h2>
           <button className="icon-btn" onClick={onClose} aria-label={tx.close}>
-            <span aria-hidden="true">✕</span>
+            <Icon k="close" />
           </button>
         </div>
         <div className="ms-stars" role="img" aria-label={`${ms} / 5 ${tx.stars}`}>

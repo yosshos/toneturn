@@ -672,3 +672,17 @@ a.rec-entry {
 .rec-dayrec-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rec-dayrec small { color: var(--ink-dim); flex-shrink: 0; }
 .rec-dayrecs-more { font-size: 0.82rem; justify-self: start; }
+
+/* filled (ink / accent) controls: the Paper chrome symbol takes the button's text colour; a delete row's symbol is rose */
+.recordings .icon-btn.on,
+.recordings .rec-playbtn {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}
+.rec-menu-row.danger .rec-ico {
+  --cs: var(--ca);
+  --ce: var(--cae);
+}

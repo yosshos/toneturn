@@ -35,3 +35,11 @@
 
 /* the streak calendar: a day a friend's fermata held */
 .streak-cal li.fermata, .week-strip li.fermata { color: var(--ink); }
+
+.chl-react-b.on {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}

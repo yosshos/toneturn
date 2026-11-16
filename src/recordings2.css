@@ -85,3 +85,12 @@
 /* a folder row with its .zip export */
 .rec-folders > li { display: flex; align-items: center; gap: 4px; }
 .rec-folders > li > .rec-folder-row { flex: 1; min-width: 0; }
+
+/* filled controls: the Paper chrome symbol in the button's text colour */
+.rec-pill.ac, .rec-now-play, .rec-cmp-both {
+  --cs: initial;
+  --ce: initial;
+  --ca: initial;
+  --cae: initial;
+  --cl: initial;
+}

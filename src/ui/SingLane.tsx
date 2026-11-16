@@ -13,6 +13,7 @@ import { noteLabel } from './Vocal';
 import { targetAt, type LaneTarget, type SingFeed } from './singFeed';
 import { SING_TX } from '../content/singLaneText';
 import '../singlane.css';
+import { Icon } from './icons';
 
 const G = 30; // gutter (note ruler)
 const PAD = 8;
@@ -566,7 +567,7 @@ export function SingReadout({ feed, targets, tol, pass = 50, settings, live, lan
       <div className={`sr-note${sung === null ? ' silent' : ''}`}>{sung === null ? '–' : <NoteName label={noteLabel(sung, settings)} />}</div>
       {tg && !sameNote && !hideTarget && (
         <div className="sr-target">
-          <span className="flip-rtl">→</span> <NoteName label={noteLabel(Math.round(tg.midi), settings)} />
+          <Icon k="fwd" /> <NoteName label={noteLabel(Math.round(tg.midi), settings)} />
         </div>
       )}
       <CentsChip cents={cents} tol={tol} pass={pass} lang={lang} />

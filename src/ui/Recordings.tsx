@@ -58,6 +58,7 @@ import { CompareScreen, ProgressChart } from './RecCompare';
 import { progressPoints } from '../engine/recCompare';
 import { refreshReserve, sessionAudioOf } from '../storage/recExtras';
 import { bgPlayer } from '../audio/bgPlayer';
+import { Icon, type IconKey } from './icons';
 
 type Lang = 'en' | 'he';
 const RX2Compare = { en: 'Compare', he: 'להשוות' };
@@ -76,57 +77,30 @@ export function Bidi({ text }: { text: string }) {
   return <>{parts.map((x, i) => (i % 2 ? <N key={i}>{x}</N> : x))}</>;
 }
 
-const P = (d: ReactNode) => d;
-const ICONS = {
-  search: P(
-    <>
-      <circle cx="10.5" cy="10.5" r="6" />
-      <path d="M15 15l5 5" />
-    </>,
-  ),
-  star: P(<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />),
-  folder: P(<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />),
-  trash: P(<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5" />),
-  select: P(
-    <>
-      <rect x="4" y="4" width="16" height="16" rx="4" />
-      <path d="M8.5 12.2l2.4 2.4 4.6-5" />
-    </>,
-  ),
-  more: P(
-    <>
-      <circle cx="6" cy="12" r="1.3" />
-      <circle cx="12" cy="12" r="1.3" />
-      <circle cx="18" cy="12" r="1.3" />
-    </>,
-  ),
-  play: P(<path d="M7 5l12 7-12 7z" />),
-  pause: P(<path d="M9 5v14M15 5v14" />),
-  loop: P(<path d="M4 11V9a3 3 0 0 1 3-3h12m-3-3 3 3-3 3M20 13v2a3 3 0 0 1-3 3H5m3 3-3-3 3-3" />),
-  back5: P(<path d="M11 6L5 12l6 6M19 6l-6 6 6 6" />),
-  fwd5: P(<path d="M13 6l6 6-6 6M5 6l6 6-6 6" />),
-  mic: P(
-    <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-    </>,
-  ),
-  keys: P(
-    <>
-      <rect x="3.5" y="5" width="17" height="14" rx="2" />
-      <path d="M8 5v9M12 5v9M16 5v9M8 14v5M12 14v5M16 14v5" />
-    </>,
-  ),
-  voice: P(<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4" />),
-  close: P(<path d="M6 6l12 12M18 6L6 18" />),
-  restore: P(<path d="M5 12a7 7 0 1 0 2-5M5 4v4h4" />),
-  export: P(<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" />),
-};
-type IconName = keyof typeof ICONS;
+/** The library's control symbols, by their old names, drawn in the Paper chrome cut (src/ui/paper/art-chrome*.ts). */
+const RKEY = {
+  search: 'search',
+  star: 'star',
+  folder: 'folder',
+  trash: 'trash',
+  select: 'select',
+  more: 'more',
+  play: 'play',
+  pause: 'pause',
+  loop: 'repeat',
+  back5: 'skipback',
+  fwd5: 'skipfwd',
+  mic: 'mic',
+  keys: 'keys',
+  voice: 'voice',
+  close: 'close',
+  restore: 'restore',
+  export: 'export',
+} as const satisfies Record<string, IconKey>;
+type IconName = keyof typeof RKEY;
+/** `fill` keeps its old meaning for the star: filled = starred, otherwise the star as a paper strip. */
 export const RIcon = ({ k, size = 18, fill = false }: { k: IconName; size?: number; fill?: boolean }) => (
-  <svg className={`rec-ico rec-ico-${k}`} viewBox="0 0 24 24" width={size} height={size} fill={fill ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-    {ICONS[k]}
-  </svg>
+  <Icon k={k === 'star' && !fill ? 'staroff' : RKEY[k]} size={size} className={`rec-ico rec-ico-${k}`} />
 );
 
 const mmss = (s: number) => {
@@ -382,7 +356,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
     <main className="panel-screen recordings" data-recordings="library" data-rec-bin={bin ? '1' : '0'}>
       <header className="screen-head rec-head">
         <button className="icon-btn" onClick={() => (bin ? setBin(false) : onBack())} aria-label={RX.back[lang]}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{bin ? RX.bin[lang] : RX.title[lang]}</h1>
         {!bin && (
@@ -876,7 +850,7 @@ function TakePlayer({ id, lang, onBack, onOpen }: { id: string; lang: Lang; onBa
       <main className="panel-screen recordings rec-player" data-recordings="player">
         <header className="screen-head rec-head">
           <button className="icon-btn" onClick={onBack} aria-label={RX.back[lang]}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{RX.title[lang]}</h1>
         </header>
@@ -1079,7 +1053,7 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
     <main className="panel-screen recordings rec-player" data-recordings="player" data-rec-playing={playing ? '1' : '0'} data-rec-loop={loopOn ? '1' : '0'} data-rec-ab={ab ? `${ab[0].toFixed(2)}:${ab[1].toFixed(2)}` : ''} data-rec-pos={pos.toFixed(2)}>
       <header className="screen-head rec-head">
         <button className="icon-btn" onClick={() => (stopAll(), onBack())} aria-label={RX.back[lang]}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <div className="rec-ptitle">
           <h1>
@@ -1178,9 +1152,7 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
       </div>
       <div className="rec-actions2" data-rec-actions2="1">
         <button className="icon-btn small" onClick={() => (stopAll(), (location.hash = `/recordings/compare/${encodeURIComponent(take.id)}`))} aria-label={RX2Compare[lang]} title={RX2Compare[lang]} data-rec-compare="1">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M7 4v16M17 4v16M3 8l4-4 4 4M13 16l4 4 4-4" />
-          </svg>
+          <Icon k="swap" size={18} />
         </button>
         <button className="icon-btn small" onClick={() => setSheet2('list')} aria-label={RX2.addTo[lang]} title={RX2.addTo[lang]} data-rec-addlist="1">
           <XIcon k="list" />
@@ -1189,9 +1161,7 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
           <XIcon k="bg" />
         </button>
         <button className="icon-btn small" onClick={() => setSheet2('export')} aria-label={RX2.export[lang]} title={RX2.export[lang]} data-rec-export="1">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" />
-          </svg>
+          <Icon k="share" size={18} />
         </button>
       </div>
       {sheet2 === 'list' && <AddToPlaylistSheet lang={lang} takeIds={[take.id]} onClose={() => setSheet2(null)} />}
@@ -1375,8 +1345,8 @@ export function RecordingsEntryCard({ lang }: { lang: Lang }) {
         <b>{RX.title[lang]}</b>
         <small>{n === 1 ? RX.oneTake[lang] : fillRx(RX.takes[lang], { n })}</small>
       </span>
-      <span className="flip-rtl" aria-hidden="true">
-        ›
+      <span aria-hidden="true">
+        <Icon k="fwd" />
       </span>
     </a>
   );

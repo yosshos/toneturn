@@ -16,6 +16,7 @@ import { SERVED } from '../engine/drills/headDrills';
 import { keyLabel } from '../engine/stdKey';
 import { ChordChart } from './ChordChart';
 import '../reharm.css';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 const FAMS: FamilyId[] = ['k-tune', 'g-tune', 'b-tune'];
@@ -101,13 +102,13 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
         </select>
         <div className="tab-pager" dir="ltr">
           <button className="icon-btn" aria-label="Previous bars" disabled={page === 0} onClick={() => setPage(page - 1)}>
-            ‹
+            <Icon k="back" />
           </button>
           <small>
             {first + 1}–{Math.min(hi.bars.length, first + PER)} / {hi.bars.length}
           </small>
           <button className="icon-btn" aria-label="Next bars" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>
-            ›
+            <Icon k="fwd" />
           </button>
         </div>
       </div>

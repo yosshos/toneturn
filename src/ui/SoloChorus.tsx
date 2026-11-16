@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CHORUS_FORMS, assembleChorus, barsOf, cellName, cellShort, cellsFor, chorusChecks, defaultPlan, planOf, savePlan, type CellId } from '../engine/soloChorus';
 import { chartOf } from '../engine/bebopVocab';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 type Inst = 'piano' | 'guitar' | 'bass';
@@ -36,7 +37,7 @@ export function SoloChorusEditor({ lang, inst, form, keyPc, onClose }: { lang: L
             {tx.title} <small>{CHORUS_FORMS[form % CHORUS_FORMS.length].name[lang]}</small>
           </h2>
           <button className="icon-btn" onClick={() => onClose(false)} aria-label={tx.close}>
-            ✕
+            <Icon k="close" />
           </button>
         </div>
         <div className="chorus-grid" dir="ltr" role="radiogroup" aria-label={tx.bar}>

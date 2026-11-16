@@ -7,6 +7,7 @@ import { useCourse } from './courseContext';
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavIcon, type TabId } from './Arcade';
 import { Logo } from './bits';
+import { Icon } from './icons';
 
 export type NavId =
   | TabId
@@ -28,58 +29,6 @@ interface Section extends Item {
   group?: boolean;
 }
 
-const I = (d: React.ReactNode) => d;
-const ICON = {
-  tools: I(<path d="M14.5 6.5l3-3 3 3-3 3zM4 20l9.5-9.5M14 14l5.5 5.5-1.5 1.5L12.5 15.5" />),
-  check: I(
-    <>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M15.5 8.5l-2 5-5 2 2-5z" />
-    </>,
-  ),
-  mic: I(
-    <>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
-      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-    </>,
-  ),
-  gear: I(
-    <>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
-    </>,
-  ),
-  chevron: I(<path d="M9 6l6 6-6 6" />),
-  play: I(
-    <>
-      <path d="M9 18V5l11-2v13" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="17.5" cy="16" r="2.5" />
-    </>,
-  ),
-  train: I(
-    <>
-      <path d="M8 12h8" />
-      <rect x="5" y="7" width="3" height="10" rx="1" />
-      <rect x="16" y="7" width="3" height="10" rx="1" />
-      <path d="M2.5 9.5v5M21.5 9.5v5" />
-    </>,
-  ),
-  cap: I(
-    <>
-      <path d="M3 9.5 12 5l9 4.5-9 4.5z" />
-      <path d="M7 11.5v4.2c1.4 1.3 3.1 1.9 5 1.9s3.6-.6 5-1.9v-4.2M21 9.5V15" />
-    </>,
-  ),
-  improv: I(
-    <>
-      <path d="M9 18V6l10-2v12" />
-      <circle cx="6.5" cy="18" r="2.5" />
-      <circle cx="16.5" cy="16" r="2.5" />
-    </>,
-  ),
-  collapse: I(<path d="M15 6l-6 6 6 6M20 4v16" />),
-};
 
 // 0.61 (SPEC-REDESIGN NavMap): the four screens of the active course first (their contents follow the course), then
 // what every course shares, then the tools. Songs, pieces, charts, technique… now live inside Practice, per course.
@@ -179,11 +128,6 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
     });
   };
   const L = (x: L) => x[lang];
-  const svg = (d: React.ReactNode) => (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {d}
-    </svg>
-  );
   const badge = (id: NavId) => {
     const b = badges?.[id];
     if (!b) return null;
@@ -209,10 +153,10 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
           </button>
           {s.children && !s.group && (
             <button className="sn-chev" onClick={() => setOpen(isOpen ? null : key)} aria-expanded={isOpen} aria-label={L(s.label)}>
-              {svg(ICON.chevron)}
+              <Icon k="fwd" size={20} />
             </button>
           )}
-          {s.group && <span className="sn-chev passive" aria-hidden="true">{svg(ICON.chevron)}</span>}
+          {s.group && <span className="sn-chev passive" aria-hidden="true"><Icon k="fwd" size={20} /></span>}
         </div>
         {isOpen && (
           <div className="sn-sub" role="group" aria-label={L(s.label)}>
@@ -240,10 +184,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
       </div>
       {!collapsed && <CourseChip active={course.active} lang={lang} onOpen={course.open} variant="side" />}
       <button className="sn-search sn-label-wrap" onClick={() => dispatchEvent(new Event('tt-open-search'))} title={lang === 'he' ? 'חיפוש (Ctrl K)' : 'Search (Ctrl K)'} data-nav-search="1">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="6.5" />
-          <path d="M20 20l-4-4" />
-        </svg>
+        <Icon k="search" size={16} />
         <span className="sn-label">{lang === 'he' ? 'חיפוש' : 'Search'}</span>
         <kbd className="sn-label">Ctrl K</kbd>
       </button>
@@ -258,7 +199,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
         <div className={`sn-sec ${lit === 'settings' ? 'on' : ''}`}>
           <div className="sn-row">
             <button className={`sn-item ${route === 'settings' ? 'current' : ''}`} onClick={() => onNav('settings')} title={lang === 'he' ? 'הגדרות' : 'Settings'} data-nav="settings">
-              {svg(ICON.gear)}
+              <Icon k="settings" size={20} />
               <span className="sn-label">{lang === 'he' ? 'הגדרות' : 'Settings'}</span>
             </button>
           </div>
@@ -276,7 +217,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
           </span>
         </button>
         <button className="sn-collapse" onClick={toggleCollapsed} aria-label={lang === 'he' ? (collapsed ? 'להרחיב את התפריט' : 'לכווץ את התפריט') : collapsed ? 'Expand the menu' : 'Collapse the menu'} aria-pressed={collapsed}>
-          {svg(ICON.collapse)}
+          <Icon k="sidebar" size={20} />
         </button>
       </div>
     </nav>

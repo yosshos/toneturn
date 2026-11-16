@@ -353,7 +353,7 @@ export function PeakHunter({ lang, settings, saved, onSave, onExit, onResult, be
                   onClick={() => void play(w)}
                 >
                   <span className="ph-ab-icon" aria-hidden>
-                    {playing === w ? '■' : '▶'}
+                    <Icon k={playing === w ? 'stop' : 'play'} />
                   </span>
                   <span>
                     <IsoMix text={w === 'a' ? tx.a : tx.b} />

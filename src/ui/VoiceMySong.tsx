@@ -11,6 +11,7 @@ import type { VoiceRange } from '../engine/vocal';
 import { VT } from '../content/voiceCourseText';
 import { MySongLibrary } from './MySong';
 import type { StoredSong } from '../storage/mySongs';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -64,7 +65,7 @@ export function MySongPick({ lang, range, onReady }: { lang: Lang; range: VoiceR
             {L(VT.mineOther)}
           </button>
           <button className="btn mega" onClick={() => onReady(found.plan, found.buffer, found.id)}>
-            {L(VT.next)} <span className="flip-rtl">→</span>
+            {L(VT.next)} <Icon k="fwd" />
           </button>
         </>
       ) : (

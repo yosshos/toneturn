@@ -775,6 +775,12 @@
   background: #ffffff;
   color: var(--ink-c);
 }
+/* the white edit button keeps purple paper in the dark theme too (Paper chrome, 2026-11-16) */
+.wk-hero .wk-edit {
+  --cs: #6d28d9;
+  --ce: #3b1a7a;
+  --cl: #ffffff;
+}
 .wk-hero .wk-title {
   position: relative;
   margin: 0;
@@ -1488,6 +1494,7 @@
 :root[data-theme] .sound-opt.on .inst-art { color: #fff; }
 :root[data-theme] .sound-play { all: unset; box-sizing: border-box; position: absolute; top: 8px; inset-inline-end: 8px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--lemon); color: var(--ink-c); border: var(--stroke) solid var(--ink-c); cursor: pointer; }
 :root[data-theme] .sound-play svg { width: 14px; height: 14px; }
+:root[data-theme] .sound-play { --cs: #6d28d9; --ce: #3b1a7a; --cl: var(--lemon); }
 :root[data-theme][dir='rtl'] .sound-play svg { transform: none; }
 :root[data-theme] .sound-play:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 :root[data-theme] .sound-play:disabled { opacity: 0.5; cursor: default; }

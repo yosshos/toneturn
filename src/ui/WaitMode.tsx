@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { notesIn, type Piece } from '../engine/piece/score';
 import type { NoteMark } from '../engine/noteMarks';
 import { midi } from '../speech/midi';
+import { Icon } from './icons';
 
 export interface WaitGroup {
   /** Beat from the start of the range. */
@@ -90,7 +91,7 @@ export function WaitMode({ piece, from, to, lang, onCursor, onMarks, onDone }: {
       ) : (
         <p className="pc-coach" aria-live="polite">
           {i < groups.length ? (he ? `נגנו את מה שמסומן — ${i + 1} מתוך ${groups.length}` : `Play what is marked — ${i + 1} of ${groups.length}`) : he ? 'סיימתם את הקטע.' : 'Passage done.'}
-          {wrong > 0 && <small dir="ltr"> · ✕ {wrong}</small>}
+          {wrong > 0 && <small dir="ltr"> · <Icon k="close" size={11} /> {wrong}</small>}
         </p>
       )}
     </div>

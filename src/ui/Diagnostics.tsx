@@ -14,6 +14,7 @@ import { narrator, piano, recordings, tts } from './services';
 import { previewText } from '../speech/voice/preview';
 import { lastVoiceFailure } from '../speech/voice/files';
 import { SoundDiagnostics } from './SoundQuality';
+import { Icon } from './icons';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
 interface LogLine {
@@ -190,7 +191,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
     <main className="panel-screen diag" dir={lang === 'he' ? 'rtl' : 'ltr'}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          ←
+          <Icon k="back" />
         </button>
         <h1>{t.diagnostics}</h1>
       </header>
@@ -241,7 +242,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
         <h2>2 · {lang === 'he' ? 'צליל' : 'Sound'}</h2>
         <div className="row">
           <button className="btn" onClick={testAudio}>
-            ▶ {lang === 'he' ? 'נגן אקורד' : 'Play chord'}
+            <Icon k="play" /> {lang === 'he' ? 'נגן אקורד' : 'Play chord'}
           </button>
           <button className="btn" onClick={() => testVoice('he')}>
             עברית

@@ -21,6 +21,7 @@ import { namingFor, type Settings } from '../storage/progress';
 import { piano } from './services';
 import { TierChips } from './TierChips';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
@@ -321,7 +322,7 @@ export function MelodyPuzzle({
       <main className="panel-screen g3 mp-intro">
         <header className="screen-head">
           <button className="icon-btn" onClick={onExit} aria-label={tx(T.back)}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{tx(T.title)}</h1>
         </header>
@@ -426,7 +427,7 @@ export function MelodyPuzzle({
     <main className="g3 mp-play">
       <header className="lesson-top mp-top">
         <button className="icon-btn" onClick={onExit} aria-label={tx(T.exit)}>
-          ✕
+          <Icon k="close" />
         </button>
         <div className="hw-stat">
           <small>{tx(T.puzzle)}</small>
@@ -445,7 +446,7 @@ export function MelodyPuzzle({
 
       <div className="mp-listen">
         <button className="btn mega" onClick={() => void play('puzzle')} disabled={playing} data-listen="1">
-          ▶ {st.plays === 0 ? tx(T.listen) : tx(T.again)}
+          <Icon k="play" /> {st.plays === 0 ? tx(T.listen) : tx(T.again)}
           {st.plays > 0 && !finished && <small className="mp-cost" dir="ltr">−10</small>}
         </button>
         {st.plays === 0 && <p className="field-hint">{tx(T.listenFirst)}</p>}
@@ -544,10 +545,10 @@ export function MelodyPuzzle({
         ) : (
           <>
             <button className="btn mega" onClick={next} data-next-puzzle="1">
-              {st.index + 1 >= PUZZLES_PER_RUN ? tx(T.finish) : tx(T.next)} <span className="flip-rtl">→</span>
+              {st.index + 1 >= PUZZLES_PER_RUN ? tx(T.finish) : tx(T.next)} <Icon k="fwd" />
             </button>
             <button className="btn" onClick={() => void play('puzzle')} disabled={playing}>
-              ▶ {tx(T.listen)}
+              <Icon k="play" /> {tx(T.listen)}
             </button>
           </>
         )}

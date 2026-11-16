@@ -221,6 +221,7 @@ import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep
 import { measuredMsOn } from '../engine/practiceTime';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
+import { Icon } from './icons';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
@@ -2503,8 +2504,8 @@ export function App() {
                   <b>{s.uiLang === 'he' ? 'תובנות' : 'Insights'}</b>
                   <small>{s.uiLang === 'he' ? 'מדד האוזן, מפת הידיים, טביעת הגרוב, מפת הבלבולים' : 'Ear Index, hand map, groove fingerprint, confusion map'}</small>
                 </span>
-                <span className="flip-rtl" aria-hidden="true">
-                  ›
+                <span aria-hidden="true">
+                  <Icon k="fwd" />
                 </span>
               </button>
               <DiaryEntryCard lang={s.uiLang} onOpen={() => go('diary')} />

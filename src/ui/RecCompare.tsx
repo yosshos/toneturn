@@ -11,6 +11,7 @@ import { alignTakes, compareDeltas, comparePlan, progressPoints, type Aligned, t
 import { piano } from './services';
 import { Bidi, RIcon } from './Recordings';
 import { takeTimeline } from './RecPlaylists';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 const N = ({ children }: { children: ReactNode }) => <bdi dir="ltr">{children}</bdi>;
@@ -50,7 +51,7 @@ export function CompareScreen({ lang, a, b, onBack, onOpen }: { lang: Lang; a: s
   const head = (sub?: ReactNode) => (
     <header className="screen-head rec-head">
       <button className="icon-btn" onClick={onBack} aria-label={TX.back[lang]}>
-        <span className="flip-rtl">←</span>
+        <Icon k="back" />
       </button>
       <div className="rec-ptitle">
         <h1>{TX.title[lang]}</h1>

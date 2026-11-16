@@ -9,6 +9,7 @@ import { listenLoop } from './Flight';
 import { inTune, midiToHzA, presetById, TUNER_PRESETS, TunerSmoother, tunerReading } from '../engine/tuner';
 import { piano } from './services';
 import type { AccessError } from '../game/adapters';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -70,7 +71,7 @@ export function Tuner({ lang, settings, onChange, onBack }: { lang: Lang; settin
     <main className="tuner-screen">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">‹</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>

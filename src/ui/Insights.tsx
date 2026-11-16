@@ -27,6 +27,7 @@ import { instrumentKeys, instrumentName, keyList, type InstrumentKeys } from '..
 import type { FamilyId } from '../engine/drills/types';
 import { skillTitle } from '../storage/profile';
 import { KeyMap12 } from './KeyMap12';
+import { Icon } from './icons';
 
 const TX = {
   en: {
@@ -83,7 +84,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
     <main className="panel-screen insights" data-insights="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
       </header>

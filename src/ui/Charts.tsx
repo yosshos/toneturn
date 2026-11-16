@@ -108,17 +108,12 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
     <main className="panel-screen charts" data-charts="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
         {onMixer && (
           <button className="icon-btn" onClick={onMixer} aria-label={lang === 'he' ? 'מיקסר' : 'Mixer'} data-charts-mixer="1">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
-              <path d="M6 4v16M12 4v16M18 4v16" />
-              <rect x="4" y="13" width="4" height="3" rx="1" />
-              <rect x="10" y="7" width="4" height="3" rx="1" />
-              <rect x="16" y="11" width="4" height="3" rx="1" />
-            </svg>
+            <Icon k="faders" size={20} />
           </button>
         )}
       </header>
@@ -468,7 +463,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     <main className="panel-screen charts ch-play" data-chart-player="1">
       <header className="screen-head">
         <button className="icon-btn" onClick={() => (stop(), onBack())} aria-label={tx.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <input className="ch-title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 40))} aria-label={tx.name} />
       </header>
@@ -543,8 +538,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
             <b>
               {rx.barScale} {pickBar + 1}
             </b>
-            <button className="icon-btn" onClick={() => setPickBar(null)} aria-label="✕">
-              ✕
+            <button className="icon-btn" onClick={() => setPickBar(null)} aria-label={lang === 'he' ? 'סגירה' : 'Close'}>
+              <Icon k="close" />
             </button>
           </div>
           <div className="chips wrap">
@@ -578,11 +573,11 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         <span className="ch-step">
           <small>{tx.tempo}</small>
           <button className="icon-btn" onClick={() => setBpm((b) => Math.max(40, b - 4))} aria-label="−">
-            −
+            <Icon k="minus" />
           </button>
           <b dir="ltr">{bpm}</b>
           <button className="icon-btn" onClick={() => setBpm((b) => Math.min(260, b + 4))} aria-label="+">
-            +
+            <Icon k="plus" />
           </button>
         </span>
         <span className="ch-step">
@@ -611,7 +606,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
             </p>
           )}
           <button className="btn mega" onClick={stop} data-chart-stop="1">
-            ■ {tx.stop}
+            <Icon k="stop" /> {tx.stop}
           </button>
         </>
       ) : (
@@ -624,7 +619,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
                   {lang === 'he' ? 'לולאה' : 'Loop'} <bdi dir="ltr">{Math.min(...loop) + 1 === Math.max(...loop) + 1 ? Math.min(...loop) + 1 : `${Math.min(...loop) + 1}–${Math.max(...loop) + 1}`}</bdi>
                 </span>
                 <button className="icon-btn" onClick={() => setLoop(null)} aria-label={lang === 'he' ? 'לבטל את הלולאה' : 'Clear the loop'} data-chart-loop-clear="1">
-                  ✕
+                  <Icon k="close" />
                 </button>
               </>
             ) : (
@@ -634,7 +629,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
             )}
           </div>
           <button className="btn mega" onClick={() => (setPick(null), void play())} disabled={!parsed.chords.length} data-chart-play="1">
-            ▶ {tx.play}
+            <Icon k="play" /> {tx.play}
           </button>
           <button className="btn ghost" onClick={() => void goImprov()} disabled={!parsed.chords.length} data-chart-improv="1" title={ix.hint}>
             <Icon k="mic" /> {ix.go}
@@ -648,7 +643,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       )}
       {hasTake && !playing && (
         <button className="btn ghost small ch-listen" onClick={() => void listenBack()} data-chart-listen="1">
-          ▶ {lang === 'he' ? 'להאזין לסולו שלכם' : 'Listen to your solo'}
+          <Icon k="play" /> {lang === 'he' ? 'להאזין לסולו שלכם' : 'Listen to your solo'}
         </button>
       )}
       {hasTake && !playing && (lastTake.current?.notes?.length ?? 0) >= 3 && (

@@ -29,18 +29,13 @@ import {
   type QuickMsg,
 } from '../cloud/community';
 import { activityText, canSendQuick, challengeLink, phrasesFor, phraseText, questProgress, REPORT_REASONS, type QuestMetric, type ReportKind } from '../engine/socialRound';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
 
 function Dots() {
-  return (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-      <circle cx="5" cy="12" r="1.8" />
-      <circle cx="12" cy="12" r="1.8" />
-      <circle cx="19" cy="12" r="1.8" />
-    </svg>
-  );
+  return <Icon k="more" size={18} />;
 }
 
 const ago = (iso: string, lang: Lang) => {

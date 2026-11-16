@@ -36,6 +36,7 @@ import { InputCheck } from './InputCheck';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
+import { Icon } from './icons';
 
 export type Game2 = 'flight' | 'pitch-memory' | 'name-tune' | 'tune-up';
 export interface Game2Result {
@@ -146,7 +147,7 @@ export function G2Head({ title, backLabel, onBack, children }: { title: string; 
   return (
     <header className="screen-head g2-head">
       <button className="icon-btn" onClick={onBack} aria-label={backLabel}>
-        <span className="flip-rtl">←</span>
+        <Icon k="back" />
       </button>
       <h1>{title}</h1>
       {children}

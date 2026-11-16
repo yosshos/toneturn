@@ -13,6 +13,7 @@ import { TrendDetail } from './Trends';
 import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
 import { foldSubs, subsOf, type SubStat } from '../engine/taxonomy';
+import { Icon } from './icons';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
@@ -46,7 +47,7 @@ export function SkillMap({
     <main className="panel-screen skillmap">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{t.skillMap}</h1>
       </header>
@@ -96,7 +97,7 @@ export function SkillMap({
                       <button className={`skill-row ${sel === a2 ? 'on' : ''}`} onClick={() => setSel(a2)} aria-pressed={sel === a2}>
                         <b>{t.skillNames[a2]}</b>
                         <span className={`ev ev-${ev}`}>{ev === 'unmeasured' ? t.evUnmeasured : `${t.bands[band(r!.r)]} · ${r!.r}${ev === 'provisional' ? ` · ${t.evProvisional}` : ''}`}</span>
-                        {a2 === rec && <span className="rec-chip">★</span>}
+                        {a2 === rec && <span className="rec-chip"><Icon k="star" size={12} /></span>}
                       </button>
                       {sel === a2 && (
                         <div className="sm-detail">
@@ -242,7 +243,7 @@ function Diagnosis({
   const ev = planned ? null : evidence(r);
   return (
     <section className={`set-card diag-panel ${recommended ? 'recommended' : ''}`} aria-live="polite">
-      {recommended && <p className="eyebrow">★ {t.recommendedNext}</p>}
+      {recommended && <p className="eyebrow"><Icon k="star" size={14} /> {t.recommendedNext}</p>}
       <h2>{t.skillNames[axis]}</h2>
       {r && r.n > 0 && (
         <div className="diag-stats">
@@ -272,7 +273,7 @@ function Diagnosis({
             </p>
           )}
           <button className="btn primary" onClick={() => onPractice(axis as SkillId)}>
-            {ev === 'unmeasured' ? t.measureThis : t.practiceThis} →
+            {ev === 'unmeasured' ? t.measureThis : t.practiceThis} <Icon k="fwd" />
           </button>
         </>
       )}

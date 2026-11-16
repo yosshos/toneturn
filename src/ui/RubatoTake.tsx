@@ -13,6 +13,7 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { piano } from './services';
 import { InputCheck, InputWatchdog } from './InputCheck';
+import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -145,7 +146,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
         </button>
       ) : (
         <button className="btn mega" onClick={() => void start()} data-rubato-start="1">
-          ▶ {tx.play}
+          <Icon k="play" /> {tx.play}
         </button>
       )}
     </div>

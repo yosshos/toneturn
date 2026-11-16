@@ -135,8 +135,19 @@
   cursor: pointer;
   box-shadow: 0 6px 20px color-mix(in srgb, var(--accent, #86dcbd) 35%, transparent);
 }
-.mt-play svg path {
+.mt-play svg:not(.pp) path {
   transform: translateX(1.5px);
+}
+/* the Paper chrome symbol on the lemon play button: purple paper; on the ink "running" state: the button's text colour */
+.mt-play {
+  --cs: #6d28d9;
+  --ce: #3b1a7a;
+  --cl: var(--lemon);
+}
+.mt-play.on {
+  --cs: initial;
+  --ce: initial;
+  --cl: initial;
 }
 .mt-play.on {
   background: color-mix(in srgb, var(--accent, #86dcbd) 22%, var(--card, #222));

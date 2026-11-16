@@ -25,6 +25,7 @@ import {
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
 import { canComplete, completeStep, LICK_CONCEPTS, LICK_STEPS, loadLickFlows, newLickFlow, saveLickFlows, stepCards, withKeyStars, type LickConcept, type LickFlow, type LickStepN } from '../engine/practiceMethod';
 import { RULE_NAME } from '../engine/improvRules';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 export type TakeFn = (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => void;
@@ -394,7 +395,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1>{title}</h1>
     </header>

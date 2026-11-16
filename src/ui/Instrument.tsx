@@ -16,6 +16,7 @@ import { piano } from './services';
 import { courseInstrument, noteViewsOf, playedShift } from './noteViewPref';
 import { heardMidis, identifyChord, judgeStrum } from '../engine/chordFinder';
 import { useStrums } from './strumListen';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -641,7 +642,7 @@ export function PlaceSurfaceView({ q, settings, lang, disabled, onSubmit, result
             {T.clear[lang]}
           </button>
           <button type="button" className="btn small ghost" disabled={!notes.length} onClick={() => sound(notes.map((n) => n.midi), 0.42, q.as === 'set' && surface !== 'staff')}>
-            ▶ {T.play[lang]}
+            <Icon k="play" /> {T.play[lang]}
           </button>
           <button type="button" className="btn primary place-done" disabled={!notes.length} onClick={submit}>
             ✓ {T.done[lang]}

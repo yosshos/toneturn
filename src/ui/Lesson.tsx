@@ -4,7 +4,7 @@ import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { isTimeOnly } from '../engine/timeOnly';
 import { answerFormat, pcToMidi, type AnswerFormat } from '../engine/answerFormat';
 import { Toni, type ToniState } from './Toni';
-import { Icon } from './icons';
+import { Icon, type IconKey } from './icons';
 import { buzz } from './Arcade';
 import { recordGroove } from '../storage/analysis';
 import { recordConfusion } from '../storage/confusion';
@@ -492,7 +492,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       {isStaircase && <PlacementMeter s={v.session} t={t} />}
       <header className="lesson-top">
         <button className="icon-btn" onClick={() => (paused ? onExit() : ctrl.pause())} aria-label={paused ? t.exit : t.pause}>
-          {paused ? '✕' : '❚❚'}
+          <Icon k={paused ? 'close' : 'pause'} />
         </button>
         <Rounds v={v} t={t} />
         <TalkToggle lang={lang} />
@@ -1110,21 +1110,13 @@ function Listening({ v, t, hint }: { v: LessonView; t: Strings; hint: string }) 
   );
 }
 
-/** An ink ✓ or ✕ drawn as a stroke (no font glyph, so it never renders as an emoji). */
+/** An ink ✓ or ✕ as a Paper chrome symbol (no font glyph, so it never renders as an emoji). */
 function MarkGlyph({ ok }: { ok: boolean }) {
-  return (
-    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={ok ? 'M3 8.5l3.2 3.2L13 4.8' : 'M4 4l8 8M12 4l-8 8'} />
-    </svg>
-  );
+  return <Icon k={ok ? 'check' : 'close'} size={12} />;
 }
 
 function PlayTri() {
-  return (
-    <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-      <path d="M2.5 1.5v9l8-4.5z" fill="currentColor" />
-    </svg>
-  );
+  return <Icon k="play" size={12} />;
 }
 
 /**
@@ -1252,9 +1244,7 @@ function FeedbackBanner({ v, t, lang, settings, onExplain }: { v: LessonView; t:
         {bad && hasDetail && (
           <button className="why-btn" aria-expanded={why} onClick={() => setWhy((w) => !w)} data-why="1">
             {lang === 'he' ? 'למה?' : 'Why?'}
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" aria-hidden="true">
-              <path d={why ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-            </svg>
+            <Icon k={why ? 'up' : 'down'} size={12} />
           </button>
         )}
       </div>
@@ -1337,7 +1327,7 @@ function NameKeypad({ t, length, keys, lang, nm, disabled, onSubmit }: { t: Stri
       </div>
       <div className="row center">
         <button className="btn small" disabled={!seq.length} onClick={() => setSeq((s) => s.slice(0, -1))}>
-          ⌫ {t.backspace}
+          <Icon k="backspace" /> {t.backspace}
         </button>
         <button
           className="btn primary"
@@ -1374,7 +1364,7 @@ function SeqKeypad({ t, length, disabled, onSubmit }: { t: Strings; length: numb
       </div>
       <div className="row center">
         <button className="btn small" disabled={!seq.length} onClick={() => setSeq((s) => s.slice(0, -1))}>
-          ⌫ {t.backspace}
+          <Icon k="backspace" /> {t.backspace}
         </button>
         <button
           className="btn primary"
@@ -1491,7 +1481,7 @@ function RhythmBuilder({ q, lang, t, disabled, onSubmit }: { q: Extract<Question
       </div>
       <div className="controls">
         <button className="btn small" disabled={!cells.length} onClick={() => setCells((xs) => xs.slice(0, -1))}>
-          ⌫ {t.undo}
+          <Icon k="backspace" /> {t.undo}
         </button>
         <button
           className="btn primary"
@@ -1701,19 +1691,12 @@ function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay
       <div className="ex-actions">
         {refresher && onRefresher && (
           <button className="btn ghost ex-learn" onClick={() => onRefresher(refresher, () => undefined)} data-brief-learn="1">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z" />
-              <path d="M12 6.3v13" />
-            </svg>
+            <Icon k="book" size={20} />
             {he ? 'רענון קצר' : 'Quick refresher'}
           </button>
         )}
         <button className="ex-play" onClick={onPlay} aria-label={he ? 'התחלה' : 'Start'} data-brief-play="1">
-          {voice ? <MicIcon /> : (
-            <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-              <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
-            </svg>
-          )}
+          <Icon k={voice ? 'mic' : 'play'} size={38} />
         </button>
       </div>
       {/* §20.11: the whole-session recording also from the gate page of an exercise that listens */}
@@ -1736,29 +1719,9 @@ function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay
   );
 }
 
-/** Line icons for the exercise's bottom controls (one style for all of them). */
+/** The exercise's bottom controls' symbols (the Paper chrome cut, one style for all of them). */
+const CTL: Record<'repeat' | 'skip' | 'learn' | 'hint', IconKey> = { repeat: 'again', skip: 'skip', learn: 'book', hint: 'tip' };
 function CtlIcon({ k }: { k: 'repeat' | 'skip' | 'learn' | 'hint' }) {
-  return (
-    <svg className="ctl-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {k === 'repeat' ? (
-        <>
-          <path d="M4 12a8 8 0 1 0 2.4-5.7" />
-          <path d="M4 4v4.5h4.5" />
-        </>
-      ) : k === 'skip' ? (
-        <path d="M5 6l7 6-7 6M13 6l7 6-7 6" />
-      ) : k === 'hint' ? (
-        <>
-          <path d="M9 18h6M10 21h4" />
-          <path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2.2h5c.1-1 .5-1.7 1.1-2.2A6 6 0 0 0 12 3z" />
-        </>
-      ) : (
-        <>
-          <path d="M3 5.5c3-1.2 6-1.2 9 .8 3-2 6-2 9-.8v13c-3-1.2-6-1.2-9 .8-3-2-6-2-9-.8z" />
-          <path d="M12 6.3v13" />
-        </>
-      )}
-    </svg>
-  );
+  return <Icon k={CTL[k]} size={18} className="ctl-icon" />;
 }
 

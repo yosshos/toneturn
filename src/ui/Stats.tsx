@@ -49,6 +49,7 @@ import { localDay, practiceDays, type LessonResult, type Progress } from '../sto
 import { fmtDay, FrameChips, FrameDelta, Spark, TrendDetail, useStatsFrame } from './Trends';
 import { useLedger } from './useLedger';
 import { msByDay, withLedgerMs } from '../engine/practiceTime';
+import { Icon } from './icons';
 
 /** AUDIT-5 #1: the stats days with the practice clock's measured time (lessons, technique, games, songs …). */
 function usePracticeDays(days: StatsDays | undefined): StatsDays | undefined {
@@ -1004,7 +1005,7 @@ export function TrophyCase({ list, pinned, lang }: { list: Achievement[]; pinned
                   <TierBadge a={a} lang={lang} />
                 </>
               ) : (
-                <span aria-hidden="true">＋</span>
+                <Icon k="plus" />
               )}
             </li>
           );
@@ -1149,10 +1150,7 @@ export function MonthReviewIcon({ t, lang, progress, seenMonth, onSeen }: { t: S
             onSeen(due);
           }}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="4" y="5.5" width="16" height="14" rx="2" />
-            <path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" />
-          </svg>
+          <Icon k="calendar" size={20} />
         </button>
       )}
       {open && <MonthReviewSheet t={t} lang={lang} progress={progress} month={open} onClose={() => setOpen(null)} />}

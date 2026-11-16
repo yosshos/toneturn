@@ -43,6 +43,7 @@ import { chartCells, type ChartCell, type NoteRole } from '../engine/drills/char
 import { ornamentLegend, VF_ORNAMENT, type OrnKind } from '../engine/ornaments';
 import { spellIn } from '../engine/aids';
 import { markTakeZero, useKeptTakes } from './recKeep';
+import { Icon } from './icons';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -133,13 +134,13 @@ export function useLineWindow(lines: number, beat: number, perLine: number, focu
     lines > size && follow === null ? (
       <div className="tab-pager" dir="ltr">
         <button className="icon-btn" aria-label="Previous lines" disabled={from === 0} onClick={() => setPage(Math.max(0, from - size))}>
-          ‹
+          <Icon k="back" />
         </button>
         <small>
           {size > 1 ? `${from + 1}–${Math.min(lines, from + size)}` : from + 1} / {lines}
         </small>
         <button className="icon-btn" aria-label="Next lines" disabled={from + size >= lines} onClick={() => setPage(Math.min(lines - size, from + size))}>
-          ›
+          <Icon k="fwd" />
         </button>
       </div>
     ) : null;
@@ -1228,12 +1229,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           )}
           {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
           <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
-            ▶ {tx.play}
+            <Icon k="play" /> {tx.play}
           </button>
         </>
       ) : (
         <button className="btn mega ghost" onClick={() => ac.current?.abort()}>
-          ■ {tx.stop}
+          <Icon k="stop" /> {tx.stop}
         </button>
       )}
     </div>
@@ -1312,7 +1313,7 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = 
       )}
       <div className="drill-actions">
         <button className="btn" onClick={onAgain}>
-          ↻ {tx.again}
+          <Icon k="again" /> {tx.again}
         </button>
         {m.verdict !== 'clean' && !rushing && !free && (
           <button className="btn ghost" onClick={onSlower}>
@@ -1326,7 +1327,7 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = 
         )}
         {onNext && (
           <button className="btn primary" onClick={onNext}>
-            {tx.next} ▶
+            {tx.next} <Icon k="fwd" />
           </button>
         )}
       </div>
@@ -1440,14 +1441,14 @@ function UntimedTake({ drill, lang, cal, onDone }: { drill: Drill; lang: Lang; c
           <NoteStaff notes={[cur.pitch + 12]} chord={false} keyPc={k} clef="bass" />
           <p className="field-hint">{lang === 'he' ? 'מצאו את התו הזה על הבס ונגנו אותו' : 'Find this note on your bass and play it'}</p>
           <button className="btn mega ghost" onClick={() => (ac.current?.abort(), setI(-1))}>
-            ■ {TX[lang].stop}
+            <Icon k="stop" /> {TX[lang].stop}
           </button>
         </>
       ) : (
         <>
           <p className="field-hint">{lang === 'he' ? `תו אחד בכל פעם, בלי קצב — עד ${maxMs / 1000} שניות לכל תו.` : `One note at a time, no beat — up to ${maxMs / 1000} s each.`}</p>
           <button className="btn mega" onClick={run} data-drill-play="1">
-            ▶ {TX[lang].play}
+            <Icon k="play" /> {TX[lang].play}
           </button>
         </>
       )}

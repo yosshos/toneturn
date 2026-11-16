@@ -19,6 +19,7 @@ import { useLineWindow } from './DrillTake';
 import { beamGroupAt, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
 import { expandForm } from '../engine/drills/roadmap';
 import { SECTION_HE, sectionName } from '../engine/drills/drumSong';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 
@@ -514,7 +515,7 @@ function LaneKey({ lang }: { lang: Lang }) {
             <header className="tr-sheet-head">
               <h2>{he ? 'מקרא' : 'Key'}</h2>
               <button className="icon-btn" onClick={() => setOpen(false)} aria-label={he ? 'סגירה' : 'Close'}>
-                ✕
+                <Icon k="close" />
               </button>
             </header>
             <ul className="tr-detail">

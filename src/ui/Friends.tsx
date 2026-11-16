@@ -112,7 +112,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
     <main className="panel-screen friends fr2">
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{lang === 'he' ? 'קהילה' : 'Community'}</h1>
       </header>
@@ -229,10 +229,10 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                           </span>
                           <span className="fr-stats">
                             <span title={t.streak}>
-                              <LineIcon d={FLAME} /> {r.streak ?? 0}
+                              <Icon k="flame" size={14} /> {r.streak ?? 0}
                             </span>
                             <span title={t.lessons}>
-                              <LineIcon d={BOOK} /> {r.lessons_done ?? 0}
+                              <Icon k="book" size={14} /> {r.lessons_done ?? 0}
                             </span>
                             {sortBy === 'xp' && <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />}
                           </span>
@@ -251,7 +251,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                               if (confirm(`${t.remove} ${r.name}?`)) void removeFriend(r.user_id).then(load);
                             }}
                           >
-                            ✕
+                            <Icon k="close" />
                           </button>
                         )}
                       </li>
@@ -393,15 +393,6 @@ const demoRows = (): FriendRow[] => [
   demo('e', 'Ostinato7', 'outgoing', 0, 0, 0, 900),
 ];
 const initial = (n: string | null | undefined) => (n?.trim()?.[0] ?? '?').toUpperCase();
-const FLAME = 'M12 3c.5 3-2.5 4.5-2.5 8a2.5 2.5 0 0 0 5 0c0-1-.4-1.8-.9-2.5 2.3 1 3.9 3.3 3.9 6A5.5 5.5 0 0 1 6 14.5C6 9.5 10 7.5 12 3z';
-const BOOK = 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5';
-function LineIcon({ d }: { d: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d={d} />
-    </svg>
-  );
-}
 
 /** A friend's picture: their photo when they share it with me, else their instrument icon + colour; their flag. */
 function FriendAvatar({ r, size = 34 }: { r: FriendRow; size?: number }) {

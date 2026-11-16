@@ -6,6 +6,7 @@ import type { AccessError } from '../game/adapters';
 import { ERROR_TITLES, recoverySteps, type Strings } from '../i18n/strings';
 import { detectBrowser } from '../speech/errors';
 import { piano } from './services';
+import { Icon } from './icons';
 
 /** Note/chord symbols stay left-to-right inside Hebrew text. */
 export const Note = ({ children }: { children: ReactNode }) => (
@@ -74,20 +75,8 @@ export function ModeSwitch({ mode, onChange, t }: { mode: InputMode; onChange: (
   );
 }
 
-export const MicIcon = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-    <rect x="8.5" y="2.5" width="7" height="12" rx="3.5" fill="currentColor" stroke="none" />
-    <path d="M5 11a7 7 0 0 0 14 0M12 18v3.5" />
-  </svg>
-);
-export const TapIcon = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-    <rect x="3" y="3" width="8" height="8" rx="2.5" />
-    <rect x="13" y="3" width="8" height="8" rx="2.5" opacity=".6" />
-    <rect x="3" y="13" width="8" height="8" rx="2.5" opacity=".6" />
-    <rect x="13" y="13" width="8" height="8" rx="2.5" />
-  </svg>
-);
+export const MicIcon = () => <Icon k="mic" size={20} />;
+export const TapIcon = () => <Icon k="pads" size={20} />;
 
 /** Audio-synced mini keyboard: keys light up exactly while they sound. */
 /** Piano strip. `live` = light the keys that sound; off while the sound IS the question (see keysGiveAway). */
@@ -180,7 +169,7 @@ export function PermissionPanel({
         </button>
       </div>
       <a className="link" href="#/diagnostics">
-        {t.diagnostics} →
+        {t.diagnostics} <Icon k="fwd" />
       </a>
     </div>
   );

@@ -6,6 +6,7 @@ import '../games3.css';
 import { useEffect, useRef, useState } from 'react';
 import { bingoCallEvents, bingoItem, type BingoGame } from '../engine/bingo';
 import { piano } from './services';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type Text = { en: string; he: string };
@@ -111,11 +112,11 @@ export function BingoHost({ lang, game, called, onCall, winners = [], onEnd, sou
 
       <div className="bingo-host-actions">
         <button className="btn mega" onClick={next} disabled={done || playing} data-bingo-next="1">
-          ▶ {called === 0 ? tx(T.first) : tx(T.next)}
+          <Icon k="play" /> {called === 0 ? tx(T.first) : tx(T.next)}
         </button>
         {cur >= 0 && (
           <button className="btn" onClick={() => void playCall(cur)} disabled={playing || !sound}>
-            ↻ {tx(T.replay)}
+            <Icon k="again" /> {tx(T.replay)}
           </button>
         )}
         {cur >= 0 && revealed < cur && (

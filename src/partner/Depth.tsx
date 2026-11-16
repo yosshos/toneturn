@@ -8,6 +8,7 @@ import { DEPTH_MAPS, SCALE_HE, SCALE_SHORT } from './depthMaps';
 import { TEACHER_STATES, STATE_NAME, TeacherFrame } from './TeacherFrame';
 import type { CourseId } from '../engine/courses';
 import './depth.css';
+import { Icon } from '../ui/icons';
 
 type Lang = 'en' | 'he';
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
@@ -201,7 +202,7 @@ export function DepthScreen({ lang, onBack, onOpen, partner = ACTIVE_PARTNER }: 
     <main className="panel-screen depth-page" data-depth="1" data-partner-build={partner ? partner.id : undefined}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={L(lang, 'Back', 'חזרה')}>
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{L(lang, 'What’s inside', 'מה יש בפנים')}</h1>
       </header>
@@ -389,8 +390,8 @@ export function DepthCard({ lang, onOpen, partner = ACTIVE_PARTNER }: { lang: La
         <small>{partner.tagline[lang]}</small>
         <b>{copy('depth.card', lang, { en: 'What is inside', he: 'מה יש בפנים' }, partner)}</b>
       </span>
-      <span className="flip-rtl" aria-hidden="true">
-        →
+      <span aria-hidden="true">
+        <Icon k="fwd" />
       </span>
     </button>
   );

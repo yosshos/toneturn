@@ -28,6 +28,7 @@ import { keyName } from '../engine/drills/generate';
 import '../licks.css';
 import { lickDrill, lickFromPhrase } from '../engine/licks';
 import { clearMySession, cleanName, deviceSongStore, loadMySession, MAX_FILE_BYTES, MAX_SECONDS, memorySongStore, newSongId, roomFor, saveMySession, songName, storageEstimate, type MySession, type SongMeta, type SongStore, type StoredSong } from '../storage/mySongs';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 type T2 = { en: string; he: string };
@@ -72,17 +73,8 @@ const bufferOf = (x: Float32Array, sr: number): AudioBuffer => {
   return b;
 };
 
-const Pen = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 20h4L19 9l-4-4L4 16z" />
-    <path d="M13.5 6.5l4 4" />
-  </svg>
-);
-const Bin = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" />
-  </svg>
-);
+const Pen = () => <Icon k="edit" size={18} />;
+const Bin = () => <Icon k="trash" size={18} />;
 
 // ───────────────────────────── the library ─────────────────────────────
 
@@ -324,7 +316,7 @@ function Head({ title, onBack, lang }: { title: string; onBack: () => void; lang
   return (
     <header className="screen-head">
       <button className="icon-btn" onClick={onBack} aria-label={MS.back[lang]}>
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1 dir="auto">{title}</h1>
     </header>
@@ -526,14 +518,14 @@ function PlayAlong({ lang, settings, course, o, session, onSession, onFinish, on
         </ol>
       )}
       <div className="ms-nav" dir="ltr">
-        <button className="icon-btn" onClick={() => go(sec - 1)} disabled={sec === 0 || busy} aria-label="‹">
-          ‹
+        <button className="icon-btn" onClick={() => go(sec - 1)} disabled={sec === 0 || busy} aria-label={lang === 'he' ? 'הקטע הקודם' : 'Previous section'}>
+          <Icon k="back" />
         </button>
         <span dir={lang === 'he' ? 'rtl' : 'ltr'}>
           {L(MS.section)} <b>{sec + 1}</b>/{sections.length} · <span dir="ltr">{fmt(S.start)}–{fmt(S.end)}</span>
         </span>
-        <button className="icon-btn" onClick={() => go(sec + 1)} disabled={sec >= sections.length - 1 || busy} aria-label="›">
-          ›
+        <button className="icon-btn" onClick={() => go(sec + 1)} disabled={sec >= sections.length - 1 || busy} aria-label={lang === 'he' ? 'הקטע הבא' : 'Next section'}>
+          <Icon k="fwd" />
         </button>
       </div>
       <Speeds speed={speed} lang={lang} disabled={busy} onSpeed={(s) => (stop(), cache.current.clear(), onSession({ ...session, speed: s }))} />
@@ -687,15 +679,15 @@ function TranscribeMine({ lang, settings, course, o, session, onSession, onFinis
       </p>
       <LoopWave wave={wave} dur={analysis.duration} t={t} a={P.start} b={P.end} onSeek={(s) => go(phrases.findIndex((x) => s >= x.start - 0.2 && s < x.end + 0.2))} marks={phrases.map((x) => x.start)} />
       <div className="ms-nav" dir="ltr">
-        <button className="icon-btn" onClick={() => go(i - 1)} disabled={i === 0 || step === 'back'} aria-label="‹">
-          ‹
+        <button className="icon-btn" onClick={() => go(i - 1)} disabled={i === 0 || step === 'back'} aria-label={lang === 'he' ? 'המשפט הקודם' : 'Previous phrase'}>
+          <Icon k="back" />
         </button>
         <span dir={lang === 'he' ? 'rtl' : 'ltr'}>
           {L(MS.phrase)} <b>{i + 1}</b>/{phrases.length} · {P.notes.length}
           {' ♪'}
         </span>
-        <button className="icon-btn" onClick={() => go(i + 1)} disabled={i >= phrases.length - 1 || step === 'back'} aria-label="›">
-          ›
+        <button className="icon-btn" onClick={() => go(i + 1)} disabled={i >= phrases.length - 1 || step === 'back'} aria-label={lang === 'he' ? 'המשפט הבא' : 'Next phrase'}>
+          <Icon k="fwd" />
         </button>
       </div>
       {step !== 'back' && step !== 'write' && <Speeds speed={speed} lang={lang} onSpeed={(s) => (stop(), onSession({ ...session, speed: s }))} />}

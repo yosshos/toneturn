@@ -69,7 +69,7 @@ export function PlacementMeter({ s, t }: { s: SessionState; t: Strings }) {
       </aside>
       {line && (
         <p className={`pm-line ${line.move}`} key={line.key} role="status" data-pm-move={line.move}>
-          {line.move === 'up' || line.move === 'up2' ? '↑ ' : line.move === 'next' ? <span className="flip-rtl">→ </span> : line.move === 'edge' ? <><Icon k="target" /> </> : <><Icon k="phones" /> </>}
+          {line.move === 'up' || line.move === 'up2' ? <><Icon k="up" /> </> : line.move === 'next' ? <><Icon k="fwd" /> </> : line.move === 'edge' ? <><Icon k="target" /> </> : <><Icon k="phones" /> </>}
           {line.text}
         </p>
       )}

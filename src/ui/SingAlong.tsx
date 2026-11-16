@@ -109,7 +109,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
       <main className="panel-screen singalong">
         <header className="screen-head">
           <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-            <span className="flip-rtl">←</span>
+            <Icon k="back" />
           </button>
           <h1>{t.singAlongTitle}</h1>
         </header>
@@ -146,7 +146,7 @@ export function SingAlongScreen({ t, settings, onBack }: { t: Strings; settings:
           }}
           aria-label={t.back}
         >
-          <span className="flip-rtl">←</span>
+          <Icon k="back" />
         </button>
         <h1>{song.title[lang]}</h1>
       </header>

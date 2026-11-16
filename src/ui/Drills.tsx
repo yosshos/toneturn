@@ -66,6 +66,7 @@ import { isDrumDrill } from '../engine/drills/events';
 import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -243,7 +244,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
-        <span className="flip-rtl">‹</span>
+        <Icon k="back" />
       </button>
       <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
     </header>
@@ -566,7 +567,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
         <div className="drills-head">
           <h2>{tx.today}</h2>
           <button className="btn primary" onClick={() => onRun(today.map((t) => t.drill))} disabled={!today.length} data-drills-start="1">
-            ▶ {tx.start}
+            <Icon k="play" /> {tx.start}
           </button>
         </div>
         <ol className="drill-levels">
@@ -613,12 +614,12 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
               {c.name}
             </button>
             <button className="btn small" onClick={() => onRun(customKeys(c, ds.keyOrder).map((k) => customToDrill(c, k)))}>
-              ▶ {tx.allKeys}
+              <Icon k="play" /> {tx.allKeys}
             </button>
           </div>
         ))}
         <button className="btn ghost" onClick={() => onCreate()} data-drills-create="1">
-          ＋ {tx.create}
+          <Icon k="plus" /> {tx.create}
         </button>
           </div>
         </>
@@ -764,7 +765,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
     return (
       <div className="drill-opts">
         <button className="btn primary" onClick={() => onRun(row, 0)} data-level-start={level.id}>
-          ▶ {lang === 'he' ? 'כל הווריאציות' : 'All variations'}
+          <Icon k="play" /> {lang === 'he' ? 'כל הווריאציות' : 'All variations'}
         </button>
         <small className="field-hint drum-record" data-drum-record={rec?.bpm ?? 0}>
           {rec ? (
@@ -807,7 +808,7 @@ function LevelGrid({ lang, ds, level, items, onRun }: { lang: Lang; ds: DrillSet
   return (
     <div className="drill-opts">
       <button className="btn primary" onClick={() => onRun(levelDrills(level, ds.keyOrder), 0)} data-level-start={level.id}>
-        ▶ {tx.allKeys}
+        <Icon k="play" /> {tx.allKeys}
       </button>
       <LevelRefs level={level} lang={lang} />
       <div className="heat" dir="ltr">
@@ -1526,7 +1527,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
         </ol>
         <div className="drill-actions">
           <button className="btn primary" onClick={() => setStarted(true)} data-test-start="1">
-            ▶ {tx.start}
+            <Icon k="play" /> {tx.start}
           </button>
           <button className="btn ghost" onClick={() => onDone(null)}>
             {tx.skip}
