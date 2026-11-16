@@ -197,6 +197,8 @@ const SHORT: Record<string, L2> = {
   'lh-tex-ear': { en: 'Left hand by ear', he: 'יד שמאל בשמיעה' },
   'solo-tex-ear': { en: 'Solo textures', he: 'מרקמי סולו' },
   'comp-rhythm-ear': { en: 'Comping rhythms', he: 'מקצבי ליווי' },
+  // AUDIT-DEPTH-3 #12
+  'intro-ending': { en: 'Intros and endings', he: 'פתיחות וסיומים' },
   // AUDIT-6 Stage B: the Ear course's beginnings
   'rhythm-echo': { en: 'Rhythm echo', he: 'הד קצבי' },
   'intervals-down': { en: 'Intervals down', he: 'מרווחים יורדים' },

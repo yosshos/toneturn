@@ -1,0 +1,661 @@
+/* My recordings (SPEC-PHRASE-STUDIO §6.3–6.4): v2 language — ink outlines, flat fills, small icon buttons as chrome.
+   Logical properties only; musical time (roll, waveform, transport) always runs left → right. */
+
+.recordings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.recordings .rec-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.recordings .rec-head h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-head-tools {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.recordings .icon-btn.small {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  position: relative;
+}
+.recordings .icon-btn.on {
+  background: var(--ink);
+  color: var(--bg);
+}
+.recordings .icon-btn.ghosty {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink-dim);
+}
+.recordings .rec-star.on {
+  color: var(--accent);
+}
+.rec-badge {
+  position: absolute;
+  inset-block-start: -5px;
+  inset-inline-end: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* search + chips */
+.rec-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink-dim);
+}
+@media (max-width: 380px) {
+  .recordings .rec-head h1 {
+    font-size: 1.12rem;
+  }
+  .recordings .rec-head-tools .icon-btn.small {
+    width: 34px;
+    height: 34px;
+  }
+  .rec-head-tools {
+    gap: 4px;
+  }
+}
+.recordings .rec-search input,
+.recordings .rec-search input:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0;
+}
+.rec-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  padding: 4px 0;
+  outline: none;
+}
+.rec-search:focus-within {
+  border-color: var(--outline);
+}
+.rec-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 2px 4px;
+  margin-inline: -2px;
+  padding-inline: 2px;
+}
+.rec-chips::-webkit-scrollbar {
+  display: none;
+}
+.rec-chips .chip {
+  flex: none;
+  white-space: nowrap;
+}
+.rec-chip-ic {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rec-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.rec-note.warn {
+  color: var(--ink);
+  border-inline-start: 4px solid var(--bad);
+  padding-inline-start: 8px;
+}
+.rec-binbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rec-binbar .field-hint {
+  flex: 1;
+  margin: 0;
+}
+
+/* timeline */
+.rec-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.rec-empty {
+  color: var(--ink-dim);
+  text-align: center;
+  padding: 24px 8px;
+}
+.rec-day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rec-day-h {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font);
+  font-weight: 700;
+}
+.rec-session {
+  background: var(--card);
+  border: var(--stroke, 2px) solid var(--outline);
+  border-radius: 16px;
+  box-shadow: var(--shadow-s);
+  padding: 8px 10px;
+  min-width: 0;
+}
+.rec-session-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--line);
+}
+.rec-session-h .grow,
+.recordings .grow {
+  flex: 1;
+  min-width: 0;
+}
+.rec-session-h b {
+  display: block;
+  font-size: 0.95rem;
+}
+.rec-session-h small {
+  color: var(--ink-dim);
+}
+.rec-pill {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 2px solid var(--line-strong);
+  color: var(--ink-soft, var(--ink));
+}
+.rec-takes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rec-take {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.rec-take:last-child {
+  border-bottom: 0;
+}
+.rec-take.sel {
+  background: var(--card-2);
+  border-radius: 10px;
+}
+.rec-glyph {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 2px solid var(--line-strong);
+  color: var(--ink-soft, var(--ink));
+}
+.rec-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-inline: 4px;
+  accent-color: var(--accent);
+}
+.rec-take-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.rec-take-main:disabled {
+  cursor: default;
+}
+.rec-take-title {
+  font-weight: 600;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-take-meta {
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-folder-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.rec-session-more {
+  font-size: 0.85rem;
+  padding: 4px 0 0;
+}
+.rec-more {
+  align-self: center;
+}
+
+/* storage meter */
+.rec-meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding-top: 4px;
+}
+.rec-meter-text {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.rec-bars {
+  width: 120px;
+  height: 14px;
+}
+.rec-bars rect {
+  fill: var(--line-strong);
+}
+.rec-bars rect.on {
+  fill: var(--accent);
+}
+.rec-meter-note {
+  grid-column: 1 / -1;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+/* bulk bar */
+.rec-bulk {
+  position: sticky;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--card);
+  border: var(--stroke, 2px) solid var(--outline);
+  border-radius: 16px;
+  box-shadow: var(--shadow-s);
+  z-index: 3;
+}
+.rec-bulk-n {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* sheets */
+.rec-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rec-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rec-sheet-head h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rec-rename {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.rec-rename label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rec-rename small {
+  color: var(--ink-dim);
+}
+.rec-rename input {
+  font: inherit;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 2px solid var(--line-strong);
+  background: var(--card);
+  color: var(--ink);
+  min-width: 0;
+}
+.rec-menu-row,
+.rec-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.rec-menu-row small,
+.rec-folder-row small {
+  color: var(--ink-dim);
+}
+.rec-menu-row.danger {
+  color: var(--ink);
+}
+.rec-menu-row.danger .rec-ico {
+  color: var(--bad);
+}
+.rec-folder-row.on {
+  background: var(--card-2);
+  border-radius: 10px;
+}
+.rec-folders,
+.rec-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 46vh;
+  overflow-y: auto;
+}
+.rec-sheet-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.recordings .btn.danger,
+.rec-sheet .btn.danger {
+  background: var(--bad);
+  color: var(--ink-c, #1e1033);
+}
+
+/* player */
+.rec-player {
+  gap: 8px;
+}
+.rec-ptitle {
+  flex: 1;
+  min-width: 0;
+}
+.rec-ptitle h1 {
+  font-size: 1.15rem !important;
+}
+.rec-ptitle small {
+  display: block;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rec-view {
+  background: var(--card);
+  border: var(--stroke, 2px) solid var(--outline);
+  border-radius: 16px;
+  padding: 6px;
+  min-width: 0;
+}
+.rec-roll,
+.rec-wave {
+  display: block;
+  width: 100%;
+  height: clamp(130px, 30vh, 280px);
+  touch-action: none;
+  cursor: pointer;
+}
+.rec-wave {
+  height: clamp(110px, 22vh, 200px);
+}
+.rec-bg {
+  fill: var(--card-2);
+}
+.rec-sel {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.rec-barline {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.rec-barno {
+  font: 600 11px var(--font);
+  fill: var(--ink-dim);
+}
+.rec-note-r {
+  fill: var(--accent);
+}
+.rec-bandnote {
+  fill: var(--line-strong);
+}
+.rec-wbar {
+  fill: var(--line-strong);
+}
+.rec-wbar.on {
+  fill: var(--accent);
+}
+.rec-trace {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.rec-playhead {
+  stroke: var(--ink);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.rec-timerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.rec-timerow .t3 {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.rec-loopchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.rec-ab {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.rec-ab .btn {
+  min-width: 52px;
+}
+.rec-transport {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+.rec-transport .icon-btn {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+}
+.recordings .rec-playbtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: var(--ink);
+  color: var(--bg);
+}
+.rec-speed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+}
+.rec-speed > .grow {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.rec-speed b {
+  flex: none;
+  white-space: nowrap;
+}
+.rec-speed input[type='range'] {
+  flex: 2 1 120px;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+.rec-speed small {
+  flex-basis: 100%;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+.rec-mix button {
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.rec-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+}
+.rec-actions .btn.primary {
+  width: 100%;
+}
+.rec-actions .btn.ghost {
+  align-self: center;
+}
+.rec-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+.rec-settings .toggle-row span {
+  display: flex;
+  flex-direction: column;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+@media (min-width: 900px) {
+  .recordings .rec-timeline {
+    max-width: 860px;
+  }
+  .rec-player .rec-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .rec-player .rec-actions .btn.primary {
+    width: auto;
+  }
+}
+
+/* entry points: the Practice page title row, the diary header, the Progress card */
+.pt-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pt-title-row .screen-title {
+  flex: 1;
+  min-width: 0;
+}
+.pt-rec,
+.pd-rec {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.pdiary .screen-head h1 {
+  flex: 1;
+  min-width: 0;
+}
+a.rec-entry {
+  color: inherit;
+  text-decoration: none;
+}

@@ -35,6 +35,44 @@ export function evenGrade(cv: number | null): number | null {
   return cv < 0.04 ? 5 : cv < 0.06 ? 4 : cv < 0.09 ? 3 : cv < 0.13 ? 2 : 1;
 }
 
+/** One drum's chip in the review (slice 6): its mean offset, or a miss when under half its notes were hit. */
+export interface LimbChip {
+  voice: import('./types').DrumVoice;
+  /** Mean offset in ms (− early, + late), rounded; null when not measured. */
+  mean: number | null;
+  state: 'ok' | 'early' | 'late' | 'miss';
+}
+/**
+ * The per-drum split under the chips: "Kick ◂ 22 · Snare ✓ · Hat ▸ 14". A drum whose mean sits inside a third of the
+ * window (at least 8 ms) is on time; under half its notes hit, it is a miss. Hi-hat open / closed and rim fold into
+ * their drum. At most four chips, in kit order (cymbals, snare, toms, kick).
+ */
+export function limbChips(d: Pick<import('./types').DrumMetrics, 'voices' | 'windowMs'>): LimbChip[] {
+  const ORDER: import('./types').DrumVoice[] = ['crash', 'ride', 'hihat', 'snare', 'tom1', 'tom2', 'tom3', 'kick', 'hhPedal'];
+  const fold = (v: import('./types').DrumVoice) => (v === 'hhOpen' ? 'hihat' : v === 'rim' ? 'snare' : v);
+  const acc = new Map<import('./types').DrumVoice, { sum: number; k: number; n: number; of: number }>();
+  for (const x of d.voices) {
+    const v = fold(x.voice);
+    const a = acc.get(v) ?? { sum: 0, k: 0, n: 0, of: 0 };
+    if (x.mean !== null && Number.isFinite(x.mean) && x.n > 0) {
+      a.sum += x.mean * x.n;
+      a.k += x.n;
+    }
+    a.n += x.n;
+    a.of += x.of;
+    acc.set(v, a);
+  }
+  const tol = Math.max(8, (d.windowMs || 40) / 3);
+  return ORDER.filter((v) => (acc.get(v)?.of ?? 0) > 0)
+    .slice(0, 4)
+    .map((v) => {
+      const a = acc.get(v)!;
+      const mean = a.k ? Math.round(a.sum / a.k) : null;
+      const state: LimbChip['state'] = a.n / a.of < 0.5 || mean === null ? 'miss' : mean < -tol ? 'early' : mean > tol ? 'late' : 'ok';
+      return { voice: v, mean, state };
+    });
+}
+
 export function reviewOf(m: TakeMetrics, opts: { free?: boolean; canFree?: boolean } = {}): Review {
   const total = m.perNote.length;
   const ok = m.perNote.filter((r) => r.ok).length;

@@ -44,7 +44,7 @@ export const isQuality = (q: Quality) => q === 'edge' || q === 'consolidation';
 const NOT_PRACTICE = new Set([
   'intake', 'studio', 'home', 'path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'achievements', 'learned',
   'repertoire', 'workout', 'workoutrun', 'insights', 'welcome', 'coursestart', 'plans', 'admin', 'land', 'tuner', 'mixer', 'classes', 'exams',
-  'depth', 'chordfinder', 'duel', 'diary',
+  'depth', 'chordfinder', 'duel', 'diary', 'recordings',
 ]);
 const ROUTE_KIND: Record<string, PracticeKind> = {
   lesson: 'lesson', daily: 'lesson', puzzle: 'lesson',

@@ -115,7 +115,7 @@ export function Keyboard({
   for (let m = low; m <= high; m++) if (!isBlack(m)) whites.push(m);
   const W = 100 / whites.length;
   return (
-    <div className="keyboard" dir="ltr" aria-hidden="true">
+    <div className="keyboard" dir="ltr" aria-hidden="true" data-lit={shown.size || undefined}>
       {whites.map((m, i) => (
         <div key={m} className={`wk ${shown.has(m) ? 'lit' : ''} ${mark === m ? 'mark' : ''} ${aidSet.has(m) ? 'aid' : ''} ${aid?.tonic === m ? 'aid-tonic' : ''}`} style={{ left: `${i * W}%`, width: `${W}%` }}>
           {aidLabel.get(m) && <span className="key-label">{aidLabel.get(m)}</span>}

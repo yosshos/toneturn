@@ -90,13 +90,8 @@
 .drill-chart .vdot.acc { stroke-width: 2; }
 .drill-chart figcaption { color: var(--ink-soft); }
 
-/* ---------------------------------------------------------------- Highway: no glow, verdict flashes readable */
+/* ---------------------------------------------------------------- Highway: no glow (the near ring is ink, not white) */
 :root[data-theme] .hw-note[data-near='2'] { box-shadow: 0 0 0 3px var(--ink-c); }
-:root[data-theme] .hw-flash { text-shadow: none; padding: 2px 10px; border-radius: 10px; border: 2px solid var(--ink-c); color: var(--ink-c) !important; background: var(--card); }
-:root[data-theme] .hw-flash.perfect, :root[data-theme] .hw-flash.good { background: var(--teal); }
-:root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { background: var(--pink); }
-:root[data-theme] .hw-flash.early { background: var(--tangerine); }
-:root[data-theme] .hw-flash.late { background: var(--lilac); }
 
 /* ---------------------------------------------------------------- the review after a take (TakeReview, slice 2) */
 .take-review { display: grid; gap: 6px; padding: 8px 12px 6px; }
@@ -306,3 +301,97 @@ html[data-motion='reduced'] .dn-cue-ring { opacity: 1; }
 .drills-screen[data-drills='run'] .drill-staff.ht { gap: 4px; }
 .drills-screen[data-drills='run'] .drill-staff.ht .tab-pager { min-height: 36px; }
 .drills-screen[data-drills='run'] .drill-staff.ht .tab-pager .icon-btn { width: 36px; height: 36px; }
+
+/* ================================================================ slice 7: ear replay pair, keyboard lights, ✓/✕
+   COURSE-FEEDBACK-UI §4.6. Flat fills under ink glyphs; never colour alone; no glow. */
+/* answer buttons: the right one teal with an ink ✓, the chosen wrong one pink with an ink ✕ (text stays ink in both
+   themes — the fills are light) */
+:root[data-theme] .answers .answer { position: relative; }
+:root[data-theme] .answers .answer.is-right,
+:root[data-theme] .answers .answer.is-wrong {
+  opacity: 1;
+  outline: 0;
+  color: var(--ink-c);
+  border-color: var(--ink-c);
+  box-shadow: var(--sx) 4px 0 var(--ink-c);
+}
+:root[data-theme] .answers .answer.is-right { background: var(--teal); }
+:root[data-theme] .answers .answer.is-wrong { background: var(--pink); }
+:root[data-theme] .answers .answer:is(.is-right, .is-wrong) :is(b, small) { color: var(--ink-c); }
+.ans-glyph {
+  position: absolute;
+  top: 5px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-c);
+  color: var(--ink-c);
+  font-style: normal;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+/* Toni's note head: no halo ring in any state — Toni's face does the work */
+:root[data-theme] .orb-row .orb,
+:root[data-theme] .orb-row .orb.sounding { box-shadow: var(--sx) 5px 0 var(--outline); }
+:root[data-theme] .orb-row .orb:is(.correct, .correct-retry) { background: var(--teal); color: var(--ink-c); }
+:root[data-theme] .orb-row .orb:is(.retry, .reveal) { background: var(--pink); color: var(--ink-c); }
+/* the question keyboard lights the sounding notes: sky fill, ink outline (only once the keys can't give the answer) */
+:root[data-theme] .lesson .keyboard .wk.lit { background: var(--sky); box-shadow: inset 0 0 0 2px var(--ink-c); }
+:root[data-theme] .lesson .keyboard .bk.lit { background: var(--sky); box-shadow: inset 0 0 0 2px var(--ink-c); }
+/* Yours ▶ / Right ▶: two small chips under the one-line miss card */
+.fb-actions.replay-pair { gap: 8px; margin: 4px 0 0; }
+.replay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 2px solid var(--outline);
+  border-radius: 11px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.replay-chip svg { flex: none; }
+/* the side that is sounding: sky fill (the keyboard's colour) with ink text */
+.replay-chip.on { background: var(--sky); color: var(--ink-c); border-color: var(--ink-c); }
+:root[data-theme] .lesson.await-next .fb-actions.replay-pair { margin-block: 2px; }
+/* the streak after the recap: a bottom sheet, not a full screen in front of it */
+.streak-after-backdrop { z-index: 60; }
+.sheet.streak-after {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.streak-after .sa-head { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.streak-after .sa-head h2 { margin: 0; font-size: 1.15rem; width: 100%; }
+.streak-after .sa-count { font-family: var(--display); font-size: 2.2rem; line-height: 1; color: var(--ink); overflow: hidden; height: 2.3rem; }
+.streak-after .sa-count .roll { display: inline-block; animation: roll-up 0.45s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.streak-after .sa-line { margin: 0; color: var(--ink-soft); font-size: 0.9rem; }
+.streak-after .btn { min-width: 12em; }
+@media (prefers-reduced-motion: reduce) {
+  .streak-after .sa-count .roll { animation: none; }
+}
+:root[data-motion='reduced'] .streak-after .sa-count .roll { animation: none; }
+/* one screen after a miss: once answered, "tap your answer" has nothing to say — the pair takes its row */
+.lesson.await-next .stage > .hint { display: none; }
+/* …and with Continue in the bottom bar, Refresh is its icon on a narrow phone so Repeat / Skip / Refresh stay one row */
+@media (max-width: 380px) {
+  .lesson .controls.with-continue .refresh-concept .ctl-label { display: none; }
+  :root .lesson .controls.with-continue .refresh-concept.btn { padding-inline: 10px; }
+}
+/* recap rows at phone width: the text keeps the row, the replay buttons sit under it (no letter-per-line column) */
+@media (max-width: 420px) {
+  .recap-row { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'mark q' 'mark given'; row-gap: 6px; }
+  .recap-row .btn,
+  .recap-row:has(.btn.ghost) .btn:not(.ghost),
+  .recap-row .btn.ghost { grid-column: 2; grid-row: auto; justify-self: start; min-height: 32px; }
+}

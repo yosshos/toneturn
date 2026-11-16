@@ -4,10 +4,25 @@
 
 import { useState, type ReactNode } from 'react';
 import type { TakeMetrics } from '../engine/drills/types';
-import { reviewOf, type Review } from '../engine/drills/review';
+import { limbChips, reviewOf, type Review } from '../engine/drills/review';
+import type { DrumVoice } from '../engine/drills/types';
+
+/** Short drum names for the per-drum chips (slice 6). */
+const DRUM_SHORT: Partial<Record<DrumVoice, { en: string; he: string }>> = {
+  kick: { en: 'Kick', he: 'קיק' },
+  snare: { en: 'Snare', he: 'סנר' },
+  hihat: { en: 'Hat', he: 'היי־האט' },
+  hhPedal: { en: 'Hat foot', he: 'פדל' },
+  ride: { en: 'Ride', he: 'רייד' },
+  crash: { en: 'Crash', he: 'קראש' },
+  tom1: { en: 'Tom', he: 'טום' },
+  tom2: { en: 'Tom 2', he: 'טום 2' },
+  tom3: { en: 'Floor', he: 'טום רצפה' },
+};
 import { drumLimbLine } from '../engine/drills/drumAnalyze';
 import { EvennessStrip, MarkLegend, VelocityCurve } from './DrillTake';
 import { KeepButton } from './encore/bits';
+import { RecLink } from './Recordings'; // My recordings: every take is kept (SPEC-PHRASE-STUDIO §6.3)
 
 type Lang = 'he' | 'en';
 
@@ -177,6 +192,20 @@ export function TakeReview({
           )}
         </ul>
       )}
+      {!r.soft && m.drum && !free && (
+        // Slice 6: the per-drum split — which limb rushed or dragged (◂ early / late ▸), a check when on time.
+        <ul className="limb-chips" data-limb-chips={limbChips(m.drum).map((c) => `${c.voice}:${c.state}`).join(' ')} aria-label={lang === 'he' ? 'לפי תוף' : 'per drum'}>
+          {limbChips(m.drum).map((c) => (
+            <li key={c.voice} className={c.state}>
+              <i aria-hidden="true" />
+              {DRUM_SHORT[c.voice]?.[lang] ?? c.voice}
+              <b>
+                <bdi dir="ltr">{c.state === 'ok' ? '✓' : c.state === 'miss' ? '—' : c.state === 'early' ? `◂ ${Math.abs(c.mean!)}` : `${Math.abs(c.mean!)} ▸`}</bdi>
+              </b>
+            </li>
+          ))}
+        </ul>
+      )}
       {!r.soft && children}
       {suggestion && <p className="tr-suggest">{suggestion}</p>}
       <div className="tr-actions">
@@ -252,6 +281,7 @@ export function TakeReview({
             <MarkLegend lang={lang} />
             {!free && <EvennessStrip m={m} lang={lang} />}
             <VelocityCurve m={m} lang={lang} />
+            <RecLink lang={lang} />
           </div>
         </div>
       )}

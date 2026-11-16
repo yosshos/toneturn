@@ -66,6 +66,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-pop': 'kpop', 'k-pedal': 'kpedal', 'k-classic': 'kclassic', 'b-riff': 'briff', 'b-feel': 'bfeel',
   // AUDIT-7 (#2, #8, #9): the singer's blues and scat start, improvising in pop, pop and theatre style.
   'v-jazz1': 'vjazz1', 'v-impro': 'vimpro', 'v-pop': 'vpop', 'g-jblues': 'gjblues',
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand.
+  'k-gig': 'kgig', 'g-gig': 'ggig', 'b-gig': 'bgig',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

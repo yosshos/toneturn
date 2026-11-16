@@ -37,6 +37,7 @@ import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases
 import { generateGuitarHead, guitarChordMelodyFamily, guitarTuneFamily } from './headDrills';
 import { genGuitarSolo, guitarSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3 C5–C7
 import { genGuitarCtx, guitarCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
+import { genGuitarGig, guitarGigFamily } from './gigDrills'; // AUDIT-DEPTH-3 #11, #12, C8
 import { gateFamilies } from '../verifiedContent';
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
@@ -2404,6 +2405,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return genGuitarSolo(s, tu);
     case 'g-ctx':
       return genGuitarCtx(s, tu);
+    case 'g-gig':
+      return genGuitarGig(s, tu);
     case 'g-prog':
       return generateGuitarProg(s, tu);
     case 'g-meter':
@@ -2727,6 +2730,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // AUDIT-DEPTH-3: jazz in context and improvising under rule cards on the neck (the jazz add-on).
     guitarCtxFamily(LT, fam),
     guitarSoloFamily(LT, fam),
+    // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad, the whole tune (jazz add-on).
+    guitarGigFamily(LT, fam),
     // STAGE C (AUDIT-6 GA-4): speed, fusion and outside, chord-melody arranging, solo jazz guitar, Harris lines at tempo.
     ...guitarTopFamilies(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,

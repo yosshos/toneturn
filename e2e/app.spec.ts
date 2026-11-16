@@ -2,8 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 // The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
 test.beforeEach(async ({ page }) => {
-  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
-    await page.locator('.streak-celebrate .btn.mega').click();
+  await page.addLocatorHandler(page.locator('.streak-celebrate, [data-streak-sheet]'), async () => {
+    await page.locator('.streak-celebrate .btn.mega, [data-streak-continue]').first().click();
   });
 });
 

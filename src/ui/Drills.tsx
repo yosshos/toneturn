@@ -108,7 +108,7 @@ export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax:
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
 /** Family stripe colours: domain tokens only (COURSE-FEEDBACK-UI §3.3) — play lemon, harmony lilac, ear sky, theory tangerine, time pink, improvisation purple. */
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' };
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-gig': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' };
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -443,6 +443,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // AUDIT-7: pop accompaniment with chords, pedalling with the hands, the classical pieces with songs' styles; bass riffs
   // and feels as styles.
   'k-pop': 'chords', 'k-pedal': 'hands', 'k-classic': 'styles', 'b-riff': 'styles', 'b-feel': 'styles',
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (intros, endings, the ballad, the whole tune) is a style.
+  'k-gig': 'styles', 'g-gig': 'styles', 'b-gig': 'styles',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   all: { en: 'All', he: 'הכול' },

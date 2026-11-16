@@ -19,6 +19,8 @@ import { addJournalNote, deleteJournalNote } from '../storage/practice';
 import { localDay, practiceDays, type Progress } from '../storage/progress';
 import { fmtDuration } from './Stats';
 import { fmtDay } from './Trends';
+import { RIcon } from './Recordings';
+import { RX } from '../i18n/recordingsText';
 
 type Lang = 'en' | 'he';
 type L = { en: string; he: string };
@@ -637,6 +639,9 @@ export function PracticeDiaryScreen({
           <span className="flip-rtl">←</span>
         </button>
         <h1>{DX.title[lang]}</h1>
+        <a className="icon-btn small pd-rec" href="#/recordings" aria-label={RX.title[lang]} title={RX.title[lang]} data-open-recordings="diary">
+          <RIcon k="voice" />
+        </a>
       </header>
       <div className="ps-seg" role="tablist" aria-label={DX.title[lang]}>
         {(['time', 'quality', 'journal'] as Tab[]).map((x) => (

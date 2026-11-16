@@ -167,6 +167,13 @@ function secondTag(drill: Drill): Tags[number] | null {
   // reharm: reharmonisation).
   if (f === 'k-harm' || f === 'g-cmel') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };
   if (f === 'k-tune' || f === 'g-tune' || f === 'b-tune') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  // AUDIT-DEPTH-3 #11, #12, C8 (gigDrills.ts): the whole tune rates song form; the ballad voicings; intros / endings progressions.
+  if (f === 'k-gig' || f === 'g-gig' || f === 'b-gig') {
+    const k = drill.spec.kind;
+    if (k === 'gg-tune') return { skill: 'form', sub: 'form/song', w: 0.3 };
+    if (k === 'gg-b10' || k === 'gg-brh' || k === 'gg-b2h' || k === 'gg-two') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+    return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  }
   if (f === 'k-keys' || f === 'g-keys' || f === 'b-keys')
     return drill.spec.kind === 'km-turn' || drill.spec.kind === 'km-bridge' ? { skill: 'cadences', sub: 'cadences/progression', w: 0.3 } : { skill: 'cadences', sub: 'cadences/modulation', w: 0.3 };
   // HARMONY-REHARM (colorDrills.ts): colour reharm rates reharmonisation; organ comping rates voicings.

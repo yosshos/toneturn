@@ -295,7 +295,7 @@ export function improvChecks(drill: Drill, bpm: number, played0: PlayedNote[]): 
   const g = drill.goal.improv;
   if (!g) return [];
   const notes = improvNotes(drill, bpm, played0);
-  const ctx = { notes, spans: g.spans, meter: drill.meter || 4, bpm, opt: { ...(g.licks?.length ? { lickIds: g.licks } : {}), ...(drill.freeAbove !== undefined ? { split: drill.freeAbove } : {}) } };
+  const ctx = { notes, spans: g.spans, meter: drill.meter || 4, bpm, opt: { ...(g.licks?.length ? { lickIds: g.licks } : {}), ...(drill.freeAbove !== undefined ? { split: drill.freeAbove } : {}), ...(g.melody?.length ? { melody: g.melody } : {}) } };
   const out: NonNullable<TakeMetrics['improv']> = [];
   for (const card of g.cards) {
     const c = ruleCheck(card, ctx);
@@ -924,6 +924,19 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       he: `כלל לא נשמר: ${nm.he} (${c.ok}/${c.total})`,
     });
   }
+  // AUDIT-DEPTH-3 C8 (the whole tune): name the section whose written notes slipped (intro, head, head out, ending).
+  const sections = goal.sections?.map((sec) => {
+    const idx = exp.map((_, i) => i).filter((i) => exp[i].land === undefined && exp[i].beat >= sec.from - 1e-6 && exp[i].beat < sec.to - 1e-6);
+    return { name: sec.name, ok: idx.filter((i) => ok[i]).length, total: idx.length };
+  });
+  for (const sec of sections ?? []) {
+    if (!sec.total || sec.ok / sec.total >= 0.95) continue;
+    F.push({
+      sev: 1 + (0.95 - sec.ok / sec.total) * 8,
+      en: `${sec.name.en}: ${sec.total - sec.ok} of ${sec.total} notes missed`,
+      he: `${sec.name.he}: ${sec.total - sec.ok} מתוך ${sec.total} צלילים הוחמצו`,
+    });
+  }
   // Siskind / MTNA rubric (phraseOrg.ts): the phrasing of every improvised take is reported; goal.phrase and
   // goal.playRest turn it into a pass rule.
   const po = improvPhrasing(drill, bpm, played0);
@@ -1074,6 +1087,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     ...(ga.graces.total ? { graces: ga.graces } : {}),
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),
+    ...(sections ? { sections } : {}),
     ...(drill.goal.improv ? { improv } : {}),
     ...(drill.goal.improv ? (() => { const l = improvLandings(drill, bpm, played0); return l.length ? { landings: l } : {}; })() : {}),
     ...(po ? { phraseOrg: po.report } : {}),

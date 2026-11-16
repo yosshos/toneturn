@@ -348,8 +348,11 @@ export interface Settings {
   drumKit?: import('../engine/drumKit').KitProfile;
   /** Re-calibration offers declined (skill or area → ISO day): not offered again for 7 days (SPEC-PLACEMENT §6). */
   recalSnooze?: Record<string, string>;
-  /** Keep one vocal take per exercise per week on this device for "then vs. now" (spec S.2). */
+  /** My recordings (SPEC-PHRASE-STUDIO §6.1, owner 2026-11-16): keep the audio of every microphone take on this device.
+   *  Default on (undefined = on); false = notes only. Before 0.99 it meant "one vocal take a week" (opt-in). */
   keepTakes?: boolean;
+  /** My recordings: keep the notes of every measured take (default on; false = only starred / Encore takes). */
+  keepTakeNotes?: boolean;
   /** My charts (SPEC-0.48 §P2): typed chord charts for backing tracks. */
   myCharts?: import('../ui/Charts').MyChart[];
   /** Improvisation levels: best rules score (0..1) per level id. */

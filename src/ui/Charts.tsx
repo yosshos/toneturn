@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { STANDARD_CHANGES, STANDARD_GROUPS, type StandardGroup } from '../engine/standards';
 import { RHYTHMS, RHYTHM_NAME, STRIDES, VOICINGS, VOICING_NAME, chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '../engine/drills/chartDrills';
 import { IMPROV_LEVELS } from '../engine/charts';
-import { CHART_STYLES, CHART_TEMPLATES, STYLE_NAME, chartBacking, chordAtBeat, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
+import { CHART_STYLES, CHART_TEMPLATES, STYLE_NAME, chartBacking, chordAtBeat, parseChart, sliceChart, transposeChart, type ChartStyle } from '../engine/charts';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
 import { framesFromNotes, improvReportBy, type ImprovReport } from '../engine/perform';
@@ -28,6 +28,8 @@ import { referenceOf } from '../content/references';
 import { ChordChart } from './ChordChart';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
+import { keepChartTake } from './recKeep';
+import { recordingPrefs } from '../storage/recordings';
 
 export interface MyChart {
   id: string;
@@ -237,6 +239,11 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const [drums, setDrums] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [beat, setBeat] = useState(-1);
+  // COURSE-FEEDBACK-UI slice 3: a loop of bars (lilac hatching). Play plays just those bars; Stop keeps the loop; the
+  // clear button or a long press on the chart clears it. `pick`: choosing the loop (null = off, -1 = the first bar next).
+  const [loop, setLoop] = useState<[number, number] | null>(null);
+  const [pick, setPick] = useState<number | null>(null);
+  const press = useRef<number | null>(null);
   const meter = style === 'waltz' ? 3 : 4;
   const parsed = useMemo(() => parseChart(text, meter), [text, meter]);
   const ctl = useRef<AbortController | null>(null);
@@ -311,19 +318,22 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     await piano.unlock();
     setPlaying(true);
     const beatMs = 60000 / bpm;
-    const loopBeats = parsed.bars * meter;
+    // A loop plays only its bars (no head); the chart lights the real bar.
+    const src = loop ? sliceChart(parsed, loop[0], loop[1], meter) : parsed;
+    const base = loop ? Math.min(loop[0], loop[1]) * meter : 0;
+    const loopBeats = src.bars * meter;
     // Two passes per render keeps each scheduled block short; keep going until Stop.
     let first = true;
     while (!c.signal.aborted) {
       const loops = Math.max(1, Math.ceil(32 / loopBeats));
-      const b = chartBacking(parsed, style, bpm, loops, meter, { countIn: first, drums });
-      if (first && head) b.events.push(...headEvents(b.startBeat));
+      const b = chartBacking(src, style, bpm, loops, meter, { countIn: first, drums });
+      if (first && head && !loop) b.events.push(...headEvents(b.startBeat));
       const t0 = performance.now() + 120;
       // A timer, not animation frames: it keeps running with the screen off or the tab in the background.
       const timer = setInterval(() => {
         if (c.signal.aborted) return clearInterval(timer);
         const x = (performance.now() - t0) / beatMs - b.startBeat;
-        setBeat(x >= 0 ? Math.floor(x) % loopBeats : -1);
+        setBeat(x >= 0 ? base + (Math.floor(x) % loopBeats) : -1);
       }, 40);
       first = false;
       try {
@@ -364,6 +374,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     let frames: SungFrame[] = [];
     const midiNotes: PlayedNote[] = [];
     const useMidi = midi.devices.length > 0;
+    let takeAudio: Blob | null = null; // My recordings: the take's own sound (mic)
     if (SIMULATED) {
       await new Promise((r) => setTimeout(r, 300));
     } else if (useMidi) {
@@ -396,6 +407,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         maxMs: b.length * 1000,
         silenceMs: 600_000,
         hopMs: 20,
+        // My recordings (SPEC-PHRASE-STUDIO §6.1): where no second recorder runs (iOS), the capture's own stream records.
+        record: !rec && recordingPrefs().keepAudio,
         ...(capture ?? {}),
         onFrame: (f) => {
           if (f.t < listenFrom) return gate?.calibrate(f);
@@ -404,8 +417,10 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         },
       });
       frames = r.kind === 'frames' ? buf : [];
+      if (r.kind === 'frames' && r.audio) takeAudio = r.audio;
       if (rec) {
         const blob = await rec.stop();
+        takeAudio = blob;
         try {
           const audio = await piano.context!.decodeAudioData(await blob.arrayBuffer());
           // the recording began this long after the backing was heard (a little input latency taken off)
@@ -436,6 +451,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;
+    // My recordings: the take's notes (and sound) with the chart, so the player can play it back with the band.
+    keepChartTake({ kind: 'chart', title: title || chart.title, notes: sung, bpm, meter, chart: text, style, loops, source: useMidi ? 'midi' : 'mic', audio: takeAudio, score, ...(chart.std ? { itemId: `chart:${chart.std}` } : {}) });
     if ((rr?.notes ?? rep.notes) >= 3) onImprov?.(score, bpm, new Set(parsed.chords.map((x) => x.sym)).size, chart.level, rr && rr.notes >= 4 ? challengeOf(rules)?.id : undefined);
   };
   const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -475,8 +492,17 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       {/* COURSE-FEEDBACK-UI §4.7: the shared chord chart — four bars a row, the bar being played lit (lemon strip and an
           underline across the bar), a pink corner tab on a bar that broke a rule; with "scale" rules each bar names its
           scale and opens the scale picker. Long charts scroll inside the grid; while playing, the rows around now. */}
-      <div className="ch-grid">
+      <div
+        className="ch-grid"
+        onPointerDown={() => {
+          if (!loop) return;
+          press.current = window.setTimeout(() => (setLoop(null), setPick(null)), 650);
+        }}
+        onPointerUp={() => press.current !== null && clearTimeout(press.current)}
+        onPointerLeave={() => press.current !== null && clearTimeout(press.current)}
+      >
         <ChordChart
+          loop={loop ? [Math.min(...loop), Math.max(...loop)] : null}
           cells={barChords.map((cs, i) => ({
             chord: cs.map((c) => c.sym).join(' ') || null,
             ...(rulesRep && !playing && rulesRep.bars.some((_x, j) => j % parsed.bars === i) ? { tab: { kind: rulesRep.bars.some((x, j) => j % parsed.bars === i && x.breaks > 0) ? ('bad' as const) : ('ok' as const), rules: [] } } : {}),
@@ -486,8 +512,22 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           beat={beat}
           maxRows={playing ? 4 : Math.max(1, Math.ceil(parsed.bars / 4))}
           lang={lang}
-          onBar={rules.note === 'scale' && !playing ? (i) => setPickBar(i) : undefined}
-          attrs={{ 'data-chart-bars': parsed.bars, ...(cur ? { 'data-chart-now': cur.sym } : {}) }}
+          onBar={
+            pick !== null && !playing
+              ? (i) => {
+                  if (pick < 0) {
+                    setLoop([i, i]);
+                    setPick(i);
+                  } else {
+                    setLoop([Math.min(pick, i), Math.max(pick, i)]);
+                    setPick(null);
+                  }
+                }
+              : rules.note === 'scale' && !playing
+                ? (i) => setPickBar(i)
+                : undefined
+          }
+          attrs={{ 'data-chart-bars': parsed.bars, ...(cur ? { 'data-chart-now': cur.sym } : {}), ...(loop ? { 'data-chart-loop': `${Math.min(...loop) + 1}-${Math.max(...loop) + 1}` } : {}) }}
         />
       </div>
       <textarea className="ch-text" dir="ltr" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder={tx.chords} aria-label={tx.chords} data-chart-text="1" />
@@ -576,7 +616,24 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         </>
       ) : (
         <div className="ch-go">
-          <button className="btn mega" onClick={() => void play()} disabled={!parsed.chords.length} data-chart-play="1">
+          {/* The loop (slice 3): pick a bar, then the last bar of the range (or the same bar again); it stays across Stop. */}
+          <div className="ch-loop" data-chart-loop-state={pick !== null ? 'pick' : loop ? 'on' : 'off'}>
+            {loop && pick === null ? (
+              <>
+                <span className="chip on ch-loop-on">
+                  {lang === 'he' ? 'לולאה' : 'Loop'} <bdi dir="ltr">{Math.min(...loop) + 1 === Math.max(...loop) + 1 ? Math.min(...loop) + 1 : `${Math.min(...loop) + 1}–${Math.max(...loop) + 1}`}</bdi>
+                </span>
+                <button className="icon-btn" onClick={() => setLoop(null)} aria-label={lang === 'he' ? 'לבטל את הלולאה' : 'Clear the loop'} data-chart-loop-clear="1">
+                  ✕
+                </button>
+              </>
+            ) : (
+              <button className={`chip ${pick !== null ? 'on' : ''}`} onClick={() => (pick !== null ? setPick(null) : (setLoop(null), setPick(-1)))} aria-pressed={pick !== null} disabled={!parsed.chords.length} data-chart-loop-pick="1">
+                {pick === null ? (lang === 'he' ? 'לולאה על תיבות' : 'Loop bars') : pick < 0 ? (lang === 'he' ? 'הקישו על התיבה הראשונה' : 'Tap the first bar') : lang === 'he' ? 'עכשיו התיבה האחרונה' : 'Now the last bar'}
+              </button>
+            )}
+          </div>
+          <button className="btn mega" onClick={() => (setPick(null), void play())} disabled={!parsed.chords.length} data-chart-play="1">
             ▶ {tx.play}
           </button>
           <button className="btn ghost" onClick={() => void goImprov()} disabled={!parsed.chords.length} data-chart-improv="1" title={ix.hint}>

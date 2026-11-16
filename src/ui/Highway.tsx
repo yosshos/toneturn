@@ -351,6 +351,8 @@ export function Highway({
   const [run, setRun] = useState<HighwayRun>(() => newRun(song));
   const [section, setSection] = useState(0);
   const [flash, setFlash] = useState<{ text: string; cls: string; n: number } | null>(null);
+  // Slice 6: a wrong drum / pitch is a pink ✕ at the hit line (in the lane hit when it is known), not a text flash.
+  const [wrongAt, setWrongAt] = useState<{ lane: number | null; n: number } | null>(null);
   const [shake, setShake] = useState(0);
   const [result, setResult] = useState<{ sum: HighwaySummary; best: boolean } | null>(null);
   const [bests, setBests] = useState<HighwayBests>(loadBests);
@@ -438,7 +440,11 @@ export function Highway({
       const j = judgeInput(s, runRef.current, perf - originRef.current, lat, midi);
       setBoth(j.run);
       if (j.grade) showGrade(j.grade, j.offset);
-      else if (j.wrongPitch) showGrade('wrong', null);
+      else if (j.wrongPitch) {
+        showGrade('wrong', null);
+        const lane = s.opts.mode === 'kit' && typeof midi === 'number' ? KIT_LANES.findIndex((l) => KIT_LANE_NOTE[l] === midi) : -1;
+        setWrongAt((w) => ({ lane: lane >= 0 ? lane : null, n: (w?.n ?? 0) + 1 }));
+      }
     },
     [latency, showGrade],
   );
@@ -1035,6 +1041,8 @@ export function Highway({
               ))}
               {s.notes.map((n, i) => {
                 const g = run.grades[i];
+                // Slice 6 (§4.5): a good-but-off hit carries a timing tick — tangerine on the left (early), purple on the right (late).
+                const off = g === 'good' && run.offsets[i] !== null ? (run.offsets[i]! < 0 ? 'early' : 'late') : null;
                 return (
                   <div
                     key={i}
@@ -1042,16 +1050,22 @@ export function Highway({
                       noteEls.current[i] = el;
                     }}
                     className={`hw-note lane-${n.lane} ${s.opts.mode === 'kit' ? `kit-${KIT_LANES[n.lane]}` : ''} ${g ? `is-${g}` : ''}`}
+                    data-off={off ?? undefined}
                     style={{
                       bottom: `${n.ms * px}px`,
                       height: `${Math.max(14, Math.min(n.durMs * px, 90) * 0.35)}px`,
                       ['--i' as string]: n.lane,
                     }}
-                  />
+                  >
+                    {off && <i className={`hw-tick ${off}`} aria-hidden="true" />}
+                  </div>
                 );
               })}
             </div>
             <div className="hw-hitline" />
+            {wrongAt && (
+              <span key={wrongAt.n} className={`hw-wrong ${wrongAt.lane === null ? 'mid' : ''}`} style={{ ['--i' as string]: wrongAt.lane ?? 0 }} aria-hidden="true" data-hw-wrong={wrongAt.lane ?? 'mid'} />
+            )}
             {flash && (
               // The grade shows as a mark on the note itself (.is-perfect / .is-good / .is-miss); the word is for screen readers only.
               <div key={flash.n} className={`hw-flash sr-only ${flash.cls}`} aria-live="assertive">

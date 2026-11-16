@@ -8,21 +8,24 @@ test('first lesson of the day: streak screen, lit flame, streak sheet with calen
   await page.getByRole('radio', { name: 'Buttons' }).click();
   await page.getByRole('button', { name: 'Or start from lesson 1' }).click();
   // Answer until the lesson ends (any answer; wrong ones are retried, then revealed).
-  for (let i = 0; i < 240 && !(await page.locator('.streak-celebrate').isVisible()); i++) {
+  for (let i = 0; i < 240 && !(await page.locator('main.recap').isVisible()); i++) {
     // 0.50.2: a wrong final answer waits for Continue
     if (await page.locator('[data-continue]').isVisible()) await page.locator('[data-continue]').click().catch(() => {});
     const btn = page.locator('.answers .answer:not([disabled])').nth(i % 2);
     if (await btn.isVisible()) await btn.click().catch(() => {});
     await page.waitForTimeout(500);
   }
-  const screen = page.locator('.streak-celebrate');
-  await expect(screen).toBeVisible({ timeout: 60_000 });
-  await expect(screen.getByRole('heading')).toHaveText('Streak extended');
-  await expect(screen.locator('.sc-count')).toHaveText('1');
-  await page.screenshot({ path: 'test-results/streak-celebrate.png' });
-  await screen.locator('.btn.mega').click();
-  await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible();
+  // Slice 7 (COURSE-FEEDBACK-UI §4.6): the recap comes first; the day's streak is a sheet once the recap is left.
+  await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 60_000 });
+  await page.waitForTimeout(1500);
+  await expect(page.locator('[data-streak-sheet]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Home' }).click();
+  const screen = page.locator('[data-streak-sheet]');
+  await expect(screen).toBeVisible({ timeout: 10_000 });
+  await expect(screen.getByRole('heading')).toHaveText('Streak extended');
+  await expect(screen.locator('.sa-count')).toHaveText('1');
+  await page.screenshot({ path: 'test-results/streak-celebrate.png' });
+  await screen.locator('[data-streak-continue]').click();
   await expect(page.locator('.streak-chip.done .flame.lit')).toBeVisible();
   await page.locator('.streak-chip').click();
   const sheet = page.getByRole('dialog', { name: 'Streak' });

@@ -422,6 +422,13 @@ export class LessonController {
     if (stim) this.sidePlay(stim);
   }
 
+  /** Slice 7: the Yours ▶ / Right ▶ chips after a miss — play one side while waiting for Continue. Returns seconds. */
+  playSide(stim: Stimulus[]): number {
+    if (!this.view.awaitNext || !stim.length) return 0;
+    this.sidePlay(stim);
+    return renderStimulus(stim).length;
+  }
+
   private side: AbortController | null = null;
   /** Play without disturbing the waiting question flow (Compare / Repeat while waiting for Continue). */
   private sidePlay(stim: Stimulus[]) {

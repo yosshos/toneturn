@@ -9,9 +9,9 @@ import { planWorkout, stepKey, type WorkoutStep } from '../engine/workout';
 import { LESSON_META } from '../game/content';
 import { foldSubs, SUB_BY_ID } from '../engine/taxonomy';
 import { TOPIC_GEN } from '../engine/topics';
-import type { Strings } from '../i18n/strings';
+import { STRINGS, type Strings } from '../i18n/strings';
 import { dueReviews, lessonMastered, localDay, ratingsOf, type Progress, type Settings } from '../storage/progress';
-import { listTakes, thenAndNow, type StoredTake } from '../storage/takes';
+import { getTakeAudio, listTakes, thenAndNowOf, type RecTake } from '../storage/recordings';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -184,36 +184,48 @@ export function AchievementsScreen({ t, progress, extra, onBack }: { t: Strings;
   );
 }
 
-/** Vocal technique: the first and latest kept take of each exercise, side by side. */
+/** Vocal technique: the first and latest kept take of each exercise, side by side (from My recordings since 0.99). */
 export function ThenAndNow({ t, refresh }: { t: Strings; refresh: number }) {
-  const [rows, setRows] = useState<{ item: string; then: StoredTake; now: StoredTake }[]>([]);
+  const [rows, setRows] = useState<{ item: string; then: RecTake; now: RecTake }[]>([]);
+  const [urls, setUrls] = useState<{ then: string; now: string }[]>([]);
   useEffect(() => {
-    void listTakes().then((all) => setRows(thenAndNow(all)));
+    let live = true;
+    const made: string[] = [];
+    void listTakes({ kind: 'vocal' }).then(async (all) => {
+      const pairs = thenAndNowOf(all);
+      const us = await Promise.all(
+        pairs.map(async (p) => {
+          const [a, b] = await Promise.all([getTakeAudio(p.then.id), getTakeAudio(p.now.id)]);
+          const u = { then: a ? URL.createObjectURL(a) : '', now: b ? URL.createObjectURL(b) : '' };
+          made.push(u.then, u.now);
+          return u;
+        }),
+      );
+      if (!live) return;
+      setRows(pairs);
+      setUrls(us);
+    });
+    return () => {
+      live = false;
+      made.filter(Boolean).forEach((u) => URL.revokeObjectURL(u));
+    };
   }, [refresh]);
-  const urls = useMemo(() => rows.map((r) => ({ then: URL.createObjectURL(r.then.blob), now: URL.createObjectURL(r.now.blob) })), [rows]);
-  useEffect(
-    () => () =>
-      urls.forEach((u) => {
-        URL.revokeObjectURL(u.then);
-        URL.revokeObjectURL(u.now);
-      }),
-    [urls],
-  );
+  const day = (iso: string) => iso.slice(0, 10);
   if (!rows.length) return <p className="field-hint">{t.thenNowEmpty}</p>;
   return (
     <ul className="then-now">
       {rows.map((r, i) => (
         <li key={r.item}>
-          <b>{r.item}</b>
+          <b>{typeof r.now.title === 'string' ? r.now.title : r.now.title[t === STRINGS.en ? 'en' : 'he']}</b>
           <div>
             <small>
-              {r.then.week} · {Math.round(r.then.score * 100)}%
+              <bdi dir="ltr">{day(r.then.at)}</bdi> · <bdi dir="ltr">{Math.round((r.then.result?.score ?? 0) * 100)}%</bdi>
             </small>
             <audio controls src={urls[i]?.then} />
           </div>
           <div>
             <small>
-              {r.now.week} · {Math.round(r.now.score * 100)}%
+              <bdi dir="ltr">{day(r.now.at)}</bdi> · <bdi dir="ltr">{Math.round((r.now.result?.score ?? 0) * 100)}%</bdi>
             </small>
             <audio controls src={urls[i]?.now} />
           </div>

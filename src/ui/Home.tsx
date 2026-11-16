@@ -1,5 +1,6 @@
 
 import { CourseChip } from './CourseSwitcher';
+import { ConsentBody } from './Recordings';
 import { useCourse } from './courseContext';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { StreakChip } from './Streak';
@@ -223,7 +224,9 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
             <h2 id="consent-title">
               <MicIcon /> {t.consentTitle}
             </h2>
-            <p>{t.consentBody}</p>
+            <p>
+              <ConsentBody lang={lang} />
+            </p>
             <button className="btn primary" autoFocus onClick={() => onPractice(consentFor, true)}>
               {t.consentAllow}
             </button>

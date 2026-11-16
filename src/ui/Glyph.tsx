@@ -922,6 +922,8 @@ Object.assign(GLYPHS, {
 Object.assign(GLYPHS, { krhythm: mark('5:4'), gmeter: mark('3:2') });
 // AUDIT-7: the singer's blues and scat start (the 12-bar), improvising in pop (call → answer), pop and theatre style.
 Object.assign(GLYPHS, { vjazz1: mark('12-bar'), vimpro: mark('Q→A'), vpop: mark('Pop'), gjblues: mark('I7·IV7') });
+// AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (intros, endings, the ballad, the whole tune) — keys, guitar (6), bass (4).
+Object.assign(GLYPHS, { kgig: mark('Gig'), ggig: mark('Gig·6'), bgig: mark('Gig·4') });
 // THEORY_PLAY: theory you play (k-theory) — two triads stacked, a whole step apart (a triad pair).
 Object.assign(GLYPHS, {
   tpair: (
