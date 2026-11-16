@@ -3,7 +3,7 @@
 // GAME_STEP_GLYPH); everything renders in the badge cut (ג‰¥ 64 px detail).
 import { FAMILY_GLYPH, GAME_STEP_GLYPH } from '../stepGlyphs';
 import { PAPER } from './index';
-import { art, Ci, det, H, L, markArt, P, R, rich, star, T, type Art, type HueName } from './kit';
+import { art, an, Ci, det, H, L, markArt, P, R, rich, star, T, type Art, type HueName } from './kit';
 
 /** A count on a laurel plaque: "50", "200", "1000". */
 const count = (text: string, hue: HueName, hue2: HueName): Art =>
@@ -32,8 +32,8 @@ const tempo = (text: string): Art =>
     'purple',
     P('M12 44 L17 7 Q24 2 31 7 L36 44 Z', 'body'),
     P('M16.6 40 L20.4 12 Q24 9.5 27.6 12 L31.4 40 Z', 'light'),
-    L(24, 37, 33.5, 14, 'inkline', 2.4),
-    R(28.5, 21, 6.4, 4.6, 1.4, 'accent', 'rotate(-22 31.7 23.3)'),
+    an('swing', { o: [24, 37] }, L(24, 37, 33.5, 14, 'inkline', 2.4),
+    R(28.5, 21, 6.4, 4.6, 1.4, 'accent', 'rotate(-22 31.7 23.3)')),
     R(9, 41.5, 30, 4.5, 2, 'mark'),
     T(24, 34, text, text.length > 2 ? 9 : 11, 'ink'),
     det(L(19.5, 18, 22, 18), L(19, 24, 21.5, 24)),
@@ -62,8 +62,8 @@ export const BADGE_ONLY: Record<string, Art> = {
       const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
       return Ci(Math.round((24 + Math.cos(a) * 12.4) * 10) / 10, Math.round((25 + Math.sin(a) * 12.4) * 10) / 10, i % 3 ? 1.1 : 1.8, i === 0 ? 'accent' : 'ink');
     }),
-    H(24, 25, 4.4, 'accent'),
-    L(27.6, 24, 27.6, 14.5, 'inkline', 2),
+    an('turn', { o: [24, 25] }, H(24, 25, 4.4, 'accent'),
+    L(27.6, 24, 27.6, 14.5, 'inkline', 2)),
     rich(P('M10 13 A 18 18 0 0 1 20 7', 'shine', 1.4)),
   ),
   /** Three in a row: a triad of note heads, one stem, a star. */
@@ -71,9 +71,9 @@ export const BADGE_ONLY: Record<string, Art> = {
     'tan',
     'purple',
     R(5, 10, 32, 34, 6, 'light'),
-    H(17, 36, 5.2, 'body'),
-    H(17, 27, 5.2, 'body'),
-    H(17, 18, 5.2, 'accent'),
+    an('hop', {}, H(17, 36, 5.2, 'body')),
+    an('hop', { d: 1 }, H(17, 27, 5.2, 'body')),
+    an('hop', { d: 2 }, H(17, 18, 5.2, 'accent')),
     L(21.8, 17, 21.8, 5, 'wire', 2.2),
     det(L(8, 22.5, 34, 22.5, 'line', 0.9), L(8, 31.5, 34, 31.5, 'line', 0.9)),
     P(star(38, 12, 8), 'accent'),
@@ -86,7 +86,7 @@ export const BADGE_ONLY: Record<string, Art> = {
     Ci(24, 26, 19, 'light'),
     H(20, 33, 7, 'body'),
     L(26.4, 31.2, 26.4, 9, 'inkline', 2.6),
-    P('M26.4 9.2 C 33 11, 36 15, 33 22 C 33 17, 30 15, 26.4 15', 'accent'),
+    an('wave', { o: [26.4, 12] }, P('M26.4 9.2 C 33 11, 36 15, 33 22 C 33 17, 30 15, 26.4 15', 'accent')),
     P(star(39, 9, 5), 'accent'),
     rich(H(18, 31.6, 2.4, 'light')),
   ),
@@ -98,20 +98,18 @@ export const BADGE_ONLY: Record<string, Art> = {
       const a = (i / 7) * Math.PI * 2 - Math.PI / 2;
       const x = Math.round((24 + Math.cos(a) * 20) * 10) / 10;
       const y = Math.round((25 + Math.sin(a) * 20) * 10) / 10;
-      return [L(24, 25, x, y, 'tube', 3.2), Ci(x, y, 2.6, 'accent')];
+      return an('turn', { o: [24, 25] }, L(24, 25, x, y, 'tube', 3.2), Ci(x, y, 2.6, 'accent'));
     }).flat(),
-    Ci(24, 25, 14, 'body'),
-    Ci(24, 25, 9.5, 'light'),
-    H(24, 25, 4.6, 'ink'),
+    an('turn', { o: [24, 25] }, Ci(24, 25, 14, 'body'), Ci(24, 25, 9.5, 'light'), H(24, 25, 4.6, 'ink')),
     rich(P('M14 18 A 12 12 0 0 1 22 13', 'shine', 1.4)),
   ),
   /** Dawn chorus: the sun rising behind a line of note heads. */
   dawn: art(
     'tan',
     'pink',
-    P('M6 34 A 18 18 0 0 1 42 34 Z', 'body'),
+    an('pulse', { o: [24, 34] }, P('M6 34 A 18 18 0 0 1 42 34 Z', 'body'),
     P('M13 34 A 11 11 0 0 1 35 34 Z', 'light'),
-    det(L(24, 6, 24, 11, 'accentline', 2), L(8, 14, 11.5, 17.5, 'accentline', 2), L(40, 14, 36.5, 17.5, 'accentline', 2)),
+    det(L(24, 6, 24, 11, 'accentline', 2), L(8, 14, 11.5, 17.5, 'accentline', 2), L(40, 14, 36.5, 17.5, 'accentline', 2))),
     R(3, 34, 42, 4, 1.6, 'mark'),
     H(13, 43, 3.4, 'accent'),
     H(24, 42, 3.4, 'accent'),
@@ -124,9 +122,9 @@ export const BADGE_ONLY: Record<string, Art> = {
     'tan',
     P('M30 5 C 17 6, 9 15, 9 27 C 9 39, 19 46, 30 45 C 21 41, 17 34, 17 26 C 17 17, 22 9, 30 5 Z', 'body'),
     det(P(star(38, 10, 3.2), 'accent'), P(star(43, 21, 2.2), 'accent')),
-    H(33, 37, 4.8, 'accent'),
+    an('nod', { o: [37.4, 36] }, H(33, 37, 4.8, 'accent'),
     L(37.4, 35.8, 37.4, 20, 'wire', 2.2),
-    P('M37.4 20.2 Q42.5 22 41 27', 'wire', 2),
+    P('M37.4 20.2 Q42.5 22 41 27', 'wire', 2)),
     rich(P('M13 20 C 12 25, 12 30, 14 34', 'shine', 1.3)),
   ),
   /** Hall of fame: a portico on a plinth with a note in the pediment. */
@@ -140,7 +138,7 @@ export const BADGE_ONLY: Record<string, Art> = {
     R(32.5, 20, 5.5, 18, 1.2, 'light'),
     R(5, 38, 38, 4, 1.2, 'body'),
     R(3, 42, 42, 4, 1.4, 'mark'),
-    H(24, 11.2, 2.8, 'accent'),
+    an('hop', {}, H(24, 11.2, 2.8, 'accent')),
     rich(L(12.75, 22, 12.75, 36, 'line', 0.8), L(24, 22, 24, 36, 'line', 0.8), L(35.25, 22, 35.25, 36, 'line', 0.8)),
   ),
   /** The four seasons: a dial cut in four, one quarter lit. */
@@ -148,8 +146,8 @@ export const BADGE_ONLY: Record<string, Art> = {
     'green',
     'tan',
     Ci(24, 25, 19, 'light'),
-    P('M24 25 L24 6 A 19 19 0 0 1 43 25 Z', 'body'),
-    P('M24 25 L5 25 A 19 19 0 0 1 24 6 Z', 'accent'),
+    an('turn', { o: [24, 25] }, P('M24 25 L24 6 A 19 19 0 0 1 43 25 Z', 'body'),
+    P('M24 25 L5 25 A 19 19 0 0 1 24 6 Z', 'accent')),
     det(L(24, 6, 24, 44, 'line', 1), L(5, 25, 43, 25, 'line', 1)),
     H(24, 25, 4.4, 'ink'),
     rich(P(star(33, 34, 3), 'body'), Ci(15, 34, 2.4, 'body')),

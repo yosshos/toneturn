@@ -17,7 +17,7 @@
 import { useId, type CSSProperties, type ReactNode } from 'react';
 import { badgePaper } from './paper/art-badge';
 import { HUES, TONE_KEYS, tones, type Art } from './paper/kit';
-import { paperParts, PaperSvg } from './paper/Paper';
+import { hasMotion, paperParts, PaperSvg } from './paper/Paper';
 import { familyLevelCount, type Badge, type BadgeCat } from '../engine/badges';
 import type { RankArea, RankTier } from '../engine/ranks';
 import { SUB_SKILLS } from '../engine/taxonomy';
@@ -1909,7 +1909,7 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
 
       {/* glyph: the Paper drawing in its badge cut on the dark face; the old line glyph if a key has none */}
       {pa ? (
-        <g className="ba-glyph" transform={`translate(${gx - 24 * ps} ${gy - 24 * ps}) scale(${ps})`} style={faceVars(pa)} opacity={earned ? 1 : 0.7}>
+        <g className={`ba-glyph${hasMotion(pa, size >= 40 ? 'badge' : 'full') ? '' : ' pm-lift'}`} transform={`translate(${gx - 24 * ps} ${gy - 24 * ps}) scale(${ps})`} style={faceVars(pa)} opacity={earned ? 1 : 0.7}>
           {paperParts(pa, size >= 40 ? 'badge' : 'full')}
         </g>
       ) : (

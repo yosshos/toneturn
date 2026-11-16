@@ -1,6 +1,6 @@
 // Paper drawings: the guitar course's families, topics and games (see kit.ts for the roles and builders).
 // Shared cue: a light "neck" sheet with strings in the deep tone; each drawing puts its own idea on it.
-import { art, Ci, det, H, L, markParts, N, P, R, rich, T, type Art, type Part } from './kit';
+import { art, an, Ci, det, H, L, markParts, N, P, R, rich, T, type Art, type Part } from './kit';
 
 /** A neck sheet from y0, height h, with n strings (and optional frets at xs). */
 const neck = (y0: number, h: number, n: number, frets: number[] = [], x0 = 2, w = 44): Part[] => {
@@ -8,7 +8,8 @@ const neck = (y0: number, h: number, n: number, frets: number[] = [], x0 = 2, w 
   return [
     R(x0, y0, w, h, 3, 'light'),
     ...det(frets.map((x) => L(x, y0, x, y0 + h, 'inkline', 1.4))),
-    ...Array.from({ length: n }, (_, i) => L(x0 + 1, +(y0 + gap * (i + 1)).toFixed(2), x0 + w - 1, +(y0 + gap * (i + 1)).toFixed(2), 'line', 1)),
+    // the strings ring when the icon plays, low to high
+    ...Array.from({ length: n }, (_, i) => ({ ...L(x0 + 1, +(y0 + gap * (i + 1)).toFixed(2), x0 + w - 1, +(y0 + gap * (i + 1)).toFixed(2), 'line', 1), m: { k: 'vibrate' as const, d: (Math.min(i, 4) as 0 | 1 | 2 | 3 | 4) } })),
   ];
 };
 const pickPath = (cx: number, top: number, s: number) =>
@@ -43,12 +44,12 @@ export const ART_GUITAR: Record<string, Art> = {
   pick: art(
     'tan',
     'purple',
-    det(L(2, 40, 46, 40, 'accentline', 2)),
-    P(pickPath(24, 3, 1), 'body'),
+    an('vibrate', { d: 2 }, det(L(2, 40, 46, 40, 'accentline', 2))),
+    an('strike', { o: [24, 3] }, P(pickPath(24, 3, 1), 'body'),
     P(pickPath(24, 9, 0.72), 'light'),
     H(22, 21, 4.4, 'body'),
     L(25.9, 19.9, 25.9, 12, 'inkline', 1.8),
-    det(P('M25.9 12.2 Q29.5 13.6 28.4 17', 'inkline', 1.4)),
+    det(P('M25.9 12.2 Q29.5 13.6 28.4 17', 'inkline', 1.4))),
     rich(P('M10 12 C 10 9, 13 7, 17 6.5', 'shine', 1.4)),
   ),
   /** Legato: a hammer-on — two heads under a slur, on a string. */
@@ -57,8 +58,8 @@ export const ART_GUITAR: Record<string, Art> = {
     'purple',
     R(2, 34, 44, 9, 3, 'light'),
     det(L(3, 38.5, 45, 38.5, 'line', 1)),
-    H(13, 32, 6, 'body'),
-    H(35, 22, 6, 'body'),
+    an('hop', {}, H(13, 32, 6, 'body')),
+    an('hop', { d: 2 }, H(35, 22, 6, 'body')),
     L(18.6, 30.5, 18.6, 15, 'wire', 2),
     L(40.6, 20.5, 40.6, 6, 'wire', 2),
     P('M7 21 Q 20 4, 36 11', 'accentline', 2.6),
@@ -83,7 +84,7 @@ export const ART_GUITAR: Record<string, Art> = {
     'purple',
     R(9, 6, 30, 38, 3, 'light'),
     R(9, 6, 30, 4.5, 1.6, 'ink'),
-    det([12, 16.8, 21.6, 26.4, 31.2, 36].map((x) => L(x, 10, x, 43, 'line', 1))),
+    an('vibrate-x', {}, det([12, 16.8, 21.6, 26.4, 31.2, 36].map((x) => L(x, 10, x, 43, 'line', 1)))),
     L(10, 20, 38, 20, 'inkline', 1.4),
     L(10, 31, 38, 31, 'inkline', 1.4),
     Ci(16.8, 25.5, 3.4, 'body'),
@@ -96,9 +97,9 @@ export const ART_GUITAR: Record<string, Art> = {
     'tan',
     'purple',
     P('M8 44 q 4 -4 0 -8 t 0 -8 t 0 -8 t 0 -8', 'accentline', 2.4),
-    N(21, 36, 5.4, 12, 'body', 1.8),
-    N(30.5, 25.5, 5.4, 12, 'body', 1.8),
-    N(40, 15, 5.4, 11, 'body', 1.8),
+    an('hop', {}, N(21, 36, 5.4, 12, 'body', 1.8)),
+    an('hop', { d: 1 }, N(30.5, 25.5, 5.4, 12, 'body', 1.8)),
+    an('hop', { d: 2 }, N(40, 15, 5.4, 11, 'body', 1.8)),
     det(P('M16 40 L44 12', 'dash', 1.2)),
     rich(H(19.5, 35, 1.8, 'light'), H(29, 24.5, 1.8, 'light'), H(38.5, 14, 1.8, 'light')),
   ),
@@ -107,9 +108,9 @@ export const ART_GUITAR: Record<string, Art> = {
     'tan',
     'purple',
     R(3, 15, 42, 20, 4, 'light'),
-    det(L(4, 20, 44, 20, 'line', 1), L(4, 25, 44, 25, 'line', 1), L(4, 30, 44, 30, 'line', 1)),
-    downArrow(15, 4, 44, 2.6, 'body'),
-    upArrow(33, 44, 4, 2.6, 'accent'),
+    an('vibrate', { d: 1 }, det(L(4, 20, 44, 20, 'line', 1), L(4, 25, 44, 25, 'line', 1), L(4, 30, 44, 30, 'line', 1))),
+    an('slide', { r: true }, downArrow(15, 4, 44, 2.6, 'body')),
+    an('slide', { d: 2 }, upArrow(33, 44, 4, 2.6, 'accent')),
     rich(L(14, 7, 14, 30, 'shine', 0.9)),
   ),
   /** Lead: a string bent upward under the fingertip. */
@@ -118,8 +119,8 @@ export const ART_GUITAR: Record<string, Art> = {
     'purple',
     R(2, 28, 44, 16, 3, 'light'),
     det(L(26, 28, 26, 44, 'inkline', 1.4), L(3, 32, 45, 32, 'line', 1), L(3, 40, 45, 40, 'line', 1)),
-    P('M3 36 L18 36 Q 28 36, 31 20', 'accentline', 2.4),
-    P('M26 19 L31.5 9 L37 19 Z', 'accent'),
+    an('vibrate', {}, P('M3 36 L18 36 Q 28 36, 31 20', 'accentline', 2.4)),
+    an('hop', {}, P('M26 19 L31.5 9 L37 19 Z', 'accent')),
     H(31, 24, 4.6, 'body'),
     rich(H(29.6, 23.2, 1.6, 'light')),
   ),
@@ -149,7 +150,7 @@ export const ART_GUITAR: Record<string, Art> = {
     R(2, 12, 4, 24, 1.4, 'ink'),
     L(16, 12, 16, 36, 'inkline', 2.2),
     L(30, 12, 30, 36, 'inkline', 2.2),
-    det(L(43, 12, 43, 36, 'inkline', 2.2), [16.8, 21.6, 26.4, 31.2].map((y) => L(6, y, 45, y, 'line', 1))),
+    an('vibrate', {}, det(L(43, 12, 43, 36, 'inkline', 2.2), [16.8, 21.6, 26.4, 31.2].map((y) => L(6, y, 45, y, 'line', 1)))),
     Ci(23, 24, 2.4, 'accent'),
     H(37, 21.6, 4.4, 'body'),
     rich(Ci(37, 26.4, 1.4, 'accent'), H(35.8, 20.8, 1.5, 'light')),
@@ -459,14 +460,14 @@ export const ART_GUITAR: Record<string, Art> = {
   songstrum: art(
     'tan',
     'purple',
-    P('M3 12 C 8 4, 13 4, 17 10 S 26 16, 31 8', 'accentline', 2),
+    an('vibrate', { d: 1 }, P('M3 12 C 8 4, 13 4, 17 10 S 26 16, 31 8', 'accentline', 2)),
     H(17, 10, 2.8, 'accent'),
     H(31, 8, 2.8, 'accent'),
     H(14, 41, 4.4, 'body'),
     H(14, 32.5, 4.4, 'body'),
     H(14, 24, 4.4, 'body'),
     L(18, 40, 18, 17, 'wire', 1.6),
-    downArrow(36, 18, 45, 2.4, 'body'),
+    an('slide', { r: true }, downArrow(36, 18, 45, 2.4, 'body')),
     rich(H(12.6, 23.2, 1.5, 'light')),
   ),
   /** Strum Changes (game): six strings and a down-strum arrow across them, a chord change marked. */
