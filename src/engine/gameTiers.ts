@@ -850,8 +850,87 @@ GAME_TIERS.holdnote = {
   },
 };
 
+// ---------------------------------------------------------------- AUDIT-7 hole #14: a beginner game per instrument
+// (src/engine/beginnerRun.ts). Laps against the click, measured by MIDI or the microphone only; a run at ≥ 80 % of its
+// targets clears the tier. They start at pp (the beginner band) and climb to ff.
+
+/** Staff Runner (keys): read the note at the now-cue, play it on its beat. */
+GAME_TIERS.staffrunner = {
+  game: 'staffrunner',
+  source: (c) => (c === 'keys' ? 'instrument/piano-tech' : 'notes'),
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('C, G and F positions, treble clef, half notes', 'פוזיציות C, G ו־F, מפתח סול, חצאים'), levels: [1], params: { bpm: 60 }, target: 80 },
+    p: { label: L('The same in the bass clef', 'אותו דבר במפתח פה'), levels: [2], params: { bpm: 60 }, target: 80 },
+    mp: { label: L('Both clefs, steps and skips, quarters, + D and B♭', 'שני המפתחות, צעדים ודילוגים, רבעים, + D ו־B♭'), levels: [3], params: { bpm: 66 }, target: 80 },
+    mf: { label: L('Up to three sharps or flats, leaps to a 5th', 'עד שלושה דיאזים או במולים, קפיצות עד קווינטה'), levels: [4], params: { bpm: 72 }, target: 80 },
+    f: { label: L('All 12 keys, leaps to the octave', 'כל 12 הסולמות, קפיצות עד אוקטבה'), levels: [5], params: { bpm: 80 }, target: 80 },
+    ff: { label: L('All 12 keys with eighth notes, faster', 'כל 12 הסולמות עם שמיניות, מהר יותר'), levels: [6], params: { bpm: 88 }, target: 80 },
+  },
+};
+
+/** Root Catcher (bass): each chord's root on its first beat. */
+GAME_TIERS.rootcatch = {
+  game: 'rootcatch',
+  source: () => 'instrument/bass-tech',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('I, IV, V in E, A and D', 'I, IV, V ב־E, A ו־D'), levels: [1], params: { bpm: 70 }, target: 80 },
+    p: { label: L('+ vi, in five keys', '+ vi, בחמישה סולמות'), levels: [2], params: { bpm: 76 }, target: 80 },
+    mp: { label: L('Minor keys: i, iv, v, ♭VI, ♭VII', 'סולמות מינוריים: i, iv, v, ♭VI, ♭VII'), levels: [3], params: { bpm: 80 }, target: 80 },
+    mf: { label: L('The 8-bar blues', 'בלוז של 8 תיבות'), levels: [4], params: { bpm: 88 }, target: 80 },
+    f: { label: L('ii–V–I, two chords a bar, all 12 keys', 'ii–V–I, שני אקורדים בתיבה, כל 12 הסולמות'), levels: [5], params: { bpm: 92 }, target: 80 },
+    ff: { label: L('Roman numerals only, all 12 keys', 'רק ספרות רומיות, כל 12 הסולמות'), levels: [6], params: { bpm: 100 }, target: 80 },
+  },
+};
+
+/** Strum Changes (guitar): strum the new chord on its first beat. */
+GAME_TIERS.strumchange = {
+  game: 'strumchange',
+  source: () => 'instrument/guitar-tech',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Open-chord pairs: E–A, A–D, Em–Am', 'זוגות של אקורדים פתוחים: E–A, A–D, Em–Am'), levels: [1], params: { bpm: 60 }, target: 80 },
+    p: { label: L('More pairs: G–C, D–G, C–Am, G–Em', 'עוד זוגות: G–C, D–G, C–Am, G–Em'), levels: [2], params: { bpm: 66 }, target: 80 },
+    mp: { label: L('Four-chord songs in open keys', 'שירים של ארבעה אקורדים בסולמות פתוחים'), levels: [3], params: { bpm: 72 }, target: 80 },
+    mf: { label: L('Two changes a bar', 'שתי החלפות בתיבה'), levels: [4], params: { bpm: 72 }, target: 80 },
+    f: { label: L('Barre chords: I–IV–I–V in all 12 keys', 'אקורדי ברה: I–IV–I–V בכל 12 הסולמות'), levels: [5], params: { bpm: 76 }, target: 80 },
+    ff: { label: L('7th chords: I–vi–ii–V, two a bar, 12 keys', 'ספטאקורדים: I–vi–ii–V, שניים בתיבה, 12 סולמות'), levels: [6], params: { bpm: 84 }, target: 80 },
+  },
+};
+
+/** Rebound Ball (drums): even strokes against the click. */
+GAME_TIERS.rebound = {
+  game: 'rebound',
+  source: () => 'instrument/drum-tech',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Quarter notes, one hand', 'רבעים, יד אחת'), levels: [1], params: { bpm: 70 }, target: 80 },
+    p: { label: L('Eighth notes, alternating', 'שמיניות, ידיים לסירוגין'), levels: [2], params: { bpm: 70 }, target: 80 },
+    mp: { label: L('Eighths with an accent on every beat', 'שמיניות עם הטעמה בכל פעמה'), levels: [3], params: { bpm: 76 }, target: 80 },
+    mf: { label: L('Doubles: RRLL, both strokes alike', 'כפולות: RRLL, שתי המכות שוות'), levels: [4], params: { bpm: 80 }, target: 80 },
+    f: { label: L('Sixteenth notes, alternating', 'שש־עשריות, לסירוגין'), levels: [5], params: { bpm: 72 }, target: 80 },
+    ff: { label: L('A swell: soft to loud to soft', 'קרשנדו ודימינואנדו: חלש, חזק, חלש'), levels: [6], params: { bpm: 84 }, target: 80 },
+  },
+};
+
+/** Sing It Back (voice): a phrase played, then sung back in time in the next bar. */
+GAME_TIERS.singback = {
+  game: 'singback',
+  source: () => 'singing',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Two notes: match the pitch', 'שני צלילים: להתאים את הגובה'), levels: [1], params: { bpm: 66 }, target: 80 },
+    p: { label: L('Three notes by step: do re mi', 'שלושה צלילים בצעדים: דו רה מי'), levels: [2], params: { bpm: 70 }, target: 80 },
+    mp: { label: L('Three notes with skips: 1 3 5', 'שלושה צלילים עם דילוגים: 1 3 5'), levels: [3], params: { bpm: 72 }, target: 80 },
+    mf: { label: L('Four notes, steps and skips', 'ארבעה צלילים, צעדים ודילוגים'), levels: [4], params: { bpm: 76 }, target: 80 },
+    f: { label: L('Four notes in minor, all 12 keys', 'ארבעה צלילים במינור, כל 12 הסולמות'), levels: [5], params: { bpm: 80 }, target: 80 },
+    ff: { label: L('Five notes with eighths, to the octave', 'חמישה צלילים עם שמיניות, עד האוקטבה'), levels: [6], params: { bpm: 88 }, target: 80 },
+  },
+};
+
 /** Games whose on-screen (touch) input is practice only: it never clears a tier. */
-export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'whichbrother', 'compcaller']);
+export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'whichbrother', 'compcaller', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback']);
 
 // Social sets (duel, ghost, rooms, daily): the tier picks the items (engine/tournament.ts tournamentItem).
 const SOCIAL_LABEL: Record<DynName, Bi> = {

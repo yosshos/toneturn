@@ -1207,7 +1207,7 @@ function virtualStep(id: string, unitId: string, from: PathStep[] = []): PathSte
 }
 
 /** Games that can sit inside a unit, by the area they train (0.38). */
-export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub: string; title: { en: string; he: string }; needsMic?: boolean; forPlays?: string[]; minDiff?: number }> = {
+export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub: string; title: { en: string; he: string }; needsMic?: boolean; forPlays?: string[]; minDiff?: number; /** A beginner game: in the units up to this difficulty only, and every other unit there (gameForArea). */ maxDiff?: number }> = {
   'rush-interval': { domain: 'pitch', skill: 'intervals', sub: 'melodic', title: { en: 'Interval Sprint', he: 'ספרינט מרווחים' } },
   'rush-chord': { domain: 'pitch', skill: 'chords', sub: 'quality', title: { en: 'Chord Rush', he: 'מרוץ אקורדים' } },
   'rush-progression': { domain: 'pitch', skill: 'cadences', sub: 'progression', title: { en: 'Progression Detective', he: 'בלש המהלכים' } },
@@ -1253,15 +1253,21 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   call5432: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1150 },
   crossword: { domain: 'pitch', skill: 'cadences', sub: 'dictation', title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' }, minDiff: 1000 },
   holdnote: { domain: 'pitch', skill: 'cadences', sub: 'reharm', title: { en: 'Hold the Note', he: 'להחזיק את הצליל' }, minDiff: 1050 },
+  // AUDIT-7 hole #14: a beginner game per instrument course, in the beginner band's units (720 → 1150).
+  staffrunner: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Staff Runner', he: 'רץ החמשה' }, forPlays: ['keys', 'piano'], minDiff: 720, maxDiff: 1150 },
+  rootcatch: { domain: 'instrument', skill: 'instrument', sub: 'bass-tech', title: { en: 'Root Catcher', he: 'תופס השורשים' }, forPlays: ['bass'], minDiff: 720, maxDiff: 1150 },
+  strumchange: { domain: 'instrument', skill: 'instrument', sub: 'guitar-tech', title: { en: 'Strum Changes', he: 'החלפות בפריטה' }, forPlays: ['guitar'], minDiff: 720, maxDiff: 1150 },
+  rebound: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Rebound Ball', he: 'הכדור הקופץ' }, forPlays: ['drums'], minDiff: 720, maxDiff: 1150 },
+  singback: { domain: 'voice', skill: 'singing', sub: 'match', title: { en: 'Sing It Back', he: 'שרים בחזרה' }, needsMic: true, minDiff: 720, maxDiff: 1150 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
-  voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher'],
-  reading: ['rush-note', 'rush-keysig'],
+  voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],
+  reading: ['rush-note', 'rush-keysig', 'staffrunner'],
   creative: ['rush-chord'],
-  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'enclosure', 'call5432'],
+  instrument: ['drills', 'rush-fretboard', 'peakhunter', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'tuneup', 'changerace', 'kitread', 'rootsear', 'playback', 'namegroove', 'walkchanges', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'enclosure', 'call5432', 'staffrunner', 'rootcatch', 'strumchange', 'rebound'],
 };
 /** The game for a unit's leading area (rotating by unit number; mic / instrument / pack rules apply). */
 export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noMic' | 'noSing' | 'plays' | 'packs'> & { noDrills?: boolean; course?: CourseId }, diff = Infinity): string | null {
@@ -1269,6 +1275,7 @@ export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noM
     if (!gameVerified(g)) return false;
     const s = GAME_STEPS[g];
     if (s.minDiff && diff < s.minDiff) return false;
+    if (s.maxDiff && diff > s.maxDiff) return false;
     if (inp.course && !inCourse({ domain: s.domain, sung: !!s.needsMic && s.domain === 'voice', forPlays: s.forPlays }, inp.course)) return false;
     if (g === 'drills' && inp.noDrills) return false;
     if (s.needsMic && (inp.noMic || inp.noSing)) return false;
@@ -1276,6 +1283,9 @@ export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noM
     if (g === 'peakhunter' && !inp.packs.includes('production')) return false;
     return true;
   });
+  // AUDIT-7 hole #14: in the beginner band every other unit plays the course's beginner game.
+  const early = ok.filter((g) => GAME_STEPS[g].maxDiff);
+  if (early.length && n % 2 === 1) return early[Math.floor(n / 2) % early.length];
   return ok.length ? ok[n % ok.length] : null;
 }
 

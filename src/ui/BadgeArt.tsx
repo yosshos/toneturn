@@ -1391,6 +1391,48 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M6 11v8 M12 11v8 M18 11v8', false)}
     </>
   ),
+  // AUDIT-7 hole #14: the beginner game per instrument.
+  // Staff Runner: staff lines, a head, the now-line.
+  'special:game:staffrunner': () => (
+    <>
+      {p('M3 8h18 M3 12h18 M3 16h18', false)}
+      {head(9, 14, 2.4)}
+      {p('M15 4v16')}
+    </>
+  ),
+  // Root Catcher: a low head caught in a bracket under a chord stack.
+  'special:game:rootcatch': () => (
+    <>
+      {p('M12 3v6 M9 4h6 M9 7h6', false)}
+      {head(12, 16, 2.6)}
+      {p('M6 12v8h3 M18 12v8h-3', false)}
+    </>
+  ),
+  // Strum Changes: strings and a strum arrow.
+  'special:game:strumchange': () => (
+    <>
+      {p('M6 3v18 M10 3v18 M14 3v18 M18 3v18', false)}
+      {p('M3 7 L20 17 M20 17 L15 17 M20 17 L17.5 12.5')}
+    </>
+  ),
+  // Rebound Ball: equal bounces over a pad line.
+  'special:game:rebound': () => (
+    <>
+      {p('M3 20h18', false)}
+      {p('M4 20 Q8 6 12 20 Q16 6 20 20', false)}
+      {dot(12, 9, 2.2)}
+    </>
+  ),
+  // Sing It Back: two heads called, two answered across a dashed bar.
+  'special:game:singback': () => (
+    <>
+      {head(6, 8, 2.2)}
+      {head(10, 6, 2.2)}
+      {p('M12 3v18', false)}
+      {head(15, 17, 2.2)}
+      {head(19, 15, 2.2)}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>

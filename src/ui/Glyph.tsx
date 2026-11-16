@@ -1795,6 +1795,53 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-7 hole #14: the beginner game per instrument, one drawn symbol each.
+Object.assign(GLYPHS, {
+  // Staff Runner: three staff lines, two heads, the now-line through the second.
+  staffrunner: (
+    <>
+      <path d="M-28 -10 H28 M-28 0 H28 M-28 10 H28" {...sw} strokeWidth={1.8} />
+      {head(-12, 5, 5.6, 4.2)}
+      {head(10, -5, 5.6, 4.2)}
+      <path d="M10 -22 V22" {...sw} strokeWidth={2.8} />
+    </>
+  ),
+  // Root Catcher: a low head on the bottom line caught in a bracket, a chord stack above.
+  rootcatch: (
+    <>
+      <path d="M-4 -24 V-6 M-10 -20 H2 M-10 -14 H2 M-10 -8 H2" {...sw} strokeWidth={2.2} />
+      {head(-4, 14, 6.4, 4.6)}
+      <path d="M-20 4 V22 H-14 M12 4 V22 H6" {...sw} strokeWidth={2.4} />
+      <path d="M-28 22 H28" {...sw} strokeWidth={2} />
+    </>
+  ),
+  // Strum Changes: six strings and a downward strum arrow across them.
+  strumchange: (
+    <>
+      <path d="M-20 -22 V22 M-12 -22 V22 M-4 -22 V22 M4 -22 V22 M12 -22 V22 M20 -22 V22" {...sw} strokeWidth={1.6} />
+      <path d="M-26 -14 L24 14" {...sw} strokeWidth={3.2} />
+      <path d="M24 14 L13 13 M24 14 L19 4" {...sw} strokeWidth={3} />
+    </>
+  ),
+  // Rebound Ball: a stick tip over a pad line, a ball bouncing in equal arcs.
+  rebound: (
+    <>
+      <path d="M-28 18 H28" {...sw} strokeWidth={2.6} />
+      <path d="M-24 18 Q-16 -14 -8 18 Q0 -14 8 18 Q16 -14 24 18" {...sw} strokeWidth={2} />
+      <circle cx={0} cy={-6} r={5.2} fill={I} />
+    </>
+  ),
+  // Sing It Back: an open mouth arc answering two heads (call, then answer).
+  singback: (
+    <>
+      {head(-16, -8, 5.2, 3.9)}
+      {head(-4, -14, 5.2, 3.9)}
+      <path d="M-24 4 H24" {...sw} strokeWidth={1.8} strokeDasharray="3 4" />
+      {head(6, 14, 5.2, 3.9)}
+      {head(18, 8, 5.2, 3.9)}
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

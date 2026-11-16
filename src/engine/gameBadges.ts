@@ -52,6 +52,12 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'enclosure', name: l('Enclosure Target', 'מטרת הכיתור'), course: 'jazz', alsoIn: ['keys', 'guitar', 'bass'], titles: [l('Lands the Target', 'נוחת על המטרה'), l('Bebop Enclosures', 'כיתורי ביבופ'), l('Through the Changes', 'דרך המהלך')] },
   { game: 'crossword', name: l('Changes Crossword', 'תשבץ המהלכים'), course: 'ear', alsoIn: ['jazz'], titles: [l('Hears the Roots', 'שומע את היסודות'), l('Borrowed and Bent', 'שאולים ומוטים'), l('Changes by Ear', 'מהלכים בשמיעה')] },
   { game: 'holdnote', name: l('Hold the Note', 'להחזיק את הצליל'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('One Note, Many Chords', 'צליל אחד, הרבה אקורדים'), l('Tension Reader', 'קורא טנשנים'), l('Eight Ways', 'שמונה דרכים')] },
+  // AUDIT-7 hole #14: the beginner game per instrument.
+  { game: 'staffrunner', name: l('Staff Runner', 'רץ החמשה'), course: 'keys', titles: [l('Reads Both Clefs', 'קורא בשני המפתחות'), l('Every Key Signature', 'כל סימני ההיתק'), l('Fluent Reader', 'קורא שוטף')] },
+  { game: 'rootcatch', name: l('Root Catcher', 'תופס השורשים'), course: 'bass', titles: [l('On the One', 'על האחת'), l('Through the Blues', 'דרך הבלוז'), l('Numbers to Roots', 'מספרים לשורשים')] },
+  { game: 'strumchange', name: l('Strum Changes', 'החלפות בפריטה'), course: 'guitar', titles: [l('Clean Changes', 'החלפות נקיות'), l('Two a Bar', 'שתיים בתיבה'), l('Sevenths in Every Key', 'ספטים בכל סולם')] },
+  { game: 'rebound', name: l('Rebound Ball', 'הכדור הקופץ'), course: 'drums', titles: [l('Steady Strokes', 'מכות יציבות'), l('Clean Doubles', 'כפולות נקיות'), l('Shapes the Swell', 'מעצב את הקרשנדו')] },
+  { game: 'singback', name: l('Sing It Back', 'שרים בחזרה'), course: 'voice', titles: [l('Matches the Note', 'מתאים את הצליל'), l('Echoes in Time', 'הד בזמן'), l('Sings Any Phrase Back', 'מחזיר כל משפט')] },
 ];
 
 const TIERS: { t: DynName; tone: RankTier }[] = [

@@ -51,7 +51,7 @@ describe('the games that never reached the path are path games now', () => {
     });
   it('a harder game waits for its difficulty', () => {
     for (let n = 0; n < 30; n++) {
-      expect(gameForArea('voice', n, { ...base, plays: [], course: 'voice' }, 800)).toBe('flight');
+      expect(gameForArea('voice', n, { ...base, plays: [], course: 'voice' }, 800)).toMatch(/^(flight|singback)$/); // AUDIT-7 #14: Sing It Back, the voice beginner game, every other unit
       expect(gameForArea('instrument', n, { ...base, plays: ['bass'], course: 'bass' }, 800)).not.toBe('walkchanges');
     }
   });

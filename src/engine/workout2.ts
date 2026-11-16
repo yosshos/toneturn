@@ -79,11 +79,11 @@ export interface SuggestInput {
 export const WORKOUT_GAMES: Record<CourseId, string[]> = {
   ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note', 'bordercontrol', 'crossword'],
   jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller', 'crossword', 'holdnote'],
-  voice: ['flight', 'singinterval', 'rush-interval', 'runcatcher'],
-  keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller', 'guidetone'],
-  guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller', 'guidetone'],
-  bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear', 'guidetone'],
-  drums: ['highway', 'groove-echo', 'kitread', 'time-lock'],
+  voice: ['flight', 'singinterval', 'rush-interval', 'runcatcher', 'singback'],
+  keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller', 'guidetone', 'staffrunner'],
+  guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller', 'guidetone', 'strumchange'],
+  bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear', 'guidetone', 'rootcatch'],
+  drums: ['highway', 'groove-echo', 'kitread', 'time-lock', 'rebound'],
 };
 /** The day's game for a course (deterministic per local day; Highway without a course). */
 export function workoutGame(course?: CourseId, day?: string): string {

@@ -52,7 +52,7 @@ type Make = (d: QuestDay) => Quest;
 /** The skills the exams test most (the exam goal's boosts, engine/path.ts GOAL_BOOST.exam, plus reading). */
 const EXAM_SKILLS: string[] = ['theory', 'notes', 'sight', 'dictation', 'cadences', 'rhythm-dictation'];
 /** Games the drum-game quest counts (Time Lock, Ghost Control, Rudiment Rush, Groove-off). */
-export const DRUM_QUEST_GAMES = ['time-lock', 'ghost-control', 'rudiment-rush', 'groove-off'];
+export const DRUM_QUEST_GAMES = ['time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'rebound'];
 /** The 8 advanced games (0.70). */
 export const ADV_QUEST_GAMES = ['rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock'];
 const POOL: Record<string, Make> = {

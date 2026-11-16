@@ -10,13 +10,13 @@ import { gameVerified } from '../engine/verifiedContent';
 const ALL_COURSE_GAMES: Record<CourseId, string[]> = {
   ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'rush-note', 'rush-keysig', 'peakhunter', 'rush-voicing', 'reharm', 'rush-scale', 'transcribe', 'rush-standard', 'polylock', 'bordercontrol', 'crossword', 'holdnote'],
   jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily', 'rush-standard', 'rush-voicing', 'reharm', 'bhtime', 'transcribe', 'rush-scale', 'bordercontrol', 'whichbrother', 'compcaller', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'],
-  voice: ['flight', 'melody', 'nametune', 'rush-interval', 'rush-scale', 'singinterval', 'harmonyhold', 'runcatcher'],
-  keys: ['rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm', 'bhtime', 'rush-voicing', 'transcribe', 'riffecho', 'polylock', 'playback', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'holdnote'],
-  guitar: ['rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho', 'changerace', 'playback', 'rootsear', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure'],
-  bass: ['rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho', 'walkchanges', 'rootsear', 'playback', 'guidetone', 'call5432', 'enclosure'],
+  voice: ['flight', 'melody', 'nametune', 'rush-interval', 'rush-scale', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],
+  keys: ['rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm', 'bhtime', 'rush-voicing', 'transcribe', 'riffecho', 'polylock', 'playback', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'holdnote', 'staffrunner'],
+  guitar: ['rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho', 'changerace', 'playback', 'rootsear', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'strumchange'],
+  bass: ['rush-fretboard', 'tuneup', 'highway', 'rush-note', 'rhythm', 'riffecho', 'walkchanges', 'rootsear', 'playback', 'guidetone', 'call5432', 'enclosure', 'rootcatch'],
   // 0.65: technique on the kit, Highway with drum lanes, beat echo, the groove trainer.
   // DRUMS_NICHE_PLAN §3 (P1): Land It, Groove Echo, Odd-meter Echo — measured takes on the kit.
-  drums: ['highway', 'land', 'groove-echo', 'polylock', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'kitread', 'namegroove'],
+  drums: ['highway', 'land', 'groove-echo', 'polylock', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'kitread', 'namegroove', 'rebound'],
 };
 /** The games on show: hidden-until-verified games (verifiedContent.ts) left out; their routes and saved progress stay. */
 export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Object.entries(ALL_COURSE_GAMES).map(([c, gs]) => [c, gs.filter(gameVerified)])) as Record<CourseId, string[]>;
