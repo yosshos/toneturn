@@ -225,7 +225,7 @@ function CompareBody({ lang, A, B, head, onOpen }: { lang: Lang; A: RecTake; B: 
         return (
           <div key={w} className={`rec-cmp-card ${playing === w ? 'on' : ''}`}>
             <div className="rec-cmp-row">
-              <span className={`rec-pill ${w === 'B' ? 'ac' : ''}`}>{w}</span>
+              <span className={`rec-pill ${w === 'B' ? 'ac' : ''}`}><N>{w}</N></span>
               <small className="grow">
                 <N>{dm(t.at)}</N>
                 {d.tempo[w === 'A' ? 0 : 1] ? <N> · ♩{d.tempo[w === 'A' ? 0 : 1]}</N> : null}
