@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.99.0',
+    date: '2026-11-16',
+    en: [
+      'Encore: keep any phrase you play — after an improvisation, an exercise or a free recording — trim up to 8 bars, set a target tempo and take it through all 12 keys until it is yours. On keys, guitar, bass and voice, by MIDI or microphone; a teacher can play a phrase and assign it.',
+      'My recordings: every take is kept on this device by date — rename, star, folders, playlists, loop a span, slow it down without changing pitch, compare two takes, and listen with the screen locked.',
+      'Grace notes and two voices in one hand in the notation; triad pairs in depth (patterns, voicings, lines, an ear level and a game); intros, endings, a ballad ladder and a whole tune in one take; two new harmony games; clearer drum and ear feedback.',
+    ],
+    he: [
+      'הדרן: שומרים כל משפט שניגנתם — אחרי אלתור, תרגיל או הקלטה חופשית — חותכים עד 8 תיבות, קובעים טמפו יעד ועוברים בכל 12 הסולמות עד שהוא שלכם. בקלידים, גיטרה, בס ושירה, ב־MIDI או במיקרופון; מורה יכול לנגן משפט ולהטיל אותו.',
+      'ההקלטות שלי: כל ביצוע נשמר במכשיר לפי תאריך — שם, כוכב, תיקיות, רשימות השמעה, לולאה על קטע, האטה בלי לשנות גובה, השוואה בין שני ביצועים, והאזנה עם מסך נעול.',
+      'תווי חן ושני קולות ביד אחת בתווים; זוגות משולשים לעומק (תבניות, קולות, קווים, שמיעה ומשחק); פתיחות, סיומים, סולם בלדות ושיר שלם בביצוע אחד; שני משחקי הרמוניה חדשים; משוב ברור יותר בתופים ובשמיעה.',
+    ],
+  },
+  {
     version: '0.98.0',
     date: '2026-11-16',
     en: [
