@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.99.3',
+    date: '2026-11-17',
+    en: [
+      'A new look for every icon and button: layered paper drawings in one language, with small, gentle motion when you tap (none if your device asks for reduced motion).',
+      'Encore challenges: share a phrase you mastered and challenge friends to beat your tempo. React with "Encore!" plus groove, sound or idea, and give a friend a fermata, dedicate a phrase, or invite them to practise together now.',
+      'Deeper content: harmonise, embellish and reharmonise a tune, more public-domain tunes, and a tune ladder. Fixes: profile saving, Community tabs on small screens, and bottom-bar labels.',
+    ],
+    he: [
+      'מראה חדש לכל האייקונים והכפתורים: ציורי נייר בשכבות בשפה אחת, עם תנועה קטנה ועדינה בלחיצה (בלי תנועה אם המכשיר מבקש להפחית תנועה).',
+      'אתגרי הדרן: משתפים משפט שכבשתם ומאתגרים חברים לעבור את הטמפו שלכם. מגיבים ב"הדרן!" ועוד גרוב, צליל או רעיון, ונותנים לחבר פרמטה, מקדישים לו משפט או מזמינים אותו לתרגל איתכם עכשיו.',
+      'עוד עומק בתוכן: הרמוניזציה, קישוט והרמוניזציה מחדש של שיר, עוד שירים מנחלת הכלל, וסולם שירים. תיקונים: שמירת הפרופיל, לשוניות הקהילה במסכים קטנים ותוויות הסרגל התחתון.',
+    ],
+  },
+  {
     version: '0.99.2',
     date: '2026-11-16',
     en: ['Your measured practice time and your notes now travel with your results to every device you sign in on.'],

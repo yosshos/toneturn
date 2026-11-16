@@ -2,7 +2,9 @@
 // sheets and thick strips (no hairlines), reading on every button surface in both themes (≥ 3:1, never yellow on
 // white), with a tap motion of the vocabulary; and no text glyph or thin line icon is left standing in for one.
 import { describe, expect, it } from 'vitest';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync as readRaw, statSync } from 'node:fs';
+// CRLF checkouts (Windows) read as LF so CSS/selector matching is stable.
+const readFileSync = (f: string, enc: 'utf8') => readRaw(f, enc).split(String.fromCharCode(13, 10)).join(String.fromCharCode(10));
 import { join } from 'node:path';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
