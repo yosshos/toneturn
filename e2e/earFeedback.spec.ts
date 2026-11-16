@@ -149,6 +149,18 @@ for (const lang of ['en', 'he'] as const) {
     await page.waitForTimeout(1200);
     await expect(page.locator('[data-streak-sheet]')).toHaveCount(0);
     await expect(page.locator('.streak-celebrate')).toHaveCount(0);
+    // the recap in the v2 palette: no gold marks, no lemon / pale-yellow insight card
+    const pal = await page.evaluate(() => {
+      const rgb = (s: string) => (s.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+      const yellowish = (s: string) => {
+        const [r, g, b] = rgb(s);
+        return r > 180 && g > 150 && b < 150 && r - b > 60;
+      };
+      const marks = [...document.querySelectorAll('.recap-mark')].map((e) => getComputedStyle(e).color);
+      const ins = document.querySelector('.coach-insight') as HTMLElement | null;
+      return { goldMark: marks.some((c) => { const [r, g, b] = rgb(c); return r > 110 && g > 70 && b < 40 && r - b > 80; }), insYellow: ins ? yellowish(getComputedStyle(ins).backgroundColor) : false, insGradient: ins ? getComputedStyle(ins).backgroundImage !== 'none' : false };
+    });
+    expect(pal).toEqual({ goldMark: false, insYellow: false, insGradient: false });
     await shot(page, `recap-${lang}`);
     for (let i = 0; i < 3 && (await page.locator('[data-recap-next]').isVisible().catch(() => false)); i++) {
       await page.locator('[data-recap-next]').click();
@@ -168,6 +180,10 @@ for (const lang of ['en', 'he'] as const) {
     expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.y + box!.height).toBeLessThanOrEqual(721);
     expect(box!.width).toBeLessThanOrEqual(321);
+    // the week strip's day letters are in the app's language (Hebrew letters on a Hebrew screen)
+    const days = await sheet.locator('.week-strip li span').allTextContents();
+    expect(days).toHaveLength(7);
+    for (const d of days) expect(d).toMatch(lang === 'he' ? /^[אבגדהוש]$/ : /^[SMTWF]$/);
     await shot(page, `streak-sheet-${lang}`);
     await page.locator('[data-streak-continue]').click();
     await expect(sheet).toHaveCount(0);
@@ -192,6 +208,9 @@ for (const lang of ['en', 'he'] as const) {
     const on = await page.locator('[data-gd-root="0"]').evaluate((e) => ({ bg: getComputedStyle(e).backgroundColor, fg: getComputedStyle(e).color }));
     expect(on.bg).toBe('rgb(30, 16, 51)');
     expect(on.fg).toBe('rgb(251, 247, 255)');
+    // the current cell is edged in ink, not the voice course's teal
+    const cur = await page.locator('.gd-cell.cur').first().evaluate((e) => getComputedStyle(e).borderTopColor);
+    expect(cur).not.toBe('rgb(18, 201, 180)');
     await fits(page);
     await shot(page, `grid-question-${lang}`);
     // fill blindly and check: the wrong parts get ✕, the right parts ✓

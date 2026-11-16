@@ -297,7 +297,13 @@ html[data-motion='reduced'] .dn-cue-ring { opacity: 1; }
 .ir-wave rect.on { fill: var(--purple); }
 /* hands together (one screen): one system — the RH and LH lines of the same bars — slightly shorter, with the chords and
    the pager, inside the score box with no inner scroll */
-.drills-screen[data-drills='run'] .drill-staff.ht .note-staff svg { max-height: clamp(62px, 11.5vh, 140px); }
+/* (the staves are cropped to their music and one bar a system on a phone, so the cap no longer shrinks the heads) */
+.drills-screen[data-drills='run'] .drill-staff.ht .note-staff svg { max-height: 120px; }
+/* the system spends the screen's width: the page's second gutter and the card's inner padding go (one 16 px gutter left) */
+@media (max-width: 399px) {
+  .drills-screen[data-drills='run'] .drill-staff.ht { margin-inline: -14px; }
+  .drills-screen[data-drills='run'] .drill-staff.ht .note-staff { padding-inline: 3px; }
+}
 .drills-screen[data-drills='run'] .drill-staff.ht { gap: 4px; }
 .drills-screen[data-drills='run'] .drill-staff.ht .tab-pager { min-height: 36px; }
 .drills-screen[data-drills='run'] .drill-staff.ht .tab-pager .icon-btn { width: 36px; height: 36px; }

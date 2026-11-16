@@ -86,6 +86,20 @@ export function drawMarks(svg: SVGSVGElement | null, spots: MarkSpot[], kind: 's
 }
 
 /**
+ * Played notes that are not in the score (§4.1 "extra note"): a small ink ✕ on a line above the staff (or the tab's top
+ * string) at the time it was played, no head. `xs` in the SVG's units; `y` the row's centre. Its own layer.
+ */
+export function drawExtras(svg: SVGSVGElement | null, xs: number[], y: number): void {
+  if (!svg) return;
+  svg.querySelector('g.mk-extra')?.remove();
+  if (!xs.length) return;
+  const g = el('g', { 'data-extras': xs.length }, 'mk-extra');
+  const d = 3.4;
+  for (const x of xs) g.appendChild(el('path', { d: `M${x - d} ${y - d}L${x + d} ${y + d}M${x + d} ${y - d}L${x - d} ${y + d}`, 'data-extra': 1 }, 'mk-x mk-extra-x'));
+  svg.appendChild(g);
+}
+
+/**
  * The count-in cue (§4.1 now-cue): the first note head pulses once (scale 1.15, no glow) while the count runs; with
  * reduced motion a static ink outline instead. Its own layer over the engraved music.
  */

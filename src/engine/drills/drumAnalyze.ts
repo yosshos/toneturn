@@ -4,7 +4,7 @@
 // Verdict: clean = every rule of the tier met; almost = one rule missed by < 25 %; not = otherwise. Pure.
 
 import type { Drill, DrumMetrics, DrumVoice, Limb, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
-import { expTimeMs, npsOf } from './analyze';
+import { beatAtMs, expTimeMs, npsOf } from './analyze';
 import { classOf, inDynBand, velBand, velRange, VOICE_NAME, VOICE_NOTE, type HatState, type KitProfile } from '../drumKit';
 import { expandForm } from './roadmap';
 import { timeMapOf } from './timeline';
@@ -167,7 +167,8 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
   });
   // A tom for another tom (same class) is also the wrong voice.
   for (const [i, j] of mExp) if (!noMidi && exp[i].n.voice && hits[j].voice && classOf(exp[i].n.voice!) === 'tom' && hits[j].voice !== exp[i].n.voice) wrong++;
-  const extra = hits.filter((h, j) => !usedHit.has(j) && !h.unsure).length;
+  const extraHits = hits.filter((h, j) => !usedHit.has(j) && !h.unsure);
+  const extra = extraHits.length;
   // Acoustic: the share of matched notes whose drum was not told apart.
   const unsureN = ac ? [...mExp.values()].filter((j) => hits[j].unsure).length : 0;
   const unsure = ac ? (mExp.size ? unsureN / mExp.size : hits.length ? 1 : 0) : null;
@@ -590,6 +591,8 @@ export function analyzeDrumTake(drill: Drill, bpm: number, hits0: DrumTakeHit[],
     verdict,
     why: drumWhy(dm, verdict),
     drum: dm,
+    // Extra hits (no note due): a pink ✕ in their drum's lane where they were played (COURSE-FEEDBACK-UI §4.1).
+    ...(extraHits.length ? { extras: extraHits.filter((h) => h.voice).map((h) => ({ pitch: 0, on: h.on, beat: Math.max(0, beatAtMs(drill, h.on, bpm)), voice: h.voice! })) } : {}),
   };
 }
 

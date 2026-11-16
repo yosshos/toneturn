@@ -50,6 +50,12 @@ export function runDays(st: StreakState, today: string): Set<string> {
   return out;
 }
 
+/** A day's letter in the app's language (the page's lang, not the browser's locale): א–ש in Hebrew, S M T … in English. */
+export function dayLetter(day: string, lang: 'he' | 'en' = typeof document !== 'undefined' && document.documentElement.lang === 'he' ? 'he' : 'en'): string {
+  const w = new Date(day + 'T12:00:00').getDay();
+  return (lang === 'he' ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'])[w];
+}
+
 function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: Strings }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
   const freeze = new Set(st.freezeDays);
@@ -61,7 +67,7 @@ function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: String
         const done = run.has(d);
         return (
           <li key={d} className={`${done ? 'done' : ''} ${freeze.has(d) ? 'freeze' : ''} ${isToday ? 'today' : ''}`} style={{ ['--i' as string]: i }}>
-            <span>{new Date(d + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'narrow' })}</span>
+            <span>{dayLetter(d)}</span>
             <i aria-hidden="true">{freeze.has(d) ? <Icon k="snow" size={14} /> : done ? <Icon k="flame" size={14} /> : null}</i>
           </li>
         );

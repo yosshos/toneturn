@@ -123,11 +123,13 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live, cue = fa
   // The review needs the room (error map, chips): taller lanes show one line there, the pager pages the rest.
   const shown = Array.from({ length: Math.min(result && view === 'lanes' ? 1 : 2, lines - from) }, (_, i) => from + i);
   const notes = shownNotes(drill);
+  // Extra hits (no note due): a pink ✕ in their drum's lane (lanes), a small ✕ above the staff (notation).
+  const extras = (result ? result.extras : live?.extras) ?? [];
   return (
-    <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
+    <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars} data-drum-extras={extras.length}>
       {drill.form && <DrumRoadMap drill={drill} beat={beat} lang={lang} />}
       {shown.map((li) =>
-        view === 'staff' ? <StaffLine key={li} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} lang={lang} />,
+        view === 'staff' ? <StaffLine key={li} extras={extras} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} extras={extras} drill={drill} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} lang={lang} />,
       )}
       {pager}
       {view === 'lanes' && <LaneKey lang={lang} />}
@@ -201,7 +203,8 @@ const yOf = (step: number) => 60 - step * 4;
 /** Gap-click drills (Time Lock, the gap-click drills): is this bar one of the silent ones (no click)? */
 export const silentBar = (drill: Drill, bar: number): boolean => drill.click === 'gap' && !!drill.gap && bar % (drill.gap[0] + drill.gap[1]) >= drill.gap[0];
 
-function StaffLine({ drill, notes, line, geo, marks, pmarks, cueBeat, beat, sticking, lang }: { drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; sticking: boolean; lang: Lang }) {
+type Extras = NonNullable<TakeMetrics['extras']>;
+function StaffLine({ drill, notes, line, geo, marks, pmarks, cueBeat, beat, sticking, lang, extras = [] }: { extras?: Extras; drill: Drill; notes: ShownNote[]; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; sticking: boolean; lang: Lang }) {
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const repeat = new Set(drill.drum?.repeatBars ?? []);
@@ -429,6 +432,12 @@ function StaffLine({ drill, notes, line, geo, marks, pmarks, cueBeat, beat, stic
           </g>
         );
       })}
+      {extras
+        .filter((e) => e.beat >= b0 - 1e-6 && e.beat < b0 + per - 1e-6)
+        .map((e, i) => {
+          const x = xOf(e.beat);
+          return <path key={`ex${i}`} d={`M${x - 3.4} 14.6l6.8 6.8M${x + 3.4} 14.6l-6.8 6.8`} className="mk-x mk-extra-x" data-extra={e.voice} />;
+        })}
       {cursor !== null && <line x1={cursor} x2={cursor} y1={14} y2={74} className="dn-cursor" />}
     </svg>
   );
@@ -525,7 +534,7 @@ function LaneKey({ lang }: { lang: Lang }) {
   );
 }
 
-function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; lang: Lang }) {
+function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, extras = [] }: { extras?: Extras; drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; lang: Lang }) {
   // Slice 6 (§4.5): lanes 26 units (≈ 22 px on a phone), the drums as icons in a narrow column, cymbals on top and the
   // kick as a short bar across the bottom of the lanes; ✕ cymbal heads, ● drum heads, hollow ghosts, thick accents.
   // Its own (narrower) width: the lanes then scale up to about 22 px on a 320 px phone.
@@ -601,6 +610,21 @@ function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat }: { drill: D
           </g>
         );
       })}
+      {extras
+        .filter((e) => e.voice && e.beat >= b0 - 1e-6 && e.beat < b0 + per - 1e-6)
+        .map((e, i) => {
+          // an extra hit: a pink disc with an ink ✕ in its drum's lane (the kick strip for the kick; above the lanes when
+          // the drum has no lane in this groove)
+          const x = xOf(e.beat);
+          const li = e.voice === 'kick' ? -2 : lanes.indexOf(laneOf(e.voice!));
+          const y = li === -2 && hasKick ? kickY + KH / 2 : li >= 0 ? 3 + li * H + (H - 2) / 2 : 4;
+          return (
+            <g key={`ex${i}`} className="dl-extra" data-extra={e.voice}>
+              <circle cx={x} cy={y} r={5.2} className="dl-extra-bg" />
+              <path d={`M${x - 2.8} ${y - 2.8}l5.6 5.6M${x + 2.8} ${y - 2.8}l-5.6 5.6`} className="mk-x" />
+            </g>
+          );
+        })}
       {cursor !== null && <line x1={cursor} x2={cursor} y1={0} y2={h} className="dn-cursor" />}
     </svg>
   );

@@ -835,6 +835,9 @@ export interface TakeMetrics {
   /** Voice-leading distance (voicing families). */
   voiceLeading: number | null;
   perNote: NoteResult[];
+  /** Played notes that are not in the score (matched to no written note): pitch, onset (ms) and drill beat — drawn as a
+   *  small ✕ above the staff (drums: a pink ✕ in the lane of `voice`). Absent when there are none. */
+  extras?: { pitch: number; on: number; beat: number; voice?: DrumVoice }[];
   /** Grace notes (engine/drills/grace.ts): played / written, and the indexes (into notes) of the main notes whose graces were left out. */
   graces?: { ok: number; total: number; missed: number[] };
   verdict: Verdict;
