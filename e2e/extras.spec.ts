@@ -90,6 +90,19 @@ for (const lang of ['en', 'he'] as const)
       const box = await page.locator(EXTRA).first().boundingBox();
       expect(box!.x).toBeGreaterThanOrEqual(0);
       expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+      // lanes: an extra hit on a drum with no lane (the crash in a rock groove) sits in the "other drum" strip, whole
+      // inside the lanes' box (not clipped at the top)
+      if (plays === 'drums' && view === 'lanes') {
+        const other = page.locator('.drum-lanes [data-extra-other] .dl-extra-bg').first();
+        expect(await other.count()).toBeGreaterThan(0);
+        if (await other.count()) {
+          const ob = (await other.boundingBox())!;
+          const svg = (await page.locator('.drum-lanes:has([data-extra-other])').first().boundingBox())!;
+          expect(ob.y).toBeGreaterThanOrEqual(svg.y - 0.5);
+          expect(ob.y + ob.height).toBeLessThanOrEqual(svg.y + svg.height + 0.5);
+          await expect(page.locator('.drum-lanes [data-other-lane]').first()).toBeVisible();
+        }
+      }
       expect(await tall(page)).toBeLessThanOrEqual(2);
       if (SHOTS) await page.screenshot({ path: `docs/ui-shots-v3/extras-review-${plays}-${view}-${lang}.png` });
     });
