@@ -35,6 +35,7 @@ import { UNITS as HEADS_UNITS } from './mini/heads'; // AUDIT-DEPTH-3: heads
 // AUDIT-DEPTH-3: improvising under rule cards and jazz in context.
 import { UNITS as SOLO_RULES } from './mini/soloRules';
 import { UNITS as JAZZ_CONTEXT } from './mini/jazzContext';
+import { UNITS as GIG } from './mini/gig'; // AUDIT-DEPTH-3 #11, #12, C8
 import { UNITS as HARRIS_LINES } from './mini/harrisLines'; // Barry Harris lines (Part D)
 import { UNITS as STAGE_C } from './mini/stageC'; // STAGE C (AUDIT-6): the advanced endings
 import { UNITS as REHARM_COLOR } from './mini/reharmColor'; // HARMONY-REHARM
@@ -83,6 +84,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...HEADS_UNITS,
   ...SOLO_RULES,
   ...JAZZ_CONTEXT,
+  ...GIG,
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',

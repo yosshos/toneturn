@@ -248,6 +248,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'ct-degree': 'jazz', mediants: 'jazz', 'pedal-ear': 'jazz', 'approach-chord': 'jazz', 'counter-line': 'jazz', 'modern-color': 'jazz', 'func-color': 'jazz', 'modal-mix': 'jazz',
   // Solo jazz piano by ear (Siskind, SISKIND-SOLO-PIANO C1–C3).
   'lh-tex-ear': 'jazz', 'solo-tex-ear': 'jazz', 'comp-rhythm-ear': 'jazz',
+  // AUDIT-DEPTH-3 #12: intros and endings by ear.
+  'intro-ending': 'jazz',
   // AUDIT-6 §2–3 (course membership rule, courses.ts inCourse): the jazz ear that sat in Ear — the advanced games'
   // jazz-ear topics (voicing types by ear, ii–V chains), rootless and upper-structure voicings, reading a standard's
   // lead sheet — and the Jazz beginner band's blues on-ramp.
@@ -376,7 +378,9 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // AUDIT-DEPTH-3 C3/C4: a head on the bass from ~1330 (roots) to ~1710 (walking the Coltrane reharm).
   'b-tune': 9,
   // AUDIT-DEPTH-3: improvising under rule cards and jazz in context on the bass.
-  'b-solo': 8, 'b-ctx': 9 };
+  'b-solo': 8, 'b-ctx': 9,
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (fallback only: every level is placed by levelPlacement GIG_PLACEMENT).
+  'b-gig': 9 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -442,6 +446,8 @@ const KEYS_JAZZ_LATER: Record<string, number> = { 'k-sixdim': 9, 'k-bebop': 6, '
   // AUDIT-DEPTH-3: improvising under rule cards from ~1190 (guide tones) to the duo and the written chorus (~1880);
   // jazz in context (brothers, backdoor, superimposition, Coltrane sub, intros / endings, ballads) ~1330–1880.
   'k-solo': 7, 'k-ctx': 9,
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (fallback only: levelPlacement GIG_PLACEMENT places every level).
+  'k-gig': 9,
   // Barry Harris lines: every level is placed by KEYS_LEVEL_DIFF; this is only the fallback.
   'k-harrisline': 6,
   // Solo jazz piano (Siskind): every level is placed by KEYS_LEVEL_DIFF; these are only the fallbacks.
@@ -554,6 +560,8 @@ GUITAR_RANK['g-tune'] = 6;
 GUITAR_RANK['g-cmel'] = 7;
 // AUDIT-DEPTH-3: jazz in context with the Harris and theory families; improvising under rule cards with improvisation.
 GUITAR_RANK['g-ctx'] = 6;
+// AUDIT-DEPTH-3 #11, #12, C8: on the bandstand with the jazz-in-context family.
+GUITAR_RANK['g-gig'] = 6;
 GUITAR_RANK['g-solo'] = 1,
 // Barry Harris lines on the neck: with the Harris family (grades 6–9).
 GUITAR_RANK['g-harrisline'] = 6;

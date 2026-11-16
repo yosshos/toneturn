@@ -56,6 +56,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   // AUDIT-DEPTH-3: jazz in context and improvising under rule cards.
   'b-ctx': 'jazz',
   'b-solo': 'jazz',
+  // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand.
+  'b-gig': 'jazz',
 };
 /** Is a bass family shown for the player's track (absent / 'both' = every family)? */
 export const inBassTrack = (family: string, track?: 'jazz' | 'prog' | 'both'): boolean => !track || track === 'both' || !BASS_TRACK[family as BassFamilyId] || BASS_TRACK[family as BassFamilyId] === track;

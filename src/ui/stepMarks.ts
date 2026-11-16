@@ -175,6 +175,8 @@ export const TOPIC_MARK: Record<string, string> = {
   'lh-tex-ear': '1+10',
   'solo-tex-ear': '3/2',
   'comp-rhythm-ear': '1·2+',
+  // AUDIT-DEPTH-3 #12: intros and endings by ear (♭VI → ♭II → I).
+  'intro-ending': '♭6♭2I',
   // AUDIT-6 Stage B: the Ear course's beginnings — a rhythm echoed back, intervals down, root / 3rd / 5th, the changed note.
   'rhythm-echo': '♩♪→',
   'intervals-down': 'P5↓',
