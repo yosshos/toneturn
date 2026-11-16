@@ -116,6 +116,23 @@ export function expTimeMs(drill: Drill, beat: number, bpm: number): number {
   return beat * beatMs;
 }
 
+/**
+ * The drill beat at a time in ms (the inverse of expTimeMs, for drawing a played-only note where it was played): a
+ * binary search on the drill's own time map (a timeline), plain division otherwise.
+ */
+export function beatAtMs(drill: Drill, ms: number, bpm: number): number {
+  const beatMs = 60000 / bpm;
+  if (!hasTimeline(drill)) return ms / beatMs;
+  let lo = -2;
+  let hi = drill.beats + 2;
+  for (let k = 0; k < 40; k++) {
+    const mid = (lo + hi) / 2;
+    if (expTimeMs(drill, mid, bpm) < ms) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 // ───────────────────────────── alignment ─────────────────────────────
 
 interface Align {
@@ -126,6 +143,8 @@ interface Align {
   wrong: number;
   /** Played notes inside the take window. */
   valid: number[];
+  /** Played notes matched to nothing (not in the free bars): the extras ("wrong" counts them). */
+  extra: number[];
 }
 
 function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
@@ -221,8 +240,13 @@ function align(drill: Drill, bpm: number, played: PlayedNote[]): Align {
     }
   });
   // Free bars: the player's own notes are judged by freeStats, never "wrong".
-  for (const j of valid) if (!used.has(j) && !takenJ.has(j) && !inFreeBars(drill, bpm, played[j].on)) wrong++;
-  return { match, ok, wrong, valid };
+  const extra: number[] = [];
+  for (const j of valid)
+    if (!used.has(j) && !takenJ.has(j) && !inFreeBars(drill, bpm, played[j].on)) {
+      wrong++;
+      extra.push(j);
+    }
+  return { match, ok, wrong, valid, extra };
 }
 
 /** PIANO_JAZZ: is a played onset (ms) inside the player's free bars (from a quarter beat before each window)? */
@@ -462,7 +486,9 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // when that sat nearer the beat (an appoggiatura's main note comes late by design).
   const ga = absorbGraces(drill, beatMs, played1, (b) => expTimeMs(drill, b, bpm));
   const played = ga.played;
-  const { match, ok, wrong } = align(drill, bpm, played);
+  const { match, ok, wrong, extra } = align(drill, bpm, played);
+  // Played-only notes (not in the score): where and what, for the small ✕ above the staff (COURSE-FEEDBACK-UI §4.1).
+  const extras = extra.map((j) => ({ pitch: played[j].pitch, on: played[j].on, beat: Math.max(0, beatAtMs(drill, played[j].on, bpm)) })).sort((a, b) => a.on - b.on);
   const T = exp.map((n) => expTimeMs(drill, n.beat, bpm));
   const nExp = exp.length;
   const okCount = ok.filter(Boolean).length;
@@ -1084,6 +1110,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     perNote,
     verdict,
     why,
+    ...(extras.length ? { extras } : {}),
     ...(ga.graces.total ? { graces: ga.graces } : {}),
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),

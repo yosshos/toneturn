@@ -41,7 +41,10 @@ export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, patte
       const o = o0.dt !== undefined && Math.abs(o0.dt) > 50 ? { ...o0, dt: Math.sign(o0.dt) * W * 1.35 } : o0;
       if (o.skip || !n.voice) return;
       hits.push({ voice: o.dPitch ? (n.voice === 'snare' ? 'kick' : 'snare') : n.voice, on: expTimeMs(drill, n.beat, bpm) + (o.dt ?? 0), vel: n.accent ? 110 : n.ghost ? 30 : 80 });
+      // 'mixed': now and then an extra hit where nothing is due (a crash between the notes) — drawn as a pink ✕
+      if (pattern === 'mixed' && i % 11 === 7) hits.push({ voice: 'crash', on: expTimeMs(drill, n.beat + 0.37, bpm), vel: 90 });
     });
+    hits.sort((a, b) => a.on - b.on);
     return { m: analyzeDrumTake(drill, bpm, hits), played: hits.map((h) => ({ pitch: 38, on: h.on, off: null, vel: h.vel })), hits };
   }
   const played: PlayedNote[] = [];

@@ -66,7 +66,8 @@ export function ScoreView({
   const wrap = useRef<HTMLDivElement>(null);
   const [geo, setGeo] = useState<ScoreGeometry | null>(null);
   const [failed, setFailed] = useState(false);
-  const perLine = barsPerLine ?? (typeof window !== 'undefined' && window.innerWidth < 560 ? 2 : 4);
+  // A phone: one bar a system, so the grand staff's heads draw at 9 px or more (COURSE-FEEDBACK-UI follow-up).
+  const perLine = barsPerLine ?? (typeof window === 'undefined' ? 4 : window.innerWidth < 400 ? 1 : window.innerWidth < 560 ? 2 : 4);
   const markKey = marks ? [...marks.entries()].map(([k, v]) => `${k}${v}`).join(',') : '';
 
   useEffect(() => {
@@ -150,7 +151,8 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
   const keyPc = keyPcOf(piece.fifths);
   const keySpec = FIFTHS_KEY[Math.max(0, Math.min(14, piece.fifths + 7))];
   const hasL = bars.some((b) => b.hands.L.some((e) => e.midis.length));
-  const W = 900;
+  // the drawing's width follows the bars a system (≈ 300 units a bar up to 900): one bar on a phone scales to ~0.9
+  const W = Math.min(900, Math.max(1, perLine) * 300);
   const sysH = hasL ? 230 : 130;
   const lines = Math.ceil(bars.length / perLine);
   const H = lines * sysH + 20;

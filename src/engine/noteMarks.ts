@@ -39,6 +39,24 @@ export function markCounts(m: Pick<TakeMetrics, 'perNote'>, timingMs: number): R
   return out;
 }
 
+/**
+ * Where a played-only note goes on a drawn line: a fractional index into the line's items (`ats`, their start
+ * positions in time order; `end` the line's end, drawn as one more position). 2.5 = halfway from item 2 to the next item
+ * that starts later. Items starting together (two voices, a chord) share a position: the index is the group's first.
+ * Null when `q` is outside [half a beat before the first start, end).
+ */
+export function extraIndex(ats: number[], q: number, end: number): number | null {
+  if (!ats.length || q >= end - 1e-6) return null;
+  if (q < ats[0] - 1e-6) return q >= ats[0] - 0.5 ? 0 : null;
+  let i = 0;
+  for (let k = 0; k < ats.length; k++) if (ats[k] <= q + 1e-6) i = k;
+  while (i > 0 && Math.abs(ats[i - 1] - ats[i]) < 1e-6) i--;
+  let j = i + 1;
+  while (j < ats.length && ats[j] <= ats[i] + 1e-6) j++;
+  const b = j < ats.length ? ats[j] : end;
+  return b > ats[i] + 1e-6 ? i + Math.min(0.999, (q - ats[i]) / (b - ats[i])) : i;
+}
+
 /** Note-by-note marks for a sequence answer (degrees / names): which notes of the melody were right. */
 export function seqMarks(q: Question, answer: unknown): NoteMark[] | undefined {
   if ((q.kind !== 'degree-seq' && q.kind !== 'name-seq') || answer === undefined || answer === null) return undefined;

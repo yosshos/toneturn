@@ -131,7 +131,8 @@ for (const lang of ['en', 'he'] as const)
       await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
       await seed(page, lang, plays);
       await openLevel(page, lang, family, level);
-      await page.waitForTimeout(600);
+      // (VexFlow loads on first use: wait for the heads rather than a fixed time)
+      await expect.poll(() => page.locator('.drill-staff .vf-notehead, .drill-staff .vf-tabnote, .dn-head, .dn-x, .dl-hit').count(), { timeout: 15_000 }).toBeGreaterThan(0);
       // the score is drawn (VexFlow staff / tab with heads, or the drum SVG), not an empty box
       const drawn = await page.evaluate(() => {
         const svg = document.querySelector('.drill-staff svg, .drum-score svg, svg.drum-lanes') as SVGSVGElement | null;
@@ -565,60 +566,123 @@ for (const lang of ['en', 'he'] as const)
     await expect(page.locator('[data-is-mode="trade"]')).toHaveAttribute('aria-selected', 'true');
   });
 
-// Hands together, one screen: the first hands-together level of every keys family. One system at a time (RH + LH of the
-// same bars, paged), no staff card scrolled away inside the score box or covered by the pocket meter, at 320×720.
+// Hands together, one screen: the first hands-together level of every keys family, and the two-voice pieces. One
+// system at a time (RH + LH of the same bar on a phone, paged), no staff card scrolled away inside the score box or
+// covered by the pocket meter, heads at 9 px or more, at 320×720. In groups of five, each walk with its own time budget.
 const HT_LEVELS: [string, string][] = [
   ['k-first', 'k-first-2'], ['scales', 'scales-3'], ['arpeggios', 'arpeggios-3'], ['cadences', 'cadences-1'], ['fingers', 'fingers-2'],
   ['control', 'control-7'], ['advanced', 'advanced-2'], ['k-sixdim', 'k-sixdim-3'], ['voicings', 'voicings-9'], ['k-reharm', 'k-reharm-1'],
   ['k-theory', 'k-theory-2'], ['jazz', 'jazz-4'], ['k-bebop', 'k-bebop-7'], ['accomp', 'accomp-6'], ['k-rhythm', 'k-rhythm-1'],
   ['k-indep', 'k-indep-4'], ['k-sharm', 'k-sharm-13'], ['k-tune', 'k-tune-5'], ['k-ctx', 'k-ctx-12'], ['k-harrisline', 'k-harrisline-8'],
   ['k-ctone', 'k-ctone-4'], ['k-mediant', 'k-mediant-6'], ['k-organ', 'k-organ-1'], ['k-tex', 'k-tex-1'], ['k-read', 'k-read-4'],
+  ['k-classic', 'k-classic-2'], ['k-classic', 'k-classic-6'], ['k-read', 'k-read-11'],
 ];
+/** The drawn head size (px) of each staff on screen: one staff space (10 units) at the SVG's real scale (it meets its box). */
+const staffHeads = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('.drill-staff .note-staff svg')].map((svg) => {
+      const vb = svg.getAttribute('viewBox')!.split(' ').map(Number);
+      const r = svg.getBoundingClientRect();
+      return Math.min(r.width / vb[2], r.height / vb[3]) * 10;
+    }),
+  );
+const HT_GROUPS = Array.from({ length: Math.ceil(HT_LEVELS.length / 5) }, (_, g) => HT_LEVELS.slice(g * 5, g * 5 + 5));
 for (const lang of ['en', 'he'] as const)
-  test(`hands together: no staff card covered by the meter or scrolled away, every keys family (${lang})`, async ({ page }) => {
-    test.setTimeout(600_000);
+  HT_GROUPS.forEach((group, gi) =>
+    test(`hands together: one system, heads ≥ 9 px, nothing covered or scrolled away (group ${gi + 1}: ${group.map((x) => x[1]).join(' ')}, ${lang})`, async ({ page }) => {
+      test.setTimeout(360_000);
+      await seed(page, lang, 'keys');
+      const checked: string[] = [];
+      for (const [family, level] of group) {
+        await page.goto('about:blank');
+        await page.goto(`/?unlock=all&lang=${lang}#/drills`);
+        await page.locator('[data-topic="all"]').click();
+        const fam = page.locator(`[data-family="${family}"]`);
+        // (a family hidden in this build, e.g. by the verified-content gate, is skipped)
+        if (!(await fam.isVisible({ timeout: 3000 }).catch(() => false))) continue;
+        await fam.click();
+        const card = page.locator(`[data-level="${level}"]`);
+        if (!(await card.count())) continue;
+        await card.scrollIntoViewIfNeeded();
+        if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
+        const start = page.locator(`[data-level-start="${level}"]`);
+        if (!(await start.isVisible({ timeout: 3000 }).catch(() => false))) continue;
+        await start.click();
+        await page.locator('[data-brief-play]').click({ timeout: 3000 }).catch(() => {});
+        if (!(await page.locator('[data-drills="run"]').isVisible({ timeout: 8000 }).catch(() => false))) continue;
+        await page.waitForTimeout(700);
+        const g = await page.evaluate(() => {
+          const banner = document.querySelector('.sim-banner') as HTMLElement | null;
+          if (banner) banner.style.display = 'none';
+          const box = document.querySelector('.drill-staff') as HTMLElement | null;
+          const pocket = document.querySelector('.pocket') as HTMLElement | null;
+          const cards = [...document.querySelectorAll('.drill-staff .note-staff')].map((e) => e.getBoundingClientRect());
+          return {
+            ht: !!document.querySelector('.drill-staff.ht'),
+            cards: cards.length,
+            inner: box ? box.scrollHeight - box.clientHeight : 0,
+            boxBottom: box ? box.getBoundingClientRect().bottom : 0,
+            lowest: cards.length ? Math.max(...cards.map((c) => c.bottom)) : 0,
+            pocketTop: pocket ? pocket.getBoundingClientRect().top : 9999,
+            tall: document.scrollingElement!.scrollHeight - innerHeight,
+          };
+        });
+        if (!g.cards) continue;
+        checked.push(level);
+        expect(g.inner, `${level}: staff cards scroll inside the score box`).toBeLessThanOrEqual(2);
+        expect(g.lowest, `${level}: a staff card is cut off by the score box`).toBeLessThanOrEqual(g.boxBottom + 1);
+        expect(g.lowest, `${level}: a staff card is covered by the meter`).toBeLessThanOrEqual(g.pocketTop + 1);
+        expect(g.tall, `${level}: taller than the screen`).toBeLessThanOrEqual(2);
+        if (g.ht) {
+          const heads = await staffHeads(page);
+          expect(Math.min(...heads), `${level}: heads ${heads.map((x) => x.toFixed(1)).join('/')} px`).toBeGreaterThanOrEqual(8.95);
+        }
+        if (level === 'scales-3') await shot(page, `s5-hands-together-${lang}`);
+        if (level === 'k-classic-6') await shot(page, `ht-prelude-${lang}`);
+      }
+      expect(checked.length, `checked ${checked.join(', ')}`).toBeGreaterThanOrEqual(Math.min(2, group.length));
+    }),
+  );
+
+// The two-voice pieces after a take: heads still ≥ 9 px, the review on the same screen with Next visible.
+for (const lang of ['en', 'he'] as const)
+  for (const [family, level] of [['k-classic', 'k-classic-2'], ['k-classic', 'k-classic-6'], ['k-read', 'k-read-11']] as const)
+    test(`hands together review: heads ≥ 9 px, one screen, Next visible (${level}, ${lang})`, async ({ page }) => {
+      await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'mixed'));
+      await seed(page, lang, 'keys');
+      await openLevel(page, lang, family, level);
+      await page.waitForTimeout(600);
+      for (const h of await staffHeads(page)) expect(h, 'before').toBeGreaterThanOrEqual(8.95);
+      await fakeTakeRun(page, 'mixed');
+      for (const h of await staffHeads(page)) expect(h, 'review').toBeGreaterThanOrEqual(8.95);
+      const o = await overflow(page);
+      expect(o.tall, 'review taller than the screen').toBeLessThanOrEqual(2);
+      const next = await page.locator('.take-review [data-next]').boundingBox();
+      expect(next!.y + next!.height).toBeLessThanOrEqual(720);
+      if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+      await shot(page, `ht-review-${level}-${lang}`);
+    });
+
+// The piece coach's grand staff: one bar a system on a phone, heads ≥ 9 px (Minuet in G, Prelude in C).
+for (const lang of ['en', 'he'] as const)
+  test(`piece coach: the grand staff's heads ≥ 9 px on a phone (${lang})`, async ({ page }) => {
     await seed(page, lang, 'keys');
-    const checked: string[] = [];
-    for (const [family, level] of HT_LEVELS) {
+    for (const id of ['minuet-g', 'prelude-c']) {
       await page.goto('about:blank');
-      await page.goto(`/?unlock=all&lang=${lang}#/drills`);
-      await page.locator('[data-topic="all"]').click();
-      const fam = page.locator(`[data-family="${family}"]`);
-      // (a family hidden in this build, e.g. by the verified-content gate, is skipped)
-      if (!(await fam.isVisible({ timeout: 3000 }).catch(() => false))) continue;
-      await fam.click();
-      const card = page.locator(`[data-level="${level}"]`);
-      if (!(await card.count())) continue;
-      await card.scrollIntoViewIfNeeded();
-      if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
-      const start = page.locator(`[data-level-start="${level}"]`);
-      if (!(await start.isVisible({ timeout: 3000 }).catch(() => false))) continue;
-      await start.click();
-      await page.locator('[data-brief-play]').click({ timeout: 3000 }).catch(() => {});
-      if (!(await page.locator('[data-drills="run"]').isVisible({ timeout: 8000 }).catch(() => false))) continue;
-      await page.waitForTimeout(700);
-      const g = await page.evaluate(() => {
-        const banner = document.querySelector('.sim-banner') as HTMLElement | null;
-        if (banner) banner.style.display = 'none';
-        const box = document.querySelector('.drill-staff') as HTMLElement | null;
-        const pocket = document.querySelector('.pocket') as HTMLElement | null;
-        const cards = [...document.querySelectorAll('.drill-staff .note-staff')].map((e) => e.getBoundingClientRect());
-        return {
-          cards: cards.length,
-          inner: box ? box.scrollHeight - box.clientHeight : 0,
-          boxBottom: box ? box.getBoundingClientRect().bottom : 0,
-          lowest: cards.length ? Math.max(...cards.map((c) => c.bottom)) : 0,
-          pocketTop: pocket ? pocket.getBoundingClientRect().top : 9999,
-          tall: document.scrollingElement!.scrollHeight - innerHeight,
-        };
+      await page.goto(`/?unlock=all&lang=${lang}#/pieces`);
+      await page.locator(`[data-pd-piece="${id}"]`).click();
+      // the setup page: start practising
+      await page.getByRole('button', { name: /start|begin|להתחיל/i }).last().click({ timeout: 5000 }).catch(() => {});
+      const svg = page.locator('[data-score] svg').first();
+      await expect(svg).toBeVisible();
+      await page.waitForTimeout(400);
+      const h = await svg.evaluate((s) => {
+        const vb = s.getAttribute('viewBox')!.split(' ').map(Number);
+        const r = s.getBoundingClientRect();
+        return Math.min(r.width / vb[2], r.height / vb[3]) * 10;
       });
-      if (!g.cards) continue;
-      checked.push(level);
-      expect(g.inner, `${level}: staff cards scroll inside the score box`).toBeLessThanOrEqual(2);
-      expect(g.lowest, `${level}: a staff card is cut off by the score box`).toBeLessThanOrEqual(g.boxBottom + 1);
-      expect(g.lowest, `${level}: a staff card is covered by the meter`).toBeLessThanOrEqual(g.pocketTop + 1);
-      expect(g.tall, `${level}: taller than the screen`).toBeLessThanOrEqual(2);
-      if (level === 'scales-3') await shot(page, `s5-hands-together-${lang}`);
+      expect(h, `${id} heads px`).toBeGreaterThanOrEqual(8.95);
+      expect((await overflow(page)).wide).toBeLessThanOrEqual(1);
+      await shot(page, `coach-${id}-${lang}`);
     }
-    expect(checked.length, `checked ${checked.join(', ')}`).toBeGreaterThanOrEqual(10);
   });

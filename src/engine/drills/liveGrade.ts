@@ -45,6 +45,8 @@ export interface LiveTake {
    * size (the review's handsAbs), `mean` its sign (+ = the left hand first). Null with one hand or no shared beat yet.
    */
   hands: { abs: number; mean: number } | null;
+  /** Played notes not in the score, settled (LIVE_LAG_MS old): drawn as a small ✕ above the staff / in the drum lane. */
+  extras: NonNullable<TakeMetrics['extras']>;
   /** Settled notes so far / all expected. */
   done: number;
   total: number;
@@ -65,7 +67,7 @@ const LIMB_ORDER: Limb[] = ['RH', 'LH', 'RF', 'LF'];
  * The live state from an analysis of the take so far (`m`, run on the onsets played up to `nowMs`, the take's clock).
  * A note is settled once it is matched and LIVE_LAG_MS old, or once its match window has passed unmatched.
  */
-export function liveGrade(drill: Drill, m: Pick<TakeMetrics, 'perNote' | 'nps' | 'drum'>, bpm: number, nowMs: number): LiveTake {
+export function liveGrade(drill: Drill, m: Pick<TakeMetrics, 'perNote' | 'nps' | 'drum' | 'extras'>, bpm: number, nowMs: number): LiveTake {
   const win = markWindow(m);
   const half = 30000 / bpm;
   const settled: { r: NoteResult; t: number; mark: NoteMark }[] = [];
@@ -88,7 +90,7 @@ export function liveGrade(drill: Drill, m: Pick<TakeMetrics, 'perNote' | 'nps' |
   let streak = 0;
   for (let k = byT.length - 1; k >= 0 && byT[k].mark === 'ok'; k--) streak++;
   const rows: PocketRow[] = pocketRowKeys(drill).map((key) => ({ key, mean: lastMean(byT.filter((s) => (key === 'R' || key === 'L' ? s.r.exp.hand === key : limbOf(s.r.exp) === key))) }));
-  return { perNote: settled.map((s) => s.r), win, mean: lastMean(byT), rows, streak, hands: handsGap(settled.map((s) => ({ r: s.r, t: s.t }))), done: settled.length, total: m.perNote.length };
+  return { perNote: settled.map((s) => s.r), win, mean: lastMean(byT), rows, streak, hands: handsGap(settled.map((s) => ({ r: s.r, t: s.t }))), extras: (m.extras ?? []).filter((x) => nowMs >= x.on + LIVE_LAG_MS), done: settled.length, total: m.perNote.length };
 }
 
 /** The ⇆ chip shows only when the hands are further apart than this (ms, §4.1). */

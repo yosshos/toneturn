@@ -25,6 +25,9 @@
 .drum-lanes .dl-x.missed { stroke-dasharray: 2.4 1.8; }
 .drum-lanes .dl-kick.accent { stroke-width: 2.4; }
 .lane-key-row { display: flex; align-items: center; gap: 8px; }
+/* an extra hit (no note due): pink disc, ink cross, in its lane */
+.drum-lanes .dl-extra-bg { fill: var(--pink); stroke: var(--ink-c); stroke-width: 1.2; }
+.drum-lanes .dl-extra .mk-x, .mk-extra-x { stroke: var(--ink-c); stroke-width: 1.8; stroke-linecap: round; fill: none; }
 .drum-lanes .dl-xbg { fill: transparent; stroke: none; }
 .drum-lanes .dl-xbg.ok, .drum-lanes .dl-xbg.early, .drum-lanes .dl-xbg.late { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1; }
 .drum-lanes .dl-xbg.wrong { fill: var(--pink); stroke: var(--ink-c); stroke-width: 1; }
@@ -82,3 +85,21 @@ html[data-motion='reduced'] .hw-wrong { animation: none; opacity: 0.9; }
 :root[data-theme] .hw-road .hw-note.kit-kick::after { display: none; }
 :root[data-theme] .hw-road .hw-note.kit-kick::before { font-size: 0.7rem; }
 :root[data-theme] .hw-road .hw-note.kit-kick .hw-tick { top: 50%; }
+
+/* ---------------------------------------------------------------- the recap and the grid: v2 palette, no gold / pale yellow */
+/* each row's mark: an ink glyph on a flat fill — teal right, lilac right on a retry, pink revealed, dashed skipped */
+:root[data-theme] .recap-row .recap-mark { display: inline-grid; place-items: center; align-self: start; width: 28px; height: 28px; border: 2px solid var(--ink-c); border-radius: 50%; background: var(--card); color: var(--ink-c); font: 700 0.95rem/1 var(--font); }
+/* (the doubled attribute outweighs v2's light-theme gold list, an :is() whose weight is its heaviest selector) */
+:root[data-theme][data-theme] .recap .recap-row.correct .recap-mark { background: var(--teal); color: var(--ink-c); }
+:root[data-theme][data-theme] .recap .recap-row.correct-retry .recap-mark { background: var(--lilac); color: var(--ink-c); }
+:root[data-theme][data-theme] .recap .recap-row.revealed .recap-mark { background: var(--pink); color: var(--ink-c); }
+:root[data-theme][data-theme] .recap .recap-row.skipped .recap-mark { border-style: dashed; }
+:root[data-theme][data-theme] .recap .recap-row.correct .recap-pts { color: var(--ink); }
+:root[data-theme][data-theme] .recap .eyebrow { color: var(--purple); }
+/* the insight card: paper with the ink outline (it was lemon-tinted; the flawless one a gold gradient) */
+:root[data-theme] .recap .coach-insight,
+:root[data-theme] .recap .coach-insight.pair { background: var(--card); outline: none; border: 2px solid var(--outline); border-radius: 14px; color: var(--ink); }
+:root[data-theme] .recap .coach-insight.flawless { background: color-mix(in srgb, var(--lilac) 30%, var(--card)); }
+/* grid dictation: the current cell in ink (teal is the voice course's colour); the bar number in ink */
+:root[data-theme] .gd-cell.cur { border-color: var(--ink-c); box-shadow: 0 0 0 1px var(--ink-c) inset; }
+:root[data-theme] .gd-n { color: var(--ink-soft); }

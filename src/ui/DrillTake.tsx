@@ -8,7 +8,7 @@ import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine
 import { analyzeTake, improvNotes, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult } from '../engine/drills/types';
 import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
-import { markOf, worstMark } from '../engine/noteMarks';
+import { extraIndex, markOf, worstMark } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
 import { analyzePedal, pedalDown, type PedalEvent } from '../engine/drills/pedal';
@@ -96,6 +96,17 @@ export function denseOnPhone(drill: Drill, bar: number): boolean {
     per.set(b, (per.get(b) ?? 0) + 1 + (n.graces?.length ?? 0));
   }
   return Math.max(0, ...per.values()) >= 8;
+}
+
+/**
+ * Hands together on a phone: the note spacing (staff units a column) that makes every staff of a system ~300 units wide
+ * — drawn about 274 px wide, heads at ~9.1 px (a staff space is 10 units): wide for a sparse bar (so it is not blown up
+ * and too tall), down to 13 for a bar of sixteenths. Columns = distinct onsets (two voices starting together share one).
+ */
+export const HT_UNITS = 300;
+export function htSpacing(items: { at: number }[]): number {
+  const cols = new Set(items.map((x) => Math.round(x.at * 1000))).size;
+  return Math.max(13, Math.min(210, Math.floor((HT_UNITS - 90) / Math.max(1, cols))));
 }
 
 /** A bass drill (bass course, the old g-bass family, or a bass custom drill). */
@@ -196,6 +207,13 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
             prior={pf ? { marks: l.map((c) => c.pmark), devs: l.map((c) => c.pdev ?? null) } : undefined}
             cue={cue && !result && firstCol && l.includes(firstCol) ? l.indexOf(firstCol) : undefined}
             spacing={phone() ? 30 : 40}
+            extras={(() => {
+              // played notes not in the tab: a small ✕ above the top string where they were played
+              const end = sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine;
+              const start = sl?.[from + i] ? sl[from + i].from / k : (from + i) * perLine;
+              const fs = ((result ? result.extras : live?.extras) ?? []).filter((e) => e.beat >= start - 1e-6).map((e) => extraIndex(l.map((c) => c.at), e.beat, end)).filter((f): f is number => f !== null);
+              return fs.length ? fs : undefined;
+            })()}
             ahead={beat >= 0 && !result && lineOf(beat) !== from + i}
             marks={result ? l.map((c) => c.mark) : undefined}
             win={result ? timingMs : (live?.win ?? timingMs)}
@@ -365,7 +383,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const sig = drill.pulse === 8 ? `${drill.meter}/8` : undefined;
   // COURSE-FEEDBACK-UI §4.1 (the score as hero): on a phone, one bar a line when a bar holds 8+ notes, so heads read
   // at ~9 px instead of ~5 px.
-  const per = meter * (meter >= 6 || denseOnPhone(drill, meter / qk) ? 1 : 2);
+  // Hands together on a phone: one bar a system always (two staves share the height; heads ≥ 9 px).
+  const htPhone = ht && phone();
+  const per = meter * (meter >= 6 || htPhone || denseOnPhone(drill, meter / qk) ? 1 : 2);
   const bq = (n: ExpNote) => n.beat * qk;
   const dq = (n: ExpNote) => n.dur * qk;
   // Mixed meters / a tempo map (prog timeline): lines of whole bars from the engine, bar lines and time signatures per bar.
@@ -522,11 +542,20 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       const now = cur >= lineStart - 0.03 && cur < lineEnd - 0.03 ? glidePos(items.map((x) => x.at), lineEnd, cur) : -1;
       // Look-ahead: while playing, every line but the one being played is drawn faded.
       const ahead = beat >= 0 && !result && now < 0;
+      // Played notes not in the score (§4.1): a small ✕ above this staff where they were played (hands together: the
+      // treble staff takes notes from middle C up, the bass staff the rest).
+      const exAts = items.map((x) => x.at);
+      const exIdx = (result ? result.extras : live?.extras ?? [])
+        ?.filter((e) => (!ht || (clef === 'bass') === e.pitch < 60) && e.beat * qk >= lineStart - 1e-6)
+        .map((e) => extraIndex(exAts, e.beat * qk, lineEnd))
+        .filter((f): f is number => f !== null);
       return (
         <NoteStaff
+          extras={exIdx?.length ? exIdx : undefined}
           now={now}
           ahead={ahead}
-          spacing={phone() ? 32 : 44}
+          spacing={htPhone ? htSpacing(items) : phone() ? 32 : 44}
+          fit={htPhone}
           key={`${clef}${li}`}
           notes={items.map((x) => (x.n ? x.n.pitch + shift : (x.p ?? 71)))}
           rests={items.map((x) => !x.n && x.p === undefined)}
