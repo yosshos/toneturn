@@ -11,7 +11,7 @@ export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phr
  * Until then a phrase travels as a 'piece' assignment whose ref is the phrase code (≤ 2000 chars, no audio), and the
  * client reads it back as kind 'phrase' — so the feature works on today's server.
  */
-export const PHRASE_ASSIGN_SYNCED = false;
+export const PHRASE_ASSIGN_SYNCED = true; // migration 20261203000000 applied by the owner 2026-11-16
 /** The longest phrase code the server takes now. */
 export const phraseRefLimit = () => (PHRASE_ASSIGN_SYNCED ? PHRASE_REF_MAX : LEGACY_REF_MAX);
 /** The teacher's attached audio lives here (private; class members read it through signed URLs). */

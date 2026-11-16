@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.99.1',
+    date: '2026-11-16',
+    en: ['A teacher can attach their own playing to a phrase assignment, and longer phrases (up to 16 bars) travel whole. When a phrase becomes yours, friends see it in their feed — grade and tempo only, never its name.'],
+    he: ['מורה יכול לצרף את הנגינה שלו למשימת משפט, ומשפטים ארוכים יותר (עד 16 תיבות) נשלחים במלואם. כשמשפט הופך לשלכם, חברים רואים את זה בפיד — רק דרגה וטמפו, אף פעם לא את השם.'],
+  },
+  {
     version: '0.99.0',
     date: '2026-11-16',
     en: [

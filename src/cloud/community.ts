@@ -112,8 +112,9 @@ export async function postActivity(kind: ActivityKind, payload: Record<string, u
  */
 export const PHRASE_FEED = (): boolean => {
   try {
-    if (import.meta.env.VITE_PHRASE_FEED === '1') return true;
-    return typeof localStorage !== 'undefined' && localStorage.getItem('tt.flag.phraseFeed') === '1';
+    // Migration 20261203120000 applied by the owner 2026-11-16: on by default; VITE_PHRASE_FEED=0 or the localStorage flag "0" turns it off.
+    if (import.meta.env.VITE_PHRASE_FEED === '0') return false;
+    return !(typeof localStorage !== 'undefined' && localStorage.getItem('tt.flag.phraseFeed') === '0');
   } catch {
     return false;
   }
