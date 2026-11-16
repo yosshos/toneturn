@@ -54,7 +54,7 @@ const HANDS: Rung[] = [
   r('k-indep-5', 3, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 8, 'k-indep': 4 }),
   r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
   // AUDIT-7 #11: a graded piece (Bach's Prelude in C, G5) places the classical tier and the pedal's first steps.
-  r('k-classic-4', 0, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 4, 'k-pedal': 2 }),
+  r('k-classic-6', 0, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2 }),
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),

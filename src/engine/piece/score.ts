@@ -46,6 +46,10 @@ export interface Piece {
   fifths: number;
   /** Where it came from. */
   source: 'musicxml' | 'midi';
+  /** Ornament signs (quarter beats; engine/ornaments.ts): drawn as one head with the sign, the notes inside are the written-out realisation. */
+  ornaments?: import('../ornaments').Ornament[];
+  /** Pitch classes the score writes as sharps (G♯ in A minor), not flats. */
+  sharps?: number[];
 }
 
 const STEP: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };

@@ -5,10 +5,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Piece } from '../engine/piece/score';
 import { layoutPiece, VF_DUR, type LayoutBar, type LayoutEv } from '../engine/piece/layout';
-import { spellMidi } from '../engine/aids';
+import { spellIn } from '../engine/aids';
 import type { PitchClass } from '../engine/pitch';
 import type { NoteMark } from '../engine/noteMarks';
 import { headX } from './NoteViews';
+import { VF_ORNAMENT } from '../engine/ornaments';
 
 type VF = typeof import('vexflow/bravura');
 let vfPromise: Promise<VF> | null = null;
@@ -157,7 +158,7 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
   const ctx = renderer.getContext();
   const geo: ScoreGeometry = { bars: [], width: W, height: H };
   const vfKey = (m: number) => {
-    const s = spellMidi(m, keyPc);
+    const s = spellIn(m, keyPc, piece.sharps);
     return `${s.letter.toLowerCase()}${s.acc === -1 ? 'b' : s.acc === 1 ? '#' : ''}/${s.octave}`;
   };
   const ties: { a: InstanceType<VF['StaveNote']>; b: InstanceType<VF['StaveNote']> | null }[] = [];
@@ -196,6 +197,8 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
           const rest = !e.midis.length;
           const sn = new VF.StaveNote({ keys: rest ? [clef === 'bass' ? 'd/3' : 'b/4'] : e.midis.map(vfKey), duration: `${vd.d}${rest ? 'r' : ''}`, clef });
           if (vd.dots) VF.Dot.buildAndAttach([sn], { all: true });
+          // an ornament sign (the notes it stands for are the take's notes)
+          if (e.orn && !rest) sn.addModifier(new VF.Ornament(VF_ORNAMENT[e.orn]), 0);
           if (!rest) {
             const mk = e.refs.map((r) => marks?.get(r)).find(Boolean);
             if (mk) sn.setStyle({ fillStyle: MARK[mk], strokeStyle: MARK[mk] });

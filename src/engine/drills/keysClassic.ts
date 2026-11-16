@@ -7,7 +7,7 @@
 import type { Drill, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { itemIdOf } from './generate';
-import { PD_PIECES, pdNotes, pdPiece, type PdPiece } from '../../content/classicalPD';
+import { PD_PIECES, pdNotes, pdOrnaments, pdPiece, pdSharps, type PdPiece } from '../../content/classicalPD';
 
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
 const FIFTHS_KEY = ['Cb', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#'];
@@ -25,6 +25,10 @@ export function pdSectionDrill(s: DrillSpec, p: PdPiece, section: number): Drill
     if (same && !groups.has(k)) groups.set(k, ++gid);
     return { pitch: n.midi, beat: r6(n.start - t0), dur: r6(n.dur), hand: n.hand, ...(same ? { chordId: groups.get(k) } : {}) };
   });
+  // ornament signs inside the section (the notes above are their written-out realisation)
+  const ornaments = pdOrnaments(p)
+    .filter((o) => o.beat >= t0 - 1e-6 && o.beat < (sec.to + 1) * p.meter - 1e-6)
+    .map((o) => ({ ...o, beat: r6(o.beat - t0) }));
   const bars = sec.to - sec.from + 1;
   const eighths = p.unit === 8;
   const both = notes.some((n) => n.hand === 'L') && notes.some((n) => n.hand === 'R');
@@ -43,6 +47,9 @@ export function pdSectionDrill(s: DrillSpec, p: PdPiece, section: number): Drill
     tonic: { key: p.tonic, ...(p.minor ? { minor: true } : {}) },
     ...(eighths ? { pulse: 8 as const, groups: [p.meter] } : {}),
     ...(bars > 8 ? { paged: true } : {}),
+    ...(ornaments.length ? { ornaments } : {}),
+    ...(p.sig ? { sigText: p.sig } : {}),
+    ...(pdSharps(p).length ? { sharps: pdSharps(p) } : {}),
   };
 }
 

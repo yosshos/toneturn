@@ -220,7 +220,7 @@ describe('#11 the public-domain classical tier', () => {
         expect(Math.max(...d.notes.map((n) => n.beat + n.dur))).toBeLessThanOrEqual(d.beats + 1e-6);
       }
     }
-    expect(levelDrills(lv('k-classic-3'), 'fifths-up')[0].pulse).toBe(8);
+    expect(levelDrills(lv('k-classic-4'), 'fifths-up')[0].pulse).toBe(8); // Für Elise (3/8)
     expect(hasRubato(levelDrills(lv('k-classic-2'), 'fifths-up')[0])).toBe(true);
     for (const p of PD_PIECES) {
       const piece = pdToPiece(p, 'he');
@@ -327,7 +327,7 @@ describe('wiring: path, courses, glyphs, badges, level test, skill map', () => {
   });
   it('the level tests reach the new levels', () => {
     const p = (e: 'classical' | 'jazz' | 'both') => strandsFor('piano', e).flatMap((s) => s.rungs.map((r) => r.level));
-    for (const id of ['k-read-12', 'k-read-14', 'k-pop-2', 'k-pop-4', 'k-classic-4']) expect(p('classical'), id).toContain(id);
+    for (const id of ['k-read-12', 'k-read-14', 'k-pop-2', 'k-pop-4', 'k-classic-6']) expect(p('classical'), id).toContain(id);
     expect(p('jazz')).toContain('k-pop-3');
     const b = strandsFor('bass', 'both').flatMap((s) => s.rungs.map((r) => r.level));
     for (const id of ['b-riff-4', 'b-feel-2']) expect(b, id).toContain(id);

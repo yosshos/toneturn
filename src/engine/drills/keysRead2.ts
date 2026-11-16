@@ -3,7 +3,8 @@
 // rule as k-read 1–10 — every item new from its seed (family, kind, key, hands, variant), nothing to learn by heart:
 //
 //   11 four voices: a chorale texture, soprano and alto in the right hand, tenor and bass in the left
-//   12 written-out ornaments in a Baroque-style line: mordents, turns, a cadential trill — over a walking bass
+//   12 ornaments in a Baroque-style line: mordents (upper and lower), turns, a cadential trill — over a walking bass;
+//      the staff draws the signs (ornaments.ts), the take is graded on their written-out realisation
 //   13 changing metres: 4/4, 3/4 and 2/4 bars mixed (the bar plan of timeline.ts)
 //   14 a lead sheet with band hits: the tune in the right hand, the left hand's shells on the written hits
 //   15 a quick study: eight bars in any key, accidentals, a moving bass, double notes, with the 30-second look
@@ -14,6 +15,7 @@ import type { Drill, DrillGoal, DrillSpec, ExpNote } from './types';
 import { itemIdOf } from './generate';
 import { readMelody, seeded, type ReadRecipe } from './keysFirst';
 import { withBarPlan } from './timeline';
+import type { Ornament } from '../ornaments';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -144,6 +146,8 @@ function genOrn(s: DrillSpec): Drill {
   const mel = readMelody(r, ORN_RC, meter);
   const n = new Notes();
   const used: string[] = [];
+  // the signs drawn over the written note (ornaments.ts); the notes added below are their realisation (graded)
+  const orns: Ornament[] = [];
   // the last note of a beat or longer before the close takes a cadential trill (upper note first, a turn into the
   // tonic); with none, the first such note takes a mordent, so every item has its ornament
   let pen = -1;
@@ -159,13 +163,16 @@ function genOrn(s: DrillSpec): Drill {
       n.add(x.beat + (k - 2) * 0.25, 0.25, [{ p: lo, hand: 'R' }]);
       n.add(x.beat + (k - 1) * 0.25, 0.25, [{ p, hand: 'R' }]);
       used.push('trill');
+      orns.push({ beat: x.beat, dur: x.dur, hand: 'R', pitch: p, kind: 'trill' });
     } else if (i === forced || (i > 0 && i < pen && x.dur >= 1 && Number.isInteger(x.beat) && r() < 0.45)) {
       if (i === forced || r() < 0.5) {
-        // a mordent: main – upper – main (written in 16ths)
+        // an upper mordent (main – upper – main) or, now and then, the lower mordent (main – lower – main), in 16ths
+        const lower = i !== forced && r() < 0.4;
         n.add(x.beat, 0.25, [{ p, hand: 'R' }]);
-        n.add(x.beat + 0.25, 0.25, [{ p: up, hand: 'R' }]);
+        n.add(x.beat + 0.25, 0.25, [{ p: lower ? lo : up, hand: 'R' }]);
         n.add(x.beat + 0.5, x.dur - 0.5, [{ p, hand: 'R' }]);
-        used.push('mordent');
+        used.push(lower ? 'mordent' : 'upper mordent');
+        orns.push({ beat: x.beat, dur: x.dur, hand: 'R', pitch: p, kind: lower ? 'mordent' : 'prall' });
       } else {
         // a turn: upper – main – lower – main
         n.add(x.beat, 0.25, [{ p: up, hand: 'R' }]);
@@ -173,6 +180,7 @@ function genOrn(s: DrillSpec): Drill {
         n.add(x.beat + 0.5, 0.25, [{ p: lo, hand: 'R' }]);
         n.add(x.beat + 0.75, x.dur - 0.75, [{ p, hand: 'R' }]);
         used.push('turn');
+        orns.push({ beat: x.beat, dur: x.dur, hand: 'R', pitch: p, kind: 'turn' });
       }
     } else n.add(x.beat, x.dur, [{ p, hand: 'R' }]);
   });
@@ -187,10 +195,10 @@ function genOrn(s: DrillSpec): Drill {
     fig.forEach((x, q) => n.add(bar * meter + q, last ? meter : 1, [{ p: deg(L, x, ints), hand: 'L' }]));
   }
   const kinds = [...new Set(used)];
-  const en = `written-out ornaments (${kinds.join(', ')})${meter === 3 ? ' in 3/4' : ''}`;
-  const HE: Record<string, string> = { trill: 'טריל', mordent: 'מורדנט', turn: 'גרופטו' };
-  const he = `קישוטים כתובים (${kinds.map((k) => HE[k]).join(', ')})${meter === 3 ? ' ב־3/4' : ''}`;
-  return done(s, n, title(en, he, s), {}, meter === 3 ? { meter: 3 } : {});
+  const en = `ornaments (${kinds.join(', ')})${meter === 3 ? ' in 3/4' : ''}`;
+  const HE: Record<string, string> = { trill: 'טריל', 'upper mordent': 'מורדנט עליון', mordent: 'מורדנט', turn: 'גרופטו' };
+  const he = `קישוטים (${kinds.map((k) => HE[k]).join(', ')})${meter === 3 ? ' ב־3/4' : ''}`;
+  return done(s, n, title(en, he, s), {}, { ...(meter === 3 ? { meter: 3 } : {}), ornaments: orns });
 }
 
 // ───────────────────────────── 13: changing metres ─────────────────────────────
