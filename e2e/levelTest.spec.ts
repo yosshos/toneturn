@@ -63,7 +63,7 @@ test('voice level test: sections of the voice course, each take in the real exer
   await expect(probe).toHaveAttribute('data-test-strand', 'v-pitch');
   await expect(page.locator('.pn-click').first()).toBeVisible(); // the click / now-cue of the real screen
   const seen: string[] = [];
-  for (let k = 0; k < 10; k++) {
+  for (let k = 0; k < 20; k++) { // 11 sections since AUDIT-7 (blues and scat, pop and theatre)
     if (await page.locator('[data-level-test-done]').isVisible()) break;
     seen.push((await probe.getAttribute('data-test-strand')) ?? '');
     await page.locator('.vlt-skip').click();

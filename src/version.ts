@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.97.0',
+    date: '2026-11-16',
+    en: [
+      'More at every level: written theory from grade 1 (note values, interval numbers), ascending intervals first, counterpoint in the Ear course; jazz you play from the start on guitar, bass and voice; singers get first steps, improvising and pop and theatre style.',
+      'Piano: sight-reading to grade 8, a pop accompaniment ladder, pedalling, and classical pieces (Ode to Joy, Minuet in G, Für Elise, Bach’s Prelude in C) in our own engraving. Guitar modes from grade 5. Bass riffs, feels and all 12 keys. Drums: groove, develop, solo, and the rudiments where they belong.',
+      'Barry Harris, checked: the chromatic scale, the half-step rules from every degree, the ABCs in thirds, the two-voice chromatic scale and Echols’s shells are back, verified. Live marks now on two-hand pieces too, a velocity row and a “last take” overlay.',
+    ],
+    he: [
+      'יותר בכל רמה: תיאוריה כתובה מכיתה 1 (ערכי תווים, מספרי מרווחים), מרווחים עולים קודם, קונטרפונקט בקורס השמיעה; ג׳אז מנוגן מההתחלה בגיטרה, בבס ובשירה; לזמרים צעדים ראשונים, אלתור וסגנון פופ ומחזמר.',
+      'פסנתר: קריאה מדף עד כיתה 8, סולם ליווי פופ, פדל, ויצירות קלאסיות (אודה לשמחה, מינואט בסול, לאליזה, הפרלוד בדו של באך) בתווים שלנו. מודוסים בגיטרה מכיתה 5. בבס ריפים, ליווי באלדות וכל 12 הסולמות. בתופים גרוב, פיתוח וסולו, והרודימנטים במקום הנכון.',
+      'בארי האריס, מאומת: הסולם הכרומטי, חוקי חצי הטון מכל דרגה, האלף־בית בטרצות, הסולם הכרומטי בשני קולות והשלדים של אקולס חזרו אחרי אימות. סימונים חיים גם ביצירות לשתי ידיים, שורת עוצמה ושכבת "הביצוע הקודם".',
+    ],
+  },
+  {
     version: '0.96.0',
     date: '2026-11-15',
     en: [
