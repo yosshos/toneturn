@@ -2,6 +2,7 @@
 // domain tiles, the path as a winding road, and the Play hub.
 
 import { COURSE_AREAS } from '../engine/courses';
+import { RIcon } from './Recordings';
 import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch } from './CourseSwitcher';
@@ -1062,7 +1063,15 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </header>
       ) : (
         <>
-          <h1 className="screen-title">{t.playTitle}</h1>
+          <div className="pt-title-row">
+            <h1 className="screen-title">{t.playTitle}</h1>
+            {/* SPEC-PHRASE-STUDIO §17: My recordings, one tap from Practice. */}
+            {hub && (
+              <a className="icon-btn small pt-rec" href="#/recordings" aria-label={lang === 'he' ? 'ההקלטות שלי' : 'My recordings'} title={lang === 'he' ? 'ההקלטות שלי' : 'My recordings'} data-open-recordings="practice">
+                <RIcon k="voice" />
+              </a>
+            )}
+          </div>
           {!hub && <p className="field-hint">{t.playHint}</p>}
           {hub && course === 'ear' && (
             <div className="exam-head-row">

@@ -41,6 +41,7 @@ import { ChordChart } from './ChordChart';
 import { chartCells, type ChartCell, type NoteRole } from '../engine/drills/chartCells';
 import { ornamentLegend, VF_ORNAMENT, type OrnKind } from '../engine/ornaments';
 import { spellIn } from '../engine/aids';
+import { keepingTakes } from './recKeep';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -723,6 +724,7 @@ function usePrep(drill: Drill): { left: number; skip: () => void } {
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
 export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false, liveMarks = false, onLive, onCount, onHeard }: { /** The count-in is running (true) or not: the score's first head pulses. */ onCount?: (on: boolean) => void; /** Rule-card items (§4.7 note roles): the improvised notes heard so far, in beats (null when the take ends). */ onHeard?: (notes: { beat: number; midi: number }[] | null) => void; /** Slice 5: grade each note as it is played and hand the marks to the score (practice); off = calm (the meter only). */ liveMarks?: boolean; /** The running take's settled notes (null when it ends). */ onLive?: (l: LiveTake | null) => void; /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
+  onDone = keepingTakes(drill, bpm, onDone); // My recordings: every take is kept (SPEC-PHRASE-STUDIO §6.1)
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
   const [beat, setBeat] = useState(-1);

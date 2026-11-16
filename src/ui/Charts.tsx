@@ -26,6 +26,8 @@ import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 import { ListenIcons, ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { ChordChart } from './ChordChart';
+import { keepChartTake } from './recKeep';
+import { recordingPrefs } from '../storage/recordings';
 
 export interface MyChart {
   id: string;
@@ -370,6 +372,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     let frames: SungFrame[] = [];
     const midiNotes: PlayedNote[] = [];
     const useMidi = midi.devices.length > 0;
+    let takeAudio: Blob | null = null; // My recordings: the take's own sound (mic)
     if (SIMULATED) {
       await new Promise((r) => setTimeout(r, 300));
     } else if (useMidi) {
@@ -402,6 +405,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         maxMs: b.length * 1000,
         silenceMs: 600_000,
         hopMs: 20,
+        // My recordings (SPEC-PHRASE-STUDIO §6.1): where no second recorder runs (iOS), the capture's own stream records.
+        record: !rec && recordingPrefs().keepAudio,
         ...(capture ?? {}),
         onFrame: (f) => {
           if (f.t < listenFrom) return gate?.calibrate(f);
@@ -410,8 +415,10 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         },
       });
       frames = r.kind === 'frames' ? buf : [];
+      if (r.kind === 'frames' && r.audio) takeAudio = r.audio;
       if (rec) {
         const blob = await rec.stop();
+        takeAudio = blob;
         try {
           const audio = await piano.context!.decodeAudioData(await blob.arrayBuffer());
           // the recording began this long after the backing was heard (a little input latency taken off)
@@ -442,6 +449,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
     setRulesRep(rr);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;
+    // My recordings: the take's notes (and sound) with the chart, so the player can play it back with the band.
+    keepChartTake({ kind: 'chart', title: title || chart.title, notes: sung, bpm, meter, chart: text, style, loops, source: useMidi ? 'midi' : 'mic', audio: takeAudio, score, ...(chart.std ? { itemId: `chart:${chart.std}` } : {}) });
     if ((rr?.notes ?? rep.notes) >= 3) onImprov?.(score, bpm, new Set(parsed.chords.map((x) => x.sym)).size, chart.level, rr && rr.notes >= 4 ? challengeOf(rules)?.id : undefined);
   };
   const pct = (x: number) => `${Math.round(x * 100)}%`;

@@ -21,6 +21,7 @@ const DRUM_SHORT: Partial<Record<DrumVoice, { en: string; he: string }>> = {
 };
 import { drumLimbLine } from '../engine/drills/drumAnalyze';
 import { EvennessStrip, MarkLegend, VelocityCurve } from './DrillTake';
+import { RecLink } from './Recordings'; // My recordings: every take is kept (SPEC-PHRASE-STUDIO §6.3)
 
 type Lang = 'he' | 'en';
 
@@ -275,6 +276,7 @@ export function TakeReview({
             <MarkLegend lang={lang} />
             {!free && <EvennessStrip m={m} lang={lang} />}
             <VelocityCurve m={m} lang={lang} />
+            <RecLink lang={lang} />
           </div>
         </div>
       )}

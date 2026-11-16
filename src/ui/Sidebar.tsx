@@ -11,7 +11,7 @@ import { Logo } from './bits';
 export type NavId =
   | TabId
   | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
-  | 'insights' | 'achievements' | 'diary'
+  | 'insights' | 'achievements' | 'diary' | 'recordings'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder' | 'chordbuilder'
   | 'placement' | 'diagnostics' | 'settings';
 
@@ -94,6 +94,8 @@ const SECTIONS: Section[] = [
       { id: 'insights', label: { en: 'Insights', he: 'תובנות' } },
       // AUDIT-5: measured practice time, the quality ledger and the journal.
       { id: 'diary', label: { en: 'Practice diary', he: 'יומן אימון' } },
+      // SPEC-PHRASE-STUDIO §6 / §17: every take, kept on the device.
+      { id: 'recordings', label: { en: 'My recordings', he: 'ההקלטות שלי' } },
     ],
   },
 ];

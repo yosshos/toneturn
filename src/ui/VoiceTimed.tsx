@@ -31,8 +31,7 @@ import { MySongPick } from './VoiceMySong';
 import { noteSongScore } from './MySong';
 import { pc } from '../engine/pitch';
 import { COLLA_TEXT, METRIC_NAMES, MOTIF_KIND_NAMES, SCAT_INSTR, SONG_INSTR, TIME_INSTR, VT } from '../content/voiceCourseText';
-import { keepTake } from '../storage/takes';
-import { weekId } from '../engine/adaptive';
+import { keepVocalTake } from './recKeep';
 import type { LessonResult, Progress, Settings, VocalTake } from '../storage/progress';
 import type { Strings } from '../i18n/strings';
 
@@ -817,7 +816,8 @@ export async function captureTimed(a: {
     void own?.close().catch(() => {});
     if (r.kind === 'aborted' && !a.stopped.current) return null;
     got = buf;
-    if (r.kind === 'frames' && r.audio && settings.keepTakes && !a.loop) void keepTake({ item: item.id, week: weekId(new Date()), score: 0, at: new Date().toISOString(), blob: r.audio });
+    // My recordings (SPEC-PHRASE-STUDIO §6.1): the sung notes on the take's beat clock, and its audio unless switched off.
+    if (r.kind === 'frames' && !a.loop) keepVocalTake({ itemId: item.id, title: { en: 'Timed singing', he: 'שירה בזמן' }, frames: buf, audio: r.audio, ...(item.bpm ? { bpm: item.bpm } : {}), t0: 0 });
   }
   piano.stopAll();
   let take: Take;

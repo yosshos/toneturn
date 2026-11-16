@@ -14,6 +14,7 @@ import { piano } from './services';
 import { ChallengeList } from './ImprovRules';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { ListenOriginal } from './ListenOriginal';
+import { keepChartTake } from './recKeep';
 import type { MyChart } from './Charts';
 import { UseIt, lickInstrumentOf } from './LickTrainer';
 import { lickById } from '../engine/licks';
@@ -141,6 +142,8 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
     if (!done) return;
     const played = notes.current.filter((n) => n.beat >= -0.25 && n.beat <= total);
     const rep = phrasingReport(played, total);
+    // My recordings (SPEC-PHRASE-STUDIO §6.1): the improvised notes, with the chart to play them back over the band.
+    keepChartTake({ kind: 'improv', title: { en: `Phrasing · ${L.text.split('|')[0].trim()}`, he: `משפטים · ${L.text.split('|')[0].trim()}` }, notes: played.map((n) => ({ start: n.beat * beatS, end: (n.beat + Math.max(0.1, n.dur)) * beatS, midi: n.midi })), bpm, meter: 4, chart: L.text, style: L.style, loops: 2, source: midi.devices.length ? 'midi' : 'screen' });
     const chk = checkPhraseRule(played, total, RULES[rule]);
     const mot = motifReturns(played);
     setResult(
