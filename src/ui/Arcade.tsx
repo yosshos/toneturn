@@ -616,7 +616,7 @@ export const GAME_CATS: { id: GameCat; en: string; he: string }[] = [
   { id: 'instrument', en: 'Instrument & sound', he: 'כלי וסאונד' },
   { id: 'social', en: 'Against others', he: 'מול אחרים' },
 ];
-export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside'; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
+export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'nametune' | 'tuneup' | 'pitchmemory' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'peakhunter' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside' | 'whichpair'; hue: string; cat: GameCat; en: [string, string]; he: [string, string] }[] = [
   { id: 'rush-chord', hue: 'var(--hue-pitch)', cat: 'read', en: ['Chord Rush', 'Name chords on the neck, keys or staff — 60 seconds.'], he: ['מרוץ אקורדים', 'זהו אקורדים על הצוואר, הקלידים או החמשה — 60 שניות.'] },
   { id: 'rush-note', hue: 'var(--hue-reading)', cat: 'read', en: ['Note Rush', 'Read notes off the staff as fast as you can.'], he: ['מרוץ תווים', 'קראו תווים מהחמשה הכי מהר שאפשר.'] },
   { id: 'rush-keysig', hue: 'var(--hue-reading)', cat: 'read', en: ['Key Signature Rush', 'Sharps and flats → the key, fast.'], he: ['מרוץ סימני מפתח', 'דיאזים ובמולים → הסולם, מהר.'] },
@@ -680,6 +680,8 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   // HARMONY-REHARM still-open games.
   { id: 'thirdjump', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Third Jump', 'Jump a 3rd to the chord that keeps the glowing note.'], he: ['קפיצת טרצה', 'קופצים טרצה לאקורד ששומר על הצליל הזוהר.'] },
   { id: 'darkside', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Dark Side', 'Tap the borrowed chord the moment it comes, then name it.'], he: ['הצד האפל', 'מקישים על האקורד השאול ברגע שהוא מגיע, ונותנים לו שם.'] },
+  // Triad pairs, deep.
+  { id: 'whichpair', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Which Pair?', 'A chord sounds: pick, or play, the triad pair that fits it.'], he: ['איזה זוג?', 'אקורד נשמע: בוחרים, או מנגנים, את זוג המשולשים שמתאים לו.'] },
 ];
 
 /** Practice tab hub (owner 2026-11-08): songs, technique and singing get their own place above the games, with the tools. */
@@ -980,7 +982,7 @@ const GAME_GLYPH: Record<string, GlyphKind> = {
   bordercontrol: 'bordercontrol', whichbrother: 'whichbrother', runcatcher: 'runcatcher', compcaller: 'compcaller', elevator: 'elevator',
   guidetone: 'guidetone', call5432: 'call5432', enclosure: 'enclosure', crossword: 'crossword', holdnote: 'holdnote',
   staffrunner: 'staffrunner', rootcatch: 'rootcatch', strumchange: 'strumchange', rebound: 'rebound', singback: 'singback',
-  thirdjump: 'thirdjump', darkside: 'darkside',
+  thirdjump: 'thirdjump', darkside: 'darkside', whichpair: 'whichpair',
 };
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 

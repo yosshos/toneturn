@@ -8,7 +8,7 @@ import type { FamilyId, ItemState } from './drills/types';
 import type { KeyInstrument } from './analysis/keyMastery';
 
 /** The games that feed key mastery. */
-export const KEY_GAMES = ['bhtime', 'voicingsprint', 'walkchanges', 'changerace', 'rootsear', 'playback', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'staffrunner', 'rootcatch', 'strumchange', 'thirdjump'] as const;
+export const KEY_GAMES = ['bhtime', 'voicingsprint', 'walkchanges', 'changerace', 'rootsear', 'playback', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'staffrunner', 'rootcatch', 'strumchange', 'thirdjump', 'whichpair'] as const;
 export type KeyGame = (typeof KEY_GAMES)[number];
 export const isKeyGame = (g: string): g is KeyGame => (KEY_GAMES as readonly string[]).includes(g);
 
@@ -103,6 +103,7 @@ const TITLES: Record<KeyGame, { en: string; he: string }> = {
   rootcatch: { en: 'Root Catcher', he: 'תופס השורשים' },
   strumchange: { en: 'Strum Changes', he: 'החלפות בפריטה' },
   thirdjump: { en: 'Third Jump', he: 'קפיצת טרצה' },
+  whichpair: { en: 'Which Pair?', he: 'איזה זוג?' },
 };
 /** A game key skill's name (the game's title), or undefined for other families. */
 export function gameKeyTitle(f: string): { en: string; he: string } | undefined {

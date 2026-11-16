@@ -431,10 +431,33 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: 
   if (drill.goal.vl && !drill.goal.vl.strings && drill.spec?.instrument !== 'guitar') out.push('voicing');
   // One note, many chords (your own chords): which voicing was played needs MIDI too.
   if (drill.goal.ct) out.push('voicing');
+  // Triad-pair voicings: which triad is on top needs MIDI.
+  if (drill.goal.pairVoicing?.length) out.push('voicing');
   if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
   if (drill.goal.articulation || drill.goal.handArt) out.push('articulation');
   if (drill.goal.pedal) out.push('pedal');
   return out;
+}
+
+/**
+ * Triad-pair voicings: how many chords were played with all their notes but in the wrong shape — the three highest
+ * notes are not the named top triad, or the lowest notes are not the lower triad's root and 5th / the bass.
+ * `pitchOf(i)`: the played pitch matched to expected note i (null = missed; a missed chord is counted by accuracy).
+ */
+export function pairVoicingMisses(exp: { chordId?: number }[], specs: NonNullable<Drill['goal']['pairVoicing']>, pitchOf: (i: number) => number | null): number {
+  let bad = 0;
+  const pcs = (xs: number[]) => [...new Set(xs.map((x) => ((x % 12) + 12) % 12))].sort((a, b) => a - b).join(',');
+  for (const v of specs) {
+    const idx = exp.map((e, i) => (e.chordId === v.chordId ? i : -1)).filter((i) => i >= 0);
+    const ps = idx.map(pitchOf);
+    if (!ps.length || ps.some((p) => p === null)) continue;
+    const sorted = (ps as number[]).slice().sort((a, b) => a - b);
+    let ok = pcs(sorted.slice(-3)) === pcs(v.top);
+    if (ok && v.low) ok = pcs(sorted.slice(0, 2)) === pcs(v.low);
+    if (ok && v.bass !== undefined) ok = (((sorted[0] - v.bass) % 12) + 12) % 12 === 0;
+    if (!ok) bad++;
+  }
+  return bad;
 }
 
 /**
@@ -959,6 +982,16 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
         sev: 1.3,
         en: low >= high ? `Too low (${low} notes): muddy — keep the 3rd and 7th between C3 and G4` : `Too high (${high} notes): thin — keep the 3rd and 7th between C3 and G4`,
         he: low >= high ? `נמוך מדי (${low} צלילים): עכור — טרצה וספטימה בין C3 ל־G4` : `גבוה מדי (${high} צלילים): דק — טרצה וספטימה בין C3 ל־G4`,
+      });
+  }
+  // Triad-pair voicings (tpairDrills.ts): the named triad on top, the lower triad / the bass below.
+  if (goal.pairVoicing?.length) {
+    const bad = pairVoicingMisses(exp, goal.pairVoicing, (i) => (match[i] !== null ? played[match[i]!].pitch : null));
+    if (bad > 0)
+      F.push({
+        sev: 1.6,
+        en: `Voicing: ${bad === 1 ? 'one chord' : `${bad} chords`} with the wrong triad on top or the wrong note at the bottom`,
+        he: `קול: ${bad === 1 ? 'אקורד אחד' : `${bad} אקורדים`} עם המשולש הלא נכון למעלה או הצליל הלא נכון למטה`,
       });
   }
   if (hesitations > 0)

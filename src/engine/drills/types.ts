@@ -34,6 +34,8 @@ export type FamilyId =
   | 'k-ctone'
   | 'k-mediant'
   | 'k-organ'
+  // Triad pairs, deep (owner 2026-11-16, tpairDrills.ts): patterns, voicings, lines over changes, side-slip.
+  | 'k-tpair'
   // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C, soloPianoDrills.ts): the left hand
   // for solo piano, solo-piano textures through the heads, the comping vocabulary, improvisation habits.
   | 'k-lh'
@@ -100,6 +102,7 @@ export type FamilyId =
   | 'g-harrisline' // Barry Harris lines on the neck (BARRY-HARRIS-METHOD Part D, harrisLineDrills.ts)
   | 'g-ctone' // HARMONY-REHARM §2: one note, many chords on the neck (colorDrills.ts)
   | 'g-color' // HARMONY-REHARM §3–5: mediants, modal interchange, planing, side-slip, sus on the neck (colorDrills.ts)
+  | 'g-tpair' // triad pairs on the neck: shapes and lines on string sets, comping, lines over ii–V–I (tpairDrills.ts)
   | 'g-theory' // THEORY_PLAY: theory you play on the neck (rootless, quartal, Giant Steps, UST, triad pairs, lines)
   | 'g-prog' // odd meters, polyrhythm, metric modulation, fusion lines, unisons (prog engine)
   | 'g-meter' // AUDIT-CONTENT-THEORY R-4/R-5: meter & cross-rhythm on the core path (subdivision → 7:4, odd meters, hemiola)
@@ -159,6 +162,8 @@ export type BassFamilyId =
   | 'b-harrisline'
   // HARMONY-REHARM: the bass reharmonizes — pedals, roots of borrowed chords and mediants, the counter-line (colorDrills.ts).
   | 'b-counter'
+  // Triad pairs on the bass: arpeggiated pair lines, inversions, ii–V–I, side-slip (tpairDrills.ts).
+  | 'b-tpair'
   // 0.64 (track B): the bass-ear family F15 and the upright / double-bass track (BASS_CURRICULUM §5, §5.1).
   | 'b-ear'
   | 'b-up-pos'
@@ -499,6 +504,12 @@ export interface DrillGoal {
   handArt?: { R?: Articulation; L?: Articulation };
   /** Voicing / chord correctness instead of exact pitches (voicing families): allowed pitch classes per chordId. */
   chordSets?: { chordId: number; required: number[]; allowed: number[] }[];
+  /**
+   * Triad-pair voicings (tpairDrills.ts): per chordId the triad that must sit on top (its pitch classes = the three
+   * highest notes played), and the lower triad's root and 5th as the two lowest notes, or the bass pitch class as the
+   * lowest. Checked on top of the chord sets; MIDI only (the microphone hears the notes, not the voicing).
+   */
+  pairVoicing?: { chordId: number; top: number[]; low?: number[]; bass?: number }[];
   /**
    * Pedalling drills (spec AI §5.6): the sustain-pedal plan, for the CC64 analysis. `changes` = beats where the harmony
    * changes. Direct pedal: down with the chord, up before the next; legato (syncopated): up at the change, down just after.

@@ -30,6 +30,7 @@ import { bassSoloFamily, genBassSolo } from './soloDrills'; // AUDIT-DEPTH-3 C5�
 import { bassCtxFamily, genBassCtx } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 import { bassHarrisLineFamily, genBassHarrisLine } from './harrisLineDrills'; // Barry Harris lines (Part D)
 import { bassCounterFamily, genBassCounter } from './colorDrills'; // HARMONY-REHARM: the bass reharmonizes
+import { bassTpairFamily, genTpairBass } from './tpairDrills'; // triad pairs, deep (2026-11-16)
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
@@ -2514,6 +2515,9 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // HARMONY-REHARM: pedals, borrowed and mediant roots, the counter-line (colorDrills.ts).
     case 'b-counter':
       return genBassCounter(s, tu);
+    // Triad pairs, deep: arpeggiated pair lines, inversions, ii–V–I, side-slip (tpairDrills.ts).
+    case 'b-tpair':
+      return genTpairBass(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2799,6 +2803,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassHarrisLineFamily(L, fam),
     // HARMONY-REHARM: the bass reharmonizes (jazz track) — pedals, borrowed and mediant roots, the counter-line.
     bassCounterFamily(L, fam),
+    // Triad pairs, deep (jazz track, owner 2026-11-16): pair lines, inversions, ii–V–I, side-slip (tpairDrills.ts).
+    bassTpairFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

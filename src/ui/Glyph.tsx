@@ -1864,6 +1864,59 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Triad pairs, deep (tpairDrills.ts, whichPair.ts): one drawn symbol each.
+Object.assign(GLYPHS, {
+  // keys (k-tpair): two three-note stacks a step apart, joined by a bracket underneath — the pair as one sound.
+  tpairkeys: (
+    <>
+      <path d="M-14 16 V-12 M14 6 V-22" {...sw} strokeWidth={2.2} />
+      {head(-20, 16, 5.2, 3.9)}
+      {head(-20, 6, 5.2, 3.9)}
+      {head(-20, -4, 5.2, 3.9)}
+      {head(8, 6, 5.2, 3.9)}
+      {head(8, -4, 5.2, 3.9)}
+      {head(8, -14, 5.2, 3.9)}
+      <path d="M-26 26 V30 H26 V26" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+  // guitar (g-tpair): three strings, two three-dot shapes a step apart on them.
+  tpairneck: (
+    <>
+      <path d="M-28 -14 H28 M-28 0 H28 M-28 14 H28" {...sw} strokeWidth={1.6} />
+      <path d="M-22 -22 V22 M22 -22 V22" {...sw} strokeWidth={1.2} />
+      <circle cx={-12} cy={14} r={4.6} fill={I} />
+      <circle cx={-8} cy={0} r={4.6} fill={I} />
+      <circle cx={-12} cy={-14} r={4.6} fill={I} />
+      <circle cx={10} cy={14} r={4.6} {...sw} strokeWidth={2.4} />
+      <circle cx={14} cy={0} r={4.6} {...sw} strokeWidth={2.4} />
+      <circle cx={10} cy={-14} r={4.6} {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  // bass (b-tpair): two low strings, an arpeggio climbing over them — one triad, then the other a step higher.
+  tpairbass: (
+    <>
+      <path d="M-28 18 H28 M-28 26 H28" {...sw} strokeWidth={1.4} />
+      <path d="M-24 10 L-14 -2 L-4 -12 M4 4 L14 -8 L24 -18" {...sw} strokeWidth={2.4} />
+      {head(-24, 10, 4.6, 3.4)}
+      {head(-14, -2, 4.6, 3.4)}
+      {head(-4, -12, 4.6, 3.4)}
+      {head(4, 4, 4.6, 3.4)}
+      {head(14, -8, 4.6, 3.4)}
+      {head(24, -18, 4.6, 3.4)}
+    </>
+  ),
+  // Which Pair? (game): a chord stack on the left, an arrow, two small stacks on the right — hear the chord, find its pair.
+  whichpair: (
+    <>
+      <path d="M-18 14 V-14" {...sw} strokeWidth={2.2} />
+      {head(-24, 14, 5, 3.8)}
+      {head(-24, 4, 5, 3.8)}
+      {head(-24, -6, 5, 3.8)}
+      <path d="M-12 0 H0 M-5 -5 L0 0 L-5 5" {...sw} strokeWidth={2.4} />
+      <path d="M8 18 L14 6 L20 18 Z M16 4 L22 -8 L28 4 Z" {...sw} strokeWidth={2.2} strokeLinejoin="round" />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

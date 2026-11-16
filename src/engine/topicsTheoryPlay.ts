@@ -17,6 +17,7 @@ import {
   pentName, pentNotes, reharmValid, slashKind, triadOf, voicingSets,
   type Device, type PairId, type PentSuper, type RChord, type TriadPair, type Ust,
 } from './theoryPlay';
+import { CORE, chordNameIn, chordTonesOf, coreTriads, earColour, earGroupOf, pairNameIn, patternUp, scalesHoldingPair, type CorePair } from './triadPairs';
 
 type Names = ChoiceQuestion['names'];
 type Bi = { en: string; he: string };
@@ -80,8 +81,14 @@ TOPIC_GEN['triad-pairs'] = {
     { en: 'Over a dominant: mixolydian, lydian dominant, altered', he: 'מעל דומיננט: מיקסולידי, לידי דומיננטי, אלטרד' },
     { en: 'Over maj7: lydian or lydian augmented', he: 'מעל maj7: לידי או לידי מוגדל' },
     { en: 'Which scale tone does the pair leave out?', he: 'איזה צליל של הסולם הזוג משמיט?' },
+    // Triad pairs, deep (2026-11-16): src/engine/triadPairs.ts.
+    { en: 'Which colours does the pair add?', he: 'אילו צבעים הזוג מוסיף?' },
+    { en: 'Which pair fits the chord? (all 12 keys)', he: 'איזה זוג מתאים לאקורד? (12 סולמות)' },
+    { en: 'Play back the pair you hear', he: 'נגנו את הזוג ששמעתם' },
+    { en: 'Inside, or a half step out?', he: 'בפנים, או חצי טון בחוץ?' },
   ],
   gen(seed, level, id) {
+    if (level >= 6) return deepPairQ(seed, level, id);
     const rnd = rng(seed);
     const root = pickR(rnd, KEYS);
     const base = { id, topic: 'triad-pairs', level, seed, skill: 'modes' as const, difficulty: [1500, 1540, 1580, 1620, 1660][level - 1] };
@@ -123,7 +130,77 @@ TOPIC_GEN['triad-pairs'] = {
     return choiceQ({ ...base, ask: { en: `${nm} over ${nameOf(root)}${p.chord}: which ${TP_SCALES[p.scale].n.en} tone is missing?`, he: `${nm} מעל ${nameOf(root)}${p.chord}: איזה צליל חסר?` }, names, answer: ans, choices, stimulus: [pairStim(p, root)] });
   },
 };
-TOPIC_TAGS['triad-pairs'] = (l) => (l === 1 || l === 5 ? tg(['modes', 'scales', 0.6], ['chords', 'extension', 0.4]) : tg(['modes', 'scales', 0.5], ['improv', 'vocab', 0.5]));
+TOPIC_TAGS['triad-pairs'] = (l) => (l === 1 || l === 5 || l === 6 ? tg(['modes', 'scales', 0.6], ['chords', 'extension', 0.4]) : l === 8 ? tg(['modes', 'scales', 0.5], ['dictation', 'melodic', 0.5]) : tg(['modes', 'scales', 0.5], ['improv', 'vocab', 0.5]));
+
+// ---------------------------------------------------------------- triad-pairs 6–9: the deep map (triadPairs.ts)
+
+const ALL12 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+/** A core pair as a line: alternating inversions up about an octave and a half from the first triad's root, and back. */
+export function corePairLine(c: Pick<CorePair, 'a' | 'b'>, root: number, shift = 0): number[] {
+  const [A0, B0] = coreTriads(c, root);
+  const A = A0.map((x) => mod12(x + shift));
+  const B = B0.map((x) => mod12(x + shift));
+  const lo = 60 + mod12(A[0] - 60);
+  const up = patternUp(A, B, 'inv', lo, lo + 17);
+  return [...up, ...up.slice(0, -1).reverse()].slice(0, 14);
+}
+const scaleChord = (c: CorePair): number[] => chordTonesOf(c.scale).filter((x) => x !== 0);
+/** The colour groups heard over one plain chord (maj7, 7, m7): the pairs whose colours the ear tells apart there. */
+const EAR_GROUPS: Record<'maj' | 'dom' | 'min', { ivs: number[]; pairs: CorePair[] }> = {
+  maj: { ivs: [4, 7, 11], pairs: CORE.filter((c) => earGroupOf(c) === 'maj') },
+  dom: { ivs: [4, 7, 10], pairs: CORE.filter((c) => earGroupOf(c) === 'dom') },
+  min: { ivs: [3, 7, 10], pairs: CORE.filter((c) => earGroupOf(c) === 'min') },
+};
+function deepPairQ(seed: number, level: number, id: string): ChoiceQuestion | PlaceQuestion {
+  const rnd = rng(seed);
+  const root = pickR(rnd, ALL12);
+  const base = { id, topic: 'triad-pairs', level, seed, skill: 'modes' as const, difficulty: [1700, 1740, 1780, 1820][level - 6] };
+  if (level === 6) {
+    // which colours: every pair of one group over the same plain chord, so only the colours tell them apart
+    const g = pickR(rnd, ['maj', 'dom', 'min'] as const);
+    const pool = EAR_GROUPS[g].pairs;
+    const ans = pickR(rnd, pool);
+    const choices = shuffleR(rnd, [ans, ...shuffleR(rnd, pool.filter((x) => x !== ans)).slice(0, 3)]);
+    const names: Names = Object.fromEntries(choices.map((c) => [c.id, { en: earColour(c).join(' '), he: earColour(c).join(' ') }]));
+    const stim = (c: CorePair) => lineOver(root, EAR_GROUPS[g].ivs, corePairLine(c, root));
+    return choiceQ({ ...base, ask: { en: 'Which colours does the pair add?', he: 'אילו צבעים הזוג מוסיף?' }, names, answer: ans.id, choices: choices.map((c) => c.id), stimulus: [stim(ans)], choiceStim: Object.fromEntries(choices.map((c) => [c.id, [stim(c)]])) });
+  }
+  if (level === 7) {
+    // which pair for the chord: the distractors' six notes do not all lie in the chord's scale (only one answer fits)
+    const ans = pickR(rnd, CORE.filter((c) => c.id !== 'augmented'));
+    const wrong = CORE.filter((c) => c !== ans && !scalesHoldingPair(c).includes(ans.scale));
+    const choices = shuffleR(rnd, [ans, ...shuffleR(rnd, wrong).slice(0, 3)]);
+    const names: Names = Object.fromEntries(choices.map((c) => [c.id, { en: pairNameIn(c, root), he: pairNameIn(c, root) }]));
+    const ch = chordNameIn(ans, root);
+    return choiceQ({
+      ...base,
+      ask: { en: `${ch}: which pair?`, he: `${ch}: איזה זוג?` },
+      names, answer: ans.id, choices: choices.map((c) => c.id), stimulus: [lineOver(root, scaleChord(ans), [])],
+      choiceStim: Object.fromEntries(choices.map((c) => [c.id, [lineOver(root, scaleChord(ans), corePairLine(c, root))]])),
+    });
+  }
+  if (level === 8) {
+    // dictation: the two triads, each low to high, over the chord — play them back in order (any octave)
+    const c = pickR(rnd, CORE.filter((x) => x.id !== 'augmented' && x.id !== 'whole-tone'));
+    const [A, B] = coreTriads(c, root);
+    const target = rising([...A, ...B], 60);
+    const ch = chordNameIn(c, root);
+    const q = {
+      kind: 'place', choices: [], as: 'seq', match: 'pc', surface: 'keys', ...base,
+      ask: { en: `Over ${ch}: play the two triads you hear, low to high`, he: `מעל ${ch}: נגנו את שני המשולשים ששמעתם, מלמטה למעלה` },
+      target, stimulus: [lineOver(root, scaleChord(c), target, 0.42)], text: { en: ch, he: ch }, answer: '',
+    } as unknown as PlaceQuestion;
+    q.answer = placeKey(q, target);
+    return q;
+  }
+  // 9: inside, or the pair slid a half step up / down (outside)
+  const c = pickR(rnd, [CORE.find((x) => x.id === 'dorian')!, CORE.find((x) => x.id === 'mixo-no11')!, CORE.find((x) => x.id === 'lydian')!]);
+  const shift = pickR(rnd, [0, 1, -1]);
+  const ansId = shift === 0 ? 'in' : shift === 1 ? 'up' : 'down';
+  const names: Names = { in: { en: 'inside', he: 'בפנים' }, up: { en: 'a half step up', he: 'חצי טון למעלה' }, down: { en: 'a half step down', he: 'חצי טון למטה' } };
+  const stim = (sh: number) => lineOver(root, scaleChord(c), corePairLine(c, root, sh));
+  return choiceQ({ ...base, ask: { en: `Over ${chordNameIn(c, root)}: inside or out?`, he: `מעל ${chordNameIn(c, root)}: בפנים או בחוץ?` }, names, answer: ansId, choices: ['in', 'up', 'down'], stimulus: [stim(shift)], choiceStim: { in: [stim(0)], up: [stim(1)], down: [stim(-1)] } });
+}
 
 // ================================================================ pent-super (TP-2)
 

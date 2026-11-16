@@ -66,7 +66,7 @@ const ALL_DEPTH_MAPS: DepthMap[] = [
     rows: [
       { name: { en: 'Shells, guide tones, rootless A/B', he: 'שלדים, צלילים מנחים, ללא־שורש A/B' }, links: [F('voicings'), T('guide-tones'), T('upper-rootless')] },
       { name: { en: 'Voice leading and accompaniment', he: 'הובלת קולות וליווי' }, links: [F('k-vl'), F('accomp'), T('voice-leading')] },
-      { name: { en: 'Triad pairs, polychords, quartal', he: 'זוגות משולשים, פוליאקורדים, קוורטלי' }, links: [T('triad-pairs'), T('polychords'), T('voicing-type')] },
+      { name: { en: 'Triad pairs, polychords, quartal', he: 'זוגות משולשים, פוליאקורדים, קוורטלי' }, links: [T('triad-pairs'), F('k-tpair'), T('polychords'), T('voicing-type')] },
       { name: { en: 'Guitar: jazz chords, chord-melody', he: 'גיטרה: אקורדי ג׳אז, מלודיה באקורדים' }, links: [F('g-chords'), F('g-jazz'), F('g-cmel')] },
     ],
   },

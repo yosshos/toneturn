@@ -882,6 +882,23 @@ GAME_TIERS.darkside = {
   },
 };
 
+// ---------------------------------------------------------------- triad pairs, deep (src/engine/whichPair.ts)
+
+/** Which Pair?: a chord sounds, pick (or play, ff on MIDI) the triad pair that fits it. */
+GAME_TIERS.whichpair = {
+  game: 'whichpair',
+  source: () => 'modes',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Three pairs: dorian, mixolydian, lydian', 'שלושה זוגות: דורי, מיקסולידי, לידי'), levels: [1], target: 80 },
+    p: { label: L('Six pairs, every key', 'שישה זוגות, כל הסולמות'), levels: [2], target: 80 },
+    mp: { label: L('+ melodic minor, half-diminished, harmonic minor', '+ מינור מלודי, חצי מוקטן, מינור הרמוני'), levels: [3], target: 80 },
+    mf: { label: L('By ear: which colour is the pair?', 'בשמיעה: איזה צבע הזוג?'), levels: [4], target: 80 },
+    f: { label: L('The colours a pair adds', 'הצבעים שזוג מוסיף'), levels: [5], target: 80 },
+    ff: { label: L('Play the pair (MIDI)', 'מנגנים את הזוג (MIDI)'), levels: [6], target: 80 },
+  },
+};
+
 // ---------------------------------------------------------------- AUDIT-7 hole #14: a beginner game per instrument
 // (src/engine/beginnerRun.ts). Laps against the click, measured by MIDI or the microphone only; a run at ≥ 80 % of its
 // targets clears the tier. They start at pp (the beginner band) and climb to ff.
@@ -1155,6 +1172,8 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
   if (d.input === 'touch' && MEASURED_ONLY.has(spec.game)) return false;
   // Third Jump ff is the played tier: on-screen taps there are practice.
   if (game === 'thirdjump' && tier === 'ff' && d.input !== 'midi') return false;
+  // Which Pair? ff is the played tier too.
+  if (game === 'whichpair' && tier === 'ff' && d.input !== 'midi') return false;
   switch (spec.clear) {
     case 'rush': {
       const right = num(d, 'right') ?? 0;

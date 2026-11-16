@@ -823,6 +823,27 @@ export const GLYPHS: Record<string, Glyph> = {
   ),
   // THEORY_PLAY: theory you play — two triads stacked a step apart (a triad pair).
   'family:k-theory':() => p('M3 20L9 9l6 11z M9 14l6-11 6 11z'),
+  // Triad pairs, deep: two three-note stacks a step apart over a bracket (keys); two shapes on three strings (guitar).
+  'family:k-tpair': () => (
+    <>
+      {head(6, 17, 2)}
+      {head(6, 12.5, 2)}
+      {head(6, 8, 2)}
+      {head(17, 13, 2)}
+      {head(17, 8.5, 2)}
+      {head(17, 4, 2)}
+      {p('M3 21v1.5h18V21', false)}
+    </>
+  ),
+  'family:g-tpair': () => (
+    <>
+      <path d="M2 7h20 M2 12h20 M2 17h20" strokeWidth={0.8} />
+      {head(7, 17, 1.9)}
+      {head(8.5, 12, 1.9)}
+      {head(7, 7, 1.9)}
+      {p('M15.5 17a1.9 1.9 0 1 0 0.01 0 M17 12a1.9 1.9 0 1 0 0.01 0 M15.5 7a1.9 1.9 0 1 0 0.01 0', false)}
+    </>
+  ),
   'family:k-reharm': () => (
     <>
       {head(5, 18, 2.2)}
@@ -1449,6 +1470,16 @@ export const GLYPHS: Record<string, Glyph> = {
       <circle cx={12} cy={9} r={5.5} fill="none" />
       {p('M12 3.5a5.5 5.5 0 0 0 0 11z', true)}
       {p('M3 19h18 M3 17v4 M12 17v4 M21 17v4', false)}
+    </>
+  ),
+  // Which Pair? (triad pairs): a chord stack, an arrow, two small triangles — the chord and its pair.
+  'special:game:whichpair': () => (
+    <>
+      {head(5, 17, 2)}
+      {head(5, 12, 2)}
+      {head(5, 7, 2)}
+      {p('M9 12h4 M11 10l2 2-2 2', false)}
+      {p('M14 19l2.5-5 2.5 5z M17 12l2.5-5 2.5 5z', false)}
     </>
   ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.

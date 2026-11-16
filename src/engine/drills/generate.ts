@@ -19,6 +19,7 @@ import { genIndep, indepFamily } from './indepDrills'; // AUDIT-SCALES §3: hand
 import { genKeysPhrase, keysPhraseFamily } from './phraseDrills'; // phrases by ear
 import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry Harris lines (BARRY-HARRIS-METHOD Part D)
 import { COLOR_RH_KINDS, colorReharmLevels, ctoneFamily, genColor, mediantFamily, organFamily } from './colorDrills'; // HARMONY-REHARM
+import { genTpairKeys, keysTpairFamily } from './tpairDrills'; // triad pairs, deep (2026-11-16)
 import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
 import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
@@ -5091,6 +5092,7 @@ export function generate(spec: DrillSpec): Drill {
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): voiceLeadDrills.ts.
   if (s.family === 'k-vl') return genVoiceLead(s);
   if (s.family === 'k-theory') return genTheoryPlay(s);
+  if (s.family === 'k-tpair') return genTpairKeys(s);
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
   // AUDIT-SCALES: the harmonization ladder + Barry Harris borrowing, hand independence.
@@ -6179,6 +6181,8 @@ export function catalog(): FamilyDef[] {
     ctoneFamily(),
     mediantFamily(),
     organFamily(),
+    // Triad pairs, deep (owner 2026-11-16): patterns, voicings, lines over changes, side-slip (tpairDrills.ts).
+    keysTpairFamily(),
     // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C): the left hand for solo piano, the
     // texture ladder through the heads, the comping vocabulary, improvisation habits (soloPianoDrills.ts).
     soloLhFamily(),
