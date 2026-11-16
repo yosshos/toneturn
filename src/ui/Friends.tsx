@@ -14,6 +14,7 @@ import { socialInfo } from '../engine/gameTiers';
 import { courseOf, type CourseId } from '../engine/courses';
 import { courseLevel, friendsInCourse, type DynName } from '../engine/courseSocial';
 import { Glyph } from './Glyph';
+import { CHALLENGES_ON } from '../cloud/challenges';
 import { ActivityFeed, FriendQuest, PlayerSafety } from './Community';
 import { effectivePrivacy } from '../engine/privacy';
 import { postActivity } from '../cloud/community';
@@ -141,6 +142,11 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           </section>
 
           {profileErr && <p className="field-hint warn">{profileErr}</p>}
+          {CHALLENGES_ON() && (
+            <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges')} data-fr-challenges="1">
+              {lang === 'he' ? 'אתגרי הדרן' : 'Encore challenges'}
+            </button>
+          )}
           {!duelPlaying && incoming.length > 0 && (
             <section className="set-card fr-requests">
               <h2>{t.requests}</h2>

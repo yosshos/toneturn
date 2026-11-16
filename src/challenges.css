@@ -1,0 +1,74 @@
+/* Encore v3 — community challenges (SPEC-PHRASE-STUDIO §12). Same cards and type as Encore; no colour coding by
+   rank, no yellow behind text. Lists scroll inside the screen (finite), the page itself fits one phone screen. */
+
+.chl-screen { gap: 8px; }
+.chl-fit { height: calc(100dvh - 44px); overflow: hidden; }
+.chl-fit > * { flex: none; }
+.chl-fit > .chl-list,
+.chl-fit > .chl-board { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.chl-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 4px; }
+.chl-ic { flex: none; }
+
+.chl-input { width: 100%; box-sizing: border-box; border: var(--stroke) solid var(--outline); border-radius: 12px; padding: 8px 11px; font: 600 0.95rem var(--font); background: var(--card); color: var(--ink); }
+.chl-chips { gap: 6px; }
+.chl-level { display: inline-flex; align-items: center; gap: 4px; }
+.chl-level .ch { padding: 1px 9px; }
+.chl-scroll-x { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; flex: none; }
+.chl-scroll-x::-webkit-scrollbar { display: none; }
+.chl-kv { gap: 6px; }
+.chl-attest { gap: 10px; align-items: flex-start; cursor: pointer; }
+.chl-attest input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.chl-ink { color: var(--ink); }
+.chl-why { color: var(--ink); border-inline-start: 3px solid var(--pink); padding-inline-start: 8px; }
+.chl-card-img { width: 100%; height: auto; border-radius: 12px; border: 2px solid var(--line-strong); display: block; background: #fbfaf7; }
+.chl-card-img.sm { max-height: 92px; object-fit: contain; }
+.chl-link { font: 600 0.82rem var(--font); word-break: break-all; color: var(--ink); }
+
+.chl-staff { width: 100%; height: auto; display: block; }
+.cs-line { stroke: var(--ink); stroke-width: 1; opacity: 0.75; }
+.cs-head { fill: var(--ink); }
+.cs-chord { font: 700 9px var(--font); fill: var(--ink-dim); }
+
+.chl-phrase { gap: 6px; padding: 8px 10px; }
+.chl-target { gap: 5px; }
+.chl-target .ch { cursor: default; padding: 2px 8px; }
+.chl-beat { margin: 0; }
+.chl-mine { gap: 8px; }
+
+.chl-board { list-style: none; margin: 0; padding: 4px 10px; border: var(--stroke) solid var(--outline); border-radius: 16px; background: var(--card); }
+.chl-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 2px solid var(--line); }
+.chl-row:last-child { border-bottom: 0; }
+.chl-row.me { background: var(--card-2); margin: 0 -10px; padding-inline: 10px; }
+.chl-rank { width: 18px; text-align: center; font: 400 1.05rem var(--display); flex: none; }
+.chl-row-main { gap: 1px; }
+.chl-name { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chl-src { font: 700 0.66rem var(--font); border: 1.5px solid var(--outline); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
+.chl-flag { color: var(--ink); font-weight: 700; }
+.chl-mini { width: 28px; height: 28px; min-width: 28px; padding: 0; }
+.chl-empty { padding: 8px 0; }
+.chl-rule { text-align: center; }
+.chl-actions { gap: 8px; }
+.chl-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.chl-actions .btn.on { background: var(--accent); color: var(--accent-ink); }
+
+.chl-pcard { display: flex; flex-direction: column; gap: 4px; width: 100%; cursor: pointer; }
+.chl-pcard .chl-staff { max-height: 52px; }
+.chl-pcard.big .chl-staff { max-height: 84px; }
+.chl-ellip { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chl-plain { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: start; cursor: pointer; width: 100%; }
+
+.chl-sheet-back { position: fixed; inset: 0; background: rgba(20, 18, 26, 0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 60; padding: 12px; }
+.chl-sheet { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; }
+.chl-reason { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-weight: 600; cursor: pointer; }
+.chl-reason input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.chl-public { gap: 10px; }
+.chl-brand { gap: 8px; }
+.chl-pub-title { margin: 0; font-size: 1.35rem; line-height: 1.25; }
+.chl-try { gap: 6px; }
+.chl-keys { position: relative; height: 112px; width: 100%; touch-action: manipulation; user-select: none; }
+.chl-w, .chl-b { position: absolute; top: 0; border: 1.5px solid var(--outline); padding: 0; cursor: pointer; }
+.chl-w { height: 100%; background: #fbfaf7; border-radius: 0 0 6px 6px; z-index: 1; }
+.chl-b { height: 62%; background: #1d1b22; border-radius: 0 0 4px 4px; z-index: 2; }
+.chl-w.next { background: var(--accent); }
+.chl-b.next { background: var(--accent); border-color: #1d1b22; }
