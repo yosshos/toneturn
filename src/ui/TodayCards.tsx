@@ -18,6 +18,8 @@ import { repGoal, repResults } from '../engine/repertoire';
 import '../repertoire.css';
 import '../todaypm.css';
 import { dayKey, doneOn, meanAbs, trend } from '../engine/pitchMemory';
+import { EncoreTodayCard } from './encore/EncoreToday';
+import '../encore.css';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -113,7 +115,7 @@ export function PitchMemoryCard({ progress, lang, onOpen }: { progress: Progress
   );
 }
 
-export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void }) {
+export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -168,6 +170,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
       {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
+      {onEncore && !examPrep && <EncoreTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">
           <h2 id="tq-title">{he ? 'משימות היום' : "Today's quests"}</h2>

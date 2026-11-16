@@ -26,6 +26,8 @@ import { irealStyle, type LeadSheet } from '../engine/leadsheet';
 import { ListenIcons, ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { ChordChart } from './ChordChart';
+import { KeepButton } from './encore/bits';
+import { keepPhrase } from '../engine/encore/takeSource';
 
 export interface MyChart {
   id: string;
@@ -591,6 +593,10 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         <button className="btn ghost small ch-listen" onClick={() => void listenBack()} data-chart-listen="1">
           ▶ {lang === 'he' ? 'להאזין לסולו שלכם' : 'Listen to your solo'}
         </button>
+      )}
+      {hasTake && !playing && (lastTake.current?.notes?.length ?? 0) >= 3 && (
+        // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this solo (guided improv when rules were on).
+        <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: rulesRep ? 'guided' : 'chart', instrument: 'piano', title: title || (lang === 'he' ? 'סולו' : 'Solo'), source: 'midi', notes: (lastTake.current?.notes ?? []).map((n) => ({ pitch: n.midi, on: n.start * 1000, off: n.end * 1000, vel: n.vel ?? 80 })), bpm, t0: 0, meter, chart: text })} />
       )}
       {rulesRep && !playing && (
         <div className="take-card ch-rules-result" aria-live="polite" data-rules-score={Math.round(rulesRep.score * 100)}>

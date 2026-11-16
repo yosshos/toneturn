@@ -42,7 +42,8 @@ export type LickNote = [semi: number, beat: number, dur: number];
 
 export interface Lick {
   id: string;
-  ctx: LickContext;
+  /** 'free': an Encore phrase without a ii–V / blues context (SPEC-PHRASE-STUDIO §5.3). */
+  ctx: LickContext | 'free';
   /** 1 (first ii–V shapes) … 5 (long bebop lines). */
   level: number;
   name: T2;
@@ -52,7 +53,67 @@ export interface Lick {
   straight?: boolean;
   /** The player's own lick (from the transcription coach or "my licks"). */
   own?: boolean;
+  // ── v3 (Encore, SPEC-PHRASE-STUDIO §13.1). All optional; built-in licks are unchanged. ──
+  v?: 3;
+  /** Left-hand notes for two-hand piano phrases (same [semi, beat, dur], semi from the tonic an octave below). */
+  lh?: LickNote[];
+  /** Per-note extras parallel to notes / lh. */
+  marks?: (PhraseMark | null)[];
+  lhMarks?: (PhraseMark | null)[];
+  /** Beats per bar (6 = 6/8 in eighths). */
+  meter?: 3 | 4 | 5 | 6;
+  /** Beats before the first downbeat. */
+  pickup?: number;
+  /** 0.5 straight … 0.67 hard swing (overrides `straight`). */
+  swing?: number;
+  /** The key it was played in (0–11), shown first. */
+  homeKey?: number;
+  minor?: boolean;
+  instrument?: LickInstrument;
+  plan?: PhrasePlan;
+  source?: PhraseSource;
+  createdAt?: string;
+  folder?: string;
+  tags?: string[];
+  /** "As played" (no quantisation): grading uses a wider timing window. */
+  asPlayed?: boolean;
+  /** The tempo it was played at (♩), for "you played it at" and the default target. */
+  playedBpm?: number;
+  /** Another phrase this one was made from (an edit / trim): it shares that phrase's daily cap and passed keys. */
+  parent?: string;
+  shared?: { code: string; visibility: 'friends' | 'class' | 'public' };
 }
+export interface PhraseMark {
+  vel?: number;
+  finger?: number;
+  string?: number;
+  fret?: number;
+  acc?: boolean;
+  stac?: boolean;
+  tech?: ExpNote['technique'];
+}
+export interface PhrasePlan {
+  startBpm: number;
+  goalBpm: number;
+  keys: number[] | 'all';
+  order: 'easiest' | 'fourths' | 'chromatic' | 'weak' | 'custom';
+  hands: 'R' | 'L' | 'RL' | 'R-then-RL';
+  /** The target stage is with the band. */
+  band: boolean;
+  position?: 'same' | 'per-key';
+  locked?: ('goalBpm' | 'keys' | 'hands')[];
+  inToday?: boolean;
+  inWorkout?: boolean;
+  inPath?: boolean;
+}
+export type PhraseSource =
+  | { kind: 'take'; takeId: string; fromBeat: number; toBeat: number }
+  | { kind: 'record'; takeId: string }
+  | { kind: 'lick'; lickId: string }
+  | { kind: 'piece'; pieceId: string; bars: [number, number] }
+  | { kind: 'pattern'; drillId: string }
+  | { kind: 'teacher'; assignmentId: string; teacher: string }
+  | { kind: 'shared'; code: string; by: string };
 
 export const CONTEXTS: { id: LickContext; name: T2; short: T2 }[] = [
   { id: 'major-251', name: { en: 'Major ii–V–I', he: 'ii–V–I מז׳ורי' }, short: { en: 'ii–V–I', he: 'ii–V–I' } },
@@ -135,7 +196,8 @@ export const LICKS: Lick[] = [
 ];
 
 export const lickById = (id: string, own: Lick[] = []): Lick | undefined => LICKS.find((l) => l.id === id) ?? own.find((l) => l.id === id);
-export const contextOf = (id: LickContext) => CONTEXTS.find((c) => c.id === id)!;
+const FREE_CTX = { id: 'free' as const, name: { en: 'Free phrase', he: 'משפט חופשי' }, short: { en: 'free', he: 'חופשי' } };
+export const contextOf = (id: LickContext | 'free') => CONTEXTS.find((c) => c.id === id) ?? FREE_CTX;
 
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
 export const lickBeats = (l: Lick): number => Math.max(l.chords.reduce((a, c) => a + c[2], 0), ...l.notes.map((n) => n[1] + n[2]));
@@ -263,7 +325,7 @@ const ROOT_SHARP = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 
 const ROOT_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 /** A chord symbol the chart parser reads ("Dm7", "Bbmaj7", "G7alt"). */
 export const chordSym = (c: LickChord, key: number): string => (flatKey(key) || [5].includes(mod(key)) ? ROOT_FLAT : ROOT_SHARP)[mod(c[0] + key)] + LICK_Q[c[1]].sym;
-export const isMinorLick = (l: Lick) => LICK_Q[l.chords[l.chords.length - 1][1]].ct.includes(3) && !LICK_Q[l.chords[l.chords.length - 1][1]].ct.includes(4);
+export const isMinorLick = (l: Lick) => (l.minor !== undefined || !l.chords.length ? !!l.minor : null) ?? (LICK_Q[l.chords[l.chords.length - 1][1]].ct.includes(3) && !LICK_Q[l.chords[l.chords.length - 1][1]].ct.includes(4));
 
 /** Chord names per bar (two chords in a bar are joined with a space), for the chart above the staff and the band. */
 export function lickChart(l: Lick, key: number): string[] {
@@ -497,6 +559,12 @@ export interface LickBook {
   review?: Record<string, LickReview>;
   /** "Use it" challenges passed: lick id → best occurrences in one chorus run. */
   used?: Record<string, number>;
+  /** Encore (SPEC-PHRASE-STUDIO §13.1): the order of the old custom drills ("patterns") in the unified library. */
+  patterns?: string[];
+  /** Encore: cached phrase rank (0 sketch … 6 ff), for the promotion moments; recomputable from the items. */
+  phraseRank?: Record<string, number>;
+  /** Encore: XP earned per phrase today (the daily cap, §10.5), reset on a new day. */
+  phraseXp?: { day: string; by: Record<string, number> };
 }
 
 /** Fold a session's result into the book: a lick that became known starts its review; a review take moves its box. */
@@ -510,10 +578,12 @@ export function bookAfterTake(book: LickBook | undefined, lickId: string, known:
 }
 
 /** A phrase (transcription coach) as the player's own lick: semitones above its key's tonic, chords if it has them. */
-export function lickFromPhrase(id: string, name: T2, key: number, notes: { midi: number; beat: number; dur: number }[], chords: LickChord[] | null): Lick {
+export function lickFromPhrase(id: string, name: T2, key: number, notes: { midi: number; beat: number; dur: number }[], chords: LickChord[] | null, ctx?: LickContext | 'free'): Lick {
   const first = notes[0]?.midi ?? 60;
   const tonic = first - mod(first - key) + (mod(first - key) > 6 ? 12 : 0);
   const beats = Math.ceil(Math.max(...notes.map((n) => n.beat + n.dur)) / 4 - 1e-6) * 4;
   const ch: LickChord[] = chords?.length ? chords : [[0, 'maj7', Math.max(4, beats)]];
-  return { id, ctx: 'major-251', level: 3, name, own: true, chords: ch, notes: notes.map((n) => [n.midi - tonic, n.beat, n.dur] as LickNote) };
+  // Encore (§13.4): the detected context when given; the old default otherwise.
+  const c: LickContext | 'free' = ctx ?? 'major-251';
+  return { id, ctx: c, level: 3, name, own: true, chords: ch, notes: notes.map((n) => [n.midi - tonic, n.beat, n.dur] as LickNote) };
 }

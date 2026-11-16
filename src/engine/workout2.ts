@@ -61,6 +61,9 @@ export interface SuggestInput {
   technique?: boolean;
   /** Licks due for spaced review (SPEC-LICKS-TRANSCRIPTION): a 2-minute lick-review block, taken from the path block. */
   licksDue?: number;
+  /** Encore (SPEC-PHRASE-STUDIO §9): own phrases due for review (or in progress, `inWorkout`): with no licks due the
+   *  review block is the phrases' ("licks & phrases"). */
+  phrasesDue?: number;
   /** Learned pieces due for a review run (SPEC-PIECE §2.10): a 3-minute piece-review block, taken from the path block. */
   piecesDue?: number;
   /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) or "I choose" — no New block; strengthen + review only. */
@@ -177,13 +180,14 @@ const reviewSource = (out: Block[], m: number): Block | undefined =>
   out.find((b) => b.target.kind === 'warmup' && b.minutes >= m + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= m + LIMITS.minBlock);
 
 function withLicks(inp: SuggestInput, out: Block[]): Block[] {
-  if (!inp.licksDue || inp.template?.length || total(out) < 10) return out;
-  // The lick review (review share): 2 minutes from the review block (or the largest block), after the review.
+  if (!(inp.licksDue || inp.phrasesDue) || inp.template?.length || total(out) < 10) return out;
+  // The lick review (review share): 2 minutes from the review block (or the largest block), after the review. Licks
+  // and phrases (Encore) share it: licks due first, else the player's own phrases.
   const from = reviewSource(out, 2);
   if (!from) return out;
   from.minutes -= 2;
   const at = out.findIndex((b) => b.target.kind === 'warmup');
-  const block: Block = { id: uid(out, 'game'), target: { kind: 'game', game: 'licks' }, minutes: 2 };
+  const block: Block = { id: uid(out, 'game'), target: { kind: 'game', game: inp.licksDue ? 'licks' : 'encore' }, minutes: 2 };
   out.splice(at < 0 ? out.length : at + 1, 0, block);
   return out;
 }

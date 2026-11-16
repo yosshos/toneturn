@@ -18,6 +18,8 @@ import type { MyChart } from './Charts';
 import { UseIt, lickInstrumentOf } from './LickTrainer';
 import { lickById } from '../engine/licks';
 import type { RatingEvent } from '../engine/rating';
+import { KeepButton } from './encore/bits';
+import { keepPhrase } from '../engine/encore/takeSource';
 
 type Lang = 'en' | 'he';
 type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
@@ -165,6 +167,10 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
         <p className="field-hint">
           {tx.motif}: {mot.returns.length} {tx.times} · {tx.dev} {Math.round(developmentScore(mot.returns) * 100)}%
         </p>
+        {played.length >= 3 && (
+          // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this take.
+          <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: 'improv', instrument: 'piano', title: { en: `Improv over ${L.title.en}`, he: `אלתור על ${L.title.he}` }, source: midi.devices.length ? 'midi' : 'screen', notes: played.map((n) => ({ pitch: n.midi, on: n.beat * beatS * 1000, off: (n.beat + Math.max(0.1, n.dur)) * beatS * 1000, vel: 80 })), bpm, t0: 0, meter: 4, chart: L.text })} />
+        )}
       </div>,
     );
   };

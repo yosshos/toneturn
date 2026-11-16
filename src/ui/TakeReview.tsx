@@ -7,6 +7,7 @@ import type { TakeMetrics } from '../engine/drills/types';
 import { reviewOf, type Review } from '../engine/drills/review';
 import { drumLimbLine } from '../engine/drills/drumAnalyze';
 import { EvennessStrip, MarkLegend, VelocityCurve } from './DrillTake';
+import { KeepButton } from './encore/bits';
 
 type Lang = 'he' | 'en';
 
@@ -69,7 +70,10 @@ export function TakeReview({
   nextLabel,
   lastTake,
   children,
+  onKeep,
 }: {
+  /** Encore (SPEC-PHRASE-STUDIO §4.1): "Keep this phrase" — a small icon button beside Again / Loop / Next. */
+  onKeep?: () => void;
   /** A previous take of the same item exists: the "Last take" toggle (its ticks faded under this take's). */
   lastTake?: { on: boolean; onToggle: () => void };
   /** The Next button's word ("Whole item" after a loop). */
@@ -189,6 +193,7 @@ export function TakeReview({
             {nextLabel ?? tx.next}
           </button>
         )}
+        {onKeep && <KeepButton lang={lang} onKeep={onKeep} />}
       </div>
       {lastTake ? (
         // The take overlay (§4.1): the previous take's ticks, faded, under this one's — on the same notes.
