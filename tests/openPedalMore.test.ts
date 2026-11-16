@@ -13,11 +13,12 @@ const pc = (n: number) => ((n % 12) + 12) % 12;
 const g = (kind: string, key: number, option = 0) => generate({ family: 'g-color', kind, key, hands: 'R', instrument: 'guitar', option });
 
 describe('more open-string pedals', () => {
-  it('levels 16–18 exist, stay in their idiomatic keys (FIXED_KEY_LEVELS), open with the pedal-point lesson', () => {
+  it('minor joins level 13, the high E level 15, drop D is level 16; each in its idiomatic keys (FIXED_KEY_LEVELS)', () => {
     const fam = guitarCatalog().find((f) => f.id === 'g-color')!;
-    for (const [n, kind] of [[16, 'gop-minor'], [17, 'gop-high'], [18, 'gop-dropd']] as const) {
+    for (const [n, kind] of [[13, 'gop-minor'], [15, 'gop-high'], [16, 'gop-dropd']] as const) {
       const lv = fam.levels.find((l) => l.id === `g-color-${n}`)!;
       expect(lv, kind).toBeDefined();
+      expect(lv.specs.some((x) => x.kind === kind)).toBe(true);
       expect(FIXED_KEY_LEVELS).toContain(lv.id);
       expect([...(lv.keys as number[])].sort()).toEqual([...MORE_PEDAL_KEYS[kind]].sort());
       expect(UNITS[`tech:${lv.id}`]).toBe('pedal-point');
@@ -27,6 +28,7 @@ describe('more open-string pedals', () => {
   });
   it('a non-idiomatic key throws (never a fretted "open" pedal)', () => {
     expect(() => g('gop-high', 0)).toThrow();
+    expect(() => g('gop-high', 5)).toThrow();
     expect(() => g('gop-dropd', 9)).toThrow();
     expect(() => g('gop-minor', 7)).toThrow();
   });
@@ -44,9 +46,12 @@ describe('more open-string pedals', () => {
       });
     }
   });
-  it('the high E rings on top of every chord (E and A, I – IV – ♭VII – I)', () => {
-    const want: Record<number, string> = { 4: 'E A Dadd9 E', 9: 'A Dadd9 G6 A' };
-    for (const k of [4, 9]) {
+  it('the high E rings on top of every chord (E, A, D, G: I – IV – ♭VII – I), and the names hold it', () => {
+    const want: Record<number, string> = { 4: 'E A Dadd9 E', 9: 'A Dadd9 G6 A', 2: 'Dadd9 G6 Cadd9 Dadd9', 7: 'G6 C Fmaj7 G6' };
+    // E's interval above each chord root is consonant: root/3rd/5th, 6th, 9th or maj7
+    const ok = [0, 4, 7, 9, 2, 11];
+    for (const k of [4, 9, 2, 7]) {
+      for (const d of [0, 5, 10]) expect(ok).toContain(pc(4 - (k + d)));
       const d = g('gop-high', k);
       expect(d.chart!.join(' ')).toBe(want[k]);
       for (const b of [0, 4, 8, 12]) {

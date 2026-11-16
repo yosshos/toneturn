@@ -36,6 +36,8 @@ import { headIn, type HeadIn } from '../heads';
 import { chartFor, chordMelodyEvs, genHeadPiano } from './headDrills';
 import { parseChart } from '../charts';
 import { modelLine } from './soloDrills';
+import { generateGuitarEar } from './guitarEar';
+import { generateBassEar } from './bassEar';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -557,7 +559,7 @@ function genKeysTune(s: DrillSpec): Drill {
 // ───────────────────────────── keys family ─────────────────────────────
 
 /** Guitar grades of g-gig 1–8 (the path places guitar levels by grade; keys and bass: ../gigPlacement.ts). */
-export const G_GIG_GRADE: number[] = [8, 8, 8, 8, 9, 10, 10, 11];
+export const G_GIG_GRADE: number[] = [8, 8, 8, 8, 9, 10, 10, 11, 11];
 
 export function keysGigFamily(): FamilyDef {
   const v = (kind: string, option: number, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: 'k-gig', kind, hands: 'R', swing: true, option, ...o });
@@ -618,6 +620,8 @@ const hitsOf = (chords: VChord[], b0 = 0): { beat: number; dur: number; c: VChor
 
 export function genGuitarGig(s: DrillSpec, tu: Tuning): Drill {
   if (s.kind === 'gg-tune') return genGuitarTune(s, tu);
+  // Intros and endings by ear (progEar.ts): hear one, comp it back in drop 2 (graded per chord, harmonyGrade.ts).
+  if (s.kind === 'prog-intro' || s.kind === 'prog-ending') return generateGuitarEar(s, tu);
   const key = mod12(s.key);
   const it = gigItem(s.kind, key, s.option ?? 0);
   const comp = isComp(it.what);
@@ -724,6 +728,8 @@ export function guitarGigFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
     LT('g-gig', 6, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), GIG_KEYS, [72, 126], 'chord-melody', G[5]),
     LT('g-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 120], 'chord-melody', G[6]),
     LT('g-gig', 8, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), GIG_KEYS, [72, 120], 'chord-melody', G[7]),
+    // By ear (the guitar's own counterpart of the ear topic intro-ending): hear an intro or an ending, comp it back.
+    LT('g-gig', 9, 'Intros and endings by ear: comp them back in drop 2', 'פתיחות וסיומים בשמיעה: ללוות אותם בחזרה בדרופ 2', [v('prog-intro', 0, { position: 1, swing: false }), v('prog-ending', 1, { position: 1, swing: false })], GIG_KEYS, [60, 90], 'chords', G[8]),
   ]);
 }
 
@@ -733,6 +739,8 @@ const toBN = (ln: VN[], b0 = 0): BN[] => ln.map((n) => ({ b: r6(b0 + n.beat), d:
 
 export function genBassGig(s: DrillSpec, tu: Tuning): Drill {
   if (s.kind === 'gg-tune') return genBassTune(s, tu);
+  // Intros and endings by ear (bassEar.ts 'ie-ear'): hear one, walk its roots back.
+  if (s.kind === 'ie-ear') return generateBassEar(s, tu);
   const key = mod12(s.key);
   const it = gigItem(s.kind, key, s.option ?? 0);
   const ln = gigLine(it, 28, 52, `${s.family}:${s.kind}:${key}:${s.option ?? 0}`);
@@ -818,5 +826,7 @@ export function bassGigFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
     L('b-gig', 6, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), GIG_KEYS, [72, 126], 'two-feel / walking'),
     L('b-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 120], 'two-feel / walking'),
     L('b-gig', 8, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), GIG_KEYS, [72, 120], 'two-feel / walking'),
+    // By ear (the bass's own counterpart of the ear topic intro-ending): hear an intro or an ending, play its roots back.
+    L('b-gig', 9, 'Intros and endings by ear: play the roots back', 'פתיחות וסיומים בשמיעה: לנגן את היסודות בחזרה', [v('ie-ear', 0, { perBeat: 0.5, swing: false }), v('ie-ear', 1, { perBeat: 0.5, swing: false })], GIG_KEYS, [70, 110], 'halves'),
   ]);
 }

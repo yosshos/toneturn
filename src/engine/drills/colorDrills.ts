@@ -871,13 +871,13 @@ const RING: Record<number, [number, 'M' | 'm', string][]> = {
 };
 const TRI: Record<'M' | 'm' | 'dim', number[]> = { M: [0, 4, 7], m: [0, 3, 7], dim: [0, 3, 6] };
 /** A triad on three adjacent strings near `aim` (the lowest fret), voice-led from `prev`. */
-function triadOn(tu: Tuning, root: number, q: 'M' | 'm' | 'dim', strings: number[], prev: number[] | null, aim: number): { s: number; f: number }[] {
+function triadOn(tu: Tuning, root: number, q: 'M' | 'm' | 'dim', strings: number[], prev: number[] | null, aim: number, below = 999): { s: number; f: number }[] {
   const pcs = TRI[q].map((x) => mod12(root + x));
   const lo = tu.open[strings[0] - 1];
   const cands = closeShapes(pcs, lo, lo + 19)
     .flatMap((v) => [v, [v[1], v[2], v[0] + 12].sort((a, b) => a - b)])
     .map((v) => ({ v, fit: fitOnSet(v, strings, tu.id) }))
-    .filter((x): x is { v: number[]; fit: { s: number; f: number }[] } => !!x.fit);
+    .filter((x): x is { v: number[]; fit: { s: number; f: number }[] } => !!x.fit && Math.max(...x.v) < below);
   if (!cands.length) throw new Error(`open pedal: no triad for ${root} ${q} on ${strings.join('')}`);
   const cost = (x: { v: number[]; fit: { f: number }[] }) => (prev ? motionOf(prev, x.v) : Math.abs(Math.min(...x.fit.map((f) => f.f)) - aim));
   return cands.sort((a, b) => cost(a) - cost(b))[0].fit;
@@ -885,12 +885,13 @@ function triadOn(tu: Tuning, root: number, q: 'M' | 'm' | 'dim', strings: number
 /**
  * More open-string pedals (AUDIT-DEPTH-3 follow-up, 2026-11-16), only where the open string is idiomatic:
  *  gop-minor  i – iv – V – i over the open tonic in E, A and D minor (the same open strings as the major pedal);
- *  gop-high   the open high E (1st string) ringing ABOVE shapes on strings 4-3-2: in E the tonic on top
- *             (E – A – D(add9) – E), in A the 5th on top (A – D(add9) – G6 – A); I – IV – ♭VII – I, all consonant;
+ *  gop-high   the open high E (1st string) ringing ABOVE shapes on strings 4-3-2, I – IV – ♭VII – I, every chord
+ *             consonant with it: E (E – A – Dadd9 – E), A (A – Dadd9 – G6 – A), D (Dadd9 – G6 – Cadd9 – Dadd9),
+ *             G (G6 – C – Fmaj7 – G6);
  *  gop-dropd  drop D tuning, the low open D (6th string) as the pedal: in D the tonic pedal (I – IV – V – I,
  *             I – ♭VII – IV – I), in G the dominant pedal (Am/D – C/D – E♭/D – D7 → G).
  */
-export const MORE_PEDAL_KEYS: Record<string, number[]> = { 'gop-minor': [4, 9, 2], 'gop-high': [4, 9], 'gop-dropd': [2, 7] };
+export const MORE_PEDAL_KEYS: Record<string, number[]> = { 'gop-minor': [4, 9, 2], 'gop-high': [4, 9, 2, 7], 'gop-dropd': [2, 7] };
 const MINOR_PEDAL: [number, 'M' | 'm', string][] = [[0, 'm', ''], [5, 'm', 'iv'], [7, 'M', 'V'], [0, 'm', '']];
 const HIGH_PEDAL: [number, 'M' | 'm', string][] = [[0, 'M', ''], [5, 'M', 'IV'], [10, 'M', '♭VII'], [0, 'M', '']];
 function genMorePedal(s: DrillSpec, tu0: Tuning, key: number, op: number): Drill {
@@ -921,16 +922,15 @@ function genMorePedal(s: DrillSpec, tu0: Tuning, key: number, op: number): Drill
   } else if (s.kind === 'gop-high') {
     const fl = flatsOf(key);
     const kn = kName(key);
-    const SUF: Record<number, string[]> = { 4: ['', '', 'add9', ''], 9: ['', 'add9', '6', ''] };
+    const SUF: Record<number, string[]> = { 4: ['', '', 'add9', ''], 9: ['', 'add9', '6', ''], 2: ['add9', '6', 'add9', 'add9'], 7: ['6', '', 'maj7', '6'] };
     HIGH_PEDAL.forEach(([d, q], i) => {
-      const tri = triadOn(tu, key + d, q, [4, 3, 2], prev, 2);
+      const tri = triadOn(tu, key + d, q, [4, 3, 2], prev, 2, 64);
       prev = pitches(tri);
       strum([...tri, { s: 1, f: 0 }], i * 4, 4);
       names.push(rootName(key + d, fl) + SUF[key][i]);
     });
-    ttl = key === 4
-      ? t(`The open high E rings above the shapes in ${kn}: ${names.join(' – ')}`, `ה־E הגבוה הפתוח מצלצל מעל הצורות ב־${kn}: ${names.join(' – ')}`)
-      : t(`The open high E (the 5th) rings above the shapes in ${kn}: ${names.join(' – ')}`, `ה־E הגבוה הפתוח (הקווינטה) מצלצל מעל הצורות ב־${kn}: ${names.join(' – ')}`);
+    const deg = { 4: ['the tonic', 'הטוניקה'], 9: ['the 5th', 'הקווינטה'], 2: ['the 9th', 'הנונה'], 7: ['the 6th', 'הסקסטה'] }[key]!;
+    ttl = t(`The open high E (${deg[0]}) rings above the shapes in ${kn}: ${names.join(' – ')}`, `ה־E הגבוה הפתוח (${deg[1]}) מצלצל מעל הצורות ב־${kn}: ${names.join(' – ')}`);
   } else {
     // drop D: the pedal is the low D on the 6th string
     const fl = flatsOf(key);
@@ -1100,7 +1100,7 @@ export function genGuitarColor(s: DrillSpec, tu: Tuning): Drill {
 type LTFn = (fam: string, level: number, en: string, he: string, specs: SpecTemplate[], keys: LevelDef['keys'], tempo: [number, number], sub: string, grade: number) => GuitarLevelDef;
 type GFamFn = (id: FamilyId, en: string, he: string, style: 'classical' | 'jazz', genres: GuitarStyle[], levels: GuitarLevelDef[]) => GuitarFamilyDef;
 /** Guitar rows: [kind, options, grade, en, he, sub]. */
-export const GCT_ROWS: { kind: string; ops: number[]; grade: number; en: string; he: string; sub: string; keys?: number[] }[] = [
+export const GCT_ROWS: { kind: string; ops: number[]; grade: number; en: string; he: string; sub: string; keys?: number[]; also?: { kind: string; ops: number[] }[] }[] = [
   { kind: 'gct-tri', ops: [0, 1], grade: 6, en: 'One note on string 1, six triads under it', he: 'צליל אחד על מיתר 1, שישה משולשים מתחתיו', sub: 'one chord a bar' },
   { kind: 'gct-sev', ops: [0, 1], grade: 6, en: 'Drop 2 under the note, strings 4-3-2-1', he: 'דרופ 2 מתחת לצליל, מיתרים 4-3-2-1', sub: 'one chord a bar' },
   { kind: 'gct-drop2b', ops: [0, 1], grade: 7, en: 'Drop 2 under the note, strings 5-4-3-2', he: 'דרופ 2 מתחת לצליל, מיתרים 5-4-3-2', sub: 'one chord a bar' },
@@ -1109,7 +1109,7 @@ export const GCT_ROWS: { kind: string; ops: number[]; grade: number; en: string;
   // HARMONY-REHARM "still open": the player's own chords on the neck (k-ctone 7's item).
   { kind: 'gct-free', ops: [0], grade: 9, en: 'Your choice: the note eight ways on the neck', he: 'הבחירה שלכם: הצליל בשמונה דרכים על הצוואר', sub: 'one chord a bar' },
 ];
-export const GCOL_ROWS: { kind: string; ops: number[]; grade: number; en: string; he: string; sub: string; keys?: number[] }[] = [
+export const GCOL_ROWS: { kind: string; ops: number[]; grade: number; en: string; he: string; sub: string; keys?: number[]; also?: { kind: string; ops: number[] }[] }[] = [
   { kind: 'gmi-tri', ops: [0], grade: 5, en: 'Borrowed iv under the held tonic', he: 'iv שאול מתחת לטוניקה', sub: 'triads' },
   { kind: 'gmi-pop', ops: [0], grade: 5, en: '♭VI – ♭VII – I triads', he: 'משולשי ♭VI – ♭VII – I', sub: 'triads' },
   { kind: 'gmd-tri', ops: [0, 1], grade: 6, en: 'Chromatic mediants: the common tone held', he: 'מדיאנטות כרומטיות: הצליל המשותף נשאר', sub: 'triads' },
@@ -1123,15 +1123,15 @@ export const GCOL_ROWS: { kind: string; ops: number[]; grade: number; en: string
   { kind: 'gss-slip', ops: [0], grade: 8, en: 'Side-slip comping', he: 'ליווי בהחלקה הצידה', sub: 'drop 2' },
   { kind: 'gsus', ops: [0], grade: 9, en: 'The sus reharm of ii–V', he: 'הרמון הסאס של ii–V', sub: 'drop 2' },
   // HARMONY-REHARM "still open": the open-string pedal, in the keys whose open strings carry it (E, A, D; G at the top).
-  { kind: 'gop-tonic', ops: [0, 1], grade: 5, en: 'Open-string pedal: shapes over the ringing tonic', he: 'פדל על מיתר פתוח: צורות מעל הטוניקה המצלצלת', sub: 'triads', keys: [4, 9, 2] },
+  { kind: 'gop-tonic', ops: [0, 1], grade: 5, en: 'Open-string pedal: shapes over the ringing tonic, major and minor', he: 'פדל על מיתר פתוח: צורות מעל הטוניקה המצלצלת, מז׳ור ומינור', sub: 'triads', keys: [4, 9, 2], also: [{ kind: 'gop-minor', ops: [0] }] },
   { kind: 'gop-dom', ops: [0], grade: 6, en: 'Dominant pedal on an open string, then home', he: 'פדל דומיננטה על מיתר פתוח, ואז הביתה', sub: 'triads', keys: [9, 2, 7] },
-  { kind: 'gop-ring', ops: [0], grade: 6, en: 'Open B and E ringing above moving shapes', he: 'B ו־E פתוחים מצלצלים מעל צורות זזות', sub: 'triads', keys: [4, 9, 2, 7] },
-  // More open-string pedals, only in the keys whose open strings carry them (FIXED_KEY_LEVELS g-color 16–18).
-  { kind: 'gop-minor', ops: [0], grade: 5, en: 'Open-string pedal in minor: i – iv – V – i over the open tonic', he: 'פדל על מיתר פתוח במינור: i – iv – V – i מעל הטוניקה הפתוחה', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-minor'] },
-  { kind: 'gop-high', ops: [0], grade: 6, en: 'The open high E rings above the shapes', he: 'ה־E הגבוה הפתוח מצלצל מעל הצורות', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-high'] },
+  { kind: 'gop-ring', ops: [0], grade: 6, en: 'Open B and E ringing above moving shapes; the high E alone', he: 'B ו־E פתוחים מצלצלים מעל צורות זזות; ה־E הגבוה לבד', sub: 'triads', keys: [4, 9, 2, 7], also: [{ kind: 'gop-high', ops: [0] }] },
+  // Drop D: the low open D as the pedal, only in D and G (FIXED_KEY_LEVELS g-color 16). gop-minor joins level 13 and
+  // gop-high level 15 (the same keys).
   { kind: 'gop-dropd', ops: [0], grade: 6, en: 'Drop D: the low open D as the pedal (tonic in D, dominant in G)', he: 'Drop D: ה־D הנמוך הפתוח כפדל (טוניקה ב־D, דומיננטה ב־G)', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-dropd'] },
 ];
-const gFam = (id: FamilyId, rows: typeof GCT_ROWS, LT: LTFn) => rows.map((r, i) => LT(id, i + 1, r.en, r.he, r.ops.map((o) => ({ family: id, kind: r.kind, hands: 'R' as const, instrument: 'guitar' as const, option: o, tempo: 60 })), r.keys ?? CL_KEYS, [60, 100], r.sub, r.grade));
+const gFam = (id: FamilyId, rows: typeof GCT_ROWS, LT: LTFn) =>
+  rows.map((r, i) => LT(id, i + 1, r.en, r.he, [{ kind: r.kind, ops: r.ops }, ...(r.also ?? [])].flatMap((k) => k.ops.map((o) => ({ family: id, kind: k.kind, hands: 'R' as const, instrument: 'guitar' as const, option: o, tempo: 60 }))), r.keys ?? CL_KEYS, [60, 100], r.sub, r.grade));
 export function guitarCtoneFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
   return fam('g-ctone', 'One note, many chords on guitar', 'צליל אחד, הרבה אקורדים בגיטרה', 'jazz', ['jazz'], gFam('g-ctone', GCT_ROWS, LT));
 }

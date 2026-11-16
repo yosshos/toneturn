@@ -12,7 +12,27 @@ const pickOf = <T,>(rnd: Rnd, xs: readonly T[]): T => xs[Math.floor(rnd() * xs.l
 const C = (deg: string, q: DChord['q'], beats = 4, x: GX = 'none'): DChord => ({ deg, q, x, beats });
 
 /** The instrument progression kinds (k-ear 'prog-*', g-ear 'prog-*'). */
-export type ProgEarKind = 'iivi' | 'rootless' | 'secinv' | 'subs' | 'altered' | 'blues' | 'bridge';
+export type ProgEarKind = 'iivi' | 'rootless' | 'secinv' | 'subs' | 'altered' | 'blues' | 'bridge' | 'intro' | 'ending';
+
+// Intros and endings by ear on the instrument (AUDIT-DEPTH-3 #12 follow-up, 2026-11-16): the guitar comps back and the
+// bass walks back the intro or ending it heard — the same progressions as the bandstand family (gigDrills.ts TURN_INTRO,
+// BLUES_LAST4, TAG3, B6B2_MAJ, B6B2_DOM, DAMERON, WALKDOWN, the Basie ii–V–I; tests check they match). Written here as
+// degrees: this module cannot import gigDrills.ts (it loads before the drill catalogues).
+const twice = (ds: DChord[]): DChord[] => [...ds, ...ds];
+export const EAR_INTROS: { id: string; ch: DChord[]; name: { en: string; he: string } }[] = [
+  { id: 'turn', ch: [...twice([C('3', 'm7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2)]), C('1', 'maj7')], name: { en: 'Intro: the iii–VI7–ii–V7 vamp', he: 'פתיחה: ואמפ iii–VI7–ii–V7' } },
+  { id: 'last4', ch: [C('2', 'm7'), C('5', '7'), C('1', '7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2), C('1', '7')], name: { en: 'Intro: a blues’s last four bars', he: 'פתיחה: ארבע התיבות האחרונות של בלוז' } },
+];
+export const EAR_ENDINGS: { id: string; ch: DChord[]; name: { en: string; he: string } }[] = [
+  { id: 'basie', ch: [C('2', 'm7'), C('5', '7'), C('1', '6', 8)], name: { en: 'Ending: ii–V–I, the Basie ending', he: 'סיום: ii–V–I, סיום בייסי' } },
+  { id: 'tag', ch: [...twice([C('3', 'm7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2)]), C('3', 'm7', 2), C('6', '7', 2), C('2', 'm7', 2), C('5', '7', 2), C('1', 'maj7')], name: { en: 'Ending: the tag ×3', he: 'סיום: התג ×3' } },
+  { id: 'b6b2maj', ch: [C('2', 'm7'), C('5', '7'), C('b6', 'maj7', 2), C('b2', 'maj7', 2), C('1', 'maj7')], name: { en: 'Ending: ♭VImaj7–♭IImaj7–Imaj7', he: 'סיום: ♭VImaj7–♭IImaj7–Imaj7' } },
+  { id: 'b6b2', ch: [C('2', 'm7'), C('5', '7'), C('b6', '7', 2), C('b2', '7', 2), C('1', 'maj7')], name: { en: 'Ending: ♭VI7–♭II7–Imaj7', he: 'סיום: ♭VI7–♭II7–Imaj7' } },
+  { id: 'dameron', ch: [...twice([C('1', 'maj7', 2), C('b3', 'maj7', 2), C('b6', 'maj7', 2), C('b2', 'maj7', 2)]), C('1', 'maj7')], name: { en: 'Ending: the Dameron turnaround', he: 'סיום: הטרנאראונד של דיימרון' } },
+  { id: 'walkdown', ch: [C('3', 'm7'), C('b3', 'dim7'), C('2', 'm7'), C('5', '7'), C('1', 'maj7')], name: { en: 'Ending: the diminished walk-down', he: 'סיום: הירידה הדימינישית' } },
+];
+/** The intro (op 0) or ending (op 1) an ear item picks. */
+export const earFormPick = (kind: 'intro' | 'ending', rnd: Rnd) => pickOf(rnd, kind === 'intro' ? EAR_INTROS : EAR_ENDINGS);
 
 /** The chords of a kind (op picks major / minor, or the blues variant). */
 export function progEarChords(kind: ProgEarKind, op: number, rnd: Rnd): DChord[] {
@@ -44,6 +64,9 @@ export function progEarChords(kind: ProgEarKind, op: number, rnd: Rnd): DChord[]
         ? [C('1', '7', 4, col()), C('4', '7', 4, col()), C('1', '7', 4, col()), C('5', 'm7', 2), C('1', '7', 2), C('4', '7', 4, col()), C('#4', 'dim7'), C('1', '7', 4, col()), C('6', '7', 4, 'b9'), C('2', 'm7'), C('5', '7', 4, col()), C('1', '7', 2), C('6', '7', 2, 'b9'), C('2', 'm7', 2), C('5', '7', 2)]
         : [C('1', '7', 4, col()), C('4', '7', 4, col()), C('1', '7', 8, col()), C('4', '7', 8, col()), C('1', '7', 4, col()), C('6', '7', 4, 'b9'), C('2', 'm7'), C('5', '7', 4, col()), C('1', '7', 4, col()), C('5', '7', 4, col())];
     }
+    case 'intro':
+    case 'ending':
+      return earFormPick(kind, rnd).ch;
     case 'bridge': {
       // The bridge of an AABA (the A is heard first, then the bridge; the bridge is played back).
       const p = gridProgression(8, rnd);
@@ -56,7 +79,7 @@ export function progEarChords(kind: ProgEarKind, op: number, rnd: Rnd): DChord[]
 export const A_SECTION: DChord[] = [C('1', 'maj7'), C('6', 'm7'), C('2', 'm7'), C('5', '7'), C('3', 'm7'), C('6', '7', 4, 'b9'), C('2', 'm7'), C('5', '7')];
 
 /** The voicing style of a kind on the keys. */
-export const KEYS_STYLE: Record<ProgEarKind, GridVoicing> = { iivi: 'shell', rootless: 'rootless', secinv: 'close', subs: 'shell', altered: 'rootless', blues: 'rootless', bridge: 'rootless' };
+export const KEYS_STYLE: Record<ProgEarKind, GridVoicing> = { iivi: 'shell', rootless: 'rootless', secinv: 'close', subs: 'shell', altered: 'rootless', blues: 'rootless', bridge: 'rootless', intro: 'rootless', ending: 'rootless' };
 
 /** Realise chords at beats from `b0` (each chord's beat and length). */
 export function placeChords(key: number, ds: DChord[], b0 = 0): { c: GChord; beat: number }[] {
@@ -97,4 +120,6 @@ export const PROG_EAR_NAME: Record<ProgEarKind, { en: string; he: string }[]> = 
   altered: [{ en: 'Altered dominants and upper structures', he: 'דומיננטות אלטרד ומבנים עליונים' }, { en: 'Altered dominants in minor', he: 'דומיננטות אלטרד במינור' }],
   blues: [{ en: 'A 12-bar jazz blues', he: 'בלוז ג׳אז של 12 תיבות' }, { en: 'A 12-bar jazz blues with ♯IV°7', he: 'בלוז ג׳אז של 12 תיבות עם ♯IV°7' }],
   bridge: [{ en: 'An AABA bridge', he: 'הגשר של שיר בצורת 32 תיבות' }],
+  intro: [{ en: 'Intros by ear', he: 'פתיחות בשמיעה' }],
+  ending: [{ en: 'Endings by ear', he: 'סיומים בשמיעה' }],
 };

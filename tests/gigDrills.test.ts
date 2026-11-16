@@ -29,10 +29,10 @@ const playAt = (d: Drill, bpm: number, notes: { p: number; beat: number; dur: nu
   notes.map((n) => ({ pitch: n.p, on: expTimeMs(d, n.beat, bpm), off: expTimeMs(d, n.beat + n.dur * 0.9, bpm), vel: 80 }));
 
 describe('the families', () => {
-  it('k-gig 12 levels, g-gig 8, b-gig 8; titles in English and Hebrew; every level in all 12 keys', () => {
+  it('k-gig 12 levels, g-gig 9, b-gig 9 (9: intros and endings by ear); titles in English and Hebrew; every level in all 12 keys', () => {
     expect(famOf('k-gig').levels).toHaveLength(12);
-    expect(famOf('g-gig').levels).toHaveLength(8);
-    expect(famOf('b-gig').levels).toHaveLength(8);
+    expect(famOf('g-gig').levels).toHaveLength(9);
+    expect(famOf('b-gig').levels).toHaveLength(9);
     for (const id of ['k-gig', 'g-gig', 'b-gig']) {
       const f = famOf(id);
       expect(HE.test(f.title.he)).toBe(true);
@@ -287,7 +287,7 @@ describe('the whole tune (C8)', () => {
 describe('wiring (everything connects)', () => {
   it('path: k-gig and b-gig at their ratings (1300–1840), g-gig by grade; families rise', () => {
     const tech = stepCatalogue().filter((s) => s.kind === 'tech' && s.ladder && /^(k|g|b)-gig$/.test(s.ladder.family));
-    expect(tech.length).toBe(28);
+    expect(tech.length).toBe(30);
     const d = (id: string) => tech.find((s) => s.id === `tech:${id}`)!.difficulty;
     expect(d('k-gig-1')).toBe(1320);
     expect(d('k-gig-8')).toBe(1500);

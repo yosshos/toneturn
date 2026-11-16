@@ -14,7 +14,7 @@ import { alt, chartOf, drillOf, fold, PROGS, QI, rootOf, spell, textOf, type BN,
 import { MODULATIONS, withBarPlan } from './timeline';
 import { barryLine } from '../barry';
 import { gridProgression, type DChord, type GChord } from '../progGrid';
-import { beatsOf, harmonyPlan, placeChords } from './progEar';
+import { beatsOf, earFormPick, harmonyPlan, placeChords } from './progEar';
 type T2l = { en: string; he: string };
 
 /** EN / HE pair (local: bass.ts helpers can't run at module load). */
@@ -54,6 +54,8 @@ const ASK: Record<string, { en: string; he: string }> = {
   'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו יסוד בתחילת כל קבוצה'),
   'mod-ear': tt('Hear the beat change — play quarters on the new beat', 'שמעו את הפעמה משתנה — נגנו רבעים בפעמה החדשה'),
   'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת ווקינג על המהלך — ואז נגנו את היסוד של כל אקורד, בפעמה הראשונה שלו'),
+  'ie-intro': tt('The band plays an intro — then play its roots: which intro was it?', 'הלהקה מנגנת פתיחה — ואז נגנו את היסודות שלה: איזו פתיחה זו?'),
+  'ie-end': tt('The band plays an ending — then play its roots: which ending was it?', 'הלהקה מנגנת סיום — ואז נגנו את היסודות שלו: איזה סיום זה?'),
   'form-ear': tt('Hear a whole 32-bar chorus — then play its roots through the form', 'שמעו סבב שלם של 32 תיבות — ואז נגנו את היסודות שלו לאורך כל הצורה'),
 };
 
@@ -390,6 +392,32 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         form: tt('A 32-bar AABA: hear it, play it through', 'שיר של 32 תיבות: לשמוע, לנגן עד הסוף'),
       };
       const d = finishEar(s, tu, line, notes, windows, s.kind === 'form-ear' ? 'form-ear' : 'walk-ear', s.kind === 'form-ear' ? NM2.form : op === 1 ? NM2.walk1 : NM2.walk0, ans.map((a) => a.c.sym));
+      return { ...d, harmony: harmonyPlan(ans, 'bass', true) };
+    }
+    case 'ie-ear': {
+      // Intros (op 0) and endings (op 1) by ear (progEar.ts EAR_INTROS / EAR_ENDINGS, the bandstand's progressions): the
+      // band comps the intro or ending (no bass), then the player plays its roots — on the chord's first beat, again on
+      // 3 of a bar-long chord — graded chord by chord (harmonyGrade.ts, bass mode).
+      const pick = earFormPick(op === 1 ? 'ending' : 'intro', rnd);
+      const total = beatsOf(pick.ch);
+      const placed = placeChords(key, pick.ch, 0);
+      const plain = (c: GChord) => `${c.sym.replace(/(maj7|m7♭5|m7|°7|7|m6|6|m)(.*)$/, '$1')}`.replace('m7♭5', 'm7b5').replace('°7', 'dim7').replace(/♭/g, 'b').replace(/♯/g, '#');
+      const bars: string[] = [];
+      for (const { c, beat } of placed) {
+        const bar = Math.floor(beat / 4);
+        bars[bar] = bars[bar] ? `${bars[bar]} ${plain(c)}` : plain(c);
+        for (let k = 1; k < c.beats / 4; k++) bars[bar + k] = plain(c);
+      }
+      const p = parseChart(bars.join(' | '));
+      for (const h of comping(p, 4, total, 'swing', hashOf(`b-ear:ie:${key}:${op}:c`))) notes.push({ beat: h.beat, dur: h.len, midi: h.notes, inst: 'piano' });
+      for (let b = 0; b < total; b += 2) notes.push({ beat: b, dur: 0.2, midi: [42], perc: 'hat' });
+      band(0, total - 1);
+      const ans = placeChords(key, pick.ch, total);
+      for (const { c, beat } of ans) {
+        line.push({ b: beat, d: Math.min(2, c.beats), p: rootOf(tu, c.root), ct: true });
+        if (c.beats >= 4) line.push({ b: beat + 2, d: Math.min(2, c.beats - 2), p: rootOf(tu, c.root), ct: true });
+      }
+      const d = finishEar(s, tu, line, notes, windows, op === 1 ? 'ie-end' : 'ie-intro', op === 1 ? tt('Endings by ear: play the roots back', 'סיומים בשמיעה: לנגן את היסודות בחזרה') : tt('Intros by ear: play the roots back', 'פתיחות בשמיעה: לנגן את היסודות בחזרה'), ans.map((a) => a.c.sym));
       return { ...d, harmony: harmonyPlan(ans, 'bass', true) };
     }
     case 'transcribe-long': {

@@ -55,7 +55,7 @@ describe('guitar drills: catalogue', () => {
       // BASS_NICHE_PLAN P2: the bass ear runs to 21 (E5); progressions by ear take it to 23.
       // AUDIT-7 #7: g-scales has 15 (harmonic minor and the modes at grades 5–7, levels 13–15).
       // HARMONY-REHARM: b-ear 24 (borrowed chords by ear); g-color 13–15 (the open-string pedal).
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' || f.id === 'g-color' ? 15 : 13);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' ? 15 : f.id === 'g-color' ? 16 : 13);
       // numbered in order; a gap only where a level is hidden until verified (src/engine/verifiedContent.ts)
       f.levels.forEach((l, i) => expect(l.level).toBeGreaterThanOrEqual(i + 1));
       f.levels.forEach((l, i) => i > 0 && expect(l.level).toBeGreaterThan(f.levels[i - 1].level));

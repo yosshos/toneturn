@@ -208,5 +208,8 @@ export const UNITS: Record<string, string> = {
   'tech:b-gig-1': 'gig-ballad',
   'tech:b-gig-2': 'gig-endings',
   'tech:b-gig-5': 'gig-tune',
+  // intros and endings by ear (the instruments' own ear counterparts of the topic)
+  'tech:g-gig-9': 'gig-endings',
+  'tech:b-gig-9': 'gig-endings',
   'topic:intro-ending': 'gig-endings',
 };

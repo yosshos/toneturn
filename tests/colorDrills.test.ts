@@ -27,7 +27,7 @@ describe('colour harmony families: counts and wiring', () => {
     expect(GCAT.find((f) => f.id === 'g-ctone')!.levels).toHaveLength(GCT_ROWS.length);
     expect(GCAT.find((f) => f.id === 'g-color')!.levels).toHaveLength(GCOL_ROWS.length);
     // 12 colour levels + the open-string pedal ladder (HARMONY-REHARM still open, 3 levels)
-    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(15);
+    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(16); // 16: drop D (the low open D pedal)
     expect(GCAT.find((f) => f.id === 'b-counter')!.levels).toHaveLength(BC_ROWS.length);
     expect(CT_ROWS.length + MD_ROWS.length + ORG_ROWS.length + RH_ROWS.length).toBe(34);
   });

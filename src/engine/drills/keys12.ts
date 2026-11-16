@@ -61,8 +61,8 @@ export const FIXED_KEY_LEVELS: string[] = [
   'g-fretting-6', 'g-rhythm-10',
   // HARMONY-REHARM: the open-string pedal exists only in the keys whose open strings carry it (E, A, D, G)
   'g-color-13', 'g-color-14', 'g-color-15',
-  // the more open-string pedals: E, A, D minor; the high E above in E and A; drop D in D and G
-  'g-color-16', 'g-color-17', 'g-color-18',
+  // drop D: the low open D as the pedal, in D and G only
+  'g-color-16',
   // bass: open strings, one-string rhythm, natural harmonics
   'b-pluck-1', 'b-pluck-2', 'b-pluck-3', 'b-slap-1', 'b-ear-5', 'b-read-2', 'b-legato-5', 'b-ext-1', 'b-ext-2',
   // positional stretches (above fret 5 the high-register take would fold onto the low one)
