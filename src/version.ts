@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.98.0',
+    date: '2026-11-16',
+    en: [
+      'A first game for every instrument, played on the real thing: Staff Runner (keys), Root Catcher (bass), Strum Changes (guitar), Rebound Ball (drums) and Sing It Back (voice).',
+      'Classical pieces from grade 1 to 8 — Burgmüller, Clementi, two Bach inventions and the C minor prelude join the list — each checked note for note against a public-domain edition. Ornaments are drawn as real signs, with a line saying how to play them.',
+      'All 12 keys across keys, guitar and bass; the level test now credits levels by difficulty; minor keys spell the raised 7th as a sharp; Hebrew durations read right to left.',
+    ],
+    he: [
+      'משחק ראשון לכל כלי, בנגינה על הכלי האמיתי: רץ החמשה (קלידים), תופס השורשים (בס), החלפות בפריטה (גיטרה), הכדור הקופץ (תופים) ושרים בחזרה (שירה).',
+      'יצירות קלאסיות מכיתה 1 עד 8 — בורגמילר, קלמנטי, שתי אינוונציות של באך והפרלוד בדו מינור הצטרפו — כל אחת נבדקה תו אחר תו מול מהדורה בנחלת הכלל. קישוטים מצוירים כסמלים, עם שורה שמסבירה איך מנגנים אותם.',
+      'כל 12 הסולמות בקלידים, בגיטרה ובבס; מבחן הרמה מזכה שלבים לפי קושי; בסולמות מינוריים הדרגה השביעית המוגבהת נכתבת בדיאז; משכי זמן בעברית מוצגים מימין לשמאל.',
+    ],
+  },
+  {
     version: '0.97.0',
     date: '2026-11-16',
     en: [
