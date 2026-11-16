@@ -75,6 +75,11 @@ export function instrumentOf(family: FamilyId): KeyInstrument | null {
   return 'piano';
 }
 
+/** Encore phrases (SPEC-PHRASE-STUDIO §9): `lick:enc-…:<inst>:<key>[:hand]` items have keys — their instrument. */
+export const phraseInstrument = (itemId: string): KeyInstrument | null => (/^lick:enc-[^:]+:(piano|guitar|bass):/.exec(itemId)?.[1] as KeyInstrument | undefined) ?? null;
+/** The instrument of a skill row (a family, or the player's own phrases on an instrument). */
+const skillInstrument = (s: Pick<SkillKeys, 'skill' | 'family'>): KeyInstrument | null => (s.skill.startsWith('licks:phrase:') ? (s.skill.split(':')[2] as KeyInstrument) : instrumentOf(s.family));
+
 /** The drill kind from an item id (family:kind:key:hands…). */
 export const kindOf = (itemId: string): string => itemId.split(':')[1] ?? '';
 /** An item id without its key: the same variant in every key. */
@@ -111,13 +116,14 @@ export type SkillBy = 'family' | 'kind';
 
 /** Key mastery of every skill with takes. `by: 'kind'` splits a family into its drill kinds (scale, arpeggio, ii–V …). */
 export function keyMastery(items: Record<string, ItemState> | ItemState[], now: number | string = Date.now(), by: SkillBy = 'family'): SkillKeys[] {
-  const list = (Array.isArray(items) ? items : Object.values(items)).filter((s) => s && s.takes > 0 && instrumentOf(s.family) !== null && itemIdVerified(s.itemId));
+  const list = (Array.isArray(items) ? items : Object.values(items)).filter((s) => s && s.takes > 0 && ((instrumentOf(s.family) !== null && itemIdVerified(s.itemId)) || phraseInstrument(s.itemId) !== null));
   // The variant's best clean tempo in any key (the reference when an item has no target).
   const top = new Map<string, number>();
   for (const s of list) top.set(variantOf(s.itemId), Math.max(top.get(variantOf(s.itemId)) ?? 0, s.cleanBpm));
   const groups = new Map<string, ItemState[]>();
   for (const s of list) {
-    const skill = by === 'kind' ? `${s.family}:${kindOf(s.itemId)}` : s.family;
+    const pi = phraseInstrument(s.itemId);
+    const skill = pi ? `licks:phrase:${pi}` : by === 'kind' ? `${s.family}:${kindOf(s.itemId)}` : s.family;
     const g = groups.get(skill);
     if (g) g.push(s);
     else groups.set(skill, [s]);
@@ -165,7 +171,7 @@ export function instrumentKeys(items: Record<string, ItemState> | ItemState[], n
   const skills = keyMastery(items, now);
   const out: InstrumentKeys[] = [];
   for (const inst of ['piano', 'guitar', 'bass'] as const) {
-    const ss = skills.filter((s) => instrumentOf(s.family) === inst && s.tried > 0);
+    const ss = skills.filter((s) => skillInstrument(s) === inst && s.tried > 0);
     if (!ss.length) continue;
     const cells: KeyCell[] = Array.from({ length: 12 }, (_, key) => {
       const cs = ss.map((s) => s.cells[key]).filter((c) => c.status !== 'untried');

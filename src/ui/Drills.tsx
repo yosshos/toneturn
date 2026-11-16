@@ -55,6 +55,7 @@ import { DrumWrite } from './DrumWrite';
 import { withDrumWrite } from '../engine/drills/drumEar';
 import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
+import { keepPhrase } from '../engine/encore/takeSource';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { DrumSongCard } from './DrumSongCard';
@@ -903,6 +904,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const lastTake = useRef<{ id: string; m: TakeMetrics } | null>(null);
   const [prior, setPrior] = useState<TakeMetrics | null>(null);
   const [ghost, setGhost] = useState(false);
+  // Encore (SPEC-PHRASE-STUDIO §4.1): the last take's notes, for "Keep this phrase".
+  const lastPlayed = useRef<PlayedNote[]>([]);
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -921,6 +924,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setTake((t) => t + 1);
   };
   const done = (m: TakeMetrics, _played: PlayedNote[]) => {
+    lastPlayed.current = _played;
     // The take also moves the player profile's timeline (SPEC-AI §8).
     void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
@@ -1167,6 +1171,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
             lastTake={prior ? { on: ghost, onToggle: () => setGhost((g) => !g) } : undefined}
+            onKeep={lastPlayed.current.length >= 3 && !isDrumDrill(drill) ? () => keepPhrase({ kind: 'drill', instrument: drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano', title: drill.title, source: midi.devices.length ? 'midi' : 'mic', notes: lastPlayed.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart?.length ? { chart: drill.chart.join(' | ') } : {}) }, loopSel ? { from: loopSel[0] * drill.meter, to: (loopSel[1] + 1) * drill.meter } : null) : undefined}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           >
           {/* AUDIT-DEPTH-3 C5 + slice 8: the rule cards of an improvised take, one compact line. With the chart on screen:

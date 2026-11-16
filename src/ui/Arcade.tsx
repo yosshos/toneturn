@@ -708,6 +708,8 @@ export interface PracticeHub {
   improv?: () => void;
   /** Licks in 12 keys and the transcription coach (SPEC-LICKS-TRANSCRIPTION). */
   licks?: () => void;
+  /** Encore (SPEC-PHRASE-STUDIO): keep a phrase, make it yours in 12 keys. */
+  encore?: () => void;
   /** Chord finder (guitar course, GUITAR_DEEPENING §6.3): strum → name, name → shapes. */
   chordfinder?: () => void;
   /** Chord & cadence builder (keys and guitar courses). */
@@ -721,6 +723,17 @@ export interface PracticeHub {
   mysong?: () => void;
 }
 const HUB_PATHS: Record<string, React.ReactNode> = {
+  // Encore: a note head between repeat signs.
+  encore: (
+    <>
+      <path d="M3 5v14M6 5v14M18 5v14M21 5v14" />
+      <circle cx="8.6" cy="10" r="0.6" />
+      <circle cx="8.6" cy="14" r="0.6" />
+      <circle cx="15.4" cy="10" r="0.6" />
+      <circle cx="15.4" cy="14" r="0.6" />
+      <ellipse cx="12" cy="12" rx="2.6" ry="1.9" transform="rotate(-20 12 12)" />
+    </>
+  ),
   repertoire: (
     <>
       <path d="M4 19h16" />
@@ -888,6 +901,7 @@ const HUB_TX = {
   groove: { en: 'Groove', he: 'גרוב' },
   improv: { en: 'Improvise', he: 'אלתור' },
   licks: { en: 'Licks', he: 'ליקים' },
+  encore: { en: 'Encore', he: 'הדרן' },
   transcribe: { en: 'Transcribe', he: 'תמלול' },
   puzzle: { en: 'Daily progression', he: 'מהלך היום' },
   exams: { en: 'Programs & exams', he: 'תכניות לימוד ומבחנים' },
@@ -901,7 +915,7 @@ const HUB_TX = {
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
   { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'songs', 'pieces', 'charts', 'mysong'] },
-  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'improv', 'licks', 'transcribe', 'games'] },
+  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['encore', 'drills', 'improv', 'licks', 'transcribe', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
 /** An instrument course's own words on shared game cards (the shared text is the piano's: Hanon, Barry Harris, MIDI). */
@@ -935,7 +949,7 @@ const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', 
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
 const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
-const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', transcribe: '#3AB8FF', mysong: '#FF8A3D' };
+const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', encore: '#6D28D9', transcribe: '#3AB8FF', mysong: '#FF8A3D' };
 const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** The games list opens on the course's own category. */
@@ -959,6 +973,7 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Technique', 'Your instrument and your voice, level by level'], he: ['טכניקה', 'הכלי שלכם והקול שלכם, שלב אחר שלב'] },
   improv: { en: ['Improvise', 'Under rules, phrasing, trading fours'], he: ['אלתור', 'עם כללים, פרייזינג, חילופי ארבע'] },
   licks: { en: ['Licks', 'Vocabulary in 12 keys, measured — then use it'], he: ['ליקים', 'אוצר מילים ב-12 סולמות, במדידה — ואז להשתמש'] },
+  encore: { en: ['Encore — my phrases', 'Keep what you played, make it yours in 12 keys'], he: ['הדרן — המשפטים שלי', 'מה שניגנתם — שלכם, ב-12 סולמות'] },
   transcribe: { en: ['Transcribe', 'Hear it, play it back, write it, 12 keys'], he: ['תמלול', 'לשמוע, לנגן בחזרה, לכתוב, 12 סולמות'] },
   games: { en: ['Games', 'Ear, rhythm and memory games'], he: ['משחקים', 'משחקי שמיעה, קצב וזיכרון'] },
   lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },

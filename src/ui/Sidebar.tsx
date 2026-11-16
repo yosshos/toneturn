@@ -13,7 +13,8 @@ export type NavId =
   | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
   | 'insights' | 'achievements' | 'diary' | 'recordings'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder' | 'chordbuilder'
-  | 'placement' | 'diagnostics' | 'settings';
+  | 'placement' | 'diagnostics' | 'settings'
+  | 'encore';
 
 type L = { en: string; he: string };
 interface Item {
@@ -85,7 +86,8 @@ const ICON = {
 const SECTIONS: Section[] = [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: TAB_ICONS.home },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: TAB_ICONS.path },
-  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: TAB_ICONS.arcade },
+  // Encore (SPEC-PHRASE-STUDIO §17): "הדרן" under Practice.
+  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: TAB_ICONS.arcade, children: [{ id: 'encore', label: { en: 'Encore', he: 'הדרן' } }] },
   {
     id: 'skills',
     label: { en: 'Progress', he: 'התקדמות' },

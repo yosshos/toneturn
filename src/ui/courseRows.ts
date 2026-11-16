@@ -27,11 +27,12 @@ export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Objec
 export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
   voice: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
-  keys: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  // SPEC-PHRASE-STUDIO §17: Encore is the first Train row where it plays in v1 (piano: keys, jazz).
+  keys: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
   guitar: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
   bass: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
   drums: ['drills', 'repertoire', 'mysong', 'games'],
-  jazz: ['repertoire', 'charts', 'improv', 'licks', 'transcribe', 'mysong', 'games'],
+  jazz: ['encore', 'repertoire', 'charts', 'improv', 'licks', 'transcribe', 'mysong', 'games'],
 };
 /** 0.67: the Ear course in exam-prep mode (was the Exams course) puts the mock exams first. */
 export const EXAM_PREP_ROWS = ['exams', 'lessons', 'puzzle', 'games'];

@@ -363,7 +363,8 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
-  const own = book.own ?? [];
+  // Encore phrases (Lick v3) live in the same book but practise in Encore (their own plan and map).
+  const own = (book.own ?? []).filter((l) => !(l.v === 3 || l.id.startsWith('enc-')));
   const all = [...LICKS, ...own];
   const due = dueLicks(book.review).filter((id) => lickById(id, own));
   const [tab, setTab] = useState<LickContext | 'all' | 'review' | 'mine'>(startReview && due.length ? 'review' : 'all');
