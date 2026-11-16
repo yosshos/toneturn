@@ -108,7 +108,9 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live, cue = fa
   const meter = drill.meter || 4;
   // Eighth-pulse meters: a drill beat is an eighth — measure the density in quarters.
   const q = drill.pulse === 8 ? 0.5 : 1;
-  const bars = view === 'staff' ? barsPerLine(q === 1 ? drill.notes : drill.notes.map((n) => ({ beat: n.beat * q, voice: n.voice })), meter * q) : 2;
+  // Slice 6 (§4.5): one bar a line on a phone, so the heads keep their size (≥ 9 px) and the spacing reads.
+  const phone = typeof window !== 'undefined' && window.innerWidth < 400;
+  const bars = view === 'staff' ? (phone ? 1 : barsPerLine(q === 1 ? drill.notes : drill.notes.map((n) => ({ beat: n.beat * q, voice: n.voice })), meter * q)) : 2;
   const geo = scoreLines(drill, bars);
   const lines = geo.length;
   const lineOf = (b: number) => Math.max(0, geo.findIndex((l) => b >= l.from - 1e-6 && b < l.to - 1e-6));
@@ -118,7 +120,8 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live, cue = fa
   const firstBad = result ? drill.notes.findIndex((n) => (marks.get(noteKey(n)) ?? 'ok') !== 'ok') : -1;
   // The window follows the line the take is in (lines may differ in length on a timeline drill).
   const { from, pager } = useLineWindow(lines, beat >= 0 ? lineOf(beat) : -1, 1, firstBad >= 0 ? lineOf(drill.notes[firstBad].beat) : 0);
-  const shown = Array.from({ length: Math.min(2, lines - from) }, (_, i) => from + i);
+  // The review needs the room (error map, chips): taller lanes show one line there, the pager pages the rest.
+  const shown = Array.from({ length: Math.min(result && view === 'lanes' ? 1 : 2, lines - from) }, (_, i) => from + i);
   const notes = shownNotes(drill);
   return (
     <div className={`drum-score ${view}`} dir="ltr" data-drum-view={view} data-drum-lines={lines} data-drum-bars={bars}>
@@ -127,7 +130,7 @@ export function DrumScore({ drill, view, result, beat = -1, lang, live, cue = fa
         view === 'staff' ? <StaffLine key={li} lang={lang} drill={drill} notes={notes} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} sticking={!!drill.drum?.mic || !!drill.drum?.sticking || drill.notes.some((n) => n.grace)} /> : <LaneLine key={li} drill={drill} line={li} geo={geo[li]} marks={marks} pmarks={pmarks} cueBeat={cueBeat} beat={beat} lang={lang} />,
       )}
       {pager}
-      {view === 'lanes' && <p className="drum-key">{lang === 'he' ? 'עיגול גדול = הדגשה · עיגול חלול = רפאים · טבעת = היי־האט פתוח' : 'Big = accent · hollow = ghost · ring = open hat'}</p>}
+      {view === 'lanes' && <LaneKey lang={lang} />}
     </div>
   );
 }
@@ -432,57 +435,169 @@ function StaffLine({ drill, notes, line, geo, marks, pmarks, cueBeat, beat, stic
 }
 
 const LANE_ORDER: DrumVoice[] = ['crash', 'ride', 'hihat', 'tom1', 'snare', 'tom2', 'tom3', 'kick', 'hhPedal'];
-const LANE_NAME: Record<DrumVoice, { en: string; he: string }> = {
-  crash: { en: 'Crash', he: 'קראש' },
-  ride: { en: 'Ride', he: 'רייד' },
-  hihat: { en: 'Hi-hat', he: 'היי־האט' },
-  hhOpen: { en: 'Hi-hat', he: 'היי־האט' },
-  tom1: { en: 'Tom 1', he: 'טום 1' },
-  snare: { en: 'Snare', he: 'סנר' },
-  rim: { en: 'Snare', he: 'סנר' },
-  tom2: { en: 'Tom 2', he: 'טום 2' },
-  tom3: { en: 'Floor tom', he: 'טום רצפה' },
-  kick: { en: 'Kick', he: 'קיק' },
-  hhPedal: { en: 'Hat foot', he: 'פדל האט' },
-};
 const laneOf = (v: DrumVoice): DrumVoice => (v === 'hhOpen' ? 'hihat' : v === 'rim' ? 'snare' : v);
 
-function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat, lang }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; lang: Lang }) {
-  // Lane names are words, not abbreviations: a wider name column than the staff's.
-  const LX0 = 46;
-  const lanes = LANE_ORDER.filter((v) => drill.notes.some((n) => n.voice && laneOf(n.voice) === v));
+/** Lane icons (24-unit box, ink line drawings — the same drums as the Highway's pads). */
+function LaneIcon({ v, x, y, s = 18 }: { v: DrumVoice; x: number; y: number; s?: number }) {
+  const k = PAD_GLYPH[v];
+  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s / 24})`} className="dl-icon" data-lane-icon={v}>
+      {k === 'hihat' && (
+        <g {...p}>
+          <ellipse cx="12" cy="7" rx="9" ry="2" />
+          <ellipse cx="12" cy="10" rx="9" ry="2" />
+          <path d={v === 'hhPedal' ? 'M12 12v8M7 20l10 2' : 'M12 12v10M8 22h8'} />
+        </g>
+      )}
+      {k === 'snare' && (
+        <g {...p}>
+          <ellipse cx="12" cy="8" rx="9" ry="3" />
+          <path d="M3 8v7c0 1.7 4 3 9 3s9-1.3 9-3V8M7 10.5v6M12 11v7M17 10.5v6" />
+        </g>
+      )}
+      {k === 'kick' && (
+        <g {...p}>
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="3.5" />
+        </g>
+      )}
+      {k === 'toms' && (
+        <g {...p}>
+          <ellipse cx="12" cy="7" rx="7" ry="2.5" />
+          <path d="M5 7v8c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V7M12 17.5V22" />
+          {v !== 'tom1' && (
+            <text x="19" y="23" fontSize="10" stroke="none" fill="currentColor" fontWeight="700">
+              {v === 'tom2' ? 2 : 3}
+            </text>
+          )}
+        </g>
+      )}
+      {k === 'cymbal' && (
+        <g {...p}>
+          <path d="M2 10c3-2.5 17-2.5 20 0-3 1.6-17 1.6-20 0z" />
+          <path d={v === 'ride' ? 'M12 8V6M12 11v11M8 22h8M10 10h4' : 'M12 8V6M12 11v11M8 22h8'} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+/** The lanes key behind a "?" (the shapes are big enough to read on their own; the key is there when asked). */
+function LaneKey({ lang }: { lang: Lang }) {
+  const [open, setOpen] = useState(false);
+  const he = lang === 'he';
+  const rows: [React.ReactNode, string][] = [
+    [<path key="x" d="M5 2l10 10M15 2L5 12" className="dl-x" />, he ? 'מצילה / היי־האט' : 'Cymbal / hi-hat'],
+    [<circle key="d" cx={10} cy={7} r={5} className="dl-hit" />, he ? 'תוף' : 'Drum'],
+    [<circle key="g" cx={10} cy={7} r={4} className="dl-hit ghost" />, he ? 'מכת רפאים' : 'Ghost note'],
+    [<circle key="a" cx={10} cy={7} r={5.5} className="dl-hit accent" />, he ? 'הדגשה' : 'Accent'],
+    [<rect key="k" x={2} y={4} width={16} height={6} rx={3} className="dl-kick" />, he ? 'בס־תוף' : 'Kick'],
+  ];
+  return (
+    <>
+      <button type="button" className="icon-btn drum-key-help" onClick={() => setOpen(true)} aria-label={he ? 'מקרא' : 'Key'} data-lane-key="1">
+        ?
+      </button>
+      {open && (
+        <div className="sheet-backdrop" onClick={() => setOpen(false)}>
+          <div className="sheet tr-sheet" role="dialog" aria-modal="true" aria-label={he ? 'מקרא' : 'Key'} onClick={(e) => e.stopPropagation()} data-lane-key-sheet="1" dir={he ? 'rtl' : 'ltr'}>
+            <header className="tr-sheet-head">
+              <h2>{he ? 'מקרא' : 'Key'}</h2>
+              <button className="icon-btn" onClick={() => setOpen(false)} aria-label={he ? 'סגירה' : 'Close'}>
+                ✕
+              </button>
+            </header>
+            <ul className="tr-detail">
+              {rows.map(([g, t], i) => (
+                <li key={i} className="lane-key-row">
+                  <svg viewBox="0 0 20 14" width={30} height={21} className="drum-lanes" aria-hidden="true">
+                    {g}
+                  </svg>
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function LaneLine({ drill, line, geo, marks, pmarks, cueBeat, beat }: { drill: Drill; line: number; geo: LineGeo; marks: Map<string, NoteMark>; pmarks?: Map<string, NoteMark> | null; cueBeat?: number | null; beat: number; lang: Lang }) {
+  // Slice 6 (§4.5): lanes 26 units (≈ 22 px on a phone), the drums as icons in a narrow column, cymbals on top and the
+  // kick as a short bar across the bottom of the lanes; ✕ cymbal heads, ● drum heads, hollow ghosts, thick accents.
+  // Its own (narrower) width: the lanes then scale up to about 22 px on a 320 px phone.
+  const LW = 280;
+  const LX0 = 28;
+  const H = 26;
+  const KH = 14;
+  const lanes = LANE_ORDER.filter((v) => v !== 'kick' && drill.notes.some((n) => n.voice && laneOf(n.voice) === v));
+  const hasKick = drill.notes.some((n) => n.voice === 'kick');
   const b0 = geo.from;
   const per = geo.to - geo.from;
   const ns = drill.notes.filter((n) => n.beat >= b0 - 1e-6 && n.beat < b0 + per - 1e-6 && n.voice);
-  const H = 14;
-  const h = lanes.length * H + 6;
-  const xOf = (b: number) => LX0 + 6 + ((b - b0) / per) * (W - LX0 - 16);
+  const kickY = 3 + lanes.length * H;
+  const h = kickY + (hasKick ? KH + 2 : 0) + 3;
+  const xOf = (b: number) => LX0 + 8 + ((b - b0) / per) * (LW - LX0 - 18);
   const cursor = beat >= b0 && beat < b0 + per ? xOf(beat) : null;
   const barStarts = new Set(geo.bars.map((b) => Math.round(b.from * 1e4)));
+  const step = (LW - LX0 - 18) / Math.max(1, per * 4);
+  const isCue = (n: ExpNote) => cueBeat !== null && cueBeat !== undefined && Math.abs(n.beat - cueBeat) < 1e-6;
   return (
-    <svg className="drum-lanes" viewBox={`0 0 ${W} ${h}`} role="img" aria-label="drum lanes" data-line={line}>
+    <svg className="drum-lanes" viewBox={`0 0 ${LW} ${h}`} role="img" aria-label="drum lanes" data-line={line} data-kick-bar={hasKick ? 1 : 0}>
       {lanes.map((v, i) => (
         <g key={v}>
-          <rect x={LX0} y={3 + i * H} width={W - LX0 - 4} height={H - 2} rx={4} className={`dl-lane l-${classOf(v)}`} />
-          <text x={4} y={3 + i * H + 10} className="dl-name">
-            {LANE_NAME[v][lang]}
-          </text>
+          <rect x={LX0} y={3 + i * H} width={LW - LX0 - 4} height={H - 2} rx={5} className={`dl-lane l-${classOf(v)}`} />
+          <LaneIcon v={v} x={4} y={3 + i * H + (H - 2) / 2 - 9} />
         </g>
       ))}
+      {hasKick && (
+        <g>
+          <rect x={LX0} y={kickY} width={LW - LX0 - 4} height={KH} rx={5} className="dl-lane l-kick" />
+          <LaneIcon v="kick" x={6} y={kickY - 1} s={15} />
+        </g>
+      )}
       {Array.from({ length: Math.round(per) + 1 }, (_, k) => (
         <line key={k} x1={xOf(b0 + k)} x2={xOf(b0 + k)} y1={2} y2={h - 2} className={barStarts.has(Math.round((b0 + k) * 1e4)) || k === Math.round(per) ? 'dl-bar' : 'dl-beat'} />
       ))}
       {ns.map((n, i) => {
+        const k = noteKey(n);
+        const m = marks.get(k);
+        const x = xOf(n.beat);
+        if (n.voice === 'kick') {
+          const w = Math.max(9, Math.min(18, step * 1.6));
+          const y = kickY + KH / 2;
+          return (
+            <g key={i} data-voice="kick">
+              <rect x={x - w / 2} y={kickY + 3} width={w} height={KH - 6} rx={3} className={`dl-kick ${m ?? ''} ${n.accent ? 'accent' : ''}`} />
+              {pmarks && <Tick marks={pmarks} k={k} x={x} y={y} edge={w / 2 + 1.5} prior />}
+              <Tick marks={marks} k={k} x={x} y={y} edge={w / 2 + 1.5} />
+              {isCue(n) && <DrumCue x={x} y={y} r={5} />}
+            </g>
+          );
+        }
         const li = lanes.indexOf(laneOf(n.voice!));
         const y = 3 + li * H + (H - 2) / 2;
-        const m = marks.get(noteKey(n));
-        const r = n.accent ? 5 : n.ghost ? 3 : 4;
+        const xh = XHEAD.has(n.voice!);
+        const r = n.accent ? 6.5 : n.ghost ? 4.6 : 5.6;
         return (
-          <g key={i}>
-            <circle cx={xOf(n.beat)} cy={y} r={r} className={`dl-hit ${m ?? ''} ${n.ghost ? 'ghost' : ''} ${n.voice === 'hhOpen' ? 'open' : ''}`} data-voice={n.voice} />
-            {pmarks && <Tick marks={pmarks} k={noteKey(n)} x={xOf(n.beat)} y={y} edge={r + 1.5} prior />}
-            <Tick marks={marks} k={noteKey(n)} x={xOf(n.beat)} y={y} edge={r + 1.5} />
-            {cueBeat !== null && cueBeat !== undefined && Math.abs(n.beat - cueBeat) < 1e-6 && <DrumCue x={xOf(n.beat)} y={y} r={r} />}
+          <g key={i} data-voice={n.voice} className={`dl ${m ?? ''}`}>
+            {xh ? (
+              <>
+                <circle cx={x} cy={y} r={7} className={`dl-xbg ${m ?? ''}`} />
+                <path d={`M${x - 5} ${y - 5}l10 10M${x + 5} ${y - 5}l-10 10`} className={`dl-x ${m ?? ''}`} strokeWidth={n.accent ? 3.2 : undefined} />
+              </>
+            ) : (
+              <circle cx={x} cy={y} r={r} className={`dl-hit ${m ?? ''} ${n.ghost ? 'ghost' : ''} ${n.accent ? 'accent' : ''}`} />
+            )}
+            {m === 'wrong' && !xh && <path d={`M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8`} className="mk-x" />}
+            {n.accent && <path d={`M${x - 4} ${y - 12.5}l7 2.5-7 2.5`} className="dl-acc" />}
+            {n.voice === 'hhOpen' && <circle cx={x + 8} cy={y - 7} r={2.4} className="dl-open" />}
+            {pmarks && <Tick marks={pmarks} k={k} x={x} y={y} edge={7.5} prior />}
+            <Tick marks={marks} k={k} x={x} y={y} edge={7.5} />
+            {isCue(n) && <DrumCue x={x} y={y} r={r} />}
           </g>
         );
       })}

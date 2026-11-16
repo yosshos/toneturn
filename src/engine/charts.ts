@@ -101,6 +101,25 @@ export interface ParsedChart {
   errors: string[];
 }
 
+/**
+ * Bars `from`..`to` (inclusive, 0-based) of a chart as a chart of their own, re-based to bar 0 — the loop the chart
+ * player plays (COURSE-FEEDBACK-UI slice 3). A bar with no chord of its own takes the chord sounding into it.
+ */
+export function sliceChart(p: ParsedChart, from: number, to: number, meter = 4): ParsedChart {
+  const a = Math.max(0, Math.min(from, to, p.bars - 1));
+  const b = Math.min(p.bars - 1, Math.max(from, to, a));
+  const total = (b - a + 1) * meter;
+  const inside = p.chords.filter((c) => c.bar >= a && c.bar <= b);
+  const chords = inside.map((c) => ({ ...c, bar: c.bar - a }));
+  if (!inside.some((c) => c.bar === a && c.at === 0)) {
+    const before = [...p.chords].reverse().find((c) => c.bar < a);
+    const firstAt = inside.length ? (inside[0].bar - a) * meter + inside[0].at : total;
+    if (before) chords.unshift({ ...before, bar: 0, at: 0, beats: firstAt });
+  }
+  // A chord sounding past the loop's end stops at the end.
+  return { chords: chords.map((c) => ({ ...c, beats: Math.max(0, Math.min(c.beats, total - (c.bar * meter + c.at))) })), bars: b - a + 1, errors: [] };
+}
+
 /** Parse a whole chart in a meter (beats per bar). */
 export function parseChart(text: string, meter = 4): ParsedChart {
   const bars = text

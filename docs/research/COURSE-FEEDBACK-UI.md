@@ -553,48 +553,53 @@ Remove the colour-blind opt-in (`MARK_CVD`): the new palette *is* the safe one (
 **Impact/effort key:** H/M/L. Slices are ordered by impact ÷ effort; each ships alone.
 
 ### Slice 1: Marks and colours, everywhere (impact H, effort L)
-- [ ] `src/engine/noteMarks.ts`:
+**Shipped in 0.94 (commit "S1"); the boxes below were ticked in the 0.98 sweep after checking the code.** One note on `extra`: the mark exists in `NoteMark` (and in `MARK_ORDER` / `markCounts`), but no take produces it per note — `perNote` lists the written notes, and an extra (unwritten) note has no head to stand on. Extras stay counted in the take (`glitches`, `drum.extra`) and in the "Why?" text; drawing a small ✕ above the staff at the extra's time is left open (it needs the played-only notes' positions, which `analyzeTake` does not keep).
+- [x] `src/engine/noteMarks.ts`:
   - split `timing` into `early` | `late` with the offset (`dev`) carried through `markOf`;
   - keep `ok` / `wrong` / `missed`;
   - add `extra`.
   - Unit test: the same `TakeMetrics` gives the same counts as the score (no "all green but 83%").
-- [ ] `src/ui/NoteViews.tsx:136-141`:
+- [x] `src/ui/NoteViews.tsx:136-141`:
   - replace `MARK_RG` / `MARK_CVD` with the §4.1 palette (teal / tangerine / purple / pink / dashed);
   - draw early/late ticks as VexFlow annotations or an SVG overlay positioned from `xs`;
   - draw ✕ plus a ghost head for a wrong pitch;
   - delete the CVD proxy.
-- [ ] `src/ui/DrillTake.tsx:366-376` `MarkLegend`: shapes with ink text (no coloured text), LTR-isolated.
-- [ ] CSS sweep:
+  (An SVG overlay, `markLayer.ts`; the colour-blind toggle went in S5.)
+- [x] `src/ui/DrillTake.tsx:366-376` `MarkLegend`: shapes with ink text (no coloured text), LTR-isolated.
+- [x] CSS sweep:
   - `drills.css:31` (gradient), `:107-201` (mint/gold/coral → tokens), `:358-366`, `:549-564`, `:576-580`;
   - `pulse.css:114-126` (lemon playhead with ink edge, no halo);
   - `DrumViews.tsx:504/579/618/872` (drum glyph green → pink, the rhythm domain);
   - `Drills.tsx:102` `FAM_HUE` → domain tokens only.
-- [ ] `.kit-warn` and the disabled mega button: paper with an ink dashed outline and an info glyph, not pale yellow.
+- [x] `.kit-warn` and the disabled mega button: paper with an ink dashed outline and an info glyph, not pale yellow.
 
 ### Slice 2: Result → review (impact H, effort M)
-- [ ] `src/ui/TakeReview.tsx` (new), replacing `TakeResult` (`DrillTake.tsx:807-900`):
+**Shipped in 0.94 (commits "S2", "S3"); ticked in the 0.98 sweep.** The error map lives under the score (`ErrorMap.tsx`) rather than above the actions; the legend, limbs, hands, pedal and chord rings sit behind "Why?".
+- [x] `src/ui/TakeReview.tsx` (new), replacing `TakeResult` (`DrillTake.tsx:807-900`):
   - verdict line;
   - error map (`ErrorMap` component, per-bar worst mark from `perNote` + `staffLines`);
   - three stat chips;
   - actions row;
   - "Why?" sheet holding `EvennessStrip` / `VelocityCurve` (restyled: paper background, ink axis, v2 fills).
-- [ ] `Drills.tsx:1024-1070`:
+- [x] `Drills.tsx:1024-1070`:
   - remove the duplicate ladder line and the `MarkLegend` row (the legend moves into "Why?");
   - pass `onLoop(fromBar, toBar)`.
 - [x] Fix RTL: wrap the stat chips in `<bdi>`; no `dir="ltr"` around Hebrew words (`DrillTake.tsx:824`); "שוב ב־♩ 66" built with an isolated tempo span. (0.97 leftovers: the chips with Hebrew words are `dir="auto"` inside the LTR row; the tempo line is already an isolated `<bdi dir="ltr">`, and no "שוב ב־♩" string is left. Stats durations use the diary's isolation, `Stats.Dur`.)
-- [ ] e2e: the keys, drums and guitar result fits 320×720 with Next visible (extend `e2e/keys.spec.ts`, `drums.spec.ts`).
+- [x] e2e: the keys, drums and guitar result fits 320×720 with Next visible (in `e2e/feedbackUi.spec.ts`, "the review fits one screen", en + he).
 
 ### Slice 3: Loop the spot (impact H, effort M)
-- [ ] `src/engine/drills/slice.ts` (new): `sliceDrill(drill, fromBar, toBar)`, which re-bases beats and keeps chart, drums and band; count-in 1 bar. Unit test against `staffLines`.
-- [ ] `Drills.tsx` run state: a `loop` mode (−10% bpm, 2 clean passes → "Whole item" chip); ItemState untouched by loop takes, or counted as practice only. Check with the "only measured practice counts" rule.
-- [ ] Charts: the loop keeps across Stop in `Charts.tsx` (same hatch style).
+**Drill loop shipped in 0.94 ("S3"). The chart player's loop shipped after 0.98:** a "Loop bars" chip under the chart; tap the first bar, then the last (or the same bar again); the bars get the lilac hatching (never lemon) and Play plays just them, the chart lighting the real bar (`sliceChart` in `charts.ts`, re-based, the chord sounding into the first bar carried in, nothing past the end; the head melody is left out of a loop). Stop keeps the loop; the ✕ beside the "Loop 2–3" chip or a long press on the chart clears it. Improvise still plays the whole form (a solo take is graded on the chorus). Tests: `tests/sliceChart.test.ts`; `e2e/chartLoop.spec.ts` (320×720, en + he).
+- [x] `src/engine/drills/slice.ts` (new): `sliceDrill(drill, fromBar, toBar)`, which re-bases beats and keeps chart, drums and band; count-in 1 bar. Unit test against `staffLines`.
+- [x] `Drills.tsx` run state: a `loop` mode (−10% bpm, 2 clean passes → "Whole item" chip); ItemState untouched by loop takes, or counted as practice only. Check with the "only measured practice counts" rule. (Loop takes are practice only: no ladder or level change.)
+- [x] Charts: the loop keeps across Stop in `Charts.tsx` (same hatch style).
 
 ### Slice 4: The score as hero, plus look-ahead and the ladder chips (impact H, effort M)
-- [ ] `DrillStaff` (`DrillTake.tsx:234-363`): per-line bar count by density (1 bar a line when 8+ notes a bar on width < 400 px); faded next line; ink finger numbers 11 px; card min-height so a short item doesn't leave a hole.
-- [ ] `DrillTab` (`DrillTake.tsx:86-144`) and `TabLine` (`NoteViews.tsx:258-300`): 13 px digits, outline card, no coloured fingers.
-- [ ] Ladder chips: a new `TempoLadder` in `Drills.tsx:966-1000` from `rubatoStage` + `lad`; it replaces "1 / 24 · ♩ 66" with "1/24" + chips.
-- [ ] One-line MIDI hint (`DrillTake.tsx:716`).
-- [ ] Headphones gate → once-per-session sheet (`DrillTake.tsx:748-775`).
+**Shipped in 0.94 ("S4"); ticked in the 0.98 sweep, with these measured deviations.** Tab digits are at least 10 px on a 320 px phone, not 13: two bars of sixteenths at 13 px do not fit the one screen with the review. Finger numbers are ink, measured at about 10 px glyph height (13.3 px VexFlow font, scaled). The "card min-height" became the opposite fix: the old 15vh cap was removed and the card is as tall as its music, so a short item no longer sits in a tall empty box.
+- [x] `DrillStaff` (`DrillTake.tsx:234-363`): per-line bar count by density (1 bar a line when 8+ notes a bar on width < 400 px); faded next line; ink finger numbers 11 px; card min-height so a short item doesn't leave a hole.
+- [x] `DrillTab` (`DrillTake.tsx:86-144`) and `TabLine` (`NoteViews.tsx:258-300`): 13 px digits, outline card, no coloured fingers.
+- [x] Ladder chips: a new `TempoLadder` in `Drills.tsx:966-1000` from `rubatoStage` + `lad`; it replaces "1 / 24 · ♩ 66" with "1/24" + chips.
+- [x] One-line MIDI hint (`DrillTake.tsx:716`). Obsolete in this form: the Input check strip (0.91) replaced the hint line; its MIDI link says what MIDI adds, and a take that needs MIDI shows the one dashed notice.
+- [x] Headphones gate → once-per-session sheet (`DrillTake.tsx:748-775`).
 
 ### Slice 5: Live marks and the pocket meter (impact H, effort H)
 **Shipped (after 0.95).** `liveGrade.ts` re-runs the take's own analysis on what was played so far (a few times a second) and shows a note once settled (80 ms after a matched onset; a miss after its half-beat window), so the live marks of a finished take are the review's marks. Marks are drawn on their own SVG layer (`mk-live`), never redrawing VexFlow; drums use the same map. `PocketMeter.tsx` replaces `.drill-beat` (keeps the class and a keyed child per beat). Setting "Live marks: Always / While learning / Never" (default while learning = free / quarters steps and until 2 clean takes count); level tests are calm. Not live: acoustic-kit and piano-chord-by-mic takes (meter beats only), improvised / phrase / voicing-choice / ear items, the free-time take (no clock).
@@ -608,22 +613,24 @@ Remove the colour-blind opt-in (`MARK_CVD`): the new palette *is* the safe one (
 - [x] Setting "Live marks" in `DrillSettingsView` (`Drills.tsx:1072`).
 
 ### Slice 6: Drums lanes, notation and Highway (impact M, effort M)
-- [ ] `DrumViews.tsx:386-462` `LaneLine`: 22 px lanes, icon names, ✕/●/( ) heads, kick bar, marks and ticks.
-- [ ] `StaffLine` (`:170`): v2 marks, 9 px heads, one bar a line on phones.
-- [ ] Per-limb split chips in the review (from `m.drum`).
-- [ ] `Highway.tsx:980-1080` + `v2.css:1496-1545` + `games3.css:144-201`:
+**Shipped after 0.98.** Lanes: 26-unit lanes on their own 280-wide box (≈ 22 px at 320 px), the drums as line icons in a narrow column (no 6 px words), cymbals ✕ (a mark-coloured disc behind the ink ✕ after a take), drums ●, ghosts hollow, accents thick with ">", open hat "o"; the kick is a short bar in a strip across the bottom; the cymbal lanes are sky-tinted (they were lemon); the "Big = accent…" line is gone, a "?" in the card's corner opens the key as a sheet; in the review the lanes show one line (the pager pages), so the review still fits. Notation: one bar a line on a phone (< 400 px), heads ≈ 9.5 px. The review: a per-drum chip row under the chips ("Hat 25 ▸ · Snare ✓ · Kick ◂ 22", `limbChips` in `review.ts`: on time inside a third of the window, at least 8 ms; a miss under half hit; at most four), the `drumLimbLine` text stays behind "Why?". Highway: the kick is a bar across every lane (under the other gems), hi-hat / crash gems carry an ✕ (rounded square), drums keep the round pad; a hit turns the gem teal with an ink ✓, a good-but-off hit gets a tangerine tick on the left or a purple tick on the right, a miss is a dashed paper ring, a wrong drum is a pink ✕ at the hit line in the lane hit (fading); the grade words are screen-reader only and their coloured rules (the lemon "Perfect") are deleted from `v2.css`, `games3.css` and `feedback.css`; the first lane's gem and the hi-hat pad are paper, not lemon. The setup already fitted one screen (tempo and click in a sheet since AUDIT-GAMES #4); now covered by the e2e in en + he. Tests: `tests/limbChips.test.ts`; `e2e/drumsFeedback.spec.ts` (320×720, en + he). CSS in `src/feedback2.css`.
+- [x] `DrumViews.tsx:386-462` `LaneLine`: 22 px lanes, icon names, ✕/●/( ) heads, kick bar, marks and ticks.
+- [x] `StaffLine` (`:170`): v2 marks, 9 px heads, one bar a line on phones.
+- [x] Per-limb split chips in the review (from `m.drum`). (Split by drum — kick / snare / hat — which is what the spec's example shows and what a player can act on; the per-limb RH / LH / RF / LF rows are the live meter's.)
+- [x] `Highway.tsx:980-1080` + `v2.css:1496-1545` + `games3.css:144-201`:
   - kick bar, gem shapes, lemon hit line, per-gem marks instead of text flashes;
   - remove the glows and the `games3` legacy rules;
   - make the setup fit one screen (`Highway.tsx:622-820`).
 
 ### Slice 7: Ear: replay pair, keyboard lights, partial-credit glyphs (impact M, effort M)
-- [ ] `Lesson.tsx:1060-1145` `Feedback`: "Yours ▶ / Right ▶" chips (play `f.given` and the target through the question's own sound builder); the sound-why per question kind.
-- [ ] `Lesson.tsx:596-640`: light the keyboard during playback (`keysLive` path in `NoteViews.tsx:362-380`).
-- [ ] Answer buttons: a ✓/✕ glyph on `.answer.is-right` / `.is-wrong` (`v2.css:251-262`).
-- [ ] Remove Toni's halo on feedback.
-- [ ] `GridDictation.tsx`: move the ask above the pad (in `Lesson.tsx` layout for `q.kind === 'grid'`), add ✓/✕ to `.gd-p.ok` / `.bad` (`grid.css:116-120`), ink selected chips, higher-contrast disabled chips.
-- [ ] Partial mastery credit: in the rating update for grid / chord / dictation (where `gridLine` is computed), add a fractional score; the streak stays whole-items only.
-- [ ] Recap: "Drill these 3", and the streak sheet after the recap (`Recap.tsx`, `App.tsx` streak trigger).
+**Shipped after 0.98 ("S7").** "Yours ▶ / Right ▶" replace the old Compare button on a reveal (not on a first miss that still allows a retry — "Right" would give the answer away); sounds from `replayPair.ts`: degrees walk stepwise to the tonic, chord quality / sevenths play the chord then its arpeggio, intervals melodic then harmonic; "Yours" is hidden where the pick is not a sound (wrong-note, true/false, grid, sung takes). Lit keys are sky with an ink outline, each chip lights its notes. ✓ / ✕ are drawn icons on the teal / pink answer. Toni's halo is gone. Grid: the ask above the pad, ✓ / ✕ on each part with the underline, ink selected chips, readable dashed locked chips. Partial credit: grids, sung lines and degree dictation already had it; note-name dictation now scores note by note (enharmonics equal) and chords built on the keys keep their share; the streak stays whole items. Recap: "Drill these N" (the misses, up to 5; not in a level test or mock exam) and the day's streak as a sheet when the recap is left. Tests: `tests/slice7Ear.test.ts`; `e2e/earFeedback.spec.ts`; `e2e/streak.spec.ts` updated. Open: the streak sheet's weekday letters are English (the week strip's), the recap's gold ✓ and yellow insight card are older leftovers, the current grid cell's border is still teal.
+- [x] `Lesson.tsx:1060-1145` `Feedback`: "Yours ▶ / Right ▶" chips (play `f.given` and the target through the question's own sound builder); the sound-why per question kind.
+- [x] `Lesson.tsx:596-640`: light the keyboard during playback (`keysLive` path in `NoteViews.tsx:362-380`).
+- [x] Answer buttons: a ✓/✕ glyph on `.answer.is-right` / `.is-wrong` (`v2.css:251-262`).
+- [x] Remove Toni's halo on feedback.
+- [x] `GridDictation.tsx`: move the ask above the pad (in `Lesson.tsx` layout for `q.kind === 'grid'`), add ✓/✕ to `.gd-p.ok` / `.bad` (`grid.css:116-120`), ink selected chips, higher-contrast disabled chips.
+- [x] Partial mastery credit: in the rating update for grid / chord / dictation (where `gridLine` is computed), add a fractional score; the streak stays whole-items only.
+- [x] Recap: "Drill these 3", and the streak sheet after the recap (`Recap.tsx`, `App.tsx` streak trigger).
 
 ### Slice 8: Jazz chart, rule chips, per-bar targets (impact M, effort M)
 **Shipped (after 0.95), first part.** `ChordChart.tsx` ("דף אקורדים") + `chartCells.ts` replace `ChartView`, the `EarCard` bars and the `.song-chart` lists; rule chips carry numbers, a broken bar's corner tab shows those numbers; target cards (`guide-target`, `three-on-one`) print "→ F/C" before the take and the landed note after; `m.improv[].bars` (from the cards' `miss` beats) and `m.landings`. A rule-card take's review shows the chart in place of the landings staff, with "Rules kept n/m bars". 

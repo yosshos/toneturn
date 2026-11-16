@@ -90,13 +90,8 @@
 .drill-chart .vdot.acc { stroke-width: 2; }
 .drill-chart figcaption { color: var(--ink-soft); }
 
-/* ---------------------------------------------------------------- Highway: no glow, verdict flashes readable */
+/* ---------------------------------------------------------------- Highway: no glow (the near ring is ink, not white) */
 :root[data-theme] .hw-note[data-near='2'] { box-shadow: 0 0 0 3px var(--ink-c); }
-:root[data-theme] .hw-flash { text-shadow: none; padding: 2px 10px; border-radius: 10px; border: 2px solid var(--ink-c); color: var(--ink-c) !important; background: var(--card); }
-:root[data-theme] .hw-flash.perfect, :root[data-theme] .hw-flash.good { background: var(--teal); }
-:root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { background: var(--pink); }
-:root[data-theme] .hw-flash.early { background: var(--tangerine); }
-:root[data-theme] .hw-flash.late { background: var(--lilac); }
 
 /* ---------------------------------------------------------------- the review after a take (TakeReview, slice 2) */
 .take-review { display: grid; gap: 6px; padding: 8px 12px 6px; }

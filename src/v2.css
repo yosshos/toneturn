@@ -1563,10 +1563,6 @@
   :root[data-theme] .hw-note[class*='kit-'][data-near] { transform: translateY(50%); }
 }
 :root[data-theme] .hw-hitline { height: 10px; margin-bottom: -5px; background: var(--lemon); border-block: 2.5px solid var(--ink-c); box-sizing: border-box; box-shadow: none; } /* games fix: a lemon hit line with an ink edge, no halo */
-:root[data-theme] .hw-flash { font-family: 'Secular One', Rubik, sans-serif; text-shadow: 0 2px 0 var(--ink-c); }
-:root[data-theme] .hw-flash.perfect { color: var(--lemon); }
-:root[data-theme] .hw-flash.good { color: var(--teal); }
-:root[data-theme] .hw-flash.miss, :root[data-theme] .hw-flash.wrong { color: var(--pink); }
 :root[data-theme] .hw-lane-labels b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; color: #fff; }
 :root[data-theme] .hw-lane-labels small { color: var(--lemon); }
 :root[data-theme] .hw-stat.combo b { color: var(--purple); }
