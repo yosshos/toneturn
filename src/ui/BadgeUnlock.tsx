@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Reac
 import { BADGE_CAT_NAME, type Badge } from '../engine/badges';
 import { AREA_NAME, MASTER_DIV, rankLabel, tierOfDiv, TIER_NAME, type RankArea, type RankChange, type RankTier } from '../engine/ranks';
 import { BadgeArt, tierGlow } from './BadgeArt';
+import { playIcon } from './paper/motion';
 import { RankCrest } from './Badges';
 import { Toni } from './Toni';
 import '../badges.css';
@@ -65,6 +66,12 @@ function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext
   useEffect(() => {
     btn.current?.focus({ preventScroll: true });
   }, [k, btn]);
+  // The badge art plays its motion once, as the medal lands (after bu-drop, with the sweep).
+  const medalRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const id = window.setTimeout(() => playIcon(medalRef.current?.querySelector('svg.badge-art, svg.pp'), 'event'), 820);
+    return () => window.clearTimeout(id);
+  }, [k]);
   const style = { '--bu-c': tierGlow(tier), '--bu-ms': `${UNLOCK_MS}ms` } as CSSProperties;
   return (
     <div className="bu-overlay" role="dialog" aria-modal="true" aria-labelledby="bu-title" dir={lang === 'he' ? 'rtl' : 'ltr'} style={style} onClick={onNext}>
@@ -82,7 +89,9 @@ function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext
           {PARTICLES.map((p, i) => (
             <span key={i} className="bu-p" style={{ '--x': `${p.x}px`, '--y': `${p.y}px`, '--s': `${p.s}px`, '--d': `${p.delay}ms` } as CSSProperties} />
           ))}
-          <div className="bu-medal">{medal}</div>
+          <div className="bu-medal" ref={medalRef}>
+            {medal}
+          </div>
         </div>
         <h2 className="bu-title" id="bu-title">
           {title}

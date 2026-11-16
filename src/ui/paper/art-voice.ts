@@ -1,5 +1,5 @@
 ﻿// Paper drawings: the voice course's families and the instrument / voice / harmony games (see kit.ts for roles).
-import { art, Ci, det, E, H, L, markArt, P, R, rich, T, type Art, type Part } from './kit';
+import { art, an, Ci, det, E, H, L, markArt, P, R, rich, T, type Art, type Part } from './kit';
 
 /** A voice mark whose text runs wide (an arrow): squeezed into `fit` units of the plaque. */
 const fitMark = (text: string, fit: number, extra: Part[]): Art => {
@@ -13,9 +13,9 @@ export const ART_VOICE: Record<string, Art> = {
     'pink',
     'sky',
     R(2, 8, 7, 34, 3.5, 'light'),
-    P('M9 15 C 15 11, 20 19, 27 15', 'tube', 5),
-    P('M9 25 C 17 20, 24 30, 33 25 S 41 21, 44 24', 'tube', 6),
-    P('M9 35 C 14 31, 19 39, 24 35', 'tube', 5),
+    an('pulse', { o: [9, 25] }, P('M9 15 C 15 11, 20 19, 27 15', 'tube', 5)),
+    an('pulse', { o: [9, 25], d: 1 }, P('M9 25 C 17 20, 24 30, 33 25 S 41 21, 44 24', 'tube', 6)),
+    an('pulse', { o: [9, 25], d: 2 }, P('M9 35 C 14 31, 19 39, 24 35', 'tube', 5)),
     det(P('M11 25 C 17 21.5, 24 29, 33 25', 'shine', 1.2)),
     H(37, 39, 4.2, 'accent'),
     L(40.8, 38, 40.8, 30.5, 'wire', 1.8),
@@ -28,13 +28,15 @@ export const ART_VOICE: Record<string, Art> = {
     P('M10 21 C 10 37, 38 37, 38 21', 'wire', 2.6),
     L(24, 35, 24, 42, 'wire', 2.6),
     R(15, 41.5, 18, 4.5, 2.2, 'mark'),
-    R(14, 4, 20, 29, 10, 'body'),
+    an('nod', { o: [24, 21] }, R(14, 4, 20, 29, 10, 'body'),
     R(17.5, 8, 13, 21, 6.5, 'light'),
     det(L(19, 13, 29, 13, 'line', 1), L(18.5, 17, 29.5, 17, 'line', 1), L(18.5, 21, 29.5, 21, 'line', 1), L(19, 25, 29, 25, 'line', 1)),
-    R(14, 17.2, 20, 3.2, 0, 'ink'),
+    R(14, 17.2, 20, 3.2, 0, 'ink')),
     Ci(11, 21, 2.6, 'accent'),
     Ci(37, 21, 2.6, 'accent'),
     rich(P('M17 9 C 16 12, 16 16, 16.5 18', 'shine', 1.2), H(24, 30.6, 1.6, 'ink')),
+    an('rise', { fx: true }, H(38, 7, 2.4, 'accent')),
+    an('rise', { fx: true, d: 3, r: true }, H(10, 9, 2, 'accent')),
   ),
   /** Play It Back: three heads heard, an arrow down to the keys. */
   playback: art(

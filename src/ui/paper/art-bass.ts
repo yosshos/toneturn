@@ -1,9 +1,9 @@
 ﻿// Paper drawings: the bass course's families and games (see kit.ts for the roles and builders). The "b…" twins of the
 // keyboard glyphs share one cue: a light strip with the bass's two thick low strings along the bottom (or top).
-import { art, Ci, det, E, H, L, markParts, P, R, rich, T, type Art, type Part } from './kit';
+import { art, an, Ci, det, E, H, L, markParts, P, R, rich, T, type Art, type Part } from './kit';
 
 /** The bass cue: a light strip with two thick strings (y = top of the strip). */
-const strip = (y = 37.5): Part[] => [R(2, y, 44, 8.5, 3, 'light'), L(4, y + 2.8, 44, y + 2.8, 'inkline', 2.2), ...det(L(4, y + 5.8, 44, y + 5.8, 'inkline', 1.6))];
+const strip = (y = 37.5): Part[] => [R(2, y, 44, 8.5, 3, 'light'), ...an('vibrate', {}, L(4, y + 2.8, 44, y + 2.8, 'inkline', 2.2)), ...an('vibrate', { d: 1 }, det(L(4, y + 5.8, 44, y + 5.8, 'inkline', 1.6)))];
 
 export const ART_BASS: Record<string, Art> = {
   /** Plucking hand: two fingers coming down on the string, the stroke coming to rest on the next. */
@@ -11,10 +11,10 @@ export const ART_BASS: Record<string, Art> = {
     'sky',
     'purple',
     R(3, 27, 42, 13, 3, 'light'),
-    L(4, 31, 44, 31, 'inkline', 2),
-    L(4, 36, 44, 36, 'inkline', 1.6),
-    R(13, 5, 8.5, 24, 4.2, 'body', 'rotate(14 17 17)'),
-    R(24.5, 3, 8.5, 25, 4.2, 'body', 'rotate(14 28.7 15.5)'),
+    an('vibrate', { d: 2 }, L(4, 31, 44, 31, 'inkline', 2)),
+    an('vibrate', { d: 3 }, L(4, 36, 44, 36, 'inkline', 1.6)),
+    an('strike', { o: [15, 6] }, R(13, 5, 8.5, 24, 4.2, 'body', 'rotate(14 17 17)')),
+    an('strike', { o: [27, 4], d: 1 }, R(24.5, 3, 8.5, 25, 4.2, 'body', 'rotate(14 28.7 15.5)')),
     det(E(15.2, 25.2, 2.4, 1.6, 14, 'light'), E(26.8, 24.2, 2.4, 1.6, 14, 'light')),
     P('M38 12 C 41 17, 41 22, 38 27', 'accentline', 2.2),
     H(37, 36, 3.2, 'accent'),

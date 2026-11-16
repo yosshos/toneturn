@@ -3,7 +3,8 @@
 
 import { Toni } from './Toni';
 import { Icon } from './icons';
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import { useAmbient, usePlayOnMount } from './paper/motion';
 import { addDays, canBuy, canBuyCosmetic, COSMETICS, FRAMES, MAX_FREEZES, ownsCosmetic, PRICES, type Purchase, type StreakState } from '../engine/streak';
 import type { Strings } from '../i18n/strings';
 
@@ -11,22 +12,31 @@ const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+
 const reduced = () => document.documentElement.dataset.motion === 'reduced';
 
 /** The streak mark (0.61, SPEC-REDESIGN): a streak is counted in bars — a measure with two notes, coloured once today is in.
- *  (The name stays Flame for the callers.) */
-export function Flame({ lit, size = 22 }: { lit: boolean; size?: number }) {
+ *  (The name stays Flame for the callers.)
+ *  Its two note heads flicker when it plays (src/paper-motion.css): on a tap, as the streak goes up, and softly on the
+ *  home screen while the streak is lit (the only ambient motion besides the current path node). */
+export const Flame = forwardRef<SVGSVGElement, { lit: boolean; size?: number }>(function Flame({ lit, size = 22 }, ref) {
   return (
-    <svg className={`flame bars ${lit ? 'lit' : 'cold'}`} width={size * 1.3} height={size} viewBox="0 0 30 22" aria-hidden="true">
+    <svg ref={ref} className={`flame bars ${lit ? 'lit' : 'cold'}`} width={size * 1.3} height={size} viewBox="0 0 30 22" aria-hidden="true">
       {/* 0.65 (owner): no pale-yellow block behind the mark — it made the chip unreadable. */}
       <path d="M2 5H28M2 9H28M2 13H28M2 17H28" stroke="currentColor" strokeWidth="1.2" opacity={lit ? 0.5 : 0.35} />
       <path d="M2 2V20M15 2V20M28 2V20" stroke="currentColor" strokeWidth="2.2" />
-      <ellipse cx="8.5" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 8.5 14)" fill={lit ? 'var(--purple, #6D28D9)' : 'currentColor'} opacity={lit ? 1 : 0.45} />
-      <ellipse cx="21.5" cy="9.5" rx="3.4" ry="2.5" transform="rotate(-20 21.5 9.5)" fill={lit ? 'var(--coral, #FF8A3D)' : 'currentColor'} opacity={lit ? 1 : 0.3} />
+      <g className="fl-n fl-n1">
+        <ellipse cx="8.5" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 8.5 14)" fill={lit ? 'var(--purple, #6D28D9)' : 'currentColor'} opacity={lit ? 1 : 0.45} />
+      </g>
+      <g className="fl-n fl-n2">
+        <ellipse cx="21.5" cy="9.5" rx="3.4" ry="2.5" transform="rotate(-20 21.5 9.5)" fill={lit ? 'var(--coral, #FF8A3D)' : 'currentColor'} opacity={lit ? 1 : 0.3} />
+      </g>
     </svg>
   );
-}
+});
 
-export function StreakChip({ t, st, onOpen }: { t: Strings; st: StreakState; onOpen: () => void }) {
+/** The streak chip in the top bar. `home`: on the home screen the lit flame flickers softly while on screen. */
+export function StreakChip({ t, st, onOpen, home = false }: { t: Strings; st: StreakState; onOpen: () => void; home?: boolean }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useAmbient(ref, 'flicker', home && st.practicedToday && st.count > 0);
   return (
-    <button className={`chip streak streak-chip ${st.practicedToday ? 'done' : 'todo'}`} onClick={onOpen} aria-label={`${t.streak}: ${st.count}${st.practicedToday ? '' : ` · ${t.streakTodo}`}`}>
+    <button ref={ref} className={`chip streak streak-chip ${st.practicedToday ? 'done' : 'todo'}`} onClick={onOpen} aria-label={`${t.streak}: ${st.count}${st.practicedToday ? '' : ` · ${t.streakTodo}`}`}>
       <Flame lit={st.practicedToday} />
       <b>{st.count}</b>
     </button>
@@ -81,6 +91,9 @@ function WeekStrip({ st, today, t }: { st: StreakState; today: string; t: String
 export function StreakCelebration({ t, before, after, gemsGained, today, onDone }: { t: Strings; before: number; after: StreakState; gemsGained: number; today: string; onDone: () => void }) {
   const [shown, setShown] = useState(reduced() ? after.count : before);
   const milestone = after.milestones.find((m) => m.day === today && m.days === after.count);
+  // The streak goes up: the flame grows and flickers as the count rolls.
+  const flame = useRef<SVGSVGElement>(null);
+  usePlayOnMount(flame, 650, after.count);
   useEffect(() => {
     if (reduced()) return;
     const id = window.setTimeout(() => setShown(after.count), 650);
@@ -95,7 +108,7 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
     <div className="streak-celebrate" role="dialog" aria-modal="true" aria-label={t.streakExtended}>
       {milestone && <Confetti />}
       <div className="sc-flame">
-        <Flame lit size={132} />
+        <Flame ref={flame} lit size={132} />
         <span className="sc-toni">
           <Toni state="streak" size={78} />
         </span>
@@ -124,6 +137,8 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
 export function StreakAfterSheet({ t, before, after, gemsGained, today, onDone }: { t: Strings; before: number; after: StreakState; gemsGained: number; today: string; onDone: () => void }) {
   const [shown, setShown] = useState(reduced() ? after.count : before);
   const milestone = after.milestones.find((m) => m.day === today && m.days === after.count);
+  const flame = useRef<SVGSVGElement>(null);
+  usePlayOnMount(flame, 450, after.count);
   useEffect(() => {
     if (reduced()) return;
     const id = window.setTimeout(() => setShown(after.count), 450);
@@ -133,7 +148,7 @@ export function StreakAfterSheet({ t, before, after, gemsGained, today, onDone }
     <div className="sheet-backdrop streak-after-backdrop" onClick={onDone}>
       <div className="sheet streak-after" role="dialog" aria-modal="true" aria-label={t.streakExtended} data-streak-sheet="1" onClick={(e) => e.stopPropagation()}>
         <div className="sa-head">
-          <Flame lit size={34} />
+          <Flame ref={flame} lit size={34} />
           <span className="sa-count" dir="ltr" aria-live="polite">
             <span key={shown} className="roll">
               {shown}

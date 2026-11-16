@@ -25,6 +25,33 @@ export interface Part {
   lod?: 0 | 1 | 2;
   /** Text content (t: 'text'). */
   text?: string;
+  /** Its motion when the icon plays (on tap / on a progress event); see an() and src/ui/paper/motion.ts. */
+  m?: Motion;
+}
+/**
+ * The motion vocabulary (src/paper-motion.css). Every motion is a transform / opacity of the part's own group, short
+ * (400–900 ms), small, eased without bounce. An icon without tagged parts plays the default "lift" (its sheets rise off
+ * their edges and settle).
+ *   vibrate / vibrate-x  a string trembling across its length (y / x), decaying     swing   a pendulum about its pivot
+ *   flicker  a flame stretching and settling (origin: bottom)                        rise    a little note rising and fading (fx)
+ *   pulse    a sound wave pushing out from its source and back                         spin    a full turn (reels, records)
+ *   turn     a hand / dial turning a notch and back                                    press   a key going down and up
+ *   strike   a stick lifting and striking (about its grip)                             dip     a drumhead giving under the stroke
+ *   wave     a flag rippling from its pole                                             loop    the note travelling between the repeat signs
+ *   nod      a note head tipping on its stem                                           hop     a part hopping up once
+ *   slide    a fader sliding up and back
+ */
+export type Anim = 'vibrate' | 'vibrate-x' | 'swing' | 'flicker' | 'rise' | 'pulse' | 'spin' | 'turn' | 'press' | 'strike' | 'dip' | 'wave' | 'loop' | 'nod' | 'hop' | 'slide';
+export interface Motion {
+  k: Anim;
+  /** The origin on the 48 grid (a pivot, a grip, a source). Without it: the part's own box (centre; bottom for flicker). */
+  o?: [number, number];
+  /** Start later, in steps of 80 ms (a stagger: waves one after another, two sticks, notes rising in turn). */
+  d?: 0 | 1 | 2 | 3 | 4 | 5;
+  /** Mirror the direction (the second stick, a swing starting the other way). */
+  r?: boolean;
+  /** Only seen while playing (a note rising out of a microphone): invisible at rest, so the static drawing is unchanged. */
+  fx?: boolean;
 }
 export type HueName = 'teal' | 'sky' | 'purple' | 'lilac' | 'pink' | 'tan' | 'green' | 'rose' | 'indigo' | 'slate';
 export interface Art {
@@ -173,6 +200,8 @@ export const star = (cx: number, cy: number, r: number, inner = 0.45, n = 5) => 
   });
   return `M${pts.join(' L')} Z`;
 };
+/** Tag parts with a motion: an('swing', { o: [24, 36] }, rod, weight). */
+export const an = (k: Anim, opt: Omit<Motion, 'k'>, ...ps: (Part | Part[])[]): Part[] => ps.flat().map((p) => ({ ...p, m: { k, ...opt } }));
 export const art = (hue: HueName, hue2: HueName, ...parts: (Part | Part[])[]): Art => ({ hue, hue2, parts: parts.flat() });
 
 /** The size of a short music mark ("7/8", "iiג€“V", "R1") on the 48 grid, by its length. */
