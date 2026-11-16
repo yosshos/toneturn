@@ -21,6 +21,9 @@ import { ProgPuzzleScreen } from './ProgPuzzle';
 import { ImprovStudioScreen } from './ImprovStudio';
 import { LickTrainerScreen } from './LickTrainer';
 import { EncoreScreen } from './encore/Encore';
+import { ChallengeScreen, PhrasePublicScreen } from './encore/Challenge';
+import { CHALLENGES_ON, challengesMockOn, mockSignedOut, syncChallengeResults } from '../cloud/challenges';
+import { publicFromHash } from '../engine/encore/community';
 import { TeachScreen } from './TeachPhrase';
 import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './teacherPhraseSync';
 import { teacherMockOn } from '../cloud/teacher';
@@ -218,7 +221,7 @@ import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'diary' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside' | 'recordings' | 'encore' | 'whichpair' | 'teach';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'diary' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside' | 'recordings' | 'encore' | 'whichpair' | 'teach' | 'challenges';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -229,8 +232,8 @@ const enterPlay = () => {
   if (location.hash.replace(/^#\/?/, '') !== PLAY_HASH) location.hash = `/${PLAY_HASH}`;
 };
 const routeFromHash = (): Route => {
-  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings').replace(/^encore[/?].*$/, 'encore').replace(/^teach\/.*$/, 'teach');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside', 'recordings', 'encore', 'whichpair', 'teach'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings').replace(/^encore[/?].*$/, 'encore').replace(/^teach\/.*$/, 'teach').replace(/^challenges[/?].*$/, 'challenges');
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside', 'recordings', 'encore', 'whichpair', 'teach', 'challenges'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -309,6 +312,16 @@ export function App() {
   };
   // The parent digest (#/digest/<token>, 0.52): readable without signing in.
   const [digestToken, setDigestToken] = useState<string | null>(() => /^#\/?digest\/([\w-]{20,64})/.exec(location.hash)?.[1] ?? null);
+  // Encore v3 (SPEC-PHRASE-STUDIO §11.7): a shared phrase's public link (#/p/CODE[/BEAT]) — readable without an account.
+  const [publicLink, setPublicLink] = useState(() => publicFromHash(location.hash));
+  useEffect(() => {
+    const on = () => {
+      const p = publicFromHash(location.hash);
+      if (p) setPublicLink(p);
+    };
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
   // The opening (0.52): the logo draws itself once per app start (not in automated runs unless ?splash).
   const [splash, setSplash] = useState(() => params.has('splash') || !(SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)));
   /** Generated session in progress (placement / review / weekly puzzle). */
@@ -656,6 +669,37 @@ export function App() {
     [user],
   );
 
+  // Encore v3 (SPEC-PHRASE-STUDIO §12): community challenges, behind the flag (cloud/challenges.ts CHALLENGES_ON).
+  const challengeSignedIn = !!user || (challengesMockOn() && !mockSignedOut());
+  useEffect(() => {
+    if (!publicLink || !challengeSignedIn) return;
+    try {
+      localStorage.removeItem('toneturn.phraseLink');
+    } catch {
+      /* fine */
+    }
+    location.hash = `/challenges/p/${publicLink.code}${publicLink.beat ? `/${publicLink.beat}` : ''}`;
+    setPublicLink(null);
+  }, [publicLink, challengeSignedIn]);
+  useEffect(() => {
+    // a public link opened before signing in: the OAuth round trip drops the hash
+    if (!challengeSignedIn || publicLink) return;
+    try {
+      const saved = localStorage.getItem('toneturn.phraseLink');
+      if (saved) {
+        localStorage.removeItem('toneturn.phraseLink');
+        location.hash = `/challenges/p/${saved}`;
+      }
+    } catch {
+      /* fine */
+    }
+  }, [challengeSignedIn, publicLink]);
+  useEffect(() => {
+    if (!CHALLENGES_ON() || !challengeSignedIn) return;
+    const id = window.setTimeout(() => void syncChallengeResults(s.lickBook, progress.drillItems ?? {}).catch(() => 0), 2500);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeSignedIn, progress.drillItems, s.lickBook]);
   // Encore v2 (SPEC-PHRASE-STUDIO §11): teacher phrases into the lick book; each passed key submitted once
   useTeacherPhrases({ enabled: !!user || teacherMockOn(), route, book: s.lickBook, items: progress.drillItems ?? {}, onBook: (lickBook) => updateSettings({ lickBook }) });
   useMotion(route);
@@ -2059,6 +2103,28 @@ export function App() {
         <DigestScreen token={digestToken} lang={s.uiLang} t={t} onHome={() => ((location.hash = ''), setDigestToken(null))} />
       </div>
     );
+  // The public link of a shared phrase stands alone too (hear it, see it, try it in free time — no account needed).
+  if (publicLink && !challengeSignedIn)
+    return (
+      <div className="app">
+        <PhrasePublicScreen
+          code={publicLink.code}
+          beat={publicLink.beat}
+          lang={s.uiLang}
+          signedIn={false}
+          onOpenInApp={() => setPublicLink(null)}
+          onSignIn={() => {
+            try {
+              localStorage.setItem('toneturn.phraseLink', `${publicLink.code}${publicLink.beat ? `/${publicLink.beat}` : ''}`);
+            } catch {
+              /* fine */
+            }
+            if (cloudConfigured) void signInWithGoogle();
+          }}
+          onHome={() => ((location.hash = ''), setPublicLink(null))}
+        />
+      </div>
+    );
 
   return (
     <CourseContext.Provider value={courseCtx}>
@@ -2733,6 +2799,17 @@ export function App() {
             const r = makeLogResult('piece', min, 0, new Date(), id);
             void store.recordCompletion({ ...r, sessionId: `piece-${id}`, xp: Math.min(30, cleanReps * 2) }).then(setProgress);
           }}
+        />
+      )}
+      {route === 'challenges' && (
+        <ChallengeScreen
+          lang={s.uiLang}
+          settings={s}
+          items={progress.drillItems ?? {}}
+          signedIn={challengeSignedIn}
+          onSettings={updateSettings}
+          onBack={() => (history.length > 1 ? history.back() : go('friends'))}
+          onSignIn={() => (cloudConfigured ? void signInWithGoogle() : go('settings'))}
         />
       )}
       {route === 'teach' && <TeachScreen lang={s.uiLang} settings={s} items={progress.drillItems ?? {}} onBack={() => (history.length > 1 ? history.back() : go('home'))} />}

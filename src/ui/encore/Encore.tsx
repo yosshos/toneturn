@@ -32,6 +32,9 @@ import { midi } from '../../speech/midi';
 import { saveTake } from '../../storage/recordings';
 import { PianoRoll, type RollNote } from './PianoRoll';
 import { EncoreRun, type EncoreTakeFn } from './EncoreRun';
+import { ShareButton } from './Challenge';
+import { CHALLENGES_ON } from '../../cloud/challenges';
+import { shareCodeOf } from '../../engine/encore/community';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 
 export interface EncoreProps {
@@ -1029,6 +1032,13 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
           <button className="btn small ghost" onClick={onDelete} data-phrase-delete="1">
             {he ? 'מחיקה' : 'Delete'}
           </button>
+          {/* Encore v3: share as a community challenge / open its challenge page (hidden while the flag is off) */}
+          {!isTeacherShared(l) && <ShareButton lang={lang} phraseId={l.id} className="btn small ghost" />}
+          {shareCodeOf(l) && CHALLENGES_ON() && (
+            <button className="btn small ghost" onClick={() => (location.hash = `/challenges/p/${shareCodeOf(l)}`)} data-phrase-challenge="1">
+              {he ? 'דף האתגר' : 'Challenge page'}
+            </button>
+          )}
         </div>
       )}
       <div className="enc-card row enc-rank">
@@ -1247,6 +1257,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
         <button className="btn ghost enc-full" onClick={onClose} data-yours-close="1">
           {he ? 'סגירה' : 'Close'}
         </button>
+        {!isTeacherShared(l) && <ShareButton lang={lang} phraseId={l.id} className="link" />}
       </div>
     </main>
   );
@@ -1395,3 +1406,6 @@ function RangeLine({ lang, l }: { lang: Lang; l: Lick }) {
     </small>
   );
 }
+
+/** Encore v3: phrases from a teacher or taken from someone else's challenge are not re-shared. */
+const isTeacherShared = (l: Lick) => l.source?.kind === 'teacher' || l.source?.kind === 'shared';

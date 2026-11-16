@@ -1,6 +1,7 @@
 // Plans (0.54): the player's plan, the prices (with the sale when one is on), and the way to upgrade; the owner's
 // control panel (prices, sale, the free tier's daily limit, payment links, plans given by email); the cool-down sheet.
 import { useEffect, useState } from 'react';
+import { CHALLENGES_ON } from '../cloud/challenges';
 import { ReportsAdmin } from './Community';
 import { grantPlan, listPlans, loadPricing, myPlan, saleNow, salePrice, savePricing, type MyPlan, type PlanId, type Pricing } from '../cloud/pricing';
 
@@ -250,6 +251,11 @@ export function AdminScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
         )}
       </section>
       <ReportsAdmin lang={lang} />
+      {CHALLENGES_ON() && (
+        <button className="btn small ghost" onClick={() => (location.hash = '/challenges/review')} data-admin-challenges="1">
+          {lang === 'he' ? 'אתגרי הדרן: דיווחים ומשפט השבוע' : 'Encore challenges: reports and the featured phrase'}
+        </button>
+      )}
     </main>
   );
 }
