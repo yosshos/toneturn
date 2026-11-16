@@ -45,12 +45,14 @@ export const mockSignedOut = () => challengesMockOn() && ls.get('tt.mockChalleng
 /** The feature flag (see the header). */
 export const CHALLENGES_ON = (): boolean => {
   if (challengesMockOn()) return true;
+  // Migrations 20261204000000 + 20261205000000 applied 2026-11-16: on by default; VITE_ENCORE_CHALLENGES=0 or the
+  // localStorage flag "0" turns it off.
   try {
-    if (import.meta.env.VITE_ENCORE_CHALLENGES === '1') return true;
+    if (import.meta.env.VITE_ENCORE_CHALLENGES === '0') return false;
   } catch {
     /* no env in some test runners */
   }
-  return ls.get('tt.flag.challenges') === '1';
+  return ls.get('tt.flag.challenges') !== '0';
 };
 
 // ───────────────────────────── transport ─────────────────────────────
