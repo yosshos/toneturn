@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encore screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=Secular+One&family=Noto+Music&display=swap" rel="stylesheet">
+<style>
+/* v2 tokens (src/v2.css) */
+:root{
+  --paper:#fbf7ff;--ink-c:#1e1033;--purple:#6d28d9;--lilac:#a78bfa;--lemon:#ffd43b;--sky:#3ab8ff;--pink:#ff5fa2;--teal:#12c9b4;--tangerine:#ff8a3d;
+  --bg:var(--paper);--bg-2:#f3ecff;--card:#ffffff;--card-2:#f6f0ff;--ink:var(--ink-c);--ink-soft:#3b2a5c;--ink-dim:#5b4a86;--outline:var(--ink-c);
+  --line:rgba(30,16,51,.12);--line-strong:#c9b8ec;--accent:var(--purple);--accent-ink:#fff;--now:var(--lemon);--ok:var(--teal);--ok-soft:#d9fbf5;--bad:var(--pink);--bad-soft:#ffe1ee;--near:var(--tangerine);
+  --sel:rgba(167,139,250,.28);--pending:#b7a9d6;--bezel:#140a24;
+  --stroke:2.5px;--sx:-4px;--shadow:var(--sx) 4px 0 var(--outline);--shadow-s:-3px 3px 0 var(--outline);
+  --font:'Rubik',system-ui,'Segoe UI',Arial,sans-serif;--display:'Secular One','Rubik',system-ui,sans-serif;--music:'Noto Music','Rubik',serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#140a24;--bg-2:#1e1033;--card:#241540;--card-2:#2e1a4f;--ink:#fff;--ink-soft:#e3d8ff;--ink-dim:#b9a8de;--outline:#07030f;
+    --line:rgba(255,255,255,.1);--line-strong:#4a3670;--accent:var(--lilac);--accent-ink:var(--ink-c);--ok-soft:#0e3d39;--bad-soft:#4a1630;
+    --sel:rgba(167,139,250,.22);--pending:#5d4a85;--bezel:#000;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#140a24;--bg-2:#1e1033;--card:#241540;--card-2:#2e1a4f;--ink:#fff;--ink-soft:#e3d8ff;--ink-dim:#b9a8de;--outline:#07030f;
+  --line:rgba(255,255,255,.1);--line-strong:#4a3670;--accent:var(--lilac);--accent-ink:var(--ink-c);--ok-soft:#0e3d39;--bad-soft:#4a1630;
+  --sel:rgba(167,139,250,.22);--pending:#5d4a85;--bezel:#000;color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg-2);color:var(--ink);font-family:var(--font);overflow:hidden}
+bdi{unicode-bidi:isolate}
+.mu{font-family:var(--music);font-weight:400}
+.tm{white-space:nowrap}.tm .mu{display:inline-block;font-size:1.05em;margin-right:.12em}
+
+/* viewer chrome */
+.bar{position:fixed;inset:0 0 auto 0;height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--bg);border-bottom:var(--stroke) solid var(--outline);z-index:5}
+.bar h1{font-family:var(--display);font-weight:400;font-size:20px;margin:0;white-space:nowrap}
+.bar .cnt{font-size:13px;color:var(--ink-dim);font-weight:600;white-space:nowrap}
+.bar .sp{flex:1}
+.vb{height:38px;min-width:38px;padding:0 12px;border:var(--stroke) solid var(--outline);border-radius:12px;background:var(--card);color:var(--ink);font:700 14px var(--font);box-shadow:var(--shadow-s);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.vb:active{transform:translate(-3px,3px);box-shadow:none}
+.vb.pr{background:var(--accent);color:var(--accent-ink)}
+.vb svg{width:18px;height:18px}
+@media (max-width:640px){.bar .cnt{display:none}.bar h1{font-size:16px}.vb .t{display:none}}
+.deck{position:fixed;inset:56px 0 0 0;overflow:auto}
+.slide{display:none;padding:14px 16px 24px}
+.slide.on{display:block}
+.cap{max-width:1200px;margin:0 auto 12px;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.cap h2{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.cap p{margin:0;color:var(--ink-soft);font-size:14px;line-height:1.5;flex:1;min-width:260px}
+.stage{display:flex;gap:28px;justify-content:center;align-items:flex-start}
+.fit{position:relative;direction:ltr;flex:none}
+.fit>.inner{position:absolute;top:0;left:0;transform-origin:0 0}
+.lbl{font-size:12px;color:var(--ink-dim);font-weight:700;text-align:center;margin-top:6px;direction:rtl}
+@media (max-width:899px){.stage{flex-direction:column;align-items:center}}
+
+/* device frames */
+.phone{width:410px;height:864px;border-radius:54px;background:var(--bezel);padding:10px}
+.scr{width:390px;height:844px;border-radius:44px;overflow:hidden;background:var(--bg);color:var(--ink);direction:rtl;position:relative;display:flex;flex-direction:column}
+.sb{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:700 15px var(--font);direction:ltr}
+.sb i{display:inline-block;width:24px;height:11px;border:2px solid currentColor;border-radius:3px;position:relative}
+.sb i:after{content:"";position:absolute;inset:1px 6px 1px 1px;background:currentColor;border-radius:1px}
+.home{position:absolute;bottom:8px;left:50%;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:var(--ink);opacity:.8}
+.wide{width:1284px;height:804px;border-radius:16px;border:var(--stroke) solid var(--outline);background:var(--bg);overflow:hidden;box-shadow:var(--shadow);direction:rtl;display:flex;flex-direction:column}
+.wbar{height:34px;flex:none;border-bottom:var(--stroke) solid var(--outline);display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--card-2);direction:ltr}
+.wbar b{width:11px;height:11px;border-radius:50%;border:2px solid var(--outline);background:var(--card)}
+.wbar span{margin-left:12px;flex:1;max-width:420px;height:22px;border-radius:8px;border:2px solid var(--line-strong);background:var(--card);font:500 12px var(--font);color:var(--ink-dim);display:flex;align-items:center;padding:0 10px}
+.wbody{flex:1;display:flex;min-height:0}
+.side{width:224px;flex:none;border-inline-start:none;border-inline-end:var(--stroke) solid var(--outline);padding:16px 12px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-size:19px;margin:0 6px 14px}
+.logo svg{width:30px;height:30px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;font-weight:600;font-size:15px;color:var(--ink-soft);border:var(--stroke) solid transparent}
+.nav svg{width:20px;height:20px;flex:none}
+.nav.on{background:var(--card);border-color:var(--outline);color:var(--ink);box-shadow:var(--shadow-s)}
+.nav .n{margin-inline-start:auto;font-size:12px;font-weight:800;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 8px}
+.sideh{font-size:11px;font-weight:800;color:var(--ink-dim);margin:12px 10px 4px;letter-spacing:.02em}
+.main{flex:1;min-width:0;padding:22px 28px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+
+/* app pieces */
+.hd{height:52px;flex:none;display:flex;align-items:center;gap:8px;padding:0 16px}
+.hd h3{flex:1;margin:0;font-family:var(--display);font-weight:400;font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .sub{font:500 12px var(--font);color:var(--ink-dim);display:block;margin-top:-2px}
+.ib{width:38px;height:38px;flex:none;border:var(--stroke) solid var(--outline);border-radius:13px;background:var(--card);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow-s)}
+.ib svg{width:19px;height:19px}
+.ib.sm{width:32px;height:32px;border-radius:11px}
+.ib.sm svg{width:16px;height:16px}
+.ib.on{background:var(--accent);color:var(--accent-ink)}
+.body{flex:1;min-height:0;padding:4px 16px 26px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.cd{background:var(--card);border:var(--stroke) solid var(--outline);border-radius:20px;box-shadow:var(--shadow);padding:12px 14px}
+.cd.flat{box-shadow:none}
+.cd.soft{background:var(--card-2)}
+.row{display:flex;align-items:center;gap:8px}
+.col{display:flex;flex-direction:column;gap:8px}
+.grow{flex:1;min-width:0}
+.wrap{flex-wrap:wrap}
+.t1{font-family:var(--display);font-size:20px;line-height:1.15}
+.t2{font-weight:700;font-size:15px}
+.t3{font-size:13px;color:var(--ink-dim);font-weight:500}
+.tiny{font-size:11.5px;color:var(--ink-dim);font-weight:600}
+.big{font-family:var(--display);font-size:44px;line-height:1}
+.ch{display:inline-flex;align-items:center;gap:5px;border:2px solid var(--outline);border-radius:999px;padding:4px 11px;font-size:13px;font-weight:600;background:var(--card);white-space:nowrap;color:var(--ink)}
+.ch.on{background:var(--accent);color:var(--accent-ink)}
+.ch.gh{border-color:var(--line-strong)}
+.ch.q{border-style:dashed}
+.ch svg{width:14px;height:14px}
+.conf{letter-spacing:1px;font-size:10px;color:var(--accent)}
+.bt{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;padding:0 16px;border:var(--stroke) solid var(--outline);border-radius:14px;background:var(--card);color:var(--ink);font:800 15px var(--font);box-shadow:var(--shadow);white-space:nowrap}
+.bt svg{width:18px;height:18px}
+.bt.pr{background:var(--accent);color:var(--accent-ink)}
+.bt.mg{height:56px;border-radius:16px;background:var(--now);color:var(--ink-c);font-size:17px;font-weight:900}
+.bt.gh{background:transparent;border-color:var(--line-strong);box-shadow:none}
+.bt.sm{height:36px;padding:0 12px;font-size:13.5px;border-radius:12px;box-shadow:var(--shadow-s)}
+.bt.full{width:100%}
+.seg{display:flex;border:var(--stroke) solid var(--outline);border-radius:13px;overflow:hidden;background:var(--card)}
+.seg span{flex:1;text-align:center;padding:7px 8px;font-size:13.5px;font-weight:700;border-inline-start:2px solid var(--outline)}
+.seg span:first-child{border-inline-start:none}
+.seg span.on{background:var(--accent);color:var(--accent-ink)}
+.tog{width:44px;height:26px;border-radius:999px;border:var(--stroke) solid var(--outline);background:var(--card-2);position:relative;flex:none}
+.tog:after{content:"";position:absolute;top:2px;right:2px;width:17px;height:17px;border-radius:50%;background:var(--ink-dim)}
+.tog.on{background:var(--accent)}
+.tog.on:after{right:auto;left:2px;background:var(--accent-ink)}
+.hr{height:2px;background:var(--line);margin:2px 0}
+.pill{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;border:2px solid var(--outline);background:var(--card-2);white-space:nowrap}
+.pill.ac{background:var(--accent);color:var(--accent-ink)}
+.dyn{font-family:'Noto Music',serif;font-style:italic;font-weight:700;font-size:22px;line-height:1}
+.bdg{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--outline);border-radius:10px;padding:3px 9px;font-weight:700;font-size:13px;background:var(--card)}
+.bdg b{font-family:var(--display);font-weight:400;font-size:15px}
+.meter{height:10px;border-radius:999px;border:2px solid var(--outline);background:var(--card-2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.svgw{display:block;width:100%;direction:ltr}
+.lst .it{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:2px solid var(--line)}
+.lst .it:last-child{border-bottom:none}
+.thumb{width:54px;height:38px;flex:none;border:2px solid var(--outline);border-radius:9px;background:var(--card-2);overflow:hidden}
+.strip{display:flex;gap:2px;direction:ltr}
+.strip i{width:9px;height:9px;border:1.5px solid var(--outline);border-radius:2px;background:var(--card)}
+.strip i.d{background:var(--accent)}
+.strip i.c{background:var(--now)}
+.input{border:var(--stroke) solid var(--outline);border-radius:12px;padding:9px 12px;background:var(--card);font-size:14px;font-weight:500}
+.dots{display:flex;gap:10px;justify-content:center;direction:ltr}
+.dots i{width:16px;height:12px;border-radius:50%;transform:rotate(-20deg);border:2px solid var(--outline);background:var(--card)}
+.dots i.on{background:var(--now)}
+.dots i.done{background:var(--ink)}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:2px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:none}
+.ring{position:relative}
+.pop{position:absolute;background:var(--card);border:var(--stroke) solid var(--outline);border-radius:14px;box-shadow:var(--shadow);padding:6px;display:flex;gap:4px;z-index:2}
+.grid12{display:grid;gap:3px;direction:ltr}
+.grid12 .k{font-family:var(--display);font-size:14px;text-align:center}
+.grid12 .r{font-size:11px;color:var(--ink-dim);font-weight:700;text-align:right;padding-right:4px;white-space:nowrap;direction:rtl}
+.grid12 .c{height:22px;border:2px solid var(--line-strong);border-radius:6px;background:var(--card)}
+.grid12 .c.d{background:var(--accent);border-color:var(--outline)}
+.grid12 .c.p{background:var(--accent);border-color:var(--outline);position:relative}
+.grid12 .c.p:after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--accent-ink)}
+.grid12 .c.cur{background:var(--now);border-color:var(--outline);border-width:2.5px}
+.lock{position:absolute;inset:0;background:#120a20;color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:80px}
+.toni{width:46px;height:56px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:14px;height:14px;border-radius:4px;border:2px solid var(--outline);display:inline-block}
+.cover{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}
+@media (max-width:899px){.cover{grid-template-columns:1fr}}
+.cover h2{font-family:var(--display);font-weight:400;font-size:52px;margin:6px 0 0;line-height:1}
+.cover .lead{font-size:17px;line-height:1.6;color:var(--ink-soft)}
+.flow{display:flex;flex-direction:column;gap:8px}
+.flow .st{display:flex;gap:12px;align-items:center}
+.flow .n{width:30px;height:24px;border-radius:50%;transform:rotate(-20deg);border:var(--stroke) solid var(--outline);background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:13px;flex:none}
+.flow .n b{transform:rotate(20deg);font-weight:400}
+.names td,.names th{padding:8px 10px;border-bottom:2px solid var(--line);text-align:right;font-size:14px;vertical-align:top}
+.names th{font-size:12px;color:var(--ink-dim)}
+.names tr.pick td{background:var(--card-2)}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>הדרן · Encore</h1>
+  <span class="cnt" id="cnt"></span>
+  <span class="sp"></span>
+  <button class="vb" id="theme" aria-label="Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/></svg></button>
+  <button class="vb" id="prev" aria-label="הקודם"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg><span class="t">הקודם</span></button>
+  <button class="vb pr" id="next" aria-label="הבא"><span class="t">הבא</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+</div>
+<div class="deck" id="deck"></div>
+
+<script>
+(function(){
+/* ------------------------------------------------------------ icons */
+const P={
+ back:'<path d="M9 6l6 6-6 6"/>',close:'<path d="M6 6l12 12M18 6 6 18"/>',more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+ play:'<path d="M8 5.5v13l11-6.5z" fill="currentColor"/>',pause:'<path d="M8 5v14M16 5v14"/>',star:'<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8 6.8 19.5l1-5.8-4.2-4.1 5.8-.8z"/>',
+ starf:'<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8 6.8 19.5l1-5.8-4.2-4.1 5.8-.8z" fill="currentColor"/>',
+ share:'<path d="M12 15V3M7 8l5-5 5 5M5 13v6h14v-6"/>',folder:'<path d="M3 6h6l2 2h10v11H3z"/>',search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+ mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',keys:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v9M12 5v9M16 5v9M8 14v5M12 14v5M16 14v5"/>',
+ loop:'<path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/>',plus:'<path d="M12 5v14M5 12h14"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ today:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',path:'<path d="M5 20c0-6 14-4 14-10S12 4 12 4"/><circle cx="12" cy="4" r="1.6"/><circle cx="5" cy="20" r="1.6"/>',
+ practice:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',wave:'<path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 7v10M21 12h0"/>',
+ people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A5 5 0 0 1 21.5 19"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+ prev:'<path d="M6 5v14M19 5L9 12l10 7z" fill="currentColor"/>',next:'<path d="M18 5v14M5 5l10 7-10 7z" fill="currentColor"/>',speed:'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-6"/>',
+ head:'<path d="M3 12c3 0 3-6 6-6s3 12 6 12 3-6 6-6"/>',swap:'<path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',filter:'<path d="M4 5h16l-6 8v6l-4-2v-4z"/>',
+ rec:'<circle cx="12" cy="12" r="7" fill="currentColor"/>',stop:'<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+ send:'<path d="M3 11l18-8-8 18-2-8z"/>',note:'<ellipse cx="9" cy="17" rx="4" ry="3" transform="rotate(-20 9 17)" fill="currentColor"/><path d="M12.6 15.5V4l5 2.5"/>'
+};
+const I=(n,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${P[n]}</svg>`;
+// the Encore glyph: a note head between repeat signs
+const ENC=(s=24)=>`<svg viewBox="0 0 32 24" width="${s*1.33}" height="${s}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 4v16M6.5 4v16"/><circle cx="10" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="10" cy="15" r="1.4" fill="currentColor" stroke="none"/><ellipse cx="16" cy="12" rx="3.6" ry="2.7" transform="rotate(-20 16 12)" fill="currentColor"/><circle cx="22" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="22" cy="15" r="1.4" fill="currentColor" stroke="none"/><path d="M25.5 4v16M29 4v16"/></svg>`;
+const LOGO=`<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M10 8c0-3 4-5 8-4 5 1 7 6 5 11-1.5 3.5-5 5-5 9"/><circle cx="12.5" cy="11" r="1.6" fill="currentColor"/><path d="M14 19c1.5 0 2.5 1 2.5 2.5"/></svg>`;
+const B=s=>`<bdi dir="ltr">${s.replace(/♭/g,'<span class="mu">♭</span>').replace(/♯/g,'<span class="mu">♯</span>').replace(/♮/g,'<span class="mu">♮</span>')}</bdi>`;
+const Q=n=>`<bdi dir="ltr" class="tm"><span class="mu">♩</span>${n}</bdi>`; // tempo mark
+
+/* ------------------------------------------------------------ music data: a ii–V–I line in F */
+// [midi, beat, dur]
+const PH=[[74,0,.5],[77,.5,.5],[81,1,.5],[79,1.5,.5],[77,2,.5],[74,2.5,.5],[70,3,.5],[69,3.5,.5],
+ [67,4,.5],[70,4.5,.5],[74,5,.5],[76,5.5,.5],[73,6,.5],[72,6.5,.5],[70,7,.5],[68,7.5,.5],
+ [69,8,1],[72,9,.5],[76,9.5,.5],[79,10,1],[77,11,1],[76,12,2]];
+// staff spelling: [diatonic step from C4, accidental 0 none / -1 flat / 1 sharp / 2 natural]
+const SF=[[8,0],[10,0],[12,0],[11,0],[10,0],[8,0],[6,0],[5,0],[4,0],[6,0],[8,0],[9,0],[8,-1],[7,0],[6,0],[4,1],[5,0],[7,0],[9,0],[11,0],[10,0],[9,0]];
+const SA=[[10,0],[12,0],[14,0],[13,0],[12,0],[10,0],[8,0],[7,0],[6,0],[8,0],[10,0],[11,0],[10,-1],[9,0],[8,0],[6,2],[7,0],[9,0],[11,0],[13,0],[12,0],[11,0]];
+const CH_F=['Gm7','C7','Fmaj7','Fmaj7'], CH_AB=['B♭m7','E♭7','A♭maj7','A♭maj7'];
+// a 12-bar improvised take that contains the phrase in bars 5–8
+function rnd(seed){let x=seed;return()=>((x=(x*16807)%2147483647)/2147483647);}
+const TAKE=(()=>{const r=rnd(7),out=[];
+  const pool=[65,67,69,70,72,74,76,77,79,81];
+  let b=0;while(b<14){const d=r()<.25?1:.5;if(r()<.12){b+=d;continue;}out.push([pool[Math.floor(r()*pool.length)],b,d]);b+=d;}
+  PH.forEach(n=>out.push([n[0],n[1]+16,n[2]]));
+  b=33;while(b<46){const d=r()<.3?1:.5;if(r()<.15){b+=d;continue;}out.push([pool[Math.floor(r()*pool.length)]+(r()<.3?-12:0)+12*0,b,d]);b+=d;}
+  return out;})();
+const TCH=['Gm7','C7','Fmaj7','Fmaj7','Gm7','C7','Fmaj7','Fmaj7','Am7♭5','D7','Gm7','C7'];
+
+const CT=c=>c.split(/([♭♯])/).map(x=>x==='♭'||x==='♯'?`<tspan font-family="Noto Music">${x}</tspan>`:x).join('');
+/* ------------------------------------------------------------ svg: piano roll */
+function roll(o){
+  const w=o.w||358,h=o.h||150,notes=o.notes||PH,b0=o.from||0,b1=o.to||(o.notes===TAKE?48:16);
+  const lo=o.lo||64,hi=o.hi||84,pad=o.chords?18:4,H=h-pad-4;
+  const X=b=>(b-b0)/(b1-b0)*w, Y=m=>pad+(hi-m)/(hi-lo)*H;
+  let s=`<svg class="svgw" viewBox="0 0 ${w} ${h}" style="height:${h}px" preserveAspectRatio="none">`;
+  s+=`<rect x="0" y="${pad}" width="${w}" height="${H+2}" rx="8" fill="var(--card)" stroke="var(--outline)" stroke-width="2"/>`;
+  for(let m=lo;m<=hi;m++){if([1,3,6,8,10].includes(m%12))s+=`<rect x="1" y="${Y(m+.5)}" width="${w-2}" height="${H/(hi-lo)}" fill="var(--line)"/>`;}
+  for(let b=Math.ceil(b0);b<=b1;b++){const bar=b%4===0;s+=`<line x1="${X(b)}" x2="${X(b)}" y1="${pad}" y2="${pad+H}" stroke="${bar?'var(--line-strong)':'var(--line)'}" stroke-width="${bar?2:1}"/>`;}
+  if(o.cand)o.cand.forEach(([a,z],i)=>{s+=`<rect x="${X(a*4)}" y="${pad+2}" width="${X(z*4)-X(a*4)}" height="${H-2}" fill="${i?'transparent':'var(--sel)'}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="${i?'5 4':'0'}" rx="6"/>`;});
+  if(o.sel){const [a,z]=o.sel;s+=`<rect x="${X(a)}" y="${pad}" width="${X(z)-X(a)}" height="${H+2}" fill="var(--sel)"/>`;}
+  if(o.ticks)o.ticks.forEach(b=>{s+=`<path d="M${X(b)} ${pad+H+1}l-4 5h8z" fill="var(--ink)"/>`;});
+  notes.forEach((n,i)=>{if(n[1]+n[2]<b0||n[1]>b1)return;const mk=o.marks?o.marks[i]:null;
+    let fill='var(--accent)',st='var(--outline)',dash='';
+    if(o.dimOut&&(n[1]<o.dimOut[0]||n[1]>=o.dimOut[1]))fill='var(--pending)';
+    if(o.lh&&n[0]<60)fill='var(--lilac)';
+    if(mk==='wrong')fill='var(--pink)';if(mk==='miss'){fill='transparent';dash='3 2';}if(mk==='pend')fill='var(--pending)';
+    const op=o.vel?(.55+.45*((i*37)%10)/10):1;
+    s+=`<rect x="${X(n[1])+.8}" y="${Y(n[0]+.5)+.5}" width="${Math.max(3,X(n[1]+n[2])-X(n[1])-1.6)}" height="${Math.max(3,H/(hi-lo)-1)}" rx="2.5" fill="${fill}" fill-opacity="${op}" stroke="${st}" stroke-width="1.3" stroke-dasharray="${dash}"/>`;
+    if(mk==='late'||mk==='early'){const xx=mk==='late'?X(n[1]+n[2])+2:X(n[1])-4;s+=`<line x1="${xx}" x2="${xx}" y1="${Y(n[0]+1.2)}" y2="${Y(n[0]-1.2)}" stroke="var(--tangerine)" stroke-width="2.5" stroke-linecap="round"/>`;}
+    if(o.devs&&o.devs[i]){const d=o.devs[i];s+=`<line x1="${X(n[1])}" x2="${X(n[1])+d}" y1="${Y(n[0])+6}" y2="${Y(n[0])+6}" stroke="var(--tangerine)" stroke-width="2"/>`;}
+  });
+  if(o.chords){const per=4;o.chords.forEach((c,i)=>{const b=b0+i*per;if(b>=b1)return;s+=`<text x="${X(b)+4}" y="13" font-family="Secular One" font-size="12.5" fill="var(--ink)">${CT(c)}</text>`;});}
+  if(o.play!=null)s+=`<line x1="${X(o.play)}" x2="${X(o.play)}" y1="${pad-2}" y2="${pad+H+3}" stroke="var(--ink)" stroke-width="2.5"/>`;
+  if(o.handles){const [a,z]=o.sel;[a,z].forEach(b=>{const x=X(b);s+=`<line x1="${x}" x2="${x}" y1="${pad}" y2="${pad+H}" stroke="var(--outline)" stroke-width="3"/><rect x="${x-9}" y="${pad+H/2-17}" width="18" height="34" rx="7" fill="var(--card)" stroke="var(--outline)" stroke-width="2.5"/><path d="M${x-2} ${pad+H/2-7}v14M${x+2} ${pad+H/2-7}v14" stroke="var(--ink)" stroke-width="1.6"/>`;});}
+  if(o.barNums){for(let b=Math.ceil(b0/4);b*4<b1;b++){s+=`<text x="${X(b*4)+3}" y="${pad+H-4}" font-size="9.5" font-weight="700" font-family="Rubik" fill="var(--ink-dim)">${b+1}</text>`;}}
+  return s+'</svg>';
+}
+/* ------------------------------------------------------------ svg: staff */
+function staff(o){
+  const w=o.w||358,h=o.h||132,sp=o.sp||8,sig=o.sig||1,notes=o.notes||PH,sp2=o.spell||SF,from=o.from||0,to=o.to||16,nb=to-from;
+  const top=o.top||34,y0=top+4*sp; // y of E4 bottom line
+  const Ys=st=>y0-(st-2)*sp/2;
+  const ks=sp*3.6+6,x0=ks+sig*sp*1.05+8+(o.timeSig?18:0), xw=w-x0-(o.end?22:10), X=b=>x0+(b-from)/nb*xw+6;
+  let s=`<svg class="svgw" viewBox="0 0 ${w} ${h}" style="height:${h}px">`;
+  for(let i=0;i<5;i++)s+=`<line x1="4" x2="${w-4}" y1="${top+i*sp}" y2="${top+i*sp}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.2"/>`;
+  s+=`<text x="5" y="${top+4*sp+sp*0.9}" font-family="Noto Music" font-size="${sp*5.2}" fill="var(--ink)">𝄞</text>`;
+  const flats=[6,9,5,8,4,7];for(let i=0;i<sig;i++)s+=`<text x="${ks+i*sp*1.05}" y="${Ys(flats[i])+sp*0.55}" font-family="Noto Music" font-size="${sp*2.1}" fill="var(--ink)">♭</text>`;
+  for(let b=from+4;b<to;b+=4)s+=`<line x1="${X(b)-7}" x2="${X(b)-7}" y1="${top}" y2="${top+4*sp}" stroke="var(--ink)" stroke-opacity=".7" stroke-width="1.3"/>`;
+  if(o.end){const xe=w-12;s+=`<line x1="${xe-5}" x2="${xe-5}" y1="${top}" y2="${top+4*sp}" stroke="var(--ink)" stroke-width="1.3"/><rect x="${xe-1}" y="${top}" width="4" height="${4*sp}" fill="var(--ink)"/><text x="${xe-14}" y="${top-6}" font-family="Noto Music" font-size="${sp*2.6}" fill="var(--ink)">𝄐</text>`;}
+  else s+=`<line x1="${w-5}" x2="${w-5}" y1="${top}" y2="${top+4*sp}" stroke="var(--ink)" stroke-width="1.3"/>`;
+  if(o.chords)o.chords.forEach((c,i)=>{if(i*4>=from&&i*4<to)s+=`<text x="${X(i*4)-4}" y="${top-sp*1.9}" font-family="Secular One" font-size="${sp*1.7}" fill="var(--ink)">${CT(c)}</text>`;});
+  if(o.worst!=null){const a=X(o.worst*4)-10,z=X(o.worst*4+4)-10;s+=`<rect x="${a}" y="${top-sp*1.2}" width="${z-a}" height="${sp*6.6}" rx="7" fill="none" stroke="var(--tangerine)" stroke-width="2.5"/>`;}
+  if(o.now!=null){const xn=X(o.now)-2;s+=`<rect x="${xn-3}" y="${top-sp*1.4}" width="6" height="${sp*7}" rx="3" fill="var(--now)" stroke="var(--outline)" stroke-width="1.6"/>`;}
+  // beams for eighth pairs
+  const heads=[];
+  notes.forEach((n,i)=>{if(n[1]>=to||n[1]<from)return;const [st,acc]=sp2[i];const x=X(n[1]),y=Ys(st);const up=st<6;heads.push({i,x,y,up,d:n[2],b:n[1],st,acc});});
+  const beamed=new Set();for(let k=0;k<heads.length-1;k++){const a=heads[k],z=heads[k+1];if(a.d===.5&&z.d===.5&&Math.floor(a.b)===Math.floor(z.b)&&a.b%1===0){beamed.add(k);beamed.add(k+1);k++;}}
+  heads.forEach((hd,hi)=>{const mk=o.marks?o.marks[hd.i]:null;
+    let col='var(--ink)',fill=hd.d>=2?'none':'var(--ink)',dash='';
+    if(mk==='pend'){col='var(--pending)';fill=hd.d>=2?'none':'var(--pending)';}
+    if(mk==='wrong'){col='var(--pink)';fill='var(--pink)';}
+    if(mk==='miss'){fill='none';dash='2 2';}
+    // ledger lines
+    for(let l=12;l<=hd.st;l+=2)s+=`<line x1="${hd.x-sp*1.1}" x2="${hd.x+sp*1.1}" y1="${Ys(l)}" y2="${Ys(l)}" stroke="var(--ink)" stroke-opacity=".6" stroke-width="1.2"/>`;
+    if(hd.acc){const g=hd.acc===-1?'♭':hd.acc===1?'♯':'♮';s+=`<text x="${hd.x-sp*2.2}" y="${hd.y+sp*.55}" font-family="Noto Music" font-size="${sp*2}" fill="${col}">${g}</text>`;}
+    s+=`<ellipse cx="${hd.x}" cy="${hd.y}" rx="${sp*.68}" ry="${sp*.48}" transform="rotate(-20 ${hd.x} ${hd.y})" fill="${fill}" stroke="${col}" stroke-width="1.5" stroke-dasharray="${dash}"/>`;
+    const sx=hd.up?hd.x+sp*.6:hd.x-sp*.6, sy2=hd.up?hd.y-sp*3.3:hd.y+sp*3.3;
+    hd.sx=sx;hd.sy2=sy2;hd.col=col;
+    if(hd.d<4&&!beamed.has(hi))s+=`<line x1="${sx}" x2="${sx}" y1="${hd.y}" y2="${sy2}" stroke="${col}" stroke-width="1.4"/>`;
+    if(hd.d===.5&&!beamed.has(hi))s+=`<path d="M${sx} ${sy2}q${sp*1.2} ${hd.up?sp*1.2:-sp*1.2} ${sp*.6} ${hd.up?sp*2.4:-sp*2.4}" fill="none" stroke="${col}" stroke-width="1.4"/>`;
+    if(mk==='late'||mk==='early'){const xx=mk==='late'?hd.x+sp*1.5:hd.x-sp*1.6;s+=`<line x1="${xx}" x2="${xx}" y1="${hd.y-sp}" y2="${hd.y+sp}" stroke="var(--tangerine)" stroke-width="2.6" stroke-linecap="round"/>`;}
+    if(mk==='wrong'&&o.wrongLabel)s+=`<text x="${hd.x+sp*.9}" y="${hd.y-sp*1.1}" font-family="Rubik" font-weight="800" font-size="${sp*1.25}" fill="var(--pink)">${o.wrongLabel}</text>`;
+  });
+  // beam pairs (same beat, both eighths)
+  for(let k=0;k<heads.length-1;k++){const a=heads[k],z=heads[k+1];if(a.d===.5&&z.d===.5&&Math.floor(a.b)===Math.floor(z.b)&&a.b%1===0){
+      const up=(a.st+z.st)/2<6;const ya=up?Math.min(a.y,z.y)-sp*3.3:Math.max(a.y,z.y)+sp*3.3;const xa=up?a.x+sp*.6:a.x-sp*.6,xz=up?z.x+sp*.6:z.x-sp*.6;
+      s+=`<line x1="${xa}" x2="${xa}" y1="${a.y}" y2="${ya}" stroke="${a.col}" stroke-width="1.4"/><line x1="${xz}" x2="${xz}" y1="${z.y}" y2="${ya}" stroke="${z.col}" stroke-width="1.4"/><line x1="${xa}" x2="${xz}" y1="${ya}" y2="${ya}" stroke="var(--ink)" stroke-width="${sp*.45}"/>`;k++;}}
+  if(o.rest&&to>14){s+=`<rect x="${X(14)}" y="${top+sp*1.55}" width="${sp*1.2}" height="${sp*.5}" fill="var(--ink)"/>`;}
+  return s+'</svg>';
+}
+/* ------------------------------------------------------------ waveform */
+function wave(o){const w=o.w||358,h=o.h||56,n=o.n||90,r=rnd(o.seed||3);let s=`<svg class="svgw" viewBox="0 0 ${w} ${h}" style="height:${h}px" preserveAspectRatio="none">`;
+  const bw=w/n;for(let i=0;i<n;i++){const env=Math.sin(Math.PI*((i%30)+2)/34)*.75+.25;const v=Math.max(.08,env*(.45+.55*r()));const bh=v*(h-6);const inSel=o.sel&&i>=o.sel[0]*n&&i<o.sel[1]*n;const past=o.play!=null&&i<o.play*n;
+    s+=`<rect x="${i*bw+1}" y="${(h-bh)/2}" width="${Math.max(1.5,bw-2)}" height="${bh}" rx="1.5" fill="${inSel?'var(--accent)':past?'var(--ink-soft)':'var(--pending)'}"/>`;}
+  if(o.sel){[o.sel[0],o.sel[1]].forEach((p,j)=>{const x=p*w;s+=`<line x1="${x}" x2="${x}" y1="0" y2="${h}" stroke="var(--outline)" stroke-width="2.5"/><rect x="${x-11}" y="${h/2-11}" width="22" height="22" rx="7" fill="var(--card)" stroke="var(--outline)" stroke-width="2.5"/><text x="${x}" y="${h/2+5}" text-anchor="middle" font-family="Secular One" font-size="13" fill="var(--ink)">${j?'B':'A'}</text>`;});}
+  if(o.play!=null)s+=`<line x1="${o.play*w}" x2="${o.play*w}" y1="0" y2="${h}" stroke="var(--ink)" stroke-width="2.5"/>`;
+  return s+'</svg>';}
+/* ------------------------------------------------------------ 12-key map */
+const KEYS=['F','C','B♭','G','E♭','D','A♭','A','D♭','E','G♭','B'];
+const RUNGS=['בלי קצב','120','140','160','180','200'];
+function keyMap(o={}){const state=o.state||((k,r)=>k<6?'d':(k===6&&r<=3)?'d':(k===6&&r===4)?'cur':(k===7&&r===0)?'d':'');
+  const cw=o.cw||'1fr';let s=`<div class="grid12" style="grid-template-columns:auto repeat(12,${cw})"><span></span>`;
+  KEYS.forEach(k=>s+=`<span class="k">${B(k)}</span>`);
+  for(let r=RUNGS.length-1;r>=0;r--){s+=`<span class="r">${r===0?RUNGS[0]:Q(RUNGS[r])}</span>`;for(let k=0;k<12;k++){let c=state(k,r);if(r===5&&c==='d')c='p';s+=`<span class="c ${c}"></span>`;}}
+  return s+'</div>';}
+function strip(n,cur){let s='<span class="strip">';for(let i=0;i<12;i++)s+=`<i class="${i<n?'d':i===cur?'c':''}"></i>`;return s+'</span>';}
+/* ------------------------------------------------------------ mascot Toni (eighth note, calm) */
+const TONI=`<svg class="toni" viewBox="0 0 46 56"><path d="M27 6v30" stroke="var(--outline)" stroke-width="3"/><path d="M27 6c8 2 13 7 11 15" fill="none" stroke="var(--outline)" stroke-width="3" stroke-linecap="round"/><ellipse cx="18" cy="40" rx="12" ry="9" transform="rotate(-20 18 40)" fill="var(--accent)" stroke="var(--outline)" stroke-width="2.5"/><circle cx="14" cy="39" r="1.6" fill="var(--accent-ink)"/><circle cx="21" cy="37" r="1.6" fill="var(--accent-ink)"/><path d="M14 44c3 2 6 1 8-1" stroke="var(--accent-ink)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`;
+
+/* ------------------------------------------------------------ shells */
+function phone(body,{title,sub,left,right}={}){
+  return `<div class="phone"><div class="scr"><div class="sb"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><svg width="18" height="12" viewBox="0 0 18 12"><path d="M1 11h2V8H1zM5 11h2V6H5zM9 11h2V3H9zM13 11h2V1h-2z" fill="currentColor"/></svg><i></i></span></div>
+  ${title!==undefined?`<div class="hd">${right||`<span class="ib">${I('back')}</span>`}<h3>${title}${sub?`<span class="sub">${sub}</span>`:''}</h3>${left||''}</div>`:''}
+  <div class="body">${body}</div><div class="home"></div></div></div>`;}
+const NAV=[['today','היום'],['path','מסלול'],['practice','תרגול'],['enc','הדרן',3],['wave','ההקלטות'],['people','קהילה'],['user','פרופיל']];
+function wide(main,active,url){
+  return `<div class="wide"><div class="wbar"><b></b><b></b><b></b><span>7sense.netlify.app/#/${url||'encore'}</span></div><div class="wbody">
+  <nav class="side"><div class="logo">${LOGO}<span>החוש ה־7</span></div>
+  ${NAV.map(([ic,l,n])=>`<div class="nav ${l===active?'on':''}">${ic==='enc'?ENC(18):I(ic)}<span>${l}</span>${n?`<span class="n">${n}</span>`:''}</div>`).join('')}
+  </nav><div class="main">${main}</div></div></div>`;}
+const H2=(t,sub,btns='')=>`<div class="row"><div class="grow"><div class="t1" style="font-size:28px">${t}</div>${sub?`<div class="t3" style="font-size:14px;margin-top:2px">${sub}</div>`:''}</div>${btns}</div>`;
+
+/* ------------------------------------------------------------ reusable blocks */
+const keepRow=(wide)=>`<div class="row" style="gap:8px">
+  <span class="bt ${wide?'':'sm'}">${I('loop')}שוב</span><span class="bt ${wide?'':'sm'}">${I('play')}להקשיב</span><span class="grow"></span>
+  <span class="bt pr ${wide?'':'sm'}">${ENC(16)}לשמור משפט</span></div>`;
+const candChips=`<div class="row wrap"><span class="ch on">תיבות ${B('5–8')} · מומלץ</span><span class="ch">תיבות ${B('1–2')}</span><span class="ch">תיבות ${B('10–12')}</span></div>`;
+const improvStats=`<div class="row" style="justify-content:space-between;text-align:center">
+  <div><div class="big" style="font-size:30px">4</div><div class="tiny">משפטים</div></div>
+  <div><div class="big" style="font-size:30px">31%</div><div class="tiny">שקט</div></div>
+  <div><div class="big" style="font-size:30px">2.1</div><div class="tiny">צלילים לפעמה</div></div>
+  <div><div class="big" style="font-size:30px">2</div><div class="tiny">הרעיון חזר</div></div></div>`;
+const shelfItems=[['אלתור על ii–V–I ב־F','היום 08:40 · 2:14','MIDI',3],['הקלטה חופשית','אתמול 21:05 · 0:38','מיק׳',11],['כללים: צלילי מטרה','14.11 · 3:02','MIDI',5]];
+const shelf=(n=3)=>`<div class="lst">${shelfItems.slice(0,n).map(([t,d,src,sd])=>`<div class="it"><span class="thumb">${roll({notes:TAKE,w:54,h:38,from:sd*2,to:sd*2+12,lo:60,hi:86})}</span><div class="grow"><div class="t2">${t.replace('F',B('F')).replace('ii–V–I',B('ii–V–I'))}</div><div class="t3">${d} · ${B(src)}</div></div><span class="ib sm">${I('back','style="transform:scaleX(-1)"')}</span></div>`).join('')}</div>`;
+const dueCard=(name,key,bpm,dyn,n)=>`<div class="cd flat soft row" style="gap:10px;padding:10px 12px"><span class="dyn">${dyn}</span><div class="grow"><div class="t2">${name}</div><div class="t3">הבא: ${B(key)} ב־${Q(bpm)}</div></div>${strip(n,n)}</div>`;
+const ctxChips=(big)=>`<div class="row wrap" style="gap:6px">
+  <span class="ch">סולם ${B('F')} מז׳ור <span class="conf">●●●</span></span>
+  <span class="ch">${B('4/4')} <span class="conf">●●○</span></span>
+  <span class="ch">סווינג 62% <span class="conf">●●○</span></span>
+  <span class="ch">${B('ii–V')} מז׳ורי</span>${big?`<span class="ch">${Q('162')} <span class="conf">●●●</span></span>`:''}</div>`;
+const chordRow=`<div class="row" style="gap:6px;direction:ltr;justify-content:flex-end">${CH_F.map(c=>`<span class="ch" style="font-family:var(--display);font-weight:400;font-size:15px">${B(c)}</span>`).join('<span class="tiny">|</span>')}</div>`;
+const handsSeg=`<div class="seg"><span>יד ימין</span><span>יד שמאל</span><span class="on">שתי ידיים</span></div>`;
+function keyRing(sz=210,sel){const ord=['C','G','D','A','E','B','G♭','D♭','A♭','E♭','B♭','F'];const s0=sel||ord;let s=`<div class="ring" style="width:${sz}px;height:${sz}px;margin:0 auto">`;
+  ord.forEach((k,i)=>{const a=(i/12)*Math.PI*2-Math.PI/2,r=sz/2-22;const x=sz/2+Math.cos(a)*r-21,y=sz/2+Math.sin(a)*r-16;const on=s0.includes(k);
+   s+=`<span style="position:absolute;left:${x}px;top:${y}px;width:42px;height:32px;border-radius:50%;transform:rotate(-20deg);border:2.5px solid var(--outline);background:${on?'var(--accent)':'var(--card)'};color:${on?'var(--accent-ink)':'var(--ink)'};display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-s)"><span style="transform:rotate(20deg);font-family:var(--display);font-size:15px">${B(k)}</span></span>`;});
+  s+=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center"><div class="big" style="font-size:34px">12</div><div class="tiny">סולמות</div></div></div>`;return s;}
+const diffBadge=`<span class="bdg">דרגה <b>7</b> <span class="tiny">1330</span></span>`;
+const diffWhy=`<span class="t3">עטיפות · פיבוט על צליל אקורד · ${B('6.7')} צלילים לשנייה ב־${Q('200')}</span>`;
+const xpPrev=`<div class="row" style="gap:6px;justify-content:space-between"><span class="t3">ניסיון נקי:</span><span class="ch gh">${Q('120')} · 4</span><span class="ch gh">${Q('160')} · 6</span><span class="ch on">${Q('200')} · 8 XP</span></div>`;
+const ladderStrip=(cur=4)=>`<div class="row" style="gap:4px;direction:ltr">${['rub.','120','140','160','168','180','200'].map((r,i)=>`<span style="flex:1;text-align:center;padding:5px 0;border-radius:9px;border:2px solid ${i===cur?'var(--outline)':i<cur?'var(--outline)':'var(--line-strong)'};background:${i<cur?'var(--accent)':i===cur?'var(--now)':'var(--card)'};color:${i<cur?'var(--accent-ink)':'var(--ink-c)'};font-size:11.5px;font-weight:800">${i===0?'<span style="font-family:var(--font)">~</span>':Q(r)}</span>`).join('')}</div>`;
+const RUNMARKS=PH.map((n,i)=>i<9?(i===3?'late':'ok'):'pend');
+const TAKEMARKS=PH.map((n,i)=>i===12?'wrong':(i===9||i===10||i===11)?'early':'ok');
+const boardRows=[['1','BluesOwl','12','208','98%','MIDI'],['2','CodaFox42','12','200','97%','MIDI','יוצר/ת'],['3','את/ה','6','200','95%','MIDI','',1],['4','Noa.K','4','184','93%','מיק׳'],['5','נגן/ית','3','176','96%','MIDI']];
+const board=(n=5)=>`<div class="lst">${boardRows.slice(0,n).map(r=>`<div class="it" style="${r[7]?'background:var(--card-2);margin:0 -8px;padding:9px 8px;border-radius:12px':''}"><span class="big" style="font-size:20px;width:22px;text-align:center">${r[0]}</span><span class="ib sm" style="border-radius:50%;box-shadow:none">${I('user')}</span><div class="grow"><div class="t2">${B(r[1])} ${r[6]?`<span class="pill">${r[6]}</span>`:''}</div><div class="t3">${r[2]} סולמות · ${Q(r[3])} · ${B(r[4])}</div></div><span class="pill">${B(r[5])}</span></div>`).join('')}</div>`;
+
+/* ------------------------------------------------------------ slides */
+const S=[];
+// 0 cover
+S.push({cover:true,title:'הדרן — המשפטים שלי',html:`<div class="cover">
+ <div><div class="row" style="gap:12px">${ENC(44)}<span class="pill ac">Encore</span></div>
+ <h2>הדרן</h2><div class="t1" style="font-size:22px;color:var(--ink-soft);margin-top:4px">המשפטים שלי · My phrases</div>
+ <p class="lead">ניגנת משהו יפה? שומרים אותו בנגיעה, בוחרים עד 8 תיבות, קובעים טמפו יעד — והאפליקציה מובילה אותו בלי קצב, דרך סולם טמפו, בכל 12 הסולמות, עד שהוא שלך. כל ניסיון נשמר בהקלטות שלך, אפשר לשמוע אותו בלולאה בדרך לעבודה, לשלוח למורה, או להפוך אותו לאתגר לחברים.</p>
+ <table class="names" style="border-collapse:collapse;width:100%"><tr><th>שם</th><th>עברית</th><th>למה / למה לא</th></tr>
+ <tr class="pick"><td><b>Encore</b> · נבחר</td><td><b>הדרן</b></td><td>“עוד פעם” — בדיוק מה שהבעלים תיאר; “הדרן עלך” = נחזור אליך (חזרה מרווחת)</td></tr>
+ <tr><td>Phrasebook</td><td>ספר המשפטים</td><td>ברור, אבל נשמע כמו מחברת סטטית</td></tr>
+ <tr><td>Lick Lab</td><td>מעבדת ליקים</td><td>קליט באנגלית, אבל משלב של משחק ילדים; “ליק” זר לזמרים</td></tr></table></div>
+ <div class="cd"><div class="t2" style="margin-bottom:10px">הזרימה</div><div class="flow">
+ ${[['1','לתפוס','אחרי כל אלתור, תרגיל או הקלטה חופשית — “לשמור משפט”'],['2','לחתוך','עד 8 תיבות על נוטות ותווים, ידיות שנצמדות לתיבות'],['3','להבין','סולם, אקורדים, משקל, סווינג — עם סימן ביטחון ותיקון בנגיעה'],['4','לתכנן','טמפו יעד, 12 סולמות לפי סדר קל־קודם, ידיים'],['5','לתרגל','בלי קצב ← רבעים ← סולם טמפו, ספירה, קליק וסמן “עכשיו”'],['6','שלך','12 סולמות ביעד: קו סיום עם פרמטה, הניסיון הראשון מול היום'],['7','לשמור ולשתף','ההקלטות שלי, המורה, אתגר הדרן']].map(([n,t,d])=>`<div class="st"><span class="n"><b>${n}</b></span><div><div class="t2">${t}</div><div class="t3">${d}</div></div></div>`).join('')}
+ </div><div class="hr" style="margin:12px 0"></div><div class="t3">כל מסך מוצג בגודל טלפון (390×844) ובגודל מחשב. ניווט: כפתורי הבא/הקודם, חיצים במקלדת (שמאלה = הבא), רווח.</div></div></div>`});
+
+// 1 improv review
+S.push({title:'אחרי אלתור: “לשמור משפט”',note:'סיכום הניסיון בסטודיו לאלתור. האפליקציה מציעה עד שלושה משפטים ששווה לשמור (מסומנים על הנוטות); כפתור קטן אחד פותח את החיתוך. הניסיון כבר שמור בהקלטות לפני הלחיצה.',
+ p:()=>phone(`<div class="cd col">${improvStats}</div>
+   <div class="cd col" style="gap:6px"><div class="row"><span class="t2 grow">משפטים ששווה לשמור</span><span class="tiny">${B('♩160')} · ${B('12')} תיבות</span></div>
+   ${roll({notes:TAKE,w:330,h:150,cand:[[4,8],[0,2],[9,12]],lo:58,hi:86,barNums:1})}
+   ${candChips}<div class="t3">החזיקו צ׳יפ כדי לשמוע שתי שניות</div></div>
+   <div class="cd flat soft row" style="gap:8px"><span class="dyn" style="font-size:18px">${ENC(18)}</span><span class="t3 grow">הרעיון הפותח חזר בתיבה 9 — מפותח</span></div>
+   <div style="flex:1"></div>${keepRow()}`,{title:'סיכום הניסיון',sub:'סטודיו לאלתור · משפט'}),
+ w:()=>wide(`${H2('סיכום הניסיון','סטודיו לאלתור · משפט · '+B('ii–V–I')+' ב־'+B('F')+' · '+Q('160'),`<span class="ib">${I('more')}</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch"><div class="cd col grow" style="gap:8px">${roll({notes:TAKE,w:700,h:280,cand:[[4,8],[0,2],[9,12]],chords:TCH,lo:58,hi:86,barNums:1,vel:1})}${candChips}</div>
+   <div class="col" style="width:300px;gap:12px"><div class="cd col">${improvStats}</div><div class="cd col"><div class="t2">תיבות ${B('5–8')}</div><div class="t3">משפט שלם: מתחיל אחרי שקט, נוחת על ${B('E')} (השביעית של ${B('Fmaj7')}), שתי עטיפות.</div>${roll({w:260,h:90,chords:CH_F})}</div></div></div>
+   <div style="flex:1"></div>${keepRow(1)}`,'תרגול','improv')});
+
+// 2 Encore home + takes shelf
+S.push({title:'בית הדרן ומדף הניסיונות האחרונים',note:'המדף “מהנגינה האחרונה שלך” מציג את עשרת הניסיונות החופשיים האחרונים (אלתור, הקלטה חופשית, אלתור מודרך). מעל: מה לחזור היום. הכפתור + פותח מצב הקלטה.',
+ p:()=>phone(`<div class="col" style="gap:8px"><div class="row"><span class="t2 grow">לחזרה היום</span><span class="pill ac">2</span></div>
+   ${dueCard('ii–V ב־'+B('F'),'A♭',180,'mf',6)}${dueCard('ירידה כרומטית על '+B('C7'),'E♭',150,'mp',3)}</div>
+   <div class="cd col" style="gap:2px"><div class="row"><span class="t2 grow">מהנגינה האחרונה שלך</span><span class="tiny">לכל ההקלטות</span></div>${shelf(3)}</div>
+   <div class="cd flat soft col" style="gap:6px"><div class="row"><span class="t2 grow">המשפטים שלי</span><span class="t3">7 משפטים · 2 תבניות</span></div><div class="row" style="gap:6px"><span class="pill">שלך · 2</span><span class="pill">בלמידה · 4</span><span class="pill">טיוטה · 1</span></div></div>
+   <div style="flex:1"></div><span class="bt pr full">${I('rec')}להקליט משהו חדש</span>`,{title:'הדרן',sub:'המשפטים שלי',right:`<span class="ib">${ENC(18)}</span>`,left:`<span class="ib">${I('search')}</span>`}),
+ w:()=>wide(`${H2('הדרן','המשפטים שלי',`<span class="bt sm">${I('search')}חיפוש</span><span class="bt pr sm">${I('rec')}להקליט</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch"><div class="col grow" style="gap:12px"><div class="cd col"><div class="row"><span class="t2 grow">לחזרה היום</span><span class="pill ac">2</span></div>${dueCard('ii–V ב־'+B('F'),'A♭',180,'mf',6)}${dueCard('ירידה כרומטית על '+B('C7'),'E♭',150,'mp',3)}</div>
+   <div class="cd col"><div class="t2">המשפט שבתהליך</div>${keyMap({cw:'34px'})}</div></div>
+   <div class="cd col" style="width:420px;gap:2px"><div class="row"><span class="t2 grow">מהנגינה האחרונה שלך</span><span class="tiny">לכל ההקלטות</span></div>${shelf(3)}<div class="hr"></div><div class="t3" style="padding-top:6px">ניסיונות חופשיים נשמרים אוטומטית. בחרו אחד כדי לחתוך ממנו משפט.</div></div></div>`,'הדרן')});
+
+// 3 record listening
+S.push({title:'מצב הקלטה — מקשיב',note:'אין ספירה מחייבת: ההקלטה מתחילה בצליל הראשון ונעצרת אחרי 2.5 שניות של שקט. הסולם והטמפו מופיעים עמומים עד שהם בטוחים. מטרונום אופציונלי.',
+ p:()=>phone(`<div class="cd flat soft row" style="justify-content:space-between"><span class="row" style="gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--pink);border:2px solid var(--outline)"></span><b>מקליט</b></span><span class="big" style="font-size:26px">${B('0:07')}</span></div>
+   <div class="cd col" style="gap:6px">${roll({notes:TAKE,w:330,h:230,from:0,to:14,lo:58,hi:86,play:13,vel:1})}
+   <div class="row" style="gap:6px;opacity:.7"><span class="ch q">${B('F')} מז׳ור? <span class="conf">●●○</span></span><span class="ch q">${Q('≈160')} <span class="conf">●○○</span></span><span class="ch q">${B('4/4')}</span></div></div>
+   <div class="row" style="gap:10px"><span class="t3 grow">נעצר אחרי 2.5 שניות של שקט</span><span class="row" style="gap:6px"><span class="t3">מטרונום</span><span class="tog"></span></span></div>
+   <div class="meter"><i style="width:62%"></i></div>
+   <div style="flex:1"></div><span class="bt mg full">${I('stop')}לעצור</span>`,{title:'הקלטה חופשית',sub:'פסנתר · '+B('MIDI')}),
+ w:()=>wide(`${H2('הקלטה חופשית','פסנתר · '+B('MIDI')+' · נגנו כשתרצו — ההקלטה מתחילה בצליל הראשון')}
+   <div class="cd col" style="gap:10px;flex:1"><div class="row"><span class="row" style="gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:var(--pink);border:2px solid var(--outline)"></span><b>מקליט</b></span><span class="grow"></span><span class="big" style="font-size:30px">${B('0:07')}</span></div>
+   ${roll({notes:TAKE,w:960,h:380,from:0,to:14,lo:56,hi:88,play:13,vel:1})}
+   <div class="row" style="gap:8px;opacity:.75"><span class="ch q">${B('F')} מז׳ור? <span class="conf">●●○</span></span><span class="ch q">${Q('≈160')} <span class="conf">●○○</span></span><span class="ch q">${B('4/4')}</span><span class="grow"></span><span class="t3">נעצר אחרי 2.5 שניות של שקט</span><span class="tog"></span><span class="t3">מטרונום</span></div></div>
+   <div class="row"><span class="grow"></span><span class="bt mg" style="width:260px">${I('stop')}לעצור</span></div>`,'הדרן','encore/record')});
+
+// 4 caught
+S.push({title:'נתפס — מה האפליקציה הבינה',note:'כרטיס סיכום: התחלה וסוף, תיבות, סולם, טמפו, משקל ותחושה, כל אחד עם סימן ביטחון. ערך לא בטוח מוצג כשאלה עם שתי אפשרויות.',
+ p:()=>phone(`<div class="cd col" style="gap:4px">${roll({notes:TAKE,w:330,h:110,from:14,to:40,lo:58,hi:86,dimOut:[16,32]})}<div class="tiny" style="text-align:center">${B('0:01.2')} — ${B('0:13.6')} · שקט בסוף נחתך</div></div>
+   <div class="cd col" style="gap:0">
+   <div class="kv"><span>תיבות</span><b>6</b></div>
+   <div class="kv"><span>סולם</span><span class="row" style="gap:6px"><b>${B('F')} מז׳ור</b><span class="conf">●●○</span></span></div>
+   <div class="kv"><span class="t3">או אולי</span><span class="row" style="gap:6px"><span class="ch on">${B('F')} מז׳ור</span><span class="ch">${B('D')} מינור</span></span></div>
+   <div class="kv"><span>טמפו</span><span class="row" style="gap:6px"><b>${Q('162')}</b><span class="conf">●●●</span></span></div>
+   <div class="kv"><span>משקל</span><span class="row" style="gap:6px"><b>${B('4/4')}</b><span class="conf">●●○</span></span></div>
+   <div class="kv"><span>תחושה</span><span class="row" style="gap:6px"><b>סווינג 62%</b><span class="conf">●●○</span></span></div></div>
+   <div style="flex:1"></div><span class="bt pr full">לבחור תיבות</span><span class="bt gh full">להקליט שוב</span>`,{title:'נתפס משפט'}),
+ w:()=>wide(`${H2('נתפס משפט','הקלטה חופשית · היום 09:12')}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="cd col grow">${roll({notes:TAKE,w:640,h:330,from:12,to:42,lo:56,hi:88,dimOut:[16,32],barNums:1})}<div class="t3">${B('0:01.2')} — ${B('0:13.6')} · שקט בסוף נחתך</div></div>
+   <div class="cd col" style="width:340px;gap:0"><div class="kv"><span>תיבות</span><b>6</b></div><div class="kv"><span>סולם</span><span class="row" style="gap:6px"><b>${B('F')} מז׳ור</b><span class="conf">●●○</span></span></div><div class="kv"><span class="t3">או אולי</span><span class="row" style="gap:6px"><span class="ch on">${B('F')} מז׳ור</span><span class="ch">${B('D')} מינור</span></span></div><div class="kv"><span>טמפו</span><span class="row" style="gap:6px"><b>${Q('162')}</b><span class="conf">●●●</span></span></div><div class="kv"><span>משקל</span><span class="row" style="gap:6px"><b>${B('4/4')}</b><span class="conf">●●○</span></span></div><div class="kv"><span>תחושה</span><span class="row" style="gap:6px"><b>סווינג 62%</b><span class="conf">●●○</span></span></div><div style="flex:1"></div><span class="bt pr full" style="margin-top:12px">לבחור תיבות</span></div></div>`,'הדרן','encore/record')});
+
+// 5 trim
+S.push({title:'בחירת תיבות — נוטות ותווים',note:'הפס הסגול הוא הבחירה; שתי ידיות נצמדות לתיבות, החזקה של רגע עוברת לפעמות. סימני הגבול שמתחת הם גבולות שהאפליקציה מציעה. עד 8 תיבות. התווים מתעדכנים יחד עם הנוטות.',
+ p:()=>phone(`<div class="row"><div class="seg grow"><span class="on">נוטות</span><span>תווים</span></div><span class="pill ac" style="margin-inline-start:8px">4 תיבות מתוך 8</span></div>
+   <div class="cd col" style="gap:4px;padding:10px">${roll({notes:TAKE,w:334,h:220,from:10,to:38,lo:58,hi:86,sel:[16,32],handles:1,ticks:[14,16,32,34],chords:['Fmaj7','Gm7','C7','Fmaj7','Fmaj7','Gm7','C7'],barNums:1})}
+   <div class="tiny" style="text-align:center">גררו את הידיות · נצמד לתיבות · החזקה = פעמה</div></div>
+   <div class="cd col" style="padding:6px 8px">${staff({w:334,h:104,sp:6.5,top:30,chords:CH_F})}</div>
+   <div class="row" style="gap:6px"><span class="ib on">${I('play')}</span><span class="ch">50%</span><span class="ch on">75%</span><span class="ch">100%</span><span class="grow"></span><span class="ib sm">${I('loop')}</span></div>
+   <div style="flex:1"></div><span class="bt pr full">המשך — ההקשר</span>`,{title:'בחירת תיבות',sub:'ת׳ '+B('5–8')}),
+ w:()=>wide(`${H2('בחירת תיבות','הקלטה חופשית · ת׳ '+B('5–8')+' · 4 תיבות מתוך 8',`<span class="ch">50%</span><span class="ch on">75%</span><span class="ch">100%</span><span class="ib on">${I('play')}</span>`)}
+   <div class="cd col" style="gap:6px">${roll({notes:TAKE,w:980,h:300,from:8,to:40,lo:56,hi:88,sel:[16,32],handles:1,ticks:[14,16,32,34],chords:['Fmaj7','Fmaj7','Gm7','C7','Fmaj7','Fmaj7','Gm7','C7'],barNums:1,vel:1})}<div class="tiny">חצים: הזזת ידית בתיבה · Shift: בפעמה · רווח: ניגון</div></div>
+   <div class="cd">${staff({w:980,h:130,sp:8,top:38,chords:CH_F})}</div>
+   <div class="row"><span class="grow"></span><span class="bt pr">המשך — ההקשר</span></div>`,'הדרן','encore/trim')});
+
+// 6 context
+S.push({title:'ההקשר: סולם, אקורדים ותיקון תווים',note:'כל ערך הוא צ׳יפ שנפתח לבחירה. נגיעה בתו פותחת סרגל קטן: חצי טון למעלה/למטה, מחיקה, ו“תו שגוי” שמצמיד לצליל האקורד הקרוב. מחוון הקוונטיזציה מראה מה זז.',
+ p:()=>phone(`${chordRow}${ctxChips()}
+   <div class="cd col" style="gap:4px;position:relative">${roll({w:330,h:160,marks:PH.map((n,i)=>i===12?'wrong':null)})}
+   <div class="pop" style="top:44px;left:150px"><span class="ib sm">▲</span><span class="ib sm">▼</span><span class="ch" style="font-weight:800">${B('D♭5')}</span><span class="ib sm">${I('trash')}</span></div>
+   <div class="row" style="gap:6px"><span class="ch">תו שגוי ← צליל אקורד</span><span class="ch gh">2 תווי רפאים — להסיר?</span></div></div>
+   <div class="cd col" style="gap:6px"><div class="row"><span class="t2 grow">קוונטיזציה</span><span class="tiny">מדויק ← → טבעי</span></div><div class="seg"><span>רשת</span><span class="on">סווינג</span><span>כמו שניגנתי</span></div></div>
+   <div class="input">ii–V ב־${B('F')} · מהאלתור של 16.11</div>
+   <div style="flex:1"></div><span class="bt pr full">לשמור ולתכנן</span>`,{title:'ההקשר'}),
+ w:()=>wide(`${H2('ההקשר','סולם, אקורדים, משקל ותחושה — נגיעה לתיקון')}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="cd col" style="position:relative">${chordRow}${roll({w:640,h:260,marks:PH.map((n,i)=>i===12?'wrong':null),chords:CH_F})}<div class="pop" style="top:120px;left:300px"><span class="ib sm">▲</span><span class="ib sm">▼</span><span class="ch" style="font-weight:800">${B('D♭5')}</span><span class="ib sm">${I('trash')}</span><span class="ch">תו שגוי ← צליל אקורד</span></div></div>
+   <div class="cd">${staff({w:640,h:120,sp:7.5,top:36,chords:CH_F})}</div></div>
+   <div class="col" style="width:330px;gap:12px"><div class="cd col">${ctxChips(1)}<div class="t3">אפשרות שנייה: ${B('D')} מינור (18%)</div></div><div class="cd col"><div class="t2">קוונטיזציה</div><div class="seg"><span>רשת</span><span class="on">סווינג</span><span>כמו שניגנתי</span></div><div class="t3">שומר את הסווינג שזוהה (62%).</div></div><div class="cd col"><div class="t2">ידיים</div>${handsSeg}<div class="t3">קו פיצול ב־${B('C4')}</div></div><div class="input">ii–V ב־${B('F')} · מהאלתור של 16.11</div><span class="bt pr full">לשמור ולתכנן</span></div></div>`,'הדרן','encore/context')});
+
+// 7 plan
+S.push({title:'תוכנית אימון: טמפו יעד, סולמות, ידיים',note:'האפליקציה מציעה הכול: יעד = 125% ממה שניגנת, כל 12 הסולמות בסדר “קל קודם” לפי המשפט הזה, יד אחת קודם. מתחילים תמיד בלי קצב ואז סולם טמפו. תג הקושי ותצוגת ה־XP מתעדכנים.',
+ p:()=>phone(`<div class="cd row" style="gap:12px;justify-content:space-between"><span class="ib">−</span><div style="text-align:center"><div class="big">${Q('200')}</div><div class="t3">יעד · ניגנת ב־${Q('160')}</div></div><span class="ib">+</span></div>
+   <div class="cd flat soft row" style="gap:8px;padding:8px 12px"><span class="t3 grow">בלי קצב ← רבעים ← ${Q('120')} … ${Q('200')}</span><span class="pill">${B('6')} שלבים</span></div>
+   <div class="cd col" style="gap:6px;padding:10px">${keyRing(190)}<div class="row" style="gap:6px;justify-content:center"><span class="ch on">קל קודם</span><span class="ch">מעגל רביעיות</span><span class="ch">לבחור</span></div></div>
+   ${handsSeg}
+   <div class="row"><span class="t3 grow">ביעד — עם הלהקה</span><span class="tog on"></span></div>
+   <div class="cd col" style="gap:4px;padding:10px 12px"><div class="row">${diffBadge}<span class="grow"></span><span class="tiny">למה?</span></div>${diffWhy}${xpPrev}</div>
+   <div style="flex:1"></div><span class="bt pr full">להתחיל — ${B('F')} בלי קצב</span>`,{title:'תוכנית אימון',sub:'ii–V ב־'+B('F')}),
+ w:()=>wide(`${H2('תוכנית אימון','ii–V ב־'+B('F')+' · 4 תיבות · מתוך האלתור של 16.11',diffBadge)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col" style="width:330px;gap:12px"><div class="cd row" style="justify-content:space-between"><span class="ib">−</span><div style="text-align:center"><div class="big" style="font-size:56px">${Q('200')}</div><div class="t3">יעד · ניגנת ב־${Q('160')}</div></div><span class="ib">+</span></div>
+   <div class="cd col"><div class="t2">ידיים</div>${handsSeg}<div class="t3">יד ימין, יד שמאל, ואז יחד</div></div><div class="cd col"><div class="row"><span class="t3 grow">ביעד — עם הלהקה</span><span class="tog on"></span></div><div class="row"><span class="t3 grow">להכניס להיום ולאימון</span><span class="tog on"></span></div></div></div>
+   <div class="cd col" style="width:300px;align-items:center">${keyRing(250)}<div class="row" style="gap:6px"><span class="ch on">קל קודם</span><span class="ch">מעגל רביעיות</span><span class="ch">לבחור</span></div><div class="t3" style="text-align:center">הסדר למשפט הזה: ${B('F C B♭ G E♭ D A♭ A D♭ E G♭ B')}</div></div>
+   <div class="col grow" style="gap:12px"><div class="cd col"><div class="t2">הסולם בטמפו</div>${ladderStrip(0)}<div class="t3">כל סולם מתחיל פעם אחת בלי קצב; אחרי הסולם הראשון מתחילים ב־80% מהטמפו הנקי הטוב.</div></div><div class="cd col">${diffWhy}${xpPrev}<div class="t3">כל 12: +48 XP</div></div><div style="flex:1"></div><span class="bt pr full">להתחיל — ${B('F')} בלי קצב</span></div></div>`,'הדרן','encore/plan')});
+
+// 8 difficulty & XP
+S.push({title:'קושי ו־XP: האפליקציה מודדת את המשפט',note:'מודל קבוע (בלי בינה מלאכותית) נותן למשפט דרגה על אותה סקאלה של כל התוכן (700–1900). שלושה רכיבים: חומר, עלות פיזית בכלי ובסולם, וטמפו. C–D–E בכל 12 שווה מעט; שורה בשתי ידיים עם עטיפות שווה הרבה — גם בשלושה סולמות.',
+ p:()=>{const rows=[['אורך אפקטיבי · 21 צלילים',120],['עטיפות ×2',70],['כרומטיות 18%',45],['פיבוט על צליל אקורד',35],['לא־אקורדי על פעמה',30],['קפיצות',25],['פיזי · פסנתר ב־'+B('F'),40],['טמפו · '+B('6.7')+' צל׳/שנ׳',265]];const mx=265;
+  return phone(`<div class="cd row" style="gap:10px">${diffBadge}<div class="grow t3">≈ כיתה 7 · שורה ביבופית ב־${Q('200')}</div></div>
+   <div class="cd col" style="gap:5px"><div class="t2">למה דרגה 7?</div>${rows.map(([l,v])=>`<div class="row" style="gap:8px"><span class="t3" style="width:150px">${l}</span><span class="grow" style="height:10px;border-radius:5px;background:var(--card-2);border:1.5px solid var(--line-strong);overflow:hidden"><i style="display:block;height:100%;width:${v/mx*100}%;background:var(--accent)"></i></span><b style="width:34px;font-size:13px;text-align:left">+${v}</b></div>`).join('')}<div class="hr"></div><div class="row"><span class="t3 grow">בסיס 700 + 630</span><b class="t1" style="font-size:18px">1330</b></div></div>
+   <div class="cd col" style="gap:6px"><div class="t2">XP לניסיון נקי ביעד, לפי סולם</div><div class="row" style="gap:3px;direction:ltr">${KEYS.map((k,i)=>`<div style="flex:1;text-align:center"><div style="height:${6+i*1.6}px;background:var(--lilac);border-radius:2px;margin:0 2px 3px"></div><div style="font-family:var(--display);font-size:11px">${B(k)}</div><div style="font-size:11px;font-weight:800">${8+Math.floor(i/4)}</div></div>`).join('')}</div><div class="tiny">סולם קשה יותר לידיים במשפט הזה = יותר</div></div>
+   <div class="cd flat soft row" style="gap:8px;padding:9px 12px"><span class="bdg">דרגה <b>0</b> <span class="tiny">715</span></span><span class="t3 grow">${B('C–D–E')} בכל 12 · נקודה אחת לניסיון</span></div>`,{title:'קושי ו־XP',sub:'ii–V ב־'+B('F')})},
+ w:()=>{const rows=[['אורך אפקטיבי',' · 21 צלילים (חזרות נספרות ברבע)',120],['עטיפות',' · 2 (צליל מטרה מוקף מלמעלה ומלמטה)',70],['כרומטיות',' · 18% מחוץ לסולם האקורד',45],['פיבוט',' · שינוי כיוון על צליל אקורד',35],['לא־אקורדי על פעמה',' · 3 צלילים',30],['קפיצות',' · ממוצע 3.1 חצאי טון',25],['פיזי',' · פסנתר ב־'+B('F')+': 2 קליפות אגודל',40],['טמפו',' · '+B('6.7')+' צלילים לשנייה ב־'+Q('200'),265]];
+  return wide(`${H2('קושי ו־XP','המודל של האפליקציה — קבוע, שקוף, אותה סקאלה של כל התוכן',diffBadge)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="cd col grow" style="gap:8px"><div class="t2">למה דרגה 7 (1330)?</div>${rows.map(([l,d,v])=>`<div class="row" style="gap:10px"><span style="width:300px;font-size:14px"><b>${l}</b><span class="t3">${d}</span></span><span class="grow" style="height:12px;border-radius:6px;background:var(--card-2);border:1.5px solid var(--line-strong);overflow:hidden"><i style="display:block;height:100%;width:${v/265*100}%;background:var(--accent)"></i></span><b style="width:44px;text-align:left">+${v}</b></div>`).join('')}<div class="hr"></div><div class="t3">חומר 325 · פיזי 40 · טמפו 265 (מוכפל בחומר: חומר פשוט בטמפו קיצוני מקבל ערך בינוני)</div></div>
+   <div class="col" style="width:380px;gap:12px"><div class="cd col"><div class="t2">XP לניסיון נקי</div><div class="kv"><span>${Q('120')}</span><b>4</b></div><div class="kv"><span>${Q('160')}</span><b>6</b></div><div class="kv"><span>${Q('200')} (יעד)</span><b>8</b></div><div class="kv"><span>כל סולם חדש ביעד</span><b>+24 ← +7</b></div><div class="kv"><span>כל 12</span><b>+48</b></div><div class="kv"><span>תקרה ליום, למשפט</span><b>56</b></div></div>
+   <div class="cd col"><div class="t2">השוואה</div><div class="kv"><span>${B('C–D–E')} ברבעים, 12 סולמות</span><b>715 · 1 XP</b></div><div class="kv"><span>${B('C–D–E')} בשש־עשריות ב־${Q('150')}</span><b>830 · 1 XP</b></div><div class="kv"><span>אותה שורה, שתי ידיים</span><b>1520 · 10 XP</b></div></div></div></div>`,'הדרן','encore/difficulty')}});
+
+// 9 practice run
+S.push({title:'בתרגול: סימנים חיים וסמן “עכשיו”',note:'סולם ‎A♭‎ ב־♩168. ספירה, קליק וסמן “עכשיו” (הקו הצהוב עם מסגרת דיו). כל תו מסומן ברגע שנמדד: מלא = בזמן ונכון, קו כתום = מוקדם/מאוחר, ורוד = תו שגוי, ריק מקווקו = חסר. אין גלילה.',
+ p:()=>phone(`<div class="row" style="gap:6px"><span class="ch on" style="font-family:var(--display);font-weight:400;font-size:15px">${B('A♭')}</span><span class="ch">${Q('168')} ← ${Q('200')}</span><span class="grow"></span><span class="tiny">סולם 7 מתוך 12</span></div>
+   <div class="cd" style="padding:8px 6px">${staff({w:340,h:128,sp:8.5,top:48,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:RUNMARKS,now:4.5,to:8})}${staff({w:340,h:128,sp:8.5,top:48,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:RUNMARKS,from:8,to:16})}</div>
+   <div class="dots"><i class="done"></i><i class="on"></i><i></i><i></i></div>
+   <div class="row" style="gap:8px;justify-content:center"><span class="t3">תיבה 2 · פעמה 1</span><span class="pill">קליק</span></div>
+   ${ladderStrip(4)}
+   <div class="legend"><span><span class="sw" style="background:var(--ink)"></span>בזמן</span><span><span class="sw" style="background:var(--tangerine)"></span>מוקדם/מאוחר</span><span><span class="sw" style="background:var(--pink)"></span>שגוי</span><span><span class="sw" style="border-style:dashed"></span>חסר</span></div>
+   <div style="flex:1"></div><span class="bt mg full">${I('stop')}לעצור</span>`,{title:'ii–V ב־'+B('F'),sub:'בסולם '+B('A♭'),right:`<span class="ib">${I('close')}</span>`}),
+ w:()=>wide(`${H2('ii–V ב־'+B('F')+' · בסולם '+B('A♭'),'סולם 7 מתוך 12 · '+Q('168')+' ← '+Q('200'),`<span class="ib">${I('close')}</span>`)}
+   <div class="cd" style="padding:14px 10px">${staff({w:980,h:230,sp:11,top:66,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:RUNMARKS,now:4.5})}</div>
+   <div class="row" style="gap:20px"><div class="dots"><i class="done"></i><i class="on"></i><i></i><i></i></div><span class="t3">תיבה 2 · פעמה 1 · קליק</span><span class="grow"></span><div style="width:420px">${ladderStrip(4)}</div></div>
+   <div class="row"><div class="legend"><span><span class="sw" style="background:var(--ink)"></span>בזמן ונכון</span><span><span class="sw" style="background:var(--tangerine)"></span>מוקדם/מאוחר</span><span><span class="sw" style="background:var(--pink)"></span>תו שגוי</span><span><span class="sw" style="border-style:dashed"></span>חסר</span></div><span class="grow"></span><span class="bt mg" style="width:240px">${I('stop')}לעצור</span></div>`,'הדרן','encore/run')});
+
+// 10 after take
+S.push({title:'אחרי הניסיון: שורה אחת',note:'משפט משוב אחד. הסימנים נשארים על התווים, התיבה החלשה מוקפת, ו“לולאה” מנגנת רק אותה ב־90%. “למה?” מופיע רק כשיש טעות.',
+ p:()=>phone(`<div class="cd col" style="gap:4px"><div class="t1">כמעט — תיבה 2 מוקדמת.</div><div class="tiny">למה? · ${B('F♭')} נוגן כ־${B('F')}</div></div>
+   <div class="cd" style="padding:8px 6px">${staff({w:340,h:128,sp:8.5,top:48,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:TAKEMARKS,worst:1,wrongLabel:'F',to:8})}${staff({w:340,h:128,sp:8.5,top:48,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:TAKEMARKS,from:8,to:16})}</div>
+   <div class="row" style="gap:6px;justify-content:space-between"><span class="ch">תווים 21/22</span><span class="ch">זמן · מוקדם 28 מ״ש</span><span class="ch">אחידות 91%</span></div>
+   ${ladderStrip(4)}
+   <div class="t3">ניסיון נקי אחד ב־${Q('168')} מעלה ל־${Q('180')}</div>
+   <div style="flex:1"></div><div class="row" style="gap:8px"><span class="bt mg grow">שוב</span><span class="bt">${I('loop')}ת׳ 2</span><span class="bt gh">הבא</span></div>`,{title:'ii–V ב־'+B('F'),sub:'בסולם '+B('A♭')+' · '+Q('168'),right:`<span class="ib">${I('close')}</span>`}),
+ w:()=>wide(`${H2('כמעט — תיבה 2 מוקדמת.','ii–V ב־'+B('F')+' · '+B('A♭')+' · '+Q('168'),`<span class="ib">${I('close')}</span>`)}
+   <div class="cd" style="padding:14px 10px">${staff({w:980,h:230,sp:11,top:66,notes:PH,spell:SA,sig:4,chords:CH_AB,marks:TAKEMARKS,worst:1,wrongLabel:'F'})}</div>
+   <div class="row" style="gap:12px;align-items:stretch"><div class="cd col grow"><div class="row" style="gap:8px"><span class="ch">תווים 21/22</span><span class="ch">זמן · מוקדם 28 מ״ש</span><span class="ch">אחידות 91%</span></div><div class="t3">למה? בתיבה 2 נוגן ${B('F')} במקום ${B('F♭')} (השנייה המוקטנת של ${B('E♭7')}), ושלוש שמיניות הגיעו מוקדם.</div></div>
+   <div class="cd col" style="width:420px">${ladderStrip(4)}<div class="t3">ניסיון נקי אחד ב־${Q('168')} מעלה ל־${Q('180')}</div></div></div>
+   <div class="row" style="gap:10px"><span class="grow"></span><span class="bt gh">הבא</span><span class="bt">${I('loop')}לולאה ת׳ 2</span><span class="bt mg" style="width:200px">שוב</span></div>`,'הדרן','encore/run')});
+
+// 11 map
+S.push({title:'המפה של המשפט: 12 סולמות × טמפו',note:'כל עמודה סולם (בסדר של התוכנית), כל שורה שלב. מלא = נקי, נקודה = עבר את היעד לפי כלל המעבר, צהוב = השלב הנוכחי. מעל: הדרגה של המשפט (דינמיקה) ופס רק עד הקידום הבא — אף פעם לא “מלא”.',
+ p:()=>phone(`<div class="cd row" style="gap:12px"><span class="dyn" style="font-size:34px">mf</span><div class="grow col" style="gap:4px"><div class="t2">6 מתוך 12 סולמות ביעד</div><div class="meter"><i style="width:20%"></i></div><div class="tiny">עוד 6 סולמות ל־<span class="dyn" style="font-size:13px">f</span> — “שלך”</div></div></div>
+   <div class="cd" style="padding:10px 8px">${keyMap()}</div>
+   <div class="legend"><span><span class="sw" style="background:var(--accent)"></span>נקי</span><span><span class="sw" style="background:var(--now)"></span>עכשיו</span><span><span class="sw"></span>עוד לא</span></div>
+   <div class="row" style="gap:3px;direction:ltr;justify-content:flex-end">${Array.from({length:9},()=>`<span style="width:3px;height:14px;background:var(--ink);opacity:.7"></span>`).join('')}<span class="tiny" style="margin-left:6px;direction:rtl">9 ימי תרגול</span></div>
+   <div class="row" style="gap:6px"><span class="ch">${B('XP')} השבוע · 142</span><span class="ch">לחזרה: ${B('F')} ביום ו׳</span></div>
+   <div style="flex:1"></div><span class="bt pr full">להמשיך — ${B('A♭')} ב־${Q('180')}</span>`,{title:'ii–V ב־'+B('F'),sub:'מהאלתור של 16.11',left:`<span class="ib">${I('more')}</span>`}),
+ w:()=>wide(`${H2('ii–V ב־'+B('F'),'מהאלתור של 16.11 · '+B('Gm7 | C7 | Fmaj7'),`<span class="ib">${I('share')}</span><span class="ib">${I('more')}</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="cd col grow" style="gap:12px"><div class="row" style="gap:14px"><span class="dyn" style="font-size:40px">mf</span><div class="grow col" style="gap:4px"><div class="t2">6 מתוך 12 סולמות ביעד · ${Q('200')}</div><div class="meter" style="max-width:420px"><i style="width:20%"></i></div><div class="tiny">עוד 6 סולמות ל־<span class="dyn" style="font-size:13px">f</span> — “שלך”</div></div>${diffBadge}</div>${keyMap({cw:'52px'})}<div class="legend"><span><span class="sw" style="background:var(--accent)"></span>נקי</span><span><span class="sw" style="background:var(--now)"></span>עכשיו</span><span><span class="sw"></span>עוד לא</span><span>נקודה = עבר יעד (3 ניסיונות נקיים ביומיים)</span></div></div>
+   <div class="col" style="width:330px;gap:12px"><div class="cd">${staff({w:300,h:100,sp:6,top:30,chords:CH_F})}</div><div class="cd col"><div class="kv"><span>ימי תרגול</span><b>9</b></div><div class="kv"><span>דקות שנמדדו</span><b>74</b></div><div class="kv"><span>XP השבוע</span><b>142</b></div><div class="kv"><span>חזרה הבאה</span><b>${B('F')} · יום ו׳</b></div></div><span class="bt pr full">להמשיך — ${B('A♭')} ב־${Q('180')}</span></div></div>`,'הדרן','encore/phrase')});
+
+// 12 yours
+S.push({title:'“המשפט שלך.”',note:'רגע שקט ורציני: קו סיום עם פרמטה, שלוש עובדות במספרים גדולים, והדבר הכי מניע שאפשר להראות — הניסיון הראשון מול היום. הלהקה מנגנת את המשפט פעם אחת בסולם האחרון, כקודה.',
+ p:()=>phone(`<div style="text-align:center;margin-top:8px"><div class="t1" style="font-size:34px">המשפט שלך.</div><div class="t3" style="margin-top:4px">ii–V ב־${B('F')} · מהאלתור של 16.11</div></div>
+   <div class="cd" style="padding:8px 6px">${staff({w:340,h:120,sp:6.8,top:38,chords:CH_F,end:1,rest:1})}</div>
+   <div class="row" style="justify-content:space-around;text-align:center"><div><div class="big" style="font-size:36px">12</div><div class="tiny">סולמות</div></div><div><div class="big" style="font-size:36px">${Q('200')}</div><div class="tiny">טמפו</div></div><div><div class="big" style="font-size:36px">9</div><div class="tiny">ימים</div></div></div>
+   <div class="row" style="gap:8px"><div class="cd col grow" style="gap:4px;align-items:center;padding:10px"><span class="ib">${I('play')}</span><div class="t2">הניסיון הראשון</div><div class="tiny">${Q('160')} · 16.11</div></div><div class="cd col grow" style="gap:4px;align-items:center;padding:10px"><span class="ib on">${I('play')}</span><div class="t2">היום</div><div class="tiny">${Q('200')} · 25.11</div></div></div>
+   <div class="row" style="gap:8px;justify-content:center">${TONI}<span class="dyn" style="font-size:30px">f</span></div>
+   <div style="flex:1"></div><span class="bt pr full">להשתמש בזה באלתור</span><div class="row" style="gap:8px"><span class="bt gh grow">${I('share')}לשתף</span><span class="bt gh grow">סגירה</span></div>`,{}),
+ w:()=>wide(`<div style="text-align:center;margin-top:10px"><div class="t1" style="font-size:52px">המשפט שלך.</div><div class="t3" style="font-size:15px;margin-top:6px">ii–V ב־${B('F')} · מהאלתור של 16.11 · <span class="dyn" style="font-size:18px">f</span></div></div>
+   <div class="cd" style="max-width:860px;margin:0 auto;width:100%">${staff({w:820,h:170,sp:10,top:58,chords:CH_F,end:1,rest:1})}</div>
+   <div class="row" style="justify-content:center;gap:70px;text-align:center"><div><div class="big" style="font-size:54px">12</div><div class="t3">סולמות</div></div><div><div class="big" style="font-size:54px">${Q('200')}</div><div class="t3">טמפו</div></div><div><div class="big" style="font-size:54px">9</div><div class="t3">ימים</div></div></div>
+   <div class="row" style="gap:16px;justify-content:center"><div class="cd row" style="gap:10px"><span class="ib">${I('play')}</span><div><div class="t2">הניסיון הראשון</div><div class="tiny">${Q('160')} · 16.11</div></div></div><div class="cd row" style="gap:10px"><span class="ib on">${I('play')}</span><div><div class="t2">היום</div><div class="tiny">${Q('200')} · 25.11</div></div></div>${TONI}</div>
+   <div class="row" style="gap:10px;justify-content:center"><span class="bt gh">סגירה</span><span class="bt gh">${I('share')}לשתף</span><span class="bt pr">להשתמש בזה באלתור</span></div>`,'הדרן','encore/phrase')});
+
+// 13 library
+const libCards=[['ii–V ב־'+B('F'),'מאלתור · '+B('ii–V'),'mf',6,'לחזרה'],['ריף פתיחה לבלוז ב־'+B('B♭'),'מהקלטה חופשית · בלוז','f',12,'שלך'],['ירידה כרומטית על '+B('C7'),'מספריית הליקים · דומיננטי','mp',3,''],['שורה מינורית '+B('ii–V'),'מהמורה · '+B('Dm'),'p',1,'מהמורה'],['תבנית: '+B('1-2-3-5')+' בסקוונצה','תבנית · מז׳ור','mf',7,'']];
+S.push({title:'המשפטים שלי',note:'כל משפט בכרטיס: שם, מקור, דרגה כדינמיקה, ופס 12 הסולמות. תבניות (מעורך התרגילים הישן) נמצאות כאן גם הן, באותה ספרייה. מיון: לחזרה קודם.',
+ p:()=>phone(`<div class="row" style="gap:8px"><div class="seg grow"><span class="on">משפטים · 7</span><span>תבניות · 2</span></div><span class="ib">${I('filter')}</span></div>
+   <div class="row" style="gap:6px"><span class="ch on">לחזרה קודם</span><span class="ch">אחרונים</span><span class="ch">דרגה</span></div>
+   <div class="col" style="gap:8px">${libCards.map(([t,s,d,n,tag])=>`<div class="cd row" style="gap:10px;padding:10px 12px"><span class="dyn" style="width:30px;text-align:center">${d}</span><div class="grow col" style="gap:3px"><div class="t2">${t}</div><div class="t3">${s}</div>${strip(n,n<12?n:-1)}</div>${tag?`<span class="pill ${tag==='שלך'?'ac':''}">${tag}</span>`:''}</div>`).join('')}</div>`,{title:'המשפטים שלי',sub:'הדרן',left:`<span class="ib">${I('plus')}</span>`}),
+ w:()=>wide(`${H2('המשפטים שלי','7 משפטים · 2 תבניות',`<span class="ch on">לחזרה קודם</span><span class="ch">אחרונים</span><span class="ch">דרגה</span><span class="ib">${I('search')}</span><span class="bt pr sm">${I('plus')}משפט חדש</span>`)}
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">${libCards.concat([['פתיחה של '+B('Fmaj7')+' עם עטיפה','מאלתור מודרך · '+B('ii–V'),'pp',0,'טיוטה']]).map(([t,s,d,n,tag],i)=>`<div class="cd col" style="gap:8px"><div class="row"><span class="dyn">${d}</span><span class="grow"></span>${tag?`<span class="pill ${tag==='שלך'?'ac':''}">${tag}</span>`:''}</div>${roll({w:340,h:70,from:i%2?4:0,to:i%2?16:12})}<div class="t2">${t}</div><div class="t3">${s}</div>${strip(n,n<12?n:-1)}</div>`).join('')}</div>`,'הדרן','encore/library')});
+
+// 14 teacher assign
+S.push({title:'מורה: לנגן ולהטיל',note:'בגיליון המשימה סוג חדש “משפט”. המורה מנגן כמה תיבות ב־MIDI, האפליקציה תופסת אותן, וקובעים יעד, סולמות, ידיים, תאריך וקפדנות. רק נתוני התווים עולים לשרת (פחות מ־4KB).',
+ p:()=>phone(`<div class="seg"><span class="on">לנגן עכשיו</span><span>מהמשפטים שלי</span><span>ספרייה</span></div>
+   <div class="cd col" style="gap:4px">${roll({w:330,h:88,chords:CH_F})}<div class="row"><span class="t3 grow">נקלט: 4 תיבות · ${B('F')} מז׳ור · ${Q('150')}</span><span class="ib sm">${I('play')}</span></div></div>
+   <div class="cd col" style="gap:0"><div class="kv"><span>טמפו יעד</span><b>${Q('180')}</b></div><div class="kv"><span>סולמות</span><span class="row" style="gap:4px"><span class="ch on">כל 12</span><span class="ch">לבחור</span></span></div><div class="kv"><span>ידיים</span><span class="ch">יד ימין ואז יחד</span></div><div class="kv"><span>עד</span><b>יום ה׳ 20.11</b></div><div class="kv"><span>קפדנות</span><span class="seg" style="width:180px"><span>מקלה</span><span class="on">בינונית</span><span>קפדנית</span></span></div><div class="kv"><span>ביעד עם הלהקה</span><span class="tog on"></span></div></div>
+   <div class="input">שימו לב לעטיפה בתיבה 2</div>
+   <div class="row"><span class="t3 grow">כיתה ב׳ · 8 תלמידים</span><span class="tiny">עוד אפשרויות</span></div>
+   <div style="flex:1"></div><span class="bt pr full">${I('send')}להטיל</span>`,{title:'משימה חדשה',sub:'משפט',right:`<span class="ib">${I('close')}</span>`}),
+ w:()=>wide(`${H2('משימה חדשה · משפט','כיתה ב׳ · 8 תלמידים')}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="seg" style="max-width:460px"><span class="on">לנגן עכשיו</span><span>מהמשפטים שלי</span><span>ספרייה</span></div><div class="cd col">${roll({w:600,h:200,chords:CH_F,vel:1})}<div class="row"><span class="t3 grow">נקלט: 4 תיבות · ${B('F')} מז׳ור · ${Q('150')} · אפשר לחתוך ולתקן</span><span class="bt sm">${I('play')}להשמיע</span><span class="bt sm">${I('rec')}לנגן שוב</span></div></div><div class="cd">${staff({w:600,h:110,sp:7,top:34,chords:CH_F})}</div></div>
+   <div class="cd col" style="width:380px;gap:0"><div class="kv"><span>טמפו יעד</span><b>${Q('180')}</b></div><div class="kv"><span>סולמות</span><span class="row" style="gap:4px"><span class="ch on">כל 12</span><span class="ch">לבחור</span></span></div><div class="kv"><span>סדר</span><span class="ch">קל קודם</span></div><div class="kv"><span>ידיים</span><span class="ch">יד ימין ואז יחד</span></div><div class="kv"><span>עד</span><b>יום ה׳ 20.11</b></div><div class="kv"><span>קפדנות</span><span class="seg" style="width:200px"><span>מקלה</span><span class="on">בינונית</span><span>קפדנית</span></span></div><div class="kv"><span>ביעד עם הלהקה</span><span class="tog on"></span></div><div class="kv"><span>לצרף את השמע שלי</span><span class="tog"></span></div><div class="input" style="margin:10px 0">שימו לב לעטיפה בתיבה 2</div><span class="bt pr full">${I('send')}להטיל</span></div></div>`,'קהילה','classes/assign')});
+
+// 15 student
+S.push({title:'התלמיד: משימה מהמורה',note:'כרטיס ב“היום” ובמשימות. קודם הנגינה של המורה, אחר כך התוכנית — שדות שהמורה נעל מסומנים במנעול; אפשר תמיד לתרגל לאט יותר ובכל סדר. כל סולם שעובר נשלח למורה כהגשה.',
+ p:()=>phone(`<div class="cd col" style="gap:6px;border-color:var(--outline)"><div class="row"><span class="pill ac">מהמורה</span><span class="grow"></span><span class="tiny">עד יום ה׳</span></div><div class="t2">ii–V ב־${B('F')} · רונית</div>${roll({w:320,h:80,chords:CH_F})}<div class="row" style="gap:6px"><span class="bt sm">${I('play')}הנגינה של המורה</span></div></div>
+   <div class="row wrap" style="gap:6px"><span class="ch">${I('lock')}${Q('180')}</span><span class="ch">${I('lock')}כל 12</span><span class="ch">${I('lock')}יד ימין ואז יחד</span><span class="ch">בינונית</span></div>
+   <div class="cd col" style="gap:6px"><div class="row"><span class="t2 grow">ההתקדמות</span><span class="t3">3 מתוך 12</span></div>${strip(3,3)}<div class="t3">הבא: ${B('B♭')} ב־${Q('150')}</div></div>
+   <div class="cd flat soft col" style="gap:4px"><div class="row" style="gap:6px"><span class="pill">המורה</span><span class="tiny">אתמול</span></div><div class="t2">יפה! עכשיו ${B('A♭')} ו־${B('D♭')}.</div></div>
+   <div style="flex:1"></div><span class="bt pr full">להמשיך — ${B('B♭')}</span>`,{title:'משימה',sub:'כיתה ב׳'}),
+ w:()=>wide(`${H2('היום','יום שלישי 18.11 · 25 דקות')}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="cd col" style="gap:8px"><div class="row"><span class="pill ac">מהמורה</span><span class="t2 grow" style="margin-inline-start:8px">ii–V ב־${B('F')} · רונית · עד יום ה׳</span><span class="bt sm">${I('play')}הנגינה של המורה</span></div>${roll({w:620,h:150,chords:CH_F})}<div class="row" style="gap:6px"><span class="ch">${I('lock')}${Q('180')}</span><span class="ch">${I('lock')}כל 12</span><span class="ch">${I('lock')}יד ימין ואז יחד</span><span class="grow"></span>${strip(3,3)}<span class="t3">3 מתוך 12</span></div></div>
+   <div class="cd row" style="gap:10px"><span class="dyn">mf</span><div class="grow"><div class="t2">הדרן: ii–V שלך ב־${B('F')}</div><div class="t3">${B('A♭')} ב־${Q('180')} · 3 דק׳</div></div>${strip(6,6)}</div></div>
+   <div class="col" style="width:340px;gap:12px"><div class="cd flat soft col"><div class="row" style="gap:6px"><span class="pill">המורה</span><span class="tiny">אתמול</span></div><div class="t2">יפה! עכשיו ${B('A♭')} ו־${B('D♭')}.</div></div><div class="cd col"><div class="t2">ההגשות שלך</div><div class="kv"><span>${B('F')}</span><b>${Q('184')} · 97%</b></div><div class="kv"><span>${B('C')}</span><b>${Q('180')} · 95%</b></div><div class="kv"><span>${B('B♭')}</span><b>${Q('150')} · בדרך</b></div></div><span class="bt pr full">להמשיך — ${B('B♭')}</span></div></div>`,'היום','today')});
+
+// 16 recordings timeline
+const takeRows=[['אלתור על '+B('ii–V–I'),'2:14 · '+B('MIDI'),'4 משפטים',1,'keys'],['סולם '+B('A♭')+' מז׳ור','0:22 · '+B('MIDI'),'נקי · '+Q('132')+' · 97%',0,'keys'],['ii–V ב־'+B('F')+' · '+B('A♭'),'0:09 · '+B('MIDI'),'כמעט · '+Q('168'),0,'keys']];
+const takeRowsY=[['שירה · מרווחים','0:42 · מיק׳','84%',1,'mic'],['הקלטה חופשית','0:38 · מיק׳','',0,'mic']];
+const tRow=([t,d,r,st,ic])=>`<div class="it"><span class="ib sm" style="box-shadow:none">${I(ic)}</span><div class="grow"><div class="t2">${t}</div><div class="t3">${d}${r?' · '+r:''}</div></div><span class="ib sm" style="box-shadow:none;border-color:transparent;color:${st?'var(--accent)':'var(--ink-dim)'}">${I(st?'starf':'star')}</span><span class="ib sm">${I('play')}</span></div>`;
+S.push({title:'ההקלטות שלי: ציר זמן',note:'כל מה שניגנת או שרת, לפי תאריך: אימונים שנפתחים לניסיונות. מסננים לפי קורס וסוג (מושר / מנוגן / MIDI / שמע), חיפוש, שינוי שם, כוכב, תיקיות, מחיקה. השמע נשאר במכשיר.',
+ p:()=>phone(`<div class="input row" style="gap:8px;padding:7px 12px">${I('search','style="width:16px;height:16px"')}<span class="t3">חיפוש: שם, סולם, תאריך</span></div>
+   <div class="row" style="gap:6px;overflow:hidden"><span class="ch on">הכול</span><span class="ch">פסנתר</span><span class="ch">קול</span><span class="ch">מושר</span><span class="ch">${B('MIDI')}</span><span class="ch">${I('starf')}</span></div>
+   <div class="t2">היום</div>
+   <div class="cd col" style="gap:0;padding:8px 12px"><div class="row" style="gap:8px;padding-bottom:6px;border-bottom:2px solid var(--line)"><div class="grow"><div class="t2">אימון בוקר · 08:20</div><div class="t3">34 דק׳ נמדדו · 9 ניסיונות</div></div><span class="pill">פסנתר</span></div><div class="lst">${takeRows.map(tRow).join('')}</div><div class="tiny" style="padding-top:4px">עוד 6 ניסיונות</div></div>
+   <div class="t2">אתמול</div>
+   <div class="cd col" style="gap:0;padding:8px 12px"><div class="lst">${takeRowsY.map(tRow).join('')}</div></div>
+   <div class="row" style="gap:8px"><span class="tiny grow">בשימוש 212 MB מתוך 500</span><span style="width:120px">${wave({w:120,h:14,n:24,sel:null})}</span></div>`,{title:'ההקלטות שלי',left:`<span class="ib">${I('folder')}</span>`,right:`<span class="ib">${I('wave')}</span>`}),
+ w:()=>wide(`${H2('ההקלטות שלי','כל ניסיון נשמר במכשיר · 212 MB מתוך 500',`<div class="input row" style="gap:8px;padding:7px 12px;width:280px">${I('search','style="width:16px;height:16px"')}<span class="t3">חיפוש</span></div><span class="ib">${I('folder')}</span>`)}
+   <div class="row" style="gap:6px"><span class="ch on">הכול</span><span class="ch">פסנתר</span><span class="ch">גיטרה</span><span class="ch">קול</span><span class="ch">מושר</span><span class="ch">מנוגן</span><span class="ch">${B('MIDI')}</span><span class="ch">שמע</span><span class="ch">${I('starf')}מועדפים</span><span class="ch">הדרן</span><span class="ch">מהמורה</span></div>
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:10px"><div class="t2">היום</div><div class="cd col" style="gap:0"><div class="row" style="gap:8px;padding-bottom:6px;border-bottom:2px solid var(--line)"><div class="grow"><div class="t2">אימון בוקר · 08:20</div><div class="t3">34 דק׳ נמדדו · 9 ניסיונות</div></div><span class="pill">פסנתר</span><span class="bt sm">${I('play')}כל האימון</span></div><div class="lst">${takeRows.map(tRow).join('')}</div></div><div class="t2">אתמול</div><div class="cd col" style="gap:0"><div class="lst">${takeRowsY.map(tRow).join('')}</div></div></div>
+   <div class="col" style="width:300px;gap:12px"><div class="cd col"><div class="t2">תיקיות</div><div class="kv"><span>${I('folder','style="width:16px;height:16px;vertical-align:-3px"')} הסולואים הטובים</span><b>8</b></div><div class="kv"><span>${I('folder','style="width:16px;height:16px;vertical-align:-3px"')} לשלוח למורה</span><b>3</b></div><div class="kv"><span>${I('folder','style="width:16px;height:16px;vertical-align:-3px"')} שירה — לפני ואחרי</span><b>5</b></div></div><div class="cd col"><div class="t2">רשימות השמעה</div><div class="kv"><span>המועדפים בלולאה</span><b>14</b></div><div class="kv"><span>הדרן — הניסיונות הטובים</span><b>7</b></div></div><div class="cd flat soft t3">ניסיונות ללא כוכב יותר מ־60 יום נשמרים כתווים בלבד. מסומנים בכוכב נשמרים תמיד.</div></div></div>`,'ההקלטות','recordings')});
+
+// 17 player
+S.push({title:'הנגן: לולאה A–B ומהירות',note:'לולאה על כל הניסיון או על קטע A–B שנצמד לתיבות כשהטמפו ידוע. מהירות 50–125% בלי לשנות גובה. בניסיון MIDI אפשר “רק אני / עם הלהקה”. מכאן נגיעה אחת: “לתרגל את הקטע”.',
+ p:()=>phone(`<div class="cd col" style="gap:6px">${roll({notes:TAKE,w:330,h:150,from:8,to:40,lo:56,hi:88,sel:[16,32],play:22,chords:['Fmaj7','Fmaj7','Gm7','C7','Fmaj7','Fmaj7','Gm7','C7'],barNums:1})}${wave({w:330,h:40,n:70,sel:[.25,.75],play:.44})}</div>
+   <div class="row" style="justify-content:space-between;direction:ltr"><span class="t3">${B('0:31')}</span><span class="ch on">${I('loop')}לולאה ת׳ ${B('5–8')}</span><span class="t3">${B('2:14')}</span></div>
+   <div class="row" style="gap:14px;justify-content:center"><span class="ib">${I('next')}</span><span class="ib on" style="width:64px;height:64px;border-radius:20px">${I('pause','style="width:28px;height:28px"')}</span><span class="ib">${I('prev')}</span></div>
+   <div class="cd col" style="gap:6px;padding:10px 12px"><div class="row"><span class="t2 grow">מהירות</span><b>85%</b></div><div class="meter"><i style="width:47%"></i></div><div class="tiny">הגובה נשמר</div></div>
+   <div class="seg"><span>רק אני</span><span class="on">עם הלהקה</span><span>רק הלהקה</span></div>
+   <div style="flex:1"></div><span class="bt pr full">${ENC(16)}לתרגל את הקטע</span><div class="row" style="gap:8px"><span class="bt gh grow">${I('swap')}להשוות</span><span class="bt gh grow">${I('starf')}</span><span class="bt gh grow">${I('share')}</span></div>`,{title:'אלתור על '+B('ii–V–I'),sub:'היום 08:40 · '+B('MIDI'),left:`<span class="ib">${I('more')}</span>`}),
+ w:()=>wide(`${H2('אלתור על '+B('ii–V–I')+' ב־'+B('F'),'היום 08:40 · '+B('MIDI')+' · '+Q('160')+' · 12 תיבות · מהאימון של הבוקר',`<span class="ib">${I('starf')}</span><span class="ib">${I('share')}</span><span class="ib">${I('more')}</span>`)}
+   <div class="cd col" style="gap:8px">${roll({notes:TAKE,w:980,h:290,from:0,to:48,lo:56,hi:88,sel:[16,32],play:22,chords:TCH,barNums:1,vel:1})}${wave({w:980,h:46,n:160,sel:[1/3,2/3],play:.46})}</div>
+   <div class="row" style="gap:14px"><span class="ib">${I('next')}</span><span class="ib on" style="width:56px;height:56px;border-radius:18px">${I('pause','style="width:26px;height:26px"')}</span><span class="ib">${I('prev')}</span><span class="ch on">${I('loop')}לולאה ת׳ ${B('5–8')}</span><span class="t3">${B('0:31 / 2:14')}</span><span class="grow"></span><span class="t3">מהירות</span><div class="meter" style="width:180px"><i style="width:47%"></i></div><b>85%</b><div class="seg" style="width:300px"><span>רק אני</span><span class="on">עם הלהקה</span><span>רק הלהקה</span></div></div>
+   <div class="row" style="gap:10px"><span class="grow"></span><span class="bt gh">${I('swap')}להשוות</span><span class="bt pr">${ENC(16)}לתרגל את הקטע</span></div>`,'ההקלטות','recordings/take')});
+
+// 18 commute
+S.push({title:'בדרך לעבודה: מסך נעול ורשימת השמעה',note:'ברקע מתנגן קובץ שמע רגיל עם Media Session: כותרת, תמונה פשוטה ושליטה ממסך הנעילה ומהאוזניות. ניסיונות MIDI מוקלטים מראש לשמע; לולאת A–B “נצרבת” לקליפ קצר שמתנגן בלולאה בלי טיימרים. עובד באפליקציה מותקנת.',
+ p:()=>`<div class="phone"><div class="scr" style="background:#120a20;color:#fff"><div class="sb" style="color:#fff"><span></span><span style="display:flex;gap:6px;align-items:center"><i style="color:#fff"></i></span></div>
+   <div style="text-align:center;margin-top:30px"><div style="font:500 15px var(--font);opacity:.85">יום שלישי, 18 בנובמבר</div><div style="font:300 88px var(--font);line-height:1;letter-spacing:-2px;direction:ltr">8:12</div></div>
+   <div style="margin:auto 14px 120px;background:rgba(255,255,255,.12);border-radius:26px;padding:16px">
+     <div class="row" style="gap:12px"><div style="width:64px;height:64px;border-radius:12px;background:#fbf7ff;border:2px solid #fff;overflow:hidden;flex:none;--card:#fbf7ff;--outline:#1e1033;--line:rgba(30,16,51,.12);--line-strong:#c9b8ec;--accent:#6d28d9">${roll({notes:TAKE,w:64,h:64,from:16,to:32,lo:60,hi:86})}</div><div class="grow"><div style="font-weight:700;font-size:16px">הסולו על ii–V · ת׳ ${B('5–8')}</div><div style="opacity:.75;font-size:13px">The 7th Sense · המועדפים בלולאה</div></div></div>
+     <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:14px 0 6px;direction:ltr"><div style="width:38%;height:100%;border-radius:3px;background:#fff"></div></div>
+     <div class="row" style="justify-content:space-between;font-size:12px;opacity:.75;direction:ltr"><span>0:04</span><span>A–B · 85%</span><span>0:11</span></div>
+     <div class="row" style="justify-content:center;gap:42px;margin-top:10px;direction:ltr"><svg width="30" height="30" viewBox="0 0 24 24">${P.prev.replace('currentColor','#fff')}</svg><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round">${P.pause}</svg><svg width="30" height="30" viewBox="0 0 24 24">${P.next.replace('currentColor','#fff')}</svg></div>
+   </div><div class="home" style="background:#fff"></div></div></div>`,
+ w:()=>wide(`${H2('המועדפים בלולאה','14 ניסיונות · 23 דק׳ · מוכן להשמעה ברקע',`<span class="bt sm">${I('loop')}חזרה: הכול</span><span class="bt pr sm">${I('play')}לנגן</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="cd col grow" style="gap:0"><div class="lst">${[['הסולו על ii–V · ת׳ '+B('5–8'),'A–B · 85% · '+B('MIDI')+' ← שמע',1],['שירה · השיר שלי מהחזרה','2:40 · מיק׳',0],['ריף פתיחה לבלוז ב־'+B('B♭'),'0:12 · '+B('MIDI')+' ← שמע',0],['מרווחים · לפני ואחרי','0:42 · מיק׳',0],['ii–V ב־'+B('F')+' · היום ב־'+Q('200'),'0:09 · '+B('MIDI')+' ← שמע',0]].map(([t,d,on],i)=>`<div class="it" style="${on?'background:var(--card-2);margin:0 -8px;padding:9px 8px;border-radius:12px':''}"><span class="big" style="font-size:18px;width:20px">${i+1}</span><span class="thumb">${roll({notes:TAKE,w:54,h:38,from:i*6,to:i*6+12,lo:58,hi:88})}</span><div class="grow"><div class="t2">${t}</div><div class="t3">${d}</div></div>${on?'<span class="pill ac">מתנגן</span>':''}<span class="ib sm">${I('more')}</span></div>`).join('')}</div></div>
+   <div class="col" style="width:340px;gap:12px"><div class="cd col"><div class="t2">השמעה ברקע</div><div class="t3">ממשיך לנגן עם מסך נעול. ניסיונות MIDI מוקלטים לשמע בפעם הראשונה (12 MB מקום), לולאות A–B נצרבות לקליפ.</div><div class="row"><span class="t3 grow">נרמול עוצמה</span><span class="tog on"></span></div><div class="row"><span class="t3 grow">מונו</span><span class="tog"></span></div></div><div class="cd flat soft t3">באייפון: הוסיפו את האפליקציה למסך הבית כדי לשמוע ברקע וכדי שההקלטות יישמרו.</div></div></div>`,'ההקלטות','recordings/playlist')});
+
+// 19 A/B compare
+S.push({title:'השוואת A/B: אז והיום',note:'שני ניסיונות של אותו פריט, מיושרים לפי תיבות. מנגנים A ואז B לסירוגין או ברצף. קווים כתומים = סטייה בזמן, ורוד = תו שגוי. שורה אחת של שינוי שנמדד.',
+ p:()=>{const devA=PH.map((n,i)=>(i%3===1?8:i%4===2?-6:0)),devB=PH.map((n,i)=>(i===5?4:0));
+  return phone(`<div class="cd col" style="gap:4px"><div class="row"><span class="pill">A</span><span class="t3 grow" style="margin-inline-start:6px">16.11 · ${Q('160')}</span><span class="ib sm">${I('play')}</span></div>${roll({w:330,h:100,devs:devA,marks:PH.map((n,i)=>i===12||i===19?'wrong':null)})}</div>
+   <div class="cd col" style="gap:4px"><div class="row"><span class="pill ac">B</span><span class="t3 grow" style="margin-inline-start:6px">25.11 · ${Q('200')}</span><span class="ib sm on">${I('play')}</span></div>${roll({w:330,h:100,devs:devB})}</div>
+   <div class="seg"><span class="on">A ↔ B לסירוגין</span><span>ברצף</span></div>
+   <div class="cd col" style="gap:0"><div class="kv"><span>טמפו</span><b>${Q('160')} ← ${Q('200')}</b></div><div class="kv"><span>דיוק</span><b>84% ← 98%</b></div><div class="kv"><span>פיזור תזמון</span><b>31 ← 17 מ״ש</b></div></div>
+   <div style="flex:1"></div><span class="bt gh full">כל הניסיונות של המשפט</span>`,{title:'השוואה',sub:'ii–V ב־'+B('F')})},
+ w:()=>{const devA=PH.map((n,i)=>(i%3===1?14:i%4===2?-10:0)),devB=PH.map((n,i)=>(i===5?6:0));
+  return wide(`${H2('השוואה','ii–V ב־'+B('F')+' · '+Q('160')+' ← '+Q('200')+' · דיוק 84% ← 98% · פיזור תזמון 31 ← 17 מ״ש',`<div class="seg" style="width:280px"><span class="on">A ↔ B לסירוגין</span><span>ברצף</span></div>`)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="cd col"><div class="row"><span class="pill">A</span><span class="t2 grow" style="margin-inline-start:8px">16.11 · ${Q('160')} · הניסיון הראשון</span><span class="ib sm">${I('play')}</span></div>${roll({w:640,h:190,devs:devA,marks:PH.map((n,i)=>i===12||i===19?'wrong':null),chords:CH_F})}</div><div class="cd col"><div class="row"><span class="pill ac">B</span><span class="t2 grow" style="margin-inline-start:8px">25.11 · ${Q('200')} · היום</span><span class="ib sm on">${I('play')}</span></div>${roll({w:640,h:190,devs:devB,chords:CH_F})}</div></div>
+   <div class="cd col" style="width:330px;gap:6px"><div class="t2">ההתקדמות של הפריט</div><svg class="svgw" viewBox="0 0 300 150" style="height:150px"><rect x="1" y="1" width="298" height="148" rx="10" fill="var(--card-2)" stroke="var(--line-strong)" stroke-width="2"/><polyline points="20,120 60,110 100,96 140,92 180,70 220,58 260,40 285,30" fill="none" stroke="var(--accent)" stroke-width="3"/>${[20,60,100,140,180,220,260,285].map((x,i)=>`<circle cx="${x}" cy="${[120,110,96,92,70,58,40,30][i]}" r="4.5" fill="var(--card)" stroke="var(--outline)" stroke-width="2"/>`).join('')}<text x="290" y="22" text-anchor="end" font-size="12" font-family="Rubik" font-weight="700" fill="var(--ink)">♩200</text><text x="20" y="140" font-size="11" font-family="Rubik" fill="var(--ink-dim)">16.11</text><text x="285" y="140" text-anchor="end" font-size="11" font-family="Rubik" fill="var(--ink-dim)">25.11</text></svg><div class="t3">8 ניסיונות שמורים · נגיעה בנקודה מנגנת אותו</div></div></div>`,'ההקלטות','recordings/compare')}});
+
+// 20 share sheet
+S.push({title:'לשתף משפט',note:'כותרת, הקשר, דרגה, כלי וסגנון. ברירת המחדל: חברים בלבד, בלי שמע. הצהרה קצרה שזה משפט שלך. הגדרות האתגר מגיעות מהתוכנית שלך. תמונת השיתוף נראית כמו דף מספר תרגול רציני.',
+ p:()=>phone(`<div class="input">ii–V ב־${B('F')} — שתי עטיפות</div>
+   <div class="row wrap" style="gap:6px"><span class="ch">${B('ii–V–I')} ב־${B('F')}</span><span class="ch">פסנתר</span>${diffBadge}<span class="ch on">ביבופ</span><span class="ch">בלוז</span></div>
+   <div class="cd col" style="gap:0"><div class="kv"><span>יעד האתגר</span><b>${Q('200')} · כל 12</b></div><div class="kv"><span>לצרף קטע שמע שלי <span class="tiny">(עד 20 שנ׳)</span></span><span class="tog"></span></div></div>
+   <div><div class="t2" style="margin-bottom:6px">מי רואה</div><div class="seg"><span class="on">חברים</span><span>הכיתה</span><span>כולם</span></div></div>
+   <div class="cd flat soft row" style="gap:10px;align-items:flex-start"><span class="ib sm on" style="flex:none">${I('check')}</span><span class="t3" style="color:var(--ink)">זה משפט שלי — לא לחן או הקלטה של מישהו אחר.</span></div>
+   <div class="cd col" style="gap:4px;padding:10px"><div class="tiny">תמונת השיתוף</div>${staff({w:320,h:84,sp:5.2,top:26,chords:CH_F})}<div class="row"><span class="t2 grow">ii–V ב־${B('F')}</span><span class="tiny">${Q('200')} · 12 סולמות · החוש ה־7</span></div></div>
+   <div style="flex:1"></div><span class="bt pr full">${I('share')}לשתף עם חברים</span>`,{title:'לשתף',right:`<span class="ib">${I('close')}</span>`}),
+ w:()=>wide(`${H2('לשתף משפט','ii–V ב־'+B('F')+' · הוא כבר שלך — 12 סולמות ב־'+Q('200'))}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="input">ii–V ב־${B('F')} — שתי עטיפות</div><div class="row wrap" style="gap:6px"><span class="ch">${B('ii–V–I')} ב־${B('F')}</span><span class="ch">פסנתר</span>${diffBadge}<span class="ch on">ביבופ</span><span class="ch">בלוז</span><span class="ch">מודאלי</span></div><div class="cd col" style="gap:0"><div class="kv"><span>יעד האתגר</span><b>${Q('200')} · כל 12 · יד ימין</b></div><div class="kv"><span>לצרף קטע שמע שלי (עד 20 שנ׳)</span><span class="tog"></span></div></div><div class="t2">מי רואה</div><div class="seg" style="max-width:420px"><span class="on">חברים</span><span>הכיתה</span><span>כולם</span></div><div class="cd flat soft row" style="gap:10px"><span class="ib sm on">${I('check')}</span><span class="t3" style="color:var(--ink)">זה משפט שלי — לא לחן או הקלטה של מישהו אחר.</span></div><div class="row"><span class="grow"></span><span class="bt pr">${I('share')}לשתף עם חברים</span></div></div>
+   <div class="cd col" style="width:400px;gap:8px"><div class="tiny">תמונת השיתוף · קישור ${B('7sense.netlify.app/#/p/K7Q2MX9A')}</div><div style="border:2px solid var(--outline);border-radius:14px;padding:14px;background:var(--bg)">${staff({w:340,h:100,sp:6.2,top:30,chords:CH_F})}<div class="t1" style="margin-top:6px">ii–V ב־${B('F')}</div><div class="t3">CodaFox42 · ${Q('200')} · 12 סולמות · דרגה 7</div><div class="row" style="margin-top:8px">${LOGO.replace('<svg','<svg width="22" height="22"')}<span class="tiny" style="margin-inline-start:6px">החוש ה־7 · אתגר הדרן</span></div></div><div class="t3">הקישור נפתח גם למי שאין לו חשבון: שומעים, רואים תווים, מנסים בלי קצב. כדי להופיע בלוח צריך להירשם.</div></div></div>`,'קהילה','encore/share')});
+
+// 21 challenge page
+S.push({title:'דף האתגר והלוח',note:'המשפט, היעד, וכפתור “לקבל את האתגר” — שמכניס אותו לאותה תוכנית בדיוק (בלי קצב ← טמפו ← 12 סולמות). הלוח מדרג שליטה: סולמות ביעד, אחר כך טמפו, אחר כך ניקיון. אין לייקים ואין עוקבים.',
+ p:()=>phone(`<div class="cd col" style="gap:4px;padding:8px 10px">${staff({w:330,h:96,sp:5.8,top:30,chords:CH_F})}<div class="row"><span class="ib sm">${I('play')}</span><span class="t3 grow" style="margin-inline-start:6px">מאת ${B('CodaFox42')} · ${B('ii–V')} ב־${B('F')}</span>${diffBadge}</div></div>
+   <div class="row" style="gap:6px"><span class="ch">${Q('200')}</span><span class="ch">כל 12</span><span class="ch">יד ימין</span><span class="grow"></span><span class="tiny">37 הגיעו ליעד</span></div>
+   <span class="bt pr full">לקבל את האתגר</span>
+   <div class="seg"><span class="on">חברים</span><span>כולם</span></div>
+   <div class="cd col" style="gap:0;padding:6px 12px">${board(5)}</div>
+   <div class="row" style="gap:6px"><span class="bt sm grow">בראבו</span><span class="bt sm grow">${I('send')}לנצח את הטמפו שלי</span></div>`,{title:'אתגר הדרן',left:`<span class="ib">${I('flag')}</span>`}),
+ w:()=>wide(`${H2('ii–V ב־'+B('F')+' — שתי עטיפות','אתגר הדרן · מאת '+B('CodaFox42')+' · 37 נגנים הגיעו ליעד',`${diffBadge}<span class="ib">${I('flag')}</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="col grow" style="gap:12px"><div class="cd col">${staff({w:600,h:140,sp:8.5,top:44,chords:CH_F})}<div class="row" style="gap:8px"><span class="bt sm">${I('play')}להשמיע</span><span class="bt sm">${I('mic')}הקליפ של היוצר</span><span class="grow"></span><span class="ch">${Q('200')}</span><span class="ch">כל 12</span><span class="ch">יד ימין</span></div></div><div class="cd col"><div class="t2">ההתקדמות שלך באתגר</div>${strip(6,6)}<div class="t3">6 סולמות ב־${Q('200')} · הבא ${B('A♭')}</div></div><div class="row" style="gap:10px"><span class="bt pr grow">לקבל את האתגר</span><span class="bt">בראבו</span><span class="bt">${I('send')}לנצח את הטמפו שלי</span></div></div>
+   <div class="cd col" style="width:430px;gap:6px"><div class="row"><span class="t2 grow">הלוח</span><div class="seg" style="width:170px"><span class="on">חברים</span><span>כולם</span></div></div>${board(5)}<div class="tiny">דירוג: סולמות ביעד · טמפו נקי · דיוק. רק ניסיונות שנמדדו.</div></div></div>`,'קהילה','p/K7Q2MX9A')});
+
+// 22 feed
+S.push({title:'אתגרי הדרן: הגלריה',note:'דף סופי, לא פיד אינסופי: משפט השבוע, מחברים, עולים השבוע (לפי כמה “למדו את זה”, לא כמה ניגנו). מסננים לפי כלי, דרגה וסגנון. שום דבר לא מתנגן עד שנוגעים.',
+ p:()=>phone(`<div class="row" style="gap:6px"><span class="ch on">פסנתר</span><span class="ch">דרגה 5–8</span><span class="ch">ביבופ</span><span class="ch">${B('ii–V')}</span></div>
+   <div class="cd col" style="gap:6px"><div class="row"><span class="pill ac">משפט השבוע</span><span class="grow"></span><span class="tiny">נגמר בעוד 4 ימים</span></div>${roll({notes:TAKE,w:320,h:80,from:34,to:46,lo:58,hi:86,chords:['Dm7♭5','G7','Cm6']})}<div class="t2">ירידה מינורית על ${B('ii–V')}</div><div class="t3">${B('BluesOwl')} · דרגה 6 · 112 משתתפים</div></div>
+   <div class="t2">מחברים</div>
+   <div class="cd col" style="gap:0;padding:6px 12px"><div class="lst">${[['ריף פתיחה לבלוז ב־'+B('B♭'),'Noa.K · דרגה 4',4],['פתיחה מודאלית ב־'+B('D'),'Itai · דרגה 5',0]].map(([t,s,n])=>`<div class="it"><span class="thumb">${roll({w:54,h:38,from:4,to:16})}</span><div class="grow"><div class="t2">${t}</div><div class="t3">${s}</div></div>${strip(n,n)}</div>`).join('')}</div></div>
+   <div class="t2">עולים השבוע</div>
+   <div class="cd col" style="gap:0;padding:6px 12px"><div class="lst"><div class="it"><span class="thumb">${roll({w:54,h:38,from:0,to:10})}</span><div class="grow"><div class="t2">שרשרת עטיפות על ${B('Cmaj7')}</div><div class="t3">48 למדו את זה השבוע</div></div></div></div></div>`,{title:'אתגרי הדרן',sub:'קהילה',left:`<span class="ib">${I('search')}</span>`}),
+ w:()=>wide(`${H2('אתגרי הדרן','קהילה · השבוע',`<span class="ch on">פסנתר</span><span class="ch">גיטרה</span><span class="ch">קול</span><span class="ch">דרגה 5–8</span><span class="ch">ביבופ</span><span class="ch">${B('ii–V')}</span><span class="ib">${I('search')}</span>`)}
+   <div class="row" style="gap:16px;align-items:stretch;flex:1"><div class="cd col" style="width:430px;gap:8px"><div class="row"><span class="pill ac">משפט השבוע</span><span class="grow"></span><span class="tiny">נגמר בעוד 4 ימים</span></div>${roll({notes:TAKE,w:390,h:120,from:34,to:46,lo:58,hi:86,chords:['Dm7♭5','G7','Cm6']})}<div class="t1">ירידה מינורית על ${B('ii–V')}</div><div class="t3">${B('BluesOwl')} · דרגה 6 · 112 משתתפים · 41 הגיעו ליעד</div><span class="bt pr">לקבל את האתגר</span></div>
+   <div class="col grow" style="gap:12px"><div class="t2">מחברים</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${[['ריף פתיחה לבלוז ב־'+B('B♭'),'Noa.K · דרגה 4',4],['פתיחה מודאלית ב־'+B('D'),'Itai · דרגה 5',0]].map(([t,s,n])=>`<div class="cd col" style="gap:6px">${roll({w:300,h:56,from:2,to:14})}<div class="t2">${t}</div><div class="row"><span class="t3 grow">${s}</span>${strip(n,n)}</div></div>`).join('')}</div><div class="t2">עולים השבוע</div><div class="cd col" style="gap:0"><div class="lst">${[['שרשרת עטיפות על '+B('Cmaj7'),'48 למדו את זה השבוע · דרגה 7'],['ליין בלוז עם תו כחול','31 למדו את זה · דרגה 3'],['ארפג׳ו מתהפך על '+B('Gm7'),'22 למדו את זה · דרגה 5']].map(([t,s],i)=>`<div class="it"><span class="big" style="font-size:18px;width:20px">${i+1}</span><div class="grow"><div class="t2">${t}</div><div class="t3">${s}</div></div><span class="ib sm">${I('play')}</span></div>`).join('')}</div></div><div class="tiny" style="text-align:center">זה הכול לשבוע הזה</div></div></div>`,'קהילה','community/encore')});
+
+/* ------------------------------------------------------------ build + viewer */
+const deck=document.getElementById('deck');
+deck.innerHTML=S.map((s,i)=>s.cover?`<section class="slide" data-i="${i}">${s.html}</section>`:
+ `<section class="slide" data-i="${i}"><div class="cap"><h2>${s.title}</h2><p>${s.note}</p></div><div class="stage"><div><div class="fit fp"><div class="inner">${s.p()}</div></div><div class="lbl">טלפון · <bdi dir="ltr">390×844</bdi></div></div><div><div class="fit fw"><div class="inner">${s.w()}</div></div><div class="lbl">מחשב · <bdi dir="ltr">1280×800</bdi></div></div></div></section>`).join('');
+const slides=[...deck.querySelectorAll('.slide')];
+let cur=0;try{cur=Math.min(slides.length-1,Math.max(0,parseInt(location.hash.slice(1))||0));}catch(e){}
+function fit(){const vw=innerWidth,vh=innerHeight-56;const sl=slides[cur];const cap=sl.querySelector('.cap');const capH=cap?cap.offsetHeight+12:0;
+  const fp=sl.querySelector('.fp'),fw=sl.querySelector('.fw');if(!fp)return;
+  let sp,sw;
+  if(vw>=900){const H=vh-capH-60;sp=Math.min(1,H/864);const pw=410*sp;const W=Math.min(vw,1700)-48-pw-28;sw=Math.min(W/1284,H/804);}
+  else{sp=Math.min(1,(vw-32)/410);sw=(vw-32)/1284;}
+  [[fp,410,864,sp],[fw,1284,804,sw]].forEach(([el,w,h,s])=>{el.style.width=w*s+'px';el.style.height=h*s+'px';el.firstElementChild.style.transform=`scale(${s})`;});}
+function show(i){cur=(i+slides.length)%slides.length;slides.forEach((s,j)=>s.classList.toggle('on',j===cur));document.getElementById('cnt').textContent=`${cur+1} / ${slides.length} · ${S[cur].title}`;try{history.replaceState(null,'','#'+cur);}catch(e){}deck.scrollTop=0;fit();}
+document.getElementById('next').onclick=()=>show(cur+1);
+document.getElementById('prev').onclick=()=>show(cur-1);
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(cur+1);}else if(e.key==='ArrowRight'||e.key==='PageUp'){e.preventDefault();show(cur-1);}else if(e.key==='Home')show(0);else if(e.key==='End')show(slides.length-1);});
+addEventListener('resize',fit);
+document.getElementById('theme').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark';};
+show(cur);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+})();
+</script>
+</body>
+</html>
