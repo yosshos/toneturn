@@ -38,6 +38,8 @@ export const BASS_TRACK: Partial<Record<BassFamilyId, 'jazz' | 'prog'>> = {
   'b-harrisline': 'jazz',
   // HARMONY-REHARM: the bass reharmonizes (colorDrills.ts).
   'b-counter': 'jazz',
+  // Triad pairs on the bass (tpairDrills.ts).
+  'b-tpair': 'jazz',
   'b-jform': 'jazz',
   'b-latin': 'jazz',
   'b-odd': 'prog',

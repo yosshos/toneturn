@@ -20,6 +20,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-harrisline': 'bhline', 'g-harrisline': 'gbhline', 'b-harrisline': 'bbhline',
   // HARMONY-REHARM: one note many chords, mediants, organ, colour harmony on the neck, the bass reharmonizes.
   'k-ctone': 'ctone', 'g-ctone': 'gctone', 'k-mediant': 'mediant', 'g-color': 'gcolor', 'k-organ': 'organ', 'b-counter': 'bcounter',
+  // Triad pairs, deep: two note stacks under a bracket (keys), two shapes on three strings (guitar), a climbing arpeggio (bass).
+  'k-tpair': 'tpairkeys', 'g-tpair': 'tpairneck', 'b-tpair': 'tpairbass',
   // AUDIT-CONTENT-THEORY §ז.2: the first steps — sitting at the piano; matching a held note (the drone) for the voice.
   'k-first': 'person', 'v-first': 'drone',
   // GUITAR_DEEPENING: the guitarist's ear, Barry Harris on the neck, prog / fusion.
@@ -100,6 +102,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   staffrunner: 'staffrunner', rootcatch: 'rootcatch', strumchange: 'strumchange', rebound: 'rebound', singback: 'singback',
   // HARMONY-REHARM still-open games.
   thirdjump: 'thirdjump', darkside: 'darkside',
+  // Triad pairs, deep: the Which Pair? game.
+  whichpair: 'whichpair',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

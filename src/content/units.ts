@@ -42,6 +42,7 @@ import { UNITS as REHARM_COLOR } from './mini/reharmColor'; // HARMONY-REHARM
 import { UNITS as SOLO_PIANO } from './mini/soloPiano'; // Siskind: solo jazz piano
 import { UNITS as FIRST_STEPS_MORE } from './mini/firstStepsMore'; // AUDIT-6 Stage B: the new beginnings
 import { UNITS as AUDIT7 } from './mini/audit7'; // AUDIT-7: written theory from grade 1, the jazz entry, voice gaps
+import { UNITS as TPAIR_DEEP } from './mini/triadPairsDeep'; // triad pairs, deep (2026-11-16)
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -76,6 +77,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...FIRST_STEPS_MORE,
   ...STAGE_C,
   ...AUDIT7,
+  ...TPAIR_DEEP,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

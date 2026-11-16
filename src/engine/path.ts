@@ -1269,6 +1269,8 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   // HARMONY-REHARM still-open games: chromatic mediants and modal interchange, from their ladders' first ratings.
   thirdjump: { domain: 'pitch', skill: 'cadences', sub: 'chromatic', title: { en: 'Third Jump', he: 'קפיצת טרצה' }, minDiff: 1250 },
   darkside: { domain: 'pitch', skill: 'cadences', sub: 'chromatic', title: { en: 'Dark Side', he: 'הצד האפל' }, minDiff: 1100 },
+  // Triad pairs, deep: Which Pair? from the first pair's rating (advanced, ~1350–1850).
+  whichpair: { domain: 'pitch', skill: 'modes', sub: 'scales', title: { en: 'Which Pair?', he: 'איזה זוג?' }, minDiff: 1350 },
   // AUDIT-7 hole #14: a beginner game per instrument course, in the beginner band's units (720 → 1150).
   staffrunner: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Staff Runner', he: 'רץ החמשה' }, forPlays: ['keys', 'piano'], minDiff: 720, maxDiff: 1150 },
   rootcatch: { domain: 'instrument', skill: 'instrument', sub: 'bass-tech', title: { en: 'Root Catcher', he: 'תופס השורשים' }, forPlays: ['bass'], minDiff: 720, maxDiff: 1150 },
@@ -1277,7 +1279,7 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   singback: { domain: 'voice', skill: 'singing', sub: 'match', title: { en: 'Sing It Back', he: 'שרים בחזרה' }, needsMic: true, minDiff: 720, maxDiff: 1150 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
-  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside'],
+  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
   voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],

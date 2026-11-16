@@ -27,6 +27,7 @@ import { generateGuitarJazzStart } from './guitarJazzStart'; // AUDIT-7 #2: the 
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
 import { genGuitarColor, guitarColorFamily, guitarCtoneFamily } from './colorDrills'; // HARMONY-REHARM
+import { genTpairGuitar, guitarTpairFamily } from './tpairDrills'; // triad pairs, deep (2026-11-16)
 import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
@@ -2395,6 +2396,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
     case 'g-ctone':
     case 'g-color':
       return genGuitarColor(s, tu);
+    // Triad pairs, deep (tpairDrills.ts): shapes and lines on string sets, comping, lines over ii–V–I.
+    case 'g-tpair':
+      return genTpairGuitar(s, tu);
     case 'g-theory':
       return generateTheoryGuitar(s, tu);
     case 'g-bebop':
@@ -2681,6 +2685,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // the sus reharm on the neck — all 12 keys (colorDrills.ts).
     guitarCtoneFamily(LT, fam),
     guitarColorFamily(LT, fam),
+    // Triad pairs, deep (owner 2026-11-16): string sets, the hexatonic, comping, ii–V–I, side-slip — all 12 keys.
+    guitarTpairFamily(LT, fam),
     fam('g-reading', 'Reading by position', 'קריאה לפי מצבים', 'classical', ['all'], [
       L('g-reading', 1, 'Position I, strings 1–3', 'מצב I, מיתרים 1–3', [RD('position', { position: 1, option: 1 })], [0]),
       L('g-reading', 2, 'Position I, all strings', 'מצב I, כל המיתרים', [RD('position', { position: 1 })], [0, 7, 5]),

@@ -179,6 +179,12 @@ function secondTag(drill: Drill): Tags[number] | null {
   // HARMONY-REHARM (colorDrills.ts): colour reharm rates reharmonisation; organ comping rates voicings.
   if (f === 'k-ctone' || f === 'g-ctone' || f === 'k-mediant' || f === 'g-color' || f === 'b-counter') return { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 };
   if (f === 'k-organ') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+  // Triad pairs, deep (tpairDrills.ts): pair voicings and comping rate voicings; patterns and lines rate improvising vocabulary.
+  if (f === 'k-tpair' || f === 'g-tpair' || f === 'b-tpair') {
+    const k = drill.spec.kind;
+    if (k === 'tpk-close' || k === 'tpk-spread' || k === 'tpk-block' || k === 'tpk-comp' || k === 'gtp-shapes' || k === 'gtp-comp') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
+    return { skill: 'improv', sub: 'improv/vocab', w: 0.3 };
+  }
   if (f === 'k-reharm') {
     const k = drill.spec.kind;
     if (k.startsWith('rh-') && ['rh-mi', 'rh-pedalpt', 'rh-planemel', 'rh-approach', 'rh-slip', 'rh-sus', 'rh-modern', 'rh-maj7s5'].includes(k)) return { skill: 'cadences', sub: 'cadences/reharm', w: 0.3 };

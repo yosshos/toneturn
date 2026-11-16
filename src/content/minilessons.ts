@@ -32,7 +32,7 @@ import { LESSONS as GUITAR } from './mini/guitar';
 import { LESSONS as MY_SONG } from './mini/mySong';
 import { LESSONS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THEORY R-1…R-5
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK, ...HARRIS_LINES, ...REHARM_COLOR, ...SOLO_PIANO, ...FIRST_STEPS_MORE, ...STAGE_C, ...AUDIT7, ...GIG].filter((l) => lessonVerified(l.id)).map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK, ...HARRIS_LINES, ...REHARM_COLOR, ...SOLO_PIANO, ...FIRST_STEPS_MORE, ...STAGE_C, ...AUDIT7, ...GIG, ...TPAIR_DEEP].filter((l) => lessonVerified(l.id)).map((l) => [l.id, l]));
 // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): one lesson per stage of k-vl / g-vl.
 import { LESSONS as VOICE_LEAD } from './mini/voiceLead';
 
@@ -77,3 +77,5 @@ import { LESSONS as STAGE_C } from './mini/stageC';
 export const lessonForUnit = (unit: string): MiniLesson | null => MINI_LESSONS[UNIT_LESSON[unit] ?? ''] ?? null;
 // AUDIT-7: note values, interval numbers, the jazz entry on guitar / bass / voice, the singer's first steps, improvising in pop, pop style.
 import { LESSONS as AUDIT7 } from './mini/audit7';
+// Triad pairs, deep (2026-11-16): lines and voicings; on guitar and bass.
+import { LESSONS as TPAIR_DEEP } from './mini/triadPairsDeep';

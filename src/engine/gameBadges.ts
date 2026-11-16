@@ -60,6 +60,8 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   // HARMONY-REHARM still-open games.
   { game: 'thirdjump', name: l('Third Jump', 'קפיצת טרצה'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('Keeps the Note', 'שומר על הצליל'), l('Mediants by Ear', 'מדיאנטות בשמיעה'), l('Film Cue', 'מוזיקת סרט')] },
   { game: 'darkside', name: l('Dark Side', 'הצד האפל'), course: 'jazz', alsoIn: ['ear'], titles: [l('Hears the Borrowed', 'שומע את השאול'), l('Borrowed Sevenths', 'ספטאקורדים שאולים'), l('Both Sides', 'משני הצדדים')] },
+  // Triad pairs, deep.
+  { game: 'whichpair', name: l('Which Pair?', 'איזה זוג?'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('Finds the Pair', 'מוצא את הזוג'), l('Pairs in Every Key', 'זוגות בכל הסולמות'), l('Plays the Pair', 'מנגן את הזוג')] },
   { game: 'singback', name: l('Sing It Back', 'שרים בחזרה'), course: 'voice', titles: [l('Matches the Note', 'מתאים את הצליל'), l('Echoes in Time', 'הד בזמן'), l('Sings Any Phrase Back', 'מחזיר כל משפט')] },
 ];
 

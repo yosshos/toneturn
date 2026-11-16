@@ -346,11 +346,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // AUDIT-6 Stage B: the first steps at the piano grew to 11 levels and have their titles now (k-first), like the
 // guitar's (g-first); bass and drum first steps get the bass / drum milestones with their own names (bassBadges, drumBadges).
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic', 'k-gig'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-gig'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic', 'k-gig', 'k-tpair'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-gig', 'g-tpair'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter', 'g-gig'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter', 'g-gig', 'g-tpair'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -370,6 +370,9 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-organ': { en: 'Organ comping', he: 'ליווי באורגן' },
   'g-ctone': { en: 'One note, many chords on guitar', he: 'צליל אחד, הרבה אקורדים בגיטרה' },
   'g-color': { en: 'Colour harmony on guitar', he: 'הרמוניית צבע בגיטרה' },
+  // Triad pairs, deep (tpairDrills.ts).
+  'k-tpair': { en: 'Triad pairs', he: 'זוגות משולשים' },
+  'g-tpair': { en: 'Triad pairs on guitar', he: 'זוגות משולשים בגיטרה' },
   'k-theory': { en: 'Theory you play', he: 'תאוריה בביצוע' },
   'k-vocab': { en: 'Bebop vocabulary', he: 'שפת הביבופ' },
   'k-indep': { en: 'Hand independence', he: 'עצמאות הידיים' },
@@ -462,6 +465,9 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-organ': 'organ',
   'g-ctone': 'gctone',
   'g-color': 'gcolor',
+  // Triad pairs, deep: two interlocking triads over a bass line; the same on three strings.
+  'k-tpair': 'tpairkeys',
+  'g-tpair': 'tpairneck',
   'k-theory': 'tpair',
   'k-vocab': 'enclose',
   'k-indep': 'indep',
@@ -545,6 +551,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-organ': [['Organ Half Notes', 'חצאים באורגן'], ['Organ Walker', 'מהלך האורגן'], ['Inner-Voice Organist', 'אורגניסט הקול הפנימי'], ['Minor-Blues Organist', 'אורגניסט הבלוז המינורי'], ['Texture Shaper', 'מעצב המרקם'], ['Organ Balladeer', 'בלדות באורגן'], ['Held-Third Ballad', 'בלדת הטרצה הנשארת']],
   'g-ctone': [['Held Note on the Neck', 'צליל נשאר על הצוואר'], ['Drop 2 Under the Note', 'דרופ 2 מתחת לצליל על הצוואר'], ['Middle-String Common Tone', 'צליל משותף על המיתרים האמצעיים'], ['Tensions on the Neck', 'טנשנים על הצוואר'], ['Common-Tone Guitarist', 'גיטריסט הצליל המשותף'], ['Eight Ways on the Neck', 'שמונה דרכים על הצוואר']],
   'g-color': [['Borrowed iv on the Neck', 'iv שאול על הצוואר'], ['Flat Six, Flat Seven', '♭VI, ♭VII על הצוואר'], ['Mediant Guitarist', 'גיטריסט המדיאנטות'], ['Thirds Cycles on the Neck', 'מעגלי טרצות על הצוואר'], ['Mediant Drop 2', 'דרופ 2 מדיאנטי'], ['Minor Plagal Guitarist', 'גיטריסט הפלגלית המינורית'], ['Half-Diminished Two', 'ה־ii החצי מוקטן'], ['Dameron Turnaround', 'הטרנאראונד של דמרון'], ['Borrowing in Minor', 'השאלה במינור'], ['Planing Guitarist', 'גיטריסט הפליינינג'], ['Side-Slipper', 'מחליק הצידה'], ['Sus Reharmonizer', 'מהרמן הסאס'], ['Open-String Pedal', 'פדל על מיתר פתוח'], ['Dominant Pedal on the Neck', 'פדל דומיננטה על הצוואר'], ['Ringing Strings', 'מיתרים מצלצלים']],
+  // Triad pairs, deep: one title per level (k-tpair 16, g-tpair 7).
+  'k-tpair': [['Root-Position Pairs', 'זוגות במצב יסודי'], ['Every Permutation', 'כל הפרמוטציות'], ['Pairs Over the Shell', 'זוגות מעל השלד'], ['Inversion Weaver', 'אורג ההיפוכים'], ['Intervallic Cells', 'תאים אינטרוולים'], ['Hexatonic Runner', 'רץ ההקסטוני'], ['Two-Hand Spread', 'פריסה בשתי ידיים'], ['Three Over Four', 'שלוש על ארבע'], ['Vamp Colourist', 'צבעי הוואמפ'], ['Block-Chord Pairs', 'זוגות באקורדי בלוק'], ['Pairs Through ii–V–I', 'זוגות לאורך ii–V–I'], ['Pair Comper', 'מלווה הזוגות'], ['Blues in Pairs', 'בלוז בזוגות'], ['Half-Step Out and Back', 'חצי טון החוצה ובחזרה'], ['Pairs Through the Form', 'זוגות לאורך הצורה'], ['Symmetric Pairs', 'זוגות סימטריים']],
+  'g-tpair': [['Pair Shapes on the Neck', 'צורות זוג על הצוואר'], ['Top-String Pair Lines', 'קווי זוגות על המיתרים העליונים'], ['Middle-String Inversions', 'היפוכים על המיתרים האמצעיים'], ['Hexatonic in Position', 'הקסטוני במצב אחד'], ['Pair-Shape Comper', 'מלווה בצורות זוג'], ['Pair Lines Through ii–V–I', 'קווי זוגות לאורך ii–V–I'], ['Side-Slip on the Neck', 'החלקה הצידה על הצוואר']],
   'k-reharm': [['Altered Colourist', 'צבעי האלטרד'], ['Minor-Cadence Maker', 'עושה הקדנצה המינורית'], ['Ballad Voicer', 'מעצב הבלדות'], ['Reharmoniser', 'מחדש ההרמוניה'], ['Modal Comper', 'המלווה המודאלי'], ['Solo Pianist', 'פסנתרן סולו'], ['Harmony Master', 'אמן ההרמוניה']],
   // THEORY_PLAY: one title for each of the seven levels.
   'k-theory': [['Pentatonic Painter', 'צייר הפנטטוני'], ['Upper-Structure Builder', 'בונה המבנים העליונים'], ['Dominant Colourist', 'צבעי הדומיננט'], ['Triad-Pair Player', 'נגן זוגות המשולשים'], ['Line-Cliché Reharmoniser', 'מחדש בליין קלישה'], ['Hexatonic Liner', 'קווי ההקסטוניק'], ['Colours Through ii–V–I', 'צבעים לאורך ii–V–I']],

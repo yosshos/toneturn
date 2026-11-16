@@ -99,6 +99,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   // HARMONY-REHARM still-open games (always tiered; `diff` is a fallback).
   thirdjump: { tags: () => T2(['cadences', 'chromatic', 0.7], ['theory', 'chromatic', 0.3]), diff: () => 1400 },
   darkside: { tags: () => T2(['cadences', 'chromatic', 0.7], ['cadences', 'reharm', 0.3]), diff: () => 1300 },
+  // Triad pairs, deep: Which Pair? (always tiered; `diff` is a fallback).
+  whichpair: { tags: () => T2(['modes', 'scales', 0.6], ['improv', 'vocab', 0.4]), diff: () => 1500 },
   // AUDIT-7 hole #14: the beginner game per instrument (always tiered; `diff` is a fallback).
   staffrunner: { tags: () => T2(['instrument', 'piano-tech', 0.5], ['notes', 'staff', 0.5]), diff: () => 850 },
   rootcatch: { tags: () => T2(['instrument', 'bass-tech', 0.6], ['cadences', 'roots', 0.4]), diff: () => 850 },
