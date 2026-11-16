@@ -19,10 +19,14 @@ import { SKILLS } from '../engine/rating';
 import { TOPIC_GEN } from '../engine/topics';
 import type { Strings } from '../i18n/strings';
 import { assignmentTitle } from './Classes';
+import { assignTitle, autoMark, decodePhraseRef, keyStrip, submissionKey } from '../engine/encore/assign';
+import { kName } from './encore/bits';
+import '../teachphrase.css';
 
 type Lang = 'en' | 'he';
 const TX = {
   en: {
+    phrase: 'Phrase (play it)', phraseOpen: 'Play and assign a phrase', auto: 'Graded automatically', autoHint: 'Each key a student passes is graded by the strictness; tap a mark to override.', override: 'Override',
     kind: 'What', lesson: 'Path lesson', topic: 'Topic level', drill: 'Technique level', chart: 'Chord chart', piece: 'Piece',
     level: 'Level', strict: 'Strictness', lenient: 'Lenient', moderate: 'Moderate', strictS: 'Strict', bpm: 'Target ♩', note: 'Note to the class',
     due: 'Due', assign: 'Assign', voicing: 'Voicing', rhythm: 'Rhythm', mode: 'Mode', comp: 'Comp', improv: 'Improvise', rules: 'Improvise under rules', challenge: 'Challenge', over: 'Over', pieceText: 'What to practice (piece, bars, tempo…)',
@@ -32,6 +36,7 @@ const TX = {
     parent: 'Parent link', parentHint: 'A private page for a parent: this week’s practice, streak, skills mastered and the teacher’s latest comments. No sign-in needed; you can turn it off.', make: 'Make a link', copy: 'Copy', revoke: 'Turn off', copied: 'Copied',
   },
   he: {
+    phrase: 'משפט (לנגן)', phraseOpen: 'לנגן ולהטיל משפט', auto: 'נבדק אוטומטית', autoHint: 'כל סולם שתלמיד עובר נבדק לפי הקפדנות; נגיעה בסימן משנה את הציון.', override: 'לשנות',
     kind: 'מה', lesson: 'שיעור במסלול', topic: 'רמה בנושא', drill: 'רמה בטכניקה', chart: 'מהלך אקורדים', piece: 'יצירה',
     level: 'רמה', strict: 'קפדנות', lenient: 'מקלה', moderate: 'בינונית', strictS: 'קפדנית', bpm: 'טמפו יעד ♩', note: 'הערה לכיתה',
     due: 'עד', assign: 'להטיל', voicing: 'קולות', rhythm: 'קצב', mode: 'מצב', comp: 'ליווי', improv: 'אלתור', rules: 'אלתור עם כללים', challenge: 'אתגר', over: 'על', pieceText: 'מה לתרגל (יצירה, תיבות, טמפו…)',
@@ -61,6 +66,10 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
     const lv = /^lv:(\d+)$/.exec(k.ref);
     const name = lv ? IMPROV_LEVELS.find((x) => x.n === Number(lv[1]))?.title[lang] ?? k.ref : k.ref;
     return `${name} · ${k.mode === 'improv' ? TX[lang].improv : VOICING_NAME[k.voicing]?.[lang] ?? k.voicing}`;
+  }
+  if (a.kind === 'phrase') {
+    const p = decodePhraseRef(a.ref);
+    return p ? `${assignTitle(p, lang)} · ${kName(p.homeKey, p.minor)}` : TX[lang].phrase;
   }
   if (a.kind === 'piece') return a.ref ?? TX[lang].piece;
   return assignmentTitle(a.lessonId, lang, t);
@@ -106,7 +115,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
       <label className="af-row">
         <span>{tx.kind}</span>
         <select value={kind} onChange={(e) => setKind(e.target.value as AssignKind)} data-assign-kind="1">
-          {(['topic', 'lesson', 'drill', 'chart', 'piece'] as const).map((k) => (
+          {(['topic', 'lesson', 'drill', 'chart', 'piece', 'phrase'] as const).map((k) => (
             <option key={k} value={k}>
               {tx[k]}
             </option>
@@ -220,6 +229,13 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
           )}
         </div>
       )}
+      {kind === 'phrase' && (
+        <button className="btn primary small" onClick={() => (location.hash = `/teach/new/${encodeURIComponent(classId)}`)} data-assign-phrase="1">
+          {tx.phraseOpen}
+        </button>
+      )}
+      {kind === 'phrase' ? null : (
+      <>
       {kind === 'piece' && <input value={piece} maxLength={200} onChange={(e) => setPiece(e.target.value)} placeholder={tx.pieceText} aria-label={tx.pieceText} />}
       <div className="af-grid">
         <label className="af-row">
@@ -243,6 +259,8 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
       <button className="btn primary small" disabled={busy || !can} onClick={() => void go()} data-assign-go="1">
         {tx.assign}
       </button>
+      </>
+      )}
     </div>
   );
 }
@@ -251,7 +269,9 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
 
 export function GradingInbox({ detail, lang, t, onChanged }: { detail: ClassDetail; lang: Lang; t: Strings; onChanged: () => void }) {
   const tx = TX[lang];
-  const items = inboxOf(detail);
+  // phrase submissions are graded automatically (owner decision §20.9): they leave "to grade" and show below
+  const items = inboxOf(detail).filter(({ a }) => a.kind !== 'phrase');
+  const autos = autoRows(detail);
   const [text, setText] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const send = async (id: string, mark: Mark | null) => {
@@ -290,8 +310,70 @@ export function GradingInbox({ detail, lang, t, onChanged }: { detail: ClassDeta
           </li>
         ))}
       </ul>
+      {autos.length > 0 && (
+        <>
+          <h3>{tx.auto}</h3>
+          <small className="field-hint">{tx.autoHint}</small>
+          <ul className="inbox-list" data-inbox-auto="1">
+            {autos.slice(0, 30).map((r) => (
+              <li key={`${r.a.id}:${r.user}`} className={`ib-auto ${r.passed ? 'ok' : 'low'}`} data-auto-mark={r.mark}>
+                <div className="ib-head">
+                  <b>{r.name}</b>
+                  <span>{itemTitle(r.a, lang, t)}</span>
+                  <small dir="ltr">
+                    {r.done}/{r.req.length} · ♩{r.bestBpm} · {r.minutes} {tx.min}
+                  </small>
+                </div>
+                <span className="ib-strip" aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, k) => (
+                    <i key={k} className={`${r.req.includes(k) ? 'req' : ''} ${r.strip.has(k) ? 'd' : ''}`} />
+                  ))}
+                </span>
+                <div className="ib-act">
+                  <span className="ib-mark" data-auto-shown={r.shown}>
+                    {tx[r.shown]}
+                    {r.overridden ? '' : ` · ${tx.auto}`}
+                  </span>
+                  {(['great', 'good', 'again'] as const)
+                    .filter((m) => m !== r.shown)
+                    .map((m) => (
+                      <button key={m} className="btn ghost small" disabled={busy === r.last.id} onClick={() => void send(r.last.id, m)} data-override={m} aria-label={`${tx.override}: ${tx[m]}`}>
+                        {tx[m]}
+                      </button>
+                    ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
+}
+
+/** Phrase assignments in the teacher's inbox: one row per (assignment, student) with the 12-key strip, the automatic
+ * mark from the best score per key and the strictness, and the teacher's override (a mark on the latest submission). */
+export function autoRows(d: ClassDetail) {
+  const out: { a: AssignItem; user: string; name: string; req: number[]; strip: Map<number, { score: number; bpm: number }>; done: number; bestBpm: number; minutes: number; passed: boolean; mark: Mark; shown: Mark; overridden: boolean; last: AssignItem['submissions'][number] }[] = [];
+  for (const a of d.assignments) {
+    if (a.kind !== 'phrase') continue;
+    const p = decodePhraseRef(a.ref);
+    if (!p) continue;
+    const req = p.plan.keys === 'all' ? Array.from({ length: 12 }, (_, k) => k) : p.plan.keys;
+    const byUser = new Map<string, AssignItem['submissions']>();
+    for (const s of a.submissions) if (submissionKey(s.metrics)) byUser.set(s.userId ?? '?', [...(byUser.get(s.userId ?? '?') ?? []), s]);
+    for (const [user, subs] of byUser) {
+      const strip = keyStrip(subs);
+      const scores = req.map((k) => strip.get(k)?.score ?? 0);
+      const done = req.filter((k) => strip.has(k)).length;
+      // the assignment's automatic mark: the weakest required key (missing keys count as not yet)
+      const mark = autoMark(done ? Math.min(...scores) : null, a.strictness);
+      const last = [...subs].sort((x, y) => y.createdAt.localeCompare(x.createdAt))[0];
+      const said = subs.find((s) => s.mark);
+      out.push({ a, user, name: last.name ?? '', req, strip, done, bestBpm: Math.max(0, ...[...strip.values()].map((x) => x.bpm)), minutes: subs.reduce((m, s) => m + (s.minutes ?? 0), 0), passed: mark !== 'again', mark, shown: said?.mark ?? mark, overridden: !!said?.mark, last });
+    }
+  }
+  return out.sort((x, y) => y.last.createdAt.localeCompare(x.last.createdAt));
 }
 
 /** Students × skills: each cell coloured by first-try accuracy; minutes this week; "behind" when the week is empty. */

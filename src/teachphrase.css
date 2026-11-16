@@ -1,0 +1,46 @@
+/* Teacher phrase assignments (SPEC-PHRASE-STUDIO §11): the teacher's sheet and the student's assignment, one phone
+   screen each; v2 tokens, ink outlines, flat fills, small icon buttons. */
+.tp-screen { gap: 8px; }
+.tp-screen .icon-btn.small { width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; font-weight: 800; }
+.tp-cap { display: flex; flex-direction: column; gap: 4px; padding: 7px 9px; }
+.tp-cap .t3 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tp-select { width: 100%; font: inherit; border: 2px solid var(--line-strong); border-radius: 10px; padding: 4px 8px; background: var(--card); color: var(--ink); }
+.tp-bars { gap: 6px; flex-wrap: nowrap; }
+.tp-bars .tiny { margin-inline-start: auto; }
+.tp-step { display: inline-flex; align-items: center; gap: 4px; }
+.tp-step b { min-width: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.tp-kv { display: flex; flex-direction: column; gap: 0; padding: 2px 10px; }
+.tp-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; border-bottom: 1.5px solid var(--line); font-size: 0.85rem; font-weight: 600; }
+.tp-row:last-child { border-bottom: 0; }
+.tp-row > span:first-child { color: var(--ink-dim); white-space: nowrap; }
+.tp-row .enc-seg { flex: 0 1 190px; }
+.tp-row .enc-seg button { font-size: 0.74rem; padding: 4px 2px; }
+.tp-row select, .tp-row input[type='date'], .tp-row input[type='number'] { font: inherit; font-size: 0.8rem; border: 2px solid var(--line-strong); border-radius: 9px; padding: 3px 6px; background: var(--card); color: var(--ink); max-width: 60%; }
+.tp-row input[type='number'] { width: 76px; }
+.tp-row .ch { padding: 2px 8px; font-size: 0.76rem; }
+.tp-row b { font-variant-numeric: tabular-nums; min-width: 48px; text-align: center; }
+.tp-ring { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 4px 0 6px; }
+.tp-k { font: 700 0.74rem var(--font); border: 2px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--ink); padding: 3px 0; cursor: pointer; }
+.tp-k.on { background: var(--accent); color: var(--accent-ink); border-color: var(--outline); }
+.tp-note { font: inherit; font-size: 0.85rem; border: 2px solid var(--line-strong); border-radius: 12px; padding: 7px 10px; background: var(--card); color: var(--ink); width: 100%; box-sizing: border-box; }
+.tp-from { display: flex; flex-direction: column; gap: 5px; }
+.tp-hear { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; }
+.tp-locks { gap: 6px; }
+.tp-locks .ch { cursor: default; font-size: 0.76rem; }
+.tp-lock { flex: none; }
+.tp-prog { display: flex; flex-direction: column; gap: 5px; }
+.tp-strip { display: inline-flex; gap: 3px; }
+.tp-strip i { width: 14px; height: 14px; border: 1.5px dashed var(--line-strong); border-radius: 3px; background: var(--card); }
+.tp-strip i.req { border: 2px solid var(--outline); }
+.tp-strip i.d { background: var(--accent); }
+.tp-strip i.c { background: var(--now); }
+.tp-said { display: flex; flex-direction: column; gap: 3px; }
+.tp-today { display: flex; align-items: center; gap: 10px; }
+.tp-pill { font-size: 0.7rem; font-weight: 800; border-radius: 999px; padding: 2px 8px; border: 2px solid var(--outline); background: var(--accent); color: var(--accent-ink); white-space: nowrap; }
+/* the teacher's inbox: auto-graded phrase rows */
+.ib-auto { display: flex; flex-direction: column; gap: 4px; }
+.ib-auto .ib-strip { display: inline-flex; gap: 2px; direction: ltr; }
+.ib-auto .ib-strip i { width: 10px; height: 10px; border: 1.5px dashed var(--line-strong); border-radius: 2px; }
+.ib-auto .ib-strip i.req { border: 1.5px solid var(--outline); }
+.ib-auto .ib-strip i.d { background: var(--accent); }
+.ib-auto .ib-mark { font-weight: 800; }
