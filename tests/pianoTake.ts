@@ -42,6 +42,8 @@ export function humanTake(d: Drill, bpm: number, sd: number, seed = 7, shift = 0
     const art = d.goal.handArt?.[n.hand] ?? d.goal.articulation;
     const off = art === 'legato' ? on + gap + 15 : art === 'staccato' ? on + 0.3 * gap : art === 'portato' ? on + 0.7 * gap : on + 0.9 * n.dur * beatMs;
     out.push({ pitch: n.pitch + shift, on, off, vel: Math.max(1, Math.min(127, Math.round(vel))) });
+    // grace notes (0.99): crushed in just before the main note, softer
+    (n.graces ?? []).forEach((gr, k, all) => out.push({ pitch: gr.pitch + shift, on: on - 60 * (all.length - k), off: on - 60 * (all.length - k) + 40, vel: Math.max(1, Math.round(base - 10)) }));
   });
   return out.sort((a, b) => a.on - b.on);
 }

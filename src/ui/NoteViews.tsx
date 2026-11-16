@@ -138,6 +138,8 @@ import type { NoteMark } from '../engine/noteMarks';
 import { glidePos, nowX } from '../engine/playhead';
 export type { NoteMark };
 import { drawCue, drawMarks, type MarkSpot } from './markLayer';
+import { graceGroup, markVoice2, onsetColumns, signAfterGrace } from './vfGrace';
+import type { Grace } from '../engine/drills/types';
 /** Marks while a take runs (slice 5): one per drawn item (undefined = not settled yet), with the offset for the tick. */
 export interface LiveMarks {
   marks: NoteMark[];
@@ -172,11 +174,15 @@ function useCueLayer(ref: React.RefObject<HTMLDivElement | null>, geo: React.Ref
 }
 /** A ghost head's key: the note really played, spelled in the staff's key. */
 
-export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, tieIn = false, extra, orns, sharps, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live, cue, prior }: { /** Pitch classes the score writes as sharps (a piece: G♯ in A minor), not flats. */ sharps?: readonly number[]; /** A tie into the first item from the line before (drawn from the staff's start). */ tieIn?: boolean; /** More heads on an item (a chord: the other notes of the same hand at the same time). */ extra?: (number[] | undefined)[]; /** An ornament sign over an item (a VexFlow ornament code: ornaments.ts VF_ORNAMENT). */ orns?: (string | undefined)[]; /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** The count-in: this item's head pulses once (index into notes). */ cue?: number; /** The last take's ticks, faded, under this take's marks (per item). */ prior?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
+export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, marks, rests, meter, timeSig, sig, bars, ties, tieIn = false, tieIns, extra, orns, graces, vox, sharps, now, devs, win = 40, ghosts, spacing = 44, ahead = false, live, cue, prior }: { /** Grace notes drawn small before an item's head (per item; never graded notes of their own). */ graces?: (Grace[] | undefined)[]; /** Two voices on the staff (per item): 2 = the lower voice (stems down, its own rests), else voice 1 (stems up). Items are in time order; each voice must fill the line. */ vox?: (1 | 2 | undefined)[]; /** Tie-ins per item (two voices: a held note of either voice tied in from the line before). */ tieIns?: boolean[]; /** Pitch classes the score writes as sharps (a piece: G♯ in A minor), not flats. */ sharps?: readonly number[]; /** A tie into the first item from the line before (drawn from the staff's start). */ tieIn?: boolean; /** More heads on an item (a chord: the other notes of the same hand at the same time). */ extra?: (number[] | undefined)[]; /** An ornament sign over an item (a VexFlow ornament code: ornaments.ts VF_ORNAMENT). */ orns?: (string | undefined)[]; /** Slice 5: marks while the take runs, per item (an overlay; the music is not redrawn). */ live?: LiveMarks; /** The count-in: this item's head pulses once (index into notes). */ cue?: number; /** The last take's ticks, faded, under this take's marks (per item). */ prior?: LiveMarks; /** px per note before scaling (phones: tighter, so heads come out bigger). */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** ms off the click per item (− early, + late): the length of the timing tick. */ devs?: (number | null | undefined)[]; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The note really played under a wrong-pitch mark (a ghost head there). */ ghosts?: (number | null | undefined)[]; /** The due note (index into notes, −1 none): a now-cue column behind it. */ now?: number; notes: number[]; chord: boolean; keyPc: PitchClass | null; labels?: string[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; durs?: number[]; marks?: NoteMark[]; /** Rests: true where the item is a rest of durs[i] (its note value is ignored). */ rests?: boolean[]; /** Beats per bar: draws bar lines between bars (with durs). */ meter?: number; /** Show the time signature (first line of a passage). */ timeSig?: boolean; /** The time signature text when it is not meter/4 (eighth-note meters: '7/8'). */ sig?: string; /** Mixed meters (prog timeline): the line's bars in quarter notes; a bar with `sig` writes its new time signature after the bar line. Overrides `meter` for the bar lines. */ bars?: { len: number; sig?: string }[]; /** Ties: true where a note is tied to the next one (lead sheets). */ ties?: boolean[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
-      const n = chord ? 1 : notes.length;
+      // Two voices (0.99): voice 1 stems up, voice 2 stems down, each with its rests above / below the middle line.
+      const two = !chord && !!vox?.some((v) => v === 2);
+      const vOf = (i: number): 1 | 2 => (two && vox?.[i] === 2 ? 2 : 1);
+      // the width follows the columns: two voices share a column where they start together
+      const n = chord ? 1 : two && durs ? onsetColumns(durs, notes.map((_, i) => vOf(i))) : notes.length;
       const width = Math.max(220, 90 + n * spacing);
       const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
       renderer.resize(width, 120);
@@ -188,13 +194,19 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       // e.g. Note Rush's C4 above the bass staff).
       stave.setDefaultLedgerLineStyle({ strokeStyle: '#1f1f24', lineWidth: 2.2 });
       stave.setContext(ctx).draw();
+      // Two voices (0.99): voice 1 stems up, voice 2 stems down, each with its rests above / below the middle line.
+      const restKey = (i: number) => (!two ? (clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4') : vOf(i) === 1 ? (clef === 'bass' ? 'f/3' : clef === 'tenor' ? 'c/4' : 'd/5') : clef === 'bass' ? 'f/2' : clef === 'tenor' ? 'e/3' : 'f/4');
       const sn = chord
         ? [new VF.StaveNote({ keys: notes.map((m) => vfKey(m, keyPc, sharps)), duration: 'w', clef })]
         : notes.map((m, i) => {
             const b = durs?.[i] ?? 1;
             const rest = !!rests?.[i];
-            const heads = rest ? [clef === 'bass' ? 'd/3' : clef === 'tenor' ? 'a/3' : 'b/4'] : [m, ...(extra?.[i] ?? [])].sort((x, y) => x - y).map((x) => vfKey(x, keyPc, sharps));
-            const s = new VF.StaveNote({ keys: heads, duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : b >= 0.5 ? '8' : b >= 0.25 ? '16' : '32') + (rest ? 'r' : ''), clef });
+            const heads = rest ? [restKey(i)] : [m, ...(extra?.[i] ?? [])].sort((x, y) => x - y).map((x) => vfKey(x, keyPc, sharps));
+            const s = new VF.StaveNote({ keys: heads, duration: (b >= 4 ? 'w' : b >= 2 ? 'h' : b >= 1 ? 'q' : b >= 0.5 ? '8' : b >= 0.25 ? '16' : '32') + (rest ? 'r' : ''), clef, ...(two ? { stem_direction: vOf(i) === 2 ? -1 : 1 } : {}) });
+            if (vOf(i) === 2) markVoice2(s);
+            // grace notes, small, before the head (0.99)
+            const gr = graces?.[i];
+            if (gr?.length && !rest) s.addModifier(graceGroup(VF, gr, (x) => vfKey(x, keyPc, sharps), clef, keySpec(keyPc), vOf(i) === 2), 0);
             if (b === 1.5 || b === 3 || b === 0.75 || b === 0.375) VF.Dot.buildAndAttach([s], { all: true });
             // an ornament sign over the head (the realisation is in the drill's notes, graded)
             const o = orns?.[i];
@@ -204,37 +216,57 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
             if (lab) s.addModifier(new VF.Annotation(lab).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
             return s;
           });
-      const voice = new VF.Voice({ num_beats: chord ? 4 : durs ? Math.ceil(durs.reduce((a, b) => a + b, 0)) : notes.length, beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
-      // Bar lines between bars (engraving, 0.52): after a note that completes a bar, unless it is the last one.
-      const ticks: InstanceType<typeof VF.StaveNote | typeof VF.BarNote>[] = [];
-      let acc = 0;
+      // Items per voice (one voice: all of them, as before).
+      const groupsV: number[][] = two ? [sn.map((_, i) => i).filter((i) => vOf(i) === 1), sn.map((_, i) => i).filter((i) => vOf(i) === 2)] : [sn.map((_, i) => i)];
       // Mixed meters: bar ends at the cumulative bar lengths, a new time signature after the bar line where it changes.
       const ends = bars ? bars.map((_, k) => bars.slice(0, k + 1).reduce((a, b) => a + b.len, 0)) : null;
-      sn.forEach((x, i) => {
-        ticks.push(x);
-        if (chord || !durs || (!meter && !ends)) return;
-        acc += durs[i] ?? 1;
-        if (i >= sn.length - 1) return;
-        if (ends) {
-          const k = ends.findIndex((e) => Math.abs(e - acc) < 1e-6);
-          if (k >= 0) {
-            ticks.push(new VF.BarNote());
-            const next = bars![k + 1];
-            if (next?.sig) ticks.push(new VF.TimeSigNote(next.sig) as unknown as InstanceType<typeof VF.BarNote>);
-          }
-        } else if (meter && Math.abs(acc / meter - Math.round(acc / meter)) < 1e-6) ticks.push(new VF.BarNote());
+      const voices = groupsV.map((idxs) => {
+        const total = chord ? 4 : durs ? Math.ceil(idxs.reduce((a, i) => a + (durs[i] ?? 1), 0)) : idxs.length;
+        const voice = new VF.Voice({ num_beats: Math.max(1, total), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
+        // Bar lines between bars (engraving, 0.52): after a note that completes a bar, unless it is the last one (each
+        // voice gets its own, at the same places, so the voices stay aligned bar by bar).
+        const ticks: InstanceType<typeof VF.StaveNote | typeof VF.BarNote>[] = [];
+        let acc = 0;
+        idxs.forEach((i, k) => {
+          const x = sn[i];
+          ticks.push(x);
+          if (chord || !durs || (!meter && !ends)) return;
+          acc += durs[i] ?? 1;
+          if (k >= idxs.length - 1) return;
+          if (ends) {
+            const e = ends.findIndex((v) => Math.abs(v - acc) < 1e-6);
+            if (e >= 0) {
+              ticks.push(new VF.BarNote());
+              const next = bars![e + 1];
+              if (next?.sig) ticks.push(new VF.TimeSigNote(next.sig) as unknown as InstanceType<typeof VF.BarNote>);
+            }
+          } else if (meter && Math.abs(acc / meter - Math.round(acc / meter)) < 1e-6) ticks.push(new VF.BarNote());
+        });
+        voice.addTickables(ticks);
+        return voice;
       });
-      voice.addTickables(ticks);
-      VF.Accidental.applyAccidentals([voice], keySpec(keyPc));
+      VF.Accidental.applyAccidentals(voices, keySpec(keyPc));
+      // a main head after a grace of its letter with another alteration shows its own sign (A♮ after a grace A♭)
+      graces?.forEach((g, i) => g?.length && sn[i] && !rests?.[i] && signAfterGrace(VF, sn[i], g, (x) => vfKey(x, keyPc, sharps)));
       // Beams must exist before the notes are drawn: a beamed note then has no flag (an eighth with a flag AND a beam is
-      // not notation). Beams group by the beat.
-      const beams = durs ? VF.Beam.generateBeams(sn.filter((_, i) => !rests?.[i]), { groups: [new VF.Fraction(1, 4)] }) : [];
-      new VF.Formatter().joinVoices([voice]).format([voice], width - (timeSig ? 110 : 90));
-      voice.draw(ctx, stave);
+      // not notation). Beams group by the beat — rests stay in the list (0.99), so a figure after an eighth rest is still
+      // grouped on its beats (dropping them shifted every group; the Prelude in C beamed across the beat); two voices beam
+      // apart, each keeping its stem direction.
+      const beams = durs ? groupsV.flatMap((idxs, v) => VF.Beam.generateBeams(idxs.map((i) => sn[i]), { groups: [new VF.Fraction(1, 4)], ...(two ? { stem_direction: v === 0 ? 1 : -1, maintain_stem_directions: true } : {}) })) : [];
+      new VF.Formatter().joinVoices(voices).format(voices, width - (timeSig ? 110 : 90));
+      voices.forEach((v) => v.draw(ctx, stave));
       beams.forEach((bm) => bm.setContext(ctx).draw());
+      /** The next item of the same voice (a tie goes to it). */
+      const nextOf = (i: number): number | undefined => groupsV.find((g) => g.includes(i))?.find((j) => j > i);
       const tieIdx = (i: number) => Array.from({ length: 1 + (extra?.[i]?.length ?? 0) }, (_, k) => k);
-      if (!chord && ties) ties.forEach((t, i) => t && (sn[i + 1] ? new VF.StaveTie({ first_note: sn[i], last_note: sn[i + 1], first_indices: tieIdx(i), last_indices: tieIdx(i + 1) }) : new VF.StaveTie({ first_note: sn[i], first_indices: tieIdx(i), last_indices: tieIdx(i) })).setContext(ctx).draw());
+      if (!chord && ties)
+        ties.forEach((t, i) => {
+          if (!t) return;
+          const j = nextOf(i);
+          (j !== undefined ? new VF.StaveTie({ first_note: sn[i], last_note: sn[j], first_indices: tieIdx(i), last_indices: tieIdx(j) }) : new VF.StaveTie({ first_note: sn[i], first_indices: tieIdx(i), last_indices: tieIdx(i) })).setContext(ctx).draw();
+        });
       if (!chord && tieIn && sn[0] && !rests?.[0]) new VF.StaveTie({ last_note: sn[0], first_indices: tieIdx(0), last_indices: tieIdx(0) }).setContext(ctx).draw();
+      if (!chord && tieIns) tieIns.forEach((t, i) => t && !(i === 0 && tieIn) && sn[i] && !rests?.[i] && new VF.StaveTie({ last_note: sn[i], first_indices: tieIdx(i), last_indices: tieIdx(i) }).setContext(ctx).draw());
       // Each head's place, for the live marks drawn over it while the take runs.
       geo.current = chord
         ? []
@@ -278,7 +310,7 @@ export function NoteStaff({ notes, chord, keyPc, labels, clef = 'treble', durs, 
       }
       return [...sn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(','), tieIn, (sharps ?? []).join(','), (extra ?? []).map((x) => (x ?? []).join('+')).join(','), (orns ?? []).join(',')],
+    [notes.join(','), chord, spacing, keySpec(keyPc), (labels ?? []).join(','), clef, (durs ?? []).join(','), (marks ?? []).join(','), (devs ?? []).join(','), (ghosts ?? []).join(','), win, sig, (bars ?? []).map((b) => `${b.len}${b.sig ?? ''}`).join(','), (ties ?? []).join(','), tieIn, (sharps ?? []).join(','), (extra ?? []).map((x) => (x ?? []).join('+')).join(','), (orns ?? []).join(','), (graces ?? []).map((g) => (g ?? []).map((x) => `${x.pitch}${x.slash ? '/' : ''}`).join('+')).join(','), (vox ?? []).join(','), (tieIns ?? []).join(',')],
   );
   useLiveLayer(ref, geo, live, win, xs, 'staff');
   useLiveLayer(ref, geo, prior, win, xs, 'staff', 'mk-prior');

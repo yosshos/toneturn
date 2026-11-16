@@ -33,7 +33,7 @@ import { genKeysCtx, keysCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import { gateFamilies } from '../verifiedContent';
-import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
+import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Grace, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -313,6 +313,8 @@ interface SN {
   finger?: number;
   accent?: boolean;
   chordTone?: boolean;
+  /** Grace notes before the note (drawn small, graded softly: grace.ts). */
+  graces?: Grace[];
 }
 type Step = SN[];
 
@@ -333,6 +335,7 @@ class Buf {
       if (id !== undefined) n.chordId = id;
       if (s.accent) n.accent = true;
       if (s.chordTone !== undefined) n.chordTone = s.chordTone;
+      if (s.graces?.length) n.graces = s.graces;
       this.notes.push(n);
     }
     return id;
@@ -2590,7 +2593,7 @@ function genOrnament(s: DrillSpec): Drill {
   const base = hand === 'L' ? rhBase(s.key) - 12 : rhBase(s.key);
   const P = (k: number) => degPitch(base, SCALE_INTERVALS.major, k);
   const buf = new Buf();
-  const add = (b: number, d: number, k: number) => buf.add(b, d, [{ pitch: P(k), hand }]);
+  const add = (b: number, d: number, k: number, graces?: Grace[]) => buf.add(b, d, [{ pitch: P(k), hand, ...(graces ? { graces } : {}) }]);
   if (op === 5) {
     [0, 1, 2, 3].forEach((d, bar) => {
       const b0 = bar * 4;
@@ -2601,7 +2604,7 @@ function genOrnament(s: DrillSpec): Drill {
     });
     add(16, 1, 0);
   } else {
-    const start = op === 3 ? 1 : 0;
+    const start = 0;
     [0, 1, 2, 3, 4, 3, 2, 1].forEach((k, i) => {
       const b = start + i;
       if (op === 0 || op === 1) {
@@ -2614,16 +2617,19 @@ function genOrnament(s: DrillSpec): Drill {
         add(b + 0.5, 0.25, k - 1);
         add(b + 0.75, 0.25, k);
       } else if (op === 3) {
-        add(b - 0.125, 0.125, k + 1);
-        add(b, 1, k);
+        // 0.99: a real grace note — the upper neighbour, slashed, crushed in just before the beat
+        add(b, 1, k, [{ pitch: P(k + 1), slash: true }]);
       } else {
-        add(b, 0.5, k + 1);
-        add(b + 0.5, 0.5, k);
+        // 0.99: the appoggiatura as a small unslashed note on the beat, taking time from the main note (played as two
+        // eighths; graded as one note with its grace, grace.ts)
+        add(b, 1, k, [{ pitch: P(k + 1) }]);
       }
     });
     add(start + 8, 1, 0);
   }
-  return finish(s, buf, title([t(`Ornaments: ${ORN_T[op].en} in ${keyLabel(s)}`, `קישוטים: ${ORN_T[op].he} ב-${keyLabel(s)}`)], s), goalOf(s, false), 60);
+  // an item about grace notes: one left out keeps the take from clean
+  const goal = op === 3 || op === 4 ? { ...goalOf(s, false), graces: 'strict' as const } : goalOf(s, false);
+  return finish(s, buf, title([t(`Ornaments: ${ORN_T[op].en} in ${keyLabel(s)}`, `קישוטים: ${ORN_T[op].he} ב-${keyLabel(s)}`)], s), goal, 60);
 }
 
 /** Thumb-under preparation (Hanon Part II / Cortot ch. 2): the thumb passes under 3 (option 0) or 4 (option 1) and back. */
@@ -3096,27 +3102,26 @@ function genBluesLick(s: DrillSpec): Drill {
     buf.add(8, 2, [{ pitch: root, hand: 'L' }, ...I7.map((p) => ({ pitch: p, hand: 'R' as Hand }))]);
   } else {
     const R = pitchIn(key, 60);
-    const lick: [number, number][] = [
-      [3, 0.25],
-      [4, 0.75],
+    // 0.99: the crush written as it is played and read — the ♭3 a slashed grace note crushed into the 3rd
+    const lick: [number, number, boolean?][] = [
+      [4, 1, true],
       [7, 1],
       [10, 0.5],
       [9, 0.5],
       [7, 1],
-      [3, 0.25],
-      [4, 0.75],
+      [4, 1, true],
       [0, 3],
     ];
     let b = 0;
-    for (const [x, d] of lick) {
-      buf.add(b, d, [{ pitch: R + x, hand: 'R' }]);
+    for (const [x, d, crush] of lick) {
+      buf.add(b, d, [{ pitch: R + x, hand: 'R', ...(crush ? { graces: [{ pitch: R + 3, slash: true }] } : {}) }]);
       b += d;
     }
     buf.add(0, 4, [{ pitch: root, hand: 'L' }]);
     buf.add(4, 4, [{ pitch: root, hand: 'L' }]);
   }
   const nm = [t('turnaround, falling inner line', 'טרנאראונד, קו פנימי יורד'), t('turnaround, rising bass 1-3-4-♯4-5', 'טרנאראונד, בס עולה 1-3-4-♯4-5'), t('the ♭3 → 3 "crush" lick', 'ליק "הריסוק" ♭3 → 3')][op];
-  return finish(s, buf, title([t(`Blues in ${keyName(key)}: ${nm.en}`, `בלוז ב-${keyName(key)}: ${nm.he}`)], { ...s, hands: 'RL' }), { evenness: false, hands: true }, 70, 4, SIG[key]);
+  return finish(s, buf, title([t(`Blues in ${keyName(key)}: ${nm.en}`, `בלוז ב-${keyName(key)}: ${nm.he}`)], { ...s, hands: 'RL' }), { evenness: false, hands: true, ...(op === 2 ? { graces: 'strict' as const } : {}) }, 70, 4, SIG[key]);
 }
 
 const BLUES_ROOTS = [0, 5, 0, 0, 5, 5, 0, 0, 7, 5, 0, 7];

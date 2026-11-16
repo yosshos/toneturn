@@ -20,10 +20,11 @@ export function pdSectionDrill(s: DrillSpec, p: PdPiece, section: number): Drill
   const groups = new Map<string, number>();
   let gid = 0;
   const notes: ExpNote[] = ns.map((n) => {
-    const k = `${n.hand}:${Math.round((n.start - t0) * 48)}`;
-    const same = ns.filter((m) => m.hand === n.hand && Math.abs(m.start - n.start) < 1e-6).length > 1;
+    // a chord = one hand's notes of one voice struck together (two voices starting together are two items, not a chord)
+    const k = `${n.hand}:${n.voice ?? 1}:${Math.round((n.start - t0) * 48)}`;
+    const same = ns.filter((m) => m.hand === n.hand && (m.voice ?? 1) === (n.voice ?? 1) && Math.abs(m.start - n.start) < 1e-6).length > 1;
     if (same && !groups.has(k)) groups.set(k, ++gid);
-    return { pitch: n.midi, beat: r6(n.start - t0), dur: r6(n.dur), hand: n.hand, ...(same ? { chordId: groups.get(k) } : {}) };
+    return { pitch: n.midi, beat: r6(n.start - t0), dur: r6(n.dur), hand: n.hand, ...(same ? { chordId: groups.get(k) } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
   });
   // ornament signs inside the section (the notes above are their written-out realisation)
   const ornaments = pdOrnaments(p)

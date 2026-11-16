@@ -2,7 +2,8 @@
 // study). k-read 11–15 carry it through ABRSM grades 7–8 and the RSL quick study (1450–1800), with the same generator
 // rule as k-read 1–10 — every item new from its seed (family, kind, key, hands, variant), nothing to learn by heart:
 //
-//   11 four voices: a chorale texture, soprano and alto in the right hand, tenor and bass in the left
+//   11 four voices: a chorale texture, soprano and alto in the right hand, tenor and bass in the left — two voices a
+//      staff (soprano / tenor stems up, alto / bass stems down), the alto held while the soprano passes
 //   12 ornaments in a Baroque-style line: mordents (upper and lower), turns, a cadential trill — over a walking bass;
 //      the staff draws the signs (ornaments.ts), the take is graded on their written-out realisation
 //   13 changing metres: 4/4, 3/4 and 2/4 bars mixed (the bar plan of timeline.ts)
@@ -37,9 +38,9 @@ export const READ2_KINDS = new Set(['kr-four', 'kr-orn', 'kr-meter', 'kr-lead', 
 class Notes {
   list: ExpNote[] = [];
   private cid = 0;
-  add(beat: number, dur: number, ns: { p: number; hand: 'R' | 'L' }[]): void {
+  add(beat: number, dur: number, ns: { p: number; hand: 'R' | 'L' }[], staffVoice?: 1 | 2): void {
     const id = ns.length > 1 ? ++this.cid : undefined;
-    for (const n of ns) this.list.push({ pitch: n.p, beat: r6(beat), dur: r6(dur), hand: n.hand, ...(id !== undefined ? { chordId: id } : {}) });
+    for (const n of ns) this.list.push({ pitch: n.p, beat: r6(beat), dur: r6(dur), hand: n.hand, ...(id !== undefined ? { chordId: id } : {}), ...(staffVoice ? { staffVoice } : {}) });
   }
 }
 function done(s: DrillSpec, n: Notes, title: T2, goal: Partial<DrillGoal>, extra: Partial<Drill> = {}): Drill {
@@ -127,10 +128,13 @@ function genFour(s: DrillSpec): Drill {
         return q;
       };
       const pass = step(-1) > alto ? step(-1) : step(1);
-      n.add(at, 1, [{ p: sop, hand: 'R' }, { p: alto, hand: 'R' }]);
-      n.add(at + 1, 1, [{ p: pass, hand: 'R' }, { p: alto, hand: 'R' }]);
-    } else n.add(at, 2, [{ p: sop, hand: 'R' }, { p: alto, hand: 'R' }]);
-    n.add(at, 2, [{ p: tenor, hand: 'L' }, { p: bass, hand: 'L' }]);
+      // 0.99: two voices a staff — the soprano moves in quarters over the alto, held for the half (as a chorale is written)
+      n.add(at, 1, [{ p: sop, hand: 'R' }], 1);
+      n.add(at + 1, 1, [{ p: pass, hand: 'R' }], 1);
+    } else n.add(at, 2, [{ p: sop, hand: 'R' }], 1);
+    n.add(at, 2, [{ p: alto, hand: 'R' }], 2);
+    n.add(at, 2, [{ p: tenor, hand: 'L' }], 1);
+    n.add(at, 2, [{ p: bass, hand: 'L' }], 2);
   });
   return done(s, n, title('four voices', 'ארבעה קולות', s), {});
 }

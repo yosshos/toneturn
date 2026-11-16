@@ -1,6 +1,7 @@
 // Technique drills: one take → metrics + verdict (spec AI §6, research §5.2). Pure.
 // Thresholds are the research's starting numbers (⚙, not yet calibrated with the owner's playing).
 
+import { absorbGraces } from './grace';
 import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
 import { vlDistance } from './generate';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
@@ -453,10 +454,14 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // anticipations — the written notes are only a model.
   if (drill.goal.freeComp) return analyzeFreeCompTake(drill, bpm, played0);
   // Improv mode: the right hand above the split plays freely and is checked elsewhere (against the chord-scales).
-  const played = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
+  const played1 = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
   const goal = drill.goal;
   const beatMs = 60000 / bpm;
+  // Grace notes (grace.ts): the played graces leave the list (never wrong or extra); a main note is re-timed to its grace
+  // when that sat nearer the beat (an appoggiatura's main note comes late by design).
+  const ga = absorbGraces(drill, beatMs, played1, (b) => expTimeMs(drill, b, bpm));
+  const played = ga.played;
   const { match, ok, wrong } = align(drill, bpm, played);
   const T = exp.map((n) => expTimeMs(drill, n.beat, bpm));
   const nExp = exp.length;
@@ -983,8 +988,16 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   if (accClean && others.every((f) => f.sev <= 1) && hesitations === 0) verdict = 'clean';
   else if (accAlmost && others.every((f) => f.sev <= 1.5)) verdict = 'almost';
   else verdict = 'not';
+  // A grace left out: soft (reported only), or — an item about graces — it keeps the take from clean.
+  const graceMiss = ga.graces.total - ga.graces.ok;
+  if (graceMiss > 0 && goal.graces === 'strict' && verdict === 'clean') verdict = 'almost';
   let why: { en: string; he: string };
-  if (verdict === 'clean')
+  if (verdict !== 'not' && graceMiss > 0 && (goal.graces === 'strict' || verdict === 'clean'))
+    why = {
+      en: `${verdict === 'clean' ? `Clean at ♩ = ${Math.round(bpm)} — ` : ''}${graceMiss === 1 ? 'a grace note was' : `${graceMiss} grace notes were`} left out: the small note just before the main one`,
+      he: `${verdict === 'clean' ? `נקי ב-♩ = ${Math.round(bpm)} — ` : ''}${graceMiss === 1 ? 'צליל חן אחד חסר' : `${graceMiss} צלילי חן חסרים`}: הצליל הקטן שלפני הצליל הראשי`,
+    };
+  else if (verdict === 'clean')
     why = {
       en: `Clean at ♩ = ${Math.round(bpm)}`,
       he: `נקי ב-♩ = ${Math.round(bpm)}`,
@@ -1058,6 +1071,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     perNote,
     verdict,
     why,
+    ...(ga.graces.total ? { graces: ga.graces } : {}),
     ...(octaveShift !== undefined ? { octaveShift } : {}),
     ...(unmeasured.length ? { unmeasured } : {}),
     ...(drill.goal.improv ? { improv } : {}),
