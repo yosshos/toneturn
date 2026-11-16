@@ -167,9 +167,9 @@ for (const lang of ['en', 'he'] as Lang[]) {
     await expect(page.locator('[data-chl-practise]')).toBeVisible();
     await check(page, lang, 'page-taken');
 
-    // bravo, then "beat my tempo" makes a link
-    await page.locator('[data-chl-bravo="off"]').click();
-    await expect(page.locator('[data-chl-bravo="on"]')).toBeVisible();
+    // "הדרן!" (a reaction), then "beat my tempo" makes a link
+    await page.locator('[data-react="encore"][data-react-on="0"]').click();
+    await expect(page.locator('[data-react="encore"][data-react-on="1"]')).toBeVisible();
     await page.evaluate(() => Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }));
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {} }, configurable: true }));
     await page.locator('[data-beat-link]').click();

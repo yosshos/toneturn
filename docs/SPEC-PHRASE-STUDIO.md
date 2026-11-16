@@ -1433,3 +1433,36 @@ The owner accepted every recommendation:
 10. Pricing: recordings and basic Encore free; a limit on the number of active phrases in the free tier (the number is the owner's later call).
 11. Whole-session recording: yes, in v2.
 12. The weekly featured phrase is chosen by the app; the owner can replace it.
+
+### 20.1 Reactions and gifts between friends (owner, 2026-11-16 — built behind the challenges flag)
+
+- **Reactions** replace "Bravo": **הדרן! / Encore!** (the Encore glyph) and three compliments — **גרוב** (Groove — the time
+  feels great), **צליל** (Tone — the sound), **רעיון** (Idea — the line). Each once per viewer and phrase (a toggle), never on
+  one's own phrase; per-kind counts reach the sharer only ("my shares", the sharer's challenge page). No public counts,
+  no emoji. Board rows carry no reactions. Rules: `src/engine/encore/gifts.ts`; UI: `src/ui/encore/Reactions.tsx`.
+- **Gifts** (`#/challenges/gifts[/<friend>[/dedicate]]`, also from a friend's row in Community, the challenge page of a
+  friend's phrase, and the "For you" card in Community → Activity):
+  - **One gift per practice day** (owner, same day): after today's 5 measured minutes a player may send ONE gift — a
+    fermata OR a dedication. Today's allowance only; nothing accumulates. Copy: "מתנה אחת ליום תרגול — נשארה לך היום" /
+    "המתנה של היום נשלחה" / "תרגלו היום כדי לשלוח מתנה". The server enforces it (unique (sender, day); the client sends
+    today's measured ms as proof, or a result on the server that day counts).
+  - **פרמטה / Fermata** — a streak freeze for the friend: an entry `kind: 'fermata'` in the synced purchase list (free,
+    id `gift-<gift id>`). It holds the first missed day after it arrives (before the player's own freezes, so the gift is
+    what holds it); the calendar draws a fermata on that day. Not capped by the two own freezes (sanity bound 7).
+  - **הקדשת משפט / Dedicate a phrase** — one of my own Encore phrases (not a teacher's, not a taken challenge, not one
+    dedicated to me) with an optional note (≤ 140 chars; none to or from a young player). It lands in the friend's
+    library marked "הקדשה מאת <name>". When they make it "yours" (rank f) both get **+20 XP**, once per side (server
+    flag per side + a local grant key). **Personal XP only**: it raises the total and the day's goal ring; it is never
+    posted as a lesson result (so the weekly league, summed on the server from results, does not count it) and makes
+    no rating events. A quiet line on the "yours" screen: "ההקדשה הושלמה".
+  - **תרגל איתי עכשיו / Practise with me now** — up to **3 invites a day**, each open 30 minutes; a session ends after
+    2 hours. My measured time counts from the moment the session is active on my device (practice ledger, measured
+    only; the server caps it by the time since it started). A small live mark shows "יחד עם <name>" while both gained
+    measured time within the same 10 minutes. When both reach 5 measured minutes, that day counts for the duet streak
+    (a duet starts as active if the pair had none).
+  - Anti-automation only: 60 gifts + invites an hour and 60 reactions an hour per player (never met in normal use).
+- **Notifications**: gifts, invites and completed dedications join the one merged social push a day (quiet hours, the
+  "duets" notification setting), Hebrew first, no emoji (`supabase/functions/_shared/socialPush.ts`).
+- **Server**: reactions in `20261204000000_toneturn_phrase_challenges.sql` (edited in place — not applied yet); gifts,
+  together sessions, duet days, the push kinds in `20261205000000_toneturn_friend_gifts.sql` (after it). Not building:
+  sound as a gift, XP boosts, gems.

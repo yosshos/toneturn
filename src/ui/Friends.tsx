@@ -15,6 +15,8 @@ import { courseOf, type CourseId } from '../engine/courses';
 import { courseLevel, friendsInCourse, type DynName } from '../engine/courseSocial';
 import { Glyph } from './Glyph';
 import { CHALLENGES_ON } from '../cloud/challenges';
+import { GiftInboxCard } from './encore/Gifts';
+import { Icon } from './icons';
 import { ActivityFeed, FriendQuest, PlayerSafety } from './Community';
 import { effectivePrivacy } from '../engine/privacy';
 import { postActivity } from '../cloud/community';
@@ -143,9 +145,14 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
 
           {profileErr && <p className="field-hint warn">{profileErr}</p>}
           {CHALLENGES_ON() && (
-            <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges')} data-fr-challenges="1">
-              {lang === 'he' ? 'אתגרי הדרן' : 'Encore challenges'}
-            </button>
+            <span className="row fr-chl-row">
+              <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges')} data-fr-challenges="1">
+                {lang === 'he' ? 'אתגרי הדרן' : 'Encore challenges'}
+              </button>
+              <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges/gifts')} data-fr-gifts="1">
+                <Icon k="gift" size={14} /> {lang === 'he' ? 'מתנות' : 'Gifts'}
+              </button>
+            </span>
           )}
           {!duelPlaying && incoming.length > 0 && (
             <section className="set-card fr-requests">
@@ -230,6 +237,11 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                             {sortBy === 'xp' && <RatingBadge r={r.rating} provisional={!!r.rating_provisional} t={t} size="sm" />}
                           </span>
                         </span>
+                        {r.relation === 'friend' && CHALLENGES_ON() && (
+                          <button className="icon-btn fr-gift" aria-label={`${he ? 'מתנה ל־' : 'Gift for '}${r.name}`} onClick={() => (location.hash = `/challenges/gifts/${r.user_id}`)} data-fr-gift={r.user_id}>
+                            <Icon k="gift" size={15} />
+                          </button>
+                        )}
                         {r.relation === 'friend' && <PlayerSafety lang={lang} user={{ id: r.user_id, name: r.name }} onBlocked={() => void load()} />}
                         {r.relation === 'friend' && (
                           <button
@@ -308,6 +320,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                   }}
                 />
               )}
+              {realUser && CHALLENGES_ON() && <GiftInboxCard lang={lang} />}
               <section className="set-card fr-activity" data-fr-activity="1">
                 <h2>{he ? 'פעילות החברים' : "Friends' activity"}</h2>
                 {realUser ? <ActivityFeed lang={lang} young={priv.young} myId={realUser.id} onBlocked={() => void load()} /> : <p className="field-hint">{t.noFriends}</p>}

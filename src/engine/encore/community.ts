@@ -77,14 +77,16 @@ export function publicFromHash(hash: string): { code: string; beat: string | nul
   const beat = m[2]?.toUpperCase() ?? null;
   return isShareCode(code) && (beat === null || isShareCode(beat)) ? { code, beat } : null;
 }
-export type ChallengeView = { view: 'gallery' } | { view: 'page'; code: string; beat: string | null } | { view: 'share'; id: string } | { view: 'review' } | { view: 'mine' };
-/** In-app routes: #/challenges, /p/CODE[/BEAT], /share/<phraseId>, /review, /mine. */
+export type ChallengeView = { view: 'gallery' } | { view: 'page'; code: string; beat: string | null } | { view: 'share'; id: string } | { view: 'review' } | { view: 'mine' } | { view: 'gifts'; friend: string | null; dedicate: boolean };
+/** In-app routes: #/challenges, /p/CODE[/BEAT], /share/<phraseId>, /review, /mine, /gifts[/<friend>[/dedicate]]. */
 export function parseChallengeHash(hash: string): ChallengeView {
   const h = hash.replace(/^#\/?/, '').replace(/^challenges\/?/, '');
   const p = /^p\/([A-Za-z0-9]{8})(?:\/([A-Za-z0-9]{8}))?/.exec(h);
   if (p && isShareCode(p[1].toUpperCase())) return { view: 'page', code: p[1].toUpperCase(), beat: p[2] && isShareCode(p[2].toUpperCase()) ? p[2].toUpperCase() : null };
   const s = /^share\/([\w~.-]{3,80})/.exec(h);
   if (s) return { view: 'share', id: decodeURIComponent(s[1]) };
+  const g = /^gifts(?:\/([\w-]{1,64}))?(?:\/(dedicate))?/.exec(h);
+  if (g) return { view: 'gifts', friend: g[1] ?? null, dedicate: !!g[2] };
   if (/^review\b/.test(h)) return { view: 'review' };
   if (/^mine\b/.test(h)) return { view: 'mine' };
   return { view: 'gallery' };

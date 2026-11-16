@@ -71,6 +71,9 @@ export interface LessonResult {
 export interface Progress {
   version: number;
   xp: number;
+  /** Personal bonus XP already granted, by key (gifts: "ded:<gift>:to|from" → the XP). Never posted as a result, so
+   *  the weekly league does not count it (engine/encore/gifts.ts). */
+  granted?: Record<string, number>;
   /** Event ids already applied (completion + per-question awards). */
   applied: string[];
   lessons: Record<string, { best: number; completions: number; lastAt: string }>;
@@ -829,6 +832,18 @@ export class ProgressStore {
     if (fresh.length) next.snapshots = snapshot(next, new Date());
     await this.kv.set('progress', next);
     safe(() => bookDrillTake(state, prev, m?.verdict), undefined);
+    return next;
+  }
+
+  /** Personal bonus XP (a completed dedication, engine/encore/gifts.ts), once per key: the total and the day's goal ring
+   *  rise; no rating events, no lesson result, so leagues and ratings are untouched. */
+  async recordBonusXp(key: string, xp: number, now = new Date()): Promise<Progress> {
+    const p = await this.loadProgress();
+    if (!key || xp <= 0 || p.granted?.[key] !== undefined) return p;
+    const day = localDay(now);
+    const s0 = p.stats ?? { days: [], goodSessions: 0, xpByDay: {} };
+    const next: Progress = { ...p, xp: p.xp + xp, granted: { ...(p.granted ?? {}), [key]: xp }, stats: { ...s0, xpByDay: { ...s0.xpByDay, [day]: (s0.xpByDay[day] ?? 0) + xp } } };
+    await this.kv.set('progress', next);
     return next;
   }
 

@@ -14,11 +14,14 @@ export const COSMETICS: Record<string, number> = { 'frame-gold': 300, 'frame-sta
 export const FRAMES = ['gold', 'staff', 'notes'] as const;
 export type FrameId = (typeof FRAMES)[number];
 export const REPAIR_WINDOW_DAYS = 2;
+/** Fermatas (a streak freeze a friend gave, owner 2026-11-16) waiting at once — far above anything one gift a practice day
+ *  can build up; a sanity bound only. They cost no gems. */
+export const MAX_FERMATAS = 7;
 
 export interface Purchase {
   id: string;
-  kind: 'freeze' | 'repair' | 'cosmetic';
-  /** For a cosmetic: which one (e.g. 'theme-ocean'). */
+  kind: 'freeze' | 'repair' | 'cosmetic' | 'fermata';
+  /** For a cosmetic: which one (e.g. 'theme-ocean'). For a fermata: the friend who gave it (shown on the calendar). */
   item?: string;
   /** Local day the purchase was made (YYYY-MM-DD). */
   day: string;
@@ -42,8 +45,12 @@ export interface StreakState {
   practicedToday: boolean;
   /** Freezes ready to protect a missed day. */
   freezes: number;
-  /** Days covered by a freeze (❄). */
+  /** Days covered by a freeze (❄) — fermata days included, so the server and the toast treat them alike. */
   freezeDays: string[];
+  /** Gifted fermatas not used yet (counted apart from `freezes`, never capped by MAX_FREEZES). */
+  fermatas?: number;
+  /** The subset of freezeDays a friend's fermata held (the calendar draws a fermata there). */
+  fermataDays?: string[];
   /** Days a repair restored. */
   repairedDays: string[];
   /** Milestones reached so far, with the day they were reached (one entry per streak run). */
@@ -95,11 +102,15 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
   let count = 0;
   let best = 0;
   let freezes = 0;
+  let fermatas = 0;
   let lastWeek = '';
   const freezeDays: string[] = [];
+  const fermataDays: string[] = [];
   const repairedDays: string[] = [];
   const milestones: { days: number; day: string }[] = [];
   let broke: { lost: number; on: string; missed: string[] } | null = null;
+  // a fermata that arrived before the first practice day waits for the first missed day
+  fermatas = Math.min(MAX_FERMATAS, purchases.filter((p) => p.kind === 'fermata' && p.day < sorted[0]).length);
 
   for (let d = sorted[0]; d <= today; d = addDays(d, 1)) {
     const wk = weekOf(d);
@@ -109,6 +120,7 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
     }
     for (const p of byDay.get(d) ?? []) {
       if (p.kind === 'freeze' && freezes < MAX_FREEZES) freezes++;
+      if (p.kind === 'fermata' && fermatas < MAX_FERMATAS) fermatas++;
       if (p.kind === 'repair' && broke && daysBetween(broke.on, d) <= REPAIR_WINDOW_DAYS) {
         count = broke.lost + count;
         repairedDays.push(...broke.missed);
@@ -120,7 +132,13 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
       if (MILESTONES.includes(count)) milestones.push({ days: count, day: d });
     } else if (d !== today) {
       if (count > 0 && target && weekCovers(days, d, today, target)) restDays.push(d);
-      else if (count > 0 && freezes > 0) {
+      else if (count > 0 && fermatas > 0) {
+        // a friend's fermata holds the first missed day after it arrived (it is what the gift is for; the player's own
+        // freezes stay for later)
+        fermatas--;
+        freezeDays.push(d);
+        fermataDays.push(d);
+      } else if (count > 0 && freezes > 0) {
         freezes--;
         freezeDays.push(d);
       } else if (count > 0 || broke) {
@@ -138,6 +156,7 @@ export function streakState(practiceDays: Iterable<string>, purchases: Purchase[
     practicedToday: days.has(today),
     freezes,
     freezeDays,
+    ...(fermatas || fermataDays.length ? { fermatas, fermataDays } : {}),
     repairedDays,
     milestones,
     best,
@@ -165,7 +184,7 @@ export function gemsEarned(s: GemSources): number {
   return s.goodSessions * 5 + s.goalDays * 10 + s.puzzleGold * 20 + s.puzzleSilver * 10 + s.dailyPlays * 5 + s.milestones.reduce((a, m) => a + (MILESTONE_GEMS[m] ?? 0), 0);
 }
 
-const priceOf = (p: Purchase) => (p.kind === 'cosmetic' ? (COSMETICS[p.item ?? ''] ?? 0) : PRICES[p.kind]);
+const priceOf = (p: Purchase) => (p.kind === 'cosmetic' ? (COSMETICS[p.item ?? ''] ?? 0) : p.kind === 'fermata' ? 0 : (PRICES[p.kind] ?? 0));
 export const gemsSpent = (purchases: Purchase[]) => purchases.reduce((a, p) => a + priceOf(p), 0);
 
 /** Owned cosmetics. Retired colour themes (theme-*) still count as bought, but cost nothing now (refunded). */

@@ -23,6 +23,9 @@ import { LickTrainerScreen } from './LickTrainer';
 import { EncoreScreen } from './encore/Encore';
 import { ChallengeScreen, PhrasePublicScreen } from './encore/Challenge';
 import { CHALLENGES_ON, challengesMockOn, mockSignedOut, syncChallengeResults } from '../cloud/challenges';
+import { syncGifts } from '../cloud/gifts';
+import { withAssignedPhrase } from '../engine/encore/assign';
+import { TogetherChip } from './encore/Together';
 import { publicFromHash } from '../engine/encore/community';
 import { TeachScreen } from './TeachPhrase';
 import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './teacherPhraseSync';
@@ -700,6 +703,41 @@ export function App() {
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeSignedIn, progress.drillItems, s.lickBook]);
+  // Gifts between friends (owner 2026-11-16, cloud/gifts.ts): fermatas into the purchase list, dedications into the
+  // Encore library, a dedication made "yours" reported once, completion bonuses granted once (personal XP only).
+  const giftBusy = useRef(false);
+  useEffect(() => {
+    if (!CHALLENGES_ON() || !challengeSignedIn || giftBusy.current) return;
+    const id = window.setTimeout(() => {
+      giftBusy.current = true;
+      void (async () => {
+        try {
+          if (!settings) return;
+          const r = await syncGifts({ book: s.lickBook, purchases: s.purchases ?? [], items: progress.drillItems ?? {}, granted: progress.granted });
+          if (r.purchases.length || r.licks.length)
+            setSettings((prev) => {
+              const base = prev ?? DEFAULT_SETTINGS;
+              const have = new Set((base.purchases ?? []).map((x) => x.id));
+              const add = r.purchases.filter((x) => !have.has(x.id));
+              let book = base.lickBook;
+              for (const l of r.licks) if (!(book?.own ?? []).some((x) => x.id === l.id)) book = withAssignedPhrase(book, l);
+              if (!add.length && book === base.lickBook) return prev;
+              const next = { ...base, purchases: [...(base.purchases ?? []), ...add], lickBook: book };
+              void store.saveSettings(next);
+              if (user) void pushSettings(user.id, next).catch(() => {});
+              return next;
+            });
+          let p: Progress | null = null;
+          for (const g of r.xp) p = await store.recordBonusXp(g.key, g.xp);
+          if (p) setProgress(p);
+        } finally {
+          giftBusy.current = false;
+        }
+      })();
+    }, 1800);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeSignedIn, !!settings, progress.drillItems, route]);
   // Encore v2 (SPEC-PHRASE-STUDIO §11): teacher phrases into the lick book; each passed key submitted once
   useTeacherPhrases({ enabled: !!user || teacherMockOn(), route, book: s.lickBook, items: progress.drillItems ?? {}, onBook: (lickBook) => updateSettings({ lickBook }) });
   useMotion(route);
@@ -2801,6 +2839,7 @@ export function App() {
           }}
         />
       )}
+      {CHALLENGES_ON() && challengeSignedIn && <TogetherChip lang={s.uiLang} />}
       {route === 'challenges' && (
         <ChallengeScreen
           lang={s.uiLang}

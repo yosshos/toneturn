@@ -12,8 +12,10 @@
 --  · toneturn_phrase_results: one row per player and phrase — keys at the target, best clean tempo, accuracy, input,
 --    a digest of the best take — sent by the device from measured takes only; the server re-checks plausibility.
 --    Flagged rows (a sequencer-like MIDI take, a device shared between accounts, reports, an admin) stay off boards.
---  · toneturn_phrase_reactions: 'bravo' (one tap, counted back to the sharer only) and 'learned' (automatic when a
---    player reaches the target in every needed key).
+--  · toneturn_phrase_reactions: the musicians' reactions (owner 2026-11-16, replacing the single "bravo"):
+--    'encore' ("הדרן!") and the compliments 'groove' (גרוב), 'tone' (צליל), 'idea' (רעיון) — each at most once per
+--    viewer and phrase, never on one's own phrase, counted per kind back to the sharer only (never a public count) —
+--    and 'learned' (automatic when a player reaches the target in every needed key).
 --  · toneturn_phrase_reports: 'copied' (2 distinct → the phrase is held), 'implausible' (3 distinct → the row is
 --    hidden), 'other'; the admin review list restores or removes.
 --  · toneturn_phrase_featured: the phrase of the week (the app's pick on first read of the week; the owner replaces it).
@@ -100,7 +102,7 @@ create table if not exists public.toneturn_phrase_devices (
 create table if not exists public.toneturn_phrase_reactions (
   phrase_id  uuid not null references public.toneturn_shared_phrases (id) on delete cascade,
   user_id    uuid not null references auth.users (id) on delete cascade,
-  kind       text not null check (kind in ('bravo', 'learned')),
+  kind       text not null check (kind in ('encore', 'groove', 'tone', 'idea', 'learned')),
   created_at timestamptz not null default now(),
   primary key (phrase_id, user_id, kind)
 );
@@ -194,8 +196,13 @@ returns jsonb language sql stable security definer set search_path = '' as $$
     'reached', (select count(*) from public.toneturn_phrase_results r where r.phrase_id = p.id and not r.flagged and r.keys_clean >= p.needed),
     'learned_week', (select count(*) from public.toneturn_phrase_reactions x where x.phrase_id = p.id and x.kind = 'learned' and x.created_at > now() - interval '7 days'),
     'featured', exists (select 1 from public.toneturn_phrase_featured f where f.week = public.toneturn_week_monday() and f.phrase_id = p.id),
-    'my_bravo', p_viewer is not null and exists (select 1 from public.toneturn_phrase_reactions x where x.phrase_id = p.id and x.user_id = p_viewer and x.kind = 'bravo'),
-    'bravos', case when p.owner_id = p_viewer then (select count(*) from public.toneturn_phrase_reactions x where x.phrase_id = p.id and x.kind = 'bravo') end
+    'my_reactions', case when p_viewer is null then '[]'::jsonb else coalesce((select jsonb_agg(x.kind order by x.kind) from public.toneturn_phrase_reactions x
+                      where x.phrase_id = p.id and x.user_id = p_viewer and x.kind in ('encore', 'groove', 'tone', 'idea')), '[]'::jsonb) end,
+    -- per-kind counts: the sharer only
+    'reactions', case when p.owner_id = p_viewer then (select jsonb_build_object(
+                      'encore', count(*) filter (where x.kind = 'encore'), 'groove', count(*) filter (where x.kind = 'groove'),
+                      'tone', count(*) filter (where x.kind = 'tone'), 'idea', count(*) filter (where x.kind = 'idea'))
+                    from public.toneturn_phrase_reactions x where x.phrase_id = p.id) end
   );
 $$;
 revoke execute on function public.toneturn_phrase_json(public.toneturn_shared_phrases, uuid) from public, anon, authenticated;
@@ -391,18 +398,24 @@ begin
   return case when flag then 'flagged' else 'ok' end;
 end $$;
 
--- "Bravo": one tap, not on my own phrase; the count goes back to the sharer only.
-create or replace function public.toneturn_phrase_bravo(p_phrase uuid, p_on boolean)
+-- A reaction: "הדרן!" ('encore') or a compliment ('groove', 'tone', 'idea'). One tap each, at most once per viewer and
+-- phrase (the primary key), taken back with p_on = false; not on my own phrase; the counts go to the sharer only.
+-- Anti-automation only: 60 reactions an hour per player (never met in normal use).
+create or replace function public.toneturn_phrase_react(p_phrase uuid, p_kind text, p_on boolean)
 returns void language plpgsql security definer set search_path = '' as $$
 declare
   me uuid := auth.uid();
 begin
+  if p_kind not in ('encore', 'groove', 'tone', 'idea') then raise exception 'bad kind'; end if;
   if me is null or not public.toneturn_phrase_visible(p_phrase, me) then raise exception 'not visible'; end if;
   if exists (select 1 from public.toneturn_shared_phrases x where x.id = p_phrase and x.owner_id = me) then raise exception 'not your own'; end if;
   if p_on then
-    insert into public.toneturn_phrase_reactions (phrase_id, user_id, kind) values (p_phrase, me, 'bravo') on conflict do nothing;
+    if (select count(*) from public.toneturn_phrase_reactions x where x.user_id = me and x.kind <> 'learned' and x.created_at > now() - interval '1 hour') >= 60 then
+      raise exception 'slow down';
+    end if;
+    insert into public.toneturn_phrase_reactions (phrase_id, user_id, kind) values (p_phrase, me, p_kind) on conflict do nothing;
   else
-    delete from public.toneturn_phrase_reactions x where x.phrase_id = p_phrase and x.user_id = me and x.kind = 'bravo';
+    delete from public.toneturn_phrase_reactions x where x.phrase_id = p_phrase and x.user_id = me and x.kind = p_kind;
   end if;
 end $$;
 
@@ -630,7 +643,7 @@ revoke all on function public.toneturn_phrase_set_audio(uuid, text) from public,
 revoke all on function public.toneturn_phrase_get(text) from public, anon;
 revoke all on function public.toneturn_phrase_board(uuid, text) from public, anon;
 revoke all on function public.toneturn_phrase_result(uuid, int, int, real, text, text, int, int, boolean, text) from public, anon;
-revoke all on function public.toneturn_phrase_bravo(uuid, boolean) from public, anon;
+revoke all on function public.toneturn_phrase_react(uuid, text, boolean) from public, anon;
 revoke all on function public.toneturn_phrase_report(uuid, uuid, text, text) from public, anon;
 revoke all on function public.toneturn_phrase_reviews() from public, anon;
 revoke all on function public.toneturn_phrase_review(text, uuid, uuid, text) from public, anon;
@@ -645,7 +658,7 @@ grant execute on function public.toneturn_phrase_set_audio(uuid, text) to authen
 grant execute on function public.toneturn_phrase_get(text) to authenticated;
 grant execute on function public.toneturn_phrase_board(uuid, text) to authenticated;
 grant execute on function public.toneturn_phrase_result(uuid, int, int, real, text, text, int, int, boolean, text) to authenticated;
-grant execute on function public.toneturn_phrase_bravo(uuid, boolean) to authenticated;
+grant execute on function public.toneturn_phrase_react(uuid, text, boolean) to authenticated;
 grant execute on function public.toneturn_phrase_report(uuid, uuid, text, text) to authenticated;
 grant execute on function public.toneturn_phrase_reviews() to authenticated;
 grant execute on function public.toneturn_phrase_review(text, uuid, uuid, text) to authenticated;

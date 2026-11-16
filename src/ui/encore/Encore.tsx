@@ -36,6 +36,7 @@ import { isTeacherPhrase, phraseInstOf } from '../../engine/encore/assign';
 import { ShareButton } from './Challenge';
 import { CHALLENGES_ON } from '../../cloud/challenges';
 import { shareCodeOf } from '../../engine/encore/community';
+import { DEDICATION_XP } from '../../engine/encore/gifts';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 
 export interface EncoreProps {
@@ -1208,6 +1209,14 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
         <small className="t3">
           <Bi text={T(l.name, lang)} />
         </small>
+        {l.source?.kind === 'dedication' && (
+          <small className="t3 enc-ded-done" data-dedication-done={l.source.giftId}>
+            {he ? 'ההקדשה הושלמה. ' : 'Dedication completed. '}
+            <Bi text={l.source.by} />
+            {he ? ' ואת/ה מקבלים ' : ' and you each get '}
+            <bdi dir="ltr">+{DEDICATION_XP} XP</bdi>.
+          </small>
+        )}
       </div>
       <div className="enc-card">
         <FinalStaff l={l} keyPc={lastKey} />
@@ -1322,7 +1331,15 @@ function LibraryView({ lang, head, book, custom, items, onMakePhrase }: { lang: 
                     <Bi text={T(x.name, lang)} />
                   </b>
                   <small className="t3">
-                    {SRC[x.lick.source?.kind ?? 'lick'][lang]} · <KeyB k={x.lick.homeKey ?? 0} minor={!!x.lick.minor} /> · <bdi dir="ltr">{gradeOf(badge(x.lick, INST).D)}</bdi>
+                    {x.lick.source?.kind === 'dedication' ? (
+                      <span data-lib-dedication={x.lick.source.by}>
+                        {he ? 'הקדשה מאת ' : 'Dedicated by '}
+                        <Bi text={x.lick.source.by} />
+                      </span>
+                    ) : (
+                      SRC[x.lick.source?.kind ?? 'lick'][lang]
+                    )}{' '}
+                    · <KeyB k={x.lick.homeKey ?? 0} minor={!!x.lick.minor} /> · <bdi dir="ltr">{gradeOf(badge(x.lick, INST).D)}</bdi>
                   </small>
                   <KeyStrip passed={passedKeys(x.lick, items, INST).length} current={x.rank > 0 && x.rank < 5} />
                 </span>
@@ -1368,6 +1385,7 @@ const SRC: Record<string, { en: string; he: string }> = {
   pattern: { en: 'From a pattern', he: 'מתבנית' },
   teacher: { en: 'From the teacher', he: 'מהמורה' },
   shared: { en: 'Shared', he: 'שיתוף' },
+  dedication: { en: 'Dedicated by a friend', he: 'הקדשה מחבר' },
 };
 
 // ───────────────────────────── v2: guitar / bass position, voice range (§7.4) ─────────────────────────────
@@ -1422,4 +1440,4 @@ function RangeLine({ lang, l }: { lang: Lang; l: Lick }) {
 }
 
 /** Encore v3: phrases from a teacher or taken from someone else's challenge are not re-shared. */
-const isTeacherShared = (l: Lick) => l.source?.kind === 'teacher' || l.source?.kind === 'shared';
+const isTeacherShared = (l: Lick) => l.source?.kind === 'teacher' || l.source?.kind === 'shared' || l.source?.kind === 'dedication';

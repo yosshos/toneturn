@@ -10,6 +10,7 @@
 import { currentUser, supabase } from './cloud';
 import type { Lick, LickBook, LickInstrument } from '../engine/licks';
 import type { ItemState } from '../engine/drills/types';
+import { REACTION_KINDS, visibleCounts, type ReactionCounts, type ReactionKind } from '../engine/encore/gifts';
 import { challengeResult, isShareCode, phraseItemIds, resultChanged, shareCodeOf, type BoardRow, type ChallengeResult, type InputSource, type SharePayload, type Style, type TakeTrace, type Visibility } from '../engine/encore/community';
 
 export const CHALLENGES_MIGRATION = '20261204000000_toneturn_phrase_challenges';
@@ -61,6 +62,8 @@ export function setChallengeBackend(b: Backend | null) {
   backend = b;
 }
 export class ChallengeError extends Error {}
+/** The same transport for the gifts client (src/cloud/gifts.ts). */
+export const challengeRpc = <T>(fn: string, args: Record<string, unknown> = {}) => rpc<T>(fn, args);
 async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
   if (!backend && challengesMockOn()) backend = (await import('./challengesMock')).mockChallengeRpc;
   if (backend) return (await backend(fn, args)) as T;
@@ -103,9 +106,10 @@ export interface SharedPhrase {
   /** "Learned it" in the last 7 days (the "rising" order). */
   learnedWeek: number;
   featured: boolean;
-  myBravo: boolean;
-  /** Only on my own phrases: bravos received (never shown to others). */
-  bravos?: number;
+  /** The reactions I gave ("הדרן!" and the compliments), each at most once. */
+  myReactions: ReactionKind[];
+  /** Only on my own phrases: reactions received per kind (never shown to others). */
+  reactions?: ReactionCounts;
 }
 type Raw = Record<string, unknown>;
 const str = (v: unknown, d = '') => (typeof v === 'string' ? v : d);
@@ -138,8 +142,8 @@ export function phraseFromRaw(r: Raw): SharedPhrase {
     reached: num(r.reached),
     learnedWeek: num(r.learned_week),
     featured: !!r.featured,
-    myBravo: !!r.my_bravo,
-    ...(r.bravos !== undefined && r.bravos !== null ? { bravos: num(r.bravos) } : {}),
+    myReactions: Array.isArray(r.my_reactions) ? REACTION_KINDS.filter((k) => (r.my_reactions as unknown[]).includes(k)) : [],
+    ...(r.mine && r.reactions && typeof r.reactions === 'object' ? { reactions: visibleCounts(true, r.reactions as Record<string, unknown>)! } : {}),
   };
 }
 export function rowFromRaw(r: Raw): BoardRow {
@@ -222,7 +226,8 @@ export async function postResult(id: string, r: ChallengeResult): Promise<PostAn
     return 'error';
   }
 }
-export const setBravo = (id: string, on: boolean) => rpc<void>('toneturn_phrase_bravo', { p_phrase: id, p_on: on });
+/** Give or take back one reaction ("הדרן!" or a compliment) on someone else's phrase. */
+export const setReaction = (id: string, kind: ReactionKind, on: boolean) => rpc<void>('toneturn_phrase_react', { p_phrase: id, p_kind: kind, p_on: on });
 export type ReportKind = 'copied' | 'implausible' | 'other';
 export type ReportAnswer = 'ok' | 'already' | 'held' | 'row-hidden' | 'error';
 /** Report a phrase (userId null) or one board row (userId). It hides at once for me; the server holds it at 2 / 3 reports. */
