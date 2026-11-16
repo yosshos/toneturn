@@ -2,6 +2,9 @@
 // on its domain colour, with an ink outline. Same drawings as the design canvas ("What makes it ours").
 import type { ReactNode } from 'react';
 import { LESSON_MARK, TOPIC_MARK } from './stepMarks';
+import { PAPER } from './paper';
+import { cutFor, PaperSvg } from './paper/Paper';
+import type { Cut } from './paper/kit';
 
 const I = '#1E1033';
 const sw = { stroke: I, strokeWidth: 3.2, strokeLinecap: 'round' as const, fill: 'none' };
@@ -1919,6 +1922,9 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Paper redraw: names that exist only in the Paper set (the Jazz course's saxophone, Encore, the games card) get the
+// nearest old drawing so raw GLYPHS users still draw something.
+Object.assign(GLYPHS, { jazz: GLYPHS.prog, encore: GLYPHS.echo, games: GLYPHS.puzzle });
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */
@@ -1937,9 +1943,20 @@ export function glyphForEmoji(e: string | null | undefined): GlyphKind {
 }
 
 
-/** A symbol inside a tilted note head. `shadow` adds the hard offset shadow used for big, tappable ones. */
+/**
+ * A glyph in the Paper language (src/ui/paper): the drawing in its family hue, the cut by the rendered size (simplified
+ * ≤ 24 px, badge detail ≥ 64 px). The box stays size × 0.78·size so layouts keep their measure. `color` and `shadow`
+ * belong to the old note-head drawing, still used for a glyph appended without a Paper drawing (paperFallbacks()).
+ */
 export function Glyph({ kind, color = DOMAIN_COLOR.ear, size = 46, shadow = false, label }: { kind: GlyphKind; color?: string; size?: number; shadow?: boolean; label?: string }) {
   const h = Math.round(size * 0.78);
+  const pa = PAPER[kind];
+  if (pa)
+    return (
+      <span className="glyph glyph-paper" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+        <PaperSvg art={pa} cut={cutFor(h)} width={size} height={h} />
+      </span>
+    );
   return (
     <span className="glyph" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <svg width={size} height={h} viewBox="0 0 120 94">
@@ -1950,3 +1967,19 @@ export function Glyph({ kind, color = DOMAIN_COLOR.ear, size = 46, shadow = fals
     </span>
   );
 }
+
+/**
+ * A bare glyph svg (no box) — path nodes, history chips. Paper when drawn; otherwise the old drawing on its own
+ * centred grid, in currentColor-free ink, so an appended glyph still shows.
+ */
+export function PaperGlyph({ kind, width, height = width, cut = 'full', className }: { kind: GlyphKind; width: number; height?: number; cut?: Cut; className?: string }) {
+  const pa = PAPER[kind];
+  if (pa) return <PaperSvg art={pa} cut={cut} width={width} height={height} className={className} />;
+  return (
+    <svg className={className} viewBox="-30 -27 60 54" width={width} height={height} aria-hidden="true">
+      {GLYPHS[kind]}
+    </svg>
+  );
+}
+/** Glyph names that still render through their old drawing (appended after the Paper redraw). */
+export const paperFallbacks = () => Object.keys(GLYPHS).filter((k) => !PAPER[k]);

@@ -1,0 +1,251 @@
+// Paper drawings: the courses and the shared core (the owner-approved samples of docs/icon-language-directions.html,
+// redrawn on the 48 grid with wires / marks where a part sits on the background).
+import { art, Ci, det, E, H, L, P, R, rich, T, type Art } from './kit';
+
+export const ART_CORE: Record<string, Art> = {
+  keys: art(
+    'purple',
+    'lilac',
+    R(4, 18, 40, 26, 4, 'light'),
+    R(23.6, 18, 9.8, 26, 0, 'body'),
+    det(L(14, 18, 14, 44), L(23.6, 18, 23.6, 44), L(33.4, 18, 33.4, 44)),
+    R(11.2, 18, 5.6, 15, 1.6, 'ink'),
+    R(20.8, 18, 5.6, 15, 1.6, 'ink'),
+    R(30.6, 18, 5.6, 15, 1.6, 'ink'),
+    H(36.5, 10, 4.4, 'accent'),
+    L(40.4, 9, 40.4, 2, 'wire', 2),
+    det(P('M40.4 2.2 Q45 4.4 43.6 8.4', 'wire', 1.8)),
+    rich(R(6, 38.5, 16, 2.2, 1, 'body'), H(9, 10, 2.6, 'accent'), L(11.4, 9.4, 11.4, 4, 'wire', 1.4)),
+  ),
+  guitar: art(
+    'tan',
+    'purple',
+    P('M25.5 22.5 L39.5 8.5 L42.5 11.5 L28.5 25.5 Z', 'light'),
+    P('M38.6 9.4 L41.5 4.6 L46 7.4 L42.4 12.4 Z', 'accent'),
+    det(Ci(41.4, 3.4, 1.3, 'mark'), Ci(46.4, 8.6, 1.3, 'mark')),
+    P('M20 19 C 26 17, 32 21, 30 27 C 29 30, 33 32, 33 36 C 33 43, 25 47, 18 45.5 C 11 43.5, 6.5 37, 8.5 31 C 9.5 28, 13 27, 14 24 C 15 21, 16 19.5, 20 19 Z', 'body'),
+    Ci(20.5, 32.5, 4, 'ink'),
+    det(P('M24.5 35 C 28 35, 29.5 39, 27.5 41.5 C 25.5 43.5, 22.5 42, 23 39.5 Z', 'accent')),
+    R(11.5, 37.5, 8, 3, 1, 'ink', 'rotate(-45 15.5 39)'),
+    L(15.5, 39, 41, 10, 'line', 1),
+    det(L(33, 19.8, 35, 21.8, 'inkline', 1.4), L(30, 22.8, 32, 24.8, 'inkline', 1.4)),
+    rich(L(17, 40.5, 42, 11.5, 'line', 0.7), E(13, 27, 2.4, 1.4, -35, 'light')),
+  ),
+  bass: art(
+    'sky',
+    'purple',
+    R(19.5, 19, 9, 28, 2, 'light'),
+    det(L(19.5, 26, 28.5, 26, 'inkline', 1.4), L(19.5, 32, 28.5, 32, 'inkline', 1.4), L(19.5, 38, 28.5, 38, 'inkline', 1.4)),
+    P('M17 5 Q24 1.5 31 5 L30 20 L18 20 Z', 'body'),
+    Ci(13, 9, 2.6, 'accent'),
+    Ci(13, 16, 2.6, 'accent'),
+    Ci(35, 9, 2.6, 'accent'),
+    Ci(35, 16, 2.6, 'accent'),
+    det(L(15.5, 9, 18, 9, 'wire', 1.6), L(15.5, 16, 18, 16, 'wire', 1.6), L(32.5, 9, 30, 9, 'wire', 1.6), L(32.5, 16, 30, 16, 'wire', 1.6)),
+    L(21.6, 10, 21.6, 47, 'line', 1),
+    L(23.2, 10, 23.2, 47, 'line', 1),
+    L(24.8, 10, 24.8, 47, 'line', 1),
+    L(26.4, 10, 26.4, 47, 'line', 1),
+    rich(Ci(21.5, 29, 1, 'ink'), Ci(26.5, 35, 1, 'ink'), E(22, 7, 3, 1.2, -8, 'light')),
+  ),
+  drums: art(
+    'tan',
+    'purple',
+    P('M7 25 L7 38 C 7 42.5, 41 42.5, 41 38 L41 25 Z', 'body'),
+    E(24, 25, 17, 5.4, 0, 'light'),
+    det(L(13, 28.8, 13, 40.4, 'inkline', 1.8), L(24, 30.4, 24, 42, 'inkline', 1.8), L(35, 28.8, 35, 40.4, 'inkline', 1.8)),
+    P('M7 32.5 C 7 36.5, 41 36.5, 41 32.5', 'inkline', 1.6),
+    L(10, 5, 22.5, 21.5, 'accentline', 3),
+    L(38, 5, 25.5, 21.5, 'accentline', 3),
+    Ci(10, 5, 2.5, 'mark'),
+    Ci(38, 5, 2.5, 'mark'),
+    rich(E(18, 24, 6, 1.6, 0, 'body'), H(24, 25.4, 2.4, 'accent')),
+  ),
+  sing: art(
+    'pink',
+    'purple',
+    P('M15.5 30 C 15.5 37.5, 32.5 37.5, 32.5 30', 'wire', 2.4),
+    L(24, 36.5, 24, 42, 'wire', 2.4),
+    R(16.5, 41, 15, 4, 2, 'mark'),
+    R(17, 4, 14, 26, 7, 'body'),
+    R(17, 4, 14, 13, 7, 'light'),
+    det(L(19.5, 8, 28.5, 8, 'line', 1.2), L(18.5, 11.5, 29.5, 11.5, 'line', 1.2), L(19.5, 15, 28.5, 15, 'line', 1.2)),
+    P('M37 12 C 40 15, 40 20, 37 23', 'accentline', 2.4),
+    det(P('M41 8 C 46 13, 46 22, 41 27', 'accentline', 2.4)),
+    rich(R(17, 20, 14, 2.4, 0, 'ink'), E(20.5, 24.5, 1.4, 3, 0, 'light')),
+  ),
+  ear: art(
+    'teal',
+    'sky',
+    P('M30 9 C 21 8, 15 15, 16 23 C 16.6 28, 21 29, 21 33 C 21 37, 18 38, 18 41 C 18 45, 24 46, 27 42 C 30 38, 37 34, 38 25 C 39 16, 35 10, 30 9 Z', 'body'),
+    P('M29 15 C 24 15, 22 19, 23 23 C 23.6 25.5, 27 25.5, 27.5 28.5 C 28 31, 25.5 32.5, 26 34.5', 'inkline', 2.2),
+    P('M11 18 C 7 22, 7 28, 11 32', 'accentline', 2.4),
+    det(P('M6 14 C 1 21, 1 29, 6 36', 'accentline', 2.4)),
+    H(31.5, 20, 3, 'light'),
+    rich(E(33, 30, 1.6, 3.4, 20, 'light'), H(26, 38.5, 1.8, 'ink')),
+  ),
+  /** The Jazz & improv course: a saxophone. */
+  jazz: art(
+    'tan',
+    'purple',
+    P('M9 7 C 16 6, 20 9, 21 14 L21 34 C 21 42, 31 43, 33 35 L34 28', 'tube', 7),
+    E(35, 26, 6.6, 3.6, -25, 'accent'),
+    E(35, 26, 3.4, 1.6, -25, 'ink'),
+    det(Ci(21, 19, 1.8, 'light'), Ci(21, 24.5, 1.8, 'light'), Ci(21, 30, 1.8, 'light')),
+    R(4.5, 5, 6, 3.6, 1.2, 'mark', 'rotate(-6 7.5 6.8)'),
+    P('M38 10 C 41 12, 41 16, 38 18', 'accentline', 2.2),
+    det(P('M42 7 C 46 11, 46 17, 42 21', 'accentline', 2.2)),
+    rich(Ci(25.5, 39, 1.5, 'light'), L(17.8, 12, 17.8, 30, 'shine', 1)),
+  ),
+  theory: art(
+    'lilac',
+    'purple',
+    P('M7 5 L35 5 L42 12 L42 45 L7 45 Z', 'light'),
+    P('M35 5 L35 12 L42 12 Z', 'body'),
+    det(L(11, 17, 38, 17, 'line', 1.1), L(11, 22, 38, 22, 'line', 1.1), L(11, 27, 38, 27, 'line', 1.1), L(11, 32, 38, 32, 'line', 1.1), L(11, 37, 38, 37, 'line', 1.1)),
+    H(27, 34.5, 3.4, 'body'),
+    H(27, 29.5, 3.4, 'body'),
+    H(27, 24.5, 3.4, 'accent'),
+    L(30.1, 23.8, 30.1, 10, 'inkline', 1.8),
+    P('M15 21 L15 33 M18.4 19.5 L18.4 31.5 M13.4 25 L20 23.2 M13.4 29.6 L20 27.8', 'inkline', 1.5),
+    rich(H(35, 39.5, 2.2, 'ink'), L(11, 41.5, 24, 41.5, 'line', 0.8)),
+  ),
+  /** Encore: a note head between repeat signs (𝄆 ● 𝄇). */
+  encore: art(
+    'purple',
+    'lilac',
+    R(3, 10, 3.6, 28, 1, 'mark'),
+    L(9.5, 10, 9.5, 38, 'wire', 1.6),
+    Ci(13, 20, 1.9, 'mark'),
+    Ci(13, 28, 1.9, 'mark'),
+    R(41.4, 10, 3.6, 28, 1, 'mark'),
+    L(38.5, 10, 38.5, 38, 'wire', 1.6),
+    Ci(35, 20, 1.9, 'mark'),
+    Ci(35, 28, 1.9, 'mark'),
+    H(23, 29, 6, 'body'),
+    L(28.4, 27.4, 28.4, 9, 'wire', 2.2),
+    det(P('M28.4 9.2 Q33.5 11 31.8 16', 'wire', 2)),
+    P('M15 43.5 C 20 46.5, 28 46.5, 33 43.5', 'accentline', 2.2),
+    rich(H(21, 27.6, 2, 'light')),
+  ),
+  fire: art(
+    'tan',
+    'pink',
+    P('M24 3 C 27 11, 36 15, 36 28 C 36 37, 30 44, 24 44 C 17 44, 11 38, 11 30 C 11 22, 17 19, 18 12 C 22 15, 23 19, 22 23 C 26 19, 26 11, 24 3 Z', 'body'),
+    P('M24 22 C 26 27, 31 29, 31 35 C 31 40, 27.5 43, 24 43 C 20 43, 17 40, 17 36 C 17 31, 22 30, 24 22 Z', 'accent'),
+    H(23, 37, 3.4, 'ink'),
+    det(L(26.1, 36.2, 26.1, 29.5, 'inkline', 1.6)),
+    rich(P('M15 26 C 14 30, 15 33, 16 34', 'shine', 1.4), E(30, 14, 1.2, 2.6, 20, 'light')),
+  ),
+  /** All games (the Practice page's games card). */
+  games: art(
+    'tan',
+    'teal',
+    P('M13 18 L35 18 C 42 18, 46 25, 46 33 C 46 40, 40 43, 36 38 L33 34 L15 34 L12 38 C 8 43, 2 40, 2 33 C 2 25, 6 18, 13 18 Z', 'body'),
+    R(10, 23.5, 4, 11, 1.2, 'ink'),
+    R(6.5, 27, 11, 4, 1.2, 'ink'),
+    Ci(34, 24.5, 2.6, 'accent'),
+    det(Ci(39, 29.5, 2.6, 'light'), Ci(29, 29.5, 2.6, 'light')),
+    H(24, 10, 3.4, 'accent'),
+    L(27, 9.3, 27, 3.5, 'wire', 1.8),
+    rich(P('M17 21 L31 21', 'shine', 1.2)),
+  ),
+  person: art(
+    'pink',
+    'purple',
+    P('M7 46 C 7 34, 15 30, 24 30 C 33 30, 41 34, 41 46 Z', 'body'),
+    Ci(24, 18, 9, 'light'),
+    P('M13 18 C 13 8, 35 8, 35 18', 'wire', 2.4),
+    R(10, 15, 5, 9, 2, 'accent'),
+    R(33, 15, 5, 9, 2, 'accent'),
+    det(H(30, 39, 3.6, 'accent'), L(33.2, 38.2, 33.2, 32.5, 'inkline', 1.6)),
+    rich(P('M17 34 C 20 36, 28 36, 31 34', 'inkline', 1.2)),
+  ),
+};
+
+/** Nav, tab bar and sidebar (small cut by default). `home` takes today's date. */
+export function navArt(id: string, date = new Date().getDate()): Art | null {
+  switch (id) {
+    case 'home':
+      return art(
+        'sky',
+        'pink',
+        R(5, 9, 38, 35, 6, 'light'),
+        R(5, 9, 38, 11, 6, 'body'),
+        R(5, 15, 38, 5, 0, 'body'),
+        R(13, 4, 4.4, 10, 2.2, 'mark'),
+        R(30.6, 4, 4.4, 10, 2.2, 'mark'),
+        T(24, 40, String(date), 18, 'ink'),
+        rich(H(38, 38, 2.6, 'accent')),
+      );
+    case 'path':
+      return art(
+        'teal',
+        'purple',
+        P('M10 44 C 10 34, 34 36, 34 26 S 16 18, 18 8', 'tube', 7),
+        det(P('M10 44 C 10 34, 34 36, 34 26 S 16 18, 18 8', 'dash', 1.4)),
+        Ci(11, 41, 4.2, 'accent'),
+        Ci(31, 28.5, 4.2, 'body'),
+        L(18, 9, 18, 1.5, 'wire', 2),
+        P('M18 1.8 L28 4.6 L18 8 Z', 'accent'),
+      );
+    case 'arcade':
+      return art(
+        'purple',
+        'tan',
+        P('M14 44 L18.5 8 Q24 3.5 29.5 8 L34 44 Z', 'body'),
+        P('M18.4 39.5 L21.6 13 Q24 10.5 26.4 13 L29.6 39.5 Z', 'light'),
+        L(24, 36.5, 32, 14, 'inkline', 2.4),
+        R(27, 20, 6.4, 4.6, 1.4, 'accent', 'rotate(-18 30.2 22.3)'),
+        R(11, 41.5, 26, 4.5, 2, 'mark'),
+        det(L(21, 20, 23, 20), L(20.5, 26, 23, 26), L(20, 32, 23, 32)),
+        Ci(24, 36.5, 1.8, 'ink'),
+      );
+    case 'skills':
+      return art(
+        'teal',
+        'purple',
+        R(6, 29, 9, 14, 2.4, 'light'),
+        R(19.5, 20, 9, 23, 2.4, 'body'),
+        R(33, 12, 9, 31, 2.4, 'body'),
+        R(3, 42, 42, 3.6, 1.6, 'mark'),
+        H(37.5, 6.5, 3.6, 'accent'),
+        det(P('M10.5 25 L24 16 L33 9', 'dash', 1.4)),
+        rich(R(33, 12, 9, 6, 2.4, 'light')),
+      );
+    case 'friends':
+      return art(
+        'pink',
+        'purple',
+        P('M3 42 C 3 33, 9 29, 16 29 C 23 29, 29 33, 29 42 Z', 'light'),
+        Ci(16, 19.5, 7, 'light'),
+        P('M17 46 C 17 36, 24 32, 31.5 32 C 39 32, 45.5 36, 45.5 46 Z', 'body'),
+        Ci(31.5, 21.5, 7.6, 'body'),
+        det(H(38, 40.5, 2.8, 'accent'), L(40.5, 39.8, 40.5, 35.4, 'inkline', 1.4)),
+      );
+    case 'tools':
+      return art(
+        'lilac',
+        'tan',
+        P('M14 4 L14 22 C 14 30, 34 30, 34 22 L34 4 L28 4 L28 21 C 28 24.5, 20 24.5, 20 21 L20 4 Z', 'body'),
+        R(21, 28, 6, 17, 3, 'light'),
+        P('M39 9 C 42 12, 42 17, 39 20', 'accentline', 2.2),
+        det(P('M9 9 C 6 12, 6 17, 9 20', 'accentline', 2.2)),
+        rich(H(24, 41, 2.2, 'accent')),
+      );
+    case 'achievements':
+      return art(
+        'tan',
+        'purple',
+        P('M14 3 L22 3 L26 18 L18 20 Z', 'accent'),
+        P('M34 3 L26 3 L22 18 L30 20 Z', 'accent'),
+        Ci(24, 30, 14, 'body'),
+        Ci(24, 30, 9.6, 'light'),
+        H(23, 32.5, 4, 'ink'),
+        L(26.6, 31.4, 26.6, 23, 'inkline', 1.8),
+        rich(P('M26.6 23.2 Q30 24.4 29 27.6', 'inkline', 1.4)),
+      );
+    default:
+      return null;
+  }
+}

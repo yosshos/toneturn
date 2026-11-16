@@ -14,7 +14,10 @@
 //             New drill family → registerFamilyGlyph('g-strum', glyph) or add a 'family:<id>' entry below.
 //             resolveGlyph(badge).fallback is true only when nothing matched (tests forbid it for area/skill/technique/special).
 
-import { useId, type ReactNode } from 'react';
+import { useId, type CSSProperties, type ReactNode } from 'react';
+import { badgePaper } from './paper/art-badge';
+import { HUES, TONE_KEYS, tones, type Art } from './paper/kit';
+import { paperParts, PaperSvg } from './paper/Paper';
 import { familyLevelCount, type Badge, type BadgeCat } from '../engine/badges';
 import type { RankArea, RankTier } from '../engine/ranks';
 import { SUB_SKILLS } from '../engine/taxonomy';
@@ -42,8 +45,6 @@ export const METALS: Record<RankTier | 'locked', Metal> = {
   master: { stops: ['#ffe9a8', '#ff8fd8', '#a58bff', '#3f6fd8'], hi: '#fff0fb', glow: '#ff7ad9', ribbon: '#2a1f5c' },
   locked: { stops: ['#8a8ea8', '#62667f', '#45485e', '#2c2e40'], hi: '#9a9eb8', glow: '#62667f', ribbon: '#2c2e40' },
 };
-const FACE = ['#2b2e5c', '#15162e'];
-const FACE_LOCKED = ['#2a2b3d', '#18192a'];
 
 // ======================================================================= glyphs (24-unit grid)
 
@@ -1758,7 +1759,7 @@ const FRAMES: Record<BadgeCat, FrameSpec> = {
 };
 const FACE_SCALE: Partial<Record<BadgeCat, number>> = { area: 0.8, sub: 0.8, technique: 0.84 };
 
-function Laurel({ fill }: { fill: string }) {
+function Laurel({ fill, edge }: { fill: string; edge: string }) {
   const side: ReactNode[] = [];
   for (let i = 0; i < 7; i++) {
     const th = ((24 + i * 21) * Math.PI) / 180; // from the bottom, up the left side
@@ -1767,20 +1768,30 @@ function Laurel({ fill }: { fill: string }) {
     const phi = (Math.atan2(-Math.sin(th), -Math.cos(th)) * 180) / Math.PI - 28;
     side.push(<ellipse key={i} cx={x.toFixed(2)} cy={y.toFixed(2)} rx="6.4" ry="2.7" transform={`rotate(${phi.toFixed(1)} ${x.toFixed(2)} ${y.toFixed(2)})`} />);
   }
-  return (
-    <g fill={fill}>
+  // Paper leaves: each sheet with its darker edge below.
+  const leaves = (
+    <>
       <g>{side}</g>
       <g transform="translate(100 0) scale(-1 1)">{side}</g>
+    </>
+  );
+  return (
+    <g>
+      <g fill={edge} transform="translate(0 2.4)">
+        {leaves}
+      </g>
+      <g fill={fill}>{leaves}</g>
       <path d="M43 88 Q50 83 57 88" fill="none" stroke={fill} strokeWidth="3" strokeLinecap="round" />
     </g>
   );
 }
 
-function KeyStrip({ fill, dark }: { fill: string; dark: string }) {
+function KeyStrip({ fill, dark, edge }: { fill: string; dark: string; edge: string }) {
   const x0 = 23;
   const w = 54 / 7;
   return (
     <g>
+      <rect x={x0} y="65" width="54" height="15" rx="2.5" fill={edge} />
       <rect x={x0} y="63" width="54" height="15" rx="2.5" fill={fill} />
       {Array.from({ length: 6 }, (_, i) => (
         <path key={i} d={`M${(x0 + w * (i + 1)).toFixed(2)} 63.5 V77.5`} stroke={dark} strokeWidth="0.9" />
@@ -1805,26 +1816,55 @@ export interface BadgeArtProps {
 }
 const LOCKED_TXT = { en: 'locked', he: 'נעול' };
 
+/** Flat tier tones of the Paper medal (no gradients): body, its edge, the bevel tint, the ribbon. Never lemon. */
+export const PAPER_TIER: Record<RankTier | 'locked', { body: string; edge: string; light: string; ribbon: string; ribbonEdge: string }> = {
+  bronze: { body: '#c27a3e', edge: '#8a4f22', light: '#efc196', ribbon: '#7a2f2f', ribbonEdge: '#4f1c1c' },
+  silver: { body: '#a7b0c2', edge: '#6f788c', light: '#e4e8f0', ribbon: '#2f4a7a', ribbonEdge: '#1d2f4f' },
+  gold: { body: '#e3a21a', edge: '#9c6a08', light: '#f0bd52', ribbon: '#7a2f55', ribbonEdge: '#4f1c37' },
+  platinum: { body: '#4fb39a', edge: '#2b6f5d', light: '#bfeadc', ribbon: '#25406b', ribbonEdge: '#162843' },
+  diamond: { body: '#3aa9d9', edge: '#1d5f86', light: '#bde9fb', ribbon: '#3a2f7a', ribbonEdge: '#241c4f' },
+  master: { body: '#a58bff', edge: '#5b3fc4', light: '#ffc2ea', ribbon: '#2a1f5c', ribbonEdge: '#18113a' },
+  locked: { body: '#6b6f88', edge: '#45485e', light: '#9a9eb8', ribbon: '#2c2e40', ribbonEdge: '#1b1c2a' },
+};
+const PAPER_FACE = { earned: '#24163f', edge: '#120a22', locked: '#2a2b3d' };
+/** The glyph's tones on the medal's dark face: the dark-surface set, pinned (no theme / surface context applies). */
+function faceVars(a: Art): CSSProperties {
+  const K = tones(HUES[a.hue], HUES[a.hue2], 'dark');
+  const v: Record<string, string> = { stroke: 'none' };
+  for (const k of TONE_KEYS) {
+    v[`--${k}`] = K[k];
+    v[`--p${k}`] = K[k];
+  }
+  return v as CSSProperties;
+}
+const EDGE = 3.6; // paper thickness on the 100 grid (1.9 on 48)
+
 export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = false, className }: BadgeArtProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const id = (k: string) => `ba${uid}-${k}`;
   const tier: RankTier = badge.tone ?? 'gold';
   const m = METALS[earned ? tier : 'locked'];
-  const face = earned ? FACE : FACE_LOCKED;
+  const T = PAPER_TIER[earned ? tier : 'locked'];
+  const faceFill = earned ? PAPER_FACE.earned : PAPER_FACE.locked;
   const spec = FRAMES[badge.cat];
   const fs = FACE_SCALE[badge.cat];
-  const { glyph } = resolveGlyph(badge);
+  const { key, glyph } = resolveGlyph(badge);
+  const pa0 = badgePaper(key);
+  const pa: Art | null = pa0 ? (earned ? pa0 : { ...pa0, hue: 'slate', hue2: 'slate' }) : null;
   const [gx, gy, gs] = spec.g;
   const label = `${badge.name[lang]}${earned ? '' : ` (${LOCKED_TXT[lang]})`}`;
   const pip = badge.cat === 'sub' ? subPip(badge.id) : null;
   const lv = badge.cat === 'technique' ? techLevel(badge.id) : null;
   const pipCount = lv === null ? 0 : Math.max(lv, familyLevelCount(badge.id.split(':')[1]));
   const url = (k: string) => `url(#${id(k)})`;
-  const faceShape = <path d={spec.face} transform={fs ? scaleAt(fs) : undefined} />;
+  const faceT = fs ? scaleAt(fs) : undefined;
+  const bevelT = scaleAt((fs ?? 1) * 1.09, gx, gy);
+  // Paper glyph: the 48 grid scaled to the old 24·gs box, a little larger (the drawing fills its grid less).
+  const ps = (24 * gs * 1.2) / 48;
 
   return (
     <svg
-      className={`badge-art ba-${badge.cat} ${earned ? 'ba-earned' : 'ba-locked'} ba-tier-${tier}${className ? ` ${className}` : ''}`}
+      className={`badge-art ba-paper ba-${badge.cat} ${earned ? 'ba-earned' : 'ba-locked'} ba-tier-${tier}${className ? ` ${className}` : ''}`}
       width={size}
       height={size}
       viewBox="0 0 100 100"
@@ -1832,24 +1872,9 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
     >
       {!decorative && <title>{label}</title>}
       <defs>
-        <linearGradient id={id('m')} x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0" stopColor={m.stops[0]} />
-          <stop offset="0.38" stopColor={m.stops[1]} />
-          <stop offset="0.72" stopColor={m.stops[2]} />
-          <stop offset="1" stopColor={m.stops[3]} />
-        </linearGradient>
-        <linearGradient id={id('r')} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor={m.stops[3]} />
-          <stop offset="0.5" stopColor={m.stops[1]} />
-          <stop offset="1" stopColor={m.stops[0]} />
-        </linearGradient>
-        <radialGradient id={id('f')} cx="0.4" cy="0.3" r="0.85">
-          <stop offset="0" stopColor={face[0]} />
-          <stop offset="1" stopColor={face[1]} />
-        </radialGradient>
         <linearGradient id={id('s')} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#fff" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0.5" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
         <clipPath id={id('c')}>
@@ -1857,49 +1882,57 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
         </clipPath>
       </defs>
 
-      {/* ribbon tails behind the round medal */}
+      {/* ribbon tails behind the round medal: two paper strips */}
       {badge.cat === 'skill' && (
         <g>
-          <path d="M34 58 L24 95 L33 89.5 L39.5 97 L48 68 Z" fill={earned ? m.ribbon : '#2c2e40'} />
-          <path d="M66 58 L76 95 L67 89.5 L60.5 97 L52 68 Z" fill={earned ? m.ribbon : '#2c2e40'} />
-          <path d="M37.5 62 L29.5 91 M62.5 62 L70.5 91" stroke={m.stops[1]} strokeWidth="2.4" opacity={earned ? 0.85 : 0.4} />
+          <g transform={`translate(0 ${EDGE})`} fill={T.ribbonEdge}>
+            <path d="M34 58 L24 95 L33 89.5 L39.5 97 L48 68 Z" />
+            <path d="M66 58 L76 95 L67 89.5 L60.5 97 L52 68 Z" />
+          </g>
+          <path d="M34 58 L24 95 L33 89.5 L39.5 97 L48 68 Z" fill={T.ribbon} />
+          <path d="M66 58 L76 95 L67 89.5 L60.5 97 L52 68 Z" fill={T.ribbon} />
+          <path d="M37.5 62 L29.5 91 M62.5 62 L70.5 91" stroke={T.light} strokeWidth="2.4" strokeLinecap="round" opacity={earned ? 0.9 : 0.4} />
         </g>
       )}
-      {badge.cat === 'season' && <Laurel fill={url('m')} />}
+      {badge.cat === 'season' && <Laurel fill={T.body} edge={T.edge} />}
 
-      {/* metal body + a soft drop line */}
-      <path d={spec.outer} fill={url('m')} />
-      <path d={spec.outer} fill="none" stroke={m.stops[3]} strokeWidth="1.5" opacity="0.7" />
-      {badge.cat === 'skill' && <circle cx="50" cy="40" r="30.3" fill="none" stroke={m.stops[0]} strokeWidth="1.6" strokeDasharray="0.1 3.6" strokeLinecap="round" opacity="0.9" />}
-      {badge.cat === 'special' && <circle cx="50" cy="50" r="35" fill="none" stroke={m.stops[3]} strokeWidth="1" opacity="0.6" />}
+      {/* the medal: a sheet in the tier tone with its edge, a bevel tint, the dark face */}
+      <path d={spec.outer} transform={`translate(0 ${EDGE})`} fill={T.edge} />
+      <path d={spec.outer} fill={T.body} />
+      {badge.cat === 'skill' && <circle cx="50" cy="40" r="30.3" fill="none" stroke={T.light} strokeWidth="1.6" strokeDasharray="0.1 3.6" strokeLinecap="round" />}
+      {badge.cat === 'special' && <circle cx="50" cy="50" r="35" fill={T.light} opacity="0.55" />}
+      <path d={spec.face} transform={bevelT} fill={T.light} />
+      <path d={spec.face} transform={`translate(0 1.6)${faceT ? ` ${faceT}` : ''}`} fill={PAPER_FACE.edge} />
+      <path d={spec.face} transform={faceT} fill={faceFill} />
 
-      {/* enamel face with a bevel ring */}
-      <g fill={url('f')} stroke={url('r')} strokeWidth="2.2">
-        {faceShape}
-      </g>
+      {badge.cat === 'technique' && <KeyStrip fill={T.light} dark={faceFill} edge={T.edge} />}
 
-      {badge.cat === 'technique' && <KeyStrip fill={m.stops[0]} dark={face[1]} />}
-
-      {/* glyph */}
-      <g
-        transform={`translate(${gx - 12 * gs} ${gy - 12 * gs}) scale(${gs})`}
-        color={m.hi}
-        stroke="currentColor"
-        fill="none"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={earned ? 1 : 0.55}
-      >
-        {glyph({ bg: face[1] })}
-      </g>
+      {/* glyph: the Paper drawing in its badge cut on the dark face; the old line glyph if a key has none */}
+      {pa ? (
+        <g className="ba-glyph" transform={`translate(${gx - 24 * ps} ${gy - 24 * ps}) scale(${ps})`} style={faceVars(pa)} opacity={earned ? 1 : 0.7}>
+          {paperParts(pa, size >= 40 ? 'badge' : 'full')}
+        </g>
+      ) : (
+        <g
+          transform={`translate(${gx - 12 * gs} ${gy - 12 * gs}) scale(${gs})`}
+          color={m.hi}
+          stroke="currentColor"
+          fill="none"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={earned ? 1 : 0.55}
+        >
+          {glyph({ bg: faceFill })}
+        </g>
+      )}
 
       {/* sub-skill pips: which sub-skill of its skill (n dots, the own one filled) */}
       {pip && (
         <g>
           {Array.from({ length: pip.n }, (_, i) => {
             const x = 50 + (i - (pip.n - 1) / 2) * 6;
-            return <circle key={i} cx={x} cy={74.5} r={i === pip.i ? 2.3 : 1.4} fill={i === pip.i ? m.hi : m.stops[2]} />;
+            return <circle key={i} cx={x} cy={74.5} r={i === pip.i ? 2.3 : 1.4} fill={i === pip.i ? T.light : T.edge} />;
           })}
         </g>
       )}
@@ -1907,25 +1940,25 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
       {lv !== null && (
         <g>
           {Array.from({ length: pipCount }, (_, i) => (
-            <circle key={i} cx={50 + (i - (pipCount - 1) / 2) * 7} cy={13.2} r={2.1} fill={i < lv ? face[1] : 'none'} stroke={face[1]} strokeWidth="0.8" opacity={i < lv ? 0.9 : 0.5} />
+            <circle key={i} cx={50 + (i - (pipCount - 1) / 2) * 7} cy={13.2} r={2.1} fill={i < lv ? PAPER_FACE.earned : T.light} />
           ))}
         </g>
       )}
 
-      {/* sheen: a static soft highlight + a band the unlock overlay sweeps across */}
-      <g clipPath={url('c')}>
-        <ellipse cx="34" cy="22" rx="30" ry="14" fill="#fff" opacity={earned ? 0.13 : 0.05} transform="rotate(-28 34 22)" />
-        {earned && (
+      {/* the band the unlock overlay sweeps across (earned only) */}
+      {earned && (
+        <g clipPath={url('c')}>
           <g transform="rotate(24 50 50)">
             <rect className="ba-sweep" x="-30" y="-20" width="22" height="140" fill={url('s')} />
           </g>
-        )}
-      </g>
+        </g>
+      )}
 
       {/* locked: lock pip (shape, not only colour) */}
       {!earned && (
         <g transform="translate(74 74)">
-          <circle r="12" fill="#1b1c2e" stroke="#8a8ea8" strokeWidth="2" />
+          <circle r="12" cy="2.4" fill="#0e0f1a" />
+          <circle r="12" fill="#1b1c2e" />
           <path d="M-4 -1.5 V-4.5 A4 4 0 0 1 4 -4.5 V-1.5" fill="none" stroke="#c9cce0" strokeWidth="2.2" strokeLinecap="round" />
           <rect x="-6" y="-2" width="12" height="9" rx="2" fill="#c9cce0" />
         </g>
@@ -1936,8 +1969,10 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
 
 // ======================================================================= small helpers for other screens
 
-/** The area glyph alone, in currentColor (for rank strips / challenge headers instead of emoji). */
+/** The area glyph alone (rank strips / challenge headers): its Paper drawing in the simplified cut. */
 export function AreaGlyph({ area, size = 18 }: { area: RankArea; size?: number }) {
+  const pa = badgePaper(`area:${area}`);
+  if (pa) return <PaperSvg art={pa} cut={size <= 24 ? 'small' : 'full'} width={size} className="area-glyph" />;
   const g = GLYPHS[`area:${area}`] ?? FALLBACK;
   return (
     <svg className="area-glyph" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -6,11 +6,15 @@ import type { CellState, MapRow } from '../../engine/encore/phrase';
 import { RANKS } from '../../engine/encore/phrase';
 import type { Dots } from '../../engine/encore/detect';
 import { keyName } from '../../engine/drills/generate';
+import { PAPER } from '../paper';
+import { PaperSvg } from '../paper/Paper';
 
 export type Lang = 'he' | 'en';
 
 /** The Encore glyph: the app's tilted note head inside a repeat sign (𝄆 ● 𝄇). */
 export function EncoreGlyph({ size = 18 }: { size?: number }) {
+  // The Paper drawing (src/ui/paper art-core 'encore'), in the same box.
+  if (PAPER.encore) return <PaperSvg art={PAPER.encore} cut="small" width={Math.round(size * 1.4)} height={size} className="enc-glyph" />;
   return (
     <svg className="enc-glyph" viewBox="0 0 28 20" width={size * 1.4} height={size} aria-hidden="true" style={{ direction: 'ltr' }}>
       <path d="M2 3v14M5 3v14" stroke="currentColor" strokeWidth="1.6" />

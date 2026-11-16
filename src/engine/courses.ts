@@ -22,7 +22,7 @@ export interface CourseDef {
   short: { he: string; en: string };
   /** Domain colour (v2 palette) and the note-head glyph. */
   color: string;
-  glyph: 'ear' | 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'prog' | 'theory' | 'drums';
+  glyph: 'ear' | 'intervals' | 'sing' | 'keys' | 'guitar' | 'bass' | 'prog' | 'theory' | 'drums' | 'jazz';
   /** The path goal used inside the course (area weights and boosts). */
   goal: Goal;
   /** What the course plays on (instrument-only steps). */
@@ -41,7 +41,7 @@ export const COURSES: CourseDef[] = [
   { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FF5FA2', glyph: 'bass', goal: 'guitar', plays: ['bass'] },
   // 0.65 (DRUMS_CURRICULUM): measured on a MIDI e-kit, or a practice pad by microphone (single-surface items only).
   { id: 'drums', name: { he: 'תופים', en: 'Drums' }, short: { he: 'תופים', en: 'Drums' }, color: '#4CD07D', glyph: 'drums', goal: 'general', plays: ['drums'], note: { en: 'Best with an e-kit by MIDI', he: 'הכי טוב עם תופים אלקטרוניים ב-MIDI' } },
-  { id: 'jazz', name: { he: 'ג׳אז ואלתור', en: 'Jazz & improv' }, short: { he: 'ג׳אז', en: 'Jazz' }, color: '#A78BFA', glyph: 'prog', goal: 'jazz', plays: [] },
+  { id: 'jazz', name: { he: 'ג׳אז ואלתור', en: 'Jazz & improv' }, short: { he: 'ג׳אז', en: 'Jazz' }, color: '#A78BFA', glyph: 'jazz', goal: 'jazz', plays: [] },
 ];
 export const COURSE_IDS = COURSES.map((c) => c.id);
 export const courseOf = (id: string | null | undefined): CourseDef => COURSES.find((c) => c.id === id) ?? COURSES[0];

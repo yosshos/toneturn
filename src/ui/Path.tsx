@@ -2,7 +2,7 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
-import { GLYPHS } from './Glyph';
+import { PaperGlyph } from './Glyph';
 import { ladderFamiliesFor, ladderHiddenFor, pathGuitarAddOns, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
@@ -264,9 +264,7 @@ function StepIcon({ step }: { step: PathStep }) {
   const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? ((step.bonus ? BONUS_STEP_GLYPH[step.game] : undefined) ?? GAME_STEP_GLYPH[step.game]) : undefined;
   if (!kind) return <NodeIcon kind={iconOf(step)} />;
   return (
-    <svg className="step-glyph" viewBox="-30 -27 60 54" width="30" height="27" aria-hidden="true">
-      {GLYPHS[kind]}
-    </svg>
+    <PaperGlyph kind={kind} width={30} height={27} className="step-glyph" />
   );
 }
 
