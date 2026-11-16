@@ -26,11 +26,11 @@ export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Objec
  *  SPEC-MY-SONG: "My song" (practise over your own recording, measured) in every course. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
-  voice: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
-  // SPEC-PHRASE-STUDIO §17: Encore is the first Train row where it plays in v1 (piano: keys, jazz).
+  voice: ['encore', 'drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  // SPEC-PHRASE-STUDIO §17: Encore is the first Train row where it plays — v1 piano (keys, jazz), v2 guitar, bass, voice.
   keys: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  guitar: ['drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  bass: ['drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  guitar: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  bass: ['encore', 'drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
   drums: ['drills', 'repertoire', 'mysong', 'games'],
   jazz: ['encore', 'repertoire', 'charts', 'improv', 'licks', 'transcribe', 'mysong', 'games'],
 };
