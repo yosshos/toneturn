@@ -235,7 +235,7 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     const prog = pathOf(ds({ guitarAddOns: ['prog'] })).map((s) => s.ladder!.ref);
     expect(prog).toEqual(expect.arrayContaining(['g-prog-1', 'g-prog-8', 'g-picking-9', 'g-legato-8']));
     expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(305); /* + AUDIT-7 g-scales 13–15 */ /* 3 hidden until verified (6 before 2026-11-16) */ // + g-first 8 + g-riff 5 (AUDIT-6 Stage B) + g-ctone 5 + g-color 12 + AUDIT-SCALES 21 + g-harrisline 10 + g-meter 6 + g-vl 3 + g-theory 7 + g-harris 10 + g-keys 12 + g-bebop 12 + g-phrase 8 + g-ear 11–13 + g-cmel 6 + g-tune 9 + g-ctx 11 + g-solo 10
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(303);
+    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(306);
     // The Technique hub shows the same.
     expect(shownFamilies(ds({ guitarAddOns: [] })).map((f) => f.id)).not.toContain('g-jazz');
     expect(shownFamilies(ds({ guitarAddOns: ['fingerstyle'] })).map((f) => f.id)).toContain('g-fingerstyle');
