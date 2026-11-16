@@ -16,12 +16,18 @@
 // length in the piece's beat unit (a quarter, or an eighth for x/8 metres). Every bar must fill its metre exactly (the
 // parser throws otherwise), so a mistyped length cannot slip in.
 //   "~" after an event ties it into the first event of the next bar (same pitches): one note, no new attack.
+//   "[<pitch>,…]" before the pitches: grace notes, small, before the event and taking none of its time ("[B4]A4/3": the
+//   Minuet's grace B before bar 8 — unslashed, as the source's \grace prints it; "[/B4]…" slashed, an acciaccatura).
+//   Several graces in a row are written "[A4,B4]". Graded softly (engine/drills/grace.ts): never wrong, never a fail.
+//   Two strings in a hand's list are two voices on that staff: the first stems up (voice 1), the second stems down
+//   (voice 2), each with its own rests and filling every bar (the Prelude in C's left hand: inner voice over a held bass).
 //   "@<kind>(<aux>)" after the length is an ornament sign (engine/ornaments.ts) on that note: @mordent(B4) (main – lower
 //   – main), @prall(D5) (main – upper – main), @turn(D5,B4), @trill(D5). The sign is drawn; the notes graded are its
 //   written-out realisation (quick notes of a quarter of the note, at most a 16th).
 // Pure data + a small parser.
 
 import type { Piece, PieceBar, PieceNote } from '../engine/piece/score';
+import type { Grace } from '../engine/drills/types';
 import { realise, type OrnKind, type Ornament } from '../engine/ornaments';
 
 type Bi = { en: string; he: string };
@@ -60,7 +66,7 @@ export interface PdPiece {
   source: { url: string; licence: 'Public Domain'; edition: string; checked: string };
   /** Practice sections (bar indexes, inclusive): the ladder plays them one by one. A tie never crosses a section's end. */
   sections: { name: Bi; from: number; to: number }[];
-  /** Voices of each hand (bars separated by "|"). */
+  /** Voices of each hand (bars separated by "|"): one, or two (the first stems up, the second stems down). */
   rh: string[];
   lh: string[];
 }
@@ -157,14 +163,14 @@ export const PD_PIECES: PdPiece[] = [
       url: `${MUTOPIA}BachJS/BWVAnh114/anna-magdalena-04/anna-magdalena-04.ly`,
       licence: 'Public Domain',
       edition: 'Bach-Gesellschaft (Anna Magdalena notebook)',
-      checked: 'bars 1–16, both hands, note for note; the four mordents (bars 3, 5, 11, 13) are the source\'s \\mordent signs. The small grace note B before bar 8 is not written here',
+      checked: 'bars 1–16, both hands, note for note; the four mordents (bars 3, 5, 11, 13) are the source\'s \\mordent signs; the grace note B before bar 8\'s A is the source\'s \\grace b8 (unslashed), drawn small and graded softly',
     },
     sections: [
       { name: { en: 'bars 1–8', he: 'תיבות 1–8' }, from: 0, to: 7 },
       { name: { en: 'bars 9–16', he: 'תיבות 9–16' }, from: 8, to: 15 },
     ],
     rh: [
-      'D5/1 G4/0.5 A4/0.5 B4/0.5 C5/0.5 | D5/1 G4/1 G4/1 | E5/1 C5/0.5@mordent(B4) D5/0.5 E5/0.5 F#5/0.5 | G5/1 G4/1 G4/1 | C5/1@mordent(B4) D5/0.5 C5/0.5 B4/0.5 A4/0.5 | B4/1 C5/0.5 B4/0.5 A4/0.5 G4/0.5 | F#4/1 G4/0.5 A4/0.5 B4/0.5 G4/0.5 | A4/3 | ' +
+      'D5/1 G4/0.5 A4/0.5 B4/0.5 C5/0.5 | D5/1 G4/1 G4/1 | E5/1 C5/0.5@mordent(B4) D5/0.5 E5/0.5 F#5/0.5 | G5/1 G4/1 G4/1 | C5/1@mordent(B4) D5/0.5 C5/0.5 B4/0.5 A4/0.5 | B4/1 C5/0.5 B4/0.5 A4/0.5 G4/0.5 | F#4/1 G4/0.5 A4/0.5 B4/0.5 G4/0.5 | [B4]A4/3 | ' +
         'D5/1 G4/0.5 A4/0.5 B4/0.5 C5/0.5 | D5/1 G4/1 G4/1 | E5/1 C5/0.5@mordent(B4) D5/0.5 E5/0.5 F#5/0.5 | G5/1 G4/1 G4/1 | C5/1@mordent(B4) D5/0.5 C5/0.5 B4/0.5 A4/0.5 | B4/1 C5/0.5 B4/0.5 A4/0.5 G4/0.5 | A4/1 B4/0.5 A4/0.5 G4/0.5 F#4/0.5 | G4/3',
     ],
     lh: ['G3+B3+D4/2 A3/1 | B3/3 | C4/3 | B3/3 | A3/3 | G3/3 | D4/1 B3/1 G3/1 | D4/1 D3/0.5 C4/0.5 B3/0.5 A3/0.5 | B3/2 A3/1 | G3/1 B3/1 G3/1 | C4/3 | B3/1 C4/0.5 B3/0.5 A3/0.5 G3/0.5 | A3/2 F#3/1 | G3/2 B3/1 | C4/1 D4/1 D3/1 | G3/2 G2/1'],
@@ -287,14 +293,15 @@ export const PD_PIECES: PdPiece[] = [
       url: `${MUTOPIA}BachJS/BWV846/wtk1-prelude1/wtk1-prelude1.ly`,
       licence: 'Public Domain',
       edition: 'Mutopia WTC I Prelude 1 (Erbsland / Nienhuys)',
-      checked: 'bars 1–19: each bar\'s five notes (both hands) and the figure (held bass half, second voice from the second 16th, the right hand\'s 16ths), note for note',
+      checked: 'bars 1–19: each bar\'s five notes (both hands) and the figure (the right hand\'s 16ths after an eighth rest; the left hand in two voices as the source writes it: voice 1, stems up, a 16th rest then a dotted eighth tied to a quarter; voice 2, stems down, the held bass in halves), note for note',
     },
     sections: [
       { name: { en: 'bars 1–11', he: 'תיבות 1–11' }, from: 0, to: 10 },
       { name: { en: 'bars 12–19', he: 'תיבות 12–19' }, from: 11, to: 18 },
     ],
     rh: [PRE.rh],
-    lh: [PRE.lh1, PRE.lh2],
+    // two voices, as the source writes them: the inner voice (stems up) over the held bass (stems down)
+    lh: [PRE.lh2, PRE.lh1],
   },
   {
     id: 'invention-8',
@@ -443,14 +450,14 @@ export function midiOf(name: string): number {
   return 12 * (Number(m[3]) + 1) + STEP[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
 }
 
-export type PdNote = { midi: number; start: number; dur: number; bar: number; hand: 'R' | 'L' };
+export type PdNote = { midi: number; start: number; dur: number; bar: number; hand: 'R' | 'L'; /** Grace notes before this note. */ graces?: Grace[]; /** 2 = the hand's lower voice (stems down); 1 = the upper of two; absent = the hand's only voice. */ voice?: 1 | 2 };
 const ORN_KINDS: OrnKind[] = ['mordent', 'prall', 'turn', 'trill'];
 
 /**
  * One voice → its notes (beat = unit beats from the start; ornaments written out, ties merged) and its ornament signs,
  * checking every bar fills the metre and every tie lands on the same pitches.
  */
-export function parseVoiceFull(src: string, meter: number, hand: 'R' | 'L', id = '', unit: 4 | 8 = 4): { notes: PdNote[]; ornaments: Ornament[] } {
+export function parseVoiceFull(src: string, meter: number, hand: 'R' | 'L', id = '', unit: 4 | 8 = 4, voice?: 1 | 2): { notes: PdNote[]; ornaments: Ornament[] } {
   const notes: PdNote[] = [];
   const ornaments: Ornament[] = [];
   /** Notes tied into the next bar's first event, by pitch. */
@@ -460,9 +467,12 @@ export function parseVoiceFull(src: string, meter: number, hand: 'R' | 'L', id =
     let at = 0;
     const evs = bar.trim().split(/\s+/);
     evs.forEach((ev, ei) => {
-      const m = /^([^/]+)\/([\d.]+)(?:@(\w+)\(([^)]*)\))?(~)?$/.exec(ev);
+      const m = /^(?:\[(\/)?([^\]]+)\])?([^/[\]]+)\/([\d.]+)(?:@(\w+)\(([^)]*)\))?(~)?$/.exec(ev);
       if (!m) throw new Error(`${id} bar ${bi + 1}: bad event "${ev}"`);
-      const [, ps, len, orn, aux, tie] = m;
+      const [, slash, gs, ps, len, orn, aux, tie] = m;
+      const graces: Grace[] | undefined = gs ? gs.split(',').map((g) => ({ pitch: midiOf(g.trim()), ...(slash ? { slash: true } : {}) })) : undefined;
+      if (graces && ps === 'r') throw new Error(`${id} bar ${bi + 1}: a grace note before a rest`);
+      if (graces && orn) throw new Error(`${id} bar ${bi + 1}: a grace note and an ornament on one note`);
       const d = Number(len);
       if (!(d > 0)) throw new Error(`${id} bar ${bi + 1}: bad length in "${ev}"`);
       const start = bi * meter + at;
@@ -471,6 +481,7 @@ export function parseVoiceFull(src: string, meter: number, hand: 'R' | 'L', id =
       if (ei === 0 && tied) {
         if (pitches.length !== tied.size || !pitches.every((p) => tied!.has(p))) throw new Error(`${id} bar ${bi + 1}: the tie lands on "${ps}"`);
         if (orn) throw new Error(`${id} bar ${bi + 1}: an ornament on a tied note`);
+        if (graces) throw new Error(`${id} bar ${bi + 1}: a grace note on a tied note`);
         for (const p of pitches) tied.get(p)!.dur += d;
         tied = tie ? tied : null;
         at += d;
@@ -489,9 +500,13 @@ export function parseVoiceFull(src: string, meter: number, hand: 'R' | 'L', id =
         if (tie) throw new Error(`${id} bar ${bi + 1}: a tie from an ornament`);
         // quick notes: a quarter of the note, at most a 16th (a quarter beat = 4 / unit beats)
         const sixteenth = 0.25 * (unit / 4);
-        for (const r of realise(kind, start, d, main, upper, lower, Math.min(sixteenth, d / 4))) made.push({ midi: r.pitch, start: r.beat, dur: r.dur, bar: bi, hand });
+        for (const r of realise(kind, start, d, main, upper, lower, Math.min(sixteenth, d / 4))) made.push({ midi: r.pitch, start: r.beat, dur: r.dur, bar: bi, hand, ...(voice ? { voice } : {}) });
         ornaments.push({ beat: start, dur: d, hand, pitch: main, kind });
-      } else for (const p of pitches) made.push({ midi: p, start, dur: d, bar: bi, hand });
+      } else {
+        // graces go on the chord's outer note (the top in the right hand, the bottom in the left)
+        const outer = hand === 'R' ? Math.max(...pitches) : Math.min(...pitches);
+        for (const p of pitches) made.push({ midi: p, start, dur: d, bar: bi, hand, ...(voice ? { voice } : {}), ...(graces && p === outer ? { graces } : {}) });
+      }
       notes.push(...made);
       if (tie) {
         if (ei !== evs.length - 1) throw new Error(`${id} bar ${bi + 1}: a tie must end the bar`);
@@ -511,7 +526,12 @@ export function parseVoice(src: string, meter: number, hand: 'R' | 'L', id = '',
   return parseVoiceFull(src, meter, hand, id, unit).notes;
 }
 
-const parsedAll = (p: PdPiece) => [...p.rh.map((v) => parseVoiceFull(v, p.meter, 'R', p.id, p.unit)), ...p.lh.map((v) => parseVoiceFull(v, p.meter, 'L', p.id, p.unit))];
+/** A hand's voices: one (no voice mark) or two (1 = stems up, 2 = stems down). */
+const voicesOf = (vs: string[], hand: 'R' | 'L', p: PdPiece) => {
+  if (vs.length > 2) throw new Error(`${p.id}: at most two voices a hand`);
+  return vs.map((v, k) => parseVoiceFull(v, p.meter, hand, p.id, p.unit, vs.length > 1 ? ((k + 1) as 1 | 2) : undefined));
+};
+const parsedAll = (p: PdPiece) => [...voicesOf(p.rh, 'R', p), ...voicesOf(p.lh, 'L', p)];
 /** All notes of a piece (both hands, every voice; ornaments written out), sorted. */
 export function pdNotes(p: PdPiece): PdNote[] {
   return parsedAll(p)
@@ -545,7 +565,7 @@ export function pdToPiece(p: PdPiece, lang: 'en' | 'he' = 'en'): Piece {
   const sig: [number, number] = p.sig ? (p.sig.split('/').map(Number) as [number, number]) : [p.meter, p.unit];
   const bars: PieceBar[] = Array.from({ length: n }, (_, i) => ({ number: String(p.pickup ? i : i + 1), start: i * p.meter * q, beats: p.meter * q, sig, ...(i === 0 ? { boundary: true } : {}) }));
   for (const s of p.sections) if (bars[s.from]) bars[s.from].boundary = true;
-  const notes: PieceNote[] = pdNotes(p).map((x) => ({ midi: x.midi, start: x.start * q, dur: x.dur * q, bar: x.bar, hand: x.hand }));
+  const notes: PieceNote[] = pdNotes(p).map((x) => ({ midi: x.midi, start: x.start * q, dur: x.dur * q, bar: x.bar, hand: x.hand, ...(x.graces ? { graces: x.graces } : {}), ...(x.voice ? { voice: x.voice } : {}) }));
   const orns = pdOrnaments(p).map((o) => ({ ...o, beat: o.beat * q, dur: o.dur * q }));
   const sharps = pdSharps(p);
   return { title: p.title[lang], composer: p.composer[lang], bars, notes, tempo: Math.round(p.tempo * q), fifths: p.fifths, source: 'musicxml', ...(orns.length ? { ornaments: orns } : {}), ...(sharps.length ? { sharps } : {}) };

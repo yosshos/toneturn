@@ -42,6 +42,8 @@ function perfect(
       off: on + (kdr >= 1 ? len + 20 : len * kdr),
       vel,
     });
+    // grace notes (0.99): played just before the main note
+    (n.graces ?? []).forEach((g, k, all) => out.push({ pitch: g.pitch, on: on - 60 * (all.length - k), off: on - 60 * (all.length - k) + 40, vel: 60 }));
   });
   // Improvised parts judged by rule cards (AUDIT-DEPTH-3): the model line is the perfect answer there.
   for (const m of d.goal.improv ? (d.goal.improv.model ?? d.goal.free?.model ?? []) : [])

@@ -12,6 +12,8 @@ export interface WaitGroup {
   midis: number[];
   /** Piece.notes indexes. */
   refs: number[];
+  /** Grace notes before this onset (0.99): pressed before the chord, they are neither wrong nor needed. */
+  graces?: number[];
 }
 
 /** Onset groups of a bar range (both hands together; a chord = notes starting together). */
@@ -25,6 +27,7 @@ export function waitGroups(p: Piece, from: number, to: number): WaitGroup[] {
     const g = map.get(key) ?? { at: n.start, midis: [], refs: [] };
     g.midis.push(n.midi);
     g.refs.push(abs[k].i);
+    if (n.graces?.length) g.graces = [...(g.graces ?? []), ...n.graces.map((x) => x.pitch)];
     map.set(key, g);
   });
   void t0;
@@ -52,6 +55,8 @@ export function WaitMode({ piece, from, to, lang, onCursor, onMarks, onDone }: {
         down.current.delete(m);
         return;
       }
+      // a grace note before the onset: accepted, never wrong (and not needed)
+      if (!g.midis.includes(m) && g.graces?.includes(m) && !g.midis.some((x) => down.current.has(x))) return;
       if (!g.midis.includes(m)) {
         misses.current++;
         setWrong((w) => w + 1);

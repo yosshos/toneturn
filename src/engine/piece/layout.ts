@@ -4,6 +4,7 @@
 
 import type { Piece, PieceHand, PieceNote } from './score';
 import type { OrnKind } from '../ornaments';
+import type { Grace } from '../drills/types';
 
 export interface LayoutEv {
   /** Onset inside the bar (quarter beats). */
@@ -20,13 +21,18 @@ export interface LayoutEv {
   cont?: boolean;
   /** An ornament sign over the head (Piece.ornaments): `refs` are its written-out notes. */
   orn?: OrnKind;
+  /** Grace notes drawn small before the head (they are not in `refs`: never a graded note of their own). */
+  graces?: Grace[];
 }
 export interface LayoutBar {
   index: number;
   number: string;
   beats: number;
   sig: [number, number];
+  /** Each hand's only voice, or its voice 1 (stems up) when it has two. */
   hands: Record<PieceHand, LayoutEv[]>;
+  /** A hand's voice 2 (stems down), when the hand has two voices. */
+  hands2?: Partial<Record<PieceHand, LayoutEv[]>>;
 }
 
 const Q = 0.25;
@@ -73,55 +79,68 @@ export function layoutPiece(p: Piece): LayoutBar[] {
     const refs = p.notes.map((n, i) => ({ n, i })).filter(({ n }) => n.hand === o.hand && n.start >= o.beat - 1e-6 && n.start < o.beat + o.dur - 1e-6).map(({ i }) => i);
     if (!refs.length) continue;
     for (const i of refs) hidden.add(i);
-    extra.push({ n: { midi: o.pitch, start: o.beat, dur: o.dur, bar: p.notes[refs[0]].bar, hand: o.hand }, i: refs[0], refs, orn: o.kind });
+    const v = p.notes[refs[0]].voice;
+    extra.push({ n: { midi: o.pitch, start: o.beat, dur: o.dur, bar: p.notes[refs[0]].bar, hand: o.hand, ...(v ? { voice: v } : {}) }, i: refs[0], refs, orn: o.kind });
   }
   const vnotes: VN[] = [...p.notes.map((n, i) => ({ n, i, refs: [i] })).filter(({ i }) => !hidden.has(i)), ...extra];
+  // Two voices on a staff (0.99): a hand with any voice-2 note is laid out as two voices, each filling every bar with
+  // its own notes and rests (voice 1 = notes without a voice or voice 1).
+  const twoVoices = (h: PieceHand) => vnotes.some(({ n }) => n.hand === h && n.voice === 2);
   return p.bars.map((b, bi) => {
     const hands = { R: [] as LayoutEv[], L: [] as LayoutEv[] };
+    const hands2: Partial<Record<PieceHand, LayoutEv[]>> = {};
     for (const h of ['R', 'L'] as PieceHand[]) {
-      // notes sounding in this bar for this hand: starting here, or held over from earlier bars
-      const idx = vnotes.filter(({ n }) => n.hand === h && n.start < b.start + b.beats - 1e-6 && n.start + n.dur > b.start + 1e-6);
-      // onset groups (chords) by quantised start inside the bar; held-over notes start at 0 as a continuation
-      const groups = new Map<number, { midis: number[]; refs: number[]; end: number; cont: boolean; orn?: OrnKind }>();
-      for (const { n, refs, orn } of idx) {
-        const held = n.start < b.start - 1e-6;
-        const at = held ? 0 : Math.max(0, Math.min(b.beats - Q, q(n.start - b.start)));
-        const end = Math.min(b.beats, q(n.start + n.dur - b.start));
-        const g = groups.get(at) ?? { midis: [], refs: [], end: 0, cont: held };
-        if (!g.midis.includes(n.midi)) g.midis.push(n.midi);
-        if (!held) g.refs.push(...refs);
-        if (orn && !held) g.orn = orn;
-        g.end = Math.max(g.end, end);
-        g.cont = g.cont && held;
-        groups.set(at, g);
-      }
-      const starts = [...groups.keys()].sort((a, c) => a - c);
-      let pos = 0;
-      const evs: LayoutEv[] = [];
-      const pushRest = (from: number, to: number) => {
-        for (const v of splitDur(from, to - from)) {
-          evs.push({ at: from, dur: v, midis: [], refs: [], tie: false });
-          from += v;
-        }
-      };
-      starts.forEach((at, k) => {
-        if (at < pos - 1e-6) return; // overlapping onset inside a held chord: drawn with the earlier one
-        if (at > pos + 1e-6) pushRest(pos, at);
-        const g = groups.get(at)!;
-        const next = starts.slice(k + 1).find((s) => s > at + 1e-6) ?? b.beats;
-        const end = Math.max(at + Q, Math.min(g.end, next));
-        const crossesBar = idx.some(({ n }) => g.midis.includes(n.midi) && n.start + n.dur > b.start + b.beats + 1e-6 && Math.abs(q(n.start - b.start) - at) < 1e-6) && end >= b.beats - 1e-6;
-        const parts = splitDur(at, end - at);
-        let p0 = at;
-        parts.forEach((v, j) => {
-          evs.push({ at: p0, dur: v, midis: g.midis.slice().sort((x, y) => x - y), refs: j === 0 ? g.refs : [], tie: j < parts.length - 1 || crossesBar, ...(j > 0 || g.cont ? { cont: true } : {}), ...(j === 0 && g.orn ? { orn: g.orn } : {}) });
-          p0 += v;
-        });
-        pos = end;
-      });
-      if (pos < b.beats - 1e-6) pushRest(pos, b.beats);
-      hands[h] = evs;
+      const two = twoVoices(h);
+      hands[h] = voiceEvs(b, vnotes.filter(({ n }) => n.hand === h && (!two || n.voice !== 2)));
+      if (two) hands2[h] = voiceEvs(b, vnotes.filter(({ n }) => n.hand === h && n.voice === 2));
     }
-    return { index: bi, number: b.number, beats: b.beats, sig: b.sig, hands };
+    return { index: bi, number: b.number, beats: b.beats, sig: b.sig, hands, ...(hands2.R || hands2.L ? { hands2 } : {}) };
   });
+}
+
+/** One voice of one hand in one bar: chords by onset, standard values, ties over values and the bar line, rests. */
+function voiceEvs(b: Piece['bars'][number], vn: { n: PieceNote; refs: number[]; orn?: OrnKind }[]): LayoutEv[] {
+  // notes sounding in this bar: starting here, or held over from earlier bars
+  const idx = vn.filter(({ n }) => n.start < b.start + b.beats - 1e-6 && n.start + n.dur > b.start + 1e-6);
+  // onset groups (chords) by quantised start inside the bar; held-over notes start at 0 as a continuation
+  const groups = new Map<number, { midis: number[]; refs: number[]; end: number; cont: boolean; orn?: OrnKind; graces?: Grace[] }>();
+  for (const { n, refs, orn } of idx) {
+    const held = n.start < b.start - 1e-6;
+    const at = held ? 0 : Math.max(0, Math.min(b.beats - Q, q(n.start - b.start)));
+    const end = Math.min(b.beats, q(n.start + n.dur - b.start));
+    const g = groups.get(at) ?? { midis: [], refs: [], end: 0, cont: held };
+    if (!g.midis.includes(n.midi)) g.midis.push(n.midi);
+    if (!held) g.refs.push(...refs);
+    if (orn && !held) g.orn = orn;
+    if (n.graces?.length && !held) g.graces = [...(g.graces ?? []), ...n.graces];
+    g.end = Math.max(g.end, end);
+    g.cont = g.cont && held;
+    groups.set(at, g);
+  }
+  const starts = [...groups.keys()].sort((a, c) => a - c);
+  let pos = 0;
+  const evs: LayoutEv[] = [];
+  const pushRest = (from: number, to: number) => {
+    for (const v of splitDur(from, to - from)) {
+      evs.push({ at: from, dur: v, midis: [], refs: [], tie: false });
+      from += v;
+    }
+  };
+  starts.forEach((at, k) => {
+    if (at < pos - 1e-6) return; // overlapping onset inside a held chord: drawn with the earlier one
+    if (at > pos + 1e-6) pushRest(pos, at);
+    const g = groups.get(at)!;
+    const next = starts.slice(k + 1).find((s) => s > at + 1e-6) ?? b.beats;
+    const end = Math.max(at + Q, Math.min(g.end, next));
+    const crossesBar = idx.some(({ n }) => g.midis.includes(n.midi) && n.start + n.dur > b.start + b.beats + 1e-6 && Math.abs(q(n.start - b.start) - at) < 1e-6) && end >= b.beats - 1e-6;
+    const parts = splitDur(at, end - at);
+    let p0 = at;
+    parts.forEach((v, j) => {
+      evs.push({ at: p0, dur: v, midis: g.midis.slice().sort((x, y) => x - y), refs: j === 0 ? g.refs : [], tie: j < parts.length - 1 || crossesBar, ...(j > 0 || g.cont ? { cont: true } : {}), ...(j === 0 && g.orn ? { orn: g.orn } : {}), ...(j === 0 && g.graces ? { graces: g.graces } : {}) });
+      p0 += v;
+    });
+    pos = end;
+  });
+  if (pos < b.beats - 1e-6) pushRest(pos, b.beats);
+  return evs;
 }

@@ -6,6 +6,7 @@
 import { notesPerBeat } from './analyze';
 import { isDrumDrill } from './events';
 import type { Drill, ItemState, NoteResult, PlayedNote, TakeMetrics } from './types';
+import { freeGraces } from './grace';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
 import { analyzeHeldChoiceTake } from './ctFreeAnalyze';
 
@@ -159,12 +160,17 @@ export function analyzeFree(drill: Drill, played: PlayedNote[]): TakeMetrics {
       perNote[k] = { exp: drill.notes[k], played: played[hit], dev: null, ok: true };
     }
   });
+  // Grace notes (grace.ts): a leftover note just before its main note, of the grace's pitch, is the grace — not wrong.
+  const hitIdx = new Map(perNote.map((r, k) => [k, r.played ? played.indexOf(r.played) : -1]));
+  const unused = new Set(played.map((_, j) => j).filter((j) => !usedPlayed.has(j)));
+  const fg = freeGraces(drill, played, (k) => { const j = hitIdx.get(k) ?? -1; return j >= 0 ? j : null; }, unused);
   const total = drill.notes.length;
   const okN = perNote.filter((x) => x.ok).length;
   const accuracy = total ? okN / total : 1;
-  const wrong = played.length - usedPlayed.size;
+  const wrong = played.length - usedPlayed.size - fg.taken.size;
+  const graceMiss = fg.graces.total - fg.graces.ok;
   const missing = total - okN;
-  const clean = accuracy >= 0.95 && wrong <= Math.max(1, Math.round(total * 0.05));
+  const clean = accuracy >= 0.95 && wrong <= Math.max(1, Math.round(total * 0.05)) && !(graceMiss > 0 && drill.goal.graces === 'strict');
   const verdict: TakeMetrics['verdict'] = clean ? 'clean' : accuracy >= 0.8 ? 'almost' : 'not';
   const why =
     verdict === 'clean'
@@ -198,6 +204,7 @@ export function analyzeFree(drill: Drill, played: PlayedNote[]): TakeMetrics {
     chordToneOnBeats: null,
     voiceLeading: null,
     perNote,
+    ...(fg.graces.total ? { graces: fg.graces } : {}),
     verdict,
     why,
   };

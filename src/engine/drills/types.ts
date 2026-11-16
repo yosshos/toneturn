@@ -191,6 +191,18 @@ export type ScaleType = 'major' | 'harmonic' | 'melodic' | 'natural' | 'chromati
 export type KeyOrder = 'chromatic-up' | 'chromatic-down' | 'fifths-up' | 'fifths-down' | 'difficulty';
 
 /** One expected note of a drill. */
+/**
+ * A grace note (notation, 0.99): a small note just before its main note, sharing none of the bar's time. `slash` = an
+ * acciaccatura (a slashed stem, crushed in before the beat); no slash = an appoggiatura / a plain grace as the source
+ * writes it (unslashed, on or just before the beat). Never a separate graded note: a grace played just before the main
+ * note is accepted (never wrong or extra), its timing never moves the main note's grade, and leaving it out is a soft
+ * mark (engine/drills/grace.ts) unless the drill's goal makes graces strict.
+ */
+export interface Grace {
+  pitch: number;
+  slash?: boolean;
+}
+
 export interface ExpNote {
   pitch: number;
   /** Onset in beats from the start (beat 0 = first note). */
@@ -260,6 +272,14 @@ export interface ExpNote {
   grace?: 1 | 2;
   /** Drums: a swung skip note (jazz ride): judged by the swing ratio (goal.drum.swing), not against the triplet grid. */
   swing?: boolean;
+  /** Grace notes before this note, in the order played (drawn small before the head; engine/drills/grace.ts grades them). */
+  graces?: Grace[];
+  /**
+   * Two voices on one staff (0.99): 2 = the hand's lower voice, drawn stems down with its own rests (a held bass under a
+   * moving inner voice, a chorale's alto under the soprano). Absent = voice 1 (stems up when the staff has two voices).
+   * Graded like any other note of the hand.
+   */
+  staffVoice?: 1 | 2;
 }
 
 /** What a drill is: everything needed to generate its notes. */
@@ -464,6 +484,8 @@ export interface DrumDrillInfo {
 export interface DrillGoal {
   /** Evenness matters (scales, patterns). */
   evenness: boolean;
+  /** Grace notes (ExpNote.graces): 'strict' = a grace left out keeps the take from clean (an item about graces); default soft (reported, never a fail). */
+  graces?: 'soft' | 'strict';
   /** Hands together matter (HT). */
   hands: boolean;
   /** Target dynamics (velocity band / shape), if any. */
@@ -801,6 +823,8 @@ export interface TakeMetrics {
   /** Voice-leading distance (voicing families). */
   voiceLeading: number | null;
   perNote: NoteResult[];
+  /** Grace notes (engine/drills/grace.ts): played / written, and the indexes (into notes) of the main notes whose graces were left out. */
+  graces?: { ok: number; total: number; missed: number[] };
   verdict: Verdict;
   /** The one-line reason (worst factor), EN / HE. */
   why: { en: string; he: string };

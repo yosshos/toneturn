@@ -10,6 +10,7 @@ import type { PitchClass } from '../engine/pitch';
 import type { NoteMark } from '../engine/noteMarks';
 import { headX } from './NoteViews';
 import { VF_ORNAMENT } from '../engine/ornaments';
+import { graceGroup, markVoice2, signAfterGrace } from './vfGrace';
 
 type VF = typeof import('vexflow/bravura');
 let vfPromise: Promise<VF> | null = null;
@@ -162,7 +163,7 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
     return `${s.letter.toLowerCase()}${s.acc === -1 ? 'b' : s.acc === 1 ? '#' : ''}/${s.octave}`;
   };
   const ties: { a: InstanceType<VF['StaveNote']>; b: InstanceType<VF['StaveNote']> | null }[] = [];
-  let pendingTie: Record<'R' | 'L', InstanceType<VF['StaveNote']> | null> = { R: null, L: null };
+  let pendingTie: Record<string, InstanceType<VF['StaveNote']> | null> = {};
   for (let li = 0; li < lines; li++) {
     const row = bars.slice(li * perLine, li * perLine + perLine);
     const y = 10 + li * sysH;
@@ -191,46 +192,66 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
       }
       if (bot) new VF.StaveConnector(top, bot).setType(VF.StaveConnector.type.SINGLE_RIGHT).setContext(ctx).draw();
       const voices: InstanceType<VF['Voice']>[] = [];
-      const make = (evs: LayoutEv[], clef: 'treble' | 'bass', hand: 'R' | 'L') => {
+      // stem: 0 = the staff's only voice (VexFlow decides), 1 = voice 1 of two (stems up), -1 = voice 2 (stems down)
+      const make = (evs: LayoutEv[], clef: 'treble' | 'bass', hand: 'R' | 'L', stem: 0 | 1 | -1 = 0) => {
+        // rests of two voices sit above / below the middle so they don't collide with the other voice
+        const restKey = stem === 1 ? (clef === 'bass' ? 'f/3' : 'd/5') : stem === -1 ? (clef === 'bass' ? 'f/2' : 'f/4') : clef === 'bass' ? 'd/3' : 'b/4';
         const notes = evs.map((e) => {
           const vd = VF_DUR[e.dur] ?? { d: 'q', dots: 0 };
           const rest = !e.midis.length;
-          const sn = new VF.StaveNote({ keys: rest ? [clef === 'bass' ? 'd/3' : 'b/4'] : e.midis.map(vfKey), duration: `${vd.d}${rest ? 'r' : ''}`, clef });
+          const sn = new VF.StaveNote({ keys: rest ? [restKey] : e.midis.map(vfKey), duration: `${vd.d}${rest ? 'r' : ''}`, clef, ...(stem ? { stem_direction: stem } : {}) });
           if (vd.dots) VF.Dot.buildAndAttach([sn], { all: true });
           // an ornament sign (the notes it stands for are the take's notes)
           if (e.orn && !rest) sn.addModifier(new VF.Ornament(VF_ORNAMENT[e.orn]), 0);
+          if (stem === -1) markVoice2(sn);
+          // grace notes, small, before the head (never graded notes of their own)
+          if (e.graces?.length && !rest) sn.addModifier(graceGroup(VF, e.graces, vfKey, clef, keySpec, stem === -1), 0);
           if (!rest) {
             const mk = e.refs.map((r) => marks?.get(r)).find(Boolean);
             if (mk) sn.setStyle({ fillStyle: MARK[mk], strokeStyle: MARK[mk] });
-            if (pendingTie[hand] && e.cont) ties.push({ a: pendingTie[hand]!, b: sn });
-            pendingTie[hand] = e.tie ? sn : null;
+            const tk = `${hand}${stem}`;
+            if (pendingTie[tk] && e.cont) ties.push({ a: pendingTie[tk]!, b: sn });
+            pendingTie[tk] = e.tie ? sn : null;
           }
           return sn;
         });
         const v = new VF.Voice({ num_beats: Math.max(1, Math.round(b.beats * 4)), beat_value: 16 }).setMode(VF.Voice.Mode.SOFT);
         v.addTickables(notes);
-        VF.Accidental.applyAccidentals([v], keySpec);
-        return { v, notes };
+        return { v, notes, stem, evs };
       };
-      const t = make(b.hands.R, 'treble', 'R');
-      voices.push(t.v);
-      const bv = bot ? make(b.hands.L, 'bass', 'L') : null;
-      if (bv) voices.push(bv.v);
+      // each staff: its one voice, or two (voice 1 stems up, voice 2 stems down), formatted together
+      const staffVoices = (h: 'R' | 'L', clef: 'treble' | 'bass') => {
+        const v2 = b.hands2?.[h];
+        return v2 ? [make(b.hands[h], clef, h, 1), make(v2, clef, h, -1)] : [make(b.hands[h], clef, h)];
+      };
+      const tv = staffVoices('R', 'treble');
+      const bvs = bot ? staffVoices('L', 'bass') : [];
+      // accidentals across the voices of one staff (a sharp in one voice holds for the bar in the other)
+      VF.Accidental.applyAccidentals(tv.map((x) => x.v), keySpec);
+      if (bvs.length) VF.Accidental.applyAccidentals(bvs.map((x) => x.v), keySpec);
+      // a main head after a grace of its letter with another alteration shows its own sign (A♮ after a grace A♭)
+      for (const x of [...tv, ...bvs]) x.evs.forEach((e, j) => e.graces?.length && e.midis.length && signAfterGrace(VF, x.notes[j], e.graces, vfKey));
+      voices.push(...tv.map((x) => x.v), ...bvs.map((x) => x.v));
+      // Beams before formatting and drawing (0.99): a beamed note then draws no flag of its own (the old order drew
+      // 16ths with a flag AND a beam), rests kept in the list so groups stay on the beat, each voice of two keeps its stems.
+      const beam = (x: { notes: InstanceType<VF['StaveNote']>[]; stem: number }) => VF.Beam.generateBeams(x.notes, x.stem ? { stem_direction: x.stem, maintain_stem_directions: true } : {});
+      const beams = [...tv, ...bvs].flatMap(beam);
       const fmt = new VF.Formatter();
-      fmt.joinVoices([t.v]);
-      if (bv) fmt.joinVoices([bv.v]);
+      fmt.joinVoices(tv.map((x) => x.v));
+      if (bvs.length) fmt.joinVoices(bvs.map((x) => x.v));
       fmt.format(voices, Math.max(40, w - (k === 0 ? firstExtra + 20 : 24)));
-      t.v.draw(ctx, top);
-      VF.Beam.generateBeams(t.notes.filter((n) => !n.isRest())).forEach((bm) => bm.setContext(ctx).draw());
-      if (bv && bot) {
-        bv.v.draw(ctx, bot);
-        VF.Beam.generateBeams(bv.notes.filter((n) => !n.isRest())).forEach((bm) => bm.setContext(ctx).draw());
-      }
+      for (const x of tv) x.v.draw(ctx, top);
+      if (bot) for (const x of bvs) x.v.draw(ctx, bot);
+      beams.forEach((bm) => bm.setContext(ctx).draw());
+      const t = tv[0];
+      const bv = bvs[0] ?? null;
       const noteX0 = top.getNoteStartX();
       const byAt = new Map<number, number>();
       const put = (evs: LayoutEv[], ns: InstanceType<VF['StaveNote']>[]) => evs.forEach((e, j) => ns[j] && !byAt.has(e.at) && byAt.set(e.at, headX(ns[j]) / W));
       put(b.hands.R, t.notes);
+      if (tv[1] && b.hands2?.R) put(b.hands2.R, tv[1].notes);
       if (bv) put(b.hands.L, bv.notes);
+      if (bvs[1] && b.hands2?.L) put(b.hands2.L, bvs[1].notes);
       const anchors = [...byAt.entries()].map(([at, xx]) => ({ at, x: xx })).sort((p, q) => p.at - q.at);
       geo.bars.push({ x0: noteX0 / W, x1: (x + w) / W, y0: y, y1: y + (bot ? 200 : 100), sys: li, anchors });
       x += w;
@@ -243,7 +264,7 @@ function drawScore(VF: VF, el: HTMLDivElement, piece: Piece, bars: LayoutBar[], 
       /* a tie across systems can fail to draw — skip it */
     }
   }
-  pendingTie = { R: null, L: null };
+  pendingTie = {};
   const svg = el.querySelector('svg');
   if (svg) {
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);

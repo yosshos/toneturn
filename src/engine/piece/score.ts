@@ -20,6 +20,10 @@ export interface PieceNote {
   accent?: boolean;
   /** Dynamic in force (pp … ff) when the score says so. */
   dyn?: string;
+  /** Grace notes before this note (drawn small; graded softly, engine/drills/grace.ts). */
+  graces?: import('../drills/types').Grace[];
+  /** Two voices on the hand's staff: 1 = upper (stems up), 2 = lower (stems down). Absent = the hand's only voice. */
+  voice?: 1 | 2;
 }
 
 export interface PieceBar {
@@ -66,6 +70,10 @@ interface RawNote {
   staccato?: boolean;
   accent?: boolean;
   dyn?: string;
+  /** The score's voice number (MusicXML <voice>). */
+  voice?: string;
+  /** Grace notes just before this note on its staff. */
+  graces?: import('../drills/types').Grace[];
 }
 interface RawBar {
   number: string;
@@ -101,6 +109,8 @@ function readPart(part: XNode): RawBar[] {
   let divisions = 1;
   let sig: [number, number] = [4, 4];
   let dyn: string | undefined;
+  /** Grace notes read, waiting for the next main note on their staff. */
+  const pendingGrace = new Map<number, import('../drills/types').Grace[]>();
   for (const m of kids(part, 'measure')) {
     let pos = 0;
     let maxPos = 0;
@@ -146,8 +156,17 @@ function readPart(part: XNode): RawBar[] {
       } else if (el.name === 'note') {
         const dur = Number(txt(el, 'duration') ?? 0) / divisions;
         const chord = !!kid(el, 'chord');
-        const grace = !!kid(el, 'grace');
-        if (grace) continue;
+        const grace = kid(el, 'grace');
+        if (grace) {
+          // a grace note (0.99): kept for the next main note on its staff (a grace chord: its first note)
+          const gp = kid(el, 'pitch');
+          const st = Number(txt(el, 'staff')) || 1;
+          if (gp && !kid(el, 'chord')) {
+            const gm = 12 * ((Number(txt(gp, 'octave')) || 4) + 1) + (STEP[txt(gp, 'step') ?? 'C'] ?? 0) + (Number(txt(gp, 'alter')) || 0);
+            pendingGrace.set(st, [...(pendingGrace.get(st) ?? []), { pitch: Math.round(gm), ...(grace.attrs.slash === 'yes' ? { slash: true } : {}) }]);
+          }
+          continue;
+        }
         const start = chord ? lastStart : pos;
         if (!chord) {
           lastStart = pos;
@@ -160,11 +179,17 @@ function readPart(part: XNode): RawBar[] {
         const ties = kids(el, 'tie');
         const notations = kid(el, 'notations');
         const art = kid(notations, 'articulations');
+        const staff = Number(txt(el, 'staff')) || 1;
+        const gs = chord ? undefined : pendingGrace.get(staff);
+        if (gs) pendingGrace.delete(staff);
+        const vo = txt(el, 'voice');
         bar.notes.push({
+          ...(gs ? { graces: gs } : {}),
+          ...(vo ? { voice: vo } : {}),
           midi: Math.round(midi),
           at: start,
           dur,
-          staff: Number(txt(el, 'staff')) || 1,
+          staff,
           tieStart: ties.some((t) => t.attrs.type === 'start'),
           tieStop: ties.some((t) => t.attrs.type === 'stop'),
           ...(kid(art, 'staccato') || kid(art, 'staccatissimo') ? { staccato: true } : {}),
@@ -226,6 +251,15 @@ function expand(raw: RawBar[], title: string, composer?: string): Piece {
   const notes: PieceNote[] = [];
   let t = 0;
   const open = new Map<string, PieceNote>(); // tied notes: "midi:hand"
+  // Two voices on a staff (0.99): its first voice number is voice 1 (stems up), any other voice 2 (stems down).
+  const voiceIds: Record<PieceHand, string[]> = { R: [], L: [] };
+  for (const rb of raw)
+    for (const n of rb.notes) {
+      const h: PieceHand = n.staff >= 2 ? 'L' : 'R';
+      if (n.voice !== undefined && !voiceIds[h].includes(n.voice)) voiceIds[h].push(n.voice);
+    }
+  for (const h of ['R', 'L'] as PieceHand[]) voiceIds[h].sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
+  const voiceOf = (h: PieceHand, v?: string): 1 | 2 | undefined => (voiceIds[h].length < 2 || v === undefined ? undefined : v === voiceIds[h][0] ? 1 : 2);
   order.forEach((ri, k) => {
     const rb = raw[ri];
     bars.push({ number: rb.number, start: t, beats: rb.beats, sig: rb.sig, ...(rb.boundary || (k > 0 && order[k - 1] !== ri - 1) ? { boundary: true } : {}) });
@@ -238,7 +272,8 @@ function expand(raw: RawBar[], title: string, composer?: string): Piece {
         if (!n.tieStart) open.delete(key);
         continue;
       }
-      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}) };
+      const vv = voiceOf(hand, n.voice);
+      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(vv ? { voice: vv } : {}) };
       notes.push(pn);
       if (n.tieStart) open.set(key, pn);
       else open.delete(key);

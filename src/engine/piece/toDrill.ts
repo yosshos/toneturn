@@ -13,10 +13,11 @@ export function chunkDrill(p: Piece, pieceId: string, from: number, to: number, 
   const groups = new Map<string, number>();
   let gid = 0;
   const notes: ExpNote[] = ns.map((n) => {
-    const key = `${n.hand}:${Math.round(n.start * 48)}`;
-    const same = ns.filter((m) => m.hand === n.hand && Math.abs(m.start - n.start) < 1e-3).length > 1;
+    // one voice of one hand (two voices starting together are not one chord)
+    const key = `${n.hand}:${n.voice ?? 1}:${Math.round(n.start * 48)}`;
+    const same = ns.filter((m) => m.hand === n.hand && (m.voice ?? 1) === (n.voice ?? 1) && Math.abs(m.start - n.start) < 1e-3).length > 1;
     if (same && !groups.has(key)) groups.set(key, gid++);
-    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}) };
+    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
   });
   const sig = p.bars[from]?.sig ?? [4, 4];
   const meter = Math.max(1, Math.round((sig[0] * 4) / sig[1]));
