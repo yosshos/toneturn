@@ -1,7 +1,8 @@
 // Scoring model (spec addendum J): one evidence record per answer → three scores
 // (skill rating, XP, tournament points). All weights live in SCORING; records are stored raw.
 
-import { gradePlace, type Answer, type Question } from './lesson';
+import { gradePlace, pcFromKey, type Answer, type Question } from './lesson';
+import { pcValue } from './pitch';
 import { gradeGrid, gridCredit } from './progGrid';
 import { gradeMelody } from './memory';
 import type { SungResult } from './sing';
@@ -36,7 +37,9 @@ export interface AttemptEvidence {
 }
 
 /** Items with a small closed answer set get a guessing correction on retries. */
-export const isCategorical = (q: Question) => q.kind !== 'grid' && q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'name-seq';
+// Slice 7 (COURSE-FEEDBACK-UI §4.6): a chord built on the keys ('place') is graded part by part, so it is not categorical
+// either — 3 of 4 tones keeps 0.75 of the credit even when the item is revealed.
+export const isCategorical = (q: Question) => q.kind !== 'grid' && q.kind !== 'place' && q.kind !== 'sing' && q.kind !== 'degree-seq' && q.kind !== 'sing-seq' && q.kind !== 'sing-run' && q.kind !== 'name-seq';
 
 // ---------------------------------------------------------------- accuracy a ∈ [0, 1]
 
@@ -57,6 +60,7 @@ export function accuracyFor(q: Question, answer: Answer, sung?: SungResult): num
     if (!sung || sung.status === 'wrong' || sung.status === 'unclear') return 0;
     return pitchAccuracy(sung.cents);
   }
+  if (q.kind === 'name-seq') return answer === q.answer ? 1 : seqCredit(String(q.answer).split('.'), String(answer).split('.'), sameNote);
   if (q.kind === 'degree-seq') {
     const given = String(answer)
       .split('-')
@@ -67,6 +71,29 @@ export function accuracyFor(q: Question, answer: Answer, sung?: SungResult): num
     return ok / (q.degrees.length + g.extra);
   }
   return answer === q.answer ? 1 : 0;
+}
+
+/** Two note names that sound the same (B♯ = C: enharmonic = same note). */
+function sameNote(a: string, b: string): boolean {
+  if (a === b) return true;
+  const x = pcFromKey(a);
+  const y = pcFromKey(b);
+  return !!x && !!y && pcValue(x) === pcValue(y);
+}
+
+/**
+ * Partial mastery credit for a note-by-note answer (slice 7): the share of positions named right, over the longer of
+ * the two (extra notes cost). "C.E.G.B" against "C.E.G.A" = 0.75. The streak still counts whole items only (session).
+ */
+export function seqCredit(want: string[], got: string[], same: (a: string, b: string) => boolean = (a, b) => a === b): number {
+  const g = got.filter((x) => x !== '');
+  const n = Math.max(want.length, g.length);
+  if (!n) return 0;
+  let ok = 0;
+  want.forEach((w, i) => {
+    if (got[i] !== undefined && got[i] !== '' && same(got[i], w)) ok++;
+  });
+  return ok / n;
 }
 
 // ---------------------------------------------------------------- attempts g(k)

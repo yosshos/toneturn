@@ -110,6 +110,50 @@ export function StreakCelebration({ t, before, after, gemsGained, today, onDone 
   );
 }
 
+/**
+ * Slice 7 (COURSE-FEEDBACK-UI §4.6): the day's streak as a bottom sheet AFTER the recap (it used to cover the recap on
+ * the first finish of the day). Opened by the recap's exit, its Continue carries on with that exit.
+ */
+export function StreakAfterSheet({ t, before, after, gemsGained, today, onDone }: { t: Strings; before: number; after: StreakState; gemsGained: number; today: string; onDone: () => void }) {
+  const [shown, setShown] = useState(reduced() ? after.count : before);
+  const milestone = after.milestones.find((m) => m.day === today && m.days === after.count);
+  useEffect(() => {
+    if (reduced()) return;
+    const id = window.setTimeout(() => setShown(after.count), 450);
+    return () => window.clearTimeout(id);
+  }, [after.count]);
+  return (
+    <div className="sheet-backdrop streak-after-backdrop" onClick={onDone}>
+      <div className="sheet streak-after" role="dialog" aria-modal="true" aria-label={t.streakExtended} data-streak-sheet="1" onClick={(e) => e.stopPropagation()}>
+        <div className="sa-head">
+          <Flame lit size={34} />
+          <span className="sa-count" dir="ltr" aria-live="polite">
+            <span key={shown} className="roll">
+              {shown}
+            </span>
+          </span>
+          <h2>{milestone ? fmt(t.milestoneReached, { n: milestone.days }) : t.streakExtended}</h2>
+        </div>
+        <WeekStrip st={after} today={today} t={t} />
+        {(after.next || gemsGained > 0) && (
+          <p className="sa-line">
+            {after.next && fmt(t.daysToMilestone, { n: after.next.left, m: after.next.days })}
+            {after.next && gemsGained > 0 && ' · '}
+            {gemsGained > 0 && (
+              <bdi dir="ltr">
+                +{gemsGained} <Icon k="gem" />
+              </bdi>
+            )}
+          </p>
+        )}
+        <button className="btn primary" onClick={onDone} autoFocus data-streak-continue="1">
+          {t.continue}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Confetti() {
   if (reduced()) return null;
   return (

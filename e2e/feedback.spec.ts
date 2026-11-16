@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test';
 // 0.50.2: Buttons mode answers quietly — the buttons are marked, a wrong final answer waits for Continue (Compare on
 // demand) — and an exercise cut off by a reload (the phone closing the tab) opens again where it stood.
 test.beforeEach(async ({ page }) => {
-  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
-    await page.locator('.streak-celebrate .btn.mega').click();
+  await page.addLocatorHandler(page.locator('.streak-celebrate, [data-streak-sheet]'), async () => {
+    await page.locator('.streak-celebrate .btn.mega, [data-streak-continue]').first().click();
   });
 });
 

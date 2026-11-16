@@ -6,8 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
 test.use({ viewport: { width: 390, height: 844 } });
 
 test.beforeEach(async ({ page }) => {
-  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
-    await page.locator('.streak-celebrate .btn.mega').click();
+  await page.addLocatorHandler(page.locator('.streak-celebrate, [data-streak-sheet]'), async () => {
+    await page.locator('.streak-celebrate .btn.mega, [data-streak-continue]').first().click();
   });
 });
 
