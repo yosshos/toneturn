@@ -128,6 +128,8 @@ export const SCAT_INSTR = {
   tensions: { en: 'Put a 9th or a 13th on a strong beat over the dominants (a ♯11 over major sevenths) — three or more.', he: 'שימו נונה או טרצדצימה בפעמה חזקה מעל הדומיננטות (אונדצימה מוגדלת מעל מז׳ור ספט) — שלוש ומעלה.' },
   motif: { en: 'Hear the three-note motif, then develop it: repeat it, move it up or down, shift it in time — two different ways.', he: 'שמעו את המוטיב של שלושה צלילים, ואז פתחו אותו: חזרו עליו, הזיזו אותו למעלה או למטה, הזיזו אותו בזמן — בשתי דרכים שונות.' },
   trade: { en: 'Trade with the band: it plays, you answer in your turn — chord tones on the strong beats, and pick up an idea.', he: 'החליפו עם הלהקה: היא מנגנת, אתם עונים בתור שלכם — צלילי אקורד בפעמות החזקות, וקחו רעיון והמשיכו אותו.' },
+  // AUDIT-7 #8: improvising with only the scale's notes (the degrees show while you sing).
+  scale: { en: 'Improvise with only the scale’s notes, in time. End on a chord tone.', he: 'אלתרו רק בצלילי הסולם, בזמן. סיימו על צליל אקורד.' },
 } as const;
 
 /** Names of the new metrics (the old ones are in i18n/strings.ts metricNames). */
@@ -162,6 +164,8 @@ export const METRIC_NAMES: Record<string, Bi> = {
   falls: { en: 'Falls', he: 'נפילות' },
   motif: { en: 'An idea returns', he: 'רעיון שחוזר' },
   lift: { en: 'Off-beat accent', he: 'הדגשה באוף־ביט' },
+  // AUDIT-7 #8
+  inScale: { en: 'Notes in the scale', he: 'צלילים בסולם' },
 };
 
 /** How each further held / phrase item is sung ({s} = seconds). */

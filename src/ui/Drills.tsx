@@ -426,7 +426,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // AUDIT-CONTENT-THEORY §ז.2: the first steps at the piano are hand technique.
   'k-first': 'hands',
   // AUDIT-6 Stage B: graded sight-reading under reading; the guitar, bass and drum first steps with the hands; riffs as styles.
-  'k-read': 'reading', 'g-first': 'hands', 'b-first': 'hands', 'd-first': 'hands', 'g-riff': 'styles',
+  'k-read': 'reading', 'g-first': 'hands', 'b-first': 'hands', 'd-first': 'hands', 'g-riff': 'styles', 'g-jblues': 'styles',
   // GUITAR_DEEPENING: the guitarist's ear has the ear topic; Barry Harris and prog / fusion are styles.
   'g-ear': 'ear', 'g-harris': 'styles', 'g-theory': 'styles', 'g-bebop': 'styles', 'g-solo': 'styles', 'g-ctx': 'styles', 'b-solo': 'styles', 'b-ctx': 'styles', 'g-prog': 'styles',
   'k-vl': 'chords', 'g-vl': 'chords',

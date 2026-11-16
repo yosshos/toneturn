@@ -40,6 +40,7 @@ import { UNITS as STAGE_C } from './mini/stageC'; // STAGE C (AUDIT-6): the adva
 import { UNITS as REHARM_COLOR } from './mini/reharmColor'; // HARMONY-REHARM
 import { UNITS as SOLO_PIANO } from './mini/soloPiano'; // Siskind: solo jazz piano
 import { UNITS as FIRST_STEPS_MORE } from './mini/firstStepsMore'; // AUDIT-6 Stage B: the new beginnings
+import { UNITS as AUDIT7 } from './mini/audit7'; // AUDIT-7: written theory from grade 1, the jazz entry, voice gaps
 
 export const UNIT_LESSON: Record<string, string> = {
   // 0.38 (spec AE): each area file maps its own topics.
@@ -73,6 +74,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...SOLO_PIANO,
   ...FIRST_STEPS_MORE,
   ...STAGE_C,
+  ...AUDIT7,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

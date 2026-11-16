@@ -22,6 +22,7 @@ import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT
 import { generateGuitarFirst, guitarFirstFamily, guitarRiffFamily } from './guitarFirst'; // AUDIT-6 Stage B: the guitar's first steps, riffs by grade
 import { bassFirstFamily, generateBassFirst } from './bassFirst'; // AUDIT-6 Stage B: the bass's first steps
 import { generateGuitarEar } from './guitarEar';
+import { generateGuitarJazzStart } from './guitarJazzStart'; // AUDIT-7 #2: the guitarist's jazz entry over the blues
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
 import { genGuitarColor, guitarColorFamily, guitarCtoneFamily } from './colorDrills'; // HARMONY-REHARM
@@ -2405,6 +2406,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
     case 'g-first':
     case 'g-riff':
       return generateGuitarFirst(s, tu);
+    case 'g-jblues':
+      return generateGuitarJazzStart(s, tu);
     case 'b-first':
       return generateBassFirst(s, tu);
     // Voice leading on the neck (AUDIT-CONTENT-THEORY §ה.2, VL-8): voiceLeadDrills.ts.
@@ -2483,6 +2486,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
   const FS = sp('g-fingerstyle');
   const FL = sp('g-flamenco');
   const J = sp('g-jazz');
+  const JB = sp('g-jblues'); // AUDIT-7 #2
   const RD = sp('g-reading');
   const I = sp('g-impro');
   const B = sp('g-bass');
@@ -2611,6 +2615,14 @@ export function guitarCatalog(): GuitarFamilyDef[] {
         const [a, b] = guitarStdTempo(x.id);
         return J('comp-chart', { option: guitarStdOption(x.id)!, swing: x.rhythm !== 'bossa', tempo: a, target: b });
       }), [0], [80, 140], 'swing quarters', 7),
+    ]),
+    // AUDIT-7 #2: the jazz entry below 1000 (grades 1–3, placed by audit7Placement.ts), over the 12-bar blues in all 12
+    // keys: a blues head, shells four to the bar, guide tones, the Charleston (guitarJazzStart.ts).
+    fam('g-jblues', 'Jazz on the blues', 'ג׳אז על הבלוז', 'jazz', ['jazz', 'blues'], [
+      LT('g-jblues', 1, 'A blues head: the riff, the riff over IV, the answer', 'נושא בלוז: הריף, הריף על IV, התשובה', [JB('blues-head')], CYC4, [70, 120], 'quarters', 1),
+      LT('g-jblues', 2, 'Shells on a blues, four to the bar', 'קונכיות על בלוז, ארבע לתיבה', [JB('blues-shells')], CYC4, [70, 130], 'quarters', 2),
+      LT('g-jblues', 3, 'Guide tones on a blues: 3rds and 7ths', 'צלילים מנחים על בלוז: טרצות וספטימות', [JB('blues-guide', { option: 0 }), JB('blues-guide', { option: 1 })], CYC4, [60, 110], 'halves', 2),
+      LT('g-jblues', 4, 'Comping on a blues: the Charleston', 'ליווי על בלוז: צ׳רלסטון', [JB('blues-comp', { swing: true })], CYC4, [80, 140], 'Charleston', 3),
     ]),
     // THEORY_PLAY (TP-1…TP-5): theory you play on the neck — rootless on two string sets, So What, Giant Steps, upper
     // structures, triad pairs, pentatonic / triad-pair lines, line clichés (the jazz add-on).

@@ -202,6 +202,9 @@ const SHORT: Record<string, L2> = {
   'intervals-down': { en: 'Intervals down', he: 'מרווחים יורדים' },
   'chord-member': { en: 'Root, 3rd, 5th', he: 'יסוד, טרצה, קווינטה' },
   'melody-change': { en: 'What changed?', he: 'מה השתנה?' },
+  // AUDIT-7 #1: written theory from ABRSM grade 1
+  'note-values': { en: 'Note values', he: 'ערכי תווים' },
+  'interval-number': { en: 'Interval numbers', he: 'מספרי מרווחים' },
   // lessons
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },

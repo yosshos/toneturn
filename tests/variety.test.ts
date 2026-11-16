@@ -21,7 +21,8 @@ const EXEMPT = new Set(['time-signatures', 'voice-leading', 'tempo', 'bh-keys',
   'swing-ratio']);
 /** Single levels: tapping the Middle-Eastern cycles (a drill), and "what made it sadder" (4 fixed changes × the music). */
 // prog-meter L5 (metric modulation): a few tempo ratios × three start tempos, finite by design.
-const EXEMPT_LEVEL = new Set(['eastern-rhythm L5', 'mood L4', 'prog-meter L5']);
+// AUDIT-7 #1: note values (5 notes, 6 rests and dotted values) are a small fixed set of facts, like time-signatures.
+const EXEMPT_LEVEL = new Set(['eastern-rhythm L5', 'mood L4', 'prog-meter L5', 'note-values L1', 'note-values L2']);
 
 describe('item variety', () => {
   it('every practice topic level yields at least 20 different items in 120 draws', () => {

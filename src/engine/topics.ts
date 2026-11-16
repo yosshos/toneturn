@@ -56,6 +56,8 @@ import './topicsTopTiers';
 import './topicsEarStart';
 // STAGE C (AUDIT-6 ear #8): the lowest of three voices, single-hearing playback, describe the piece (ABRSM D).
 import './topicsStageC';
+// AUDIT-7 #1: written theory from ABRSM grade 1 — note values and rests, interval numbers.
+import './topicsTheoryStart';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

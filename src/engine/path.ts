@@ -15,7 +15,7 @@ import { BASICS_ORDER, LESSON_AREA, PREREQ } from './intake';
 import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question, type SkillId } from './lesson';
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
-import { inCourse, isKeysForAll, type CourseId } from './courses';
+import { inCourse, isKeysForAll, PIANO_ONLY_JAZZ_TOPICS, playsKeys, type CourseId } from './courses';
 import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
@@ -253,7 +253,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   // lead sheet — and the Jazz beginner band's blues on-ramp.
   'voicing-type': 'jazz', 'jazz-chains': 'jazz', 'upper-rootless': 'jazz', 'chart-analysis': 'jazz', 'blues-ear': 'jazz',
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
-  'set-classes': 'post-tonal', counterpoint: 'post-tonal',
+  // AUDIT-7 #13: species counterpoint is conservatory theory, not post-tonal: it sits in the Ear course by its level.
+  'set-classes': 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
 };
 /**
@@ -414,6 +415,8 @@ export const STEP_PREREQ: Record<string, string[]> = {
   'topic:staff-dictation:1': ['topic:note-reading:1'],
   'topic:chord-read:2': ['topic:note-reading:1'],
   'topic:scale-spelling:1': ['topic:note-reading:1'],
+  // AUDIT-7 #1: interval numbers are read off the staff too.
+  'topic:interval-number:1': ['topic:note-reading:1'],
   // BH-G (owner 2026-11-14): the pivot itself is taught first, then the scale line with a pivot inside it.
   'topic:bh-pivot:1': ['topic:bh-pivot-arp:1'],
 };
@@ -519,6 +522,8 @@ export const VOICE_LATER: Record<string, number> = {
   'v-first': -2, 'v-breath': 0, 'v-pitch': 0, 'v-songs': 0, 'v-range': 1, 'v-time': 1, 'v-ear': 1, 'v-dyn': 2, 'v-scale': 2, 'v-sight': 2,
   'v-vib': 3, 'v-agility': 3, 'v-harmony': 3, 'v-inflect': 4, 'v-standards': 4, 'v-scat': 5, 'v-barry': 6,
   'v-ladder': 0, 'v-modes': 2, 'v-ornament': 4,
+  // AUDIT-7 (fallback only: every level has its rating in audit7Placement.ts).
+  'v-jazz1': 2, 'v-impro': 2, 'v-pop': 4,
 };
 /** Guitar families' teaching rank inside a grade (GUITAR_DEEPENING §5): the hands and chords first, the ear and improvising after. */
 export const GUITAR_RANK: Record<string, number> = { 'g-fretting': 0, 'g-chords': 1, 'g-rhythm': 2, 'g-fingerstyle': 2, 'g-picking': 3, 'g-flamenco': 3, 'g-scales': 4, 'g-jazz': 4, 'g-ear': 5, 'g-prog': 5, 'g-legato': 6, 'g-harris': 6, 'g-theory': 6, 'g-lead': 7, 'g-arps': 8, 'g-reading': 9, 'g-impro': 10 };
@@ -548,6 +553,8 @@ GUITAR_RANK['g-harrisline'] = 6;
 // HARMONY-REHARM: one note many chords and colour harmony on the neck, with the theory families.
 GUITAR_RANK['g-ctone'] = 6;
 GUITAR_RANK['g-color'] = 6;
+// AUDIT-7 #2: the jazz entry over the blues, with the jazz family (each level has its own rating, audit7Placement.ts).
+GUITAR_RANK['g-jblues'] = 4;
 // STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
 Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
 /**
@@ -637,6 +644,8 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   if (s.ladder && inp.ladderHidden?.includes(s.ladder.ref)) return false;
   // AUDIT-6: the Jazz course's sung families (scat, standards) only for a player who sings (the voice is their instrument).
   if (inp.course === 'jazz' && s.kind === 'vocal' && !inp.plays.includes('voice')) return false;
+  // AUDIT-7 #2: the pianist's solo-hand topics only for a player of the keys.
+  if (s.topic && PIANO_ONLY_JAZZ_TOPICS.includes(s.topic) && !playsKeys(inp.plays)) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
   if (s.sung && (inp.leaveOut.includes('voice') || inp.noSing)) return false;
   if (s.mic && inp.noMic) return false;

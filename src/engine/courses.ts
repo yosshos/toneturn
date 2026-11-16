@@ -73,13 +73,24 @@ export const JAZZ_LADDER_FAMILIES: string[] = [
   'k-impro', 'k-lh', 'voicings', 'jazz', 'k-comp', 'k-solo',
   // guitar: target-note improvising, jazz comping, improvising by the rules
   'g-impro', 'g-jazz', 'g-solo',
+  // AUDIT-7 #2: the guitarist's jazz entry over the blues (head, shells, guide tones, the Charleston) below 1000.
+  'g-jblues',
   // bass: walking, fills and target notes, swing time
   'b-walk', 'b-impro', 'b-swing',
   // drums: the jazz ride, comping and trading
   'd-jazz',
   // voice: scat and standards
   'v-scat', 'v-standards',
+  // AUDIT-7 #2: the singer's jazz entry (a blues head, scat calls, guide tones on a blues) below 1000.
+  'v-jazz1',
 ];
+
+/**
+ * AUDIT-7 #2: Jazz-course topics about the pianist's hands (the solo left hand, solo-piano textures by ear) — shown only
+ * to a player whose instruments include the keys; a guitarist, bassist or singer gets the jazz ear without them.
+ */
+export const PIANO_ONLY_JAZZ_TOPICS: string[] = ['lh-tex-ear', 'solo-tex-ear'];
+export const playsKeys = (plays: string[]): boolean => plays.includes('keys') || plays.includes('piano');
 
 /**
  * Does this path step belong to the course? Courses are (almost) disjoint, so progress never shows twice.

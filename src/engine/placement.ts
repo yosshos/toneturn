@@ -60,10 +60,12 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
   intervals: [
     { difficulty: 850, make: (s, id) => intervalQuestion(id, 53 + Math.floor(mulberry32(s)() * 10), pick(mulberry32(s + 1), ['P5', 'P8'] as const), 'melodic', 850) },
     { difficulty: 960, make: (s, id) => intervalQuestion(id, 53 + Math.floor(mulberry32(s)() * 10), pick(mulberry32(s + 1), ['M3', 'P5', 'P8'] as const), 'melodic', 960) },
+    { difficulty: 1000, make: (s, id) => at(topic('intervals-all', 2)(s, id), 1000) },
     { difficulty: 1100, make: (s, id) => intervalQuestion(id, 53 + Math.floor(mulberry32(s)() * 10), pick(mulberry32(s + 1), ['M3', 'P5', 'P8'] as const), 'harmonic', 1100) },
-    { difficulty: 1250, make: (s, id) => at(topic('intervals-all', 2)(s, id), 1250) },
-    { difficulty: 1380, make: (s, id) => at(topic('intervals-all', 3)(s, id), 1380) },
-    { difficulty: 1460, make: (s, id) => at(topic('intervals-all', 4)(s, id), 1460) },
+    // AUDIT-7 #5: all twelve going up at 1000 (before the harmonic built-in), harmonic 1250, up or down 1320.
+    { difficulty: 1250, make: (s, id) => at(topic('intervals-all', 3)(s, id), 1250) },
+    { difficulty: 1320, make: (s, id) => at(topic('intervals-all', 4)(s, id), 1320) },
+    { difficulty: 1460, make: (s, id) => at(topic('interval-spelling', 3)(s, id), 1460) },
     { difficulty: 1600, make: (s, id) => at(TOPIC_GEN['set-classes'].gen(s, 2, id), 1600) },
   ],
   chords: [
@@ -90,12 +92,18 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     difficulty: 980 + (lv - 1) * 130,
     make: (s: number, id: string) => at({ ...modesLesson(lv, s).questions[0], id }, 980 + (lv - 1) * 130),
   })),
+  // AUDIT-7 #1: the written-theory ladder starts where ABRSM theory grade 1 does — note values, interval numbers, key
+  // signatures to two, tonic triads — then interval quality (G4).
   theory: [
+    { difficulty: 760, make: (s, id) => at(topic('note-values', 1)(s, id), 760) },
+    { difficulty: 800, make: (s, id) => at(topic('interval-number', 1)(s, id), 800) },
+    { difficulty: 840, make: (s, id) => at(topic('key-signatures', 1)(s, id), 840) },
+    { difficulty: 900, make: (s, id) => at(topic('chord-spelling', 1)(s, id), 900) },
     { difficulty: 1000, make: (s, id) => at(topic('time-signatures', 1)(s, id), 1000) },
-    { difficulty: 1110, make: (s, id) => at(topic('key-signatures', 1)(s, id), 1110) },
+    { difficulty: 1110, make: (s, id) => at(topic('key-signatures', 2)(s, id), 1110) },
     { difficulty: 1230, make: (s, id) => at(topic('interval-spelling', 1)(s, id), 1230) },
     { difficulty: 1350, make: (s, id) => at(topic('roman-numerals', 1)(s, id), 1350) },
-    { difficulty: 1470, make: (s, id) => at(topic('chord-spelling', 2)(s, id), 1470) },
+    { difficulty: 1470, make: (s, id) => at(topic('chord-spelling', 3)(s, id), 1470) },
     { difficulty: 1590, make: (s, id) => at(topic('interval-spelling', 3)(s, id), 1590) },
     { difficulty: 1700, make: (s, id) => at(topic('chord-scale', 2)(s, id), 1700) },
   ],

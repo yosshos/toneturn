@@ -180,6 +180,9 @@ export const TOPIC_MARK: Record<string, string> = {
   'intervals-down': 'P5↓',
   'chord-member': 'R35',
   'melody-change': '♪≠♪',
+  // AUDIT-7 #1: written theory from ABRSM grade 1 — note values (a quarter is one beat), interval numbers.
+  'note-values': '♩=1',
+  'interval-number': '1→5',
   'key-centres': 'I→I→I',
   // VOICE_CURRICULUM: the voice path's topics (each its own mark next to the 16 vocal families).
   'sing-intervals': 'P5↑',
