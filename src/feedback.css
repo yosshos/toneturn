@@ -401,3 +401,8 @@ html[data-motion='reduced'] .dn-cue-ring { opacity: 1; }
   .recap-row:has(.btn.ghost) .btn:not(.ghost),
   .recap-row .btn.ghost { grid-column: 2; grid-row: auto; justify-self: start; min-height: 32px; }
 }
+
+/* The headphones gate never traps the player: the screen's header (Back) stays tappable above the dimmed area, and
+   only the sheet itself takes taps — leaving the exercise is always possible (course-start taste, any band drill). */
+.drums-gate-backdrop { pointer-events: none; }
+.drums-gate-backdrop .sheet.drums-gate { pointer-events: auto; }

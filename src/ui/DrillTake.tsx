@@ -1182,7 +1182,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       {phase === 'ready' && askDrums ? (
         // B5: the headphones gate — where the sound goes, so the mic hears only the player's instrument. Not a pass of anything.
         <div className="sheet-backdrop drums-gate-backdrop">
-        <div className="sheet drums-gate" data-drums-gate="1" role="dialog" aria-modal="true">
+        <div className="sheet drums-gate" data-drums-gate="1" role="dialog" aria-modal="false">
           <p className="field-hint">
             {drum
               ? lang === 'he'
