@@ -1842,6 +1842,28 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// HARMONY-REHARM still-open games, one drawn symbol each.
+Object.assign(GLYPHS, {
+  // Third Jump: two triad stacks a 3rd apart, an arc jumping between them, the shared head on top of both.
+  thirdjump: (
+    <>
+      <path d="M-24 -2 V20 M-30 6 H-18 M-30 13 H-18 M24 -2 V20 M18 6 H30 M18 13 H30" {...sw} strokeWidth={2.2} />
+      <path d="M-16 -8 Q0 -30 16 -8" {...sw} strokeWidth={2.6} />
+      <path d="M16 -8 L8 -10 M16 -8 L14 -16" {...sw} strokeWidth={2.4} />
+      {head(-24, -8, 5.2, 3.9)}
+      {head(24, -8, 5.2, 3.9)}
+    </>
+  ),
+  // Dark Side: a half-dark disc (the parallel minor's shade) over a 4-bar line, the third bar marked.
+  darkside: (
+    <>
+      <circle cx={0} cy={-8} r={12} {...sw} strokeWidth={2.4} />
+      <path d="M0 -20 A12 12 0 0 0 0 4 Z" fill={I} />
+      <path d="M-28 18 H28 M-28 12 V24 M-14 12 V24 M0 12 V24 M14 12 V24 M28 12 V24" {...sw} strokeWidth={1.8} />
+      <rect x={0} y={13} width={14} height={10} fill={I} />
+    </>
+  ),
+});
 export type GlyphKind = keyof typeof GLYPHS;
 
 /** Emoji left in content data → the closest symbol of our set (0.61: no emoji in the interface). */

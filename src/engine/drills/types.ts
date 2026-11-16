@@ -510,7 +510,7 @@ export interface DrillGoal {
    * pitch on top, a chord that can carry it (commonTone.holdsNote), none repeated, the inner voices moving at most
    * `tol` semitones a voice on average from the chord before. `at` = the beat of each chord (timed takes).
    */
-  ct?: { held: number; count: number; at: number[]; tol: number };
+  ct?: { held: number; count: number; at: number[]; tol: number; /** The guitar: the held note anywhere in the chord, no motion check (gradeHeldChoices). */ loose?: boolean };
   /**
    * AUDIT-DEPTH-3 C5: improvisation graded by rule cards (ruleCards.ts). The improvised notes are those at or above
    * `drill.freeAbove` (piano: the LH comps, the RH improvises), else those inside `free.windows`. `spans` = the chords

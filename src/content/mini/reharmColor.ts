@@ -735,7 +735,7 @@ export const LESSONS: MiniLesson[] = [
 ];
 
 const RH_LESSON: Record<string, string> = { 'rh-mi': 'modal-mix', 'rh-pedalpt': 'pedal-point', 'rh-planemel': 'planing-melody', 'rh-approach': 'approach-slip', 'rh-slip': 'approach-slip', 'rh-sus': 'modern-colours', 'rh-modern': 'modern-colours', 'rh-maj7s5': 'modern-colours' };
-const G_LESSON = (kind: string): string => (kind.startsWith('gmi') ? 'modal-mix' : kind.startsWith('gmd') ? 'chromatic-mediants' : kind === 'gpl-melody' ? 'planing-melody' : kind === 'gss-slip' ? 'approach-slip' : 'modern-colours');
+const G_LESSON = (kind: string): string => (kind.startsWith('gop') ? 'pedal-point' : kind.startsWith('gmi') ? 'modal-mix' : kind.startsWith('gmd') ? 'chromatic-mediants' : kind === 'gpl-melody' ? 'planing-melody' : kind === 'gss-slip' ? 'approach-slip' : 'modern-colours');
 const B_LESSON = (kind: string): string =>
   ['bc-pedal', 'bc-dompedal', 'bc-push'].includes(kind) ? 'pedal-point' : ['bc-ctroots', 'bc-ctwalk'].includes(kind) ? 'ct-one-note' : kind === 'bc-thirds' ? 'chromatic-mediants' : kind === 'bc-counter' ? 'bass-counter-line' : 'modal-mix';
 
@@ -756,6 +756,8 @@ export const UNITS: Record<string, string> = {
   'tech:g-color': 'modal-mix',
   'tech:b-counter': 'bass-counter-line',
   'tech:k-tune-10': 'modal-mix',
+  // HARMONY-REHARM still open: the bass hears borrowed chords (b-ear 24).
+  'tech:b-ear-24': 'modal-mix',
   ...Object.fromEntries(CT_ROWS.map((r, i) => [`tech:k-ctone-${i + 1}`, r.kind === 'ct-counter' ? 'bass-counter-line' : 'ct-one-note'])),
   ...Object.fromEntries(RH_ROWS.map((r, i) => [`tech:k-reharm-${RH_FIRST + i}`, RH_LESSON[r.kind]])),
   ...Object.fromEntries(GCOL_ROWS.map((r, i) => [`tech:g-color-${i + 1}`, G_LESSON(r.kind)])),

@@ -111,11 +111,11 @@ The left hand walks the bass (half notes, then quarters), the right hand holds a
 
 | Concept | Ear | Keys | Guitar | Bass |
 |---|---|---|---|---|
-| One note, many chords | `ct-degree` 1–6 (1050–1800) | `k-ctone` 1–5, 7 (1050–1800) | `g-ctone` 1–5 | `b-counter` 1, 10 |
+| One note, many chords | `ct-degree` 1–6 (1050–1800) | `k-ctone` 1–5, 7 (1050–1800) | `g-ctone` 1–6 | `b-counter` 1, 10 |
 | Counter-line | `counter-line` 1–3 (1550–1650) | `k-ctone` 6 (1660) | — | `b-counter` 7 (1500) |
 | Chromatic mediants | `mediants` 1–5 (1250–1800) | `k-mediant` 1–8 (1250–1800) | `g-color` 3–5 | `b-counter` 4 |
-| Modal interchange | `modal-mix` 1–5 (1100–1700) | `k-reharm` 11, 13, 15, 17, 20 (1100–1700); `k-tune` 10 | `g-color` 1, 2, 6–9 | `b-counter` 2, 6, 8 |
-| Pedal point | `pedal-ear` 1–3 (1150–1550) | `k-reharm` 12 (1350) | — | `b-counter` 3, 5, 9 |
+| Modal interchange | `modal-mix` 1–5 (1100–1700) | `k-reharm` 11, 13, 15, 17, 20 (1100–1700); `k-tune` 10 | `g-color` 1, 2, 6–9 | `b-counter` 2, 6, 8; `b-ear` 24 (1450) |
+| Pedal point | `pedal-ear` 1–3 (1150–1550) | `k-reharm` 12 (1350) | `g-color` 13–15 (open-string pedal) | `b-counter` 3, 5, 9 |
 | Planing under a melody | `planing` 4 (1650) | `k-reharm` 18 (1650) | `g-color` 10 | — |
 | Approach chords, side-slip | `approach-chord` 1–3 (1400–1600) | `k-reharm` 14, 21 (1500, 1710) | `g-color` 11 | — |
 | Modern colors | `modern-color` 1–3 (1550–1750) | `k-reharm` 16, 19, 22 (1560–1750) | `g-color` 12 | — |
@@ -125,9 +125,18 @@ The left hand walks the bass (half notes, then quarters), the right hand holds a
 
 Lessons (en + he, narrated): `ct-one-note`, `bass-counter-line`, `chromatic-mediants`, `modal-mix`, `pedal-point`, `planing-melody`, `approach-slip`, `modern-colours`, `organ-comping`, `pull-or-paint`, `jazz-deceptive`.
 
-Still open: the guitar open-string pedal, the "Hold the note", "Third jump" and "Dark side" games, a bass `b-ear` modal-interchange level, the player's-own-chords item on the guitar.
+Games: **Hold the Note** (`holdnote`, 0.96: one note, many chords), **Third Jump** (`thirdjump`: chromatic mediants), **Dark Side** (`darkside`: modal interchange by ear, in time). Each has 6 tiers and feeds the path (Ear pitch units, Jazz bonus steps), the workout, XP, ratings, boards, badges and its own glyph.
 
-**(verify)** The Larry Goldings presentation of "one note, many chords" (Open Studio). Align the wording when the owner shares the handout.
+Closed (2026-11-16; was "still open"):
+
+- **The guitar open-string pedal** — done: `g-color` 13–15 (grades 5–6; lesson `pedal-point`). 13: shapes on strings 3-2-1 over the ringing open tonic (E, A, D: I – IV/I – V/I – I and I – ♭VII/I – IV/I – I). 14: the dominant pedal on an open string, then home (A: Bm/E – D/E – F/E – E7 – A; D on the open A; G on the open D). 15: open B and E ringing above moving shapes (E: E – C♯m7 – Aadd9 – E; A, D, G). They keep the keys whose open strings carry them (keys12.ts `FIXED_KEY_LEVELS`); rubato first, then the tempo ladder.
+- **"Hold the note"** — done: it is the same idea as Hold the Note (`holdnote`, AUDIT-GAMES, 0.96): one held note, which chords keep it, its degree, a 4-bar chain, "8 ways" at ff.
+- **"Third jump"** — done: `thirdjump`. A chord sounds with one note glowing; jump to the chromatic mediant that keeps it; the chord landed on starts the next jump; a streak builds the film cue. pp major triads · p + minor · mp + the doubly chromatic jump (keeps nothing) · mf by ear · f the glowing note's degree in the new chord · ff played on MIDI (feeds key mastery). Every 5th jump starts on the next key of the cycle of 4ths.
+- **"Dark side"** — done: `darkside`. A count-in, then a 4-bar loop with a click on every beat and the now-cue; tap the borrowed chord the moment it arrives (earlier in the bar scores more), then name it. pp iv / ♭VII · p + ♭VI, ♭III · mp the jazz round (ivm6, iiø7, ♭VImaj7, ♭VII7) · mf every borrowed 7th (+ v m7, ♭IImaj7, ♭IIImaj7, ivm7) · f two or three borrowed chords, named as chord symbols in the key · ff + borrowing in minor (Dorian IV7 and ii m7, the Picardy third). All 12 keys.
+- **A bass `b-ear` modal-interchange level** — done: `b-ear` 24 (1450): the band plays a loop with a borrowed chord, the bassist answers with the roots, one a bar (pop triads; jazz 7ths with iiø7 and ivm6 → I). All 12 keys; lesson `modal-mix`.
+- **The player's own chords on the guitar** — done: `g-ctone` 6 (grade 9): eight different chords that hold the note, graded by `ctFreeAnalyze.ts` with `loose` (the held note anywhere in the strum; no inner-voice check, since a strum's voice order can't be heard reliably). All 12 keys.
+
+**(verify)** The Larry Goldings presentation of "one note, many chords" (Open Studio). Align the wording when the owner shares the handout. Until then the content stays generic: no lesson, drill, game or badge names Goldings (checked 2026-11-16; the name appears only in code comments and this reference).
 
 ## Sources
 

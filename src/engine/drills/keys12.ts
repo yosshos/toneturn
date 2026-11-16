@@ -59,6 +59,8 @@ export const FIXED_KEY_LEVELS: string[] = [
   // positional stretches (the key only picks the fret: more keys repeat the same shapes) and the Mizrahi strum (its
   // open-chord version exists only in the open keys E, A, D, G)
   'g-fretting-6', 'g-rhythm-10',
+  // HARMONY-REHARM: the open-string pedal exists only in the keys whose open strings carry it (E, A, D, G)
+  'g-color-13', 'g-color-14', 'g-color-15',
   // bass: open strings, one-string rhythm, natural harmonics
   'b-pluck-1', 'b-pluck-2', 'b-pluck-3', 'b-slap-1', 'b-ear-5', 'b-read-2', 'b-legato-5', 'b-ext-1', 'b-ext-2',
   // positional stretches (above fret 5 the high-register take would fold onto the low one)

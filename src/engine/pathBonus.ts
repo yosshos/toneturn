@@ -36,6 +36,9 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'guidetone', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1050, title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' } },
   { game: 'crossword', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/dictation', difficulty: 1100, title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' } },
   { game: 'holdnote', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1150, title: { en: 'Hold the Note', he: 'להחזיק את הצליל' } },
+  // HARMONY-REHARM still-open games (the Ear course has them in its pitch units, path.ts).
+  { game: 'darkside', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/chromatic', difficulty: 1200, title: { en: 'Dark Side', he: 'הצד האפל' } },
+  { game: 'thirdjump', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/chromatic', difficulty: 1300, title: { en: 'Third Jump', he: 'קפיצת טרצה' } },
   { game: 'enclosure', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1150, title: { en: 'Enclosure Target', he: 'מטרת הכיתור' } },
   { game: 'call5432', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/answer', difficulty: 1250, title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' } },
 ];

@@ -96,6 +96,9 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   enclosure: { tags: () => T2(['improv', 'vocab', 0.6], ['timing', 'precision', 0.4]), diff: () => 1150 },
   crossword: { tags: () => T2(['cadences', 'dictation', 0.7], ['cadences', 'progression', 0.3]), diff: () => 1150 },
   holdnote: { tags: () => T2(['cadences', 'reharm', 0.6], ['chords', 'extension', 0.4]), diff: () => 1150 },
+  // HARMONY-REHARM still-open games (always tiered; `diff` is a fallback).
+  thirdjump: { tags: () => T2(['cadences', 'chromatic', 0.7], ['theory', 'chromatic', 0.3]), diff: () => 1400 },
+  darkside: { tags: () => T2(['cadences', 'chromatic', 0.7], ['cadences', 'reharm', 0.3]), diff: () => 1300 },
   // AUDIT-7 hole #14: the beginner game per instrument (always tiered; `diff` is a fallback).
   staffrunner: { tags: () => T2(['instrument', 'piano-tech', 0.5], ['notes', 'staff', 0.5]), diff: () => 850 },
   rootcatch: { tags: () => T2(['instrument', 'bass-tech', 0.6], ['cadences', 'roots', 0.4]), diff: () => 850 },

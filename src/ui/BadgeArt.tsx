@@ -1433,6 +1433,24 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(19, 15, 2.2)}
     </>
   ),
+  // HARMONY-REHARM still-open games.
+  // Third Jump: two stacks, an arc between them.
+  'special:game:thirdjump': () => (
+    <>
+      {p('M5 12v8 M19 12v8', false)}
+      {p('M7 9q5-7 10 0', false)}
+      {head(5, 9, 2.2)}
+      {head(19, 9, 2.2)}
+    </>
+  ),
+  // Dark Side: a half-dark disc over a bar line.
+  'special:game:darkside': () => (
+    <>
+      <circle cx={12} cy={9} r={5.5} fill="none" />
+      {p('M12 3.5a5.5 5.5 0 0 0 0 11z', true)}
+      {p('M3 19h18 M3 17v4 M12 17v4 M21 17v4', false)}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>

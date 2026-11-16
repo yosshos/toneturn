@@ -57,6 +57,9 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'rootcatch', name: l('Root Catcher', 'תופס השורשים'), course: 'bass', titles: [l('On the One', 'על האחת'), l('Through the Blues', 'דרך הבלוז'), l('Numbers to Roots', 'מספרים לשורשים')] },
   { game: 'strumchange', name: l('Strum Changes', 'החלפות בפריטה'), course: 'guitar', titles: [l('Clean Changes', 'החלפות נקיות'), l('Two a Bar', 'שתיים בתיבה'), l('Sevenths in Every Key', 'ספטים בכל סולם')] },
   { game: 'rebound', name: l('Rebound Ball', 'הכדור הקופץ'), course: 'drums', titles: [l('Steady Strokes', 'מכות יציבות'), l('Clean Doubles', 'כפולות נקיות'), l('Shapes the Swell', 'מעצב את הקרשנדו')] },
+  // HARMONY-REHARM still-open games.
+  { game: 'thirdjump', name: l('Third Jump', 'קפיצת טרצה'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('Keeps the Note', 'שומר על הצליל'), l('Mediants by Ear', 'מדיאנטות בשמיעה'), l('Film Cue', 'מוזיקת סרט')] },
+  { game: 'darkside', name: l('Dark Side', 'הצד האפל'), course: 'jazz', alsoIn: ['ear'], titles: [l('Hears the Borrowed', 'שומע את השאול'), l('Borrowed Sevenths', 'ספטאקורדים שאולים'), l('Both Sides', 'משני הצדדים')] },
   { game: 'singback', name: l('Sing It Back', 'שרים בחזרה'), course: 'voice', titles: [l('Matches the Note', 'מתאים את הצליל'), l('Echoes in Time', 'הד בזמן'), l('Sings Any Phrase Back', 'מחזיר כל משפט')] },
 ];
 

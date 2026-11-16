@@ -47,7 +47,7 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     expect(levelsOf('b-walk').length).toBe(21); // + AUDIT-7 #2: the first walking line over a blues
     expect(levelsOf('b-impro').length).toBe(18);
     expect(levelsOf('b-pick').length).toBe(10);
-    expect(levelsOf('b-ear').length).toBe(23); // + 22–23: progressions by ear
+    expect(levelsOf('b-ear').length).toBe(24); // + 22–23: progressions by ear; + 24: borrowed chords by ear
     expect(levelsOf('b-up-walk').length).toBe(9);
     expect(levelsOf('b-std').length).toBe(5);
     expect(levelsOf('b-ext').length).toBe(9);

@@ -17,7 +17,7 @@ const sd = (xs: number[]): number => {
   return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / xs.length);
 };
 
-export type HeldKind = 'ok' | 'empty' | 'top' | 'unknown' | 'clash' | 'repeat';
+export type HeldKind = 'ok' | 'empty' | 'top' | 'held' | 'unknown' | 'clash' | 'repeat';
 export interface HeldStep {
   kind: HeldKind;
   /** The chord heard (root pc + quality), when one was. */
@@ -27,14 +27,18 @@ export interface HeldStep {
   motion: number | null;
 }
 
-/** Grade a sequence of played voicings (low → high pitches each) against the held pitch. */
-export function gradeHeldChoices(voicings: number[][], held: number): HeldStep[] {
+/**
+ * Grade a sequence of played voicings (low → high pitches each) against the held pitch. `loose` (the guitar: a strum's
+ * octaves and voice order can't be told apart by the microphone): the held note need only sound in the chord, and the
+ * inner-voice motion is not judged.
+ */
+export function gradeHeldChoices(voicings: number[][], held: number, loose = false): HeldStep[] {
   const seen = new Set<string>();
   let prevInner: number[] | null = null;
   return voicings.map((v0) => {
     const v = [...new Set(v0)].sort((a, b) => a - b);
     if (!v.length) return { kind: 'empty', chord: null, voicing: v, motion: null };
-    if (mod12(v[v.length - 1]) !== mod12(held)) return { kind: 'top', chord: null, voicing: v, motion: null };
+    if (loose ? !v.some((p) => mod12(p) === mod12(held)) : mod12(v[v.length - 1]) !== mod12(held)) return { kind: loose ? 'held' : 'top', chord: null, voicing: v, motion: null };
     const chord = identifyChord(v);
     if (!chord) {
       // The chord under the held note, when the held note itself is what spoils it (C E G B under F: an avoid note).
@@ -49,7 +53,7 @@ export function gradeHeldChoices(voicings: number[][], held: number): HeldStep[]
     // Inner voices: without the top (held) and, with 4+ notes, without the bass.
     const inner = v.length >= 4 ? v.slice(1, -1) : v.slice(0, -1);
     let motion: number | null = null;
-    if (prevInner && inner.length) {
+    if (prevInner && inner.length && !loose) {
       const p = prevInner;
       motion = inner.reduce((s, x) => s + Math.min(...p.map((y) => Math.abs(x - y))), 0) / inner.length;
     }
@@ -61,6 +65,7 @@ export function gradeHeldChoices(voicings: number[][], held: number): HeldStep[]
 const KIND_LINE: Record<Exclude<HeldKind, 'ok'>, (n: number, held: string, s: HeldStep) => { en: string; he: string }> = {
   empty: (n) => ({ en: `Chord ${n}: not played`, he: `אקורד ${n}: לא נוגן` }),
   top: (n, held) => ({ en: `Chord ${n}: keep ${held} on top`, he: `אקורד ${n}: ${held} צריך להישאר למעלה` }),
+  held: (n, held) => ({ en: `Chord ${n}: ${held} is missing — keep it in every chord`, he: `אקורד ${n}: ${held} חסר — הוא נשאר בכל אקורד` }),
   unknown: (n) => ({ en: `Chord ${n}: not a chord the app knows (3 notes or more)`, he: `אקורד ${n}: לא אקורד מוכר (3 צלילים לפחות)` }),
   clash: (n, held, s) => ({ en: `Chord ${n}: ${held} clashes with ${rootName(s.chord!.root)}${CT_Q[s.chord!.q].sym}`, he: `אקורד ${n}: ${held} מתנגש עם ${rootName(s.chord!.root)}${CT_Q[s.chord!.q].sym}` }),
   repeat: (n) => ({ en: `Chord ${n}: already used — no repeats`, he: `אקורד ${n}: כבר נוגן — בלי חזרות` }),
@@ -98,7 +103,7 @@ function voicingsOf(drill: Drill, bpm: number, played: PlayedNote[], rubato: boo
   }
   const voicings = slots.map((sl) => {
     if (!sl) return [];
-    const held = ps.filter((p) => !sl.notes.includes(p) && p.on < sl.t - 30 && (p.off === null || p.off > sl.t + 100));
+    const held = g.loose ? [] : ps.filter((p) => !sl.notes.includes(p) && p.on < sl.t - 30 && (p.off === null || p.off > sl.t + 100));
     return [...new Set([...sl.notes, ...held].map((p) => p.pitch))].sort((a, b) => a - b);
   });
   return { voicings, onsets: slots.map((sl) => (sl ? sl.t : null)), extra };
@@ -109,7 +114,7 @@ export function analyzeHeldChoiceTake(drill: Drill, bpm: number, played: PlayedN
   const g = drill.goal.ct!;
   const rubato = !!opts.rubato;
   const { voicings, onsets, extra } = voicingsOf(drill, bpm, played, rubato);
-  const steps = gradeHeldChoices(voicings, g.held);
+  const steps = gradeHeldChoices(voicings, g.held, !!g.loose);
   const okN = steps.filter((s) => s.kind === 'ok').length;
   const accuracy = g.count ? okN / g.count : 1;
   const heldName = rootName(g.held);

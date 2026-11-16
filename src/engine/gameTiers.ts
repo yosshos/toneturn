@@ -850,6 +850,38 @@ GAME_TIERS.holdnote = {
   },
 };
 
+// ---------------------------------------------------------------- HARMONY-REHARM "still open" games (REHARM-AND-COLOR C.2, C.3)
+
+/** Third Jump: chromatic mediants — jump to the chord a 3rd away that keeps the glowing note. ff is played (MIDI). */
+GAME_TIERS.thirdjump = {
+  game: 'thirdjump',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Major triads: the jump that keeps the note', 'משולשים מז׳וריים: הקפיצה ששומרת על הצליל'), levels: [1], target: 85 },
+    p: { label: L('Major and minor triads', 'משולשים מז׳וריים ומינוריים'), levels: [2], target: 85 },
+    mp: { label: L('+ the jump that keeps nothing', '+ הקפיצה שלא שומרת אף צליל'), levels: [3], target: 85 },
+    mf: { label: L('By ear: where did it jump?', 'בשמיעה: לאן הוא קפץ?'), levels: [4], target: 85 },
+    f: { label: L('The note’s degree in the new chord', 'הדרגה של הצליל באקורד החדש'), levels: [5], target: 85 },
+    ff: { label: L('Play the jump (MIDI)', 'מנגנים את הקפיצה (MIDI)'), levels: [6], target: 85 },
+  },
+};
+
+/** Dark Side: modal interchange by ear in time — tap the borrowed chord's moment, then name it. */
+GAME_TIERS.darkside = {
+  game: 'darkside',
+  source: () => 'cadences',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Pop loops: iv or ♭VII', 'לופים של פופ: iv או ♭VII'), levels: [1], params: { bpm: 80 }, target: 80 },
+    p: { label: L('+ ♭VI and ♭III', '+ ♭VI ו־♭III'), levels: [2], params: { bpm: 88 }, target: 80 },
+    mp: { label: L('Jazz: ivm6, iiø7, ♭VImaj7, ♭VII7', 'ג׳אז: ivm6, iiø7, ♭VImaj7, ♭VII7'), levels: [3], params: { bpm: 92 }, target: 80 },
+    mf: { label: L('Every borrowed 7th chord', 'כל ספטאקורד שאול'), levels: [4], params: { bpm: 100 }, target: 80 },
+    f: { label: L('Two or three borrowed, named in the key', 'שניים או שלושה שאולים, בשמם בסולם'), levels: [5], params: { bpm: 100 }, target: 80 },
+    ff: { label: L('+ borrowing in minor', '+ השאלה במינור'), levels: [6], params: { bpm: 108 }, target: 80 },
+  },
+};
+
 // ---------------------------------------------------------------- AUDIT-7 hole #14: a beginner game per instrument
 // (src/engine/beginnerRun.ts). Laps against the click, measured by MIDI or the microphone only; a run at ≥ 80 % of its
 // targets clears the tier. They start at pp (the beginner band) and climb to ff.
@@ -1121,6 +1153,8 @@ export function clearsRun(game: string, tier: DynName, score: number, detail: un
   const d = (detail && typeof detail === 'object' ? detail : {}) as Record<string, unknown>;
   const target = def.target ?? 0;
   if (d.input === 'touch' && MEASURED_ONLY.has(spec.game)) return false;
+  // Third Jump ff is the played tier: on-screen taps there are practice.
+  if (game === 'thirdjump' && tier === 'ff' && d.input !== 'midi') return false;
   switch (spec.clear) {
     case 'rush': {
       const right = num(d, 'right') ?? 0;

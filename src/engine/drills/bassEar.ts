@@ -45,6 +45,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   quality2: tt('Hear a chord over its root — then play its four notes: root, 3rd or 4th, 5th, 6th or 7th', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את ארבעת הצלילים שלו: יסוד, טרצה או קוורטה, קווינטה, סקסטה או ספטימה'),
   quality3: tt('Hear a colourful dominant or major chord — play root, 3rd, 7th and its colour note', 'שמעו אקורד דומיננטי או מז׳ורי צבעוני — נגנו יסוד, טרצה, ספטימה ואת צליל הצבע שלו'),
   motion: tt('Hear a cadence — then play its bass line, one note a bar', 'שמעו קדנצה — ואז נגנו את קו הבס שלה, צליל אחד בתיבה'),
+  mixear: tt('Hear a loop with a borrowed chord — then play its roots, one a bar', 'שמעו לופ עם אקורד שאול — ואז נגנו את היסודות שלו, אחד בתיבה'),
   secdom: tt('Hear the chords — then play the bass note of each, one a bar', 'שמעו את האקורדים — ואז נגנו את צליל הבס של כל אחד, אחד בתיבה'),
   where: tt('The band plays part of the form — go on with the next section’s roots', 'הלהקה מנגנת חלק מהצורה — המשיכו עם היסודות של הקטע הבא'),
   dropin: tt('The band starts somewhere in the blues — play the next four roots', 'הלהקה מתחילה איפשהו בבלוז — נגנו את ארבעת היסודות הבאים'),
@@ -253,6 +254,43 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         chart.push(...pick.ch.map(([d, q]) => (q === '/5' ? `${spell(key + d, key)}/${spell(key + 7, key)}` : `${spell(key + d, key)}${q === 'dim7' ? '°7' : q}`)));
       }
       return finishEar(s, tu, line, notes, windows, s.kind, s.kind === 'motion' ? { en: 'Cadences by ear: ii–V, backdoor, tritone sub', he: 'קדנצות בשמיעה: ii–V, דלת אחורית, תחליף טריטון' } : { en: 'Secondary dominants and passing diminished by ear', he: 'דומיננטות משניות ומוקטן עובר בשמיעה' });
+    }
+    case 'mixear': {
+      // HARMONY-REHARM §4 (REHARM-AND-COLOR C.3, bass): modal interchange by ear. The band plays a 4-bar loop in major
+      // (no bass) with a chord from the parallel minor or another mode; the player answers with the roots, one a bar —
+      // the borrowed root (♭VI, ♭VII, ♭III, ♭II, iv) is what the ear must find. op 0: the pop loops (triads); op 1: the
+      // jazz loops (7th chords, iiø7 and the minor plagal ivm6 → I).
+      const POOL: [number, Q | 'm6'][][] =
+        op === 1
+          ? [
+              [[0, 'maj7'], [5, 'maj7'], [5, 'm6'], [0, 'maj7']],
+              [[0, 'maj7'], [9, 'm7'], [2, 'm7b5'], [7, '7']],
+              [[0, 'maj7'], [5, 'maj7'], [10, '7'], [0, 'maj7']],
+              [[0, 'maj7'], [2, 'm7'], [1, 'maj7'], [0, 'maj7']],
+              [[0, 'maj7'], [3, 'maj7'], [8, 'maj7'], [1, 'maj7']],
+            ]
+          : [
+              [[0, 'M'], [5, 'M'], [5, 'm'], [0, 'M']],
+              [[0, 'M'], [8, 'M'], [10, 'M'], [0, 'M']],
+              [[0, 'M'], [10, 'M'], [5, 'M'], [0, 'M']],
+              [[0, 'M'], [3, 'M'], [5, 'M'], [0, 'M']],
+              [[0, 'M'], [8, 'M'], [7, 'M'], [0, 'M']],
+            ];
+      const DIATONIC: Record<string, true> = { '0:M': true, '0:maj7': true, '5:M': true, '5:maj7': true, '7:M': true, '7:7': true, '9:m7': true, '2:m7': true };
+      const chart: string[] = [];
+      for (let r = 0; r < 2; r++) {
+        const prog = POOL[(Math.floor(rnd() * POOL.length) + r * 2) % POOL.length];
+        const b0 = r * 32;
+        prog.forEach(([d, q], i) => {
+          notes.push({ beat: b0 + i * 4, dur: 3.8, midi: q === 'm6' ? [0, 3, 7, 9].map((x) => 48 + mod(key + d, 12) + x).map((m) => (m > 67 ? m - 12 : m)).sort((a, c) => a - c) : voicing(key + d, q), inst: 'piano' }, { beat: b0 + i * 4, dur: 0.2, midi: [42], perc: 'hat' }, { beat: b0 + i * 4 + 2, dur: 0.2, midi: [42], perc: 'hat' });
+          line.push({ b: b0 + 16 + i * 4, d: 4, p: rootOf(tu, key + d), ct: true });
+        });
+        band(b0, b0 + 16);
+        // borrowed roots are spelled from the parallel minor (D: B♭, C; E: C, D)
+        const bHome = spell(1, key) === 'D♭' ? key : key + 3;
+        chart.push(...prog.map(([d, q]) => `${spell(key + d, DIATONIC[`${d}:${q}`] ? key : bHome)}${q === 'M' ? '' : q === 'm7b5' ? 'ø7' : q}`));
+      }
+      return finishEar(s, tu, line, notes, windows, 'mixear', op === 1 ? { en: 'Borrowed 7th chords by ear: play the roots', he: 'ספטאקורדים שאולים בשמיעה: לנגן את היסודות' } : { en: 'Borrowed chords by ear: play the roots', he: 'אקורדים שאולים בשמיעה: לנגן את היסודות' }, chart);
     }
     case 'where':
     case 'dropin':

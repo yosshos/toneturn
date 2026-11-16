@@ -9,6 +9,7 @@ import { analyzeTake, expTimeMs } from '../src/engine/drills/analyze';
 import { gradeHeldChoices } from '../src/engine/drills/ctFreeAnalyze';
 import { COLOR_LEVEL_DIFF, COLOR_LEVEL_IDS, CT_ROWS, GCOL_ROWS, GCT_ROWS, MD_ROWS, ORG_ROWS, RH_ROWS, BC_ROWS, heldOf } from '../src/engine/drills/colorDrills';
 import { stepCatalogue, PATH_CAP } from '../src/engine/path';
+import { FIXED_KEY_LEVELS } from '../src/engine/drills/keys12';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
 const CAT = catalog();
@@ -25,7 +26,8 @@ describe('colour harmony families: counts and wiring', () => {
     expect(CAT.find((f) => f.id === 'k-reharm')!.levels).toHaveLength(10 + RH_ROWS.length);
     expect(GCAT.find((f) => f.id === 'g-ctone')!.levels).toHaveLength(GCT_ROWS.length);
     expect(GCAT.find((f) => f.id === 'g-color')!.levels).toHaveLength(GCOL_ROWS.length);
-    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(13);
+    // 12 colour levels + the open-string pedal ladder (HARMONY-REHARM still open, 3 levels)
+    expect(GCAT.find((f) => f.id === 'g-color')!.levels.length).toBeLessThanOrEqual(15);
     expect(GCAT.find((f) => f.id === 'b-counter')!.levels).toHaveLength(BC_ROWS.length);
     expect(CT_ROWS.length + MD_ROWS.length + ORG_ROWS.length + RH_ROWS.length).toBe(34);
   });
@@ -54,7 +56,8 @@ describe('every new item in all 12 keys', () => {
       const l = lv(id);
       expect(l, id).toBeDefined();
       const ds = levelDrills(l, 'fifths-up');
-      expect(new Set(ds.map((d) => pc(d.spec.key))).size, id).toBe(12);
+      // the open-string pedal keeps the keys whose open strings carry it (keys12.ts FIXED_KEY_LEVELS)
+      expect(new Set(ds.map((d) => pc(d.spec.key))).size, id).toBe(FIXED_KEY_LEVELS.includes(id) ? (l.keys as number[]).length : 12);
       expect(new Set(ds.map((d) => d.itemId)).size, id).toBe(ds.length);
       for (const d of ds) {
         expect(d.notes.length, d.itemId).toBeGreaterThan(0);

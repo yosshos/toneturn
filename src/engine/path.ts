@@ -483,6 +483,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`k-reharm-${i + 1}`, 700 + 70 * (6 + i)])),
   // The borrowed-chord reharm of a head (k-tune 10): before the Coltrane level, under the cap.
   'k-tune-10': 1700,
+  // HARMONY-REHARM still open: borrowed chords by ear on the bass, in the modal-mix band (ear 1100–1700).
+  'b-ear-24': 1450,
   // Solo jazz piano after Jeremy Siskind (SISKIND-SOLO-PIANO Part C): the left hand ~760–1620, textures 1000–1900,
   // comping vocabulary 1250–1650, improvisation habits 780–1200 — each level at its own rating.
   ...SP_LEVEL_DIFF,
@@ -504,7 +506,10 @@ export const NON_MONOTONE_FAMILIES = [
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).
   'control', 'arpeggios', 'cadences', 'k-rhythm', 'b-styles', 'b-scale', 'b-walk', 'b-ext', 'd-diddles', 'd-count', 'd-read',
   // AUDIT-7 #12: the groove-development level (d-fills 9) and the grade 4–6 PAS rudiments sit below their families' later numbers.
-  'd-fills', 'd-pas'];
+  'd-fills', 'd-pas',
+  // HARMONY-REHARM: b-ear 24 (borrowed chords by ear) sits at its own rating among the cadence levels; the guitar's
+  // open-string pedal (g-color 13–15, grades 5–6) is placed by grade after the grade 7–9 colour levels.
+  'b-ear', 'g-color'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;
@@ -1253,6 +1258,9 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   call5432: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1150 },
   crossword: { domain: 'pitch', skill: 'cadences', sub: 'dictation', title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' }, minDiff: 1000 },
   holdnote: { domain: 'pitch', skill: 'cadences', sub: 'reharm', title: { en: 'Hold the Note', he: 'להחזיק את הצליל' }, minDiff: 1050 },
+  // HARMONY-REHARM still-open games: chromatic mediants and modal interchange, from their ladders' first ratings.
+  thirdjump: { domain: 'pitch', skill: 'cadences', sub: 'chromatic', title: { en: 'Third Jump', he: 'קפיצת טרצה' }, minDiff: 1250 },
+  darkside: { domain: 'pitch', skill: 'cadences', sub: 'chromatic', title: { en: 'Dark Side', he: 'הצד האפל' }, minDiff: 1100 },
   // AUDIT-7 hole #14: a beginner game per instrument course, in the beginner band's units (720 → 1150).
   staffrunner: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Staff Runner', he: 'רץ החמשה' }, forPlays: ['keys', 'piano'], minDiff: 720, maxDiff: 1150 },
   rootcatch: { domain: 'instrument', skill: 'instrument', sub: 'bass-tech', title: { en: 'Root Catcher', he: 'תופס השורשים' }, forPlays: ['bass'], minDiff: 720, maxDiff: 1150 },
@@ -1261,7 +1269,7 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   singback: { domain: 'voice', skill: 'singing', sub: 'match', title: { en: 'Sing It Back', he: 'שרים בחזרה' }, needsMic: true, minDiff: 720, maxDiff: 1150 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
-  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote'],
+  pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside'],
   time: ['highway'],
   memory: ['melodypuzzle', 'nametune'],
   voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],

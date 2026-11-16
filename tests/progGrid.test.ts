@@ -252,10 +252,10 @@ describe('instrument playback ladders: every new level in all 12 keys', () => {
     for (const n of [2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]) expect(new Set(levelDrills(level('b-ear', n), 'fifths-up').map((d) => pcOf(d.spec.key))).size, `b-ear-${n}`).toBe(12);
     expect(new Set(levelDrills(level('b-ear', 5), 'fifths-up').map((d) => pcOf(d.spec.key))).size).toBeLessThan(12);
   });
-  it('updated counts: k-ear 16 levels, g-ear 13, b-ear 23', () => {
+  it('updated counts: k-ear 16 levels, g-ear 13, b-ear 24 (+ borrowed chords by ear)', () => {
     expect(fam('k-ear').levels).toHaveLength(16);
     expect(fam('g-ear').levels).toHaveLength(13);
-    expect(fam('b-ear').levels).toHaveLength(23);
+    expect(fam('b-ear').levels).toHaveLength(24);
   });
   it('the keys play back the progression with the root in the left hand (shells, rootless)', () => {
     const d = generate({ family: 'k-ear', kind: 'prog-iivi', key: 3, hands: 'RL', tempo: 72 });

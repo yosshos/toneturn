@@ -125,7 +125,7 @@ describe('guitar technique badges', () => {
       // by level number: levels hidden until verified (src/engine/verifiedContent.ts) leave gaps and have no badge
       const top = Math.max(...f.levels.map((l) => l.level));
       expect(familyLevelCount(f.id), f.id).toBeGreaterThanOrEqual(top);
-      expect(top).toBeLessThanOrEqual(f.id === 'g-scales' ? 15 : 13); // AUDIT-7 #7: g-scales 13–15
+      expect(top).toBeLessThanOrEqual(f.id === 'g-scales' || f.id === 'g-color' ? 15 : 13); // AUDIT-7 #7: g-scales 13–15; HARMONY-REHARM: g-color 13–15 (open-string pedal)
       for (let lv = 1; lv <= top; lv++) {
         const b = BADGE_BY_ID[`tech:${f.id}:${lv}`];
         if (!f.levels.some((l) => l.level === lv)) {

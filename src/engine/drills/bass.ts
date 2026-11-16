@@ -2651,6 +2651,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       // Progressions by ear (progEar.ts), all 12 keys: walk the changes heard (rhythm changes, a minor blues), then a whole AABA.
       L('b-ear', 22, 'Rhythm changes and a minor blues by ear', 'ריתם צ׳יינג׳ס ובלוז מינורי בשמיעה', [EA('walk-ear', { perBeat: 0.5 }), EA('walk-ear', { perBeat: 0.5, option: 1 })], all12([5, 10, 0, 7]), [80, 140], 'halves'),
       L('b-ear', 23, 'A 32-bar AABA: hear it, play it through', 'שיר של 32 תיבות: לשמוע, לנגן עד הסוף', [EA('form-ear', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [90, 160], 'halves'),
+      // HARMONY-REHARM §4: modal interchange by ear on the bass (its own rating, path.ts KEYS_LEVEL_DIFF).
+      L('b-ear', 24, 'Borrowed chords by ear: play the roots', 'אקורדים שאולים בשמיעה: לנגן את היסודות', [EA('mixear', { perBeat: 0.25 }), EA('mixear', { perBeat: 0.25, option: 1 })], all12([0, 5, 7, 10, 3]), [70, 100], 'whole notes'),
     ]),
     fam('b-scale', 'Scales and modes', 'סולמות ומודוסים', [
       L('b-scale', 1, 'Minor and major pentatonic', 'פנטטוני מינור ומז׳ור', [SC('scale', { option: 8 }), SC('scale', { option: 9 })], K6, [70, 110], E8),

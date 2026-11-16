@@ -96,6 +96,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   guidetone: 'guidetone', call5432: 'call5432', enclosure: 'enclosure', crossword: 'crossword', holdnote: 'holdnote',
   // AUDIT-7 hole #14: the beginner game per instrument.
   staffrunner: 'staffrunner', rootcatch: 'rootcatch', strumchange: 'strumchange', rebound: 'rebound', singback: 'singback',
+  // HARMONY-REHARM still-open games.
+  thirdjump: 'thirdjump', darkside: 'darkside',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')
