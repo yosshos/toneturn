@@ -54,6 +54,8 @@ function done(s: DrillSpec, n: Notes, title: T2, goal: Partial<DrillGoal>, extra
     keySig: SIG[mod(s.key + (s.minor ? 3 : 0), 12)],
     goal: { evenness: false, hands: true, ...goal },
     startBpm: s.tempo ?? 60,
+    // Minor keys: the raised 7th (harmonic / melodic minor) is written as a sharp — G♯ in A minor, not A♭.
+    ...(s.minor ? { sharps: [mod(s.key + 11, 12)] } : {}),
     ...extra,
   };
 }

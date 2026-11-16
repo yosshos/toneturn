@@ -171,7 +171,7 @@ export const PD_PIECES: PdPiece[] = [
   },
   {
     id: 'la-candeur',
-    title: { en: 'La Candeur (Sincerity)', he: 'כנות (La Candeur)' },
+    title: { en: 'La Candeur (Sincerity)', he: 'כנות' },
     composer: { en: 'Friedrich Burgmüller', he: 'פרידריך בורגמילר' },
     born: 1806,
     died: 1874,
