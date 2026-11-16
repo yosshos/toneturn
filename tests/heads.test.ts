@@ -19,7 +19,9 @@ import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
 const pc = (n: number) => ((n % 12) + 12) % 12;
 /** The owner's list (STANDARDS_LEGAL.md §2.1, PD worldwide): the only PD titles a head may carry. */
-const PD_ALLOWED = ['Back Home Again in Indiana', 'Avalon', 'Rose Room', 'My Blue Heaven', 'Love Me or Leave Me', 'Mean to Me', "I'll Get By", 'If I Could Be with You'];
+const PD_ALLOWED = ['Back Home Again in Indiana', 'Avalon', 'Rose Room', 'My Blue Heaven', 'Love Me or Leave Me', 'Mean to Me', "I'll Get By", 'If I Could Be with You',
+  // 19th-century songs checked note for note against Mutopia "Public Domain" LilyPond files (AUDIT-DEPTH-3 §3, 2026-11-16)
+  'Hard Times Come Again No More', "There's Music in the Air"];
 const NOT_ALLOWED = /rhythm|body and soul|honeysuckle|misbehavin|st\.? louis|georgia|what is this thing/i;
 const FAMS = ['k-harm', 'k-tune'];
 const GFAMS = ['g-cmel', 'g-tune', 'b-tune'];

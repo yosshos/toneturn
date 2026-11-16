@@ -193,7 +193,7 @@ describe('the whole tune (C8)', () => {
         expect(d.beats).toBe(p.spans[4].to);
       }
   });
-  it('the head is k-tune’s melody + shells, the same notes in the head and the head out', () => {
+  it('the head is k-tune’s melody + shells; the head out is the melody over a reharm (a different harmonisation)', () => {
     for (const tune of [0, 1]) {
       const k = 7;
       const p = tunePlan(tune, k);
@@ -201,10 +201,18 @@ describe('the whole tune (C8)', () => {
       const head = d.notes.filter((n) => n.beat >= p.spans[1].from && n.beat < p.spans[1].to).map((n) => `${n.pitch}@${(n.beat - p.spans[1].from).toFixed(3)}`);
       const out = d.notes.filter((n) => n.beat >= p.spans[3].from && n.beat < p.spans[3].to).map((n) => `${n.pitch}@${(n.beat - p.spans[3].from).toFixed(3)}`);
       expect(head.length).toBeGreaterThan(20);
-      expect(out).toEqual(head);
+      expect(out).not.toEqual(head);
+      // the melody is the same (the top note of each onset), the chart under it changed
+      const tops = (ns: typeof d.notes, b0: number, b1: number) => [...new Set(ns.filter((n) => n.beat >= b0 && n.beat < b1 && n.hand === 'R').map((n) => (n.beat - b0).toFixed(3)))].map((bt) => Math.max(...ns.filter((n) => n.hand === 'R' && (n.beat - b0).toFixed(3) === bt).map((n) => n.pitch)));
+      expect(tops(d.notes, p.spans[3].from, p.spans[3].to)).toEqual(tops(d.notes, p.spans[1].from, p.spans[1].to));
+      const outChart = d.chart!.slice(4 + p.hi.bars.length * 2, 4 + p.hi.bars.length * 3);
+      expect(outChart).not.toEqual(d.chart!.slice(4, 4 + p.hi.bars.length));
       const alone = sect(tune, 2, k);
       expect(alone.notes.map((n) => `${n.pitch}@${n.beat.toFixed(3)}`)).toEqual(head);
       expect(hasRubato(alone)).toBe(true);
+      const outAlone = sect(tune, 5, k);
+      expect(outAlone.notes.map((n) => `${n.pitch}@${n.beat.toFixed(3)}`)).toEqual(out);
+      expect(hasRubato(outAlone)).toBe(true);
     }
   });
   it('the intro comps the tune’s last four bars; the ending is Basie in major, the iiø–V tag in minor', () => {
@@ -332,5 +340,28 @@ describe('wiring (everything connects)', () => {
         expect(q.stimulus.length).toBeGreaterThan(0);
         for (const c of q.choices) expect(HE.test(q.names[c].he) || /[♭I]/.test(q.names[c].he)).toBe(true);
       }
+  });
+});
+
+describe('the head out is a different harmonisation (guitar, bass)', () => {
+  const lvOf = (fam: string, n: number) => guitarCatalog().find((f) => f.id === fam)!.levels[n - 1];
+  it('guitar: the head in is bass + melody, the head out drop 2 on the reharm; bass: head in two, head out walking the reharm', () => {
+    for (const fam of ['g-gig', 'b-gig']) {
+      for (const [lvN, tune] of [[5, 0], [7, 1]] as const) {
+        const ds = levelDrills(lvOf(fam, lvN), 'fifths-up');
+        const sec = (n: number) => ds.find((d) => (d.spec.option ?? 0) % 8 === n)!;
+        const head = sec(2);
+        const out = sec(5);
+        expect(out, `${fam} ${tune}`).toBeDefined();
+        expect(out.chart).not.toEqual(head.chart);
+        if (fam === 'g-gig') {
+          const size = (d: Drill) => Math.max(...[...new Set(d.notes.map((n) => n.beat))].map((b) => d.notes.filter((n) => n.beat === b).length));
+          expect(size(out)).toBeGreaterThanOrEqual(4);
+          expect(size(head)).toBeLessThanOrEqual(2);
+        } else {
+          expect(out.notes.length).toBeGreaterThan(head.notes.length * 1.6);
+        }
+      }
+    }
   });
 });
