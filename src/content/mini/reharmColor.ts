@@ -734,7 +734,7 @@ export const LESSONS: MiniLesson[] = [
   },
 ];
 
-const RH_LESSON: Record<string, string> = { 'rh-mi': 'modal-mix', 'rh-pedalpt': 'pedal-point', 'rh-planemel': 'planing-melody', 'rh-approach': 'approach-slip', 'rh-slip': 'approach-slip', 'rh-sus': 'modern-colours', 'rh-modern': 'modern-colours', 'rh-maj7s5': 'modern-colours' };
+const RH_LESSON: Record<string, string> = { 'rh-mi': 'modal-mix', 'rh-pedalpt': 'pedal-point', 'rh-planemel': 'planing-melody', 'rh-approach': 'approach-slip', 'rh-slip': 'approach-slip', 'rh-sus': 'modern-colours', 'rh-modern': 'modern-colours', 'rh-maj7s5': 'modern-colours', 'rh-dev': 'reharm-tune' };
 const G_LESSON = (kind: string): string => (kind.startsWith('gop') ? 'pedal-point' : kind.startsWith('gmi') ? 'modal-mix' : kind.startsWith('gmd') ? 'chromatic-mediants' : kind === 'gpl-melody' ? 'planing-melody' : kind === 'gss-slip' ? 'approach-slip' : 'modern-colours');
 const B_LESSON = (kind: string): string =>
   ['bc-pedal', 'bc-dompedal', 'bc-push'].includes(kind) ? 'pedal-point' : ['bc-ctroots', 'bc-ctwalk'].includes(kind) ? 'ct-one-note' : kind === 'bc-thirds' ? 'chromatic-mediants' : kind === 'bc-counter' ? 'bass-counter-line' : 'modal-mix';

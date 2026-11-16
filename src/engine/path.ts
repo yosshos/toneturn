@@ -491,6 +491,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   'k-tune-10': 1700,
   // AUDIT-DEPTH-3 C2: embellish the head — approach 1350, enclose 1420, pivots 1500, free 1600 (the doc's 1350–1650).
   'k-tune-11': 1350, 'k-tune-12': 1420, 'k-tune-13': 1500, 'k-tune-14': 1600,
+  // C3 step 5 / #2 L6: a solo chorus over the reharm (after the reharm levels).
+  'k-tune-15': 1760,
   // the same on the bass (the melody an octave or two down): inside the heads' band, after the walking levels' start.
   'b-tune-8': 1400, 'b-tune-9': 1470, 'b-tune-10': 1550, 'b-tune-11': 1640,
   // HARMONY-REHARM still open: borrowed chords by ear on the bass, in the modal-mix band (ear 1100–1700).

@@ -1,7 +1,8 @@
 // The reharm studio (docs/AUDIT-DEPTH-3.md C3): on the tune families' page (k-tune, g-tune, b-tune). Pick a head and a
 // key, then a device per bar from the ones that fit there (tritone sub, extra ii–V, backdoor, passing dim, line cliché,
 // Coltrane). Each change is checked against the melody at once (one short line per clash). Then play it: comp it
-// (piano / guitar), walk it (bass), or the melody over the new chords — an ordinary drill (kind tn-own~<plan>), so it
+// (piano / guitar), walk it (bass), the melody over the new chords, or a solo chorus over them (tn-ownsolo~<plan>,
+// graded by rule cards) — an ordinary drill (kind tn-own~<plan>), so it
 // is measured and counts like any other take. Eight bars a page on the shared chord chart (COURSE-FEEDBACK-UI §4.7):
 // tap a bar for its devices in a sheet. One phone screen.
 
@@ -46,8 +47,8 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
   const L = (en: string, he: string) => (lang === 'he' ? he : en);
   const pages = Math.ceil(hi.bars.length / PER);
   const inst = family === 'g-tune' ? 'guitar' : family === 'b-tune' ? 'bass' : 'piano';
-  const play = (mel: boolean) => {
-    const kind = `${mel ? 'tn-ownmel' : 'tn-own'}~${planCode(plan)}`;
+  const play = (mode: boolean | 'solo') => {
+    const kind = `${mode === 'solo' ? 'tn-ownsolo' : mode ? 'tn-ownmel' : 'tn-own'}~${planCode(plan)}`;
     const d = generate({ family, kind, key, hands: inst === 'piano' ? 'RL' : 'R', option: idx * 16, ...(inst === 'piano' ? {} : { instrument: inst }), ...(inst === 'bass' ? { perBeat: 1 } : {}), tempo: 60 });
     onRun([d]);
   };
@@ -169,6 +170,11 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
         {inst !== 'bass' && (
           <button className="btn ghost" disabled={!r.changed.length} onClick={() => play(true)} data-rh-play="melody">
             {L('Melody over it', 'המנגינה מעליו')}
+          </button>
+        )}
+        {inst !== 'bass' && (
+          <button className="btn ghost" disabled={!r.changed.length} onClick={() => play('solo')} data-rh-play="solo">
+            {L('Solo over it', 'סולו עליו')}
           </button>
         )}
       </div>

@@ -429,7 +429,7 @@ function genMediant(s: DrillSpec): Drill {
 
 // ───────────────────────────── k-reharm 11–22: colour reharm devices ─────────────────────────────
 
-export const COLOR_RH_KINDS = new Set(['rh-mi', 'rh-pedalpt', 'rh-planemel', 'rh-approach', 'rh-slip', 'rh-sus', 'rh-modern', 'rh-maj7s5']);
+export const COLOR_RH_KINDS = new Set(['rh-mi', 'rh-pedalpt', 'rh-planemel', 'rh-approach', 'rh-slip', 'rh-sus', 'rh-modern', 'rh-maj7s5', 'rh-dev']);
 type Bar = [number, CtQ, number] | [number, CtQ, number, number];
 const progCC = (key: number, bars: Bar[], lh: CC['lh'] = 'shell'): CC[] => bars.map(([d, q, beats, bass]) => ({ root: mod12(key + d), q, beats, name: nm(key, key + d, q) + (bass !== undefined ? `/${rootName(key + bass, flatsOf(key))}` : ''), lh, ...(bass !== undefined ? { bass: mod12(key + bass) } : {}) }));
 /** The modal-interchange progressions (C.3), by option. */
@@ -451,6 +451,47 @@ export const MI_PROGS: { bars: Bar[]; en: string; he: string; minor?: boolean; t
   // 7: borrowing in minor: the Dorian IV7, ii m7, and the Picardy third
   { bars: [[0, 'm6', 4], [5, '7', 4], [0, 'm6', 4], [5, '7', 4], [2, 'm7', 2], [7, '7', 2], [0, '6', 4]], en: 'borrowing in minor: im6 – IV7 (Dorian), ii m7 – V7 – I6 (Picardy)', he: 'השאלה במינור: im6 – IV7 (דורי), ii m7 – V7 – I6 (פיקרדי)', minor: true },
 ];
+
+/**
+ * AUDIT-DEPTH-3 #2 L1–L2: each reharm device of the head drills (reharm.ts) performed under a melody, in a ii–V–I, all
+ * 12 keys. Op = device × melody: even ops hold one melody note through every chord (a note every chord takes: a
+ * chord tone or a natural tension — the reharm studio's rule), odd ops put a guide-tone line on top (the 3rd or 7th of
+ * each chord, the nearest to the note before). Devices: the tritone sub, the backdoor (iv–♭VII7), a passing diminished
+ * (I – ♯I°7 – ii – V), an added ii–V (I – iii–VI7 – ii–V), and a brother of the V (E7 for G7 → C: one of the four
+ * dominants a minor 3rd apart, docs/BARRY-HARRIS-THEORY.md §2).
+ */
+export const RH_DEVICES: { id: string; bars: Bar[]; held: number; en: string; he: string }[] = [
+  { id: 'tritone', bars: [[2, 'm7', 4], [1, '7', 4], [0, 'maj7', 8]], held: 11, en: 'the tritone sub: ii – ♭II7 – I', he: 'תחליף הטריטון: ii – ♭II7 – I' },
+  { id: 'backdoor', bars: [[5, 'm7', 4], [10, '7', 4], [0, 'maj7', 8]], held: 7, en: 'the backdoor: iv m7 – ♭VII7 – I', he: 'הדלת האחורית: iv m7 – ♭VII7 – I' },
+  { id: 'pdim', bars: [[0, 'maj7', 4], [1, 'dim7', 4], [2, 'm7', 4], [7, '7', 4], [0, 'maj7', 4]], held: 4, en: 'a passing diminished: I – ♯I°7 – ii – V – I', he: 'מוקטן עובר: I – ♯I°7 – ii – V – I' },
+  { id: 'iiV', bars: [[0, 'maj7', 4], [4, 'm7', 2], [9, '7', 2], [2, 'm7', 2], [7, '7', 2], [0, 'maj7', 4]], held: 4, en: 'an added ii–V: I – iii VI7 – ii V – I', he: 'ii–V נוסף: I – iii VI7 – ii V – I' },
+  { id: 'brother', bars: [[2, 'm7', 4], [4, '7', 4], [0, 'maj7', 8]], held: 11, en: 'a brother of the V: ii – III7 – I', he: 'אח של ה־V: ii – III7 – I' },
+];
+/** A melody note is fine over a chord: a chord tone or a natural tension (9, 11 on minor, 13; ♭9 / ♯9 / ♭13 on a dominant). */
+export function heldFits(note: number, root: number, q: CtQ): boolean {
+  const r = mod12(note - root);
+  if (CT_Q[q].ints.map(mod12).includes(r)) return true;
+  if (q === 'dim7') return [2, 5, 8, 11].includes(r);
+  if (q === '7') return [1, 2, 3, 8, 9].includes(r);
+  if (q === 'm7') return [2, 5, 9].includes(r);
+  if (q === 'maj7') return [2, 9].includes(r);
+  return false;
+}
+/** The guide-tone line on top of a progression: per chord its 3rd or 7th (6th), each the nearest to the one before. */
+export function guideTops(key: number, bars: Bar[], start = 72): number[] {
+  const out: number[] = [];
+  let prev = start;
+  for (const [d, q] of bars) {
+    const iv = CT_Q[q].ints;
+    const g = [iv[1], iv[3] ?? iv[2]].map((x) => mod12(key + d + x));
+    let best = prev;
+    let bd = 99;
+    for (let p = 64; p <= 79; p++) if (g.includes(mod12(p)) && Math.abs(p - prev) < bd) { bd = Math.abs(p - prev); best = p; }
+    out.push(best);
+    prev = best;
+  }
+  return out;
+}
 
 function genColorReharm(s: DrillSpec): Drill {
   const key = mod12(s.key);
@@ -541,6 +582,14 @@ function genColorReharm(s: DrillSpec): Drill {
       const bars: Bar[] = op === 1 ? [[0, 'maj7', 4], [9, 'maj7', 4], [8, 'maj7', 4], [3, 'maj7', 4], [0, 'maj7', 4]] : [[0, '7sus4', 4], [8, '7sus4', 4], [10, '7sus4', 4], [7, '7sus4', 4], [0, '7sus4', 4]];
       const ccs = progCC(key, bars, 'root');
       return comp(s, ccs, { title: op === 1 ? t(`A non-functional maj7 chain: ${ccs.map((c) => c.name).join(' – ')}`, `שרשרת maj7 לא פונקציונלית: ${ccs.map((c) => c.name).join(' – ')}`) : t(`A sus sequence on a moving bass: ${ccs.map((c) => c.name).join(' – ')}`, `רצף סאס על בס נע: ${ccs.map((c) => c.name).join(' – ')}`), keySig: SIG[key] });
+    }
+    case 'rh-dev': {
+      const dv = RH_DEVICES[Math.floor(op / 2) % RH_DEVICES.length];
+      const guide = op % 2 === 1;
+      const tops = guide ? guideTops(key, dv.bars) : dv.bars.map(() => pin(key + dv.held, 72));
+      const ccs = progCC(key, dv.bars, 'root').map((c, i) => ({ ...c, top: tops[i] }));
+      const what = guide ? t('the guide-tone line on top', 'קו הצלילים המנחים למעלה') : t(`${rootName(key + dv.held, fl)} held on top`, `${rootName(key + dv.held, fl)} מוחזק למעלה`);
+      return comp(s, ccs, { title: t(`${dv.en[0].toUpperCase()}${dv.en.slice(1)} · ${what.en} · ${kn}`, `${dv.he} · ${what.he} · ${kn}`), keySig: SIG[key] });
     }
     case 'rh-maj7s5': {
       // maj7♯5 as a tonic colour (C.9 L3): Cmaj7 – Cmaj7♯5 (E/C: E G♯ B over C) – C6 – Cmaj7♯5; op 1 ii–V into it.
@@ -700,6 +749,9 @@ export const RH_ROWS: Row[] = [
   { kind: 'rh-mi', ops: [7], rating: 1700, en: 'Borrowing in minor: Dorian IV7, the Picardy third', he: 'השאלה במינור: IV7 דורי, הטרצה הפיקרדית' },
   { kind: 'rh-slip', ops: [0], rating: 1710, en: 'Side-slip comping on a dorian vamp', he: 'ליווי בהחלקה הצידה על וואמפ דורי', tempo: [80, 140] },
   { kind: 'rh-maj7s5', ops: [0, 1], rating: 1750, en: 'maj7♯5: the lydian-augmented tonic colour', he: 'maj7♯5: צבע הטוניקה הלידי־מוגדל' },
+  // AUDIT-DEPTH-3 #2 L1–L2: each device under one held melody note, then under a moving melody (the guide-tone line).
+  { kind: 'rh-dev', ops: [0, 2, 4, 6, 8], rating: 1350, en: 'Each reharm device under one held melody note', he: 'כל תחבולת הרמון מתחת לצליל מנגינה מוחזק' },
+  { kind: 'rh-dev', ops: [1, 3, 5, 7, 9], rating: 1420, en: 'Each device in a ii–V–I, the melody on top', he: 'כל תחבולה ב־ii–V–I, המנגינה למעלה' },
 ];
 /** The first new k-reharm level number. */
 export const RH_FIRST = 11;

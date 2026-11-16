@@ -33,6 +33,8 @@ import { HEADS, servedHeads, type Head } from '../../content/heads';
 import { builtStyles, chordAt, chordKind, chordUnder, harmEvents, headIn, HARM_STYLES, notesIn, phraseCount, sixDimUnder, type HarmStyle, type HeadIn, type HNote } from '../heads';
 import { applyPlan, autoPlan, parsePlan, type Device } from '../reharm';
 import { embellish, keyScale, type EmbKind } from '../embellish';
+import { VQ_DEF, nearestPc, type VChord, type VQ } from '../bebopVocab';
+import { modelLine } from './soloDrills';
 import { sharedHands, splitShared } from '../soloPiano';
 
 type T2 = { en: string; he: string };
@@ -69,10 +71,12 @@ export const RH_SETS: Record<string, Device[]> = {
   // HARMONY-REHARM §4: the borrowed chords (modal interchange) — the minor plagal ending, iv(m6), ♭VI, iiø7, ♭VII7.
   'tn-rh4': ['minorPlagal', 'minorIV', 'iiHalfDim', 'bVI', 'bVII'],
   'tn-rhmel': ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche'],
+  // AUDIT-DEPTH-3 C3 step 5: a chorus of improvisation over the same reharm.
+  'tn-rhsolo': ['tritone', 'iiV', 'backdoor', 'pdim', 'cliche'],
 };
 /** A head's chart for a kind: as written, a preset reharm (autoPlan), or the player's own plan (`~<code>` in the kind). */
 export function chartFor(hi: HeadIn, kind: string): { text: string; bars: string[]; reharm: boolean } {
-  const own = /^tn-own(?:mel)?~(.*)$/.exec(kind);
+  const own = /^tn-own(?:mel|solo)?~(.*)$/.exec(kind);
   if (own) {
     const r = applyPlan(hi.text, parsePlan(own[1]), hi.tonic, hi.notes);
     return { text: r.text, bars: r.bars, reharm: true };
@@ -351,6 +355,8 @@ const TUNE_WHAT: Record<string, T2> = {
   'tn-rhmel': t('the melody over the reharm', 'המנגינה מעל ההרמון החדש'),
   'tn-own': t('my reharm', 'ההרמון שלי'),
   'tn-ownmel': t('the melody over my reharm', 'המנגינה מעל ההרמון שלי'),
+  'tn-rhsolo': t('a solo chorus over the reharm', 'סבב סולו על ההרמון החדש'),
+  'tn-ownsolo': t('a solo chorus over my reharm', 'סבב סולו על ההרמון שלי'),
   'tn-two': t('two-feel', 'בשתיים'),
   'tn-walk': t('walking', 'ווקינג'),
   'tn-appr': t('walking with approaches', 'ווקינג עם צלילי גישה'),
@@ -841,16 +847,107 @@ function genEmbBass(s: DrillSpec, tu: Tuning): Drill {
   return { ...d, title: titleOf(hi, whatOf(s.kind)), goal: { ...d.goal, ...(fr ? { free: fr } : {}) }, tonic: hi.tonic, paged: true };
 }
 
+// ───────────────────────────── a solo chorus over the reharm (C3 step 5) ─────────────────────────────
+
+const SOLO_CARDS = ['target-ct', 'inside'];
+const isSoloKind = (kind: string): boolean => /^tn-(rh|own)solo(~|$)/.test(kind);
+/** A chart chord as a bebop-vocabulary chord (scales, model lines). */
+function vchordOf(c: ChartChordEv): VChord {
+  const has = (x: number) => c.iv.some((i) => pc(i) === x);
+  const q: VQ = has(3) && has(6) ? (has(10) ? 'hd7' : 'dim7') : has(3) ? (has(10) ? 'm7' : 'm6') : has(10) ? (has(13) || has(1) ? '7b9' : '7') : has(11) ? 'maj7' : '6';
+  return { r: pc(c.root), q, beats: c.beats };
+}
+/**
+ * One chorus improvised over the reharmonised head (the preset reharm, or the player's own plan): the free goal over
+ * the whole chorus (each chord's scale), the rule cards a chord tone on each change + inside the changes (analyze.ts
+ * goal.improv), a written landing on the first and the last chord, the band and drums. The model is a bebop line
+ * through the new changes (it keeps both cards; tests check it).
+ */
+export function soloPlan(hi: HeadIn, kind: string, lo: number, hiP: number) {
+  const { text, bars } = chartFor(hi, kind);
+  const chords = parseChart(text).chords;
+  const vcs = chords.map(vchordOf);
+  const total = bars.length * 4;
+  const scale = chords.map((c, i) => ({ from: c.bar * 4 + c.at, to: c.bar * 4 + c.at + c.beats, pcs: [...new Set([...VQ_DEF[vcs[i].q].sc, ...VQ_DEF[vcs[i].q].ct].map((x) => pc(vcs[i].r + x)))] }));
+  const spans = chords.map((c) => ({ at: c.bar * 4 + c.at, beats: c.beats, root: pc(c.root), iv: c.iv }));
+  const model = modelLine('bebop', vcs, lo, hiP, `solo:${hi.head.id}:${hi.tonic.key}:${kind}`).map((n) => ({ beat: n.beat, dur: n.dur, pitch: n.p }));
+  const land = (c: ChartChordEv, first: boolean) => {
+    const ct = [...new Set(VQ_DEF[vchordOf(c).q].ct.map((x) => pc(c.root + x)))].sort((a, b) => a - b);
+    const beat = c.bar * 4 + c.at;
+    const m = model.find((n) => Math.abs(n.beat - beat) < 1e-6);
+    const pitch = !first && m && ct.includes(pc(m.pitch)) ? m.pitch : nearestPc(c.root, Math.round((lo + hiP) / 2), lo, hiP);
+    return { beat, dur: first ? 1 : c.beats, pitch, land: ct };
+  };
+  return {
+    bars,
+    total,
+    landings: [land(chords[0], true), land(chords[chords.length - 1], false)],
+    goal: { free: { windows: [[0, total]] as [number, number][], scale, minPerBar: 2, model }, improv: { cards: SOLO_CARDS, spans } },
+  };
+}
+function genSoloPiano(s: DrillSpec): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'piano');
+  const sp = soloPlan(hi, s.kind, 60, 86);
+  const notes: ExpNote[] = sp.landings.map((l) => ({ pitch: l.pitch, beat: l.beat, dur: l.dur, hand: 'R' as Hand, chordTone: true, land: l.land }));
+  return {
+    spec: { ...s, hands: 'R', swing: true },
+    itemId: itemIdOf(s),
+    title: titleOf(hi, whatOf(s.kind)),
+    notes,
+    beats: sp.total,
+    meter: 4,
+    keySig: sigOf(hi.tonic),
+    goal: { evenness: false, hands: false, ...sp.goal },
+    startBpm: Math.round(s.tempo ?? (head.feel === 'ballad' ? 60 : 96)),
+    chart: chartOf(sp.bars),
+    tonic: hi.tonic,
+    paged: true,
+    show: 'none',
+    band: { style: 'swing', bass: true },
+    drums: { groove: head.feel === 'ballad' ? 'ballad-brush' : 'swing' },
+  };
+}
+function genSoloGuitar(s: DrillSpec, tu: Tuning): Drill {
+  const { head } = decodeHead(s.option);
+  const hi = headIn(head, s.key, 'guitar');
+  const sp = soloPlan(hi, s.kind, 55, 79);
+  let near = 5;
+  const evs: Ev[] = sp.landings.map((l) => {
+    const p = melodyPlace(tu, l.pitch, near);
+    if (p.f > 0) near = p.f;
+    return { beat: l.beat, dur: l.dur, notes: [{ ...p, stroke: 'D' as const, ct: true }] };
+  });
+  const d = finish({ ...s, swing: true }, tu, evs, { title: titleOf(hi, whatOf(s.kind)), bpm: head.feel === 'ballad' ? 60 : 96, evenness: false, keySig: sigOf(hi.tonic) });
+  return {
+    ...d,
+    notes: d.notes.map((n) => {
+      const l = sp.landings.find((x) => Math.abs(x.beat - n.beat) < 1e-6);
+      return l ? { ...n, land: l.land } : n;
+    }),
+    beats: Math.max(d.beats, sp.total),
+    goal: { ...d.goal, evenness: false, hands: false, ...sp.goal },
+    chart: chartOf(sp.bars),
+    tonic: hi.tonic,
+    paged: true,
+    show: 'none',
+    band: { style: 'swing', bass: true },
+    drums: { groove: head.feel === 'ballad' ? 'ballad-brush' : 'swing' },
+  };
+}
+
 // ───────────────────────────── dispatch ─────────────────────────────
 
 /** Piano: k-harm and k-tune. */
 export function genHeadPiano(s: DrillSpec): Drill {
   if (EMB_KIND[s.kind]) return genEmbPiano(s);
+  if (isSoloKind(s.kind)) return genSoloPiano(s);
   return s.family === 'k-harm' ? genHarm(s) : genTunePiano(s);
 }
 /** Guitar: g-cmel and g-tune. */
 export function generateGuitarHead(s: DrillSpec, tu: Tuning): Drill {
   if (EMB_KIND[s.kind]) return genEmbGuitar(s, tu);
+  if (isSoloKind(s.kind)) return genSoloGuitar(s, tu);
   return s.family === 'g-cmel' ? genChordMelody(s, tu) : genTuneGuitar(s, tu);
 }
 /** Bass: b-tune. */
@@ -952,6 +1049,8 @@ const TUNE_PIANO: [string, string, string][] = [
   ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה'],
   ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים'],
   ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה'],
+  // AUDIT-DEPTH-3 C3 step 5 / #2 L6: the whole form reharmonised, then a chorus improvised over it.
+  ['tn-rhsolo', 'Solo over the reharm: a chorus with the band', 'סולו על ההרמון החדש: סבב עם הלהקה'],
 ];
 
 /** k-tune: comp a head (piano, path ~1330 → 1780). */
@@ -1008,6 +1107,7 @@ const TUNE_GUITAR: [string, string, string, number][] = [
   ['em-encl', 'Embellish: enclose each downbeat', 'קישוט: כיתור לכל פעמה ראשונה', 9],
   ['em-pivot', 'Embellish: a pivot arpeggio on the long notes', 'קישוט: ארפג׳יו פיבוט על הצלילים הארוכים', 10],
   ['em-free', 'Embellish freely: the melody lands on its beats', 'קישוט חופשי: המנגינה נוחתת על הפעמות שלה', 10],
+  ['tn-rhsolo', 'Solo over the reharm: a chorus with the band', 'סולו על ההרמון החדש: סבב עם הלהקה', 10],
 ];
 export function guitarTuneFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-tune';
