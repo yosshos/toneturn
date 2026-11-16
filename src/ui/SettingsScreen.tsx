@@ -1,5 +1,6 @@
 import { APP_VERSION } from '../version';
 import { InstrumentArt } from './InstrumentArt';
+import { RecordingSettings } from './Recordings';
 import { Glyph, glyphForEmoji } from './Glyph';
 import { Icon } from './icons';
 import { REGISTRATIONS } from '../audio/organ';
@@ -390,6 +391,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
 
         <Group id="privacy" icon={<SetIcon k="privacy" />} title={G.privacy.title[lang]} sub={G.privacy.sub[lang]}>
           <PrivacySettings lang={lang} s={s} onChange={onChange} />
+          <RecordingSettings lang={lang} s={s} onChange={onChange} />
         </Group>
 
         <Group id="language" icon={<SetIcon k="language" />} title={G.language.title[lang]} sub={G.language.sub[lang]}>

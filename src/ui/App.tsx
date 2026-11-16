@@ -201,13 +201,18 @@ import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
 import { PracticeDiaryScreen, DiaryEntryCard, plateausOf } from './PracticeDiary';
+import { ConsentBody, RecordingsEntryCard, RecordingsScreen } from './Recordings';
+import { runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource } from '../storage/recordings';
+import { listTakes as listOldVocalTakes } from '../storage/takes';
+import { setRecKindHint, setRecRoute } from './recKeep';
+import { measuredMsOn } from '../engine/practiceTime';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
 
-type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'diary' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside';
+type Route = 'intake' | 'studio' | 'home' | 'path' | 'arcade' | 'lesson' | 'settings' | 'diagnostics' | 'games' | 'game' | 'friends' | 'skills' | 'daily' | 'duel' | 'duelplay' | 'online' | 'drone' | 'classes' | 'ghost' | 'truefalse' | 'vocal' | 'achievements' | 'singalong' | 'perform' | 'learned' | 'tuner' | 'metronome' | 'songs' | 'repertoire' | 'drills' | 'workout' | 'workoutrun' | 'peakhunter' | 'rush-chord' | 'rush-note' | 'rush-fretboard' | 'rush-interval' | 'rush-keysig' | 'rush-progression' | 'rush-voicing' | 'rush-scale' | 'rush-standard' | 'reharm' | 'transcribe' | 'bhtime' | 'riffecho' | 'polylock' | 'gameboard' | 'flight' | 'pitchmemory' | 'nametune' | 'tuneup' | 'highway' | 'melodypuzzle' | 'charts' | 'slowdown' | 'pieces' | 'mixer' | 'insights' | 'groove' | 'welcome' | 'coursestart' | 'puzzle' | 'improv' | 'exams' | 'plans' | 'admin' | 'land' | 'groove-echo' | 'odd-echo' | 'time-lock' | 'ghost-control' | 'rudiment-rush' | 'groove-off' | 'licks' | 'transcribe-coach' | 'chordfinder' | 'mysong' | 'chordbuilder' | 'playback' | 'voicingsprint' | 'changerace' | 'walkchanges' | 'rootsear' | 'harmonyhold' | 'singinterval' | 'kitread' | 'namegroove' | 'depth' | 'guidetone' | 'call5432' | 'enclosure' | 'crossword' | 'holdnote' | 'bordercontrol' | 'whichbrother' | 'runcatcher' | 'compcaller' | 'elevator' | 'diary' | 'staffrunner' | 'rootcatch' | 'strumchange' | 'rebound' | 'singback' | 'thirdjump' | 'darkside' | 'recordings';
 /** Invite links: #/online/CODE */
 const onlineCodeFromHash = () => (/^#\/?online\/(\w+)/.exec(location.hash)?.[1] ?? '');
 const PLAY_HASH = 'play';
@@ -218,8 +223,8 @@ const enterPlay = () => {
   if (location.hash.replace(/^#\/?/, '') !== PLAY_HASH) location.hash = `/${PLAY_HASH}`;
 };
 const routeFromHash = (): Route => {
-  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings');
-  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
+  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings');
+  return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside', 'recordings'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
 /** The level a generated modes lesson was made at (from its first question's pool size). */
@@ -481,6 +486,25 @@ export function App() {
   }, [s.uiLang, s.reducedMotion]);
   // AUDIT-5 #1: the clock runs on practice screens only, and books time to the active course.
   useEffect(() => setPracticeContext(route, settings?.activeCourse), [route, settings?.activeCourse]);
+  // My recordings (SPEC-PHRASE-STUDIO §6): takes know their screen, course and session; the settings' two switches; the
+  // old vocal takes are copied in on first use; the retention policy runs once a little after start.
+  const recFrom = useRef<Route>('home');
+  const lastRoute = useRef<Route>(route);
+  const recCourse = useRef<CourseId | null>(null);
+  useEffect(() => {
+    recCourse.current = (settings?.activeCourse ?? null) as CourseId | null;
+    if (route === 'recordings' && lastRoute.current !== 'recordings') recFrom.current = lastRoute.current;
+    lastRoute.current = route;
+    setRecRoute(route, recCourse.current);
+    setRecKindHint(route === 'drills' && drillFrom.current === 'test' ? 'level-test' : null);
+  }, [route, settings?.activeCourse]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setRecordingPrefs({ keepNotes: settings?.keepTakeNotes !== false, keepAudio: settings?.keepTakes !== false }), [settings?.keepTakeNotes, settings?.keepTakes]);
+  useEffect(() => {
+    setRecordingContext(() => ({ route: lastRoute.current, course: recCourse.current, measuredMs: measuredMsOn(loadLedger(), localDay(new Date())) }));
+    setVocalMigrationSource(listOldVocalTakes);
+    const id = window.setTimeout(() => void runCleanup(), 15_000);
+    return () => window.clearTimeout(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Appearance (0.61): light / dark / high contrast, or automatic by the device. Old theme choices map to a mode.
   const appearance = appearanceOf(s.theme);
   const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false);
@@ -2347,6 +2371,7 @@ export function App() {
                 </span>
               </button>
               <DiaryEntryCard lang={s.uiLang} onOpen={() => go('diary')} />
+              <RecordingsEntryCard lang={s.uiLang} />
               <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
               <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
               <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />
@@ -2362,7 +2387,9 @@ export function App() {
             <h2 id="consent2-title">
               <MicIcon /> {t.consentTitle}
             </h2>
-            <p>{t.consentBody}</p>
+            <p>
+              <ConsentBody lang={s.uiLang} />
+            </p>
             <button
               className="btn mega"
               autoFocus
@@ -2680,6 +2707,7 @@ export function App() {
           }}
         />
       )}
+      {route === 'recordings' && <RecordingsScreen lang={s.uiLang} onBack={() => go(recFrom.current === 'recordings' ? 'home' : recFrom.current)} />}
       {route === 'diary' && (
         <PracticeDiaryScreen
           lang={s.uiLang}

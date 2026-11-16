@@ -13,8 +13,9 @@ import { sungMelodyRemarks } from '../engine/feedbackMelody';
 import { melodyRemarkText, remarkText } from '../game/content';
 import { BleedGate, CALIBRATE_SEC } from '../engine/bleed';
 import { ThenAndNow } from './Extras';
-import { keepTake } from '../storage/takes';
-import { weekId } from '../engine/adaptive';
+import { keepVocalTake } from './recKeep';
+import { STRINGS } from '../i18n/strings';
+import { RX } from '../i18n/recordingsText';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { clearSlot, loadSlot, saveSlot } from '../storage/resume';
 import { spellMidi } from '../engine/aids';
@@ -573,10 +574,13 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
       <section className="set-card">
         <h2>{t.thenNowTitle}</h2>
         <label className="toggle-row">
-          <input type="checkbox" checked={!!settings.keepTakes} onChange={(e) => onSettings({ keepTakes: e.target.checked })} />
-          <span>{t.keepTakes}</span>
+          <input type="checkbox" checked={settings.keepTakes !== false} onChange={(e) => onSettings({ keepTakes: e.target.checked })} />
+          <span>{RX.keepAudio[settings.uiLang === 'en' ? 'en' : 'he']}</span>
         </label>
-        {settings.keepTakes && <ThenAndNow t={t} refresh={v.takes.length} />}
+        <ThenAndNow t={t} refresh={v.takes.length} />
+        <a className="link" href="#/recordings" data-open-recordings="vocal">
+          {RX.allRecordings[settings.uiLang === 'en' ? 'en' : 'he']}
+        </a>
       </section>
     </main>
   );
@@ -1062,7 +1066,11 @@ function VocalSession({
     setGrade(g);
     if (!g.unclear && g.score >= 0.8) strongTakes.current[item.id] = (strongTakes.current[item.id] ?? 0) + 1;
     if (audio) setAudioUrl(URL.createObjectURL(audio));
-    if (audio && settings.keepTakes && !g.unclear && !test) void keepTake({ item: item.kind === 'range' || item.kind === 'vibrato-register' ? `${item.id}#${noteIdx}` : item.id, week: weekId(new Date()), score: g.score, at: new Date().toISOString(), blob: audio });
+    // My recordings (SPEC-PHRASE-STUDIO §6.1): every graded take keeps its sung notes, and its audio unless switched off.
+    if (got && !g.unclear && !test) {
+      const lvT = (L: 'en' | 'he') => (level === 'warmup' ? STRINGS[L].vocalWarmup : `${RX.kinds.vocal[L]} · ${levelName(level, STRINGS[L], L)}`);
+      keepVocalTake({ itemId: item.id, title: { en: lvT('en'), he: lvT('he') }, frames: got, audio, score: g.score, ...(item.bpm ? { bpm: item.bpm } : {}) });
+    }
     setPhase('result');
     piano.cue(g.unclear ? 'wrong' : g.score >= 0.6 ? 'correct' : 'wrong');
     if (!g.unclear) {

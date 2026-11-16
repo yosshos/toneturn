@@ -47,7 +47,12 @@ export class BrowserPitchCapture implements PitchCapture {
     let rec: MediaRecorder | null = null;
     if (record && typeof MediaRecorder !== 'undefined') {
       try {
-        rec = new MediaRecorder(r.stream);
+        // My recordings (SPEC-PHRASE-STUDIO §6.2): mono Opus / AAC at ~48 kbps, about 0.36 MB a minute.
+        try {
+          rec = new MediaRecorder(r.stream, { audioBitsPerSecond: 48_000 });
+        } catch {
+          rec = new MediaRecorder(r.stream);
+        }
         rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
         rec.start();
       } catch {
