@@ -183,7 +183,7 @@ export interface TradeResult {
  * turn used (three notes or more — trading is not laying out), and an idea that returns (a motif repeated,
  * sequenced or displaced across the turns, or the app's cell picked up).
  */
-export function gradeTrade(frames: SungFrame[], turns: TradeTurn[], pcsAt: (beat: number) => number[], bpm: number, appCells: PNote[][] = []): TradeResult {
+export function gradeTrade(frames: SungFrame[], turns: TradeTurn[], pcsAt: (beat: number) => number[], bpm: number, appCells: PNote[][] = [], straight = false): TradeResult {
   const beat = 60 / bpm;
   const mine = turns.filter((t) => t.who === 'you');
   const inMine = (t: number) => mine.some((x) => t >= x.from * beat - 0.1 && t < x.to * beat + 0.1);
@@ -191,11 +191,13 @@ export function gradeTrade(frames: SungFrame[], turns: TradeTurn[], pcsAt: (beat
   if (fs.filter(voiced).length < 20) return { grade: UNCLEAR, turns: mine.map(() => 0) };
   const perTurn = mine.map((x) => segmentNotes(frames.filter((f) => f.t >= x.from * beat - 0.1 && f.t < x.to * beat + 0.1), { minSec: 0.09 }).length);
   const r = improvReportBy(fs, pcsAt, bpm);
-  // Onsets against the swung-eighth grid (the downbeat, or two thirds into the beat).
+  // Onsets against the swung-eighth grid (the downbeat, or two thirds into the beat); AUDIT-7 #8: a straight feel (pop,
+  // rock) has its "and" half way.
+  const and = straight ? 0.5 : 2 / 3;
   const offs = voiceOnsets(fs).map((t) => {
     const b = t / beat;
     const f = b - Math.floor(b);
-    return Math.min(f, Math.abs(f - 2 / 3), 1 - f) * beat * 1000;
+    return Math.min(f, Math.abs(f - and), 1 - f) * beat * 1000;
   });
   const offMs = offs.length ? Math.round(mean(offs)) : 999;
   const used = perTurn.filter((n) => n >= 3).length / Math.max(1, mine.length);

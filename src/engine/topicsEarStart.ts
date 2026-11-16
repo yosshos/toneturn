@@ -80,8 +80,9 @@ const IV_DOWN = [
   { s: 12, en: 'octave', he: 'אוקטבה', say: ['octave'] },
 ];
 /** The descending ladder: the intervals of each level (semitones) and its rating. */
+// AUDIT-7 #5: the descending ladder opens at 830, after the ascending one (intervals-all 1, 780).
 export const DOWN_LADDER: { pool: number[]; difficulty: number; en: string; he: string }[] = [
-  { pool: [3, 4], difficulty: 800, en: 'Down: minor or major 3rd', he: 'יורדים: טרצה קטנה או גדולה' },
+  { pool: [3, 4], difficulty: 830, en: 'Down: minor or major 3rd', he: 'יורדים: טרצה קטנה או גדולה' },
   { pool: [5, 7], difficulty: 880, en: 'Down: 4th or 5th', he: 'יורדים: קוורטה או קווינטה' },
   { pool: [3, 4, 5, 7, 12], difficulty: 960, en: 'Down: 3rds, 4th, 5th, octave', he: 'יורדים: טרצות, קוורטה, קווינטה, אוקטבה' },
   { pool: [1, 2, 3, 4, 5, 7, 8, 9, 12], difficulty: 1060, en: 'Down: adding 2nds and 6ths', he: 'יורדים: עם סקונדות וסקסטות' },

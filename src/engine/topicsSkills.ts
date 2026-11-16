@@ -95,6 +95,9 @@ const IV = [
   { s: 12, en: 'octave', he: 'אוקטבה', say: ['P8', 'eight'] },
 ];
 
+/** AUDIT-7 #5: the ascending ladder's ratings (level 1 before intervals-down 1). */
+export const INTERVALS_ALL_DIFF = [780, 1000, 1250, 1320];
+
 TOPIC_GEN['intervals-all'] = {
   title: { en: 'Every interval by ear', he: 'כל המרווחים בשמיעה' },
   skill: 'intervals',
@@ -102,7 +105,8 @@ TOPIC_GEN['intervals-all'] = {
     { en: 'Up: 3rds, 4th, 5th, octave', he: 'עולים: טרצות, קוורטה, קווינטה, אוקטבה' },
     { en: 'Up: all twelve', he: 'עולים: כל השנים־עשר' },
     { en: 'Together (harmonic)', he: 'ביחד (הרמוני)' },
-    { en: 'Down', he: 'יורדים' },
+    // AUDIT-7 #5: "Down" duplicated intervals-down (its own ladder from 830); level 4 is now up OR down, all twelve.
+    { en: 'Up or down: all twelve', he: 'עולים או יורדים: כל השנים־עשר' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -110,7 +114,9 @@ TOPIC_GEN['intervals-all'] = {
     const ans = pickR(rnd, pool);
     const choices = level === 1 ? pool : shuffleR(rnd, [ans, ...IV.filter((x) => x !== ans).sort((a, b) => Math.abs(a.s - ans.s) - Math.abs(b.s - ans.s)).slice(0, 3)]);
     const low = 55 + Math.floor(rnd() * 8);
-    const play = (s: number): Stimulus[] => (level === 3 ? [chordStim([low, low + s], 1.8)] : level === 4 ? [notesStim([low + 12, low + 12 - s], 0.8)] : [notesStim([low, low + s], 0.8)]);
+    // Level 4: the direction is part of the question (one coin for the whole item, its choices played the same way).
+    const down = level === 4 && rnd() < 0.5;
+    const play = (s: number): Stimulus[] => (level === 3 ? [chordStim([low, low + s], 1.8)] : down ? [notesStim([low + 12, low + 12 - s], 0.8)] : [notesStim([low, low + s], 0.8)]);
     const names: ChoiceQuestion['names'] = {};
     const choiceStim: Record<string, Stimulus[]> = {};
     for (const c of choices) {
@@ -118,7 +124,9 @@ TOPIC_GEN['intervals-all'] = {
       choiceStim[`i${c.s}`] = play(c.s);
     }
     return choiceQ({
-      id, topic: 'intervals-all', level, seed, skill: 'intervals', difficulty: [1050, 1250, 1380, 1450][level - 1],
+      // AUDIT-7 #5 (RCM levels 1–3): ascending naming first — m3 / M3 / P4 / P5 / P8 at 780, before the descending ladder
+      // (830); all twelve up at 1000, harmonic at 1250, up or down at 1320.
+      id, topic: 'intervals-all', level, seed, skill: 'intervals', difficulty: INTERVALS_ALL_DIFF[level - 1] ?? 1320,
       ask: { en: 'Which interval?', he: 'איזה מרווח?' },
       names, answer: `i${ans.s}`, choices: choices.map((c) => `i${c.s}`), stimulus: play(ans.s), choiceStim,
     });

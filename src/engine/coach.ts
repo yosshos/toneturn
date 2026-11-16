@@ -260,6 +260,9 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'three-voice': { en: 'Sing the bass under your breath while it plays: root position moves by 4ths and 5ths, an inversion steps.', he: 'שירו את הבס בשקט בזמן שהוא מתנגן: מצב יסודי זז בקוורטות ובקווינטות, היפוך זז בצעדים.' },
   'one-hearing': { en: 'Hold the whole phrase in your ear before writing: the first note, the shape, then the last note.', he: 'החזיקו את כל המשפט באוזן לפני הכתיבה: הצליל הראשון, הצורה, ואז הצליל האחרון.' },
   features: { en: 'Listen once for each feature: the loudness, the note lengths, the pulse, then the key and the ending.', he: 'הקשיבו פעם אחת לכל תכונה: העוצמה, אורכי הצלילים, הפעמה, ואז הסולם והסיום.' },
+  // AUDIT-7 #1: written theory from ABRSM grade 1.
+  'note-values': { en: 'A quarter is one beat. A half is two, a whole four; a dot adds half the note again; an eighth is half a beat.', he: 'רבע הוא פעמה אחת. חצי שתיים, שלם ארבע; נקודה מוסיפה עוד חצי מערך התו; שמינית היא חצי פעמה.' },
+  'interval-number': { en: 'Count the letters from the lower note to the upper, both included: C to E is C-D-E, a 3rd.', he: 'ספרו את שמות התווים מהנמוך אל הגבוה, כולל שניהם: דו עד מי זה דו-רה-מי, טרצה.' },
   'bh-line-ear': { en: 'Find the scale degrees on the beats first; the skip-back is the note that jumps past a half step and comes back.', he: 'מצאו קודם את דרגות הסולם על הפעמות; הדילוג חזרה הוא הצליל שקופץ מעבר לחצי טון וחוזר.' },
   'bh-pivot-arp': { en: 'A pivot leaps down from the top note, then climbs. A minor 6th down means a major 3rd, a major 6th a minor 3rd.', he: 'פיבוט קופץ למטה מהצליל העליון, ואז עולה. סקסטה קטנה למטה פירושה טרצה גדולה, סקסטה גדולה פירושה טרצה קטנה.' },
   'bh-m6-bass': { en: 'The bass names it: on the root an m6, a minor 3rd below a m7♭5, a 5th below a 9 chord.', he: 'הבס קובע: על היסוד m6, טרצה קטנה מתחת m7♭5, קווינטה מתחת אקורד 9.' },

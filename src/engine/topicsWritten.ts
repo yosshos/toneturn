@@ -839,7 +839,8 @@ TOPIC_GEN['scale-spelling'] = {
     if (down) target = target.reverse();
     const dir = updown ? { en: 'up and back down', he: 'בעלייה ובירידה' } : down ? { en: 'going down', he: 'בירידה' } : { en: 'going up', he: 'בעלייה' };
     return placeQ({
-      id, topic: 'scale-spelling', level, seed, skill: 'theory', difficulty: [1050, 1150, 1280, 1300, 1400][level - 1],
+      // AUDIT-7 #1: major scales are ABRSM theory grade 1–2 (820, after the treble clef); minor G3 on.
+      id, topic: 'scale-spelling', level, seed, skill: 'theory', difficulty: [820, 1000, 1150, 1300, 1400][level - 1],
       ask: { en: `Write the ${level === 4 ? `chromatic scale from ${spEn(t)}` : `${name.en} scale`} ${dir.en}, with accidentals (no key signature). The first note is given.`, he: `כתבו את סולם ${name.he} ${dir.he}, עם סימני היתק (בלי ארמטורה). הצליל הראשון נתון.` },
       text: { en: `${name.en} · ${dir.en}`, he: `${name.he} · ${dir.he}` },
       target, as: 'seq', match: 'exact', surface: 'staff',

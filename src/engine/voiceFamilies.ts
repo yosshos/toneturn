@@ -7,6 +7,7 @@ import { vocalVerified } from './verifiedContent';
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS, type VocalItem, type VocalLevel } from './vocal';
 import { SONGBOOK, songNotes } from '../content/songbook';
 import { VOICE_TOP_FAMILIES, VOICE_TOP_LEVELS, VOICE_TOP_NAMES } from './voiceTop';
+import { AUDIT7_VOICE_FAMILIES, AUDIT7_VOICE_LEVELS, AUDIT7_VOICE_NAMES, FIRST_MORE_LEVELS } from './voiceAudit7';
 
 type Bi = { en: string; he: string };
 type Item = Omit<VocalItem, 'id' | 'level'>;
@@ -502,7 +503,7 @@ export const FIRST_LEVELS: VocalLevel[] = [
 ];
 
 /** Every new level of the families. */
-export const NEW_LEVELS: VocalLevel[] = [...VOICE_TOP_LEVELS, ...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...RUN_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
+export const NEW_LEVELS: VocalLevel[] = [...AUDIT7_VOICE_LEVELS, ...VOICE_TOP_LEVELS, ...FIRST_LEVELS, ...EAR_P3_LEVELS, ...SONG_ECHO_LEVELS, ...MICRO_LEVELS, ...READ_LEVELS, ...MY_SONG_LEVELS, ...STANDARD_MORE_LEVELS, ...SCAT_P2_LEVELS, ...SIGHT_MORE_LEVELS, ...ARPEGGIO_LEVELS, ...SCAT_MORE_LEVELS, ...BREATH_LEVELS, ...PITCH_LEVELS, ...RANGE_LEVELS, ...DYN_LEVELS, ...VIB_LEVELS, ...TIME_LEVELS, ...EAR_LEVELS, ...SONG_LEVELS, ...STANDARD_LEVELS, ...SCAT_LEVELS, ...RUN_LEVELS, ...AGILITY_LEVELS, ...HARMONY_MORE_LEVELS, ...INFLECT_LEVELS];
 
 // ---------------------------------------------------------------- the families
 
@@ -555,7 +556,10 @@ const ALL_VOICE_FAMILIES: VoiceFamily[] = [
   // STAGE C (AUDIT-6 §3.5): the top ladder — altered arpeggios, wide leaps, runs, quick study, one part from the score,
   // style studies, scat on rhythm changes, the top of the range (voiceTop.ts; placed by VOICE_TOP_PLACEMENT).
   ...VOICE_TOP_FAMILIES,
-  { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: FIRST_LEVELS.map((l) => l.level), stage: 'A' },
+  // AUDIT-7 (#2, #8, #9): the singer's jazz entry, improvising outside jazz, pop and theatre style (voiceAudit7.ts).
+  ...AUDIT7_VOICE_FAMILIES,
+  // AUDIT-7 #8: four more measured first steps (match a note, a rhythm sung back, five notes echoed, a four-bar song).
+  { id: 'v-first', title: { en: 'First steps', he: 'צעדים ראשונים' }, refs: [...FIRST_LEVELS, ...FIRST_MORE_LEVELS].map((l) => l.level), stage: 'A' },
   { id: 'v-barry', title: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, refs: [301, 303, 302, 308, 304, 309, 310, 305, 306, 307], stage: 'D' },
 ];
 /** The families as shown: levels hidden until verified (verifiedContent.ts) left out; saved progress keeps their refs. */
@@ -694,6 +698,7 @@ export const NEW_LEVEL_NAMES: Record<number, Bi> = {
   1207: { en: 'Ninths', he: 'נונות' },
   1309: { en: 'One phrase of a song', he: 'משפט אחד משיר' },
   ...VOICE_TOP_NAMES,
+  ...AUDIT7_VOICE_NAMES,
 };
 
 // ---------------------------------------------------------------- rating tags of the new families
@@ -702,7 +707,7 @@ type TagT = { skill: import('./lesson').SkillId; sub: string; w: number };
 const T3 = (...xs: [import('./lesson').SkillId, string, number][]): TagT[] => xs.map(([skill, sub, w]) => ({ skill, sub: `${skill}/${sub}`, w }));
 
 /** The skill and rating tags of a new family's item (feeds ratings, the skill map, leagues — "everything connects"). */
-export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'scat' | 'time'> & Partial<Pick<VocalItem, 'ear'>>): { skill: import('./lesson').SkillId; tags: TagT[] } {
+export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'scat' | 'time'> & Partial<Pick<VocalItem, 'ear' | 'run'>>): { skill: import('./lesson').SkillId; tags: TagT[] } {
   const fam = familyOfRef(level)?.id;
   // P3 ear items: intervals rate interval singing; echoes and audiation rate the inner ear (sequences).
   if (item.ear?.mode === 'interval') return { skill: 'singing', tags: T3(['singing', 'intervals', 0.7], ['intervals', 'melodic', 0.3]) };
@@ -753,6 +758,23 @@ export function voiceItemTags(level: number, item: Pick<VocalItem, 'kind' | 'sca
       return { skill: 'singing', tags: T3(['singing', 'songs', 0.6], ['expression', 'articulation', 0.2], ['timing', 'precision', 0.2]) };
     case 'v-top':
       return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
+    // AUDIT-7: the first steps' rhythm echo rates timing; the jazz entry, improvising in pop and pop style.
+    case 'v-first':
+      if (item.kind === 'time') return { skill: 'technique', tags: T3(['timing', 'precision', 0.6], ['technique', 'control', 0.4]) };
+      if (item.kind === 'song') return { skill: 'singing', tags: T3(['singing', 'songs', 0.7], ['timing', 'precision', 0.3]) };
+      return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
+    case 'v-jazz1':
+      if (item.kind === 'time') return { skill: 'improv', tags: T3(['improv', 'answer', 0.6], ['timing', 'precision', 0.4]) };
+      if (item.kind === 'scat') return { skill: 'singing', tags: T3(['singing', 'harmony', 0.6], ['chords', 'quality', 0.2], ['timing', 'precision', 0.2]) };
+      return { skill: 'singing', tags: T3(['singing', 'songs', 0.6], ['rhythm-dictation', 'feel', 0.2], ['timing', 'precision', 0.2]) };
+    case 'v-impro':
+      if (item.scat?.mode === 'trade') return { skill: 'improv', tags: T3(['improv', 'answer', 0.5], ['improv', 'play', 0.3], ['timing', 'precision', 0.2]) };
+      return { skill: 'improv', tags: T3(['improv', 'play', 0.6], ['timing', 'precision', 0.2], ['chords', 'quality', 0.2]) };
+    case 'v-pop':
+      if (item.kind === 'song') return { skill: 'singing', tags: T3(['singing', 'songs', 0.6], ['expression', 'articulation', 0.2], ['timing', 'precision', 0.2]) };
+      if (item.run) return { skill: 'agility', tags: T3(['agility', 'runs', 0.7], ['timing', 'precision', 0.3]) };
+      if (item.kind === 'arc') return { skill: 'technique', tags: T3(['technique', 'control', 0.6], ['expression', 'dynamics', 0.4]) };
+      return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
     default:
       return { skill: 'technique', tags: T3(['technique', 'control', 1]) };
   }
@@ -779,6 +801,7 @@ export function probeStarts(s: ProbeScores): Record<string, number> {
   const jazz = ok(s.guide) && ok(s.echo) && ok(s.time) && ok(s.song);
   if (ok(s.hold)) out['v-breath'] = jazz ? 3 : 2;
   // A clear hold and echo: the first steps (posture, SOVT, sliding onto a note) are ✓.
+  // AUDIT-7 #8: v-first 4–7 (match, rhythm back, five notes, a four-bar song) stay to do — the cautious rule.
   if (ok(s.hold) && ok(s.echo)) out['v-first'] = 4;
   if (ok(s.echo)) {
     out['v-pitch'] = jazz ? 4 : 3;

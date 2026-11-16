@@ -210,7 +210,9 @@ const G_EAR: Rung[] = [
   r('g-phrase-5', 8, { 'g-ear': 10, 'g-phrase': 6 }),
 ];
 const G_JAZZ: Rung[] = [
-  r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1 }),
+  // AUDIT-7 #2: the jazz entry over the blues opens the section; shells on ii–V–I prove it all.
+  r('g-jblues-2', 7, { 'g-jblues': 3 }),
+  r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1, 'g-jblues': 5 }),
   r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2, 'g-bebop': 2 }),
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3, 'g-bebop': 3 }),
   r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5 }),

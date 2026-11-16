@@ -1336,6 +1336,18 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       line.push(endOn(tu, key, 48, 2));
       return drillOf(s, tu, alt(line), { en: op === 1 ? 'Arpeggio walk R–3–5–6 (blues)' : 'Arpeggio walk R–3–5–3 (blues)', he: op === 1 ? 'הליכת ארפג׳יו R–3–5–6 (בלוז)' : 'הליכת ארפג׳יו R–3–5–3 (בלוז)', chart: chartOf(key, blues), goal: { chordTonesOnBeats: true } });
     }
+    case 'blues-chrom': {
+      // AUDIT-7 #2: the first walking line over the blues — R–3–5 of each dominant seventh, then a half step into the
+      // next bar's root on beat 4 (from below, then above, bar by bar); the last bar walks into the closing tonic.
+      // From below on even bars, from above on odd ones — from above whenever below would leave the instrument's range.
+      const line = walk(blues, (R, c, next, bar) => {
+        const three = [R, R + QI[c[1]][1], R + QI[c[1]][2]];
+        const below = next - 1;
+        return [...three, below >= lowest(tu) && (bar % 2 === 0 || next + 1 === three[2]) ? below : next + 1];
+      }, [3]);
+      line.push(endOn(tu, key, 48, 2));
+      return drillOf(s, tu, alt(line), { en: 'First walking line: R–3–5 and a half step into each chord (blues)', he: 'קו ווקינג ראשון: R–3–5 וחצי טון אל כל אקורד (בלוז)', chart: chartOf(key, blues), goal: { chordTonesOnBeats: true } });
+    }
     case 'chrom':
     case 'dom':
     case 'scaleapp': {
@@ -2747,6 +2759,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),
       // BASS_NICHE_PLAN J5: walking in 3/4 (a jazz waltz, the blues waltz).
       ...waltzLevels(L),
+      // AUDIT-7 #2: the first real walking line over a blues, below 1000 (audit7Placement.ts: between the arpeggio walk
+      // and the chromatic approach over ii–V–I), all 12 keys.
+      L('b-walk', 21, 'First walking line over a blues: R–3–5 and a half step in', 'קו ווקינג ראשון על בלוז: R–3–5 וחצי טון פנימה', [WK('blues-chrom', { perBeat: 1 })], 'major', [80, 140], Qn),
     ]),
     // 0.66: fills and short solos that land on chord tones — a ladder up to the walk family's two-chorus blues solo.
     fam('b-impro', 'Fills and target notes', 'מילויים וצלילי מטרה', [

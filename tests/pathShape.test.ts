@@ -174,7 +174,9 @@ describe('the Jazz beginner band is real jazz (AUDIT-6 J-W1, J-W2)', () => {
     const ids = beginner([]);
     expect(ids).toContain('topic:swing-ratio:1');
     expect(ids.filter((id) => id.startsWith('topic:blues-ear:')).length).toBe(3);
-    expect(ids).toContain('topic:lh-tex-ear:1'); // shells by ear
+    // AUDIT-7 #2: the solo left hand by ear is a piano item — only for a player of the keys.
+    expect(ids).not.toContain('topic:lh-tex-ear:1');
+    expect(beginner(['keys'])).toContain('topic:lh-tex-ear:1'); // shells by ear
     expect(ids).toContain('topic:guide-tones:1');
     // No expression filler any more.
     expect(ids.some((id) => /topic:(mood|dynamics|articulation):/.test(id))).toBe(false);

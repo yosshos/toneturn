@@ -572,7 +572,9 @@ export type MetricKey =
   | 'follow'
   | 'falls'
   | 'motif'
-  | 'lift';
+  | 'lift'
+  // AUDIT-7 #8: improvising inside a scale (the pentatonic)
+  | 'inScale';
 
 export interface MetricScore {
   key: MetricKey;
@@ -678,13 +680,16 @@ export interface EarSpec {
 }
 /** Scat (F15): improvised or chosen notes over the band, graded on pitch, rhythm and landing — never the syllables. */
 export interface ScatSpec {
-  mode: 'guide' | 'landing' | 'approach' | 'tensions' | 'motif' | 'trade';
+  mode: 'guide' | 'landing' | 'approach' | 'tensions' | 'motif' | 'trade' | 'scale';
+  /** AUDIT-7 #8 'scale': improvise only with these notes (semitones above the tonic, e.g. the major pentatonic 0 2 4 7 9). */
+  scale?: number[];
   /** F15 L2 motif: the given cell [beat, semitones from the tonic, beats], played in the first two bars; the singer develops it after. */
   cell?: [number, number, number][];
   /** F15 L10 trading: bars per turn (2 or 4); the app takes the first turn. */
   turn?: number;
   chart: string;
-  style: 'swing' | 'bossa' | 'ballad';
+  /** AUDIT-7 #8: pop and rock too (straight eighths: the timing grid has no swing). */
+  style: 'swing' | 'bossa' | 'ballad' | 'pop' | 'rock';
   bpm: number;
   /** Times through the chart. */
   loops?: number;

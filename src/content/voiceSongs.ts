@@ -9,6 +9,7 @@
 
 import type { ChartStyle } from '../engine/charts';
 import { VOICE_TOP_SONGS } from './voiceTopSongs';
+import { AUDIT7_SONGS } from './voiceAudit7Songs'; // AUDIT-7 #2: the singer's first blues head
 
 export interface VoiceSong {
   id: string;
@@ -407,4 +408,4 @@ export const VERSE_SONGS: VoiceSong[] = [
 ];
 
 // STAGE C (AUDIT-6 §3.5): the Quick Study tunes and the non-jazz style studies (voiceTopSongs.ts).
-export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS, ...VERSE_SONGS, ...VOICE_TOP_SONGS];
+export const VOICE_SONGS: VoiceSong[] = [...POP_SONGS, ...JAZZ_HEADS, ...P2_SONGS, ...VERSE_SONGS, ...VOICE_TOP_SONGS, ...AUDIT7_SONGS];

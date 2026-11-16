@@ -277,7 +277,7 @@ describe('rhythm echo: hear it, tap it back', () => {
 });
 
 describe('the Ear topics', () => {
-  it('descending intervals from 800: the second note is lower by the answer', () => {
+  it('descending intervals from 830 (after the ascending ones, AUDIT-7 #5): the second note is lower by the answer', () => {
     const T = TOPIC_GEN['intervals-down'];
     expect(T.levels.length).toBe(5);
     for (let l = 1; l <= 5; l++)
@@ -287,7 +287,7 @@ describe('the Ear topics', () => {
         expect(st.midis[0] - st.midis[1]).toBe(Number(q.answer.slice(1)));
         expect(q.choices).toContain(q.answer);
       }
-    expect((T.gen(1, 1, 'x') as ChoiceQuestion).difficulty).toBe(800);
+    expect((T.gen(1, 1, 'x') as ChoiceQuestion).difficulty).toBe(830);
   });
   it('root, 3rd or 5th: a general Ear topic (not in the jazz pack), ~950', () => {
     const T = TOPIC_GEN['chord-member'];

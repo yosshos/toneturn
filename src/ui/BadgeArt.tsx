@@ -920,6 +920,16 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'family:g-first': () => p('M2 9h20 M12 21c-3-3-6-7-6-10 0-3 3-4 6-4s6 1 6 4c0 3-3 7-6 10z', false),
+  // AUDIT-7 #2: jazz on the blues — a three-note shell over a 12-bar roadmap line.
+  'family:g-jblues': () => (
+    <>
+      {p('M2 20h20 M2 16h20', false)}
+      {head(8, 11, 2)}
+      {head(8, 6.5, 2)}
+      {head(15, 3.5, 2)}
+      {p('M10 11V2 M17 3.5V1', false)}
+    </>
+  ),
   'family:g-riff': () => (
     <>
       {p('M2 7h20 M2 12h20', false)}

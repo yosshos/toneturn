@@ -118,7 +118,7 @@ describe('the voice families (VOICE_CURRICULUM §5, §9)', () => {
   });
   // + the first steps (AUDIT-CONTENT-THEORY §ז.2).
   it('15 families + Barry Harris + the first steps, each with its own symbol on the voice path; every step of the path has one', () => {
-    expect(VOICE_FAMILIES.length).toBe(25); // + the 8 STAGE C families of the top ladder
+    expect(VOICE_FAMILIES.length).toBe(28); // + the 8 STAGE C families of the top ladder; + AUDIT-7 v-jazz1, v-impro, v-pop
     const glyphs = VOICE_FAMILIES.map((f) => FAMILY_GLYPH[f.id]);
     for (const g of glyphs) expect(GLYPHS[g], g).toBeDefined();
     const steps = stepCatalogue().filter((s) => inCourse(s, 'voice'));

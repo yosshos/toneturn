@@ -345,6 +345,7 @@ export function TimedSession({ t, settings, range, level, items, onExit, onProgr
       {phase === 'count' && <p className="vocal-cue vib">{item.time?.call ? L(VT.listenCall) : item.song?.rubato || item.song?.freeUntil !== undefined ? L(VT.rubatoGo) : L(VT.countIn)}</p>}
       {phase === 'singing' && item.time?.call && <p className="vocal-cue">{beatNow >= (item.time.answerAt ?? 8) ? L(VT.yourTurn) : L(VT.listenCall)}</p>}
       {phase === 'singing' && item.scat?.mode === 'motif' && <p className="vocal-cue">{beatNow >= MOTIF_ANSWER_AT ? L(VT.yourTurn) : L(VT.motifListen)}</p>}
+      {phase !== 'result' && item.scat?.mode === 'scale' && <p className="vocal-cue" data-scale="1" dir="ltr"><bdi>{scaleDegrees(item.scat.scale ?? [0, 2, 4, 7, 9])}</bdi></p>}
       {phase === 'singing' && item.scat?.mode === 'trade' && <p className="vocal-cue" data-trade-turn={scatTurns(item).find((x) => beatNow >= x.from && beatNow < x.to)?.who ?? ''}>{scatTurns(item).find((x) => beatNow >= x.from && beatNow < x.to)?.who === 'you' ? L(VT.yourTurn) : L(VT.appTurn)}</p>}
       {phase === 'singing' && item.song?.rubato && <p className="vocal-cue">{L(VT.singing)}</p>}
       {phase === 'singing' && item.song?.freeUntil !== undefined && <p className={`vocal-cue ${colla === 'count' ? 'vib' : ''}`} data-colla={colla ?? 'free'}>{L(COLLA_TEXT[colla ?? 'free'])}</p>}
@@ -962,7 +963,9 @@ function simulate(item: VocalItem, plan: SongPlan | null, span: { from: number; 
     for (let b = 0; b < ch.beats; b += item.scat.mode === 'guide' ? 2 : 1) {
       const c = chordAtBeat(ch.parsed, 4, b);
       const ten = item.scat.mode === 'tensions' && b % 2 === 0 && c && c.iv.includes(10) ? [(c.root + 2) % 12] : null;
-      const pcs = ten ?? (item.scat.mode === 'guide' ? ch.guideAt(b) : ch.pcsAt(b));
+      // AUDIT-7 #8: a scale take sings the chord tones that are in the scale.
+      const inSc = (xs: number[]) => (item.scat!.mode === 'scale' ? xs.filter((pc) => (item.scat!.scale ?? [0, 2, 4, 7, 9]).includes((((pc - tonicPc) % 12) + 12) % 12)) : xs);
+      const pcs = ten ?? (item.scat.mode === 'guide' ? ch.guideAt(b) : inSc(ch.pcsAt(b)).length ? inSc(ch.pcsAt(b)) : ch.pcsAt(b));
       notes.push({ midi: near(pcs[item.scat.mode === 'guide' ? (b / 2) % 2 : 1] ?? pcs[0]), start: b * beat, dur: (item.scat.mode === 'guide' ? 2 : 1) * beat * 0.9 });
     }
     return synthLine(notes);
@@ -1012,4 +1015,10 @@ function ReadSheet({ plan, span, lead, clef, lang }: { plan: SongPlan; span: { f
       ))}
     </div>
   );
+}
+
+/** AUDIT-7 #8: a scale as degrees (major pentatonic "1 2 3 5 6", minor pentatonic "1 ♭3 4 5 ♭7"). */
+const DEGREE_OF: Record<number, string> = { 0: '1', 1: '♭2', 2: '2', 3: '♭3', 4: '3', 5: '4', 6: '♭5', 7: '5', 8: '♭6', 9: '6', 10: '♭7', 11: '7' };
+export function scaleDegrees(scale: number[]): string {
+  return scale.map((x) => DEGREE_OF[((x % 12) + 12) % 12]).join(' ');
 }

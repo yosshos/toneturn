@@ -580,6 +580,25 @@ export function tensionsOnStrongBeats(frames: SungFrame[], item: VocalItem, toni
   return n;
 }
 
+/** AUDIT-7 #8: a pop or rock groove — straight eighths. */
+export const straightFeel = (style: string): boolean => style === 'pop' || style === 'rock';
+/** The share of sung notes whose pitch class is in the scale (semitones above the tonic). */
+export function inScaleShare(frames: SungFrame[], scale: number[], tonicPc: number): number {
+  const notes = segmentNotes(frames, { minSec: 0.09 });
+  if (!notes.length) return 0;
+  const pcs = new Set(scale.map((x) => (tonicPc + x) % 12));
+  return notes.filter((n) => pcs.has(((Math.round(n.midi) % 12) + 12) % 12)).length / notes.length;
+}
+/** The mean distance (ms) of the sung onsets from the nearest beat or eighth (straight, or swung at two thirds). */
+export function onsetOffMs(frames: SungFrame[], beat: number, straight: boolean): number {
+  const and = straight ? 0.5 : 2 / 3;
+  const offs = voiceOnsets(frames).map((t) => {
+    const f = t / beat - Math.floor(t / beat);
+    return Math.min(f, Math.abs(f - and), 1 - f) * beat * 1000;
+  });
+  return offs.length ? Math.round(offs.reduce((a, b) => a + b, 0) / offs.length) : 999;
+}
+
 export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number): ScatResult {
   const sc = item.scat!;
   const beat = 60 / sc.bpm;
@@ -594,7 +613,7 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
     const turns = scatTurns(item);
     const centre = scatCentre(tonicPc, frames);
     const opening = tradeOpening(ch.pcsAt, centre, 0, (sc.turn ?? 4) * 4);
-    const r = gradeTrade(frames, turns, ch.pcsAt, sc.bpm, [opening]);
+    const r = gradeTrade(frames, turns, ch.pcsAt, sc.bpm, [opening], straightFeel(sc.style));
     return { grade: r.grade, turns: r.turns };
   }
   if (sc.mode === 'guide') {
@@ -606,9 +625,11 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
         continue;
       }
       const m = [...cs].sort((x, y) => x - y)[cs.length >> 1];
+      // AUDIT-7: the course's one pass band for a sung note (passCents), not a stricter one of its own.
+      const tol = passCents(item.difficulty);
       const ok = ch.guideAt(b).some((pc) => {
         const c = ((((m - pc) * 100) % 1200) + 1200) % 1200;
-        return Math.min(c, 1200 - c) <= 30;
+        return Math.min(c, 1200 - c) <= tol;
       });
       slots.push(ok ? 'ok' : 'off');
     }
@@ -617,9 +638,28 @@ export function gradeScat(item: VocalItem, frames: SungFrame[], tonicPc: number)
   }
   const r = improvReportBy(frames, ch.pcsAt, sc.bpm);
   if (r.notes < 3) return { grade: UNCLEAR, report: r };
+  if (sc.mode === 'scale') {
+    // AUDIT-7 #8: improvising inside a scale (the pentatonic over I–IV–V): the share of notes in the scale, chord tones
+    // on the strong beats, the ending on a chord tone, the pulse (straight eighths), and enough notes.
+    const share = inScaleShare(frames, sc.scale ?? [0, 2, 4, 7, 9], tonicPc);
+    const onMs = onsetOffMs(frames, beat, straightFeel(sc.style));
+    const out: MetricScore[] = [
+      M('inScale', share * 100, '%', reachScore(share, 0.85), 3),
+      M('landingTones', r.strongChordTones * 100, '%', reachScore(r.strongChordTones, 0.6), 2),
+      M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5),
+      M('onset', onMs, 'ms', bandScore(onMs, [40, 70, 120]), 1.5),
+      M('coverage', r.notes, '%', reachScore(r.notes, ch.beats / 2), 0.5),
+    ];
+    return { grade: finish(out, {}), report: r };
+  }
   // Tensions on strong beats are on purpose in L8: there the landing rule is the tensions' own count.
   const out: MetricScore[] = sc.mode === 'tensions' ? [M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5)] : [M('landingTones', r.strongChordTones * 100, '%', reachScore(r.strongChordTones, 0.7), 3), M('landing', r.endsOnChordTone ? 100 : 0, '%', r.endsOnChordTone ? 1 : 0, 1.5)];
   if (sc.mode === 'approach') out.push(M('approach', r.chromaticApproaches * 100, '%', reachScore(r.chromaticApproaches, 0.4), 3));
+  // AUDIT-7 #8: over a straight pop / rock groove the answer is timed too (the jazz items keep their own rules).
+  if (straightFeel(sc.style)) {
+    const onMs = onsetOffMs(frames, beat, true);
+    out.push(M('onset', onMs, 'ms', bandScore(onMs, [40, 70, 120]), 1.5));
+  }
   if (sc.mode === 'tensions') {
     const t = tensionsOnStrongBeats(frames, item, tonicPc);
     out.push(M('tensions', t, '%', reachScore(t, 3), 3));

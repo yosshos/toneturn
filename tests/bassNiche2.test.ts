@@ -44,14 +44,14 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     const ids = families('bass').map((f) => f.id);
     expect(ids.indexOf('b-std')).toBe(ids.indexOf('b-latin') + 1);
     expect(ids.indexOf('b-ext')).toBe(ids.indexOf('b-legato') + 1);
-    expect(levelsOf('b-walk').length).toBe(20);
+    expect(levelsOf('b-walk').length).toBe(21); // + AUDIT-7 #2: the first walking line over a blues
     expect(levelsOf('b-impro').length).toBe(18);
     expect(levelsOf('b-pick').length).toBe(10);
     expect(levelsOf('b-ear').length).toBe(23); // + 22–23: progressions by ear
     expect(levelsOf('b-up-walk').length).toBe(9);
     expect(levelsOf('b-std').length).toBe(5);
     expect(levelsOf('b-ext').length).toBe(9);
-    expect(P2_LEVELS().length).toBe(28);
+    expect(P2_LEVELS().length).toBe(29); // + AUDIT-7 b-walk 21
   });
 
   it('the standards ladder is on the jazz track; extended techniques on both', () => {

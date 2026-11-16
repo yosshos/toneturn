@@ -64,6 +64,9 @@ const keyName = (s: Sp, minor: boolean) => nm(`${spEn(s)} ${minor ? 'minor' : 'm
 const sigName = (n: number) => (n === 0 ? nm('No sharps or flats', 'בלי סימנים', 'none', 'nothing', 'בלי') : nm(`${Math.abs(n)} ${n > 0 ? (n === 1 ? 'sharp' : 'sharps') : n === -1 ? 'flat' : 'flats'}`, Math.abs(n) === 1 ? (n > 0 ? 'דיאז אחד' : 'במול אחד') : `${Math.abs(n)} ${n > 0 ? 'דיאזים' : 'במולים'}`, `${['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven'][Math.abs(n)]} ${n > 0 ? 'sharp' : 'flat'}`));
 const tonicMidi = (s: Sp) => 60 + spPc(s);
 
+/** AUDIT-7 #1: path ratings by ABRSM theory grade (G(1) 790, G(3) 970 + 10, G(5) 1150). */
+export const KEYSIG_DIFF = [790, 980, 1150];
+
 TOPIC_GEN['key-signatures'] = {
   title: { en: 'Key signatures', he: 'סימני היתק' },
   skill: 'theory',
@@ -86,7 +89,8 @@ TOPIC_GEN['key-signatures'] = {
     const step = [0, 2, 4, 5, 7, 9, 11][Math.floor(rnd() * 7)];
     const m = tonicMidi(k.tonic) + step;
     return choiceQ({
-      id, topic: 'key-signatures', level, seed, skill: 'theory', difficulty: 1000 + 150 * level,
+      // AUDIT-7 #1 (ABRSM theory G1–G5): key signatures to 2 at grade 1 (790), to 4 at grade 3, all and minor at grade 5.
+      id, topic: 'key-signatures', level, seed, skill: 'theory', difficulty: KEYSIG_DIFF[level - 1] ?? 1150,
       ask: minor ? { en: 'Which minor key has this signature?', he: 'לאיזה סולם מינורי שייך סימן ההיתק?' } : { en: 'Which major key has this signature?', he: 'לאיזה סולם מז׳ורי שייך סימן ההיתק?' },
       names, answer: spEn(ton(k)), choices: opts.map((o) => spEn(ton(o))), stimulus: [],
       show: { midis: [m > 74 ? m - 12 : m], key: pcOf(k.tonic) },
@@ -136,7 +140,8 @@ TOPIC_GEN['interval-spelling'] = {
     const q = spChoicesQ(ans, noteChoices(rnd, ans));
     const m = tonicMidi(root);
     return choiceQ({
-      id, topic: 'interval-spelling', level, seed, skill: 'theory', difficulty: 1100 + 180 * level,
+      // AUDIT-7 #1: interval quality is ABRSM theory grade 4 (1060); all intervals G6, augmented / diminished G8.
+      id, topic: 'interval-spelling', level, seed, skill: 'theory', difficulty: [1060, 1240, 1420][level - 1] ?? 1420,
       ask: { en: `A ${IV[ivk].name.en} above ${spEn(root)}?`, he: `${IV[ivk].name.he} מעל ${spHe(root)}?` },
       text: { en: `${IV[ivk].name.en} ↑ ${spEn(root)} = ?`, he: `${IV[ivk].name.he} ↑ ${spHe(root)} = ?` },
       ...q, stimulus: [notesStim([m, m + IV[ivk].semis], 0.6)],
@@ -161,7 +166,11 @@ const CHORDS: Record<string, { tones: [number, number][]; en: string; he: string
   b9: { tones: [[1, 0], [3, 4], [5, 7], [7, 10], [2, 13]], en: '7♭9', he: '7 במול 9', say: 'seven flat nine' },
   s11: { tones: [[1, 0], [3, 4], [7, 10], [2, 14], [4, 18]], en: '9♯11', he: '9 דיאז 11', say: 'nine sharp eleven' },
 };
-const CHORD_LEVELS = [['maj', 'min', 'dim', 'aug'], ['maj7', 'dom7', 'm7', 'hd', 'dim7'], ['dom9', 'm9', 'b9', 's11']];
+const CHORD_LEVELS = [['maj', 'min'], ['dim', 'aug', 'dom7'], ['maj7', 'dom7', 'm7', 'hd', 'dim7'], ['dom9', 'm9', 'b9', 's11']];
+/** AUDIT-7 #1: tonic triads in the keys of ABRSM theory G1–G3 (up to three sharps or flats). */
+const TRIAD_ROOTS = ['C', 'G', 'D', 'A', 'F', 'B♭', 'E♭'];
+/** AUDIT-7 #1: triads at grade 2 (880), diminished / augmented and the dominant 7th G5, all sevenths G7, ninths beyond G8. */
+export const CHORD_SPELL_DIFF = [880, 1130, 1320, 1560];
 
 function spellChord(root: Sp, kind: string): Sp[] | null {
   const out: Sp[] = [];
@@ -179,7 +188,10 @@ TOPIC_GEN['chord-spelling'] = {
   title: { en: 'Spelling chords', he: 'כתיבת אקורדים' },
   skill: 'theory',
   levels: [
-    { en: 'Triads', he: 'משולשים' },
+    // AUDIT-7 #1: level 1 is now the tonic triads of ABRSM theory G1–G3 (major and minor); the diminished and augmented
+    // triads it used to mix in come with the dominant seventh at G5; then the seventh chords, then the ninths.
+    { en: 'Triads, major and minor', he: 'משולשים, מז׳ור ומינור' },
+    { en: 'Diminished, augmented, dominant 7th', he: 'מוקטן, מוגדל, ספטאקורד דומיננטי' },
     { en: 'Seventh chords', he: 'אקורדי ספטימה' },
     { en: 'Ninths and alterations', he: '9, 11, 13 ואלטרציות' },
   ],
@@ -187,10 +199,10 @@ TOPIC_GEN['chord-spelling'] = {
     const rnd = rng(seed);
     let root: Sp, kind: string, ns: Sp[] | null;
     do {
-      root = sp(pickR(rnd, ROOTS[Math.min(2, level)]));
+      root = sp(pickR(rnd, level === 1 ? TRIAD_ROOTS : ROOTS[level === 2 ? 1 : 2]));
       kind = pickR(rnd, CHORD_LEVELS[level - 1]);
       ns = spellChord(root, kind);
-    } while (!ns || ns.some((n) => Math.abs(n.a) > 1 + (level === 3 ? 1 : 0)));
+    } while (!ns || ns.some((n) => Math.abs(n.a) > 1 + (level === 4 ? 1 : 0)));
     // Decoys: one tone a semitone off (never an enharmonic respelling — the same sounds are not a wrong answer).
     const decoys: Sp[][] = [];
     const pcs = (d: Sp[]) => d.map(spPc).join(',');
@@ -206,7 +218,7 @@ TOPIC_GEN['chord-spelling'] = {
     const sym = `${spEn(root)}${CHORDS[kind].en}`;
     const base = 48 + spPc(root);
     return choiceQ({
-      id, topic: 'chord-spelling', level, seed, skill: 'theory', difficulty: 1150 + 170 * level,
+      id, topic: 'chord-spelling', level, seed, skill: 'theory', difficulty: CHORD_SPELL_DIFF[level - 1] ?? 1660,
       ask: { en: `Spell ${sym}`, he: `כתבו את ${spHe(root)} ${CHORDS[kind].he}` },
       text: { en: sym, he: `${spHe(root)} ${CHORDS[kind].he}` },
       names, answer: chordLine(ns), choices: all.map(chordLine),
@@ -488,7 +500,8 @@ TOPIC_GEN['note-reading'] = {
     }
     return choiceQ({
       // AUDIT-CONTENT-THEORY §ב.1: the treble clef sits before the steps that read from the staff (dictation, chords, spelling).
-      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: [950, 1120, 1280, 1430, 1560][level - 1] ?? 1560,
+      // AUDIT-7 #1: treble and bass clef are ABRSM theory grade 1 (760, 850); the alto clef G4, ledger lines G6, tenor G8.
+      id, topic: 'note-reading', level, seed, skill: 'notes', difficulty: [760, 850, 1080, 1300, 1540][level - 1] ?? 1540,
       ask: { en: 'Which note is this?', he: 'איזה תו זה?' },
       names, answer: spEn(ans), choices: opts.map(spEn), stimulus: [], choiceStim,
       show: { midis: [m], clef: r.clef, key: null },

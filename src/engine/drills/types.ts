@@ -50,6 +50,8 @@ export type FamilyId =
   | 'k-pop'
   | 'k-pedal'
   | 'k-classic'
+  // AUDIT-7 #2: the guitarist's jazz entry over the blues
+  | 'g-jblues'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'

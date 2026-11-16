@@ -920,6 +920,8 @@ Object.assign(GLYPHS, {
 });
 // AUDIT-CONTENT-THEORY R-1/R-2/R-4: rhythm & meter on the keys (5:4), meter & cross-rhythm on the guitar (3:2).
 Object.assign(GLYPHS, { krhythm: mark('5:4'), gmeter: mark('3:2') });
+// AUDIT-7: the singer's blues and scat start (the 12-bar), improvising in pop (call → answer), pop and theatre style.
+Object.assign(GLYPHS, { vjazz1: mark('12-bar'), vimpro: mark('Q→A'), vpop: mark('Pop'), gjblues: mark('I7·IV7') });
 // THEORY_PLAY: theory you play (k-theory) — two triads stacked, a whole step apart (a triad pair).
 Object.assign(GLYPHS, {
   tpair: (
