@@ -53,6 +53,8 @@ const HANDS: Rung[] = [
   r('scales-5', 9, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 6, 'k-indep': 2 }),
   r('k-indep-5', 3, { scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 8, 'k-indep': 4 }),
   r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
+  // AUDIT-7 #11: a graded piece (Bach's Prelude in C, G5) places the classical tier and the pedal's first steps.
+  r('k-classic-4', 0, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 4, 'k-pedal': 2 }),
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),
@@ -86,12 +88,17 @@ const COMP_JAZZ: Rung[] = [
   r('voicings-11', 10, { accomp: 4, voicings: 12, 'k-lh': 9, 'k-tex': 4, 'k-comp': 2, 'k-impro': 5 }),
   r('accomp-3', 7, { accomp: 5, 'k-lh': 8, 'k-tex': 2 }),
   r('k-tex-6', 3, { accomp: 5, voicings: 12, 'k-lh': 12, 'k-tex': 6, 'k-comp': 3, 'k-impro': 5 }),
+  // AUDIT-7 #10: pop accompaniment (the ballad) is a comping step of the jazz / both test too.
+  r('k-pop-3', 7, { accomp: 5, voicings: 12, 'k-lh': 12, 'k-tex': 6, 'k-comp': 3, 'k-impro': 5, 'k-pop': 4, 'k-pedal': 1 }),
   r('voicings-14', 7, { accomp: 9, voicings: 15, 'k-lh': 14, 'k-tex': 8, 'k-comp': 5, 'k-impro': 5 }),
 ];
 const COMP_CLASSICAL: Rung[] = [
   r('accomp-1', 0, { accomp: 2, control: 4 }),
   r('control-7', 7, { accomp: 3, control: 8 }),
   r('accomp-3', 5, { accomp: 5, control: 9 }),
+  // AUDIT-7 #10: pop accompaniment from a lead sheet (broken patterns, then rock) and the pedal levels.
+  r('k-pop-2', 7, { accomp: 5, control: 9, 'k-pop': 3, 'k-pedal': 1 }),
+  r('k-pop-4', 5, { accomp: 7, control: 10, 'k-pop': 5, 'k-pedal': 2 }),
 ];
 // Sight-reading below the playing level is normal (placement auditions read about two grades lower); the takes feed the
 // reading skill, and a clean read opens the reading levels of Control.
@@ -104,6 +111,9 @@ const READING: Rung[] = [
   r('k-read-6', 2, { 'k-read': 7 }),
   r('k-read-8', 10, { 'k-read': 9 }),
   r('k-read-10', 7, { 'k-read': 10 }),
+  // AUDIT-7 #4: grade 8 reading (ornaments) and the lead sheet with hits.
+  r('k-read-12', 7, { 'k-read': 13 }),
+  r('k-read-14', 5, { 'k-read': 15 }),
 ];
 const EAR: Rung[] = [
   r('k-ear-1', 0, { 'k-ear': 2 }),
@@ -251,6 +261,9 @@ const B_TIME: Rung[] = [
   r('b-time-4', 7, { 'b-time': 5, 'b-pocket': 3, 'b-styles': 3 }),
   r('b-pocket-4', 4, { 'b-time': 6, 'b-pocket': 5, 'b-styles': 5, 'b-ghost': 2 }),
   r('b-time-7', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3 }),
+  // AUDIT-7 #15: riffs by grade, then the half-time feel.
+  r('b-riff-4', 4, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5 }),
+  r('b-feel-2', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5, 'b-feel': 3 }),
 ];
 const B_CHORDS: Rung[] = [
   // AUDIT-6 Stage B: roots on the E and A strings (b-first 5).
@@ -335,6 +348,8 @@ const D_FILLS: Rung[] = [
   r('d-fills-2', 0, { 'd-fills': 3 }),
   r('d-fills-3', 0, { 'd-fills': 4 }),
   r('d-fills-5', 0, { 'd-fills': 6 }),
+  // AUDIT-7 #12: develop the groove, a solo break, back to the groove (RSL I&I, G4–G5).
+  r('d-fills-9', 0, { 'd-fills': 6 }),
 ];
 const D_READING: Rung[] = [
   r('d-read-1', 0, { 'd-read': 2, 'd-notation': 1 }),

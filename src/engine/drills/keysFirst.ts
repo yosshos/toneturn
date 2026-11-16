@@ -17,6 +17,7 @@ import type { Drill, DrillGoal, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { itemIdOf } from './generate';
 import { all12 } from './keys12';
+import { genRead2, READ2_KINDS } from './keysRead2'; // AUDIT-7 #4: k-read 11–15 (grades 7–8, the quick study)
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -376,6 +377,7 @@ function genRead(s: DrillSpec): Drill {
 
 /** Build a k-first (levels 4–11) or k-read item. */
 export function genKeysFirst(s: DrillSpec): Drill {
+  if (s.family === 'k-read' && READ2_KINDS.has(s.kind)) return genRead2(s);
   return s.family === 'k-read' ? genRead(s) : genFirst(s);
 }
 /** k-first kinds made here (levels 1–3 are generate.ts's five-finger and thumb-under kinds). */
@@ -411,7 +413,7 @@ export function keysFirstFamily(): FamilyDef {
   };
 }
 
-/** Graded sight-reading at the piano: ten levels, four new melodies a level in every key. */
+/** Graded sight-reading at the piano: fifteen levels (AUDIT-7: 11–15 added), new melodies every level in every key. */
 export function keysReadFamily(): FamilyDef {
   const fam: FamilyId = 'k-read';
   const sp = (kind: string, hands: SpecTemplate['hands'], option: number, o: Partial<SpecTemplate> = {}): SpecTemplate => ({ family: fam, kind, hands, option, ...o });
@@ -433,6 +435,12 @@ export function keysReadFamily(): FamilyDef {
       L(8, 'Left-hand chords under the melody', 'אקורדים ביד שמאל מתחת למנגינה', four('kr-lhchords', ['RL', 'RL', 'RL', 'RL']), CGF, [56, 88]),
       L(9, 'Right-hand double notes over a bass', 'צלילים כפולים ביד ימין מעל בס', four('kr-rhchords', ['RL', 'RL', 'RL', 'RL']), CGF, [56, 84]),
       L(10, 'Quick study: 3/4 and 6/8, a 30-second look', 'לימוד מהיר: 3/4 ו־6/8, הצצה של 30 שניות', four('kr-quick', ['RL', 'RL', 'RL', 'RL']).map((x) => ((x.option ?? 0) % 2 ? { ...x, tempo: 120 } : x)), all12([0, 7, 5, 2, 10]), [56, 92]),
+      // AUDIT-7 #4: grades 7–8 and the RSL quick study (keysRead2.ts), 1450–1800 on the path.
+      L(11, 'Four voices: a chorale texture', 'ארבעה קולות: מרקם של כוראל', four('kr-four', ['RL', 'RL', 'RL', 'RL']), all12([0, 7, 5]), [50, 76]),
+      L(12, 'Written-out ornaments: mordents, turns, a trill', 'קישוטים כתובים: מורדנטים, גרופטו, טריל', four('kr-orn', ['RL', 'RL', 'RL', 'RL']), all12([7, 2, 0]), [44, 72]),
+      L(13, 'Changing metres: 4/4, 3/4 and 2/4', 'משקלים מתחלפים: 4/4, 3/4 ו־2/4', four('kr-meter', ['RL', 'RL', 'RL', 'RL']), all12([0, 5, 7]), [56, 92]),
+      L(14, 'A lead sheet with band hits', 'דף אקורדים עם מכות להקה', [0, 1, 2].map((o) => sp('kr-lead', 'RL', o)), all12([5, 10, 0]), [60, 100]),
+      L(15, 'Quick study: any key, a 30-second look', 'לימוד מהיר: כל סולם, הצצה של 30 שניות', [sp('kr-quick2', 'RL', 0), sp('kr-quick2', 'RL', 1), sp('kr-quick2', 'RL', 2, { minor: true }), sp('kr-quick2', 'RL', 3, { minor: true })], all12([2, 10, 4, 8]), [56, 96]),
     ],
   };
 }

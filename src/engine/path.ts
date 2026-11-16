@@ -499,7 +499,9 @@ export const NON_MONOTONE_FAMILIES = [
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).
-  'control', 'arpeggios', 'cadences', 'k-rhythm', 'b-styles', 'b-scale', 'b-walk', 'b-ext', 'd-diddles', 'd-count', 'd-read'];
+  'control', 'arpeggios', 'cadences', 'k-rhythm', 'b-styles', 'b-scale', 'b-walk', 'b-ext', 'd-diddles', 'd-count', 'd-read',
+  // AUDIT-7 #12: the groove-development level (d-fills 9) and the grade 4–6 PAS rudiments sit below their families' later numbers.
+  'd-fills', 'd-pas'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;

@@ -1694,6 +1694,54 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// AUDIT-7: the new families — pop accompaniment, pedalling, the classical pieces, bass riffs, bass feels.
+Object.assign(GLYPHS, {
+  /** Pop accompaniment: three stacked heads (a block chord) under a chord symbol's slash, in the 3+3+2 rhythm ticks. */
+  kpop: (
+    <>
+      {head(-12, 14, 5, 3.6)}
+      {head(-12, 4, 5, 3.6)}
+      {head(-12, -6, 5, 3.6)}
+      <path d="M-6 12 V-22" {...sw} strokeWidth={2.4} />
+      <path d="M6 22 L14 2 L22 22 M9 15 H19" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Pedalling: a sustain pedal under a long held line. */
+  kpedal: (
+    <>
+      <path d="M-24 -16 H24" {...sw} strokeWidth={2.4} />
+      <path d="M-18 10 H18 L14 20 H-14 Z" {...sw} strokeWidth={2.6} />
+      <path d="M0 10 V-6 M-8 -6 H8" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Classical pieces: a treble-clef curl beside a 3 over 4 (the minuet). */
+  kclassic: (
+    <>
+      <path d="M-14 22 C-24 22 -24 10 -14 10 C-6 10 -6 22 -14 22 M-14 10 V-22 C-4 -18 -2 -10 -10 -2 C-18 6 -24 8 -24 14" {...sw} strokeWidth={2.4} />
+      <text x={4} y={-2} fontSize={18} fontFamily="'Noto Music', serif" fill={I}>3</text>
+      <text x={4} y={20} fontSize={18} fontFamily="'Noto Music', serif" fill={I}>4</text>
+    </>
+  ),
+  /** Bass riffs: four strings, a riff of heads climbing and an accent. */
+  briff: (
+    <>
+      <path d="M-26 -14 H26 M-26 -4 H26 M-26 6 H26 M-26 16 H26" stroke={I} strokeWidth={1.4} />
+      <circle cx={-16} cy={16} r={4.2} fill={I} />
+      <circle cx={-4} cy={16} r={4.2} fill={I} />
+      <circle cx={8} cy={6} r={4.2} fill={I} />
+      <path d="M14 -20 L22 -14 L14 -8" {...sw} strokeWidth={2.4} />
+    </>
+  ),
+  /** Bass feels: a half note, a space, a half note (in two) over a long-short arc. */
+  bfeel: (
+    <>
+      <ellipse cx={-14} cy={6} rx={6.4} ry={4.6} transform="rotate(-20 -14 6)" fill="none" stroke={I} strokeWidth={2.6} />
+      <ellipse cx={12} cy={6} rx={6.4} ry={4.6} transform="rotate(-20 12 6)" fill="none" stroke={I} strokeWidth={2.6} />
+      <path d="M-8 4 V-20 M18 4 V-20" {...sw} strokeWidth={2.4} />
+      <path d="M-24 20 Q0 30 24 20" {...sw} strokeWidth={2.2} />
+    </>
+  ),
+});
 // AUDIT-GAMES §4.2 new games: one drawn symbol each.
 Object.assign(GLYPHS, {
   // Guide-Tone Runner: a 7th falling to the next 3rd over a beat line with ticks.

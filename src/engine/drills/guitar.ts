@@ -21,6 +21,7 @@ import { generateGuitarProg, guitarProgFamily } from './guitarProg';
 import { generateGuitarMeter, guitarMeterFamily } from './guitarMeter'; // AUDIT-CONTENT-THEORY R-4/R-5
 import { generateGuitarFirst, guitarFirstFamily, guitarRiffFamily } from './guitarFirst'; // AUDIT-6 Stage B: the guitar's first steps, riffs by grade
 import { bassFirstFamily, generateBassFirst } from './bassFirst'; // AUDIT-6 Stage B: the bass's first steps
+import { bassFeelFamily, bassRiffFamily, generateBassRiffFeel } from './bassRiffFeel'; // AUDIT-7 #15: bass riffs by grade, the feels
 import { generateGuitarEar } from './guitarEar';
 import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
@@ -2407,6 +2408,10 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarFirst(s, tu);
     case 'b-first':
       return generateBassFirst(s, tu);
+    // AUDIT-7 #15: riffs by grade and the broken-feel / ballad ladder on the bass.
+    case 'b-riff':
+    case 'b-feel':
+      return generateBassRiffFeel(s, tu);
     // Voice leading on the neck (AUDIT-CONTENT-THEORY §ה.2, VL-8): voiceLeadDrills.ts.
     case 'g-vl':
       return generateGuitarVL(s, tu);
@@ -2541,7 +2546,13 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-scales', 4, 'Major scale: E and A shape positions', 'סולם מז׳ור: מצבי צורות E ו-A', [S('caged', { position: 0 }), S('caged', { position: 3 })], 'major'),
       L('g-scales', 5, 'Major scale in all 5 CAGED positions', 'סולם מז׳ור בכל 5 מצבי CAGED', [1, 2, 4].map((p) => S('caged', { position: p })), 'major'),
       L('g-scales', 6, '3 notes per string (7 patterns) and one-string scales', '3 צלילים במיתר (7 תבניות) וסולם על מיתר אחד', [...range(7).map((p) => S('3nps', { position: p, stretch: true })), S('one-string', { position: 3 }), S('one-string', { position: 5 })], 'major'),
-      L('g-scales', 7, 'Modes, minor, symmetric and altered scales; sequences in position', 'מודוסים, סולמות מינור, סימטריים ואלטרד; רצפים במצב', [...[1, 4, 3, 2, 6, 7, 8].map((m) => S('mode', { option: m })), S('seq3', { position: 0 }), S('seq4', { position: 3 }), ...[5, 9, 10, 11].map((m) => S('mode', { option: m })), S('seq-g3', { position: 0, perBeat: 3 }), S('seq-g3', { position: 3, perBeat: 3 }), S('seq3', { position: 3 }), S('seq4', { position: 0 })], 'major'),
+      // AUDIT-7 #7: harmonic minor (RSL G5), Dorian / Mixolydian (G6), Lydian / Phrygian / melodic minor (G7) moved to
+      // their own levels 13–15 (same items, same ids); level 7 keeps Locrian, the symmetric and altered scales and the
+      // sequences (grade 8).
+      L('g-scales', 7, 'Locrian, symmetric and altered scales; sequences in position', 'לוקרי, סולמות סימטריים ואלטרד; רצפים במצב', [S('mode', { option: 6 }), S('seq3', { position: 0 }), S('seq4', { position: 3 }), ...[9, 10, 11].map((m) => S('mode', { option: m })), S('seq-g3', { position: 0, perBeat: 3 }), S('seq-g3', { position: 3, perBeat: 3 }), S('seq3', { position: 3 }), S('seq4', { position: 0 })], 'major'),
+      L('g-scales', 13, 'Harmonic minor and natural minor in position', 'מינור הרמוני ומינור טבעי במצב', [S('mode', { option: 7 }), S('mode', { option: 5 })], 'major'),
+      L('g-scales', 14, 'Dorian and Mixolydian in position', 'דורי ומיקסולידי במצב', [S('mode', { option: 1 }), S('mode', { option: 4 })], 'major'),
+      L('g-scales', 15, 'Lydian, Phrygian and melodic minor in position', 'לידי, פריגי ומינור מלודי במצב', [S('mode', { option: 3 }), S('mode', { option: 2 }), S('mode', { option: 8 })], 'major'),
     ]),
     fam('g-arps', 'Arpeggios', 'ארפג׳יו', 'classical', ['all'], [
       L('g-arps', 1, 'Major and minor triads, root on 6 and 5', 'משולשים מז׳ור ומינור, יסוד על 6 ו-5', [A('triad', { position: 6 }), A('triad', { position: 5 }), A('triad', { position: 6, minor: true }), A('triad', { position: 5, minor: true })], 'major'),
@@ -2724,7 +2735,14 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     },
     // The bass course (BASS_CURRICULUM §5), in teaching order; AUDIT-6 Stage B: its first steps lead (bassFirst.ts).
     bassFirstFamily(),
-    ...bassFamilies(),
+    // AUDIT-7 #15: bass riffs by grade (b-riff) and the feels — two, half-time, broken, ballad (b-feel), before the
+    // upright track (which stays last).
+    ...((): GuitarFamilyDef[] => {
+      const b = bassFamilies();
+      const up = b.findIndex((f) => f.id.startsWith('b-up-'));
+      const at = up < 0 ? b.length : up;
+      return [...b.slice(0, at), bassRiffFamily(), bassFeelFamily(), ...b.slice(at)];
+    })(),
     // The drums course v1 (DRUMS_CURRICULUM §4.3), in teaching order.
     ...drumFamilies(),
   ];
@@ -2761,6 +2779,8 @@ function applyGuitarMeta(f: GuitarFamilyDef): GuitarFamilyDef {
     const grade = topGrade(lv.id, meta.grade);
     return { ...lv, specs, tempo: meta.tempo, sub: meta.sub, grade, exam: examOfGrade(grade), ...(addOn ? { addOn } : {}), ...(meta.country ? { country: true } : {}) };
   });
+  // Levels in number order (AUDIT-7 #7: g-scales 13–15 are written with the core levels, 8–12 come from the batches).
+  levels.sort((a, b) => a.level - b.level);
   return { ...f, levels, ...(famAddOn ? { addOn: famAddOn } : {}) };
 }
 

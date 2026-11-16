@@ -53,7 +53,8 @@ describe('guitar drills: catalogue', () => {
       expect(f.levels.length).toBeGreaterThan(0);
       // Bass-course families (b-*, BASS_CURRICULUM §5) run up to 12 levels.
       // BASS_NICHE_PLAN P2: the bass ear runs to 21 (E5); progressions by ear take it to 23.
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 23 : f.id.startsWith('d-') ? 20 : 13);
+      // AUDIT-7 #7: g-scales has 15 (harmonic minor and the modes at grades 5–7, levels 13–15).
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 23 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' ? 15 : 13);
       // numbered in order; a gap only where a level is hidden until verified (src/engine/verifiedContent.ts)
       f.levels.forEach((l, i) => expect(l.level).toBeGreaterThanOrEqual(i + 1));
       f.levels.forEach((l, i) => i > 0 && expect(l.level).toBeGreaterThan(f.levels[i - 1].level));
@@ -396,7 +397,7 @@ describe('guitar drills: plan', () => {
     expect(g.length).toBeGreaterThan(10);
     expect(g.every((f) => f.id.startsWith('g-') && f.id !== 'g-bass')).toBe(true);
     // Bass: the 14 course families; the old g-bass starter is retired (kept for old ids, not shown).
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-first', 'b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-ctx', 'b-solo', 'b-harrisline', 'b-counter', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass' }).map((f) => f.id)).toEqual(['b-first', 'b-pluck', 'b-time', 'b-fret', 'b-chord', 'b-ear', 'b-scale', 'b-length', 'b-pocket', 'b-read', 'b-posread', 'b-styles', 'b-ghost', 'b-walk', 'b-impro', 'b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-bebop', 'b-phrase', 'b-tune', 'b-ctx', 'b-solo', 'b-harrisline', 'b-counter', 'b-legato', 'b-ext', 'b-pick', 'b-odd', 'b-prog', 'b-poly', 'b-slap', 'b-riff', 'b-feel', 'b-up-pos', 'b-up-arco', 'b-up-scales', 'b-up-pizz', 'b-up-walk', 'b-up-read']);
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 

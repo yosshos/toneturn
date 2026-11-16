@@ -17,6 +17,7 @@ import { generateCount, generateForm, generateNotation, generateReadMore } from 
 import { generateMore } from './drumMore';
 import { drumFirstFamily, generateDrumFirst } from './drumFirst'; // AUDIT-6 Stage B: the drums' first steps
 import { drumTopFamilies, generateDrumTop } from './drumTop';
+import { genGrooveDev } from './drumGroove'; // AUDIT-7 #12: develop a groove, a solo break, back to the groove
 import { gateFamilies } from '../verifiedContent';
 
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -868,6 +869,8 @@ export function generateDrums(spec: DrillSpec): Drill {
   // STAGE C (AUDIT-6 DA-10): the advanced families past 1400 (drumTop.ts).
   const top = generateDrumTop(s);
   if (top) return top;
+  // AUDIT-7 #12: d-fills 9, the RSL Improvisation & Interpretation task (drumGroove.ts) — before drumMore takes d-fills 6+.
+  if (s.family === 'd-fills' && levelOfKind(s.kind) === 9) return genGrooveDev(s);
   // DRUMS_NICHE_PLAN P2: the rest of the curriculum (drumMore.MORE_FROM: the levels past each family's first ones).
   const more = generateMore(s);
   if (more) return more;
@@ -1009,6 +1012,8 @@ export function allDrumFamilies(): DrumFamilyDef[] {
       L('d-fills', 6, 'Flam and accent fills into the "&" of 4', 'מעברי פלאם והדגשה אל ה"וְ" של 4', 'antic', 3, [80, 110], '1/16', false),
       L('d-fills', 7, 'Read the fill length', 'לקרוא את אורך המעבר', 'call', 4, [80, 110], '1/16', false),
       L('d-fills', 8, 'Your own fill, land on 1', 'מעבר משלכם, נחיתה על 1', 'free', 3, [90, 130], 'mixed', false),
+      // AUDIT-7 #12 (RSL I&I, grades 4–5): develop a written groove, a 2-bar solo break, back to the groove (drumGroove.ts).
+      L('d-fills', 9, 'Develop the groove, solo, come back', 'לפתח את הגרוב, סולו, לחזור', 'develop', 3, [80, 110], 'mixed', false),
     ]),
     fam('d-read', 'Reading', 'קריאת תווים', [
       L('d-read', 1, 'Snare: quarters, 8ths, rests', 'סנר: רבעים, שמיניות, הפסקות', 'read', 4, [70, 90], '1/8', true),

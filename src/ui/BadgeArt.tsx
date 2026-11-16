@@ -928,6 +928,23 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M13 19c1.5-3 3-3 4.5 0s3 3 4.5 0 M2 19h9', false)}
     </>
   ),
+  // AUDIT-7: pop accompaniment (a chord symbol over three stacked heads), pedalling (a pedal under a held line), the
+  // classical pieces (a treble clef curl beside a minuet's 3/4).
+  'family:k-pop': () => (
+    <>
+      {head(9, 18, 2.2)}
+      {head(9, 14, 2.2)}
+      {head(9, 10, 2.2)}
+      {p('M11.2 9V3 M15 20l3-6 3 6 M16 18h4', false)}
+    </>
+  ),
+  'family:k-pedal': () => p('M3 6h18 M4 17h16l-2 4H6z M12 17V9 M8 9h8', false),
+  'family:k-classic': () => (
+    <>
+      {p('M8 21c-3 0-3-4 0-4s3 4 0 4 M8 17V3c3 1 4 3 2 6-2 3-6 4-6 8', false)}
+      {p('M15 6h6 M15 12h6 M18 14v7', false)}
+    </>
+  ),
   // Solo jazz piano (Siskind): a bass note under a two-note shell; three mangos over two hands; a hit on the "and";
   // phrases with a rest between them.
   'family:k-lh': () => (
