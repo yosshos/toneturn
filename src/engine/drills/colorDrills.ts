@@ -23,7 +23,7 @@
 import type { BassFamilyId, Drill, DrillGoal, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { Buf, chordDrill, itemIdOf, pianoFinish } from './generate';
-import type { Tuning } from '../fretboard';
+import { tuningById, type Tuning } from '../fretboard';
 import type { Ev, GuitarFamilyDef, GuitarLevelDef, GuitarStyle } from './guitar';
 import { finish as gFinish } from './guitar';
 import { alt, drillOf, rootOf, type BN } from './bass';
@@ -882,7 +882,87 @@ function triadOn(tu: Tuning, root: number, q: 'M' | 'm' | 'dim', strings: number
   const cost = (x: { v: number[]; fit: { f: number }[] }) => (prev ? motionOf(prev, x.v) : Math.abs(Math.min(...x.fit.map((f) => f.f)) - aim));
   return cands.sort((a, b) => cost(a) - cost(b))[0].fit;
 }
+/**
+ * More open-string pedals (AUDIT-DEPTH-3 follow-up, 2026-11-16), only where the open string is idiomatic:
+ *  gop-minor  i – iv – V – i over the open tonic in E, A and D minor (the same open strings as the major pedal);
+ *  gop-high   the open high E (1st string) ringing ABOVE shapes on strings 4-3-2: in E the tonic on top
+ *             (E – A – D(add9) – E), in A the 5th on top (A – D(add9) – G6 – A); I – IV – ♭VII – I, all consonant;
+ *  gop-dropd  drop D tuning, the low open D (6th string) as the pedal: in D the tonic pedal (I – IV – V – I,
+ *             I – ♭VII – IV – I), in G the dominant pedal (Am/D – C/D – E♭/D – D7 → G).
+ */
+export const MORE_PEDAL_KEYS: Record<string, number[]> = { 'gop-minor': [4, 9, 2], 'gop-high': [4, 9], 'gop-dropd': [2, 7] };
+const MINOR_PEDAL: [number, 'M' | 'm', string][] = [[0, 'm', ''], [5, 'm', 'iv'], [7, 'M', 'V'], [0, 'm', '']];
+const HIGH_PEDAL: [number, 'M' | 'm', string][] = [[0, 'M', ''], [5, 'M', 'IV'], [10, 'M', '♭VII'], [0, 'M', '']];
+function genMorePedal(s: DrillSpec, tu0: Tuning, key: number, op: number): Drill {
+  const keys = MORE_PEDAL_KEYS[s.kind];
+  if (!keys.includes(key)) throw new Error(`${s.kind}: not idiomatic in ${key}`);
+  const drop = s.kind === 'gop-dropd';
+  const tu = drop ? tuningById('drop-d') : tu0;
+  const spec: DrillSpec = drop ? { ...s, tuning: 'drop-d' } : s;
+  const evs: Ev[] = [];
+  const names: string[] = [];
+  let prev: number[] | null = null;
+  const pitches = (fit: { s: number; f: number }[]) => fit.map((x) => tu.open[x.s - 1] + x.f);
+  const strum = (fit: { s: number; f: number }[], beat: number, dur: number) => evs.push({ beat, dur, notes: fit.map((x) => ({ s: x.s, f: x.f, tech: 'strum-down' as const, stroke: 'D' as const })) });
+  let ttl: T2;
+  let sig = SIG[key];
+  if (s.kind === 'gop-minor') {
+    const fl = flatsOf(key + 3);
+    const str = OPEN_PEDAL[key];
+    const kn = kName(key, true);
+    MINOR_PEDAL.forEach(([d, q, rn], i) => {
+      const tri = triadOn(tu, key + d, q, [3, 2, 1], prev, 2);
+      prev = pitches(tri);
+      strum([{ s: str, f: 0 }, ...tri], i * 4, 4);
+      names.push(rn ? `${rootName(key + d, fl)}${q === 'm' ? 'm' : ''}/${rootName(key, fl)}` : kn);
+    });
+    sig = SIG[mod12(key + 3)];
+    ttl = t(`Open-string pedal in ${kn}: i – iv – V – i over the open tonic`, `פדל על מיתר פתוח ב־${kn}: i – iv – V – i מעל הטוניקה הפתוחה`);
+  } else if (s.kind === 'gop-high') {
+    const fl = flatsOf(key);
+    const kn = kName(key);
+    const SUF: Record<number, string[]> = { 4: ['', '', 'add9', ''], 9: ['', 'add9', '6', ''] };
+    HIGH_PEDAL.forEach(([d, q], i) => {
+      const tri = triadOn(tu, key + d, q, [4, 3, 2], prev, 2);
+      prev = pitches(tri);
+      strum([...tri, { s: 1, f: 0 }], i * 4, 4);
+      names.push(rootName(key + d, fl) + SUF[key][i]);
+    });
+    ttl = key === 4
+      ? t(`The open high E rings above the shapes in ${kn}: ${names.join(' – ')}`, `ה־E הגבוה הפתוח מצלצל מעל הצורות ב־${kn}: ${names.join(' – ')}`)
+      : t(`The open high E (the 5th) rings above the shapes in ${kn}: ${names.join(' – ')}`, `ה־E הגבוה הפתוח (הקווינטה) מצלצל מעל הצורות ב־${kn}: ${names.join(' – ')}`);
+  } else {
+    // drop D: the pedal is the low D on the 6th string
+    const fl = flatsOf(key);
+    const kn = kName(key);
+    if (key === 2) {
+      const row = TONIC_PEDAL[op % TONIC_PEDAL.length];
+      row.prog.forEach(([d, q, rn], i) => {
+        const tri = triadOn(tu, key + d, q, [3, 2, 1], prev, 2);
+        prev = pitches(tri);
+        strum([{ s: 6, f: 0 }, ...tri], i * 4, 4);
+        names.push(rn ? `${rootName(key + d, fl)}/D` : kn);
+      });
+      ttl = t(`Drop D: the low open D under the shapes in ${kn}: ${row.en.replace(' over the open tonic', '')}`, `Drop D: ה־D הנמוך הפתוח מתחת לצורות ב־${kn}: ${row.he.replace(' מעל הטוניקה הפתוחה', '')}`);
+    } else {
+      DOM_PEDAL.forEach(([d, q], i) => {
+        const tri = triadOn(tu, key + d, q, [3, 2, 1], prev, 2);
+        prev = pitches(tri);
+        strum([{ s: 6, f: 0 }, ...tri], i * 4, 4);
+        names.push(d === 11 ? 'D7' : `${rootName(key + d, fl || d === 8)}${q === 'm' ? 'm' : ''}/D`);
+      });
+      // home: G with its root on the 6th string (fret 5 in drop D)
+      const tri = triadOn(tu, key, 'M', [3, 2, 1], null, 5);
+      strum([{ s: 6, f: mod12(key - tu.open[5]) }, ...tri], DOM_PEDAL.length * 4, 4);
+      names.push(kn);
+      ttl = t(`Drop D: the dominant pedal on the low open D, then ${kn}: ${names.join(' – ')}`, `Drop D: פדל דומיננטה על ה־D הנמוך הפתוח, ואז ${kn}: ${names.join(' – ')}`);
+    }
+  }
+  const d = gFinish({ ...spec, key }, tu, evs, { title: ttl, bpm: 60, evenness: false, keySig: sig });
+  return { ...d, chart: chartOfAt(names, evs.map((e) => e.beat)) };
+}
 function genOpenPedal(s: DrillSpec, tu: Tuning, key: number, op: number): Drill {
+  if (MORE_PEDAL_KEYS[s.kind]) return genMorePedal(s, tu, key, op);
   const fl = flatsOf(key);
   const evs: Ev[] = [];
   const names: string[] = [];
@@ -1046,6 +1126,10 @@ export const GCOL_ROWS: { kind: string; ops: number[]; grade: number; en: string
   { kind: 'gop-tonic', ops: [0, 1], grade: 5, en: 'Open-string pedal: shapes over the ringing tonic', he: 'פדל על מיתר פתוח: צורות מעל הטוניקה המצלצלת', sub: 'triads', keys: [4, 9, 2] },
   { kind: 'gop-dom', ops: [0], grade: 6, en: 'Dominant pedal on an open string, then home', he: 'פדל דומיננטה על מיתר פתוח, ואז הביתה', sub: 'triads', keys: [9, 2, 7] },
   { kind: 'gop-ring', ops: [0], grade: 6, en: 'Open B and E ringing above moving shapes', he: 'B ו־E פתוחים מצלצלים מעל צורות זזות', sub: 'triads', keys: [4, 9, 2, 7] },
+  // More open-string pedals, only in the keys whose open strings carry them (FIXED_KEY_LEVELS g-color 16–18).
+  { kind: 'gop-minor', ops: [0], grade: 5, en: 'Open-string pedal in minor: i – iv – V – i over the open tonic', he: 'פדל על מיתר פתוח במינור: i – iv – V – i מעל הטוניקה הפתוחה', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-minor'] },
+  { kind: 'gop-high', ops: [0], grade: 6, en: 'The open high E rings above the shapes', he: 'ה־E הגבוה הפתוח מצלצל מעל הצורות', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-high'] },
+  { kind: 'gop-dropd', ops: [0], grade: 6, en: 'Drop D: the low open D as the pedal (tonic in D, dominant in G)', he: 'Drop D: ה־D הנמוך הפתוח כפדל (טוניקה ב־D, דומיננטה ב־G)', sub: 'triads', keys: MORE_PEDAL_KEYS['gop-dropd'] },
 ];
 const gFam = (id: FamilyId, rows: typeof GCT_ROWS, LT: LTFn) => rows.map((r, i) => LT(id, i + 1, r.en, r.he, r.ops.map((o) => ({ family: id, kind: r.kind, hands: 'R' as const, instrument: 'guitar' as const, option: o, tempo: 60 })), r.keys ?? CL_KEYS, [60, 100], r.sub, r.grade));
 export function guitarCtoneFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
