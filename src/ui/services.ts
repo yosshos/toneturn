@@ -17,7 +17,7 @@ import { WebSpeechTranscriber } from '../speech/webspeech';
 import { ProgressStore } from '../storage/progress';
 import { defaultKV, memoryKV } from '../storage/kv';
 
-export const params = new URLSearchParams(location.search);
+export const params = new URLSearchParams(typeof location !== 'undefined' ? location.search : ''); // safe in unit tests (no window)
 export const SIMULATED = params.has('sim');
 /** Dev/test convenience: ?unlock=all opens every lesson on the path. */
 export const UNLOCK_ALL = params.get('unlock') === 'all';
