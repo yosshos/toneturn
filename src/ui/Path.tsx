@@ -25,6 +25,7 @@ import { NodeIcon, starsFor, TOTALS } from './Home';
 import { UNLOCK_ALL } from './services';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { DOMAIN_HUE, useRoad } from './Arcade';
+import { useAmbient, usePathNodeEvents } from './paper/motion';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -319,6 +320,10 @@ export function PathView2({
   const shownUnits = view.units;
   const roadKey = `${lang}|${shownUnits.map((u) => u.steps.map((x) => x.step.id + x.state).join(',')).join('|')}`;
   const road = useRoad(roadRef, roadKey);
+  // Icon motion: the current step breathes while on screen (one of the two ambient motions); a step that unlocked or
+  // was completed since the road was last shown plays its motion once.
+  useAmbient(curRef, 'breathe', !!view.current, `${roadKey}|${view.current?.step.id ?? ''}`);
+  usePathNodeEvents(roadRef, roadKey);
 
   // The change card (P17: the next five steps changed after a rebuild).
   const ids = nextIds(view);

@@ -33,12 +33,16 @@ import './practice.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
+import { installIconTaps } from './ui/paper/motion';
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);
 
 // A partner build (VITE_PARTNER) paints its tokens before the first render; the normal app: no-op.
 installPartner();
+
+// Icon micro-animations: pressing a control with an icon plays the icon's motion (one listener; off in exercises).
+installIconTaps();
 
 // Dev-only: the Paper icon gallery (#/dev/glyphs), outside the app shell.
 if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {

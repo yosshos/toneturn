@@ -3,8 +3,9 @@
 // variables so the same drawing re-tones per theme / surface (src/paper.css): light cards, dark cards, the dark bar,
 // and the two filled surfaces (lemon "now", purple "done").
 import { createElement, type CSSProperties, type ReactNode } from 'react';
-import { HUES, TONE_KEYS, tones, type Art, type Cut, type Part, type Role } from './kit';
+import { HUES, TONE_KEYS, tones, type Art, type Cut, type Motion, type Part, type Role } from './kit';
 import '../../paper.css';
+import '../../paper-motion.css';
 
 const SOLID: Partial<Record<Role, [string, string]>> = {
   body: ['b', 'bE'],
@@ -33,29 +34,52 @@ export function paperParts(art: Art, cut: Cut = 'full', keyPrefix = ''): ReactNo
   const maxLod = cut === 'small' ? 0 : cut === 'full' ? 1 : 2;
   const edge = cut === 'small' ? 2.2 : 1.9;
   const bump = cut === 'small' ? 0.5 : 0;
+  const nod = autoNod(art, cut);
   art.parts.forEach((p: Part, i) => {
     if ((p.lod ?? 0) > maxLod) return;
     const k = `${keyPrefix}${i}`;
     const base = p.t === 'text' ? { ...TEXT, ...p.a } : p.a;
+    const own: ReactNode[] = [];
     const solid = SOLID[p.role];
+    const st = STROKE[p.role];
     if (solid) {
       const [f, e] = solid;
       // Letters get a thinner edge (none in the small cut) so they stay crisp.
       const dy = p.t === 'text' ? (cut === 'small' ? 0 : 0.9) : edge;
-      if (dy) out.push(createElement(p.t, { key: `${k}e`, ...base, transform: shift(p.a.transform, dy), style: { fill: tv(e) } }, p.text));
-      out.push(createElement(p.t, { key: k, ...base, style: { fill: tv(f) } }, p.text));
-      return;
-    }
-    const st = STROKE[p.role];
-    if (!st) return;
-    const [tone, w0] = st;
-    const w = (p.w ?? w0) + (p.role === 'accentline' ? 0.6 : p.role === 'line' ? 0.2 : 0) + bump;
-    const common = { fill: 'none', strokeWidth: w, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-    if (p.role === 'tube') out.push(createElement(p.t, { key: `${k}e`, ...base, ...common, transform: shift(p.a.transform, edge), style: { stroke: tv('bE') } }));
-    out.push(createElement(p.t, { key: k, ...base, ...common, ...(p.role === 'dash' ? { strokeDasharray: '2.6 3' } : {}), style: { stroke: tv(tone) } }));
+      if (dy) own.push(createElement(p.t, { key: `${k}e`, className: 'pe', ...base, transform: shift(p.a.transform, dy), style: { fill: tv(e) } }, p.text));
+      own.push(createElement(p.t, { key: k, ...base, style: { fill: tv(f) } }, p.text));
+    } else if (st) {
+      const [tone, w0] = st;
+      const w = (p.w ?? w0) + (p.role === 'accentline' ? 0.6 : p.role === 'line' ? 0.2 : 0) + bump;
+      const common = { fill: 'none', strokeWidth: w, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+      if (p.role === 'tube') own.push(createElement(p.t, { key: `${k}e`, className: 'pe', ...base, ...common, transform: shift(p.a.transform, edge), style: { stroke: tv('bE') } }));
+      own.push(createElement(p.t, { key: k, ...base, ...common, ...(p.role === 'dash' ? { strokeDasharray: '2.6 3' } : {}), style: { stroke: tv(tone) } }));
+    } else return;
+    // A moving part: its sheet and edge in one group that carries the motion (classes and attributes only - the colour
+    // styles stay the only inline styles). Origin: a point on the grid (view-box), or the group's own box.
+    const m = p.m ?? (i === nod ? AUTO_NOD : undefined);
+    if (m) out.push(createElement('g', { key: `${k}m`, className: motionClass(m), ...(m.o ? { transformOrigin: `${m.o[0]} ${m.o[1]}` } : {}) }, own));
+    else out.push(...own);
   });
   return out;
 }
+/** The class list of a moving part's group (src/paper-motion.css). */
+export const motionClass = (m: Motion) => `pa pa-${m.k}${m.o ? ' pa-o' : ''}${m.d ? ` pa-d${m.d}` : ''}${m.r ? ' pa-r' : ''}${m.fx ? ' pa-fx' : ''}`;
+const AUTO_NOD: Motion = { k: 'nod' };
+/**
+ * The default motion's companion: in a drawing without tagged parts, the motif — the first tilted note head in the
+ * accent hue — nods while the sheets lift. −1 when there is none (or the drawing has its own motion).
+ */
+export function autoNod(art: Art, cut: Cut = 'full'): number {
+  const maxLod = cut === 'small' ? 0 : cut === 'full' ? 1 : 2;
+  if (art.parts.some((p) => p.m && !p.m.fx)) return -1;
+  return art.parts.findIndex((p) => p.t === 'ellipse' && p.role === 'accent' && (p.lod ?? 0) <= maxLod && /^rotate\(-20 /.test(String(p.a.transform ?? '')));
+}
+/** True when the drawing has a tagged motion at this cut (otherwise it plays the default lift). */
+export const hasMotion = (art: Art, cut: Cut = 'full') => {
+  const maxLod = cut === 'small' ? 0 : cut === 'full' ? 1 : 2;
+  return art.parts.some((p) => p.m && !p.m.fx && (p.lod ?? 0) <= maxLod);
+};
 /** Prepend a downward translate to an existing transform (edges sit below their sheet). */
 const shift = (tr: string | number | undefined, dy: number) => (tr ? `translate(0 ${dy}) ${tr}` : `translate(0 ${dy})`);
 
@@ -85,7 +109,7 @@ export interface PaperSvgProps {
 export function PaperSvg({ art, cut = 'full', width = 48, height, className, label }: PaperSvgProps) {
   return (
     <svg
-      className={`pp pp-${cut}${className ? ` ${className}` : ''}`}
+      className={`pp pp-${cut}${hasMotion(art, cut) ? '' : ' pm-lift'}${className ? ` ${className}` : ''}`}
       viewBox="0 0 48 48"
       width={width}
       height={height ?? width}

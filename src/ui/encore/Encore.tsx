@@ -5,6 +5,9 @@
 // Every screen fits one phone screen (320×720); musical time runs left → right; Latin is isolated in Hebrew.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { PAPER } from '../paper';
+import { usePlayOnMount } from '../paper/motion';
+import { PaperSvg } from '../paper/Paper';
 import '../../encore.css';
 import type { ItemState } from '../../engine/drills/types';
 import type { Settings } from '../../storage/progress';
@@ -1201,9 +1204,17 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
   }, []);
   const src = l.source && 'takeId' in l.source ? getEncoreTakeSync(l.source.takeId) : null;
   const first = l.createdAt ? new Date(l.createdAt) : null;
+  // The phrase becomes yours: the Encore mark plays its motion once (the note travels between the repeat signs).
+  const mark = useRef<HTMLSpanElement>(null);
+  usePlayOnMount(mark, 450, l.id);
   return (
     <main className="panel-screen enc-screen enc-yours" data-encore="yours" data-phrase={l.id}>
       <div className="enc-center enc-yours-top">
+        {PAPER.encore && (
+          <span ref={mark} className="enc-yours-mark" aria-hidden="true" style={{ display: 'block', width: 'fit-content', margin: '0 auto', lineHeight: 0 }}>
+            <PaperSvg art={PAPER.encore} width={52} />
+          </span>
+        )}
         <h1 className="enc-yours-h">{he ? 'המשפט שלך.' : 'The phrase is yours.'}</h1>
         <small className="t3">
           <Bi text={T(l.name, lang)} />

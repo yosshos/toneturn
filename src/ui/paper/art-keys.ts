@@ -1,6 +1,6 @@
 ﻿// Paper drawings: the piano course, jazz harmony on the keys and the keys games (see kit.ts for the roles and builders).
 import { ART_CORE } from './art-core';
-import { art, Ci, det, E, H, L, markParts, P, R, rich, T, type Art, type Part, type Role } from './kit';
+import { art, an, Ci, det, E, H, L, markParts, P, R, rich, T, type Art, type Part, type Role } from './kit';
 
 /** A keyboard sheet: n white keys, separators as detail, black keys in the deep tone. */
 const kbd = (x: number, y: number, w: number, h: number, n: number, role: Role = 'light', first = 0): Part[] => {
@@ -8,7 +8,15 @@ const kbd = (x: number, y: number, w: number, h: number, n: number, role: Role =
   const bw = ww * 0.58;
   const out: Part[] = [R(x, y, w, h, 3, role)];
   for (let i = 1; i < n; i++) out.push({ ...L(+(x + i * ww).toFixed(2), y, +(x + i * ww).toFixed(2), y + h, 'line', 1), lod: 1 });
-  for (let i = 0; i < n - 1; i++) if ([0, 1, 3, 4, 5].includes((i + first) % 7)) out.push(R(+(x + (i + 1) * ww - bw / 2).toFixed(2), y, +bw.toFixed(2), +(h * 0.58).toFixed(2), 1.2, 'ink'));
+  let pressed = false;
+  for (let i = 0; i < n - 1; i++)
+    if ([0, 1, 3, 4, 5].includes((i + first) % 7)) {
+      const key = R(+(x + (i + 1) * ww - bw / 2).toFixed(2), y, +bw.toFixed(2), +(h * 0.58).toFixed(2), 1.2, 'ink');
+      // the first black key past the middle goes down when the icon plays
+      const press = !pressed && i + 1 >= n / 2;
+      if (press) pressed = true;
+      out.push(press ? { ...key, m: { k: 'press' } } : key);
+    }
   return out;
 };
 /** Re-place a drawing's parts (translate + scale). */
@@ -101,14 +109,14 @@ export const ART_KEYS: Record<string, Art> = {
   lick: art(
     'purple',
     'teal',
-    Ci(24, 24, 21, 'body'),
+    an('turn', { o: [24, 24] }, Ci(24, 24, 21, 'body'),
     Ci(24, 24, 15.6, 'light'),
     det(
       ...Array.from({ length: 12 }, (_, i) => {
         const a = (i / 12) * Math.PI * 2;
         return Ci(+(24 + Math.cos(a) * 18.3).toFixed(2), +(24 + Math.sin(a) * 18.3).toFixed(2), 1.1, 'light');
       }),
-    ),
+    )),
     H(17, 31, 3.6, 'ink'),
     H(29, 27, 3.6, 'accent'),
     L(20.2, 30, 20.2, 16, 'inkline', 1.8),
@@ -125,10 +133,10 @@ export const ART_KEYS: Record<string, Art> = {
     H(14, 30, 3.8, 'body'),
     L(17.4, 29, 17.4, 16, 'inkline', 1.8),
     H(24, 24, 3.4, 'body', 1),
-    P('M30 40 L42 8 L46.4 9.8 L34.4 41.8 Z', 'accent'),
+    an('nod', { o: [31, 44] }, P('M30 40 L42 8 L46.4 9.8 L34.4 41.8 Z', 'accent'),
     P('M30 40 L34.4 41.8 L30.4 46 Z', 'light'),
     P('M42 8 L46.4 9.8 L47.2 7.4 Q46 5 43 5.6 Z', 'mark'),
-    rich(L(41.6, 12, 33, 35, 'shine', 0.8)),
+    rich(L(41.6, 12, 33, 35, 'shine', 0.8))),
   ),
   /** Voice leading: three voices stepping from one chord to the next, one held. */
   voicelead: art(
@@ -362,7 +370,7 @@ export const ART_KEYS: Record<string, Art> = {
     L(13, 20, 36, 20, 'inkline', 1.6),
     det(L(13, 26, 36, 26, 'inkline', 1.6), L(13, 32, 26, 32, 'inkline', 1.6)),
     H(16, 38.5, 3.2, 'body'),
-    P('M29 31 L36 31 L36 47 L32.5 44 L29 47 Z', 'accent'),
+    an('wave', { o: [32.5, 31] }, P('M29 31 L36 31 L36 47 L32.5 44 L29 47 Z', 'accent')),
     rich(L(19.2, 37.6, 19.2, 31, 'inkline', 1.2)),
   ),
   /** The Transcription Race: a staff and a stopwatch. */
@@ -580,8 +588,8 @@ export const ART_KEYS: Record<string, Art> = {
     L(15, 10, 44, 10, 'wire', 2),
     det(L(44, 6, 44, 14, 'wire', 2)),
     R(4, 39, 40, 7, 2.5, 'mark'),
-    P('M10 38 L38 26 Q42 25 43 28.4 L43.4 30 L13 41 Q9.6 42 10 38 Z', 'body'),
-    P('M14 36 L37.4 26.2 Q40.4 25.6 41 27.6 L15.6 38.2 Z', 'light'),
+    an('press', { o: [12, 40] }, P('M10 38 L38 26 Q42 25 43 28.4 L43.4 30 L13 41 Q9.6 42 10 38 Z', 'body'),
+    P('M14 36 L37.4 26.2 Q40.4 25.6 41 27.6 L15.6 38.2 Z', 'light')),
     Ci(16, 39.4, 2, 'ink'),
     det(L(23, 33, 24, 35.2, 'line', 1), L(29, 30.4, 30, 32.6, 'line', 1), L(35, 27.8, 36, 30, 'line', 1)),
     rich(E(7.4, 9, 1.6, 0.8, -20, 'light')),

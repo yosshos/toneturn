@@ -130,6 +130,7 @@ import { subPriorities } from '../engine/scheduler';
 import { foldSubs } from '../engine/taxonomy';
 import { DOMAINS, evidence, weakestSkill } from '../engine/rating';
 import { useMotion } from './motion';
+import { ICON_MOTION_ROUTES } from './paper/motion';
 import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
 import { achievements, earnAwards, firstAwardsLine, firstLaunchAwards } from '../engine/achievements';
 import { bumpCount } from '../engine/stats';
@@ -764,6 +765,10 @@ export function App() {
 
   // Mini-lessons (spec X): a unit opens with its short lesson until the player has heard it to the end.
   const [mini, setMini] = useState<{ lesson: MiniLesson; then: () => void } | null>(null);
+  // Icon tap motion (src/ui/paper/motion.ts) only on the app's own screens — never inside an exercise or a mini-lesson.
+  useEffect(() => {
+    document.documentElement.dataset.iconMotion = ICON_MOTION_ROUTES.has(route) && !mini ? 'on' : 'off';
+  }, [route, mini]);
   const playerFirstName = user?.name ? user.name.split(' ')[0] : null;
   const markLearned = (id: string) => updateSettings({ learned: { ...(settings?.learned ?? {}), [id]: new Date().toISOString() } });
   const gate = (unit: string | null, start: () => void) => {
