@@ -504,6 +504,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   const played1 = drill.freeAbove !== undefined ? played0.filter((p) => p.pitch < drill.freeAbove!) : played0;
   const exp = drill.notes;
   const goal = drill.goal;
+  const tolK = Math.max(1, goal.timingTolerance ?? 1);
   const beatMs = 60000 / bpm;
   // Grace notes (grace.ts): the played graces leave the list (never wrong or extra); a main note is re-timed to its grace
   // when that sat nearer the beat (an appoggiatura's main note comes late by design).
@@ -558,7 +559,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     for (const x of rs) {
       const rel = med > 0 ? x.r / med : 1;
       for (const i of x.o.idx) ioiRatio[i] = rel;
-      if (rel > (opts.voice ? VOICE_TIMING.hesitation : 1.5)) hesitations++;
+      if (rel > (opts.voice ? VOICE_TIMING.hesitation : 1.5) * Math.sqrt(tolK)) hesitations++;
       if (goal.evenness && rel > 1.15) {
         const thumb = !fingered || x.o.idx.some((i) => exp[i].finger === 1) || x.prev.idx.some((i) => exp[i].finger === 1);
         if (thumb) glitches.push(x.o.idx[0]);
@@ -773,6 +774,11 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     th.hands = Math.max(th.hands, 35);
   }
   if (opts.voice) th.sd = Math.max(th.sd, VOICE_TIMING.sd);
+  // A phrase kept "as played" (its own timing, not on the grid): a wider window (DrillGoal.timingTolerance).
+  if (tolK > 1) {
+    th.sd *= tolK;
+    th.hands *= tolK;
+  }
   // A1: the evenness limit never asks for less IOI spread than the floor (ms) at the take's written IOI. (Callers with
   // their own limits — the bass, A7 — keep them.)
   const ioiMs = 1000 / Math.max(0.1, nps);

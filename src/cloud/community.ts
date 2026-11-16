@@ -104,6 +104,28 @@ export async function postActivity(kind: ActivityKind, payload: Record<string, u
   const { error } = await call('toneturn_post_activity', { p_kind: kind, p_payload: payload });
   return !error ? 'ok' : isMissingFn(error) ? 'missing' : 'error';
 }
+/**
+ * Encore's "the phrase is yours" moment for friends (kind 'phrase', grade and tempo — never the phrase's name). Off
+ * until the server has migration 20261203120000_toneturn_phrase_feed.sql: the flag is VITE_PHRASE_FEED=1 at build
+ * time (or localStorage "tt.flag.phraseFeed" = "1" on one device). Once per phrase on a device; the server also returns
+ * the first post for the same payload within 14 days, and skips young players and "feed" off.
+ */
+export const PHRASE_FEED = (): boolean => {
+  try {
+    if (import.meta.env.VITE_PHRASE_FEED === '1') return true;
+    return typeof localStorage !== 'undefined' && localStorage.getItem('tt.flag.phraseFeed') === '1';
+  } catch {
+    return false;
+  }
+};
+export async function postPhraseYours(phraseId: string, p: { grade: number; bpm: number; inst: string }): Promise<'ok' | 'off' | 'done' | 'missing' | 'error'> {
+  if (!PHRASE_FEED()) return 'off';
+  const key = `phrase:${phraseId}`;
+  if ((store.get<string[]>(POSTED) ?? []).includes(key)) return 'done';
+  const r = await postActivity('phrase', { grade: Math.round(p.grade), bpm: Math.round(p.bpm), inst: p.inst });
+  if (r === 'ok') store.set(POSTED, [...(store.get<string[]>(POSTED) ?? []), key].slice(-300));
+  return r;
+}
 export async function cheer(activityId: number): Promise<boolean> {
   const { error } = await call('toneturn_cheer', { p_activity: activityId });
   return !error;

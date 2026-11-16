@@ -5,6 +5,7 @@
 
 import type { Drill, DrillGoal, ExpNote, ItemState } from '../drills/types';
 import { itemPass, ladderStep } from '../drills/ladder';
+import { withBarPlan } from '../drills/timeline';
 import { keyName } from '../drills/generate';
 import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type LickChord, type LickContext, type LickInstrument, type LickNote, type PhrasePlan, type PhraseSource } from '../licks';
 import type { BeatNote } from './detect';
@@ -93,13 +94,75 @@ export function makePhrase(d: PhraseDraft): Lick {
 }
 const round3 = (x: number) => Math.round(x * 1000) / 1000;
 
-/** Total beats of a phrase: whole bars. */
+// ───────────────────────────── a pickup (anacrusis) ─────────────────────────────
+
+/**
+ * An anacrusis in a selection re-based to its first bar line (beat 0): the first note falls in the second half of bar
+ * 0 and the line goes on past the next bar line. Returns the pickup bar's length in whole beats (1 … meter − 1: an
+ * "and of 4" lead-in is a one-beat pickup bar that starts with an eighth rest), or 0 when the phrase starts on (or
+ * near) the downbeat.
+ */
+export function detectPickup(notes: Pick<BeatNote, 'beat'>[], meter: number): number {
+  if (!notes.length) return 0;
+  const f = Math.min(...notes.map((n) => n.beat));
+  if (f < meter / 2 - 1e-6 || f >= meter - 0.12) return 0;
+  if (!notes.some((n) => n.beat >= meter - 0.12)) return 0;
+  return Math.max(1, Math.min(meter - 1, meter - Math.floor(f + 0.12)));
+}
+/**
+ * A draft with its anacrusis notated (§5.2): when detectPickup finds one, the notes and chords move back so beat 0 is
+ * the start of a short first bar (`pickup` beats) and the first downbeat falls on beat `pickup` — rather than the
+ * phrase starting inside a full bar of rests.
+ */
+export function withPickup(d: PhraseDraft): PhraseDraft {
+  const p = detectPickup([...d.rh, ...d.lh], d.meter);
+  if (!p) return { ...d, pickup: 0 };
+  const shift = d.meter - p;
+  const mv = (ns: BeatNote[]) => ns.map((n) => ({ ...n, beat: Math.max(0, round3(n.beat - shift)) }));
+  // the chords lose the empty beats at the start
+  const chords: LickChord[] = [];
+  let cut = shift;
+  for (const c of d.chords) {
+    if (cut >= c[2] - 1e-6) {
+      cut -= c[2];
+      continue;
+    }
+    chords.push([c[0], c[1], c[2] - cut]);
+    cut = 0;
+  }
+  return { ...d, rh: mv(d.rh), lh: mv(d.lh), chords, pickup: p };
+}
+/** The pickup bar's length (0 = none). */
+export const pickupOf = (l: Pick<Lick, 'pickup' | 'meter'>): number => {
+  const p = Math.round(l.pickup ?? 0);
+  return p > 0 && p < (l.meter ?? 4) ? p : 0;
+};
+/** The bar a beat falls in (bar 0 = the pickup bar when there is one). */
+export function barOfBeat(l: Pick<Lick, 'pickup' | 'meter'>, beat: number): number {
+  const m = l.meter ?? 4;
+  const p = pickupOf(l);
+  if (!p) return Math.floor(beat / m + 1e-6);
+  return beat < p - 1e-6 ? 0 : 1 + Math.floor((beat - p) / m + 1e-6);
+}
+/** The end beat of a bar. */
+export function barEndBeat(l: Pick<Lick, 'pickup' | 'meter'>, bar: number): number {
+  const m = l.meter ?? 4;
+  const p = pickupOf(l);
+  return p ? p + bar * m : (bar + 1) * m;
+}
+
+/** Total beats of a phrase: whole bars (after a pickup bar, when there is one). */
 export function phraseBeats(l: Lick): number {
   const m = l.meter ?? 4;
+  const p = pickupOf(l);
   const last = Math.max(0, ...l.notes.map((n) => n[1] + n[2]), ...(l.lh ?? []).map((n) => n[1] + n[2]), l.chords.reduce((a, c) => a + c[2], 0));
-  return Math.max(m, Math.ceil(last / m - 1e-6) * m);
+  return p + Math.max(m, Math.ceil((last - p) / m - 1e-6) * m);
 }
-export const phraseBars = (l: Lick) => phraseBeats(l) / (l.meter ?? 4);
+/** Bars of a phrase (the pickup bar counts as one). */
+export const phraseBars = (l: Lick) => {
+  const p = pickupOf(l);
+  return (p ? 1 : 0) + (phraseBeats(l) - p) / (l.meter ?? 4);
+};
 
 // ───────────────────────────── the plan (§7.1–7.3) ─────────────────────────────
 
@@ -190,15 +253,14 @@ export const chordName = (c: LickChord, key: number): string => (flatKey(key) ? 
 /** Chord names per bar for the chart above the staff (any meter). */
 export function phraseChart(l: Lick, key: number): string[] {
   if (!l.chords.length) return [];
-  const m = l.meter ?? 4;
   const bars: string[][] = [];
   let beat = 0;
   for (const c of l.chords) {
     let left = c[2];
     let first = true;
     while (left > 1e-6) {
-      const bar = Math.floor(beat / m + 1e-6);
-      const inBar = Math.min(left, (bar + 1) * m - beat);
+      const bar = barOfBeat(l, beat);
+      const inBar = Math.min(left, barEndBeat(l, bar) - beat);
       (bars[bar] ??= []);
       if (first) bars[bar].push(chordName(c, key));
       else if (!bars[bar].length) bars[bar].push('%');
@@ -211,6 +273,9 @@ export function phraseChart(l: Lick, key: number): string[] {
   for (let b = 0; b < total; b++) bars[b] ??= ['%'];
   return bars.slice(0, total).map((b) => b.join(' '));
 }
+
+/** The timing-window factor of an "as played" phrase (DrillGoal.timingTolerance): its limits × 1.6. */
+export const AS_PLAYED_TOLERANCE = 1.6;
 
 /**
  * (phrase, key, hand) as a Drill: the take, the ladder, the live marks and the chart all come from the drills engine
@@ -244,10 +309,12 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
   }
   const minor = !!l.minor;
   const kn = keyName(k, minor) + (minor ? 'm' : '');
-  const goal: DrillGoal = { evenness: false, hands: hand === 'RL' };
+  // "As played" (kept off the grid, §5.5): its own timing is the model, so the grading window is wider.
+  const goal: DrillGoal = { evenness: false, hands: hand === 'RL', ...(l.asPlayed ? { timingTolerance: AS_PLAYED_TOLERANCE } : {}) };
   const sig = ROOT_FLAT[minor ? mod(k + 3) : k];
   const plan = planOf(l);
-  return {
+  const p = pickupOf(l);
+  const drill: Drill = {
     spec: { family: 'licks', kind: `lick:${l.id}`, key: k, hands: hand, swing: (l.swing ?? (l.straight ? 0.5 : 0.62)) > 0.54, ...(minor ? { minor: true } : {}), ...(inst === 'guitar' || inst === 'bass' ? { instrument: inst, tuning: tuningOf(inst).id } : {}) },
     itemId: phraseItemId(l, inst, k, hand),
     title: { en: `${l.name.en} · ${kn}`, he: `${l.name.he} · ${kn}` },
@@ -263,6 +330,10 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
     ...(inst === 'voice' ? { sung: true } : {}),
     ...(o.band && l.chords.length ? { band: { style: 'swing' as const, bass: true } } : {}),
   };
+  // A pickup: a short first bar (written in the phrase's meter; the count-in is a full bar and the beats before it).
+  if (!p) return drill;
+  const m = l.meter ?? 4;
+  return withBarPlan(drill, [{ num: p, den: 4, pickup: true }, [{ num: m, den: 4 }, Math.max(1, Math.round((phraseBeats(l) - p) / m))]]);
 }
 
 // ───────────────────────────── the 12 keys, easiest first (§7.3) ─────────────────────────────

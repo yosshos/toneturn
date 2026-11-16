@@ -117,10 +117,14 @@ export function candidates(notes: BeatNote[], meter = 4, n = 3, max = MAX_BARS):
  * quarter of a beat to a suggested boundary. The span stays 1 unit … `max` bars.
  */
 export function snapHandle(beat: number, mode: 'bar' | 'beat' | 'eighth', meter = 4, magnets: number[] = []): number {
+  return snapHandleInfo(beat, mode, meter, magnets).beat;
+}
+/** snapHandle, and whether a suggested boundary pulled the handle (the screen shows a small badge there). */
+export function snapHandleInfo(beat: number, mode: 'bar' | 'beat' | 'eighth', meter = 4, magnets: number[] = []): { beat: number; magnet: boolean } {
   const unit = mode === 'bar' ? meter : mode === 'beat' ? 1 : 0.5;
   const s = Math.round(beat / unit) * unit;
   const m = magnets.find((x) => Math.abs(x - beat) <= 0.25 && mode !== 'bar');
-  return m ?? s;
+  return m === undefined ? { beat: s, magnet: false } : { beat: m, magnet: true };
 }
 export function clampSpan(from: number, to: number, meter = 4, max = MAX_BARS, moved: 'from' | 'to' = 'to'): { from: number; to: number; capped: boolean } {
   let f = Math.min(from, to);

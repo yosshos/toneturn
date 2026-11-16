@@ -540,6 +540,11 @@ export interface DrillGoal {
    */
   /** Siskind's registers (soloPiano.ts): a missed note played an octave away gets the "muddy" / "thin" feedback line. */
   register?: boolean;
+  /**
+   * A wider timing window (Encore "as played" phrases, SPEC-PHRASE-STUDIO §5.5): the onset-SD, worst-onset and
+   * hands-together limits × this factor (≥ 1), and a hesitation only past 1.5 × √factor of its share. Pitch rules stay.
+   */
+  timingTolerance?: number;
   freeComp?: { chords: { beat: number; beats: number; root: number; q: import('../soloPiano').SQ }[]; bars: number };
   /** Voice leading (k-vl / g-vl, voiceLead.ts): the learner chooses each voicing from chord symbols; graded by type + smallest motion. */
   vl?: import('./voiceLead').VLGoal;

@@ -107,7 +107,7 @@ describe('properties (§10.8.4)', () => {
     expect(Math.round(baseXp(1900))).toBe(12);
     expect(dailyCap(700)).toBe(20);
     expect(dailyCap(1900)).toBe(70);
-    expect(PHRASE_DIFF_V).toBe(1);
+    expect(PHRASE_DIFF_V).toBe(2);
   });
 });
 
@@ -148,11 +148,13 @@ describe('XP rules (§10.5, §10.7)', () => {
 });
 
 describe('calibration against the built-in levels (§10.8)', () => {
-  const rows: { id: string; placed: number; D: number }[] = [];
+  // A level's model difficulty = the median D of its items (every key, every variant) at their target tempo; the placed
+  // difficulty = LEVEL_PLACEMENT (grade-cited). Improvisation, pedalling and gig skills (accompanying, stamina) are
+  // placed by what they ask besides the notes, so they stay out.
+  const rows: { id: string; fam: string; placed: number; D: number }[] = [];
   for (const fam of catalog())
     for (const lv of fam.levels) {
       const placed = LEVEL_PLACEMENT[lv.id];
-      // improvisation, pedalling and gig skills (accompanying, stamina) are placed by what they ask besides the notes
       if (!placed || /impro|pedal|gig/.test(lv.id)) continue;
       let ds;
       try {
@@ -160,9 +162,9 @@ describe('calibration against the built-in levels (§10.8)', () => {
       } catch {
         continue;
       }
-      const d0 = ds[0];
-      if (!d0?.notes.length) continue;
-      rows.push({ id: lv.id, placed, D: difficultyOf(drillInput(d0), itemTargetBpm(d0)).D });
+      if (!ds[0]?.notes.length) continue;
+      const Ds = ds.filter((d) => d.notes.length).map((d) => difficultyOf(drillInput(d), itemTargetBpm(d)).D).sort((a, b) => a - b);
+      rows.push({ id: lv.id, fam: fam.id, placed, D: Ds[Ds.length >> 1] });
     }
   const rank = (xs: number[]) => {
     const s = xs.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]);
@@ -176,18 +178,32 @@ describe('calibration against the built-in levels (§10.8)', () => {
     const n = rs.length;
     return 1 - (6 * a.reduce((s, x, i) => s + (x - b[i]) ** 2, 0)) / (n * (n * n - 1));
   };
-  it('keeps the order of the placed levels (Spearman over all grade-cited piano levels with notes)', () => {
-    expect(rows.length).toBeGreaterThanOrEqual(40);
+  const mae = (rs: typeof rows) => rs.reduce((s, r) => s + Math.abs(r.placed - r.D), 0) / rs.length;
+  it('v2 keeps the order of the placed levels: ρ ≈ 0.84, mean error ≈ 144 over the grade-cited piano levels (v1: 0.59 / 240)', () => {
+    expect(rows.length).toBeGreaterThanOrEqual(70);
     const rho = spearman(rows);
-    const mae = rows.reduce((s, r) => s + Math.abs(r.placed - r.D), 0) / rows.length;
-    console.log(`encore difficulty calibration v${PHRASE_DIFF_V}: n=${rows.length} spearman=${rho.toFixed(3)} mae=${mae.toFixed(0)}`);
-    expect(rho).toBeGreaterThanOrEqual(0.5);
+    console.log(`encore difficulty calibration v${PHRASE_DIFF_V}: n=${rows.length} spearman=${rho.toFixed(3)} mae=${mae(rows).toFixed(0)}`);
+    expect(PHRASE_DIFF_V).toBe(2);
+    expect(rho).toBeGreaterThanOrEqual(0.83);
+    expect(mae(rows)).toBeLessThanOrEqual(150);
   });
-  it('within the reading and classical families the order holds closely', () => {
-    for (const fam of ['k-read', 'k-classic']) {
-      const rs = rows.filter((r) => r.id.startsWith(`${fam}-`));
-      expect(rs.length).toBeGreaterThanOrEqual(8);
-      expect(spearman(rs), fam).toBeGreaterThanOrEqual(0.75);
+  it('per family (the locked v2 numbers; families of ≥ 3 levels)', () => {
+    // [family, ρ at least, mean error at most] — v2: k-classic 0.93 / 104, k-read 0.84 / 232, k-pop 0.71 / 117,
+    // k-first 0.68 / 126, k-tpair 0.61 / 147, scales 0.36 / 85, control 0.50 / 59.
+    const locked: [string, number, number][] = [
+      ['k-classic', 0.9, 115],
+      ['k-read', 0.8, 245],
+      ['k-pop', 0.65, 130],
+      ['k-first', 0.6, 140],
+      ['k-tpair', 0.55, 160],
+      ['scales', 0.3, 95],
+      ['control', 0.45, 70],
+    ];
+    for (const [fam, rho, err] of locked) {
+      const rs = rows.filter((r) => r.fam === fam);
+      expect(rs.length, fam).toBeGreaterThanOrEqual(3);
+      expect(spearman(rs), fam).toBeGreaterThanOrEqual(rho);
+      expect(mae(rs), fam).toBeLessThanOrEqual(err);
     }
   });
 });

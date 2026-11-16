@@ -799,7 +799,17 @@ can be computed on all of them.
    put the thumb on black keys.
 5. **Version** the model (`phraseDiffV`) — weights only change in a release, with a test snapshot of the corpus, so a
    player's XP never moves under them mid-week.
-6. **Later**: compare with observed data (pass rates vs players' ratings; an item whose empirical difficulty — the
+6. **Done (v2, `PHRASE_DIFF_V = 2`, piano):** 72 grade-cited piano levels (improvisation, pedal, gig left out); a level's
+   D = the median over its items at their target tempo; a drill's chart is its chord context; without chords an
+   approach / enclosure counts only when chromatic. Weights of M, piano P and the tempo curve (amp 480, m̂^0.75,
+   nps_ref 7) fitted by coordinate search (loss = mean error / 100 + 4·(1 − ρ) + the worked examples as bands, six
+   starts, floors on the named devices). Spearman ρ 0.59 → **0.84**, mean error 240 → **144** (k-classic 0.93 / 104,
+   k-read 0.84 / 232, k-pop 0.71 / 117, k-first 0.68 / 126, k-tpair 0.61 / 147, scales 0.36 / 85, control 0.50 / 59).
+   Holding out families (tpair + pop; read + first; classic + scales + control) gives ρ 0.14 / 0.76 / 0.71 on the held-out
+   part: the families' placements reflect things the notes don't show (sight-reading, playing with a band, curricular
+   order), so the 90-point target is not met yet. Scores are never stored: every badge / preview / XP is computed when
+   shown, so v1 phrases read v2 numbers on load.
+7. **Later**: compare with observed data (pass rates vs players' ratings; an item whose empirical difficulty — the
    rating at which players pass it half the time — drifts > 150 points from the model is listed for review).
 
 ### 10.9 In the UI

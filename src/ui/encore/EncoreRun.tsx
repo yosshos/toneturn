@@ -23,6 +23,8 @@ import { barMarks, worstBar } from '../ErrorMap';
 import { KeyB, Tempo, type Lang } from './bits';
 import type { LiveTake } from '../../engine/drills/liveGrade';
 import { keepPhrase } from '../../engine/encore/takeSource';
+import { badge } from '../../engine/encore/difficulty';
+import { postPhraseYours } from '../../cloud/community';
 
 export type EncoreTakeFn = (st: ItemState, evs: RatingEvent[], xp: number, m: { verdict: string; hands: string; cv: number | null }) => void;
 
@@ -115,7 +117,12 @@ export function EncoreRun({
                 : 'One more clean take in free time.';
     setRes({ m, lad, out, stage: st, line: out.bonus || out.completion ? `${line} +${out.bonus + out.completion} XP` : line });
     if (lad) setBpm(Math.max(drill.startBpm, Math.min(plan.goalBpm, lad.next.bpm)));
-    if (out.yours) window.setTimeout(onYours, 900);
+    if (out.yours) {
+      // friends' activity (flagged until the server migration is applied: postPhraseYours)
+      const b = badge(l, inst);
+      void postPhraseYours(l.id, { grade: b.grade, bpm: plan.goalBpm, inst }).catch(() => {});
+      window.setTimeout(onYours, 900);
+    }
   };
 
   const head = (

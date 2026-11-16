@@ -820,7 +820,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       const abort = new AbortController();
       ac.current = abort;
       const beatMs = 60000 / bpm / speed;
-      const lastBeat = drill.meter + Math.ceil(drill.beats) + 1;
+      // the count-in in beats (a pickup bar counts a bar and the beats before the pickup: timeline.ts clickPlan)
+      const ci = clickPlan(drill, bpm).countIn;
+      const lastBeat = ci + Math.ceil(drill.beats) + 1;
       const t0 = performance.now();
       const upTo = (now: number): TakeMetrics => (f.hits ? analyzeDrumTake(drill, bpm, f.hits.filter((h) => h.on <= now)) : isGuitarDrill(drill) ? analyzeGuitarTake(drill, bpm, f.played.filter((p) => p.on <= now), cal) : analyzeTake(drill, bpm, f.played.filter((p) => p.on <= now), cal));
       setPhase('count');
@@ -833,10 +835,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           if (i !== shown) {
             shown = i;
             setBeat(i);
-            if (i >= drill.meter) setPhase('play');
+            if (i >= ci) setPhase('play');
           }
-          onBeat?.(el / beatMs - drill.meter);
-          const now = (el - drill.meter * beatMs) * speed;
+          onBeat?.(el / beatMs - ci);
+          const now = (el - ci * beatMs) * speed;
           if (now >= -200 && markable) {
             const l = liveGrade(drill, upTo(now), bpm, now);
             setPocket(l);
@@ -1031,9 +1033,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     let sent = -99;
     const smooth = onBeat
       ? window.setInterval(() => {
-          if (!lastBeat || lastBeat.i < drill.meter) return;
+          if (!lastBeat || lastBeat.i < plan.countIn) return;
           const f = Math.min(0.999, (performance.now() - lastBeat.t) / lastBeat.dt);
-          const b = lastBeat.i - drill.meter + f;
+          const b = lastBeat.i - plan.countIn + f;
           if (Math.abs(b - sent) >= 0.01) onBeat((sent = b));
         }, 33)
       : 0;
@@ -1047,8 +1049,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           const t = performance.now();
           const gap = tl.clicks[i + 1] ? (tl.clicks[i + 1].t - tl.clicks[i].t) * 1000 : 0;
           lastBeat = { i, t, dt: gap > 60 ? gap : lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
-          if (onBeat && i - drill.meter !== sent) onBeat((sent = i - drill.meter));
-          if (i >= drill.meter) setPhase('play');
+          if (onBeat && i - plan.countIn !== sent) onBeat((sent = i - plan.countIn));
+          if (i >= plan.countIn) setPhase('play');
         },
         (perf) => {
           zero = perf;

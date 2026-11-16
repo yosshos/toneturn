@@ -15,9 +15,9 @@ import { piano } from '../services';
 import { DrillScore, drillSettingsOf } from '../Drills';
 import { DrillCreator } from '../DrillCreator';
 import { Toni } from '../Toni';
-import { getEncoreTake, getEncoreTakeSync, parseEncoreHash, putMemoryTake, recentFreeTakes, encoreTakeHash, type EncoreTake, type RawNote } from '../../engine/encore/takeSource';
+import { dropMemoryTake, getEncoreTake, getEncoreTakeSync, parseEncoreHash, putMemoryTake, recentFreeTakes, encoreTakeHash, storedTwin, type EncoreTake, type RawNote } from '../../engine/encore/takeSource';
 import { catchTake, detectKeyChords, dotsOf, onsetEvents, type Caught, type BeatNote } from '../../engine/encore/detect';
-import { candidates, boundaries, clampSpan, snapHandle, spanBars, MAX_BARS } from '../../engine/encore/segment';
+import { candidates, boundaries, clampSpan, snapHandleInfo, spanBars, MAX_BARS } from '../../engine/encore/segment';
 import { isGhost, splitHands, wrongNoteFix, type QuantMode } from '../../engine/encore/quantise';
 import { badge, whyLine, xpPreview, gradeOf } from '../../engine/encore/difficulty';
 import { bestTempo, daysPractised, finalHand, forInstrument, handsOf, keyOrder, keysInRange, keysNeeded, makePhrase, nextKey, overCeiling, passedKeys, phraseDrill, phraseMap, phraseNeck, phraseRank, phraseRungs, planOf, promotion, RANK_NAME, roundToLadder, twoHands, type Hand } from '../../engine/encore/phrase';
@@ -329,8 +329,9 @@ function RecordMode({ lang, head }: { lang: Lang; head: Head }) {
     }
     const title = { en: 'Free recording', he: 'הקלטה חופשית' };
     const id = putMemoryTake({ kind: 'record', instrument: 'piano', title, source: 'midi', notes: ns });
-    // the take is kept in My recordings too (it shows on the shelf and in the timeline)
-    void saveTake({ durationMs: Math.round(Math.max(...ns.map((n) => n.off ?? n.on))), course: null, instrument: 'piano', kind: 'record', title, sung: false, source: 'midi', played: ns }).catch(() => {});
+    // the take is kept in My recordings too (it shows on the shelf and in the timeline) — under the same id, so the
+    // shelf lists it once (dedupeTakes)
+    void saveTake({ id, durationMs: Math.round(Math.max(...ns.map((n) => n.off ?? n.on))), course: null, instrument: 'piano', kind: 'record', title, sung: false, source: 'midi', played: ns }).catch(() => {});
     nav(`caught/${encodeURIComponent(id)}`);
   };
   useEffect(() => {
@@ -580,6 +581,17 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
   const init = useMemo(() => initialTrim(take, from, to), [take, from, to]);
   const [s, setS0] = useState<TrimState>(init.s);
   const [capped, setCapped] = useState(false);
+  // The beat a suggested boundary last pulled a handle to (the magnet's badge on the roll).
+  const [magnet, setMagnet] = useState<number | null>(null);
+  // The stored twin of a review's copy (one take, not two: storedTwin).
+  const [twin, setTwin] = useState<string | null>(null);
+  useEffect(() => {
+    let on = true;
+    void storedTwin(take).then((x) => on && setTwin(x));
+    return () => {
+      on = false;
+    };
+  }, [take]);
   const [picked, setPicked] = useState<number | null>(null);
   const [speed, setSpeed] = useState(0.75);
   const [playing, setPlaying] = useState(false);
@@ -615,9 +627,13 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
   const preview = useMemo(() => (draft.rh.length + draft.lh.length >= 1 ? makePhrase(draft) : null), [draft]);
   const bars = spanBars(s.from, s.to, m);
   const onHandle = (which: 'from' | 'to', beat: number, held: boolean, shift: boolean) => {
-    const v = snapHandle(beat, shift ? 'eighth' : held ? 'beat' : 'bar', m, bnd);
+    const sn = snapHandleInfo(beat, shift ? 'eighth' : held ? 'beat' : 'bar', m, bnd);
+    const v = sn.beat;
     const sp = clampSpan(which === 'from' ? v : s.from, which === 'to' ? v : s.to, m, MAX_BARS, which);
     setCapped(sp.capped);
+    const landed = which === 'from' ? sp.from : sp.to;
+    if (sn.magnet && Math.abs(landed - v) < 1e-6) setMagnet(v);
+    else if (magnet !== null && Math.abs((which === 'from' ? s.from : s.to) - magnet) < 1e-6) setMagnet(null);
     if (sp.from !== s.from || sp.to !== s.to) setS({ ...s, from: sp.from, to: sp.to });
   };
   const play = async () => {
@@ -685,7 +701,7 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
         )}
         <div className="enc-card enc-trim-card">
           {s.view === 'roll' ? (
-            <PianoRoll notes={rollNotes} from={vFrom} to={vTo} meter={m} sel={[s.from, s.to]} onHandle={onHandle} ticks={bnd} cands={cands.length > 1 ? cands.filter((c) => c.from !== s.from).map((c) => [c.from, c.to] as [number, number]) : []} chords={chordNames} height={200} label={he ? 'נוטות' : 'piano roll'} />
+            <PianoRoll notes={rollNotes} from={vFrom} to={vTo} meter={m} sel={[s.from, s.to]} onHandle={onHandle} ticks={bnd} magnet={magnet !== null && (Math.abs(s.from - magnet) < 1e-6 || Math.abs(s.to - magnet) < 1e-6) ? magnet : null} magnetLabel={he ? 'גבול מוצע' : 'suggested edge'} cands={cands.length > 1 ? cands.filter((c) => c.from !== s.from).map((c) => [c.from, c.to] as [number, number]) : []} chords={chordNames} height={200} label={he ? 'נוטות' : 'piano roll'} />
           ) : preview ? (
             <DrillScore drill={phraseDrill(preview, s.key, twoHands(preview) ? 'RL' : 'R')} ds={drillSettingsOf(settings)} lang={lang} />
           ) : null}
@@ -731,7 +747,10 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
     const id = newPhraseId();
     const d = draftFrom(take, s, chords, ctx, id);
     if (d.rh.length + d.lh.length < 3) return;
-    onSave(makePhrase(d));
+    // A review's copy of a take the recordings keeper stored too: the phrase points at the stored take, the copy goes.
+    const src = twin && d.source && 'takeId' in d.source ? { ...d, source: { ...d.source, takeId: twin } } : d;
+    if (twin) dropMemoryTake(take.id);
+    onSave(makePhrase(src));
   };
   return (
     <main className="panel-screen enc-screen" data-encore="context">
@@ -802,10 +821,21 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
   const [why, setWhy] = useState(false);
   const keys = plan.keys === 'all' ? FIFTHS : plan.keys;
   const toggle = (k: number) => {
+    // My choice: the ring is the order — a tap adds the key at the end, a second tap takes it out.
+    if (plan.order === 'custom') {
+      const cur = keyOrder(l, plan, INST);
+      set({ keys: cur.includes(k) ? (cur.length > 1 ? cur.filter((x) => x !== k) : cur) : [...cur, k] });
+      return;
+    }
     const cur = new Set(plan.keys === 'all' ? FIFTHS : plan.keys);
     if (cur.has(k) && cur.size > 1) cur.delete(k);
     else cur.add(k);
-    set({ keys: cur.size === 12 ? 'all' : [...cur], order: cur.size === 12 && plan.order === 'custom' ? 'easiest' : plan.order });
+    set({ keys: cur.size === 12 ? 'all' : [...cur] });
+  };
+  // Picking an order: "my choice" starts from the order shown, as an explicit list the ring then edits.
+  const pickOrder = (o: 'easiest' | 'fourths' | 'chromatic' | 'custom') => {
+    if (o === 'custom') set({ order: 'custom', keys: keyOrder(l, plan, INST) });
+    else set({ order: o, keys: plan.keys !== 'all' && plan.keys.length === 12 ? 'all' : plan.keys });
   };
   const b = badge(l, INST);
   const prev = xpPreview(l, INST, keyOrder(l, plan, INST));
@@ -874,12 +904,18 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
             {keys.length === 12 ? '12/12' : `${keys.length}/12`}
           </text>
         </svg>
-        <div className="row wrap enc-center-row">
-          {(['easiest', 'fourths', 'chromatic'] as const).map((o) => (
-            <button key={o} className={`ch ${plan.order === o ? 'on' : ''}`} onClick={() => set({ order: o })} data-order={o}>
-              {o === 'easiest' ? (he ? 'קל קודם' : 'Easiest first') : o === 'fourths' ? (he ? 'מעגל רביעיות' : 'Cycle of 4ths') : he ? 'כרומטי' : 'Chromatic'}
-            </button>
-          ))}
+        <div className="enc-order" role="radiogroup" aria-label={he ? 'סדר הסולמות' : 'Key order'} data-order-set="1">
+          <div className="row enc-center-row enc-order-chips">
+            {(['easiest', 'fourths', 'chromatic', 'custom'] as const).map((o) => (
+              <button key={o} title={o === 'fourths' ? (he ? 'מעגל רביעיות' : 'Cycle of 4ths') : o === 'custom' ? (he ? 'סדר לבחירתי' : 'My choice') : undefined} role="radio" aria-checked={(plan.order === 'weak' ? 'easiest' : plan.order) === o} className={`ch ${(plan.order === 'weak' ? 'easiest' : plan.order) === o ? 'on' : ''}`} onClick={() => pickOrder(o)} data-order={o}>
+                {o === 'easiest' ? (he ? 'קל קודם' : 'Easiest') : o === 'fourths' ? (he ? 'רביעיות' : '4ths') : o === 'chromatic' ? (he ? 'כרומטי' : 'Chromatic') : he ? 'לבחירתי' : 'Mine'}
+              </button>
+            ))}
+          </div>
+          <small className="t3 enc-order-line" data-order-line={order.join(' ')}>
+            {plan.order === 'custom' ? (he ? 'נגיעה מוסיפה בסוף: ' : 'Tap adds at the end: ') : he ? 'הסדר: ' : 'Order: '}
+            <bdi dir="ltr">{order.map((k) => kName(k)).join(' ')}</bdi>
+          </small>
         </div>
       </div>}
       {(INST === 'guitar' || INST === 'bass') && <NeckLine lang={lang} l={l} order={order} onPosition={(v) => set({ position: v })} />}

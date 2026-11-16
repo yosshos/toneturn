@@ -8,7 +8,7 @@ import { lickPitches, type Lick, type LickBook, type LickInstrument } from '../l
 import type { RawNote, EncoreTake } from './takeSource';
 import { catchTake, type BeatNote, type Caught } from './detect';
 import { quantise, splitHands, type QuantMode } from './quantise';
-import { autoName, defaultPlan, isPhrase, makePhrase, phraseRank, PHRASE_PREFIX, tonic4, type PhraseDraft } from './phrase';
+import { autoName, defaultPlan, isPhrase, makePhrase, phraseRank, PHRASE_PREFIX, tonic4, withPickup, type PhraseDraft } from './phrase';
 import { phrasesOf } from './connect';
 import { parseChart } from '../charts';
 
@@ -154,7 +154,8 @@ export function draftFrom(t: EncoreTake, s: TrimState, chords: PhraseDraft['chor
   const hands = splitHands(q, s.split);
   const from: 'improv' | 'record' | 'chart' | 'drill' = t.kind === 'record' ? 'record' : t.kind === 'chart' || t.kind === 'guided' ? 'chart' : t.kind === 'drill' ? 'drill' : 'improv';
   const name = s.name.trim() ? { en: s.name.trim(), he: s.name.trim() } : autoName(ctx, s.key, s.minor, from, new Date(t.at));
-  return {
+  // an anacrusis is notated as a short first bar (withPickup), not as rests inside bar 1
+  return withPickup({
     id,
     name,
     rh: hands.rh,
@@ -171,7 +172,7 @@ export function draftFrom(t: EncoreTake, s: TrimState, chords: PhraseDraft['chor
     asPlayed: s.quant === 'played',
     source: t.kind === 'record' ? { kind: 'record', takeId: t.id } : { kind: 'take', takeId: t.id, fromBeat: s.from, toBeat: s.to },
     createdAt: now,
-  };
+  });
 }
 
 /** Chords for the selection (relative to the key), re-based to the selection: the take's chart if it had one, else detected. */

@@ -20,6 +20,12 @@ export interface MeterSpec {
   groups?: number[];
   /** Note value of the group numbers (default `den`): 4/4 grouped 3+3+2 in eighths has unit 8. */
   unit?: 4 | 8 | 16;
+  /**
+   * An anacrusis (pickup) bar, only as bar 0: shorter than the bar after it. The staff writes the next bar's time
+   * signature on it, and the count-in is a full bar of that meter plus the beats before the pickup (so the music's
+   * downbeats fall on the count's).
+   */
+  pickup?: boolean;
 }
 
 /** A meter change: from bar `bar` (0-based) on, bars are in `meter` (until the next change). */
@@ -194,7 +200,8 @@ export function buildTimeMap(o: { beats: number; bpm: number; pulse?: 8; base: M
     for (const t of tempo) if (t.bar === i) bpm *= t.ratio;
     const meter = meterOf(i);
     const beats = barBeats(meter, o.pulse);
-    const sig = `${meterSig(meter)} ${groupText(meter)}`;
+    const shown = meter.pickup ? meterOf(i + 1) : meter;
+    const sig = `${meterSig(shown)} ${groupText(shown)}`;
     bars.push({ index: i, start, beats, meter, groups: groupStartsOf(meter, o.pulse), sigChange: sig !== prevSig, ms, bpm });
     prevSig = sig;
     start += beats;
@@ -332,15 +339,17 @@ export function clickPlan(drill: Pick<Drill, 'meter' | 'click' | 'gap' | 'groups
     return { clicks, wood, countIn: drill.meter, responseAt: drill.meter * beatS, responseEnd: (drill.meter + drill.beats + 1) * beatS, at: (b) => (drill.meter + b) * beatS };
   }
   const tm = timeMapOf(drill, bpm);
-  const first = tm.bars[0];
-  const countIn = Math.round(first.beats);
-  const lead = (countIn * 60) / first.bpm;
+  // A pickup bar: count a full bar of the next meter, then the beats before the pickup.
+  const pk = tm.bars[0].meter.pickup && tm.bars[1] ? tm.bars[0] : null;
+  const first = pk ? tm.bars[1] : tm.bars[0];
+  const countIn = pk ? Math.round(2 * first.beats - pk.beats) : Math.round(first.beats);
+  const lead = (countIn * 60) / tm.bars[0].bpm;
   const at = (b: number) => lead + tm.msAt(b) / 1000;
   const clicks: Click[] = [];
   for (let i = 0; i < countIn + Math.ceil(drill.beats) + 1; i++) {
     const b = i - countIn;
     if (b < 0) {
-      const inBar = i;
+      const inBar = i % Math.round(first.beats);
       const lvl = inBar === 0 ? 2 : first.groups.some((g) => Math.abs(g - inBar) < 1e-9) ? 1 : 0;
       clicks.push({ t: at(b), accent: inBar === 0, silent: lvl === 0, level: lvl, count: true });
       continue;
@@ -395,7 +404,9 @@ export function staffLines(drill: TimelineFields, perLine = 8): StaffLine[] {
       out.push(cur);
     }
     const groups = b.meter.den >= 8 ? b.groups.map((g) => g * q) : undefined;
-    cur.bars.push({ from, len, cur: meterSig(b.meter), ...(b.sigChange ? { sig: meterSig(b.meter) } : {}), ...(groups && groups.length > 1 ? { groups } : {}) });
+    // a pickup bar is written in the meter of the bar after it
+    const shown = b.meter.pickup ? (tm.bars[b.index + 1]?.meter ?? b.meter) : b.meter;
+    cur.bars.push({ from, len, cur: meterSig(shown), ...(b.sigChange ? { sig: meterSig(shown) } : {}), ...(groups && groups.length > 1 ? { groups } : {}) });
     cur.to = from + len;
   }
   return out;
@@ -433,7 +444,8 @@ export function withBarPlan<D extends Drill>(drill: D, plan: (MeterSpec | string
   }
   const errs = meterErrors(changes, drill.pulse);
   if (errs.length) throw new Error(errs.join('; '));
-  const first = changes[0]?.meter;
+  // A pickup bar: `meter` is the full bar after it (old readers count that bar in).
+  const first = changes[0]?.meter.pickup ? (changes[1]?.meter ?? changes[0].meter) : changes[0]?.meter;
   const out: D = { ...drill, meters: changes, ...(tempo.length ? { tempoMap: tempo } : {}) };
   if (first) {
     out.meter = barBeats(first, drill.pulse);

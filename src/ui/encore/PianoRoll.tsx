@@ -30,6 +30,8 @@ export function PianoRoll({
   onNote,
   picked,
   label,
+  magnet = null,
+  magnetLabel = 'suggested edge',
 }: {
   notes: RollNote[];
   /** Visible span (beats). */
@@ -50,6 +52,9 @@ export function PianoRoll({
   onNote?: (i: number) => void;
   picked?: number | null;
   label?: string;
+  /** A handle the magnet pulled onto a suggested boundary (beat): a small badge above it. */
+  magnet?: number | null;
+  magnetLabel?: string;
 }) {
   const W = 340;
   const H = height;
@@ -162,6 +167,22 @@ export function PianoRoll({
           </text>
         ))}
       {playhead !== null && playhead !== undefined && playhead >= from && playhead <= to && <line x1={x(playhead)} x2={x(playhead)} y1={top - 2} y2={H - bottom} className="er-play" />}
+      {magnet !== null && magnet >= from - 1e-6 && magnet <= to + 1e-6 && (
+        <g className="er-magnet" data-magnet={magnet} aria-label={magnetLabel}>
+          {(() => {
+            const w = magnetLabel.length * 5.8 + 14;
+            const mx = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, x(magnet)));
+            return (
+              <>
+                <rect x={mx - w / 2} y={top + 3} width={w} height={16} rx={8} className="er-magnet-b" />
+                <text x={mx} y={top + 14.5} textAnchor="middle" className="er-magnet-t">
+                  {magnetLabel}
+                </text>
+              </>
+            );
+          })()}
+        </g>
+      )}
       {sel && onHandle && (
         <>
           {(['from', 'to'] as const).map((w) => {

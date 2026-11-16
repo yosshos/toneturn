@@ -83,8 +83,11 @@ const fromRec = new Map<string, EncoreTake>();
 
 /** Hand a take to Encore (from a review screen). Returns its id (prefixed "mem:"). */
 export function putMemoryTake(t: Omit<EncoreTake, 'id' | 'at'> & { id?: string; at?: string }): string {
-  const id = t.id && t.id.startsWith('mem:') ? t.id : `mem:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-  const take: EncoreTake = { ...t, id, at: t.at ?? new Date().toISOString() } as EncoreTake;
+  const at = t.at ?? new Date().toISOString();
+  // Keep pressed twice on one take: the same copy, not a second one.
+  const prior = t.id ? null : [...live.values(), ...readMem()].find((x) => x.id.startsWith('mem:') && sameTake(x, { id: '', at, instrument: t.instrument, notes: t.notes }));
+  const id = t.id && t.id.startsWith('mem:') ? t.id : (prior?.id ?? `mem:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`);
+  const take: EncoreTake = { ...t, id, at } as EncoreTake;
   live.set(id, take);
   writeMem([take, ...readMem().filter((x) => x.id !== id)]);
   return id;
@@ -140,7 +143,62 @@ export async function recentFreeTakes(n = 10): Promise<EncoreTake[]> {
   }
   for (const t of rec) fromRec.set(t.id, t);
   const mem = readMem().filter((t) => FREE_KINDS.includes(t.kind));
-  return [...rec, ...mem].sort((a, b) => b.at.localeCompare(a.at)).slice(0, n);
+  return dedupeTakes([...rec, ...mem]).sort((a, b) => b.at.localeCompare(a.at)).slice(0, n);
+}
+
+/**
+ * The same take twice: a review hands it to Encore (a "mem:" copy) while the recordings keeper saves it to My
+ * recordings. Same id, or the same notes (pitches in order, onsets relative to the first within 25 ms — the keeper may
+ * re-base the clock) on the same instrument within 30 minutes (the copy is stamped when Keep is pressed).
+ */
+export function sameTake(a: Pick<EncoreTake, 'id' | 'at' | 'instrument' | 'notes'>, b: Pick<EncoreTake, 'id' | 'at' | 'instrument' | 'notes'>): boolean {
+  if (a.id === b.id) return true;
+  if (a.instrument !== b.instrument || a.notes.length !== b.notes.length || !a.notes.length) return false;
+  const dt = Math.abs(Date.parse(a.at) - Date.parse(b.at));
+  if (!(dt <= 30 * 60000)) return false;
+  const sa = [...a.notes].sort((x, y) => x.on - y.on);
+  const sb = [...b.notes].sort((x, y) => x.on - y.on);
+  const a0 = sa[0].on;
+  const b0 = sb[0].on;
+  return sa.every((n, i) => n.pitch === sb[i].pitch && Math.abs(n.on - a0 - (sb[i].on - b0)) <= 25);
+}
+/** The clock offset (ms) between two copies of one take (0 when they share a clock), or null when not the same take. */
+export function twinOffset(a: Pick<EncoreTake, 'id' | 'at' | 'instrument' | 'notes'>, b: Pick<EncoreTake, 'id' | 'at' | 'instrument' | 'notes'>): number | null {
+  if (!sameTake(a, b)) return null;
+  if (!a.notes.length) return 0;
+  return Math.min(...a.notes.map((n) => n.on)) - Math.min(...b.notes.map((n) => n.on));
+}
+/**
+ * A review's copy ("mem:") whose take the recordings keeper also stored, on the same clock: the stored take's id, so a
+ * phrase kept from it points at My recordings (one take, kept by the library's rules) and the copy can go.
+ */
+export async function storedTwin(t: EncoreTake): Promise<string | null> {
+  if (!t.id.startsWith('mem:')) return null;
+  try {
+    const rec = (await listTakes({ limit: 30 })).filter((r) => (r.notes?.byteLength ?? 0) > 3).map(encoreTakeOf);
+    const hit = rec.find((r) => {
+      const off = twinOffset(t, r);
+      return off !== null && Math.abs(off) <= 25;
+    });
+    return hit?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+/** Forget a review's copy (after its phrase points at the stored take). */
+export function dropMemoryTake(id: string): void {
+  live.delete(id);
+  writeMem(readMem().filter((x) => x.id !== id));
+}
+/** One entry per take: a stored take (My recordings) wins over its review copy; otherwise the first seen. */
+export function dedupeTakes<T extends Pick<EncoreTake, 'id' | 'at' | 'instrument' | 'notes'>>(list: readonly T[]): T[] {
+  const out: T[] = [];
+  for (const t of list) {
+    const i = out.findIndex((o) => sameTake(o, t));
+    if (i < 0) out.push(t);
+    else if (out[i].id.startsWith('mem:') && !t.id.startsWith('mem:')) out[i] = t;
+  }
+  return out;
 }
 
 /** The Encore address for a take and an optional span (seconds on the take's timeline). */

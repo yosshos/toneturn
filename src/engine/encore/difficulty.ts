@@ -8,17 +8,20 @@
 // a moderate amount. XP per measured take, promotion bonuses, a daily cap per phrase and the anti-gaming factor follow.
 // No AI. Weights change only with a release (PHRASE_DIFF_V).
 //
-// Calibration (v1, tests/encoreDifficulty.test.ts): C–D–E in quarters ≈ 715 and ~1 XP a take; a 4-bar right-hand
-// bebop line over a ii–V–I at ♩200 ≈ G7; the same line with an independent left hand ≈ G8+ and ~10 XP a clean take;
-// against the placed difficulty of built-in technique levels (LEVEL_PLACEMENT) the model keeps the order (Spearman ρ
-// reported by the test).
+// Calibration (v2, tests/encoreDifficulty.test.ts): C–D–E in quarters ≈ 710 and ~1 XP a take; a 4-bar right-hand
+// bebop line over a ii–V–I at ♩200 ≈ G7; the same line with an independent left hand ≈ G8+ and ~10 XP a clean take.
+// Against the placed difficulty of the 72 grade-cited built-in piano levels (LEVEL_PLACEMENT, a level = the median D of
+// its items, a drill's chart as its chord context; improvisation, pedal and gig levels left out): v1 ρ 0.59 / mean
+// error 240 → v2 ρ 0.84 / 144. No stored score depends on the version: every badge, preview and XP is computed from
+// the phrase when it is shown or a take is graded, so a phrase saved under v1 reads v2 numbers on load.
 
 import type { Drill } from '../drills/types';
 import { LICK_Q, chordAt, type Lick, type LickChord, type LickInstrument } from '../licks';
 import { finalHand, phraseNeck, phrasePitches, planOf, type Hand } from './phrase';
 import { neckStats, singerRange, voiceStats, type Placed, type Range } from './placement';
+import { parseChord } from '../charts';
 
-export const PHRASE_DIFF_V = 1;
+export const PHRASE_DIFF_V = 2;
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
 const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
 const sat = (x: number, x95: number) => clamp(x / x95, 0, 1);
@@ -188,12 +191,15 @@ export function features(inp: DInput): Features {
     const isTarget = onBeat(x.beat) && c.ct.includes(pc);
     if (isTarget && i >= 1) {
       const p = main[i - 1];
-      if (Math.abs(p.midi - x.midi) <= 2 && Math.abs(p.midi - x.midi) >= 1 && !onBeat(p.beat)) approaches++;
+      // Without chords every scale step lands on a tonic-triad tone; there a device counts only when it is chromatic
+      // (calibration v2: plain diatonic runs scored as "enclosures" and sat grades too high).
+      const devOk = (ys: DNote[]) => inp.chords.length > 0 || ys.some((y) => !c.sc.includes(mod(y.midi)));
+      if (Math.abs(p.midi - x.midi) <= 2 && Math.abs(p.midi - x.midi) >= 1 && !onBeat(p.beat) && devOk([p])) approaches++;
       if (i >= 2) {
-        const w = main.slice(Math.max(0, i - 4), i).map((y) => y.midi - x.midi);
-        const above = w.some((d) => d > 0 && d <= 2);
-        const below = w.some((d) => d < 0 && d >= -2);
-        if (above && below) enclosures++;
+        const win = main.slice(Math.max(0, i - 4), i).filter((y) => Math.abs(y.midi - x.midi) <= 2 && y.midi !== x.midi);
+        const above = win.some((y) => y.midi > x.midi);
+        const below = win.some((y) => y.midi < x.midi);
+        if (above && below && devOk(win)) enclosures++;
       }
     }
     if (i >= 2 && i + 2 < main.length) {
@@ -240,50 +246,97 @@ function isStepRun(line: DNote[]): boolean {
 
 // ───────────────────────────── M, P, T (§10.2–10.4) ─────────────────────────────
 
-/** Material weights (points at saturation), fitted by hand against the built-in corpus (v1). */
+/**
+ * Material weights (points at saturation). v2: fitted (with PW and TEMPO) by coordinate search against the placed
+ * difficulty of the built-in piano levels — loss = mean |error| / 100 + 4·(1 − Spearman ρ) + the worked examples as
+ * bands — from six starts, weights non-negative, with floors on the devices the spec names (length, hands, enclosures,
+ * approaches, pivots, chromaticism, leaps, interval, density stay in the model even where the corpus does not ask for
+ * them), then rounded. tests/encoreDifficulty.test.ts locks the result.
+ */
 export const W = {
-  length: 230,
-  density: 70,
-  syncopation: 45,
-  switches: 30,
-  interval: 40,
-  leaps: 35,
-  range: 35,
-  chromatic: 70,
-  approaches: 25,
-  enclosures: 60,
-  pivots: 40,
-  nct: 35,
-  hands: 200,
+  length: 100,
+  density: 55,
+  syncopation: 125,
+  switches: 25,
+  interval: 20,
+  leaps: 60,
+  range: 55,
+  chromatic: 40,
+  approaches: 15,
+  enclosures: 40,
+  pivots: 20,
+  nct: 380,
+  hands: 100,
 };
 
-/** Contributions of each feature to M, in points (the "Why?" list). */
-export function materialParts(f: Features): Record<keyof typeof W, number> {
+/** The saturating feature curves φ (0..1 each, §10.2) that the material weights multiply. */
+export function materialPhi(f: Features): Record<keyof typeof W, number> {
   // Slow material (a melody in quarters, block chords under it): length and hands weigh less (calibration v1: the
   // first-steps and pop levels sat a grade too high without it).
   const slow = 0.5 + 0.5 * clamp((f.density - 0.5) / 1.5, 0, 1);
-  const parts = {
-    length: W.length * slow * clamp(Math.log2(Math.max(1, f.nEff / 2)) / Math.log2(24), 0, 1),
-    density: W.density * sat(Math.max(0, f.density - 1), 3),
-    syncopation: W.syncopation * sat(f.syncopation, 0.4),
-    switches: W.switches * sat(f.switches / Math.max(1, f.bars), 1),
-    interval: W.interval * sat(Math.max(0, f.meanInterval - 2), 6),
-    leaps: W.leaps * sat(f.leapShare, 0.4),
-    range: W.range * sat(Math.max(0, f.range - 5), 19),
-    chromatic: W.chromatic * sat(f.chromatic, 0.3),
-    approaches: W.approaches * sat(f.approaches, 4),
-    enclosures: W.enclosures * sat(f.enclosures, 3),
-    pivots: W.pivots * sat(f.pivots, 3),
-    nct: W.nct * sat(f.nctStrong, 0.4),
-    hands: f.twoHands ? W.hands * (0.35 + 0.65 * f.handsIndep * slow) : 0,
+  const phi = {
+    length: slow * clamp(Math.log2(Math.max(1, f.nEff / 2)) / Math.log2(24), 0, 1),
+    density: sat(Math.max(0, f.density - 1), 3),
+    syncopation: sat(f.syncopation, 0.4),
+    switches: sat(f.switches / Math.max(1, f.bars), 1),
+    interval: sat(Math.max(0, f.meanInterval - 2), 6),
+    leaps: sat(f.leapShare, 0.4),
+    range: sat(Math.max(0, f.range - 5), 19),
+    chromatic: sat(f.chromatic, 0.3),
+    approaches: sat(f.approaches, 4),
+    enclosures: sat(f.enclosures, 3),
+    pivots: sat(f.pivots, 3),
+    nct: sat(f.nctStrong, 0.4),
+    hands: f.twoHands ? 0.35 + 0.65 * f.handsIndep * slow : 0,
   };
   // a trivial cell (C–D–E): half weight (it is still notes, but not material)
-  if (f.trivial) for (const k of Object.keys(parts) as (keyof typeof parts)[]) parts[k] *= 0.5;
+  if (f.trivial) for (const k of Object.keys(phi) as (keyof typeof phi)[]) phi[k] *= 0.5;
+  return phi;
+}
+/** Contributions of each feature to M, in points (the "Why?" list). */
+export function materialParts(f: Features): Record<keyof typeof W, number> {
+  const phi = materialPhi(f);
+  const parts = { ...phi };
+  for (const k of Object.keys(parts) as (keyof typeof W)[]) parts[k] = W[k] * phi[k];
   return parts;
 }
 export const material = (f: Features): number => clamp(Object.values(materialParts(f)).reduce((a, b) => a + b, 0), 0, 600);
 
 const BLACK = new Set([1, 3, 6, 8, 10]);
+/** Piano physical-cost weights (points at saturation per term). */
+// v2 (fitted with W): a thumb or 5th on a black key (edgeBlack) costs most, black keys elsewhere little; chords in a hand
+// and fast repeated notes cost; the left hand counts 0.4.
+export const PW = { black: 30, edgeBlack: 150, cross: 30, stretch: 0, rep: 120, chords: 185, lhScale: 0.4, both: 0 };
+/** The piano cost curves (0..1 each) of one hand's notes (see pianoCost). */
+export function pianoHandPhi(ns: DNote[]): { black: number; edgeBlack: number; cross: number; stretch: number; rep: number; chords: number } | null {
+  const line = lineOf(ns);
+  if (line.length < 2) return null;
+  let black = 0;
+  let edgeBlack = 0;
+  let cross = 0;
+  let stretch = 0;
+  let rep = 0;
+  let runLen = 1;
+  let dir = 0;
+  for (let i = 0; i < line.length; i++) {
+    const b = BLACK.has(mod(line[i].midi));
+    if (b) black++;
+    const turn = i === 0 || i === line.length - 1 || Math.sign(line[i].midi - line[i - 1].midi) !== Math.sign((line[i + 1]?.midi ?? line[i].midi) - line[i].midi);
+    if (turn && b) edgeBlack++;
+    if (i) {
+      const d = Math.sign(line[i].midi - line[i - 1].midi);
+      if (d && d === dir) runLen++;
+      else runLen = 1;
+      if (d) dir = d;
+      if (runLen > 5 && (runLen - 5) % 4 === 1) cross += b ? 1.6 : 1;
+      if (Math.abs(line[i].midi - line[i - 1].midi) > 12 && line[i].beat - line[i - 1].beat <= 1) stretch++;
+      if (line[i].midi === line[i - 1].midi && line[i].beat - line[i - 1].beat < 0.5) rep++;
+    }
+  }
+  const n = line.length;
+  const chords = ns.length - line.length;
+  return { black: black / n, edgeBlack: sat(edgeBlack, Math.max(2, n * 0.3)), cross: sat(cross, Math.max(2, n / 8)), stretch: sat(stretch, 3), rep: sat(rep, 4), chords: sat(chords, 8) };
+}
 /**
  * Piano physical cost (0–250) of the notes as placed: black keys weighted by where they fall (turning points and run
  * ends, where a thumb or 5th lands), crossings (direction runs longer than five notes need a thumb under), stretches
@@ -291,51 +344,29 @@ const BLACK = new Set([1, 3, 6, 8, 10]);
  */
 export function pianoCost(notes: DNote[]): number {
   const hand = (ns: DNote[]) => {
-    const line = lineOf(ns);
-    if (line.length < 2) return 0;
-    let black = 0;
-    let edgeBlack = 0;
-    let cross = 0;
-    let stretch = 0;
-    let rep = 0;
-    let runLen = 1;
-    let dir = 0;
-    for (let i = 0; i < line.length; i++) {
-      const b = BLACK.has(mod(line[i].midi));
-      if (b) black++;
-      const turn = i === 0 || i === line.length - 1 || Math.sign(line[i].midi - line[i - 1].midi) !== Math.sign((line[i + 1]?.midi ?? line[i].midi) - line[i].midi);
-      if (turn && b) edgeBlack++;
-      if (i) {
-        const d = Math.sign(line[i].midi - line[i - 1].midi);
-        if (d && d === dir) runLen++;
-        else runLen = 1;
-        if (d) dir = d;
-        if (runLen > 5 && (runLen - 5) % 4 === 1) cross += b ? 1.6 : 1;
-        if (Math.abs(line[i].midi - line[i - 1].midi) > 12 && line[i].beat - line[i - 1].beat <= 1) stretch++;
-        if (line[i].midi === line[i - 1].midi && line[i].beat - line[i - 1].beat < 0.5) rep++;
-      }
-    }
-    const n = line.length;
-    const chords = ns.length - line.length;
-    return 70 * (black / n) + 45 * sat(edgeBlack, Math.max(2, n * 0.3)) + 50 * sat(cross, Math.max(2, n / 8)) + 25 * sat(stretch, 3) + 15 * sat(rep, 4) + 15 * sat(chords, 8);
+    const f = pianoHandPhi(ns);
+    if (!f) return 0;
+    return PW.black * f.black + PW.edgeBlack * f.edgeBlack + PW.cross * f.cross + PW.stretch * f.stretch + PW.rep * f.rep + PW.chords * f.chords;
   };
   const r = notes.filter((x) => x.hand === 'R');
   const l = notes.filter((x) => x.hand === 'L');
-  const both = r.length && l.length ? 30 : 0;
-  return clamp(hand(r) + hand(l) * 0.8 + both, 0, 250);
+  const both = r.length && l.length ? PW.both : 0;
+  return clamp(hand(r) + hand(l) * PW.lhScale + both, 0, 250);
 }
 
 /** The instrument's reference note rate (notes / s): a graded G8 player's running lines. */
-export const NPS_REF: Record<LickInstrument, number> = { piano: 6, guitar: 5.5, bass: 4.5, voice: 3 };
+export const NPS_REF: Record<LickInstrument, number> = { piano: 7, guitar: 5.5, bass: 4.5, voice: 3 };
 
 /** Notes per second at a tempo (onsets of both hands, chords once). */
 export const npsAt = (f: Pick<Features, 'density'>, bpm: number, onsetRate?: number) => ((onsetRate ?? Math.max(1, f.density)) * bpm) / 60;
 
-/** Tempo demand T (0–450): saturating in r = nps / nps_ref, scaled by the material (m̂^0.6, floor 0.15). */
+/** Tempo demand T (0–480): saturating in r = nps / nps_ref, scaled by the material (m̂^0.75, floor 0.15). */
+/** The tempo curve (v2, fitted with W): T = amp · m̂^exp · r² / (1 + r²). */
+export const TEMPO = { amp: 480, exp: 0.75 };
 export function tempoDemand(M: number, nps: number, inst: LickInstrument, trivial = false): number {
   const r = nps / NPS_REF[inst];
   const m = Math.max(0.15, M / 600);
-  const t = 450 * Math.pow(m, 0.6) * ((r * r) / (1 + r * r));
+  const t = TEMPO.amp * Math.pow(m, TEMPO.exp) * ((r * r) / (1 + r * r));
   return trivial ? Math.min(t, 110) : t;
 }
 
@@ -358,14 +389,50 @@ export function phraseInput(l: Lick, key: number, hand: Hand = finalHand(l), ins
   }
   return { notes, chords: l.chords, tonic: mod(key), minor: l.minor, meter: l.meter ?? 4 };
 }
-/** The model's input for a built-in drill (calibration). */
+/** A parsed chord's intervals → the nearest LICK_Q quality (its chord tones and chord-scale). */
+function qualityOf(iv: number[]): string {
+  const has = (x: number) => iv.some((y) => mod(y) === x);
+  if (has(3) && has(6) && has(9) && !has(10)) return 'dim7';
+  if (has(3) && has(6)) return 'hd7';
+  if (has(3)) return has(9) && !has(10) ? 'm6' : 'm7';
+  if (has(10)) return iv.includes(20) || (iv.includes(13) && iv.includes(15)) ? 'alt' : iv.includes(13) ? '7b9' : '7';
+  if (has(9) && !has(11)) return '6';
+  return 'maj7';
+}
+/**
+ * The chord context of a drill's chart (one entry per bar, '%' repeats, several chords in a bar share it), relative to
+ * the drill's tonic — so chromaticism and tensions are measured against the chords, as for a phrase (§10.2).
+ */
+export function chartChords(chart: string[] | undefined, tonic: number, meter: number): LickChord[] {
+  if (!chart?.length) return [];
+  const out: LickChord[] = [];
+  let prev: LickChord | null = null;
+  for (const bar of chart) {
+    const syms = bar.trim().split(/\s+/).filter((x) => x && x !== '%');
+    if (!syms.length) {
+      if (!prev) return [];
+      out.push([prev[0], prev[1], meter]);
+      continue;
+    }
+    for (const sym of syms) {
+      const c = parseChord(sym);
+      if (!c) return [];
+      prev = [mod(c.root - tonic), qualityOf(c.iv), meter / syms.length];
+      out.push(prev);
+    }
+  }
+  return out;
+}
+/** The model's input for a built-in drill (calibration): its notes, and its chart as the chord context. */
 export function drillInput(d: Drill): DInput {
   const notes: DNote[] = d.notes.filter((n) => n.pitch > 0).map((n) => ({ midi: n.pitch, beat: n.beat, dur: n.dur, hand: n.hand === 'L' ? 'L' : 'R' }));
-  return { notes, chords: [], tonic: d.tonic ? d.tonic.key : d.spec.key, minor: d.tonic ? !!d.tonic.minor : !!d.spec.minor, meter: d.meter || 4 };
+  const tonic = d.tonic ? d.tonic.key : d.spec.key;
+  const meter = d.meter || 4;
+  return { notes, chords: chartChords(d.chart, tonic, meter), tonic, minor: d.tonic ? !!d.tonic.minor : !!d.spec.minor, meter };
 }
 
 /** Onsets per beat over the whole phrase (the note rate behind T). */
-function onsetRate(inp: DInput): number {
+export function onsetRate(inp: DInput): number {
   const on = [...new Set(inp.notes.map((n) => Math.round(n.beat * 1000)))].map((x) => x / 1000).sort((a, b) => a - b);
   if (on.length < 2) return 1;
   // the busiest stretch decides: onsets per beat over the longest run without a rest of a beat or more
@@ -428,9 +495,11 @@ export function whyLine(d: Difficulty, lang: 'en' | 'he'): string {
     nct: ['tensions on the beat', 'מתחים על הפעמה'],
     hands: ['two hands', 'שתי ידיים'],
   };
+  // Two hands are named first whenever the phrase has them: the biggest single step for the player, even where the
+  // v2 weights give tensions or length more points.
   const top = Object.entries(d.parts)
     .filter(([, v]) => v >= 8)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => (b[0] === 'hands' ? 1e6 : b[1]) - (a[0] === 'hands' ? 1e6 : a[1]))
     .slice(0, 2)
     .map(([k]) => names[k][lang === 'he' ? 1 : 0]);
   const rate = lang === 'he' ? `${d.nps} צלילים לשנייה` : `${d.nps} notes/s`;

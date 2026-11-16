@@ -63,7 +63,9 @@ export function challengeFromHash(hash: string): string | null {
 
 // ---------------------------------------------------------------- friends' activity (automatic milestones)
 
-export type ActivityKind = 'unit' | 'rank' | 'badge' | 'streak' | 'duet' | 'best' | 'level' | 'standard' | 'quest';
+// 'phrase' (Encore, "the phrase is yours"): needs migration 20261203120000_toneturn_phrase_feed.sql; the client posts it only
+// with the flag on (cloud/community.ts PHRASE_FEED).
+export type ActivityKind = 'unit' | 'rank' | 'badge' | 'streak' | 'duet' | 'best' | 'level' | 'standard' | 'quest' | 'phrase';
 export interface ActivityPost {
   kind: ActivityKind;
   payload: Record<string, string | number>;
@@ -159,6 +161,13 @@ export function activityText(kind: string, payload: Record<string, unknown>, lan
       return he ? 'סיים יחידה' : 'finished a unit';
     case 'best':
       return he ? 'שבר שיא אישי' : 'set a personal best';
+    case 'phrase': {
+      // No free text from the player (the phrase's name stays private): grade and tempo only.
+      const g = num('grade');
+      const bpm = num('bpm');
+      const tail = g || bpm ? ` (${[g ? (he ? `דרגה ${g}` : `grade ${g}`) : '', bpm ? `♩${bpm}` : ''].filter(Boolean).join(' · ')})` : '';
+      return he ? `שלט במשפט משלו בכל 12 הסולמות${tail}` : `mastered a phrase of their own in all 12 keys${tail}`;
+    }
     default:
       return '';
   }
