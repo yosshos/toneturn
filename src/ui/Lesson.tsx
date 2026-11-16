@@ -30,6 +30,8 @@ import { GridDictation } from './GridDictation';
 import { gridLine } from '../engine/progGrid';
 import { itemNeedsHeadphones } from '../engine/fx';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { explainStimulus, type Stimulus } from '../engine/lesson';
+import { replayPair } from '../engine/replayPair';
 import { answerFromMidi, INTERVAL_SEMITONES, makeLesson, pcFromKey, questionSkill, type IntervalName, type IntroCard, type SkillId, type LessonDef, type LessonId, type Question } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import { displayNote, type Naming, type PitchClass } from '../engine/pitch';
@@ -39,7 +41,7 @@ import { LessonController, type LessonView } from '../game/controller';
 import { answerWord, askTemplate, choiceLabel, hintText, keysGiveAway, LESSON_META, questionBadge } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import { gemsOf, localDay, namingFor, provisionalDays, ratingsOf, resultFromSession, type Progress, type Settings } from '../storage/progress';
-import { StreakCelebration } from './Streak';
+import { StreakAfterSheet } from './Streak';
 import type { StreakState } from '../engine/streak';
 import { overallHistory, peakOf, ratingChange, type RatingChange } from '../engine/rating';
 import { isTimed } from '../engine/scoring';
@@ -96,6 +98,9 @@ interface Props {
   onSettings?: (p: Partial<Settings>) => void;
 }
 
+/** "Drill these N": at most this many missed items. */
+const DRILL_MAX = 5;
+
 /** A task that measures the voice itself (singing in tune, technique, agility): always sung, into the microphone. */
 const sungSkill = (q: Question) => !(q.kind === 'sing-seq' && q.play) && (['singing', 'technique', 'agility'].includes(questionSkill(q)) || /^p:(singing|technique|agility):/.test(q.id));
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
@@ -106,6 +111,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
   const [xpTotals, setXpTotals] = useState<{ before: number; after: number } | null>(null);
   const [streakMoment, setStreakMoment] = useState<{ before: number; after: StreakState; gems: number } | null>(null);
+  // Slice 7: the recap exit waiting behind the streak sheet, and the "Drill these N" session.
+  const [streakThen, setStreakThen] = useState<(() => void) | null>(null);
+  const [drill, setDrill] = useState<{ n: number; def: LessonDef } | null>(null);
+  const drillable = lessonId !== 'placement' && !lessonDef?.exam && lessonDef?.id !== 'placement';
   const sessionId = useMemo(() => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, []);
   if (!ctrlRef.current) {
     // Aids (spec M.3): marked per question from the player's current ratings; aided items count as easier.
@@ -309,11 +318,52 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   const bb = displayNote({ letter: 'B', acc: -1 }, nm, lang);
 
   if (v.stage === 'complete') {
+    // Slice 7: "Drill these N" — a short session of this one's misses, run in place (its own recap, Again = once more).
+    if (drill) {
+      return (
+        <LessonScreen
+          key={drill.n}
+          t={t}
+          lessonId={lessonId}
+          lessonDef={drill.def}
+          settings={settings}
+          autoStart
+          briefSeen
+          onMode={onMode}
+          onExit={onExit}
+          onAgain={() => setDrill((d) => (d ? { ...d, n: d.n + 1 } : d))}
+          onNext={null}
+          onProgress={onProgress}
+          ratings={ratings}
+          playerName={playerName}
+          onSettings={onSettings}
+          recent={recent}
+        />
+      );
+    }
+    const missedQs = drillable ? v.session.lesson.questions.filter((_, i) => ['revealed', 'correct-retry'].includes(v.session.records[i]?.outcome)).slice(0, DRILL_MAX) : [];
+    // The streak moment waits until the recap is done: the recap's exit opens it as a sheet, its Continue carries on.
+    const gate = (fn: () => void) => () => (streakMoment ? setStreakThen(() => fn) : fn());
+    const drillOpen = missedQs.length
+      ? { n: missedQs.length, open: gate(() => setDrill({ n: 0, def: { id: 'review', version: 1, skill: v.session.lesson.skill, scoring: v.session.lesson.scoring, intro: [], questions: missedQs } })) }
+      : undefined;
     return (
       <>
-        <Recap covered={!!streakMoment} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={onAgain} onHome={onExit} onNext={onNext} nextLabel={nextLabel} secondary={secondary} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} />
-        {streakMoment && (
-          <StreakCelebration t={t} before={streakMoment.before} after={streakMoment.after} gemsGained={streakMoment.gems} today={localDay(new Date())} onDone={() => setStreakMoment(null)} />
+        <Recap covered={!!streakThen} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={gate(onAgain)} onHome={gate(onExit)} onNext={onNext && gate(onNext)} nextLabel={nextLabel} secondary={secondary && { label: secondary.label, open: gate(secondary.open) }} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} drill={drillOpen} />
+        {streakMoment && streakThen && (
+          <StreakAfterSheet
+            t={t}
+            before={streakMoment.before}
+            after={streakMoment.after}
+            gemsGained={streakMoment.gems}
+            today={localDay(new Date())}
+            onDone={() => {
+              const go = streakThen;
+              setStreakMoment(null);
+              setStreakThen(null);
+              go();
+            }}
+          />
         )}
       </>
     );
@@ -498,6 +548,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               </>
             )}
           </div>
+          {/* Slice 7 (COURSE-FEEDBACK-UI §4.6): the ask sits above any input — the grid's pad comes after the task. */}
+          {isGrid && <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>}
           <div className="hero-slot">
             {q.kind === 'sing' ? (
               <Tuner v={v} />
@@ -595,17 +647,11 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
               </div>
             </div>
           )}
-          <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>
+          {!isGrid && <h1 className="ask">{withNote(askTemplate(q, lang, nm), target, keyName)}</h1>}
           {!isGrid && <PaceBar v={v} t={t} />}
           {!isGrid && <Listening v={v} t={t} hint={hintText(q, lang, v.mode === 'voice' && !v.needsListenTap)} />}
           <FeedbackBanner v={v} t={t} lang={lang} settings={settings} onExplain={() => openAi('explain', 'miss')} />
-          {v.awaitNext && v.canCompare && (
-            <div className="fb-actions" data-await-next="1">
-              <button className="btn ghost" onClick={() => ctrl.compareNow()} data-compare-now="1">
-                {lang === 'he' ? '⇄ השוואה: שלכם מול הנכון' : '⇄ Compare: yours vs the right one'}
-              </button>
-            </div>
-          )}
+          {v.awaitNext && v.canCompare && <ReplayChips key={`rp${v.index}`} q={q} given={v.feedback?.given} lang={lang} onPlay={(st) => ctrl.playSide(st)} />}
           {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
             <RhythmBuilder key={`${v.index}-${v.session.turn}`} q={q} lang={lang} t={t} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
           )}
@@ -637,6 +683,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                       <span className="answer-hint" dir="ltr" aria-hidden="true">
                         <NoteStaff {...staffOf(c)!} />
                       </span>
+                    )}
+                    {/* Slice 7: never colour alone — the right answer carries ✓, the chosen wrong one ✕ (ink glyphs). */}
+                    {markOf(v, c) && (
+                      <i className="ans-glyph" data-ans-glyph={markOf(v, c) === 'is-right' ? 'right' : 'wrong'} aria-label={markOf(v, c) === 'is-right' ? (lang === 'he' ? 'נכון' : 'right') : lang === 'he' ? 'הבחירה שלכם' : 'your pick'}>
+                        <MarkGlyph ok={markOf(v, c) === 'is-right'} />
+                      </i>
                     )}
                   </button>
                 );
@@ -1035,6 +1087,56 @@ function Listening({ v, t, hint }: { v: LessonView; t: Strings; hint: string }) 
         <b>{label || ' '}</b>
         <small>{v.interim ? `“${v.interim}”` : hint}</small>
       </span>
+    </div>
+  );
+}
+
+/** An ink ✓ or ✕ drawn as a stroke (no font glyph, so it never renders as an emoji). */
+function MarkGlyph({ ok }: { ok: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={ok ? 'M3 8.5l3.2 3.2L13 4.8' : 'M4 4l8 8M12 4l-8 8'} />
+    </svg>
+  );
+}
+
+function PlayTri() {
+  return (
+    <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+      <path d="M2.5 1.5v9l8-4.5z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/**
+ * Slice 7 (COURSE-FEEDBACK-UI §4.6): after a miss, "Yours ▶" / "Right ▶" replay the real thing through the question's
+ * own sound, with the why as a sound (replayPair). The keyboard lights each as it plays (the item is answered, so the
+ * note views are live). No "Yours" when the given answer can't be played as what the player did.
+ */
+function ReplayChips({ q, given, lang, onPlay }: { q: Question; given: unknown; lang: 'he' | 'en'; onPlay: (s: Stimulus[]) => number }) {
+  const pair = useMemo(() => replayPair(q, given as never) ?? (explainStimulus(q).length ? { yours: null, right: explainStimulus(q) } : null), [q, given]);
+  const [playing, setPlaying] = useState<'yours' | 'right' | null>(null);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  if (!pair) return null;
+  const play = (side: 'yours' | 'right') => {
+    const st = side === 'yours' ? pair.yours : pair.right;
+    if (!st) return;
+    const sec = onPlay(st);
+    window.clearTimeout(timer.current);
+    setPlaying(side);
+    timer.current = window.setTimeout(() => setPlaying(null), Math.max(400, sec * 1000 + 150));
+  };
+  return (
+    <div className="fb-actions replay-pair" data-await-next="1" data-replay-playing={playing ?? ''}>
+      {pair.yours && (
+        <button type="button" className={`replay-chip yours${playing === 'yours' ? ' on' : ''}`} onClick={() => play('yours')} data-replay="yours" aria-pressed={playing === 'yours'}>
+          {lang === 'he' ? 'שלכם' : 'Yours'} <PlayTri />
+        </button>
+      )}
+      <button type="button" className={`replay-chip right${playing === 'right' ? ' on' : ''}`} onClick={() => play('right')} data-replay="right" aria-pressed={playing === 'right'}>
+        {lang === 'he' ? 'הנכון' : 'Right'} <PlayTri />
+      </button>
     </div>
   );
 }

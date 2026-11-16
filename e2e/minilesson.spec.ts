@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addLocatorHandler(page.locator('.streak-celebrate'), async () => {
-    await page.locator('.streak-celebrate .btn.mega').click();
+  await page.addLocatorHandler(page.locator('.streak-celebrate, [data-streak-sheet]'), async () => {
+    await page.locator('.streak-celebrate .btn.mega, [data-streak-continue]').first().click();
   });
 });
 

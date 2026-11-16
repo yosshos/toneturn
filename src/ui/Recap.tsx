@@ -43,9 +43,11 @@ interface Props {
   xpTotals?: { before: number; after: number } | null;
   /** Something covers the recap (the streak screen): its animations wait until it is uncovered. */
   covered?: boolean;
+  /** Slice 7: "Drill these N" — a short session of the misses. */
+  drill?: { n: number; open: () => void };
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, secondary, rating, playerName, xpTotals, covered = false }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, secondary, rating, playerName, xpTotals, covered = false, drill }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [page, setPage] = useState(0);
@@ -331,6 +333,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         {secondary && (
           <button className="btn" onClick={secondary.open} data-recap-secondary="1">
             {secondary.label} <span className="flip-rtl">→</span>
+          </button>
+        )}
+        {drill && (
+          <button className="btn drill-these" onClick={drill.open} data-drill-these={drill.n}>
+            {drill.n === 1 ? (lang === 'he' ? 'לתרגל את זה שוב' : 'Drill this one') : lang === 'he' ? `לתרגל את ה־${drill.n} האלה` : `Drill these ${drill.n}`}
           </button>
         )}
         <button className={onNext ? 'btn' : 'btn mega'} onClick={onAgain}>

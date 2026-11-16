@@ -1,0 +1,84 @@
+/* COURSE-FEEDBACK-UI slices 3 and 6: the chart player's loop; drum lanes, drum notation, the per-drum chips and the
+   Highway's gems (§4.5) in the v2 language.
+   Loaded after feedback.css. Teal / tangerine / purple / pink are fills under ink; lemon only for "now". */
+
+/* ---------------------------------------------------------------- drill lanes: 22 px lanes, icon names, kick bar */
+.drum-lanes .dl-lane { fill: var(--card-2); stroke: var(--line-strong); stroke-width: 1; }
+.drum-lanes .dl-lane.l-kick { fill: color-mix(in srgb, var(--lilac) 22%, var(--card)); }
+.drum-lanes .dl-lane.l-snare { fill: color-mix(in srgb, var(--pink) 14%, var(--card)); }
+.drum-lanes .dl-lane.l-hat,
+.drum-lanes .dl-lane.l-ride,
+.drum-lanes .dl-lane.l-crash { fill: color-mix(in srgb, var(--sky) 18%, var(--card)); }
+.drum-lanes .dl-icon { color: var(--ink-c); }
+.drum-lanes .dl-hit { fill: var(--ink-c); stroke: var(--ink-c); stroke-width: 1.2; }
+.drum-lanes .dl-hit.ghost { fill: var(--card); stroke-width: 1.4; }
+.drum-lanes .dl-hit.accent { stroke-width: 2.6; }
+.drum-lanes .dl-x { stroke: var(--ink-c); stroke-width: 2.4; stroke-linecap: round; fill: none; }
+.drum-lanes .dl-open { fill: none; stroke: var(--ink-c); stroke-width: 1.3; }
+.drum-lanes .dl-acc { fill: none; stroke: var(--ink-c); stroke-width: 1.4; }
+.drum-lanes .dl-kick { fill: var(--ink-c); stroke: var(--ink-c); stroke-width: 1; }
+/* marks: the head carries pitch (teal right, pink wrong, dashed missed); the tick beside it carries timing */
+.drum-lanes .dl-hit.ok, .drum-lanes .dl-hit.early, .drum-lanes .dl-hit.late,
+.drum-lanes .dl-kick.ok, .drum-lanes .dl-kick.early, .drum-lanes .dl-kick.late { fill: var(--teal); }
+.drum-lanes .dl-hit.wrong, .drum-lanes .dl-kick.wrong { fill: var(--pink); }
+.drum-lanes .dl-hit.missed, .drum-lanes .dl-kick.missed { fill: var(--card); stroke-dasharray: 2.4 1.8; }
+.drum-lanes .dl-x.missed { stroke-dasharray: 2.4 1.8; }
+.drum-lanes .dl-kick.accent { stroke-width: 2.4; }
+.lane-key-row { display: flex; align-items: center; gap: 8px; }
+.drum-lanes .dl-xbg { fill: transparent; stroke: none; }
+.drum-lanes .dl-xbg.ok, .drum-lanes .dl-xbg.early, .drum-lanes .dl-xbg.late { fill: var(--teal); stroke: var(--ink-c); stroke-width: 1; }
+.drum-lanes .dl-xbg.wrong { fill: var(--pink); stroke: var(--ink-c); stroke-width: 1; }
+.drum-score.lanes { position: relative; }
+.drum-score.lanes .drum-key-help { position: absolute; inset-inline-end: 6px; bottom: 6px; width: 30px; height: 30px; min-height: 0; padding: 0; font-size: 0.85rem; }
+/* the kit pads under the Highway: the hi-hat pad was lemon-tinted (lemon means "now" only) */
+:root[data-theme] .hw-lane-labels.kit .kit-pad:first-child { --c: var(--card); }
+.drum-score.lanes svg.drum-lanes { max-height: 30vh; }
+
+/* ---------------------------------------------------------------- the review: per-limb split chips */
+.limb-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.limb-chips li { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px 1px 3px; border: 2px solid var(--outline); border-radius: 999px; background: var(--card); font-size: 0.78rem; line-height: 1.5; color: var(--ink); white-space: nowrap; }
+.limb-chips i { width: 14px; height: 10px; flex: none; border-radius: 50%; transform: rotate(-20deg); border: 1.5px solid var(--ink-c); background: var(--teal); }
+.limb-chips li.early i { background: var(--tangerine); }
+.limb-chips li.late i { background: var(--purple); }
+.limb-chips li.miss i { background: var(--card); border-style: dashed; }
+.limb-chips b { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------- the chart player's loop (slice 3) */
+.ch-play .ch-go .ch-loop { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; min-height: 36px; }
+.ch-loop .chip { min-height: 32px; }
+.ch-loop .ch-loop-on { cursor: default; }
+
+/* ---------------------------------------------------------------- Highway: gems and marks */
+/* lemon only for now: an unmarked gem in the first lane is paper, not lemon */
+:root[data-theme] .hw-note.lane-0 { background: var(--card); }
+/* the mark on the gem itself: teal + ink check for a hit, a timing tick beside it when it was off, a dashed ring for a miss */
+:root[data-theme] .hw-note.is-perfect, :root[data-theme] .hw-note.is-good { background: var(--teal); }
+:root[data-theme] .hw-note.is-miss { background: transparent; border: 3px dashed var(--card); opacity: 1; }
+:root[data-theme] .hw-note.is-miss::before, :root[data-theme] .hw-note.is-miss::after { opacity: 0; }
+.hw-tick { position: absolute; top: 50%; width: 12px; height: 6px; margin-top: -3px; border: 1.5px solid var(--ink-c); border-radius: 2px; box-sizing: border-box; pointer-events: none; }
+.hw-tick.early { right: calc(100% + 3px); background: var(--tangerine); }
+.hw-tick.late { left: calc(100% + 3px); background: var(--purple); border-color: var(--card); }
+/* a wrong drum / pitch: a pink cross at the hit line, in the lane that was hit, fading */
+.hw-wrong { position: absolute; bottom: 16%; left: calc((100% / var(--lanes, 1)) * (var(--i, 0) + 0.5) - 14px); width: 28px; height: 28px; transform: translateY(50%); border-radius: 50%; background: var(--pink); border: 2.5px solid var(--ink-c); box-sizing: border-box; pointer-events: none; z-index: 3; animation: hw-wrong-fade 0.7s ease-out forwards; }
+.hw-wrong.mid { left: calc(50% - 14px); }
+.hw-wrong::before, .hw-wrong::after { content: ''; position: absolute; left: 50%; top: 50%; width: 14px; height: 3px; margin: -1.5px 0 0 -7px; border-radius: 2px; background: var(--ink-c); transform: rotate(45deg); }
+.hw-wrong::after { transform: rotate(-45deg); }
+@keyframes hw-wrong-fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+html[data-motion='reduced'] .hw-wrong { animation: none; opacity: 0.9; }
+/* kit gems: cymbals (hi-hat, crash) carry a cross, drums a round head; the kick is a bar across every lane */
+:root[data-theme] .hw-note[class*='kit-'] { z-index: 1; }
+:root[data-theme] .hw-note.kit-hihat, :root[data-theme] .hw-note.kit-cymbal { border-radius: 10px; }
+:root[data-theme] .hw-note.kit-hihat::after, :root[data-theme] .hw-note.kit-cymbal::after {
+  --kit-ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M5 5l14 14M19 5L5 19'/%3E%3C/svg%3E");
+  width: 18px;
+  height: 18px;
+}
+:root[data-theme] .hw-road .hw-note.kit-kick,
+:root[data-theme] .hw-road .hw-note.kit-kick[data-near],
+:root[data-theme] .hw-road .hw-note.kit-kick.is-miss[data-near] { left: 6px; width: calc(100% - 12px); height: 14px !important; border-radius: 7px; transform: translateY(50%); z-index: 0; }
+:root[data-theme] .hw-road .hw-note.kit-kick[data-near='2'] { transform: translateY(50%) scaleY(1.4); box-shadow: none; }
+:root[data-theme] .hw-road .hw-note.kit-kick.is-perfect,
+:root[data-theme] .hw-road .hw-note.kit-kick.is-good { transform: translateY(50%) scaleY(1.3); }
+:root[data-theme] .hw-road .hw-note.kit-kick::after { display: none; }
+:root[data-theme] .hw-road .hw-note.kit-kick::before { font-size: 0.7rem; }
+:root[data-theme] .hw-road .hw-note.kit-kick .hw-tick { top: 50%; }
