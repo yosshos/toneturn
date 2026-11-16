@@ -59,7 +59,7 @@ const CASES: [Inst, string, string[]][] = [
   ['piano', 'k-tune', ['k-tune-11', 'k-tune-14', 'k-tune-15']],
   ['piano', 'k-reharm', ['k-reharm-23', 'k-reharm-24']],
   ['guitar', 'g-cmel', ['g-cmel-7', 'g-cmel-8', 'g-cmel-9']],
-  ['guitar', 'g-tune', ['g-tune-10', 'g-tune-14']],
+  ['guitar', 'g-tune', ['g-tune-10', 'g-tune-13']],
   ['guitar', 'g-gig', ['g-gig-9']],
   ['guitar', 'g-color', ['g-color-13', 'g-color-15', 'g-color-16']],
   ['bass', 'b-tune', ['b-tune-8', 'b-tune-11']],
