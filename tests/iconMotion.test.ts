@@ -17,7 +17,7 @@ import { hasMotion, PaperSvg } from '../src/ui/paper/Paper';
 
 const NAV = ['home', 'path', 'arcade', 'skills', 'friends', 'tools', 'achievements'];
 const ALL: [string, Art][] = [...Object.entries(PAPER), ...Object.entries(BADGE_ONLY), ...NAV.map((id) => [`nav:${id}`, navArt(id, 16)!] as [string, Art])];
-const CSS = readFileSync('src/paper-motion.css', 'utf8');
+const CSS = readFileSync('src/paper-motion.css', 'utf8').split(String.fromCharCode(13, 10)).join(String.fromCharCode(10)); // CRLF checkouts (Windows)
 const VOCAB = Object.keys(MOTION_MS) as (Anim | 'lift')[];
 
 describe('icon motion data', () => {
