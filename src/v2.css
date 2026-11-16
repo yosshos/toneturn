@@ -2127,3 +2127,7 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 .time-visual.playing svg { animation: time-pulse .5s ease-in-out infinite alternate; }
 @keyframes time-pulse { from { transform: scale(.92); } to { transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .time-visual.playing svg { animation: none; } }
+
+/* Bottom bar: the longest label ("Community") fits at phone width without an ellipsis. */
+:root[data-theme] .tab .tab-label { font-size: 0.64rem; letter-spacing: -0.02em; }
+@media (max-width: 380px) { :root[data-theme] .tab .tab-label { font-size: 0.6rem; } }

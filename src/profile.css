@@ -310,3 +310,8 @@
 .duet-card p { margin: 0; flex-basis: 100%; }
 .duet-start { margin-top: 10px; display: flex; gap: 8px; }
 .duet-start select { flex: 1; min-width: 0; font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel, transparent); color: inherit; }
+
+/* Community tabs: five tabs never overlap on a phone — each takes its own width and the row scrolls sideways if needed. */
+.fr2 .fr-tabs { display: flex; overflow-x: auto; scrollbar-width: none; gap: 2px; }
+.fr2 .fr-tabs::-webkit-scrollbar { display: none; }
+.fr2 .fr-tabs > button { flex: 1 0 auto; min-width: max-content; padding-inline: 10px; }
