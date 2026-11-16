@@ -5,7 +5,7 @@
 import { CourseChip } from './CourseSwitcher';
 import { useCourse } from './courseContext';
 import { useEffect, useState, type ReactNode } from 'react';
-import { TAB_ICONS, type TabId } from './Arcade';
+import { NavIcon, type TabId } from './Arcade';
 import { Logo } from './bits';
 
 export type NavId =
@@ -84,14 +84,14 @@ const ICON = {
 // 0.61 (SPEC-REDESIGN NavMap): the four screens of the active course first (their contents follow the course), then
 // what every course shares, then the tools. Songs, pieces, charts, technique… now live inside Practice, per course.
 const SECTIONS: Section[] = [
-  { id: 'home', label: { en: 'Today', he: 'היום' }, icon: TAB_ICONS.home },
-  { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: TAB_ICONS.path },
+  { id: 'home', label: { en: 'Today', he: 'היום' }, icon: <NavIcon id="home" size={22} /> },
+  { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: <NavIcon id="path" size={22} /> },
   // Encore (SPEC-PHRASE-STUDIO §17): "הדרן" under Practice.
-  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: TAB_ICONS.arcade, children: [{ id: 'encore', label: { en: 'Encore', he: 'הדרן' } }] },
+  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: <NavIcon id="arcade" size={22} />, children: [{ id: 'encore', label: { en: 'Encore', he: 'הדרן' } }] },
   {
     id: 'skills',
     label: { en: 'Progress', he: 'התקדמות' },
-    icon: TAB_ICONS.skills,
+    icon: <NavIcon id="skills" size={22} />,
     children: [
       { id: 'insights', label: { en: 'Insights', he: 'תובנות' } },
       // AUDIT-5: measured practice time, the quality ledger and the journal.
@@ -102,14 +102,14 @@ const SECTIONS: Section[] = [
   },
 ];
 const SHARED: Section[] = [
-  { id: 'friends', label: { en: 'Community & league', he: 'קהילה וליגה' }, icon: TAB_ICONS.friends },
-  { id: 'achievements', label: { en: 'Achievements', he: 'הישגים' }, icon: ICON.cap },
+  { id: 'friends', label: { en: 'Community & league', he: 'קהילה וליגה' }, icon: <NavIcon id="friends" size={22} /> },
+  { id: 'achievements', label: { en: 'Achievements', he: 'הישגים' }, icon: <NavIcon id="achievements" size={22} /> },
 ];
 const TOOLS: Section = {
   id: 'tuner',
   group: true,
   label: { en: 'Tools', he: 'כלים' },
-  icon: ICON.tools,
+  icon: <NavIcon id="tools" size={22} />,
   children: [
     { id: 'tuner', label: { en: 'Tuner', he: 'טיונר' } },
     { id: 'metronome', label: { en: 'Metronome', he: 'מטרונום' } },
@@ -203,7 +203,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
             title={L(s.label)}
             data-nav={s.group ? `group:${key}` : s.id}
           >
-            {svg(s.icon)}
+            {s.icon}
             <span className="sn-label">{L(s.label)}</span>
             {badge(s.id)}
           </button>

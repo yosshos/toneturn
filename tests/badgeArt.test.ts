@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+﻿import { describe, expect, it } from 'vitest';
 import { createElement as h, Fragment } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BADGES, GUITAR_BADGE_FAMILIES } from '../src/engine/badges';
@@ -12,7 +12,7 @@ describe('glyph registry', () => {
     for (const b of BADGES) {
       const r = resolveGlyph(b);
       expect(typeof r.glyph, b.id).toBe('function');
-      if (['area', 'skill', 'technique', 'special', 'season', 'sub'].includes(b.cat)) expect(r.fallback, `${b.id} → ${r.key}`).toBe(false);
+      if (['area', 'skill', 'technique', 'special', 'season', 'sub'].includes(b.cat)) expect(r.fallback, `${b.id} ג†’ ${r.key}`).toBe(false);
     }
   });
   it('sub-skill badges reuse their skill glyph', () => {
@@ -62,7 +62,8 @@ describe('BadgeArt', () => {
   it('gradient ids are unique across many instances in one tree', () => {
     const html = renderToStaticMarkup(h(Fragment, null, ...BADGES.map((b, i) => h(BadgeArt, { key: b.id, badge: b, earned: i % 2 === 0 }))));
     const all = ids(html);
-    expect(all.length).toBeGreaterThan(BADGES.length * 4);
+    // Paper medals (flat, no gradients): the sweep gradient + the clip per badge.
+    expect(all.length).toBeGreaterThan(BADGES.length * 1.5);
     expect(new Set(all).size).toBe(all.length);
     for (const ref of html.matchAll(/url\(#([^)]+)\)/g)) expect(all, ref[1]).toContain(ref[1]);
   });

@@ -4,6 +4,9 @@
 import { COURSE_AREAS } from '../engine/courses';
 import { RIcon } from './Recordings';
 import { DOMAIN_COLOR, Glyph, type GlyphKind } from './Glyph';
+import { PAPER } from './paper';
+import { navArt } from './paper/art-core';
+import { PaperSvg } from './paper/Paper';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch } from './CourseSwitcher';
 import { COURSE_GAMES, COURSE_ROWS, courseRows } from './courseRows';
@@ -99,6 +102,12 @@ export const TAB_ICONS: Record<TabId, React.ReactNode> = {
   ),
 };
 
+/** A nav icon in the Paper language (src/ui/paper), simplified cut: tab bar, sidebar. */
+export function NavIcon({ id, size = 24 }: { id: TabId | 'tools' | 'achievements'; size?: number }) {
+  const a = navArt(id);
+  return a ? <PaperSvg art={a} cut="small" width={size} className="nav-pp" /> : null;
+}
+
 export function TabBar({ t, route, onGo, dot }: { t: Strings; route: TabId; onGo: (r: TabId) => void; /** Tabs that have something new. */ dot?: Partial<Record<TabId, boolean>> }) {
   const label: Record<TabId, string> = { home: t.tabHome, path: t.tabPath, skills: t.tabProgress, arcade: t.tabPlay, friends: t.tabFriends };
   return (
@@ -106,9 +115,7 @@ export function TabBar({ t, route, onGo, dot }: { t: Strings; route: TabId; onGo
       {TAB_ROUTES.map((r) => (
         <button key={r} className={`tab ${route === r ? 'on' : ''}`} aria-current={route === r ? 'page' : undefined} onClick={() => onGo(r)} data-tab={r}>
           <span className="tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              {TAB_ICONS[r]}
-            </svg>
+            <NavIcon id={r} size={26} />
             {dot?.[r] && <span className="tab-dot" />}
           </span>
           <span className="tab-label">{label[r]}</span>
@@ -882,11 +889,20 @@ const HUB_PATHS: Record<string, React.ReactNode> = {
     </>
   ),
 };
-const HubIcon = ({ k, size = 22 }: { k: string; size?: number }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {HUB_PATHS[k]}
-  </svg>
-);
+/** Practice-page cards and tools in the Paper language: each hub row → its glyph (HUB_PATHS: the old line drawing, kept as a fallback). */
+const HUB_ART: Record<string, string> = {
+  encore: 'encore', repertoire: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
+  slowdown: 'slow', licks: 'lick', transcribe: 'transcribe', improv: 'improv', puzzle: 'puzzle', exams: 'features', groove: 'groove', charts: 'roadmap',
+  log: 'log', pieces: 'kclassic', chordfinder: 'chordbox', chordbuilder: 'keychord', mixer: 'mixer', mysong: 'record', games: 'games',
+};
+const HubIcon = ({ k, size = 22 }: { k: string; size?: number }) =>
+  PAPER[HUB_ART[k]] ? (
+    <PaperSvg art={PAPER[HUB_ART[k]]} cut={size <= 24 ? 'small' : 'full'} width={size} className="hub-pp" />
+  ) : (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {HUB_PATHS[k]}
+    </svg>
+  );
 const HUB_TX = {
   songs: { en: ['Songs', 'Play and sing real songs'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים'] },
   drills: { en: ['Technique', 'Your instrument and your voice'], he: ['טכניקה', 'הכלי שלכם והקול שלכם'] },
@@ -1252,6 +1268,7 @@ const CAT_PATHS: Record<string, string> = {
   puzzle: 'M5 8h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v3h-3a2 2 0 1 0-4 0H5v-3a2 2 0 1 0 0-4z',
 };
 function CatIcon({ k }: { k: string }) {
+  if (k === 'puzzle' && PAPER.puzzle) return <PaperSvg art={PAPER.puzzle} cut="small" width={24} />;
   return (
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
       <path d={CAT_PATHS[k] ?? CAT_PATHS.ear} />

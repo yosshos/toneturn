@@ -1,0 +1,292 @@
+<title>שפת האייקונים</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Secular+One&display=swap">
+<style>
+/* Layout: a full-screen deck — intro, one slide per direction (grid + sizes + in-app context), a side-by-side compare. */
+:root {
+  --paper: #fbf7ff; --ink: #1e1033; --card: #ffffff; --card2: #f3ecff; --soft: #5b4a86; --line: #ddd2f3;
+  --bar: #1e1033; --bar-ink: #fbf7ff;
+  --purple: #6d28d9; --lilac: #a78bfa; --teal: #12c9b4; --pink: #ff5fa2; --tangerine: #ff8a3d; --sky: #3ab8ff; --lemon: #ffd43b;
+  --display: 'Secular One', 'Rubik', system-ui, sans-serif; --body: 'Rubik', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #140a24; --ink: #f4efff; --card: #241540; --card2: #2e1a4f; --soft: #b9a8de; --line: #3d2a62; --bar: #07030f; --bar-ink: #f4efff; color-scheme: dark } }
+:root[data-theme="dark"] { --paper: #140a24; --ink: #f4efff; --card: #241540; --card2: #2e1a4f; --soft: #b9a8de; --line: #3d2a62; --bar: #07030f; --bar-ink: #f4efff; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 10px; background: var(--paper); border-bottom: 2px solid var(--line);
+  padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.top h1 { font-family: var(--display); font-weight: 400; font-size: 19px; margin: 0; white-space: nowrap; }
+.top .cnt { color: var(--soft); font-size: 13px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn { border: 2px solid var(--ink); background: var(--card); color: var(--ink); border-radius: 12px; height: 38px; min-width: 38px; padding: 0 12px; font: 700 14px var(--body); cursor: pointer; }
+.btn.pr { background: var(--purple); color: #fff; border-color: var(--purple); }
+.btn:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.deck { padding-block: 18px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.slide { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.slide[hidden] { display: none !important; }
+h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--soft); font-size: 15.5px; line-height: 1.6; max-width: 70ch; }
+.rules { display: flex; flex-wrap: wrap; gap: 8px; }
+.rules span { border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; background: var(--card); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; }
+.tile { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 14px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+.tile svg { width: 72px; height: 72px; }
+.tile b { font-size: 13.5px; font-weight: 700; }
+.row2 { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; }
+@media (max-width: 820px) { .row2 { grid-template-columns: 1fr; } }
+.panel { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.panel h3 { margin: 0; font-size: 15px; }
+.sizes { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.sizes figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sizes figcaption { font-size: 11.5px; color: var(--soft); font-variant-numeric: tabular-nums; }
+.nav { background: var(--bar); border-radius: 22px; display: flex; justify-content: space-around; padding: 10px 6px; }
+.nav div { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--bar-ink); font-size: 11px; font-weight: 600; padding: 6px 8px; border-radius: 14px; }
+.nav div.on { background: var(--lemon); color: #1e1033; }
+.nav svg { width: 26px; height: 26px; }
+.pathc { display: flex; justify-content: space-around; align-items: center; padding: 6px 0; }
+.node { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; border: 2.5px solid var(--ink); background: var(--card2); }
+.node.done { background: var(--teal); }
+.node.now { background: var(--lemon); box-shadow: 0 0 0 5px var(--card), 0 0 0 7.5px var(--ink); }
+.node svg { width: 46px; height: 46px; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini { border: 2px solid var(--ink); border-radius: 16px; padding: 10px; display: flex; gap: 10px; align-items: center; min-width: 0; }
+.mini svg { width: 44px; height: 44px; flex: none; }
+.mini .t { font-weight: 700; font-size: 14px; } .mini .s { font-size: 12px; color: var(--soft); }
+.m1 { background: #f0e8ff; color: #1e1033; } .m2 { background: #d9fbf5; color: #1e1033; } .m3 { background: #ffe1ee; color: #1e1033; } .m4 { background: #ffe9d9; color: #1e1033; }
+.m1 .s, .m2 .s, .m3 .s, .m4 .s { color: #4a3a6e; }
+.cmp { display: grid; grid-template-columns: auto repeat(3, 1fr); gap: 10px; align-items: center; }
+.cmp .h { font-weight: 700; text-align: center; font-size: 14px; }
+.cmp .c { background: var(--card); border: 2px solid var(--line); border-radius: 16px; display: grid; place-items: center; padding: 10px; }
+.cmp .c svg { width: 64px; height: 64px; }
+.cmp .lab { font-size: 13px; font-weight: 600; color: var(--soft); }
+.intro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 820px) { .intro { grid-template-columns: 1fr; } }
+.dir { background: var(--card); border: 2px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.dir .ic { display: flex; gap: 10px; } .dir .ic svg { width: 56px; height: 56px; }
+.dir h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 20px; }
+.dir p { margin: 0; color: var(--soft); font-size: 14px; line-height: 1.55; }
+.note { font-size: 13px; color: var(--soft); margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .slide:not([hidden]) { animation: in .25s ease-out both; } @keyframes in { from { opacity: .4; transform: translateY(4px); } } }
+</style>
+
+<div dir="rtl" lang="he">
+  <div class="top">
+    <h1>שפת האייקונים</h1>
+    <span class="cnt" id="cnt"></span>
+    <button class="btn" id="theme" aria-label="בהיר / כהה">◐</button>
+    <button class="btn" id="prev">הקודם</button>
+    <button class="btn pr" id="next">הבא</button>
+  </div>
+  <div class="deck" id="deck"></div>
+</div>
+
+<script>
+(function () {
+// ---------------------------------------------------------------- palette
+const C = { ink: '#1e1033', paper: '#fbf7ff', purple: '#6d28d9', lilac: '#a78bfa', teal: '#12c9b4', pink: '#ff5fa2', tan: '#ff8a3d', sky: '#3ab8ff', lemon: '#ffd43b' };
+const mix = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+
+// ---------------------------------------------------------------- geometry (48 grid). roles: body, accent, light, ink, line, tube
+const E = (cx, cy, rx, ry, rot, role) => ({ t: 'ellipse', a: { cx, cy, rx, ry, transform: `rotate(${rot} ${cx} ${cy})` }, role });
+const R = (x, y, w, h, rx, role, tr) => ({ t: 'rect', a: { x, y, width: w, height: h, rx, ...(tr ? { transform: tr } : {}) }, role });
+const P = (d, role, w) => ({ t: 'path', a: { d }, role, w });
+const Ci = (cx, cy, r, role) => ({ t: 'circle', a: { cx, cy, r }, role });
+const L = (x1, y1, x2, y2, role = 'line', w) => ({ t: 'line', a: { x1, y1, x2, y2 }, role, w });
+const gear = (cx, cy, r1, r2, n) => { let d = ''; for (let i = 0; i < n * 2; i++) { const a0 = (i / (n * 2)) * Math.PI * 2, a1 = ((i + 1) / (n * 2)) * Math.PI * 2, r = i % 2 ? r1 : r2; const p = (a, rr) => `${(cx + Math.cos(a) * rr).toFixed(2)} ${(cy + Math.sin(a) * rr).toFixed(2)}`; d += (i ? 'L' : 'M') + p(a0 + 0.06, r) + 'L' + p(a1 - 0.06, r); } return d + 'Z'; };
+
+const ICONS = [
+  { id: 'path', he: 'מסלול', hue: C.teal, hue2: C.purple, parts: [
+    P('M10 44 C 10 34, 34 36, 34 26 S 16 18, 18 8', 'tube', 7),
+    P('M10 44 C 10 34, 34 36, 34 26 S 16 18, 18 8', 'dash', 1.4),
+    Ci(11, 41, 4.2, 'accent'), Ci(31, 28.5, 4.2, 'body'),
+    L(18, 9, 18, 1.5, 'inkline', 2), P('M18 1.8 L28 4.6 L18 8 Z', 'accent') ] },
+  { id: 'practice', he: 'תרגול', hue: C.purple, hue2: C.tan, parts: [
+    P('M15 44 L19 8 Q24 4 29 8 L33 44 Z', 'body'), P('M18.6 40 L21.6 13 Q24 10.5 26.4 13 L29.4 40 Z', 'light'),
+    L(24, 37, 31, 15, 'inkline', 2.4), R(26.5, 20.5, 6, 4.5, 1.4, 'accent', 'rotate(-18 29.5 22.7)'),
+    R(12, 42, 24, 4.5, 2, 'ink'), Ci(24, 37, 1.8, 'ink'), L(21, 20, 23, 20), L(20.5, 26, 23, 26), L(20, 32, 23, 32) ] },
+  { id: 'ear', he: 'שמיעה', hue: C.teal, hue2: C.sky, parts: [
+    P('M30 9 C 21 8, 15 15, 16 23 C 16.6 28, 21 29, 21 33 C 21 37, 18 38, 18 41 C 18 45, 24 46, 27 42 C 30 38, 37 34, 38 25 C 39 16, 35 10, 30 9 Z', 'body'),
+    P('M29 15 C 24 15, 22 19, 23 23 C 23.6 25.5, 27 25.5, 27.5 28.5 C 28 31, 25.5 32.5, 26 34.5', 'inkline', 2.2),
+    P('M11 18 C 7 22, 7 28, 11 32', 'accentline', 2.4), P('M6 14 C 0.5 21, 0.5 29, 6 36', 'accentline', 2.4),
+    E(31.5, 20, 3, 2.2, -20, 'light') ] },
+  { id: 'keys', he: 'קלידים', hue: C.purple, hue2: C.lilac, parts: [
+    R(5, 17, 38, 26, 4, 'light'), R(23.8, 17, 9.6, 26, 0, 'body'), L(14.4, 17, 14.4, 43), L(23.8, 17, 23.8, 43), L(33.4, 17, 33.4, 43),
+    R(11.6, 17, 5.6, 14.5, 1.6, 'ink'), R(21, 17, 5.6, 14.5, 1.6, 'ink'), R(30.6, 17, 5.6, 14.5, 1.6, 'ink'),
+    E(37, 9.6, 4.4, 3.2, -20, 'accent'), L(41, 8.6, 41, 1.6, 'inkline', 2), P('M41 1.8 Q45.5 4 44 8', 'inkline', 1.8) ] },
+  { id: 'guitar', he: 'גיטרה', hue: C.tan, hue2: C.purple, parts: [
+    P('M25.5 21.5 L39.5 7.5 L42.5 10.5 L28.5 24.5 Z', 'light'),
+    P('M38.6 8.4 L41.5 3.6 L46.4 6.6 L42.4 11.4 Z', 'accent'), Ci(41.5, 3.1, 1.3, 'ink'), Ci(46.6, 8.1, 1.3, 'ink'),
+    P('M20 18 C 26 16, 32 20, 30 26 C 29 29, 33 31, 33 35 C 33 42, 25 46.5, 18 44.5 C 11 42.5, 6.5 36, 8.5 30 C 9.5 27, 13 26, 14 23 C 15 20, 16 18.5, 20 18 Z', 'body'),
+    Ci(20.5, 31.5, 4, 'ink'), P('M24.5 34 C 28 34, 29.5 38, 27.5 40.5 C 25.5 42.5, 22.5 41, 23 38.5 Z', 'accent'),
+    R(11.5, 36.5, 8, 3, 1, 'ink', 'rotate(-45 15.5 38)'), L(15.5, 38, 41, 9, 'line', 1), L(33, 18.8, 35, 20.8, 'inkline', 1.4), L(30, 21.8, 32, 23.8, 'inkline', 1.4) ] },
+  { id: 'bass', he: 'בס', hue: C.sky, hue2: C.purple, parts: [
+    R(19.5, 18, 9, 29, 2, 'light'), L(19.5, 25, 28.5, 25, 'inkline', 1.4), L(19.5, 31, 28.5, 31, 'inkline', 1.4), L(19.5, 37, 28.5, 37, 'inkline', 1.4),
+    P('M17 4 Q24 0.5 31 4 L30 19 L18 19 Z', 'body'),
+    Ci(13, 8, 2.6, 'accent'), Ci(13, 15, 2.6, 'accent'), Ci(35, 8, 2.6, 'accent'), Ci(35, 15, 2.6, 'accent'),
+    L(15.5, 8, 18, 8, 'inkline', 1.6), L(15.5, 15, 18, 15, 'inkline', 1.6), L(32.5, 8, 30, 8, 'inkline', 1.6), L(32.5, 15, 30, 15, 'inkline', 1.6),
+    L(21.6, 9, 21.6, 47, 'line', 1), L(23.2, 9, 23.2, 47, 'line', 1), L(24.8, 9, 24.8, 47, 'line', 1), L(26.4, 9, 26.4, 47, 'line', 1) ] },
+  { id: 'drums', he: 'תופים', hue: C.pink, hue2: C.purple, parts: [
+    P('M8 24 L8 37 C 8 41, 40 41, 40 37 L40 24 Z', 'body'),
+    E(24, 24, 16, 5, 0, 'light'),
+    L(13, 27.5, 13, 39, 'inkline', 1.8), L(24, 29, 24, 40.8, 'inkline', 1.8), L(35, 27.5, 35, 39, 'inkline', 1.8),
+    P('M8 31 C 8 35, 40 35, 40 31', 'inkline', 1.6),
+    L(10, 4, 23, 21, 'accentline', 3), L(38, 4, 25, 21, 'accentline', 3), Ci(10, 4, 2.4, 'ink'), Ci(38, 4, 2.4, 'ink') ] },
+  { id: 'voice', he: 'שירה', hue: C.pink, hue2: C.purple, parts: [
+    P('M16 30 C 16 37, 32 37, 32 30', 'inkline', 2.4), L(24, 36, 24, 42, 'inkline', 2.4), R(16.5, 41, 15, 4, 2, 'ink'),
+    R(17, 4, 14, 26, 7, 'body'), R(17, 4, 14, 13, 7, 'light'), L(19.5, 8, 28.5, 8, 'line', 1.2), L(18.5, 11.5, 29.5, 11.5, 'line', 1.2), L(19.5, 15, 28.5, 15, 'line', 1.2),
+    P('M37 12 C 40 15, 40 20, 37 23', 'accentline', 2.4), P('M41 8 C 46 13, 46 22, 41 27', 'accentline', 2.4) ] },
+  { id: 'jazz', he: 'ג׳אז', hue: C.tan, hue2: C.purple, parts: [
+    P('M9 6 C 16 5, 20 8, 21 13 L21 33 C 21 41, 31 42, 33 34 L34 27', 'tube', 7),
+    E(35, 25, 6.6, 3.6, -25, 'accent'), E(35, 25, 3.4, 1.6, -25, 'ink'),
+    Ci(21, 18, 1.8, 'light'), Ci(21, 23.5, 1.8, 'light'), Ci(21, 29, 1.8, 'light'),
+    R(5, 4, 6, 3.6, 1.2, 'ink', 'rotate(-6 8 5.8)'),
+    P('M37 9 C 40 11, 40 15, 37 17', 'accentline', 2.2), P('M41 6 C 45 10, 45 16, 41 20', 'accentline', 2.2) ] },
+  { id: 'games', he: 'משחקים', hue: C.tan, hue2: C.teal, parts: [
+    P('M13 17 L35 17 C 42 17, 46 24, 46 32 C 46 39, 40 42, 36 37 L33 33 L15 33 L12 37 C 8 42, 2 39, 2 32 C 2 24, 6 17, 13 17 Z', 'body'),
+    R(10, 22.5, 4, 11, 1.2, 'ink'), R(6.5, 26, 11, 4, 1.2, 'ink'),
+    Ci(34, 23.5, 2.6, 'accent'), Ci(39, 28.5, 2.6, 'light'), Ci(29, 28.5, 2.6, 'light'),
+    E(24, 9.5, 3.4, 2.5, -20, 'accent'), L(27, 8.8, 27, 3, 'inkline', 1.8) ] },
+  { id: 'streak', he: 'רצף', hue: C.tan, hue2: C.pink, parts: [
+    P('M24 3 C 27 11, 36 15, 36 28 C 36 37, 30 44, 24 44 C 17 44, 11 38, 11 30 C 11 22, 17 19, 18 12 C 22 15, 23 19, 22 23 C 26 19, 26 11, 24 3 Z', 'body'),
+    P('M24 22 C 26 27, 31 29, 31 35 C 31 40, 27.5 43, 24 43 C 20 43, 17 40, 17 36 C 17 31, 22 30, 24 22 Z', 'accent'),
+    E(23, 37, 3.4, 2.5, -20, 'ink'), L(26.1, 36.2, 26.1, 30, 'inkline', 1.6) ] },
+  { id: 'recordings', he: 'הקלטות', hue: C.sky, hue2: C.lilac, parts: [
+    R(3, 11, 42, 27, 4, 'body'), R(8, 15, 32, 9, 2, 'light'), L(11, 19.5, 37, 19.5, 'line', 1.2),
+    Ci(16, 31, 4.6, 'ink'), Ci(32, 31, 4.6, 'ink'), Ci(16, 31, 1.6, 'light'), Ci(32, 31, 1.6, 'light'),
+    R(20.5, 28.5, 7, 5, 1.2, 'accent'), P('M12 38 L15 34.5 L33 34.5 L36 38', 'inkline', 1.6),
+    L(9, 6, 9, 9, 'accentline', 2.2), L(13, 4, 13, 9, 'accentline', 2.2), L(17, 6.5, 17, 9, 'accentline', 2.2) ] },
+  { id: 'encore', he: 'הדרן', hue: C.purple, hue2: C.lilac, parts: [
+    R(3, 10, 3.6, 28, 1, 'ink'), L(9.5, 10, 9.5, 38, 'inkline', 1.6), Ci(13, 20, 1.9, 'ink'), Ci(13, 28, 1.9, 'ink'),
+    R(41.4, 10, 3.6, 28, 1, 'ink'), L(38.5, 10, 38.5, 38, 'inkline', 1.6), Ci(35, 20, 1.9, 'ink'), Ci(35, 28, 1.9, 'ink'),
+    E(23, 29, 6, 4.4, -20, 'body'), L(28.4, 27.4, 28.4, 9, 'inkline', 2.2), P('M28.4 9.2 Q33.5 11 31.8 16', 'inkline', 2),
+    P('M15 43.5 C 20 46.5, 28 46.5, 33 43.5', 'accentline', 2.2) ] },
+  { id: 'theory', he: 'תיאוריה', hue: C.lilac, hue2: C.purple, parts: [
+    P('M7 5 L35 5 L42 12 L42 44 L7 44 Z', 'light'), P('M35 5 L35 12 L42 12', 'inkline', 1.8),
+    L(11, 16, 38, 16, 'line', 1.1), L(11, 21, 38, 21, 'line', 1.1), L(11, 26, 38, 26, 'line', 1.1), L(11, 31, 38, 31, 'line', 1.1), L(11, 36, 38, 36, 'line', 1.1),
+    E(25, 33.5, 3.4, 2.4, -20, 'body'), E(25, 28.5, 3.4, 2.4, -20, 'body'), E(25, 23.5, 3.4, 2.4, -20, 'accent'), L(28.1, 22.8, 28.1, 9, 'inkline', 1.8),
+    P('M15 21 L15 32 M18 19.5 L18 30.5 M13.5 24.5 L19.5 22.8 M13.5 29 L19.5 27.3', 'inkline', 1.4) ] },
+  { id: 'settings', he: 'הגדרות', hue: C.lilac, hue2: C.tan, parts: [
+    P(gear(24, 24, 15, 19.5, 9), 'body'), Ci(24, 24, 9, 'light'), Ci(24, 24, 4.2, 'accent'), L(24, 24, 24, 13.5, 'inkline', 2.4), Ci(24, 24, 1.5, 'ink') ] },
+  { id: 'profile', he: 'פרופיל', hue: C.pink, hue2: C.purple, parts: [
+    P('M7 46 C 7 34, 15 30, 24 30 C 33 30, 41 34, 41 46 Z', 'body'),
+    Ci(24, 18, 9, 'light'), P('M13 18 C 13 8, 35 8, 35 18', 'inkline', 2.4),
+    R(10, 15, 5, 9, 2, 'accent'), R(33, 15, 5, 9, 2, 'accent'),
+    E(30, 39, 3.6, 2.6, -20, 'accent'), L(33.2, 38.2, 33.2, 32.5, 'inkline', 1.6) ] },
+];
+
+// ---------------------------------------------------------------- the three treatments
+const attrs = (o) => Object.entries(o).map(([k, v]) => `${k}="${v}"`).join(' ');
+const el = (p, extra) => `<${p.t} ${attrs({ ...p.a, ...extra })}/>`;
+const SOLID = new Set(['body', 'accent', 'light', 'ink']);
+
+/** A — "חרוט": ink outline + flat fill + the app's offset shadow (a sticker in the cards' language). */
+function styleA(ic, ink, paper) {
+  const fill = (r) => r === 'body' ? ic.hue : r === 'accent' ? ic.hue2 : r === 'light' ? paper : ink;
+  let sh = '', s = '';
+  for (const p of ic.parts) {
+    if (SOLID.has(p.role)) sh += el(p, { fill: ink, stroke: ink, 'stroke-width': 2.2, 'stroke-linejoin': 'round' });
+    if (p.role === 'tube') sh += el(p, { fill: 'none', stroke: ink, 'stroke-width': p.w + 4.4, 'stroke-linecap': 'round' });
+  }
+  for (const p of ic.parts) {
+    if (SOLID.has(p.role)) s += el(p, { fill: fill(p.role), stroke: ink, 'stroke-width': 2.2, 'stroke-linejoin': 'round' });
+    else if (p.role === 'tube') s += el(p, { fill: 'none', stroke: ink, 'stroke-width': p.w + 4.4, 'stroke-linecap': 'round' }) + el(p, { fill: 'none', stroke: ic.hue, 'stroke-width': p.w, 'stroke-linecap': 'round' });
+    else if (p.role === 'dash') s += el(p, { fill: 'none', stroke: paper, 'stroke-width': p.w, 'stroke-dasharray': '2.6 3', 'stroke-linecap': 'round' });
+    else if (p.role === 'accentline') s += el(p, { fill: 'none', stroke: ink, 'stroke-width': (p.w || 2) + 2.6, 'stroke-linecap': 'round' }) + el(p, { fill: 'none', stroke: ic.hue2, 'stroke-width': p.w || 2, 'stroke-linecap': 'round' });
+    else s += el(p, { fill: 'none', stroke: ink, 'stroke-width': p.w || 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  }
+  return `<g transform="translate(-2.2 2.2)">${sh}</g>${s}`;
+}
+/** B — "נייר": no outlines; each shape is a sheet with a darker edge under it, tones of one hue. */
+function styleB(ic, ink, paper) {
+  const deep = mix(ic.hue, C.ink, 0.45), lite = mix(ic.hue, '#ffffff', 0.78), acc = ic.hue2;
+  const fill = (r) => r === 'body' ? ic.hue : r === 'accent' ? acc : r === 'light' ? lite : deep;
+  const edge = (r) => r === 'body' ? mix(ic.hue, C.ink, 0.3) : r === 'accent' ? mix(acc, C.ink, 0.3) : r === 'light' ? mix(ic.hue, '#ffffff', 0.45) : mix(deep, C.ink, 0.4);
+  let s = '';
+  for (const p of ic.parts) {
+    if (SOLID.has(p.role)) s += `<g transform="translate(0 1.9)">${el(p, { fill: edge(p.role) })}</g>` + el(p, { fill: fill(p.role) });
+    else if (p.role === 'tube') s += `<g transform="translate(0 1.9)">${el(p, { fill: 'none', stroke: mix(ic.hue, C.ink, 0.3), 'stroke-width': p.w, 'stroke-linecap': 'round' })}</g>` + el(p, { fill: 'none', stroke: ic.hue, 'stroke-width': p.w, 'stroke-linecap': 'round' });
+    else if (p.role === 'dash') s += el(p, { fill: 'none', stroke: lite, 'stroke-width': p.w, 'stroke-dasharray': '2.6 3', 'stroke-linecap': 'round' });
+    else if (p.role === 'accentline') s += el(p, { fill: 'none', stroke: acc, 'stroke-width': (p.w || 2) + 0.6, 'stroke-linecap': 'round' });
+    else s += el(p, { fill: 'none', stroke: deep, 'stroke-width': (p.w || 1.4) + 0.2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  }
+  return s;
+}
+/** C — "פוסטר": ink silhouettes on a colour disc, accents in halftone dots — a gig-poster / engraving feel. */
+let PAT = 0;
+function styleC(ic, ink, paper) {
+  const id = 'ht' + (++PAT);
+  const defs = `<defs><pattern id="${id}" width="2.6" height="2.6" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><rect width="2.6" height="2.6" fill="${ic.hue2}"/><circle cx="1.3" cy="1.3" r="0.62" fill="${ink}" opacity=".55"/></pattern></defs>`;
+  const fill = (r) => r === 'body' ? ink : r === 'accent' ? `url(#${id})` : r === 'light' ? paper : ink;
+  let s = `<circle cx="27" cy="27" r="20.5" fill="${ic.hue}"/>`;
+  for (const p of ic.parts) {
+    if (SOLID.has(p.role)) s += el(p, { fill: fill(p.role), stroke: ink, 'stroke-width': p.role === 'light' ? 1.6 : 1, 'stroke-linejoin': 'round' });
+    else if (p.role === 'tube') s += el(p, { fill: 'none', stroke: ink, 'stroke-width': p.w + 1, 'stroke-linecap': 'round' });
+    else if (p.role === 'dash') s += el(p, { fill: 'none', stroke: ic.hue, 'stroke-width': p.w + 0.4, 'stroke-dasharray': '2.6 3', 'stroke-linecap': 'round' });
+    else if (p.role === 'accentline') s += el(p, { fill: 'none', stroke: ink, 'stroke-width': (p.w || 2) + 0.8, 'stroke-linecap': 'round' });
+    else if (p.role === 'line') s += el(p, { fill: 'none', stroke: ic.hue, 'stroke-width': (p.w || 1.4) + 0.3, 'stroke-linecap': 'round' });
+    else s += el(p, { fill: 'none', stroke: ic.id === 'theory' || ic.id === 'keys' ? ink : paper, 'stroke-width': p.w || 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  }
+  return defs + s;
+}
+
+const DIRS = [
+  { key: 'a', name: 'חרוט', sub: 'קו דיו, מילוי שטוח וצל מוזח', f: styleA,
+    desc: 'אותה שפה של הכרטיסים והכפתורים באפליקציה: קו דיו עבה, צבע שטוח אחד או שניים, וצל מוזח שמרים כל אייקון כמו מדבקה. ראש התו הנטוי חוזר בכל אייקון. הכי קרוב לזהות הקיימת, והכי קריא בגדלים קטנים.' },
+  { key: 'b', name: 'נייר', sub: 'שכבות בלי קווים, גוונים של צבע אחד', f: styleB,
+    desc: 'בלי קווי מתאר: כל צורה היא גיליון צבעוני עם שוליים כהים מתחתיו, כמו נייר חתוך. גוונים של צבע אחד לכל אייקון, ופרטים בגוון הכהה. רך, מודרני ובוגר, פחות "משחקי".' },
+  { key: 'c', name: 'פוסטר', sub: 'צללית דיו על עיגול צבע, נקודות רסטר', f: styleC,
+    desc: 'צלליות דיו מלאות על עיגול צבע, והדגשות בנקודות רסטר כמו בפוסטרים של הופעות ג׳אז ובחריטה של תווים. הכי ייחודי ואופי מוזיקלי חזק, אבל דורש גרסה פשוטה יותר לגדלים קטנים.' },
+];
+
+const svg = (dir, ic, ink = C.ink, paper = C.paper) => `<svg viewBox="-3 -1 54 52" role="img" aria-label="${ic.he}">${dir.f(ic, ink, paper)}</svg>`;
+const by = (id) => ICONS.find((i) => i.id === id);
+
+// ---------------------------------------------------------------- slides
+const slides = [];
+slides.push({ title: 'שלושה כיוונים', html: `
+  <h2>שלושה כיוונים לשפת האייקונים</h2>
+  <p class="lead">אותם 16 אייקונים, מצוירים בשלוש שפות שונות. כל שפה בנויה על אותם כללים: גריד של 48, ראש התו הנטוי ב־20 מעלות כמוטיב חוזר, צבעי האפליקציה, ושכבות של גוף, הדגשה ופרטים במקום קו דק אחד. בכל שקף רואים את השפה בגדלים שונים ובתוך מסכים אמיתיים.</p>
+  <div class="rules"><span>גריד 48</span><span>ראש תו נטוי כמוטיב</span><span>צבעי האפליקציה</span><span>שלוש רמות פירוט: 16 / 24 / 48+</span><span>בהיר וכהה</span></div>
+  <div class="intro">${DIRS.map((d) => `<div class="dir"><div class="ic">${['keys', 'voice', 'encore'].map((id) => svg(d, by(id))).join('')}</div><h3>${d.name}</h3><p>${d.desc}</p></div>`).join('')}</div>` });
+
+for (const d of DIRS) slides.push({ title: d.name, html: `
+  <h2>${d.name}</h2>
+  <p class="lead">${d.desc}</p>
+  <div class="grid">${ICONS.map((ic) => `<div class="tile">${svg(d, ic)}<b>${ic.he}</b></div>`).join('')}</div>
+  <div class="row2">
+    <div class="panel"><h3>בתוך האפליקציה</h3>
+      <div class="nav">${[['path', 'מסלול'], ['practice', 'תרגול', 1], ['games', 'משחקים'], ['recordings', 'הקלטות'], ['profile', 'פרופיל']].map(([id, t, on]) => `<div class="${on ? 'on' : ''}">${svg(d, by(id), on ? C.ink : '#fbf7ff', on ? C.paper : '#2e1a4f')}<span>${t}</span></div>`).join('')}</div>
+      <div class="pathc"><div class="node done">${svg(d, by('ear'))}</div><div class="node now">${svg(d, by('keys'))}</div><div class="node">${svg(d, by('theory'))}</div><div class="node">${svg(d, by('jazz'))}</div></div>
+      <div class="cards">
+        <div class="mini m1">${svg(d, by('encore'))}<div><div class="t">הדרן</div><div class="s">2 משפטים לחזרה</div></div></div>
+        <div class="mini m2">${svg(d, by('ear'))}<div><div class="t">שמיעה</div><div class="s">מרווחים · רמה 6</div></div></div>
+        <div class="mini m3">${svg(d, by('voice'))}<div><div class="t">שירה</div><div class="s">ביצוע אחרון 92%</div></div></div>
+        <div class="mini m4">${svg(d, by('streak'))}<div><div class="t">רצף</div><div class="s">14 ימים</div></div></div>
+      </div></div>
+    <div class="panel"><h3>גדלים</h3>
+      ${['guitar', 'drums', 'recordings'].map((id) => `<div class="sizes">${[24, 36, 56, 96].map((s) => `<figure><div style="width:${s}px;height:${s}px">${svg(d, by(id))}</div><figcaption>${s}px</figcaption></figure>`).join('')}</div>`).join('')}
+      <p class="note">ב־16 ו־24 פיקסלים אצייר גרסה מופשטת של כל אייקון, עם פחות פרטים, כדי שיישאר חד.</p></div>
+  </div>` });
+
+slides.push({ title: 'השוואה', html: `
+  <h2>השוואה</h2>
+  <p class="lead">אותם אייקונים זה ליד זה. אפשר גם לשלב: למשל "חרוט" בממשק ובניווט, ו"פוסטר" לתגים, להישגים ולצמתים מיוחדים במסלול.</p>
+  <div class="cmp"><span></span>${DIRS.map((d) => `<span class="h">${d.name}</span>`).join('')}
+  ${['path', 'keys', 'guitar', 'voice', 'jazz', 'encore', 'streak', 'settings'].map((id) => `<span class="lab">${by(id).he}</span>${DIRS.map((d) => `<div class="c">${svg(d, by(id))}</div>`).join('')}`).join('')}</div>` });
+
+// ---------------------------------------------------------------- viewer
+const deck = document.getElementById('deck');
+deck.innerHTML = slides.map((s, i) => `<section class="slide" data-i="${i}" ${i ? 'hidden' : ''}>${s.html}</section>`).join('');
+const els = [...deck.querySelectorAll('.slide')];
+let cur = 0;
+const show = (i) => { cur = (i + els.length) % els.length; els.forEach((e, j) => (e.hidden = j !== cur)); document.getElementById('cnt').textContent = `${cur + 1} / ${els.length} · ${slides[cur].title}`; try { history.replaceState(null, '', '#s' + cur); } catch (e) {} window.scrollTo(0, 0); };
+document.getElementById('next').onclick = () => show(cur + 1);
+document.getElementById('prev').onclick = () => show(cur - 1);
+addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft' || e.key === ' ') { e.preventDefault(); show(cur + 1); } else if (e.key === 'ArrowRight') { e.preventDefault(); show(cur - 1); } });
+document.getElementById('theme').onclick = () => { const r = document.documentElement; const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; };
+const fromHash = () => { const m = /^#s(\d+)$/.exec(location.hash); return m ? +m[1] : 0; };
+addEventListener('hashchange', () => { const i = fromHash(); if (i !== cur) show(i); });
+show(fromHash());
+})();
+</script>

@@ -1,0 +1,126 @@
+/* Paper icon language (src/ui/paper): which tone set an icon paints with, by surface.
+   Each icon carries its own light-surface tones (--b, --bE, …) and dark-surface tones (--kb, --kbE, …) inline; the
+   parts paint with --p<tone>, falling back to the light set. Lemon and purple surfaces get fixed ramps that read on them. */
+.pp {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+
+/* dark cards (dark / contrast theme), the dark bar, the ink sidebar */
+:root[data-theme='dark'] .pp,
+:root[data-theme='contrast'] .pp,
+:root[data-theme='oled'] .pp,
+:root[data-theme='calm'] .pp,
+:root[data-theme='studio'] .pp,
+:root .tabbar .pp,
+:root .side-nav .pp,
+:root .pp-on-dark .pp {
+  --pb: var(--kb);
+  --pbE: var(--kbE);
+  --pa: var(--ka);
+  --paE: var(--kaE);
+  --pl: var(--kl);
+  --plE: var(--klE);
+  --pd: var(--kd);
+  --pdE: var(--kdE);
+  --pf: var(--kf);
+  --pfE: var(--kfE);
+}
+/* a light island inside a dark context */
+:root .pp-on-light .pp {
+  --pb: var(--b);
+  --pbE: var(--bE);
+  --pa: var(--a);
+  --paE: var(--aE);
+  --pl: var(--l);
+  --plE: var(--lE);
+  --pd: var(--d);
+  --pdE: var(--dE);
+  --pf: var(--f);
+  --pfE: var(--fE);
+}
+
+/* on lemon ("here": the active tab, the current path node): one purple ramp, a rose accent */
+:root .tabbar .tab.on .pp,
+:root .side-nav .sn-item.current .pp,
+:root .side-nav .sn-sec.on > .sn-row > .sn-item .pp,
+:root .path2 .road .node.current .node-disc .pp,
+:root .pp-on-lemon .pp {
+  --pb: #6d28d9;
+  --pbE: #4f1f9c;
+  --pa: #c42a62;
+  --paE: #8e2050;
+  --pl: #f3ecff;
+  --plE: #a98ce6;
+  --pd: #3b1a7a;
+  --pdE: #261052;
+  --pf: #3b1a7a;
+  --pfE: #261052;
+}
+
+/* on purple (done / mastered path nodes): white paper with purple details */
+:root .path2 .road .node.done .node-disc .pp,
+:root .path2 .road .node.mastered .node-disc .pp,
+:root .path2 .road .node.tested .node-disc .pp,
+:root .pp-on-purple .pp {
+  --pb: #ffffff;
+  --pbE: #c9b8ec;
+  --pa: #ffb3d4;
+  --paE: #d97aa6;
+  --pl: #e9defc;
+  --plE: #b9a3e8;
+  --pd: #4a1d9a;
+  --pdE: #2e1166;
+  --pf: #ffffff;
+  --pfE: #3b1a7a;
+}
+/* an opened (unfinished) done node is a light head again */
+:root .path2 .road .node.done.opened .node-disc .pp,
+:root .path2 .road .node.tested.opened .node-disc .pp,
+:root .path2 .road .node.done.faded .node-disc .pp,
+:root .path2 .road .node.mastered.faded .node-disc .pp {
+  --pb: var(--b);
+  --pbE: var(--bE);
+  --pa: var(--a);
+  --paE: var(--aE);
+  --pl: var(--l);
+  --plE: var(--lE);
+  --pd: var(--d);
+  --pdE: var(--dE);
+  --pf: var(--f);
+  --pfE: var(--fE);
+}
+:root[data-theme='dark'] .path2 .road .node.done.opened .node-disc .pp,
+:root[data-theme='dark'] .path2 .road .node.tested.opened .node-disc .pp,
+:root[data-theme='dark'] .path2 .road .node.done.faded .node-disc .pp,
+:root[data-theme='dark'] .path2 .road .node.mastered.faded .node-disc .pp {
+  --pb: var(--kb);
+  --pbE: var(--kbE);
+  --pa: var(--ka);
+  --paE: var(--kaE);
+  --pl: var(--kl);
+  --plE: var(--klE);
+  --pd: var(--kd);
+  --pdE: var(--kdE);
+  --pf: var(--kf);
+  --pfE: var(--kfE);
+}
+/* locked path nodes: the drawing, quieter */
+:root .path2 .road .node.locked .node-disc .pp {
+  opacity: 0.55;
+}
+
+/* Practice-page tiles are painted in their family colour (some lemon): the icon sits on a small paper chip of the card. */
+:root[data-theme] .pt-tile .pt-icon {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 2px 0 rgba(30, 16, 51, 0.22);
+}
+:root[data-theme] .pt-tile.pt-all .pt-icon {
+  background: var(--card-2);
+}

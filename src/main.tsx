@@ -40,4 +40,9 @@ initPwa(import.meta.env.PROD);
 // A partner build (VITE_PARTNER) paints its tokens before the first render; the normal app: no-op.
 installPartner();
 
-createRoot(document.getElementById('root')!).render(<App />);
+// Dev-only: the Paper icon gallery (#/dev/glyphs), outside the app shell.
+if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
+  void import('./ui/paper/Gallery').then(({ PaperGallery }) => createRoot(document.getElementById('root')!).render(<PaperGallery />));
+} else {
+  createRoot(document.getElementById('root')!).render(<App />);
+}
