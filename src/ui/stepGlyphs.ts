@@ -62,6 +62,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'g-speed': 'gspeed', 'g-fusion': 'gfusion', 'g-cmarr': 'gcmarr', 'g-solojazz': 'gsolojazz', 'g-hlfast': 'ghlfast',
   'd-pas': 'dpas', 'd-stick': 'dstick', 'd-synco': 'dsynco', 'd-chapin': 'dchapin', 'd-linear': 'dlinear', 'd-brush': 'dbrush', 'd-oddtempo': 'doddtempo', 'd-trade': 'dtrade',
   'v-arp2': 'varp2', 'v-leaps': 'vleaps', 'v-runs': 'vruns', 'v-quick': 'vquick', 'v-part': 'vpart', 'v-style': 'vstyle', 'v-scat2': 'vscat2', 'v-top': 'vtop',
+  // AUDIT-7: pop accompaniment, pedalling, the classical pieces on the keys; bass riffs and feels.
+  'k-pop': 'kpop', 'k-pedal': 'kpedal', 'k-classic': 'kclassic', 'b-riff': 'briff', 'b-feel': 'bfeel',
 };
 /** Instrument topics (they all used to share one chord icon). */
 export const TOPIC_GLYPH: Record<string, GlyphKind> = {

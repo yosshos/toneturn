@@ -4,6 +4,7 @@ import { guitarCatalog } from '../src/engine/drills/guitar';
 import { levelDrills, levelKeys } from '../src/engine/drills/plan';
 import type { Drill, DrillSpec } from '../src/engine/drills/types';
 import { FIRST_STEPS_DIFF, NEW_FIRST_FAMILIES } from '../src/engine/drills/firstStepsDiff';
+import { AUDIT7_PLACEMENT } from '../src/engine/audit7Placement';
 import { FIRST_STEP_FAMILIES, stepCatalogue } from '../src/engine/path';
 import { analyzeDrumTake } from '../src/engine/drills/drumAnalyze';
 import { strandsFor } from '../src/engine/drills/levelTest';
@@ -29,13 +30,14 @@ const shape = (d: Drill) => d.notes.map((n) => `${n.pitch - d.notes[0].pitch}@${
 
 describe('counts and placement', () => {
   it('the six families have their levels', () => {
-    expect(FAMS.map((f) => fam(f).levels.length)).toEqual([11, 10, 8, 5, 8, 8]);
+    // AUDIT-7 #4: k-read grew to 15 (levels 11–15 placed by audit7Placement.ts).
+    expect(FAMS.map((f) => fam(f).levels.length)).toEqual([11, 15, 8, 5, 8, 8]);
   });
   it('every level sits on the path at its FIRST_STEPS_DIFF rating, in level order', () => {
     const cat = stepCatalogue();
     for (const f of FAMS) {
       const ds = fam(f).levels.map((l) => cat.find((s) => s.id === `tech:${l.id}`)!.difficulty);
-      expect(ds, f).toEqual(fam(f).levels.map((l) => FIRST_STEPS_DIFF[l.id]));
+      expect(ds, f).toEqual(fam(f).levels.map((l) => FIRST_STEPS_DIFF[l.id] ?? AUDIT7_PLACEMENT[l.id]));
       expect([...ds].sort((a, b) => a - b), f).toEqual(ds);
     }
     // the ranges the stage asked for
@@ -215,7 +217,8 @@ describe('reading: generated, never the same twice', () => {
         seen.set(sh, d.itemId);
         n++;
       }
-    expect(n).toBe(10 * 48);
+    // AUDIT-7 #4: levels 11–15 (4 + 4 + 4 + 3 + 4 items a key)
+    expect(n).toBe(10 * 48 + 19 * 12);
   });
   it('the reading ladder grows: hands together from level 4, accidentals at 6, minor at 7, chords at 8–9, 3/4 and 6/8 with a 30-second look at 10', () => {
     const one = (id: string) => levelDrills(lv(id), 'fifths-up');
@@ -347,7 +350,7 @@ describe('wiring', () => {
     for (const m of marks) expect(Object.values(TOPIC_GLYPH).filter((g) => g === m).length, m).toBe(1);
   });
   it('badges: one per level for the keys and guitar families, named milestones for bass and drums, unique titles', () => {
-    for (const [f, n] of [['k-first', 11], ['k-read', 10], ['g-first', 8], ['g-riff', 5]] as const) expect(BADGES.filter((b) => b.id.startsWith(`tech:${f}:`)).length, f).toBe(n);
+    for (const [f, n] of [['k-first', 11], ['k-read', 15], ['g-first', 8], ['g-riff', 5]] as const) expect(BADGES.filter((b) => b.id.startsWith(`tech:${f}:`)).length, f).toBe(n);
     const named = BADGES.filter((b) => b.group === 'b-first' || b.group === 'd-first');
     expect(named.length).toBe(6);
     expect(named.every((b) => !/first steps:/i.test(b.name.en))).toBe(true);

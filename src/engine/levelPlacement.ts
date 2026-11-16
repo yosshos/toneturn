@@ -30,6 +30,7 @@ export const G = (grade: number): number => Math.round(700 + 90 * grade);
 export const guitarGradeBase = (grade: number): number => (grade <= 8 ? G(grade) : 1590 + 100 * (Math.min(11, grade) - 9));
 
 import { DRUM_TOP_PLACEMENT, VOICE_TOP_PLACEMENT } from './stageCPlacement';
+import { AUDIT7_PLACEMENT } from './audit7Placement';
 
 // ---------------------------------------------------------------- keys (AUDIT-6-LEVELS-INSTRUMENTS §1.5 pri 1)
 
@@ -155,7 +156,8 @@ export const VOICE_PLACEMENT: Record<string, number> = {
 /** Every curated table, merged (a later one wins). Stage B / C: add your exported table here. */
 // STAGE C: the drums past 1400 and the voice's top ladder (stageCPlacement.ts); guitar grades 9–11 in guitarGradeBase.
 // AUDIT-6 Stage B: the first steps (keys, guitar, bass, drums), riffs by grade, graded sight-reading (firstStepsDiff.ts).
-const PLACEMENT_TABLES: Record<string, number>[] = [KEYS_PLACEMENT, BASS_PLACEMENT, DRUM_PLACEMENT, VOICE_PLACEMENT, FIRST_STEPS_DIFF, DRUM_TOP_PLACEMENT, VOICE_TOP_PLACEMENT];
+// AUDIT-7: k-read 11–15, k-pop, k-pedal, k-classic, b-riff, b-feel, d-fills 9 and the d-pas re-placements (audit7Placement.ts).
+const PLACEMENT_TABLES: Record<string, number>[] = [KEYS_PLACEMENT, BASS_PLACEMENT, DRUM_PLACEMENT, VOICE_PLACEMENT, FIRST_STEPS_DIFF, DRUM_TOP_PLACEMENT, VOICE_TOP_PLACEMENT, AUDIT7_PLACEMENT];
 export const LEVEL_PLACEMENT: Record<string, number> = Object.assign({}, ...PLACEMENT_TABLES);
 
 /**

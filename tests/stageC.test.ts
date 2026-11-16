@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { guitarCatalog, generateGuitar } from '../src/engine/drills/guitar';
 import { generateDrums } from '../src/engine/drills/drums';
 import { GUITAR_GRADE_UP, GUITAR_TOP_FAMILIES, walkLine } from '../src/engine/drills/guitarTop';
-import { DRUM_TOP_DIFF, DRUM_TOP_FAMILIES, flipSt, gracedAt, linearLanes, openRoll, stickings, syncoLine } from '../src/engine/drills/drumTop';
+import { DRUM_TOP_DIFF, DRUM_TOP_FAMILIES, D_PAS_GRADE_4_6, flipSt, gracedAt, linearLanes, openRoll, stickings, syncoLine } from '../src/engine/drills/drumTop';
+import { AUDIT7_PLACEMENT } from '../src/engine/audit7Placement';
 import { eligible, guitarGradeBase, guitarPathDifficulty, PATH_CAP, stepCatalogue } from '../src/engine/path';
 import { hasRubato } from '../src/engine/drills/rubato';
 import { VOICE_TOP_DIFF, VOICE_TOP_FAMILIES, VOICE_TOP_LEVELS, keyedBase, partEvents, sessionKeyItem } from '../src/engine/voiceTop';
@@ -129,9 +130,15 @@ describe('drums past 1400', () => {
   const DRUMS = GUITAR.filter((f) => (DRUM_TOP_FAMILIES as readonly string[]).includes(f.id));
   it('eight families, every level rated 1400–1900 and generating three variants', () => {
     expect(DRUMS.map((f) => f.id)).toEqual([...DRUM_TOP_FAMILIES]);
+    // AUDIT-7 #12: the triple-stroke roll, the triple paradiddle and the 10/11-stroke rolls moved to grades 4–6.
+    const moved = (id: string) => id.startsWith('d-pas-') && D_PAS_GRADE_4_6.includes(Number(id.slice(6)));
     for (const f of DRUMS) {
       expect(f.levels.length).toBeLessThanOrEqual(20);
       for (const lv of f.levels) {
+        if (moved(lv.id)) {
+          expect(AUDIT7_PLACEMENT[lv.id], lv.id).toBeLessThan(1300);
+          continue;
+        }
         expect(DRUM_TOP_DIFF[lv.id], lv.id).toBeGreaterThanOrEqual(1400);
         expect(DRUM_TOP_DIFF[lv.id], lv.id).toBeLessThanOrEqual(PATH_CAP);
         expect(lv.specs.length).toBe(3);
@@ -150,7 +157,7 @@ describe('drums past 1400', () => {
     const steps = stepCatalogue().filter((s) => s.ladder?.instrument === 'drums');
     expect(steps.filter((s) => s.difficulty >= 1500).length).toBeGreaterThan(50);
     expect(steps.filter((s) => s.difficulty >= 1700).length).toBeGreaterThanOrEqual(15);
-    for (const id of Object.keys(DRUM_TOP_DIFF)) expect(steps.find((s) => s.ladder!.ref === id)!.difficulty, id).toBe(DRUM_TOP_DIFF[id]);
+    for (const id of Object.keys(DRUM_TOP_DIFF)) expect(steps.find((s) => s.ladder!.ref === id)!.difficulty, id).toBe(AUDIT7_PLACEMENT[id] ?? DRUM_TOP_DIFF[id]);
   });
 
   it('the open rolls (PAS): doubles plus the release — 10, 11, 13, 15, 17', () => {

@@ -18,6 +18,7 @@ import type { NoteMark } from '../engine/noteMarks';
 import { DEFAULT_CAL } from './Drills';
 import { inputLatency } from '../engine/latency';
 import { midi } from '../speech/midi';
+import { PD_PIECES, pdToPiece } from '../content/classicalPD';
 
 export interface StoredPiece {
   id: string;
@@ -47,6 +48,7 @@ const TX = {
     bars: 'bars', tempo: '♩ =', loop: 'Fix this bar', seam: 'The join', join: 'Put it together', warm: 'Warm-up', burst: 'One burst at full tempo', spot: 'The hard spot', chunk1: 'Next part', trouble: 'The bar that keeps tripping you',
     done: 'You can play the whole piece at the target tempo.', again: 'Again', minutes: 'min today',
     review: 'Review run', reviewDue: 'Review due', nextReview: 'Next review',
+    library: 'Classical library', libraryHint: 'Public-domain pieces in our own engraving, by grade.', grade: 'Grade',
   },
   he: {
     title: 'היצירות שלי', add: 'להוסיף יצירה', formats: 'MusicXML (‏.musicxml, ‏.xml, ‏.mxl) או MIDI (‏.mid). ממיוזסקור: קובץ ← ייצוא ← MusicXML.', none: 'עדיין אין יצירות.', bad: 'לא ניתן לקרוא את הקובץ:',
@@ -54,6 +56,7 @@ const TX = {
     bars: 'תיבות', tempo: '♩ =', loop: 'לתקן את התיבה הזו', seam: 'החיבור', join: 'לחבר הכול', warm: 'חימום', burst: 'פרץ אחד בטמפו המלא', spot: 'המקום הקשה', chunk1: 'החלק הבא', trouble: 'התיבה שחוזרת להכשיל',
     done: 'אתם מנגנים את כל היצירה בטמפו היעד.', again: 'שוב', minutes: 'דק׳ היום',
     review: 'ניגון חזרה', reviewDue: 'חזרה היום', nextReview: 'החזרה הבאה',
+    library: 'ספרייה קלאסית', libraryHint: 'יצירות בנחלת הכלל, בתווים שכתבנו בעצמנו, לפי כיתה.', grade: 'כיתה',
   },
 };
 
@@ -221,6 +224,28 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
             </li>
           );
         })}
+      </ul>
+      {/* AUDIT-7 #11: graded public-domain pieces (content/classicalPD.ts) open in the same coach. */}
+      <h2 className="pc-lib-head">{tx.library}</h2>
+      <p className="field-hint">{tx.libraryHint}</p>
+      <ul className="ch-list pc-list" data-pd-library="1">
+        {[...PD_PIECES]
+          .sort((a, b) => a.grade - b.grade)
+          .map((p) => (
+            <li key={p.id}>
+              <button className="ch-row" onClick={() => setSetup({ piece: pdToPiece(p, lang), target: Math.round(p.tempo * (4 / p.unit)), size: 4, backward: false })} data-pd-piece={p.id}>
+                <span className="pc-name">
+                  <b dir="auto">{p.title[lang]}</b>
+                  <small dir="auto">
+                    {p.composer[lang]} · <bdi>{p.work}</bdi>
+                  </small>
+                </span>
+                <small>
+                  {tx.grade} {p.grade}
+                </small>
+              </button>
+            </li>
+          ))}
       </ul>
     </main>
   );

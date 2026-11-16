@@ -21,6 +21,8 @@ import { genHarrisLine, harrisLineFamily } from './harrisLineDrills'; // Barry H
 import { COLOR_RH_KINDS, colorReharmLevels, ctoneFamily, genColor, mediantFamily, organFamily } from './colorDrills'; // HARMONY-REHARM
 import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
+import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
+import { genKeysClassic, keysClassicFamily } from './keysClassic'; // AUDIT-7 #11: public-domain classical pieces
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
@@ -5089,6 +5091,9 @@ export function generate(spec: DrillSpec): Drill {
   if (isSoloPianoFamily(s.family)) return genSoloPiano(s);
   // AUDIT-6 Stage B: k-first 4–11 and graded sight-reading (keysFirst.ts).
   if (s.family === 'k-read' || (s.family === 'k-first' && KEYS_FIRST_KINDS.has(s.kind))) return genKeysFirst(s);
+  // AUDIT-7 #10, #11: pop accompaniment, pedalling 2–4, the public-domain classical tier.
+  if (s.family === 'k-pop' || s.family === 'k-pedal') return genKeysPop(s);
+  if (s.family === 'k-classic') return genKeysClassic(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -6168,6 +6173,10 @@ export function catalog(): FamilyDef[] {
     improHabitsFamily(),
     // AUDIT-6 Stage B: graded sight-reading, ~800–1400 (keysFirst.ts).
     keysReadFamily(),
+    // AUDIT-7 #10, #11: pop accompaniment (k-pop), pedal levels 2–4 (k-pedal), graded public-domain pieces (k-classic).
+    keysPopFamily(),
+    keysPedalFamily(),
+    keysClassicFamily(),
   ]));
 }
 

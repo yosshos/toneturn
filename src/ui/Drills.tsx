@@ -437,6 +437,9 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // Solo jazz piano (Siskind): the left hand and the comping vocabulary with chords, textures and improv habits as styles.
   'k-lh': 'chords', 'k-comp': 'chords', 'k-tex': 'styles', 'k-impro': 'styles',
   'b-up-pos': 'upright', 'b-up-arco': 'upright', 'b-up-scales': 'upright', 'b-up-pizz': 'upright', 'b-up-walk': 'upright', 'b-up-read': 'upright',
+  // AUDIT-7: pop accompaniment with chords, pedalling with the hands, the classical pieces with songs' styles; bass riffs
+  // and feels as styles.
+  'k-pop': 'chords', 'k-pedal': 'hands', 'k-classic': 'styles', 'b-riff': 'styles', 'b-feel': 'styles',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   all: { en: 'All', he: 'הכול' },

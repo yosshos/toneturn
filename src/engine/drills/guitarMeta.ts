@@ -50,6 +50,10 @@ export const GUITAR_META: Record<string, GuitarLevelMeta> = {
   'g-scales-5': { tempo: [80, 110], sub: '8ths', grade: 5 },
   'g-scales-6': { tempo: [60, 100], sub: 'triplets', grade: 7 },
   'g-scales-7': { tempo: [80, 120], sub: '8ths', grade: 8 },
+  // AUDIT-7 #7 (RSL guitar order): harmonic minor at grade 5, Dorian and Mixolydian at 6, Lydian, Phrygian, melodic minor at 7.
+  'g-scales-13': { tempo: [80, 112], sub: '8ths', grade: 5 },
+  'g-scales-14': { tempo: [80, 116], sub: '8ths', grade: 6 },
+  'g-scales-15': { tempo: [80, 120], sub: '8ths', grade: 7 },
   'g-arps-1': { tempo: [60, 90], sub: '8ths', grade: 3 },
   'g-arps-2': { tempo: [60, 90], sub: '8ths', grade: 4 },
   'g-arps-3': { tempo: [60, 100], sub: '8ths', grade: 5 },

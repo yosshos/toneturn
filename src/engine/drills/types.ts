@@ -46,6 +46,10 @@ export type FamilyId =
   | 'k-read'
   | 'g-first'
   | 'g-riff'
+  // AUDIT-7 #10, #11: pop accompaniment and pedal levels 2–4 on the keys; graded public-domain classical pieces.
+  | 'k-pop'
+  | 'k-pedal'
+  | 'k-classic'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
@@ -169,7 +173,10 @@ export type BassFamilyId =
   | 'b-solo'
   | 'b-ctx'
   // AUDIT-6 Stage B: the bass's first steps (bassFirst.ts).
-  | 'b-first';
+  | 'b-first'
+  // AUDIT-7 #15: riffs by grade and the broken-feel / ballad ladder on the bass (bassRiffFeel.ts).
+  | 'b-riff'
+  | 'b-feel';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
@@ -463,7 +470,8 @@ export interface DrillGoal {
    * Pedalling drills (spec AI §5.6): the sustain-pedal plan, for the CC64 analysis. `changes` = beats where the harmony
    * changes. Direct pedal: down with the chord, up before the next; legato (syncopated): up at the change, down just after.
    */
-  pedal?: { style: 'direct' | 'legato'; changes: number[] };
+  // AUDIT-7 #10: 'half' = a half change at each change (a partial lift: CC64 values in between), so a held bass rings on.
+  pedal?: { style: 'direct' | 'legato' | 'half'; changes: number[] };
   /** Bass measures on top of pitch + timing (bassAnalyze.ts); each can only lower the verdict. */
   bass?: BassGoal;
   /** Drum measures on top of per-limb timing (drumAnalyze.ts); each can only lower the verdict. */

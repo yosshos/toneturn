@@ -144,6 +144,8 @@ export function drumTopFamilies(): DrumFamilyDef[] {
 
 // ───────────────────────────── generation ─────────────────────────────
 
+/** d-pas levels re-placed at grades 4–6 (AUDIT-7 #12). */
+export const D_PAS_GRADE_4_6 = [2, 3, 4];
 /** Every Stage C drill is graded as advanced (verdict tier 3), whatever its level number. */
 const adv = (d: Drill): Drill => ({ ...d, drum: { ...d.drum!, tier: 3 } });
 
@@ -153,8 +155,12 @@ export function generateDrumTop(s: DrillSpec): Drill | null {
   const lv = levelOfKind(s.kind);
   const op = s.option ?? 0;
   switch (s.family) {
-    case 'd-pas':
-      return adv(genPas(s, lv, op));
+    case 'd-pas': {
+      // AUDIT-7 #12: the triple-stroke roll, the triple paradiddle and the 10/11-stroke rolls sit at grades 4–6 now
+      // (audit7Placement.ts), graded with the intermediate tier like the other grade 4–7 drum levels.
+      const d = genPas(s, lv, op);
+      return D_PAS_GRADE_4_6.includes(lv) ? { ...d, drum: { ...d.drum!, tier: 2 } } : adv(d);
+    }
     case 'd-stick':
       return adv(genStick(s, lv, op));
     case 'd-synco':

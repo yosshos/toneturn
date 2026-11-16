@@ -28,6 +28,9 @@ export const TWELVE_KEY_FAMILIES: string[] = [
   'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl', 'g-harrisline', 'g-ctone', 'g-color',
   // bass (the jazz track)
   'b-barry', 'b-harrisline', 'b-counter', 'b-impro', 'b-walk', 'b-swing', 'b-jform', 'b-latin', 'b-std',
+  // AUDIT-7 #6: the bass's arpeggio and scale levels (they ran in 4–6 keys). Every key fits the 4-string range: the
+  // generators start from the root in E1–D♯2 (bass.ts rootOf) and fold into the neck (fold), tests/audit7.test.ts.
+  'b-chord', 'b-scale',
 ];
 /** Single levels of other families that are key-relative jazz material (g-rhythm 6: bossa, Freddie Green, clave). */
 export const TWELVE_KEY_LEVELS: string[] = ['g-rhythm-6'];

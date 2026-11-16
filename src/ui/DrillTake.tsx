@@ -630,7 +630,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       ? midi.onCC((cc, value, at) => {
           if (cc !== 64 || !zero) return;
           const d = pedalDown(value);
-          if (d !== pedalWas) pedal.push({ at: at - zero - cal.latencyMs, down: d });
+          // AUDIT-7 #10: a half-pedal drill keeps every CC64 sample (the partial lift is in the values between).
+          if (drill.goal.pedal?.style === 'half') pedal.push({ at: at - zero - cal.latencyMs, down: d, value });
+          else if (d !== pedalWas) pedal.push({ at: at - zero - cal.latencyMs, down: d });
           pedalWas = d;
         })
       : null;
