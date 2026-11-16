@@ -1375,3 +1375,19 @@ window ×1.5.
 11. **Session recording**: do you want the "record the whole practice session" option in v2, or is per-take enough?
 12. **Weekly featured phrase**: will you pick it yourself at first (an admin screen), or should the app pick the
     most-learned phrase of the week automatically?
+
+## 20. Owner decisions (2026-11-16)
+
+The owner accepted every recommendation:
+1. Name: **Encore / הדרן** ("המשפטים שלי · My phrases").
+2. Audio of every mic take is kept by default, with a switch to turn it off (replaces the opt-in "one take a week").
+3. Audio budget 500 MB; unstarred audio older than 60 days becomes notes only (starred is kept).
+4. "Yours" requires all 12 keys; a chosen subset shows as "4 מתוך 12" and does not reach f.
+5. Up to 8 bars; up to 16 bars for teacher assignments.
+6. The XP model with its daily cap per phrase is accepted; own phrases count in the weekly league.
+7. Community from age 13; public audio only from 16.
+8. Public phrases may carry audio: only the sharer's own playing, up to 20 s.
+9. Teacher submissions are graded automatically; the teacher can override.
+10. Pricing: recordings and basic Encore free; a limit on the number of active phrases in the free tier (the number is the owner's later call).
+11. Whole-session recording: yes, in v2.
+12. The weekly featured phrase is chosen by the app; the owner can replace it.
