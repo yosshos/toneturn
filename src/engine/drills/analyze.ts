@@ -489,6 +489,9 @@ export function pairVoicingMisses(exp: { chordId?: number }[], specs: NonNullabl
  * tempo-band CV / SD limits (bass, A7). `opts.mic`: the piano was heard by the microphone (no velocity, no key
  * release): looser timing limits, and a drill whose goal needs MIDI never passes (only measured practice counts).
  */
+/** Guitar / bass drills (explicit instrument, or a g-/b- family): keyboard-only messages don't apply. */
+const isFretted = (d: Drill): boolean => d.spec.instrument === 'guitar' || d.spec.instrument === 'bass' || /^[gb]-/.test(String(d.spec.family));
+
 export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean } = {}): TakeMetrics {
   // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
   // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
@@ -560,7 +563,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       const rel = med > 0 ? x.r / med : 1;
       for (const i of x.o.idx) ioiRatio[i] = rel;
       if (rel > (opts.voice ? VOICE_TIMING.hesitation : 1.5) * Math.sqrt(tolK)) hesitations++;
-      if (goal.evenness && rel > 1.15) {
+      // Thumb crossings are a keyboard idea: on fretted instruments finger 1 is the index (guitar audit 2026-11-17).
+      if (goal.evenness && rel > 1.15 && !isFretted(drill)) {
         const thumb = !fingered || x.o.idx.some((i) => exp[i].finger === 1) || x.prev.idx.some((i) => exp[i].finger === 1);
         if (thumb) glitches.push(x.o.idx[0]);
       }
@@ -796,17 +800,18 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     });
   }
   if (goal.evenness) {
+    const fretted = isFretted(drill);
     if (cv.R !== null)
       F.push({
         sev: cv.R / th.cv,
-        en: `RH uneven (${pct(cv.R)} %)`,
-        he: `יד ימין לא אחידה (${pct(cv.R)}%)`,
+        en: fretted ? `Uneven notes (${pct(cv.R)} %)` : `RH uneven (${pct(cv.R)} %)`,
+        he: fretted ? `צלילים לא אחידים (${pct(cv.R)}%)` : `יד ימין לא אחידה (${pct(cv.R)}%)`,
       });
     if (cv.L !== null)
       F.push({
         sev: cv.L / th.cv,
-        en: `LH uneven (${pct(cv.L)} %)`,
-        he: `יד שמאל לא אחידה (${pct(cv.L)}%)`,
+        en: fretted ? `Uneven notes (${pct(cv.L)} %)` : `LH uneven (${pct(cv.L)} %)`,
+        he: fretted ? `צלילים לא אחידים (${pct(cv.L)}%)` : `יד שמאל לא אחידה (${pct(cv.L)}%)`,
       });
     if (glitches.length >= 2)
       F.push({

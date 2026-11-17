@@ -426,7 +426,12 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
         const firstOfBar = !!ends && (i === 0 || barOf(i) !== barOf(i - 1));
         const sig = firstOfBar ? bars![barOf(i)]?.sig : undefined;
         if (sig || c.top) n.addModifier(new VF.Annotation([sig, c.top].filter(Boolean).join(' ')).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
-        if (c.bottom) n.addModifier(new VF.Annotation(c.bottom).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM), 0);
+        if (c.bottom) {
+          // Fingers / strokes under the tab: small purple digits, so they never read as fret numbers (guitar audit 2026-11-17).
+          const ann = new VF.Annotation(c.bottom).setFont('Rubik', 10, 'bold').setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM);
+          ann.setStyle({ fillStyle: '#6d28d9', strokeStyle: '#6d28d9' });
+          n.addModifier(ann, 0);
+        }
         return n;
       });
       const voice = new VF.Voice({ num_beats: Math.max(1, Math.ceil(cols.reduce((a, c) => a + c.dur, 0))), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);

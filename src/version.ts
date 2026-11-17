@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.100.0',
+    date: '2026-11-17',
+    en: [
+      'A new look: calmer cards, one clear main button per screen, cleaner type, a new logo, an opening animation, and Toni redrawn as a young musician with headphones.',
+      'Guitar: fairer timing by microphone, and no more keyboard-only advice on guitar takes.',
+    ],
+    he: [
+      'מראה חדש: כרטיסים רגועים יותר, כפתור ראשי אחד ברור בכל מסך, טיפוגרפיה נקייה, לוגו חדש, אנימציית פתיחה, וטוני מצויר מחדש כמוזיקאי צעיר עם אוזניות.',
+      'גיטרה: תזמון הוגן יותר במיקרופון, ובלי עצות של מקלדת על ביצועי גיטרה.',
+    ],
+  },
+  {
     version: '0.99.4',
     date: '2026-11-17',
     en: [

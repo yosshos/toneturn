@@ -614,7 +614,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
   // The same holds for a dynamics shape (bass 16ths with a crescendo): pitch and timing are still judged.
   const judged: Drill = hasLoudness ? base : { ...base, goal: base.goal.dynamics ? { ...base.goal, dynamics: undefined } : base.goal, notes: base.notes.map((n) => (n.accent ? { ...n, accent: undefined } : n)) };
   // Bass timing limits (A7): mic SD ≤ 28 / CV ≤ .06 at every tempo; MIDI never stricter than SD 20 / CV .06.
-  const m = analyzeTake(judged, bpm, norm.played, cal, bassDrill ? { thresholds: bassThresholds(tempoBand(npsOf(drill, bpm)), mic) } : {});
+  const m = analyzeTake(judged, bpm, norm.played, cal, bassDrill ? { thresholds: bassThresholds(tempoBand(npsOf(drill, bpm)), mic), mic } : { mic });
   // The shared analysis saw the substituted pitches; give the model line back to the per-note results.
   if (ruled) m.perNote.forEach((r, i) => (r.exp = drill.notes[i]));
   const gs = groupsOf(drill, bpm);

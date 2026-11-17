@@ -458,7 +458,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   grooves: { en: 'Grooves & fills', he: 'גרובים ומעברים' },
   styles: { en: 'Styles & jazz', he: 'סגנונות וג׳אז' },
   reading: { en: 'Reading & charts', he: 'קריאה וצ׳ארטים' },
-  ear: { en: 'Bass ear', he: 'שמיעה לבסיסטים' },
+  ear: { en: 'Ear', he: 'שמיעה' },
   upright: { en: 'Upright bass', he: 'קונטרבס' },
   songs: { en: 'Songs', he: 'שירים' },
   mine: { en: 'My drills', he: 'התרגילים שלי' },
