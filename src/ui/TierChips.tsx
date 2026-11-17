@@ -49,7 +49,7 @@ function TierRow(p: TierProps) {
           {def ? <small>{lang === 'he' ? <IsoMix text={def.label.he} /> : def.label.en}</small> : null}
         </span>
         <span className="gs-chev" aria-hidden="true">
-          ›
+          <Icon k="fwd" />
         </span>
       </button>
       {open && (

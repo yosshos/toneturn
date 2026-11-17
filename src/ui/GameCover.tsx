@@ -11,6 +11,7 @@ import { PaperGlyph, type GlyphKind } from './Glyph';
 import { useCourse } from './courseContext';
 import { GAME_TITLES } from '../engine/gameBoard';
 import { GAMES_TX } from '../i18n/gamesText';
+import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
 export const docLang = (): Lang => (typeof document !== 'undefined' && document.documentElement.lang === 'en' ? 'en' : 'he');
@@ -113,7 +114,7 @@ export function CoverHero({ title, game, lang, frameRef }: { title: string; game
       <button type="button" className="gs-howto" aria-expanded={how} onClick={() => setHow((v) => !v)} data-gs-howto>
         {how ? GAMES_TX.hideHowTo[lang] : GAMES_TX.howTo[lang]}
         <span className="gs-chev" aria-hidden="true">
-          ›
+          <Icon k="fwd" />
         </span>
       </button>
     </div>

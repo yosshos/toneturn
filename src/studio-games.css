@@ -216,16 +216,15 @@
   transform: rotate(90deg);
 }
 :root[data-look='studio'] .gs-chev {
-  display: inline-block;
-  font-size: 1.15em;
+  display: inline-flex;
+  inline-size: 16px;
+  block-size: 16px;
   line-height: 1;
   color: var(--ink-dim);
 }
-:root[dir='rtl'][data-look='studio'] .gs-chev {
-  transform: scaleX(-1);
-}
-:root[dir='rtl'][data-look='studio'] .gs-howto[aria-expanded='true'] .gs-chev {
-  transform: rotate(90deg);
+:root[data-look='studio'] .gs-chev svg {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 /* the setup card turns into a list of compact rows */
