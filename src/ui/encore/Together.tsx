@@ -9,9 +9,8 @@ import '../../gifts.css';
 import { beatTogether, loadTogether, localDay, saveTogether, type TogetherLocal, type TogetherSession } from '../../cloud/gifts';
 import { practisingTogether, TOGETHER_MIN_MS } from '../../engine/encore/gifts';
 import { subscribePractice } from '../../storage/practice';
-import { Icon } from '../icons';
 import { Bi, type Lang } from './bits';
-import { measuredToday } from './Gifts';
+import { GiftArt, measuredToday } from './Gifts';
 
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
 const mmss = (ms: number) => {
@@ -83,7 +82,7 @@ export function TogetherChip({ lang }: { lang: Lang }) {
   if (note)
     return (
       <div className="together-chip" role="status" data-together="note">
-        <Icon k="together" size={15} />
+        <GiftArt kind="together" size={20} />
         <span>{note}</span>
       </div>
     );

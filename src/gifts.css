@@ -1,5 +1,5 @@
-/* Gifts between friends and the musicians' reactions (owner 2026-11-16). Same cards and type as Encore; quiet line
-   icons, no emoji, no yellow behind text. */
+/* Gifts between friends and the musicians' reactions (owner 2026-11-16). Same cards and type as Encore; Paper
+   drawings (src/ui/paper/art-gifts.ts), no emoji, no yellow behind text. */
 
 .gift-allow { display: flex; align-items: center; gap: 8px; margin: 0; padding: 7px 10px; border-radius: 12px; border: 2px solid var(--line-strong); background: var(--card); color: var(--ink); font-weight: 600; font-size: 0.86rem; }
 .gift-allow.used, .gift-allow.practise-first { color: var(--ink-dim); }
@@ -43,3 +43,7 @@
   --cae: initial;
   --cl: initial;
 }
+
+/* the gifts' Paper drawings beside text (allowance, inbox rows, the together note): never shrink, centred on the line */
+.gift-art { flex: none; display: block; }
+.gift-allow .gift-art { margin-block: -3px; }

@@ -22,8 +22,11 @@ import { ImprovStudioScreen } from './ImprovStudio';
 import { LickTrainerScreen } from './LickTrainer';
 import { EncoreScreen } from './encore/Encore';
 import { ChallengeScreen, PhrasePublicScreen } from './encore/Challenge';
-import { CHALLENGES_ON, challengesMockOn, mockSignedOut, syncChallengeResults } from '../cloud/challenges';
+import { CHALLENGES_ON, challengesMockOn, mockSignedOut, sharerBonusesDue, syncChallengeResults } from '../cloud/challenges';
 import { syncGifts } from '../cloud/gifts';
+import { syncTakeNotes } from '../cloud/takeNotes';
+import { SHARER_RESULT_ID } from '../engine/encore/sharerBonus';
+import { EX } from '../i18n/encoreText';
 import { withAssignedPhrase } from '../engine/encore/assign';
 import { TogetherChip } from './encore/Together';
 import { publicFromHash } from '../engine/encore/community';
@@ -215,7 +218,7 @@ import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
 import { PracticeDiaryScreen, DiaryEntryCard, plateausOf } from './PracticeDiary';
 import { ConsentBody, RecordingsEntryCard, RecordingsScreen } from './Recordings';
-import { runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource } from '../storage/recordings';
+import { applySyncedMeta, putSyncedTake, runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource, subscribeRecordings, syncCandidates } from '../storage/recordings';
 import { listTakes as listOldVocalTakes } from '../storage/takes';
 import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
 import { measuredMsOn } from '../engine/practiceTime';
@@ -740,6 +743,55 @@ export function App() {
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeSignedIn, !!settings, progress.drillItems, route]);
+  // Encore challenges (§11.5): +5 XP when a friend reaches the target on my shared phrase — once per friend and phrase,
+  // at most 50 a week — as an ordinary result, so it counts in the weekly league (never a practice day).
+  useEffect(() => {
+    if (!CHALLENGES_ON() || !challengeSignedIn || !progressReady) return;
+    const id = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const due = await sharerBonusesDue(progress.history);
+          let p: Progress | null = null;
+          for (const b of due)
+            p = await store.recordCompletion({ lessonId: SHARER_RESULT_ID, lessonVersion: 1, sessionId: b.sessionId, completedAt: new Date().toISOString(), firstTry: 1, total: 1, xp: b.xp, missed: [], items: [] });
+          if (p) {
+            setProgress(p);
+            const xp = due.reduce((a, b) => a + b.xp, 0);
+            setAwardToast(`${EX.learnedBonus[s.uiLang]} · ‎+${xp} XP`);
+          }
+        } catch {
+          /* next check */
+        }
+      })();
+    }, 3000);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challengeSignedIn, progressReady, route]);
+  // My recordings (§6.2): the opt-in sync of starred takes' NOTES between my devices (cloud/takeNotes.ts, flag off by
+  // default) — a moment after sign-in, and 10 s after the recordings change (a star, a folder, a delete).
+  const notesSyncOn = !!user && !!settings?.syncTakeNotes;
+  useEffect(() => {
+    if (!notesSyncOn) return;
+    let busy = false;
+    let timer = 0;
+    const run = () => {
+      if (busy) return;
+      busy = true;
+      void syncTakeNotes(true, { local: syncCandidates, put: putSyncedTake, meta: applySyncedMeta })
+        .catch((e) => console.warn('[toneturn] take notes sync failed', e))
+        .finally(() => (busy = false));
+    };
+    const soon = (ms: number) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(run, ms);
+    };
+    soon(4000);
+    const off = subscribeRecordings(() => soon(10_000));
+    return () => {
+      off();
+      window.clearTimeout(timer);
+    };
+  }, [notesSyncOn]);
   // Encore v2 (SPEC-PHRASE-STUDIO §11): teacher phrases into the lick book; each passed key submitted once
   useTeacherPhrases({ enabled: !!user || teacherMockOn(), route, book: s.lickBook, items: progress.drillItems ?? {}, onBook: (lickBook) => updateSettings({ lickBook }) });
   useMotion(route);

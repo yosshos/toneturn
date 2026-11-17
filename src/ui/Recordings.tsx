@@ -48,6 +48,9 @@ import {
 } from '../storage/recordings';
 import type { Settings } from '../storage/progress';
 import { CONSENT_BODY, RX, fillRx } from '../i18n/recordingsText';
+import { EX } from '../i18n/encoreText';
+import { cloudConfigured } from '../cloud/cloud';
+import { TAKE_NOTES_SYNC_ON } from '../cloud/takeNotes';
 import { eventOfByte } from './recKeep';
 import { openEncoreFromTake } from './encoreBridge';
 import { piano } from './services';
@@ -598,6 +601,7 @@ function TakeRow({ lang, t, bin, selecting, checked, onSel, onOpen, onMenu }: { 
           )}
           {t.source === 'mic' ? sourceTag(t, lang) : <N>MIDI</N>}
           {!t.audioId && t.prunedAt && <> · {RX.notesOnly[lang]}</>}
+          {!t.audioId && t.fromCloud && <span data-from-cloud="1"> · {EX.fromCloud[lang]}</span>}
           {res && (
             <>
               {' · '}
@@ -1313,6 +1317,15 @@ export function RecordingSettings({ lang, s, onChange }: { lang: Lang; s: Settin
           </small>
         </span>
       </label>
+      {cloudConfigured && TAKE_NOTES_SYNC_ON() && (
+        <label className="toggle-row">
+          <input type="checkbox" checked={!!s.syncTakeNotes} onChange={(e) => onChange({ syncTakeNotes: e.target.checked })} data-rec-syncnotes="1" />
+          <span>
+            {EX.syncNotes[lang]}
+            <small className="field-hint">{EX.syncNotesHint[lang]}</small>
+          </span>
+        </label>
+      )}
       <p className="field-hint">{RX.privacy[lang]}</p>
       <a className="link" href="#/recordings" data-open-recordings="settings">
         {RX.open[lang]}

@@ -23,13 +23,16 @@ import { catchTake, detectKeyChords, dotsOf, onsetEvents, type Caught, type Beat
 import { candidates, boundaries, clampSpan, snapHandleInfo, spanBars, MAX_BARS } from '../../engine/encore/segment';
 import { isGhost, splitHands, wrongNoteFix, type QuantMode } from '../../engine/encore/quantise';
 import { badge, whyLine, xpPreview, gradeOf } from '../../engine/encore/difficulty';
-import { bestTempo, daysPractised, finalHand, forInstrument, handsOf, keyOrder, keysInRange, keysNeeded, makePhrase, nextKey, overCeiling, passedKeys, phraseDrill, phraseMap, phraseNeck, phraseRank, phraseRungs, planOf, promotion, RANK_NAME, roundToLadder, twoHands, type Hand } from '../../engine/encore/phrase';
+import { barSpanBeats, phraseBars, phraseFingers, phrasePitches, setOwnFinger, bestTempo, daysPractised, finalHand, forInstrument, handsOf, keyOrder, keysInRange, keysNeeded, makePhrase, nextKey, overCeiling, passedKeys, phraseDrill, phraseMap, phraseNeck, phraseRank, phraseRungs, planOf, promotion, RANK_NAME, roundToLadder, twoHands, type Hand } from '../../engine/encore/phrase';
 import { setInstrumentCtx, singerRange } from '../../engine/encore/placement';
 import { lickInstrumentOf } from '../LickTrainer';
 import { bassTuningOf } from '../../storage/progress';
 import { AudioRecordMode, TapTempo, audioTakeNote } from './AudioRecord';
 import { duePhrases } from '../../engine/encore/connect';
-import { chartChords, chordsFor, draftFrom, gridNotes, library, newPhraseId, patternToPhrase, takeOnGrid, type TrimState } from '../../engine/encore/library';
+import { chartChords, chordsFor, draftFrom, gridNotes, library, METERS, meterLabel, newPhraseId, patternToPhrase, takeOnGrid, withMeter, type TrimState } from '../../engine/encore/library';
+import { canShell, withShells } from '../../engine/encore/shells';
+import { keyFifths, spell } from '../../engine/encore/musicxml';
+import { EX } from '../../i18n/encoreText';
 import { ladderStep } from '../../engine/drills/ladder';
 import { midi } from '../../speech/midi';
 import { saveTake } from '../../storage/recordings';
@@ -128,6 +131,10 @@ export function EncoreScreen(p: EncoreProps) {
   if (r.view === 'plan') {
     const l = byId(r.id);
     if (l) return <PlanView lang={lang} head={head} l={l} items={items} onSave={savePhrase} />;
+  }
+  if (r.view === 'fingers') {
+    const l = byId(r.id);
+    if (l && INST === 'piano') return <FingerView lang={lang} head={head} l={l} onSave={savePhrase} />;
   }
   if (r.view === 'phrase') {
     const l = byId(r.id);
@@ -772,9 +779,24 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
         <button className={`ch ${s.chordsOn && chords.length ? 'on' : 'gh'}`} onClick={() => setS({ ...s, chordsOn: !s.chordsOn })} disabled={!chords.length} data-ctx-chords={chords.length && s.chordsOn ? 'on' : 'off'}>
           {chords.length ? <bdi dir="ltr">{(chordNames ?? []).filter(Boolean).join(' | ')}</bdi> : he ? 'ללא אקורדים' : 'No chords'}
         </button>
-        <button className="ch" onClick={() => setS({ ...s, meter: s.meter === 4 ? 3 : 4 })} data-ctx-meter={s.meter}>
-          <bdi dir="ltr">{s.meter}/4</bdi>
-        </button>
+        <label className="ch enc-keypick" data-ctx-meter={s.meter}>
+          <select
+            value={s.meter}
+            onChange={(e) => {
+              const x = withMeter(s, Number(e.target.value) as TrimState['meter']);
+              const sp = clampSpan(x.from, x.to, x.meter, MAX_BARS);
+              setS({ ...x, from: sp.from, to: sp.to });
+            }}
+            aria-label={EX.meter[lang]}
+            data-ctx-meter-pick="1"
+          >
+            {METERS.map((mm) => (
+              <option key={mm} value={mm}>
+                {meterLabel(mm)}
+              </option>
+            ))}
+          </select>
+        </label>
         <span className="ch gh">{s.swing > 0.54 ? (he ? `סווינג ${Math.round(s.swing * 100)}%` : `Swing ${Math.round(s.swing * 100)}%`) : he ? 'ישר' : 'Straight'}</span>
       </div>
       <div className="enc-card enc-ctx-roll">
@@ -869,11 +891,11 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
         </button>
         <div className="grow enc-center">
           <div className="enc-big" data-goal={plan.goalBpm}>
-            <Tempo bpm={plan.goalBpm} />
+            <Tempo bpm={plan.goalBpm} eighth={l.meter === 6} />
           </div>
           <small className="t3">
             {he ? 'יעד · ניגנת ב־' : 'Target · you played it at '}
-            <Tempo bpm={l.playedBpm ?? plan.startBpm} />
+            <Tempo bpm={l.playedBpm ?? plan.startBpm} eighth={l.meter === 6} />
           </small>
         </div>
         <button className="icon-btn" onClick={() => step(1)} aria-label={he ? 'יותר' : 'Faster'} disabled={plan.locked?.includes('goalBpm')} data-goal-plus="1">
@@ -935,10 +957,28 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
       {twoHands(l) && (
         <Seg<'R-then-RL' | 'RL' | 'R' | 'L'> value={plan.hands} label={he ? 'ידיים' : 'Hands'} onChange={(h) => set({ hands: h })} options={[{ k: 'R-then-RL', t: he ? 'יד אחת, ואז יחד' : 'One, then both' }, { k: 'RL', t: he ? 'יחד' : 'Together' }, { k: 'R', t: he ? 'ימין' : 'RH' }, { k: 'L', t: he ? 'שמאל' : 'LH' }]} />
       )}
-      <label className="row enc-tog-row">
-        <small className="t3 grow">{he ? 'ביעד — עם הלהקה' : 'At the target — with the band'}</small>
-        <input type="checkbox" className="enc-tog" checked={plan.band} disabled={!l.chords.length} onChange={(e) => set({ band: e.target.checked })} data-plan-band="1" />
-      </label>
+      {INST === 'piano' ? (
+        // piano: one row — Fingering (opens the fingering screen, its switch is there), LH shells, and the band switch
+        <div className="row enc-opt-chips" data-plan-opts="1">
+          <button className={`ch ${plan.fingering ? 'on' : ''}`} onClick={() => nav(`fingers/${l.id}`)} title={EX.fingersEdit[lang]} data-plan-fingering={plan.fingering ? 'on' : 'off'}>
+            {EX.fingering[lang]}
+          </button>
+          {canShell(l) && !plan.locked?.includes('hands') && (
+            <button className={`ch ${l.lhShells ? 'on' : ''}`} role="switch" aria-checked={!!l.lhShells} title={EX.shellsHint[lang]} onClick={() => onSave(withShells(l, !l.lhShells))} data-plan-shells={l.lhShells ? 'on' : 'off'}>
+              {EX.shells[lang]}
+            </button>
+          )}
+          <label className="row enc-tog-row enc-band-short" title={he ? 'ביעד — עם הלהקה' : 'At the target — with the band'}>
+            <small className="t3">{EX.band[lang]}</small>
+            <input type="checkbox" className="enc-tog" checked={plan.band} disabled={!l.chords.length} onChange={(e) => set({ band: e.target.checked })} aria-label={he ? 'ביעד — עם הלהקה' : 'At the target — with the band'} data-plan-band="1" />
+          </label>
+        </div>
+      ) : (
+        <label className="row enc-tog-row">
+          <small className="t3 grow">{he ? 'ביעד — עם הלהקה' : 'At the target — with the band'}</small>
+          <input type="checkbox" className="enc-tog" checked={plan.band} disabled={!l.chords.length} onChange={(e) => set({ band: e.target.checked })} data-plan-band="1" />
+        </label>
+      )}
       <div className="enc-card col enc-diff">
         <div className="row">
           <DiffBadge grade={b.grade} D={b.D} lang={lang} />
@@ -978,7 +1018,7 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
             {prev.tempi.map((t, i) => (
               <span key={t.bpm}>
                 {i ? ' · ' : ''}
-                <Tempo bpm={t.bpm} />: <bdi dir="ltr">{t.xp}</bdi>
+                <Tempo bpm={t.bpm} eighth={l.meter === 6} />: <bdi dir="ltr">{t.xp}</bdi>
               </span>
             ))}{' '}
 <bdi dir="ltr">XP</bdi> {he ? 'לניסיון נקי' : 'a clean take'} · {he ? 'כל 12' : 'All 12'}: <bdi dir="ltr">+{prev.all12}</bdi>
@@ -1118,7 +1158,7 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
           {bestTempo(l, items, INST) > 0 && (
             <>
               {' · '}
-              {he ? 'הכי מהר' : 'best'} <Tempo bpm={bestTempo(l, items, INST)} />
+              {he ? 'הכי מהר' : 'best'} <Tempo bpm={bestTempo(l, items, INST)} eighth={l.meter === 6} />
             </>
           )}
           {due && (
@@ -1133,7 +1173,7 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
         <button className="btn primary enc-full" onClick={() => nav(`run/${l.id}~${nk}~${hand}`)} data-phrase-continue="1">
           {he ? 'להמשיך — ' : 'Continue — '}
           <KeyB k={nk} minor={!!l.minor} /> {he ? 'ב־' : 'at '}
-          <Tempo bpm={nb} />
+          <Tempo bpm={nb} eighth={l.meter === 6} />
         </button>
       </div>
     </main>
@@ -1174,6 +1214,83 @@ function FinalStaff({ l, keyPc }: { l: Lick; keyPc: number }) {
       <path d={`M${W - 26} ${top - 8} a9 9 0 0 1 18 0`} className="ef-fermata" />
       <circle cx={W - 17} cy={top - 10} r={1.8} className="ef-dot" />
     </svg>
+  );
+}
+
+// ───────────────────────────── Fingering (§5.6) ─────────────────────────────
+
+/**
+ * The phrase's piano fingering in its home key, one bar at a time: each note a chip "E4 · 3"; a tap moves its finger
+ * on (1 → 5 → 1) and keeps it as the player's own; the suggestion fills the rest. One screen at 320 px.
+ */
+function FingerView({ lang, head, l, onSave }: { lang: Lang; head: Head; l: Lick; onSave: (l: Lick) => void }) {
+  const two = !!l.lh?.length;
+  const [hand, setHand] = useState<'R' | 'L'>('R');
+  const [bar, setBar] = useState(0);
+  const home = l.homeKey ?? 0;
+  const nb = Math.max(1, Math.round(phraseBars(l)));
+  const b = Math.min(bar, nb - 1);
+  const fg = phraseFingers(l, home);
+  const ps = phrasePitches(l, home, 'piano');
+  const src = hand === 'R' ? l.notes : (l.lh ?? []);
+  const pitches = hand === 'R' ? ps.rh : ps.lh;
+  const fingers = hand === 'R' ? fg.rh : fg.lh;
+  const own = hand === 'R' ? l.marks : l.lhMarks;
+  const span = barSpanBeats(l, b);
+  const idx = src.map((_, i) => i).filter((i) => src[i][1] >= span.from - 1e-6 && src[i][1] < span.to - 1e-6);
+  const fifths = keyFifths(home, !!l.minor);
+  const name = (p: number) => {
+    const s = spell(p, fifths);
+    return `${s.step}${s.alter > 0 ? '♯' : s.alter < 0 ? '♭' : ''}${s.octave}`;
+  };
+  const hasOwn = (own ?? []).some((m) => m?.finger);
+  return (
+    <main className="panel-screen enc-screen" data-encore="fingers" data-phrase={l.id}>
+      {head(EX.fingersTitle[lang], <Bi text={T(l.name, lang)} />, () => nav(`plan/${l.id}`))}
+      <label className="row enc-tog-row">
+        <small className="t3 grow">{EX.fingeringOn[lang]}</small>
+        <input type="checkbox" className="enc-tog" checked={!!planOf(l).fingering} onChange={(e) => onSave({ ...l, plan: { ...planOf(l), fingering: e.target.checked } })} data-fing-on={planOf(l).fingering ? 'on' : 'off'} />
+      </label>
+      {two &&<Seg<'R' | 'L'> value={hand} label={EX.fingering[lang]} onChange={(h) => setHand(h)} options={[{ k: 'R', t: EX.rh[lang] }, { k: 'L', t: EX.lh[lang] }]} />}
+      <div className="row enc-center-row">
+        <button className="icon-btn" onClick={() => setBar(Math.max(0, b - 1))} disabled={b === 0} aria-label={EX.prevBar[lang]} data-fing-prev="1">
+          <Icon k="back" />
+        </button>
+        <b className="t2" data-fing-bar={b + 1}>
+          {EX.bar[lang]} <bdi dir="ltr">{b + 1}/{nb}</bdi>
+        </b>
+        <button className="icon-btn" onClick={() => setBar(Math.min(nb - 1, b + 1))} disabled={b >= nb - 1} aria-label={EX.nextBar[lang]} data-fing-next="1">
+          <Icon k="fwd" />
+        </button>
+      </div>
+      <div className="enc-card enc-fing-grid" dir="ltr" data-fing-notes={idx.length}>
+        {idx.map((i) => {
+          const mine = !!own?.[i]?.finger;
+          return (
+            <button key={i} type="button" className={`enc-fing ${mine ? 'own' : ''}`} onClick={() => onSave(setOwnFinger(l, hand, i, (fingers[i] % 5) + 1))} aria-label={`${name(pitches[i])} · ${fingers[i]}${mine ? ` · ${EX.ownMark[lang]}` : ''}`} data-fing={i} data-finger={fingers[i]}>
+              <small>{name(pitches[i])}</small>
+              <b>{fingers[i]}</b>
+            </button>
+          );
+        })}
+      </div>
+      <small className="t3 enc-center">{EX.fingersHint[lang]}</small>
+      <small className="tiny enc-center">{EX.fingersHome[lang]}</small>
+      <div className="enc-foot">
+        <button
+          className="btn ghost enc-full"
+          disabled={!hasOwn}
+          onClick={() => {
+            let x = l;
+            src.forEach((_, i) => (x = setOwnFinger(x, hand, i, null)));
+            onSave(x);
+          }}
+          data-fing-reset="1"
+        >
+          {EX.fingersReset[lang]}
+        </button>
+      </div>
+    </main>
   );
 }
 
@@ -1242,7 +1359,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
         </div>
         <div>
           <b className="enc-big">
-            <Tempo bpm={plan.goalBpm} />
+            <Tempo bpm={plan.goalBpm} eighth={l.meter === 6} />
           </b>
           <small className="tiny">{he ? 'טמפו' : 'tempo'}</small>
         </div>
@@ -1260,7 +1377,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
           </span>
           <b className="t2">{he ? 'הניסיון הראשון' : 'The first take'}</b>
           <small className="tiny">
-            <Tempo bpm={l.playedBpm ?? plan.startBpm} />
+            <Tempo bpm={l.playedBpm ?? plan.startBpm} eighth={l.meter === 6} />
             {first && (
               <>
                 {' · '}
@@ -1277,7 +1394,7 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
           </span>
           <b className="t2">{he ? 'היום' : 'Today'}</b>
           <small className="tiny">
-            <Tempo bpm={plan.goalBpm} />
+            <Tempo bpm={plan.goalBpm} eighth={l.meter === 6} />
           </small>
         </button>
       </div>

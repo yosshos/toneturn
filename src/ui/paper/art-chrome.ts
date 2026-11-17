@@ -7,7 +7,7 @@
 //
 // Roles in this cut: body = the sheet · accent = the second hue (record, the star) · tube = a thick strip of the sheet
 // (chevrons, crosses, arcs) · accentline = a strip in the accent · light / line = a cut-out in the surface colour.
-import { an, art, Ci, gear, L, P, R, star, type Art } from './kit';
+import { an, art, Ci, E, gear, P, R, star, type Art } from './kit';
 import { cut, head, S, SL, tri } from './chrome-kit';
 import { CHROME_MEDIA } from './art-chrome-media';
 import { CHROME_APP } from './art-chrome-app';
@@ -72,9 +72,13 @@ const CORE = {
   gem: art('purple', 'rose', an('hop', {}, P('M13 8 H35 L42 17 L24 38 L6 17 Z', 'body')), cut('M6.5 17 H41.5 M18 8.5 L24 37 L30 8.5', 2.2)),
   snow: art('purple', 'rose', an('spin', { o: [24, 22] }, SL(24, 6, 24, 38, 5), SL(10.1, 14, 37.9, 30, 5), SL(10.1, 30, 37.9, 14, 5))),
   flame: art('purple', 'rose', an('flicker', {}, P('M24 4.5 Q26 13 33 19 Q38.5 24 37 30 Q35 38.5 24 38.5 Q13 38.5 11 30 Q9.5 23.5 16 18 Q17.5 24 21 25 Q18.5 15 24 4.5 Z', 'body'))),
-  fermata: art('purple', 'rose', S('M8.5 31 A15.5 15.5 0 0 1 39.5 31', 5.6), an('hop', {}, head(24, 28, 4.6, 'accent'))),
-  gift: art('purple', 'rose', R(9, 19, 30, 19, 4, 'body'), an('hop', {}, R(6.5, 12, 35, 8, 3, 'body'), S('M24 12.5 Q19 4 14.5 7 Q12.5 10 24 12.5 Q35.5 10 33.5 7 Q29 4 24 12.5', 4)), L(24, 20.5, 24, 37, 'line', 3.4)),
-  together: art('purple', 'rose', SL(17, 33, 17, 12, 4.6), SL(35, 29, 35, 8, 4.6), an('wave', {}, S('M17 12 L35 8', 6.5)), an('nod', {}, head(12.5, 33, 6.6)), an('nod', { d: 1 }, head(30.5, 29, 6.6))),
+  /** The gifts (§20.1), as sheets: the fermata a solid arc over its note-head dot; the gift a box, a lid with its bow, a ribbon cut. */
+  fermata: art('purple', 'rose', P('M7 33 A17 17 0 0 1 41 33 L34.2 33 A10.2 10.2 0 0 0 13.8 33 Z', 'body'), an('hop', {}, head(24, 29, 4.4, 'accent'))),
+  gift: art('purple', 'rose', R(9, 20, 30, 18.5, 4, 'body'), an('hop', {}, R(6.5, 12.5, 35, 8.5, 3, 'body'), P('M24 12.5 Q16 3 12.2 7 Q10.6 11 24 12.5 Q37.4 11 35.8 7 Q32 3 24 12.5 Z', 'body')), R(21.6, 12.5, 4.8, 26, 0, 'light')),
+  /** A phrase dedicated to a friend: a gift tag sheet with its eyelet, a note head cut out of it. */
+  dedicate: art('purple', 'rose', an('swing', { o: [12, 22] }, P('M15 7.5 H37.5 Q41.5 7.5 41.5 11.5 V32.5 Q41.5 36.5 37.5 36.5 H15 L5.5 22 Z', 'body')), Ci(12.5, 22, 2.8, 'light'), an('nod', {}, E(28, 22, 6.2, 4.6, -20, 'light'))),
+  /** Practise with me now: two notes on one beam (a sheet), stems as paper strips. */
+  together: art('purple', 'rose', SL(17, 33, 17, 13, 4.6), SL(35, 29, 35, 9, 4.6), an('wave', {}, P('M14.7 10 L37.3 5 L37.3 11.8 L14.7 16.8 Z', 'body')), an('nod', {}, head(12.5, 33, 6.6)), an('nod', { d: 1 }, head(30.5, 29, 6.6, 'accent'))),
   wave: art('purple', 'rose', an('vibrate', {}, S('M4.5 22 Q9 12 13.5 22 T22.5 22 T31.5 22 T40.5 22', 5.6))),
   /** The refresher / theory page (an open book). */
   book: art('purple', 'rose', P('M5 11 Q14 7 23 11.5 V37 Q14 33 5 36 Z', 'body'), an('wave', { o: [25, 24] }, P('M25 11.5 Q34 7 43 11 V36 Q34 33 25 37 Z', 'body'))),

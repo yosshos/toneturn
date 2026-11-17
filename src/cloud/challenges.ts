@@ -11,6 +11,7 @@ import { currentUser, supabase } from './cloud';
 import type { Lick, LickBook, LickInstrument } from '../engine/licks';
 import type { ItemState } from '../engine/drills/types';
 import { REACTION_KINDS, visibleCounts, type ReactionCounts, type ReactionKind } from '../engine/encore/gifts';
+import { paidSoFar, sharerBonuses, SHARER_BONUS_WEEK_CAP, type SharerBonus } from '../engine/encore/sharerBonus';
 import { challengeResult, isShareCode, phraseItemIds, resultChanged, shareCodeOf, type BoardRow, type ChallengeResult, type InputSource, type SharePayload, type Style, type TakeTrace, type Visibility } from '../engine/encore/community';
 
 export const CHALLENGES_MIGRATION = '20261204000000_toneturn_phrase_challenges';
@@ -442,4 +443,36 @@ export function forgetSent(code: string) {
   const sent = json<Record<string, unknown>>(SENT, {});
   delete sent[code];
   ls.set(SENT, JSON.stringify(sent));
+}
+
+// ───────────────────────────── the sharer's bonus (§11.5) ─────────────────────────────
+
+let lastBonusCheck = 0;
+/** Tests: check again at once. */
+export const resetBonusCheck = () => void (lastBonusCheck = 0);
+/**
+ * The +5 XP bonuses due to me: friends who reached the target on my live shared phrases, once per friend per phrase,
+ * at most 50 a week (engine/encore/sharerBonus.ts). Reads my shares and their friends' boards — at most every 10 minutes.
+ */
+export async function sharerBonusesDue(history: readonly { lessonId: string; sessionId: string; xp: number; completedAt: string }[], now = new Date()): Promise<SharerBonus[]> {
+  if (!CHALLENGES_ON() || mockSignedOut()) return [];
+  if (now.getTime() - lastBonusCheck < 10 * 60_000) return [];
+  lastBonusCheck = now.getTime();
+  const { paid, weekPaid } = paidSoFar(history, now);
+  if (weekPaid >= SHARER_BONUS_WEEK_CAP) return [];
+  const shares = (await myShares()).filter((s) => s.status === 'live' && s.reached > 0).slice(0, 20);
+  const boards: Record<string, BoardRow[]> = {};
+  for (const s of shares) {
+    try {
+      boards[s.id] = await phraseBoard(s.id, 'friends');
+    } catch {
+      /* next check */
+    }
+  }
+  return sharerBonuses(
+    shares.map((s) => ({ ...s, mine: true })),
+    boards,
+    paid,
+    weekPaid,
+  );
 }

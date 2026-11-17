@@ -1,7 +1,8 @@
 // Gifts between friends (owner decisions 2026-11-16) — #/challenges/gifts[/<friend>[/dedicate]]: today's allowance
 // (one gift per practice day), "for you" (fermatas, dedications, practise-together invites), and per friend: a
-// fermata, a phrase dedication, "practise with me now". Quiet and mature: words and line icons, no emoji, no counts
-// of anyone else's. Rules: src/engine/encore/gifts.ts; server: migration 20261205000000_toneturn_friend_gifts.sql.
+// fermata, a phrase dedication, "practise with me now". Quiet and mature: words and Paper drawings (src/ui/paper/
+// art-gifts.ts for the content marks, the chrome cut inside buttons), no emoji, no counts of anyone else's.
+// Rules: src/engine/encore/gifts.ts; server: migration 20261205000000_toneturn_friend_gifts.sql.
 
 import { useEffect, useMemo, useState } from 'react';
 import '../../encore.css';
@@ -13,6 +14,8 @@ import { loadLedger } from '../../storage/practice';
 import { ALLOWANCE_TEXT, DEDICATION_XP, NOTE_MAX, dedicatable, dedicationLickId, giftAllowance, invitesLeft, type GiftAllowance } from '../../engine/encore/gifts';
 import { answerTogether, giftsView, inviteTogether, localDay, saveTogether, sendDedication, sendFermata, type GiftFriend, type GiftsView as View, type SendAnswer } from '../../cloud/gifts';
 import { Icon } from '../icons';
+import { PAPER } from '../paper';
+import { PaperSvg } from '../paper/Paper';
 import { Bi, T, type Lang } from './bits';
 import type { ChallengeProps } from './Challenge';
 
@@ -22,8 +25,16 @@ const go = (path: string) => {
 };
 type Head = (title: React.ReactNode, sub?: React.ReactNode, back?: () => void, extra?: React.ReactNode) => React.ReactNode;
 
+/** The control symbol (chrome cut) for icon buttons. */
 export function GiftIcon({ size = 16 }: { size?: number }) {
   return <Icon k="gift" size={size} />;
+}
+
+export type GiftKind = 'gift' | 'fermata' | 'dedicate' | 'together';
+/** A gift's Paper drawing (layered tonal sheets, src/ui/paper/art-gifts.ts) beside text: allowance, inbox rows. */
+export function GiftArt({ kind, size = 20 }: { kind: GiftKind; size?: number }) {
+  const art = PAPER[kind === 'gift' ? 'gift' : `gift-${kind}`];
+  return <PaperSvg art={art} cut={size <= 24 ? 'small' : 'full'} width={size} className={`gift-art gift-art-${kind}`} />;
 }
 
 /** Today's measured practice on this device (the 5 minutes that make a practice day). */
@@ -93,7 +104,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="gifts" data-gift-allowance={allowance}>
       {head(L(lang, 'Gifts between friends', 'מתנות בין חברים'), undefined, () => (friend ? go('gifts') : history.back()))}
       <p className={`gift-allow ${allowance}`} data-gift-allow-text="1">
-        <Icon k="gift" size={15} />
+        <GiftArt kind="gift" size={22} />
         <span>{ALLOWANCE_TEXT[allowance][lang]}</span>
       </p>
       <div className="chl-list">
@@ -104,7 +115,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
             {invites.map((s) => (
               <div key={s.id} className="enc-card col gift-item" data-gift-invite={s.id}>
                 <span className="row">
-                  <Icon k="together" size={15} />
+                  <GiftArt kind="together" size={22} />
                   <span className="grow">
                     <Bi text={s.friendName} /> {L(lang, 'invites you to practise together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
                   </span>
@@ -132,7 +143,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
             {forMe.map((g) =>
               g.kind === 'fermata' ? (
                 <div key={g.id} className="enc-card row gift-item" data-gift-received="fermata" data-gift-id={g.id}>
-                  <Icon k="fermata" size={16} />
+                  <GiftArt kind="fermata" size={24} />
                   <span className="grow col">
                     <span>
                       {L(lang, 'A fermata from ', 'פרמטה מ־')}
@@ -144,7 +155,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
               ) : (
                 <div key={g.id} className="enc-card col gift-item" data-gift-received="dedication" data-gift-id={g.id}>
                   <span className="row">
-                    <Icon k="gift" size={15} />
+                    <GiftArt kind="dedicate" size={22} />
                     <span className="grow">
                       <Bi text={g.fromName} /> {L(lang, 'dedicated a phrase to you', 'הקדיש/ה לך משפט')}
                     </span>
@@ -205,7 +216,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
                       {L(lang, 'Fermata', 'פרמטה')}
                     </button>
                     <button className="btn small ghost" disabled={allowance !== 'ready' || busy} onClick={() => go(`gifts/${f.id}/dedicate`)} data-gift-dedicate={f.id}>
-                      <Icon k="gift" size={14} />
+                      <Icon k="dedicate" size={14} />
                       {L(lang, 'Dedicate', 'הקדשה')}
                     </button>
                     <button className="btn small ghost" disabled={busy || left === 0 || openWith.has(f.id)} onClick={() => void invite(f)} data-gift-together={f.id}>
@@ -269,7 +280,7 @@ function DedicateView({ lang, settings, head, f, allowance, youngMe, ms }: { lan
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="dedicate">
       {head(L(lang, 'Dedicate a phrase', 'הקדשת משפט'), <Bi text={f.name} />, () => go(`gifts/${f.id}`))}
       <p className={`gift-allow ${allowance}`}>
-        <Icon k="gift" size={15} />
+        <GiftArt kind="dedicate" size={22} />
         <span>{ALLOWANCE_TEXT[allowance][lang]}</span>
       </p>
       <div className="chl-list" role="radiogroup" aria-label={L(lang, 'My phrases', 'המשפטים שלי')}>
@@ -326,7 +337,7 @@ export function GiftInboxCard({ lang }: { lang: Lang }) {
       <h2>{L(lang, 'For you', 'בשבילך')}</h2>
       {invites.map((s) => (
         <small key={s.id} className="row">
-          <Icon k="together" size={14} />
+          <GiftArt kind="together" size={20} />
           <span>
             <Bi text={s.friendName} /> {L(lang, 'invites you to practise together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
           </span>
@@ -334,7 +345,7 @@ export function GiftInboxCard({ lang }: { lang: Lang }) {
       ))}
       {recent.map((g) => (
         <small key={g.id} className="row">
-          <Icon k={g.kind === 'fermata' ? 'fermata' : 'gift'} size={14} />
+          <GiftArt kind={g.kind === 'fermata' ? 'fermata' : 'dedicate'} size={20} />
           <span>
             {g.kind === 'fermata' ? L(lang, 'A fermata from ', 'פרמטה מ־') : L(lang, 'A phrase dedicated by ', 'משפט שהקדיש/ה ')}
             <Bi text={g.fromName} />

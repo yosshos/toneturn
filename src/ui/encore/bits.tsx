@@ -52,10 +52,12 @@ export const kName = (k: number, minor = false) => keyName(((k % 12) + 12) % 12,
 export function KeyB({ k, minor = false }: { k: number; minor?: boolean }) {
   return <bdi dir="ltr">{kName(k, minor)}</bdi>;
 }
-export function Tempo({ bpm }: { bpm: number | string }) {
+/** A tempo, "♩120"; a 6/8 phrase counts eighths, "♪240" (`eighth`). */
+export function Tempo({ bpm, eighth = false }: { bpm: number | string; eighth?: boolean }) {
   return (
     <bdi dir="ltr" className="tempo-iso">
-      ♩{bpm}
+      {eighth ? '♪' : '♩'}
+      {bpm}
     </bdi>
   );
 }

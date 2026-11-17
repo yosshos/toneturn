@@ -8,6 +8,7 @@ import { ART_GUITAR } from './art-guitar';
 import { ART_BASS } from './art-bass';
 import { ART_KEYS } from './art-keys';
 import { ART_VOICE } from './art-voice';
+import { ART_GIFTS } from './art-gifts';
 import { markArt, type Art, type HueName } from './kit';
 
 /** A mark's hue by what it names: meters and rhythms tangerine, sound engineering sky, the rest theory lilac. */
@@ -25,6 +26,7 @@ export const PAPER: Record<string, Art> = {
   ...ART_BASS,
   ...ART_KEYS,
   ...ART_VOICE,
+  ...ART_GIFTS,
 };
 for (const [k, s] of Object.entries(TOPIC_MARK)) PAPER[`m:${k}`] ??= markArt(s, ...markHue(s));
 for (const [k, s] of Object.entries(LESSON_MARK)) PAPER[`m:lesson:${k}`] ??= markArt(s, ...markHue(s));

@@ -13,6 +13,7 @@ import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type Li
 import type { BeatNote } from './detect';
 import { tuningById } from '../fretboard';
 import { instrumentCtx, neckPlace, neckStats, singerRange, voiceOctave, type NeckResult, type Range } from './placement';
+import { suggestFingers } from './fingering';
 
 type T2 = { en: string; he: string };
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
@@ -29,8 +30,12 @@ export const tonic4 = (k: number): number => 60 + mod(k) - (mod(k) > 5 ? 12 : 0)
 /** Item id per (phrase, instrument, key[, hand]) — `lick:<id>:<inst>:<key>` (§7.7), a hand suffix for two-hand phrases. */
 export function phraseItemId(l: Lick, inst: LickInstrument, key: number, hand?: Hand): string {
   const base = `lick:${l.id}:${inst}:${mod(key)}`;
+  // LH shells (§7.5) leave the right hand's line as it was: its items (and progress) keep the one-hand id
+  if (l.lhShells && hand === 'R') return base;
   return twoHands(l) ? `${base}:${hand ?? 'RL'}` : base;
 }
+/** 6/8 counts eighths (one beat = ♪): the bar's two groups of three. Other meters have no groups. */
+export const groupsOf = (m: number): number[] => (m === 6 ? [3, 3] : [m]);
 /** The hands a phrase is practised in, in order (a two-hand phrase: right, left, then together by default). */
 export function handsOf(l: Lick): Hand[] {
   if (!twoHands(l)) return [l.notes.length ? 'R' : 'L'];
@@ -53,7 +58,8 @@ export interface PhraseDraft {
   /** Relative to the key's tonic; [] = no harmony. */
   chords: LickChord[];
   ctx: LickContext | 'free';
-  meter: 3 | 4;
+  /** Beats per bar (6 = 6/8: one beat is an eighth and the tempo counts eighths). */
+  meter: 3 | 4 | 5 | 6;
   swing: number;
   pickup?: number;
   instrument: LickInstrument;
@@ -179,7 +185,8 @@ export function phraseQuartersDrill(drill: Drill): Drill {
   const k = notesPerBeat(drill);
   if (k <= 1) return drill;
   const m = drill.meter;
-  const p = drill.meters![0].meter.num * (4 / drill.meters![0].meter.den);
+  const den = drill.pulse === 8 ? 8 : 4;
+  const p = drill.meters![0].meter.num * (den / drill.meters![0].meter.den);
   const plain = quartersDrill({ ...drill, meters: undefined });
   const L = p * k;
   const rest = L - Math.floor(L / m + 1e-9) * m;
@@ -187,7 +194,7 @@ export function phraseQuartersDrill(drill: Drill): Drill {
     const r = Math.round(rest) % m;
     if (!r) return { ...plain, meter: m, beats: Math.ceil(plain.beats / m - 1e-9) * m };
     const bars = Math.max(1, Math.ceil((plain.beats - r) / m - 1e-9));
-    return withBarPlan({ ...plain, meter: m, beats: r + bars * m }, [{ num: r, den: 4, pickup: true }, [{ num: m, den: 4 }, bars]]);
+    return withBarPlan({ ...plain, meter: m, beats: r + bars * m }, [{ num: r, den, pickup: true }, [{ num: m, den, ...(den === 8 ? { groups: groupsOf(m) } : {}) }, bars]]);
   }
   const pad = m - rest;
   return { ...plain, meter: m, notes: plain.notes.map((n) => ({ ...n, beat: Math.round((n.beat + pad) * 1e4) / 1e4 })), beats: Math.ceil((plain.beats + pad) / m - 1e-9) * m };
@@ -335,10 +342,16 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
     return LICK_Q[c[1]]?.ct.includes(mod(semi - c[0]));
   };
   const notes: ExpNote[] = [];
-  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : {}) }));
-  if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]) }));
+  // §5.6: suggested piano fingering when the plan asks for it (the player's own numbers in the home key win)
+  const fg = inst === 'piano' && planOf(l).fingering ? phraseFingers(l, k) : null;
+  const fin = (f: number | undefined) => (f ? { finger: f } : {});
+  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : fin(fg?.rh[i])) }));
+  if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]), ...fin(fg?.lh[i]) }));
   // a one-hand phrase practised "left": its notes an octave down in the left hand
-  if (hand === 'L' && !l.lh?.length) l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L' }));
+  if (hand === 'L' && !l.lh?.length) {
+    const lf = fg ? suggestFingers(l.notes.map((n, i) => ({ pitch: ps.rh[i] - 12, beat: n[1] })), 'L') : null;
+    l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L', ...fin(lf?.[i]) }));
+  }
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
   // notes sounding together share a chordId (chords, hands together)
   let cid = 0;
@@ -372,10 +385,39 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
     ...(inst === 'voice' ? { sung: true } : {}),
     ...(o.band && l.chords.length ? { band: { style: 'swing' as const, bass: true } } : {}),
   };
-  // A pickup: a short first bar (written in the phrase's meter; the count-in is a full bar and the beats before it).
-  if (!p) return drill;
+  // 6/8: one drill beat is an eighth (pulse 8, the tempo counts eighths), two groups of three a bar
   const m = l.meter ?? 4;
-  return withBarPlan(drill, [{ num: p, den: 4, pickup: true }, [{ num: m, den: 4 }, Math.max(1, Math.round((phraseBeats(l) - p) / m))]]);
+  const den = m === 6 ? 8 : 4;
+  const d6: Drill = m === 6 ? { ...drill, pulse: 8, groups: groupsOf(6) } : drill;
+  // A pickup: a short first bar (written in the phrase's meter; the count-in is a full bar and the beats before it).
+  if (!p) return d6;
+  return withBarPlan(d6, [{ num: p, den, pickup: true }, [{ num: m, den, ...(den === 8 ? { groups: groupsOf(m) } : {}) }, Math.max(1, Math.round((phraseBeats(l) - p) / m))]]);
+}
+
+/**
+ * The fingering of a phrase in a key (§5.6): suggested per hand from the key's own pitches (black and white keys change
+ * with the key); in the home key the player's own numbers (marks / lhMarks) are kept and the suggestion runs around them.
+ */
+export function phraseFingers(l: Lick, key: number): { rh: number[]; lh: number[] } {
+  const ps = phrasePitches(l, key, 'piano');
+  const home = mod(key) === mod(l.homeKey ?? 0);
+  const own = (ms: Lick['marks'], n: number) => Array.from({ length: n }, (_, i) => (home ? ms?.[i]?.finger : undefined));
+  const rh = suggestFingers(l.notes.map((n, i) => ({ pitch: ps.rh[i], beat: n[1] })), 'R', own(l.marks, l.notes.length));
+  const lh = l.lh?.length ? suggestFingers(l.lh.map((n, i) => ({ pitch: ps.lh[i], beat: n[1] })), 'L', own(l.lhMarks, l.lh.length)) : [];
+  return { rh, lh };
+}
+/** The player's own finger on a note in the home key (null clears it back to the suggestion). */
+export function setOwnFinger(l: Lick, hand: 'R' | 'L', i: number, finger: number | null): Lick {
+  const field = hand === 'R' ? 'marks' : 'lhMarks';
+  const n = hand === 'R' ? l.notes.length : (l.lh?.length ?? 0);
+  if (i < 0 || i >= n) return l;
+  const ms = Array.from({ length: n }, (_, j) => l[field]?.[j] ?? null);
+  const cur = ms[i] ?? {};
+  const { finger: _f, ...rest } = cur;
+  void _f;
+  const next = finger ? { ...rest, finger: Math.max(1, Math.min(5, Math.round(finger))) } : rest;
+  ms[i] = Object.keys(next).length ? next : null;
+  return { ...l, [field]: ms.some(Boolean) ? ms : undefined };
 }
 
 // ───────────────────────────── the 12 keys, easiest first (§7.3) ─────────────────────────────

@@ -1382,6 +1382,29 @@ phrases and Keep's bar span after a pickup; calibration on the note-measurable l
 as one .zip (stored, audio or .mid per take) and a phrase as MusicXML (from v3, the phrase screen's "⋯"). Still open:
 the optional sync of take notes (needs a server table and a restore path on another device — not started).
 
+**Closed 2026-11-17 (client built; server and flags pending the owner):**
+- *Sync of take notes* (§6.2): table `toneturn_take_notes` (owner-only RLS, ≤ 300 rows, notes ≤ 64 KB base64, never
+  audio) in `20261207000000_toneturn_take_notes.sql` — NOT applied; client `src/cloud/takeNotes.ts` behind
+  `VITE_TAKE_NOTES_SYNC=1` / localStorage `tt.flag.takeNotes=1` (off by default) plus the player's switch in Settings →
+  My recordings. Starred / foldered / phrase takes go up; a take another device lacks comes down with its notes only
+  ("notes from another device"); metadata merges three-way; a deletion moves the take to the bin elsewhere.
+- *Fingering* (§5.6): piano suggestion by a shortest path over fingers (`encore/fingering.ts`, the drills' rules as
+  costs), per key from that key's pitches; the player's own numbers in the home key win (`marks[].finger`); the plan's
+  "Fingering" opens the fingering screen (`#/encore/fingers/<id>`, one bar at a time, tap to change, switch for practice).
+  Guitar / bass keep the position fingering of §7.4. Help only, never graded.
+- *Meter chips* (§5.3): 4/4 · 3/4 · 5/4 · 6/8; 6/8 counts eighths (the grid's tempo doubles, the drill has pulse 8 in
+  3 + 3, tempos show ♪, MusicXML writes 6/8). 7/8 is left out (the phrase's meter field holds no grouping).
+- *LH shells* (§7.5): root–3rd–7th or root–7th–3rd per chord, chosen by voice leading (roots E2–E♭3); 6 / m6 chords get
+  root and 3rd only. The shells become the phrase's left hand (`lhShells`), so the plan practises R, L, together; the
+  right hand's items keep their ids. Piano phrases in one hand with chords only.
+- *Calibration* (§10.8.3 / §10.8.8): `encore/calibration.ts` — the empirical difficulty of an item from (rating, passed)
+  observations on the Elo scale, the target check (ρ ≥ 0.8, mean error ≤ 90, families in order) and the > 150-point
+  review list. The model's weights are unchanged; the 90-point target is measurable once pass data is gathered (no
+  server aggregate exists yet).
+- *Sharer's bonus* (§11.5): +5 XP per friend at the target on my phrase, once per friend and phrase, ≤ 50 a week, as a
+  `challenge-learned` result (it counts in the league; never a practice day). *Today*: one shared phrase (a friend's,
+  else the week's), small, dismissible on this device.
+
 ### v3 — "Challenges"
 
 - Sharing with friends and the community, the challenge page and boards, "beat my tempo" links, the public web

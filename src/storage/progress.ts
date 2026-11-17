@@ -26,6 +26,7 @@ import type { Naming } from '../engine/pitch';
 import type { KV } from './kv';
 import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from '../engine/fsrs';
 import { bookDrillTake, bookGameRun, bookResult } from './practice';
+import { SHARER_RESULT_ID } from '../engine/encore/sharerBonus';
 
 /** AUDIT-5 #4: from this day on, only measured practice makes a streak day — minutes logged away from the app (the
  * practice log, the workout's off-app block) still count as practice time, but no longer as a streak day. Days before
@@ -356,6 +357,9 @@ export interface Settings {
   keepTakes?: boolean;
   /** My recordings: keep the notes of every measured take (default on; false = only starred / Encore takes). */
   keepTakeNotes?: boolean;
+  /** My recordings (§6.2): sync the NOTES (never audio) of starred / foldered / phrase takes to my other devices.
+   *  Default off; needs the cloud flag too (src/cloud/takeNotes.ts). */
+  syncTakeNotes?: boolean;
   /** My charts (SPEC-0.48 §P2): typed chord charts for backing tracks. */
   myCharts?: import('../ui/Charts').MyChart[];
   /** Improvisation levels: best rules score (0..1) per level id. */
@@ -1060,9 +1064,10 @@ export function lessonMastered(p: Progress, id: string): boolean {
 export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonNullable<Progress['stats']> {
   const day = localDay(new Date(r.completedAt));
   const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
-  const good = r.lessonId !== 'weekly-puzzle' && r.total > 0 && r.firstTry / r.total >= 0.8;
+  const good = r.lessonId !== 'weekly-puzzle' && r.lessonId !== SHARER_RESULT_ID && r.total > 0 && r.firstTry / r.total >= 0.8;
   // AUDIT-5 #4: logged minutes are practice time, not a measured practice day.
-  const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM);
+  // a friend's mastery of my phrase (the sharer's bonus) is XP, not a day I practised
+  const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM) && r.lessonId !== SHARER_RESULT_ID;
   const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + (r.xpCounted ? 0 : r.xp) };
   const keys = Object.keys(xpByDay).sort();
   if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
@@ -1079,7 +1084,7 @@ export function practiceDays(p: Progress): Set<string> {
   const out = new Set<string>(p.stats?.days ?? []);
   for (const h of p.history) {
     const d = localDay(new Date(h.completedAt));
-    if (isLog(h.lessonId) && d >= MEASURED_STREAK_FROM) continue;
+    if ((isLog(h.lessonId) && d >= MEASURED_STREAK_FROM) || h.lessonId === SHARER_RESULT_ID) continue;
     out.add(d);
   }
   for (const d of Object.keys(p.daily ?? {})) out.add(d);
@@ -1094,7 +1099,7 @@ export function streakOf(p: Progress, purchases: Purchase[], now = new Date(), w
 export function gemsOf(p: Progress, purchases: Purchase[], now = new Date(), weeklyTarget?: number) {
   const st = streakOf(p, purchases, now, weeklyTarget);
   // Older data (before stats existed) still counts from the history.
-  const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && h.total > 0 && h.firstTry / h.total >= 0.8).length;
+  const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && h.lessonId !== SHARER_RESULT_ID && h.total > 0 && h.firstTry / h.total >= 0.8).length;
   const xpByDay: Record<string, number> = { ...(p.stats?.xpByDay ?? {}) };
   if (!p.stats) for (const h of p.history) xpByDay[localDay(new Date(h.completedAt))] = (xpByDay[localDay(new Date(h.completedAt))] ?? 0) + h.xp;
   const medals = Object.values(p.puzzles ?? {});

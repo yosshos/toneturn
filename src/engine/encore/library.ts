@@ -125,7 +125,8 @@ export interface TrimState {
   split: number | null;
   name: string;
   bpm: number;
-  meter: 3 | 4;
+  /** Beats per bar: 4/4, 3/4, 5/4, or 6 = 6/8 (the grid then counts eighths: the tempo doubled). */
+  meter: 3 | 4 | 5 | 6;
   swing: number;
   /** Edits on the selection (index → semitone shift, or deleted). */
   edits: Record<number, number | 'x'>;
@@ -133,6 +134,21 @@ export interface TrimState {
   t0: number;
   /** The route's span this state was opened with ("from:to" in seconds; '' = none). */
   spanKey?: string;
+}
+
+/** The meter chips (§5.3): 4/4 · 3/4 · 5/4 · 6/8, in that order. */
+export const METERS: readonly TrimState['meter'][] = [4, 3, 5, 6];
+export const meterLabel = (m: number): string => (m === 6 ? '6/8' : `${m}/4`);
+/**
+ * Another meter for the selection (§5.3). 6/8 counts eighths, so going into it doubles the grid's tempo and the
+ * selection's beats (the same notes, the same seconds); leaving it halves them. The handles land on the new bar lines.
+ */
+export function withMeter(s: TrimState, m: TrimState['meter']): TrimState {
+  if (m === s.meter) return s;
+  const f = (m === 6 ? 2 : 1) / (s.meter === 6 ? 2 : 1);
+  const from = Math.floor((s.from * f) / m + 1e-6) * m;
+  const to = Math.max(from + m, Math.ceil((s.to * f) / m - 1e-6) * m);
+  return { ...s, meter: m, bpm: s.bpm * f, from, to };
 }
 
 /** The take's notes on the trim state's grid (the player may have fixed the tempo or meter). */

@@ -57,7 +57,8 @@ export function EncoreRun({
 }) {
   const he = lang === 'he';
   const hand = hand0 ?? finalHand(l);
-  const ds = drillSettingsOf(settings);
+  // §5.6: a phrase planned with fingering shows its numbers, whatever the drills' own "show fingering" switch says
+  const ds = planOf(l).fingering && (inst ?? 'piano') === 'piano' ? { ...drillSettingsOf(settings), showFingering: true } : drillSettingsOf(settings);
   const cal = calOf(settings);
   const local = useRef<Record<string, ItemState>>({});
   const all = (): Record<string, ItemState> => ({ ...items, ...local.current });
@@ -136,7 +137,8 @@ export function EncoreRun({
       <span className="ch" data-stage={stage ?? 'tempo'}>
         {stage === 'free' ? (he ? 'בלי קצב' : 'Free time') : stage === 'quarters' ? <Tempo bpm={QUARTERS_BPM} /> : (
           <bdi dir="ltr">
-            ♩{bpm} → {plan.goalBpm}
+            {l.meter === 6 ? '♪' : '♩'}
+            {bpm} → {plan.goalBpm}
           </bdi>
         )}
       </span>
@@ -174,7 +176,7 @@ export function EncoreRun({
       <div className="drill-run enc-run" data-drill={drill.itemId} data-loop={loop.bar + 1}>
         {head}
         <p className="loop-bar">
-          <b>{he ? 'לולאה' : 'Loop'}</b> {he ? 'תיבה' : 'bar'} <bdi dir="ltr">{loop.bar + 1}</bdi> · <Tempo bpm={lb} />
+          <b>{he ? 'לולאה' : 'Loop'}</b> {he ? 'תיבה' : 'bar'} <bdi dir="ltr">{loop.bar + 1}</bdi> · <Tempo bpm={lb} eighth={l.meter === 6} />
           <button className="link" onClick={() => (setLoop(null), setTake((t) => t + 1))}>
             {he ? 'כל המשפט' : 'Whole phrase'}
           </button>

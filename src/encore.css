@@ -218,3 +218,23 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
   --cae: initial;
   --cl: initial;
 }
+
+/* Encore leftovers (§5.3 meter chip, §5.6 fingering, §7.5 LH shells) */
+.enc-opt-chips.row { gap: 6px; flex-wrap: nowrap; }
+.enc-opt-chips .ch { padding: 3px 9px; font-size: 0.76rem; }
+.enc-opt-chips .enc-band-short { margin-inline-start: auto; gap: 6px; }
+.enc-fing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
+.enc-fing { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 2px; border: 2px solid var(--outline); border-radius: 12px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+.enc-fing small { font: 600 0.72rem var(--font); color: var(--ink-dim); }
+.enc-fing b { font: 800 1.2rem var(--font); line-height: 1.1; }
+.enc-fing.own { background: var(--accent); color: var(--accent-ink); }
+.enc-fing.own small { color: inherit; opacity: 0.85; }
+.enc-fing:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+/* Today: one shared phrase (a friend's, else the week's) — small, dismissible */
+:root .tc-card.tc-featured, :root[data-theme] .tc-card.tc-featured { flex-direction: row; align-items: center; gap: 6px; padding: 10px 8px 10px 12px; }
+.tc-featured-open { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; text-align: start; }
+.tc-featured-open:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; border-radius: 12px; }
+.tc-featured-text { display: flex; flex-direction: column; min-width: 0; }
+.tc-featured-text > small:first-child { font-weight: 700; color: var(--ink-dim); font-size: 0.8rem; }
+.tc-featured-text > b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.1rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tc-featured-hide { flex: none; width: 30px; height: 30px; }

@@ -20,6 +20,7 @@ import '../repertoire.css';
 import '../todaypm.css';
 import { dayKey, doneOn, meanAbs, trend } from '../engine/pitchMemory';
 import { EncoreTodayCard, encoreInstOf } from './encore/EncoreToday';
+import { FeaturedPhraseCard } from './encore/FeaturedToday';
 import '../encore.css';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
@@ -173,6 +174,7 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
       {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
       {onEncore && !examPrep && <TeacherPhraseTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
       {onEncore && !examPrep && <EncoreTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} inst={encoreInstOf(settings)} range={settings.voiceRange ?? null} />}
+      {onEncore && !examPrep && <FeaturedPhraseCard lang={lang} book={settings.lickBook} />}
       <section className="today-quests" aria-labelledby="tq-title">
         <div className="tq-head">
           <h2 id="tq-title">{he ? 'משימות היום' : "Today's quests"}</h2>

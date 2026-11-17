@@ -60,6 +60,8 @@ export interface Lick {
   /** Per-note extras parallel to notes / lh. */
   marks?: (PhraseMark | null)[];
   lhMarks?: (PhraseMark | null)[];
+  /** Encore v2 (§7.5): `lh` is the generated shell voicings (1-3-7 / 1-7-3) under a one-hand phrase (encore/shells.ts). */
+  lhShells?: boolean;
   /** Beats per bar (6 = 6/8 in eighths). */
   meter?: 3 | 4 | 5 | 6;
   /** Beats before the first downbeat. */
@@ -101,6 +103,8 @@ export interface PhrasePlan {
   /** The target stage is with the band. */
   band: boolean;
   position?: 'same' | 'per-key';
+  /** Encore v2 (§5.6): show suggested piano fingering (help only, never graded; own numbers in `marks` win). */
+  fingering?: boolean;
   locked?: ('goalBpm' | 'keys' | 'hands')[];
   inToday?: boolean;
   inWorkout?: boolean;

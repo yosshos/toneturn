@@ -69,6 +69,8 @@ export interface RecTake {
   sharedTo?: ('teacher' | 'friends' | 'public')[];
   /** Waveform peaks (0..255, one per PEAK_MS) — computed once the audio is first decoded (§15). */
   peaks?: Uint8Array;
+  /** §6.2: the notes came from another of the player's devices (opt-in note sync); this device has no audio of it. */
+  fromCloud?: boolean;
 }
 
 export interface RecPlaylist {
@@ -234,10 +236,10 @@ export interface ScanOpts {
  */
 export type TakeHead = Pick<
   RecTake,
-  'id' | 'sessionId' | 'at' | 'durationMs' | 'course' | 'instrument' | 'kind' | 'itemId' | 'title' | 'sung' | 'source' | 'result' | 'audioId' | 'audioBytes' | 'star' | 'folder' | 'tags' | 'deletedAt' | 'prunedAt' | 'phraseIds' | 'sharedTo'
+  'id' | 'sessionId' | 'at' | 'durationMs' | 'course' | 'instrument' | 'kind' | 'itemId' | 'title' | 'sung' | 'source' | 'result' | 'audioId' | 'audioBytes' | 'star' | 'folder' | 'tags' | 'deletedAt' | 'prunedAt' | 'phraseIds' | 'sharedTo' | 'fromCloud'
 > & { q: string; nb: number };
 
-const HEAD_KEYS = ['id', 'sessionId', 'at', 'durationMs', 'course', 'instrument', 'kind', 'itemId', 'title', 'sung', 'source', 'result', 'audioId', 'audioBytes', 'star', 'folder', 'tags', 'deletedAt', 'prunedAt', 'phraseIds', 'sharedTo'] as const;
+const HEAD_KEYS = ['id', 'sessionId', 'at', 'durationMs', 'course', 'instrument', 'kind', 'itemId', 'title', 'sung', 'source', 'result', 'audioId', 'audioBytes', 'star', 'folder', 'tags', 'deletedAt', 'prunedAt', 'phraseIds', 'sharedTo', 'fromCloud'] as const;
 export function headOf(t: RecTake): TakeHead {
   const h = { q: searchText(t), nb: (t.notes?.byteLength ?? 0) + (t.backing?.notes?.byteLength ?? 0) } as TakeHead;
   for (const k of HEAD_KEYS) if (t[k] !== undefined) (h as unknown as Record<string, unknown>)[k] = t[k];
@@ -977,6 +979,41 @@ async function pruneAudio(t: Pick<RecTake, 'id' | 'audioId'>, now: number): Prom
 /** Store waveform peaks once computed (the player). */
 export async function setTakePeaks(id: string, peaks: Uint8Array): Promise<void> {
   await patch(id, { peaks });
+}
+
+// ───────────────────────────── synced notes (§6.2, cloud/takeNotes.ts) ─────────────────────────────
+
+/** The fields a second device takes over from the cloud (metadata only; notes and audio never change here). */
+export type SyncedMeta = Pick<RecTake, 'title' | 'star' | 'folder' | 'phraseIds' | 'deletedAt'>;
+
+/**
+ * A take that arrived from another device (notes, no audio): stored in a session of its own ("ses-cloud-<id>") so the
+ * timeline groups it by its date. An existing take with that id is left alone.
+ */
+export async function putSyncedTake(t: RecTake): Promise<boolean> {
+  await migrateOnce();
+  const s = st();
+  if (await s.get<RecTake>('takes', t.id)) return false;
+  const sid = `ses-cloud-${t.id}`.slice(0, 96);
+  const take: RecTake = { ...t, sessionId: sid, fromCloud: true };
+  for (const k of ['audioId', 'audioBytes', 'audioType', 'peaks'] as const) delete take[k];
+  const w = await s.put('takes', take);
+  if (!w.ok) return false;
+  await s.put('sessions', { id: sid, startedAt: t.at, endedAt: t.at, course: t.course ?? null, route: 'cloud', measuredMs: 0, takeIds: [t.id] } satisfies RecSession);
+  changed();
+  return true;
+}
+/** The takes the note sync looks at: protected ones with notes, and every take it synced before (bin included). */
+export async function syncCandidates(known: ReadonlySet<string>): Promise<RecTake[]> {
+  await migrateOnce();
+  const hs = await allHeads();
+  return takesFor(hs.filter((h) => known.has(h.id) || (!h.deletedAt && h.nb > 0 && isProtected(h))));
+}
+/** Apply another device's change of a synced take's metadata (a deletion goes to the bin, as on this device). */
+export async function applySyncedMeta(id: string, m: SyncedMeta): Promise<RecTake | null> {
+  const r = await patch(id, { title: m.title, star: m.star || undefined, folder: m.folder || undefined, phraseIds: m.phraseIds?.length ? m.phraseIds : undefined, deletedAt: m.deletedAt || undefined });
+  changed();
+  return r;
 }
 
 /** Run the retention policy: purge the bin's old takes, prune old unstarred audio. */

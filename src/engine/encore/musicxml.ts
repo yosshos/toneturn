@@ -64,13 +64,13 @@ interface Ev {
   pitches: number[];
 }
 /** One staff's notes as onset groups (chords), each lasting to the next onset at most, in divisions. */
-function staffEvents(notes: { midi: number; beat: number; dur: number }[]): Ev[] {
+function staffEvents(notes: { midi: number; beat: number; dur: number }[], tpb = DIV): Ev[] {
   const by = new Map<number, { pitches: number[]; dur: number }>();
   for (const n of notes) {
-    const at = Math.round(n.beat * DIV);
+    const at = Math.round(n.beat * tpb);
     const g = by.get(at) ?? { pitches: [], dur: 0 };
     if (!g.pitches.includes(n.midi)) g.pitches.push(n.midi);
-    g.dur = Math.max(g.dur, Math.round(n.dur * DIV));
+    g.dur = Math.max(g.dur, Math.round(n.dur * tpb));
     by.set(at, g);
   }
   const ats = [...by.keys()].sort((a, b) => a - b);
@@ -95,13 +95,15 @@ export function phraseMusicXml(l: Lick, o: { key?: number; inst?: LickInstrument
   const meter = l.meter ?? 4;
   const p = pickupOf(l);
   const nBars = Math.round(phraseBars(l));
-  const total = phraseBeats(l) * DIV;
+  // divisions per drill beat: a quarter, or an eighth in 6/8 (DIV stays the divisions per quarter)
+  const tpb = meter === 6 ? DIV / 2 : DIV;
+  const total = phraseBeats(l) * tpb;
   const bars = Array.from({ length: nBars }, (_, b) => {
-    const end = Math.min(total, barEndBeat(l, b) * DIV);
-    const start = b === 0 ? 0 : barEndBeat(l, b - 1) * DIV;
+    const end = Math.min(total, barEndBeat(l, b) * tpb);
+    const start = b === 0 ? 0 : barEndBeat(l, b - 1) * tpb;
     return { start, end };
   });
-  const events = staves.map(staffEvents);
+  const events = staves.map((s) => staffEvents(s, tpb));
   const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length);
   const clefs: string[] =
     staves.length === 2
@@ -116,7 +118,7 @@ export function phraseMusicXml(l: Lick, o: { key?: number; inst?: LickInstrument
   const chords: { at: number; root: number; q: string }[] = [];
   let ca = 0;
   for (const c of l.chords) {
-    chords.push({ at: Math.round(ca * DIV), root: mod(c[0] + key), q: c[1] });
+    chords.push({ at: Math.round(ca * tpb), root: mod(c[0] + key), q: c[1] });
     ca += c[2];
   }
   const title = o.title ?? (typeof l.name === 'string' ? (l.name as string) : l.name.en || l.name.he);
@@ -169,8 +171,8 @@ export function phraseMusicXml(l: Lick, o: { key?: number; inst?: LickInstrument
   const measures = bars.map((bar, b) => {
     let x = `<measure number="${p ? b : b + 1}"${p && b === 0 ? ' implicit="yes"' : ''}>`;
     if (b === 0) {
-      x += `<attributes><divisions>${DIV}</divisions><key><fifths>${fifths}</fifths><mode>${l.minor ? 'minor' : 'major'}</mode></key><time><beats>${meter}</beats><beat-type>4</beat-type></time>${staves.length === 2 ? '<staves>2</staves>' : ''}${clefs.join('')}</attributes>`;
-      x += `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${bpm}</per-minute></metronome></direction-type><sound tempo="${bpm}"/></direction>`;
+      x += `<attributes><divisions>${DIV}</divisions><key><fifths>${fifths}</fifths><mode>${l.minor ? 'minor' : 'major'}</mode></key><time><beats>${meter}</beats><beat-type>${meter === 6 ? 8 : 4}</beat-type></time>${staves.length === 2 ? '<staves>2</staves>' : ''}${clefs.join('')}</attributes>`;
+      x += `<direction placement="above"><direction-type><metronome><beat-unit>${meter === 6 ? 'eighth' : 'quarter'}</beat-unit><per-minute>${bpm}</per-minute></metronome></direction-type><sound tempo="${meter === 6 ? Math.round(bpm / 2) : bpm}"/></direction>`;
     }
     for (const c of chords.filter((c) => c.at >= bar.start && c.at < bar.end)) {
       const sp = spell(60 + c.root, fifths);
