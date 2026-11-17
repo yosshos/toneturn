@@ -34,7 +34,7 @@ export interface VoiceSong {
   answer?: string;
 }
 
-const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש השביעי' };
+const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש ה־7' };
 const SPIRITUAL = { en: 'Traditional spiritual · our jazz chords', he: 'שיר עממי מסורתי · האקורדים שלנו' };
 
 /** Our own pop-style songs (verse + chorus over common progressions): the on-ramp. */

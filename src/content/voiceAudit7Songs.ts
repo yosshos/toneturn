@@ -5,7 +5,7 @@
 
 import type { VoiceSong } from './voiceSongs';
 
-const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש השביעי' };
+const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש ה־7' };
 
 export const AUDIT7_SONGS: VoiceSong[] = [
   {

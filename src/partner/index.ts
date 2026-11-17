@@ -42,7 +42,7 @@ export function copy(key: CopyKey, lang: 'en' | 'he', fallback: Bi, p: PartnerCo
   return (p?.copy[key] ?? fallback)[lang];
 }
 
-const APP_WORDMARK: Bi = { en: 'The 7th Sense', he: 'החוש השביעי' };
+const APP_WORDMARK: Bi = { en: 'The 7th Sense', he: 'החוש ה־7' };
 export const wordmark = (lang: 'en' | 'he', p: PartnerConfig | null = ACTIVE_PARTNER): string => (p?.wordmark ?? APP_WORDMARK)[lang];
 
 const block = (sel: string, t: TokenMap & Record<string, string>): string =>

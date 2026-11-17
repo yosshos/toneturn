@@ -56,7 +56,7 @@ export const solvedBy = (rows: Slot[][]) => rows.some((r) => r.every((s) => s ==
 /** The share text: number, tries, and a grid of squares (no chord names — no spoilers). */
 export function shareText(n: number, rows: Slot[][], lang: 'en' | 'he'): string {
   const won = solvedBy(rows);
-  const head = lang === 'he' ? `החוש השביעי · מהלך היום #${n} · ${won ? rows.length : 'X'}/${MAX_GUESSES}` : `The 7th Sense · Progression #${n} · ${won ? rows.length : 'X'}/${MAX_GUESSES}`;
+  const head = lang === 'he' ? `החוש ה־7 · מהלך היום #${n} · ${won ? rows.length : 'X'}/${MAX_GUESSES}` : `The 7th Sense · Progression #${n} · ${won ? rows.length : 'X'}/${MAX_GUESSES}`;
   const sq: Record<Slot, string> = { right: '🟩', present: '🟨', absent: '⬛' };
   return [head, ...rows.map((r) => r.map((s) => sq[s]).join(''))].join('\n');
 }

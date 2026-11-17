@@ -394,7 +394,7 @@ export function BeatMyScoreButton({ lang, game, tier, score, gameTitle, canShare
     setState('busy');
     const code = await createChallenge({ kind: 'beat', game, tier, score });
     if (!code) return setState('error');
-    const ok = await shareLink(L(lang, `Can you beat my ${score.toLocaleString()} in ${gameTitle}? The 7th Sense:`, `תצליחו לעבור את ה־${score.toLocaleString()} שלי ב${gameTitle}? החוש השביעי:`), appLink(code));
+    const ok = await shareLink(L(lang, `Can you beat my ${score.toLocaleString()} in ${gameTitle}? The 7th Sense:`, `תצליחו לעבור את ה־${score.toLocaleString()} שלי ב${gameTitle}? החוש ה־7:`), appLink(code));
     setState(ok ? 'done' : 'idle');
   };
   return (

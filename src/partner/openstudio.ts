@@ -8,7 +8,7 @@ import type { PartnerConfig } from './types';
 export const OPENSTUDIO: PartnerConfig = {
   id: 'openstudio',
   partnerName: 'Open Studio',
-  wordmark: { en: 'The 7th Sense Practice Lab', he: 'מעבדת התרגול של החוש השביעי' },
+  wordmark: { en: 'The 7th Sense Practice Lab', he: 'מעבדת התרגול של החוש ה־7' },
   tagline: { en: 'Built for Open Studio members', he: 'נבנה עבור חברי Open Studio' },
   theme: {
     light: {

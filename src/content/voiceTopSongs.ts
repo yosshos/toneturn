@@ -5,7 +5,7 @@
 
 import type { VoiceSong } from './voiceSongs';
 
-const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש השביעי' };
+const OWN = { en: 'Written for The 7th Sense', he: 'נכתב עבור החוש ה־7' };
 
 /** Quick Study: four bars each — read at sight over the band, then varied, then the chart improvised. */
 export const QUICK_STUDY_SONGS: VoiceSong[] = [
