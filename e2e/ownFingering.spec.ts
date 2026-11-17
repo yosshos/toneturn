@@ -114,7 +114,7 @@ for (const lang of ['he', 'en'] as const)
           const g = st.get('progress');
           g.onsuccess = () => {
             const p = g.result;
-            p.drillItems = { ...(p.drillItems ?? {}), [itemId!]: { itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: 50, goalBpm: 50, streak: 0, fails: 0, ewma: { cv: 0.03, sd: 10, vsd: 0, hands: 0, acc: 1 }, takes: 3, last: now, history: [{ at: now, bpm: 50, cv: 0.03 }], passLog: [{ at: now, bpm: 50 }] } };
+            p.drillItems = { ...(p.drillItems ?? {}), [itemId!]: { itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: 50, goalBpm: 66, streak: 0, fails: 0, ewma: { cv: 0.03, sd: 10, vsd: 0, hands: 0, acc: 1 }, takes: 3, last: now, history: [{ at: now, bpm: 50, cv: 0.03 }], passLog: [{ at: now, bpm: 50 }] } };
             st.put(p, 'progress');
           };
           tx.oncomplete = res;
