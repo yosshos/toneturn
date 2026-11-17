@@ -127,7 +127,8 @@ for (const lang of ['en', 'he'] as const) {
           if (k) k.style.transition = 'none';
           return k ? getComputedStyle(k).backgroundColor : '';
         });
-        if (lit) expect(lit).toBe('rgb(58, 184, 255)');
+        // the studio's lit key: a teal tint on a white key, teal on a black key (studio-elements.css)
+        if (lit) expect(['rgb(191, 240, 232)', 'rgb(18, 201, 180)']).toContain(lit);
         await shot(page, `ear-miss-pair-${lang}`);
       }
       await expect(pair).toHaveAttribute('data-replay-playing', '', { timeout: 8000 });

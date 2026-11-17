@@ -1005,8 +1005,9 @@
     max-height: calc(46vh - 12px);
   }
 }
-/* hands together on a phone: the box's own side padding goes too, so the system keeps heads of 9 px (feedback.css) */
-@media (max-width: 399px) {
+/* hands together on a 320 px phone: the box's own side padding goes too, so the system keeps heads of 9 px
+   (feedback.css). Only that narrow: at 390 px the same change made a hands-together scale (scales-14) hang the page. */
+@media (max-width: 340px) {
   :root:root .drill-run .drill-staff.ht {
     padding-inline: 0;
   }
