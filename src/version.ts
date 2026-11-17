@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.102.0',
+    date: '2026-11-17',
+    en: [
+      'Guitar: a strum with a string that did not sound is no longer counted as full, and the app says which note and string; chord boxes show finger numbers and barres, with the current and next chord on chord drills and in Strum Changes; finger numbers sit in their own row under the tab; string names on the neck.',
+      'Piano: say "I use a different fingering" on any drill, a small keyboard strip shows the next key and finger, and a new best tempo gets its own moment. The new look now covers the remaining screens.',
+    ],
+    he: [
+      'גיטרה: פריטה שבה מיתר לא נשמע כבר לא נחשבת מלאה, והאפליקציה אומרת איזה צליל ואיזה מיתר; דיאגרמות אקורדים עם מספרי אצבעות וברה, עם האקורד הנוכחי והבא בתרגילי אקורדים וב־Strum Changes; מספרי האצבעות בשורה משלהם מתחת לטאב; שמות מיתרים על הצוואר.',
+      'פסנתר: אפשר לסמן "אני מנגן באצבוע אחר" בכל תרגיל, פס מקלדת קטן מראה את הקליד והאצבע הבאים, ושיא טמפו חדש מקבל רגע משלו. המראה החדש מגיע עכשיו גם לשאר המסכים.',
+    ],
+  },
+  {
     version: '0.101.0',
     date: '2026-11-17',
     en: [

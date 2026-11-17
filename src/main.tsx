@@ -30,7 +30,6 @@ import './pulse.css';
 import './feedback.css';
 import './feedback2.css';
 import './practice.css';
-import './studio-elements.css';
 // GUITAR-AUDIT: chord boxes, the tab's finger row, the neck's string names (both looks; studio rules scoped inside).
 import './guitar.css';
 import { bootStudioLook } from './ui/studio/lookBoot';
@@ -45,6 +44,7 @@ import { installIconTaps } from './ui/paper/motion';
 // Last: the studio screens and the studio game frame (scoped under :root[data-look='studio']).
 import './studio-screens.css';
 import './studio-games.css';
+import './studio-elements.css';
 // The remaining screens and the sweep of the classic sheets (studio look); last, so its by-hand rules win.
 import './studio-rest.css';
 
