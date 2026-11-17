@@ -21,6 +21,9 @@ import { IsoMix } from './Iso';
 import { startTier, tierDef, tierDifficulty, type DynName, type TierInfo } from '../engine/gameTiers';
 import { PLAYER_COLORS } from '../engine/match';
 import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { useStudioFrame } from './GameCover';
+import { GameCeleArt } from './GameCele';
 
 type Mode = 'solo' | 'duel' | 'online';
 const PICK_KEY = 'toneturn.tfTopics';
@@ -188,14 +191,9 @@ export function TrueFalseScreen({
     );
   const cont = mode === 'solo' ? savedSolo : null;
   return (
-    <main className="panel-screen tf-setup">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.trueFalse}</h1>
-      </header>
-      <p className="field-hint">{t.tfHint}</p>
+    <main className="panel-screen tf-setup" data-game="truefalse" data-phase="setup">
+      <G2Head title={t.trueFalse} backLabel={t.back} onBack={onBack} game="truefalse" />
+      <p className="field-hint gs-how">{t.tfHint}</p>
       <section className="set-card">
         <FactPicker t={t} lang={lang} topics={topics} onTopics={setTopics} level={level} onLevel={setLevel} compact levelSlot={tierInfo && mode === 'solo' ? <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game="truefalse" /> : undefined} />
         <fieldset className="seg-field">
@@ -253,6 +251,8 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
   const [flash, setFlash] = useState<null | { ok: boolean }>(null);
   const [over, setOver] = useState<null | { best: boolean }>(null);
   const events = useRef<RatingEvent[]>(resume?.events ?? []);
+  const topRef = useRef<HTMLDivElement | null>(null);
+  useStudioFrame(topRef);
   const answered = useRef(resume?.events.length ?? 0);
   // Saved after each statement: the clock left, the score and streak, where the statements stood.
   useEffect(() => {
@@ -335,7 +335,8 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
 
   if (over)
     return (
-      <main className="recap scoreboard">
+      <main className="recap scoreboard gs-over" key="over">
+        <GameCeleArt good={score > 0} best={!!over.best} />
         <p className="eyebrow">{t.trueFalse}</p>
         <h1>{t.gameOver}</h1>
         <p className="big-score">
@@ -354,8 +355,8 @@ function SoloRun({ t, settings, topics, level, tier, perMs, best, bestKey, resum
     );
 
   return (
-    <main className={`tf-play ${flash ? (flash.ok ? 'flash-ok' : 'flash-no') : ''}`}>
-      <div className="tf-top">
+    <main className={`tf-play ${flash ? (flash.ok ? 'flash-ok' : 'flash-no') : ''}`} data-game="truefalse" data-phase="play">
+      <div className="tf-top" ref={topRef}>
         <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
           <Icon k="close" />
         </button>
@@ -442,7 +443,8 @@ function DuelRun({ t, settings, topics, level, onExit, onAgain }: { t: Strings; 
   if (round >= DUEL_ROUNDS) {
     const w = scores[0] === scores[1] ? null : scores[0] > scores[1] ? 0 : 1;
     return (
-      <main className="recap scoreboard">
+      <main className="recap scoreboard gs-over" key="over">
+        <GameCeleArt good best={w !== null} />
         <p className="eyebrow">{t.trueFalse}</p>
         <h1>{w === null ? t.tie : `${t.winner}: ${names[w]}`}</h1>
         <ol className="board">

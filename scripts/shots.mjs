@@ -2,12 +2,14 @@
 // Usage: node scripts/shots.mjs <outDir> <phone|wide|both> <hash> [<hash> …]   (dev server on :5173)
 // Env: SHOT_LOOK=classic · SHOT_THEME=dark · SHOT_LANG=en · SHOT_SEED=1 (a returning player: a few lessons done, onboarding finished)
 //      SHOT_COURSE=keys (active course when seeded) · SHOT_SETUP='js run before each shot'.
+//      SHOT_SIZE=320x720 (the phone size; default 390x844) · SHOT_TAG=name (added to each file name).
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
 const [out, mode, ...hashes] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
-const sizes = { phone: { width: 390, height: 844 }, wide: { width: 1440, height: 900 } };
+const [sw, sh] = (process.env.SHOT_SIZE ?? '390x844').split('x').map(Number);
+const sizes = { phone: { width: sw, height: sh }, wide: { width: 1440, height: 900 } };
 const which = mode === 'both' ? ['phone', 'wide'] : [mode];
 const seed = !!process.env.SHOT_SEED;
 const course = process.env.SHOT_COURSE ?? 'ear';
@@ -62,7 +64,7 @@ for (const w of which) {
     await page.waitForTimeout(1000);
     if (process.env.SHOT_SETUP) await page.evaluate(process.env.SHOT_SETUP).catch(() => {});
     await page.waitForTimeout(300);
-    const name = `${w}-${h.replace(/[^a-z0-9-]/gi, '_') || 'home'}.png`;
+    const name = `${w}-${h.replace(/[^a-z0-9-]/gi, '_') || 'home'}${process.env.SHOT_TAG ? `-${process.env.SHOT_TAG}` : ''}.png`;
     await page.screenshot({ path: `${out}/${name}` });
     console.log(name);
   }

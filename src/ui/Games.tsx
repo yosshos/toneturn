@@ -22,6 +22,8 @@ import { SetupSheet } from './SetupSheet';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { midi as midiInput } from '../speech/midi';
 import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { GameCeleArt } from './GameCele';
 
 export interface GameSetupValue {
   kind: GameKind;
@@ -107,13 +109,8 @@ export function GameSetup({
   const effInput: GameInput = noPads && input === 'pads' ? 'sing' : input;
 
   return (
-    <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`}>
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.games}</h1>
-      </header>
+    <main className={`panel-screen game-setup ${tinfo ? 'tiered' : ''}`} data-game={kind} data-phase="setup">
+      <G2Head title={kind === 'melody' ? t.echoChain : t.beatEcho} backLabel={t.back} onBack={onBack} game={kind} />
 
       {!tinfo && <EchoArt kind={kind} />}
       <div className="game-cards" role="radiogroup" aria-label={t.games}>
@@ -662,7 +659,8 @@ function Scoreboard({ t, v, onRematch, onChangePlayers, onHome }: { t: Strings; 
   const solo = m.players.length === 1;
   const ranked = m.players.map((p, i) => ({ ...p, i })).sort((a, b) => b.best - a.best || b.points - a.points);
   return (
-    <main className="recap scoreboard">
+    <main className="recap scoreboard gs-over">
+      <GameCeleArt good best={!solo || m.players[0].best > 0} />
       <p className="eyebrow">{v.kind === 'melody' ? t.echoChain : t.beatEcho}</p>
       <h1>{solo ? t.gameOver : m.winners.length > 1 ? t.tie : `${t.winner}: ${m.players[m.winners[0]].name}`}</h1>
       {solo ? (

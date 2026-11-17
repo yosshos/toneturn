@@ -12,11 +12,15 @@ import { useCourse } from './courseContext';
 import { GAME_TITLES } from '../engine/gameBoard';
 import { GAMES_TX } from '../i18n/gamesText';
 import { Icon } from './icons';
+import { isStudio } from './studioLook';
 
 type Lang = 'he' | 'en';
 export const docLang = (): Lang => (typeof document !== 'undefined' && document.documentElement.lang === 'en' ? 'en' : 'he');
 
-const ALIAS: Record<string, string> = { 'name-tune': 'nametune', 'tune-up': 'tuneup', 'melody-puzzle': 'melodypuzzle' };
+/** Covers of screens outside the games list's glyph table. */
+const EXTRA_GLYPH: Record<string, GlyphKind> = { online: 'live' };
+
+const ALIAS: Record<string, string> = { 'name-tune': 'nametune', 'tune-up': 'tuneup', 'melody-puzzle': 'melodypuzzle', 'pitch-memory': 'pitchmemory' };
 
 /** A game id from its shown title (GAMES2 / GAME_TITLES in either language). */
 function idFromTitle(title: string): string | null {
@@ -34,6 +38,11 @@ function phaseOf(main: HTMLElement): 'setup' | 'play' | 'over' {
   if (/(^|\s)\S*(-setup|-intro)(\s|$)/.test(c) || /(^|\s)game-setup(\s|$)/.test(c)) return 'setup';
   if (/(^|\s)\S*(-over|-done)(\s|$)/.test(c) || /(^|\s)recap(\s|$)/.test(c)) return 'over';
   return 'play';
+}
+
+/** useGameFrame for a game screen that keeps its own header (Highway's play row, Truth or Bluff, Duel …). */
+export function useStudioFrame(ref: RefObject<HTMLElement | null>): void {
+  useGameFrame(ref, isStudio());
 }
 
 /** Marks the <main> around `ref` as a studio game frame; returns the game id it names (data-game) when known. */
@@ -88,10 +97,10 @@ export function HudSegs({ from, lang }: { from: ReactNode; lang: Lang }) {
 }
 
 /** The cover's top: glyph panel, name, one-line goal, "How to play" (shows the setup's own paragraph). */
-export function CoverHero({ title, game, lang, frameRef }: { title: string; game: string | null; lang: Lang; frameRef: RefObject<HTMLElement | null> }) {
-  const id = idFromTitle(title) ?? game;
+export function CoverHero({ title, game, pinned, goal, lang, frameRef }: { title: string; game: string | null; /** The game id given by the screen itself (wins over the title). */ pinned?: string; goal?: string; lang: Lang; frameRef: RefObject<HTMLElement | null> }) {
+  const id = pinned ?? idFromTitle(title) ?? game;
   const entry = id ? GAMES2.find((x) => x.id === id) : undefined;
-  const glyph: GlyphKind | undefined = id ? GAME_GLYPH[id] : undefined;
+  const glyph: GlyphKind | undefined = id ? (GAME_GLYPH[id] ?? EXTRA_GLYPH[id]) : undefined;
   const [how, setHow] = useState(false);
   useLayoutEffect(() => {
     const main = frameRef.current?.closest('main');
@@ -109,7 +118,7 @@ export function CoverHero({ title, game, lang, frameRef }: { title: string; game
       </div>
       <div className="gs-title">
         <h2>{title}</h2>
-        {entry && <p>{entry[lang][1]}</p>}
+        {goal ? <p>{goal}</p> : entry ? <p>{entry[lang][1]}</p> : id && GAMES_TX.goal[id as keyof typeof GAMES_TX.goal] ? <p>{GAMES_TX.goal[id as keyof typeof GAMES_TX.goal][lang]}</p> : null}
       </div>
       <button type="button" className="gs-howto" aria-expanded={how} onClick={() => setHow((v) => !v)} data-gs-howto>
         {how ? GAMES_TX.hideHowTo[lang] : GAMES_TX.howTo[lang]}
