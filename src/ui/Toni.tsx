@@ -2,10 +2,15 @@
 // from parts (5 eyes, 4 brows, 7 mouths). Each state has its own motion in v2.css (.toni.s-*), and reduced motion
 // keeps only the pose. Pure SVG, no images.
 // Partner builds may swap the mascot set (src/partner: a neutral "your teacher here" frame per state).
+// Studio look (<html data-look="studio">, 2026-11-17): the Paper Toni (src/ui/ToniPaper.tsx, motion in src/toni.css)
+// replaces this classic drawing, with five extra moods (proud, focused, encouraging, celebrating, curious); the classic
+// drawing and the partner frame show an extra mood as its nearest classic state.
 import { ACTIVE_PARTNER } from '../partner';
 import { TeacherFrame } from '../partner/TeacherFrame';
+import { ToniPaper, toBase, useStudioLook, type ToniMood } from './ToniPaper';
 
 export type ToniState = 'idle' | 'listen' | 'think' | 'hint' | 'correct' | 'streak' | 'wrong' | 'close' | 'wow' | 'sleepy' | 'draw' | 'bye';
+export type { ToniMood };
 type Eyes = 'open' | 'happy' | 'wide' | 'half' | 'closed';
 type Brows = '' | 'raised' | 'worried' | 'one' | 'determined';
 type Mouth = 'smile' | 'grin' | 'o' | 'small-o' | 'flat' | 'wobble' | 'smirk' | 'sleep';
@@ -95,8 +100,15 @@ function MouthPart({ kind }: { kind: Mouth }) {
 }
 
 /** Toni in a given state. `size` is the box in CSS px; the drawing keeps room around it for hops and spins. */
-export function Toni({ state = 'idle', size = 120, label }: { state?: ToniState; size?: number; label?: string }) {
-  if (ACTIVE_PARTNER?.mascot === 'teacher-frame') return <TeacherFrame state={state} size={size} label={label} />;
+export function Toni({ state = 'idle', size = 120, label }: { state?: ToniMood; size?: number; label?: string }) {
+  const studio = useStudioLook();
+  if (ACTIVE_PARTNER?.mascot === 'teacher-frame') return <TeacherFrame state={toBase(state)} size={size} label={label} />;
+  if (studio) return <ToniPaper state={state} size={size} label={label} />;
+  return <ToniClassic state={toBase(state)} size={size} label={label} />;
+}
+
+/** The classic Toni (outlined, 0.61): shown unless the studio look is on. */
+export function ToniClassic({ state = 'idle', size = 120, label }: { state?: ToniState; size?: number; label?: string }) {
   const p = POSE[state];
   return (
     <span className={`toni s-${state}`} style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
