@@ -304,6 +304,12 @@ export interface ExpNote {
   stac?: boolean;
   /** Under a slur (its id, per hand): joined legato to the next note of the same slur. */
   slur?: number;
+  /** MEASUREMENT-AUDIT G12: a sudden mark on this onset — sf / sfz / fz (a strong accent), fp / sfp (loud, then soft at once). */
+  sub?: 'sf' | 'fp';
+  /** MEASUREMENT-AUDIT G13: written under una corda (the soft pedal, CC67); "tre corde" ends it. */
+  uc?: boolean;
+  /** MEASUREMENT-AUDIT G14: the model take's velocity of this note (an Encore phrase from a recorded take); its shape is compared, never its level. */
+  modelVel?: number;
 }
 
 /** What a drill is: everything needed to generate its notes. */
@@ -536,6 +542,8 @@ export interface DrillGoal {
   lengths?: boolean;
   /** MEASUREMENT-AUDIT G1: the written dynamics, hairpins, staccato dots and slurs of the notes are graded (pieces). */
   marks?: boolean;
+  /** MEASUREMENT-AUDIT G14: an Encore phrase from a recorded take — its dynamics contour, accents and staccato notes are compared to the model (soft information). */
+  model?: boolean;
   /** Hand independence: a different touch per hand (legato in one, staccato in the other). MIDI only. */
   handArt?: { R?: Articulation; L?: Articulation };
   /** Voicing / chord correctness instead of exact pitches (voicing families): allowed pitch classes per chordId. */
@@ -818,10 +826,12 @@ export interface PlayedNote {
 }
 
 /** MEASUREMENT-AUDIT: the touch of one take (touch.ts) — dynamics shape, fingers, lengths, tempo, swing, pedal, chords. */
-export type TouchMark = 'short' | 'long' | 'roll' | 'flat' | 'voiced' | 'soft' | 'thumb' | 'blur' | 'jump' | 'peak';
+export type TouchMark = 'short' | 'long' | 'roll' | 'flat' | 'voiced' | 'soft' | 'thumb' | 'blur' | 'jump' | 'peak' | 'extra' | 'gap' | 'land';
 export interface TouchLine {
   /** What the line is about (also the profile's control kind). */
-  id: 'cresc' | 'dim' | 'shape' | 'hands-dyn' | 'zones' | 'hair' | 'level' | 'creep' | 'finger' | 'late-finger' | 'thumb' | 'lengths' | 'release' | 'stac' | 'slur' | 'drift' | 'swing' | 'pedal' | 'blur' | 'roll' | 'voicing';
+  id: 'cresc' | 'dim' | 'shape' | 'hands-dyn' | 'zones' | 'hair' | 'level' | 'creep' | 'finger' | 'late-finger' | 'thumb' | 'lengths' | 'release' | 'stac' | 'slur' | 'drift' | 'swing' | 'pedal' | 'blur' | 'roll' | 'voicing'
+    // second round (G9–G14, melody balance, the microphone's touch)
+    | 'accents' | 'trill' | 'leaps' | 'subito' | 'una-corda' | 'model' | 'melody' | 'legato' | 'mic';
   ok: boolean;
   /** One short line (few words). */
   text: { en: string; he: string };
@@ -846,6 +856,16 @@ export interface TouchReport {
   lengths?: { held: number; long: number; rel: number; rests: number };
   /** Pedal changes (CC64), when recorded. */
   pedal?: { beat: number; ok: boolean; why?: string }[];
+  /** G9: accents on their notes / accents written; unaccented notes that came out accented. */
+  accents?: { ok: number; total: number; extra: number };
+  /** G10: trills and repeated notes — notes per second reached, the last third's slowing (IOI ratio) and fading (velocity). */
+  trill?: { nps: number; slow: number; fade: number | null };
+  /** G11: leaps landed late (≥ 25 ms after the note before) / leaps, the median landing delay (ms). */
+  leaps?: { late: number; n: number; median: number };
+  /** Item 2 (pieces): bars where the melody sat above the accompaniment in velocity / bars judged. */
+  melody?: { bars: number; of: number };
+  /** The piano by microphone (micTouch.ts): the loudness steps (dB) and the sounding share per note pair it measured. */
+  mic?: { steps?: number[]; held?: number[] };
   /** Control score 0..1 of the take (the touch goals only), for the item EWMA and the profile. */
   control?: number;
   /** Tags of what went wrong, for the long-term profile (e.g. 'dim-early', 'cresc-flat', 'lh-shape'). */

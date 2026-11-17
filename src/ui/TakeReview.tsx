@@ -3,7 +3,7 @@
 // "Why?" in a sheet. A weak take shows only the total and one suggestion. No jargon (no "CV", no "vel SD").
 
 import { useState, type ReactNode } from 'react';
-import type { TakeMetrics } from '../engine/drills/types';
+import type { Drill, DrillCalibration, TakeMetrics } from '../engine/drills/types';
 import { limbChips, reviewOf, type Review } from '../engine/drills/review';
 import type { DrumVoice } from '../engine/drills/types';
 
@@ -89,7 +89,12 @@ export function TakeReview({
   children,
   onKeep,
   fingering,
+  drill,
+  cal,
 }: {
+  /** B14: the drill and calibration, so the "Why?" sheet's velocity row matches the live bars. */
+  drill?: Drill;
+  cal?: DrillCalibration;
   /** "Other fingering?" (OwnFingeringLink): a small text action beside "Why?" — the row it shares adds no height. */
   fingering?: ReactNode;
   /** Encore (SPEC-PHRASE-STUDIO §4.1): "Keep this phrase" — a small icon button beside Again / Loop / Next. */
@@ -296,7 +301,7 @@ export function TakeReview({
             <TouchLines t={m.touch} lang={lang} />
             <MarkLegend lang={lang} />
             {!free && <EvennessStrip m={m} lang={lang} />}
-            <VelocityCurve m={m} lang={lang} />
+            <VelocityCurve m={m} lang={lang} drill={drill} cal={cal} />
             <RecLink lang={lang} />
           </div>
         </div>

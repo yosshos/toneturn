@@ -167,7 +167,18 @@ export function draftFrom(t: EncoreTake, s: TrimState, chords: PhraseDraft['chor
     .filter(({ i }) => s.edits[i] !== 'x')
     .map(({ n, i }) => ({ midi: n.midi + (typeof s.edits[i] === 'number' ? (s.edits[i] as number) : 0), beat: n.beat - base, dur: Math.min(n.dur, s.to - n.beat) }));
   const q = quantise(sel, s.quant, s.swing);
-  const hands = splitHands(q, s.split);
+  const hands0 = splitHands(q, s.split);
+  // MEASUREMENT-AUDIT G14: each kept note carries its source velocity and how long it sounded (the model's touch)
+  const src = notes.filter((n, i) => n.beat >= s.from - 0.12 && n.beat < s.to - 0.12 && s.edits[i] !== 'x').map((n) => ({ ...n, beat: n.beat - base }));
+  const withModel = (hs: typeof hands0.rh) =>
+    hs.map((n, k) => {
+      const m = src.filter((x) => x.midi === n.midi || Math.abs(x.midi - n.midi) <= 2).reduce<(typeof src)[number] | null>((b, x) => (!b || Math.abs(x.beat - n.beat) < Math.abs(b.beat - n.beat) ? x : b), null);
+      if (!m || Math.abs(m.beat - n.beat) > 0.3) return n;
+      const next = hs.slice(k + 1).find((x) => x.beat > n.beat + 1e-6);
+      const gapMs = next ? ((next.beat - n.beat) * 60000) / Math.max(1, s.bpm) : null;
+      return { ...n, vel: m.vel, ...(gapMs ? { held: Math.round(Math.min(1.5, m.durMs / gapMs) * 100) / 100 } : {}) };
+    });
+  const hands = { ...hands0, rh: withModel(hands0.rh), lh: withModel(hands0.lh) };
   const from: 'improv' | 'record' | 'chart' | 'drill' = t.kind === 'record' ? 'record' : t.kind === 'chart' || t.kind === 'guided' ? 'chart' : t.kind === 'drill' ? 'drill' : 'improv';
   const name = s.name.trim() ? { en: s.name.trim(), he: s.name.trim() } : autoName(ctx, s.key, s.minor, from, new Date(t.at));
   // an anacrusis is notated as a short first bar (withPickup), not as rests inside bar 1

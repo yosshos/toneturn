@@ -9,7 +9,7 @@ import { withBarPlan } from '../drills/timeline';
 import { hasQuarters, quartersDrill } from '../drills/rubato';
 import { notesPerBeat } from '../drills/analyze';
 import { keyName } from '../drills/generate';
-import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type LickChord, type LickContext, type LickInstrument, type LickNote, type PhrasePlan, type PhraseSource } from '../licks';
+import { LICK_KEYS, LICK_Q, chordAt, windowOf, type Lick, type LickBook, type LickChord, type LickContext, type LickInstrument, type LickNote, type PhraseMark, type PhrasePlan, type PhraseSource } from '../licks';
 import type { BeatNote } from './detect';
 import { tuningById } from '../fretboard';
 import { instrumentCtx, neckPlace, neckStats, singerRange, voiceOctave, type NeckResult, type Range } from './placement';
@@ -98,6 +98,11 @@ export function makePhrase(d: PhraseDraft): Lick {
     ...(d.parent ? { parent: d.parent } : {}),
     createdAt: d.createdAt ?? new Date().toISOString(),
   };
+  // MEASUREMENT-AUDIT G14: the source's velocity and short (detached) notes as per-note marks — the model's touch
+  const markOf = (n: BeatNote): PhraseMark | null => (n.vel !== undefined || (n.held !== undefined && n.held <= 0.55) ? { ...(n.vel !== undefined ? { vel: n.vel } : {}), ...(n.held !== undefined && n.held <= 0.55 ? { stac: true } : {}) } : null);
+  const main = rhN.length ? d.rh : d.lh;
+  if (main.some((n) => markOf(n))) l.marks = main.map(markOf);
+  if (rhN.length && lhN.length && d.lh.some((n) => markOf(n))) l.lhMarks = d.lh.map(markOf);
   return { ...l, plan: defaultPlan(l, d.playedBpm) };
 }
 const round3 = (x: number) => Math.round(x * 1000) / 1000;
@@ -345,12 +350,14 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
   // §5.6: suggested piano fingering when the plan asks for it (the player's own numbers in the home key win)
   const fg = inst === 'piano' && planOf(l).fingering ? phraseFingers(l, k) : null;
   const fin = (f: number | undefined) => (f ? { finger: f } : {});
-  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : fin(fg?.rh[i])) }));
-  if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]), ...fin(fg?.lh[i]) }));
+  // MEASUREMENT-AUDIT G14: a piano phrase from a recorded take keeps the model's velocity and its detached notes
+  const mdl = (mk: PhraseMark | null | undefined) => (inst === 'piano' && mk ? { ...(mk.vel !== undefined ? { modelVel: mk.vel } : {}), ...(mk.stac ? { stac: true } : {}) } : {});
+  if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : fin(fg?.rh[i])), ...mdl(l.marks?.[i]) }));
+  if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]), ...fin(fg?.lh[i]), ...mdl(l.lhMarks?.[i]) }));
   // a one-hand phrase practised "left": its notes an octave down in the left hand
   if (hand === 'L' && !l.lh?.length) {
     const lf = fg ? suggestFingers(l.notes.map((n, i) => ({ pitch: ps.rh[i] - 12, beat: n[1] })), 'L') : null;
-    l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L', ...fin(lf?.[i]) }));
+    l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L', ...fin(lf?.[i]), ...mdl(l.marks?.[i]) }));
   }
   notes.sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
   // notes sounding together share a chordId (chords, hands together)
@@ -365,7 +372,7 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
   const minor = !!l.minor;
   const kn = keyName(k, minor) + (minor ? 'm' : '');
   // "As played" (kept off the grid, §5.5): its own timing is the model, so the grading window is wider.
-  const goal: DrillGoal = { evenness: false, hands: hand === 'RL', ...(l.asPlayed ? { timingTolerance: AS_PLAYED_TOLERANCE } : {}) };
+  const goal: DrillGoal = { evenness: false, hands: hand === 'RL', ...(l.asPlayed ? { timingTolerance: AS_PLAYED_TOLERANCE } : {}), ...(notes.some((n) => n.modelVel !== undefined || n.stac) ? { model: true } : {}) };
   const sig = ROOT_FLAT[minor ? mod(k + 3) : k];
   const plan = planOf(l);
   const p = pickupOf(l);

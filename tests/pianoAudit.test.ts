@@ -1,5 +1,6 @@
 // PIANO_AUDIT (2026-11-10): scale / arpeggio fingerings in every key, cadence voice leading, exam-grade tempos, Hebrew
 // titles, and the take analysis with realistic human takes (jitter, velocity noise) at every level's target tempo.
+import { micTouchGoal } from '../src/engine/drills/micTouch';
 import { describe, expect, it } from 'vitest';
 import { catalog, EXAM_NPS, generate, parallelsBetween, type LevelDef } from '../src/engine/drills/generate';
 import { analyzeTake, micUnmeasurable, notesPerBeat, npsOf, tempoBand, thresholds } from '../src/engine/drills/analyze';
@@ -164,10 +165,17 @@ describe('A2 piano by microphone', () => {
   it('a loudness, articulation or pedal goal never passes by microphone, and says it needs MIDI', () => {
     for (const id of ['control-1', 'control-2', 'control-3', 'control-4', 'control-5', 'control-6', 'control-8', 'control-10']) {
       for (const d of levelDrills(lvl(id), 'fifths-up').slice(0, 3)) {
-        expect(micUnmeasurable(d).length).toBeGreaterThan(0);
         const bpm = d.startBpm;
         const m = analyzeTake(d, bpm, mic(humanTake(d, bpm, 5, 1)), undefined, { mic: true });
         expect(m.verdict).toBe('not');
+        // MEASUREMENT-AUDIT (second round): one hand's shape, p / f steps and legato / staccato are heard from the sound's
+        // energy (micTouch.ts) — without that energy the take is still not measured, and never passes on the notes
+        if (micTouchGoal(d)) {
+          expect(micUnmeasurable(d)).toEqual([]);
+          expect(m.why.en).toBe('Too few clear notes to measure the touch');
+          continue;
+        }
+        expect(micUnmeasurable(d).length).toBeGreaterThan(0);
         expect(m.unmeasured?.length).toBeGreaterThan(0);
         expect(m.why.he).toContain('MIDI');
       }

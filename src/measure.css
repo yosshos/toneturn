@@ -16,3 +16,5 @@
 .mk-touch .tm.dot { fill: currentColor; stroke: none; }
 .mk-touch .tm.hollow { fill: none; }
 .mk-touch { color: var(--ink, #1f1f24); }
+/* B15: the faint tick between one and two SD limits (markLayer.ts) */
+.mk-tick.soft { opacity: 0.45; }

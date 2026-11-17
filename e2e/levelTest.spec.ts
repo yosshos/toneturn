@@ -5,7 +5,8 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   await page.goto('/?sim=1#/drills');
   await page.locator('[data-drills-test]').click();
   await expect(page.locator('[data-level-test="piano"]')).toBeVisible();
-  await expect(page.locator('.lt-sections li')).toHaveCount(6);
+  // MEASUREMENT-AUDIT (second round): without MIDI the touch section is the microphone's (what a phone can measure)
+  await expect(page.locator('.lt-sections li')).toHaveCount(7);
   await page.locator('[data-test-start]').click();
   const probe = page.locator('[data-test-probe]');
   // Hands starts on its second step (two octaves hands together, not C).
@@ -16,7 +17,12 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   // A miss brackets down to the first step, in another key.
   await expect(probe).toHaveAttribute('data-test-probe', 'scales-1');
   await page.locator('[data-test-too-hard]').click();
-  // Then the next section — no insisting.
+  // Then the next section — no insisting: touch by microphone (the crescendo up / diminuendo down, one hand).
+  await expect(probe).toHaveAttribute('data-test-strand', 'touch');
+  await expect(probe).toHaveAttribute('data-test-probe', 'control-4');
+  await page.locator('[data-test-too-hard]').click();
+  await expect(probe).toHaveAttribute('data-test-probe', 'control-1');
+  await page.locator('[data-test-too-hard]').click();
   await expect(probe).toHaveAttribute('data-test-strand', 'chords');
   const seen: string[] = [];
   for (let k = 0; k < 30; k++) {

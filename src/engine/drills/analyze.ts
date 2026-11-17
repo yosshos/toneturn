@@ -13,6 +13,7 @@ import { RULE_NAME, ruleCheck } from '../improvRules';
 import { RULE_CARDS, TARGET_CARDS, cardKept, changeLandings, targetPcs, type CNote } from '../ruleCards';
 import { phraseOrg, playRestCheck, PHRASE_BAND_NAME, type PhraseOrgReport } from '../phraseOrg';
 import { analyzeTouch, measureSwing, pianoTouch, swingBand } from './touch';
+import { micTouchGoal, type EnvFrame } from './micTouch';
 import type { PedalEvent } from './pedal';
 import { MT } from '../../i18n/measureText';
 
@@ -451,8 +452,16 @@ export const IOI_FLOOR_MS = { midi: 12, mic: 25 } as const;
  */
 export const VOICE_TIMING = { sd: 40, hesitation: 1.8 } as const;
 
-/** What a microphone can't measure on a piano drill: loudness (dynamics, accents, voicing, balance), key release (articulation) and the pedal. */
-export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: Drill['spec'] }): ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] {
+/** MEASUREMENT-AUDIT B10: the legato key overlap allowed at a hand's IOI (ms): a quarter of the IOI, at least 60 ms. */
+export const legatoOverlapLimit = (ioiMs: number): number => Math.max(60, 0.25 * ioiMs);
+
+/**
+ * What a microphone can't measure on a piano drill: loudness (dynamics, accents, voicing, balance), key release
+ * (articulation) and the pedal. MEASUREMENT-AUDIT (second round): one hand's crescendo / diminuendo shape, written p / f
+ * steps and legato vs staccato ARE measured by the microphone from the sound's energy (micTouch.ts), so they are not here.
+ */
+export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: Drill['spec']; sung?: boolean }): ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] {
+  const byEnergy = micTouchGoal(drill) !== null;
   const out: ('dynamics' | 'articulation' | 'pedal' | 'voicing')[] = [];
   // Voice leading on the piano: the microphone hears the chord, not which voicing (octave, inversion) was chosen.
   if (drill.goal.vl && !drill.goal.vl.strings && drill.spec?.instrument !== 'guitar') out.push('voicing');
@@ -460,8 +469,8 @@ export function micUnmeasurable(drill: Pick<Drill, 'goal' | 'notes'> & { spec?: 
   if (drill.goal.ct) out.push('voicing');
   // Triad-pair voicings: which triad is on top needs MIDI.
   if (drill.goal.pairVoicing?.length) out.push('voicing');
-  if (drill.goal.dynamics || drill.notes.some((n) => n.accent)) out.push('dynamics');
-  if (drill.goal.articulation || drill.goal.handArt) out.push('articulation');
+  if (!byEnergy && (drill.goal.dynamics || drill.notes.some((n) => n.accent))) out.push('dynamics');
+  if (!byEnergy && (drill.goal.articulation || drill.goal.handArt)) out.push('articulation');
   if (drill.goal.pedal) out.push('pedal');
   return out;
 }
@@ -495,7 +504,7 @@ export function pairVoicingMisses(exp: { chordId?: number }[], specs: NonNullabl
 /** Guitar / bass drills (explicit instrument, or a g-/b- family): keyboard-only messages don't apply. */
 const isFretted = (d: Drill): boolean => d.spec.instrument === 'guitar' || d.spec.instrument === 'bass' || /^[gb]-/.test(String(d.spec.family));
 
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean; /** MEASUREMENT-AUDIT G6: the take's CC64 events (any MIDI take); pedal drills are graded on them. */ pedal?: PedalEvent[] } = {}): TakeMetrics {
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean; /** MEASUREMENT-AUDIT G6: the take's CC64 events (any MIDI take); pedal drills are graded on them. */ pedal?: PedalEvent[]; /** G13: the take's CC67 (soft pedal) events. */ softPedal?: PedalEvent[]; /** The piano by microphone: the take's energy (micTouch.ts). */ frames?: EnvFrame[] } = {}): TakeMetrics {
   // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
   // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
   if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
@@ -674,14 +683,18 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     if (a.length && plain.length) accentGap = mean(a) - mean(plain);
   }
 
-  // Articulation: key overlap (legato) and duration ratio (staccato / portato).
+  // Articulation: key overlap (legato) and duration ratio (staccato / portato). MEASUREMENT-AUDIT B10: per hand (one
+  // hand detached under a legato one no longer hides in a pooled median), and the legato overlap limit scales with the
+  // tempo — ≤ 25 % of the hand's IOI, never below 60 ms (slow legato with an 80 ms overlap is musically fine).
   let kot: number | null = null;
   let kdr: number | null = null;
+  const artBy: { hand: Hand; kot: number; kdr: number; ioi: number }[] = [];
   if (goal.articulation) {
-    const kots: number[] = [];
-    const kdrs: number[] = [];
     for (const h of ['R', 'L'] as Hand[]) {
       const os = series[h].filter((o) => o.idx.length === 1);
+      const kots: number[] = [];
+      const kdrs: number[] = [];
+      const iois: number[] = [];
       for (let k = 1; k < os.length; k++) {
         const ja = match[os[k - 1].idx[0]];
         const jb = match[os[k].idx[0]];
@@ -691,11 +704,16 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
         if (a.off === null || b.on <= a.on) continue;
         kots.push(a.off - b.on);
         kdrs.push((a.off - a.on) / (b.on - a.on));
+        iois.push(b.on - a.on);
       }
+      if (kots.length) artBy.push({ hand: h, kot: median(kots), kdr: median(kdrs), ioi: median(iois) });
     }
-    if (kots.length) {
-      kot = median(kots);
-      kdr = median(kdrs);
+    // the worse hand for the goal stands for the take (the metrics keep one number)
+    const badness = (x: (typeof artBy)[number]) => (goal.articulation === 'legato' ? (x.kot < 0 ? -x.kot / 10 : x.kot / legatoOverlapLimit(x.ioi)) : goal.articulation === 'staccato' ? x.kdr / 0.5 : x.kdr < 0.6 ? (0.6 - x.kdr) / 0.1 : x.kdr > 0.8 ? (x.kdr - 0.8) / 0.1 : 0);
+    const w = artBy.reduce<(typeof artBy)[number] | null>((m, x) => (!m || badness(x) > badness(m) ? x : m), null);
+    if (w) {
+      kot = w.kot;
+      kdr = w.kdr;
     }
   }
 
@@ -813,7 +831,14 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     return r;
   });
   // MEASUREMENT-AUDIT: the touch of the take (touch.ts): shapes, levels, fingers, lengths, drift, swing, pedal, chords.
-  const touch = analyzeTouch(drill, bpm, perNote, cal, { mic: opts.mic, pedal: opts.pedal, rubato: opts.rubato }, expT, swingMeasured ? { ratio: swingMeasured.ratio, sd: swingMeasured.sd, band: sBand } : null);
+  const touch = analyzeTouch(drill, bpm, perNote, cal, { mic: opts.mic, pedal: opts.pedal, rubato: opts.rubato, softPedal: opts.softPedal, frames: opts.frames }, expT, swingMeasured ? { ratio: swingMeasured.ratio, sd: swingMeasured.sd, band: sBand } : null);
+  // B12: the IOI ratio per note (computed for evenness) marks the hesitations on the staff, note by note.
+  const hesLim = (opts.voice ? VOICE_TIMING.hesitation : 1.5) * Math.sqrt(tolK);
+  ioiRatio.forEach((x, i) => {
+    if (x !== undefined && x > hesLim && !touch.report.marks.some((m) => m.i === i)) touch.report.marks.push({ i, mark: 'gap' });
+  });
+  // The piano by microphone on a touch goal it can hear (micTouch.ts) but without the sound's energy: not measured.
+  if (opts.mic && !opts.frames && micTouchGoal(drill)) touch.factors.push({ sev: 2, en: MT.micFew.en, he: MT.micFew.he });
 
   // Factors (severity > 1 = misses the goal; ≤ 1.5 = almost).
   const F: Factor[] = [...touch.factors];
@@ -923,33 +948,39 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
           },
     );
   }
-  if (goal.articulation === 'legato' && kot !== null) {
-    if (kot < 0)
+  // B10: each hand on its own (the hand is named when both play); the legato overlap limit scales with the IOI.
+  for (const x of artBy) {
+    const two = artBy.length === 2;
+    const hn = two ? `${x.hand === 'R' ? 'RH' : 'LH'}: ` : '';
+    const hh = two ? `${x.hand === 'R' ? 'יד ימין' : 'יד שמאל'}: ` : '';
+    if (goal.articulation === 'legato') {
+      if (x.kot < 0)
+        F.push({
+          sev: -x.kot / 10,
+          en: `${hn}Not legato (gaps ${Math.round(-x.kot)} ms)`,
+          he: `${hh}לא לגאטו (רווחים של ${Math.round(-x.kot)} ms)`,
+        });
+      else
+        F.push({
+          sev: x.kot / legatoOverlapLimit(x.ioi),
+          en: `${hn}Legato smudged (overlap ${Math.round(x.kot)} ms)`,
+          he: `${hh}לגאטו מרוח (חפיפה ${Math.round(x.kot)} ms)`,
+        });
+    }
+    if (goal.articulation === 'staccato')
       F.push({
-        sev: -kot / 10,
-        en: `Not legato (gaps ${Math.round(-kot)} ms)`,
-        he: `לא לגאטו (רווחים של ${Math.round(-kot)} ms)`,
+        sev: x.kdr / 0.5,
+        en: `${hn}Staccato too long (${pct(x.kdr)}% of the gap)`,
+        he: `${hh}סטקטו ארוך מדי (${pct(x.kdr)}%)`,
       });
-    else
+    if (goal.articulation === 'portato') {
+      const off = x.kdr < 0.6 ? 0.6 - x.kdr : x.kdr > 0.8 ? x.kdr - 0.8 : 0;
       F.push({
-        sev: kot / 60,
-        en: `Legato smudged (overlap ${Math.round(kot)} ms)`,
-        he: `לגאטו מרוח (חפיפה ${Math.round(kot)} ms)`,
+        sev: off === 0 ? 0.5 : 1 + off / 0.1,
+        en: `${hn}Portato length off (${pct(x.kdr)}%)`,
+        he: `${hh}אורך הפורטטו לא מדויק (${pct(x.kdr)}%)`,
       });
-  }
-  if (goal.articulation === 'staccato' && kdr !== null)
-    F.push({
-      sev: kdr / 0.5,
-      en: `Staccato too long (${pct(kdr)}% of the gap)`,
-      he: `סטקטו ארוך מדי (${pct(kdr)}%)`,
-    });
-  if (goal.articulation === 'portato' && kdr !== null) {
-    const off = kdr < 0.6 ? 0.6 - kdr : kdr > 0.8 ? kdr - 0.8 : 0;
-    F.push({
-      sev: off === 0 ? 0.5 : 1 + off / 0.1,
-      en: `Portato length off (${pct(kdr)}%)`,
-      he: `אורך הפורטטו לא מדויק (${pct(kdr)}%)`,
-    });
+    }
   }
   if (holdN > 0 && holdShort > 0) {
     // Borrowing: name the voice that let go (oblique motion — the other voices hold).

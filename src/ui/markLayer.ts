@@ -3,7 +3,8 @@
 // really played (wrong), a dashed hollow outline (missed). A tick beside it carries timing — tangerine on the left
 // (early), purple on the right (late), longer the further off. Drawn as plain SVG over the engraved music (no redraw).
 
-import { tickLen, type NoteMark } from '../engine/noteMarks';
+import { softTick, tickLen, type NoteMark } from '../engine/noteMarks';
+import '../measure.css';
 
 const NS = 'http://www.w3.org/2000/svg';
 const el = (tag: string, attrs: Record<string, string | number>, cls?: string): SVGElement => {
@@ -92,6 +93,12 @@ export function drawMarks(svg: SVGSVGElement | null, spots: MarkSpot[], kind: 's
         one.appendChild(el('path', { d, 'data-shape': s.mark }, `mk-shape ${s.mark}`));
       }
     }
+    // B15: right on time within the window, but beyond the take's SD limit — a faint short tick on that side.
+    const st = s.mark === 'ok' ? softTick(s.dev, s.win) : null;
+    if (st) {
+      const edge = (kind === 'tab' ? Math.max(rx, 6.5) : rx) + 2;
+      one.appendChild(el('rect', { x: st === 'early' ? s.x - edge - 3 : s.x + edge, y: s.y - 1, width: 3, height: 2, rx: 0.8, 'data-soft-tick': st }, `mk-tick soft ${st}`));
+    }
     // Studio look: a wrong note also gets a small ✕ below it (the shape cue under the head).
     if (s.mark === 'wrong' && studioShapes()) {
       const d = 3.6;
@@ -171,6 +178,10 @@ export function drawTouch(svg: SVGSVGElement | null, spots: { x: number; y: numb
     else if (s.mark === 'thumb') one.appendChild(el('path', { d: `M${s.x - 4} ${s.y - 16}l8 2.5l-8 2.5` }, 'tm'));
     else if (s.mark === 'jump' || s.mark === 'peak') one.appendChild(el('path', { d: `M${s.x - 4} ${s.y - 11}l4 -4l4 4` }, 'tm'));
     else if (s.mark === 'blur') one.appendChild(el('path', { d: `M${s.x - 6} ${s.y + 12}l3 -3l3 3l3 -3l3 3` }, 'tm'));
+    // second round: an accent where none is written (a small > above), a hesitation before the note (a break), a late landing after a leap (an arrow after)
+    else if (s.mark === 'extra') one.appendChild(el('path', { d: `M${s.x - 4} ${s.y - 18}l8 2.5l-8 2.5` }, 'tm hollow'));
+    else if (s.mark === 'gap') one.appendChild(el('path', { d: `M${s.x - r - 6} ${s.y - 6}v12` }, 'tm'));
+    else if (s.mark === 'land') one.appendChild(el('path', { d: `M${s.x + r + 2} ${s.y + 8}h7m-3 -3l3 3l-3 3` }, 'tm'));
     g.appendChild(one);
   }
   svg.appendChild(g);

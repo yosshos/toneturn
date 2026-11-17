@@ -28,6 +28,10 @@ export interface PieceNote {
   graces?: import('../drills/types').Grace[];
   /** Two voices on the hand's staff: 1 = upper (stems up), 2 = lower (stems down). Absent = the hand's only voice. */
   voice?: 1 | 2;
+  /** MEASUREMENT-AUDIT G12: a sudden mark on this onset (sf / sfz / fz / rf → 'sf'; fp / sfp → 'fp'). */
+  sub?: 'sf' | 'fp';
+  /** MEASUREMENT-AUDIT G13: under una corda (until tre corde). */
+  uc?: boolean;
 }
 
 export interface PieceBar {
@@ -80,6 +84,8 @@ interface RawNote {
   voice?: string;
   /** Grace notes just before this note on its staff. */
   graces?: import('../drills/types').Grace[];
+  sub?: 'sf' | 'fp';
+  uc?: boolean;
 }
 interface RawBar {
   number: string;
@@ -122,7 +128,14 @@ function readPart(part: XNode): RawBar[] {
   let slurId = 0;
   /** Grace notes read, waiting for the next main note on their staff. */
   const pendingGrace = new Map<number, import('../drills/types').Grace[]>();
+  // MEASUREMENT-AUDIT G12: a momentary mark (sf, fp …) belongs to the next onset of its staff (0 = every staff) and
+  // never stays "in force" like p or f; fp / sfp leave the music at p (sfpp at pp).
+  let pendingSub: { kind: 'sf' | 'fp'; staff: number } | null = null;
+  let subAt: { staff: number; at: number; kind: 'sf' | 'fp' } | null = null;
+  // G13: una corda … tre corde (written as words)
+  let uc = false;
   for (const m of kids(part, 'measure')) {
+    subAt = null;
     let pos = 0;
     let maxPos = 0;
     let lastStart = 0;
@@ -148,7 +161,20 @@ function readPart(part: XNode): RawBar[] {
         const snd = find(el, 'sound');
         if (snd?.attrs.tempo) bar.tempo = Number(snd.attrs.tempo);
         const dy = find(el, 'dynamics');
-        if (dy?.children[0]) dyn = dy.children[0].name;
+        if (dy?.children[0]) {
+          const nm = dy.children[0].name;
+          const st = Number(txt(el, 'staff')) || 0;
+          if (['sf', 'sfz', 'sffz', 'fz', 'rf', 'rfz'].includes(nm)) pendingSub = { kind: 'sf', staff: st };
+          else if (['fp', 'sfp', 'sfpp'].includes(nm)) {
+            pendingSub = { kind: 'fp', staff: st };
+            dyn = nm === 'sfpp' ? 'pp' : 'p';
+          } else dyn = nm;
+        }
+        for (const w of kids(find(el, 'direction-type'), 'words')) {
+          const t = (w.text ?? '').toLowerCase();
+          if (/una\s+corda|(?:^|\s)u\.\s*c\./.test(t)) uc = true;
+          if (/tre\s+corde|(?:^|\s)t\.\s*c\./.test(t)) uc = false;
+        }
         const wedge = find(el, 'wedge');
         if (wedge) {
           const st = Number(txt(el, 'staff')) || 0;
@@ -211,7 +237,17 @@ function readPart(part: XNode): RawBar[] {
         for (const [k2, id] of slurOpen) if (k2.startsWith(`${staff}:`)) slurOf = id;
         for (const sl of kids(notations, 'slur')) if (sl.attrs.type === 'stop') slurOpen.delete(`${staff}:${sl.attrs.number ?? '1'}`);
         const hp = hair.get(staff) ?? hairAll;
+        // the momentary mark: the first onset of its staff after it (a chord: all its notes)
+        let sub: 'sf' | 'fp' | undefined;
+        if (subAt && subAt.staff === staff && Math.abs(subAt.at - start) < 1e-6) sub = subAt.kind;
+        else if (pendingSub && (pendingSub.staff === 0 || pendingSub.staff === staff)) {
+          sub = pendingSub.kind;
+          subAt = { staff, at: start, kind: pendingSub.kind };
+          pendingSub = null;
+        } else if (subAt && subAt.staff === staff) subAt = null;
         bar.notes.push({
+          ...(sub ? { sub } : {}),
+          ...(uc ? { uc: true } : {}),
           ...(hp ? { hair: hp } : {}),
           ...(slurOf !== undefined ? { slur: slurOf } : {}),
           ...(gs ? { graces: gs } : {}),
@@ -303,7 +339,7 @@ function expand(raw: RawBar[], title: string, composer?: string): Piece {
         continue;
       }
       const vv = voiceOf(hand, n.voice);
-      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.hair ? { hair: n.hair } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(vv ? { voice: vv } : {}) };
+      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.sub ? { sub: n.sub } : {}), ...(n.uc ? { uc: true } : {}), ...(n.hair ? { hair: n.hair } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(vv ? { voice: vv } : {}) };
       notes.push(pn);
       if (n.tieStart) open.set(key, pn);
       else open.delete(key);
