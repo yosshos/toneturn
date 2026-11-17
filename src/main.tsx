@@ -38,12 +38,9 @@ import { applyStartupLook } from './ui/look';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
-import { installLook } from './ui/studioLook';
-// Last: the studio game frame (scoped under :root[data-look='studio']) after every component's own stylesheet.
+// Last: the studio screens and the studio game frame (scoped under :root[data-look='studio']).
+import './studio-screens.css';
 import './studio-games.css';
-
-// The studio look (?look=studio, remembered on this device) before the first paint.
-installLook();
 
 // The look (classic / studio): index.html already painted it; this keeps it right if that snippet could not run.
 applyStartupLook();

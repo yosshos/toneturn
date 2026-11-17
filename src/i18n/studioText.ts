@@ -1,0 +1,63 @@
+// Strings for the studio look's restructured screens (redesign 2026-11). Few words; Hebrew first.
+type Lang = 'he' | 'en';
+
+const S = {
+  he: {
+    todayWorkout: 'האימון של היום',
+    cont: 'המשך',
+    start: 'להתחיל',
+    min: 'דק׳',
+    minShort: '{m}׳',
+    edit: 'לערוך',
+    dailyGoal: 'מטרה יומית',
+    league: 'ליגה',
+    leagueJoin: 'להצטרף',
+    place: 'מקום {n}',
+    streak: 'רצף',
+    days: 'ימים',
+    daysLeft: 'עוד {d} ימים',
+    moreToday: 'עוד היום',
+    quests: 'משימות היום',
+    findLevel: 'למצוא את הרמה',
+    goPill: 'להתחיל',
+    testOut: 'מבחן מעבר',
+    duration: 'משך',
+    conditions: 'איפה אתם היום',
+    blocks: 'הבלוקים',
+    presets: 'תבניות',
+    total: 'סה״כ',
+    tempo: 'טמפו',
+    free: 'חופשי',
+  },
+  en: {
+    todayWorkout: "Today's workout",
+    cont: 'Continue',
+    start: 'Start',
+    min: 'min',
+    minShort: '{m}′',
+    edit: 'Edit',
+    dailyGoal: 'Daily goal',
+    league: 'League',
+    leagueJoin: 'Join',
+    place: 'Rank {n}',
+    streak: 'Streak',
+    days: 'days',
+    daysLeft: '{d} days left',
+    moreToday: 'More today',
+    quests: "Today's quests",
+    findLevel: 'Find my level',
+    goPill: 'Start',
+    testOut: 'Test out',
+    duration: 'Length',
+    conditions: 'Where you are today',
+    blocks: 'Blocks',
+    presets: 'Presets',
+    total: 'Total',
+    tempo: 'Tempo',
+    free: 'Free',
+  },
+} satisfies Record<Lang, Record<string, string>>;
+
+export type StudioText = (typeof S)['he'];
+export const studioText = (lang: Lang): StudioText => S[lang];
+export const sfill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);

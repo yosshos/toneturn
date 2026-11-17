@@ -10,6 +10,8 @@ import { courseInput } from '../engine/courses';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch } from './CourseSwitcher';
 import { Icon } from './icons';
+import { useStudio } from './look';
+import { studioText } from '../i18n/studioText';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { shortName } from '../engine/pathNames';
 import type { Strings } from '../i18n/strings';
@@ -307,6 +309,7 @@ export function PathView2({
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
+  const studio = useStudio();
   const courseCtx = useCourse();
   // SPEC-PATH-ROLE §8: open / opened (a thin ring filling with the stars) / mastered (a full gold ring) / refresh (silver).
   const { view, ctx: mctx } = useMasteryView(view0, settings, progress);
@@ -454,7 +457,7 @@ export function PathView2({
             <b>
               <Iso text={label} />
             </b>
-            {isCur && <small className="node-go">{lang === 'he' ? 'לגעת כדי להתחיל' : 'Tap to start'}</small>}
+            {isCur && <small className="node-go">{studio ? studioText(lang).goPill : lang === 'he' ? 'לגעת כדי להתחיל' : 'Tap to start'}</small>}
             {isCur && x.probe && <small className="node-tag">{tx.probe}</small>}
             {st === 'quick' && <small className="node-tag">{tx.quick}</small>}
             {pendingCheck && <small className="node-tag" data-promo="1">{tx.promo}</small>}

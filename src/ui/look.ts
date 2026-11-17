@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 // The look layer (redesign stage 1). `data-look="studio"` on <html> turns on src/studio.css, a restrained skin over the
 // classic v2 look: hairlines and soft shadows instead of ink outlines and hard offsets, one emphasis per screen.
 // The studio look is the DEFAULT (owner, 2026-11-17); the previous look stays reachable: localStorage tt.look =
@@ -46,3 +47,16 @@ export function applyStartupLook(loc: Pick<Location, 'search'> = location, doc: 
 }
 
 export const isStudio = (doc: Document = document): boolean => doc.documentElement.dataset.look === 'studio';
+
+// ---- React hook (main screens, 2026-11-17) ----
+
+const subscribeLook = (cb: () => void) => {
+  const mo = new MutationObserver(cb);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-look'] });
+  return () => mo.disconnect();
+};
+
+/** True while the studio look is on (re-renders when <html data-look> changes). */
+export function useStudio(): boolean {
+  return useSyncExternalStore(subscribeLook, () => document.documentElement.dataset.look === 'studio', () => false);
+}
