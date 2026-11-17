@@ -22,6 +22,17 @@ export function markOf(r: NoteResult | undefined, timingMs: number): NoteMark {
   return 'ok';
 }
 
+/**
+ * MEASUREMENT-AUDIT B15: the marks' window is twice the take's SD limit (the big misses), so a fast take full of 35 ms
+ * errors looked all green live and then failed on its SD. A note inside the window but beyond the SD limit itself (half
+ * the window) gets a second, faint tick on its side — never a colour change, never counted as a miss.
+ */
+export function softTick(dev: number | null | undefined, win: number | undefined): 'early' | 'late' | null {
+  if (dev === null || dev === undefined || !win) return null;
+  if (Math.abs(dev) <= win / 2 || Math.abs(dev) > win) return null;
+  return dev < 0 ? 'early' : 'late';
+}
+
 /** Length (px) of the timing tick: 4 at the window's edge, growing to 12 at twice the window. */
 export function tickLen(dev: number, win: number): number {
   const w = Math.max(1, win);

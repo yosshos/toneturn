@@ -4,7 +4,7 @@
 import type { Drill, Dyn, ExpNote, TakeMetrics } from '../drills/types';
 
 const DYNS: Dyn[] = ['pp', 'p', 'mp', 'mf', 'f', 'ff'];
-/** A score's dynamic as a level we grade (pp … ff; fff / ppp to the nearest, sf / fp and others not graded). */
+/** A score's dynamic as a level we grade (pp … ff; fff / ppp to the nearest). sf / fp are momentary (ExpNote.sub, G12). */
 const dynMarkOf = (d?: string): Dyn | undefined => (d === 'fff' ? 'ff' : d === 'ppp' ? 'pp' : DYNS.includes(d as Dyn) ? (d as Dyn) : undefined);
 import { beatsIn, notesIn, type Piece } from './score';
 import type { RepResult } from './coach';
@@ -23,7 +23,7 @@ export function chunkDrill(p: Piece, pieceId: string, from: number, to: number, 
     if (same && !groups.has(key)) groups.set(key, gid++);
     // MEASUREMENT-AUDIT G1: the written dynamics, hairpins, staccato dots and slurs reach the take (graded per passage).
     const dm = dynMarkOf(n.dyn);
-    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(dm ? { dynMark: dm } : {}), ...(n.hair ? { hair: n.hair } : {}), ...(n.staccato ? { stac: true } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
+    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(dm ? { dynMark: dm } : {}), ...(n.hair ? { hair: n.hair } : {}), ...(n.staccato ? { stac: true } : {}), ...(n.sub ? { sub: n.sub } : {}), ...(n.uc ? { uc: true } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
   });
   const sig = p.bars[from]?.sig ?? [4, 4];
   const meter = Math.max(1, Math.round((sig[0] * 4) / sig[1]));

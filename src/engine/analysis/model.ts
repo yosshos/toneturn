@@ -160,7 +160,7 @@ export function addControl(prev: PlayerModel['control'], m: TakeMetrics, at: str
 
 // ---------------------------------------------------------------- findings
 
-export type FindingKind = 'soft-note' | 'loud-note' | 'finger-hypothesis' | 'weak-place' | 'soft-finger' | 'loud-finger' | 'hand-balance' | 'rush' | 'drag' | 'uneven' | 'weak-key' | 'weak-scale' | 'leaps' | 'fast-tempo' | 'late-finger' | 'thumb-accent' | 'control';
+export type FindingKind = 'soft-note' | 'loud-note' | 'finger-hypothesis' | 'weak-place' | 'soft-finger' | 'loud-finger' | 'hand-balance' | 'rush' | 'drag' | 'uneven' | 'weak-key' | 'weak-scale' | 'leaps' | 'fast-tempo' | 'late-finger' | 'thumb-accent' | 'control' | 'late-leap';
 export interface Finding {
   kind: FindingKind;
   /** The context it is about (e.g. "f:R4", "sub:16", "k:6"). */
@@ -328,18 +328,19 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   }
   out.push(...fingerHypotheses(model, minN));
   out.push(...weakPlaces(model, minN), ...guitarFingerHypotheses(model, minN));
-  // G3 / B12: fingers that come late — a finger's mean offset against its hand's (the tMean the model always kept)
+  // G3 / B12: fingers that come late — a finger's mean offset against its hand's (the tMean the model always kept). The
+  // finger is only the SUGGESTED one, so this is a hypothesis (with its confidence), and never with the player's own fingering.
   for (const [k, s] of of('f:')) {
     const hand = S[`h:${k[2]}`];
-    if (!hand || s.tn < minN) continue;
+    if (model.ownFingering || !hand || s.tn < minN) continue;
     const diff = s.tMean - hand.tMean;
     const zz = z(diff, s.tVar, s.tn);
     if (diff >= 12 && zz > 2) {
       const fg = k.slice(3);
       const hn = k[2] === 'R' ? { en: 'right', he: 'ימין' } : { en: 'left', he: 'שמאל' };
       out.push({
-        kind: 'late-finger', ctx: k, size: Math.round(diff), confidence: conf(zz),
-        text: { en: `Finger ${fg} of the ${hn.en} hand comes ${Math.round(diff)} ms late`, he: `אצבע ${fg} ביד ${hn.he} מאחרת ב־${Math.round(diff)} מילישניות` },
+        kind: 'late-finger', ctx: k, size: Math.round(diff), confidence: conf(zz), hypothesis: true,
+        text: { en: `Possibly finger ${fg} (${hn.en} hand): the notes it is suggested for come ${Math.round(diff)} ms late`, he: `ייתכן שזו אצבע ${fg} (יד ${hn.he}): הצלילים שהיא מוצעת להם מאחרים ב־${Math.round(diff)} מילישניות` },
         prescribe: { family: 'fingers', kind: 'five', note: { en: 'Five-finger patterns slowly, that finger prepared over its key', he: 'תבניות חמש אצבעות לאט, האצבע הזו מוכנה מעל הקליד' } },
       });
     }
@@ -444,6 +445,17 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
       text: { en: `Leaps of a 6th or more fail ${Math.round(big.err * 100)}% of the time (steps: ${Math.round(step.err * 100)}%)`, he: `קפיצות של סקסטה ומעלה נכשלות ב־${Math.round(big.err * 100)}% (צעדים: ${Math.round(step.err * 100)}%)` },
       prescribe: { family: 'advanced', kind: 'leaps', note: { en: 'Leap drills: look ahead, move early, land softly', he: 'תרגילי קפיצות: להסתכל קדימה, לזוז מוקדם, לנחות בעדינות' } },
     });
+  // MEASUREMENT-AUDIT G11: landing timing after leaps (the tMean the leap contexts always kept) against steps
+  if (step && big && big.tn >= minN && step.tn >= minN) {
+    const diff = big.tMean - step.tMean;
+    const zz = z(diff, (big.tVar + step.tVar) / 2, Math.min(big.tn, step.tn));
+    if (diff >= 15 && zz > 2)
+      out.push({
+        kind: 'late-leap', ctx: 'leap:big', size: Math.round(diff), confidence: conf(zz),
+        text: { en: `After leaps of a 6th or more you land ${Math.round(diff)} ms late`, he: `אחרי קפיצות של סקסטה ומעלה אתם נוחתים באיחור של ${Math.round(diff)} מילישניות` },
+        prescribe: { family: 'advanced', kind: 'leaps', note: { en: 'Look and move early; land on the beat', he: 'להסתכל ולזוז מוקדם; לנחות על הפעמה' } },
+      });
+  }
   const fast = S['bpm:fast'];
   const mid = S['bpm:mid'];
   if (fast && mid && fast.n >= minN && fast.err >= Math.max(0.1, mid.err * 2))

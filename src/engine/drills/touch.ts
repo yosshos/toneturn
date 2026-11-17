@@ -19,6 +19,7 @@
 import type { Drill, DrillCalibration, Dyn, ExpNote, Hand, NoteResult, PlayedNote, TouchLine, TouchMark, TouchReport } from './types';
 import { MT, barsLabel, handTag, ratioText, type L } from '../../i18n/measureText';
 import { analyzePedal, transitions, type PedalEvent } from './pedal';
+import { analyzeMicTouch, type EnvFrame } from './micTouch';
 
 export interface TouchFactor {
   sev: number;
@@ -31,6 +32,10 @@ export interface TouchOpts {
   pedal?: PedalEvent[];
   /** An untimed / free-time take: no tempo or swing measures. */
   rubato?: boolean;
+  /** MEASUREMENT-AUDIT G13: the take's CC67 (soft pedal) events, when the keyboard sends them. */
+  softPedal?: PedalEvent[];
+  /** The piano by microphone: the take's energy frames (micTouch.ts grades the touch a phone can hear). */
+  frames?: EnvFrame[];
 }
 
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -503,7 +508,7 @@ function lengthsOf(drill: Drill, bpm: number, per: NoteResult[], pedal: PedalEve
 }
 
 /** G1: staccato dots and slurs as written. */
-function articulationOf(drill: Drill, per: NoteResult[], add: Adder) {
+function articulationOf(drill: Drill, per: NoteResult[], add: Adder, cap = 1.4) {
   const nextOn = (n: ExpNote): number | null => {
     const b = drill.notes.filter((m) => m.hand === n.hand && m.beat > n.beat + 1e-6).reduce<number | null>((a, m) => (a === null || m.beat < a ? m.beat : a), null);
     if (b === null) return null;
@@ -537,11 +542,11 @@ function articulationOf(drill: Drill, per: NoteResult[], add: Adder) {
   });
   if (sN >= 2) {
     const sh = sOk / sN;
-    add(sh >= 0.8 ? { id: 'stac', ok: true, text: MT.stacOk } : { id: 'stac', ok: false, text: MT.stacLong(sN - sOk), why: MT.whyStac }, Math.min(1.4, (1 - sh) / 0.2), sh >= 0.8 ? null : 'stac', sMarks);
+    add(sh >= 0.8 ? { id: 'stac', ok: true, text: MT.stacOk } : { id: 'stac', ok: false, text: MT.stacLong(sN - sOk), why: MT.whyStac }, Math.min(cap, (1 - sh) / 0.2), sh >= 0.8 ? null : 'stac', sMarks);
   }
   if (lN >= 2) {
     const sh = lOk / lN;
-    add(sh >= 0.8 ? { id: 'slur', ok: true, text: MT.slurOk } : { id: 'slur', ok: false, text: MT.slurGap(lN - lOk), why: MT.whySlur }, Math.min(1.4, (1 - sh) / 0.2), sh >= 0.8 ? null : 'slur', lMarks);
+    add(sh >= 0.8 ? { id: 'slur', ok: true, text: MT.slurOk } : { id: 'slur', ok: false, text: MT.slurGap(lN - lOk), why: MT.whySlur }, Math.min(cap, (1 - sh) / 0.2), sh >= 0.8 ? null : 'slur', lMarks);
   }
 }
 
@@ -662,7 +667,11 @@ function chordsOf(drill: Drill, per: NoteResult[], span: number, add: Adder, vel
   const share = rolledIdx.length / gs.length;
   const sevRoll = Math.max(md / 25, share / 0.2);
   const marks = rolledIdx.map((g) => ({ i: Math.min(...g), mark: 'roll' as TouchMark }));
-  add(rolledIdx.length ? { id: 'roll', ok: false, text: MT.rolled(rolledIdx.length, gs.length), why: MT.whyRoll } : { id: 'roll', ok: true, text: MT.chordsOk }, 0, rolledIdx.length ? 'roll' : null, marks);
+  // G11: octaves (two notes an octave apart in one hand) are named as octaves — the outer fingers down as one
+  const octave = (g: number[]) => g.length === 2 && Math.abs(drill.notes[g[0]].pitch - drill.notes[g[1]].pitch) === 12;
+  const oct = gs.filter(octave).length >= Math.max(3, gs.length / 2);
+  if (oct) add(rolledIdx.length ? { id: 'roll', ok: false, text: MT.octavesApart(rolledIdx.length, gs.length), why: MT.whyOctaves } : { id: 'roll', ok: true, text: MT.chordsOk }, 0, rolledIdx.length ? 'octaves' : null, marks);
+  else add(rolledIdx.length ? { id: 'roll', ok: false, text: MT.rolled(rolledIdx.length, gs.length), why: MT.whyRoll } : { id: 'roll', ok: true, text: MT.chordsOk }, 0, rolledIdx.length ? 'roll' : null, marks);
   // G7: voicing per chord — the top note above the mean of the others by 10 % of the span (≥ 8)
   let voiced: number | undefined;
   if (velOk && (drill.goal.dynamics === 'voicing' || gs.some((g) => g.some((i) => drill.notes[i].accent)))) {
@@ -684,6 +693,323 @@ function chordsOf(drill: Drill, per: NoteResult[], span: number, add: Adder, vel
     }
   }
   return { report: { rolled: rolledIdx.length, total: gs.length, ...(voiced !== undefined ? { voiced } : {}) }, median: md, sevRoll };
+}
+
+// ───────────────────────────── second round: G9–G14 and the melody ─────────────────────────────
+
+/** The single notes of a hand in time order (chords left out), with their results. */
+function lineOf(drill: Drill, per: NoteResult[], h: Hand): { n: ExpNote; i: number; r: NoteResult }[] {
+  return drill.notes
+    .map((n, i) => ({ n, i, r: per[i] }))
+    .filter((x) => x.n.hand === h && soloInHand(drill.notes, x.n))
+    .sort((a, b) => a.n.beat - b.n.beat);
+}
+const barOf = (drill: Drill, beat: number): number => (drill.barBase ?? 1) + Math.floor(beat / (drill.meter || 4) + 1e-6);
+
+/**
+ * G9 / B11: accents on their notes, and the other notes NOT accented (the drums' accentPos, for the piano). Each note is
+ * compared with its nearest unaccented neighbours: an accent must stand ≥ 10 % of the span (≥ 8) above them; an
+ * unmarked note that stands that far above its own neighbours, at about the accents' level, is an accent where none is
+ * written. Graded on the accent levels and variants (accent3/4, groups of 3/4, the moving accent); soft elsewhere.
+ */
+function accentsOf(drill: Drill, per: NoteResult[], span: number, add: Adder): TouchReport['accents'] {
+  const graded = drill.goal.dynamics === 'accent3' || drill.goal.dynamics === 'accent4' || ['groups3', 'groups4', 'accent-shift'].includes(drill.spec.variant ?? '');
+  const need = Math.max(8, 0.1 * span);
+  let ok = 0;
+  let total = 0;
+  let extra = 0;
+  let plainN = 0;
+  const missMarks: { i: number; mark: TouchMark }[] = [];
+  const extraMarks: { i: number; mark: TouchMark }[] = [];
+  for (const h of handsOf(drill)) {
+    const xs = lineOf(drill, per, h).filter((x) => x.r?.played);
+    const acc = xs.filter((x) => x.n.accent);
+    if (acc.length < 3 || xs.length - acc.length < 3) continue;
+    const accMed = med(acc.map((x) => x.r.played!.vel));
+    xs.forEach((x, k) => {
+      const nb: number[] = [];
+      for (let j = k - 1; j >= 0; j--)
+        if (!xs[j].n.accent) {
+          nb.push(xs[j].r.played!.vel);
+          break;
+        }
+      for (let j = k + 1; j < xs.length; j++)
+        if (!xs[j].n.accent) {
+          nb.push(xs[j].r.played!.vel);
+          break;
+        }
+      if (!nb.length) return;
+      const v = x.r.played!.vel;
+      const up = v - mean(nb);
+      if (x.n.accent) {
+        total++;
+        if (up >= need) ok++;
+        else missMarks.push({ i: x.i, mark: 'flat' });
+      } else {
+        plainN++;
+        if (up >= need && v >= accMed - need / 2) {
+          extra++;
+          extraMarks.push({ i: x.i, mark: 'extra' });
+        }
+      }
+    });
+  }
+  if (!total) return undefined;
+  const cap = (s: number) => (graded ? s : Math.min(drill.goal.marks ? 1.4 : 0.9, s));
+  const share = ok / total;
+  const allowed = Math.max(1, Math.round(0.1 * plainN));
+  if (share < 0.8) add({ id: 'accents', ok: false, text: MT.accentsMissed(total - ok, total), why: MT.whyAccents }, cap(1 + (0.8 - share) / 0.2), 'accent-miss', missMarks);
+  if (extra > allowed) add({ id: 'accents', ok: false, text: MT.accentsExtra(extra), why: MT.whyAccents }, cap(1 + (extra - allowed) / Math.max(1, allowed)), 'accent-extra', extraMarks);
+  if (share >= 0.8 && extra <= allowed) add({ id: 'accents', ok: true, text: MT.accentsOk(ok, total) }, 0.5 * (1 - share) + 0.3, null, []);
+  return { ok, total, extra };
+}
+
+/**
+ * G10: trills and repeated notes — the speed reached (notes a second), the last third slower than the first (IOI ≥ +12 %),
+ * fading (velocity down ≥ 12 % of the span), and for a trill one of its two notes softer (≥ 12 % of the hand's level).
+ * Slowing is graded (the evenness goal); fading and the softer note are soft information (no dynamics goal).
+ */
+function trillOf(drill: Drill, per: NoteResult[], span: number, add: Adder, velOk: boolean): TouchReport['trill'] {
+  const kind = drill.spec.kind;
+  if (kind !== 'trill' && kind !== 'repeated') return undefined;
+  let out: NonNullable<TouchReport['trill']> | null = null;
+  const key = drill.tonic?.key ?? drill.spec.key;
+  for (const h of handsOf(drill)) {
+    const xs = lineOf(drill, per, h).filter((x) => x.r?.played);
+    if (xs.length < 9) continue;
+    const ons = xs.map((x) => x.r.played!.on);
+    const dur = ons[ons.length - 1] - ons[0];
+    if (dur <= 0) continue;
+    const nps = ((xs.length - 1) / dur) * 1000;
+    const iois = ons.slice(1).map((o, k) => o - ons[k]);
+    const k3 = Math.max(2, Math.floor(iois.length / 3));
+    const slow = med(iois.slice(-k3)) / Math.max(1, med(iois.slice(0, k3)));
+    const vs = xs.map((x) => x.r.played!.vel);
+    const v3 = Math.max(2, Math.floor(vs.length / 3));
+    const fade = velOk ? med(vs.slice(0, v3)) - med(vs.slice(-v3)) : null;
+    if (!out || slow > out.slow) out = { nps: Math.round(nps * 10) / 10, slow: Math.round(slow * 100) / 100, fade: fade === null ? null : Math.round(fade) };
+    // a trill's two notes: one of them softer every time (the note, never the finger: fingering is a suggestion)
+    if (velOk && kind === 'trill') {
+      const pcs = [...new Set(xs.map((x) => ((x.n.pitch % 12) + 12) % 12))];
+      if (pcs.length === 2) {
+        const hv = med(vs);
+        const m = pcs.map((pc) => med(xs.filter((x) => ((x.n.pitch % 12) + 12) % 12 === pc).map((x) => x.r.played!.vel)));
+        const w = m[0] < m[1] ? 0 : 1;
+        const d = m[1 - w] - m[w];
+        if (d / Math.max(1, hv) >= 0.12 && d >= Math.max(6, 0.06 * span))
+          add(
+            { id: 'trill', ok: false, text: { ...MT.trillPair(pcName(pcs[w], key), pcName(pcs[1 - w], key), Math.round((d / Math.max(1, m[1 - w])) * 100)) }, why: MT.whyTrillPair },
+            0.9,
+            'trill-pair',
+            xs.filter((x) => ((x.n.pitch % 12) + 12) % 12 === pcs[w]).map((x) => ({ i: x.i, mark: 'soft' as TouchMark })),
+          );
+      }
+    }
+  }
+  if (!out) return undefined;
+  add({ id: 'trill', ok: true, text: MT.trillSpeed(out.nps) }, 0, null, []);
+  if (out.slow >= 1.12) add({ id: 'trill', ok: false, text: MT.trillSlowed, why: MT.whyTrill }, drill.goal.evenness ? (out.slow - 1) / 0.12 : 0.9, 'trill-slow', []);
+  if (out.fade !== null && out.fade >= Math.max(8, 0.12 * span)) add({ id: 'trill', ok: false, text: MT.trillFaded, why: MT.whyTrill }, 0.9, 'trill-fade', []);
+  return out;
+}
+
+/**
+ * G11: leaps of a minor 6th or more (single notes, same hand) — the landing's offset against the hand's own steady
+ * offset (the median of its other notes), so a player who is always a little late is not "late after leaps".
+ */
+export const LEAP_MIN = 8;
+function leapsOf(drill: Drill, per: NoteResult[], add: Adder): TouchReport['leaps'] {
+  const ds: number[] = [];
+  const late: number[] = [];
+  for (const h of handsOf(drill)) {
+    const xs = lineOf(drill, per, h);
+    const land = new Set<number>();
+    for (let k = 1; k < xs.length; k++) if (Math.abs(xs[k].n.pitch - xs[k - 1].n.pitch) >= LEAP_MIN) land.add(k);
+    if (!land.size) continue;
+    const others = xs.filter((x, k) => !land.has(k) && x.r?.played && x.r.dev !== null).map((x) => x.r.dev!);
+    if (others.length < 3) continue;
+    const base = med(others);
+    for (const k of land) {
+      const b = xs[k];
+      if (!b.r?.played || b.r.dev === null) continue;
+      const d = b.r.dev - base;
+      ds.push(d);
+      if (d >= 25) late.push(b.i);
+    }
+  }
+  if (ds.length < 3) return undefined;
+  const md = med(ds);
+  const graded = drill.spec.kind === 'leaps';
+  if (md >= 25) add({ id: 'leaps', ok: false, text: MT.leapsLate(Math.round(md), late.length), why: MT.whyLeaps }, graded ? md / 25 : 0.9, 'leap-late', late.map((i) => ({ i, mark: 'land' as TouchMark })));
+  else add({ id: 'leaps', ok: true, text: MT.leapsOk }, graded ? Math.max(0, md) / 25 : 0, null, []);
+  return { late: late.length, n: ds.length, median: Math.round(md) };
+}
+
+/**
+ * G12: sudden marks from the score — sf / sfz / fz must stand ≥ 15 % of the span (≥ 10) above the notes just before it in
+ * that hand; fp / sfp must drop that much to the notes right after it. Per passage (pieces), soft like the other marks.
+ */
+function subitoOf(drill: Drill, per: NoteResult[], span: number, add: Adder): void {
+  const need = Math.max(10, 0.15 * span);
+  let n = 0;
+  let bad: { i: number; kind: 'sf' | 'fp'; beat: number } | null = null;
+  const marks: { i: number; mark: TouchMark }[] = [];
+  for (const h of handsOf(drill)) {
+    const os = onsetsOf(drill, per, h);
+    os.forEach((o, k) => {
+      const sub = o.idx.map((i) => drill.notes[i].sub).find(Boolean);
+      if (!sub || o.vel === null) return;
+      const plain = (x: On) => x.vel !== null && !x.idx.some((i) => drill.notes[i].sub || drill.notes[i].accent);
+      const before = os.slice(Math.max(0, k - 3), k).filter(plain).map((x) => x.vel!);
+      const after = os.slice(k + 1, k + 3).filter(plain).map((x) => x.vel!);
+      const ref = sub === 'sf' ? before : after;
+      if (!ref.length) return;
+      n++;
+      if (o.vel - med(ref) >= need) return;
+      marks.push({ i: o.idx[0], mark: 'flat' });
+      if (!bad) bad = { i: o.idx[0], kind: sub, beat: o.beat };
+    });
+  }
+  if (!n) return;
+  if (bad) {
+    const b = bad as { i: number; kind: 'sf' | 'fp'; beat: number };
+    const where = barsLabel(barOf(drill, b.beat), barOf(drill, b.beat));
+    add({ id: 'subito', ok: false, text: b.kind === 'sf' ? MT.sfMiss(where) : MT.fpMiss(where), why: b.kind === 'sf' ? MT.whySf : MT.whyFp }, Math.min(1.4, 1 + marks.length / n), 'subito', marks);
+  } else add({ id: 'subito', ok: true, text: MT.subitoOk(n) }, 0.5, null, []);
+}
+
+/**
+ * G13: the soft pedal (CC67) where the score writes una corda, up again at tre corde. Soft information only, and no claim
+ * at all when the keyboard sent no CC67 in the take (most keyboards have no soft pedal).
+ */
+function unaCordaOf(drill: Drill, per: NoteResult[], soft: PedalEvent[] | undefined, add: Adder): void {
+  if (!drill.notes.some((n) => n.uc) || !soft?.length) return;
+  const ev = transitions(soft).sort((a, b) => a.at - b.at);
+  if (!ev.some((e) => e.down)) return;
+  const firstUc = Math.min(...drill.notes.filter((n) => n.uc).map((n) => n.beat));
+  let ucN = 0;
+  let ucDown = 0;
+  let afterN = 0;
+  let afterDown = 0;
+  drill.notes.forEach((n, i) => {
+    const p = per[i]?.played;
+    if (!p) return;
+    const d = pedalDownAt(ev, p.on + 5);
+    if (n.uc) {
+      ucN++;
+      if (d) ucDown++;
+    } else if (n.beat > firstUc) {
+      afterN++;
+      if (d) afterDown++;
+    }
+  });
+  if (ucN < 2) return;
+  if (ucDown / ucN < 0.8) add({ id: 'una-corda', ok: false, text: MT.ucMissing(ucN - ucDown, ucN), why: MT.whyUc }, 0.9, 'una-corda', []);
+  else if (afterN >= 2 && afterDown / afterN > 0.2) add({ id: 'una-corda', ok: false, text: MT.ucLeft, why: MT.whyUc }, 0.9, 'una-corda', []);
+  else add({ id: 'una-corda', ok: true, text: MT.ucOk }, 0, null, []);
+}
+
+/**
+ * G14: an Encore phrase made from a recorded take keeps the model's velocities. The take is compared by SHAPE, never by
+ * level (another keyboard, or an audio take, has another scale): the correlation of the two velocity lines (≥ 0.5), and
+ * the model's leaning notes (≥ 1.2 SD above their neighbours) leaning in the take too. No claim when the model is even
+ * (SD < 4) or has fewer than five notes in a hand. Soft information: imitation is guidance, the notes and time pass a take.
+ */
+function modelOf(drill: Drill, per: NoteResult[], span: number, add: Adder): void {
+  let judged = false;
+  let worst: { c: number } | null = null;
+  let missed: { i: number; beat: number } | null = null;
+  const marks: { i: number; mark: TouchMark }[] = [];
+  for (const h of handsOf(drill)) {
+    const xs = lineOf(drill, per, h).filter((x) => x.n.modelVel !== undefined && x.r?.played);
+    if (xs.length < 5) continue;
+    const m = xs.map((x) => x.n.modelVel!);
+    const p = xs.map((x) => x.r.played!.vel);
+    const sdM = sdOf(m);
+    if (sdM < 4) continue;
+    judged = true;
+    const c = corr(p, m) ?? 0;
+    if (!worst || c < worst.c) worst = { c };
+    const nbMean = (a: number[], k: number) => mean([a[k - 1], a[k + 1]].filter((x): x is number => x !== undefined));
+    xs.forEach((x, k) => {
+      const lean = m[k] - nbMean(m, k);
+      const isPeak = (k === 0 || m[k] > m[k - 1]) && (k === m.length - 1 || m[k] > m[k + 1]);
+      if (!isPeak || lean < Math.max(8, 1.2 * sdM)) return;
+      if (p[k] - nbMean(p, k) >= Math.max(5, 0.06 * span)) return;
+      marks.push({ i: x.i, mark: 'flat' });
+      if (!missed || x.n.beat < missed.beat) missed = { i: x.i, beat: x.n.beat };
+    });
+  }
+  if (!judged || !worst) return;
+  const w = worst as { c: number };
+  if (w.c < 0.5) add({ id: 'model', ok: false, text: MT.modelApart, why: MT.whyModel }, 0.9, 'model-dyn', []);
+  if (missed) {
+    const ms = missed as { i: number; beat: number };
+    const meter = drill.meter || 4;
+    add({ id: 'model', ok: false, text: MT.modelAccent(barOf(drill, ms.beat), Math.floor(ms.beat - Math.floor(ms.beat / meter + 1e-6) * meter + 1e-6) + 1), why: MT.whyModel }, 0.9, 'model-acc', marks);
+  }
+  if (w.c >= 0.5 && !missed) add({ id: 'model', ok: true, text: MT.modelOk }, 0, null, []);
+}
+
+/**
+ * Melody over accompaniment (pieces, owner's item 2): the melody (the right hand's top line; its upper voice when the
+ * staff has two) against the accompaniment (the left hand, and the right hand's lower voice) — per bar, the melody's
+ * median velocity ≥ the accompaniment's + 8 % of the span (≥ 6). Two equal single lines (counterpoint: an invention) are
+ * not melody and accompaniment and are left out. Reported per passage ("in 6 of 8 bars") and as a long-term pattern.
+ */
+export function melodyTexture(drill: Drill): { mel: number[]; acc: number[] } | null {
+  const rh = drill.notes.map((n, i) => ({ n, i })).filter((x) => x.n.hand === 'R');
+  const rhV2 = rh.some((x) => x.n.staffVoice === 2);
+  const top = new Map<number, number>();
+  for (const x of rh) {
+    if (x.n.staffVoice === 2) continue;
+    const k = Math.round(x.n.beat * 1e4);
+    const cur = top.get(k);
+    if (cur === undefined || x.n.pitch > drill.notes[cur].pitch) top.set(k, x.i);
+  }
+  const mel = [...top.values()];
+  const acc = drill.notes.map((n, i) => ({ n, i })).filter((x) => x.n.hand === 'L' || (x.n.hand === 'R' && x.n.staffVoice === 2)).map((x) => x.i);
+  if (mel.length < 4 || acc.length < 2) return null;
+  if (!rhV2) {
+    const lhOn = new Map<number, number>();
+    for (const i of acc) lhOn.set(Math.round(drill.notes[i].beat * 1e4), (lhOn.get(Math.round(drill.notes[i].beat * 1e4)) ?? 0) + 1);
+    const chordShare = [...lhOn.values()].filter((c) => c >= 2).length / Math.max(1, lhOn.size);
+    const ratio = lhOn.size / mel.length;
+    if (chordShare < 0.3 && ratio >= 0.67 && ratio <= 1.5) return null;
+  }
+  return { mel, acc };
+}
+function melodyOf(drill: Drill, per: NoteResult[], span: number, add: Adder): TouchReport['melody'] {
+  const tx = melodyTexture(drill);
+  if (!tx) return undefined;
+  const meter = drill.meter || 4;
+  const bars = new Map<number, { m: number[]; a: number[]; first: number }>();
+  const put = (i: number, which: 'm' | 'a') => {
+    const r = per[i];
+    if (!r?.played) return;
+    const b = Math.floor(drill.notes[i].beat / meter + 1e-6);
+    const g = bars.get(b) ?? { m: [], a: [], first: -1 };
+    g[which].push(r.played.vel);
+    if (which === 'm' && (g.first < 0 || drill.notes[i].beat < drill.notes[g.first].beat)) g.first = i;
+    bars.set(b, g);
+  };
+  for (const i of tx.mel) put(i, 'm');
+  for (const i of tx.acc) put(i, 'a');
+  const need = Math.max(6, 0.08 * span);
+  let ok = 0;
+  let of = 0;
+  const marks: { i: number; mark: TouchMark }[] = [];
+  for (const g of bars.values()) {
+    if (!g.m.length || !g.a.length) continue;
+    of++;
+    if (med(g.m) - med(g.a) >= need) ok++;
+    else if (g.first >= 0) marks.push({ i: g.first, mark: 'flat' });
+  }
+  if (of < 2) return undefined;
+  const share = ok / of;
+  const good = share >= 0.75 - 1e-9;
+  add({ id: 'melody', ok: good, text: MT.melodyAbove(ok, of), ...(good ? {} : { why: MT.whyMelody }) }, good ? 0.5 : Math.min(1.4, 1 + (0.75 - share) / 0.25), good ? null : 'melody', marks);
+  return { bars: ok, of };
 }
 
 // ───────────────────────────── the report ─────────────────────────────
@@ -712,7 +1038,7 @@ export function analyzeTouch(drill: Drill, bpm: number, per: NoteResult[], cal: 
     marks.push(...ms);
     if (tag) tags.push(...(Array.isArray(tag) ? tag : [tag]));
     if (sev > 0) factors.push({ sev, en: line.text.en, he: line.text.he });
-    if (['cresc', 'dim', 'hands-dyn', 'zones', 'hair', 'level', 'creep', 'lengths', 'release', 'stac', 'slur', 'pedal', 'voicing'].includes(line.id)) control.push(line.ok ? 1 : Math.max(0, 1 - Math.max(0, sev - 0.5) / 1.5));
+    if (['cresc', 'dim', 'hands-dyn', 'zones', 'hair', 'level', 'creep', 'lengths', 'release', 'stac', 'slur', 'pedal', 'voicing', 'accents', 'subito', 'una-corda', 'melody', 'legato'].includes(line.id)) control.push(line.ok ? 1 : Math.max(0, 1 - Math.max(0, sev - 0.5) / 1.5));
   };
   const report: TouchReport = { lines, marks };
   const span = velSpan(cal);
@@ -725,13 +1051,40 @@ export function analyzeTouch(drill: Drill, bpm: number, per: NoteResult[], cal: 
     if (g.marks && drill.notes.some((n) => n.hair)) hairpinsOf(drill, per, span, add);
     if (g.dynamics?.startsWith('even-')) levelOf(drill, per, cal, span, add);
     report.fingers = fingersOf(drill, per, span, add);
+    // second round: accents in place (G9), sudden marks (G12), the model take (G14), melody over accompaniment
+    if (g.dynamics !== 'voicing') {
+      const a = accentsOf(drill, per, span, add);
+      if (a) report.accents = a;
+    }
+    if (drill.notes.some((n) => n.sub)) subitoOf(drill, per, span, add);
+    if (g.model) modelOf(drill, per, span, add);
+    if (g.marks) {
+      const m = melodyOf(drill, per, span, add);
+      if (m) report.melody = m;
+    }
+  }
+  // G10 (trills, repeated notes) and G11 (leaps): timing by any input, velocity parts by MIDI only
+  if (pianoTouch(drill, opts.mic) || (opts.mic && !drill.sung && drill.spec.instrument !== 'guitar' && drill.spec.instrument !== 'bass')) {
+    const t = trillOf(drill, per, span, add, velOk);
+    if (t) report.trill = t;
+    const lp = leapsOf(drill, per, add);
+    if (lp) report.leaps = lp;
+  }
+  if (pianoTouch(drill, opts.mic)) unaCordaOf(drill, per, opts.softPedal, add);
+  // the piano by microphone: relative steps, shapes and legato / staccato from the sound's energy (micTouch.ts)
+  if (opts.mic && opts.frames) {
+    const mt = analyzeMicTouch(drill, per, opts.frames);
+    if (mt) {
+      for (const l of mt.lines) add(l.line, l.sev, l.tag, l.marks);
+      report.mic = mt.report;
+    }
   }
   const ch = pianoTouch(drill, opts.mic) ? chordsOf(drill, per, span, add, velOk) : { report: undefined, median: null, sevRoll: null };
   if (ch.report) report.chords = ch.report;
   if (ch.sevRoll !== null) factors.push({ sev: ch.sevRoll, en: lines.find((l) => l.id === 'roll')!.text.en, he: lines.find((l) => l.id === 'roll')!.text.he });
   if (releaseOk) {
     if (g.lengths) report.lengths = lengthsOf(drill, bpm, per, opts.pedal ?? [], !!g.marks, add, expMs);
-    if (g.marks) articulationOf(drill, per, add);
+    if (g.marks || g.model) articulationOf(drill, per, add, g.marks ? 1.4 : 0.9);
   }
   if (opts.pedal && pianoTouch(drill, opts.mic) && (g.pedal || opts.pedal.length)) {
     const p = pedalOf(drill, bpm, opts.pedal, add, expMs);

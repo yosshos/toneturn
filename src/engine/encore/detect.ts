@@ -234,6 +234,10 @@ export interface BeatNote {
   midi: number;
   beat: number;
   dur: number;
+  /** MEASUREMENT-AUDIT G14: the source take's velocity (MIDI, or an audio take's relative level) — the model's dynamics. */
+  vel?: number;
+  /** G14: how long the source note sounded, as a share of the gap to the next onset of its hand (a short one is detached). */
+  held?: number;
 }
 
 export interface KeyGuess {

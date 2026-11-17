@@ -574,7 +574,9 @@ export type MetricKey =
   | 'motif'
   | 'lift'
   // AUDIT-7 #8: improvising inside a scale (the pentatonic)
-  | 'inScale';
+  | 'inScale'
+  // MEASUREMENT-AUDIT G15: the brightness change within one held note (soft information, never scored)
+  | 'brightness';
 
 export interface MetricScore {
   key: MetricKey;
@@ -1466,9 +1468,28 @@ export function gradeHold(item: VocalItem, frames: SungFrame[], target: number, 
   return { ...g, score: Math.round(g.score * (0.4 + 0.6 * k) * 1000) / 1000 };
 }
 
+/**
+ * MEASUREMENT-AUDIT G15: the brightness of one held note — the spectral centroid of its last third against its first
+ * third, in % (+ brighter, − darker). Relative within the note only: the phone, its distance and the room move the
+ * absolute value, so it is shown as soft information and never scored. Null without enough voiced centroid frames.
+ * (Breathiness — HNR / CPP — is left out: a phone microphone's noise floor makes it unreliable.)
+ */
+export function brightnessChange(frames: SungFrame[]): number | null {
+  const vs = frames.filter((f) => f.hz && f.confidence >= 0.8 && f.centroid !== undefined && f.centroid > 0);
+  if (vs.length < 30) return null;
+  const k = Math.floor(vs.length / 3);
+  const md = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+  const a = md(vs.slice(0, k).map((f) => f.centroid!));
+  const b = md(vs.slice(-k).map((f) => f.centroid!));
+  return a > 0 ? Math.round((b / a - 1) * 100) : null;
+}
+
 function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, style: VibratoStyle = 'pop'): TakeGrade {
   const h = holdMetrics(frames, target);
   if (h.unclear) return { ...UNCLEAR, hold: h };
+  // G15: weight 0 — shown beside the scored metrics, never part of the score
+  const bright = brightnessChange(frames);
+  const soft: MetricScore[] = bright === null ? [] : [M('brightness', bright, '%', 1, 0)];
   const base: MetricScore[] = [
     M('settle', h.settleMs ?? 1000, 'ms', bandScore(h.settleMs ?? 1000, BANDS.settleMs), 1),
     M('intonation', h.intonation, '¢', bandScore(h.intonation, BANDS.intonation), 2),
@@ -1482,9 +1503,9 @@ function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, styl
   switch (item.kind) {
     // MEASUREMENT-AUDIT §3: the scoop into a held note (cents in its first 60 ms) is graded and shown, lightly weighted.
     case 'hold':
-      return finish([...base, M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5)], { hold: h });
+      return finish([...base, M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5), ...soft], { hold: h });
     case 'straight':
-      return finish([...base, M('stability', h.stability, '¢', h.vibrato.present ? 0 : bandScore(h.stability, BANDS.stability), 2), M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5)], { hold: h });
+      return finish([...base, M('stability', h.stability, '¢', h.vibrato.present ? 0 : bandScore(h.stability, BANDS.stability), 2), M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5), ...soft], { hold: h });
     case 'vibrato-steady':
       return finish([...base, ...vibScores(1.5)], { hold: h });
     case 'vibrato-delayed': {
@@ -1551,6 +1572,7 @@ function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, styl
           ...base,
           M('dynamics', rise, 'dB', sw && sw.peakAt >= 0.2 && sw.peakAt <= 0.8 ? reachScore(rise, 6) * (0.5 + 0.5 * sw.mono) : 0, 1.5),
           M('stability', h.maxTrendDev, '¢', bandScore(h.maxTrendDev, [15, 25, 40]), 2),
+          ...soft,
         ],
         { hold: h },
       );

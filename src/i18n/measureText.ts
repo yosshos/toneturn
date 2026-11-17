@@ -124,6 +124,61 @@ export const MT = {
   velCheck: { en: 'Check: play p, then mf, then f', he: 'בדיקה: נגנו p, אחר כך mf, אחר כך f' },
   velCheckOk: { en: 'Your three levels are apart', he: 'שלוש הרמות שלכם נפרדות' },
   velCheckBad: { en: 'Two levels came out alike: calibrate again', he: 'שתי רמות יצאו דומות: כיילו שוב' },
+  // ---- second round (2026-11-17): accents in place (G9) ----
+  accentsOk: (n: number, of: number): L => ({ en: `Accents in place (${n}/${of})`, he: `ההטעמות במקום (${n}/${of})` }),
+  accentsMissed: (n: number, of: number): L => ({ en: `Accents missing (${n} of ${of})`, he: `הטעמות חסרות (${n} מתוך ${of})` }),
+  accentsExtra: (n: number): L => ({ en: `Accents where none is written (${n})`, he: `הטעמות במקום לא כתוב (${n})` }),
+  whyAccents: { en: 'Only the marked notes louder, the rest even.', he: 'רק הצלילים המסומנים חזקים, השאר אחידים.' },
+  // ---- trills and repeated notes (G10) ----
+  trillSpeed: (nps: number): L => ({ en: `${nps} notes a second`, he: `${nps} צלילים בשנייה` }),
+  trillSlowed: { en: 'Slowed in the last third', he: 'האטתם בשליש האחרון' },
+  trillFaded: { en: 'Faded in the last third', he: 'נחלשתם בשליש האחרון' },
+  trillPair: (weak: string, strong: string, pct: number): L => ({ en: `${weak} softer than ${strong} (−${pct}%)`, he: `ה־${weak} חלש מה־${strong} (−${pct}%)` }),
+  whyTrill: { en: 'Short bursts at this speed, then longer ones.', he: 'פרצים קצרים במהירות הזו, ואז ארוכים יותר.' },
+  whyTrillPair: { en: 'Both notes from the same height, with the same weight.', he: 'שני הצלילים מאותו גובה, באותו משקל.' },
+  // ---- leaps and octaves (G11) ----
+  leapsOk: { en: 'Leaps landed on time', he: 'הקפיצות נחתו בזמן' },
+  leapsLate: (ms: number, n: number): L => ({ en: `Late after leaps (+${ms} ms, ${n})`, he: `איחור אחרי קפיצות (+${ms} מ״ש, ${n})` }),
+  whyLeaps: { en: 'Look and move early; land on the beat.', he: 'להסתכל ולזוז מוקדם; לנחות על הפעמה.' },
+  octavesApart: (n: number, of: number): L => ({ en: `Octaves not together (${n} of ${of})`, he: `אוקטבות לא יחד (${n} מתוך ${of})` }),
+  whyOctaves: { en: 'Both notes of the octave down as one.', he: 'שני צלילי האוקטבה יורדים כאחד.' },
+  // ---- sudden marks: sf, fp (G12) ----
+  subitoOk: (n: number): L => ({ en: `sf / fp heard (${n})`, he: `sf / fp נשמעו (${n})` }),
+  sfMiss: (where: L): L => pre(where, { en: ': sf not heard', he: ': ה־sf לא בלט' }),
+  fpMiss: (where: L): L => pre(where, { en: ': fp without the drop', he: ': fp בלי ירידה מיד אחריו' }),
+  whySf: { en: 'That note alone, much louder, then straight back.', he: 'רק הצליל הזה, הרבה יותר חזק, ומיד חזרה.' },
+  whyFp: { en: 'A loud attack, then soft at once.', he: 'התקפה חזקה, ומיד שקט.' },
+  // ---- the soft pedal (G13) ----
+  ucOk: { en: 'Soft pedal where written', he: 'הפדל השמאלי במקום הכתוב' },
+  ucMissing: (n: number, of: number): L => ({ en: `Soft pedal missing (${n} of ${of} notes)`, he: `חסר פדל שמאלי (${n} מתוך ${of} צלילים)` }),
+  ucLeft: { en: 'Soft pedal left down after tre corde', he: 'הפדל השמאלי נשאר לחוץ אחרי tre corde' },
+  whyUc: { en: 'Left pedal down at una corda, up at tre corde.', he: 'פדל שמאלי למטה ב־una corda, למעלה ב־tre corde.' },
+  // ---- an Encore phrase against its model take (G14) ----
+  modelOk: { en: 'Dynamics like the model', he: 'העוצמות כמו במקור' },
+  modelApart: { en: 'Dynamics unlike the model', he: 'העוצמות לא כמו במקור' },
+  modelAccent: (bar: number, beat: number): L => ({ en: `The model leans on bar ${bar}, beat ${beat}`, he: `במקור יש הדגשה בתיבה ${bar}, פעמה ${beat}` }),
+  whyModel: { en: 'Hear the model again: where it grows, where it leans.', he: 'להקשיב שוב למקור: איפה הוא גדל, על מה הוא נשען.' },
+  // ---- melody over the accompaniment (pieces) ----
+  melodyAbove: (n: number, of: number): L => ({ en: `Melody above in ${n} of ${of} bars`, he: `המנגינה בלטה ב־${n} מתוך ${of} תיבות` }),
+  whyMelody: { en: 'The melody hand heavier, the accompaniment lighter.', he: 'יד המנגינה כבדה יותר, הליווי קל יותר.' },
+  // ---- the piano by microphone (micTouch.ts): loudness steps, shapes and the release, from the sound's energy ----
+  micStepOk: (db: number): L => ({ en: `p and f apart (${db} dB)`, he: `p ו־f נפרדים (${db} dB)` }),
+  micStepFlat: (db: number): L => ({ en: `p and f too close (${db} dB)`, he: `p ו־f קרובים מדי (${db} dB)` }),
+  whyMicStep: { en: 'p clearly softer, f clearly louder.', he: 'p שקט בבירור, f חזק בבירור.' },
+  micLegatoOk: { en: 'Legato joined', he: 'הלגאטו מחובר' },
+  micLegatoGap: (n: number): L => ({ en: `Gaps in the legato (${n})`, he: `רווחים בלגאטו (${n})` }),
+  whyMicLegato: { en: 'Hold each key until the next one sounds.', he: 'להחזיק כל קליד עד שהבא נשמע.' },
+  whyMicStac: { en: 'Off the key at once, without the pedal.', he: 'לעזוב את הקליד מיד, בלי פדל.' },
+  micQuiet: { en: 'Too quiet to measure the loudness', he: 'חלש מדי למדידת עוצמה' },
+  micFast: { en: 'Too fast to hear the release', he: 'מהר מדי לשמוע את השחרור' },
+  micFew: { en: 'Too few clear notes to measure the touch', he: 'מעט מדי צלילים ברורים למדידת המגע' },
+  whyMicNoClaim: { en: 'Phone closer to the piano, a quiet room, no pedal.', he: 'הטלפון קרוב יותר לפסנתר, חדר שקט, בלי פדל.' },
+  micBy: { en: 'by microphone', he: 'במיקרופון' },
+  // ---- the level test: places the test inferred instead of measuring ----
+  inferred: { en: 'inferred', he: 'משוער' },
+  inferredNote: { en: 'Inferred: not measured in this test', he: 'משוער: לא נמדד במבחן הזה' },
+  // ---- voice: brightness (G15), relative within one note only ----
+  brightness: { en: 'Brightness change', he: 'שינוי בהירות' },
   // ---- the review ----
   touchHead: { en: 'Touch', he: 'מגע' },
   why: { en: 'Why?', he: 'למה?' },
@@ -177,6 +232,21 @@ export const CTL_TEXT: Record<string, CtlText> = {
   blur: c('Your pedal blurs chord changes', 'הפדל שלכם מערבב החלפות אקורד', 'Change the pedal at every new chord.', 'להחליף פדל בכל אקורד חדש.'),
   roll: c('Your chords roll', 'האקורדים שלכם מפוזרים', 'All the fingers down as one.', 'כל האצבעות יורדות כאחת.'),
   voicing: c("Your chords' top note doesn't sing", 'הצליל העליון באקורדים שלכם לא בולט', 'Weight toward the 5th finger.', 'משקל לכיוון האצבע החמישית.'),
+  // second round (G9–G14, melody balance, the microphone)
+  'accent-miss': c('Your accents go missing', 'ההטעמות שלכם נעלמות', 'Slowly, the accented note from higher.', 'לאט, הצליל המוטעם מגובה רב יותר.'),
+  'accent-extra': c('You accent notes that are not marked', 'אתם מטעימים צלילים שלא מסומנים', 'The unmarked notes light and even.', 'הצלילים הלא מסומנים קלים ואחידים.'),
+  'trill-slow': c('Your trills slow down at the end', 'הטרילים שלכם מאטים בסוף', 'Short bursts, then longer ones.', 'פרצים קצרים, ואז ארוכים יותר.'),
+  'trill-fade': c('Your trills fade at the end', 'הטרילים שלכם נחלשים בסוף', 'Short bursts, the same weight to the end.', 'פרצים קצרים, אותו משקל עד הסוף.'),
+  'trill-pair': c('One note of your trills is softer', 'צליל אחד בטרילים שלכם חלש יותר', 'Slowly, both notes with the same weight.', 'לאט, שני הצלילים באותו משקל.'),
+  'leap-late': c('You land late after leaps', 'אתם נוחתים מאוחר אחרי קפיצות', 'Look and move early; land on the beat.', 'להסתכל ולזוז מוקדם; לנחות על הפעמה.'),
+  octaves: c('Your octaves split', 'האוקטבות שלכם מתפצלות', 'Both notes of the octave down as one.', 'שני צלילי האוקטבה יורדים כאחד.'),
+  subito: c('Your sf and fp are not heard', 'ה־sf וה־fp שלכם לא נשמעים', 'That note alone, much louder, then back.', 'רק הצליל הזה, הרבה יותר חזק, ומיד חזרה.'),
+  'una-corda': c('Your soft pedal misses the marks', 'הפדל השמאלי שלכם לא במקום', 'Down at una corda, up at tre corde.', 'למטה ב־una corda, למעלה ב־tre corde.'),
+  'model-dyn': c('Your dynamics drift from the model', 'העוצמות שלכם רחוקות מהמקור', 'Hear the model again, then shape with it.', 'להקשיב שוב למקור, ואז לעצב איתו.'),
+  'model-acc': c("You miss the model's accents", 'אתם מפספסים את ההדגשות של המקור', 'Find the leaning notes of the model first.', 'קודם למצוא את הצלילים שהמקור נשען עליהם.'),
+  melody: c("Your melody doesn't sit above the accompaniment", 'המנגינה שלכם לא בולטת מעל הליווי', 'Accompaniment alone, softly; then the melody over it.', 'קודם הליווי לבד, בשקט; ואז המנגינה מעליו.'),
+  'mic-legato': c('Your legato has gaps', 'בלגאטו שלכם יש רווחים', 'Hold each key until the next one sounds.', 'להחזיק כל קליד עד שהבא נשמע.'),
+  'mic-step': c('Your p and f sound alike', 'ה־p וה־f שלכם נשמעים דומה', 'p clearly softer, f clearly louder.', 'p שקט בבירור, f חזק בבירור.'),
 };
 /** The touch measure (TouchLine id) a miss tag belongs to. */
 export function ctlKindOf(tag: string): string {
@@ -188,5 +258,12 @@ export function ctlKindOf(tag: string): string {
   if (t === 'late-note' || t === 'cross-late') return 'late-finger';
   if (t === 'rush' || t === 'drag') return 'drift';
   if (t.startsWith('swing-')) return 'swing';
+  if (t === 'accent-miss' || t === 'accent-extra') return 'accents';
+  if (t.startsWith('trill-')) return 'trill';
+  if (t === 'leap-late') return 'leaps';
+  if (t === 'octaves') return 'roll';
+  if (t === 'model-dyn' || t === 'model-acc') return 'model';
+  if (t === 'mic-legato') return 'legato';
+  if (t === 'mic-step') return 'zones';
   return t;
 }

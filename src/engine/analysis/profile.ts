@@ -289,7 +289,9 @@ export function keyLineOf(keys: InstrumentKeys[], titleOf?: (f: FamilyId) => Bi)
  */
 export function profileDigest(p: Profile, extra: { nearMastery?: string } = {}) {
   // G3: a likely cause travels as a hypothesis with its confidence, so the coach phrases it carefully ("probably").
-  const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en, ...(r.hypothesis ? { hypothesis: true, confidence: Math.round(r.confidence * 100) / 100 } : {}) });
+  // MEASUREMENT-AUDIT (second round): every long-term pattern carries its confidence, so the coach words each one as a
+  // hypothesis of that strength (a finger is always flagged `hypothesis`).
+  const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en, ...(r.hypothesis ? { hypothesis: true } : {}), ...(typeof r.confidence === 'number' ? { confidence: Math.round(r.confidence * 100) / 100 } : {}) });
   return {
     strengths: p.strengths.map(row),
     patterns: p.patterns.map(row),

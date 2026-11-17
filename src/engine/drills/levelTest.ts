@@ -15,6 +15,8 @@ export interface Rung {
   key: number;
   /** Start level per family when this step is clean (the level after the one beaten). */
   places: Partial<Record<FamilyId, number>>;
+  /** Which of the level's items is played (index into its specs; default the first). */
+  spec?: number;
 }
 
 export interface Strand {
@@ -42,7 +44,7 @@ export const STRAND_TITLE: Record<StrandId, T2> = {
 };
 const EAR_T: T2 = { en: 'Ear', he: 'אוזן' };
 
-const r = (level: string, key: number, places: Rung['places']): Rung => ({ level, key, places });
+const r = (level: string, key: number, places: Rung['places'], spec?: number): Rung => ({ level, key, places, ...(spec !== undefined ? { spec } : {}) });
 
 // Keys move from step to step (owner: "it only tested me in C").
 const HANDS: Rung[] = [
@@ -69,6 +71,18 @@ const TOUCH: Rung[] = [
   r('control-14', 3, { control: 15 }),
   r('control-16', 10, { control: 16 }),
 ];
+// MEASUREMENT-AUDIT (second round): the touch strand for a piano heard by the microphone — only what a phone hears
+// reliably from the sound's energy (micTouch.ts), one hand: staccato against legato, a crescendo up / diminuendo down,
+// the reverse shape, and written p / f steps. Levels in between that need MIDI (portato, one absolute level, accents,
+// voicing, balance, pedal) are skipped by these places and shown as inferred (finishPlaces).
+const TOUCH_MIC: Rung[] = [
+  r('control-1', 0, { control: 2 }, 1),
+  r('control-4', 7, { control: 5 }, 0),
+  r('control-13', 5, { control: 14 }, 0),
+  r('control-15', 2, { control: 16 }, 2),
+];
+/** By microphone the touch strand proves the control levels up to this one without skipping an unmeasured level. */
+export const MIC_TOUCH_PROVES = 2;
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),
   // Voice leading (k-vl, AUDIT-CONTENT-THEORY §ה.2) starts from what the chord steps prove.
@@ -155,11 +169,11 @@ const LINES: Rung[] = [
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear (all), and jazz lines (jazz / both). */
-export function pianoStrands(emphasis: DrillSettings['emphasis']): Strand[] {
+export function pianoStrands(emphasis: DrillSettings['emphasis'], o: { mic?: boolean } = {}): Strand[] {
   const jazz = emphasis !== 'classical';
   const out: Strand[] = [
     { id: 'hands', title: STRAND_TITLE.hands, rungs: HANDS },
-    { id: 'touch', title: STRAND_TITLE.touch, rungs: TOUCH },
+    { id: 'touch', title: STRAND_TITLE.touch, rungs: o.mic ? TOUCH_MIC : TOUCH },
     { id: 'chords', title: STRAND_TITLE.chords, rungs: jazz ? CHORDS_JAZZ : CHORDS_CLASSICAL },
     { id: 'comp', title: STRAND_TITLE.comp, rungs: jazz ? COMP_JAZZ : COMP_CLASSICAL },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: READING },
@@ -416,8 +430,8 @@ export function drumStrands(): Strand[] {
 }
 
 /** The sections of an instrument's test. */
-export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis']): Strand[] {
-  const all = instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis);
+export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis'], o: { mic?: boolean } = {}): Strand[] {
+  const all = instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis, o);
   // Hidden until verified (verifiedContent.ts): a rung whose level is not in the catalogue any more is left out.
   const shown = new Set(families(instrument).flatMap((f) => f.levels.map((l) => l.id)));
   return all.map((st) => (st.rungs.every((x) => shown.has(x.level)) ? st : { ...st, rungs: st.rungs.filter((x) => shown.has(x.level)) })).filter((st) => st.rungs.length > 0);
@@ -510,6 +524,34 @@ export function testedLevelIds(levels: readonly { id: string; level: number }[],
     if (d !== undefined && d <= top) out.add(l.id);
   }
   return out;
+}
+
+/** Touch families: placed by the touch strand when it ran (other sections only infer them). */
+export const TOUCH_FAMILIES: FamilyId[] = ['control'];
+/** Families a microphone can never measure on the piano (the pedal). */
+export const MIC_BLIND_FAMILIES: FamilyId[] = ['k-pedal'];
+
+/**
+ * MEASUREMENT-AUDIT (second round, owner's item 4): the test's places, honest about what was measured. The touch
+ * families come from the touch section when it ran — a hands step no longer lifts control above what touch proved;
+ * without a touch section they are inferred from the hands steps and flagged. By microphone the pedal families are
+ * always inferred, and a control place above what the microphone's touch steps prove (MIC_TOUCH_PROVES) is flagged too.
+ */
+export function finishPlaces(runs: { strand: StrandId; places: Partial<Record<FamilyId, number>> }[], byMic = false): { places: Partial<Record<FamilyId, number>>; inferred: FamilyId[] } {
+  const touch = runs.filter((x) => x.strand === 'touch');
+  const places = mergePlaces(...runs.filter((x) => x.strand !== 'touch').map((x) => x.places));
+  const inferred = new Set<FamilyId>();
+  const fromTouch = mergePlaces(...touch.map((x) => x.places));
+  for (const f of TOUCH_FAMILIES) {
+    if (touch.length) {
+      if (fromTouch[f] !== undefined) places[f] = fromTouch[f];
+      else delete places[f];
+      if (byMic && (places[f] ?? 1) > MIC_TOUCH_PROVES) inferred.add(f);
+    } else if ((places[f] ?? 1) > 1) inferred.add(f);
+  }
+  for (const [k, v] of Object.entries(fromTouch) as [FamilyId, number][]) if (!TOUCH_FAMILIES.includes(k)) places[k] = Math.max(places[k] ?? 0, v);
+  if (byMic) for (const f of MIC_BLIND_FAMILIES) if ((places[f] ?? 1) > 1) inferred.add(f);
+  return { places, inferred: [...inferred] };
 }
 
 /** Merge the places of several sections (the higher start wins). */
