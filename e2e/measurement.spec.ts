@@ -80,5 +80,40 @@ for (const lang of ['en', 'he'] as const) {
     await expect(miss.locator('.tl-why-text')).toBeVisible();
     // no Why? on a line that passed
     expect(await lines.locator('[data-touch-ok="1"] [data-touch-why]').count()).toBe(0);
+    // B14: the sheet's velocity row reads like the live bars (calibrated steps, target outlines), not raw dots
+    await expect(page.locator('[data-vel-curve="bars"] [data-vel-bars]')).toBeAttached();
   });
 }
+
+// MEASUREMENT-AUDIT (second round): without MIDI the level test's touch section is the microphone's — only steps a
+// phone can measure (one hand: the crescendo shape, staccato, p / f steps). Too hard everywhere: no place is claimed.
+for (const lang of ['en', 'he'] as const)
+  test(`level test by microphone: a touch section a phone can measure (${lang})`, async ({ page }) => {
+    await seed(page, lang, 'keys');
+    await page.goto('about:blank');
+    await page.goto(`/?lang=${lang}#/drills`);
+    await page.locator('[data-drills-test]').click();
+    await expect(page.locator('[data-level-test="piano"]')).toBeVisible();
+    await page.locator('[data-test-start]').click();
+    const probe = page.locator('[data-test-probe]');
+    const strands: string[] = [];
+    const steps: string[] = [];
+    for (let k = 0; k < 40; k++) {
+      if (await page.locator('[data-level-test-done]').isVisible()) break;
+      await expect(probe).toBeVisible();
+      strands.push((await probe.getAttribute('data-test-strand')) ?? '');
+      steps.push((await probe.getAttribute('data-test-probe')) ?? '');
+      if (strands[strands.length - 1] === 'touch') {
+        // the take is not blocked ("needs a MIDI keyboard") and the screen fits one phone
+        await expect(page.locator('[data-piano-needs-midi]')).toHaveCount(0);
+        expect((await overflow(page)).tall).toBeLessThanOrEqual(2);
+      }
+      await page.locator('[data-test-too-hard]').click();
+    }
+    await expect(page.locator('[data-level-test-done]')).toBeVisible();
+    expect(strands).toContain('touch');
+    const touchSteps = steps.filter((_, i) => strands[i] === 'touch');
+    expect(touchSteps.every((s) => ['control-1', 'control-4', 'control-13', 'control-15'].includes(s))).toBe(true);
+    // nothing proved: no inferred note
+    await expect(page.locator('[data-inferred-note]')).toHaveCount(0);
+  });

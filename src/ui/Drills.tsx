@@ -32,7 +32,7 @@ import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
 import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate } from '../engine/drills/generate';
-import { advance, mergePlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandState } from '../engine/drills/levelTest';
+import { advance, finishPlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandId, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
 import { type GuitarLevelDef } from '../engine/drills/guitar';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
@@ -1024,7 +1024,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     return (
       <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage}>
         <DrillScore drill={stageRes.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={stageRes.m} beat={-1} lang={lang} />
-        <TakeReview
+        <TakeReview drill={drill} cal={cal}
           m={stageRes.m}
           free={stageRes.stage === 'free'}
           next={line}
@@ -1079,7 +1079,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           />
         )}
         {loopRes && (
-          <TakeReview
+          <TakeReview drill={drill} cal={cal}
             m={loopRes}
             lang={lang}
             next={passed ? (he ? `${LOOP_PASSES} נקיים — בחזרה לכל התרגיל` : `${LOOP_PASSES} clean — back to the whole item`) : he ? `נקי ${loop.passes}/${LOOP_PASSES} ב־♩ ${lb}` : `Clean ${loop.passes}/${LOOP_PASSES} at ♩ ${lb}`}
@@ -1192,7 +1192,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {res && (
         <>
           <ErrorMap marks={bm} sel={loopSel} onPick={pickBar} lang={lang} />
-          <TakeReview
+          <TakeReview drill={drill} cal={cal}
             m={res.m}
             lang={lang}
             next={res.lad.message[lang]}
@@ -1516,7 +1516,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     const byMic = !midi.devices.length;
     const drumMic = inst === 'drums' ? drumMicOf(kit) : undefined;
     const shown = new Set(shownFamilies({ ...ds, bassTuning, drumMic }).flatMap((f) => f.levels.map((l) => l.id)));
-    return strandsFor(inst, ds.emphasis)
+    return strandsFor(inst, ds.emphasis, { mic: byMic && inst === 'piano' })
       .map((x) => ({
         ...x,
         rungs: x.rungs
@@ -1524,7 +1524,9 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
             const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
             if (!lv || !shown.has(lv.id)) return null;
             const key = Array.isArray(lv.keys) && !lv.keys.includes(r.key) ? lv.keys[0] : r.key;
-            const drill = withBassTuning([generate({ ...lv.specs[0], key })], bassTuning)[0];
+            const d0 = withBassTuning([generate({ ...(lv.specs[r.spec ?? 0] ?? lv.specs[0]), key })], bassTuning)[0];
+            // one phone screen: a long one-hand scale (the touch steps by microphone) shows two lines at a time
+            const drill = inst === 'piano' && d0.notes.length > 16 && !d0.paged ? { ...d0, paged: true } : d0;
             if (inst === 'piano' && byMic && micUnmeasurable(drill).length) return null;
             return { ...r, drill, title: lv.title };
           })
@@ -1539,8 +1541,10 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   const [last, setLast] = useState<TakeMetrics | null>(null);
   const [take, setTake] = useState(0);
   const [auto, setAuto] = useState(false);
-  const placed = useRef<Partial<Record<FamilyId, number>>[]>([]);
+  const placed = useRef<{ strand: StrandId; places: Partial<Record<FamilyId, number>> }[]>([]);
   const [summary, setSummary] = useState<Partial<Record<FamilyId, number>> | null>(null);
+  // Owner's item 4: places the test inferred (not measured) are shown as such
+  const [inferred, setInferred] = useState<FamilyId[]>([]);
   const session = useRef(`t${Date.now().toString(36)}`);
   const n = useRef(0);
   const timer = useRef(0);
@@ -1548,9 +1552,13 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   const strand = strands[si];
   const rung = strand && st.at >= 0 ? strand.rungs[st.at] : null;
   const finishStrand = (s: StrandState) => {
-    placed.current.push(strandPlaces(strand, s));
+    placed.current.push({ strand: strand.id, places: strandPlaces(strand, s) });
     const k = si + 1;
-    if (k >= strands.length) return setSummary(testStart(inst, mergePlaces(...placed.current)));
+    if (k >= strands.length) {
+      const fin = finishPlaces(placed.current, !midi.devices.length && inst === 'piano');
+      setInferred(fin.inferred);
+      return setSummary(testStart(inst, fin.places));
+    }
     setSi(k);
     setSt(startState(strands[k].rungs.length));
     setLast(null);
@@ -1605,11 +1613,17 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
           {cat
             .filter((f) => (summary[f.id] ?? 1) > 1)
             .map((f) => (
-              <li key={f.id}>
+              <li key={f.id} {...(inferred.includes(f.id) ? { 'data-inferred': '1', title: MT.inferredNote[lang] } : {})}>
                 {f.title[lang]} · <b dir="ltr">{summary[f.id]}</b>
+                {inferred.includes(f.id) && <span className="field-hint"> · {MT.inferred[lang]}</span>}
               </li>
             ))}
         </ul>
+        {inferred.length > 0 && (
+          <p className="field-hint" data-inferred-note="1">
+            {MT.inferredNote[lang]}
+          </p>
+        )}
         <button className="btn primary" onClick={() => onDone(summary)} data-test-finish="1">
           {tx.next}
         </button>

@@ -196,7 +196,7 @@ export function EncoreRun({
         {!loop.res ? (
           <DrillTake key={`loop:${take}`} autoStart drill={ld} bpm={lb} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), setLoop({ ...loop, res: m }))} onBeat={setBeat} liveMarks onLive={setLive} onCount={setCounting} drumsOk={settings.headphones} />
         ) : (
-          <TakeReview m={loop.res} lang={lang} onAgain={() => (setLoop({ ...loop, res: null }), setTake((t) => t + 1))} onNext={() => (setLoop(null), setTake((t) => t + 1))} nextLabel={he ? 'כל המשפט' : 'Whole phrase'} />
+          <TakeReview drill={drill} cal={cal} m={loop.res} lang={lang} onAgain={() => (setLoop({ ...loop, res: null }), setTake((t) => t + 1))} onNext={() => (setLoop(null), setTake((t) => t + 1))} nextLabel={he ? 'כל המשפט' : 'Whole phrase'} />
         )}
       </div>
     );
@@ -242,6 +242,8 @@ export function EncoreRun({
       {!res && !stage && <DrillTake key={`t:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), settle(m, 'tempo', bpm, p))} onBeat={setBeat} liveMarks={ds.liveMarks !== 'never'} onLive={setLive} onCount={setCounting} drumsOk={settings.headphones} />}
       {res && (
         <TakeReview
+          drill={drill}
+          cal={cal}
           m={res.m}
           lang={lang}
           free={res.stage === 'free'}

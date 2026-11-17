@@ -386,7 +386,8 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     if (!group.every((x) => lv.has(noteKey(x)))) return { mk: undefined, dev: null };
     const ms = group.map((x) => markOf(lv.get(noteKey(x)), live!.win));
     const mk = worstMark(ms);
-    return { mk, dev: mk === 'early' || mk === 'late' ? (lv.get(noteKey(group[ms.indexOf(mk)]))?.dev ?? null) : null };
+    // B15: an 'ok' note keeps its offset too, for the faint tick between one and two SD limits
+    return { mk, dev: mk === 'early' || mk === 'late' || mk === 'ok' ? (lv.get(noteKey(group[ms.indexOf(mk)]))?.dev ?? null) : null };
   };
   const lh = withOrns(drill.notes.filter((n) => n.hand === 'L'));
   const pf = result ? priorFor(prior) : null;
@@ -732,9 +733,18 @@ export function EvennessStrip({ m, lang }: { m: TakeMetrics; lang: Lang }) {
   );
 }
 
-export function VelocityCurve({ m, lang }: { m: TakeMetrics; lang: Lang }) {
+export function VelocityCurve({ m, lang, drill, cal }: { m: TakeMetrics; lang: Lang; /** B14: with the drill, the same stepped bars and target outlines as the live row. */ drill?: Drill; cal?: DrillCalibration }) {
   const pts = m.perNote.filter((r) => r.played);
   if (pts.length < 2) return null;
+  // MEASUREMENT-AUDIT B14: the "Why?" sheet reads like the live velocity bars — four steps of the calibrated range, the
+  // target as a hollow outline, a thick top on an accented note — not raw vel/127 dots.
+  if (drill)
+    return (
+      <figure className="drill-chart" data-vel-curve="bars">
+        <figcaption>{TX[lang].velocity}</figcaption>
+        <VelocityBars bars={velBars(drill, m.perNote, cal)} />
+      </figure>
+    );
   const W = 300;
   const H = 60;
   return (
@@ -914,9 +924,18 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const open = new Map<number, PlayedNote>();
     // Sustain pedal (CC64): every MIDI take (MEASUREMENT-AUDIT G6) — graded on pedalling drills, soft information elsewhere.
     const pedal: PedalEvent[] = [];
+    // MEASUREMENT-AUDIT G13: the soft pedal (CC67), graded only where a piece writes una corda.
+    const softPedal: PedalEvent[] = [];
     let pedalWas = false;
+    let softWas = false;
     const offCC = midi.devices.length && !drum
       ? midi.onCC((cc, value, at) => {
+          if (cc === 67 && zero) {
+            const sd = value >= 64;
+            if (sd !== softWas) softPedal.push({ at: at - zero - cal.latencyMs, down: sd });
+            softWas = sd;
+            return;
+          }
           if (cc !== 64 || !zero) return;
           const d = pedalDown(value);
           // AUDIT-7 #10: a half-pedal drill keeps every CC64 sample (the partial lift is in the values between).
@@ -997,6 +1016,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       void listenLoop(new BrowserPitchCapture(), micStop.signal, (f) => {
         if (!zero) return;
         const now = performance.now();
+        // MEASUREMENT-AUDIT (second round): the sound's energy too, so the touch a phone can hear is measured (micTouch.ts)
+        frames.push({ t: now - zero - cal.latencyMs, hz: f.hz, conf: f.confidence, rms: f.rms });
         if (!f.hz || f.confidence < 0.85) {
           last = null;
           cand = null;
@@ -1158,7 +1179,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const heardNotes = answer(notes);
     // Sung licks (the voice course): the voice's timing tolerance, always by microphone.
     // The pedal (B5 / G6) is graded inside the analysis now, per change, so its marks reach the staff.
-    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung, ...(midi.devices.length && !pianoMicTake ? { pedal } : {}) });
+    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung, ...(midi.devices.length && !pianoMicTake ? { pedal, softPedal } : {}), ...(pianoMicTake && !drill.sung && frames.length ? { frames: frames.map((f) => ({ t: f.t, rms: f.rms })) } : {}) });
     done(m, heardNotes);
   };
   startRef.current = start;

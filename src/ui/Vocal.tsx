@@ -79,6 +79,7 @@ import { NoVoiceBanner, VoiceCheck } from './VoiceCheck';
 import { prefersCalm } from './Flight';
 
 import { paceFrames, SIM_RT } from './simRt';
+import { MT } from '../i18n/measureText';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -162,8 +163,11 @@ export function PitchTrace({ frames, targets, seconds, label, fold = true, bands
 
 function MetricBars({ t, g }: { t: Strings; g: TakeGrade }) {
   const lang = t.back === 'Back' ? 'en' : 'he';
-  const shown = [...g.metrics].sort((a, b) => b.weight - a.weight).filter((m, i, a) => a.findIndex((x) => x.key === m.key) === i).slice(0, 4);
+  const shown = [...g.metrics].filter((m) => m.weight > 0).sort((a, b) => b.weight - a.weight).filter((m, i, a) => a.findIndex((x) => x.key === m.key) === i).slice(0, 4);
+  // MEASUREMENT-AUDIT G15: soft information (weight 0, never scored) — one line under the bars
+  const bright = g.metrics.find((m) => m.key === 'brightness');
   return (
+    <>
     <ul className="metric-bars">
       {shown.map((m) => (
         <li key={m.key} className={m.score >= 0.8 ? 'good' : m.score >= 0.5 ? 'fair' : 'weak'}>
@@ -177,6 +181,12 @@ function MetricBars({ t, g }: { t: Strings; g: TakeGrade }) {
         </li>
       ))}
     </ul>
+    {bright && Math.abs(bright.value) >= 5 && (
+      <p className="field-hint" data-brightness={Math.round(bright.value)}>
+        {MT.brightness[lang]} <bdi dir="ltr">{bright.value > 0 ? '+' : '−'}{Math.abs(Math.round(bright.value))}%</bdi>
+      </p>
+    )}
+    </>
   );
 }
 
@@ -1039,6 +1049,8 @@ function VocalSession({
           endSilenceMs: melodic ? (item.kind === 'staccato' ? 1200 : 900) : 700,
           hopMs: 20,
           record: true,
+          // G15: the spectral centroid on held notes (brightness within the note, soft information)
+          centroid: item.kind === 'hold' || item.kind === 'straight' || item.kind === 'messa',
           onFrame: keepShifted,
         });
         clickCtl.abort();
