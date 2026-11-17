@@ -1,4 +1,4 @@
-/* Studio look — the game screens (redesign 2026-11-17). Every rule is scoped under :root[data-look='studio'].
+/* Studio look — the game screens (redesign 2026-11-17). Every rule is scoped under :root:root (see src/studio.css).
    One frame for every game that draws its header with G2Head (src/ui/GameCover.tsx marks its <main>):
    - cover (setup): back · Paper glyph on a course-tinted panel · name + one-line goal · compact option rows ·
      the Play button pinned at the bottom. The full setup paragraph sits behind "How to play".
@@ -7,7 +7,7 @@
    Hairline borders and soft shadows only; the hard ink shadow stays on the main lemon CTA. Rubik only. */
 
 /* ---------------------------------------------------------------- course hue */
-:root[data-look='studio'] main[data-gframe] {
+:root:root main[data-gframe] {
   --gc: var(--sky);
   --gs-tint: color-mix(in srgb, var(--gc) 11%, var(--bg));
   --gs-tint-2: color-mix(in srgb, var(--gc) 20%, var(--bg));
@@ -15,20 +15,20 @@
   --gs-soft: 0 1px 2px rgba(30, 16, 51, 0.06), 0 2px 8px rgba(30, 16, 51, 0.06);
   --gs-r: 16px;
 }
-:root[data-look='studio'] main[data-gframe][data-gcourse='voice'] { --gc: var(--teal); }
-:root[data-look='studio'] main[data-gframe][data-gcourse='keys'] { --gc: var(--lilac); }
-:root[data-look='studio'] main[data-gframe][data-gcourse='jazz'] { --gc: var(--lilac); }
-:root[data-look='studio'] main[data-gframe][data-gcourse='guitar'] { --gc: var(--tangerine); }
-:root[data-look='studio'] main[data-gframe][data-gcourse='bass'] { --gc: var(--pink); }
-:root[data-look='studio'] main[data-gframe][data-gcourse='drums'] { --gc: var(--pink); }
-:root[data-look='studio'][data-theme='dark'] main[data-gframe] {
+:root:root main[data-gframe][data-gcourse='voice'] { --gc: var(--teal); }
+:root:root main[data-gframe][data-gcourse='keys'] { --gc: var(--lilac); }
+:root:root main[data-gframe][data-gcourse='jazz'] { --gc: var(--lilac); }
+:root:root main[data-gframe][data-gcourse='guitar'] { --gc: var(--tangerine); }
+:root:root main[data-gframe][data-gcourse='bass'] { --gc: var(--pink); }
+:root:root main[data-gframe][data-gcourse='drums'] { --gc: var(--pink); }
+:root:root[data-theme='dark'] main[data-gframe] {
   --gs-tint: color-mix(in srgb, var(--gc) 12%, var(--bg));
   --gs-tint-2: color-mix(in srgb, var(--gc) 22%, var(--card));
   --gs-soft: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* ---------------------------------------------------------------- the frame */
-:root[data-look='studio'] main[data-gframe] {
+:root:root main[data-gframe] {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -39,18 +39,18 @@
   padding: 6px 16px max(14px, env(safe-area-inset-bottom));
   font-family: var(--font);
 }
-:root[data-look='studio'] main[data-gframe] :is(h1, h2, h3, b, strong, .btn, button) {
+:root:root main[data-gframe] :is(h1, h2, h3, b, strong, .btn, button) {
   font-family: var(--font);
 }
 
 /* a game owns the whole screen: no app padding around it (the frame pads itself) */
-:root[data-look='studio'] .app:has(> main[data-gframe]) {
+:root:root .app:has(> main[data-gframe]) {
   padding-block: 0;
   padding-inline: 0;
 }
 
 /* the top row: back on the inline start, then progress, then the counter */
-:root[data-look='studio'] main[data-gframe] > .g2-head {
+:root:root main[data-gframe] > .g2-head {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -59,7 +59,7 @@
   padding: 0;
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head .icon-btn {
+:root:root main[data-gframe] > .g2-head .icon-btn {
   inline-size: 40px;
   block-size: 40px;
   min-inline-size: 40px;
@@ -70,10 +70,10 @@
   box-shadow: none;
   color: var(--ink);
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head .icon-btn:hover {
+:root:root main[data-gframe] > .g2-head .icon-btn:hover {
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head h1 {
+:root:root main[data-gframe] > .g2-head h1 {
   flex: 1;
   min-inline-size: 0;
   margin: 0;
@@ -86,19 +86,19 @@
   text-overflow: ellipsis;
   overflow-wrap: normal;
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head:has(.gs-segs) h1 {
+:root:root main[data-gframe] > .g2-head:has(.gs-segs) h1 {
   display: none;
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head .g2-hud-mini {
+:root:root main[data-gframe] > .g2-head .g2-hud-mini {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head:has(.gs-segs) .g2-hud-mini {
+:root:root main[data-gframe] > .g2-head:has(.gs-segs) .g2-hud-mini {
   display: none;
 }
-:root[data-look='studio'] main[data-gframe] > .g2-head .gs-score {
+:root:root main[data-gframe] > .g2-head .gs-score {
   flex: none;
   min-inline-size: 2ch;
   font-size: 1rem;
@@ -107,54 +107,54 @@
   font-variant-numeric: tabular-nums;
   text-align: end;
 }
-:root[data-look='studio'] main[data-gframe].rush-play .rush-hud > .rush-score {
+:root:root main[data-gframe].rush-play .rush-hud > .rush-score {
   display: none;
 }
-:root[data-look='studio'] .gs-segs {
+:root:root .gs-segs {
   flex: 1;
   display: grid;
   gap: 4px;
   min-inline-size: 0;
 }
-:root[data-look='studio'] .gs-segs i {
+:root:root .gs-segs i {
   block-size: 6px;
   border-radius: 99px;
   background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
-:root[data-look='studio'] .gs-segs i.d {
+:root:root .gs-segs i.d {
   background: var(--accent);
 }
-:root[data-look='studio'] .gs-segs i.c {
+:root:root .gs-segs i.c {
   background: color-mix(in srgb, var(--accent) 45%, transparent);
 }
-:root[data-look='studio'] .gs-segs.bar {
+:root:root .gs-segs.bar {
   display: block;
   block-size: 6px;
   border-radius: 99px;
   background: color-mix(in srgb, var(--ink) 10%, transparent);
   overflow: hidden;
 }
-:root[data-look='studio'] .gs-segs.bar i {
+:root:root .gs-segs.bar i {
   display: block;
   block-size: 100%;
   background: var(--accent);
 }
 
 /* ---------------------------------------------------------------- cover (setup) */
-:root[data-look='studio'] .gs-cover {
+:root:root .gs-cover {
   display: none;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > .gs-cover {
+:root:root main[data-gframe][data-gphase='setup'] > .gs-cover {
   display: flex;
   flex-direction: column;
   gap: 10px;
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > .g2-head h1 {
+:root:root main[data-gframe][data-gphase='setup'] > .g2-head h1 {
   /* the name moves into the cover */
   visibility: hidden;
 }
-:root[data-look='studio'] .gs-hero {
+:root:root .gs-hero {
   position: relative;
   display: grid;
   place-items: center;
@@ -163,42 +163,42 @@
   background: var(--gs-tint-2);
   overflow: hidden;
 }
-:root[data-look='studio'] .gs-lines {
+:root:root .gs-lines {
   position: absolute;
   inset: 0;
   inline-size: 100%;
   block-size: 100%;
 }
-:root[data-look='studio'] .gs-lines line {
+:root:root .gs-lines line {
   stroke: color-mix(in srgb, var(--gc) 35%, transparent);
   stroke-width: 1.2;
   vector-effect: non-scaling-stroke;
 }
-:root[data-look='studio'] .gs-glyph {
+:root:root .gs-glyph {
   position: relative;
   inline-size: auto;
   block-size: 72%;
   max-block-size: 120px;
 }
-:root[data-look='studio'] .gs-title {
+:root:root .gs-title {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-:root[data-look='studio'] .gs-title h2 {
+:root:root .gs-title h2 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
   color: var(--ink);
 }
-:root[data-look='studio'] .gs-title p {
+:root:root .gs-title p {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.45;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .gs-howto {
+:root:root .gs-howto {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
@@ -212,23 +212,23 @@
   font-weight: 600;
   cursor: pointer;
 }
-:root[data-look='studio'] .gs-howto[aria-expanded='true'] .gs-chev {
+:root:root .gs-howto[aria-expanded='true'] .gs-chev {
   transform: rotate(90deg);
 }
-:root[data-look='studio'] .gs-chev {
+:root:root .gs-chev {
   display: inline-flex;
   inline-size: 16px;
   block-size: 16px;
   line-height: 1;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .gs-chev svg {
+:root:root .gs-chev svg {
   inline-size: 100%;
   block-size: 100%;
 }
 
 /* the setup card turns into a list of compact rows */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) {
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -239,34 +239,34 @@
   box-shadow: none;
 }
 /* the long setup paragraph waits behind "How to play" */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'][data-howto='0'] > :is(.g2-card, section) > p:first-child {
+:root:root main[data-gframe][data-gphase='setup'][data-howto='0'] > :is(.g2-card, section) > p:first-child {
   display: none;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) > p:first-child {
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) > p:first-child {
   font-size: 0.9rem;
   color: var(--ink-dim);
   padding: 10px 12px;
   border-radius: 12px;
   background: var(--card-2);
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] :is(.g2-dim, .field-hint, .tier-line) {
+:root:root main[data-gframe][data-gphase='setup'] :is(.g2-dim, .field-hint, .tier-line) {
   font-size: 0.85rem;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] :is(.g2-best, .rush-best) {
+:root:root main[data-gframe][data-gphase='setup'] :is(.g2-best, .rush-best) {
   order: -1;
   margin: 0;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] :is(.g2-best, .rush-best) b {
+:root:root main[data-gframe][data-gphase='setup'] :is(.g2-best, .rush-best) b {
   color: var(--ink);
   font-weight: 700;
 }
 
 /* one row = label · value · chevron (the level row, the "More" chip) */
-:root[data-look='studio'] .gs-row,
-:root[data-look='studio'] main[data-gframe] .setup-more-chip {
+:root:root .gs-row,
+:root:root main[data-gframe] .setup-more-chip {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -284,11 +284,11 @@
   text-align: start;
   cursor: pointer;
 }
-:root[data-look='studio'] .gs-row-k {
+:root:root .gs-row-k {
   flex: none;
   font-weight: 600;
 }
-:root[data-look='studio'] .gs-row-v {
+:root:root .gs-row-v {
   flex: 1;
   min-inline-size: 0;
   display: flex;
@@ -297,35 +297,35 @@
   gap: 8px;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .gs-row-v .dyn {
+:root:root .gs-row-v .dyn {
   flex: none;
   white-space: nowrap;
   font-size: 1.2rem;
   color: var(--ink);
 }
-:root[data-look='studio'] .gs-row-v small {
+:root:root .gs-row-v small {
   font-size: 0.82rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-inline-size: 0;
 }
-:root[data-look='studio'] main[data-gframe] .setup-more-chip .sm-label {
+:root:root main[data-gframe] .setup-more-chip .sm-label {
   font-weight: 600;
 }
-:root[data-look='studio'] main[data-gframe] .setup-more-chip .sm-sum {
+:root:root main[data-gframe] .setup-more-chip .sm-sum {
   flex: 1;
   text-align: end;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .gs-tier-sheet .tier-field {
+:root:root .gs-tier-sheet .tier-field {
   border: 0;
   padding: 0;
   margin: 0;
 }
 
 /* segmented controls (input mode, tiles show …): a quiet track, the picked one lifted */
-:root[data-look='studio'] main[data-gframe] :is(.seg, .rush-seg) {
+:root:root main[data-gframe] :is(.seg, .rush-seg) {
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -334,7 +334,7 @@
   background: color-mix(in srgb, var(--ink) 7%, transparent);
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe] :is(.seg, .rush-seg) > button {
+:root:root main[data-gframe] :is(.seg, .rush-seg) > button {
   flex: 1;
   min-block-size: 36px;
   border: 0;
@@ -345,18 +345,18 @@
   font-size: 0.9rem;
   font-weight: 600;
 }
-:root[data-look='studio'] main[data-gframe] :is(.seg, .rush-seg) > button:is(.on, [aria-checked='true']) {
+:root:root main[data-gframe] :is(.seg, .rush-seg) > button:is(.on, [aria-checked='true']) {
   background: var(--card);
   color: var(--ink);
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.14);
 }
-:root[data-look='studio'] main[data-gframe] :is(.seg-field, .rush-field, fieldset) {
+:root:root main[data-gframe] :is(.seg-field, .rush-field, fieldset) {
   border: 0;
   padding: 0;
   margin: 0;
   min-inline-size: 0;
 }
-:root[data-look='studio'] main[data-gframe] :is(.seg-field, .rush-field) > legend {
+:root:root main[data-gframe] :is(.seg-field, .rush-field) > legend {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--ink-dim);
@@ -365,12 +365,12 @@
 }
 
 /* the Play button sits at the bottom of the cover */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) > :is(.btn.mega, .g2-col, .g2-row):last-child {
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) > :is(.btn.mega, .g2-col, .g2-row):last-child {
   margin-block-start: auto;
   position: sticky;
   bottom: max(10px, env(safe-area-inset-bottom));
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] :is(.g2-col, .g2-row):last-child {
+:root:root main[data-gframe][data-gphase='setup'] :is(.g2-col, .g2-row):last-child {
   flex: none;
   display: flex;
   flex-direction: column;
@@ -378,7 +378,7 @@
 }
 
 /* ---------------------------------------------------------------- buttons inside games */
-:root[data-look='studio'] main[data-gframe] .btn {
+:root:root main[data-gframe] .btn {
   border: 1px solid var(--line);
   border-style: solid;
   border-radius: 14px;
@@ -387,17 +387,17 @@
   font-weight: 600;
   box-shadow: var(--gs-soft);
 }
-:root[data-look='studio'] main[data-gframe] .btn.ghost {
+:root:root main[data-gframe] .btn.ghost {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
   color: var(--accent);
 }
-:root[data-look='studio'] main[data-gframe] .btn.small {
+:root:root main[data-gframe] .btn.small {
   box-shadow: none;
 }
 /* the main CTA: lemon with the one hard ink shadow */
-:root[data-look='studio'] main[data-gframe] .btn:is(.mega, .primary) {
+:root:root main[data-gframe] .btn:is(.mega, .primary) {
   min-block-size: 52px;
   border: 2px solid var(--ink-c);
   border-radius: 16px;
@@ -407,13 +407,13 @@
   font-size: 1.05rem;
   box-shadow: var(--sx) 4px 0 var(--ink-c);
 }
-:root[data-look='studio'] main[data-gframe] .btn:is(.mega, .primary):active:not(:disabled) {
+:root:root main[data-gframe] .btn:is(.mega, .primary):active:not(:disabled) {
   transform: translate(var(--sx), 4px);
   box-shadow: 0 0 0 var(--ink-c);
 }
 /* disabled = faded, never dashed, never pale yellow */
-:root[data-look='studio'] main[data-gframe] .btn:disabled,
-:root[data-look='studio'] main[data-gframe] .btn:is(.mega, .primary):disabled {
+:root:root main[data-gframe] .btn:disabled,
+:root:root main[data-gframe] .btn:is(.mega, .primary):disabled {
   opacity: 1;
   border: 1px solid var(--line);
   border-style: solid;
@@ -422,15 +422,15 @@
   box-shadow: none;
 }
 /* Listen / Play again buttons are tonal, not a second lemon CTA */
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] :is([data-listen], .rush-replay, .mp-listen .btn, .btn.mega.listen):not(:disabled) {
+:root:root main[data-gframe][data-gphase='play'] :is([data-listen], .rush-replay, .mp-listen .btn, .btn.mega.listen):not(:disabled) {
   background: var(--gs-tint-2);
   border-color: transparent;
   color: var(--ink);
   box-shadow: none;
 }
 /* …except the step's own Check / Next / Submit at the foot */
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] :is(.ng-foot, .mp-actions, .tr-actions) .btn.mega:not(:disabled),
-:root[data-look='studio'] main[data-gframe] [data-ng-next] {
+:root:root main[data-gframe][data-gphase='play'] :is(.ng-foot, .mp-actions, .tr-actions) .btn.mega:not(:disabled),
+:root:root main[data-gframe] [data-ng-next] {
   background: var(--lemon);
   border: 2px solid var(--ink-c);
   color: var(--ink-c);
@@ -439,7 +439,7 @@
 
 /* ---------------------------------------------------------------- play */
 /* the stats line: Lives 3/3 · Score 40 · Level mp — one quiet row, no caps, no cards */
-:root[data-look='studio'] main[data-gframe] :is(.adv-hud, .g2-hud, .rush-hud) {
+:root:root main[data-gframe] :is(.adv-hud, .g2-hud, .rush-hud) {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -452,7 +452,7 @@
   box-shadow: none;
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe] :is(.adv-hud, .g2-hud) > * {
+:root:root main[data-gframe] :is(.adv-hud, .g2-hud) > * {
   flex: none;
   flex-direction: row;
   align-items: baseline;
@@ -463,64 +463,64 @@
   box-shadow: none;
   min-inline-size: 0;
 }
-:root[data-look='studio'] main[data-gframe] :is(.adv-hud, .g2-hud, .rush-hud) small {
+:root:root main[data-gframe] :is(.adv-hud, .g2-hud, .rush-hud) small {
   font-size: 0.78rem;
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] main[data-gframe] :is(.adv-hud, .g2-hud) :is(b, .dyn) {
+:root:root main[data-gframe] :is(.adv-hud, .g2-hud) :is(b, .dyn) {
   font-size: 1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 /* the stage: cards sit on the tinted page; the board takes the free height */
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] > :is(.ng-board, .rush-stage, .g2-stage, .g2-card, .g2-play, [class$='-stage'], [class$='-board']) {
+:root:root main[data-gframe][data-gphase='play'] > :is(.ng-board, .rush-stage, .g2-stage, .g2-card, .g2-play, [class$='-stage'], [class$='-board']) {
   flex: 1 0 auto;
   justify-content: center;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] > :is(.g2-card, .ng-board, .rush-stage, [class$='-stage']) {
+:root:root main[data-gframe][data-gphase='play'] > :is(.g2-card, .ng-board, .rush-stage, [class$='-stage']) {
   border: 0;
   border-radius: 22px;
   padding: 14px;
   background: var(--gs-tint);
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe] .rush-hud {
+:root:root main[data-gframe] .rush-hud {
   justify-content: center;
 }
-:root[data-look='studio'] main[data-gframe] .rush-hud > * {
+:root:root main[data-gframe] .rush-hud > * {
   display: flex;
   align-items: baseline;
   gap: 5px;
 }
-:root[data-look='studio'] main[data-gframe] .rush-hud small {
+:root:root main[data-gframe] .rush-hud small {
   display: inline;
 }
-:root[data-look='studio'] main[data-gframe] .rush-hud b {
+:root:root main[data-gframe] .rush-hud b {
   font-family: var(--font);
   font-size: 1rem;
   font-weight: 700;
 }
-:root[data-look='studio'] main[data-gframe] .rush-clock svg {
+:root:root main[data-gframe] .rush-clock svg {
   inline-size: 26px;
   block-size: 26px;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] > :last-child:not(.g2-head) {
+:root:root main[data-gframe][data-gphase='play'] > :last-child:not(.g2-head) {
   margin-block-start: auto;
 }
-:root[data-look='studio'] main[data-gframe] :is(.ng-foot, .adv-line) {
+:root:root main[data-gframe] :is(.ng-foot, .adv-line) {
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe] .adv-line {
+:root:root main[data-gframe] .adv-line {
   font-size: 0.95rem;
   font-weight: 600;
 }
 
 /* answer tiles: clean cards */
-:root[data-look='studio'] main[data-gframe] :is(.rush-ans, .ng-opt, .g2-options > button, .hn-choices .btn) {
+:root:root main[data-gframe] :is(.rush-ans, .ng-opt, .g2-options > button, .hn-choices .btn) {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card);
@@ -528,13 +528,13 @@
   box-shadow: var(--gs-soft);
   font-weight: 600;
 }
-:root[data-look='studio'] main[data-gframe] :is(.rush-ans, .ng-opt):active:not(:disabled) {
+:root:root main[data-gframe] :is(.rush-ans, .ng-opt):active:not(:disabled) {
   transform: translateY(1px);
   box-shadow: none;
 }
 
 /* slot rows never orphan one slot: one row, equal columns */
-:root[data-look='studio'] main[data-gframe] :is(.mp-slots, .tr-slots, .ng-slots) {
+:root:root main[data-gframe] :is(.mp-slots, .tr-slots, .ng-slots) {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
@@ -544,29 +544,29 @@
 }
 
 /* ---------------------------------------------------------------- results */
-:root[data-look='studio'] main[data-gframe][data-gphase='over'] > .g2-head h1 {
+:root:root main[data-gframe][data-gphase='over'] > .g2-head h1 {
   visibility: visible;
 }
 
 /* ---------------------------------------------------------------- more cover rules */
 /* the rules line right after the paragraph waits behind "How to play" too */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'][data-howto='0'] > :is(.g2-card, section) > p:first-child + p.g2-dim,
-:root[data-look='studio'] main[data-gframe].mp-intro[data-howto='0'] .field-hint {
+:root:root main[data-gframe][data-gphase='setup'][data-howto='0'] > :is(.g2-card, section) > p:first-child + p.g2-dim,
+:root:root main[data-gframe].mp-intro[data-howto='0'] .field-hint {
   display: none;
 }
 /* a Start button outside the card (Melody Puzzle …) also drops to the bottom */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > .btn:is(.mega, .primary) {
+:root:root main[data-gframe][data-gphase='setup'] > .btn:is(.mega, .primary) {
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) + .btn,
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) + .btn + .btn {
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) + .btn,
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section) + .btn + .btn {
   margin-block-start: 0;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] > :is(.g2-card, section):not(:last-child) {
+:root:root main[data-gframe][data-gphase='setup'] > :is(.g2-card, section):not(:last-child) {
   flex: 1 0 auto;
 }
 /* the MIDI / mic check: a hairline row, not an ink box */
-:root[data-look='studio'] main[data-gframe] :is(.input-check, .ic, [class^='inputcheck']) {
+:root:root main[data-gframe] :is(.input-check, .ic, [class^='inputcheck']) {
   border: 1px solid var(--line);
   border-radius: 14px;
   box-shadow: none;
@@ -574,11 +574,11 @@
 }
 
 /* ---------------------------------------------------------------- setup buttons never stretch */
-:root[data-look='studio'] main[data-gframe][data-gphase='setup'] :is(.g2-row, .g2-col) > .btn {
+:root:root main[data-gframe][data-gphase='setup'] :is(.g2-row, .g2-col) > .btn {
   flex: none;
   inline-size: 100%;
 }
-:root[data-look='studio'] main[data-gframe] :is(.seg, .rush-seg) > button {
+:root:root main[data-gframe] :is(.seg, .rush-seg) > button {
   padding-inline: 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -587,7 +587,7 @@
 }
 
 /* ---------------------------------------------------------------- Melody Puzzle */
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-top {
+:root:root main[data-gframe].mp-play > .mp-top {
   display: flex;
   justify-content: center;
   min-block-size: 0;
@@ -597,10 +597,10 @@
   background: none;
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-top > :not(.mp-key) {
+:root:root main[data-gframe].mp-play > .mp-top > :not(.mp-key) {
   display: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play .mp-key {
+:root:root main[data-gframe].mp-play .mp-key {
   padding: 4px 12px;
   border: 1px solid var(--line);
   border-radius: 99px;
@@ -609,17 +609,17 @@
   font-size: 0.9rem;
   font-weight: 600;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-listen {
+:root:root main[data-gframe].mp-play > .mp-listen {
   flex: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-slots {
+:root:root main[data-gframe].mp-play > .mp-slots {
   margin: 0;
   padding: 14px;
   border-radius: 22px 22px 0 0;
   background: var(--gs-tint);
   list-style: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-tray {
+:root:root main[data-gframe].mp-play > .mp-tray {
   flex: 1 0 auto;
   align-content: center;
   margin: 0;
@@ -630,7 +630,7 @@
   background: var(--gs-tint);
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play .mp-slot {
+:root:root main[data-gframe].mp-play .mp-slot {
   inline-size: 100%;
   min-inline-size: 0;
   border: 1px solid var(--gs-line);
@@ -639,15 +639,15 @@
   background: color-mix(in srgb, var(--card) 60%, transparent);
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe].mp-play .mp-slot.filled {
+:root:root main[data-gframe].mp-play .mp-slot.filled {
   background: var(--card);
   border-color: var(--line);
   box-shadow: var(--gs-soft);
 }
-:root[data-look='studio'] main[data-gframe].mp-play .mp-slot.active {
+:root:root main[data-gframe].mp-play .mp-slot.active {
   border: 2px solid var(--accent);
 }
-:root[data-look='studio'] main[data-gframe] .mp-tile:not(.mp-ghost) {
+:root:root main[data-gframe] .mp-tile:not(.mp-ghost) {
   border: 0;
   border-radius: 14px;
   background: var(--accent);
@@ -655,20 +655,20 @@
   box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 60%, var(--ink-c));
   font-weight: 700;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-actions {
+:root:root main[data-gframe].mp-play > .mp-actions {
   flex: none;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .mp-actions .btn:not(.mega) {
+:root:root main[data-gframe].mp-play > .mp-actions .btn:not(.mega) {
   background: transparent;
   border-color: transparent;
   box-shadow: none;
   color: var(--accent);
   min-block-size: 36px;
 }
-:root[data-look='studio'] main[data-gframe].mp-play > .hint {
+:root:root main[data-gframe].mp-play > .hint {
   margin: 0;
   text-align: center;
   font-size: 0.82rem;
@@ -676,43 +676,43 @@
 }
 
 /* hover keeps each tier's colour (v2's hover rules are stronger than plain ones) */
-:root[data-look='studio'] main[data-gframe] .btn:is(.mega, .primary):hover:not(:disabled) {
+:root:root main[data-gframe] .btn:is(.mega, .primary):hover:not(:disabled) {
   background: color-mix(in srgb, var(--lemon) 90%, var(--ink-c));
   color: var(--ink-c);
 }
-:root[data-look='studio'] main[data-gframe] .btn:not(.mega):not(.primary):not(.ghost):hover:not(:disabled) {
+:root:root main[data-gframe] .btn:not(.mega):not(.primary):not(.ghost):hover:not(:disabled) {
   background: var(--card-2);
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] :is([data-listen], .rush-replay, .mp-listen .btn, .btn.mega.listen):not(:disabled):hover {
+:root:root main[data-gframe][data-gphase='play'] :is([data-listen], .rush-replay, .mp-listen .btn, .btn.mega.listen):not(:disabled):hover {
   background: color-mix(in srgb, var(--gs-tint-2) 80%, var(--ink) 6%);
   color: var(--ink);
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='play'] :is(.ng-foot, .mp-actions, .tr-actions) .btn.mega:not(:disabled):hover {
+:root:root main[data-gframe][data-gphase='play'] :is(.ng-foot, .mp-actions, .tr-actions) .btn.mega:not(:disabled):hover {
   background: color-mix(in srgb, var(--lemon) 90%, var(--ink-c));
 }
 /* segmented controls beat the game sheets' own .seg rules */
-:root[data-look='studio'] main[data-gframe][data-gphase] :is(.seg, .rush-seg) > button:is(.on, [aria-checked='true']) {
+:root:root main[data-gframe][data-gphase] :is(.seg, .rush-seg) > button:is(.on, [aria-checked='true']) {
   background: var(--card);
   color: var(--ink);
   border: 0;
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.14);
 }
-:root[data-look='studio'] main[data-gframe][data-gphase] :is(.seg, .rush-seg) > button:not(.on):not([aria-checked='true']) {
+:root:root main[data-gframe][data-gphase] :is(.seg, .rush-seg) > button:not(.on):not([aria-checked='true']) {
   background: transparent;
   border: 0;
   box-shadow: none;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase] :is(.seg, .rush-seg) {
+:root:root main[data-gframe][data-gphase] :is(.seg, .rush-seg) {
   border: 0;
   background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 /* ---------------------------------------------------------------- Echo Chain / Beat Echo (their own play screen) */
-:root[data-look='studio'] .app:has(> main.game) {
+:root:root .app:has(> main.game) {
   padding-block: 0;
   padding-inline: 0;
 }
-:root[data-look='studio'] main.game {
+:root:root main.game {
   --gs-tint: color-mix(in srgb, var(--sky) 11%, var(--bg));
   display: flex;
   flex-direction: column;
@@ -723,10 +723,10 @@
   margin-inline: auto;
   padding: 6px 16px max(14px, env(safe-area-inset-bottom));
 }
-:root[data-look='studio'][data-theme='dark'] main.game {
+:root:root[data-theme='dark'] main.game {
   --gs-tint: color-mix(in srgb, var(--sky) 12%, var(--bg));
 }
-:root[data-look='studio'] main.game > .lesson-top {
+:root:root main.game > .lesson-top {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -737,7 +737,7 @@
   background: none;
   box-shadow: none;
 }
-:root[data-look='studio'] main.game > .lesson-top .icon-btn {
+:root:root main.game > .lesson-top .icon-btn {
   inline-size: 40px;
   block-size: 40px;
   margin-inline-start: -8px;
@@ -746,31 +746,31 @@
   box-shadow: none;
   color: var(--ink);
 }
-:root[data-look='studio'] main.game .chain-count {
+:root:root main.game .chain-count {
   display: flex;
   align-items: baseline;
   gap: 6px;
 }
-:root[data-look='studio'] main.game .chain-count small {
+:root:root main.game .chain-count small {
   font-size: 0.8rem;
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] main.game .chain-count b {
+:root:root main.game .chain-count b {
   font-family: var(--font);
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--ink);
 }
-:root[data-look='studio'] main.game .game-name {
+:root:root main.game .game-name {
   margin-inline-start: auto;
   font-family: var(--font);
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] main.game > .game-stage {
+:root:root main.game > .game-stage {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
@@ -782,31 +782,31 @@
   background: var(--gs-tint);
   box-shadow: none;
 }
-:root[data-look='studio'] main.game :is(.pad, .echo-pad, .tap-pad) {
+:root:root main.game :is(.pad, .echo-pad, .tap-pad) {
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--gs-soft, 0 2px 8px rgba(30, 16, 51, 0.06));
 }
-:root[data-look='studio'] main.game .btn {
+:root:root main.game .btn {
   border: 1px solid var(--line);
   border-style: solid;
   box-shadow: none;
 }
 
 /* a play screen without its own stage block: the content sits low, in thumb reach, under the HUD's free space */
-:root[data-look='studio'] main[data-gframe][data-gphase='play']:not(:has(> :is(.ng-board, .rush-stage, .g2-card, .g2-stage, [class$='-stage'], [class$='-board'], .mp-slots))) > :is(.adv-hud, .g2-hud, .rush-hud) + * {
+:root:root main[data-gframe][data-gphase='play']:not(:has(> :is(.ng-board, .rush-stage, .g2-card, .g2-stage, [class$='-stage'], [class$='-board'], .mp-slots))) > :is(.adv-hud, .g2-hud, .rush-hud) + * {
   margin-block-start: auto;
 }
-:root[data-look='studio'] main[data-gframe][data-gphase='play']:not(:has(> :is(.ng-board, .rush-stage, .g2-card, .g2-stage, [class$='-stage'], [class$='-board'], .mp-slots))) > :last-child:not(.g2-head) {
+:root:root main[data-gframe][data-gphase='play']:not(:has(> :is(.ng-board, .rush-stage, .g2-card, .g2-stage, [class$='-stage'], [class$='-board'], .mp-slots))) > :last-child:not(.g2-head) {
   margin-block-start: 0;
 }
 
 /* short phones: a smaller cover panel keeps Play on the first screen */
 @media (max-height: 760px) {
-  :root[data-look='studio'] .gs-hero {
+  :root:root .gs-hero {
     block-size: clamp(84px, 19dvh, 150px);
   }
-  :root[data-look='studio'] .gs-title h2 {
+  :root:root .gs-title h2 {
     font-size: 1.3rem;
   }
 }

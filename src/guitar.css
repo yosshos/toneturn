@@ -1,5 +1,6 @@
 /* GUITAR-AUDIT (2026-11-17): chord boxes, the drill chord strip, the tab's finger row and now-column, the neck's
-   string names. Both looks; the studio look (default) gets Paper tones: ink lines, hairlines, soft shadows. */
+   string names. Base rules, then the Paper tones (:root:root, the studio layer's weight): ink lines, hairlines, soft
+   shadows. */
 
 /* ---- chord box (C1–C4, C6) ---- */
 .chord-box .box-str { stroke: #8f86a6; }
@@ -17,12 +18,12 @@
 .chord-box.compact .box-dot text { font-size: 13px; }
 .chord-box.compact .base-fret { font-size: 14px; }
 
-:root[data-look='studio'] .chord-box .box-str { stroke: #8f86a6; }
-:root[data-look='studio'] .chord-box .fret-wire { stroke: #d6cde6; stroke-width: 1.4; }
-:root[data-look='studio'] .chord-box .box-nut { stroke: #1e1033; }
-:root[data-look='studio'] .chord-box .box-dot.given circle { fill: #7c3aed; }
-:root[data-look='studio'] .chord-box .box-dot.root circle { fill: #0f9e8e; }
-:root[data-look='studio'] .chord-box .box-dot text { fill: #ffffff; }
+:root:root .chord-box .box-str { stroke: #8f86a6; }
+:root:root .chord-box .fret-wire { stroke: #d6cde6; stroke-width: 1.4; }
+:root:root .chord-box .box-nut { stroke: #1e1033; }
+:root:root .chord-box .box-dot.given circle { fill: #7c3aed; }
+:root:root .chord-box .box-dot.root circle { fill: #0f9e8e; }
+:root:root .chord-box .box-dot text { fill: #ffffff; }
 
 /* ---- Now / Next chord boxes (drills, Strum Changes) ---- */
 .chord-pair { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 0 auto 4px; direction: ltr; }
@@ -36,7 +37,7 @@
   .chord-pair .chord-box { width: 74px; }
   .chord-pair .is-next .chord-box { width: 54px; }
 }
-:root[data-look='studio'] .chord-pair figure.is-now { background: #ffffff; border-radius: 12px; padding: 3px 8px 2px; box-shadow: 0 1px 0 #ebe4f5, 0 4px 12px rgb(30 16 51 / 0.07); }
+:root:root .chord-pair figure.is-now { background: #ffffff; border-radius: 12px; padding: 3px 8px 2px; box-shadow: 0 1px 0 #ebe4f5, 0 4px 12px rgb(30 16 51 / 0.07); }
 
 /* Strum Changes: the boxes beside the big chord name */
 .bg-chords .chord-pair { margin-top: 2px; }
@@ -48,21 +49,21 @@
 .guitar-tab .svg-wrap > div { position: relative; z-index: 1; }
 .guitar-tab .tab-col-now { position: absolute; top: 6%; bottom: 6%; width: 24px; margin-left: -12px; border-radius: 8px; background: rgb(255 212 59 / 0.32); box-shadow: inset 0 0 0 1px rgb(201 138 0 / 0.28); pointer-events: none; transition: left 0.1s ease-out; z-index: 0; }
 .guitar-tab .staff-now { z-index: 0; width: 2px; margin-left: -1px; outline: 0; background: rgb(201 138 0 / 0.55); box-shadow: none; }
-:root[data-look='studio'] .guitar-tab .staff-now { width: 2px; margin-left: -1px; box-shadow: none; background: rgb(201 138 0 / 0.55); }
+:root:root .guitar-tab .staff-now { width: 2px; margin-left: -1px; box-shadow: none; background: rgb(201 138 0 / 0.55); }
 @media (prefers-reduced-motion: reduce) { .guitar-tab .tab-col-now { transition: none; } }
 
 /* ---- neck: string names at the nut (N1), inactive strings visible (N2) ---- */
 .neck .str-name { font-size: 15px; font-weight: 800; text-anchor: middle; fill: var(--ink-dim, #66597d); }
 .neck .str-name.off { opacity: 0.55; }
 .neck .str.off { opacity: 0.45; }
-:root[data-look='studio'] .neck .str.off { opacity: 0.45; stroke: #b9aed0; }
+:root:root .neck .str.off { opacity: 0.45; stroke: #b9aed0; }
 
 /* ---- chord pictures on the neck (N3, Chord Rush): an open string is a hollow ring at the nut ---- */
 .neck .neck-dot.open-str circle { fill: none; stroke: #7c3aed; stroke-width: 2.6; }
 .neck .neck-dot.open-str.root circle { stroke: #0f9e8e; }
 .neck-dot.open-str text { display: none; }
-:root[data-look='studio'] .neck .neck-dot.open-str circle { fill: none; stroke: #7c3aed; stroke-width: 2.6; }
-:root[data-look='studio'] .neck .neck-dot.open-str.root circle { fill: none; stroke: #0f9e8e; }
+:root:root .neck .neck-dot.open-str circle { fill: none; stroke: #7c3aed; stroke-width: 2.6; }
+:root:root .neck .neck-dot.open-str.root circle { fill: none; stroke: #0f9e8e; }
 
 /* ---- rhythm under the tab (T2): small ink stems and beams, the digits stay the focus ---- */
 .guitar-tab svg .tab-rhythm .tab-stem { stroke: #4a3d63; stroke-width: 1.3; }

@@ -1,9 +1,9 @@
 /* Studio look: the approved design elements (2026-11-17, scratchpad elements/build.py). Imported last in main.tsx.
-   Every rule is scoped to :root[data-look='studio']; the base tokens live in studio.css (another file). Paper language:
+   Every rule is scoped to :root:root (see src/studio.css); the base tokens live in studio.css (another file). Paper language:
    flat sheets with a darker edge under them, no outlines. Never yellow text on white. */
 
 /* ================================================================ 1. feedback colours + shape cues */
-:root[data-look='studio'] {
+:root:root {
   --wrong: #e23a5a;
   --wrong-edge: #9c1d3a;
   --bad: var(--wrong);
@@ -12,123 +12,123 @@
   --fb-late: #7c3aed;
   --fb-ok: #12c9b4;
 }
-:root[data-look='studio'][data-theme='dark'] {
+:root:root[data-theme='dark'] {
   --wrong: #ff5d7a;
   --bad-soft: #4a1424;
 }
 /* the per-note marks on the staff / tab */
-:root[data-look='studio'] .mk .mk-head { fill: var(--fb-ok); stroke: none; }
-:root[data-look='studio'] .mk.wrong .mk-head { fill: var(--wrong); }
-:root[data-look='studio'] .mk.missed .mk-head { fill: var(--card, #fff); stroke: var(--ink-c, #1e1033); }
-:root[data-look='studio'] .mk .mk-ghost { fill: color-mix(in srgb, var(--wrong) 40%, transparent); stroke: var(--wrong-edge); }
-:root[data-look='studio'] .mk-tick { stroke: none; }
-:root[data-look='studio'] .mk-tick.early { fill: var(--fb-early); }
-:root[data-look='studio'] .mk-tick.late { fill: var(--fb-late); }
-:root[data-look='studio'] .mk-shape.early { fill: var(--fb-early); }
-:root[data-look='studio'] .mk-shape.late { fill: var(--fb-late); }
-:root[data-look='studio'] .mk-shape.wrong { fill: none; stroke: var(--wrong); stroke-width: 2.4; stroke-linecap: round; }
-:root[data-look='studio'] .dn.wrong .dn-head,
-:root[data-look='studio'] .dl-hit.wrong,
-:root[data-look='studio'] .drum-lanes .dl-hit.wrong,
-:root[data-look='studio'] .drum-lanes .dl-kick.wrong,
-:root[data-look='studio'] .drum-lanes .dl-xbg.wrong { fill: var(--wrong); }
-:root[data-look='studio'] .dn.wrong .dn-x { stroke: var(--wrong); }
-:root[data-look='studio'] .em-cell.wrong i,
-:root[data-look='studio'] .hw-wrong { background: var(--wrong); }
-:root[data-look='studio'] .keys-pad .mk.wrong,
-:root[data-look='studio'][data-theme] .keys-pad .mk.wrong { background: var(--wrong); }
-:root[data-look='studio'] .neck-dot.wrong circle { fill: var(--wrong); }
-:root[data-look='studio'] .staff-pad .snote.wrong .head,
-:root[data-look='studio'] .staff-pad .snote.wrong .stem { stroke: var(--wrong); }
-:root[data-look='studio'] .staff-pad .snote.wrong .head.filled { fill: var(--wrong); }
-:root[data-look='studio'][data-theme] .answers .answer.is-wrong { background: var(--wrong); color: #ffffff; }
-:root[data-look='studio'][data-theme] .answers .answer.is-wrong :is(b, small) { color: #ffffff; }
+:root:root .mk .mk-head { fill: var(--fb-ok); stroke: none; }
+:root:root .mk.wrong .mk-head { fill: var(--wrong); }
+:root:root .mk.missed .mk-head { fill: var(--card, #fff); stroke: var(--ink-c, #1e1033); }
+:root:root .mk .mk-ghost { fill: color-mix(in srgb, var(--wrong) 40%, transparent); stroke: var(--wrong-edge); }
+:root:root .mk-tick { stroke: none; }
+:root:root .mk-tick.early { fill: var(--fb-early); }
+:root:root .mk-tick.late { fill: var(--fb-late); }
+:root:root .mk-shape.early { fill: var(--fb-early); }
+:root:root .mk-shape.late { fill: var(--fb-late); }
+:root:root .mk-shape.wrong { fill: none; stroke: var(--wrong); stroke-width: 2.4; stroke-linecap: round; }
+:root:root .dn.wrong .dn-head,
+:root:root .dl-hit.wrong,
+:root:root .drum-lanes .dl-hit.wrong,
+:root:root .drum-lanes .dl-kick.wrong,
+:root:root .drum-lanes .dl-xbg.wrong { fill: var(--wrong); }
+:root:root .dn.wrong .dn-x { stroke: var(--wrong); }
+:root:root .em-cell.wrong i,
+:root:root .hw-wrong { background: var(--wrong); }
+:root:root .keys-pad .mk.wrong,
+:root:root[data-theme] .keys-pad .mk.wrong { background: var(--wrong); }
+:root:root .neck-dot.wrong circle { fill: var(--wrong); }
+:root:root .staff-pad .snote.wrong .head,
+:root:root .staff-pad .snote.wrong .stem { stroke: var(--wrong); }
+:root:root .staff-pad .snote.wrong .head.filled { fill: var(--wrong); }
+:root:root[data-theme] .answers .answer.is-wrong { background: var(--wrong); color: #ffffff; }
+:root:root[data-theme] .answers .answer.is-wrong :is(b, small) { color: #ffffff; }
 
 /* ================================================================ 2. leagues, ranks, badges */
-:root[data-look='studio'] .league-tile { overflow: visible; }
-:root[data-look='studio'] .league-tile .lb-new ellipse { animation: none; }
-:root[data-look='studio'] .league-ladder li.now .league-tile { transform: scale(1.1); filter: drop-shadow(0 0 0 #ffd43b); }
-:root[data-look='studio'] .league-ladder li.ahead .league-tile { opacity: 0.45; filter: grayscale(0.6); }
-:root[data-look='studio'] .rank-shield { flex: none; display: block; overflow: visible; }
-:root[data-look='studio'] .bu-medal .rank-shield .rs-rays { transform-origin: 38px 40px; animation: el-rays 14s linear infinite; }
+:root:root .league-tile { overflow: visible; }
+:root:root .league-tile .lb-new ellipse { animation: none; }
+:root:root .league-ladder li.now .league-tile { transform: scale(1.1); filter: drop-shadow(0 0 0 #ffd43b); }
+:root:root .league-ladder li.ahead .league-tile { opacity: 0.45; filter: grayscale(0.6); }
+:root:root .rank-shield { flex: none; display: block; overflow: visible; }
+:root:root .bu-medal .rank-shield .rs-rays { transform-origin: 38px 40px; animation: el-rays 14s linear infinite; }
 @keyframes el-rays { to { transform: rotate(360deg); } }
-:root[data-look='studio'][data-motion='reduced'] .rank-shield .rs-rays { animation: none; }
-@media (prefers-reduced-motion: reduce) { :root[data-look='studio'] .rank-shield .rs-rays { animation: none; } }
+:root:root[data-motion='reduced'] .rank-shield .rs-rays { animation: none; }
+@media (prefers-reduced-motion: reduce) { :root:root .rank-shield .rs-rays { animation: none; } }
 /* a badge not yet earned: grey and translucent; the lock pip stays as its shape cue */
-:root[data-look='studio'] .badge-art.ba-locked { filter: grayscale(1); opacity: 0.5; }
+:root:root .badge-art.ba-locked { filter: grayscale(1); opacity: 0.5; }
 
 /* ================================================================ 3. celebrations */
 /* lesson end */
-:root[data-look='studio'] .rp-cele .cel-art { flex: none; height: 150px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; color: var(--ink-c, #1e1033); }
-:root[data-look='studio'][data-theme='dark'] .rp-cele .cel-art { color: #ece6f5; }
-:root[data-look='studio'] .rp-cele .cel-barline { margin-bottom: 14px; flex: none; }
-:root[data-look='studio'] .rp-cele .cel-toni { display: block; }
-:root[data-look='studio'] .rp-cele { justify-content: safe center; }
-:root[data-look='studio'] .rp-cele > * { flex-shrink: 0; }
-:root[data-look='studio'] .cel-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 420px; margin: 4px auto 0; padding: 0; }
-:root[data-look='studio'] .cel-stats .cel-stat { display: inline-flex; flex-direction: row; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 12px; background: var(--card, #fff); box-shadow: 0 3px 0 color-mix(in srgb, var(--ink-c, #1e1033) 12%, transparent); }
-:root[data-look='studio'] .cel-stats .cel-stat small { font-size: 0.75rem; font-weight: 500; color: var(--ink-dim, #6b5f86); }
-:root[data-look='studio'] .cel-stats .cel-stat b { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink, #1e1033); }
-:root[data-look='studio'] .cel-weak { margin: 2px auto 0; max-width: 100%; font-size: 0.82rem; color: var(--ink-dim, #6b5f86); background: color-mix(in srgb, var(--card, #fff) 70%, var(--bg, #f6f2fb)); padding: 6px 12px; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-:root[data-look='studio'] .cel-weak br { display: none; }
+:root:root .rp-cele .cel-art { flex: none; height: 150px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; color: var(--ink-c, #1e1033); }
+:root:root[data-theme='dark'] .rp-cele .cel-art { color: #ece6f5; }
+:root:root .rp-cele .cel-barline { margin-bottom: 14px; flex: none; }
+:root:root .rp-cele .cel-toni { display: block; }
+:root:root .rp-cele { justify-content: safe center; }
+:root:root .rp-cele > * { flex-shrink: 0; }
+:root:root .cel-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 420px; margin: 4px auto 0; padding: 0; }
+:root:root .cel-stats .cel-stat { display: inline-flex; flex-direction: row; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: 12px; background: var(--card, #fff); box-shadow: 0 3px 0 color-mix(in srgb, var(--ink-c, #1e1033) 12%, transparent); }
+:root:root .cel-stats .cel-stat small { font-size: 0.75rem; font-weight: 500; color: var(--ink-dim, #6b5f86); }
+:root:root .cel-stats .cel-stat b { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink, #1e1033); }
+:root:root .cel-weak { margin: 2px auto 0; max-width: 100%; font-size: 0.82rem; color: var(--ink-dim, #6b5f86); background: color-mix(in srgb, var(--card, #fff) 70%, var(--bg, #f6f2fb)); padding: 6px 12px; border-radius: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+:root:root .cel-weak br { display: none; }
 
 /* rank up / badge unlock */
-:root[data-look='studio'][data-theme] .bu-card { border: 0; box-shadow: 0 6px 0 color-mix(in srgb, var(--ink-c, #1e1033) 14%, transparent); }
-:root[data-look='studio'] .bu-medal .rank-shield { width: 200px; height: 200px; }
-:root[data-look='studio'] .bu-glow { opacity: 0.35; }
-:root[data-look='studio'][data-theme] .bu-btn { border: 0; box-shadow: 0 4px 0 #c98a00; font-family: inherit; font-weight: 700; }
-:root[data-look='studio'] .bu-bar { width: min(100%, 280px); height: 10px; margin: 10px auto 2px; border-radius: 6px; background: color-mix(in srgb, var(--ink, #1e1033) 16%, transparent); overflow: hidden; }
-:root[data-look='studio'] .bu-bar i { display: block; height: 100%; border-radius: 6px; background: var(--fb-ok); }
-:root[data-look='studio'] [dir='rtl'] .bu-bar i { margin-inline-start: 0; }
+:root:root[data-theme] .bu-card { border: 0; box-shadow: 0 6px 0 color-mix(in srgb, var(--ink-c, #1e1033) 14%, transparent); }
+:root:root .bu-medal .rank-shield { width: 200px; height: 200px; }
+:root:root .bu-glow { opacity: 0.35; }
+:root:root[data-theme] .bu-btn { border: 0; box-shadow: 0 4px 0 #c98a00; font-family: inherit; font-weight: 700; }
+:root:root .bu-bar { width: min(100%, 280px); height: 10px; margin: 10px auto 2px; border-radius: 6px; background: color-mix(in srgb, var(--ink, #1e1033) 16%, transparent); overflow: hidden; }
+:root:root .bu-bar i { display: block; height: 100%; border-radius: 6px; background: var(--fb-ok); }
+:root:root [dir='rtl'] .bu-bar i { margin-inline-start: 0; }
 
 /* new best tempo */
-:root[data-look='studio'] .cel-tempo { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
-:root[data-look='studio'] .cel-tempo .tbig { font-size: 4.6rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #6d28d9; font-variant-numeric: tabular-nums; }
-:root[data-look='studio'][data-theme='dark'] .cel-tempo .tbig { color: #c9b8f5; }
-:root[data-look='studio'] .cel-tempo .tprev { font-size: 0.9rem; color: var(--ink-dim, #6b5f86); }
+:root:root .cel-tempo { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+:root:root .cel-tempo .tbig { font-size: 4.6rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: #6d28d9; font-variant-numeric: tabular-nums; }
+:root:root[data-theme='dark'] .cel-tempo .tbig { color: #c9b8f5; }
+:root:root .cel-tempo .tprev { font-size: 0.9rem; color: var(--ink-dim, #6b5f86); }
 
 /* ================================================================ 4. on-screen instruments */
 /* keyboard: warm whites, black keys with a top layer, no outlines, the active key teal */
-:root[data-look='studio'][data-theme] .keyboard { background: #e9e2f3; border: 0; box-shadow: none; border-radius: 12px; }
-:root[data-look='studio'][data-theme] .keyboard .wk,
-:root[data-look='studio'][data-theme] .keys-pad .wk { background: #fffdfb; border: 0; border-inline-end: 2px solid #e9e2f3; box-shadow: inset 0 -6px 0 #e9e2f3; border-radius: 0 0 6px 6px; }
-:root[data-look='studio'][data-theme] .keyboard .bk,
-:root[data-look='studio'][data-theme] .keys-pad .bk { background: linear-gradient(#1e1033 0 88%, #2a1a40 88%); border: 0; box-shadow: 0 2px 0 #2a1a40; border-radius: 0 0 5px 5px; }
-:root[data-look='studio'][data-theme] .keyboard .wk.lit,
-:root[data-look='studio'][data-theme] .keys-pad .wk.mk:is(.mine, .ok) { background: #bff0e8; box-shadow: inset 0 -6px 0 #12c9b4; }
-:root[data-look='studio'][data-theme] .keyboard .bk.lit,
-:root[data-look='studio'][data-theme] .keys-pad .bk.mk:is(.mine, .ok) { background: #12c9b4; }
-:root[data-look='studio'][data-theme] .keyboard .wk.mark { background: #e6dcff; }
-:root[data-look='studio'][data-theme] .keyboard .bk.mark { background: #5b2fc4; }
-:root[data-look='studio'][data-theme] .keys-pad .wk.mk.wrong { background: #fbd0d9; box-shadow: inset 0 -6px 0 var(--wrong); }
-:root[data-look='studio'][data-theme] .keys-pad .bk.mk.wrong { background: var(--wrong); }
+:root:root[data-theme] .keyboard { background: #e9e2f3; border: 0; box-shadow: none; border-radius: 12px; }
+:root:root[data-theme] .keyboard .wk,
+:root:root[data-theme] .keys-pad .wk { background: #fffdfb; border: 0; border-inline-end: 2px solid #e9e2f3; box-shadow: inset 0 -6px 0 #e9e2f3; border-radius: 0 0 6px 6px; }
+:root:root[data-theme] .keyboard .bk,
+:root:root[data-theme] .keys-pad .bk { background: linear-gradient(#1e1033 0 88%, #2a1a40 88%); border: 0; box-shadow: 0 2px 0 #2a1a40; border-radius: 0 0 5px 5px; }
+:root:root[data-theme] .keyboard .wk.lit,
+:root:root[data-theme] .keys-pad .wk.mk:is(.mine, .ok) { background: #bff0e8; box-shadow: inset 0 -6px 0 #12c9b4; }
+:root:root[data-theme] .keyboard .bk.lit,
+:root:root[data-theme] .keys-pad .bk.mk:is(.mine, .ok) { background: #12c9b4; }
+:root:root[data-theme] .keyboard .wk.mark { background: #e6dcff; }
+:root:root[data-theme] .keyboard .bk.mark { background: #5b2fc4; }
+:root:root[data-theme] .keys-pad .wk.mk.wrong { background: #fbd0d9; box-shadow: inset 0 -6px 0 var(--wrong); }
+:root:root[data-theme] .keys-pad .bk.mk.wrong { background: var(--wrong); }
 
 /* fretboard: dark neck, light frets, notes by chord role */
-:root[data-look='studio'] .neck-wood { fill: #3b2a52; }
-:root[data-look='studio'] .neck.fretless .neck-wood { fill: #2a1d3d; }
-:root[data-look='studio'] .fret-wire { stroke: #c9bfd8; stroke-width: 3; }
-:root[data-look='studio'] .nut { stroke: #f3ead9; }
-:root[data-look='studio'] .inlay { fill: #5a4672; opacity: 1; }
-:root[data-look='studio'] .neck .str { stroke: #e8dcc8; }
-:root[data-look='studio'] .neck-dot circle { stroke: none; fill: #ffffff; }
-:root[data-look='studio'] .neck-dot text { fill: #1e1033; }
-:root[data-look='studio'] .neck-dot.root circle { fill: #12c9b4; }
-:root[data-look='studio'] .neck-dot.given circle { fill: #b794ff; }
-:root[data-look='studio'] .neck-dot:is(.mine, .ok) circle { fill: #12c9b4; }
-:root[data-look='studio'] .neck-dot.answer circle { fill: transparent; stroke: #12c9b4; stroke-width: 3; }
+:root:root .neck-wood { fill: #3b2a52; }
+:root:root .neck.fretless .neck-wood { fill: #2a1d3d; }
+:root:root .fret-wire { stroke: #c9bfd8; stroke-width: 3; }
+:root:root .nut { stroke: #f3ead9; }
+:root:root .inlay { fill: #5a4672; opacity: 1; }
+:root:root .neck .str { stroke: #e8dcc8; }
+:root:root .neck-dot circle { stroke: none; fill: #ffffff; }
+:root:root .neck-dot text { fill: #1e1033; }
+:root:root .neck-dot.root circle { fill: #12c9b4; }
+:root:root .neck-dot.given circle { fill: #b794ff; }
+:root:root .neck-dot:is(.mine, .ok) circle { fill: #12c9b4; }
+:root:root .neck-dot.answer circle { fill: transparent; stroke: #12c9b4; stroke-width: 3; }
 
 /* drum kit pads as Paper sheets */
-:root[data-look='studio'] .tap-pad.big { background: var(--pc, #7c3aed); box-shadow: 0 8px 0 color-mix(in srgb, var(--pc, #7c3aed) 55%, #12052e); border: 0; }
-:root[data-look='studio'] .tap-pad.big.live { background: color-mix(in srgb, var(--pc, #7c3aed) 85%, #ffffff); }
-:root[data-look='studio'] .tap-pad.big:active { box-shadow: 0 2px 0 color-mix(in srgb, var(--pc, #7c3aed) 55%, #12052e); }
-:root[data-look='studio'] .kit-dots i { border: 0; box-shadow: 0 2px 0 #cdc3dd; }
+:root:root .tap-pad.big { background: var(--pc, #7c3aed); box-shadow: 0 8px 0 color-mix(in srgb, var(--pc, #7c3aed) 55%, #12052e); border: 0; }
+:root:root .tap-pad.big.live { background: color-mix(in srgb, var(--pc, #7c3aed) 85%, #ffffff); }
+:root:root .tap-pad.big:active { box-shadow: 0 2px 0 color-mix(in srgb, var(--pc, #7c3aed) 55%, #12052e); }
+:root:root .kit-dots i { border: 0; box-shadow: 0 2px 0 #cdc3dd; }
 
 /* the staff: hairline lines, ink notes, a lemon playhead */
-:root[data-look='studio'] .note-staff svg path[stroke='#999999'],
-:root[data-look='studio'] .note-staff svg rect[fill='#999999'] { opacity: 0.55; }
-:root[data-look='studio'] .staff-now { width: 3px; margin-left: -1.5px; border-radius: 2px; background: #ffd43b; outline: 0; box-shadow: 0 0 0 1px #c98a00; }
+:root:root .note-staff svg path[stroke='#999999'],
+:root:root .note-staff svg rect[fill='#999999'] { opacity: 0.55; }
+:root:root .staff-now { width: 3px; margin-left: -1.5px; border-radius: 2px; background: #ffd43b; outline: 0; box-shadow: 0 0 0 1px #c98a00; }
 
 /* ================================================================ 5. share card */
-:root[data-look='studio'] .chl-card-img { border: 0; background: #2b0d5e; border-radius: 18px; max-width: 360px; margin-inline: auto; }
-:root[data-look='studio'] .chl-card-img.sm { max-height: 120px; width: auto; }
-:root[data-look='studio'][data-theme] .note-staff { background: #fbf8ff; border: 0; box-shadow: 0 3px 0 color-mix(in srgb, var(--ink-c, #1e1033) 10%, transparent); }
+:root:root .chl-card-img { border: 0; background: #2b0d5e; border-radius: 18px; max-width: 360px; margin-inline: auto; }
+:root:root .chl-card-img.sm { max-height: 120px; width: auto; }
+:root:root[data-theme] .note-staff { background: #fbf8ff; border: 0; box-shadow: 0 3px 0 color-mix(in srgb, var(--ink-c, #1e1033) 10%, transparent); }

@@ -1,223 +1,223 @@
 /* Studio look, the remaining screens (redesign stage 3): onboarding, profile and settings pages, teacher, exams, level
    test, recaps, badges, progress, community, tournament, the streak and what's-new sheets, diary, repertoire, tools; and
-   a sweep of the classic sheets' last heavy weights, hard offset shadows and thick outlines. Loaded last
-   (src/main.tsx). Every rule is scoped under :root[data-look='studio'] (tests/studioRest.test.ts).
+   a sweep of the base sheets' last heavy weights, hard offset shadows and thick outlines. Loaded last
+   (src/main.tsx). Every rule is scoped under :root:root (see src/studio.css; tests/studioRest.test.ts).
 
-   Part 1 is generated (one override per classic rule: 800/900 -> 700, a hard ink / outline offset shadow -> the soft
+   Part 1 is generated (one override per base rule: 800/900 -> 700, a hard ink / outline offset shadow -> the soft
    one, a 2-4px outline / ink border -> a 1px hairline). Instruments, notation, game screens and guitar pieces are left
    alone. Part 2 is written by hand and wins over part 1. */
 
 /* ================================================================ part 1: the sweep (generated) */
-:root[data-look='studio'] .wordmark { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .house-label { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .coin-label { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .deg-badge { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .tagline { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .hero h1 { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .intro-key { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .intro-coin { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .intro-deg b { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .key-badge { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .mt-note { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .mt-pedal.on { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .g-chip { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .lang-toggle { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .eyebrow { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .goal-ring .ring-text { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .node.current .node-text small { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .btn.record { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .step-coin { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .tuner-deg { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .tuner-cents { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .fluency-score b { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .recap-pts { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .chip-mini.pace-fast { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .panel-screen.settings .screen-head h1 { font-weight: 700; } /* styles.css */
-:root[data-look='studio'] .count-badge { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .seq-key { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .seq-target b { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .read-words { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .run-dot small { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .builder-count { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .swing-mark { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .drone-degree { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .drone-cents { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .drone-ladder li { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .drone-done { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .roster th { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .tb-count { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .topic-strip .ts { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .trend-name { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .trend-now b { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .trend-delta { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .update-pill { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .rating-badge { font-weight: 700; border: 1px solid var(--line-strong); } /* features.css */
-:root[data-look='studio'] .name-chip { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .name-initial { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .overall-band { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .overall-facts dd { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .rc-peak,
-:root[data-look='studio'] .rc-band { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .rc-val { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .sc-count { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .sc-next,
-:root[data-look='studio'] .sc-gems { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .week-strip li { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .streak-risk { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .milestone-ring span { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .freeze-toast { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .aid-chip { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .mini-text { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .mini-learned-name { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .league-ladder li.now small { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .pm-top { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .rounds-count { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .item-card .item-state { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .rank-btn .rank-n { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .range-live { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .term-q { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .talk-toggle { font-weight: 700; } /* features.css */
-:root[data-look='studio'] .frame-preview { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .side-nav .sn-subitem.current { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .feedback .why-btn { font-weight: 700; border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'] .feedback .fb-detail.open { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .path2 .road .node .node-text b { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .course-row b { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .ob-course b { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .icon-family-h { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .icon-family-h i { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .avatar { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .in-g-track { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .in-g-dot { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .in-finger { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .ps-melody { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .read-strip .rs { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .read-strip .rs-head { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .pt-tools h2 { font-weight: 700; } /* v2.css */
-:root[data-look='studio'][data-theme] .pt-tool svg { box-shadow: var(--shadow-s); } /* v2.css */
-:root[data-look='studio'][data-theme] .cl-item { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .ov-head small { font-weight: 700; } /* v2.css */
-:root[data-look='studio'][data-theme] .ov-chip.now { box-shadow: var(--shadow-s); } /* v2.css */
-:root[data-look='studio'][data-theme] .ov-next { font-weight: 700; } /* v2.css */
-:root[data-look='studio'][data-theme] .ov-col i { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .rp-dots i { border: 1px solid var(--line-strong); } /* v2.css */
-:root[data-look='studio'][data-theme] .in-a-row small { font-weight: 700; } /* v2.css */
-:root[data-look='studio'][data-theme] .play-hero small { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .exam-switch { font-weight: 700; } /* v2.css */
-:root[data-look='studio'][data-theme] .tc-exam > b { font-weight: 700; } /* v2.css */
-:root[data-look='studio'] .field-hint.good { font-weight: 700; } /* menu.css */
-:root[data-look='studio'] .league .rank { font-weight: 700; } /* menu.css */
-:root[data-look='studio'] .menu-head h2 { font-weight: 700; } /* menu.css */
-:root[data-look='studio'] .px-section > summary { font-weight: 700; } /* path.css */
-:root[data-look='studio'] .lessons2 .ls-mark { font-weight: 700; } /* path.css */
-:root[data-look='studio'] .in-entry-n { font-weight: 700; } /* path.css */
-:root[data-look='studio'] .frame-chip { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-tile b { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-area-lv { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-skill-name { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-skill-now { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-bar-v { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .ps-h-facts { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .tier-badge { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .cmp-table td { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .pf-facts dd { font-weight: 700; } /* stats.css */
-:root[data-look='studio'] .t-round { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .t-countdown { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .time-bar { border: 1px solid var(--line-strong); } /* tournament.css */
-:root[data-look='studio'] .half-head .dot,
-:root[data-look='studio'] .name-row .dot { border: 1px solid var(--line-strong); } /* tournament.css */
-:root[data-look='studio'] .half-score { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .half-result { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .share-card { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .daily-date { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .half-ask { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .daily-stats span { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .form-error { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .room-players li { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .t-answered { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .offline-chip { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .podium .step i { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .ghost-bar { font-weight: 700; border: 1px solid var(--line-strong); } /* tournament.css */
-:root[data-look='studio'] .ghost-note,
-:root[data-look='studio'] .ghost-best { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .tf-score { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .tf-time { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .tf-ask { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .tf-why { font-weight: 700; } /* tournament.css */
-:root[data-look='studio'] .vocal-level .lv-num { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .vocal-cue { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .range-now { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .big-count,
-:root[data-look='studio'] .big-key { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .seq-shown { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .workout-steps li.done .ws-check { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .sing-notes li { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .topic-group summary { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .choice-text { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .clock-pad { font-weight: 700; } /* vocal.css */
-:root[data-look='studio'] .tr-medal { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .tr-chips li { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .tr-tip { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .em-cell i { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .loop-passes i { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .rule-chips li { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .cc-row { border-left: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .cc-bar { border-right: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .ans-glyph { border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .replay-chip { font-weight: 700; border: 1px solid var(--line-strong); } /* feedback.css */
-:root[data-look='studio'] .limb-chips li { border: 1px solid var(--line-strong); } /* feedback2.css */
-:root[data-look='studio'][data-theme] .recap-row .recap-mark { border: 1px solid var(--line-strong); } /* feedback2.css */
-:root[data-look='studio'][data-theme] .recap .coach-insight.pair { border: 1px solid var(--line-strong); } /* feedback2.css */
-:root[data-look='studio'] .rank-crest .rc-num { font-weight: 700; } /* badges.css */
-:root[data-look='studio'] .bd-tone { font-weight: 700; } /* badges.css */
-:root[data-look='studio'] .drill-family .lvl { font-weight: 700; } /* drills.css */
-:root[data-look='studio'] .ear-card { border: 1px solid var(--line-strong); } /* drills.css */
-:root[data-look='studio'] .ear-bars li { border: 1px solid var(--line-strong); } /* drills.css */
-:root[data-look='studio'] .ear-legend span { border: 1px solid var(--line-strong); } /* drills.css */
-:root[data-look='studio'] .vl-chords li { border: 1px solid var(--line-strong); } /* drills.css */
-:root[data-look='studio'] .enc-screen .enc-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-thumb { border: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-seg button { border-inline-start: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-meter { border: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-level { border: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-fing { border: 1px solid var(--line-strong); } /* encore.css */
-:root[data-look='studio'] .enc-fing b { font-weight: 700; } /* encore.css */
-:root[data-look='studio'] .rec-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* recordings2.css */
-:root[data-look='studio'] .rec-pl-items li.now .rec-pl-take { font-weight: 700; } /* recordings2.css */
-:root[data-look='studio'] .rec-pl-n { font-weight: 700; border: 1px solid var(--line-strong); } /* recordings2.css */
-:root[data-look='studio'] .enc-recdot-s { border: 1px solid var(--line-strong); } /* recordings2.css */
-:root[data-look='studio'] .rep-goal-foot > span:first-child { font-weight: 700; } /* repertoire.css */
-:root[data-look='studio'] .rep-mark { font-weight: 700; } /* repertoire.css */
-:root[data-look='studio'] .ms-score { font-weight: 700; } /* mysong.css */
-:root[data-look='studio'] .pn-beat { font-weight: 700; } /* pulse.css */
-:root[data-look='studio'] .pn-chip { font-weight: 700; } /* pulse.css */
-:root[data-look='studio'] .setup-more-chip .sm-dots { font-weight: 700; } /* setupsheet.css */
-:root[data-look='studio'] .setup-sheet { border: 1px solid var(--line-strong); } /* setupsheet.css */
-:root[data-look='studio'] .tp-screen .icon-btn.small { font-weight: 700; } /* teachphrase.css */
-:root[data-look='studio'] .tp-strip i.req { border: 1px solid var(--line-strong); } /* teachphrase.css */
-:root[data-look='studio'] .tp-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* teachphrase.css */
-:root[data-look='studio'] .ib-auto .ib-mark { font-weight: 700; } /* teachphrase.css */
-:root[data-look='studio'] .lk-useit-res { border: 1px solid var(--line-strong); } /* licks.css */
-:root[data-look='studio'] .tx-result { border: 1px solid var(--line-strong); } /* licks.css */
-:root[data-look='studio'] .tx-deg { border: 1px solid var(--line-strong); } /* licks.css */
-:root[data-look='studio'] .together-chip { border: 1px solid var(--line-strong); } /* gifts.css */
-:root[data-look='studio'] .mission-kicker { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .hot-chip { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .dt-rank-name { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .start-bubble { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .pc-icon { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .play-card .best-chip,
-:root[data-look='studio'] .play-card .new-chip { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .live-go { font-weight: 700; } /* arcade.css */
-:root[data-look='studio'] .rl-badge { font-weight: 700; } /* arcade.css */
+:root:root .wordmark { font-weight: 700; } /* styles.css */
+:root:root .house-label { font-weight: 700; } /* styles.css */
+:root:root .coin-label { font-weight: 700; } /* styles.css */
+:root:root .deg-badge { font-weight: 700; } /* styles.css */
+:root:root .tagline { font-weight: 700; } /* styles.css */
+:root:root .hero h1 { font-weight: 700; } /* styles.css */
+:root:root .intro-key { font-weight: 700; } /* styles.css */
+:root:root .intro-coin { font-weight: 700; } /* styles.css */
+:root:root .intro-deg b { font-weight: 700; } /* styles.css */
+:root:root .key-badge { font-weight: 700; } /* styles.css */
+:root:root .mt-note { font-weight: 700; } /* styles.css */
+:root:root .mt-pedal.on { font-weight: 700; } /* styles.css */
+:root:root .g-chip { font-weight: 700; } /* styles.css */
+:root:root .lang-toggle { font-weight: 700; } /* styles.css */
+:root:root .eyebrow { font-weight: 700; } /* styles.css */
+:root:root .goal-ring .ring-text { font-weight: 700; } /* styles.css */
+:root:root .node.current .node-text small { font-weight: 700; } /* styles.css */
+:root:root .btn.record { font-weight: 700; } /* styles.css */
+:root:root .step-coin { font-weight: 700; } /* styles.css */
+:root:root .tuner-deg { font-weight: 700; } /* styles.css */
+:root:root .tuner-cents { font-weight: 700; } /* styles.css */
+:root:root .fluency-score b { font-weight: 700; } /* styles.css */
+:root:root .recap-pts { font-weight: 700; } /* styles.css */
+:root:root .chip-mini.pace-fast { font-weight: 700; } /* styles.css */
+:root:root .panel-screen.settings .screen-head h1 { font-weight: 700; } /* styles.css */
+:root:root .count-badge { font-weight: 700; } /* features.css */
+:root:root .seq-key { font-weight: 700; } /* features.css */
+:root:root .seq-target b { font-weight: 700; } /* features.css */
+:root:root .read-words { font-weight: 700; } /* features.css */
+:root:root .run-dot small { font-weight: 700; } /* features.css */
+:root:root .builder-count { font-weight: 700; } /* features.css */
+:root:root .swing-mark { font-weight: 700; } /* features.css */
+:root:root .drone-degree { font-weight: 700; } /* features.css */
+:root:root .drone-cents { font-weight: 700; } /* features.css */
+:root:root .drone-ladder li { font-weight: 700; } /* features.css */
+:root:root .drone-done { font-weight: 700; } /* features.css */
+:root:root .roster th { font-weight: 700; } /* features.css */
+:root:root .tb-count { font-weight: 700; } /* features.css */
+:root:root .topic-strip .ts { font-weight: 700; } /* features.css */
+:root:root .trend-name { font-weight: 700; } /* features.css */
+:root:root .trend-now b { font-weight: 700; } /* features.css */
+:root:root .trend-delta { font-weight: 700; } /* features.css */
+:root:root .update-pill { font-weight: 700; } /* features.css */
+:root:root .rating-badge { font-weight: 700; border: 1px solid var(--line-strong); } /* features.css */
+:root:root .name-chip { font-weight: 700; } /* features.css */
+:root:root .name-initial { font-weight: 700; } /* features.css */
+:root:root .overall-band { font-weight: 700; } /* features.css */
+:root:root .overall-facts dd { font-weight: 700; } /* features.css */
+:root:root .rc-peak,
+:root:root .rc-band { font-weight: 700; } /* features.css */
+:root:root .rc-val { font-weight: 700; } /* features.css */
+:root:root .sc-count { font-weight: 700; } /* features.css */
+:root:root .sc-next,
+:root:root .sc-gems { font-weight: 700; } /* features.css */
+:root:root .week-strip li { font-weight: 700; } /* features.css */
+:root:root .streak-risk { font-weight: 700; } /* features.css */
+:root:root .milestone-ring span { font-weight: 700; } /* features.css */
+:root:root .freeze-toast { font-weight: 700; } /* features.css */
+:root:root .aid-chip { font-weight: 700; } /* features.css */
+:root:root .mini-text { font-weight: 700; } /* features.css */
+:root:root .mini-learned-name { font-weight: 700; } /* features.css */
+:root:root .league-ladder li.now small { font-weight: 700; } /* features.css */
+:root:root .pm-top { font-weight: 700; } /* features.css */
+:root:root .rounds-count { font-weight: 700; } /* features.css */
+:root:root .item-card .item-state { font-weight: 700; } /* features.css */
+:root:root .rank-btn .rank-n { font-weight: 700; } /* features.css */
+:root:root .range-live { font-weight: 700; } /* features.css */
+:root:root .term-q { font-weight: 700; } /* features.css */
+:root:root .talk-toggle { font-weight: 700; } /* features.css */
+:root:root .frame-preview { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .side-nav .sn-subitem.current { font-weight: 700; } /* v2.css */
+:root:root .feedback .why-btn { font-weight: 700; border: 1px solid var(--line-strong); } /* v2.css */
+:root:root .feedback .fb-detail.open { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .path2 .road .node .node-text b { font-weight: 700; } /* v2.css */
+:root:root .course-row b { font-weight: 700; } /* v2.css */
+:root:root .ob-course b { font-weight: 700; } /* v2.css */
+:root:root .icon-family-h { font-weight: 700; } /* v2.css */
+:root:root .icon-family-h i { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .avatar { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .in-g-track { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .in-g-dot { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .in-finger { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .ps-melody { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .read-strip .rs { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .read-strip .rs-head { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .pt-tools h2 { font-weight: 700; } /* v2.css */
+:root:root[data-theme] .pt-tool svg { box-shadow: var(--shadow-s); } /* v2.css */
+:root:root[data-theme] .cl-item { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .ov-head small { font-weight: 700; } /* v2.css */
+:root:root[data-theme] .ov-chip.now { box-shadow: var(--shadow-s); } /* v2.css */
+:root:root[data-theme] .ov-next { font-weight: 700; } /* v2.css */
+:root:root[data-theme] .ov-col i { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .rp-dots i { border: 1px solid var(--line-strong); } /* v2.css */
+:root:root[data-theme] .in-a-row small { font-weight: 700; } /* v2.css */
+:root:root[data-theme] .play-hero small { font-weight: 700; } /* v2.css */
+:root:root .exam-switch { font-weight: 700; } /* v2.css */
+:root:root[data-theme] .tc-exam > b { font-weight: 700; } /* v2.css */
+:root:root .field-hint.good { font-weight: 700; } /* menu.css */
+:root:root .league .rank { font-weight: 700; } /* menu.css */
+:root:root .menu-head h2 { font-weight: 700; } /* menu.css */
+:root:root .px-section > summary { font-weight: 700; } /* path.css */
+:root:root .lessons2 .ls-mark { font-weight: 700; } /* path.css */
+:root:root .in-entry-n { font-weight: 700; } /* path.css */
+:root:root .frame-chip { font-weight: 700; } /* stats.css */
+:root:root .ps-tile b { font-weight: 700; } /* stats.css */
+:root:root .ps-area-lv { font-weight: 700; } /* stats.css */
+:root:root .ps-skill-name { font-weight: 700; } /* stats.css */
+:root:root .ps-skill-now { font-weight: 700; } /* stats.css */
+:root:root .ps-bar-v { font-weight: 700; } /* stats.css */
+:root:root .ps-h-facts { font-weight: 700; } /* stats.css */
+:root:root .tier-badge { font-weight: 700; } /* stats.css */
+:root:root .cmp-table td { font-weight: 700; } /* stats.css */
+:root:root .pf-facts dd { font-weight: 700; } /* stats.css */
+:root:root .t-round { font-weight: 700; } /* tournament.css */
+:root:root .t-countdown { font-weight: 700; } /* tournament.css */
+:root:root .time-bar { border: 1px solid var(--line-strong); } /* tournament.css */
+:root:root .half-head .dot,
+:root:root .name-row .dot { border: 1px solid var(--line-strong); } /* tournament.css */
+:root:root .half-score { font-weight: 700; } /* tournament.css */
+:root:root .half-result { font-weight: 700; } /* tournament.css */
+:root:root .share-card { font-weight: 700; } /* tournament.css */
+:root:root .daily-date { font-weight: 700; } /* tournament.css */
+:root:root .half-ask { font-weight: 700; } /* tournament.css */
+:root:root .daily-stats span { font-weight: 700; } /* tournament.css */
+:root:root .form-error { font-weight: 700; } /* tournament.css */
+:root:root .room-players li { font-weight: 700; } /* tournament.css */
+:root:root .t-answered { font-weight: 700; } /* tournament.css */
+:root:root .offline-chip { font-weight: 700; } /* tournament.css */
+:root:root .podium .step i { font-weight: 700; } /* tournament.css */
+:root:root .ghost-bar { font-weight: 700; border: 1px solid var(--line-strong); } /* tournament.css */
+:root:root .ghost-note,
+:root:root .ghost-best { font-weight: 700; } /* tournament.css */
+:root:root .tf-score { font-weight: 700; } /* tournament.css */
+:root:root .tf-time { font-weight: 700; } /* tournament.css */
+:root:root .tf-ask { font-weight: 700; } /* tournament.css */
+:root:root .tf-why { font-weight: 700; } /* tournament.css */
+:root:root .vocal-level .lv-num { font-weight: 700; } /* vocal.css */
+:root:root .vocal-cue { font-weight: 700; } /* vocal.css */
+:root:root .range-now { font-weight: 700; } /* vocal.css */
+:root:root .big-count,
+:root:root .big-key { font-weight: 700; } /* vocal.css */
+:root:root .seq-shown { font-weight: 700; } /* vocal.css */
+:root:root .workout-steps li.done .ws-check { font-weight: 700; } /* vocal.css */
+:root:root .sing-notes li { font-weight: 700; } /* vocal.css */
+:root:root .topic-group summary { font-weight: 700; } /* vocal.css */
+:root:root .choice-text { font-weight: 700; } /* vocal.css */
+:root:root .clock-pad { font-weight: 700; } /* vocal.css */
+:root:root .tr-medal { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .tr-chips li { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .tr-tip { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .em-cell i { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .loop-passes i { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .rule-chips li { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .cc-row { border-left: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .cc-bar { border-right: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .ans-glyph { border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .replay-chip { font-weight: 700; border: 1px solid var(--line-strong); } /* feedback.css */
+:root:root .limb-chips li { border: 1px solid var(--line-strong); } /* feedback2.css */
+:root:root[data-theme] .recap-row .recap-mark { border: 1px solid var(--line-strong); } /* feedback2.css */
+:root:root[data-theme] .recap .coach-insight.pair { border: 1px solid var(--line-strong); } /* feedback2.css */
+:root:root .rank-crest .rc-num { font-weight: 700; } /* badges.css */
+:root:root .bd-tone { font-weight: 700; } /* badges.css */
+:root:root .drill-family .lvl { font-weight: 700; } /* drills.css */
+:root:root .ear-card { border: 1px solid var(--line-strong); } /* drills.css */
+:root:root .ear-bars li { border: 1px solid var(--line-strong); } /* drills.css */
+:root:root .ear-legend span { border: 1px solid var(--line-strong); } /* drills.css */
+:root:root .vl-chords li { border: 1px solid var(--line-strong); } /* drills.css */
+:root:root .enc-screen .enc-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-thumb { border: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-seg button { border-inline-start: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-meter { border: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-level { border: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-fing { border: 1px solid var(--line-strong); } /* encore.css */
+:root:root .enc-fing b { font-weight: 700; } /* encore.css */
+:root:root .rec-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* recordings2.css */
+:root:root .rec-pl-items li.now .rec-pl-take { font-weight: 700; } /* recordings2.css */
+:root:root .rec-pl-n { font-weight: 700; border: 1px solid var(--line-strong); } /* recordings2.css */
+:root:root .enc-recdot-s { border: 1px solid var(--line-strong); } /* recordings2.css */
+:root:root .rep-goal-foot > span:first-child { font-weight: 700; } /* repertoire.css */
+:root:root .rep-mark { font-weight: 700; } /* repertoire.css */
+:root:root .ms-score { font-weight: 700; } /* mysong.css */
+:root:root .pn-beat { font-weight: 700; } /* pulse.css */
+:root:root .pn-chip { font-weight: 700; } /* pulse.css */
+:root:root .setup-more-chip .sm-dots { font-weight: 700; } /* setupsheet.css */
+:root:root .setup-sheet { border: 1px solid var(--line-strong); } /* setupsheet.css */
+:root:root .tp-screen .icon-btn.small { font-weight: 700; } /* teachphrase.css */
+:root:root .tp-strip i.req { border: 1px solid var(--line-strong); } /* teachphrase.css */
+:root:root .tp-pill { font-weight: 700; border: 1px solid var(--line-strong); } /* teachphrase.css */
+:root:root .ib-auto .ib-mark { font-weight: 700; } /* teachphrase.css */
+:root:root .lk-useit-res { border: 1px solid var(--line-strong); } /* licks.css */
+:root:root .tx-result { border: 1px solid var(--line-strong); } /* licks.css */
+:root:root .tx-deg { border: 1px solid var(--line-strong); } /* licks.css */
+:root:root .together-chip { border: 1px solid var(--line-strong); } /* gifts.css */
+:root:root .mission-kicker { font-weight: 700; } /* arcade.css */
+:root:root .hot-chip { font-weight: 700; } /* arcade.css */
+:root:root .dt-rank-name { font-weight: 700; } /* arcade.css */
+:root:root .start-bubble { font-weight: 700; } /* arcade.css */
+:root:root .pc-icon { font-weight: 700; } /* arcade.css */
+:root:root .play-card .best-chip,
+:root:root .play-card .new-chip { font-weight: 700; } /* arcade.css */
+:root:root .live-go { font-weight: 700; } /* arcade.css */
+:root:root .rl-badge { font-weight: 700; } /* arcade.css */
 @media (min-width: 900px) {
-  :root[data-look='studio'][data-theme] .gift-pop { box-shadow: var(--shadow-s); border: 1px solid var(--line-strong); } /* v2.css */
+  :root:root[data-theme] .gift-pop { box-shadow: var(--shadow-s); border: 1px solid var(--line-strong); } /* v2.css */
 }
 
 /* ================================================================ part 2: by hand */
 
 /* ---- shared: switches in a toggle row (the drone's "fifth", recordings, vocal) are the studio switch, sized */
-:root[data-look='studio'][data-theme] .toggle-row input[type='checkbox'] {
+:root:root[data-theme] .toggle-row input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -231,7 +231,7 @@
   box-shadow: none;
   cursor: pointer;
 }
-:root[data-look='studio'][data-theme] .toggle-row input[type='checkbox']::after {
+:root:root[data-theme] .toggle-row input[type='checkbox']::after {
   content: '';
   position: absolute;
   top: 3px;
@@ -245,61 +245,61 @@
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.25);
   transition: inset-inline-start 0.15s;
 }
-:root[data-look='studio'][data-theme] .toggle-row input[type='checkbox']:checked {
+:root:root[data-theme] .toggle-row input[type='checkbox']:checked {
   background: var(--teal);
 }
-:root[data-look='studio'][data-theme] .toggle-row input[type='checkbox']:checked::after {
+:root:root[data-theme] .toggle-row input[type='checkbox']:checked::after {
   inset-inline-start: 21px;
 }
-:root[data-look='studio'][data-theme] .toggle-row input[type='checkbox']:disabled {
+:root:root[data-theme] .toggle-row input[type='checkbox']:disabled {
   opacity: 0.5;
 }
-:root[data-look='studio'] .toggle-row {
+:root:root .toggle-row {
   font-weight: 500;
 }
 
 /* ---- shared: the last hard offsets */
-:root[data-look='studio'] .together-chip {
+:root:root .together-chip {
   box-shadow: var(--shadow-s);
   font-weight: 600;
 }
 @media (min-width: 900px) {
-  :root[data-look='studio'][data-theme] .gift-pop {
+  :root:root[data-theme] .gift-pop {
     border: 0;
     box-shadow: 0 12px 40px rgba(30, 16, 51, 0.18);
   }
 }
-:root[data-look='studio'] .path2 :is(.path-techtest, .path-changed) {
+:root:root .path2 :is(.path-techtest, .path-changed) {
   font-weight: 600;
 }
 
 /* ---- path: the unit mastery ring (dark: was a white disc) */
-:root[data-look='studio'] .unit-banner .unit-ring,
-:root[data-look='studio'] .path2 .unit-banner .unit-ring {
+:root:root .unit-banner .unit-ring,
+:root:root .path2 .unit-banner .unit-ring {
   border: 0;
   background: transparent;
   color: var(--accent);
 }
-:root[data-look='studio'] .unit-banner .unit-ring .ur-bed {
+:root:root .unit-banner .unit-ring .ur-bed {
   stroke: var(--line-strong);
 }
-:root[data-look='studio'] .unit-banner .unit-ring .ur-fill {
+:root:root .unit-banner .unit-ring .ur-fill {
   stroke: var(--accent);
 }
-:root[data-look='studio'] .unit-banner .unit-ring.sealed {
+:root:root .unit-banner .unit-ring.sealed {
   background: var(--ring-gold);
   color: #ffffff;
 }
-:root[data-look='studio'] .unit-banner .unit-ring.sealed :is(.ur-fill, .ur-bed) {
+:root:root .unit-banner .unit-ring.sealed :is(.ur-fill, .ur-bed) {
   stroke: #ffffff;
 }
-:root[data-look='studio'] .unit-banner .unit-ring.sealed.faded {
+:root:root .unit-banner .unit-ring.sealed.faded {
   background: var(--ring-silver);
 }
 
 /* ================================================================ features: own fingering, next-key finger, new best */
 /* "Other fingering?": a quiet text action in the review's Why row */
-:root[data-look='studio'] .own-fing-link {
+:root:root .own-fing-link {
   font: 500 0.85rem/1.2 var(--font);
   color: var(--ink-dim);
   background: none;
@@ -307,42 +307,42 @@
   padding: 6px 2px;
   text-decoration: none;
 }
-:root[data-look='studio'] .own-fing-link.on {
+:root:root .own-fing-link.on {
   color: var(--st-tonal-ink);
 }
-:root[data-look='studio'] .tr-why-row {
+:root:root .tr-why-row {
   flex-wrap: wrap;
   row-gap: 0;
 }
-:root[data-look='studio'] .own-fing-sheet {
+:root:root .own-fing-sheet {
   display: grid;
   gap: 12px;
   max-height: 86vh;
   overflow-y: auto;
 }
-:root[data-look='studio'] .own-fing-sheet .own-fing-on {
+:root:root .own-fing-sheet .own-fing-on {
   padding: 10px 14px;
   border-radius: 14px;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] .own-fing-hint {
+:root:root .own-fing-hint {
   margin: 0;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .own-fing-hand {
+:root:root .own-fing-hand {
   display: grid;
   gap: 6px;
 }
-:root[data-look='studio'] .own-fing-h {
+:root:root .own-fing-h {
   color: var(--ink-dim);
   font-weight: 500;
 }
-:root[data-look='studio'] .own-fing-grid {
+:root:root .own-fing-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
   gap: 6px;
 }
-:root[data-look='studio'] .own-fing-cell {
+:root:root .own-fing-cell {
   display: grid;
   justify-items: center;
   gap: 1px;
@@ -354,30 +354,30 @@
   color: var(--ink);
   cursor: pointer;
 }
-:root[data-look='studio'] .own-fing-cell small {
+:root:root .own-fing-cell small {
   font-size: 0.68rem;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .own-fing-cell b {
+:root:root .own-fing-cell b {
   font-size: 1.05rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-:root[data-look='studio'] .own-fing-cell.mine {
+:root:root .own-fing-cell.mine {
   border-color: transparent;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
 }
-:root[data-look='studio'] .own-fing-reset {
+:root:root .own-fing-reset {
   justify-self: center;
   font-weight: 500;
 }
-:root[data-look='studio'] .own-fing-reset:disabled {
+:root:root .own-fing-reset:disabled {
   opacity: 0.4;
 }
 
 /* the slim keyboard under the score: the next key tinted, its finger a small number (a recommendation) */
-:root[data-look='studio'][data-theme] .keyboard.finger-keys {
+:root:root[data-theme] .keyboard.finger-keys {
   position: relative;
   height: 44px;
   margin: 4px auto 0;
@@ -385,14 +385,14 @@
   max-width: 560px;
   flex: none;
 }
-:root[data-look='studio'][data-theme] .finger-keys .wk.next {
+:root:root[data-theme] .finger-keys .wk.next {
   background: #e6dcff;
   box-shadow: inset 0 -5px 0 #b794ff;
 }
-:root[data-look='studio'][data-theme] .finger-keys .bk.next {
+:root:root[data-theme] .finger-keys .bk.next {
   background: #5b2fc4;
 }
-:root[data-look='studio'] .finger-keys .key-finger {
+:root:root .finger-keys .key-finger {
   position: absolute;
   inset-inline: 0;
   bottom: 7px;
@@ -402,18 +402,18 @@
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
-:root[data-look='studio'] .finger-keys .bk .key-finger {
+:root:root .finger-keys .bk .key-finger {
   bottom: 4px;
   color: #ffffff;
 }
 @media (max-height: 700px) {
-  :root[data-look='studio'][data-theme] .keyboard.finger-keys {
+  :root:root[data-theme] .keyboard.finger-keys {
     height: 34px;
   }
 }
 
 /* new best tempo: a light card over a dim veil; any tap continues */
-:root[data-look='studio'] .tb-overlay {
+:root:root .tb-overlay {
   position: fixed;
   inset: 0;
   z-index: 95;
@@ -422,7 +422,7 @@
   padding: 16px;
   background: rgb(30 16 51 / 0.35);
 }
-:root[data-look='studio'] .tb-card {
+:root:root .tb-card {
   display: grid;
   justify-items: center;
   gap: 10px;
@@ -434,40 +434,40 @@
   box-shadow: 0 12px 40px rgba(30, 16, 51, 0.18);
   text-align: center;
 }
-:root[data-look='studio'] .tb-kicker {
+:root:root .tb-kicker {
   margin: 0;
   font: 600 0.95rem/1.2 var(--font);
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .tb-card .cel-tempo .tbig {
+:root:root .tb-card .cel-tempo .tbig {
   font-weight: 700;
 }
-:root[data-look='studio'] .tb-share {
+:root:root .tb-share {
   min-width: 160px;
 }
-:root[data-look='studio'] .tb-go {
+:root:root .tb-go {
   font-weight: 500;
   color: var(--ink-dim);
 }
 
 /* ================================================================ screens */
 /* ---- the streak sheet: purple progress, quiet days, the done days a soft teal, today ringed in purple */
-:root[data-look='studio'] .streak-facts small {
+:root:root .streak-facts small {
   font-weight: 500;
 }
-:root[data-look='studio'] .streak-facts b {
+:root:root .streak-facts b {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-:root[data-look='studio'] .milestone-ring {
+:root:root .milestone-ring {
   height: 8px;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] .milestone-ring::before {
+:root:root .milestone-ring::before {
   background: var(--accent);
   border-radius: 99px;
 }
-:root[data-look='studio'] .milestone-ring span {
+:root:root .milestone-ring span {
   position: absolute;
   inset-block-start: 12px;
   inset-inline: 0;
@@ -475,231 +475,231 @@
   font-weight: 500;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .streak-sheet .milestone-ring {
+:root:root .streak-sheet .milestone-ring {
   overflow: visible;
   margin-block-end: 16px;
 }
-:root[data-look='studio'] .streak-cal li {
+:root:root .streak-cal li {
   font-weight: 500;
   color: var(--ink-soft);
 }
-:root[data-look='studio'] .streak-cal li.done {
+:root:root .streak-cal li.done {
   background: var(--ss-done-soft);
   color: var(--ss-done);
   font-weight: 700;
 }
-:root[data-look='studio'] .streak-cal li.freeze {
+:root:root .streak-cal li.freeze {
   background: color-mix(in srgb, #3ab8ff 18%, transparent);
   color: var(--ink-soft);
 }
-:root[data-look='studio'] .streak-cal li.today {
+:root:root .streak-cal li.today {
   outline: 0;
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-:root[data-look='studio'] .streak-cal li.milestone {
+:root:root .streak-cal li.milestone {
   box-shadow: inset 0 0 0 1.5px var(--line-strong);
 }
-:root[data-look='studio'] .streak-cal li.today.milestone {
+:root:root .streak-cal li.today.milestone {
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-:root[data-look='studio'] .streak-risk {
+:root:root .streak-risk {
   border-radius: 12px;
   font-weight: 600;
 }
 
 /* ---- the what's-new card in the menu and the changelog */
-:root[data-look='studio'] .whats-new-card h3 {
+:root:root .whats-new-card h3 {
   font-size: var(--st-card-title);
 }
-:root[data-look='studio'] .changelog small,
-:root[data-look='studio'] .version-line {
+:root:root .changelog small,
+:root:root .version-line {
   color: var(--ink-dim);
   font-weight: 400;
 }
-:root[data-look='studio'] .version-line b {
+:root:root .version-line b {
   font-weight: 600;
 }
-:root[data-look='studio'] .changelog ul {
+:root:root .changelog ul {
   line-height: 1.5;
 }
 
 /* ---- profile: the avatar picker = tonal discs, the colour only on the chosen one */
-:root[data-look='studio'][data-theme] .icon-opt {
+:root:root[data-theme] .icon-opt {
   border: 0;
   background: var(--st-surface-2);
   color: var(--ink-soft);
   box-shadow: none;
 }
-:root[data-look='studio'][data-theme] .icon-opt.on {
+:root:root[data-theme] .icon-opt.on {
   background: var(--av, var(--lilac));
   color: var(--ink-c);
   box-shadow: 0 0 0 3px var(--card), 0 0 0 4.5px var(--accent);
 }
-:root[data-look='studio'] .icon-family-h {
+:root:root .icon-family-h {
   font-weight: 600;
 }
-:root[data-look='studio'] .icon-family-h small {
+:root:root .icon-family-h small {
   font-weight: 500;
 }
-:root[data-look='studio'] .color-opt {
+:root:root .color-opt {
   border: 0;
 }
-:root[data-look='studio'] .color-opt.on {
+:root:root .color-opt.on {
   outline: 0;
   box-shadow: 0 0 0 3px var(--card), 0 0 0 4.5px var(--accent);
 }
-:root[data-look='studio'][data-theme] .avatar {
+:root:root[data-theme] .avatar {
   border: 0;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 /* ---- badges and ranks: flat tiles on the card, the tier colour as a soft wash only */
-:root[data-look='studio'] .bd-tile {
+:root:root .bd-tile {
   border: 0;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] .bd-tile.got {
+:root:root .bd-tile.got {
   background: linear-gradient(160deg, color-mix(in srgb, var(--rc, #ffc94d) 16%, var(--card)), var(--st-surface-2) 75%);
 }
-:root[data-look='studio'] .bd-icon {
+:root:root .bd-icon {
   filter: drop-shadow(0 2px 3px rgba(30, 16, 51, 0.18));
 }
-:root[data-look='studio'] .bd-name {
+:root:root .bd-name {
   font-weight: 600;
 }
-:root[data-look='studio'] .bd-tone {
+:root:root .bd-tone {
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
 }
-:root[data-look='studio'] .bd-group > summary {
+:root:root .bd-group > summary {
   font-weight: 600;
 }
-:root[data-look='studio'] .ar-cell .ar-btn {
+:root:root .ar-cell .ar-btn {
   border: 0;
   box-shadow: none;
 }
-:root[data-look='studio'] .bd-ch-tiers li {
+:root:root .bd-ch-tiers li {
   border: 0;
 }
 /* the achievements list: cards with a soft shadow; earned = full ink and a teal mark, locked = dimmed (no gold rim) */
-:root[data-look='studio'] .achievements .badge-grid li {
+:root:root .achievements .badge-grid li {
   border: 0;
   box-shadow: var(--ss-sh-s);
   opacity: 1;
 }
-:root[data-look='studio'] .achievements .badge-grid li:not(.got) {
+:root:root .achievements .badge-grid li:not(.got) {
   background: var(--st-surface-2);
   box-shadow: none;
 }
-:root[data-look='studio'] .achievements .badge-grid li:not(.got) :is(b, strong) {
+:root:root .achievements .badge-grid li:not(.got) :is(b, strong) {
   color: var(--ink-soft);
 }
-:root[data-look='studio'] .achievements .badge-grid li.got {
+:root:root .achievements .badge-grid li.got {
   border: 0;
   box-shadow: var(--ss-sh-s), inset 0 0 0 1.5px var(--accent);
 }
 
 /* ---- progress: the radar and level cards (no ink outlines; the radar's grid a hairline) */
-:root[data-look='studio'] .ps-view :is(.ps-tile, .ps-area, .ps-skill, .ps-card, .lvl-card, .level-card) {
+:root:root .ps-view :is(.ps-tile, .ps-area, .ps-skill, .ps-card, .lvl-card, .level-card) {
   border: 0;
   box-shadow: var(--ss-sh-s);
   background: var(--card);
 }
-:root[data-look='studio'] .ps-view svg :is(polygon, line, circle)[stroke='#1e1033'],
-:root[data-look='studio'] .ps-view svg :is(polygon, line, circle)[stroke='#160f2b'] {
+:root:root .ps-view svg :is(polygon, line, circle)[stroke='#1e1033'],
+:root:root .ps-view svg :is(polygon, line, circle)[stroke='#160f2b'] {
   stroke: var(--line-strong);
 }
 
 /* ---- level test: sections as a quiet numbered list, the verdict one line */
-:root[data-look='studio'] .lt-sections {
+:root:root .lt-sections {
   display: grid;
   gap: 4px;
   padding-inline-start: 1.4em;
   color: var(--ink-soft);
 }
-:root[data-look='studio'] .lt-sections li::marker {
+:root:root .lt-sections li::marker {
   color: var(--ink-dim);
   font-variant-numeric: tabular-nums;
 }
-:root[data-look='studio'] .lt-summary {
+:root:root .lt-summary {
   display: grid;
   gap: 6px;
   padding: 0;
   list-style: none;
 }
-:root[data-look='studio'] .lt-summary li {
+:root:root .lt-summary li {
   padding: 10px 14px;
   border-radius: 14px;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] .lt-verdict {
+:root:root .lt-verdict {
   font-weight: 600;
 }
 
 /* ---- recap: the coach's line a quiet tonal note, the stars without ink rims */
-:root[data-look='studio'] .recap .coach-insight,
-:root[data-look='studio'][data-theme] .recap .coach-insight.pair {
+:root:root .recap .coach-insight,
+:root:root[data-theme] .recap .coach-insight.pair {
   border: 0;
   border-radius: 16px;
   background: var(--st-surface-2);
   box-shadow: none;
   color: var(--ink-soft);
 }
-:root[data-look='studio'][data-theme] .recap-row .recap-mark {
+:root:root[data-theme] .recap-row .recap-mark {
   border: 0;
 }
-:root[data-look='studio'] .recap-pts {
+:root:root .recap-pts {
   font-weight: 700;
 }
 
 /* ---- tournament / duels / daily: hairline bars, quiet chips */
-:root[data-look='studio'] .time-bar {
+:root:root .time-bar {
   height: 6px;
   border: 0;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] :is(.half-head, .name-row) .dot {
+:root:root :is(.half-head, .name-row) .dot {
   border: 0;
 }
-:root[data-look='studio'] .podium .step {
+:root:root .podium .step {
   border: 0;
   box-shadow: var(--ss-sh-s);
 }
-:root[data-look='studio'] :is(.room-players li, .offline-chip, .t-answered) {
+:root:root :is(.room-players li, .offline-chip, .t-answered) {
   font-weight: 600;
 }
 
 /* ---- community: the friend level chip and the dynamics chips are tonal (no lemon with an ink rim) */
-:root[data-look='studio'][data-theme] :is(.fr-level, .cl-dyn) {
+:root:root[data-theme] :is(.fr-level, .cl-dyn) {
   border: 0;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
 }
-:root[data-look='studio'][data-theme] .beta-chip {
+:root:root[data-theme] .beta-chip {
   border: 0;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   font-weight: 600;
 }
-:root[data-look='studio'][data-theme] :is(.new-chip, .hot-chip) {
+:root:root[data-theme] :is(.new-chip, .hot-chip) {
   border: 0;
 }
 
 /* ---- tools: the drone's big degree, the tuner's numbers */
-:root[data-look='studio'] .drone-degree {
+:root:root .drone-degree {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-:root[data-look='studio'] :is(.drone-ladder li, .drone-cents) {
+:root:root :is(.drone-ladder li, .drone-cents) {
   font-weight: 600;
 }
 
 /* Settings cards (owner 2026-11-17): the inner cards keep a real gutter, and the naming example is a quiet tonal box. */
-:root[data-look='studio'] .set-group-body .set-card { padding: 16px 18px; gap: 14px; }
-:root[data-look='studio'] .set-card > h2 { margin: 0; padding-inline: 2px; }
-:root[data-look='studio'] .set-card .toggle-row { padding-inline: 2px; }
-:root[data-look='studio'] .example { background: var(--bg-2); color: var(--ink); border-radius: 14px; padding: 12px 14px; }
-:root[data-look='studio'] .set-card .example .spoken-ex { color: var(--purple) !important; font-weight: 700; }
-:root[data-look='studio'][data-theme='dark'] .example { background: #2a1f42; }
-:root[data-look='studio'][data-theme='dark'] .set-card .example .spoken-ex { color: #c4a8ff !important; }
+:root:root .set-group-body .set-card { padding: 16px 18px; gap: 14px; }
+:root:root .set-card > h2 { margin: 0; padding-inline: 2px; }
+:root:root .set-card .toggle-row { padding-inline: 2px; }
+:root:root .example { background: var(--bg-2); color: var(--ink); border-radius: 14px; padding: 12px 14px; }
+:root:root .set-card .example .spoken-ex { color: var(--purple) !important; font-weight: 700; }
+:root:root[data-theme='dark'] .example { background: #2a1f42; }
+:root:root[data-theme='dark'] .set-card .example .spoken-ex { color: #c4a8ff !important; }
