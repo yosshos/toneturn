@@ -1,0 +1,43 @@
+/* Install pill + how-to sheet (2026-11-17). Tonal lilac pill: no outline, no hard shadow (not the screen's main action). */
+.install-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-2, #f3ecff);
+  color: var(--purple, #6d28d9);
+  font: 600 0.88rem/1 var(--font, Rubik, system-ui, sans-serif);
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.install-pill:active { transform: scale(0.97); }
+.install-pill:focus-visible { outline: 2px solid var(--purple, #6d28d9); outline-offset: 2px; }
+:root[data-theme='dark'] .install-pill { background: #2f2250; color: #c4a8ff; }
+@media (max-width: 350px) { .install-pill span { display: none; } .install-pill { padding: 0 9px; } }
+
+.ob-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+
+.install-sheet2 { display: flex; flex-direction: column; gap: 14px; }
+.install-sheet2 .is-head { display: flex; align-items: center; gap: 12px; }
+.install-sheet2 h2 { margin: 0; font-size: 1.25rem; font-weight: 700; }
+.install-sheet2 .is-lead { margin: 0; color: var(--ink-dim, #5b4a86); }
+.install-sheet2 .is-steps { margin: 0; padding-inline-start: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 8px; }
+.install-sheet2 .is-steps li { counter-increment: s; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.install-sheet2 .is-steps li::before {
+  content: counter(s);
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-2, #f3ecff);
+  color: var(--purple, #6d28d9);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.ob-brand-row .ob-word { white-space: nowrap; }

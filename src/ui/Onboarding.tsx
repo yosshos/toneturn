@@ -21,6 +21,7 @@ import type { IntakeResult } from './Intake';
 import { piano } from './services';
 import { Icon } from './icons';
 import { Logo } from './brand/Logo';
+import { InstallButton } from './brand/InstallButton';
 import { MARK, PALETTES, barLine } from './brand/mark';
 
 type Lang = 'en' | 'he';
@@ -235,9 +236,12 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
 
       {step === 'welcome' && (
         <section className="ob-welcome">
-          <div className="ob-brand">
-            <Logo size={44} />
-            <span className="ob-word">{wordmark(lang)}</span>
+          <div className="ob-brand-row">
+            <div className="ob-brand">
+              <Logo size={44} />
+              <span className="ob-word">{wordmark(lang)}</span>
+            </div>
+            <InstallButton lang={lang} />
           </div>
           <div className="ob-hero">
             <Toni state="draw" size={200} />

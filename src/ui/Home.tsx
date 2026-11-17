@@ -5,13 +5,14 @@ import { useCourse } from './courseContext';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { StreakChip } from './Streak';
 import type { StreakState } from '../engine/streak';
-import { applyUpdate, promptInstall, pwa } from '../pwa';
+import { applyUpdate, pwa } from '../pwa';
 import { topicProgress } from '../engine/recommend';
 import { useState, useSyncExternalStore } from 'react';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { personalOrder, type Intake } from '../engine/intake';
 import type { InputMode } from '../engine/session';
 import type { Strings } from '../i18n/strings';
+import { InstallButton } from './brand/InstallButton';
 import type { Progress, Settings } from '../storage/progress';
 import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
@@ -250,7 +251,7 @@ export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = fal
       <CourseChip active={course.active} lang={lang} onOpen={course.open} />
       <div className="stats">
         <StreakChip t={t} st={streak} onOpen={onStreak} home={home} />
-        <HeaderPwa t={t} />
+        <HeaderPwa t={t} lang={lang} />
         <button className={`icon-btn menu-btn ${whatsNew.unseen ? 'has-dot' : ''}`} onClick={onMenu} aria-label={whatsNew.unseen ? `${t.menu} · ${lang === 'he' ? 'יש חדש' : 'something new'}` : t.menu}>
           <Icon k="menu" size={22} />
         </button>
@@ -356,7 +357,7 @@ export function TopicBars({ t, progress }: { t: Strings; progress: Progress }) {
 }
 
 /** Header actions from the PWA state: a gold "update" button when a new version is waiting, an install emoji when not installed. */
-function HeaderPwa({ t }: { t: Strings }) {
+function HeaderPwa({ t, lang }: { t: Strings; lang: 'he' | 'en' }) {
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
   const [howTo, setHowTo] = useState(false);
   return (
@@ -368,17 +369,7 @@ function HeaderPwa({ t }: { t: Strings }) {
           <span className="hdr-dot" aria-hidden="true" />
         </button>
       )}
-      {!p.installed && (p.canInstall || p.iosManual || import.meta.env.PROD) && (
-        <button
-          className="icon-btn hdr-action install-btn"
-          aria-label={t.installApp}
-          title={t.installApp}
-          data-install-btn="1"
-          onClick={() => (p.canInstall ? void promptInstall() : setHowTo(true))}
-        >
-          <Icon k="download" size={20} />
-        </button>
-      )}
+      <InstallButton lang={lang} />
       {howTo && (
         <div className="sheet-backdrop" onClick={() => setHowTo(false)}>
           <div className="sheet install-sheet" role="dialog" aria-modal="true" aria-label={t.installApp} onClick={(e) => e.stopPropagation()}>

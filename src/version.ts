@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.102.1',
+    date: '2026-11-17',
+    en: ['An "Install" button in the top bar and on the welcome screen, with the steps for iPhone and other browsers.'],
+    he: ['כפתור "התקנה" בסרגל העליון ובמסך הפתיחה, עם ההוראות לאייפון ולדפדפנים אחרים.'],
+  },
+  {
     version: '0.102.0',
     date: '2026-11-17',
     en: [
