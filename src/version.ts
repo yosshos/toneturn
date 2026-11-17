@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.103.0',
+    date: '2026-11-17',
+    en: [
+      'Guitar: rhythm stems under the tab, chord boxes mirrored for left-handed players, Encore guitar phrases checked like guitar drills, and MIDI guitars with a channel per string and pitch bend.',
+      'Measured touch goes further: accents in place, trills and repeated notes, leaps and octaves, sf and fp, the soft pedal, melody over accompaniment in pieces, and a touch section in the level test by microphone too. Settings cards have proper margins.',
+    ],
+    he: [
+      'גיטרה: קווי קצב מתחת לטאב, דיאגרמות אקורדים מראה לשמאליים, משפטי גיטרה בהדרן נבדקים כמו תרגילי גיטרה, וגיטרות MIDI עם ערוץ לכל מיתר וכיפוף.',
+      'המדידה של המגע מעמיקה: הטעמות במקום, טרילים ותווים חוזרים, קפיצות ואוקטבות, sf ו־fp, הפדל השמאלי, מנגינה מעל הליווי ביצירות, וחלק מגע במבחן הרמה גם במיקרופון. לכרטיסי ההגדרות יש שוליים כמו שצריך.',
+    ],
+  },
+  {
     version: '0.102.1',
     date: '2026-11-17',
     en: ['An "Install" button in the top bar and on the welcome screen, with the steps for iPhone and other browsers.'],

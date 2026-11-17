@@ -694,3 +694,12 @@
 :root[data-look='studio'] :is(.drone-ladder li, .drone-cents) {
   font-weight: 600;
 }
+
+/* Settings cards (owner 2026-11-17): the inner cards keep a real gutter, and the naming example is a quiet tonal box. */
+:root[data-look='studio'] .set-group-body .set-card { padding: 16px 18px; gap: 14px; }
+:root[data-look='studio'] .set-card > h2 { margin: 0; padding-inline: 2px; }
+:root[data-look='studio'] .set-card .toggle-row { padding-inline: 2px; }
+:root[data-look='studio'] .example { background: var(--bg-2); color: var(--ink); border-radius: 14px; padding: 12px 14px; }
+:root[data-look='studio'] .set-card .example .spoken-ex { color: var(--purple) !important; font-weight: 700; }
+:root[data-look='studio'][data-theme='dark'] .example { background: #2a1f42; }
+:root[data-look='studio'][data-theme='dark'] .set-card .example .spoken-ex { color: #c4a8ff !important; }
