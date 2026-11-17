@@ -2,7 +2,7 @@
 // and think again whether a questionnaire is the right first step"). Research (Duolingo, Simply Piano, Yousician,
 // Headspace): open with the brand, one promise, a first win within ~20 s, then at most a few questions; ask the rest
 // later, in context. So:
-//   Splash   — the logo draws itself (the ear, the clef-7, the wave), the name fades in; tap to skip; reduced motion = still.
+//   Opening  — src/ui/brand/Splash.tsx (once a day, over the app).
 //   Welcome  — one line of promise · Start · I already have an account.
 //   Taste    — two notes: which one was higher? (a first, real win before any question)
 //   Courses  — what to learn (everything else has sensible defaults; the full questionnaire stays in Settings).
@@ -13,7 +13,7 @@ import { courseOf, type CourseId } from '../engine/courses';
 import { copy, defaultCourse, visibleCourses, wordmark } from '../partner';
 import { KIT_NOTICE } from '../engine/drumKit';
 import { Glyph } from './Glyph';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { intakeSettings, trackOf, type Intake, type Level4 } from '../engine/intake';
 import { defaultPacks, type Goal } from '../engine/path';
 import type { Settings } from '../storage/progress';
@@ -22,67 +22,8 @@ import { piano } from './services';
 import { Icon } from './icons';
 import { Logo } from './brand/Logo';
 import { InstallButton } from './brand/InstallButton';
-import { MARK, PALETTES, barLine } from './brand/mark';
 
 type Lang = 'en' | 'he';
-
-/** The brand mark (./brand/mark.ts) on its tile, drawn stroke by stroke: the 7's top, its stem, the head, the bars. */
-export function SplashLogo({ size = 132 }: { size?: number }) {
-  const P = PALETTES.paper;
-  const H = MARK.head;
-  const bar = (dy: number, color: string) =>
-    MARK.bars.map((b) => {
-      const l = barLine(b, dy);
-      return <path key={l.x} className="sp-wave" pathLength={1} d={`M${l.x} ${l.y2}V${l.y1}`} stroke={color} strokeWidth={MARK.barStroke} />;
-    });
-  const seven = (color: string, dy = 0) => (
-    <g transform={dy ? `translate(0 ${dy})` : undefined}>
-      <path className="sp-ear" pathLength={1} d={MARK.top} stroke={color} strokeWidth={MARK.stroke} />
-      <path className="sp-seven" pathLength={1} d={MARK.stem} stroke={color} strokeWidth={MARK.stroke} />
-      <g className="sp-dot d1">
-        <ellipse cx={H.cx} cy={H.cy} rx={H.rx} ry={H.ry} transform={`rotate(${H.rotate} ${H.cx} ${H.cy})`} fill={color} />
-      </g>
-    </g>
-  );
-  return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true" className="splash-logo brand-logo">
-      <rect width="120" height="120" rx={MARK.radius} fill={P.bg} />
-      <g fill="none" strokeLinecap="round">
-        {bar(MARK.barEdgeDy, P.barsEdge)}
-        {bar(0, P.bars)}
-        {seven(P.edge, MARK.edgeDy)}
-        {seven(P.fill)}
-      </g>
-    </svg>
-  );
-}
-
-/** The opening: ~1.6 s, tap anywhere to skip. Calls onDone once. */
-export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lang }) {
-  const done = useRef(false);
-  const finish = () => {
-    if (done.current) return;
-    done.current = true;
-    onDone();
-  };
-  useEffect(() => {
-    const reduced = document.documentElement.dataset.motion === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // 0.63 (owner): long enough to read the name and the slogan.
-    const id = setTimeout(finish, reduced ? 3100 : 5300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <div className="splash" onPointerDown={finish} role="presentation" data-splash="1">
-      <SplashLogo />
-      <div className="splash-word">{wordmark(lang)}</div>
-      <div className="splash-slogan">{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</div>
-      <svg className="splash-staff" viewBox="0 0 390 130" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 2H390M0 32H390M0 62H390M0 92H390M0 122H390" stroke="rgb(255 255 255 / 0.22)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-      </svg>
-    </div>
-  );
-}
 
 const TX = {
   en: {

@@ -1,6 +1,5 @@
 // The Paper Toni gallery (#/dev/toni, dev server only): every state at 120 and 48 px on a light and a dark panel.
-// Shots go to docs/toni-shots/ for review: the whole gallery (pose after the one-shots), each state close up,
-// and the classic drawing for comparison. Also checks the look gate follows html[data-look] live.
+// Shots go to docs/toni-shots/ for review: the whole gallery (pose after the one-shots) and each state close up.
 import { expect, test } from '@playwright/test';
 
 const OUT = 'docs/toni-shots';
@@ -13,7 +12,7 @@ test('toni gallery: every state, light and dark, shots', async ({ browser }) => 
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto('/#/dev/toni');
   await expect(page.locator('[data-ready]')).toBeVisible();
-  // 17 states x 2 sizes x 2 panels, all Paper (+ the live gated one in the header).
+  // 17 states x 2 sizes x 2 panels, all Paper (+ the one in the header, as call sites use it).
   await expect(page.locator('.tg-panel .toni-p')).toHaveCount(STATES.length * 4);
   await expect(page.locator('.tg-live .toni-p')).toHaveCount(1);
   // The wrong flag is the raspberry red.
@@ -27,11 +26,6 @@ test('toni gallery: every state, light and dark, shots', async ({ browser }) => 
   await page.screenshot({ path: `${OUT}/gallery.png`, fullPage: true });
   for (const theme of ['light', 'dark'])
     for (const s of STATES) await page.locator(`.tg-${theme} [data-state="${s}"]`).screenshot({ path: `${OUT}/${theme}-${s}.png` });
-  await page.goto('/#/dev/toni?look=classic');
-  await page.reload();
-  await expect(page.locator('[data-ready]')).toBeVisible();
-  await page.waitForTimeout(1300);
-  await page.locator('.tg-light').screenshot({ path: `${OUT}/classic-light.png` });
   expect(errors).toEqual([]);
   await ctx.close();
 });
@@ -45,16 +39,4 @@ test('toni gallery: reduced motion keeps the pose only', async ({ browser }) => 
   expect(names.length).toBeGreaterThan(4);
   for (const n of names) expect(n).toBe('none');
   await ctx.close();
-});
-
-test('look gate: Toni follows html[data-look] live', async ({ page }) => {
-  await page.goto('/#/dev/toni?look=classic&only=idle');
-  await expect(page.locator('[data-ready]')).toBeVisible();
-  await expect(page.locator('.tg-live .toni')).toHaveCount(1);
-  await expect(page.locator('.tg-live .toni-p')).toHaveCount(0);
-  await page.evaluate(() => (document.documentElement.dataset.look = 'studio'));
-  await expect(page.locator('.tg-live .toni-p')).toHaveCount(1);
-  await page.evaluate(() => delete document.documentElement.dataset.look);
-  await expect(page.locator('.tg-live .toni-p')).toHaveCount(0);
-  await expect(page.locator('.tg-live .toni')).toHaveCount(1);
 });

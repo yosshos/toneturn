@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 // Runs against the production build (vite preview), where the service worker is active.
-test.use({ baseURL: 'http://localhost:4174' });
+test.use({ baseURL: process.env.E2E_PROD_BASE ?? 'http://localhost:4174' }); // E2E_PROD_BASE: a worktree's own preview
 
 test('service worker installs, controls the page, and the app loads offline', async ({ page, context }) => {
   await page.goto('/');

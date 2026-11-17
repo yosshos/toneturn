@@ -1,29 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// The studio look (redesign stage 1, src/studio.css) is the default (owner 2026-11-17): ?look=classic or the Settings
-// row "Previous look" keeps the old one (remembered), ?look=studio returns. Home and an exercise's gate page render in
-// it with nothing sticking out sideways at 320 px; the main action keeps its hard shadow while the cards go flat.
+// The studio look (redesign, src/studio*.css) is the only look (owner 2026-11-17: the classic look is gone). Home and
+// an exercise's gate page render in it with nothing sticking out sideways at 320 px; the main action keeps its hard
+// shadow while the cards go flat. The old switch (?look=classic, the Settings row "Previous look") no longer exists.
 
 test.use({ viewport: { width: 320, height: 720 } });
 
 const overflowX = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-const look = (page: Page) => page.evaluate(() => document.documentElement.dataset.look ?? null);
+const tabbarBg = (page: Page) => page.locator('.tabbar').evaluate((el) => getComputedStyle(el).backgroundColor);
 
-test('the look switch: studio by default, ?look=classic off and remembered, ?look=studio back', async ({ page }) => {
+test('one look: ?look=classic and an old stored tt.look change nothing', async ({ page }) => {
   await page.goto('/?sim=1');
-  await expect(page.locator('html')).toHaveAttribute('data-look', 'studio');
-
+  await expect(page.locator('.tabbar')).toBeVisible();
+  const studioBar = await tabbarBg(page);
+  expect(studioBar).toBe('rgb(255, 255, 255)');
+  await page.evaluate(() => localStorage.setItem('tt.look', 'classic'));
   await page.goto('/?sim=1&look=classic');
-  await expect(page.locator('main').first()).toBeVisible();
-  expect(await look(page)).toBeNull();
-  expect(await page.evaluate(() => localStorage.getItem('tt.look'))).toBe('classic');
-  await page.goto('/?sim=1');
-  await expect(page.locator('main').first()).toBeVisible();
-  expect(await look(page)).toBeNull();
-
-  await page.goto('/?sim=1&look=studio');
-  await expect(page.locator('html')).toHaveAttribute('data-look', 'studio');
-  expect(await page.evaluate(() => localStorage.getItem('tt.look'))).toBeNull();
+  await expect(page.locator('.tabbar')).toBeVisible();
+  expect(await tabbarBg(page)).toBe(studioBar);
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-look'))).toBe(false);
 });
 
 /** A returning player (onboarding done), so a topic link opens its gate page. */
@@ -53,7 +48,6 @@ for (const lang of ['en', 'he'] as const) {
     await seed(page, lang);
     await page.goto(`/?lang=${lang}&brief=1&unlock=all#/topic/basics-highlow/1`);
     await expect(page.locator('[data-brief]')).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-look', 'studio');
     const play = page.locator('.ex-play');
     await expect(play).toBeVisible();
     // the Play button is the main action: it keeps the one hard shadow
@@ -62,24 +56,17 @@ for (const lang of ['en', 'he'] as const) {
 
     // home
     await page.goto(`/?lang=${lang}`);
-    await expect(page.locator('html')).toHaveAttribute('data-look', 'studio');
     await expect(page.locator('.tabbar')).toBeVisible();
-    // the bottom bar is a white surface now, not the ink pill
-    const bar = await page.locator('.tabbar').evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bar).toBe('rgb(255, 255, 255)');
+    // the bottom bar is a white surface, not the old ink pill
+    expect(await tabbarBg(page)).toBe('rgb(255, 255, 255)');
     expect(await overflowX(page)).toBeLessThanOrEqual(1);
   });
 }
 
-test('the Settings row switches to the previous look and back', async ({ page }) => {
+test('Settings has no "Previous look" row', async ({ page }) => {
   await page.goto('/?sim=1&lang=en#/settings');
   const display = page.locator('.set-sec', { hasText: 'Display' }).first();
   if (await display.isVisible()) await display.click();
-  const row = page.locator('[data-look-toggle]');
-  await expect(row).toHaveAttribute('data-look-toggle', 'studio');
-  await row.locator('input').check();
-  await expect(row).toHaveAttribute('data-look-toggle', 'classic');
-  expect(await look(page)).toBeNull();
-  await row.locator('input').uncheck();
-  await expect(page.locator('html')).toHaveAttribute('data-look', 'studio');
+  await expect(page.getByText('Reduce motion', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('Previous look')).toHaveCount(0);
 });

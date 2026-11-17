@@ -22,8 +22,6 @@ import { previewText } from '../speech/voice/preview';
 import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
 import { APP_THEMES, appearanceOf } from './themes';
-import { isStudio, setLook } from './look';
-import { LOOK_TEXT } from '../i18n/lookText';
 import { GT } from '../i18n/guitarText';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
@@ -707,7 +705,6 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               </div>
               <p className="field-hint">{t.showNotesHint}</p>
             </fieldset>
-            <LookToggle lang={lang} />
             <label className="check">
               <input type="checkbox" checked={s.reducedMotion ?? window.matchMedia('(prefers-reduced-motion: reduce)').matches} onChange={(e) => onChange({ reducedMotion: e.target.checked })} />
               {t.reducedMotion}
@@ -776,27 +773,6 @@ const SetIcon = ({ k }: { k: string }) => <Icon k={SET_ICON[k] ?? 'settings'} si
 
 /** Settings on a computer (SPEC-DESKTOP §4, owner 2026-11-08): categories in a column, the chosen one as a page. */
 const PaneCtx = createContext<{ wide: boolean; active: string; groups: string[] } | null>(null);
-/** The previous (classic) look: the studio look is the default; a device preference in localStorage, not synced. */
-function LookToggle({ lang }: { lang: 'en' | 'he' }) {
-  const [classic, setClassic] = useState(() => !isStudio());
-  return (
-    <label className="check" data-look-toggle={classic ? 'classic' : 'studio'}>
-      <input
-        type="checkbox"
-        checked={classic}
-        onChange={(e) => {
-          setLook(e.target.checked ? 'classic' : 'studio');
-          setClassic(e.target.checked);
-        }}
-      />
-      <span className="look-toggle-text" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {LOOK_TEXT.label[lang]}
-        <small style={{ color: 'var(--ink-dim)', fontWeight: 400 }}>{LOOK_TEXT.hint[lang]}</small>
-      </span>
-    </label>
-  );
-}
-
 function useWide() {
   const q = '(min-width: 1100px)';
   const [wide, setWide] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);

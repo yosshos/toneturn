@@ -25,7 +25,6 @@ const LEAGUES = { he: ['שורש', 'טרצה', 'קווינטה', 'ספטימה',
 export function ElementsGallery() {
   useEffect(() => {
     const r = document.documentElement;
-    r.dataset.look = 'studio';
     r.dataset.theme = theme;
     r.lang = lang;
     r.dir = lang === 'he' ? 'rtl' : 'ltr';

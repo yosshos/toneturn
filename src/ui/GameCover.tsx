@@ -37,11 +37,10 @@ function phaseOf(main: HTMLElement): 'setup' | 'play' | 'over' {
 }
 
 /** Marks the <main> around `ref` as a studio game frame; returns the game id it names (data-game) when known. */
-export function useGameFrame(ref: RefObject<HTMLElement | null>, on: boolean): string | null {
+export function useGameFrame(ref: RefObject<HTMLElement | null>): string | null {
   const { active } = useCourse();
   const [game, setGame] = useState<string | null>(null);
   useLayoutEffect(() => {
-    if (!on) return;
     const main = ref.current?.closest('main');
     // not a game: the leaderboard screen shares G2Head
     if (!main || main.dataset.screen === 'gameboard') return;

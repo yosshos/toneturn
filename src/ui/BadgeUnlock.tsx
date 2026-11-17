@@ -9,9 +9,7 @@ import { BADGE_CAT_NAME, type Badge } from '../engine/badges';
 import { AREA_NAME, MASTER_DIV, rankLabel, tierOfDiv, TIER_NAME, type RankArea, type RankChange, type RankTier } from '../engine/ranks';
 import { BadgeArt, tierGlow } from './BadgeArt';
 import { playIcon } from './paper/motion';
-import { RankCrest } from './Badges';
 import { Toni } from './Toni';
-import { useStudioLook } from './ToniPaper';
 import { RankShield } from './studio/StudioArt';
 import { romanOfDiv } from '../engine/ranks';
 import { el } from '../i18n/elementsText';
@@ -61,9 +59,8 @@ function useOverlayFocus(onEsc: () => void) {
 }
 
 /** Shared stage: backdrop, medal slot with glow + particles, texts, button, auto-advance bar. */
-function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext, onClose, extra }: { k: string | number; tier: RankTier | undefined; kicker: string; medal: ReactNode; title: string; sub: string; note?: string; counter?: string; lang: Lang; onNext: () => void; onClose: () => void; /** Studio look: a line under the note (the rank's bar to Master). */ extra?: ReactNode }) {
+function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext, onClose, extra }: { k: string | number; tier: RankTier | undefined; kicker: string; medal: ReactNode; title: string; sub: string; note?: string; counter?: string; lang: Lang; onNext: () => void; onClose: () => void; /** A line under the note (the rank's bar to Master). */ extra?: ReactNode }) {
   const btn = useOverlayFocus(onClose);
-  const studio = useStudioLook();
   useEffect(() => {
     const t = window.setTimeout(onNext, UNLOCK_MS);
     return () => window.clearTimeout(t);
@@ -83,7 +80,7 @@ function Stage({ k, tier, kicker, medal, title, sub, note, counter, lang, onNext
       <p className="bu-sr" aria-live="assertive" aria-atomic="true">{`${kicker} ${title}. ${sub}`}</p>
       <div className="bu-card" key={k}>
         <span className="cele-toni">
-          <Toni state={studio ? 'celebrating' : 'wow'} size={84} />
+          <Toni state="celebrating" size={84} />
         </span>
         <p className="bu-kicker">
           {kicker}
@@ -176,7 +173,6 @@ export function RankUpUnlock({ change, lang, onDone }: { change: Pick<RankChange
     done.current = true;
     onDone();
   }, [onDone]);
-  const studio = useStudioLook();
   const area: RankArea = change.area;
   const label = rankLabel(change.to, lang);
   const title = lang === 'he' ? `${label} ב${AREA_NAME[area].he}` : `${label} in ${AREA_NAME[area].en}`;
@@ -186,13 +182,11 @@ export function RankUpUnlock({ change, lang, onDone }: { change: Pick<RankChange
       tier={tierOfDiv(change.to)}
       lang={lang}
       kicker={change.kind === 'new' ? TX.newRank[lang] : TX.rankUp[lang]}
-      medal={studio ? <RankShield tier={tierOfDiv(change.to)} pips={romanOfDiv(change.to).length} size={200} label={label} rays /> : <RankCrest div={change.to} size={168} lang={lang} />}
+      medal={<RankShield tier={tierOfDiv(change.to)} pips={romanOfDiv(change.to).length} size={200} label={label} rays />}
       extra={
-        studio ? (
-          <div className="bu-bar" role="img" aria-label={el('toMaster', lang)} data-rank-bar={change.to}>
-            <i style={{ width: `${Math.round((Math.min(change.to, MASTER_DIV) / MASTER_DIV) * 100)}%` }} />
-          </div>
-        ) : undefined
+        <div className="bu-bar" role="img" aria-label={el('toMaster', lang)} data-rank-bar={change.to}>
+          <i style={{ width: `${Math.round((Math.min(change.to, MASTER_DIV) / MASTER_DIV) * 100)}%` }} />
+        </div>
       }
       title={title}
       sub={TX.hold[lang]}

@@ -327,59 +327,6 @@
 .toni svg {
   overflow: visible;
 }
-.toni .t-body,
-.toni .t-flag,
-.toni .t-eye,
-.toni .t-fx {
-  transform-box: view-box;
-}
-.toni .t-body {
-  transform-origin: 96px 186px;
-}
-.toni .t-flag {
-  transform-origin: 142px 30px;
-}
-.toni .t-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-@keyframes t-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes t-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
-@keyframes t-sway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
-@keyframes t-tilt { 0%, 100% { transform: rotate(0); } 30%, 80% { transform: rotate(-9deg); } }
-@keyframes t-tap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(10deg); } }
-@keyframes t-point { 0%, 40%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } }
-@keyframes t-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 10% { transform: scale(1.06, 0.92); } 35% { transform: translateY(-26px) scale(0.96, 1.05); } 60% { transform: scale(1.05, 0.95); } 75% { transform: none; } }
-@keyframes t-raise { 0%, 100% { transform: rotate(60deg); } 30%, 85% { transform: rotate(0); } }
-@keyframes t-spin { 0%, 20% { transform: rotate(0); } 60%, 100% { transform: rotate(360deg); } }
-@keyframes t-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-18deg); } 75% { transform: rotate(14deg); } }
-@keyframes t-no { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(-6deg); } 20% { transform: rotate(6deg); } 30% { transform: rotate(-4deg); } 40% { transform: rotate(3deg); } }
-@keyframes t-droop { 0% { transform: rotate(-40deg); } 40%, 100% { transform: rotate(0); } }
-@keyframes t-back { 0%, 100% { transform: translate(0, 0); } 15% { transform: translate(8px, -10px) rotate(6deg); } 35% { transform: translate(0, 0); } }
-@keyframes t-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.97); } }
-@keyframes t-unfurl { 0%, 15% { transform: scaleX(0.05) rotate(-80deg); } 45% { transform: scaleX(1.12) rotate(6deg); } 60%, 100% { transform: scaleX(1) rotate(0); } }
-@keyframes t-bye { 0% { transform: rotate(-30deg); } 15% { transform: rotate(20deg); } 30% { transform: rotate(-30deg); } 45% { transform: rotate(20deg); } 60% { transform: rotate(-20deg); } 85%, 100% { transform: rotate(60deg); } }
-@keyframes t-fade { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-.toni.s-idle .t-body { animation: t-bob 2.6s ease-in-out infinite; }
-.toni.s-idle .t-eye { animation: t-blink 4s infinite; }
-.toni.s-idle .t-flag { animation: t-sway 2.6s ease-in-out infinite; }
-.toni.s-listen .t-body { animation: t-tilt 2.8s ease-in-out infinite; }
-.toni.s-listen .t-fx { animation: t-fade 0.9s ease-in-out infinite; }
-.toni.s-think .t-flag { animation: t-tap 0.5s ease-in-out infinite; }
-.toni.s-think .t-fx { animation: t-fade 2s infinite; }
-.toni.s-hint .t-flag { animation: t-point 1.4s ease-in-out infinite; }
-.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1; }
-.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1; }
-.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1; }
-.toni.s-streak .t-flag { animation: t-wave 0.5s ease-in-out infinite; }
-.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1; }
-.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1; }
-.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2; }
-.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1; }
-.toni.s-sleepy .t-body { animation: t-breathe 3.6s ease-in-out infinite; }
-.toni.s-sleepy .t-fx { animation: t-fade 3s ease-in-out infinite; }
-.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1; }
-.toni.s-bye .t-flag { animation: t-bye 2.4s ease-in-out 1 forwards; }
 :root[data-motion='reduced'] .toni * {
   animation: none !important;
 }
@@ -2097,26 +2044,6 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 /* 0.68.1: a recap card's animations (Toni, the level bar's fill, the stars) wait until the card is first shown. */
 .recap-pages > .rp.rp-wait,
 .recap-pages > .rp.rp-wait * { animation-play-state: paused !important; }
-/* 0.68.1 (owner: "Toni is often frozen"): every state keeps a gentle motion after its one-shot gesture — the gesture
-   plays once, then a slow bob / sway / breath carries on (a second animation, delayed by the gesture's length). Eyes
-   blink in every awake state. Reduced motion still stops it all (rule above: data-motion='reduced'). */
-.toni:not(.s-sleepy):not(.s-correct):not(.s-streak):not(.s-bye) .t-eye { animation: t-blink 4.5s infinite; }
-.toni.s-think .t-body { animation: t-bob 3.2s ease-in-out infinite; }
-.toni.s-hint .t-body { animation: t-bob 2.8s ease-in-out infinite; }
-.toni.s-listen .t-flag { animation: t-sway 3s ease-in-out infinite; }
-.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1, t-bob 2.6s ease-in-out 0.9s infinite; }
-.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1, t-wave 1.6s ease-in-out 0.9s infinite; }
-.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1, t-bob 2.4s ease-in-out 1.2s infinite; }
-.toni.s-streak .t-flag { animation: t-wave 0.9s ease-in-out infinite; }
-.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1, t-breathe 3.6s ease-in-out 1.2s infinite; }
-.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1, t-sway 3.6s ease-in-out 1.2s infinite; }
-.toni.s-close .t-body { animation: t-bob 3s ease-in-out infinite; }
-.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2, t-sway 3s ease-in-out 2s infinite; }
-.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1, t-bob 2.8s ease-in-out 1.2s infinite; }
-.toni.s-wow .t-flag { animation: t-sway 2.8s ease-in-out infinite; }
-.toni.s-draw .t-body { animation: t-bob 2.6s ease-in-out 0.9s infinite; }
-.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1, t-sway 2.6s ease-in-out 0.9s infinite; }
-.toni.s-bye .t-body { animation: t-bob 2.6s ease-in-out infinite; }
 
 /* 0.70 (owner): the passage's length while it plays — sounding parts as bars, a running marker. */
 :root[data-theme] .listen-strip { position: relative; height: 10px; margin: 6px auto 4px; width: min(100%, 420px); border-radius: 99px; background: var(--card-2, #efeaf8); overflow: hidden; }

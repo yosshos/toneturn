@@ -45,7 +45,6 @@ import { shareCodeOf } from '../../engine/encore/community';
 import { DEDICATION_XP } from '../../engine/encore/gifts';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 import { Icon } from '../icons';
-import { useStudio } from '../look';
 import { EmptyState } from '../EmptyState';
 
 export interface EncoreProps {
@@ -1420,7 +1419,6 @@ function YoursView({ lang, l, items, onClose }: { lang: Lang; l: Lick; items: Re
 // ───────────────────────────── The library (§8.6) ─────────────────────────────
 
 function LibraryView({ lang, head, book, custom, items, onMakePhrase }: { lang: Lang; head: Head; book: LickBook; custom: CustomDrill[] | undefined; items: Record<string, ItemState>; onMakePhrase: (c: CustomDrill) => void }) {
-  const studio = useStudio();
   const he = lang === 'he';
   const [tab, setTab] = useState<'phrase' | 'pattern'>('phrase');
   const [sort, setSort] = useState<'due' | 'recent' | 'rank'>('due');
@@ -1447,12 +1445,8 @@ function LibraryView({ lang, head, book, custom, items, onMakePhrase }: { lang: 
           ))}
         </div>
       )}
-      {list.length === 0 && studio && tab === 'phrase' && <EmptyState glyph="phrasing" data="encore" text={he ? 'עוד אין משפטים. שומרים משפט מכל ניסיון, או מקליטים משהו.' : 'No phrases yet. Keep one from any take, or record something.'} />}
-      {list.length === 0 && !(studio && tab === 'phrase') && (
-        <p className="t3">
-          {tab === 'phrase' ? (he ? 'עוד אין משפטים. שמרו משפט מכל ניסיון, או הקליטו משהו.' : 'No phrases yet. Keep one from any take, or record something.') : he ? 'תבניות מעורך התרגילים יופיעו כאן.' : 'Patterns from the drill editor show here.'}
-        </p>
-      )}
+      {list.length === 0 && tab === 'phrase' && <EmptyState glyph="phrasing" data="encore" text={he ? 'עוד אין משפטים. שומרים משפט מכל ניסיון, או מקליטים משהו.' : 'No phrases yet. Keep one from any take, or record something.'} />}
+      {list.length === 0 && tab !== 'phrase' && <p className="t3">{he ? 'תבניות מעורך התרגילים יופיעו כאן.' : 'Patterns from the drill editor show here.'}</p>}
       <ul className="enc-list">
         {list.map((x) =>
           x.kind === 'phrase' && x.lick ? (

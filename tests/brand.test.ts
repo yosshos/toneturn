@@ -2,13 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Logo } from '../src/ui/brand/Logo';
-import { decideSplash, isStudioLook, localDay, splashLang, type SplashEnv } from '../src/ui/brand/splashDecision';
+import { decideSplash, localDay, splashLang, type SplashEnv } from '../src/ui/brand/splashDecision';
 
 const env = (o: Partial<SplashEnv> = {}): SplashEnv => ({
-  search: '?look=studio',
+  search: '',
   hash: '',
   webdriver: false,
-  look: null,
   reducedMotion: false,
   lastDay: null,
   today: '2026-11-17',
@@ -16,9 +15,8 @@ const env = (o: Partial<SplashEnv> = {}): SplashEnv => ({
 });
 
 describe('splash decision', () => {
-  it('shows on the first open of the day, home screen, studio look', () => {
+  it('shows on the first open of the day, home screen', () => {
     expect(decideSplash(env())).toEqual({ show: true, mode: 'full' });
-    expect(decideSplash(env({ search: '', look: 'studio' }))).toEqual({ show: true, mode: 'full' });
     for (const hash of ['#', '#/', '#/home']) expect(decideSplash(env({ hash })).show, hash).toBe(true);
   });
   it('once per local day', () => {
@@ -26,21 +24,15 @@ describe('splash decision', () => {
     expect(decideSplash(env({ lastDay: '2026-11-16' })).show).toBe(true);
     expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
   });
-  it('only with the studio look', () => {
-    expect(decideSplash(env({ search: '' }))).toEqual({ show: false, reason: 'look' });
-    expect(decideSplash(env({ search: '?look=classic', look: 'classic' })).show).toBe(false);
-    expect(isStudioLook('studio', '')).toBe(true);
-    expect(isStudioLook(undefined, '?a=1&look=studio')).toBe(true);
-  });
   it('never in automated runs, unless ?splash=force (which still keeps the once-a-day rule)', () => {
     expect(decideSplash(env({ webdriver: true }))).toEqual({ show: false, reason: 'webdriver' });
-    expect(decideSplash(env({ webdriver: true, search: '?look=studio&splash=1' })).show).toBe(false);
-    expect(decideSplash(env({ webdriver: true, search: '?look=studio&splash=force' })).show).toBe(true);
-    expect(decideSplash(env({ webdriver: true, search: '?look=studio&splash=force', lastDay: '2026-11-17' })).show).toBe(false);
+    expect(decideSplash(env({ webdriver: true, search: '?splash=1' })).show).toBe(false);
+    expect(decideSplash(env({ webdriver: true, search: '?splash=force' })).show).toBe(true);
+    expect(decideSplash(env({ webdriver: true, search: '?splash=force', lastDay: '2026-11-17' })).show).toBe(false);
   });
   it('?nosplash wins over everything', () => {
-    expect(decideSplash(env({ search: '?look=studio&nosplash' }))).toEqual({ show: false, reason: 'nosplash' });
-    expect(decideSplash(env({ search: '?look=studio&splash=force&nosplash', webdriver: true })).show).toBe(false);
+    expect(decideSplash(env({ search: '?nosplash' }))).toEqual({ show: false, reason: 'nosplash' });
+    expect(decideSplash(env({ search: '?splash=force&nosplash', webdriver: true })).show).toBe(false);
   });
   it('a deep link (hash route other than home) skips it', () => {
     for (const hash of ['#/path', '#/settings/sound', '#/encore?x=1', '#/digest/abc'])

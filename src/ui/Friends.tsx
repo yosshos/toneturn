@@ -1,4 +1,3 @@
-import { useStudio } from './look';
 import { EmptyState } from './EmptyState';
 import { DuelsSection, LeagueCard } from './Compete';
 import { DuetsStrip } from './Duets';
@@ -26,7 +25,6 @@ import { postActivity } from '../cloud/community';
 export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes, profileErr }: { profileErr?: string | null; classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
   const user = realUser ?? (import.meta.env.DEV && DEMO ? DEMO_USER : null);
-  const studio = useStudio();
   const [duelPlaying, setDuelPlaying] = useState(false);
   const [cmp, setCmp] = useState<FriendStats | null>(null);
   const [me, setMe] = useState<MyProfile | null>(null);
@@ -261,7 +259,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
                     );
                   })}
                 </ol>
-                {board.length <= 1 && (studio ? <EmptyState glyph="person" text={t.noFriends} data="friends" action={{ label: t.addFriend, onClick: () => (document.querySelector('.fr-add .code-input') as HTMLInputElement | null)?.focus() }} /> : <p className="field-hint">{t.noFriends}</p>)}
+                {board.length <= 1 && <EmptyState glyph="person" text={t.noFriends} data="friends" action={{ label: t.addFriend, onClick: () => (document.querySelector('.fr-add .code-input') as HTMLInputElement | null)?.focus() }} />}
               </section>}
 
               {progress && friends.length > 0 && (

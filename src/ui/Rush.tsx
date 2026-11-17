@@ -36,7 +36,6 @@ import { neckTuningOf, type Settings } from '../storage/progress';
 import { DiagramView, Neck, type NeckDot } from './Instrument';
 import { NoteStaff } from './NoteViews';
 import { G2Head, prefersCalm } from './Flight';
-import { isStudio } from './studioLook';
 import { piano } from './services';
 import { TierChips } from './TierChips';
 import { RushResultCard } from './GameResult';
@@ -477,17 +476,15 @@ export function Rush({ lang, settings, mode, saved, onSave, onExit, onResult, be
   return (
     <main className={`rush rush-play ${calm ? 'calm' : ''} ${fb ? (fb.correct ? 'fb-ok' : 'fb-bad') : ''}`}>
       <G2Head title={title} backLabel={tx(T.back, lang)} onBack={exit}>
-        {/* studio look: the round counter (→ segmented progress) and the score move into the top row */}
-        {isStudio() && rounds && (
+        {/* the round counter (→ segmented progress) and the score sit in the top row */}
+        {rounds && (
           <span className="g2-hud-mini" dir="ltr">
             {Math.min(ROUNDS, st.i + 1)}/{ROUNDS}
           </span>
         )}
-        {isStudio() && (
-          <span className="gs-score" dir="ltr" aria-label={tx(T.score, lang)}>
-            {st.score}
-          </span>
-        )}
+        <span className="gs-score" dir="ltr" aria-label={tx(T.score, lang)}>
+          {st.score}
+        </span>
       </G2Head>
       <div className="rush-hud">
         {streak ? (

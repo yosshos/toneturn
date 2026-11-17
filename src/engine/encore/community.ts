@@ -444,61 +444,7 @@ export function pickFeatured<T extends { id: string; visibility: Visibility; sta
   return [...ok].sort((a, b) => b.learnedWeek - a.learnedWeek || b.reached - a.reached || b.createdAt.localeCompare(a.createdAt))[0] ?? null;
 }
 
-// ───────────────────────────── the share card (§11.7) ─────────────────────────────
-
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-/** Diatonic staff step of a MIDI pitch (C4 = 28). */
-const step = (m: number) => Math.floor(m / 12) * 7 + [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6][mod(m)];
-
-/**
- * The share card as an SVG string: a page of a serious practice book — the phrase on a staff (treble, heads by
- * diatonic step, bar lines), the title, "♩200 · 12 keys", the sharer's nickname and the app's mark. 600×340.
- */
-export function shareCardSvg(o: { title: string; by: string; bpm: number; keys: number; level: number; notes: { pitch: number; beat: number }[]; beats: number; meter: number; lang: 'en' | 'he' }): string {
-  const W = 600;
-  const H = 340;
-  const he = o.lang === 'he';
-  const top = 70;
-  const gap = 12;
-  const e4 = step(64);
-  const total = Math.max(1, o.beats);
-  const x = (b: number) => 48 + (b / total) * (W - 96);
-  const y = (m: number) => Math.max(18, Math.min(top + 4 * gap + 46, top + 4 * gap - ((step(m) - e4) * gap) / 2));
-  const lines = [0, 1, 2, 3, 4].map((i) => `<line x1="28" x2="${W - 28}" y1="${top + i * gap}" y2="${top + i * gap}" stroke="#1d1b22" stroke-width="1.4"/>`).join('');
-  const bars: string[] = [];
-  for (let b = o.meter; b < total - 1e-6; b += o.meter) bars.push(`<line x1="${x(b) - 8}" x2="${x(b) - 8}" y1="${top}" y2="${top + 4 * gap}" stroke="#1d1b22" stroke-width="1.4"/>`);
-  const heads = o.notes
-    .slice(0, 48)
-    .map((n) => {
-      const cx = x(n.beat).toFixed(1);
-      const cy = y(n.pitch).toFixed(1);
-      // ledger lines below / above the staff
-      const s = step(n.pitch);
-      const led: string[] = [];
-      for (let k = e4 - 2; k >= s; k -= 2) led.push(`<line x1="${Number(cx) - 10}" x2="${Number(cx) + 10}" y1="${top + 4 * gap - ((k - e4) * gap) / 2}" y2="${top + 4 * gap - ((k - e4) * gap) / 2}" stroke="#1d1b22" stroke-width="1.3"/>`);
-      for (let k = e4 + 10; k <= s; k += 2) led.push(`<line x1="${Number(cx) - 10}" x2="${Number(cx) + 10}" y1="${top + 4 * gap - ((k - e4) * gap) / 2}" y2="${top + 4 * gap - ((k - e4) * gap) / 2}" stroke="#1d1b22" stroke-width="1.3"/>`);
-      return `${led.join('')}<ellipse cx="${cx}" cy="${cy}" rx="7" ry="5" transform="rotate(-20 ${cx} ${cy})" fill="#1d1b22"/>`;
-    })
-    .join('');
-  const facts = he ? `♩${o.bpm} · ${o.keys} סולמות · רמה ${o.level}` : `♩${o.bpm} · ${o.keys} keys · level ${o.level}`;
-  const brand = he ? 'החוש ה־7 · אתגר הדרן' : 'The 7th Sense · Encore challenge';
-  const anchor = he ? 'end' : 'start';
-  const tx = he ? W - 32 : 32;
-  return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`,
-    `<rect x="0" y="0" width="${W}" height="${H}" fill="#fbfaf7"/>`,
-    `<rect x="10" y="10" width="${W - 20}" height="${H - 20}" rx="18" fill="none" stroke="#1d1b22" stroke-width="3"/>`,
-    lines,
-    bars.join(''),
-    `<line x1="${W - 34}" x2="${W - 34}" y1="${top}" y2="${top + 4 * gap}" stroke="#1d1b22" stroke-width="1.4"/><rect x="${W - 31}" y="${top}" width="4" height="${4 * gap}" fill="#1d1b22"/>`,
-    heads,
-    `<text x="${tx}" y="214" text-anchor="${anchor}" font-family="Rubik, Arial, sans-serif" font-size="30" font-weight="700" fill="#1d1b22" direction="${he ? 'rtl' : 'ltr'}">${esc(o.title)}</text>`,
-    `<text x="${tx}" y="252" text-anchor="${anchor}" font-family="Rubik, Arial, sans-serif" font-size="20" fill="#4a4652" direction="${he ? 'rtl' : 'ltr'}">${esc(o.by)} · ${esc(facts)}</text>`,
-    `<g transform="translate(${he ? W - 64 : 32} 274)"><circle cx="16" cy="16" r="15" fill="none" stroke="#1d1b22" stroke-width="2.4"/><ellipse cx="16" cy="18" rx="6.5" ry="4.6" transform="rotate(-20 16 18)" fill="#1d1b22"/><path d="M22 18V6" stroke="#1d1b22" stroke-width="2.2"/></g>`,
-    `<text x="${he ? W - 76 : 76}" y="297" text-anchor="${anchor}" font-family="Rubik, Arial, sans-serif" font-size="17" font-weight="600" fill="#1d1b22" direction="${he ? 'rtl' : 'ltr'}">${esc(brand)}</text>`,
-    `</svg>`,
-  ].join('');
-}
+// ───────────────────────────── the share card (§11.7): src/ui/studio/shareCard.tsx ─────────────────────────────
 
 /** The share text that goes with the link (no emoji, nothing personal beyond the nickname). */
 export function shareText(o: { title: string; bpm: number; keys: number; lang: 'en' | 'he'; beat?: { bpm: number; keys: number } | null }): string {

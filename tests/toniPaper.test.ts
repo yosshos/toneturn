@@ -1,27 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'fs';
-import { Toni, ToniClassic } from '../src/ui/Toni';
+import { Toni } from '../src/ui/Toni';
 import { FLAG_COLORS, POSES, TONI_BASE_STATES, TONI_EXTRA_STATES, TONI_MOODS, ToniPaper, toBase } from '../src/ui/ToniPaper';
 
 const CSS = readFileSync('src/toni.css', 'utf8');
-const g = globalThis as { document?: unknown };
-const withLook = (look: string | undefined, fn: () => void) => {
-  const prev = g.document;
-  g.document = { documentElement: { dataset: look ? { look } : {} } };
-  try {
-    fn();
-  } finally {
-    g.document = prev;
-  }
-};
 
 describe('Paper Toni', () => {
-  afterEach(() => {
-    delete g.document;
-  });
-
   it('has the 12 classic states plus the extra moods', () => {
     expect(TONI_BASE_STATES).toHaveLength(12);
     expect(TONI_EXTRA_STATES).toEqual(['proud', 'focused', 'encouraging', 'celebrating', 'curious']);
@@ -29,21 +15,12 @@ describe('Paper Toni', () => {
     for (const s of TONI_EXTRA_STATES) expect(TONI_BASE_STATES).toContain(toBase(s));
   });
 
-  it('every state renders for both looks through the gated Toni', () => {
+  it('every state renders the Paper Toni (also with no document: server render)', () => {
     for (const s of TONI_MOODS) {
-      withLook('studio', () => {
-        const html = renderToStaticMarkup(h(Toni, { state: s, size: 48 }));
-        expect(html, s).toContain(`toni toni-p s-${s}`);
-      });
-      withLook(undefined, () => {
-        const html = renderToStaticMarkup(h(Toni, { state: s, size: 48 }));
-        expect(html, s).not.toContain('toni-p');
-        expect(html, s).toContain(`toni s-${toBase(s)}`);
-      });
+      const html = renderToStaticMarkup(h(Toni, { state: s, size: 48 }));
+      expect(html, s).toContain(`toni toni-p s-${s}`);
+      expect(html, s).not.toContain('data-look');
     }
-    // no document at all (server render): classic
-    expect(renderToStaticMarkup(h(Toni, { state: 'idle' }))).not.toContain('toni-p');
-    for (const s of TONI_BASE_STATES) expect(renderToStaticMarkup(h(ToniClassic, { state: s }))).toContain('<svg');
   });
 
   it('body sheets carry no stroke outline; no cheeks, no feet', () => {

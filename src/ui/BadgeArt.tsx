@@ -21,7 +21,6 @@ import { hasMotion, paperParts, PaperSvg } from './paper/Paper';
 import { familyLevelCount, type Badge, type BadgeCat } from '../engine/badges';
 import type { RankArea, RankTier } from '../engine/ranks';
 import { SUB_SKILLS } from '../engine/taxonomy';
-import { useStudioLook } from './ToniPaper';
 
 type Lang = 'he' | 'en';
 
@@ -1846,11 +1845,10 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
   const tier: RankTier = badge.tone ?? 'gold';
   const m = METALS[earned ? tier : 'locked'];
   const T = PAPER_TIER[earned ? tier : 'locked'];
-  // Studio look (approved elements 2026-11-17): a light face with the glyph in its light-surface tones; a badge not yet
-  // earned is grey and translucent (CSS), the lock pip stays as its shape cue.
-  const studio = useStudioLook();
-  const faceFill = studio ? (earned ? '#fffdfb' : '#f6f2fb') : earned ? PAPER_FACE.earned : PAPER_FACE.locked;
-  const faceEdge = studio ? T.edge : PAPER_FACE.edge;
+  // A light face with the glyph in its light-surface tones (approved elements 2026-11-17); a badge not yet earned is grey
+  // and translucent (CSS), the lock pip stays as its shape cue.
+  const faceFill = earned ? '#fffdfb' : '#f6f2fb';
+  const faceEdge = T.edge;
   const spec = FRAMES[badge.cat];
   const fs = FACE_SCALE[badge.cat];
   const { key, glyph } = resolveGlyph(badge);
@@ -1914,7 +1912,7 @@ export function BadgeArt({ badge, earned, size = 64, lang = 'en', decorative = f
 
       {/* glyph: the Paper drawing in its badge cut on the dark face; the old line glyph if a key has none */}
       {pa ? (
-        <g className={`ba-glyph${hasMotion(pa, size >= 40 ? 'badge' : 'full') ? '' : ' pm-lift'}`} transform={`translate(${gx - 24 * ps} ${gy - 24 * ps}) scale(${ps})`} style={faceVars(pa, studio ? 'light' : 'dark')} opacity={earned ? 1 : 0.7}>
+        <g className={`ba-glyph${hasMotion(pa, size >= 40 ? 'badge' : 'full') ? '' : ' pm-lift'}`} transform={`translate(${gx - 24 * ps} ${gy - 24 * ps}) scale(${ps})`} style={faceVars(pa, 'light')} opacity={earned ? 1 : 0.7}>
           {paperParts(pa, size >= 40 ? 'badge' : 'full')}
         </g>
       ) : (

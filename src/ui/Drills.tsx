@@ -49,7 +49,6 @@ import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the on
 import { hasFingering, shownDrill, type OwnFingerings } from '../engine/drills/ownFingering';
 import { FingerKeys, OwnFingeringLink } from './OwnFingering';
 import { NewBestTempo, newBestOf } from './studio/NewBestTempo';
-import { isStudio } from './look';
 import { syncOwnFingering } from '../storage/analysis';
 import { ErrorMap, barMarks, worstBar } from './ErrorMap'; // slice 3: loop the spot
 import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
@@ -75,7 +74,6 @@ import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
-import { useStudio } from './look';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -252,13 +250,12 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
   useEffect(() => setRunIdx(null), [view]);
-  const studio = useStudio();
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
         <Icon k="back" />
       </button>
-      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{studio && view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
+      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });
@@ -924,7 +921,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [ghost, setGhost] = useState(false);
   // Encore (SPEC-PHRASE-STUDIO §4.1): the last take's notes, for "Keep this phrase".
   const lastPlayed = useRef<PlayedNote[]>([]);
-  // The new-best-tempo moment (studio look), over the review; any tap closes it.
+  // The new-best-tempo moment, over the review; any tap closes it.
   const [best, setBest] = useState<{ bpm: number; prev: number; title: string } | null>(null);
   const bestPop = best ? <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={best.title} onClose={() => setBest(null)} /> : null;
   if (!drill)
@@ -957,7 +954,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     const st0 = stateOf(drill);
     const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99 });
     // Studio look: a ladder step cleared above the previous best tempo is the moment (one tap continues).
-    const nb = isStudio() ? newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean') : null;
+    const nb = newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean');
     if (nb) setBest({ ...nb, title: drill.title[lang] });
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
@@ -1000,9 +997,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setOneFree(false);
     setStageRes({ m, stage: st });
   };
-  // Piano fingering on the score: the review's "Other fingering?" and (studio look, the switch on) the next-key finger.
+  // Piano fingering on the score: the review's "Other fingering?" and (the switch on) the next-key finger.
   const pianoFingered = !isGuitarDrill(drill) && !isDrumDrill(drill) && !drill.sung && hasFingering(drill);
-  const fingerKeysOn = pianoFingered && ds.showFingering && isStudio() && stage !== 'free' && drill.show !== 'none';
+  const fingerKeysOn = pianoFingered && ds.showFingering && stage !== 'free' && drill.show !== 'none';
   const freeN = Math.min(RUBATO_CLEAN, (stateOf(drill).rubato?.free ?? 0) + 1);
   const he = lang === 'he';
   const stageTx = rubatoOnly ? (he ? 'רובאטו: אקורד, עצירה, ואז המנגינה — בלי קצב' : 'Rubato: a chord, a stop, then the melody — no pulse') : stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;

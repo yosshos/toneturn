@@ -1,4 +1,3 @@
-import { useStudio } from './look';
 import { EmptyState } from './EmptyState';
 // "My song" in every course (SPEC-MY-SONG): the player's own recordings, kept on this device, practised with each
 // course's own measuring — keys / guitar / bass / drums play along (timing against the detected beat, notes against
@@ -85,7 +84,6 @@ const Bin = () => <Icon k="trash" size={18} />;
  * Opening a song decodes it and analyses it once (the analysis is kept with it).
  */
 export function MySongLibrary({ lang, course, onOpen, demo }: { lang: Lang; course: CourseId; onOpen: (song: StoredSong, buffer: AudioBuffer) => void; /** Simulator: a demo recording to add. */ demo?: () => AudioBuffer }) {
-  const studio = useStudio();
   const L = (b: T2) => b[lang];
   const [list, setList] = useState<SongMeta[] | null>(null);
   const [busy, setBusy] = useState<{ label: T2; pct: number } | null>(null);
@@ -178,7 +176,7 @@ export function MySongLibrary({ lang, course, onOpen, demo }: { lang: Lang; cour
         </p>
       ) : (
         <>
-          {list && !list.length && (studio ? <EmptyState glyph="tune" text={L(MS.empty)} data="mysong" /> : <p className="field-hint">{L(MS.empty)}</p>)}
+          {list && !list.length && <EmptyState glyph="tune" text={L(MS.empty)} data="mysong" />}
           {!!list?.length && (
             <ul className="ms-list">
               {list.map((s) => {

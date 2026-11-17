@@ -1,4 +1,4 @@
-// The opening animation, studio look (owner, 2026-11-17: concept B "from sound to note", with C's landing burst).
+// The opening animation (owner, 2026-11-17: concept B "from sound to note", with C's landing burst).
 //   1. a free sound wave draws across the screen, then settles into the five staff lines;
 //   2. the 7 is written: top stroke, stem, then the note head pops (with a burst of light);
 //   3. the three sound bars light up one by one, with the three slogan words;
@@ -100,7 +100,7 @@ export function BrandSplash() {
   const [leaving, setLeaving] = useState(false);
   const skipRef = useRef<() => void>(() => {});
 
-  // Layout effect: after the app's own first layout pass (so its <html data-look> is in place), before the first paint.
+  // Layout effect: after the app's own first layout pass, before the first paint.
   useLayoutEffect(() => {
     let env, d;
     try {
