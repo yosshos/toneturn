@@ -9,6 +9,8 @@ const routes = process.argv.slice(2);
 const b = await chromium.launch({ channel: 'chrome' });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: process.env.SHOT_THEME === 'dark' ? 'dark' : 'light' });
 const p = await ctx.newPage();
+// SHOT_LOOK=classic: check the previous look (the studio look, src/studio.css, is the default).
+if (process.env.SHOT_LOOK === 'classic') await p.addInitScript(() => { try { localStorage.setItem('tt.look', 'classic'); } catch {} });
 const lang = process.env.SHOT_LANG === 'en' ? 'en' : 'he';
 const out = [];
 for (const h of routes) {
