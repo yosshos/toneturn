@@ -88,7 +88,10 @@ export function TakeReview({
   lastTake,
   children,
   onKeep,
+  fingering,
 }: {
+  /** "Other fingering?" (OwnFingeringLink): a small text action beside "Why?" — the row it shares adds no height. */
+  fingering?: ReactNode;
   /** Encore (SPEC-PHRASE-STUDIO §4.1): "Keep this phrase" — a small icon button beside Again / Loop / Next. */
   onKeep?: () => void;
   /** A previous take of the same item exists: the "Last take" toggle (its ticks faded under this take's). */
@@ -232,15 +235,18 @@ export function TakeReview({
         )}
         {onKeep && <KeepButton lang={lang} onKeep={onKeep} />}
       </div>
-      {lastTake ? (
+      {lastTake || fingering ? (
         // The take overlay (§4.1): the previous take's ticks, faded, under this one's — on the same notes.
         <div className="tr-why-row">
           <button className="link tr-why" onClick={() => setWhy(true)} aria-haspopup="dialog" data-why="1">
             {tx.why}
           </button>
-          <button className={`chip tr-last ${lastTake.on ? 'on' : ''}`} aria-pressed={lastTake.on} onClick={lastTake.onToggle} data-last-take={lastTake.on ? 'on' : 'off'}>
-            {lang === 'he' ? 'הנגינה הקודמת' : 'Last take'}
-          </button>
+          {fingering}
+          {lastTake && (
+            <button className={`chip tr-last ${lastTake.on ? 'on' : ''}`} aria-pressed={lastTake.on} onClick={lastTake.onToggle} data-last-take={lastTake.on ? 'on' : 'off'}>
+              {lang === 'he' ? 'הנגינה הקודמת' : 'Last take'}
+            </button>
+          )}
         </div>
       ) : (
         <button className="link tr-why" onClick={() => setWhy(true)} aria-haspopup="dialog" data-why="1">

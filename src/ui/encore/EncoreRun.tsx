@@ -27,6 +27,10 @@ import { keepPhrase } from '../../engine/encore/takeSource';
 import { badge } from '../../engine/encore/difficulty';
 import { postPhraseYours } from '../../cloud/community';
 import { recordTakeAnalysis } from '../../storage/analysis';
+import { hasFingering } from '../../engine/drills/ownFingering';
+import { FingerKeys } from '../OwnFingering';
+import { NewBestTempo, newBestOf } from '../studio/NewBestTempo';
+import { isStudio } from '../look';
 
 export type EncoreTakeFn = (st: ItemState, evs: RatingEvent[], xp: number, m: { verdict: string; hands: string; cv: number | null }) => void;
 
@@ -77,6 +81,8 @@ export function EncoreRun({
   const [counting, setCounting] = useState(false);
   const [loop, setLoop] = useState<{ bar: number; res: TakeMetrics | null } | null>(null);
   const session = useRef(Date.now().toString(36));
+  // The new-best-tempo moment (studio look): a tempo take above the key's previous best; one tap closes it.
+  const [best, setBest] = useState<{ bpm: number; prev: number } | null>(null);
   const n = useRef(0);
   const played = useRef<PlayedNote[]>([]);
   const book = useRef<LickBook | undefined>(settings.lickBook);
@@ -95,6 +101,8 @@ export function EncoreRun({
     if (st === 'tempo') {
       lad = applyTake(st0, m, usedBpm, new Date().toISOString(), ds, { targetBpm: plan.goalBpm, slower: usedBpm < (st0.goalBpm ?? 0) * 0.99 });
       next = lad.state;
+      const nb = isStudio() ? newBestOf(st0.cleanBpm, next.cleanBpm, m.verdict === 'clean') : null;
+      if (nb) setBest(nb);
       // MEASUREMENT-AUDIT B13: the flagship phrase practice shapes the player profile too (tempo takes only)
       void recordTakeAnalysis(drill, m, usedBpm).catch(() => {});
     } else next = withStageTake(st0, st, m);
@@ -210,6 +218,8 @@ export function EncoreRun({
       {head}
       <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={stage === 'quarters' ? QUARTERS_BPM : bpm} live={res ? null : live} cue={!res && counting} loop={res && wb !== null ? [wb, wb] : null} />
       {!res && !stage && strip}
+      {/* Studio look: the next key and its finger (small), when the phrase shows fingering on the piano. */}
+      {!res && stage !== 'free' && ds.showFingering && (inst ?? 'piano') === 'piano' && isStudio() && hasFingering(takeDrill) && <FingerKeys drill={takeDrill} beat={beat} lang={lang} />}
       {!res && stage && (
         <p className="drill-stage enc-stage" data-rubato-stage={stage}>
           <b>{stage === 'free' ? (he ? 'בלי קצב — הצלילים בלבד' : 'Free time — the notes only') : he ? 'ברבעים, ♩60' : 'Quarters at ♩60'}</b>
@@ -250,6 +260,7 @@ export function EncoreRun({
           {res.line && <p className="enc-after" data-after-line="1">{res.line}</p>}
         </TakeReview>
       )}
+      {best && <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={l.name[lang]} onClose={() => setBest(null)} />}
     </div>
   );
 }

@@ -45,6 +45,8 @@ import { installIconTaps } from './ui/paper/motion';
 // Last: the studio screens and the studio game frame (scoped under :root[data-look='studio']).
 import './studio-screens.css';
 import './studio-games.css';
+// The remaining screens and the sweep of the classic sheets (studio look); last, so its by-hand rules win.
+import './studio-rest.css';
 
 // The look (classic / studio): index.html already painted it; this keeps it right if that snippet could not run.
 applyStartupLook();
