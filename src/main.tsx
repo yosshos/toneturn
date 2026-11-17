@@ -48,6 +48,9 @@ installIconTaps();
 // Dev-only: the Paper icon gallery (#/dev/glyphs), outside the app shell.
 if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
   void import('./ui/paper/Gallery').then(({ PaperGallery }) => createRoot(document.getElementById('root')!).render(<PaperGallery />));
+} else if (import.meta.env.DEV && location.hash.startsWith('#/dev/toni')) {
+  // Dev-only: the Paper Toni gallery (#/dev/toni), every state animated, light and dark.
+  void import('./ui/ToniGallery').then(({ ToniGallery }) => createRoot(document.getElementById('root')!).render(<ToniGallery />));
 } else {
   // The opening animation (studio look) is a sibling overlay: the app starts underneath, untouched.
   createRoot(document.getElementById('root')!).render(
