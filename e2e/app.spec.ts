@@ -62,7 +62,7 @@ test.describe('lesson', () => {
       await expect.poll(() => pill(page, i), { timeout: 60_000 }).toMatch(/correct/); // real-time audio
     }
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator('.score-line')).toContainText('3/3');
+    await expect(page.locator('[data-cel-stats]')).toContainText('3/3');
     // Quick, right first time, no replays: a full fluency score.
     await expect(page.locator('.fluency-score')).toHaveAttribute('data-score', '100');
     await expect(page.locator('.star.won')).toHaveCount(3);
@@ -70,7 +70,7 @@ test.describe('lesson', () => {
     await page.getByRole('button', { name: 'Home' }).click();
     // Lesson 1 runs with automatic aids (a new player is below Solid): each answer gives 80 % XP (8),
     // plus the full speed bonus (3) for answering within the pace goal.
-    await expect(page.locator('.tc-goal')).toContainText('33 /');
+    await expect(page.locator('.tc-goal')).toContainText('33/');
     // Today (SPEC-TODAY): the workout and one small Find my level button — no topic list, no tools, no account card.
     await expect(page.locator('.tab[data-tab="home"]')).toContainText('Today');
     await expect(page.locator('.wk-card')).toBeVisible();
@@ -93,7 +93,7 @@ test.describe('lesson', () => {
     // No further interaction.
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 120_000 });
     // Script: right, wrong→right, right
-    await expect(page.locator('.score-line')).toContainText('2/3');
+    await expect(page.locator('[data-cel-stats]')).toContainText('2/3');
     await expect(page.locator('.recap-row').nth(1)).toHaveClass(/correct-retry/);
     // Simulator keeps progress only in memory: nothing survives a reload.
     await page.getByRole('button', { name: 'Home' }).click();
@@ -218,7 +218,7 @@ test.describe('more lessons', () => {
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.intro-card')).toHaveCount(2);
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 140_000 });
-    await expect(page.locator('.score-line')).toContainText('4/5');
+    await expect(page.locator('[data-cel-stats]')).toContainText('4/5');
   });
 
   test('Sing home & five (simulator): live tuner and per-attempt pitch feedback', async ({ page }) => {
@@ -229,7 +229,7 @@ test.describe('more lessons', () => {
     await expect(page.locator('.tuner')).toBeVisible();
     await expect(page.locator('.feedback')).toContainText(/Spot on|A little low/, { timeout: 60_000 });
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 120_000 });
-    await expect(page.locator('.score-line')).toContainText('2/3');
+    await expect(page.locator('[data-cel-stats]')).toContainText('2/3');
     await expect(page.locator('.recap-row').nth(1)).toContainText('low');
   });
 });

@@ -4,9 +4,9 @@ import { expect, test } from '@playwright/test';
 // the courses, then the first course starts with its welcome card (SPEC-COURSE-START). The full questionnaire stays in
 // Settings (?intake for its own test).
 test('splash → welcome → taste → courses → the first course: welcome card and setup', async ({ page }) => {
-  await page.goto('/?sim=1&welcome=1&splash=1&lang=en');
-  await expect(page.locator('[data-splash]')).toBeVisible();
-  await expect(page.locator('[data-splash]')).toBeHidden({ timeout: 9000 });
+  await page.goto('/?sim=1&welcome=1&splash=force&lang=en');
+  await expect(page.locator('[data-brand-splash]')).toBeVisible();
+  await expect(page.locator('[data-brand-splash]')).toBeHidden({ timeout: 9000 });
   await expect(page.locator('[data-onboarding="welcome"]')).toBeVisible();
   await expect(page.locator('[data-side-nav]')).toBeHidden();
   await page.locator('[data-ob="start"]').click();

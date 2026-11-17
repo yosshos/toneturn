@@ -17,7 +17,12 @@ test.describe('bass course', () => {
     await expect(page.locator('[data-drills="run"]')).toBeVisible();
   };
   const fitsScreen = async (page: Page) => {
-    const h = await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight);
+    const h = await page.evaluate(() => {
+      // The test-only "simulated" banner (?sim=1) is not part of the real screen (as in games-fit / auditScales).
+      const banner = document.querySelector('.sim-banner') as HTMLElement | null;
+      if (banner) banner.style.display = 'none';
+      return document.scrollingElement!.scrollHeight - window.innerHeight;
+    });
     expect(h).toBeLessThanOrEqual(4);
   };
 
