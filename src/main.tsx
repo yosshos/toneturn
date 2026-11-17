@@ -30,11 +30,16 @@ import './pulse.css';
 import './feedback.css';
 import './feedback2.css';
 import './practice.css';
+import './studio-elements.css';
+import { bootStudioLook } from './ui/studio/lookBoot';
 import { App } from './ui/App';
 import { BrandSplash } from './ui/brand/Splash';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
+
+// The studio look (?look=studio / localStorage tt.look) before the first render.
+bootStudioLook();
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);
@@ -51,6 +56,9 @@ if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
 } else if (import.meta.env.DEV && location.hash.startsWith('#/dev/toni')) {
   // Dev-only: the Paper Toni gallery (#/dev/toni), every state animated, light and dark.
   void import('./ui/ToniGallery').then(({ ToniGallery }) => createRoot(document.getElementById('root')!).render(<ToniGallery />));
+} else if (import.meta.env.DEV && location.hash.startsWith('#/dev/elements')) {
+  // Dev-only: the studio design elements (#/dev/elements), for screenshots.
+  void import('./ui/studio/ElementsGallery').then(({ ElementsGallery }) => createRoot(document.getElementById('root')!).render(<ElementsGallery />));
 } else {
   // The opening animation (studio look) is a sibling overlay: the app starts underneath, untouched.
   createRoot(document.getElementById('root')!).render(
