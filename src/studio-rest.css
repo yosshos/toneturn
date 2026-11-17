@@ -449,3 +449,248 @@
   font-weight: 500;
   color: var(--ink-dim);
 }
+
+/* ================================================================ screens */
+/* ---- the streak sheet: purple progress, quiet days, the done days a soft teal, today ringed in purple */
+:root[data-look='studio'] .streak-facts small {
+  font-weight: 500;
+}
+:root[data-look='studio'] .streak-facts b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-look='studio'] .milestone-ring {
+  height: 8px;
+  background: var(--st-surface-2);
+}
+:root[data-look='studio'] .milestone-ring::before {
+  background: var(--accent);
+  border-radius: 99px;
+}
+:root[data-look='studio'] .milestone-ring span {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline: 0;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--ink-dim);
+}
+:root[data-look='studio'] .streak-sheet .milestone-ring {
+  overflow: visible;
+  margin-block-end: 16px;
+}
+:root[data-look='studio'] .streak-cal li {
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+:root[data-look='studio'] .streak-cal li.done {
+  background: var(--ss-done-soft);
+  color: var(--ss-done);
+  font-weight: 700;
+}
+:root[data-look='studio'] .streak-cal li.freeze {
+  background: color-mix(in srgb, #3ab8ff 18%, transparent);
+  color: var(--ink-soft);
+}
+:root[data-look='studio'] .streak-cal li.today {
+  outline: 0;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+:root[data-look='studio'] .streak-cal li.milestone {
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+:root[data-look='studio'] .streak-cal li.today.milestone {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+:root[data-look='studio'] .streak-risk {
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* ---- the what's-new card in the menu and the changelog */
+:root[data-look='studio'] .whats-new-card h3 {
+  font-size: var(--st-card-title);
+}
+:root[data-look='studio'] .changelog small,
+:root[data-look='studio'] .version-line {
+  color: var(--ink-dim);
+  font-weight: 400;
+}
+:root[data-look='studio'] .version-line b {
+  font-weight: 600;
+}
+:root[data-look='studio'] .changelog ul {
+  line-height: 1.5;
+}
+
+/* ---- profile: the avatar picker = tonal discs, the colour only on the chosen one */
+:root[data-look='studio'][data-theme] .icon-opt {
+  border: 0;
+  background: var(--st-surface-2);
+  color: var(--ink-soft);
+  box-shadow: none;
+}
+:root[data-look='studio'][data-theme] .icon-opt.on {
+  background: var(--av, var(--lilac));
+  color: var(--ink-c);
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 4.5px var(--accent);
+}
+:root[data-look='studio'] .icon-family-h {
+  font-weight: 600;
+}
+:root[data-look='studio'] .icon-family-h small {
+  font-weight: 500;
+}
+:root[data-look='studio'] .color-opt {
+  border: 0;
+}
+:root[data-look='studio'] .color-opt.on {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 4.5px var(--accent);
+}
+:root[data-look='studio'][data-theme] .avatar {
+  border: 0;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+/* ---- badges and ranks: flat tiles on the card, the tier colour as a soft wash only */
+:root[data-look='studio'] .bd-tile {
+  border: 0;
+  background: var(--st-surface-2);
+}
+:root[data-look='studio'] .bd-tile.got {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--rc, #ffc94d) 16%, var(--card)), var(--st-surface-2) 75%);
+}
+:root[data-look='studio'] .bd-icon {
+  filter: drop-shadow(0 2px 3px rgba(30, 16, 51, 0.18));
+}
+:root[data-look='studio'] .bd-name {
+  font-weight: 600;
+}
+:root[data-look='studio'] .bd-tone {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+:root[data-look='studio'] .bd-group > summary {
+  font-weight: 600;
+}
+:root[data-look='studio'] .ar-cell .ar-btn {
+  border: 0;
+  box-shadow: none;
+}
+:root[data-look='studio'] .bd-ch-tiers li {
+  border: 0;
+}
+/* the achievements list: cards with a soft shadow; earned = full ink and a teal mark, locked = dimmed (no gold rim) */
+:root[data-look='studio'] .achievements .badge-grid li {
+  border: 0;
+  box-shadow: var(--ss-sh-s);
+  opacity: 1;
+}
+:root[data-look='studio'] .achievements .badge-grid li:not(.got) {
+  background: var(--st-surface-2);
+  box-shadow: none;
+}
+:root[data-look='studio'] .achievements .badge-grid li:not(.got) :is(b, strong) {
+  color: var(--ink-soft);
+}
+:root[data-look='studio'] .achievements .badge-grid li.got {
+  border: 0;
+  box-shadow: var(--ss-sh-s), inset 0 0 0 1.5px var(--accent);
+}
+
+/* ---- progress: the radar and level cards (no ink outlines; the radar's grid a hairline) */
+:root[data-look='studio'] .ps-view :is(.ps-tile, .ps-area, .ps-skill, .ps-card, .lvl-card, .level-card) {
+  border: 0;
+  box-shadow: var(--ss-sh-s);
+  background: var(--card);
+}
+:root[data-look='studio'] .ps-view svg :is(polygon, line, circle)[stroke='#1e1033'],
+:root[data-look='studio'] .ps-view svg :is(polygon, line, circle)[stroke='#160f2b'] {
+  stroke: var(--line-strong);
+}
+
+/* ---- level test: sections as a quiet numbered list, the verdict one line */
+:root[data-look='studio'] .lt-sections {
+  display: grid;
+  gap: 4px;
+  padding-inline-start: 1.4em;
+  color: var(--ink-soft);
+}
+:root[data-look='studio'] .lt-sections li::marker {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+:root[data-look='studio'] .lt-summary {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+:root[data-look='studio'] .lt-summary li {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--st-surface-2);
+}
+:root[data-look='studio'] .lt-verdict {
+  font-weight: 600;
+}
+
+/* ---- recap: the coach's line a quiet tonal note, the stars without ink rims */
+:root[data-look='studio'] .recap .coach-insight,
+:root[data-look='studio'][data-theme] .recap .coach-insight.pair {
+  border: 0;
+  border-radius: 16px;
+  background: var(--st-surface-2);
+  box-shadow: none;
+  color: var(--ink-soft);
+}
+:root[data-look='studio'][data-theme] .recap-row .recap-mark {
+  border: 0;
+}
+:root[data-look='studio'] .recap-pts {
+  font-weight: 700;
+}
+
+/* ---- tournament / duels / daily: hairline bars, quiet chips */
+:root[data-look='studio'] .time-bar {
+  height: 6px;
+  border: 0;
+  background: var(--st-surface-2);
+}
+:root[data-look='studio'] :is(.half-head, .name-row) .dot {
+  border: 0;
+}
+:root[data-look='studio'] .podium .step {
+  border: 0;
+  box-shadow: var(--ss-sh-s);
+}
+:root[data-look='studio'] :is(.room-players li, .offline-chip, .t-answered) {
+  font-weight: 600;
+}
+
+/* ---- community: the friend level chip and the dynamics chips are tonal (no lemon with an ink rim) */
+:root[data-look='studio'][data-theme] :is(.fr-level, .cl-dyn) {
+  border: 0;
+  background: var(--st-tonal);
+  color: var(--st-tonal-ink);
+}
+:root[data-look='studio'][data-theme] .beta-chip {
+  border: 0;
+  background: var(--st-tonal);
+  color: var(--st-tonal-ink);
+  font-weight: 600;
+}
+:root[data-look='studio'][data-theme] :is(.new-chip, .hot-chip) {
+  border: 0;
+}
+
+/* ---- tools: the drone's big degree, the tuner's numbers */
+:root[data-look='studio'] .drone-degree {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+:root[data-look='studio'] :is(.drone-ladder li, .drone-cents) {
+  font-weight: 600;
+}

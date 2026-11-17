@@ -95,3 +95,45 @@ for (const lang of ['he', 'en'] as const)
     await page.locator('[data-drill-play]').click();
     await expect(page.locator('[data-own-fing]')).toHaveAttribute('data-own-fing', 'on', { timeout: 20_000 });
   });
+
+for (const lang of ['he', 'en'] as const)
+  test(`a clean take above the previous best tempo shows the new best; one tap continues (${lang})`, async ({ page }) => {
+    await page.addInitScript(() => ((window as unknown as { __fakeTake?: string }).__fakeTake = 'clean'));
+    await seed(page, lang);
+    await openScales(page, lang);
+    const id = await page.locator('[data-drills="run"] [data-drill]').first().getAttribute('data-drill');
+    expect(id).toBeTruthy();
+    // the item was played clean at ♩50 before
+    await page.evaluate(async (itemId) => {
+      const now = new Date(Date.now() - 86400000).toISOString();
+      await new Promise((res, rej) => {
+        const r = indexedDB.open('toneturn', 1);
+        r.onsuccess = () => {
+          const tx = r.result.transaction('kv', 'readwrite');
+          const st = tx.objectStore('kv');
+          const g = st.get('progress');
+          g.onsuccess = () => {
+            const p = g.result;
+            p.drillItems = { ...(p.drillItems ?? {}), [itemId!]: { itemId, family: 'scales', key: 0, hands: 'R', cleanBpm: 50, goalBpm: 50, streak: 0, fails: 0, ewma: { cv: 0.03, sd: 10, vsd: 0, hands: 0, acc: 1 }, takes: 3, last: now, history: [{ at: now, bpm: 50, cv: 0.03 }], passLog: [{ at: now, bpm: 50 }] } };
+            st.put(p, 'progress');
+          };
+          tx.oncomplete = res;
+          tx.onerror = rej;
+        };
+        r.onerror = rej;
+      });
+    }, id);
+    await openScales(page, lang);
+    const speaker = page.locator('[data-drums-choice="speaker"]');
+    if (await speaker.isVisible().catch(() => false)) await speaker.click();
+    await page.locator('[data-drill-play]').click();
+    await expect(page.locator('[data-review]')).toBeVisible({ timeout: 20_000 });
+    const pop = page.locator('[data-new-best]');
+    await expect(pop).toBeVisible();
+    expect(Number(await pop.getAttribute('data-new-best'))).toBeGreaterThan(50);
+    await expect(pop.locator('.tprev')).toContainText('50');
+    await shot(page, `drill-new-best-${lang}-320`);
+    await pop.click({ position: { x: 10, y: 10 } });
+    await expect(pop).toHaveCount(0);
+    await expect(page.locator('[data-review]')).toBeVisible();
+  });
