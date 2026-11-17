@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.101.0',
+    date: '2026-11-17',
+    en: [
+      'The new look reaches everything: a cleaner Today with one plan, a path of paper notes, game covers and one game frame, calmer practice tiles, new league, rank and badge art, new celebration screens, and a share card for challenges.',
+      'Measured touch on piano: crescendo and diminuendo as two clear lines, rolled chords, held notes and releases, speeding up, swing, voicing, pedal on every take, and a new touch section in the level test. Four new control exercises in all 12 keys. Wrong notes are now red, with small marks for early, late and wrong.',
+    ],
+    he: [
+      'המראה החדש מגיע לכל מקום: מסך היום עם תוכנית אחת, מסלול של תווי נייר, כריכות למשחקים ומסגרת משחק אחת, אריחי תרגול רגועים, ציורים חדשים לליגות, לדרגות ולתגים, מסכי חגיגה חדשים וכרטיס שיתוף לאתגרים.',
+      'מגע נמדד בפסנתר: קרשנדו ודימינואנדו כשתי שורות ברורות, אקורדים מפוזרים, צלילים מוחזקים ועזיבות, האצה, סווינג, הבלטת קול, דוושה בכל ביצוע, וחלק מגע חדש במבחן הרמה. ארבעה תרגילי שליטה חדשים בכל 12 הסולמות. צליל שגוי מסומן עכשיו באדום, עם סימנים קטנים למוקדם, מאוחר ושגוי.',
+    ],
+  },
+  {
     version: '0.100.0',
     date: '2026-11-17',
     en: [

@@ -96,7 +96,8 @@ describe('studio.css', () => {
     expect(at).toBeGreaterThan(0);
     expect(main.indexOf("import { App }")).toBeLessThan(at);
     const after = main.slice(at + 1);
-    expect(after).not.toMatch(/import '[^']+\.css'/);
+    // Only the studio layer's own sheets (studio-screens / studio-games / studio-elements) may follow it.
+    expect(after.replace(/import '\.\/studio-[a-z]+\.css';/g, '')).not.toMatch(/import '[^']+\.css'/);
   });
 });
 

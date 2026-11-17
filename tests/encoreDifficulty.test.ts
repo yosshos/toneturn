@@ -157,7 +157,7 @@ describe('calibration against the built-in levels (§10.8)', () => {
   for (const fam of catalog())
     for (const lv of fam.levels) {
       const placed = LEVEL_PLACEMENT[lv.id];
-      if (!placed || /impro|pedal|gig/.test(lv.id) || /^k-read-1[3-5]$/.test(lv.id)) continue;
+      if (!placed || /impro|pedal|gig/.test(lv.id) || /^k-read-1[3-5]$/.test(lv.id) || /^control-1[3-6]$/.test(lv.id)) continue; // control-13…16: touch/dynamics levels (MEASUREMENT-AUDIT E1–E4), placed by what the notes can't show
       let ds;
       try {
         ds = levelDrills(lv, 'fifths-up');
