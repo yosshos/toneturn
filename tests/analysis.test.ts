@@ -39,7 +39,8 @@ describe('player analysis (0.49)', () => {
     }
     const f = findings(m);
     const kinds = f.map((x) => `${x.kind}:${x.ctx}`);
-    expect(kinds).toContain('soft-finger:f:R4');
+    // owner 2026-11-17: a finger is only ever a likely cause (it follows the suggested finger across notes and keys)
+    expect(kinds).toContain('finger-hypothesis:f:R4');
     expect(kinds).toContain('hand-balance:h:L');
     expect(kinds).toContain('weak-key:k:11');
     expect(f.find((x) => x.ctx === 'f:R4')!.size).toBeLessThan(-15);

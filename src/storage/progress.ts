@@ -197,6 +197,8 @@ export interface Settings {
   tapLatencyMs: number;
   /** Calibrated delay of a MIDI keyboard (ms; absent = 0) — removed from timing (owner, 2026-11-07). */
   midiLatencyMs?: number;
+  /** MEASUREMENT-AUDIT B6: the player's own early (−) / late (+) habit against a click on MIDI (ms), reported, never removed. */
+  midiBiasMs?: number;
   /** Calibrated delay of the microphone pipeline (ms; absent = the built-in 70). */
   micLatencyMs?: number;
   /** Response time affects scores. null = automatic (untimed for the first days). */

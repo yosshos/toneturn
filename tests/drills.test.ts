@@ -152,10 +152,14 @@ describe('drills: generate', () => {
           for (const key of Array.isArray(lvl.keys) ? lvl.keys : keysInOrder('fifths-up', lvl.keys === 'minor')) {
           const d = generate({ ...tpl, key } as DrillSpec);
           let vel: ((n: ExpNote, i: number) => number) | undefined;
-          if (d.goal.dynamics === 'cresc') {
-            const peak = d.notes.reduce((b, n, i) => (n.pitch > d.notes[b].pitch ? i : b), 0);
-            vel = (_n, i) => 30 + 3 * (i <= peak ? i : 2 * peak - i);
+          if (d.goal.dynamics === 'cresc' || d.goal.dynamics === 'dim-cresc') {
+            // a perfect shape: 45 velocity units out to the turning beat and back, by the beat (both hands alike)
+            const turn = d.notes.reduce((b, n) => (n.pitch > b.pitch ? n : b), d.notes[0]).beat;
+            const sh = (n: ExpNote) => (45 * (n.beat <= turn ? n.beat : 2 * turn - n.beat)) / turn;
+            vel = d.goal.dynamics === 'cresc' ? (n) => 30 + sh(n) : (n) => 120 - sh(n);
           }
+          // MEASUREMENT-AUDIT E3b: each note at the centre of its written level's band
+          if (d.goal.dynamics === 'terraced') vel = (n) => (n.dynMark === 'f' ? 98 : 49);
           const m = analyzeTake(d, d.startBpm, perfect(d, d.startBpm, { vel }));
           expect({ id: d.itemId, v: m.verdict, why: m.why.en }).toEqual({
             id: d.itemId,
@@ -393,7 +397,7 @@ describe('drills: analyzeTake', () => {
     expect(good.verdict).toBe('clean');
     const flat = analyzeTake(c, 70, perfect(c, 70, { vel: (_n, i) => 70 + (i % 2) * 3 }));
     expect(flat.verdict).toBe('not');
-    expect(flat.why.en).toMatch(/Crescendo/);
+    expect(flat.why.en).toMatch(/crescendo/i);
   });
 
   it('legato vs staccato: KOT and KDR', () => {

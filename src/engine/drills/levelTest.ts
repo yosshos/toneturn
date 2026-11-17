@@ -6,7 +6,7 @@ import type { DrillSettings, FamilyId } from './types';
 type T2 = { en: string; he: string };
 import { families } from './plan';
 
-export type StrandId = 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines' | 'rhythm' | 'lead' | 'jazz' | 'time' | 'walk' | 'grooves' | 'fills' | 'indep';
+export type StrandId = 'touch' | 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines' | 'rhythm' | 'lead' | 'jazz' | 'time' | 'walk' | 'grooves' | 'fills' | 'indep';
 export type Verdict = 'clean' | 'almost' | 'not';
 
 /** One step of a section: a level of the catalogue, in a chosen key, and the start levels it proves when passed. */
@@ -25,6 +25,7 @@ export interface Strand {
 
 export const STRAND_TITLE: Record<StrandId, T2> = {
   hands: { en: 'Hands', he: 'ידיים' },
+  touch: { en: 'Touch and dynamics', he: 'מגע ודינמיקה' },
   chords: { en: 'Chords', he: 'אקורדים' },
   comp: { en: 'Comping', he: 'ליווי' },
   reading: { en: 'Reading', he: 'קריאה' },
@@ -55,6 +56,18 @@ const HANDS: Rung[] = [
   r('fingers-6', 10, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
   // AUDIT-7 #11: a graded piece (Bach's Prelude in C, G5) places the classical tier and the pedal's first steps.
   r('k-classic-6', 0, { scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2 }),
+];
+// MEASUREMENT-AUDIT G8: touch is tested before it is placed (control used to be inferred from the hands steps): one
+// level, a crescendo out and back, voicing, the pedal, dynamics in contrary motion, soft at speed. MIDI only — by
+// microphone these steps are left out of the test (SectionLevelTest filters what a mic can't measure).
+const TOUCH: Rung[] = [
+  r('control-1', 0, { control: 2 }),
+  r('control-3', 7, { control: 4 }),
+  r('control-4', 5, { control: 5 }),
+  r('control-6', 2, { control: 7 }),
+  r('control-10', 9, { control: 11 }),
+  r('control-14', 3, { control: 15 }),
+  r('control-16', 10, { control: 16 }),
 ];
 const CHORDS_JAZZ: Rung[] = [
   r('cadences-1', 7, { cadences: 2, voicings: 1 }),
@@ -146,6 +159,7 @@ export function pianoStrands(emphasis: DrillSettings['emphasis']): Strand[] {
   const jazz = emphasis !== 'classical';
   const out: Strand[] = [
     { id: 'hands', title: STRAND_TITLE.hands, rungs: HANDS },
+    { id: 'touch', title: STRAND_TITLE.touch, rungs: TOUCH },
     { id: 'chords', title: STRAND_TITLE.chords, rungs: jazz ? CHORDS_JAZZ : CHORDS_CLASSICAL },
     { id: 'comp', title: STRAND_TITLE.comp, rungs: jazz ? COMP_JAZZ : COMP_CLASSICAL },
     { id: 'reading', title: STRAND_TITLE.reading, rungs: READING },

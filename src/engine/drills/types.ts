@@ -192,7 +192,12 @@ export type BassFamilyId =
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';
-export type DynamicsGoal = 'even-mf' | 'even-p' | 'even-f' | 'even-pp' | 'even-ff' | 'cresc' | 'accent3' | 'accent4' | 'voicing';
+/**
+ * Target dynamics. 'cresc' = crescendo out to the turning point, diminuendo back (MEASUREMENT-AUDIT E1: the two halves
+ * graded as separate lines); 'dim-cresc' = the reverse (loud at the ends, soft at the turn); 'terraced' = each note's
+ * written level (ExpNote.dynMark) held zone by zone, a step between zones and none inside them (E3b).
+ */
+export type DynamicsGoal = 'even-mf' | 'even-p' | 'even-f' | 'even-pp' | 'even-ff' | 'cresc' | 'dim-cresc' | 'terraced' | 'accent3' | 'accent4' | 'voicing';
 export type Variant = 'even' | 'dotted' | 'rev-dotted' | 'groups3' | 'groups4' | 'accent-shift';
 export type Motion = 'parallel' | 'contrary' | 'third' | 'sixth' | 'tenth' | 'formula';
 export type ScaleType = 'major' | 'harmonic' | 'melodic' | 'natural' | 'chromatic' | 'mixolydian' | 'bebop-dom' | 'six-dim' | 'blues' | 'pentatonic'
@@ -290,6 +295,15 @@ export interface ExpNote {
    * Graded like any other note of the hand.
    */
   staffVoice?: 1 | 2;
+  // ---- written touch (MEASUREMENT-AUDIT G1, E3b): graded as zones / passages by touch.ts, never note by note ----
+  /** The dynamic in force for this note (pp … ff) as written; graded per zone of equal marks. */
+  dynMark?: Dyn;
+  /** Under a written hairpin: getting louder (cresc) or softer (dim) through the hairpin's notes. */
+  hair?: 'cresc' | 'dim';
+  /** A staccato dot: released well before the next note (≤ 60 % of the gap). */
+  stac?: boolean;
+  /** Under a slur (its id, per hand): joined legato to the next note of the same slur. */
+  slur?: number;
 }
 
 /** What a drill is: everything needed to generate its notes. */
@@ -452,6 +466,14 @@ export interface Drill {
   sigText?: string;
   /** Pitch classes the score writes as sharps (a piece in A minor: G♯, not A♭); the staff spells them so. */
   sharps?: number[];
+  /**
+   * MEASUREMENT-AUDIT B2: the swing ratio the off-beat 8ths are graded against (the long note's share of the beat; an
+   * Encore phrase's own measured ratio, e.g. 0.58). Absent on a swing drill: the player's own steady ratio inside the
+   * tempo's stylistic range is accepted (touch.ts swingBand), the grid's 2/3 outside it.
+   */
+  swingRatio?: number;
+  /** The printed number of the drill's first bar (a piece's chunk), for "bars 5–8" in the touch lines. */
+  barBase?: number;
 }
 
 /** A unison part: the band's bass / guitar / keys play `line` (or the drill's own notes moved by `transpose`). */
@@ -507,6 +529,13 @@ export interface DrillGoal {
   chordTonesOnBeats?: boolean;
   /** Hand independence: notes marked `hold` must be kept down ≥ this share of their written length (0.8). MIDI only. */
   holds?: number;
+  /**
+   * MEASUREMENT-AUDIT G4: note lengths matter (reading, pieces, Alberti, pop LH) — long notes held ≥ 80 % of their written
+   * length, a clean release where a rest follows. MIDI only; notes under the sustain pedal are not judged.
+   */
+  lengths?: boolean;
+  /** MEASUREMENT-AUDIT G1: the written dynamics, hairpins, staccato dots and slurs of the notes are graded (pieces). */
+  marks?: boolean;
   /** Hand independence: a different touch per hand (legato in one, staccato in the other). MIDI only. */
   handArt?: { R?: Articulation; L?: Articulation };
   /** Voicing / chord correctness instead of exact pitches (voicing families): allowed pitch classes per chordId. */
@@ -785,6 +814,41 @@ export interface PlayedNote {
   vel: number;
 }
 
+/** MEASUREMENT-AUDIT: the touch of one take (touch.ts) — dynamics shape, fingers, lengths, tempo, swing, pedal, chords. */
+export type TouchMark = 'short' | 'long' | 'roll' | 'flat' | 'voiced' | 'soft' | 'thumb' | 'blur' | 'jump' | 'peak';
+export interface TouchLine {
+  /** What the line is about (also the profile's control kind). */
+  id: 'cresc' | 'dim' | 'shape' | 'hands-dyn' | 'zones' | 'hair' | 'level' | 'creep' | 'finger' | 'late-finger' | 'thumb' | 'lengths' | 'release' | 'stac' | 'slur' | 'drift' | 'swing' | 'pedal' | 'blur' | 'roll' | 'voicing';
+  ok: boolean;
+  /** One short line (few words). */
+  text: { en: string; he: string };
+  /** The "Why?" line, misses only. */
+  why?: { en: string; he: string };
+}
+export interface TouchReport {
+  lines: TouchLine[];
+  /** Note-level marks for the staff (index into drill.notes). */
+  marks: { i: number; mark: TouchMark }[];
+  /** Crescendo / diminuendo fit per half (the hand graded; both hands with `hands`). */
+  shape?: { up: { slope: number; r2: number; range: number } | null; down: { slope: number; r2: number; range: number } | null; peakOff: number; jump: number; hands?: { corr: number | null; diff: number } };
+  /** Per finger (hand + finger): velocity relative to the hand, mean onset offset relative to the hand (ms), notes. */
+  fingers?: { key: string; vel: number; late: number; n: number }[];
+  /** Tempo at the start and the end of the take (♩), from the played onsets. */
+  drift?: { from: number; to: number };
+  /** The measured swing ratio and the ratio graded against. */
+  swing?: { ratio: number; target: number; lo: number; hi: number };
+  /** Chords: rolled (spread over the limit) / all, top-voiced / all. */
+  chords?: { rolled: number; total: number; voiced?: number };
+  /** Lengths: held long notes / long notes, clean releases before rests / rests. */
+  lengths?: { held: number; long: number; rel: number; rests: number };
+  /** Pedal changes (CC64), when recorded. */
+  pedal?: { beat: number; ok: boolean; why?: string }[];
+  /** Control score 0..1 of the take (the touch goals only), for the item EWMA and the profile. */
+  control?: number;
+  /** Tags of what went wrong, for the long-term profile (e.g. 'dim-early', 'cresc-flat', 'lh-shape'). */
+  tags?: string[];
+}
+
 /** Per-device calibration (spec AI §2): latency and the player's velocity range. */
 export interface DrillCalibration {
   latencyMs: number;
@@ -863,8 +927,12 @@ export interface TakeMetrics {
   why: { en: string; he: string };
   /** Most notes were played exactly this many semitones off (±12, ±24): the keyboard is shifted by octaves. */
   octaveShift?: number;
-  /** Pedalling drills (MIDI CC64): changes done right / total. */
-  pedal?: { ok: number; total: number; pass: boolean };
+  /** Pedalling drills (MIDI CC64): changes done right / total; per change (MEASUREMENT-AUDIT B5) for the marks. */
+  pedal?: { ok: number; total: number; pass: boolean; perChange?: { beat: number; ok: boolean; why?: string }[] };
+  /** MEASUREMENT-AUDIT: the touch report (dynamics shape, fingers, lengths, drift, swing, chords, pedal). */
+  touch?: TouchReport;
+  /** MEASUREMENT-AUDIT B3: the velocity spread was graded (a dynamics goal, a MIDI take) — only then it feeds the item. */
+  vsdGraded?: boolean;
   /** Free-choice drills (goal.bass.rules, A5): per-slot labels and the worst bar for the "Why?" line. */
   rules?: TakeRules;
   /** Written transcription (ear L7): notes written right / total. */
@@ -963,7 +1031,7 @@ export interface ItemState {
   /** Failed sets in a row. */
   fails: number;
   /** Smoothed metrics. */
-  ewma: { cv: number; sd: number; vsd: number; hands: number; acc: number };
+  ewma: { cv: number; sd: number; vsd: number; hands: number; acc: number; /** MEASUREMENT-AUDIT G8: control score 0..1 (touch goals only). */ ctl?: number };
   takes: number;
   last: string;
   /** Tempo history (date, clean bpm) for the trends. */

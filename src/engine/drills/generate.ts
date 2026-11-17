@@ -432,7 +432,9 @@ const DYN_T: Record<DynamicsGoal, T2> = {
   'even-f': t('even f', 'אחיד f'),
   'even-pp': t('even pp', 'אחיד pp'),
   'even-ff': t('even ff', 'אחיד ff'),
-  cresc: t('cresc. up, dim. down', 'קרשנדו למעלה, דימינואנדו למטה'),
+  cresc: t('cresc. out, dim. back', 'קרשנדו החוצה, דימינואנדו בחזרה'),
+  'dim-cresc': t('dim. out, cresc. back', 'דימינואנדו החוצה, קרשנדו בחזרה'),
+  terraced: t('p then f', 'p ואז f'),
   accent3: t('accent every 3rd', 'הטעמה כל 3'),
   accent4: t('accent every 4th', 'הטעמה כל 4'),
   voicing: t('top voice sings', 'הקול העליון בולט'),
@@ -636,6 +638,14 @@ function genScale(s: DrillSpec): Drill {
   const perBeat = s.perBeat ?? 2;
   const buf = new Buf();
   buf.steps(steps, 1 / perBeat, s.variant, s.dynamics);
+  // MEASUREMENT-AUDIT E3b: terraced dynamics — the first octave out from the start p, the next f (each note keeps its
+  // written level; the take is graded zone by zone).
+  if (s.dynamics === 'terraced')
+    for (const nt of buf.notes) {
+      const i = Math.round(nt.beat * perBeat);
+      const k = path[Math.max(0, Math.min(path.length - 1, i))];
+      nt.dynMark = Math.abs(nt.hand === 'R' ? k[0] : k[1]) < n ? 'p' : 'f';
+    }
   const ttl = title(
     [
       octavesKind ? t('Octaves', 'אוקטבות') : null,
@@ -5079,7 +5089,18 @@ function genTheoryPlay(s: DrillSpec): Drill {
   throw new Error(`Unknown k-theory kind: ${s.kind}`);
 }
 
+/**
+ * MEASUREMENT-AUDIT G4: families where note lengths matter (reading, the classical pieces, Alberti and pop left hands)
+ * grade long notes held and releases at rests (MIDI; touch.ts).
+ */
+const LENGTH_KINDS = new Set(['reading', 'alberti', 'melody-alberti', 'pop-lh']);
 export function generate(spec: DrillSpec): Drill {
+  const d = generateRaw(spec);
+  if ((spec.family === 'k-read' || spec.family === 'k-classic' || LENGTH_KINDS.has(spec.kind)) && !d.goal.lengths && d.spec.instrument !== 'guitar' && d.spec.instrument !== 'bass') d.goal = { ...d.goal, lengths: true };
+  return d;
+}
+
+function generateRaw(spec: DrillSpec): Drill {
   if (spec.family.startsWith('d-')) return generateDrums(spec);
   if (spec.family.startsWith('g-') || spec.family.startsWith('b-')) return generateGuitar(spec);
   const s: DrillSpec = { ...spec, key: mod(spec.key, 12) };
@@ -5747,13 +5768,15 @@ export function catalog(): FamilyDef[] {
           (['even-mf', 'even-p', 'even-f', 'even-pp', 'even-ff'] as DynamicsGoal[]).map((d) => k({ dynamics: d })),
           [0, 7, 5],
         ),
+        // MEASUREMENT-AUDIT E1: crescendo up the scale and diminuendo back down, the halves graded as separate lines,
+        // each hand then hands together, in all 12 keys.
         L(
           'control',
           4,
           'Crescendo up, diminuendo down',
           'קרשנדו למעלה, דימינואנדו למטה',
-          [k({ dynamics: 'cresc' }), k({ hands: 'L', dynamics: 'cresc' })],
-          [0, 7, 5],
+          [k({ dynamics: 'cresc' }), k({ hands: 'L', dynamics: 'cresc' }), k({ hands: 'RL', dynamics: 'cresc' })],
+          ALL12,
         ),
         L(
           'control',
@@ -5804,6 +5827,34 @@ export function catalog(): FamilyDef[] {
             { family: 'control', kind: 'reading', hands: 'RL', option: 2 },
           ],
           [0, 7, 5, 2, 10, 9, 4, 3],
+        ),
+        // MEASUREMENT-AUDIT §7 (owner's examples): dynamics measured as shapes, every item rubato first, then the tempo
+        // ladder, in all 12 keys.
+        // E1 variant: soft at the top, loud at both ends — against the scale's own pull to get louder as it rises.
+        L('control', 13, 'Diminuendo up, crescendo down', 'דימינואנדו למעלה, קרשנדו למטה', [k({ dynamics: 'dim-cresc' }), k({ hands: 'L', dynamics: 'dim-cresc' }), k({ hands: 'RL', dynamics: 'dim-cresc' })], ALL12),
+        // E2: contrary motion from the unison — louder as the hands move apart, softer as they come back; both hands'
+        // lines are checked together (parallel dynamics), one and two octaves.
+        L('control', 14, 'Contrary motion: louder out, softer in', 'תנועה נגדית: חזק החוצה, שקט פנימה', [k({ hands: 'RL', motion: 'contrary', octaves: 1, dynamics: 'cresc' }), k({ hands: 'RL', motion: 'contrary', dynamics: 'cresc' })], ALL12),
+        // E3: the chromatic scale (2 octaves, 1-3 fingering) with a crescendo out and back, terraced p / f, hands together;
+        // twelve starting notes.
+        L(
+          'control',
+          15,
+          'Chromatic scale with dynamics',
+          'סולם כרומטי עם דינמיקה',
+          [k({ scale: 'chromatic', dynamics: 'cresc' }), k({ hands: 'L', scale: 'chromatic', dynamics: 'cresc' }), k({ scale: 'chromatic', dynamics: 'terraced' }), k({ hands: 'L', scale: 'chromatic', dynamics: 'terraced' }), k({ hands: 'RL', scale: 'chromatic', dynamics: 'cresc' })],
+          ALL12,
+        ),
+        // E3c + E4: a soft level held at speed — 16ths up the tempo ladder at p (and the chromatic at pp, where the 1-3
+        // fingering tempts the 3rd finger to accent). Getting faster by getting louder fails.
+        L(
+          'control',
+          16,
+          'Soft at speed: p and pp in 16ths',
+          'שקט במהירות: פיאנו ופיאניסימו בשש־עשריות',
+          [k({ dynamics: 'even-p', perBeat: 4 }), k({ hands: 'L', dynamics: 'even-p', perBeat: 4 }), k({ hands: 'RL', dynamics: 'even-p', perBeat: 4 }), k({ scale: 'chromatic', dynamics: 'even-pp', perBeat: 4 }), k({ hands: 'L', scale: 'chromatic', dynamics: 'even-pp', perBeat: 4 })],
+          ALL12,
+          [SN[2], SN[5]],
         ),
       ],
     },

@@ -62,6 +62,12 @@ export const KEYS_PLACEMENT: Record<string, number> = {
   'control-11': 780,
   // ABRSM G3: wider range, mixed rhythms, hands together.
   'control-12': 1000,
+  // MEASUREMENT-AUDIT §7 (dynamics as shapes): ABRSM / Trinity ask for a crescendo / diminuendo through a scale from
+  // G3–G4; contrary motion with dynamics G4; the chromatic scale with dynamics G5; p at speed in 16ths G6.
+  'control-13': G(4), // 1060: diminuendo up, crescendo down (against the scale's pull)
+  'control-14': 1100, // contrary motion: louder out, softer in
+  'control-15': G(5), // 1150: chromatic with dynamics (cresc / terraced)
+  'control-16': G(6), // 1240: soft at speed (p, pp in 16ths)
   // Theory G2–G5: plagal and deceptive cadences before the Neapolitan and augmented 6th (G7–G8).
   'cadences-6': 1050,
   'cadences-5': G(7), // 1330

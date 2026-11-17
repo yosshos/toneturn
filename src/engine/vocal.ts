@@ -1307,6 +1307,28 @@ function levenshtein(a: number[], b: number[]): number {
   return d[a.length][b.length];
 }
 
+/** A held note's onset scoop (|cents| in its first 60 ms): good / fair / poor limits. */
+export const SCOOP_BANDS: [number, number, number] = [25, 50, 90];
+
+/**
+ * MEASUREMENT-AUDIT B8: the swell of one held note — the level in 5 time bins (dB), the rise to the loudest bin and the
+ * fall after it, where the peak sits (0..1 of the note) and how monotone each side is. Null when too little was heard.
+ */
+export function swellOf(frames: SungFrame[]): { rise: number; fall: number; peakAt: number; mono: number } | null {
+  const vs = frames.filter((f) => f.hz && f.confidence >= 0.8 && f.rms > 0);
+  if (vs.length < 30) return null;
+  const t0 = vs[0].t;
+  const span = vs[vs.length - 1].t - t0 || 1;
+  const bins = Array.from({ length: 5 }, () => [] as number[]);
+  for (const f of vs) bins[Math.min(4, Math.floor(((f.t - t0) / span) * 5))].push(20 * Math.log10(f.rms));
+  const db = bins.map((b) => (b.length ? mean(b) : NaN));
+  if (db.some((x) => Number.isNaN(x))) return null;
+  const p = db.indexOf(Math.max(...db));
+  let ok = 0;
+  for (let k = 1; k < 5; k++) if (k <= p ? db[k] >= db[k - 1] - 1 : db[k] <= db[k - 1] + 1) ok++;
+  return { rise: db[p] - db[0], fall: db[p] - db[4], peakAt: (p + 0.5) / 5, mono: ok / 4 };
+}
+
 /** Dynamics (spec V.2): follow a loudness shape on one held note while the pitch stays put. */
 export function gradeDynamic(item: VocalItem, frames: SungFrame[], target: number): TakeGrade {
   const vs = frames.filter((f) => f.hz && f.confidence >= 0.8 && f.rms > 0);
@@ -1458,10 +1480,11 @@ function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, styl
     M('vibratoRegularity', h.vibrato.regularity * 100, '%', h.vibrato.present ? bandScore(h.vibrato.regularity, BANDS.vibratoRegularity) : 0, w),
   ];
   switch (item.kind) {
+    // MEASUREMENT-AUDIT §3: the scoop into a held note (cents in its first 60 ms) is graded and shown, lightly weighted.
     case 'hold':
-      return finish([...base, M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1)], { hold: h });
+      return finish([...base, M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5)], { hold: h });
     case 'straight':
-      return finish([...base, M('stability', h.stability, '¢', h.vibrato.present ? 0 : bandScore(h.stability, BANDS.stability), 2), M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1)], { hold: h });
+      return finish([...base, M('stability', h.stability, '¢', h.vibrato.present ? 0 : bandScore(h.stability, BANDS.stability), 2), M('drift', h.drift, '¢/s', bandScore(h.drift, BANDS.drift), 1), M('scoop', Math.abs(h.scoop), '¢', bandScore(Math.abs(h.scoop), SCOOP_BANDS), 0.5)], { hold: h });
     case 'vibrato-steady':
       return finish([...base, ...vibScores(1.5)], { hold: h });
     case 'vibrato-delayed': {
@@ -1518,15 +1541,20 @@ function gradeHoldRaw(item: VocalItem, frames: SungFrame[], target: number, styl
       const e = (eOn + eOff) / 2;
       return finish([...base, ...vibScores(1), M('vibratoCue', e * 1000, 'ms', bandScore(e, BANDS.vibratoCue), 2)], { hold: h });
     }
-    case 'messa':
+    case 'messa': {
+      // MEASUREMENT-AUDIT B8: messa di voce is soft → loud → soft — the rise AND the fall around a peak in the middle,
+      // not just a loudness range (a plain crescendo passed before). The range counted is the smaller of the two sides.
+      const sw = swellOf(frames);
+      const rise = sw ? Math.min(sw.rise, sw.fall) : 0;
       return finish(
         [
           ...base,
-          M('dynamics', h.loudnessRangeDb, 'dB', reachScore(h.loudnessRangeDb, 6), 1.5),
+          M('dynamics', rise, 'dB', sw && sw.peakAt >= 0.2 && sw.peakAt <= 0.8 ? reachScore(rise, 6) * (0.5 + 0.5 * sw.mono) : 0, 1.5),
           M('stability', h.maxTrendDev, '¢', bandScore(h.maxTrendDev, [15, 25, 40]), 2),
         ],
         { hold: h },
       );
+    }
     default:
       return finish(base, { hold: h });
   }
