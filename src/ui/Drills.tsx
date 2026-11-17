@@ -46,6 +46,11 @@ import { drillEvents, drillXp } from '../engine/drills/events';
 import { ChartView, DrillStaff, DrillTab, DrillTake, EarCard, MarkLegend } from './DrillTake';
 import { BidiText, plainText } from './BidiText';
 import { TakeReview } from './TakeReview'; // COURSE-FEEDBACK-UI slice 2: the one-screen review
+import { hasFingering, shownDrill, type OwnFingerings } from '../engine/drills/ownFingering';
+import { FingerKeys, OwnFingeringLink } from './OwnFingering';
+import { NewBestTempo, newBestOf } from './studio/NewBestTempo';
+import { isStudio } from './look';
+import { syncOwnFingering } from '../storage/analysis';
 import { ErrorMap, barMarks, worstBar } from './ErrorMap'; // slice 3: loop the spot
 import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
 // Voice leading (AUDIT-CONTENT-THEORY §ה.2): the chord symbols + first voicing, the voices as lanes, the stage lessons.
@@ -274,6 +279,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           atTarget={atTarget}
           onTake={onTake}
           onEnd={(takes, clean) => (onQueueDone && queue?.length ? onQueueDone(takes, clean) : setView(view.from))}
+          own={settings.ownFingering}
+          onOwn={(ownFingering) => (onSettings({ ownFingering }), void syncOwnFingering(ownFingering))}
         />
       </main>
     );
@@ -871,7 +878,7 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine }: { /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn }: { /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -914,6 +921,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [ghost, setGhost] = useState(false);
   // Encore (SPEC-PHRASE-STUDIO §4.1): the last take's notes, for "Keep this phrase".
   const lastPlayed = useRef<PlayedNote[]>([]);
+  // The new-best-tempo moment (studio look), over the review; any tap closes it.
+  const [best, setBest] = useState<{ bpm: number; prev: number; title: string } | null>(null);
+  const bestPop = best ? <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={best.title} onClose={() => setBest(null)} /> : null;
   if (!drill)
     return (
       <section className="drill-result v-clean">
@@ -939,10 +949,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       if (r) onCalRefine(r);
     }
     // The take also moves the player profile's timeline (SPEC-AI §8).
-    void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
+    void recordTakeAnalysis(drill, m, bpm, own).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
     const st0 = stateOf(drill);
     const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99 });
+    // Studio look: a ladder step cleared above the previous best tempo is the moment (one tap continues).
+    const nb = isStudio() ? newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean') : null;
+    if (nb) setBest({ ...nb, title: drill.title[lang] });
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
@@ -979,11 +992,14 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     local.current[drill.itemId] = next;
     count.current.takes++;
     // Measured practice: it shows on the profile and earns a little XP, but no rating events (no tempo was measured).
-    if (st === 'quarters') void recordTakeAnalysis(takeDrill, m, QUARTERS_BPM).catch(() => {});
+    if (st === 'quarters') void recordTakeAnalysis(takeDrill, m, QUARTERS_BPM, own).catch(() => {});
     onTake(next, [], Math.max(1, Math.floor(drillXp(m) / 2)), takeInfo(drill, m));
     setOneFree(false);
     setStageRes({ m, stage: st });
   };
+  // Piano fingering on the score: the review's "Other fingering?" and (studio look, the switch on) the next-key finger.
+  const pianoFingered = !isGuitarDrill(drill) && !isDrumDrill(drill) && !drill.sung && hasFingering(drill);
+  const fingerKeysOn = pianoFingered && ds.showFingering && isStudio() && stage !== 'free' && drill.show !== 'none';
   const freeN = Math.min(RUBATO_CLEAN, (stateOf(drill).rubato?.free ?? 0) + 1);
   const he = lang === 'he';
   const stageTx = rubatoOnly ? (he ? 'רובאטו: אקורד, עצירה, ואז המנגינה — בלי קצב' : 'Rubato: a chord, a stop, then the melody — no pulse') : stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;
@@ -1142,7 +1158,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           )}
         </p>
       )}
-      <DrillScore drill={takeDrill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} live={res ? null : live} loop={res ? loopSel : null} cue={!res && counting} prior={res && ghost ? prior : null} heard={res ? null : heard} />
+      <DrillScore drill={shownDrill(takeDrill, own)} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} bpm={bpm} live={res ? null : live} loop={res ? loopSel : null} cue={!res && counting} prior={res && ghost ? prior : null} heard={res ? null : heard} />
+      {/* Studio look: the next key and its finger (small — the fingering is a recommendation), while a fingered piano item is played. */}
+      {!res && !writing && fingerKeysOn && <FingerKeys drill={shownDrill(takeDrill, own)} beat={beat} lang={lang} />}
       {drill.spec.kind === 'sl-chorus' && !res && (
         <p className="drill-stage">
           <button className="btn small ghost" onClick={() => setChorusEd(true)} data-chorus-open="1">
@@ -1184,6 +1202,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
             lastTake={prior ? { on: ghost, onToggle: () => setGhost((g) => !g) } : undefined}
+            fingering={onOwn && pianoFingered ? <OwnFingeringLink lang={lang} drill={drill} own={own} onChange={onOwn} /> : undefined}
             onKeep={lastPlayed.current.length >= 3 && !isDrumDrill(drill) ? () => keepPhrase({ kind: 'drill', instrument: drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano', title: drill.title, source: midi.devices.length ? 'midi' : 'mic', notes: lastPlayed.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart?.length ? { chart: drill.chart.join(' | ') } : {}) }, loopSel ? { from: loopSel[0] * drill.meter, to: (loopSel[1] + 1) * drill.meter } : null) : undefined}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           >
@@ -1241,6 +1260,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           </TakeReview>
         </>
       )}
+      {bestPop}
     </div>
   );
 }

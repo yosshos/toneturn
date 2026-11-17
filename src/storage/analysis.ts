@@ -2,6 +2,7 @@
 
 import { addTake, emptyModel, type PlayerModel } from '../engine/analysis/model';
 import type { Drill, TakeMetrics } from '../engine/drills/types';
+import { analysisDrill, anyOwn, type OwnFingerings } from '../engine/drills/ownFingering';
 import { indexedKV, memoryKV, type KV } from './kv';
 
 const kv: KV = (() => {
@@ -20,16 +21,40 @@ export async function loadModel(): Promise<PlayerModel> {
   return cache;
 }
 
-/** Fold one take in (serialised, so quick takes never overwrite each other). */
-export function recordTakeAnalysis(drill: Drill, m: TakeMetrics, bpm: number): Promise<unknown> {
+/**
+ * Fold one take in (serialised, so quick takes never overwrite each other). `own` = the player's own fingerings: the
+ * item's notes carry the player's numbers (none where not entered), and the model's ownFingering flag follows them.
+ */
+export function recordTakeAnalysis(drill: Drill, m: TakeMetrics, bpm: number, own?: OwnFingerings): Promise<unknown> {
   chain = chain.then(async () => {
     const cur = await loadModel();
-    cache = addTake(cur, drill, m, bpm, new Date().toISOString());
+    const next = addTake(cur, own ? analysisDrill(drill, own) : drill, m, bpm, new Date().toISOString());
+    cache = own === undefined ? next : withOwnFlag(next, anyOwn(own));
     await kv.set('model', cache);
   }).catch(() => {});
   // Bass takes also feed the groove fingerprint (BASS_AUDIT A14).
   const g = feedsGroove(drill) ? takeGroove(drill, m) : null;
   if (g) void recordGroove(g.onsets, g.offsets, bpm, g.beatsPerBar);
+  return chain;
+}
+
+const withOwnFlag = (m: PlayerModel, on: boolean): PlayerModel => {
+  if (!!m.ownFingering === on) return m;
+  const { ownFingering: _old, ...rest } = m;
+  return on ? { ...rest, ownFingering: true } : rest;
+};
+
+/** The player marked / unmarked an item's own fingering: the model's flag follows at once (no take needed). */
+export function syncOwnFingering(own: OwnFingerings | undefined): Promise<unknown> {
+  chain = chain
+    .then(async () => {
+      const cur = await loadModel();
+      const next = withOwnFlag(cur, anyOwn(own));
+      if (next === cur) return;
+      cache = next;
+      await kv.set('model', cache);
+    })
+    .catch(() => {});
   return chain;
 }
 

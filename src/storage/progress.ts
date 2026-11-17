@@ -346,6 +346,8 @@ export interface Settings {
   drillCal?: import('../engine/drills/types').DrillCalibration;
   /** The player's own drills (drill creator). */
   customDrills?: import('../engine/drills/types').CustomDrill[];
+  /** "I use a different fingering": per drill item, the player's own finger numbers (0 = not entered; [] = no numbers). */
+  ownFingering?: import('../engine/drills/ownFingering').OwnFingerings;
   /** Licks (SPEC-LICKS-TRANSCRIPTION): my licks, own licks from transcriptions, the spaced review, "Use it" passes. */
   lickBook?: import('../engine/licks').LickBook;
   /** Level test (technique section): the start level per family (spec AI §13). */
