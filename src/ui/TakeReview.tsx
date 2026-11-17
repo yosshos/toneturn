@@ -24,6 +24,7 @@ import { EvennessStrip, MarkLegend, VelocityCurve } from './DrillTake';
 import { KeepButton } from './encore/bits';
 import { Icon } from './icons';
 import { RecLink } from './Recordings'; // My recordings: every take is kept (SPEC-PHRASE-STUDIO §6.3)
+import { TouchLines } from './TouchLines';
 
 type Lang = 'he' | 'en';
 
@@ -285,6 +286,8 @@ export function TakeReview({
                 </li>
               )}
             </ul>
+            {/* MEASUREMENT-AUDIT: one line per touch point, a "Why?" on the misses */}
+            <TouchLines t={m.touch} lang={lang} />
             <MarkLegend lang={lang} />
             {!free && <EvennessStrip m={m} lang={lang} />}
             <VelocityCurve m={m} lang={lang} />

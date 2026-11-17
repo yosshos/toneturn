@@ -26,6 +26,7 @@ import type { LiveTake } from '../../engine/drills/liveGrade';
 import { keepPhrase } from '../../engine/encore/takeSource';
 import { badge } from '../../engine/encore/difficulty';
 import { postPhraseYours } from '../../cloud/community';
+import { recordTakeAnalysis } from '../../storage/analysis';
 
 export type EncoreTakeFn = (st: ItemState, evs: RatingEvent[], xp: number, m: { verdict: string; hands: string; cv: number | null }) => void;
 
@@ -94,6 +95,8 @@ export function EncoreRun({
     if (st === 'tempo') {
       lad = applyTake(st0, m, usedBpm, new Date().toISOString(), ds, { targetBpm: plan.goalBpm, slower: usedBpm < (st0.goalBpm ?? 0) * 0.99 });
       next = lad.state;
+      // MEASUREMENT-AUDIT B13: the flagship phrase practice shapes the player profile too (tempo takes only)
+      void recordTakeAnalysis(drill, m, usedBpm).catch(() => {});
     } else next = withStageTake(st0, st, m);
     local.current[drill.itemId] = next;
     const after = { ...before, [drill.itemId]: next };

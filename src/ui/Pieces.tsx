@@ -12,6 +12,7 @@ import type { TakeMetrics } from '../engine/drills/types';
 import { indexedKV, memoryKV, type KV } from '../storage/kv';
 import { localDay, type Settings } from '../storage/progress';
 import { DrillTake, MarkLegend } from './DrillTake';
+import { TouchLines } from './TouchLines';
 import { ScoreView } from './ScoreView';
 import { WaitMode } from './WaitMode';
 import type { NoteMark } from '../engine/noteMarks';
@@ -348,6 +349,8 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
               {line}
             </p>
           )}
+          {/* MEASUREMENT-AUDIT G1: the chunk's touch (written dynamics, hairpins, staccato, slurs, lengths), its worst miss */}
+          {last && lastTask && lastTask.from === task.from && lastTask.to === task.to && <TouchLines t={last.touch} lang={lang} max={1} missesOnly />}
           <ScoreView
             piece={p}
             cursorBeat={cursor === null ? null : cursor + (p.bars[task.from]?.start ?? 0)}

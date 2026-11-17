@@ -6,13 +6,13 @@ import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import { splitDur } from '../engine/piece/layout';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
 import { analyzeTake, improvNotes, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
-import type { ExpNote, NoteResult } from '../engine/drills/types';
+import type { ExpNote, NoteResult, TouchMark } from '../engine/drills/types';
 import { sungMidi, sungTolOf } from '../engine/drills/sungPitch';
 import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { extraIndex, markOf, worstMark } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
-import { analyzePedal, pedalDown, type PedalEvent } from '../engine/drills/pedal';
+import { pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
 import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
 import { midi } from '../speech/midi';
@@ -359,6 +359,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   };
   const lh = withOrns(drill.notes.filter((n) => n.hand === 'L'));
   const pf = result ? priorFor(prior) : null;
+  // MEASUREMENT-AUDIT: the touch marks of the take (a short / ringing note, a rolled or voiced chord, a jump in a shape,
+  // a soft note, a bump after a crossing, a blurred pedal change), by note index.
+  const touchAt = new Map<number, TouchMark>((result?.touch?.marks ?? []).map((x) => [x.i, x.mark] as [number, TouchMark]));
   // The count-in cue: the first note's beat (both staves pulse when both hands start together).
   const firstBeat = cue && !result && drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : null;
   // A long item (a whole head, AUDIT-DEPTH-3): two lines at a time with a pager, like the bass (one phone screen).
@@ -575,6 +578,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           durs={items.map((x) => x.dur)}
           labels={labels ? items.map((x) => (x.n ? labels[idx(x.n)] : '')) : undefined}
           marks={marks ? items.map((x) => (x.n ? marks[idx(x.n)] : undefined)) : undefined}
+          touch={touchAt.size ? items.map((x) => (x.n ? groupOf(x.n, ns).map((g) => touchAt.get(drill.notes.indexOf(g))).find(Boolean) : undefined)) : undefined}
           devs={devs ? items.map((x) => (x.n ? devs[idx(x.n)] : null)) : undefined}
           ghosts={ghosts ? items.map((x) => (x.n ? ghosts[idx(x.n)] : null)) : undefined}
           win={result ? timingMs : (live?.win ?? timingMs)}
@@ -877,10 +881,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     let zero = 0;
     const notes: PlayedNote[] = [];
     const open = new Map<number, PlayedNote>();
-    // Sustain pedal (CC64) for pedalling drills.
+    // Sustain pedal (CC64): every MIDI take (MEASUREMENT-AUDIT G6) — graded on pedalling drills, soft information elsewhere.
     const pedal: PedalEvent[] = [];
     let pedalWas = false;
-    const offCC = drill.goal.pedal
+    const offCC = midi.devices.length && !drum
       ? midi.onCC((cc, value, at) => {
           if (cc !== 64 || !zero) return;
           const d = pedalDown(value);
@@ -1122,13 +1126,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     }
     const heardNotes = answer(notes);
     // Sung licks (the voice course): the voice's timing tolerance, always by microphone.
-    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung });
-    if (drill.goal.pedal && midi.devices.length) {
-      const pr = analyzePedal(drill.goal.pedal, pedal, bpm);
-      m.pedal = { ok: pr.ok, total: pr.total, pass: pr.pass };
-      if (!pr.pass && m.verdict === 'clean') m.verdict = 'almost';
-      if (!pr.pass || m.verdict === 'clean') m.why = pr.why;
-    }
+    // The pedal (B5 / G6) is graded inside the analysis now, per change, so its marks reach the staff.
+    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung, ...(midi.devices.length && !pianoMicTake ? { pedal } : {}) });
     done(m, heardNotes);
   };
   startRef.current = start;
