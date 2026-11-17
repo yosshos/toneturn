@@ -168,7 +168,6 @@
 :root:root .limb-chips li { border: 1px solid var(--line-strong); } /* feedback2.css */
 :root:root[data-theme] .recap-row .recap-mark { border: 1px solid var(--line-strong); } /* feedback2.css */
 :root:root[data-theme] .recap .coach-insight.pair { border: 1px solid var(--line-strong); } /* feedback2.css */
-:root:root .rank-crest .rc-num { font-weight: 700; } /* badges.css */
 :root:root .bd-tone { font-weight: 700; } /* badges.css */
 :root:root .drill-family .lvl { font-weight: 700; } /* drills.css */
 :root:root .ear-card { border: 1px solid var(--line-strong); } /* drills.css */

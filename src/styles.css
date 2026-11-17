@@ -912,11 +912,6 @@ code {
     opacity: 0;
   }
 }
-.score-line {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: 1.15rem;
-}
 .xp-count {
   color: var(--gold);
   font-size: 1.4rem;

@@ -1,46 +1,14 @@
-/* The first minute (0.52): splash, welcome, a first taste, three questions, where to start. Calm and mature. */
+/* The first minute (0.52): welcome, a first taste, three questions, where to start. Calm and mature. */
 
-.splash {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 18px;
-  background: var(--bg);
-  cursor: pointer;
-  animation: splash-out 0.35s ease 1.45s both;
-}
-.splash-word, .ob-word {
+.ob-word {
   font-family: var(--display, inherit);
   font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--ink);
 }
-.splash-word { animation: sp-fade 0.6s ease 0.75s both; }
-.splash-word .wordmark-th, .ob-word .wordmark-th { font-size: 0.58em; vertical-align: super; }
-.splash-logo path { stroke-dasharray: 1; stroke-dashoffset: 1; }
-.splash-logo .sp-ear { animation: sp-draw 0.8s cubic-bezier(0.5, 0, 0.2, 1) 0.05s forwards; }
-.splash-logo .sp-seven { animation: sp-draw 0.45s cubic-bezier(0.5, 0, 0.2, 1) 0.55s forwards; }
-.splash-logo .sp-wave { animation: sp-draw 0.55s ease-out 0.85s forwards; }
-.splash-logo .sp-dot { transform-box: fill-box; transform-origin: center; transform: scale(0); animation: sp-pop 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) forwards; }
-.splash-logo .d0 { animation-delay: 0.95s; }
-.splash-logo .d1 { animation-delay: 1.05s; }
-.splash-logo .d2 { animation-delay: 1.12s; }
-@keyframes sp-draw { to { stroke-dashoffset: 0; } }
-@keyframes sp-pop { to { transform: scale(1); } }
+.ob-word .wordmark-th { font-size: 0.58em; vertical-align: super; }
 @keyframes sp-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-@keyframes splash-out { to { opacity: 0; visibility: hidden; } }
-/* the welcome screen's logo: already drawn, a soft entrance */
-.ob-welcome .splash-logo path { stroke-dashoffset: 0; animation: none; }
-.ob-welcome .splash-logo .sp-dot { transform: none; animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .splash-logo path, .splash-logo .sp-dot { animation: none !important; stroke-dashoffset: 0; transform: none; }
-  .splash-word { animation: none; }
-}
-html[data-motion='reduced'] .splash-logo path, html[data-motion='reduced'] .splash-logo .sp-dot { animation: none !important; stroke-dashoffset: 0; transform: none; }
 
 .onboarding {
   min-height: 100dvh;

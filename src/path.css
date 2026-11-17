@@ -766,11 +766,6 @@ html[data-motion='reduced'] .award-toast {
   border: 1px solid color-mix(in srgb, var(--mint) 35%, transparent);
   box-shadow: 0 6px 0 rgb(0 0 0 / 0.3);
 }
-.wk-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .wk-kicker {
   font-family: var(--display);
   letter-spacing: 0.04em;
@@ -1363,9 +1358,6 @@ html[data-motion='reduced'] .wk-undo {
   background: var(--card);
   border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
   gap: 12px;
-}
-.wk-calm .wk-head {
-  justify-content: space-between;
 }
 .wk-calm .wk-kicker {
   color: var(--ink-dim);
@@ -2587,12 +2579,6 @@ button.chip.on {
   display: inline-flex;
   gap: 6px;
   flex-wrap: wrap;
-}
-/* Workout: what the strengthen block leads to. */
-.wk-hero .wk-leads {
-  margin: 2px 0 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
 }
 
 /* The ring sits beside the unit's copy (the banner wraps only for the projected units' test-out button). */
