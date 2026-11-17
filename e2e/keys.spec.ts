@@ -79,13 +79,21 @@ test.describe('keys course', () => {
 
   for (const lang of ['he', 'en'] as const)
     for (const [f, n] of FAMS)
-      test(`every ${f} level's run screen fits 390 × 844 (${lang})`, async ({ page }) => {
+      test(`every ${f} level's run screen fits 390 × 844 (${lang})`, async ({ page, context }) => {
         test.setTimeout(600_000); // scales / arpeggios run every level in all 12 keys (0.91)
         await seed(page, lang);
         const bad: string[] = [];
+        // Each level in a fresh tab: reloading the app 15+ times in one tab piles up the renderer's audio memory (the
+        // sampled piano, several GB) until the machine runs out; a player never reloads like that.
+        let tab = page;
         for (let i = 1; i <= n; i++) {
-          await openLevel(page, f, `${f}-${i}`);
-          const o = await overflow(page);
+          if (i > 1) {
+            const next = await context.newPage();
+            await tab.close();
+            tab = next;
+          }
+          await openLevel(tab, f, `${f}-${i}`);
+          const o = await overflow(tab);
           if (o > 4) bad.push(`${f}-${i}: ${o}px`);
         }
         expect(bad).toEqual([]);
