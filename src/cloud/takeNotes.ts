@@ -41,11 +41,12 @@ const ls = {
 /** The feature flag (see the header): OFF unless the build or this device turns it on. */
 export const TAKE_NOTES_SYNC_ON = (): boolean => {
   try {
-    if (import.meta.env.VITE_TAKE_NOTES_SYNC === '1') return true;
+    if (import.meta.env.VITE_TAKE_NOTES_SYNC === '0') return false;
   } catch {
     /* no env in some test runners */
   }
-  return ls.get('tt.flag.takeNotes') === '1';
+  // On by default since the server table was applied (2026-11-17); "0" turns it off on one device.
+  return ls.get('tt.flag.takeNotes') !== '0';
 };
 
 // ───────────────────────────── rows ─────────────────────────────

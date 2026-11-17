@@ -242,14 +242,16 @@ describe('opt-in sync of take notes (§6.2)', () => {
   it('the server cap leaves new takes waiting', () => {
     expect(planSync([take('a', { star: true }), take('b', { star: true })], [], {}, 1).up).toHaveLength(1);
   });
-  it('off by default: no flag, or the switch off, means no call at all', async () => {
+  it('flag on by default; the flag set to "0", or the player switch off, means no call at all', async () => {
     let calls = 0;
     const rows: TakeNotesRow[] = [];
     setTakeNotesBackend({ list: async () => (calls++, rows), upsert: async (r) => void (calls++, rows.push(...r)) });
     const io = { local: async () => [take('a', { star: true })], put: async () => true, meta: async () => null };
+    expect(TAKE_NOTES_SYNC_ON()).toBe(true);
+    localStorage.setItem('tt.flag.takeNotes', '0');
     expect(TAKE_NOTES_SYNC_ON()).toBe(false);
     expect(await syncTakeNotes(true, io)).toBeNull();
-    localStorage.setItem('tt.flag.takeNotes', '1');
+    localStorage.removeItem('tt.flag.takeNotes');
     expect(await syncTakeNotes(false, io)).toBeNull();
     expect(calls).toBe(0);
     expect(await syncTakeNotes(true, io)).toEqual({ up: 1, added: 0, changed: 0 });

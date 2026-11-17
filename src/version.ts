@@ -18,6 +18,18 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.99.4',
+    date: '2026-11-17',
+    en: [
+      'Encore: suggested piano fingering you can change note by note, left-hand shells under a phrase, and 3/4, 5/4 and 6/8 phrases. Starred recordings can keep their notes (never the audio) on all your devices; turn it on in Settings.',
+      'When a friend masters a phrase you shared, you get 5 XP. A small card on Today shows a friend’s newest phrase to take on. New drawings for the gifts.',
+    ],
+    he: [
+      'הדרן: הצעת אצבוע לפסנתר שאפשר לשנות תו אחר תו, שלד ליד שמאל מתחת למשפט, ומשפטים ב־3/4, 5/4 ו־6/8. הקלטות עם כוכב יכולות לשמור את התווים (אף פעם לא את השמע) בכל המכשירים שלכם; מפעילים בהגדרות.',
+      'כשחבר כובש משפט ששיתפתם, אתם מקבלים 5 XP. כרטיס קטן במסך היום מציג את המשפט החדש של חבר לאתגר. ציורים חדשים למתנות.',
+    ],
+  },
+  {
     version: '0.99.3',
     date: '2026-11-17',
     en: [
