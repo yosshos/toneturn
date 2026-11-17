@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.103.1',
+    date: '2026-11-17',
+    en: ['The games that still had the old look now open with the studio cover and play with the same top bar as the rest.'],
+    he: ['המשחקים שעוד נשארו בעיצוב הישן נפתחים עכשיו עם כריכת הסטודיו ומשחקים עם אותו סרגל עליון כמו כל השאר.'],
+  },
+  {
     version: '0.103.0',
     date: '2026-11-17',
     en: [
