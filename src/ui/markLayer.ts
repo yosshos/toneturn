@@ -13,6 +13,9 @@ const el = (tag: string, attrs: Record<string, string | number>, cls?: string): 
   return e;
 };
 
+/** The studio look draws shape cues beside the colour marks (early ▸ before, late ◂ after, wrong ✕ below). */
+const studioShapes = () => typeof document !== 'undefined' && document.documentElement?.dataset?.look === 'studio';
+
 /** One marked item: its head (or tab digit) centre and half-width, in the SVG's own units. */
 export interface MarkSpot {
   mark: Exclude<NoteMark, undefined>;
@@ -79,6 +82,22 @@ export function drawMarks(svg: SVGSVGElement | null, spots: MarkSpot[], kind: 's
       const edge = (kind === 'tab' ? Math.max(rx, 6.5) : rx) + 2;
       const x = s.mark === 'early' ? s.x - edge - len : s.x + edge;
       one.appendChild(el('rect', { x, y: s.y - 1.75, width: len, height: 3.5, rx: 1.2 }, `mk-tick ${s.mark}`));
+      // Studio look: a shape cue, so timing never rests on colour alone — a small triangle before (early) or after (late)
+      // the head, pointing the way the note was off, just beyond the tick.
+      if (studioShapes()) {
+        const t = 4.2;
+        const w = t * 1.4;
+        const tx = s.mark === 'early' ? x - 2.5 : x + len + 2.5;
+        const d = s.mark === 'early' ? `M${tx - w} ${s.y}l${w} ${-t}v${t * 2}z` : `M${tx + w} ${s.y}l${-w} ${-t}v${t * 2}z`;
+        one.appendChild(el('path', { d, 'data-shape': s.mark }, `mk-shape ${s.mark}`));
+      }
+    }
+    // Studio look: a wrong note also gets a small ✕ below it (the shape cue under the head).
+    if (s.mark === 'wrong' && studioShapes()) {
+      const d = 3.6;
+      const cx = s.x;
+      const cy = s.y + ry + (kind === 'tab' ? 7 : 9);
+      one.appendChild(el('path', { d: `M${cx - d} ${cy - d}L${cx + d} ${cy + d}M${cx + d} ${cy - d}L${cx - d} ${cy + d}`, 'data-shape': 'wrong' }, 'mk-shape wrong'));
     }
     g.appendChild(one);
   }

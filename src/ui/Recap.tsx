@@ -1,4 +1,7 @@
 import { Toni } from './Toni';
+import { useStudioLook } from './ToniPaper';
+import { FinalBarline } from './studio/StudioArt';
+import { el } from '../i18n/elementsText';
 import { Icon } from './icons';
 import { sessionInsight } from '../engine/coach';
 import { pairWeeks, profileDigest } from '../engine/analysis/profile';
@@ -51,6 +54,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
   const s = view.session;
   const sm = summary(s);
   const [page, setPage] = useState(0);
+  const studio = useStudioLook();
   // The coach's note (SPEC-AI §2): phrased from this session's numbers and the player profile — never a new grade.
   const [digest, setDigest] = useState<ReturnType<typeof profileDigest> | null>(null);
   useEffect(() => {
@@ -157,6 +161,14 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
       >
       <section className={`rp rp-cele ${on(0)}`} aria-label={t.recapTitle}>
       {/* 0.61 (SPEC-REDESIGN): the lesson ends on a final barline with a fermata, and Toni celebrates. */}
+      {studio ? (
+        <div className="recap-art cel-art" aria-hidden="true">
+          <FinalBarline size={78} />
+          <span className="cel-toni">
+            <Toni state={stars === 3 ? 'celebrating' : stars >= 1 ? 'proud' : 'encouraging'} size={112} />
+          </span>
+        </div>
+      ) : (
       <div className="recap-art" aria-hidden="true">
         <svg className="recap-staff" viewBox="0 0 365 120" preserveAspectRatio="xMidYMid meet">
           <g className="rs-lines">
@@ -169,6 +181,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         </svg>
         <Toni state={stars === 3 ? 'streak' : stars >= 1 ? 'correct' : 'close'} size={150} />
       </div>
+      )}
       <p className="eyebrow">{withNote(meta.title[lang], bb)}</p>
       <h1>{t.recapTitle}</h1>
       {(() => {
@@ -216,6 +229,35 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           </span>
         ))}
       </div>
+      {studio ? (
+        <>
+          <div className="cel-stats" data-cel-stats="1">
+            <div className="cel-stat">
+              <small>{el('accuracy', lang)}</small>
+              <b dir="ltr">
+                {sm.firstTry}/{sm.total}
+              </b>
+            </div>
+            <div className="cel-stat">
+              <small>{t.xp}</small>
+              <b className="xp-count" dir="ltr">
+                +{xp}
+              </b>
+            </div>
+            {medianMs !== null && (
+              <div className="cel-stat">
+                <small>{el('time', lang)}</small>
+                <b dir="ltr">{(medianMs / 1000).toFixed(1)}s</b>
+              </div>
+            )}
+          </div>
+          {missed >= 0 && (
+            <p className="cel-weak" data-cel-weak="1">
+              {rec}
+            </p>
+          )}
+        </>
+      ) : (
       <p className="score-line">
         <b>
           {sm.firstTry}/{sm.total}
@@ -231,6 +273,7 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
           </>
         )}
       </p>
+      )}
 
       </section>
       {hasProgress && (

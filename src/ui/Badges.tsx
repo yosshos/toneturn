@@ -20,6 +20,8 @@ import {
 import type { SkillId } from '../engine/lesson';
 import { shareCanvas } from './Stats';
 import { AreaGlyph, BadgeArt, METALS } from './BadgeArt';
+import { useStudioLook } from './ToniPaper';
+import { RankShield } from './studio/StudioArt';
 import '../badges.css';
 import { courseOf, type CourseId } from '../engine/courses';
 import { Glyph } from './Glyph';
@@ -78,6 +80,9 @@ export function RankCrest({ div, size = 44, lang }: { div: number | null | undef
   const label = rankLabel(ranked ? div : null, lang);
   const uid = `rc${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const m = tier ? METALS[tier] : null;
+  // Studio look: the Paper shield (pips for III / II / I, a star for Master).
+  const studio = useStudioLook();
+  if (studio) return <RankShield tier={tier} pips={ranked ? romanOfDiv(div).length : 0} size={size} label={label} />;
   const shield = 'M32 3 L57 11 L57 32 C57 46 46 56 32 61 C18 56 7 46 7 32 L7 11 Z';
   return (
     <svg className={`rank-crest ${tier ? `rc-${tier} rc-metal` : 'rc-none'}`} width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={label}>

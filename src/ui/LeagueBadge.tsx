@@ -3,6 +3,8 @@
 // league wears an aurora frame.
 
 import { LADDER, TOP_TIER, tierOf } from '../engine/league';
+import { useStudioLook } from './ToniPaper';
+import { LeagueTile } from './studio/StudioArt';
 
 /** Diatonic step above middle C for each chord note (C E G B♭ D F♯ A are all on lines / ledger lines). */
 const POS = [0, 2, 4, 6, 8, 10, 12];
@@ -13,6 +15,9 @@ const TILE = ['#EDE6F7', '#12C9B4', '#3AB8FF', '#A78BFA', '#FFD43B', '#FF5FA2', 
 export function LeagueBadge({ tier, size = 72, ghostNext = false, title, arrive = false, falling = [] }: { tier: number; size?: number; ghostNext?: boolean; title?: string; /** Promotion (spec Y.5): the newest note drops onto its line. */ arrive?: boolean; /** Relegation: these higher notes fall off the staff. */ falling?: number[] }) {
   // 0.61 (SPEC-REDESIGN): an ink-outlined tile with a white staff window; the chord reads like real notation (one
   // stem, accidentals), the newest note is lemon, the league's symbol sits in a chip; the full 13 wears a fermata.
+  // Studio look: the Paper league tile (the chord so far, stacked in the league's own colour).
+  const studio = useStudioLook();
+  if (studio) return <LeagueTile tier={tier} size={size} ghostNext={ghostNext} title={title ?? tierOf(tier).symbol} arrive={arrive} falling={falling} />;
   const T = tierOf(tier);
   const ink = '#1E1033';
   const top = tier === TOP_TIER;
