@@ -998,6 +998,19 @@
   padding: 6px 4px;
   gap: 0;
 }
+/* the next-key finger strip (48 px) sits under the score on a piano item: on a short phone the score box gives up a
+   little of its 46vh (it scrolls inside anyway), so the notices, the meter and Play still fit one screen */
+@media (max-height: 760px) {
+  :root:root .drill-run:has(> .finger-keys) .drill-staff:not(.ht) {
+    max-height: calc(46vh - 12px);
+  }
+}
+/* hands together on a phone: the box's own side padding goes too, so the system keeps heads of 9 px (feedback.css) */
+@media (max-width: 399px) {
+  :root:root .drill-run .drill-staff.ht {
+    padding-inline: 0;
+  }
+}
 :root:root .drill-run .drill-staff .note-staff {
   border: 0;
   box-shadow: none;

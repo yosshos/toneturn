@@ -109,7 +109,7 @@ for (const lang of ['en', 'he'] as const) {
     await expect(page.locator('.answer.is-right [data-ans-glyph="right"]')).toBeVisible();
     const bg = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).backgroundColor);
     await expect.poll(() => bg('.answer.is-right')).toBe('rgb(18, 201, 180)');
-    await expect.poll(() => bg('.answer.is-wrong')).toBe('rgb(255, 95, 162)');
+    await expect.poll(() => bg('.answer.is-wrong')).toBe('rgb(226, 58, 90)'); // the studio raspberry wrong colour (--wrong, studio-elements.css)
     // the pair under the one-line card
     const pair = page.locator('.replay-pair');
     await expect(pair).toBeVisible();
@@ -207,7 +207,7 @@ for (const lang of ['en', 'he'] as const) {
     await page.locator('[data-gd-root="0"]').click();
     const on = await page.locator('[data-gd-root="0"]').evaluate((e) => ({ bg: getComputedStyle(e).backgroundColor, fg: getComputedStyle(e).color }));
     expect(on.bg).toBe('rgb(30, 16, 51)');
-    expect(on.fg).toBe('rgb(251, 247, 255)');
+    expect(on.fg).toBe('rgb(251, 248, 255)');
     // the current cell is edged in ink, not the voice course's teal
     const cur = await page.locator('.gd-cell.cur').first().evaluate((e) => getComputedStyle(e).borderTopColor);
     expect(cur).not.toBe('rgb(18, 201, 180)');

@@ -100,6 +100,16 @@
 :root:root[data-theme] .keys-pad .bk.mk:is(.mine, .ok) { background: #12c9b4; }
 :root:root[data-theme] .keyboard .wk.mark { background: #e6dcff; }
 :root:root[data-theme] .keyboard .bk.mark { background: #5b2fc4; }
+/* the note-view keyboard aid and the keys picture's given / answer marks (v2.css restated them for the base keys; the
+   warm-white keys above would hide them again) */
+:root:root[data-theme] .keyboard .wk.aid { background: #e6dcff; box-shadow: inset 0 -6px 0 #7c3aed; }
+:root:root[data-theme] .keyboard .bk.aid { background: #5b2fc4; }
+:root:root[data-theme] .keyboard .wk.aid-tonic { background: #bff0e8; box-shadow: inset 0 -6px 0 #0d8f80; }
+:root:root[data-theme] .keyboard .bk.aid-tonic { background: #0d8f80; }
+:root:root[data-theme] .keys-pad .wk.mk.given { background: #e6dcff; box-shadow: inset 0 -6px 0 #7c3aed; }
+:root:root[data-theme] .keys-pad .bk.mk.given { background: #5b2fc4; }
+:root:root[data-theme] .keys-pad .wk.mk.answer { background: #ccf7ef; box-shadow: inset 0 0 0 3px #0d8f80; }
+:root:root[data-theme] .keys-pad .bk.mk.answer { background: #0d8f80; box-shadow: inset 0 0 0 2px #12c9b4; }
 :root:root[data-theme] .keys-pad .wk.mk.wrong { background: #fbd0d9; box-shadow: inset 0 -6px 0 var(--wrong); }
 :root:root[data-theme] .keys-pad .bk.mk.wrong { background: var(--wrong); }
 
