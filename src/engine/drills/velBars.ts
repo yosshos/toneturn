@@ -26,12 +26,28 @@ export function velBarsShown(drill: Drill): boolean {
   if (g.dynamics && g.dynamics !== 'voicing') return true;
   const dg = g.drum;
   if (dg && (dg.velCv !== undefined || dg.levels !== undefined || dg.accentGap !== undefined || dg.ghost !== undefined || dg.balance !== undefined)) return true;
-  return drill.notes.some((n) => n.accent || n.ghost || n.dyn);
+  return drill.notes.some((n) => n.accent || n.ghost || n.dyn || n.dynMark);
 }
 
 /** The step a note should reach (a hollow outline), or null when the item sets no level for it. */
 export function velTarget(drill: Drill, n: ExpNote, cal?: DrillCalibration): VelStep | null {
   const d = drill.goal.dynamics;
+  // MEASUREMENT-AUDIT G2: a shaped scale's target ramp — soft at the start, loud at the turning note (the hand's note
+  // farthest from where it started), back down (dim-cresc: the reverse).
+  if (d === 'cresc' || d === 'dim-cresc') {
+    const hs = drill.notes.filter((x) => x.hand === n.hand);
+    const first = hs.reduce((a, b) => (b.beat < a.beat ? b : a), hs[0]);
+    const turn = hs.reduce((a, b) => (Math.abs(b.pitch - first.pitch) > Math.abs(a.pitch - first.pitch) ? b : a), first).beat;
+    const last = Math.max(...hs.map((x) => x.beat));
+    const share = turn <= first.beat ? 0 : n.beat <= turn ? (n.beat - first.beat) / (turn - first.beat) : last > turn ? (last - n.beat) / (last - turn) : 1;
+    const c = calOf(cal);
+    const x = d === 'cresc' ? share : 1 - share;
+    return velStep(c.velMin + (c.velMax - c.velMin) * (0.12 + 0.76 * x), cal);
+  }
+  if (n.dynMark) {
+    const [a, b] = velocityBand(n.dynMark === 'mp' ? 'p' : n.dynMark, calOf(cal));
+    return velStep((a + b) / 2, cal);
+  }
   const level = n.dyn ?? (n.ghost ? 'pp' : d && d.startsWith('even-') ? (d.slice(5) as 'pp' | 'p' | 'mf' | 'f' | 'ff') : null);
   if (!level) return null;
   const [a, b] = velocityBand(level, calOf(cal));

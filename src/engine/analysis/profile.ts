@@ -27,6 +27,8 @@ export interface ProfileItem {
   /** 0..1. */
   confidence: number;
   action?: ProfileAction;
+  /** A likely cause, not a measured fact (G3 finger hypotheses): the coach says "probably". */
+  hypothesis?: boolean;
 }
 
 /** How much practice stood behind the measures (to tell "gone" from "not practised"). */
@@ -168,6 +170,7 @@ export function profileItems({ model, groove, pairs, ear, now, keys, titleOf }: 
         text: f.text,
         note: f.prescribe.note,
         confidence: f.confidence,
+        ...(f.hypothesis ? { hypothesis: true } : {}),
         action: f.prescribe.topic ? { kind: 'topic', id: f.prescribe.topic, level: 1 } : { kind: 'drills' },
       });
     }
@@ -285,7 +288,8 @@ export function keyLineOf(keys: InstrumentKeys[], titleOf?: (f: FamilyId) => Bi)
  * is missing (pathMastery.masteryLine) — the weekly summary names them.
  */
 export function profileDigest(p: Profile, extra: { nearMastery?: string } = {}) {
-  const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en });
+  // G3: a likely cause travels as a hypothesis with its confidence, so the coach phrases it carefully ("probably").
+  const row = (r: ProfileRow) => ({ id: r.id, area: r.source, finding: r.text.en, weeks: r.weeks || undefined, practise: r.note?.en, ...(r.hypothesis ? { hypothesis: true, confidence: Math.round(r.confidence * 100) / 100 } : {}) });
   return {
     strengths: p.strengths.map(row),
     patterns: p.patterns.map(row),

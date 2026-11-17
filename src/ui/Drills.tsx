@@ -4,6 +4,8 @@
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { CAL_PRESSES, calFromPresses, checkLevels, refineCal } from '../engine/drills/velCal';
+import { MT } from '../i18n/measureText';
 import { NOTE_BAND_NAME, PHRASE_BAND_NAME } from '../engine/phraseOrg';
 import { refreshProfile } from '../storage/profile';
 import { keyList, skillKeysOf, type KeyCell } from '../engine/analysis/keyMastery';
@@ -264,6 +266,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           headphones={settings.headphones}
           onHeadphones={(h) => onSettings({ headphones: h })}
           cal={calOf(settings)}
+          onCalRefine={(c) => onSettings({ drillCal: { ...(settings.drillCal ?? DEFAULT_CAL), velMin: c.velMin, velMax: c.velMax } })}
           queue={runQueue}
           kit={settings.drumKit}
           start={view.i}
@@ -868,7 +871,7 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget }: { atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine }: { /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -930,6 +933,11 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   };
   const done = (m: TakeMetrics, _played: PlayedNote[]) => {
     lastPlayed.current = _played;
+    // MEASUREMENT-AUDIT B7: a real piano MIDI take refines the velocity range (only ever wider, a quarter step).
+    if (onCalRefine && midi.devices.length && !isDrumDrill(drill) && drill.spec.instrument !== 'guitar' && drill.spec.instrument !== 'bass' && !drill.sung) {
+      const r = refineCal(cal, _played.map((p) => p.vel));
+      if (r) onCalRefine(r);
+    }
     // The take also moves the player profile's timeline (SPEC-AI §8).
     void recordTakeAnalysis(drill, m, bpm).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
@@ -1372,39 +1380,70 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
   );
 }
 
+/**
+ * MEASUREMENT-AUDIT B7: the velocity range from several presses at each end (their medians), then an optional p / mf /
+ * f check that the three levels come out apart. One stray press no longer moves every band.
+ */
 function Calibration({ lang, cal, onSave }: { lang: Lang; cal: DrillCalibration; onSave: (c: DrillCalibration) => void }) {
   const tx = T[lang];
   const [c, setC] = useState(cal);
-  const [listen, setListen] = useState<'min' | 'max' | null>(null);
+  const [listen, setListen] = useState<'min' | 'max' | 'p' | 'mf' | 'f' | null>(null);
+  const [got, setGot] = useState<Record<'min' | 'max' | 'p' | 'mf' | 'f', number[]>>({ min: [], max: [], p: [], mf: [], f: [] });
   const off = useRef<(() => void) | null>(null);
-  const capture = (which: 'min' | 'max') => {
+  useEffect(() => () => off.current?.(), []);
+  const capture = (which: 'min' | 'max' | 'p' | 'mf' | 'f') => {
     off.current?.();
     setListen(which);
+    setGot((g) => ({ ...g, [which]: [] }));
+    const vs: number[] = [];
     off.current = midi.onNote((_m, on, _at, vel) => {
       if (!on) return;
-      setC((x) => (which === 'min' ? { ...x, velMin: vel } : { ...x, velMax: vel }));
-      setListen(null);
-      off.current?.();
-      off.current = null;
+      vs.push(vel);
+      setGot((g) => ({ ...g, [which]: [...vs] }));
+      if (vs.length >= CAL_PRESSES) {
+        setListen(null);
+        off.current?.();
+        off.current = null;
+      }
     });
   };
+  const range = calFromPresses(got.min, got.max);
+  const cur = range ? { ...c, ...range } : c;
+  if (range && (range.velMin !== c.velMin || range.velMax !== c.velMax)) setC(cur);
+  const chk = got.p.length >= 3 && got.mf.length >= 3 && got.f.length >= 3 ? checkLevels(cur, got.p, got.mf, got.f) : null;
   return (
-    <div className="drill-opts card">
+    <div className="drill-opts card" data-vel-cal="1">
       <div className="row">
         <span>{tx.range}</span>
         <b dir="ltr">
-          {c.velMin} – {c.velMax}
+          {cur.velMin} – {cur.velMax}
         </b>
       </div>
+      <p className="field-hint">{MT.velHow[lang]}</p>
       <div className="row">
-        <button className={`btn ${listen === 'min' ? 'primary' : ''}`} onClick={() => capture('min')}>
-          {tx.softest}
+        <button className={`btn ${listen === 'min' ? 'primary' : ''}`} onClick={() => capture('min')} data-cal-soft={got.min.length}>
+          {tx.softest} <bdi dir="ltr">{got.min.length}/{CAL_PRESSES}</bdi>
         </button>
-        <button className={`btn ${listen === 'max' ? 'primary' : ''}`} onClick={() => capture('max')}>
-          {tx.loudest}
+        <button className={`btn ${listen === 'max' ? 'primary' : ''}`} onClick={() => capture('max')} data-cal-loud={got.max.length}>
+          {tx.loudest} <bdi dir="ltr">{got.max.length}/{CAL_PRESSES}</bdi>
         </button>
       </div>
-      <button className="btn primary" onClick={() => (off.current?.(), onSave({ ...c, velMax: Math.max(c.velMax, c.velMin + 10) }))}>
+      {range && (
+        <>
+          <p className="field-hint">{MT.velCheck[lang]}</p>
+          <div className="row">
+            {(['p', 'mf', 'f'] as const).map((l) => (
+              <button key={l} className={`btn small ${listen === l ? 'primary' : 'ghost'}`} onClick={() => capture(l)} data-cal-level={l}>
+                <bdi dir="ltr">
+                  {l} {got[l].length}/{CAL_PRESSES}
+                </bdi>
+              </button>
+            ))}
+          </div>
+          {chk && <p className={`field-hint ${chk.apart ? '' : 'warn'}`} data-cal-check={chk.apart ? 'ok' : 'bad'}>{(chk.apart ? MT.velCheckOk : MT.velCheckBad)[lang]}</p>}
+        </>
+      )}
+      <button className="btn primary" onClick={() => (off.current?.(), onSave({ ...cur, velMax: Math.max(cur.velMax, cur.velMin + 10) }))}>
         {tx.save}
       </button>
     </div>

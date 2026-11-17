@@ -1,7 +1,11 @@
 // A piece chunk as a drill (SPEC-PIECE §3): the same take engine (count-in, MIDI / microphone, per-note marks,
 // timing) plays and judges a chunk of a piece. Pure.
 
-import type { Drill, ExpNote, TakeMetrics } from '../drills/types';
+import type { Drill, Dyn, ExpNote, TakeMetrics } from '../drills/types';
+
+const DYNS: Dyn[] = ['pp', 'p', 'mp', 'mf', 'f', 'ff'];
+/** A score's dynamic as a level we grade (pp … ff; fff / ppp to the nearest, sf / fp and others not graded). */
+const dynMarkOf = (d?: string): Dyn | undefined => (d === 'fff' ? 'ff' : d === 'ppp' ? 'pp' : DYNS.includes(d as Dyn) ? (d as Dyn) : undefined);
 import { beatsIn, notesIn, type Piece } from './score';
 import type { RepResult } from './coach';
 
@@ -17,7 +21,9 @@ export function chunkDrill(p: Piece, pieceId: string, from: number, to: number, 
     const key = `${n.hand}:${n.voice ?? 1}:${Math.round(n.start * 48)}`;
     const same = ns.filter((m) => m.hand === n.hand && (m.voice ?? 1) === (n.voice ?? 1) && Math.abs(m.start - n.start) < 1e-3).length > 1;
     if (same && !groups.has(key)) groups.set(key, gid++);
-    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
+    // MEASUREMENT-AUDIT G1: the written dynamics, hairpins, staccato dots and slurs reach the take (graded per passage).
+    const dm = dynMarkOf(n.dyn);
+    return { pitch: n.midi, beat: n.start, dur: n.dur, hand: n.hand, ...(dm ? { dynMark: dm } : {}), ...(n.hair ? { hair: n.hair } : {}), ...(n.staccato ? { stac: true } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(same ? { chordId: groups.get(key) } : {}), ...(n.accent ? { accent: true } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(n.voice ? { staffVoice: n.voice } : {}) };
   });
   const sig = p.bars[from]?.sig ?? [4, 4];
   const meter = Math.max(1, Math.round((sig[0] * 4) / sig[1]));
@@ -30,8 +36,9 @@ export function chunkDrill(p: Piece, pieceId: string, from: number, to: number, 
     beats: beatsIn(p, from, to),
     meter,
     keySig: FIFTHS_KEY[Math.max(0, Math.min(14, p.fifths + 7))],
-    goal: { evenness: false, hands: both },
+    goal: { evenness: false, hands: both, marks: true, lengths: true },
     startBpm: bpm,
+    barBase: Number(p.bars[from]?.number) || from + 1,
   };
 }
 

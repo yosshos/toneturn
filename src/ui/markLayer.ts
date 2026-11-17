@@ -148,3 +148,30 @@ export function drawCue(svg: SVGSVGElement | null, spot: { x: number; y: number;
   g.appendChild(rot);
   svg.appendChild(g);
 }
+
+/**
+ * MEASUREMENT-AUDIT: touch marks after a take — small ink shapes that never cover the head: a stub after the head (a
+ * long note cut short), a long line (rang into the rest), a wavy line before a chord (rolled), a dot over a chord
+ * (filled: the top sang; hollow: flat), a hollow ring under the head (a soft note), an accent wedge over it (a bump
+ * after a crossing), a caret over it (a jump / an early peak in a shape), a small zigzag under it (a blurred pedal change).
+ */
+export function drawTouch(svg: SVGSVGElement | null, spots: { x: number; y: number; hw: number; mark: import('../engine/drills/types').TouchMark }[]): void {
+  if (!svg) return;
+  svg.querySelector('g.mk-touch')?.remove();
+  if (!spots.length) return;
+  const g = el('g', { 'data-touch-marks': spots.length }, 'mk-touch');
+  for (const s of spots) {
+    const r = s.hw;
+    const one = el('g', { 'data-touch-mark': s.mark });
+    if (s.mark === 'short') one.appendChild(el('path', { d: `M${s.x + r + 2} ${s.y}h5` }, 'tm'));
+    else if (s.mark === 'long') one.appendChild(el('path', { d: `M${s.x + r + 2} ${s.y}h14m0 -3v6` }, 'tm'));
+    else if (s.mark === 'roll') one.appendChild(el('path', { d: `M${s.x - r - 5} ${s.y - 9}q3 3 0 6q-3 3 0 6q3 3 0 6` }, 'tm'));
+    else if (s.mark === 'voiced' || s.mark === 'flat') one.appendChild(el('circle', { cx: s.x, cy: s.y - 14, r: 2.4 }, s.mark === 'voiced' ? 'tm dot' : 'tm hollow'));
+    else if (s.mark === 'soft') one.appendChild(el('circle', { cx: s.x, cy: s.y + 10, r: 2.2 }, 'tm hollow'));
+    else if (s.mark === 'thumb') one.appendChild(el('path', { d: `M${s.x - 4} ${s.y - 16}l8 2.5l-8 2.5` }, 'tm'));
+    else if (s.mark === 'jump' || s.mark === 'peak') one.appendChild(el('path', { d: `M${s.x - 4} ${s.y - 11}l4 -4l4 4` }, 'tm'));
+    else if (s.mark === 'blur') one.appendChild(el('path', { d: `M${s.x - 6} ${s.y + 12}l3 -3l3 3l3 -3l3 3` }, 'tm'));
+    g.appendChild(one);
+  }
+  svg.appendChild(g);
+}

@@ -23,7 +23,7 @@ export function humanTake(d: Drill, bpm: number, sd: number, seed = 7, shift = 0
   const seen = new Set<string>();
   const onAt = new Map<string, number>();
   const out: PlayedNote[] = [];
-  const top = Math.max(...d.notes.map((n) => n.pitch));
+  const turn = d.notes.reduce((b, n) => (n.pitch > b.pitch ? n : b), d.notes[0]).beat || 1;
   // PIANO_JAZZ trading fours: in the free bars the pianist plays the model line (its landings are the written notes).
   const model = (d.goal.free?.model ?? []).filter((m) => !d.notes.some((n) => Math.abs(n.beat - m.beat) < 1e-6)).map((m) => ({ pitch: m.pitch, beat: m.beat, dur: m.dur, hand: 'R' as const }));
   const ordered: (Pick<ExpNote, 'pitch' | 'beat' | 'dur' | 'hand'> & Partial<ExpNote>)[] = [...d.notes, ...model].sort((a, b) => a.beat - b.beat);
@@ -36,7 +36,12 @@ export function humanTake(d: Drill, bpm: number, sd: number, seed = 7, shift = 0
     const on = onAt.get(slot)! + (n.chordId !== undefined ? g() * 1.5 : 0);
     let vel = base + g() * 3;
     if (n.accent) vel += dyn === 'voicing' ? 20 : 26;
-    if (dyn === 'cresc') vel = 45 + 55 * ((n.pitch - (top - 24)) / 24) + g() * 2;
+    // a shaped scale: out to the turning beat (the hand farthest from where it started) and back, by the beat
+    if (dyn === 'cresc' || dyn === 'dim-cresc') {
+      const sh = 50 * (n.beat <= turn ? n.beat / turn : (2 * turn - n.beat) / turn);
+      vel = (dyn === 'cresc' ? 45 + sh : 105 - sh) + g() * 2;
+    }
+    if (dyn === 'terraced') vel = (n.dynMark === 'f' ? BAND.f : BAND.p) + g() * 2;
     const next = ordered.find((o) => o.hand === n.hand && o.beat > n.beat + 1e-6);
     const gap = next ? (next.beat - n.beat) * beatMs : n.dur * beatMs;
     const art = d.goal.handArt?.[n.hand] ?? d.goal.articulation;

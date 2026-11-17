@@ -383,6 +383,8 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
     // one phone screen: a phrase longer than two bars shows two lines at a time, following the take
     ...(phraseBars(l) > 2 ? { paged: true } : {}),
     ...(inst === 'voice' ? { sung: true } : {}),
+    // MEASUREMENT-AUDIT B2: graded against the phrase's own measured swing (0.58, 0.72 …), not always the triplet's 2/3
+    ...(l.swing !== undefined && l.swing > 0.54 ? { swingRatio: l.swing } : {}),
     ...(o.band && l.chords.length ? { band: { style: 'swing' as const, bass: true } } : {}),
   };
   // 6/8: one drill beat is an eighth (pulse 8, the tempo counts eighths), two groups of three a bar

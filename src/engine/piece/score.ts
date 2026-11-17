@@ -20,6 +20,10 @@ export interface PieceNote {
   accent?: boolean;
   /** Dynamic in force (pp … ff) when the score says so. */
   dyn?: string;
+  /** Under a hairpin (MusicXML <wedge>): crescendo or diminuendo. */
+  hair?: 'cresc' | 'dim';
+  /** Under a slur (MusicXML <slur>): its id, unique in the piece. */
+  slur?: number;
   /** Grace notes before this note (drawn small; graded softly, engine/drills/grace.ts). */
   graces?: import('../drills/types').Grace[];
   /** Two voices on the hand's staff: 1 = upper (stems up), 2 = lower (stems down). Absent = the hand's only voice. */
@@ -70,6 +74,8 @@ interface RawNote {
   staccato?: boolean;
   accent?: boolean;
   dyn?: string;
+  hair?: 'cresc' | 'dim';
+  slur?: number;
   /** The score's voice number (MusicXML <voice>). */
   voice?: string;
   /** Grace notes just before this note on its staff. */
@@ -109,6 +115,11 @@ function readPart(part: XNode): RawBar[] {
   let divisions = 1;
   let sig: [number, number] = [4, 4];
   let dyn: string | undefined;
+  // MEASUREMENT-AUDIT G1: hairpins and slurs in force, per staff (a direction without a staff applies to all).
+  const hair = new Map<number, 'cresc' | 'dim'>();
+  let hairAll: 'cresc' | 'dim' | undefined;
+  const slurOpen = new Map<string, number>();
+  let slurId = 0;
   /** Grace notes read, waiting for the next main note on their staff. */
   const pendingGrace = new Map<number, import('../drills/types').Grace[]>();
   for (const m of kids(part, 'measure')) {
@@ -138,6 +149,14 @@ function readPart(part: XNode): RawBar[] {
         if (snd?.attrs.tempo) bar.tempo = Number(snd.attrs.tempo);
         const dy = find(el, 'dynamics');
         if (dy?.children[0]) dyn = dy.children[0].name;
+        const wedge = find(el, 'wedge');
+        if (wedge) {
+          const st = Number(txt(el, 'staff')) || 0;
+          const v = wedge.attrs.type === 'crescendo' ? 'cresc' : wedge.attrs.type === 'diminuendo' ? 'dim' : undefined;
+          if (st) v ? hair.set(st, v) : hair.delete(st);
+          else hairAll = v;
+          if (!v && !st) hair.clear();
+        }
         if (find(el, 'rehearsal')) bar.boundary = true;
       } else if (el.name === 'sound' && el.attrs.tempo) bar.tempo = Number(el.attrs.tempo);
       else if (el.name === 'barline') {
@@ -183,7 +202,18 @@ function readPart(part: XNode): RawBar[] {
         const gs = chord ? undefined : pendingGrace.get(staff);
         if (gs) pendingGrace.delete(staff);
         const vo = txt(el, 'voice');
+        // slurs: a note between a slur's start and its stop (both included) belongs to it
+        let slurOf: number | undefined;
+        for (const sl of kids(notations, 'slur')) {
+          const key = `${staff}:${sl.attrs.number ?? '1'}`;
+          if (sl.attrs.type === 'start') slurOpen.set(key, ++slurId);
+        }
+        for (const [k2, id] of slurOpen) if (k2.startsWith(`${staff}:`)) slurOf = id;
+        for (const sl of kids(notations, 'slur')) if (sl.attrs.type === 'stop') slurOpen.delete(`${staff}:${sl.attrs.number ?? '1'}`);
+        const hp = hair.get(staff) ?? hairAll;
         bar.notes.push({
+          ...(hp ? { hair: hp } : {}),
+          ...(slurOf !== undefined ? { slur: slurOf } : {}),
           ...(gs ? { graces: gs } : {}),
           ...(vo ? { voice: vo } : {}),
           midi: Math.round(midi),
@@ -273,7 +303,7 @@ function expand(raw: RawBar[], title: string, composer?: string): Piece {
         continue;
       }
       const vv = voiceOf(hand, n.voice);
-      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(vv ? { voice: vv } : {}) };
+      const pn: PieceNote = { midi: n.midi, start: t + n.at, dur: n.dur, bar: k, hand, ...(n.hair ? { hair: n.hair } : {}), ...(n.slur !== undefined ? { slur: n.slur } : {}), ...(n.staccato ? { staccato: true } : {}), ...(n.accent ? { accent: true } : {}), ...(n.dyn ? { dyn: n.dyn } : {}), ...(n.graces ? { graces: n.graces } : {}), ...(vv ? { voice: vv } : {}) };
       notes.push(pn);
       if (n.tieStart) open.set(key, pn);
       else open.delete(key);

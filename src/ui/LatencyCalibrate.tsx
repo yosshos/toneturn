@@ -3,7 +3,8 @@
 // input and removed from every timing judgement (rhythm, Highway, drills). An unsteady take is not saved.
 
 import { useEffect, useRef, useState } from 'react';
-import { latencyFrom, type LatencyResult, type LatencySource } from '../engine/latency';
+import { HABIT_MS, latencyFrom, splitLatency, type LatencyResult, type LatencySource } from '../engine/latency';
+import { MT } from '../i18n/measureText';
 import { piano } from './services';
 import { midi } from '../speech/midi';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
@@ -53,6 +54,8 @@ export interface LatencyValues {
   tapLatencyMs?: number;
   midiLatencyMs?: number;
   micLatencyMs?: number;
+  /** MEASUREMENT-AUDIT B6: the player's habit on MIDI (reported, not removed). */
+  midiBiasMs?: number;
 }
 const KEY: Record<LatencySource, keyof LatencyValues> = { tap: 'tapLatencyMs', midi: 'midiLatencyMs', mic: 'micLatencyMs' };
 
@@ -62,6 +65,7 @@ export function LatencyCalibrate({ lang, values, onSave, sources = ['tap', 'midi
   const [state, setState] = useState<'idle' | 'run' | 'done' | 'unsteady' | 'none'>('idle');
   const [beat, setBeat] = useState(-1);
   const [res, setRes] = useState<LatencyResult | null>(null);
+  const [bias, setBias] = useState<number | null>(null);
   const onsets = useRef<number[]>([]);
   const ac = useRef<AbortController | null>(null);
   useEffect(() => () => ac.current?.abort(), []);
@@ -99,7 +103,10 @@ export function LatencyCalibrate({ lang, values, onSave, sources = ['tap', 'midi
       else {
         setRes(r);
         if (r.ok) {
-          onSave({ [KEY[src]]: Math.max(-50, Math.min(400, r.ms)) });
+          // B6: on MIDI with a reported output time, the device part and the player's habit are told apart.
+          const sp = splitLatency(r.ms, src, (piano.latencyInfo().outputMs ?? 0) > 0);
+          setBias(sp.biasMs);
+          onSave({ [KEY[src]]: Math.max(-50, Math.min(400, sp.deviceMs)), ...(src === 'midi' ? { midiBiasMs: sp.biasMs ?? undefined } : {}) });
           setState('done');
         } else setState('unsteady');
       }
@@ -157,8 +164,14 @@ export function LatencyCalibrate({ lang, values, onSave, sources = ['tap', 'midi
       {res && (
         <p className={`lat-result ${state}`} aria-live="polite">
           {state === 'done' ? `✓ ${tx.saved}: ` : ''}
-          <b dir="ltr">{res.ms} ms</b> · {tx.spread} <span dir="ltr">±{res.sd} ms</span>
+          <b dir="ltr">{state === 'done' && bias !== null ? `${res.ms - bias} ms` : `${res.ms} ms`}</b> · {tx.spread} <span dir="ltr">±{res.sd} ms</span>
           {state === 'unsteady' && <span className="field-hint warn"> — {tx.unsteady}</span>}
+        </p>
+      )}
+      {state === 'done' && bias !== null && (
+        <p className="lat-habit" data-lat-habit={bias}>
+          {(Math.abs(bias) < HABIT_MS ? MT.habitNone : bias < 0 ? MT.habitEarly(-bias) : MT.habitLate(bias))[lang]}
+          {Math.abs(bias) >= HABIT_MS && <small className="field-hint"> {MT.habitKept[lang]}</small>}
         </p>
       )}
       {state === 'none' && <p className="field-hint warn">{tx.none}</p>}

@@ -12,6 +12,9 @@ import { analyzePhraseTake } from './phraseGrade';
 import { RULE_NAME, ruleCheck } from '../improvRules';
 import { RULE_CARDS, TARGET_CARDS, cardKept, changeLandings, targetPcs, type CNote } from '../ruleCards';
 import { phraseOrg, playRestCheck, PHRASE_BAND_NAME, type PhraseOrgReport } from '../phraseOrg';
+import { analyzeTouch, measureSwing, pianoTouch, swingBand } from './touch';
+import type { PedalEvent } from './pedal';
+import { MT } from '../../i18n/measureText';
 
 const mod12 = (n: number): number => ((n % 12) + 12) % 12;
 /** Borrowing feedback: the voices of a 4-note chord, top to bottom. */
@@ -397,14 +400,14 @@ interface Onset {
   on: number | null;
   idx: number[];
 }
-function onsetsOf(drill: Drill, bpm: number, hand: Hand, match: (number | null)[], played: PlayedNote[]): Onset[] {
+function onsetsOf(drill: Drill, bpm: number, hand: Hand, match: (number | null)[], played: PlayedNote[], expT: (b: number) => number = (b) => expTimeMs(drill, b, bpm)): Onset[] {
   const map = new Map<number, Onset>();
   drill.notes.forEach((n, i) => {
     if (n.hand !== hand) return;
     const key = Math.round(n.beat * 1e4);
     let o = map.get(key);
     if (!o) {
-      o = { beat: n.beat, t: expTimeMs(drill, n.beat, bpm), on: null, idx: [] };
+      o = { beat: n.beat, t: expT(n.beat), on: null, idx: [] };
       map.set(key, o);
     }
     o.idx.push(i);
@@ -492,7 +495,7 @@ export function pairVoicingMisses(exp: { chordId?: number }[], specs: NonNullabl
 /** Guitar / bass drills (explicit instrument, or a g-/b- family): keyboard-only messages don't apply. */
 const isFretted = (d: Drill): boolean => d.spec.instrument === 'guitar' || d.spec.instrument === 'bass' || /^[gb]-/.test(String(d.spec.family));
 
-export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean } = {}): TakeMetrics {
+export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], cal?: DrillCalibration, opts: { thresholds?: { cv: number; sd: number }; mic?: boolean; voice?: boolean; /** Untimed take: notes only (voice leading: each voicing when ready). */ rubato?: boolean; /** MEASUREMENT-AUDIT G6: the take's CC64 events (any MIDI take); pedal drills are graded on them. */ pedal?: PedalEvent[] } = {}): TakeMetrics {
   // Voice leading (k-vl / g-vl): the voicing chosen at each chord, graded by type + smallest motion (voiceLeadAnalyze.ts).
   // By microphone the piano can't tell which voicing was played: the take is not measured (below, like loudness goals).
   if (drill.goal.vl && !opts.mic) return analyzeVoiceLeadTake(drill, bpm, played0, { rubato: opts.rubato });
@@ -516,7 +519,18 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   const { match, ok, wrong, extra } = align(drill, bpm, played);
   // Played-only notes (not in the score): where and what, for the small ✕ above the staff (COURSE-FEEDBACK-UI §4.1).
   const extras = extra.map((j) => ({ pitch: played[j].pitch, on: played[j].on, beat: Math.max(0, beatAtMs(drill, played[j].on, bpm)) })).sort((a, b) => a.on - b.on);
-  const T = exp.map((n) => expTimeMs(drill, n.beat, bpm));
+  // MEASUREMENT-AUDIT B2 / G5: swung 8ths are graded against the phrase's own ratio (drill.swingRatio), or the player's
+  // own steady ratio when it sits inside the tempo's stylistic band (about 2/3 slow, straighter at bebop tempi), not
+  // always the triplet's 2/3. Outside the band, against the band's nearer edge.
+  const swingMeasured = (drill.spec.swing || drill.swingRatio !== undefined) && !hasTimeline(drill) ? measureSwing(drill, (i) => (match[i] !== null ? played[match[i]!].on : null)) : null;
+  const sBand = swingBand(bpm, drill.swingRatio);
+  const swingR = swingMeasured ? Math.max(sBand.lo, Math.min(sBand.hi, swingMeasured.ratio)) : (drill.swingRatio ?? 2 / 3);
+  const expT = (b: number): number => {
+    if ((!drill.spec.swing && drill.swingRatio === undefined) || hasTimeline(drill)) return expTimeMs(drill, b, bpm);
+    const f = b - Math.floor(b);
+    return Math.abs(f - 0.5) < EPS ? (Math.floor(b) + swingR) * beatMs : b * beatMs;
+  };
+  const T = exp.map((n) => expT(n.beat));
   const nExp = exp.length;
   const okCount = ok.filter(Boolean).length;
   const accuracy = nExp ? okCount / nExp : 1;
@@ -544,8 +558,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   let hesitations = 0;
   const cv: Record<Hand, number | null> = { R: null, L: null };
   const series: Record<Hand, Onset[]> = {
-    R: onsetsOf(drill, bpm, 'R', match, played),
-    L: onsetsOf(drill, bpm, 'L', match, played),
+    R: onsetsOf(drill, bpm, 'R', match, played, expT),
+    L: onsetsOf(drill, bpm, 'L', match, played, expT),
   };
   for (const h of ['R', 'L'] as Hand[]) {
     const os = series[h];
@@ -619,7 +633,7 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   });
   const velMean = vel.length ? mean(vel.map((x) => x.v)) : null;
   const plain = vel.filter((x) => !x.accent).map((x) => x.v);
-  const shaped = goal.dynamics === 'cresc' || goal.dynamics === 'voicing';
+  const shaped = goal.dynamics === 'cresc' || goal.dynamics === 'dim-cresc' || goal.dynamics === 'terraced' || goal.dynamics === 'voicing';
   const velSD = plain.length >= 3 && !shaped ? sd(plain) : null;
   const lvl = levelOf(goal.dynamics);
   let bandHit: number | null = null;
@@ -788,8 +802,21 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   const ioiMs = 1000 / Math.max(0.1, nps);
   if (!opts.thresholds) th.cv = Math.max(th.cv, IOI_FLOOR_MS[opts.mic ? 'mic' : 'midi'] / ioiMs);
 
+  const perNote: NoteResult[] = exp.map((e, i) => {
+    const r: NoteResult = {
+      exp: e,
+      played: match[i] !== null ? played[match[i]!] : null,
+      dev: dev[i],
+      ok: ok[i],
+    };
+    if (ioiRatio[i] !== undefined) r.ioiRatio = ioiRatio[i];
+    return r;
+  });
+  // MEASUREMENT-AUDIT: the touch of the take (touch.ts): shapes, levels, fingers, lengths, drift, swing, pedal, chords.
+  const touch = analyzeTouch(drill, bpm, perNote, cal, { mic: opts.mic, pedal: opts.pedal, rubato: opts.rubato }, expT, swingMeasured ? { ratio: swingMeasured.ratio, sd: swingMeasured.sd, band: sBand } : null);
+
   // Factors (severity > 1 = misses the goal; ≤ 1.5 = almost).
-  const F: Factor[] = [];
+  const F: Factor[] = [...touch.factors];
   const pct = (x: number) => r1(x * 100);
   if (wrong > 0 || missing > 0) {
     const sev = 1 + ((wrong + missing) / Math.max(1, nExp)) * 20;
@@ -841,7 +868,9 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
       he: `הידיים לא יחד (${Math.round(handsAbs)} ms, ${leadHe} מקדימה)`,
     });
   }
-  if (chordSpread !== null)
+  // B4: chord spread is graded in touch.ts (the median and the share rolled, each rolled chord marked); by microphone
+  // (no touch) the old limit on the widest chord stays.
+  if (chordSpread !== null && !pianoTouch(drill, opts.mic))
     F.push({
       sev: chordSpread / 25,
       en: `Chord notes not together (${Math.round(chordSpread)} ms)`,
@@ -854,21 +883,29 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
         en: `Uneven dynamics (velocity SD ${r1(velSD)})`,
         he: `עוצמה לא אחידה (סטיית תקן ${r1(velSD)})`,
       });
-    if (bandHit !== null)
+    if (bandHit !== null) {
+      // E4: which way it missed (getting faster by getting louder reads "too loud for p").
+      const [blo] = velocityBand(lvl, cal);
+      const loud = vel.length ? median(vel.map((x) => x.v)) >= blo : true;
+      const txt = bandHit >= 0.85 ? MT.levelOk(lvl) : loud ? MT.tooLoud(lvl) : MT.tooSoft(lvl);
       F.push({
         sev: (1 - bandHit) / 0.15,
-        en: `Off the ${lvl} level (${pct(bandHit)}% in band)`,
-        he: `לא ברמת ${lvl} (${pct(bandHit)}% בטווח)`,
+        en: `${txt.en} (${pct(bandHit)}% in band)`,
+        he: `${txt.he} (${pct(bandHit)}% בטווח)`,
       });
+    }
   }
-  if (goal.dynamics === 'cresc' && r2 !== null) {
+  // MEASUREMENT-AUDIT G2: the crescendo / diminuendo halves are graded in touch.ts; the old one-line fit stays only when
+  // touch could not run (nothing measurable).
+  if ((goal.dynamics === 'cresc' || goal.dynamics === 'dim-cresc') && r2 !== null && !touch.report.shape && !opts.mic) {
     F.push({
       sev: Math.max((1 - r2) / 0.2, 40 / Math.max(1, crescRange)),
       en: `Crescendo not smooth (R² ${r1(r2 * 10) / 10}, range ${Math.round(crescRange)})`,
       he: `הקרשנדו לא חלק (R² ${r1(r2 * 10) / 10}, טווח ${Math.round(crescRange)})`,
     });
   }
-  if (accentGap !== null) {
+  // G7: voicing graded per chord in touch.ts when the take has voiced chords; the take mean otherwise (a melody over Alberti).
+  if (accentGap !== null && !(goal.dynamics === 'voicing' && touch.report.lines.some((l) => l.id === 'voicing'))) {
     const voicing = goal.dynamics === 'voicing';
     const need = voicing ? 10 : 15;
     const sev = accentGap <= 0 ? 3 : need / accentGap;
@@ -1115,16 +1152,13 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
         : { en: `You played ${n === 1 ? "an octave" : n + " octaves"} higher than written — your keyboard may be shifted. Fix it below or in Settings → MIDI.`, he: `ניגנתם ${n === 1 ? "אוקטבה" : n + " אוקטבות"} גבוה מהכתוב — כנראה שהמקלדת מוזזת. אפשר לתקן כאן למטה או בהגדרות ← MIDI.` };
   }
 
-  const perNote: NoteResult[] = exp.map((e, i) => {
-    const r: NoteResult = {
-      exp: e,
-      played: match[i] !== null ? played[match[i]!] : null,
-      dev: dev[i],
-      ok: ok[i],
-    };
-    if (ioiRatio[i] !== undefined) r.ioiRatio = ioiRatio[i];
-    return r;
-  });
+  // Pedalling drills: the changes (B5: kept per change for the marks); a clean take names the pedal.
+  const pc = goal.pedal ? touch.report.pedal : undefined;
+  const pedalOut = pc ? { ok: pc.filter((c) => c.ok).length, total: pc.length, pass: pc.length > 0 && pc.filter((c) => c.ok).length / pc.length >= 0.8 - 1e-9, perChange: pc } : null;
+  if (pedalOut?.pass && verdict === 'clean' && graceMiss === 0) {
+    const l = touch.report.lines.find((x) => x.id === 'pedal');
+    if (l) why = l.text;
+  }
 
   return {
     bpm,
@@ -1163,5 +1197,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     ...(drill.goal.improv ? (() => { const l = improvLandings(drill, bpm, played0); return l.length ? { landings: l } : {}; })() : {}),
     ...(po ? { phraseOrg: po.report } : {}),
     ...(po?.playRest ? { playRest: po.playRest } : {}),
+    ...(touch.report.lines.length || touch.report.marks.length ? { touch: touch.report } : {}),
+    ...(pedalOut ? { pedal: pedalOut } : {}),
+    ...(lvl && pianoTouch(drill, opts.mic) ? { vsdGraded: true } : {}),
   };
 }

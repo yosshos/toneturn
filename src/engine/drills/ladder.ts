@@ -103,12 +103,17 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
   const first = s.takes === 0;
   const upd = (k: keyof ItemState['ewma'], v: number | null) => {
     if (v === null || !Number.isFinite(v)) return;
-    s.ewma[k] = first ? v : s.ewma[k] + ALPHA * (v - s.ewma[k]);
+    const cur = s.ewma[k];
+    s.ewma[k] = first || cur === undefined ? v : cur + ALPHA * (v - cur);
   };
   const cv = worstCv(metrics);
   upd('cv', cv);
   upd('sd', metrics.timingSD);
-  upd('vsd', metrics.velSD);
+  // MEASUREMENT-AUDIT B3: the velocity spread feeds the item only when it was graded (a dynamics goal on a MIDI take);
+  // a microphone take's flat 64s and a piece's musical dynamics are not "even".
+  if (metrics.vsdGraded) upd('vsd', metrics.velSD);
+  // G8: control as a tracked skill — the take's touch score (shapes, levels, lengths, pedal, voicing).
+  if (metrics.touch?.control !== undefined) upd('ctl', metrics.touch.control);
   upd('hands', metrics.handsAbs);
   upd('acc', metrics.accuracy);
   s.takes += 1;
@@ -231,10 +236,12 @@ function comps(s: ItemState) {
     vsd: s.ewma.vsd,
     hands: s.ewma.hands,
     err: 1 - s.ewma.acc,
+    // G8: missing control (1 − the touch score); items without touch goals sit at 0 like a perfect one
+    ctl: s.ewma.ctl === undefined ? 0 : 1 - s.ewma.ctl,
   };
 }
-const FLOOR = { gap: 0.05, cv: 0.01, vsd: 2, hands: 5, err: 0.02 };
-const W = { gap: 0.35, cv: 0.25, vsd: 0.15, hands: 0.15, err: 0.1 };
+const FLOOR = { gap: 0.05, cv: 0.01, vsd: 2, hands: 5, err: 0.02, ctl: 0.05 };
+const W = { gap: 0.35, cv: 0.25, vsd: 0.15, hands: 0.15, err: 0.1, ctl: 0.15 };
 
 /**
  * Weakness of an item (research §6.1): weighted robust z-scores against the player's own peers
