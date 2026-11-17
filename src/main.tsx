@@ -30,10 +30,15 @@ import './pulse.css';
 import './feedback.css';
 import './feedback2.css';
 import './practice.css';
+import './studio-screens.css';
 import { App } from './ui/App';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
+import { installLook } from './ui/look';
+
+// The studio look (redesign): ?look=studio / ?look=classic sets and remembers <html data-look>.
+installLook();
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);

@@ -67,6 +67,7 @@ import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
+import { useStudio } from './look';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -241,12 +242,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
   useEffect(() => setRunIdx(null), [view]);
+  const studio = useStudio();
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
         <Icon k="back" />
       </button>
-      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
+      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{studio && view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });

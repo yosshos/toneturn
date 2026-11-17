@@ -17,6 +17,8 @@ import { useCourse } from './courseContext';
 import { COURSE_AREAS } from '../engine/courses';
 import { piano } from './services';
 import { slotLabelOf, type ListenCard } from '../engine/practiceMethod';
+import { useStudio } from './look';
+import { studioText, sfill } from '../i18n/studioText';
 
 type Lang = 'he' | 'en';
 const W = {
@@ -169,10 +171,12 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
   leadsTo?: string | null;
   goal?: { todayXp: number; goalXp: number }; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
   const tx = W[lang];
+  const studio = useStudio();
   const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
   const at = run && !run.finished ? run.at : -1;
   const pct = goal ? Math.min(1, goal.todayXp / Math.max(1, goal.goalXp)) : 0;
+  if (studio) return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active: !!active, leftMin, at }} />;
   // 0.61 (SPEC-REDESIGN, "Today"): the workout is the hero — purple, a staff behind, Toni, one lemon button.
   const he = lang === 'he';
   const bubble = active ? fill(tx.left, { m: leftMin }) : goal && goal.todayXp > 0 && pct < 1 ? (he ? 'עוד קצת, והיעד של היום מושלם.' : 'A little more and today’s goal is done.') : he ? 'מוכנים? בוא נתחיל.' : 'Ready? Let’s go.';
@@ -231,6 +235,73 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
   );
 }
 
+/**
+ * The studio look's Today hero (redesign 2026-11): "Today's workout", the blocks as numbered steps (done / now / next)
+ * with their minutes, a thin bar of time used, and one lemon button "Continue · <step>". Toni is not on it every day.
+ */
+function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active, leftMin, at }: { t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; active: boolean; leftMin: number; at: number }) {
+  const tx = W[lang];
+  const sx = studioText(lang);
+  const T = total(blocks);
+  const finished = !!run?.finished;
+  const cur = finished ? -1 : Math.max(0, at);
+  const usedPct = finished ? 100 : T ? Math.round((100 * Math.max(0, T - leftMin)) / T) : 0;
+  const curLabel = cur >= 0 && blocks[cur] ? blockLabel(t, blocks[cur].target, lang, blocks[cur].id) : '';
+  return (
+    <section className="wk-card wk-hero st-plan" aria-label={tx.title}>
+      <div className="st-plan-h">
+        <span className="st-eyebrow">{sx.todayWorkout}</span>
+        <span className="st-chip" dir="auto">
+          <Icon k="clock" size={14} />
+          {active ? fill(tx.left, { m: leftMin }) : `${T} ${sx.min}`}
+        </span>
+        <button className="icon-btn wk-edit st-edit" onClick={onEdit} aria-label={tx.edit}>
+          <Icon k="edit" size={18} />
+        </button>
+      </div>
+      <h2 className="wk-title">
+        <Iso text={nextLine ?? tx.title} />
+      </h2>
+      <ol className="st-steps">
+        {blocks.map((b, i) => {
+          const state = finished || i < cur ? 'done' : i === cur ? 'cur' : '';
+          const sub = b.target.kind === 'strengthen' && leadsTo ? leadsTo : tx.blockSub[b.target.kind];
+          return (
+            <li key={b.id} className={state} data-step-state={state || 'next'}>
+              <span className="st-sn" aria-hidden="true">
+                {state === 'done' ? <Icon k="check" size={14} /> : i + 1}
+              </span>
+              <span className="st-st">
+                <b dir="auto">{blockLabel(t, b.target, lang, b.id)}</b>
+                {sub && (
+                  <small dir="auto" data-leads-to={b.target.kind === 'strengthen' && leadsTo ? '1' : undefined}>
+                    {sub}
+                  </small>
+                )}
+              </span>
+              <span className="st-min" dir="ltr">
+                {sfill(sx.minShort, { m: b.minutes })}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="st-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={usedPct} aria-label={tx.title}>
+        <i style={{ width: `${usedPct}%` }} />
+      </div>
+      <button className="btn mega wk-start st-cta" data-continue="1" onClick={onStart}>
+        <Icon k="play" size={18} />
+        <span>{curLabel ? `${active ? sx.cont : sx.start} · ${curLabel}` : active ? sx.cont : sx.start}</span>
+      </button>
+      {edited && (
+        <button className="link wk-edited st-tlink" onClick={onReset}>
+          {tx.edited} · {tx.reset}
+        </button>
+      )}
+    </section>
+  );
+}
+
 /** An area preset belongs to the courses that practise that area (no "voice focus" in the guitar course). */
 const PRESET_AREA: Partial<Record<Preset, DomainId>> = { ear: 'pitch', rhythm: 'time', reading: 'reading', voice: 'voice', instrument: 'instrument', 'four-slot': 'instrument' };
 
@@ -268,6 +339,7 @@ export function WorkoutEditor({
 }) {
   const tx = W[lang];
   const courseAreas = COURSE_AREAS[useCourse().active];
+  const studio = useStudio();
   const [bs, setBs] = useState<Block[]>(initial);
   const [undo, setUndo] = useState<{ prev: Block[]; text: string } | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
@@ -305,26 +377,34 @@ export function WorkoutEditor({
   const waitList = [...cov.waiting.entries()].map(([a, n]) => `${n} ${t.domainNames[a as DomainId]}`).join(', ');
   const filteredTopics = useMemo(() => addOptions.topics.filter((id) => !q || (TOPIC_GEN[id]?.title[lang] ?? id).toLowerCase().includes(q.toLowerCase())).slice(0, 30), [q, addOptions.topics, lang]);
 
+  // Studio look: sectioned (length · where you are · blocks · presets) with the total and Done in a bottom bar.
+  const sx = studioText(lang);
+  const ctxEl = ctx && onCtx && (
+    <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'}>
+      {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
+        <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
+          {studio && <Icon k={k === 'nomic' ? 'mute' : k === 'quiet' ? 'phones' : 'pads'} size={16} />}
+          {tx.ctx[k]}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <main className="wk-editor">
+    <main className={`wk-editor ${studio ? 'st-editor' : ''}`}>
       <header className="wk-ed-head">
         <button className="icon-btn" onClick={onClose} aria-label={tx.done}>
           <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
-        <button className="btn small primary" onClick={onClose}>
-          {tx.done}
-        </button>
+        {!studio && (
+          <button className="btn small primary" onClick={onClose}>
+            {tx.done}
+          </button>
+        )}
       </header>
-      {ctx && onCtx && (
-        <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'}>
-          {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
-            <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
-              {tx.ctx[k]}
-            </button>
-          ))}
-        </div>
-      )}
+      {!studio && ctxEl}
+      {studio && <h2 className="st-sec-h">{sx.duration}</h2>}
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">
           {[5, 10, 15, 20, 30, 45, 60].map((n) => (
@@ -346,6 +426,13 @@ export function WorkoutEditor({
         </div>
         {msg && <p className="field-hint" role="status">{msg}</p>}
       </section>
+      {studio && ctxEl && (
+        <>
+          <h2 className="st-sec-h">{sx.conditions}</h2>
+          {ctxEl}
+        </>
+      )}
+      {studio && <h2 className="st-sec-h">{sx.blocks}</h2>}
 
       <ol className="wk-blocks">
         {bs.map((b) => {
@@ -436,6 +523,7 @@ export function WorkoutEditor({
         <Icon k="plus" /> {tx.add}
       </button>
 
+      {studio && <h2 className="st-sec-h">{sx.presets}</h2>}
       <div className="wk-presets" role="group">
         {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'four-slot', 'mistakes', 'quick5'] as Preset[]).filter((p) => !PRESET_AREA[p] || courseAreas.includes(PRESET_AREA[p]!)).map((p) => (
           <button key={p} className="chip" onClick={() => change(preset(p, T, suggested), tx.presets[p])} data-preset={p}>
@@ -452,6 +540,20 @@ export function WorkoutEditor({
           {tx.thisDay}
         </button>
       </div>
+
+      {studio && (
+        <div className="st-dock wk-dock">
+          <span className="st-dock-total">
+            <small>{sx.total}</small>
+            <b dir="auto">
+              {T} {sx.min}
+            </b>
+          </span>
+          <button className="btn primary st-primary" onClick={onClose}>
+            {tx.done}
+          </button>
+        </div>
+      )}
 
       {undo && (
         <div className="wk-undo" role="status">

@@ -1,13 +1,13 @@
 // Dev helper: headless screenshots of routes on phone and wide, for design review.
-// Usage: node scripts/shots.mjs <outDir> <phone|wide|both> <hash> [<hash> …]   (dev server on :5173)
-// Env: SHOT_THEME=dark · SHOT_LANG=en · SHOT_SEED=1 (a returning player: a few lessons done, onboarding finished)
+// Usage: node scripts/shots.mjs <outDir> <phone|small|wide|both> <hash> [<hash> …]   (dev server on :5173)
+// Env: SHOT_LOOK=studio · SHOT_STARTED=1 (courses past their first-run hero) · SHOT_THEME=dark · SHOT_LANG=en · SHOT_SEED=1 (a returning player: a few lessons done, onboarding finished)
 //      SHOT_COURSE=keys (active course when seeded) · SHOT_SETUP='js run before each shot'.
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 
 const [out, mode, ...hashes] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
-const sizes = { phone: { width: 390, height: 844 }, wide: { width: 1440, height: 900 } };
+const sizes = { phone: { width: 390, height: 844 }, small: { width: 320, height: 720 }, wide: { width: 1440, height: 900 } };
 const which = mode === 'both' ? ['phone', 'wide'] : [mode];
 const seed = !!process.env.SHOT_SEED;
 const course = process.env.SHOT_COURSE ?? 'ear';
@@ -17,7 +17,7 @@ const lang = process.env.SHOT_LANG === 'en' ? 'en' : 'he';
 async function seedDb(page) {
   await page.goto(`${BASE}/manifest.webmanifest`, { waitUntil: 'domcontentloaded' });
   await page.evaluate(
-    async ({ course, lang }) => {
+    async ({ course, lang, started }) => {
       const now = new Date().toISOString();
       const day = now.slice(0, 10);
       const hist = (id, i) => ({ lessonId: id, lessonVersion: 1, sessionId: `s${i}`, completedAt: now, firstTry: 5, total: 6, xp: 40, missed: [] });
@@ -30,7 +30,7 @@ async function seedDb(page) {
         streak: { count: 12, lastDay: day },
         review: [],
       };
-      const settings = { version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, intake: { v: 1, at: now, music: 1, singing: 1, theory: 1, reading: 1, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 10, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false }, courses: [...new Set(['ear', 'keys', 'voice', course])], activeCourse: course, seenVersion: '9.9.9' };
+      const settings = { version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, intake: { v: 1, at: now, music: 1, singing: 1, theory: 1, reading: 1, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 10, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false }, courses: [...new Set(['ear', 'keys', 'voice', course])], activeCourse: course, seenVersion: '9.9.9', ...(started ? { courseStart: Object.fromEntries(['ear', 'keys', 'voice', course].map((c) => [c, { legacy: true }])) } : {}) };
       await new Promise((res, rej) => {
         const r = indexedDB.open('toneturn', 1);
         r.onupgradeneeded = () => r.result.createObjectStore('kv');
@@ -44,7 +44,7 @@ async function seedDb(page) {
         r.onerror = rej;
       });
     },
-    { course, lang },
+    { course, lang, started: !!process.env.SHOT_STARTED },
   );
 }
 
@@ -55,7 +55,8 @@ for (const w of which) {
   if (process.env.SHOT_ERRORS) page.on('pageerror', (e) => console.log('PAGEERR', e.message.slice(0, 400)));
   if (seed) await seedDb(page);
   for (const h of hashes) {
-    const q = seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1';
+    const look = process.env.SHOT_LOOK ? `&look=${process.env.SHOT_LOOK}` : '';
+    const q = (seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1') + look;
     await page.goto(`${BASE}/${q}#/${h}`, { waitUntil: 'networkidle' }).catch(() => {});
     await page.waitForTimeout(1000);
     if (process.env.SHOT_SETUP) await page.evaluate(process.env.SHOT_SETUP).catch(() => {});

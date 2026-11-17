@@ -22,6 +22,9 @@ import { dayKey, doneOn, meanAbs, trend } from '../engine/pitchMemory';
 import { EncoreTodayCard, encoreInstOf } from './encore/EncoreToday';
 import { FeaturedPhraseCard } from './encore/FeaturedToday';
 import '../encore.css';
+import { useStudio } from './look';
+import { studioText, sfill } from '../i18n/studioText';
+import { Icon } from './icons';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -117,8 +120,9 @@ export function PitchMemoryCard({ progress, lang, onOpen }: { progress: Progress
   );
 }
 
-export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore }: { t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
+export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore, streak, onStreak }: { /** Studio look: the streak in the stats row. */ streak?: number; onStreak?: () => void; t: Strings; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
   const lang = settings.uiLang;
+  const studio = useStudio();
   const he = lang === 'he';
   const day = localDay(new Date());
   const today = progress.history.filter((h) => localDay(new Date(h.completedAt)) === day);
@@ -137,6 +141,83 @@ export function TodayCards({ t, settings, progress, goalXp, signedIn, onLeague, 
   }, [signedIn]);
   const rank = league ? [...league.members].sort((a, b) => b.xp - a.xp).findIndex((m) => m.me) + 1 : 0;
   const days = league ? Math.max(0, Math.ceil((new Date(league.endsAt).getTime() - Date.now()) / 86_400_000)) : 0;
+
+  if (studio) {
+    const sx = studioText(lang);
+    const questsDone = quests.filter((q) => q.now >= q.target).length;
+    return (
+      <>
+        {/* Studio look: one compact row of numbers under the workout, then at most a card or two, then a quiet list. */}
+        <section className="today-cards st-stats" aria-label={he ? 'היום שלך' : 'Your day'}>
+          <div className="tc-card tc-goal st-stat">
+            <small>{sx.dailyGoal}</small>
+            <b dir="ltr">
+              {todayXp}
+              <span>/{goalXp} XP</span>
+            </b>
+            <span className="st-bar sm" aria-hidden="true">
+              <i style={{ width: `${goalXp ? Math.min(100, (100 * todayXp) / goalXp) : 0}%` }} />
+            </span>
+          </div>
+          <button type="button" className="tc-card tc-league st-stat" onClick={onLeague} data-today-league="1">
+            <small>{sx.league}</small>
+            {league && rank > 0 ? (
+              <>
+                <b>{sfill(sx.place, { n: rank })}</b>
+                <small className="st-xs">{he ? (days === 1 ? 'עוד יום' : days === 2 ? 'עוד יומיים' : sfill(sx.daysLeft, { d: days })) : sfill(sx.daysLeft, { d: days })}</small>
+              </>
+            ) : (
+              <>
+                <b>{sx.leagueJoin}</b>
+                <small className="st-xs">{he ? '30 שחקנים' : '30 players'}</small>
+              </>
+            )}
+          </button>
+          {streak !== undefined && (
+            <button type="button" className="tc-card st-stat st-streak" onClick={onStreak} data-today-streak="1">
+              <small>{sx.streak}</small>
+              <b>
+                {streak} <span>{sx.days}</span>
+              </b>
+            </button>
+          )}
+        </section>
+        {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
+        {onEncore && !examPrep && <TeacherPhraseTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
+        {onEncore && !examPrep && <EncoreTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} inst={encoreInstOf(settings)} range={settings.voiceRange ?? null} />}
+        <section className="st-more" aria-label={sx.moreToday}>
+          {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
+          {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
+          {onEncore && !examPrep && <FeaturedPhraseCard lang={lang} book={settings.lickBook} />}
+          <details className="today-quests st-quests">
+            <summary>
+              <span id="tq-title">{sx.quests}</span>
+              <span className="tq-n" dir="ltr">
+                {questsDone}/{quests.length}
+              </span>
+              <Icon k="down" size={16} />
+            </summary>
+            <ul className="tq-list">
+              {quests.map((q) => (
+                <li key={q.id} className={q.now >= q.target ? 'done' : ''} data-quest={q.id}>
+                  <Glyph kind={q.glyph} color={q.color} size={32} />
+                  <span className="tq-text">
+                    <b>{q.title[lang]}</b>
+                    <span className="tq-bar" aria-hidden="true">
+                      <i style={{ width: `${(100 * q.now) / q.target}%` }} />
+                    </span>
+                  </span>
+                  <span className="tq-n" dir="ltr">
+                    {q.now}/{q.target}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>

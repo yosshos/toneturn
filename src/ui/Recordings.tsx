@@ -6,6 +6,8 @@
 // the route is outside the practice clock (practiceTime.ts NOT_PRACTICE).
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useStudio } from './look';
+import { EmptyState } from './EmptyState';
 import '../recordings.css';
 import type { CourseId } from '../engine/courses';
 import type { NoteEvent } from '../engine/lesson';
@@ -275,6 +277,7 @@ function StorageNotice({ lang, u }: { lang: Lang; u: StorageUsage }) {
 }
 
 function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onOpen: (id: string) => void }) {
+  const studio = useStudio();
   const [chip, setChipS] = useState<Chip>(() => {
     try {
       return (sessionStorage.getItem(FILTER_KEY) as Chip | null) ?? 'all';
@@ -412,7 +415,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       {!bin && !selecting && <SessionRecToggle lang={lang} />}
 
       <div className="rec-timeline" data-rec-count={data.takes.length} data-rec-more={data.next ? '1' : '0'}>
-        {data.ready && !data.takes.length && <p className="rec-empty">{facets.total || bin ? RX.emptyFilter[lang] : RX.empty[lang]}</p>}
+        {data.ready && !data.takes.length && (studio && !facets.total && !bin ? <EmptyState glyph="record" text={RX.empty[lang]} data="recordings" action={{ label: lang === 'he' ? 'לתרגל' : 'Practise', onClick: () => (location.hash = '#/arcade') }} /> : <p className="rec-empty">{facets.total || bin ? RX.emptyFilter[lang] : RX.empty[lang]}</p>)}
         {byDay.map((d) => (
           <section key={d.day} className="rec-day">
             {!bin && <h2 className="rec-day-h">{d.label}</h2>}

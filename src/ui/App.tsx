@@ -2286,6 +2286,8 @@ export function App() {
               exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
               onRepertoire={(id) => ((repShown.current = id ?? null), go('repertoire'))}
               onPitchMemory={() => go('pitchmemory')}
+              streak={gems.streak.count}
+              onStreak={() => setStreakOpen(true)}
               onEncore={(h) => (location.hash = h)}
             />
           }
