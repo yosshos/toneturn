@@ -1,4 +1,7 @@
 import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { useStudioFrame } from './GameCover';
+import { GameCeleArt } from './GameCele';
 import { PlayerSafety, QuickMessages } from './Community';
 import { effectivePrivacy } from '../engine/privacy';
 import { RatingBadge } from './Rating';
@@ -96,14 +99,9 @@ export function OnlineScreen({ t, settings, user, initialCode, facts, onBack, ti
   };
 
   return (
-    <main className="panel-screen online">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.online}</h1>
-      </header>
-      <p className="field-hint">{t.onlineHint}</p>
+    <main className="panel-screen online" data-game="online" data-phase="setup">
+      <G2Head title={t.online} backLabel={t.back} onBack={onBack} game="online" />
+      <p className="field-hint gs-how">{t.onlineHint}</p>
       {!FAKE_ROOMS && !cloudConfigured ? (
         <p className="set-card">{t.onlineUnavailable}</p>
       ) : !ready ? (
@@ -250,6 +248,8 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
     return () => c.dispose();
   }, [c]);
 
+  const topRef = useRef<HTMLDivElement | null>(null);
+  useStudioFrame(topRef);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const s = v.snap;
@@ -267,13 +267,8 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
   if (v.phase === 'lobby' || v.phase === 'connecting') {
     const link = `${location.origin}${location.pathname}#/online/${s.code}`;
     return (
-      <main className="panel-screen room-lobby">
-        <header className="screen-head">
-          <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
-            <Icon k="back" />
-          </button>
-          <h1>{t.online}</h1>
-        </header>
+      <main className="panel-screen room-lobby" data-game="online" data-phase="lobby">
+        <G2Head title={t.online} backLabel={t.leave} onBack={onExit} game="online" />
         <section className="set-card room-code-card">
           <small>{t.roomCode}</small>
           <b className="room-code" dir="ltr" data-code={s.code}>
@@ -328,7 +323,8 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
   if (v.phase === 'over') {
     const top = v.standings.slice(0, 3);
     return (
-      <main className="recap scoreboard room-over">
+      <main className="recap scoreboard room-over gs-over" key="over">
+        <GameCeleArt good best={top[0]?.userId === s.me} />
         <p className="eyebrow">{t.online}</p>
         <h1>{t.finalStandings}</h1>
         <div className="podium">
@@ -394,9 +390,9 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
     );
   }
   return (
-    <main className={`tournament single online-play stage-${v.phase}`}>
+    <main className={`tournament single online-play stage-${v.phase}`} data-game="online" data-phase="play">
       <section className="t-center">
-        <div className="t-top">
+        <div className="t-top" ref={topRef}>
           <button className="icon-btn" onClick={onExit} aria-label={t.leave}>
             <Icon k="close" />
           </button>

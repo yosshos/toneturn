@@ -16,7 +16,8 @@ import { TierChips } from './TierChips';
 import { kitKind, type KitProfile } from '../engine/drumKit';
 import { ZONE_NAME, zonesFor, zonesOf, type StickZones } from '../engine/rudimentRush';
 import { rushTopBpm } from '../engine/drumRecords';
-import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { GameCeleArt } from './GameCele';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -105,13 +106,8 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
   const cue = game === 'land' && !res ? landCue(r, beat) : null;
   if (phase === 'setup')
     return (
-      <main className="panel-screen dg-screen" data-drum-game={game}>
-        <header className="screen-head">
-          <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-            <Icon k="back" />
-          </button>
-          <h1>{tx(DRUM_GAME_NAME[echoMode ? 'groove-echo' : game])}</h1>
-        </header>
+      <main className="panel-screen dg-screen" data-drum-game={game} data-game={echoMode ? 'groove-echo' : game} data-phase="setup">
+        <G2Head title={tx(DRUM_GAME_NAME[echoMode ? 'groove-echo' : game])} backLabel={tx(TX.back)} onBack={onExit} game={echoMode ? 'groove-echo' : game} />
         <section className="set-card">
           {echoMode && (
             <div className="seg small" role="radiogroup" aria-label={tx(TX.meter)} data-echo-mode={echoMode.odd ? 'odd' : 'even'}>
@@ -122,7 +118,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
               ))}
             </div>
           )}
-          <p className="field-hint">{tx(DRUM_GAME_BLURB[game])}</p>
+          <p className="field-hint gs-how">{tx(DRUM_GAME_BLURB[game])}</p>
           {tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={setTier} game={game} />}
           {game === 'rudiment-rush' && (
             <div className="dg-zones" data-dg-zones={zones}>
@@ -154,7 +150,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
             <IsoMix text={tx(TX.kit)} />
           </p>
           {best !== undefined && (
-            <p className="field-hint">
+            <p className="field-hint g2-best">
               {tx(TX.best)} <bdi dir="ltr">{best}</bdi>
               {game === 'rudiment-rush' && bestBpm ? (
                 <>
@@ -173,14 +169,10 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
   if (phase === 'end') {
     const sum = runSummary(tier, scores);
     return (
-      <main className="panel-screen dg-screen" data-drum-game={game}>
-        <header className="screen-head">
-          <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-            <Icon k="back" />
-          </button>
-          <h1>{tx(DRUM_GAME_NAME[game])}</h1>
-        </header>
+      <main className="panel-screen dg-screen" data-drum-game={game} data-game={game} data-phase="over">
+        <G2Head title={tx(DRUM_GAME_NAME[game])} backLabel={tx(TX.back)} onBack={onExit} game={game} />
         <section className="set-card dg-end" data-dg-score={sum.score}>
+          <GameCeleArt good={sum.detail.right * 2 >= sum.detail.rounds} best={game === 'rudiment-rush' && rushTopBpm(rushBpms) > (bestBpmAtStart ?? 0)} />
           <p className="dg-big" dir="ltr">
             {sum.detail.right}/{sum.detail.rounds}
           </p>
@@ -206,15 +198,17 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
     );
   }
   return (
-    <main className="panel-screen dg-screen dg-play" data-drum-game={game} data-dg-round={round + 1}>
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onExit} aria-label={tx(TX.back)}>
-          <Icon k="back" />
-        </button>
-        <h1>{tx(DRUM_GAME_NAME[game])}</h1>
-      </header>
+    <main className="panel-screen dg-screen dg-play" data-drum-game={game} data-dg-round={round + 1} data-game={game} data-phase="play">
+      <G2Head title={tx(DRUM_GAME_NAME[game])} backLabel={tx(TX.back)} onBack={onExit} game={game}>
+        <span className="g2-hud-mini" dir="ltr">
+          {Math.min(DRUM_GAME_ROUNDS, round + 1)}/{DRUM_GAME_ROUNDS}
+        </span>
+      </G2Head>
       <p className="drill-goal dg-status">
-        {tx(TX.round)} {Math.min(DRUM_GAME_ROUNDS, round + 1)}/{DRUM_GAME_ROUNDS} · <i className="dyn">{tier}</i> · <span dir="ltr">{r.drill.pulse === 8 ? '♪' : '♩'} {r.bpm}</span>
+        <span className="dg-rnd">
+          {tx(TX.round)} {Math.min(DRUM_GAME_ROUNDS, round + 1)}/{DRUM_GAME_ROUNDS} ·{' '}
+        </span>
+        <i className="dyn">{tier}</i> · <span dir="ltr">{r.drill.pulse === 8 ? '♪' : '♩'} {r.bpm}</span>
         {streak > 1 && (
           <>
             {' · '}

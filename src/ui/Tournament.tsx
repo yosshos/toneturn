@@ -1,4 +1,7 @@
 import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { useStudioFrame } from './GameCover';
+import { GameCeleArt } from './GameCele';
 import { IsoMix } from './Iso';
 import { LevelStatsLine } from './LevelStats';
 import { RatingBadge } from './Rating';
@@ -112,15 +115,10 @@ export function DailyScreen({
     );
   }
   return (
-    <main className="panel-screen daily">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.dailyChallenge}</h1>
-      </header>
+    <main className="panel-screen daily" data-game="daily" data-phase="setup">
+      <G2Head title={t.dailyChallenge} backLabel={t.back} onBack={onBack} game="daily" />
       <section className="set-card">
-        <p className="field-hint">{t.dailyHint}</p>
+        <p className="field-hint gs-how">{t.dailyHint}</p>
         <p className="daily-date" dir="ltr">
           {day}
         </p>
@@ -241,14 +239,9 @@ export function DuelSetup({ t, onBack, onStart, course = 'ear', tier: tierInfo, 
   const [kind, setKind] = useState<SetKind>(firstKind(kinds));
   const [rounds, setRounds] = useState(10);
   return (
-    <main className="panel-screen duel-setup">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.duel}</h1>
-      </header>
-      <p className="field-hint">{t.duelHint}</p>
+    <main className="panel-screen duel-setup" data-game="duel" data-phase="setup">
+      <G2Head title={t.duel} backLabel={t.back} onBack={onBack} game="duel" />
+      <p className="field-hint gs-how">{t.duelHint}</p>
       <section className="set-card">
         <div className="name-list">
           {names.map((n, i) => (
@@ -372,14 +365,9 @@ export function GhostScreen({ t, settings, progress, onBack, onProgress }: { t: 
     );
   }
   return (
-    <main className="panel-screen ghost-setup">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{t.ghostRace}</h1>
-      </header>
-      <p className="field-hint">{t.ghostHint}</p>
+    <main className="panel-screen ghost-setup" data-game="ghost" data-phase="setup">
+      <G2Head title={t.ghostRace} backLabel={t.back} onBack={onBack} game="ghost" />
+      <p className="field-hint gs-how">{t.ghostHint}</p>
       <section className="set-card">
         <TierChips lang={settings.uiLang} info={tierInfo} value={tier} onChange={setTier} game="ghost" />
         <SetupSheet lang={settings.uiLang} id="ghost" label={t.questionsOn} summary={`${kinds.find(([v]) => v === kind)?.[1] ?? ''} · ${rounds}`}>
@@ -490,6 +478,8 @@ export function TournamentPlay({
     return () => clearTimeout(timer);
   }, [ghost, v.stage, v.round, c]);
 
+  const topRef = useRef<HTMLDivElement | null>(null);
+  useStudioFrame(topRef);
   const lang = settings.uiLang;
   const nm = namingFor(settings.naming, lang);
   const duel = players.length === 2;
@@ -502,7 +492,8 @@ export function TournamentPlay({
     const tie = duel && v.standings[0].points === v.standings[1].points && v.standings[0].totalTimeMs === v.standings[1].totalTimeMs;
     const text = shareDay ? shareText(shareDay, v.results, winner.points, lang) : '';
     return (
-      <main className="recap scoreboard">
+      <main className="recap scoreboard gs-over" key="over">
+        <GameCeleArt good best={!duel || !tie} />
         <p className="eyebrow">{ghost ? t.ghostRace : duel ? t.duel : t.dailyChallenge}</p>
         <h1>{duel ? (tie ? t.tie : `${t.winner}: ${players[winner.player]}`) : t.gameOver}</h1>
         {overNote && <p className="ghost-note">{overNote}</p>}
@@ -601,10 +592,10 @@ export function TournamentPlay({
   };
 
   return (
-    <main className={`tournament ${split ? 'duel' : 'single'} stage-${v.stage}`}>
+    <main className={`tournament ${split ? 'duel' : 'single'} stage-${v.stage}`} data-game={ghost ? 'ghost' : duel ? 'duel' : 'daily'} data-phase="play">
       {split && half(0)}
       <section className="t-center">
-        <div className="t-top">
+        <div className="t-top" ref={topRef}>
           <button className="icon-btn" onClick={onExit} aria-label={t.exit}>
             <Icon k="close" />
           </button>

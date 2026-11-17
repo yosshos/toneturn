@@ -45,6 +45,9 @@ import { IsoMix } from './Iso';
 import { voiceOf } from '../engine/drumKit';
 import { startTier, tierDef, type DynName, type TierInfo } from '../engine/gameTiers';
 import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { useStudioFrame } from './GameCover';
+import { GameCeleArt } from './GameCele';
 
 /** A tier sets the level of each song chip (its levels in turn), the tempo and the pitch lanes (GAMES_TIERS_PLAN). */
 function withTier(o: HighwayOptions, t: DynName | undefined): HighwayOptions {
@@ -314,6 +317,9 @@ export function Highway({
   // shows why: no Web MIDI in this browser, no device, or notes the kit map doesn't name.
   const [kitLink, setKitLink] = useState<{ state: 'checking' | 'unsupported' | 'none' | 'ok' | 'denied'; devices: string[] }>({ state: 'checking', devices: [] });
   const lastHitRef = useRef<HTMLSpanElement | null>(null);
+  // studio look: the play row joins the shared game frame (src/studio-games.css)
+  const topRef = useRef<HTMLElement | null>(null);
+  useStudioFrame(topRef);
   useEffect(() => {
     if (opts.mode !== 'kit') return;
     if (!midiInput.supported) {
@@ -633,13 +639,8 @@ export function Highway({
         return withLayer(n.tier ? withTier(n, n.tier) : n, p.kitLayer !== undefined || !('song' in p || 'tier' in p || 'mode' in p || 'level' in p));
       });
     return (
-      <main className="panel-screen g3 hw-setup">
-        <header className="screen-head">
-          <button className="icon-btn" onClick={onExit} aria-label={tx(T.back)}>
-            <Icon k="back" />
-          </button>
-          <h1>{tx(T.title)}</h1>
-        </header>
+      <main className="panel-screen g3 hw-setup" data-game="highway" data-phase="setup">
+        <G2Head title={tx(T.title)} backLabel={tx(T.back)} onBack={onExit} game="highway" />
         <section className="set-card">
           <fieldset className="seg-field">
             <legend>{tx(T.mode)}</legend>
@@ -849,7 +850,7 @@ export function Highway({
 
   if (stage === 'mic-error') {
     return (
-      <main className="panel-screen g3">
+      <main className="panel-screen g3" key="mic-error">
         <section className="set-card g3-center">
           <p>{tx(T.micError)}</p>
           <button className="btn mega" onClick={() => resumeFromCheckpoint()}>
@@ -875,7 +876,9 @@ export function Highway({
   if (stage === 'over' && result) {
     const r = result.sum;
     return (
-      <main className="recap g3 hw-over">
+      <main className="recap g3 hw-over" data-game="highway" data-phase="over">
+        <G2Head title={tx(T.title)} backLabel={tx(T.exit)} onBack={onExit} game="highway" />
+        <GameCeleArt good={r.accuracy >= LAYER_PASS} best={r.fullCombo || !!result.best} />
         <p className="eyebrow">
           {tx(T.title)} · <bdi dir="ltr">R{song.opts.level}</bdi> · {tx(T.song)} <bdi dir="ltr">{song.opts.song}</bdi>
         </p>
@@ -963,8 +966,8 @@ export function Highway({
   const barMs = s.beatsPerBar * s.beatMs;
 
   return (
-    <main className={`g3 hw-play ${reduced ? 'calm' : ''}`}>
-      <header className="lesson-top hw-top">
+    <main className={`g3 hw-play ${reduced ? 'calm' : ''}`} data-game="highway" data-phase="play">
+      <header className="lesson-top hw-top" ref={topRef}>
         <button className="icon-btn" onClick={() => (stage === 'paused' ? onExit() : pause())} aria-label={stage === 'paused' ? tx(T.exit) : tx(T.pause)}>
           <Icon k={stage === 'paused' ? 'close' : 'pause'} />
         </button>

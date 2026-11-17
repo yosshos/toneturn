@@ -145,7 +145,7 @@ export function MicProblem({ lang, error, onRetry, onBack, onTouch }: { lang: 'h
   );
 }
 
-export function G2Head({ title, backLabel, onBack, children }: { title: string; backLabel: string; onBack: () => void; children?: ReactNode }) {
+export function G2Head({ title, backLabel, onBack, children, game: gameId, goal }: { title: string; backLabel: string; onBack: () => void; children?: ReactNode; /** The game id for the cover (when the title or <main data-game> does not name it). */ game?: string; /** The cover's one-line goal (games outside GAMES2). */ goal?: string }) {
   // Studio look (src/studio-games.css): the header doubles as the thin HUD row (segmented progress from its "n/m"),
   // and the setup phase gets the shared game cover under it. The classic look renders exactly as before.
   const studio = isStudio();
@@ -162,7 +162,7 @@ export function G2Head({ title, backLabel, onBack, children }: { title: string; 
         {studio && <HudSegs from={children} lang={lang} />}
         {children}
       </header>
-      {studio && <CoverHero title={title} game={game} lang={lang} frameRef={ref} />}
+      {studio && <CoverHero title={title} game={game} pinned={gameId} goal={goal} lang={lang} frameRef={ref} />}
     </>
   );
 }

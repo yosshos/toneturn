@@ -137,7 +137,7 @@ export function PitchMemory({
   const mean = meanAbs(points);
 
   return (
-    <main className="panel-screen g2 g2-memory" data-game="pitch-memory">
+    <main className="panel-screen g2 g2-memory" data-game="pitch-memory" data-phase={done ? 'over' : phase === 'error' || phase === 'listening' || first !== null ? 'play' : 'setup'}>
       <G2Head
         title={tx.title}
         backLabel={tx.back}

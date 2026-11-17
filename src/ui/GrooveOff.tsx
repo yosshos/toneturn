@@ -15,7 +15,8 @@ import { createGrooveDuel, myGrooveDuels, submitGrooveDuel, type GrooveDuelRow }
 import { listFriends } from '../cloud/social';
 import { DrillTake } from './DrillTake';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
-import { Icon } from './icons';
+import { G2Head } from './Flight';
+import { GameCeleArt } from './GameCele';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -112,12 +113,13 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
     setEnded(true);
   };
   const head = (
-    <header className="screen-head">
-      <button className="icon-btn" onClick={play && !ended ? () => setPlay(null) : onExit} aria-label={tx(TX.back)}>
-        <Icon k="back" />
-      </button>
-      <h1>{tx(TX.title)}</h1>
-    </header>
+    <G2Head title={tx(TX.title)} backLabel={tx(TX.back)} onBack={play && !ended ? () => setPlay(null) : onExit} game="groove-off">
+      {play && !ended && rounds.length > 0 && (
+        <span className="g2-hud-mini" dir="ltr">
+          {round + 1}/{rounds.length}
+        </span>
+      )}
+    </G2Head>
   );
 
   if (play && ended) {
@@ -128,9 +130,10 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
     const tempo = tempoReached(rounds, scores);
     const shareCode = encodeGrooveCode({ seed: play.seed, points: mine });
     return (
-      <main className="panel-screen dg-screen go-screen" data-groove-off="end">
+      <main className="panel-screen dg-screen go-screen" data-groove-off="end" data-game="groove-off" data-phase="over">
         {head}
         <section className="set-card dg-end" data-go-total={total}>
+          <GameCeleArt good={theirs ? w !== -1 : true} best={w === 1} />
           {theirs ? (
             <>
               <p className="dg-big" dir="ltr">
@@ -182,10 +185,13 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
 
   if (play && g) {
     return (
-      <main className="panel-screen dg-screen dg-play go-screen" data-groove-off="play" data-dg-round={round + 1}>
+      <main className="panel-screen dg-screen dg-play go-screen" data-groove-off="play" data-dg-round={round + 1} data-game="groove-off" data-phase="play">
         {head}
         <p className="drill-goal dg-status">
-          {tx(TX.round)} {round + 1}/{rounds.length} · <i className="dyn">{seedTier(play.seed)}</i> · <span dir="ltr">♩ {g.bpm}</span>
+          <span className="dg-rnd">
+            {tx(TX.round)} {round + 1}/{rounds.length} ·{' '}
+          </span>
+          <i className="dyn">{seedTier(play.seed)}</i> · <span dir="ltr">♩ {g.bpm}</span>
         </p>
         <p className="dg-cue">{tx(g.drill.title)}</p>
         <div className="dg-score">
@@ -211,10 +217,10 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
   }
 
   return (
-    <main className="panel-screen dg-screen go-screen" data-groove-off="home">
+    <main className="panel-screen dg-screen go-screen" data-groove-off="home" data-game="groove-off" data-phase="setup">
       {head}
       <section className="set-card">
-        <p className="field-hint">{tx(TX.blurb)}</p>
+        <p className="field-hint gs-how">{tx(TX.blurb)}</p>
         <p className="go-level" data-go-level={level.tier}>
           {tx(TX.level)} <i className="dyn">{level.tier}</i> · <bdi dir="ltr">{level.done}</bdi> {tx(TX.done)}
           {level.toNext > 0 && (

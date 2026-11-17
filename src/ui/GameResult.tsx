@@ -4,6 +4,7 @@
 import '../rush.css';
 import type { ReactNode } from 'react';
 import { G2Head } from './Flight';
+import { GameCeleArt } from './GameCele';
 
 type Lang = 'en' | 'he';
 
@@ -46,6 +47,7 @@ export interface RushResultProps {
 export function RushResultCard({ lang, heading, score, best, newBest, right, wrong, stats = [], note, onAgain, onBack, againLabel }: RushResultProps) {
   return (
     <section className="g2-card rush-card rush-result" aria-live="polite" data-result-card="1">
+      <GameCeleArt good={right >= wrong} best={!!newBest} />
       <h2>{heading}</h2>
       <p className="rush-final">
         <span>{T.score[lang]}</span>

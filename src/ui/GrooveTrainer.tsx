@@ -15,6 +15,7 @@ import { InputCheck } from './InputCheck';
 import { startTier, tierAllowed, type DynName, type TierInfo } from '../engine/gameTiers';
 import { accentsOf, BAND_PUSH_MS, GROOVE_FF_PARTS, grooveTierPlan, grooveTierScore, hiddenSwing, POCKET_BARS, POCKET_BPM, pocketPartScore, SWING_BPM, swingPartScore, matchTapsAt, tempoChangePlan, tempoChangeScore, type GrooveFfPart } from '../engine/grooveTier';
 import { Icon } from './icons';
+import { G2Head } from './Flight';
 
 type Mode = 'fade' | 'pocket' | 'swing' | 'level';
 const TX = {
@@ -243,13 +244,8 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
     setRunning(false);
   };
   return (
-    <main className="panel-screen groove-trainer" data-groove-trainer="1">
-      <header className="screen-head">
-        <button className="icon-btn" onClick={() => (stop(), onBack())} aria-label={tx.back}>
-          <Icon k="back" />
-        </button>
-        <h1>{tx.title}</h1>
-      </header>
+    <main className="panel-screen groove-trainer" data-groove-trainer="1" data-game="groove" data-phase={running ? 'play' : 'setup'} data-gt-mode={mode}>
+      <G2Head title={tx.title} backLabel={tx.back} onBack={() => (stop(), onBack())} game="groove" />
       <div className="chips" role="tablist">
         {(['fade', 'pocket', 'swing', ...(tierInfo ? (['level'] as const) : [])] as const).map((m) => (
           <button key={m} role="tab" aria-selected={mode === m} className={`chip ${mode === m ? 'on' : ''}`} onClick={() => (stop(), setMode(m), setMsg(null), setMeter(null))} data-groove-mode={m}>
@@ -257,7 +253,7 @@ export function GrooveTrainerScreen({ settings, onBack, tier: tierInfo, onResult
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? (tier === 'ff' && part !== 'slow' ? (part === 'odd' ? tx.oddHow : part === 'pocket' ? tx.layHow : part === 'tempo' ? tx.tempoHow : tx.swingMatchHow) : tx.levelHow) : tx.swingHow}</p>
+      <p className="field-hint gs-how">{mode === 'fade' ? tx.fadeHow : mode === 'pocket' ? tx.pocketHow : mode === 'level' ? (tier === 'ff' && part !== 'slow' ? (part === 'odd' ? tx.oddHow : part === 'pocket' ? tx.layHow : part === 'tempo' ? tx.tempoHow : tx.swingMatchHow) : tx.levelHow) : tx.swingHow}</p>
       {mode === 'level' && tierInfo && <TierChips lang={lang} info={tierInfo} value={tier} onChange={(x) => !running && setTier(x)} game="groove" />}
       {!running && <InputCheck mode="drum-midi" lang={lang} />}
       {mode === 'level' && tier === 'ff' && (
