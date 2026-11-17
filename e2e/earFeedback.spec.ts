@@ -136,7 +136,8 @@ for (const lang of ['en', 'he'] as const) {
     await fits(page);
     // no halo around Toni's note head
     const orbShadow = await page.locator('.orb').evaluate((e) => getComputedStyle(e).boxShadow);
-    expect(orbShadow.match(/rgb/g)?.length ?? 0).toBeLessThanOrEqual(1);
+    // (the studio's soft elevation has two offset layers; a halo is a layer centred on the head: 0 0 blur)
+    expect(orbShadow).not.toMatch(/rgba?\([^)]*\)\s+0px\s+0px\s+[1-9]/);
     if (lang === 'he') expect(await latinLeft(page, '.feedback, .replay-pair')).toEqual([]);
     // finish quickly: Continue, then skip the rest
     await page.locator('[data-continue]').click();
