@@ -51,4 +51,26 @@ export const GT = {
   baseFret: (f: number): L => ({ en: `fret ${f}`, he: `סריג ${f}` }),
   /** "strings 5–6" with the range isolated, for plain-string contexts. */
   strings: (range: string): L => ({ en: `strings ${range}`, he: `מיתרים ${ltr(range)}` }),
+
+  // ---- MIDI guitar (B7) ----
+  /** Advice only: a per-string MIDI guitar heard notes on other strings than the tab. */
+  otherString: (n: number): L => ({ en: `${n} notes on another string than the tab — fine if that's your fingering`, he: `${n} צלילים על מיתר אחר מהטאב — בסדר אם זו האצבוע שלכם` }),
+  /** The take's input line when a MIDI device is connected on a guitar item (the mic is then off — said, not silent). */
+  inputMidi: { en: 'Guitar by MIDI — the microphone is off', he: `גיטרה ב־${ltr('MIDI')} — המיקרופון כבוי` } as L,
+  inputMic: { en: 'Guitar by microphone — MIDI is connected', he: `גיטרה במיקרופון — ${ltr('MIDI')} מחובר` } as L,
+  useMic: { en: 'Use the mic', he: 'למיקרופון' } as L,
+  useMidi: { en: 'Use MIDI', he: `ל־${ltr('MIDI')}` } as L,
+  /** Settings → MIDI: how a MIDI guitar sends its strings. */
+  setChannels: { en: 'MIDI guitar: a channel per string', he: `גיטרת ${ltr('MIDI')}: ערוץ לכל מיתר` } as L,
+  chAuto: { en: 'Auto', he: 'אוטומטי' } as L,
+  chOff: { en: 'Off', he: 'כבוי' } as L,
+  setBend: { en: 'Pitch-bend range (semitones)', he: 'טווח כיפוף (חצאי טונים)' } as L,
+
+  // ---- calibration log (diagnostics, never uploaded) ----
+  calibTitle: { en: 'Guitar calibration log', he: 'יומן כיול לגיטרה' } as L,
+  calibHint: { en: 'Off by default. Keeps the raw numbers of each guitar take (strums, chord notes, bends, changes) on this device only, to tune the thresholds. Nothing is uploaded.', he: 'כבוי כברירת מחדל. שומר את המספרים הגולמיים של כל טייק גיטרה (פריטות, צלילי אקורד, כיפופים, החלפות) במכשיר הזה בלבד, לכיוון הספים. שום דבר לא נשלח.' } as L,
+  calibOn: { en: 'Record guitar takes', he: 'לתעד טייקים של גיטרה' } as L,
+  calibCount: (n: number): L => ({ en: `${n} takes kept`, he: `${n} טייקים שמורים` }),
+  calibExport: { en: 'Export JSON', he: `ייצוא ${ltr('JSON')}` } as L,
+  calibClear: { en: 'Clear', he: 'ניקוי' } as L,
 };

@@ -211,6 +211,9 @@ export interface Settings {
   midiDevice?: string | null;
   midiOctave?: number;
   midiPedalInvert?: boolean;
+  /** GUITAR-AUDIT B7: a MIDI guitar's strings by channel (auto: decided from what it sends) and its pitch-bend range (semitones). */
+  midiGuitarChannels?: 'auto' | '1-6' | '2-7' | 'off';
+  midiBendRange?: number;
   /** Sound the keys through the app (on unless turned off: most MIDI keyboards have no speakers). */
   midiSound?: boolean;
   /** Volume of your own keys (0–1.5), apart from the app's playback. */

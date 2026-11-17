@@ -24,6 +24,7 @@ import { listMics } from '../speech/mic';
 import { APP_THEMES, appearanceOf } from './themes';
 import { isStudio, setLook } from './look';
 import { LOOK_TEXT } from '../i18n/lookText';
+import { GT } from '../i18n/guitarText';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
@@ -1069,6 +1070,22 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
             <input type="checkbox" checked={!!s.midiPedalInvert} onChange={(e) => onSettings({ midiPedalInvert: e.target.checked })} data-pedal-invert="1" />
             <span>{he ? 'הפדל הפוך (לוחץ כשהוא למעלה)' : 'Pedal works backwards (reverse it)'}</span>
           </label>
+          {(s.activeCourse === 'guitar' || s.activeCourse === 'bass' || s.instrument === 'guitar' || s.instrument === 'bass') && (
+            <>
+              <Seg
+                label={GT.setChannels[lang]}
+                value={s.midiGuitarChannels ?? 'auto'}
+                options={[
+                  ['auto', GT.chAuto[lang]],
+                  ['1-6', <bdi key="a">1–6</bdi>],
+                  ['2-7', <bdi key="b">2–7</bdi>],
+                  ['off', GT.chOff[lang]],
+                ]}
+                onChange={(v) => onSettings({ midiGuitarChannels: v })}
+              />
+              <Seg label={GT.setBend[lang]} value={String(s.midiBendRange ?? 2)} options={(['2', '12', '24'] as const).map((n) => [n, n] as [string, string])} onChange={(v) => onSettings({ midiBendRange: Number(v) })} />
+            </>
+          )}
           <p className="field-hint">{he ? 'עוצמת הנגינה (פיאנו–פורטה) מכיילים במסך התרגילים הטכניים ← הגדרות.' : 'Your soft-to-loud range is calibrated in Technique drills → settings.'}</p>
         </>
       )}

@@ -588,9 +588,9 @@ export function App() {
     document.documentElement.dataset.haptics = s.haptics === false ? 'off' : 'on';
     setPreferredMic(s.micDeviceId);
     // 0.65: the drums course reads the e-kit in drum mode (raw notes, CC4 hi-hat, the learned kit map).
-    midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert, drums: s.activeCourse === 'drums', ...(s.drumKit ? { kit: s.drumKit } : {}) });
+    midi.setOptions({ only: s.midiDevice ?? null, octave: s.midiOctave ?? 0, pedalInvert: !!s.midiPedalInvert, guitarChannels: s.midiGuitarChannels ?? 'auto', bendRange: s.midiBendRange ?? 2, drums: s.activeCourse === 'drums', ...(s.drumKit ? { kit: s.drumKit } : {}) });
     document.documentElement.style.fontSize = s.textScale && s.textScale !== 1 ? `${Math.round(s.textScale * 100)}%` : '';
-  }, [s.mixer, s.textScale, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert, s.activeCourse, s.drumKit]);
+  }, [s.mixer, s.textScale, s.volume, s.cues, s.ttsRate, s.haptics, s.micDeviceId, s.midiDevice, s.midiOctave, s.midiPedalInvert, s.midiGuitarChannels, s.midiBendRange, s.activeCourse, s.drumKit]);
   // MIDI keys sounded through the app (0.50), everywhere — on by default (most MIDI keyboards have no speakers).
   useEffect(() => {
     piano.setLiveOptions({ volume: s.midiVolume ?? 1, curve: s.midiCurve ?? 'normal' });

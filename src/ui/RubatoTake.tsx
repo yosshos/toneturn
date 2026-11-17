@@ -9,6 +9,12 @@ import { captureOptsFor, detectOnsets, onsetOptsFor, type GFrame } from '../engi
 import { isGuitarDrill } from '../engine/drills/events';
 import type { Drill, DrillCalibration, PlayedNote, TakeMetrics } from '../engine/drills/types';
 import { midi } from '../speech/midi';
+import { takeUsesMidi } from '../speech/guitarInput';
+import { analyzeGuitarFree, guitarFreeProgress } from '../engine/drills/guitarFree';
+import { logGuitarTake } from '../engine/drills/guitarCalib';
+import { bendTrace, placeMidiGuitar, type BendEvent, type ChannelNote } from '../engine/midiGuitar';
+import { tuningById } from '../engine/fretboard';
+import { isBassDrill } from '../engine/drills/guitarAnalyze';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { piano } from './services';
@@ -29,7 +35,9 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   const [on, setOn] = useState(false);
   // Input check: free time has no first-note time, so the watchdog gives the player 2 s to begin, then its usual wait.
   const [armAt, setArmAt] = useState(0);
-  const checkMode = midi.devices.length ? 'midi' : 'mic';
+  // B7: a guitar item listens to MIDI unless the player chose the microphone (DrillTake says which, and switches).
+  const byMidi = takeUsesMidi(drill);
+  const checkMode = byMidi ? 'midi' : 'mic';
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
   const start = async () => {
@@ -45,38 +53,58 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
     const abort = new AbortController();
     let lastAt = zero;
     let finished = false;
-    const current = (): PlayedNote[] => (guitar && !midi.devices.length && frames.length ? detectOnsets(frames, onsetOptsFor(drill)) : notes);
+    const chNotes: ChannelNote[] = [];
+    const bends: BendEvent[] = [];
+    const tuningOpen = () => tuningById(drill.spec.tuning ?? (isBassDrill(drill) ? 'bass' : 'standard')).open;
+    const current = (): PlayedNote[] => (guitar && !byMidi && frames.length ? detectOnsets(frames, onsetOptsFor(drill)) : guitar && byMidi ? placeMidiGuitar(chNotes, midi.opts.guitarChannels, tuningOpen()).played : notes);
     const finish = () => {
       if (finished) return;
       finished = true;
       abort.abort();
       offMidi();
+      offBend?.();
       window.clearInterval(tick);
       setOn(false);
       onBeat?.(-1);
       const played = current();
-      onDone(analyzeFree(drill, played), played);
+      // (voice leading and own-chord items keep their own graders: any good voicing counts)
+      if (!guitar || drill.goal.vl || drill.goal.ct) return onDone(analyzeFree(drill, played), played);
+      // B5: a guitar take in free time keeps the guitar checks (strums, unclear onsets, bends) — guitarFree.ts.
+      const gm = analyzeGuitarFree(drill, played, byMidi ? [] : frames, byMidi && bends.length ? { pitchTrace: bendTrace(chNotes, bends) } : {});
+      logGuitarTake(drill, 0, gm, { input: byMidi ? 'midi' : 'mic', free: true });
+      onDone(gm, played);
     };
     stop.current = () => {
       finished = true;
       abort.abort();
       offMidi();
+      offBend?.();
       window.clearInterval(tick);
     };
-    const offMidi = midi.onNote((m, isOn, at, vel) => {
+    const offMidi = midi.onNote((m, isOn, at, vel, ch = 0) => {
       const t = at - zero - cal.latencyMs;
       if (isOn) {
         const n: PlayedNote = { pitch: m, on: t, off: null, vel };
         notes.push(n);
-        open.set(m, n);
+        const c: ChannelNote = { ...n, ch };
+        chNotes.push(c);
+        open.set(ch * 128 + m, n);
+        openCh.set(ch * 128 + m, c);
         lastAt = performance.now();
       } else {
-        const n = open.get(m);
+        const k = open.has(ch * 128 + m) ? ch * 128 + m : [...open.keys()].find((x) => x % 128 === m);
+        if (k === undefined) return;
+        const n = open.get(k);
         if (n) n.off = t;
-        open.delete(m);
+        const c = openCh.get(k);
+        if (c) c.off = t;
+        open.delete(k);
+        openCh.delete(k);
       }
     });
-    if (!midi.devices.length) {
+    const openCh = new Map<number, ChannelNote>();
+    const offBend = guitar && byMidi ? midi.onBend((ch, cents, at) => void bends.push({ ch, cents, at: at - zero - cal.latencyMs })) : null;
+    if (!byMidi) {
       if (guitar)
         void listenLoop(
           new BrowserPitchCapture(),
@@ -117,7 +145,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
     // The now-cue follows the player; the take ends when every note is in, or after a long silence past half-way.
     const tick = window.setInterval(() => {
       const played = current();
-      const at = freeProgress(drill, played);
+      const at = guitar && !drill.goal.vl && !drill.goal.ct ? guitarFreeProgress(drill, played) : freeProgress(drill, played);
       onBeat?.(Math.min(at, drill.beats - 0.001));
       if (at >= drill.beats) return void window.setTimeout(finish, 600);
       if (played.length >= drill.notes.length / 2 && performance.now() - lastAt > QUIET_MS) finish();
@@ -126,6 +154,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       finished = true;
       abort.abort();
       offMidi();
+      offBend?.();
       window.clearInterval(tick);
     };
     doneRef.current = finish;

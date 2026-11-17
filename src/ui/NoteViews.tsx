@@ -10,6 +10,7 @@ import type { PitchClass } from '../engine/pitch';
 import { Keyboard } from './bits';
 import { ChordBox, Neck } from './Instrument';
 import { TUNINGS } from '../engine/fretboard';
+import { TAB_RHYTHM_MAX_COLS, tabRhythm, type TabRhythm } from '../engine/tabRhythm';
 
 /** Strings for a chord, one note per string (clashes move to the next lower string). */
 function chordPositions(notes: number[]): { str: number; fret: number }[] {
@@ -434,14 +435,19 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live, cue, prior, extras, bottomLabel }: { /** GUITAR-AUDIT T1: the row under the tab is labelled once (e.g. "finger" / "אצבע"); its digits never sit on a string line. */ bottomLabel?: string; /** Played notes not in the tab: fractional column indices — a small ✕ above the top string. */ extras?: number[]; /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** The count-in: this column's digit pulses once. */ cue?: number; /** The last take's ticks, faded (per column). */ prior?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live, cue, prior, extras, bottomLabel, rhythm }: { /** GUITAR-AUDIT T2: each column's start and length (quarter notes from the line's start) — stems and beams under the tab; `group` = the beaming unit (1, or 1.5 in 6/8). */ rhythm?: { at: number[]; dur: number[]; group?: number }; /** GUITAR-AUDIT T1: the row under the tab is labelled once (e.g. "finger" / "אצבע"); its digits never sit on a string line. */ bottomLabel?: string; /** Played notes not in the tab: fractional column indices — a small ✕ above the top string. */ extras?: number[]; /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** The count-in: this column's digit pulses once. */ cue?: number; /** The last take's ticks, faded (per column). */ prior?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
       const width = Math.max(220, 60 + cols.length * spacing);
       const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
+      // T2: rhythm under the tab, unless the line is too dense for it (a phone line of many 16ths) or carries kick bars.
+      const rh = rhythm && rhythm.at.length === cols.length && cols.length <= TAB_RHYTHM_MAX_COLS && !cols.some((c) => c.kick) ? tabRhythm(rhythm.at, rhythm.dur, rhythm.group ?? 1) : null;
+      const hasRow = cols.some((c) => c.bottom);
+      // the finger row moves under the stems; a triplet's "3" needs a little more room
+      const extraH = (rh && hasRow ? 16 : 0) + (rh?.triplets.length ? 8 : 0);
       // COURSE-FEEDBACK-UI §4.3: less empty band above the strings (two lines of room for technique marks).
-      renderer.resize(width, strings === 4 ? 96 : 122);
+      renderer.resize(width, (strings === 4 ? 96 : 122) + extraH);
       const ctx = renderer.getContext();
       const stave = new VF.TabStave(4, 0, width - 8, { num_lines: strings, space_above_staff_ln: 2 });
       stave.addTabGlyph();
@@ -472,9 +478,10 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
       // GUITAR-AUDIT T1: fingers / strokes in their own row below the stave — small, purple, labelled once at its start —
       // never on a string line, where a beginner reads them as frets.
       const svgF = el.querySelector('svg');
+      if (svgF && rh) drawTabRhythm(svgF, rh, tn.map(headX), stave.getYForLine(strings - 1) + 7);
       if (svgF && cols.some((c) => c.bottom)) {
-        // a 4-string tab's TAB glyph (and the kick bars) reach below its last line: the row sits under them
-        const yb = stave.getYForLine(strings - 1) + (strings === 4 ? 27 : 17);
+        // a 4-string tab's TAB glyph (and the kick bars) reach below its last line: the row sits under them (and under the stems)
+        const yb = stave.getYForLine(strings - 1) + (strings === 4 ? 27 : 17) + (rh ? 16 : 0);
         const add = (x: number, txt: string, cls: string, anchor = 'middle') => {
           const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
           t.setAttribute('x', String(x));
@@ -526,14 +533,14 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
       }
       return [...tn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(','), bottomLabel ?? ''],
+    [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(','), bottomLabel ?? '', JSON.stringify(rhythm ?? null)],
   );
   useLiveLayer(ref, geo, live, win, xs, 'tab');
   useLiveLayer(ref, geo, prior, win, xs, 'tab', 'mk-prior');
   useCueLayer(ref, geo, cue, xs, 'tab');
   useExtraLayer(ref, extras, xs, 12);
   return (
-    <div className={`guitar-tab ${ahead ? 'ahead' : ''}`} data-kicks={cols.filter((c) => c.kick).length || undefined} role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
+    <div className={`guitar-tab ${ahead ? 'ahead' : ''}`} dir="ltr" data-rhythm={rhythm ? (rhythm.at.length <= TAB_RHYTHM_MAX_COLS && !cols.some((c) => c.kick) ? 'stems' : 'dense') : undefined} data-kicks={cols.filter((c) => c.kick).length || undefined} role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
       <div className="svg-wrap">
         {/* T3: the cue sits BEHIND the digits — a soft band on the column that is due, the thin glide line under it */}
         <TabNow xs={xs} now={now} />
@@ -543,6 +550,51 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
       {failed && <p className="staff-fallback">TAB</p>}
     </div>
   );
+}
+
+/**
+ * T2: the rhythm under a tab line — stems from just below the lowest string (`y0`), beams at their foot, a flag on a lone
+ * 8th / 16th, a dot beside a dotted value, "3" under a triplet group. Small and ink-grey, so the digits stay the focus.
+ */
+function drawTabRhythm(svg: SVGSVGElement, r: TabRhythm, xs: number[], y0: number) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class', 'tab-rhythm');
+  const L = 14;
+  const foot = y0 + L;
+  const el = (tag: string, a: Record<string, string | number>) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+    g.appendChild(e);
+    return e;
+  };
+  const beamed = new Set<number>();
+  for (const b of r.beams) if (b.level === 1) for (let i = b.from; i <= b.to; i++) beamed.add(i);
+  r.marks.forEach((m, i) => {
+    const x = xs[i];
+    if (m.kind === 0) return;
+    // a half note: a short stem (the lower half), the classic tab-rhythm sign
+    el('line', { x1: x, x2: x, y1: m.kind === 1 ? y0 + L / 2 : y0, y2: foot, class: 'tab-stem' });
+    if (m.dotted) el('circle', { cx: x + 3.6, cy: foot - 2.5, r: 1.3, class: 'tab-dot' });
+    if (m.kind >= 3 && !beamed.has(i)) {
+      // a lone 8th / 16th: a flag (two for a 16th)
+      for (let f = 0; f < m.kind - 2; f++) el('path', { d: `M${x} ${foot - f * 4} q 4.5 -2.5 5.5 -7`, class: 'tab-flag' });
+    }
+  });
+  for (const b of r.beams) {
+    const y = b.level === 1 ? foot - 2.4 : foot - 6.4;
+    if (b.from === b.to) {
+      // a 16th beside 8ths: a short stub toward its neighbour
+      const x = xs[b.from];
+      const dir = b.from > 0 && beamed.has(b.from - 1) ? -1 : 1;
+      el('rect', { x: dir > 0 ? x : x - 6, y, width: 6, height: 2.4, class: 'tab-beam' });
+    } else el('rect', { x: xs[b.from], y, width: xs[b.to] - xs[b.from], height: 2.4, class: 'tab-beam' });
+  }
+  for (const [a, b] of r.triplets) {
+    const t = el('text', { x: (xs[a] + xs[b]) / 2, y: foot + 9, class: 'tab-trip', 'text-anchor': 'middle' });
+    t.textContent = '3';
+  }
+  svg.appendChild(g);
 }
 
 export function GuitarTab({ notes, chord }: { notes: number[]; chord: boolean }) {

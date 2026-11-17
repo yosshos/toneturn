@@ -812,6 +812,9 @@ export interface PlayedNote {
   on: number;
   off: number | null;
   vel: number;
+  /** GUITAR-AUDIT B7: the string and fret really played — a per-string MIDI guitar (channel = string); absent otherwise. */
+  string?: number;
+  fret?: number;
 }
 
 /** MEASUREMENT-AUDIT: the touch of one take (touch.ts) — dynamics shape, fingers, lengths, tempo, swing, pedal, chords. */
@@ -1100,6 +1103,8 @@ export interface CustomDrill {
 /** Drills settings (spec AI, owner Q2 / Q5 / Q6 / Q7). */
 export interface DrillSettings {
   showFingering: boolean;
+  /** The player's left-handed neck (Settings): the drill's chord boxes are mirrored (the tab stays as it is). Derived, not stored. */
+  leftHanded?: boolean;
   keyOrder: KeyOrder;
   /** Continuous practice: after a clean take raise the tempo (auto) or move on to the next key / drill. */
   continuous: 'off' | 'raise-tempo' | 'next-key' | 'next-drill';

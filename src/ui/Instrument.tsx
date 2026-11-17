@@ -66,7 +66,7 @@ export interface NeckDot {
 }
 
 /** A horizontal neck: string 1 (highest) on top, the nut on the left (right on a left-handed neck). */
-export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, onTap, label }: { tuning: Tuning; lo?: number; hi?: number; dots?: NeckDot[]; strings?: number[]; leftHanded?: boolean; onTap?: (str: number, fret: number) => void; label?: string }) {
+export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, onTap, label, hollowOpen = false }: { tuning: Tuning; lo?: number; hi?: number; dots?: NeckDot[]; strings?: number[]; leftHanded?: boolean; onTap?: (str: number, fret: number) => void; label?: string; /** GUITAR-AUDIT N3 (chord pictures): an open string is a hollow ring at the nut, not a filled dot like a fretted note. */ hollowOpen?: boolean }) {
   const n = tuning.open.length;
   const frets = hi - lo + 1;
   // GUITAR-AUDIT N1: a gutter at the nut end for the string names (E A D G B e), Latin and left-to-right in Hebrew too.
@@ -145,8 +145,8 @@ export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, 
             }),
           )}
         {dots.map((d, i) => (
-          <g key={i} className={`neck-dot ${d.tone ?? 'given'}`} pointerEvents="none">
-            <circle cx={X(x(d.fret))} cy={y(d.str)} r={10} />
+          <g key={i} className={`neck-dot ${d.tone ?? 'given'}${hollowOpen && d.fret === 0 ? ' open-str' : ''}`} pointerEvents="none" data-open-string={hollowOpen && d.fret === 0 ? d.str : undefined}>
+            <circle cx={X(x(d.fret))} cy={y(d.str)} r={hollowOpen && d.fret === 0 ? 7.5 : 10} />
             {d.label && (
               <text x={X(x(d.fret))} y={y(d.str) + 4}>
                 {d.label}
@@ -284,7 +284,7 @@ export function DiagramView({ d: d0, settings }: { d: Diagram; settings: Setting
   const frets = (d.dots ?? []).map((p) => p.fret);
   const lo = d.baseFret ?? (frets.length && Math.max(...frets) > 12 ? Math.max(0, Math.min(...frets) - 1) : 0);
   const hi = Math.max(lo + (d.frets ?? 12), ...frets);
-  return <Neck tuning={tuning} lo={lo} hi={Math.min(lo + 15, hi)} dots={(d.dots ?? []).map((p) => ({ ...p, tone: p.root ? 'root' : 'given' }))} leftHanded={settings.leftHanded} />;
+  return <Neck tuning={tuning} lo={lo} hi={Math.min(lo + 15, hi)} dots={(d.dots ?? []).map((p) => ({ ...p, tone: p.root ? 'root' : 'given' }))} leftHanded={settings.leftHanded} hollowOpen />;
 }
 
 // ---------------------------------------------------------------- keys

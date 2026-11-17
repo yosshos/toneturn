@@ -63,6 +63,7 @@ import { DrumWrite } from './DrumWrite';
 import { withDrumWrite } from '../engine/drills/drumEar';
 import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
+import { guitarInputPref } from '../speech/guitarInput';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
@@ -116,20 +117,22 @@ const takeInfo = (d: Drill, m: TakeMetrics) => {
 };
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
-const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length ? 'midi' : 'mic') });
+// B7: in the guitar / bass course with the microphone chosen over a connected MIDI device, the mic's latency applies.
+const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length && !((s.activeCourse === 'guitar' || s.activeCourse === 'bass') && guitarInputPref() === 'mic') ? 'midi' : 'mic') });
 /** Family stripe colours: domain tokens only (COURSE-FEEDBACK-UI §3.3) — play lemon, harmony lilac, ear sky, theory tangerine, time pink, improvisation purple. */
 const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-gig': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' , 'k-tpair': 'var(--tangerine)', 'g-tpair': 'var(--tangerine)', 'b-tpair': 'var(--tangerine)'};
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
-export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse']; courses?: Settings['courses'] }): DrillSettings {
+export function drillSettingsOf(s: Pick<Settings, 'drills' | 'instrument'> & { activeCourse?: Settings['activeCourse']; courses?: Settings['courses']; leftHanded?: boolean }): DrillSettings {
   const inst = s.instrument === 'guitar' ? 'guitar' : s.instrument === 'bass' ? 'bass' : 'piano';
   // 0.64: an instrument course decides the technique instrument (keys → piano, guitar, bass), however the course was reached.
   const byCourse: DrillSettings['instrument'] | null = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' ? 'guitar' : s.activeCourse === 'bass' ? 'bass' : s.activeCourse === 'drums' ? 'drums' : null;
   const out0: DrillSettings = { ...DEFAULT_DRILL_SETTINGS, instrument: inst as DrillSettings['instrument'], ...(s.drills ?? {}) };
   // GUITAR_DEEPENING §5 (owner 2026-11-11): the guitar add-ons, migrated from the old single style when never set
   // (jazz pre-ticked for a player who also takes the Jazz course).
-  const out: DrillSettings = { ...out0, guitarAddOns: guitarAddOnsOf(out0, s.courses) };
+  // The left-handed neck (Settings → instrument) mirrors the drill's chord boxes too; never stored with the drill settings.
+  const out: DrillSettings = { ...out0, guitarAddOns: guitarAddOnsOf(out0, s.courses), leftHanded: !!s.leftHanded };
   return byCourse ? { ...out, instrument: byCourse } : out;
 }
 
@@ -175,13 +178,13 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
       <>
         {model ? (
           <>
-            {view !== 'staff' && <DrillTab drill={md} lang={lang} />}
+            {view !== 'staff' && <DrillTab leftHanded={ds.leftHanded} drill={md} lang={lang} />}
             {view !== 'tab' && <DrillStaff drill={md} />}
           </>
         ) : (
           (ruleChart ?? (
             <>
-              {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} lang={lang} />}
+              {view !== 'staff' && <DrillTab leftHanded={ds.leftHanded} drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} lang={lang} />}
               {view !== 'tab' && <DrillStaff drill={drill} result={result} lang={lang} />}
             </>
           ))
@@ -197,7 +200,7 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
   const written = upTo === undefined || upTo > 0;
   return (
     <>
-      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} cue={cue} prior={prior} lang={lang} />}
+      {written && view !== 'staff' && <DrillTab leftHanded={ds.leftHanded} drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} cue={cue} prior={prior} lang={lang} />}
       {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} live={live} lang={lang} cue={cue && view === 'staff'} prior={prior} roles={roles} />}
       {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} result={result} loop={loop} lang={lang} compact={written} roles={roles} />}
       {drill.show === 'chart' && (

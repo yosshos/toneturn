@@ -86,6 +86,16 @@ export function contextsOf(drill: Drill, i: number, bpm: number): string[] {
   return out;
 }
 
+/**
+ * GUITAR-AUDIT B7: a per-string MIDI guitar says where a note was really played — the place on the neck (gp: keys) is
+ * that string and fret, not the tab's; the suggested finger no longer applies there. Other notes: the drill as is.
+ */
+function playedPlace(drill: Drill, i: number, p: { string?: number; fret?: number } | null | undefined): Drill {
+  const n = drill.notes[i];
+  if (!n || !p || p.string === undefined || p.fret === undefined || n.string === undefined || (p.string === n.string && p.fret === n.fret)) return drill;
+  return { ...drill, notes: drill.notes.map((x, j) => (j === i ? { ...x, string: p.string, fret: p.fret, finger: undefined } : x)) };
+}
+
 const upd = (m: number, v: number, x: number, w: number) => {
   const d = x - m;
   const mean = m + w * d;
@@ -107,7 +117,7 @@ export function addTake(model: PlayerModel, drill: Drill, m: TakeMetrics, bpm: n
   const hasVel = velSpread.length > 2 && new Set(velSpread).size > 1;
   m.perNote.forEach((r, i) => {
     const idx = drill.notes.indexOf(r.exp);
-    for (const key of contextsOf(drill, idx >= 0 ? idx : i, bpm)) {
+    for (const key of contextsOf(playedPlace(drill, idx >= 0 ? idx : i, r.played), idx >= 0 ? idx : i, bpm)) {
       const s: Stat = { ...(stats[key] ?? { n: 0, err: 0, tn: 0, tMean: 0, tVar: 0, vn: 0, vMean: 1, vVar: 0, last: at }) };
       const w = Math.max(1 / (s.n + 1), 1 / HALF);
       s.n = Math.min(HALF, s.n + 1);

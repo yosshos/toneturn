@@ -56,3 +56,18 @@
 .neck .str-name.off { opacity: 0.55; }
 .neck .str.off { opacity: 0.45; }
 :root[data-look='studio'] .neck .str.off { opacity: 0.45; stroke: #b9aed0; }
+
+/* ---- chord pictures on the neck (N3, Chord Rush): an open string is a hollow ring at the nut ---- */
+.neck .neck-dot.open-str circle { fill: none; stroke: #7c3aed; stroke-width: 2.6; }
+.neck .neck-dot.open-str.root circle { stroke: #0f9e8e; }
+.neck-dot.open-str text { display: none; }
+:root[data-look='studio'] .neck .neck-dot.open-str circle { fill: none; stroke: #7c3aed; stroke-width: 2.6; }
+:root[data-look='studio'] .neck .neck-dot.open-str.root circle { fill: none; stroke: #0f9e8e; }
+
+/* ---- rhythm under the tab (T2): small ink stems and beams, the digits stay the focus ---- */
+.guitar-tab svg .tab-rhythm .tab-stem { stroke: #4a3d63; stroke-width: 1.3; }
+.guitar-tab svg .tab-rhythm .tab-beam { fill: #4a3d63; stroke: none; }
+.guitar-tab svg .tab-rhythm .tab-flag { stroke: #4a3d63; stroke-width: 1.3; fill: none; }
+.guitar-tab svg .tab-rhythm .tab-dot { fill: #4a3d63; stroke: none; }
+.guitar-tab svg .tab-rhythm .tab-trip { fill: #4a3d63; font-size: 8.5px; font-weight: 700; font-family: inherit; stroke: none; }
+.guitar-tab.ahead svg .tab-rhythm { opacity: 0.6; }

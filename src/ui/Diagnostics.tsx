@@ -15,6 +15,9 @@ import { previewText } from '../speech/voice/preview';
 import { lastVoiceFailure } from '../speech/voice/files';
 import { SoundDiagnostics } from './SoundQuality';
 import { Icon } from './icons';
+import { GT } from '../i18n/guitarText';
+import { calibEnabled, calibJson, clearCalib, readCalib, setCalibEnabled } from '../engine/drills/guitarCalib';
+import { APP_VERSION } from '../version';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
 interface LogLine {
@@ -308,7 +311,60 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
           {lang === 'he' ? 'העתק דוח JSON' : 'Copy JSON report'}
         </button>
       </section>
+
+      <GuitarCalibCard lang={lang} />
     </main>
+  );
+}
+
+/**
+ * GUITAR-AUDIT B10: the opt-in guitar calibration log — on / off, how many takes are kept, export as a JSON file, clear.
+ * Kept on this device only (guitarCalib.ts); nothing is uploaded.
+ */
+function GuitarCalibCard({ lang }: { lang: 'he' | 'en' }) {
+  const [on, setOn] = useState(calibEnabled);
+  const [n, setN] = useState(() => readCalib().length);
+  const save = () => {
+    const blob = new Blob([calibJson(readCalib(), { app: APP_VERSION })], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `guitar-calibration-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  return (
+    <section className="diag-card" data-guitar-calib={on ? 'on' : 'off'}>
+      <h2>6 · {GT.calibTitle[lang]}</h2>
+      <p className="field-hint">{GT.calibHint[lang]}</p>
+      <label className="toggle-row">
+        <input
+          type="checkbox"
+          checked={on}
+          onChange={(e) => {
+            setCalibEnabled(e.target.checked);
+            setOn(e.target.checked);
+          }}
+          data-guitar-calib-toggle="1"
+        />
+        <span>{GT.calibOn[lang]}</span>
+      </label>
+      <div className="row">
+        <span data-guitar-calib-count={n}>{GT.calibCount(n)[lang]}</span>
+        <button className="btn small" onClick={save} disabled={!n} data-guitar-calib-export="1">
+          {GT.calibExport[lang]}
+        </button>
+        <button
+          className="btn small ghost"
+          onClick={() => {
+            clearCalib();
+            setN(0);
+          }}
+          disabled={!n}
+        >
+          {GT.calibClear[lang]}
+        </button>
+      </div>
+    </section>
   );
 }
 

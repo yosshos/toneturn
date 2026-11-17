@@ -12,6 +12,9 @@ import { glidePos, NoteStaff, TabLine, type NoteMark } from './NoteViews';
 import { extraIndex, markOf, worstMark } from '../engine/noteMarks';
 import { analyzeGuitarTake, captureOptsFor, detectOnsets, onsetOptsFor, untimedPitch, type GFrame } from '../engine/drills/guitarAnalyze';
 import { isGuitarDrill } from '../engine/drills/events';
+import { bendTrace, placeMidiGuitar, type BendEvent, type ChannelNote } from '../engine/midiGuitar';
+import { guitarInputPref, setGuitarInputPref } from '../speech/guitarInput';
+import { logGuitarTake } from '../engine/drills/guitarCalib';
 import { pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
 import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
@@ -251,6 +254,11 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
             marks={result ? l.map((c) => c.mark) : undefined}
             win={result ? timingMs : (live?.win ?? timingMs)}
             strings={strings}
+            // T2: the rhythm under the tab — each column's start and length in quarters from the line's start
+            rhythm={(() => {
+              const start = sl?.[from + i] ? sl[from + i].from / k : (from + i) * perLine;
+              return { at: l.map((c) => (c.at - start) * k), dur: l.map((c) => c.dur), group: drill.pulse === 8 ? 1.5 : 1 };
+            })()}
             {...(sl?.[from + i] ? { bars: sl[from + i].bars.map((b, j) => ({ len: b.len, sig: b.sig ?? (from + i === 0 && j === 0 ? b.cur : undefined) })), at: l.map((c) => c.at * k - sl[from + i].from) } : {})}
           />
         ) : (
@@ -816,7 +824,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const drumBlocked = drum && !drumMidi && !drill.drum?.mic && !acoustic;
   // A take whose drums were mostly not told apart: not counted (no pass, no fail) — the reason, and play again.
   const [voided, setVoided] = useState<{ en: string; he: string } | null>(null);
-  const useMidi = drum ? drumMidi : midi.devices.length > 0;
+  // GUITAR-AUDIT B7: a guitar item with MIDI connected listens to MIDI unless the player chose the microphone — and says
+  // which one it listens to (a keyboard left plugged in must not silently turn the guitar's mic checks off).
+  const guitarItem = isGuitarDrill(drill);
+  const [gIn, setGIn] = useState(guitarInputPref);
+  const useMidi = drum ? drumMidi : midi.devices.length > 0 && !(guitarItem && gIn === 'mic');
   // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
   const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
   // Input check (owner 2026-11-15): the strip above Play shows the signal arriving; the watchdog speaks up mid-take.
@@ -950,19 +962,38 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             if (zero && pressure >= 64) chokesIn.push(at - zero - cal.latencyMs);
           })
         : null;
-    const offMidi = midi.onNote((m, on, at, vel) => {
+    // B7: each note with its channel (a per-string MIDI guitar: channel = string); one pitch on two strings is two notes.
+    const chNotes: ChannelNote[] = [];
+    const bends: BendEvent[] = [];
+    const openP = new Map<number, PlayedNote>();
+    const offMidi = midi.onNote((m, on, at, vel, ch = 0) => {
       if (!zero) return;
       const t = at - zero - cal.latencyMs;
       if (on) {
-        const n: PlayedNote = { pitch: m, on: t, off: null, vel };
-        notes.push(n);
-        open.set(m, n);
+        const n: ChannelNote = { pitch: m, on: t, off: null, vel, ch };
+        chNotes.push(n);
+        const { ch: _c, ...p } = n;
+        notes.push(p);
+        open.set(ch * 128 + m, n);
+        openP.set(ch * 128 + m, p);
       } else {
-        const n = open.get(m);
-        if (n) n.off = t;
-        open.delete(m);
+        const k = open.has(ch * 128 + m) ? ch * 128 + m : [...open.keys()].find((x) => x % 128 === m);
+        if (k === undefined) return;
+        open.get(k)!.off = t;
+        const p = openP.get(k);
+        if (p) p.off = t;
+        open.delete(k);
+        openP.delete(k);
       }
     });
+    const offBend = guitarItem && useMidi ? midi.onBend((ch, cents, at) => zero && bends.push({ ch, cents, at: at - zero - cal.latencyMs })) : null;
+    // A MIDI guitar's notes with their string / fret (when it sends a channel per string) and its bends as a pitch trace.
+    const midiGuitar = () => {
+      const tu = tuningById(drill.spec.tuning ?? (isBassDrill(drill) ? 'bass' : 'standard')).open;
+      const placed = placeMidiGuitar(chNotes, midi.opts.guitarChannels, tu);
+      const trace = bends.length ? bendTrace(chNotes, bends) : [];
+      return { played: placed.played, trace, strings: placed.base !== null };
+    };
     // Microphone fallback (spec AI §6): pitch onsets only, no velocity / release.
     let micStop: AbortController | null = null;
     // Guitar / bass (spec AJ): raw frames → onsets (repeated notes and strums count) → the guitar analysis.
@@ -972,7 +1003,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const pianoChords = !guitar && !drum && !midi.devices.length && drill.notes.some((n) => n.chordId !== undefined);
     // A practice pad by microphone: energy onsets on the raw frames (no pitch).
     const drumMic = drum && !drumMidi;
-    if (((guitar || pianoChords) && !midi.devices.length) || drumMic) {
+    if ((guitar && !useMidi) || pianoChords || drumMic) {
       micStop = new AbortController();
       // Chords in the drill → also a chroma per frame, so the analysis can hear which strings rang (SPEC-0.48 §I1).
       const chords = drill.notes.some((n, i) => drill.notes.some((o, j) => j !== i && Math.abs(o.beat - n.beat) < 1e-4));
@@ -1026,6 +1057,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             : () => analyzeDrumTake(drill, bpm, detectOnsets(frames.slice(), { refractoryMs: 35, ratio: 1.8 }).map((p) => ({ voice: null, on: p.on, vel: p.vel })), { kit, mic: true })
           : guitar
             ? () => {
+                if (useMidi) {
+                  const g = midiGuitar();
+                  return analyzeGuitarTake(drill, bpm, g.played, cal, [], { pitchTrace: g.trace });
+                }
                 const heard = frames.slice();
                 return analyzeGuitarTake(drill, bpm, heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes.slice(), cal, heard);
               }
@@ -1056,7 +1091,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       ? window.setInterval(() => {
           if (!zero) return;
           try {
-            const ps = guitar ? (frames.length ? detectOnsets(frames.slice(), onsetOptsFor(drill)) : notes.slice()) : notes.slice();
+            const ps = guitar && !useMidi ? (frames.length ? detectOnsets(frames.slice(), onsetOptsFor(drill)) : notes.slice()) : notes.slice();
             onHeard!(improvNotes(drill, bpm, ps));
           } catch {
             /* a frame mid-write: next tick */
@@ -1109,6 +1144,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       setPocket(null);
       onLive?.(null);
       offMidi();
+      offBend?.();
       offCC?.();
       offHit?.();
       offChoke?.();
@@ -1142,10 +1178,20 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       return done(drumMidi ? withSplash(withChoke(dm, drill, bpm, chokesIn), drill, bpm, hits.filter((h) => h.voice === 'hhPedal'), cc4In, kit) : dm, played);
     }
     if (guitar) {
+      if (useMidi) {
+        // B7: a MIDI guitar — strings by channel (when it sends them), bends and vibrato from pitch bend.
+        const g = midiGuitar();
+        const played = g.played.filter((p) => !drill.listen || !inBand(p.on));
+        const gm = analyzeGuitarTake(drill, bpm, played, cal, [], { pitchTrace: g.trace });
+        logGuitarTake(drill, bpm, gm, { input: g.strings ? 'midi-strings' : 'midi' });
+        return done(gm, played);
+      }
       const heard = drill.listen ? frames.filter((f) => !inBand(f.t)) : frames;
       const played = (heard.length ? detectOnsets(heard, onsetOptsFor(drill)) : notes).filter((p) => !drill.listen || !inBand(p.on));
       if (drill.harmony?.mode === 'chords' && heard.length) harmonyFrames = heard;
-      return done(analyzeGuitarTake(drill, bpm, played, cal, heard), played);
+      const gm = analyzeGuitarTake(drill, bpm, played, cal, heard);
+      logGuitarTake(drill, bpm, gm, { input: 'mic' });
+      return done(gm, played);
     }
     // PIANO_AUDIT A2: the microphone is flagged so a loudness / release / pedal goal can't pass on notes alone.
     const pianoMicTake = !midi.devices.length;
@@ -1258,6 +1304,24 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             </p>
           )}
           {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
+          {guitarItem && midi.devices.length > 0 && (
+            // B7: which input the guitar take listens to, and the other one a tap away (never a silent switch).
+            <p className="field-hint guitar-input" data-guitar-input={useMidi ? 'midi' : 'mic'}>
+              {(useMidi ? GT.inputMidi : GT.inputMic)[lang]}{' '}
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  const v = useMidi ? 'mic' : 'midi';
+                  setGuitarInputPref(v);
+                  setGIn(v);
+                }}
+                data-guitar-input-switch="1"
+              >
+                {(useMidi ? GT.useMic : GT.useMidi)[lang]}
+              </button>
+            </p>
+          )}
           <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
             <Icon k="play" /> {tx.play}
           </button>
