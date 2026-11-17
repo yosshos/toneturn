@@ -31,7 +31,7 @@ function serviceWorker(): Plugin {
       // The Kokoro narrator (0.65): its worker (≈2 MB) and onnxruntime's WASM (≈21 MB) are never precached — they load
       // only when an English line is first spoken, then live in the service worker's voice cache across versions.
       const voice = files.filter((f) => VOICE_FILE.test(f));
-      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f) && !/AvatarStudio|three/i.test(f) && !VOICE_FILE.test(f))];
+      const precache = [base, `${base}index.html`, `${base}icon.svg`, `${base}favicon.svg`, `${base}manifest.webmanifest`, ...files.filter((f) => /\.(js|css|woff2)$/.test(f) && !/AvatarStudio|three/i.test(f) && !VOICE_FILE.test(f))];
       const tpl = readFileSync(new URL('./src/sw-template.js', import.meta.url), 'utf-8');
       this.emitFile({
         type: 'asset',

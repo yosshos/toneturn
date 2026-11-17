@@ -1,4 +1,4 @@
-// Small shared UI pieces: logo, mode switch, keyboard, permission panel.
+// Small shared UI pieces: mode switch, keyboard, permission panel (the logo lives in ./brand/Logo).
 
 import { useEffect, useState, type ReactNode } from 'react';
 import type { InputMode } from '../engine/session';
@@ -29,32 +29,8 @@ export function withNote(template: string, note: string, key = '') {
 /** Plain-text fill for speech. */
 export const fillText = (template: string, note: string, key = '') => template.replaceAll('{n}', note).replaceAll('{k}', key);
 
-/**
- * The brand mark (0.61, logo A redrawn for the v2 language): the ear whose outline with the two dots is a bass clef,
- * a 7 inside it, and a sound wave going in. Ink outline, flat fills, no gradients. `bare` = no tile (in-app header).
- */
-const EAR = 'M226 206 C226 132 274 96 318 96 C380 96 420 146 420 208 C420 266 388 290 368 320 C348 350 358 404 304 418 C266 428 242 404 236 378';
-const WAVE = 'M240 286 Q220 222 200 286 Q182 338 164 286 Q149 250 134 286 Q122 308 110 286';
-const SEVEN = 'M272 186 L356 186 Q370 186 364 200 L312 330';
-export function Logo({ size = 44, bare = false, onDark = false }: { size?: number; /** No tile behind it (in-app header). */ bare?: boolean; /** Light outline for dark surfaces. */ onDark?: boolean }) {
-  const ink = '#1E1033';
-  const edge = onDark ? '#FFFFFF' : ink;
-  return (
-    <svg width={size} height={size} viewBox={bare ? '60 60 420 420' : '0 0 512 512'} aria-hidden="true" className={`logo-mark ${bare ? 'bare' : ''}`}>
-      {!bare && <rect width="512" height="512" rx="116" fill="#6D28D9" />}
-      <g transform="translate(256 256) scale(0.86) translate(-306 -256)" fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path className="logo-wave w1" d={WAVE} stroke={ink} strokeWidth="44" />
-        <path d={WAVE} stroke="#12C9B4" strokeWidth="24" />
-        <path d={EAR} stroke={bare ? edge : ink} strokeWidth="80" />
-        <path d={EAR} stroke="#FFD43B" strokeWidth="56" />
-        <path d={SEVEN} stroke={ink} strokeWidth="40" />
-        <path d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
-      </g>
-      <circle className="logo-spark" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
-      <circle cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
-    </svg>
-  );
-}
+/** The brand mark (owner 2026-11-17: the "Paper" 7-as-a-quaver): ./brand/Logo. */
+export { Logo } from './brand/Logo';
 
 export function ModeSwitch({ mode, onChange, t }: { mode: InputMode; onChange: (m: InputMode) => void; t: Strings }) {
   return (

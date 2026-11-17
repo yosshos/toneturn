@@ -20,27 +20,38 @@ import type { Settings } from '../storage/progress';
 import type { IntakeResult } from './Intake';
 import { piano } from './services';
 import { Icon } from './icons';
+import { Logo } from './brand/Logo';
+import { MARK, PALETTES, barLine } from './brand/mark';
 
 type Lang = 'en' | 'he';
 
-/** The logo, drawn stroke by stroke (same geometry as bits.Logo, v2: ink outline, flat fills). */
-export function SplashLogo({ size = 132, onDark = false }: { size?: number; onDark?: boolean }) {
-  const ink = '#1E1033';
-  const EAR = 'M226 206 C226 132 274 96 318 96 C380 96 420 146 420 208 C420 266 388 290 368 320 C348 350 358 404 304 418 C266 428 242 404 236 378';
-  const WAVE = 'M240 286 Q220 222 200 286 Q182 338 164 286 Q149 250 134 286 Q122 308 110 286';
-  const SEVEN = 'M272 186 L356 186 Q370 186 364 200 L312 330';
-  return (
-    <svg width={size} height={size} viewBox="60 60 420 420" aria-hidden="true" className="splash-logo">
-      <g transform="translate(256 256) scale(0.86) translate(-306 -256)" fill="none" strokeLinecap="round" strokeLinejoin="round">
-        <path className="sp-wave" pathLength={1} d={WAVE} stroke={ink} strokeWidth="44" />
-        <path className="sp-wave" pathLength={1} d={WAVE} stroke="#12C9B4" strokeWidth="24" />
-        <path className="sp-ear" pathLength={1} d={EAR} stroke={onDark ? '#FFFFFF' : ink} strokeWidth="80" />
-        <path className="sp-ear" pathLength={1} d={EAR} stroke="#FFD43B" strokeWidth="56" />
-        <path className="sp-seven" pathLength={1} d={SEVEN} stroke={ink} strokeWidth="40" />
-        <path className="sp-seven" pathLength={1} d={SEVEN} stroke="#FFFFFF" strokeWidth="20" />
+/** The brand mark (./brand/mark.ts) on its tile, drawn stroke by stroke: the 7's top, its stem, the head, the bars. */
+export function SplashLogo({ size = 132 }: { size?: number }) {
+  const P = PALETTES.paper;
+  const H = MARK.head;
+  const bar = (dy: number, color: string) =>
+    MARK.bars.map((b) => {
+      const l = barLine(b, dy);
+      return <path key={l.x} className="sp-wave" pathLength={1} d={`M${l.x} ${l.y2}V${l.y1}`} stroke={color} strokeWidth={MARK.barStroke} />;
+    });
+  const seven = (color: string, dy = 0) => (
+    <g transform={dy ? `translate(0 ${dy})` : undefined}>
+      <path className="sp-ear" pathLength={1} d={MARK.top} stroke={color} strokeWidth={MARK.stroke} />
+      <path className="sp-seven" pathLength={1} d={MARK.stem} stroke={color} strokeWidth={MARK.stroke} />
+      <g className="sp-dot d1">
+        <ellipse cx={H.cx} cy={H.cy} rx={H.rx} ry={H.ry} transform={`rotate(${H.rotate} ${H.cx} ${H.cy})`} fill={color} />
       </g>
-      <circle className="sp-dot d1" cx="430" cy="196" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
-      <circle className="sp-dot d2" cx="430" cy="268" r="26" fill="#FF5FA2" stroke={ink} strokeWidth="9" />
+    </g>
+  );
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true" className="splash-logo brand-logo">
+      <rect width="120" height="120" rx={MARK.radius} fill={P.bg} />
+      <g fill="none" strokeLinecap="round">
+        {bar(MARK.barEdgeDy, P.barsEdge)}
+        {bar(0, P.bars)}
+        {seven(P.edge, MARK.edgeDy)}
+        {seven(P.fill)}
+      </g>
     </svg>
   );
 }
@@ -62,7 +73,7 @@ export function Splash({ onDone, lang = 'he' }: { onDone: () => void; lang?: Lan
   }, []);
   return (
     <div className="splash" onPointerDown={finish} role="presentation" data-splash="1">
-      <SplashLogo onDark />
+      <SplashLogo />
       <div className="splash-word">{wordmark(lang)}</div>
       <div className="splash-slogan">{lang === 'he' ? 'לשמוע. להבין. לבצע.' : 'Hear. Understand. Perform.'}</div>
       <svg className="splash-staff" viewBox="0 0 390 130" preserveAspectRatio="none" aria-hidden="true">
@@ -225,7 +236,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
       {step === 'welcome' && (
         <section className="ob-welcome">
           <div className="ob-brand">
-            <SplashLogo size={44} />
+            <Logo size={44} />
             <span className="ob-word">{wordmark(lang)}</span>
           </div>
           <div className="ob-hero">

@@ -225,6 +225,7 @@ import { measuredMsOn } from '../engine/practiceTime';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 import { Icon } from './icons';
+import { isStudioLook, rememberSplashPrefs } from './brand/splashDecision';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
@@ -511,6 +512,10 @@ export function App() {
     const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
   }, [s.uiLang, s.reducedMotion]);
+  // The opening animation shows before settings load: it reads the last language and motion setting from here.
+  useEffect(() => {
+    if (settings) rememberSplashPrefs({ lang: s.uiLang, reduced: s.reducedMotion ?? undefined });
+  }, [settings, s.uiLang, s.reducedMotion]);
   // AUDIT-5 #1: the clock runs on practice screens only, and books time to the active course.
   useEffect(() => setPracticeContext(route, settings?.activeCourse), [route, settings?.activeCourse]);
   // My recordings (SPEC-PHRASE-STUDIO §6): takes know their screen, course and session; the settings' two switches; the
@@ -2227,7 +2232,7 @@ export function App() {
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
-      {splash && <Splash lang={s.uiLang} onDone={() => setSplash(false)} />}
+      {splash && !isStudioLook(document.documentElement.dataset.look, location.search) && <Splash lang={s.uiLang} onDone={() => setSplash(false)} />}
       {withSide && <CommandPalette lang={s.uiLang} onPick={onPalette} />}
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} extra={<>

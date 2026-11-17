@@ -1,0 +1,85 @@
+/* The opening animation (src/ui/brand/Splash.tsx), studio look. Concept B "from sound to note" + C's landing burst.
+   Timeline (s): wave 0.03-0.43 -> staff settles 0.45-0.8 -> 7 top 0.72, stem 0.9, head pops 1.08 (burst 1.12)
+   -> bars + slogan words 1.3 / 1.44 / 1.58 -> wordmark 1.72-2.07 -> fade 2.1-2.4. */
+
+.bsp {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse 120% 75% at 50% 42%, #4a1d96 0%, #2b0d5e 55%, #170638 100%) #2b0d5e;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.bsp.bsp-leaving { opacity: 0; }
+.bsp-art {
+  width: min(100vw, 520px);
+  height: min(100dvh, 534px);
+  max-height: 100%;
+  display: block;
+  overflow: visible;
+}
+/* Only the animated pieces get a centred transform origin (never an element that has its own transform attribute). */
+.bsp-wave, .bsp-sl, .bsp-head, .bsp-burst, .bsp-bar, .bsp-wm { transform-box: fill-box; transform-origin: center; }
+
+.bsp-sl { stroke: #8f75d9; stroke-width: 2; stroke-linecap: round; opacity: 0.55; }
+.bsp-wm { font: 700 34px var(--font, 'Rubik Variable', Rubik, system-ui, sans-serif); fill: #ffffff; text-anchor: middle; }
+.bsp-wm.long { font-size: 22px; }
+.bsp-sg { font: 500 18px var(--font, 'Rubik Variable', Rubik, system-ui, sans-serif); fill: #cbbcf2; text-anchor: middle; }
+.bsp-burst { opacity: 0; }
+.bsp-still .bsp-wave { opacity: 0; }
+
+/* Round caps show a dot on an undrawn path: hidden until its draw starts (fill-mode forwards, not both). */
+@keyframes bsp-draw { from { opacity: 1; stroke-dashoffset: 1; } to { opacity: 1; stroke-dashoffset: 0; } }
+@keyframes bsp-fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes bsp-fadeIn { to { opacity: 1; } }
+
+/* 1. the sound wave, then the staff */
+.bsp-full .bsp-wave { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; animation: bsp-draw 0.4s 0.03s ease-out forwards, bsp-waveOut 0.22s 0.45s forwards; }
+@keyframes bsp-waveOut { to { opacity: 0; transform: scaleY(0.1); } }
+.bsp-full .bsp-sl { opacity: 0; animation: bsp-settle 0.35s 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.bsp-full .bsp-s0 { --dy: 32px; }
+.bsp-full .bsp-s1 { --dy: 16px; }
+.bsp-full .bsp-s2 { --dy: 0px; }
+.bsp-full .bsp-s3 { --dy: -16px; }
+.bsp-full .bsp-s4 { --dy: -32px; }
+@keyframes bsp-settle { from { opacity: 0; transform: translateY(var(--dy)); } to { opacity: 0.55; transform: translateY(0); } }
+
+/* 2. the 7 is written; the head lands with a burst of light */
+.bsp-full .bsp-top, .bsp-full .bsp-stem { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.bsp-full .bsp-top { animation: bsp-draw 0.2s 0.72s ease-out forwards; }
+.bsp-full .bsp-stem { animation: bsp-draw 0.2s 0.9s ease-in forwards; }
+.bsp-full .bsp-head { transform: scale(0); animation: bsp-pop 0.28s 1.08s cubic-bezier(0.2, 0.9, 0.3, 1.4) forwards; }
+@keyframes bsp-pop { to { transform: scale(1); } }
+.bsp-full .bsp-burst { animation: bsp-burst 0.7s 1.12s ease-out; }
+.bsp-full .bsp-burst2 { animation-delay: 1.22s; }
+@keyframes bsp-burst { 0% { opacity: 0.9; transform: scale(0.6); } 100% { opacity: 0; transform: scale(4); } }
+
+/* 3. the bars light up with the slogan words */
+.bsp-full .bsp-bar { opacity: 0; transform: scaleY(0.2); animation: bsp-barOn 0.22s ease-out forwards; }
+.bsp-full .bsp-w0, .bsp-full .bsp-w1, .bsp-full .bsp-w2 { opacity: 0; animation: bsp-fadeIn 0.22s ease-out forwards; }
+.bsp-full .bsp-b0, .bsp-full .bsp-w0 { animation-delay: 1.3s; }
+.bsp-full .bsp-b1, .bsp-full .bsp-w1 { animation-delay: 1.44s; }
+.bsp-full .bsp-b2, .bsp-full .bsp-w2 { animation-delay: 1.58s; }
+@keyframes bsp-barOn { to { opacity: 1; transform: scaleY(1); } }
+
+/* 4. the wordmark */
+.bsp-full .bsp-wm { opacity: 0; animation: bsp-fadeUp 0.35s 1.72s ease-out forwards; }
+
+/* Reduced motion (also decided in JS: the 'still' mode): the final frame. */
+@media (prefers-reduced-motion: reduce) {
+  .bsp { transition-duration: 0.15s; }
+  .bsp-art .bsp-wave, .bsp-art .bsp-sl, .bsp-art .bsp-top, .bsp-art .bsp-stem, .bsp-art .bsp-head, .bsp-art .bsp-burst, .bsp-art .bsp-bar,
+  .bsp-art .bsp-wm, .bsp-art .bsp-w0, .bsp-art .bsp-w1, .bsp-art .bsp-w2 { animation: none !important; transform: none !important; stroke-dashoffset: 0 !important; }
+  .bsp-art .bsp-wave, .bsp-art .bsp-burst { opacity: 0 !important; }
+  .bsp-art .bsp-sl { opacity: 0.55 !important; }
+  .bsp-art .bsp-bar, .bsp-art .bsp-wm, .bsp-art .bsp-w0, .bsp-art .bsp-w1, .bsp-art .bsp-w2 { opacity: 1 !important; }
+}
+
+/* The in-app logo: a crisp tile, no shadow. */
+.brand-logo { display: block; flex: none; border-radius: 22%; }

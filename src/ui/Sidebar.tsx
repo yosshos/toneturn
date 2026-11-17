@@ -6,7 +6,7 @@ import { CourseChip } from './CourseSwitcher';
 import { useCourse } from './courseContext';
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavIcon, type TabId } from './Arcade';
-import { Logo } from './bits';
+import { Logo } from './brand/Logo';
 import { Icon } from './icons';
 
 export type NavId =
@@ -176,7 +176,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
     <nav className={`side-nav ${collapsed ? 'collapsed' : ''}`} aria-label={lang === 'he' ? 'ניווט' : 'Navigation'} data-side-nav="1">
       <div className="sn-brand" dir="ltr">
         <span className="sn-logo" aria-hidden="true">
-          <Logo bare size={32} onDark />
+          <Logo size={32} />
         </span>
         <span className="sn-label sn-word">
           The 7<span className="wordmark-th">th</span> Sense

@@ -31,6 +31,7 @@ import './feedback.css';
 import './feedback2.css';
 import './practice.css';
 import { App } from './ui/App';
+import { BrandSplash } from './ui/brand/Splash';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
@@ -48,5 +49,11 @@ installIconTaps();
 if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
   void import('./ui/paper/Gallery').then(({ PaperGallery }) => createRoot(document.getElementById('root')!).render(<PaperGallery />));
 } else {
-  createRoot(document.getElementById('root')!).render(<App />);
+  // The opening animation (studio look) is a sibling overlay: the app starts underneath, untouched.
+  createRoot(document.getElementById('root')!).render(
+    <>
+      <App />
+      <BrandSplash />
+    </>,
+  );
 }
