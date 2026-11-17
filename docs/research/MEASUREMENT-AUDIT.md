@@ -236,3 +236,93 @@ All are MIDI only and will be blocked by `micUnmeasurable` for the mic. As with 
 The same scale at the item's ladder tempo, graded at *p* (`even-p`). The level passes only when the velocity band share stays ≥ 85 % at the target tempo. This is the direct "control, not speed" check: a player who gets faster by getting louder fails.
 
 **Implementation notes:** the cresc block in `analyzeTake` is the place for the split fit. `velBars.velTarget` needs a per-note ramp target (interpolate the level along the scale). New `DynamicsGoal` values `cresc-dim`, `dim-cresc`, `terraced` slot into `goalOf`. The control family in `generate.ts` (~l.5745) gets the new levels. Effort: about **M** for E1–E3 together, after G2.
+
+---
+
+## 8. Status (2026-11-17, after the second round)
+
+Round 1 (commits `1627431c`, `8c74b1d8`) built the touch engine (`src/engine/drills/touch.ts`), its words (`src/i18n/measureText.ts`), the review lines (`src/ui/TouchLines.tsx`) and the staff marks (`src/ui/markLayer.ts` `drawTouch`). Round 2 finished every deferred item. Tests: `tests/measurement.test.ts` (round 1) and `tests/measurement2.test.ts` (round 2), synthetic takes for every measure, including the "no claim" cases.
+
+### 8.1 Bugs
+
+| # | Status | What was done | Where |
+|---|---|---|---|
+| B1 | Done (1) | Shaped, accented and written-level notes and guitar fingers are left out of per-finger velocity | `model.ts` `addTake`, `contextsOf` |
+| B2 | Done (1) | Swing is graded against the phrase's ratio or the tempo's band | `touch.ts` `swingBand`, `analyze.ts` `expT` |
+| B3 | Done (1) | `vsd` feeds the item only when graded (MIDI, dynamics goal) | `ladder.ts`, `vsdGraded` |
+| B4 | Done (1) | Median spread and the share rolled; each rolled chord is marked | `touch.ts` `chordsOf` |
+| B5 | Done (1) | Pedal kept per change and marked on the staff | `touch.ts` `pedalOf` |
+| B6 | Done (1) | Device latency is split from the player's habit, which is reported | `latency.ts` `splitLatency` |
+| B7 | Done (1) | Several presses per end, a p / mf / f check, refined from takes | `velCal.ts` |
+| B8 | Done (1) | Messa needs the rise AND the fall | `vocal.ts` `swellOf` |
+| B9 | Done (1, checked in 2) | The shape is fitted per hand (the worse one graded). The hands' lines must correlate (≥ 0.8) and stay within 10 of each other. Contrary motion uses each hand's own turning note. Nothing was missing. | `touch.ts` `shapeOf` |
+| B10 | Done (2) | Articulation is judged per hand (the hand is named when both play). The legato overlap limit is max(60 ms, 25 % of the hand's IOI). | `analyze.ts` articulation block, `legatoOverlapLimit` |
+| B11 | Done (2) | Unmarked notes that stand out like accents are counted (with G9) | `touch.ts` `accentsOf` |
+| B12 | Done (1 + 2) | Per-finger `tMean` feeds the `late-finger` finding (now a hypothesis, see §8.4). `ioiRatio` puts a `gap` mark on the staff at each hesitation. Leap `tMean` feeds the `late-leap` finding (G11). | `analyze.ts`, `model.ts` `findings` |
+| B13 | Done (1) | Encore takes feed the player model | `EncoreRun.tsx` |
+| B14 | Done (2) | The "Why?" sheet's velocity row is now the live velocity bars (four calibrated steps, the target outline, the accent top), not raw vel/127 dots | `DrillTake.tsx` `VelocityCurve`, `TakeReview.tsx` |
+| B15 | Done (2) | A note inside the mark window but beyond the take's SD limit (half the window) gets a faint short tick on its side. It never changes colour and never counts as a miss. | `noteMarks.ts` `softTick`, `markLayer.ts`, `measure.css` |
+
+### 8.2 Gaps
+
+| # | Status | What the player sees (he) | Where |
+|---|---|---|---|
+| G1–G8 | Done (1) | See round 1 | `touch.ts` |
+| G9 | Done (2) | "ההטעמות במקום (10/12)", "הטעמות חסרות (2 מתוך 12)", "הטעמות במקום לא כתוב (3)". A hollow dot marks a missed accent; a small hollow `>` marks an extra one. Graded on accent3/4, groups of 3/4 and the moving accent; soft elsewhere. | `accentsOf` |
+| G10 | Done (2) | "6 צלילים בשנייה" (always shown). "האטתם בשליש האחרון" (graded with the evenness goal). "נחלשתם בשליש האחרון" and "ה־D חלש מה־C (−15%)" are soft, named by note, never by finger. | `trillOf` |
+| G11 | Done (2) | "איחור אחרי קפיצות (+40 מ״ש, 4)", measured against the hand's own steady offset, with an arrow after each late landing. Octaves are named "אוקטבות לא יחד (2 מתוך 8)". Profile: "אחרי קפיצות של סקסטה ומעלה אתם נוחתים באיחור של 20 מילישניות". | `leapsOf`, `chordsOf`, `findings` `late-leap` |
+| G12 | Done (2), no new level | The parser keeps sf / sfz / fz / rf as a momentary mark on the next onset. Before, it stayed "in force" and hid the following p / f. fp / sfp leave the music at p. Lines: "תיבה 5: ה־sf לא בלט", "תיבה 7: fp בלי ירידה מיד אחריו", "sf / fp נשמעו (3)". **Not done:** a new control level. An sf in a scale is the same motion as control 5's accent, so the measure lives where the score writes it (pieces). | `score.ts`, `toDrill.ts`, `subitoOf` |
+| G13 | Done (2) | CC67 is recorded on every MIDI take, and "una corda … tre corde" is read from the score's words. Lines: "הפדל השמאלי במקום הכתוב", "חסר פדל שמאלי (3 מתוך 8 צלילים)", "הפדל השמאלי נשאר לחוץ אחרי tre corde". Soft only. **No claim** when the keyboard sent no CC67 in the take (most keyboards have no soft pedal). | `DrillTake.tsx`, `unaCordaOf` |
+| G14 | Done (2) | A phrase kept from a recorded take keeps each note's source velocity and its detached notes (`PhraseMark.vel / stac`). It is compared by shape, never by level: "העוצמות כמו במקור" / "העוצמות לא כמו במקור" (correlation < 0.5), and "במקור יש הדגשה בתיבה 2, פעמה 3". The model's staccato notes go through the existing staccato line. Soft: the notes and time pass a take. **No claim** when the model is even (SD < 4), has fewer than five notes in a hand, or is an older phrase without velocities. | `library.ts` `draftFrom`, `phrase.ts`, `modelOf` |
+| G15 | Done (2) | The messa shape and the scoop were done in round 1. Brightness is the centroid's change within one held note, "שינוי בהירות +18%", shown under the metric bars and never scored (weight 0). Breathiness (HNR / CPP) is left out: it is unreliable on a phone microphone. | `vocal.ts` `brightnessChange`, `Vocal.tsx` |
+| G16 | Not done (skipped) | Release velocity and channel aftertouch. Few keyboards send meaningful values, and reading them needs the MIDI input layer (`src/speech/midi.ts`), which was out of this round's scope (another agent works there). Nothing is claimed from them. | — |
+
+### 8.3 Melody over accompaniment (pieces)
+
+This applies where a piece chunk has a melody and an accompaniment: the RH top line (its upper voice when the staff has two voices) against the LH and the RH's lower voice.
+
+- **Per bar:** the melody's median velocity must be ≥ the accompaniment's + 8 % of the calibrated span (≥ 6).
+- **No claim:** two equal single lines of similar density (counterpoint, an invention) are not melody and accompaniment, so they get no line.
+- **Per passage:** "המנגינה בלטה ב־6 מתוך 8 תיבות" (ok from 75 %). A hollow dot sits over the first melody note of each bar where it didn't stand out. "למה?" on a miss: "יד המנגינה כבדה יותר, הליווי קל יותר."
+- **Long-term:** the `melody` tag becomes "המנגינה שלכם לא בולטת מעל הליווי" in the profile (G8 control stats) and goes to the coach with its confidence.
+
+Code: `touch.ts` `melodyTexture`, `melodyOf`.
+
+### 8.4 Long-term patterns and the coach
+
+- Every profile pattern now reaches the coach with its confidence (`profile.ts` `profileDigest`), so each is phrased as a hypothesis of that strength.
+- The per-finger timing finding is now a hypothesis: "ייתכן שזו אצבע 4 (יד ימין): הצלילים שהיא מוצעת להם מאחרים ב־18 מילישניות". It is silent when the player uses their own fingering. Per take, only notes and places are named.
+- New control tags: `accent-miss`, `accent-extra`, `trill-slow`, `trill-fade`, `trill-pair`, `leap-late`, `octaves`, `subito`, `una-corda`, `model-dyn`, `model-acc`, `melody`, `mic-legato`, `mic-step` (`measureText.ts` `CTL_TEXT`).
+
+### 8.5 The piano by microphone: what is measured and what is not
+
+Code: `src/engine/drills/micTouch.ts`. The single-note microphone path now also keeps the sound's energy (RMS per ~25 ms frame). It applies to one hand, single notes, no accents and no pedal goal:
+
+| Measure | How | Tolerance (honest) | Status |
+|---|---|---|---|
+| p vs f (relative steps) | Median attack peak (dB) per written zone | A step ≥ 5 dB in the written direction | Measured |
+| Crescendo / diminuendo shape | Attack peaks along the scale, each half fitted | Change ≥ 6 dB and R² ≥ 0.6 (MIDI asks 0.8: the register and the phone's response add ±2–3 dB per note) | Measured |
+| Legato vs staccato | How long each note stays within 18 dB of its peak, as a share of the gap to the next note | Legato ≥ 75 %, staccato ≤ 70 %; only with notes ≥ 250 ms apart and below C6 | Measured |
+| Absolute level (pp…ff) | — | The phone's gain, distance and room move a level by more than a p-to-mf step | Left out |
+| Accents at speed | — | The previous note's ring hides a +3 dB step | Left out |
+| Voicing, hand balance, hands together | — | One sound, no hands | Left out |
+| Portato, small overlaps, release timing | — | The room's decay blurs the last ~100 ms | Left out |
+| Pedal | — | The release is not heard under it | Left out |
+
+When the microphone can't measure, the take makes no claim and does not pass. The line says why, and "למה?" says: "הטלפון קרוב יותר לפסנתר, חדר שקט, בלי פדל.". The three cases:
+
+- "חלש מדי למדידת עוצמה" (attacks < 10 dB over the room's floor)
+- "מעט מדי צלילים ברורים למדידת המגע"
+- "מהר מדי לשמוע את השחרור"
+
+`micUnmeasurable` no longer blocks these goals; everything else still needs MIDI.
+
+### 8.6 The level test
+
+- **Touch by microphone:** a short section of what the phone measures: control 1 (staccato, RH), control 4 (crescendo up, diminuendo down, RH), control 13 (the reverse shape, RH) and control 15 (p / f steps, chromatic, RH). MIDI keeps its own section (`levelTest.ts` `TOUCH_MIC`, `Rung.spec`).
+- **Honest places** (`finishPlaces`):
+  - Control comes from the touch section when it ran. A hands step no longer lifts control above what touch proved.
+  - Without a touch section, control is inferred from the hands steps and flagged.
+  - By microphone, the pedal (`k-pedal`) is always flagged. Control above level 2 is flagged too: level 2 is as far as the microphone's steps prove without skipping a level it can't measure.
+  - The summary shows "משוער" beside those families and one line: "משוער: לא נמדד במבחן הזה".
+- No new levels were added, so the `encoreDifficulty` calibration exclusion (`control-13…16`) is unchanged.
