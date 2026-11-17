@@ -451,6 +451,8 @@ export interface Diagram {
   open?: number[];
   /** First fret shown (chord box base fret / neck window). */
   baseFret?: number;
+  /** Chord box: one finger across strings `from` … `to` at a fret (GUITAR-AUDIT C2). */
+  barre?: { fret: number; from: number; to: number };
   frets?: number;
   /** Keys: MIDI notes to mark. */
   midis?: number[];

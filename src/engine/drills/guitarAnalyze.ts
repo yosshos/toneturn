@@ -21,6 +21,7 @@ import { tuningById } from '../fretboard';
 import { drillDrumHits } from './bandTimeline';
 import { bassPitchOpts } from '../yin';
 import { analyzePhraseTake } from './phraseGrade';
+import { GT } from '../../i18n/guitarText';
 
 /** One analysis frame from the microphone (times in ms relative to beat 0, latency removed). */
 export interface GFrame {
@@ -191,8 +192,12 @@ export interface Normalized {
   octaveFixed: number;
   /** Glide artifacts dropped (bend / vibrato / slide pitches). */
   glides: number;
-  /** Clustered strums: onset, spread of the string onsets (ms), how many onsets were merged. */
-  strums: { at: number; spread: number; size: number }[];
+  /**
+   * Clustered strums: onset, spread of the string onsets (ms), how many onsets were merged. GUITAR-AUDIT B1: `g` = the
+   * chord group (time order), `pitched` = members with a readable pitch, `unheard` = the written notes of the chord no
+   * pitched member stood for (stood in for TIMING only; analyzeGuitarTake decides whether they really sounded).
+   */
+  strums: { at: number; spread: number; size: number; g: number; pitched: number; unheard: ExpNote[] }[];
   /** The single onsets snapped to an expected note for TIMING only (objects inside `played`): never a right pitch. */
   snapped: PlayedNote[];
 }
@@ -246,6 +251,8 @@ export function normalizeGuitarTake(drill: Drill, bpm: number, played: PlayedNot
         const hi = Math.max(from, n.pitch);
         ps.forEach((p, j) => {
           if (p.pitch === UNPITCHED || p.on <= prev.t + 30 || p.on >= g.t + radius(i)) return;
+          // B1: a note written in the arrival chord itself (the other voice of an octave slide) is not a glide.
+          if (Math.abs(p.on - g.t) < 30 && g.notes.some((x) => x.pitch === p.pitch)) return;
           if (p.pitch > lo && p.pitch < hi) drop.add(j);
         });
       }
@@ -267,15 +274,31 @@ export function normalizeGuitarTake(drill: Drill, bpm: number, played: PlayedNot
       .filter(({ p, j }) => !used.has(j) && Math.abs(p.on - g.t) <= r)
       .sort((a, b) => a.p.on - b.p.on);
     if (!cands.length) return;
-    const t0 = cands[0].p.on;
-    const members = cands.filter(({ p }) => p.on - t0 <= Math.min(win, r));
+    // B1: the strum is the densest run of onsets near the beat (most members, then nearest the click) — a stray note
+    // just before it must not stand for the whole chord.
+    const runAt = (t: number) => cands.filter(({ p }) => p.on >= t && p.on - t <= Math.min(win, r));
+    let t0 = cands[0].p.on;
+    for (const { p } of cands) {
+      const a = runAt(p.on).length;
+      const b = runAt(t0).length;
+      if (a > b || (a === b && Math.abs(p.on - g.t) < Math.abs(t0 - g.t))) t0 = p.on;
+    }
+    const members = runAt(t0);
     const fits = members.every(({ p }) => p.pitch === UNPITCHED || g.pcs.has(mod12(p.pitch)));
     if (!fits) return;
     for (const { j } of members) used.add(j);
     if (members.every(({ p }) => p.pitch === UNPITCHED)) unpitched++;
     const vel = Math.max(...members.map(({ p }) => p.vel));
+    // B1: which written notes a pitched member stands for — the same pitch first, else the same pitch class (an octave
+    // misread). The others stand in for timing only (the alignment needs one onset per note).
+    const heard = new Set<ExpNote>();
+    const pitched = members.filter(({ p }) => p.pitch !== UNPITCHED);
+    for (const { p } of pitched) {
+      const n = g.notes.find((x) => !heard.has(x) && x.pitch === p.pitch) ?? g.notes.find((x) => !heard.has(x) && mod12(x.pitch) === mod12(p.pitch));
+      if (n) heard.add(n);
+    }
     for (const n of g.notes) out.push({ pitch: n.pitch, on: t0, off: null, vel });
-    strums.push({ at: t0, spread: members[members.length - 1].p.on - t0, size: members.length });
+    strums.push({ at: t0, spread: members[members.length - 1].p.on - t0, size: members.length, g: i, pitched: pitched.length, unheard: g.notes.filter((n) => !heard.has(n)) });
   });
 
   // 4) Unpitched single onsets snap to the nearest single-note group (TIMING only: analyzeGuitarTake never credits
@@ -490,6 +513,8 @@ export interface GuitarExtras {
   changesPerMin: number | null;
   /** Chord ring-check: chords judged, chords where every note rang, and how often each pitch class was missing. */
   ring: { chords: number; full: number; missing: Record<number, number> } | null;
+  /** GUITAR-AUDIT B1: chord completeness — which written notes of the strums did not sound (null: no chords). */
+  chordMiss?: ChordCompleteness | null;
   /** Closed-set chord recognition (drill.recognize): chords named right / wrong / unclear (played again). */
   recognized?: { ok: number; wrong: number; unsure: number; heard: (string | null)[] };
   selfCheck: T2[];
@@ -593,6 +618,81 @@ function applyRules(drill: Drill, bpm: number, played: PlayedNote[]): { judged: 
   return { judged: { ...drill, notes, goal: { ...drill.goal, chordTonesOnBeats: undefined } }, rules: rep };
 }
 
+/** A written chord note that did not sound, how often (strums), and its string when the tab gives one. */
+export interface ChordMissNote {
+  pitch: number;
+  string?: number;
+  fret?: number;
+  count: number;
+}
+/** GUITAR-AUDIT B1: what the strums' sound says about each chord's notes. */
+export interface ChordCompleteness {
+  /** Strums whose notes could be judged (MIDI note-ons, or a chroma window by microphone). */
+  checked: number;
+  /** Strums with a missing note that can be told apart; strums where it was clearly missing. */
+  missed: number;
+  clear: number;
+  /** The missing notes that can be told apart (unique pitch class by mic, unique pitch by MIDI), most often first. */
+  notes: ChordMissNote[];
+  /** Written notes taken off the right count: missing and told apart. */
+  uncredited: ExpNote[];
+  /** Notes of strums with nothing to judge them by (an unpitched strum, no chroma window): timing only, never right. */
+  unclear: ExpNote[];
+}
+/** ⚙ By microphone a chord note counts as clearly missing below this share of the strongest pitch class. */
+const CLEAR_MISS = 0.09;
+
+/**
+ * GUITAR-AUDIT B1: did every note of each strum sound? MIDI: a written note no note-on stood for is missing. Microphone
+ * (one pitch tracker, so the members say little): the chroma 50–420 ms after the strum decides; a strum without one is
+ * judged only when it had a readable pitch (credit kept) — an unpitched one (a muted chuck) is never credited. A missing
+ * note is reported only when it can be told apart: by mic its pitch class is not doubled on another string (a dead low E
+ * under a ringing high E is inaudible as such).
+ */
+export function chordCompleteness(drill: Drill, bpm: number, strums: Normalized['strums'], frames: GFrame[], micLike: boolean): ChordCompleteness {
+  const gs = groupsOf(drill, bpm);
+  const out: ChordCompleteness = { checked: 0, missed: 0, clear: 0, notes: [], uncredited: [], unclear: [] };
+  const counts = new Map<ExpNote, number>();
+  const byPlace = new Map<string, ChordMissNote>();
+  for (const st of strums) {
+    const notes = (gs[st.g]?.notes ?? []).filter((n) => !isGhostTech(n));
+    if (notes.length < 2) continue;
+    let missing: ExpNote[] = [];
+    let level: number[] = [];
+    if (!micLike) {
+      out.checked++;
+      missing = st.unheard.filter((n) => notes.includes(n));
+    } else {
+      const win = frames.filter((f) => f.chroma && f.t >= st.at + 50 && f.t <= st.at + 420 && f.rms > 0.01);
+      if (win.length >= 3) {
+        out.checked++;
+        const c = meanChroma(win.map((f) => f.chroma!));
+        const rc = ringCheck(c, notes.map((n) => n.pitch));
+        missing = notes.filter((n) => rc.missing.includes(mod12(n.pitch)));
+        level = c;
+      } else {
+        if (st.pitched === 0) out.unclear.push(...notes);
+        continue;
+      }
+    }
+    const told = (n: ExpNote) => (micLike ? notes.filter((x) => mod12(x.pitch) === mod12(n.pitch)).length === 1 : notes.filter((x) => x.pitch === n.pitch).length === 1);
+    const rep = missing.filter(told);
+    if (!rep.length) continue;
+    out.missed++;
+    if (!micLike || rep.some((n) => level[mod12(n.pitch)] < CLEAR_MISS)) out.clear++;
+    for (const n of rep) {
+      out.uncredited.push(n);
+      counts.set(n, (counts.get(n) ?? 0) + 1);
+      const k = n.string ? `s${n.string}:${n.fret ?? 0}` : `p${micLike ? mod12(n.pitch) : n.pitch}`;
+      const x = byPlace.get(k) ?? { pitch: n.pitch, ...(n.string ? { string: n.string, fret: n.fret ?? 0 } : {}), count: 0 };
+      x.count++;
+      byPlace.set(k, x);
+    }
+  }
+  out.notes = [...byPlace.values()].sort((a, b) => b.count - a.count);
+  return out;
+}
+
 /**
  * One guitar take: normalise, run the shared analysis, add the guitar measures. Frames are optional (without them
  * only pitch + timing are judged; bends / vibrato / legato / mute / gaps stay null). Frames present = a microphone
@@ -635,7 +735,23 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       if (r.played && !ruled.rules.valid[i]) r.ok = false;
     });
   }
-  if (unclear || ruled) m.accuracy = m.perNote.length ? m.perNote.filter((r) => r.ok).length / m.perNote.length : 1;
+  // B1: a partial or muted strum is not a full chord — notes that did not sound lose the credit the clustering gave.
+  const micLike = mic || played.some((p) => p.pitch === UNPITCHED);
+  const cc = norm.strums.length ? chordCompleteness(drill, bpm, norm.strums, frames, micLike) : null;
+  // By mic a lone weak note (under a quarter of the strums) is left alone: no line, no mark (lenient, B10).
+  const ccReport = !!cc && cc.missed > 0 && cc.notes.length > 0 && (!micLike || cc.missed >= Math.max(1, Math.ceil(cc.checked * 0.25)));
+  if (cc) {
+    const off = new Set(ccReport ? cc.uncredited : []);
+    const dim = new Set(cc.unclear);
+    m.perNote.forEach((r) => {
+      if (!r.played || !r.ok) return;
+      if (dim.has(r.exp)) {
+        r.ok = false;
+        unclear++;
+      } else if (off.has(r.exp)) r.ok = false;
+    });
+  }
+  if (unclear || ruled || ccReport) m.accuracy = m.perNote.length ? m.perNote.filter((r) => r.ok).length / m.perNote.length : 1;
   {
     const pitchedExp = drill.notes.filter((n) => !isGhostTech(n)).length;
     const share = pitchedExp ? unclear / pitchedExp : 0;
@@ -692,6 +808,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
     palmMuteShare: null,
     changesPerMin: null,
     ring: null,
+    chordMiss: cc,
     selfCheck: selfChecks(drill),
   };
 
@@ -759,10 +876,16 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
     if (rec.wrong) factors.push({ verdict: 'not', en: `Another chord: heard ${firstWrong.replace(' (', ', not ').replace(')', '')}`, he: `אקורד אחר: נשמע ${firstWrong.replace(' (', ' ולא ').replace(')', '')}` });
     else if (rec.unsure) factors.push({ verdict: 'almost', en: `${rec.unsure === 1 ? 'One chord' : `${rec.unsure} chords`} not clear enough to name — play it again, a clean tone, every string`, he: `${rec.unsure === 1 ? 'אקורד אחד לא ברור' : `${rec.unsure} אקורדים לא ברורים`} מספיק כדי לזהות — נגנו שוב, צליל נקי, כל המיתרים` });
   }
+  // B1: one line in the player's terms — the note that didn't sound, and its string when only one string has it.
+  if (cc && ccReport) {
+    const line = GT.chordMiss(cc.notes.slice(0, 2).map((x) => PC_SHARP[mod12(x.pitch)]), cc.missed, cc.checked, cc.notes.length === 1 && cc.notes[0].string ? { str: cc.notes[0].string, open: PC_SHARP[mod12(cc.notes[0].pitch - (cc.notes[0].fret ?? 0))] } : null);
+    factors.push({ verdict: cc.clear > cc.checked / 2 ? 'not' : 'almost', ...line });
+  }
   // Ring-check: in the first ~400 ms after each chord's onset, did every chord note sound?
   if (chordGs.length && frames.some((f) => f.chroma)) {
     const ring = { chords: 0, full: 0, missing: {} as Record<number, number> };
     for (const g of chordGs) {
+      if (g.notes.every(isGhostTech)) continue; // B6: a muted chuck is not meant to ring
       const on = onOf(drill.notes.indexOf(g.notes[0]));
       const win = frames.filter((f) => f.chroma && f.t >= on + 50 && f.t <= on + 420 && f.rms > 0.01);
       if (win.length < 3) continue;
@@ -771,19 +894,8 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       if (!r.missing.length) ring.full++;
       for (const p of r.missing) ring.missing[p] = (ring.missing[p] ?? 0) + 1;
     }
-    if (ring.chords) {
-      extra.ring = ring;
-      const share = ring.full / ring.chords;
-      if (share < 0.75) {
-        const worst = Object.entries(ring.missing).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p]) => PC_EN[+p]);
-        const worstHe = Object.entries(ring.missing).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([p]) => PC_HE[+p]);
-        factors.push({
-          verdict: share < 0.4 ? 'not' : 'almost',
-          en: `Not every note rang (${ring.full} of ${ring.chords} chords full) — listen for ${worst.join(', ')}`,
-          he: `לא כל הצלילים צלצלו (${ring.full} מתוך ${ring.chords} אקורדים מלאים) — הקשיבו ל־${worstHe.join(', ')}`,
-        });
-      }
-    }
+    // The chip ("full chords x/y"); the line is chordCompleteness's (B1), which names only notes that can be told apart.
+    if (ring.chords) extra.ring = ring;
   }
   if (chordGs.length >= 2) {
     const key = (g: Group) => [...g.pcs].sort((a, b) => a - b).join(',');

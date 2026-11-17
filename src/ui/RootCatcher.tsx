@@ -1,7 +1,11 @@
 // Root Catcher (bass): the chords change bar by bar; play each chord's root on its first beat. Engine:
 // src/engine/rootCatcher.ts; the screen is the beginner shell (BeginnerShell.tsx).
 
-import { KEY_SHOW, type BLap, type BMark } from '../engine/beginnerRun';
+import { KEY_SHOW, type BLap, type BMark, type BTarget } from '../engine/beginnerRun';
+import { shapesFor } from '../engine/chordFinder';
+import type { ChordQuality } from '../engine/chordRecognize';
+import type { Diagram } from '../engine/lesson';
+import { ChordPair } from './Instrument';
 import { ROOT_LEVELS, rootBand, rootJudge, rootLap } from '../engine/rootCatcher';
 import type { NoteEvent } from '../engine/lesson';
 import type { GameScreenProps } from './gameProps';
@@ -49,9 +53,14 @@ const CFG: BeginnerCfg = {
 };
 
 /** The chord now (big), the next one, and the lap's strip of changes with their marks. */
-export function ChordBoard({ lap, marks, now, lang, numerals = false, minor = false }: { lap: BLap; marks?: (BMark | undefined)[]; now: number; lang: 'he' | 'en'; numerals?: boolean; minor?: boolean }) {
+export function ChordBoard({ lap, marks, now, lang, numerals = false, minor = false, boxes = false, leftHanded }: { lap: BLap; marks?: (BMark | undefined)[]; now: number; lang: 'he' | 'en'; numerals?: boolean; minor?: boolean; /** Strum Changes (GUITAR-AUDIT §2.4): the shapes of the chord now and the next one. */ boxes?: boolean; leftHanded?: boolean }) {
   const cur = lap.targets[Math.max(0, now)];
   const next = lap.targets[Math.max(0, now) + 1];
+  const boxOf = (t: BTarget | undefined): Diagram | null => {
+    if (!boxes || !t?.chord) return null;
+    const sh = shapesFor(t.chord.root, t.chord.quality as ChordQuality)[0];
+    return sh ? { kind: 'box', instrument: 'guitar', ...sh.box } : null;
+  };
   const show = (i: number) => (numerals ? (lap.targets[i].num ?? '') : lap.targets[i].label);
   return (
     <div className="bg-chords">
@@ -71,6 +80,7 @@ export function ChordBoard({ lap, marks, now, lang, numerals = false, minor = fa
           </span>
         )}
       </div>
+      {boxes && <ChordPair now={boxOf(cur)} next={next && next.label !== cur?.label ? boxOf(next) : null} lang={lang} leftHanded={leftHanded} />}
       <div className={`gtr-strip bg-strip n${lap.targets.length}`} dir="ltr">
         {lap.targets.map((_, i) => (
           <span key={i} className={`gtr-cell ${marks?.[i] === 'hit' ? 'hit' : ''} ${marks?.[i] === 'wrong' || marks?.[i] === 'miss' ? 'miss' : ''} ${i === now ? 'now' : ''}`}>

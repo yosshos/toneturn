@@ -31,6 +31,8 @@ import './feedback.css';
 import './feedback2.css';
 import './practice.css';
 import './studio-elements.css';
+// GUITAR-AUDIT: chord boxes, the tab's finger row, the neck's string names (both looks; studio rules scoped inside).
+import './guitar.css';
 import { bootStudioLook } from './ui/studio/lookBoot';
 import { App } from './ui/App';
 import { BrandSplash } from './ui/brand/Splash';

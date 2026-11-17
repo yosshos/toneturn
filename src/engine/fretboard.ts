@@ -112,12 +112,51 @@ export function parseShape(s: string, strings = 6): FretShape {
 /** Move a shape up by n frets (open strings become fretted: the barre). */
 export const shiftShape = (s: FretShape, n: number): FretShape => ({ dots: s.dots.map((d) => ({ str: d.str, fret: d.fret + n })), muted: s.muted.slice() });
 
-/** A chord-box picture: fretted dots (roots marked), open and muted strings, the first fret shown. */
+/** A barre: one finger (1) across strings `from` (lowest-sounding, higher number) … `to` at one fret. */
+export interface Barre {
+  fret: number;
+  from: number;
+  to: number;
+}
+/** A chord-box picture: fretted dots (roots marked, the fretting finger as a label), open and muted strings, the first fret shown. */
 export interface BoxPicture {
-  dots: { str: number; fret: number; root?: boolean }[];
+  dots: { str: number; fret: number; root?: boolean; label?: string }[];
   open: number[];
   muted: number[];
   baseFret: number;
+  barre?: Barre;
+}
+
+/**
+ * GUITAR-AUDIT C1 / C2: a standard fretting for a shape — finger 1 at the lowest fret (a barre when two or more dots
+ * share it and no open string rings, or when they are the top strings of an open shape: F, Dm7), then fingers in fret
+ * order, lower strings first, one finger a fret where the hand allows (else packed: the A-shape barre's 2-3-4). It
+ * reproduces the open chords' book fingerings (C 3-2-1, G 2-1-3, D 1-3-2, Am 2-3-1, E 2-3-1, Dm 2-3-1 …). Null when
+ * the shape needs more than four fingers.
+ */
+export function shapeFingers(s: FretShape): { fingers: Map<NeckPos, number>; barre?: Barre } | null {
+  const fretted = s.dots.filter((d) => d.fret > 0);
+  if (!fretted.length) return { fingers: new Map() };
+  const lo = Math.min(...fretted.map((d) => d.fret));
+  const atLo = fretted.filter((d) => d.fret === lo).sort((a, b) => b.str - a.str);
+  const hasOpen = s.dots.some((d) => d.fret === 0);
+  const topRun = atLo.length >= 2 && atLo[atLo.length - 1].str === 1 && atLo.every((d, i) => i === 0 || atLo[i - 1].str - d.str === 1) && lo === 1;
+  const barre = atLo.length >= 2 && (!hasOpen || topRun) ? { fret: lo, from: atLo[0].str, to: atLo[atLo.length - 1].str } : undefined;
+  const fingers = new Map<NeckPos, number>();
+  const rest = fretted.filter((d) => !(barre && d.fret === lo)).sort((a, b) => a.fret - b.fret || b.str - a.str);
+  if (barre) for (const d of atLo) fingers.set(d, 1);
+  const assign = (spread: boolean): boolean => {
+    let prev = barre ? 1 : 0;
+    for (const d of rest) {
+      const f = spread ? Math.max(prev + 1, 1 + d.fret - lo) : prev + 1;
+      if (f > 4) return false;
+      fingers.set(d, f);
+      prev = f;
+    }
+    return true;
+  };
+  if (!assign(true) && !assign(false)) return null;
+  return { fingers, ...(barre ? { barre } : {}) };
 }
 /** The picture of a shape: fret 0 → ○; the window starts at 1 when everything fits in frets 1–4, else at the lowest fret. */
 export function boxPicture(t: Tuning, s: FretShape, rootPc?: number): BoxPicture {
@@ -125,11 +164,13 @@ export function boxPicture(t: Tuning, s: FretShape, rootPc?: number): BoxPicture
   const lo = fretted.length ? Math.min(...fretted.map((d) => d.fret)) : 1;
   const hi = fretted.length ? Math.max(...fretted.map((d) => d.fret)) : 1;
   const isRoot = (d: NeckPos) => rootPc !== undefined && (((noteAt(t, d.str, d.fret) - rootPc) % 12) + 12) % 12 === 0;
+  const fg = shapeFingers(s);
   return {
-    dots: fretted.map((d) => ({ str: d.str, fret: d.fret, ...(isRoot(d) ? { root: true } : {}) })),
+    dots: fretted.map((d) => ({ str: d.str, fret: d.fret, ...(isRoot(d) ? { root: true } : {}), ...(fg?.fingers.has(d) ? { label: String(fg.fingers.get(d)) } : {}) })),
     open: s.dots.filter((d) => d.fret === 0).map((d) => d.str),
     muted: s.muted.slice(),
     baseFret: hi <= 4 ? 1 : lo,
+    ...(fg?.barre ? { barre: fg.barre } : {}),
   };
 }
 

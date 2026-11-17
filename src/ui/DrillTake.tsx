@@ -21,6 +21,11 @@ import { listenLoop } from './Flight';
 import { InputCheck, InputWatchdog } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
 import { tuningById } from '../engine/fretboard';
+import { boxOfNotes, ChordPair } from './Instrument';
+import { identifyChord } from '../engine/chordFinder';
+import type { ChordQuality } from '../engine/chordRecognize';
+import type { Diagram } from '../engine/lesson';
+import { GT } from '../i18n/guitarText';
 import { bandBass } from '../engine/drills/bassBand';
 import { drillBandHits, drillDrumHits, unisonLine } from '../engine/drills/bandTimeline';
 import { clickPlan, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
@@ -147,8 +152,25 @@ export function useLineWindow(lines: number, beat: number, perLine: number, focu
   return { from, pager };
 }
 
+const CHORD_Q: ChordQuality[] = ['M', 'm', '7', 'maj7', 'm7', 'm7b5', 'dim7', 'sus2', 'sus4', '5', '9', 'add9'];
+const PC_NAME = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+const Q_SHOW: Record<string, string> = { M: '', m: 'm', '7': '7', maj7: 'maj7', m7: 'm7', m7b5: 'm7♭5', dim7: '°7', sus2: 'sus2', sus4: 'sus4', '5': '5', '9': '9', add9: 'add9' };
+/** T5: the strummed chords of a drill in order (three strings or more), each as a box picture with its name. */
+export function strummedChords(ns: ExpNote[]): { beat: number; sig: string; box: Diagram; name: string }[] {
+  const by = new Map<number, ExpNote[]>();
+  for (const n of ns) if (n.chordId !== undefined && n.string) by.set(n.chordId, [...(by.get(n.chordId) ?? []), n]);
+  return [...by.values()]
+    .filter((g) => new Set(g.map((n) => n.string)).size >= 3)
+    .map((g) => {
+      const c = identifyChord(g.filter((n) => n.technique !== 'dead').map((n) => n.pitch), CHORD_Q);
+      const name = c ? `${PC_NAME[c.root]}${Q_SHOW[c.quality] ?? ''}${c.bass !== undefined ? `/${PC_NAME[c.bass]}` : ''}` : '';
+      return { beat: Math.min(...g.map((n) => n.beat)), sig: g.map((n) => `${n.string}:${n.fret}`).sort().join(','), box: boxOfNotes(g), name };
+    })
+    .sort((a, b) => a.beat - b.beat);
+}
+
 /** Guitar / bass drill as tab (spec AJ): string / fret, technique marks above, fingers or strokes below, result colours. */
-export function DrillTab({ drill, fingering = false, picking = false, result, beat = -1, upTo, live, cue = false, prior }: { /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** The count-in is running: the first digit pulses. */ cue?: boolean; /** The last take of this item (its ticks, faded, under the review's). */ prior?: TakeMetrics | null; drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null; /** Beat of the running take (−1 idle): the window follows it. */ beat?: number; /** Only the notes before this beat (the written bars of a free-choice drill). */ upTo?: number }) {
+export function DrillTab({ drill, fingering = false, picking = false, result, beat = -1, upTo, live, cue = false, prior, lang = 'en', leftHanded }: { /** For the finger row's label and the chord boxes' captions. */ lang?: 'he' | 'en'; leftHanded?: boolean; /** Slice 5: the running take's settled notes (live marks). */ live?: LiveTake | null; /** The count-in is running: the first digit pulses. */ cue?: boolean; /** The last take of this item (its ticks, faded, under the review's). */ prior?: TakeMetrics | null; drill: Drill; fingering?: boolean; picking?: boolean; result?: TakeMetrics | null; /** Beat of the running take (−1 idle): the window follows it. */ beat?: number; /** Only the notes before this beat (the written bars of a free-choice drill). */ upTo?: number }) {
   const ns = upTo === undefined ? drill.notes : drill.notes.filter((n) => n.beat < upTo - 1e-6);
   const byKey = new Map<string, NoteResult>();
   for (const r of result?.perNote ?? []) byKey.set(noteKey(r.exp), r);
@@ -167,7 +189,8 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
     const pos = group.filter((x) => x.string).map((x) => ({ str: x.string!, fret: x.technique === 'dead' ? ('x' as const) : (x.fret ?? 0) }));
     if (!pos.length) continue;
     const tech = n.technique && TECH_SYM[n.technique] ? TECH_SYM[n.technique]! + (n.bendCents && n.technique !== 'vibrato' ? (n.bendCents >= 200 ? ' full' : ' ½') : '') : undefined;
-    const bottom = picking ? (n.stroke ? STROKE_SYM[n.stroke] : undefined) : fingering && n.finger ? String(n.finger) : undefined;
+    // T1: fingers of single notes only — a chord's fingers are in its box (T5), not one digit under a stack.
+    const bottom = picking ? (n.stroke ? STROKE_SYM[n.stroke] : undefined) : fingering && n.finger && group.length === 1 ? (n.finger >= 5 ? 'T' : String(n.finger)) : undefined;
     const ms = result ? group.map((x) => markOf(byKey.get(noteKey(x)), timingMs)) : [];
     const mark = result ? worstMark(ms) : undefined;
     // The tick of the note that set the mark (early / late), its offset in ms.
@@ -196,12 +219,20 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
   const firstBad = result ? lines.findIndex((l) => l.some((c) => c.mark && c.mark !== 'ok')) : -1;
   // The window follows the running beat by line (a timeline's lines differ in length).
   const lineBeat = sl && beat >= 0 ? Math.max(0, lineOf(beat)) * perLine : beat;
-  const { from, pager } = useLineWindow(lines.length, lineBeat, perLine, Math.max(0, firstBad));
+  // T5: strummed chords (three strings or more) — the chord now and the next one as small boxes with fingers; the tab
+  // then shows one line at a time so the screen still fits a phone.
+  const chordGroups = useMemo(() => strummedChords(ns), [drill, upTo]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { from, pager } = useLineWindow(lines.length, lineBeat, perLine, Math.max(0, firstBad), chordGroups.length ? 1 : 2);
+  const ci = chordGroups.length ? Math.max(0, chordGroups.reduce((k, g, i) => (g.beat <= beat + 0.02 ? i : k), 0)) : -1;
+  const nextCi = ci >= 0 ? chordGroups.findIndex((g, i) => i > ci && g.sig !== chordGroups[ci].sig) : -1;
+  const fingerLabel = !picking && fingering && cols.some((c) => c.bottom) ? GT.fingerRow[lang] : undefined;
   return (
     <div className="drill-staff drill-tab" data-tab-lines={lines.length} {...(sl ? { 'data-tab-bars': sl.map((l) => l.bars.map((b) => b.cur).join(' ')).join(' | ') } : {})}>
-      {lines.slice(from, from + 2).map((l, i) =>
+      {ci >= 0 && <ChordPair now={chordGroups[ci].box} next={nextCi >= 0 ? chordGroups[nextCi].box : null} nowName={chordGroups[ci].name} nextName={nextCi >= 0 ? chordGroups[nextCi].name : undefined} lang={lang} leftHanded={leftHanded} />}
+      {lines.slice(from, from + (ci >= 0 ? 1 : 2)).map((l, i) =>
         l.length ? (
           <TabLine
+            bottomLabel={fingerLabel}
             key={from + i}
             now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
             cols={l.map(({ mark: _m, at: _a, lmark: _lm, ldev: _ld, pmark: _pm, pdev: _pd, ...c }) => ({ ...c, ...(kicks.has(Math.round(_a * 1e3)) ? { kick: true } : {}) }))}

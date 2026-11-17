@@ -1,0 +1,58 @@
+/* GUITAR-AUDIT (2026-11-17): chord boxes, the drill chord strip, the tab's finger row and now-column, the neck's
+   string names. Both looks; the studio look (default) gets Paper tones: ink lines, hairlines, soft shadows. */
+
+/* ---- chord box (C1–C4, C6) ---- */
+.chord-box .box-str { stroke: #8f86a6; }
+.chord-box .fret-wire { stroke: #c9c1d8; stroke-width: 1.4; }
+.chord-box .box-nut { stroke: var(--ink, #1e1033); stroke-width: 5; stroke-linecap: round; }
+.chord-box .base-fret { fill: var(--ink, #1e1033); font-size: 13px; font-weight: 700; letter-spacing: -0.02em; }
+.chord-box .box-barre { fill: #7c3aed; }
+.chord-box .box-barre-n,
+.chord-box .box-dot text { fill: #ffffff; font-size: 11px; font-weight: 800; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.chord-box .box-dot.given circle { fill: #7c3aed; stroke: none; }
+.chord-box .box-dot.root circle { fill: #0f9e8e; stroke: none; }
+.chord-box .box-mark { fill: #c2334d; font-size: 11px; }
+.chord-box .box-open { stroke: var(--ink, #1e1033); stroke-width: 1.6; fill: none; }
+.chord-box.compact .box-barre-n,
+.chord-box.compact .box-dot text { font-size: 13px; }
+.chord-box.compact .base-fret { font-size: 14px; }
+
+:root[data-look='studio'] .chord-box .box-str { stroke: #8f86a6; }
+:root[data-look='studio'] .chord-box .fret-wire { stroke: #d6cde6; stroke-width: 1.4; }
+:root[data-look='studio'] .chord-box .box-nut { stroke: #1e1033; }
+:root[data-look='studio'] .chord-box .box-dot.given circle { fill: #7c3aed; }
+:root[data-look='studio'] .chord-box .box-dot.root circle { fill: #0f9e8e; }
+:root[data-look='studio'] .chord-box .box-dot text { fill: #ffffff; }
+
+/* ---- Now / Next chord boxes (drills, Strum Changes) ---- */
+.chord-pair { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin: 0 auto 4px; direction: ltr; }
+.chord-pair figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.chord-pair figcaption { font-size: 0.72rem; line-height: 1.1; color: var(--ink-dim, #66597d); display: flex; gap: 4px; align-items: baseline; }
+.chord-pair figcaption b { font-size: 0.95rem; color: var(--ink, #1e1033); font-weight: 800; }
+.chord-pair .chord-box { width: 96px; max-width: none; margin: 0; }
+.chord-pair .is-next { opacity: 0.55; }
+.chord-pair .is-next .chord-box { width: 68px; }
+@media (max-height: 760px) {
+  .chord-pair .chord-box { width: 74px; }
+  .chord-pair .is-next .chord-box { width: 54px; }
+}
+:root[data-look='studio'] .chord-pair figure.is-now { background: #ffffff; border-radius: 12px; padding: 3px 8px 2px; box-shadow: 0 1px 0 #ebe4f5, 0 4px 12px rgb(30 16 51 / 0.07); }
+
+/* Strum Changes: the boxes beside the big chord name */
+.bg-chords .chord-pair { margin-top: 2px; }
+
+/* ---- tab: the finger row (T1) and the now-column (T3) ---- */
+.guitar-tab { direction: ltr; }
+.guitar-tab svg text.tab-row-digit { fill: #6d28d9; font-size: 10.5px; font-weight: 800; font-family: inherit; stroke: none; }
+.guitar-tab svg text.tab-row-label { fill: #6d28d9; font-size: 8.5px; font-weight: 700; letter-spacing: 0.03em; font-family: inherit; opacity: 0.85; stroke: none; }
+.guitar-tab .svg-wrap > div { position: relative; z-index: 1; }
+.guitar-tab .tab-col-now { position: absolute; top: 6%; bottom: 6%; width: 24px; margin-left: -12px; border-radius: 8px; background: rgb(255 212 59 / 0.32); box-shadow: inset 0 0 0 1px rgb(201 138 0 / 0.28); pointer-events: none; transition: left 0.1s ease-out; z-index: 0; }
+.guitar-tab .staff-now { z-index: 0; width: 2px; margin-left: -1px; outline: 0; background: rgb(201 138 0 / 0.55); box-shadow: none; }
+:root[data-look='studio'] .guitar-tab .staff-now { width: 2px; margin-left: -1px; box-shadow: none; background: rgb(201 138 0 / 0.55); }
+@media (prefers-reduced-motion: reduce) { .guitar-tab .tab-col-now { transition: none; } }
+
+/* ---- neck: string names at the nut (N1), inactive strings visible (N2) ---- */
+.neck .str-name { font-size: 15px; font-weight: 800; text-anchor: middle; fill: var(--ink-dim, #66597d); }
+.neck .str-name.off { opacity: 0.55; }
+.neck .str.off { opacity: 0.45; }
+:root[data-look='studio'] .neck .str.off { opacity: 0.45; stroke: #b9aed0; }

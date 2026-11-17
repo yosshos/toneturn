@@ -170,13 +170,13 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
       <>
         {model ? (
           <>
-            {view !== 'staff' && <DrillTab drill={md} />}
+            {view !== 'staff' && <DrillTab drill={md} lang={lang} />}
             {view !== 'tab' && <DrillStaff drill={md} />}
           </>
         ) : (
           (ruleChart ?? (
             <>
-              {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} />}
+              {view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} lang={lang} />}
               {view !== 'tab' && <DrillStaff drill={drill} result={result} lang={lang} />}
             </>
           ))
@@ -192,7 +192,7 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
   const written = upTo === undefined || upTo > 0;
   return (
     <>
-      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} cue={cue} prior={prior} />}
+      {written && view !== 'staff' && <DrillTab drill={drill} fingering={ds.showFingering} picking={!!ds.showPicking} result={result} beat={beat} upTo={upTo} live={live} cue={cue} prior={prior} lang={lang} />}
       {written && view !== 'tab' && <DrillStaff drill={drill} result={result} beat={beat} upTo={upTo} live={live} lang={lang} cue={cue && view === 'staff'} prior={prior} roles={roles} />}
       {chartOnly && <ChartView drill={drill} beat={beat} fromBeat={drill.freeFrom ?? 0} result={result} loop={loop} lang={lang} compact={written} roles={roles} />}
       {drill.show === 'chart' && (

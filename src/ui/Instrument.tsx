@@ -17,6 +17,7 @@ import { courseInstrument, noteViewsOf, playedShift } from './noteViewPref';
 import { heardMidis, identifyChord, judgeStrum } from '../engine/chordFinder';
 import { useStrums } from './strumListen';
 import { Icon } from './icons';
+import { GT } from '../i18n/guitarText';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -68,9 +69,15 @@ export interface NeckDot {
 export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, onTap, label }: { tuning: Tuning; lo?: number; hi?: number; dots?: NeckDot[]; strings?: number[]; leftHanded?: boolean; onTap?: (str: number, fret: number) => void; label?: string }) {
   const n = tuning.open.length;
   const frets = hi - lo + 1;
-  const W = 40 + frets * 46;
+  // GUITAR-AUDIT N1: a gutter at the nut end for the string names (E A D G B e), Latin and left-to-right in Hebrew too.
+  const G = 14;
+  const W = 40 + G + frets * 46;
   const H = 18 + n * 26;
-  const x = (f: number) => (lo === 0 ? (f === 0 ? 18 : 30 + (f - 0.5) * 46) : 30 + (f - lo + 0.5) * 46);
+  const x = (f: number) => G + (lo === 0 ? (f === 0 ? 18 : 30 + (f - 0.5) * 46) : 30 + (f - lo + 0.5) * 46);
+  const nm = (i: number) => {
+    const l = NAMES[((tuning.open[i] % 12) + 12) % 12];
+    return i === 0 && n > 1 && NAMES[((tuning.open[n - 1] % 12) + 12) % 12] === l ? l.toLowerCase() : l;
+  };
   const y = (s: number) => 18 + (s - 1) * 26;
   const X = (v: number) => (leftHanded ? W - v : v);
   const can = (s: number) => !strings || strings.includes(s);
@@ -78,7 +85,7 @@ export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, 
     <div className="neck-wrap" dir="ltr">
       <svg className={`neck ${tuning.fretted ? '' : 'fretless'}`} viewBox={`0 0 ${W} ${H + 14}`} role={onTap ? 'group' : 'img'} aria-label={label}>
         {/* fretboard */}
-        <rect x={X(leftHanded ? W - 4 : 26)} y={y(1) - 8} width={W - 30} height={(n - 1) * 26 + 16} className="neck-wood" transform={leftHanded ? `translate(${-(W - 30)},0)` : undefined} />
+        <rect x={leftHanded ? 4 : 26 + G} y={y(1) - 8} width={W - 30 - G} height={(n - 1) * 26 + 16} className="neck-wood" />
         {INLAYS.filter((f) => f >= Math.max(1, lo) && f <= hi).map((f) =>
           f % 12 === 0 ? (
             <g key={f}>
@@ -92,12 +99,17 @@ export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, 
         {tuning.fretted &&
           Array.from({ length: frets + (lo === 0 ? 0 : 1) }, (_, i) => {
             const f = lo === 0 ? i + 1 : lo + i;
-            const fx = lo === 0 ? 30 + i * 46 + 46 : 30 + i * 46;
+            const fx = G + (lo === 0 ? 30 + i * 46 + 46 : 30 + i * 46);
             return <line key={f} x1={X(fx - (lo === 0 ? 0 : 0))} x2={X(fx)} y1={y(1) - 8} y2={y(n) + 8} className="fret-wire" />;
           })}
-        {lo === 0 && <line x1={X(30)} x2={X(30)} y1={y(1) - 9} y2={y(n) + 9} className="nut" />}
+        {lo === 0 && <line x1={X(30 + G)} x2={X(30 + G)} y1={y(1) - 9} y2={y(n) + 9} className="nut" />}
         {Array.from({ length: n }, (_, i) => (
-          <line key={i} x1={X(26)} x2={X(W - 4)} y1={y(i + 1)} y2={y(i + 1)} className={`str ${can(i + 1) ? '' : 'off'}`} strokeWidth={0.8 + i * 0.35} />
+          <line key={i} x1={X(26 + G)} x2={X(W - 4)} y1={y(i + 1)} y2={y(i + 1)} className={`str ${can(i + 1) ? '' : 'off'}`} strokeWidth={0.8 + i * 0.35} />
+        ))}
+        {Array.from({ length: n }, (_, i) => (
+          <text key={`n${i}`} x={X(9)} y={y(i + 1) + 5} className={`str-name ${can(i + 1) ? '' : 'off'}`}>
+            {nm(i)}
+          </text>
         ))}
         {/* fret numbers */}
         {Array.from({ length: frets }, (_, i) => lo + i)
@@ -147,43 +159,66 @@ export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, 
   );
 }
 
-/** A chord box: strings vertical (lowest on the left for right-handed players), frets downward. */
-export function ChordBox({ d, tuning, leftHanded }: { d: Diagram; tuning: Tuning; leftHanded?: boolean }) {
+/**
+ * A chord box: strings vertical (lowest on the left for right-handed players), frets downward. GUITAR-AUDIT C1–C4, C6:
+ * the fretting finger in each dot (1–4, T), a barre as one bar across its strings, a thick ink nut, the base fret
+ * written large ("5fr") beside the first fret, low strings thicker. `compact` = the small Now / Next boxes in drills
+ * and games (only the frets the shape needs, larger dots and digits for its size). Always left-to-right.
+ */
+export function ChordBox({ d, tuning, leftHanded, compact = false, label }: { d: Diagram; tuning: Tuning; leftHanded?: boolean; compact?: boolean; label?: string }) {
   const n = tuning.open.length;
-  const frets = d.frets ?? 5;
+  const used = (d.dots ?? []).map((p) => p.fret).filter((f) => f > 0);
   const base = d.baseFret ?? 1;
-  const W = 30 + (n - 1) * 22 + 30;
-  const H = 36 + frets * 24 + 10;
+  const frets = compact ? Math.max(3, (used.length ? Math.max(...used) : 1) - base + 1) : (d.frets ?? 5);
+  const SP = 22;
+  const FR = compact ? 22 : 24;
+  const TOP = compact ? 30 : 36;
+  const LM = base > 1 ? 34 : 24;
+  const W = LM + (n - 1) * SP + 16;
+  const H = TOP + frets * FR + 6;
   const sx = (s: number) => {
     const col = n - s; // string n (lowest) → column 0
-    const v = 30 + col * 22;
+    const v = LM + col * SP;
     return leftHanded ? W - v : v;
   };
-  const fy = (f: number) => 36 + (f - base + 0.5) * 24;
+  const fy = (f: number) => TOP + (f - base + 0.5) * FR;
+  const r = compact ? 9.5 : 8.5;
+  const br = d.barre && d.barre.fret >= base && d.barre.fret < base + frets ? d.barre : null;
+  const onBarre = (p: { str: number; fret: number }) => !!br && p.fret === br.fret && p.str <= br.from && p.str >= br.to;
   return (
-    <svg className="chord-box" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="chord diagram">
-      {base === 1 ? <line x1={sx(n)} x2={sx(1)} y1={36} y2={36} className="nut" /> : <text x={leftHanded ? W - 8 : 8} y={36 + 16} className="base-fret">{base}</text>}
+    <svg className={`chord-box ${compact ? 'compact' : ''}`} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? 'chord diagram'} style={{ direction: 'ltr' }}>
       {Array.from({ length: frets + 1 }, (_, i) => (
-        <line key={i} x1={sx(n)} x2={sx(1)} y1={36 + i * 24} y2={36 + i * 24} className="fret-wire" />
+        <line key={i} x1={sx(n)} x2={sx(1)} y1={TOP + i * FR} y2={TOP + i * FR} className="fret-wire" />
       ))}
       {Array.from({ length: n }, (_, i) => (
-        <line key={i} x1={sx(i + 1)} x2={sx(i + 1)} y1={36} y2={36 + frets * 24} className="str" />
+        <line key={i} x1={sx(i + 1)} x2={sx(i + 1)} y1={TOP} y2={TOP + frets * FR} className="str box-str" strokeWidth={1 + i * 0.28} />
       ))}
+      {base === 1 ? <line x1={sx(n) - 1.5} x2={sx(1) + 1.5} y1={TOP - 2.5} y2={TOP - 2.5} className="box-nut" /> : (
+        <text x={leftHanded ? W - 4 : 4} y={fy(base) + 4.5} className="base-fret" textAnchor={leftHanded ? 'end' : 'start'}>
+          {base}fr
+        </text>
+      )}
       {(d.muted ?? []).map((s) => (
-        <text key={`m${s}`} x={sx(s)} y={26} className="box-mark">
+        <text key={`m${s}`} x={sx(s)} y={TOP - 9} className="box-mark">
           ✕
         </text>
       ))}
       {(d.open ?? []).map((s) => (
-        <circle key={`o${s}`} cx={sx(s)} cy={21} r={5} className="box-open" />
+        <circle key={`o${s}`} cx={sx(s)} cy={TOP - 14} r={compact ? 4.5 : 5} className="box-open" />
       ))}
+      {br && <rect className="box-barre" x={Math.min(sx(br.from), sx(br.to)) - r} y={fy(br.fret) - r} width={Math.abs(sx(br.from) - sx(br.to)) + 2 * r} height={2 * r} rx={r} />}
+      {br && (
+        <text className="box-barre-n" x={leftHanded ? Math.max(sx(br.from), sx(br.to)) : Math.min(sx(br.from), sx(br.to))} y={fy(br.fret) + (compact ? 4.5 : 4)}>
+          1
+        </text>
+      )}
       {(d.dots ?? [])
-        .filter((p) => p.fret > 0)
+        .filter((p) => p.fret > 0 && !(onBarre(p) && !p.root))
         .map((p, i) => (
-          <g key={i} className={`neck-dot ${p.root ? 'root' : 'given'}`}>
-            <circle cx={sx(p.str)} cy={fy(p.fret)} r={8.5} />
+          <g key={i} className={`neck-dot box-dot ${p.root ? 'root' : 'given'}`}>
+            <circle cx={sx(p.str)} cy={fy(p.fret)} r={r} />
             {p.label && (
-              <text x={sx(p.str)} y={fy(p.fret) + 4}>
+              <text x={sx(p.str)} y={fy(p.fret) + (compact ? 4.5 : 4)}>
                 {p.label}
               </text>
             )}
@@ -191,6 +226,51 @@ export function ChordBox({ d, tuning, leftHanded }: { d: Diagram; tuning: Tuning
         ))}
     </svg>
   );
+}
+
+/**
+ * GUITAR-AUDIT T5: the chord now and the next one as small boxes (drills, Strum Changes) — the shape and its fingers,
+ * not just a name. Fits beside / above the tab on a 320 px phone; the next one is smaller and faded.
+ */
+export function ChordPair({ now, next, nowName, nextName, lang, leftHanded }: { now: Diagram | null; next?: Diagram | null; nowName?: string; nextName?: string; lang: Lang; leftHanded?: boolean }) {
+  if (!now) return null;
+  const tu = tuningById('standard');
+  return (
+    <div className="chord-pair" data-chord-pair>
+      <figure className="is-now">
+        <ChordBox d={now} tuning={tu} leftHanded={leftHanded} compact label={GT.chordBox(nowName ?? '')[lang]} />
+        <figcaption>
+          {GT.chordNow[lang]} {nowName && <bdi dir="ltr"><b>{nowName}</b></bdi>}
+        </figcaption>
+      </figure>
+      {next && (
+        <figure className="is-next">
+          <ChordBox d={next} tuning={tu} leftHanded={leftHanded} compact label={GT.chordBox(nextName ?? '')[lang]} />
+          <figcaption>
+            {GT.chordNext[lang]} {nextName && <bdi dir="ltr"><b>{nextName}</b></bdi>}
+          </figcaption>
+        </figure>
+      )}
+    </div>
+  );
+}
+
+/** A drill / game chord as a box picture: the written strings and frets, fingers as labels, a barre where finger 1 lies flat. */
+export function boxOfNotes(notes: { string?: number; fret?: number; finger?: number; technique?: string }[], strings = 6): Diagram {
+  const on = notes.filter((x) => x.string && x.technique !== 'dead');
+  const fretted = on.filter((x) => (x.fret ?? 0) > 0);
+  const lo = fretted.length ? Math.min(...fretted.map((x) => x.fret!)) : 1;
+  const hi = fretted.length ? Math.max(...fretted.map((x) => x.fret!)) : 1;
+  const ones = fretted.filter((x) => x.finger === 1 && x.fret === lo).map((x) => x.string!).sort((a, b) => b - a);
+  return {
+    kind: 'box',
+    instrument: 'guitar',
+    dots: fretted.map((x) => ({ str: x.string!, fret: x.fret!, ...(x.finger ? { label: x.finger >= 5 ? 'T' : String(x.finger) } : {}) })),
+    open: on.filter((x) => (x.fret ?? 0) === 0).map((x) => x.string!),
+    muted: Array.from({ length: strings }, (_, i) => i + 1).filter((s) => !on.some((x) => x.string === s)),
+    baseFret: hi <= 4 ? 1 : lo,
+    ...(ones.length >= 2 ? { barre: { fret: lo, from: ones[0], to: ones[ones.length - 1] } } : {}),
+  };
 }
 
 /** A choice question's picture: neck, chord box or keys (spec AE). */

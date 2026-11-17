@@ -647,7 +647,16 @@ function StrumPrompt({ item, lang, settings, fb, again, micErr }: { item: Extrac
 function FretPrompt({ item, lang }: { item: Extract<RushItem, { kind: 'fret' }>; lang: Lang }) {
   const t = item.target;
   const ss = [...t.strings].sort((a, b) => a - b);
-  const range = ss.length === 1 ? `${T.onString[lang]} ${ss[0]}` : `${T.onStrings[lang]} ${ss[0]}–${ss[ss.length - 1]}`;
+  // GUITAR-AUDIT N5: the range stays left-to-right in Hebrew ("מיתרים 5–6", never "6–5").
+  const range = ss.length === 1 ? (
+    <>
+      {T.onString[lang]} <bdi dir="ltr">{ss[0]}</bdi>
+    </>
+  ) : (
+    <>
+      {T.onStrings[lang]} <bdi dir="ltr">{`${ss[0]}–${ss[ss.length - 1]}`}</bdi>
+    </>
+  );
   return (
     <>
       <p className="rush-ask">{T.find[lang]}</p>

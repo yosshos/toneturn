@@ -135,6 +135,22 @@ export function Playhead({ x }: { x: number }) {
   });
   return <span ref={ref} className="staff-now" style={{ left: `${x * 100}%` }} aria-hidden="true" />;
 }
+/** GUITAR-AUDIT T3: a light band behind the tab column that is due (placed against the SVG's box, like the playhead). */
+function TabNow({ xs, now }: { xs: number[]; now?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const k = now === undefined || !(now >= 0) || xs.length < 2 ? -1 : Math.min(Math.floor(now + 1e-6), xs.length - 2);
+  const x = k >= 0 ? xs[k] : null;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const wrap = el?.parentElement;
+    const svg = wrap?.querySelector('svg');
+    if (!el || !wrap || !svg || x === null) return;
+    const a = wrap.getBoundingClientRect();
+    const b = svg.getBoundingClientRect();
+    if (a.width > 0 && b.width > 0) el.style.left = `${b.left - a.left + x * b.width}px`;
+  });
+  return x === null ? null : <span ref={ref} className="tab-col-now" style={{ left: `${x * 100}%` }} aria-hidden="true" />;
+}
 /** A drawn item's notehead centre (rests and tab numbers: the middle of the glyph). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const headX = (x: any): number => {
@@ -418,7 +434,7 @@ export function GrandStaff({ notes, keyPc }: { notes: number[]; keyPc: PitchClas
 }
 
 /** One line of tablature with given string/fret positions (drills): chords stack, a mark above (h p / b ~ PM X …), result colours. */
-export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live, cue, prior, extras }: { /** Played notes not in the tab: fractional column indices — a small ✕ above the top string. */ extras?: number[]; /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** The count-in: this column's digit pulses once. */ cue?: number; /** The last take's ticks, faded (per column). */ prior?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
+export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spacing = 40, ahead = false, live, cue, prior, extras, bottomLabel }: { /** GUITAR-AUDIT T1: the row under the tab is labelled once (e.g. "finger" / "אצבע"); its digits never sit on a string line. */ bottomLabel?: string; /** Played notes not in the tab: fractional column indices — a small ✕ above the top string. */ extras?: number[]; /** Slice 5: marks while the take runs, per column (an overlay). */ live?: LiveMarks; /** The count-in: this column's digit pulses once. */ cue?: number; /** The last take's ticks, faded (per column). */ prior?: LiveMarks; /** px per column before scaling. */ spacing?: number; /** Look-ahead: a line not being played, drawn faded. */ ahead?: boolean; /** The timing window (ms) the ticks are measured against. */ win?: number; /** The due column (−1 none): a now-cue column behind it. */ now?: number; cols: { pos: { str: number; fret: number | 'x' }[]; dur: number; top?: string; bottom?: string; /** ms off the click (− early, + late). */ dev?: number | null; /** Bass: the kick lands on this column. */ kick?: boolean }[]; marks?: NoteMark[]; strings?: number; /** Mixed meters: the line's bars (quarter notes) — a bar line at each bar's end, its time signature written where it changes. */ bars?: { len: number; sig?: string }[]; /** With `bars`: each column's start in quarter notes from the line's start. */ at?: number[] }) {
   const geo = useRef<MarkGeo[][]>([]);
   const { ref, failed, xs } = useSvg(
     (VF, el) => {
@@ -440,12 +456,6 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
         const firstOfBar = !!ends && (i === 0 || barOf(i) !== barOf(i - 1));
         const sig = firstOfBar ? bars![barOf(i)]?.sig : undefined;
         if (sig || c.top) n.addModifier(new VF.Annotation([sig, c.top].filter(Boolean).join(' ')).setVerticalJustification(VF.Annotation.VerticalJustify.TOP), 0);
-        if (c.bottom) {
-          // Fingers / strokes under the tab: small purple digits, so they never read as fret numbers (guitar audit 2026-11-17).
-          const ann = new VF.Annotation(c.bottom).setFont('Rubik', 10, 'bold').setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM);
-          ann.setStyle({ fillStyle: '#6d28d9', strokeStyle: '#6d28d9' });
-          n.addModifier(ann, 0);
-        }
         return n;
       });
       const voice = new VF.Voice({ num_beats: Math.max(1, Math.ceil(cols.reduce((a, c) => a + c.dur, 0))), beat_value: 4 }).setMode(VF.Voice.Mode.SOFT);
@@ -459,6 +469,24 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
       } else voice.addTickables(tn);
       new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
       voice.draw(ctx, stave);
+      // GUITAR-AUDIT T1: fingers / strokes in their own row below the stave — small, purple, labelled once at its start —
+      // never on a string line, where a beginner reads them as frets.
+      const svgF = el.querySelector('svg');
+      if (svgF && cols.some((c) => c.bottom)) {
+        // a 4-string tab's TAB glyph (and the kick bars) reach below its last line: the row sits under them
+        const yb = stave.getYForLine(strings - 1) + (strings === 4 ? 27 : 17);
+        const add = (x: number, txt: string, cls: string, anchor = 'middle') => {
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', String(x));
+          t.setAttribute('y', String(yb));
+          t.setAttribute('class', cls);
+          t.setAttribute('text-anchor', anchor);
+          t.textContent = txt;
+          svgF.appendChild(t);
+        };
+        if (bottomLabel) add(strings === 4 ? 30 : 6, bottomLabel, 'tab-row-label', 'start');
+        tn.forEach((x, i) => cols[i].bottom && add(headX(x), cols[i].bottom!, 'tab-row-digit'));
+      }
       // Bass "lock with the kick": a short ink bar under each column the kick lands on.
       const svgK = el.querySelector('svg');
       if (svgK && cols.some((c) => c.kick)) {
@@ -498,7 +526,7 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
       }
       return [...tn.map((x) => headX(x) / width), stave.getNoteEndX() / width];
     },
-    [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(',')],
+    [JSON.stringify(cols), (marks ?? []).join(','), win, spacing, strings, JSON.stringify(bars ?? null), (at ?? []).join(','), bottomLabel ?? ''],
   );
   useLiveLayer(ref, geo, live, win, xs, 'tab');
   useLiveLayer(ref, geo, prior, win, xs, 'tab', 'mk-prior');
@@ -507,8 +535,10 @@ export function TabLine({ cols, marks, strings = 6, bars, at, now, win = 40, spa
   return (
     <div className={`guitar-tab ${ahead ? 'ahead' : ''}`} data-kicks={cols.filter((c) => c.kick).length || undefined} role="img" aria-label={cols.map((c, i) => c.pos.map((p) => `${p.str}/${p.fret}`).join('+') + (marks?.[i] ? ` ${marks[i]}` : '')).join(' ')}>
       <div className="svg-wrap">
-        <div ref={ref} />
+        {/* T3: the cue sits BEHIND the digits — a soft band on the column that is due, the thin glide line under it */}
+        <TabNow xs={xs} now={now} />
         <NowColumn xs={xs} now={now} />
+        <div ref={ref} />
       </div>
       {failed && <p className="staff-fallback">TAB</p>}
     </div>

@@ -8,6 +8,7 @@
 import type { Drill, TakeMetrics } from '../drills/types';
 import { pianoTouch, soloInHand } from '../drills/touch';
 import { CTL_TEXT, ctlKindOf } from '../../i18n/measureText';
+import { GT } from '../../i18n/guitarText';
 
 export interface Stat {
   /** Effective sample size (decays slowly). */
@@ -52,6 +53,12 @@ export function contextsOf(drill: Drill, i: number, bpm: number): string[] {
   // B1: the piano's fingers only — a guitar / bass fretting finger is another hand (its own contexts, never in the piano's HandMap)
   const piano = pianoTouch(drill);
   if (n.finger) out.push(piano ? `f:${n.hand}${n.finger}` : `gf:${n.hand}${n.finger}`);
+  // GUITAR-AUDIT §1 (string / fret vs finger): the place on the neck is the observed fact; the suggested fretting finger
+  // there and in this drill context are kept apart so a finger is named only when the misses follow it.
+  if (!piano && n.string && n.fret !== undefined) {
+    out.push(`gp:${n.string}:${n.fret}`);
+    if (n.finger && n.fret > 0) out.push(`gpf:${n.finger}:${n.string}:${n.fret}`, `gfx:${n.finger}:${s.family}:${((s.key % 12) + 12) % 12}`);
+  }
   // G3 (owner 2026-11-17): the written fingering is a suggestion — so the note itself, and the suggested finger by note
   // and by key, are kept apart; a finger is named only when the weakness follows it (fingerHypotheses).
   if (piano && soloInHand(drill.notes, n)) {
@@ -153,7 +160,7 @@ export function addControl(prev: PlayerModel['control'], m: TakeMetrics, at: str
 
 // ---------------------------------------------------------------- findings
 
-export type FindingKind = 'soft-note' | 'loud-note' | 'finger-hypothesis' | 'soft-finger' | 'loud-finger' | 'hand-balance' | 'rush' | 'drag' | 'uneven' | 'weak-key' | 'weak-scale' | 'leaps' | 'fast-tempo' | 'late-finger' | 'thumb-accent' | 'control';
+export type FindingKind = 'soft-note' | 'loud-note' | 'finger-hypothesis' | 'weak-place' | 'soft-finger' | 'loud-finger' | 'hand-balance' | 'rush' | 'drag' | 'uneven' | 'weak-key' | 'weak-scale' | 'leaps' | 'fast-tempo' | 'late-finger' | 'thumb-accent' | 'control';
 export interface Finding {
   kind: FindingKind;
   /** The context it is about (e.g. "f:R4", "sub:16", "k:6"). */
@@ -216,6 +223,88 @@ export function fingerHypotheses(model: PlayerModel, minN: number = FINGER_HYP.m
   return out;
 }
 
+/** ⚙ Guitar: a fretting finger is named only with this much evidence (GUITAR-AUDIT §1, the piano rule's twin). */
+export const GUITAR_FINGER_HYP = { minN: 30, perCtx: 6, places: 3, contexts: 3, effect: 0.1, ctxEffect: 0.06 } as const;
+
+/** The guitar's miss rate over every place on the neck (the baseline each finger and place is measured against). */
+function placeBase(S: Record<string, Stat>): number {
+  const ps = Object.entries(S).filter(([k]) => k.startsWith('gp:'));
+  const n = ps.reduce((a, [, s]) => a + s.n, 0);
+  return n ? ps.reduce((a, [, s]) => a + s.err * s.n, 0) / n : 0;
+}
+const binZ = (diff: number, p: number, n: number) => (n > 1 ? diff / Math.sqrt(Math.max(0.01, p * (1 - p)) / n) : 0);
+
+/**
+ * Guitar places that keep missing (string × fret) — observed facts, never a cause. A place is named when it misses
+ * clearly more than the player's own baseline over enough notes.
+ */
+export function weakPlaces(model: PlayerModel, minN: number = GUITAR_FINGER_HYP.minN): Finding[] {
+  const S = model.stats;
+  const base = placeBase(S);
+  const need = Math.max(GUITAR_FINGER_HYP.perCtx * 2, Math.round(minN / 2));
+  const out: Finding[] = [];
+  for (const [k, s] of Object.entries(S)) {
+    if (!k.startsWith('gp:') || s.n < need) continue;
+    const diff = s.err - base;
+    const zz = binZ(diff, base, s.n);
+    if (s.err < Math.max(0.15, base * 2) || zz <= 2) continue;
+    const [, str, fret] = k.split(':').map(Number);
+    out.push({ kind: 'weak-place', ctx: k, size: Math.round(s.err * 100), confidence: Math.min(conf(zz), s.n / (need * 3)), text: GT.weakPlace(str, fret, Math.round(s.err * 100)), prescribe: { family: 'g-fretting', note: GT.weakPlaceNote } });
+  }
+  return out;
+}
+
+/**
+ * GUITAR-AUDIT §1: does a recurring miss follow the PLACE (string × fret: action, setup, pressing too far from the
+ * fret — other fingers miss there too) or the SUGGESTED FRETTING FINGER (the same finger misses on different strings
+ * and frets, in different drills)? A finger is named — as "possibly", never as a grade — only when it misses clearly
+ * more than the baseline, on ≥ 3 places spanning ≥ 2 strings and ≥ 2 frets and in ≥ 3 contexts (family × key), on at
+ * least half of its own places, and those places are not weak without it. The player's own fingering turns it off.
+ */
+export function guitarFingerHypotheses(model: PlayerModel, minN: number = GUITAR_FINGER_HYP.minN): Finding[] {
+  if (model.ownFingering) return [];
+  const S = model.stats;
+  const H = GUITAR_FINGER_HYP;
+  const base = placeBase(S);
+  const out: Finding[] = [];
+  for (const [k, s] of Object.entries(S)) {
+    const mk = /^gf:[RL](\d)$/.exec(k);
+    if (!mk || s.n < minN) continue;
+    const f = mk[1];
+    const diff = s.err - base;
+    const zz = binZ(diff, base, s.n);
+    if (diff < H.effect || zz <= 2) continue;
+    const weak = (x: { n: number; err: number } | undefined) => !!x && x.n >= H.perCtx && x.err - base >= H.ctxEffect;
+    const mine = Object.entries(S).filter(([c, x]) => c.startsWith(`gpf:${f}:`) && x.n >= H.perCtx);
+    const places = mine.filter(([, x]) => weak(x)).map(([c]) => c.split(':').slice(2).map(Number) as [number, number]);
+    const ctxs = Object.entries(S).filter(([c, x]) => c.startsWith(`gfx:${f}:`) && weak(x)).length;
+    const strs = new Set(places.map((p) => p[0]));
+    const frets = new Set(places.map((p) => p[1]));
+    if (places.length < H.places || strs.size < 2 || frets.size < 2 || ctxs < H.contexts || places.length * 2 < mine.length) continue;
+    // the place explanation: the same spots miss without this finger too (other fingers, or the note however played)
+    let withData = 0;
+    let placeToo = 0;
+    for (const [str, fret] of places) {
+      const all = S[`gp:${str}:${fret}`];
+      const me = S[`gpf:${f}:${str}:${fret}`];
+      if (!all || !me) continue;
+      const n = all.n - me.n;
+      if (n < H.perCtx) continue;
+      withData++;
+      if (weak({ n, err: (all.err * all.n - me.err * me.n) / n })) placeToo++;
+    }
+    if (placeToo > 0 && placeToo * 2 >= withData) continue;
+    const ss = [...strs].sort((a, b) => a - b);
+    out.push({
+      kind: 'finger-hypothesis', ctx: k, size: Math.round(diff * 100), hypothesis: true,
+      confidence: Math.min(conf(zz), Math.min(1, (places.length + ctxs) / 10)),
+      text: GT.fingerHyp(Number(f), places.length, ss.length > 1 ? `${ss[0]}–${ss[ss.length - 1]}` : String(ss[0])),
+      prescribe: { family: 'g-fretting', note: GT.fingerHypNote(Number(f)) },
+    });
+  }
+  return out;
+}
+
 /** Findings, strongest first. `minN` = notes needed in a context before it can be reported. */
 export function findings(model: PlayerModel, minN = 30): Finding[] {
   const S = model.stats;
@@ -238,6 +327,7 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
     });
   }
   out.push(...fingerHypotheses(model, minN));
+  out.push(...weakPlaces(model, minN), ...guitarFingerHypotheses(model, minN));
   // G3 / B12: fingers that come late — a finger's mean offset against its hand's (the tMean the model always kept)
   for (const [k, s] of of('f:')) {
     const hand = S[`h:${k[2]}`];

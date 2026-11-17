@@ -20,7 +20,7 @@ const CFG: BeginnerCfg = {
   slack: 1.25,
   lapOf: (seed, level, lap, run) => strumLap(seed, level, lap, run),
   judge: () => strumJudge,
-  board: ({ lap, match, now, lang }) => <ChordBoard lap={lap} marks={match?.marks} now={now} lang={lang} />,
+  board: ({ lap, match, now, lang, settings }) => <ChordBoard lap={lap} marks={match?.marks} now={now} lang={lang} boxes leftHanded={settings?.leftHanded} />,
   why: ({ lap, m, o, lang, settings }) => {
     const i = o.firstMiss;
     if (i < 0) return null;
