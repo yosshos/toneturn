@@ -2,6 +2,11 @@
 // tier preselected, lower tiers free (warm-up), one tier above open ("try" — rated), the rest locked with a one-line
 // reason. One line under the row says what the picked tier holds. Fits a phone row at 320 px.
 import '../tiers.css';
+import '../setupsheet.css';
+import { useEffect, useState } from 'react';
+import { isStudio } from './studioLook';
+import { Icon } from './icons';
+import { GAMES_TX } from '../i18n/gamesText';
 import { IsoMix } from './Iso';
 import { lockReason, tierAllowed, tierDef, tierIndex, TIERS, type DynName, type TierInfo } from '../engine/gameTiers';
 
@@ -15,7 +20,61 @@ const TX = {
   cleared: { en: 'cleared', he: 'עברתם' },
 };
 
-export function TierChips({ lang, info, value, onChange, game }: { lang: Lang; info: TierInfo; value: DynName; onChange: (t: DynName) => void; game?: string }) {
+type TierProps = { lang: Lang; info: TierInfo; value: DynName; onChange: (t: DynName) => void; game?: string };
+
+export function TierChips(p: TierProps) {
+  return isStudio() ? <TierRow {...p} /> : <TierField {...p} />;
+}
+
+/**
+ * Studio look (redesign 2026-11-17): the level is ONE compact row — "Level mp · what it holds ›" — that opens the
+ * same pp … ff chooser in a sheet. Same choices, same callback; only the presentation differs.
+ */
+function TierRow(p: TierProps) {
+  const [open, setOpen] = useState(false);
+  const { lang, info, value } = p;
+  const def = tierDef(p.game ?? info.game, value);
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    addEventListener('keydown', k);
+    return () => removeEventListener('keydown', k);
+  }, [open]);
+  return (
+    <>
+      <button type="button" className="gs-row gs-tier-row" data-tiers={info.game} data-tier-row={value} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+        <span className="gs-row-k">{GAMES_TX.level[lang]}</span>
+        <span className="gs-row-v">
+          <i className="dyn">{value}</i>
+          {def ? <small>{lang === 'he' ? <IsoMix text={def.label.he} /> : def.label.en}</small> : null}
+        </span>
+        <span className="gs-chev" aria-hidden="true">
+          ›
+        </span>
+      </button>
+      {open && (
+        <div className="sheet-backdrop" onClick={() => setOpen(false)}>
+          <div className="sheet setup-sheet gs-tier-sheet" role="dialog" aria-modal="true" aria-label={GAMES_TX.chooseLevel[lang]} onClick={(e) => e.stopPropagation()}>
+            <div className="menu-head">
+              <h2>{GAMES_TX.chooseLevel[lang]}</h2>
+              <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label={GAMES_TX.close[lang]}>
+                <Icon k="close" />
+              </button>
+            </div>
+            <div className="setup-sheet-body">
+              <TierField {...p} />
+            </div>
+            <button type="button" className="btn primary" onClick={() => setOpen(false)}>
+              {GAMES_TX.done[lang]}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function TierField({ lang, info, value, onChange, game }: TierProps) {
   const def = tierDef(game ?? info.game, value);
   const vi = tierIndex(value);
   const oi = tierIndex(info.open);

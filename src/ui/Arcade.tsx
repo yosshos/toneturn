@@ -832,7 +832,7 @@ const mySongTx = (c: CourseId): { en: [string, string]; he: [string, string] } =
 };
 
 /** Each game's note-head symbol and its category colour (0.61, SPEC-REDESIGN: no emoji). */
-const GAME_GLYPH: Record<string, GlyphKind> = {
+export const GAME_GLYPH: Record<string, GlyphKind> = {
   melody: 'echo', rhythm: 'rhythm', truefalse: 'theory', ghost: 'ghost', duel: 'duel', daily: 'calendar', 'rush-chord': 'chords', 'rush-note': 'sight', 'rush-keysig': 'theory', 'rush-interval': 'intervals',
   'rush-progression': 'prog', 'rush-fretboard': 'guitar', peakhunter: 'eq', highway: 'rhythm', flight: 'sing', melodypuzzle: 'puzzle', nametune: 'name', drills: 'scales', tuneup: 'tune', pitchmemory: 'memory', groove: 'groove',
   'rush-voicing': 'voicingspy', reharm: 'reharm', 'rush-standard': 'standard', 'rush-scale': 'scalerush', transcribe: 'transcribe', bhtime: 'bhtime', riffecho: 'riff', polylock: 'polylock',

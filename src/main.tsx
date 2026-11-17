@@ -34,6 +34,12 @@ import { App } from './ui/App';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
+import { installLook } from './ui/studioLook';
+// Last: the studio game frame (scoped under :root[data-look='studio']) after every component's own stylesheet.
+import './studio-games.css';
+
+// The studio look (?look=studio, remembered on this device) before the first paint.
+installLook();
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);
