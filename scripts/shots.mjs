@@ -1,6 +1,6 @@
 // Dev helper: headless screenshots of routes on phone and wide, for design review.
 // Usage: node scripts/shots.mjs <outDir> <phone|wide|both> <hash> [<hash> …]   (dev server on :5173)
-// Env: SHOT_THEME=dark · SHOT_LANG=en · SHOT_SEED=1 (a returning player: a few lessons done, onboarding finished)
+// Env: SHOT_LOOK=classic · SHOT_THEME=dark · SHOT_LANG=en · SHOT_SEED=1 (a returning player: a few lessons done, onboarding finished)
 //      SHOT_COURSE=keys (active course when seeded) · SHOT_SETUP='js run before each shot'.
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
@@ -52,10 +52,12 @@ const browser = await chromium.launch({ channel: 'chrome' });
 for (const w of which) {
   const ctx = await browser.newContext({ viewport: sizes[w], deviceScaleFactor: 1, colorScheme: process.env.SHOT_THEME === 'dark' ? 'dark' : 'light' });
   const page = await ctx.newPage();
+  // SHOT_LOOK=classic: the previous look (the studio look, src/studio.css, is the default).
+  await page.addInitScript((look) => { try { if (look === 'classic') localStorage.setItem('tt.look', 'classic'); else localStorage.removeItem('tt.look'); } catch {} }, process.env.SHOT_LOOK ?? '');
   if (process.env.SHOT_ERRORS) page.on('pageerror', (e) => console.log('PAGEERR', e.message.slice(0, 400)));
   if (seed) await seedDb(page);
   for (const h of hashes) {
-    const q = seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1';
+    const q = (seed ? '?unlock' : lang === 'en' ? '?sim=1&lang=en' : '?sim=1') + (process.env.SHOT_QS ? `&${process.env.SHOT_QS}` : '');
     await page.goto(`${BASE}/${q}#/${h}`, { waitUntil: 'networkidle' }).catch(() => {});
     await page.waitForTimeout(1000);
     if (process.env.SHOT_SETUP) await page.evaluate(process.env.SHOT_SETUP).catch(() => {});

@@ -32,9 +32,15 @@ import './feedback2.css';
 import './practice.css';
 import { App } from './ui/App';
 import { BrandSplash } from './ui/brand/Splash';
+// The studio look layer (redesign stage 1): after every other stylesheet, including those App's modules import.
+import './studio.css';
+import { applyStartupLook } from './ui/look';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
+
+// The look (classic / studio): index.html already painted it; this keeps it right if that snippet could not run.
+applyStartupLook();
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);

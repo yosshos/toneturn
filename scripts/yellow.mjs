@@ -5,6 +5,8 @@ const BASE = process.env.SHOT_BASE ?? 'http://localhost:5173';
 const b = await chromium.launch({ channel: 'chrome' });
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: process.env.SHOT_THEME === 'dark' ? 'dark' : 'light' });
 const p = await ctx.newPage();
+// SHOT_LOOK=classic: check the previous look (the studio look, src/studio.css, is the default).
+if (process.env.SHOT_LOOK === 'classic') await p.addInitScript(() => { try { localStorage.setItem('tt.look', 'classic'); } catch {} });
 if (process.env.SHOT_COURSE || process.env.SHOT_THEME) await p.addInitScript(([c, th]) => { try { const k = 'toneturn.settings'; const s = JSON.parse(localStorage.getItem(k) || '{}'); if (c) s.activeCourse = c; if (th) s.theme = th; localStorage.setItem(k, JSON.stringify(s)); } catch {} }, [process.env.SHOT_COURSE, process.env.SHOT_THEME]);
 const seen = new Set();
 for (const h of process.argv.slice(2)) {
