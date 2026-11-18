@@ -21,6 +21,7 @@ import { Icon } from './icons';
 import { ActivityFeed, FriendQuest, PlayerSafety } from './Community';
 import { effectivePrivacy } from '../engine/privacy';
 import { postActivity } from '../cloud/community';
+import { appHome, friendInviteText, friendLink, pendingFriend, shareOut, takeFriendFlash } from '../engine/shareLinks';
 
 export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBestTier, onLeagueSeen, progress, streak = 0, classes, profileErr }: { profileErr?: string | null; classes?: React.ReactNode; t: Strings; user: CloudUser | null; sync: SyncState; onBack: () => void; settings: Settings; onBestTier?: (tier: number) => void; onLeagueSeen?: (tier: number) => void; progress?: Progress; streak?: number }) {
   // Dev-only layout preview with made-up friends (?demoFriends): never in a production build.
@@ -31,7 +32,11 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   const [rows, setRows] = useState<FriendRow[]>([]);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
+  // A friend's invite link was just accepted (App.tsx): its result shows once in the add-a-friend card.
+  const [msg, setMsg] = useState<string | null>(() => {
+    const f = takeFriendFlash();
+    return f ? (t.addResult[f] ?? null) : null;
+  });
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -91,15 +96,11 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   };
   const friends = rows.filter((r) => r.relation === 'friend');
   const shareCode = async () => {
-    const text = `${t.shareText} ${me?.friend_code}`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else await navigator.clipboard.writeText(me?.friend_code ?? '');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* cancelled */
-    }
+    if (!me?.friend_code) return;
+    const r = await shareOut(friendInviteText(name, me.friend_code, lang), friendLink(appHome(), me.friend_code));
+    if (r === 'cancelled') return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
   const TABS = [
     ['friends', t.friends],
@@ -121,6 +122,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
       {!user ? (
         <>
           <p className="field-hint">{t.friendsHint}</p>
+          {pendingFriend() && <p className="field-hint" data-fr-pending="1">{he ? 'קיבלת הזמנה מחבר — אחרי הכניסה לחשבון תישלח בקשת החברות אוטומטית.' : 'A friend invited you — sign in and the friend request goes out by itself.'}</p>}
           <AccountCard t={t} user={user} sync={sync} />
         </>
       ) : (

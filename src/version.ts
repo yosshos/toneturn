@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.104.1',
+    date: '2026-11-18',
+    en: ['Shares now invite: every share (friend code, daily puzzle, daily challenge, new best tempo, rooms, challenges) carries a link to the app, and the link shows a preview card in WhatsApp and other chats. A friend’s link sends the friend request by itself — after signing in, if needed.'],
+    he: ['שיתופים שמזמינים: כל שיתוף (קוד חבר, חידת היום, האתגר היומי, שיא טמפו, חדרים ואתגרים) יוצא עם קישור לאפליקציה, ובוואטסאפ ובצ׳אטים אחרים הוא מופיע עם כרטיס תצוגה מקדימה. קישור של חבר שולח את בקשת החברות לבד — אחרי כניסה לחשבון, אם צריך.'],
+  },
+  {
     version: '0.104.0',
     date: '2026-11-18',
     en: ['One look for the whole app: the earlier design is gone, along with its switch in Settings. A few screens were tightened so they still fit one phone screen.'],

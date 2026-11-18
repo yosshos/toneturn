@@ -4,6 +4,7 @@
 
 import { rt } from '../../i18n/restText';
 import { TempoBest } from './StudioArt';
+import { appHome, inviteTail, shareOut } from '../../engine/shareLinks';
 
 /** A new best: a clean take whose tempo beats the item's previous best clean tempo (the badge counter's rule). */
 export function newBestOf(prevBest: number, nextBest: number, clean: boolean): { bpm: number; prev: number } | null {
@@ -23,7 +24,9 @@ export function NewBestTempo({ lang, bpm, prev, title, onClose }: { lang: 'he' |
             className="btn primary tb-share"
             onClick={(e) => {
               e.stopPropagation();
-              void navigator.share({ text: rt('shareText', lang, { t: title, n: bpm }) }).catch(() => {});
+              void shareOut(`${rt('shareText', lang, { t: title, n: bpm })}
+
+${inviteTail(lang)}`, appHome());
               onClose();
             }}
             data-new-best-share="1"

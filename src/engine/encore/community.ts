@@ -448,8 +448,8 @@ export function pickFeatured<T extends { id: string; visibility: Visibility; sta
 
 /** The share text that goes with the link (no emoji, nothing personal beyond the nickname). */
 export function shareText(o: { title: string; bpm: number; keys: number; lang: 'en' | 'he'; beat?: { bpm: number; keys: number } | null }): string {
-  if (o.beat) return o.lang === 'he' ? `תנצחו את הטמפו שלי: ♩${o.beat.bpm} ב־${o.beat.keys} סולמות — ${o.title}` : `Beat my tempo: ♩${o.beat.bpm} in ${o.beat.keys} keys — ${o.title}`;
-  return o.lang === 'he' ? `אתגר הדרן: ${o.title} · ♩${o.bpm} · ${o.keys} סולמות` : `Encore challenge: ${o.title} · ♩${o.bpm} · ${o.keys} keys`;
+  if (o.beat) return o.lang === 'he' ? `תנצחו את הטמפו שלי בחוש ה־7: ♩${o.beat.bpm} ב־${o.beat.keys} סולמות — ${o.title}` : `Beat my tempo on The 7th Sense: ♩${o.beat.bpm} in ${o.beat.keys} keys — ${o.title}`;
+  return o.lang === 'he' ? `אתגר הדרן בחוש ה־7: ${o.title} · ♩${o.bpm} · ${o.keys} סולמות` : `Encore challenge on The 7th Sense: ${o.title} · ♩${o.bpm} · ${o.keys} keys`;
 }
 
 /** Notes of a shared phrase for the card / the staff (home key, the right hand or the line). */

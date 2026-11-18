@@ -4,6 +4,7 @@
 // the server has no social-round migration yet; young players get no messaging and no feed.
 
 import '../community.css';
+import { shareOut } from '../engine/shareLinks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   blockedList,
@@ -376,13 +377,7 @@ export function QuickMessages({ lang, ctx, id, stage, canMessage, compact }: { l
 // ---------------------------------------------------------------- challenge links
 
 async function shareLink(text: string, url: string): Promise<boolean> {
-  try {
-    if (navigator.share) await navigator.share({ text, url });
-    else await navigator.clipboard.writeText(`${text}\n${url}`);
-    return true;
-  } catch {
-    return false;
-  }
+  return (await shareOut(text, url)) !== 'cancelled';
 }
 const appLink = (code: string) => challengeLink(location.origin, location.pathname, code);
 
@@ -412,7 +407,7 @@ export function DuelLinkButton({ lang, make, canShare }: { lang: Lang; make: () 
     setState('busy');
     const code = await createChallenge({ kind: 'duel', ...make() });
     if (!code) return setState('error');
-    const ok = await shareLink(L(lang, 'A duel on The 7th Sense — same questions for both of us:', 'דו־קרב בחוש השביעי — אותן שאלות לשנינו:'), appLink(code));
+    const ok = await shareLink(L(lang, 'A duel on The 7th Sense — same questions for both of us:', 'דו־קרב בחוש ה־7 — אותן שאלות לשנינו:'), appLink(code));
     setState(ok ? 'done' : 'idle');
   };
   return (

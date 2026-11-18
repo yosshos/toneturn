@@ -1,4 +1,5 @@
 import { Icon } from './icons';
+import { shareOut } from '../engine/shareLinks';
 import { G2Head } from './Flight';
 import { useStudioFrame } from './GameCover';
 import { GameCeleArt } from './GameCele';
@@ -279,13 +280,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             className="btn primary"
             onClick={async () => {
               const text = fmt(t.inviteText, { c: s.code });
-              try {
-                if (navigator.share) await navigator.share({ text, url: link });
-                else await navigator.clipboard.writeText(`${text}\n${link}`);
-                setShared(true);
-              } catch {
-                /* cancelled */
-              }
+              if ((await shareOut(text, link)) !== 'cancelled') setShared(true);
             }}
           >
             {shared ? `✓ ${t.copied}` : t.invite}

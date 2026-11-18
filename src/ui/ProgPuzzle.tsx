@@ -1,5 +1,6 @@
 // The daily progression puzzle (0.53): hear today's four chords, guess them in Roman numerals, six tries.
 import { useEffect, useRef, useState } from 'react';
+import { appHome, inviteTail, shareOut } from '../engine/shareLinks';
 import { dailyPuzzle, MAX_GUESSES, PUZZLE_CHORDS, puzzlePoints, scoreGuess, shareText, solvedBy, type PChord, type Slot } from '../engine/progPuzzle';
 import type { Settings } from '../storage/progress';
 import { localDay } from '../storage/progress';
@@ -54,16 +55,10 @@ export function ProgPuzzleScreen({ settings, onChange, onBack, onSolved }: { set
     if (solvedBy(sc) || next.length >= MAX_GUESSES) onSolved(puzzlePoints(sc));
   };
   const share = async () => {
-    const text = shareText(pz.n, scores, lang);
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-      }
-    } catch {
-      /* cancelled */
-    }
+    const r = await shareOut(`${shareText(pz.n, scores, lang)}
+
+${inviteTail(lang)}`, appHome());
+    if (r === 'copied') setCopied(true);
   };
   return (
     <main className="panel-screen prog-puzzle" data-prog-puzzle={pz.n}>

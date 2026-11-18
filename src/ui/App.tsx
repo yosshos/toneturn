@@ -199,7 +199,8 @@ import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
 import { checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
-import { enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
+import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { realDrills } from '../engine/tasteLessons';
@@ -1207,6 +1208,32 @@ export function App() {
       if (r !== 'missing') clearPendingChallenge();
       setChallenge(r);
     });
+  }, [user]);
+  // "#/f/CODE" (a friend's invite link): remember it (sign-in and onboarding drop the hash), then send the request once signed in.
+  useEffect(() => {
+    const code = friendFromHash(location.hash);
+    if (!code) return;
+    savePendingFriend(code);
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+  }, []);
+  useEffect(() => {
+    const code = pendingFriend();
+    if (!code || !user || !cloudConfigured) return;
+    void addFriend(code)
+      .then((r) => {
+        clearPendingFriend();
+        setFriendFlash(r);
+        try {
+          sessionStorage.setItem('toneturn.friendsTab', 'friends');
+        } catch {
+          /* fine */
+        }
+        go('friends');
+      })
+      .catch(() => {
+        /* offline: the link waits for the next sign-in */
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
   const challengeGame = (key: string | null | undefined) => (key ? Object.values(COURSE_GAMES).flat().find((g) => tierKey(g) === key) : undefined);
   const playChallenge = () => {

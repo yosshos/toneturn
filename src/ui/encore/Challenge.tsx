@@ -5,6 +5,7 @@
 // try it in free time on the on-screen keys; signing in is needed only to appear on the board.
 // Mature and quiet: words, no emoji, no likes, no follower counts, nothing plays until tapped.
 
+import { shareOut as shareWithLink } from '../../engine/shareLinks';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../../encore.css';
 import '../../challenges.css';
@@ -391,12 +392,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
     try {
       const png = await svgToPng(card);
       const file = png ? new File([png], 'encore-challenge.png', { type: 'image/png' }) : null;
-      if (file && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], text, url: link });
-      else if (navigator.share) await navigator.share({ text, url: link });
-      else {
-        await navigator.clipboard.writeText(`${text} ${link}`);
-        setCopied(true);
-      }
+      if ((await shareWithLink(text, link, file ? [file] : undefined)) === 'copied') setCopied(true);
     } catch {
       /* cancelled */
     }
@@ -645,8 +641,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
     const link = phraseLink(location.origin, location.pathname, ph.code, c);
     const text = shareText({ title: ph.title, bpm: ph.goalBpm, keys: ph.needed, lang, beat: myRow ? { bpm: myRow.bestBpm, keys: myRow.keys } : null });
     try {
-      if (navigator.share) await navigator.share({ text, url: link });
-      else await navigator.clipboard.writeText(`${text} ${link}`);
+      await shareWithLink(text, link);
       setMsg(L(lang, 'Link ready.', 'הקישור מוכן.'));
     } catch {
       setMsg(L(lang, 'Link ready.', 'הקישור מוכן.'));

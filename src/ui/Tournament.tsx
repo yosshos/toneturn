@@ -11,6 +11,7 @@ import { BAND_NAMES, bandOfTier, bandsOpen, bandTiers, socialInfo, startTier, ti
 import { TierChips } from './TierChips';
 import { SetupSheet } from './SetupSheet';
 import type { CloudUser } from '../cloud/cloud';
+import { appHome, inviteTail, shareOut } from '../engine/shareLinks';
 import { dailySet, duelOutcome, shareText, tournamentSet, type DuelOutcome, type SetKind } from '../engine/tournament';
 import { firstKind, forCourse } from '../engine/courseSocial';
 import type { CourseId } from '../engine/courses';
@@ -136,7 +137,7 @@ export function DailyScreen({
             <pre className="share-card" dir="ltr">
               {done.text}
             </pre>
-            <ShareButton t={t} text={done.text} />
+            <ShareButton t={t} text={done.text} lang={settings.uiLang} />
             <button
               className="btn ghost"
               onClick={() => {
@@ -200,19 +201,15 @@ export function DailyBoardCard({ t, board, signedIn, error, lang }: { t: Strings
   );
 }
 
-function ShareButton({ t, text }: { t: Strings; text: string }) {
+function ShareButton({ t, text, lang }: { t: Strings; text: string; lang: 'he' | 'en' }) {
   const [ok, setOk] = useState(false);
   return (
     <button
       className="btn primary"
       onClick={async () => {
-        try {
-          if (navigator.share) await navigator.share({ text });
-          else await navigator.clipboard.writeText(text);
-          setOk(true);
-        } catch {
-          /* cancelled */
-        }
+        if ((await shareOut(`${text}
+
+${inviteTail(lang)}`, appHome())) !== 'cancelled') setOk(true);
       }}
     >
       {ok ? `✓ ${t.copied}` : t.share}
@@ -523,7 +520,7 @@ export function TournamentPlay({
                 <pre className="share-card" dir="ltr">
                   {text}
                 </pre>
-                <ShareButton t={t} text={text} />
+                <ShareButton t={t} text={text} lang={lang} />
               </>
             )}
           </>
