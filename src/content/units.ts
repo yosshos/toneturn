@@ -90,6 +90,7 @@ export const UNIT_LESSON: Record<string, string> = {
   // Learning path
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',
+  'chord-intro': 'chord-intro',
   'major-minor': 'major-minor',
   cadences: 'cadences',
   'sing-home-five': 'sing-home-five',

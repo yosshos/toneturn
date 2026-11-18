@@ -211,6 +211,7 @@ const SHORT: Record<string, L2> = {
   'basics-shape': { en: 'Melody shape', he: 'צורת מנגינה' },
   'rhythm-shift': { en: 'Move the rhythm', he: 'הזזת קצב' },
   'chord-tones': { en: 'Chord tones', he: 'צלילי אקורד' },
+  'chord-intro': { en: 'What is a chord?', he: 'מה זה אקורד?' },
   'bflat-two-homes': { en: 'Two homes', he: 'שני בתים' },
   'degrees-135': { en: '1, 3, 5', he: '1, 3, 5' },
   'major-minor': { en: 'Major or minor', he: 'מז׳ור או מינור' },

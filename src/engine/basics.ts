@@ -12,10 +12,11 @@
 import type { ChoiceQuestion, LessonDef, NameSeqQuestion, Question, RhythmReadQuestion, SingQuestion, SingSeqQuestion, Stimulus } from './lesson';
 import type { CellId, Rhythm, RhythmLevel } from './rhythm';
 import type { PitchClass } from './pitch';
-import { mulberry32, nameSeqQuestion, placeInRange, singQuestion, singSeqQuestion } from './lesson';
+import { mulberry32, nameSeqQuestion, placeInRange, qualityQuestion, singQuestion, singSeqQuestion } from './lesson';
 import { displayNote, majorScale, pc, pcValue } from './pitch';
 import { TOPIC_GEN, choiceQ, genTopic, eventsStim, nm, notesStim, pickR, rng, shuffleR } from './topicKit';
 import './topicsSkills'; // registers topics the lessons below may use
+import './topicsAD'; // 'voice-count' (the chord intro's practice)
 import { rampLevels } from './ramp';
 
 const rest = (d: number): Stimulus => ({ kind: 'rest', duration: d });
@@ -446,6 +447,30 @@ export function rhythmShiftLesson(seed = Date.now()): LessonDef {
   L.intro = [
     { id: 'intro-charleston', card: { kind: 'rhythm', rhythm: 'dqe.qr.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'dqe.qr.qr', bars: 1, bpm: 80 }] },
     { id: 'intro-moved', card: { kind: 'rhythm', rhythm: 'qr.dqe.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'qr.dqe.qr', bars: 1, bpm: 80 }] },
+  ];
+  return L;
+}
+
+/**
+ * "What is a chord?" (tester 2026-11-18): the short practice after its mini-lesson, before major / minor and every chord
+ * step. Major or minor on C (as just heard), then how many notes sound together (one, two or three), then C again.
+ * The first item is the chord one, so the step is a chords / quality step (the path takes its sub-skill from it).
+ */
+export function chordIntroLesson(seed = Date.now()): LessonDef {
+  const rnd = mulberry32(seed);
+  const s = () => Math.floor(rnd() * 1e9);
+  const first = rnd() < 0.5 ? 'maj' : 'min';
+  const C = pc('C');
+  const L = lesson('chord-intro', 'chords', [
+    qualityQuestion('q1', C, first, ['maj', 'min'], true, 950),
+    gen('voice-count', 1, s(), 'q2'),
+    gen('voice-count', 1, s(), 'q3'),
+    qualityQuestion('q4', C, first === 'maj' ? 'min' : 'maj', ['maj', 'min'], true, 950),
+  ]);
+  // The two colours once more before the items (the mini-lesson told the story): C major, then C minor.
+  L.intro = [
+    { id: 'intro-major', card: { kind: 'quality', root: C, quality: 'maj' }, stimulus: [{ kind: 'chord', midis: [60, 64, 67], duration: 1.4, arpeggio: true }, { kind: 'chord', midis: [60, 64, 67], duration: 1.4 }] },
+    { id: 'intro-minor', card: { kind: 'quality', root: C, quality: 'min' }, stimulus: [{ kind: 'chord', midis: [60, 63, 67], duration: 1.4, arpeggio: true }, { kind: 'chord', midis: [60, 63, 67], duration: 1.4 }] },
   ];
   return L;
 }
