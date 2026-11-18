@@ -197,7 +197,7 @@ import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
 import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './Path';
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
-import { checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
+import { THEMES, checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
 import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
@@ -209,7 +209,7 @@ import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicC
 import { RealMusicCard } from './CourseStart';
 import { Opener, type OpenerSpec } from './Opener';
 import { stepGlyphOf } from './Path';
-import { courseOpenerSeen, markCourseOpener, markUnitOpener, unitOpenerDue } from '../content/openers';
+import { courseOpenerSeen, markCourseOpener, markUnitOpener, unitOpenerDue, unitThemeOf } from '../content/openers';
 import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekCard, FirstWin, LevelOfferCard } from './CourseStart';
 import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
@@ -1401,7 +1401,7 @@ export function App() {
       course: s.activeCourse ?? 'ear',
       unitId: unit.id,
       no: unit.no ?? unit.n,
-      theme: unit.theme,
+      theme: unitThemeOf(s.activeCourse ?? 'ear', unit.theme, steps.map((y) => y.step), THEMES),
       section: unit.section,
       steps: steps.map((y) => ({ title: nodeTitle(y.step, s, s.uiLang), step: y.step, glyph: stepGlyphOf(y.step) })),
       families: [...fams.values()],

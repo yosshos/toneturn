@@ -103,7 +103,7 @@ export interface CourseOpenerDef {
   rungs: [T2, T2, T2, T2];
 }
 
-const EAR_THEME_GLYPH: Record<string, GlyphKind> = { home: 'tune', steps: 'intervals', colour: 'features', pulse: 'pulse', chords: 'chords', memory: 'memory', harmony: 'prog', groove: 'groove', read: 'sight', sound: 'eq' };
+const EAR_THEME_GLYPH: Record<string, GlyphKind> = { basics: 'contour', home: 'tune', steps: 'intervals', colour: 'features', pulse: 'pulse', chords: 'chords', memory: 'memory', harmony: 'prog', groove: 'groove', read: 'sight', sound: 'eq' };
 export const themeGlyph = (theme: string | undefined): GlyphKind => EAR_THEME_GLYPH[theme ?? ''] ?? 'ear';
 
 // Shared demo sounds
@@ -560,6 +560,8 @@ export interface LanePass {
 }
 
 export interface UnitThemeCopy {
+  /** A name for a copy that has no path THEMES entry (the beginner first unit). */
+  name?: T2;
   what: T2;
   whatSay: T2;
   why: T2;
@@ -580,6 +582,22 @@ const swung = (n: number, beat = 0.4): LanePass['ev'] => Array.from({ length: n 
 
 /** Unit themes (path.ts THEMES): what, why and a sound demo. Used by the Ear and Jazz courses. */
 export const UNIT_THEMES: Record<string, UnitThemeCopy> = {
+  // The beginner's first unit (tester 2026-11-18: high / low, loud / soft and the pulse come before anything that names notes).
+  basics: {
+    name: { he: 'צעדים ראשונים לאוזן', en: 'First steps for the ear' },
+    what: { he: 'צליל יכול להיות גבוה או נמוך, חזק או חלש.', en: 'A note can be high or low, loud or soft.' },
+    whatSay: { he: 'מתחילים מהבסיס: גבוה ונמוך.', en: 'You start with the basics: high and low.' },
+    why: { he: 'על זה נבנה כל השאר', en: 'Everything else builds on this' },
+    whySay: { he: 'מי ששומע לאן הצליל זז, יוכל לשמוע מרווחים, מנגינות ואקורדים.', en: 'Hear which way a note moves, and you can hear intervals, tunes and chords.' },
+    feeds: [{ g: 'intervals', t: { he: 'מרווחים', en: 'Intervals' } }, { g: 'contour', t: { he: 'מנגינות', en: 'Melodies' } }, { g: 'pulse', t: { he: 'קצב', en: 'Rhythm' } }],
+    goal: { he: 'בסוף: תשמעו לאן הצליל זז', en: 'By the end: hear which way a note moves' },
+    goalSay: { he: 'בסוף היחידה תשמעו לאן הצליל זז.', en: 'By the end, you will hear which way a note moves.' },
+    demo: [
+      { cap: { he: 'עולה', en: 'Going up' }, ev: ev([55, 60, 64, 67, 72], 0.36, 0.32) },
+      { cap: { he: 'יורד', en: 'Going down' }, ev: ev([72, 67, 64, 60, 55], 0.36, 0.32) },
+    ],
+    base: 55,
+  },
   home: {
     what: { he: 'לכל מנגינה יש צליל אחד שהיא רוצה לחזור אליו.', en: 'Every tune has one note it wants to come back to.' },
     whatSay: { he: 'לכל מנגינה יש בית.', en: 'Every tune has a home.' },
@@ -643,8 +661,8 @@ export const UNIT_THEMES: Record<string, UnitThemeCopy> = {
     why: { he: 'מי שיודע מה בפנים, שומע ומנגן', en: 'Know what is inside, and you can hear it and play it' },
     whySay: { he: 'מי שיודע מה יש בתוך אקורד, יכול לשמוע אותו ולנגן אותו.', en: 'Know what is inside a chord, and you can hear it and play it.' },
     feeds: [{ g: 'keys', t: { he: 'נגינה', en: 'Playing' } }, { g: 'voicing', t: { he: 'קולות', en: 'Voicings' } }, { g: 'prog', t: { he: 'מהלכים', en: 'Progressions' } }],
-    goal: { he: 'בסוף: תשמעו יסוד, טרצה וקווינטה', en: 'By the end: hear root, third and fifth' },
-    goalSay: { he: 'בסוף היחידה תשמעו את היסוד, הטרצה והקווינטה.', en: 'By the end, you will hear the root, the third and the fifth.' },
+    goal: { he: 'בסוף: תשמעו שורש, טרצה וקווינטה', en: 'By the end: hear root, third and fifth' },
+    goalSay: { he: 'בסוף היחידה תשמעו את השורש, הטרצה והקווינטה.', en: 'By the end, you will hear the root, the third and the fifth.' },
     demo: [
       { cap: { he: 'צליל אחרי צליל', en: 'One note at a time' }, ev: ev([60, 64, 67, 71], 0.4, 0.6) },
       { cap: { he: 'ביחד: אקורד', en: 'Together: a chord' }, ev: [{ m: [60, 64, 67, 71], t: 0, d: 1.4 }] },
@@ -776,6 +794,35 @@ export const COURSE_UNIT: Partial<Record<CourseId, { what: T2; whatSay: T2; why:
     },
   },
 };
+
+/**
+ * Which theme copy describes a unit. A unit's path theme rotates with its number, but its steps follow the prerequisite
+ * order, so for Ear / Jazz the unit is described by its lead lesson (the first "lesson:" step) when one maps to a copy,
+ * else by the theme most of its steps belong to, else by the path theme.
+ */
+export const LEAD_LESSON_THEME: Record<string, string> = {
+  'lesson:basics-pitch': 'basics',
+  'lesson:basics-beat': 'basics',
+  'lesson:intervals': 'steps',
+  'lesson:chord-intro': 'chords',
+  'lesson:major-minor': 'colour',
+  'lesson:degrees-135': 'home',
+  'lesson:bflat-two-homes': 'home',
+  'lesson:cadences': 'harmony',
+  'lesson:rhythm-r1': 'pulse',
+};
+export function unitThemeOf(course: CourseId, pathTheme: string | undefined, steps: readonly { id: string; sub?: string }[], themes: readonly { id: string; subs: string[] }[]): string | undefined {
+  if (course !== 'ear' && course !== 'jazz') return pathTheme;
+  const lead = steps.find((x) => x.id.startsWith('lesson:') && LEAD_LESSON_THEME[x.id]);
+  if (lead) return LEAD_LESSON_THEME[lead.id];
+  const inT = (sub: string, t: { subs: string[] }) => t.subs.some((x) => (x.endsWith('/') ? sub.startsWith(x) : sub === x));
+  let best = pathTheme, n = 0;
+  for (const t of themes) {
+    const k = steps.filter((x) => x.sub && inT(x.sub, t)).length;
+    if (k > n || (k === n && t.id === pathTheme)) [best, n] = [t.id, k];
+  }
+  return best;
+}
 
 /** The unit opener's copy for a course and a unit (theme copy for Ear / Jazz, course copy for the playing courses). */
 export function unitCopy(course: CourseId, theme: string | undefined, section: Section): { what: T2; whatSay: T2; why: T2; whySay: T2; theme: UnitThemeCopy } {

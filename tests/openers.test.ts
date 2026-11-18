@@ -194,3 +194,16 @@ describe('narration', () => {
     expect(openerLines('he', []).every((l) => /[֐-׿]/.test(l))).toBe(true);
   });
 });
+
+describe('a unit opener describes what the unit holds (tester 2026-11-18)', () => {
+  it('the lead lesson decides; else the theme most steps belong to; playing courses keep the path theme', async () => {
+    const { unitThemeOf, UNIT_THEMES } = await import('../src/content/openers');
+    const { THEMES } = await import('../src/engine/path');
+    const u1 = [{ id: 'lesson:basics-pitch', sub: 'pitch/higher-lower' }, { id: 'topic:dynamics:1', sub: 'expression/dynamics' }, { id: 'topic:basics-beat:1', sub: 'timing/steady' }];
+    expect(unitThemeOf('ear', 'home', u1, THEMES)).toBe('basics');
+    expect(UNIT_THEMES.basics.name?.he).toBeTruthy();
+    expect(unitThemeOf('ear', 'home', [{ id: 'topic:intervals-all:1', sub: 'intervals/melodic' }, { id: 'topic:x:1', sub: 'intervals/harmonic' }], THEMES)).toBe('steps');
+    expect(unitThemeOf('keys', 'home', u1, THEMES)).toBe('home');
+    for (const t of Object.values((await import('../src/content/openers')).LEAD_LESSON_THEME)) expect(UNIT_THEMES[t]).toBeTruthy();
+  });
+});

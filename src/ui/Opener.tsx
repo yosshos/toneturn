@@ -10,7 +10,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { courseOf, type CourseId } from '../engine/courses';
 import { LADDER, type SelfReport } from '../engine/courseStart';
 import { THEMES, type PathStep, type Section } from '../engine/path';
-import { COURSE_OPENERS, DAY, FILM, GO, START, UNIT_TX, fill, rungOfReport, sndEvents, themeGlyph, unitCopy, unitMinutes, type LanePass, type Snd, type Station, type T2 } from '../content/openers';
+import { COURSE_OPENERS, DAY, FILM, GO, START, UNIT_TX, UNIT_THEMES, fill, rungOfReport, sndEvents, themeGlyph, unitCopy, unitMinutes, type LanePass, type Snd, type Station, type T2 } from '../content/openers';
 import { FAMILY_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
 import { GLYPHS, PaperGlyph, type GlyphKind } from './Glyph';
 import { Toni, type ToniMood } from './Toni';
@@ -683,7 +683,7 @@ function drawPass(c: Ctx, p: LanePass, geo: ReturnType<typeof laneGeo>, upTo = I
 const unitSpec = (s: OpenerSpec) => s as Extract<OpenerSpec, { kind: 'unit' }>;
 const themeName = (spec: OpenerSpec, lang: Lang) => {
   const u = unitSpec(spec);
-  return THEMES.find((t) => t.id === u.theme)?.name[lang] ?? (lang === 'he' ? `יחידה ${u.no}` : `Unit ${u.no}`);
+  return UNIT_THEMES[u.theme ?? '']?.name?.[lang] ?? THEMES.find((t) => t.id === u.theme)?.name[lang] ?? (lang === 'he' ? `יחידה ${u.no}` : `Unit ${u.no}`);
 };
 
 const U_WHAT: SceneDef = {

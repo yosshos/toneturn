@@ -96,7 +96,7 @@ test.describe('course start', () => {
     await playLesson(page);
     const win = page.locator('[data-course-start="win"]');
     await expect(win).toBeVisible();
-    await expect(win.locator('[data-win-line]')).toContainText(/of 6 right first time/);
+    await expect(win.locator('[data-win-line]')).toContainText(/of 7 right first time/);
     await expect(win.locator('[data-win-badge]')).toContainText('First session');
     await fits(page, 'first win');
     // "New" highlights Continue the path; the daily goal and the reminder are one tap away.
