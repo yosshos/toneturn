@@ -5,6 +5,7 @@ import type { LessonDef, Question, SingSeqQuestion } from './lesson';
 import { mulberry32, singQuestion } from './lesson';
 import { pc } from './pitch';
 import { genTopic } from './topicKit';
+import { rampLevels } from './ramp';
 import { keepBeatQuestion } from './basics';
 import './topics'; // registers every topic generator
 import type { Drill, ExpNote } from './drills/types';
@@ -22,8 +23,11 @@ export function tasteLesson(def: TasteDef, seed: number): LessonDef {
   const s = () => Math.floor(rnd() * 1e9);
   const qs: Question[] = [];
   const id = () => `${def.id}-${qs.length + 1}`;
+  // The gentle ramp (ramp.ts): a topic rises one level at a time, after a short run at its current level.
+  const levels = rampLevels(def.run.items.flatMap((it) => ('topic' in it ? Array.from({ length: it.n }, () => ({ topic: it.topic, level: it.level })) : [])));
+  let k = 0;
   for (const it of def.run.items) {
-    if ('topic' in it) for (let i = 0; i < it.n; i++) qs.push(genTopic(it.topic, s(), it.level, id()) as Question);
+    if ('topic' in it) for (let i = 0; i < it.n; i++) qs.push(genTopic(it.topic, s(), levels[k++], id()) as Question);
     else if ('beat' in it) qs.push(keepBeatQuestion(id(), it.beat.bpm, it.beat.bars));
     else if ('echoNote' in it) {
       const q = singQuestion(id(), pc(KEYS[Math.floor(rnd() * KEYS.length)]), it.echoNote);
