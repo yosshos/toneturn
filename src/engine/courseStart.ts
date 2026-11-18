@@ -385,9 +385,10 @@ const ROCK_A = ['A', 'D', 'E', 'A', 'A', 'D', 'E', 'A'];
 /** Own material and generated items only (topics, drills, the band engine); songs are public-domain (songbook). */
 export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
   ear: {
-    new: T('ear', 'new', 'High, low and home', 'גבוה, נמוך ובית', 'Hear which note is higher, find the home note, then tap with a groove.', 'לשמוע איזה צליל גבוה יותר, למצוא את צליל הבית, ואז לתופף עם גרוב.', {
+    new: T('ear', 'new', 'High, low and home', 'גבוה, נמוך ובית', 'Hear which note is higher, then find the home note.', 'לשמוע איזה צליל גבוה יותר, ואז למצוא את צליל הבית.', {
       kind: 'lesson',
-      items: [{ topic: 'basics-highlow', level: 1, n: 1 }, { topic: 'find-tonic', level: 1, n: 1 }, { topic: 'basics-highlow', level: 2, n: 1 }, { beat: { bpm: 76, bars: 2 } }, { topic: 'find-tonic', level: 1, n: 1 }, { topic: 'basics-highlow', level: 3, n: 1 }],
+      // A gentle ramp (ramp.ts, 2026-11-18): a run at each level before the next, no jump to the top level.
+      items: [{ topic: 'basics-highlow', level: 1, n: 3 }, { topic: 'find-tonic', level: 1, n: 2 }, { topic: 'basics-highlow', level: 2, n: 2 }],
     }),
     bit: T('ear', 'bit', 'Major or minor', 'מז׳ור או מינור', 'Hear chords as bright or dark, then in a band progression.', 'לשמוע אקורדים בהירים או כהים, ואז בתוך מהלך של להקה.', {
       kind: 'lesson',

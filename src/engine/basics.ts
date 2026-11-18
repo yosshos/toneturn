@@ -15,7 +15,8 @@ import type { PitchClass } from './pitch';
 import { mulberry32, nameSeqQuestion, placeInRange, singQuestion, singSeqQuestion } from './lesson';
 import { displayNote, majorScale, pc, pcValue } from './pitch';
 import { TOPIC_GEN, choiceQ, genTopic, eventsStim, nm, notesStim, pickR, rng, shuffleR } from './topicKit';
-import './topicsSkills'; // 'tempo' (used by the beat lesson)
+import './topicsSkills'; // registers topics the lessons below may use
+import { rampLevels } from './ramp';
 
 const rest = (d: number): Stimulus => ({ kind: 'rest', duration: d });
 const nameEn = (p: PitchClass) => displayNote(p, 'letter', 'en');
@@ -155,20 +156,32 @@ TOPIC_GEN['basics-beat'] = {
 const lesson = (id: LessonDef['id'], skill: LessonDef['skill'], questions: Question[]): LessonDef => ({ id, version: 1, skill, scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions });
 const gen = (topic: string, level: number, seed: number, id: string) => genTopic(topic, seed, level, id);
 
+/** A part of a hand-built lesson: a topic level, or a built-in item made from its id (and a seed). */
+type Part = readonly [topic: string, level: number] | ((id: string, seed: number) => Question);
+/**
+ * A hand-built lesson's questions (ids q1, q2, …), the topic items on the gentle ramp (ramp.ts): a topic moves up a
+ * level only after a short run at its current one, else the item is a fresh seed of that level.
+ */
+function rampedLesson(seed: number, parts: readonly Part[]): Question[] {
+  const r = mulberry32(seed);
+  const s = () => Math.floor(r() * 1e9);
+  const levels = rampLevels(parts.flatMap((p) => (typeof p === 'function' ? [] : [{ topic: p[0], level: p[1] }])));
+  let k = 0;
+  return parts.map((p, i) => (typeof p === 'function' ? p(`q${i + 1}`, s()) : gen(p[0], levels[k++], s(), `q${i + 1}`)));
+}
+
+// The basics (tester 2026-11-18): one idea per lesson, a run at each level before the next, no jump to the top level.
+/** Higher or lower: three at level 1, then three at level 2. */
 export function basicsPitch(seed = Date.now()): LessonDef {
-  const r = mulberry32(seed);
-  const s = () => Math.floor(r() * 1e9);
-  return lesson('basics-pitch', 'pitch', [gen('basics-highlow', 1, s(), 'q1'), gen('basics-highlow', 1, s(), 'q2'), gen('basics-samediff', 1, s(), 'q3'), gen('basics-highlow', 2, s(), 'q4'), gen('basics-samediff', 1, s(), 'q5'), gen('basics-highlow', 3, s(), 'q6')]);
+  return lesson('basics-pitch', 'pitch', rampedLesson(seed, [['basics-highlow', 1], ['basics-highlow', 1], ['basics-highlow', 1], ['basics-highlow', 2], ['basics-highlow', 2], ['basics-highlow', 2]]));
 }
+/** The shape of a tune (up, down, up and down): three at level 1, then three at level 2. */
 export function basicsShape(seed = Date.now()): LessonDef {
-  const r = mulberry32(seed);
-  const s = () => Math.floor(r() * 1e9);
-  return lesson('basics-shape', 'sequences', [gen('basics-contour', 1, s(), 'q1'), gen('basics-contour', 1, s(), 'q2'), gen('basics-contour', 2, s(), 'q3'), gen('basics-samediff', 2, s(), 'q4'), gen('basics-contour', 2, s(), 'q5'), gen('basics-contour', 3, s(), 'q6')]);
+  return lesson('basics-shape', 'sequences', rampedLesson(seed, [['basics-contour', 1], ['basics-contour', 1], ['basics-contour', 1], ['basics-contour', 2], ['basics-contour', 2], ['basics-contour', 2]]));
 }
+/** The steady pulse only: hear it (steady or wobbly?) and keep it (tap along, then on through the silent bars). Meter and tempo are their own steps. */
 export function basicsBeat(seed = Date.now()): LessonDef {
-  const r = mulberry32(seed);
-  const s = () => Math.floor(r() * 1e9);
-  return lesson('basics-beat', 'timing', [gen('basics-beat', 1, s(), 'q1'), keepBeatQuestion('q2', 72, 2), gen('tempo', 1, s(), 'q3'), gen('basics-beat', 2, s(), 'q4'), gen('meter-feel', 1, s(), 'q5'), keepBeatQuestion('q6', 80, 3, 1)]);
+  return lesson('basics-beat', 'timing', rampedLesson(seed, [['basics-beat', 1], (id) => keepBeatQuestion(id, 72, 2), ['basics-beat', 1], (id) => keepBeatQuestion(id, 76, 2), ['basics-beat', 1], (id) => keepBeatQuestion(id, 80, 3, 1)]));
 }
 /** Match a note with your voice: hear one note, sing it back (no key, no names). */
 export function basicsVoice(seed = Date.now()): LessonDef {
@@ -305,16 +318,16 @@ export function transposeLesson(seed = Date.now()): LessonDef {
   const rnd = mulberry32(seed);
   const s = () => Math.floor(rnd() * 1e9);
   const k = shuffleR(rnd, ['C', 'G', 'F', 'D']);
-  const L = lesson('transpose', 'transpose', [
-    gen('transpose', 1, s(), 'q1'),
-    gen('transpose', 1, s(), 'q2'),
-    gen('transpose', 2, s(), 'q3'),
-    transposeNamesQuestion('q4', pc(k[0]), pc(k[1]), [1, 2, 3], 1150),
-    transposeNamesQuestion('q5', pc(k[2]), pc(k[3]), [1, 3, 5, 3], 1250),
-    gen('transpose', 4, s(), 'q6'),
-    transposeSingQuestion('q7', pc(k[1]), pc(k[2]), [1, 2, 3], 1200),
-    transposeSingQuestion('q8', pc(k[3]), pc(k[0]), [1, 2, 3, 1], 1450, true),
-  ]);
+  const L = lesson('transpose', 'transpose', rampedLesson(s(), [
+    ['transpose', 1],
+    ['transpose', 1],
+    ['transpose', 2],
+    (id) => transposeNamesQuestion(id, pc(k[0]), pc(k[1]), [1, 2, 3], 1150),
+    (id) => transposeNamesQuestion(id, pc(k[2]), pc(k[3]), [1, 3, 5, 3], 1250),
+    ['transpose', 2],
+    (id) => transposeSingQuestion(id, pc(k[1]), pc(k[2]), [1, 2, 3], 1200),
+    (id) => transposeSingQuestion(id, pc(k[3]), pc(k[0]), [1, 2, 3, 1], 1450, true),
+  ]));
   // Intro: the same three steps (1 2 3) from two homes.
   L.intro = [
     { id: 'intro-c', card: { kind: 'degrees', key: pc('C'), degrees: [1, 2, 3] }, stimulus: [{ kind: 'cadence', key: pc('C') }, notesStim([60, 62, 64], 0.5)] },
@@ -422,14 +435,14 @@ export function finishPhraseQuestion(id: string, key: PitchClass, seed: number, 
 export function rhythmShiftLesson(seed = Date.now()): LessonDef {
   const rnd = mulberry32(seed);
   const s = () => Math.floor(rnd() * 1e9);
-  const L = lesson('rhythm-shift', 'transpose', [
-    gen('displacement', 1, s(), 'q1'),
-    gen('displacement', 2, s(), 'q2'),
-    tapDisplacedQuestion('q3', s()),
-    gen('displacement', 3, s(), 'q4'),
-    tapDisplacedQuestion('q5', s()),
-    gen('rhythm-transform', 1, s(), 'q6'),
-  ]);
+  const L = lesson('rhythm-shift', 'transpose', rampedLesson(s(), [
+    ['displacement', 1],
+    ['displacement', 1],
+    (id, sd) => tapDisplacedQuestion(id, sd),
+    ['displacement', 2],
+    (id, sd) => tapDisplacedQuestion(id, sd),
+    ['rhythm-transform', 1],
+  ]));
   L.intro = [
     { id: 'intro-charleston', card: { kind: 'rhythm', rhythm: 'dqe.qr.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'dqe.qr.qr', bars: 1, bpm: 80 }] },
     { id: 'intro-moved', card: { kind: 'rhythm', rhythm: 'qr.dqe.qr' }, stimulus: [{ kind: 'rhythm', rhythm: 'qr.dqe.qr', bars: 1, bpm: 80 }] },

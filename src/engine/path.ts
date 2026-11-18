@@ -423,7 +423,26 @@ export const STEP_PREREQ: Record<string, string[]> = {
   'topic:interval-number:1': ['topic:note-reading:1'],
   // BH-G (owner 2026-11-14): the pivot itself is taught first, then the scale line with a pivot inside it.
   'topic:bh-pivot:1': ['topic:bh-pivot-arp:1'],
+  // Tester 2026-11-18 (Ear, beginner): one new idea at a time, basics before what builds on them. The same note in two
+  // homes needs the scale degrees (do-re-mi: 1 3 5) first; open / closed endings need the home note; meter, tempo,
+  // articulation and rhythm memory come after the steady-pulse basics. (With EARLY_PREREQ_BELOW these wait a unit.)
+  'lesson:bflat-two-homes': ['lesson:degrees-135'],
+  'lesson:cadences': ['lesson:degrees-135'],
+  'topic:meter-feel:1': ['lesson:basics-beat'],
+  'topic:tempo:1': ['lesson:basics-beat'],
+  'topic:articulation:1': ['lesson:basics-beat'],
+  'topic:rhythm-memory:1': ['lesson:basics-beat'],
+  // Chord steps after the first chord lesson (major or minor, by ear): there is no separate "what is a chord" step.
+  'topic:chord-read:1': ['lesson:major-minor'],
+  'topic:chord-member:1': ['lesson:major-minor'],
+  'topic:triads:1': ['lesson:major-minor'],
 };
+/**
+ * Tester 2026-11-18: in the first two sections (below solid) a step that builds on another lesson (PREREQ /
+ * STEP_PREREQ) waits for a unit after the one that teaches it — never the same unit, so a newcomer meets one new idea
+ * and passes it before the next one leans on it. Later, a prerequisite earlier in the same unit is enough.
+ */
+export const EARLY_PREREQ_BELOW = 1150;
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
@@ -975,11 +994,11 @@ export function buildPath(inp: PathInput): PathView {
       // A previous level left out of this path (N10: low B on a 4-string) doesn't block the next one.
       if (prev && all.some((x) => x.id === prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
     }
-    if (s.kind === 'lesson') for (const p of PREREQ[s.lesson!] ?? []) {
-      const pid = `lesson:${p}`;
-      if (all.some((x) => x.id === pid) && !taken.has(pid) && !scheduled.has(pid)) return false;
-    }
-    for (const pid of STEP_PREREQ[s.id] ?? []) if (all.some((x) => x.id === pid) && !taken.has(pid) && !scheduled.has(pid)) return false;
+    // EARLY_PREREQ_BELOW: early on, a prerequisite scheduled in this same unit is not enough.
+    const sameUnitOk = s.difficulty >= EARLY_PREREQ_BELOW;
+    const waits = (pid: string) => all.some((x) => x.id === pid) && !taken.has(pid) && !(sameUnitOk && scheduled.has(pid));
+    if (s.kind === 'lesson') for (const p of PREREQ[s.lesson!] ?? []) if (waits(`lesson:${p}`)) return false;
+    for (const pid of STEP_PREREQ[s.id] ?? []) if (waits(pid)) return false;
     for (const p of SUB_PREREQ[s.sub] ?? []) {
       const area = domainOf(p.split('/')[0] as SkillId);
       if (inp.leaveOut.includes(area)) continue; // P15
@@ -987,6 +1006,14 @@ export function buildPath(inp: PathInput): PathView {
     }
     return true;
   };
+
+  /** The step ids a step builds on: its topic's previous level, its ladder's previous level, PREREQ, STEP_PREREQ. */
+  const prereqIdsOf = (s: PathStep): string[] => [
+    ...(s.kind === 'topic' && (s.level ?? 1) > 1 ? [`topic:${s.topic}:${(s.level ?? 1) - 1}`] : []),
+    ...(s.ladder && ladderPrev.get(s.id) ? [ladderPrev.get(s.id)!] : []),
+    ...(s.kind === 'lesson' ? (PREREQ[s.lesson!] ?? []).map((p) => `lesson:${p}`) : []),
+    ...(STEP_PREREQ[s.id] ?? []),
+  ];
 
   // Ladder steps (0.61): the previous level of each family, and which families are open to the player now.
   const ladderPrev = new Map<string, string>();
@@ -1114,6 +1141,15 @@ export function buildPath(inp: PathInput): PathView {
     const order: { s: PathStep; probe?: boolean }[] = [];
     const queues = [...byArea.entries()].sort((a, b) => (weights.get(b[0]) ?? 0) - (weights.get(a[0]) ?? 0)).map(([, xs]) => xs);
     while (queues.some((q) => q.length)) for (const q of queues) if (q.length) order.push(q.shift()!);
+    // Prerequisites first (tester 2026-11-18): the difficulty sort put "same note, two homes" (900) before the degrees
+    // lesson it builds on (1000). A step moves to just after the last of its prerequisites in this unit.
+    for (let guard = 0; guard < order.length * order.length; guard++) {
+      const i = order.findIndex((p, k) => prereqIdsOf(p.s).some((pid) => order.findIndex((o) => o.s.id === pid) > k));
+      if (i < 0) break;
+      const [p] = order.splice(i, 1);
+      const last = Math.max(...prereqIdsOf(p.s).map((pid) => order.findIndex((o) => o.s.id === pid)));
+      order.splice(last + 1, 0, p);
+    }
     // Simulate success for the projection.
     for (const p of order) {
       taken.add(p.s.id);
