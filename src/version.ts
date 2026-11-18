@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.104.0',
+    date: '2026-11-18',
+    en: ['One look for the whole app: the earlier design is gone, along with its switch in Settings. A few screens were tightened so they still fit one phone screen.'],
+    he: ['עיצוב אחד לכל האפליקציה: העיצוב הקודם הוסר, יחד עם המתג שלו בהגדרות. כמה מסכים הודקו כדי שימשיכו להיכנס במסך טלפון אחד.'],
+  },
+  {
     version: '0.103.2',
     date: '2026-11-18',
     en: ['A globe button in the top bar and on the welcome screen switches the whole app between English and Hebrew in one tap.'],
