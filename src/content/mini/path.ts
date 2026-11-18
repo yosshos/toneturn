@@ -106,6 +106,76 @@ export const LESSONS: MiniLesson[] = [
     ],
   },
 
+  // ------------------------------------------------------------------ What is a chord? (tester 2026-11-18)
+  // Short on purpose (owner: few words per screen): it opens the chord steps, before major / minor. The terms are the
+  // glossary's (שורש, טרצה, קווינטה) and major-minor's own.
+  {
+    id: 'chord-intro',
+    area: 'harmony',
+    emoji: 'chords', // a glyph name (Glyph.glyphForEmoji passes it through): no emoji
+    title: { en: 'What is a chord?', he: 'מה זה אקורד?' },
+    takeaway: { en: 'Several notes sounding together make a chord. C–E–G: root, third, fifth. Lower the third a half step and major turns minor.', he: 'כמה צלילים שנשמעים ביחד יוצרים אקורד. דו–מי–סול: שורש, טרצה, קווינטה. מורידים את הטרצה בחצי טון, והמז׳ור הופך למינור.' },
+    steps: [
+      {
+        say: { en: 'A chord is several notes sounding at once. First, a single note.', he: 'אקורד הוא כמה צלילים שנשמעים בבת אחת. קודם, צליל אחד לבד.' },
+        play: [note(60, 1.4)],
+        show: { notes: [60], key: 'C', text: { en: 'one note', he: 'צליל אחד' } },
+      },
+      {
+        say: { en: 'Now three notes: one by one, then together. That is a chord.', he: 'עכשיו שלושה צלילים: אחד אחרי השני, ואז ביחד. זה אקורד.' },
+        play: [chord([60, 64, 67], 1.6, true), chord([60, 64, 67], 1.8)],
+        show: { notes: [60, 64, 67], chord: true, key: 'C', text: { en: 'C – E – G', he: 'דו – מי – סול' } },
+      },
+      {
+        say: { en: 'Their names: in C–E–G, C is the root, E the third, G the fifth.', he: 'השמות שלהם: בדו–מי–סול, דו הוא השורש, מי הטרצה, סול הקווינטה.' },
+        play: [notes([60, 64, 67], 0.9)],
+        show: { notes: [60, 64, 67], key: 'C', text: { en: 'root · third · fifth', he: 'שורש · טרצה · קווינטה' } },
+      },
+      {
+        say: { en: 'Chords have a color. Major sounds bright; minor sounds darker.', he: 'לאקורד יש צבע. מז׳ור נשמע בהיר; מינור נשמע כהה יותר.' },
+        play: [chord([60, 64, 67], 1.6), rest(0.5), chord([60, 63, 67], 1.8)],
+        show: { notes: [60, 63, 64, 67], text: { en: 'C major · C minor', he: 'דו מז׳ור · דו מינור' } },
+      },
+      {
+        say: { en: 'Only one note changes: the third, a half step lower in minor. E becomes E-flat.', he: 'רק צליל אחד משתנה: הטרצה, נמוכה בחצי טון במינור. מי הופך למי במול.' },
+        play: [chord([60, 64, 67], 1.2), chord([60, 63, 67], 1.2), chord([60, 64, 67], 1.4)],
+        show: { notes: [60, 63, 67], chord: true, key: 'C', text: { en: 'E → E♭', he: 'מי → מי במול' } },
+      },
+    ],
+    more: [
+      {
+        say: { en: 'Chords are usually built from thirds: every other note of the scale. In C major take C, skip D, take E, skip F, take G. That is C–E–G.', he: 'בדרך כלל בונים אקורדים מטרצות: כל צליל שני בסולם. בדו מז׳ור לוקחים דו, מדלגים על רה, לוקחים מי, מדלגים על פה, לוקחים סול. זה דו–מי–סול.' },
+        play: [notes([60, 62, 64, 65, 67], 0.45), chord([60, 64, 67], 1.4)],
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', text: { en: 'C (D) E (F) G', he: 'דו (רה) מי (פה) סול' } },
+      },
+      {
+        say: { en: 'A chord of three notes is called a triad. The root gives the chord its name: C–E–G is a C chord, G–B–D is a G chord.', he: 'אקורד של שלושה צלילים נקרא משולש (טריאדה). השורש נותן לאקורד את שמו: דו–מי–סול הוא אקורד דו, סול–סי–רה הוא אקורד סול.' },
+        play: [chord([60, 64, 67], 1.2), rest(0.3), chord([55, 59, 62], 1.4)],
+        show: { notes: [55, 59, 62], chord: true, key: 'C', text: { en: 'G – B – D', he: 'סול – סי – רה' } },
+      },
+      {
+        say: { en: 'Count half steps up from the root. Major: four to the third, then three more to the fifth. Minor: three, then four. Both reach the fifth at seven half steps.', he: 'סופרים חצאי טונים למעלה מהשורש. מז׳ור: ארבעה עד הטרצה, ועוד שלושה עד הקווינטה. מינור: שלושה, ואז ארבעה. בשניהם הקווינטה נמצאת שבעה חצאי טונים מעל השורש.' },
+        play: [chord([60, 64, 67], 1.3, true), rest(0.3), chord([60, 63, 67], 1.3, true)],
+        show: { notes: [60, 63, 64, 67], text: { en: '4 + 3 = major · 3 + 4 = minor', he: '4 + 3 = מז׳ור · 3 + 4 = מינור' } },
+      },
+      {
+        say: { en: 'Spread the notes out, or double one, and it is still the same chord. Here is C major low and wide, then high and close.', he: 'אפשר לפזר את הצלילים או להכפיל אחד מהם, וזה עדיין אותו אקורד. הנה דו מז׳ור נמוך ורחב, ואז גבוה וצפוף.' },
+        play: [chord([36, 48, 55, 64], 1.6), rest(0.3), chord([72, 76, 79], 1.4)],
+        show: { notes: [36, 48, 55, 64, 72, 76, 79], text: { en: 'C – C – G – E · C – E – G', he: 'דו – דו – סול – מי · דו – מי – סול' } },
+      },
+      {
+        say: { en: 'A common mistake: calling every quiet or sad-sounding chord minor. Register and mood do not decide; only the third does. Here is a low G major, then a high E minor.', he: 'טעות נפוצה: לקרוא מינור לכל אקורד שקט או עצוב. הרגיסטר ומצב הרוח לא קובעים; רק הטרצה קובעת. הנה סול מז׳ור נמוך, ואז מי מינור גבוה.' },
+        play: [chord([43, 47, 50], 1.6), rest(0.3), chord([76, 79, 83], 1.2)],
+        show: { notes: [43, 47, 50, 76, 79, 83], text: { en: 'G (major) · Em (minor)', he: 'G (מז׳ור) · Em (מינור)' } },
+      },
+      {
+        say: { en: 'In a song, the melody is one line on top, and the chords under it are the harmony. Here are four chords that bring a phrase home in C.', he: 'בשיר, המנגינה היא קו אחד למעלה, והאקורדים מתחתיה הם ההרמוניה. הנה ארבעה אקורדים שמחזירים משפט הביתה בדו.' },
+        play: [{ kind: 'phrase', key: C, chords: ['I', 'IV', 'V7', 'I'] }],
+        show: { text: { en: 'C – F – G7 – C', he: 'C – F – G7 – C' } },
+      },
+    ],
+  },
+
   // ------------------------------------------------------------------ 3. Major or minor?
   {
     id: 'major-minor',

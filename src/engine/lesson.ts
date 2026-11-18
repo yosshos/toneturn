@@ -8,7 +8,7 @@ import { jazzVoicing, PROGRESSIONS, SEVENTHS, voiceProgression, type JazzChord, 
 import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
-import { basicsBeat, basicsPitch, basicsShape, basicsVoice, chordTonesLesson, rhythmShiftLesson, transposeLesson } from './basics';
+import { basicsBeat, basicsPitch, basicsShape, basicsVoice, chordIntroLesson, chordTonesLesson, rhythmShiftLesson, transposeLesson } from './basics';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
@@ -723,7 +723,8 @@ export type LessonId =
   | 'basics-voice'
   | 'transpose'
   | 'rhythm-shift'
-  | 'chord-tones';
+  | 'chord-tones'
+  | 'chord-intro';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -1536,6 +1537,7 @@ function spelledPcOf(t: string): number | null {
 export const LESSON_ORDER: LessonId[] = [
   'bflat-two-homes',
   'degrees-135',
+  'chord-intro',
   'major-minor',
   'cadences',
   'sing-home-five',
@@ -1580,6 +1582,8 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return rhythmShiftLesson(seed);
     case 'chord-tones':
       return chordTonesLesson(seed);
+    case 'chord-intro':
+      return chordIntroLesson(seed);
     case 'modes':
       return modesLesson(1, seed);
     case 'slash-chords':

@@ -78,6 +78,7 @@ export const LESSON_AREA: Record<LessonId, DomainId> = {
   transpose: 'creative',
   'rhythm-shift': 'creative',
   'chord-tones': 'voice',
+  'chord-intro': 'pitch',
   'basics-pitch': 'pitch',
   'basics-shape': 'memory',
   'basics-beat': 'time',

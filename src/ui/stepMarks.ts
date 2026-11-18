@@ -222,6 +222,7 @@ export const LESSON_MARK: Record<string, string> = {
   'basics-shape': 'Up',
   'bflat-two-homes': 'B♭',
   'degrees-135': '1·3·5',
+  'chord-intro': 'chord',
   'major-minor': 'M/m',
   'notes-degrees': 'do',
   cadences: 'V7',

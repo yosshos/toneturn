@@ -5,6 +5,8 @@ import { renderStimulus } from '../src/engine/lesson';
 
 const words = (s: string) => s.replace(/\{name\}/g, '').split(/\s+/).filter(Boolean).length;
 const AREAS = ['ear', 'harmony', 'rhythm', 'theory', 'voice', 'jazz', 'world', 'play'];
+/** Short on purpose (owner 2026-11-18, few words per screen): a first look at a concept, not the 60–90 s lesson. */
+const SHORT = new Set(['chord-intro']);
 
 describe('mini-lessons (spec X)', () => {
   const all = Object.values(MINI_LESSONS);
@@ -19,7 +21,8 @@ describe('mini-lessons (spec X)', () => {
       expect(l.steps.length).toBeLessThanOrEqual(10);
       const en = l.steps.reduce((a, s) => a + words(s.say.en), 0);
       // ~2.6 spoken words per second plus the examples ≈ 60–90 s
-      expect(en, `${l.id} English words`).toBeGreaterThanOrEqual(100);
+      expect(en, `${l.id} English words`).toBeGreaterThanOrEqual(SHORT.has(l.id) ? 40 : 100);
+      if (SHORT.has(l.id)) for (const s of l.steps) expect(words(s.say.en), `${l.id} short screens`).toBeLessThanOrEqual(16);
       expect(en, `${l.id} English words`).toBeLessThanOrEqual(240);
       expect(l.title.he && l.takeaway.he && l.title.en && l.takeaway.en).toBeTruthy();
       let examples = 0;

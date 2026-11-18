@@ -99,7 +99,10 @@ describe('the beginner path: what a step builds on comes first, in an earlier un
         expect(b, `${id} after ${p}`).toBeGreaterThanOrEqual(0);
       }
     }
-    expect(unitOf('lesson:bflat-two-homes')).toBeGreaterThan(unitOf('lesson:degrees-135'));
+    // 2026-11-18 (round 2): degrees 1-3-5 now waits for high / low, so two homes may fall past these five units.
+    expect(unitOf('lesson:degrees-135')).toBeGreaterThanOrEqual(0);
+    const twoHomes = unitOf('lesson:bflat-two-homes');
+    expect(twoHomes === -1 || twoHomes > unitOf('lesson:degrees-135')).toBe(true);
   });
 
   it('inside a unit no step comes before a step it builds on', () => {

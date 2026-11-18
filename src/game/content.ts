@@ -78,6 +78,12 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'drum',
     tip: { en: 'Clap a rhythm you know, then clap it again starting one beat later.', he: 'מחאו כף מקצב שאתם מכירים, ואז שוב — פעמה אחת מאוחר יותר.' },
   },
+  'chord-intro': {
+    title: { en: 'What is a chord?', he: 'מה זה אקורד?' },
+    blurb: { en: 'Notes together make a chord: root, third, fifth — bright or dark.', he: 'צלילים ביחד יוצרים אקורד: שורש, טרצה, קווינטה — בהיר או כהה.' },
+    icon: 'chord',
+    tip: { en: 'Play any three white keys, skipping one between each: you just played a chord.', he: 'נגנו שלושה קלידים לבנים, ודלגו על אחד בין כל שניים: ניגנתם אקורד.' },
+  },
   'chord-tones': {
     title: { en: 'Sing inside the chord', he: 'לשיר בתוך האקורד' },
     blurb: { en: 'Hear a chord, sing its root, third or fifth — and finish the tune.', he: 'שומעים אקורד, שרים את השורש, הטרצה או הקווינטה — ומסיימים את המנגינה.' },
