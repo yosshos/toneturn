@@ -207,6 +207,9 @@ import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { realDrills } from '../engine/tasteLessons';
 import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicCard, realMusicFor, skipReal } from '../engine/courseStart';
 import { RealMusicCard } from './CourseStart';
+import { Opener, type OpenerSpec } from './Opener';
+import { stepGlyphOf } from './Path';
+import { courseOpenerSeen, markCourseOpener, markUnitOpener, unitOpenerDue } from '../content/openers';
 import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekCard, FirstWin, LevelOfferCard } from './CourseStart';
 import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
@@ -868,19 +871,36 @@ export function App() {
 
   // Mini-lessons (spec X): a unit opens with its short lesson until the player has heard it to the end.
   const [mini, setMini] = useState<{ lesson: MiniLesson; then: () => void } | null>(null);
+  // The course / unit opener (Opener.tsx): a film over the screen; `then` continues what opened it (Start or Skip).
+  const [opener, setOpener] = useState<{ spec: OpenerSpec; then?: () => void } | null>(null);
+  /** Openers show on their own except in automated runs (like the mini-lessons), unless asked for with ?openers. */
+  const openersOn = !(SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) || params.has('openers');
   // Icon tap motion (src/ui/paper/motion.ts) only on the app's own screens — never inside an exercise or a mini-lesson.
   useEffect(() => {
     document.documentElement.dataset.iconMotion = ICON_MOTION_ROUTES.has(route) && !mini ? 'on' : 'off';
   }, [route, mini]);
   const playerFirstName = user?.name ? user.name.split(' ')[0] : null;
   const markLearned = (id: string) => updateSettings({ learned: { ...(settings?.learned ?? {}), [id]: new Date().toISOString() } });
+  /** The unit opener just played (owner 2026-11-18): it REPLACES the first screen of what the unit opens with — the
+   *  mini-lesson's first step when one is due, otherwise the exercise's brief page. Read once by the next gate(). */
+  const openerReplaces = useRef(false);
   const gate = (unit: string | null, start: () => void) => {
     const l = unit ? lessonForUnit(unit) : null;
     const cur = settings;
+    const replaced = openerReplaces.current;
+    openerReplaces.current = false;
     // Automated test runs (simulator, unlocked, WebDriver) skip them unless asked for with ?mini.
     const automated = SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver);
     const auto = (cur?.miniLessons ?? true) && (!automated || params.has('mini'));
-    if (!l || !auto || cur?.learned?.[l.id] || cur?.miniSeen?.[l.id]) return start();
+    if (!l || !auto || cur?.learned?.[l.id] || cur?.miniSeen?.[l.id]) {
+      if (!replaced) return start();
+      againing.current = true; // the brief page was the opener's last scene
+      start();
+      againing.current = false;
+      return;
+    }
+    // The mini-lesson continues from its second step (the opener was its first screen), and still counts as heard.
+    if (replaced && l.steps.length > 1 && !loadSlot(`mini:${l.id}`)) saveSlot(`mini:${l.id}`, { title: l.title[s.uiLang], route: 'home', done: 1, total: l.steps.length, data: { i: 1, heard: [0] } });
     void piano.unlock();
     setMini({ lesson: l, then: start });
   };
@@ -1351,9 +1371,42 @@ export function App() {
   const lastStepId = useRef<string | null>(null);
   /** A step opened from the path screen (or its recap's "Next step") — not from the workout. */
   const openFromPath = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
+    // The unit opener (owner 2026-11-18): the first entry into a unit plays it in place of the first screen.
+    const c: CourseId = s.activeCourse ?? 'ear';
+    if (mode === 'step' && openersOn && unitOpenerDue(s.openers, c, unit)) {
+      updateSettings({ openers: markUnitOpener(s.openers, c, unit.id, new Date().toISOString()) });
+      setOpener({
+        spec: unitOpenerSpec(unit, false),
+        then: () => {
+          openerReplaces.current = true;
+          openFrom.current.path = true;
+          workoutPending.current = null;
+          openPathStep(x, unit, mode);
+          openerReplaces.current = false;
+        },
+      });
+      return;
+    }
     openFrom.current.path = true;
     workoutPending.current = null;
     openPathStep(x, unit, mode);
+  };
+  /** The unit opener's facts: the unit's number and theme, its real steps (road names and symbols), its families. */
+  const unitOpenerSpec = (unit: PathUnit, replay: boolean): OpenerSpec => {
+    const steps = unit.steps.filter((y) => !y.step.bonus);
+    const fams = new Map<string, { title: string; glyph: ReturnType<typeof stepGlyphOf> }>();
+    for (const y of steps) if (y.step.ladder && !fams.has(y.step.ladder.family)) fams.set(y.step.ladder.family, { title: y.step.title[s.uiLang].split(' · ')[0], glyph: stepGlyphOf(y.step) });
+    return {
+      kind: 'unit',
+      course: s.activeCourse ?? 'ear',
+      unitId: unit.id,
+      no: unit.no ?? unit.n,
+      theme: unit.theme,
+      section: unit.section,
+      steps: steps.map((y) => ({ title: nodeTitle(y.step, s, s.uiLang), step: y.step, glyph: stepGlyphOf(y.step) })),
+      families: [...fams.values()],
+      replay,
+    };
   };
   /** The recap's "Next step" (0.68.1, owner): the next open step of the current unit, through the normal opener. */
   const openNextStep = () => {
@@ -1787,7 +1840,16 @@ export function App() {
       updateSettings({ ...ir.patch, pathFacts: unfreezeIfEarly(settings.pathFacts) });
     }
     setCsWelcomeAgain(false);
-    if (!(setupNeeded(c, settings) && !cStart?.setupAt)) startTaste(r);
+    const next = () => {
+      if (!(setupNeeded(c, settings) && !cStart?.setupAt)) startTaste(r);
+    };
+    // The course opener (owner 2026-11-18): once per course, right after the self-report and before the taste.
+    if (openersOn && !courseOpenerSeen(settings.openers, c)) {
+      updateSettings({ openers: markCourseOpener(settings.openers, c, new Date().toISOString()) });
+      setOpener({ spec: { kind: 'course', course: c, report: r, replay: false, taste: tasteFor(c, r, tasteWho).title }, then: next });
+      return;
+    }
+    next();
   };
   const csNow = () => new Date().toISOString();
   const leaveWin = (then: () => void) => {
@@ -1803,9 +1865,9 @@ export function App() {
   }, [progressReady, settings?.courses, settings?.activeCourse, progress.history.length]);
   // The course-start screen shows only welcome / setup / the first win; anything else goes back to Today.
   useEffect(() => {
-    if (route === 'coursestart' && settings && (cStage === 'done' || (cStage === 'taste' && !csWelcomeAgain))) go('home');
+    if (route === 'coursestart' && settings && !opener && (cStage === 'done' || (cStage === 'taste' && !csWelcomeAgain))) go('home');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [route, cStage, csWelcomeAgain]);
+  }, [route, cStage, csWelcomeAgain, opener]);
 
   /** A game step of the path (0.38): stars from the game's accuracy (≥ 60 % = 1, 80 % = 2, 95 % = 3). */
   const noteGameStep = (game: string, score: number, detail: unknown) => {
@@ -2271,6 +2333,18 @@ export function App() {
             <WhatsNewButton t={t} lang={s.uiLang} unseen={news.length > 0} onSeen={() => updateSettings({ seenVersion: APP_VERSION })} />
             <MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />
           </>} />}
+      {opener && (
+        <Opener
+          key={opener.spec.kind === 'course' ? `c:${opener.spec.course}` : `u:${opener.spec.unitId}`}
+          spec={opener.spec}
+          lang={s.outputLang}
+          onDone={() => {
+            const then = opener.then;
+            setOpener(null);
+            then?.();
+          }}
+        />
+      )}
       {mini && (
         <MiniLessonPlayer
           t={t}
@@ -2407,7 +2481,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteWho).title } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (

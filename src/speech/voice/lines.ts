@@ -16,8 +16,11 @@ import { narration } from '../../game/narration';
 import { pc, spokenMajorKey, type Naming } from '../../engine/pitch';
 import { previewText } from './preview';
 export { previewText };
+import { openerLines as openerText } from '../../content/openers';
+import { COURSE_IDS } from '../../engine/courses';
+import { SELF_REPORTS, tasteFor, type JazzWho } from '../../engine/courseStart';
 
-export type LineSource = 'mini' | 'mini-name' | 'intro' | 'go' | 'prompt' | 'feedback' | 'memory' | 'preview' | 'other';
+export type LineSource = 'mini' | 'mini-name' | 'intro' | 'go' | 'prompt' | 'feedback' | 'memory' | 'preview' | 'opener' | 'other';
 export interface VoiceLine {
   /** The raw English text as the app passes it to tts.speak (before speakable()). */
   text: string;
@@ -50,6 +53,13 @@ export function memoryLines(): VoiceLine[] {
   for (let n = 1; n <= 30; n++) out.push(t.soloTurn(n, 'melody'), t.soloTurn(n, 'rhythm'));
   for (const nm of NAMINGS) for (const k of KEY_NAMES) out.push(t.key(spokenMajorKey(pc(k), nm, 'en')));
   return out.map((text) => ({ text, src: 'memory' }));
+}
+
+/** The course and unit openers (src/content/openers.ts): every narrated English line, every first-lesson title. */
+export function openerLines(): VoiceLine[] {
+  const who: JazzWho[] = [null, 'voice', 'keys', 'bass', 'guitar'];
+  const titles = COURSE_IDS.flatMap((c) => SELF_REPORTS.flatMap((r) => who.map((w) => tasteFor(c, r, w).title)));
+  return openerText('en', titles).map((text) => ({ text, src: 'opener' as const }));
 }
 
 export function previewLines(): VoiceLine[] {

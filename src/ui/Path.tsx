@@ -2,7 +2,8 @@
 // a sticky unit header, the glide to the current step, steps that rise in as they scroll into view, and a
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
-import { PaperGlyph } from './Glyph';
+import { PaperGlyph, type GlyphKind } from './Glyph';
+import { FILM } from '../content/openers';
 import { ladderFamiliesFor, ladderHiddenFor, pathGuitarAddOns, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
@@ -262,8 +263,13 @@ import { withRepFacts } from '../engine/pathBonus';
 import { decorateMastery, missingFor, unitMastery, type MasteryCtx } from '../engine/pathMastery';
 import { KEY_LABEL } from '../engine/analysis/keyMastery';
 
+/** A step's own Paper symbol on the road (undefined: it shows a plain node icon). Also used by the unit opener. */
+export function stepGlyphOf(step: PathStep): GlyphKind | null {
+  return (step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? ((step.bonus ? BONUS_STEP_GLYPH[step.game] : undefined) ?? GAME_STEP_GLYPH[step.game]) : undefined) ?? null;
+}
+
 function StepIcon({ step }: { step: PathStep }) {
-  const kind = step.ladder ? (FAMILY_GLYPH[step.ladder.family] ?? (step.kind === 'vocal' ? 'sing' : step.ladder.instrument === 'piano' ? 'keys' : step.ladder.instrument === 'drums' ? 'drums' : 'guitar')) : step.topic ? TOPIC_GLYPH[step.topic] : step.lesson ? LESSON_GLYPH[step.lesson] : step.kind === 'game' && step.game ? ((step.bonus ? BONUS_STEP_GLYPH[step.game] : undefined) ?? GAME_STEP_GLYPH[step.game]) : undefined;
+  const kind = stepGlyphOf(step);
   if (!kind) return <NodeIcon kind={iconOf(step)} />;
   return (
     <PaperGlyph kind={kind} width={30} height={27} className="step-glyph" />
@@ -286,6 +292,8 @@ export function PathView2({
   extras,
   onTechTest,
   top,
+  onCourseIntro,
+  onAboutUnit,
 }: {
   t: Strings;
   settings: Settings;
@@ -305,6 +313,10 @@ export function PathView2({
   onTechTest?: () => void;
   /** SPEC-COURSE-START: under the header — the course-start hero, the level-test offer, the goal line. */
   top?: React.ReactNode;
+  /** Replay the course opener (Opener.tsx). */
+  onCourseIntro?: () => void;
+  /** Replay a unit's opener ("About this unit"). */
+  onAboutUnit?: (unit: PathUnit) => void;
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -495,6 +507,12 @@ export function PathView2({
             {view.progress.done + view.progress.checked}/{view.progress.total}
           </span>
         </div>
+        {onCourseIntro && (
+          <button type="button" className="path-intro" onClick={onCourseIntro} data-course-intro>
+            <Icon k="play" size={14} />
+            {FILM.watchIntro[lang]}
+          </button>
+        )}
         {(settings.activeCourse ?? 'ear') === 'ear' && (
           <div className="exam-head-row">
             <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />
@@ -601,6 +619,11 @@ export function PathView2({
                     )}
                   </small>
                   <b>{th ? th.name[lang] : tx.section[u.section]}</b>
+                  {onAboutUnit && u.status !== 'projected' && (
+                    <button type="button" className="unit-about" onClick={() => onAboutUnit(u)} data-unit-about={u.id}>
+                      {FILM.aboutUnit[lang]}
+                    </button>
+                  )}
                   {/* 0.66 (owner): the unit shows its progress (steps done / steps) — the old row of area-colour dots read as
                       stars that were "lit" before starting. */}
                   {(() => {

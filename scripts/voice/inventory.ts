@@ -3,7 +3,7 @@
 // Also prints a saturation check: how many new lines the generators still produce with more seeds.
 
 import { writeFileSync } from 'node:fs';
-import { distinct, harvestLessons, memoryLines, miniLines, previewLines, type VoiceLine } from '../../src/speech/voice/lines';
+import { distinct, harvestLessons, memoryLines, miniLines, openerLines, previewLines, type VoiceLine } from '../../src/speech/voice/lines';
 import { speakable } from '../../src/speech/speakable';
 import { voiceKey } from '../../src/speech/voice/manifest';
 
@@ -11,6 +11,7 @@ const SEEDS = Number(process.env.SEEDS ?? 120);
 const groups: [string, VoiceLine[]][] = [
   ['mini', miniLines()],
   ['preview', previewLines()],
+  ['opener', openerLines()],
   ['memory', memoryLines()],
   ['lessons', harvestLessons(SEEDS)],
 ];
@@ -22,7 +23,7 @@ const rows = all
   .filter((r) => r.say.trim());
 const byKey = new Map(rows.map((r) => [r.key, r]));
 // Priority: what a player hears first (mini-lessons, intros), then the rest.
-const order = ['mini', 'mini-name', 'intro', 'go', 'preview', 'memory', 'other', 'prompt', 'feedback'];
+const order = ['mini', 'mini-name', 'intro', 'go', 'opener', 'preview', 'memory', 'other', 'prompt', 'feedback'];
 const out = [...byKey.values()].sort((a, b) => order.indexOf(a.src) - order.indexOf(b.src));
 writeFileSync(new URL('./.lines.json', import.meta.url), JSON.stringify(out));
 
