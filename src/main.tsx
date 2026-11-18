@@ -30,29 +30,21 @@ import './pulse.css';
 import './feedback.css';
 import './feedback2.css';
 import './practice.css';
-// GUITAR-AUDIT: chord boxes, the tab's finger row, the neck's string names (both looks; studio rules scoped inside).
+// GUITAR-AUDIT: chord boxes, the tab's finger row, the neck's string names (Paper tones inside).
 import './guitar.css';
-import { bootStudioLook } from './ui/studio/lookBoot';
 import { App } from './ui/App';
 import { BrandSplash } from './ui/brand/Splash';
-// The studio look layer (redesign stage 1): after every other stylesheet, including those App's modules import.
+// The studio layer (redesign stage 1): after every other stylesheet, including those App's modules import.
 import './studio.css';
-import { applyStartupLook } from './ui/look';
 import { initPwa } from './pwa';
 import { installPartner } from './partner';
 import { installIconTaps } from './ui/paper/motion';
-// Last: the studio screens and the studio game frame (scoped under :root[data-look='studio']).
+// Last: the studio screens and the studio game frame.
 import './studio-screens.css';
 import './studio-games.css';
 import './studio-elements.css';
-// The remaining screens and the sweep of the classic sheets (studio look); last, so its by-hand rules win.
+// The remaining screens and the sweep of the base sheets; last, so its by-hand rules win.
 import './studio-rest.css';
-
-// The look (classic / studio): index.html already painted it; this keeps it right if that snippet could not run.
-applyStartupLook();
-
-// The studio look (?look=studio / localStorage tt.look) before the first render.
-bootStudioLook();
 
 // Service worker (app shell, updates, push) only in production builds.
 initPwa(import.meta.env.PROD);
@@ -73,7 +65,7 @@ if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
   // Dev-only: the studio design elements (#/dev/elements), for screenshots.
   void import('./ui/studio/ElementsGallery').then(({ ElementsGallery }) => createRoot(document.getElementById('root')!).render(<ElementsGallery />));
 } else {
-  // The opening animation (studio look) is a sibling overlay: the app starts underneath, untouched.
+  // The opening animation is a sibling overlay: the app starts underneath, untouched.
   createRoot(document.getElementById('root')!).render(
     <>
       <App />

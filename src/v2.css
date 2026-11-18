@@ -327,59 +327,6 @@
 .toni svg {
   overflow: visible;
 }
-.toni .t-body,
-.toni .t-flag,
-.toni .t-eye,
-.toni .t-fx {
-  transform-box: view-box;
-}
-.toni .t-body {
-  transform-origin: 96px 186px;
-}
-.toni .t-flag {
-  transform-origin: 142px 30px;
-}
-.toni .t-eye {
-  transform-box: fill-box;
-  transform-origin: center;
-}
-@keyframes t-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-@keyframes t-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
-@keyframes t-sway { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-6deg); } }
-@keyframes t-tilt { 0%, 100% { transform: rotate(0); } 30%, 80% { transform: rotate(-9deg); } }
-@keyframes t-tap { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(10deg); } }
-@keyframes t-point { 0%, 40%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } }
-@keyframes t-hop { 0%, 100% { transform: translateY(0) scale(1, 1); } 10% { transform: scale(1.06, 0.92); } 35% { transform: translateY(-26px) scale(0.96, 1.05); } 60% { transform: scale(1.05, 0.95); } 75% { transform: none; } }
-@keyframes t-raise { 0%, 100% { transform: rotate(60deg); } 30%, 85% { transform: rotate(0); } }
-@keyframes t-spin { 0%, 20% { transform: rotate(0); } 60%, 100% { transform: rotate(360deg); } }
-@keyframes t-wave { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-18deg); } 75% { transform: rotate(14deg); } }
-@keyframes t-no { 0%, 60%, 100% { transform: rotate(0); } 10% { transform: rotate(-6deg); } 20% { transform: rotate(6deg); } 30% { transform: rotate(-4deg); } 40% { transform: rotate(3deg); } }
-@keyframes t-droop { 0% { transform: rotate(-40deg); } 40%, 100% { transform: rotate(0); } }
-@keyframes t-back { 0%, 100% { transform: translate(0, 0); } 15% { transform: translate(8px, -10px) rotate(6deg); } 35% { transform: translate(0, 0); } }
-@keyframes t-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.03, 0.97); } }
-@keyframes t-unfurl { 0%, 15% { transform: scaleX(0.05) rotate(-80deg); } 45% { transform: scaleX(1.12) rotate(6deg); } 60%, 100% { transform: scaleX(1) rotate(0); } }
-@keyframes t-bye { 0% { transform: rotate(-30deg); } 15% { transform: rotate(20deg); } 30% { transform: rotate(-30deg); } 45% { transform: rotate(20deg); } 60% { transform: rotate(-20deg); } 85%, 100% { transform: rotate(60deg); } }
-@keyframes t-fade { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-.toni.s-idle .t-body { animation: t-bob 2.6s ease-in-out infinite; }
-.toni.s-idle .t-eye { animation: t-blink 4s infinite; }
-.toni.s-idle .t-flag { animation: t-sway 2.6s ease-in-out infinite; }
-.toni.s-listen .t-body { animation: t-tilt 2.8s ease-in-out infinite; }
-.toni.s-listen .t-fx { animation: t-fade 0.9s ease-in-out infinite; }
-.toni.s-think .t-flag { animation: t-tap 0.5s ease-in-out infinite; }
-.toni.s-think .t-fx { animation: t-fade 2s infinite; }
-.toni.s-hint .t-flag { animation: t-point 1.4s ease-in-out infinite; }
-.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1; }
-.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1; }
-.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1; }
-.toni.s-streak .t-flag { animation: t-wave 0.5s ease-in-out infinite; }
-.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1; }
-.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1; }
-.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2; }
-.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1; }
-.toni.s-sleepy .t-body { animation: t-breathe 3.6s ease-in-out infinite; }
-.toni.s-sleepy .t-fx { animation: t-fade 3s ease-in-out infinite; }
-.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1; }
-.toni.s-bye .t-flag { animation: t-bye 2.4s ease-in-out 1 forwards; }
 :root[data-motion='reduced'] .toni * {
   animation: none !important;
 }
@@ -709,17 +656,6 @@
 }
 
 /* ---------------------------------------------------------------- wave meter */
-.wave-meter {
-  display: block;
-  width: 100%;
-  height: 22px;
-}
-.wave-meter .on {
-  fill: var(--teal);
-}
-.wave-meter .off {
-  fill: color-mix(in srgb, var(--accent) 16%, var(--card));
-}
 
 /* ---------------------------------------------------------------- Today: the workout hero */
 :root[data-theme] .wk-card.wk-hero {
@@ -731,45 +667,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-.wk-hero .wk-staff {
-  position: absolute;
-  inset: 8px 0 auto 0;
-  width: 100%;
-  height: 120px;
-  opacity: 0.35;
-  pointer-events: none;
-}
-.wk-hero .wk-staff path {
-  stroke: var(--lilac);
-  stroke-width: 1.6;
-  fill: none;
-}
-.wk-hero .wk-head {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-.wk-hero .wk-toni {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-}
-.wk-hero .wk-bubble {
-  margin-bottom: 34px;
-  padding: 8px 12px;
-  border-radius: 16px 16px 16px 4px;
-  background: #ffffff;
-  color: var(--ink-c);
-  border: 2.5px solid var(--ink-c);
-  font-weight: 800;
-  font-size: 0.86rem;
-  line-height: 1.3;
-  max-width: 190px;
-}
-:root[dir='rtl'] .wk-hero .wk-bubble {
-  border-radius: 16px 16px 4px 16px;
 }
 .wk-hero .wk-edit {
   background: #ffffff;
@@ -788,20 +685,6 @@
   line-height: 1.1;
   color: #ffffff;
 }
-.wk-hero .wk-line {
-  position: relative;
-  margin: 0;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #e3d8ff;
-}
-.wk-hero .wk-line .now {
-  color: var(--lemon);
-}
-.wk-hero .wk-line .done {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
 .wk-hero .wk-start {
   position: relative;
   width: 100%;
@@ -809,23 +692,6 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-}
-.wk-hero .wk-goal {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.wk-hero .wk-goal small {
-  font-weight: 800;
-  color: #e3d8ff;
-  white-space: nowrap;
-}
-.wk-hero .wave-meter .off {
-  fill: #8b5cf6;
-}
-.wk-hero .wave-meter .on {
-  fill: var(--lemon);
 }
 .wk-hero .wk-edited {
   position: relative;
@@ -1142,29 +1008,6 @@
   place-items: center;
   height: 190px;
 }
-.recap-art .recap-staff {
-  position: absolute;
-  inset: auto 0 18px 0;
-  width: 100%;
-  height: 120px;
-}
-.recap-staff .rs-lines path {
-  stroke: var(--line-strong);
-  stroke-width: 1.6;
-  fill: none;
-}
-.recap-staff .rs-bar {
-  fill: var(--outline);
-}
-.recap-staff .rs-fermata {
-  stroke: var(--purple);
-  stroke-width: 4.5;
-  fill: none;
-  stroke-linecap: round;
-}
-.recap-staff .rs-dot {
-  fill: var(--purple);
-}
 :root[data-theme] .recap .stars .star.note {
   color: inherit;
   text-shadow: none;
@@ -1348,16 +1191,7 @@
   color: var(--lemon);
 }
 
-/* ---------------------------------------------------------------- opening: splash (logo + name) and welcome (the slogan, once) */
-:root[data-theme] .splash {
-  background: var(--purple);
-  color: #ffffff;
-}
-:root[data-theme] .splash .splash-word {
-  font-family: var(--display);
-  font-size: 2.4rem;
-  color: #ffffff;
-}
+/* ---------------------------------------------------------------- opening: welcome (the slogan, once) */
 :root[data-theme] .ob-welcome {
   gap: 12px;
 }
@@ -1724,12 +1558,8 @@
 :root[data-theme] button.tc-card:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
 :root[data-theme] .tc-card > small { font-weight: 700; color: var(--ink-dim); font-size: 0.8rem; }
 :root[data-theme] .tc-card > b { font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.25rem; line-height: 1.2; }
-:root[data-theme] .tc-card .wave-meter { margin-top: auto; }
-:root[data-theme] .tc-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; color: var(--ink-dim); font-size: 0.8rem; }
 :root[data-theme] .tc-hint { color: var(--ink-dim); font-size: 0.8rem; }
 :root[data-theme] .today-quests { margin-top: 18px; }
-:root[data-theme] .tq-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 8px; }
-:root[data-theme] .tq-head h2 { margin: 0; font-family: 'Secular One', Rubik, sans-serif; font-weight: 400; font-size: 1.1rem; }
 :root[data-theme] .tq-list { list-style: none; margin: 0; padding: 0; border-radius: 20px; border: var(--stroke) solid var(--outline); background: var(--card, #fff); box-shadow: var(--shadow); overflow: hidden; }
 :root[data-theme] .tq-list li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-top: 1.5px solid var(--card-2); }
 :root[data-theme] .tq-list li:first-child { border-top: 0; }
@@ -1790,11 +1620,6 @@
 :root[data-theme] .pt-tool svg { box-sizing: content-box; width: 22px; height: 22px; padding: 11px; border-radius: 50%; border: var(--stroke) solid var(--ink-c); background: var(--card, #fff); box-shadow: var(--sx) 3px 0 var(--ink-c); color: var(--ink-c); }
 :root[data-theme] .pt-tool small { font-size: 0.68rem; font-weight: 700; text-align: center; line-height: 1.2; }
 :root[data-theme] .pt-tool:focus-visible svg { outline: 3px solid var(--sky); outline-offset: 2px; }
-/* splash (0.63): name, slogan, the staff under them (design board Splash) */
-:root[data-theme] .splash .splash-slogan { margin-top: 8px; color: var(--lemon); font-family: 'Secular One', Rubik, sans-serif; font-size: 1.15rem; letter-spacing: 0.02em; opacity: 0; animation: v2-rise 0.5s ease-out 0.9s forwards; }
-:root[data-theme] .splash .splash-staff { position: absolute; inset-inline: 0; bottom: 18%; width: 100%; height: 130px; pointer-events: none; }
-@keyframes v2-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { :root[data-theme] .splash .splash-slogan { animation: none; opacity: 1; } }
 
 /* ── Per-course community (0.65): my courses with their level, the league week's XP per course, badge course chips ── */
 :root[data-theme] .cl-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
@@ -1828,18 +1653,6 @@
 :root[data-theme] .ov-col i { display: block; width: 100%; max-width: 30px; border-radius: 14px; background: var(--teal); border: 2px solid var(--ink-c); box-sizing: border-box; }
 :root[data-theme] .ov-col i.zero { background: var(--card-2); border-style: dashed; }
 :root[data-theme] .ov-col small { font-size: 0.72rem; font-weight: 700; color: var(--ink-dim); }
-/* Splash timeline (0.63, owner: calmer, time to read the slogan): logo drawn 0.2–2.4 s, name at 2.0 s, slogan at 2.7 s,
-   held until 4.6 s, then a slow fade into the app (5.3 s). A tap still skips. */
-:root[data-theme] .splash { animation: splash-out 0.7s ease 4.6s both; }
-:root[data-theme] .splash-logo .sp-ear { animation: sp-draw 1.2s cubic-bezier(0.45, 0, 0.25, 1) 0.2s forwards; }
-:root[data-theme] .splash-logo .sp-seven { animation: sp-draw 0.7s cubic-bezier(0.45, 0, 0.25, 1) 1.1s forwards; }
-:root[data-theme] .splash-logo .sp-wave { animation: sp-draw 0.8s ease-out 1.5s forwards; }
-:root[data-theme] .splash-logo .d0 { animation-delay: 2.1s; }
-:root[data-theme] .splash-logo .d1 { animation-delay: 2.25s; }
-:root[data-theme] .splash-logo .d2 { animation-delay: 2.4s; }
-:root[data-theme] .splash .splash-word { animation: sp-fade 0.8s ease 2s both; }
-:root[data-theme] .splash .splash-slogan { animation: v2-rise 0.8s ease-out 2.7s forwards; }
-@media (prefers-reduced-motion: reduce) { :root[data-theme] .splash { animation: splash-out 0.5s ease 2.6s both; } :root[data-theme] .splash .splash-word { animation: none; } }
 :root[data-theme] .pt-tile { min-height: 156px; padding-top: 56px; }
 :root[data-theme] .pt-tile small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* five stars on technique levels (0.64, owner): note heads; three opens the next level */
@@ -2097,26 +1910,6 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 /* 0.68.1: a recap card's animations (Toni, the level bar's fill, the stars) wait until the card is first shown. */
 .recap-pages > .rp.rp-wait,
 .recap-pages > .rp.rp-wait * { animation-play-state: paused !important; }
-/* 0.68.1 (owner: "Toni is often frozen"): every state keeps a gentle motion after its one-shot gesture — the gesture
-   plays once, then a slow bob / sway / breath carries on (a second animation, delayed by the gesture's length). Eyes
-   blink in every awake state. Reduced motion still stops it all (rule above: data-motion='reduced'). */
-.toni:not(.s-sleepy):not(.s-correct):not(.s-streak):not(.s-bye) .t-eye { animation: t-blink 4.5s infinite; }
-.toni.s-think .t-body { animation: t-bob 3.2s ease-in-out infinite; }
-.toni.s-hint .t-body { animation: t-bob 2.8s ease-in-out infinite; }
-.toni.s-listen .t-flag { animation: t-sway 3s ease-in-out infinite; }
-.toni.s-correct .t-body { animation: t-hop 0.9s cubic-bezier(0.3, 0.7, 0.4, 1) 1, t-bob 2.6s ease-in-out 0.9s infinite; }
-.toni.s-correct .t-flag { animation: t-raise 0.9s ease-out 1, t-wave 1.6s ease-in-out 0.9s infinite; }
-.toni.s-streak .t-body { animation: t-spin 1.2s cubic-bezier(0.5, 0, 0.3, 1) 1, t-bob 2.4s ease-in-out 1.2s infinite; }
-.toni.s-streak .t-flag { animation: t-wave 0.9s ease-in-out infinite; }
-.toni.s-wrong .t-body { animation: t-no 1.2s ease-in-out 1, t-breathe 3.6s ease-in-out 1.2s infinite; }
-.toni.s-wrong .t-flag { animation: t-droop 1.2s cubic-bezier(0.4, 1.6, 0.5, 1) 1, t-sway 3.6s ease-in-out 1.2s infinite; }
-.toni.s-close .t-body { animation: t-bob 3s ease-in-out infinite; }
-.toni.s-close .t-flag { animation: t-tap 1s ease-in-out 2, t-sway 3s ease-in-out 2s infinite; }
-.toni.s-wow .t-body { animation: t-back 1.2s ease-out 1, t-bob 2.8s ease-in-out 1.2s infinite; }
-.toni.s-wow .t-flag { animation: t-sway 2.8s ease-in-out infinite; }
-.toni.s-draw .t-body { animation: t-bob 2.6s ease-in-out 0.9s infinite; }
-.toni.s-draw .t-flag { animation: t-unfurl 0.9s cubic-bezier(0.3, 1.5, 0.5, 1) 1, t-sway 2.6s ease-in-out 0.9s infinite; }
-.toni.s-bye .t-body { animation: t-bob 2.6s ease-in-out infinite; }
 
 /* 0.70 (owner): the passage's length while it plays — sounding parts as bars, a running marker. */
 :root[data-theme] .listen-strip { position: relative; height: 10px; margin: 6px auto 4px; width: min(100%, 420px); border-radius: 99px; background: var(--card-2, #efeaf8); overflow: hidden; }

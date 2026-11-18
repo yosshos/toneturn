@@ -1,9 +1,9 @@
 // Dev-only gallery of the Paper Toni (#/dev/toni): every state at 120 and 48 px, animated, on a light and a dark
-// panel. Query: ?only=idle,wrong (states), &look=classic (the classic drawing, for comparison). "Replay" restarts the
+// panel. Query: ?only=idle,wrong (states). "Replay" restarts the
 // one-shot gestures. e2e/toniGallery.spec.ts screenshots it to docs/toni-shots/.
 import { useEffect, useState } from 'react';
-import { Toni, ToniClassic } from './Toni';
-import { TONI_EXTRA_STATES, TONI_MOODS, ToniPaper, toBase, type ToniMood } from './ToniPaper';
+import { Toni } from './Toni';
+import { TONI_EXTRA_STATES, TONI_MOODS, ToniPaper, type ToniMood } from './ToniPaper';
 
 const q = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
 const NAME: Record<ToniMood, string> = {
@@ -29,16 +29,14 @@ const NAME: Record<ToniMood, string> = {
 export function ToniGallery() {
   const p = q();
   const only = (p.get('only') ?? '').split(',').filter(Boolean);
-  const classic = p.get('look') === 'classic';
   const states = TONI_MOODS.filter((s) => !only.length || only.includes(s));
   const [run, setRun] = useState(0);
   useEffect(() => {
     const root = document.documentElement;
-    if (!classic) root.dataset.look = 'studio';
     root.dataset.theme = 'light';
     root.lang = 'he';
-  }, [classic]);
-  const Fig = ({ s, size }: { s: ToniMood; size: number }) => (classic ? <ToniClassic state={toBase(s)} size={size} /> : <ToniPaper state={s} size={size} />);
+  }, []);
+  const Fig = ({ s, size }: { s: ToniMood; size: number }) => <ToniPaper state={s} size={size} />;
   const panel = (theme: 'light' | 'dark') => (
     <section className={`tg-panel tg-${theme}`} data-theme={theme} key={`${theme}-${run}`}>
       <h2>{theme}</h2>
@@ -62,11 +60,11 @@ export function ToniGallery() {
     <div className="tg" data-ready="1">
       <style>{CSS}</style>
       <header>
-        <h1>Toni · {classic ? 'classic' : 'Paper'}</h1>
+        <h1>Toni · Paper</h1>
         <button type="button" onClick={() => setRun((n) => n + 1)}>
           Replay
         </button>
-        {/* the gated Toni, as call sites use it: follows <html data-look> live */}
+        {/* Toni as call sites use it */}
         <span className="tg-live">
           <Toni state="idle" size={48} />
         </span>

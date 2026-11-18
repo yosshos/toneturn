@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { openGames } from './practice';
+import { cloudConfigured, NO_CLOUD } from './cloud';
 
 test.describe('online rooms', () => {
   test('signed out: the online screen asks to sign in', async ({ page }) => {
+    test.skip(!cloudConfigured(), NO_CLOUD);
     await page.goto('/#/arcade');
     await openGames(page);
     await page.getByRole('button', { name: /Online room/ }).click();

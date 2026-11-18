@@ -3,12 +3,11 @@
 // (band + two cups), a small calm face (ink eyes with a highlight, soft lids, brows only when they say something, a small
 // mouth). The flag is his hand and his mood signal. Emotion lives in the pose, the flag-hand, the eyes / lids / brows and
 // small Paper effect sheets (sparkles, sound arcs, thought dots, rests). Motion per state: src/toni.css (.toni-p.s-*).
-// Shown when <html data-look="studio">; src/ui/Toni.tsx keeps the classic drawing otherwise.
-import { useSyncExternalStore } from 'react';
+// src/ui/Toni.tsx shows it (or a partner build's teacher frame).
 import '../toni.css';
 import type { ToniState } from './Toni';
 
-/** The twelve classic states (every call site, and the partner TeacherFrame set). */
+/** The twelve base states (every call site, and the partner TeacherFrame set). */
 export type ToniBaseState = ToniState;
 /** Extra moods of the Paper Toni, for real moments: lesson done / rank up, counting in / playing, after two misses,
  * a new best / streak milestone, a new topic. */
@@ -18,31 +17,9 @@ export type ToniMood = ToniBaseState | ToniExtraState;
 export const TONI_BASE_STATES: ToniBaseState[] = ['idle', 'listen', 'think', 'hint', 'correct', 'streak', 'wrong', 'close', 'wow', 'sleepy', 'draw', 'bye'];
 export const TONI_EXTRA_STATES: ToniExtraState[] = ['proud', 'focused', 'encouraging', 'celebrating', 'curious'];
 export const TONI_MOODS: ToniMood[] = [...TONI_BASE_STATES, ...TONI_EXTRA_STATES];
-/** The nearest classic state for an extra mood (the classic drawing and the partner frame know only the twelve). */
+/** The nearest base state for an extra mood (the partner frame knows only the twelve). */
 export const BASE_OF: Record<ToniExtraState, ToniBaseState> = { proud: 'correct', focused: 'listen', encouraging: 'close', celebrating: 'streak', curious: 'wow' };
 export const toBase = (s: ToniMood): ToniBaseState => (s in BASE_OF ? BASE_OF[s as ToniExtraState] : (s as ToniBaseState));
-
-// ---------------------------------------------------------------- the look switch
-// <html data-look="studio"> (localStorage tt.look / ?look=studio, set elsewhere). One shared observer for every Toni.
-const looks = new Set<() => void>();
-let observer: MutationObserver | null = null;
-const lookNow = () => typeof document !== 'undefined' && document.documentElement?.dataset?.look === 'studio';
-function subscribeLook(cb: () => void) {
-  looks.add(cb);
-  if (!observer && typeof MutationObserver !== 'undefined') {
-    observer = new MutationObserver(() => looks.forEach((f) => f()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-look'] });
-  }
-  return () => {
-    looks.delete(cb);
-    if (!looks.size && observer) {
-      observer.disconnect();
-      observer = null;
-    }
-  };
-}
-/** True while <html data-look="studio"> is set; re-renders when the attribute changes. */
-export const useStudioLook = (): boolean => useSyncExternalStore(subscribeLook, lookNow, lookNow);
 
 // ---------------------------------------------------------------- palette
 export const TONI_INK = '#1e1033';
@@ -353,7 +330,7 @@ export function ToniPaper({ state = 'idle', size = 120, label }: { state?: ToniM
   const p = POSES[state] ?? POSES.idle;
   const [flag, flagE] = FLAG_COLORS[p.flag];
   return (
-    <span className={`toni toni-p s-${state}`} data-look="studio" style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+    <span className={`toni toni-p s-${state}`} style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <svg viewBox="-24 -48 266 266" width={size} height={size}>
         <ellipse className="tp-shadow" cx={94} cy={192} rx={46} ry={6} fill={TONI_INK} opacity={0.1} />
         <g transform={`translate(0 ${p.dy}) rotate(${p.tilt} 94 188)`}>

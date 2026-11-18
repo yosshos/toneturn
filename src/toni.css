@@ -1,4 +1,4 @@
-/* The Paper Toni's motion (src/ui/ToniPaper.tsx; shown under <html data-look="studio">). One block per state.
+/* The Paper Toni's motion (src/ui/ToniPaper.tsx). One block per state.
    Loops stay subtle (breath, sway, tilt); one-shot gestures (hop, wave, droop, pop) run under 1 s and hand over to a
    slow loop so he never freezes. Reduced motion (html[data-motion='reduced'] or the OS setting) keeps the pose only.
    Origins are in the drawing's own units (viewBox): the base of the body (94 188), the stem top where the flag-hand is

@@ -1,9 +1,7 @@
 // Today's workout (spec AH): the first card on Home, a calm editor (W17), and the run screen for blocks that are
 // not lessons (practice timer, game, vocal) plus the end summary with one-tap feedback (W11).
 
-import { Toni } from './Toni';
 import { Iso } from './Iso';
-import { WaveMeter } from './WaveMeter';
 import { Icon } from './icons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Strings } from '../i18n/strings';
@@ -17,7 +15,6 @@ import { useCourse } from './courseContext';
 import { COURSE_AREAS } from '../engine/courses';
 import { piano } from './services';
 import { slotLabelOf, type ListenCard } from '../engine/practiceMethod';
-import { useStudio } from './look';
 import { studioText, sfill } from '../i18n/studioText';
 
 type Lang = 'he' | 'en';
@@ -162,81 +159,20 @@ function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null })
 }
 
 /**
- * Today's workout (W1, redesigned 0.41 — owner: "too much text and color"): one title line with the total and ✎, the
- * next path step, a calm numbered list of blocks (one accent: the block you're on), Start with a small daily-goal ring.
- * The context switches (no mic / quiet / no instrument) live in the editor.
+ * Today's workout (W1): the hero of Today. The context switches (no mic / quiet / no instrument) live in the editor.
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, goal, leadsTo }: {
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo }: {
   /** SPEC-PATH-ROLE §8: what the strengthen block leads to. */
   leadsTo?: string | null;
-  goal?: { todayXp: number; goalXp: number }; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
-  const tx = W[lang];
-  const studio = useStudio();
+  t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
   const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
   const at = run && !run.finished ? run.at : -1;
-  const pct = goal ? Math.min(1, goal.todayXp / Math.max(1, goal.goalXp)) : 0;
-  if (studio) return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active: !!active, leftMin, at }} />;
-  // 0.61 (SPEC-REDESIGN, "Today"): the workout is the hero — purple, a staff behind, Toni, one lemon button.
-  const he = lang === 'he';
-  const bubble = active ? fill(tx.left, { m: leftMin }) : goal && goal.todayXp > 0 && pct < 1 ? (he ? 'עוד קצת, והיעד של היום מושלם.' : 'A little more and today’s goal is done.') : he ? 'מוכנים? בוא נתחיל.' : 'Ready? Let’s go.';
-  return (
-    <section className="wk-card wk-hero" aria-label={tx.title}>
-      <svg className="wk-staff" viewBox="0 0 390 120" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 30H390M0 46H390M0 62H390M0 78H390M0 94H390" />
-      </svg>
-      <div className="wk-head">
-        <div className="wk-toni">
-          <Toni state={active ? 'hint' : 'idle'} size={92} />
-          <span className="wk-bubble">{bubble}</span>
-        </div>
-        <button className="icon-btn wk-edit" onClick={onEdit} aria-label={tx.edit}>
-          <Icon k="edit" size={18} />
-        </button>
-      </div>
-      <h2 className="wk-title">
-        <Iso text={nextLine ?? tx.title} />
-      </h2>
-      <p className="wk-line">
-        {blocks.map((b, i) => (
-          <span key={b.id} className={i < at ? 'done' : i === at || (at < 0 && i === 0) ? 'now' : ''}>
-            {i > 0 && ' · '}
-            {blockLabel(t, b.target, lang, b.id)}
-          </span>
-        ))}
-        <span>
-          {' · '}
-          {total(blocks)} {tx.min}
-        </span>
-      </p>
-      {leadsTo && blocks.some((b) => b.target.kind === 'strengthen') && (
-        <p className="wk-leads" dir="auto" data-leads-to="1">
-          {leadsTo}
-        </p>
-      )}
-      <button className="btn mega wk-start" data-continue="1" onClick={onStart}>
-        <Icon k="play" size={16} />
-        {active ? `${tx.cont} · ${fill(tx.left, { m: leftMin })}` : tx.start}
-      </button>
-      {goal && (
-        <div className="wk-goal" role="progressbar" aria-valuemin={0} aria-valuemax={goal.goalXp} aria-valuenow={Math.min(goal.todayXp, goal.goalXp)} aria-label={`${t.dailyGoal}: ${goal.todayXp}/${goal.goalXp} ${t.xp}`}>
-          <WaveMeter value={pct} />
-          <small dir="ltr">
-            {goal.todayXp}/{goal.goalXp} {t.xp}
-          </small>
-        </div>
-      )}
-      {edited && (
-        <button className="link wk-edited" onClick={onReset}>
-          {tx.edited} · {tx.reset}
-        </button>
-      )}
-    </section>
-  );
+  return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active: !!active, leftMin, at }} />;
 }
 
 /**
- * The studio look's Today hero (redesign 2026-11): "Today's workout", the blocks as numbered steps (done / now / next)
+ * The Today hero (redesign 2026-11): "Today's workout", the blocks as numbered steps (done / now / next)
  * with their minutes, a thin bar of time used, and one lemon button "Continue · <step>". Toni is not on it every day.
  */
 function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active, leftMin, at }: { t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; active: boolean; leftMin: number; at: number }) {
@@ -339,7 +275,6 @@ export function WorkoutEditor({
 }) {
   const tx = W[lang];
   const courseAreas = COURSE_AREAS[useCourse().active];
-  const studio = useStudio();
   const [bs, setBs] = useState<Block[]>(initial);
   const [undo, setUndo] = useState<{ prev: Block[]; text: string } | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
@@ -377,13 +312,13 @@ export function WorkoutEditor({
   const waitList = [...cov.waiting.entries()].map(([a, n]) => `${n} ${t.domainNames[a as DomainId]}`).join(', ');
   const filteredTopics = useMemo(() => addOptions.topics.filter((id) => !q || (TOPIC_GEN[id]?.title[lang] ?? id).toLowerCase().includes(q.toLowerCase())).slice(0, 30), [q, addOptions.topics, lang]);
 
-  // Studio look: sectioned (length · where you are · blocks · presets) with the total and Done in a bottom bar.
+  // Sectioned (length · where you are · blocks · presets) with the total and Done in a bottom bar.
   const sx = studioText(lang);
   const ctxEl = ctx && onCtx && (
     <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'}>
       {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
         <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
-          {studio && <Icon k={k === 'nomic' ? 'mute' : k === 'quiet' ? 'phones' : 'pads'} size={16} />}
+          <Icon k={k === 'nomic' ? 'mute' : k === 'quiet' ? 'phones' : 'pads'} size={16} />
           {tx.ctx[k]}
         </button>
       ))}
@@ -391,20 +326,14 @@ export function WorkoutEditor({
   );
 
   return (
-    <main className={`wk-editor ${studio ? 'st-editor' : ''}`}>
+    <main className="wk-editor st-editor">
       <header className="wk-ed-head">
         <button className="icon-btn" onClick={onClose} aria-label={tx.done}>
           <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
-        {!studio && (
-          <button className="btn small primary" onClick={onClose}>
-            {tx.done}
-          </button>
-        )}
       </header>
-      {!studio && ctxEl}
-      {studio && <h2 className="st-sec-h">{sx.duration}</h2>}
+      <h2 className="st-sec-h">{sx.duration}</h2>
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">
           {[5, 10, 15, 20, 30, 45, 60].map((n) => (
@@ -426,13 +355,13 @@ export function WorkoutEditor({
         </div>
         {msg && <p className="field-hint" role="status">{msg}</p>}
       </section>
-      {studio && ctxEl && (
+      {ctxEl && (
         <>
           <h2 className="st-sec-h">{sx.conditions}</h2>
           {ctxEl}
         </>
       )}
-      {studio && <h2 className="st-sec-h">{sx.blocks}</h2>}
+      <h2 className="st-sec-h">{sx.blocks}</h2>
 
       <ol className="wk-blocks">
         {bs.map((b) => {
@@ -523,7 +452,7 @@ export function WorkoutEditor({
         <Icon k="plus" /> {tx.add}
       </button>
 
-      {studio && <h2 className="st-sec-h">{sx.presets}</h2>}
+      <h2 className="st-sec-h">{sx.presets}</h2>
       <div className="wk-presets" role="group">
         {(['suggested', 'ear', 'rhythm', 'reading', 'voice', 'instrument', 'four-slot', 'mistakes', 'quick5'] as Preset[]).filter((p) => !PRESET_AREA[p] || courseAreas.includes(PRESET_AREA[p]!)).map((p) => (
           <button key={p} className="chip" onClick={() => change(preset(p, T, suggested), tx.presets[p])} data-preset={p}>
@@ -541,8 +470,7 @@ export function WorkoutEditor({
         </button>
       </div>
 
-      {studio && (
-        <div className="st-dock wk-dock">
+      <div className="st-dock wk-dock">
           <span className="st-dock-total">
             <small>{sx.total}</small>
             <b dir="auto">
@@ -553,7 +481,6 @@ export function WorkoutEditor({
             {tx.done}
           </button>
         </div>
-      )}
 
       {undo && (
         <div className="wk-undo" role="status">

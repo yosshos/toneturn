@@ -28,7 +28,6 @@ import type { FamilyId } from '../engine/drills/types';
 import { skillTitle } from '../storage/profile';
 import { KeyMap12 } from './KeyMap12';
 import { Icon } from './icons';
-import { useStudio } from './look';
 import { EmptyState } from './EmptyState';
 
 const TX = {
@@ -282,7 +281,6 @@ function KeysCard({ keys, lang, onDrillKey, onDrills }: { keys: InstrumentKeys[]
 
 /** The player profile (SPEC-AI §8): strengths, recurring patterns with their week streak, and patterns that went away. */
 function ProfileCard({ profile, lang, tx, shows, act, nearMastery }: { nearMastery?: string; profile: Profile; lang: 'en' | 'he'; tx: (typeof TX)['en']; shows: (s: ProfileSource) => boolean; act: (a?: ProfileAction) => (() => void) | undefined }) {
-  const studio = useStudio();
   const strengths = profile.strengths.filter((r) => shows(r.source)).slice(0, 2);
   const patterns = profile.patterns.filter((r) => shows(r.source)).slice(0, 3);
   const gone = profile.gone.filter((r) => shows(r.source)).slice(0, 2);
@@ -297,7 +295,7 @@ function ProfileCard({ profile, lang, tx, shows, act, nearMastery }: { nearMaste
         </p>
       )}
       {empty ? (
-        studio ? <EmptyState glyph="target" data="insights" text={profile.ready ? tx.clear : tx.building} /> : <p className="field-hint">{profile.ready ? tx.clear : tx.building}</p>
+        <EmptyState glyph="target" data="insights" text={profile.ready ? tx.clear : tx.building} />
       ) : (
         <>
           {strengths.length > 0 && (

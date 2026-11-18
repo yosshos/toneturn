@@ -21,12 +21,6 @@
 
 /* ---------- crest ---------- */
 .rank-crest { flex: none; display: block; }
-.rank-crest .rc-shield { fill: color-mix(in srgb, var(--rc-c) 22%, transparent); stroke: var(--rc-c); stroke-width: 3; }
-.rank-crest .rc-emblem { fill: var(--rc-c); stroke: var(--rc-c); stroke-width: 1.2; stroke-linejoin: round; }
-.rank-crest.rc-diamond .rc-emblem { fill: color-mix(in srgb, var(--rc-c) 55%, transparent); }
-.rank-crest .rc-num { fill: currentColor; font: 800 12px/1 system-ui, sans-serif; letter-spacing: 0.5px; }
-.rank-crest.rc-none .rc-shield { fill: transparent; stroke-dasharray: 4 3; }
-.rank-crest.rc-none .rc-num { font-size: 22px; opacity: 0.6; }
 .rc-bronze { --rc-c: var(--tier-bronze, #cd7f32); }
 .rc-silver { --rc-c: var(--tier-silver, #c0c6d6); }
 .rc-gold { --rc-c: var(--tier-gold, #ffc94d); }
@@ -125,9 +119,6 @@ button.ar-btn:focus-visible { outline: 2px solid var(--rc, currentColor); outlin
 }
 html[data-motion='reduced'] .bd-tile.got:hover .bd-icon { transform: none; }
 
-/* ---------- rank crest, metal style ---------- */
-.rank-crest.rc-metal .rc-emblem { stroke-width: 1; }
-.rank-crest.rc-metal .rc-num { font-size: 11px; }
 
 /* ---------- unlock celebration (BadgeUnlock / RankUpUnlock) ---------- */
 .bu-overlay {

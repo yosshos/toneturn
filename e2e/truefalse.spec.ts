@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openGames } from './practice';
+import { closeTiers, openTiers, pickTier } from './tiers';
 
 test.describe('Truth or Bluff', () => {
   test('solo 60-second run on theory statements: answer, a bluff shows why, score, best kept', async ({ page }) => {
@@ -40,10 +41,12 @@ test.describe('Truth or Bluff', () => {
     await expect(page.locator('.tf-topics .chip.on')).toHaveCount(1);
     await page.locator('[data-setup-done]').click();
     // GAMES_TIERS P2: the Easy / Medium / Hard radios became the six level tiers; a new player opens at pp.
-    const pp = page.locator('.tier-chip[data-tier="pp"]');
+    const sheet = await openTiers(page);
+    const pp = sheet.locator('.tier-chip[data-tier="pp"]');
     await pp.click();
     await expect(pp).toHaveAttribute('aria-checked', 'true');
-    await expect(page.locator('.tier-chip[data-tier="f"]')).toBeDisabled();
+    await expect(sheet.locator('.tier-chip[data-tier="f"]')).toBeDisabled();
+    await closeTiers(page);
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-statement')).toHaveAttribute('data-topic', 'keys');
     await expect(page.locator('.tf-text')).toContainText(/major|minor/);
@@ -53,7 +56,7 @@ test.describe('Truth or Bluff', () => {
     await chips.and(page.locator('[data-topic="trio"]')).click();
     await chips.and(page.locator('[data-topic="keys"]')).click();
     await page.locator('[data-setup-done]').click();
-    await page.locator('.tier-chip[data-tier="pp"]').click();
+    await pickTier(page, 'pp');
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.tf-text')).toContainText(/ up to /);
   });

@@ -1,7 +1,7 @@
 // Badges, area ranks and rank crests (docs/SPEC-STATS.md §9). Inline {en, he} text, logical CSS only (RTL-safe),
 // numbers and roman numerals in LTR islands; a tier is always shown by shape + label, never by colour alone.
 
-import { useId, useMemo, useState, type MouseEvent, type ReactNode } from 'react';
+import { useMemo, useState, type MouseEvent, type ReactNode } from 'react';
 import { BADGE_CAT_NAME, BADGE_CATS, badgeInCourse, badgeProgress, badgeStates, FAMILY_NAME, SKILL_NAME, type Badge, type BadgeFamily, type BadgeCat, type BadgeInput, type BadgeLog, type BadgeState } from '../engine/badges';
 import {
   AREA_NAME,
@@ -15,12 +15,10 @@ import {
   type AreaEvidence,
   type RankArea,
   type Ranks,
-  type RankTier,
 } from '../engine/ranks';
 import type { SkillId } from '../engine/lesson';
 import { shareCanvas } from './Stats';
-import { AreaGlyph, BadgeArt, METALS } from './BadgeArt';
-import { useStudioLook } from './ToniPaper';
+import { AreaGlyph, BadgeArt } from './BadgeArt';
 import { RankShield } from './studio/StudioArt';
 import '../badges.css';
 import { courseOf, type CourseId } from '../engine/courses';
@@ -55,73 +53,11 @@ const BX = {
 
 // ======================================================================= RankCrest
 
-/** Emblem per tier: the shape alone tells the tier (circle, rhombus, star, hexagon, gem, crown). */
-function Emblem({ tier }: { tier: RankTier }) {
-  switch (tier) {
-    case 'bronze':
-      return <circle cx="32" cy="27" r="11" />;
-    case 'silver':
-      return <path d="M32 14 L44 27 L32 40 L20 27 Z" />;
-    case 'gold':
-      return <path d="M32 13 L35.5 23 L46 23.4 L37.7 29.8 L40.6 40 L32 34 L23.4 40 L26.3 29.8 L18 23.4 L28.5 23 Z" />;
-    case 'platinum':
-      return <path d="M32 14 L43.3 20.5 L43.3 33.5 L32 40 L20.7 33.5 L20.7 20.5 Z" />;
-    case 'diamond':
-      return <path d="M22 20 L42 20 L47 26 L32 41 L17 26 Z M17 26 L47 26 M27 20 L32 41 M37 20 L32 41" />;
-    case 'master':
-      return <path d="M18 36 L18 19 L25 26 L32 15 L39 26 L46 19 L46 36 Z" />;
-  }
-}
-
-/** A tier crest: a metal shield in the tier's metal (BadgeArt palette), the tier's emblem and the division numeral (III / II / I). */
+/** A tier crest: the Paper shield in the tier's colour (pips for III / II / I, a star for Master). */
 export function RankCrest({ div, size = 44, lang }: { div: number | null | undefined; size?: number; lang: Lang }) {
   const ranked = div !== null && div !== undefined && div >= 0;
   const tier = ranked ? tierOfDiv(div) : null;
-  const label = rankLabel(ranked ? div : null, lang);
-  const uid = `rc${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-  const m = tier ? METALS[tier] : null;
-  // Studio look: the Paper shield (pips for III / II / I, a star for Master).
-  const studio = useStudioLook();
-  if (studio) return <RankShield tier={tier} pips={ranked ? romanOfDiv(div).length : 0} size={size} label={label} />;
-  const shield = 'M32 3 L57 11 L57 32 C57 46 46 56 32 61 C18 56 7 46 7 32 L7 11 Z';
-  return (
-    <svg className={`rank-crest ${tier ? `rc-${tier} rc-metal` : 'rc-none'}`} width={size} height={size} viewBox="0 0 64 64" role="img" aria-label={label}>
-      <title>{label}</title>
-      {m ? (
-        <>
-          <defs>
-            <linearGradient id={`${uid}-m`} x1="0.15" y1="0" x2="0.85" y2="1">
-              {m.stops.map((c, i) => (
-                <stop key={i} offset={i / (m.stops.length - 1)} stopColor={c} />
-              ))}
-            </linearGradient>
-            <radialGradient id={`${uid}-f`} cx="0.4" cy="0.3" r="0.85">
-              <stop offset="0" stopColor="#2b2e5c" />
-              <stop offset="1" stopColor="#15162e" />
-            </radialGradient>
-          </defs>
-          <path d={shield} fill={`url(#${uid}-m)`} stroke={m.stops[3]} strokeWidth="1" />
-          <path d={shield} transform="translate(32 32) scale(0.8) translate(-32 -32)" fill={`url(#${uid}-f)`} stroke={m.stops[0]} strokeWidth="1.4" />
-          <g className="rc-emblem" fill={m.hi} stroke={m.hi}>
-            <Emblem tier={tier!} />
-          </g>
-          {romanOfDiv(div!) && (
-            <text className="rc-num" x="32" y="52" textAnchor="middle" direction="ltr" style={{ fill: m.hi }}>
-              {romanOfDiv(div!)}
-            </text>
-          )}
-          <ellipse cx="25" cy="17" rx="13" ry="4.5" fill="#fff" opacity="0.14" transform="rotate(-22 25 17)" />
-        </>
-      ) : (
-        <>
-          <path className="rc-shield" d={shield} />
-          <text className="rc-num" x="32" y="38" textAnchor="middle">
-            ?
-          </text>
-        </>
-      )}
-    </svg>
-  );
+  return <RankShield tier={tier} pips={ranked ? romanOfDiv(div).length : 0} size={size} label={rankLabel(ranked ? div : null, lang)} />;
 }
 
 // ======================================================================= AreaRanks strip

@@ -37,7 +37,6 @@ import { BrowserPitchCapture } from '../speech/pitchCapture';
 import type { Settings } from '../storage/progress';
 import { piano, SIMULATED } from './services';
 import { Icon } from './icons';
-import { isStudio } from './studioLook';
 import { CoverHero, docLang, HudSegs, useGameFrame } from './GameCover';
 
 export type Game2 = 'flight' | 'pitch-memory' | 'name-tune' | 'tune-up';
@@ -146,11 +145,10 @@ export function MicProblem({ lang, error, onRetry, onBack, onTouch }: { lang: 'h
 }
 
 export function G2Head({ title, backLabel, onBack, children, game: gameId, goal }: { title: string; backLabel: string; onBack: () => void; children?: ReactNode; /** The game id for the cover (when the title or <main data-game> does not name it). */ game?: string; /** The cover's one-line goal (games outside GAMES2). */ goal?: string }) {
-  // Studio look (src/studio-games.css): the header doubles as the thin HUD row (segmented progress from its "n/m"),
-  // and the setup phase gets the shared game cover under it. The classic look renders exactly as before.
-  const studio = isStudio();
+  // The header doubles as the thin HUD row (segmented progress from its "n/m", src/studio-games.css), and the setup
+  // phase gets the shared game cover under it.
   const ref = useRef<HTMLElement>(null);
-  const game = useGameFrame(ref, studio);
+  const game = useGameFrame(ref);
   const lang = docLang();
   return (
     <>
@@ -159,10 +157,10 @@ export function G2Head({ title, backLabel, onBack, children, game: gameId, goal 
           <Icon k="back" />
         </button>
         <h1>{title}</h1>
-        {studio && <HudSegs from={children} lang={lang} />}
+        <HudSegs from={children} lang={lang} />
         {children}
       </header>
-      {studio && <CoverHero title={title} game={game} pinned={gameId} goal={goal} lang={lang} frameRef={ref} />}
+      <CoverHero title={title} game={game} pinned={gameId} goal={goal} lang={lang} frameRef={ref} />
     </>
   );
 }

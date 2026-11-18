@@ -1,6 +1,6 @@
-// Frames of the studio opening animation (src/ui/brand/Splash.tsx) into docs/brand-shots/.
+// Frames of the opening animation (src/ui/brand/Splash.tsx) into docs/brand-shots/.
 // Usage: start the dev server (npx vite --port 5184), then: node scripts/render-splash-frames.mjs [baseURL] [--inapp]
-// Each frame loads the app with ?look=studio&splash=force, then pauses every animation at the frame's time.
+// Each frame loads the app with ?splash=force, then pauses every animation at the frame's time.
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -28,7 +28,7 @@ for (const [lang, view] of [
       }
     });
     const page = await ctx.newPage();
-    await page.goto(`${base}/?look=studio&splash=force&lang=${lang}`);
+    await page.goto(`${base}/?splash=force&lang=${lang}`);
     await page.locator('[data-brand-splash]').waitFor();
     await page.evaluate((ms) => {
       for (const a of document.getAnimations()) {

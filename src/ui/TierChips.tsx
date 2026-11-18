@@ -4,7 +4,6 @@
 import '../tiers.css';
 import '../setupsheet.css';
 import { useEffect, useState } from 'react';
-import { isStudio } from './studioLook';
 import { Icon } from './icons';
 import { GAMES_TX } from '../i18n/gamesText';
 import { IsoMix } from './Iso';
@@ -22,15 +21,11 @@ const TX = {
 
 type TierProps = { lang: Lang; info: TierInfo; value: DynName; onChange: (t: DynName) => void; game?: string };
 
-export function TierChips(p: TierProps) {
-  return isStudio() ? <TierRow {...p} /> : <TierField {...p} />;
-}
-
 /**
- * Studio look (redesign 2026-11-17): the level is ONE compact row — "Level mp · what it holds ›" — that opens the
- * same pp … ff chooser in a sheet. Same choices, same callback; only the presentation differs.
+ * The level is ONE compact row — "Level mp · what it holds ›" — that opens the pp … ff chooser in a sheet (redesign
+ * 2026-11-17).
  */
-function TierRow(p: TierProps) {
+export function TierChips(p: TierProps) {
   const [open, setOpen] = useState(false);
   const { lang, info, value } = p;
   const def = tierDef(p.game ?? info.game, value);

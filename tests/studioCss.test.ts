@@ -1,13 +1,12 @@
-// The studio look (redesign stage 1): src/studio.css is a switchable layer, so every rule must be scoped under
-// :root[data-look='studio'] (the classic look stays reachable, untouched), it never draws a dashed border, and it loads after every
-// other stylesheet. The switch itself: studio by default; ?look=classic / tt.look = 'classic' keep the previous look.
+// The studio look (redesign stage 1), the app's only look since 2026-11-17: src/studio.css is a layer over the base
+// sheets, every rule scoped under :root:root (the weight it had as :root[data-look='studio'], so it keeps winning over
+// the base sheets' :root[data-theme] rules), it never draws a dashed border, and it loads after every other stylesheet.
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { lookFromSearch } from '../src/ui/look';
+import { readdirSync, readFileSync } from 'node:fs';
 
 const read = (f: string) => readFileSync(f, 'utf8').split(String.fromCharCode(13, 10)).join(String.fromCharCode(10)); // CRLF checkouts (Windows)
 const CSS = read('src/studio.css');
-const PREFIX = ":root[data-look='studio']";
+const PREFIX = ':root:root';
 
 /** Top-level comma split (commas inside :is() / :not() stay). */
 function splitTop(s: string): string[] {
@@ -65,7 +64,7 @@ describe('studio.css', () => {
     expect(all.length).toBeGreaterThan(100);
   });
 
-  it("scopes every rule under :root[data-look='studio']", () => {
+  it('scopes every rule under :root:root', () => {
     const bad: string[] = [];
     for (const r of all) {
       expect(r.sel.startsWith('@'), `no other at-rules: ${r.sel}`).toBe(false);
@@ -78,7 +77,7 @@ describe('studio.css', () => {
     expect(CSS.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/dashed/);
   });
 
-  it('turns the dashed disabled buttons of the classic look solid', () => {
+  it('turns the dashed disabled buttons of the base sheets solid', () => {
     const disabled = all.filter((r) => /\.btn[^,]*:disabled/.test(r.sel));
     expect(disabled.length).toBeGreaterThan(0);
     expect(disabled.some((r) => /border:\s*0/.test(r.body) && /border-style:\s*solid/.test(r.body))).toBe(true);
@@ -101,18 +100,13 @@ describe('studio.css', () => {
   });
 });
 
-describe('the look switch', () => {
-  it('reads ?look= from the URL', () => {
-    expect(lookFromSearch('?look=studio')).toBe('studio');
-    expect(lookFromSearch('?sim=1&look=classic')).toBe('classic');
-    expect(lookFromSearch('?look=other')).toBeNull();
-    expect(lookFromSearch('')).toBeNull();
-  });
-
-  it('is applied before the first paint by index.html, studio by default', () => {
-    const html = read('index.html');
-    expect(html).toMatch(/localStorage\.getItem\('tt\.look'\) !== 'classic'/);
-    expect(html).toMatch(/setAttribute\('data-look', 'studio'\)/);
-    expect(html.indexOf("'data-look'")).toBeLessThan(html.indexOf('src/main.tsx'));
+describe('one look', () => {
+  it('has no look switch left: no data-look, no tt.look, no ?look= anywhere in the app', () => {
+    const files = readdirSync('src', { recursive: true, encoding: 'utf8' })
+      .filter((f) => /\.(tsx?|css)$/.test(f) && !/AvatarStudio/.test(f))
+      .map((f) => `src/${f.split(String.fromCharCode(92)).join('/')}`);
+    files.push('index.html');
+    const hits = files.filter((f) => /data-look|dataset\.look|tt\.look|toneturn\.look|[?&]look=/.test(read(f).replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '')));
+    expect(hits).toEqual([]);
   });
 });

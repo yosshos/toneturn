@@ -11,7 +11,7 @@ import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
 import { InsightsScreen } from './Insights';
 import { Sidebar, type NavId } from './Sidebar';
-import { Onboarding, onboardingIntake, Splash } from './Onboarding';
+import { Onboarding, onboardingIntake } from './Onboarding';
 import { ACTIVE_PARTNER, allowedCourses, courseAllowed, defaultCourse, type DepthLink } from '../partner';
 import { DepthCard, DepthScreen } from '../partner/Depth';
 import { CommandPalette, type PaletteHit } from './CommandPalette';
@@ -226,7 +226,7 @@ import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, record
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 import { Icon } from './icons';
 import { registerLangSetter } from './langSwitch';
-import { isStudioLook, rememberSplashPrefs } from './brand/splashDecision';
+import { rememberSplashPrefs } from './brand/splashDecision';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
 const BAND_ROUTES = new Set<string>(['charts', 'improv', 'groove', 'metronome', 'mixer', 'slowdown', 'perform', 'highway', 'drills', 'workoutrun', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off']);
@@ -332,8 +332,6 @@ export function App() {
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);
-  // The opening (0.52): the logo draws itself once per app start (not in automated runs unless ?splash).
-  const [splash, setSplash] = useState(() => params.has('splash') || !(SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)));
   /** Generated session in progress (placement / review / weekly puzzle). */
   /** Voice-consent gate for sessions started outside the Practice button. */
   const [consentThen, setConsentThen] = useState<null | (() => void)>(null);
@@ -2237,7 +2235,6 @@ export function App() {
     <MiniGateContext.Provider value={gate}>
     <RefresherContext.Provider value={openRefresher}>
     <div className={`app ${isTab ? 'has-tabs' : ''} ${withSide ? 'with-side' : ''}`}>
-      {splash && !isStudioLook(document.documentElement.dataset.look, location.search) && <Splash lang={s.uiLang} onDone={() => setSplash(false)} />}
       {withSide && <CommandPalette lang={s.uiLang} onPick={onPalette} />}
       {SIMULATED && <div className="sim-banner">{t.simulated}</div>}
       {withSide && <Sidebar route={route} lang={s.uiLang} onNav={sideNav} me={{ name: playerFirstName, streak: gems.streak.count, onOpen: () => go('settings') }} extra={<>
@@ -2287,7 +2284,6 @@ export function App() {
           }
           today={
             <TodayCards
-              t={t}
               settings={s}
               progress={progress}
               goalXp={s.dailyGoal ?? DAILY_GOAL_XP}

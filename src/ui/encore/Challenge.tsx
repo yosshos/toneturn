@@ -28,7 +28,6 @@ import {
   phraseLink,
   rankBoard,
   rowFacts,
-  shareCardSvg,
   shareGate,
   shareLevel,
   shareNotes,
@@ -71,7 +70,6 @@ import { Bi, EncoreGlyph, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bi
 import { ReactionBar, ReactionCountsLine } from './Reactions';
 import { GiftIcon, GiftsView } from './Gifts';
 import { Icon } from '../icons';
-import { useStudioLook } from '../ToniPaper';
 import { studioShareCardSvg } from '../studio/shareCard';
 
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
@@ -286,8 +284,7 @@ interface ClipChoice {
 const DEFAULT_STYLE: Partial<Record<string, Style>> = { barry: 'barry', blues: 'blues', modal: 'modal', 'major-251': 'bebop', 'minor-251': 'bebop', dominant: 'bebop', altered: 'bebop', enclosure: 'bebop', guide: 'bebop' };
 
 function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengeProps & { head: Head; phraseId: string }) {
-  // Studio look: the approved dark-purple 4:5 share card (same facts as the classic card).
-  const studio = useStudioLook();
+  // The approved dark-purple 4:5 share card.
   const book = settings.lickBook ?? {};
   const l = (book.own ?? []).find((x) => x.id === phraseId);
   const gate = shareGate(settings.birthYear);
@@ -353,7 +350,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
   const { payload, problems } = sharePayload(l, { title, style, level, visibility: vis, classId: vis === 'class' ? (classes[0]?.id ?? null) : null, attested, audio: audio && !!clip }, { inst, lang, gate, context, grade: b.grade, known: !!known });
   const blocking = problems.filter((x) => x !== 'attest');
   const sn = shareNotes(payload.ref);
-  const card = sn ? (studio ? studioShareCardSvg : shareCardSvg)({ title: payload.title || T(l.name, lang), by: settings.nickname || L(lang, 'Player', 'נגן/ית'), bpm: plan.goalBpm, keys: payload.needed, level: payload.level, notes: sn.notes, beats: sn.beats, meter: sn.meter, lang }) : '';
+  const card = sn ? studioShareCardSvg({ title: payload.title || T(l.name, lang), by: settings.nickname || L(lang, 'Player', 'נגן/ית'), bpm: plan.goalBpm, keys: payload.needed, level: payload.level, notes: sn.notes, beats: sn.beats, meter: sn.meter, lang }) : '';
   const cardUrl = card ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(card)}` : '';
   const why: Partial<Record<ShareProblem, string>> = {
     'under-13': L(lang, 'Sharing with everyone opens at 13.', 'שיתוף עם כולם נפתח מגיל 13.'),
@@ -527,7 +524,7 @@ async function svgToPng(svg: string): Promise<Blob | null> {
       img.src = url;
     });
     const c = document.createElement('canvas');
-    // Twice the card's own size (classic 600×340, studio 540×675).
+    // Twice the card's own size (540×675).
     const m = /viewBox="0 0 (\d+) (\d+)"/.exec(svg);
     const w = m ? Number(m[1]) * 2 : 1200;
     const h = m ? Number(m[2]) * 2 : 680;

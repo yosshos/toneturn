@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { closeTiers, openTiers, tierRow } from './tiers';
 
 // 0.70 advanced games (GAMES_TIERS_PLAN §4) and the game board fit one phone screen (390×844), English and Hebrew:
 // the setup shows six tier buttons (pp and p locked: "opens at mp") and Start without vertical scrolling, and after
@@ -60,11 +61,13 @@ for (const lang of ['en', 'he'] as const) {
       }
       await page.goto('about:blank');
       await page.goto(`/?sim=1&unlock=all&lang=${lang}#/${route}`);
-      const row = page.locator('.tier-row').first();
-      await expect(row, `${route}: tier row`).toBeVisible();
-      await expect(row.locator('.tier-chip')).toHaveCount(6);
-      await expect(row.locator('.tier-chip[data-tier="pp"]')).toBeDisabled();
-      await expect(row.locator('.tier-chip[data-tier="mp"]')).toBeEnabled();
+      // the level is one compact row; its sheet holds the six tiers
+      await expect(tierRow(page), `${route}: tier row`).toBeVisible();
+      const sheet = await openTiers(page);
+      await expect(sheet.locator('.tier-chip')).toHaveCount(6);
+      await expect(sheet.locator('.tier-chip[data-tier="pp"]')).toBeDisabled();
+      await expect(sheet.locator('.tier-chip[data-tier="mp"]')).toBeEnabled();
+      await closeTiers(page);
       await page.waitForTimeout(250);
       const setup = await page.evaluate(() => {
         const banner = document.querySelector('.sim-banner') as HTMLElement | null;

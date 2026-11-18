@@ -49,7 +49,8 @@ button.enc-card, button.enc-card-soft { cursor: pointer; width: 100%; }
 @media (min-width: 700px) { .enc-keep .enc-keep-t { display: inline; } }
 
 /* the piano roll */
-.enc-roll { display: block; width: 100%; height: auto; touch-action: none; user-select: none; }
+.enc-roll { display: block; width: 100%; height: auto; touch-action: none; user-select: none; overflow: visible; }
+/* (visible: a trim handle at the roll's first or last beat keeps its whole grip and hit area to grab) */
 .er-bg { fill: var(--card-2); }
 .er-beat { stroke: var(--line); stroke-width: 1; }
 .er-bar { stroke: var(--line-strong); stroke-width: 1.5; }

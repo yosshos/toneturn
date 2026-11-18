@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openGames } from './practice';
+import { pickTier, tierRow } from './tiers';
 
 // The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
 test.beforeEach(async ({ page }) => {
@@ -99,7 +100,7 @@ test.describe('memory games', () => {
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
     await expect(page.getByRole('radio', { name: /Tapping/ })).toHaveAttribute('aria-checked', 'true');
     // GAMES_TIERS P2: the Slow / Medium / Fast tempo radios became the six level tiers; a new player opens at pp.
-    await expect(page.locator('.tier-chip[data-tier="pp"]')).toHaveAttribute('aria-checked', 'true');
+    await expect(tierRow(page)).toHaveAttribute('data-tier-row', 'pp');
     await page.getByRole('button', { name: /Play/ }).click();
     await expect(page.locator('.turn-banner')).toHaveText(/Listen/, { timeout: 30_000 });
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible();
@@ -115,7 +116,7 @@ test.describe('memory games', () => {
     await page.goto('/#/games');
     await page.getByRole('radio', { name: /Beat Echo/ }).click();
     // The first tier (pp) is Slow, 75 BPM.
-    await page.locator('.tier-chip[data-tier="pp"]').click();
+    await pickTier(page, 'pp');
     await page.getByRole('button', { name: /Play/ }).click();
     // Read the pattern from the beat grid shown during the demo.
     await expect(page.locator('.beat-grid .onset').first()).toBeVisible({ timeout: 30_000 });

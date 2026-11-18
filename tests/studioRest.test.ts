@@ -1,11 +1,11 @@
-// The studio look's remaining screens (src/studio-rest.css): every rule scoped under :root[data-look='studio'], no
+// The studio look's remaining screens (src/studio-rest.css): every rule scoped under :root:root (see studioCss), no
 // dashed borders, no hard offset shadow and no 800/900 weight of its own; imported last.
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 const read = (f: string) => readFileSync(f, 'utf8').split(String.fromCharCode(13, 10)).join(String.fromCharCode(10));
 const CSS = read('src/studio-rest.css').replace(/\/\*[\s\S]*?\*\//g, '');
-const PREFIX = ":root[data-look='studio']";
+const PREFIX = ':root:root';
 
 function splitTop(s: string): string[] {
   const out: string[] = [];

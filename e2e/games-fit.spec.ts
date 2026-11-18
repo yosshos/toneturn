@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { closeTiers, openTiers, tierRow } from './tiers';
 
 // Game setups fit one phone screen (GAMES_TIERS_PLAN P1, owner rule "exercise fits one screen"): every game's setup
 // at 390×844, English and Hebrew, shows the six level-tier buttons (pp … ff) and its Start button without vertical
@@ -63,9 +64,11 @@ for (const lang of ['en', 'he'] as const) {
       }
       await page.goto('about:blank');
       await page.goto(`/?sim=1&unlock=all&lang=${lang}#/${route}`);
-      const row = page.locator('.tier-row').first();
-      await expect(row, `${route}: tier row`).toBeVisible();
-      await expect(row.locator('.tier-chip')).toHaveCount(6);
+      // the level is one compact row; its sheet holds the six tiers
+      await expect(tierRow(page), `${route}: tier row`).toBeVisible();
+      const sheet = await openTiers(page);
+      await expect(sheet.locator('.tier-chip')).toHaveCount(6);
+      await closeTiers(page);
       await page.waitForTimeout(250);
       const r = await page.evaluate(() => {
         // The test-only "simulated" banner is not part of the real screen.

@@ -18,7 +18,7 @@ test.describe('riffs & runs', () => {
     await expect(page.locator('.run-dot.ok').first()).toBeVisible({ timeout: 60_000 });
     await page.screenshot({ path: 'test-results/runs-contour.png' });
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 150_000 });
-    await expect(page.locator('.score-line')).toContainText('4/5');
+    await expect(page.locator('[data-cel-stats]')).toContainText('4/5');
   });
 
   test('Runs workshop card opens a slow → fast session', async ({ page }) => {

@@ -109,7 +109,7 @@ for (const lang of ['en', 'he'] as const) {
     await expect(page.locator('.answer.is-right [data-ans-glyph="right"]')).toBeVisible();
     const bg = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).backgroundColor);
     await expect.poll(() => bg('.answer.is-right')).toBe('rgb(18, 201, 180)');
-    await expect.poll(() => bg('.answer.is-wrong')).toBe('rgb(255, 95, 162)');
+    await expect.poll(() => bg('.answer.is-wrong')).toBe('rgb(226, 58, 90)'); // the studio raspberry wrong colour (--wrong, studio-elements.css)
     // the pair under the one-line card
     const pair = page.locator('.replay-pair');
     await expect(pair).toBeVisible();
@@ -127,7 +127,8 @@ for (const lang of ['en', 'he'] as const) {
           if (k) k.style.transition = 'none';
           return k ? getComputedStyle(k).backgroundColor : '';
         });
-        if (lit) expect(lit).toBe('rgb(58, 184, 255)');
+        // the studio's lit key: a teal tint on a white key, teal on a black key (studio-elements.css)
+        if (lit) expect(['rgb(191, 240, 232)', 'rgb(18, 201, 180)']).toContain(lit);
         await shot(page, `ear-miss-pair-${lang}`);
       }
       await expect(pair).toHaveAttribute('data-replay-playing', '', { timeout: 8000 });
@@ -135,7 +136,8 @@ for (const lang of ['en', 'he'] as const) {
     await fits(page);
     // no halo around Toni's note head
     const orbShadow = await page.locator('.orb').evaluate((e) => getComputedStyle(e).boxShadow);
-    expect(orbShadow.match(/rgb/g)?.length ?? 0).toBeLessThanOrEqual(1);
+    // (the studio's soft elevation has two offset layers; a halo is a layer centred on the head: 0 0 blur)
+    expect(orbShadow).not.toMatch(/rgba?\([^)]*\)\s+0px\s+0px\s+[1-9]/);
     if (lang === 'he') expect(await latinLeft(page, '.feedback, .replay-pair')).toEqual([]);
     // finish quickly: Continue, then skip the rest
     await page.locator('[data-continue]').click();
@@ -207,7 +209,7 @@ for (const lang of ['en', 'he'] as const) {
     await page.locator('[data-gd-root="0"]').click();
     const on = await page.locator('[data-gd-root="0"]').evaluate((e) => ({ bg: getComputedStyle(e).backgroundColor, fg: getComputedStyle(e).color }));
     expect(on.bg).toBe('rgb(30, 16, 51)');
-    expect(on.fg).toBe('rgb(251, 247, 255)');
+    expect(on.fg).toBe('rgb(251, 248, 255)');
     // the current cell is edged in ink, not the voice course's teal
     const cur = await page.locator('.gd-cell.cur').first().evaluate((e) => getComputedStyle(e).borderTopColor);
     expect(cur).not.toBe('rgb(18, 201, 180)');

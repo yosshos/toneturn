@@ -3,7 +3,6 @@
 
 import '../games3.css';
 import { G2Head } from './Flight';
-import { isStudio } from './studioLook';
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import {
   answerEvents,
@@ -322,16 +321,7 @@ export function MelodyPuzzle({
   if (stage === 'intro') {
     return (
       <main className="panel-screen g3 mp-intro" data-phase="setup">
-        {isStudio() ? (
-          <G2Head title={tx(T.title)} backLabel={tx(T.back)} onBack={onExit} />
-        ) : (
-          <header className="screen-head">
-            <button className="icon-btn" onClick={onExit} aria-label={tx(T.back)}>
-              <Icon k="back" />
-            </button>
-            <h1>{tx(T.title)}</h1>
-          </header>
-        )}
+        <G2Head title={tx(T.title)} backLabel={tx(T.back)} onBack={onExit} />
         <section className="set-card">
           <fieldset className="seg-field">
             <legend>{tx(T.labels)}</legend>
@@ -431,17 +421,15 @@ export function MelodyPuzzle({
 
   return (
     <main className="g3 mp-play" data-phase="play">
-      {isStudio() && (
-        // studio look: the shared thin HUD row (progress from "n/6", score at the end); the key line stays below
-        <G2Head title={tx(T.title)} backLabel={tx(T.exit)} onBack={onExit}>
-          <span className="g2-hud-mini" dir="ltr">
-            {st.index + 1}/{PUZZLES_PER_RUN}
-          </span>
-          <span className="gs-score" dir="ltr" aria-label={tx(T.score)}>
-            {st.score}
-          </span>
-        </G2Head>
-      )}
+      {/* the shared thin HUD row (progress from "n/6", score at the end); the key line stays below */}
+      <G2Head title={tx(T.title)} backLabel={tx(T.exit)} onBack={onExit}>
+        <span className="g2-hud-mini" dir="ltr">
+          {st.index + 1}/{PUZZLES_PER_RUN}
+        </span>
+        <span className="gs-score" dir="ltr" aria-label={tx(T.score)}>
+          {st.score}
+        </span>
+      </G2Head>
       <header className="lesson-top mp-top">
         <button className="icon-btn" onClick={onExit} aria-label={tx(T.exit)}>
           <Icon k="close" />

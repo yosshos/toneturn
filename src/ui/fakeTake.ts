@@ -47,11 +47,16 @@ export function fakeTake(drill: Drill, bpm: number, cal: DrillCalibration, patte
     hits.sort((a, b) => a.on - b.on);
     return { m: analyzeDrumTake(drill, bpm, hits), played: hits.map((h) => ({ pitch: 38, on: h.on, off: null, vel: h.vel })), hits };
   }
+  // A phrase graded against its own swing ratio (drill.swingRatio, e.g. 0.58) is played at that ratio, not the grid's 2/3.
+  const at = (beat: number): number => {
+    const f = beat - Math.floor(beat);
+    return drill.swingRatio !== undefined && Math.abs(f - 0.5) < 1e-6 ? (Math.floor(beat) + drill.swingRatio) * (60000 / bpm) : expTimeMs(drill, beat, bpm);
+  };
   const played: PlayedNote[] = [];
   drill.notes.forEach((n, i) => {
     const o = off(i);
     if (o.skip) return;
-    const on = expTimeMs(drill, n.beat, bpm) + (o.dt ?? 0);
+    const on = at(n.beat) + (o.dt ?? 0);
     played.push({ pitch: n.pitch + (o.dPitch ?? 0), on, off: on + Math.max(80, (n.dur * 60000) / bpm - 40), vel: 70 + ((i * 13) % 30) });
   });
   return { m: isGuitarDrill(drill) ? analyzeGuitarTake(drill, bpm, played, cal) : analyzeTake(drill, bpm, played, cal), played };

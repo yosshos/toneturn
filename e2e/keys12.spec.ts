@@ -48,7 +48,8 @@ for (const lang of ['en', 'he'] as const)
       await map.locator(`button[data-key="${c.key}"]`).click();
       await expect(page.locator('[data-drills="run"]')).toBeVisible();
       const h1 = page.locator('.screen-head h1');
-      await expect(h1).toHaveText(c.label);
+      // the run title is the name over a small subline with the key; the h1's title keeps the whole "name · key"
+      await expect(h1).toHaveAttribute('title', c.label);
       const { sh, ih, sw, iw } = await page.evaluate(() => ({ sh: document.documentElement.scrollHeight, ih: window.innerHeight, sw: document.documentElement.scrollWidth, iw: window.innerWidth }));
       await page.screenshot({ path: `test-results/keys12-${c.family}-${lang}.png` });
       expect(sw, 'no horizontal scroll').toBeLessThanOrEqual(iw + 1);

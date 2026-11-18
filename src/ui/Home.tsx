@@ -18,7 +18,6 @@ import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
 import { Icon } from './icons';
 import { LangButton } from './LangButton';
-import { useStudio } from './look';
 
 
 interface Props {
@@ -96,8 +95,6 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
 export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, startHero, startLessonLink }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
-  // Studio look: the workout is the one hero; resume / catch-up / offers move under it as a quiet list.
-  const studio = useStudio();
   const lang = settings.uiLang;
   // The path in the player's own order of areas (intake questionnaire).
   const order = personalOrder((settings.intake as Intake | null | undefined)?.priorities, settings.track);
@@ -117,7 +114,8 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
     <main className="home today-screen">
       <TopBar t={t} lang={lang} streak={streak} onStreak={onStreak} whatsNew={whatsNew} headerExtra={headerExtra} onMenu={onMenu} home />
 
-      {!(studio && !startHero && !firstRun) && news}
+      {/* The workout is the one hero; resume / catch-up / offers move under it as a quiet list. */}
+      {(startHero || firstRun) && news}
 
       {startHero ? (
         <>
@@ -164,11 +162,10 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
         <>
           <h1 className="sr-only">The 7th Sense — {t.homeToday}</h1>
           {aside}
-          {!studio && assigned}
           {workout}
-          {studio && assigned}
+          {assigned}
           {today}
-          {studio && <div className="st-news">{news}</div>}
+          <div className="st-news">{news}</div>
           <button className="find-level-btn" onClick={() => (levelAreas.length > 1 ? setLevelSheet(true) : onFindLevel())} data-find-level="1">
             <Icon k="compass" size={18} /> {t.findLevel}
           </button>

@@ -21,7 +21,6 @@ import {
   publicFromHash,
   rankBoard,
   resultChanged,
-  shareCardSvg,
   shareGate,
   shareLevel,
   shareNotes,
@@ -168,15 +167,6 @@ describe('links and codes', () => {
     expect(l.plan?.goalBpm).toBe(160);
     expect(l.plan?.locked).toEqual(['goalBpm', 'keys', 'hands']);
     expect(lickFromShare('nonsense', 'K7Q2MX9A', 'x')).toBeNull();
-  });
-  it('the share card is a self-contained SVG with the facts and the brand', () => {
-    const sn = shareNotes(sharePayload(phrase(), meta, { gate: adult }).payload.ref)!;
-    const svg = shareCardSvg({ title: 'ii–V <F>', by: 'Ronit', bpm: 200, keys: 12, level: 4, notes: sn.notes, beats: sn.beats, meter: 4, lang: 'he' });
-    expect(svg.startsWith('<svg')).toBe(true);
-    expect(svg).toContain('♩200 · 12 סולמות');
-    expect(svg).toContain('החוש ה־7');
-    expect(svg).toContain('&lt;F&gt;'); // escaped
-    expect((svg.match(/<ellipse/g) ?? []).length).toBeGreaterThanOrEqual(16);
   });
 });
 

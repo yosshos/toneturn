@@ -1,6 +1,7 @@
-/* The studio look (redesign stage 1). A switchable layer over the classic v2 look: on only when <html data-look="studio">
-   (src/ui/look.ts; ?look=studio, or Settings > Display). Loaded after every other stylesheet. Every rule is scoped
-   under :root[data-look='studio'] (tests/studioCss.test.ts checks it), so the classic look is untouched.
+/* The studio look (redesign stage 1), the app's only look: a layer over the base v2 sheets, loaded after every other
+   stylesheet. Every rule is scoped under :root:root (tests/studioCss.test.ts checks it): the doubled :root keeps the
+   weight the layer had as :root:root when the classic look still existed, so it keeps winning over the
+   base sheets' :root[data-theme] rules. Do not shorten it to :root.
 
    Restraint: one emphasis per screen. Surfaces are flat (a hairline and a soft shadow); only the main action keeps the
    ink outline and the hard shadow: the lemon exercise buttons (Play / Again / Next / Stop) and the screen's one CTA.
@@ -8,7 +9,7 @@
    Rubik for everything; bold only for numbers, titles and the one word that must stand out. Same palette as v2. */
 
 /* ================================================================ tokens */
-:root[data-look='studio'] {
+:root:root {
   --stroke: 1px;
   --radius: 20px;
   --display: 'Rubik Variable', 'Rubik', system-ui, 'Segoe UI', Arial, sans-serif;
@@ -20,7 +21,7 @@
   --st-cta-edge: #1e1033;
 }
 /* light (also before the theme is resolved) */
-:root[data-look='studio']:not([data-theme='dark']):not([data-theme='contrast']) {
+:root:root:not([data-theme='dark']):not([data-theme='contrast']) {
   --bg: #fbf8ff;
   --bg-2: #f5f0fc;
   --card: #ffffff;
@@ -39,7 +40,7 @@
   --st-press: 0 1px 2px rgba(30, 16, 51, 0.08);
   --staff-line: #e2d8f4;
 }
-:root[data-look='studio'][data-theme='dark'] {
+:root:root[data-theme='dark'] {
   --bg: #140c22;
   --bg-2: #1f1533;
   --card: #1f1533;
@@ -62,7 +63,7 @@
   --st-press: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 /* high contrast keeps v2's white outlines and no shadows; only the weights and shapes change */
-:root[data-look='studio'][data-theme='contrast'] {
+:root:root[data-theme='contrast'] {
   --stroke: 1.5px;
   --st-tonal: #111111;
   --st-tonal-ink: #ffe600;
@@ -72,173 +73,172 @@
 }
 
 /* instruments and notation keep their ink lines (keys, note heads, lanes, staff marks) */
-:root[data-look='studio'] :is(svg, .keyboard, .keys-pad, .hw-road, .drum-lanes, .neck-wrap, .fretboard) {
+:root:root :is(svg, .keyboard, .keys-pad, .hw-road, .drum-lanes, .neck-wrap, .fretboard) {
   --outline: var(--st-ink-line);
 }
 
 /* ================================================================ type */
-:root[data-look='studio'] body {
+:root:root body {
   font-size: 16px;
   font-weight: 400;
 }
-:root[data-look='studio'] :is(h1, h2) {
+:root:root :is(h1, h2) {
   font-family: var(--font);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
-:root[data-look='studio'] :is(h3, h4) {
+:root:root :is(h3, h4) {
   font-weight: 700;
 }
-:root[data-look='studio'] :is(b, strong) {
+:root:root :is(b, strong) {
   font-weight: 600;
 }
-:root[data-look='studio'] .screen-title,
-:root[data-look='studio'] .screen-head h1,
-:root[data-look='studio'] .screen-head h2 {
+:root:root .screen-title,
+:root:root .screen-head h1,
+:root:root .screen-head h2 {
   font-family: var(--font);
   font-weight: 700;
   font-size: var(--st-title);
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
-:root[data-look='studio'] .screen-head h1 small,
-:root[data-look='studio'] .screen-head small {
+:root:root .screen-head h1 small,
+:root:root .screen-head small {
   font-weight: 400;
   color: var(--ink-dim);
 }
 
 /* ---- the display face, everywhere it was used: Rubik at a title weight (Secular One is drawn at 400). One rule per
-   classic selector (same specificity, later), so the targeted rules below still win. Source file in each comment. */
-:root[data-look='studio'] .stage-title { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .ask { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .screen-head h1 { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .screen-title { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .recap h1 { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .home-h { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .set-card h2 { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .sheet h2 { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .level-ring b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .play-hero b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .feedback.correct b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .feedback.correct-retry b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .feedback.retry b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .feedback.reveal b { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .xp-fly { font-family: var(--font); font-weight: 650; } /* arcade.css */
-:root[data-look='studio'] .bu-kicker { font-family: var(--font); font-weight: 650; } /* badges.css */
-:root[data-look='studio'] .bu-title { font-family: var(--font); font-weight: 650; } /* badges.css */
-:root[data-look='studio'] .bu-btn { font-family: var(--font); font-weight: 700; } /* badges.css */
-:root[data-look='studio'] .bg-cue { font-family: var(--font); font-weight: 650; } /* beginnergames.css */
-:root[data-look='studio'] .chl-rank { font-family: var(--font); font-weight: 650; } /* challenges.css */
-:root[data-look='studio'] .cb-name b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
-:root[data-look='studio'] .cb-roman b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
-:root[data-look='studio'] .cb-card b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
-:root[data-look='studio'] .cf-sym { font-family: var(--font); font-weight: 650; } /* chordfinder.css */
-:root[data-look='studio'] .cf-title b { font-family: var(--font); font-weight: 650; } /* chordfinder.css */
-:root[data-look='studio'] .cs-hero h1 { font-family: var(--font); font-weight: 650; } /* coursestart.css */
-:root[data-look='studio'] .cs-hero h2 { font-family: var(--font); font-weight: 650; } /* coursestart.css */
-:root[data-look='studio'] .drill-family b { font-family: var(--font); font-weight: 650; } /* drills.css */
-:root[data-look='studio'] .drill-level .n { font-family: var(--font); font-weight: 650; } /* drills.css */
-:root[data-look='studio'] .drill-beat { font-family: var(--font); font-weight: 650; } /* drills.css */
-:root[data-look='studio'] .drill-result h2 { font-family: var(--font); font-weight: 650; } /* drills.css */
-:root[data-look='studio'] .km-cell { font-family: var(--font); font-weight: 650; } /* drills.css */
-:root[data-look='studio'] .kit-step h2 { font-family: var(--font); font-weight: 650; } /* drums.css */
-:root[data-look='studio'] .enc-bdg b { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-time { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-big { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-ring-n { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-map th.k { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-key { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .enc-yours-h { font-family: var(--font); font-weight: 650; } /* encore.css */
-:root[data-look='studio'] .take-review .tr-verdict { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .tr-chips b { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .loop-bar b { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .pocket .pm-lead { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .cc-chord { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .rh-sheet-head h2 bdi { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .streak-after .sa-count { font-family: var(--font); font-weight: 650; } /* feedback.css */
-:root[data-look='studio'] .g2-big { font-family: var(--font); font-weight: 650; } /* games2.css */
-:root[data-look='studio'] .g2-hud b { font-family: var(--font); font-weight: 650; } /* games2.css */
-:root[data-look='studio'] .g3-chip.wide b { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .hw-stat b { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .hw-lane-labels b { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .mp-tile-face { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .mp-tile { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .bingo-current b { font-family: var(--font); font-weight: 650; } /* games3.css */
-:root[data-look='studio'] .inst-cell b { font-family: var(--font); font-weight: 650; } /* instgames.css */
-:root[data-look='studio'] .walk-chord b { font-family: var(--font); font-weight: 650; } /* instgames.css */
-:root[data-look='studio'] .vs-symbol { font-family: var(--font); font-weight: 650; } /* instgames.css */
-:root[data-look='studio'] .ks-sig { font-family: var(--font); font-weight: 700; } /* kitread.css */
-:root[data-look='studio'] .ng .ng-sym { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .gtr-cell { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .c5-num { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .c5-bar { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .cw-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .cw-row .chip { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .hn-choices .btn { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .hn-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .hn-ways .chip { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .tj-from { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .ds-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
-:root[data-look='studio'] .path2 .section-bar b { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .warmup-card b { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .tempo-target { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .tuner-note { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .wk-kicker { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .wk-next { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .wk-timer { font-family: var(--font); font-weight: 650; } /* path.css */
-:root[data-look='studio'] .ph-readout { font-family: var(--font); font-weight: 650; } /* peak.css */
-:root[data-look='studio'] .poly-ratio { font-family: var(--font); font-weight: 650; } /* polylock.css */
-:root[data-look='studio'] .poly-pad small { font-family: var(--font); font-weight: 650; } /* polylock.css */
-:root[data-look='studio'] .rh-chords { font-family: var(--font); font-weight: 650; } /* reharm.css */
-:root[data-look='studio'] .riff-meter { font-family: var(--font); font-weight: 650; } /* riffecho.css */
-:root[data-look='studio'] .rush-lvl b { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-hud b { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-ask { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-target b { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-ans .sym { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-pop { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-burst { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-lvlup { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-final b { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .rush-stats dd { font-family: var(--font); font-weight: 650; } /* rush.css */
-:root[data-look='studio'] .note-detail .nd-name { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .sr-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .take-card .take-score b { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .panel-screen.vocal p.vocal-targets.vocal-targets.vocal-targets { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .panel-screen.vocal .big-score { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .vc-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .lane-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
-:root[data-look='studio'] .ps-big { font-family: var(--font); font-weight: 650; } /* stats.css */
-:root[data-look='studio'] .pf-ring { font-family: var(--font); font-weight: 650; } /* stats.css */
-:root[data-look='studio'] .unit-banner b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .unit-banner .unit-letter { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .orb { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .feedback b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .feedback:is(.correct, .correct-retry, .retry, .reveal) b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .ob-welcome .ob-word { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .ob-welcome h1 { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .onboarding h1 { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .set-cap { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .panel-screen.settings .sound-opt b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .tap-pad { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .mini-celebrate h2 { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .in-big { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .string-chip { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .path-techtest b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .beta-chip { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .tc-card > b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .tq-head h2 { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .pt-tile b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .in-a-row b { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .tap-pad .tap-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .lane-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .gt-pad .tap-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
-:root[data-look='studio'] .vg-chord b { font-family: var(--font); font-weight: 650; } /* voicegames.css */
-:root[data-look='studio'] .vg-ask { font-family: var(--font); font-weight: 650; } /* voicegames.css */
+   base selector (same specificity, later), so the targeted rules below still win. Source file in each comment. */
+:root:root .stage-title { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .ask { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .screen-head h1 { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .screen-title { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .recap h1 { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .home-h { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .set-card h2 { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .sheet h2 { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .level-ring b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .play-hero b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .feedback.correct b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .feedback.correct-retry b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .feedback.retry b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .feedback.reveal b { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .xp-fly { font-family: var(--font); font-weight: 650; } /* arcade.css */
+:root:root .bu-kicker { font-family: var(--font); font-weight: 650; } /* badges.css */
+:root:root .bu-title { font-family: var(--font); font-weight: 650; } /* badges.css */
+:root:root .bu-btn { font-family: var(--font); font-weight: 700; } /* badges.css */
+:root:root .bg-cue { font-family: var(--font); font-weight: 650; } /* beginnergames.css */
+:root:root .chl-rank { font-family: var(--font); font-weight: 650; } /* challenges.css */
+:root:root .cb-name b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
+:root:root .cb-roman b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
+:root:root .cb-card b { font-family: var(--font); font-weight: 650; } /* chordbuilder.css */
+:root:root .cf-sym { font-family: var(--font); font-weight: 650; } /* chordfinder.css */
+:root:root .cf-title b { font-family: var(--font); font-weight: 650; } /* chordfinder.css */
+:root:root .cs-hero h1 { font-family: var(--font); font-weight: 650; } /* coursestart.css */
+:root:root .cs-hero h2 { font-family: var(--font); font-weight: 650; } /* coursestart.css */
+:root:root .drill-family b { font-family: var(--font); font-weight: 650; } /* drills.css */
+:root:root .drill-level .n { font-family: var(--font); font-weight: 650; } /* drills.css */
+:root:root .drill-beat { font-family: var(--font); font-weight: 650; } /* drills.css */
+:root:root .drill-result h2 { font-family: var(--font); font-weight: 650; } /* drills.css */
+:root:root .km-cell { font-family: var(--font); font-weight: 650; } /* drills.css */
+:root:root .kit-step h2 { font-family: var(--font); font-weight: 650; } /* drums.css */
+:root:root .enc-bdg b { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-time { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-big { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-ring-n { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-map th.k { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-key { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .enc-yours-h { font-family: var(--font); font-weight: 650; } /* encore.css */
+:root:root .take-review .tr-verdict { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .tr-chips b { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .loop-bar b { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .pocket .pm-lead { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .cc-chord { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .rh-sheet-head h2 bdi { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .streak-after .sa-count { font-family: var(--font); font-weight: 650; } /* feedback.css */
+:root:root .g2-big { font-family: var(--font); font-weight: 650; } /* games2.css */
+:root:root .g2-hud b { font-family: var(--font); font-weight: 650; } /* games2.css */
+:root:root .g3-chip.wide b { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .hw-stat b { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .hw-lane-labels b { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .mp-tile-face { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .mp-tile { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .bingo-current b { font-family: var(--font); font-weight: 650; } /* games3.css */
+:root:root .inst-cell b { font-family: var(--font); font-weight: 650; } /* instgames.css */
+:root:root .walk-chord b { font-family: var(--font); font-weight: 650; } /* instgames.css */
+:root:root .vs-symbol { font-family: var(--font); font-weight: 650; } /* instgames.css */
+:root:root .ks-sig { font-family: var(--font); font-weight: 700; } /* kitread.css */
+:root:root .ng .ng-sym { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .gtr-cell { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .c5-num { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .c5-bar { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .cw-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .cw-row .chip { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .hn-choices .btn { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .hn-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .hn-ways .chip { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .tj-from { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .ds-bar span { font-family: var(--font); font-weight: 650; } /* newgames.css */
+:root:root .path2 .section-bar b { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .warmup-card b { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .tempo-target { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .tuner-note { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .wk-kicker { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .wk-next { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .wk-timer { font-family: var(--font); font-weight: 650; } /* path.css */
+:root:root .ph-readout { font-family: var(--font); font-weight: 650; } /* peak.css */
+:root:root .poly-ratio { font-family: var(--font); font-weight: 650; } /* polylock.css */
+:root:root .poly-pad small { font-family: var(--font); font-weight: 650; } /* polylock.css */
+:root:root .rh-chords { font-family: var(--font); font-weight: 650; } /* reharm.css */
+:root:root .riff-meter { font-family: var(--font); font-weight: 650; } /* riffecho.css */
+:root:root .rush-lvl b { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-hud b { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-ask { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-target b { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-ans .sym { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-pop { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-burst { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-lvlup { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-final b { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .rush-stats dd { font-family: var(--font); font-weight: 650; } /* rush.css */
+:root:root .note-detail .nd-name { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .sr-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .take-card .take-score b { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .panel-screen.vocal p.vocal-targets.vocal-targets.vocal-targets { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .panel-screen.vocal .big-score { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .vc-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .lane-note { font-family: var(--font); font-weight: 650; } /* singlane.css */
+:root:root .ps-big { font-family: var(--font); font-weight: 650; } /* stats.css */
+:root:root .pf-ring { font-family: var(--font); font-weight: 650; } /* stats.css */
+:root:root .unit-banner b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .unit-banner .unit-letter { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .orb { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .feedback b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .feedback:is(.correct, .correct-retry, .retry, .reveal) b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .ob-welcome .ob-word { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .ob-welcome h1 { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .onboarding h1 { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .set-cap { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .panel-screen.settings .sound-opt b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .tap-pad { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .mini-celebrate h2 { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .in-big { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .string-chip { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .path-techtest b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .beta-chip { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .tc-card > b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .pt-tile b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .in-a-row b { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .tap-pad .tap-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .lane-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .gt-pad .tap-countdown { font-family: var(--font); font-weight: 650; } /* v2.css */
+:root:root .vg-chord b { font-family: var(--font); font-weight: 650; } /* voicegames.css */
+:root:root .vg-ask { font-family: var(--font); font-weight: 650; } /* voicegames.css */
 
 /* ================================================================ buttons: three tiers + the one main action */
 /* secondary (the default .btn): a tonal lilac fill, no outline, no hard shadow */
-:root[data-look='studio'] .btn {
+:root:root .btn {
   border: 0;
   border-radius: 14px;
   background: var(--st-tonal);
@@ -247,43 +247,43 @@
   box-shadow: none;
   transition: transform 0.08s, background 0.12s, filter 0.12s;
 }
-:root[data-look='studio'] .btn:hover:not(:disabled) {
+:root:root .btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--st-tonal) 82%, var(--st-tonal-ink));
 }
-:root[data-look='studio'] .btn:active:not(:disabled) {
+:root:root .btn:active:not(:disabled) {
   transform: scale(0.98);
   box-shadow: none;
 }
 /* primary outside exercises: purple, flat */
-:root[data-look='studio'] .btn.primary {
+:root:root .btn.primary {
   background: var(--accent);
   color: var(--accent-ink);
   border: 0;
   box-shadow: none;
 }
-:root[data-look='studio'] .btn.primary:hover:not(:disabled) {
+:root:root .btn.primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 88%, var(--ink-c));
 }
 /* tertiary: text only, purple */
-:root[data-look='studio'] .btn.ghost {
+:root:root .btn.ghost {
   background: transparent;
   border: 0;
   color: var(--st-tonal-ink);
   box-shadow: none;
 }
-:root[data-look='studio'] .btn.ghost:hover:not(:disabled) {
+:root:root .btn.ghost:hover:not(:disabled) {
   background: color-mix(in srgb, var(--st-tonal) 60%, transparent);
 }
-:root[data-look='studio'] .btn.small {
+:root:root .btn.small {
   border-radius: 12px;
   box-shadow: none;
 }
-:root[data-look='studio'] .btn.danger {
+:root:root .btn.danger {
   background: var(--bad);
   color: var(--ink-c);
 }
 /* THE main action: lemon, ink outline, the one hard shadow (straight down) */
-:root[data-look='studio'] :is(.btn.mega, .bu-btn, .tap-pad) {
+:root:root :is(.btn.mega, .bu-btn, .tap-pad) {
   border: 1.5px solid var(--st-cta-edge);
   border-radius: 16px;
   background: var(--lemon);
@@ -291,20 +291,20 @@
   font-weight: 700;
   box-shadow: 0 3px 0 var(--st-cta-edge);
 }
-:root[data-look='studio'] :is(.btn.mega, .bu-btn, .tap-pad):hover:not(:disabled) {
+:root:root :is(.btn.mega, .bu-btn, .tap-pad):hover:not(:disabled) {
   background: color-mix(in srgb, var(--lemon) 92%, #ffffff);
 }
-:root[data-look='studio'] :is(.btn.mega, .bu-btn, .tap-pad):active:not(:disabled) {
+:root:root :is(.btn.mega, .bu-btn, .tap-pad):active:not(:disabled) {
   transform: translateY(3px);
   box-shadow: 0 0 0 var(--st-cta-edge);
 }
-:root[data-look='studio'][data-theme='contrast'] :is(.btn.mega, .bu-btn, .tap-pad) {
+:root:root[data-theme='contrast'] :is(.btn.mega, .bu-btn, .tap-pad) {
   border-color: #ffffff;
   box-shadow: 0 3px 0 #ffffff;
 }
 /* disabled: faded, never dashed, never pale yellow */
-:root[data-look='studio'] :is(.btn, .btn.mega, .btn.primary, .btn.ghost):disabled,
-:root[data-look='studio'][data-theme] :is(.btn, .btn.mega, .btn.primary):disabled {
+:root:root :is(.btn, .btn.mega, .btn.primary, .btn.ghost):disabled,
+:root:root[data-theme] :is(.btn, .btn.mega, .btn.primary):disabled {
   opacity: 1;
   background: var(--st-surface-2);
   color: color-mix(in srgb, var(--ink) 42%, transparent) !important;
@@ -313,36 +313,36 @@
   box-shadow: none;
   transform: none;
 }
-:root[data-look='studio'] .btn.ghost:disabled {
+:root:root .btn.ghost:disabled {
   background: transparent;
 }
 /* icon buttons: flat, hairline, no hard shadow */
-:root[data-look='studio'] .icon-btn {
+:root:root .icon-btn {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--card);
   color: var(--ink);
   box-shadow: none;
 }
-:root[data-look='studio'] .icon-btn:active {
+:root:root .icon-btn:active {
   transform: scale(0.96);
   box-shadow: none;
 }
 /* back: a bare chevron, no box */
-:root[data-look='studio'] :is(.screen-head, .ob-head, .t-top, .tf-top, .wk-ed-head, .ai-head, .menu-head, .ps-sheet-head) > .icon-btn:first-child,
-:root[data-look='studio'] .icon-btn:is([aria-label='Back'], [aria-label='חזרה'], [aria-label='back']) {
+:root:root :is(.screen-head, .ob-head, .t-top, .tf-top, .wk-ed-head, .ai-head, .menu-head, .ps-sheet-head) > .icon-btn:first-child,
+:root:root .icon-btn:is([aria-label='Back'], [aria-label='חזרה'], [aria-label='back']) {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
   border-radius: 12px;
 }
-:root[data-look='studio'] :is(.screen-head, .ob-head, .t-top, .tf-top, .wk-ed-head, .ai-head, .menu-head, .ps-sheet-head) > .icon-btn:first-child:hover,
-:root[data-look='studio'] .icon-btn:is([aria-label='Back'], [aria-label='חזרה'], [aria-label='back']):hover {
+:root:root :is(.screen-head, .ob-head, .t-top, .tf-top, .wk-ed-head, .ai-head, .menu-head, .ps-sheet-head) > .icon-btn:first-child:hover,
+:root:root .icon-btn:is([aria-label='Back'], [aria-label='חזרה'], [aria-label='back']):hover {
   background: color-mix(in srgb, var(--st-tonal) 70%, transparent);
 }
 /* the exercise's small round controls (Repeat / Skip / Hint / Refresh): tonal pills */
-:root[data-look='studio'] main.lesson .controls .ctl-btn,
-:root[data-look='studio'] .ctl-btn {
+:root:root main.lesson .controls .ctl-btn,
+:root:root .ctl-btn {
   border: 0;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
@@ -350,62 +350,62 @@
   font-weight: 600;
 }
 /* buttons that used a dashed border: solid and quiet now */
-:root[data-look='studio'] .course-add {
+:root:root .course-add {
   border: 0;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   font-weight: 600;
 }
-:root[data-look='studio'] .term-chip {
+:root:root .term-chip {
   border: 0;
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   opacity: 1;
 }
-:root[data-look='studio'] .gd-chip:disabled {
+:root:root .gd-chip:disabled {
   border: 1px solid var(--line);
   border-style: solid;
   opacity: 0.55;
 }
-:root[data-look='studio'] .enc-screen .ch.q {
+:root:root .enc-screen .ch.q {
   border-style: solid;
 }
 
 /* ================================================================ surfaces: flat cards */
-:root[data-look='studio'] :is(.menu-card, .set-card, .v2-card, .tc-card, .tq-list, .sq-card, .paused-card, .enc-block, .ov-card),
-:root[data-look='studio'] :is(.hub-rows, .workout-card, .wk-card, .exam-card, .plan-card, .take-card, .item-card, .intro-card, .learned-card, .live-card, .px-section, .set-group, .tool-card, .play-card, .drill-family, .skill-row, .recap-row, .vocal-level, .topic-group, .later-section, .drill-result, .resume-row, .domain-tile, .card, .g2-card, .tf-statement, .plan-facts, .menu-links, .intake-opt, .ob-choice, .rank-btn, .dc-sec) {
+:root:root :is(.menu-card, .set-card, .v2-card, .tc-card, .tq-list, .sq-card, .paused-card, .enc-block, .ov-card),
+:root:root :is(.hub-rows, .workout-card, .wk-card, .exam-card, .plan-card, .take-card, .item-card, .intro-card, .learned-card, .live-card, .px-section, .set-group, .tool-card, .play-card, .drill-family, .skill-row, .recap-row, .vocal-level, .topic-group, .later-section, .drill-result, .resume-row, .domain-tile, .card, .g2-card, .tf-statement, .plan-facts, .menu-links, .intake-opt, .ob-choice, .rank-btn, .dc-sec) {
   border: 0;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'][data-theme='contrast'] :is(.menu-card, .set-card, .v2-card, .tc-card, .tq-list, .sq-card, .paused-card, .enc-block, .ov-card, .hub-rows, .card, .drill-family, .tool-card, .play-card) {
+:root:root[data-theme='contrast'] :is(.menu-card, .set-card, .v2-card, .tc-card, .tq-list, .sq-card, .paused-card, .enc-block, .ov-card, .hub-rows, .card, .drill-family, .tool-card, .play-card) {
   border: 1.5px solid #ffffff;
 }
-:root[data-look='studio'] :is(.ob-choice, .intake-opt, .rank-btn):is(.on, [aria-checked='true'], [aria-pressed='true']) {
+:root:root :is(.ob-choice, .intake-opt, .rank-btn):is(.on, [aria-checked='true'], [aria-pressed='true']) {
   background: var(--st-tonal);
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-:root[data-look='studio'] .sheet {
+:root:root .sheet {
   border: 0;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -8px 30px rgba(30, 16, 51, 0.12);
 }
-:root[data-look='studio'] :is(.bu-card, .mini-player, .mini-celebrate) {
+:root:root :is(.bu-card, .mini-player, .mini-celebrate) {
   border: 0;
   box-shadow: 0 12px 40px rgba(30, 16, 51, 0.18);
 }
-:root[data-look='studio'] .bu-overlay .bu-card {
+:root:root .bu-overlay .bu-card {
   box-shadow: 0 12px 40px rgba(30, 16, 51, 0.18), 0 0 0 100vmax rgb(30 16 51 / 0.35);
 }
-:root[data-look='studio'] :is(.sim-banner, .simulated) {
+:root:root :is(.sim-banner, .simulated) {
   border: 1px solid var(--line);
 }
 
 /* ================================================================ chips, segmented controls, inputs, toggles */
-:root[data-look='studio'] .chip,
-:root[data-look='studio'] .enc-screen .ch,
-:root[data-look='studio'] .tier-chip,
-:root[data-look='studio'] .enc-pill {
+:root:root .chip,
+:root:root .enc-screen .ch,
+:root:root .tier-chip,
+:root:root .enc-pill {
   border: 0;
   border-radius: 999px;
   background: var(--st-surface-2);
@@ -413,22 +413,22 @@
   font-weight: 500;
   box-shadow: none;
 }
-:root[data-look='studio'] :is(.chip.on, button.chip.on, .chip[aria-pressed='true'], .chip[aria-selected='true'], .drill-inst .chip.on, .drill-opts .chip.on, .latency-cal .chip.on, .slot-row .chip.on, .intake-chips .chip.on, .tf-topics .chip.on, .panel-screen.settings .chip.on, .enc-screen .ch.on, .tier-chip.on),
-:root[data-look='studio'][data-look][data-theme] :is(.chip.on, button.chip.on, .chip[aria-pressed='true'], .chip[aria-selected='true'], .drill-inst .chip.on, .drill-opts .chip.on, .latency-cal .chip.on, .slot-row .chip.on, .intake-chips .chip.on, .tf-topics .chip.on, .panel-screen.settings .chip.on) {
+:root:root :is(.chip.on, button.chip.on, .chip[aria-pressed='true'], .chip[aria-selected='true'], .drill-inst .chip.on, .drill-opts .chip.on, .latency-cal .chip.on, .slot-row .chip.on, .intake-chips .chip.on, .tf-topics .chip.on, .panel-screen.settings .chip.on, .enc-screen .ch.on, .tier-chip.on),
+:root:root:root[data-theme] :is(.chip.on, button.chip.on, .chip[aria-pressed='true'], .chip[aria-selected='true'], .drill-inst .chip.on, .drill-opts .chip.on, .latency-cal .chip.on, .slot-row .chip.on, .intake-chips .chip.on, .tf-topics .chip.on, .panel-screen.settings .chip.on) {
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   border-color: transparent;
   font-weight: 600;
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--st-tonal-ink) 55%, transparent);
 }
-:root[data-look='studio'] :is(.seg, .mode-switch, .ps-seg) {
+:root:root :is(.seg, .mode-switch, .ps-seg) {
   background: var(--st-surface-2);
   border: 0;
   border-radius: 12px;
   padding: 3px;
   box-shadow: none;
 }
-:root[data-look='studio'] :is(.seg button, .mode-switch button, .ps-seg button) {
+:root:root :is(.seg button, .mode-switch button, .ps-seg button) {
   border: 0;
   border-radius: 9px;
   background: transparent;
@@ -436,47 +436,47 @@
   font-weight: 600;
   box-shadow: none;
 }
-:root[data-look='studio'][data-look][data-theme] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on, .seg button[aria-checked='true'], .seg button[aria-pressed='true']) {
+:root:root:root[data-theme] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on, .seg button[aria-checked='true'], .seg button[aria-pressed='true']) {
   background: var(--card);
   color: var(--ink);
   border-color: transparent;
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.12);
 }
-:root[data-look='studio'][data-look][data-theme='contrast'] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on) {
+:root:root:root[data-theme='contrast'] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on) {
   background: #ffe600;
   color: #000000;
 }
-:root[data-look='studio'] .seg-field legend {
+:root:root .seg-field legend {
   font-weight: 600;
   letter-spacing: 0;
 }
-:root[data-look='studio'] :is(input[type='text'], input[type='email'], input[type='search'], input[type='number'], textarea, select, .set-search) {
+:root:root :is(input[type='text'], input[type='email'], input[type='search'], input[type='number'], textarea, select, .set-search) {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--card);
   box-shadow: none;
 }
-:root[data-look='studio'] :is(input[type='text'], input[type='email'], input[type='search'], input[type='number'], textarea, select, .set-search):focus {
+:root:root :is(input[type='text'], input[type='email'], input[type='search'], input[type='number'], textarea, select, .set-search):focus {
   border-color: var(--accent);
 }
-:root[data-look='studio'] :is(.toggle-row, .check) input[type='checkbox'],
-:root[data-look='studio'] .panel-screen.settings input[type='checkbox'] {
+:root:root :is(.toggle-row, .check) input[type='checkbox'],
+:root:root .panel-screen.settings input[type='checkbox'] {
   border: 0;
   background: var(--line-strong);
 }
-:root[data-look='studio'] :is(.toggle-row, .check) input[type='checkbox']::after,
-:root[data-look='studio'] .panel-screen.settings input[type='checkbox']::after {
+:root:root :is(.toggle-row, .check) input[type='checkbox']::after,
+:root:root .panel-screen.settings input[type='checkbox']::after {
   border: 0;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.25);
 }
-:root[data-look='studio'] :is(.toggle-row, .check) input[type='checkbox']:checked,
-:root[data-look='studio'] .panel-screen.settings input[type='checkbox']:checked {
+:root:root :is(.toggle-row, .check) input[type='checkbox']:checked,
+:root:root .panel-screen.settings input[type='checkbox']:checked {
   background: var(--teal);
 }
 
 /* ================================================================ shell: top bar */
-:root[data-look='studio'] .course-chip {
+:root:root .course-chip {
   height: 42px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -484,11 +484,11 @@
   font-weight: 600;
   box-shadow: none;
 }
-:root[data-look='studio'] .course-chip:active {
+:root:root .course-chip:active {
   transform: scale(0.98);
 }
-:root[data-look='studio'] .v2-topbar .icon-btn,
-:root[data-look='studio'] .topbar .icon-btn {
+:root:root .v2-topbar .icon-btn,
+:root:root .topbar .icon-btn {
   width: 42px;
   height: 42px;
   border: 1px solid var(--line);
@@ -496,10 +496,10 @@
   background: var(--card);
   box-shadow: none;
 }
-:root[data-look='studio'] .menu-btn.has-dot::after {
+:root:root .menu-btn.has-dot::after {
   border: 2px solid var(--card);
 }
-:root[data-look='studio'] :is(.streak-chip, .v2-topbar .stats > button:not(.icon-btn)) {
+:root:root :is(.streak-chip, .v2-topbar .stats > button:not(.icon-btn)) {
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--card);
@@ -507,7 +507,7 @@
 }
 
 /* ================================================================ shell: bottom nav = white surface, hairline top, lilac pill */
-:root[data-look='studio'] .tabbar {
+:root:root .tabbar {
   inset-inline: 0;
   bottom: 0;
   max-width: none;
@@ -520,26 +520,26 @@
   box-shadow: none;
   backdrop-filter: none;
 }
-:root[data-look='studio'] .tab {
+:root:root .tab {
   min-height: 54px;
   border-radius: 14px;
   color: var(--ink-dim);
   font-weight: 500;
 }
-:root[data-look='studio'] .tab.on {
+:root:root .tab.on {
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   font-weight: 700;
 }
-:root[data-look='studio'] .tab .tab-dot {
+:root:root .tab .tab-dot {
   border: 2px solid var(--card);
 }
-:root[data-look='studio'] .app.has-tabs {
+:root:root .app.has-tabs {
   padding-bottom: calc(88px + env(safe-area-inset-bottom));
 }
 /* the icons on a light bar: the light paper set and the light chrome ramp */
-:root[data-look='studio']:not([data-theme='dark']):not([data-theme='contrast']) :is(.tabbar .tab:not(.on), .side-nav .sn-item:not(.current)) .pp,
-:root[data-look='studio']:not([data-theme='dark']):not([data-theme='contrast']) .side-nav .sn-subitem .pp {
+:root:root:not([data-theme='dark']):not([data-theme='contrast']) :is(.tabbar .tab:not(.on), .side-nav .sn-item:not(.current)) .pp,
+:root:root:not([data-theme='dark']):not([data-theme='contrast']) .side-nav .sn-subitem .pp {
   --pb: var(--b);
   --pbE: var(--bE);
   --pa: var(--a);
@@ -551,7 +551,7 @@
   --pf: var(--f);
   --pfE: var(--fE);
 }
-:root[data-look='studio']:not([data-theme='dark']):not([data-theme='contrast']) :is(.tabbar, .side-nav) {
+:root:root:not([data-theme='dark']):not([data-theme='contrast']) :is(.tabbar, .side-nav) {
   --cs: #6d28d9;
   --ce: #3b1a7a;
   --ca: #c42a62;
@@ -560,124 +560,113 @@
 }
 
 /* ================================================================ shell: side menu (tablet / desktop) = white panel */
-:root[data-look='studio'] .side-nav {
+:root:root .side-nav {
   background: var(--card);
   color: var(--ink);
   border: 0;
   border-inline-end: 1px solid var(--line);
 }
-:root[data-look='studio'] .side-nav :is(.sn-item, .sn-subitem) {
+:root:root .side-nav :is(.sn-item, .sn-subitem) {
   color: var(--ink-dim);
   border-radius: 12px;
   font-weight: 500;
 }
-:root[data-look='studio'] .side-nav :is(.sn-item, .sn-subitem):hover {
+:root:root .side-nav :is(.sn-item, .sn-subitem):hover {
   background: var(--st-surface-2);
   color: var(--ink);
 }
-:root[data-look='studio'] .side-nav :is(.sn-item.current, .sn-subitem.current),
-:root[data-look='studio'] .side-nav .sn-sec.on > .sn-row > .sn-item {
+:root:root .side-nav :is(.sn-item.current, .sn-subitem.current),
+:root:root .side-nav .sn-sec.on > .sn-row > .sn-item {
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   font-weight: 700;
 }
-:root[data-look='studio'] .side-nav .sn-cap {
+:root:root .side-nav .sn-cap {
   color: var(--ink-dim);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
-:root[data-look='studio'] .side-nav .sn-hr {
+:root:root .side-nav .sn-hr {
   background: var(--line);
 }
-:root[data-look='studio'] .side-nav .sn-search {
+:root:root .side-nav .sn-search {
   background: var(--st-surface-2);
   border: 0;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .side-nav :is(.sn-word, .sn-me) {
+:root:root .side-nav :is(.sn-word, .sn-me) {
   color: var(--ink);
   font-family: var(--font);
   font-weight: 700;
 }
-:root[data-look='studio'] .side-nav .sn-me {
+:root:root .side-nav .sn-me {
   border: 1px solid var(--line);
   font-weight: 500;
 }
-:root[data-look='studio'] .side-nav .sn-me small {
+:root:root .side-nav .sn-me small {
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .side-nav .sn-avatar {
+:root:root .side-nav .sn-avatar {
   border: 0;
 }
-:root[data-look='studio'] .side-nav :is(.sn-chev, .sn-collapse) {
+:root:root .side-nav :is(.sn-chev, .sn-collapse) {
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .course-chip.side {
+:root:root .course-chip.side {
   background: var(--card);
   color: var(--ink);
   border: 1px solid var(--line);
 }
-:root[data-look='studio'] .sn-extra .icon-btn {
+:root:root .sn-extra .icon-btn {
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink);
 }
 
 /* ================================================================ home / Today */
-:root[data-look='studio'] .wk-card.wk-hero {
+:root:root .wk-card.wk-hero {
   border: 0;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(109, 40, 217, 0.22);
 }
-:root[data-look='studio'] .wk-hero .wk-bubble {
-  border: 0;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(30, 16, 51, 0.18);
-}
-:root[data-look='studio'] .wk-hero .wk-edit {
+:root:root .wk-hero .wk-edit {
   border: 0;
   background: rgba(255, 255, 255, 0.95);
 }
-:root[data-look='studio'] .wk-hero .wk-title {
+:root:root .wk-hero .wk-title {
   font-weight: 700;
 }
-:root[data-look='studio'] .wk-hero .wk-line {
-  font-weight: 500;
-}
-:root[data-look='studio'] .tc-card > small,
-:root[data-look='studio'] .tc-card > .tc-kicker {
+:root:root .tc-card > small,
+:root:root .tc-card > .tc-kicker {
   font-weight: 600;
   color: var(--accent);
   font-size: var(--st-caption);
 }
-:root[data-look='studio'] .tc-card > b {
+:root:root .tc-card > b {
   font-weight: 700;
   font-size: var(--st-card-title);
 }
-:root[data-look='studio'] .tq-head h2 {
-  font-size: var(--st-card-title);
-}
-:root[data-look='studio'] .tq-list li {
+:root:root .tq-list li {
   border-top: 1px solid var(--line);
 }
-:root[data-look='studio'] .tq-text b {
+:root:root .tq-text b {
   font-weight: 600;
 }
-:root[data-look='studio'] .tq-n {
+:root:root .tq-n {
   font-weight: 700;
 }
 
 /* ================================================================ path */
-:root[data-look='studio'] .unit-banner {
+:root:root .unit-banner {
   border: 0;
   border-radius: 18px;
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .unit-banner b {
+:root:root .unit-banner b {
   font-weight: 700;
   font-size: 1.1rem;
 }
-:root[data-look='studio'] .unit-banner .unit-letter {
+:root:root .unit-banner .unit-letter {
   border: 0;
   border-radius: 12px;
   background: var(--ink-c);
@@ -685,26 +674,26 @@
   font-family: var(--font);
   font-weight: 800;
 }
-:root[data-look='studio'] .unit-banner .unit-ring {
+:root:root .unit-banner .unit-ring {
   border-width: 1.5px;
 }
-:root[data-look='studio'] .unit-banner .unit-areas i {
+:root:root .unit-banner .unit-areas i {
   border-width: 1px;
 }
-:root[data-look='studio'] .path2 .road .node .node-disc,
-:root[data-look='studio'] .path2 .road .sys .node .node-disc {
+:root:root .path2 .road .node .node-disc,
+:root:root .path2 .road .sys .node .node-disc {
   border: 0;
   background: var(--card);
   color: var(--ink);
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .path2 .road .node:is(.done, .mastered, .tested) .node-disc,
-:root[data-look='studio'] .path2 .road .sys .node:is(.done, .mastered, .tested) .node-disc {
+:root:root .path2 .road .node:is(.done, .mastered, .tested) .node-disc,
+:root:root .path2 .road .sys .node:is(.done, .mastered, .tested) .node-disc {
   background: var(--card);
   color: var(--accent);
   box-shadow: var(--shadow), inset 0 0 0 2.5px var(--accent);
 }
-:root[data-look='studio'] .path2 .road .node:is(.done, .mastered, .tested):not(.opened):not(.faded) .node-disc .pp {
+:root:root .path2 .road .node:is(.done, .mastered, .tested):not(.opened):not(.faded) .node-disc .pp {
   --pb: var(--b);
   --pbE: var(--bE);
   --pa: var(--a);
@@ -716,7 +705,7 @@
   --pf: var(--f);
   --pfE: var(--fE);
 }
-:root[data-look='studio'][data-theme='dark'] .path2 .road .node:is(.done, .mastered, .tested):not(.opened):not(.faded) .node-disc .pp {
+:root:root[data-theme='dark'] .path2 .road .node:is(.done, .mastered, .tested):not(.opened):not(.faded) .node-disc .pp {
   --pb: var(--kb);
   --pbE: var(--kbE);
   --pa: var(--ka);
@@ -728,107 +717,107 @@
   --pf: var(--kf);
   --pfE: var(--kfE);
 }
-:root[data-look='studio'] .path2 .road .node.current .node-disc,
-:root[data-look='studio'] .path2 .road .sys .node.current .node-disc {
+:root:root .path2 .road .node.current .node-disc,
+:root:root .path2 .road .sys .node.current .node-disc {
   background: var(--lemon);
   color: var(--ink-c);
   box-shadow: 0 0 0 7px rgba(255, 212, 59, 0.28), 0 6px 18px rgba(201, 138, 0, 0.25);
 }
-:root[data-look='studio'] .path2 .road .sys .node.current .node-disc::after {
+:root:root .path2 .road .sys .node.current .node-disc::after {
   border-width: 3px;
   opacity: 0.6;
 }
-:root[data-look='studio'] .path2 .road .node.locked .node-disc,
-:root[data-look='studio'] .path2 .road .sys .node.locked .node-disc {
+:root:root .path2 .road .node.locked .node-disc,
+:root:root .path2 .road .sys .node.locked .node-disc {
   background: var(--st-surface-2);
   border: 0;
   box-shadow: none;
 }
-:root[data-look='studio'] .path2 .road .node :is(.check-medal, .master-medal, .refresh-medal) {
+:root:root .path2 .road .node :is(.check-medal, .master-medal, .refresh-medal) {
   border: 0;
   box-shadow: 0 0 0 2.5px var(--bg);
 }
-:root[data-look='studio'] .path2 .road .node .mini-stars i {
+:root:root .path2 .road .node .mini-stars i {
   border-width: 1px;
 }
-:root[data-look='studio'] .path2 .road .sys .node .node-text b {
+:root:root .path2 .road .sys .node .node-text b {
   font-family: var(--font);
   font-weight: 600;
   font-size: var(--st-caption);
 }
-:root[data-look='studio'] .path2 .road .sys .node.current .node-text b {
+:root:root .path2 .road .sys .node.current .node-text b {
   font-weight: 700;
 }
 
 /* ================================================================ practice hub, tiles, tools */
-:root[data-look='studio'] .hub-row {
+:root:root .hub-row {
   border-top: 1px solid var(--line);
 }
-:root[data-look='studio'] .hub-row b {
+:root:root .hub-row b {
   font-weight: 600;
 }
-:root[data-look='studio'] .hub-icon {
+:root:root .hub-icon {
   border: 0;
   background: var(--st-surface-2);
 }
-:root[data-look='studio'] .hub-group-h {
+:root:root .hub-group-h {
   font-weight: 600;
   letter-spacing: 0.02em;
 }
-:root[data-look='studio'] .hub-tool,
-:root[data-look='studio'] .practice-hub .hub-tool {
+:root:root .hub-tool,
+:root:root .practice-hub .hub-tool {
   border: 0;
   box-shadow: var(--shadow);
   font-weight: 600;
 }
-:root[data-look='studio'] .hub-tool:active {
+:root:root .hub-tool:active {
   transform: scale(0.98);
   box-shadow: var(--st-press);
 }
-:root[data-look='studio'] .pt-tile {
+:root:root .pt-tile {
   border: 0;
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .pt-tile:active {
+:root:root .pt-tile:active {
   transform: scale(0.98);
   box-shadow: var(--st-press);
 }
-:root[data-look='studio'] .pt-tile b {
+:root:root .pt-tile b {
   font-family: var(--font);
   font-weight: 700;
   font-size: var(--st-card-title);
 }
-:root[data-look='studio'] .pt-tile .pt-icon {
+:root:root .pt-tile .pt-icon {
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.12);
 }
-:root[data-look='studio'] .pt-tool {
+:root:root .pt-tool {
   border: 0;
   box-shadow: var(--shadow);
 }
 
 /* ================================================================ settings */
-:root[data-look='studio'] .set-cap {
+:root:root .set-cap {
   font-family: var(--font);
   font-weight: 600;
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .set-sec {
+:root:root .set-sec {
   border: 0;
   border-radius: 16px;
   background: var(--card);
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .set-sec:hover {
+:root:root .set-sec:hover {
   transform: none;
 }
-:root[data-look='studio'] .set-sec.on {
+:root:root .set-sec.on {
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
 }
-:root[data-look='studio'] .set-sec.on small {
+:root:root .set-sec.on small {
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .set-sec .ss-ic {
+:root:root .set-sec .ss-ic {
   border: 0;
   color: var(--ink-c);
   /* the section colour sits behind the symbol in both themes: a deep purple sheet reads on all of them */
@@ -838,108 +827,108 @@
   --cae: #4a0f2a;
   --cl: rgba(255, 255, 255, 0.85);
 }
-:root[data-look='studio'] .set-sec .ss-text b {
+:root:root .set-sec .ss-text b {
   font-family: var(--font);
   font-weight: 600;
 }
-:root[data-look='studio'] .panel-screen.settings .sound-opt {
+:root:root .panel-screen.settings .sound-opt {
   border: 0;
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .panel-screen.settings .sound-opt.on {
+:root:root .panel-screen.settings .sound-opt.on {
   background: var(--st-tonal);
   color: var(--st-tonal-ink);
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-:root[data-look='studio'] .panel-screen.settings .sound-opt.on small {
+:root:root .panel-screen.settings .sound-opt.on small {
   color: var(--ink-dim);
 }
-:root[data-look='studio'] .panel-screen.settings .sound-opt.on .inst-art {
+:root:root .panel-screen.settings .sound-opt.on .inst-art {
   color: var(--st-tonal-ink);
 }
-:root[data-look='studio'] .panel-screen.settings .sound-opt b {
+:root:root .panel-screen.settings .sound-opt b {
   font-family: var(--font);
   font-weight: 600;
 }
-:root[data-look='studio'] .tp-opt {
+:root:root .tp-opt {
   border: 1px solid var(--line);
   box-shadow: none;
 }
-:root[data-look='studio'] .tp-opt.on {
+:root:root .tp-opt.on {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 /* ================================================================ exercises: answer tiles, keyboard, feedback */
-:root[data-look='studio'] .answer {
+:root:root .answer {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card);
   box-shadow: var(--shadow-s);
 }
-:root[data-look='studio'] .answer:active:not(:disabled) {
+:root:root .answer:active:not(:disabled) {
   transform: scale(0.98);
   box-shadow: var(--st-press);
 }
-:root[data-look='studio'] .answer b {
+:root:root .answer b {
   font-weight: 600;
 }
-:root[data-look='studio'] .answer.is-right {
+:root:root .answer.is-right {
   border: 1.5px solid var(--ok);
   box-shadow: none;
 }
-:root[data-look='studio'] .answer.is-wrong {
+:root:root .answer.is-wrong {
   border: 1.5px solid var(--bad);
   box-shadow: none;
 }
-:root[data-look='studio'] .keyboard {
+:root:root .keyboard {
   box-shadow: var(--shadow-s);
 }
-:root[data-look='studio'] :is(.orb, .orb.sounding) {
+:root:root :is(.orb, .orb.sounding) {
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .orb {
+:root:root .orb {
   border-width: 2px;
 }
-:root[data-look='studio'] .rounds .pill {
+:root:root .rounds .pill {
   border-width: 1px;
 }
-:root[data-look='studio'] .feedback:is(.correct, .correct-retry, .retry, .reveal) {
+:root:root .feedback:is(.correct, .correct-retry, .retry, .reveal) {
   border: 0;
   box-shadow: none;
 }
-:root[data-look='studio'] .feedback:is(.correct, .correct-retry, .retry, .reveal) b {
+:root:root .feedback:is(.correct, .correct-retry, .retry, .reveal) b {
   font-weight: 700;
 }
-:root[data-look='studio'] .input-check {
+:root:root .input-check {
   border-width: 1px;
 }
-:root[data-look='studio'] .kit-warn {
+:root:root .kit-warn {
   border: 1px solid var(--line-strong);
 }
-:root[data-look='studio'] .kit-warn::before {
+:root:root .kit-warn::before {
   border-width: 1.5px;
 }
-:root[data-look='studio'] .hw-road {
+:root:root .hw-road {
   border: 0;
   box-shadow: var(--shadow);
 }
-:root[data-look='studio'] .recap .recap-list > li {
+:root:root .recap .recap-list > li {
   border-width: 1px;
 }
-:root[data-look='studio'] .recap .coach-insight {
+:root:root .recap .coach-insight {
   border: 0;
   box-shadow: var(--shadow);
 }
 
 /* ================================================================ game setup */
-:root[data-look='studio'] .tier-chip.open:not(.on) {
+:root:root .tier-chip.open:not(.on) {
   color: var(--ink);
 }
-:root[data-look='studio'] .tier-chip:disabled {
+:root:root .tier-chip:disabled {
   opacity: 0.5;
 }
-:root[data-look='studio'] .setup-more-chip {
+:root:root .setup-more-chip {
   border: 0;
   border-radius: 999px;
   background: var(--st-tonal);
@@ -947,30 +936,30 @@
   box-shadow: none;
   font-weight: 600;
 }
-:root[data-look='studio'] .setup-more-chip:active {
+:root:root .setup-more-chip:active {
   transform: scale(0.98);
   box-shadow: none;
 }
 
 /* ================================================================ encore, community, recordings, metronome */
-:root[data-look='studio'] .enc-block {
+:root:root .enc-block {
   border: 0;
 }
-:root[data-look='studio'] .enc-recdot {
+:root:root .enc-recdot {
   border-width: 1.5px;
 }
-:root[data-look='studio'] .mt-play {
+:root:root .mt-play {
   box-shadow: 0 3px 0 var(--st-cta-edge);
   border: 1.5px solid var(--st-cta-edge);
 }
-:root[data-look='studio'] .mt-play:active {
+:root:root .mt-play:active {
   transform: translateY(3px);
   box-shadow: none;
 }
-:root[data-look='studio'] .string-chip {
+:root:root .string-chip {
   border-width: 1px;
 }
-:root[data-look='studio'] .beta-chip {
+:root:root .beta-chip {
   border: 0;
   font-family: var(--font);
   font-weight: 600;
@@ -979,65 +968,65 @@
 }
 
 /* ================================================================ smaller pieces found by the sticker sweep */
-:root[data-look='studio'] :is(.ov-chip, .g3-chip, .rec-sesstog, .rec-search, .lk-card) {
+:root:root :is(.ov-chip, .g3-chip, .rec-sesstog, .rec-search, .lk-card) {
   border-width: 1px;
   box-shadow: none;
 }
-:root[data-look='studio'] .lk-card {
+:root:root .lk-card {
   border-color: var(--line);
   box-shadow: var(--shadow-s);
 }
-:root[data-look='studio'] .rush-opt {
+:root:root .rush-opt {
   border: 1px solid var(--line);
   box-shadow: var(--shadow-s);
 }
-:root[data-look='studio'] .rush-opt.on {
+:root:root .rush-opt.on {
   border: 1.5px solid var(--accent);
 }
-:root[data-look='studio'] .mt-dot {
+:root:root .mt-dot {
   border-width: 1.5px;
 }
-:root[data-look='studio'][data-theme] .mt-dot.a0 {
+:root:root[data-theme] .mt-dot.a0 {
   border-style: solid;
   opacity: 0.45;
 }
 /* dark: the chosen segment lifts a step instead of sinking into the track */
-:root[data-look='studio'][data-look][data-theme='dark'] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on, .seg button[aria-checked='true'], .seg button[aria-pressed='true']) {
+:root:root:root[data-theme='dark'] :is(.seg button.on, .mode-switch button.on, .ps-seg button.on, .seg button[aria-checked='true'], .seg button[aria-pressed='true']) {
   background: #3d2f5c;
   color: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 /* crowded heads (a title beside four icon buttons) keep a smaller title so it is not cut */
-:root[data-look='studio'] :is(.rec-head, .enc-head) h1 {
+:root:root :is(.rec-head, .enc-head) h1 {
   font-size: 1.35rem;
 }
 /* the gate page's Play: the main action, so it keeps the ink edge and the one hard shadow (straight down) */
-:root[data-look='studio'] .ex-play {
+:root:root .ex-play {
   --outline: var(--st-cta-edge);
   filter: drop-shadow(0 3px 0 var(--st-cta-edge));
 }
-:root[data-look='studio'] .ex-play::before {
+:root:root .ex-play::before {
   border: 1.5px solid var(--st-cta-edge);
 }
-:root[data-look='studio'] .ex-play:active {
+:root:root .ex-play:active {
   transform: translateY(3px);
   filter: none;
 }
-:root[data-look='studio'][data-theme='dark'] .ex-play::before {
+:root:root[data-theme='dark'] .ex-play::before {
   border-color: var(--st-cta-edge);
 }
 /* buttons on the coloured unit banner read in ink (the banner keeps its light hue in both themes) */
-:root[data-look='studio'] .unit-banner .btn,
-:root[data-look='studio'] .unit-banner .btn.ghost {
+:root:root .unit-banner .btn,
+:root:root .unit-banner .btn.ghost {
   background: rgba(255, 255, 255, 0.6);
   color: var(--ink-c);
 }
 /* the active tab's icon on the lilac pill: the light sheet one step deeper so the layer still reads */
-:root[data-look='studio']:not([data-theme='dark']):not([data-theme='contrast']) .tabbar .tab.on .pp {
+:root:root:not([data-theme='dark']):not([data-theme='contrast']) .tabbar .tab.on .pp {
   --pl: #d6c4fb;
   --plE: #9a7fe0;
 }
-:root[data-look='studio'][data-theme='dark'] :is(.tabbar .tab.on, .side-nav .sn-item.current, .side-nav .sn-sec.on > .sn-row > .sn-item) .pp {
+:root:root[data-theme='dark'] :is(.tabbar .tab.on, .side-nav .sn-item.current, .side-nav .sn-sec.on > .sn-row > .sn-item) .pp {
   --pb: var(--kb);
   --pbE: var(--kbE);
   --pa: var(--ka);
@@ -1050,11 +1039,11 @@
   --pfE: var(--kfE);
 }
 /* the big tap pad of the timed games: the same main-action edge, not the classic 3 px */
-:root[data-look='studio'] :is(.tap-pad.big, .tap-pad.big.live) {
+:root:root :is(.tap-pad.big, .tap-pad.big.live) {
   border-width: 1.5px;
   border-color: var(--st-cta-edge);
 }
 /* long statements set as a heading (the course start) stay a step lighter than titles */
-:root[data-look='studio'] :is(.cs-hero h1, .cs-hero h2) {
+:root:root :is(.cs-hero h1, .cs-hero h2) {
   font-weight: 600;
 }
