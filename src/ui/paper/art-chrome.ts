@@ -91,6 +91,8 @@ const CORE = {
   pads: art('purple', 'rose', an('press', {}, R(7, 6, 15, 15, 4.5, 'body')), R(26, 6, 15, 15, 4.5, 'accent'), R(7, 24, 15, 15, 4.5, 'accent'), an('press', { d: 1 }, R(26, 24, 15, 15, 4.5, 'body'))),
   /** A person (profile) and a list (the menu). */
   person: art('purple', 'rose', an('hop', {}, Ci(24, 14, 8, 'body')), P('M8 38 Q8 24 24 24 Q40 24 40 38 Z', 'body')),
+  /** Globe: the quick language switch in the top bar — a paper ball with its equator and one meridian cut out. */
+  globe: art('purple', 'rose', an('turn', { o: [24, 22] }, Ci(24, 22, 15.5, 'body')), cut('M9 22 H39 M24 6.5 Q14.5 22 24 37.5 Q33.5 22 24 6.5', 3.2)),
   menu: art('purple', 'rose', an('slide', {}, SL(10, 12, 38, 12, 6)), SL(10, 22, 38, 22, 6), an('slide', { d: 1 }, SL(10, 32, 38, 32, 6))),
 } satisfies Record<string, Art>;
 

@@ -41,3 +41,13 @@
   font-size: 0.85rem;
 }
 .ob-brand-row .ob-word { white-space: nowrap; }
+
+/* Quick language switch (2026-11-18): globe + the language it switches to, same tonal family as the install pill. */
+.lang-btn.icon-btn { width: auto !important; min-width: 42px; padding-inline: 10px !important; white-space: nowrap; gap: 5px; }
+.lang-btn { display: inline-flex; align-items: center; gap: 4px; height: 36px; min-width: 36px; padding: 0 9px; border: 0; border-radius: 999px; background: var(--bg-2, #f3ecff); color: var(--purple, #6d28d9); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.lang-btn .lang-to { font: 700 0.8rem/1 var(--font, Rubik, system-ui, sans-serif); letter-spacing: 0.02em; }
+.lang-btn:active { transform: scale(0.97); }
+.lang-btn:focus-visible { outline: 2px solid var(--purple, #6d28d9); outline-offset: 2px; }
+:root[data-theme='dark'] .lang-btn { background: #2f2250; color: #c4a8ff; }
+@media (max-width: 350px) { .lang-btn .lang-to { display: none; } .lang-btn.icon-btn { padding-inline: 0 !important; width: 42px !important; justify-content: center; } }
+.ob-brand-actions { display: flex; align-items: center; gap: 8px; }

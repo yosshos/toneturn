@@ -225,6 +225,7 @@ import { measuredMsOn } from '../engine/practiceTime';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 import { Icon } from './icons';
+import { registerLangSetter } from './langSwitch';
 import { isStudioLook, rememberSplashPrefs } from './brand/splashDecision';
 
 /** Screens that play the band (0.69: its sets load here, and only here on Lite / Standard). */
@@ -666,6 +667,10 @@ export function App() {
     },
     [user],
   );
+  useEffect(() => {
+    registerLangSetter((uiLang) => updateSettings({ uiLang }));
+    return () => registerLangSetter(null);
+  }, [updateSettings]);
   /** SPEC-COURSE-START: one step of a course's start, applied to the latest state (several can land in one tap). */
   const updateCourseStart = useCallback(
     (fn: (m: CourseStartMap | undefined) => CourseStartMap | undefined) => {

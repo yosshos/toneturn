@@ -17,6 +17,7 @@ import type { Progress, Settings } from '../storage/progress';
 import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
 import { Icon } from './icons';
+import { LangButton } from './LangButton';
 import { useStudio } from './look';
 
 
@@ -252,6 +253,7 @@ export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = fal
       <div className="stats">
         <StreakChip t={t} st={streak} onOpen={onStreak} home={home} />
         <HeaderPwa t={t} lang={lang} />
+        <LangButton lang={lang} />
         <button className={`icon-btn menu-btn ${whatsNew.unseen ? 'has-dot' : ''}`} onClick={onMenu} aria-label={whatsNew.unseen ? `${t.menu} · ${lang === 'he' ? 'יש חדש' : 'something new'}` : t.menu}>
           <Icon k="menu" size={22} />
         </button>
