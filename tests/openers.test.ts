@@ -82,9 +82,27 @@ describe('course openers: data', () => {
     }
   });
 
-  it('the Ear stations follow the real unit-theme order', () => {
-    const ids = COURSE_OPENERS.ear.road.stations.map((s) => s.ref.theme);
-    expect(ids).toEqual(THEMES.slice(0, ids.length).map((t) => t.id));
+  it('the Ear stations follow what a new player meets, unit by unit (lead lessons, tester 2026-11-18)', async () => {
+    const { buildPath } = await import('../src/engine/path');
+    const { courseInput } = await import('../src/engine/courses');
+    const { unitThemeOf } = await import('../src/content/openers');
+    await import('../src/engine/topics');
+    const base = { track: 'explorer', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [], packs: [], plays: [], minutes: 10, ratings: {}, events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-18T10:00:00Z') } as unknown as Parameters<typeof courseInput>[0];
+    let facts: Record<string, unknown> = {};
+    const met: string[] = [];
+    for (let u = 0; u < 8; u++) {
+      const v = buildPath({ ...courseInput(base, 'ear'), ladderFamilies: ladderFamiliesFor('ear', DEFAULT_DRILL_SETTINGS), facts } as never);
+      const cur = v.units.find((x) => x.status === 'current');
+      if (!cur) break;
+      const t = unitThemeOf('ear', cur.theme, cur.steps.map((x) => x.step), THEMES);
+      if (t && !met.includes(t)) met.push(t);
+      const steps = { ...((facts.steps as object) ?? {}) } as Record<string, unknown>;
+      for (const x of cur.steps) steps[x.step.id] = { stars: 3, at: '2026-11-18T10:00:00Z' };
+      facts = { ...facts, steps, units: [...((facts.units as unknown[]) ?? []), ...(v.freeze ? [{ ...v.freeze, at: '2026-11-18T10:00:00Z' }] : [])] };
+    }
+    const key = (s: (typeof COURSE_OPENERS)['ear']['road']['stations'][number]) => (s.ref.topic === 'basics-highlow' ? 'basics' : s.ref.theme);
+    const st = COURSE_OPENERS.ear.road.stations.map(key);
+    expect(met.slice(0, 4)).toEqual(st.slice(0, 4));
   });
 
   it('hook: four cards with sound; the question demo is complete; one rung line per ladder rung', () => {
