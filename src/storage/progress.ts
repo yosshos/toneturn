@@ -181,6 +181,8 @@ export interface Settings {
   uiLang: 'he' | 'en';
   inputLang: 'he' | 'en';
   outputLang: 'he' | 'en';
+  /** Keep the screen on while the app is open (Screen Wake Lock); undefined = on. */
+  keepAwake?: boolean;
   /** auto = Hebrew → Do-Re-Mi, English → letters (per channel language). */
   naming: NamingPref;
   /** Preferred narration voice gender, used when no specific voice is chosen or it is missing. */

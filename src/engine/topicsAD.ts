@@ -97,7 +97,7 @@ TOPIC_GEN['find-tonic'] = {
       names[letters[i]] = nm(`Note ${letters[i].toUpperCase()}`, `צליל ${['א', 'ב', 'ג'][i]}`, letters[i].toUpperCase());
       choiceStim[letters[i]] = [notes([degMidi(tonic, d, scale)], 1.1)];
     });
-    return choiceQ({ id, topic: 'find-tonic', level, seed, skill: 'degrees', difficulty: [1000, 1150, 1300][level - 1], ask: { en: 'No chords this time. Which note feels like home?', he: 'הפעם בלי אקורדים. איזה צליל מרגיש כמו הבית?' }, names, answer: letters[cand.indexOf(1)], choices: letters, stimulus: [notes(tune, 0.42)], choiceStim });
+    return choiceQ({ id, topic: 'find-tonic', level, seed, skill: 'degrees', difficulty: [1000, 1150, 1300][level - 1], ask: { en: 'Which note would the tune end on?', he: 'על איזה צליל המנגינה הייתה נגמרת?' }, names, answer: letters[cand.indexOf(1)], choices: letters, stimulus: [notes(tune, 0.42)], choiceStim });
   },
 };
 

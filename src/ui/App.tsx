@@ -199,6 +199,7 @@ import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
 import { checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
 import { FriendsScreen } from './Friends';
+import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
 import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
@@ -666,8 +667,10 @@ export function App() {
     },
     [user],
   );
+  useWakeLock(s.keepAwake !== false);
   useEffect(() => {
-    registerLangSetter((uiLang) => updateSettings({ uiLang }));
+    // The globe switches the whole app: screens, spoken answers and the voice that answers (owner feedback 2026-11-18).
+    registerLangSetter((lang) => updateSettings({ uiLang: lang, inputLang: lang, outputLang: lang }));
     return () => registerLangSetter(null);
   }, [updateSettings]);
   /** SPEC-COURSE-START: one step of a course's start, applied to the latest state (several can land in one tap). */

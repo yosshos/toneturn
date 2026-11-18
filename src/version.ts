@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.104.2',
+    date: '2026-11-18',
+    en: ['The language button now switches everything at once: the screens, the language you answer in and the voice that answers you.', 'Keep screen on: the screen no longer goes dark while the app is open (Settings → Display to turn it off).', 'The “home note” question now simply asks which note the tune would end on.'],
+    he: ['כפתור השפה מחליף עכשיו הכול יחד: המסכים, השפה שבה עונים בקול והקול שעונה לכם.', 'מסך דלוק: המסך כבר לא נכבה כל עוד האפליקציה פתוחה (אפשר לכבות בהגדרות ← תצוגה).', 'השאלה על "צליל הבית" שואלת עכשיו פשוט על איזה צליל המנגינה הייתה נגמרת.'],
+  },
+  {
     version: '0.104.1',
     date: '2026-11-18',
     en: ['Shares now invite: every share (friend code, daily puzzle, daily challenge, new best tempo, rooms, challenges) carries a link to the app, and the link shows a preview card in WhatsApp and other chats. A friend’s link sends the friend request by itself — after signing in, if needed.'],

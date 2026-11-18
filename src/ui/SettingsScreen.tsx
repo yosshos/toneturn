@@ -398,7 +398,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <Group id="language" icon={<SetIcon k="language" />} title={G.language.title[lang]} sub={G.language.sub[lang]}>
           <section className="set-card">
             <h2>{t.secLanguage}</h2>
-            <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang })} />
+            <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang, ...(s.inputLang === s.uiLang ? { inputLang: uiLang } : {}), ...(s.outputLang === s.uiLang ? { outputLang: uiLang } : {}) })} />
             <Seg label={t.settingsSpeakIn} hint={t.answerLangHint} value={s.inputLang} options={langs} onChange={(inputLang) => onChange({ inputLang })} />
             <Seg label={t.settingsListen} value={s.outputLang} options={langs} onChange={(outputLang) => onChange({ outputLang })} />
           </section>
@@ -680,6 +680,18 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               ]}
               onChange={(v) => onChange({ textScale: Number(v) })}
             />
+            {'wakeLock' in navigator && (
+              <Seg
+                label={lang === 'he' ? 'מסך דלוק' : 'Keep screen on'}
+                hint={lang === 'he' ? 'המסך לא נכבה כל עוד האפליקציה פתוחה.' : 'The screen stays on while the app is open.'}
+                value={s.keepAwake === false ? 'off' : 'on'}
+                options={[
+                  ['on', lang === 'he' ? 'דלוק' : 'On'],
+                  ['off', lang === 'he' ? 'רגיל' : 'Normal'],
+                ]}
+                onChange={(v) => onChange({ keepAwake: v === 'on' })}
+              />
+            )}
           </section>
           <section className="set-card">
             <fieldset className="seg-field views-field">
