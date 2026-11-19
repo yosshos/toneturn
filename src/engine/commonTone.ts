@@ -309,7 +309,7 @@ export const DEVICE_FAMILY: { id: string; fam: Family; name: T2 }[] = [
   { id: 'tritone', fam: 'functional', name: { en: 'Tritone sub', he: 'תחליף טריטון' } },
   { id: 'iiV', fam: 'functional', name: { en: 'Added ii–V', he: 'ii–V נוסף' } },
   { id: 'backdoor', fam: 'functional', name: { en: 'Backdoor', he: 'דלת אחורית' } },
-  { id: 'pdim', fam: 'functional', name: { en: 'Passing diminished', he: 'דימיניש עובר' } },
+  { id: 'pdim', fam: 'functional', name: { en: 'Passing diminished', he: 'מוקטן עובר' } },
   { id: 'mediant', fam: 'colour', name: { en: 'Chromatic mediant', he: 'מדיאנטה כרומטית' } },
   { id: 'planing', fam: 'colour', name: { en: 'Planing', he: 'פליינינג' } },
   { id: 'mi', fam: 'colour', name: { en: 'Modal interchange', he: 'השאלה מודאלית' } },

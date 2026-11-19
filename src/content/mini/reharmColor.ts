@@ -44,7 +44,7 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'One note, many chords', he: 'צליל אחד, הרבה אקורדים' },
     takeaway: {
       en: 'Hold the melody note and change what it means: the root, the 3rd, the 5th, the 7th, or a tension of a new chord.',
-      he: 'מחזיקים את צליל המנגינה ומשנים את המשמעות שלו: יסוד, טרצה, קווינטה, ספטימה, או טנשן של אקורד חדש.',
+      he: 'מחזיקים את צליל המנגינה ומשנים את המשמעות שלו: שורש, טרצה, קווינטה, ספטימה, או טנשן של אקורד חדש.',
     },
     steps: [
       {
@@ -53,7 +53,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [77], key: 'C', text: { en: 'F', he: 'F' } },
       },
       {
-        say: { en: 'F over six triads: F is the root of F and Fm, the 3rd of Dm and D flat, the 5th of B flat and B flat minor.', he: 'פה מעל שישה משולשים: פה הוא היסוד של F ו־Fm, הטרצה של Dm ו־D♭, הקווינטה של B♭ ו־B♭m.' },
+        say: { en: 'F over six triads: F is the root of F and Fm, the 3rd of Dm and D flat, the 5th of B flat and B flat minor.', he: 'פה מעל שישה משולשים: פה הוא השורש של F ו־Fm, הטרצה של Dm ו־D♭, הקווינטה של B♭ ו־B♭m.' },
         play: row(TRI_F, 0.8),
         show: { text: { en: 'F · Fm · Dm · D♭ · B♭ · B♭m', he: 'F · Fm · Dm · D♭ · B♭ · B♭m' } },
       },
@@ -82,21 +82,21 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G B D F → D G B F', he: 'G B D F → D G B F' } },
       },
       {
-        say: { en: 'How to hear it: find the root in the bass, then count letters up to the held note. Three letters is the 3rd, seven the 7th.', he: 'איך שומעים: מוצאים את היסוד בבס וסופרים אותיות עד הצליל הנשאר. שלוש אותיות זו הטרצה, שבע הספטימה.' },
+        say: { en: 'How to hear it: find the root in the bass, then count letters up to the held note. Three letters is the 3rd, seven the 7th.', he: 'איך שומעים: מוצאים את השורש בבס וסופרים אותיות עד הצליל הנשאר. שלוש אותיות זו הטרצה, שבע הספטימה.' },
       },
       {
         say: { en: 'A common slip is to let the top note move. Keep it exactly where it is and let the other voices do the work.', he: 'טעות נפוצה היא לתת לצליל העליון לזוז. השאירו אותו בדיוק במקומו ותנו לשאר הקולות לעבוד.' },
         play: [chord([61, 68, 72, 77], 0.9), chord([62, 67, 71, 77], 0.9), chord([60, 65, 69, 77], 0.9)],
       },
       {
-        say: { en: 'The common-tone diminished is the same idea: C6 to C diminished 7 and back, with C and A staying put.', he: 'הדימיניש בצליל משותף הוא אותו רעיון: C6 אל C°7 וחזרה, ו־C ו־A נשארים במקומם.' },
+        say: { en: 'The common-tone diminished is the same idea: C6 to C diminished 7 and back, with C and A staying put.', he: 'המוקטן בצליל משותף הוא אותו רעיון: C6 אל C°7 וחזרה, ו־C ו־A נשארים במקומם.' },
         play: [chord([60, 64, 67, 69], 0.9), chord([60, 63, 66, 69], 0.9), chord([60, 64, 67, 69], 0.9)],
       },
       {
         say: { en: 'At the top level you choose: harmonize the note eight ways, no chord twice, each one voice-led from the last.', he: 'ברמה העליונה אתם בוחרים: שמונה הרמוניות לצליל אחד, אף אקורד לא פעמיים, כל אחד בהובלת קולות מהקודם.' },
       },
       {
-        say: { en: 'To keep: the note stays, the meaning moves. Root, 3rd, 5th, 7th, then the tensions.', he: 'לזכור: הצליל נשאר, המשמעות זזה. יסוד, טרצה, קווינטה, ספטימה, ואז הטנשנים.' },
+        say: { en: 'To keep: the note stays, the meaning moves. Root, 3rd, 5th, 7th, then the tensions.', he: 'לזכור: הצליל נשאר, המשמעות זזה. שורש, טרצה, קווינטה, ספטימה, ואז הטנשנים.' },
       },
     ],
   },
@@ -147,7 +147,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 55, 60, 63], 0.8), chord([48, 55, 59, 63], 0.8), chord([48, 55, 58, 63], 0.8), chord([48, 55, 57, 63], 0.8)],
       },
       {
-        say: { en: 'How to hear it: keep the top note in your ear and follow only the bass. Name the new root, then the held note’s degree in it.', he: 'איך שומעים: השאירו את הצליל העליון באוזן ועקבו רק אחרי הבס. תנו שם ליסוד החדש, ואז לדרגה של הצליל הנשאר בו.' },
+        say: { en: 'How to hear it: keep the top note in your ear and follow only the bass. Name the new root, then the held note’s degree in it.', he: 'איך שומעים: השאירו את הצליל העליון באוזן ועקבו רק אחרי הבס. תנו שם לשורש החדש, ואז לדרגה של הצליל הנשאר בו.' },
       },
       {
         say: { en: 'A common slip on the bass is to rush the half steps. Give each new chord its full length so the change is heard.', he: 'טעות נפוצה בבס היא למהר בחצאי הטונים. תנו לכל אקורד חדש את כל האורך שלו כדי שהשינוי יישמע.' },
@@ -189,7 +189,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord(C, 0.9), chord(ABM, 0.9), chord(C, 0.9)],
       },
       {
-        say: { en: 'Coltrane’s cycle is built from them: C, A flat and E are major-third mediants, and their roots spell an augmented triad.', he: 'המעגל של קולטריין בנוי מהן: C, ‏A♭ ו־E הן מדיאנטות בטרצה גדולה, והיסודות שלהן יוצרים משולש מוגדל.' },
+        say: { en: 'Coltrane’s cycle is built from them: C, A flat and E are major-third mediants, and their roots spell an augmented triad.', he: 'המעגל של קולטריין בנוי מהן: C, ‏A♭ ו־E הן מדיאנטות בטרצה גדולה, והשורשים שלהן יוצרים משולש מוגדל.' },
         play: [chord(C, 0.8), chord(AB, 0.8), chord(E, 0.8), chord(C, 0.8)],
         show: { text: { en: 'C – A♭ – E = C E G♯', he: 'C – A♭ – E = C E G♯' } },
       },
@@ -203,7 +203,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 64, 67, 71], 1.1), chord([44, 63, 67, 72], 1.1), chord([48, 64, 67, 71], 1.1)],
       },
       {
-        say: { en: 'Three moves explain them: P swaps major and minor on one root, R goes to the relative, and L moves one voice by a half step.', he: 'שלוש תנועות מסבירות אותן: P מחליף מז׳ור ומינור על אותו יסוד, ‏R הולך אל היחסי, ו־L מזיז קול אחד בחצי טון.' },
+        say: { en: 'Three moves explain them: P swaps major and minor on one root, R goes to the relative, and L moves one voice by a half step.', he: 'שלוש תנועות מסבירות אותן: P מחליף מז׳ור ומינור על אותו שורש, ‏R הולך אל היחסי, ו־L מזיז קול אחד בחצי טון.' },
         play: [chord(C, 0.8), chord([60, 63, 67], 0.8), chord([60, 64, 69], 0.8), chord([59, 64, 67], 0.8)],
       },
       {
@@ -211,7 +211,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord(C, 0.6), chord([60, 63, 67], 0.6), chord(AB, 0.6), chord(ABM, 0.6), chord(E, 0.6), chord([59, 64, 67], 0.6)],
       },
       {
-        say: { en: 'P and R in turn give the octatonic cycle. Its major roots, C, A, F sharp and E flat, are the minor-third cycle of Barry Harris’s family of dominants.', he: 'P ו־R לסירוגין נותנים את המעגל האוקטטוני. היסודות המז׳וריים שלו, C, ‏A, ‏F♯ ו־E♭, הם מעגל הטרצות הקטנות של משפחת הדומיננטות של בארי האריס.' },
+        say: { en: 'P and R in turn give the octatonic cycle. Its major roots, C, A, F sharp and E flat, are the minor-third cycle of Barry Harris’s family of dominants.', he: 'P ו־R לסירוגין נותנים את המעגל האוקטטוני. השורשים המז׳וריים שלו, C, ‏A, ‏F♯ ו־E♭, הם מעגל הטרצות הקטנות של משפחת הדומיננטות של בארי האריס.' },
         show: { text: { en: 'C – Am – A – F♯m – F♯ – E♭m – E♭ – Cm', he: 'C – Am – A – F♯m – F♯ – E♭m – E♭ – Cm' } },
       },
       {
@@ -366,7 +366,7 @@ export const LESSONS: MiniLesson[] = [
     },
     steps: [
       {
-        say: { en: 'Take one shape, a major 7 in drop 2 with the root on top, and slide it under each note of a melody.', he: 'לוקחים צורה אחת, maj7 בדרופ 2 עם היסוד למעלה, ומחליקים אותה מתחת לכל צליל במנגינה.' },
+        say: { en: 'Take one shape, a major 7 in drop 2 with the root on top, and slide it under each note of a melody.', he: 'לוקחים צורה אחת, maj7 בדרופ 2 עם השורש למעלה, ומחליקים אותה מתחת לכל צליל במנגינה.' },
         play: [chord([63, 68, 71, 76], 0.7), chord([61, 66, 69, 74], 0.7), chord([59, 64, 67, 72], 0.7), chord([56, 61, 64, 69], 0.9)],
         show: { text: { en: 'E D C A, one shape', he: 'E D C A, צורה אחת' } },
       },
@@ -527,7 +527,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([43, 60, 62, 65], 0.9), chord([43, 59, 62, 65], 0.9)],
       },
       {
-        say: { en: 'The sequences here are the app’s own, in the spirit of Herbie Hancock’s writing: sus or maj7 chords on roots that move freely.', he: 'הרצפים כאן של האפליקציה, ברוח הכתיבה של הרבי הנקוק: אקורדי סאס או maj7 על יסודות שזזים בחופשיות.' },
+        say: { en: 'The sequences here are the app’s own, in the spirit of Herbie Hancock’s writing: sus or maj7 chords on roots that move freely.', he: 'הרצפים כאן של האפליקציה, ברוח הכתיבה של הרבי הנקוק: אקורדי סאס או maj7 על שורשים שזזים בחופשיות.' },
         play: [chord([48, 64, 67, 71], 0.8), chord([45, 61, 64, 68], 0.8), chord([44, 60, 63, 67], 0.8)],
       },
       {
@@ -597,7 +597,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common slip is to hold the pad too low. Keep it above the walking line so the bass stays clear.', he: 'טעות נפוצה היא להחזיק את המשטח נמוך מדי. השאירו אותו מעל הקו המהלך כדי שהבס יישאר ברור.' },
       },
       {
-        say: { en: 'The walking hand is measured like a bass player: steady quarters, chord tones on the strong beats, a half step into each new root.', he: 'היד המהלכת נמדדת כמו נגן בס: רבעים יציבים, צלילי אקורד על הפעמות החזקות, חצי טון אל כל יסוד חדש.' },
+        say: { en: 'The walking hand is measured like a bass player: steady quarters, chord tones on the strong beats, a half step into each new root.', he: 'היד המהלכת נמדדת כמו נגן בס: רבעים יציבים, צלילי אקורד על הפעמות החזקות, חצי טון אל כל שורש חדש.' },
         play: [notes([41, 45, 48, 47, 46], 0.4)],
       },
       {
@@ -629,7 +629,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 64, 67, 71], 0.9), chord([44, 63, 67, 72], 0.9), chord([48, 64, 67, 71], 1)],
       },
       {
-        say: { en: 'Functional: secondary dominants, tritone subs, an added ii–V, the backdoor, passing diminished chords.', he: 'פונקציונלי: דומיננטות משניות, תחליפי טריטון, ii–V נוסף, הדלת האחורית, דימיניש עובר.' },
+        say: { en: 'Functional: secondary dominants, tritone subs, an added ii–V, the backdoor, passing diminished chords.', he: 'פונקציונלי: דומיננטות משניות, תחליפי טריטון, ii–V נוסף, הדלת האחורית, מוקטן עובר.' },
         play: [chord([48, 64, 67, 71], 0.7), chord([49, 64, 67, 70], 0.7), chord([50, 65, 69, 72], 0.9)],
       },
       {

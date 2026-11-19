@@ -27,9 +27,9 @@ type Bi = { en: string; he: string };
 export const VOICING_NAME: Record<ChartVoicing, Bi> = {
   shell: { en: 'Shells (1-3-7 / 1-7-3)', he: 'שלדים (1-3-7 / 1-7-3)' },
   guide: { en: 'Guide tones (3 & 7)', he: 'צלילים מנחים (3 ו־7)' },
-  rootless: { en: 'Rootless A/B (smoothest)', he: 'בלי יסוד A/B (הכי חלק)' },
-  'rootless-a': { en: 'Rootless A (3-5-7-9)', he: 'בלי יסוד A (3-5-7-9)' },
-  'rootless-b': { en: 'Rootless B (7-9-3-5)', he: 'בלי יסוד B (7-9-3-5)' },
+  rootless: { en: 'Rootless A/B (smoothest)', he: 'בלי שורש A/B (הכי חלק)' },
+  'rootless-a': { en: 'Rootless A (3-5-7-9)', he: 'בלי שורש A (3-5-7-9)' },
+  'rootless-b': { en: 'Rootless B (7-9-3-5)', he: 'בלי שורש B (7-9-3-5)' },
   close4: { en: 'Four-note close', he: 'ארבעה צלילים צמודים' },
   drop2: { en: 'Drop 2', he: 'דרופ 2' },
   drop3: { en: 'Drop 3', he: 'דרופ 3' },

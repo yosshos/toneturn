@@ -251,7 +251,7 @@ export const PROMISE: Record<CourseId, T2> = {
   keys: { en: 'Comp a jazz blues by ear and hand, then play standards with the band.', he: 'ללוות בלוז ג׳אז מהאוזן ומהיד, ואז לנגן סטנדרטים עם הלהקה.' },
   guitar: { en: 'Play in time with a band: chords and riffs first, then jazz comping.', he: 'לנגן בזמן עם להקה: אקורדים וריפים קודם, ואחר כך ליווי ג׳אז.' },
   bass: { en: 'Lock with the drummer, then walk a blues and the standards.', he: 'להינעל עם המתופף, ואז ללכת בבלוז ובסטנדרטים.' },
-  drums: { en: 'Hold a groove with the band, then fills, feels and odd meters.', he: 'להחזיק גרוב עם הלהקה, ואז מילויים, תחושות ומשקלים אי־זוגיים.' },
+  drums: { en: 'Hold a groove with the band, then fills, feels and odd meters.', he: 'להחזיק גרוב עם הלהקה, ואז מעברים, תחושות ומשקלים אי־זוגיים.' },
   voice: { en: 'Sing in tune with the band, from simple songs to standards and scat.', he: 'לשיר מדויק עם הלהקה, משירים פשוטים ועד סטנדרטים וסקאט.' },
   jazz: { en: 'Swing, hear the changes and improvise over a blues and the standards.', he: 'לסווינג, לשמוע את המהלכים ולאלתר על בלוז ועל סטנדרטים.' },
 };
@@ -259,13 +259,13 @@ export const PROMISE: Record<CourseId, T2> = {
 /** The destination ladder (4 rungs): simple first material reads as the first step, not the point. */
 export const LADDER: Record<CourseId, T2[]> = {
   ear: [
-    { en: 'Foundations', he: 'יסודות' },
+    { en: 'Foundations', he: 'שורשים' },
     { en: 'Chords & keys', he: 'אקורדים וסולמות' },
     { en: 'Harmony by ear', he: 'הרמוניה מהאוזן' },
     { en: 'Jazz harmony', he: 'הרמוניה של ג׳אז' },
   ],
   keys: [
-    { en: 'Foundations', he: 'יסודות' },
+    { en: 'Foundations', he: 'שורשים' },
     { en: 'Blues', he: 'בלוז' },
     { en: 'Standards', he: 'סטנדרטים' },
     { en: 'Advanced jazz piano', he: 'פסנתר ג׳אז מתקדם' },
@@ -284,7 +284,7 @@ export const LADDER: Record<CourseId, T2[]> = {
   ],
   drums: [
     { en: 'Grooves', he: 'גרובים' },
-    { en: 'Fills & feels', he: 'מילויים ותחושות' },
+    { en: 'Fills & feels', he: 'מעברים ותחושות' },
     { en: 'Odd meters', he: 'משקלים אי־זוגיים' },
     { en: 'Advanced', he: 'מתקדמים' },
   ],
@@ -394,7 +394,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       kind: 'lesson',
       items: [{ topic: 'triads', level: 1, n: 4 }, { topic: 'progressions', level: 1, n: 2 }],
     }),
-    well: T('ear', 'well', 'ii–V–I by ear', 'ii–V–I מהאוזן', 'Name seventh-chord qualities, then what the changes do.', 'לזהות סוגי אקורדי ספטים, ואז מה המהלכים עושים.', {
+    well: T('ear', 'well', 'ii–V–I by ear', 'ii–V–I מהאוזן', 'Name seventh-chord qualities, then what the changes do.', 'לזהות סוגי ספטאקורדים, ואז מה המהלכים עושים.', {
       kind: 'lesson',
       items: [{ topic: 'seventh-chords', level: 1, n: 3 }, { topic: 'jazz-changes', level: 1, n: 3 }],
     }),
@@ -405,7 +405,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       kind: 'drills',
       picks: [{ level: 'cadences-1', items: [0, 1, 2], band: { style: 'pop', chart: ['C F', 'G C'] } }],
     }),
-    well: T('keys', 'well', 'Shells on a blues in F', 'קונכיות על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
+    well: T('keys', 'well', 'Shells on a blues in F', 'שלדים על בלוז בפה', 'Left-hand shell voicings through a 12-bar blues with the band.', 'קולות שלד ביד שמאל לאורך בלוז של 12 תיבות עם הלהקה.', {
       kind: 'drills',
       picks: [{ level: 'voicings-6', match: ':5:', band: { style: 'swing', chart: ['F7', 'Bb7', 'F7', 'F7', 'Bb7', 'Bb7', 'F7', 'D7', 'Gm7', 'C7', 'F7', 'C7'], bass: true, drums: 'swing' } }],
     }),
@@ -425,7 +425,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
     }),
   },
   bass: {
-    new: T('bass', 'new', 'Roots with the drummer', 'שורשים עם המתופף', 'One note a beat, locked with the kick.', 'צליל אחד בכל פעמה, נעול עם הבס־דראם.', { kind: 'drills', picks: [{ level: 'b-time-1', items: [0] }] }),
+    new: T('bass', 'new', 'Roots with the drummer', 'שורשים עם המתופף', 'One note a beat, locked with the kick.', 'צליל אחד בכל פעמה, נעול עם הקיק.', { kind: 'drills', picks: [{ level: 'b-time-1', items: [0] }] }),
     bit: T('bass', 'bit', 'Root and fifth', 'שורש וקווינטה', 'Root–5th over a progression, with the band.', 'שורש–קווינטה על מהלך אקורדים, עם הלהקה.', {
       kind: 'drills',
       picks: [{ level: 'b-chord-2', items: [0], band: { style: 'rock', chart: ['C', 'Am', 'F', 'G'], drums: 'rock-8' } }],
@@ -436,11 +436,11 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
     }),
   },
   drums: {
-    new: T('drums', 'new', 'Your first rock groove', 'גרוב הרוק הראשון שלכם', 'Hi-hat, snare on 2 and 4, kick on 1 and 3: eight bars with the band.', 'היי־האט, סנר ב־2 וב־4, בס־דראם ב־1 וב־3: שמונה תיבות עם הלהקה.', {
+    new: T('drums', 'new', 'Your first rock groove', 'גרוב הרוק הראשון שלכם', 'Hi-hat, snare on 2 and 4, kick on 1 and 3: eight bars with the band.', 'היי־האט, סנר ב־2 וב־4, קיק ב־1 וב־3: שמונה תיבות עם הלהקה.', {
       kind: 'drills',
       picks: [{ level: 'd-rock-1', items: [0], band: { style: 'rock', chart: ROCK_A, bass: true } }],
     }),
-    bit: T('drums', 'bit', 'Groove and a fill', 'גרוב ומילוי', 'Hold the groove, play a one-beat fill and land on 1.', 'להחזיק את הגרוב, לנגן מילוי של פעמה ולנחות על 1.', {
+    bit: T('drums', 'bit', 'Groove and a fill', 'גרוב ומעבר', 'Hold the groove, play a one-beat fill and land on 1.', 'להחזיק את הגרוב, לנגן מעבר של פעמה ולנחות על 1.', {
       kind: 'drills',
       picks: [{ level: 'd-rock-1', items: [0], band: { style: 'rock', chart: ROCK_A, bass: true } }, { level: 'd-fills-1', items: [0], band: { style: 'rock', chart: [...ROCK_A, 'A'], bass: true } }],
     }),
@@ -465,7 +465,7 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       kind: 'lesson',
       items: [{ topic: 'swing-ratio', level: 1, n: 3 }, { beat: { bpm: 96, bars: 2 } }, { topic: 'swing-ratio', level: 1, n: 2 }],
     }),
-    bit: T('jazz', 'bit', 'Guide tones on a blues', 'צלילים מובילים על בלוז', 'Hear the 3rds and 7ths that carry the changes, and the comping.', 'לשמוע את הטרצות והספטימות שנושאות את המהלכים, ואת הליווי.', {
+    bit: T('jazz', 'bit', 'Guide tones on a blues', 'צלילים מנחים על בלוז', 'Hear the 3rds and 7ths that carry the changes, and the comping.', 'לשמוע את הטרצות והספטימות שנושאות את המהלכים, ואת הליווי.', {
       kind: 'lesson',
       items: [{ topic: 'guide-tones', level: 1, n: 3 }, { topic: 'comping', level: 1, n: 3 }],
     }),
@@ -593,8 +593,8 @@ export const REAL_MUSIC: Record<CourseId, Record<SelfReport, TasteDef>> = {
     well: R('bass', 'well', 'Walk a blues chorus', 'ללכת סבב בלוז', 'A walking line, R–3–5–6, through all 12 bars, with the band.', 'קו ווקינג, R–3–5–6, לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-3', items: [1], band: { style: 'swing', chart: BLUES_C, drums: 'swing' } }] }),
   },
   drums: {
-    new: R('drums', 'new', 'Verse to chorus', 'מבית לפזמון', 'Hold the verse groove, fill on the cue and lift into the chorus, with the band.', 'להחזיק את הגרוב של הבית, מילוי ברמז ולעלות לפזמון, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-1', items: [0] }] }),
-    bit: R('drums', 'bit', 'A whole song form', 'מבנה שיר שלם', 'Verse, chorus and bridge with the fills between them, with the band.', 'בית, פזמון וגשר עם המילויים ביניהם, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-3', items: [0] }] }),
+    new: R('drums', 'new', 'Verse to chorus', 'מבית לפזמון', 'Hold the verse groove, fill on the cue and lift into the chorus, with the band.', 'להחזיק את הגרוב של הבית, מעבר ברמז ולעלות לפזמון, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-1', items: [0] }] }),
+    bit: R('drums', 'bit', 'A whole song form', 'מבנה שיר שלם', 'Verse, chorus and bridge with the fills between them, with the band.', 'בית, פזמון וגשר עם המעברים ביניהם, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-3', items: [0] }] }),
     well: R('drums', 'well', 'Two blues choruses', 'שני סבבי בלוז', 'A shuffle through two 12-bar choruses, marking the form, with the band.', 'שאפל לאורך שני סבבים של 12 תיבות, מסמנים את המבנה, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-form-3', items: [0] }] }),
   },
   voice: {

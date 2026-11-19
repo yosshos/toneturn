@@ -727,7 +727,7 @@ TOPIC_GEN['jazz-phrase'] = {
   levels: [
     { en: 'Arpeggios: four chord tones', he: 'ארפג׳ים: ארבעה צלילי אקורד' },
     { en: 'Lines over a dominant', he: 'קווים מעל דומיננט' },
-    { en: 'Enclosures', he: 'הקפות (אנקלוז׳ר)' },
+    { en: 'Enclosures', he: 'כיתורים' },
     { en: 'Bebop lines (the passing half step)', he: 'קווי ביבופ (חצי הטון המעביר)' },
     // AUDIT-GAPS-2 #1: the ear twin of the enclosure drills (k-vocab, g-bebop, b-bebop).
     { en: 'Which enclosure?', he: 'איזה כיתור?' },

@@ -82,7 +82,7 @@ export const STYLE_SONGS: VoiceSong[] = [
     level: 5,
     style: 'pop',
     bpm: 80,
-    form: { en: 'R&B ballad, seventh chords', he: 'בלדת R&B, אקורדי ספטים' },
+    form: { en: 'R&B ballad, seventh chords', he: 'בלדת R&B, ספטאקורדים' },
   },
   {
     id: 'st-lowlight',

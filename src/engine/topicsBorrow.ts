@@ -32,7 +32,7 @@ const VOICES = {
 const SOURCES = {
   one: nm('The other chord, a step down', 'האקורד השני, צעד למטה', 'step down', 'diminished'),
   chord: nm('The chord above', 'האקורד שמעל', 'chord above', 'neighbour'),
-  out: nm('Another diminished (a half step outside)', 'דימיניש אחר (חצי טון בחוץ)', 'outside', 'other diminished'),
+  out: nm('Another diminished (a half step outside)', 'מוקטן אחר (חצי טון בחוץ)', 'outside', 'other diminished'),
   scale: nm('Passing through the scale', 'מעבר דרך הסולם', 'scale', 'passing'),
 };
 
@@ -311,7 +311,7 @@ export function tesseract(root: number): { name: string; kind: 'dom' | 'six' | '
 }
 
 TOPIC_GEN['bh-tesseract'] = {
-  title: { en: 'The 16 chords around one diminished', he: '16 האקורדים סביב דימיניש אחד' },
+  title: { en: 'The 16 chords around one diminished', he: '16 האקורדים סביב מוקטן אחד' },
   skill: 'chords',
   levels: [
     { en: 'How many notes moved?', he: 'כמה צלילים זזו?' },

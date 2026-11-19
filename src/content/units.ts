@@ -43,8 +43,14 @@ import { UNITS as SOLO_PIANO } from './mini/soloPiano'; // Siskind: solo jazz pi
 import { UNITS as FIRST_STEPS_MORE } from './mini/firstStepsMore'; // AUDIT-6 Stage B: the new beginnings
 import { UNITS as AUDIT7 } from './mini/audit7'; // AUDIT-7: written theory from grade 1, the jazz entry, voice gaps
 import { UNITS as TPAIR_DEEP } from './mini/triadPairsDeep'; // triad pairs, deep (2026-11-16)
+// Curriculum audit 2026-11-19: existing lessons wired to the path steps that first use them.
+import { UNITS as PATH_WIRING, VOCAL_FAMILY_UNIT } from './mini/pathWiring';
+
+export { VOCAL_FAMILY_UNIT };
 
 export const UNIT_LESSON: Record<string, string> = {
+  // First, so that every lesson another file maps wins (pathWiring.ts only fills the gaps).
+  ...PATH_WIRING,
   // 0.38 (spec AE): each area file maps its own topics.
   ...INSTRUMENT,
   ...PIANO_JAZZ,
@@ -196,7 +202,8 @@ export const UNIT_LESSON: Record<string, string> = {
   'topic:nct-ear': 'harmony-more',
   'topic:musical-terms': 'terms',
   'topic:time-signatures': 'terms',
-  'topic:voice-leading': 'terms',
+  // EAR-JAZZ F13: voice-leading rules are taught by four-part harmony (the terms lesson is the Italian words).
+  'topic:voice-leading': 'four-parts',
   'topic:find-tonic': 'home-and-scales',
   'topic:octave': 'home-and-scales',
   'topic:scale-types': 'home-and-scales',

@@ -19,7 +19,7 @@ export const MEANS_NAME: Record<BorderMeans, Bi> = {
   pivot: { en: 'Pivot chord', he: 'אקורד ציר' },
   direct: { en: 'Direct', he: 'ישירות' },
   iiv: { en: 'ii–V of the new key', he: 'ii–V של הסולם החדש' },
-  dim: { en: 'Common diminished', he: 'הדימיניש המשותף' },
+  dim: { en: 'Common diminished', he: 'המוקטן המשותף' },
   tritone: { en: 'Tritone sub', he: 'תחליף טריטון' },
 };
 /** One line for the "Why?" of a wrong means stamp. */

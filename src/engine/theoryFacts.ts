@@ -471,7 +471,7 @@ const GEN: Record<Exclude<FactTopic, 'trio' | 'trio-ear'>, (lv: FactLevel, r: Rn
       ['Cm6 and Am7♭5 have the same four notes', 'ל־Cm6 ול־Am7♭5 יש אותם ארבעה צלילים', true, 'C E♭ G A = A C E♭ G', 'C E♭ G A = A C E♭ G'],
       ['C6 and Am7 have the same four notes', 'ל־C6 ול־Am7 יש אותם ארבעה צלילים', true, 'C E G A = A C E G', 'C E G A = A C E G'],
       ['A diminished seventh chord repeats every minor third', 'אקורד מוקטן 7 חוזר על עצמו כל טרצה קטנה', true, 'Four minor thirds fill the octave: four "brothers" share the notes', 'ארבע טרצות קטנות ממלאות אוקטבה: ארבעה "אחים" חולקים את הצלילים'],
-      ['In the Barry Harris major 6th-diminished scale, the diminished notes are the 2, 4, ♭6 and 7', 'בסולם 6 דימיניש של בארי האריס, צלילי הדימיניש הם 2, 4, ♭6 ו־7', true, 'C6 (C E G A) alternates with B° (B D F A♭)', 'C6 (C E G A) מתחלף עם B° (B D F A♭)'],
+      ['In the Barry Harris major 6th-diminished scale, the diminished notes are the 2, 4, ♭6 and 7', 'בסולם 6 מוקטן של בארי האריס, צלילי המוקטן הם 2, 4, ♭6 ו־7', true, 'C6 (C E G A) alternates with B° (B D F A♭)', 'C6 (C E G A) מתחלף עם B° (B D F A♭)'],
       ['A "shell" voicing is the root, 3rd and 5th', 'וויסינג Shell הוא שורש, טרצה וקווינטה', false, 'Shell = root + 3rd + 7th (the guide tones)', 'Shell = שורש + טרצה + ספטימה (צלילי ההכוונה)'],
       ['Ø means half-diminished', 'Ø פירושו חצי מוקטן', true, 'Cø = Cm7♭5', 'Cø = Cm7♭5'],
       ['Δ means a dominant seventh', 'Δ פירושו ספטימה דומיננטית', false, 'Δ = major seventh (CΔ = Cmaj7)', 'Δ = מז׳ור 7 (CΔ = Cmaj7)'],
@@ -509,7 +509,7 @@ export function jazzHarmFact(r: Rnd): Fact {
   // the diminished chord of the major 6th-diminished scale sits on its 7th
   const real = COMMON[(R + 11) % 12];
   const c = claim(r, real, [COMMON[(R + 1) % 12], COMMON[(R + 2) % 12]]);
-  return fact('jazz', 3, 'theory', c.truth, { en: `In Barry Harris's ${COMMON[R]}6-diminished scale, the diminished chord is ${c.shown}°7`, he: `בסולם 6 דימיניש של בארי האריס ב־${COMMON[R]}, האקורד המוקטן הוא ${c.shown}°7` }, { en: `${COMMON[R]}6 alternates with ${real}°7, built on the 7th`, he: `${COMMON[R]}6 מתחלף עם ${real}°7, שנבנה על הספטימה` });
+  return fact('jazz', 3, 'theory', c.truth, { en: `In Barry Harris's ${COMMON[R]}6-diminished scale, the diminished chord is ${c.shown}°7`, he: `בסולם 6 מוקטן של בארי האריס ב־${COMMON[R]}, האקורד המוקטן הוא ${c.shown}°7` }, { en: `${COMMON[R]}6 alternates with ${real}°7, built on the 7th`, he: `${COMMON[R]}6 מתחלף עם ${real}°7, שנבנה על הספטימה` });
 }
 
 // ---------------------------------------------------------------- items, questions, sets

@@ -29,7 +29,7 @@ export const EAR_ENDINGS: { id: string; ch: DChord[]; name: { en: string; he: st
   { id: 'b6b2maj', ch: [C('2', 'm7'), C('5', '7'), C('b6', 'maj7', 2), C('b2', 'maj7', 2), C('1', 'maj7')], name: { en: 'Ending: ♭VImaj7–♭IImaj7–Imaj7', he: 'סיום: ♭VImaj7–♭IImaj7–Imaj7' } },
   { id: 'b6b2', ch: [C('2', 'm7'), C('5', '7'), C('b6', '7', 2), C('b2', '7', 2), C('1', 'maj7')], name: { en: 'Ending: ♭VI7–♭II7–Imaj7', he: 'סיום: ♭VI7–♭II7–Imaj7' } },
   { id: 'dameron', ch: [...twice([C('1', 'maj7', 2), C('b3', 'maj7', 2), C('b6', 'maj7', 2), C('b2', 'maj7', 2)]), C('1', 'maj7')], name: { en: 'Ending: the Dameron turnaround', he: 'סיום: הטרנאראונד של דיימרון' } },
-  { id: 'walkdown', ch: [C('3', 'm7'), C('b3', 'dim7'), C('2', 'm7'), C('5', '7'), C('1', 'maj7')], name: { en: 'Ending: the diminished walk-down', he: 'סיום: הירידה הדימינישית' } },
+  { id: 'walkdown', ch: [C('3', 'm7'), C('b3', 'dim7'), C('2', 'm7'), C('5', '7'), C('1', 'maj7')], name: { en: 'Ending: the diminished walk-down', he: 'סיום: ירידת המוקטן' } },
 ];
 /** The intro (op 0) or ending (op 1) an ear item picks. */
 export const earFormPick = (kind: 'intro' | 'ending', rnd: Rnd) => pickOf(rnd, kind === 'intro' ? EAR_INTROS : EAR_ENDINGS);
@@ -113,8 +113,8 @@ export function harmonyPlan(placed: { c: GChord; beat: number }[], mode: Harmony
 
 /** Level names (EN / HE) of the kinds. */
 export const PROG_EAR_NAME: Record<ProgEarKind, { en: string; he: string }[]> = {
-  iivi: [{ en: 'ii–V–I as shells', he: 'ii–V–I בקונכיות' }, { en: 'Minor ii–V–i as shells', he: 'ii–V–i מינורי בקונכיות' }],
-  rootless: [{ en: 'ii–V–I, rootless A / B voicings', he: 'ii–V–I, וויסינגים בלי יסוד A / B' }, { en: 'Minor ii–V–i, rootless', he: 'ii–V–i מינורי, בלי יסוד' }],
+  iivi: [{ en: 'ii–V–I as shells', he: 'ii–V–I בשלדים' }, { en: 'Minor ii–V–i as shells', he: 'ii–V–i מינורי בשלדים' }],
+  rootless: [{ en: 'ii–V–I, rootless A / B voicings', he: 'ii–V–I, וויסינגים בלי שורש A / B' }, { en: 'Minor ii–V–i, rootless', he: 'ii–V–i מינורי, בלי שורש' }],
   secinv: [{ en: 'Eight bars: secondary dominants and inversions', he: 'שמונה תיבות: דומיננטות משניות והיפוכים' }],
   subs: [{ en: 'Tritone subs and the backdoor', he: 'תחליפי טריטון והדלת האחורית' }],
   altered: [{ en: 'Altered dominants and upper structures', he: 'דומיננטות אלטרד ומבנים עליונים' }, { en: 'Altered dominants in minor', he: 'דומיננטות אלטרד במינור' }],

@@ -361,14 +361,14 @@ function pianoMelody(s: DrillSpec, kind = s.kind): Drill {
 
 type PianoComp = 'root' | 'guide' | 'shell' | 'rootless' | 'drop2' | 'melody';
 const TUNE_WHAT: Record<string, T2> = {
-  'tn-root': t('roots', 'יסודות'),
+  'tn-root': t('roots', 'שורשים'),
   'tn-guide': t('guide tones', 'צלילים מנחים'),
   'tn-shell': t('shells', 'שלדים'),
-  'tn-rootless': t('rootless', 'בלי יסוד'),
+  'tn-rootless': t('rootless', 'בלי שורש'),
   'tn-drop2': t('drop 2', 'דרופ 2'),
   'tn-melcomp': t('melody + comp', 'מנגינה + ליווי'),
   'tn-rh1': t('reharm: tritone subs, extra ii–Vs', 'הרמון מחדש: טריטון, ii–V נוסף'),
-  'tn-rh2': t('reharm: backdoor, passing dim, cliché', 'הרמון מחדש: דלת אחורית, דימיניש, קלישאה'),
+  'tn-rh2': t('reharm: backdoor, passing dim, cliché', 'הרמון מחדש: דלת אחורית, מוקטן, קלישאה'),
   'tn-rh3': t('reharm: Coltrane subs', 'הרמון מחדש: תחליפי קולטריין'),
   'tn-rh4': t('reharm: borrowed chords', 'הרמון מחדש: אקורדים שאולים'),
   'tn-rhmel': t('the melody over the reharm', 'המנגינה מעל ההרמון החדש'),
@@ -566,11 +566,11 @@ const CM_WHAT: Record<string, T2> = {
   'cm-bass': t('melody + bass on the downbeats', 'מנגינה + בס על הפעמות'),
   'cm-guide': t('melody + a guide tone', 'מנגינה + צליל מנחה'),
   'cm-drop2': t('drop 2 under the melody', 'דרופ 2 מתחת למנגינה'),
-  'cm-dim': t('with passing diminished', 'עם דימיניש עובר'),
+  'cm-dim': t('with passing diminished', 'עם מוקטן עובר'),
   'cm-chorus': t('a whole chorus', 'פזמון שלם'),
   'cm-six': t('6-dim blocks in drop 2', 'בלוקים שש-מוקטן בדרופ 2'),
   'cm-every': t('drop 2 under every note', 'דרופ 2 מתחת לכל צליל'),
-  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + בס מהלך'),
+  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + ווקינג בס'),
 };
 
 /** Place a melody note on the top strings near a fret (strings 1–3). */
@@ -1084,14 +1084,14 @@ export function pianoHarmFamily(): FamilyDef {
 
 /** The piano tune ladder: [kind, en, he]. */
 const TUNE_PIANO: [string, string, string][] = [
-  ['tn-root', 'Roots through the head', 'יסודות לאורך השיר'],
+  ['tn-root', 'Roots through the head', 'שורשים לאורך השיר'],
   ['tn-guide', 'Guide tones through the head', 'צלילים מנחים לאורך השיר'],
   ['tn-shell', 'Shells through the head', 'שלדים לאורך השיר'],
-  ['tn-rootless', 'Rootless voicings through the head', 'קולות בלי יסוד לאורך השיר'],
+  ['tn-rootless', 'Rootless voicings through the head', 'קולות בלי שורש לאורך השיר'],
   ['tn-drop2', 'Drop 2 through the head', 'דרופ 2 לאורך השיר'],
   ['tn-melcomp', 'Melody and comp: shells under the head', 'מנגינה וליווי: שלדים מתחת לשיר'],
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף'],
-  ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה'],
+  ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, מוקטן עובר, קו קלישאה'],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו'],
   // HARMONY-REHARM §4: modal interchange inside a head (the borrowed devices of reharm.ts, checked against the melody).
   ['tn-rh4', 'Reharm: borrowed chords — iv, ♭VI, ♭VII7, iiø7, minor plagal', 'הרמון מחדש: אקורדים שאולים — iv, ♭VI, ♭VII7, iiø7, פלגלית מינורית'],
@@ -1121,12 +1121,12 @@ const CMEL: [string, string, string, number][] = [
   ['cm-bass', 'Melody and the bass note on the downbeats', 'מנגינה וצליל הבס על הפעמות', 7],
   ['cm-guide', 'Two voices: melody and a guide tone', 'שני קולות: מנגינה וצליל מנחה', 8],
   ['cm-drop2', 'Drop 2 under the melody, top four strings', 'דרופ 2 מתחת למנגינה, ארבעת המיתרים העליונים', 8],
-  ['cm-dim', 'Passing diminished between the chords', 'דימיניש עובר בין האקורדים', 9],
+  ['cm-dim', 'Passing diminished between the chords', 'מוקטן עובר בין האקורדים', 9],
   ['cm-chorus', 'A whole chorus of chord-melody', 'פזמון שלם של אקורד-מלודיה', 9],
   // AUDIT-DEPTH-3 C1 on the guitar and #4: 6-dim blocks, drop 2 under every note (8 bars), the solo-guitar chorus.
   ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 10],
   ['cm-every', 'Drop 2 under every melody note, eight bars', 'דרופ 2 מתחת לכל צליל של המנגינה, שמונה תיבות', 10],
-  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומילויי בס מהלך', 11],
+  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומעברי ווקינג בס', 11],
 ];
 export function guitarChordMelodyFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cmel';
@@ -1145,14 +1145,14 @@ export function guitarChordMelodyFamily(): GuitarFamilyDef {
 
 /** g-tune: the tune ladder on the guitar (jazz add-on). */
 const TUNE_GUITAR: [string, string, string, number][] = [
-  ['tn-root', 'Roots through the head', 'יסודות לאורך השיר', 7],
+  ['tn-root', 'Roots through the head', 'שורשים לאורך השיר', 7],
   ['tn-guide', 'Guide tones through the head', 'צלילים מנחים לאורך השיר', 7],
   ['tn-shell', 'Shells through the head', 'שלדים לאורך השיר', 7],
-  ['tn-rootless', 'Rootless drop 2 through the head', 'דרופ 2 בלי יסוד לאורך השיר', 8],
+  ['tn-rootless', 'Rootless drop 2 through the head', 'דרופ 2 בלי שורש לאורך השיר', 8],
   ['tn-drop2', 'Drop 2 through the head', 'דרופ 2 לאורך השיר', 8],
   ['tn-melcomp', 'Melody and comp: chord-melody on the changes', 'מנגינה וליווי: אקורד-מלודיה על חילופי האקורדים', 8],
   ['tn-rh1', 'Reharm: tritone subs and extra ii–Vs', 'הרמון מחדש: תחליפי טריטון ו־ii–V נוסף', 9],
-  ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, דימיניש עובר, קו קלישאה', 9],
+  ['tn-rh2', 'Reharm: backdoor, passing dim, line cliché', 'הרמון מחדש: דלת אחורית, מוקטן עובר, קו קלישאה', 9],
   ['tn-rh3', 'Reharm: Coltrane subs, and the melody over it', 'הרמון מחדש: קולטריין, והמנגינה מעליו', 9],
   // (the guitar family stays within 13 levels: approaches and enclosures share a level)
   ['em-appr', 'Embellish: approach and enclose each downbeat', 'קישוט: גישה וכיתור לכל פעמה ראשונה', 9],
@@ -1180,12 +1180,12 @@ export function guitarTuneFamily(): GuitarFamilyDef {
 
 /** b-tune: the bass ladder per head (jazz track). */
 const TUNE_BASS: [string, string, string][] = [
-  ['tn-root', 'Roots through the head', 'יסודות לאורך השיר'],
+  ['tn-root', 'Roots through the head', 'שורשים לאורך השיר'],
   ['tn-two', 'Two-feel through the head', 'בשתיים לאורך השיר'],
   ['tn-walk', 'Walking the head', 'ווקינג על השיר'],
   ['tn-appr', 'Walking with approach notes', 'ווקינג עם צלילי גישה'],
   ['tn-rh1', 'Walk the reharm: tritone subs and extra ii–Vs', 'ווקינג על ההרמון החדש: טריטון ו־ii–V נוסף'],
-  ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'ווקינג על ההרמון החדש: דלת אחורית, דימיניש, קלישאה'],
+  ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'ווקינג על ההרמון החדש: דלת אחורית, מוקטן, קלישאה'],
   ['tn-rh3', 'Walk the reharm: Coltrane subs', 'ווקינג על ההרמון החדש: קולטריין'],
   ['em-appr', 'The melody on the bass, approached from below', 'המנגינה בבס, עם גישה מלמטה'],
   ['em-encl', 'The melody on the bass, enclosed', 'המנגינה בבס, עם כיתורים'],

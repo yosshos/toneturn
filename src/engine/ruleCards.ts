@@ -829,7 +829,7 @@ const CARDS: CardDef[] = [
   {
     id: 'call-response',
     fam: 'rhythm',
-    name: { en: 'Call and response', he: 'קריאה ותשובה' },
+    name: { en: 'Call and response', he: 'שאלה ותשובה' },
     how: { en: 'Answer each phrase with its rhythm on new notes.', he: 'ענו לכל משפט בקצב שלו, על צלילים חדשים.' },
     level: 3,
     diff: 1350,

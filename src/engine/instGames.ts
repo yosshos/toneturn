@@ -633,7 +633,7 @@ export function voicingItem(seed: number, level: number): VoicingItem {
   const sym = chordSymbol({ root, quality });
   if (lv === 3) {
     const up = rnd() < 0.5;
-    return { level: lv, kind: 'shell', chord: { root, quality, beats: 4 }, symbol: sym, how: up ? { en: 'Shell 1-3-7', he: 'שֶׁל 1-3-7' } : { en: 'Shell 1-7-3', he: 'שֶׁל 1-7-3' }, order: up ? [r, t3, t7] : [r, t7, t3] };
+    return { level: lv, kind: 'shell', chord: { root, quality, beats: 4 }, symbol: sym, how: up ? { en: 'Shell 1-3-7', he: 'שלד 1-3-7' } : { en: 'Shell 1-7-3', he: 'שלד 1-7-3' }, order: up ? [r, t3, t7] : [r, t7, t3] };
   }
   if (lv === 4) {
     const nine = pc12(root + 2);

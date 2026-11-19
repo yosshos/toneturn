@@ -87,12 +87,12 @@ export const LESSONS: MiniLesson[] = [
     steps: [
       { say: { en: 'First the melody alone. Learn it until you can sing it, because every chord you add will sit under it.', he: 'קודם המנגינה לבד. למדו אותה עד שתוכלו לשיר אותה, כי כל אקורד שתוסיפו יישב מתחתיה.' }, play: melodyStim() },
       {
-        say: { en: 'Shells under it: the root in the left hand, and the 3rd and 7th of the chord just below the melody note.', he: 'שלדים מתחתיה: היסוד ביד שמאל, והטרצה והספטימה של האקורד ממש מתחת לצליל המנגינה.' },
+        say: { en: 'Shells under it: the root in the left hand, and the 3rd and 7th of the chord just below the melody note.', he: 'שלדים מתחתיה: השורש ביד שמאל, והטרצה והספטימה של האקורד ממש מתחת לצליל המנגינה.' },
         play: harmStim('shell'),
-        show: { text: { en: 'root · 3 · 7 · melody', he: 'יסוד · 3 · 7 · מנגינה' } },
+        show: { text: { en: 'root · 3 · 7 · melody', he: 'שורש · 3 · 7 · מנגינה' } },
       },
       {
-        say: { en: 'Four-way close: the melody note is the top of a close four-note chord. A major chord under its root or its 6th becomes a 6 chord.', he: 'ארבעה קולות צמודים: צליל המנגינה הוא הקצה העליון של אקורד צמוד בן ארבעה צלילים. אקורד מז׳ורי מתחת ליסוד או לסקסטה שלו הופך לאקורד 6.' },
+        say: { en: 'Four-way close: the melody note is the top of a close four-note chord. A major chord under its root or its 6th becomes a 6 chord.', he: 'ארבעה קולות צמודים: צליל המנגינה הוא הקצה העליון של אקורד צמוד בן ארבעה צלילים. אקורד מז׳ורי מתחת לשורש או לסקסטה שלו הופך לאקורד 6.' },
         play: harmStim('close'),
       },
       {
@@ -118,14 +118,14 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Chord-melody', he: 'אקורד-מלודיה' },
     takeaway: {
       en: 'Melody on the top strings; under it, step by step: the bass note on the downbeats, a guide tone, a drop-2 voicing on the top four strings, a passing diminished.',
-      he: 'המנגינה על המיתרים העליונים; מתחתיה, שלב אחר שלב: צליל בס על הפעמות, צליל מנחה, דרופ 2 על ארבעת המיתרים העליונים, דימיניש עובר.',
+      he: 'המנגינה על המיתרים העליונים; מתחתיה, שלב אחר שלב: צליל בס על הפעמות, צליל מנחה, דרופ 2 על ארבעת המיתרים העליונים, מוקטן עובר.',
     },
     steps: [
       { say: { en: 'Find the melody in one position on the top strings, so that a chord can fit under every note without a jump.', he: 'מצאו את המנגינה בפוזיציה אחת על המיתרים העליונים, כך שאקורד יוכל להיכנס מתחת לכל צליל בלי קפיצה.' }, play: melodyStim() },
-      { say: { en: 'Add the root on string six or five on each downbeat. Two voices already sound like a small band.', he: 'הוסיפו את היסוד על מיתר שש או חמש בכל פעמה ראשונה. שני קולות כבר נשמעים כמו הרכב קטן.' }, play: twoVoiceStim(false) },
-      { say: { en: 'Then a guide tone, the 3rd or the 7th, under the melody instead of the root. Now the harmony is clear without a bass.', he: 'אחר כך צליל מנחה, הטרצה או הספטימה, מתחת למנגינה במקום היסוד. עכשיו ההרמוניה ברורה גם בלי בס.' }, play: twoVoiceStim(true) },
+      { say: { en: 'Add the root on string six or five on each downbeat. Two voices already sound like a small band.', he: 'הוסיפו את השורש על מיתר שש או חמש בכל פעמה ראשונה. שני קולות כבר נשמעים כמו הרכב קטן.' }, play: twoVoiceStim(false) },
+      { say: { en: 'Then a guide tone, the 3rd or the 7th, under the melody instead of the root. Now the harmony is clear without a bass.', he: 'אחר כך צליל מנחה, הטרצה או הספטימה, מתחת למנגינה במקום השורש. עכשיו ההרמוניה ברורה גם בלי בס.' }, play: twoVoiceStim(true) },
       {
-        say: { en: 'Drop 2 on strings four, three, two and one, with the melody on string one. Notes outside the chord can take the diminished that contains them.', he: 'דרופ 2 על מיתרים ארבע, שלוש, שתיים ואחת, והמנגינה על מיתר אחת. צלילים מחוץ לאקורד יכולים לקבל את הדימיניש שמכיל אותם.' },
+        say: { en: 'Drop 2 on strings four, three, two and one, with the melody on string one. Notes outside the chord can take the diminished that contains them.', he: 'דרופ 2 על מיתרים ארבע, שלוש, שתיים ואחת, והמנגינה על מיתר אחת. צלילים מחוץ לאקורד יכולים לקבל את המוקטן שמכיל אותם.' },
         play: harmStim('drop2'),
       },
       { say: { en: 'Your turn: each step on four bars, then a whole chorus, in all twelve keys. Free time first.', he: 'תורכם: כל שלב על ארבע תיבות, ואז פזמון שלם, בכל שנים־עשר הסולמות. קודם בזמן חופשי.' } },
@@ -146,21 +146,21 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Reharmonising a tune', he: 'הרמון מחדש של שיר' },
     takeaway: {
       en: 'Learn the head’s changes step by step, then swap chords bar by bar: tritone sub, extra ii–V, backdoor, passing dim, line cliché, Coltrane. The melody must still fit each new chord.',
-      he: 'לומדים את ההרמוניה של השיר שלב אחר שלב, ואז מחליפים אקורדים תיבה אחר תיבה: טריטון, ii–V נוסף, דלת אחורית, דימיניש עובר, קו קלישאה, קולטריין. המנגינה חייבת להתאים לכל אקורד חדש.',
+      he: 'לומדים את ההרמוניה של השיר שלב אחר שלב, ואז מחליפים אקורדים תיבה אחר תיבה: טריטון, ii–V נוסף, דלת אחורית, מוקטן עובר, קו קלישאה, קולטריין. המנגינה חייבת להתאים לכל אקורד חדש.',
     },
     steps: [
-      { say: { en: 'Comp the head as written first: roots, guide tones, shells, rootless, drop 2, and then the melody over your own comp.', he: 'קודם מלווים את השיר כפי שהוא כתוב: יסודות, צלילים מנחים, שלדים, בלי יסוד, דרופ 2, ואז המנגינה מעל הליווי שלכם.' }, play: compStim(null) },
+      { say: { en: 'Comp the head as written first: roots, guide tones, shells, rootless, drop 2, and then the melody over your own comp.', he: 'קודם מלווים את השיר כפי שהוא כתוב: שורשים, צלילים מנחים, שלדים, בלי שורש, דרופ 2, ואז המנגינה מעל הליווי שלכם.' }, play: compStim(null) },
       {
         say: { en: 'Now change bars. A dominant that resolves can become the dominant a tritone away: the melody’s 3rd turns into the new chord’s 7th.', he: 'עכשיו מחליפים תיבות. דומיננט שנפתר יכול להפוך לדומיננט במרחק טריטון: הטרצה של המנגינה הופכת לספטימה של האקורד החדש.' },
         play: compStim(['tritone', 'iiV']),
         show: { text: { en: 'G7 → D♭7: B = ♭7', he: 'G7 → D♭7: B = ♭7' } },
       },
       { say: { en: 'Check every strong melody note against the new chord. A chord tone or a tension is fine; the 11th over a major chord clashes.', he: 'בדקו כל צליל חזק במנגינה מול האקורד החדש. צליל אקורד או מתח זה בסדר; האונדצימה מעל אקורד מז׳ורי מתנגשת.' }, play: [...fitStim(74), { kind: 'rest', duration: 0.4 }, ...fitStim(77)] },
-      { say: { en: 'The backdoor, a passing diminished, a line cliché: each fits only where its chords are. The studio on the family page shows you where.', he: 'הדלת האחורית, דימיניש עובר, קו קלישאה: כל אחד מתאים רק במקום שבו האקורדים שלו נמצאים. הסטודיו בעמוד המשפחה מראה לכם איפה.' }, play: compStim(['backdoor', 'pdim', 'cliche']) },
+      { say: { en: 'The backdoor, a passing diminished, a line cliché: each fits only where its chords are. The studio on the family page shows you where.', he: 'הדלת האחורית, מוקטן עובר, קו קלישאה: כל אחד מתאים רק במקום שבו האקורדים שלו נמצאים. הסטודיו בעמוד המשפחה מראה לכם איפה.' }, play: compStim(['backdoor', 'pdim', 'cliche']) },
       { say: { en: 'Then play your reharm: comp it, walk it on the bass, and play the melody over it, in all twelve keys.', he: 'ואז מנגנים את ההרמון שלכם: מלווים אותו, עושים עליו ווקינג בבס, ומנגנים מעליו את המנגינה, בכל שנים־עשר הסולמות.' } },
     ],
     more: [
-      { say: { en: 'A tritone sub keeps the 3rd and 7th of the dominant and slides the bass down a half step into the next chord. Under a melody root it gives a sharp 11.', he: 'תחליף טריטון שומר על הטרצה והספטימה של הדומיננט ומחליק את הבס חצי טון למטה אל האקורד הבא. מתחת ליסוד במנגינה הוא נותן ♯11.' } },
+      { say: { en: 'A tritone sub keeps the 3rd and 7th of the dominant and slides the bass down a half step into the next chord. Under a melody root it gives a sharp 11.', he: 'תחליף טריטון שומר על הטרצה והספטימה של הדומיננט ומחליק את הבס חצי טון למטה אל האקורד הבא. מתחת לשורש במנגינה הוא נותן ♯11.' } },
       { say: { en: 'An extra ii–V puts the related minor chord before a dominant, or the ii–V of the next chord in a bar that only holds a chord.', he: 'ii–V נוסף שם את האקורד המינורי הקשור לפני דומיננט, או את ה־ii–V של האקורד הבא בתיבה שרק מחזיקה אקורד.' } },
       { say: { en: 'The Coltrane sub turns a ii–V into the Giant Steps cycle: three keys a major third apart, landing on the same tonic.', he: 'תחליף קולטריין הופך ii–V למעגל של Giant Steps: שלושה סולמות במרחק טרצה גדולה, שנוחתים על אותה טוניקה.' }, play: compStim(['coltrane'], 4) },
       { say: { en: 'Common mistake: too many devices at once. Leave a bar as written between changes; the melody needs a place to breathe.', he: 'טעות נפוצה: יותר מדי תחבולות בבת אחת. השאירו תיבה כפי שנכתבה בין השינויים; המנגינה צריכה מקום לנשום.' }, play: compStim(['tritone', 'iiV'], 4) },

@@ -27,7 +27,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: PHRASE, text: { en: 'sing it first', he: 'קודם לשיר' } },
       },
       {
-        say: { en: 'Then find the first note. Hear it against the chord: is it the root, the 3rd, the 5th or the 7th? Here it is G, the root of G7.', he: 'אחר כך מצאו את הצליל הראשון. שמעו אותו מול האקורד: האם זה היסוד, הטרצה, הקווינטה או הספטימה? כאן זה סול, היסוד של G7.' },
+        say: { en: 'Then find the first note. Hear it against the chord: is it the root, the 3rd, the 5th or the 7th? Here it is G, the root of G7.', he: 'אחר כך מצאו את הצליל הראשון. שמעו אותו מול האקורד: האם זה השורש, הטרצה, הקווינטה או הספטימה? כאן זה סול, השורש של G7.' },
         play: [chord(G7, 0.8), notes([67], 0.8)],
         show: { notes: [67], text: { en: 'the first note', he: 'הצליל הראשון' } },
       },
@@ -50,7 +50,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Why it works: singing ties the sound to your inner ear, so the hands follow a line you already hold, not a guess.', he: 'למה זה עובד: השירה קושרת את הצליל לאוזן הפנימית, כך שהידיים הולכות אחרי קו שכבר מוחזק אצלכם, ולא אחרי ניחוש.' },
       },
       {
-        say: { en: 'Find the first note by its place in the chord. Sing the root of the chord, then walk up to the note: one step is the 2nd, two steps the 3rd.', he: 'מוצאים את הצליל הראשון לפי מקומו באקורד. שירו את היסוד של האקורד, ואז עלו אל הצליל: צעד אחד הוא הסקונדה, שני צעדים הטרצה.' },
+        say: { en: 'Find the first note by its place in the chord. Sing the root of the chord, then walk up to the note: one step is the 2nd, two steps the 3rd.', he: 'מוצאים את הצליל הראשון לפי מקומו באקורד. שירו את השורש של האקורד, ואז עלו אל הצליל: צעד אחד הוא הסקונדה, שני צעדים הטרצה.' },
         play: [chord(CMAJ7, 0.8), notes([60, 62, 64], 0.4)],
       },
       {

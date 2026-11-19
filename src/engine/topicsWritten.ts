@@ -700,7 +700,7 @@ TOPIC_GEN['bass-dictation'] = {
   title: { en: 'Write the bass', he: 'לכתוב את הבס' },
   skill: 'dictation',
   levels: [
-    { en: 'Roots of I, IV and V', he: 'יסודות של I, IV ו־V' },
+    { en: 'Roots of I, IV and V', he: 'שורשים של I, IV ו־V' },
     { en: 'With inversions (I6, V6)', he: 'עם היפוכים (I6, V6)' },
     { en: 'With passing notes', he: 'עם צלילי מעבר' },
     { en: 'Soprano, bass and numerals', he: 'סופרן, בס וספרות רומיות' },
@@ -787,7 +787,7 @@ TOPIC_TAGS['bass-dictation'] = tg(['dictation', 'bass', 0.6], ['cadences', 'prog
   };
   TOPIC_GEN['harmonic-dictation'] = {
     ...base,
-    levels: [...base.levels, { en: 'Minor keys', he: 'סולמות מינוריים' }, { en: 'Seventh chords, ii–V–I', he: 'אקורדי ספטים, ii–V–I' }, { en: 'Secondary dominants and borrowed chords', he: 'דומיננטות משניות ואקורדים שאולים' }],
+    levels: [...base.levels, { en: 'Minor keys', he: 'סולמות מינוריים' }, { en: 'Seventh chords, ii–V–I', he: 'ספטאקורדים, ii–V–I' }, { en: 'Secondary dominants and borrowed chords', he: 'דומיננטות משניות ואקורדים שאולים' }],
     gen: (seed, level, id) => (level <= baseN ? base.gen(seed, level, id) : gen(seed, level - baseN, id)),
   };
 }
@@ -1110,7 +1110,7 @@ TOPIC_GEN['chromatic-theory'] = {
         names[j.en] = nm(j.en, j.he, p.map(spSay).join(' '));
       });
       const kn = keyName(t, minor);
-      return choiceQ({ id, topic: 'chromatic-theory', level, seed, skill: 'theory', difficulty: 1450, ask: { en: `Spell the Neapolitan chord (♭II) in ${kn.en}, from its root.`, he: `אייתו את האקורד הנפוליטני (♭II) ב${kn.he}, מהיסוד.` }, text: { en: `${kn.en}: ♭II = ?`, he: `${kn.he}: ♭II = ?` }, names, answer: joinSp(right).en, choices: order.map((p) => joinSp(p).en), stimulus: [] });
+      return choiceQ({ id, topic: 'chromatic-theory', level, seed, skill: 'theory', difficulty: 1450, ask: { en: `Spell the Neapolitan chord (♭II) in ${kn.en}, from its root.`, he: `אייתו את האקורד הנפוליטני (♭II) ב${kn.he}, מהשורש.` }, text: { en: `${kn.en}: ♭II = ?`, he: `${kn.he}: ♭II = ?` }, names, answer: joinSp(right).en, choices: order.map((p) => joinSp(p).en), stimulus: [] });
     }
     if (level === 3) {
       const minor = rnd() < 0.5;

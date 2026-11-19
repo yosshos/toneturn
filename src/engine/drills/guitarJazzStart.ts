@@ -62,7 +62,7 @@ export function generateGuitarJazzStart(s: DrillSpec, tu: Tuning): Drill {
         for (let q = 0; q < 4; q++) evs.push({ beat: bar * 4 + q, dur: 1, notes: strum(v) });
       });
       evs.push({ beat: 48, dur: 4, notes: strum(bluesShells(tu, key)[0]) });
-      const d = finish(s, tu, evs, { title: t(`Shells on a blues, four to the bar · ${k}`, `קונכיות על בלוז, ארבע לתיבה · ${k}`), bpm: 90, evenness: true });
+      const d = finish(s, tu, evs, { title: t(`Shells on a blues, four to the bar · ${k}`, `שלדים על בלוז, ארבע לתיבה · ${k}`), bpm: 90, evenness: true });
       return { ...d, chart: [...chart, chordName(key, 0)] };
     }
     case 'blues-guide': {
@@ -91,7 +91,7 @@ export function generateGuitarJazzStart(s: DrillSpec, tu: Tuning): Drill {
         evs.push({ beat: bar * 4, dur: 1.5, notes: strum(v) });
         evs.push({ beat: bar * 4 + 1.5, dur: 2.5, notes: strum(v) });
       });
-      const d = finish(s, tu, evs, { title: t(`Comping on a blues: the Charleston, shells · ${k}`, `ליווי על בלוז: צ׳רלסטון, קונכיות · ${k}`), bpm: 96, evenness: true });
+      const d = finish(s, tu, evs, { title: t(`Comping on a blues: the Charleston, shells · ${k}`, `ליווי על בלוז: צ׳רלסטון, שלדים · ${k}`), bpm: 96, evenness: true });
       return { ...d, chart };
     }
   }

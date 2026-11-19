@@ -399,20 +399,20 @@ TOPIC_GEN['reharm-own'] = {
       const c: RChord = { d: 1, q: '7' };
       const mel = pickR(rnd, [1, 2, 3, 4, 5, 7, 8, 9, 10, 11].filter((m) => reharmValid('dominant', c, m)));
       const sets = voicingSets(c, k, mel);
-      return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)} over ${nameOf(k + 7)}7: play ${sym(k, c)} holding it.`, he: `מנגינה ${melHe(k + mel)} מעל ${nameOf(k + 7)}7: נגנו ${sym(k, c)} שמחזיק אותה.` }, text: { en: 'Root, 3, 7 + melody (5th optional)', he: 'יסוד, 3, 7 + מנגינה (קווינטה לבחירה)' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
+      return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)} over ${nameOf(k + 7)}7: play ${sym(k, c)} holding it.`, he: `מנגינה ${melHe(k + mel)} מעל ${nameOf(k + 7)}7: נגנו ${sym(k, c)} שמחזיק אותה.` }, text: { en: 'Root, 3, 7 + melody (5th optional)', he: 'שורש, 3, 7 + מנגינה (קווינטה לבחירה)' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
     }
     if (level === 4) {
       const slot = SLOT_CHORDS['into-ii'];
       const mel = pickR(rnd, Array.from({ length: 12 }, (_, i) => i).filter((m) => slot.some((x) => reharmValid('into-ii', x.c, m))));
       const valid = slot.filter((x) => reharmValid('into-ii', x.c, mel));
       const sets = valid.flatMap((x) => voicingSets(x.c, k, mel));
-      return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)}: ${nameOf(k)}maj7 → ? → ${nameOf(k + 2)}m7. Play a chord that leads to ${nameOf(k + 2)}m7.`, he: `מנגינה ${melHe(k + mel)}: ${nameOf(k)}maj7 → ? → ${nameOf(k + 2)}m7. נגנו אקורד שמוביל ל־${nameOf(k + 2)}m7.` }, text: { en: '♯I°7, VI7 or ♭III7: root, 3, 7 + melody', he: '‏♯I°7, ‏VI7 או ♭III7: יסוד, 3, 7 + מנגינה' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
+      return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)}: ${nameOf(k)}maj7 → ? → ${nameOf(k + 2)}m7. Play a chord that leads to ${nameOf(k + 2)}m7.`, he: `מנגינה ${melHe(k + mel)}: ${nameOf(k)}maj7 → ? → ${nameOf(k + 2)}m7. נגנו אקורד שמוביל ל־${nameOf(k + 2)}m7.` }, text: { en: '♯I°7, VI7 or ♭III7: root, 3, 7 + melody', he: '‏♯I°7, ‏VI7 או ♭III7: שורש, 3, 7 + מנגינה' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
     }
     // 5: replace V7 by any dominant that resolves to I and holds the melody (tritone sub or backdoor).
     const subs = SLOT_CHORDS.dominant.filter((x) => x.device !== 'original');
     const mel = pickR(rnd, Array.from({ length: 12 }, (_, i) => i).filter((m) => subs.some((x) => reharmValid('dominant', x.c, m))));
     const sets = subs.filter((x) => reharmValid('dominant', x.c, mel)).flatMap((x) => voicingSets(x.c, k, mel));
-    return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: replace ${nameOf(k + 7)}7.`, he: `מנגינה ${melHe(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: החליפו את ${nameOf(k + 7)}7.` }, text: { en: 'A dominant into I: root, 3, 7 + melody', he: 'דומיננט אל ה־I: יסוד, 3, 7 + מנגינה' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
+    return placeQ({ ...base, ask: { en: `Melody ${nameOf(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: replace ${nameOf(k + 7)}7.`, he: `מנגינה ${melHe(k + mel)}, ${nameOf(k + 7)}7 → ${nameOf(k)}maj7: החליפו את ${nameOf(k + 7)}7.` }, text: { en: 'A dominant into I: root, 3, 7 + melody', he: 'דומיננט אל ה־I: שורש, 3, 7 + מנגינה' }, target: sets[0], sets, given: { midis: [72 + mod12(k + mel)], key: null } });
   },
 };
 TOPIC_TAGS['reharm-own'] = (l) => (l === 1 ? tg(['cadences', 'reharm', 0.7], ['theory', 'harmony', 0.3]) : tg(['cadences', 'reharm', 0.6], ['chords', 'voicing', 0.4]));

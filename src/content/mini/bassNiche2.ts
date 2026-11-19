@@ -41,11 +41,11 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Why tiers? A tune is hard for a reason: speed, harmony that moves, or a feel that is not swing. Each tier adds one of those.', he: 'למה דרגות? שיר קשה מסיבה: מהירות, הרמוניה שזזה, או תחושה שאינה סווינג. כל דרגה מוסיפה אחת מהן.' },
       },
       {
-        say: { en: 'In tier three the ballads are in two: a root on one, a fifth or a passing note on three, and the notes ring their full length.', he: 'בדרגה שלוש הבלדות בשתיים: יסוד על אחת, קווינטה או צליל עובר על שלוש, והצלילים מצלצלים באורך מלא.' },
+        say: { en: 'In tier three the ballads are in two: a root on one, a fifth or a passing note on three, and the notes ring their full length.', he: 'בדרגה שלוש הבלדות בשתיים: שורש על אחת, קווינטה או צליל עובר על שלוש, והצלילים מצלצלים באורך מלא.' },
         play: [notes([39, 46, 41, 48], 1)],
       },
       {
-        say: { en: 'In a bossa, the bass plays the root and the fifth with a push before beat three. The chord tones still land on the changes.', he: 'בבוסה הבס מנגן יסוד וקווינטה עם דחיפה לפני פעמה שלוש. צלילי האקורד עדיין נוחתים בחילופים.' },
+        say: { en: 'In a bossa, the bass plays the root and the fifth with a push before beat three. The chord tones still land on the changes.', he: 'בבוסה הבס מנגן שורש וקווינטה עם דחיפה לפני פעמה שלוש. צלילי האקורד עדיין נוחתים בחילופים.' },
         play: [notes([36, 43, 43, 36], 0.5)],
       },
       {
@@ -81,11 +81,11 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '12 · 7 · 5 · 4 · 3', he: '12 · 7 · 5 · 4 · 3' } },
       },
       {
-        say: { en: 'Tapping: the fretting hand sounds the root, the other hand taps the fifth, the octave and the tenth. Every note must be even in time.', he: 'טאפינג: היד הלוחצת משמיעה את היסוד, והיד השנייה מקישה את הקווינטה, האוקטבה והדצימה. כל צליל צריך להיות שווה בזמן.' },
+        say: { en: 'Tapping: the fretting hand sounds the root, the other hand taps the fifth, the octave and the tenth. Every note must be even in time.', he: 'טאפינג: היד הלוחצת משמיעה את השורש, והיד השנייה מקישה את הקווינטה, האוקטבה והדצימה. כל צליל צריך להיות שווה בזמן.' },
         play: [notes([33, 40, 45, 49, 33, 40, 45, 49], 0.25)],
       },
       {
-        say: { en: 'Double-stops: a tenth or a root with its seventh, two strings at once. Both notes must ring, and the microphone hears whether they do.', he: 'צלילים כפולים: דצימה, או יסוד עם הספטימה שלו, שני מיתרים יחד. שני הצלילים צריכים לצלצל, והמיקרופון שומע אם הם מצלצלים.' },
+        say: { en: 'Double-stops: a tenth or a root with its seventh, two strings at once. Both notes must ring, and the microphone hears whether they do.', he: 'צלילים כפולים: דצימה, או שורש עם הספטימה שלו, שני מיתרים יחד. שני הצלילים צריכים לצלצל, והמיקרופון שומע אם הם מצלצלים.' },
         play: [chord([38, 53]), chord([43, 53]), chord([36, 52])],
       },
       {
@@ -102,7 +102,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([43, 55], 0.8)],
       },
       {
-        say: { en: 'Shells on the bass are the root and the seventh: the same shape for every chord, a fret apart between major seventh and dominant.', he: 'קונכיות על הבס הן היסוד והספטימה: אותה צורה לכל אקורד, סריג אחד הבדל בין ספטימה גדולה לדומיננטית.' },
+        say: { en: 'Shells on the bass are the root and the seventh: the same shape for every chord, a fret apart between major seventh and dominant.', he: 'שלדים על הבס הן השורש והספטימה: אותה צורה לכל אקורד, סריג אחד הבדל בין ספטימה גדולה לדומיננטית.' },
         play: [chord([36, 47]), chord([36, 46])],
       },
       {

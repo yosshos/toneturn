@@ -169,7 +169,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'ta sh sh ta', he: 'טה שְׁ שְׁ טה' } },
       },
       {
-        say: { en: 'In real music, quarters often carry a walking bass line or a steady strum, while halves and wholes hold the long notes of hymns, chorales and sustained pads under a band. Rests give phrases room to breathe.', he: 'במוזיקה אמיתית, רבעים נושאים לעתים קרובות קו בס מהלך או פריטה יציבה, וחצאים ושלמים מחזיקים את הצלילים הארוכים של מזמורים, כוראלים ומשטחי צליל מתמשכים מתחת ללהקה. ההפסקות נותנות למשפטים מקום לנשום.' },
+        say: { en: 'In real music, quarters often carry a walking bass line or a steady strum, while halves and wholes hold the long notes of hymns, chorales and sustained pads under a band. Rests give phrases room to breathe.', he: 'במוזיקה אמיתית, רבעים נושאים לעתים קרובות קו ווקינג או פריטה יציבה, וחצאים ושלמים מחזיקים את הצלילים הארוכים של מזמורים, כוראלים ומשטחי צליל מתמשכים מתחת ללהקה. ההפסקות נותנות למשפטים מקום לנשום.' },
       },
       {
         say: { en: 'To keep: the beat is the ruler. Quarter = 1, half = 2, whole = 4, and each rest lasts exactly as long as its note.', he: 'לזכור: הפעמה היא הסרגל. רבע = 1, חצי = 2, שלם = 4, וכל הפסקה נמשכת בדיוק כמו התו שלה.' },
@@ -266,7 +266,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♩. ♪  ·  ta-i ti', he: '♩. ♪  ·  טה-אי טי' } },
       },
       {
-        say: { en: 'Count it: the long note starts on 1 and holds right through 2. The eighth lands on the "and" of 2.', he: 'ספרו: הצליל הארוך מתחיל על 1 ונמשך גם דרך 2. השמינית נוחתת על ה"ו" של 2.' },
+        say: { en: 'Count it: the long note starts on 1 and holds right through 2. The eighth lands on the "and" of 2.', he: 'ספרו: הצליל הארוך מתחיל על 1 ונמשך גם דרך 2. השמינית נוחתת על ה"וְ" של 2.' },
         play: [R('dqe.q.q', 80)],
         show: { text: { en: '1 (& 2) &  ·  ta-i ti', he: '1 (ו 2) ו  ·  טה-אי טי' } },
       },
@@ -296,7 +296,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♩. = ♩‿♪', he: '♩. = ♩‿♪' } },
       },
       {
-        say: { en: 'Compare ta ti-ti with ta-i ti. Both last two beats and both end on the "and" of the second beat. The only difference: in the dotted version, nothing new happens on that second beat.', he: 'השוו טה טי-טי לטה-אי טי. שתיהן נמשכות שתי פעמות ושתיהן נגמרות על ה"ו" של הפעמה השנייה. ההבדל היחיד: בגרסה המנוקדת, שום דבר חדש לא קורה על הפעמה השנייה.' },
+        say: { en: 'Compare ta ti-ti with ta-i ti. Both last two beats and both end on the "and" of the second beat. The only difference: in the dotted version, nothing new happens on that second beat.', he: 'השוו טה טי-טי לטה-אי טי. שתיהן נמשכות שתי פעמות ושתיהן נגמרות על ה"וְ" של הפעמה השנייה. ההבדל היחיד: בגרסה המנוקדת, שום דבר חדש לא קורה על הפעמה השנייה.' },
         play: [R('q.ee.dqe', 80)],
         show: { text: { en: 'ta ti-ti  |  ta-i ti', he: 'טה טי-טי  |  טה-אי טי' } },
       },
@@ -359,8 +359,8 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A sixteenth note is half an eighth: four per beat, sixteen in a 4/4 bar. It has two flags, or two beams in a group. Musicians count them "1 e & a, 2 e & a", with the "&" still exactly halfway.', he: 'שש־עשרית היא חצי שמינית: ארבע בפעמה, שש־עשרה בתיבה של 4/4. יש לה שני דגלים, או שתי קורות בקבוצה. נגנים סופרים אותן "1 e & a, 2 e & a", כמו באנגלית, וה־& עדיין בדיוק באמצע.' },
-        show: { text: { en: '1 e & a  2 e & a', he: '1 e & a  2 e & a' } },
+        say: { en: 'A sixteenth note is half an eighth: four per beat, sixteen in a 4/4 bar. It has two flags, or two beams in a group. Musicians count them "1 e & a, 2 e & a", with the "&" still exactly halfway.', he: 'שש־עשרית היא חצי שמינית: ארבע בפעמה, שש־עשרה בתיבה של 4/4. יש לה שני דגלים, או שתי קורות בקבוצה. נגנים סופרים אותן "1 אִי וְ אָה, 2 אִי וְ אָה", כמו באנגלית, וה־וְ עדיין בדיוק באמצע.' },
+        show: { text: { en: '1 e & a  2 e & a', he: '1 אִי וְ אָה  2 אִי וְ אָה' } },
       },
       {
         say: { en: 'Inside one beat, sixteenths can merge. Ti tika is an eighth then two sixteenths, sounding on 1, &, a. Tika ti is two sixteenths then an eighth, sounding on 1, e, &. Hear them alternate.', he: 'בתוך פעמה אחת, שש־עשריות יכולות להתמזג. טי טיקה היא שמינית ואז שתי שש־עשריות, שנשמעות על 1, &, a. טיקה טי היא שתי שש־עשריות ואז שמינית, שנשמעות על 1, e, &. שמעו אותן מתחלפות.' },
@@ -368,7 +368,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1 & a  ·  1 e &', he: '1 & a  ·  1 e &' } },
       },
       {
-        say: { en: 'Listening strategy: find the "&" first. If the quick pair comes after it, the beat is ti tika; if before it, tika ti. If all four slots sound, it is tika-tika.', he: 'אסטרטגיית האזנה: מצאו קודם את ה־&. אם הזוג המהיר בא אחריו, הפעמה היא טי טיקה; אם לפניו, טיקה טי. אם כל ארבע המשבצות נשמעות, זה טיקה-טיקה.' },
+        say: { en: 'Listening strategy: find the "&" first. If the quick pair comes after it, the beat is ti tika; if before it, tika ti. If all four slots sound, it is tika-tika.', he: 'אסטרטגיית האזנה: מצאו קודם את ה־וְ. אם הזוג המהיר בא אחריו, הפעמה היא טי טיקה; אם לפניו, טיקה טי. אם כל ארבע המשבצות נשמעות, זה טיקה-טיקה.' },
         show: { text: { en: 'pair after & → ti tika · before → tika ti', he: 'זוג אחרי & ← טי טיקה · לפני ← טיקה טי' } },
       },
       {
@@ -385,7 +385,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Sixteenths drive funk and disco: the hi-hat and the scratchy rhythm guitar often run in constant sixteenths. They are also the language of fast melodic runs and of many rap flows.', he: 'שש־עשריות מניעות פאנק ודיסקו: ההיי־האט וגיטרת הקצב המגרדת רצים לעתים קרובות בשש־עשריות רצופות. הן גם השפה של ריצות מלודיות מהירות ושל הרבה פלואו בראפ.' },
       },
       {
-        say: { en: 'To keep: four sixteenths per beat, counted "1 e & a". Find the "&", and the shape of the beat becomes clear.', he: 'לזכור: ארבע שש־עשריות בפעמה, סופרים "1 e & a". מוצאים את ה־&, וצורת הפעמה מתבהרת.' },
+        say: { en: 'To keep: four sixteenths per beat, counted "1 e & a". Find the "&", and the shape of the beat becomes clear.', he: 'לזכור: ארבע שש־עשריות בפעמה, סופרים "1 אִי וְ אָה". מוצאים את ה־וְ, וצורת הפעמה מתבהרת.' },
         show: { text: { en: '♩ = 4 × ♬', he: '♩ = 4 × ♬' } },
       },
     ],
@@ -404,7 +404,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1 & 2 &  ·  on the "&"', he: '1 ו 2 ו  ·  על ה"ו"' } },
       },
       {
-        say: { en: 'The classic shape is eighth, quarter, eighth: syn-co-pa. The long middle note starts on the "and" of 1 and rings across beat 2.', he: 'הצורה הקלאסית היא שמינית, רבע, שמינית: סין-קו-פה. הצליל הארוך שבאמצע מתחיל על ה"ו" של 1 ונמשך מעבר לפעמה 2.' },
+        say: { en: 'The classic shape is eighth, quarter, eighth: syn-co-pa. The long middle note starts on the "and" of 1 and rings across beat 2.', he: 'הצורה הקלאסית היא שמינית, רבע, שמינית: סין-קו-פה. הצליל הארוך שבאמצע מתחיל על ה"וְ" של 1 ונמשך מעבר לפעמה 2.' },
         play: [R('syn.q.q', 84)],
         show: { text: { en: '♪ ♩ ♪  ·  syn-co-pa', he: '♪ ♩ ♪  ·  סין-קו-פה' } },
       },
@@ -434,7 +434,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'strong 1, 3 · weaker 2, 4 · weakest &', he: 'חזק 1, 3 · חלש 2, 4 · הכי חלש ו' } },
       },
       {
-        say: { en: 'Syn-co-pa is often written with a tie: eighth, eighth tied to eighth, eighth. The tie hides beat 2 inside a note that started on the "and" of 1. Same sound, two spellings.', he: 'סין-קו-פה נכתבת לעתים קרובות עם ליגטורה: שמינית, שמינית קשורה לשמינית, שמינית. הליגטורה מחביאה את פעמה 2 בתוך צליל שהתחיל על ה"ו" של 1. אותו צליל, שתי דרכי כתיבה.' },
+        say: { en: 'Syn-co-pa is often written with a tie: eighth, eighth tied to eighth, eighth. The tie hides beat 2 inside a note that started on the "and" of 1. Same sound, two spellings.', he: 'סין-קו-פה נכתבת לעתים קרובות עם ליגטורה: שמינית, שמינית קשורה לשמינית, שמינית. הליגטורה מחביאה את פעמה 2 בתוך צליל שהתחיל על ה"וְ" של 1. אותו צליל, שתי דרכי כתיבה.' },
         play: [R('syn.syn', 84)],
         show: { text: { en: '♪ ♩ ♪  =  ♪ ♪‿♪ ♪', he: '♪ ♩ ♪  =  ♪ ♪‿♪ ♪' } },
       },
@@ -526,7 +526,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'tika ti ≠ tri-o-la', he: 'טיקה טי ≠ טרי-או-לה' } },
       },
       {
-        say: { en: 'Triplets are central to blues and shuffle, to the piano chords of 1950s ballads and doo-wop, and to drum fills everywhere. A 4/4 bar filled with eighth-note triplets is effectively 12/8: the two notations meet.', he: 'טריולות הן מרכזיות בבלוז ובשאפל, באקורדי הפסנתר של בלדות ודו־וופ משנות ה־50, ובפילים של תופים בכל מקום. תיבת 4/4 מלאה בטריולות שמיניות היא למעשה 12/8: שני הכתיבים נפגשים.' },
+        say: { en: 'Triplets are central to blues and shuffle, to the piano chords of 1950s ballads and doo-wop, and to drum fills everywhere. A 4/4 bar filled with eighth-note triplets is effectively 12/8: the two notations meet.', he: 'טריולות הן מרכזיות בבלוז ובשאפל, באקורדי הפסנתר של בלדות ודו־וופ משנות ה־50, ובמעברים של תופים בכל מקום. תיבת 4/4 מלאה בטריולות שמיניות היא למעשה 12/8: שני הכתיבים נפגשים.' },
       },
       {
         say: { en: 'To keep: a triplet is three equal notes where two would normally go. Keep every gap the same, and the first note on the beat.', he: 'לזכור: טריולה היא שלושה צלילים שווים במקום שבדרך כלל יש שניים. שומרים על כל המרווחים שווים, ועל הצליל הראשון על הפעמה.' },
@@ -673,7 +673,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Two common mistakes. Over-swinging: playing a choppy dotted eighth and sixteenth where a relaxed triplet feel is meant. And swinging everything: only the eighth pairs swing, while quarters and quarter triplets stay even.', he: 'שתי טעויות נפוצות. סווינג מוגזם: לנגן שמינית מנוקדת ושש־עשרית קופצניות במקום שבו הכוונה לתחושת טריולה רגועה. וסווינג על הכול: רק זוגות השמיניות מתנדנדים, ורבעים וטריולות רבעים נשארים שווים.' },
       },
       {
-        say: { en: 'Swing eighths are the default in most jazz, from big bands to bebop, and in the blues shuffle. Quarter-note triplets show up in melodies that seem to float over the bar line, in drum fills and in big-band ensemble hits.', he: 'שמיניות סווינג הן ברירת המחדל ברוב הג׳אז, מהביג בנד ועד הביבופ, ובשאפל של הבלוז. טריולות רבעים מופיעות במנגינות שנדמה שהן מרחפות מעל קו התיבה, בפילים של תופים ובמכות משותפות של ביג בנד.' },
+        say: { en: 'Swing eighths are the default in most jazz, from big bands to bebop, and in the blues shuffle. Quarter-note triplets show up in melodies that seem to float over the bar line, in drum fills and in big-band ensemble hits.', he: 'שמיניות סווינג הן ברירת המחדל ברוב הג׳אז, מהביג בנד ועד הביבופ, ובשאפל של הבלוז. טריולות רבעים מופיעות במנגינות שנדמה שהן מרחפות מעל קו התיבה, במעברים של תופים ובמכות משותפות של ביג בנד.' },
         play: [R('sw:ee.qtrip.q', 116)],
         show: { text: { en: 'doo-ba  ³ta-ta-ta  ta', he: 'דו-בה  ³טה-טה-טה  טה' } },
       },
@@ -1131,7 +1131,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Beat Echo trains rhythmic memory: hearing a pattern once, holding it, and reproducing it in time. It is the old call and response of music teaching — the teacher plays, the student answers.', he: 'הד קצבי מאמן זיכרון קצבי: לשמוע דפוס פעם אחת, להחזיק אותו, ולשחזר אותו בזמן. זו הקריאה והתשובה הוותיקה של הוראת המוזיקה — המורה מנגן, התלמיד עונה.' },
+        say: { en: 'Beat Echo trains rhythmic memory: hearing a pattern once, holding it, and reproducing it in time. It is the old call and response of music teaching — the teacher plays, the student answers.', he: 'הד קצבי מאמן זיכרון קצבי: לשמוע דפוס פעם אחת, להחזיק אותו, ולשחזר אותו בזמן. זו השאלה והתשובה הוותיקה של הוראת המוזיקה — המורה מנגן, התלמיד עונה.' },
         show: { text: { en: 'call → response', he: 'קריאה ← תשובה' } },
       },
       {
@@ -1157,7 +1157,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'ti-ti ta | ti-ti ta | ta sh-ti', he: 'טי-טי טה | טי-טי טה | טה שְׁ-טי' } },
       },
       {
-        say: { en: 'Call and response runs through African drumming, gospel and the blues. Jazz musicians "trade fours", answering each other in four-bar solos, and many drum traditions are taught entirely by ear, phrase by phrase.', he: 'קריאה ותשובה עוברת דרך התיפוף האפריקאי, הגוספל והבלוז. נגני ג׳אז "מחליפים ארבע", עונים זה לזה בסולואים של ארבע תיבות, והרבה מסורות תיפוף נלמדות כולן בשמיעה, משפט אחר משפט.' },
+        say: { en: 'Call and response runs through African drumming, gospel and the blues. Jazz musicians "trade fours", answering each other in four-bar solos, and many drum traditions are taught entirely by ear, phrase by phrase.', he: 'שאלה ותשובה עוברת דרך התיפוף האפריקאי, הגוספל והבלוז. נגני ג׳אז "מחליפים ארבע", עונים זה לזה בסולואים של ארבע תיבות, והרבה מסורות תיפוף נלמדות כולן בשמיעה, משפט אחר משפט.' },
       },
       {
         say: { en: 'To keep: hear in beat-sized words, keep the pulse running, and never skip the silent beats.', he: 'לזכור: שומעים במילים בגודל של פעמה, שומרים על הדופק רץ, ואף פעם לא מדלגים על הפעמות השקטות.' },

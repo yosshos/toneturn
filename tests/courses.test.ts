@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courseInput, coursesFromProfile, inCourse, JAZZ_LADDER_FAMILIES, switchCourse, type CourseId } from '../src/engine/courses';
+import { courseInput, coursesFromProfile, inCourse, JAZZ_LADDER_FAMILIES, switchCourse, VOICE_SHARED_LESSONS, type CourseId } from '../src/engine/courses';
 import { eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { migrateSettings, DEFAULT_SETTINGS } from '../src/storage/progress';
 
@@ -36,6 +36,11 @@ describe('courses (SPEC-COURSES)', () => {
     for (const s of all) {
       if (s.topic === 'key-notes' && (s.level ?? 9) <= 3) {
         expect(inCourse(s, 'ear') && inCourse(s, 'keys'), s.id).toBe(true);
+        continue;
+      }
+      // Curriculum audit R3(a): the Ear lessons the voice course builds on are shared with it.
+      if (s.kind === 'lesson' && VOICE_SHARED_LESSONS.includes(s.lesson!)) {
+        expect(inCourse(s, 'ear') && inCourse(s, 'voice'), s.id).toBe(true);
         continue;
       }
       const instr = (['keys', 'guitar', 'bass'] as CourseId[]).some((c) => inCourse(s, c));

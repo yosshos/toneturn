@@ -23,7 +23,7 @@ export const EX = {
   ownMark: { en: 'yours', he: 'שלך' },
   // §7.5 — LH shells
   shells: { en: 'LH shells', he: 'שלדים ביד שמאל' },
-  shellsHint: { en: 'Root, 3rd and 7th under each chord.', he: 'יסוד, טרצה וספטימה מתחת לכל אקורד.' },
+  shellsHint: { en: 'Root, 3rd and 7th under each chord.', he: 'שורש, טרצה וספטימה מתחת לכל אקורד.' },
   band: { en: 'Band', he: 'להקה' },
   // §6.2 — synced notes
   syncNotes: { en: 'Sync the notes of starred takes', he: 'לסנכרן תווים של ניסיונות מסומנים' },

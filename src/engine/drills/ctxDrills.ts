@@ -121,16 +121,16 @@ export function ctxItem(kind: string, key: number, op: number): Item {
       return { chords: P(broIIVI(b)), what: 'line', name: t(`ii–V–I, the V as ${BROTHER_NAME[b].en}: line`, `ii–V–I, ה־V כ־${BROTHER_NAME[b].he}: קו`) };
     }
     case 'cx-bro-comp': {
-      if (op % 5 === 4) return { chords: P(DIM_BRO), what: 'dim', name: t('All four brothers as one diminished (7♭9 rootless)', 'ארבעת האחים כדימיניש אחד (7♭9 בלי יסוד)') };
+      if (op % 5 === 4) return { chords: P(DIM_BRO), what: 'dim', name: t('All four brothers as one diminished (7♭9 rootless)', 'ארבעת האחים כמוקטן אחד (7♭9 בלי שורש)') };
       const b = op % 5;
-      return { chords: P(broIIVI(b)), what: 'comp', name: t(`ii–V–I, the V as ${BROTHER_NAME[b].en}: rootless comping`, `ii–V–I, ה־V כ־${BROTHER_NAME[b].he}: ליווי בלי יסוד`) };
+      return { chords: P(broIIVI(b)), what: 'comp', name: t(`ii–V–I, the V as ${BROTHER_NAME[b].en}: rootless comping`, `ii–V–I, ה־V כ־${BROTHER_NAME[b].he}: ליווי בלי שורש`) };
     }
     case 'cx-bro-all':
       return op % 2 ? { chords: P(ALL_BRO), what: 'comp', name: t('All four brothers in turn: comping', 'ארבעת האחים בתורם: ליווי') } : { chords: P(ALL_BRO), what: 'line', name: t('All four brothers in turn: line', 'ארבעת האחים בתורם: קו') };
     case 'cx-bro-forms':
       return op % 2 ? { chords: P(BLUES_BRO), what: 'line', name: t('A blues with brothers: line', 'בלוז עם אחים: קו') } : { chords: P(TURN_BRO), what: 'line', name: t('Turnaround with brothers (I–♭III7–ii–♭II7): line', 'טרנאראונד עם אחים (I–♭III7–ii–♭II7): קו') };
     case 'cx-backdoor':
-      if (op % 3 === 0) return { chords: P(BACKDOOR), what: 'comp', name: t('Backdoor iv7–♭VII7–I: rootless comping', 'דלת אחורית iv7–♭VII7–I: ליווי בלי יסוד') };
+      if (op % 3 === 0) return { chords: P(BACKDOOR), what: 'comp', name: t('Backdoor iv7–♭VII7–I: rootless comping', 'דלת אחורית iv7–♭VII7–I: ליווי בלי שורש') };
       if (op % 3 === 1) return { chords: P(BACKDOOR), what: 'guide', name: t('Backdoor iv7–♭VII7–I: guide-tone line', 'דלת אחורית iv7–♭VII7–I: קו צלילים מנחים') };
       return { chords: P(BACKDOOR_LINE), what: 'line', name: t('Bebop line over ♭VII7 → I', 'קו ביבופ על ♭VII7 ← I') };
     case 'cx-tune':
@@ -161,7 +161,7 @@ export function ctxItem(kind: string, key: number, op: number): Item {
       if (op % 3 === 2) return { chords: P(TAG), what: 'comp', name: t('Tag ending: iii–VI–ii–V three times', 'סיום תג: iii–VI–ii–V שלוש פעמים') };
       return { chords: P(BASIE), what: 'basie', name: t('The Basie ending: a three-note tag, then the last hit', 'סיום בייסי: תג של שלושה צלילים, ואז המכה האחרונה') };
     case 'cx-ballad':
-      return op % 2 ? { chords: P(BALLAD2), what: 'ballad2', name: t('Ballad comping: LH shells, RH four notes', 'ליווי בלדה: קונכיות ביד שמאל, ארבעה צלילים בימין') } : { chords: P(BALLAD), what: 'ballad', name: t('Ballad comping: LH 10ths, RH four notes', 'ליווי בלדה: דצימות ביד שמאל, ארבעה צלילים בימין') };
+      return op % 2 ? { chords: P(BALLAD2), what: 'ballad2', name: t('Ballad comping: LH shells, RH four notes', 'ליווי בלדה: שלדים ביד שמאל, ארבעה צלילים בימין') } : { chords: P(BALLAD), what: 'ballad', name: t('Ballad comping: LH 10ths, RH four notes', 'ליווי בלדה: דצימות ביד שמאל, ארבעה צלילים בימין') };
     case 'cx-walk':
       switch (op % 8) {
         case 4:
@@ -524,7 +524,7 @@ export function keysCtxFamily(): FamilyDef {
     levels: [
       JT(1, 'The brothers: arpeggio, then a half step into I', 'האחים: ארפג׳יו, ואז חצי טון אל I', vs('cx-bro', [0, 1, 2, 3]), [60, 120]),
       JT(2, 'A brother replaces the V: lines', 'אח מחליף את ה־V: קווים', vs('cx-bro-line', [0, 1, 2, 3]), [70, 140]),
-      JT(3, 'A brother replaces the V: rootless comping', 'אח מחליף את ה־V: ליווי בלי יסוד', vs('cx-bro-comp', [0, 1, 2, 3, 4], { hands: 'L' }), [60, 120]),
+      JT(3, 'A brother replaces the V: rootless comping', 'אח מחליף את ה־V: ליווי בלי שורש', vs('cx-bro-comp', [0, 1, 2, 3, 4], { hands: 'L' }), [60, 120]),
       JT(4, 'All four brothers in turn', 'ארבעת האחים בתורם', [v('cx-bro-all', 0), v('cx-bro-all', 1, { hands: 'L' })], [70, 140]),
       JT(5, 'Brothers in a turnaround and a blues', 'אחים בטרנאראונד ובבלוז', vs('cx-bro-forms', [0, 1]), [80, 150]),
       JT(6, 'The backdoor: comping, guide tones, a bebop line', 'הדלת האחורית: ליווי, צלילים מנחים, קו ביבופ', [v('cx-backdoor', 0, { hands: 'L' }), v('cx-backdoor', 1), v('cx-backdoor', 2)], [60, 130]),

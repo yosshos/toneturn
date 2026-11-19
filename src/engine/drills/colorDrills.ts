@@ -406,7 +406,7 @@ function genMediant(s: DrillSpec): Drill {
       const steps: [number, CtQ][] = [[0, 'maj7'], [8, 'maj7#5'], [4, 'maj7'], [8, 'maj7#5'], [0, 'maj7']];
       const ccs: CC[] = steps.map(([d, q]) => ({ root: mod12(key + d), q, beats: 4, name: spellHeld(key + d, q, key + 4, fl)!.sym, top: H }));
       const held = rootName(key + 4, fl);
-      return comp(s, ccs, { title: t(`The Coltrane link: ${held} held — the 3rd of ${ccs[0].name}, the ♯5 of ${ccs[1].name}, the root of ${ccs[2].name}`, `החיבור לקולטריין: ${held} נשאר — הטרצה של ${ccs[0].name}, ה־♯5 של ${ccs[1].name}, היסוד של ${ccs[2].name}`), keySig: SIG[key] });
+      return comp(s, ccs, { title: t(`The Coltrane link: ${held} held — the 3rd of ${ccs[0].name}, the ♯5 of ${ccs[1].name}, the root of ${ccs[2].name}`, `החיבור לקולטריין: ${held} נשאר — הטרצה של ${ccs[0].name}, ה־♯5 של ${ccs[1].name}, השורש של ${ccs[2].name}`), keySig: SIG[key] });
     }
     case 'md-dbl': {
       // Doubly chromatic pairs: C – A♭m – C – E♭m – C, no tone in common (every voice moves).
@@ -708,7 +708,7 @@ export function genColor(s: DrillSpec): Drill {
 type Row = { kind: string; ops: number[]; rating: number; en: string; he: string; tempo?: [number, number]; hands?: 'R' | 'RL' };
 const T60: [number, number] = [60, 100];
 export const CT_ROWS: Row[] = [
-  { kind: 'ct-tri', ops: [0, 1], rating: 1050, en: 'One note, six triads: root, 3rd, 5th', he: 'צליל אחד, שישה משולשים: יסוד, טרצה, קווינטה' },
+  { kind: 'ct-tri', ops: [0, 1], rating: 1050, en: 'One note, six triads: root, 3rd, 5th', he: 'צליל אחד, שישה משולשים: שורש, טרצה, קווינטה' },
   { kind: 'ct-sev', ops: [0, 1], rating: 1200, en: 'One note, seven 7th chords', he: 'צליל אחד, שבעה ספטאקורדים' },
   { kind: 'ct-drop2', ops: [0, 1], rating: 1350, en: 'Drop 2 with the note on top, voice-led', he: 'דרופ 2 עם הצליל למעלה, בהובלת קולות' },
   { kind: 'ct-tens', ops: [0, 1], rating: 1500, en: 'The note as a tension: 9, 11, 13, ♭9, ♯11, ♭13, ♯9', he: 'הצליל כטנשן: 9, 11, 13, ♭9, ♯11, ♭13, ♯9' },
@@ -1195,10 +1195,10 @@ export function guitarColorFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
 
 /** The bass rows (b-counter 1–10). */
 export const BC_ROWS: { kind: string; ops: number[]; rating: number; en: string; he: string; tempo: [number, number]; sub: string }[] = [
-  { kind: 'bc-ctroots', ops: [0], rating: 1100, en: 'Roots under one held note', he: 'יסודות מתחת לצליל אחד שנשאר', tempo: [60, 100], sub: 'halves' },
-  { kind: 'bc-mi', ops: [0, 1], rating: 1120, en: 'Roots of borrowed chords: iv, ♭VI, ♭VII', he: 'יסודות של אקורדים שאולים: iv, ♭VI, ♭VII', tempo: [60, 100], sub: 'halves' },
+  { kind: 'bc-ctroots', ops: [0], rating: 1100, en: 'Roots under one held note', he: 'שורשים מתחת לצליל אחד שנשאר', tempo: [60, 100], sub: 'halves' },
+  { kind: 'bc-mi', ops: [0, 1], rating: 1120, en: 'Roots of borrowed chords: iv, ♭VI, ♭VII', he: 'שורשים של אקורדים שאולים: iv, ♭VI, ♭VII', tempo: [60, 100], sub: 'halves' },
   { kind: 'bc-pedal', ops: [0, 1], rating: 1150, en: 'Hold the pedal: the tonic under moving chords', he: 'להחזיק את הפדל: הטוניקה מתחת לאקורדים שזזים', tempo: [60, 100], sub: 'whole and half notes' },
-  { kind: 'bc-thirds', ops: [0, 1], rating: 1250, en: 'Roots by thirds: chromatic mediants', he: 'יסודות בטרצות: מדיאנטות כרומטיות', tempo: [60, 100], sub: 'halves' },
+  { kind: 'bc-thirds', ops: [0, 1], rating: 1250, en: 'Roots by thirds: chromatic mediants', he: 'שורשים בטרצות: מדיאנטות כרומטיות', tempo: [60, 100], sub: 'halves' },
   { kind: 'bc-dompedal', ops: [0], rating: 1350, en: 'The dominant pedal into the tonic', he: 'פדל הדומיננטה אל הטוניקה', tempo: [60, 110], sub: 'quarters' },
   { kind: 'bc-plagal', ops: [0], rating: 1450, en: 'Walk the minor plagal endings', he: 'ווקינג על הסיומים הפלגליים המינוריים', tempo: [70, 140], sub: 'quarters' },
   { kind: 'bc-counter', ops: [0, 1], rating: 1500, en: 'The counter-line: your note renames the chord', he: 'הקו הנגדי: הצליל שלכם נותן לאקורד שם חדש', tempo: [60, 100], sub: 'halves' },
@@ -1234,11 +1234,11 @@ export function genBassCounter(s0: DrillSpec, tu: Tuning): Drill {
     case 'bc-ctroots': {
       const ch = LADDER.triads.map(([iv, q]) => spellHeld(heldOf(key) - iv, q, heldOf(key), fl)!);
       const ds = ch.map((c) => mod12(c.root - key));
-      return halves([...ds, ds[0]], [`${ch[0].sym} ${ch[1].sym}`, `${ch[2].sym} ${ch[3].sym}`, `${ch[4].sym} ${ch[5].sym}`, ch[0].sym], `Roots under a held ${heldName(key)}: ${ch.map((c) => c.sym).join(', ')}`, `יסודות מתחת ל־${heldName(key)}: ${ch.map((c) => c.sym).join(', ')}`);
+      return halves([...ds, ds[0]], [`${ch[0].sym} ${ch[1].sym}`, `${ch[2].sym} ${ch[3].sym}`, `${ch[4].sym} ${ch[5].sym}`, ch[0].sym], `Roots under a held ${heldName(key)}: ${ch.map((c) => c.sym).join(', ')}`, `שורשים מתחת ל־${heldName(key)}: ${ch.map((c) => c.sym).join(', ')}`);
     }
     case 'bc-mi': {
-      if (op === 1) return halves([8, 10, 0, 0, 8, 10, 0, 0], [`${N(8)} ${N(10)}`, N(0), `${N(8)} ${N(10)}`, N(0)], `♭VI – ♭VII – I roots in ${kn}`, `יסודות ♭VI – ♭VII – I ב־${kn}`);
-      return halves([0, 0, 5, 5, 5, 5, 0, 0], [N(0), N(5), `${N(5)}m6`, N(0)], `I – IV – iv – I roots in ${kn}: the bass stays, the chord darkens`, `יסודות I – IV – iv – I ב־${kn}: הבס נשאר, האקורד מחשיך`);
+      if (op === 1) return halves([8, 10, 0, 0, 8, 10, 0, 0], [`${N(8)} ${N(10)}`, N(0), `${N(8)} ${N(10)}`, N(0)], `♭VI – ♭VII – I roots in ${kn}`, `שורשים ♭VI – ♭VII – I ב־${kn}`);
+      return halves([0, 0, 5, 5, 5, 5, 0, 0], [N(0), N(5), `${N(5)}m6`, N(0)], `I – IV – iv – I roots in ${kn}: the bass stays, the chord darkens`, `שורשים I – IV – iv – I ב־${kn}: הבס נשאר, האקורד מחשיך`);
     }
     case 'bc-pedal': {
       const r = R(key);
@@ -1258,7 +1258,7 @@ export function genBassCounter(s0: DrillSpec, tu: Tuning): Drill {
         line.push({ b: i * 2, d: 2, p, ct: true });
       });
       const names = ds.map((d) => N(d));
-      return drillOf(s, tu, alt(line), { en: `Roots by ${op === 1 ? 'minor' : 'major'} 3rds: ${names.join(' – ')}`, he: `יסודות ב${op === 1 ? 'טרצות קטנות' : 'טרצות גדולות'}: ${names.join(' – ')}`, chart: chartOfAt(names, ds.map((_, i) => i * 2)), evenness: false, keySig: SIG[key] });
+      return drillOf(s, tu, alt(line), { en: `Roots by ${op === 1 ? 'minor' : 'major'} 3rds: ${names.join(' – ')}`, he: `שורשים ב${op === 1 ? 'טרצות קטנות' : 'טרצות גדולות'}: ${names.join(' – ')}`, chart: chartOfAt(names, ds.map((_, i) => i * 2)), evenness: false, keySig: SIG[key] });
     }
     case 'bc-dompedal': {
       const g = R(key + 7);

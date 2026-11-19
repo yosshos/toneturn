@@ -1029,7 +1029,7 @@ function genArps(s: DrillSpec, tu: Tuning): Drill {
     case 'triad': {
       const rs = s.position === 5 ? 5 : 6;
       line = upDown(arpUnderHand(tu, key, s.minor ? [0, 3, 7] : [0, 4, 7], rs));
-      title = t(`Triad arpeggio, root on string ${rs} · ${kn(s)}`, `ארפג׳יו משולש, יסוד על מיתר ${rs} · ${kn(s)}`);
+      title = t(`Triad arpeggio, root on string ${rs} · ${kn(s)}`, `ארפג׳יו משולש, שורש על מיתר ${rs} · ${kn(s)}`);
       break;
     }
     case 'caged-arp': {
@@ -1060,7 +1060,7 @@ function genArps(s: DrillSpec, tu: Tuning): Drill {
       const rs = s.position === 5 ? 5 : 6;
       const under = arpUnderHand(tu, key, k.ints, rs);
       line = upDown(k.ints.length > 4 ? under.slice(0, k.ints.length) : under);
-      title = t(`${NAMES[key]}${k.name} arpeggio, root on string ${rs}`, `ארפג׳יו ${NAMES[key]}${k.name}, יסוד על מיתר ${rs}`);
+      title = t(`${NAMES[key]}${k.name} arpeggio, root on string ${rs}`, `ארפג׳יו ${NAMES[key]}${k.name}, שורש על מיתר ${rs}`);
       break;
     }
     case 'iivi-arp': {
@@ -1339,7 +1339,7 @@ export const GROOVES: Record<string, Groove> = {
   ska: { genre: 'reggae', en: 'Ska upstrokes on the off-beats', he: 'סקא: פריטות למעלה על ה"וְ"', hits: [[2, 'U', 1], [6, 'U', 1], [10, 'U', 1], [14, 'U', 1]], len16: 16, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']] },
   'boom-chick': { genre: 'country', en: 'Country boom-chick (bass – strum – alt bass – strum)', he: 'קאנטרי בּוּם-צִ׳יק (בס – פריטה – בס מתחלף – פריטה)', hits: fromString('B...D...b...D...'), len16: 16, prog: [[0, 'M'], [5, 'M'], [7, 'M'], [0, 'M']] },
   bossa: { genre: 'latin', en: 'Bossa nova (thumb bass + chord plucks)', he: 'בוסה נובה (בס באגודל + צביטות אקורד)', hits: [[0, 'B'], [0, 'C'], [6, 'C'], [8, 'b'], [12, 'C'], [16, 'B'], [20, 'C'], [24, 'b'], [26, 'C']], len16: 32, prog: [[2, 'm7'], [7, '7'], [0, 'maj7'], [0, 'maj7']], shells: true },
-  freddie: { genre: 'jazz', en: 'Four to the bar (Freddie Green), short shells', he: 'ארבע לתיבה (פרדי גרין), קונכיות קצרות', hits: [[0, 'S', 2], [4, 'S', 2], [8, 'S', 2], [12, 'S', 2]], len16: 16, prog: [[2, 'm7'], [7, '7'], [0, 'maj7'], [0, 'maj7']], shells: true },
+  freddie: { genre: 'jazz', en: 'Four to the bar (Freddie Green), short shells', he: 'ארבע לתיבה (פרדי גרין), שלדים קצרים', hits: [[0, 'S', 2], [4, 'S', 2], [8, 'S', 2], [12, 'S', 2]], len16: 16, prog: [[2, 'm7'], [7, '7'], [0, 'maj7'], [0, 'maj7']], shells: true },
   gallop: { genre: 'metal', en: 'Metal gallop (8th + two 16ths), palm-muted, drop D', he: 'גאלופ מטאל (שמינית + שתי שש-עשריות), מושתק, Drop D', hits: fromString('M.MMM.MMM.MMM.MM'), len16: 16, prog: [[0, '5'], [8, '5'], [10, '5'], [0, '5']], tuning: 'drop-d' },
   shuffle: { genre: 'blues', en: 'Blues shuffle 5–6 (12 bars, swung)', he: 'שאפל בלוז 5–6 (12 תיבות, סווינג)', hits: [], len16: 16, prog: [], swing: true },
   waltz: { genre: 'pop', en: 'Waltz strum in 3/4 (D, DU, DU)', he: 'פריטת ואלס ב-3/4 (D, DU, DU)', hits: fromString('D...D.U.D.U.'), len16: 12, meter: 3, prog: [[0, 'M'], [7, 'M'], [5, 'M'], [0, 'M']] },
@@ -1885,7 +1885,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
         return v;
       });
       chordBars(vs, 4);
-      title = t(`Shell voicings ii–V–I, root on ${first}, four to the bar · ${NAMES[key]}`, `קונכיות ii–V–I, יסוד על ${first}, ארבע לתיבה · ${NAMES[key]}`);
+      title = t(`Shell voicings ii–V–I, root on ${first}, four to the bar · ${NAMES[key]}`, `שלדים ii–V–I, שורש על ${first}, ארבע לתיבה · ${NAMES[key]}`);
       break;
     }
     case 'drop2': {
@@ -1941,7 +1941,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
         return ms.map((m, j) => ({ s: ss[j], f: m - tu.open[ss[j] - 1] }));
       });
       chordBars(vs, 2);
-      title = t(`ii–V–I in drop-3 voicings (root on 6 and 5) · ${NAMES[key]}`, `ii–V–I בקולות דרופ 3 (יסוד על 6 ו-5) · ${NAMES[key]}`);
+      title = t(`ii–V–I in drop-3 voicings (root on 6 and 5) · ${NAMES[key]}`, `ii–V–I בקולות דרופ 3 (שורש על 6 ו-5) · ${NAMES[key]}`);
       break;
     }
     case 'guide-tones': {
@@ -1970,7 +1970,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'walking': {
       bassWalk(tu, key, evs, [6, 5, 4], 40);
-      title = t(`Walking bass on guitar, ii–V–I · ${NAMES[key]}`, `בס מהלך על גיטרה, ii–V–I · ${NAMES[key]}`);
+      title = t(`Walking bass on guitar, ii–V–I · ${NAMES[key]}`, `ווקינג בס על גיטרה, ii–V–I · ${NAMES[key]}`);
       return finish(s, tu, evs, { title, bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     case 'comp': {
@@ -1990,7 +1990,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
           hit(bar * 4 + 1.5, 2.5, v);
         }
       });
-      title = antic ? t(`Comping with anticipations (the "and" of 4), shells ii–V–I · ${NAMES[key]}`, `ליווי עם הקדמות (ה"וְ" של 4), קונכיות ii–V–I · ${NAMES[key]}`) : t(`Charleston comping, shells ii–V–I · ${NAMES[key]}`, `ליווי צ׳רלסטון, קונכיות ii–V–I · ${NAMES[key]}`);
+      title = antic ? t(`Comping with anticipations (the "and" of 4), shells ii–V–I · ${NAMES[key]}`, `ליווי עם הקדמות (ה"וְ" של 4), שלדים ii–V–I · ${NAMES[key]}`) : t(`Charleston comping, shells ii–V–I · ${NAMES[key]}`, `ליווי צ׳רלסטון, שלדים ii–V–I · ${NAMES[key]}`);
       return finish(s, tu, evs, { title, bpm: 100, evenness: true });
     }
     case 'octaves': {
@@ -2187,7 +2187,7 @@ function genImpro(s: DrillSpec, tu: Tuning): Drill {
     }
   });
   const nm: Record<string, T2> = {
-    'targets-root': t('roots on beat 1', 'יסודות על פעמה 1'),
+    'targets-root': t('roots on beat 1', 'שורשים על פעמה 1'),
     'targets-third': s.option ? t('3rds on beat 1 (the 3rd of each chord)', 'טרצות על פעמה 1 (הטרצה של כל אקורד)') : t('3rds on beat 1 (major 3rd over each 7th chord)', 'טרצות על פעמה 1 (טרצה גדולה של כל אקורד)'),
     'targets-arp': t('chord-tone arpeggio every bar', 'ארפג׳יו צלילי אקורד בכל תיבה'),
     'targets-guide': t('guide tones (3rd → 7th)', 'צלילים מנחים (טרצה ← ספטימה)'),
@@ -2259,9 +2259,9 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
       });
       evs.push({ beat: 16, dur: 1, notes: [at(rootP(key))] });
       const nm = [
-        t('Rock root 8ths (I–♭VII–IV–I)', 'שמיניות יסוד ברוק (I–♭VII–IV–I)'),
+        t('Rock root 8ths (I–♭VII–IV–I)', 'שמיניות שורש ברוק (I–♭VII–IV–I)'),
         t('Motown groove: R-5-6-8 and a chromatic approach (I–vi–IV–V)', 'גרוב מוטאון: R-5-6-8 וגישה כרומטית (I–vi–IV–V)'),
-        t('Latin tumbao: the 5th on 2-and, the next root anticipated on 4', 'טומבאו לטיני: הקווינטה על 2-וְ, היסוד הבא מוקדם על 4'),
+        t('Latin tumbao: the 5th on 2-and, the next root anticipated on 4', 'טומבאו לטיני: הקווינטה על 2-וְ, השורש הבא מוקדם על 4'),
       ][op];
       return finish(s, tu, evs, { title: t(`${nm.en} · ${NAMES[key]}`, `${nm.he} · ${NAMES[key]}`), bpm: op === 2 ? 90 : 80, evenness: true });
     }
@@ -2278,7 +2278,7 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
         ];
         gns.push(...pat, ...pat);
       }
-      title = t(`Root–5th–octave groove, I–IV–V–I · ${NAMES[key]}`, `גרוב יסוד–קווינטה–אוקטבה, I–IV–V–I · ${NAMES[key]}`);
+      title = t(`Root–5th–octave groove, I–IV–V–I · ${NAMES[key]}`, `גרוב שורש–קווינטה–אוקטבה, I–IV–V–I · ${NAMES[key]}`);
       break;
     }
     case 'arp': {
@@ -2330,7 +2330,7 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
       });
       evs.push({ beat: 16, dur: 1, notes: [{ s: nStr, f: lowFret(tu, key, nStr), stroke: slap ? 'p' : 'i' }] });
       return finish(s, tu, evs, {
-        title: slap && s.option === 1 ? t(`Slap: thumb, hammer-on, pop octave and ♭7 · ${NAMES[key]}`, `סלאפ: אגודל, הקשה, פופ באוקטבה וב-♭7 · ${NAMES[key]}`) : slap ? t(`Slap groove: thumb root, pop octave, ghost notes · ${NAMES[key]}`, `גרוב סלאפ: אגודל ביסוד, פופ באוקטבה, צלילי רפאים · ${NAMES[key]}`) : t(`16th groove with ghost (dead) notes · ${NAMES[key]}`, `גרוב בשש-עשריות עם צלילי רפאים · ${NAMES[key]}`),
+        title: slap && s.option === 1 ? t(`Slap: thumb, hammer-on, pop octave and ♭7 · ${NAMES[key]}`, `סלאפ: אגודל, הקשה, פופ באוקטבה וב-♭7 · ${NAMES[key]}`) : slap ? t(`Slap groove: thumb root, pop octave, ghost notes · ${NAMES[key]}`, `גרוב סלאפ: אגודל בשורש, פופ באוקטבה, צלילי רפאים · ${NAMES[key]}`) : t(`16th groove with ghost (dead) notes · ${NAMES[key]}`, `גרוב בשש-עשריות עם צלילי רפאים · ${NAMES[key]}`),
         bpm: 80,
         evenness: true,
       });
@@ -2353,12 +2353,12 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
       });
       const end = place(tu, rootP(key), [nStr, nStr - 1], 0, 7)!;
       evs.push({ beat, dur: 2, notes: [{ ...end, ct: true, stroke: 'i' }] });
-      return finish(s, tu, evs, { title: t(`Walking bass, 12-bar blues · ${NAMES[key]}`, `בס מהלך, בלוז 12 תיבות · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Walking bass, 12-bar blues · ${NAMES[key]}`, `ווקינג בס, בלוז 12 תיבות · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     case 'walking': {
       const evs: Ev[] = [];
       bassWalk(tu, key, evs, [4, 3, 2], 28);
-      return finish(s, tu, evs, { title: t(`Walking bass ii–V–I · ${NAMES[key]}`, `בס מהלך ii–V–I · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Walking bass ii–V–I · ${NAMES[key]}`, `ווקינג בס ii–V–I · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     default:
       throw new Error(`Unknown bass kind ${s.kind}`);
@@ -2571,16 +2571,16 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-scales', 15, 'Lydian, Phrygian and melodic minor in position', 'לידי, פריגי ומינור מלודי במצב', [S('mode', { option: 3 }), S('mode', { option: 2 }), S('mode', { option: 8 })], 'major'),
     ]),
     fam('g-arps', 'Arpeggios', 'ארפג׳יו', 'classical', ['all'], [
-      L('g-arps', 1, 'Major and minor triads, root on 6 and 5', 'משולשים מז׳ור ומינור, יסוד על 6 ו-5', [A('triad', { position: 6 }), A('triad', { position: 5 }), A('triad', { position: 6, minor: true }), A('triad', { position: 5, minor: true })], 'major'),
+      L('g-arps', 1, 'Major and minor triads, root on 6 and 5', 'משולשים מז׳ור ומינור, שורש על 6 ו-5', [A('triad', { position: 6 }), A('triad', { position: 5 }), A('triad', { position: 6, minor: true }), A('triad', { position: 5, minor: true })], 'major'),
       L('g-arps', 2, 'Triads in the 5 CAGED shapes', 'משולשים ב-5 צורות CAGED', range(5).map((p) => A('caged-arp', { position: p })), 'major'),
       L('g-arps', 3, 'Triad inversions on string sets', 'היפוכי משולש על קבוצות מיתרים', range(4).map((p) => A('inversions', { position: p })), 'major'),
-      L('g-arps', 4, '7th arpeggios, root on 6 and 5', 'ארפג׳יו ספטאקורד, יסוד על 6 ו-5', [0, 1, 2, 3].flatMap((o) => [A('seventh', { option: o, position: 6 }), A('seventh', { option: o, position: 5 })]), CYC4),
+      L('g-arps', 4, '7th arpeggios, root on 6 and 5', 'ארפג׳יו ספטאקורד, שורש על 6 ו-5', [0, 1, 2, 3].flatMap((o) => [A('seventh', { option: o, position: 6 }), A('seventh', { option: o, position: 5 })]), CYC4),
       L('g-arps', 5, 'Diminished 7th, altered-dominant and ii–V–I arpeggios', 'ארפג׳יו מוקטן, דומיננטה אלטרד ו-ii–V–I', [A('seventh', { option: 4, position: 6 }), A('iivi-arp'), A('seventh', { option: 4, position: 5 }), ...[5, 6, 7, 8].map((o) => A('seventh', { option: o, position: 6 })), A('seventh', { option: 7, position: 5 }), A('seventh', { option: 8, position: 5 })], CYC4, ['jazz', 'rock', 'blues']),
     ]),
     fam('g-chords', 'Chords and changes', 'אקורדים והחלפות', 'classical', ['all'], [
       L('g-chords', 1, 'Open chords: every string rings', 'אקורדים פתוחים: כל מיתר מצלצל', range(8).map((o) => C('chord-check', { option: o })), [0]),
       L('g-chords', 2, 'One-minute changes (1 strum per bar)', 'החלפות בדקה (פריטה אחת לתיבה)', range(10).map((o) => C('one-minute', { option: o, perBeat: 0.25 })), [0]),
-      L('g-chords', 3, 'Faster changes; 7th, sus and add9 chords', 'החלפות מהירות; אקורדי ספטימה, sus ו-add9', [...range(5).map((o) => C('one-minute', { option: o, perBeat: 0.5 })), ...range(11).map((o) => C('chord-check', { option: o, position: 7 })), ...range(6).map((o) => C('chord-check', { option: o, position: 4 }))], [0]),
+      L('g-chords', 3, 'Faster changes; 7th, sus and add9 chords', 'החלפות מהירות; ספטאקורדים, sus ו-add9', [...range(5).map((o) => C('one-minute', { option: o, perBeat: 0.5 })), ...range(11).map((o) => C('chord-check', { option: o, position: 7 })), ...range(6).map((o) => C('chord-check', { option: o, position: 4 }))], [0]),
       L('g-chords', 4, 'Power chords, palm-muted', 'אקורדי פאוור, מושתקים', [C('power')], [4, 9, 7, 2, 0, 5], ['rock', 'metal', 'blues', 'pop']),
       L('g-chords', 5, 'Barre chords (E and A shapes, major and minor)', 'אקורדי ברה (צורות E ו-A, מז׳ור ומינור)', [C('barre-check', { position: 6 }), C('barre-check', { position: 5 }), C('barre-check', { position: 6, minor: true }), C('barre-check', { position: 5, minor: true }), ...[0, 1, 2].flatMap((o) => [C('barre-check', { position: 6, option: o }), C('barre-check', { position: 5, option: o })])], [5, 7, 9, 10, 0, 2]),
       L('g-chords', 6, 'Barre changes and triad inversions', 'החלפות ברה והיפוכי משולש', [C('barre-changes'), C('triad-inv'), C('triad-inv', { minor: true })], GKEYS_MAJOR),
@@ -2620,19 +2620,19 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-flamenco', 5, 'Compás: soleá, bulería, seguiriya, rumba', 'קומפאס: סולאה, בולריאה, סגיריה, רומבה', [FL('compas'), FL('compas', { option: 1 }), FL('compas', { option: 2 }), FL('compas', { option: 3 })], [4, 9]),
     ]),
     fam('g-jazz', 'Jazz guitar', 'גיטרת ג׳אז', 'jazz', ['jazz', 'latin'], [
-      L('g-jazz', 1, 'Shell voicings ii–V–I, four to the bar and comping rhythms', 'קונכיות ii–V–I, ארבע לתיבה ומקצבי ליווי', [J('shells', { option: 0 }), J('shells', { option: 1 }), J('comp', { option: 0, swing: true }), J('comp', { option: 1, swing: true })], CYC4),
+      L('g-jazz', 1, 'Shell voicings ii–V–I, four to the bar and comping rhythms', 'שלדים ii–V–I, ארבע לתיבה ומקצבי ליווי', [J('shells', { option: 0 }), J('shells', { option: 1 }), J('comp', { option: 0, swing: true }), J('comp', { option: 1, swing: true })], CYC4),
       L('g-jazz', 2, 'Drop-2 inversions (maj7, 7, m7, m7♭5) on three string sets', 'היפוכי דרופ 2 (maj7, 7, m7, m7♭5) על שלוש קבוצות מיתרים', [...range(4).map((o) => J('drop2', { option: o })), ...range(4).flatMap((o) => [J('drop2', { option: o, position: 1 }), J('drop2', { option: o, position: 2 })])], CYC4),
       L('g-jazz', 3, 'Drop-3 ii–V–I', 'ii–V–I בדרופ 3', [J('drop3')], CYC4),
       L('g-jazz', 4, 'Drop-2 ii–V–I, voice-led', 'ii–V–I בדרופ 2, הובלת קולות', [J('iivi-drop2')], CYC4),
       L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מנחים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
-      L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
+      L('g-jazz', 6, 'Walking bass on guitar', 'ווקינג בס על גיטרה', [J('walking')], CYC4),
       L('g-jazz', 7, 'Harmonized scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
       // GUITAR_DEEPENING §4.2: jazz for the niche.
-      LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: קונכיות ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
+      LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: שלדים ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
       LT('g-jazz', 9, 'Voice leading by ear and by hand: guide tones, then drop-2 by step', 'הובלת קולות בשמיעה וביד: צלילים מנחים, ואז דרופ 2 בצעדים', [J('vl-ear', { option: 0 }), J('vl-ear', { option: 1 })], CYC4, [70, 100], 'halves', 7),
       LT('g-jazz', 10, 'Chord melody: our melody on top of drop-2 voicings', 'אקורד-מלודיה: המנגינה שלנו מעל קולות דרופ 2', range(4).map((o) => J('chord-melody', { option: o })), CYC4.slice(0, 6), [60, 90], 'halves', 8),
-      LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: קונכיות ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
-      LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: בס מהלך עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
+      LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: שלדים ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
+      LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: ווקינג בס עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
       // GUITAR_DEEPENING P2: comp a whole standard's chart, in its own key, each at its own tempo (the repertoire's guitar standards).
       LT('g-jazz', 13, 'Comp a whole standard: the full chart with the band', 'ליווי סטנדרט שלם: כל דף האקורדים עם הלהקה', GUITAR_STD.map((x) => {
         const [a, b] = guitarStdTempo(x.id);
@@ -2643,16 +2643,16 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // keys: a blues head, shells four to the bar, guide tones, the Charleston (guitarJazzStart.ts).
     fam('g-jblues', 'Jazz on the blues', 'ג׳אז על הבלוז', 'jazz', ['jazz', 'blues'], [
       LT('g-jblues', 1, 'A blues head: the riff, the riff over IV, the answer', 'נושא בלוז: הריף, הריף על IV, התשובה', [JB('blues-head')], CYC4, [70, 120], 'quarters', 1),
-      LT('g-jblues', 2, 'Shells on a blues, four to the bar', 'קונכיות על בלוז, ארבע לתיבה', [JB('blues-shells')], CYC4, [70, 130], 'quarters', 2),
+      LT('g-jblues', 2, 'Shells on a blues, four to the bar', 'שלדים על בלוז, ארבע לתיבה', [JB('blues-shells')], CYC4, [70, 130], 'quarters', 2),
       LT('g-jblues', 3, 'Guide tones on a blues: 3rds and 7ths', 'צלילים מנחים על בלוז: טרצות וספטימות', [JB('blues-guide', { option: 0 }), JB('blues-guide', { option: 1 })], CYC4, [60, 110], 'halves', 2),
       LT('g-jblues', 4, 'Comping on a blues: the Charleston', 'ליווי על בלוז: צ׳רלסטון', [JB('blues-comp', { swing: true })], CYC4, [80, 140], 'Charleston', 3),
     ]),
     // THEORY_PLAY (TP-1…TP-5): theory you play on the neck — rootless on two string sets, So What, Giant Steps, upper
     // structures, triad pairs, pentatonic / triad-pair lines, line clichés (the jazz add-on).
     fam('g-theory', 'Theory you play', 'תאוריה בביצוע', 'jazz', ['jazz'], [
-      LT('g-theory', 1, 'Rootless voicings on strings 5–2 and 4–1: ii–V–I, major and minor', 'קולות בלי יסוד על מיתרים 5–2 ו־4–1: ii–V–I, מז׳ור ומינור', range(4).map((o) => TG('tp-rootless', { option: o, swing: true })), CYC4, [70, 120], 'halves', 8),
+      LT('g-theory', 1, 'Rootless voicings on strings 5–2 and 4–1: ii–V–I, major and minor', 'קולות בלי שורש על מיתרים 5–2 ו־4–1: ii–V–I, מז׳ור ומינור', range(4).map((o) => TG('tp-rootless', { option: o, swing: true })), CYC4, [70, 120], 'halves', 8),
       LT('g-theory', 2, 'Quartal voicings: So What and 4ths up the dorian scale', 'קולות קוורטליים: So What וקוורטות בסולם הדורי', [TG('tp-quartal', { option: 0, swing: true }), TG('tp-quartal', { option: 1 })], [2, 9, 4, 7, 0, 5], [80, 140], 'halves', 8),
-      LT('g-theory', 3, 'Giant Steps, bars 1–8: shells and drop-2', 'Giant Steps, תיבות 1–8: קונכיות ודרופ 2', [TG('tp-giant', { option: 0, swing: true }), TG('tp-giant', { option: 1, swing: true })], [0, 5, 10], [60, 140], 'halves', 9),
+      LT('g-theory', 3, 'Giant Steps, bars 1–8: shells and drop-2', 'Giant Steps, תיבות 1–8: שלדים ודרופ 2', [TG('tp-giant', { option: 0, swing: true }), TG('tp-giant', { option: 1, swing: true })], [0, 5, 10], [60, 140], 'halves', 9),
       LT('g-theory', 4, 'Upper structures: guide tones, then the triad on strings 3–1', 'מבנים עליונים: צלילים מנחים, ואז המשולש על מיתרים 3–1', range(3).map((o) => TG('tp-ust', { option: o, swing: true })), CYC4, [70, 120], 'Charleston', 8),
       LT('g-theory', 5, 'Triad pairs in inversions on strings 3–1', 'זוגות משולשים בהיפוכים על מיתרים 3–1', range(5).map((o) => TG('tp-pairs', { option: o })), CYC4, [60, 110], 'quarters', 8),
       LT('g-theory', 6, 'Pentatonic superimposition and triad-pair lines over a vamp', 'פנטטוני מוסט וקווי זוגות משולשים מעל וואמפ', range(6).map((o) => TG('tp-lines', { option: o, swing: true })), CYC4, [70, 140], 'swing 8ths', 9),
@@ -2701,19 +2701,19 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       LT('g-ear', 3, 'Melodic recall: two bars over the drums', 'זיכרון מלודי: שתי תיבות מעל התופים', range(4).map((o) => GE('melodic2', { option: o })), GKEYS_MAJOR, [80, 90], 'quarters / 8ths', 4),
       LT('g-ear', 4, 'Rhythm recall on muted strings', 'זיכרון מקצב על מיתרים מושתקים', [GE('rhythm', { option: 0 }), GE('rhythm', { option: 1 })], [7, 0, 2, 9, 4], [80, 100], '8ths / 16ths', 3),
       LT('g-ear', 5, 'Riff recall: single notes and power chords', 'זיכרון ריף: צלילים בודדים ואקורדי פאוור', [GE('riff', { option: 0 }), GE('riff', { option: 1 })], [4, 9, 7, 2, 0, 5], [80, 110], '8ths', 4),
-      LT('g-ear', 6, 'Root finder: I, IV, V, vi', 'מוצא היסודות: I, IV, V, vi', [GE('roots', { option: 0 })], GKEYS_MAJOR, [80, 100], 'halves', 4),
-      LT('g-ear', 7, 'Root finder: ii, iii, V7, ♭VII', 'מוצא היסודות: ii, iii, V7, ♭VII', [GE('roots', { option: 1 })], GKEYS_MAJOR, [80, 100], 'halves', 7),
+      LT('g-ear', 6, 'Root finder: I, IV, V, vi', 'מוצא השורשים: I, IV, V, vi', [GE('roots', { option: 0 })], GKEYS_MAJOR, [80, 100], 'halves', 4),
+      LT('g-ear', 7, 'Root finder: ii, iii, V7, ♭VII', 'מוצא השורשים: ii, iii, V7, ♭VII', [GE('roots', { option: 1 })], GKEYS_MAJOR, [80, 100], 'halves', 7),
       LT('g-ear', 8, 'Chord quality by ear', 'סוג האקורד בשמיעה', [GE('quality', { option: 0 }), GE('quality', { option: 1 }), GE('quality', { option: 2 })], GKEYS_MAJOR.slice(0, 8), [60, 90], 'quarters', 6),
       LT('g-ear', 9, 'Find the key, then its pentatonic', 'למצוא את הסולם, ואז את הפנטטוני שלו', [GE('key', { option: 0 }), GE('key', { option: 1 })], GKEYS_MAJOR, [70, 90], '8ths', 5),
       LT('g-ear', 10, 'Transcribe a line', 'תמלול קו', [GE('transcribe', { option: 0 }), GE('transcribe', { option: 1 })], BLUES_KEYS, [70, 100], '8ths', 9),
       // Progressions by ear (progEar.ts), all 12 keys: strummed back as shells, drop 2 or drop 3; graded per chord by the
       // chroma (harmonyGrade.ts). The jazz add-on (ii–V–I voicings); three levels keep the family within 13.
-      { ...LT('g-ear', 11, 'ii–V–I by ear: shells, then drop 2', 'ii–V–I בשמיעה: קונכיות, ואז דרופ 2', [GE('prog-iivi', { option: 0, position: 0 }), GE('prog-iivi', { option: 1, position: 0 }), GE('prog-iivi', { option: 0, position: 1 }), GE('prog-iivi', { option: 1, position: 1 })], GKEYS_MAJOR, [60, 90], 'chords', 9), addOn: 'jazz' as const },
+      { ...LT('g-ear', 11, 'ii–V–I by ear: shells, then drop 2', 'ii–V–I בשמיעה: שלדים, ואז דרופ 2', [GE('prog-iivi', { option: 0, position: 0 }), GE('prog-iivi', { option: 1, position: 0 }), GE('prog-iivi', { option: 0, position: 1 }), GE('prog-iivi', { option: 1, position: 1 })], GKEYS_MAJOR, [60, 90], 'chords', 9), addOn: 'jazz' as const },
       { ...LT('g-ear', 12, 'Eight bars by ear: secondaries (drop 3), tritone subs and the backdoor (drop 2)', 'שמונה תיבות בשמיעה: משניות (דרופ 3), תחליפי טריטון ודלת אחורית (דרופ 2)', [GE('prog-secinv', { position: 2 }), GE('prog-subs', { position: 1 })], GKEYS_MAJOR, [60, 90], 'chords', 9), addOn: 'jazz' as const },
       { ...LT('g-ear', 13, 'Altered dominants (drop 2) and a 12-bar jazz blues, comped', 'דומיננטות אלטרד (דרופ 2) ובלוז ג׳אז של 12 תיבות, בקומפינג', [GE('prog-altered', { option: 0, position: 1 }), GE('prog-altered', { option: 1, position: 1 }), GE('prog-blues', { option: 0, position: 0 }), GE('prog-blues', { option: 1, position: 0 })], GKEYS_MAJOR, [70, 110], 'chords', 9), addOn: 'jazz' as const },
     ]),
     fam('g-impro', 'Improvising: target notes', 'אלתור: צלילי מטרה', 'jazz', ['blues', 'rock', 'jazz', 'all'], [
-      L('g-impro', 1, 'Roots on beat 1: blues, minor blues, ii–V–I, a standard', 'יסודות על 1: בלוז, בלוז מינורי, ii–V–I, סטנדרט', [I('targets-root'), I('targets-root', { option: 1 }), I('targets-root', { option: 2 }), I('targets-root', { option: 3 })], BLUES_KEYS),
+      L('g-impro', 1, 'Roots on beat 1: blues, minor blues, ii–V–I, a standard', 'שורשים על 1: בלוז, בלוז מינורי, ii–V–I, סטנדרט', [I('targets-root'), I('targets-root', { option: 1 }), I('targets-root', { option: 2 }), I('targets-root', { option: 3 })], BLUES_KEYS),
       L('g-impro', 2, '3rds on beat 1 through the forms', 'טרצות על 1 לאורך הצורות', [I('targets-third'), I('targets-third', { option: 1 }), I('targets-third', { option: 2 }), I('targets-third', { option: 3 })], BLUES_KEYS),
       L('g-impro', 3, 'Chord-tone arpeggios through the form', 'ארפג׳יו צלילי אקורד לאורך הצורה', [I('targets-arp'), I('targets-arp', { option: 1 }), I('targets-arp', { option: 2 }), I('targets-arp', { option: 3 })], BLUES_KEYS),
       L('g-impro', 4, 'Guide tones through the form', 'צלילים מנחים לאורך הצורה', [I('targets-guide'), I('targets-guide', { option: 1 }), I('targets-guide', { option: 2 }), I('targets-guide', { option: 3 })], BLUES_KEYS),
@@ -2752,10 +2752,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       [
         L('g-bass', 1, 'Chromatic 1-2-3-4 and finger permutations', 'כרומטי 1-2-3-4 ותמורות אצבעות', [B('spider', { option: 0 }), B('spider', { option: 1 }), B('spider', { option: 3 })], POS_5_TO_1),
         L('g-bass', 2, 'Major, natural minor, Dorian, Mixolydian, minor pentatonic and blues', 'מז׳ור, מינור טבעי, דורי, מיקסולידי, פנטטוני מינור ובלוז', [B('major'), B('penta'), B('penta', { option: 1 }), B('mode', { option: 5 }), B('mode', { option: 1 }), B('mode', { option: 4 })], GKEYS_MAJOR),
-        L('g-bass', 3, 'Grooves: root–5th–octave, ghost notes, rock 8ths, Motown, tumbao', 'גרובים: יסוד–קווינטה–אוקטבה, צלילי רפאים, שמיניות רוק, מוטאון, טומבאו', [B('r58'), B('ghost'), B('groove', { option: 0 }), B('groove', { option: 1 }), B('groove', { option: 2 })], GKEYS_MAJOR),
+        L('g-bass', 3, 'Grooves: root–5th–octave, ghost notes, rock 8ths, Motown, tumbao', 'גרובים: שורש–קווינטה–אוקטבה, צלילי רפאים, שמיניות רוק, מוטאון, טומבאו', [B('r58'), B('ghost'), B('groove', { option: 0 }), B('groove', { option: 1 }), B('groove', { option: 2 })], GKEYS_MAJOR),
         L('g-bass', 4, 'Arpeggios: triads and 7ths', 'ארפג׳יו: משולשים וספטאקורדים', [B('arp'), B('arp', { option: 0 }), B('arp', { option: 1 }), B('arp', { option: 2 })], GKEYS_MAJOR),
         L('g-bass', 5, 'Octaves and slap (disco / funk)', 'אוקטבות וסלאפ (דיסקו / פאנק)', [B('octaves'), B('slap'), B('slap', { option: 1 })], [4, 9, 2, 7, 0, 5]),
-        L('g-bass', 6, 'Walking bass: ii–V–I and the blues', 'בס מהלך: ii–V–I והבלוז', [B('walking'), B('walk-blues')], CYC4),
+        L('g-bass', 6, 'Walking bass: ii–V–I and the blues', 'ווקינג בס: ii–V–I והבלוז', [B('walking'), B('walk-blues')], CYC4),
       ],
       ['bass'],
     ),

@@ -152,7 +152,7 @@ deepen(
 const SC2: Record<string, { steps: number[]; name: ReturnType<typeof nm> }> = {
   melMin: { steps: [0, 2, 3, 5, 7, 9, 11, 12], name: nm('Melodic minor', 'מינור מלודי', 'melodic minor', 'jazz minor', 'מלודי') },
   wholeTone: { steps: [0, 2, 4, 6, 8, 10, 12], name: nm('Whole tone', 'טון שלם', 'whole tone', 'טונים שלמים') },
-  dimWH: { steps: [0, 2, 3, 5, 6, 8, 9, 11, 12], name: nm('Diminished (whole–half)', 'דימיניש (שלם–חצי)', 'diminished', 'octatonic', 'דימיניש') },
+  dimWH: { steps: [0, 2, 3, 5, 6, 8, 9, 11, 12], name: nm('Diminished (whole–half)', 'מוקטן (שלם–חצי)', 'diminished', 'octatonic', 'מוקטן') },
   bebopMaj: { steps: [0, 2, 4, 5, 7, 8, 9, 11, 12], name: nm('Bebop major', 'ביבופ מז׳ורי', 'bebop major', 'ביבופ מז׳ור') },
   bebopDom: { steps: [0, 2, 4, 5, 7, 9, 10, 11, 12], name: nm('Bebop dominant', 'ביבופ דומיננטי', 'bebop dominant', 'ביבופ דומיננט') },
 };
@@ -160,7 +160,7 @@ const SC2: Record<string, { steps: number[]; name: ReturnType<typeof nm> }> = {
 deepen(
   'scale-types',
   [
-    { en: 'Melodic minor, whole tone or diminished?', he: 'מינור מלודי, טון שלם או דימיניש?' },
+    { en: 'Melodic minor, whole tone or diminished?', he: 'מינור מלודי, טון שלם או מוקטן?' },
     { en: 'Bebop major or bebop dominant?', he: 'ביבופ מז׳ורי או ביבופ דומיננטי?' },
   ],
   (seed, l, id) => {
@@ -428,7 +428,7 @@ const KEY_REL: Names = {
 };
 
 // bh-keys 2: any of the three diminished chords, any reference, resolving to major or minor.
-deepen('bh-keys', [{ en: 'More keys: any diminished chord, major or minor', he: 'עוד סולמות: כל דימיניש, מז׳ור או מינור' }], (seed, _l, id) => {
+deepen('bh-keys', [{ en: 'More keys: any diminished chord, major or minor', he: 'עוד סולמות: כל מוקטן, מז׳ור או מינור' }], (seed, _l, id) => {
   const rnd = rng(seed);
   const root = 58 + Math.floor(rnd() * 3);
   const minor = rnd() < 0.5;
@@ -447,7 +447,7 @@ deepen('bh-keys', [{ en: 'More keys: any diminished chord, major or minor', he: 
   keys.forEach((kk, i) => (choiceStim[kk] = [...resolve(ref), rest(0.8), ...resolve((ref + i) % 4)]));
   return choiceQ({
     id, topic: 'bh-keys', level: 2, seed, skill: 'cadences', difficulty: 1450,
-    ask: { en: `First a resolution to ${minor ? 'minor' : 'major'}, then another from the same diminished chord: where did it go?`, he: `קודם פתרון ל${minor ? 'מינור' : 'מז׳ור'}, ואחר כך עוד אחד מאותו דימיניש: לאן הוא הלך?` },
+    ask: { en: `First a resolution to ${minor ? 'minor' : 'major'}, then another from the same diminished chord: where did it go?`, he: `קודם פתרון ל${minor ? 'מינור' : 'מז׳ור'}, ואחר כך עוד אחד מאותו מוקטן: לאן הוא הלך?` },
     names: KEY_REL, answer: keys[rel], choices: keys,
     stimulus: [...resolve(ref), rest(0.8), ...resolve(k)], choiceStim,
   });
@@ -468,7 +468,7 @@ deepen('bh-tone', [{ en: 'Descending: where did the run stop?', he: 'ביריד�
   return choiceQ({
     id, topic: 'bh-tone', level: 2, seed, skill: 'chords', difficulty: 1300,
     ask: { en: 'The scale runs down and stops. Whose note?', he: 'הסולם יורד ונעצר. צליל של איזה אקורד?' },
-    names: { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'sixth', 'major six', 'שש'), dim: nm('The diminished chord', 'הדימיניש', 'diminished', 'dim', 'דימיניש', 'מוקטן') },
+    names: { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'sixth', 'major six', 'שש'), dim: nm('The diminished chord', 'המוקטן', 'diminished', 'dim', 'דימיניש', 'מוקטן') },
     answer: fromSix ? 'six' : 'dim', choices: ['six', 'dim'],
     stimulus: [chordStim(six, 1), chordStim(dim, 1), rest(0.4), ev(out, line.length * 0.28 + 1.1)],
     choiceStim: { six: [chordStim([...six, last])], dim: [chordStim([...dim, last])] },

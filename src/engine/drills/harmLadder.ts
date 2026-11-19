@@ -82,11 +82,11 @@ const STEP_T: Record<HStep, T2> = {
   '3t': t('in 3rds together, up and down', 'בטרצות יחד, עולה ויורד'),
   ta: t('triads on every degree, arpeggiated', 'משולשים על כל דרגה, בארפג׳יו'),
   tb: t('triads on every degree, block', 'משולשים על כל דרגה, בבלוק'),
-  '7a': t('7th chords on every degree, arpeggiated', 'אקורדי ספטימה על כל דרגה, בארפג׳יו'),
-  '7b': t('7th chords on every degree, block', 'אקורדי ספטימה על כל דרגה, בבלוק'),
-  d2: t('7th chords in drop 2, up and down', 'אקורדי ספטימה בדרופ 2, עולה ויורד'),
-  d3: t('7th chords in drop 3, up and down', 'אקורדי ספטימה בדרופ 3, עולה ויורד'),
-  d24: t('7th chords in drop 2&4, up and down', 'אקורדי ספטימה בדרופ 2 ו־4, עולה ויורד'),
+  '7a': t('7th chords on every degree, arpeggiated', 'ספטאקורדים על כל דרגה, בארפג׳יו'),
+  '7b': t('7th chords on every degree, block', 'ספטאקורדים על כל דרגה, בבלוק'),
+  d2: t('7th chords in drop 2, up and down', 'ספטאקורדים בדרופ 2, עולה ויורד'),
+  d3: t('7th chords in drop 3, up and down', 'ספטאקורדים בדרופ 3, עולה ויורד'),
+  d24: t('7th chords in drop 2&4, up and down', 'ספטאקורדים בדרופ 2 ו־4, עולה ויורד'),
 };
 
 /** One onset of the ladder: pitches sounding together (low → high), its length, and the chord's pitch classes when it is a chord. */
@@ -313,12 +313,12 @@ const B_KIND_T: Record<BKind, (p: number) => T2> = {
   one: (p) => t(`the ${VOICE_T[p].en} borrows a step down and returns`, `ה${VOICE_T[p].he} שואל צעד למטה וחוזר`),
   two: (p) => t(`${VOICE_T[p].en} and ${VOICE_T[p + 1].en} borrow together and return`, `${VOICE_T[p].he} ו${VOICE_T[p + 1].he} שואלים יחד וחוזרים`),
   three: (p) => t(`three voices borrow, the ${VOICE_T[p].en} holds`, `שלושה קולות שואלים, ה${VOICE_T[p].he} מחזיק`),
-  root: () => t('the dominant root borrowed into the diminished (a maj7 colour)', 'יסוד הדומיננט מושאל אל הדימיניש (צבע של maj7)'),
+  root: () => t('the dominant root borrowed into the diminished (a maj7 colour)', 'שורש הדומיננט מושאל אל המוקטן (צבע של maj7)'),
   chord: (p) => t(`the ${VOICE_T[p].en} borrows from the chord above and returns`, `ה${VOICE_T[p].he} שואל מהאקורד שמעל וחוזר`),
-  out: (p) => t(`the ${VOICE_T[p].en} borrows from another diminished (a half step outside) and returns`, `ה${VOICE_T[p].he} שואל מדימיניש אחר (חצי טון מחוץ לסולם) וחוזר`),
+  out: (p) => t(`the ${VOICE_T[p].en} borrows from another diminished (a half step outside) and returns`, `ה${VOICE_T[p].he} שואל ממוקטן אחר (חצי טון מחוץ לסולם) וחוזר`),
   scale: (p) => t(`the ${VOICE_T[p].en} passes through the scale and returns`, `ה${VOICE_T[p].he} עובר דרך הסולם וחוזר`),
   walk: () => t('borrowing on every degree, voice by voice', 'השאלה על כל דרגה, קול אחר קול'),
-  iivi: (p) => t(p === 1 ? 'minor ii–V–i: each chord borrows, the dominant from the diminished' : 'ii–V–I: each chord borrows, the dominant from the diminished', p === 1 ? 'ii–V–i מינורי: כל אקורד שואל, הדומיננט מהדימיניש' : 'ii–V–I: כל אקורד שואל, הדומיננט מהדימיניש'),
+  iivi: (p) => t(p === 1 ? 'minor ii–V–i: each chord borrows, the dominant from the diminished' : 'ii–V–I: each chord borrows, the dominant from the diminished', p === 1 ? 'ii–V–i מינורי: כל אקורד שואל, הדומיננט מהמוקטן' : 'ii–V–I: כל אקורד שואל, הדומיננט מהמוקטן'),
   std: () => t("a standard's turnaround (I–VI–ii–V, iii–VI–ii–V): each chord borrows", 'טרנאראונד של סטנדרט (I–VI–ii–V, ‏iii–VI–ii–V): כל אקורד שואל'),
 };
 
@@ -403,7 +403,7 @@ export function genHarmPiano(s: DrillSpec): Drill {
   });
   const harris = isHarris(sc) && (step === 'line' || step === '3b' || step === '7a');
   const goal: Partial<DrillGoal> = chordStep ? { evenness: false, chordSets: sets } : harris && step === 'line' ? { chordTonesOnBeats: true } : {};
-  const hn = s.hands === 'RL' && !drop ? t(' · LH root', ' · יסוד ביד שמאל') : t('', '');
+  const hn = s.hands === 'RL' && !drop ? t(' · LH root', ' · שורש ביד שמאל') : t('', '');
   const title = t(`${kName(key, sc)} ${sc.name.en}: ${STEP_T[step].en}${hn.en}`, `${kName(key, sc)} ${sc.name.he}: ${STEP_T[step].he}${hn.he}`);
   const bpm = { line: 72, '3b': 66, '3t': 60, ta: 50, tb: 50, '7a': 60, '7b': 50, d2: 46, d3: 46, d24: 46 }[step];
   return pDrill(s, n, title, bpm, goal, SIG[mod(key + sc.sig, 12)]);
@@ -572,7 +572,7 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
       evs.push({ beat: e.beat, dur: e.dur, notes: pl.places.map((q) => ({ ...q })) });
     }
     const where = set ? t(` · strings ${setName(set)}`, ` · מיתרים ${setName(set)}`) : t(' · 3-string sets', ' · קבוצות של 3 מיתרים');
-    const st = step === '7b' ? t('7th chords on every degree, block (drop 2)', 'אקורדי ספטימה על כל דרגה, בבלוק (דרופ 2)') : STEP_T[step];
+    const st = step === '7b' ? t('7th chords on every degree, block (drop 2)', 'ספטאקורדים על כל דרגה, בבלוק (דרופ 2)') : STEP_T[step];
     title = t(`${kName(key, sc)} ${sc.name.en}: ${st.en}${where.en}`, `${kName(key, sc)} ${sc.name.he}: ${st.he}${where.he}`);
   }
   const chordStep = !lineStep && step !== '3t';
@@ -647,7 +647,7 @@ export function pianoScaleHarmFamily(): FamilyDef {
   const M = H_MODES;
   const O = H_OTHERS;
   LV('Note by note, 2 octaves up and down: major and the modes', 'צליל אחר צליל, 2 אוקטבות עולה ויורד: מז׳ור והמודוסים', hl('line', M), [60, 120], 900);
-  LV('Note by note: harmonic and melodic minor, the four Harris diminished scales', 'צליל אחר צליל: מינור הרמוני ומלודי, ארבעת סולמות הדימיניש של האריס', hl('line', O), [60, 120], 940);
+  LV('Note by note: harmonic and melodic minor, the four Harris diminished scales', 'צליל אחר צליל: מינור הרמוני ומלודי, ארבעת סולמות המוקטן של האריס', hl('line', O), [60, 120], 940);
   LV('Diatonic 3rds, broken: major and the modes', 'טרצות דיאטוניות, שבורות: מז׳ור והמודוסים', hl('3b', M), [60, 110], 980);
   LV('Diatonic 3rds, broken: minor and the Harris scales', 'טרצות דיאטוניות, שבורות: מינור וסולמות האריס', hl('3b', O), [60, 110], 1010);
   LV('3rds together: major and the modes', 'טרצות יחד: מז׳ור והמודוסים', hl('3t', M), [50, 90], 1050);
@@ -655,11 +655,11 @@ export function pianoScaleHarmFamily(): FamilyDef {
   LV('Triads on every degree, arpeggiated: major and the modes', 'משולשים על כל דרגה, בארפג׳יו: מז׳ור והמודוסים', hl('ta', M), [50, 90], 1110);
   LV('Triads arpeggiated: minor and the Harris scales', 'משולשים בארפג׳יו: מינור וסולמות האריס', hl('ta', O), [50, 90], 1140);
   LV('Block triads, melody on top: major and the modes', 'משולשים בבלוק, המנגינה למעלה: מז׳ור והמודוסים', hl('tb', M), [40, 80], 1170);
-  LV('Block triads: minor and the Harris scales; LH root under them', 'משולשים בבלוק: מינור וסולמות האריס; יסוד ביד שמאל', [...hl('tb', O), ...hl('tb', [0, 9], { hands: 'RL' })], [40, 80], 1200);
-  LV('7th chords on every degree, arpeggiated: major and the modes', 'אקורדי ספטימה על כל דרגה, בארפג׳יו: מז׳ור והמודוסים', hl('7a', M), [50, 96], 1230);
-  LV('7th chords arpeggiated: minor; the Harris scales chord and diminished in turn', 'אקורדי ספטימה בארפג׳יו: מינור; בסולמות האריס אקורד ודימיניש לסירוגין', hl('7a', O), [50, 96], 1260);
-  LV('Block 7th chords, LH root: major and the modes', 'אקורדי ספטימה בבלוק, יסוד ביד שמאל: מז׳ור והמודוסים', hl('7b', M, { hands: 'RL' }), [40, 76], 1300);
-  LV('Block 7th chords: minor; the Harris scales in moving inversions (C6, B°7 …)', 'אקורדי ספטימה בבלוק: מינור; סולמות האריס בהיפוכים נעים (C6, ‏B°7 …)', [...hl('7b', O, { hands: 'RL' }), ...hl('7b', H_HARRIS)], [40, 76], 1340);
+  LV('Block triads: minor and the Harris scales; LH root under them', 'משולשים בבלוק: מינור וסולמות האריס; שורש ביד שמאל', [...hl('tb', O), ...hl('tb', [0, 9], { hands: 'RL' })], [40, 80], 1200);
+  LV('7th chords on every degree, arpeggiated: major and the modes', 'ספטאקורדים על כל דרגה, בארפג׳יו: מז׳ור והמודוסים', hl('7a', M), [50, 96], 1230);
+  LV('7th chords arpeggiated: minor; the Harris scales chord and diminished in turn', 'ספטאקורדים בארפג׳יו: מינור; בסולמות האריס אקורד ומוקטן לסירוגין', hl('7a', O), [50, 96], 1260);
+  LV('Block 7th chords, LH root: major and the modes', 'ספטאקורדים בבלוק, שורש ביד שמאל: מז׳ור והמודוסים', hl('7b', M, { hands: 'RL' }), [40, 76], 1300);
+  LV('Block 7th chords: minor; the Harris scales in moving inversions (C6, B°7 …)', 'ספטאקורדים בבלוק: מינור; סולמות האריס בהיפוכים נעים (C6, ‏B°7 …)', [...hl('7b', O, { hands: 'RL' }), ...hl('7b', H_HARRIS)], [40, 76], 1340);
   LV('Drop 2 up and down the scale: major and the modes', 'דרופ 2 לאורך הסולם: מז׳ור והמודוסים', hl('d2', M, { hands: 'RL' }), [40, 72], 1380);
   LV('Drop 2: harmonic and melodic minor, the Harris scales', 'דרופ 2: מינור הרמוני ומלודי, סולמות האריס', hl('d2', O, { hands: 'RL' }), [40, 72], 1450);
   LV('Drop 3 up and down the scale: major and the modes', 'דרופ 3 לאורך הסולם: מז׳ור והמודוסים', hl('d3', M, { hands: 'RL' }), [40, 72], 1520);
@@ -669,7 +669,7 @@ export function pianoScaleHarmFamily(): FamilyDef {
   LV('Borrowing: one voice steps to the other chord and returns — soprano, alto, tenor, bass (6th-diminished)', 'השאלה: קול אחד עובר לאקורד השני וחוזר — סופרן, אלט, טנור, בס (שישית-מוקטן)', [0, 1, 2, 3].map((v) => bw('one', v)), [40, 72], 1360);
   LV('Borrowing, one voice: minor 6th, dominant 7th and 7♭5 diminished scales', 'השאלה, קול אחד: סולמות מינור 6, דומיננט 7 ו־7♭5 מוקטן', [1, 2, 3].flatMap((sc) => [0, 3].map((v) => bw('one', sc * 10 + v))), [40, 72], 1400);
   LV('Two voices borrow together and return', 'שני קולות שואלים יחד וחוזרים', [0, 1, 2].flatMap((p) => [bw('two', p), bw('two', 10 + p)]), [40, 72], 1440);
-  LV('Borrowing from the chord above, from another diminished, and passing through the scale', 'השאלה מהאקורד שמעל, מדימיניש אחר, ומעבר דרך הסולם', [bw('chord', 0), bw('chord', 1), bw('out', 0), bw('out', 2), bw('scale', 0), bw('scale', 3), bw('chord', 10), bw('scale', 10)], [40, 72], 1480);
+  LV('Borrowing from the chord above, from another diminished, and passing through the scale', 'השאלה מהאקורד שמעל, ממוקטן אחר, ומעבר דרך הסולם', [bw('chord', 0), bw('chord', 1), bw('out', 0), bw('out', 2), bw('scale', 0), bw('scale', 3), bw('chord', 10), bw('scale', 10)], [40, 72], 1480);
   LV("Borrowing while walking the scale, over ii–V–I and a standard's turnaround", 'השאלה בהליכה לאורך הסולם, על ii–V–I ועל טרנאראונד של סטנדרט', [bw('walk', 0), bw('walk', 10), bw('walk', 20), bw('walk', 30), bw('iivi', 0), bw('iivi', 1), bw('std', 0)], [40, 72], 1540);
   LV('Borrowing in drop 2', 'השאלה בדרופ 2', [bw('one-d2', 1, 'RL'), bw('two-d2', 0, 'RL'), bw('chord-d2', 0, 'RL'), bw('scale-d2', 0, 'RL'), bw('walk-d2', 0, 'RL'), bw('walk-d2', 10, 'RL'), bw('walk-d2', 20, 'RL'), bw('walk-d2', 30, 'RL'), bw('iivi-d2', 0, 'RL')], [40, 66], 1600);
   LV('Borrowing in drop 3', 'השאלה בדרופ 3', [bw('one-d3', 2, 'RL'), bw('two-d3', 1, 'RL'), bw('chord-d3', 0, 'RL'), bw('scale-d3', 0, 'RL'), bw('walk-d3', 0, 'RL'), bw('walk-d3', 10, 'RL'), bw('walk-d3', 20, 'RL'), bw('walk-d3', 30, 'RL'), bw('std-d3', 0, 'RL')], [40, 66], 1650);
@@ -681,16 +681,16 @@ export function pianoScaleHarmFamily(): FamilyDef {
   LV('Mixing the expressions per bar; the important minor as one sound over ii–V', 'ערבוב הביטויים לפי תיבה; המינור החשוב כצליל אחד על ii–V', [sf('sf-line', 8, 'R'), sf('sf-line', 9, 'R')], [60, 120], 1620);
   LV('Comping a turnaround and a jazz blues with the substitutions', 'ליווי טרנאראונד ובלוז ג׳אז עם התחליפים', [sf('sf-comp', 0), sf('sf-comp', 1)], [50, 100], 1640);
   LV('Borrowing inside the substitutions: the minor 6th and the tritone brother', 'השאלה בתוך התחליפים: המינור 6 והאח בטריטון', [sf('sf-borrow', 0, 'R'), sf('sf-borrow', 1, 'R')], [40, 72], 1670);
-  LV('Minor ii–V–i: the half-diminished and the V as minor 6ths, then the diminished — voicings and lines', 'ii–V–i מינורי: החצי־מוקטן וה־V כמינור 6, ואז הדימיניש — קולות וקווים', [sf('sf-minor', 0), sf('sf-minor', 1, 'R')], [40, 100], 1700);
+  LV('Minor ii–V–i: the half-diminished and the V as minor 6ths, then the diminished — voicings and lines', 'ii–V–i מינורי: החצי־מוקטן וה־V כמינור 6, ואז המוקטן — קולות וקווים', [sf('sf-minor', 0), sf('sf-minor', 1, 'R')], [40, 100], 1700);
   // BARRY-HARRIS-METHOD.md Part D (D3, D4, D6, D7, D11, D12) and drop 2&4 on the four key scales.
   const pd = (kind: string, option: number, hands: 'R' | 'RL' = 'RL'): SpecTemplate => ({ family: 'k-sharm', kind, hands, option });
   // The elevator from the tonic only (owner 2026-11-15: how Echols builds it; the outer-voice interval rule holds there).
   LV('The elevator: from a unison on the tonic up the nine floors and back (6th-diminished)', 'המעלית: מיוניסון על הטוניקה במעלה תשע הקומות וחזרה (שישית־מוקטן)', [pd('cm-expand', 0), pd('cm-elevator', 0)], [40, 72], 1450);
   LV('The 7th-dim and 7♭5-dim scales in drop 2 and drop 3 over V7 → I', 'סולמות השביעית־מוקטן ו־7♭5־מוקטן בדרופ 2 ובדרופ 3 על V7 ← I', [0, 1, 2, 3].map((o) => pd('v7-d2', o)), [40, 72], 1500);
   LV('Drop 2&4 on the four key scales', 'דרופ 2 ו־4 על ארבעת סולמות המפתח', H_HARRIS.map((i) => ({ family: 'k-sharm' as FamilyId, kind: 'hl-d24', hands: 'RL' as const, option: i })), [40, 72], 1620);
-  LV('The sixth on the fifth: the major 6 on the 5th over the root', 'השישית על הקווינטה: מז׳ור 6 על הקווינטה מעל היסוד', [pd('sixth5', 0), pd('sixth5', 1)], [40, 72], 1460);
+  LV('The sixth on the fifth: the major 6 on the 5th over the root', 'השישית על הקווינטה: מז׳ור 6 על הקווינטה מעל השורש', [pd('sixth5', 0), pd('sixth5', 1)], [40, 72], 1460);
   LV("Harris's moves: the first movement, the next move, major – minor – minor/6", 'המהלכים של האריס: התנועה הראשונה, המהלך הבא, מז׳ור – מינור – מינור/6', [pd('mv-first', 0), pd('mv-next', 0, 'R'), pd('mv-mmm', 0)], [40, 72], 1500);
-  LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; יסוד הדומיננט מושאל אל הדימיניש', [{ family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
+  LV('Borrowing with three voices; the dominant root borrowed into the diminished', 'השאלה בשלושה קולות; שורש הדומיננט מושאל אל המוקטן', [{ family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 3 }, { family: 'k-sharm' as FamilyId, kind: 'bw-three', hands: 'R' as const, option: 10 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 0 }, { family: 'k-sharm' as FamilyId, kind: 'bw-root', hands: 'R' as const, option: 20 }], [40, 72], 1520);
   LV("The four related dominants over a shell; the tritone's minor resolving", 'ארבע הדומיננטות הקרובות מעל שלד; המינור של הטריטון נפתר', [pd('shell4', 0), pd('tm-res', 0)], [40, 72], 1680);
   LV(isVerified('item:el-borrow') ? 'The elevator in minor 6th-diminished; borrowing through the elevator' : 'The elevator in minor 6th-diminished, from the tonic', isVerified('item:el-borrow') ? 'המעלית במינור שישית־מוקטן; השאלה דרך המעלית' : 'המעלית במינור שישית־מוקטן, מהטוניקה', [pd('cm-expand', 8), pd('cm-elevator', 1), pd('el-borrow', 0), pd('el-borrow', 1)], [40, 72], 1480);
   LV(
@@ -719,11 +719,11 @@ export function guitarHarmLevels(): GuitarLevelDef[] {
   LV('Triads on every degree, arpeggiated in position', 'משולשים על כל דרגה, בארפג׳יו במצב', hl('ta'), [50, 90], 'triplets', 5);
   LV('Block triads on 3-string sets along the neck', 'משולשים בבלוק על קבוצות של 3 מיתרים לאורך הצוואר', hl('tb'), [40, 80], 'quarters', 6);
   LV('7th arpeggios on every degree, in position', 'ארפג׳יו ספטימה על כל דרגה, במצב', hl('7a'), [50, 96], '8ths', 6);
-  LV('7th chords on every degree in drop 2, strings 4-3-2-1', 'אקורדי ספטימה על כל דרגה בדרופ 2, מיתרים 4-3-2-1', hl('7b'), [40, 76], 'quarters', 7);
+  LV('7th chords on every degree in drop 2, strings 4-3-2-1', 'ספטאקורדים על כל דרגה בדרופ 2, מיתרים 4-3-2-1', hl('7b'), [40, 76], 'quarters', 7);
   LV('Drop 2 on strings 5-4-3-2 and 6-5-4-3', 'דרופ 2 על מיתרים 5-4-3-2 ו־6-5-4-3', [...hl('d2', ALL, 1), ...hl('d2', ALL, 2)], [40, 72], 'quarters', 8);
   LV('Drop 3 on strings 6-4-3-2 and 5-3-2-1; drop 2&4 on 6-5-3-2 and 5-4-2-1 (the four key scales)', 'דרופ 3 על מיתרים 6-4-3-2 ו־5-3-2-1; דרופ 2 ו־4 על 6-5-3-2 ו־5-4-2-1 (ארבעת סולמות המפתח)', [...hl('d3', ALL, 0), ...hl('d3', ALL, 1), ...hl('d24', H_HARRIS, 0), ...hl('d24', H_HARRIS, 1)], [40, 72], 'quarters', 8);
   LV('Borrowing in drop 2 (4-3-2-1): one voice at a time, all four Harris scales', 'השאלה בדרופ 2 (4-3-2-1): קול אחד בכל פעם, ארבעת סולמות האריס', [0, 1, 2, 3].map((v) => g('bw-one', v)).concat([1, 2, 3].map((sc) => g('bw-one', sc * 10))), [40, 72], 'quarters', 8);
-  LV('Borrowing: two voices, the chord above, another diminished, a passing scale tone', 'השאלה: שני קולות, האקורד שמעל, דימיניש אחר, צליל סולם עובר', [g('bw-two', 0), g('bw-two', 11), g('bw-chord', 0), g('bw-out', 0), g('bw-scale', 0), g('bw-chord', 10)], [40, 72], 'quarters', 8);
+  LV('Borrowing: two voices, the chord above, another diminished, a passing scale tone', 'השאלה: שני קולות, האקורד שמעל, מוקטן אחר, צליל סולם עובר', [g('bw-two', 0), g('bw-two', 11), g('bw-chord', 0), g('bw-out', 0), g('bw-scale', 0), g('bw-chord', 10)], [40, 72], 'quarters', 8);
   LV("Borrowing while walking the scale, over ii–V–I and a standard's turnaround", 'השאלה בהליכה לאורך הסולם, על ii–V–I ועל טרנאראונד של סטנדרט', [g('bw-walk', 0), g('bw-walk', 10), g('bw-walk', 20), g('bw-walk', 30), g('bw-iivi', 0), g('bw-iivi', 1), g('bw-std', 0)], [40, 72], 'quarters', 9);
   LV('Borrowing on other string sets: drop 2 on 5-4-3-2 and 6-5-4-3, drop 3 on 6-4-3-2 and 5-3-2-1', 'השאלה על קבוצות מיתרים נוספות: דרופ 2 על 5-4-3-2 ו־6-5-4-3, דרופ 3 על 6-4-3-2 ו־5-3-2-1', [g('bw-walk', 0, 1), g('bw-walk', 10, 2), g('bw-walk-d3', 0, 0), g('bw-walk-d3', 10, 1), g('bw-iivi-d3', 0, 0)], [40, 66], 'quarters', 9);
   return out;
@@ -830,7 +830,7 @@ const SF_T = {
   one: t('the important minor over the whole ii–V, one sound, then I6', 'המינור החשוב על כל ה־ii–V, צליל אחד, ואז I6'),
   comp: [t('comping a turnaround: the important minors, then the tritone’s minors', 'ליווי טרנאראונד: המינורים החשובים, ואז המינורים של הטריטון'), t('comping a jazz blues with the important and the tritone’s minors', 'ליווי בלוז ג׳אז עם המינור החשוב והמינור של הטריטון')],
   borrow: [t('borrowing inside the important minor', 'השאלה בתוך המינור החשוב'), t('borrowing inside the tritone brother’s scale', 'השאלה בתוך הסולם של האח בטריטון')],
-  minor: [t('minor ii–V–i: the ø as the m6 a minor 3rd up, the V as the m6 a half step up, then as its diminished', 'ii–V–i מינורי: ה־ø כמינור 6 טרצה קטנה למעלה, ה־V כמינור 6 חצי טון למעלה, ואז כדימיניש שלו'), t('minor ii–V–i lines through the m6 and diminished scales', 'קווי ii–V–i מינורי דרך סולמות המינור 6 והדימיניש')],
+  minor: [t('minor ii–V–i: the ø as the m6 a minor 3rd up, the V as the m6 a half step up, then as its diminished', 'ii–V–i מינורי: ה־ø כמינור 6 טרצה קטנה למעלה, ה־V כמינור 6 חצי טון למעלה, ואז כמוקטן שלו'), t('minor ii–V–i lines through the m6 and diminished scales', 'קווי ii–V–i מינורי דרך סולמות המינור 6 והמוקטן')],
 };
 
 /** The drills' music (key = the key of I). */
@@ -1087,7 +1087,7 @@ function elevatorEvents(tonic: number, sc: HScale, s: number): HEv[] {
 
 const NAMED_T = {
   first: t('the first movement: m6 → °7 → 7 → 6, one note down a half step at a time', 'התנועה הראשונה: m6 ← °7 ← 7 ← 6, צליל אחד יורד חצי טון בכל פעם'),
-  next: t('the next move: raise two neighbouring dim notes, return, lower them — round all four pairs', 'המהלך הבא: מעלים שני צלילי דימיניש שכנים, חוזרים, מורידים אותם — בכל ארבעת הזוגות'),
+  next: t('the next move: raise two neighbouring dim notes, return, lower them — round all four pairs', 'המהלך הבא: מעלים שני צלילי מוקטן שכנים, חוזרים, מורידים אותם — בכל ארבעת הזוגות'),
   mmm: t('major – minor – minor/6, the bass down by half steps', 'מז׳ור – מינור – מינור/6, הבס יורד בחצאי טונים'),
 };
 
@@ -1280,7 +1280,7 @@ export function partDEvents(key: number, kind: string, option: number): { evs: D
     const I6 = pcsOfInts([0, 4, 7, 9], k);
     const v = closeNear(I6, aim);
     evs.push({ beat: b, dur: 2, ps: [pitchIn(k, 36), pitchIn(k, 36) + 9, ...v], pcs: I6.slice().sort((p, q) => p - q) });
-    return { evs, title: t(`The four related dominants over the ${MAJ_N[V]}7 shell, floating up the diminished, to ${MAJ_N[k]}6`, `ארבע הדומיננטות הקרובות מעל שלד ${MAJ_N[V]}7, עולות לאורך הדימיניש, אל ${MAJ_N[k]}6`), sig: 0 };
+    return { evs, title: t(`The four related dominants over the ${MAJ_N[V]}7 shell, floating up the diminished, to ${MAJ_N[k]}6`, `ארבע הדומיננטות הקרובות מעל שלד ${MAJ_N[V]}7, עולות לאורך המוקטן, אל ${MAJ_N[k]}6`), sig: 0 };
   }
   // tm-res: the tritone's minor (the m6 a half step above the V) through its scale of chords over the V's bass, to I6
   const r = mod(V + 1, 12);

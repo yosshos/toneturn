@@ -181,7 +181,7 @@ export function generateTech(s: DrillSpec, tu: Tuning): Drill | null {
           tops.forEach((x, i) => evs.push({ beat: swung(i), dur: i % 2 ? 1 / 3 : 2 / 3, notes: [pc(6, R, { tech: 'mute' }), pc(5, R + x)] }));
           tops.forEach((x, i) => evs.push({ beat: 4 + swung(i), dur: i % 2 ? 1 / 3 : 2 / 3, notes: [pc(5, R, { tech: 'mute' }), pc(4, R + x)] }));
           evs.push({ beat: 8, dur: 1, notes: power(R) });
-          title = T('Blues shuffle riff: root under a moving 5th and 6th, swung (our riff)', 'ריף שאפל בלוז: יסוד מתחת לקווינטה וסקסטה נעות, בסווינג (ריף שלנו)', key);
+          title = T('Blues shuffle riff: root under a moving 5th and 6th, swung (our riff)', 'ריף שאפל בלוז: שורש מתחת לקווינטה וסקסטה נעות, בסווינג (ריף שלנו)', key);
           bpm = 90;
           break;
         }
@@ -211,7 +211,7 @@ export function generateTech(s: DrillSpec, tu: Tuning): Drill | null {
               evs.push({ beat: b, dur: 0.25, notes: [{ ...g, stroke: i % 2 === 0 ? 'D' : 'U' }] });
             });
           evs.push({ beat: 8, dur: 1, notes: [pc(5, f)] });
-          title = T('Funk 16ths: root, ♭7, octave and dead notes (our riff)', 'פאנק בשש־עשריות: יסוד, ♭7, אוקטבה וצלילים מתים (ריף שלנו)', key);
+          title = T('Funk 16ths: root, ♭7, octave and dead notes (our riff)', 'פאנק בשש־עשריות: שורש, ♭7, אוקטבה וצלילים מתים (ריף שלנו)', key);
           bpm = 88;
           break;
         }

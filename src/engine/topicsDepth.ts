@@ -171,8 +171,8 @@ deepen(
 deepen(
   'bh-tone',
   [
-    { en: 'Minor 6 or diminished, any key', he: 'מינור 6 או דימיניש, כל סולם' },
-    { en: 'How many notes came from the diminished?', he: 'כמה צלילים הגיעו מהדימיניש?' },
+    { en: 'Minor 6 or diminished, any key', he: 'מינור 6 או מוקטן, כל סולם' },
+    { en: 'How many notes came from the diminished?', he: 'כמה צלילים הגיעו מהמוקטן?' },
   ],
   (seed, level, id, k) => {
     const rnd = rng(seed);
@@ -188,8 +188,8 @@ deepen(
       const note = pickR(rnd, fromSix ? six : dim) + 12;
       return choiceQ({
         id, topic: 'bh-tone', level, seed, skill: 'chords', difficulty: 1350,
-        ask: { en: `${sixName}, then its diminished, then one note: from which chord?`, he: `${sixHe}, אחר כך הדימיניש שלו, ואז צליל: מאיזה אקורד?` },
-        names: { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'minor six', 'שש'), dim: nm('The diminished chord', 'הדימיניש', 'diminished', 'dim', 'דימיניש') },
+        ask: { en: `${sixName}, then its diminished, then one note: from which chord?`, he: `${sixHe}, אחר כך המוקטן שלו, ואז צליל: מאיזה אקורד?` },
+        names: { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'minor six', 'שש'), dim: nm('The diminished chord', 'המוקטן', 'diminished', 'dim', 'דימיניש', 'מוקטן') },
         answer: fromSix ? 'six' : 'dim', choices: ['six', 'dim'],
         stimulus: [...intro, { kind: 'note', midi: note, duration: 1.1 }],
         choiceStim: { six: [chordStim([...six, note])], dim: [chordStim([...dim, note])] },
@@ -200,7 +200,7 @@ deepen(
     const line = [0, 1, 2, 3].map((i) => (fromDim.includes(i) ? pickR(rnd, dim) : pickR(rnd, six)) + 12);
     return choiceQ({
       id, topic: 'bh-tone', level, seed, skill: 'chords', difficulty: 1550,
-      ask: { en: `${sixName}, its diminished, then four notes: how many came from the diminished?`, he: `${sixHe}, הדימיניש שלו, ואז ארבעה צלילים: כמה מהם מהדימיניש?` },
+      ask: { en: `${sixName}, its diminished, then four notes: how many came from the diminished?`, he: `${sixHe}, המוקטן שלו, ואז ארבעה צלילים: כמה מהם מהמוקטן?` },
       names: { n1: nm('One', 'אחד', 'one', '1'), n2: nm('Two', 'שניים', 'two', '2'), n3: nm('Three', 'שלושה', 'three', '3') },
       answer: `n${n}`, choices: ['n1', 'n2', 'n3'], stimulus: [...intro, notesStim(line, 0.55)],
     });
@@ -209,7 +209,7 @@ deepen(
 
 // bh-convert-2: backwards — a dominant 7: which diminished chord does it come from? (its ♭9 diminished: root + 1)
 // ("Which note moved?" is bh-convert level 2.) There are only three diminished chords; each is named by its four notes.
-deepen('bh-convert-2', [{ en: 'Which diminished chord is it from?', he: 'מאיזה דימיניש הוא בא?' }], (seed, level, id) => {
+deepen('bh-convert-2', [{ en: 'Which diminished chord is it from?', he: 'מאיזה מוקטן הוא בא?' }], (seed, level, id) => {
   const rnd = rng(seed);
   const r = 53 + Math.floor(rnd() * 12);
   // any inversion and register, so the item is never the same twice in a row
@@ -231,7 +231,7 @@ deepen('bh-convert-2', [{ en: 'Which diminished chord is it from?', he: 'מאי�
   });
   return choiceQ({
     id, topic: 'bh-convert-2', level, seed, skill: 'chords', difficulty: 1650,
-    ask: { en: `${pcName(r % 12)}7: lower one note of which diminished chord to get it?`, he: `${pcNameHe(r % 12)} 7: באיזה דימיניש מורידים צליל אחד כדי לקבל אותו?` },
+    ask: { en: `${pcName(r % 12)}7: lower one note of which diminished chord to get it?`, he: `${pcNameHe(r % 12)} 7: באיזה מוקטן מורידים צליל אחד כדי לקבל אותו?` },
     text: { en: `${pcName(r % 12)}7`, he: `${pcNameHe(r % 12)} 7` },
     names, answer: keys[fam], choices: keys, stimulus: [chordStim(dom, 1.4)], choiceStim,
   });
@@ -281,7 +281,7 @@ deepen('bh-brothers', [{ en: 'Find the stranger', he: 'מי לא שייך' }], (
   const keys = ['c1', 'c2', 'c3'];
   return choiceQ({
     id, topic: 'bh-brothers', level, seed, skill: 'chords', difficulty: 1700,
-    ask: { en: 'Three dominants — two are brothers (same diminished chord). Which one is the stranger?', he: 'שלושה דומיננטים — שניים אחים (אותו דימיניש). מי לא שייך?' },
+    ask: { en: 'Three dominants — two are brothers (same diminished chord). Which one is the stranger?', he: 'שלושה דומיננטים — שניים אחים (אותו מוקטן). מי לא שייך?' },
     names: { c1: nm('The first', 'הראשון', 'first', 'one'), c2: nm('The second', 'השני', 'second', 'two'), c3: nm('The third', 'השלישי', 'third', 'three') },
     answer: keys[strangerAt], choices: keys,
     stimulus: played.flatMap((o, j) => (j ? [{ kind: 'rest' as const, duration: 0.3 }, chordStim(dom(r1 + o), 1.2)] : [chordStim(dom(r1 + o), 1.2)])),

@@ -88,15 +88,15 @@ export const LESSONS: MiniLesson[] = [
     takeaway: isVerified('card:bh-5432') && isVerified('card:bh-sevendown') && isVerified('card:bh-3b9')
       ? {
       en: 'A scale outline gives each bar its scale, up from the root. On a dominant: the three important arpeggios, the 5-4-3-2 phrases, 3 to ♭9, and seven down to the 3rd.',
-      he: 'מתאר סולמות נותן לכל תיבה את הסולם שלה, מהיסוד למעלה. על דומיננט: שלושת הארפג׳ים החשובים, משפטי 5-4-3-2, ‏3 עד ♭9, ושבע למטה לטרצה.',
+      he: 'מתאר סולמות נותן לכל תיבה את הסולם שלה, מהשורש למעלה. על דומיננט: שלושת הארפג׳ים החשובים, משפטי 5-4-3-2, ‏3 עד ♭9, ושבע למטה לטרצה.',
     }
       : {
           en: 'A scale outline gives each bar its scale, up from the root. On a dominant: the three important arpeggios, then the scale down by the rule.',
-          he: 'מתאר סולמות נותן לכל תיבה את הסולם שלה, מהיסוד למעלה. על דומיננט: שלושת הארפג׳ים החשובים, ואז הסולם למטה לפי החוק.',
+          he: 'מתאר סולמות נותן לכל תיבה את הסולם שלה, מהשורש למעלה. על דומיננט: שלושת הארפג׳ים החשובים, ואז הסולם למטה לפי החוק.',
         },
     steps: [
       {
-        say: { en: 'The scale outline of a tune: each bar its scale from the root up, chord tones on the beats. A chord that lasts two bars comes back down.', he: 'מתאר הסולמות של שיר: בכל תיבה הסולם שלה מהיסוד למעלה, צלילי אקורד על הפעמות. אקורד שנמשך שתי תיבות חוזר למטה.' },
+        say: { en: 'The scale outline of a tune: each bar its scale from the root up, chord tones on the beats. A chord that lasts two bars comes back down.', he: 'מתאר הסולמות של שיר: בכל תיבה הסולם שלה מהשורש למעלה, צלילי אקורד על הפעמות. אקורד שנמשך שתי תיבות חוזר למטה.' },
         play: [notes(ps(scaleOutline(0, OUTLINES.indiana.chords.slice(0, 2), 55).line))],
         show: { text: { en: 'C6 up | C6 down', he: 'C6 למעלה | C6 למטה' } },
       },
@@ -137,7 +137,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes(ps(arpIntoScale(60, 0)))],
       },
       ...gatedOr('bh-3b9', {
-        say: { en: '3 to flat 9 over the family: G7, B flat 7, D flat 7 and E7 all share the same four notes, the diminished on the 3rd.', he: '3 עד ♭9 על המשפחה: G7, ‏B♭7, ‏D♭7 ו־E7 חולקים את אותם ארבעה צלילים, הדימיניש על הטרצה.' },
+        say: { en: '3 to flat 9 over the family: G7, B flat 7, D flat 7 and E7 all share the same four notes, the diminished on the 3rd.', he: '3 עד ♭9 על המשפחה: G7, ‏B♭7, ‏D♭7 ו־E7 חולקים את אותם ארבעה צלילים, המוקטן על הטרצה.' },
         play: [notes(ps(threeToFlatNine(60, 'up').line))],
       }, [
         {
@@ -208,7 +208,7 @@ export const LESSONS: MiniLesson[] = [
         },
       ]),
       {
-        say: { en: 'The bass feels it too: push the next root onto the and of 4 and tie it over the bar line.', he: 'גם הבס מרגיש את זה: דוחפים את היסוד הבא אל ה״וְ״ של 4 וקושרים אותו מעבר לקו התיבה.' },
+        say: { en: 'The bass feels it too: push the next root onto the and of 4 and tie it over the bar line.', he: 'גם הבס מרגיש את זה: דוחפים את השורש הבא אל ה״וְ״ של 4 וקושרים אותו מעבר לקו התיבה.' },
         play: [notes([36, 40, 43, 41], 0.45), chord([41], 1)],
       },
       {
@@ -235,7 +235,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Composing a line: pick a chord tone for every beat first, then fill the eighths between with scale notes or a half step.', he: 'לחבר קו: קודם בוחרים צליל אקורד לכל פעמה, ואז ממלאים את השמיניות ביניהם בצלילי סולם או בחצי טון.' },
       }, [
         {
-          say: { en: 'The bass walks on the beats but leans into the next bar: the next root on the and of 4, tied over the bar line. The band still meets on the downbeat.', he: 'הבס הולך על הפעמות אבל נשען אל התיבה הבאה: היסוד הבא על ה"וְ" של 4, קשור מעל קו התיבה. הלהקה עדיין נפגשת על הפעמה הראשונה.' },
+          say: { en: 'The bass walks on the beats but leans into the next bar: the next root on the and of 4, tied over the bar line. The band still meets on the downbeat.', he: 'הבס הולך על הפעמות אבל נשען אל התיבה הבאה: השורש הבא על ה"וְ" של 4, קשור מעל קו התיבה. הלהקה עדיין נפגשת על הפעמה הראשונה.' },
           play: [notes([36, 40, 43, 41], 0.45), chord([41], 1)],
         },
       ]),

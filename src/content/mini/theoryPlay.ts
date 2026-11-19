@@ -29,12 +29,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♭3 5 ♭7 · 11 13 1', he: '♭3 5 ♭7 · 11 13 1' } },
       },
       {
-        say: { en: 'Over C7alt: G flat and A flat. Root, flat 9, sharp 9, flat 5, flat 13, flat 7. The altered scale without its 3rd.', he: 'מעל C7alt: סול במול ולה במול. יסוד, ‏♭9, ‏♯9, ‏♭5, ‏♭13, ‏♭7. הסולם האלטרד בלי הטרצה.' },
+        say: { en: 'Over C7alt: G flat and A flat. Root, flat 9, sharp 9, flat 5, flat 13, flat 7. The altered scale without its 3rd.', he: 'מעל C7alt: סול במול ולה במול. שורש, ‏♭9, ‏♯9, ‏♭5, ‏♭13, ‏♭7. הסולם האלטרד בלי הטרצה.' },
         play: [pairStimOf('altered', 0)],
         show: { text: { en: 'G♭ + A♭ / C7alt', he: 'G♭ + A♭ / C7alt' } },
       },
       {
-        say: { en: 'Over C major 7 sharp 11: D and E minor. 9, sharp 11, 13, then 3, 5, 7: lydian without the root.', he: 'מעל Cmaj7♯11: רה ומי מינור. 9, ‏♯11, 13, ואז 3, 5, 7: לידי בלי היסוד.' },
+        say: { en: 'Over C major 7 sharp 11: D and E minor. 9, sharp 11, 13, then 3, 5, 7: lydian without the root.', he: 'מעל Cmaj7♯11: רה ומי מינור. 9, ‏♯11, 13, ואז 3, 5, 7: לידי בלי השורש.' },
         play: [pairStimOf('lydian', 0)],
         show: { text: { en: 'D + Em / Cmaj7♯11', he: 'D + Em / Cmaj7♯11' } },
       },
@@ -91,7 +91,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 64, 70, 75], 1), notes([63, 66, 68, 70, 73])],
       },
       {
-        say: { en: 'Over C minor 7, D minor pentatonic gives 9, 11, 5, 13 and the root: a dorian sound.', he: 'מעל Cm7, רה מינור פנטטוני נותן 9, 11, 5, 13 והיסוד: צליל דורי.' },
+        say: { en: 'Over C minor 7, D minor pentatonic gives 9, 11, 5, 13 and the root: a dorian sound.', he: 'מעל Cm7, רה מינור פנטטוני נותן 9, 11, 5, 13 והשורש: צליל דורי.' },
         play: [chord([48, 63, 67, 70], 1), notes([62, 65, 67, 69, 72])],
       },
       {
@@ -100,7 +100,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Name each note against the chord root, not the pentatonic’s. That is how you know what you are adding.', he: 'קוראים לכל צליל מול יסוד האקורד, לא מול יסוד הפנטטוני. כך יודעים מה מוסיפים.' },
+        say: { en: 'Name each note against the chord root, not the pentatonic’s. That is how you know what you are adding.', he: 'קוראים לכל צליל מול שורש האקורד, לא מול שורש הפנטטוני. כך יודעים מה מוסיפים.' },
       },
       {
         say: { en: 'Listen to the same chord with two pentatonics: G major is calm and inside, D major lifts with the sharp 11. Same shape, a 5th apart.', he: 'הקשיבו לאותו אקורד עם שני פנטטוניים: סול מז׳ור רגוע ופנימי, רה מז׳ור מתרומם עם ה־♯11. אותה צורה, קווינטה ביניהם.' },
@@ -113,14 +113,14 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Play it in groups of four: 1-2-3-4, 2-3-4-5, up the neck or the keyboard. The groups cross the beat and sound like a line, not a scale.', he: 'מנגנים בקבוצות של ארבעה: 1-2-3-4, ‏2-3-4-5, במעלה הצוואר או המקלדת. הקבוצות חוצות את הפעמה ונשמעות כמו קו, לא כמו סולם.' },
       },
       {
-        say: { en: 'Over the altered dominant the same trick works a half step above the root: E flat minor pentatonic over C7 gives every altered tension and resolves well to F.', he: 'מעל הדומיננט האלטרד אותו טריק עובד חצי טון מעל היסוד: מי במול מינור פנטטוני מעל C7 נותן את כל המתחים האלטרד ונפתר יפה לפה.' },
+        say: { en: 'Over the altered dominant the same trick works a half step above the root: E flat minor pentatonic over C7 gives every altered tension and resolves well to F.', he: 'מעל הדומיננט האלטרד אותו טריק עובד חצי טון מעל השורש: מי במול מינור פנטטוני מעל C7 נותן את כל המתחים האלטרד ונפתר יפה לפה.' },
         play: [chord([48, 64, 70, 75], 1), notes([75, 73, 70, 68, 66], 0.24), chord([41, 57, 64, 69], 1.2)],
       },
       {
         say: { en: 'Practise it slowly over a vamp first, then over a ii–V–I: a different pentatonic on each chord, chosen for the colour you want to hear, not for the key of the tune.', he: 'תרגלו קודם לאט מעל וואמפ, ואז מעל ii–V–I: פנטטוני אחר על כל אקורד, שנבחר לפי הצבע שאתם רוצים לשמוע, לא לפי הסולם של השיר.' },
       },
       {
-        say: { en: 'To keep: same five-note shape, new root, new colour.', he: 'מה לזכור: אותה צורה של חמישה צלילים, יסוד חדש, צבע חדש.' },
+        say: { en: 'To keep: same five-note shape, new root, new colour.', he: 'מה לזכור: אותה צורה של חמישה צלילים, שורש חדש, צבע חדש.' },
         show: { text: { en: 'G = inside · D = ♯11 · E♭m = alt', he: 'G = פנימי · D = ♯11 · E♭m = אלטרד' } },
       },
     ],
@@ -168,7 +168,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([36, 52, 58, 62, 67, 70], 1.4)],
       },
       {
-        say: { en: 'Upper structures work over major 7 and minor 7 too. G over C major 7 is a major 9; F over C minor 7 is 11, 13 and the root, dorian.', he: 'מבנים עליונים עובדים גם מעל maj7 ו־m7. G מעל Cmaj7 הוא maj9; ‏F מעל Cm7 הוא 11, 13 והיסוד, דורי.' },
+        say: { en: 'Upper structures work over major 7 and minor 7 too. G over C major 7 is a major 9; F over C minor 7 is 11, 13 and the root, dorian.', he: 'מבנים עליונים עובדים גם מעל maj7 ו־m7. G מעל Cmaj7 הוא maj9; ‏F מעל Cm7 הוא 11, 13 והשורש, דורי.' },
         play: [chord([36, 52, 59, 62, 67, 71], 1.4), rest(), chord([36, 51, 58, 65, 69, 72], 1.4)],
       },
       {
@@ -208,7 +208,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 60, 63, 67], 0.8), chord([48, 59, 63, 67], 0.8), chord([48, 58, 63, 67], 0.8), chord([48, 57, 63, 67], 0.8)],
       },
       {
-        say: { en: 'Your turn: play the root, the 3rd, the 7th and the melody note. Any octave counts.', he: 'תורכם: נגנו יסוד, טרצה, ספטימה וצליל המנגינה. כל אוקטבה נחשבת.' },
+        say: { en: 'Your turn: play the root, the 3rd, the 7th and the melody note. Any octave counts.', he: 'תורכם: נגנו שורש, טרצה, ספטימה וצליל המנגינה. כל אוקטבה נחשבת.' },
         show: { text: { en: 'job + melody', he: 'תפקיד + מנגינה' } },
       },
     ],
@@ -217,7 +217,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Over a dominant the melody may be any tension but the natural 11th and the major 7th. Over major 7, avoid the 11th; over minor 7, the flat 13.', he: 'מעל דומיננט המנגינה יכולה להיות כל מתח חוץ מה־11 הטבעי והספטימה הגדולה. מעל maj7 נמנעים מה־11; מעל m7 מה־♭13.' },
       },
       {
-        say: { en: 'Why the root? A tritone sub shares its 3rd and 7th with the V. Without the root nobody hears that you changed it.', he: 'למה היסוד? תחליף טריטון חולק טרצה וספטימה עם ה־V. בלי היסוד אף אחד לא שומע שהחלפתם.' },
+        say: { en: 'Why the root? A tritone sub shares its 3rd and 7th with the V. Without the root nobody hears that you changed it.', he: 'למה השורש? תחליף טריטון חולק טרצה וספטימה עם ה־V. בלי השורש אף אחד לא שומע שהחלפתם.' },
         play: [chord([53, 59], 0.9), rest(0.2), chord([43, 53, 59], 0.9), rest(0.2), chord([37, 53, 59], 0.9)],
       },
       {
@@ -255,7 +255,7 @@ export const LESSONS: MiniLesson[] = [
         play: [pairStimOf('altered', 0)],
       },
       {
-        say: { en: 'Then a line cliché over a held minor chord, and a melody you reharmonise with a passing diminished and a tritone sub.', he: 'אחר כך ליין קלישה מעל אקורד מינור מוחזק, ומנגינה שאתם מרהרמנים עם דימיניש עובר ותחליף טריטון.' },
+        say: { en: 'Then a line cliché over a held minor chord, and a melody you reharmonise with a passing diminished and a tritone sub.', he: 'אחר כך ליין קלישה מעל אקורד מינור מוחזק, ומנגינה שאתם מרהרמנים עם מוקטן עובר ותחליף טריטון.' },
         play: [chord([48, 60, 63, 67], 0.7), chord([48, 59, 63, 67], 0.7), chord([48, 58, 63, 67], 0.7), chord([48, 57, 63, 67], 0.7)],
       },
       {
@@ -278,7 +278,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([64, 67, 69, 71, 61, 65, 68, 63, 66, 70, 74, 76], 0.2)],
       },
       {
-        say: { en: 'Keep the left hand relaxed and low in the upper structures; the right hand carries the colour and should sing a little louder than the shell.', he: 'השאירו את יד שמאל רפויה ונמוכה במבנים העליונים; יד ימין נושאת את הצבע וצריכה לשיר קצת חזק יותר מהקונכייה.' },
+        say: { en: 'Keep the left hand relaxed and low in the upper structures; the right hand carries the colour and should sing a little louder than the shell.', he: 'השאירו את יד שמאל רפויה ונמוכה במבנים העליונים; יד ימין נושאת את הצבע וצריכה לשיר קצת חזק יותר מהשלד.' },
       },
       {
         say: { en: 'To keep: hear it, name it, then play it. The ear lessons and these drills are the same colours from two sides.', he: 'מה לזכור: לשמוע, לתת שם, ואז לנגן. שיעורי האוזן והתרגילים האלה הם אותם צבעים משני צדדים.' },
@@ -289,11 +289,11 @@ export const LESSONS: MiniLesson[] = [
     id: 'guitar-tp',
     area: 'play',
     emoji: '𝄞',
-    title: { en: 'Rootless, quartal and Coltrane on guitar', he: 'בלי יסוד, קוורטלי וקולטריין בגיטרה' },
-    takeaway: { en: 'Rootless 3-5-7-9 and 7-9-3-5 on strings 5–2 and 4–1, So What in 4ths, and Giant Steps with shells: the jazz pianist’s harmony on the neck.', he: 'בלי יסוד 3-5-7-9 ו־7-9-3-5 על מיתרים 5–2 ו־4–1, ‏So What בקוורטות, ו־Giant Steps בקונכיות: ההרמוניה של פסנתרן הג׳אז על הצוואר.' },
+    title: { en: 'Rootless, quartal and Coltrane on guitar', he: 'בלי שורש, קוורטלי וקולטריין בגיטרה' },
+    takeaway: { en: 'Rootless 3-5-7-9 and 7-9-3-5 on strings 5–2 and 4–1, So What in 4ths, and Giant Steps with shells: the jazz pianist’s harmony on the neck.', he: 'בלי שורש 3-5-7-9 ו־7-9-3-5 על מיתרים 5–2 ו־4–1, ‏So What בקוורטות, ו־Giant Steps בשלדים: ההרמוניה של פסנתרן הג׳אז על הצוואר.' },
     steps: [
       {
-        say: { en: 'Hi {name}! The bass plays the root, so the guitar can drop it. D minor 9 without D: F, A, C, E, on strings 5 to 2.', he: 'היי {name}! הבס מנגן את היסוד, אז הגיטרה יכולה לוותר עליו. רה מינור 9 בלי רה: פה, לה, דו, מי, על מיתרים 5 עד 2.' },
+        say: { en: 'Hi {name}! The bass plays the root, so the guitar can drop it. D minor 9 without D: F, A, C, E, on strings 5 to 2.', he: 'היי {name}! הבס מנגן את השורש, אז הגיטרה יכולה לוותר עליו. רה מינור 9 בלי רה: פה, לה, דו, מי, על מיתרים 5 עד 2.' },
         play: [chord([53, 57, 60, 64])],
       },
       {
@@ -305,7 +305,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([50, 55, 60, 65, 69])],
       },
       {
-        say: { en: 'Giant Steps: keys a major 3rd apart, B, G and E flat, each reached by its own V7. Shells keep the hand still.', he: 'Giant Steps: סולמות במרחק טרצה גדולה, סי, סול ומי במול, וכל אחד מגיעים אליו דרך ה־V7 שלו. קונכיות שומרות את היד במקום.' },
+        say: { en: 'Giant Steps: keys a major 3rd apart, B, G and E flat, each reached by its own V7. Shells keep the hand still.', he: 'Giant Steps: סולמות במרחק טרצה גדולה, סי, סול ומי במול, וכל אחד מגיעים אליו דרך ה־V7 שלו. שלדים שומרים את היד במקום.' },
         play: [chord([47, 58, 63], 0.7), chord([50, 60, 66], 0.7), chord([43, 54, 59], 0.7), chord([46, 56, 62], 0.7), chord([39, 50, 55], 1.2)],
       },
       {
@@ -314,7 +314,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Rootless on guitar means drop-2 shapes of 3, 5, 7, 9: four strings, no root, the 9th on top or inside. The bass player gives the root.', he: 'בלי יסוד בגיטרה זה צורות דרופ 2 של 3, 5, 7, 9: ארבעה מיתרים, בלי יסוד, ה־9 למעלה או בפנים. הבסיסט נותן את היסוד.' },
+        say: { en: 'Rootless on guitar means drop-2 shapes of 3, 5, 7, 9: four strings, no root, the 9th on top or inside. The bass player gives the root.', he: 'בלי שורש בגיטרה זה צורות דרופ 2 של 3, 5, 7, 9: ארבעה מיתרים, בלי שורש, ה־9 למעלה או בפנים. הבסיסט נותן את השורש.' },
         play: [chord([53, 60, 64, 69], 1.2)],
       },
       {
@@ -322,16 +322,16 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([52, 57, 62, 67, 71], 0.9), chord([50, 55, 60, 65, 69], 1.2)],
       },
       {
-        say: { en: 'Giant Steps moves fast between three keys. Learn it slowly with shells, root, 3rd and 7th, then with drop-2 on the top four strings.', he: 'Giant Steps זז מהר בין שלושה סולמות. לומדים אותו לאט בקונכיות, יסוד, טרצה וספטימה, ואז בדרופ 2 על ארבעת המיתרים העליונים.' },
+        say: { en: 'Giant Steps moves fast between three keys. Learn it slowly with shells, root, 3rd and 7th, then with drop-2 on the top four strings.', he: 'Giant Steps זז מהר בין שלושה סולמות. לומדים אותו לאט בשלדים, שורש, טרצה וספטימה, ואז בדרופ 2 על ארבעת המיתרים העליונים.' },
       },
       {
         say: { en: 'Upper structures on guitar: play the 3rd and 7th first, then the triad on strings 3 to 1. Two hits, one chord.', he: 'מבנים עליונים בגיטרה: קודם טרצה וספטימה, ואז המשולש על מיתרים 3 עד 1. שתי מכות, אקורד אחד.' },
       },
       {
-        say: { en: 'A line cliché sits well on guitar: the root rings on a low string while one finger walks the moving voice down a string by half steps, the other notes held.', he: 'ליין קלישה יושב טוב על הגיטרה: היסוד מצלצל על מיתר נמוך בזמן שאצבע אחת מורידה את הקול הנע לאורך מיתר בחצאי טונים, והשאר מוחזקים.' },
+        say: { en: 'A line cliché sits well on guitar: the root rings on a low string while one finger walks the moving voice down a string by half steps, the other notes held.', he: 'ליין קלישה יושב טוב על הגיטרה: השורש מצלצל על מיתר נמוך בזמן שאצבע אחת מורידה את הקול הנע לאורך מיתר בחצאי טונים, והשאר מוחזקים.' },
       },
       {
-        say: { en: 'To keep: fewer notes, chosen well. The root belongs to the bass; your notes are the 3rd, the 7th and the colours.', he: 'מה לזכור: פחות צלילים, נבחרים היטב. היסוד שייך לבס; הצלילים שלכם הם הטרצה, הספטימה והצבעים.' },
+        say: { en: 'To keep: fewer notes, chosen well. The root belongs to the bass; your notes are the 3rd, the 7th and the colours.', he: 'מה לזכור: פחות צלילים, נבחרים היטב. השורש שייך לבס; הצלילים שלכם הם הטרצה, הספטימה והצבעים.' },
       },
     ],
   },

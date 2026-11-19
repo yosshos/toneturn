@@ -49,7 +49,7 @@ export const LESSONS: MiniLesson[] = [
         play: [mel([63, 64, 66, 67], [0.5, 0.5, 0.5, 1.5])],
       },
       {
-        say: { en: 'An enclosure surrounds the target: one note above it, one below, then the target itself on the beat.', he: 'הקפה מקיפה את המטרה: צליל אחד מעליה, אחד מתחתיה, ואז המטרה עצמה על הפעמה.' },
+        say: { en: 'An enclosure surrounds the target: one note above it, one below, then the target itself on the beat.', he: 'כיתור מקיף את המטרה: צליל אחד מעליה, אחד מתחתיה, ואז המטרה עצמה על הפעמה.' },
         play: [mel([65, 63, 64], [0.5, 0.5, 2])],
       },
       {
@@ -64,7 +64,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'C · F · B♭ · E♭ · A♭', he: 'C · F · B♭ · E♭ · A♭' } },
       },
       {
-        say: { en: 'To keep: chord tones on the beats, approach and enclose, every key, then use it in a solo. That is how vocabulary becomes yours.', he: 'מה לזכור: צלילי אקורד על הפעמות, גישה והקפה, כל הסולמות, ואז להשתמש בסולו. כך אוצר מילים נהיה שלכם.' },
+        say: { en: 'To keep: chord tones on the beats, approach and enclose, every key, then use it in a solo. That is how vocabulary becomes yours.', he: 'מה לזכור: צלילי אקורד על הפעמות, גישה וכיתור, כל הסולמות, ואז להשתמש בסולו. כך אוצר מילים נהיה שלכם.' },
         show: { text: { en: 'hear · own · use · keep', he: 'לשמוע · לשלוט · להשתמש · לשמור' } },
       },
     ],

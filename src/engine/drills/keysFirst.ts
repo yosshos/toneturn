@@ -232,7 +232,7 @@ function genFirst(s: DrillSpec): Drill {
       n.add(32, 4, [...vs[0].map((p) => ({ p, hand: 'R' as const })), { p: 40 + mod(key - 40, 12), hand: 'L' as const }]);
       const chart = [...Array.from({ length: 8 }, (_, bar) => chordName(key, POP[bar % 4])), chordName(key, 0)];
       const nm = op === 1 ? t('triads in quarters', 'משולשים ברבעים') : t('triads in halves', 'משולשים בחצאים');
-      return done(s, n, kt(`Pop from chord symbols: LH root, RH ${nm.en}`, `פופ מסימני אקורדים: יסוד ביד שמאל, ${nm.he} ביד ימין`, { ...s, hands: 'RL' }), 60, { evenness: true, hands: true }, { chart });
+      return done(s, n, kt(`Pop from chord symbols: LH root, RH ${nm.en}`, `פופ מסימני אקורדים: שורש ביד שמאל, ${nm.he} ביד ימין`, { ...s, hands: 'RL' }), 60, { evenness: true, hands: true }, { chart });
     }
   }
   throw new Error(`Unknown k-first kind ${s.kind}`);
@@ -408,7 +408,7 @@ export function keysFirstFamily(): FamilyDef {
       L(8, 'Reading the bass clef', 'קריאה במפתח פה', [0, 1, 2].map((o) => fs('kf-read', 'L', { option: o })), CGF, [50, 84]),
       L(9, 'A first piece, both hands', 'יצירה ראשונה בשתי ידיים', [fs('kf-piece', 'RL'), fs('kf-piece', 'RL', { option: 1 })], CGF, [56, 88]),
       L(10, 'Chord symbols: block chords', 'סימני אקורדים: אקורדים חסומים', [fs('kf-block', 'R', { perBeat: 0.25 }), fs('kf-block', 'R', { option: 1, perBeat: 0.5 })], CGF, [50, 80]),
-      L(11, 'Pop accompaniment: LH root, RH triad', 'ליווי פופ: יסוד ביד שמאל, משולש ביד ימין', [fs('kf-pop', 'RL', { perBeat: 0.5 }), fs('kf-pop', 'RL', { option: 1 })], CGF, [56, 92]),
+      L(11, 'Pop accompaniment: LH root, RH triad', 'ליווי פופ: שורש ביד שמאל, משולש ביד ימין', [fs('kf-pop', 'RL', { perBeat: 0.5 }), fs('kf-pop', 'RL', { option: 1 })], CGF, [56, 92]),
     ],
   };
 }

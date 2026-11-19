@@ -21,7 +21,7 @@ const chordName = (pc: number, q: ArpQuality) => `${ROOT[mod12(pc)]}${ARP_SYM[q]
 const pad = (root: number, q: ArpQuality) => ARP_QUALITY[q].map((x) => root - 12 + x);
 
 export const TONE_NAMES: Names = {
-  t0: nm('Root', 'יסוד', 'root', 'one'),
+  t0: nm('Root', 'שורש', 'root', 'one'),
   t1: nm('3rd', 'טרצה', 'third', 'three'),
   t2: nm('5th', 'קווינטה', 'fifth', 'five'),
   t3: nm('7th', 'ספטימה', 'seventh', 'seven'),

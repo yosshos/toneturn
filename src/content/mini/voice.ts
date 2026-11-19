@@ -916,7 +916,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'rebuild from the start', he: 'לבנות מההתחלה' } },
       },
       {
-        say: { en: 'This is how musicians learn by ear: call and response in gospel and blues, a teacher singing a phrase for a student to copy, a band picking up a riff. To keep: degrees, contour, chunks and a silent replay.', he: 'ככה מוזיקאים לומדים בשמיעה: קריאה ותשובה בגוספל ובבלוז, מורה ששר משפט ותלמיד שמעתיק, להקה שלומדת ריף. לזכור: דרגות, קו מתאר, קבוצות וחזרה שקטה בראש.' },
+        say: { en: 'This is how musicians learn by ear: call and response in gospel and blues, a teacher singing a phrase for a student to copy, a band picking up a riff. To keep: degrees, contour, chunks and a silent replay.', he: 'ככה מוזיקאים לומדים בשמיעה: שאלה ותשובה בגוספל ובבלוז, מורה ששר משפט ותלמיד שמעתיק, להקה שלומדת ריף. לזכור: דרגות, קו מתאר, קבוצות וחזרה שקטה בראש.' },
         show: { text: { en: 'degrees · contour · chunks · replay', he: 'דרגות · קו מתאר · קבוצות · חזרה' } },
       },
     ],

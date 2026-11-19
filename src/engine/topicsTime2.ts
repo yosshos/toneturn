@@ -231,7 +231,7 @@ TOPIC_TAGS['poly-tap'] = tg(['timing', 'poly', 0.7], ['rhythm-dictation', 'poly'
 
 // ---------------------------------------------------------------- drum-read
 
-const KIT = { kick: { en: 'Kick', he: 'בס־דראם' }, snare: { en: 'Snare', he: 'סנר' }, hat: { en: 'Hi-hat', he: 'הַיי־הֶט' } };
+const KIT = { kick: { en: 'Kick', he: 'קיק' }, snare: { en: 'Snare', he: 'סנר' }, hat: { en: 'Hi-hat', he: 'הַיי־הֶט' } };
 const HAT8: CellId[] = ['ee', 'ee', 'ee', 'ee'];
 const HAT16: CellId[] = ['ssss', 'ssss', 'ssss', 'ssss'];
 const BACK: CellId[] = ['qr', 'q', 'qr', 'q'];
@@ -267,10 +267,10 @@ TOPIC_GEN['drum-read'] = {
   forPlays: ['drums'],
   levels: [
     { en: 'Rock beat', he: 'ביט רוק' },
-    { en: 'Kick variations', he: 'וריאציות בבס־דראם' },
-    { en: 'Fills', he: 'מילויים (פילים)' },
-    { en: 'Sixteenth hi-hats', he: 'היי־הט בשש־עשריות' },
-    { en: 'Open hi-hat and ghost notes', he: 'היי־הט פתוח ותווי רפאים' },
+    { en: 'Kick variations', he: 'וריאציות בקיק' },
+    { en: 'Fills', he: 'מעברים' },
+    { en: 'Sixteenth hi-hats', he: 'היי־האט בשש־עשריות' },
+    { en: 'Open hi-hat and ghost notes', he: 'היי־האט פתוח ותווי רפאים' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -301,11 +301,11 @@ TOPIC_GEN['drum-read'] = {
       { rhythm: bars44(...hat), name: KIT.hat, perc: 'hat' },
     ];
     const prompt: Bi = [
-      { en: 'Read the kit and play it on three pads: kick, snare, hi-hat.', he: 'קראו את התופים ונגנו על שלושה פדים: בס־דראם, סנר, היי־הט.' },
-      { en: 'Read the kit: the kick moves around the beat. Play it on three pads.', he: 'קראו את התופים: הבס־דראם זז סביב הפעמה. נגנו על שלושה פדים.' },
-      { en: 'Read the kit: a groove bar, then a snare fill. Play it on three pads.', he: 'קראו את התופים: תיבת גרוב ואחריה פיל בסנר. נגנו על שלושה פדים.' },
-      { en: 'Read the kit with sixteenth notes on the hi-hat. Play it on three pads.', he: 'קראו את התופים עם שש־עשריות בהיי־הט. נגנו על שלושה פדים.' },
-      { en: 'Read the kit: soft ghost notes on the snare between the backbeats; open the hi-hat on the last "and". Three pads.', he: 'קראו את התופים: תווי רפאים שקטים בסנר בין הבקביטים; פותחים את ההיי־הט על ה״וְ״ האחרון. שלושה פדים.' },
+      { en: 'Read the kit and play it on three pads: kick, snare, hi-hat.', he: 'קראו את התופים ונגנו על שלושה פדים: קיק, סנר, היי־האט.' },
+      { en: 'Read the kit: the kick moves around the beat. Play it on three pads.', he: 'קראו את התופים: הקיק זז סביב הפעמה. נגנו על שלושה פדים.' },
+      { en: 'Read the kit: a groove bar, then a snare fill. Play it on three pads.', he: 'קראו את התופים: תיבת גרוב ואחריה מעבר בסנר. נגנו על שלושה פדים.' },
+      { en: 'Read the kit with sixteenth notes on the hi-hat. Play it on three pads.', he: 'קראו את התופים עם שש־עשריות בהיי־האט. נגנו על שלושה פדים.' },
+      { en: 'Read the kit: soft ghost notes on the snare between the backbeats; open the hi-hat on the last "and". Three pads.', he: 'קראו את התופים: תווי רפאים שקטים בסנר בין הבקביטים; פותחים את ההיי־האט על ה״וְ״ האחרון. שלושה פדים.' },
     ][L - 1];
     const bpm = pickR(rnd, L === 4 ? [60, 66, 72] : L === 3 ? [72, 80, 88] : [76, 84, 92]);
     // `rhythm` = the first lane (count-in and clicks); grading uses every lane (gradeLanes).
@@ -610,7 +610,7 @@ deepen('swing-ratio', [
     back: nm('Laid back (a little behind)', 'לייד־בק (קצת מאחור)', 'laid back', 'behind', 'מאחור'),
     rush: nm('Rushing (getting earlier)', 'ממהר (מקדים יותר ויותר)', 'rushing', 'rush', 'ממהר'),
   };
-  return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1400, ask: { en: 'Bass and hi-hat keep time. Where does the piano sit?', he: 'הבס וההיי־הט שומרים על הזמן. איפה יושב הפסנתר?' }, names, answer, choices: pool, stimulus: [feel(answer, beat, 12)], choiceStim: Object.fromEntries(pool.map((p) => [p, [feel(p, beat, 12)]])) });
+  return choiceQ({ id, topic: 'swing-ratio', level, seed, skill: 'rhythm-dictation', difficulty: 1400, ask: { en: 'Bass and hi-hat keep time. Where does the piano sit?', he: 'הבס וההיי־האט שומרים על הזמן. איפה יושב הפסנתר?' }, names, answer, choices: pool, stimulus: [feel(answer, beat, 12)], choiceStim: Object.fromEntries(pool.map((p) => [p, [feel(p, beat, 12)]])) });
 });
 
 // ---------------------------------------------------------------- syncopation 3–4
@@ -907,5 +907,5 @@ deepen('odd-meter', [{ en: 'Mixed meter: which two bars alternate?', he: 'משק
     names[k] = MIX[k][2];
     choiceStim[k] = [mixed(MIX[k][0], MIX[k][1], step, 1)];
   }
-  return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'meter', difficulty: 1900, ask: { en: 'Two different bars keep alternating (the kick marks each bar). Which two?', he: 'שתי תיבות שונות מתחלפות (הבס־דראם מסמן כל תיבה). אילו שתיים?' }, names, answer, choices: pool, stimulus: [mixed(MIX[answer][0], MIX[answer][1], step, 3)], choiceStim });
+  return choiceQ({ id, topic: 'odd-meter', level, seed, skill: 'meter', difficulty: 1900, ask: { en: 'Two different bars keep alternating (the kick marks each bar). Which two?', he: 'שתי תיבות שונות מתחלפות (הקיק מסמן כל תיבה). אילו שתיים?' }, names, answer, choices: pool, stimulus: [mixed(MIX[answer][0], MIX[answer][1], step, 3)], choiceStim });
 }, () => tg(['meter', 'odd', 1]));

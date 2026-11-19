@@ -21,25 +21,25 @@ const S = (family: FamilyId, kind: string, en: string, he: string, keys12 = fals
 
 export const TUNE_LADDERS: Record<LadderInst, TuneStep[]> = {
   piano: [
-    S('k-tune', 'tn-root', 'Roots', 'יסודות'),
+    S('k-tune', 'tn-root', 'Roots', 'שורשים'),
     S('k-tune', 'tn-guide', 'Guide tones', 'צלילים מנחים'),
     S('k-tune', 'tn-shell', 'Shells', 'שלדים'),
-    S('k-tune', 'tn-rootless', 'Rootless A / B', 'בלי יסוד A / B'),
+    S('k-tune', 'tn-rootless', 'Rootless A / B', 'בלי שורש A / B'),
     S('k-tune', 'tn-drop2', 'Drop 2', 'דרופ 2'),
     S('k-harm', 'hm-sixdim', '6-dim blocks under the melody', 'בלוקים שש-מוקטן מתחת למנגינה'),
     S('k-tune', 'tn-melcomp', 'Melody and comp', 'מנגינה וליווי'),
-    S('k-tune', 'tn-rootless', 'Rootless in all 12 keys', 'בלי יסוד בכל 12 הסולמות', true),
+    S('k-tune', 'tn-rootless', 'Rootless in all 12 keys', 'בלי שורש בכל 12 הסולמות', true),
   ],
   guitar: [
-    S('g-tune', 'tn-root', 'Roots', 'יסודות'),
+    S('g-tune', 'tn-root', 'Roots', 'שורשים'),
     S('g-tune', 'tn-shell', 'Shells', 'שלדים'),
-    S('g-tune', 'tn-rootless', 'Rootless drop 2', 'דרופ 2 בלי יסוד'),
+    S('g-tune', 'tn-rootless', 'Rootless drop 2', 'דרופ 2 בלי שורש'),
     S('g-tune', 'tn-drop2', 'Drop 2', 'דרופ 2'),
     S('g-tune', 'tn-melcomp', 'Chord-melody on the changes', 'אקורד-מלודיה על המהלך'),
     S('g-tune', 'tn-shell', 'Shells in all 12 keys', 'שלדים בכל 12 הסולמות', true),
   ],
   bass: [
-    S('b-tune', 'tn-root', 'Roots', 'יסודות'),
+    S('b-tune', 'tn-root', 'Roots', 'שורשים'),
     S('b-tune', 'tn-two', 'Two-feel', 'בשתיים'),
     S('b-tune', 'tn-walk', 'Walking', 'ווקינג'),
     S('b-tune', 'tn-appr', 'Walking with approaches', 'ווקינג עם צלילי גישה'),

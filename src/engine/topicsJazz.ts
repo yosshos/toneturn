@@ -23,7 +23,7 @@ TOPIC_GEN['bh-family'] = {
   levels: [
     { en: 'Major 6 = minor 7', he: 'מז׳ור 6 = מינור 7' },
     { en: 'Minor 6 = half-diminished', he: 'מינור 6 = חצי מוקטן' },
-    { en: 'Diminished = 7♭9 without its root', he: 'דימיניש = 7♭9 בלי השורש' },
+    { en: 'Diminished = 7♭9 without its root', he: 'מוקטן = 7♭9 בלי השורש' },
     { en: 'By ear: the bass names the chord', he: 'בשמיעה: הבס קובע את השם' },
   ],
   gen(seed, level, id) {
@@ -66,7 +66,7 @@ TOPIC_GEN['bh-family'] = {
         for (const f of [0, 1, 2]) names[`f${f}`] = nm(`${famName(f).en} (°7)`, `${famName(f).he} (°7)`, `${pcName(f).replace('♭', ' flat')} diminished`);
         return choiceQ({
           id, topic: 'bh-family', level, seed, skill: 'theory', difficulty: 1450,
-          ask: { en: `${pcName(r)}7♭9 without its root is which diminished chord?`, he: `${pcNameHe(r)} 7♭9 בלי השורש הוא איזה דימיניש?` },
+          ask: { en: `${pcName(r)}7♭9 without its root is which diminished chord?`, he: `${pcNameHe(r)} 7♭9 בלי השורש הוא איזה מוקטן?` },
           text: { en: `${pcName(r)}7♭9 − ${pcName(r)}`, he: `${pcNameHe(r)} 7♭9 − ${pcNameHe(r)}` },
           names, answer: `f${ansF}`, choices: ['f0', 'f1', 'f2'], stimulus: [],
           choiceStim: Object.fromEntries([0, 1, 2].map((f) => [`f${f}`, [chordStim(fit(fam(f).map((p) => 60 + p)), 1.3)]])),
@@ -82,7 +82,7 @@ TOPIC_GEN['bh-family'] = {
       for (const o of opts) names[`d${o}`] = nm(`${pcName(o)}7♭9`, `${pcNameHe(o)} 7♭9`, `${pcName(o).replace('♭', ' flat')} seven flat nine`);
       return choiceQ({
         id, topic: 'bh-family', level, seed, skill: 'theory', difficulty: 1500,
-        ask: { en: `${famName(f).en} — which dominant 7♭9 contains this diminished chord?`, he: `${famName(f).he} — איזה דומיננט 7♭9 מכיל את הדימיניש הזה?` },
+        ask: { en: `${famName(f).en} — which dominant 7♭9 contains this diminished chord?`, he: `${famName(f).he} — איזה דומיננט 7♭9 מכיל את המוקטן הזה?` },
         text: { en: `${pcName(f)}°7`, he: `${pcNameHe(f)}°7` },
         names, answer: `d${ans}`, choices: opts.map((o) => `d${o}`), stimulus: [],
       });
@@ -148,23 +148,23 @@ TOPIC_GEN['bh-block'] = {
   title: { en: 'Barry Harris: block chords', he: 'בארי האריס: אקורדי בלוק' },
   skill: 'chords',
   levels: [
-    { en: '6 chord or diminished?', he: 'אקורד 6 או דימיניש?' },
+    { en: '6 chord or diminished?', he: 'אקורד 6 או מוקטן?' },
     { en: 'Where did the chords stop?', he: 'איפה האקורדים נעצרו?' },
-    { en: 'Major or minor 6th-diminished?', he: '6 דימיניש מז׳ורי או מינורי?' },
-    { en: 'How many diminished chords?', he: 'כמה אקורדי דימיניש?' },
+    { en: 'Major or minor 6th-diminished?', he: '6 מוקטן מז׳ורי או מינורי?' },
+    { en: 'How many diminished chords?', he: 'כמה אקורדי מוקטן?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
     const tonic = 64 + Math.floor(rnd() * 6);
     const minor = level === 3 ? rnd() < 0.5 : rnd() < 0.3;
     const ref = chordStim(blockAt(tonic, minor, 0).midis, 1);
-    const names2: Names = { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'שש'), dim: nm('The diminished chord', 'הדימיניש', 'diminished', 'dim', 'דימיניש') };
+    const names2: Names = { six: nm('The 6 chord', 'אקורד ה־6', 'six', 'שש'), dim: nm('The diminished chord', 'המוקטן', 'diminished', 'dim', 'דימיניש', 'מוקטן') };
     if (level === 1) {
       const step = 1 + Math.floor(rnd() * 7);
       const b = blockAt(tonic, minor, step);
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1250,
-        ask: { en: 'A block chord: 6 chord or diminished?', he: 'אקורד בלוק: 6 או דימיניש?' },
+        ask: { en: 'A block chord: 6 chord or diminished?', he: 'אקורד בלוק: 6 או מוקטן?' },
         names: names2, answer: b.six ? 'six' : 'dim', choices: ['six', 'dim'], stimulus: [ref, rest(0.4), chordStim(b.midis, 1.4)],
       });
     }
@@ -173,7 +173,7 @@ TOPIC_GEN['bh-block'] = {
       const run = Array.from({ length: stop + 1 }, (_, k) => chordStim(blockAt(tonic, minor, k).midis, k === stop ? 1.5 : 0.42));
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1350,
-        ask: { en: 'They stop on a 6 chord or a diminished?', he: 'הם נעצרים על 6 או על דימיניש?' },
+        ask: { en: 'They stop on a 6 chord or a diminished?', he: 'הם נעצרים על 6 או על מוקטן?' },
         names: names2, answer: blockAt(tonic, minor, stop).six ? 'six' : 'dim', choices: ['six', 'dim'], stimulus: run,
       });
     }
@@ -181,7 +181,7 @@ TOPIC_GEN['bh-block'] = {
       const run = (mi: boolean) => Array.from({ length: 9 }, (_, k) => chordStim(blockAt(tonic, mi, k).midis, k === 8 ? 1.4 : 0.38));
       return choiceQ({
         id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1400,
-        ask: { en: 'The harmonized scale: major 6th-diminished or minor 6th-diminished?', he: 'הסולם המהורמן: 6 דימיניש מז׳ורי או מינורי?' },
+        ask: { en: 'The harmonized scale: major 6th-diminished or minor 6th-diminished?', he: 'הסולם המהורמן: 6 מוקטן מז׳ורי או מינורי?' },
         names: { maj: nm('Major (6 chord)', 'מז׳ורי (אקורד 6)', 'major'), min: nm('Minor (minor 6 chord)', 'מינורי (מינור 6)', 'minor') },
         answer: minor ? 'min' : 'maj', choices: ['maj', 'min'], stimulus: run(minor), choiceStim: { maj: run(false), min: run(true) },
       });
@@ -199,7 +199,7 @@ TOPIC_GEN['bh-block'] = {
     const nn = fixed.filter((s) => !blockAt(tonic, minor, s).six).length;
     return choiceQ({
       id, topic: 'bh-block', level, seed, skill: 'chords', difficulty: 1550,
-      ask: { en: 'A melody in block chords: how many of the chords are diminished?', he: 'מנגינה באקורדי בלוק: כמה מהאקורדים הם דימיניש?' },
+      ask: { en: 'A melody in block chords: how many of the chords are diminished?', he: 'מנגינה באקורדי בלוק: כמה מהאקורדים הם מוקטן?' },
       names: { n1: nm('One', 'אחד', 'one', '1'), n2: nm('Two', 'שניים', 'two', '2'), n3: nm('Three', 'שלושה', 'three', '3') },
       answer: `n${Math.max(1, Math.min(3, nn))}`, choices: ['n1', 'n2', 'n3'],
       stimulus: [ref, rest(0.5), ...fixed.map((s, k) => chordStim(blockAt(tonic, minor, s).midis, k === fixed.length - 1 ? 1.3 : 0.6))],
@@ -360,7 +360,7 @@ TOPIC_GEN['guide-tones'] = {
     };
     return choiceQ({
       id, topic: 'guide-tones', level, seed, skill: 'sequences', difficulty: [950, 1150, 1350][level - 1] ?? 1350,
-      ask: minor ? { en: 'Minor ii–V–i in shells — which guide-tone line is on top?', he: 'ii–V–i מינורי בקונכיות — איזה קו צלילים מנחים למעלה?' } : { en: 'ii–V–I in shells — which guide-tone line is on top?', he: 'ii–V–I בקונכיות — איזה קו צלילים מנחים למעלה?' },
+      ask: minor ? { en: 'Minor ii–V–i in shells — which guide-tone line is on top?', he: 'ii–V–i מינורי בשלדים — איזה קו צלילים מנחים למעלה?' } : { en: 'ii–V–I in shells — which guide-tone line is on top?', he: 'ii–V–I בשלדים — איזה קו צלילים מנחים למעלה?' },
       names, answer: a ? 'a' : 'b', choices: ['a', 'b'], stimulus: voice(a), choiceStim: { a: voice(true), b: voice(false) },
     });
   },

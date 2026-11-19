@@ -54,7 +54,7 @@ function vocabLine(s: DrillSpec, inst: Inst): { line: VLine; name: T2; click?: D
     case 'v-3b9':
       return { line: cell3b9(key, op, lo, hi), name: op % 2 ? t('3 to ♭9 on the V, minor ii–V–i', '3 עד ♭9 על ה־V, ii–V–i מינורי') : t('3 to ♭9 on the V, the ♭9 falls to the 5th of I', '3 עד ♭9 על ה־V, ה־♭9 יורד לקווינטה של I') };
     case 'v-trip':
-      return { line: tripletLine(key, op, lo, hi), name: op % 2 ? t('Triplet rules through ii–V: from the root and the 3rd', 'חוקי הטריולה ב־ii–V: מהיסוד ומהטרצה') : t('Triplet rules on the V: a triplet down from the root', 'חוקי הטריולה על ה־V: טריולה יורדת מהיסוד') };
+      return { line: tripletLine(key, op, lo, hi), name: op % 2 ? t('Triplet rules through ii–V: from the root and the 3rd', 'חוקי הטריולה ב־ii–V: מהשורש ומהטרצה') : t('Triplet rules on the V: a triplet down from the root', 'חוקי הטריולה על ה־V: טריולה יורדת מהשורש') };
     case 'v-minor':
       return { line: makeItMinor(key, op, lo, hi), name: op % 2 ? t('Make it minor: the m7♭5 on the V’s 3rd', 'להפוך למינור: m7♭5 על הטרצה של ה־V') : t('Make it minor: the m6 a 5th above the V', 'להפוך למינור: m6 קווינטה מעל ה־V') };
     case 'v-digit': {

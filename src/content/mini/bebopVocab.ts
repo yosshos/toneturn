@@ -57,7 +57,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake: the outside note lands on the beat and the chord tone after it. Then the wrong note is the one the ear hears.', he: 'טעות נפוצה: הצליל שבחוץ נוחת על הפעמה, וצליל האקורד אחריו. אז האוזן שומעת דווקא את הצליל השגוי.' },
       },
       {
-        say: { en: 'Bass players walk with the same moves: a half step or the 5th before each new root. On a horn, guitar or piano they shape every bebop line.', he: 'נגני בס מהלכים עם אותן תנועות: חצי טון או קווינטה לפני כל יסוד חדש. בכלי נשיפה, גיטרה או פסנתר הן מעצבות כל קו ביבופ.' },
+        say: { en: 'Bass players walk with the same moves: a half step or the 5th before each new root. On a horn, guitar or piano they shape every bebop line.', he: 'נגני בס מהלכים עם אותן תנועות: חצי טון או קווינטה לפני כל שורש חדש. בכלי נשיפה, גיטרה או פסנתר הן מעצבות כל קו ביבופ.' },
         play: [notes([43, 46, 47, 48], 0.4)],
       },
       {
@@ -106,7 +106,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Where the notes fall: the target on the beat, the enclosure in the 8ths before it. Two notes take one beat, four take two.', he: 'איפה הצלילים נופלים: המטרה על הפעמה, הכיתור בשמיניות שלפניה. שני צלילים לוקחים פעמה אחת, ארבעה לוקחים שתיים.' },
       },
       {
-        say: { en: 'Enclose every chord tone of ii–V–I: the roots, then the 3rds, the 5ths, the 7ths. Each one becomes a place you can land.', he: 'מכתרים כל צליל אקורד של ii–V–I: היסודות, אחר כך הטרצות, הקווינטות, הספטימות. כל אחד הופך למקום שאפשר לנחות בו.' },
+        say: { en: 'Enclose every chord tone of ii–V–I: the roots, then the 3rds, the 5ths, the 7ths. Each one becomes a place you can land.', he: 'מכתרים כל צליל אקורד של ii–V–I: השורשים, אחר כך הטרצות, הקווינטות, הספטימות. כל אחד הופך למקום שאפשר לנחות בו.' },
         play: [chord(DM7, 0.5), notes([66, 64, 65], 0.25), chord(G7, 0.5), notes([60, 58, 59], 0.25), chord(CMAJ7, 0.5), notes([65, 63, 64], 0.3)],
       },
       {
@@ -116,7 +116,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to rush the enclosure and land early. Keep the 8ths even and let the target arrive exactly on the beat.', he: 'טעות נפוצה היא למהר בכיתור ולנחות מוקדם. שמרו על שמיניות שוות ותנו למטרה להגיע בדיוק על הפעמה.' },
       },
       {
-        say: { en: 'You hear enclosures all through the bebop era, on horns, piano and guitar, usually into the 3rd or the root of the next chord.', he: 'שומעים כיתורים לאורך כל תקופת הביבופ, בכלי נשיפה, בפסנתר ובגיטרה, בדרך כלל אל הטרצה או היסוד של האקורד הבא.' },
+        say: { en: 'You hear enclosures all through the bebop era, on horns, piano and guitar, usually into the 3rd or the root of the next chord.', he: 'שומעים כיתורים לאורך כל תקופת הביבופ, בכלי נשיפה, בפסנתר ובגיטרה, בדרך כלל אל הטרצה או השורש של האקורד הבא.' },
         play: [notes([69, 66, 67, 64, 62, 60], 0.24), notes([62, 59, 60], 0.3)],
       },
       {
@@ -197,7 +197,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [59, 62, 65, 68, 67], text: { en: '3 5 7 ♭9 → 5', he: '3 5 7 ♭9 ← 5' } },
       },
       {
-        say: { en: 'The triplet rule: going down the scale, a triplet from the root reaches the next chord tone on the beat. G, F, E, then D.', he: 'חוק הטריולה: בירידה בסולם, טריולה מהיסוד מגיעה לצליל האקורד הבא על הפעמה. סול, פה, מי, ואז רה.' },
+        say: { en: 'The triplet rule: going down the scale, a triplet from the root reaches the next chord tone on the beat. G, F, E, then D.', he: 'חוק הטריולה: בירידה בסולם, טריולה מהשורש מגיעה לצליל האקורד הבא על הפעמה. סול, פה, מי, ואז רה.' },
         play: [notes([67, 65, 64], 0.18), notes([62, 60, 59], 0.3)],
         show: { notes: [67, 65, 64, 62], text: { en: 'G F E → D', he: 'G F E ← D' } },
       },
@@ -224,7 +224,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to rush the triplet. Three even notes in the beat, then the chord tone on time.', he: 'טעות נפוצה היא למהר בטריולה. שלושה צלילים שווים בתוך הפעמה, ואז צליל האקורד בזמן.' },
       },
       {
-        say: { en: 'To keep: over V think the minor a 5th above; 3–5–7–♭9 resolves to the 5th; triplets from the root and the 3rd.', he: 'מה לזכור: מעל V חושבים על המינור קווינטה מעל; 3–5–7–♭9 נפתר לקווינטה; טריולות מהיסוד ומהטרצה.' },
+        say: { en: 'To keep: over V think the minor a 5th above; 3–5–7–♭9 resolves to the 5th; triplets from the root and the 3rd.', he: 'מה לזכור: מעל V חושבים על המינור קווינטה מעל; 3–5–7–♭9 נפתר לקווינטה; טריולות מהשורש ומהטרצה.' },
       },
     ],
   },
@@ -267,11 +267,11 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([68, 66, 64], 0.3), notes([61, 59, 57], 0.3), notes([66, 64, 62], 0.3), notes([59, 57, 55], 0.3)],
       },
       {
-        say: { en: 'Digital patterns train the hand to find chord tones fast: 1-2-3-5 up from each root, then 7-5-3-1 down, two chords a bar, near the last note.', he: 'תבניות דיגיטליות מאמנות את היד למצוא צלילי אקורד מהר: 1-2-3-5 למעלה מכל יסוד, ואז 7-5-3-1 למטה, שני אקורדים בתיבה, קרוב לצליל האחרון.' },
+        say: { en: 'Digital patterns train the hand to find chord tones fast: 1-2-3-5 up from each root, then 7-5-3-1 down, two chords a bar, near the last note.', he: 'תבניות דיגיטליות מאמנות את היד למצוא צלילי אקורד מהר: 1-2-3-5 למעלה מכל שורש, ואז 7-5-3-1 למטה, שני אקורדים בתיבה, קרוב לצליל האחרון.' },
         play: [notes([62, 64, 65, 69, 65, 62, 59, 55], 0.22)],
       },
       {
-        say: { en: 'A common mistake is to run the scale from the root on every chord. Start each bar near where the last one ended, and let the line turn at the edges of your range.', he: 'טעות נפוצה היא לרוץ בסולם מהיסוד על כל אקורד. התחילו כל תיבה קרוב למקום שבו הקודמת נגמרה, ותנו לקו להסתובב בקצוות של המנעד.' },
+        say: { en: 'A common mistake is to run the scale from the root on every chord. Start each bar near where the last one ended, and let the line turn at the edges of your range.', he: 'טעות נפוצה היא לרוץ בסולם מהשורש על כל אקורד. התחילו כל תיבה קרוב למקום שבו הקודמת נגמרה, ותנו לקו להסתובב בקצוות של המנעד.' },
       },
       {
         say: { en: 'On the bass, keep the line in one position as long as you can and shift on a chord tone, so the shift never lands on a passing note. On the guitar, the same: shift on the beat.', he: 'בבס, השאירו את הקו בפוזיציה אחת כמה שאפשר והחליפו פוזיציה על צליל אקורד, כך שההחלפה לא נופלת על צליל מעבר. בגיטרה אותו דבר: מחליפים על הפעמה.' },

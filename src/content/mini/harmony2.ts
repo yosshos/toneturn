@@ -138,7 +138,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A triad stacks two thirds on a root. Major: a major third (4 semitones), then a minor third (3) — C E G. Minor: minor, then major — C E♭ G. Both span a perfect fifth, 7 semitones.', he: 'משולש בונה שתי טרצות על יסוד. מז׳ור: טרצה גדולה (4 חצאי טונים) ואז טרצה קטנה (3) — דו מי סול. מינור: קטנה ואז גדולה — דו מי♭ סול. בשניהם יש קווינטה זכה, 7 חצאי טונים.' },
+        say: { en: 'A triad stacks two thirds on a root. Major: a major third (4 semitones), then a minor third (3) — C E G. Minor: minor, then major — C E♭ G. Both span a perfect fifth, 7 semitones.', he: 'משולש בונה שתי טרצות על שורש. מז׳ור: טרצה גדולה (4 חצאי טונים) ואז טרצה קטנה (3) — דו מי סול. מינור: קטנה ואז גדולה — דו מי♭ סול. בשניהם יש קווינטה זכה, 7 חצאי טונים.' },
         play: [chord([C, C + 4, C + 7], 1.1, true), rest(0.2), chord([C, C + 3, C + 7], 1.1, true)],
         show: { notes: [C, C + 4, C + 7], key: 'C', text: { en: 'C E G · C E♭ G', he: 'דו מי סול · דו מי♭ סול' } },
       },
@@ -166,7 +166,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Cm · Cdim', he: 'Cm · Cdim' } },
       },
       {
-        say: { en: 'Inversions name the bass: root in the bass is root position; the third, first inversion (figured 6); the fifth, second inversion (6/4). The quality never changes — only the weight of the chord.', he: 'ההיפוכים נקראים לפי הבס: יסוד בבס הוא מצב יסודי; טרצה בבס, היפוך ראשון (סקסט, 6); קווינטה בבס, היפוך שני (קוורטסקסט, 6/4). האיכות לא משתנה — רק המשקל של האקורד.' },
+        say: { en: 'Inversions name the bass: root in the bass is root position; the third, first inversion (figured 6); the fifth, second inversion (6/4). The quality never changes — only the weight of the chord.', he: 'ההיפוכים נקראים לפי הבס: שורש בבס הוא מצב יסודי; טרצה בבס, היפוך ראשון (סקסט, 6); קווינטה בבס, היפוך שני (קוורטסקסט, 6/4). האיכות לא משתנה — רק המשקל של האקורד.' },
         play: [chord([C - 12, C, C + 4, C + 7], 0.9), chord([C - 8, C, C + 7, C + 12], 0.9), chord([C - 5, C, C + 4, C + 12], 1.2)],
         show: { text: { en: '5/3 · 6 · 6/4', he: '5/3 · 6 · 6/4' } },
       },
@@ -209,7 +209,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A seventh chord is a triad plus the seventh above the root. Its name comes from two choices: the triad (major, minor or diminished) and the seventh (major, 11 semitones; minor, 10; diminished, 9).', he: 'ספטאקורד הוא משולש ועוד הספטימה מעל היסוד. השם שלו נקבע משתי בחירות: המשולש (מז׳ור, מינור או מוקטן) והספטימה (גדולה, 11 חצאי טונים; קטנה, 10; מוקטנת, 9).' },
+        say: { en: 'A seventh chord is a triad plus the seventh above the root. Its name comes from two choices: the triad (major, minor or diminished) and the seventh (major, 11 semitones; minor, 10; diminished, 9).', he: 'ספטאקורד הוא משולש ועוד הספטימה מעל השורש. השם שלו נקבע משתי בחירות: המשולש (מז׳ור, מינור או מוקטן) והספטימה (גדולה, 11 חצאי טונים; קטנה, 10; מוקטנת, 9).' },
       },
       {
         say: { en: 'The five types on C: maj7 is C E G B; 7 is C E G B♭; m7 is C E♭ G B♭; half-diminished, ø7, is C E♭ G♭ B♭; diminished, °7, is C E♭ G♭ B𝄫 — sounding like A.', he: 'חמשת הסוגים על דו: maj7 הוא דו מי סול סי; 7 הוא דו מי סול סי♭; m7 הוא דו מי♭ סול סי♭; חצי מוקטן, ø7, הוא דו מי♭ סול♭ סי♭; מוקטן, °7, הוא דו מי♭ סול♭ סי𝄫 — שנשמע כמו לה.' },
@@ -378,7 +378,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'I I I I | IV IV I I | V IV I V', he: 'I I I I | IV IV I I | V IV I V' } },
       },
       {
-        say: { en: 'How to map a song: count bars in groups of four and mark every change — a drum fill, the band thinning or swelling, the melody jumping up. Sections usually change every 8 or 16 bars.', he: 'איך ממפים שיר: סופרים תיבות בקבוצות של ארבע ומסמנים כל שינוי — מילוי של תופים, הלהקה מתדללת או מתעצמת, המנגינה קופצת למעלה. החלקים מתחלפים בדרך כלל כל 8 או 16 תיבות.' },
+        say: { en: 'How to map a song: count bars in groups of four and mark every change — a drum fill, the band thinning or swelling, the melody jumping up. Sections usually change every 8 or 16 bars.', he: 'איך ממפים שיר: סופרים תיבות בקבוצות של ארבע ומסמנים כל שינוי — מעבר של תופים, הלהקה מתדללת או מתעצמת, המנגינה קופצת למעלה. החלקים מתחלפים בדרך כלל כל 8 או 16 תיבות.' },
       },
       {
         say: { en: 'A common mistake is calling the first loud part the chorus. Check what repeats: a chorus brings back the same words, a verse brings new words over the same music.', he: 'טעות נפוצה היא לקרוא לחלק החזק הראשון פזמון. בדקו מה חוזר: פזמון מחזיר את אותן מילים, בית מביא מילים חדשות על אותה מוזיקה.' },
@@ -412,7 +412,7 @@ export const LESSONS: MiniLesson[] = [
         play: [clip('modern')],
       },
       {
-        say: { en: 'Jazz: swung eighth notes, a walking bass, a ride cymbal and short chord jabs.', he: 'ג׳אז: שמיניות בסווינג, בס מהלך, מצילת רייד ודקירות קצרות של אקורדים.' },
+        say: { en: 'Jazz: swung eighth notes, a walking bass, a ride cymbal and short chord jabs.', he: 'ג׳אז: שמיניות בסווינג, ווקינג בס, מצילת רייד ודקירות קצרות של אקורדים.' },
         play: [clip('jazz')],
       },
       {
@@ -441,7 +441,7 @@ export const LESSONS: MiniLesson[] = [
         play: [clip('modern')],
       },
       {
-        say: { en: 'Jazz: a swing feel with long-short eighths, seventh chords and extensions, improvisation, and a walking bass. Pop: a steady backbeat on 2 and 4, short chord loops, verse–chorus form and a hook.', he: 'ג׳אז: תחושת סווינג עם שמיניות ארוך־קצר, ספטאקורדים וטנשנים, אימפרוביזציה ובס מהלך. פופ: ביט יציב עם הדגשה על 2 ו־4, לופים קצרים של אקורדים, מבנה בית־פזמון והוק.' },
+        say: { en: 'Jazz: a swing feel with long-short eighths, seventh chords and extensions, improvisation, and a walking bass. Pop: a steady backbeat on 2 and 4, short chord loops, verse–chorus form and a hook.', he: 'ג׳אז: תחושת סווינג עם שמיניות ארוך־קצר, ספטאקורדים וטנשנים, אימפרוביזציה ו־ווקינג בס. פופ: ביט יציב עם הדגשה על 2 ו־4, לופים קצרים של אקורדים, מבנה בית־פזמון והוק.' },
         play: [clip('jazz')],
       },
       {

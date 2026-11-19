@@ -49,7 +49,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Drop 2 takes the second note from the top an octave down: the same chords, wider and more open. Your turn.', he: 'דרופ 2 מוריד את הצליל השני מלמעלה אוקטבה: אותם אקורדים, רחבים ופתוחים יותר. תורכם.' },
         play: [...vl251Stim(0, 'smooth'), rest(0.8), ...vl251Stim(0, 'drop2')],
-        show: { text: { en: 'close · drop 2', he: 'מצב קרוב · דרופ 2' } },
+        show: { text: { en: 'close · drop 2', he: 'מצב צפוף · דרופ 2' } },
       },
     ],
     more: [
@@ -73,7 +73,7 @@ export const LESSONS: MiniLesson[] = [
         play: vl251Stim(5, 'drop2'),
       },
       {
-        say: { en: 'To keep: hold the shared notes, move the rest by step, count what stays. Drop 2 is close position opened up: the same notes, the same top.', he: 'מה לזכור: משאירים את הצלילים המשותפים, מזיזים את השאר בצעד, וסופרים מה נשאר. דרופ 2 הוא מצב קרוב שנפתח: אותם צלילים, אותו צליל עליון.' },
+        say: { en: 'To keep: hold the shared notes, move the rest by step, count what stays. Drop 2 is close position opened up: the same notes, the same top.', he: 'מה לזכור: משאירים את הצלילים המשותפים, מזיזים את השאר בצעד, וסופרים מה נשאר. דרופ 2 הוא מצב צפוף שנפתח: אותם צלילים, אותו צליל עליון.' },
       },
     ],
   },

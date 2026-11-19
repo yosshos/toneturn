@@ -196,8 +196,8 @@ export function moveName(off: number): { en: string; he: string } {
 }
 
 export const DEVICE_NAME: Record<Device, { en: string; he: string }> = {
-  dim: { en: 'The common diminished', he: 'הדימיניש המשותף' },
-  dimb9: { en: 'The diminished, raised to 7♭9', he: 'הדימיניש, מורם ל־7♭9' },
+  dim: { en: 'The common diminished', he: 'המוקטן המשותף' },
+  dimb9: { en: 'The diminished, raised to 7♭9', he: 'המוקטן, מורם ל־7♭9' },
   pivot: { en: 'A pivot chord', he: 'אקורד ציר' },
   iiv: { en: 'A ii–V of the new key', he: 'ii–V של הסולם החדש' },
   tritone: { en: 'A tritone sub into it', he: 'תחליף טריטון לתוכו' },

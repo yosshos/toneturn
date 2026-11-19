@@ -275,17 +275,17 @@ const OPEN_SHAPES: { root: number; quality: ChordQuality; shape: string }[] = [
 const MOVABLE: { str: 6 | 5 | 4; name: Bi; shapes: Partial<Record<ChordQuality, (number | 'x')[]>> }[] = [
   {
     str: 6,
-    name: { en: 'E shape, root on 6', he: 'צורת E, יסוד על 6' },
+    name: { en: 'E shape, root on 6', he: 'צורת E, שורש על 6' },
     shapes: { M: [0, 2, 2, 1, 0, 0], m: [0, 2, 2, 0, 0, 0], '7': [0, 2, 0, 1, 0, 0], maj7: [0, 'x', 1, 1, 0, 'x'], m7: [0, 2, 0, 0, 0, 0], m7b5: [0, 'x', 0, 0, -1, 'x'], dim7: [0, 'x', -1, 0, -1, 'x'], sus4: [0, 2, 2, 2, 0, 0], sus2: [0, 2, 4, 4, 0, 0], '5': [0, 2, 2, 'x', 'x', 'x'], '9': [0, 2, 0, 1, 0, 2] },
   },
   {
     str: 5,
-    name: { en: 'A shape, root on 5', he: 'צורת A, יסוד על 5' },
+    name: { en: 'A shape, root on 5', he: 'צורת A, שורש על 5' },
     shapes: { M: ['x', 0, 2, 2, 2, 0], m: ['x', 0, 2, 2, 1, 0], '7': ['x', 0, 2, 0, 2, 0], maj7: ['x', 0, 2, 1, 2, 0], m7: ['x', 0, 2, 0, 1, 0], m7b5: ['x', 0, 1, 0, 1, 'x'], dim7: ['x', 0, 1, -1, 1, 'x'], sus4: ['x', 0, 2, 2, 3, 0], sus2: ['x', 0, 2, 2, 0, 0], '5': ['x', 0, 2, 2, 'x', 'x'], '9': ['x', 0, -1, 0, 0, 'x'] },
   },
   {
     str: 4,
-    name: { en: 'D shape, root on 4', he: 'צורת D, יסוד על 4' },
+    name: { en: 'D shape, root on 4', he: 'צורת D, שורש על 4' },
     shapes: { M: ['x', 'x', 0, 2, 3, 2], m: ['x', 'x', 0, 2, 3, 1], '7': ['x', 'x', 0, 2, 1, 2], maj7: ['x', 'x', 0, 2, 2, 2], m7: ['x', 'x', 0, 2, 1, 1], m7b5: ['x', 'x', 0, 1, 1, 1], dim7: ['x', 'x', 0, 1, 0, 1], sus4: ['x', 'x', 0, 2, 3, 3], sus2: ['x', 'x', 0, 2, 3, 0] },
   },
 ];
@@ -343,7 +343,7 @@ export function shapesFor(root: number, quality: ChordQuality, tu: Tuning = STD)
         const v = dropVoicing(tu, 2, k, rs, rf);
         if (!v || v.some((p) => p.fret === 0) || Math.max(...v.map((p) => p.fret)) > 15) continue;
         const all = [6, 5, 4, 3, 2, 1].filter((s) => !v.some((p) => p.str === s));
-        push({ en: `Drop-2, root on ${rs}`, he: `דרופ 2, יסוד על ${rs}` }, { dots: v, muted: all });
+        push({ en: `Drop-2, root on ${rs}`, he: `דרופ 2, שורש על ${rs}` }, { dots: v, muted: all });
         break;
       }
     }

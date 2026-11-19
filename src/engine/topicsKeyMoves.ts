@@ -56,7 +56,7 @@ function moveBy(dev: Device, A: number, rnd: () => number, off?: number): KeyMov
   }
 }
 
-const DEV_SAY: Record<string, string[]> = { pivot: ['pivot', 'pivot chord', 'ציר'], direct: ['direct', 'no preparation', 'ישירות'], iiv: ['two five', 'ii V'], dim: ['diminished', 'dim', 'דימיניש'], tritone: ['tritone', 'tritone sub', 'טריטון'] };
+const DEV_SAY: Record<string, string[]> = { pivot: ['pivot', 'pivot chord', 'ציר'], direct: ['direct', 'no preparation', 'ישירות'], iiv: ['two five', 'ii V'], dim: ['diminished', 'dim', 'מוקטן'], tritone: ['tritone', 'tritone sub', 'טריטון'] };
 const devName = (d: Device) => nm(DEVICE_NAME[d].en, DEVICE_NAME[d].he, ...(DEV_SAY[d] ?? []));
 const POOLS: Device[][] = [['pivot', 'direct'], ['pivot', 'direct', 'iiv'], ['pivot', 'direct', 'iiv', 'dim'], ['pivot', 'direct', 'iiv', 'dim', 'tritone']];
 const KEYS_A = [0, 2, 3, 5, 7, 8, 10];
@@ -67,7 +67,7 @@ TOPIC_GEN['modulation-means'] = {
   levels: [
     { en: 'A pivot chord, or direct?', he: 'אקורד ציר, או ישירות?' },
     { en: '… or a ii–V of the new key?', he: '… או ii–V של הסולם החדש?' },
-    { en: '… or the common diminished?', he: '… או הדימיניש המשותף?' },
+    { en: '… or the common diminished?', he: '… או המוקטן המשותף?' },
     { en: 'All five, with the tritone sub', he: 'כל החמישה, עם תחליף הטריטון' },
     { en: 'How, and where to', he: 'איך, ולאן' },
   ],

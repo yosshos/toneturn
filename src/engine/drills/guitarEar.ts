@@ -42,13 +42,13 @@ const lowRoot = (pc: number): number => 40 + mod(pc - 40, 12);
 
 const ASK: Record<string, { en: string; he: string }> = {
   tonic: t('The band plays four bars — then play the home note (the tonic), twice', 'הלהקה מנגנת ארבע תיבות — ואז נגנו את צליל הבית (הטוניקה), פעמיים'),
-  mel1: t('Hear one bar (it starts on the root) — play it back', 'שמעו תיבה אחת (היא מתחילה ביסוד) — נגנו אותה בחזרה'),
+  mel1: t('Hear one bar (it starts on the root) — play it back', 'שמעו תיבה אחת (היא מתחילה בשורש) — נגנו אותה בחזרה'),
   mel2: t('Hear two bars over the drums — play them back', 'שמעו שתי תיבות מעל התופים — נגנו אותן בחזרה'),
   rhythm: t('Hear two bars of strumming — echo the rhythm on muted strings', 'שמעו שתי תיבות של פריטה — החזירו את המקצב על מיתרים מושתקים'),
-  riff: t('Hear a riff on the low strings — play it back (power chords count by their root)', 'שמעו ריף על המיתרים הנמוכים — נגנו אותו בחזרה (אקורד פאוור נספר לפי היסוד)'),
-  roots: t('Hear four bars of chords — then play their roots on strings 6 and 5, two per bar', 'שמעו ארבע תיבות של אקורדים — ואז נגנו את היסודות על מיתרים 6 ו-5, שניים בתיבה'),
-  qualityStrum: t('Hear a chord over its root — then strum that chord (any shape)', 'שמעו אקורד מעל היסוד שלו — ואז פרטו את האקורד הזה (בכל צורה)'),
-  quality: t('Hear a chord over its root — then play its arpeggio from that root', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את הארפג׳יו שלו מאותו יסוד'),
+  riff: t('Hear a riff on the low strings — play it back (power chords count by their root)', 'שמעו ריף על המיתרים הנמוכים — נגנו אותו בחזרה (אקורד פאוור נספר לפי השורש)'),
+  roots: t('Hear four bars of chords — then play their roots on strings 6 and 5, two per bar', 'שמעו ארבע תיבות של אקורדים — ואז נגנו את השורשים על מיתרים 6 ו-5, שניים בתיבה'),
+  qualityStrum: t('Hear a chord over its root — then strum that chord (any shape)', 'שמעו אקורד מעל השורש שלו — ואז פרטו את האקורד הזה (בכל צורה)'),
+  quality: t('Hear a chord over its root — then play its arpeggio from that root', 'שמעו אקורד מעל השורש שלו — ואז נגנו את הארפג׳יו שלו מאותו שורש'),
   key: t('Hear a groove in an unknown key — play the tonic, then pentatonic box 1 up and down', 'שמעו גרוב בסולם לא ידוע — נגנו את הטוניקה, ואז תיבה 1 של הפנטטוני למעלה ולמטה'),
   transcribe: t('Hear two bars of a line — play them back note for note', 'שמעו שתי תיבות של קו — נגנו אותן בחזרה תו אחר תו'),
 };
@@ -131,7 +131,7 @@ function generateGuitarProgEar(s: DrillSpec, tu: Tuning): Drill {
   }
   const nm = PROG_EAR_NAME[kind][Math.min(op, PROG_EAR_NAME[kind].length - 1)];
   const vEn = ['shells', 'drop 2', 'drop 3'][voicing] ?? 'shells';
-  const vHe = ['קונכיות', 'דרופ 2', 'דרופ 3'][voicing] ?? 'קונכיות';
+  const vHe = ['שלדים', 'דרופ 2', 'דרופ 3'][voicing] ?? 'שלדים';
   const d = finish(s, tu, evs, { title: t(`${nm.en}, ${vEn} · ${progKeyName(key)}`, `${nm.he}, ${vHe} · ${progKeyName(key, true)}`), bpm: 72, evenness: false, keySig: 'C' });
   const ask =
     kind === 'bridge'
@@ -219,7 +219,7 @@ export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
         if (two) for (let q = 0; q < len - 1; q++) (q % 2 === 0 ? kick : hat)(b0 + q);
         band(b0, b0 + len);
       }
-      name = two ? t(`Melodic recall, two bars (${minor ? 'minor' : 'major'} pentatonic)`, `זיכרון מלודי, שתי תיבות (פנטטוני ${minor ? 'מינורי' : 'מז׳ורי'})`) : t('Melodic recall, one bar (minor pentatonic, from the root)', 'זיכרון מלודי, תיבה אחת (פנטטוני מינורי, מהיסוד)');
+      name = two ? t(`Melodic recall, two bars (${minor ? 'minor' : 'major'} pentatonic)`, `זיכרון מלודי, שתי תיבות (פנטטוני ${minor ? 'מינורי' : 'מז׳ורי'})`) : t('Melodic recall, one bar (minor pentatonic, from the root)', 'זיכרון מלודי, תיבה אחת (פנטטוני מינורי, מהשורש)');
       ask = two ? 'mel2' : 'mel1';
       bpm = two ? 80 : 75;
       break;
@@ -314,7 +314,7 @@ export function generateGuitarEar(s: DrillSpec, tu: Tuning): Drill {
         answer(18 + bar * 4, 2, [lowRoot(key + d)], { ct: true }, true);
       });
       chart = prog.map(([d, q]) => `${NAMES[mod(key + d, 12)]}${SYM[q]}`);
-      name = op === 1 ? t('Root finder: ii, iii, V7 and ♭VII', 'מוצא היסודות: ii, iii, V7 ו-♭VII') : t('Root finder: I, IV, V and vi', 'מוצא היסודות: I, IV, V ו-vi');
+      name = op === 1 ? t('Root finder: ii, iii, V7 and ♭VII', 'מוצא השורשים: ii, iii, V7 ו-♭VII') : t('Root finder: I, IV, V and vi', 'מוצא השורשים: I, IV, V ו-vi');
       ask = 'roots';
       bpm = 80;
       break;

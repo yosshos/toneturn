@@ -664,7 +664,7 @@ export const GAMES2: { id: 'drills' | 'highway' | 'flight' | 'melodypuzzle' | 'n
   { id: 'compcaller', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Comp Caller', 'Comp the called rhythm on the changes, switched on the bar.'], he: ['קורא הליווי', 'מלווים במקצב שנקרא על המהלך, ומחליפים על התיבה.'] },
   { id: 'elevator', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Elevator', 'Echols’s floors on the 6-dim scale: build the voicing, then play it.'], he: ['המעלית', 'הקומות של אקולס בסולם 6־דים: בונים את הוויסינג ומנגנים אותו.'] },
   // AUDIT-GAMES §4.2 new games.
-  { id: 'guidetone', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Guide-Tone Runner', 'A 3rd or 7th on every change, in time. One miss ends the run.'], he: ['רץ הצלילים המובילים', 'טרצה או ספטימה על כל החלפה, בזמן. החטאה אחת מסיימת.'] },
+  { id: 'guidetone', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Guide-Tone Runner', 'A 3rd or 7th on every change, in time. One miss ends the run.'], he: ['רץ הצלילים המנחים', 'טרצה או ספטימה על כל החלפה, בזמן. החטאה אחת מסיימת.'] },
   { id: 'call5432', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['5-4-3-2 Call', 'A number is called: play that Barry Harris phrase.'], he: ['קריאת 5-4-3-2', 'נקרא מספר: מנגנים את המשפט של בארי האריס.'] },
   { id: 'enclosure', hue: 'var(--hue-instrument)', cat: 'instrument', en: ['Enclosure Target', 'Enclose the chord tone, land it on the beat.'], he: ['מטרת הכיתור', 'מכתרים את צליל האקורד ונוחתים עליו בפעמה.'] },
   { id: 'crossword', hue: 'var(--hue-pitch)', cat: 'ear', en: ['Changes Crossword', 'Hear the bars, fill root, quality and bass.'], he: ['תשבץ המהלכים', 'שומעים את התיבות וממלאים שורש, סוג ובס.'] },

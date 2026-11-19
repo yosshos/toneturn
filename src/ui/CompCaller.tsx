@@ -80,7 +80,7 @@ const TX = {
   wrongChord: { en: 'other chord', he: 'אקורד אחר' },
   missed: { en: 'missed', he: 'חסרים' },
   extra: { en: 'extra', he: 'מיותרים' },
-  whyText: { en: 'A hit counts within a little under half an 8th of its place; with MIDI its chord’s 3rd and 7th must sound. A hit on the "and" of 4 marked → sounds the next bar’s chord.', he: 'מכה נספרת עד קצת פחות מחצי שמינית מהמקום שלה; ב־MIDI צריכות להישמע הטרצה והספטימה של האקורד. מכה על ה"ו" של 4 שמסומנת → משמיעה את האקורד של התיבה הבאה.' },
+  whyText: { en: 'A hit counts within a little under half an 8th of its place; with MIDI its chord’s 3rd and 7th must sound. A hit on the "and" of 4 marked → sounds the next bar’s chord.', he: 'מכה נספרת עד קצת פחות מחצי שמינית מהמקום שלה; ב־MIDI צריכות להישמע הטרצה והספטימה של האקורד. מכה על ה"וְ" של 4 שמסומנת → משמיעה את האקורד של התיבה הבאה.' },
 };
 const tx = (b: Bi, l: Lang) => b[l];
 const SLOTS = ['1', '+', '2', '+', '3', '+', '4', '+'];

@@ -63,6 +63,14 @@ const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: '
 export const isKeysForAll = (s: Partial<Pick<PathStep, 'topic' | 'level'>>): boolean => s.topic === 'key-notes' && (s.level ?? 9) <= 3;
 
 /**
+ * Curriculum audit 2026-11-19 (VOICE-DRUMS R3a, owner's choice "share the lessons"): the Ear lessons the voice lessons
+ * build on — scale degrees and note names (sing-names, sing-home-five, transcription), what a chord is and major /
+ * minor (runs, chord-tones, the blues and pop entries) — are in the voice course too. Same step id, shared credit, as
+ * with key-notes 1–3.
+ */
+export const VOICE_SHARED_LESSONS: string[] = ['degrees-135', 'notes-degrees', 'chord-intro', 'major-minor'];
+
+/**
  * AUDIT-6 J-W2: the performed jazz families — improvising, comping, walking, scat — that the Jazz course path also
  * teaches, for the instruments the player plays (the step's forPlays decides; singing only when singing is on). Their
  * progress is the instrument course's own (technique and vocal facts come from the measured takes), so nothing counts twice.
@@ -106,10 +114,11 @@ export const playsKeys = (plays: string[]): boolean => plays.includes('keys') ||
  *   character: the ABRSM aural "features"), Nashville numbers, transposition and melodic / rhythmic transformations,
  *   which the creative area used to drag into Jazz.
  */
-export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level' | 'skill' | 'ladder'>>, c: CourseId): boolean {
+export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level' | 'skill' | 'ladder' | 'kind' | 'lesson'>>, c: CourseId): boolean {
   // AUDIT-CONTENT-THEORY §ב.1: note names on the keyboard (key-notes 1–3) are the theory picture every beginner needs,
   // so they belong to the Ear course too (the one shared exception).
   if (c === 'ear' && isKeysForAll(s)) return true;
+  if (c === 'voice' && s.kind === 'lesson' && !!s.lesson && VOICE_SHARED_LESSONS.includes(s.lesson)) return true;
   if (c === 'jazz' && s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family)) return true;
   const voiceish = !!s.sung || s.domain === 'voice';
   const instr = s.forPlays?.map((p) => INSTR[p]).filter(Boolean) as CourseId[] | undefined;

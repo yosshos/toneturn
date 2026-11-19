@@ -39,7 +39,7 @@ export const STRAND_TITLE: Record<StrandId, T2> = {
   time: { en: 'Time and pocket', he: 'זמן וכיס' },
   walk: { en: 'Walking bass', he: 'ליווי הליכה' },
   grooves: { en: 'Grooves', he: 'גרוב' },
-  fills: { en: 'Fills', he: 'מילויים' },
+  fills: { en: 'Fills', he: 'מעברים' },
   indep: { en: 'Independence', he: 'עצמאות גפיים' },
 };
 const EAR_T: T2 = { en: 'Ear', he: 'אוזן' };

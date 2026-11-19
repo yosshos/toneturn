@@ -668,7 +668,7 @@ function genBarry(s: DrillSpec, tu: Tuning): Drill {
       const ps = [...up, up[0], ...straightArp(r, q).slice(1).reverse(), r];
       const line: BN[] = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 2 : 0.5, p, ct: true }));
       const sym = `${spell(key, key)}${ARP_SYM[q]}`;
-      return drillOf(s, tu, alt(line), { ...tt(`${sym} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${sym}: היסוד למעלה, ירידה לטרצה, עלייה — ואז למטה`), chart: [sym, '%'], evenness: true });
+      return drillOf(s, tu, alt(line), { ...tt(`${sym} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${sym}: השורש למעלה, ירידה לטרצה, עלייה — ואז למטה`), chart: [sym, '%'], evenness: true });
     }
     case 'scale-pivot': {
       // BH-G: descending scale plus pivot (op 0 the 6 chord, op 1 the 7 chord): the scale down by the half-step rules, a

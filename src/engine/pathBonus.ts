@@ -33,7 +33,7 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'whichbrother', course: 'jazz', domain: 'pitch', skill: 'chords', sub: 'chords/barry', difficulty: 1050, title: { en: 'Which Brother?', he: 'איזה אח?' } },
   { game: 'compcaller', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/play', difficulty: 1100, title: { en: 'Comp Caller', he: 'קורא הליווי' } },
   // AUDIT-GAMES §4.2 new games in the Jazz course (the instrument and ear courses have them in their units, path.ts).
-  { game: 'guidetone', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1050, title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' } },
+  { game: 'guidetone', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1050, title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המנחים' } },
   { game: 'crossword', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/dictation', difficulty: 1100, title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' } },
   { game: 'holdnote', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/reharm', difficulty: 1150, title: { en: 'Hold the Note', he: 'להחזיק את הצליל' } },
   // HARMONY-REHARM still-open games (the Ear course has them in its pitch units, path.ts).

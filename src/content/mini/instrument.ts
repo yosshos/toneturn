@@ -65,7 +65,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 63, 64], key: 'C', text: { en: '♭3 → 3', he: '♭3 → 3' } },
       },
       {
-        say: { en: 'For a bass line, ignore the top of the chords and follow the lowest note. Most of the time it is the root: here C, F, G and back to C.', he: 'בקו בס, התעלמו מהחלק העליון של האקורדים ועקבו אחרי הצליל הנמוך ביותר. רוב הזמן זה היסוד: כאן דו, פה, סול וחזרה לדו.' },
+        say: { en: 'For a bass line, ignore the top of the chords and follow the lowest note. Most of the time it is the root: here C, F, G and back to C.', he: 'בקו בס, התעלמו מהחלק העליון של האקורדים ועקבו אחרי הצליל הנמוך ביותר. רוב הזמן זה השורש: כאן דו, פה, סול וחזרה לדו.' },
         play: [chord([48, 64, 67], 0.9), chord([53, 65, 69], 0.9), chord([55, 62, 67], 0.9), chord([48, 64, 72], 1.2)],
         show: { notes: [48, 53, 55, 48], clef: 'bass', text: { en: 'C · F · G · C', he: 'דו · פה · סול · דו' } },
       },
@@ -97,7 +97,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E·F — G — A', he: 'מי·פה — סול — לה' } },
       },
       {
-        say: { en: 'Learn string 6 and string 5 first: they name the root of most barre chords. G is on fret 3 of string 6, C on fret 3 of string 5.', he: 'למדו קודם את מיתר 6 ומיתר 5: הם נותנים את היסוד לרוב אקורדי הברה. סול בסריג 3 של מיתר 6, דו בסריג 3 של מיתר 5.' },
+        say: { en: 'Learn string 6 and string 5 first: they name the root of most barre chords. G is on fret 3 of string 6, C on fret 3 of string 5.', he: 'למדו קודם את מיתר 6 ומיתר 5: הם נותנים את השורש לרוב אקורדי הברה. סול בסריג 3 של מיתר 6, דו בסריג 3 של מיתר 5.' },
         play: [notes([43], 0.8), rest(0.2), notes([48], 0.8)],
       },
       {
@@ -122,7 +122,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E0 F1 G3 A5 B7 C8 D10 E12', he: 'E0 F1 G3 A5 B7 C8 D10 E12' } },
       },
       {
-        say: { en: 'And on string 5: A at 0, B at 2, C at 3, D at 5, E at 7, F at 8, G at 10. These two strings are your map — barre-chord roots live here.', he: 'ועל מיתר 5: A ב־0, B ב־2, C ב־3, D ב־5, E ב־7, F ב־8, G ב־10. שני המיתרים האלה הם המפה שלכם — היסודות של אקורדי הברה גרים כאן.' },
+        say: { en: 'And on string 5: A at 0, B at 2, C at 3, D at 5, E at 7, F at 8, G at 10. These two strings are your map — barre-chord roots live here.', he: 'ועל מיתר 5: A ב־0, B ב־2, C ב־3, D ב־5, E ב־7, F ב־8, G ב־10. שני המיתרים האלה הם המפה שלכם — השורשים של אקורדי הברה גרים כאן.' },
         play: [notes([45, 47, 48, 50, 52, 53, 55, 57], 0.4)],
         show: { text: { en: 'A0 B2 C3 D5 E7 F8 G10 A12', he: 'A0 B2 C3 D5 E7 F8 G10 A12' } },
       },
@@ -271,7 +271,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E: 4th string fret 2 → 2nd string fret 5', he: 'מי: מיתר 4 סריג 2 ← מיתר 2 סריג 5' } },
       },
       {
-        say: { en: 'The power chord is root, fifth and octave stacked as one shape. From G on string 6, fret 3: the fifth and the octave both sit at fret 5 on the next two strings.', he: 'אקורד פאוור הוא יסוד, קווינטה ואוקטבה בצורה אחת. מסול על מיתר 6, סריג 3: הקווינטה והאוקטבה שתיהן בסריג 5 על שני המיתרים הבאים.' },
+        say: { en: 'The power chord is root, fifth and octave stacked as one shape. From G on string 6, fret 3: the fifth and the octave both sit at fret 5 on the next two strings.', he: 'אקורד פאוור הוא שורש, קווינטה ואוקטבה בצורה אחת. מסול על מיתר 6, סריג 3: הקווינטה והאוקטבה שתיהן בסריג 5 על שני המיתרים הבאים.' },
         play: [chord([43, 50, 55], 1.4)],
         show: { text: { en: 'G5: 3 · 5 · 5', he: 'G5: 3 · 5 · 5' } },
       },
@@ -312,7 +312,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([55, 60, 64], 0.9), chord([60, 64, 67], 0.9), chord([64, 67, 72], 0.9)],
       },
       {
-        say: { en: 'Your turn! Name the open chord, build triads, find the CAGED shape, then stack seventh chords. Bass players: root, fifth, octave, then arpeggios.', he: 'תורכם! זהו את האקורד הפתוח, בנו משולשים, מצאו את צורת ה־CAGED, ואז בנו אקורדי ספטים. נגני בס: יסוד, קווינטה, אוקטבה, ואז ארפג׳יו.' },
+        say: { en: 'Your turn! Name the open chord, build triads, find the CAGED shape, then stack seventh chords. Bass players: root, fifth, octave, then arpeggios.', he: 'תורכם! זהו את האקורד הפתוח, בנו משולשים, מצאו את צורת ה־CAGED, ואז בנו ספטאקורדים. נגני בס: שורש, קווינטה, אוקטבה, ואז ארפג׳יו.' },
         show: { text: { en: 'R · 3 · 5 · 7', he: 'R · 3 · 5 · 7' } },
       },
     ],
@@ -323,12 +323,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'x32010 = C E G C E', he: 'x32010 = C E G C E' } },
       },
       {
-        say: { en: 'A major triad is root, major third, fifth; minor lowers the third by one fret. Open E is 022100; lift one finger, 022000, and it becomes E minor.', he: 'משולש מז׳ורי הוא יסוד, טרצה גדולה, קווינטה; במינור הטרצה יורדת בסריג אחד. E פתוח הוא 022100; מרימים אצבע אחת, 022000, והוא הופך ל־E מינור.' },
+        say: { en: 'A major triad is root, major third, fifth; minor lowers the third by one fret. Open E is 022100; lift one finger, 022000, and it becomes E minor.', he: 'משולש מז׳ורי הוא שורש, טרצה גדולה, קווינטה; במינור הטרצה יורדת בסריג אחד. E פתוח הוא 022100; מרימים אצבע אחת, 022000, והוא הופך ל־E מינור.' },
         play: [chord([40, 47, 52, 56, 59, 64], 1.2, true), rest(0.2), chord([40, 47, 52, 55, 59, 64], 1.2, true)],
         show: { text: { en: 'E 022100 · Em 022000', he: 'E 022100 · Em 022000' } },
       },
       {
-        say: { en: 'CAGED names the five open shapes. Each one holds the root in a different place, so each can be barred and moved. The A shape at fret 3 is C major: x35553.', he: 'CAGED הוא השם של חמש הצורות הפתוחות. כל אחת מחזיקה את היסוד במקום אחר, ולכן כל אחת אפשר לתפוס בברה ולהזיז. צורת A בסריג 3 היא דו מז׳ור: x35553.' },
+        say: { en: 'CAGED names the five open shapes. Each one holds the root in a different place, so each can be barred and moved. The A shape at fret 3 is C major: x35553.', he: 'CAGED הוא השם של חמש הצורות הפתוחות. כל אחת מחזיקה את השורש במקום אחר, ולכן כל אחת אפשר לתפוס בברה ולהזיז. צורת A בסריג 3 היא דו מז׳ור: x35553.' },
         play: [chord([48, 55, 60, 64, 67], 1.4, true)],
         show: { text: { en: 'A shape, fret 3 = C', he: 'צורת A, סריג 3 = C' } },
       },
@@ -347,13 +347,13 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 60, 64, 67, 72], text: { en: 'GCE · CEG · EGC', he: 'GCE · CEG · EGC' } },
       },
       {
-        say: { en: 'For seventh chords guitarists use Drop 2: take a close voicing, C-E-G-B, and drop the second note from the top down an octave. You get G-C-E-B, on the top four strings at frets 5-5-5-7.', he: 'לאקורדי ספטימה גיטריסטים משתמשים ב־Drop 2: לוקחים קול צמוד, דו־מי־סול־סי, ומורידים אוקטבה את הצליל השני מלמעלה. מקבלים סול־דו־מי־סי, על ארבעת המיתרים העליונים בסריגים 5־5־5־7.' },
+        say: { en: 'For seventh chords guitarists use Drop 2: take a close voicing, C-E-G-B, and drop the second note from the top down an octave. You get G-C-E-B, on the top four strings at frets 5-5-5-7.', he: 'לספטאקורדים גיטריסטים משתמשים ב־Drop 2: לוקחים קול צמוד, דו־מי־סול־סי, ומורידים אוקטבה את הצליל השני מלמעלה. מקבלים סול־דו־מי־סי, על ארבעת המיתרים העליונים בסריגים 5־5־5־7.' },
         play: [chord([60, 64, 67, 71], 1.2), rest(0.2), chord([55, 60, 64, 71], 1.4)],
         show: { notes: [55, 60, 64, 71], chord: true, text: { en: 'Cmaj7 Drop 2: xx5557', he: 'Cmaj7 Drop 2: xx5557' } },
       },
       {
-        say: { en: 'The common mistake is learning shapes as finger pictures without knowing where the root is. Mark the root in every shape. To keep: five shapes, one chord, the whole neck.', he: 'הטעות הנפוצה היא ללמוד צורות כתמונות של אצבעות בלי לדעת איפה היסוד. סמנו את היסוד בכל צורה. מה לזכור: חמש צורות, אקורד אחד, כל הצוואר.' },
-        show: { text: { en: 'find the root first', he: 'קודם מוצאים את היסוד' } },
+        say: { en: 'The common mistake is learning shapes as finger pictures without knowing where the root is. Mark the root in every shape. To keep: five shapes, one chord, the whole neck.', he: 'הטעות הנפוצה היא ללמוד צורות כתמונות של אצבעות בלי לדעת איפה השורש. סמנו את השורש בכל צורה. מה לזכור: חמש צורות, אקורד אחד, כל הצוואר.' },
+        show: { text: { en: 'find the root first', he: 'קודם מוצאים את השורש' } },
       },
     ],
   },
@@ -362,24 +362,24 @@ export const LESSONS: MiniLesson[] = [
     area: 'play',
     emoji: '🪜',
     title: { en: 'Scales on the neck', he: 'סולמות על הצוואר' },
-    takeaway: { en: 'A scale on the neck is a pattern under one hand. Learn it from a root on string 6, then the five pentatonic boxes that cover the whole neck.', he: 'סולם על הצוואר הוא תבנית מתחת ליד אחת. למדו אותו מהיסוד על מיתר 6, ואז את חמש התיבות הפנטטוניות שמכסות את כל הצוואר.' },
+    takeaway: { en: 'A scale on the neck is a pattern under one hand. Learn it from a root on string 6, then the five pentatonic boxes that cover the whole neck.', he: 'סולם על הצוואר הוא תבנית מתחת ליד אחת. למדו אותו מהשורש על מיתר 6, ואז את חמש התיבות הפנטטוניות שמכסות את כל הצוואר.' },
     steps: [
       {
         say: { en: 'Hi {name}! Here is G major, one octave up from G on string 6. Four frets, three strings, one hand that hardly moves.', he: 'היי {name}! הנה סול מז׳ור, אוקטבה אחת למעלה מסול על מיתר 6. ארבעה סריגים, שלושה מיתרים, יד אחת שכמעט לא זזה.' },
         play: [notes([43, 45, 47, 48, 50, 52, 54, 55], 0.35)],
       },
       {
-        say: { en: 'The minor pentatonic has only five notes. Box 1 starts on the root on string 6: two notes on every string. This is A, at fret 5.', he: 'לפנטטונית המינורית יש רק חמישה צלילים. תיבה 1 מתחילה ביסוד על מיתר 6: שני צלילים בכל מיתר. זה לה, בסריג 5.' },
+        say: { en: 'The minor pentatonic has only five notes. Box 1 starts on the root on string 6: two notes on every string. This is A, at fret 5.', he: 'לפנטטונית המינורית יש רק חמישה צלילים. תיבה 1 מתחילה בשורש על מיתר 6: שני צלילים בכל מיתר. זה לה, בסריג 5.' },
         play: [notes([45, 48, 50, 52, 55, 57, 60, 62, 64, 67, 69, 72], 0.25)],
         show: { text: { en: 'box 1', he: 'תיבה 1' } },
       },
       {
-        say: { en: 'Each box joins the next one, five in all, until the pattern repeats at fret 12. The root dots tell you which box you are in.', he: 'כל תיבה מתחברת לבאה אחריה, חמישה בסך הכול, עד שהתבנית חוזרת בסריג 12. נקודות היסוד מגלות באיזו תיבה אתם.' },
+        say: { en: 'Each box joins the next one, five in all, until the pattern repeats at fret 12. The root dots tell you which box you are in.', he: 'כל תיבה מתחברת לבאה אחריה, חמישה בסך הכול, עד שהתבנית חוזרת בסריג 12. נקודות השורש מגלות באיזו תיבה אתם.' },
         play: [notes([69, 72, 74, 76, 79, 81], 0.3)],
         show: { text: { en: '1 · 2 · 3 · 4 · 5', he: '1 · 2 · 3 · 4 · 5' } },
       },
       {
-        say: { en: 'Three notes on every string makes fast runs easy: the same picking on every string. Bass players learn approach notes that lead into the next root.', he: 'שלושה צלילים בכל מיתר הופכים ריצות מהירות לקלות: אותה פריטה בכל מיתר. נגני בס לומדים צלילי גישה שמובילים ליסוד הבא.' },
+        say: { en: 'Three notes on every string makes fast runs easy: the same picking on every string. Bass players learn approach notes that lead into the next root.', he: 'שלושה צלילים בכל מיתר הופכים ריצות מהירות לקלות: אותה פריטה בכל מיתר. נגני בס לומדים צלילי גישה שמובילים לשורש הבא.' },
         play: [notes([40, 42, 44, 45, 47, 49, 51, 52, 54], 0.25), rest(0.3), notes([36, 40, 41], 0.5)],
       },
       {
@@ -419,8 +419,8 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 64, 62, 65, 64, 67, 65, 69, 67], key: 'C', text: { en: 'in thirds', he: 'בטרצות' } },
       },
       {
-        say: { en: 'The common mistake is running boxes without landing anywhere. End phrases on a chord tone and know which dot is the root. To keep: one pattern, one root, and the five boxes join into one neck.', he: 'הטעות הנפוצה היא לרוץ בתיבות בלי לנחות בשום מקום. סיימו משפטים על צליל של האקורד ודעו איזו נקודה היא היסוד. מה לזכור: תבנית אחת, יסוד אחד, וחמש התיבות מתחברות לצוואר אחד.' },
-        show: { text: { en: 'land on the root', he: 'לנחות על היסוד' } },
+        say: { en: 'The common mistake is running boxes without landing anywhere. End phrases on a chord tone and know which dot is the root. To keep: one pattern, one root, and the five boxes join into one neck.', he: 'הטעות הנפוצה היא לרוץ בתיבות בלי לנחות בשום מקום. סיימו משפטים על צליל של האקורד ודעו איזו נקודה היא השורש. מה לזכור: תבנית אחת, שורש אחד, וחמש התיבות מתחברות לצוואר אחד.' },
+        show: { text: { en: 'land on the root', he: 'לנחות על השורש' } },
       },
     ],
   },
@@ -520,7 +520,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E0 F1 G3 A5', he: 'E0 F1 G3 A5' } },
       },
       {
-        say: { en: 'Learn the E and A strings first: the roots of most bass lines live there.', he: 'לומדים קודם את מיתרי E ו־A: שם גרים היסודות של רוב קווי הבס.' },
+        say: { en: 'Learn the E and A strings first: the roots of most bass lines live there.', he: 'לומדים קודם את מיתרי E ו־A: שם גרים השורשים של רוב קווי הבס.' },
         play: [notes([31], 0.8), rest(0.2), notes([36], 0.8)],
         show: { text: { en: 'G = E3 · C = A3', he: 'G = E3 · C = A3' } },
       },
@@ -568,10 +568,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'play',
     emoji: '𝄢',
     title: { en: 'Bass shapes', he: 'צורות בבס' },
-    takeaway: { en: 'Root, fifth, octave: one shape, every key. Arpeggios and approach notes grow from it.', he: 'יסוד, קווינטה, אוקטבה: צורה אחת, בכל סולם. ארפג׳יו וצלילי גישה צומחים ממנה.' },
+    takeaway: { en: 'Root, fifth, octave: one shape, every key. Arpeggios and approach notes grow from it.', he: 'שורש, קווינטה, אוקטבה: צורה אחת, בכל סולם. ארפג׳יו וצלילי גישה צומחים ממנה.' },
     steps: [
       {
-        say: { en: 'Hi {name}! On the bass one shape works in every key. Start on the root, on the E or the A string.', he: 'היי {name}! בבס צורה אחת עובדת בכל סולם. מתחילים מהיסוד, על מיתר E או A.' },
+        say: { en: 'Hi {name}! On the bass one shape works in every key. Start on the root, on the E or the A string.', he: 'היי {name}! בבס צורה אחת עובדת בכל סולם. מתחילים מהשורש, על מיתר E או A.' },
         play: [notes([31], 0.8)],
       },
       {
@@ -589,32 +589,32 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([33, 40, 45], 0.5)],
       },
       {
-        say: { en: 'An approach note leads into the next root: a half step below it, above it, or its fifth. Your turn: tap the shapes.', he: 'צליל גישה מוביל ליסוד הבא: חצי טון מתחתיו, מעליו, או הקווינטה שלו. תורכם: הקישו את הצורות.' },
+        say: { en: 'An approach note leads into the next root: a half step below it, above it, or its fifth. Your turn: tap the shapes.', he: 'צליל גישה מוביל לשורש הבא: חצי טון מתחתיו, מעליו, או הקווינטה שלו. תורכם: הקישו את הצורות.' },
         play: [notes([31, 35, 36], 0.5)],
         show: { text: { en: 'G → B → C', he: 'G → B → C' } },
       },
     ],
     more: [
       {
-        say: { en: 'Root and fifth carry most bass lines in pop, rock and country. The octave adds lift without new notes.', he: 'יסוד וקווינטה נושאים את רוב קווי הבס בפופ, רוק וקאנטרי. האוקטבה מוסיפה תנופה בלי צלילים חדשים.' },
+        say: { en: 'Root and fifth carry most bass lines in pop, rock and country. The octave adds lift without new notes.', he: 'שורש וקווינטה נושאים את רוב קווי הבס בפופ, רוק וקאנטרי. האוקטבה מוסיפה תנופה בלי צלילים חדשים.' },
         play: [notes([33, 40, 45, 40], 0.4)],
       },
       {
-        say: { en: 'The fifth also sits below the root: same fret, one string down. Handy when the root is on the A string.', he: 'הקווינטה יושבת גם מתחת ליסוד: אותו סריג, מיתר אחד למטה. שימושי כשהיסוד על מיתר A.' },
+        say: { en: 'The fifth also sits below the root: same fret, one string down. Handy when the root is on the A string.', he: 'הקווינטה יושבת גם מתחת לשורש: אותו סריג, מיתר אחד למטה. שימושי כשהשורש על מיתר A.' },
         play: [notes([36, 31], 0.6)],
         show: { text: { en: 'C on A3 · G on E3', he: 'C על A3 · G על E3' } },
       },
       {
-        say: { en: 'Seventh chords add one more note: a major seventh is one fret below the octave, a minor seventh two frets below.', he: 'אקורדי ספט מוסיפים צליל אחד: ספט גדול הוא סריג אחד מתחת לאוקטבה, ספט קטן שני סריגים מתחתיה.' },
+        say: { en: 'Seventh chords add one more note: a major seventh is one fret below the octave, a minor seventh two frets below.', he: 'ספטאקורדים מוסיפים צליל אחד: ספט גדול הוא סריג אחד מתחת לאוקטבה, ספט קטן שני סריגים מתחתיה.' },
         play: [notes([31, 35, 38, 42], 0.45), rest(0.3), notes([31, 35, 38, 41], 0.45)],
         show: { text: { en: 'maj7 · 7', he: 'maj7 · 7' } },
       },
       {
-        say: { en: 'A half step below the next root pulls hardest. A half step above sounds bluesier. Try both into the same chord.', he: 'חצי טון מתחת ליסוד הבא מושך הכי חזק. חצי טון מעליו נשמע בלוזי יותר. נסו את שניהם אל אותו אקורד.' },
+        say: { en: 'A half step below the next root pulls hardest. A half step above sounds bluesier. Try both into the same chord.', he: 'חצי טון מתחת לשורש הבא מושך הכי חזק. חצי טון מעליו נשמע בלוזי יותר. נסו את שניהם אל אותו אקורד.' },
         play: [notes([31, 35, 36], 0.5), rest(0.3), notes([31, 37, 36], 0.5)],
       },
       {
-        say: { en: 'The usual mistake is looking for each note alone. Think in shapes from the root, and say the chord tone you land on.', he: 'הטעות הנפוצה היא לחפש כל צליל לבד. חושבים בצורות מהיסוד, ואומרים בקול על איזה צליל אקורד נוחתים.' },
+        say: { en: 'The usual mistake is looking for each note alone. Think in shapes from the root, and say the chord tone you land on.', he: 'הטעות הנפוצה היא לחפש כל צליל לבד. חושבים בצורות מהשורש, ואומרים בקול על איזה צליל אקורד נוחתים.' },
       },
       {
         say: { en: 'Walking lines use all of it: a chord tone on the first beat, then steps, and an approach note on the last beat into the next chord.', he: 'קווי ווקינג משתמשים בכל זה: צליל אקורד על הפעמה הראשונה, אחר כך צעדים, וצליל גישה בפעמה האחרונה אל האקורד הבא.' },
@@ -622,7 +622,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G A B C♯ → D', he: 'G A B C♯ → D' } },
       },
       {
-        say: { en: 'To keep: root, fifth and octave first, then the third and the seventh, then the note that leads to the next root.', he: 'מה לזכור: קודם יסוד, קווינטה ואוקטבה, אחר כך הטרצה והספט, ואז הצליל שמוביל ליסוד הבא.' },
+        say: { en: 'To keep: root, fifth and octave first, then the third and the seventh, then the note that leads to the next root.', he: 'מה לזכור: קודם שורש, קווינטה ואוקטבה, אחר כך הטרצה והספט, ואז הצליל שמוביל לשורש הבא.' },
         show: { text: { en: 'R 5 8 · 3 7 · →', he: 'R 5 8 · 3 7 · →' } },
       },
     ],
@@ -684,7 +684,7 @@ LESSONS.push(
         say: { en: 'The usual mistake is counting frets one by one. Look at the shape instead: the hand learns the distance, and the ear checks it.', he: 'הטעות הנפוצה היא לספור סריגים אחד אחד. מסתכלים על הצורה במקום: היד לומדת את המרחק, והאוזן בודקת אותו.' },
       },
       {
-        say: { en: 'To keep: octave two over and two up, fifth one over and two up, fourth straight across. Practise them from every root on the E and A strings.', he: 'מה לזכור: אוקטבה שניים מעל ושניים קדימה, קווינטה אחד מעל ושניים קדימה, קוורטה ישר מעל. תרגלו אותן מכל יסוד על מיתרי E ו־A.' },
+        say: { en: 'To keep: octave two over and two up, fifth one over and two up, fourth straight across. Practise them from every root on the E and A strings.', he: 'מה לזכור: אוקטבה שניים מעל ושניים קדימה, קווינטה אחד מעל ושניים קדימה, קוורטה ישר מעל. תרגלו אותן מכל שורש על מיתרי E ו־A.' },
         show: { text: { en: '8 · 5 · 4', he: '8 · 5 · 4' } },
       },
     ],
@@ -697,17 +697,17 @@ LESSONS.push(
     takeaway: { en: 'One finger per fret, four frets: the major scale and each pentatonic box fit under one hand.', he: 'אצבע לכל סריג, ארבעה סריגים: הסולם המז׳ורי וכל תיבה פנטטונית נכנסים מתחת ליד אחת.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Put your second finger on the root, on the E or the A string. With one finger per fret, the whole major scale is under your hand.', he: 'היי {name}! שימו את האצבע השנייה על היסוד, על מיתר E או A. באצבע לכל סריג, כל הסולם המז׳ורי מתחת ליד.' },
+        say: { en: 'Hi {name}! Put your second finger on the root, on the E or the A string. With one finger per fret, the whole major scale is under your hand.', he: 'היי {name}! שימו את האצבע השנייה על השורש, על מיתר E או A. באצבע לכל סריג, כל הסולם המז׳ורי מתחת ליד.' },
         play: [notes([31, 33, 35, 36, 38, 40, 42, 43], 0.35)],
         show: { text: { en: 'G major from fret 3', he: 'G מז׳ור מסריג 3' } },
       },
       {
-        say: { en: 'The fingering is the same in every key: two notes on the root string, then three, then three. Move the hand and the key moves with it.', he: 'האצבוע זהה בכל סולם: שני צלילים על מיתר היסוד, אחר כך שלושה, ועוד שלושה. מזיזים את היד והסולם זז איתה.' },
+        say: { en: 'The fingering is the same in every key: two notes on the root string, then three, then three. Move the hand and the key moves with it.', he: 'האצבוע זהה בכל סולם: שני צלילים על מיתר השורש, אחר כך שלושה, ועוד שלושה. מזיזים את היד והסולם זז איתה.' },
         play: [notes([33, 35, 37, 38, 40, 42, 44, 45], 0.35)],
         show: { text: { en: '2 4 · 1 2 4 · 1 3 4', he: '2 4 · 1 2 4 · 1 3 4' } },
       },
       {
-        say: { en: 'The minor pentatonic, box 1: the root under your first finger, two notes on each string. Most bass fills live in this box.', he: 'הפנטטונית המינורית, תיבה 1: היסוד מתחת לאצבע הראשונה, שני צלילים על כל מיתר. רוב המילויים בבס גרים בתיבה הזו.' },
+        say: { en: 'The minor pentatonic, box 1: the root under your first finger, two notes on each string. Most bass fills live in this box.', he: 'הפנטטונית המינורית, תיבה 1: השורש מתחת לאצבע הראשונה, שני צלילים על כל מיתר. רוב המעברים בבס גרים בתיבה הזו.' },
         play: [notes([33, 36, 38, 40, 43, 45], 0.35)],
         show: { text: { en: 'A C D E G A', he: 'A C D E G A' } },
       },
@@ -716,7 +716,7 @@ LESSONS.push(
         play: [notes([36, 38, 40, 43, 45, 48], 0.35)],
       },
       {
-        say: { en: 'Your turn: play the scales from the root I show you, then look at a box and name it.', he: 'תורכם: נגנו את הסולמות מהיסוד שאני מראה, ואז הסתכלו על תיבה ותנו לה שם.' },
+        say: { en: 'Your turn: play the scales from the root I show you, then look at a box and name it.', he: 'תורכם: נגנו את הסולמות מהשורש שאני מראה, ואז הסתכלו על תיבה ותנו לה שם.' },
       },
     ],
     more: [
@@ -724,7 +724,7 @@ LESSONS.push(
         say: { en: 'On a bass, a box keeps its shape on every pair of strings, because all the strings are a fourth apart.', he: 'בבס, תיבה שומרת על הצורה שלה על כל זוג מיתרים, כי כל המיתרים רחוקים קוורטה זה מזה.' },
       },
       {
-        say: { en: 'A fill is three or four notes from the box that lead into the next chord. Fall from above into its root, or into its third.', he: 'מילוי הוא שלושה או ארבעה צלילים מהתיבה שמובילים לאקורד הבא. נופלים מלמעלה אל היסוד שלו, או אל הטרצה שלו.' },
+        say: { en: 'A fill is three or four notes from the box that lead into the next chord. Fall from above into its root, or into its third.', he: 'מעבר הוא שלושה או ארבעה צלילים מהתיבה שמובילים לאקורד הבא. נופלים מלמעלה אל השורש שלו, או אל הטרצה שלו.' },
         play: [notes([43, 40, 38, 36, 33], 0.3)],
       },
       {
@@ -732,13 +732,13 @@ LESSONS.push(
         play: [notes([36, 38, 40, 43, 45], 0.3)],
       },
       {
-        say: { en: 'The usual mistake is playing the box only up and down. Play it in small groups, skip notes, and always say where the root is.', he: 'הטעות הנפוצה היא לנגן את התיבה רק למעלה ולמטה. נגנו אותו בקבוצות קטנות, דלגו על צלילים, ותמיד דעו איפה היסוד.' },
+        say: { en: 'The usual mistake is playing the box only up and down. Play it in small groups, skip notes, and always say where the root is.', he: 'הטעות הנפוצה היא לנגן את התיבה רק למעלה ולמטה. נגנו אותו בקבוצות קטנות, דלגו על צלילים, ותמיד דעו איפה השורש.' },
       },
       {
         say: { en: 'On a six-string bass, three notes per string run a scale across the neck without moving the hand. That has its own technique level.', he: 'בבס של שישה מיתרים, שלושה צלילים בכל מיתר מריצים סולם לרוחב הצוואר בלי להזיז את היד. יש לזה שלב טכניקה משלו.' },
       },
       {
-        say: { en: 'To keep: one finger per fret, the root under finger two for the major scale and under finger one for the pentatonic box. Five slow minutes a day are enough.', he: 'מה לזכור: אצבע לכל סריג, היסוד מתחת לאצבע שתיים בסולם המז׳ורי ומתחת לאצבע אחת בתיבה הפנטטונית. חמש דקות איטיות ביום מספיקות.' },
+        say: { en: 'To keep: one finger per fret, the root under finger two for the major scale and under finger one for the pentatonic box. Five slow minutes a day are enough.', he: 'מה לזכור: אצבע לכל סריג, השורש מתחת לאצבע שתיים בסולם המז׳ורי ומתחת לאצבע אחת בתיבה הפנטטונית. חמש דקות איטיות ביום מספיקות.' },
         show: { text: { en: 'major: 2 · penta: 1', he: 'מז׳ור: 2 · פנטטוני: 1' } },
       },
     ],
@@ -812,7 +812,7 @@ LESSONS.push(
     takeaway: { en: 'A triad is two thirds stacked. Major: 4 then 3 half steps; minor: 3 then 4. Inversions move the bottom note to the top.', he: 'משולש הוא שתי טרצות זו על זו. מז׳ור: 4 ואז 3 חצאי טונים; מינור: 3 ואז 4. היפוך מעביר את הצליל התחתון למעלה.' },
     steps: [
       {
-        say: { en: 'Hi {name}! A major triad: root, four half steps up, three more. On C: C, E, G.', he: 'היי {name}! משולש מז׳ורי: יסוד, ארבעה חצאי טונים למעלה, ועוד שלושה. על דו: דו, מי, סול.' },
+        say: { en: 'Hi {name}! A major triad: root, four half steps up, three more. On C: C, E, G.', he: 'היי {name}! משולש מז׳ורי: שורש, ארבעה חצאי טונים למעלה, ועוד שלושה. על דו: דו, מי, סול.' },
         play: [chord([60, 64, 67])],
         show: { notes: [60, 64, 67] },
       },
@@ -821,7 +821,7 @@ LESSONS.push(
         play: [chord([60, 63, 67]), rest(0.3), chord([60, 63, 66])],
       },
       {
-        say: { en: 'Move the root to the top and you get the 1st inversion: E, G, C — written C/E. Once more: the 2nd inversion, G, C, E.', he: 'מעבירים את היסוד למעלה ומקבלים היפוך ראשון: מי, סול, דו — נכתב C/E. עוד פעם: היפוך שני, סול, דו, מי.' },
+        say: { en: 'Move the root to the top and you get the 1st inversion: E, G, C — written C/E. Once more: the 2nd inversion, G, C, E.', he: 'מעבירים את השורש למעלה ומקבלים היפוך ראשון: מי, סול, דו — נכתב C/E. עוד פעם: היפוך שני, סול, דו, מי.' },
         play: [chord([64, 67, 72]), rest(0.3), chord([67, 72, 76])],
       },
       {
@@ -839,7 +839,7 @@ LESSONS.push(
         play: [chord([60, 64, 67, 71]), rest(0.2), chord([60, 64, 67, 70])],
       },
       {
-        say: { en: 'Jazz pianists play shells in the left hand: root, 3rd and 7th — the notes that name the chord. The 5th can go.', he: 'פסנתרני ג׳אז מנגנים קונכיות ביד שמאל: יסוד, טרצה וספטימה — הצלילים שקובעים את האקורד. אפשר לוותר על הקווינטה.' },
+        say: { en: 'Jazz pianists play shells in the left hand: root, 3rd and 7th — the notes that name the chord. The 5th can go.', he: 'פסנתרני ג׳אז מנגנים שלדים ביד שמאל: שורש, טרצה וספטימה — הצלילים שקובעים את האקורד. אפשר לוותר על הקווינטה.' },
         play: [chord([50, 53, 60]), rest(0.2), chord([43, 53, 59])],
       },
       {
@@ -850,7 +850,7 @@ LESSONS.push(
         play: [chord([60, 64, 67], 0.9), chord([60, 65, 69], 0.9), chord([59, 62, 67], 0.9)],
       },
       {
-        say: { en: 'Black-key roots look strange but follow the same counts. D flat major: D flat, F, A flat. Feel the shape, then say the names.', he: 'יסודות על קלידים שחורים נראים מוזר אבל נספרים אותו דבר. רה במול מז׳ור: רה במול, פה, לה במול. מרגישים את הצורה, ואז אומרים את השמות.' },
+        say: { en: 'Black-key roots look strange but follow the same counts. D flat major: D flat, F, A flat. Feel the shape, then say the names.', he: 'שורשים על קלידים שחורים נראים מוזר אבל נספרים אותו דבר. רה במול מז׳ור: רה במול, פה, לה במול. מרגישים את הצורה, ואז אומרים את השמות.' },
         play: [chord([61, 65, 68])],
       },
       {

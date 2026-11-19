@@ -340,9 +340,9 @@ TOPIC_TAGS['fret-intervals'] = tg(['instrument', 'shapes', 0.6], ['intervals', '
 const rootName = (rootPc: number, minor: boolean): Bi => noteName(rootPc, minor && [1, 6, 8].includes(mod12(rootPc)));
 const chordName = (rootPc: number, minor: boolean): Bi => {
   const r = rootName(rootPc, minor);
-  return { en: `${r.en} ${minor ? 'minor' : 'major'}`, he: `${r.he} ${minor ? 'מינור' : "מז'ור"}` };
+  return { en: `${r.en} ${minor ? 'minor' : 'major'}`, he: `${r.he} ${minor ? 'מינור' : "מז׳ור"}` };
 };
-const SEV_SYM: Record<SeventhKind, Bi> = { maj7: { en: 'maj7', he: "מז'ור 7" }, '7': { en: '7', he: '7' }, m7: { en: 'm7', he: 'מינור 7' }, m7b5: { en: 'm7♭5', he: 'חצי מוקטן' } };
+const SEV_SYM: Record<SeventhKind, Bi> = { maj7: { en: 'maj7', he: "מז׳ור 7" }, '7': { en: '7', he: '7' }, m7: { en: 'm7', he: 'מינור 7' }, m7b5: { en: 'm7♭5', he: 'חצי מוקטן' } };
 const sevName = (rootPc: number, k: SeventhKind): Bi => ({ en: `${pcName(rootPc)}${SEV_SYM[k].en}`, he: `${pcNameHe(rootPc)} ${SEV_SYM[k].he}` });
 const INV: Bi[] = [
   { en: 'root position', he: 'מצב יסודי' },
@@ -353,9 +353,9 @@ const shapeMidis = (t: Tuning, dots: NeckPos[]) => midisAt(t, [...dots].sort((a,
 
 /** Bass items shared by fret-chords (root–5–octave, arpeggio shapes). */
 const BASS_ARP: { iv: number[]; sym: Bi; minor: boolean }[] = [
-  { iv: [0, 4, 7, 12], sym: { en: '', he: "מז'ור" }, minor: false },
+  { iv: [0, 4, 7, 12], sym: { en: '', he: "מז׳ור" }, minor: false },
   { iv: [0, 3, 7, 12], sym: { en: 'm', he: 'מינור' }, minor: true },
-  { iv: [0, 4, 7, 11], sym: { en: 'maj7', he: "מז'ור 7" }, minor: false },
+  { iv: [0, 4, 7, 11], sym: { en: 'maj7', he: "מז׳ור 7" }, minor: false },
   { iv: [0, 4, 7, 10], sym: { en: '7', he: '7' }, minor: false },
   { iv: [0, 3, 7, 10], sym: { en: 'm7', he: 'מינור 7' }, minor: true },
 ];
@@ -371,9 +371,9 @@ TOPIC_GEN['fret-chords'] = {
     { en: 'Open chords by diagram (C A G E D, minor)', he: 'אקורדים פתוחים לפי דיאגרמה (C A G E D, מינור)' },
     { en: 'Build a triad on the top three strings', he: 'לבנות משולש על שלושת המיתרים העליונים' },
     { en: 'CAGED: which shape?', he: 'CAGED: איזו צורה?' },
-    { en: 'Seventh chords (drop 2 / drop 3)', he: 'אקורדי ספטים (דרופ 2 / דרופ 3)' },
+    { en: 'Seventh chords (drop 2 / drop 3)', he: 'ספטאקורדים (דרופ 2 / דרופ 3)' },
     { en: 'Triad inversions on a string set', he: 'היפוכי משולשים על קבוצת מיתרים' },
-    { en: 'Bass: root, fifth, octave', he: 'בס: יסוד, קווינטה, אוקטבה' },
+    { en: 'Bass: root, fifth, octave', he: 'בס: שורש, קווינטה, אוקטבה' },
     { en: 'Bass: arpeggio shapes', he: 'בס: צורות ארפג׳יו' },
   ],
   gen(seed, level, id) {
@@ -453,7 +453,7 @@ TOPIC_GEN['fret-chords'] = {
         const name = sevName(target[0], kind);
         return placeQ({
           ...base, instrument: 'guitar',
-          ask: { en: `Build ${name.en} as a drop-${drop} voicing: root on string ${rootStr}, strings ${strs.join('–')}.`, he: `בנו ${name.he} בקול דרופ ${drop}: היסוד על מיתר ${rootStr}, מיתרים ${strs.join('–')}.` },
+          ask: { en: `Build ${name.en} as a drop-${drop} voicing: root on string ${rootStr}, strings ${strs.join('–')}.`, he: `בנו ${name.he} בקול דרופ ${drop}: השורש על מיתר ${rootStr}, מיתרים ${strs.join('–')}.` },
           target, as: 'set', neck: { strings: strs },
           stimulus: [chordStim(target, 1.6)],
         });
@@ -472,8 +472,8 @@ TOPIC_GEN['fret-chords'] = {
       const n = noteName(r);
       const ask: Bi =
         level === 6
-          ? { en: `Play ${n.en}, its fifth and its octave — root on string ${rootStr}.`, he: `נגנו ${n.he}, את הקווינטה ואת האוקטבה שלו — היסוד על מיתר ${rootStr}.` }
-          : { en: `Play the ${n.en}${arp!.sym.en} arpeggio up from the root on string ${rootStr}.`, he: `נגנו ארפג׳יו של ${n.he} ${arp!.sym.he} למעלה, מהיסוד על מיתר ${rootStr}.` };
+          ? { en: `Play ${n.en}, its fifth and its octave — root on string ${rootStr}.`, he: `נגנו ${n.he}, את הקווינטה ואת האוקטבה שלו — השורש על מיתר ${rootStr}.` }
+          : { en: `Play the ${n.en}${arp!.sym.en} arpeggio up from the root on string ${rootStr}.`, he: `נגנו ארפג׳יו של ${n.he} ${arp!.sym.he} למעלה, מהשורש על מיתר ${rootStr}.` };
       const minor = arp?.minor ?? false;
       return placeQ({ ...base, instrument: 'bass', ask, target, as: 'seq', neck: { frets: [0, 12] }, stimulus: [chordStim(triadOver(r + 12, mod12(r), minor), 1.4)] });
     }
@@ -490,7 +490,7 @@ TOPIC_GEN['fret-scales'] = {
   forPlays: ['guitar'],
   levelPlays: [['guitar'], ['guitar'], ['guitar'], ['guitar'], []],
   levels: [
-    { en: 'Major scale from a root on string 6', he: "סולם מז'ור מהיסוד על מיתר 6" },
+    { en: 'Major scale from a root on string 6', he: "סולם מז׳ור מהשורש על מיתר 6" },
     { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, תיבה 1' },
     { en: 'Which pentatonic box (1–5)?', he: 'איזו תיבה פנטטונית (1–5)?' },
     { en: 'Three notes per string', he: 'שלושה צלילים למיתר' },
@@ -505,7 +505,7 @@ TOPIC_GEN['fret-scales'] = {
       const r = noteAt(STD, 6, f);
       const target = [...MAJ, 12].map((x) => r + x);
       const n = noteName(r);
-      return placeQ({ ...base, instrument: 'guitar', ask: { en: `Play the ${n.en} major scale, one octave up, from ${n.en} on string 6.`, he: `נגנו סולם ${n.he} מז'ור, אוקטבה אחת למעלה, מ־${n.he} על מיתר 6.` }, target, as: 'seq', neck: { strings: [6, 5, 4], frets: [Math.max(0, f - 1), f + 4], dots: [{ str: 6, fret: f }] } });
+      return placeQ({ ...base, instrument: 'guitar', ask: { en: `Play the ${n.en} major scale, one octave up, from ${n.en} on string 6.`, he: `נגנו סולם ${n.he} מז׳ור, אוקטבה אחת למעלה, מ־${n.he} על מיתר 6.` }, target, as: 'seq', neck: { strings: [6, 5, 4], frets: [Math.max(0, f - 1), f + 4], dots: [{ str: 6, fret: f }] } });
     }
     if (level === 2) {
       const root = Math.floor(rnd() * 12);
@@ -599,7 +599,7 @@ TOPIC_GEN['bass-shapes'] = {
   skill: 'instrument',
   forPlays: ['bass'],
   levels: [
-    { en: 'Root, fifth, octave', he: 'יסוד, קווינטה, אוקטבה' },
+    { en: 'Root, fifth, octave', he: 'שורש, קווינטה, אוקטבה' },
     { en: 'Arpeggio shapes', he: 'צורות ארפג׳יו' },
     { en: 'Walking approach notes', he: 'צלילי גישה בווקינג' },
   ],
@@ -701,8 +701,8 @@ TOPIC_GEN['bass-scales'] = {
   skill: 'instrument',
   forPlays: ['bass'],
   levels: [
-    { en: 'Major scale from a root on the E or A string', he: "סולם מז'ור מהיסוד על מיתר E או A" },
-    { en: 'Minor pentatonic, box 1 (for fills)', he: 'פנטטונית מינורית, תיבה 1 (למילויים)' },
+    { en: 'Major scale from a root on the E or A string', he: "סולם מז׳ור מהשורש על מיתר E או A" },
+    { en: 'Minor pentatonic, box 1 (for fills)', he: 'פנטטונית מינורית, תיבה 1 (למעברים)' },
     { en: 'Which pentatonic box (1–5)?', he: 'איזו תיבה פנטטונית (1–5)?' },
   ],
   gen(seed, level, id) {
@@ -716,7 +716,7 @@ TOPIC_GEN['bass-scales'] = {
       const r = noteAt(BASS, s, f);
       const n = noteName(r);
       const sn = strName(BASS, s);
-      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} major, one octave up, from ${n.en} on ${sn.en}.`, he: `נגנו ${n.he} מז'ור, אוקטבה אחת למעלה, מ־${n.he} על ${sn.he}.` }, target: [...MAJ, 12].map((x) => r + x), as: 'seq', neck: { strings: [s, s - 1, s - 2], frets: [Math.max(0, f - 1), f + 4], dots: [{ str: s, fret: f }] } });
+      return placeQ({ ...base, instrument: 'bass', ask: { en: `Play ${n.en} major, one octave up, from ${n.en} on ${sn.en}.`, he: `נגנו ${n.he} מז׳ור, אוקטבה אחת למעלה, מ־${n.he} על ${sn.he}.` }, target: [...MAJ, 12].map((x) => r + x), as: 'seq', neck: { strings: [s, s - 1, s - 2], frets: [Math.max(0, f - 1), f + 4], dots: [{ str: s, fret: f }] } });
     }
     const root = Math.floor(rnd() * 12);
     if (level === 2) {
@@ -747,11 +747,11 @@ TOPIC_TAGS['bass-scales'] = tg(['instrument', 'fretboard', 0.6], ['modes', 'scal
 // ======================================================================= notes on the keys
 
 const KEY_CHORDS: { iv: number[]; en: string; he: string }[] = [
-  { iv: [0, 4, 7], en: 'major', he: "מז'ור" },
+  { iv: [0, 4, 7], en: 'major', he: "מז׳ור" },
   { iv: [0, 3, 7], en: 'minor', he: 'מינור' },
   { iv: [0, 3, 6], en: 'diminished', he: 'מוקטן' },
   { iv: [0, 4, 8], en: 'augmented', he: 'מוגדל' },
-  { iv: [0, 4, 7, 11], en: 'maj7', he: "מז'ור 7" },
+  { iv: [0, 4, 7, 11], en: 'maj7', he: "מז׳ור 7" },
   { iv: [0, 4, 7, 10], en: '7', he: '7' },
   { iv: [0, 3, 7, 10], en: 'm7', he: 'מינור 7' },
   { iv: [0, 3, 6, 10], en: 'm7♭5', he: 'חצי מוקטן' },
@@ -862,7 +862,7 @@ TOPIC_GEN['key-read'] = {
 TOPIC_TAGS['key-read'] = tg(['instrument', 'keyboard', 0.5], ['notes', 'staff', 0.5]);
 
 const TRIADS: { iv: number[]; en: string; he: string; sym: string }[] = [
-  { iv: [0, 4, 7], en: 'major', he: "מז'ור", sym: '' },
+  { iv: [0, 4, 7], en: 'major', he: "מז׳ור", sym: '' },
   { iv: [0, 3, 7], en: 'minor', he: 'מינור', sym: 'm' },
   { iv: [0, 3, 6], en: 'diminished', he: 'מוקטן', sym: '°' },
   { iv: [0, 4, 8], en: 'augmented', he: 'מוגדל', sym: '+' },
@@ -891,11 +891,11 @@ TOPIC_GEN['key-shapes'] = {
   skill: 'instrument',
   forPlays: ['keys'],
   levels: [
-    { en: 'Major and minor triads', he: "משולשים מז'וריים ומינוריים" },
+    { en: 'Major and minor triads', he: "משולשים מז׳וריים ומינוריים" },
     { en: 'Triads from black keys, diminished, augmented', he: 'משולשים מקלידים שחורים, מוקטן, מוגדל' },
     { en: 'Inversions', he: 'היפוכים' },
     { en: 'Seventh chords in every inversion', he: 'ספטאקורדים בכל היפוך' },
-    { en: 'Left-hand shells', he: 'קונכיות ביד שמאל' },
+    { en: 'Left-hand shells', he: 'שלדים ביד שמאל' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -924,13 +924,13 @@ TOPIC_GEN['key-shapes'] = {
     const b = rnd() < 0.5;
     const target = b ? [r, r + c.iv[3], r + c.iv[1] + 12] : [r, r + c.iv[1], r + c.iv[3]];
     const sym = `${pcName(root)}${c.sym}`;
-    return placeQ({ ...base, ask: b ? { en: `Left-hand shell of ${sym}: root, 7th, then the 3rd on top.`, he: `קונכייה של ${sym} ביד שמאל: יסוד, ספטימה, והטרצה למעלה.` } : { en: `Left-hand shell of ${sym}: root, 3rd, 7th.`, he: `קונכייה של ${sym} ביד שמאל: יסוד, טרצה, ספטימה.` }, target, given: { midis: [r], key: null, clef: 'bass' } });
+    return placeQ({ ...base, ask: b ? { en: `Left-hand shell of ${sym}: root, 7th, then the 3rd on top.`, he: `שלד של ${sym} ביד שמאל: שורש, ספטימה, והטרצה למעלה.` } : { en: `Left-hand shell of ${sym}: root, 3rd, 7th.`, he: `שלד של ${sym} ביד שמאל: שורש, טרצה, ספטימה.` }, target, given: { midis: [r], key: null, clef: 'bass' } });
   },
 };
 TOPIC_TAGS['key-shapes'] = (l) => (l >= 4 ? tg(['instrument', 'keyboard', 0.6], ['chords', 'voicing', 0.4]) : tg(['instrument', 'keyboard', 0.6], ['theory', 'spelling', 0.4]));
 
 const KEY_SCALES: { iv: number[]; en: string; he: string }[] = [
-  { iv: [0, 2, 4, 5, 7, 9, 11, 12], en: 'major', he: "מז'ור" },
+  { iv: [0, 2, 4, 5, 7, 9, 11, 12], en: 'major', he: "מז׳ור" },
   { iv: [0, 2, 3, 5, 7, 8, 11, 12], en: 'harmonic minor', he: 'מינור הרמוני' },
   { iv: [0, 2, 3, 5, 7, 9, 11, 12], en: 'melodic minor (going up)', he: 'מינור מלודי (בעלייה)' },
   { iv: [0, 2, 3, 5, 7, 9, 10, 12], en: 'dorian', he: 'דורי' },
@@ -943,8 +943,8 @@ TOPIC_GEN['key-scales'] = {
   skill: 'instrument',
   forPlays: ['keys'],
   levels: [
-    { en: 'Major scales from white keys', he: "סולמות מז'ור מקלידים לבנים" },
-    { en: 'Major scales from every key', he: "סולמות מז'ור מכל קליד" },
+    { en: 'Major scales from white keys', he: "סולמות מז׳ור מקלידים לבנים" },
+    { en: 'Major scales from every key', he: "סולמות מז׳ור מכל קליד" },
     { en: 'Harmonic minor', he: 'מינור הרמוני' },
     { en: 'Melodic minor', he: 'מינור מלודי' },
     { en: 'Modes: dorian, mixolydian, lydian', he: 'מודוסים: דורי, מיקסולידי, לידי' },

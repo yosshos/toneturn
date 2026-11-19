@@ -11,7 +11,7 @@ import { LESSONS as VOICE } from './mini/voice';
 import { LESSONS as SKILLS, MEMORY_LESSONS } from './mini/skills';
 import { LESSONS as BASICS } from './mini/basics';
 import { LESSONS as AD } from './mini/ad';
-import { UNIT_LESSON } from './units';
+import { UNIT_LESSON, VOCAL_FAMILY_UNIT, vocalUnit } from './units';
 import { LESSONS as INSTRUMENT } from './mini/instrument';
 import { LESSONS as PIANO_JAZZ } from './mini/pianoJazz';
 import { LESSONS as LICKS } from './mini/licks';
@@ -75,6 +75,17 @@ import { LESSONS as STAGE_C } from './mini/stageC';
 
 /** The mini-lesson that opens a unit, if there is one. */
 export const lessonForUnit = (unit: string): MiniLesson | null => MINI_LESSONS[UNIT_LESSON[unit] ?? ''] ?? null;
+
+/**
+ * The unit key whose mini-lesson opens a technique / vocal path step (curriculum audit 2026-11-19, R7 / R2): the level's
+ * own lesson, else the family's; a vocal level falls back to its family's track lesson. Null when none exists.
+ */
+export function ladderLessonKey(kind: string, ladder: { family: string; ref: string }): string | null {
+  const keys = kind === 'vocal'
+    ? [`vocal:${ladder.ref}`, VOCAL_FAMILY_UNIT[ladder.family], vocalUnit(Number(ladder.ref))]
+    : [`tech:${ladder.ref}`, `tech:${ladder.family}`];
+  return keys.find((k): k is string => !!k && !!lessonForUnit(k)) ?? null;
+}
 // AUDIT-7: note values, interval numbers, the jazz entry on guitar / bass / voice, the singer's first steps, improvising in pop, pop style.
 import { LESSONS as AUDIT7 } from './mini/audit7';
 // Triad pairs, deep (2026-11-16): lines and voicings; on guitar and bass.

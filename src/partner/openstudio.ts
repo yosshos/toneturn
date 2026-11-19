@@ -78,7 +78,7 @@ export const OPENSTUDIO: PartnerConfig = {
   mascot: 'teacher-frame',
   courseMap: [
     { course: 'Jazz Piano Jumpstart', area: 'keys', what: { en: 'Shells, guide tones, first comping', he: 'שלדים, צלילים מנחים, ליווי ראשון' }, links: [{ kind: 'family', id: 'voicings' }, { kind: 'topic', id: 'guide-tones' }, { kind: 'family', id: 'k-impro' }] },
-    { course: 'Introductory Jazz Piano Pathway', area: 'keys', what: { en: 'Seventh chords, ii–V–I, the blues', he: 'אקורדי ספטים, ii–V–I, בלוז' }, links: [{ kind: 'topic', id: 'seventh-chords' }, { kind: 'family', id: 'accomp' }, { kind: 'topic', id: 'blues-ear' }] },
+    { course: 'Introductory Jazz Piano Pathway', area: 'keys', what: { en: 'Seventh chords, ii–V–I, the blues', he: 'ספטאקורדים, ii–V–I, בלוז' }, links: [{ kind: 'topic', id: 'seventh-chords' }, { kind: 'family', id: 'accomp' }, { kind: 'topic', id: 'blues-ear' }] },
     { course: 'Elements of Jazz Piano', area: 'keys', what: { en: 'Voicings, lines, comping vocabulary', he: 'קולות, קווים, אוצר ליווי' }, links: [{ kind: 'family', id: 'voicings' }, { kind: 'family', id: 'jazz' }, { kind: 'family', id: 'k-comp' }] },
     { course: 'Jazz Piano Foundations', area: 'keys', what: { en: 'Scales, arpeggios and changes in 12 keys', he: 'סולמות, ארפג׳ים ומהלכים ב־12 סולמות' }, links: [{ kind: 'family', id: 'scales' }, { kind: 'family', id: 'arpeggios' }, { kind: 'topic', id: 'jazz-changes' }] },
     { course: 'Jazz Piano Inside and Out', area: 'keys', what: { en: 'Bebop lines, reharmonization', he: 'קווי ביבופ, הרמוניה מחדש' }, links: [{ kind: 'family', id: 'k-bebop' }, { kind: 'family', id: 'k-reharm' }] },

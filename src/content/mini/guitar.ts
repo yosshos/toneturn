@@ -28,11 +28,11 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([57, 60, 62, 64]), rest(0.4), notes([57, 60, 62, 64])],
       },
       {
-        say: { en: 'Sing it inside first, then find the first note. Every line starts on a note I tell you: the root or the fifth.', he: 'שרים בפנים קודם, ואז מוצאים את הצליל הראשון. כל קו מתחיל בצליל שאני אומר: היסוד או הקווינטה.' },
+        say: { en: 'Sing it inside first, then find the first note. Every line starts on a note I tell you: the root or the fifth.', he: 'שרים בפנים קודם, ואז מוצאים את הצליל הראשון. כל קו מתחיל בצליל שאני אומר: השורש או הקווינטה.' },
         play: [notes([57, 64], 0.6)],
       },
       {
-        say: { en: 'For chords, listen for the root — the note the chord is named after, not always the lowest one. Play it on strings six and five.', he: 'באקורדים מקשיבים ליסוד — הצליל שעל שמו האקורד, לא תמיד הנמוך ביותר. מנגנים אותו על מיתרים שש וחמש.' },
+        say: { en: 'For chords, listen for the root — the note the chord is named after, not always the lowest one. Play it on strings six and five.', he: 'באקורדים מקשיבים לשורש — הצליל שעל שמו האקורד, לא תמיד הנמוך ביותר. מנגנים אותו על מיתרים שש וחמש.' },
         play: [chord([45, 57, 60, 64], 1), chord([50, 57, 62, 65], 1)],
       },
       {
@@ -58,7 +58,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([52, 57, 62], 0.2), rest(0.25), chord([52, 57, 62], 0.2), chord([52, 57, 62], 0.2)],
       },
       {
-        say: { en: 'For the root finder, hum the note each chord rests on — its root, not its lowest voice. Chords come in inversions on purpose, so neither the top nor the bottom voice gives it away.', he: 'במוצא היסודות מזמזמים את הצליל שכל אקורד נח עליו — היסוד שלו, לא הקול הנמוך. האקורדים מגיעים בהיפוכים בכוונה, כך שלא הקול העליון ולא התחתון יסגירו את התשובה.' },
+        say: { en: 'For the root finder, hum the note each chord rests on — its root, not its lowest voice. Chords come in inversions on purpose, so neither the top nor the bottom voice gives it away.', he: 'במוצא השורשים מזמזמים את הצליל שכל אקורד נח עליו — השורש שלו, לא הקול הנמוך. האקורדים מגיעים בהיפוכים בכוונה, כך שלא הקול העליון ולא התחתון יסגירו את התשובה.' },
         play: [chord([52, 57, 60], 1), chord([53, 57, 62], 1)],
       },
       {
@@ -76,10 +76,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'Comping and chord melody', he: 'ליווי ואקורד-מלודיה' },
-    takeaway: { en: 'Shells hold the 3rd and 7th; drop-2 puts the melody on top. The rhythm is the comp.', he: 'קונכיות מחזיקות את הטרצה והספטימה; דרופ 2 שם את המנגינה למעלה. המקצב הוא הליווי.' },
+    takeaway: { en: 'Shells hold the 3rd and 7th; drop-2 puts the melody on top. The rhythm is the comp.', he: 'שלדים מחזיקים את הטרצה והספטימה; דרופ 2 שם את המנגינה למעלה. המקצב הוא הליווי.' },
     steps: [
       {
-        say: { en: 'A jazz guitarist rarely plays full chords. Three notes are enough: the root, the 3rd and the 7th.', he: 'גיטריסט ג׳אז כמעט לא מנגן אקורדים מלאים. שלושה צלילים מספיקים: היסוד, הטרצה והספטימה.' },
+        say: { en: 'A jazz guitarist rarely plays full chords. Three notes are enough: the root, the 3rd and the 7th.', he: 'גיטריסט ג׳אז כמעט לא מנגן אקורדים מלאים. שלושה צלילים מספיקים: השורש, הטרצה והספטימה.' },
         play: [chord([50, 60, 65], 1), chord([55, 59, 65], 1), chord([48, 59, 64], 1.6)],
       },
       {
@@ -95,13 +95,13 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([53, 60, 64, 69], 1), chord([55, 59, 65, 67], 1), chord([52, 59, 64, 67], 1.6)],
       },
       {
-        say: { en: 'Your turn: shells first, four to the bar, then the Charleston. Keep the chords short so the bass and drums can breathe.', he: 'תורכם: קודם קונכיות, ארבע לתיבה, ואז צ׳רלסטון. משאירים את האקורדים קצרים כדי שהבס והתופים יוכלו לנשום.' },
+        say: { en: 'Your turn: shells first, four to the bar, then the Charleston. Keep the chords short so the bass and drums can breathe.', he: 'תורכם: קודם שלדים, ארבע לתיבה, ואז צ׳רלסטון. משאירים את האקורדים קצרים כדי שהבס והתופים יוכלו לנשום.' },
         show: { text: { en: 'R · 3 · 7', he: 'R · 3 · 7' } },
       },
     ],
     more: [
       {
-        say: { en: 'Freddie Green played short shells on every beat in the Basie band: barely heard alone, but the whole band leaned on them.', he: 'פרדי גרין ניגן קונכיות קצרות על כל פעמה בלהקה של בייסי: כמעט לא שומעים אותן לבד, אבל כל הלהקה נשענה עליהן.' },
+        say: { en: 'Freddie Green played short shells on every beat in the Basie band: barely heard alone, but the whole band leaned on them.', he: 'פרדי גרין ניגן שלדים קצרים על כל פעמה בלהקה של בייסי: כמעט לא שומעים אותן לבד, אבל כל הלהקה נשענה עליהן.' },
         play: [chord([43, 53, 59], 0.3), rest(0.2), chord([43, 53, 59], 0.3), rest(0.2), chord([43, 53, 59], 0.3)],
       },
       {
@@ -118,7 +118,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'To keep: three notes are a chord, the rhythm is the comp, and the melody on top of drop-2 is chord melody. The drills measure each hit in time.', he: 'מה לזכור: שלושה צלילים הם אקורד, המקצב הוא הליווי, והמנגינה מעל דרופ 2 היא אקורד-מלודיה. התרגילים מודדים כל מכה בזמן.' },
-        show: { text: { en: 'shells · drop-2 · rhythm', he: 'קונכיות · דרופ 2 · מקצב' } },
+        show: { text: { en: 'shells · drop-2 · rhythm', he: 'שלדים · דרופ 2 · מקצב' } },
       },
       {
         say: { en: 'Listen to the great comping guitarists and notice how little they play: a short chord, a long silence, and every hit placed exactly with the drummer.', he: 'מקשיבים לגיטריסטים הגדולים בליווי ושמים לב כמה מעט הם מנגנים: אקורד קצר, שקט ארוך, וכל מכה במקום המדויק עם המתופף.' },
@@ -142,7 +142,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([72, 71, 69, 68, 67, 65, 64, 62, 60], 0.3)],
       },
       {
-        say: { en: 'On a dominant, coming down from a chord tone, add a half step between the root and the flat 7th.', he: 'על דומיננטה, בירידה מצליל אקורד, מוסיפים חצי טון בין היסוד לספטימה הקטנה.' },
+        say: { en: 'On a dominant, coming down from a chord tone, add a half step between the root and the flat 7th.', he: 'על דומיננטה, בירידה מצליל אקורד, מוסיפים חצי טון בין השורש לספטימה הקטנה.' },
         play: [notes([67, 65, 64, 62, 60, 59, 58, 57, 55], 0.3)],
       },
       {
@@ -164,7 +164,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([59, 62, 65, 68], 0.8), chord([59, 62, 65, 67], 0.8)],
       },
       {
-        say: { en: 'The half-step rule: coming down a dominant scale from a chord tone, add one chromatic note between the root and the flat 7th, so the chord tones stay on the beats.', he: 'חוק חצי הטון: בירידה בסולם הדומיננטה מצליל אקורד מוסיפים צליל כרומטי אחד בין היסוד לספטימה הקטנה, כדי שצלילי האקורד יישארו על הפעמות.' },
+        say: { en: 'The half-step rule: coming down a dominant scale from a chord tone, add one chromatic note between the root and the flat 7th, so the chord tones stay on the beats.', he: 'חוק חצי הטון: בירידה בסולם הדומיננטה מצליל אקורד מוסיפים צליל כרומטי אחד בין השורש לספטימה הקטנה, כדי שצלילי האקורד יישארו על הפעמות.' },
         play: [notes([64, 62, 60, 59, 58, 57, 55], 0.3)],
       },
       {
@@ -279,7 +279,7 @@ LESSONS.push({
       play: [chord([48, 52, 55, 60, 64], 1.2), chord([48, 52, 55, 59, 64], 1.2)],
     },
     {
-      say: { en: 'The lowest note decides the bass. Play C with E on the low string and you get C over E, a first inversion. Mute the low string and the root takes the bass again.', he: 'הצליל הנמוך ביותר קובע את הבס. מנגנים דו עם מי במיתר הנמוך ומקבלים דו על מי, היפוך ראשון. משתיקים את המיתר הנמוך והיסוד חוזר לבס.' },
+      say: { en: 'The lowest note decides the bass. Play C with E on the low string and you get C over E, a first inversion. Mute the low string and the root takes the bass again.', he: 'הצליל הנמוך ביותר קובע את הבס. מנגנים דו עם מי במיתר הנמוך ומקבלים דו על מי, היפוך ראשון. משתיקים את המיתר הנמוך והשורש חוזר לבס.' },
       play: [chord([40, 48, 55, 60, 64], 1.2), chord([48, 52, 55, 60, 64], 1.2)],
     },
     {
@@ -306,7 +306,7 @@ LESSONS.push({
   takeaway: { en: 'Build any chord and see it on the keys and the neck; voice a cadence with the smallest moves, then play it chord by chord.', he: 'בונים כל אקורד ורואים אותו על הקלידים ועל הצוואר; קובעים וויסינג לקדנצה בתנועות הקטנות ביותר, ואז מנגנים אותה אקורד אחרי אקורד.' },
   steps: [
     {
-      say: { en: 'Hi {name}! Pick a root and a quality, and the builder spells the chord, plays it, and shows it on the piano keys and as a guitar shape.', he: 'היי {name}! בוחרים יסוד וסוג, והבונה מאיית את האקורד, מנגן אותו ומראה אותו על קלידי הפסנתר וכצורה בגיטרה.' },
+      say: { en: 'Hi {name}! Pick a root and a quality, and the builder spells the chord, plays it, and shows it on the piano keys and as a guitar shape.', he: 'היי {name}! בוחרים שורש וסוג, והבונה מאיית את האקורד, מנגן אותו ומראה אותו על קלידי הפסנתר וכצורה בגיטרה.' },
       play: [chord([48, 52, 55, 59], 1.4)],
     },
     {

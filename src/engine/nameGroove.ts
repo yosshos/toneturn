@@ -35,7 +35,7 @@ const B8 = (lanes: Lanes, groups: number[]): KitBar => {
 export const GROOVE_STYLES: GrooveStyle[] = [
   // pp
   { id: 'rock', name: t('Rock', 'רוק'), level: 1, bars: 1, bpm: [100, 120], like: ['pop', 'halftime'], bar: B4({ h: 'xxxxxxxx', s: '..x...x.', k: 'x...x.x.' }, 2) },
-  { id: 'pop', name: t('Pop (16th hats)', 'פופ (היי־הט בשש־עשריות)'), level: 1, bars: 1, bpm: [90, 104], like: ['rock', 'funk'], bar: B4({ h: 'x'.repeat(16), s: '....x.......x...', k: 'x.....x.x.......' }, 4) },
+  { id: 'pop', name: t('Pop (16th hats)', 'פופ (היי־האט בשש־עשריות)'), level: 1, bars: 1, bpm: [90, 104], like: ['rock', 'funk'], bar: B4({ h: 'x'.repeat(16), s: '....x.......x...', k: 'x.....x.x.......' }, 4) },
   { id: 'halftime', name: t('Half-time', 'חצי־טמפו'), level: 1, bars: 1, bpm: [120, 140], like: ['rock', 'reggae'], bar: B4({ h: 'xxxxxxxx', s: '....x...', k: 'x......x' }, 2) },
   // p
   { id: 'funk', name: t('Funk', 'פאנק'), level: 2, bars: 1, bpm: [92, 104], like: ['pop', 'songo'], bar: B4({ h: 'x'.repeat(16), s: '....X..g.g..X..g', k: 'x.x.....x.x..x..' }, 4) },

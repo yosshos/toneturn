@@ -122,7 +122,7 @@ describe('the fix-it pass', () => {
     const first = cells.map((c, i) => (i === 1 ? { ...c, x: c.x === 'none' ? ('/3' as const) : ('none' as const) } : c));
     const line = gridLine(q, gridKey(first), 'en');
     expect(line).toMatch(/^Roots ✓ · quality ✓ · bass 7\/8$/);
-    expect(gridLine(q, gridKey(first), 'he')).toContain('יסודות ✓');
+    expect(gridLine(q, gridKey(first), 'he')).toContain('שורשים ✓');
     expect(gridWhy(q, gridKey(first), 'en')).toMatch(/^Bar 2: /);
     expect(gridWhy(q, q.answer, 'en')).toBeNull();
   });

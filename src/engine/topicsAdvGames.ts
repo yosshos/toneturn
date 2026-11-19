@@ -28,7 +28,7 @@ export const VOICING_NAMES: Record<VoicingKind, ReturnType<typeof nm>> = {
   drop2: nm('Drop 2', 'דרופ 2', 'drop two'),
   drop3: nm('Drop 3', 'דרופ 3', 'drop three'),
   spread: nm('Spread', 'פרוש', 'spread'),
-  shell: nm('Shell (1–3–7)', 'שֶׁל (1–3–7)', 'shell'),
+  shell: nm('Shell (1–3–7)', 'שלד (1–3–7)', 'shell'),
   rootless: nm('Rootless', 'בלי שורש', 'rootless'),
   quartal: nm('Quartal (4ths)', 'קוורטלי (קוורטות)', 'quartal', 'fourths'),
   upper: nm('Upper structure', 'מבנה עליון', 'upper structure'),
@@ -87,7 +87,7 @@ TOPIC_GEN['voicing-type'] = {
   levels: [
     { en: 'Close or drop 2?', he: 'צפוף או דרופ 2?' },
     { en: 'Close, drop 2 or drop 3?', he: 'צפוף, דרופ 2 או דרופ 3?' },
-    { en: 'Shell, rootless or close?', he: 'שֶׁל, בלי שורש או צפוף?' },
+    { en: 'Shell, rootless or close?', he: 'שלד, בלי שורש או צפוף?' },
     { en: 'Close, drop 2, rootless or quartal?', he: 'צפוף, דרופ 2, בלי שורש או קוורטלי?' },
     { en: '… or an upper structure', he: '… או מבנה עליון' },
   ],

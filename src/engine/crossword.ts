@@ -163,7 +163,7 @@ export function cwWhy(p: CwPuzzle, g: GridGrade, lang: 'en' | 'he'): string | nu
   const m = g.marks[i];
   const w = p.cells[i];
   const he = lang === 'he';
-  const part = !m.root ? (he ? 'שמעו את הבס: לאן היסוד זז' : 'follow the bass: where the root moves') : !m.quality ? (he ? 'שמעו את הטרצה ואת הספטימה' : 'listen for the 3rd and the 7th') : he ? `בבס: ${w.x === 'none' ? 'השורש' : GX_LABEL[w.x]}` : `in the bass: ${w.x === 'none' ? 'the root' : GX_LABEL[w.x]}`;
+  const part = !m.root ? (he ? 'שמעו את הבס: לאן השורש זז' : 'follow the bass: where the root moves') : !m.quality ? (he ? 'שמעו את הטרצה ואת הספטימה' : 'listen for the 3rd and the 7th') : he ? `בבס: ${w.x === 'none' ? 'השורש' : GX_LABEL[w.x]}` : `in the bass: ${w.x === 'none' ? 'the root' : GX_LABEL[w.x]}`;
   return he ? `תיבה ${i + 1}: ${cellText(p, i)} — ${part}.` : `Bar ${i + 1}: ${cellText(p, i)} — ${part}.`;
 }
 

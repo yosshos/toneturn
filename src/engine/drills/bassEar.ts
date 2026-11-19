@@ -36,27 +36,27 @@ const ASK: Record<string, { en: string; he: string }> = {
   hilo0: tt('Listen to two notes, then play the HIGHER one', 'הקשיבו לשני צלילים, ונגנו את הגבוה מביניהם'),
   hilo1: tt('Listen to two notes, then play the LOWER one', 'הקשיבו לשני צלילים, ונגנו את הנמוך מביניהם'),
   tonic: tt('The band plays four bars — then play the home note (the tonic)', 'הלהקה מנגנת ארבע תיבות — ואז נגנו את צליל הבית (הטוניקה)'),
-  roots: tt('Hear the chords — then play their roots, two per bar', 'שמעו את האקורדים — ואז נגנו את היסודות, שניים בתיבה'),
+  roots: tt('Hear the chords — then play their roots, two per bar', 'שמעו את האקורדים — ואז נגנו את השורשים, שניים בתיבה'),
   rhythm: tt('Hear a two-bar rhythm — echo it on the open E', 'שמעו מקצב של שתי תיבות — החזירו אותו על מיתר E פתוח'),
   melodic: tt('Hear a two-bar line — play it back', 'שמעו קו של שתי תיבות — נגנו אותו בחזרה'),
   transcribe: tt('Hear two bars of walking bass — play them back', 'שמעו שתי תיבות של ווקינג בס — נגנו אותן בחזרה'),
-  quality: tt('Hear a chord over its root — then play its arpeggio: root, 3rd, 5th, 7th', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את הארפג׳יו שלו: יסוד, טרצה, קווינטה, ספטימה'),
-  slash: tt('Hear the chords — play the BASS note of each (not always the root)', 'שמעו את האקורדים — נגנו את צליל הבס של כל אחד (לא תמיד היסוד)'),
-  quality2: tt('Hear a chord over its root — then play its four notes: root, 3rd or 4th, 5th, 6th or 7th', 'שמעו אקורד מעל היסוד שלו — ואז נגנו את ארבעת הצלילים שלו: יסוד, טרצה או קוורטה, קווינטה, סקסטה או ספטימה'),
-  quality3: tt('Hear a colourful dominant or major chord — play root, 3rd, 7th and its colour note', 'שמעו אקורד דומיננטי או מז׳ורי צבעוני — נגנו יסוד, טרצה, ספטימה ואת צליל הצבע שלו'),
+  quality: tt('Hear a chord over its root — then play its arpeggio: root, 3rd, 5th, 7th', 'שמעו אקורד מעל השורש שלו — ואז נגנו את הארפג׳יו שלו: שורש, טרצה, קווינטה, ספטימה'),
+  slash: tt('Hear the chords — play the BASS note of each (not always the root)', 'שמעו את האקורדים — נגנו את צליל הבס של כל אחד (לא תמיד השורש)'),
+  quality2: tt('Hear a chord over its root — then play its four notes: root, 3rd or 4th, 5th, 6th or 7th', 'שמעו אקורד מעל השורש שלו — ואז נגנו את ארבעת הצלילים שלו: שורש, טרצה או קוורטה, קווינטה, סקסטה או ספטימה'),
+  quality3: tt('Hear a colourful dominant or major chord — play root, 3rd, 7th and its colour note', 'שמעו אקורד דומיננטי או מז׳ורי צבעוני — נגנו שורש, טרצה, ספטימה ואת צליל הצבע שלו'),
   motion: tt('Hear a cadence — then play its bass line, one note a bar', 'שמעו קדנצה — ואז נגנו את קו הבס שלה, צליל אחד בתיבה'),
-  mixear: tt('Hear a loop with a borrowed chord — then play its roots, one a bar', 'שמעו לופ עם אקורד שאול — ואז נגנו את היסודות שלו, אחד בתיבה'),
+  mixear: tt('Hear a loop with a borrowed chord — then play its roots, one a bar', 'שמעו לופ עם אקורד שאול — ואז נגנו את השורשים שלו, אחד בתיבה'),
   secdom: tt('Hear the chords — then play the bass note of each, one a bar', 'שמעו את האקורדים — ואז נגנו את צליל הבס של כל אחד, אחד בתיבה'),
-  where: tt('The band plays part of the form — go on with the next section’s roots', 'הלהקה מנגנת חלק מהצורה — המשיכו עם היסודות של הקטע הבא'),
-  dropin: tt('The band starts somewhere in the blues — play the next four roots', 'הלהקה מתחילה איפשהו בבלוז — נגנו את ארבעת היסודות הבאים'),
-  bridge: tt('Hear a whole chorus — then play the bridge’s roots', 'שמעו סבב שלם — ואז נגנו את היסודות של הגשר'),
+  where: tt('The band plays part of the form — go on with the next section’s roots', 'הלהקה מנגנת חלק מהצורה — המשיכו עם השורשים של הקטע הבא'),
+  dropin: tt('The band starts somewhere in the blues — play the next four roots', 'הלהקה מתחילה איפשהו בבלוז — נגנו את ארבעת השורשים הבאים'),
+  bridge: tt('Hear a whole chorus — then play the bridge’s roots', 'שמעו סבב שלם — ואז נגנו את השורשים של הגשר'),
   'riff-ear': tt('Hear a two-bar riff — play it back', 'שמעו ריף של שתי תיבות — נגנו אותו בחזרה'),
-  'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו יסוד בתחילת כל קבוצה'),
+  'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו שורש בתחילת כל קבוצה'),
   'mod-ear': tt('Hear the beat change — play quarters on the new beat', 'שמעו את הפעמה משתנה — נגנו רבעים בפעמה החדשה'),
-  'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת ווקינג על המהלך — ואז נגנו את היסוד של כל אקורד, בפעמה הראשונה שלו'),
-  'ie-intro': tt('The band plays an intro — then play its roots: which intro was it?', 'הלהקה מנגנת פתיחה — ואז נגנו את היסודות שלה: איזו פתיחה זו?'),
-  'ie-end': tt('The band plays an ending — then play its roots: which ending was it?', 'הלהקה מנגנת סיום — ואז נגנו את היסודות שלו: איזה סיום זה?'),
-  'form-ear': tt('Hear a whole 32-bar chorus — then play its roots through the form', 'שמעו סבב שלם של 32 תיבות — ואז נגנו את היסודות שלו לאורך כל הצורה'),
+  'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת ווקינג על המהלך — ואז נגנו את השורש של כל אקורד, בפעמה הראשונה שלו'),
+  'ie-intro': tt('The band plays an intro — then play its roots: which intro was it?', 'הלהקה מנגנת פתיחה — ואז נגנו את השורשים שלה: איזו פתיחה זו?'),
+  'ie-end': tt('The band plays an ending — then play its roots: which ending was it?', 'הלהקה מנגנת סיום — ואז נגנו את השורשים שלו: איזה סיום זה?'),
+  'form-ear': tt('Hear a whole 32-bar chorus — then play its roots through the form', 'שמעו סבב שלם של 32 תיבות — ואז נגנו את השורשים שלו לאורך כל הצורה'),
 };
 
 /** Build a b-ear drill. */
@@ -118,7 +118,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
       for (let bar = 0; bar < 4; bar++) notes.push({ beat: bar * 4, dur: 0.2, midi: [42], perc: 'hat' }, { beat: bar * 4 + 2, dur: 0.2, midi: [42], perc: 'hat' });
       band(0, 16);
       prog.forEach((c, bar) => line.push({ b: 16 + bar * 4, d: 2, p: rootOf(tu, key + c[0]), ct: true }, { b: 18 + bar * 4, d: 2, p: rootOf(tu, key + c[0]), ct: true }));
-      return finishEar(s, tu, line, notes, windows, 'roots', op === 1 ? { en: 'Root finder: ii, iii, vi and V7', he: 'מוצא היסודות: ii, iii, vi ו-V7' } : { en: 'Root finder: I, IV, V', he: 'מוצא היסודות: I, IV, V' }, chartOf(key, prog));
+      return finishEar(s, tu, line, notes, windows, 'roots', op === 1 ? { en: 'Root finder: ii, iii, vi and V7', he: 'מוצא השורשים: ii, iii, vi ו-V7' } : { en: 'Root finder: I, IV, V', he: 'מוצא השורשים: I, IV, V' }, chartOf(key, prog));
     }
     case 'rhythm': {
       // RSL rhythmic recall: two bars on the low E (with hats), echoed on the open E string. Two rounds.
@@ -292,7 +292,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         const bHome = spell(1, key) === 'D♭' ? key : key + 3;
         chart.push(...prog.map(([d, q]) => `${spell(key + d, DIATONIC[`${d}:${q}`] ? key : bHome)}${q === 'M' ? '' : q === 'm7b5' ? 'ø7' : q}`));
       }
-      return finishEar(s, tu, line, notes, windows, 'mixear', op === 1 ? { en: 'Borrowed 7th chords by ear: play the roots', he: 'ספטאקורדים שאולים בשמיעה: לנגן את היסודות' } : { en: 'Borrowed chords by ear: play the roots', he: 'אקורדים שאולים בשמיעה: לנגן את היסודות' }, chart);
+      return finishEar(s, tu, line, notes, windows, 'mixear', op === 1 ? { en: 'Borrowed 7th chords by ear: play the roots', he: 'ספטאקורדים שאולים בשמיעה: לנגן את השורשים' } : { en: 'Borrowed chords by ear: play the roots', he: 'אקורדים שאולים בשמיעה: לנגן את השורשים' }, chart);
     }
     case 'where':
     case 'dropin':
@@ -387,8 +387,8 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         if (c.beats >= 4) line.push({ b: beat + 2, d: Math.min(2, c.beats - 2), p: rootOf(tu, c.root), ct: true });
       }
       const NM2: Record<string, T2l> = {
-        walk0: tt('Rhythm changes by ear: play the roots', 'ריתם צ׳יינג׳ס בשמיעה: לנגן את היסודות'),
-        walk1: tt('A minor blues by ear: play the roots', 'בלוז מינורי בשמיעה: לנגן את היסודות'),
+        walk0: tt('Rhythm changes by ear: play the roots', 'ריתם צ׳יינג׳ס בשמיעה: לנגן את השורשים'),
+        walk1: tt('A minor blues by ear: play the roots', 'בלוז מינורי בשמיעה: לנגן את השורשים'),
         form: tt('A 32-bar AABA: hear it, play it through', 'שיר של 32 תיבות: לשמוע, לנגן עד הסוף'),
       };
       const d = finishEar(s, tu, line, notes, windows, s.kind === 'form-ear' ? 'form-ear' : 'walk-ear', s.kind === 'form-ear' ? NM2.form : op === 1 ? NM2.walk1 : NM2.walk0, ans.map((a) => a.c.sym));
@@ -417,7 +417,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: beat, d: Math.min(2, c.beats), p: rootOf(tu, c.root), ct: true });
         if (c.beats >= 4) line.push({ b: beat + 2, d: Math.min(2, c.beats - 2), p: rootOf(tu, c.root), ct: true });
       }
-      const d = finishEar(s, tu, line, notes, windows, op === 1 ? 'ie-end' : 'ie-intro', op === 1 ? tt('Endings by ear: play the roots back', 'סיומים בשמיעה: לנגן את היסודות בחזרה') : tt('Intros by ear: play the roots back', 'פתיחות בשמיעה: לנגן את היסודות בחזרה'), ans.map((a) => a.c.sym));
+      const d = finishEar(s, tu, line, notes, windows, op === 1 ? 'ie-end' : 'ie-intro', op === 1 ? tt('Endings by ear: play the roots back', 'סיומים בשמיעה: לנגן את השורשים בחזרה') : tt('Intros by ear: play the roots back', 'פתיחות בשמיעה: לנגן את השורשים בחזרה'), ans.map((a) => a.c.sym));
       return { ...d, harmony: harmonyPlan(ans, 'bass', true) };
     }
     case 'transcribe-long': {

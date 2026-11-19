@@ -78,7 +78,7 @@ const chordName = (kind: 'dom' | 'm6', rootPc: number) => ({
 });
 
 TOPIC_GEN['bh-convert'] = {
-  title: { en: 'Barry Harris: the diminished chord changes', he: 'בארי האריס: הדימיניש משנה צורה' },
+  title: { en: 'Barry Harris: the diminished chord changes', he: 'בארי האריס: המוקטן משנה צורה' },
   skill: 'chords',
   levels: [
     { en: 'Dominant or minor 6?', he: 'דומיננט או מינור 6?' },
@@ -96,7 +96,7 @@ TOPIC_GEN['bh-convert'] = {
       const other = dimConvert(root, i, dir === 'down' ? 'up' : 'down');
       return choiceQ({
         id, topic: 'bh-convert', level, seed, skill: 'chords', difficulty: 1150,
-        ask: { en: 'The diminished chord moved one note: dominant 7 or minor 6?', he: 'צליל אחד בדימיניש זז: דומיננט 7 או מינור 6?' },
+        ask: { en: 'The diminished chord moved one note: dominant 7 or minor 6?', he: 'צליל אחד במוקטן זז: דומיננט 7 או מינור 6?' },
         names: { dom: { en: 'Dominant 7', he: 'דומיננט 7', say: ['dominant', 'seven', 'דומיננט'] }, m6: { en: 'Minor 6', he: 'מינור 6', say: ['minor six', 'minor', 'מינור'] } },
         answer: res.kind, choices: ['dom', 'm6'], stimulus,
         choiceStim: { [res.kind]: [chordStim(res.midis)], [other.kind]: [chordStim(other.midis)] },
@@ -113,7 +113,7 @@ TOPIC_GEN['bh-convert'] = {
       for (let k = 0; k < 4; k++) choiceStim[`n${k + 1}`] = [chordStim(DIM(root), 0.9), chordStim(dimConvert(root, k, dir).midis, 1.2)];
       return choiceQ({
         id, topic: 'bh-convert', level, seed, skill: 'chords', difficulty: 1300,
-        ask: { en: `One note of the diminished chord moved ${dir === 'down' ? 'down' : 'up'} a half step — which?`, he: `צליל אחד בדימיניש ${dir === 'down' ? 'ירד' : 'עלה'} בחצי טון — איזה?` },
+        ask: { en: `One note of the diminished chord moved ${dir === 'down' ? 'down' : 'up'} a half step — which?`, he: `צליל אחד במוקטן ${dir === 'down' ? 'ירד' : 'עלה'} בחצי טון — איזה?` },
         names, answer: `n${i + 1}`, choices: ['n1', 'n2', 'n3', 'n4'], stimulus, choiceStim,
       });
     }
@@ -127,14 +127,14 @@ TOPIC_GEN['bh-convert'] = {
     });
     return choiceQ({
       id, topic: 'bh-convert', level, seed, skill: 'chords', difficulty: 1450,
-      ask: { en: `Diminished on ${pcName(root % 12)}, one note moves — which chord is it?`, he: `דימיניש על ${pcNameHe(root % 12)}, צליל אחד זז — איזה אקורד זה?` },
+      ask: { en: `Diminished on ${pcName(root % 12)}, one note moves — which chord is it?`, he: `מוקטן על ${pcNameHe(root % 12)}, צליל אחד זז — איזה אקורד זה?` },
       names, answer: `c${i}`, choices: shuffleR(rnd, ['c0', 'c1', 'c2', 'c3']), stimulus, choiceStim,
     });
   },
 };
 
 TOPIC_GEN['bh-keys'] = {
-  title: { en: 'Barry Harris: one diminished, four keys', he: 'בארי האריס: דימיניש אחד, ארבעה סולמות' },
+  title: { en: 'Barry Harris: one diminished, four keys', he: 'בארי האריס: מוקטן אחד, ארבעה סולמות' },
   skill: 'cadences',
   levels: [{ en: 'Same key or another?', he: 'אותו סולם או אחר?' }],
   gen(seed, level, id) {
@@ -151,7 +151,7 @@ TOPIC_GEN['bh-keys'] = {
     const keys = ['same', 'up3', 'tritone', 'down3'];
     return choiceQ({
       id, topic: 'bh-keys', level, seed, skill: 'cadences', difficulty: 1350,
-      ask: { en: 'The same diminished, a second resolution. Where to?', he: 'אותו דימיניש, פתרון שני. לאן?' },
+      ask: { en: 'The same diminished, a second resolution. Where to?', he: 'אותו מוקטן, פתרון שני. לאן?' },
       names: {
         same: { en: 'The same key', he: 'אותו סולם', say: ['same'] },
         up3: { en: 'A minor third up', he: 'טרצה קטנה למעלה', say: ['minor third up', 'up'] },
@@ -165,8 +165,8 @@ TOPIC_GEN['bh-keys'] = {
 };
 
 const SCALE_NAMES: Partial<Record<ModeId, { en: string; he: string; say?: string[] }>> = {
-  'sixth-dim': { en: 'Major 6th diminished', he: 'מז׳ור 6 דימיניש', say: ['sixth diminished', 'six diminished', 'barry harris'] },
-  'minor-sixth-dim': { en: 'Minor 6th diminished', he: 'מינור 6 דימיניש', say: ['minor sixth diminished', 'minor six diminished'] },
+  'sixth-dim': { en: 'Major 6th diminished', he: 'מז׳ור 6 מוקטן', say: ['sixth diminished', 'six diminished', 'barry harris'] },
+  'minor-sixth-dim': { en: 'Minor 6th diminished', he: 'מינור 6 מוקטן', say: ['minor sixth diminished', 'minor six diminished'] },
   ionian: { en: 'Major', he: 'מז׳ור', say: ['major'] },
   'harmonic-major': { en: 'Harmonic major', he: 'מז׳ור הרמוני', say: ['harmonic major'] },
   'melodic-minor': { en: 'Melodic minor', he: 'מינור מלודי', say: ['melodic minor'] },
@@ -176,10 +176,10 @@ const SCALE_NAMES: Partial<Record<ModeId, { en: string; he: string; say?: string
 };
 
 TOPIC_GEN['bh-scale'] = {
-  title: { en: 'Barry Harris: 6th diminished scales', he: 'בארי האריס: סולמות 6 דימיניש' },
+  title: { en: 'Barry Harris: 6th diminished scales', he: 'בארי האריס: סולמות 6 מוקטן' },
   skill: 'modes',
   levels: [
-    { en: 'Major 6-dim or major?', he: '6 דימיניש או מז׳ור?' },
+    { en: 'Major 6-dim or major?', he: '6 מוקטן או מז׳ור?' },
     { en: 'Major family', he: 'משפחת המז׳ור' },
     { en: 'Minor family', he: 'משפחת המינור' },
   ],
@@ -200,7 +200,7 @@ TOPIC_GEN['bh-scale'] = {
 };
 
 TOPIC_GEN['bh-tone'] = {
-  title: { en: 'Barry Harris: 6 chord or diminished?', he: 'בארי האריס: אקורד 6 או דימיניש?' },
+  title: { en: 'Barry Harris: 6 chord or diminished?', he: 'בארי האריס: אקורד 6 או מוקטן?' },
   skill: 'chords',
   levels: [{ en: 'Which chord owns the note?', he: 'לאיזה אקורד שייך הצליל?' }],
   gen(seed, level, id) {
@@ -212,8 +212,8 @@ TOPIC_GEN['bh-tone'] = {
     const note = pickR(rnd, fromSix ? six : dim) + 12;
     return choiceQ({
       id, topic: 'bh-tone', level, seed, skill: 'chords', difficulty: 1200,
-      ask: { en: 'C6, then B diminished, then a note of the scale: from which chord?', he: 'C6, אחר כך סי דימיניש, ואז צליל מהסולם: מאיזה אקורד?' },
-      names: { six: { en: 'The 6 chord', he: 'אקורד ה־6', say: ['six', 'sixth', 'major six', 'שש'] }, dim: { en: 'The diminished chord', he: 'הדימיניש', say: ['diminished', 'dim', 'דימיניש', 'מוקטן'] } },
+      ask: { en: 'C6, then B diminished, then a note of the scale: from which chord?', he: 'C6, אחר כך סי מוקטן, ואז צליל מהסולם: מאיזה אקורד?' },
+      names: { six: { en: 'The 6 chord', he: 'אקורד ה־6', say: ['six', 'sixth', 'major six', 'שש'] }, dim: { en: 'The diminished chord', he: 'המוקטן', say: ['diminished', 'dim', 'דימיניש', 'מוקטן'] } },
       answer: fromSix ? 'six' : 'dim', choices: ['six', 'dim'],
       stimulus: [chordStim(six, 1), chordStim(dim, 1), { kind: 'rest', duration: 0.4 }, { kind: 'note', midi: note, duration: 1.2 }],
       choiceStim: { six: [chordStim([...six, note])], dim: [chordStim([...dim, note])] },
@@ -276,7 +276,7 @@ TOPIC_GEN['bh-convert-2'] = {
     if (level === 1) {
       return choiceQ({
         id, topic: 'bh-convert-2', level, seed, skill: 'chords', difficulty: 1400,
-        ask: { en: 'The diminished chord moved: which kind of chord is it now?', he: 'הדימיניש זז: איזה סוג אקורד זה עכשיו?' },
+        ask: { en: 'The diminished chord moved: which kind of chord is it now?', he: 'המוקטן זז: איזה סוג אקורד זה עכשיו?' },
         names: KIND_NAME, answer: res.kind, choices: ['dom7', 'm6', 'maj6'], stimulus,
       });
     }
@@ -292,7 +292,7 @@ TOPIC_GEN['bh-convert-2'] = {
     });
     return choiceQ({
       id, topic: 'bh-convert-2', level, seed, skill: 'chords', difficulty: 1550,
-      ask: { en: `Diminished on ${pcName(root)} — one or two notes move. Which chord?`, he: `דימיניש על ${pcNameHe(root)} — צליל אחד או שניים זזים. איזה אקורד?` },
+      ask: { en: `Diminished on ${pcName(root)} — one or two notes move. Which chord?`, he: `מוקטן על ${pcNameHe(root)} — צליל אחד או שניים זזים. איזה אקורד?` },
       names, answer: 'c0', choices: shuffleR(rnd, ['c0', 'c1', 'c2', 'c3']), stimulus, choiceStim,
     });
   },
@@ -441,7 +441,7 @@ TOPIC_GEN['bh-brothers'] = {
   title: { en: 'Barry Harris: brother dominants', he: 'בארי האריס: דומיננטים אחים' },
   skill: 'chords',
   levels: [
-    { en: 'Same diminished family?', he: 'מאותה משפחת דימיניש?' },
+    { en: 'Same diminished family?', he: 'מאותה משפחת מוקטן?' },
     { en: 'Which brother?', he: 'איזה אח?' },
   ],
   gen(seed, level, id) {
@@ -459,7 +459,7 @@ TOPIC_GEN['bh-brothers'] = {
       const k = same ? pickR(rnd, fam) : pickR(rnd, non);
       return choiceQ({
         id, topic: 'bh-brothers', level, seed, skill: 'chords', difficulty: 1450,
-        ask: { en: 'Two dominants: brothers (same diminished chord) or not?', he: 'שני דומיננטים: אחים (אותו דימיניש) או לא?' },
+        ask: { en: 'Two dominants: brothers (same diminished chord) or not?', he: 'שני דומיננטים: אחים (אותו מוקטן) או לא?' },
         names: { yes: { en: 'Brothers', he: 'אחים', say: ['yes', 'same', 'brothers', 'כן'] }, no: { en: 'Not related', he: 'לא קשורים', say: ['no', 'not', 'different', 'לא'] } },
         answer: same ? 'yes' : 'no', choices: ['yes', 'no'], stimulus: play(k),
         choiceStim: { yes: play(same ? k : 3), no: play(same ? 2 : k) },

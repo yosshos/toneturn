@@ -133,13 +133,13 @@ export const SCALES_6DIM: Record<string, { iv: number[]; n: ReturnType<typeof nm
 };
 
 TOPIC_GEN['bh-three-dim'] = {
-  title: { en: 'Barry Harris: three diminished chords, one 6th chord', he: 'בארי האריס: שלושה דימינישים, אקורד 6 אחד' },
+  title: { en: 'Barry Harris: three diminished chords, one 6th chord', he: 'בארי האריס: שלושה מוקטנים, אקורד 6 אחד' },
   skill: 'chords',
   levels: [
-    { en: 'Which diminished joins the 6th chord?', he: 'איזה דימיניש מצטרף לאקורד ה־6?' },
-    { en: 'The minor 6th grows from which diminished?', he: 'המינור 6 נוצר מאיזה דימיניש?' },
-    { en: 'The 6th chord + its diminished = which scale?', he: 'אקורד ה־6 + הדימיניש שלו = איזה סולם?' },
-    { en: 'By ear: the scale’s diminished or another?', he: 'בשמיעה: הדימיניש של הסולם או אחר?' },
+    { en: 'Which diminished joins the 6th chord?', he: 'איזה מוקטן מצטרף לאקורד ה־6?' },
+    { en: 'The minor 6th grows from which diminished?', he: 'המינור 6 נוצר מאיזה מוקטן?' },
+    { en: 'The 6th chord + its diminished = which scale?', he: 'אקורד ה־6 + המוקטן שלו = איזה סולם?' },
+    { en: 'By ear: the scale’s diminished or another?', he: 'בשמיעה: המוקטן של הסולם או אחר?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -161,7 +161,7 @@ TOPIC_GEN['bh-three-dim'] = {
     if (level === 1) {
       return choiceQ({
         ...base, difficulty: 1300,
-        ask: { en: `Which diminished makes the scale with ${sixName}?`, he: `איזה דימיניש בונה את הסולם עם ${sixName}?` },
+        ask: { en: `Which diminished makes the scale with ${sixName}?`, he: `איזה מוקטן בונה את הסולם עם ${sixName}?` },
         text: { en: `${sixName} + ?°7`, he: `${sixName} + ?°7` },
         names, answer: `d${partnerClass(key)}`, choices, stimulus: [chordStim(sixV, 1.4)], choiceStim,
       });
@@ -170,7 +170,7 @@ TOPIC_GEN['bh-three-dim'] = {
       // Cm6 = C°7 with G♭ raised to G: the diminished on the root (§ג.3, Barry's m6 rule — the root is a 4th above the raised note).
       return choiceQ({
         ...base, difficulty: 1320,
-        ask: { en: `Raise one note of which diminished to get ${sixName}?`, he: `מאיזה דימיניש, בהרמת צליל אחד, מקבלים ${sixName}?` },
+        ask: { en: `Raise one note of which diminished to get ${sixName}?`, he: `מאיזה מוקטן, בהרמת צליל אחד, מקבלים ${sixName}?` },
         text: { en: `?°7 → ${sixName}`, he: `?°7 → ${sixName}` },
         names, answer: `d${dimClass(key)}`, choices, stimulus: [chordStim(sixV, 1.4)],
         choiceStim: Object.fromEntries(reps.map((r) => [`d${dimClass(r)}`, [chordStim(nearVoicing(dimPcs(r), sixV), 1)]])),
@@ -196,13 +196,13 @@ TOPIC_GEN['bh-three-dim'] = {
     const r = partner ? key + 11 : pickR(rnd, [key, key + 1]);
     const dimV = nearVoicing(dimPcs(r), sixV);
     const n4: Names = {
-      yes: nm('The scale’s diminished', 'הדימיניש של הסולם', 'partner', 'yes', 'the scale'),
-      no: nm('Another diminished', 'דימיניש אחר', 'another', 'no', 'other'),
+      yes: nm('The scale’s diminished', 'המוקטן של הסולם', 'partner', 'yes', 'the scale'),
+      no: nm('Another diminished', 'מוקטן אחר', 'another', 'no', 'other'),
     };
     const other = partner ? nearVoicing(dimPcs(key), sixV) : nearVoicing(dimPcs(key + 11), sixV);
     return choiceQ({
       ...base, difficulty: 1400,
-      ask: { en: 'A 6th chord, then a diminished. Is it the scale’s own?', he: 'אקורד 6 ואז דימיניש. זה הדימיניש של הסולם?' },
+      ask: { en: 'A 6th chord, then a diminished. Is it the scale’s own?', he: 'אקורד 6 ואז מוקטן. זה המוקטן של הסולם?' },
       names: n4, answer: partner ? 'yes' : 'no', choices: ['yes', 'no'],
       stimulus: [chordStim(sixV, 1.2), rest(0.15), chordStim(dimV, 1.5)],
       choiceStim: { [partner ? 'yes' : 'no']: [chordStim(sixV, 0.9), chordStim(dimV, 1.2)], [partner ? 'no' : 'yes']: [chordStim(sixV, 0.9), chordStim(other, 1.2)] },
@@ -252,13 +252,13 @@ const VIA: Record<string, { ch: (keyof typeof BH)[]; n: ReturnType<typeof nm> }>
 };
 
 TOPIC_GEN['bh-dim-roles'] = {
-  title: { en: 'Barry Harris: the diminished in the progression', he: 'בארי האריס: הדימיניש בתוך המהלך' },
+  title: { en: 'Barry Harris: the diminished in the progression', he: 'בארי האריס: המוקטן בתוך המהלך' },
   skill: 'chords',
   levels: [
-    { en: 'Where is the diminished?', he: 'איפה הדימיניש?' },
+    { en: 'Where is the diminished?', he: 'איפה המוקטן?' },
     { en: 'Passing up or down?', he: 'עובר בעלייה או בירידה?' },
     { en: 'Passing, auxiliary or dominant?', he: 'עובר, עזר או דומיננטי?' },
-    { en: 'Which passing diminished?', he: 'איזה דימיניש עובר?' },
+    { en: 'Which passing diminished?', he: 'איזה מוקטן עובר?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -274,7 +274,7 @@ TOPIC_GEN['bh-dim-roles'] = {
       };
       return choiceQ({
         ...base, difficulty: 1330,
-        ask: { en: 'Which chord is the diminished?', he: 'איזה אקורד הוא הדימיניש?' },
+        ask: { en: 'Which chord is the diminished?', he: 'איזה אקורד הוא המוקטן?' },
         names, answer: `p${t.at}`, choices: ['p2', 'p3', 'p4'], stimulus: [P(t.ch)],
         choiceStim: Object.fromEntries([2, 3, 4].map((k) => [`p${k}`, [P(WHERE.find((w) => w.at === k)!.ch)]])),
       });
@@ -285,7 +285,7 @@ TOPIC_GEN['bh-dim-roles'] = {
       const other = PASSING.find((p) => p.dir !== t.dir)!;
       return choiceQ({
         ...base, difficulty: 1360,
-        ask: { en: 'The bass passes through a diminished. Up or down?', he: 'הבס עובר דרך דימיניש. בעלייה או בירידה?' },
+        ask: { en: 'The bass passes through a diminished. Up or down?', he: 'הבס עובר דרך מוקטן. בעלייה או בירידה?' },
         names, answer: t.dir, choices: ['up', 'down'], stimulus: [P(t.ch)],
         choiceStim: { [t.dir]: [P(t.ch)], [other.dir]: [P(other.ch)] },
       });
@@ -300,7 +300,7 @@ TOPIC_GEN['bh-dim-roles'] = {
       const pick = (r: string) => ROLE.find((x) => x.role === r)!.ch;
       return choiceQ({
         ...base, difficulty: 1400,
-        ask: { en: 'What does the diminished do here?', he: 'מה הדימיניש עושה כאן?' },
+        ask: { en: 'What does the diminished do here?', he: 'מה המוקטן עושה כאן?' },
         names, answer: t.role, choices: ['passing', 'aux', 'dom'], stimulus: [P(t.ch)],
         choiceStim: { passing: [P(pick('passing'))], aux: [P(pick('aux'))], dom: [P(pick('dom'))] },
       });
@@ -311,7 +311,7 @@ TOPIC_GEN['bh-dim-roles'] = {
     for (const o of opts) names[o] = VIA[o].n;
     return choiceQ({
       ...base, difficulty: 1450,
-      ask: { en: 'Where does the diminished pass?', he: 'איפה עובר הדימיניש?' },
+      ask: { en: 'Where does the diminished pass?', he: 'איפה עובר המוקטן?' },
       names, answer: via, choices: opts, stimulus: [P(VIA[via].ch)],
       choiceStim: Object.fromEntries(opts.map((o) => [o, [P(VIA[o].ch)]])),
     });
@@ -330,7 +330,7 @@ export const M6_BASS: { k: 'm6' | 'hd' | 'nine'; off: number; q: string; say: st
 const sayRoot = (pc: number) => ROOT[mod12(pc)].replace('♭', ' flat').replace('♯', ' sharp');
 
 TOPIC_GEN['bh-m6-bass'] = {
-  title: { en: 'Barry Harris: minor 6 = m7♭5 = 9 without the root', he: 'בארי האריס: מינור 6 = m7♭5 = 9 בלי יסוד' },
+  title: { en: 'Barry Harris: minor 6 = m7♭5 = 9 without the root', he: 'בארי האריס: מינור 6 = m7♭5 = 9 בלי שורש' },
   skill: 'chords',
   levels: [
     { en: 'By ear: one shape over three basses', he: 'בשמיעה: צורה אחת מעל שלושה בסים' },
@@ -348,7 +348,7 @@ TOPIC_GEN['bh-m6-bass'] = {
       const low = (pc: number) => 36 + mod12(pc - 36) + (mod12(pc) < 4 ? 12 : 0);
       const pick = pickR(rnd, M6_BASS);
       const names: Names = {
-        m6: nm('Minor 6 (bass on the root)', 'מינור 6 (הבס על היסוד)', 'minor six'),
+        m6: nm('Minor 6 (bass on the root)', 'מינור 6 (הבס על השורש)', 'minor six'),
         hd: nm('m7♭5 (bass a minor 3rd below)', 'm7♭5 (הבס טרצה קטנה מתחת)', 'half diminished'),
         nine: nm('9 (bass a 5th below)', '9 (הבס קווינטה מתחת)', 'nine'),
       };
@@ -389,7 +389,7 @@ TOPIC_GEN['bh-m6-bass'] = {
     let say: string;
     let shown: string;
     if (form === 'nine') {
-      ask = { en: `${ROOT[r]}9 without its root = which minor 6th?`, he: `${ROOT[r]}9 בלי היסוד = איזה מינור 6?` };
+      ask = { en: `${ROOT[r]}9 without its root = which minor 6th?`, he: `${ROOT[r]}9 בלי השורש = איזה מינור 6?` };
       shown = `${ROOT[r]}9 − ${ROOT[r]}`;
       answer = r + 7;
       offs = [7, 0, 2, 9];
@@ -410,7 +410,7 @@ TOPIC_GEN['bh-m6-bass'] = {
       q = 'm7♭5';
       say = 'half diminished';
     } else {
-      ask = { en: `${ROOT[r]}m6 is which 9 chord without its root?`, he: `${ROOT[r]}m6 הוא איזה אקורד 9 בלי היסוד?` };
+      ask = { en: `${ROOT[r]}m6 is which 9 chord without its root?`, he: `${ROOT[r]}m6 הוא איזה אקורד 9 בלי השורש?` };
       shown = `${ROOT[r]}m6 = ?9`;
       answer = r + 5;
       offs = [5, 0, 7, 10];

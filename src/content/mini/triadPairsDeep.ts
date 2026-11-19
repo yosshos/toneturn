@@ -13,7 +13,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'Triad pairs: lines and voicings', he: 'זוגות משולשים: קווים וקולות' },
-    takeaway: { en: 'Two triads with no shared note make six notes of a chord scale. Play them as lines (1-3-5, inversions, cells) and as chords (over the root, spread, block).', he: 'שני משולשים בלי צליל משותף הם שישה צלילים של סולם האקורד. מנגנים אותם כקווים (1-3-5, היפוכים, תאים) וכאקורדים (מעל היסוד, פרוש, בלוק).' },
+    takeaway: { en: 'Two triads with no shared note make six notes of a chord scale. Play them as lines (1-3-5, inversions, cells) and as chords (over the root, spread, block).', he: 'שני משולשים בלי צליל משותף הם שישה צלילים של סולם האקורד. מנגנים אותם כקווים (1-3-5, היפוכים, תאים) וכאקורדים (מעל השורש, פרוש, בלוק).' },
     steps: [
       {
         say: { en: 'Hi {name}! A triad pair is two triads that share no note. Over C minor 7: E flat and F.', he: 'היי {name}! זוג משולשים הוא שני משולשים בלי צליל משותף. מעל דו מינור 7: מי במול ופה.' },
@@ -31,7 +31,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1-3-5 · 3-5-1 · 5-1-3', he: '1-3-5 · 3-5-1 · 5-1-3' } },
       },
       {
-        say: { en: 'As harmony: the root and 7th in the left hand, the two triads taking turns on top.', he: 'כהרמוניה: היסוד והספטימה ביד שמאל, ושני המשולשים מתחלפים למעלה.' },
+        say: { en: 'As harmony: the root and 7th in the left hand, the two triads taking turns on top.', he: 'כהרמוניה: השורש והספטימה ביד שמאל, ושני המשולשים מתחלפים למעלה.' },
         play: [chord([48, 58, 63, 67, 70], 1.1), chord([48, 58, 65, 69, 72], 1.1)],
         show: { notes: [48, 58, 63, 67, 70], chord: true },
       },
@@ -49,11 +49,11 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([65, 69, 72, 67, 71, 74]), notes([60, 64, 67, 62, 66, 69])],
       },
       {
-        say: { en: 'Intervallic cells: two notes of one triad, two of the other, or each triad open, root, 5th and 10th. The wide leaps are the modern sound.', he: 'תאים אינטרוולים: שני צלילים ממשולש אחד, שניים מהשני, או כל משולש פתוח, יסוד, קווינטה ודצימה. הקפיצות הרחבות הן הצליל המודרני.' },
+        say: { en: 'Intervallic cells: two notes of one triad, two of the other, or each triad open, root, 5th and 10th. The wide leaps are the modern sound.', he: 'תאים אינטרוולים: שני צלילים ממשולש אחד, שניים מהשני, או כל משולש פתוח, שורש, קווינטה ודצימה. הקפיצות הרחבות הן הצליל המודרני.' },
         play: [notes([63, 67, 65, 69, 70, 75, 72, 77]), notes([63, 70, 79, 65, 72, 81])],
       },
       {
-        say: { en: 'Spread voicing: one triad’s root and 5th in the left hand, its 3rd as the 10th, the other triad on top. Block chords: every melody note sits on top of its own triad.', he: 'קול פרוש: היסוד והקווינטה של משולש אחד ביד שמאל, הטרצה שלו כדצימה, והמשולש השני למעלה. אקורדי בלוק: כל צליל של המנגינה יושב מעל המשולש שלו.' },
+        say: { en: 'Spread voicing: one triad’s root and 5th in the left hand, its 3rd as the 10th, the other triad on top. Block chords: every melody note sits on top of its own triad.', he: 'קול פרוש: השורש והקווינטה של משולש אחד ביד שמאל, הטרצה שלו כדצימה, והמשולש השני למעלה. אקורדי בלוק: כל צליל של המנגינה יושב מעל המשולש שלו.' },
         play: [chord([41, 48, 57, 63, 67, 70], 1.4), chord([63, 67, 70, 75], 0.7), chord([65, 69, 72, 77], 0.7)],
       },
       {
@@ -103,7 +103,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([53, 57, 60], 0.9), chord([55, 59, 62], 0.9)],
       },
       {
-        say: { en: 'Comping with a pair: the first triad on beat 1, the second on the "and" of 2, over each chord of a ii–V–I. The bass player has the root, so the shapes can stay small.', he: 'ליווי עם זוג: המשולש הראשון על פעמה 1, השני על ה"וְ" של 2, מעל כל אקורד של ii–V–I. הבסיסט מנגן את היסוד, אז הצורות יכולות להישאר קטנות.' },
+        say: { en: 'Comping with a pair: the first triad on beat 1, the second on the "and" of 2, over each chord of a ii–V–I. The bass player has the root, so the shapes can stay small.', he: 'ליווי עם זוג: המשולש הראשון על פעמה 1, השני על ה"וְ" של 2, מעל כל אקורד של ii–V–I. הבסיסט מנגן את השורש, אז הצורות יכולות להישאר קטנות.' },
         play: [chord([57, 60, 65], 0.6), chord([59, 62, 67], 1.0)],
       },
       {
