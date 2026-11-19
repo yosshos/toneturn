@@ -374,6 +374,22 @@ export class LessonController {
     this.readUps.push(Math.round(perfMs - this.readStart - (this.cfg.latencyMs ?? 0)));
   }
 
+  /** Loudest onset the microphone heard before the answer (the played rhythm, the count-in): the app's own sound. */
+  private micBleed = 0;
+  /** A microphone onset (a syllable said in time, or a knock). Before the answer it only measures how loud the app's
+   *  own sound reaches the microphone; during the answer an onset must stand clearly above that, so the clicks heard
+   *  through the phone's speaker are not taken for the player. */
+  private micOnset(perfMs: number, peak: number | undefined, latencyMs?: number) {
+    if (!this.readOpen) return;
+    const rel = this.readStart === null ? -Infinity : perfMs - this.readStart - (latencyMs ?? 0);
+    if (rel < -400) {
+      if (peak !== undefined) this.micBleed = Math.max(this.micBleed, peak);
+      return;
+    }
+    if (peak !== undefined && this.micBleed > 0 && peak < Math.min(0.9, this.micBleed * 1.8)) return;
+    this.registerOnset(perfMs, latencyMs);
+  }
+
   private registerOnset(perfMs: number, latencyMs = this.cfg.latencyMs) {
     if (!this.readOpen || this.readStart === null) return;
     const rel = perfMs - this.readStart - (latencyMs ?? 0);
@@ -1037,6 +1053,7 @@ export class LessonController {
       this.laneTaps = [];
       this.readUps = [];
       this.readStart = null;
+      this.micBleed = 0;
       // Rhythm is tapped on the pad. Only when the player opted in: also "ta" syllables / knocks from the
       // microphone (never speech recognition — spec G.5). Syllables are too unreliable for timing to be the default.
       let mic: AbortController | null = null;
@@ -1046,7 +1063,7 @@ export class LessonController {
         const micSignal = mic.signal;
         signal.addEventListener('abort', () => mic?.abort(), { once: true });
         const opened = await new Promise<boolean>((resolve) => {
-          void this.ad.knock!.listen({ signal: micSignal, onReady: () => resolve(true), onKnock: (perf) => this.registerOnset(perf, this.cfg.micLatencyMs) }).then((r) => {
+          void this.ad.knock!.listen({ signal: micSignal, onReady: () => resolve(true), onKnock: (perf, peak) => this.micOnset(perf, peak, this.cfg.micLatencyMs) }).then((r) => {
             if (!r.ok) {
               this.patch({ error: r.error });
               resolve(false);
@@ -1101,7 +1118,12 @@ export class LessonController {
           this.patch({ needsListenTap: true });
           continue;
         }
-        await this.say(l === 'en' ? "I didn't catch any taps. Again, after the count-in." : 'לא קלטתי הקשות. שוב, אחרי הספירה.', signal);
+        await this.say(
+          modality === 'knock'
+            ? l === 'en' ? "I didn't catch it. Again after the count-in: tap the pad, or say it louder and closer." : 'לא קלטתי. שוב אחרי הספירה: הקישו על הכפתור, או אמרו חזק וקרוב יותר.'
+            : l === 'en' ? "I didn't catch any taps. Again, after the count-in." : 'לא קלטתי הקשות. שוב, אחרי הספירה.',
+          signal,
+        );
         continue;
       }
       if (q.tempoGoal || q.lanes) {

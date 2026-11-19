@@ -49,6 +49,7 @@ import { learnPace, loadPace } from '../storage/pace';
 import { paceBand, paceTarget } from '../engine/fluency';
 import { Burst, Keyboard, MicIcon, ModeSwitch, Note, PermissionPanel, withNote } from './bits';
 import { courseInstrument, noteViewsOf } from './noteViewPref';
+import { rhythmByPerformance } from '../engine/rhythmEcho';
 import { StrumChoice } from './StrumChoice';
 import { ChordPlayChoice } from './ChordPlayChoice';
 import { Recap } from './Recap';
@@ -136,7 +137,9 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
   if (!ctrlRef.current) {
     // Aids (spec M.3): marked per question from the player's current ratings; aided items count as easier.
     // Sung questions sit inside the player's range (spec P.0): moved by octaves, or left out when they cannot fit.
-    const lesson = resume && lessonDef ? lessonDef : fitLessonToRange(withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {}), settings.voiceRange);
+    const base = resume && lessonDef ? lessonDef : fitLessonToRange(withAids(lessonDef ?? makeLesson(lessonId), settings.aids ?? 'auto', ratings ?? {}), settings.voiceRange);
+    // Owner 2026-11-19: rhythm is answered by playing it back (pad, or said in time), never by "ta ti-ti" words.
+    const lesson = rhythmByPerformance(base, true);
     let c: LessonController | null = null;
     const adapters = makeAdapters(
       () => c?.getView().question.answer ?? 1,
@@ -171,7 +174,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         latencyMs: settings.tapLatencyMs,
         micLatencyMs: settings.micLatencyMs,
         playerName: playerName ?? null,
-        rhythmByVoice: settings.rhythmByVoice ?? false,
+        rhythmByVoice: settings.rhythmByVoice ?? true,
       },
       settings.mode,
       {

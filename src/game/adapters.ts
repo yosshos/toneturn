@@ -147,7 +147,8 @@ export interface RhythmAudio {
 export interface KnockInput {
   listen(opts: {
     signal: AbortSignal;
-    onKnock: (perfMs: number) => void;
+    /** `peak`: the onset's level (0..1), so the app's own clicks heard through the speaker can be told apart. */
+    onKnock: (perfMs: number, peak?: number) => void;
     onReady?: () => void;
   }): Promise<{ ok: true } | { ok: false; error: AccessError }>;
 }

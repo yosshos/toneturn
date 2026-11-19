@@ -600,7 +600,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
               onChange={(mode) => onChange({ mode })}
             />
             <label className="toggle-row">
-              <input type="checkbox" checked={s.rhythmByVoice ?? false} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
+              <input type="checkbox" checked={s.rhythmByVoice ?? true} onChange={(e) => onChange({ rhythmByVoice: e.target.checked })} data-rhythm-voice="1" />
               <span>
                 {t.rhythmVoiceSetting}
                 <small className="field-hint"> — {t.rhythmVoiceHint}</small>

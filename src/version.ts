@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.4',
+    date: '2026-11-19',
+    en: ['Rhythm questions: hear the rhythm, then play it back — tap the big pad, or say it in time on a short syllable like “dum”. No more “ta ti-ti” answers.'],
+    he: ['שאלות קצב: שומעים את הקצב ומחזירים אותו — מקישים על הכפתור הגדול, או אומרים בקצב בהברה קצרה כמו "דם". בלי תשובות של "טה טי-טי".'],
+  },
+  {
     version: '0.107.3',
     date: '2026-11-19',
     en: ['The first screen now asks for your language — עברית or English — right above Get started, and a phone set to Hebrew opens in Hebrew from the start.'],

@@ -21,6 +21,10 @@ export class BrowserKnockInput implements KnockInput {
     const frameMs = (an.fftSize / ctx.sampleRate) * 1000;
     let floor = 0.01;
     let last = -1e9;
+    // A spoken syllable ("dum") holds its level for a while: one onset per rise, re-armed only once the level falls
+    // back (the closure of the next consonant), so a long vowel never counts twice. Knocks decay at once.
+    let armed = true;
+    let runMax = 0;
     onReady?.();
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
@@ -29,9 +33,16 @@ export class BrowserKnockInput implements KnockInput {
       let peak = 0;
       for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i]));
       const now = performance.now();
-      if (peak > Math.max(0.08, floor * 5) && now - last > 110) {
+      const thr = Math.max(0.08, floor * 5);
+      if (!armed) {
+        runMax = Math.max(runMax, peak);
+        if (peak < Math.max(thr * 0.5, runMax * 0.35)) armed = true;
+      }
+      if (armed && peak > thr && now - last > 110) {
         last = now;
-        onKnock(now - frameMs / 2);
+        armed = false;
+        runMax = peak;
+        onKnock(now - frameMs / 2, peak);
       }
       floor = floor * 0.98 + Math.min(peak, 0.05) * 0.02;
       timer = setTimeout(tick, 4);

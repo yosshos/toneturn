@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('rhythm reading & dictation', () => {
   test.setTimeout(240_000);
 
-  test('Rhythm 1 in Buttons mode: notation renders, taps on the metronome are graded, dictation options show notation', async ({ page }) => {
+  test('Rhythm 1 in Buttons mode: notation renders, taps on the metronome are graded, dictation is played back', async ({ page }) => {
     await page.goto('/?unlock=all');
     await page.getByRole('radio', { name: 'Buttons' }).click();
     await page.locator('.tab[data-tab="path"]').click();
@@ -38,12 +38,10 @@ test.describe('rhythm reading & dictation', () => {
     await expect(page.locator('.feedback.correct')).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('.read-strip .rs')).not.toHaveCount(0);
 
-    // Q2: dictation — four options, each with notation
-    await expect(page.locator('.answer.rhythm-opt')).toHaveCount(4, { timeout: 60_000 });
-    await expect(page.locator('.answer.rhythm-opt .rhythm-staff svg').first()).toBeVisible();
+    // Dictation (owner 2026-11-19): heard, then played back on the pad — no notated choices, no syllables.
+    await expect(page.locator('.read-prompt[data-by-ear="1"]')).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('.answer.rhythm-opt')).toHaveCount(0);
     await page.screenshot({ path: 'test-results/rhythm-dictation.png' });
-    await page.locator('.answer.rhythm-opt').first().click();
-    await expect(page.locator('.feedback')).not.toHaveClass(/empty/, { timeout: 30_000 });
   });
 });
 

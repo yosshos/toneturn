@@ -518,7 +518,7 @@ export function sayChoices(q: Question, l: Lang): string {
   if (q.kind === 'name-seq') return l === 'en' ? 'the note names in order' : 'את שמות התווים לפי הסדר';
   if (q.kind === 'degree-seq') return l === 'en' ? 'the degrees in order' : 'את הדרגות לפי הסדר';
   if (q.kind === 'note-name') return l === 'en' ? 'the note name' : 'את שם התו';
-  if (q.kind === 'rhythm-dict') return l === 'en' ? 'the rhythm, like “ta ti-ti ta”' : 'את הקצב, למשל "טה טי-טי טה"';
+  if (q.kind === 'rhythm-dict') return l === 'en' ? 'the bar you heard' : 'את התיבה ששמעתם';
   if (q.choices.length > 4) return l === 'en' ? 'a degree, one to seven' : 'דרגה, מאחת עד שבע';
   return orList(q.choices.map((c) => answerWord(q, c, l)), l);
 }
@@ -1031,9 +1031,11 @@ export function askTemplate(q: Question, l: Lang, nm: Naming = 'letter'): string
 export function hintText(q: Question, l: Lang, voice: boolean): string {
   if (q.kind === 'sing' || q.kind === 'sing-seq' || q.kind === 'sing-run') return voice ? (l === 'en' ? 'Sing after the chime' : 'שירו אחרי הצליל') : l === 'en' ? 'Tap the mic, then sing' : 'לחצו על המיקרופון ושירו';
   if (q.kind === 'note-name' && voice) return l === 'en' ? 'Say the note name' : 'אמרו את שם התו';
-  if (q.kind === 'rhythm-read') return l === 'en' ? 'Tap the big pad (or Space) on each note — hold it for long notes' : 'הקישו על הכפתור הגדול (או רווח) בכל תו — החזיקו לתווים ארוכים';
-  void voice;
-  if (q.kind === 'rhythm-dict' && voice) return l === 'en' ? 'Say it: “ta ti-ti ta” or “quarter, two eighths…”' : 'אמרו: "טה טי-טי טה" או "רבע, שתי שמיניות…"';
+  if (q.kind === 'rhythm-read')
+    return voice && !q.lanes && !q.tempoGoal
+      ? l === 'en' ? 'Tap the big pad on each note, or say it in time: “dum”' : 'הקישו על הכפתור הגדול בכל תו, או אמרו בקצב: "דם"'
+      : l === 'en' ? 'Tap the big pad (or Space) on each note — hold it for long notes' : 'הקישו על הכפתור הגדול (או רווח) בכל תו — החזיקו לתווים ארוכים';
+  if (q.kind === 'rhythm-dict') return l === 'en' ? 'Tap the bar you heard' : 'בחרו את התיבה ששמעתם';
   if (q.kind === 'name-seq') return voice ? (l === 'en' ? 'Say the note names in order' : 'אמרו את שמות התווים לפי הסדר') : l === 'en' ? 'Tap the notes in order, then Done' : 'לחצו על התווים לפי הסדר, ואז סיום';
   if (q.kind === 'degree-seq') return voice ? (l === 'en' ? 'Say them in order, e.g. “one three five”' : 'אמרו לפי הסדר, למשל "אחת שלוש חמש"') : l === 'en' ? 'Tap the degrees in order, then Done' : 'לחצו על הדרגות לפי הסדר, ואז סיום';
   if (q.kind === 'tf') return voice ? (l === 'en' ? 'Say “true” or “false”' : 'אמרו "נכון" או "לא"') : l === 'en' ? 'Tap ✓ or ✗' : 'בחרו ✓ או ✗';
