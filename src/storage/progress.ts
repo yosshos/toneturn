@@ -414,6 +414,8 @@ export interface Settings {
   vibratoStyle?: VibratoStyle;
   /** AUDIT-5 #4: weekly-target streak — practice days a week (3–6); absent / 0 = every day. */
   streakWeekly?: number;
+  /** The fresh-start epoch these settings belong to (storage/freshStart.ts). */
+  progressEpoch?: string;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -421,8 +423,12 @@ export const SETTINGS_VERSION = 2;
 /** The instrument when the player never chose one: the recorded grand (the synth piano plays until it loads). */
 export const DEFAULT_SOUND = 'grand';
 
+/** Bumped when every tester starts over (storage/freshStart.ts). */
+export const PROGRESS_EPOCH = '2026-11-19';
+
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,
+  progressEpoch: PROGRESS_EPOCH,
   mode: 'voice',
   uiLang: 'en',
   inputLang: 'en',

@@ -4,6 +4,7 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import type { LessonResult, Progress, Settings } from '../storage/progress';
 import { mergeResults, pendingUploads, rebuildProgress } from '../storage/sync';
+import { currentResults } from '../storage/freshStart';
 
 const URL_ = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
@@ -115,13 +116,15 @@ export async function syncProgress(local: Progress): Promise<Progress> {
   if (!sb) return local;
   const { data, error } = await sb.from('toneturn_lesson_results').select(`session_id,lesson_id,lesson_version,first_try,total,xp,missed,items,completed_at${RESULT_EXTRAS_SYNCED ? ',duration_ms,note' : ''}`).order('completed_at');
   if (error) throw error;
-  const remote = (data as unknown as ResultRow[]).map(fromRow);
-  const up = pendingUploads(local.history, remote);
+  // Results from before the fresh start (storage/freshStart.ts) are neither uploaded nor brought back.
+  const remote = currentResults((data as unknown as ResultRow[]).map(fromRow));
+  const mine = currentResults(local.history);
+  const up = pendingUploads(mine, remote);
   if (up.length) {
     const { error: e2 } = await sb.from('toneturn_lesson_results').upsert(up.map(toRow), { onConflict: 'user_id,session_id', ignoreDuplicates: true });
     if (e2) throw e2;
   }
-  return rebuildProgress(mergeResults(local.history, remote), local);
+  return rebuildProgress(mergeResults(mine, remote), local);
 }
 
 export async function pushSettings(userId: string, s: Settings) {

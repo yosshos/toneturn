@@ -97,6 +97,7 @@ import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
 import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
+import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
@@ -432,11 +433,16 @@ export function App() {
   progressRef.current = progress;
 
   useEffect(() => {
-    void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
-    void store.loadProgress().then((p) => {
-      setProgress(p);
-      setProgressReady(true);
-    });
+    // Once per epoch every device starts over (storage/freshStart.ts), before anything reads settings or progress.
+    void freshStartIfNeeded(store)
+      .catch(() => false)
+      .then(() => {
+        void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
+        void store.loadProgress().then((p) => {
+          setProgress(p);
+          setProgressReady(true);
+        });
+      });
     // Back from Google sign-in that started on the online screen.
     try {
       const pending = sessionStorage.getItem(PENDING_ONLINE_KEY);
@@ -492,13 +498,18 @@ export function App() {
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const remote = await pullSettings(user.id).catch(() => null);
+      const raw = await pullSettings(user.id).catch(() => null);
+      // A cloud copy from before the fresh start brings back only the person's and the device's settings.
+      const stale = Boolean(raw) && raw!.progressEpoch !== PROGRESS_EPOCH;
+      const remote = raw ? remoteSettingsForEpoch(raw) : null;
       if (remote)
         setSettings((prev) => {
           // Gem purchases are append-only: keep the union of both devices (by id).
           const all = [...(prev?.purchases ?? []), ...((remote as Partial<Settings>).purchases ?? [])];
           const purchases = all.filter((x, i) => all.findIndex((y) => y.id === x.id) === i);
-          return migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, purchases, voiceConsent: prev?.voiceConsent ?? false });
+          const next = migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, purchases, voiceConsent: prev?.voiceConsent ?? false, progressEpoch: PROGRESS_EPOCH });
+          if (stale) void pushSettings(user.id, next).catch(() => {});
+          return next;
         });
       await runSync();
     })();
