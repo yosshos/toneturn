@@ -7,7 +7,7 @@ import { Keyboard } from './bits';
 import { GuitarView, NoteStaff } from './NoteViews';
 import { noteViewsOf } from './noteViewPref';
 
-export function NotesView({ midis, keyPc, settings, chord = false, durs, clef, now }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; /** The due note of a running take (−1 none): lit on the staff. */ now?: number }) {
+export function NotesView({ midis, keyPc, settings, chord = false, durs, clef, now, tabShift = 0 }: { midis: number[]; keyPc: PitchClass | null; settings: Settings; chord?: boolean; durs?: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; /** The due note of a running take (−1 none): lit on the staff. */ now?: number; /** Semitones added to the notes on the neck only (written guitar pitch sounds an octave lower). */ tabShift?: number }) {
   const views: NoteView[] = noteViewsOf(settings);
   if (!midis.length) return <div className="notes-view empty" aria-hidden="true" />;
   const lo = Math.min(...midis);
@@ -19,7 +19,7 @@ export function NotesView({ midis, keyPc, settings, chord = false, durs, clef, n
     <div className="notes-view">
       {views.includes('keyboard') && <Keyboard low={low} high={high} live={false} aid={{ notes: midis }} />}
       {views.includes('staff') && <NoteStaff notes={midis} chord={chord} keyPc={keyPc} durs={durs} clef={clef} now={now} />}
-      {views.includes('tab') && <GuitarView notes={midis} chord={chord} leftHanded={settings.leftHanded} />}
+      {views.includes('tab') && <GuitarView notes={tabShift ? midis.map((m) => m + tabShift) : midis} chord={chord} leftHanded={settings.leftHanded} />}
     </div>
   );
 }

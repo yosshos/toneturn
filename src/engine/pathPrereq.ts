@@ -130,15 +130,19 @@ export const FLOW_PREREQ: Record<string, string[]> = { ...EAR, ...JAZZ, ...INSTR
 export const LADDER_WAITS: Record<string, string[]> = {
   // Keys (Instruments audit R9, K1, K3, K4, K8, K9): sight-reading after the first reading level; the four Harris
   // diminished scales after the 6th-diminished scale; guide-tone lines after the voice-leading guide tones; 7th-chord
-  // voicings and shells after the maj7 / m7 / ø7 arpeggios; the walking-bass LH after the approach notes.
+  // voicings and shells after the maj7 / m7 / ø7 arpeggios. (The walking-bass LH, accomp-2, no longer waits for
+  // k-vocab-2: it opens with its own lesson on approach notes, walk-approach, since 2026-11-19.)
   'tech:control-11': ['tech:k-read-1'],
   'tech:k-sharm-2': ['tech:harris-1'],
   'tech:jazz-1': ['tech:k-vl-3'],
   'tech:voicings-2': ['tech:arpeggios-7'],
   'tech:k-lh-4': ['tech:arpeggios-7'],
-  'tech:accomp-2': ['tech:k-vocab-2'],
-  // Guitar (G3): target-note improvising over forms after the jazz-blues comping.
+  // Guitar (G3): target-note improvising over forms after the jazz-blues comping. Reading by position (G5, L6) after
+  // the first rhythm reading, which opens with the rhythm lesson (first-rhythms).
   'tech:g-impro-1': ['tech:g-jblues-4'],
+  'tech:g-reading-1': ['tech:g-first-8'],
+  // Bass (B3, L6): the bass clef after the first rhythm reading from the staff (first-rhythms).
+  'tech:b-read-1': ['tech:b-first-8'],
   // Voice (Voice-Drums audit R4): the blues / scat and pop improvising after "on the click" (and the pitch basics);
   // Barry Harris lines after standards and scat have begun (VOICE_LATER intent).
   'vocal:2301': ['vocal:1101'],

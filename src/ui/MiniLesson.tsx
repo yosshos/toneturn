@@ -205,7 +205,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             </p>
           )}
           {step.show?.notes && step.show.notes.length > 0 && (
-            <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
+            <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} tabShift={step.show.written ? -12 : 0} />
           )}
           <p className="mini-caption" aria-live="polite">
             {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!speaking} msPerWord={speaking ? (msPerWord ?? 260) : 120} onDone={() => {

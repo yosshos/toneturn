@@ -9,19 +9,12 @@ import { ladderLessonKey, lessonForUnit } from '../src/content/minilessons';
 
 /** Technique / vocal families whose first level has no lesson yet (missing content; owner approval needed). */
 const FAMILIES_WITHOUT_LESSON = [
-  // keys
-  'fingers', 'control', 'k-classic', 'accomp', 'k-pedal', 'advanced',
-  // guitar
-  'g-fingerstyle', 'g-picking', 'g-fretting', 'g-legato', 'g-lead', 'g-flamenco',
-  // bass (the bass-guitar family under the guitar catalogue, the upright families too)
-  'g-bass', 'b-pluck', 'b-pocket', 'b-fret', 'b-length', 'b-styles', 'b-ghost', 'b-pick', 'b-impro', 'b-legato', 'b-slap', 'b-feel',
-  'b-up-arco', 'b-up-pizz', 'b-up-pos', 'b-up-scales',
   // drums
   'd-strokes', 'd-ear', 'd-indep', 'd-rolls', 'd-fills', 'd-funk', 'd-latin',
 ].sort();
 
 /** Question topics whose level 1 has no mini-lesson yet. */
-const TOPICS_WITHOUT_LESSON = ['drum-style', 'song-strum', 'sight-modulate'].sort();
+const TOPICS_WITHOUT_LESSON = ['drum-style', 'sight-modulate'].sort();
 
 const cat = stepCatalogue();
 
@@ -60,6 +53,18 @@ describe('every first path level opens with its teaching screen', () => {
     expect(key('g-jazz-1', 'g-jazz')).toBe('g-jazz-comp');
     expect(key('d-rock-1', 'd-rock')).toBe('first-rock');
     expect(key('d-diddles-1', 'd-diddles')).toBe('drum-paradiddle');
+    // the instrument lessons of 2026-11-19 (L5–L9)
+    expect(key('b-walk-1', 'b-walk')).toBe('walk-approach');
+    expect(key('b-up-walk-1', 'b-up-walk')).toBe('walk-approach');
+    expect(key('accomp-2', 'accomp')).toBe('walk-approach');
+    expect(key('accomp-1', 'accomp')).toBe('piano-lh-styles');
+    expect(key('g-reading-1', 'g-reading')).toBe('g-staff-read');
+    expect(key('b-read-1', 'b-read')).toBe('b-staff-read');
+    expect(key('g-scales-1', 'g-scales')).toBe('g-pent-boxes');
+    expect(key('b-time-1', 'b-time')).toBe('first-rhythms');
+    expect(key('k-read-2', 'k-read')).toBe('first-rhythms');
+    expect(key('b-walk-21', 'b-walk')).toBe('bass-blues-walk');
+    expect(lessonForUnit('topic:song-strum')?.id).toBe('song-chords');
     // a level with its own lesson keeps it
     expect(key('k-lh-4', 'k-lh')).toBe('sp-shells');
     expect(lessonForUnit('topic:voice-leading')?.id).toBe('four-parts');

@@ -1,11 +1,13 @@
 // Curriculum audit 2026-11-19 (CURRICULUM-AUDIT-INSTRUMENTS R7, -VOICE-DRUMS R2, -EAR-JAZZ F13/F25): every path step
-// opens with its teaching screen where one exists. Existing, verified lessons only — nothing new is written here; this
-// file only says which lesson opens which step. A level key ("tech:<level>") opens at that level; a family key
+// opens with its teaching screen where one exists. This file only says which lesson opens which step (the instrument
+// lessons written for it on 2026-11-19 live in instrumentCore.ts, familyKeysGuitar.ts and familyBass.ts). A level key ("tech:<level>") opens at that level; a family key
 // ("tech:<family>") opens at the first level of the family the player meets. Keys that another file already maps win
 // (this map is spread first in units.ts), so nothing that was wired before changes.
 
 import { FAMILY_LESSON } from './guitar';
 import { VL_LEVEL_LESSON } from './voiceLead';
+import { UNITS as FAMILY_KEYS_GUITAR } from './familyKeysGuitar';
+import { UNITS as FAMILY_BASS } from './familyBass';
 
 export const UNITS: Record<string, string> = {
   // The guitar (and key-change, heads) family lessons used to open only from the family page in Technique.
@@ -34,18 +36,21 @@ export const UNITS: Record<string, string> = {
   'tech:k-pop': 'first-chord-symbols', // block chords from symbols, the pop LH
   'tech:k-bebop': 'vocab-lines',
   'tech:k-sixdim': 'key-sixdim',
-  'tech:accomp-2': 'bass-blues-walk', // walking bass: roots, chord tones, approach
+  'tech:accomp': 'piano-lh-styles', // L9: root–5th, Alberti, stride, shells (accomp-1 is the Alberti bass)
+  'tech:accomp-2': 'walk-approach', // L5: walking bass — chord tones on 1 and 3, approach notes on 4
+  'tech:k-read-2': 'first-rhythms', // L8: quarters, 8ths and rests
 
   // ---- Guitar
   'tech:g-chords': 'fret-chords', // chord boxes, open shapes
   'tech:g-chords-3': 'seventh-types',
   'tech:g-rhythm': 'first-strum',
-  'tech:g-scales': 'fret-scales', // the box, the position
+  'tech:g-scales': 'g-pent-boxes', // L7: the five pentatonic boxes (g-scales-1 is box 1)
   'tech:g-scales-14': 'modes',
   'tech:g-ear-6': 'roman-numerals',
   'tech:g-impro': 'progressions', // blues and ii–V–I named by numerals
   'tech:g-arps': 'triad-types',
-  'tech:g-reading': 'note-reading',
+  'tech:g-reading': 'g-staff-read', // L6: the treble staff on guitar, an octave above the sound; position I
+  'tech:g-first-8': 'first-rhythms', // L8: reading rhythm on muted strings
 
   // ---- Bass
   'tech:b-chord': 'chord-members', // root, 3rd and 5th
@@ -55,13 +60,14 @@ export const UNITS: Record<string, string> = {
   'tech:b-ear': 'basics-pitch', // higher or lower
   'tech:b-ear-3': 'roman-numerals',
   'tech:b-pocket-3': 'swing-ratio', // the shuffle feel
-  'tech:b-time': 'note-values',
+  'tech:b-time': 'first-rhythms', // L8: the quarter-note pulse, 8ths, rests, counting aloud
+  'tech:b-first-8': 'first-rhythms',
   'tech:b-riff': 'first-riff',
-  'tech:b-walk': 'bass-blues-walk',
-  'tech:b-up-walk': 'bass-blues-walk',
-  'tech:b-read': 'note-reading', // the bass clef
-  'tech:b-posread': 'note-reading',
-  'tech:b-up-read': 'note-reading',
+  'tech:b-walk': 'walk-approach', // L5: two-feel roots and 5ths, chord tones on 1 and 3, approaches on 4
+  'tech:b-up-walk': 'walk-approach',
+  'tech:b-read': 'b-staff-read', // L6: the bass clef, an octave above the sound; first position
+  'tech:b-posread': 'b-staff-read',
+  'tech:b-up-read': 'b-staff-read',
 
   // ---- Drums (CURRICULUM-AUDIT-VOICE-DRUMS R2)
   'tech:d-time': 'first-sticks', // counting 1 e & a
@@ -82,6 +88,10 @@ export const UNITS: Record<string, string> = {
   'topic:blues-ear': 'jazz-form',
   'topic:song-sing': 'songs',
   'topic:song-play': 'songs',
+
+  // ---- New family lessons (curriculum audit 2026-11-19, owner OK): keys, guitar and bass families, the song-chords topic
+  ...FAMILY_KEYS_GUITAR,
+  ...FAMILY_BASS,
 };
 
 /** The vocal families whose first level number points at another family's lesson (vocalUnit is by number). */
