@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.3',
+    date: '2026-11-19',
+    en: ['The first screen now asks for your language — עברית or English — right above Get started, and a phone set to Hebrew opens in Hebrew from the start.'],
+    he: ['המסך הראשון שואל עכשיו באיזו שפה — עברית או English — ממש מעל "להתחיל", וטלפון שמוגדר לעברית נפתח בעברית מההתחלה.'],
+  },
+  {
     version: '0.107.2',
     date: '2026-11-19',
     en: ['“About this course” is now a clear button on the Path page (and on Today before you start), so the course intro can be watched again any time — also after leaving it half-way.', 'A unit’s title on the path now matches what it teaches, as its intro does (unit 1 of the Ear course: “First steps for the ear”).'],

@@ -451,6 +451,12 @@ export function namingFor(pref: NamingPref, lang: 'he' | 'en'): Naming {
   return lang === 'he' ? 'solfege' : 'letter';
 }
 
+/** The phone's / browser's language: Hebrew when any preferred language is Hebrew (he, or the old code iw), else English. */
+export function browserLang(nav: { languages?: readonly string[]; language?: string } | undefined = typeof navigator !== 'undefined' ? navigator : undefined): 'he' | 'en' {
+  const ls = [...(nav?.languages ?? []), nav?.language ?? ''];
+  return ls.some((l) => /^(he|iw)(-|_|$)/i.test(l)) ? 'he' : 'en';
+}
+
 /** v1 stored only first-run defaults (Hebrew + letters); move them to the v2 defaults. */
 export function migrateSettings(raw: Partial<Settings> | undefined): Settings {
   if (!raw) return { ...DEFAULT_SETTINGS };
@@ -783,7 +789,10 @@ export class ProgressStore {
   }
 
   async loadSettings(): Promise<Settings> {
-    return migrateSettings(await this.kv.get<Partial<Settings>>('settings'));
+    const raw = await this.kv.get<Partial<Settings>>('settings');
+    // A first visit opens in the phone's language (owner 2026-11-19: most testers speak Hebrew).
+    if (!raw) { const l = browserLang(); return { ...DEFAULT_SETTINGS, uiLang: l, inputLang: l, outputLang: l }; }
+    return migrateSettings(raw);
   }
 
   /** Rate solo memory-game rounds (local; ids "g:<seed>:<turn>" so each round counts once). */

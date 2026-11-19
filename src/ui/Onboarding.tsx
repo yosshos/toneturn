@@ -22,7 +22,7 @@ import { piano } from './services';
 import { Icon } from './icons';
 import { Logo } from './brand/Logo';
 import { InstallButton } from './brand/InstallButton';
-import { LangButton } from './LangButton';
+import { switchLang } from './langSwitch';
 
 type Lang = 'en' | 'he';
 
@@ -184,7 +184,6 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
               <span className="ob-word">{wordmark(lang)}</span>
             </div>
             <div className="ob-brand-actions">
-              <LangButton lang={lang} />
               <InstallButton lang={lang} />
             </div>
           </div>
@@ -193,6 +192,14 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
           </div>
           <h1>{copy('ob.slogan', lang, { he: 'לשמוע. להבין. לבצע.', en: 'Hear. Understand. Perform.' })}</h1>
           <p>{copy('ob.sub', lang, { he: 'שמיעה, שירה ונגינה, עשר דקות ביום.', en: 'Ear, voice and playing, ten minutes a day.' })}</p>
+          {/* The language comes first (owner 2026-11-19: most testers speak Hebrew; the default follows the phone). */}
+          <div className="ob-lang" role="radiogroup" aria-label="שפה · Language" data-ob-lang>
+            {(['he', 'en'] as const).map((l) => (
+              <button key={l} type="button" role="radio" aria-checked={lang === l} className={lang === l ? 'on' : ''} lang={l} onClick={() => switchLang(l)} data-ob-lang-pick={l}>
+                {l === 'he' ? 'עברית' : 'English'}
+              </button>
+            ))}
+          </div>
           <div className="ob-actions">
             <button className="btn primary ob-cta" onClick={next} data-ob="start">
               {tx.start}

@@ -65,3 +65,13 @@ describe('fresh start for every tester', () => {
     expect(keepOnly(null)).toEqual({});
   });
 });
+
+describe('first visit language', () => {
+  it('follows the phone: Hebrew when Hebrew is among the preferred languages', async () => {
+    const { browserLang } = await import('../src/storage/progress');
+    expect(browserLang({ languages: ['he-IL', 'en-US'] })).toBe('he');
+    expect(browserLang({ languages: ['en-US', 'iw'] })).toBe('he');
+    expect(browserLang({ languages: ['en-GB'], language: 'en-GB' })).toBe('en');
+    expect(browserLang(undefined)).toBe('en');
+  });
+});
