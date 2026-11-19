@@ -447,4 +447,16 @@ export const ART_VOICE: Record<string, Art> = {
     H(24, 40.5, 3.6, 'ink'),
     rich(P('M17 24.5 L24 36.5', 'shine', 1.1)),
   ),
+  /** Euclid: a paper disc of eight pulses, the tresillo E(3,8)'s three onsets lifted and joined into a triangle. */
+  euclid: art(
+    'sky',
+    'tan',
+    Ci(24, 24, 20, 'light'),
+    P('M24 8 L35.3 35.3 L8 24 Z', 'body'),
+    det(Ci(35.3, 12.7, 1.8, 'mark'), Ci(40, 24, 1.8, 'mark'), Ci(24, 40, 1.8, 'mark'), Ci(12.7, 35.3, 1.8, 'mark'), Ci(12.7, 12.7, 1.8, 'mark')),
+    Ci(24, 8, 4, 'accent'),
+    Ci(35.3, 35.3, 4, 'accent'),
+    Ci(8, 24, 4, 'accent'),
+    rich(P('M16 13.5 A 14 14 0 0 1 24 10.5', 'shine', 1.2)),
+  ),
 };

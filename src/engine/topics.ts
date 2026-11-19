@@ -63,6 +63,8 @@ import './topicsStageC';
 import './topicsTheoryStart';
 // Symmetry unit (2026-11-19): dividing the octave, P / L / R, interval vectors (after the symmetric scales).
 import './topicsSymmetry';
+// Owner 2026-11-19: Messiaen's modes, twelve-tone rows (post-tonal pack) and Euclidean rhythms (Ear, rhythm by ear).
+import './topicsPostTonal';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

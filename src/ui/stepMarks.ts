@@ -19,6 +19,9 @@ export const TOPIC_MARK: Record<string, string> = {
   'seventh-chords': 'maj7',
   extensions: '13',
   'set-classes': '[016]',
+  'messiaen-modes': 'MLT',
+  'twelve-tone': 'P·I·R',
+  'euclid-rhythms': 'E3,8',
   'scale-types': 'pent',
   'modes-ear': 'dor',
   // EAR_THEORY_AUDIT §6: upper structures and rootless voicings

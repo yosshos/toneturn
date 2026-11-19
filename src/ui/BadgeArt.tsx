@@ -1492,6 +1492,13 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M3 19h18 M3 17v4 M12 17v4 M21 17v4', false)}
     </>
   ),
+  // Euclid: a circle of pulses with the tresillo's three onsets joined.
+  'special:game:euclid': () => (
+    <>
+      <circle cx={12} cy={12} r={8.5} fill="none" />
+      {p('M12 3.5 L18 18 L3.5 12z', true)}
+    </>
+  ),
   // Which Pair? (triad pairs): a chord stack, an arrow, two small triangles — the chord and its pair.
   'special:game:whichpair': () => (
     <>

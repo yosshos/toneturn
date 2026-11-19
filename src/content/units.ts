@@ -161,6 +161,11 @@ export const UNIT_LESSON: Record<string, string> = {
   'topic:in-tune': 'fine-pitch',
   'topic:two-voice': 'two-voice',
   'topic:set-classes': 'set-classes',
+  // Owner 2026-11-19 (mini/postTonal.ts).
+  'topic:messiaen-modes': 'messiaen-modes',
+  'topic:twelve-tone': 'twelve-tone',
+  'topic:euclid-rhythms': 'euclid-rhythms',
+  'game:euclid': 'euclid-rhythms',
   'topic:maqam': 'maqam',
   'topic:eastern-rhythm': 'eastern-rhythm',
   'topic:polyrhythm': 'polyrhythm',

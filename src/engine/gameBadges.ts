@@ -64,6 +64,8 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   { game: 'whichpair', name: l('Which Pair?', 'איזה זוג?'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('Finds the Pair', 'מוצא את הזוג'), l('Pairs in Every Key', 'זוגות בכל הסולמות'), l('Plays the Pair', 'מנגן את הזוג')] },
   // Symmetry unit.
   { game: 'tonnetz', name: l('Tonnetz', 'טונץ'), course: 'ear', titles: [l('One Note Moves', 'צליל אחד זז'), l('Mediant Walker', 'הולך המדיאנטות'), l('Finds It by Ear', 'מוצא בשמיעה')] },
+  // Owner 2026-11-19: Euclidean rhythms on a circle.
+  { game: 'euclid', name: l('Euclid', 'אוקלידס'), course: 'ear', titles: [l('Hears the Tresillo', 'שומע את הטרסיו'), l('Turns the Circle', 'מסובב את המעגל'), l('Taps It Back', 'מקיש בחזרה')] },
   { game: 'singback', name: l('Sing It Back', 'שרים בחזרה'), course: 'voice', titles: [l('Matches the Note', 'מתאים את הצליל'), l('Echoes in Time', 'הד בזמן'), l('Sings Any Phrase Back', 'מחזיר כל משפט')] },
   // Negative harmony.
   { game: 'mirror', name: l('Mirror', 'מראה'), course: 'jazz', titles: [l('Finds the Mirror', 'מוצא את המראה'), l('Mirrors Seventh Chords', 'ספטאקורדים במראה'), l('Cadences in the Mirror', 'קדנצות במראה')] },

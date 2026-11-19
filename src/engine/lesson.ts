@@ -426,7 +426,13 @@ export interface ChoiceQuestion extends QBase {
   /** The sound of each choice (compare: your answer, then the right one). */
   choiceStim?: Record<string, Stimulus[]>;
   /** Notes to show (written theory, sight-reading): drawn as notation. */
-  show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; chord?: boolean; key?: PitchClass | null };
+  show?: { midis: number[]; clef?: 'treble' | 'bass' | 'alto' | 'tenor'; chord?: boolean; key?: PitchClass | null; /** Note lengths in beats and beats per bar: bar lines (a cell, then its transformed form). */ durs?: number[]; meter?: number };
+  /**
+   * Euclidean rhythms (topic euclid-rhythms): a circle of n pulses. `show` = a pattern ('x..x..x.') drawn on it (else
+   * the empty slots); `choices` = the choices are patterns, drawn as circles; `build` = tap the slots instead of buttons —
+   * the answer sent is the slots' pattern, or its necklaceKey when `anyRotation` (any starting point counts).
+   */
+  cycle?: { n: number; show?: string; choices?: boolean; build?: boolean; anyRotation?: boolean };
   /** Text to show with the question (written theory). */
   text?: { en: string; he: string };
   /** A lead sheet to read (chart analysis): the tune's name and its bars' chord symbols. */

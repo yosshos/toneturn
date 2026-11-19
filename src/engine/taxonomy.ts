@@ -76,6 +76,8 @@ export const SUB_SKILLS: SubSkill[] = [
   S('rhythm-dictation', 'feel', 'Swing and groove', 'סווינג וגרוב'),
   S('rhythm-dictation', 'poly', 'Polyrhythm', 'פולי־ריתם'),
   S('rhythm-dictation', 'world', 'World rhythms', 'מקצבי עולם'),
+  // Owner 2026-11-19: Toussaint's Euclidean rhythms E(k, n) — the euclid-rhythms topic and the Euclid game.
+  S('rhythm-dictation', 'euclid', 'Even rhythms (Euclid)', 'מקצבים אוקלידיים'),
   // memory & structure
   S('sequences', 'same-diff', 'Same or different', 'זהה או שונה'),
   S('sequences', 'contour', 'Melodic shape', 'צורת המנגינה'),

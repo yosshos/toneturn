@@ -1,0 +1,140 @@
+/* Euclidean rhythms on a circle (RhythmCircle) and the Euclid game. Flat tonal sheets, no outlines; logical properties
+   (LTR + RTL); the play screen fits 320 × 720 without scrolling. */
+
+.rc {
+  display: block;
+  max-inline-size: 100%;
+  block-size: auto;
+  flex: none;
+}
+.rc-sheet {
+  fill: var(--card-2);
+}
+.rc-ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.rc-shape {
+  fill: var(--purple, #6d28d9);
+  fill-opacity: 0.22;
+}
+.rc-line {
+  fill: none;
+  stroke: var(--purple, #6d28d9);
+  stroke-opacity: 0.45;
+  stroke-width: 2.5;
+}
+.rc-ghost {
+  fill: var(--ok);
+  fill-opacity: 0.18;
+}
+.rc-start {
+  fill: var(--ink);
+}
+.rc-slot {
+  fill: var(--ink-dim);
+  fill-opacity: 0.55;
+  transition: r 0.12s ease;
+}
+.rc-slot.on {
+  fill: var(--purple, #6d28d9);
+  fill-opacity: 1;
+}
+.rc-slot.want {
+  fill: var(--ok);
+  fill-opacity: 0.75;
+}
+.rc-slot.hit {
+  fill: var(--ok);
+}
+.rc-slot.miss {
+  fill: var(--bad, var(--red));
+}
+.rc-slot.extra {
+  fill: var(--bad, var(--red));
+  fill-opacity: 0.6;
+}
+.rc-now {
+  fill: var(--now, var(--lemon));
+}
+.rc-hit {
+  fill: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.rc-hit:focus-visible {
+  outline: none;
+  fill: var(--ink);
+  fill-opacity: 0.12;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-slot {
+    transition: none;
+  }
+}
+
+/* the topic questions */
+.rc-build {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.rc-check {
+  min-inline-size: 140px;
+}
+.answers .answer .rc {
+  margin-inline: auto;
+}
+.choice-show .rc {
+  margin-inline: auto;
+}
+
+/* ---------------------------------------------------------------- Euclid game */
+.eu-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-block-size: 0;
+}
+.eu-kn {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.05rem;
+}
+.eu-pad {
+  touch-action: manipulation;
+  user-select: none;
+  min-block-size: 64px;
+}
+.eu-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  inline-size: 100%;
+}
+.eu-row .btn {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+.eu-icon {
+  flex: none !important;
+  inline-size: 44px;
+  min-block-size: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+.eu-stage .ng-beats {
+  inline-size: 100%;
+  flex-wrap: nowrap;
+}
+.eu-stage .ng-beats i {
+  flex: 0 0 18px;
+}
+.rc-hit:focus {
+  outline: none;
+}

@@ -270,6 +270,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   maqam: 'maqam', 'eastern-rhythm': 'maqam',
   // AUDIT-7 #13: species counterpoint is conservatory theory, not post-tonal: it sits in the Ear course by its level.
   'set-classes': 'post-tonal',
+  // Owner 2026-11-19: Messiaen's modes and twelve-tone rows, after the trichords.
+  'messiaen-modes': 'post-tonal', 'twelve-tone': 'post-tonal',
   'eq-ear': 'production', 'space-ear': 'production', 'pan-ear': 'production', 'dyn-ear': 'production', 'filter-ear': 'production', 'tone-hz': 'production', 'width-ear': 'production',
 };
 /**
@@ -1727,10 +1729,12 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   strumchange: { domain: 'instrument', skill: 'instrument', sub: 'guitar-tech', title: { en: 'Strum Changes', he: 'החלפות בפריטה' }, forPlays: ['guitar'], minDiff: 720, maxDiff: 1150 },
   rebound: { domain: 'instrument', skill: 'instrument', sub: 'drum-tech', title: { en: 'Rebound Ball', he: 'הכדור הקופץ' }, forPlays: ['drums'], minDiff: 720, maxDiff: 1150 },
   singback: { domain: 'voice', skill: 'singing', sub: 'match', title: { en: 'Sing It Back', he: 'שרים בחזרה' }, needsMic: true, minDiff: 720, maxDiff: 1150 },
+  // Owner 2026-11-19: Euclid (Euclidean rhythms on a circle) in the Ear course's time units, from the topic's level.
+  euclid: { domain: 'time', skill: 'rhythm-dictation', sub: 'euclid', title: { en: 'Euclid', he: 'אוקלידס' }, minDiff: 1300 },
 };
 const AREA_GAMES: Record<DomainId, string[]> = {
   pitch: ['rush-interval', 'rush-chord', 'rush-progression', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'tonnetz'],
-  time: ['highway'],
+  time: ['highway', 'euclid'],
   memory: ['melodypuzzle', 'nametune'],
   voice: ['flight', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],
   reading: ['rush-note', 'rush-keysig', 'staffrunner'],

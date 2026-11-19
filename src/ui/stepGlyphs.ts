@@ -108,6 +108,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   mirror: 'mirror',
   // Symmetry unit: the Tonnetz game.
   tonnetz: 'tonnetz',
+  // Owner 2026-11-19: Euclid (Euclidean rhythms on a circle).
+  euclid: 'euclid',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

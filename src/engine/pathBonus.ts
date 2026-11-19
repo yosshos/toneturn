@@ -41,6 +41,8 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'thirdjump', course: 'jazz', domain: 'pitch', skill: 'cadences', sub: 'cadences/chromatic', difficulty: 1300, title: { en: 'Third Jump', he: 'קפיצת טרצה' } },
   // Triad pairs, deep: Which Pair? after the first triad-pair ear levels (the Ear course has it in its pitch units).
   { game: 'whichpair', course: 'jazz', domain: 'pitch', skill: 'modes', sub: 'modes/scales', difficulty: 1520, title: { en: 'Which Pair?', he: 'איזה זוג?' } },
+  // Owner 2026-11-19: Euclid as an optional step next to the Euclidean-rhythm topic (the Ear course's time units have it too).
+  { game: 'euclid', course: 'ear', domain: 'time', skill: 'rhythm-dictation', sub: 'rhythm-dictation/euclid', difficulty: 1500, title: { en: 'Euclid', he: 'אוקלידס' } },
   { game: 'enclosure', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1150, title: { en: 'Enclosure Target', he: 'מטרת הכיתור' } },
   { game: 'call5432', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/answer', difficulty: 1250, title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' } },
   // Negative harmony: Mirror, in the Jazz course next to the topic (negative-harmony 1–5, 1500–1660).
