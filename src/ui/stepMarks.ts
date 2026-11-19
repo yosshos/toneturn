@@ -166,6 +166,10 @@ export const TOPIC_MARK: Record<string, string> = {
   planing: 'par.',
   'form-ear': '16',
   'negative-harmony': 'neg',
+  // Symmetry unit (2026-11-19): the octave in equal parts, P / L / R, the interval vector.
+  'octave-division': '12÷n',
+  'neo-riemann': 'PLR',
+  'interval-vector': '<ic>',
   // AUDIT-CONTENT-THEORY §ה.2: voice leading by ear.
   'vl-ear': 'VL♪',
   // AUDIT-GAPS-2 #5/#19: how the key changed (the diminished door), and a tune's key centres.

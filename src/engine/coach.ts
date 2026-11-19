@@ -296,6 +296,14 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'vl-ear': { en: 'Follow one voice at a time: the top first, then the bass, then the middle. Held notes ring on; moving ones sound new.', he: 'עקבו אחרי קול אחד בכל פעם: קודם העליון, אחר כך הבס, ואז האמצע. צלילים שנשארים ממשיכים לצלצל; צלילים שזזים נשמעים חדשים.' },
   'negative-harmony:4': { en: 'The dominant has the 7th degree pulling up to 1; the mirror has ♭6 sinking to 5 and sounds minor.', he: 'בדומיננטה הדרגה 7 נמשכת למעלה ל־1; במראה ♭6 שוקעת ל־5, והיא נשמעת מינורית.' },
   'negative-harmony:5': { en: 'The dominant has the 7th degree pulling up to 1; the mirror has ♭6 sinking to 5 and sounds minor until the last chord.', he: 'בדומיננטה הדרגה 7 נמשכת למעלה ל־1; במראה ♭6 שוקעת ל־5, והיא נשמעת מינורית עד האקורד האחרון.' },
+  // Symmetry unit (2026-11-19).
+  'octave-division': { en: 'Divide 12 semitones: 2 parts of 6 (tritone), 3 of 4 (major 3rds), 4 of 3 (minor 3rds), 6 of 2 (whole tones).', he: 'מחלקים 12 חצאי טונים: 2 חלקים של 6 (טריטון), 3 של 4 (טרצות גדולות), 4 של 3 (טרצות קטנות), 6 של 2 (טונים שלמים).' },
+  'octave-division:2': { en: 'Listen to the step between the notes: a tritone means 2 parts, a major 3rd 3, a minor 3rd 4, a whole tone 6.', he: 'הקשיבו לצעד בין הצלילים: טריטון זה 2 חלקים, טרצה גדולה 3, טרצה קטנה 4, טון שלם 6.' },
+  'octave-division:4': { en: 'A dominant’s tritone (3rd and 7th) is shared with the dominant a tritone away. Lowering a note of a dim7 gives a dominant 7th rooted on that lowered note.', he: 'את הטריטון של דומיננט (טרצה וספטימה) חולק הדומיננט שבמרחק טריטון. הנמכת צליל של ספטאקורד מוקטן נותנת ספטאקורד דומיננטי שהשורש שלו הוא הצליל שהונמך.' },
+  'neo-riemann': { en: 'Find the note that moved. P: the 3rd, a semitone. R: a whole tone (the 5th of major, the root of minor). L: a semitone (the root of major, the 5th of minor).', he: 'מצאו את הצליל שזז. P: הטרצה, חצי טון. R: טון שלם (הקווינטה במז׳ור, השורש במינור). L: חצי טון (השורש במז׳ור, הקווינטה במינור).' },
+  'neo-riemann:2': { en: 'Follow the voice that moves while two stay: same root but the colour flips is P; a whole step is R; a half step that changes the root is L.', he: 'עקבו אחרי הקול שזז כששניים נשארים: אותו שורש והצבע מתהפך זה P; טון שלם זה R; חצי טון שמשנה את השורש זה L.' },
+  'interval-vector': { en: 'List every pair of notes, fold each interval to its class (1–6: a 7th or 6th counts as its inversion), and count.', he: 'עברו על כל זוג צלילים, קפלו כל מרווח למחלקה שלו (1–6: ספטימה או סקסטה נספרות כהיפוך שלהן), וספרו.' },
+  'interval-vector:3': { en: 'A semitone or major 7th rubs; a tritone sounds restless. Listen for the rub or the restlessness.', he: 'חצי טון או ספטימה גדולה משפשפים; טריטון נשמע לא שקט. הקשיבו לשפשוף או לחוסר המנוחה.' },
   'negative-harmony': { en: 'Mirror around the axis between the 3rds of I: in C, G ↔ C, B ↔ A♭, D ↔ F, E ↔ E♭.', he: 'משקפים סביב הציר שבין הטרצות של I: ב־C, ‏G ↔ C, ‏B ↔ A♭, ‏D ↔ F, ‏E ↔ E♭.' },
 };
 

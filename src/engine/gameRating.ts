@@ -103,6 +103,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   whichpair: { tags: () => T2(['modes', 'scales', 0.6], ['improv', 'vocab', 0.4]), diff: () => 1500 },
   // Negative harmony: Mirror (always tiered; `diff` is a fallback). Whole cadences (level 5+) train cadences too.
   mirror: { tags: (d) => (Number(d.level) >= 5 ? T2(['theory', 'harmony', 0.6], ['cadences', 'cadence', 0.4]) : T('theory', 'harmony')), diff: () => 1450 },
+  // Symmetry unit: the Tonnetz — P / L / R moves by ear and on the grid (always tiered; `diff` is a fallback).
+  tonnetz: { tags: () => T2(['chords', 'symmetry', 0.6], ['theory', 'symmetry', 0.4]), diff: () => 1550 },
   // AUDIT-7 hole #14: the beginner game per instrument (always tiered; `diff` is a fallback).
   staffrunner: { tags: () => T2(['instrument', 'piano-tech', 0.5], ['notes', 'staff', 0.5]), diff: () => 850 },
   rootcatch: { tags: () => T2(['instrument', 'bass-tech', 0.6], ['cadences', 'roots', 0.4]), diff: () => 850 },

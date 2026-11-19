@@ -21,6 +21,8 @@ export const TOPIC_GROUPS: { id: string; icon: string; title: { en: string; he: 
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, functional and modal harmony, form, jazz dictation.
   { id: 'barry-2', icon: 'sixdim', title: { en: 'Barry Harris 2: from the diminished to everything', he: 'בארי האריס 2: מהמוקטן לכל דבר' }, topics: ['bh-three-dim', 'bh-dim-roles', 'bh-m6-bass'] },
   { id: 'harmony-3', icon: 'prog', title: { en: 'Harmony: function, modes, borrowing, form', he: 'הרמוניה: פונקציה, מודוסים, שאילה, צורה' }, topics: ['function-ear', 'modal-cadence', 'borrowed-ext', 'form-ear', 'jazz-dictation', 'grid-dictation', 'planing'] },
+  // Symmetry unit (2026-11-19): after the symmetric scales.
+  { id: 'symmetry', icon: 'tonnetz', title: { en: 'Symmetry: equal parts, P L R, interval vectors', he: 'סימטריה: חלקים שווים, P L R, וקטור מרווחים' }, topics: ['octave-division', 'neo-riemann', 'interval-vector'] },
   // HARMONY-REHARM: reharmonization and colour harmony by ear.
   { id: 'reharm-color', icon: 'ctone', title: { en: 'Reharm and colour: one note, mediants, pedals', he: 'הרמון מחדש וצבע: צליל אחד, מדיאנטות, פדלים' }, topics: ['func-color', 'modal-mix', 'ct-degree', 'mediants', 'pedal-ear', 'approach-chord', 'counter-line', 'modern-color', 'negative-harmony'] },
   { id: 'jazz', icon: 'bebop', title: { en: 'Jazz ear: turnarounds, comping, guide tones', he: 'אוזן לג׳אז: טרנאראונדים, קומפינג, צלילים מנחים' }, topics: ['blues-ear', 'intro-ending', 'lh-tex-ear', 'solo-tex-ear', 'comp-rhythm-ear', 'jazz-changes', 'reharm-spot', 'turnarounds', 'guide-tones', 'guide-line', 'jazz-phrase', 'jazz-form', 'comping', 'swing-ratio', 'extensions', 'voicings', 'chord-scale', 'triad-pairs', 'pent-super', 'polychords', 'reharm-own'] },

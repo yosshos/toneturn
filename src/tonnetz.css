@@ -1,0 +1,130 @@
+/* Tonnetz (Symmetry unit, src/ui/Tonnetz.tsx): the triad grid as layered tonal sheets — no outlines, major and
+   minor triangles in two tones of the surface, the current triad in the tonal accent with a darker edge copy under it
+   (paper thickness), the target in the theory hue. One phone screen: the grid takes what is left between the route
+   line and the move buttons. */
+
+.tz-play {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-block-size: 0;
+}
+.tz-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tz-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-inline-size: 64px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--card-2);
+}
+.tz-end small {
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+}
+.tz-end .ng-sym,
+.tz-end b {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.tz-goal {
+  background: var(--st-tonal, var(--card-2));
+  color: var(--st-tonal-ink, var(--ink));
+}
+.tz-goal.hidden b {
+  font-size: 0.95rem;
+}
+.tz-arrow {
+  color: var(--ink-dim);
+  font-size: 1.1rem;
+}
+.tz-hear {
+  margin-inline-start: auto;
+}
+.tz-hear + .tz-hear {
+  margin-inline-start: 0;
+}
+
+.tz-grid {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 50vh;
+  flex: 0 0 auto;
+  touch-action: manipulation;
+  user-select: none;
+}
+.tz-tri polygon {
+  stroke: var(--bg, var(--card));
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  transition: fill 0.25s ease;
+}
+.tz-tri.up polygon {
+  fill: var(--card-2);
+}
+.tz-tri.dn polygon {
+  fill: var(--line-strong, var(--line));
+}
+.tz-tri.nb {
+  cursor: pointer;
+}
+.tz-tri.nb polygon {
+  fill: color-mix(in srgb, var(--st-tonal-ink, #6d28d9) 16%, var(--card));
+}
+.tz-tri.target polygon {
+  fill: #ff8a3d;
+  filter: drop-shadow(0 2px 0 rgba(30, 16, 51, 0.28));
+}
+.tz-tri.cur polygon {
+  fill: var(--st-tonal-ink, #6d28d9);
+  filter: drop-shadow(0 2.5px 0 rgba(30, 16, 51, 0.38));
+}
+.tz-tri.cur.target polygon {
+  fill: var(--mint-deep, #1f8f67);
+}
+.tz-name,
+.tz-op {
+  text-anchor: middle;
+  font-family: var(--display);
+  font-weight: 700;
+  pointer-events: none;
+}
+.tz-name {
+  font-size: 15px;
+  fill: #ffffff;
+}
+.tz-tri.target:not(.cur) .tz-name {
+  fill: #1e1033;
+}
+.tz-op {
+  font-size: 14px;
+  fill: var(--st-tonal-ink, #6d28d9);
+}
+.tz-node circle {
+  fill: var(--card);
+  filter: drop-shadow(0 1.5px 0 rgba(30, 16, 51, 0.16));
+}
+.tz-node text {
+  text-anchor: middle;
+  font-size: 10px;
+  font-weight: 650;
+  fill: var(--ink-soft, var(--ink));
+  pointer-events: none;
+}
+.tz-ops {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.tz-op-btn {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  touch-action: manipulation;
+}

@@ -916,6 +916,23 @@ GAME_TIERS.mirror = {
   },
 };
 
+// ---------------------------------------------------------------- Symmetry unit (src/engine/tonnetz.ts)
+
+/** Tonnetz: walk the triad grid with P, L, R to the target in the fewest moves (a round is right at par). */
+GAME_TIERS.tonnetz = {
+  game: 'tonnetz',
+  source: () => 'chords',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('One move: P, L or R', 'מהלך אחד (P / L / R)'), levels: [1], target: 65 },
+    p: { label: L('Two moves', 'שני מהלכים'), levels: [2], target: 65 },
+    mp: { label: L('Three moves: mediants and beyond', 'שלושה מהלכים: מדיאנטות והלאה'), levels: [3], target: 65 },
+    mf: { label: L('By ear: one or two moves', 'בשמיעה: מהלך אחד או שניים'), levels: [4], target: 65 },
+    f: { label: L('By ear: two or three moves', 'בשמיעה: שניים או שלושה מהלכים'), levels: [5], target: 65 },
+    ff: { label: L('By ear: three or four moves', 'בשמיעה: שלושה או ארבעה מהלכים'), levels: [6], target: 65 },
+  },
+};
+
 // ---------------------------------------------------------------- AUDIT-7 hole #14: a beginner game per instrument
 // (src/engine/beginnerRun.ts). Laps against the click, measured by MIDI or the microphone only; a run at ≥ 80 % of its
 // targets clears the tier. They start at pp (the beginner band) and climb to ff.

@@ -106,6 +106,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   whichpair: 'whichpair',
   // Negative harmony: the Mirror game.
   mirror: 'mirror',
+  // Symmetry unit: the Tonnetz game.
+  tonnetz: 'tonnetz',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

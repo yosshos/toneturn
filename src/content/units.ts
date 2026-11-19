@@ -47,6 +47,7 @@ import { UNITS as TPAIR_DEEP } from './mini/triadPairsDeep'; // triad pairs, dee
 import { UNITS as PATH_WIRING, VOCAL_FAMILY_UNIT } from './mini/pathWiring';
 // Curriculum audit 2026-11-19: the new shared-theory and jazz lessons (spread last: they replace the stop-gaps).
 import { UNITS as THEORY_CORE } from './mini/theoryCore';
+import { UNITS as SYMMETRY } from './mini/symmetry'; // Symmetry unit (2026-11-19)
 
 export { VOCAL_FAMILY_UNIT };
 
@@ -86,6 +87,7 @@ export const UNIT_LESSON: Record<string, string> = {
   ...STAGE_C,
   ...AUDIT7,
   ...TPAIR_DEEP,
+  ...SYMMETRY,
   ...VL_EAR,
   ...KEY_MOVES,
   ...BEBOP_VOCAB,

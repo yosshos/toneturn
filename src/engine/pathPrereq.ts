@@ -53,6 +53,11 @@ const EAR: Record<string, string[]> = {
   'topic:odd-meter:1': ['topic:time-signatures:1'],
   'topic:prog-meter:1': ['topic:odd-meter:1'],
   'topic:metric-tap:1': ['topic:click-subdivide:2'],
+  // Symmetry unit (2026-11-19): after the symmetric scales (scale-types 4: whole tone, diminished) and the chords they
+  // divide (augmented triad, dim7); P / L / R after the equal divisions; interval vectors last (sus4 from triads 3).
+  'topic:octave-division:1': ['topic:scale-types:4', 'topic:triads:2', 'topic:seventh-chords:2'],
+  'topic:neo-riemann:1': ['topic:octave-division:1'],
+  'topic:interval-vector:1': ['topic:neo-riemann:1', 'topic:triads:3'],
 };
 
 /**
@@ -222,6 +227,8 @@ export const FLOW_GAME_PREREQ: Record<string, string[]> = {
   'rush-scale': ['topic:scale-types:1'],
   // Negative harmony: the Mirror game after the topic's first level (the mirror of a chord).
   mirror: ['topic:negative-harmony:1'],
+  // Symmetry unit: the Tonnetz game after P / L / R are taught.
+  tonnetz: ['topic:neo-riemann:1'],
 };
 
 /** Repertoire steps: the concept they play first (Voice-Drums audit R6); the item's own topic ways are added in path.ts. */
