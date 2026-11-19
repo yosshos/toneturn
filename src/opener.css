@@ -325,7 +325,8 @@ html[data-motion='reduced'] .o-scene.o-leave { animation: o-fade-out 0.2s ease b
 }
 
 /* The path screen's replay links (app chrome: small and quiet, never a mega button). */
-.path-intro { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 0.84rem; font-weight: 600; color: var(--ink-c, currentColor); opacity: 0.8; cursor: pointer; }
-.path-intro:hover { opacity: 1; }
+.path-intro { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; border: 1px solid color-mix(in srgb, var(--ink-c, currentColor) 22%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--ink-c, currentColor) 6%, transparent); padding: 5px 12px; font: inherit; font-size: 0.84rem; font-weight: 600; color: var(--ink-c, currentColor); cursor: pointer; min-height: 32px; }
+.path-intro:hover { background: color-mix(in srgb, var(--ink-c, currentColor) 12%, transparent); }
+.cs-hero .path-intro { align-self: center; }
 .unit-about { display: block; border: 0; background: none; padding: 2px 0 0; font: inherit; font-size: 0.74rem; font-weight: 600; color: inherit; opacity: 0.7; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: start; }
 .unit-about:hover { opacity: 1; }

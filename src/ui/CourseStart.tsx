@@ -14,6 +14,7 @@ import { Glyph } from './Glyph';
 import { Toni } from './Toni';
 import { piano, SIMULATED } from './services';
 import { Icon } from './icons';
+import { FILM } from '../content/openers';
 
 type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
@@ -521,7 +522,7 @@ export function FirstWin({
 }
 
 /** Home / Path first run: "Start: <taste>" (Find my level second for "I play well"), the course and its ladder. */
-export function CourseStartHero({ course, lang, stage, cs, who = null, onStart, onFindLevel, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; who?: JazzWho; onStart: () => void; onFindLevel: () => void; compact?: boolean }) {
+export function CourseStartHero({ course, lang, stage, cs, who = null, onStart, onFindLevel, onIntro, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; who?: JazzWho; onStart: () => void; onFindLevel: () => void; /** Replay the course opener ("About this course"), once it has been seen. */ onIntro?: () => void; compact?: boolean }) {
   const he = lang === 'he';
   const def = courseOf(course);
   const taste: TasteDef | null = cs?.report ? tasteFor(course, cs.report, who) : null;
@@ -549,6 +550,12 @@ export function CourseStartHero({ course, lang, stage, cs, who = null, onStart, 
       {cs?.report === 'well' && stage !== 'win' && (
         <button className="link start-from-one" onClick={onFindLevel} data-course-find-level="1">
           {he ? 'בדיקת רמה' : 'Find my level'}
+        </button>
+      )}
+      {onIntro && (
+        <button type="button" className="path-intro" onClick={onIntro} data-course-intro="hero">
+          <Icon k="play" size={14} />
+          {FILM.watchIntro[lang]}
         </button>
       )}
     </section>

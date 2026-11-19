@@ -543,7 +543,7 @@ export const FILM = {
     { he: 'למה זה חשוב', en: 'Why it matters' },
     { he: 'מה ביחידה', en: 'What’s in the unit' },
   ] as T2[],
-  watchIntro: { he: 'צפייה בפתיחה', en: 'Watch the intro' },
+  watchIntro: { he: 'על הקורס', en: 'About this course' },
   aboutUnit: { he: 'על היחידה', en: 'About this unit' },
 };
 

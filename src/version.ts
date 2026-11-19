@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.2',
+    date: '2026-11-19',
+    en: ['“About this course” is now a clear button on the Path page (and on Today before you start), so the course intro can be watched again any time — also after leaving it half-way.', 'A unit’s title on the path now matches what it teaches, as its intro does (unit 1 of the Ear course: “First steps for the ear”).'],
+    he: ['"על הקורס" הוא עכשיו כפתור ברור בדף המסלול (ובדף היום לפני שמתחילים), כך שאפשר לצפות שוב בפתיחת הקורס בכל רגע — גם אחרי שיצאתם ממנה באמצע.', 'שם היחידה במסלול תואם עכשיו את מה שהיא מלמדת, כמו בפתיחה שלה (יחידה 1 בקורס השמיעה: "צעדים ראשונים לאוזן").'],
+  },
+  {
     version: '0.107.1',
     date: '2026-11-19',
     en: ['Phones: no more crackling. The sound now uses a slightly larger buffer on phones, so the piano, the band and the voice play clean even when a lot sounds at once; timing exercises still judge against the real sound. (Settings → live play latency → Low keeps the smallest buffer for MIDI.)'],

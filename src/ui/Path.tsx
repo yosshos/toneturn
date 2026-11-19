@@ -3,7 +3,7 @@
 // "back to my step" button (§10.1). Reduced motion: no glide, no stagger, no bounce.
 
 import { PaperGlyph, type GlyphKind } from './Glyph';
-import { FILM } from '../content/openers';
+import { FILM, UNIT_THEMES, unitThemeOf } from '../content/openers';
 import { ladderFamiliesFor, ladderHiddenFor, pathGuitarAddOns, withLadderFacts } from '../engine/ladderFacts';
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
@@ -499,7 +499,13 @@ export function PathView2({
     ));
   };
 
-  const theme = (u: PathUnit) => THEMES.find((th) => th.id === u.theme);
+  // The unit's title follows what it holds (its lead lesson / most of its steps), as its opener does — not only the
+  // rotating path theme (tester 2026-11-19: unit 1 read "Home & away" while it teaches high and low).
+  const theme = (u: PathUnit): { name: Record<Lang, string> } | undefined => {
+    const id = unitThemeOf(settings.activeCourse ?? 'ear', u.theme, u.steps.map((y) => y.step), THEMES);
+    const own = id ? UNIT_THEMES[id]?.name : undefined;
+    return own ? { name: own as Record<Lang, string> } : THEMES.find((th) => th.id === id) ?? THEMES.find((th) => th.id === u.theme);
+  };
   const secStats = view.sections[section];
   const later = SECTIONS.slice(SECTIONS.indexOf(section) + 1);
 

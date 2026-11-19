@@ -167,6 +167,7 @@ for (const [vw, vh, tag] of [[390, 844, 'phone-he'], [1280, 800, 'wide-he']] as 
       await seedPath(page, 'he', 'ear', []);
       await page.goto('/?openers=1#/path');
       await expect(page.locator('[data-course-intro]')).toBeVisible();
+      if (process.env.SHOTS) await page.screenshot({ path: `docs/openers-shots/about-course-${tag}.png` });
       const first = page.locator('.unit-banner.current').first();
       await expect(first).toBeVisible();
       await page.locator('li.node.current .node-btn').first().click();
