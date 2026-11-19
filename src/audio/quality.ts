@@ -223,6 +223,14 @@ export function liveStart(now: number, ageSec: number | null, lead: number): num
 
 /** The AudioContext latency hint for the "Live play latency" setting. Safari ignores it. */
 export type LatencyMode = 'auto' | 'low';
-export function latencyHintOf(m: LatencyMode | undefined): AudioContextLatencyCategory | number {
-  return m === 'low' ? 0 : 'interactive';
+/**
+ * Phones (owner 2026-11-19, on Android: every sound crackled — "exactly the noise of a studio interface on the wrong
+ * buffer size"): 'interactive' asks for the smallest buffer, and a phone playing the sampled grand, the reverb and the
+ * narrator at once runs dry. On a phone, Automatic asks for a 40 ms buffer instead; timing stays honest because notes
+ * are judged against the real output time (piano.heardAt). "Low" still asks for the smallest buffer (MIDI on a phone).
+ */
+export const PHONE_BUFFER_S = 0.04;
+export function latencyHintOf(m: LatencyMode | undefined, f: DeviceFacts = deviceFacts()): AudioContextLatencyCategory | number {
+  if (m === 'low') return 0;
+  return isMobile(f) ? PHONE_BUFFER_S : 'interactive';
 }

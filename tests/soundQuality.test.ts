@@ -86,8 +86,14 @@ describe('live play (0.69, Phase 1)', () => {
   });
   it('the latency setting maps to the AudioContext hint', () => {
     expect(latencyHintOf('low')).toBe(0);
-    expect(latencyHintOf('auto')).toBe('interactive');
-    expect(latencyHintOf(undefined)).toBe('interactive');
+    const desk = { ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130' };
+    const phone = { ua: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/130 Mobile' };
+    expect(latencyHintOf('auto', desk)).toBe('interactive');
+    expect(latencyHintOf(undefined, desk)).toBe('interactive');
+    // phones: a 40 ms buffer, so the sampled grand + reverb + narrator never run dry (owner 2026-11-19, crackles)
+    expect(latencyHintOf('auto', phone)).toBe(0.04);
+    expect(latencyHintOf(undefined, { ua: 'iPhone OS 18' })).toBe(0.04);
+    expect(latencyHintOf('low', phone)).toBe(0);
   });
   it('Bluetooth output names are recognised', () => {
     expect(wirelessName('Default - AirPods Pro (Bluetooth)')).toBe(true);

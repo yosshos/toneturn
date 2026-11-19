@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.1',
+    date: '2026-11-19',
+    en: ['Phones: no more crackling. The sound now uses a slightly larger buffer on phones, so the piano, the band and the voice play clean even when a lot sounds at once; timing exercises still judge against the real sound. (Settings → live play latency → Low keeps the smallest buffer for MIDI.)'],
+    he: ['טלפונים: בלי רשרושים. הצליל משתמש עכשיו בטלפון בבאפר קצת גדול יותר, כך שהפסנתר, הלהקה והקול מתנגנים נקי גם כשהרבה נשמע בבת אחת; תרגילי התזמון עדיין נמדדים מול הצליל האמיתי. (הגדרות ← השהיית נגינה חיה ← נמוכה משאירה את הבאפר הקטן ל־MIDI.)'],
+  },
+  {
     version: '0.107.0',
     date: '2026-11-19',
     en: ['Testing round: everyone starts over. We reordered the steps in every course, so progress was cleared on purpose; your language, nickname, calibration and recordings were kept.', 'About seventy new lessons, so no step comes before its lesson: seventh chords, chords of the key and Roman numerals, scales, mode colours, the 6 chord and the diminished seventh, a welcome to jazz, walking lines, reading the staff on guitar and bass, pentatonic boxes, left-hand styles, and an opening lesson for every technique family.', 'Drums: note values and rests, accents and ghost notes, flams, shuffle and swing ride, bossa and clave, Middle-Eastern rhythms, fills, rolls and independence. Voice: swing and the blues form, guide tones, and the singer’s ear.', 'Walking bass is now called בס מהלך in Hebrew.'],

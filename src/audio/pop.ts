@@ -1,5 +1,6 @@
 // A soft "bubble" for each word as text types itself out (0.64, owner: typed text with a pop per word instead of the
 // narrator's voice). Tiny, lazy, never throws; silent when audio isn't allowed yet.
+import { latencyHintOf } from './quality';
 
 let ctx: AudioContext | null = null;
 let last = 0;
@@ -9,7 +10,7 @@ export function wordPop(volume = 0.05) {
     if (typeof window === 'undefined') return;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
-    ctx ??= new AC();
+    ctx ??= new AC({ latencyHint: latencyHintOf('auto') }); // a phone-safe buffer (quality.ts)
     if (ctx.state === 'suspended') void ctx.resume();
     const now = ctx.currentTime;
     if (now - last < 0.045) return; // never a buzz on very fast words

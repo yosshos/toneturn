@@ -1,4 +1,5 @@
 // Knock detection on the microphone: energy onsets with an adaptive noise floor.
+import { latencyHintOf } from '../audio/quality';
 
 import type { KnockInput } from '../game/adapters';
 import { openCapture, stopStream } from './mic';
@@ -8,7 +9,7 @@ export class BrowserKnockInput implements KnockInput {
     // No echo cancellation / AGC: they suppress short transients.
     const r = await openCapture({ echoCancellation: false, noiseSuppression: false, autoGainControl: false });
     if (!r.ok) return r;
-    const ctx = new AudioContext({ latencyHint: 'interactive' });
+    const ctx = new AudioContext({ latencyHint: latencyHintOf('auto') });
     const src = ctx.createMediaStreamSource(r.stream);
     const hp = ctx.createBiquadFilter();
     hp.type = 'highpass';
