@@ -398,6 +398,11 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([55, 59, 62, 65], 0.9), chord([48, 52, 55, 60], 1), rest(), chord([53, 56, 60, 62], 0.9), chord([48, 52, 55, 60], 1.2)],
       },
       {
+        say: { en: 'To tell them apart by ear: the dominant\'s B rises to C; the mirror\'s A♭ falls to G. A whole ii–V–I, Dm7 G7 C, mirrors to Gm7 Fm6 C.', he: 'איך מבחינים בשמיעה: בדומיננטה סי עולה לדו; במראה לה במול יורד לסול. ‏ii–V–I שלם, Dm7 G7 C, משתקף ל־Gm7 Fm6 C.' },
+        play: [chord([50, 53, 57, 60], 0.8), chord([55, 59, 62, 65], 0.8), chord([48, 52, 55, 60], 1), rest(), chord([55, 58, 62, 65], 0.8), chord([53, 56, 60, 62], 0.8), chord([48, 52, 55, 60], 1.2)],
+        show: { text: { en: 'Dm7 G7 C ↔ Gm7 Fm6 C', he: 'Dm7 G7 C ↔ Gm7 Fm6 C' } },
+      },
+      {
         say: { en: 'It is a way to find minor-side colours for a major tune, not a rule of harmony. Your turn.', he: 'זו דרך למצוא צבעים מהצד המינורי לשיר במז׳ור, לא חוק של הרמוניה. תורכם.' },
       },
     ],
@@ -435,6 +440,7 @@ export const UNITS: Record<string, string> = {
   'topic:planing': 'planing',
   'topic:form-ear': 'form-ear',
   'topic:negative-harmony': 'negative-harmony',
+  'game:mirror': 'negative-harmony',
   // The keys levels that play them (k-reharm 9 borrowed comping, 10 planing).
   'tech:k-reharm-9': 'borrowed-ext',
   'tech:k-reharm-10': 'planing',

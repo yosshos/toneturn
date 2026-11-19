@@ -5,8 +5,9 @@
 //   · modal-cadence     — H-2: ♭VII–I, IV–i, ♭II–i against V–I; which mode over a vamp of chords (not over a drone)
 //   · borrowed-ext      — H-3: ♭IImaj7, ♭IIImaj7, ♭VImaj7–♭VII7, Tadd Dameron's ♭III–♭VI–♭II
 //   · form-ear          — H-7: 12-, 8- or 16-bar blues by counting bars; AABA / ABAC / ABAB; intro, tag or coda
-//   · negative-harmony  — H-8: the mirror around the tonic–dominant axis (V ↔ iv, IV ↔ v, I ↔ i)
 // Jazz & improv course (pack 'jazz'):
+//   · negative-harmony  — H-8: the mirror around the tonic–dominant axis (V ↔ iv, IV ↔ v, I ↔ i); levels 4–5 by
+//                         ear: V7–I or iv6–I, ii–V–I or v–iv–I (moved to Jazz with the reharm topics, 2026-11-19)
 //   · jazz-dictation    — H-4: chord symbols with qualities and tensions (secondary ii–V, tritone, backdoor, the V's
 //                         colour); a walking bass line
 //   · planing           — H-5: parallel or functional, diatonic or exact planing, which shape moves
@@ -681,6 +682,20 @@ export const NEG_TRIADS: { rn: string; deg: number; minor: boolean }[] = [
 export function negTriad(key: number, deg: number, minor: boolean): { root: number; minor: boolean } {
   return { root: mirror(key, key + deg + 7), minor: !minor };
 }
+/**
+ * The cadences of the ear levels and their negative images (relative to the key; the axis between ♭3 and 3):
+ * G7 (G B D F) mirrors to C A♭ F D = Fm6 (iv6); Dm7 (D F A C) mirrors to G B♭ D F = Gm7 (v7). I stays I.
+ */
+export const NEG_CADENCES: Record<'v7' | 'iiv', Record<'dom' | 'neg', { ch: BhChord[]; n: ReturnType<typeof nm> }>> = {
+  v7: {
+    dom: { ch: [ch('V7', 7, [7, 11, 2, 5]), ch('I', 0, [0, 4, 7])], n: nm('V7–I (the dominant)', 'V7–I (דומיננטה)', 'dominant') },
+    neg: { ch: [ch('iv6', 5, [5, 8, 0, 2]), ch('I', 0, [0, 4, 7])], n: nm('iv6–I (the mirror)', 'iv6–I (המראה)', 'mirror', 'negative') },
+  },
+  iiv: {
+    dom: { ch: [ch('ii7', 2, [2, 5, 9, 0]), ch('V7', 7, [7, 11, 2, 5]), ch('I', 0, [0, 4, 7])], n: nm('ii–V–I (the dominant)', 'ii–V–I (דומיננטה)', 'dominant') },
+    neg: { ch: [ch('v7', 7, [7, 10, 2, 5]), ch('iv6', 5, [5, 8, 0, 2]), ch('I', 0, [0, 4, 7])], n: nm('v–iv–I (the mirror)', 'v–iv–I (המראה)', 'mirror', 'negative') },
+  },
+};
 const triadName = (r: number, minor: boolean) => `${ROOT[mod12(r)]}${minor ? 'm' : ''}`;
 
 TOPIC_GEN['negative-harmony'] = {
@@ -690,9 +705,25 @@ TOPIC_GEN['negative-harmony'] = {
     { en: 'The mirror of a chord', he: 'השתקפות של אקורד' },
     { en: 'The mirror of a note; V7 in the mirror', he: 'השתקפות של צליל; V7 במראה' },
     { en: 'Where is the axis?', he: 'איפה הציר?' },
+    { en: 'By ear: V7–I or its mirror?', he: 'בשמיעה: V7–I או המראה?' },
+    { en: 'By ear: ii–V–I or its mirror?', he: 'בשמיעה: ii–V–I או המראה?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
+    if (level >= 4) {
+      // Ear: the cadence or its negative image, in a random key, the same I at the end.
+      const key = Math.floor(rnd() * 12);
+      const pair = NEG_CADENCES[level === 4 ? 'v7' : 'iiv'];
+      const names: Names = { dom: pair.dom.n, neg: pair.neg.n };
+      const a = rnd() < 0.5 ? 'dom' : 'neg';
+      const play = (k: 'dom' | 'neg') => bhProg(pair[k].ch, key, 84);
+      return choiceQ({
+        id, topic: 'negative-harmony', level, seed, skill: 'cadences', difficulty: level === 4 ? 1620 : 1660,
+        ask: { en: 'The dominant, or its mirror?', he: 'הדומיננטה, או המראה שלה?' },
+        names, answer: a, choices: ['dom', 'neg'], stimulus: [play(a)],
+        choiceStim: { dom: [play('dom')], neg: [play('neg')] },
+      });
+    }
     const key = pickR(rnd, [0, 5, 7, 2, 10, 3, 9, 8]);
     const base = { id, topic: 'negative-harmony', level, seed, skill: 'theory' as const };
     if (level === 3) {
@@ -755,7 +786,7 @@ TOPIC_GEN['negative-harmony'] = {
     });
   },
 };
-TOPIC_TAGS['negative-harmony'] = tg(['theory', 'harmony', 1]);
+TOPIC_TAGS['negative-harmony'] = (l) => (l >= 4 ? tg(['cadences', 'cadence', 0.6], ['theory', 'harmony', 0.4]) : tg(['theory', 'harmony', 1]));
 
 // keep JQ referenced for the symbol table's keys (QSYM) — tensions are voiced by jazzProgStim
 void JQ;

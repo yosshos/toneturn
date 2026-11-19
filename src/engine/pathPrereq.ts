@@ -98,6 +98,8 @@ const JAZZ: Record<string, string[]> = {
   // Licks and transcription (measured steps): the ii–V–I vocabulary after the lesson that names it.
   'licks:jazz:1': ['lesson:jazz-1'],
   'transcribe:jazz:4': ['lesson:jazz-1'],
+  // Negative harmony (owner 2026-11-19): V7–I and ii–V–I, the T / PD / D functions and the minor plagal iv first.
+  'topic:negative-harmony:1': ['lesson:jazz-1', 'topic:function-ear:1', 'topic:modal-mix:3'],
 };
 
 /** Keys, guitar, bass: measured steps after the levels that teach their concepts (Instruments audit R5). */
@@ -218,6 +220,8 @@ export const FLOW_GAME_PREREQ: Record<string, string[]> = {
   polylock: ['tech:d-prog-5', 'tech:advanced-2'],
   riffecho: [],
   'rush-scale': ['topic:scale-types:1'],
+  // Negative harmony: the Mirror game after the topic's first level (the mirror of a chord).
+  mirror: ['topic:negative-harmony:1'],
 };
 
 /** Repertoire steps: the concept they play first (Voice-Drums audit R6); the item's own topic ways are added in path.ts. */

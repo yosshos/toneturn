@@ -63,6 +63,8 @@ export const GAME_BADGE_GAMES: GameBadgeDef[] = [
   // Triad pairs, deep.
   { game: 'whichpair', name: l('Which Pair?', 'איזה זוג?'), course: 'jazz', alsoIn: ['ear', 'keys'], titles: [l('Finds the Pair', 'מוצא את הזוג'), l('Pairs in Every Key', 'זוגות בכל הסולמות'), l('Plays the Pair', 'מנגן את הזוג')] },
   { game: 'singback', name: l('Sing It Back', 'שרים בחזרה'), course: 'voice', titles: [l('Matches the Note', 'מתאים את הצליל'), l('Echoes in Time', 'הד בזמן'), l('Sings Any Phrase Back', 'מחזיר כל משפט')] },
+  // Negative harmony.
+  { game: 'mirror', name: l('Mirror', 'מראה'), course: 'jazz', titles: [l('Finds the Mirror', 'מוצא את המראה'), l('Mirrors Seventh Chords', 'ספטאקורדים במראה'), l('Cadences in the Mirror', 'קדנצות במראה')] },
 ];
 
 const TIERS: { t: DynName; tone: RankTier }[] = [

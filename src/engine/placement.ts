@@ -7,7 +7,7 @@
 import type { LessonDef, Question, SkillId } from './lesson';
 import { absNoteQuestion, cadenceQuestion, degreeQuestion, singRunQuestion, singSeqQuestion, degreeSeqQuestion, DEGREE_KEYS, intervalQuestion, modesLesson, noteNameQuestion, progressionQuestion, qualityQuestion, rhythmDictQuestion, rhythmReadQuestion, seventhQuestion, singQuestion, mulberry32, ROOT_NAMES, type Quality, type Roman } from './lesson';
 import type { RhythmLevel } from './rhythm';
-import { TOPIC_GEN } from './topics';
+import './topics'; // registers every TOPIC_GEN entry used through genTopic
 import { genTopic } from './topicKit';
 import { pc } from './pitch';
 import { transposeNamesQuestion } from './basics';
@@ -66,7 +66,7 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     { difficulty: 1250, make: (s, id) => at(topic('intervals-all', 3)(s, id), 1250) },
     { difficulty: 1320, make: (s, id) => at(topic('intervals-all', 4)(s, id), 1320) },
     { difficulty: 1460, make: (s, id) => at(topic('interval-spelling', 3)(s, id), 1460) },
-    { difficulty: 1600, make: (s, id) => at(TOPIC_GEN['set-classes'].gen(s, 2, id), 1600) },
+    { difficulty: 1600, make: (s, id) => at(topic('compound-intervals', 3)(s, id), 1600) },
   ],
   chords: [
     { difficulty: 850, make: (s, id) => qualityQuestion(id, pc(pick(mulberry32(s), ROOT_NAMES)), pick(mulberry32(s + 1), ['maj', 'min'] as Quality[]), ['maj', 'min'], true, 850) },

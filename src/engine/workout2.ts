@@ -81,7 +81,7 @@ export interface SuggestInput {
  */
 export const WORKOUT_GAMES: Record<CourseId, string[]> = {
   ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note', 'bordercontrol', 'crossword', 'darkside'],
-  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair'],
+  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'mirror'],
   voice: ['flight', 'singinterval', 'rush-interval', 'runcatcher', 'singback'],
   keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller', 'guidetone', 'staffrunner'],
   guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller', 'guidetone', 'strumchange'],

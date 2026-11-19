@@ -257,6 +257,8 @@ const PACK_TOPICS: Record<string, Pack> = {
   'bh-line-ear': 'jazz',
   // HARMONY-REHARM: colour harmony by ear (one note many chords, mediants, pedal, approach, counter-line, modern colours).
   'ct-degree': 'jazz', mediants: 'jazz', 'pedal-ear': 'jazz', 'approach-chord': 'jazz', 'counter-line': 'jazz', 'modern-color': 'jazz', 'func-color': 'jazz', 'modal-mix': 'jazz',
+  // Negative harmony (owner 2026-11-19): a reharm device, in the Jazz course after modal interchange.
+  'negative-harmony': 'jazz',
   // Solo jazz piano by ear (Siskind, SISKIND-SOLO-PIANO C1–C3).
   'lh-tex-ear': 'jazz', 'solo-tex-ear': 'jazz', 'comp-rhythm-ear': 'jazz',
   // AUDIT-DEPTH-3 #12: intros and endings by ear.
@@ -1715,6 +1717,8 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   darkside: { domain: 'pitch', skill: 'cadences', sub: 'chromatic', title: { en: 'Dark Side', he: 'הצד האפל' }, minDiff: 1100 },
   // Triad pairs, deep: Which Pair? from the first pair's rating (advanced, ~1350–1850).
   whichpair: { domain: 'pitch', skill: 'modes', sub: 'scales', title: { en: 'Which Pair?', he: 'איזה זוג?' }, minDiff: 1350 },
+  // Negative harmony: Mirror — a Jazz bonus step after the topic (pathBonus.ts); not a unit game (not in AREA_GAMES).
+  mirror: { domain: 'pitch', skill: 'theory', sub: 'harmony', title: { en: 'Mirror', he: 'מראה' }, minDiff: 1450 },
   // AUDIT-7 hole #14: a beginner game per instrument course, in the beginner band's units (720 → 1150).
   staffrunner: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Staff Runner', he: 'רץ החמשה' }, forPlays: ['keys', 'piano'], minDiff: 720, maxDiff: 1150 },
   rootcatch: { domain: 'instrument', skill: 'instrument', sub: 'bass-tech', title: { en: 'Root Catcher', he: 'תופס השורשים' }, forPlays: ['bass'], minDiff: 720, maxDiff: 1150 },

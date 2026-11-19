@@ -43,6 +43,8 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
   { game: 'whichpair', course: 'jazz', domain: 'pitch', skill: 'modes', sub: 'modes/scales', difficulty: 1520, title: { en: 'Which Pair?', he: 'איזה זוג?' } },
   { game: 'enclosure', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/vocab', difficulty: 1150, title: { en: 'Enclosure Target', he: 'מטרת הכיתור' } },
   { game: 'call5432', course: 'jazz', domain: 'creative', skill: 'improv', sub: 'improv/answer', difficulty: 1250, title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' } },
+  // Negative harmony: Mirror, in the Jazz course next to the topic (negative-harmony 1–5, 1500–1660).
+  { game: 'mirror', course: 'jazz', domain: 'pitch', skill: 'theory', sub: 'theory/harmony', difficulty: 1560, title: { en: 'Mirror', he: 'מראה' } },
 ];
 
 const PLAYS: Partial<Record<CourseId, string[]>> = { keys: ['keys', 'piano'], guitar: ['guitar'], bass: ['bass'], drums: ['drums'] };
