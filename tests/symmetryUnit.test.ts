@@ -138,8 +138,8 @@ describe('registrations', () => {
     expect(d('topic:octave-division:1')).toBeGreaterThan(d('topic:scale-types:4'));
   });
 
-  it('a walk of the Ear path meets the unit after scale-types 4, in order, with the Tonnetz after P / L / R', () => {
-    const w = walkPath('ear', 'student', 'strong', 60, { placeAt: 1300 });
+  it('a walk of the Ear path meets the unit after scale-types 4, in order, with the Tonnetz after P / L / R (the game rotation shares units with the newer games)', () => {
+    const w = walkPath('ear', 'student', 'strong', 75, { placeAt: 1300 });
     const at = (re: RegExp) => w.units.findIndex((u) => u.ids.some((x) => re.test(x)));
     const sc = at(/^topic:scale-types:4$/);
     const od = at(/^topic:octave-division:1$/);

@@ -18,6 +18,20 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.108.0',
+    date: '2026-11-19',
+    en: [
+      'Find my level now measures the whole course: harmony is asked in Ear & theory, and every instrument and the voice test cover every skill the course teaches. The Ear radar shows what the course teaches.',
+      'New in Ear & theory: a Symmetry unit (dividing the octave, P / L / R moves, interval vectors), Euclidean rhythms, and for the pro track the modes of Messiaen and the twelve-tone row. Negative harmony gains two listening levels.',
+      'Three new games: Mirror (negative harmony), Tonnetz (walk the triad grid) and Euclid (rhythms spread evenly).',
+    ],
+    he: [
+      'מבחן הרמה בודק עכשיו את כל הקורס: בשמיעה ותיאוריה יש שאלות הרמוניה, ובכל כלי ובשירה המבחן מכסה כל מה שהקורס מלמד. הרדאר של קורס השמיעה מראה את מה שהקורס מלמד.',
+      'חדש בשמיעה ותיאוריה: יחידת סימטריה (חלוקת האוקטבה, מהלכי P / L / R, וקטור מרווחים), מקצבים אוקלידיים, ובמסלול המקצועי המודוסים של מסיאן ושורת 12 הטונים. להרמוניה השלילית נוספו שתי רמות שמיעה.',
+      'שלושה משחקים חדשים: מראה (הרמוניה שלילית), טונץ (הליכה ברשת המשולשים) ואוקלידס (מקצבים בפיזור שווה).',
+    ],
+  },
+  {
     version: '0.107.5',
     date: '2026-11-19',
     en: ['Each rhythm lesson asks once to pick the written bar you heard — tap it, nothing to say — and once to play it back. Lessons now count “1 & 2 &” instead of “ta ti-ti”.'],

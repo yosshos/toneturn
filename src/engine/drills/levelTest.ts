@@ -45,7 +45,7 @@ export const STRAND_TITLE: Record<StrandId, T2> = {
   // families no earlier section reached (rhythm & meter at the keys; bass fills, pick, slap, odd meters, bowing; the
   // drums' Middle-Eastern and Latin grooves, odd meters and song form).
   meter: { en: 'Rhythm and meter', he: 'קצב ומשקל' },
-  'fills-bass': { en: 'Fills and solos', he: 'מילויים וסולו' },
+  'fills-bass': { en: 'Fills and solos', he: 'מעברים וסולו' },
   pick: { en: 'Pick', he: 'מפרט' },
   slap: { en: 'Slap', he: 'סלאפ' },
   odd: { en: 'Odd meters', he: 'משקלים אי-זוגיים' },
