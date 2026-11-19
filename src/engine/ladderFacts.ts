@@ -72,6 +72,20 @@ export const CORE_KEEP_BELOW = 1100;
 /** Accompaniment levels a classical-emphasis path keeps: the Alberti bass and the pop left hand. */
 export const CLASSICAL_KEEPS_ACCOMP = ['accomp-1', 'accomp-7'];
 
+/**
+ * Piano levels the course path teaches, by emphasis (ladderFamiliesFor less the parts it hides) — wider than the
+ * emphasis's shown families: the jazz pianist's core scales, arpeggios and fingers below CORE_KEEP_BELOW. The level
+ * test offers their steps too (owner 2026-11-19: the test checks everything the course covers).
+ */
+export function pathPianoLevels(ds: Pick<DrillSettings, 'emphasis'>): string[] {
+  const fams = new Set(ladderFamiliesFor('keys', { ...DEFAULT_PATH_DS, emphasis: ds.emphasis }));
+  const hidden = new Set(emphasisHidden(ds));
+  return catalog()
+    .filter((f) => fams.has(f.id))
+    .flatMap((f) => f.levels.filter((l) => !hidden.has(l.id)).map((l) => l.id));
+}
+const DEFAULT_PATH_DS = { emphasis: 'both' } as DrillSettings;
+
 /** Keys levels the emphasis leaves out of families it keeps only in part (R8). */
 function emphasisHidden(ds?: Partial<Pick<DrillSettings, 'emphasis'>>): string[] {
   if (ds?.emphasis === 'jazz') {

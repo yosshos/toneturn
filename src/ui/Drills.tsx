@@ -34,6 +34,7 @@ import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, leve
 import { generate } from '../engine/drills/generate';
 import { advance, finishPlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandId, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
+import { pathPianoLevels } from '../engine/ladderFacts';
 import { type GuitarLevelDef } from '../engine/drills/guitar';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
 import { GuitarAddOnPicker } from './GuitarAddOns';
@@ -1516,7 +1517,9 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     const byMic = !midi.devices.length;
     const drumMic = inst === 'drums' ? drumMicOf(kit) : undefined;
     const shown = new Set(shownFamilies({ ...ds, bassTuning, drumMic }).flatMap((f) => f.levels.map((l) => l.id)));
-    return strandsFor(inst, ds.emphasis, { mic: byMic && inst === 'piano' })
+    // and every piano level the course path teaches (the jazz pianist's core scales and arpeggios, R8)
+    if (inst === 'piano') for (const id of pathPianoLevels(ds)) shown.add(id);
+    return strandsFor(inst, ds.emphasis, { mic: byMic && inst === 'piano', upright: bassTuning === 'upright' || bassTuning === 'bass-fretless' })
       .map((x) => ({
         ...x,
         rungs: x.rungs

@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { StrandState } from '../engine/drills/levelTest';
 import type { VoiceRange } from '../engine/vocal';
-import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voiceTake, withFirstSteps, type VoiceRung } from '../engine/voiceLevelTest';
+import { savedVoiceStart, voiceStartState, voiceStrands, voiceStrandStart, voiceTake, withFirstSteps, withRelatedStarts, type VoiceRung } from '../engine/voiceLevelTest';
 import type { VoiceTestMode } from './VoiceTimed';
 import { SIMULATED } from './services';
 import { setRecScreenKind } from './recKeep';
@@ -15,7 +15,7 @@ type Lang = 'he' | 'en';
 const TX = {
   en: {
     title: 'Find my level',
-    intro: 'About 10 minutes: a few short takes in each area. A good take moves you ahead; a miss simply moves the test on. Your voice path then starts where you are.',
+    intro: 'About 15 minutes: a few short takes in each area. A good take moves you ahead; a miss simply moves the test on. Your voice path then starts where you are.',
     start: 'Start',
     resume: 'Continue — section {n}',
     over: 'Start over',
@@ -32,7 +32,7 @@ const TX = {
   },
   he: {
     title: 'מציאת הרמה',
-    intro: 'כ-10 דקות: כמה ביצועים קצרים בכל תחום. ביצוע טוב מקדם אתכם, החטאה פשוט מעבירה את המבחן הלאה. מסלול השירה יתחיל איפה שאתם נמצאים.',
+    intro: 'כ-15 דקות: כמה ביצועים קצרים בכל תחום. ביצוע טוב מקדם אתכם, החטאה פשוט מעבירה את המבחן הלאה. מסלול השירה יתחיל איפה שאתם נמצאים.',
     start: 'להתחיל',
     resume: 'להמשיך — חלק {n}',
     over: 'להתחיל מחדש',
@@ -143,8 +143,9 @@ export function VoiceLevelTest({
     const k = si + 1;
     if (k >= strands.length) {
       clearSaved();
-      // The first steps are not a section: the passed steps of the others prove them (withFirstSteps).
-      return setSummary(withFirstSteps({ ...starts.current }));
+      // The first steps are not a section: the passed steps of the others prove them (withFirstSteps); so are the
+      // families a section's steps ask the same of (withRelatedStarts: harmony singing from the ear's harmony steps).
+      return setSummary(withFirstSteps(withRelatedStarts({ ...starts.current })));
     }
     setSi(k);
     setSt(voiceStartState(strands[k]));

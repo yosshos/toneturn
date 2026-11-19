@@ -36,7 +36,7 @@ describe('level test sections', () => {
   for (const inst of ['guitar', 'bass', 'drums'] as const)
     it(`every step of the ${inst} test is a real level that generates`, () => {
       const cat = families(inst);
-      for (const st of strandsFor(inst, 'both'))
+      for (const st of strandsFor(inst, 'both', { upright: inst === 'bass' }))
         for (const r of st.rungs) {
           const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
           expect(lv, r.level).toBeTruthy();

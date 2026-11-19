@@ -13,7 +13,10 @@ type Bi = { en: string; he: string };
 // STAGE C (AUDIT-6 §3.5): the altered arpeggios and the advanced runs test the top of the ladder.
 // AUDIT-7: the blues head and scat calls (the singer's jazz entry) and pop style are sections too (their scat items skip).
 // 0.97 leftovers: improvising (v-impro) is a section — each of its levels is one measured take over a short chart.
-export const VOICE_TEST_FAMILIES = ['v-pitch', 'v-time', 'v-songs', 'v-ear', 'v-sight', 'v-scale', 'v-agility', 'v-arp2', 'v-runs', 'v-jazz1', 'v-impro', 'v-pop'] as const;
+// Owner 2026-11-19 ("the level test must check everything the course covers"): every axis of the voice radar has a
+// measured section — Breath (v-breath: a held note, then breath phrases), Shape (v-dyn: crescendo, messa di voce,
+// terraced dynamics, accents) and Jazz (v-standards: a standard with the band, graded in one take like a song).
+export const VOICE_TEST_FAMILIES = ['v-pitch', 'v-breath', 'v-time', 'v-songs', 'v-ear', 'v-dyn', 'v-sight', 'v-scale', 'v-agility', 'v-arp2', 'v-runs', 'v-jazz1', 'v-impro', 'v-standards', 'v-pop'] as const;
 
 /** Kinds a single take can't measure here (several takes, free shapes, not measured, or set up by hand). */
 const SKIP: VocalKind[] = ['range', 'vibrato-register', 'scat'];
@@ -97,9 +100,9 @@ const levelRating = (ref: number): number | undefined => {
 };
 /** Which sections prove which first steps: held / slid / echoed notes, the rhythm sung back, the first song. */
 const FIRST_PROOF: Record<'pitch' | 'time' | 'song', string[]> = {
-  pitch: ['v-pitch', 'v-ear', 'v-scale', 'v-sight', 'v-agility', 'v-arp2', 'v-runs'],
+  pitch: ['v-pitch', 'v-breath', 'v-dyn', 'v-ear', 'v-scale', 'v-sight', 'v-agility', 'v-arp2', 'v-runs'],
   time: ['v-time', 'v-jazz1'],
-  song: ['v-songs', 'v-jazz1', 'v-pop'],
+  song: ['v-songs', 'v-jazz1', 'v-pop', 'v-standards'],
 };
 const proofOf = (ref: number): keyof typeof FIRST_PROOF => {
   const ks = (vocalLevelByRef(ref)?.items ?? []).map((x) => x.kind);
@@ -143,4 +146,33 @@ export function withFirstSteps(starts: Record<string, number>): Record<string, n
 export function savedVoiceStart(family: string, start: number): number {
   const before = VOICE_FAMILIES.find((f) => f.id === family)?.before ?? 0;
   return Math.max(1, start - before);
+}
+
+/**
+ * Families a section proves without a section of their own (owner 2026-11-19: every family is measured or placed by a
+ * step that asks the same): harmony singing's held parts against a chord (v-harmony 1–3) are the ear section's own
+ * harmony-hold steps. A level is ✓ when every item is of that kind and a passed step of it is at least as hard.
+ */
+const RELATED: { family: string; from: string; kind: VocalKind }[] = [{ family: 'v-harmony', from: 'v-ear', kind: 'harmony-hold' }];
+
+/** The test's starts with the related families they prove (a higher start already there stays). */
+export function withRelatedStarts(starts: Record<string, number>): Record<string, number> {
+  const out = { ...starts };
+  for (const rel of RELATED) {
+    const src = VOICE_FAMILIES.find((x) => x.id === rel.from);
+    const dst = VOICE_FAMILIES.find((x) => x.id === rel.family);
+    if (!src || !dst) continue;
+    let top = -Infinity;
+    for (const ref of src.refs.slice(0, Math.max(0, (starts[rel.from] ?? 1) - 1)))
+      if ((vocalLevelByRef(ref)?.items ?? []).some((x) => x.kind === rel.kind)) top = Math.max(top, levelRating(ref) ?? -Infinity);
+    let n = 0;
+    for (const ref of dst.refs) {
+      const items = vocalLevelByRef(ref)?.items ?? [];
+      const r = levelRating(ref);
+      if (!items.length || items.some((x) => x.kind !== rel.kind) || r === undefined || r > top) break;
+      n++;
+    }
+    if (n > 0 && n + 1 > (out[rel.family] ?? 1)) out[rel.family] = n + 1;
+  }
+  return out;
 }
