@@ -1502,6 +1502,15 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M14 19l2.5-5 2.5 5z M17 12l2.5-5 2.5 5z', false)}
     </>
   ),
+  // Mirror (negative harmony): a dashed axis, a note head on each side at mirrored heights.
+  'special:game:mirror': () => (
+    <>
+      {p('M12 3v18', false)}
+      {head(6, 16, 2.2)}
+      {head(18, 8, 2.2)}
+      {p('M8.2 15V7 M15.8 9v8', false)}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>

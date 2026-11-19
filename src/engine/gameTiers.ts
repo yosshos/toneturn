@@ -899,6 +899,23 @@ GAME_TIERS.whichpair = {
   },
 };
 
+// ---------------------------------------------------------------- negative harmony (src/engine/mirrorGame.ts)
+
+/** Mirror: tap the mirror of a note, chord or cadence around the key's axis, against a shrinking clock. */
+GAME_TIERS.mirror = {
+  game: 'mirror',
+  source: () => 'theory',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Notes of the scale: C, G, F', 'צלילי הסולם: C, G, F'), levels: [1], target: 80 },
+    p: { label: L('Every note, eight keys', 'כל הצלילים, שמונה סולמות'), levels: [2], target: 80 },
+    mp: { label: L('Triads', 'משולשים'), levels: [3], target: 80 },
+    mf: { label: L('Seventh chords', 'ספטאקורדים'), levels: [4], target: 80 },
+    f: { label: L('Whole cadences', 'קדנצות שלמות'), levels: [5], target: 80 },
+    ff: { label: L('All of it, mixed and faster', 'הכל, מעורב ומהר יותר'), levels: [6], target: 80 },
+  },
+};
+
 // ---------------------------------------------------------------- AUDIT-7 hole #14: a beginner game per instrument
 // (src/engine/beginnerRun.ts). Laps against the click, measured by MIDI or the microphone only; a run at ≥ 80 % of its
 // targets clears the tier. They start at pp (the beginner band) and climb to ff.

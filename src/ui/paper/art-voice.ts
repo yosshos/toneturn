@@ -419,4 +419,19 @@ export const ART_VOICE: Record<string, Art> = {
     P('M32 41 L38 28 L44 41 Z', 'accent'),
     det(Ci(38, 17.5, 1.6, 'light'), Ci(38, 36.5, 1.6, 'light')),
   ),
+  /** Mirror (negative harmony): two sheets either side of an axis, a two-note chord on each at mirrored heights. */
+  mirror: art(
+    'indigo',
+    'sky',
+    R(3, 10, 17, 32, 4, 'light'),
+    R(28, 6, 17, 32, 4, 'light'),
+    L(24, 3, 24, 45, 'wire', 2),
+    H(10, 35, 3.8, 'body'),
+    H(10, 26, 3.8, 'body'),
+    L(13.6, 34, 13.6, 16, 'inkline', 1.8),
+    H(37, 13, 3.8, 'accent'),
+    H(37, 22, 3.8, 'accent'),
+    L(40.6, 12, 40.6, 32, 'inkline', 1.8),
+    det(Ci(24, 24, 2.2, 'mark')),
+  ),
 };

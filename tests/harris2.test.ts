@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import '../src/engine/topics';
 import { TOPIC_GEN, asChoice, genTopic } from '../src/engine/topicKit';
 import { BH, dimClass, dimPcs, isDim, M6_BASS, PASSING, partnerClass, ROLE, SCALES_6DIM, sixPcs, touches } from '../src/engine/topicsHarris2';
-import { FUNCTIONS, MODE_IV, VAMPS, VAMPS7, mirror, negTriad, walkLine, DICT } from '../src/engine/topicsHarmony3';
+import { FUNCTIONS, MODE_IV, VAMPS, VAMPS7, mirror, negTriad, walkLine, DICT, NEG_CADENCES } from '../src/engine/topicsHarmony3';
 import { floridErrors } from '../src/engine/topicsWritten';
 import { catalog, generate } from '../src/engine/drills/generate';
 import { generateGuitar, guitarCatalog } from '../src/engine/drills/guitar';
@@ -166,6 +166,22 @@ describe('harmony and ear (H-1…H-8)', () => {
         expect(set(tri.map((p) => mirror(k, p)))).toEqual(set((r.minor ? [0, 3, 7] : [0, 4, 7]).map((x) => x + r.root)));
       }
   });
+  it('negative harmony by ear (levels 4–5): each mirror chord is the reflection of its dominant chord; I ends both', () => {
+    for (const pair of [NEG_CADENCES.v7, NEG_CADENCES.iiv]) {
+      expect(pair.dom.ch.length).toBe(pair.neg.ch.length);
+      pair.dom.ch.slice(0, -1).forEach((c, i) => expect(set(c.pcs.map((p) => mirror(0, p))), c.sym).toEqual(set(pair.neg.ch[i].pcs)));
+      expect(pair.dom.ch.at(-1)!.pcs).toEqual(pair.neg.ch.at(-1)!.pcs);
+    }
+    // Dm7 → Gm7, G7 → Fm6 (C A♭ F D)
+    expect(set(NEG_CADENCES.iiv.neg.ch[0].pcs)).toEqual(set([7, 10, 2, 5]));
+    expect(set(NEG_CADENCES.v7.neg.ch[0].pcs)).toEqual(set([5, 8, 0, 2]));
+    for (const l of [4, 5])
+      for (let s = 0; s < 20; s++) {
+        const q = asChoice(genTopic('negative-harmony', s, l, 'n'));
+        expect(q.choices.sort()).toEqual(['dom', 'neg']);
+        expect(q.stimulus.length).toBe(1);
+      }
+  });
   it('walking bass: roots on beat 1, a half step into each next root, spelling matches the pitch', () => {
     for (let k = 0; k < 12; k++)
       for (const pats of [['arp', 'scale'], ['down', 'arp'], ['scale', 'down']] as [string, string][])
@@ -283,7 +299,8 @@ describe('wiring', () => {
     const cat = stepCatalogue();
     const on = (c: 'ear' | 'jazz', t: string) => cat.filter((s) => s.topic === t && eligible(s, courseInput(base, c)));
     for (const t of ['bh-three-dim', 'bh-dim-roles', 'bh-m6-bass', 'jazz-dictation', 'planing']) expect(on('jazz', t).length, t).toBeGreaterThan(0);
-    for (const t of ['function-ear', 'modal-cadence', 'borrowed-ext', 'form-ear', 'negative-harmony']) expect(on('ear', t).length, t).toBeGreaterThan(0);
+    for (const t of ['negative-harmony']) expect(on('jazz', t).length, t).toBeGreaterThan(0);
+    for (const t of ['function-ear', 'modal-cadence', 'borrowed-ext', 'form-ear']) expect(on('ear', t).length, t).toBeGreaterThan(0);
     const d = (t: string, l = 1) => cat.find((s) => s.id === `topic:${t}:${l}`)!.difficulty;
     expect(d('bh-three-dim')).toBeGreaterThan(d('bh-scale'));
     expect(d('bh-dim-roles')).toBeGreaterThan(d('bh-three-dim'));

@@ -1922,6 +1922,20 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Negative harmony (mirrorGame.ts): one drawn symbol.
+Object.assign(GLYPHS, {
+  // Mirror (game): a dashed axis down the middle, a chord stack on each side at mirrored heights.
+  mirror: (
+    <>
+      <path d="M0 -26 V26" {...sw} strokeWidth={2} strokeDasharray="4 4" />
+      <path d="M-14 16 V-12 M14 -16 V12" {...sw} strokeWidth={2.2} />
+      {head(-20, 16, 5, 3.8)}
+      {head(-20, 4, 5, 3.8)}
+      {head(20, -16, 5, 3.8)}
+      {head(20, -4, 5, 3.8)}
+    </>
+  ),
+});
 // Paper redraw: names that exist only in the Paper set (the Jazz course's saxophone, Encore, the games card) get the
 // nearest old drawing so raw GLYPHS users still draw something.
 Object.assign(GLYPHS, { jazz: GLYPHS.prog, encore: GLYPHS.echo, games: GLYPHS.puzzle });

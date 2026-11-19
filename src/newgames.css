@@ -878,3 +878,107 @@
   touch-action: manipulation;
   user-select: none;
 }
+
+/* ---------------------------------------------------------------- Mirror (negative harmony) */
+.mg-key-line {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+.mg-key-line span {
+  color: var(--ink-dim);
+  font-weight: 700;
+}
+/* one octave from the tonic; a piano stays a piano in both themes (ink and white, never yellow) */
+.mg-kbd {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2px;
+  block-size: 92px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--card-2);
+}
+.mg-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  min-inline-size: 0;
+  padding: 0 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1e1033;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.mg-cell.blk {
+  block-size: 66%;
+  background: #1e1033;
+  color: #ffffff;
+}
+.mg-cell:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.mg-cell span {
+  white-space: nowrap;
+  min-block-size: 1em;
+}
+.mg-cell i {
+  inline-size: 9px;
+  block-size: 9px;
+  border-radius: 50%;
+  background: transparent;
+}
+.mg-cell.src i {
+  background: #6d28d9;
+}
+.mg-cell.blk.src i {
+  background: #a78bfa;
+}
+.mg-cell.mir {
+  box-shadow: inset 0 0 0 3px var(--ok);
+}
+.mg-cell.mir i {
+  background: var(--ok);
+}
+.mg-cell.bad {
+  box-shadow: inset 0 0 0 3px var(--bad, var(--red));
+}
+.mg-axis {
+  position: absolute;
+  inset-block: -4px;
+  inline-size: 0;
+  margin-inline-start: 1px;
+  border-inline-start: 2px dashed var(--accent, #6d28d9);
+  pointer-events: none;
+}
+.mg-src {
+  min-block-size: 64px;
+  font-size: 1.5rem;
+}
+main[data-mg-kind='cadence'] .mg-src {
+  font-size: 1.15rem;
+}
+.mg-cad .btn {
+  font-size: 0.92rem;
+  white-space: nowrap;
+  padding-inline: 4px;
+}
+/* the board (key, axis keyboard, what sounded, the question) takes the free height, centred */
+.mg-board {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
