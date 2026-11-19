@@ -28,13 +28,15 @@ export function catchUp(
   p: { ratingEvents?: RatingEvent[]; lessons: Record<string, { completions?: number } | undefined> },
   /** The active course's areas (0.84): catching up measures only what this course teaches; [] = nothing to catch up. */
   areas?: DomainId[] | null,
+  /** The course's placement skills (courses.ts COURSE_PLACEMENT_SKILLS), when it lists them. */
+  skills?: SkillId[] | null,
 ): CatchUp {
   const intake: IntakeNeed =
     s.intake === undefined ? 'missing' : s.intake === null ? 'later' : s.intake.priorities && AREAS.some((a) => !s.intake!.priorities!.includes(a)) ? 'outdated' : null;
   const events = p.ratingEvents ?? [];
   const placed = new Set(events.filter((e) => e.set !== undefined).map((e) => e.skill));
   const ratings = foldRatings(events);
-  const unmeasured = (areas && !areas.length ? [] : placementSkills({ singing: s.mode === 'voice', areas })).filter((k) => !placed.has(k) && (ratings[k]?.n ?? 0) < PRACTICE_ENOUGH);
+  const unmeasured = (areas && !areas.length ? [] : placementSkills({ singing: s.mode === 'voice', ...(skills ? { skills } : { areas }) })).filter((k) => !placed.has(k) && (ratings[k]?.n ?? 0) < PRACTICE_ENOUGH);
   const neverPlaced = !(p.lessons.placement?.completions ?? 0);
   return { intake, unmeasured, neverPlaced, key: `${intake ?? '-'}|${unmeasured.join(',')}` };
 }

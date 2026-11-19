@@ -117,9 +117,9 @@ describe('Find my level 3.0: every skill gets a range (asked or inferred)', () =
     expect(res.intervals).toBeUndefined();
     expect(res.theory).toBeUndefined();
     expect(res.degrees.passed).toBe(3);
-    // Chords follow degrees inside the area's budget (the skipped section's item counts toward it).
+    // Chords open the harmony area (owner 2026-11-19: harmony is asked, not inferred from hearing).
     expect(res.chords.passed).toBeGreaterThanOrEqual(2);
-    expect(res.chords.asked).toBeLessThanOrEqual(PLACEMENT_BUDGET.follow);
+    expect(res.chords.asked).toBeLessThanOrEqual(PLACEMENT_BUDGET.anchor);
     expect(res.sight).toBeDefined();
     // Only one question of a skipped section was shown (the one skipped).
     expect(s.lesson.questions.filter((q) => q.id.startsWith('p:intervals:')).length).toBe(1);

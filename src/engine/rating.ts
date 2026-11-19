@@ -242,10 +242,14 @@ export const OVERALL_WEIGHT: Partial<Record<SkillId, number>> = {
 
 /** A domain's place on the map: the confidence-weighted mean of its measured skills (null = none measured). */
 export function domainValue(ratings: Ratings, d: DomainId): { v: number; n: number } | null {
+  return skillsValue(ratings, DOMAINS.find((x) => x.id === d)!.skills);
+}
+/** The same 0..1 value over any group of skills (a course's own radar axis, e.g. the Ear course's harmony). */
+export function skillsValue(ratings: Ratings, skills: readonly SkillId[]): { v: number; n: number } | null {
   let num = 0;
   let den = 0;
   let n = 0;
-  for (const k of DOMAINS.find((x) => x.id === d)!.skills) {
+  for (const k of skills) {
     const s = ratings[k];
     if (!s || s.n === 0 || k === 'absolute') continue;
     const w = Math.min(1, s.n / CONFIDENT_AT);

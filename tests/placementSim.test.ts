@@ -3,7 +3,7 @@
 // fewer items than the 2.0 staircase to failure (re-implemented here as the "before").
 import { describe, expect, it } from 'vitest';
 import { mulberry32, type SkillId } from '../src/engine/lesson';
-import { LADDERS, PLACEMENT_BUDGET, placementEstimate, placementSkills, planPlacement, rungDifficulty, type PlacementAnswer } from '../src/engine/placement';
+import { LADDERS, PLACEMENT_BUDGET, placementTestBudget, placementEstimate, placementSkills, planPlacement, rungDifficulty, type PlacementAnswer } from '../src/engine/placement';
 import { DOMAINS, type DomainId } from '../src/engine/rating';
 
 /** P(right) = guess + (1 − guess) / (1 + 10^((d − θ)/S)). */
@@ -127,15 +127,17 @@ describe('Find my level 3.0: simulation (SPEC-PLACEMENT §7)', () => {
       const before = table('old', sd, {}, 100);
       const after = table('new', sd, {}, 100);
       after.forEach((a, i) => {
-        expect(a.maxItems, `θ=${a.theta}`).toBeLessThanOrEqual(PLACEMENT_BUDGET.test);
-        expect(a.meanItems, `θ=${a.theta}`).toBeLessThanOrEqual(35);
+        // Owner 2026-11-19: breadth over brevity — every area is asked, so the full test grows with its areas.
+        expect(a.maxItems, `θ=${a.theta}`).toBeLessThanOrEqual(placementTestBudget(placementSkills()));
+        expect(a.meanItems, `θ=${a.theta}`).toBeLessThanOrEqual(placementTestBudget(placementSkills()));
         expect(a.meanItems, `θ=${a.theta}`).toBeLessThan(before[i].meanItems * 0.6);
       });
-      for (const a of table('new', sd, { singing: true }, 50)) expect(a.maxItems).toBeLessThanOrEqual(PLACEMENT_BUDGET.testSung);
+      for (const a of table('new', sd, { singing: true }, 50)) expect(a.maxItems).toBeLessThanOrEqual(placementTestBudget(placementSkills({ singing: true }), true));
     }
   });
   it('one area takes about 8 items at most', () => {
-    for (const d of DOMAINS) for (const a of table('new', 100, { domain: d.id, singing: true }, 40)) expect(a.maxItems, `${d.id} θ=${a.theta}`).toBeLessThanOrEqual(PLACEMENT_BUDGET.area);
+    // The pitch domain is two search areas (hearing, harmony) since 2026-11-19.
+    for (const d of DOMAINS) for (const a of table('new', 100, { domain: d.id, singing: true }, 40)) expect(a.maxItems, `${d.id} θ=${a.theta}`).toBeLessThanOrEqual(PLACEMENT_BUDGET.area * (d.id === 'pitch' ? 2 : 1));
   });
   it('lands within about one rung band of the truth (mean |error| ≤ 150)', () => {
     for (const sd of [0, 100]) for (const a of table('new', sd, {}, 100)) {

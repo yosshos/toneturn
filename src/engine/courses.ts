@@ -4,6 +4,7 @@
 // Settings.pathFacts so every existing caller keeps working; the others wait in pathFactsBy).
 import type { Goal, PathInput, PathStep, PathFacts, Pack } from './path';
 import type { DomainId } from './rating';
+import type { SkillId } from './lesson';
 
 export type CourseId = 'ear' | 'voice' | 'keys' | 'guitar' | 'bass' | 'jazz' | 'drums';
 
@@ -55,6 +56,22 @@ export const COURSE_AREAS: Record<CourseId, DomainId[]> = {
   bass: ['instrument'],
   jazz: ['creative'],
   drums: ['instrument', 'time'],
+};
+
+/**
+ * Owner 2026-11-19: "the level test must check everything the course covers". The skills a course's own Find my level
+ * measures (null = the course has its own sectioned test): Ear & theory = hearing, harmony, rhythm, memory, reading and
+ * theory, transposing and expression (improvising is the Jazz course's); Jazz = its radar — improvising, chords,
+ * changes, modes, swing (rhythm by ear), forms.
+ */
+export const COURSE_PLACEMENT_SKILLS: Record<CourseId, SkillId[] | null> = {
+  ear: ['degrees', 'intervals', 'pitch', 'absolute', 'chords', 'cadences', 'modes', 'rhythm-dictation', 'rhythm-reading', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'notes', 'theory', 'sight', 'dictation', 'transpose', 'expression'],
+  jazz: ['chords', 'cadences', 'modes', 'rhythm-dictation', 'form', 'improv'],
+  voice: null,
+  keys: null,
+  guitar: null,
+  bass: null,
+  drums: null,
 };
 
 const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: 'guitar', bass: 'bass', drums: 'drums' };

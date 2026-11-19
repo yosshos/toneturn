@@ -217,7 +217,8 @@ export const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
 // By domain (pitch, time, memory, reading, creative), the sung skills last. Every skill on the map is measured: rhythmic
 // precision is not a section of its own — it is read from how precisely the rhythm-reading taps landed.
 export const PLACEMENT_ORDER: SkillId[] = [
-  'degrees', 'intervals', 'chords', 'cadences', 'modes', 'pitch', 'absolute',
+  'degrees', 'intervals', 'pitch', 'absolute',
+  'chords', 'cadences', 'modes',
   'rhythm-dictation', 'rhythm-reading', 'tempo', 'meter',
   'sequences', 'rhythm', 'form',
   'notes', 'theory', 'sight', 'dictation',
@@ -231,18 +232,18 @@ export const PLACEMENT_DERIVED: Partial<Record<SkillId, SkillId>> = { timing: 'r
 /** The sections of a placement: all skills, or one domain's; sung skills only with the microphone. */
 /** `areas`: only these areas — a course's own level test (owner: every course has its own Find my level). */
 /** A saved level test, kept only when it belongs to the course with these areas ([] = the course has its own test). */
-export function placementOfCourse<T extends { lesson: { placementSkills?: SkillId[]; placementDomain?: DomainId | null } }>(saved: T | null, areas: DomainId[]): T | null {
+export function placementOfCourse<T extends { lesson: { placementSkills?: SkillId[]; placementDomain?: DomainId | null } }>(saved: T | null, areas: DomainId[], skills?: SkillId[] | null): T | null {
   if (!saved || !areas.length) return null;
   const d = saved.lesson.placementDomain ?? null;
-  if (d) return areas.includes(d) ? saved : null;
-  const ok = placementSkills({ singing: true, areas });
+  if (d && !skills) return areas.includes(d) ? saved : null;
+  const ok = placementSkills({ singing: true, ...(skills ? { skills } : { areas }) });
   return (saved.lesson.placementSkills ?? []).every((k) => ok.includes(k)) ? saved : null;
 }
 
-export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null } = {}): SkillId[] {
+export function placementSkills(opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; skills?: SkillId[] | null } = {}): SkillId[] {
   const dom = opts.domain ? DOMAINS.find((d) => d.id === opts.domain)!.skills : null;
   const inAreas = (k: SkillId) => !opts.areas?.length || opts.areas.includes(k === 'rhythm-reading' ? 'time' : domainOf(k));
-  const list = PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && inAreas(k) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
+  const list = PLACEMENT_ORDER.filter((k) => (opts.singing || !SUNG_SKILLS.includes(k)) && inAreas(k) && (!opts.skills || opts.skills.includes(k)) && (!dom || dom.includes(k) || (k === 'rhythm-reading' && dom.includes('timing'))));
   const pr = opts.priorities;
   if (!pr?.length) return list;
   // The player's most important areas are measured first (stable within an area).
@@ -275,6 +276,9 @@ export const PLACEMENT_BUDGET = {
   /** A full test without / with the sung area. */
   test: 34,
   testSung: 40,
+  /** Items per area a many-area test grows to, and its ceiling (owner 2026-11-19: breadth over a short test). */
+  perArea: 7,
+  wide: 48,
 } as const;
 /** Two measured skills of an area within this many points agree → the rest of the area is inferred (§3.5). */
 export const AGREE = 150;
@@ -397,7 +401,13 @@ export function searchRange(skill: SkillId, s: Pick<SearchState, 'lo' | 'hi' | '
   return { low, high, rating: Math.round(low + SET_AT * (high - low)) };
 }
 
-const areaOf = (k: SkillId): DomainId => (k === 'rhythm-reading' ? 'time' : domainOf(k));
+/** The search's areas: the map's domains, with harmony (chords, cadences, modes) apart from the rest of hearing — owner
+ *  2026-11-19: the test inferred chords and cadences from degrees and intervals, so it never asked about harmony. */
+type SearchArea = DomainId | 'harmony';
+const HARMONY_SKILLS: SkillId[] = ['chords', 'cadences', 'modes'];
+/** Re-calibration offers area tests by the map's domains. */
+const domainAreaOf = (k: SkillId): DomainId => (k === 'rhythm-reading' ? 'time' : domainOf(k));
+const areaOf = (k: SkillId): SearchArea => (k === 'rhythm-reading' ? 'time' : HARMONY_SKILLS.includes(k) ? 'harmony' : domainOf(k));
 const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length;
 
 /**
@@ -405,23 +415,34 @@ const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length;
  * left, each skill's search, and the next item. `order` = every section in test order; `skipped` = sections
  * the player skipped (their answers still count toward the budgets).
  */
+/** A test's item budget: a many-area test grows (PLACEMENT_BUDGET.perArea per area, up to .wide). */
+export function placementTestBudget(order: SkillId[], sung = false): number {
+  const base = sung || order.some((k) => SUNG_SKILLS.includes(k)) ? PLACEMENT_BUDGET.testSung : PLACEMENT_BUDGET.test;
+  return Math.min(PLACEMENT_BUDGET.wide, Math.max(base, PLACEMENT_BUDGET.perArea * new Set(order.map(areaOf)).size));
+}
+
+/** The search's area of a skill (harmony apart from hearing). */
+export const placementAreaOf = (k: SkillId): string => areaOf(k);
+
 export function planPlacement(
   answers: PlacementAnswer[],
   order: SkillId[],
   opts: { skipped?: SkillId[]; sung?: boolean; priors?: Partial<Record<SkillId, number>> } = {},
 ): PlacementPlan {
   const skipped = new Set(opts.skipped ?? []);
-  const testBudget = opts.sung || order.some((k) => SUNG_SKILLS.includes(k)) ? PLACEMENT_BUDGET.testSung : PLACEMENT_BUDGET.test;
+  // Breadth first (owner 2026-11-19): every area not yet started keeps room for its first items (below), so the last
+  // areas are asked, not inferred from the first ones.
+  const testBudget = placementTestBudget(order.filter((k) => !skipped.has(k)), !!opts.sung);
   const by = new Map<SkillId, PlacementAnswer[]>();
   for (const a of answers) by.set(a.skill, [...(by.get(a.skill) ?? []), a]);
   const out: SkillPlan[] = [];
   let usedTest = 0;
-  const usedArea = new Map<DomainId, number>();
+  const usedArea = new Map<SearchArea, number>();
   const spend = (k: SkillId, n: number) => {
     usedTest += n;
     usedArea.set(areaOf(k), (usedArea.get(areaOf(k)) ?? 0) + n);
   };
-  const measured = (d?: DomainId) => out.filter((p) => p.rating !== null && p.role !== 'derived' && (!d || areaOf(p.skill) === d));
+  const measured = (d?: SearchArea) => out.filter((p) => p.rating !== null && p.role !== 'derived' && (!d || areaOf(p.skill) === d));
   let next: PlacementPlan['next'] = null;
   for (let i = 0; i < order.length; i++) {
     const k = order[i];
@@ -441,7 +462,8 @@ export function planPlacement(
     const agreed = inArea.length >= 2 && Math.abs(inArea[inArea.length - 1].rating! - inArea[inArea.length - 2].rating!) <= AGREE;
     // Budget: the skill's own, within what the area (keeping room for its never-inferred skills) and the test have left.
     const reserve = own ? 0 : order.slice(i + 1).filter((x) => !skipped.has(x) && areaOf(x) === d && NOT_DERIVED.includes(x)).length * PLACEMENT_BUDGET.own;
-    const left = Math.min(PLACEMENT_BUDGET.area - (usedArea.get(d) ?? 0) - reserve, testBudget - usedTest);
+    const later = new Set(order.slice(i + 1).filter((x) => !skipped.has(x) && areaOf(x) !== d && !usedArea.has(areaOf(x))).map(areaOf)).size;
+    const left = Math.min(PLACEMENT_BUDGET.area - (usedArea.get(d) ?? 0) - reserve, testBudget - usedTest - later * PLACEMENT_BUDGET.follow);
     const budget = Math.max(mine.length, Math.min(PLACEMENT_BUDGET[role], left));
     if (!mine.length && (budget <= 0 || (agreed && !own))) {
       // Not asked: inferred from the area (else from the test so far), or left unmeasured (§3.5).
@@ -533,7 +555,7 @@ const makeItem = (skill: SkillId, level: number, seed: number, n: number): Quest
 
 export function placementLesson(
   seed: number,
-  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
+  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; skills?: SkillId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
 ): LessonDef {
   // `only`: just these sections (catching up on skills measured since the player's last placement).
   const all = placementSkills(opts);
@@ -687,15 +709,15 @@ export function recalibration(events: RatingEvent[], ratings: Ratings, now: Date
     const f = skillForm(events, k);
     const r = ratings[k]?.r;
     if (f.placed !== null && r !== undefined && f.since >= RECAL.minAnswers && Math.abs(r - f.placed) >= RECAL.placementDrift) drifted.push({ skill: k, placed: f.placed, now: r, drift: r - f.placed });
-    if (f.placed !== null && r !== undefined && Math.abs(r - f.placed) >= RECAL.retestDrift) moved.set(areaOf(k), (moved.get(areaOf(k)) ?? 0) + 1);
+    if (f.placed !== null && r !== undefined && Math.abs(r - f.placed) >= RECAL.retestDrift) moved.set(domainAreaOf(k), (moved.get(domainAreaOf(k)) ?? 0) + 1);
     if (f.placedAt) {
       const days = (now.getTime() - new Date(f.placedAt).getTime()) / 864e5;
-      old.set(areaOf(k), Math.max(old.get(areaOf(k)) ?? 0, days));
+      old.set(domainAreaOf(k), Math.max(old.get(domainAreaOf(k)) ?? 0, days));
     }
     if (snoozed.includes(k) || f.n < RECAL.window) continue;
     if (f.gap >= RECAL.promoteGap && f.right >= RECAL.promoteRight) promote.push(k);
     else if (f.gap <= RECAL.demoteGap && f.right <= RECAL.demoteRight) demote.push(k);
   }
-  const retest = DOMAINS.map((d) => d.id).filter((d) => (moved.get(d) ?? 0) >= 2 || (old.has(d) && old.get(d)! >= RECAL.retestDays && [...drifted, ...promote.map((skill) => ({ skill }))].some((x) => areaOf(x.skill) === d)));
+  const retest = DOMAINS.map((d) => d.id).filter((d) => (moved.get(d) ?? 0) >= 2 || (old.has(d) && old.get(d)! >= RECAL.retestDays && [...drifted, ...promote.map((skill) => ({ skill }))].some((x) => domainAreaOf(x.skill) === d)));
   return { drifted, redrawProjected: drifted.length > 0, promote, demote, retest };
 }

@@ -5,7 +5,7 @@ import { courseLevels } from '../engine/courseSocial';
 import { techLevel, techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
-import { COURSE_AREAS, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
+import { COURSE_AREAS, COURSE_PLACEMENT_SKILLS, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
 import { AREAS as INTAKE_AREAS } from '../engine/intake';
 import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
@@ -967,14 +967,17 @@ export function App() {
     // Owner 2026-11-13: "Find my level" belongs to the course — the ear course measures its own areas, not voice or
     // instrument (the voice and instrument courses have their own tests).
     const areas = d ? null : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
+    // Owner 2026-11-19: everything the course covers (the ear test asked no harmony; the jazz test only improvising).
+    const skills = COURSE_PLACEMENT_SKILLS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
     const saved = fresh ? null : loadPlacement();
-    const savedFits = !areas || (saved?.lesson.placementSkills ?? []).every((k) => placementSkills({ singing: true, areas }).includes(k));
+    const savedFits = !areas || (saved?.lesson.placementSkills ?? []).every((k) => placementSkills({ singing: true, ...(skills ? { skills } : { areas }) }).includes(k));
     if (saved && (saved.lesson.placementDomain ?? null) === d && savedFits) return resumePlacement(saved);
     if (saved) clearPlacement(); // an old all-areas test never comes back in another course
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
     const skip = gameTierPlacement().skip;
-    const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d, areas }).filter((k) => !skip.includes(k)) : undefined;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, areas, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
+    const scope = skills && !d ? { skills } : { areas, ...(skills ? { skills } : {}) };
+    const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d, ...scope }).filter((k) => !skip.includes(k)) : undefined;
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, ...scope, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
@@ -2180,10 +2183,11 @@ export function App() {
   const automatedRun = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('catchup');
   const started = progress.history.length > 0 || Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
   const courseAreas: DomainId[] = instrumentCourse ? [] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? [];
-  const pending = catchUp(s, progress, courseAreas);
+  const courseSkills = instrumentCourse ? null : COURSE_PLACEMENT_SKILLS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
+  const pending = catchUp(s, progress, courseAreas, courseSkills);
   // 0.84: the "continue your level test" card only for a test of this course — an old all-areas test (from before
   // 0.83) came back from Home in the keys course.
-  const savedPlacement = route === 'home' ? placementOfCourse(loadPlacement(), courseAreas) : null;
+  const savedPlacement = route === 'home' ? placementOfCourse(loadPlacement(), courseAreas, courseSkills) : null;
   void dropTick;
   const lastThing = route === 'home' && !automatedRun ? latestAnything([PLACEMENT_KEY]) : null;
   // A questionnaire left half-way shows as partly filled, to continue any time (also before any lesson).
@@ -2485,7 +2489,7 @@ export function App() {
           whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }}
           onPlacement={openPlacement}
           onFindLevel={findLevel}
-          levelAreas={instrumentCourse || s.activeCourse === 'voice' ? [] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? []}
+          levelAreas={instrumentCourse || s.activeCourse === 'voice' ? [] : (s.activeCourse ?? 'ear') === 'ear' ? [...COURSE_AREAS.ear, 'creative'] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? []}
           onMode={(mode) => updateSettings({ mode })}
           onPractice={(id, consented) => {
             if (consented) updateSettings({ voiceConsent: true });

@@ -14,7 +14,7 @@ import { Glyph, glyphForEmoji } from './Glyph';
 import { useMemo, useState, type ReactNode } from 'react';
 import { achievements, AWARD_CATEGORIES, closestToUnlock, tierName, type Achievement, type AchievementExtra, type AwardCategory, type ProgressStats, type TierName } from '../engine/achievements';
 import type { SkillId } from '../engine/lesson';
-import { band, DOMAINS, domainValue, overallRating, SKILLS, type DomainId } from '../engine/rating';
+import { band, DOMAINS, domainValue, overallRating, skillsValue, SKILLS, type DomainId } from '../engine/rating';
 import {
   activityCalendar,
   bestSessions,
@@ -411,9 +411,20 @@ function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; rati
 /** The radar of a course (0.64): ear & theory → its areas; an instrument → its technique families (share of levels
  *  passed); voice → its vocal programs; jazz → harmony and improvising skills. Values 0..1, null = not started. */
 function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en'): { label: string; v: number | null }[] {
-  const area = (d: DomainId) => ({ label: AREA_NAME_SHORT[d][lang], v: domainValue(ratings, d)?.v ?? null });
   const skill = (k: SkillId, he: string, en: string) => ({ label: lang === 'he' ? he : en, v: ratings[k]?.n ? Math.max(0, Math.min(1, (ratings[k]!.r - 600) / 1000)) : null });
-  if (course === 'ear') return (['pitch', 'reading', 'time', 'memory', 'voice', 'creative'] as DomainId[]).map(area);
+  // Owner 2026-11-19: the ear radar showed Voice (not this course's) and called improvising "Harmony" — now the axes
+  // are what the course teaches and its level test measures (courses.ts COURSE_PLACEMENT_SKILLS).
+  if (course === 'ear') {
+    const grp = (ks: SkillId[], he: string, en: string) => ({ label: lang === 'he' ? he : en, v: skillsValue(ratings, ks)?.v ?? null });
+    return [
+      grp(['degrees', 'intervals', 'pitch'], 'שמיעה', 'Ear'),
+      grp(['chords', 'cadences', 'modes'], 'הרמוניה', 'Harmony'),
+      grp(['rhythm-dictation', 'rhythm-reading', 'timing', 'tempo', 'meter'], 'קצב', 'Rhythm'),
+      grp(['sequences', 'rhythm', 'form'], 'זיכרון', 'Memory'),
+      grp(['notes', 'theory', 'sight', 'dictation'], 'קריאה', 'Reading'),
+      grp(['transpose', 'expression'], 'ביטוי', 'Expression'),
+    ];
+  }
   if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('rhythm-dictation', 'סווינג', 'Swing'), skill('form', 'צורות', 'Forms')];
   if (course === 'voice') {
     const passed = progress.vocal?.passed ?? [];
@@ -452,9 +463,6 @@ const RADAR_FAMILIES: Partial<Record<CourseId, [family: string, he: string, en: 
   bass: [['b-pluck', 'פריטה', 'Plucking'], ['b-fret', 'לחיצה', 'Fretting'], ['b-time', 'זמן', 'Time'], ['b-chord', 'הרמוניה', 'Harmony'], ['b-walk', 'בס מהלך', 'Walking'], ['b-read', 'קריאה', 'Reading']],
   // PIANO_AUDIT I4: the first six catalogue families left the ear out and put "advanced" on the radar of a beginner.
   keys: [['scales', 'סולמות', 'Scales'], ['arpeggios', 'ארפג׳יו', 'Arpeggios'], ['fingers', 'אצבעות', 'Fingers'], ['control', 'מגע', 'Touch'], ['cadences', 'הרמוניה', 'Harmony'], ['k-ear', 'שמיעה', 'Ear']],
-};
-const AREA_NAME_SHORT: Record<DomainId, { he: string; en: string }> = {
-  pitch: { he: 'שמיעה', en: 'Ear' }, reading: { he: 'קריאה', en: 'Reading' }, time: { he: 'קצב', en: 'Rhythm' }, memory: { he: 'זיכרון', en: 'Memory' }, voice: { he: 'קול', en: 'Voice' }, creative: { he: 'הרמוניה', en: 'Harmony' }, instrument: { he: 'נגינה', en: 'Playing' },
 };
 
 export function OverviewView(props: ProgressTabsProps) {

@@ -5,8 +5,10 @@ import type { SkillId } from '../src/engine/lesson';
 import {
   adaptPlacement, AGREE, LADDERS, NOT_DERIVED, PLACEMENT_BUDGET, PLACEMENT_EVIDENCE, PLACEMENT_ORDER, placementLesson, placementResults, placementSkills, planPlacement,
   ratingDrift, recalibration, RECAL, rungDifficulty, searchSkill, skillForm, type PlacementAnswer,
+  placementAreaOf,
+  placementTestBudget,
 } from '../src/engine/placement';
-import { DOMAINS, K_ESTABLISHED, K_PROVISIONAL, rate, type RatingEvent, type SkillRating } from '../src/engine/rating';
+import { K_ESTABLISHED, K_PROVISIONAL, rate, type RatingEvent, type SkillRating } from '../src/engine/rating';
 import { createSession, grade, newTurn, advance } from '../src/engine/session';
 
 /** Asked rungs of one skill when the player answers `pattern` (true = right) from `start`. */
@@ -65,7 +67,7 @@ function play(order: SkillId[], can: (k: SkillId) => number, opts: { sung?: bool
   }
   throw new Error('no end');
 }
-const areaOf = (k: SkillId) => (k === 'rhythm-reading' ? 'time' : DOMAINS.find((d) => d.skills.includes(k))!.id);
+const areaOf = placementAreaOf;
 
 describe('budgets, ranges and inference (§3.3–§3.5)', () => {
   const order = placementSkills({ singing: true });
@@ -75,13 +77,13 @@ describe('budgets, ranges and inference (§3.3–§3.5)', () => {
       for (const b of levels) {
         // Two very different profiles alternating by skill: the worst case for inference.
         const { plan, answers } = play(order, (k) => (order.indexOf(k) % 2 ? a : b), { sung: true });
-        expect(answers.length).toBeLessThanOrEqual(PLACEMENT_BUDGET.testSung);
+        expect(answers.length).toBeLessThanOrEqual(placementTestBudget(order, true));
         for (const s of plan.skills) expect(s.asked, s.skill).toBeLessThanOrEqual(PLACEMENT_BUDGET.anchor);
         const per = new Map<string, number>();
         answers.forEach((x) => per.set(areaOf(x.skill), (per.get(areaOf(x.skill)) ?? 0) + 1));
         for (const [d, n] of per) expect(n, d).toBeLessThanOrEqual(PLACEMENT_BUDGET.area);
       }
-    for (const a of levels) expect(play(placementSkills(), () => a).answers.length).toBeLessThanOrEqual(PLACEMENT_BUDGET.test);
+    for (const a of levels) expect(play(placementSkills(), () => a).answers.length).toBeLessThanOrEqual(placementTestBudget(placementSkills()));
   });
   it('every skill ends with a range around a lower-middle rating; asked or inferred', () => {
     for (const a of levels) {
@@ -100,7 +102,11 @@ describe('budgets, ranges and inference (§3.3–§3.5)', () => {
     const pitch = plan.skills.filter((s) => areaOf(s.skill) === 'pitch');
     const measured = pitch.filter((s) => s.role !== 'derived');
     expect(Math.abs(measured[0].rating! - measured[1].rating!)).toBeLessThanOrEqual(AGREE);
-    expect(pitch.filter((s) => s.role === 'derived').map((s) => s.skill)).toEqual(['chords', 'cadences', 'modes', 'pitch']);
+    expect(pitch.filter((s) => s.role === 'derived').map((s) => s.skill)).toEqual(['pitch']);
+    // Harmony is its own area (owner 2026-11-19): chords and cadences are asked, modes inferred from them.
+    const harmony = plan.skills.filter((s) => areaOf(s.skill) === 'harmony');
+    expect(harmony.filter((s) => s.role !== 'derived').map((s) => s.skill)).toEqual(['chords', 'cadences']);
+    expect(harmony.filter((s) => s.role === 'derived').map((s) => s.skill)).toEqual(['modes']);
     for (const s of plan.skills) if (NOT_DERIVED.includes(s.skill)) expect(s.role, s.skill).toBe('own');
   });
   it('a skill unlike its area is still measured and placed apart', () => {
@@ -137,7 +143,7 @@ describe('through the session (adaptPlacement / placementResults)', () => {
       if (next.length === s.index + 1) break;
       s = newTurn(advance(s), 'listening');
     }
-    expect(s.lesson.questions.length).toBeLessThanOrEqual(PLACEMENT_BUDGET.test);
+    expect(s.lesson.questions.length).toBeLessThanOrEqual(placementTestBudget(placementSkills()));
     const res = placementResults(s);
     expect(res.length).toBeGreaterThanOrEqual(placementSkills().length);
     for (const r of res) {
