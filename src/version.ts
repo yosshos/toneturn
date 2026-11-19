@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.105.0',
+    date: '2026-11-19',
+    en: ['Every course now opens with a short animated tour of what awaits you, and each unit opens with a short intro the first time you enter it. Replay both from the course page.', 'Gentler pacing: each level gives you two or three questions before it climbs, and the first lessons teach one topic at a time.', 'The Ear course now starts with high and low, and a new lesson, “What is a chord?”, comes before major and minor. Games wait until their concept has been taught.'],
+    he: ['כל קורס נפתח עכשיו בסיור מונפש קצר על מה שמחכה לכם, וכל יחידה נפתחת בהקדמה קצרה בפעם הראשונה שנכנסים אליה. אפשר לצפות שוב מדף הקורס.', 'קצב רך יותר: כל רמה נותנת שתיים־שלוש שאלות לפני שעולים, והשיעורים הראשונים מלמדים נושא אחד בכל פעם.', 'קורס השמיעה מתחיל עכשיו בגבוה ונמוך, ושיעור חדש, "מה זה אקורד?", בא לפני מז׳ור ומינור. משחקים מחכים עד שהמושג שלהם נלמד.'],
+  },
+  {
     version: '0.104.2',
     date: '2026-11-18',
     en: ['The language button now switches everything at once: the screens, the language you answer in and the voice that answers you.', 'Keep screen on: the screen no longer goes dark while the app is open (Settings → Display to turn it off).', 'The “home note” question now simply asks which note the tune would end on.'],
