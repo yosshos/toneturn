@@ -10,6 +10,7 @@ import type { PercKind, NoteEvent } from '../engine/lesson';
 import type { Section } from '../engine/path';
 import type { SelfReport } from '../engine/courseStart';
 import type { GlyphKind } from '../ui/Glyph';
+import { TOPIC_GROUPS } from '../engine/topicGroups';
 
 export type T2 = { he: string; en: string };
 
@@ -103,7 +104,7 @@ export interface CourseOpenerDef {
   rungs: [T2, T2, T2, T2];
 }
 
-const EAR_THEME_GLYPH: Record<string, GlyphKind> = { basics: 'contour', home: 'tune', steps: 'intervals', colour: 'features', pulse: 'pulse', chords: 'chords', memory: 'memory', harmony: 'prog', groove: 'groove', read: 'sight', sound: 'eq' };
+const EAR_THEME_GLYPH: Record<string, GlyphKind> = { basics: 'contour', home: 'tune', steps: 'intervals', colour: 'features', pulse: 'pulse', chords: 'chords', memory: 'memory', harmony: 'prog', groove: 'groove', read: 'sight', sound: 'eq', symmetry: 'tonnetz', posttonal: 'intervals', barry: 'sixdim', reharm: 'reharm', jazz: 'prog', world: 'scales' };
 export const themeGlyph = (theme: string | undefined): GlyphKind => EAR_THEME_GLYPH[theme ?? ''] ?? 'ear';
 
 // Shared demo sounds
@@ -740,6 +741,98 @@ export const UNIT_THEMES: Record<string, UnitThemeCopy> = {
     ],
     base: 48,
   },
+  // Advanced units (2026-11-19, owner: every unit opener, the new ones too, says what that unit is for).
+  symmetry: {
+    name: { he: 'סימטריה', en: 'Symmetry' },
+    what: { he: 'מחלקים את האוקטבה לחלקים שווים, ועוברים בין אקורדים בצעד אחד.', en: 'Split the octave into equal parts, and move between chords one step at a time.' },
+    whatSay: { he: 'מחלקים את האוקטבה לחלקים שווים.', en: 'You split the octave into equal parts.' },
+    why: { he: 'כך עובדים מוקטן, מוגדל ומעגלי קולטריין', en: 'How diminished, augmented and Coltrane cycles work' },
+    whySay: { he: 'מכאן באים המוקטן, המוגדל, מעגלי קולטריין והמדיאנטות של מוזיקת סרטים.', en: 'This is where diminished, augmented, Coltrane cycles and film-score mediants come from.' },
+    feeds: [{ g: 'tonnetz', t: { he: 'P L R', en: 'P L R' } }, { g: 'chords', t: { he: 'אקורדים', en: 'Chords' } }, { g: 'scales', t: { he: 'סולמות', en: 'Scales' } }],
+    goal: { he: 'בסוף: תשמעו חלוקה שווה ותנועה בצעד אחד', en: 'By the end: hear equal divisions and one-step moves' },
+    goalSay: { he: 'בסוף היחידה תשמעו לכמה חלקים האוקטבה מתחלקת, ואיזה צליל זז בין שני אקורדים.', en: 'By the end, you will hear how the octave is split, and which note moves between two chords.' },
+    demo: [
+      { cap: { he: 'לשלושה: טרצות גדולות', en: 'In three: major thirds' }, ev: ev([60, 64, 68, 72]) },
+      { cap: { he: 'לארבעה: טרצות קטנות', en: 'In four: minor thirds' }, ev: ev([60, 63, 66, 69, 72]) },
+    ],
+    base: 60,
+  },
+  posttonal: {
+    name: { he: 'מוזיקה של המאה ה־20', en: '20th-century music' },
+    what: { he: 'סטים, המודוסים של מסיאן ושורת 12 הטונים.', en: 'Sets, the modes of Messiaen and the twelve-tone row.' },
+    whatSay: { he: 'מוזיקה בלי בית: סטים, מסיאן ושורות.', en: 'Music without a home key: sets, Messiaen and rows.' },
+    why: { he: 'שפה של מוזיקה קלאסית מודרנית וקולנוע', en: 'The language of modern concert and film music' },
+    whySay: { he: 'כך כתבו שנברג, מסיאן ווברן, וכך כותבים הרבה מוזיקה לסרטים.', en: 'This is how Schoenberg, Messiaen and Webern wrote, and much film music too.' },
+    feeds: [{ g: 'intervals', t: { he: 'מרווחים', en: 'Intervals' } }, { g: 'scales', t: { he: 'מודוסים', en: 'Modes' } }, { g: 'sight', t: { he: 'שורות', en: 'Rows' } }],
+    goal: { he: 'בסוף: תזהו סט, מודוס ושורה', en: 'By the end: name a set, a mode and a row form' },
+    goalSay: { he: 'בסוף היחידה תזהו סט, מודוס של מסיאן וצורה של שורה.', en: 'By the end, you will name a set, a Messiaen mode and a row form.' },
+    demo: [
+      { cap: { he: 'שורה', en: 'A row' }, ev: ev([60, 61, 65, 63, 66, 62]) },
+      { cap: { he: 'ההיפוך שלה', en: 'Its inversion' }, ev: ev([60, 59, 55, 57, 54, 58]) },
+    ],
+    base: 54,
+  },
+  barry: {
+    name: { he: 'בארי האריס', en: 'Barry Harris' },
+    what: { he: 'אקורד שישית ומוקטן מתחלפים, וכל הרמוניה נבנית מהם.', en: 'A sixth chord and a diminished chord take turns, and harmony grows from them.' },
+    whatSay: { he: 'שישית ומוקטן מתחלפים.', en: 'Sixth and diminished take turns.' },
+    why: { he: 'הבסיס לשפת הביבופ', en: 'The ground of the bebop language' },
+    whySay: { he: 'מכאן באים הקווים, הקולות והתנועה של הביבופ.', en: 'Bebop lines, voicings and movement grow from this.' },
+    feeds: [{ g: 'sixdim', t: { he: 'שישית-מוקטן', en: 'Sixth-dim' } }, { g: 'voicing', t: { he: 'קולות', en: 'Voicings' } }, { g: 'prog', t: { he: 'מהלכים', en: 'Changes' } }],
+    goal: { he: 'בסוף: תשמעו את השישית והמוקטן בתוך המוזיקה', en: 'By the end: hear the sixth and the diminished inside the music' },
+    goalSay: { he: 'בסוף היחידה תשמעו איפה השישית ואיפה המוקטן.', en: 'By the end, you will hear where the sixth is and where the diminished is.' },
+    demo: [
+      { cap: { he: 'סולם שישית-מוקטן', en: 'The sixth-diminished scale' }, ev: ev([60, 62, 64, 65, 67, 68, 69, 71, 72], 0.26, 0.24) },
+      { cap: { he: 'C6 · B°7 · C6', en: 'C6 · B°7 · C6' }, ev: [{ m: [48, 60, 64, 67, 69], t: 0, d: 0.6 }, { m: [47, 59, 62, 65, 68], t: 0.6, d: 0.6 }, { m: [48, 60, 64, 67, 69], t: 1.2, d: 0.9 }], end: 'home' },
+    ],
+    base: 47,
+  },
+  reharm: {
+    name: { he: 'הרמון מחדש וצבע', en: 'Reharmonising and colour' },
+    what: { he: 'אותה מנגינה, אקורדים אחרים.', en: 'The same melody, other chords.' },
+    whatSay: { he: 'אותה מנגינה, עם אקורדים אחרים.', en: 'The same melody, with other chords.' },
+    why: { he: 'כך עיבוד הופך שיר מוכר לחדש', en: 'How an arrangement makes a known song new' },
+    whySay: { he: 'כך מעבדים ונגני ג׳אז הופכים שיר מוכר למשהו חדש.', en: 'This is how arrangers and jazz players make a known song new.' },
+    feeds: [{ g: 'reharm', t: { he: 'הרמון', en: 'Reharm' } }, { g: 'mirror', t: { he: 'מראה', en: 'Mirror' } }, { g: 'prog', t: { he: 'מהלכים', en: 'Changes' } }],
+    goal: { he: 'בסוף: תשמעו איזה אקורד הוחלף, ובמה', en: 'By the end: hear which chord was replaced, and with what' },
+    goalSay: { he: 'בסוף היחידה תשמעו איזה אקורד הוחלף, ובמה.', en: 'By the end, you will hear which chord was replaced, and with what.' },
+    demo: [
+      { cap: { he: 'צליל אחד, שלושה אקורדים', en: 'One note, three chords' }, ev: [{ m: [48, 64, 67, 72], t: 0, d: 0.7 }, { m: [44, 60, 63, 67, 72], t: 0.7, d: 0.7 }, { m: [41, 56, 65, 72], t: 1.4, d: 0.9 }] },
+      { cap: { he: 'G7 ואז המראה שלו, Fm6', en: 'G7, then its mirror Fm6' }, ev: [{ m: [43, 59, 62, 65], t: 0, d: 0.6 }, { m: [48, 60, 64, 67], t: 0.6, d: 0.7 }, { m: [41, 56, 60, 62], t: 1.4, d: 0.6 }, { m: [48, 60, 64, 67], t: 2, d: 0.9 }], end: 'home' },
+    ],
+    base: 41,
+  },
+  jazz: {
+    name: { he: 'אוזן של ג׳אז', en: 'A jazz ear' },
+    what: { he: 'ii–V–I, צלילים מנחים, טרנאראונדים וסווינג.', en: 'ii–V–I, guide tones, turnarounds and swing.' },
+    whatSay: { he: 'שומעים את המהלכים של הג׳אז.', en: 'You hear the moves of jazz.' },
+    why: { he: 'כדי לנגן סטנדרטים מהאוזן', en: 'To play standards by ear' },
+    whySay: { he: 'מי ששומע את המהלכים, יכול ללוות ולאלתר על סטנדרטים.', en: 'Hear the changes, and you can comp and improvise on standards.' },
+    feeds: [{ g: 'prog', t: { he: 'מהלכים', en: 'Changes' } }, { g: 'standard', t: { he: 'סטנדרטים', en: 'Standards' } }, { g: 'voicing', t: { he: 'קולות', en: 'Voicings' } }],
+    goal: { he: 'בסוף: תשמעו את המהלך של סטנדרט', en: 'By the end: hear the changes of a standard' },
+    goalSay: { he: 'בסוף היחידה תשמעו את המהלך של סטנדרט.', en: 'By the end, you will hear the changes of a standard.' },
+    demo: [
+      { cap: { he: 'ii – V – I', en: 'ii – V – I' }, ev: [{ m: [50, 60, 65, 69], t: 0, d: 0.7 }, { m: [43, 59, 65, 69], t: 0.7, d: 0.7 }, { m: [48, 59, 64, 69], t: 1.4, d: 1 }], end: 'home' },
+      { cap: { he: 'בסווינג', en: 'Swung' }, ev: swung(8) },
+    ],
+    base: 43,
+  },
+  world: {
+    name: { he: 'מקאמים ומקצבים מזרחיים', en: 'Maqamat and Middle-Eastern rhythm' },
+    what: { he: 'סולמות ומקצבים של המוזיקה הערבית והמזרחית.', en: 'The scales and rhythms of Arabic and Middle-Eastern music.' },
+    whatSay: { he: 'סולמות ומקצבים מזרחיים.', en: 'Middle-Eastern scales and rhythms.' },
+    why: { he: 'צבעים שאין בסולם המערבי', en: 'Colours the Western scale does not have' },
+    whySay: { he: 'כל מקאם הוא צבע ודרך מלודית משלו.', en: 'Each maqam is its own colour and melodic path.' },
+    feeds: [{ g: 'scales', t: { he: 'מקאמים', en: 'Maqamat' } }, { g: 'rhythm', t: { he: 'מקצבים', en: 'Rhythms' } }, { g: 'intervals', t: { he: 'מרווחים', en: 'Intervals' } }],
+    goal: { he: 'בסוף: תזהו מקאם ומקצב', en: 'By the end: name a maqam and a rhythm' },
+    goalSay: { he: 'בסוף היחידה תזהו מקאם ומקצב.', en: 'By the end, you will name a maqam and a rhythm.' },
+    demo: [
+      { cap: { he: 'חיג׳אז, עולה', en: 'Hijaz, up' }, ev: ev([62, 63, 66, 67, 69]) },
+      { cap: { he: 'חיג׳אז, יורד', en: 'Hijaz, down' }, ev: ev([69, 67, 66, 63, 62]), end: 'home' },
+    ],
+    base: 60,
+    home: 62,
+  },
 };
 
 /** Courses whose units are mostly playing (technique / vocal families): a course-level what and a why per section. */
@@ -818,8 +911,27 @@ export const LEAD_LESSON_THEME: Record<string, string> = {
   'lesson:scales-mm': 'steps',
   'lesson:mode-colours': 'colour',
 };
+/** Topics of the advanced units -> their unit copy (via the topic groups, plus the post-tonal pack). */
+const GROUP_THEME: Record<string, string> = { symmetry: 'symmetry', barry: 'barry', 'barry-2': 'barry', 'reharm-color': 'reharm', jazz: 'jazz', world: 'world' };
+const ADVANCED_TOPIC_THEME: Record<string, string> = {
+  ...Object.fromEntries(TOPIC_GROUPS.flatMap((g) => (GROUP_THEME[g.id] ? g.topics.map((tp) => [tp, GROUP_THEME[g.id]]) : []))),
+  'set-classes': 'posttonal',
+  'messiaen-modes': 'posttonal',
+  'twelve-tone': 'posttonal',
+  'negative-harmony': 'reharm',
+};
 export function unitThemeOf(course: CourseId, pathTheme: string | undefined, steps: readonly { id: string; sub?: string }[], themes: readonly { id: string; subs: string[] }[]): string | undefined {
   if (course !== 'ear' && course !== 'jazz') return pathTheme;
+  // An advanced unit (Symmetry, post-tonal, Barry Harris, reharm, jazz ear, maqamat) is described by what most of its
+  // topic steps are, before the lead lesson (2026-11-19: the new units fell back to a generic copy).
+  const adv = new Map<string, number>();
+  const topics = steps.map((x) => /^topic:([a-z0-9-]+):/.exec(x.id)?.[1]).filter((x): x is string => !!x);
+  for (const tp of topics) {
+    const th = ADVANCED_TOPIC_THEME[tp];
+    if (th) adv.set(th, (adv.get(th) ?? 0) + 1);
+  }
+  const top = [...adv].sort((a, b) => b[1] - a[1])[0];
+  if (top && top[1] * 2 >= topics.length) return top[0];
   const lead = steps.find((x) => x.id.startsWith('lesson:') && LEAD_LESSON_THEME[x.id]);
   if (lead) return LEAD_LESSON_THEME[lead.id];
   const inT = (sub: string, t: { subs: string[] }) => t.subs.some((x) => (x.endsWith('/') ? sub.startsWith(x) : sub === x));
