@@ -6,18 +6,18 @@ export type InsightCard = 'ear-index' | 'technique' | 'keys' | 'hand-map' | 'key
 
 const CARDS: Record<InsightCard, readonly CourseId[]> = {
   // Built from the ear ratings (intervals, chords, progressions …).
-  'ear-index': ['ear', 'jazz'],
+  'ear-index': ['ear'],
   // Technique findings and the key map come from measured drills on an instrument.
   technique: ['keys', 'guitar', 'bass', 'drums'],
   // Key mastery (owner 2026-11-14): every technique / jazz skill in all 12 keys, on piano, guitar and bass.
-  keys: ['keys', 'guitar', 'bass', 'jazz'],
+  keys: ['keys', 'guitar', 'bass'],
   // Per-finger loudness of both hands: a keyboard measure.
   'hand-map': ['keys'],
   'key-map': ['keys', 'guitar', 'bass'],
   // Timing against the beat: every course that plays or taps in time.
-  groove: ['ear', 'jazz', 'keys', 'guitar', 'bass', 'drums'],
+  groove: ['ear', 'keys', 'guitar', 'bass', 'drums'],
   // Which answers get mixed up: the ear questions (the voice course asks them too).
-  confusions: ['ear', 'jazz', 'voice'],
+  confusions: ['ear', 'voice'],
   // Pieces in the piece coach.
   'trouble-bars': ['keys', 'guitar', 'bass', 'voice', 'drums'],
 };

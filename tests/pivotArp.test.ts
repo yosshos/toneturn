@@ -220,9 +220,9 @@ describe('wiring', () => {
     packs: ['jazz', 'maqam', 'absolute', 'production', 'post-tonal'], plays: [], minutes: 10, ratings: {}, events: [],
     facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-14T10:00:00Z'),
   };
-  it('the topic is on the jazz path before the scale line with a pivot; the keys levels sit at ~1450', () => {
+  it('the topic is on the ear path (jazz pack) before the scale line with a pivot; the keys levels sit at ~1450', () => {
     const cat = stepCatalogue();
-    expect(cat.filter((s) => s.topic === 'bh-pivot-arp' && eligible(s, courseInput(base, 'jazz'))).length).toBe(5);
+    expect(cat.filter((s) => s.topic === 'bh-pivot-arp' && eligible(s, courseInput(base, 'ear'))).length).toBe(5);
     const d = (id: string) => cat.find((s) => s.id === id)!.difficulty;
     expect(d('topic:bh-pivot-arp:1')).toBeLessThan(d('topic:bh-pivot:1'));
     expect(STEP_PREREQ['topic:bh-pivot:1']).toContain('topic:bh-pivot-arp:1');

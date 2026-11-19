@@ -35,7 +35,7 @@ describe('game badges', () => {
       }
     expect(new Set(GAME_BADGE_GAMES.map((g) => resolveGlyph({ id: `special:game:${g.game}:f`, cat: 'special' }).glyph)).size).toBe(new Set(GAME_BADGE_GAMES.map((g) => g.game)).size);
     expect(badgeInCourse(BADGE_BY_ID['special:game:time-lock:f'], 'drums')).toBe(true);
-    expect(badgeInCourse(BADGE_BY_ID['special:game:time-lock:f'], 'jazz')).toBe(false);
+    expect(badgeInCourse(BADGE_BY_ID['special:game:time-lock:f'], 'ear')).toBe(false);
   });
   it('earned by the tier cleared', () => {
     const tiers: GameTiers = { 'time-lock': { cleared: 'f', recent: {}, best: {}, runs: 3 } };

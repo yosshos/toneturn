@@ -238,7 +238,7 @@ export const sectionChordsOk = (a: SongAnalysis, s: Section) => chordsOk(a) && c
 /** What a course can honestly measure on this recording, and the sentence that says so on screen. */
 export function measurePlan(a: SongAnalysis, course: CourseId): MeasurePlan {
   const b = beatsOk(a);
-  if (course === 'ear' || course === 'jazz' || course === 'voice') {
+  if (course === 'ear' || course === 'voice') {
     const t = melodyOk(a) || (!!a.melody && a.melody.notes.length >= 6);
     return t
       ? { timing: false, pitch: 'melody', transcribe: true, none: false, why: melodyOk(a) ? { en: 'Phrases of the melody, compared note by note.', he: 'משפטים מהמנגינה, בהשוואה צליל אחר צליל.' } : { en: 'The melody came out only in part: some notes may be missing or wrong.', he: 'המנגינה יצאה רק בחלקה: ייתכן שחסרים צלילים או שיש שגויים.' } }

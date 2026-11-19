@@ -1882,7 +1882,9 @@
 }
 .exam-head-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-start;
+  gap: 8px;
   margin: 6px 0 2px;
 }
 /* 0.67: Today's exam-prep card (the Ear course in exam-prep mode). */

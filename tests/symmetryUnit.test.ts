@@ -128,7 +128,7 @@ describe('registrations', () => {
     for (const t of TOPICS) {
       const s = cat.find((x) => x.id === `topic:${t}:1`)!;
       expect(eligible(s, courseInput(base, 'ear')), t).toBe(true);
-      expect(eligible(s, courseInput(base, 'jazz')), t).toBe(false);
+      expect(s.pack, t).not.toBe('jazz');
     }
     expect(STEP_PREREQ['topic:octave-division:1']).toContain('topic:scale-types:4');
     expect(STEP_PREREQ['topic:neo-riemann:1']).toContain('topic:octave-division:1');
@@ -138,8 +138,10 @@ describe('registrations', () => {
     expect(d('topic:octave-division:1')).toBeGreaterThan(d('topic:scale-types:4'));
   });
 
-  it('a walk of the Ear path meets the unit after scale-types 4, in order, with the Tonnetz after P / L / R (the game rotation shares units with the newer games)', () => {
-    const w = walkPath('ear', 'student', 'strong', 75, { placeAt: 1300 });
+  it('a walk of the Ear path meets the unit after scale-types 4, in order, with the Tonnetz after P / L / R', () => {
+    // SPEC-JAZZ-FOLD: with the jazz pack closed the pitch units' game rotation has no jazz games, so the Tonnetz
+    // comes round later in the rotation (80 units).
+    const w = walkPath('ear', 'student', 'strong', 80, { placeAt: 1300 });
     const at = (re: RegExp) => w.units.findIndex((u) => u.ids.some((x) => re.test(x)));
     const sc = at(/^topic:scale-types:4$/);
     const od = at(/^topic:octave-division:1$/);

@@ -5,7 +5,9 @@ import { GAME_STEPS, gameForArea } from '../src/engine/path';
 import { COURSE_GAMES } from '../src/ui/courseRows';
 import { INST_KEYS, changeChords, changeKeyOf, rootsItem, walkChart } from '../src/engine/instGames';
 import { RIFF_ROOTS, makeRiff } from '../src/engine/riffEcho';
-import { WORKOUT_GAMES, suggestWorkout, workoutGame } from '../src/engine/workout2';
+import { JAZZ_WORKOUT_GAMES, WORKOUT_GAMES, suggestWorkout, workoutGame } from '../src/engine/workout2';
+import { JAZZ_GAMES } from '../src/engine/courses';
+import { gameVerified } from '../src/engine/verifiedContent';
 import { addGameKeyTakes, gameKeyFamily, gameKeyTitle, keyTakesOf, withGameKeys } from '../src/engine/gameKeys';
 import { instrumentKeys, keyMastery } from '../src/engine/analysis/keyMastery';
 import { NTS_TUNES } from '../src/engine/topicsAdvGames';
@@ -47,7 +49,7 @@ describe('the games that never reached the path are path games now', () => {
       expect([...seen]).toContain(g);
       expect(GLYPHS[GAME_STEP_GLYPH[g]], g).toBeDefined();
       // never in another course
-      for (const c of ['ear', 'jazz'] as const) for (let n = 0; n < 20; n++) expect(gameForArea(area, n, { ...base, plays: [], course: c }, 1400)).not.toBe(g);
+      for (const c of ['ear'] as const) for (let n = 0; n < 20; n++) expect(gameForArea(area, n, { ...base, plays: [], course: c }, 1400)).not.toBe(g);
     });
   it('a harder game waits for its difficulty', () => {
     for (let n = 0; n < 30; n++) {
@@ -60,10 +62,18 @@ describe('the games that never reached the path are path games now', () => {
 describe('the workout game rotates through the course', () => {
   it('a game of the course per day, Highway without a course', () => {
     expect(workoutGame()).toBe('highway');
+    // SPEC-JAZZ-FOLD: the jazz games rotate in only with the jazz pack open (all of them in jazz focus).
+    const day = (i: number) => new Date(Date.UTC(2026, 10, 1) + i * 86400000).toISOString().slice(0, 10);
     for (const c of Object.keys(WORKOUT_GAMES) as CourseId[]) {
-      const days = Array.from({ length: 14 }, (_, i) => workoutGame(c, `2026-11-${String(i + 1).padStart(2, '0')}`));
-      expect(new Set(days).size).toBe(WORKOUT_GAMES[c].length);
-      for (const g of days) expect(COURSE_GAMES[c].includes(g) || g === 'highway', `${c} ${g}`).toBe(true);
+      for (const jazz of ['off', 'on'] as const) {
+        const pool = new Set([...WORKOUT_GAMES[c].filter((g) => jazz === 'on' || !JAZZ_GAMES.includes(g)), ...(jazz === 'on' ? JAZZ_WORKOUT_GAMES[c] ?? [] : [])].filter(gameVerified));
+        const days = Array.from({ length: 40 }, (_, i) => workoutGame(c, day(i), jazz));
+        expect(new Set(days).size, `${c} ${jazz}`).toBe(pool.size);
+        for (const g of days) expect(COURSE_GAMES[c].includes(g) || g === 'highway', `${c} ${g}`).toBe(true);
+        if (jazz === 'off') for (const g of days) expect(JAZZ_GAMES, `${c} ${g}`).not.toContain(g);
+      }
+      const focus = new Set(Array.from({ length: 20 }, (_, i) => workoutGame(c, day(i), 'focus')));
+      if ((JAZZ_WORKOUT_GAMES[c] ?? []).filter(gameVerified).length) for (const g of focus) expect(JAZZ_WORKOUT_GAMES[c], `${c} focus ${g}`).toContain(g);
     }
   });
   it('suggestWorkout uses it', () => {

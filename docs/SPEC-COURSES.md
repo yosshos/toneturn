@@ -20,7 +20,7 @@ From now on the app has **courses**:
 | `keys` | פסנתר וקלידים | The instrument domain with `forPlays: keys`. Also keys technique (SPEC-TECHNIQUE), reading at the keyboard, the piece coach, and harmony at the keys. |
 | `guitar` | גיטרה | The same for guitar (SPEC-GUITAR-TECHNIQUE), including the fretboard topics. |
 | `bass` | בס | The same for bass. |
-| `jazz` | ג׳אז ואלתור | The `jazz` pack, the creative domain (improv), improv-rules challenges, lead sheets and standards. |
+| ~~`jazz`~~ | ~~ג׳אז ואלתור~~ | **2026-11-19 (owner): no longer a course** (docs/SPEC-JAZZ-FOLD.md). Its ear and theory are the top levels of `ear`, its playing lives in the instrument / voice courses, all gated by the `jazz` pack per course (open for student / pro backgrounds, opened by climbing to mf, or by "מיקוד ג׳אז" — jazz focus, a mode of every course). Old `jazz` data migrates to Ear in jazz focus (`migrateJazzCourse`). |
 | ~~`exam`~~ | ~~בגרות ומבחני כניסה~~ | **0.67 (owner 2026-11-10): no longer a course.** Exam prep ("הכנה לבגרות") is a mode of the Ear course (`Settings.examPrep`): exam-goal path and workout weighting, mock exams first on Practice, an exam card and an exam-topic quest on Today. Old `exam` data migrates to Ear with the mode on (`migrateExamCourse`). |
 
 **Still open:** `maqam`, `production`, `absolute` and `post-tonal` stay packs inside `ear` for now. Each can become its own course later.
@@ -33,7 +33,7 @@ From now on the app has **courses**:
    - every player gets `ear`;
    - `plays` includes keys, guitar or bass → that instrument course;
    - goal `sing`, or voice in `plays` → `voice`;
-   - goal `jazz` → `jazz`;
+   - goal `jazz` → `ear` in jazz focus (SPEC-JAZZ-FOLD);
    - goal `exam` → `ear` with exam prep on (0.67).
 
    Each done step moves to the course that owns it. The active course is the one that matches the goal.
@@ -73,7 +73,11 @@ Each course feeds its own path and map. XP, the league and the streak stay globa
 3. Games tagged by course, and the skill map filtered by course.
 4. A crawl of every screen on phone and wide, checking that no screen still shows mixed content.
 
-## Course membership (AUDIT-6 Stage A, 2026-11-15)
+## Course membership (AUDIT-6 Stage A, 2026-11-15; jazz folded 2026-11-19)
+
+> SPEC-JAZZ-FOLD supersedes the Jazz bullets below: the jazz pack's steps, the improvising skill, the jazz bonus games
+> and repertoire are Ear steps; the jazz technique families (`JAZZ_FAMILIES`) are only their instrument course's; every
+> jazz step (`isJazzStep`) needs the jazz pack open in the course.
 
 The rule lives in `inCourse()` (`src/engine/courses.ts`), with the jazz list in `path.ts` (`PACK_TOPICS`, `PACK_LEVELS`).
 

@@ -105,7 +105,7 @@ export const TOPIC_MARK: Record<string, string> = {
   displacement: '→♩',
   'displacement-3': '6/8',
   'rhythm-transform': '×2',
-  'bh-convert': 'dim',
+  'bh-convert': '6↔°',
   'bh-convert-2': 'dim2',
   'bh-tone': 'C6',
   'bh-block': 'blk',
@@ -135,7 +135,7 @@ export const TOPIC_MARK: Record<string, string> = {
   'triad-pairs': '△△',
   'pent-super': '5/7',
   polychords: 'D/C',
-  'reharm-own': 'sub',
+  'reharm-own': 'my sub',
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): Barry Harris unit 2, functional harmony, the advanced areas.
   'bh-three-dim': '3°7',
   'bh-dim-roles': '♯I°',

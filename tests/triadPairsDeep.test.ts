@@ -32,7 +32,7 @@ import { MINI_LESSONS } from '../src/content/minilessons';
 import { UNIT_LESSON } from '../src/content/units';
 import { GAME_TIERS, clearsRun } from '../src/engine/gameTiers';
 import { BONUS_GAMES } from '../src/engine/pathBonus';
-import { WORKOUT_GAMES } from '../src/engine/workout2';
+import { JAZZ_WORKOUT_GAMES } from '../src/engine/workout2';
 import { KEY_GAMES } from '../src/engine/gameKeys';
 import { GAME_BADGE_GAMES } from '../src/engine/gameBadges';
 import { WP_ITEMS, WP_POOL, isWPSave, newWPSave, playedPair, wpAnswer, wpItem, wpOver, wpResult, wpRun, wrongPairs } from '../src/engine/whichPair';
@@ -502,7 +502,7 @@ describe('Which Pair? (the game)', () => {
     expect(Object.keys(GAME_TIERS.whichpair.tiers)).toEqual(['pp', 'p', 'mp', 'mf', 'f', 'ff']);
     expect(GAME_STEPS.whichpair.minDiff).toBe(1350);
     expect(BONUS_GAMES.some((b) => b.game === 'whichpair')).toBe(true);
-    expect(WORKOUT_GAMES.jazz).toContain('whichpair');
+    expect(JAZZ_WORKOUT_GAMES.ear).toContain('whichpair');
     expect(KEY_GAMES).toContain('whichpair');
     expect(GAME_BADGE_GAMES.some((g) => g.game === 'whichpair')).toBe(true);
     expect(GLYPHS[GAME_STEP_GLYPH.whichpair]).toBeDefined();

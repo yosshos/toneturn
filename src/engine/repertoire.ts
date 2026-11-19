@@ -9,6 +9,10 @@
 // charts we wrote (engine/standards.ts) with the real titles; grooves and topics are our own material.
 
 import type { CourseId } from './courses';
+/** A repertoire collection: a course's own, or 'jazz' — the jazz standards, which since SPEC-JAZZ-FOLD are a collection
+ *  of the Ear course (shown with the jazz pack open; their ids and results, "rep-jazz-…", are unchanged). */
+export type RepCourse = CourseId | 'jazz';
+export const REP_COURSES: RepCourse[] = ['ear', 'jazz', 'voice', 'keys', 'guitar', 'bass', 'drums'];
 import { SONGBOOK } from '../content/songbook';
 import { STANDARD_CHANGES } from './standards';
 import { voiceSong } from './voiceSongs';
@@ -314,16 +318,16 @@ const DRUMS: RepItem[] = [
   O('odd-7', 4, b('7/8 and 10/8', '7/8 ו־10/8'), b('Odd meters in a groove', 'משקלים לא זוגיים בתוך גרוב'), [L('d-mideast-8')], undefined, { standard: true }),
 ];
 
-export const REPERTOIRE: Record<CourseId, RepItem[]> = { keys: KEYS, jazz: JAZZ, ear: EAR, voice: VOICE, guitar: GUITAR, bass: BASS_ITEMS, drums: DRUMS };
+export const REPERTOIRE: Record<RepCourse, RepItem[]> = { keys: KEYS, jazz: JAZZ, ear: EAR, voice: VOICE, guitar: GUITAR, bass: BASS_ITEMS, drums: DRUMS };
 
-export const repertoireFor = (course: CourseId): RepItem[] => REPERTOIRE[course] ?? REPERTOIRE.ear;
-export const repItem = (course: CourseId, id: string): RepItem | undefined => repertoireFor(course).find((x) => x.id === id);
+export const repertoireFor = (course: RepCourse): RepItem[] => REPERTOIRE[course] ?? REPERTOIRE.ear;
+export const repItem = (course: RepCourse, id: string): RepItem | undefined => repertoireFor(course).find((x) => x.id === id);
 export const tierName = (n: RepTier): Bi => REP_TIERS[n - 1].name;
 
 // ------------------------------------------------------------------ results
 
 /** The result id of an item (a lesson id the server accepts: lowercase words and dashes, ≤ 40 chars). */
-export const repLessonId = (course: CourseId, id: string) => `rep-${course}-${id}`;
+export const repLessonId = (course: RepCourse, id: string) => `rep-${course}-${id}`;
 export const isRepLesson = (lessonId: string) => lessonId.startsWith('rep-');
 /** Results are stored out of 10 (score × 10), so lessons[id].best / 10 is the best score. */
 export const REP_TOTAL = 10;
@@ -331,9 +335,9 @@ export const REP_TOTAL = 10;
 export const REP_LEARNED = 0.8;
 
 /** The course and item of a result id, when it is one. */
-export function parseRepLesson(lessonId: string): { course: CourseId; id: string } | null {
+export function parseRepLesson(lessonId: string): { course: RepCourse; id: string } | null {
   const m = /^rep-(ear|jazz|voice|keys|guitar|bass|drums)-(.+)$/.exec(lessonId);
-  return m ? { course: m[1] as CourseId, id: m[2] } : null;
+  return m ? { course: m[1] as RepCourse, id: m[2] } : null;
 }
 
 export type RepStatus = 'new' | 'started' | 'learned';
@@ -343,7 +347,7 @@ export interface RepBest {
   plays: number;
 }
 /** Best scores per item of a course from progress.lessons (lessonId → best of 10, completions). */
-export function repResults(lessons: Record<string, { best: number; completions: number }> | undefined, course: CourseId): Record<string, RepBest> {
+export function repResults(lessons: Record<string, { best: number; completions: number }> | undefined, course: RepCourse): Record<string, RepBest> {
   const out: Record<string, RepBest> = {};
   for (const it of repertoireFor(course)) {
     const l = lessons?.[repLessonId(course, it.id)];
@@ -354,7 +358,7 @@ export function repResults(lessons: Record<string, { best: number; completions: 
 export const repStatus = (r: RepBest | undefined): RepStatus => (!r ? 'new' : r.best >= REP_LEARNED ? 'learned' : 'started');
 
 /** A finished practice of an item as a result (score 0..1 → first-try out of 10). */
-export function repResult(course: CourseId, id: string, score: number, xp: number, at = new Date(), xpCounted = false) {
+export function repResult(course: RepCourse, id: string, score: number, xp: number, at = new Date(), xpCounted = false) {
   const s = Math.max(0, Math.min(1, score));
   return {
     lessonId: repLessonId(course, id),
@@ -367,7 +371,8 @@ export function repResult(course: CourseId, id: string, score: number, xp: numbe
     ...(xpCounted ? { xpCounted: true } : {}),
     missed: [] as never[],
     items: [] as never[],
-    course,
+    // The course the result counts for: the jazz standards are an Ear collection (SPEC-JAZZ-FOLD).
+    course: (course === 'jazz' ? 'ear' : course) as CourseId,
   };
 }
 
@@ -383,7 +388,7 @@ export interface RepGoal {
 }
 
 /** Learned counts per tier, and learned standards. */
-export function repCounts(course: CourseId, res: Record<string, RepBest>): { tier: Record<RepTier, number>; standards: number; total: Record<RepTier, number> } {
+export function repCounts(course: RepCourse, res: Record<string, RepBest>): { tier: Record<RepTier, number>; standards: number; total: Record<RepTier, number> } {
   const tier = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<RepTier, number>;
   const total = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<RepTier, number>;
   let standards = 0;
@@ -399,7 +404,7 @@ export function repCounts(course: CourseId, res: Record<string, RepBest>): { tie
 /** The road: two foundations, two blues & progressions, then a standard (5 steps); then five standards; then an
  *  advanced piece; then the whole list. `next` is the first item not yet learned in the stage that is still open
  *  (an item already started comes first). */
-export function repGoal(course: CourseId, res: Record<string, RepBest>): RepGoal {
+export function repGoal(course: RepCourse, res: Record<string, RepBest>): RepGoal {
   const items = repertoireFor(course);
   const c = repCounts(course, res);
   const pick = (tiers: RepTier[], onlyStandard = false): RepItem | undefined => {
@@ -422,13 +427,13 @@ export function repGoal(course: CourseId, res: Record<string, RepBest>): RepGoal
 }
 
 /** Has the player learned a standard in this course (the "first standard" badge)? */
-export const hasFirstStandard = (course: CourseId, res: Record<string, RepBest>): boolean => repertoireFor(course).some((x) => x.standard && repStatus(res[x.id]) === 'learned');
+export const hasFirstStandard = (course: RepCourse, res: Record<string, RepBest>): boolean => repertoireFor(course).some((x) => x.standard && repStatus(res[x.id]) === 'learned');
 
 /** The items that lead to this one (for "comes from" on an item page). */
-export const repLeadsFrom = (course: CourseId, id: string): RepItem[] => repertoireFor(course).filter((x) => x.leads?.to === id);
+export const repLeadsFrom = (course: RepCourse, id: string): RepItem[] => repertoireFor(course).filter((x) => x.leads?.to === id);
 
 /** A short label of a way (for the item page's buttons). */
-export function wayLabel(w: RepWay, course: CourseId): Bi {
+export function wayLabel(w: RepWay, course: RepCourse): Bi {
   switch (w.k) {
     case 'song':
       if (course === 'guitar') return w.part === 'chords' ? b('Strum the chords', 'לפרוט את האקורדים') : b('Play the melody', 'לנגן את המנגינה');

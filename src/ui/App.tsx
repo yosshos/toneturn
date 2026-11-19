@@ -5,7 +5,7 @@ import { courseLevels } from '../engine/courseSocial';
 import { techLevel, techQueue, workoutCreditsStep } from '../engine/ladderFacts';
 import { CourseContext } from './courseContext';
 import { CourseSheet } from './CourseSwitcher';
-import { COURSE_AREAS, COURSE_PLACEMENT_SKILLS, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
+import { COURSE_AREAS, coursePlacementSkills, courseGoal, courseOf, switchCourse, type CourseId } from '../engine/courses';
 import { AREAS as INTAKE_AREAS } from '../engine/intake';
 import { miniForSkill } from '../content/refresher';
 import { CHALLENGES } from '../engine/improvRules';
@@ -206,7 +206,8 @@ import { FriendsScreen } from './Friends';
 import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
 import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
-import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, jazzWho, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
+import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
+import { coursesToOpen, jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { realDrills } from '../engine/tasteLessons';
 import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicCard, realMusicFor, skipReal } from '../engine/courseStart';
@@ -221,7 +222,7 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
-import { isRepLesson, repGoal, repResult, repResults, type RepItem, type RepWay } from '../engine/repertoire';
+import { isRepLesson, repGoal, repResult, repResults, type RepCourse, type RepItem, type RepWay } from '../engine/repertoire';
 import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
@@ -579,9 +580,22 @@ export function App() {
   // Courses (0.61, SPEC-COURSES): one active course; the chrome reads it from CourseContext.
   const [courseSheet, setCourseSheet] = useState(false);
   const courseCtx = useMemo(
-    () => ({ active: courseAllowed(s.activeCourse ?? 'ear') ? s.activeCourse ?? 'ear' : defaultCourse(), mine: allowedCourses(s.courses?.length ? s.courses : ['ear' as CourseId]), open: () => setCourseSheet(true), examPrep: !!s.examPrep, setExamPrep: (on: boolean) => updateSettings({ examPrep: on }) }),
+    () => {
+      const active = courseAllowed(s.activeCourse ?? 'ear') ? s.activeCourse ?? 'ear' : defaultCourse();
+      return {
+        active,
+        mine: allowedCourses(s.courses?.length ? s.courses : ['ear' as CourseId]),
+        open: () => setCourseSheet(true),
+        examPrep: !!s.examPrep,
+        setExamPrep: (on: boolean) => updateSettings({ examPrep: on }),
+        // SPEC-JAZZ-FOLD: the jazz pack and the jazz-focus switch of the active course.
+        jazzOn: jazzOpenIn(s, active),
+        jazzFocus: jazzFocusOn(s, active),
+        setJazzFocus: (on: boolean) => updateSettings({ jazzFocus: toggleJazzFocus(s, active, on) }),
+      };
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.courses, s.examPrep],
+    [s.activeCourse, s.courses, s.examPrep, s.jazzFocus, s.jazzOpen, s.pathPacks, s.track, s.goal, s.drills],
   );
   // A partner build offers only its courses (src/partner): a stored course outside them moves to the build's first.
   useEffect(() => {
@@ -688,6 +702,39 @@ export function App() {
     [user],
   );
   useWakeLock(s.keepAwake !== false);
+  // SPEC-JAZZ-FOLD §3: a beginner whose course level reaches mf gets that course's jazz opened (persisted, with a
+  // one-time notice). Never closes anything.
+  const jazzToOpen = useMemo(() => (settings && progressReady ? coursesToOpen(settings, ratingsOf(progress)) : []), [settings, progress, progressReady]);
+  useEffect(() => {
+    if (!settings || !jazzToOpen.length) return;
+    updateSettings({ jazzOpen: Array.from(new Set([...(settings.jazzOpen ?? []), ...jazzToOpen])), jazzNotice: settings.jazzNotice ?? jazzToOpen[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jazzToOpen.join(',')]);
+  // The one-time jazz notice (the Jazz course folded into jazz focus, or a course's jazz just opened): a short toast,
+  // then the flag is cleared so it never comes back.
+  const [jazzToast, setJazzToast] = useState<{ kind: 'fold' | CourseId; text: string } | null>(null);
+  useEffect(() => {
+    const n = settings?.jazzNotice;
+    if (!n) return;
+    const he = (settings?.uiLang ?? 'he') === 'he';
+    const cname = n === 'fold' ? '' : courseOf(n).name[he ? 'he' : 'en'];
+    const text =
+      n === 'fold'
+        ? he
+          ? 'קורס הג׳אז הוא עכשיו חלק מהקורסים שלכם: מיקוד ג׳אז פועל בהם, וכל ההתקדמות נשמרה.'
+          : 'The Jazz course is now part of your courses as jazz focus. All your progress is kept.'
+        : he
+          ? `התקדמתם יפה: הג׳אז נפתח בקורס ${cname}.`
+          : `Well climbed: jazz is now open in ${cname}.`;
+    setJazzToast({ kind: n, text });
+    updateSettings({ jazzNotice: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.jazzNotice]);
+  useEffect(() => {
+    if (!jazzToast) return;
+    const id = window.setTimeout(() => setJazzToast(null), 8000);
+    return () => window.clearTimeout(id);
+  }, [jazzToast]);
   useEffect(() => {
     // The globe switches the whole app: screens, spoken answers and the voice that answers (owner feedback 2026-11-18).
     registerLangSetter((lang) => updateSettings({ uiLang: lang, inputLang: lang, outputLang: lang }));
@@ -971,7 +1018,9 @@ export function App() {
     // instrument (the voice and instrument courses have their own tests).
     const areas = d ? null : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
     // Owner 2026-11-19: everything the course covers (the ear test asked no harmony; the jazz test only improvising).
-    const skills = COURSE_PLACEMENT_SKILLS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
+    // SPEC-JAZZ-FOLD: with the jazz pack closed (a beginner), no jazz sections or rungs.
+    const jazzOn = jazzOpenIn(s, (s.activeCourse ?? 'ear') as CourseId);
+    const skills = coursePlacementSkills((s.activeCourse ?? 'ear') as CourseId, jazzOn);
     const saved = fresh ? null : loadPlacement();
     const savedFits = !areas || (saved?.lesson.placementSkills ?? []).every((k) => placementSkills({ singing: true, ...(skills ? { skills } : { areas }) }).includes(k));
     if (saved && (saved.lesson.placementDomain ?? null) === d && savedFits) return resumePlacement(saved);
@@ -980,14 +1029,14 @@ export function App() {
     const skip = gameTierPlacement().skip;
     const scope = skills && !d ? { skills } : { areas, ...(skills ? { skills } : {}) };
     const only = skip.length ? placementSkills({ singing: s.mode === 'voice' || d === 'voice', domain: d, ...scope }).filter((k) => !skip.includes(k)) : undefined;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, ...scope, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}) }));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice' || d === 'voice', domain: d, ...scope, priorities: (s.intake as Intake | null | undefined)?.priorities, priors: measuredPriors(), ...(only?.length ? { only } : {}), ...(jazzOn ? {} : { noJazz: true }) }));
   };
   /** Catching up: only the sections this player has not been measured on yet. */
   const openCatchUpPlacement = (only: SkillId[]) => {
     const saved = loadPlacement();
     if (saved && !saved.lesson.placementDomain) return resumePlacement(saved);
     const seed = (Date.now() ^ (Math.random() * 1e9)) >>> 0;
-    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only, priors: measuredPriors() }));
+    startPlacement(seed, placementLesson(seed, { singing: s.mode === 'voice', priorities: (s.intake as Intake | null | undefined)?.priorities, only, priors: measuredPriors(), ...(jazzOpenIn(s, (s.activeCourse ?? 'ear') as CourseId) ? {} : { noJazz: true }) }));
   };
   /** The home card's "continue": path lessons through their own opener (mini-lesson gate, unlocks). */
   const continueSession = (v: SavedSession) => {
@@ -1485,6 +1534,8 @@ export function App() {
       if (step.game === 'repertoire' && step.rep) {
         pendingStep.current = null;
         repShown.current = step.rep.id;
+        // SPEC-JAZZ-FOLD: a jazz standard (rep:jazz:…) opens the Ear course's jazz-standards collection.
+        repCourse.current = step.rep.course === 'jazz' ? 'jazz' : null;
         return go('repertoire');
       }
       if (step.game === 'drills') drillFrom.current = 'path';
@@ -1572,11 +1623,13 @@ export function App() {
   const chartQueue = useRef<Drill[] | null>(null);
   /** Repertoire (SPEC-REPERTOIRE): the item being practised (its result is recorded when the practice ends) and the
    *  item page to come back to. */
-  const repOpen = useRef<{ course: CourseId; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
+  const repOpen = useRef<{ course: RepCourse; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
   const repShown = useRef<string | null>(null);
+  /** The repertoire collection on show when it is not the course's own: 'jazz' = the jazz standards (Ear, SPEC-JAZZ-FOLD). */
+  const repCourse = useRef<RepCourse | null>(null);
   const openRepWay = (item: RepItem, way: RepWay) => {
     if (!settings || !progress) return;
-    const course = (settings.activeCourse ?? 'ear') as CourseId;
+    const course: RepCourse = repCourse.current ?? ((settings.activeCourse ?? 'ear') as CourseId);
     const after = lastSession();
     repShown.current = item.id;
     if (isDrillWay(way)) {
@@ -1759,13 +1812,14 @@ export function App() {
   /** Find my level, per course: the playing test (instruments), the voice placement, the ear placement (ear / jazz). */
   const findLevel = () => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement());
   /** The jazz "I play well" taste: sung by a singer, played by a pianist or bassist (owner 2026-11-11). */
-  const tasteWho = jazzWho(s.courses ?? [], s.intake?.plays ?? [], s.instrument, !!s.midiInput);
+  // SPEC-JAZZ-FOLD: a course in jazz focus opens with its jazz taste.
+  const tasteJazz = (c: CourseId) => jazzFocusOn(s, c);
   /** A sung taste in progress (the vocal level's result is its first win). */
   const tasteVocal = useRef<{ course: CourseId; level: number; since: string } | null>(null);
   const startTaste = (report?: SelfReport) => {
     if (!settings) return;
     const c = activeC;
-    const def = tasteFor(c, report ?? cStart?.report, tasteWho);
+    const def = tasteFor(c, report ?? cStart?.report, tasteJazz(c));
     updateCourseStart((m) => markTasteOpened(m, c, new Date().toISOString()));
     setCsWelcomeAgain(false);
     if (def.run.kind === 'vocal') {
@@ -1868,7 +1922,7 @@ export function App() {
     // The course opener (owner 2026-11-18): once per course, right after the self-report and before the taste.
     if (openersOn && !courseOpenerSeen(settings.openers, c)) {
       updateSettings({ openers: markCourseOpener(settings.openers, c, new Date().toISOString()) });
-      setOpener({ spec: { kind: 'course', course: c, report: r, replay: false, taste: tasteFor(c, r, tasteWho).title }, then: next });
+      setOpener({ spec: { kind: 'course', course: c, report: r, replay: false, taste: tasteFor(c, r, tasteJazz(c)).title, jazz: jazzOpenIn(s, c) }, then: next });
       return;
     }
     next();
@@ -2014,9 +2068,9 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || course.id === 'ear' ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'jazz' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' || course.id === 'jazz' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today });
+    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode]);
   const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
@@ -2186,7 +2240,7 @@ export function App() {
   const automatedRun = (SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) && !params.has('catchup');
   const started = progress.history.length > 0 || Object.values(progress.lessons).some((l) => (l?.completions ?? 0) > 0);
   const courseAreas: DomainId[] = instrumentCourse ? [] : COURSE_AREAS[(s.activeCourse ?? 'ear') as CourseId] ?? [];
-  const courseSkills = instrumentCourse ? null : COURSE_PLACEMENT_SKILLS[(s.activeCourse ?? 'ear') as CourseId] ?? null;
+  const courseSkills = instrumentCourse ? null : coursePlacementSkills((s.activeCourse ?? 'ear') as CourseId, jazzOpenIn(s, (s.activeCourse ?? 'ear') as CourseId));
   const pending = catchUp(s, progress, courseAreas, courseSkills);
   // 0.84: the "continue your level test" card only for a test of this course — an old all-areas test (from before
   // 0.83) came back from Home in the keys course.
@@ -2417,7 +2471,7 @@ export function App() {
               signedIn={!!user}
               onLeague={() => go('friends')}
               exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
-              onRepertoire={(id) => ((repShown.current = id ?? null), go('repertoire'))}
+              onRepertoire={(id) => ((repShown.current = id ?? null), (repCourse.current = null), go('repertoire'))}
               onPitchMemory={() => go('pitchmemory')}
               streak={gems.streak.count}
               onStreak={() => setStreakOpen(true)}
@@ -2431,7 +2485,7 @@ export function App() {
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => go('improv')} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
-          startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteWho).title } }) : undefined} /> : undefined}
+          startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}
           news={
             <>
               <DepthCard lang={s.uiLang} onOpen={() => go('depth')} />
@@ -2504,9 +2558,9 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteWho).title } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
-          <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} who={tasteWho} onStart={continueCourseStart} onFindLevel={findLevel} compact />
+          <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
           <>
             {csOffer && <LevelOfferCard lang={s.uiLang} onFind={findLevel} onLater={() => updateCourseStart((m) => snoozeOffer(m, activeC, localDay(new Date())))} />}
@@ -2551,6 +2605,10 @@ export function App() {
               const g = repGoal(s.activeCourse ?? 'ear', repResults(progress.lessons, s.activeCourse ?? 'ear'));
               return `${g.title[s.uiLang]} · ${g.now}/${g.target}`;
             })(),
+            standards: (() => {
+              const g = repGoal('jazz', repResults(progress.lessons, 'jazz'));
+              return `${g.title[s.uiLang]} · ${g.now}/${g.target}`;
+            })(),
             ...((s.knownChords ?? []).length ? { songs: s.uiLang === 'he' ? `${(s.knownChords ?? []).length} אקורדים` : `${(s.knownChords ?? []).length} chords` } : {}),
             ...(s.progPuzzle?.[localDay(new Date())] ? { puzzle: s.uiLang === 'he' ? 'שוחק היום' : 'Played today' } : {}),
             ...(phrasesDueCount(s.lickBook) ? { encore: s.uiLang === 'he' ? `${phrasesDueCount(s.lickBook)} לחזרה היום` : `${phrasesDueCount(s.lickBook)} due today` } : {}),
@@ -2572,7 +2630,8 @@ export function App() {
           lang={s.uiLang}
           hub={{
             songs: () => go('songs'),
-            repertoire: () => ((repShown.current = null), go('repertoire')),
+            repertoire: () => ((repShown.current = null), (repCourse.current = null), go('repertoire')),
+            standards: () => ((repShown.current = null), (repCourse.current = 'jazz'), go('repertoire')),
             drills: () => go('drills'),
             vocal: () => go('vocal'),
             singalong: () => go('singalong'),
@@ -2602,7 +2661,7 @@ export function App() {
             mysong:
               s.activeCourse === 'voice'
                 ? () => (setVocalWarmup(false), setVocalLevel(1308), (toolFrom.current = 'arcade'), go('vocal'))
-                : () => gate(s.activeCourse === 'ear' || s.activeCourse === 'jazz' ? 'game:mysong-ear' : 'game:mysong', () => go('mysong')),
+                : () => gate(s.activeCourse === 'ear' ? 'game:mysong-ear' : 'game:mysong', () => go('mysong')),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -2911,6 +2970,11 @@ export function App() {
       {awardToast && (
         <button className="award-toast" role="status" onClick={() => (setAwardToast(null), go('skills'))}>
           {awardToast}
+        </button>
+      )}
+      {jazzToast && !awardToast && (
+        <button className="award-toast jazz-toast" role="status" data-jazz-notice={jazzToast.kind} onClick={() => setJazzToast(null)}>
+          {jazzToast.text}
         </button>
       )}
       {challenge !== undefined && (
@@ -3273,9 +3337,9 @@ export function App() {
       )}
       {route === 'repertoire' && (
         <RepertoireScreen
-          key={`rep-${s.activeCourse ?? 'ear'}`}
+          key={`rep-${repCourse.current ?? s.activeCourse ?? 'ear'}`}
           lang={s.uiLang}
-          course={(s.activeCourse ?? 'ear') as CourseId}
+          course={repCourse.current ?? ((s.activeCourse ?? 'ear') as CourseId)}
           lessons={progress.lessons}
           initialItem={repShown.current}
           onItem={(id) => (repShown.current = id)}

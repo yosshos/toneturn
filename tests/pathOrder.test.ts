@@ -12,14 +12,15 @@ import { VOICE_FAMILIES } from '../src/engine/voiceFamilies';
 import { guitarStrands, drumStrands } from '../src/engine/drills/levelTest';
 
 const base: PathInput = { track: 'hobby', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [], packs: [], plays: [], minutes: 10, ratings: {} as PathInput['ratings'], events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-14T10:00:00Z') };
-const inputFor = (c: CourseId, facts: PathFacts = {}): PathInput => ({ ...courseInput(base, c), ladderFamilies: ladderFamiliesFor(c, DEFAULT_DRILL_SETTINGS), ladderHidden: ladderHiddenFor(c, undefined, undefined, false, DEFAULT_DRILL_SETTINGS), facts });
+// SPEC-JAZZ-FOLD: `jazz` = the jazz pack open (walking bass is a jazz family).
+const inputFor = (c: CourseId, facts: PathFacts = {}, jazz = false): PathInput => ({ ...courseInput({ ...base, packs: jazz ? ['jazz'] : base.packs }, c), ladderFamilies: ladderFamiliesFor(c, DEFAULT_DRILL_SETTINGS), ladderHidden: ladderHiddenFor(c, undefined, undefined, false, DEFAULT_DRILL_SETTINGS), facts });
 
 /** The step ids of the first `n` units, each finished before the next is built (the player does everything). */
-function walk(c: CourseId, n: number, facts0: PathFacts = {}): string[][] {
+function walk(c: CourseId, n: number, facts0: PathFacts = {}, jazz = false): string[][] {
   let facts = facts0;
   const out: string[][] = [];
   for (let u = 0; u < n; u++) {
-    const v = buildPath(inputFor(c, facts));
+    const v = buildPath(inputFor(c, facts, jazz));
     const cur = v.units.find((x) => x.status === 'current');
     if (!cur) break;
     out.push(cur.steps.map((x) => x.step.id));
@@ -60,8 +61,8 @@ describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY Â§×
     expect(para === -1 || para > strokes).toBe(true);
   });
 
-  it('bass: time and plucking first, the kick lock and roots by unit 3, muting by 5, walking by 8', () => {
-    const u = walk('bass', 10);
+  it('bass: time and plucking first, the kick lock and roots by unit 3, muting by 5, walking by 8 (jazz pack open)', () => {
+    const u = walk('bass', 10, {}, true);
     // AUDIT-6 Stage B: holding and tuning (b-first) first; time and plucking right after.
     expect(u[0]).toEqual(expect.arrayContaining(['tech:b-first-1']));
     expect(unitOf(u, 'tech:b-time-1')).toBeLessThanOrEqual(3);

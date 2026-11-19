@@ -191,7 +191,9 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
         { ref: { family: 'k-first' }, name: { he: 'צעדים ראשונים', en: 'First steps' }, desc: { he: 'ישיבה, אצבעות, חמש אצבעות בדו', en: 'Posture and five fingers in C' }, say: { he: 'מתחילים בצעדים ראשונים ליד הפסנתר.', en: 'You start with first steps at the piano.' }, snd: { n: line([60, 62, 64, 65, 67], 0.16, 0.25) } },
         { ref: { family: 'fingers' }, name: { he: 'עצמאות אצבעות', en: 'Finger independence' }, desc: { he: 'כל אצבע לבד', en: 'Every finger on its own' }, say: { he: 'עצמאות אצבעות.', en: 'Finger independence.' }, snd: { n: line([60, 64, 62, 65, 64, 67], 0.13, 0.2) } },
         { ref: { family: 'k-ear' }, name: { he: 'אוזן של פסנתרן', en: 'Pianist’s ear' }, desc: { he: 'לשמוע ולנגן בחזרה', en: 'Hear it, play it back' }, say: { he: 'אוזן של פסנתרן.', en: 'A pianist’s ear.' }, snd: { n: line([67, 64, 60], 0.3, 0.4) } },
-        { ref: { family: 'k-lh' }, name: { he: 'יד שמאל', en: 'The left hand' }, desc: { he: 'בס וצלילי שלד', en: 'Bass notes and shells' }, say: { he: 'יד שמאל: בס וקולות שלד.', en: 'The left hand: bass and shells.' }, snd: snd(line([41], 0.3, 0.8, 0.6), ch([45, 51], 0.4, 0.8, 0.5)) },
+        // SPEC-JAZZ-FOLD: the left hand's accompaniment (Alberti, pop, boogie) — open to every player; the jazz shells
+        // (k-lh) come with the jazz station.
+        { ref: { family: 'accomp' }, name: { he: 'יד שמאל', en: 'The left hand' }, desc: { he: 'בס וליווי', en: 'Bass and accompaniment' }, say: { he: 'יד שמאל: בס וליווי.', en: 'The left hand: bass and accompaniment.' }, snd: snd(line([41], 0.3, 0.8, 0.6), ch([45, 52], 0.4, 0.8, 0.5)) },
         { ref: { family: 'scales' }, name: { he: 'סולמות וארפג׳ים', en: 'Scales & arpeggios' }, desc: { he: 'בכל שנים־עשר הסולמות', en: 'In all twelve keys' }, say: { he: 'וסולמות, בכל שנים־עשר הסולמות.', en: 'And scales, in all twelve keys.' }, snd: { n: line([60, 62, 64, 65, 67, 69, 71, 72], 0.1, 0.18) } },
       ],
     },
@@ -416,56 +418,55 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
       { he: 'סקאט ואלתור', en: 'Scat and improvising' },
     ],
   },
-  jazz: {
-    hook: {
-      eyebrow: { he: 'קורס ג׳אז ואלתור', en: 'Jazz & improv course' },
-      ask: { he: 'מה שומע מי שמאלתר?', en: 'What does an improviser hear?' },
-      promise: { he: 'את המהלכים. בסוף הקורס, גם אתם.', en: 'The changes. By the end, so will you.' },
-      lead: { he: 'סווינג, המהלכים, ואלתור על בלוז וסטנדרטים.', en: 'Swing, the changes, and improvising on blues and standards.' },
-      cards: [
-        { label: { he: 'Dm7', en: 'Dm7' }, badge: 'ii', snd: { n: ch([50, 65, 69, 72]) } },
-        { label: { he: 'G7', en: 'G7' }, badge: 'V', snd: { n: ch([43, 53, 59, 62]) } },
-        { label: { he: 'Cmaj7', en: 'Cmaj7' }, badge: 'I', snd: { n: ch([48, 59, 64, 67]) } },
-        { label: { he: 'A7', en: 'A7' }, badge: 'VI7', snd: { n: ch([45, 55, 61, 64]) } },
-      ],
-      say1: { he: 'מי שמאלתר שומע לאן ההרמוניה הולכת, ומנגן לשם.', en: 'An improviser hears where the harmony is going, and plays toward it.' },
-      say2: { he: 'בקורס הזה, גם אתם תשמעו את זה.', en: 'In this course, you will learn to hear it too.' },
-    },
-    road: {
-      title: { he: 'חמש תחנות, ואז רחוק יותר', en: 'Five stops, then further' },
-      lead: { he: 'כל יחידה: אוזן, קצב ושפה.', en: 'Every unit: ear, time and language.' },
-      say: { he: 'הדרך בנויה מתחנות.', en: 'The road is built from stops.' },
-      then: { he: 'ומשם: סטנדרטים, ריהרמוניזציה והרמוניה מתקדמת', en: 'Then standards, reharmonisation and advanced harmony' },
-      thenSay: { he: 'ומשם, עד הרמוניה מתקדמת.', en: 'And from there, all the way to advanced harmony.' },
-      stations: [
-        { ref: { topic: 'swing-ratio' }, glyph: 'swingtime', name: { he: 'תחושת סווינג', en: 'Swing feel' }, desc: { he: 'ארוך־קצר, על הרייד', en: 'Long-short, on the ride' }, say: { he: 'מתחילים בתחושת הסווינג.', en: 'You start with the swing feel.' }, snd: { p: [['ride', 0], ['ride', 0.4], ['ride', 0.667], ['ride', 0.8], ['ride', 1.2], ['ride', 1.467]] } },
-        { ref: { topic: 'guide-tones' }, glyph: 'guidetone', name: { he: 'צלילים מנחים', en: 'Guide tones' }, desc: { he: 'הטרצות והספטימות', en: 'The thirds and sevenths' }, say: { he: 'צלילים מנחים: הטרצות והספטימות.', en: 'Guide tones: the thirds and sevenths.' }, snd: snd(ch([53, 60], 0, 0.45, 0.5), ch([53, 59], 0.45, 0.45, 0.5), ch([52, 59], 0.9, 0.7, 0.5)) },
-        { ref: { topic: 'comping' }, glyph: 'compvoc', name: { he: 'ליווי', en: 'Comping' }, desc: { he: 'מקצבי ליווי של ג׳אז', en: 'Jazz comping rhythms' }, say: { he: 'ליווי.', en: 'Comping.' }, snd: snd(ch([53, 59, 64], 0, 0.2, 0.5), ch([53, 59, 64], 0.53, 0.3, 0.5), { p: [['ride', 0], ['ride', 0.4], ['ride', 0.53], ['ride', 0.8]] }) },
-        { ref: { topic: 'call-response' }, glyph: 'echo', name: { he: 'שאלה ותשובה', en: 'Call & response' }, desc: { he: 'משפט, ואז תשובה', en: 'A phrase, then an answer' }, say: { he: 'שאלה ותשובה.', en: 'Call and response.' }, snd: { n: [...line([67, 69, 72], 0.2, 0.25), ...line([72, 69, 67], 0.2, 0.25, 0.6, 0.9)] } },
-        { ref: { topic: 'bh-convert' }, glyph: 'sixdim', name: { he: 'בארי האריס', en: 'Barry Harris' }, desc: { he: 'השישית והמוקטן', en: 'The sixth and the diminished' }, say: { he: 'ובארי האריס: השישית והמוקטן.', en: 'And Barry Harris: the sixth and the diminished.' }, snd: snd(ch([48, 60, 64, 67, 69], 0, 0.42, 0.45), ch([47, 59, 62, 65, 68], 0.45, 0.42, 0.45), ch([48, 60, 64, 67, 69], 0.9, 0.7, 0.45)) },
-      ],
-    },
-    how: {
-      title: { he: 'מקשיבים. עונים. יודעים.', en: 'Listen. Answer. Know.' },
-      lead: { he: 'תשובה בקול או בלחיצה. בלי להקליד.', en: 'Answer out loud or with a tap. No typing.' },
-      kind: 'choice',
-      prompt: { he: 'סווינג או ישר?', en: 'Swing or straight?' },
-      opts: [{ he: 'סווינג', en: 'Swing' }, { he: 'ישר', en: 'Straight' }],
-      sayOpt: [{ he: 'אמרו ״סווינג״', en: 'say “swing”' }, { he: 'אמרו ״ישר״', en: 'say “straight”' }],
-      answer: 0,
-      steps: [{ light: null, snd: { p: [['ride', 0], ['ride', 0.4], ['ride', 0.667], ['ride', 0.8], ['ride', 1.2], ['ride', 1.467], ['ride', 1.6]] }, ms: 1700 }],
-      said: { he: '״סווינג״', en: '“Swing”' },
-      fb: { he: 'נכון. ארוך־קצר, ארוך־קצר.', en: 'Right. Long-short, long-short.' },
-      says: [{ he: 'מקשיבים,', en: 'You listen,' }, { he: 'עונים בקול או בלחיצה,', en: 'answer out loud or with a tap,' }, { he: 'ומיד יודעים אם צדקתם.', en: 'and know right away if you were right.' }],
-    },
-    rungs: [
-      { he: 'סווינג וצלילים מנחים', en: 'Swing and guide tones' },
-      { he: 'בלוז וליווי', en: 'The blues and comping' },
-      { he: 'סטנדרטים ו־ii–V', en: 'Standards and ii–Vs' },
-      { he: 'ריהרמוניזציה וצבע', en: 'Reharmonisation and colour' },
-    ],
+};
+
+/**
+ * SPEC-JAZZ-FOLD (owner 2026-11-19): the Jazz course's opener folded into the others. While the jazz pack is open in a
+ * course (an intermediate / advanced background, jazz focus, or opened by climbing), its road ends at a jazz station —
+ * the advanced goal the course leads to. With the pack closed the road is the course's own five stops (the "then" line
+ * may still name jazz as where it leads, later). The road has room for five stops (Opener GEO), so the jazz station
+ * takes the fifth place and the course's fifth stop moves into the "then" line.
+ */
+export interface JazzLeg {
+  station: Station;
+  /** The "then" line under the road while the jazz station is on it (else the course's own). */
+  then?: T2;
+  thenSay?: T2;
+}
+const BH_SND: Snd = snd(ch([48, 60, 64, 67, 69], 0, 0.42, 0.45), ch([47, 59, 62, 65, 68], 0.45, 0.42, 0.45), ch([48, 60, 64, 67, 69], 0.9, 0.7, 0.45));
+const COMP_SND: Snd = snd(ch([53, 59, 64], 0, 0.2, 0.5), ch([53, 59, 64], 0.53, 0.3, 0.5), { p: [['ride', 0], ['ride', 0.4], ['ride', 0.53], ['ride', 0.8]] });
+const SWING_SND: Snd = { p: [['ride', 0], ['ride', 0.4], ['ride', 0.667], ['ride', 0.8], ['ride', 1.2], ['ride', 1.467]] };
+export const JAZZ_LEG: Partial<Record<CourseId, JazzLeg>> = {
+  ear: {
+    station: { ref: { topic: 'bh-convert' }, glyph: 'sixdim', name: { he: 'הרמוניה של ג׳אז', en: 'Jazz harmony' }, desc: { he: 'בארי האריס, ריהרמוניזציה', en: 'Barry Harris, reharmonising' }, say: { he: 'ובסוף, ההרמוניה של ג׳אז: בארי האריס וריהרמוניזציה.', en: 'And at the top, jazz harmony: Barry Harris and reharmonising.' }, snd: BH_SND },
+    then: { he: 'בדרך: הרמוניה בתנועה, זיכרון, גרוב וקריאה', en: 'On the way: harmony moves, memory, groove and reading' },
+    thenSay: { he: 'ובדרך, הרמוניה בתנועה, זיכרון, גרוב וקריאה.', en: 'And on the way, harmony moves, memory, groove and reading.' },
+  },
+  keys: {
+    station: { ref: { family: 'k-comp' }, glyph: 'compvoc', name: { he: 'ליווי ואלתור בג׳אז', en: 'Jazz comping & improvising' }, desc: { he: 'ליווי, קווי בארי האריס', en: 'Comping, Barry Harris lines' }, say: { he: 'ובסוף, ג׳אז: ליווי, קווים ואלתור.', en: 'And at the top, jazz: comping, lines and improvising.' }, snd: COMP_SND },
+  },
+  guitar: {
+    station: { ref: { family: 'g-jazz' }, glyph: 'compvoc', name: { he: 'ליווי ג׳אז ואלתור', en: 'Jazz comping & improvising' }, desc: { he: 'קולות ג׳אז, צלילים מנחים', en: 'Jazz voicings, guide tones' }, say: { he: 'ובסוף, ג׳אז: ליווי ואלתור על המהלכים.', en: 'And at the top, jazz: comping and improvising on the changes.' }, snd: COMP_SND },
+  },
+  bass: {
+    station: { ref: { family: 'b-walk' }, name: { he: 'בס מהלך', en: 'Walking bass' }, desc: { he: 'בלוז וסטנדרטים בסווינג', en: 'Blues and standards in swing' }, say: { he: 'ובסוף, ג׳אז: בס מהלך בסטנדרטים.', en: 'And at the top, jazz: walking through the standards.' }, snd: { n: line([41, 45, 48, 50, 46, 50, 53, 52], 0.3, 0.32, 0.6) } },
+  },
+  voice: {
+    station: { ref: { family: 'v-scat' }, name: { he: 'סקאט וסטנדרטים', en: 'Scat & standards' }, desc: { he: 'אלתור בקול על המהלכים', en: 'Improvising with your voice' }, say: { he: 'ובסוף, ג׳אז: סקאט וסטנדרטים.', en: 'And at the top, jazz: scat and the standards.' }, snd: { n: [...line([67, 69, 72], 0.2, 0.25), ...line([72, 69, 67], 0.2, 0.25, 0.6, 0.9)] } },
+  },
+  drums: {
+    station: { ref: { family: 'd-jazz' }, glyph: 'swingtime', name: { he: 'סווינג על הרייד', en: 'Swing on the ride' }, desc: { he: 'ליווי וחילופי ארבע', en: 'Comping and trading fours' }, say: { he: 'ובסוף, ג׳אז: סווינג וחילופי ארבע.', en: 'And at the top, jazz: swing and trading fours.' }, snd: SWING_SND },
   },
 };
+
+/** A course's opener for this player: with the jazz pack open, the road ends at the course's jazz station. */
+export function courseOpener(c: CourseId, jazz = false): CourseOpenerDef {
+  const d = COURSE_OPENERS[c];
+  const leg = jazz ? JAZZ_LEG[c] : undefined;
+  if (!leg) return d;
+  return { ...d, road: { ...d.road, stations: [...d.road.stations.slice(0, 4), leg.station], ...(leg.then ? { then: leg.then } : {}), ...(leg.thenSay ? { thenSay: leg.thenSay } : {}) } };
+}
+
 
 // ---------------------------------------------------------------- shared scenes: the day, where you start, the start
 
@@ -489,7 +490,7 @@ export const DAY = {
 /** What the player answered on the course-start screen ("Where are you?"). */
 export function reportLabel(c: CourseId, r: SelfReport): T2 {
   if (r === 'new') return { he: 'חדשים בזה', en: 'New to this' };
-  const listening = c === 'ear' || c === 'jazz';
+  const listening = c === 'ear';
   const he = listening ? ['יודעים קצת', 'יודעים טוב'] : c === 'voice' ? ['שרים קצת', 'שרים טוב'] : ['מנגנים קצת', 'מנגנים טוב'];
   const en = listening ? ['I know a bit', 'I know it well'] : c === 'voice' ? ['I sing a bit', 'I sing well'] : ['I play a bit', 'I play well'];
   const i = r === 'bit' ? 0 : 1;
@@ -921,7 +922,7 @@ const ADVANCED_TOPIC_THEME: Record<string, string> = {
   'negative-harmony': 'reharm',
 };
 export function unitThemeOf(course: CourseId, pathTheme: string | undefined, steps: readonly { id: string; sub?: string }[], themes: readonly { id: string; subs: string[] }[]): string | undefined {
-  if (course !== 'ear' && course !== 'jazz') return pathTheme;
+  if (course !== 'ear') return pathTheme;
   // An advanced unit (Symmetry, post-tonal, Barry Harris, reharm, jazz ear, maqamat) is described by what most of its
   // topic steps are, before the lead lesson (2026-11-19: the new units fell back to a generic copy).
   const adv = new Map<string, number>();
@@ -997,6 +998,7 @@ export function openerLines(lang: 'he' | 'en', tasteTitles: T2[]): string[] {
   for (const d of Object.values(COURSE_OPENERS)) {
     out.push(d.hook.say1, d.hook.say2, d.road.say, d.road.thenSay, ...d.road.stations.map((s) => s.say), ...d.how.says);
   }
+  for (const leg of Object.values(JAZZ_LEG)) if (leg) out.push(leg.station.say, ...(leg.thenSay ? [leg.thenSay] : []));
   out.push(...DAY.says, ...Object.values(START.say), START.skipSay, GO.sayReplay, ...tasteTitles.map(GO.say));
   for (const t of Object.values(UNIT_THEMES)) out.push(t.whatSay, t.whySay, t.goalSay);
   for (const cu of Object.values(COURSE_UNIT)) if (cu) out.push(cu.whatSay, ...Object.values(cu.why));

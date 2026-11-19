@@ -30,7 +30,7 @@ beforeEach(() => {
 
 describe('fresh start for every tester', () => {
   it('a used device drops progress and path state, keeps language, profile, calibration and own material', async () => {
-    const old: Settings = { ...DEFAULT_SETTINGS, progressEpoch: undefined, uiLang: 'he', nickname: 'Yos', midiLatencyMs: 42, firstUseAt: '2026-11-01T10:00:00Z', activeCourse: 'jazz', goal: 'jazz' } as Settings;
+    const old: Settings = { ...DEFAULT_SETTINGS, progressEpoch: undefined, uiLang: 'he', nickname: 'Yos', midiLatencyMs: 42, firstUseAt: '2026-11-01T10:00:00Z', activeCourse: 'jazz' as never, goal: 'jazz' } as Settings;
     const s = memStore(old, { ...emptyProgress(), history: [result('2026-11-10T10:00:00Z')] });
     ls.setItem('toneturn.resume.v2', '{}');
     ls.setItem('toneturn.headphones', '1');
@@ -58,9 +58,9 @@ describe('fresh start for every tester', () => {
   it('old results and old cloud settings cannot bring the old progress back', () => {
     expect(currentResults([result('2026-11-10T10:00:00Z'), result('2026-12-01T10:00:00Z')]).map((r) => r.completedAt)).toEqual(['2026-12-01T10:00:00Z']);
     expect(PROGRESS_CUTOFF.startsWith(PROGRESS_EPOCH)).toBe(true);
-    const stale = remoteSettingsForEpoch({ uiLang: 'he', activeCourse: 'jazz', pathFacts: {} } as Partial<Settings>);
+    const stale = remoteSettingsForEpoch({ uiLang: 'he', activeCourse: 'jazz', pathFacts: {} } as unknown as Partial<Settings>);
     expect(stale).toEqual({ uiLang: 'he' });
-    const fresh = { uiLang: 'he', activeCourse: 'jazz', progressEpoch: PROGRESS_EPOCH } as Partial<Settings>;
+    const fresh = { uiLang: 'he', activeCourse: 'jazz', progressEpoch: PROGRESS_EPOCH } as unknown as Partial<Settings>;
     expect(remoteSettingsForEpoch(fresh)).toBe(fresh);
     expect(keepOnly(null)).toEqual({});
   });

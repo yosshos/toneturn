@@ -4,6 +4,7 @@
 // which reorders the path (src/engine/intake.ts).
 
 import { switchCourse } from '../engine/courses';
+import { toggleJazzFocus } from '../engine/jazzFold';
 import { Icon } from './icons';
 import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
@@ -310,6 +311,8 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     // 0.67: "Exam prep" is the Ear course in exam-prep mode (the Exams course is gone): turn it on and go to Ear.
     if (intake.goal === 'exam') Object.assign(patch, switchCourse(settings, 'ear'), { examPrep: true });
     else if (settings.goal === 'exam') patch.examPrep = false;
+    // SPEC-JAZZ-FOLD: "An ear for jazz" is the Ear course in jazz focus (the Jazz course is gone).
+    if (intake.goal === 'jazz') Object.assign(patch, switchCourse(settings, 'ear'), { jazzFocus: toggleJazzFocus(settings, 'ear', true) });
     patch.pathLeaveOut = intake.leaveOut;
     patch.pathPacks = intake.packs;
     patch.noSing = intake.noSing;

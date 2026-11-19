@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { COURSE_IDS, type CourseId } from '../src/engine/courses';
 import {
   tasteFor,
-  jazzWho,
   courseHasProgress,
   firstWeekDay,
   goalProgress,
@@ -77,8 +76,8 @@ describe('course start: the stage machine', () => {
     expect(setupNeeded('drums', { drumKit: { done: true } })).toBe(false);
     expect(setupNeeded('voice', { voiceRange: { lo: 50, hi: 70 } })).toBe(false);
     expect(setupNeeded('ear', { headphones: false })).toBe(false);
-    // One listening check serves ear and jazz.
-    expect(setupNeeded('jazz', { courseStart: { ear: { setupAt: NOW } } })).toBe(false);
+    // One listening check (a migrated Jazz-course player's moved to ear).
+    expect(setupNeeded('ear', { courseStart: { ear: { setupAt: NOW } } })).toBe(false);
     // Guitar and bass check their own strings.
     expect(setupNeeded('bass', { courseStart: { guitar: { setupAt: NOW } } })).toBe(true);
   });
@@ -90,16 +89,16 @@ describe('course start: migration of existing players', () => {
       activeCourse: 'keys',
       pathFacts: { steps: { 'k-1': { stars: 2, at: NOW } } },
       pathFactsBy: { voice: { tests: { u1: NOW } } },
+      // SPEC-JAZZ-FOLD: a result recorded in the old Jazz course counts for Ear.
       history: [{ lessonId: 'topic', completedAt: NOW, course: 'jazz' }],
       drillFamilies: ['d-rock'],
     };
-    const m = migrateCourseStart(undefined, ['ear', 'keys', 'voice', 'jazz', 'drums', 'guitar'], p);
+    const m = migrateCourseStart(undefined, ['ear', 'keys', 'voice', 'drums', 'guitar'], p);
     expect(m?.keys).toEqual({ legacy: true });
     expect(m?.voice).toEqual({ legacy: true });
-    expect(m?.jazz).toEqual({ legacy: true });
+    expect(m?.ear).toEqual({ legacy: true });
     expect(m?.drums).toEqual({ legacy: true });
     expect(m?.guitar).toBeUndefined();
-    expect(m?.ear).toBeUndefined();
   });
 
   it('results from before courses belong to the ear course', () => {
@@ -240,30 +239,24 @@ describe('course start: content', () => {
   });
 });
 
-describe('jazz "I play well": a singer sings it, a player plays it (owner 2026-11-11)', () => {
-  it('picks the player from courses and instruments', () => {
-    expect(jazzWho(['jazz', 'voice'], [])).toBe('voice');
-    expect(jazzWho(['jazz'], ['voice', 'keys'])).toBe('keys');
-    expect(jazzWho(['jazz', 'bass'], [])).toBe('bass');
-    expect(jazzWho(['jazz'], [], undefined, true)).toBe('keys');
-    expect(jazzWho(['jazz', 'ear'], [])).toBe(null);
-    expect(jazzWho(['jazz', 'guitar'], [])).toBe('guitar');
-    expect(jazzWho(['jazz'], ['voice', 'guitar'])).toBe('guitar');
-    expect(jazzWho(['jazz', 'guitar', 'bass'], [])).toBe('bass');
-  });
-  it('the singer gets the sung trading level; players get a playable trading drill; others keep the listening taste', () => {
-    expect(tasteFor('jazz', 'well', 'voice').run).toEqual({ kind: 'vocal', level: 1510 });
-    for (const who of ['keys', 'bass', 'guitar'] as const) {
-      const def = tasteFor('jazz', 'well', who);
+describe('jazz focus "I play well": a singer sings it, a player plays it (owner 2026-11-11, SPEC-JAZZ-FOLD)', () => {
+  it('the singer gets the sung trading level; players get a playable trading drill; Ear keeps the listening taste', () => {
+    expect(tasteFor('voice', 'well', true).run).toEqual({ kind: 'vocal', level: 1510 });
+    for (const c of ['keys', 'bass', 'guitar'] as const) {
+      const def = tasteFor(c, 'well', true);
       expect(def.run.kind).toBe('drills');
-      expect(tasteDrills(def).length, who).toBeGreaterThan(0);
+      expect(tasteDrills(def).length, c).toBeGreaterThan(0);
     }
-    const [g] = tasteDrills(tasteFor('jazz', 'well', 'guitar'));
+    const [g] = tasteDrills(tasteFor('guitar', 'well', true));
     expect(g.spec.instrument).toBe('guitar');
     expect(g.itemId).toContain('g-impro:trade:');
     expect(g.itemId).toContain(':op0:');
     expect(g.goal.free?.windows.length).toBe(2);
-    expect(tasteFor('jazz', 'well', null).run.kind).toBe('lesson');
-    expect(tasteFor('jazz', 'bit', 'voice').run.kind).toBe('lesson');
+    // Ear in jazz focus: the old Jazz course's listening tastes (ids kept).
+    expect(tasteFor('ear', 'well', true).run.kind).toBe('lesson');
+    expect(tasteFor('ear', 'new', true).id).toBe('jazz-new');
+    expect(tasteFor('voice', 'bit', true).run.kind).toBe('lesson');
+    // Without jazz focus the course's own taste.
+    expect(tasteFor('keys', 'well').id).toBe('keys-well');
   });
 });

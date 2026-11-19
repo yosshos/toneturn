@@ -8,8 +8,9 @@ import { ladderFamiliesFor, ladderHiddenFor, pathGuitarAddOns, withLadderFacts }
 import { drillSettingsOf } from './Drills';
 import { Iso } from './Iso';
 import { courseInput } from '../engine/courses';
+import { coursePacks, jazzFocusOn } from '../engine/jazzFold';
 import { useCourse } from './courseContext';
-import { ExamPrepSwitch } from './CourseSwitcher';
+import { ExamPrepSwitch, JazzFocusSwitch } from './CourseSwitcher';
 import { Icon } from './icons';
 import { studioText } from '../i18n/studioText';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -183,7 +184,8 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   const otherDone = Object.entries(s.pathFactsBy ?? {})
     .filter(([c]) => c !== course)
     .flatMap(([, f]) => Object.entries(f?.steps ?? {}).filter(([, v]) => v.stars > 0).map(([id]) => id));
-  const inp = { ...courseInput(base, course, !!s.examPrep), ...(otherDone.length ? { otherDone } : {}) };
+  // SPEC-JAZZ-FOLD: the jazz pack is open per course (background, climbing, an instrument choice, jazz focus).
+  const inp = { ...courseInput({ ...base, packs: coursePacks(s, course) }, course, !!s.examPrep, jazzFocusOn(s, course)), ...(otherDone.length ? { otherDone } : {}) };
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   // AUDIT-CONTENT-THEORY §ב.3: until the player picks guitar add-ons, the path carries the jazz add-on (pathGuitarAddOns).
   const ds0 = drillSettingsOf(s);
@@ -204,7 +206,7 @@ export function usePathView(s: Settings, p: Progress): PathView {
   return useMemo(
     () => buildPath(pathInputFrom(s, p)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [s.activeCourse, s.examPrep, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, s.drumKit, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
+    [s.activeCourse, s.examPrep, s.jazzFocus, s.jazzOpen, s.intake, s.track, s.goal, s.pathHidden, s.noSing, s.noMic, s.pathLeaveOut, s.pathPacks, s.pathFacts, s.pathKeep, s.midiInput, s.instrument, s.drills, s.drillStart, s.bassTuning, s.drumKit, p.ratingEvents?.length, p.review.length, p.lessons, p.drillItems, p.vocal, day],
   );
 }
 
@@ -524,9 +526,11 @@ export function PathView2({
             {FILM.watchIntro[lang]}
           </button>
         )}
-        {(settings.activeCourse ?? 'ear') === 'ear' && (
+        {/* 0.67 exam prep (Ear) and SPEC-JAZZ-FOLD jazz focus (Ear and the playing courses): the course's modes. */}
+        {(settings.activeCourse ?? 'ear') !== 'drums' && (
           <div className="exam-head-row">
-            <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />
+            {(settings.activeCourse ?? 'ear') === 'ear' && <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />}
+            <JazzFocusSwitch on={courseCtx.jazzFocus} lang={lang} onChange={courseCtx.setJazzFocus} />
           </div>
         )}
         <div className="section-bar" style={{ ['--p' as string]: `${secStats.total ? (100 * secStats.known) / secStats.total : 0}%` }}>

@@ -46,9 +46,11 @@ test.describe('practice hub', () => {
 
   test('0.48 tools: charts, practice log, slow down, my pieces', async ({ page }) => {
     await page.goto('/?sim=1#/arcade');
-    // 0.61: charts are the jazz course's; slow down and the log are tools in every course.
-    await switchCourse(page, 'jazz');
+    // SPEC-JAZZ-FOLD: charts are a jazz row of the Ear course (jazz pack open / jazz focus); slow down and the log are
+    // tools in every course.
+    await switchCourse(page, 'ear');
     await page.goto('/?sim=1#/arcade');
+    if ((await page.locator('[data-jazz-focus]').first().getAttribute('aria-checked')) !== 'true') await page.locator('[data-jazz-focus]').first().click();
     for (const k of ['charts', 'slowdown', 'log']) await expect(page.locator(`[data-hub="${k}"]`)).toBeVisible();
     // Charts: a template opens, plays and highlights a bar; transpose changes the text.
     await page.locator('[data-hub="charts"]').click();

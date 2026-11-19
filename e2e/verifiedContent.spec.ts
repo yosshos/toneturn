@@ -45,18 +45,20 @@ test('games list (keys): the Elevator is there, 5-4-3-2 Call is not', async ({ p
   await expect(page.locator('.game-card.guidetone')).toBeVisible();
 });
 
-test('games list (jazz): no 5-4-3-2 Call', async ({ page }) => {
+// SPEC-JAZZ-FOLD: an old Jazz-course seed lands in Ear with jazz focus; Ear's jazz games are listed, the played ones
+// (Guide-Tone Runner) are the instrument courses'.
+test('games list (old jazz seed → Ear in jazz focus): no 5-4-3-2 Call', async ({ page }) => {
   await seed(page, 'jazz');
   await page.goto('/?unlock#/arcade');
   await openGames(page);
-  await expect(page.locator('.game-card.guidetone')).toBeVisible();
+  await expect(page.locator('.game-card.reharm')).toBeVisible();
   await expect(page.locator('.game-card.call5432')).toHaveCount(0);
 });
 
-test('path (jazz): bonus steps without 5-4-3-2 Call', async ({ page }) => {
+test('path (old jazz seed → Ear in jazz focus): jazz steps without 5-4-3-2 Call', async ({ page }) => {
   await seed(page, 'jazz');
   await page.goto('/?unlock#/path');
-  await expect(page.locator('[data-step^="bonus:jazz:"]').first()).toBeAttached();
+  await expect(page.locator('[data-course-chip="ear"]:visible').first()).toBeVisible();
   await expect(page.locator('[data-step="bonus:jazz:call5432"]')).toHaveCount(0);
 });
 

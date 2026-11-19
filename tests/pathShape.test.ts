@@ -1,7 +1,9 @@
 // AUDIT-6 Stage A (2026-11-15): the shape of every course path — levels at their real difficulty, no holes, enough
 // steps in each band, the jazz beginner band real jazz, the catalogue independent of the games' modules.
 import { describe, expect, it } from 'vitest';
-import { courseInput, inCourse, type CourseId } from '../src/engine/courses';
+import { courseInput, inCourse, isJazzStep, type CourseId } from '../src/engine/courses';
+import { JAZZ_OPEN_AT } from '../src/engine/jazzFold';
+import type { RepCourse } from '../src/engine/repertoire';
 import { buildPath, eligible, stepCatalogue, PATH_CAP, type PathFacts, type PathInput, type PathStep } from '../src/engine/path';
 import { ladderFamiliesFor, ladderHiddenFor } from '../src/engine/ladderFacts';
 import { DEFAULT_DRILL_SETTINGS } from '../src/engine/drills/types';
@@ -10,23 +12,23 @@ import { TOPIC_GEN } from '../src/engine/topicKit';
 
 const base: PathInput = { track: 'hobby', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [], packs: [], plays: [], minutes: 10, ratings: {} as PathInput['ratings'], events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-15T10:00:00Z') };
 /** A course's path input as the app builds it (Path.tsx pathInputFrom), with default drill settings. */
-const inputFor = (c: CourseId, plays: string[] = [], facts: PathFacts = {}): PathInput => {
+// SPEC-JAZZ-FOLD: `jazz` = the jazz pack open (an intermediate background, climbing past mf, or jazz focus).
+const inputFor = (c: CourseId, plays: string[] = [], facts: PathFacts = {}, jazz = true): PathInput => {
   const fams = ladderFamiliesFor(c, DEFAULT_DRILL_SETTINGS);
-  return { ...courseInput({ ...base, plays }, c), ...(fams.length ? { ladderFamilies: fams, ladderHidden: ladderHiddenFor(c, undefined, undefined, false, DEFAULT_DRILL_SETTINGS) } : {}), facts };
+  return { ...courseInput({ ...base, plays, packs: jazz ? ['jazz'] : [] }, c), ...(fams.length ? { ladderFamilies: fams, ladderHidden: ladderHiddenFor(c, undefined, undefined, false, DEFAULT_DRILL_SETTINGS) } : {}), facts };
 };
-const stepsOf = (c: CourseId, plays: string[] = []): PathStep[] => {
-  const inp = inputFor(c, plays);
+const stepsOf = (c: CourseId, plays: string[] = [], jazz = true): PathStep[] => {
+  const inp = inputFor(c, plays, {}, jazz);
   return stepCatalogue().filter((s) => eligible(s, inp));
 };
 const byId = () => new Map(stepCatalogue().map((s) => [s.id, s] as const));
 const BANDS = { beginner: [700, 1000], intermediate: [1000, 1400], advanced: [1400, 1901] } as const;
 const inBand = (xs: PathStep[], [lo, hi]: readonly [number, number]) => xs.filter((s) => s.difficulty >= lo && s.difficulty < hi);
 
-/** Each course as a player of it sees it (the Jazz course: a pianist, so its performed families count too). */
+/** Each course as a player of it sees it once the jazz pack is open (SPEC-JAZZ-FOLD: the Jazz course folded in). */
 const COURSES: { c: CourseId; plays?: string[]; perBand: Record<keyof typeof BANDS, number> }[] = [
   // Minimum steps per 100 points in each band (the averages today are about 2–4× these).
-  { c: 'ear', perBand: { beginner: 8, intermediate: 30, advanced: 25 } },
-  { c: 'jazz', plays: ['keys'], perBand: { beginner: 6, intermediate: 25, advanced: 35 } },
+  { c: 'ear', perBand: { beginner: 8, intermediate: 40, advanced: 45 } },
   { c: 'voice', perBand: { beginner: 6, intermediate: 15, advanced: 8 } },
   { c: 'keys', perBand: { beginner: 20, intermediate: 40, advanced: 40 } },
   { c: 'guitar', perBand: { beginner: 10, intermediate: 30, advanced: 15 } },
@@ -44,13 +46,13 @@ describe('the step catalogue does not depend on module load order (AUDIT-6 X1)',
     expect(gameOnly).toEqual(expect.arrayContaining(['name-standard', 'interval-cells', 'mm-modes', 'chord-read-alt']));
     expect(stepCatalogue().filter((s) => s.topic && gameOnly.includes(s.topic))).toEqual([]);
   });
-  it('the advanced games’ jazz-ear topics are Jazz steps, not Ear', () => {
+  it('the advanced games’ jazz-ear topics are Ear steps of the jazz pack', () => {
     for (const t of ['voicing-type', 'jazz-chains']) {
       const xs = stepCatalogue().filter((s) => s.topic === t);
       expect(xs.length, t).toBeGreaterThan(0);
       for (const s of xs) {
-        expect(inCourse(s, 'jazz'), s.id).toBe(true);
-        expect(inCourse(s, 'ear'), s.id).toBe(false);
+        expect(inCourse(s, 'ear'), s.id).toBe(true);
+        expect(s.pack, s.id).toBe('jazz');
       }
     }
   });
@@ -64,26 +66,36 @@ describe('course membership rule (AUDIT-6 §3)', () => {
       expect(xs.length, t).toBeGreaterThan(0);
       for (const s of xs) {
         expect(inCourse(s, 'ear'), s.id).toBe(true);
-        expect(inCourse(s, 'jazz'), s.id).toBe(false);
+        expect(s.pack, s.id).toBeUndefined();
       }
     }
   });
-  it('rootless and upper-structure voicings, the jazz grids, bebop scales and jazz progressions are Jazz', () => {
+  it('rootless and upper-structure voicings, the jazz grids, bebop scales and jazz progressions are the jazz pack (Ear)', () => {
     for (const id of ['topic:upper-rootless:1', 'topic:voicings:3', 'topic:extensions:2', 'topic:grid-dictation:7', 'topic:grid-dictation:8', 'topic:scale-types:5', 'topic:progressions:2', 'topic:chart-analysis:1', 'topic:swing-ratio:1', 'topic:guide-tones:1']) {
       const s = cat.get(id)!;
       expect(s, id).toBeTruthy();
-      expect(inCourse(s, 'jazz'), id).toBe(true);
-      expect(inCourse(s, 'ear'), id).toBe(false);
+      expect(s.pack, id).toBe('jazz');
+      expect(inCourse(s, 'ear'), id).toBe(true);
     }
     // The topics' other levels stay in Ear.
     for (const id of ['topic:voicings:1', 'topic:extensions:1', 'topic:grid-dictation:1', 'topic:scale-types:1', 'topic:progressions:1']) expect(inCourse(cat.get(id)!, 'ear'), id).toBe(true);
   });
-  it('the performed jazz families are shared with the instrument courses (one step id, both courses)', () => {
-    const s = cat.get('tech:k-impro-4')!;
+  it('the performed jazz families are their instrument course only (SPEC-JAZZ-FOLD)', () => {
+    const s = cat.get('tech:k-lh-4')!;
     expect(inCourse(s, 'keys')).toBe(true);
-    expect(inCourse(s, 'jazz')).toBe(true);
-    expect(inCourse(cat.get('tech:scales-1')!, 'jazz')).toBe(false);
+    expect(inCourse(s, 'ear')).toBe(false);
   });
+});
+
+describe('a beginner path (jazz pack closed) is whole up to where jazz opens (SPEC-JAZZ-FOLD)', () => {
+  for (const { c } of COURSES)
+    it(`${c}: no gap over 150 below the auto-open level, a full beginner band, no jazz step`, () => {
+      const xs = stepsOf(c, [], false).filter((s) => s.difficulty >= 700);
+      const ds = xs.map((s) => s.difficulty).filter((d) => d <= JAZZ_OPEN_AT + 150).sort((a, b) => a - b);
+      expect(ds.slice(1).map((d, i) => [d - ds[i], ds[i]]).filter(([g]) => g > 150), c).toEqual([]);
+      expect(inBand(xs, BANDS.beginner).length, c).toBeGreaterThanOrEqual(15);
+      expect(xs.filter((s) => isJazzStep(s)).map((s) => s.id), c).toEqual([]);
+    });
 });
 
 describe('path shape per course (AUDIT-6)', () => {
@@ -168,55 +180,58 @@ describe('the known misplacements now sit in their grade band (AUDIT-6)', () => 
   });
 });
 
-describe('the Jazz beginner band is real jazz (AUDIT-6 J-W1, J-W2)', () => {
-  const beginner = (plays: string[]) => inBand(stepsOf('jazz', plays), BANDS.beginner).map((s) => s.id);
-  it('swing feel, the blues, shells and guide tones — by ear, for every player', () => {
-    const ids = beginner([]);
+describe('the jazz beginner band is real jazz, in Ear and the instruments (AUDIT-6 J-W1, J-W2; SPEC-JAZZ-FOLD)', () => {
+  const beginner = (c: CourseId, plays: string[] = []) => inBand(stepsOf(c, plays), BANDS.beginner).map((s) => s.id);
+  it('Ear with the jazz pack: swing feel, the blues, shells and guide tones by ear', () => {
+    const ids = beginner('ear');
     expect(ids).toContain('topic:swing-ratio:1');
     expect(ids.filter((id) => id.startsWith('topic:blues-ear:')).length).toBe(3);
     // AUDIT-7 #2: the solo left hand by ear is a piano item — only for a player of the keys.
     expect(ids).not.toContain('topic:lh-tex-ear:1');
-    expect(beginner(['keys'])).toContain('topic:lh-tex-ear:1'); // shells by ear
+    expect(beginner('ear', ['keys'])).toContain('topic:lh-tex-ear:1'); // shells by ear
     expect(ids).toContain('topic:guide-tones:1');
-    // No expression filler any more.
-    expect(ids.some((id) => /topic:(mood|dynamics|articulation):/.test(id))).toBe(false);
     // Comping rhythms by ear (comp-rhythm-ear) are hidden until verified: src/engine/verifiedContent.ts
     expect(ids).not.toContain('topic:comp-rhythm-ear:1');
   });
-  it('a pianist plays shells and a first solo over a blues in the beginner band', () => {
-    const ids = beginner(['keys']);
-    expect(ids).toEqual(expect.arrayContaining(['tech:k-lh-4', 'tech:k-impro-4']));
-    const g = beginner(['guitar']);
-    expect(g).toContain('tech:g-impro-1');
+  it('a pianist plays shells and a first solo over a blues in the beginner band; a guitarist improvises', () => {
+    expect(beginner('keys')).toEqual(expect.arrayContaining(['tech:k-lh-4', 'tech:k-impro-4']));
+    expect(beginner('guitar')).toContain('tech:g-impro-1');
   });
-  it('performed steps come regularly on a pianist’s Jazz path (the first eight units)', () => {
-    let facts: PathFacts = {};
-    const units: PathStep[][] = [];
-    for (let u = 0; u < 8; u++) {
-      const v = buildPath(inputFor('jazz', ['keys'], facts));
-      const cur = v.units.find((x) => x.status === 'current');
-      if (!cur) break;
-      units.push(cur.steps.map((x) => x.step));
-      const steps = { ...(facts.steps ?? {}) };
-      for (const x of cur.steps) steps[x.step.id] = { stars: 3, at: '2026-11-15T10:00:00Z' };
-      facts = { ...facts, steps, units: [...(facts.units ?? []), ...(v.freeze ? [{ ...v.freeze, at: '2026-11-15T10:00:00Z' }] : [])] };
-    }
-    expect(units.length).toBe(8);
-    for (const [i, u] of units.entries()) expect(u.some((s) => s.kind === 'tech'), `unit ${i + 1}`).toBe(true);
+  it('jazz focus brings the jazz families early on a pianist path; closed, none come', () => {
+    const walk = (inp: (facts: PathFacts) => PathInput) => {
+      let facts: PathFacts = {};
+      const out: PathStep[] = [];
+      for (let u = 0; u < 8; u++) {
+        const v = buildPath(inp(facts));
+        const cur = v.units.find((x) => x.status === 'current');
+        if (!cur) break;
+        out.push(...cur.steps.map((x) => x.step));
+        const steps = { ...(facts.steps ?? {}) };
+        for (const x of cur.steps) steps[x.step.id] = { stars: 3, at: '2026-11-15T10:00:00Z' };
+        facts = { ...facts, steps, units: [...(facts.units ?? []), ...(v.freeze ? [{ ...v.freeze, at: '2026-11-15T10:00:00Z' }] : [])] };
+      }
+      return out;
+    };
+    const fams = ladderFamiliesFor('keys', DEFAULT_DRILL_SETTINGS);
+    const hidden = ladderHiddenFor('keys', undefined, undefined, false, DEFAULT_DRILL_SETTINGS);
+    const focus = walk((facts) => ({ ...courseInput({ ...base, packs: [] }, 'keys', false, true), ladderFamilies: fams, ladderHidden: hidden, facts }));
+    const closed = walk((facts) => ({ ...courseInput({ ...base, packs: [] }, 'keys'), ladderFamilies: fams, ladderHidden: hidden, facts }));
+    expect(focus.some((s) => isJazzStep(s)), focus.map((s) => s.id).join(' ')).toBe(true);
+    expect(closed.some((s) => isJazzStep(s))).toBe(false);
   });
 });
 
 describe('repertoire across the whole path (AUDIT-6 §5)', () => {
   const rep = stepCatalogue().filter((s) => s.rep);
   it('reaches past 1400 in every course and to ~1880 where there are advanced items', () => {
-    for (const c of ['keys', 'jazz', 'guitar', 'bass', 'voice', 'ear', 'drums'] as CourseId[]) {
+    for (const c of ['keys', 'jazz', 'guitar', 'bass', 'voice', 'ear', 'drums'] as RepCourse[]) {
       const ds = rep.filter((s) => s.rep!.course === c).map((s) => s.difficulty);
       expect(Math.max(...ds), c).toBeGreaterThanOrEqual(1800);
       expect(Math.min(...ds), c).toBeLessThanOrEqual(800);
     }
   });
   it('no clumps: at most three items of a course inside any 20 points', () => {
-    for (const c of ['keys', 'jazz', 'guitar', 'bass'] as CourseId[]) {
+    for (const c of ['keys', 'jazz', 'guitar', 'bass'] as RepCourse[]) {
       const ds = rep.filter((s) => s.rep!.course === c).map((s) => s.difficulty).sort((a, b) => a - b);
       for (let i = 3; i < ds.length; i++) expect(ds[i] - ds[i - 3], `${c} at ${ds[i]}`).toBeGreaterThan(20);
     }

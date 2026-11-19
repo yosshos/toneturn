@@ -113,8 +113,8 @@ describe('ledger', () => {
     expect(msByDay(l)['2026-11-12']).toBe(1_800_000);
   });
   it('round-trips bucket keys', () => {
-    const k = bucketKey({ course: 'jazz', kind: 'technique', skill: 'bh|6dim', key: 14, q: 'review' });
-    expect(parseBucket(k)).toEqual({ course: 'jazz', kind: 'technique', skill: 'bh/6dim', key: 2, q: 'review' });
+    const k = bucketKey({ course: 'keys', kind: 'technique', skill: 'bh|6dim', key: 14, q: 'review' });
+    expect(parseBucket(k)).toEqual({ course: 'keys', kind: 'technique', skill: 'bh/6dim', key: 2, q: 'review' });
   });
   it('the quality ledger keeps cleanness and the best tempo per item and day', () => {
     let l = emptyLedger('2026-11-10');

@@ -3,7 +3,7 @@
 // hero "Start: <taste>", the level-test offer, the first-week card, the goal line). One phone screen each, no emoji.
 import { useEffect, useRef, useState } from 'react';
 import { courseOf, type CourseId } from '../engine/courses';
-import { LADDER, PERSONAL_GOALS, PROMISE, goalById, goalProgress, rungOf, tasteFor, type CourseStartState, type JazzWho, type SelfReport, type Stage, type TasteDef } from '../engine/courseStart';
+import { LADDER, PERSONAL_GOALS, PROMISE, goalById, goalProgress, rungOf, tasteFor, type CourseStartState, type SelfReport, type Stage, type TasteDef } from '../engine/courseStart';
 import type { PathFacts, PathUnit, UnitStep } from '../engine/path';
 import type { Settings } from '../storage/progress';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
@@ -20,7 +20,7 @@ type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
 const L = (lang: Lang, x: T2) => x[lang];
 
-const LISTENING = (c: CourseId) => c === 'ear' || c === 'jazz';
+const LISTENING = (c: CourseId) => c === 'ear';
 const NAMES = { en: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'], he: ['דו', 'דו♯', 'רה', 'מי♭', 'מי', 'פה', 'פה♯', 'סול', 'לה♭', 'לה', 'סי♭', 'סי'] };
 const noteName = (m: number, lang: Lang) => NAMES[lang][((Math.round(m) % 12) + 12) % 12];
 
@@ -522,10 +522,10 @@ export function FirstWin({
 }
 
 /** Home / Path first run: "Start: <taste>" (Find my level second for "I play well"), the course and its ladder. */
-export function CourseStartHero({ course, lang, stage, cs, who = null, onStart, onFindLevel, onIntro, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; who?: JazzWho; onStart: () => void; onFindLevel: () => void; /** Replay the course opener ("About this course"), once it has been seen. */ onIntro?: () => void; compact?: boolean }) {
+export function CourseStartHero({ course, lang, stage, cs, jazz = false, onStart, onFindLevel, onIntro, compact = false }: { course: CourseId; lang: Lang; stage: Stage; cs?: CourseStartState; /** Jazz focus on in this course (its jazz taste). */ jazz?: boolean; onStart: () => void; onFindLevel: () => void; /** Replay the course opener ("About this course"), once it has been seen. */ onIntro?: () => void; compact?: boolean }) {
   const he = lang === 'he';
   const def = courseOf(course);
-  const taste: TasteDef | null = cs?.report ? tasteFor(course, cs.report, who) : null;
+  const taste: TasteDef | null = cs?.report ? tasteFor(course, cs.report, jazz) : null;
   const label =
     stage === 'win'
       ? he ? 'לתוצאה הראשונה שלכם' : 'See your first result'

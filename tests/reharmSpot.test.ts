@@ -67,7 +67,7 @@ describe('Reharm Spotter', () => {
     expect(tierBars('mf')).toBe(4);
     expect(tierBars('f')).toBe(8);
     expect(tierLevel('ff')).toBe(4);
-    expect(tierInfo('reharm', {}, undefined, 'jazz').open).toBe('mp');
+    expect(tierInfo('reharm', {}, undefined, 'ear').open).toBe('mp');
     const cases = Number(tierDef('reharm', 'f')?.params?.cases);
     expect(clearsRun('reharm', 'f', 100, { right: cases })).toBe(true);
     expect(clearsRun('reharm', 'f', 100, { right: cases - 1 })).toBe(false);

@@ -26,7 +26,10 @@ describe('bonus game steps', () => {
     expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
     for (const s of steps) {
       const homes = ALL.filter((c) => inCourse(s, c));
-      expect(homes, s.id).toEqual([s.id.split(':')[1]]);
+      // SPEC-JAZZ-FOLD: the 'jazz' group (old Jazz course ids) is the Ear course's, with the jazz pack.
+      const group = s.id.split(':')[1];
+      expect(homes, s.id).toEqual([group === 'jazz' ? 'ear' : group]);
+      if (group === 'jazz') expect(s.pack, s.id).toBe('jazz');
       expect(s.tier).toBe('mp');
       expect(tierSpec(s.game!)?.tiers.mp, s.game).toBeDefined();
       expect(s.id.endsWith(`:${s.game}`)).toBe(true); // the game's result finds its step (noteGameStep)
@@ -57,7 +60,7 @@ describe('repertoire steps', () => {
     const n = Object.values(REPERTOIRE).reduce((a, xs) => a + xs.length, 0);
     expect(steps).toHaveLength(n);
     for (const s of steps) {
-      expect(ALL.filter((c) => inCourse(s, c)), s.id).toEqual([s.rep!.course]);
+      expect(ALL.filter((c) => inCourse(s, c)), s.id).toEqual([s.rep!.course === 'jazz' ? 'ear' : s.rep!.course]);
       expect(s.game).toBe('repertoire');
     }
     const keys = steps.filter((s) => s.rep!.course === 'keys');
@@ -83,8 +86,8 @@ describe('placing them at the end of units', () => {
     // Too shallow for the advanced games: no bonus.
     expect(unitEndSteps(2, 850, open)).toEqual([]);
   });
-  it('on the jazz path: they show up, a bonus is never the current step, and a unit completes without it', () => {
-    const inp = courseInput(base, 'jazz');
+  it('on the ear path with the jazz pack (SPEC-JAZZ-FOLD): they show up, a bonus is never the current step, and a unit completes without it', () => {
+    const inp = courseInput(base, 'ear');
     // Curriculum flow (one new idea per unit): the first Jazz units are short, so walk until a unit closes with a bonus.
     let v = buildPath(inp);
     for (let k = 0; k < 20 && !v.units.some((u) => u.steps.some((x) => x.step.bonus)); k++) {

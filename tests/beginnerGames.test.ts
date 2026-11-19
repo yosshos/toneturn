@@ -320,7 +320,7 @@ describe('connections: everything connects', () => {
       expect(COURSE_GAMES[c], g).toContain(g);
       expect(WORKOUT_GAMES[c], g).toContain(g);
       expect(boardGames(COURSE_GAMES[c])).toContain(g);
-      for (const other of ['ear', 'jazz'] as CourseId[]) expect(COURSE_GAMES[other]).not.toContain(g);
+      for (const other of ['ear'] as CourseId[]) expect(COURSE_GAMES[other]).not.toContain(g);
     }
     expect(DRUM_QUEST_GAMES).toContain('rebound');
   });

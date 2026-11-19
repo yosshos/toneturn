@@ -10,16 +10,19 @@ import { GAME_STEPS } from '../src/engine/path';
 import { BONUS_GAMES } from '../src/engine/pathBonus';
 import { ladderFamiliesFor, ladderHiddenFor } from '../src/engine/ladderFacts';
 import { DEFAULT_DRILL_SETTINGS } from '../src/engine/drills/types';
-import { courseBase, flowReport, walkPath, type Model } from './helpers/flowWalk';
+import { courseBase, flowReport, walkPath, type JazzMode, type Model } from './helpers/flowWalk';
 
-const COURSES: CourseId[] = ['ear', 'jazz', 'keys', 'guitar', 'bass', 'voice', 'drums'];
+// SPEC-JAZZ-FOLD: no Jazz course — every course is walked with the jazz pack closed (a beginner) and, where it holds
+// jazz, open (an intermediate / advanced background: the Ear course's jazz top levels, the instruments' jazz families).
+const COURSES: CourseId[] = ['ear', 'keys', 'guitar', 'bass', 'voice', 'drums'];
+const JAZZ_COURSES: CourseId[] = ['ear', 'keys', 'guitar', 'bass', 'voice'];
 const CONFIGS: [('explorer' | 'hobby' | 'student'), Model][] = [['explorer', 'steady'], ['hobby', 'steady'], ['student', 'steady'], ['explorer', 'strong'], ['hobby', 'placed']];
 const UNITS = 45;
 
 const reports = new Map<string, ReturnType<typeof flowReport>>();
-const report = (c: CourseId, t: 'explorer' | 'hobby' | 'student', m: Model) => {
-  const k = `${c}/${t}/${m}`;
-  if (!reports.has(k)) reports.set(k, flowReport(walkPath(c, t, m, UNITS, { placeAt: 1250 }), c));
+const report = (c: CourseId, t: 'explorer' | 'hobby' | 'student', m: Model, jazz: JazzMode = 'off') => {
+  const k = `${c}/${t}/${m}/${jazz}`;
+  if (!reports.has(k)) reports.set(k, flowReport(walkPath(c, t, m, UNITS, { placeAt: 1250, jazz }), c));
   return reports.get(k)!;
 };
 
@@ -77,11 +80,13 @@ describe('first steps are finished on the path', () => {
 });
 
 describe('the flow rules hold on every course walk', () => {
-  for (const c of COURSES)
-    it(`${c}: prerequisites first, one new idea and one level per unit, no dead end`, () => {
-      for (const [t, m] of CONFIGS) {
-        const r = report(c, t, m);
-        const tag = `${c} ${t} ${m}`;
+  const variants: [CourseId, JazzMode][] = [...COURSES.map((c): [CourseId, JazzMode] => [c, 'off']), ...JAZZ_COURSES.map((c): [CourseId, JazzMode] => [c, 'on'])];
+  for (const [c, jazz] of variants)
+    it(`${c} (jazz ${jazz}): prerequisites first, one new idea and one level per unit, no dead end`, () => {
+      // With the jazz pack open the walk is a student / pro's (an intermediate background), plus the placed player.
+      for (const [t, m] of jazz === 'off' ? CONFIGS : CONFIGS.filter(([t, m]) => t === 'student' || m === 'placed' || m === 'strong')) {
+        const r = report(c, t, m, jazz);
+        const tag = `${c} ${t} ${m} jazz-${jazz}`;
         expect(r.gaps, `${tag}: a step before what it builds on`).toEqual([]);
         expect(r.crossGaps, `${tag}: a topic level whose lower levels live in another course and were not bridged`).toEqual([]);
         // A placed player's first unit may hold a catch-up of a skipped teaching level next to a new topic.
@@ -93,33 +98,35 @@ describe('the flow rules hold on every course walk', () => {
         if (r.ended) expect(r.left, `${tag}: ended after ${r.units} units with ${r.left} steps left`).toBeLessThanOrEqual(10);
         else expect(r.units).toBe(UNITS);
       }
-    });
+    }, 180_000);
 });
 
-describe('jazz', () => {
-  it('the Jazz path no longer dead-ends for an explorer or a hobbyist, and opens with its own on-ramp', () => {
-    for (const t of ['explorer', 'hobby'] as const) {
-      const w = walkPath('jazz', t, 'steady', 50);
-      expect(w.units.length, t).toBe(50);
-      // The first unit is jazz (the swing / blues / comping on-ramp), not a bridged ear lesson.
-      const first = w.units[0].ids.filter((x) => !x.startsWith('check:'));
-      expect(first.some((id) => /swing-ratio|blues-ear|comping|call-response|comp-rhythm-ear/.test(id)), first.join(' ')).toBe(true);
-      // The entry gate: 7th-chord colours and ii–V–I before the guide tones and voicings.
-      const at = (id: string) => w.units.findIndex((u) => u.ids.includes(id));
-      expect(at('lesson:jazz-1'), t).toBeGreaterThanOrEqual(0);
-      for (const id of ['topic:guide-tones:1', 'topic:voicing-type:1', 'topic:bh-three-dim:1']) if (at(id) >= 0) expect(at(id), `${t}: ${id}`).toBeGreaterThan(at('lesson:jazz-1'));
-    }
+describe('jazz in the Ear course (SPEC-JAZZ-FOLD)', () => {
+  it('with the jazz pack open, the Ear path climbs into jazz: the jazz welcome before the 7th-chord jazz lessons, and those before guide tones, voicing types and Harris', () => {
+    const w = walkPath('ear', 'student', 'steady', 70, { jazz: 'on' });
+    const at = (id: string) => w.units.findIndex((u) => u.ids.includes(id));
+    expect(at('lesson:jazz-1'), 'jazz-1 on the path').toBeGreaterThanOrEqual(0);
+    for (const id of ['topic:guide-tones:1', 'topic:voicing-type:1', 'topic:bh-three-dim:1']) if (at(id) >= 0) expect(at(id), id).toBeGreaterThan(at('lesson:jazz-1'));
+    // Its prerequisites are Ear's own steps now (no bridge needed): the cadence lesson comes first.
+    expect(at('lesson:cadences')).toBeGreaterThanOrEqual(0);
+    expect(at('lesson:cadences')).toBeLessThan(at('lesson:jazz-1'));
   });
 
-  it('a prerequisite of another course is a bridge step in this one (Ear\'s cadence lesson before lesson:jazz-1)', () => {
-    const inp = courseBase('jazz', 'hobby');
+  it('with the jazz pack closed (a beginner), no jazz step is on the Ear path', () => {
+    const w = walkPath('ear', 'explorer', 'steady', 45);
+    const ids = w.units.flatMap((u) => u.ids);
+    const by = new Map(stepCatalogue().map((s) => [s.id, s] as const));
+    expect(ids.filter((id) => by.get(id)?.pack === 'jazz')).toEqual([]);
+    expect(w.left.filter((id) => by.get(id)?.pack === 'jazz')).toEqual([]);
+  });
+
+  it('the Ear path bridges nothing for jazz: jazz-1 prerequisites are on the same path', () => {
+    const inp = courseBase('ear', 'student', [], 'on');
     const by = new Map(stepCatalogue().map((s) => [s.id, s] as const));
     const own = stepCatalogue().filter((s) => eligible(s, inp));
-    expect(own.some((s) => s.id === 'lesson:cadences')).toBe(false);
-    const all = withBridges(own, inp, by);
-    expect(all.some((s) => s.id === 'lesson:cadences')).toBe(true);
-    expect(all.some((s) => s.id === 'topic:voicings:2')).toBe(true);
-    // Shared credit: passed in the Ear course, it is passed here too.
+    for (const id of ['lesson:cadences', 'lesson:jazz-1', 'topic:voicings:2', 'topic:voicings:3']) expect(own.some((s) => s.id === id), id).toBe(true);
+    expect(withBridges(own, inp, by).length).toBe(own.length);
+    // Shared credit still works: a step passed in another course is passed here.
     const v = buildPath({ ...inp, otherDone: ['lesson:cadences'] });
     expect(v.units.flatMap((u) => u.steps.map((x) => x.step.id))).not.toContain('lesson:cadences');
   });

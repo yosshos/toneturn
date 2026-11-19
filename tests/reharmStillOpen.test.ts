@@ -7,7 +7,7 @@ import { commonTones, triadPcs, mediantsOf } from '../src/engine/commonTone';
 import { GAME_STEPS, gameForArea, stepCatalogue } from '../src/engine/path';
 import { BONUS_GAMES, bonusSteps } from '../src/engine/pathBonus';
 import { COURSE_GAMES } from '../src/ui/courseRows';
-import { WORKOUT_GAMES } from '../src/engine/workout2';
+import { WORKOUT_GAMES, JAZZ_WORKOUT_GAMES } from '../src/engine/workout2';
 import { isKeyGame, gameKeyTitle, gameKeyFamily, keyTakesOf } from '../src/engine/gameKeys';
 import { gameEvents } from '../src/engine/gameRating';
 import { clearsRun, gameXp, tierSpec, TIERS } from '../src/engine/gameTiers';
@@ -209,12 +209,11 @@ describe('the two games connect to everything', () => {
       expect(jazz.some((s) => s.game === g), g).toBe(true);
       expect(!!GAME_STEPS[g] && BONUS_GAMES.some((b) => b.game === g)).toBe(true);
       expect(COURSE_GAMES.ear).toContain(g);
-      expect(COURSE_GAMES.jazz).toContain(g);
-      expect(WORKOUT_GAMES.jazz).toContain(g);
+      expect([...WORKOUT_GAMES.ear, ...(JAZZ_WORKOUT_GAMES.ear ?? [])]).toContain(g);
     }
     expect(COURSE_GAMES.keys).toContain('thirdjump');
     expect(WORKOUT_GAMES.ear).toContain('darkside');
-    expect(boardGames(COURSE_GAMES.jazz)).toEqual(expect.arrayContaining(['thirdjump', 'darkside']));
+    expect(boardGames(COURSE_GAMES.ear)).toEqual(expect.arrayContaining(['thirdjump', 'darkside']));
   });
   it('glyphs (each its own), badges, tiers in Hebrew, ratings, XP, clears', () => {
     const gl = ['thirdjump', 'darkside'].map((g) => GAME_STEP_GLYPH[g]);

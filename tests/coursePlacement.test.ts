@@ -2,7 +2,7 @@
 // harmony (chords and cadences were inferred from degrees and intervals), and the Jazz test measured only improvising.
 import { describe, expect, it } from 'vitest';
 import type { SkillId } from '../src/engine/lesson';
-import { COURSE_PLACEMENT_SKILLS } from '../src/engine/courses';
+import { COURSE_PLACEMENT_SKILLS, coursePlacementSkills } from '../src/engine/courses';
 import { LADDERS, placementAreaOf, placementSkills, placementTestBudget, planPlacement, type PlacementAnswer } from '../src/engine/placement';
 
 function play(order: SkillId[], can: (k: SkillId) => number) {
@@ -17,14 +17,15 @@ function play(order: SkillId[], can: (k: SkillId) => number) {
 }
 
 describe('each course measures what it teaches', () => {
-  for (const course of ['ear', 'jazz'] as const) {
-    const order = placementSkills({ skills: COURSE_PLACEMENT_SKILLS[course]! });
-    it(`${course}: every area is asked, for every kind of player`, () => {
+  // SPEC-JAZZ-FOLD: the Jazz test folded into Ear's — Ear without and with the jazz pack.
+  for (const [course, jazz] of [['ear', false], ['ear', true]] as const) {
+    const order = placementSkills({ skills: coursePlacementSkills(course, jazz)! });
+    it(`${course}${jazz ? ' (jazz pack open)' : ''}: every area is asked, for every kind of player`, () => {
       for (const lv of [700, 950, 1200, 1450, 1700]) {
         for (const shape of [() => lv, (k: SkillId) => (order.indexOf(k) % 2 ? lv : lv + 400)]) {
           const { answers } = play(order, shape);
           const askedAreas = new Set(answers.map((a) => placementAreaOf(a.skill)));
-          for (const a of new Set(order.map(placementAreaOf))) expect(askedAreas.has(a), `${course} ${lv}: ${a}`).toBe(true);
+          for (const a of new Set(order.map(placementAreaOf))) expect(askedAreas.has(a), `${course}${jazz ? '+jazz' : ''} ${lv}: ${a}`).toBe(true);
           expect(answers.length).toBeLessThanOrEqual(placementTestBudget(order));
         }
       }
@@ -38,8 +39,8 @@ describe('each course measures what it teaches', () => {
     for (const k of ['chords', 'cadences'] as SkillId[]) expect(asked.has(k), k).toBe(true);
     expect(asked.has('transpose') || asked.has('expression')).toBe(true);
   });
-  it('jazz: its radar skills are all in its test', () => {
-    const order = placementSkills({ skills: COURSE_PLACEMENT_SKILLS.jazz! });
+  it('ear with the jazz pack: the old Jazz radar skills are all in its test (improvising added)', () => {
+    const order = placementSkills({ skills: coursePlacementSkills('ear', true)! });
     for (const k of ['improv', 'chords', 'cadences', 'modes', 'rhythm-dictation', 'form'] as SkillId[]) expect(order, k).toContain(k);
   });
 });

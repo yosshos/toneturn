@@ -1,7 +1,7 @@
 // Community and achievements per course (owner 2026-11-09). Pure: which course a result belongs to, this week's XP
 // per course (the league stays one across courses, its card shows the split), the level of a course (pp … ff, the
 // same scale as Progress → Overview), friends who take a course, and the duel / room question sets of a course.
-import { COURSE_AREAS, COURSE_IDS, inCourse, LEGACY_EXAM, normCourse, type CourseId } from './courses';
+import { COURSE_AREAS, COURSE_IDS, inCourse, LEGACY_EXAM, LEGACY_JAZZ, normCourse, type CourseId } from './courses';
 import { stepCatalogue, type PathStep } from './path';
 import { COURSE_SUBS, domainValue, overallRating, type CourseSub, type Ratings } from './rating';
 import type { SetKind } from './tournament';
@@ -180,7 +180,8 @@ export function friendsInCourse<T extends CourseFriendRow>(rows: T[], course: Co
   const friends = rows.filter((r) => r.relation === 'friend');
   const known = friends.some((r) => r.course_levels && Object.keys(r.course_levels).length > 0);
   // 0.67: a friend on an older app may still send an 'exam' level: it is the Ear course's (the same rating).
-  const levelOf = (cl: Record<string, string> | null | undefined): string | undefined => cl?.[course] ?? (course === 'ear' ? cl?.[LEGACY_EXAM] : undefined);
+  // SPEC-JAZZ-FOLD: and an old 'jazz' level is the Ear course's when the friend sent no ear level.
+  const levelOf = (cl: Record<string, string> | null | undefined): string | undefined => cl?.[course] ?? (course === 'ear' ? cl?.[LEGACY_EXAM] ?? cl?.[LEGACY_JAZZ] : undefined);
   const out = rows
     .filter((r) => r.relation === 'me' || (r.relation === 'friend' && levelOf(r.course_levels) !== undefined))
     .map((r) => {
@@ -197,7 +198,6 @@ export function friendsInCourse<T extends CourseFriendRow>(rows: T[], course: Co
 const COURSE_SETS: Partial<Record<CourseId, (SetKind | 'choir')[]>> = {
   ear: ['mixed', 'degrees', 'chords', 'intervals', 'modes', 'wrong-notes', 'truefalse', 'echo', 'beat', 'jazz'],
   voice: ['vocal-hold', 'choir', 'echo', 'intervals', 'degrees'],
-  jazz: ['jazz', 'chords', 'modes', 'degrees', 'wrong-notes', 'mixed'],
   // Drums (DRUMS_AUDIT I5): rhythm only — no chords, modes or intervals in a drummer's duel.
   drums: ['beat'],
 };

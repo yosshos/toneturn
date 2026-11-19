@@ -16,7 +16,7 @@
 //
 // The ledger also keeps, per item and day, how clean the takes were (the quality ledger), and the player's notes.
 
-import type { CourseId } from './courses';
+import { normCourse, type CourseId } from './courses';
 
 export const IDLE_MS = 60_000;
 /** A tick never adds more than this (a throttled background timer must not book a long gap). */
@@ -101,7 +101,8 @@ export interface BucketParts {
 export const bucketKey = (b: BucketParts) => [b.course ?? '', b.kind, (b.skill ?? '').replace(/\|/g, '/'), b.key === null || b.key === undefined ? '' : String(((b.key % 12) + 12) % 12), b.q].join('|');
 export function parseBucket(k: string): BucketParts & { course: CourseId | '' } {
   const [course, kind, skill, key, q] = k.split('|');
-  return { course: (course || '') as CourseId | '', kind: (kind || 'game') as PracticeKind, skill: skill || undefined, key: key === '' || key === undefined ? null : Number(key), q: (q || 'run') as Quality };
+  // SPEC-JAZZ-FOLD: time logged in the old Jazz (or Exams) course is the Ear course's.
+  return { course: (course ? normCourse(course) ?? '' : '') as CourseId | '', kind: (kind || 'game') as PracticeKind, skill: skill || undefined, key: key === '' || key === undefined ? null : Number(key), q: (q || 'run') as Quality };
 }
 
 // ------------------------------------------------------------------ the ledger

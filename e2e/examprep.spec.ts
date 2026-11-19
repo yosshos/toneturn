@@ -13,7 +13,9 @@ test.describe('exam prep mode', () => {
     await page.locator('[data-course-chip]:visible').first().click();
     await page.locator('[data-course-add]').click();
     await expect(page.locator('[data-course="exam"]')).toHaveCount(0);
-    await expect(page.locator('[data-course="jazz"]')).toBeVisible();
+    // SPEC-JAZZ-FOLD: no Jazz course either (it is jazz focus now).
+    await expect(page.locator('[data-course="jazz"]')).toHaveCount(0);
+    await expect(page.locator('[data-course="bass"]')).toBeVisible();
     // Picking the active course closes the sheet.
     await page.locator('[data-course="ear"]').click();
     await expect(page.locator('.course-sheet')).toHaveCount(0);

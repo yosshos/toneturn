@@ -55,7 +55,7 @@ describe('My song: analysis (SPEC-MY-SONG §3)', () => {
     expect(k.why.en).toMatch(/Timing only/);
     expect(measurePlan({ ...base, beats: null }, 'drums').none).toBe(true);
     expect(measurePlan({ ...base, bass: { notes: [], confidence: 0.8 } }, 'bass').pitch).toBe('bass');
-    expect(measurePlan(base, 'jazz').none).toBe(true);
+    expect(measurePlan(base, 'ear').none).toBe(true);
   });
 });
 

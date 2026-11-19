@@ -34,7 +34,7 @@ export function tasteLesson(def: TasteDef, seed: number): LessonDef {
       qs.push({ ...q, promptBy: 'echo', stimulus: [{ kind: 'note', midi: q.targetMidi, duration: 1.4 }], difficulty: 700 });
     } else if ('echoPhrase' in it) for (const degs of it.echoPhrase) qs.push(echoPhrase(id(), KEYS[Math.floor(rnd() * KEYS.length)], degs));
   }
-  const skill = qs[0] && 'skillAs' in qs[0] && qs[0].skillAs ? qs[0].skillAs : def.course === 'voice' ? 'singing' : def.course === 'jazz' ? 'chords' : 'pitch';
+  const skill = qs[0] && 'skillAs' in qs[0] && qs[0].skillAs ? qs[0].skillAs : def.course === 'voice' ? 'singing' : def.id.startsWith('jazz-') ? 'chords' : 'pitch';
   return { id: 'topic', version: 1, skill, scoring: { xpPerCorrect: 10, attemptLimit: 2 }, intro: [], questions: qs };
 }
 

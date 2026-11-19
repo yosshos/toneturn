@@ -50,7 +50,7 @@ describe('exam prep: what the mode changes', () => {
   it('the ear path uses the exam goal; other courses ignore the mode', () => {
     expect(courseGoal('ear', true)).toBe('exam');
     expect(courseGoal('ear', false)).toBe('general');
-    expect(courseGoal('jazz', true)).toBe('jazz');
+    expect(courseGoal('keys', true)).toBe('general');
     expect(courseInput(base, 'ear', true).goal).toBe('exam');
     expect(courseInput(base, 'ear').goal).toBe('general');
     expect(courseInput(base, 'voice', true).goal).toBe('sing');
@@ -145,7 +145,7 @@ describe('migration: the old Exams course → Ear with exam prep on', () => {
   });
   it('re-picking the active course with no stored list never lists it twice', () => {
     expect(switchCourse({}, 'ear').courses).toEqual(['ear']);
-    expect(switchCourse({ activeCourse: 'voice' }, 'jazz').courses).toEqual(['voice', 'jazz']);
+    expect(switchCourse({ activeCourse: 'voice' }, 'bass').courses).toEqual(['voice', 'bass']);
   });
   it('mergeFacts keeps the best of both', () => {
     expect(mergeFacts(undefined, { tests: { a: 'x' } })).toEqual({ tests: { a: 'x' } });
@@ -170,7 +170,7 @@ describe('per-course XP, levels and friends: exam merges into ear', () => {
       ['Old', 'mf'],
       ['Me', 'p'],
     ]);
-    expect(friendsInCourse([{ name: 'Old', relation: 'friend' as const, course_levels: { exam: 'mf' } }], 'jazz', null).rows).toEqual([]);
+    expect(friendsInCourse([{ name: 'Old', relation: 'friend' as const, course_levels: { exam: 'mf' } }], 'keys', null).rows).toEqual([]);
   });
 });
 

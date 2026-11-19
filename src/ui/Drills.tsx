@@ -69,6 +69,8 @@ import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { DrumSongCard } from './DrumSongCard';
 import { DrumScore, KitCard, KitSetup } from './DrumViews';
+import { isJazzStep } from '../engine/courses';
+import { jazzOpenIn } from '../engine/jazzFold';
 import { drumMicOf, type KitKind } from '../engine/drumKit';
 import { isDrumDrill } from '../engine/drills/events';
 import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
@@ -311,6 +313,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <TechLevelTest
           lang={lang}
           ds={ds}
+          noJazz={!!settings.activeCourse && !jazzOpenIn(settings, settings.activeCourse)}
           cal={calOf(settings)}
           items={items}
           onTake={onTake}
@@ -1471,7 +1474,7 @@ function Calibration({ lang, cal, onSave }: { lang: Lang; cal: DrillCalibration;
   );
 }
 
-type LevelTestProps = { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit'] };
+type LevelTestProps = { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit']; /** SPEC-JAZZ-FOLD: the jazz pack is closed in the course — no jazz sections or steps. */ noJazz?: boolean };
 /** The playing level test: piano runs the section test (SPEC-LEVEL-TEST); the other instruments their probes. */
 function TechLevelTest(p: LevelTestProps & { bassTuning?: string }) {
   return <SectionLevelTest {...p} />;
@@ -1507,7 +1510,7 @@ const PIANO_TEST_TX = {
 };
 
 /** The playing level test: sections of real levels, adaptive, one take per step (docs/SPEC-LEVEL-TEST.md). */
-function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, kit, bassTuning }: LevelTestProps & { bassTuning?: string }) {
+function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, kit, bassTuning, noJazz }: LevelTestProps & { bassTuning?: string }) {
   const tx = PIANO_TEST_TX[lang];
   const inst = ds.instrument ?? 'piano';
   const cat = useMemo(() => familiesOf(inst), [inst]);
@@ -1526,6 +1529,9 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
           .map((r) => {
             const lv = cat.flatMap((f) => f.levels).find((l) => l.id === r.level);
             if (!lv || !shown.has(lv.id)) return null;
+            // SPEC-JAZZ-FOLD: a beginner's test (jazz pack closed) asks no jazz levels.
+            const fam = cat.find((f) => f.levels.some((l) => l.id === lv.id));
+            if (noJazz && fam && isJazzStep({ ladder: { family: fam.id, ref: lv.id } as never })) return null;
             const key = Array.isArray(lv.keys) && !lv.keys.includes(r.key) ? lv.keys[0] : r.key;
             const d0 = withBassTuning([generate({ ...(lv.specs[r.spec ?? 0] ?? lv.specs[0]), key })], bassTuning)[0];
             // one phone screen: a long one-hand scale (the touch steps by microphone) shows two lines at a time
@@ -1537,7 +1543,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
       }))
       .filter((x) => x.rungs.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cat, inst, ds.emphasis, bassTuning, kit]);
+  }, [cat, inst, ds.emphasis, bassTuning, kit, noJazz]);
   const [started, setStarted] = useState(false);
   const [si, setSi] = useState(0);
   const [st, setSt] = useState<StrandState>(() => startState(strands[0]?.rungs.length ?? 0));

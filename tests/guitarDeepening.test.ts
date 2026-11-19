@@ -251,10 +251,10 @@ describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', 
     expect(guitarAddOnsOf({ guitarStyle: 'metal' })).toEqual([]);
     expect(guitarAddOnsOf({ guitarStyle: 'all' })).toEqual([]);
     expect(guitarAddOnsOf({})).toEqual([]);
-    expect(guitarAddOnsOf({}, ['guitar', 'jazz'])).toEqual(['jazz']);
-    expect(guitarAddOnsOf({ guitarStyle: 'flamenco' }, ['guitar', 'jazz'])).toEqual(['jazz', 'flamenco']);
-    expect(guitarAddOnsOf({ guitarAddOns: ['prog'] }, ['guitar', 'jazz'])).toEqual(['prog']);
-    expect(guitarAddOnsOf({ guitarAddOns: [] }, ['jazz'])).toEqual([]);
+    expect(guitarAddOnsOf({}, ['guitar', 'jazz' as never])).toEqual(['jazz']);
+    expect(guitarAddOnsOf({ guitarStyle: 'flamenco' }, ['guitar', 'jazz' as never])).toEqual(['jazz', 'flamenco']);
+    expect(guitarAddOnsOf({ guitarAddOns: ['prog'] }, ['guitar', 'jazz' as never])).toEqual(['prog']);
+    expect(guitarAddOnsOf({ guitarAddOns: [] }, ['jazz' as never])).toEqual([]);
   });
 
   it('the path orders guitar levels by grade (sweep picking after 3nps scales; 3nps picking with them)', () => {

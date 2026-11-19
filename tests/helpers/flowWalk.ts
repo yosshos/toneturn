@@ -34,12 +34,14 @@ export interface Walk {
 
 export const baseInput: PathInput = { track: 'explorer', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: null, leaveOut: [], packs: [], plays: [], minutes: 10, ratings: {} as PathInput['ratings'], events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-18T10:00:00Z') };
 
-export function courseBase(course: CourseId, track: PathInput['track'], plays: string[] = []): PathInput {
-  return { ...courseInput({ ...baseInput, track, plays }, course), ladderFamilies: ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS), ladderHidden: ladderHiddenFor(course, undefined, undefined, false, DEFAULT_DRILL_SETTINGS) };
+/** SPEC-JAZZ-FOLD: the jazz pack closed (a beginner), open (an intermediate / advanced background) or in jazz focus. */
+export type JazzMode = 'off' | 'on' | 'focus';
+export function courseBase(course: CourseId, track: PathInput['track'], plays: string[] = [], jazz: JazzMode = 'off'): PathInput {
+  return { ...courseInput({ ...baseInput, track, plays, packs: jazz === 'on' ? ['jazz'] : [] }, course, false, jazz === 'focus'), ladderFamilies: ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS), ladderHidden: ladderHiddenFor(course, undefined, undefined, false, DEFAULT_DRILL_SETTINGS) };
 }
 
-export function walkPath(course: CourseId, track: PathInput['track'], model: Model, maxUnits: number, opts: { plays?: string[]; placeAt?: number } = {}): Walk {
-  const inp0 = courseBase(course, track, opts.plays);
+export function walkPath(course: CourseId, track: PathInput['track'], model: Model, maxUnits: number, opts: { plays?: string[]; placeAt?: number; jazz?: JazzMode } = {}): Walk {
+  const inp0 = courseBase(course, track, opts.plays, opts.jazz);
   let facts: PathFacts = {};
   let ratings: Ratings = {};
   let events: RatingEvent[] = [];

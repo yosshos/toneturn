@@ -3,7 +3,7 @@
 // to, shows the best result and opens the course's measured practice for it. One phone screen each, no emoji.
 
 import { useState } from 'react';
-import type { CourseId } from '../engine/courses';
+import type { RepCourse } from '../engine/repertoire';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, repStatus, repertoireFor, tierName, wayLabel, type RepItem, type RepTier, type RepWay } from '../engine/repertoire';
 import { ListenOriginal } from './ListenOriginal';
 import { loadMemo, memoProgress, MEMO_STEPS, moveTune, saveMemo, toggleMemoStep, TUNE_LISTS, tunesIn, type MemoState, type TuneList } from '../engine/practiceMethod';
@@ -14,7 +14,7 @@ type Lang = 'he' | 'en';
 
 export interface RepertoireProps {
   lang: Lang;
-  course: CourseId;
+  course: RepCourse;
   lessons: Record<string, { best: number; completions: number }> | undefined;
   /** The item to open on entry (from the Today card or a quest). */
   initialItem?: string | null;
@@ -124,7 +124,7 @@ export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, o
   );
 }
 
-function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMemo }: { lang: Lang; course: CourseId; item: RepItem; res: ReturnType<typeof repResults>; onBack: () => void; onOpen: (id: string) => void; onWay: (item: RepItem, way: RepWay) => void; memo: MemoState; setMemo: (m: MemoState) => void }) {
+function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMemo }: { lang: Lang; course: RepCourse; item: RepItem; res: ReturnType<typeof repResults>; onBack: () => void; onOpen: (id: string) => void; onWay: (item: RepItem, way: RepWay) => void; memo: MemoState; setMemo: (m: MemoState) => void }) {
   const he = lang === 'he';
   const [memoOpen, setMemoOpen] = useState(false);
   if (memoOpen) return <MemoPage lang={lang} item={item} memo={memo} setMemo={setMemo} onBack={() => setMemoOpen(false)} onWay={onWay} />;
@@ -196,7 +196,7 @@ function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMem
 }
 
 /** The three lists (Siskind: know / learning / next), tunes by title; tap opens the tune. */
-function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course: CourseId; memo: MemoState; onBack: () => void; onOpen: (id: string) => void }) {
+function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course: RepCourse; memo: MemoState; onBack: () => void; onOpen: (id: string) => void }) {
   const he = lang === 'he';
   return (
     <main className="rep-screen" data-rep-listpage="1">

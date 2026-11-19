@@ -6,8 +6,9 @@ import { CADENCES, MIRROR_ITEMS, MIRROR_KEYS, chordOf, chordPcs, isMirrorSave, m
 import { mirror } from '../src/engine/topicsHarmony3';
 import { GAME_STEPS, GAME_PREREQ } from '../src/engine/path';
 import { BONUS_GAMES, bonusSteps } from '../src/engine/pathBonus';
-import { COURSE_GAMES } from '../src/ui/courseRows';
-import { WORKOUT_GAMES } from '../src/engine/workout2';
+import { COURSE_GAMES, courseGames } from '../src/ui/courseRows';
+import { inCourse } from '../src/engine/courses';
+import { JAZZ_WORKOUT_GAMES } from '../src/engine/workout2';
 import { gameEvents } from '../src/engine/gameRating';
 import { clearsRun, gameXp, tierSpec, TIERS } from '../src/engine/gameTiers';
 import { boardGames } from '../src/engine/gameBoard';
@@ -132,15 +133,19 @@ describe('Mirror connects to everything', () => {
     expect(clearsRun('mirror', 'mf', 150, d)).toBe(true);
     expect(clearsRun('mirror', 'mf', 50, { right: 5, wrong: 5 })).toBe(false);
   });
-  it('a Jazz bonus step after negative harmony 1; workout; games list; boards', () => {
+  it('a jazz bonus step of the Ear course after negative harmony 1; workout; games list; boards (SPEC-JAZZ-FOLD)', () => {
     expect(GAME_STEPS.mirror).toBeDefined();
     expect(BONUS_GAMES.find((b) => b.game === 'mirror')?.course).toBe('jazz');
-    expect(bonusSteps().some((s) => s.id === 'bonus:jazz:mirror' && s.pack === 'jazz')).toBe(true);
+    const st = bonusSteps().find((s) => s.id === 'bonus:jazz:mirror')!;
+    expect(st.pack).toBe('jazz');
+    expect(inCourse(st, 'ear')).toBe(true);
     expect(GAME_PREREQ.mirror).toEqual(['topic:negative-harmony:1']);
-    expect(WORKOUT_GAMES.jazz).toContain('mirror');
-    expect(COURSE_GAMES.jazz).toContain('mirror');
-    expect(COURSE_GAMES.ear).not.toContain('mirror');
-    expect(boardGames(COURSE_GAMES.jazz)).toContain('mirror');
+    expect(JAZZ_WORKOUT_GAMES.ear).toContain('mirror');
+    expect(COURSE_GAMES.ear).toContain('mirror');
+    // Jazz content: in Ear's list only with the jazz pack open.
+    expect(courseGames('ear', false)).not.toContain('mirror');
+    expect(courseGames('ear', true)).toContain('mirror');
+    expect(boardGames(COURSE_GAMES.ear)).toContain('mirror');
     expect(GAMES2.some((g) => g.id === 'mirror' && /[א-ת]/.test(g.he[0]))).toBe(true);
   });
   it('its own glyph, badge and intro lesson', () => {

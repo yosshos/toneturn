@@ -14,7 +14,7 @@ import { gameEvents } from '../src/engine/gameRating';
 import { GAME_STEPS, gameForArea } from '../src/engine/path';
 import { BONUS_GAMES, bonusSteps } from '../src/engine/pathBonus';
 import { inCourse, type CourseId } from '../src/engine/courses';
-import { WORKOUT_GAMES } from '../src/engine/workout2';
+import { WORKOUT_GAMES, JAZZ_WORKOUT_GAMES } from '../src/engine/workout2';
 import { COURSE_GAMES } from '../src/ui/courseRows';
 import { GAME_STEP_GLYPH } from '../src/ui/stepGlyphs';
 import { GLYPHS } from '../src/ui/Glyph';
@@ -378,7 +378,8 @@ describe('case runs (save / resume, scoring)', () => {
 // ---------------------------------------------------------------- connections
 
 describe('the new games connect like every game', () => {
-  const base = { noMic: false, noSing: false, packs: [] as never[] };
+  // SPEC-JAZZ-FOLD: the jazz games (Which Brother, Comp Caller) are on the path with the jazz pack open.
+  const base = { noMic: false, noSing: false, packs: ['jazz'] as never[] };
   it('six tiers, a card, a glyph of their own, a rating, a course, a board', () => {
     const arcade = readFileSync('src/ui/Arcade.tsx', 'utf8');
     for (const g of NEW) {
@@ -402,7 +403,6 @@ describe('the new games connect like every game', () => {
   });
   it('the courses list them', () => {
     expect(COURSE_GAMES.ear).toContain('bordercontrol');
-    expect(COURSE_GAMES.jazz).toEqual(expect.arrayContaining(['bordercontrol', 'whichbrother', 'compcaller']));
     expect(COURSE_GAMES.voice).toContain('runcatcher');
     expect(COURSE_GAMES.keys).toEqual(expect.arrayContaining(['whichbrother', 'compcaller', 'elevator']));
     expect(COURSE_GAMES.guitar).toEqual(expect.arrayContaining(['compcaller', 'elevator']));
@@ -430,13 +430,16 @@ describe('the new games connect like every game', () => {
     for (const g of ['bordercontrol', 'whichbrother', 'compcaller']) {
       expect(BONUS_GAMES.some((b) => b.game === g && b.course === 'jazz')).toBe(true);
       const st = bonusSteps().find((s) => s.id === `bonus:jazz:${g}`)!;
-      expect(inCourse(st, 'jazz')).toBe(true);
+      // SPEC-JAZZ-FOLD: the old Jazz bonus steps are the Ear course's (jazz pack).
+      expect(inCourse(st, 'ear')).toBe(true);
+      expect(st.pack).toBe('jazz');
       expect(GAME_TIERS[g].tiers.mp).toBeDefined();
     }
   });
   it('workout rotation, key mastery, measured-only input', () => {
     expect(WORKOUT_GAMES.voice).toContain('runcatcher');
-    expect(WORKOUT_GAMES.jazz).toEqual(expect.arrayContaining(['whichbrother', 'bordercontrol', 'compcaller']));
+    expect(JAZZ_WORKOUT_GAMES.keys).toEqual(expect.arrayContaining(['whichbrother', 'compcaller']));
+    expect(WORKOUT_GAMES.ear).toContain('bordercontrol');
     expect(WORKOUT_GAMES.keys).toEqual(expect.arrayContaining(['elevator', 'compcaller']));
     for (const g of ['whichbrother', 'compcaller', 'elevator']) {
       expect(isKeyGame(g)).toBe(true);

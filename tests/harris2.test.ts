@@ -295,11 +295,13 @@ describe('wiring', () => {
     packs: ['jazz', 'maqam', 'absolute', 'production', 'post-tonal'], plays: [], minutes: 10, ratings: {}, events: [],
     facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-14T10:00:00Z'),
   };
-  it('the Barry Harris and jazz topics are on the jazz path after what they build on; the harmony topics on the ear path', () => {
+  it('the Barry Harris and jazz topics are on the ear path (its jazz top levels) after what they build on; the harmony topics on the ear path', () => {
     const cat = stepCatalogue();
-    const on = (c: 'ear' | 'jazz', t: string) => cat.filter((s) => s.topic === t && eligible(s, courseInput(base, c)));
-    for (const t of ['bh-three-dim', 'bh-dim-roles', 'bh-m6-bass', 'jazz-dictation', 'planing']) expect(on('jazz', t).length, t).toBeGreaterThan(0);
-    for (const t of ['negative-harmony']) expect(on('jazz', t).length, t).toBeGreaterThan(0);
+    const on = (c: 'ear', t: string, packs = base.packs) => cat.filter((s) => s.topic === t && eligible(s, courseInput({ ...base, packs }, c)));
+    for (const t of ['bh-three-dim', 'bh-dim-roles', 'bh-m6-bass', 'jazz-dictation', 'planing']) expect(on('ear', t).length, t).toBeGreaterThan(0);
+    for (const t of ['negative-harmony']) expect(on('ear', t).length, t).toBeGreaterThan(0);
+    // SPEC-JAZZ-FOLD: a beginner (jazz pack closed) does not get them.
+    for (const t of ['bh-three-dim', 'negative-harmony']) expect(on('ear', t, []).length, t).toBe(0);
     for (const t of ['function-ear', 'modal-cadence', 'borrowed-ext', 'form-ear']) expect(on('ear', t).length, t).toBeGreaterThan(0);
     const d = (t: string, l = 1) => cat.find((s) => s.id === `topic:${t}:${l}`)!.difficulty;
     expect(d('bh-three-dim')).toBeGreaterThan(d('bh-scale'));

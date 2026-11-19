@@ -6,14 +6,18 @@ import type { Goal, PathInput, PathStep, PathFacts, Pack } from './path';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
 
-export type CourseId = 'ear' | 'voice' | 'keys' | 'guitar' | 'bass' | 'jazz' | 'drums';
+export type CourseId = 'ear' | 'voice' | 'keys' | 'guitar' | 'bass' | 'drums';
 
 /** 0.67 (owner 2026-11-10): "Exams" is no longer a course but the Ear course's exam-prep mode (Settings.examPrep).
  *  Old data may still say 'exam' (courses, activeCourse, pathFactsBy, results, friends' course_levels): read it as 'ear'. */
 export const LEGACY_EXAM = 'exam';
-/** A stored course id as a live one: the old 'exam' course is the Ear course; unknown ids are dropped (null). */
+/** 2026-11-19 (owner, docs/SPEC-JAZZ-FOLD.md): "Jazz & improv" is no longer a course. Its ear and theory are the top
+ *  levels of the Ear course, its playing lives in the instrument courses, and "jazz focus" is a mode of each course.
+ *  Old data may still say 'jazz' (courses, activeCourse, pathFactsBy, results, friends' course_levels): read it as 'ear'. */
+export const LEGACY_JAZZ = 'jazz';
+/** A stored course id as a live one: the old 'exam' and 'jazz' courses are the Ear course; unknown ids are dropped (null). */
 export function normCourse(id: string | null | undefined): CourseId | null {
-  if (id === LEGACY_EXAM) return 'ear';
+  if (id === LEGACY_EXAM || id === LEGACY_JAZZ) return 'ear';
   return COURSES.some((c) => c.id === id) ? (id as CourseId) : null;
 }
 
@@ -42,10 +46,9 @@ export const COURSES: CourseDef[] = [
   { id: 'bass', name: { he: 'בס', en: 'Bass' }, short: { he: 'בס', en: 'Bass' }, color: '#FF5FA2', glyph: 'bass', goal: 'guitar', plays: ['bass'] },
   // 0.65 (DRUMS_CURRICULUM): measured on a MIDI e-kit, or a practice pad by microphone (single-surface items only).
   { id: 'drums', name: { he: 'תופים', en: 'Drums' }, short: { he: 'תופים', en: 'Drums' }, color: '#4CD07D', glyph: 'drums', goal: 'general', plays: ['drums'], note: { en: 'Best with an e-kit by MIDI', he: 'הכי טוב עם תופים אלקטרוניים ב-MIDI' } },
-  { id: 'jazz', name: { he: 'ג׳אז ואלתור', en: 'Jazz & improv' }, short: { he: 'ג׳אז', en: 'Jazz' }, color: '#A78BFA', glyph: 'jazz', goal: 'jazz', plays: [] },
 ];
 export const COURSE_IDS = COURSES.map((c) => c.id);
-export const courseOf = (id: string | null | undefined): CourseDef => COURSES.find((c) => c.id === id) ?? COURSES[0];
+export const courseOf = (id: string | null | undefined): CourseDef => COURSES.find((c) => c.id === normCourse(id)) ?? COURSES[0];
 
 /** The areas a course's workout may draw "area" blocks from (the path itself is already the course's). */
 export const COURSE_AREAS: Record<CourseId, DomainId[]> = {
@@ -54,25 +57,30 @@ export const COURSE_AREAS: Record<CourseId, DomainId[]> = {
   keys: ['instrument'],
   guitar: ['instrument'],
   bass: ['instrument'],
-  jazz: ['creative'],
   drums: ['instrument', 'time'],
 };
 
 /**
  * Owner 2026-11-19: "the level test must check everything the course covers". The skills a course's own Find my level
  * measures (null = the course has its own sectioned test): Ear & theory = hearing, harmony, rhythm, memory, reading and
- * theory, transposing and expression (improvising is the Jazz course's); Jazz = its radar — improvising, chords,
- * changes, modes, swing (rhythm by ear), forms.
+ * theory, transposing and expression. SPEC-JAZZ-FOLD: the Jazz course's test (improvising, chords, changes, modes,
+ * swing, forms) folded into Ear's — with the jazz pack open, Ear's test adds the theory of improvising (call and response
+ * by ear) and its ladders keep their jazz rungs (coursePlacementSkills, placement.ts noJazz).
  */
 export const COURSE_PLACEMENT_SKILLS: Record<CourseId, SkillId[] | null> = {
   ear: ['degrees', 'intervals', 'pitch', 'absolute', 'chords', 'cadences', 'modes', 'rhythm-dictation', 'rhythm-reading', 'tempo', 'meter', 'sequences', 'rhythm', 'form', 'notes', 'theory', 'sight', 'dictation', 'transpose', 'expression'],
-  jazz: ['chords', 'cadences', 'modes', 'rhythm-dictation', 'form', 'improv'],
   voice: null,
   keys: null,
   guitar: null,
   bass: null,
   drums: null,
 };
+
+/** The skills a course's Find my level measures, with the jazz pack open or closed (SPEC-JAZZ-FOLD §2). */
+export function coursePlacementSkills(c: CourseId, jazz: boolean): SkillId[] | null {
+  const base = COURSE_PLACEMENT_SKILLS[c];
+  return base && c === 'ear' && jazz ? [...base, 'improv'] : base;
+}
 
 const INSTR: Record<string, CourseId> = { keys: 'keys', piano: 'keys', guitar: 'guitar', bass: 'bass', drums: 'drums' };
 
@@ -99,9 +107,8 @@ export const THEORY_SHARED_LESSONS: Partial<Record<CourseId, string[]>> = {
 };
 
 /**
- * AUDIT-6 J-W2: the performed jazz families — improvising, comping, walking, scat — that the Jazz course path also
- * teaches, for the instruments the player plays (the step's forPlays decides; singing only when singing is on). Their
- * progress is the instrument course's own (technique and vocal facts come from the measured takes), so nothing counts twice.
+ * AUDIT-6 J-W2: the performed jazz families — improvising, comping, walking, scat — that the old Jazz course path also
+ * taught. Since SPEC-JAZZ-FOLD they live only in their instrument / voice course (the step's forPlays decides).
  */
 export const JAZZ_LADDER_FAMILIES: string[] = [
   // piano: improvisation habits (a one-note / two-note solo over a blues), the solo left hand (shells), LH voicings,
@@ -122,7 +129,48 @@ export const JAZZ_LADDER_FAMILIES: string[] = [
 ];
 
 /**
- * AUDIT-7 #2: Jazz-course topics about the pianist's hands (the solo left hand, solo-piano textures by ear) — shown only
+ * SPEC-JAZZ-FOLD §2: the technique families / vocal programs that are jazz content — closed in an instrument or voice
+ * course while the jazz pack is closed there. Piano: the families of style 'jazz' (drills catalog) except the
+ * accompaniment family (Alberti, pop, boogie hands); guitar: the jazz add-on families; bass: the jazz-track families
+ * (bassNiche BASS_TRACK) with walking and swing time; drums: the jazz ride, brushes, trading; voice: scat, standards, the
+ * jazz entry, Barry Harris. Generic improvising habits (k-impro, g-impro, b-impro) stay open for everyone.
+ * tests/jazzFold.test.ts checks this list against the catalogues.
+ */
+export const JAZZ_FAMILIES: string[] = [
+  // piano
+  'harris', 'k-sixdim', 'voicings', 'k-reharm', 'k-theory', 'jazz', 'k-bebop', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune', 'k-solo', 'k-ctx', 'k-harrisline', 'k-ctone', 'k-mediant', 'k-organ', 'k-tpair', 'k-lh', 'k-tex', 'k-comp', 'k-gig',
+  // guitar
+  'g-jazz', 'g-jblues', 'g-theory', 'g-harris', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-ctx', 'g-solo', 'g-gig', 'g-cmarr', 'g-solojazz', 'g-hlfast',
+  // bass
+  'b-walk', 'b-swing', 'b-barry', 'b-harrisline', 'b-counter', 'b-tpair', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-tune', 'b-bebop', 'b-phrase', 'b-ctx', 'b-solo', 'b-gig',
+  // drums
+  'd-jazz', 'd-brush', 'd-trade',
+  // voice
+  'v-scat', 'v-standards', 'v-jazz1', 'v-barry',
+];
+/** Levels of a jazz family that every player gets: triads and root-position 7th chords (voicings 1–2). */
+export const JAZZ_FREE_LEVELS: string[] = ['voicings-1', 'voicings-2'];
+
+/**
+ * SPEC-JAZZ-FOLD §2: is this step jazz content (shown only while the jazz pack is open in the course)? The jazz pack's
+ * topics, levels and lessons; the creative area's improvising skill (licks, call and response, improv theory); and the
+ * levels of the jazz technique families.
+ */
+export function isJazzStep(s: Partial<Pick<PathStep, 'pack' | 'domain' | 'skill' | 'ladder'>>): boolean {
+  if (s.pack === 'jazz') return true;
+  if (s.domain === 'creative' && (s.skill === undefined || s.skill === 'improv')) return true;
+  return !!s.ladder && JAZZ_FAMILIES.includes(s.ladder.family) && !JAZZ_FREE_LEVELS.includes(s.ladder.ref);
+}
+
+/**
+ * SPEC-JAZZ-FOLD §2: the games that are jazz content (voicing types, reharm, standards, Barry Harris's brothers,
+ * comping, guide tones, bebop enclosures and 5-4-3-2, one note many chords, triad pairs, negative harmony, Harris in
+ * time). Shown in Practice, the path's units and the workout only while the jazz pack is open in the course.
+ */
+export const JAZZ_GAMES: string[] = ['rush-voicing', 'reharm', 'rush-standard', 'whichbrother', 'compcaller', 'guidetone', 'call5432', 'enclosure', 'holdnote', 'whichpair', 'mirror', 'bhtime'];
+
+/**
+ * AUDIT-7 #2: jazz topics about the pianist's hands (the solo left hand, solo-piano textures by ear) — shown only
  * to a player whose instruments include the keys; a guitarist, bassist or singer gets the jazz ear without them.
  */
 export const PIANO_ONLY_JAZZ_TOPICS: string[] = ['lh-tex-ear', 'solo-tex-ear'];
@@ -131,16 +179,13 @@ export const playsKeys = (plays: string[]): boolean => plays.includes('keys') ||
 /**
  * Does this path step belong to the course? Courses are (almost) disjoint, so progress never shows twice.
  *
- * COURSE MEMBERSHIP RULE (AUDIT-6 §3, docs/SPEC-COURSES.md "Course membership"):
- * - An instrument step (forPlays) belongs to its instrument course; a sung step to Voice. The one exception: the
- *   performed jazz families (JAZZ_LADDER_FAMILIES) are also Jazz steps — shared credit, the same step id.
- * - Jazz = the jazz pack (path.ts PACK_TOPICS / PACK_LEVELS: swing, the blues on-ramp, shells and guide tones,
- *   comping, rootless and upper-structure voicings, jazz-blues and 32-bar grids, bebop scales, ii–V chains, Barry
- *   Harris, reharm and colour, jazz forms and dictation) plus the improvising skill (licks, call and response,
- *   jazz repertoire).
- * - Ear = everything else that is heard, read or written — including expression (mood, dynamics, articulation,
- *   character: the ABRSM aural "features"), Nashville numbers, transposition and melodic / rhythmic transformations,
- *   which the creative area used to drag into Jazz.
+ * COURSE MEMBERSHIP RULE (AUDIT-6 §3 + SPEC-JAZZ-FOLD, docs/SPEC-COURSES.md "Course membership"):
+ * - An instrument step (forPlays) belongs to its instrument course; a sung step to Voice — the jazz ones included
+ *   (comping, walking, Harris on the keys, scat …), gated by the jazz pack in eligible().
+ * - Ear = everything else that is heard, read or written — including expression, Nashville numbers, transposition,
+ *   and, as its top levels, the jazz pack (swing, the blues on-ramp, shells and guide tones, rootless and upper-structure
+ *   voicings, the jazz grids, bebop scales, ii–V chains, Barry Harris, reharm and colour, jazz forms and dictation) and
+ *   the theory of improvising (licks, call and response, jazz repertoire) — gated by the jazz pack.
  */
 export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pack'> & Partial<Pick<PathStep, 'topic' | 'level' | 'skill' | 'ladder' | 'kind' | 'lesson'>>, c: CourseId): boolean {
   // AUDIT-CONTENT-THEORY §ב.1: note names on the keyboard (key-notes 1–3) are the theory picture every beginner needs,
@@ -148,11 +193,8 @@ export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pac
   if (c === 'ear' && isKeysForAll(s)) return true;
   if (c === 'voice' && s.kind === 'lesson' && !!s.lesson && VOICE_SHARED_LESSONS.includes(s.lesson)) return true;
   if (s.kind === 'lesson' && !!s.lesson && THEORY_SHARED_LESSONS[c]?.includes(s.lesson)) return true;
-  if (c === 'jazz' && s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family)) return true;
   const voiceish = !!s.sung || s.domain === 'voice';
   const instr = s.forPlays?.map((p) => INSTR[p]).filter(Boolean) as CourseId[] | undefined;
-  // The improvising skill is jazz; the rest of the creative area (expression, transposition) is ear (AUDIT-6 X3).
-  const jazzish = s.pack === 'jazz' || (s.domain === 'creative' && (s.skill === undefined || s.skill === 'improv'));
   switch (c) {
     case 'voice':
       return voiceish && !instr?.length;
@@ -161,44 +203,46 @@ export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pac
     case 'bass':
     case 'drums':
       return !!instr?.includes(c);
-    case 'jazz':
-      return jazzish && !voiceish && !instr?.length;
     case 'ear':
-      return !voiceish && !instr?.length && !jazzish;
+      return !voiceish && !instr?.length;
   }
 }
 
-/** The goal a course's path and workout use: the Ear course in exam-prep mode weighs what the exams test. */
-export const courseGoal = (c: CourseId, examPrep = false): Goal => (c === 'ear' && examPrep ? 'exam' : courseOf(c).goal);
+/** The goal a course's path and workout use: the Ear course in exam-prep mode weighs what the exams test; in jazz
+ *  focus (SPEC-JAZZ-FOLD §4), what jazz harmony leans on (chords, cadences, modes). Exam prep wins when both are on. */
+export const courseGoal = (c: CourseId, examPrep = false, jazzFocus = false): Goal => (c === 'ear' && examPrep ? 'exam' : c === 'ear' && jazzFocus ? 'jazz' : courseOf(c).goal);
 
-/** The path input of a course: same player, same evidence, but the course's goal, instrument and packs. */
-export function courseInput(base: PathInput, c: CourseId, examPrep = false): PathInput {
+/**
+ * The path input of a course: same player, same evidence, but the course's goal, instrument and packs. The jazz pack
+ * stays as the caller's packs say (background, auto-open — jazzFold.ts); jazz focus opens it and prefers jazz steps.
+ */
+export function courseInput(base: PathInput, c: CourseId, examPrep = false, jazzFocus = false): PathInput {
   const def = courseOf(c);
-  const packs: Pack[] = c === 'jazz' ? Array.from(new Set<Pack>(['jazz', ...base.packs])) : base.packs.filter((p) => p !== 'jazz');
+  const packs: Pack[] = jazzFocus ? Array.from(new Set<Pack>([...base.packs, 'jazz'])) : base.packs;
   return {
     ...base,
     course: c,
-    goal: courseGoal(c, examPrep),
+    goal: courseGoal(c, examPrep, jazzFocus),
     plays: def.plays.length ? def.plays : base.plays,
     packs,
-    // Choosing a course is choosing to do it: its own area is never "left out".
-    leaveOut: base.leaveOut.filter((d) => !(c === 'voice' && d === 'voice') && !(c === 'jazz' && d === 'creative') && !(INSTR[def.plays[0] ?? ''] && d === 'instrument')),
+    ...(jazzFocus ? { jazzFocus: true } : {}),
+    // Choosing a course is choosing to do it: its own area is never "left out" (nor improvising, in jazz focus).
+    leaveOut: base.leaveOut.filter((d) => !(c === 'voice' && d === 'voice') && !(jazzFocus && d === 'creative') && !(INSTR[def.plays[0] ?? ''] && d === 'instrument')),
     noSing: c === 'voice' ? false : base.noSing,
   };
 }
 
-/** The courses a player starts with, from the old questionnaire answers (migration and quick onboarding). */
-export function coursesFromProfile(goal: Goal | undefined, plays: string[]): { courses: CourseId[]; active: CourseId; examPrep: boolean } {
+/** The courses a player starts with, from the old questionnaire answers (migration and quick onboarding). The goal
+ *  "an ear for jazz" is the Ear course in jazz focus (SPEC-JAZZ-FOLD), "exam prep" the Ear course in exam prep (0.67). */
+export function coursesFromProfile(goal: Goal | undefined, plays: string[]): { courses: CourseId[]; active: CourseId; examPrep: boolean; jazzFocus: boolean } {
   const out: CourseId[] = ['ear'];
   const add = (c: CourseId) => !out.includes(c) && out.push(c);
   for (const p of plays) if (INSTR[p]) add(INSTR[p]);
   if (goal === 'sing' || plays.includes('voice')) add('voice');
   if (goal === 'guitar') add('guitar');
-  if (goal === 'jazz') add('jazz');
-  // "Exam prep" is the Ear course in exam-prep mode (0.67).
-  const byGoal: Partial<Record<Goal, CourseId>> = { sing: 'voice', guitar: 'guitar', jazz: 'jazz', exam: 'ear' };
+  const byGoal: Partial<Record<Goal, CourseId>> = { sing: 'voice', guitar: 'guitar', jazz: 'ear', exam: 'ear' };
   const active = (goal && byGoal[goal]) || 'ear';
-  return { courses: out, active, examPrep: goal === 'exam' };
+  return { courses: out, active, examPrep: goal === 'exam', jazzFocus: goal === 'jazz' };
 }
 
 /** Merge two path-fact records of the same steps (the old exam course into ear): best stars, earliest first time,
@@ -234,6 +278,80 @@ export interface CourseState {
   pathKeep?: string[];
   pathKeepBy?: Partial<Record<CourseId, string[]>>;
   examPrep?: boolean;
+  /** SPEC-JAZZ-FOLD §4: the courses in jazz focus. */
+  jazzFocus?: CourseId[];
+  /** SPEC-JAZZ-FOLD §3: the courses where climbing opened the jazz pack. */
+  jazzOpen?: CourseId[];
+  /** A one-time notice still to show: 'fold' (the Jazz course became jazz focus) or the course whose jazz just opened. */
+  jazzNotice?: 'fold' | CourseId;
+  /** Per-course records keyed by course id that move with the course (courseStart, openers.course). */
+  courseStart?: Partial<Record<CourseId, unknown>>;
+  openers?: { course?: Partial<Record<CourseId, string>>; unit?: Record<string, string> };
+}
+
+/** The courses that can be in jazz focus (every course: Ear and each instrument / voice course). */
+export const JAZZ_FOCUS_COURSES: CourseId[] = ['ear', 'keys', 'guitar', 'bass', 'drums', 'voice'];
+
+/**
+ * SPEC-JAZZ-FOLD §5: a player who had the old 'jazz' course keeps the Ear course (added if missing) and their
+ * instrument courses, with jazz focus on (and the jazz pack kept open) in all of them; the jazz path's facts and kept steps merge into Ear's (the same
+ * step ids: the jazz ear, licks, bonus games and repertoire are Ear steps now; the jazz technique levels' facts come from
+ * the measured takes and stay with their instrument). The course start and the opener seen move to Ear when Ear has
+ * none, and a one-time notice explains the change. 'jazz' disappears from every list. Idempotent.
+ */
+export function migrateJazzCourse<T extends CourseState>(s: T): T {
+  const raw = s as unknown as { courses?: string[]; activeCourse?: string; pathFactsBy?: Record<string, PathFacts>; pathKeepBy?: Record<string, string[]>; courseStart?: Record<string, unknown>; openers?: { course?: Record<string, string>; unit?: Record<string, string> } };
+  const had = raw.activeCourse === LEGACY_JAZZ || !!raw.courses?.includes(LEGACY_JAZZ) || !!raw.pathFactsBy?.[LEGACY_JAZZ] || !!raw.pathKeepBy?.[LEGACY_JAZZ];
+  if (!had) return s;
+  const wasActive = raw.activeCourse === LEGACY_JAZZ;
+  const courses: CourseId[] = [];
+  for (const c of raw.courses ?? []) {
+    const n = c === LEGACY_JAZZ ? 'ear' : normCourse(c);
+    if (n && !courses.includes(n)) courses.push(n);
+  }
+  if (!courses.includes('ear')) courses.unshift('ear');
+  const factsBy = { ...(raw.pathFactsBy ?? {}) };
+  const keepBy = { ...(raw.pathKeepBy ?? {}) };
+  const jazzFacts = wasActive ? s.pathFacts : factsBy[LEGACY_JAZZ];
+  const jazzKeep = wasActive ? s.pathKeep : keepBy[LEGACY_JAZZ];
+  delete factsBy[LEGACY_JAZZ];
+  delete keepBy[LEGACY_JAZZ];
+  const union = (a?: string[], b?: string[]) => Array.from(new Set([...(a ?? []), ...(b ?? [])]));
+  const focus = Array.from(new Set<CourseId>([...(s.jazzFocus ?? []), ...courses.filter((c) => JAZZ_FOCUS_COURSES.includes(c))]));
+  // The jazz pack stays open there too (jazzOpen), so switching jazz focus off later never hides what they did.
+  const open = Array.from(new Set<CourseId>([...(s.jazzOpen ?? []), ...focus]));
+  const out: CourseState = { ...s, courses, jazzFocus: focus, jazzOpen: open, jazzNotice: 'fold', pathFactsBy: factsBy as CourseState['pathFactsBy'], pathKeepBy: keepBy as CourseState['pathKeepBy'] };
+  if (wasActive) {
+    // The jazz path was the live one: Ear becomes the live course, the jazz facts merged with Ear's parked ones (Ear's
+    // own units order first, so its path does not jump).
+    out.activeCourse = 'ear';
+    out.pathFacts = mergeFacts(factsBy.ear, jazzFacts);
+    out.pathKeep = union(keepBy.ear, jazzKeep);
+    delete factsBy.ear;
+    delete keepBy.ear;
+  } else if (raw.activeCourse === 'ear' || !raw.activeCourse) {
+    out.activeCourse = 'ear';
+    out.pathFacts = mergeFacts(s.pathFacts, jazzFacts);
+    out.pathKeep = union(s.pathKeep, jazzKeep);
+  } else {
+    // Another course is active: Ear waits parked, with the jazz facts merged in.
+    if (jazzFacts || factsBy.ear) factsBy.ear = mergeFacts(factsBy.ear, jazzFacts);
+    if (jazzKeep || keepBy.ear) keepBy.ear = union(keepBy.ear, jazzKeep);
+  }
+  // Per-course records: Ear inherits the jazz course's start / opener when it has none of its own.
+  if (raw.courseStart && LEGACY_JAZZ in raw.courseStart) {
+    const cs = { ...raw.courseStart };
+    if (cs.ear === undefined) cs.ear = cs[LEGACY_JAZZ];
+    delete cs[LEGACY_JAZZ];
+    out.courseStart = cs as CourseState['courseStart'];
+  }
+  if (raw.openers?.course && LEGACY_JAZZ in raw.openers.course) {
+    const oc = { ...raw.openers.course };
+    if (oc.ear === undefined) oc.ear = oc[LEGACY_JAZZ];
+    delete oc[LEGACY_JAZZ];
+    out.openers = { ...raw.openers, course: oc };
+  }
+  return out as T;
 }
 
 /** 0.67: a player who had the old 'exam' course keeps the Ear course (added if missing) with exam prep on; the exam
@@ -277,7 +395,7 @@ export function migrateExamCourse<T extends CourseState>(s: T): T {
 }
 
 /** Switch (or add and switch) to a course: park the current course's facts, load the new one's. */
-export function switchCourse(s: CourseState, to: CourseId): CourseState {
+export function switchCourse(s: CourseState, to: CourseId): Pick<CourseState, 'courses' | 'activeCourse' | 'pathFacts' | 'pathFactsBy' | 'pathKeep' | 'pathKeepBy'> {
   const from = s.activeCourse ?? 'ear';
   // (0.67 fix: with no stored list, re-picking the active course no longer lists it twice.)
   const mine = s.courses?.length ? s.courses : [from];

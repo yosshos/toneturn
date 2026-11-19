@@ -85,7 +85,6 @@ const POOL: Record<string, Make> = {
 /** Which quests a course offers (first one rotates with the day). */
 const BY_COURSE: Record<CourseId, string[]> = {
   ear: ['run10', 'steps2', 'rhythm', 'min10', 'tierPass2', 'rep1', 'advGame'],
-  jazz: ['harmony5', 'steps2', 'run10', 'min10', 'tierClear', 'rep2', 'lick3', 'tx2', 'advGame'],
   voice: ['sing3', 'steps2', 'min10', 'tierPass2', 'rep1', 'tx2'],
   keys: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3', 'advGame'],
   guitar: ['tech3', 'steps2', 'min10', 'rep1', 'rep2', 'lick3'],

@@ -44,13 +44,17 @@ describe('technique and vocal ladders in the course path (0.61, owner)', () => {
     expect(new Set(all.map((s) => s.id)).size).toBe(all.length);
   });
 
-  it('ladder steps stay out of the ear course; the jazz course has only the performed jazz families, for the player’s instrument', () => {
+  it('ladder steps stay out of the ear course; the keys jazz families open with the jazz pack (SPEC-JAZZ-FOLD)', () => {
     expect(stepCatalogue().filter((s) => s.ladder && eligible(s, inputFor('ear'))), 'ear').toHaveLength(0);
-    // AUDIT-6 J-W2: no instrument and no singing → no ladder steps in Jazz; a pianist gets the piano jazz families.
-    expect(stepCatalogue().filter((s) => s.ladder && eligible(s, inputFor('jazz'))), 'jazz').toHaveLength(0);
-    const pianist = { ...courseInput({ ...base, plays: ['keys'] }, 'jazz'), ladderFamilies: ladderFamiliesFor('jazz', ds) };
-    const fams = new Set(stepCatalogue().filter((s) => s.ladder && eligible(s, pianist)).map((s) => s.ladder!.family));
-    expect([...fams].sort()).toEqual(['jazz', 'k-comp', 'k-impro', 'k-lh', 'k-solo', 'voicings']);
+    const keysFams = (packs: PathInput['packs']) => new Set(stepCatalogue().filter((s) => s.ladder && eligible(s, { ...courseInput({ ...base, packs }, 'keys'), ladderFamilies: ladderFamiliesFor('keys', ds) })).map((s) => s.ladder!.family));
+    const closed = keysFams([]);
+    const open = keysFams(['jazz']);
+    for (const f of ['k-lh', 'k-comp', 'k-solo', 'jazz', 'harris']) {
+      expect(closed.has(f), `closed ${f}`).toBe(false);
+      expect(open.has(f), `open ${f}`).toBe(true);
+    }
+    // Generic improvising, the accompaniment hand and the first voicings stay for everyone.
+    for (const f of ['k-impro', 'accomp', 'voicings', 'scales']) expect(closed.has(f), f).toBe(true);
   });
 
   it('a keys unit is about half technique, starting at level 1 of the first families, with no checkpoint without questions', () => {

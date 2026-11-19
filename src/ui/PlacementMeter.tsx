@@ -4,7 +4,7 @@
 
 import { Icon } from './icons';
 import { useEffect, useRef, useState } from 'react';
-import { LADDERS, lessonSections } from '../engine/placement';
+import { LADDERS, ladderOf, lessonSections } from '../engine/placement';
 import type { SkillId } from '../engine/lesson';
 import type { SessionState } from '../engine/session';
 import type { Strings } from '../i18n/strings';
@@ -47,7 +47,7 @@ export function PlacementMeter({ s, t }: { s: SessionState; t: Strings }) {
   }, [q?.id]);
 
   if (!cur) return null;
-  const max = LADDERS[cur.skill]?.length ?? 1;
+  const max = LADDERS[cur.skill] ? ladderOf(cur.skill, !!(s.lesson as { placementNoJazz?: boolean }).placementNoJazz).length : 1;
   const color = SKILL_COLOR[cur.skill] ?? LEMON;
   const doneIdx = skills.indexOf(cur.skill);
   return (

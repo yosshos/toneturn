@@ -6,7 +6,7 @@ import { gameVerified } from './verifiedContent';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
 import { pendingChecks, type Goal, type PathStep, type PathView, type UnitStep } from './path';
-import type { CourseId } from './courses';
+import { JAZZ_GAMES, type CourseId } from './courses';
 
 export type BlockTarget =
   | { kind: 'path' }
@@ -72,6 +72,8 @@ export interface SuggestInput {
   opened?: number;
   /** AUDIT-GAMES §1: the active course and the local day ('YYYY-MM-DD') pick the day's game (WORKOUT_GAMES). */
   course?: CourseId;
+  /** SPEC-JAZZ-FOLD: the course's jazz pack — closed, open, or in jazz focus (the game rotation follows). */
+  jazz?: 'off' | 'on' | 'focus';
   day?: string;
 }
 
@@ -81,16 +83,29 @@ export interface SuggestInput {
  */
 export const WORKOUT_GAMES: Record<CourseId, string[]> = {
   ear: ['highway', 'rush-interval', 'rush-chord', 'melodypuzzle', 'rush-progression', 'rush-note', 'bordercontrol', 'crossword', 'darkside', 'tonnetz', 'euclid'],
-  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'rush-voicing', 'whichbrother', 'bordercontrol', 'compcaller', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'mirror'],
   voice: ['flight', 'singinterval', 'rush-interval', 'runcatcher', 'singback'],
   keys: ['highway', 'rush-note', 'playback', 'rush-chord', 'elevator', 'compcaller', 'guidetone', 'staffrunner'],
   guitar: ['highway', 'rush-fretboard', 'changerace', 'rootsear', 'compcaller', 'guidetone', 'strumchange'],
   bass: ['highway', 'rush-fretboard', 'walkchanges', 'rootsear', 'guidetone', 'rootcatch'],
   drums: ['highway', 'groove-echo', 'kitread', 'time-lock', 'rebound'],
 };
-/** The day's game for a course (deterministic per local day; Highway without a course). */
-export function workoutGame(course?: CourseId, day?: string): string {
-  const xs = course ? WORKOUT_GAMES[course].filter(gameVerified) : null;
+/**
+ * SPEC-JAZZ-FOLD: the old Jazz course's workout games, now in the course they train — rotated in while the jazz pack is
+ * open there, and the whole rotation in jazz focus.
+ */
+export const JAZZ_WORKOUT_GAMES: Partial<Record<CourseId, string[]>> = {
+  ear: ['rush-voicing', 'reharm', 'holdnote', 'thirdjump', 'whichpair', 'mirror', 'crossword', 'bordercontrol'],
+  keys: ['whichbrother', 'compcaller', 'guidetone', 'enclosure', 'call5432', 'bhtime'],
+  guitar: ['compcaller', 'guidetone', 'enclosure', 'call5432'],
+  bass: ['guidetone', 'enclosure', 'call5432', 'walkchanges'],
+};
+/** The day's game for a course (deterministic per local day; Highway without a course). `jazz`: the jazz pack is
+ *  closed ('off': no jazz games), open ('on': its jazz games join the rotation) or in focus ('focus': jazz games only). */
+export function workoutGame(course?: CourseId, day?: string, jazz: 'off' | 'on' | 'focus' = 'off'): string {
+  const base = course ? WORKOUT_GAMES[course].filter((g) => jazz !== 'off' || !JAZZ_GAMES.includes(g)) : null;
+  const jz = course && jazz !== 'off' ? JAZZ_WORKOUT_GAMES[course] ?? [] : [];
+  const pool = jazz === 'focus' && jz.length ? jz : [...(base ?? []), ...jz.filter((g) => !base?.includes(g))];
+  const xs = course ? pool.filter(gameVerified) : null;
   if (!xs?.length) return 'highway';
   const d = day ? Math.floor(Date.parse(`${day}T12:00:00Z`) / 86400000) : 0;
   return xs[((Number.isFinite(d) ? d : 0) % xs.length + xs.length) % xs.length];
@@ -227,7 +242,7 @@ function suggestBase(inp: SuggestInput): Block[] {
   // New: the path's next steps (lesson + first pass); a waiting checkpoint first (nextForBlock).
   if (m.new) push({ kind: 'path' }, m.new);
   if (m.strengthen) push({ kind: 'strengthen' }, m.strengthen);
-  if (game) push({ kind: 'game', game: workoutGame(inp.course, inp.day) }, game);
+  if (game) push({ kind: 'game', game: workoutGame(inp.course, inp.day, inp.jazz) }, game);
   return out;
 }
 // ---------------------------------------------------------------- editing (§4)

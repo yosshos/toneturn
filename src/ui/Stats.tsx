@@ -335,10 +335,10 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
 function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
   const he = lang === 'he';
   // 0.64 (owner): Progress is the active course's — its level, its radar.
-  const { active: course, mine } = useCourse();
+  const { active: course, mine, jazzOn } = useCourse();
   const cdef = courseOf(course);
   const { r, i, next, into } = courseLevel(course, ratings, mine);
-  const axes = courseAxes(course, ratings, progress, lang);
+  const axes = courseAxes(course, ratings, progress, lang, jazzOn);
   const val = axes.map((a) => Math.max(0.12, Math.min(1, a.v ?? 0.12)));
   const AX = axes;
   const R = 92;
@@ -408,9 +408,10 @@ function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; rati
   );
 }
 
-/** The radar of a course (0.64): ear & theory → its areas; an instrument → its technique families (share of levels
- *  passed); voice → its vocal programs; jazz → harmony and improvising skills. Values 0..1, null = not started. */
-function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en'): { label: string; v: number | null }[] {
+/** The radar of a course (0.64): ear & theory → its areas (with the jazz pack open, improvising too — the old Jazz
+ *  course's axis, SPEC-JAZZ-FOLD); an instrument → its technique families (share of levels passed); voice → its vocal
+ *  programs. Values 0..1, null = not started. */
+function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en', jazz = false): { label: string; v: number | null }[] {
   const skill = (k: SkillId, he: string, en: string) => ({ label: lang === 'he' ? he : en, v: ratings[k]?.n ? Math.max(0, Math.min(1, (ratings[k]!.r - 600) / 1000)) : null });
   // Owner 2026-11-19: the ear radar showed Voice (not this course's) and called improvising "Harmony" — now the axes
   // are what the course teaches and its level test measures (courses.ts COURSE_PLACEMENT_SKILLS).
@@ -423,9 +424,9 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
       grp(['sequences', 'rhythm', 'form'], 'זיכרון', 'Memory'),
       grp(['notes', 'theory', 'sight', 'dictation'], 'קריאה', 'Reading'),
       grp(['transpose', 'expression'], 'ביטוי', 'Expression'),
+      ...(jazz ? [skill('improv', 'אלתור', 'Improv')] : []),
     ];
   }
-  if (course === 'jazz') return [skill('improv', 'אלתור', 'Improv'), skill('chords', 'אקורדים', 'Chords'), skill('cadences', 'מהלכים', 'Changes'), skill('modes', 'מודוסים', 'Modes'), skill('rhythm-dictation', 'סווינג', 'Swing'), skill('form', 'צורות', 'Forms')];
   if (course === 'voice') {
     const passed = progress.vocal?.passed ?? [];
     // VOICE_CURRICULUM: the 16 families on six axes (the five meters of every take, plus jazz).

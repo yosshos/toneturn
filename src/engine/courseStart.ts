@@ -6,7 +6,7 @@
 //
 // Pure: the per-course state, the stage machine, the migration for existing players, the timing rules, and the
 // content tables (taste lessons, ladders, personal goals). The runnable taste sessions are built in tasteLessons.ts.
-import type { CourseId } from './courses';
+import { normCourse, type CourseId } from './courses';
 import type { PathFacts, PathUnit, UnitStep } from './path';
 
 export type SelfReport = 'new' | 'bit' | 'well';
@@ -95,9 +95,8 @@ export function setupNeeded(c: CourseId, s: SetupFacts): boolean {
     case 'voice':
       return !s.voiceRange && !done('voice');
     case 'ear':
-    case 'jazz':
-      // One headphones / volume check serves both listening courses.
-      return s.headphones === undefined && !done('ear') && !done('jazz');
+      // One headphones / volume check (a migrated Jazz-course player did it there: courseStart.jazz moved to ear).
+      return s.headphones === undefined && !done('ear');
   }
 }
 
@@ -162,7 +161,7 @@ const DRILL_PREFIX: Partial<Record<CourseId, (fam: string) => boolean>> = {
 export function courseHasProgress(c: CourseId, p: ProgressFacts): boolean {
   const f = factsOf(c, p);
   if (Object.keys(f?.steps ?? {}).length || Object.keys(f?.tests ?? {}).length) return true;
-  if (p.history.some((h) => h.course === c)) return true;
+  if (p.history.some((h) => normCourse(h.course) === c)) return true;
   // Results from before courses (0.61) carry no course: they were the one mixed path = the ear course.
   if (c === 'ear' && (p.history.some((h) => !h.course) || (p.lessonsDone ?? 0) > 0)) return true;
   const fam = DRILL_PREFIX[c];
@@ -192,13 +191,13 @@ export function sessionsSince(history: HistoryLite[], c: CourseId, since: string
   if (!since) return 0;
   const t = new Date(since).getTime();
   const ids = new Set<string>();
-  for (const h of history) if (h.course === c && new Date(h.completedAt).getTime() > t + 1000) ids.add(h.sessionId ?? h.completedAt);
+  for (const h of history) if (normCourse(h.course) === c && new Date(h.completedAt).getTime() > t + 1000) ids.add(h.sessionId ?? h.completedAt);
   return ids.size;
 }
 
 /** Was the course's own level test taken (ear / jazz / voice: the placement; instruments: the playing test)? */
 export function levelTested(c: CourseId, history: HistoryLite[], drillStartFamilies: string[] = []): boolean {
-  if (history.some((h) => h.course === c && (h.lessonId === 'placement' || h.lessonId === 'technique-test'))) return true;
+  if (history.some((h) => normCourse(h.course) === c && (h.lessonId === 'placement' || h.lessonId === 'technique-test'))) return true;
   const fam = DRILL_PREFIX[c];
   return !!fam && drillStartFamilies.some(fam);
 }
@@ -253,7 +252,6 @@ export const PROMISE: Record<CourseId, T2> = {
   bass: { en: 'Lock with the drummer, then walk a blues and the standards.', he: 'להינעל עם המתופף, ואז ללכת בבלוז ובסטנדרטים.' },
   drums: { en: 'Hold a groove with the band, then fills, feels and odd meters.', he: 'להחזיק גרוב עם הלהקה, ואז מעברים, תחושות ומשקלים אי־זוגיים.' },
   voice: { en: 'Sing in tune with the band, from simple songs to standards and scat.', he: 'לשיר מדויק עם הלהקה, משירים פשוטים ועד סטנדרטים וסקאט.' },
-  jazz: { en: 'Swing, hear the changes and improvise over a blues and the standards.', he: 'לסווינג, לשמוע את המהלכים ולאלתר על בלוז ועל סטנדרטים.' },
 };
 
 /** The destination ladder (4 rungs): simple first material reads as the first step, not the point. */
@@ -294,12 +292,6 @@ export const LADDER: Record<CourseId, T2[]> = {
     { en: 'Standards & harmony', he: 'סטנדרטים והרמוניה' },
     { en: 'Scat & improvisation', he: 'סקאט ואלתור' },
   ],
-  jazz: [
-    { en: 'Swing feel', he: 'תחושת סווינג' },
-    { en: 'Blues', he: 'בלוז' },
-    { en: 'Standards', he: 'סטנדרטים' },
-    { en: 'Advanced harmony', he: 'הרמוניה מתקדמת' },
-  ],
 };
 
 /** The rung the path's current section stands on. */
@@ -310,6 +302,8 @@ export const PERSONAL_GOALS: Record<CourseId, { id: string; title: T2; weeks: nu
   ear: [
     { id: 'ear-chords', title: { en: 'Name chord qualities by ear in 4 weeks', he: 'לזהות סוגי אקורדים מהאוזן בתוך 4 שבועות' }, weeks: 4, steps: 24 },
     { id: 'ear-iivi', title: { en: 'Hear a ii–V–I in any key in 8 weeks', he: 'לשמוע ii–V–I בכל סולם בתוך 8 שבועות' }, weeks: 8, steps: 48 },
+    // SPEC-JAZZ-FOLD: the old Jazz course's ear goal (same id, so a migrated goal keeps its progress).
+    { id: 'jazz-changes', title: { en: 'Hear the changes of a standard in 10 weeks', he: 'לשמוע את המהלכים של סטנדרט בתוך 10 שבועות' }, weeks: 10, steps: 60 },
   ],
   keys: [
     { id: 'keys-blues', title: { en: 'Comp a jazz blues in F in 6 weeks', he: 'ללוות בלוז ג׳אז בפה בתוך 6 שבועות' }, weeks: 6, steps: 36 },
@@ -331,13 +325,9 @@ export const PERSONAL_GOALS: Record<CourseId, { id: string; title: T2; weeks: nu
     { id: 'voice-tune', title: { en: 'Sing a song in tune from start to end in 4 weeks', he: 'לשיר שיר מדויק מתחילתו ועד סופו בתוך 4 שבועות' }, weeks: 4, steps: 24 },
     { id: 'voice-standard', title: { en: 'Sing a standard with the band in 10 weeks', he: 'לשיר סטנדרט עם הלהקה בתוך 10 שבועות' }, weeks: 10, steps: 60 },
   ],
-  jazz: [
-    { id: 'jazz-blues', title: { en: 'Improvise a chorus over a blues in 6 weeks', he: 'לאלתר סבב על בלוז בתוך 6 שבועות' }, weeks: 6, steps: 36 },
-    { id: 'jazz-changes', title: { en: 'Hear the changes of a standard in 10 weeks', he: 'לשמוע את המהלכים של סטנדרט בתוך 10 שבועות' }, weeks: 10, steps: 60 },
-  ],
 };
 
-export const goalById = (c: CourseId, id: string) => PERSONAL_GOALS[c].find((g) => g.id === id);
+export const goalById = (c: CourseId, id: string) => PERSONAL_GOALS[c].find((g) => g.id === id) ?? Object.values(PERSONAL_GOALS).flat().find((g) => g.id === id);
 
 /** Progress toward the personal goal: path steps of the course first finished since it was set, and the weeks left. */
 export function goalProgress(g: PersonalGoal, facts: PathFacts | undefined, now: Date): { done: number; total: number; weeksLeft: number } {
@@ -460,43 +450,43 @@ export const TASTES: Record<CourseId, Record<SelfReport, TasteDef>> = {
       items: [{ topic: 'song-sing', level: 3, n: 2 }, { topic: 'sing-intervals', level: 5, n: 2 }],
     }),
   },
-  jazz: {
-    new: T('jazz', 'new', 'Swing or straight', 'סווינג או ישר', 'Hear the swing feel, then keep the beat with the band.', 'לשמוע את תחושת הסווינג, ואז לשמור על הפעמה עם הלהקה.', {
+};
+
+/** SPEC-JAZZ-FOLD: the old Jazz course's tastes — the Ear course's first taste in jazz focus (ids kept: "jazz-<report>"). */
+const TJ = (report: SelfReport, en: string, he: string, ben: string, bhe: string, run: TasteRun): TasteDef => ({ ...T('ear', report, en, he, ben, bhe, run), id: `jazz-${report}` });
+const JAZZ_TASTES: Record<SelfReport, TasteDef> = {
+    new: TJ('new', 'Swing or straight', 'סווינג או ישר', 'Hear the swing feel, then keep the beat with the band.', 'לשמוע את תחושת הסווינג, ואז לשמור על הפעמה עם הלהקה.', {
       kind: 'lesson',
       items: [{ topic: 'swing-ratio', level: 1, n: 3 }, { beat: { bpm: 96, bars: 2 } }, { topic: 'swing-ratio', level: 1, n: 2 }],
     }),
-    bit: T('jazz', 'bit', 'Guide tones on a blues', 'צלילים מנחים על בלוז', 'Hear the 3rds and 7ths that carry the changes, and the comping.', 'לשמוע את הטרצות והספטימות שנושאות את המהלכים, ואת הליווי.', {
+    bit: TJ('bit', 'Guide tones on a blues', 'צלילים מנחים על בלוז', 'Hear the 3rds and 7ths that carry the changes, and the comping.', 'לשמוע את הטרצות והספטימות שנושאות את המהלכים, ואת הליווי.', {
       kind: 'lesson',
       items: [{ topic: 'guide-tones', level: 1, n: 3 }, { topic: 'comping', level: 1, n: 3 }],
     }),
-    well: T('jazz', 'well', 'Hear the changes', 'לשמוע את המהלכים', 'ii–Vs, tritone subs and the blues forms, at band tempo.', 'ii–V, תחליפי טריטון וצורות הבלוז, בקצב של להקה.', {
+    well: TJ('well', 'Hear the changes', 'לשמוע את המהלכים', 'ii–Vs, tritone subs and the blues forms, at band tempo.', 'ii–V, תחליפי טריטון וצורות הבלוז, בקצב של להקה.', {
       kind: 'lesson',
       items: [{ topic: 'jazz-changes', level: 2, n: 3 }, { topic: 'jazz-form', level: 1, n: 3 }],
     }),
-  },
 };
 
-/** Who takes the jazz course's "I play well" taste: a singer sings it, a pianist or bassist plays it (owner 2026-11-11:
- * "a singer has to sing, as a player has to play"); anyone else hears it. */
-export type JazzWho = 'voice' | 'keys' | 'bass' | 'guitar' | null;
-const JAZZ_WELL: Record<'voice' | 'keys' | 'bass' | 'guitar', TasteDef> = {
-  voice: T('jazz', 'well', 'Trade 2s with the band', 'חילופי שתיים עם הלהקה', 'Scat two bars, the band answers, over a swing blues.', 'סקאט של שתי תיבות, הלהקה עונה, על בלוז בסווינג.', { kind: 'vocal', level: 1510 }),
-  keys: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of a line, the band answers.', 'לנגן ארבע תיבות של קו, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'k-bebop-8', items: [0] }] }),
-  bass: T('jazz', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'בס מהלך, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
+/** The jazz "I play well" taste of a playing course in jazz focus: a singer sings it, a pianist, bassist or guitarist
+ * plays it (owner 2026-11-11: "a singer has to sing, as a player has to play"). */
+const JAZZ_WELL: Partial<Record<CourseId, TasteDef>> = {
+  voice: T('voice', 'well', 'Trade 2s with the band', 'חילופי שתיים עם הלהקה', 'Scat two bars, the band answers, over a swing blues.', 'סקאט של שתי תיבות, הלהקה עונה, על בלוז בסווינג.', { kind: 'vocal', level: 1510 }),
+  keys: T('keys', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of a line, the band answers.', 'לנגן ארבע תיבות של קו, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'k-bebop-8', items: [0] }] }),
+  bass: T('bass', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'בס מהלך, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
   // A guitarist trades 4s on a ii–V–I (g-impro 7, option 0), judged by mic or MIDI like the guitar line drills.
-  guitar: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of your own line on the guitar, the band answers.', 'לנגן בגיטרה ארבע תיבות של קו משלכם, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'g-impro-7', match: ':op0:' }] }),
+  guitar: T('guitar', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of your own line on the guitar, the band answers.', 'לנגן בגיטרה ארבע תיבות של קו משלכם, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'g-impro-7', match: ':op0:' }] }),
 };
-/** The jazz taste's player, from the courses and what the player said they play (voice wins only without an instrument). */
-export function jazzWho(courses: string[], plays: string[], instrument?: string, midi?: boolean): JazzWho {
-  const all = new Set([...courses, ...plays, ...(instrument ? [instrument] : []), ...(midi ? ['keys'] : [])]);
-  if (all.has('keys') || all.has('piano')) return 'keys';
-  if (all.has('bass')) return 'bass';
-  if (all.has('guitar')) return 'guitar';
-  if (all.has('voice') && !all.has('guitar') && !all.has('drums')) return 'voice';
-  return null;
-}
-export const tasteFor = (c: CourseId, r: SelfReport | undefined, who: JazzWho = null): TasteDef =>
-  c === 'jazz' && r === 'well' && who ? JAZZ_WELL[who] : TASTES[c][r ?? 'new'];
+/** SPEC-JAZZ-FOLD: a course's first taste — in jazz focus, the jazz one (Ear: hear swing / guide tones / the changes;
+ *  a playing course at "I play well": trade fours on the instrument, scat on the voice). */
+export const tasteFor = (c: CourseId, r: SelfReport | undefined, jazz = false): TasteDef => {
+  if (jazz && c === 'ear') return JAZZ_TASTES[r ?? 'new'];
+  if (jazz && r === 'well' && JAZZ_WELL[c]) return JAZZ_WELL[c]!;
+  return TASTES[c][r ?? 'new'];
+};
+/** Every taste there is (narration lines). */
+export const ALL_TASTES = (): TasteDef[] => [...Object.values(TASTES).flatMap((x) => Object.values(x)), ...Object.values(JAZZ_TASTES), ...Object.values(JAZZ_WELL).filter((x): x is TasteDef => !!x)];
 /** The quick questionnaire's music level for a self-report (onboarding's first course). */
 export const levelOfReport = (r: SelfReport): 0 | 1 | 2 => (r === 'new' ? 0 : r === 'bit' ? 1 : 2);
 
@@ -606,11 +596,6 @@ export const REAL_MUSIC: Record<CourseId, Record<SelfReport, TasteDef>> = {
     new: R('ear', 'new', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'A 12-bar blues plays: where did it stop? Then follow a whole song.', 'בלוז של 12 תיבות מתנגן: איפה הוא נעצר? ואז לעקוב אחרי שיר שלם.', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 3 }, { topic: 'song-form', level: 2, n: 1 }] }),
     bit: R('ear', 'bit', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Follow a blues bar by bar, then the plan of a whole song.', 'לעקוב אחרי בלוז תיבה אחר תיבה, ואז אחרי המבנה של שיר שלם.', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 2 }, { topic: 'song-form', level: 2, n: 2 }] }),
     well: R('ear', 'well', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Where are we in an AABA tune, and which blues is it?', 'איפה אנחנו בשיר AABA, ואיזה בלוז זה?', { kind: 'lesson', items: [{ topic: 'song-form', level: 4, n: 2 }, { topic: 'jazz-form', level: 1, n: 2 }] }),
-  },
-  jazz: {
-    new: R('jazz', 'new', 'Follow a blues chorus', 'לעקוב אחרי סבב בלוז', 'A swinging blues plays: where did it stop, and is it major or minor?', 'בלוז בסווינג מתנגן: איפה הוא נעצר, והאם הוא מז׳ורי או מינורי?', { kind: 'lesson', items: [{ topic: 'song-form', level: 3, n: 3 }, { topic: 'jazz-form', level: 1, n: 1 }] }),
-    bit: R('jazz', 'bit', 'Follow a whole chorus', 'לעקוב אחרי סבב שלם', 'Major or minor blues, then where you are in an AABA tune.', 'בלוז מז׳ורי או מינורי, ואז איפה אתם בשיר AABA.', { kind: 'lesson', items: [{ topic: 'jazz-form', level: 1, n: 2 }, { topic: 'song-form', level: 4, n: 2 }] }),
-    well: R('jazz', 'well', 'Follow the changes', 'לעקוב אחרי המהלכים', 'Rhythm changes: an A or the bridge? Then which blues: major, jazz or Bird.', 'ריתם צ׳יינג׳ס: A או הגשר? ואז איזה בלוז: מז׳ורי, ג׳אז או בירד.', { kind: 'lesson', items: [{ topic: 'jazz-form', level: 2, n: 2 }, { topic: 'jazz-form', level: 3, n: 2 }] }),
   },
 };
 export const realMusicFor = (c: CourseId, r: SelfReport | undefined): TasteDef => REAL_MUSIC[c][r ?? 'new'];

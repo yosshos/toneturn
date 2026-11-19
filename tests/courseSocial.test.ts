@@ -89,8 +89,7 @@ describe('courseLevel', () => {
     expect(courseLevel('bass', ratings).name).toBe('ff');
     expect(courseLevel('bass', ratings).next).toBeNull();
     expect(courseLevel('voice', ratings).name).toBe('pp');
-    expect(courseLevel('jazz', ratings).name).toBeNull();
-    expect(courseLevels(['bass', 'voice', 'jazz'], ratings)).toEqual({ bass: 'ff', voice: 'pp' });
+    expect(courseLevels(['bass', 'voice'], ratings)).toEqual({ bass: 'ff', voice: 'pp' });
   });
 });
 
@@ -111,7 +110,7 @@ describe('badge course tags', () => {
     expect(BADGES.find((b) => b.cat === 'skill' && b.group === 'singing')!.course).toBe('voice');
     expect(BADGES.find((b) => b.cat === 'skill' && b.group === 'intervals')!.course).toBe('ear');
     expect(badgeCourse({ id: 'x', cat: 'skill', group: 'theory' })).toEqual({ course: 'ear' });
-    expect(badgeCourse({ id: 'x', cat: 'skill', group: 'cadences' })).toEqual({ course: 'ear', alsoIn: ['jazz'] });
+    expect(badgeCourse({ id: 'x', cat: 'skill', group: 'cadences' })).toEqual({ course: 'ear' });
     expect(BADGES.some((b) => (b.alsoIn as string[] | undefined)?.includes('exam') || (b.course as string) === 'exam')).toBe(false);
   });
   it('the course filter shows the course + general (+ shared ones)', () => {
@@ -153,7 +152,8 @@ describe('courseSetKinds', () => {
     expect(courseSetKinds('voice', [...all])).toEqual(['degrees', 'intervals', 'echo', 'vocal-hold', 'choir']);
     expect(courseSetKinds('ear', [...all])).not.toContain('vocal-hold');
     expect(courseSetKinds('guitar', [...all])).toEqual([...all]);
-    expect(courseSetKinds('jazz', ['mixed', 'chords', 'beat'])).toEqual(['mixed', 'chords']);
+    // SPEC-JAZZ-FOLD: the jazz set is Ear's.
+    expect(courseSetKinds('ear', ['mixed', 'jazz', 'vocal-hold'])).toEqual(['mixed', 'jazz']);
   });
   it('labelled lists: kept in order, default mixed else the first', () => {
     const v = forCourse('voice', [['mixed', 'M'], ['intervals', 'I'], ['vocal-hold', 'V']]);

@@ -1,7 +1,7 @@
 // Ladder steps in the course path (0.61, owner): technique family levels and vocal program levels are path steps,
 // passed only by measured playing / singing. Pure: facts are derived from drill items and vocal progress, never stored.
 
-import { JAZZ_LADDER_FAMILIES, type CourseId } from './courses';
+import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
 import { guitarCatalog, guitarLevelShown } from './drills/guitar';
 import { guitarAddOnsOf } from './drills/guitarMeta';
@@ -48,9 +48,6 @@ export function pathGuitarAddOns(ds: Pick<DrillSettings, 'guitarAddOns' | 'guita
 /** The families / programs a course's path teaches, in teaching order. Other courses: none. */
 export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string, drumMic?: DrumMic): string[] {
   if (course === 'voice') return VOCAL_PROGRAMS.map((p) => p.id);
-  // AUDIT-6 J-W2: the Jazz course teaches the performed jazz families too; each step's instrument (forPlays) and
-  // singing decide whether this player gets it, so a pianist gets the piano ones, a singer scat.
-  if (course === 'jazz') return [...JAZZ_LADDER_FAMILIES];
   const instrument = course === 'keys' ? 'piano' : course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : course === 'drums' ? 'drums' : null;
   if (!instrument) return [];
   // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.

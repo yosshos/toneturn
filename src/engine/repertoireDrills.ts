@@ -1,7 +1,7 @@
 // Repertoire → drills (docs/SPEC-REPERTOIRE.md): the ways of a repertoire item that run on the Drills screen (a song
 // drill, a standard's changes on the piano or walked on the bass, a technique level) as a queue. Pure.
 
-import type { CourseId } from './courses';
+import type { RepCourse } from './repertoire';
 import type { RepWay } from './repertoire';
 import type { Drill, DrillSettings, ItemState } from './drills/types';
 import { generate, keysInOrder } from './drills/generate';
@@ -32,7 +32,7 @@ function throughKeys(home: Home, build: (offset: number) => Drill, items: Record
 }
 
 /** The drills of a way (empty when it can't build one, or it isn't a drill way). */
-export function repDrills(w: RepWay, course: CourseId, items: Record<string, ItemState> = {}, keyOrder: DrillSettings['keyOrder'] = 'fifths-up'): Drill[] {
+export function repDrills(w: RepWay, course: RepCourse, items: Record<string, ItemState> = {}, keyOrder: DrillSettings['keyOrder'] = 'fifths-up'): Drill[] {
   switch (w.k) {
     case 'song': {
       const sg = SONGBOOK.find((x) => x.id === w.song);

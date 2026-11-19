@@ -415,7 +415,8 @@ describe('wiring', () => {
   });
   it('the new families join their courses’ paths', () => {
     const steps = stepCatalogue();
-    const inp = { leaveOut: [], packs: [], plays: ['drums'], track: 'hobby' as const, course: 'drums' as const, ladderFamilies: [...DRUM_TOP_FAMILIES] };
+    // SPEC-JAZZ-FOLD: brushes and trading fours are jazz families — with the jazz pack open.
+    const inp = { leaveOut: [], packs: ['jazz' as const], plays: ['drums'], track: 'hobby' as const, course: 'drums' as const, ladderFamilies: [...DRUM_TOP_FAMILIES] };
     expect(steps.filter((s) => s.kind === 'tech' && eligible(s, inp)).length).toBe(Object.keys(DRUM_TOP_DIFF).length);
   });
 });

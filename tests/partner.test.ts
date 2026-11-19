@@ -24,7 +24,7 @@ describe('no partner: the normal app is unchanged', () => {
     expect(partnerById('nope')).toBeNull();
   });
   it('offers every course, in order, with Ear as the fallback', () => {
-    expect(visibleCourses().map((c) => c.id)).toEqual(['ear', 'voice', 'keys', 'guitar', 'bass', 'drums', 'jazz']);
+    expect(visibleCourses().map((c) => c.id)).toEqual(['ear', 'voice', 'keys', 'guitar', 'bass', 'drums']);
     expect(visibleCourses()).toBe(COURSES);
     expect(defaultCourse()).toBe('ear');
     expect(allowedCourses(['voice', 'drums'])).toEqual(['voice', 'drums']);

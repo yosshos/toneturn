@@ -157,7 +157,7 @@ describe('unit openers: data', () => {
       expect(unitCopy(c, 'home', 'solid').why).toEqual(COURSE_UNIT[c]!.why.solid);
     }
     expect(unitCopy('ear', 'harmony', 'beginner').what).toEqual(UNIT_THEMES.harmony.what);
-    expect(unitCopy('jazz', 'colour', 'solid').why).toEqual(UNIT_THEMES.colour.why);
+    expect(unitCopy('ear', 'colour', 'solid').why).toEqual(UNIT_THEMES.colour.why);
     // An unknown theme falls back to home.
     expect(unitCopy('ear', 'nope', 'beginner').theme).toBe(UNIT_THEMES.home);
   });

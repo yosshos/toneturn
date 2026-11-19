@@ -15,7 +15,7 @@ import { BASICS_ORDER, LESSON_AREA, PREREQ } from './intake';
 import { LESSON_ORDER, makeLesson, type LessonDef, type LessonId, type Question, type SkillId } from './lesson';
 import { TOPIC_GEN, genTopic, topicLesson } from './topicKit';
 import type { Track } from './intake';
-import { inCourse, isKeysForAll, PIANO_ONLY_JAZZ_TOPICS, playsKeys, type CourseId } from './courses';
+import { inCourse, isJazzStep, JAZZ_GAMES, isKeysForAll, PIANO_ONLY_JAZZ_TOPICS, playsKeys, type CourseId } from './courses';
 import { stepTier, tierSpec } from './gameTiers';
 import { catalog } from './drills/generate';
 import { guitarCatalog } from './drills/guitar';
@@ -65,7 +65,7 @@ export interface PathStep {
   /** PIANO_JAZZ P2 (pathBonus.ts): an optional bonus step (an advanced game) — never blocks its unit, never the current step. */
   bonus?: boolean;
   /** PIANO_JAZZ P2 (pathBonus.ts): a repertoire item (game 'repertoire'), passed by its measured result only. */
-  rep?: { course: CourseId; id: string };
+  rep?: { course: import('./repertoire').RepCourse; id: string };
   /** Curriculum flow (consolidation): a practice step — another set of items of this topic level (its step id). */
   practiceOf?: string;
   title: { en: string; he: string };
@@ -214,6 +214,8 @@ export interface PathInput {
    * prerequisite that lives in another course, scheduled in this one) already passed there counts as passed here.
    */
   otherDone?: string[];
+  /** SPEC-JAZZ-FOLD §4: the course is in jazz focus — a unit prefers jazz steps among the near ones (jazz comes earlier). */
+  jazzFocus?: boolean;
 }
 
 export interface PathView {
@@ -542,7 +544,7 @@ export function withBridges(base: PathStep[], inp: PathInput, byId: Map<string, 
   const have = new Set(base.map((s) => s.id));
   const extra: PathStep[] = [];
   const canBridge = (p: PathStep) =>
-    !p.ladder && !isUnitEndStep(p) && p.kind !== 'game' && eligible(p, { ...inp, course: undefined, ladderFamilies: undefined, packs: p.pack ? [...inp.packs, p.pack] : inp.packs });
+    !p.ladder && !isUnitEndStep(p) && p.kind !== 'game' && eligible(p, { ...inp, course: undefined, ladderFamilies: undefined, packs: p.pack ? [...inp.packs, p.pack] : isJazzStep(p) ? [...inp.packs, 'jazz'] : inp.packs });
   const needs = (s: PathStep): string[] => {
     const out = [...(s.kind === 'lesson' ? (PREREQ[s.lesson!] ?? []).map((p) => `lesson:${p}`) : []), ...(STEP_PREREQ[s.id] ?? [])];
     if (s.kind === 'topic' && (s.level ?? 1) > 1) {
@@ -821,8 +823,6 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   // Ladder steps only where the course asked for them (and only for its families / programs).
   if (s.ladder && !inp.ladderFamilies?.includes(s.ladder.family)) return false;
   if (s.ladder && inp.ladderHidden?.includes(s.ladder.ref)) return false;
-  // AUDIT-6: the Jazz course's sung families (scat, standards) only for a player who sings (the voice is their instrument).
-  if (inp.course === 'jazz' && s.kind === 'vocal' && !inp.plays.includes('voice')) return false;
   // AUDIT-7 #2: the pianist's solo-hand topics only for a player of the keys.
   if (s.topic && PIANO_ONLY_JAZZ_TOPICS.includes(s.topic) && !playsKeys(inp.plays)) return false;
   if (inp.leaveOut.includes(s.domain)) return false;
@@ -830,6 +830,8 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   if (s.mic && inp.noMic) return false;
   if (s.topic && inp.hidden?.includes(s.topic)) return false;
   if (s.pack && !inp.packs.includes(s.pack)) return false;
+  // SPEC-JAZZ-FOLD §2: jazz content (the pack's steps, improvising, the jazz technique families) only with the jazz pack.
+  if (!inp.packs.includes('jazz') && isJazzStep(s)) return false;
   if (s.forPlays && !s.forPlays.some((p) => inp.plays.includes(p))) {
     // The keyboard map 1–3 is the theory picture: offered to everyone (spec AE §4.1; AUDIT-CONTENT-THEORY §ב.1 — note
     // names on the keys for every beginner, not only students and pros).
@@ -1306,7 +1308,8 @@ export function buildPath(inp: PathInput): PathView {
     const takenBefore = new Set(taken);
     const theme = themeFor(n);
     unitTheme.set(n, theme.id);
-    const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0);
+    // SPEC-JAZZ-FOLD §4: in jazz focus a jazz step gets the same pull as the unit's theme (never past its prerequisites).
+    const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0) - (inp.jazzFocus && isJazzStep(s) ? 120 : 0);
     const slots = L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0);
     const ladder = pickLadder(Math.ceil(slots / 2), scheduled);
     const open = all.filter((s) => !taken.has(s.id) && !s.ladder && !isUnitEndStep(s));
@@ -1755,6 +1758,8 @@ export function gameForArea(area: DomainId, n: number, inp: Pick<PathInput, 'noM
     if (s.needsMic && (inp.noMic || inp.noSing)) return false;
     if (s.forPlays && !s.forPlays.some((p) => inp.plays.includes(p))) return false;
     if (g === 'peakhunter' && !inp.packs.includes('production')) return false;
+    // SPEC-JAZZ-FOLD: the jazz games only with the jazz pack.
+    if (JAZZ_GAMES.includes(g) && !inp.packs.includes('jazz')) return false;
     return true;
   });
   // AUDIT-7 hole #14: in the beginner band every other unit plays the course's beginner game.

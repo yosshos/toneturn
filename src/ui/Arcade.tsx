@@ -8,8 +8,8 @@ import { PAPER } from './paper';
 import { navArt } from './paper/art-core';
 import { PaperSvg } from './paper/Paper';
 import { useCourse } from './courseContext';
-import { ExamPrepSwitch } from './CourseSwitcher';
-import { COURSE_GAMES, COURSE_ROWS, courseRows } from './courseRows';
+import { ExamPrepSwitch, JazzFocusSwitch } from './CourseSwitcher';
+import { COURSE_GAMES, COURSE_ROWS, courseGames, courseRows } from './courseRows';
 import { MS_TILE } from '../content/mySongText';
 export { COURSE_GAMES, COURSE_ROWS, courseRows };
 import type { CourseId } from '../engine/courses';
@@ -693,6 +693,8 @@ export interface PracticeHub {
   songs: () => void;
   /** Repertoire (SPEC-REPERTOIRE): the road from simple tunes to standards, per course. */
   repertoire?: () => void;
+  /** SPEC-JAZZ-FOLD: the jazz standards (the old Jazz course's repertoire) in Ear, while the jazz pack is open. */
+  standards?: () => void;
   drills: () => void;
   /** Voice course (0.61): vocal technique and sing-along take the technique / songs rows. */
   vocal?: () => void;
@@ -727,7 +729,7 @@ export interface PracticeHub {
 }
 /** Practice-page cards and tools in the Paper language: each hub row → its glyph (a chrome note when a glyph is missing). */
 const HUB_ART: Record<string, string> = {
-  encore: 'encore', repertoire: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
+  encore: 'encore', repertoire: 'repstep', standards: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
   slowdown: 'slow', licks: 'lick', transcribe: 'transcribe', improv: 'improv', puzzle: 'puzzle', exams: 'features', groove: 'groove', charts: 'roadmap',
   log: 'log', pieces: 'kclassic', chordfinder: 'chordbox', chordbuilder: 'keychord', mixer: 'mixer', mysong: 'record', games: 'games',
 };
@@ -764,7 +766,7 @@ const HUB_TX = {
 
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
-  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'songs', 'pieces', 'charts', 'mysong'] },
+  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'standards', 'songs', 'pieces', 'charts', 'mysong'] },
   { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['encore', 'drills', 'improv', 'licks', 'transcribe', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
@@ -797,13 +799,13 @@ const KEYS_TX: Record<string, { en: [string, string]; he: [string, string] }> = 
 /** The instrument tile's symbol per course. */
 const INSTRUMENT_TILE: Partial<Record<CourseId, GlyphKind>> = { drums: 'drums', bass: 'bass', guitar: 'guitar' };
 /** The weekly puzzle and the live quiz rooms are ear & theory things. */
-const COURSE_SOCIAL: CourseId[] = ['ear', 'jazz'];
+const COURSE_SOCIAL: CourseId[] = ['ear'];
 /** Practice tiles (0.63): a colour per row, and the game kinds each course shows as their own tiles. */
-const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', encore: '#6D28D9', transcribe: '#3AB8FF', mysong: '#FF8A3D' };
-const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], jazz: ['ear'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
+const TILE_COLOR: Record<string, string> = { repertoire: '#12C9B4', standards: '#6D28D9', lessons: '#FF8A3D', puzzle: '#A78BFA', drills: '#FFD43B', songs: '#12C9B4', pieces: '#FF5FA2', charts: '#A78BFA', improv: '#6D28D9', exams: '#FF8A3D', licks: '#A78BFA', encore: '#6D28D9', transcribe: '#3AB8FF', mysong: '#FF8A3D' };
+const COURSE_TILE_CATS: Partial<Record<CourseId, GameCat[]>> = { ear: ['ear', 'rhythm', 'memory', 'read'], voice: ['voice'], keys: ['instrument'], guitar: ['instrument'], bass: ['instrument'], drums: ['instrument', 'rhythm'] };
 const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhythm', memory: 'memory', read: 'sight', voice: 'sing', instrument: 'keys', social: 'duel' };
 /** The games list opens on the course's own category. */
-export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument', jazz: 'ear' };
+export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument' };
 const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
   songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
@@ -817,6 +819,8 @@ const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> =
 const INSTR_DRILLS_TX: { en: [string, string]; he: [string, string] } = { en: ['Technique', 'Your instrument, level by level — measured'], he: ['טכניקה', 'הכלי שלכם, שלב אחר שלב — במדידה'] };
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   repertoire: { en: ['Repertoire', 'From simple tunes to standards'], he: ['רפרטואר', 'ממנגינות פשוטות לסטנדרטים'] },
+  // SPEC-JAZZ-FOLD: the old Jazz course's repertoire, an Ear collection while the jazz pack is open.
+  standards: { en: ['Jazz standards', 'The blues, ii–V–I and the standards'], he: ['סטנדרטים של ג׳אז', 'בלוז, ii–V–I והסטנדרטים'] },
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
   charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים ודפי אקורדים', 'ליווי, סטנדרטים, ייבוא דף אקורדים'] },
@@ -833,7 +837,7 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
 
 /** The My song tile's words per course (SPEC-MY-SONG). */
 const mySongTx = (c: CourseId): { en: [string, string]; he: [string, string] } => {
-  const b = MS_TILE[c === 'drums' ? 'drums' : c === 'ear' || c === 'jazz' ? 'ear' : c === 'voice' ? 'voice' : 'play'];
+  const b = MS_TILE[c === 'drums' ? 'drums' : c === 'ear' ? 'ear' : c === 'voice' ? 'voice' : 'play'];
   return { en: ['My song', b.en], he: ['השיר שלי', b.he] };
 };
 
@@ -853,8 +857,10 @@ export const GAME_GLYPH: Record<string, GlyphKind> = {
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, onBoard, lang = 'en', hub, status }: { onBoard?: () => void; status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
-  const { active: course, examPrep, setExamPrep } = useCourse();
-  const rows = courseRows(course, examPrep);
+  const { active: course, examPrep, setExamPrep, jazzOn, jazzFocus, setJazzFocus } = useCourse();
+  const rows = courseRows(course, examPrep, jazzFocus ? 'focus' : jazzOn ? 'on' : 'off');
+  // SPEC-JAZZ-FOLD: the jazz games only while the jazz pack is open in the course.
+  const gamesHere = courseGames(course, jazzOn);
   // Status of the weekly puzzle and the daily challenge (moved here from the old Home tools, 0.41).
   const daily = progress.daily?.[localDay(new Date())];
   const pz = progress.puzzles?.[weekId(new Date())];
@@ -911,7 +917,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
     ...(hub?.groove ? [{ key: 'groove', cat: 'rhythm' as GameCat, hue: 'var(--hue-time)', title: lang === 'he' ? 'מאמן הגרוב' : 'Groove trainer', blurb: lang === 'he' ? 'קליק שנעלם, כיס וסווינג — האם הזמן נשאר שלכם?' : 'A fading click, the pocket, swing — does the time stay yours?', onClick: hub.groove }] : []),
     { key: 'duel', hue: 'var(--hue-voice)', title: t.duel, blurb: t.duelBlurb, onClick: onDuel },
     { key: 'daily', hue: 'var(--hue-reading)', title: t.dailyChallenge, blurb: daily ? `✓ ${t.dailyDone} · ${daily.points.toLocaleString()} ${t.points}` : t.dailyBlurb, onClick: onDaily },
-  ].filter((c) => COURSE_GAMES[course].includes(c.key));
+  ].filter((c) => gamesHere.includes(c.key));
   // A category remembered from another course that has no games here shows them all.
   const catNow: GameCat | 'all' = cat !== 'all' && !cards.some((x) => (x.cat ?? CAT_OF[x.key] ?? 'social') === cat) ? 'all' : cat;
   return (
@@ -940,9 +946,10 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             )}
           </div>
           {!hub && <p className="field-hint">{t.playHint}</p>}
-          {hub && course === 'ear' && (
+          {hub && course !== 'drums' && (
             <div className="exam-head-row">
-              <ExamPrepSwitch on={examPrep} lang={lang} onChange={setExamPrep} />
+              {course === 'ear' && <ExamPrepSwitch on={examPrep} lang={lang} onChange={setExamPrep} />}
+              <JazzFocusSwitch on={jazzFocus} lang={lang} onChange={setJazzFocus} />
             </div>
           )}
         </>

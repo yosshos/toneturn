@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { GAME_STEPS, gameForArea } from '../src/engine/path';
 import { BONUS_GAMES, bonusSteps } from '../src/engine/pathBonus';
 import { COURSE_GAMES } from '../src/ui/courseRows';
-import { WORKOUT_GAMES } from '../src/engine/workout2';
+import { WORKOUT_GAMES, JAZZ_WORKOUT_GAMES } from '../src/engine/workout2';
 import { isKeyGame, gameKeyTitle, gameKeyFamily } from '../src/engine/gameKeys';
 import { gameEvents } from '../src/engine/gameRating';
 import { clearsRun, gameXp, tierSpec, TIERS } from '../src/engine/gameTiers';
@@ -21,7 +21,8 @@ const ALL_NEW = ['guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote'];
 const NEW = ALL_NEW.filter(gameVerified);
 
 describe('the new games connect to everything', () => {
-  const base = { noMic: false, noSing: false, packs: [] as never[] };
+  // SPEC-JAZZ-FOLD: the jazz games are on the path with the jazz pack open.
+  const base = { noMic: false, noSing: false, packs: ['jazz'] as never[] };
   it('path: the played games in the keys / guitar / bass units, the ear games in the Ear course, all five in Jazz as bonus steps', () => {
     for (const c of ['keys', 'guitar', 'bass'] as const) {
       const seen = new Set<string>();
@@ -44,19 +45,18 @@ describe('the new games connect to everything', () => {
     for (const g of NEW) {
       const s = jazz.find((x) => x.game === g)!;
       expect(s, g).toBeDefined();
-      expect((['ear', 'jazz', 'voice', 'keys', 'guitar', 'bass', 'drums'] as CourseId[]).filter((c) => inCourse(s, c))).toEqual(['jazz']);
+      expect((['ear', 'voice', 'keys', 'guitar', 'bass', 'drums'] as CourseId[]).filter((c) => inCourse(s, c))).toEqual(['ear']);
       expect(!!GAME_STEPS[g] && BONUS_GAMES.some((b) => b.game === g)).toBe(true);
     }
   });
   it('games lists, workout rotation, boards, glyphs, badges, tiers', () => {
-    expect(COURSE_GAMES.jazz).toEqual(expect.arrayContaining(NEW));
     expect(COURSE_GAMES.ear).toEqual(expect.arrayContaining(['crossword', 'holdnote']));
     for (const c of ['keys', 'guitar', 'bass'] as const) expect(COURSE_GAMES[c]).toEqual(expect.arrayContaining(['guidetone', 'enclosure']));
     for (const c of Object.keys(COURSE_GAMES) as CourseId[]) expect(COURSE_GAMES[c]).not.toContain('call5432');
     expect(WORKOUT_GAMES.ear).toContain('crossword');
-    expect(WORKOUT_GAMES.jazz).toEqual(expect.arrayContaining(['crossword', 'holdnote']));
+    expect(JAZZ_WORKOUT_GAMES.ear).toEqual(expect.arrayContaining(['crossword', 'holdnote']));
     for (const c of ['keys', 'guitar', 'bass'] as const) expect(WORKOUT_GAMES[c]).toContain('guidetone');
-    expect(boardGames(COURSE_GAMES.jazz)).toEqual(expect.arrayContaining(NEW));
+    expect(boardGames([...COURSE_GAMES.ear, ...COURSE_GAMES.keys])).toEqual(expect.arrayContaining(NEW.filter(gameVerified)));
     const glyphs = ALL_NEW.map((g) => GAME_STEP_GLYPH[g]);
     for (const g of glyphs) expect(GLYPHS[g], g).toBeDefined();
     expect(new Set(glyphs).size).toBe(5);

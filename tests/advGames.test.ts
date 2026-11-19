@@ -30,7 +30,7 @@ describe('advanced games: tiers', () => {
       expect(spec, g).toBeTruthy();
       expect(Object.keys(spec.tiers)).toEqual(TIERS);
       expect(spec.minTier).toBe('mp');
-      const info = tierInfo(g, {}, undefined, 'jazz');
+      const info = tierInfo(g, {}, undefined, 'ear');
       expect(info.open).toBe('mp');
       expect(tierAllowed(info, 'pp')).toBe(false);
       expect(tierAllowed(info, 'mf')).toBe(true);
@@ -58,7 +58,6 @@ describe('advanced games: tiers', () => {
     }
   });
   it('the advanced games are placed in their courses (riff echo not in drums: the kit has Odd-meter Echo)', () => {
-    expect(COURSE_GAMES.jazz).toEqual(expect.arrayContaining(['rush-standard', 'rush-voicing', 'reharm', 'bhtime', 'transcribe', 'rush-scale']));
     expect(COURSE_GAMES.ear).toEqual(expect.arrayContaining(['rush-voicing', 'reharm', 'rush-scale', 'transcribe', 'rush-standard', 'polylock']));
     expect(COURSE_GAMES.keys).toEqual(expect.arrayContaining(['bhtime', 'rush-voicing', 'transcribe', 'riffecho', 'polylock']));
     expect(COURSE_GAMES.guitar).toEqual(expect.arrayContaining(['rush-voicing', 'riffecho']));

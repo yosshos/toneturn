@@ -7,7 +7,7 @@ import { badgeInputOf } from '../src/engine/rankBadges';
 import { emptyProgress } from '../src/storage/progress';
 import type { CourseId } from '../src/engine/courses';
 
-const COURSES: CourseId[] = ['ear', 'keys', 'guitar', 'bass', 'drums', 'voice', 'jazz'];
+const COURSES: CourseId[] = ['ear', 'keys', 'guitar', 'bass', 'drums', 'voice'];
 const started: CourseStartState = { report: 'new', welcomeAt: 'a', tasteDoneAt: '2026-11-01T10:00:00Z', win: { kind: 'lesson', right: 3, total: 4, xp: 30 }, winSeenAt: '2026-11-01T10:01:00Z' };
 
 describe('day 3: the first real-music moment (SPEC-COURSE-START)', () => {
@@ -104,7 +104,7 @@ describe('"First session" badge (catalogue)', () => {
       expect(badgeInCourse(b, c)).toBe(true);
       expect(resolveGlyph(b).fallback).toBe(false);
     }
-    expect(BADGES.filter((b) => b.id.startsWith('special:first:'))).toHaveLength(7);
+    expect(BADGES.filter((b) => b.id.startsWith('special:first:'))).toHaveLength(6);
     const got = earnedBadges({ today: '2026-11-11', firstWins: ['keys'] }).map((b) => b.id);
     expect(got).toContain('special:first:keys');
     expect(got).not.toContain('special:first:ear');

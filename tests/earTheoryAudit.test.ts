@@ -10,8 +10,8 @@ import { GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from '../src/ui/stepGlyphs
 import { GLYPHS } from '../src/ui/Glyph';
 import { LESSON_MARK, TOPIC_MARK } from '../src/ui/stepMarks';
 
-describe('every step of the ear and jazz paths has its own symbol', () => {
-  for (const c of ['ear', 'jazz'] as const) {
+describe('every step of the ear path (its jazz top levels included) has its own symbol', () => {
+  for (const c of ['ear'] as const) {
     it(`${c}: drawn, and no two kinds of step share one (nor a unit game's)`, () => {
       const seen = new Map<string, string>();
       for (const s of stepCatalogue().filter((x) => eligible(x, courseInput(base, c)))) {
@@ -27,7 +27,7 @@ describe('every step of the ear and jazz paths has its own symbol', () => {
         seen.set(look, who);
       }
       for (const game of Object.values(GAME_STEP_GLYPH)) expect(seen.has(game), `game symbol ${game} ↔ ${seen.get(game)}`).toBe(false);
-      expect(seen.size).toBeGreaterThan(c === 'ear' ? 90 : 30);
+      expect(seen.size).toBeGreaterThan(120);
     });
   }
 });
@@ -37,7 +37,7 @@ const base: PathInput = {
   packs: ['jazz', 'maqam', 'absolute', 'production', 'post-tonal'], plays: [], minutes: 10, ratings: {}, events: [],
   facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-10T10:00:00Z'),
 };
-const courseTopicLevels = (c: 'ear' | 'jazz') => {
+const courseTopicLevels = (c: 'ear') => {
   const out = new Set<string>();
   for (const s of stepCatalogue()) if (s.topic && eligible(s, courseInput(base, c))) out.add(`${s.topic}:${s.level}`);
   return [...out];
@@ -47,8 +47,8 @@ const EMOJI = /(?![♩-♯←-⇿])\p{Extended_Pictographic}/u;
 // Keys of these levels are opaque ids over shuffled choices (s0 is always right, but the buttons are shuffled).
 const OPAQUE = new Set(['two-voice:2', 'two-voice:3', 'bh-six-over:1', 'bh-six-over:2', 'bh-six-over:3', 'bh-convert-2:2']);
 
-describe('every item of the ear and jazz courses is well formed', () => {
-  for (const c of ['ear', 'jazz'] as const) {
+describe('every item of the ear course (its jazz top levels included) is well formed', () => {
+  for (const c of ['ear'] as const) {
     it(`${c}: answer offered, labels unique in both languages, no emoji, the answer varies`, () => {
       for (const tl of courseTopicLevels(c)) {
         const [t, l] = tl.split(':');

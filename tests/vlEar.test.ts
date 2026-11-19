@@ -122,7 +122,7 @@ describe('vl-ear: voice leading by ear', () => {
     const on = stepCatalogue().filter((s) => s.topic === 'vl-ear' && eligible(s, courseInput(base, 'ear')));
     expect(on.map((s) => s.level)).toEqual([1, 2, 3, 4]);
     for (let i = 1; i < on.length; i++) expect(on[i].difficulty).toBeGreaterThan(on[i - 1].difficulty);
-    expect(stepCatalogue().filter((s) => s.topic === 'vl-ear' && eligible(s, courseInput(base, 'jazz')))).toHaveLength(0);
+    expect(stepCatalogue().filter((s) => s.topic === 'vl-ear' && s.pack === 'jazz')).toHaveLength(0);
     expect(TOPIC_GROUPS.some((g) => g.topics.includes('vl-ear'))).toBe(true);
     expect(GLYPHS[TOPIC_GLYPH['vl-ear']]).toBeDefined();
     expect(hasShortName('vl-ear')).toBe(true);

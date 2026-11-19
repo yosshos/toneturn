@@ -120,14 +120,14 @@ describe('game tiers', () => {
     const now = new Date('2026-11-10T10:00:00');
     let total = 0;
     for (let i = 0; i < 8; i++) {
-      const r = applyGameRun(p, { game: 'rush-chord', tier: 'ff', score: 300, detail: { right: 30, wrong: 0, level: 4 }, runId: `r${i}`, course: 'jazz' }, now);
+      const r = applyGameRun(p, { game: 'rush-chord', tier: 'ff', score: 300, detail: { right: 30, wrong: 0, level: 4 }, runId: `r${i}`, course: 'keys' }, now);
       p = r.progress;
       total += r.xp;
     }
     expect(total).toBe(100);
     expect(p.xp).toBe(100);
     const games = p.history.filter((h) => h.lessonId === 'game-rush-chord');
-    expect(games.every((h) => h.course === 'jazz' && h.total >= 2 && h.xp <= h.total * 20)).toBe(true);
+    expect(games.every((h) => h.course === 'keys' && h.total >= 2 && h.xp <= h.total * 20)).toBe(true);
     expect(p.gameTiers?.['rush-chord'].cleared).toBe('ff');
     // idempotent by run id
     expect(applyGameRun(p, { game: 'rush-chord', tier: 'ff', score: 1, runId: 'r0' }, now).progress).toBe(p);
@@ -167,9 +167,9 @@ describe('game tiers', () => {
     const got = earnedBadges({ today: '2026-11-10', gameTiers: tiers }).map((b) => b.id);
     expect(got).toContain('special:tier-first');
     expect(got).toContain('special:tier-ff');
-    expect(got).toContain('special:tierc:jazz:f');
-    expect(got).not.toContain('special:tierc:jazz:ff');
-    expect(BADGE_BY_ID['special:tierc:jazz:f'].course).toBe('jazz');
+    expect(got).toContain('special:tierc:ear:f');
+    expect(got).not.toContain('special:tierc:ear:ff');
+    expect(BADGE_BY_ID['special:tierc:ear:f'].course).toBe('ear');
   });
 
   it('daily bands', () => {

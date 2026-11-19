@@ -17,8 +17,7 @@ import { pc, spokenMajorKey, type Naming } from '../../engine/pitch';
 import { previewText } from './preview';
 export { previewText };
 import { openerLines as openerText } from '../../content/openers';
-import { COURSE_IDS } from '../../engine/courses';
-import { SELF_REPORTS, tasteFor, type JazzWho } from '../../engine/courseStart';
+import { ALL_TASTES } from '../../engine/courseStart';
 
 export type LineSource = 'mini' | 'mini-name' | 'intro' | 'go' | 'prompt' | 'feedback' | 'memory' | 'preview' | 'opener' | 'other';
 export interface VoiceLine {
@@ -58,8 +57,7 @@ export function memoryLines(): VoiceLine[] {
 
 /** The course and unit openers (src/content/openers.ts): every narrated English line, every first-lesson title. */
 export function openerLines(): VoiceLine[] {
-  const who: JazzWho[] = [null, 'voice', 'keys', 'bass', 'guitar'];
-  const titles = COURSE_IDS.flatMap((c) => SELF_REPORTS.flatMap((r) => who.map((w) => tasteFor(c, r, w).title)));
+  const titles = ALL_TASTES().map((t) => t.title);
   return openerText('en', titles).map((text) => ({ text, src: 'opener' as const }));
 }
 

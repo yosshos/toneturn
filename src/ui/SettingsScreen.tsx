@@ -6,6 +6,8 @@ import { Icon, type IconKey } from './icons';
 import { REGISTRATIONS } from '../audio/organ';
 import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
+import { courseOf, JAZZ_FOCUS_COURSES, type CourseId } from '../engine/courses';
+import { jazzFocusOn, toggleJazzFocus } from '../engine/jazzFold';
 import { TOPIC_GEN } from '../engine/topicKit';
 import { TUNINGS } from '../engine/fretboard';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -114,7 +116,8 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
           onChange={(e) => {
             const goal = e.target.value as Goal;
             // 0.67: the exam goal is the Ear course's exam-prep mode (on with it, off when leaving it).
-            onChange({ goal, pathPacks: undefined, ...(goal === 'exam' ? { examPrep: true } : s.goal === 'exam' ? { examPrep: false } : {}) });
+            // SPEC-JAZZ-FOLD: the jazz goal turns jazz focus on in Ear (the Jazz course is now a mode).
+            onChange({ goal, pathPacks: undefined, ...(goal === 'exam' ? { examPrep: true } : s.goal === 'exam' ? { examPrep: false } : {}), ...(goal === 'jazz' ? { jazzFocus: toggleJazzFocus(s, 'ear', true) } : {}) });
           }}
         >
           {GOALS.map((g) => (
@@ -148,6 +151,19 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
         <input type="checkbox" checked={!!s.examPrep} onChange={(e) => onChange({ examPrep: e.target.checked })} />
         <span>{lang === 'he' ? 'הכנה לבגרות (בקורס שמיעה ותיאוריה)' : 'Exam prep (in the Ear & theory course)'}</span>
       </label>
+      {/* SPEC-JAZZ-FOLD §4: jazz focus per course (was the Jazz course). */}
+      <h3 className="intake-sub">{lang === 'he' ? 'מיקוד ג׳אז' : 'Jazz focus'}</h3>
+      <p className="field-hint" dir="auto">{lang === 'he' ? 'פותח את הג׳אז בקורס, מקדים אותו ונותן לו משקל.' : 'Opens jazz in the course, brings it earlier and weighs it more.'}</p>
+      <div className="intake-chips" data-jazz-focus-setting="1">
+        {(s.courses?.length ? s.courses : (['ear'] as CourseId[])).filter((c) => JAZZ_FOCUS_COURSES.includes(c)).map((c) => {
+          const on = jazzFocusOn(s, c);
+          return (
+            <button key={c} type="button" className={`chip ${on ? 'on' : ''}`} aria-pressed={on} data-jazz-focus-course={c} onClick={() => onChange({ jazzFocus: toggleJazzFocus(s, c, !on) })}>
+              {courseOf(c).short[lang]}
+            </button>
+          );
+        })}
+      </div>
       <h3 className="intake-sub">{q.leaveAreas}</h3>
       <div className="intake-chips">
         {DOMAINS.map((d) => {

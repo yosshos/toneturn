@@ -153,7 +153,9 @@ describe('#13 counterpoint in the Ear course', () => {
 });
 
 describe('#2 the jazz entry for guitar, bass and voice', () => {
-  const jazz = (plays: string[], fams: string[]) => cat().filter((s) => eligible(s, { leaveOut: [], packs: ['jazz'], plays, track: 'hobby', course: 'jazz', ladderFamilies: fams }));
+  // SPEC-JAZZ-FOLD: the performed jazz steps are their instrument / voice course's (jazz pack open); the jazz ear is Ear's.
+  const courseOfPlays = (plays: string[]) => (plays.includes('guitar') ? 'guitar' : plays.includes('bass') ? 'bass' : plays.includes('voice') ? 'voice' : 'ear') as 'guitar' | 'bass' | 'voice' | 'ear';
+  const jazz = (plays: string[], fams: string[], course = courseOfPlays(plays)) => cat().filter((s) => eligible(s, { leaveOut: [], packs: ['jazz'], plays, track: 'hobby', course, ladderFamilies: fams }));
   it('performed jazz steps below 1000 for each instrument', () => {
     const g = jazz(['guitar'], [...JAZZ_LADDER_FAMILIES]).filter((s) => s.difficulty < 1000 && s.ladder);
     const b = jazz(['bass'], [...JAZZ_LADDER_FAMILIES]).filter((s) => s.difficulty < 1000 && s.ladder);
@@ -167,8 +169,8 @@ describe('#2 the jazz entry for guitar, bass and voice', () => {
   });
   it('the solo left hand and solo textures only for a player of the keys', () => {
     for (const t of PIANO_ONLY_JAZZ_TOPICS) {
-      expect(jazz(['keys'], []).some((s) => s.topic === t), t).toBe(true);
-      for (const p of [['guitar'], ['bass'], ['voice'], []]) expect(jazz(p, []).some((s) => s.topic === t), `${t} ${p}`).toBe(false);
+      expect(jazz(['keys'], [], 'ear').some((s) => s.topic === t), t).toBe(true);
+      for (const p of [['guitar'], ['bass'], ['voice'], []]) expect(jazz(p, [], 'ear').some((s) => s.topic === t), `${t} ${p}`).toBe(false);
     }
   });
   it('guitar: the head, shells, guide tones and the Charleston over the blues, in all 12 keys, rubato first', () => {
@@ -249,8 +251,11 @@ describe('#8 #9 the voice: first steps, jazz entry, improvising in pop, pop and 
     for (const l of [...FIRST_MORE_LEVELS, ...JAZZ_START_LEVELS]) expect(AUDIT7_VOICE_PLACEMENT[`vocal:${l.level}`]).toBeLessThan(1000);
   });
   it('the voice course’s beginner band (700–999) is no longer thin', () => {
-    const v = cat().filter((s) => eligible(s, { leaveOut: [], packs: [], plays: ['voice'], track: 'hobby', course: 'voice', ladderFamilies: VOCAL_PROGRAMS.map((p) => p.id) }));
-    expect(v.filter((s) => s.difficulty >= 700 && s.difficulty < 1000).length).toBeGreaterThanOrEqual(32);
+    const voice = (packs: ('jazz')[]) => cat().filter((s) => eligible(s, { leaveOut: [], packs, plays: ['voice'], track: 'hobby', course: 'voice', ladderFamilies: VOCAL_PROGRAMS.map((p) => p.id) }));
+    const v = voice([]);
+    // SPEC-JAZZ-FOLD: the singer's jazz entry (v-jazz1) waits for the jazz pack; the band stays full without it.
+    expect(v.filter((s) => s.difficulty >= 700 && s.difficulty < 1000).length).toBeGreaterThanOrEqual(28);
+    expect(voice(['jazz']).filter((s) => s.difficulty >= 700 && s.difficulty < 1000).length).toBeGreaterThanOrEqual(32);
     expect(v.some((s) => s.id === 'vocal:2311')).toBe(true);
   });
   it('key-relative melodies and riffs come round all 12 keys inside the range; belt-safe phrases stay below the top', () => {
@@ -370,7 +375,7 @@ describe('wiring (everything connects)', () => {
     expect(SCAT_INSTR.scale.he.length).toBeGreaterThan(5);
     expect(METRIC_NAMES.inScale.he.length).toBeGreaterThan(3);
   });
-  it('the guitar jazz entry is its own family (4 levels) the Jazz course teaches, with its glyph, badges and level-test step', () => {
+  it('the guitar jazz entry is its own family (4 levels) the guitar course teaches with the jazz pack, with its glyph, badges and level-test step', () => {
     const g = guitarCatalog().find((f) => f.id === 'g-jblues')!;
     expect(g.levels.map((l) => l.level)).toEqual([1, 2, 3, 4]);
     expect(JAZZ_LADDER_FAMILIES).toEqual(expect.arrayContaining(['g-jblues', 'b-walk', 'v-jazz1']));

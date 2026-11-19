@@ -900,7 +900,7 @@ export function MySongScreen({ lang, settings, course, onBack, onResult, onSetti
             {L(MS.resumed)}
           </p>
         )}
-        {course === 'ear' || course === 'jazz' ? <TranscribeMine {...props} /> : <PlayAlong {...props} onSettings={onSettings} />}
+        {course === 'ear' ? <TranscribeMine {...props} /> : <PlayAlong {...props} onSettings={onSettings} />}
       </>
     );
   }

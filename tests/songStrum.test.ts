@@ -83,7 +83,7 @@ describe('song chords, strummed', () => {
     expect(steps.map((s) => s.level)).toEqual([1, 2, 3]);
     for (const s of steps) {
       for (const c of ['guitar', 'bass', 'keys'] as const) expect(inCourse(s, c), c).toBe(true);
-      for (const c of ['ear', 'jazz', 'voice', 'drums'] as const) expect(inCourse(s, c), c).toBe(false);
+      for (const c of ['ear', 'voice', 'drums'] as const) expect(inCourse(s, c), c).toBe(false);
       expect(s.choices).toBeGreaterThan(1);
     }
     expect(GLYPHS[TOPIC_GLYPH['song-strum']]).toBeDefined();

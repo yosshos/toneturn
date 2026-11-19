@@ -8,16 +8,18 @@
 //   A bonus step never blocks a unit and never becomes the current step.
 //
 // Each step belongs to one course only (inCourse by domain / pack / instrument), so courses don't duplicate them.
+// SPEC-JAZZ-FOLD: the old Jazz course's steps keep their ids ("bonus:jazz:…", "rep:jazz:…"); 'jazz' is now a content
+// group carried by the jazz pack, so they are Ear steps shown while the jazz pack is open.
 
 import { gameVerified } from './verifiedContent';
-import type { CourseId } from './courses';
+import { JAZZ_FAMILIES, JAZZ_FREE_LEVELS, type CourseId } from './courses';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
 import type { PathFacts, PathStep } from './path';
-import { REPERTOIRE, REP_LEARNED, REP_TOTAL, repLessonId, type RepTier } from './repertoire';
+import { REPERTOIRE, REP_LEARNED, REP_TOTAL, repLessonId, repRefs, type RepCourse, type RepItem, type RepTier } from './repertoire';
 
 /** The eight advanced games and where each sits: course, area, skill / sub-skill, the depth it fits. */
-export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; skill: SkillId; sub: string; difficulty: number; title: { en: string; he: string } }[] = [
+export const BONUS_GAMES: { game: string; course: RepCourse; domain: DomainId; skill: SkillId; sub: string; difficulty: number; title: { en: string; he: string } }[] = [
   { game: 'rush-scale', course: 'ear', domain: 'pitch', skill: 'modes', sub: 'modes/scales', difficulty: 1000, title: { en: 'Scale & Mode Rush', he: 'מרוץ סולמות ומודוסים' } },
   { game: 'transcribe', course: 'ear', domain: 'memory', skill: 'dictation', sub: 'dictation/melodic', difficulty: 1050, title: { en: 'Transcription Race', he: 'מרוץ התמלול' } },
   { game: 'rush-voicing', course: 'jazz', domain: 'pitch', skill: 'chords', sub: 'chords/voicing', difficulty: 1000, title: { en: 'Voicing Spy', he: 'מרגל הוויסינגים' } },
@@ -52,8 +54,8 @@ export const BONUS_GAMES: { game: string; course: CourseId; domain: DomainId; sk
 const PLAYS: Partial<Record<CourseId, string[]>> = { keys: ['keys', 'piano'], guitar: ['guitar'], bass: ['bass'], drums: ['drums'] };
 
 /** How a step of a course is placed in it (inCourse): the instrument, the jazz pack, singing. */
-function courseShape(course: CourseId): Pick<PathStep, 'forPlays' | 'pack' | 'sung' | 'mic'> {
-  if (PLAYS[course]) return { forPlays: PLAYS[course] };
+function courseShape(course: RepCourse): Pick<PathStep, 'forPlays' | 'pack' | 'sung' | 'mic'> {
+  if (course !== 'jazz' && PLAYS[course]) return { forPlays: PLAYS[course] };
   if (course === 'jazz') return { pack: 'jazz' };
   if (course === 'voice') return { sung: true, mic: true };
   return {};
@@ -89,7 +91,7 @@ export const REP_TIER_BAND: Record<RepTier, [number, number]> = { 1: [760, 880],
  * tasks — out of the beginner band (they sat at 986–998).
  */
 export const REP_ITEM_AT: Record<string, number> = { 'blues-f': 1060, 'two-five-keys': 1110, 'minor-two-five-keys': 1140 };
-const REP_AREA: Record<CourseId, Pick<PathStep, 'domain' | 'skill' | 'sub'>> = {
+const REP_AREA: Record<RepCourse, Pick<PathStep, 'domain' | 'skill' | 'sub'>> = {
   ear: { domain: 'memory', skill: 'sequences', sub: 'sequences/melody' },
   jazz: { domain: 'creative', skill: 'improv', sub: 'improv/repertoire' },
   voice: { domain: 'voice', skill: 'singing', sub: 'singing/repertoire' },
@@ -99,9 +101,24 @@ const REP_AREA: Record<CourseId, Pick<PathStep, 'domain' | 'skill' | 'sub'>> = {
   drums: { domain: 'instrument', skill: 'instrument', sub: 'instrument/drum-tech' },
 };
 
+/**
+ * SPEC-JAZZ-FOLD §2: a repertoire item that is jazz content (on the path only with the jazz pack): the jazz standards
+ * collection; a course's standards played over a standard's changes (and the singer's standards); an item practised on a
+ * jazz technique family's level (walking a ii–V, the swing ride, comping a ii–V on the neck).
+ */
+export function isJazzRep(course: RepCourse, it: RepItem): boolean {
+  if (course === 'jazz') return true;
+  const r = repRefs(it);
+  if (it.standard && (course === 'voice' || r.standards.length > 0)) return true;
+  return r.levels.some((ref) => {
+    const fam = ref.replace(/-\d+$/, '');
+    return JAZZ_FAMILIES.includes(fam) && !JAZZ_FREE_LEVELS.includes(ref);
+  });
+}
+
 export function repSteps(): PathStep[] {
   const out: PathStep[] = [];
-  for (const [course, items] of Object.entries(REPERTOIRE) as [CourseId, (typeof REPERTOIRE)[CourseId]][]) {
+  for (const [course, items] of Object.entries(REPERTOIRE) as [RepCourse, (typeof REPERTOIRE)[RepCourse]][]) {
     const seen: Partial<Record<RepTier, number>> = {};
     const count = (t: RepTier) => items.filter((x) => x.tier === t).length;
     for (const it of items) {
@@ -118,6 +135,7 @@ export function repSteps(): PathStep[] {
         difficulty: Math.min(hi, Math.max(lo, at)),
         choices: 0,
         ...courseShape(course),
+        ...(isJazzRep(course, it) ? { pack: 'jazz' as const } : {}),
         title: { en: `Repertoire · ${it.title.en}`, he: `רפרטואר · ${it.title.he}` },
       });
     }
@@ -132,7 +150,7 @@ export const repStepStars = (best: number): number => (best >= REP_LEARNED ? 3 :
 export function withRepFacts(f: PathFacts, lessons: Record<string, { best: number; completions: number; lastAt?: string }> | undefined): PathFacts {
   if (!lessons) return f;
   const steps = { ...(f.steps ?? {}) };
-  for (const [course, items] of Object.entries(REPERTOIRE) as [CourseId, (typeof REPERTOIRE)[CourseId]][])
+  for (const [course, items] of Object.entries(REPERTOIRE) as [RepCourse, (typeof REPERTOIRE)[RepCourse]][])
     for (const it of items) {
       const l = lessons[repLessonId(course, it.id)];
       if (!l?.completions) continue;

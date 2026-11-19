@@ -1025,7 +1025,7 @@ const rankedAreas = (x: BadgeInput, minDiv: number) => DOMAINS.filter((d) => (x.
 
 // Game tiers (GAMES_TIERS_PLAN §5.2): clearing levels in games; per course, f and ff in three of its games.
 const TIER_TONE: Record<string, RankTier> = { mf: 'silver', f: 'gold', ff: 'diamond' };
-const COURSE_TIER_NAME: Record<CourseId, L> = { ear: { en: 'Ear', he: 'שמיעה' }, jazz: { en: 'Jazz', he: 'ג׳אז' }, voice: { en: 'Voice', he: 'קול' }, keys: { en: 'Piano', he: 'פסנתר' }, guitar: { en: 'Guitar', he: 'גיטרה' }, bass: { en: 'Bass', he: 'בס' }, drums: { en: 'Drums', he: 'תופים' } };
+const COURSE_TIER_NAME: Record<CourseId, L> = { ear: { en: 'Ear', he: 'שמיעה' }, voice: { en: 'Voice', he: 'קול' }, keys: { en: 'Piano', he: 'פסנתר' }, guitar: { en: 'Guitar', he: 'גיטרה' }, bass: { en: 'Bass', he: 'בס' }, drums: { en: 'Drums', he: 'תופים' } };
 const tierBadges = (): Badge[] => [
   sp('tier-first', '◆', 'bronze', 'First Level', 'רמה ראשונה', 'Clear a level in any game.', 'לעבור רמה באחד המשחקים.', (x) => count(topCleared(x.gameTiers) ? 1 : 0, 1)),
   ...(['mf', 'f', 'ff'] as const).map((t) =>
@@ -1119,16 +1119,15 @@ const AREA_COURSE: Record<RankArea, { course: CourseId; alsoIn?: CourseId[] }> =
   memory: { course: 'ear' },
   reading: { course: 'ear' },
   voice: { course: 'voice' },
-  creative: { course: 'jazz' },
+  // SPEC-JAZZ-FOLD: creative (improvising theory) is the Ear course's.
+  creative: { course: 'ear' },
   instrument: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
   technique: { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] },
 };
-/** Skills the Jazz course is clearly about (chords, changes, modes); exam prep is a mode of the Ear course (0.67). */
-const JAZZ_SKILLS: SkillId[] = ['chords', 'cadences', 'modes', 'improv', 'transpose'];
 const isBassGroup = (g: string) => g === 'g-bass' || g === 'bass-exams' || g.startsWith('b-');
 
 /** Which course a badge belongs to: technique families → their instrument; vocal → voice; ear / theory skills → ear
- *  (also shown in Jazz where clearly theirs); streaks, days and seasons → general. Pure. */
+ *  (jazz is part of Ear since SPEC-JAZZ-FOLD); streaks, days and seasons → general. Pure. */
 export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: BadgeCourse; alsoIn?: CourseId[] } {
   const g = b.group ?? '';
   switch (b.cat) {
@@ -1147,12 +1146,11 @@ export function badgeCourse(b: Pick<Badge, 'id' | 'cat' | 'group'>): { course: B
       const d = domainOfSkill(g as SkillId);
       if (d === 'voice') return { course: 'voice' };
       if (d === 'instrument') return { course: 'keys', alsoIn: ['guitar', 'bass', 'drums'] };
-      if (d === 'creative') return { course: 'jazz', alsoIn: ['ear'] };
-      return JAZZ_SKILLS.includes(g as SkillId) ? { course: 'ear', alsoIn: ['jazz'] } : { course: 'ear' };
+      return { course: 'ear' };
     }
     case 'technique': {
-      // Licks & transcription: the Jazz course's, shown in every course that plays or sings lines.
-      if (g === 'licks' || g === 'transcribe') return { course: 'jazz', alsoIn: ['keys', 'guitar', 'bass', 'voice'] };
+      // Licks & transcription: Ear's (the old Jazz course's), shown in every course that plays or sings lines.
+      if (g === 'licks' || g === 'transcribe') return { course: 'ear', alsoIn: ['keys', 'guitar', 'bass', 'voice'] };
       if (g.startsWith('v-') || g === 'voice-milestones' || b.id.startsWith('tech:voice:')) return { course: 'voice' };
       if (isBassGroup(g) || b.id.startsWith('tech:g-bass')) return { course: 'bass' };
       if (g.startsWith('d-') || b.id.startsWith('tech:drums:')) return { course: 'drums' };

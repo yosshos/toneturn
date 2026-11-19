@@ -38,7 +38,7 @@ function seq(rnd: () => number, pool: number[], n: number): number[] {
 }
 
 /** Each skill's ladder, easy → hard; difficulties rise on the rating scale. */
-export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }[]>> = {
+export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make; /** A jazz-pack rung (always at the ladder's top). */ jazz?: true }[]>> = {
   degrees: [
     { difficulty: 850, make: (s, id) => degreeQuestion(id, pick(mulberry32(s), DEGREE_KEYS), pick(mulberry32(s + 1), [1, 5]), [1, 5], 850) },
     { difficulty: 950, make: (s, id) => degreeQuestion(id, pick(mulberry32(s), DEGREE_KEYS), pick(mulberry32(s + 1), [1, 3, 5]), [1, 3, 5], 950) },
@@ -74,10 +74,11 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     { difficulty: 1150, make: (s, id) => qualityQuestion(id, pc(pick(mulberry32(s), ROOT_NAMES)), pick(mulberry32(s + 1), ['maj', 'min', 'dim', 'aug'] as Quality[]), ['maj', 'min', 'dim', 'aug'], false, 1150) },
     { difficulty: 1300, make: (s, id) => at(seventhQuestion(id, pc(pick(mulberry32(s), ROOT_NAMES)), pick(mulberry32(s + 1), SEVENTHS), SEVENTHS), 1300) },
     { difficulty: 1420, make: (s, id) => at(topic('extensions', 1)(s, id), 1420) },
-    { difficulty: 1540, make: (s, id) => at(topic('extensions', 2)(s, id), 1540) },
-    { difficulty: 1660, make: (s, id) => at(topic('voicings', 3)(s, id), 1660) },
+    // SPEC-JAZZ-FOLD: the jazz rungs (jazz pack levels) — asked only when the jazz pack is open in the course.
+    { difficulty: 1540, jazz: true, make: (s, id) => at(topic('extensions', 2)(s, id), 1540) },
+    { difficulty: 1660, jazz: true, make: (s, id) => at(topic('voicings', 3)(s, id), 1660) },
     // EAR_THEORY_AUDIT: the jazz-level top — dominants by name.
-    { difficulty: 1800, make: (s, id) => at(topic('extensions', 6)(s, id), 1800) },
+    { difficulty: 1800, jazz: true, make: (s, id) => at(topic('extensions', 6)(s, id), 1800) },
   ],
   cadences: [
     { difficulty: 900, make: (s, id) => cadenceQuestion(id, pick(mulberry32(s), DEGREE_KEYS), pick(mulberry32(s + 1), ['resolved', 'open'] as const), CAD[0], 900) },
@@ -86,7 +87,7 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     { difficulty: 1300, make: (s, id) => at(progressionQuestion(id, pick(mulberry32(s), DEGREE_KEYS), pick(mulberry32(s + 1), ['ii-V-I', 'V-I', 'I-vi-ii-V'] as ProgressionId[]), ['ii-V-I', 'V-I', 'I-vi-ii-V']), 1300) },
     { difficulty: 1440, make: (s, id) => at(topic('progressions', 2)(s, id), 1440) },
     { difficulty: 1590, make: (s, id) => at(topic('progressions', 3)(s, id), 1590) },
-    { difficulty: 1700, make: (s, id) => at(topic('jazz-changes', 2)(s, id), 1700) },
+    { difficulty: 1700, jazz: true, make: (s, id) => at(topic('jazz-changes', 2)(s, id), 1700) },
   ],
   modes: [1, 2, 3, 4, 5, 6].map((lv) => ({
     difficulty: 980 + (lv - 1) * 130,
@@ -105,7 +106,7 @@ export const LADDERS: Partial<Record<SkillId, { difficulty: number; make: Make }
     { difficulty: 1350, make: (s, id) => at(topic('roman-numerals', 1)(s, id), 1350) },
     { difficulty: 1470, make: (s, id) => at(topic('chord-spelling', 3)(s, id), 1470) },
     { difficulty: 1590, make: (s, id) => at(topic('interval-spelling', 3)(s, id), 1590) },
-    { difficulty: 1700, make: (s, id) => at(topic('chord-scale', 2)(s, id), 1700) },
+    { difficulty: 1700, jazz: true, make: (s, id) => at(topic('chord-scale', 2)(s, id), 1700) },
   ],
   sequences: [
     [[1, 3, 5], 2],
@@ -332,17 +333,19 @@ export interface PlacementPlan {
   items: number;
 }
 
+/** A skill's ladder; without the jazz rungs (always its top) while the jazz pack is closed (SPEC-JAZZ-FOLD). */
+export const ladderOf = (skill: SkillId, noJazz = false) => (noJazz ? LADDERS[skill]!.filter((x) => !x.jazz) : LADDERS[skill]!);
 /** A rung's difficulty, with virtual rungs 0 and M+1 at the open ends. */
-export function rungDifficulty(skill: SkillId, rung: number): number {
-  const L = LADDERS[skill]!;
+export function rungDifficulty(skill: SkillId, rung: number, noJazz = false): number {
+  const L = ladderOf(skill, noJazz);
   if (rung <= 0) return L[0].difficulty - EDGE;
   if (rung > L.length) return L[L.length - 1].difficulty + EDGE;
   return L[rung - 1].difficulty;
 }
 /** The highest rung at or below a rating (rung 1 when none is). */
-export function rungAt(skill: SkillId, rating: number): number {
+export function rungAt(skill: SkillId, rating: number, noJazz = false): number {
   let r = 1;
-  LADDERS[skill]!.forEach((x, i) => {
+  ladderOf(skill, noJazz).forEach((x, i) => {
     if (x.difficulty <= rating) r = i + 1;
   });
   return r;
@@ -392,12 +395,12 @@ export function searchSkill(M: number, start: number, budget: number, answers: {
 }
 
 /** The range a finished (or cut) search stands for, and the rating set from it (§3.4). */
-export function searchRange(skill: SkillId, s: Pick<SearchState, 'lo' | 'hi' | 'up'>): { low: number; high: number; rating: number } {
-  const M = LADDERS[skill]!.length;
+export function searchRange(skill: SkillId, s: Pick<SearchState, 'lo' | 'hi' | 'up'>, noJazz = false): { low: number; high: number; rating: number } {
+  const M = ladderOf(skill, noJazz).length;
   // Open ends: below, down to the virtual bottom rung (a bit lower is fine); above, as far as the next gallop
   // step would have gone (an over-estimate costs more than an under-estimate).
-  const low = rungDifficulty(skill, s.lo >= 1 ? s.lo : 0);
-  const high = rungDifficulty(skill, s.hi <= M ? s.hi : Math.min(M + 1, s.lo + s.up));
+  const low = rungDifficulty(skill, s.lo >= 1 ? s.lo : 0, noJazz);
+  const high = rungDifficulty(skill, s.hi <= M ? s.hi : Math.min(M + 1, s.lo + s.up), noJazz);
   return { low, high, rating: Math.round(low + SET_AT * (high - low)) };
 }
 
@@ -427,8 +430,9 @@ export const placementAreaOf = (k: SkillId): string => areaOf(k);
 export function planPlacement(
   answers: PlacementAnswer[],
   order: SkillId[],
-  opts: { skipped?: SkillId[]; sung?: boolean; priors?: Partial<Record<SkillId, number>> } = {},
+  opts: { skipped?: SkillId[]; sung?: boolean; priors?: Partial<Record<SkillId, number>>; noJazz?: boolean } = {},
 ): PlacementPlan {
+  const nj = !!opts.noJazz;
   const skipped = new Set(opts.skipped ?? []);
   // Breadth first (owner 2026-11-19): every area not yet started keeps room for its first items (below), so the last
   // areas are asked, not inferred from the first ones.
@@ -447,7 +451,7 @@ export function planPlacement(
   for (let i = 0; i < order.length; i++) {
     const k = order[i];
     const mine = by.get(k) ?? [];
-    const M = LADDERS[k]!.length;
+    const M = ladderOf(k, nj).length;
     const blank: SkillPlan = { skill: k, role: 'unmeasured', start: 0, budget: 0, asked: mine.length, lo: 0, hi: M + 1, misses: 0, done: true, next: null, low: null, high: null, rating: null };
     if (skipped.has(k)) {
       spend(k, mine.length);
@@ -473,7 +477,7 @@ export function planPlacement(
         continue;
       }
       const est = mean(src.map((p) => p.rating!)) - DERIVE_DISCOUNT - (inArea.length ? 0 : CROSS_AREA_DISCOUNT);
-      const clamp = (x: number) => Math.round(Math.max(rungDifficulty(k, 0), Math.min(rungDifficulty(k, M + 1), x)));
+      const clamp = (x: number) => Math.round(Math.max(rungDifficulty(k, 0, nj), Math.min(rungDifficulty(k, M + 1, nj), x)));
       // The same shape as a measured range: `est` sits at SET_AT of a 2·DERIVE_HALF-wide range.
       const low = clamp(est - 2 * DERIVE_HALF * SET_AT);
       const high = clamp(est + 2 * DERIVE_HALF * (1 - SET_AT));
@@ -482,7 +486,7 @@ export function planPlacement(
     }
     const all = measured();
     const prior = opts.priors?.[k] ?? OWN_PRIOR[k] ?? (inArea.length ? mean(inArea.map((p) => p.rating!)) : all.length ? mean(all.map((p) => p.rating!)) - CROSS_AREA_DISCOUNT : FIRST_PRIOR);
-    const start = rungAt(k, prior);
+    const start = rungAt(k, prior, nj);
     let eff = budget;
     let s = searchSkill(M, start, eff, mine);
     // A later skill that disagrees with its area (both items the same way, no bracket) earns the anchor's budget.
@@ -490,7 +494,7 @@ export function planPlacement(
     const wider = Math.max(mine.length, Math.min(PLACEMENT_BUDGET.anchor, left));
     if (role === 'follow' && open && wider > eff) s = searchSkill(M, start, (eff = wider), mine);
     spend(k, mine.length);
-    const r = s.asked ? searchRange(k, s) : { low: null, high: null, rating: null };
+    const r = s.asked ? searchRange(k, s, nj) : { low: null, high: null, rating: null };
     out.push({ skill: k, role, start, budget: eff, asked: s.asked, lo: s.lo, hi: s.hi, misses: s.misses, done: s.done, next: s.done ? null : s.next, ...r });
     if (!s.done) {
       next = { skill: k, level: s.next };
@@ -509,10 +513,10 @@ const answersOf = (s: SessionState): PlacementAnswer[] =>
   });
 
 /** Optional per-skill starting ratings carried on the lesson (a re-test starts at the player's ratings, §4.4). */
-export type PlacementLessonDef = LessonDef & { placementPriors?: Partial<Record<SkillId, number>> };
+export type PlacementLessonDef = LessonDef & { placementPriors?: Partial<Record<SkillId, number>>; /** SPEC-JAZZ-FOLD: the jazz pack is closed — no jazz rungs. */ placementNoJazz?: boolean };
 const planOf = (s: SessionState): PlacementPlan => {
   const l = s.lesson as PlacementLessonDef;
-  return planPlacement(answersOf(s), lessonSections(l), { skipped: l.placementSkipped, sung: !!l.placementSinging, priors: l.placementPriors });
+  return planPlacement(answersOf(s), lessonSections(l), { skipped: l.placementSkipped, sung: !!l.placementSinging, priors: l.placementPriors, noJazz: !!l.placementNoJazz });
 };
 /** The plan of a placement session (for the result screen: roles, ranges). */
 export const placementPlanOf = planOf;
@@ -531,7 +535,7 @@ export interface SkillProgress {
 export function placementState(s: SessionState, skills: SkillId[]): SkillProgress[] {
   const l = s.lesson as PlacementLessonDef;
   const order = l.placementSkills ?? skills;
-  const plan = planPlacement(answersOf(s), order, { skipped: order.filter((k) => !skills.includes(k)), sung: !!l.placementSinging, priors: l.placementPriors });
+  const plan = planPlacement(answersOf(s), order, { skipped: order.filter((k) => !skills.includes(k)), sung: !!l.placementSinging, priors: l.placementPriors, noJazz: !!l.placementNoJazz });
   return skills.map((k) => {
     const p = plan.skills.find((x) => x.skill === k);
     if (!p) return { skill: k, passed: 0, misses: 0, done: false, next: 1, asked: 0 };
@@ -540,8 +544,8 @@ export function placementState(s: SessionState, skills: SkillId[]): SkillProgres
 }
 
 /** The midpoint between a passed rung and the next one (the 2.0 estimate; kept for callers and comparisons). */
-export function placementEstimate(skill: SkillId, passed: number): number {
-  const L = LADDERS[skill]!;
+export function placementEstimate(skill: SkillId, passed: number, noJazz = false): number {
+  const L = ladderOf(skill, noJazz);
   if (passed <= 0) return L[0].difficulty - 120;
   if (passed >= L.length) return L[L.length - 1].difficulty + 90;
   return Math.round((L[passed - 1].difficulty + L[passed].difficulty) / 2);
@@ -555,17 +559,17 @@ const makeItem = (skill: SkillId, level: number, seed: number, n: number): Quest
 
 export function placementLesson(
   seed: number,
-  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; skills?: SkillId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>> } = {},
+  opts: { singing?: boolean; domain?: DomainId | null; priorities?: DomainId[] | null; areas?: DomainId[] | null; skills?: SkillId[] | null; only?: SkillId[]; priors?: Partial<Record<SkillId, number>>; /** SPEC-JAZZ-FOLD: the jazz pack is closed in the course. */ noJazz?: boolean } = {},
 ): LessonDef {
   // `only`: just these sections (catching up on skills measured since the player's last placement).
   const all = placementSkills(opts);
   const only = opts.only?.length ? all.filter((k) => opts.only!.includes(k)) : [];
   const skills = only.length ? only : all;
   const priors = opts.priors && Object.keys(opts.priors).length ? opts.priors : undefined;
-  const first = planPlacement([], skills, { sung: !!opts.singing, priors }).next!;
+  const first = planPlacement([], skills, { sung: !!opts.singing, priors, noJazz: !!opts.noJazz }).next!;
   const def: PlacementLessonDef = {
     id: 'placement', version: 3, skill: 'degrees', scoring: { xpPerCorrect: 5, attemptLimit: 1 }, intro: [], questions: [makeItem(first.skill, first.level, seed, 1)],
-    placementSinging: !!opts.singing, placementSkills: skills, ...(opts.domain ? { placementDomain: opts.domain } : {}), ...(priors ? { placementPriors: priors } : {}),
+    placementSinging: !!opts.singing, placementSkills: skills, ...(opts.domain ? { placementDomain: opts.domain } : {}), ...(priors ? { placementPriors: priors } : {}), ...(opts.noJazz ? { placementNoJazz: true } : {}),
   };
   return def;
 }

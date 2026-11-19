@@ -25,7 +25,7 @@ const base: PathInput = {
 describe('courses (SPEC-COURSES)', () => {
   const all = stepCatalogue();
   it('every course has steps of its own', () => {
-    for (const c of ['ear', 'voice', 'keys', 'guitar', 'jazz'] as CourseId[]) {
+    for (const c of ['ear', 'voice', 'keys', 'guitar', 'bass', 'drums'] as CourseId[]) {
       const inp = courseInput(base, c);
       const n = all.filter((s) => eligible(s, inp)).length;
       expect(n, c).toBeGreaterThan(0);
@@ -49,11 +49,10 @@ describe('courses (SPEC-COURSES)', () => {
         continue;
       }
       const instr = (['keys', 'guitar', 'bass'] as CourseId[]).some((c) => inCourse(s, c));
-      // AUDIT-6 J-W2: the performed jazz families are the one shared set — their instrument course (or voice) and Jazz.
-      const jazzShared = !!s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family);
-      const owners = (['ear', 'voice', 'jazz'] as CourseId[]).filter((c) => inCourse(s, c)).length + (instr ? 1 : 0);
-      expect(owners, s.id).toBeLessThanOrEqual(jazzShared ? 2 : 1);
-      if (jazzShared) expect(inCourse(s, 'jazz'), s.id).toBe(true);
+      // SPEC-JAZZ-FOLD: no Jazz course — the performed jazz families live only in their instrument course (or voice).
+      const owners = (['ear', 'voice'] as CourseId[]).filter((c) => inCourse(s, c)).length + (instr ? 1 : 0);
+      expect(owners, s.id).toBeLessThanOrEqual(1);
+      if (!!s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family)) expect(inCourse(s, 'ear'), s.id).toBe(false);
     }
   });
   it('sung steps live in the voice course, never in ear', () => {
@@ -64,9 +63,13 @@ describe('courses (SPEC-COURSES)', () => {
       if (!s.forPlays?.length) expect(inCourse(s, 'voice')).toBe(true);
     }
   });
-  it('the jazz pack goes to the jazz course only', () => {
-    expect(courseInput(base, 'ear').packs).not.toContain('jazz');
-    expect(courseInput(base, 'jazz').packs).toContain('jazz');
+  it('SPEC-JAZZ-FOLD: the jazz pack follows the player, not a course; jazz focus opens it in any course', () => {
+    expect(courseInput({ ...base, packs: [] }, 'ear').packs).not.toContain('jazz');
+    expect(courseInput({ ...base, packs: ['jazz'] }, 'ear').packs).toContain('jazz');
+    expect(courseInput({ ...base, packs: ['jazz'] }, 'keys').packs).toContain('jazz');
+    expect(courseInput({ ...base, packs: [] }, 'keys', false, true).packs).toContain('jazz');
+    expect(courseInput(base, 'ear', false, true).goal).toBe('jazz');
+    expect(courseInput(base, 'ear', true, true).goal).toBe('exam');
   });
   it('choosing the voice course undoes "leave singing out"', () => {
     const inp = courseInput({ ...base, leaveOut: ['voice'], noSing: true }, 'voice');
@@ -85,13 +88,14 @@ describe('courses (SPEC-COURSES)', () => {
     expect(s.pathFactsBy?.keys).toEqual({ tests: { a: '2026-11-02' } });
   });
   it('switching to a new course adds it', () => {
-    const s = switchCourse({ courses: ['ear'], activeCourse: 'ear' }, 'jazz');
-    expect(s.courses).toEqual(['ear', 'jazz']);
+    const s = switchCourse({ courses: ['ear'], activeCourse: 'ear' }, 'bass');
+    expect(s.courses).toEqual(['ear', 'bass']);
   });
   it('players from before courses get courses from their goal and instruments', () => {
-    expect(coursesFromProfile('general', [])).toEqual({ courses: ['ear'], active: 'ear', examPrep: false });
-    expect(coursesFromProfile('sing', ['keys'])).toEqual({ courses: ['ear', 'keys', 'voice'], active: 'voice', examPrep: false });
-    expect(coursesFromProfile('jazz', ['guitar'])).toEqual({ courses: ['ear', 'guitar', 'jazz'], active: 'jazz', examPrep: false });
+    expect(coursesFromProfile('general', [])).toEqual({ courses: ['ear'], active: 'ear', examPrep: false, jazzFocus: false });
+    expect(coursesFromProfile('sing', ['keys'])).toEqual({ courses: ['ear', 'keys', 'voice'], active: 'voice', examPrep: false, jazzFocus: false });
+    // SPEC-JAZZ-FOLD: the jazz goal is the Ear course in jazz focus.
+    expect(coursesFromProfile('jazz', ['guitar'])).toEqual({ courses: ['ear', 'guitar'], active: 'ear', examPrep: false, jazzFocus: true });
     // 0.67: the exam goal is the Ear course in exam-prep mode.
     const m = migrateSettings({ ...DEFAULT_SETTINGS, goal: 'exam', pathFacts: { steps: { a: { stars: 1, at: 'x' } } } });
     expect(m.courses).toEqual(['ear']);

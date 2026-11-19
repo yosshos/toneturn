@@ -41,7 +41,7 @@ async function welcome(page: Page, course: string, report: 'new' | 'bit' | 'well
 /** Setup: the simulator "plays" a note (or the listening check picks headphones); drums skip the kit wizard. */
 async function setup(page: Page, course: string) {
   await expect(page.locator(`[data-course-start="setup"][data-cs-course="${course}"]`)).toBeVisible();
-  if (course === 'ear' || course === 'jazz') {
+  if (course === 'ear') {
     await fits(page, `${course} setup`);
     await page.locator('[data-setup-play]').click();
     await page.locator('[data-setup-headphones]').click();
@@ -124,12 +124,12 @@ test.describe('course start', () => {
     await expect(page.locator('.cs-nexts .cs-next').first()).toHaveAttribute('data-next', 'level');
   });
 
-  for (const course of ['keys', 'guitar', 'drums', 'voice', 'jazz'] as const) {
+  for (const course of ['keys', 'guitar', 'drums', 'voice'] as const) {
     test(`${course}: welcome → setup (simulated) → the taste opens; left half-way it waits as "Continue" on Home`, async ({ page }) => {
       await onboard(page, course);
       await welcome(page, course, 'new');
       await setup(page, course);
-      if (course === 'voice' || course === 'jazz') {
+      if (course === 'voice') {
         await page.getByRole('button', { name: 'Use buttons instead' }).click();
         await expect(page.locator('main.lesson')).toBeVisible({ timeout: 15_000 });
         // Leave half-way: pause, then exit.
@@ -157,17 +157,18 @@ test.describe('course start', () => {
     await expect(page.locator('[data-drills="run"]')).toBeVisible({ timeout: 15_000 });
   });
 
-  test('a second course runs the same flow; setup is skipped when already checked', async ({ page }) => {
+  test('a second course runs the same flow', async ({ page }) => {
     await onboard(page, 'ear');
     await welcome(page, 'ear', 'new');
     await setup(page, 'ear');
     await playLesson(page);
     await page.locator('[data-next="path"]').click();
-    // Add jazz: its welcome opens; the listening check was done in ear, so the taste follows the report directly.
+    // Add keys (SPEC-JAZZ-FOLD: no Jazz course to add): its welcome opens, then its own setup.
     await page.locator('[data-course-chip]:visible').first().click();
     await page.locator('[data-course-add]').click();
-    await page.locator('.course-list.add [data-course="jazz"]').click();
-    await welcome(page, 'jazz', 'bit');
-    await expect(page.locator('main.lesson')).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('.course-list.add [data-course="jazz"]')).toHaveCount(0);
+    await page.locator('.course-list.add [data-course="keys"]').click();
+    await welcome(page, 'keys', 'bit');
+    await expect(page.locator('[data-course-start="setup"][data-cs-course="keys"]')).toBeVisible();
   });
 });

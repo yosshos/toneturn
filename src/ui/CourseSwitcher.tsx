@@ -68,6 +68,21 @@ export function CourseSheet({ mine, active, lang, onPick, onClose }: { mine: Cou
 /** 0.67 (owner 2026-11-10): exam prep is a mode of the Ear course (was the Exams course). A small switch on the Ear
  *  course's Path and Practice headers; Settings → learning has the same switch. */
 export const EXAM_PREP_NAME = { he: 'הכנה לבגרות', en: 'Exam prep' } as const;
+
+/** SPEC-JAZZ-FOLD §4 (owner 2026-11-19): "Jazz focus" replaces the Jazz course — a mode of Ear and of each playing
+ *  course: the jazz pack opens whatever the background, and jazz comes earlier and weighs more. The same small switch
+ *  as exam prep, on the Path and Practice headers; Settings → learning has it too. */
+export const JAZZ_FOCUS_NAME = { he: 'מיקוד ג׳אז', en: 'Jazz focus' } as const;
+export function JazzFocusSwitch({ on, lang, onChange }: { on: boolean; lang: Lang; onChange: (on: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} className={`exam-switch jazz-switch ${on ? 'on' : ''}`} onClick={() => onChange(!on)} data-jazz-focus={on ? 'on' : 'off'}>
+      <span className="es-track" aria-hidden="true">
+        <i />
+      </span>
+      <span className="es-label">{JAZZ_FOCUS_NAME[lang]}</span>
+    </button>
+  );
+}
 export function ExamPrepSwitch({ on, lang, onChange }: { on: boolean; lang: Lang; onChange: (on: boolean) => void }) {
   return (
     <button type="button" role="switch" aria-checked={on} className={`exam-switch ${on ? 'on' : ''}`} onClick={() => onChange(!on)} data-exam-prep={on ? 'on' : 'off'}>

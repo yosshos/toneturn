@@ -10,7 +10,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { courseOf, type CourseId } from '../engine/courses';
 import { LADDER, type SelfReport } from '../engine/courseStart';
 import { THEMES, type PathStep, type Section } from '../engine/path';
-import { COURSE_OPENERS, DAY, FILM, GO, START, UNIT_TX, UNIT_THEMES, fill, rungOfReport, sndEvents, themeGlyph, unitCopy, unitMinutes, type LanePass, type Snd, type Station, type T2 } from '../content/openers';
+import { courseOpener, DAY, FILM, GO, START, UNIT_TX, UNIT_THEMES, fill, rungOfReport, sndEvents, themeGlyph, unitCopy, unitMinutes, type LanePass, type Snd, type Station, type T2 } from '../content/openers';
 import { FAMILY_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
 import { GLYPHS, PaperGlyph, type GlyphKind } from './Glyph';
 import { Toni, type ToniMood } from './Toni';
@@ -24,7 +24,7 @@ import { Cancelled } from '../game/adapters';
 type Lang = 'he' | 'en';
 
 export type OpenerSpec =
-  | { kind: 'course'; course: CourseId; report: SelfReport; replay: boolean; taste: T2 }
+  | { kind: 'course'; course: CourseId; report: SelfReport; replay: boolean; taste: T2; /** The jazz pack is open in the course (SPEC-JAZZ-FOLD). */ jazz?: boolean }
   | {
       kind: 'unit';
       course: CourseId;
@@ -148,7 +148,8 @@ const ToniSlot = ({ mood, size, className = '', style }: { mood: ToniMood; size:
   </div>
 );
 const stationGlyph = (s: Station): GlyphKind | null => s.glyph ?? (s.ref.family ? FAMILY_GLYPH[s.ref.family] : s.ref.topic ? TOPIC_GLYPH[s.ref.topic] : s.ref.theme ? themeGlyph(s.ref.theme) : null) ?? null;
-const courseDef = (spec: OpenerSpec) => COURSE_OPENERS[spec.course];
+// SPEC-JAZZ-FOLD: with the jazz pack open, the road ends at the course's jazz station.
+const courseDef = (spec: OpenerSpec) => courseOpener(spec.course, spec.kind === 'course' && !!spec.jazz);
 
 // ---------------------------------------------------------------- course scenes
 

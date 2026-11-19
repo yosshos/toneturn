@@ -148,7 +148,8 @@ export function guitarAddOnsOf(ds: Pick<DrillSettings, 'guitarAddOns' | 'guitarS
   if (st === 'jazz' || st === 'latin') out.add('jazz');
   if (st === 'flamenco') out.add('flamenco');
   if (st === 'classical' || st === 'fingerstyle') out.add('fingerstyle');
-  if (courses?.includes('jazz')) out.add('jazz');
+  // (SPEC-JAZZ-FOLD: the old Jazz course in `courses` no longer exists; jazz focus / the jazz pack decide on the path.)
+  if ((courses as string[] | undefined)?.includes('jazz')) out.add('jazz');
   return GUITAR_ADDONS.filter((a) => out.has(a));
 }
 

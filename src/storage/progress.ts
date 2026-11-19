@@ -2,7 +2,7 @@
 // so a repeated callback or an app resume can never award points twice.
 
 import { addGameKeyTakes, isKeyGame, keyTakesOf } from '../engine/gameKeys';
-import { coursesFromProfile, migrateExamCourse } from '../engine/courses';
+import { coursesFromProfile, migrateExamCourse, migrateJazzCourse } from '../engine/courses';
 import { placementResults } from '../engine/placement';
 import { isLog, logMinutes } from '../engine/practiceLog';
 import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
@@ -328,6 +328,13 @@ export interface Settings {
   /** 0.67 (owner 2026-11-10): the Ear course's exam-prep mode (was the separate "Exams" course): exam-weighted path
    *  and workout, mock exams first on Practice, an exam card on Today. */
   examPrep?: boolean;
+  /** SPEC-JAZZ-FOLD (owner 2026-11-19): the courses in "jazz focus" (מיקוד ג׳אז, was the separate Jazz course): the jazz
+   *  pack open whatever the background, jazz steps earlier and weighted more (path, workout, Practice). */
+  jazzFocus?: import('../engine/courses').CourseId[];
+  /** SPEC-JAZZ-FOLD §3: the courses where climbing to mf opened the jazz pack by itself (never closed again). */
+  jazzOpen?: import('../engine/courses').CourseId[];
+  /** SPEC-JAZZ-FOLD: a one-time notice still to show — 'fold' (the Jazz course is now jazz focus) or the course whose jazz just opened. */
+  jazzNotice?: 'fold' | import('../engine/courses').CourseId;
   /** The next step ids last shown (to tell the player when a rebuild changed them). */
   pathSeen?: string[];
   /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) — the workout has a New block from the path; "I choose" — no New
@@ -496,11 +503,12 @@ export function courseInstrumentOf(s: Pick<Settings, 'instrument' | 'activeCours
  *  path's facts stay with the course that matches the goal (the active one). Nothing is lost. */
 export function withCourses(s0: Settings): Settings {
   // 0.67: the old "Exams" course → the Ear course with exam prep on (engine/courses.ts migrateExamCourse).
-  const s = migrateExamCourse(s0);
+  // SPEC-JAZZ-FOLD: the old "Jazz & improv" course → Ear (and the instrument courses) in jazz focus, progress merged.
+  const s = migrateExamCourse(migrateJazzCourse(s0));
   if (s.courses?.length && s.activeCourse) return s;
   const plays = [...((s.intake as { plays?: string[] } | null | undefined)?.plays ?? []), ...(s.instrument && !['voice', 'C', 'Bb', 'Eb', 'F'].includes(s.instrument) ? [s.instrument] : [])];
-  const { courses, active, examPrep } = coursesFromProfile(s.goal, plays);
-  return { ...s, courses: s.courses?.length ? s.courses : courses, activeCourse: s.activeCourse ?? active, ...(examPrep && s.examPrep === undefined ? { examPrep } : {}) };
+  const { courses, active, examPrep, jazzFocus } = coursesFromProfile(s.goal, plays);
+  return { ...s, courses: s.courses?.length ? s.courses : courses, activeCourse: s.activeCourse ?? active, ...(examPrep && s.examPrep === undefined ? { examPrep } : {}), ...(jazzFocus && s.jazzFocus === undefined ? { jazzFocus: ['ear' as const] } : {}) };
 }
 
 export const emptyProgress = (): Progress => ({

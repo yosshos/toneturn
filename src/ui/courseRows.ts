@@ -1,6 +1,6 @@
 // Which rows and games the Practice page shows per course (pure tables, moved out of Arcade.tsx in 0.67 so tests can
 // read them without the UI).
-import type { CourseId } from '../engine/courses';
+import { JAZZ_GAMES, type CourseId } from '../engine/courses';
 import { gameVerified } from '../engine/verifiedContent';
 
 /** The games each course offers (0.64, owner: every bottom-tab screen is the course's — no guitar game in piano).
@@ -8,8 +8,10 @@ import { gameVerified } from '../engine/verifiedContent';
  *  Echo, Pitch Memory is a Today card, the groove trainer a tool; in drums Groove Echo replaces Beat Echo. Their
  *  routes and saved progress stay. */
 const ALL_COURSE_GAMES: Record<CourseId, string[]> = {
-  jazz: ['rush-chord', 'rush-progression', 'rush-interval', 'truefalse', 'nametune', 'duel', 'daily', 'rush-standard', 'rush-voicing', 'reharm', 'bhtime', 'transcribe', 'rush-scale', 'bordercontrol', 'whichbrother', 'compcaller', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'mirror'],
-  ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'rush-note', 'rush-keysig', 'peakhunter', 'rush-voicing', 'reharm', 'rush-scale', 'transcribe', 'rush-standard', 'polylock', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'tonnetz', 'euclid'],
+  // SPEC-JAZZ-FOLD: the old Jazz course's ear games are Ear's (Euclid, Mirror joined); its played ones (Which Brother,
+  // Comp Caller, Guide-Tone Runner, Enclosure, 5-4-3-2, Barry Harris in Time) are the instrument courses'. The jazz
+  // games (courses.ts JAZZ_GAMES) show only while the jazz pack is open (courseGames).
+  ear: ['melody', 'rhythm', 'truefalse', 'ghost', 'duel', 'daily', 'rush-interval', 'rush-chord', 'rush-progression', 'highway', 'melodypuzzle', 'nametune', 'rush-note', 'rush-keysig', 'peakhunter', 'rush-voicing', 'reharm', 'rush-scale', 'transcribe', 'rush-standard', 'polylock', 'bordercontrol', 'crossword', 'holdnote', 'thirdjump', 'darkside', 'whichpair', 'tonnetz', 'euclid', 'mirror'],
   voice: ['flight', 'melody', 'nametune', 'rush-interval', 'rush-scale', 'singinterval', 'harmonyhold', 'runcatcher', 'singback'],
   keys: ['rush-note', 'rush-chord', 'rush-keysig', 'highway', 'melodypuzzle', 'rhythm', 'bhtime', 'rush-voicing', 'transcribe', 'riffecho', 'polylock', 'playback', 'voicingsprint', 'whichbrother', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'holdnote', 'staffrunner', 'thirdjump', 'whichpair'],
   guitar: ['rush-fretboard', 'tuneup', 'rush-chord', 'highway', 'rush-note', 'rhythm', 'rush-voicing', 'riffecho', 'changerace', 'playback', 'rootsear', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'strumchange'],
@@ -20,6 +22,8 @@ const ALL_COURSE_GAMES: Record<CourseId, string[]> = {
 };
 /** The games on show: hidden-until-verified games (verifiedContent.ts) left out; their routes and saved progress stay. */
 export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Object.entries(ALL_COURSE_GAMES).map(([c, gs]) => [c, gs.filter(gameVerified)])) as Record<CourseId, string[]>;
+/** SPEC-JAZZ-FOLD: a course's games for a player — the jazz games only while the jazz pack is open there. */
+export const courseGames = (course: CourseId, jazzOn: boolean): string[] => (jazzOn ? COURSE_GAMES[course] : COURSE_GAMES[course].filter((g) => !JAZZ_GAMES.includes(g)));
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
  *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
  *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines.
@@ -32,8 +36,28 @@ export const COURSE_ROWS: Record<CourseId, string[]> = {
   guitar: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
   bass: ['encore', 'drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
   drums: ['drills', 'repertoire', 'mysong', 'games'],
-  jazz: ['encore', 'repertoire', 'charts', 'improv', 'licks', 'transcribe', 'mysong', 'games'],
+};
+/**
+ * SPEC-JAZZ-FOLD: the old Jazz course's rows, in the course that now holds them while the jazz pack is open — Ear: the
+ * jazz standards, charts and lead sheets, improvising under rules, licks and transcription; the playing courses: charts
+ * and improvising. In jazz focus they come first.
+ */
+export const JAZZ_ROWS: Partial<Record<CourseId, string[]>> = {
+  ear: ['standards', 'charts', 'improv', 'licks', 'transcribe'],
+  keys: ['charts', 'improv'],
+  guitar: ['charts', 'improv'],
+  bass: ['charts', 'improv'],
+  voice: ['charts'],
 };
 /** 0.67: the Ear course in exam-prep mode (was the Exams course) puts the mock exams first. */
 export const EXAM_PREP_ROWS = ['exams', 'lessons', 'puzzle', 'games'];
-export const courseRows = (course: CourseId, examPrep = false): string[] => (course === 'ear' && examPrep ? EXAM_PREP_ROWS : COURSE_ROWS[course]);
+export function courseRows(course: CourseId, examPrep = false, jazz: 'off' | 'on' | 'focus' = 'off'): string[] {
+  if (course === 'ear' && examPrep) return EXAM_PREP_ROWS;
+  const base = COURSE_ROWS[course];
+  const jz = jazz === 'off' ? [] : (JAZZ_ROWS[course] ?? []).filter((r) => !base.includes(r));
+  if (!jz.length) return base;
+  if (jazz === 'focus') return [...jz, ...base];
+  // Open: after the course's own play rows, before My song and the games.
+  const at = base.findIndex((r) => r === 'mysong' || r === 'games');
+  return at < 0 ? [...base, ...jz] : [...base.slice(0, at), ...jz, ...base.slice(at)];
+}
