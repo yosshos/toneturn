@@ -66,6 +66,8 @@ export interface PathStep {
   bonus?: boolean;
   /** PIANO_JAZZ P2 (pathBonus.ts): a repertoire item (game 'repertoire'), passed by its measured result only. */
   rep?: { course: CourseId; id: string };
+  /** Curriculum flow (consolidation): a practice step — another set of items of this topic level (its step id). */
+  practiceOf?: string;
   title: { en: string; he: string };
 }
 
@@ -1190,7 +1192,7 @@ export function buildPath(inp: PathInput): PathView {
 
   /** The step ids a step builds on: its topic's previous level, its ladder's previous level, PREREQ, STEP_PREREQ. */
   const prereqIdsOf = (s: PathStep): string[] => [
-    ...(prevLevel(s) ? [prevLevel(s)!] : []),
+    ...(s.practiceOf ? [s.practiceOf] : prevLevel(s) ? [prevLevel(s)!] : []),
     ...(s.ladder && ladderPrev.get(s.id) ? [ladderPrev.get(s.id)!] : []),
     ...stepPrereqs(s),
   ];
@@ -1284,7 +1286,8 @@ export function buildPath(inp: PathInput): PathView {
       if (waiting(ladderPrev.get(next.id)) || (LADDER_AFTER[next.id] ?? []).some((id) => (next.difficulty < EARLY_PREREQ_BELOW ? onPath.has(id) && !taken.has(id) : waiting(id)))) continue;
       const unstarted = !isFirstFamily(f) && !all.some((s) => s.ladder?.family === f && taken.has(s.id));
       if (unstarted && fresh >= 1) continue;
-      if (firstPending && !isFirstFamily(f) && next.difficulty >= firstCap) continue;
+      // (A family already started keeps going; a new one waits until the first steps are past its level.)
+      if (firstPending && unstarted && next.difficulty >= firstCap) continue;
       if (unstarted) fresh++;
       out.push(next);
       scheduled.add(next.id);
@@ -1325,6 +1328,7 @@ export function buildPath(inp: PathInput): PathView {
       const c = s && conceptOf(s);
       if (c) started.add(c);
     }
+    const startedBefore = new Set(started);
     let newConcepts = 0;
     // A counted concept may take one partner of the other kind in its sub-skill: a teaching lesson ↔ one topic.
     const pairOpen = new Set<string>();
@@ -1445,6 +1449,54 @@ export function buildPath(inp: PathInput): PathView {
         if (best.topic) topicsIn.add(best.topic);
       }
     }
+    // Consolidation (owner 2026-11-19: several success items per stage): one NEW idea per unit, but the unit keeps its
+    // normal size. It fills with practice of what is already introduced — first a second / third item of the topic
+    // just introduced (a practice step: the same topic level, a fresh set of items), then the next level of a started
+    // topic (one level per unit, inside the road / unit caps, the unit's theme first), then a practice item of a level
+    // passed recently. Only a unit with real material of its own is filled (no units of practice only at the end).
+    // A playing course's unit was its ladder levels plus a question step or two (about four steps): it fills to that size.
+    const fillTo = inp.course && PLAYING_COURSES.includes(inp.course) && inp.ladderFamilies?.length ? Math.min(slots, 4) : slots;
+    if (picked.length && picked.length < fillTo) {
+      const inUnit = new Set(picked.map((p) => p.s.topic).filter((t): t is string => !!t));
+      const capFill = Math.min(roadCap, capUnit);
+      const themeFirst = (a: PathStep, b: PathStep) => (inTheme(b.sub, theme) ? 1 : 0) - (inTheme(a.sub, theme) ? 1 : 0);
+      let k = 0;
+      const addPractice = (base: PathStep) => {
+        const s = practiceStep(base, `${base.id}~u${n}p${++k}`);
+        picked.push({ s });
+        scheduled.add(s.id);
+      };
+      // 1. The topic just introduced: up to two more items at its level.
+      const fresh = picked.filter((p) => p.s.kind === 'topic' && !p.catchup && !p.s.practiceOf && !startedBefore.has(p.s.topic!)).map((p) => p.s);
+      for (const base of fresh) for (let r = 0; r < 2 && picked.length < fillTo; r++) addPractice(base);
+      // 2. The next level of a started topic (prerequisites met, near the road and the unit).
+      const next = open
+        // (Not a level the window passed by, nor one below a level already passed: the topic moves up, never back.)
+        .filter((s) => s.kind === 'topic' && !scheduled.has(s.id) && !inUnit.has(s.topic!) && !isNewConcept(s) && started.has(s.topic!) && s.difficulty <= capFill && !(s.difficulty < fr(s.skill) - 150 && !carrier(s)) && !all.some((x) => x.topic === s.topic && (x.level ?? 0) > (s.level ?? 0) && taken.has(x.id)) && prereqOk(s, scheduled))
+        .sort((a, b) => themeFirst(a, b) || Math.abs(a.difficulty - fr(a.skill)) - Math.abs(b.difficulty - fr(b.skill)) || a.id.localeCompare(b.id));
+      for (const s of next) {
+        if (picked.length >= fillTo) break;
+        if (inUnit.has(s.topic!)) continue;
+        picked.push({ s });
+        scheduled.add(s.id);
+        inUnit.add(s.topic!);
+      }
+      // 3. Practice items: the unit's own topics, then the levels passed most recently (each topic once).
+      const recent = all
+        .filter((s) => s.kind === 'topic' && taken.has(s.id) && !inUnit.has(s.topic!) && s.difficulty <= capFill)
+        .sort((a, b) => themeFirst(a, b) || (doneSteps[b.id]?.at ?? '').localeCompare(doneSteps[a.id]?.at ?? '') || b.difficulty - a.difficulty);
+      const unitTopics = picked.filter((p) => p.s.kind === 'topic' && !p.s.practiceOf && !p.catchup).map((p) => p.s);
+      const seenT = new Set<string>();
+      for (const base of [...unitTopics, ...recent]) {
+        if (picked.length >= fillTo) break;
+        if (seenT.has(base.topic!)) continue;
+        seenT.add(base.topic!);
+        if (fresh.includes(base)) continue;
+        addPractice(base);
+      }
+      // 4. Still short (a course's first units: nothing else is started yet): one more item of the new topic.
+      for (const base of fresh) if (picked.length < Math.min(4, fillTo)) addPractice(base);
+    }
     void catchups;
     // Order (P17): interleave areas, rising difficulty inside each area.
     const byArea = new Map<DomainId, { s: PathStep; probe?: boolean; catchup?: boolean }[]>();
@@ -1495,8 +1547,8 @@ export function buildPath(inp: PathInput): PathView {
     // A one-area unit (one new idea): a ready game of another area of the course (Name That Tune in Ear unit 1).
     if (lead && !game && gameForArea(lead, n, gInp, gDiff))
       for (const a of live.filter((a) => !order.some((p) => p.s.domain === a))) if ((game = gameForArea(a, n, gInp, gDiff, ready))) break;
-    // (Curriculum flow: units are shorter now — one new idea each — so a unit of two steps gets its game round too.)
-    if (game && order.length >= 2) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
+    // A unit of four steps or more gets its game round (units keep their size: consolidation fills them).
+    if (game && order.length >= 4) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
     // PIANO_JAZZ P2: a repertoire item / an optional bonus game at the unit's end, where its depth fits the unit.
     if (order.length >= 3)
       for (const x of unitEndSteps(n, median(order.map((p) => p.s.difficulty)), all.filter((s) => isUnitEndStep(s) && !taken.has(s.id) && endReady(s)))) {
@@ -1582,8 +1634,20 @@ export function buildPath(inp: PathInput): PathView {
   return { units, history, current, progress: { done, checked, total: all.length }, sections, freeze };
 }
 
+/**
+ * A practice step (consolidation): the same topic level as `base`, played again with fresh items, under its own id
+ * ("topic:<t>:<l>~u<unit>p<k>") so its result is its own. Not in the catalogue; frozen units rebuild it from the id.
+ */
+export function practiceStep(base: PathStep, id: string): PathStep {
+  return { ...base, id, practiceOf: base.id, teach: undefined, title: { en: `${base.title.en} · practice`, he: `${base.title.he} · תרגול` } };
+}
+
 /** Checkpoint and review steps (generated per unit). */
 function virtualStep(id: string, unitId: string, from: PathStep[] = []): PathStep | null {
+  if (id.includes('~')) {
+    const base = stepCatalogue().find((s) => s.id === id.split('~')[0]);
+    return base ? practiceStep(base, id) : null;
+  }
   if (id.startsWith('check:')) {
     const d = median(from.map((s) => s.difficulty)) || 1000;
     return { id, kind: 'check', skill: from[0]?.skill ?? 'degrees', sub: from[0]?.sub ?? 'degrees/diatonic', domain: from[0]?.domain ?? 'pitch', difficulty: d, choices: 0, title: { en: 'Checkpoint', he: 'נקודת ביקורת' } };
@@ -1641,7 +1705,7 @@ export const GAME_STEPS: Record<string, { domain: DomainId; skill: SkillId; sub:
   elevator: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Elevator', he: 'המעלית' }, forPlays: ['keys', 'piano', 'guitar'], minDiff: 1100 },
   // AUDIT-GAMES §4.2 new games: the played ones in the instrument courses' units, the ear ones in the Ear course's
   // pitch units (each from its difficulty floor); the Jazz course has them as bonus steps (pathBonus.ts).
-  guidetone: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1000 },
+  guidetone: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המנחים' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1000 },
   enclosure: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: 'Enclosure Target', he: 'מטרת הכיתור' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1050 },
   call5432: { domain: 'instrument', skill: 'instrument', sub: 'piano-tech', title: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' }, forPlays: ['keys', 'piano', 'guitar', 'bass'], minDiff: 1150 },
   crossword: { domain: 'pitch', skill: 'cadences', sub: 'dictation', title: { en: 'Changes Crossword', he: 'תשבץ המהלכים' }, minDiff: 1000 },

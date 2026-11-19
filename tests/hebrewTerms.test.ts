@@ -10,10 +10,9 @@ import { GLOSSARY } from '../src/content/glossary';
 const ROOT = join(__dirname, '..');
 /**
  * Not scanned: the changelog (history, as shipped), the speech tables that map what a player SAYS (they must accept
- * every variant), and path.ts — owned by the parallel path-engine work; its one string ("רץ הצלילים המובילים", the
- * guide-tone game title in GAME_STEPS) is listed in the hand-over and fixed after that merge.
+ * every variant).
  */
-const SKIP = new Set(['src/version.ts', 'src/engine/musicSpeech.ts', 'src/engine/parser.ts', 'src/engine/path.ts']);
+const SKIP = new Set(['src/version.ts', 'src/engine/musicSpeech.ts', 'src/engine/parser.ts']);
 
 const NH = '(?<![א-ת])';
 const NA = '(?![א-ת])';

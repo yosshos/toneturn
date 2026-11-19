@@ -178,7 +178,12 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
   // 0.61: the path is the active course's (SPEC-COURSES).
   const course = s.activeCourse ?? 'ear';
   // 0.67: the Ear course in exam-prep mode weighs the path by what the exams test (the old Exams course).
-  const inp = courseInput(base, course, !!s.examPrep);
+  // Curriculum flow (shared credit): a bridge step passed in another course (Ear's cadence lesson on the Jazz path)
+  // counts as passed here too.
+  const otherDone = Object.entries(s.pathFactsBy ?? {})
+    .filter(([c]) => c !== course)
+    .flatMap(([, f]) => Object.entries(f?.steps ?? {}).filter(([, v]) => v.stars > 0).map(([id]) => id));
+  const inp = { ...courseInput(base, course, !!s.examPrep), ...(otherDone.length ? { otherDone } : {}) };
   // 0.61 (owner): an instrument / voice course teaches its technique ladders as path steps, passed only by measured takes.
   // AUDIT-CONTENT-THEORY §ב.3: until the player picks guitar add-ons, the path carries the jazz add-on (pathGuitarAddOns).
   const ds0 = drillSettingsOf(s);

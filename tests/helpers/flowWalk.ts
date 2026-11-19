@@ -169,7 +169,8 @@ export function flowReport(w: Walk, course: CourseId): FlowReport {
       if (s?.ladder) seenFams.add(s.ladder.family);
     }
     const steps = u.ids.map((id) => byId.get(id) ?? (id.startsWith('game:') ? ({ id, kind: 'game', difficulty: 0 } as unknown as PathStep) : undefined)).filter((s): s is PathStep => !!s);
-    steps.forEach((s, k) => {
+    steps.forEach((s) => {
+      const k = u.ids.indexOf(s.id);
       for (const pid of flowPrereqs(s, onPath, byId)) {
         if (!onPath(pid) || u.before.has(pid)) continue;
         // A practice level (not a concept carrier) the player's rating had passed by more than 150: known, not a gap.
