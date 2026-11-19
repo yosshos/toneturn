@@ -95,7 +95,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '3+3+3 · 2+2+2+3', he: '3+3+3 · 2+2+2+3' } },
       },
       {
-        say: { en: 'The kick marks the bar, the snare marks each new group. Follow the snares and count their gaps.', he: 'הבס־דראם מסמן את התיבה, הסנר מסמן כל קבוצה חדשה. עקבו אחרי הסנרים וספרו את המרווחים ביניהם.' },
+        say: { en: 'The kick marks the bar, the snare marks each new group. Follow the snares and count their gaps.', he: 'הקיק מסמן את התיבה, הסנר מסמן כל קבוצה חדשה. עקבו אחרי הסנרים וספרו את המרווחים ביניהם.' },
         play: [groupStim([3, 3, 3, 2])],
         show: { text: { en: '11/8 = 3+3+3+2', he: '11/8 = 3+3+3+2' } },
       },
@@ -209,7 +209,7 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Spot the reharmonization', he: 'לזהות רה־הרמוניזציה' },
     takeaway: {
       en: 'Reharmonizing keeps the tune and changes chords under it. Find the bar that sounds different, then ask how: a new dominant, a borrowed chord, a passing diminished.',
-      he: 'רה־הרמוניזציה שומרת על המנגינה ומחליפה את האקורדים מתחתיה. מצאו את התיבה שנשמעת אחרת, ואז שאלו איך: דומיננט חדש, אקורד שאול, דימיניש מעבר.',
+      he: 'רה־הרמוניזציה שומרת על המנגינה ומחליפה את האקורדים מתחתיה. מצאו את התיבה שנשמעת אחרת, ואז שאלו איך: דומיננט חדש, אקורד שאול, מוקטן מעבר.',
     },
     steps: [
       {
@@ -278,7 +278,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1 3 5 ♭7', he: '1 3 5 ♭7' } },
       },
       {
-        say: { en: 'An enclosure circles its target: a note above, a half step below, then the target — here the 3rd.', he: 'הקפה מקיפה את המטרה: צליל מעל, חצי טון מתחת, ואז המטרה — כאן הטרצה.' },
+        say: { en: 'An enclosure circles its target: a note above, a half step below, then the target — here the 3rd.', he: 'כיתור מקיף את המטרה: צליל מעל, חצי טון מתחת, ואז המטרה — כאן הטרצה.' },
         play: [phraseOver(0, 'dom7', [0, 2, 5, 3, 4])],
         show: { text: { en: '1 2 4 ♯2 3', he: '1 2 4 ♯2 3' } },
       },
@@ -387,8 +387,8 @@ LESSONS.push({
   emoji: '♯',
   title: { en: 'Upper structures and rootless voicings', he: 'מבנים עליונים ווויסינגים בלי שורש' },
   takeaway: {
-    en: 'A rootless voicing leaves the root to the bass: A has the 3rd at the bottom, B the 7th, and they alternate through a ii–V–I. An upper-structure triad is a major triad over the 3rd and ♭7 of a dominant: II and VI sound bright (9, 13), ♭VI, ♭III and ♭V dark (♭9, ♯9, ♭13).',
-    he: 'וויסינג בלי שורש משאיר את השורש לבס: ב־A הטרצה למטה, ב־B הספטימה, והם מתחלפים לאורך ii–V–I. מבנה עליון הוא משולש מז׳ורי מעל הטרצה וה־♭7 של דומיננט: II ו־VI נשמעים בהירים (9, 13), ‏♭VI, ‏♭III ו־♭V כהים (♭9, ♯9, ♭13).',
+    en: 'A rootless voicing leaves the root to the bass: A has the 3rd at the bottom, B the 7th, and they alternate through a ii–V–I. An upper-structure triad is a major triad over the 3rd and ♭7 of a dominant: II gives the bright tensions (9, ♯11, 13); VI mixes 13 with ♭9; ♭III, ♭V and ♭VI give the dark ones (♯9, ♭9, ♭13).',
+    he: 'וויסינג בלי שורש משאיר את השורש לבס: ב־A הטרצה למטה, ב־B הספטימה, והם מתחלפים לאורך ii–V–I. מבנה עליון הוא משולש מז׳ורי מעל הטרצה וה־♭7 של דומיננט: II נותן את המתחים הבהירים (9, ‏♯11, ‏13); VI מערבב 13 עם ♭9; ‏♭III, ‏♭V ו־♭VI נותנים את הכהים (♯9, ‏♭9, ‏♭13).',
   },
   steps: [
     {
@@ -423,7 +423,7 @@ LESSONS.push({
       play: [rootlessStim(7, [4, 9, 10, 14]), rest(), rootlessStim(7, [4, 10, 15, 20])],
     },
     {
-      say: { en: 'Five upper structures cover most of what you will hear over a dominant: II and VI are bright; ♭III, ♭V and ♭VI hold the altered tensions.', he: 'חמישה מבנים עליונים מכסים את רוב מה שתשמעו מעל דומיננט: II ו־VI בהירים; ‏♭III, ‏♭V ו־♭VI מחזיקים את המתחים האלטרד.' },
+      say: { en: 'Five upper structures cover most of what you will hear over a dominant: II is bright; VI mixes the bright 13 with a dark flat 9; ♭III, ♭V and ♭VI hold the altered tensions.', he: 'חמישה מבנים עליונים מכסים את רוב מה שתשמעו מעל דומיננט: II בהיר; VI מערבב את ה־13 הבהיר עם ♭9 כהה; ‏♭III, ‏♭V ו־♭VI מחזיקים את המתחים האלטרד.' },
       play: [ustStim(7, 9), rest(), ustStim(7, 3), rest(), ustStim(7, 6)],
       show: { text: { en: 'VI: 13 ♭9 3 · ♭III: ♯9 5 ♭7 · ♭V: ♯11 ♭7 ♭9', he: 'VI: 13 ♭9 3 · ♭III: ♯9 5 ♭7 · ♭V: ♯11 ♭7 ♭9' } },
     },

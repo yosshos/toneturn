@@ -56,7 +56,7 @@ const V = (o: Partial<Variant> & Pick<Variant, 'prog' | 'type' | 'en' | 'he'>): 
 const INV_EN = ['root position', '1st inversion', '2nd inversion', '3rd inversion'];
 const INV_HE = ['מצב יסודי', 'היפוך ראשון', 'היפוך שני', 'היפוך שלישי'];
 const TOP_EN = ['root', '3rd', '5th', '7th'];
-const TOP_HE = ['יסוד', 'טרצה', 'קווינטה', 'ספטימה'];
+const TOP_HE = ['שורש', 'טרצה', 'קווינטה', 'ספטימה'];
 
 /** The piano items, per kind (option = index). */
 export const VL_VARIANTS: Record<string, Variant[]> = {

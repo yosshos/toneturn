@@ -110,7 +110,7 @@ TOPIC_GEN['vl-ear'] = {
     { en: 'Which voice moved?', he: 'איזה קול זז?' },
     { en: 'How many notes held?', he: 'כמה צלילים נשארו?' },
     { en: 'ii–V–I: smooth or jumpy?', he: 'ii–V–I: חלקה או קופצנית?' },
-    { en: 'Close or drop 2?', he: 'מצב קרוב או דרופ 2?' },
+    { en: 'Close or drop 2?', he: 'מצב צפוף או דרופ 2?' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -171,7 +171,7 @@ TOPIC_GEN['vl-ear'] = {
     const st = (dr: boolean) => vlProg(p.bass, dr ? smooth.map(drop2) : smooth);
     return choiceQ({
       id, topic: 'vl-ear', level, seed, skill: 'chords', difficulty: 1560,
-      ask: { en: 'ii–V–I: close or drop 2?', he: 'ii–V–I: מצב קרוב או דרופ 2?' },
+      ask: { en: 'ii–V–I: close or drop 2?', he: 'ii–V–I: מצב צפוף או דרופ 2?' },
       names: { close: nm('Close: inside an octave', 'קרוב: בתוך אוקטבה', 'close', 'קרוב'), drop2: nm('Drop 2: wider, open', 'דרופ 2: רחב ופתוח', 'drop two', 'drop', 'דרופ') },
       answer: isDrop ? 'drop2' : 'close', choices: ['close', 'drop2'], stimulus: st(isDrop),
       choiceStim: { close: st(false), drop2: st(true) },

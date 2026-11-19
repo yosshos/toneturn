@@ -137,7 +137,7 @@ function genPop(s: DrillSpec): Drill {
         else n.add(b0, 4, R(vs[b]));
       });
       end();
-      return done(s, n, kt(brokenR ? 'Broken patterns: both hands broken' : 'Broken patterns: LH root–5th–octave', brokenR ? 'תבניות שבורות: שתי הידיים שבורות' : 'תבניות שבורות: יסוד–קווינטה–אוקטבה ביד שמאל', s, pg.name), 72, { evenness: true }, { chart });
+      return done(s, n, kt(brokenR ? 'Broken patterns: both hands broken' : 'Broken patterns: LH root–5th–octave', brokenR ? 'תבניות שבורות: שתי הידיים שבורות' : 'תבניות שבורות: שורש–קווינטה–אוקטבה ביד שמאל', s, pg.name), 72, { evenness: true }, { chart });
     }
     case 'kp-ballad': {
       // LH broken 8ths (root, 5th, octave, 5th), RH the chord on 3 and the next chord pushed onto the "and" of 4 (written

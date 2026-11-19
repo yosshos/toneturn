@@ -523,7 +523,7 @@ TOPIC_GEN['theory-facts'] = {
   title: { en: 'Truth or Bluff: theory', he: 'אמת או בלוף: תיאוריה' },
   skill: 'theory',
   levels: [
-    { en: 'Basics: notes, rhythm, keys', he: 'יסודות: תווים, מקצב, סולמות' },
+    { en: 'Basics: notes, rhythm, keys', he: 'שורשים: תווים, מקצב, סולמות' },
     { en: 'Intervals, chords, scales, the circle', he: 'מרווחים, אקורדים, סולמות, המעגל' },
     { en: 'Modes, harmony, jazz', he: 'מודוסים, הרמוניה, ג׳אז' },
   ],

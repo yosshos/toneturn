@@ -231,7 +231,7 @@ export const LH_TITLE: Record<string, T2> = {
   'lh-shuttle': t('The left-hand shuttle', 'השאטל של יד שמאל'),
 };
 const SIX_Q: SQ[] = ['maj7', '7', 'm7'];
-const SIX_T = [t('bass', 'בס'), t('2-note shell', 'שלד 2'), t('A shell', 'שלד A'), t('B shell', 'שלד B'), t('rootless A', 'בלי יסוד A'), t('rootless B', 'בלי יסוד B')];
+const SIX_T = [t('bass', 'בס'), t('2-note shell', 'שלד 2'), t('A shell', 'שלד A'), t('B shell', 'שלד B'), t('rootless A', 'בלי שורש A'), t('rootless B', 'בלי שורש B')];
 const VAR1: StridePat[] = ['peace', 'reverse', 'skip'];
 const VAR1_T: T2[] = [t('Peace Piece pattern', 'תבנית פיס פיס'), t('reversed stride', 'סטרייד הפוך'), t('skip beat', 'פעמה מדולגת'), t('a new pattern every 4 bars', 'תבנית חדשה כל 4 תיבות')];
 const VAR2: StridePat[] = ['antic-bass', 'antic-both', 'early'];
@@ -256,7 +256,7 @@ function genLh(s: DrillSpec): Drill {
       // [PSJP-B] bass notes as low as possible: the chart's roots on 1 and 3, single, then root + 5th.
       const ch = lhChart(0, key);
       for (const c of ch.cs) for (let b = c.beat; b < c.beat + c.beats; b += 2) n.add(b, 2, 'L', bassNote(c, op === 1));
-      return mk(s, n, { title: ttl(what, key, op === 1 ? t('root + 5th', 'יסוד + קווינטה') : t('roots', 'יסודות')), bpm: 72, chart: ch.chart, tonic: ch.tonic });
+      return mk(s, n, { title: ttl(what, key, op === 1 ? t('root + 5th', 'שורש + קווינטה') : t('roots', 'שורשים')), bpm: 72, chart: ch.chart, tonic: ch.tonic });
     }
     case 'lh-six': {
       // [PSJP-B Ex. B.16] one chord through the six positions, free time first (the intervals change with the register).
@@ -270,7 +270,7 @@ function genLh(s: DrillSpec): Drill {
       const ch = lhChart(0, key, true);
       const form = op === 0 ? '3' : '10';
       n.lh(heldVoicings(ch.cs, (c) => bpShell(c, form, op === 2)));
-      const more = op === 0 ? t('root + 3rd', 'יסוד + טרצה') : op === 1 ? t('root + 10th', 'יסוד + דצימה') : t('the 9th under the thumb', 'הנונה מתחת לאגודל');
+      const more = op === 0 ? t('root + 3rd', 'שורש + טרצה') : op === 1 ? t('root + 10th', 'שורש + דצימה') : t('the 9th under the thumb', 'הנונה מתחת לאגודל');
       return mk(s, n, { title: ttl(what, key, more), bpm: 72, chart: ch.chart, tonic: ch.tonic });
     }
     case 'lh-bpalt': {
@@ -291,7 +291,7 @@ function genLh(s: DrillSpec): Drill {
       const ch = lhChart(0, key, true);
       const v = (c: TChord): number[] => (op === 1 ? shellB(c, true) : op === 2 ? withFifthBass(shellB(c), c) : op === 3 ? (c.q === '7' ? withTritoneBass(c) : shellA(c)) : shellB(c));
       n.lh(heldVoicings(ch.cs, v));
-      const more = [t('1-7-10', '1-7-10'), t('the 9th under the thumb', 'הנונה מתחת לאגודל'), t('the 5th for the root', 'הקווינטה במקום היסוד'), t('the tritone for the root', 'הטריטון במקום היסוד')][op];
+      const more = [t('1-7-10', '1-7-10'), t('the 9th under the thumb', 'הנונה מתחת לאגודל'), t('the 5th for the root', 'הקווינטה במקום השורש'), t('the tritone for the root', 'הטריטון במקום השורש')][op];
       return mk(s, n, { title: ttl(what, key, more), bpm: 72, chart: ch.chart, tonic: ch.tonic });
     }
     case 'lh-roll': {

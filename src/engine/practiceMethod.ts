@@ -143,7 +143,7 @@ const LISTEN: Record<Concept | 'any', { who: T2; prompts: T2[] }> = {
   guide: { who: t('A horn player on a ballad', 'נגן כלי נשיפה בבלדה'), prompts: [t('Hum the 3rd of each new chord.', 'זמזמו את הטרצה של כל אקורד חדש.'), t('Which notes move by a half step?', 'אילו צלילים זזים בחצי טון?'), t('Where does the phrase land?', 'איפה המשפט נוחת?')] },
   rootless: { who: t('A piano trio, the pianist comping', 'טריו פסנתר, הפסנתרן מלווה'), prompts: [t('How often does the piano hit?', 'כמה פעמים הפסנתר מכה?'), t('Short chords or held ones?', 'אקורדים קצרים או מוחזקים?'), t('Does the comp answer the soloist?', 'האם הליווי עונה לסולן?')] },
   stride: { who: t('A stride pianist', 'פסנתרן סטרייד'), prompts: [t('Count the bass notes in one bar.', 'ספרו את צלילי הבס בתיבה אחת.'), t('Find one break: the left hand stops.', 'מצאו הפסקה אחת: היד השמאלית עוצרת.'), t('Tenths or single notes?', 'דצימות או צלילים בודדים?')] },
-  walking: { who: t('A bassist walking a blues', 'בסיסט בווקינג על בלוז'), prompts: [t('Sing the root on each new chord.', 'שירו את היסוד בכל אקורד חדש.'), t('Find a chromatic approach.', 'מצאו צליל גישה כרומטי.'), t('Two-feel or four?', 'בשתיים או בארבע?')] },
+  walking: { who: t('A bassist walking a blues', 'בסיסט בווקינג על בלוז'), prompts: [t('Sing the root on each new chord.', 'שירו את השורש בכל אקורד חדש.'), t('Find a chromatic approach.', 'מצאו צליל גישה כרומטי.'), t('Two-feel or four?', 'בשתיים או בארבע?')] },
   comping: { who: t('A big band, then a trio pianist', 'ביג בנד, ואחריו פסנתרן בטריו'), prompts: [t('Clap the comping rhythm of two bars.', 'מחאו כף את קצב הליווי של שתי תיבות.'), t('Anticipations: chords before the bar line?', 'הקדמות: אקורדים לפני קו התיבה?'), t('Where is there silence?', 'איפה יש שקט?')] },
   harmonise: { who: t('A pianist playing block chords', 'פסנתרן מנגן אקורדי בלוק'), prompts: [t('Is the melody on top all the time?', 'המנגינה למעלה כל הזמן?'), t('Thick or light voicings?', 'קולות עבים או קלים?'), t('Which notes are not chord tones?', 'אילו צלילים אינם צלילי אקורד?')] },
   lines: { who: t('A bebop soloist', 'סולן ביבופ'), prompts: [t('Which beat do the phrases start on?', 'על איזו פעמה המשפטים מתחילים?'), t('Find a phrase you would steal.', 'מצאו משפט שהייתם גונבים.'), t('Sing its last three notes.', 'שירו את שלושת הצלילים האחרונים שלו.')] },
@@ -243,7 +243,7 @@ export const MEMO_STEPS: { id: MemoStep; title: T2; how: T2; topic?: string }[] 
   { id: 'chunk', title: t('Chunk by form', 'לחלק לפי הצורה'), how: t('Name the sections and their bars.', 'לתת שם לחלקים ולתיבות שלהם.') },
   { id: 'transpose', title: t('Transpose at once', 'להעביר סולם מיד'), how: t('Two keys on day one.', 'שני סולמות כבר ביום הראשון.') },
   { id: 'write', title: t('Write the changes', 'לכתוב את האקורדים'), how: t('From memory, then check.', 'מהזיכרון, ואז לבדוק.'), topic: 'harmonic-dictation' },
-  { id: 'sing', title: t('Sing it', 'לשיר'), how: t('Melody, then roots, then 3rds.', 'מנגינה, אחר כך יסודות, אחר כך טרצות.') },
+  { id: 'sing', title: t('Sing it', 'לשיר'), how: t('Melody, then roots, then 3rds.', 'מנגינה, אחר כך שורשים, אחר כך טרצות.') },
   { id: 'loop', title: t('Loop a recording', 'להקשיב בלופ'), how: t('Listen until you hear ahead.', 'להקשיב עד ששומעים קדימה.') },
   { id: 'perform', title: t('Perform it', 'לנגן בפני מישהו'), how: t('For someone, or record it.', 'בפני מישהו, או להקליט.') },
 ];

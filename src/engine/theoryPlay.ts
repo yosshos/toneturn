@@ -205,7 +205,7 @@ export const DEVICE_NAME: Record<Device, Bi> = {
   tritone: { en: 'tritone sub', he: 'תחליף טריטון' },
   backdoor: { en: 'backdoor', he: 'דלת אחורית' },
   'added-ii': { en: 'added ii–V', he: 'ii–V נוסף' },
-  'passing-dim': { en: 'passing diminished', he: 'דימיניש עובר' },
+  'passing-dim': { en: 'passing diminished', he: 'מוקטן עובר' },
   'line-cliche': { en: 'line cliché', he: 'ליין קלישה' },
 };
 /**

@@ -27,7 +27,7 @@ const PROGS: Record<string, { chords: C[]; tag?: boolean; en: string; he: string
   b6b2: { chords: [[2, M7, 4], [7, D7, 4], [8, D7, 2], [1, D7, 2], [0, MAJ7, 4]], en: '♭VI7–♭II7–I', he: '♭VI7–♭II7–I', say: ['flat six seven', 'flat six flat two'] },
   b6b2maj: { chords: [[2, M7, 4], [7, D7, 4], [8, MAJ7, 2], [1, MAJ7, 2], [0, MAJ7, 4]], en: '♭VImaj7–♭IImaj7–I', he: '♭VImaj7–♭IImaj7–I', say: ['flat six major', 'major sevenths'] },
   dameron: { chords: [...twice([[0, MAJ7, 2], [3, MAJ7, 2], [8, MAJ7, 2], [1, MAJ7, 2]]), [0, MAJ7, 4]], en: 'The Dameron turnaround', he: 'הטרנאראונד של דיימרון', say: ['dameron', 'lady bird'] },
-  walkdown: { chords: [[4, M7, 4], [3, DIM, 4], [2, M7, 4], [7, D7, 4], [0, MAJ7, 4]], en: 'The diminished walk-down', he: 'הירידה הדימינישית', say: ['walk down', 'diminished'] },
+  walkdown: { chords: [[4, M7, 4], [3, DIM, 4], [2, M7, 4], [7, D7, 4], [0, MAJ7, 4]], en: 'The diminished walk-down', he: 'ירידת המוקטן', say: ['walk down', 'diminished'] },
 };
 
 /** The progression as events: the root low, the 3rd, 7th (6th) and 5th / 9th close around middle C; the Basie tag in the RH. */

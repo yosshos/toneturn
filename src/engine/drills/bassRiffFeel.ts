@@ -31,8 +31,8 @@ type RiffDef = { en: string; he: string; prog: Prog; minor?: boolean; groove: st
 let RIFF_CACHE: Record<number, RiffDef[]> | null = null;
 const riffs = (): Record<number, RiffDef[]> => (RIFF_CACHE ??= {
   1: [
-    { en: 'root and octave in 8ths', he: 'יסוד ואוקטבה בשמיניות', prog: PROGS.p1451, groove: 'rock-8', fig: () => [[0, 0.5, 0, true], [0.5, 0.5, 0], [1, 0.5, 12], [1.5, 0.5, 0], [2, 0.5, 0, true], [2.5, 0.5, 0], [3, 0.5, 12], [3.5, 0.5, 7]] },
-    { en: 'root, 5th and octave in 8ths', he: 'יסוד, קווינטה ואוקטבה בשמיניות', prog: PROGS.rock, groove: 'rock-8', fig: () => [[0, 0.5, 0, true], [0.5, 0.5, 0], [1, 0.5, 7], [1.5, 0.5, 0], [2, 0.5, 12, true], [2.5, 0.5, 7], [3, 0.5, 0], [3.5, 0.5, 7]] },
+    { en: 'root and octave in 8ths', he: 'שורש ואוקטבה בשמיניות', prog: PROGS.p1451, groove: 'rock-8', fig: () => [[0, 0.5, 0, true], [0.5, 0.5, 0], [1, 0.5, 12], [1.5, 0.5, 0], [2, 0.5, 0, true], [2.5, 0.5, 0], [3, 0.5, 12], [3.5, 0.5, 7]] },
+    { en: 'root, 5th and octave in 8ths', he: 'שורש, קווינטה ואוקטבה בשמיניות', prog: PROGS.rock, groove: 'rock-8', fig: () => [[0, 0.5, 0, true], [0.5, 0.5, 0], [1, 0.5, 7], [1.5, 0.5, 0], [2, 0.5, 12, true], [2.5, 0.5, 7], [3, 0.5, 0], [3.5, 0.5, 7]] },
   ],
   2: [
     { en: 'a minor-pentatonic riff with a push', he: 'ריף פנטטוני מינורי עם דחיפה', prog: [[0, 'm7'], [0, 'm7'], [5, 'm7'], [0, 'm7']], minor: true, groove: 'rock-8b', fig: () => [[0, 1, 0, true], [1, 0.5, 3], [1.5, 0.5, 5], [2, 1, 7], [3, 0.5, 5], [3.5, 0.5, 3, true]] },
@@ -48,7 +48,7 @@ const riffs = (): Record<number, RiffDef[]> => (RIFF_CACHE ??= {
   ],
   5: [
     { en: 'a 3+3+2 riff in 8ths', he: 'ריף 3+3+2 בשמיניות', prog: [[0, 'm7'], [0, 'm7'], [8, 'M'], [10, 'M']], minor: true, groove: 'rock-16', fig: () => [[0, 0.5, 0, true], [0.5, 0.5, 12], [1, 0.5, 10], [1.5, 0.5, 0, true], [2, 0.5, 12], [2.5, 0.5, 7], [3, 0.5, 0, true], [3.5, 0.5, 3]] },
-    { en: 'a 3+3+2 riff with a pedal and a fill', he: 'ריף 3+3+2 עם צליל עוגב ומילוי', prog: [[0, 'm7'], [5, 'm7'], [0, 'm7'], [7, '7']], minor: true, groove: 'rock-16', fig: () => [[0, 0.5, 0, true], [0.5, 0.25, 0], [0.75, 0.25, 7], [1, 0.5, 0], [1.5, 0.5, 0, true], [2, 0.25, 0], [2.25, 0.25, 10], [2.5, 0.5, 0], [3, 0.25, 3, true], [3.25, 0.25, 5], [3.5, 0.25, 6], [3.75, 0.25, 7]] },
+    { en: 'a 3+3+2 riff with a pedal and a fill', he: 'ריף 3+3+2 עם צליל עוגב ומעבר', prog: [[0, 'm7'], [5, 'm7'], [0, 'm7'], [7, '7']], minor: true, groove: 'rock-16', fig: () => [[0, 0.5, 0, true], [0.5, 0.25, 0], [0.75, 0.25, 7], [1, 0.5, 0], [1.5, 0.5, 0, true], [2, 0.25, 0], [2.25, 0.25, 10], [2.5, 0.5, 0], [3, 0.25, 3, true], [3.25, 0.25, 5], [3.5, 0.25, 6], [3.75, 0.25, 7]] },
   ],
 });
 
@@ -80,7 +80,7 @@ const JAZZ2: Prog = [[0, 'maj7'], [9, 'm7'], [2, 'm7'], [7, '7'], [4, 'm7'], [9,
 const BALLAD: Prog = [[0, 'maj7'], [9, 'm7'], [2, 'm7'], [7, '7'], [5, 'maj7'], [10, '7'], [2, 'm7'], [7, '7']];
 const feels = (): Record<string, FeelDef[]> => (FEEL_CACHE ??= {
   two: [
-    { en: 'two-feel: root and 5th in halves', he: 'תחושה של שתיים: יסוד וקווינטה בחצאים', prog: JAZZ2, groove: 'swing', fig: () => [[0, 2, 0, true], [2, 2, 7]] },
+    { en: 'two-feel: root and 5th in halves', he: 'תחושה של שתיים: שורש וקווינטה בחצאים', prog: JAZZ2, groove: 'swing', fig: () => [[0, 2, 0, true], [2, 2, 7]] },
     { en: 'two-feel with an approach on 4', he: 'תחושה של שתיים עם גישה על 4', prog: JAZZ2, groove: 'swing', fig: (n) => [[0, 2, 0, true], [2, 1, 7], [3, 1, n - 1]] },
   ],
   half: [
@@ -145,7 +145,7 @@ export function bassRiffFamily(): GuitarFamilyDef {
     genres: ['all'],
     instruments: ['bass'],
     levels: [
-      L(1, 'Grade 1 riffs: root, 5th and octave in 8ths', 'ריפים לכיתה 1: יסוד, קווינטה ואוקטבה בשמיניות', [70, 110], '8ths'),
+      L(1, 'Grade 1 riffs: root, 5th and octave in 8ths', 'ריפים לכיתה 1: שורש, קווינטה ואוקטבה בשמיניות', [70, 110], '8ths'),
       L(2, 'Grade 2 riffs: minor pentatonic with a push', 'ריפים לכיתה 2: פנטטוני מינורי עם דחיפה', [70, 110], '8ths'),
       L(3, 'Grade 3 riffs: approach notes into the chord', 'ריפים לכיתה 3: צלילי גישה אל האקורד', [70, 112], '8ths'),
       L(4, 'Grade 4 riffs: 16th-note funk', 'ריפים לכיתה 4: פאנק בשש־עשריות', [60, 96], '16ths'),

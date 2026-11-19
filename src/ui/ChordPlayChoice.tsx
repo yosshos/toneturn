@@ -11,11 +11,11 @@ import { midi } from '../speech/midi';
 
 type Lang = 'he' | 'en';
 const T = {
-  bassIn: { en: 'Play the root on my bass', he: 'לנגן את היסוד על הבס שלי' },
+  bassIn: { en: 'Play the root on my bass', he: 'לנגן את השורש על הבס שלי' },
   stop: { en: 'Stop listening', he: 'להפסיק להקשיב' },
-  bassListening: { en: 'Listening — pluck the chord’s root once and let it ring', he: 'מקשיבים — פרטו את יסוד האקורד פעם אחת ותנו לו לצלצל' },
+  bassListening: { en: 'Listening — pluck the chord’s root once and let it ring', he: 'מקשיבים — פרטו את שורש האקורד פעם אחת ותנו לו לצלצל' },
   midiChord: { en: 'Or play the chord on your MIDI keyboard', he: 'או נגנו את האקורד במקלדת ה־MIDI' },
-  midiRoot: { en: 'Or play the root on MIDI', he: 'או נגנו את היסוד ב־MIDI' },
+  midiRoot: { en: 'Or play the root on MIDI', he: 'או נגנו את השורש ב־MIDI' },
   again: { en: 'Not clear — play it again', he: 'לא ברור — נגנו שוב' },
   mic: { en: 'The microphone is not available.', he: 'המיקרופון לא זמין.' },
 };

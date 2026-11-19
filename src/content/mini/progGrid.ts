@@ -24,19 +24,19 @@ export const LESSONS: MiniLesson[] = [
     id: 'hearing-progressions',
     area: 'harmony',
     emoji: 'ii',
-    title: { en: 'Hearing progressions: roots first, then colour', he: 'לשמוע מהלכים: קודם יסודות, אחר כך צבע' },
+    title: { en: 'Hearing progressions: roots first, then colour', he: 'לשמוע מהלכים: קודם שורשים, אחר כך צבע' },
     takeaway: {
       en: 'Write every root first, from the bass, as a degree of the key. Then each chord’s colour: minor or major 3rd, which 7th, then the top note (9, 13, ♭9, alt). A bass that is not the root is a slash chord.',
-      he: 'קודם כותבים כל יסוד, מהבס, כדרגה בסולם. אחר כך הצבע של כל אקורד: טרצה קטנה או גדולה, איזו ספטימה, ואז הצליל העליון (9, ‏13, ‏♭9, ‏alt). בס שאינו היסוד הוא אקורד סלאש.',
+      he: 'קודם כותבים כל שורש, מהבס, כדרגה בסולם. אחר כך הצבע של כל אקורד: טרצה קטנה או גדולה, איזו ספטימה, ואז הצליל העליון (9, ‏13, ‏♭9, ‏alt). בס שאינו השורש הוא אקורד סלאש.',
     },
     steps: [
       {
-        say: { en: 'A progression has two layers: where the roots move, and the colour of each chord. Hear them one at a time.', he: 'למהלך יש שתי שכבות: לאן היסודות זזים, והצבע של כל אקורד. שומעים אותן אחת־אחת.' },
+        say: { en: 'A progression has two layers: where the roots move, and the colour of each chord. Hear them one at a time.', he: 'למהלך יש שתי שכבות: לאן השורשים זזים, והצבע של כל אקורד. שומעים אותן אחת־אחת.' },
         play: [prog(TURN)],
-        show: { text: { en: 'roots → colour', he: 'יסודות ← צבע' } },
+        show: { text: { en: 'roots → colour', he: 'שורשים ← צבע' } },
       },
       {
-        say: { en: 'Roots first. Follow the bass and name each note against home: one, six, two, five.', he: 'קודם היסודות. עקבו אחרי הבס ותנו שם לכל צליל ביחס לבית: אחת, שש, שתיים, חמש.' },
+        say: { en: 'Roots first. Follow the bass and name each note against home: one, six, two, five.', he: 'קודם השורשים. עקבו אחרי הבס ותנו שם לכל צליל ביחס לבית: אחת, שש, שתיים, חמש.' },
         play: [bassLine(TURN)],
         show: { text: { en: '1 – 6 – 2 – 5', he: '1 – 6 – 2 – 5' } },
       },
@@ -46,7 +46,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Cmaj7 Am7 Dm7 G7', he: 'Cmaj7 Am7 Dm7 G7' } },
       },
       {
-        say: { en: 'When the bass is not the root, the chord leans: C over E. The bass moves by step, the chord stays.', he: 'כשהבס אינו היסוד, האקורד נשען: C מעל מי. הבס זז בצעד, האקורד נשאר.' },
+        say: { en: 'When the bass is not the root, the chord leans: C over E. The bass moves by step, the chord stays.', he: 'כשהבס אינו השורש, האקורד נשען: C מעל מי. הבס זז בצעד, האקורד נשאר.' },
         play: [prog([C('1', 'maj'), C('1', 'maj', '/3'), C('4', 'maj')])],
         show: { text: { en: 'C – C/E – F', he: 'C – C/E – F' } },
       },
@@ -56,17 +56,17 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G13 · G7♭9 · G7alt', he: 'G13 · G7♭9 · G7alt' } },
       },
       {
-        say: { en: 'Your turn: the roots of every bar first, then the colours. A right root already earns half.', he: 'תורכם: קודם היסודות של כל התיבות, ואז הצבעים. יסוד נכון כבר שווה חצי.' },
+        say: { en: 'Your turn: the roots of every bar first, then the colours. A right root already earns half.', he: 'תורכם: קודם השורשים של כל התיבות, ואז הצבעים. שורש נכון כבר שווה חצי.' },
       },
     ],
     more: [
       {
-        say: { en: 'Roots move in patterns. Down a fifth is the strongest pull: two to five to one. Learn to feel it before you name it.', he: 'יסודות זזים בתבניות. ירידה בקווינטה היא המשיכה החזקה ביותר: שתיים לחמש לאחת. למדו להרגיש אותה לפני שאתם נותנים לה שם.' },
+        say: { en: 'Roots move in patterns. Down a fifth is the strongest pull: two to five to one. Learn to feel it before you name it.', he: 'שורשים זזים בתבניות. ירידה בקווינטה היא המשיכה החזקה ביותר: שתיים לחמש לאחת. למדו להרגיש אותה לפני שאתם נותנים לה שם.' },
         play: [prog([C('2', 'm7'), C('5', '7'), C('1', 'maj7')], 'shell', 96)],
         show: { text: { en: 'Dm7 – G7 – Cmaj7', he: 'Dm7 – G7 – Cmaj7' } },
       },
       {
-        say: { en: 'A bass that falls by half steps into home is a tritone substitute: D flat seven instead of G seven. The 3rd and 7th stay, the root moves a tritone.', he: 'בס שיורד בחצאי טונים אל הבית הוא תחליף טריטון: D♭7 במקום G7. הטרצה והספטימה נשארות, היסוד זז בטריטון.' },
+        say: { en: 'A bass that falls by half steps into home is a tritone substitute: D flat seven instead of G seven. The 3rd and 7th stay, the root moves a tritone.', he: 'בס שיורד בחצאי טונים אל הבית הוא תחליף טריטון: D♭7 במקום G7. הטרצה והספטימה נשארות, השורש זז בטריטון.' },
         play: [prog([C('2', 'm7'), C('b2', '7'), C('1', 'maj7')], 'shell', 96)],
         show: { text: { en: 'Dm7 – D♭7 – Cmaj7', he: 'Dm7 – D♭7 – Cmaj7' } },
       },
@@ -81,7 +81,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Bm7♭5 – E7♭9 – Am7', he: 'Bm7♭5 – E7♭9 – Am7' } },
       },
       {
-        say: { en: 'A common slip: hearing a slash chord as a new root. If the bass moves but the colour above does not change, it is an inversion.', he: 'טעות נפוצה: לשמוע אקורד סלאש כיסוד חדש. אם הבס זז אבל הצבע מעליו לא משתנה, זה היפוך.' },
+        say: { en: 'A common slip: hearing a slash chord as a new root. If the bass moves but the colour above does not change, it is an inversion.', he: 'טעות נפוצה: לשמוע אקורד סלאש כשורש חדש. אם הבס זז אבל הצבע מעליו לא משתנה, זה היפוך.' },
       },
       {
         say: { en: 'Recap: bass first, then the 3rd and 7th, then the top. Long forms repeat: in an AABA, write the A once and listen for the bridge.', he: 'לסיכום: קודם הבס, אחר כך הטרצה והספטימה, ואז הצליל העליון. צורות ארוכות חוזרות: ב־AABA כותבים את ה־A פעם אחת ומקשיבים לגשר.' },

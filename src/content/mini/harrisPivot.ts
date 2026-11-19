@@ -23,16 +23,16 @@ export const PIVOT_LESSON: MiniLesson = {
   title: { en: 'Barry Harris: the pivot', he: 'בארי האריס: הפיבוט' },
   takeaway: {
     en: 'A pivot is an arpeggio with some notes moved an octave: same order, new contour. The classic: the root on top, then drop to the 3rd below and climb 3-5-7. Cmaj7 = C, then E G B. The drop is a minor 6th over a major 3rd, a major 6th over a minor 3rd.',
-    he: 'פיבוט הוא ארפג׳ שחלק מהצלילים שלו זזו אוקטבה: אותו סדר, קו מתאר חדש. הקלאסי: היסוד למעלה, אז ירידה לטרצה שמתחתיו ועלייה 3-5-7. ‏Cmaj7 = דו, ואז מי סול סי. הירידה היא סקסטה קטנה מעל טרצה גדולה, סקסטה גדולה מעל טרצה קטנה.',
+    he: 'פיבוט הוא ארפג׳ שחלק מהצלילים שלו זזו אוקטבה: אותו סדר, קו מתאר חדש. הקלאסי: השורש למעלה, אז ירידה לטרצה שמתחתיו ועלייה 3-5-7. ‏Cmaj7 = דו, ואז מי סול סי. הירידה היא סקסטה קטנה מעל טרצה גדולה, סקסטה גדולה מעל טרצה קטנה.',
   },
   steps: [
     {
-      say: { en: 'An arpeggio usually climbs straight up from the root: C, E, G, B.', he: 'ארפג׳ בדרך כלל עולה ישר מהיסוד: דו, מי, סול, סי.' },
+      say: { en: 'An arpeggio usually climbs straight up from the root: C, E, G, B.', he: 'ארפג׳ בדרך כלל עולה ישר מהשורש: דו, מי, סול, סי.' },
       play: [notes(straightArp(C, 'maj7'))],
       show: { notes: straightArp(C, 'maj7'), key: 'C', text: { en: '1 3 5 7', he: '1 3 5 7' } },
     },
     {
-      say: { en: 'A pivot moves some of its notes an octave. The order stays, the shape changes. The classic one: the root on top, then drop to the 3rd and climb.', he: 'פיבוט מזיז חלק מהצלילים אוקטבה. הסדר נשאר, הצורה משתנה. הקלאסי: היסוד למעלה, ואז ירידה לטרצה ועלייה.' },
+      say: { en: 'A pivot moves some of its notes an octave. The order stays, the shape changes. The classic one: the root on top, then drop to the 3rd and climb.', he: 'פיבוט מזיז חלק מהצלילים אוקטבה. הסדר נשאר, הצורה משתנה. הקלאסי: השורש למעלה, ואז ירידה לטרצה ועלייה.' },
       play: [notes(MAJ7)],
       show: { notes: MAJ7, key: 'C', text: { en: '1 ↓ 3 5 7', he: '1 ↓ 3 5 7' } },
     },
@@ -42,12 +42,12 @@ export const PIVOT_LESSON: MiniLesson = {
       show: { text: { en: 'C → E: m6 · C → E♭: M6', he: 'C → E: m6 · C → E♭: M6' } },
     },
     {
-      say: { en: 'It works on any seventh chord: maj7, m7, 7, m7♭5.', he: 'זה עובד על כל אקורד ספטים: maj7, ‏m7, ‏7, ‏m7♭5.' },
+      say: { en: 'It works on any seventh chord: maj7, m7, 7, m7♭5.', he: 'זה עובד על כל ספטאקורד: maj7, ‏m7, ‏7, ‏m7♭5.' },
       play: [notes(pivotArp(C, 'maj7')), rest(), notes(pivotArp(C, 'm7')), rest(), notes(pivotArp(C, '7')), rest(), notes(pivotArp(C, 'm7b5'))],
       show: { text: { en: 'Cmaj7 · Cm7 · C7 · Cm7♭5', he: 'Cmaj7 · Cm7 · C7 · Cm7♭5' } },
     },
     {
-      say: { en: 'And on the 6th chord and the diminished, Barry’s two home chords.', he: 'וגם על אקורד ה־6 ועל הדימיניש, שני אקורדי הבית של בארי.' },
+      say: { en: 'And on the 6th chord and the diminished, Barry’s two home chords.', he: 'וגם על אקורד ה־6 ועל המוקטן, שני אקורדי הבית של בארי.' },
       play: [notes(pivotArp(C, '6')), rest(), notes(pivotArp(C, 'dim7'))],
       show: { text: { en: 'C6 · C°7', he: 'C6 · C°7' } },
     },
@@ -64,7 +64,7 @@ export const PIVOT_LESSON: MiniLesson = {
       show: { text: { en: '3 ↓ 5 7 1 · 5 ↓ 7 1 3 · 7 ↓ 1 3 5', he: '3 ↓ 5 7 1 · 5 ↓ 7 1 3 · 7 ↓ 1 3 5' } },
     },
     {
-      say: { en: 'The mirror: the root at the bottom, leap up to the 7th, and fall: C, then B, G, E.', he: 'במראה: היסוד למטה, קפיצה למעלה לספטימה, וירידה: דו, ואז סי, סול, מי.' },
+      say: { en: 'The mirror: the root at the bottom, leap up to the 7th, and fall: C, then B, G, E.', he: 'במראה: השורש למטה, קפיצה למעלה לספטימה, וירידה: דו, ואז סי, סול, מי.' },
       play: [notes(mirrorArp(C, 'maj7'))],
       show: { notes: mirrorArp(C, 'maj7'), key: 'C', text: { en: '1 ↑ 7 5 3', he: '1 ↑ 7 5 3' } },
     },
@@ -84,7 +84,7 @@ export const PIVOT_LESSON: MiniLesson = {
       show: { notes: PIVOT_ENCL, key: 'C', text: { en: 'pivot · enclosure · pivot · enclosure', he: 'פיבוט · כיתור · פיבוט · כיתור' } },
     },
     {
-      say: { en: 'A common slip is to drop to the 5th instead of the 3rd. From the root on top, the next chord tone down is always the 3rd. Sing the drop before you play it.', he: 'טעות נפוצה היא לרדת לקווינטה במקום לטרצה. מהיסוד למעלה, צליל האקורד הבא למטה הוא תמיד הטרצה. שירו את הירידה לפני שאתם מנגנים אותה.' },
+      say: { en: 'A common slip is to drop to the 5th instead of the 3rd. From the root on top, the next chord tone down is always the 3rd. Sing the drop before you play it.', he: 'טעות נפוצה היא לרדת לקווינטה במקום לטרצה. מהשורש למעלה, צליל האקורד הבא למטה הוא תמיד הטרצה. שירו את הירידה לפני שאתם מנגנים אותה.' },
     },
     {
       say: { en: 'Recap: a pivot moves notes of an arpeggio an octave. The next lesson puts one inside a falling scale line.', he: 'לסיכום: פיבוט מזיז צלילים של ארפג׳ אוקטבה. השיעור הבא שם פיבוט בתוך קו סולם יורד.' },

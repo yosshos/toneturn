@@ -200,10 +200,10 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       const o = id === 'blues' || id === 'rhythm' || id === 'indiana' ? OUTLINES[id] : { name: TUNE_CHARTS[id].name, chords: outlineFromChart(TUNE_CHARTS[id].text, TUNE_CHARTS[id].key) };
       const { line } = scaleOutline(k, o.chords, lo + 2);
       const dimBar = o.chords.reduce((acc, c, i) => (acc >= 0 ? acc : c.dimBar ? o.chords.slice(0, i).reduce((a, x) => a + x.beats, 0) / 4 + 1 : -1), -1);
-      const dimT = dimBar > 0 ? t(` · bar ${Math.floor(dimBar)}: the related diminished`, ` · תיבה ${Math.floor(dimBar)}: הדימיניש הקשור`) : t('', '');
+      const dimT = dimBar > 0 ? t(` · bar ${Math.floor(dimBar)}: the related diminished`, ` · תיבה ${Math.floor(dimBar)}: המוקטן הקשור`) : t('', '');
       return {
         line: fit(line, lo, hi),
-        title: t(`Scale outline of ${o.name.en} in ${kn}: one scale a bar, up from the root${dimT.en}`, `מתאר הסולמות של ${o.name.he} ב־${kn}: סולם אחד בכל תיבה, מהיסוד למעלה${dimT.he}`),
+        title: t(`Scale outline of ${o.name.en} in ${kn}: one scale a bar, up from the root${dimT.en}`, `מתאר הסולמות של ${o.name.he} ב־${kn}: סולם אחד בכל תיבה, מהשורש למעלה${dimT.he}`),
         chart: outlineChart(k, o.chords),
         sigOf: id === 'blues' ? 5 : id === 'tunisia' ? 3 : 0,
         ctGoal: true,
@@ -390,7 +390,7 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       const { line, roots } = threeToFlatNine(tonic, op === 1 ? 'down' : 'up');
       return {
         line: fit(line, lo, hi),
-        title: t(`3 to ♭9 over the family: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — the same diminished each time`, `3 עד ♭9 על המשפחה: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — אותו דימיניש בכל פעם`),
+        title: t(`3 to ♭9 over the family: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — the same diminished each time`, `3 עד ♭9 על המשפחה: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — אותו מוקטן בכל פעם`),
         chart: [`${nm(roots[0])}7 ${nm(roots[1])}7`, `${nm(roots[2])}7 ${nm(roots[3])}7`, `${kn}6`],
         sigOf: 0,
         ctGoal: true,
@@ -808,7 +808,7 @@ function bassTies(s: DrillSpec, tu: Tuning, op: number): Drill {
     if (bar < cs.length - 1) line.push({ b: b0 + 3.5, d: 1.5, p: nextRoot, ct: true });
     else line.push({ b: b0 + 3.5, d: 0.5, p: R(key), ct: true });
   });
-  const name = op === 1 ? t('Walking on the upbeats: the "and" of 2 tied, the root pushed onto the "and" of 4', 'ווקינג על הקצב החלש: ה"וְ" של 2 קשור, היסוד נדחף ל"וְ" של 4') : t('Walking with ties: each root pushed onto the "and" of 4 and tied over the bar', 'ווקינג עם קשתות: כל יסוד נדחף ל"וְ" של 4 וקשור מעבר לתיבה');
+  const name = op === 1 ? t('Walking on the upbeats: the "and" of 2 tied, the root pushed onto the "and" of 4', 'ווקינג על הקצב החלש: ה"וְ" של 2 קשור, השורש נדחף ל"וְ" של 4') : t('Walking with ties: each root pushed onto the "and" of 4 and tied over the bar', 'ווקינג עם קשתות: כל שורש נדחף ל"וְ" של 4 וקשור מעבר לתיבה');
   return drillOf(s, tu, alt(line), { ...name, chart: chartLc(cs), show: 'chart', evenness: false, drums: { groove: 'swing' } });
 }
 

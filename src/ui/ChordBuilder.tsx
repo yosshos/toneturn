@@ -114,7 +114,7 @@ function ChordPane({ lang, settings, course }: { lang: Lang; settings: Settings;
       </div>
       {mode === 'pick' ? (
         <>
-          <div className="cf-pick" role="radiogroup" aria-label={lang === 'he' ? 'יסוד' : 'Root'} dir="ltr">
+          <div className="cf-pick" role="radiogroup" aria-label={lang === 'he' ? 'שורש' : 'Root'} dir="ltr">
             {NAMES.map((n, i) => (
               <button key={n} type="button" role="radio" aria-checked={root === i} className={`chip ${root === i ? 'on' : ''}`} onClick={() => setRoot(i)}>
                 {n}

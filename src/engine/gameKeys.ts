@@ -96,7 +96,7 @@ const TITLES: Record<KeyGame, { en: string; he: string }> = {
   whichbrother: { en: 'Which Brother?', he: 'איזה אח?' },
   compcaller: { en: 'Comp Caller', he: 'קורא הליווי' },
   elevator: { en: 'Elevator', he: 'המעלית' },
-  guidetone: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המובילים' },
+  guidetone: { en: 'Guide-Tone Runner', he: 'רץ הצלילים המנחים' },
   call5432: { en: '5-4-3-2 Call', he: 'קריאת 5-4-3-2' },
   enclosure: { en: 'Enclosure Target', he: 'מטרת הכיתור' },
   staffrunner: { en: 'Staff Runner', he: 'רץ החמשה' },

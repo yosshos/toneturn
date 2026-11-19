@@ -48,7 +48,7 @@ TOPIC_GEN['key-sixdim'] = {
     const dim = [key + 11, key + 2, key + 5, key + 8];
     if (level === 1) {
       const r = placeInRange(key, 55, 66);
-      return placeQ({ ...base, ask: { en: `Build ${k.en}6 from its root: root, 3rd, 5th, 6th.`, he: `בנו ${k.en}6 מהיסוד: יסוד, טרצה, קווינטה, סקסטה.` }, target: stackUp(r, six), given: { midis: [r], key: null } });
+      return placeQ({ ...base, ask: { en: `Build ${k.en}6 from its root: root, 3rd, 5th, 6th.`, he: `בנו ${k.en}6 מהשורש: שורש, טרצה, קווינטה, סקסטה.` }, target: stackUp(r, six), given: { midis: [r], key: null } });
     }
     if (level === 2) {
       const b = placeInRange(key + 11, 55, 66);
@@ -72,14 +72,14 @@ TOPIC_GEN['key-sixdim'] = {
       const j = Math.floor(rnd() * 4);
       const moves = [-1, 1, 1, -1];
       const names: Bi[] = [
-        { en: 'root', he: 'היסוד' },
+        { en: 'root', he: 'השורש' },
         { en: '3rd', he: 'הטרצה' },
         { en: '5th', he: 'הקווינטה' },
         { en: '6th', he: 'הסקסטה' },
       ];
       const moved = v.map((p, i) => (i === j ? p + moves[j] : p)).sort((a, b) => a - b);
       const to = nm(v[j] + moves[j]);
-      return placeQ({ ...base, ask: { en: `${k.en}6 from its root, the ${names[j].en} borrowed from the diminished (${pcName(v[j])} → ${to.en}).`, he: `${k.en}6 מהיסוד, ${names[j].he} מושאלת מהמוקטן (${pcName(v[j])} → ${to.en}).` }, target: moved, given: { midis: [r], key: null } });
+      return placeQ({ ...base, ask: { en: `${k.en}6 from its root, the ${names[j].en} borrowed from the diminished (${pcName(v[j])} → ${to.en}).`, he: `${k.en}6 מהשורש, ${names[j].he} מושאלת מהמוקטן (${pcName(v[j])} → ${to.en}).` }, target: moved, given: { midis: [r], key: null } });
     }
     // 5: raise one note of the diminished a whole step — a 7♭9 rooted on it.
     const b = placeInRange(key + 11, 55, 64);
@@ -104,11 +104,11 @@ TOPIC_GEN['key-jazz'] = {
   skill: 'instrument',
   forPlays: ['keys'],
   levels: [
-    { en: 'Rootless voicings, A form', he: 'קולות בלי יסוד, צורה A' },
-    { en: 'Rootless voicings, B form', he: 'קולות בלי יסוד, צורה B' },
-    { en: 'An upper-structure triad over a shell', he: 'משולש מבנה עליון מעל קונכייה' },
+    { en: 'Rootless voicings, A form', he: 'קולות בלי שורש, צורה A' },
+    { en: 'Rootless voicings, B form', he: 'קולות בלי שורש, צורה B' },
+    { en: 'An upper-structure triad over a shell', he: 'משולש מבנה עליון מעל שלד' },
     { en: 'The So What chord', he: 'אקורד So What' },
-    { en: 'The altered dominant, rootless', he: 'הדומיננט האלטרד, בלי יסוד' },
+    { en: 'The altered dominant, rootless', he: 'הדומיננט האלטרד, בלי שורש' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -122,7 +122,7 @@ TOPIC_GEN['key-jazz'] = {
       const bottom = placeInRange(root + iv[0], 48, 59);
       const tgt = iv.map((x) => bottom + x - iv[0]);
       const form = level === 1 ? 'A' : 'B';
-      return placeQ({ ...base, ask: { en: `${pcName(root)}${c.sym}, rootless ${form} (ii–V–I in ${pcName(key)}), up from the note given.`, he: `${pcName(root)}${c.sym}, בלי יסוד ${form} (ii–V–I ב-${pcName(key)}), למעלה מהצליל הנתון.` }, target: tgt, given: { midis: [bottom], key: null, clef: 'bass' } });
+      return placeQ({ ...base, ask: { en: `${pcName(root)}${c.sym}, rootless ${form} (ii–V–I in ${pcName(key)}), up from the note given.`, he: `${pcName(root)}${c.sym}, בלי שורש ${form} (ii–V–I ב-${pcName(key)}), למעלה מהצליל הנתון.` }, target: tgt, given: { midis: [bottom], key: null, clef: 'bass' } });
     }
     if (level === 3) {
       // LH 3 and 7 of a dominant, RH a major triad: II (9 ♯11 13), ♭VI (♭13 R ♯9) or ♭V (♯11 7 ♭9).
@@ -144,7 +144,7 @@ TOPIC_GEN['key-jazz'] = {
     }
     // 5: X7alt rootless — 3, ♭7, ♯9, ♭13 from the 3rd.
     const third = placeInRange(key + 4, 50, 61);
-    return placeQ({ ...base, ask: { en: `${pcName(key)}7alt without the root: 3rd, ♭7, ♯9, ♭13 up from the note given.`, he: `${pcName(key)}7alt בלי יסוד: טרצה, ♭7, ♯9, ♭13 למעלה מהצליל הנתון.` }, target: [third, third + 6, third + 11, third + 16], given: { midis: [third], key: null } });
+    return placeQ({ ...base, ask: { en: `${pcName(key)}7alt without the root: 3rd, ♭7, ♯9, ♭13 up from the note given.`, he: `${pcName(key)}7alt בלי שורש: טרצה, ♭7, ♯9, ♭13 למעלה מהצליל הנתון.` }, target: [third, third + 6, third + 11, third + 16], given: { midis: [third], key: null } });
   },
 };
 TOPIC_TAGS['key-jazz'] = (l) => tg(['instrument', 'keyboard', 0.5], ['chords', l === 5 || l === 3 ? 'extension' : 'voicing', 0.5]);

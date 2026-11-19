@@ -45,7 +45,7 @@ export const LESSONS: MiniLesson[] = [
     },
     steps: [
       { say: { en: 'Solo piano has three jobs: bass, chords and melody. Each has its own register.', he: 'לפסנתר סולו שלוש עבודות: בס, אקורדים ומנגינה. לכל אחת רגיסטר משלה.' } },
-      { say: { en: 'The bass sits as low as you can: a root, or a root and a 5th.', he: 'הבס יושב נמוך ככל שאפשר: יסוד, או יסוד וקווינטה.' }, play: [chord([36], 0.9), rest(), chord([36, 43], 1)] },
+      { say: { en: 'The bass sits as low as you can: a root, or a root and a 5th.', he: 'הבס יושב נמוך ככל שאפשר: שורש, או שורש וקווינטה.' }, play: [chord([36], 0.9), rest(), chord([36, 43], 1)] },
       {
         say: { en: 'The chord’s 3rd and 7th live between C3 and G4. Lower is muddy; higher is pretty but doesn’t say the chord.', he: 'הטרצה והספטימה של האקורד גרות בין C3 ל־G4. נמוך יותר זה עכור; גבוה יותר זה יפה אבל לא אומר את האקורד.' },
         play: [chord([28, 35], 1), rest(), chord([52, 59], 1), rest(), chord([76, 83], 1)],
@@ -53,7 +53,7 @@ export const LESSONS: MiniLesson[] = [
       },
       { say: { en: 'The melody sings in the two octaves above middle C, like a voice or a horn.', he: 'המנגינה שרה בשתי האוקטבות שמעל דו האמצעי, כמו קול או כלי נשיפה.' }, play: [notes([64, 67, 72, 71, 69, 67], 0.3)] },
       {
-        say: { en: 'The left hand has three positions: bass notes, bass shells, rootless voicings. Here is one chord in six places.', he: 'ליד שמאל שלושה מצבים: צלילי בס, שלדי בס, וויסינג בלי יסוד. הנה אקורד אחד בשישה מקומות.' },
+        say: { en: 'The left hand has three positions: bass notes, bass shells, rootless voicings. Here is one chord in six places.', he: 'ליד שמאל שלושה מצבים: צלילי בס, שלדי בס, וויסינג בלי שורש. הנה אקורד אחד בשישה מקומות.' },
         play: [chord([36], 0.7), chord(bpShell(CMAJ, '3'), 0.7), chord(shellA(CMAJ), 0.7), chord(shellB(CMAJ), 0.7), chord(rootless(CMAJ, 'A'), 0.7), chord(rootless(CMAJ, 'B'), 0.9)],
       },
       { say: { en: 'Check yourself by ear: if a chord sounds thick and grey, the 3rd and 7th sit too low; move them up into the middle.', he: 'בדקו את עצמכם בשמיעה: אם אקורד נשמע עבה ואפור, הטרצה והספטימה יושבות נמוך מדי; העלו אותן לאמצע.' }, play: [chord([36, 40, 46], 0.9), rest(), chord([36, 52, 58], 1)] },
@@ -66,7 +66,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'A common mistake is a left hand that drifts up toward the melody until the hands crash. Keep the left hand below middle C and let the right hand rise.', he: 'טעות נפוצה היא יד שמאל שמטפסת לכיוון המנגינה עד שהידיים מתנגשות. השאירו את יד שמאל מתחת לדו האמצעי ותנו ליד ימין לעלות.' }, play: [chord([48, 52, 59], 0.8), notes([67, 72, 76], 0.3)] },
       { say: { en: 'Recap: the bass low, the 3rd and 7th between C3 and G4, the melody above middle C, effects at the top.', he: 'סיכום: הבס נמוך, הטרצה והספטימה בין C3 ל־G4, המנגינה מעל דו האמצעי, אפקטים למעלה.' } },
       { say: { en: 'Where it lives: listen to any solo pianist play a ballad — the bass rings low, the chords sit warm in the middle, and the melody sings clearly above them, never buried.', he: 'איפה זה חי: הקשיבו לכל פסנתרן סולו שמנגן בלדה — הבס מצלצל נמוך, האקורדים יושבים חמים באמצע, והמנגינה שרה בבירור מעליהם, אף פעם לא קבורה.' } },
-      { say: { en: 'Practise it with one chord: play it as a bass note, a shell, a bass shell and a rootless voicing, and say aloud which register each one lives in.', he: 'מתאמנים עם אקורד אחד: מנגנים אותו כצליל בס, כשלד, כשלד בס וכוויסינג בלי יסוד, ואומרים בקול באיזה רגיסטר כל אחד גר.' } },
+      { say: { en: 'Practise it with one chord: play it as a bass note, a shell, a bass shell and a rootless voicing, and say aloud which register each one lives in.', he: 'מתאמנים עם אקורד אחד: מנגנים אותו כצליל בס, כשלד, כשלד בס וכוויסינג בלי שורש, ואומרים בקול באיזה רגיסטר כל אחד גר.' } },
     ],
   },
   {
@@ -104,14 +104,14 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Bass shells: Bud Powell, Type A, Type B', he: 'שלדי בס: באד פאוול, A ו־B' },
     takeaway: {
       en: 'Root + one essential tone (3rd, 10th or 7th); Type A 1-3-7, Type B 1-7-10; the 9th under the thumb; the 5th or the tritone for the root.',
-      he: 'יסוד + צליל מהותי אחד (טרצה, דצימה או ספטימה); A זה 1-3-7, B זה 1-7-10; הנונה מתחת לאגודל; הקווינטה או הטריטון במקום היסוד.',
+      he: 'שורש + צליל מהותי אחד (טרצה, דצימה או ספטימה); A זה 1-3-7, B זה 1-7-10; הנונה מתחת לאגודל; הקווינטה או הטריטון במקום השורש.',
     },
     steps: [
-      { say: { en: 'Two-note bass shells — Bud Powell voicings: the root and one essential tone.', he: 'שלדי בס בשני צלילים — הוויסינג של באד פאוול: היסוד וצליל מהותי אחד.' }, play: [chord(bpShell(CMAJ, '3'), 0.8), chord(bpShell(CMAJ, '10'), 0.8), chord(bpShell(CMAJ, '7'), 0.9)], show: { text: { en: '1+3 · 1+10 · 1+7', he: '1+3 · 1+10 · 1+7' } } },
+      { say: { en: 'Two-note bass shells — Bud Powell voicings: the root and one essential tone.', he: 'שלדי בס בשני צלילים — הוויסינג של באד פאוול: השורש וצליל מהותי אחד.' }, play: [chord(bpShell(CMAJ, '3'), 0.8), chord(bpShell(CMAJ, '10'), 0.8), chord(bpShell(CMAJ, '7'), 0.9)], show: { text: { en: '1+3 · 1+10 · 1+7', he: '1+3 · 1+10 · 1+7' } } },
       { say: { en: 'Alternate 3rd and 7th through a ii–V–I and the voices barely move.', he: 'מחליפים טרצה וספטימה לאורך ii–V–I והקולות כמעט לא זזים.' }, play: bpAlternate(IIVI.slice(0, 3), '3').map((v) => chord(v, 0.9)) },
       { say: { en: 'Three notes: Type A is 1-3-7, a fairly high bass for any hand. Type B is 1-7-10, for a bigger hand.', he: 'שלושה צלילים: A הוא 1-3-7, בס די גבוה שמתאים לכל יד. B הוא 1-7-10, ליד גדולה יותר.' }, play: [chord(shellA({ root: 0, q: '7' }), 0.9), rest(), chord(shellB({ root: 0, q: '7' }), 0.9)], show: { text: { en: 'C7: C-E-B♭ · C-B♭-E', he: 'C7: C-E-B♭ · C-B♭-E' } } },
       { say: { en: 'Can’t reach a 10th? Add the 9th and take 9 and 10 with the thumb, when both keys share a colour.', he: 'לא מגיעים לדצימה? מוסיפים את הנונה ולוקחים 9 ו־10 באגודל, כששני הקלידים באותו צבע.' }, play: [chord(bpShell(CMAJ, '10', true), 1)] },
-      { say: { en: 'The 5th can replace the root; on a dominant the tritone can — a built-in tritone sub.', he: 'הקווינטה יכולה להחליף את היסוד; בדומיננט גם הטריטון — תחליף טריטון מובנה.' }, play: [chord(withTritoneBass({ root: 7, q: '7' }), 1.1)] },
+      { say: { en: 'The 5th can replace the root; on a dominant the tritone can — a built-in tritone sub.', he: 'הקווינטה יכולה להחליף את השורש; בדומיננט גם הטריטון — תחליף טריטון מובנה.' }, play: [chord(withTritoneBass({ root: 7, q: '7' }), 1.1)] },
       { say: { en: 'Then shell stride: the bass on 1 and 3, the shell on 2 and 4.', he: 'ואז סטרייד שלדים: הבס על 1 ו־3, השלד על 2 ו־4.' }, play: [SHELL_STRIDE] },
       { say: { en: 'Every take is measured in all twelve keys: free time first, then in time on the tempo ladder. Your turn — slowly, and listen to each register.', he: 'כל ניסיון נמדד בכל שנים־עשר הסולמות: קודם בלי קצב, ואז בזמן על סולם הטמפו. תורכם — לאט, ולהקשיב לכל רגיסטר.' } },
     ],
@@ -120,7 +120,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Or reverse the roles: shells on the strong beats, the bass between. Bill Evans played the essentials first and the bass after.', he: 'או הופכים תפקידים: שלדים על הפעמות החזקות, הבס ביניהן. ביל אוונס ניגן קודם את הצלילים המהותיים ואחר כך את הבס.' } },
       { say: { en: 'Hear the difference: the two-note shell is light and open; Type A adds weight in the middle; Type B is wide and full.', he: 'שמעו את ההבדל: השלד בשני צלילים קל ופתוח; A מוסיף משקל באמצע; B רחב ומלא.' }, play: [chord(bpShell(CMAJ, '3'), 0.8), chord(shellA(CMAJ), 0.8), chord(shellB(CMAJ), 1)] },
       { say: { en: 'A common mistake is a shell that jumps an octave on every chord. Choose the 3rd or the 7th so the top note moves by step.', he: 'טעות נפוצה היא שלד שקופץ אוקטבה בכל אקורד. בוחרים טרצה או ספטימה כך שהצליל העליון זז בצעד.' }, play: bpAlternate(IIVI.slice(0, 3), '7').map((v) => chord(v, 0.8)) },
-      { say: { en: 'Recap: root plus 3rd, 10th or 7th; Type A and Type B; the 9th under the thumb; the 5th or the tritone for the root.', he: 'סיכום: יסוד ועוד טרצה, דצימה או ספטימה; A ו־B; הנונה מתחת לאגודל; הקווינטה או הטריטון במקום היסוד.' } },
+      { say: { en: 'Recap: root plus 3rd, 10th or 7th; Type A and Type B; the 9th under the thumb; the 5th or the tritone for the root.', he: 'סיכום: שורש ועוד טרצה, דצימה או ספטימה; A ו־B; הנונה מתחת לאגודל; הקווינטה או הטריטון במקום השורש.' } },
       { say: { en: 'Where it lives: Bud Powell comped with two-note shells under fast bebop lines; Kenny Barron and Monk play shell stride. Start slowly, keep the bass on the beat, and the shells will settle under any melody.', he: 'איפה זה חי: באד פאוול ליווה בשלדים של שני צלילים מתחת לקווי ביבופ מהירים; קני בארון ומונק מנגנים סטרייד שלדים. מתחילים לאט, שומרים את הבס על הפעמה, והשלדים יתיישבו מתחת לכל מנגינה.' } },
     ],
   },

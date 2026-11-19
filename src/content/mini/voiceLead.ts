@@ -52,7 +52,7 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([53, 60, 65, 69]), ch([55, 59, 62, 67])],
       },
       {
-        say: { en: 'Add the root in the left hand. The bass may leap, it is the floor. The right hand keeps moving by step above it.', he: 'מוסיפים את היסוד ביד שמאל. הבס יכול לקפוץ, הוא הרצפה. יד ימין ממשיכה לזוז בצעדים מעליו.' },
+        say: { en: 'Add the root in the left hand. The bass may leap, it is the floor. The right hand keeps moving by step above it.', he: 'מוסיפים את השורש ביד שמאל. הבס יכול לקפוץ, הוא הרצפה. יד ימין ממשיכה לזוז בצעדים מעליו.' },
         play: [ch([48, 64, 67, 72], 0.9), ch([53, 65, 69, 72], 0.9), ch([55, 62, 67, 71], 0.9), ch([48, 64, 67, 72])],
       },
       {
@@ -91,11 +91,11 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([50, 65, 72], 0.8), ch([43, 65, 71], 0.8), ch([48, 64, 71])],
       },
       {
-        say: { en: 'That is the rule: when the root falls a fifth, the 7th steps down to the next 3rd. Two lines that hardly move, and the whole progression is there.', he: 'זה הכלל: כשהיסוד יורד בקווינטה, הספטימה יורדת בצעד לטרצה הבאה. שני קווים שכמעט לא זזים, וכל המהלך נמצא שם.' },
+        say: { en: 'That is the rule: when the root falls a fifth, the 7th steps down to the next 3rd. Two lines that hardly move, and the whole progression is there.', he: 'זה הכלל: כשהשורש יורד בקווינטה, הספטימה יורדת בצעד לטרצה הבאה. שני קווים שכמעט לא זזים, וכל המהלך נמצא שם.' },
         show: { text: { en: '7 → 3', he: '7 → 3' } },
       },
       {
-        say: { en: 'Your turn: the root in the left hand, the 3rd and 7th in the right. Start from the written pair and move one note at a time.', he: 'תורכם: היסוד ביד שמאל, הטרצה והספטימה ביד ימין. מתחילים מהזוג הכתוב ומזיזים צליל אחד בכל פעם.' },
+        say: { en: 'Your turn: the root in the left hand, the 3rd and 7th in the right. Start from the written pair and move one note at a time.', he: 'תורכם: השורש ביד שמאל, הטרצה והספטימה ביד ימין. מתחילים מהזוג הכתוב ומזיזים צליל אחד בכל פעם.' },
         show: { text: { en: 'Dm7 · G7 · Cmaj7', he: 'Dm7 · G7 · Cmaj7' } },
       },
     ],
@@ -117,11 +117,11 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([50, 65, 72], 0.8), ch([43, 65, 71], 0.8), ch([48, 63, 69])],
       },
       {
-        say: { en: 'Why the 7th falls: it is the restless note of the chord. Over the next root it becomes the 3rd, the note that names the new chord. The tension leaves by the shortest road.', he: 'למה הספטימה יורדת: היא הצליל חסר המנוחה של האקורד. מעל היסוד הבא היא הופכת לטרצה, הצליל שנותן לאקורד החדש את שמו. המתח יוצא בדרך הקצרה ביותר.' },
+        say: { en: 'Why the 7th falls: it is the restless note of the chord. Over the next root it becomes the 3rd, the note that names the new chord. The tension leaves by the shortest road.', he: 'למה הספטימה יורדת: היא הצליל חסר המנוחה של האקורד. מעל השורש הבא היא הופכת לטרצה, הצליל שנותן לאקורד החדש את שמו. המתח יוצא בדרך הקצרה ביותר.' },
         play: [ch([43, 65, 71], 1), ch([48, 64, 71])],
       },
       {
-        say: { en: 'In a longer turnaround, I, vi, ii, V, the same two lines keep going. Every chord adds one small step, and the bass carries the roots underneath.', he: 'במהלך ארוך יותר, I, vi, ii, V, אותם שני קווים ממשיכים. כל אקורד מוסיף צעד קטן אחד, והבס נושא את היסודות מתחת.' },
+        say: { en: 'In a longer turnaround, I, vi, ii, V, the same two lines keep going. Every chord adds one small step, and the bass carries the roots underneath.', he: 'במהלך ארוך יותר, I, vi, ii, V, אותם שני קווים ממשיכים. כל אקורד מוסיף צעד קטן אחד, והבס נושא את השורשים מתחת.' },
         play: [ch([48, 64, 71], 0.7), ch([45, 64, 67], 0.7), ch([50, 65, 72], 0.7), ch([43, 65, 71], 0.7), ch([48, 64, 71])],
       },
       {
@@ -162,7 +162,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Around the cycle every root falls a fifth, so every 7th falls to the next 3rd. The voicings slowly sink: that is fine, start a little higher.', he: 'במעגל כל יסוד יורד בקווינטה, אז כל ספטימה יורדת לטרצה הבאה. הקולות שוקעים לאט: זה בסדר, מתחילים קצת גבוה יותר.' },
+        say: { en: 'Around the cycle every root falls a fifth, so every 7th falls to the next 3rd. The voicings slowly sink: that is fine, start a little higher.', he: 'במעגל כל שורש יורד בקווינטה, אז כל ספטימה יורדת לטרצה הבאה. הקולות שוקעים לאט: זה בסדר, מתחילים קצת גבוה יותר.' },
         play: [ch([60, 64, 67, 71], 0.7), ch([60, 64, 65, 69], 0.7), ch([59, 62, 65, 69], 0.7), ch([59, 62, 64, 67], 0.7), ch([57, 60, 64, 67])],
       },
       {
@@ -242,7 +242,7 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([62, 65, 69, 72], 0.7), ch([57, 62, 65, 72], 0.9)],
       },
       {
-        say: { en: 'Drop 3 on the guitar puts the root on string six or five with a gap above it. It sounds like a small big band behind a singer.', he: 'דרופ 3 בגיטרה שם את היסוד על מיתר שש או חמש, עם רווח מעליו. זה נשמע כמו תזמורת קטנה מאחורי זמרת.' },
+        say: { en: 'Drop 3 on the guitar puts the root on string six or five with a gap above it. It sounds like a small big band behind a singer.', he: 'דרופ 3 בגיטרה שם את השורש על מיתר שש או חמש, עם רווח מעליו. זה נשמע כמו תזמורת קטנה מאחורי זמרת.' },
         play: [ch([50, 60, 65, 69], 0.8), ch([43, 53, 59, 64], 0.8), ch([48, 59, 64, 67])],
       },
       {
@@ -256,10 +256,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'harmony',
     emoji: '𝄞',
     title: { en: 'Spread voicings and a melody on top', he: 'קולות פרוסים ומנגינה למעלה' },
-    takeaway: { en: 'Left hand root and 7th, right hand 3–5–9 led by step; with a melody, the melody note is always the top voice.', he: 'ביד שמאל יסוד וספטימה, ביד ימין 3–5–9 בצעדים; עם מנגינה, צליל המנגינה הוא תמיד הקול העליון.' },
+    takeaway: { en: 'Left hand root and 7th, right hand 3–5–9 led by step; with a melody, the melody note is always the top voice.', he: 'ביד שמאל שורש וספטימה, ביד ימין 3–5–9 בצעדים; עם מנגינה, צליל המנגינה הוא תמיד הקול העליון.' },
     steps: [
       {
-        say: { en: 'Hi {name}! A spread voicing uses both hands. Left hand: the root and the 7th. D and C for D minor 7.', he: 'היי {name}! קול פרוס משתמש בשתי הידיים. יד שמאל: היסוד והספטימה. רה ודו לרה מינור 7.' },
+        say: { en: 'Hi {name}! A spread voicing uses both hands. Left hand: the root and the 7th. D and C for D minor 7.', he: 'היי {name}! קול פרוס משתמש בשתי הידיים. יד שמאל: השורש והספטימה. רה ודו לרה מינור 7.' },
         play: [ch([50, 60])],
         show: { notes: [50, 60], chord: true, clef: 'bass' },
       },
@@ -269,7 +269,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [65, 69, 76], chord: true },
       },
       {
-        say: { en: 'The left hand follows the root. The right hand moves by small steps: F, A, E, then B, E, A over G7, then E, G, D over C major 7.', he: 'יד שמאל הולכת אחרי היסוד. יד ימין זזה בצעדים קטנים: פה, לה, מי, ואז סי, מי, לה מעל G7, ואז מי, סול, רה מעל דו מז׳ור 7.' },
+        say: { en: 'The left hand follows the root. The right hand moves by small steps: F, A, E, then B, E, A over G7, then E, G, D over C major 7.', he: 'יד שמאל הולכת אחרי השורש. יד ימין זזה בצעדים קטנים: פה, לה, מי, ואז סי, מי, לה מעל G7, ואז מי, סול, רה מעל דו מז׳ור 7.' },
         play: [ch([50, 60, 65, 69, 76], 0.9), ch([43, 53, 59, 64, 69], 0.9), ch([48, 59, 64, 67, 74])],
       },
       {
@@ -299,7 +299,7 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([50, 69, 72, 74, 77], 0.8), ch([50, 72, 74, 77, 81])],
       },
       {
-        say: { en: 'Practise the right hand alone first: three notes moving by step over the changes. Then add the left hand, which only follows the roots.', he: 'מתרגלים קודם את יד ימין לבד: שלושה צלילים שזזים בצעדים לאורך המהלך. אחר כך מוסיפים את יד שמאל, שרק הולכת אחרי היסודות.' },
+        say: { en: 'Practise the right hand alone first: three notes moving by step over the changes. Then add the left hand, which only follows the roots.', he: 'מתרגלים קודם את יד ימין לבד: שלושה צלילים שזזים בצעדים לאורך המהלך. אחר כך מוסיפים את יד שמאל, שרק הולכת אחרי השורשים.' },
         play: [ch([65, 69, 76], 0.8), ch([59, 64, 69], 0.8), ch([64, 67, 74])],
       },
       {

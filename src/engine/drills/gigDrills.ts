@@ -119,7 +119,7 @@ export interface GigItem {
   rubato?: boolean;
 }
 export const GIG_KINDS = ['gg-intro', 'gg-end', 'gg-b10', 'gg-brh', 'gg-b2h', 'gg-walk', 'gg-two', 'gg-tune'];
-const PART_NAME: T2[] = [t('A, bars 1–8', 'A, תיבות 1–8'), t('B, bars 9–16', 'B, תיבות 9–16'), t('the whole chart', 'כל הלידשיט')];
+const PART_NAME: T2[] = [t('A, bars 1–8', 'A, תיבות 1–8'), t('B, bars 9–16', 'B, תיבות 9–16'), t('the whole chart', 'כל דף האקורדים')];
 
 /** A progression item of the intros / endings / ballad kinds. */
 export function gigItem(kind: string, key: number, op: number): GigItem {
@@ -141,14 +141,14 @@ export function gigItem(kind: string, key: number, op: number): GigItem {
         case 4:
           return { chords: P(DAMERON), what: 'line', name: t('The Dameron turnaround: line', 'הטרנאראונד של דיימרון: קו') };
         case 5:
-          return { chords: P(WALKDOWN), what: 'comp', name: t('Ending: the diminished walk-down iii7–♭iii°7–ii7–V7–I', 'סיום: הירידה הדימינישית iii7–♭iii°7–ii7–V7–I') };
+          return { chords: P(WALKDOWN), what: 'comp', name: t('Ending: the diminished walk-down iii7–♭iii°7–ii7–V7–I', 'סיום: ירידת המוקטן iii7–♭iii°7–ii7–V7–I') };
         default:
           return { chords: P(TAG3), what: 'line', name: t('Tag ending ×3: a line over iii–VI7–ii–V7', 'סיום תג ×3: קו על iii–VI7–ii–V7') };
       }
     case 'gg-b10':
       return { chords: P(BALLAD_PART(op % 3)), what: 'tenths', name: t(`Ballad “Evening Lamp”, ${PART_NAME[op % 3].en}: LH 10ths`, `בלדה ״מנורת ערב״, ${PART_NAME[op % 3].he}: דצימות ביד שמאל`) };
     case 'gg-brh':
-      return { chords: P(BALLAD_PART(op % 3)), what: 'rh', name: t(`Ballad “Evening Lamp”, ${PART_NAME[op % 3].en}: RH four-note voicings over the root`, `בלדה ״מנורת ערב״, ${PART_NAME[op % 3].he}: ארבעה צלילים בימין מעל היסוד`) };
+      return { chords: P(BALLAD_PART(op % 3)), what: 'rh', name: t(`Ballad “Evening Lamp”, ${PART_NAME[op % 3].en}: RH four-note voicings over the root`, `בלדה ״מנורת ערב״, ${PART_NAME[op % 3].he}: ארבעה צלילים בימין מעל השורש`) };
     case 'gg-b2h':
       return { chords: P(BALLAD_PART(op % 3)), what: 'both', name: t(`Ballad “Evening Lamp”, ${PART_NAME[op % 3].en}: LH 10ths, RH four notes`, `בלדה ״מנורת ערב״, ${PART_NAME[op % 3].he}: דצימות בשמאל, ארבעה צלילים בימין`) };
     case 'gg-two':
@@ -161,7 +161,7 @@ export function gigItem(kind: string, key: number, op: number): GigItem {
         [TAG3, t('Walking the tag ending ×3', 'הליכה בסיום התג ×3')],
         [B6B2_DOM, t('Walking the ending ♭VI7–♭II7–I', 'הליכה בסיום ♭VI7–♭II7–I')],
         [DAMERON, t('Walking the Dameron turnaround', 'הליכה בטרנאראונד של דיימרון')],
-        [WALKDOWN, t('Walking the diminished walk-down ending', 'הליכה בסיום הירידה הדימינישית')],
+        [WALKDOWN, t('Walking the diminished walk-down ending', 'הליכה בסיום ירידת המוקטן')],
         [B6B2_MAJ, t('Walking the ending ♭VImaj7–♭IImaj7–I', 'הליכה בסיום ♭VImaj7–♭IImaj7–I')],
       ];
       const [ds, name] = W[op % W.length];
@@ -574,10 +574,10 @@ export function keysGigFamily(): FamilyDef {
       JT(1, 'Intros: the iii–VI7–ii–V7 vamp and a blues’s last four bars', 'פתיחות: ואמפ iii–VI7–ii–V7 וסוף של בלוז', [v('gg-intro', 0, { hands: 'L' }), v('gg-intro', 1), v('gg-intro', 2, { hands: 'L' })], [70, 150]),
       JT(2, 'Ballad: LH 10ths through “Evening Lamp”', 'בלדה: דצימות ביד שמאל לאורך ״מנורת ערב״', B('gg-b10', [0, 1]), [44, 66]),
       JT(3, 'Endings: ♭VImaj7–♭IImaj7–I and ♭VI7–♭II7–I', 'סיומים: ♭VI–♭II–I במז׳ור 7 ובדומיננט 7', [v('gg-end', 1, { hands: 'L' }), v('gg-end', 2)], [70, 150]),
-      JT(4, 'Ballad: RH four-note voicings over the root', 'בלדה: ארבעה צלילים בימין מעל היסוד', B('gg-brh', [0, 1]), [44, 66]),
+      JT(4, 'Ballad: RH four-note voicings over the root', 'בלדה: ארבעה צלילים בימין מעל השורש', B('gg-brh', [0, 1]), [44, 66]),
       JT(5, 'The tag ×3 and the Dameron turnaround', 'התג ×3 והטרנאראונד של דיימרון', [v('gg-end', 0), v('gg-end', 3, { hands: 'L' }), v('gg-end', 4)], [70, 150]),
       JT(6, 'Ballad: LH 10ths and RH four notes together', 'בלדה: דצימות בשמאל וארבעה צלילים בימין יחד', B('gg-b2h', [0, 1]), [44, 66]),
-      JT(7, 'The walk-down ending and a rubato ballad intro', 'סיום הירידה הדימינישית ופתיחת בלדה ברובאטו', [v('gg-end', 5, { hands: 'L' }), v('gg-intro', 3, { hands: 'RL', swing: false, target: 50, tempo: 50 })], [50, 130]),
+      JT(7, 'The walk-down ending and a rubato ballad intro', 'סיום ירידת המוקטן ופתיחת בלדה ברובאטו', [v('gg-end', 5, { hands: 'L' }), v('gg-intro', 3, { hands: 'RL', swing: false, target: 50, tempo: 50 })], [50, 130]),
       JT(8, 'The whole ballad chart in two hands', 'כל הבלדה בשתי ידיים', B('gg-b2h', [2]), [44, 66]),
       JT(9, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), [72, 126]),
       JT(10, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), [72, 126]),
@@ -721,7 +721,7 @@ export function guitarGigFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
   const G = G_GIG_GRADE;
   return fam('g-gig', 'On the bandstand', 'על הבמה', 'jazz', ['jazz'], [
     LT('g-gig', 1, 'Intros: the iii–VI7–ii–V7 vamp and a blues’s last four bars', 'פתיחות: ואמפ iii–VI7–ii–V7 וסוף של בלוז', [v('gg-intro', 0), v('gg-intro', 1), v('gg-intro', 2)], GIG_KEYS, [70, 150], 'comping', G[0]),
-    LT('g-gig', 2, 'Endings: ♭VI–♭II–I, the tag ×3, the walk-down', 'סיומים: ♭VI–♭II–I, התג ×3, הירידה הדימינישית', [v('gg-end', 1), v('gg-end', 2), v('gg-end', 0), v('gg-end', 5)], GIG_KEYS, [70, 150], 'comping', G[1]),
+    LT('g-gig', 2, 'Endings: ♭VI–♭II–I, the tag ×3, the walk-down', 'סיומים: ♭VI–♭II–I, התג ×3, ירידת המוקטן', [v('gg-end', 1), v('gg-end', 2), v('gg-end', 0), v('gg-end', 5)], GIG_KEYS, [70, 150], 'comping', G[1]),
     LT('g-gig', 3, 'The Dameron turnaround: drop 2 and a line', 'הטרנאראונד של דיימרון: דרופ 2 וקו', [v('gg-end', 3), v('gg-end', 4)], GIG_KEYS, [70, 150], 'comping', G[2]),
     LT('g-gig', 4, 'Ballad “Evening Lamp” in drop 2, and a rubato intro', 'הבלדה ״מנורת ערב״ בדרופ 2, ופתיחה ברובאטו', [v('gg-b2h', 0, { swing: false }), v('gg-b2h', 1, { swing: false }), v('gg-intro', 3, { swing: false, target: 50, tempo: 50 })], GIG_KEYS, [44, 66], 'ballad', G[3]),
     LT('g-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 126], 'chord-melody', G[4]),
@@ -821,12 +821,12 @@ export function bassGigFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
     L('b-gig', 1, 'Ballad “Evening Lamp” in two', 'הבלדה ״מנורת ערב״ בשתיים', [0, 1, 2].map((p) => v('gg-two', p, { swing: false })), GIG_KEYS, [44, 72], 'halves'),
     L('b-gig', 2, 'Walking intros: the iii–VI7–ii–V7 vamp, a blues’s last four bars', 'פתיחות בהליכה: ואמפ iii–VI7–ii–V7, סוף של בלוז', vs('gg-walk', [0, 1]), GIG_KEYS, [70, 160], 'walking 4'),
     L('b-gig', 3, 'Walking endings: the tag ×3, ♭VI7–♭II7–I, the Dameron turnaround', 'סיומים בהליכה: התג ×3, ♭VI7–♭II7–I, הטרנאראונד של דיימרון', vs('gg-walk', [2, 3, 4]), GIG_KEYS, [70, 160], 'walking 4'),
-    L('b-gig', 4, 'Walking the walk-down ending and ♭VImaj7–♭IImaj7–I', 'הליכה בסיום הירידה הדימינישית וב־♭VI–♭II–I במז׳ור 7', vs('gg-walk', [5, 6]), GIG_KEYS, [70, 160], 'walking 4'),
+    L('b-gig', 4, 'Walking the walk-down ending and ♭VImaj7–♭IImaj7–I', 'הליכה בסיום ירידת המוקטן וב־♭VI–♭II–I במז׳ור 7', vs('gg-walk', [5, 6]), GIG_KEYS, [70, 160], 'walking 4'),
     L('b-gig', 5, 'Back Porch Blues, section by section', 'בלוז המרפסת, קטע אחר קטע', T(0, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 126], 'two-feel / walking'),
     L('b-gig', 6, 'Back Porch Blues: the whole tune in one take', 'בלוז המרפסת: השיר כולו בטייק אחד', T(0, [0]), GIG_KEYS, [72, 126], 'two-feel / walking'),
     L('b-gig', 7, 'Night Ferry, section by section', 'מעבורת לילה, קטע אחר קטע', T(1, [1, 2, 3, 5, 4]), GIG_KEYS, [72, 120], 'two-feel / walking'),
     L('b-gig', 8, 'Night Ferry: the whole tune in one take', 'מעבורת לילה: השיר כולו בטייק אחד', T(1, [0]), GIG_KEYS, [72, 120], 'two-feel / walking'),
     // By ear (the bass's own counterpart of the ear topic intro-ending): hear an intro or an ending, play its roots back.
-    L('b-gig', 9, 'Intros and endings by ear: play the roots back', 'פתיחות וסיומים בשמיעה: לנגן את היסודות בחזרה', [v('ie-ear', 0, { perBeat: 0.5, swing: false }), v('ie-ear', 1, { perBeat: 0.5, swing: false })], GIG_KEYS, [70, 110], 'halves'),
+    L('b-gig', 9, 'Intros and endings by ear: play the roots back', 'פתיחות וסיומים בשמיעה: לנגן את השורשים בחזרה', [v('ie-ear', 0, { perBeat: 0.5, swing: false }), v('ie-ear', 1, { perBeat: 0.5, swing: false })], GIG_KEYS, [70, 110], 'halves'),
   ]);
 }

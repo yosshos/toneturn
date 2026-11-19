@@ -116,7 +116,7 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
     tiers: rushTiers({
       pp: { label: L('Major and minor', 'מז׳ור ומינור'), rungs: r('chord-read', 1) },
       p: { label: L('+ diminished and augmented', '+ מוקטן ומוגדל'), rungs: r('chord-read', 1, 2) },
-      mp: { label: L('Seventh chords', 'אקורדי ספטים'), rungs: r('chord-read', 2, 3) },
+      mp: { label: L('Seventh chords', 'ספטאקורדים'), rungs: r('chord-read', 2, 3) },
       mf: { label: L('Inversions and guitar shapes', 'היפוכים וצורות גיטרה'), rungs: r('chord-read', 3, 4, 5) },
       f: { label: L('Extensions: 9, 11, 13', 'הרחבות: 9, 11, 13'), rungs: r('chord-read', 5, 6) },
       ff: { label: L('Altered, upper structures, quartal, everything', 'אלטרד, מבנים עליונים, קוורטלי, הכול'), rungs: [...r('chord-read', 7), ...r('chord-read-alt', 1, 2, 3)] },
@@ -264,8 +264,8 @@ export const GAME_TIERS: Record<string, GameTierSpec> = {
     source: () => 'theory',
     clear: 'rush',
     tiers: {
-      pp: { label: L('Basics', 'יסודות'), levels: [1], target: 10 },
-      p: { label: L('Basics, more topics', 'יסודות, יותר נושאים'), levels: [1], target: 14 },
+      pp: { label: L('Basics', 'שורשים'), levels: [1], target: 10 },
+      p: { label: L('Basics, more topics', 'שורשים, יותר נושאים'), levels: [1], target: 14 },
       mp: { label: L('Medium', 'בינוני'), levels: [2], target: 12 },
       mf: { label: L('Medium, faster', 'בינוני, מהר יותר'), levels: [2], target: 16 },
       f: { label: L('Modes, harmony, jazz', 'מודוסים, הרמוניה, ג׳אז'), levels: [3], target: 12 },
@@ -444,7 +444,7 @@ GAME_TIERS['rush-voicing'] = advanced({
     p: { label: OPENS, rungs: r('triads', 5) },
     mp: { label: L('Close or open; close or drop 2', 'צפוף או פתוח; צפוף או דרופ 2'), rungs: [...r('triads', 5), ...r('voicing-type', 1)] },
     mf: { label: L('Close, drop 2, drop 3, spread', 'צפוף, דרופ 2, דרופ 3, פרוש'), rungs: [...r('voicing-type', 2), ...r('voicings', 1)] },
-    f: { label: L('Shells or rootless, inversions of 7ths', 'שֶׁלים או בלי שורש, היפוכי ספטים'), rungs: [...r('voicings', 2), ...r('voicing-type', 3)] },
+    f: { label: L('Shells or rootless, inversions of 7ths', 'שלדים או בלי שורש, היפוכי ספטים'), rungs: [...r('voicings', 2), ...r('voicing-type', 3)] },
     ff: { label: L('Closed, drop 2, rootless, quartal, upper structure', 'צפוף, דרופ 2, בלי שורש, קוורטלי, מבנה עליון'), rungs: [...r('voicing-type', 4), ...r('voicings', 4), ...r('voicing-type', 5)] },
   }),
 });
@@ -581,10 +581,10 @@ GAME_TIERS.voicingsprint = {
   tiers: {
     pp: { label: L('Major and minor triads', 'משולשים מז׳וריים ומינוריים'), levels: [1], target: 12 },
     p: { label: L('Triads in a named inversion (C/E)', 'משולשים בהיפוך נתון (C/E)'), levels: [2], target: 12 },
-    mp: { label: L('Shells: 1-3-7 and 1-7-3', 'שֶׁלים: 1-3-7 ו־1-7-3'), levels: [3], target: 10 },
+    mp: { label: L('Shells: 1-3-7 and 1-7-3', 'שלדים: 1-3-7 ו־1-7-3'), levels: [3], target: 10 },
     mf: { label: L('Rootless A and B (3-5-7-9, 7-9-3-5)', 'בלי שורש A ו־B (3-5-7-9, 7-9-3-5)'), levels: [4], target: 10 },
     f: { label: L('Drop 2 sevenths', 'ספטים בדרופ 2'), levels: [5], target: 8 },
-    ff: { label: L('Upper structures over a tritone shell', 'מבנים עליונים מעל שֶׁל טריטון'), levels: [6], target: 8 },
+    ff: { label: L('Upper structures over a tritone shell', 'מבנים עליונים מעל שלד טריטון'), levels: [6], target: 8 },
   },
 };
 
@@ -642,8 +642,8 @@ GAME_TIERS.harmonyhold = {
     pp: { label: L('Hold one note while the chord moves', 'מחזיקים צליל אחד והאקורד זז'), levels: [1], params: { cents: 50 }, target: 85 },
     p: { label: L('The root, 3rd or 5th of each triad', 'השורש, הטרצה או הקווינטה של כל משולש'), levels: [2], params: { cents: 40 }, target: 85 },
     mp: { label: L('3rds and 7ths of seventh chords', 'טרצות וספטימות של ספטאקורדים'), levels: [3], params: { cents: 35 }, target: 85 },
-    mf: { label: L('Guide tones through ii–V–I', 'צלילים מובילים ב־ii–V–I'), levels: [4], params: { cents: 30 }, target: 85 },
-    f: { label: L('Guide tones through ii–V chains, minor ii–V', 'צלילים מובילים בשרשראות ii–V, ii–V מינורי'), levels: [5], params: { cents: 25 }, target: 85 },
+    mf: { label: L('Guide tones through ii–V–I', 'צלילים מנחים ב־ii–V–I'), levels: [4], params: { cents: 30 }, target: 85 },
+    f: { label: L('Guide tones through ii–V chains, minor ii–V', 'צלילים מנחים בשרשראות ii–V, ii–V מינורי'), levels: [5], params: { cents: 25 }, target: 85 },
     ff: { label: L('Upper extensions: 9, ♯11, 13, ♭9', 'הרחבות עליונות: 9, ♯11, 13, ♭9'), levels: [6], params: { cents: 25 }, target: 85 },
   },
 };
@@ -670,10 +670,10 @@ GAME_TIERS.kitread = {
   clear: 'rush',
   tiers: {
     pp: { label: L('Rock beat', 'ביט רוק'), levels: [1], target: 8 },
-    p: { label: L('Kick variations', 'וריאציות בבס־דראם'), levels: [2], target: 8 },
-    mp: { label: L('Fills', 'מילויים (פילים)'), levels: [3], target: 9 },
-    mf: { label: L('Sixteenth hi-hats', 'היי־הט בשש־עשריות'), levels: [4], target: 9 },
-    f: { label: L('Open hi-hat and ghost notes', 'היי־הט פתוח ותווי רפאים'), levels: [5], target: 10 },
+    p: { label: L('Kick variations', 'וריאציות בקיק'), levels: [2], target: 8 },
+    mp: { label: L('Fills', 'מעברים'), levels: [3], target: 9 },
+    mf: { label: L('Sixteenth hi-hats', 'היי־האט בשש־עשריות'), levels: [4], target: 9 },
+    f: { label: L('Open hi-hat and ghost notes', 'היי־האט פתוח ותווי רפאים'), levels: [5], target: 10 },
     ff: { label: L('Odd meters, flams and drags, ride patterns', 'משקלים אי־זוגיים, פלאמים ודראגים, דפוסי רייד'), levels: [6], target: 10 },
   },
 };
@@ -703,7 +703,7 @@ GAME_TIERS.bordercontrol = {
   tiers: {
     pp: { label: L('Pivot chord or direct', 'אקורד ציר או ישירות'), levels: [1], params: { cases: 8 }, target: 80 },
     p: { label: L('+ a ii–V of the new key', '+ ii–V של הסולם החדש'), levels: [2], params: { cases: 8 }, target: 80 },
-    mp: { label: L('+ the common diminished', '+ הדימיניש המשותף'), levels: [3], params: { cases: 8 }, target: 80 },
+    mp: { label: L('+ the common diminished', '+ המוקטן המשותף'), levels: [3], params: { cases: 8 }, target: 80 },
     mf: { label: L('+ a tritone sub into it', '+ תחליף טריטון לתוכו'), levels: [4], params: { cases: 8 }, target: 80 },
     f: { label: L('All five, distant keys', 'כל החמישה, סולמות רחוקים'), levels: [5], params: { cases: 8 }, target: 80 },
     ff: { label: L('A tune’s key centres', 'המרכזים הטונליים של שיר'), levels: [6], params: { cases: 8 }, target: 80 },

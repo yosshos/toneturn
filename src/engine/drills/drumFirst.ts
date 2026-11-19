@@ -81,7 +81,7 @@ function genDrumFirst(s: DrillSpec): Drill {
       const acc = (per: number) => (i: number) => (i % per === 0 ? { acc: true } : {});
       const hits = op === 2 ? [...line(st, 16, 0.25, 0, acc(4)), ...line(st, 8, 0.5, 4, acc(2)), ...line(st, 4, 1, 8, acc(1)), ...line(st, 8, 0.5, 12, acc(2))] : [...line(st, 4, 1, 0, acc(1)), ...line(st, 8, 0.5, 4, acc(2)), ...line(st, 16, 0.25, 8, acc(4)), ...line(st, 8, 0.5, 12, acc(2))];
       const nm = [t('lead right', 'מובילים בימין'), t('lead left', 'מובילים בשמאל'), t('16ths first', 'קודם שש־עשריות')][op % 3];
-      return finish(s, hits, { title: t(`Counting 1 e & a: quarters, 8ths, 16ths · ${nm.en}`, `לספור 1 e & a: רבעים, שמיניות, שש־עשריות · ${nm.he}`), bpm: 60, bars: 4, mic: true, goal: { velCv: 0.25 } });
+      return finish(s, hits, { title: t(`Counting 1 e & a: quarters, 8ths, 16ths · ${nm.en}`, `לספור 1 אִי וְ אָה: רבעים, שמיניות, שש־עשריות · ${nm.he}`), bpm: 60, bars: 4, mic: true, goal: { velCv: 0.25 } });
     }
     case 5: {
       // The basic rock beat: hi-hat in quarters (then 8ths), kick on 1 and 3, snare on 2 and 4.
@@ -148,7 +148,7 @@ export function drumFirstFamily(): DrumFamilyDef {
       L(1, 'Grip: even strokes, one hand', 'אחיזה: מכות שוות, יד אחת', 'grip', 3, [60, 80], '1/4', true),
       L(2, 'Rebound: full strokes', 'ריבאונד: מכות מלאות', 'rebound', 3, [60, 90], '1/4', true),
       L(3, 'Single strokes in quarters and 8ths', 'מכות בודדות ברבעים ובשמיניות', 'singles', 3, [60, 100], '1/8', true),
-      L(4, 'Counting 1 e & a', 'לספור 1 e & a', 'count', 3, [60, 80], '1/16', true),
+      L(4, 'Counting 1 e & a', 'לספור 1 אִי וְ אָה', 'count', 3, [60, 80], '1/16', true),
       L(5, 'A basic rock beat', 'קצב רוק בסיסי', 'rock', 3, [70, 100], '1/8', false),
       L(6, 'The 8th-note paradiddle', 'פאראדידל בשמיניות', 'para8', 3, [50, 70], '1/8', true),
       // 6/8 variants count 8ths (♩ range [60, 90] × 2): their own start, the same climb (plan.targetBpmOf, pulse 8).

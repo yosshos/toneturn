@@ -201,7 +201,7 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Writing the changes', he: 'לכתוב את המהלך' },
     takeaway: {
       en: 'Bass first, then each chord’s quality. A secondary ii–V aims at another chord (Em7 A7 → Dm7); a tritone substitute keeps the 3rd and 7th and moves the root a tritone (D♭7 for G7); the V’s colour: 13 bright, 7♭9 and 7alt dark, 7♯11 lydian.',
-      he: 'קודם הבס, ואז האיכות של כל אקורד. ii–V משני מכוון לאקורד אחר (Em7 A7 → Dm7); תחליף טריטון שומר על הטרצה והספטימה ומזיז את היסוד בטריטון (D♭7 במקום G7); הצבע של ה־V: ‏13 בהיר, ‏7♭9 ו־7alt כהים, ‏7♯11 לידי.',
+      he: 'קודם הבס, ואז האיכות של כל אקורד. ii–V משני מכוון לאקורד אחר (Em7 A7 → Dm7); תחליף טריטון שומר על הטרצה והספטימה ומזיז את השורש בטריטון (D♭7 במקום G7); הצבע של ה־V: ‏13 בהיר, ‏7♭9 ו־7alt כהים, ‏7♯11 לידי.',
     },
     steps: [
       {
@@ -224,7 +224,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G13 · G7♭9 · G7alt · G7♯11', he: 'G13 · G7♭9 · G7alt · G7♯11' } },
       },
       {
-        say: { en: 'A walking bass line: the root on beat 1, chord or scale tones in the middle, then a half step into the next root, from below or from above. Your turn.', he: 'קו בס מהלך: היסוד בפעמה 1, צלילי אקורד או סולם באמצע, ואז חצי טון אל היסוד הבא, מלמטה או מלמעלה. תורכם.' },
+        say: { en: 'A walking bass line: the root on beat 1, chord or scale tones in the middle, then a half step into the next root, from below or from above. Your turn.', he: 'קו ווקינג: השורש בפעמה 1, צלילי אקורד או סולם באמצע, ואז חצי טון אל השורש הבא, מלמטה או מלמעלה. תורכם.' },
         play: [notes([38, 41, 45, 42, 43, 47, 50, 49, 48], 0.42)],
         show: { text: { en: 'D F A F♯ | G B D D♭ | C', he: 'D F A F♯ | G B D D♭ | C' } },
       },
@@ -242,7 +242,7 @@ export const LESSONS: MiniLesson[] = [
         play: [jazzProgStim(0, [[5, 'm7', 2], [10, 'dom7', 2], [0, 'maj7', 4]], 112)],
       },
       {
-        say: { en: 'Tensions come last. The top of the voicing tells you: a 13th sits a whole step above the 5th, a ♭9 a half step above the root.', he: 'המתחים באים אחרונים. הצליל העליון של הוויסינג אומר: 13 יושב טון מעל הקווינטה, ‏♭9 חצי טון מעל היסוד.' },
+        say: { en: 'Tensions come last. The top of the voicing tells you: a 13th sits a whole step above the 5th, a ♭9 a half step above the root.', he: 'המתחים באים אחרונים. הצליל העליון של הוויסינג אומר: 13 יושב טון מעל הקווינטה, ‏♭9 חצי טון מעל השורש.' },
       },
       {
         say: { en: 'Secondary dominants are easy to miss when the ii is left out. A7 straight into Dm7 is still V of ii: write it as A7, and listen for the C♯ that leads into D.', he: 'קל לפספס דומיננטות משניות כשה־ii חסר. A7 ישר אל Dm7 הוא עדיין V של ii: כותבים A7, ומקשיבים לדו דיאז שמוביל לרה.' },
@@ -317,12 +317,12 @@ export const LESSONS: MiniLesson[] = [
     emoji: '|',
     title: { en: 'Form by ear', he: 'צורה בשמיעה' },
     takeaway: {
-      en: 'The 12-bar blues is the standard; an 8-bar blues runs I V IV IV I V I V; a 16-bar blues stretches the first four bars on I to eight. AABA puts the bridge third; ABAC starts its second half like the first and ends differently. Around the tune: an intro, a tag (the last phrase again) or a coda (a new ending).',
-      he: 'בלוז 12 תיבות הוא הסטנדרט; בלוז 8 תיבות הולך I V IV IV I V I V; בלוז 16 תיבות מותח את ארבע התיבות הראשונות על I לשמונה. ב־AABA הגשר שלישי; ב־ABAC החצי השני מתחיל כמו הראשון ונגמר אחרת. מסביב לשיר: פתיחה, טאג (המשפט האחרון שוב) או קודה (סיום חדש).',
+      en: 'The 12-bar blues is the standard; an 8-bar blues runs I V IV IV I V I V; a common 16-bar blues stretches the first four bars on I to eight. AABA puts the bridge third; ABAC starts its second half like the first and ends differently. Around the tune: an intro, a tag (the last phrase again) or a coda (a new ending).',
+      he: 'בלוז 12 תיבות הוא הסטנדרט; בלוז 8 תיבות הולך I V IV IV I V I V; בלוז 16 תיבות נפוץ מותח את ארבע התיבות הראשונות על I לשמונה. ב־AABA הגשר שלישי; ב־ABAC החצי השני מתחיל כמו הראשון ונגמר אחרת. מסביב לשיר: פתיחה, טאג (המשפט האחרון שוב) או קודה (סיום חדש).',
     },
     steps: [
       {
-        say: { en: 'Blues lengths. The 12-bar blues is the standard. An 8-bar blues runs I, V, IV, IV, I, V, I, V. A 16-bar blues stretches the first four bars on I to eight.', he: 'אורכי בלוז. בלוז 12 תיבות הוא הסטנדרט. בלוז 8 תיבות הולך I, ‏V, ‏IV, ‏IV, ‏I, ‏V, ‏I, ‏V. בלוז 16 תיבות מותח את ארבע התיבות הראשונות על I לשמונה.' },
+        say: { en: 'Blues lengths. The 12-bar blues is the standard. An 8-bar blues runs I, V, IV, IV, I, V, I, V. A common 16-bar blues stretches the first four bars on I to eight.', he: 'אורכי בלוז. בלוז 12 תיבות הוא הסטנדרט. בלוז 8 תיבות הולך I, ‏V, ‏IV, ‏IV, ‏I, ‏V, ‏I, ‏V. בלוז 16 תיבות נפוץ מותח את ארבע התיבות הראשונות על I לשמונה.' },
         play: [jazzProgStim(0, [0, 7, 5, 5, 0, 7, 0, 7].map((d) => [d, 'dom7', 4] as [number, 'dom7', number]), 192)],
         show: { text: { en: '8: I V IV IV | I V I V', he: '8: I V IV IV | I V I V' } },
       },
@@ -417,7 +417,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A ii–V–I in C mirrors to B♭, Fm6, Cm. Most players use only the dominant part: iv6 or ♭VII7 in place of V, landing on a major I.', he: 'ii–V–I ב־C משתקף ל־B♭, ‏Fm6, ‏Cm. רוב הנגנים משתמשים רק בחלק הדומיננטי: iv6 או ♭VII7 במקום V, ונוחתים על I מז׳ורי.' },
       },
       {
-        say: { en: 'Try it with a melody: a phrase that ends 2 to 1 in C, D to C, mirrors to F to G. Mirrored lines often land on the 5th where the original landed on the root.', he: 'נסו את זה עם מנגינה: משפט שנגמר 2 ל־1 ב־C, רה לדו, משתקף לפה לסול. קווים משוקפים נוחתים לעיתים קרובות על הקווינטה במקום שבו המקור נחת על היסוד.' },
+        say: { en: 'Try it with a melody: a phrase that ends 2 to 1 in C, D to C, mirrors to F to G. Mirrored lines often land on the 5th where the original landed on the root.', he: 'נסו את זה עם מנגינה: משפט שנגמר 2 ל־1 ב־C, רה לדו, משתקף לפה לסול. קווים משוקפים נוחתים לעיתים קרובות על הקווינטה במקום שבו המקור נחת על השורש.' },
         play: [notes([64, 62, 60], 0.45), rest(0.3), notes([63, 65, 67], 0.45)],
       },
       {

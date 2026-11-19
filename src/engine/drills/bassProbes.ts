@@ -23,7 +23,7 @@ export const BASS_PROBES: BassProbe[] = [
     // Task 1: a rock groove, the root on every kick, on a G–C–D chart (time, pocket, roots).
     family: 'b-pocket',
     spec: { family: 'b-pocket', kind: 'kick-chart', key: 7, hands: 'R', option: 1, instrument: 'bass', tempo: 90 },
-    title: { en: 'Rock groove: roots on the kick (G–C–D)', he: 'גרוב רוק: יסודות על הבס-דראם (G–C–D)' },
+    title: { en: 'Rock groove: roots on the kick (G–C–D)', he: 'גרוב רוק: שורשים על הקיק (G–C–D)' },
     instruments: ['bass'],
     seeds: ['b-time', 'b-chord'],
     mode: 'once',
@@ -56,7 +56,7 @@ export const BASS_PROBES: BassProbe[] = [
     // Task 5: ear — the band plays I–vi–IV–V style changes, you play the roots on the repeat.
     family: 'b-ear',
     spec: { family: 'b-ear', kind: 'roots', key: 7, hands: 'R', instrument: 'bass', tempo: 80 },
-    title: { en: 'Ear: play the roots you hear', he: 'שמיעה: נגנו את היסודות שאתם שומעים' },
+    title: { en: 'Ear: play the roots you hear', he: 'שמיעה: נגנו את השורשים שאתם שומעים' },
     instruments: ['bass'],
     mode: 'once',
   },

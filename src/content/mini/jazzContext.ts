@@ -26,15 +26,15 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'The brothers', he: 'האחים' },
-    takeaway: { en: 'G7, B♭7, D♭7 and E7 share one diminished chord as their 7♭9 without the root (B D F A♭), so each can stand in for the V and resolve to C.', he: 'G7, ‏B♭7, ‏D♭7 ו־E7 חולקים אקורד דימיניש אחד כ־7♭9 שלהם בלי היסוד (B D F A♭), ולכן כל אחד מהם יכול לעמוד במקום ה־V ולהיפתר לדו.' },
+    takeaway: { en: 'G7, B♭7, D♭7 and E7 share one diminished chord as their 7♭9 without the root (B D F A♭), so each can stand in for the V and resolve to C.', he: 'G7, ‏B♭7, ‏D♭7 ו־E7 חולקים אקורד מוקטן אחד כ־7♭9 שלהם בלי השורש (B D F A♭), ולכן כל אחד מהם יכול לעמוד במקום ה־V ולהיפתר לדו.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Take G7 with a flat 9 and leave out its root. What is left is a diminished chord: B, D, F and A flat.', he: 'היי {name}! קחו G7 עם נונה קטנה והשמיטו את היסוד. מה שנשאר הוא אקורד דימיניש: סי, רה, פה ולה במול.' },
+        say: { en: 'Hi {name}! Take G7 with a flat 9 and leave out its root. What is left is a diminished chord: B, D, F and A flat.', he: 'היי {name}! קחו G7 עם נונה קטנה והשמיטו את השורש. מה שנשאר הוא אקורד מוקטן: סי, רה, פה ולה במול.' },
         play: [chord(G7), rest(0.3), chord(DIM)],
         show: { notes: DIM, chord: true, text: { en: 'G7♭9 − G = B°7', he: 'G7♭9 בלי G = B°7' } },
       },
       {
-        say: { en: 'Now put another bass under the same four notes: B flat, D flat or E. Each bass turns the diminished into a dominant seven flat nine.', he: 'עכשיו שימו בס אחר מתחת לאותם ארבעה צלילים: סי במול, רה במול או מי. כל בס הופך את הדימיניש לדומיננט שבע עם נונה קטנה.' },
+        say: { en: 'Now put another bass under the same four notes: B flat, D flat or E. Each bass turns the diminished into a dominant seven flat nine.', he: 'עכשיו שימו בס אחר מתחת לאותם ארבעה צלילים: סי במול, רה במול או מי. כל בס הופך את המוקטן לדומיננט שבע עם נונה קטנה.' },
         play: [chord([43, ...DIM], 0.9), chord([46, ...DIM], 0.9), chord([37, ...DIM], 0.9), chord([40, ...DIM], 0.9)],
         show: { text: { en: 'G7 · B♭7 · D♭7 · E7', he: 'G7 · B♭7 · D♭7 · E7' } },
       },
@@ -56,11 +56,11 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Why it works: the diminished chord is the sound of the dominant. Its four notes pull by half steps into the tones of C.', he: 'למה זה עובד: אקורד הדימיניש הוא הצליל של הדומיננט. ארבעת הצלילים שלו נמשכים בחצאי טונים אל הצלילים של דו.' },
+        say: { en: 'Why it works: the diminished chord is the sound of the dominant. Its four notes pull by half steps into the tones of C.', he: 'למה זה עובד: אקורד המוקטן הוא הצליל של הדומיננט. ארבעת הצלילים שלו נמשכים בחצאי טונים אל הצלילים של דו.' },
         play: [chord(DIM, 0.9), chord(C6, 1.4)],
       },
       {
-        say: { en: 'The bass under the diminished chooses the colour. G is the plain dominant, D flat sounds altered, B flat and E add the flat and sharp nine.', he: 'הבס מתחת לדימיניש בוחר את הצבע. סול הוא הדומיננט הפשוט, רה במול נשמע אלטרד, סי במול ומי מוסיפים את הנונה הקטנה והמוגדלת.' },
+        say: { en: 'The bass under the diminished chooses the colour. G is the plain dominant, D flat sounds altered, B flat and E add the flat and sharp nine.', he: 'הבס מתחת למוקטן בוחר את הצבע. סול הוא הדומיננט הפשוט, רה במול נשמע אלטרד, סי במול ומי מוסיפים את הנונה הקטנה והמוגדלת.' },
       },
       {
         say: { en: 'In a ii–V–I, keep D minor 7 and C major 7 and swap the G7 for any brother. The ear still hears a cadence to C.', he: 'ב־ii–V–I, משאירים את Dm7 ואת Cmaj7 ומחליפים את G7 בכל אח. האוזן עדיין שומעת קדנצה לדו.' },
@@ -70,7 +70,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to treat the brothers as a chain of keys. They are four names for one job: the V of the same I.', he: 'טעות נפוצה היא לראות באחים שרשרת של סולמות. הם ארבעה שמות לתפקיד אחד: ה־V של אותו I.' },
       },
       {
-        say: { en: 'Practise them in all twelve keys. In F the brothers are C7, E flat 7, G flat 7 and A7, and their shared diminished is E, G, B flat, D flat.', he: 'מתרגלים אותם בכל שנים־עשר הסולמות. בפה האחים הם C7, ‏E♭7, ‏G♭7 ו־A7, והדימיניש המשותף שלהם הוא מי, סול, סי במול, רה במול.' },
+        say: { en: 'Practise them in all twelve keys. In F the brothers are C7, E flat 7, G flat 7 and A7, and their shared diminished is E, G, B flat, D flat.', he: 'מתרגלים אותם בכל שנים־עשר הסולמות. בפה האחים הם C7, ‏E♭7, ‏G♭7 ו־A7, והמוקטן המשותף שלהם הוא מי, סול, סי במול, רה במול.' },
       },
       {
         say: { en: 'Bass players walk the brother roots: D, then D flat, then C is a chromatic line that every bassist knows.', he: 'נגני בס מהלכים על שורשי האחים: רה, ואז רה במול, ואז דו — קו כרומטי שכל בסיסט מכיר.' },
@@ -110,7 +110,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'B flat 7 is also a brother of G7: it shares the same diminished chord. That is the Barry Harris reason the backdoor works.', he: 'B♭7 הוא גם אח של G7: הוא חולק איתו את אותו דימיניש. זו הסיבה לפי בארי האריס שהדלת האחורית עובדת.' },
+        say: { en: 'B flat 7 is also a brother of G7: it shares the same diminished chord. That is the Barry Harris reason the backdoor works.', he: 'B♭7 הוא גם אח של G7: הוא חולק איתו את אותו מוקטן. זו הסיבה לפי בארי האריס שהדלת האחורית עובדת.' },
         play: [chord([46, ...DIM], 0.9), chord(CMAJ7, 1.4)],
       },
       {
@@ -144,11 +144,11 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Dm7: F + G · Cmaj7: D + Em', he: 'Dm7: ‏F + G · ‏Cmaj7: ‏D + Em' } },
       },
       {
-        say: { en: 'Over the dominant, try the triads on its root and on its second: G and A over G7, a bright lydian sound.', he: 'מעל הדומיננט, נסו את המשולשים על היסוד שלו ועל הדרגה השנייה: סול ולה מעל G7, צליל לידי בהיר.' },
+        say: { en: 'Over the dominant, try the triads on its root and on its second: G and A over G7, a bright lydian sound.', he: 'מעל הדומיננט, נסו את המשולשים על השורש שלו ועל הדרגה השנייה: סול ולה מעל G7, צליל לידי בהיר.' },
         play: [chord(G7, 0.8), notes([67, 71, 74, 69, 73, 76], 0.2)],
       },
       {
-        say: { en: 'A pentatonic a fifth above the root gives a chord its colours: G pentatonic over C major 7, A minor pentatonic over D minor 7.', he: 'פנטטוני קווינטה מעל היסוד נותן לאקורד את הצבעים שלו: פנטטוני סול מעל Cmaj7, פנטטוני לה מינור מעל Dm7.' },
+        say: { en: 'A pentatonic a fifth above the root gives a chord its colours: G pentatonic over C major 7, A minor pentatonic over D minor 7.', he: 'פנטטוני קווינטה מעל השורש נותן לאקורד את הצבעים שלו: פנטטוני סול מעל Cmaj7, פנטטוני לה מינור מעל Dm7.' },
         play: [chord(CMAJ7, 0.8), notes([67, 69, 71, 74, 76], 0.24)],
         show: { notes: [67, 69, 71, 74, 76], text: { en: 'G pentatonic over C', he: 'פנטטוני סול מעל דו' } },
       },
@@ -161,7 +161,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Over an altered dominant, use the pair a tritone and a minor sixth above the root: D flat and E flat over G7 alt.', he: 'מעל דומיננט אלטרד, משתמשים בזוג שטריטון וסקסטה קטנה מעל היסוד: רה במול ומי במול מעל G7alt.' },
+        say: { en: 'Over an altered dominant, use the pair a tritone and a minor sixth above the root: D flat and E flat over G7 alt.', he: 'מעל דומיננט אלטרד, משתמשים בזוג שטריטון וסקסטה קטנה מעל השורש: רה במול ומי במול מעל G7alt.' },
         play: [chord(G7, 0.6), notes([61, 65, 68, 63, 67, 70], 0.2)],
       },
       {
@@ -203,10 +203,10 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([63, 65, 67, 70, 68, 70, 72, 75, 71, 73, 75, 78], 0.18)],
       },
       {
-        say: { en: 'In the comping, shells keep it simple: root, third and seventh on each chord.', he: 'בליווי, קונכיות שומרות על פשטות: יסוד, טרצה וספטימה על כל אקורד.' },
+        say: { en: 'In the comping, shells keep it simple: root, third and seventh on each chord.', he: 'בליווי, שלדים שומרים על פשטות: שורש, טרצה וספטימה על כל אקורד.' },
       },
       {
-        say: { en: 'Your turn: the line, then comp it in shells or drop 2. Bass players walk it. The line starts in free time.', he: 'תורכם: הקו, ואז ליווי בקונכיות או בדרופ 2. נגני בס מהלכים אותו. הקו מתחיל בזמן חופשי.' },
+        say: { en: 'Your turn: the line, then comp it in shells or drop 2. Bass players walk it. The line starts in free time.', he: 'תורכם: הקו, ואז ליווי בשלדים או בדרופ 2. נגני בס מהלכים אותו. הקו מתחיל בזמן חופשי.' },
       },
     ],
     more: [
@@ -222,7 +222,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([60, 64, 68, 72], 0.3)],
       },
       {
-        say: { en: 'Keep the cells close: start each one on the root nearest the last note, so the whole line stays in one comfortable register.', he: 'משאירים את התאים קרובים: מתחילים כל אחד על היסוד הקרוב לצליל האחרון, כך שהקו נשאר במנעד אחד.' },
+        say: { en: 'Keep the cells close: start each one on the root nearest the last note, so the whole line stays in one comfortable register.', he: 'משאירים את התאים קרובים: מתחילים כל אחד על השורש הקרוב לצליל האחרון, כך שהקו נשאר במנעד אחד.' },
       },
       {
         say: { en: 'A common mistake is to rush the last bar. C major 7 is home: hold it, and let the band arrive with you.', he: 'טעות נפוצה היא למהר בתיבה האחרונה. Cmaj7 הוא הבית: החזיקו אותו, ותנו ללהקה להגיע איתכם.' },
@@ -287,10 +287,10 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'Ballad comping', he: 'ליווי בלדה' },
-    takeaway: { en: 'Slow tempo, full sound: the left hand plays a 10th or a shell, the right hand four notes (3, 5, 7, 9) above it.', he: 'טמפו איטי, צליל מלא: יד שמאל מנגנת דצימה או קונכייה, יד ימין ארבעה צלילים (3, 5, 7, 9) מעליה.' },
+    takeaway: { en: 'Slow tempo, full sound: the left hand plays a 10th or a shell, the right hand four notes (3, 5, 7, 9) above it.', he: 'טמפו איטי, צליל מלא: יד שמאל מנגנת דצימה או שלד, יד ימין ארבעה צלילים (3, 5, 7, 9) מעליה.' },
     steps: [
       {
-        say: { en: 'Hi {name}! A ballad has room. The left hand plays the root and the tenth; the right hand a rootless chord above middle C.', he: 'היי {name}! בבלדה יש מקום. יד שמאל מנגנת יסוד ודצימה; יד ימין אקורד בלי יסוד מעל דו האמצעי.' },
+        say: { en: 'Hi {name}! A ballad has room. The left hand plays the root and the tenth; the right hand a rootless chord above middle C.', he: 'היי {name}! בבלדה יש מקום. יד שמאל מנגנת שורש ודצימה; יד ימין אקורד בלי שורש מעל דו האמצעי.' },
         play: [chord([36, 52, 64, 67, 71, 74], 2)],
         show: { notes: [36, 52, 64, 67, 71, 74], chord: true, text: { en: 'LH 1–10 · RH 3-5-7-9', he: 'שמאל 1–10 · ימין 3-5-7-9' } },
       },
@@ -299,14 +299,14 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([36, 52, 64, 67, 71, 74], 1.4), chord([45, 60, 64, 67, 72, 74], 1.4)],
       },
       {
-        say: { en: 'With two chords a bar, a shell in the left hand is lighter: the root and the seventh, the right hand on top.', he: 'עם שני אקורדים בתיבה, קונכייה ביד שמאל קלה יותר: היסוד והספטימה, ויד ימין מעליהן.' },
+        say: { en: 'With two chords a bar, a shell in the left hand is lighter: the root and the seventh, the right hand on top.', he: 'עם שני אקורדים בתיבה, שלד ביד שמאל קל יותר: השורש והספטימה, ויד ימין מעליהן.' },
         play: [chord([38, 48, 65, 69, 72, 76], 1.2), chord([43, 53, 65, 69, 71, 76], 1.2)],
       },
       {
         say: { en: 'Play both hands exactly together, softly, and let each chord ring for its full length before the next one.', he: 'מנגנים את שתי הידיים בדיוק יחד, ונותנים לכל אקורד להישמע לכל אורכו.' },
       },
       {
-        say: { en: 'Your turn: a ballad progression in tenths, then in shells with two chords a bar. Guitarists play it in drop 2.', he: 'תורכם: מהלך בלדה בדצימות, ואז בקונכיות עם שני אקורדים בתיבה. גיטריסטים מנגנים אותו בדרופ 2.' },
+        say: { en: 'Your turn: a ballad progression in tenths, then in shells with two chords a bar. Guitarists play it in drop 2.', he: 'תורכם: מהלך בלדה בדצימות, ואז בשלדים עם שני אקורדים בתיבה. גיטריסטים מנגנים אותו בדרופ 2.' },
       },
     ],
     more: [
@@ -315,7 +315,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord(C6, 1.6)],
       },
       {
-        say: { en: 'A tenth is a stretch. If your hand is small, roll it quickly from the bottom, or play the root and the seventh.', he: 'דצימה היא מתיחה. אם היד קטנה, פורטים אותה מהר מלמטה, או מנגנים יסוד וספטימה.' },
+        say: { en: 'A tenth is a stretch. If your hand is small, roll it quickly from the bottom, or play the root and the seventh.', he: 'דצימה היא מתיחה. אם היד קטנה, פורטים אותה מהר מלמטה, או מנגנים שורש וספטימה.' },
         play: [notes([36, 52], 0.12), chord([64, 67, 71, 74], 1.2)],
       },
       {

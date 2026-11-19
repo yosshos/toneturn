@@ -94,9 +94,9 @@ export function kmItem(kind: string, option: number, A: number): KMItem {
     case 'km-dim':
       return { chords: dimMove(key, B).chords, to: mod12(B), name: t(`I6 → °7 → V7 → I6, ${mv.en}`, `I6 → °7 → V7 → I6, ${mv.he}`) };
     case 'km-dim251':
-      return { chords: dimMove(key, B, { start: 'iiVI' }).chords, to: mod12(B), name: t(`ii–V–I, then the diminished, ${mv.en}`, `ii–V–I, ואז הדימיניש, ${mv.he}`) };
+      return { chords: dimMove(key, B, { start: 'iiVI' }).chords, to: mod12(B), name: t(`ii–V–I, then the diminished, ${mv.en}`, `ii–V–I, ואז המוקטן, ${mv.he}`) };
     case 'km-dimall':
-      return { chords: dimMove(key, B).chords, to: mod12(B), name: t(`Through the diminished, ${mv.en}`, `דרך הדימיניש, ${mv.he}`) };
+      return { chords: dimMove(key, B).chords, to: mod12(B), name: t(`Through the diminished, ${mv.en}`, `דרך המוקטן, ${mv.he}`) };
     case 'km-dimb9':
       return { chords: dimMove(key, B, { b9: true }).chords, to: mod12(B), name: t(`°7 raised to 7♭9, ${mv.en}`, `°7 מורם ל־7♭9, ${mv.he}`) };
     case 'km-line':
@@ -364,7 +364,7 @@ export function generateBassKeyMove(s: DrillSpec, tu: Tuning): Drill {
   const sevenths = s.kind === 'km-turn' && (s.option ?? 0) === 3;
   const line = bassLineOf(tu, it.chords, two, sevenths);
   const en = two ? `${it.name.en}, in two` : sevenths ? `${it.name.en}, roots and 7ths` : it.name.en;
-  const he = two ? `${it.name.he}, בשתיים` : sevenths ? `${it.name.he}, יסודות וספטימות` : it.name.he;
+  const he = two ? `${it.name.he}, בשתיים` : sevenths ? `${it.name.he}, שורשים וספטימות` : it.name.he;
   return drillOf(s, tu, alt(line), { en, he, keyName: keysTitle(A, it), chart: kmChart(it.chords), keySig: SIGS[A], evenness: !two });
 }
 
@@ -376,15 +376,15 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 
 /** The levels, shared: [kind, options, en, he]. Order = path order (turnarounds and the bridge first, the 6-dim line last). */
 const LEVELS: { kinds: [string, number[]][]; en: string; he: string }[] = [
-  { kinds: [['km-turn', [0, 1]]], en: 'Turnarounds: I–VI7–ii–V and the passing diminished', he: 'טרנאראונדים: I–VI7–ii–V והדימיניש העובר' },
+  { kinds: [['km-turn', [0, 1]]], en: 'Turnarounds: I–VI7–ii–V and the passing diminished', he: 'טרנאראונדים: I–VI7–ii–V והמוקטן העובר' },
   { kinds: [['km-turn', [2, 3]]], en: 'The tritone turnaround and the Ladybird', he: 'טרנאראונד הטריטון והלידיבירד' },
   { kinds: [['km-bridge', [0, 1]]], en: 'Rhythm-changes bridge: III7–VI7–II7–V7', he: 'הגשר של ריתם צ׳יינג׳ס: III7–VI7–II7–V7' },
   { kinds: [['km-direct', range(4)]], en: 'Direct key changes and the pop lift', he: 'מעבר סולם ישיר וההרמה הפופית' },
   { kinds: [['km-iiv', range(6)]], en: 'A ii–V into the new key', he: 'ii–V אל הסולם החדש' },
   { kinds: [['km-pivot', range(4)]], en: 'Pivot chords: a chord both keys share', he: 'אקורד ציר: אקורד ששני הסולמות חולקים' },
-  { kinds: [['km-dim', range(3)]], en: 'One diminished, four keys: I6, °7, V7, I6', he: 'דימיניש אחד, ארבעה סולמות: I6, ‏°7, ‏V7, ‏I6' },
-  { kinds: [['km-dim251', range(3)]], en: 'From a ii–V–I through the common diminished', he: 'מ־ii–V–I דרך הדימיניש המשותף' },
-  { kinds: [['km-dimall', range(8)]], en: 'The other two diminished chords: every key', he: 'שני הדימינישים האחרים: כל הסולמות' },
+  { kinds: [['km-dim', range(3)]], en: 'One diminished, four keys: I6, °7, V7, I6', he: 'מוקטן אחד, ארבעה סולמות: I6, ‏°7, ‏V7, ‏I6' },
+  { kinds: [['km-dim251', range(3)]], en: 'From a ii–V–I through the common diminished', he: 'מ־ii–V–I דרך המוקטן המשותף' },
+  { kinds: [['km-dimall', range(8)]], en: 'The other two diminished chords: every key', he: 'שני המוקטנים האחרים: כל הסולמות' },
   { kinds: [['km-dimb9', range(5)]], en: 'Raise one note a whole step: the 7♭9', he: 'מעלים צליל אחד בטון: ה־7♭9' },
   { kinds: [['km-tritone', range(4)]], en: 'A tritone sub into the new key', he: 'תחליף טריטון אל הסולם החדש' },
   { kinds: [['km-line', range(5)]], en: '6th-diminished lines from key to key', he: 'קווי שש-מוקטן מסולם לסולם' },

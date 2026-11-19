@@ -176,7 +176,7 @@ export const LEAD_ITEMS: LeadItem[] = [
   /* 22 */ { leads: ['enc-step', 'enc-ab'], ctx: '251', tgt: 3 },
   /* 23 */ { leads: ['enc-step', 'enc-ba', 'enc-bebop'], ctx: 'm251', tgt: 'guide' },
 ];
-const TGT_NAME: T2[] = [t('roots', 'יסודות'), t('3rds', 'טרצות'), t('5ths', 'קווינטות'), t('7ths', 'ספטימות'), t('3rds and 7ths', 'טרצות וספטימות')];
+const TGT_NAME: T2[] = [t('roots', 'שורשים'), t('3rds', 'טרצות'), t('5ths', 'קווינטות'), t('7ths', 'ספטימות'), t('3rds and 7ths', 'טרצות וספטימות')];
 const joinT = (xs: T2[], en: string, he: string): T2 => t(xs.map((x) => x.en).join(en), xs.map((x) => x.he).join(he));
 /** The item's name (no key). */
 export function leadItemName(it: LeadItem): T2 {
@@ -504,9 +504,9 @@ export const TIME_ITEMS: { what: 'scale' | 'arp' | 'line' | 'comp'; click: '24' 
   { what: 'line', click: '24', name: t('ii–V–I line, click on 2 and 4', 'קו ii–V–I, קליק על 2 ו-4') },
   { what: 'line', click: 'gap', name: t('ii–V–I line, the click drops out every 4th bar', 'קו ii–V–I, הקליק נעלם כל תיבה רביעית') },
   { what: 'line', click: 'and', name: t('ii–V–I line, click on the "and"', 'קו ii–V–I, קליק על ה"וְ"') },
-  { what: 'comp', click: '24', name: t('Shells in the Charleston rhythm, click on 2 and 4', 'קונכיות במקצב צ׳רלסטון, קליק על 2 ו-4') },
-  { what: 'comp', click: 'gap', name: t('Shells four to the bar, the click drops out every 4th bar', 'קונכיות ארבע לתיבה, הקליק נעלם כל תיבה רביעית') },
-  { what: 'comp', click: 'and', name: t('Shells in half notes, click on the "and"', 'קונכיות בחצאים, קליק על ה"וְ"') },
+  { what: 'comp', click: '24', name: t('Shells in the Charleston rhythm, click on 2 and 4', 'שלדים במקצב צ׳רלסטון, קליק על 2 ו-4') },
+  { what: 'comp', click: 'gap', name: t('Shells four to the bar, the click drops out every 4th bar', 'שלדים ארבע לתיבה, הקליק נעלם כל תיבה רביעית') },
+  { what: 'comp', click: 'and', name: t('Shells in half notes, click on the "and"', 'שלדים בחצאים, קליק על ה"וְ"') },
 ];
 /** The gap click of the time levels: three bars with the click, one bar silent. */
 export const TIME_GAP: [number, number] = [3, 1];

@@ -78,7 +78,7 @@ for (const lang of ['en', 'he'] as const) {
     // The first try (chips picked blindly) is wrong somewhere: the fix-it pass opens on the wrong slots only.
     await expect(page.locator('.feedback.retry')).toBeVisible({ timeout: 15_000 });
     const fb = (await page.locator('.feedback .fb-line b').textContent()) ?? '';
-    expect(fb).toMatch(lang === 'he' ? /יסודות/ : /Roots/);
+    expect(fb).toMatch(lang === 'he' ? /שורשים/ : /Roots/);
     await expect(page.locator('.gd-cell.fix').first()).toBeVisible();
     const fixP = await problems(page);
     if (fixP.length) await page.screenshot({ path: `test-results/grid-fix-${lang}.png`, fullPage: true });

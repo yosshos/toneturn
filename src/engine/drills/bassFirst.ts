@@ -83,7 +83,7 @@ function genBassFirst(s: DrillSpec, tu: Tuning): Drill {
         for (let k = 0; k < 4 / per; k++) evs.push({ beat: bar * 4 + k * per, dur: per, notes: [{ ...g, stroke: alt(k) }] });
       });
       evs.push({ beat: 32, dur: 4, notes: [{ ...rootPlace(tu, key), stroke: 'i' }] });
-      const d = finish(s, tu, evs, { title: t(`Roots on the E and A strings: I–IV–V–I in ${per === 1 ? 'quarters' : 'halves'} · ${NAMES[key]}`, `יסודות על מיתרי מי ולה: I–IV–V–I ב${per === 1 ? 'רבעים' : 'חצאים'} · ${NAMES[key]}`), bpm: 60, evenness: true, keySig: SIG[key] });
+      const d = finish(s, tu, evs, { title: t(`Roots on the E and A strings: I–IV–V–I in ${per === 1 ? 'quarters' : 'halves'} · ${NAMES[key]}`, `שורשים על מיתרי מי ולה: I–IV–V–I ב${per === 1 ? 'רבעים' : 'חצאים'} · ${NAMES[key]}`), bpm: 60, evenness: true, keySig: SIG[key] });
       return { ...d, chart: [...ROOTS_PROG.map((x) => `${NAMES[mod(key + MAJ[x], 12)]}`), NAMES[key]] };
     }
     case 'bf-riff': {
@@ -97,7 +97,7 @@ function genBassFirst(s: DrillSpec, tu: Tuning): Drill {
       ];
       for (let rep = 0; rep < 2; rep++) BARS[op % 2].forEach(([b, len, g], i) => evs.push({ beat: rep * 8 + b, dur: len, notes: [{ ...g, stroke: alt(i), ...(b % 4 === 0 ? { acc: true } : {}) }] }));
       evs.push({ beat: 16, dur: 2, notes: [{ ...R, stroke: 'i' }] });
-      return finish(s, tu, evs, { title: t(`A first riff: root and 5th, ${op % 2 ? 'in 8ths' : 'with a push'} · ${NAMES[key]}`, `ריף ראשון: יסוד וקווינטה, ${op % 2 ? 'בשמיניות' : 'עם דחיפה'} · ${NAMES[key]}`), bpm: 72, evenness: true, keySig: SIG[mod(key + 3, 12)] });
+      return finish(s, tu, evs, { title: t(`A first riff: root and 5th, ${op % 2 ? 'in 8ths' : 'with a push'} · ${NAMES[key]}`, `ריף ראשון: שורש וקווינטה, ${op % 2 ? 'בשמיניות' : 'עם דחיפה'} · ${NAMES[key]}`), bpm: 72, evenness: true, keySig: SIG[mod(key + 3, 12)] });
     }
     case 'bf-tab': {
       const r = seeded(`b-first:tab:${op}`);
@@ -142,8 +142,8 @@ export function bassFirstFamily(): GuitarFamilyDef {
       L(2, 'Tuning check: every open string in tune', 'בדיקת כיוון: כל מיתר פתוח מכוון', [P('bf-tune'), P('bf-tune', { option: 1 })], [0], [60, 60], 'in tune ±15 cents'),
       L(3, 'Plucking alternation: i and m', 'החלפת אצבעות בפריטה: i ו־m', [0, 1, 2].map((o) => P('bf-alt', { option: o, perBeat: 2 })), [0], [60, 90], '8ths'),
       L(4, 'Open strings in time', 'מיתרים פתוחים בזמן', [0, 1, 2].map((o) => P('bf-open', { option: o })), [0], [60, 100], 'quarters'),
-      L(5, 'Root notes on the E and A strings', 'יסודות על מיתרי מי ולה', [P('bf-roots'), P('bf-roots', { option: 1 })], BASS_FIRST_KEYS, [60, 96], 'halves → quarters'),
-      L(6, 'A first riff: root and 5th', 'ריף ראשון: יסוד וקווינטה', [P('bf-riff'), P('bf-riff', { option: 1 })], BASS_FIRST_KEYS, [70, 100], '8ths'),
+      L(5, 'Root notes on the E and A strings', 'שורשים על מיתרי מי ולה', [P('bf-roots'), P('bf-roots', { option: 1 })], BASS_FIRST_KEYS, [60, 96], 'halves → quarters'),
+      L(6, 'A first riff: root and 5th', 'ריף ראשון: שורש וקווינטה', [P('bf-riff'), P('bf-riff', { option: 1 })], BASS_FIRST_KEYS, [70, 100], '8ths'),
       L(7, 'Reading bass TAB', 'קריאת טאבים לבס', [0, 1, 2, 3].map((o) => P('bf-tab', { option: o })), [0], [60, 92], 'quarters / 8ths'),
       L(8, 'Reading rhythm from the staff', 'קריאת קצב מהחמשה', [0, 1, 2, 3].map((o) => P('bf-rhythm', { option: o })), [0], [60, 96], 'quarters / 8ths / rests'),
     ],

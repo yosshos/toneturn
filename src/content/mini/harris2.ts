@@ -21,14 +21,14 @@ export const LESSONS: MiniLesson[] = [
     id: 'bh-three-dim',
     area: 'jazz',
     emoji: '°',
-    title: { en: 'Three diminished chords, one 6th chord', he: 'שלושה דימינישים, אקורד 6 אחד' },
+    title: { en: 'Three diminished chords, one 6th chord', he: 'שלושה מוקטנים, אקורד 6 אחד' },
     takeaway: {
       en: 'There are only three diminished 7th chords. A 6th chord touches two of them; the third shares no note with it and is the scale’s own diminished: C6 or Cm6 + B°7 = the 6th-diminished scale, and B°7 = G7♭9 without its root.',
-      he: 'יש רק שלושה אקורדי דימיניש. אקורד 6 נוגע בשניים מהם; השלישי לא חולק איתו אף צליל, והוא הדימיניש של הסולם: C6 או Cm6 + B°7 = סולם 6־דימיניש, ו־B°7 = G7♭9 בלי היסוד.',
+      he: 'יש רק שלושה אקורדי מוקטן. אקורד 6 נוגע בשניים מהם; השלישי לא חולק איתו אף צליל, והוא המוקטן של הסולם: C6 או Cm6 + B°7 = סולם 6־מוקטן, ו־B°7 = G7♭9 בלי השורש.',
     },
     steps: [
       {
-        say: { en: 'There are only three diminished 7th chords. Every other one repeats the notes of one of these.', he: 'יש רק שלושה אקורדי דימיניש. כל אחד אחר חוזר על הצלילים של אחד מהם.' },
+        say: { en: 'There are only three diminished 7th chords. Every other one repeats the notes of one of these.', he: 'יש רק שלושה אקורדי מוקטן. כל אחד אחר חוזר על הצלילים של אחד מהם.' },
         play: [chord([60, 63, 66, 69], 1), chord([61, 64, 67, 70], 1), chord([62, 65, 68, 71], 1.3)],
         show: { text: { en: 'C°7 · C♯°7 · D°7', he: 'C°7 · C♯°7 · D°7' } },
       },
@@ -38,41 +38,41 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'C6 + B°7: no shared note', he: 'C6 + B°7: אין צליל משותף' } },
       },
       {
-        say: { en: 'That one is the scale’s own diminished. C6 and B°7 together make the 6th-diminished scale, and B°7 is G7♭9 without its root: the dominant.', he: 'הוא הדימיניש של הסולם. C6 ו־B°7 יחד הם סולם 6־דימיניש, ו־B°7 הוא G7♭9 בלי היסוד: הדומיננטה.' },
+        say: { en: 'That one is the scale’s own diminished. C6 and B°7 together make the 6th-diminished scale, and B°7 is G7♭9 without its root: the dominant.', he: 'הוא המוקטן של הסולם. C6 ו־B°7 יחד הם סולם 6־מוקטן, ו־B°7 הוא G7♭9 בלי השורש: הדומיננטה.' },
         play: [notes(SCALE, 0.26)],
         show: { notes: SCALE, key: 'C', text: { en: '1 2 3 4 5 ♭6 6 7', he: '1 2 3 4 5 ♭6 6 7' } },
       },
       {
-        say: { en: 'The other two make the 6th chord. Raise E♭ and G♭ of C°7, and it is C6. Raise only the G♭, and it is Cm6: the root sits a 4th above the raised note.', he: 'שני האחרים בונים את אקורד ה־6. מרימים את מי במול ואת סול במול של C°7, ומקבלים C6. מרימים רק את סול במול, ומקבלים Cm6: היסוד יושב קוורטה מעל הצליל שהורם.' },
+        say: { en: 'The other two make the 6th chord. Raise E♭ and G♭ of C°7, and it is C6. Raise only the G♭, and it is Cm6: the root sits a 4th above the raised note.', he: 'שני האחרים בונים את אקורד ה־6. מרימים את מי במול ואת סול במול של C°7, ומקבלים C6. מרימים רק את סול במול, ומקבלים Cm6: השורש יושב קוורטה מעל הצליל שהורם.' },
         play: [chord([60, 63, 66, 69], 0.9), chord(C6, 1.1), rest(), chord([60, 63, 66, 69], 0.9), chord(Cm6, 1.2)],
         show: { text: { en: 'C°7 → C6 · C°7 → Cm6', he: 'C°7 → C6 · C°7 → Cm6' } },
       },
       {
-        say: { en: 'The minor 6th keeps the same partner: Cm6 and B°7 make the minor 6th-diminished scale. Your turn.', he: 'למינור 6 יש אותו בן זוג: Cm6 ו־B°7 הם סולם מינור 6־דימיניש. תורכם.' },
+        say: { en: 'The minor 6th keeps the same partner: Cm6 and B°7 make the minor 6th-diminished scale. Your turn.', he: 'למינור 6 יש אותו בן זוג: Cm6 ו־B°7 הם סולם מינור 6־מוקטן. תורכם.' },
         play: [chord(Cm6, 1), chord(B7, 1.3)],
         show: { text: { en: 'Cm6 + B°7', he: 'Cm6 + B°7' } },
       },
     ],
     more: [
       {
-        say: { en: 'Why only three? A diminished 7th chord splits the octave into four minor 3rds. Move it up a minor 3rd and you get the same four notes again, so only three starting notes give new chords: C, C♯ and D.', he: 'למה רק שלושה? אקורד דימיניש מחלק את האוקטבה לארבע טרצות קטנות. מזיזים אותו טרצה קטנה למעלה ומקבלים שוב את אותם ארבעה צלילים, ולכן רק שלושה צלילי פתיחה נותנים אקורדים חדשים: דו, דו דיאז ורה.' },
+        say: { en: 'Why only three? A diminished 7th chord splits the octave into four minor 3rds. Move it up a minor 3rd and you get the same four notes again, so only three starting notes give new chords: C, C♯ and D.', he: 'למה רק שלושה? אקורד מוקטן מחלק את האוקטבה לארבע טרצות קטנות. מזיזים אותו טרצה קטנה למעלה ומקבלים שוב את אותם ארבעה צלילים, ולכן רק שלושה צלילי פתיחה נותנים אקורדים חדשים: דו, דו דיאז ורה.' },
         play: [chord([60, 63, 66, 69], 0.9), chord([63, 66, 69, 72], 0.9), chord([66, 69, 72, 75], 1.2)],
       },
       {
-        say: { en: 'The partner is always the diminished on the 7th degree, for any 6th chord: F6 takes E°7, B♭6 takes A°7, Gm6 takes F♯°7.', he: 'בן הזוג הוא תמיד הדימיניש שעל הדרגה השביעית, לכל אקורד 6: F6 מקבל E°7, ‏B♭6 מקבל A°7, ‏Gm6 מקבל F♯°7.' },
+        say: { en: 'The partner is always the diminished on the 7th degree, for any 6th chord: F6 takes E°7, B♭6 takes A°7, Gm6 takes F♯°7.', he: 'בן הזוג הוא תמיד המוקטן שעל הדרגה השביעית, לכל אקורד 6: F6 מקבל E°7, ‏B♭6 מקבל A°7, ‏Gm6 מקבל F♯°7.' },
         play: [chord([65, 69, 72, 74], 1), chord([64, 67, 70, 73], 1.3)],
         show: { text: { en: 'F6 + E°7', he: 'F6 + E°7' } },
       },
       {
-        say: { en: 'Because the two share no note, every note of the scale belongs to exactly one of them. That is what lets Barry harmonise any melody note: 1, 3, 5 and 6 take the 6th chord, the notes between take the diminished.', he: 'מכיוון שאין להם צליל משותף, כל צליל בסולם שייך בדיוק לאחד מהם. זה מה שמאפשר לבארי להרמן כל צליל מנגינה: 1, ‏3, ‏5 ו־6 מקבלים את אקורד ה־6, הצלילים שביניהם את הדימיניש.' },
+        say: { en: 'Because the two share no note, every note of the scale belongs to exactly one of them. That is what lets Barry harmonise any melody note: 1, 3, 5 and 6 take the 6th chord, the notes between take the diminished.', he: 'מכיוון שאין להם צליל משותף, כל צליל בסולם שייך בדיוק לאחד מהם. זה מה שמאפשר לבארי להרמן כל צליל מנגינה: 1, ‏3, ‏5 ו־6 מקבלים את אקורד ה־6, הצלילים שביניהם את המוקטן.' },
       },
       {
-        say: { en: 'Two diminished chords together, C°7 and C♯°7, do not make the 6th-diminished scale. They make the half-whole diminished scale: eight notes with no tonic chord inside. That is where the two are easily confused.', he: 'שני דימינישים יחד, C°7 ו־C♯°7, לא בונים את סולם 6־דימיניש. הם בונים את הסולם המוקטן חצי־שלם: שמונה צלילים בלי אקורד טוניקה בפנים. כאן קל להתבלבל בין השניים.' },
+        say: { en: 'Two diminished chords together, C°7 and C♯°7, do not make the 6th-diminished scale. They make the half-whole diminished scale: eight notes with no tonic chord inside. That is where the two are easily confused.', he: 'שני מוקטנים יחד, C°7 ו־C♯°7, לא בונים את סולם 6־מוקטן. הם בונים את הסולם המוקטן חצי־שלם: שמונה צלילים בלי אקורד טוניקה בפנים. כאן קל להתבלבל בין השניים.' },
         play: [notes([60, 61, 63, 64, 66, 67, 69, 70, 72], 0.26)],
         show: { text: { en: '1 ♭2 ♭3 3 ♯4 5 6 ♭7', he: '1 ♭2 ♭3 3 ♯4 5 6 ♭7' } },
       },
       {
-        say: { en: 'Recap: the 6th chord touches two diminished chords and grows from them; the third is its partner, the dominant of the scale.', he: 'לסיכום: אקורד ה־6 נוגע בשני דימינישים ונוצר מהם; השלישי הוא בן הזוג שלו, הדומיננטה של הסולם.' },
+        say: { en: 'Recap: the 6th chord touches two diminished chords and grows from them; the third is its partner, the dominant of the scale.', he: 'לסיכום: אקורד ה־6 נוגע בשני מוקטנים ונוצר מהם; השלישי הוא בן הזוג שלו, הדומיננטה של הסולם.' },
       },
     ],
   },
@@ -80,14 +80,14 @@ export const LESSONS: MiniLesson[] = [
     id: 'bh-dim-roles',
     area: 'jazz',
     emoji: '♯',
-    title: { en: 'The diminished: passing, auxiliary, dominant', he: 'הדימיניש: עובר, עזר, דומיננטי' },
+    title: { en: 'The diminished: passing, auxiliary, dominant', he: 'המוקטן: עובר, עזר, דומיננטי' },
     takeaway: {
       en: 'Passing: the bass moves by half steps into a new chord (I6–♯I°7–ii7, I6/3–♭III°7–ii7). Auxiliary: the bass holds and the chord comes back (C6–C°7–C6; over a C bass ♯IV°7 has the same notes). Dominant: vii°7 stands for V and goes home.',
       he: 'עובר: הבס זז בחצאי טונים אל אקורד חדש (I6–♯I°7–ii7, ‏I6/3–♭III°7–ii7). עזר: הבס נשאר והאקורד חוזר (C6–C°7–C6; מעל בס דו ל־♯IV°7 יש אותם צלילים). דומיננטי: vii°7 במקום V, והביתה.',
     },
     steps: [
       {
-        say: { en: 'The bass climbs by half steps: C6, C♯°7, Dm7. The diminished passes between two chords a whole step apart.', he: 'הבס עולה בחצאי טונים: C6, ‏C♯°7, ‏Dm7. הדימיניש עובר בין שני אקורדים שרחוקים טון זה מזה.' },
+        say: { en: 'The bass climbs by half steps: C6, C♯°7, Dm7. The diminished passes between two chords a whole step apart.', he: 'הבס עולה בחצאי טונים: C6, ‏C♯°7, ‏Dm7. המוקטן עובר בין שני אקורדים שרחוקים טון זה מזה.' },
         play: [P(['I6', 'sI', 'ii7'])],
         show: { text: { en: 'I6 – ♯I°7 – ii7', he: 'I6 – ♯I°7 – ii7' } },
       },
@@ -97,12 +97,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'ii7 – ♯ii°7 – I6/3 · I6/3 – ♭III°7 – ii7', he: 'ii7 – ♯ii°7 – I6/3 · I6/3 – ♭III°7 – ii7' } },
       },
       {
-        say: { en: 'Auxiliary: the bass holds C, the chord leaves and comes back. C6, C°7, C6: the root and the 6th stay, the 3rd and the 5th dip a half step. Over the C bass, F♯°7 — ♯IV°7 — has the same notes.', he: 'עזר: הבס נשאר על דו, האקורד יוצא וחוזר. C6, ‏C°7, ‏C6: היסוד והסקסטה נשארים, הטרצה והקווינטה יורדות חצי טון. מעל בס דו, ל־F♯°7 — ‏♯IV°7 — יש אותם צלילים.' },
+        say: { en: 'Auxiliary: the bass holds C, the chord leaves and comes back. C6, C°7, C6: the root and the 6th stay, the 3rd and the 5th dip a half step. Over the C bass, F♯°7 — ♯IV°7 — has the same notes.', he: 'עזר: הבס נשאר על דו, האקורד יוצא וחוזר. C6, ‏C°7, ‏C6: השורש והסקסטה נשארים, הטרצה והקווינטה יורדות חצי טון. מעל בס דו, ל־F♯°7 — ‏♯IV°7 — יש אותם צלילים.' },
         play: [P(['I6', 'Idim', 'I6'])],
         show: { text: { en: 'C6 – C°7 – C6', he: 'C6 – C°7 – C6' } },
       },
       {
-        say: { en: 'Dominant: B°7 is G7♭9 without its root. It stands for V and goes home.', he: 'דומיננטי: B°7 הוא G7♭9 בלי היסוד. הוא עומד במקום V והולך הביתה.' },
+        say: { en: 'Dominant: B°7 is G7♭9 without its root. It stands for V and goes home.', he: 'דומיננטי: B°7 הוא G7♭9 בלי השורש. הוא עומד במקום V והולך הביתה.' },
         play: [P(['ii7', 'vii', 'I6'])],
         show: { text: { en: 'ii7 – vii°7 – I6', he: 'ii7 – vii°7 – I6' } },
       },
@@ -113,10 +113,10 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A passing diminished also resolves up a half step, like a leading note: C♯°7 is the vii°7 of Dm7. What makes it passing is the chromatic bass between two chords.', he: 'גם דימיניש עובר נפתר חצי טון למעלה, כמו צליל מוביל: C♯°7 הוא ה־vii°7 של Dm7. מה שהופך אותו לעובר הוא הבס הכרומטי בין שני אקורדים.' },
+        say: { en: 'A passing diminished also resolves up a half step, like a leading note: C♯°7 is the vii°7 of Dm7. What makes it passing is the chromatic bass between two chords.', he: 'גם מוקטן עובר נפתר חצי טון למעלה, כמו צליל מוביל: C♯°7 הוא ה־vii°7 של Dm7. מה שהופך אותו לעובר הוא הבס הכרומטי בין שני אקורדים.' },
       },
       {
-        say: { en: 'The third passage of the scale: F6, F♯°7, C6 over G. Coming down, G, G♭, F: the same diminished from above.', he: 'המעבר השלישי בסולם: F6, ‏F♯°7, ‏C6 מעל סול. בירידה, סול, סול במול, פה: אותו דימיניש מלמעלה.' },
+        say: { en: 'The third passage of the scale: F6, F♯°7, C6 over G. Coming down, G, G♭, F: the same diminished from above.', he: 'המעבר השלישי בסולם: F6, ‏F♯°7, ‏C6 מעל סול. בירידה, סול, סול במול, פה: אותו מוקטן מלמעלה.' },
         play: [P(['IV6', 'sIV', 'I6_5']), rest(0.5), P(['I6_5', 'sIV', 'IV6'])],
         show: { text: { en: 'IV6 – ♯IV°7 – I6/5', he: 'IV6 – ♯IV°7 – I6/5' } },
       },
@@ -125,10 +125,10 @@ export const LESSONS: MiniLesson[] = [
         play: [P(['IV6', 'IVdim', 'IV6'])],
       },
       {
-        say: { en: 'How to tell them apart in a tune: follow the bass. A chromatic step into a new chord means passing; a held bass under a chord that leaves and returns means auxiliary; a diminished after a pre-dominant, going straight home, is the dominant.', he: 'איך מבחינים ביניהם בשיר: עוקבים אחרי הבס. צעד כרומטי אל אקורד חדש — עובר; בס מוחזק מתחת לאקורד שיוצא וחוזר — עזר; דימיניש אחרי סובדומיננטה, שהולך ישר הביתה — דומיננטי.' },
+        say: { en: 'How to tell them apart in a tune: follow the bass. A chromatic step into a new chord means passing; a held bass under a chord that leaves and returns means auxiliary; a diminished after a pre-dominant, going straight home, is the dominant.', he: 'איך מבחינים ביניהם בשיר: עוקבים אחרי הבס. צעד כרומטי אל אקורד חדש — עובר; בס מוחזק מתחת לאקורד שיוצא וחוזר — עזר; מוקטן אחרי סובדומיננטה, שהולך ישר הביתה — דומיננטי.' },
       },
       {
-        say: { en: 'A common mistake is to call every diminished a dominant. Play the bass alone first: if it walks by half steps, or sits still, the diminished is decorating, not resolving the key.', he: 'טעות נפוצה היא לקרוא לכל דימיניש דומיננטה. מנגנים קודם רק את הבס: אם הוא הולך בחצאי טונים, או עומד במקום, הדימיניש מקשט ולא פותר את הסולם.' },
+        say: { en: 'A common mistake is to call every diminished a dominant. Play the bass alone first: if it walks by half steps, or sits still, the diminished is decorating, not resolving the key.', he: 'טעות נפוצה היא לקרוא לכל מוקטן דומיננטה. מנגנים קודם רק את הבס: אם הוא הולך בחצאי טונים, או עומד במקום, המוקטן מקשט ולא פותר את הסולם.' },
       },
       {
         say: { en: 'On the keys these passages are k-sixdim 5; the auxiliary with its two common tones held is k-sixdim 11.', he: 'בקלידים המעברים האלה הם k-sixdim 5; העזר, עם שני הצלילים המשותפים מוחזקים, הוא k-sixdim 11.' },
@@ -142,16 +142,16 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Chords move to chords', he: 'אקורדים זזים לאקורדים' },
     takeaway: {
       en: 'Every 6th chord has a diminished neighbour on each side in the 6th-diminished scale: all four voices step to it and back (C6 → D F A♭ B → C6 → B D F A♭ → C6), from every inversion, with the bass moving too.',
-      he: 'לכל אקורד 6 יש שכן דימיניש מכל צד בסולם 6־דימיניש: כל ארבעת הקולות צועדים אליו וחוזרים (C6 → D F A♭ B → C6 → B D F A♭ → C6), מכל היפוך, וגם הבס זז.',
+      he: 'לכל אקורד 6 יש שכן מוקטן מכל צד בסולם 6־מוקטן: כל ארבעת הקולות צועדים אליו וחוזרים (C6 → D F A♭ B → C6 → B D F A♭ → C6), מכל היפוך, וגם הבס זז.',
     },
     steps: [
       {
-        say: { en: 'Barry Harris liked to say that chords move to chords. A 6th chord steps up to the diminished, and back.', he: 'בארי האריס אהב לומר שאקורדים זזים לאקורדים. אקורד 6 צועד למעלה אל הדימיניש, וחוזר.' },
+        say: { en: 'Barry Harris liked to say that chords move to chords. A 6th chord steps up to the diminished, and back.', he: 'בארי האריס אהב לומר שאקורדים זזים לאקורדים. אקורד 6 צועד למעלה אל המוקטן, וחוזר.' },
         play: [chord(C6, 0.8), chord([62, 65, 68, 71], 0.8), chord(C6, 1.2)],
         show: { text: { en: 'C6 → °7 → C6', he: 'C6 → °7 → C6' } },
       },
       {
-        say: { en: 'And down to the diminished below, and back. Every voice moves by step inside the scale; no voice leaps.', he: 'ולמטה אל הדימיניש שמתחת, וחזרה. כל קול זז בצעד בתוך הסולם; אף קול לא קופץ.' },
+        say: { en: 'And down to the diminished below, and back. Every voice moves by step inside the scale; no voice leaps.', he: 'ולמטה אל המוקטן שמתחת, וחזרה. כל קול זז בצעד בתוך הסולם; אף קול לא קופץ.' },
         play: [chord(C6, 0.8), chord(B7, 0.8), chord(C6, 1.2)],
         show: { notes: B7, chord: true, key: 'C' },
       },
@@ -161,7 +161,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E G A C → F A♭ B D', he: 'E G A C → F A♭ B D' } },
       },
       {
-        say: { en: 'In minor the same moves work: Cm6 steps to the same B°7, above and below, because the scale’s diminished does not change.', he: 'במינור אותן תנועות עובדות: Cm6 צועד לאותו B°7, מעל ומתחת, כי הדימיניש של הסולם לא משתנה.' },
+        say: { en: 'In minor the same moves work: Cm6 steps to the same B°7, above and below, because the scale’s diminished does not change.', he: 'במינור אותן תנועות עובדות: Cm6 צועד לאותו B°7, מעל ומתחת, כי המוקטן של הסולם לא משתנה.' },
         play: [chord(Cm6, 0.8), chord([62, 65, 68, 71], 0.8), chord(Cm6, 0.8), chord(B7, 0.8), chord(Cm6, 1.2)],
         show: { text: { en: 'Cm6 → °7 → Cm6', he: 'Cm6 → °7 → Cm6' } },
       },
@@ -172,7 +172,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Why it works: in the 6th-diminished scale the notes of the 6th chord and of the diminished alternate. So the scale step above or below every note of one chord is a note of the other.', he: 'למה זה עובד: בסולם 6־דימיניש הצלילים של אקורד ה־6 ושל הדימיניש מתחלפים. לכן הצעד בסולם מעל או מתחת לכל צליל של אקורד אחד הוא צליל של השני.' },
+        say: { en: 'Why it works: in the 6th-diminished scale the notes of the 6th chord and of the diminished alternate. So the scale step above or below every note of one chord is a note of the other.', he: 'למה זה עובד: בסולם 6־מוקטן הצלילים של אקורד ה־6 ושל המוקטן מתחלפים. לכן הצעד בסולם מעל או מתחת לכל צליל של אקורד אחד הוא צליל של השני.' },
         play: [notes(SCALE, 0.26)],
       },
       {
@@ -183,13 +183,13 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'In a tune every chord can move this way: Dm7 as F6 with its E°7, G7 as Dm6 with its C♯°7, C as C6 with B°7. That is k-sixdim 9 and 10.', he: 'בשיר כל אקורד יכול לזוז כך: Dm7 בתור F6 עם ה־E°7 שלו, ‏G7 בתור Dm6 עם ה־C♯°7 שלו, ‏C בתור C6 עם B°7. אלה k-sixdim 9 ו־10.' },
       },
       {
-        say: { en: 'A common mistake is to move only the top voice and leave the others. Then two voices clash with the diminished. All four go together, every time.', he: 'טעות נפוצה היא להזיז רק את הקול העליון ולהשאיר את האחרים. אז שני קולות מתנגשים עם הדימיניש. כל הארבעה זזים יחד, בכל פעם.' },
+        say: { en: 'A common mistake is to move only the top voice and leave the others. Then two voices clash with the diminished. All four go together, every time.', he: 'טעות נפוצה היא להזיז רק את הקול העליון ולהשאיר את האחרים. אז שני קולות מתנגשים עם המוקטן. כל הארבעה זזים יחד, בכל פעם.' },
       },
       {
         say: { en: 'Practise it slowly first, out of time, until your hand finds each neighbour without looking. Then add the click: one chord a beat, and the bass moving with the lowest voice.', he: 'מתרגלים קודם לאט, בלי קצב, עד שהיד מוצאת כל שכן בלי להסתכל. אחר כך מוסיפים מטרונום: אקורד לפעמה, והבס זז עם הקול הנמוך.' },
       },
       {
-        say: { en: 'Recap: 6th chord, diminished, 6th chord — up and down, from every position, bass included. Small steps, all voices.', he: 'לסיכום: אקורד 6, דימיניש, אקורד 6 — למעלה ולמטה, מכל מצב, כולל הבס. צעדים קטנים, כל הקולות.' },
+        say: { en: 'Recap: 6th chord, diminished, 6th chord — up and down, from every position, bass included. Small steps, all voices.', he: 'לסיכום: אקורד 6, מוקטן, אקורד 6 — למעלה ולמטה, מכל מצב, כולל הבס. צעדים קטנים, כל הקולות.' },
       },
     ],
   },
@@ -200,7 +200,7 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'One minor 6th, three basses', he: 'מינור 6 אחד, שלושה בסים' },
     takeaway: {
       en: 'Cm6 (C E♭ G A) over A is Am7♭5; over F it is F9 — the m6 is the 9 chord without its root (3, 5, ♭7, 9 of F). An m6 on its root, a m7♭5 a minor 3rd below, a 9 chord a 5th below.',
-      he: 'Cm6 (דו מי במול סול לה) מעל לה הוא Am7♭5; מעל פה הוא F9 — ה־m6 הוא אקורד ה־9 בלי היסוד (3, ‏5, ‏♭7, ‏9 של פה). m6 על היסוד, ‏m7♭5 טרצה קטנה מתחת, אקורד 9 קווינטה מתחת.',
+      he: 'Cm6 (דו מי במול סול לה) מעל לה הוא Am7♭5; מעל פה הוא F9 — ה־m6 הוא אקורד ה־9 בלי השורש (3, ‏5, ‏♭7, ‏9 של פה). m6 על השורש, ‏m7♭5 טרצה קטנה מתחת, אקורד 9 קווינטה מתחת.',
     },
     steps: [
       {
@@ -209,12 +209,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Cm6 = Am7♭5', he: 'Cm6 = Am7♭5' } },
       },
       {
-        say: { en: 'Put F under it: F, A, C, E♭, G — F9. The minor 6th is the 9 chord without its root: the 3rd, 5th, ♭7 and 9th of F.', he: 'שמים פה מתחת: פה, לה, דו, מי במול, סול — F9. המינור 6 הוא אקורד ה־9 בלי היסוד: הטרצה, הקווינטה, ה־♭7 וה־9 של פה.' },
+        say: { en: 'Put F under it: F, A, C, E♭, G — F9. The minor 6th is the 9 chord without its root: the 3rd, 5th, ♭7 and 9th of F.', he: 'שמים פה מתחת: פה, לה, דו, מי במול, סול — F9. המינור 6 הוא אקורד ה־9 בלי השורש: הטרצה, הקווינטה, ה־♭7 וה־9 של פה.' },
         play: [chord([41, ...Cm6], 1.6)],
         show: { text: { en: 'Cm6 / F = F9', he: 'Cm6 / F = F9' } },
       },
       {
-        say: { en: 'One shape, three chords: an m6 on its root, a m7♭5 a minor 3rd below, a 9 chord a 5th below.', he: 'צורה אחת, שלושה אקורדים: m6 על היסוד, ‏m7♭5 טרצה קטנה מתחת, אקורד 9 קווינטה מתחת.' },
+        say: { en: 'One shape, three chords: an m6 on its root, a m7♭5 a minor 3rd below, a 9 chord a 5th below.', he: 'צורה אחת, שלושה אקורדים: m6 על השורש, ‏m7♭5 טרצה קטנה מתחת, אקורד 9 קווינטה מתחת.' },
         play: [chord([48, ...Cm6], 0.9), chord([45, ...Cm6], 0.9), chord([41, ...Cm6], 1.3)],
         show: { text: { en: 'C · A · F', he: 'C · A · F' } },
       },
@@ -224,18 +224,18 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'F9 → B♭6', he: 'F9 → B♭6' } },
       },
       {
-        say: { en: 'In a ii–V–I in C: Dm7 is F6, and G7 is Dm6, the 9 chord without its root. Listen to the bass. Your turn.', he: 'ב־ii–V–I ב־C: ‏Dm7 הוא F6, ו־G7 הוא Dm6, אקורד ה־9 בלי היסוד. הקשיבו לבס. תורכם.' },
+        say: { en: 'In a ii–V–I in C: Dm7 is F6, and G7 is Dm6, the 9 chord without its root. Listen to the bass. Your turn.', he: 'ב־ii–V–I ב־C: ‏Dm7 הוא F6, ו־G7 הוא Dm6, אקורד ה־9 בלי השורש. הקשיבו לבס. תורכם.' },
         play: [chord([50, 65, 69, 72, 74], 1), chord([43, 62, 65, 69, 71], 1), chord([48, ...C6], 1.4)],
         show: { text: { en: 'F6/D · Dm6/G · C6', he: 'F6/D · Dm6/G · C6' } },
       },
     ],
     more: [
       {
-        say: { en: 'Count it from F: F is the root, A the 3rd, C the 5th, E♭ the ♭7 and G the 9th. Leave out the F and the four notes left are Cm6.', he: 'סופרים מפה: פה היסוד, לה הטרצה, דו הקווינטה, מי במול ה־♭7 וסול ה־9. משמיטים את פה, וארבעת הצלילים שנשארים הם Cm6.' },
+        say: { en: 'Count it from F: F is the root, A the 3rd, C the 5th, E♭ the ♭7 and G the 9th. Leave out the F and the four notes left are Cm6.', he: 'סופרים מפה: פה השורש, לה הטרצה, דו הקווינטה, מי במול ה־♭7 וסול ה־9. משמיטים את פה, וארבעת הצלילים שנשארים הם Cm6.' },
         play: [notes([41, 45, 48, 51, 55], 0.4)],
       },
       {
-        say: { en: 'In minor: Dm7♭5 is Fm6, so the minor ii–V–i the 6th-diminished way is Fm6 over D, G7, Cm6.', he: 'במינור: Dm7♭5 הוא Fm6, ולכן ii–V–i מינורי בדרך 6־דימיניש הוא Fm6 מעל רה, ‏G7, ‏Cm6.' },
+        say: { en: 'In minor: Dm7♭5 is Fm6, so the minor ii–V–i the 6th-diminished way is Fm6 over D, G7, Cm6.', he: 'במינור: Dm7♭5 הוא Fm6, ולכן ii–V–i מינורי בדרך 6־מוקטן הוא Fm6 מעל רה, ‏G7, ‏Cm6.' },
         play: [chord([50, 65, 68, 72, 74], 1), chord([43, 59, 65, 67, 71], 1), chord([48, ...Cm6], 1.4)],
       },
       {
@@ -245,7 +245,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common slip: calling Cm6 over F a D chord. Count from the bass, not from the top: F under C E♭ G A is F9.', he: 'טעות נפוצה: לקרוא ל־Cm6 מעל פה אקורד של רה. סופרים מהבס, לא מלמעלה: פה מתחת לדו מי במול סול לה הוא F9.' },
       },
       {
-        say: { en: 'The same holds in every key: Gm6 is Em7♭5 and C9 without its root; E♭m6 is Cm7♭5 and A♭9. Find the m6 first, then count down a minor 3rd and a 5th for the bass.', he: 'אותו דבר בכל סולם: Gm6 הוא Em7♭5 ו־C9 בלי היסוד; ‏E♭m6 הוא Cm7♭5 ו־A♭9. מוצאים קודם את ה־m6, ואז סופרים טרצה קטנה וקווינטה למטה בשביל הבס.' },
+        say: { en: 'The same holds in every key: Gm6 is Em7♭5 and C9 without its root; E♭m6 is Cm7♭5 and A♭9. Find the m6 first, then count down a minor 3rd and a 5th for the bass.', he: 'אותו דבר בכל סולם: Gm6 הוא Em7♭5 ו־C9 בלי השורש; ‏E♭m6 הוא Cm7♭5 ו־A♭9. מוצאים קודם את ה־m6, ואז סופרים טרצה קטנה וקווינטה למטה בשביל הבס.' },
         play: [chord([43, 55, 58, 62, 64], 1), chord([40, 55, 58, 62, 64], 1), chord([36, 55, 58, 62, 64], 1.3)],
       },
       {
@@ -257,10 +257,10 @@ export const LESSONS: MiniLesson[] = [
     id: 'bh-guitar-sets',
     area: 'play',
     emoji: '#',
-    title: { en: '6th-diminished on every string set', he: '6־דימיניש על כל קבוצת מיתרים' },
+    title: { en: '6th-diminished on every string set', he: '6־מוקטן על כל קבוצת מיתרים' },
     takeaway: {
       en: 'Drop-2 voicings sit on four adjacent strings — a six-string has three such sets (6–5–4–3, 5–4–3–2, 4–3–2–1). Play the 6th chord and its diminished up the scale on each; the shapes change where the G–B major 3rd falls inside the set.',
-      he: 'קולות דרופ 2 יושבים על ארבעה מיתרים צמודים — לגיטרה של שישה מיתרים יש שלוש קבוצות כאלה (6–5–4–3, ‏5–4–3–2, ‏4–3–2–1). מנגנים את אקורד ה־6 והדימיניש שלו לאורך הסולם בכל אחת; הצורות משתנות איפה שהטרצה הגדולה בין סול לסי נופלת בתוך הקבוצה.',
+      he: 'קולות דרופ 2 יושבים על ארבעה מיתרים צמודים — לגיטרה של שישה מיתרים יש שלוש קבוצות כאלה (6–5–4–3, ‏5–4–3–2, ‏4–3–2–1). מנגנים את אקורד ה־6 והמוקטן שלו לאורך הסולם בכל אחת; הצורות משתנות איפה שהטרצה הגדולה בין סול לסי נופלת בתוך הקבוצה.',
     },
     steps: [
       {
@@ -273,11 +273,11 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '6543 · 5432 · 4321', he: '6543 · 5432 · 4321' } },
       },
       {
-        say: { en: 'The diminished in drop-2 is the easy one: four notes a minor 3rd apart keep the same shape when you move it three frets.', he: 'הדימיניש בדרופ 2 הוא הקל: ארבעה צלילים בהפרש טרצה קטנה שומרים על אותה צורה כשמזיזים אותו שלושה סריגים.' },
+        say: { en: 'The diminished in drop-2 is the easy one: four notes a minor 3rd apart keep the same shape when you move it three frets.', he: 'המוקטן בדרופ 2 הוא הקל: ארבעה צלילים בהפרש טרצה קטנה שומרים על אותה צורה כשמזיזים אותו שלושה סריגים.' },
         play: [chord([53, 59, 62, 68], 0.9), chord([56, 62, 65, 71], 1.2)],
       },
       {
-        say: { en: 'Up the scale: the 6th chord on 1, 3, 5 and 6, the diminished on 2, 4, ♭6 and 7. Find each top note on the set’s highest string and fit the chord under it.', he: 'לאורך הסולם: אקורד ה־6 על 1, ‏3, ‏5 ו־6, הדימיניש על 2, ‏4, ‏♭6 ו־7. מוצאים כל צליל עליון על המיתר הגבוה של הקבוצה ומתאימים את האקורד מתחתיו.' },
+        say: { en: 'Up the scale: the 6th chord on 1, 3, 5 and 6, the diminished on 2, 4, ♭6 and 7. Find each top note on the set’s highest string and fit the chord under it.', he: 'לאורך הסולם: אקורד ה־6 על 1, ‏3, ‏5 ו־6, המוקטן על 2, ‏4, ‏♭6 ו־7. מוצאים כל צליל עליון על המיתר הגבוה של הקבוצה ומתאימים את האקורד מתחתיו.' },
         play: [notes(SCALE, 0.26)],
       },
       {

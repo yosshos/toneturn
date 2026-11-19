@@ -14,7 +14,7 @@ type Part = { root?: number; q?: GQ; x?: GX };
 
 const TX = {
   en: { all: 'All', bar: 'Bar', slow: 'Slow', check: 'Check', fix: 'Fix the marked bars', root: 'Root', quality: 'Quality', bass: 'Bass', colour: 'Colour' },
-  he: { all: 'הכול', bar: 'תיבה', slow: 'לאט', check: 'בדיקה', fix: 'תקנו את התיבות המסומנות', root: 'יסוד', quality: 'סוג', bass: 'בס', colour: 'צבע' },
+  he: { all: 'הכול', bar: 'תיבה', slow: 'לאט', check: 'בדיקה', fix: 'תקנו את התיבות המסומנות', root: 'שורש', quality: 'סוג', bass: 'בס', colour: 'צבע' },
 };
 
 /**

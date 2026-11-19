@@ -104,7 +104,7 @@ TOPIC_GEN['lh-tex-ear'] = {
       const cs = loop(key).slice(0, 3);
       const stim = (f: '3' | '10') => [render(cs.map((c) => ({ beat: c.beat, dur: 4, ps: bpShell(c, f) })), 90, false)];
       const ans = rnd() < 0.5 ? '3' : '10';
-      const names: Names = { '3': nm('Root + 3rd', 'יסוד + טרצה', 'third', 'shell'), '10': nm('Root + 10th', 'יסוד + דצימה', 'tenth') };
+      const names: Names = { '3': nm('Root + 3rd', 'שורש + טרצה', 'third', 'shell'), '10': nm('Root + 10th', 'שורש + דצימה', 'tenth') };
       return choiceQ({ ...base, difficulty: 920, ask: { en: 'A ii–V–I in two-note shells: the 3rd or the 10th?', he: 'ii–V–I בשלדים של שני צלילים: טרצה או דצימה?' }, names, answer: ans, choices: ['3', '10'], stimulus: stim(ans), choiceStim: { '3': stim('3'), '10': stim('10') } });
     }
     if (level === 2) {

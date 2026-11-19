@@ -300,16 +300,16 @@ export const SOLO_ITEMS: SoloItem[] = [
   /* 20 */ I(['three-on-one', 'inside'], 'aaba', 'three', 'The 3rd on beat 1 of every chord', 'הטרצה בפעמה 1 של כל אקורד'),
   /* 21 */ I(['sparse', 'end-guide'], 'aaba', 'sparse', 'Space: four notes a bar at most', 'מרווח: עד ארבעה צלילים בתיבה', 1),
   /* 22 */ I(['call-response', 'inside'], 'blues', 'callresp', 'Call and response with yourself', 'שאלה ותשובה עם עצמכם', 0),
-  /* 23 */ I(['imply-roots', 'inside'], 'blues', 'roots', 'A solo that still implies the roots', 'סולו שעדיין רומז על היסודות'),
-  /* 24 */ I(['imply-roots', 'approach'], 'rhythm', 'roots', 'Rhythm changes: the roots implied, each change approached', 'ריתם צ׳יינג׳ס: יסודות רמוזים, גישה לכל החלפה'),
+  /* 23 */ I(['imply-roots', 'inside'], 'blues', 'roots', 'A solo that still implies the roots', 'סולו שעדיין רומז על השורשים'),
+  /* 24 */ I(['imply-roots', 'approach'], 'rhythm', 'roots', 'Rhythm changes: the roots implied, each change approached', 'ריתם צ׳יינג׳ס: שורשים רמוזים, גישה לכל החלפה'),
 ];
 
 /** The duo items (options of 'sl-duo'): the comping and the RH / line cards. Append only. */
 export const DUO_ITEMS: { form: FormId; cards: string[]; comp: 'shell' | 'rootless'; name: T2 }[] = [
   { form: 'blues', cards: ['guide-target', 'inside'], comp: 'shell', name: t('Duo on the blues: shells, a guide tone on every change', 'דואו בבלוז: שלדים, צליל מנחה בכל החלפה') },
   { form: '251', cards: ['harris'], comp: 'shell', name: t('Duo on ii–V–I: shells, Barry Harris rules', 'דואו על ii–V–I: שלדים, החוקים של בארי האריס') },
-  { form: '251', cards: ['approach', 'inside'], comp: 'rootless', name: t('Duo on ii–V–I: rootless, approach every chord', 'דואו על ii–V–I: בלי יסוד, גישה לכל אקורד') },
-  { form: 'rhythm', cards: ['guide-target', 'inside'], comp: 'rootless', name: t('Duo on rhythm changes: rootless, guide tones', 'דואו על ריתם צ׳יינג׳ס: בלי יסוד, צלילים מנחים') },
+  { form: '251', cards: ['approach', 'inside'], comp: 'rootless', name: t('Duo on ii–V–I: rootless, approach every chord', 'דואו על ii–V–I: בלי שורש, גישה לכל אקורד') },
+  { form: 'rhythm', cards: ['guide-target', 'inside'], comp: 'rootless', name: t('Duo on rhythm changes: rootless, guide tones', 'דואו על ריתם צ׳יינג׳ס: בלי שורש, צלילים מנחים') },
 ];
 
 const REG = { piano: [60, 84], guitar: [52, 79], bass: [36, 60] } as const;
@@ -490,7 +490,7 @@ export function keysSoloFamily(): FamilyDef {
       JT(9, 'Use the licks you learned', 'להשתמש בליקים שלמדתם', imp([17, 18]), [80, 160]),
       JT(10, 'Rule mixes over forms', 'שילובי כללים על צורות', imp([19, 20, 21, 22]), [80, 170]),
       JT(11, 'Comp and solo: shells and a right-hand line', 'ללוות ולאלתר: שלדים וקו ביד ימין', [v('sl-duo', 0, { hands: 'RL' }), v('sl-duo', 1, { hands: 'RL' })], [70, 140]),
-      JT(12, 'Comp and solo: rootless voicings and a line', 'ללוות ולאלתר: קולות בלי יסוד וקו', [v('sl-duo', 2, { hands: 'RL' }), v('sl-duo', 3, { hands: 'RL' })], [70, 150]),
+      JT(12, 'Comp and solo: rootless voicings and a line', 'ללוות ולאלתר: קולות בלי שורש וקו', [v('sl-duo', 2, { hands: 'RL' }), v('sl-duo', 3, { hands: 'RL' })], [70, 150]),
       JT(13, 'Write and play your own solo chorus', 'לכתוב ולנגן כורוס סולו משלכם', [0, 1, 2].map((o) => v('sl-chorus', o)), [70, 160]),
     ],
   };
@@ -564,7 +564,7 @@ function guitarDuo(s: DrillSpec, tu: Tuning, key: number, op: number): Drill {
   const windows: [number, number][] = [];
   for (let b = 4; b < beats; b += 8) windows.push([b, Math.min(beats, b + 4)]);
   const model = modelLine('bebop', chords, 52, 79, `gduo:${op}:${key}`);
-  const d = gFinish({ ...s, key }, tu, evs, { title: withKey(t(it.name.en.replace('shells', 'a bar of chords').replace('rootless', 'a bar of chords'), it.name.he.replace('שלדים', 'תיבת אקורדים').replace('בלי יסוד', 'תיבת אקורדים')), key), bpm: s.tempo ?? 70, evenness: false, keySig: SIG[key] });
+  const d = gFinish({ ...s, key }, tu, evs, { title: withKey(t(it.name.en.replace('shells', 'a bar of chords').replace('rootless', 'a bar of chords'), it.name.he.replace('שלדים', 'תיבת אקורדים').replace('בלי שורש', 'תיבת אקורדים')), key), bpm: s.tempo ?? 70, evenness: false, keySig: SIG[key] });
   return { ...d, beats, goal: { ...d.goal, evenness: false, hands: false, ...freeGoal(chords, windows, duoCards(it.cards), model, 2) }, chart: chartOf(chords, key), ...bandFor('guitar') };
 }
 
@@ -645,7 +645,7 @@ function bassDuo(s: DrillSpec, tu: Tuning, key: number, op: number): Drill {
   const windows: [number, number][] = [];
   for (let b = 4; b < beats - 4; b += 8) windows.push([b, Math.min(beats, b + 4)]);
   const model = modelLine('roots', chords, 36, 60, `bduo:${op}:${key}`);
-  const nm = t(`Walk a bar, fill a bar: ${SOLO_FORMS[it.form].name.en}`, `תיבת הליכה, תיבת מילוי: ${SOLO_FORMS[it.form].name.he}`);
+  const nm = t(`Walk a bar, fill a bar: ${SOLO_FORMS[it.form].name.en}`, `תיבת ווקינג, תיבת מעבר: ${SOLO_FORMS[it.form].name.he}`);
   const d = drillOf({ ...s, key }, tu, alt(line), { en: nm.en, he: nm.he, chart: chartOf(chords, key), evenness: true, keySig: SIG[key] });
   return { ...d, beats, goal: { ...d.goal, evenness: false, hands: false, ...freeGoal(chords, windows, ['target-ct', 'inside'], model, 2) }, ...bandFor('bass') };
 }
@@ -658,13 +658,13 @@ export function bassSoloFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
   const imp = (ops: number[]) => ops.map((o) => v('sl-imp', o));
   const IM = 'improvised 8ths';
   return fam('b-solo', 'Solo by the rules', 'סולו לפי כללים', [
-    L('b-solo', 1, 'A solo that implies the roots', 'סולו שרומז על היסודות', imp([23, 24]), SOLO_KEYS, [80, 150], IM),
+    L('b-solo', 1, 'A solo that implies the roots', 'סולו שרומז על השורשים', imp([23, 24]), SOLO_KEYS, [80, 150], IM),
     L('b-solo', 2, 'Improvise: guide tones and approach notes', 'אלתור: צלילים מנחים וצלילי גישה', imp([0, 2]), SOLO_KEYS, [80, 150], IM),
     L('b-solo', 3, 'Improvise by Barry Harris’s rules', 'אלתור לפי החוקים של בארי האריס', imp([4, 5]), SOLO_KEYS, [80, 150], IM),
     L('b-solo', 4, 'Improvise with enclosures', 'אלתור עם כיתורים', imp([6, 8]), SOLO_KEYS, [80, 150], IM),
     L('b-solo', 5, 'Triad pairs and superimposed pentatonics', 'זוגות משולשים ופנטטוניות מונחות', imp([13, 15]), SOLO_KEYS, [70, 140], IM),
     L('b-solo', 6, 'Use the licks you learned', 'להשתמש בליקים שלמדתם', imp([17]), SOLO_KEYS, [80, 150], IM),
-    L('b-solo', 7, 'Walk a bar, fill a bar', 'תיבת הליכה, תיבת מילוי', [0, 1, 3].map((o) => v('sl-duo', o)), SOLO_KEYS, [80, 160], 'walking 4 / fills'),
+    L('b-solo', 7, 'Walk a bar, fill a bar', 'תיבת ווקינג, תיבת מעבר', [0, 1, 3].map((o) => v('sl-duo', o)), SOLO_KEYS, [80, 160], 'walking 4 / fills'),
     L('b-solo', 8, 'Write and play your own solo chorus', 'לכתוב ולנגן כורוס סולו משלכם', [0, 1, 2].map((o) => v('sl-chorus', o)), SOLO_KEYS, [70, 150], 'swung 8ths'),
   ]);
 }

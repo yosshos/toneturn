@@ -90,7 +90,7 @@ export function gradeHarmony(plan: HarmonyPlan, ev: (HarmonyEvidence | null)[]):
   const score = n ? chords.reduce((a, r) => a + ((r.root ? 0.5 : 0) + (r.colour ? 0.3 : 0) + (r.bass ? 0.2 : 0)) / w, 0) / n : 0;
   const part = (x: { ok: number; of: number }) => (x.ok === x.of ? '✓' : `${x.ok}/${x.of}`);
   const en = [`roots ${part(roots)}`, ...(colours ? [`colours ${part(colours)}`] : []), ...(bass ? [`bass ${part(bass)}`] : [])].join(' · ');
-  const he = [`יסודות ${part(roots)}`, ...(colours ? [`צבעים ${part(colours)}`] : []), ...(bass ? [`בס ${part(bass)}`] : [])].join(' · ');
+  const he = [`שורשים ${part(roots)}`, ...(colours ? [`צבעים ${part(colours)}`] : []), ...(bass ? [`בס ${part(bass)}`] : [])].join(' · ');
   return { chords, roots, colours, bass, score, line: { en, he } };
 }
 

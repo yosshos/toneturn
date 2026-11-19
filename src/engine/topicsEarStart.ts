@@ -119,13 +119,13 @@ TOPIC_TAGS['intervals-down'] = tg(['intervals', 'melodic', 1]);
 // ---------------------------------------------------------------- chord-member
 
 export const MEMBER_LADDER: { difficulty: number; en: string; he: string }[] = [
-  { difficulty: 950, en: 'Root, 3rd or 5th? Root position', he: 'יסוד, טרצה או קווינטה? מצב יסודי' },
-  { difficulty: 1030, en: 'Root, 3rd or 5th? Inversions', he: 'יסוד, טרצה או קווינטה? היפוכים' },
-  { difficulty: 1100, en: 'The top note: root, 3rd or 5th?', he: 'הצליל העליון: יסוד, טרצה או קווינטה?' },
+  { difficulty: 950, en: 'Root, 3rd or 5th? Root position', he: 'שורש, טרצה או קווינטה? מצב יסודי' },
+  { difficulty: 1030, en: 'Root, 3rd or 5th? Inversions', he: 'שורש, טרצה או קווינטה? היפוכים' },
+  { difficulty: 1100, en: 'The top note: root, 3rd or 5th?', he: 'הצליל העליון: שורש, טרצה או קווינטה?' },
 ];
 
 TOPIC_GEN['chord-member'] = {
-  title: { en: 'Root, 3rd or 5th of the chord?', he: 'יסוד, טרצה או קווינטה של האקורד?' },
+  title: { en: 'Root, 3rd or 5th of the chord?', he: 'שורש, טרצה או קווינטה של האקורד?' },
   skill: 'chords',
   levels: MEMBER_LADDER.map((x) => ({ en: x.en, he: x.he })),
   gen(seed, level, id): ChoiceQuestion {
@@ -146,14 +146,14 @@ TOPIC_GEN['chord-member'] = {
     };
     const sound = (k: number, len = 1.4): Stimulus[] => (level >= 3 ? [chordStim(topVoicing(k), 1.6)] : [chordStim(voiced, len), rest(0.35), notesStim([memberIn(k)], 1.0)]);
     const ids = ['r1', 'r3', 'r5'];
-    const names: ChoiceQuestion['names'] = { r1: nm('Root', 'יסוד', 'root', 'one'), r3: nm('3rd', 'טרצה', 'third', 'three'), r5: nm('5th', 'קווינטה', 'fifth', 'five') };
+    const names: ChoiceQuestion['names'] = { r1: nm('Root', 'שורש', 'root', 'one'), r3: nm('3rd', 'טרצה', 'third', 'three'), r5: nm('5th', 'קווינטה', 'fifth', 'five') };
     const stimulus = sound(which);
     const choiceStim: Record<string, Stimulus[]> = Object.fromEntries([0, 1, 2].map((k) => [ids[k], sound(k, 1.2)]));
     const chord = `${pcName(root)}${minor ? 'm' : ''}`;
     const chordHe = `${pcNameHe(root)}${minor ? ' מינור' : ''}`;
     return {
       kind: 'choice', id, topic: 'chord-member', level, seed, skill: 'chords', difficulty: L.difficulty,
-      ask: level >= 3 ? { en: 'The top note of the chord: root, 3rd or 5th?', he: 'הצליל העליון באקורד: יסוד, טרצה או קווינטה?' } : { en: 'A chord, then one of its notes: root, 3rd or 5th?', he: 'אקורד, ואז אחד מצליליו: יסוד, טרצה או קווינטה?' },
+      ask: level >= 3 ? { en: 'The top note of the chord: root, 3rd or 5th?', he: 'הצליל העליון באקורד: שורש, טרצה או קווינטה?' } : { en: 'A chord, then one of its notes: root, 3rd or 5th?', he: 'אקורד, ואז אחד מצליליו: שורש, טרצה או קווינטה?' },
       text: { en: chord, he: chordHe },
       names, answer: ids[which], choices: ids, stimulus, choiceStim,
     };

@@ -32,7 +32,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'More intros and endings', he: 'עוד פתיחות וסיומים' },
-    takeaway: { en: 'Intros: the iii–VI7–ii–V7 vamp or a blues’s last four bars. Endings: ♭VI–♭II–I in maj7 or 7, the tag ×3, the Dameron turnaround, the diminished walk-down.', he: 'פתיחות: ואמפ iii–VI7–ii–V7 או ארבע התיבות האחרונות של בלוז. סיומים: ♭VI–♭II–I במז׳ור 7 או בדומיננט, התג ×3, הטרנאראונד של דיימרון, הירידה הדימינישית.' },
+    takeaway: { en: 'Intros: the iii–VI7–ii–V7 vamp or a blues’s last four bars. Endings: ♭VI–♭II–I in maj7 or 7, the tag ×3, the Dameron turnaround, the diminished walk-down.', he: 'פתיחות: ואמפ iii–VI7–ii–V7 או ארבע התיבות האחרונות של בלוז. סיומים: ♭VI–♭II–I במז׳ור 7 או בדומיננט, התג ×3, הטרנאראונד של דיימרון, ירידת המוקטן.' },
     steps: [
       {
         say: { en: 'Hi {name}! An intro can vamp on three, six, two, five: E minor 7, A7, D minor 7, G7, then the tune starts on C.', he: 'היי {name}! פתיחה יכולה לחזור על שלוש, שש, שתיים, חמש: Em7, ‏A7, ‏Dm7, ‏G7, ואז השיר מתחיל בדו.' },
@@ -75,7 +75,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake: rushing the last chord. Hold the final chord its full length and let it ring.', he: 'טעות נפוצה: למהר באקורד האחרון. החזיקו את האקורד האחרון את כל אורכו ותנו לו להדהד.' },
       },
       {
-        say: { en: 'On guitar these sit in drop 2 on the top four strings; on bass you walk them, a root on every new chord and a half step into the next.', he: 'בגיטרה הם יושבים בדרופ 2 על ארבעת המיתרים העליונים; בבס הולכים בהם, יסוד בכל אקורד חדש וחצי טון אל הבא.' },
+        say: { en: 'On guitar these sit in drop 2 on the top four strings; on bass you walk them, a root on every new chord and a half step into the next.', he: 'בגיטרה הם יושבים בדרופ 2 על ארבעת המיתרים העליונים; בבס הולכים בהם, שורש בכל אקורד חדש וחצי טון אל הבא.' },
       },
       {
         say: { en: 'Recap: vamp in, play the head, and end with a slide, a tag, or the walk-down. The ear topic asks you to name each one.', he: 'לסיכום: נכנסים בוואמפ, מנגנים את הנושא, ומסיימים בהחלקה, בתג או בירידה. נושא השמיעה מבקש לזהות כל אחד מהם.' },
@@ -87,7 +87,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'The ballad: 10ths and four notes', he: 'הבלדה: דצימות וארבעה צלילים' },
-    takeaway: { en: 'Left hand: the root and the 3rd an octave up (a 10th). Right hand: a four-note rootless voicing above it, each moving to the nearest next one.', he: 'יד שמאל: היסוד והטרצה אוקטבה מעליו (דצימה). יד ימין: קול של ארבעה צלילים בלי יסוד מעליה, וכל אחד זז לקרוב ביותר שאחריו.' },
+    takeaway: { en: 'Left hand: the root and the 3rd an octave up (a 10th). Right hand: a four-note rootless voicing above it, each moving to the nearest next one.', he: 'יד שמאל: השורש והטרצה אוקטבה מעליו (דצימה). יד ימין: קול של ארבעה צלילים בלי שורש מעליה, וכל אחד זז לקרוב ביותר שאחריו.' },
     steps: [
       {
         say: { en: 'Hi {name}! A ballad is slow and even: straight eighths, a chord or two a bar. “Evening Lamp” is our own sixteen bars of ballad changes.', he: 'היי {name}! בלדה היא איטית ושקטה: שמיניות ישרות, אקורד או שניים בתיבה. ״מנורת ערב״ הן שש־עשרה תיבות בלדה משלנו.' },
@@ -98,7 +98,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([36, 52], 1.2)],
       },
       {
-        say: { en: 'The right hand adds the 3rd, 5th, 7th and 9th, no root. Then everything together.', he: 'יד ימין מוסיפה טרצה, קווינטה, ספטימה ונונה, בלי יסוד. ואז הכול יחד.' },
+        say: { en: 'The right hand adds the 3rd, 5th, 7th and 9th, no root. Then everything together.', he: 'יד ימין מוסיפה טרצה, קווינטה, ספטימה ונונה, בלי שורש. ואז הכול יחד.' },
         play: [chord(BALLAD_C, 1.4), chord(BALLAD_AM, 1.4)],
       },
       {
@@ -106,12 +106,12 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([64, 67, 71, 74], 0.9), chord([64, 67, 71, 72], 0.9), chord([65, 69, 72, 76], 0.9)],
       },
       {
-        say: { en: 'First the left hand alone, then the right hand over the root, then both. Free time first, then a slow click.', he: 'קודם יד שמאל לבד, אחר כך יד ימין מעל היסוד, ואז שתיהן. קודם בזמן חופשי, ואז קליק איטי.' },
+        say: { en: 'First the left hand alone, then the right hand over the root, then both. Free time first, then a slow click.', he: 'קודם יד שמאל לבד, אחר כך יד ימין מעל השורש, ואז שתיהן. קודם בזמן חופשי, ואז קליק איטי.' },
       },
     ],
     more: [
       {
-        say: { en: 'Why 10ths? A 10th fills the low register warmly without the mud of a low 3rd right next to the root.', he: 'למה דצימות? דצימה ממלאת את הרגיסטר הנמוך בחום, בלי הבוץ של טרצה נמוכה צמודה ליסוד.' },
+        say: { en: 'Why 10ths? A 10th fills the low register warmly without the mud of a low 3rd right next to the root.', he: 'למה דצימות? דצימה ממלאת את הרגיסטר הנמוך בחום, בלי הבוץ של טרצה נמוכה צמודה לשורש.' },
         play: [chord([36, 40], 1), rest(0.3), chord([36, 52], 1)],
       },
       {
@@ -119,19 +119,19 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([64, 67, 71, 74], 1), chord([67, 71, 72, 76], 1)],
       },
       {
-        say: { en: 'On a minor 7 flat 5 or a diminished chord, the four notes include the root: that is fine, it is the chord itself.', he: 'באקורד m7♭5 או דימיניש, ארבעת הצלילים כוללים את היסוד: זה בסדר, זה האקורד עצמו.' },
+        say: { en: 'On a minor 7 flat 5 or a diminished chord, the four notes include the root: that is fine, it is the chord itself.', he: 'באקורד m7♭5 או מוקטן, ארבעת הצלילים כוללים את השורש: זה בסדר, זה האקורד עצמו.' },
       },
       {
         say: { en: 'A common mistake: playing loud. A ballad lives at piano to mezzo-piano; let the top note sing a little above the rest.', he: 'טעות נפוצה: לנגן חזק. בלדה חיה בפיאנו עד מצו־פיאנו; תנו לצליל העליון לשיר מעט מעל השאר.' },
       },
       {
-        say: { en: 'Practise each half of the chart on its own: bars one to eight, then nine to sixteen. Then play all sixteen bars without stopping, in free time first.', he: 'תרגלו כל חצי של הלידשיט לבד: תיבות אחת עד שמונה, ואז תשע עד שש־עשרה. אחר כך נגנו את כל שש־עשרה התיבות בלי לעצור, קודם בזמן חופשי.' },
+        say: { en: 'Practise each half of the chart on its own: bars one to eight, then nine to sixteen. Then play all sixteen bars without stopping, in free time first.', he: 'תרגלו כל חצי של דף האקורדים לבד: תיבות אחת עד שמונה, ואז תשע עד שש־עשרה. אחר כך נגנו את כל שש־עשרה התיבות בלי לעצור, קודם בזמן חופשי.' },
       },
       {
         say: { en: 'Recap: 10ths below, four notes above, small steps between chords, straight eighths, and patience.', he: 'לסיכום: דצימות למטה, ארבעה צלילים למעלה, צעדים קטנים בין האקורדים, שמיניות ישרות, וסבלנות.' },
       },
       {
-        say: { en: 'On guitar the same chart sits in drop 2 on the middle strings; on bass you play it in two, a root and a 5th each bar.', he: 'בגיטרה אותו לידשיט יושב בדרופ 2 על המיתרים האמצעיים; בבס מנגנים אותו בשתיים, יסוד וקווינטה בכל תיבה.' },
+        say: { en: 'On guitar the same chart sits in drop 2 on the middle strings; on bass you play it in two, a root and a 5th each bar.', he: 'בגיטרה אותו דף אקורדים יושב בדרופ 2 על המיתרים האמצעיים; בבס מנגנים אותו בשתיים, שורש וקווינטה בכל תיבה.' },
       },
     ],
   },
@@ -184,7 +184,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'The result screen names the part that slipped: the intro, the head, the solo chorus, the head out or the ending. Practise that part alone, then try the whole take again.', he: 'מסך התוצאה מציין את החלק שהחליק: הפתיחה, הנושא, סבב הסולו, הנושא בחזרה או הסיום. תרגלו את החלק הזה לבד, ואז נסו שוב את הטייק כולו.' },
       },
       {
-        say: { en: 'A common mistake: losing the form in the solo. Keep the chart in view and land on the first bar of the head out.', he: 'טעות נפוצה: ללכת לאיבוד בצורה בזמן הסולו. השאירו את הלידשיט מול העיניים ונחתו על התיבה הראשונה של הנושא בחזרה.' },
+        say: { en: 'A common mistake: losing the form in the solo. Keep the chart in view and land on the first bar of the head out.', he: 'טעות נפוצה: ללכת לאיבוד בצורה בזמן הסולו. השאירו את דף האקורדים מול העיניים ונחתו על התיבה הראשונה של הנושא בחזרה.' },
       },
       {
         say: { en: 'Recap: intro, head, one chorus, head, ending, all with the band. On guitar the head is chord-melody; on bass, two-feel for the head and walking for the solo.', he: 'לסיכום: פתיחה, נושא, סבב אחד, נושא, סיום, הכול עם הלהקה. בגיטרה הנושא הוא אקורד־מלודיה; בבס, בשתיים לנושא והליכה לסולו.' },

@@ -156,15 +156,15 @@ const SHORT: Record<string, L2> = {
   'blues-ear': { en: 'Blues form', he: 'צורת הבלוז' },
   'upper-rootless': { en: 'Upper structures', he: 'מבנים עליונים' },
   // HARRIS_2 + HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2)
-  'bh-three-dim': { en: 'Three diminished', he: 'שלושה דימינישים' },
-  'bh-dim-roles': { en: 'Diminished roles', he: 'תפקידי הדימיניש' },
+  'bh-three-dim': { en: 'Three diminished', he: 'שלושה מוקטנים' },
+  'bh-dim-roles': { en: 'Diminished roles', he: 'תפקידי המוקטן' },
   'bh-m6-bass': { en: 'm6 = 9', he: 'm6 = 9' },
   // BH-G: the pivot (Barry Harris's pivot arpeggio)
   'bh-pivot-arp': { en: 'The pivot', he: 'הפיבוט' },
   'bh-borrow': { en: 'Borrowing', he: 'השאלה' },
   'bh-sixfive': { en: 'Eight on the V', he: 'שמונה על ה־V' },
   'bh-moves': { en: 'Harris moves', he: 'המהלכים של האריס' },
-  'bh-tesseract': { en: '16 around a dim', he: '16 סביב דימיניש' },
+  'bh-tesseract': { en: '16 around a dim', he: '16 סביב מוקטן' },
   'bh-line-ear': { en: 'Harris lines by ear', he: 'קווי האריס בשמיעה' },
   // STAGE C (AUDIT-6): the advanced ear gaps.
   'three-voice': { en: 'Lowest of three', he: 'התחתון מבין שלושה' },
@@ -202,7 +202,7 @@ const SHORT: Record<string, L2> = {
   // AUDIT-6 Stage B: the Ear course's beginnings
   'rhythm-echo': { en: 'Rhythm echo', he: 'הד קצבי' },
   'intervals-down': { en: 'Intervals down', he: 'מרווחים יורדים' },
-  'chord-member': { en: 'Root, 3rd, 5th', he: 'יסוד, טרצה, קווינטה' },
+  'chord-member': { en: 'Root, 3rd, 5th', he: 'שורש, טרצה, קווינטה' },
   'melody-change': { en: 'What changed?', he: 'מה השתנה?' },
   // AUDIT-7 #1: written theory from ABRSM grade 1
   'note-values': { en: 'Note values', he: 'ערכי תווים' },

@@ -28,7 +28,7 @@ export const DEVICE_NAME: Record<Device, T2> = {
   tritone: { en: 'Tritone sub', he: 'תחליף טריטון' },
   iiV: { en: 'Extra ii–V', he: 'ii–V נוסף' },
   backdoor: { en: 'Backdoor', he: 'דלת אחורית' },
-  pdim: { en: 'Passing dim', he: 'דימיניש עובר' },
+  pdim: { en: 'Passing dim', he: 'מוקטן עובר' },
   cliche: { en: 'Line cliché', he: 'קו קלישאה' },
   coltrane: { en: 'Coltrane sub', he: 'תחליף קולטריין' },
   minorIV: { en: 'Minor iv', he: 'iv מינורי' },
@@ -213,7 +213,7 @@ export function parsePlan(code: string): Plan {
 /** A melody note's role over a chord: a chord tone, a valid tension, or an avoid note. */
 export type Role = 'chord' | 'tension' | 'avoid';
 const DEGREE: T2[] = [
-  { en: 'root', he: 'יסוד' }, { en: '♭9', he: '♭9' }, { en: '9th', he: 'נונה' }, { en: '♭3', he: '♭3' }, { en: '3rd', he: 'טרצה' }, { en: '11th', he: 'אונדצימה' },
+  { en: 'root', he: 'שורש' }, { en: '♭9', he: '♭9' }, { en: '9th', he: 'נונה' }, { en: '♭3', he: '♭3' }, { en: '3rd', he: 'טרצה' }, { en: '11th', he: 'אונדצימה' },
   { en: '♯11', he: '♯11' }, { en: '5th', he: 'קווינטה' }, { en: '♭13', he: '♭13' }, { en: '13th', he: '13' }, { en: '♭7', he: '♭7' }, { en: 'maj 7', he: 'ספטימה גדולה' },
 ];
 const KIND_NAME: Record<string, T2> = {

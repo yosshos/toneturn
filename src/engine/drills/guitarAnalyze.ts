@@ -834,7 +834,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       factors.push({
         verdict: R.nonRoot < WALK_VARIETY.nonRoot / 2 || R.pcRepeats > 2 * WALK_VARIETY.pcRepeats ? 'not' : 'almost',
         en: fewOthers ? `Mostly roots: only ${Math.round(R.nonRoot * 100)}% other notes (${Math.round(WALK_VARIETY.nonRoot * 100)}% needed) — add 3rds, 5ths and approach notes` : `The same note in another octave on ${Math.round(R.pcRepeats * 100)}% of the steps — walk to a new note`,
-        he: fewOthers ? `בעיקר יסודות: רק ${Math.round(R.nonRoot * 100)}% צלילים אחרים (צריך ${Math.round(WALK_VARIETY.nonRoot * 100)}%) — להוסיף טרצות, קווינטות וצלילי גישה` : `אותו צליל באוקטבה אחרת ב-${Math.round(R.pcRepeats * 100)}% מהצעדים — ללכת לצליל חדש`,
+        he: fewOthers ? `בעיקר שורשים: רק ${Math.round(R.nonRoot * 100)}% צלילים אחרים (צריך ${Math.round(WALK_VARIETY.nonRoot * 100)}%) — להוסיף טרצות, קווינטות וצלילי גישה` : `אותו צליל באוקטבה אחרת ב-${Math.round(R.pcRepeats * 100)}% מהצעדים — ללכת לצליל חדש`,
       });
     }
     const maxRep = drill.goal.bass?.rules?.maxRepeat ?? (R.kind === 'walk' ? 0.05 : 1);
@@ -1066,7 +1066,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       const ons = norm.played.map((p) => p.on);
       b.kick = kickLock(kicks, ons, bg.kick);
       if (onWritten.length) b.kick.stray = kickLock(written, ons, bg.kick).stray;
-      if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הבס-דראם ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
+      if (b.kick.lock < 0.9 || b.kick.stray > bars) factors.push({ verdict: b.kick.lock < 0.75 ? 'not' : 'almost', en: `Locked with the kick on ${Math.round(b.kick.lock * 100)}% of hits (90% needed)`, he: `נעול עם הקיק ב-${Math.round(b.kick.lock * 100)}% מהמכות (צריך 90%)` });
     }
     // Sounded length of a played note (ms): mic = the energy release, MIDI = the note-off (A9, B19).
     const soundedMs = (p: PlayedNote, until: number): number | null => (mic ? releaseTime(frames, p.on, until) : p.off !== null ? p.off - p.on : null);
@@ -1163,7 +1163,7 @@ export function analyzeGuitarTake(drill: Drill, bpm: number, played: PlayedNote[
       const off = b.landings.filter((x) => x > bg.landing!);
       if (off.length) {
         const w = Math.max(...off);
-        factors.push({ verdict: off.length > b.landings.length / 2 || w > 2 * bg.landing ? 'not' : 'almost', en: `Landing on 1 after the fill: ${off.length} of ${b.landings.length} off by more than ${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}`, he: `נחיתה על 1 אחרי המילוי: ${off.length} מתוך ${b.landings.length} סטו ביותר מ-${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}` });
+        factors.push({ verdict: off.length > b.landings.length / 2 || w > 2 * bg.landing ? 'not' : 'almost', en: `Landing on 1 after the fill: ${off.length} of ${b.landings.length} off by more than ${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}`, he: `נחיתה על 1 אחרי המעבר: ${off.length} מתוך ${b.landings.length} סטו ביותר מ-${bg.landing} ms${Number.isFinite(w) ? ` (${Math.round(w)} ms)` : ''}` });
       }
     }
     if (bg.swing) {

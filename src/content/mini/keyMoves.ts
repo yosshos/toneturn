@@ -17,7 +17,7 @@ export const LESSONS: MiniLesson[] = [
     title: { en: 'Moving between keys', he: 'מעברים בין סולמות' },
     takeaway: {
       en: 'A key change goes through a door: a pivot chord both keys share, a ii–V of the new key, a tritone sub, the common diminished, or no door at all (direct, or the pop lift).',
-      he: 'מעבר סולם עובר דרך דלת: אקורד ציר ששני הסולמות חולקים, ii–V של הסולם החדש, תחליף טריטון, הדימיניש המשותף, או בלי דלת בכלל (ישירות, או ההרמה הפופית).',
+      he: 'מעבר סולם עובר דרך דלת: אקורד ציר ששני הסולמות חולקים, ii–V של הסולם החדש, תחליף טריטון, המוקטן המשותף, או בלי דלת בכלל (ישירות, או ההרמה הפופית).',
     },
     steps: [
       {
@@ -40,7 +40,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Cmaj7 → Fm7 E7 → E♭maj7', he: 'Cmaj7 → Fm7 E7 → E♭maj7' } },
       },
       {
-        say: { en: 'The common diminished: from C6, play B°7, lower F to E and it is E7, the V of A. Three notes stay, one moves a half step.', he: 'הדימיניש המשותף: מ־C6 מנגנים B°7, מורידים את פה למי, והוא E7, ה־V של לה. שלושה צלילים נשארים, אחד זז חצי טון.' },
+        say: { en: 'The common diminished: from C6, play B°7, lower F to E and it is E7, the V of A. Three notes stay, one moves a half step.', he: 'המוקטן המשותף: מ־C6 מנגנים B°7, מורידים את פה למי, והוא E7, ה־V של לה. שלושה צלילים נשארים, אחד זז חצי טון.' },
         play: playKChords(dimMove(0, 9).chords),
         show: { text: { en: 'C6 → B°7 → E7 → A6', he: 'C6 → B°7 → E7 → A6' } },
       },
@@ -55,12 +55,12 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Raise one note of the diminished a whole step instead and you get a 7♭9 on that note. From B°7, B up to C♯ gives D♭7♭9, the door to G♭.', he: 'אפשר במקום זה להעלות צליל אחד של הדימיניש בטון, ומקבלים 7♭9 על הצליל הזה. מ־B°7, סי שעולה לדו דיאז נותן D♭7♭9, הדלת לסול במול.' },
+        say: { en: 'Raise one note of the diminished a whole step instead and you get a 7♭9 on that note. From B°7, B up to C♯ gives D♭7♭9, the door to G♭.', he: 'אפשר במקום זה להעלות צליל אחד של המוקטן בטון, ומקבלים 7♭9 על הצליל הזה. מ־B°7, סי שעולה לדו דיאז נותן D♭7♭9, הדלת לסול במול.' },
         play: playKChords(dimMove(0, 6, { b9: true }).chords),
         show: { text: { en: 'C6 → B°7 → D♭7♭9 → G♭6', he: 'C6 → B°7 → D♭7♭9 → G♭6' } },
       },
       {
-        say: { en: 'Key A’s own diminished opens the keys a minor third apart. The other two diminished chords open the other eight, so three cover all twelve.', he: 'הדימיניש של הסולם עצמו פותח את הסולמות שבמרחק טרצה קטנה. שני הדימינישים האחרים פותחים את שמונת האחרים, כך ששלושה מכסים את כל השנים־עשר.' },
+        say: { en: 'Key A’s own diminished opens the keys a minor third apart. The other two diminished chords open the other eight, so three cover all twelve.', he: 'המוקטן של הסולם עצמו פותח את הסולמות שבמרחק טרצה קטנה. שני המוקטנים האחרים פותחים את שמונת האחרים, כך ששלושה מכסים את כל השנים־עשר.' },
         play: playKChords(dimMove(0, 5).chords),
         show: { text: { en: 'C6 → E°7 → C7 → F6', he: 'C6 → E°7 → C7 → F6' } },
       },
@@ -75,12 +75,12 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'D7 G7 C7 F7 → B♭', he: 'D7 G7 C7 F7 → B♭' } },
       },
       {
-        say: { en: 'The melodic version: C’s 6th-diminished scale up, the diminished and E7, then A’s scale down to A.', he: 'הגרסה המלודית: סולם השש-מוקטן של דו למעלה, הדימיניש ו־E7, ואז הסולם של לה למטה עד לה.' },
+        say: { en: 'The melodic version: C’s 6th-diminished scale up, the diminished and E7, then A’s scale down to A.', he: 'הגרסה המלודית: סולם השש-מוקטן של דו למעלה, המוקטן ו־E7, ואז הסולם של לה למטה עד לה.' },
         play: line(0, 9),
         show: { text: { en: 'C6-dim ↑ · B°7 · E7 · A6-dim ↓', he: 'C6-dim ↑ · B°7 · E7 · A6-dim ↓' } },
       },
       {
-        say: { en: 'To hear the door, find the chord where the old key stops. Shared by both keys: a pivot. A diminished sliding into a dominant: the common diminished. Nothing: direct.', he: 'כדי לשמוע את הדלת, מצאו את האקורד שבו הסולם הישן נגמר. משותף לשני הסולמות: ציר. דימיניש שמחליק לדומיננט: הדימיניש המשותף. כלום: ישיר.' },
+        say: { en: 'To hear the door, find the chord where the old key stops. Shared by both keys: a pivot. A diminished sliding into a dominant: the common diminished. Nothing: direct.', he: 'כדי לשמוע את הדלת, מצאו את האקורד שבו הסולם הישן נגמר. משותף לשני הסולמות: ציר. מוקטן שמחליק לדומיננט: המוקטן המשותף. כלום: ישיר.' },
       },
       {
         say: { en: 'Common mistake: spelling the new key from the old one. After C, E7 and A6 are spelled with sharps; B♭7 belongs to E♭.', he: 'טעות נפוצה: לכתוב את הסולם החדש לפי הישן. אחרי דו, E7 ו־A6 נכתבים בדיאזים; B♭7 שייך למי במול.' },

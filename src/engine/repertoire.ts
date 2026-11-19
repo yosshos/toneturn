@@ -19,7 +19,7 @@ type Bi = { en: string; he: string };
 
 export type RepTier = 1 | 2 | 3 | 4;
 export const REP_TIERS: { n: RepTier; name: Bi; blurb: Bi }[] = [
-  { n: 1, name: { en: 'Foundations', he: 'יסודות' }, blurb: { en: 'Simple tunes, simple harmony', he: 'מנגינות פשוטות, הרמוניה פשוטה' } },
+  { n: 1, name: { en: 'Foundations', he: 'שורשים' }, blurb: { en: 'Simple tunes, simple harmony', he: 'מנגינות פשוטות, הרמוניה פשוטה' } },
   { n: 2, name: { en: 'Blues & progressions', he: 'בלוז ומהלכים' }, blurb: { en: '12-bar blues, ii–V–I, turnarounds', he: 'בלוז 12 תיבות, ii–V–I, טרנאראונדים' } },
   { n: 3, name: { en: 'Standards', he: 'סטנדרטים' }, blurb: { en: 'Chord charts of famous standards', he: 'דפי אקורדים של סטנדרטים מפורסמים' } },
   { n: 4, name: { en: 'Advanced', he: 'מתקדם' }, blurb: { en: 'Rhythm changes, Coltrane, odd meters', he: 'ריתם צ׳יינג׳ס, קולטריין, משקלים מורכבים' } },
@@ -250,8 +250,8 @@ const GUITAR: RepItem[] = [
   S('greensleeves', 1, b('A minor key in 3/4', 'סולם מינורי ב־3/4'), [{ k: 'song', song: 'greensleeves', part: 'chords' }, { k: 'song', song: 'greensleeves', part: 'melody' }], TO.minor('minor-blues')),
   O('strums', 1, b('Strumming patterns', 'דפוסי פריטה'), b('Quarters, down-up 8ths and the waltz', 'רבעים, שמיניות למטה־למעלה וואלס'), [L('g-rhythm-1'), L('g-rhythm-2')]),
   C('blues-basic', 2, b('The 12-bar blues and the shuffle', 'בלוז 12 תיבות והשאפל'), [GS('blues-basic'), L('g-rhythm-3'), L('g-impro-1'), CH('blues-basic')], TO.blues('blues-f')),
-  C('minor-blues', 2, b('Minor blues: roots on beat 1', 'בלוז מינורי: יסודות על 1'), [GS('minor-blues'), L('g-impro-1'), CH('minor-blues')], TO.minorIiv('blue-bossa')),
-  C('two-five-keys', 2, b('Shell voicings: ii–V–I', 'קונכיות: ii–V–I'), [GS('two-five-keys'), L('g-jazz-1'), CH('two-five-keys')], TO.autumn('autumn')),
+  C('minor-blues', 2, b('Minor blues: roots on beat 1', 'בלוז מינורי: שורשים על 1'), [GS('minor-blues'), L('g-impro-1'), CH('minor-blues')], TO.minorIiv('blue-bossa')),
+  C('two-five-keys', 2, b('Shell voicings: ii–V–I', 'שלדים: ii–V–I'), [GS('two-five-keys'), L('g-jazz-1'), CH('two-five-keys')], TO.autumn('autumn')),
   C('blues-f', 2, b('The jazz blues: 3rds on beat 1', 'בלוז ג׳אז: טרצות על 1'), [GS('blues-f'), L('g-impro-2'), CH('blues-f')], TO.jazzBlues('bird-blues')),
   C('autumn', 3, b('Major and minor ii–V–I, comped', 'ii–V–I מז׳ורי ומינורי, בליווי'), [GS('autumn'), L('g-jazz-1'), L('g-jazz-4'), CH('autumn')]),
   C('blue-bossa', 3, b('Bossa comping and a key change', 'ליווי בוסה ומעבר סולם'), [GS('blue-bossa'), L('g-rhythm-6'), CH('blue-bossa')]),
@@ -274,7 +274,7 @@ const BASS_ITEMS: RepItem[] = [
   S('twinkle', 1, b('Melody on the neck, I–IV–V underneath', 'מנגינה על הצוואר, I–IV–V מתחת'), [{ k: 'song', song: 'twinkle', part: 'melody' }], TO.i4v('blues-basic')),
   S('saints', 1, b('Melody with a pickup', 'מנגינה עם פתיחה מתרוממת'), [{ k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-basic')),
   S('ode', 1, b('Stepwise melody in position', 'מנגינה בצעדים בפוזיציה'), [{ k: 'song', song: 'ode', part: 'melody' }]),
-  O('roots', 1, b('Roots of a chord chart', 'יסודות של דף אקורדים'), b('Roots, then root and 5th', 'יסודות, ואז יסוד וקווינטה'), [L('b-chord-1'), L('b-chord-2')], TO.i4v('blues-basic')),
+  O('roots', 1, b('Roots of a chord chart', 'שורשים של דף אקורדים'), b('Roots, then root and 5th', 'שורשים, ואז שורש וקווינטה'), [L('b-chord-1'), L('b-chord-2')], TO.i4v('blues-basic')),
   C('blues-basic', 2, b('The 12-bar blues, walked', 'בלוז 12 תיבות, בווקינג'), [BASS('blues-basic'), L('b-styles-4'), CH('blues-basic')], TO.blues('blues-f')),
   C('turnarounds-f', 2, b('The I–vi–ii–V turnaround', 'הטרנאראונד I–vi–ii–V'), [BASS('turnarounds-f'), CH('turnarounds-f')], TO.turn('rhythm-full')),
   C('two-five-keys', 2, b('ii–V–I through all keys', 'ii–V–I בכל הסולמות'), [BASS('two-five-keys'), L('b-walk-9')], TO.autumn('autumn')),
@@ -437,7 +437,7 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
     case 'vocal':
       return b('Sing with the band', 'לשיר עם הלהקה');
     case 'chartDrill':
-      return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי יסוד, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'קונכיות (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
+      return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי שורש, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'שלדים (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
     case 'bassStd':
       return b('Walk the changes', 'ווקינג על המהלך');
     case 'guitarStd':

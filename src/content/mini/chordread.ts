@@ -35,7 +35,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: {
           en: 'Two minor thirds make a diminished chord; two major thirds make an augmented one. Add one more third on top and it becomes a seventh chord, like G7.',
-          he: 'שתי טרצות קטנות נותנות אקורד מוקטן; שתי טרצות גדולות נותנות מוגדל. מוסיפים עוד טרצה למעלה וזה הופך לאקורד ספטימה, כמו סול 7.',
+          he: 'שתי טרצות קטנות נותנות אקורד מוקטן; שתי טרצות גדולות נותנות מוגדל. מוסיפים עוד טרצה למעלה וזה הופך לספטאקורד, כמו סול 7.',
         },
         play: [chord([60, 63, 66], 1), rest(0.2), chord([60, 64, 68], 1), rest(0.2), chord([55, 59, 62, 65], 1.3)],
         show: { notes: [55, 59, 62, 65], chord: true },
@@ -72,7 +72,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 60, 64], chord: true, text: { en: 'G–C: root = C', he: 'G–C: השורש = C' } },
       },
       {
-        say: { en: 'Add a third above the fifth for a seventh chord. Cmaj7 is C E G B; C7, the dominant seventh, is C E G B flat; Cm7 is C E flat G B flat; Cm7♭5, half-diminished, is C E flat G flat B flat.', he: 'מוסיפים טרצה מעל הקווינטה ומקבלים אקורד ספטימה. Cmaj7 הוא C E G B; C7, הספטימה הדומיננטית, הוא C E G B♭; Cm7 הוא C E♭ G B♭; Cm7♭5, חצי מוקטן, הוא C E♭ G♭ B♭.' },
+        say: { en: 'Add a third above the fifth for a seventh chord. Cmaj7 is C E G B; C7, the dominant seventh, is C E G B flat; Cm7 is C E flat G B flat; Cm7♭5, half-diminished, is C E flat G flat B flat.', he: 'מוסיפים טרצה מעל הקווינטה ומקבלים ספטאקורד. Cmaj7 הוא C E G B; C7, הספטימה הדומיננטית, הוא C E G B♭; Cm7 הוא C E♭ G B♭; Cm7♭5, חצי מוקטן, הוא C E♭ G♭ B♭.' },
         play: [chord([60, 64, 67, 71], 1.1), rest(0.2), chord([60, 64, 67, 70], 1.1), rest(0.2), chord([60, 63, 67, 70], 1.1), rest(0.2), chord([60, 63, 66, 70], 1.2)],
         show: { notes: [60, 64, 67, 70], chord: true, text: { en: 'Cmaj7 · C7 · Cm7 · Cm7♭5', he: 'Cmaj7 · C7 · Cm7 · Cm7♭5' } },
       },

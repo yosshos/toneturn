@@ -71,7 +71,7 @@ function lead(a: number[], b: Triad): number[] {
 }
 const HELD_SET = [5, 0, 7, 10, 3, 2, 9];
 const DEG_NAME: Record<string, { en: string; he: string }> = {
-  '1': { en: 'Root', he: 'יסוד' }, '♭3': { en: '♭3', he: '♭3' }, '3': { en: '3rd', he: 'טרצה' }, '5': { en: '5th', he: 'קווינטה' }, '♭7': { en: '♭7', he: '♭7' }, maj7: { en: 'maj7', he: 'maj7' },
+  '1': { en: 'Root', he: 'שורש' }, '♭3': { en: '♭3', he: '♭3' }, '3': { en: '3rd', he: 'טרצה' }, '5': { en: '5th', he: 'קווינטה' }, '♭7': { en: '♭7', he: '♭7' }, maj7: { en: 'maj7', he: 'maj7' },
   '9': { en: '9', he: '9' }, '11': { en: '11', he: '11' }, '13': { en: '13', he: '13' }, '♭9': { en: '♭9', he: '♭9' }, '♯11': { en: '♯11', he: '♯11' }, '♭13': { en: '♭13', he: '♭13' }, '♯9': { en: '♯9', he: '♯9' }, '6': { en: '6', he: '6' },
 };
 const degId = (d: string) => 'd' + d.replace('♭', 'b').replace('♯', 's');
@@ -82,7 +82,7 @@ TOPIC_GEN['ct-degree'] = {
   title: { en: 'One note, many chords', he: 'צליל אחד, הרבה אקורדים' },
   skill: 'cadences',
   levels: [
-    { en: 'The note on top: root, 3rd or 5th?', he: 'הצליל למעלה: יסוד, טרצה או קווינטה?' },
+    { en: 'The note on top: root, 3rd or 5th?', he: 'הצליל למעלה: שורש, טרצה או קווינטה?' },
     { en: 'The note is the 3rd: which chord?', he: 'הצליל הוא הטרצה: איזה אקורד?' },
     { en: 'Under a 7th chord: which degree?', he: 'מתחת לספטאקורד: איזו דרגה?' },
     { en: 'Tensions: which degree?', he: 'טנשנים: איזו דרגה?' },
@@ -99,10 +99,10 @@ TOPIC_GEN['ct-degree'] = {
       const [iv, q] = pickR(rnd, LADDER.triads);
       const ans = iv === 0 ? 'r1' : iv === 7 ? 'r5' : 'r3';
       const c = spellHeld(h - iv, q, h)!;
-      const names: Names = { r1: nm('Root', 'יסוד', 'root'), r3: nm('3rd', 'טרצה', 'third'), r5: nm('5th', 'קווינטה', 'fifth') };
+      const names: Names = { r1: nm('Root', 'שורש', 'root'), r3: nm('3rd', 'טרצה', 'third'), r5: nm('5th', 'קווינטה', 'fifth') };
       return choiceQ({
         ...base, difficulty: 1050,
-        ask: { en: `${hn} on top: root, 3rd or 5th?`, he: `${hn} למעלה: יסוד, טרצה או קווינטה?` },
+        ask: { en: `${hn} on top: root, 3rd or 5th?`, he: `${hn} למעלה: שורש, טרצה או קווינטה?` },
         names, answer: ans, choices: ['r1', 'r3', 'r5'],
         stimulus: [seq([{ midis: under(c.root, q, H, 2) }], 1.6), notesStim([H], 0.6)],
       });
@@ -254,7 +254,7 @@ TOPIC_GEN['mediants'] = {
       const cyc = [key, key + 8, key + 4, key].map((p) => ({ midis: triV({ root: mod12(p), minor: false }, 57) }));
       return choiceQ({
         ...base, difficulty: 1650,
-        ask: { en: `${kn} – ${rootName(key + 8)} – ${rootName(key + 4)}: the roots spell which augmented triad?`, he: `${kn} – ${rootName(key + 8)} – ${rootName(key + 4)}: היסודות יוצרים איזה משולש מוגדל?` },
+        ask: { en: `${kn} – ${rootName(key + 8)} – ${rootName(key + 4)}: the roots spell which augmented triad?`, he: `${kn} – ${rootName(key + 8)} – ${rootName(key + 4)}: השורשים יוצרים איזה משולש מוגדל?` },
         names, answer: ids[augs.indexOf(aug)], choices: ids,
         stimulus: [seq(cyc, 1)],
       });
@@ -419,7 +419,7 @@ TOPIC_GEN['counter-line'] = {
       });
     }
     const degs = ['1', '♭3', '3', '11'];
-    const names: Names = { d1: nm('Root', 'יסוד', 'root'), db3: nm('♭3', '♭3', 'flat three'), d3: nm('3rd', 'טרצה', 'third'), d11: nm('11', '11', 'eleven') };
+    const names: Names = { d1: nm('Root', 'שורש', 'root'), db3: nm('♭3', '♭3', 'flat three'), d3: nm('3rd', 'טרצה', 'third'), d11: nm('11', '11', 'eleven') };
     return choiceQ({
       ...base, difficulty: 1650,
       ask: { en: `Over ${names6[k]}: which degree is ${rootName(key)}?`, he: `מעל ${names6[k]}: איזו דרגה ${rootName(key)}?` },

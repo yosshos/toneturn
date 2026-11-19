@@ -31,7 +31,7 @@ const TX = {
   notRinging: { en: 'Not ringing', he: 'לא מצלצל' },
   history: { en: 'Your strums', he: 'מה שפרטתם' },
   shapesOf: { en: 'Shapes', he: 'צורות' },
-  root: { en: 'Root', he: 'יסוד' },
+  root: { en: 'Root', he: 'שורש' },
   quality: { en: 'Quality', he: 'סוג' },
   play: { en: 'Play', he: 'לנגן' },
   mic: { en: 'The microphone is not available. Allow it for this site and try again.', he: 'המיקרופון לא זמין. אפשרו אותו לאתר ונסו שוב.' },

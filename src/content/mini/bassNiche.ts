@@ -81,7 +81,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G F E D C B A G', he: 'G F E D C B A G' } },
       },
       {
-        say: { en: 'The fix is one extra half step, between the root and the flat seven. Now G, F, D and B sit on the beats.', he: 'התיקון הוא חצי טון אחד נוסף, בין היסוד לספטימה הקטנה. עכשיו G, F, D ו-B יושבים על הפעמות.' },
+        say: { en: 'The fix is one extra half step, between the root and the flat seven. Now G, F, D and B sit on the beats.', he: 'התיקון הוא חצי טון אחד נוסף, בין השורש לספטימה הקטנה. עכשיו G, F, D ו-B יושבים על הפעמות.' },
         play: [notes([43, 42, 41, 40, 38, 36, 35, 33, 31], 0.33)],
         show: { text: { en: 'G F♯ F E D C B A G', he: 'G F♯ F E D C B A G' } },
       },
@@ -217,7 +217,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([36, 43, 48, 36, 43, 46], 0.3)],
       },
       {
-        say: { en: 'Latin jazz brings the tumbao to standards: the root of every new chord arrives an eighth early, on the "and".', he: 'ג׳אז לטיני מביא את הטומבאו לסטנדרטים: היסוד של כל אקורד חדש מגיע שמינית מוקדם, על ה"וְ".' },
+        say: { en: 'Latin jazz brings the tumbao to standards: the root of every new chord arrives an eighth early, on the "and".', he: 'ג׳אז לטיני מביא את הטומבאו לסטנדרטים: השורש של כל אקורד חדש מגיע שמינית מוקדם, על ה"וְ".' },
       },
       {
         say: { en: 'The usual mistake is falling back onto one when it gets busy. Keep the one for the drums and the piano, and trust the silence.', he: 'הטעות הנפוצה היא לחזור לאחת כשנהיה עמוס. משאירים את האחת לתופים ולפסנתר, וסומכים על השקט.' },
@@ -316,11 +316,11 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'A pedal riff keeps the low root between moving notes; the pick plays down and up so every note has the same attack.', he: 'ריף עוגב שומר את היסוד הנמוך בין צלילים זזים; המפרט מנגן למטה ולמעלה כך שלכל צליל אותה התקפה.' },
+        say: { en: 'A pedal riff keeps the low root between moving notes; the pick plays down and up so every note has the same attack.', he: 'ריף עוגב שומר את השורש הנמוך בין צלילים זזים; המפרט מנגן למטה ולמעלה כך שלכל צליל אותה התקפה.' },
         play: [notes([28, 40, 28, 38, 28, 35, 28, 31], 0.2)],
       },
       {
-        say: { en: 'A sequenced riff keeps its shape and moves it to each chord root. An ostinato keeps its notes while the chords change above it.', he: 'ריף בסקוונצה שומר על הצורה שלו ומעביר אותה לכל יסוד של אקורד. אוסטינטו שומר על הצלילים בזמן שהאקורדים משתנים מעליו.' },
+        say: { en: 'A sequenced riff keeps its shape and moves it to each chord root. An ostinato keeps its notes while the chords change above it.', he: 'ריף בסקוונצה שומר על הצורה שלו ומעביר אותה לכל שורש של אקורד. אוסטינטו שומר על הצלילים בזמן שהאקורדים משתנים מעליו.' },
       },
       {
         say: { en: 'Odd-meter unisons combine both skills: the group accents and the lock to the band.', he: 'אוניסונים במשקל אי-זוגי מחברים את שתי המיומנויות: ההדגשות של הקבוצות והנעילה עם הלהקה.' },

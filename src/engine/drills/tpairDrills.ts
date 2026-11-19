@@ -145,7 +145,7 @@ function genClose(s: DrillSpec, key: number): Drill {
     prev = v;
     evs.push({ beat: k * 2, dur: k === 7 ? 4 : 2, rh: v, lh: k % 4 === 0 ? lh : [], top: T, ...(k % 4 === 0 ? { bass: key } : {}) });
   }
-  const ttl = pianoTitle([pairT(c, key), t('close triads over the root and 7th, voice-led', 'משולשים צפופים מעל היסוד והספטימה, בהובלת קולות')], { ...s, hands: 'RL' });
+  const ttl = pianoTitle([pairT(c, key), t('close triads over the root and 7th, voice-led', 'משולשים צפופים מעל השורש והספטימה, בהובלת קולות')], { ...s, hands: 'RL' });
   return { ...voicingDrill(s, key, evs, ttl, sigOf(c.scale, key)), chart: [chordChartIn(c, key), chordChartIn(c, key), chordChartIn(c, key)] };
 }
 
@@ -361,7 +361,7 @@ const o = tpOp;
 export const KTP_ROWS: Row[] = [
   { kind: 'tpk-pat', ops: [o('dorian', 0), o('lydian', 0), o('mixo-no11', 0)], rating: 1350, en: 'Pairs in root position, 1-3-5 up and back', he: 'זוגות במצב יסודי, 1-3-5 למעלה ובחזרה', tempo: [60, 120], hands: 'R' },
   { kind: 'tpk-pat', ops: [o('dorian', 1), o('ionian', 2), o('aeolian', 1), o('mixo-no11', 2)], rating: 1400, en: 'The other permutations: 3-5-1 and 5-1-3', he: 'הפרמוטציות האחרות: 3-5-1 ו־5-1-3', tempo: [60, 120], hands: 'R' },
-  { kind: 'tpk-close', ops: [o('dorian'), o('lydian'), o('mixolydian'), o('altered')], rating: 1420, en: 'Pair triads over the root and 7th', he: 'משולשי הזוג מעל היסוד והספטימה', tempo: [60, 100], hands: 'RL' },
+  { kind: 'tpk-close', ops: [o('dorian'), o('lydian'), o('mixolydian'), o('altered')], rating: 1420, en: 'Pair triads over the root and 7th', he: 'משולשי הזוג מעל השורש והספטימה', tempo: [60, 100], hands: 'RL' },
   { kind: 'tpk-pat', ops: [o('lydian-dom', 3), o('half-dim', 3), o('lydian', 3)], rating: 1450, en: 'Alternating inversions', he: 'היפוכים מתחלפים', tempo: [60, 120], hands: 'R' },
   { kind: 'tpk-pat', ops: [o('dorian', 4), o('lydian', 4), o('half-dim', 5), o('altered', 5)], rating: 1500, en: 'Intervallic cells: two-note cells and open triads', he: 'תאים אינטרוולים: תאים של שני צלילים ומשולשים פתוחים', tempo: [60, 112], hands: 'R' },
   { kind: 'tpk-pat', ops: [o('altered', 6), o('lydian', 6), o('phryg-dom', 7)], rating: 1540, en: 'The hexatonic scale over two and three octaves', he: 'הסולם ההקסטוני על שתיים ושלוש אוקטבות', tempo: [60, 120], hands: 'R' },

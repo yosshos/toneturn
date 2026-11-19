@@ -397,7 +397,7 @@ const HANDS_T: Record<'R' | 'L' | 'RL', T2> = {
   RL: t('HT', 'ידיים יחד'),
 };
 const SCALE_T: Record<ScaleType, T2> = {
-  major: t('major', "מז'ור"),
+  major: t('major', "מז׳ור"),
   harmonic: t('harmonic minor', 'מינור הרמוני'),
   melodic: t('melodic minor', 'מינור מלודי'),
   natural: t('natural minor', 'מינור טבעי'),
@@ -715,7 +715,7 @@ function arpChord(s: DrillSpec): { root: number; tones: number[]; name: T2 } {
       return {
         root: k,
         tones: s.minor ? CHORD.min : CHORD.maj,
-        name: t(`${kn} ${s.minor ? 'minor' : 'major'} arpeggio`, `ארפז׳ ${kn} ${s.minor ? 'מינור' : "מז'ור"}`),
+        name: t(`${kn} ${s.minor ? 'minor' : 'major'} arpeggio`, `ארפז׳ ${kn} ${s.minor ? 'מינור' : "מז׳ור"}`),
       };
   }
 }
@@ -811,7 +811,7 @@ function genBroken(s: DrillSpec): Drill {
     [
       t(
         `${keyLabel(s)} ${s.minor ? 'minor' : 'major'} broken chords ${s.option === 1 ? '1-5-3-5' : '1-3-5-3'}`,
-        `אקורדים שבורים ${keyLabel(s)} ${s.minor ? 'מינור' : "מז'ור"} ${s.option === 1 ? '1-5-3-5' : '1-3-5-3'}`,
+        `אקורדים שבורים ${keyLabel(s)} ${s.minor ? 'מינור' : "מז׳ור"} ${s.option === 1 ? '1-5-3-5' : '1-3-5-3'}`,
       ),
     ],
     s,
@@ -1007,7 +1007,7 @@ const CAD_T: Record<string, T2> = {
   'cadence-deceptive': t('I–IV–V7–vi (deceptive)–ii–V7–I', 'I–IV–V7–vi (מטעה)–ii–V7–I'),
   'cadence-picardy': t('i–iv–V7–I (Picardy 3rd)', 'i–iv–V7–I (טרצה פיקרדית)'),
 };
-const TOP_T = [t('root on top', 'יסוד למעלה'), t('3rd on top', 'טרצה למעלה'), t('5th on top', 'קווינטה למעלה')];
+const TOP_T = [t('root on top', 'שורש למעלה'), t('3rd on top', 'טרצה למעלה'), t('5th on top', 'קווינטה למעלה')];
 
 /** Parallel 5ths / octaves (or unisons) between any two voices of two successive sonorities (same voice count, by position). */
 export function parallelsBetween(a: number[], b: number[]): number {
@@ -1082,7 +1082,7 @@ function genCadence(s: DrillSpec): Drill {
   });
   const ttl = title(
     [
-      t(`${keyLabel(s)} ${s.minor ? 'minor' : 'major'} cadence`, `קדנצה ${keyLabel(s)} ${s.minor ? 'מינור' : "מז'ור"}`),
+      t(`${keyLabel(s)} ${s.minor ? 'minor' : 'major'} cadence`, `קדנצה ${keyLabel(s)} ${s.minor ? 'מינור' : "מז׳ור"}`),
       CAD_T[s.kind] ?? CAD_T['cadence-1'],
       TOP_T[pos],
     ],
@@ -1549,11 +1549,11 @@ function genHarris(s: DrillSpec): Drill {
         while (!DOM_DESC.includes(mod(p - key, 12)));
         ps.push(p);
       }
-      const from = [t('root', 'היסוד'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('7th', 'הספטימה')][op];
+      const from = [t('root', 'השורש'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('7th', 'הספטימה')][op];
       return lineDrill(
         s,
         eighths(ps, isCt(DOM_CT)),
-        title([H(2, `${kn}7 scale down from the ${from.en} (root → ♮7 → ♭7)`, `סולם ${kn}7 בירידה מ${from.he} (יסוד → ♮7 → ♭7)`)], s),
+        title([H(2, `${kn}7 scale down from the ${from.en} (root → ♮7 → ♭7)`, `סולם ${kn}7 בירידה מ${from.he} (שורש → ♮7 → ♭7)`)], s),
         { chordTonesOnBeats: true },
         SIG[mod(key + 5, 12)],
       );
@@ -1754,7 +1754,7 @@ function genHarris(s: DrillSpec): Drill {
           while (!DOM_DESC.includes(mod(p - key, 12)));
         line.push({ p, beat: 2 + i / 2, dur: i === 12 ? 1 : 0.5, ct: DOM_CT.includes(mod(p - key, 12)) });
       }
-      const from = [t('root', 'היסוד'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('7th', 'הספטימה')][op];
+      const from = [t('root', 'השורש'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('7th', 'הספטימה')][op];
       return lineDrill(
         s,
         line,
@@ -1977,7 +1977,7 @@ function genVoicings(s: DrillSpec): Drill {
           allow: c.tones.map((p) => p + key),
         };
       });
-      name = t(`7th chords ii7–V7–Imaj7 in ${kn}, root position`, `אקורדי ספטימה ii7–V7–Imaj7 ב-${kn}, מצב יסודי`);
+      name = t(`7th chords ii7–V7–Imaj7 in ${kn}, root position`, `ספטאקורדים ii7–V7–Imaj7 ב-${kn}, מצב יסודי`);
       break;
     }
     case 'shells': {
@@ -2017,7 +2017,7 @@ function genVoicings(s: DrillSpec): Drill {
       );
       name = t(
         `Shell voicings ii–V–I in ${kn} (${op === 1 ? '1-3 / 1-7 / 1-3' : '1-7 / 1-10 / 1-7'})`,
-        `קונכיות ii–V–I ב-${kn} (${op === 1 ? '1-3 / 1-7 / 1-3' : '1-7 / 1-10 / 1-7'})`,
+        `שלדים ii–V–I ב-${kn} (${op === 1 ? '1-3 / 1-7 / 1-3' : '1-7 / 1-10 / 1-7'})`,
       );
       break;
     }
@@ -2042,7 +2042,7 @@ function genVoicings(s: DrillSpec): Drill {
         );
         name = t(
           `Rootless minor ii–V–i in ${keyName(key, true)} minor (ø7 – 7♭9 – m6/9)`,
-          `ללא יסוד ii–V–i מינורי ב-${keyName(key, true)} מינור (ø7 – 7♭9 – m6/9)`,
+          `ללא שורש ii–V–i מינורי ב-${keyName(key, true)} מינור (ø7 – 7♭9 – m6/9)`,
         );
       } else {
         const vs =
@@ -2066,7 +2066,7 @@ function genVoicings(s: DrillSpec): Drill {
           ],
           [DM.allow, G7.allow, CM.allow],
         );
-        name = t(`Rootless ${op === 1 ? 'B' : 'A'}-start ii–V–I in ${kn}`, `ללא יסוד מתחילים ב-${op === 1 ? 'B' : 'A'}, ii–V–I ב-${kn}`);
+        name = t(`Rootless ${op === 1 ? 'B' : 'A'}-start ii–V–I in ${kn}`, `ללא שורש מתחילים ב-${op === 1 ? 'B' : 'A'}, ii–V–I ב-${kn}`);
       }
       break;
     }
@@ -2122,8 +2122,8 @@ function genVoicings(s: DrillSpec): Drill {
       const base = tp(pair.vs, pair.reqs, pair.allows, pair.maxLow);
       chords = Array.from({ length: 16 }, (_, i) => base[i % base.length]);
       const nm = [
-        t('rootless Dm9 (A) ↔ G13 (B)', 'ללא יסוד Dm9 (A) ↔ G13 (B)'),
-        t('shells ii 1-7 ↔ V 1-10', 'קונכיות ii 1-7 ↔ V 1-10'),
+        t('rootless Dm9 (A) ↔ G13 (B)', 'ללא שורש Dm9 (A) ↔ G13 (B)'),
+        t('shells ii 1-7 ↔ V 1-10', 'שלדים ii 1-7 ↔ V 1-10'),
         t('cycle I–VI–ii–V (A/B)', 'מחזור I–VI–ii–V (A/B)'),
       ][Math.min(2, op)];
       name = t(`One-minute changes in ${kn}: ${nm.en}`, `החלפות בדקה ב-${kn}: ${nm.he}`);
@@ -2162,7 +2162,7 @@ function genVoicings(s: DrillSpec): Drill {
         };
       });
       beatsPer = 4;
-      name = t(`12-bar blues in ${kn} with shells`, `בלוז 12 תיבות ב-${kn} בקונכיות`);
+      name = t(`12-bar blues in ${kn} with shells`, `בלוז 12 תיבות ב-${kn} בשלדים`);
       break;
     }
     case 'guide-tones': {
@@ -2311,7 +2311,7 @@ function genVoicings(s: DrillSpec): Drill {
         ],
         [DM.allow, [1, 3, 5, 8, 10, 11], CM.allow],
       );
-      name = t(`Tritone substitution ii–♭II7–I in ${kn} (rootless)`, `תחליף טריטון ii–♭II7–I ב-${kn} (ללא יסוד)`);
+      name = t(`Tritone substitution ii–♭II7–I in ${kn} (rootless)`, `תחליף טריטון ii–♭II7–I ב-${kn} (ללא שורש)`);
       break;
     }
     case 'comp': {
@@ -2374,7 +2374,7 @@ function genVoicings(s: DrillSpec): Drill {
         prev = gv;
         return { v: [pitchIn(r, 36), ...gv], req: [r, ...g], allow: [...ints.map((x) => r + x), r + 2] };
       });
-      name = t(`Coltrane changes in ${kn}: root + guide tones (${coltraneNames(key)})`, `מהלכי קולטריין ב-${kn}: יסוד + צלילים מנחים (${coltraneNames(key)})`);
+      name = t(`Coltrane changes in ${kn}: root + guide tones (${coltraneNames(key)})`, `מהלכי קולטריין ב-${kn}: שורש + צלילים מנחים (${coltraneNames(key)})`);
       break;
     }
     default:
@@ -2476,14 +2476,14 @@ function genWalking(s: DrillSpec): Drill {
     pat.forEach(([p, ct], i) => buf.add(bar * 4 + i, 1, [{ pitch: p, hand: 'L', chordTone: ct }]));
   });
   buf.add(48, 2, [{ pitch: rootP(0), hand: 'L', chordTone: true }]);
-  const nm = [t('roots + approach', 'יסודות + צליל גישה'), t('chord tones + approach', 'צלילי אקורד + גישה'), t('scale walk + approach', 'הליכה בסולם + גישה')][
+  const nm = [t('roots + approach', 'שורשים + צליל גישה'), t('chord tones + approach', 'צלילי אקורד + גישה'), t('scale walk + approach', 'הליכה בסולם + גישה')][
     op
   ];
   const sp: DrillSpec = { ...s, hands: 'L' };
   return finish(
     s,
     buf,
-    title([t(`Walking bass, blues in ${keyName(key)}`, `בס מהלך, בלוז ב-${keyName(key)}`), nm], sp),
+    title([t(`Walking bass, blues in ${keyName(key)}`, `ווקינג בס, בלוז ב-${keyName(key)}`), nm], sp),
     { evenness: true, hands: false, chordTonesOnBeats: true },
     80,
     4,
@@ -2585,7 +2585,7 @@ function genBlocked(s: DrillSpec): Drill {
     }
     buf.add(i, i === order.length - 1 ? 2 : 1, sns);
   });
-  const mm = s.minor ? t('minor', 'מינור') : t('major', "מז'ור");
+  const mm = s.minor ? t('minor', 'מינור') : t('major', "מז׳ור");
   return finish(s, buf, title([t(`${keyLabel(s)} ${mm.en} blocked chords through the inversions`, `אקורדים סגורים ${keyLabel(s)} ${mm.he} דרך ההיפוכים`)], s), goalOf(s, false), 60);
 }
 
@@ -2685,7 +2685,7 @@ function genDoubleNotes(s: DrillSpec): Drill {
   const buf = new Buf();
   buf.steps(steps, 1 / perBeat, s.variant, s.dynamics);
   const nm = gap === 2 ? t('Double 3rds', 'טרצות כפולות') : t('Double 6ths', 'סקסטות כפולות');
-  return finish(s, buf, title([nm, t(`${keyLabel(s)} ${s.minor ? 'harmonic minor' : 'major'}`, `${keyLabel(s)} ${s.minor ? 'מינור הרמוני' : "מז'ור"}`), t(`${oct} oct`, `${oct} אוק׳`)], s), goalOf(s, true), bpmFor(1.6, perBeat));
+  return finish(s, buf, title([nm, t(`${keyLabel(s)} ${s.minor ? 'harmonic minor' : 'major'}`, `${keyLabel(s)} ${s.minor ? 'מינור הרמוני' : "מז׳ור"}`), t(`${oct} oct`, `${oct} אוק׳`)], s), goalOf(s, true), bpmFor(1.6, perBeat));
 }
 
 /** Leaps: waltz bass (LH, 3/4), RH two-octave jumps, both hands leaping outwards, LH crossing over the RH (option 3). */
@@ -3278,7 +3278,7 @@ function genWalkChanges(s: DrillSpec): Drill {
   });
   buf.add(b, 2, [{ pitch: rootP(0), hand: 'L', chordTone: true }]);
   const nm = rhythm ? t('rhythm changes, A section', 'ריתם צ׳יינג׳ס, חלק A') : t('ii–V–I–VI7 cycle', 'מעגל ii–V–I–VI7');
-  return finish(s, buf, title([t(`Walking bass through changes in ${keyName(key)}`, `בס מהלך דרך מהלך אקורדים ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false, chordTonesOnBeats: true }, 80, 4, SIG[key]);
+  return finish(s, buf, title([t(`Walking bass through changes in ${keyName(key)}`, `ווקינג בס דרך מהלך אקורדים ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false, chordTonesOnBeats: true }, 80, 4, SIG[key]);
 }
 
 // ───────────────────────────── dispatch ─────────────────────────────
@@ -3842,7 +3842,7 @@ function harrisPivot(s: DrillSpec): Drill {
     const up = pivotArp(root, q);
     push([...up, up[0], ...straightArp(root, q).slice(1).reverse(), root], 0, true);
     const nm = `${kn}${ARP_SYM[q]}`;
-    return lineDrill(s, line, title([H(19, `${nm} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${nm}: היסוד למעלה, ירידה לטרצה, עלייה — ואז למטה`)], s), { chordTonesOnBeats: true }, SIG[mod(key + ARP_SIG[q], 12)]);
+    return lineDrill(s, line, title([H(19, `${nm} pivot: the root on top, drop to the 3rd, climb — then down`, `פיבוט ${nm}: השורש למעלה, ירידה לטרצה, עלייה — ואז למטה`)], s), { chordTonesOnBeats: true }, SIG[mod(key + ARP_SIG[q], 12)]);
   }
   if (s.kind === 'h20-pivotrot') {
     const o = opOf(s, 3);
@@ -3855,7 +3855,7 @@ function harrisPivot(s: DrillSpec): Drill {
     const nm = `${kn}${ARP_SYM[q]}`;
     const ttl = mirror
       ? H(20, `${nm} pivot, the mirror: a chord tone at the bottom, leap up, fall — from each chord tone`, `פיבוט ${nm} במראה: צליל אקורד למטה, קפיצה למעלה, ירידה — מכל צליל אקורד`)
-      : H(20, `${nm} pivot from each chord tone: root, 3rd, 5th, 7th on top`, `פיבוט ${nm} מכל צליל אקורד: יסוד, טרצה, קווינטה, ספטימה למעלה`);
+      : H(20, `${nm} pivot from each chord tone: root, 3rd, 5th, 7th on top`, `פיבוט ${nm} מכל צליל אקורד: שורש, טרצה, קווינטה, ספטימה למעלה`);
     return lineDrill(s, line, title([ttl], s), { chordTonesOnBeats: true }, SIG[mod(key + ARP_SIG[q], 12)]);
   }
   if (s.kind === 'h22-scalepivot') {
@@ -3905,7 +3905,7 @@ function harrisPivot(s: DrillSpec): Drill {
 
 // ───────────────────────────── k-sixdim: Barry Harris harmony ─────────────────────────────
 
-const DEG4 = [t('root', 'היסוד'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('6th', 'הסקסטה')];
+const DEG4 = [t('root', 'השורש'), t('3rd', 'הטרצה'), t('5th', 'הקווינטה'), t('6th', 'הסקסטה')];
 
 /** Barry's chord conversions (PIANO_JAZZ): the 6th chord and the diminished that move a chord of a form. */
 function sixPair(root: number, q: string): { home: number[]; dim: number[] } {
@@ -3976,7 +3976,7 @@ function genSixDim(s: DrillSpec): Drill {
         return i % 4 === 0 ? evOf(i, last ? 2 : 1, rh, lh) : evOf(i, last ? 2 : 1, rh, [], lh);
       });
       // The pedal sounds through the bar (held to the next one).
-      return holdLH(chordDrill({ ...s, hands: 'RL' }, evs, title([N(`oblique motion over a held ${fifth ? 'root and 5th' : 'root'}`, `תנועה אלכסונית מעל ${fifth ? 'יסוד וקווינטה מוחזקים' : 'יסוד מוחזק'}`)], { ...s, hands: 'RL' }), 60, {}, sig));
+      return holdLH(chordDrill({ ...s, hands: 'RL' }, evs, title([N(`oblique motion over a held ${fifth ? 'root and 5th' : 'root'}`, `תנועה אלכסונית מעל ${fifth ? 'שורש וקווינטה מוחזקים' : 'שורש מוחזק'}`)], { ...s, hands: 'RL' }), 60, {}, sig));
     }
     case 'sd-spread': {
       // Spreads (two hands): the 2nd and 4th voices from the top go down an octave into the LH; op 1 doubles the melody
@@ -4169,8 +4169,8 @@ function genSixDim(s: DrillSpec): Drill {
       }
       const sp = { ...s, hands: 'RL' as const };
       const ttl = op === 1
-        ? t(`The auxiliary diminished on I and IV, then ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, root and 6th held`, `הדימיניש העזר על I ועל IV, ואז ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, היסוד והסקסטה מוחזקים`)
-        : t(`The auxiliary diminished: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 from each position, root and 6th held`, `הדימיניש העזר: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 מכל מצב, היסוד והסקסטה מוחזקים`);
+        ? t(`The auxiliary diminished on I and IV, then ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, root and 6th held`, `המוקטן העזר על I ועל IV, ואז ii–V–I: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6, ${keyName(key + 5)}6 – ${keyName(key + 5)}°7 – ${keyName(key + 5)}6, השורש והסקסטה מוחזקים`)
+        : t(`The auxiliary diminished: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 from each position, root and 6th held`, `המוקטן העזר: ${keyName(key)}6 – ${keyName(key)}°7 – ${keyName(key)}6 מכל מצב, השורש והסקסטה מוחזקים`);
       return holdNotes(chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[key]), holds);
     }
     case 'sd-move': {
@@ -4196,7 +4196,7 @@ function genSixDim(s: DrillSpec): Drill {
       const last = blockUnder(degPitch(baseFor(0, 64), six, 8), home);
       evs.push(evOf(beat, 2, last, [last[0] - 12]));
       const sp = { ...s, hands: 'RL' as const };
-      return chordDrill(sp, evs, title([N('chords move to chords — each position steps to the diminished above and below, the bass too', 'אקורדים זזים לאקורדים — כל מצב צועד אל הדימיניש שמעל ושמתחת, גם הבס')], sp), 60, {}, sig);
+      return chordDrill(sp, evs, title([N('chords move to chords — each position steps to the diminished above and below, the bass too', 'אקורדים זזים לאקורדים — כל מצב צועד אל המוקטן שמעל ושמתחת, גם הבס')], sp), 60, {}, sig);
     }
     case 'sd-m6keys': {
       // One minor 6th, three basses: Xm6 over X, then over the 6th (= m7♭5 a minor 3rd below) and the 4th (= the 9 chord
@@ -4209,7 +4209,7 @@ function genSixDim(s: DrillSpec): Drill {
       evs.push(evOf(6, 4, res, [pitchIn(key + 10, 36)]));
       const sp = { ...s, hands: 'RL' as const };
       const k = keyName(key);
-      const ttl = t(`One shape, three basses: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 without its root, then ${keyName(key + 10)}6`, `צורה אחת, שלושה בסים: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 בלי היסוד, ואז ${keyName(key + 10)}6`);
+      const ttl = t(`One shape, three basses: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 without its root, then ${keyName(key + 10)}6`, `צורה אחת, שלושה בסים: ${k}m6 = ${keyName(key + 9)}m7♭5 = ${keyName(key + 5)}9 בלי השורש, ואז ${keyName(key + 10)}6`);
       return chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[mod(key + 10, 12)]);
     }
   }
@@ -4416,7 +4416,7 @@ function genBebop(s: DrillSpec): Drill {
     for (const n of line) buf.add(n.beat, n.dur, [{ pitch: n.p, hand: 'R', chordTone: n.ct }]);
     for (const sh of shellsFor(chords)) buf.add(sh.beat, sh.dur, sh.v.map((p) => ({ pitch: p, hand: 'L' as Hand, chordTone: true })));
     const hs: DrillSpec = { ...sp, hands: 'RL' };
-    const d = finish(hs, buf, title([t(`Left-hand shells, right-hand bebop line: ${form.name.en} in ${keyName(key)}`, `קונכיות ביד שמאל, קו ביבופ ביד ימין: ${form.name.he} ב-${keyName(key)}`)], hs), { evenness: false, hands: true, chordTonesOnBeats: true }, 70, 4, SIG[key]);
+    const d = finish(hs, buf, title([t(`Left-hand shells, right-hand bebop line: ${form.name.en} in ${keyName(key)}`, `שלדים ביד שמאל, קו ביבופ ביד ימין: ${form.name.he} ב-${keyName(key)}`)], hs), { evenness: false, hands: true, chordTonesOnBeats: true }, 70, 4, SIG[key]);
     return { ...d, chart: chartOf(form.bars, key) };
   }
   if (s.kind === 'bb-trade') return genTrade(sp);
@@ -4615,7 +4615,7 @@ function genReharm(s: DrillSpec): Drill {
       // ii–V7alt–I twice: LH guide tones (3 & 7, voice-led), RH three tones — the altered shape on V.
       const o = Math.min(3, Math.max(0, op));
       const alt = [
-        { rh: [8, 0, 3], en: '7♯9♭13 (the ♭VI triad: ♭13, root, ♯9)', he: '7♯9♭13 (משולש ♭VI: ♭13, יסוד, ♯9)' },
+        { rh: [8, 0, 3], en: '7♯9♭13 (the ♭VI triad: ♭13, root, ♯9)', he: '7♯9♭13 (משולש ♭VI: ♭13, שורש, ♯9)' },
         { rh: [6, 10, 1], en: '7♭9♯11 (the ♭V triad: ♯11, 7, ♭9)', he: '7♭9♯11 (משולש ♭V: ♯11, 7, ♭9)' },
         { rh: [3, 6, 10], en: '7♯9♯11 (the ♭III minor triad: ♯9, ♯11, 7)', he: '7♯9♯11 (משולש ♭III מינורי: ♯9, ♯11, 7)' },
         { rh: [1, 4, 9], en: '13♭9 (♭9, 3, 13)', he: '13♭9 (♭9, 3, 13)' },
@@ -4649,7 +4649,7 @@ function genReharm(s: DrillSpec): Drill {
         [0, 'maj7', [4, 7, 11, 2]],
       ];
       const chords: HCh[] = prog.map(([d, q, rh]) => ({ r: R(d), lh: tenth ? [0, q.startsWith('m') ? 15 : 16] : [0, q === 'maj7' ? 11 : 10], rh, beats: 4, exact: true, more: MORE_Q[q] ?? [] }));
-      return twoHand(s, chords, tenth ? t(`Ballad voicings in ${kn}: LH 10ths, RH four notes — I–vi–ii–V, iii–VI–ii–V–I`, `קולות בלדה ב-${kn}: דצימות ביד שמאל, ארבעה צלילים בימין — I–vi–ii–V, iii–VI–ii–V–I`) : t(`Ballad voicings in ${kn}: LH root and 7th, RH four notes — I–vi–ii–V, iii–VI–ii–V–I`, `קולות בלדה ב-${kn}: יסוד וספטימה ביד שמאל, ארבעה צלילים בימין — I–vi–ii–V, iii–VI–ii–V–I`), SIG[key], { lh: [36, 64], rh: [64, 84], rhAim: 76 });
+      return twoHand(s, chords, tenth ? t(`Ballad voicings in ${kn}: LH 10ths, RH four notes — I–vi–ii–V, iii–VI–ii–V–I`, `קולות בלדה ב-${kn}: דצימות ביד שמאל, ארבעה צלילים בימין — I–vi–ii–V, iii–VI–ii–V–I`) : t(`Ballad voicings in ${kn}: LH root and 7th, RH four notes — I–vi–ii–V, iii–VI–ii–V–I`, `קולות בלדה ב-${kn}: שורש וספטימה ביד שמאל, ארבעה צלילים בימין — I–vi–ii–V, iii–VI–ii–V–I`), SIG[key], { lh: [36, 64], rh: [64, 84], rhAim: 76 });
     }
     case 'rh-reharm': {
       // Reharmonisation, two hands (LH root–7th, RH rootless): tritone subs, backdoor, passing diminished, ii–V inserted.
@@ -4865,7 +4865,7 @@ function genReharm(s: DrillSpec): Drill {
       const sp: DrillSpec = { ...s, hands: 'RL' };
       const ttl = so
         ? t(`Planing the So What voicing in ${kn} dorian: on ${keyName(key + 2)} and ${kn}, then a half step up`, `פליינינג של קול So What ב-${kn} דורי: על ${keyName(key + 2)} ועל ${kn}, ואז חצי טון למעלה`)
-        : t(`Constant structure: a rootless maj9 on ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`, `מבנה קבוע: maj9 בלי יסוד על ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`);
+        : t(`Constant structure: a rootless maj9 on ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`, `מבנה קבוע: maj9 בלי שורש על ${kn}, ${keyName(key + 3)}, ${keyName(key + 6)}, ${keyName(key + 9)}`);
       return chordDrill(sp, evs, title([ttl], sp), 60, {}, SIG[so ? mod(key + 10, 12) : key]);
     }
   }
@@ -5411,8 +5411,8 @@ export function catalog(): FamilyDef[] {
       title: t('Scales', 'סולמות'),
       style: 'classical',
       levels: [
-        L('scales', 1, 'Major, each hand, 1 octave', "מז'ור, כל יד לחוד, אוקטבה אחת", HS({ octaves: 1 })),
-        L('scales', 2, 'Major, each hand, 2 octaves', "מז'ור, כל יד לחוד, 2 אוקטבות", HS({ octaves: 2 })),
+        L('scales', 1, 'Major, each hand, 1 octave', "מז׳ור, כל יד לחוד, אוקטבה אחת", HS({ octaves: 1 })),
+        L('scales', 2, 'Major, each hand, 2 octaves', "מז׳ור, כל יד לחוד, 2 אוקטבות", HS({ octaves: 2 })),
         L('scales', 3, 'Hands together, 2 octaves', 'ידיים יחד, 2 אוקטבות', [sc({ hands: 'RL', octaves: 2 })]),
         L('scales', 4, 'Contrary motion', 'תנועה נגדית', [sc({ hands: 'RL', octaves: 2, motion: 'contrary' })]),
         L(
@@ -5539,7 +5539,7 @@ export function catalog(): FamilyDef[] {
       title: t('Arpeggios', "ארפג'יו"),
       style: 'classical',
       levels: [
-        L('arpeggios', 1, 'Major triads, root position, each hand', "משולשים מז'וריים, מצב יסודי, כל יד", [
+        L('arpeggios', 1, 'Major triads, root position, each hand', "משולשים מז׳וריים, מצב יסודי, כל יד", [
           ar({ hands: 'R', octaves: 1 }),
           ar({ hands: 'L', octaves: 1 }),
           ar({ hands: 'R', octaves: 2 }),
@@ -5551,7 +5551,7 @@ export function catalog(): FamilyDef[] {
           ar({ hands: 'L', option: 1 }),
           ar({ hands: 'L', option: 2 }),
         ]),
-        L('arpeggios', 3, 'Hands together, 2 octaves (major and minor)', "ידיים יחד, 2 אוקטבות (מז'ור ומינור)", [
+        L('arpeggios', 3, 'Hands together, 2 octaves (major and minor)', "ידיים יחד, 2 אוקטבות (מז׳ור ומינור)", [
           ar({ hands: 'RL', octaves: 2 }),
           ar({ hands: 'RL', octaves: 2, minor: true }),
         ]),
@@ -5633,7 +5633,7 @@ export function catalog(): FamilyDef[] {
           [0, 1, 2].map((o) => c('cadence-64', { option: o })),
           [0, 7, 5, 2, 10, 9],
         ),
-        L('cadences', 3, 'All keys, major and minor', "כל הסולמות, מז'ור ומינור", [c('cadence-64'), c('cadence-64', { minor: true })]),
+        L('cadences', 3, 'All keys, major and minor', "כל הסולמות, מז׳ור ומינור", [c('cadence-64'), c('cadence-64', { minor: true })]),
         L('cadences', 4, 'ii6–V7–I, the circle, V/V', 'ii6–V7–I, המעגל, V/V', [c('cadence-ii6'), c('cadence-circle'), c('cadence-vofv')]),
         L(
           'cadences',
@@ -5950,7 +5950,7 @@ export function catalog(): FamilyDef[] {
           h('h5-pivots', { hands: 'L' }),
           h('h6-approach', { hands: 'L' }),
         ], cyc4),
-        L('harris', 13, 'Diminished moves: four keys from one chord', 'תנועות הדימיניש: ארבעה סולמות מאקורד אחד', [h('h13-dimmoves'), h('h13-dimmoves', { option: 1 })], cyc4),
+        L('harris', 13, 'Diminished moves: four keys from one chord', 'תנועות המוקטן: ארבעה סולמות מאקורד אחד', [h('h13-dimmoves'), h('h13-dimmoves', { option: 1 })], cyc4),
         // PIANO_JAZZ: the half-step rules from any start, and ii–V–I lines by the rules.
         L('harris', 14, 'The half-step rules on descending lines: chord tones on the beats from any start', 'חוקי חצי הטון בקווים יורדים: צלילי אקורד על הפעמות מכל התחלה', [...[0, 1, 2, 3].map((o) => h('h14-rules', { option: o, swing: true })), h('h14-rules', { hands: 'L', swing: true })], cyc4, [2.33, 4]),
         L('harris', 15, 'ii–V–I lines by the rules, major and minor', 'שורות ii–V–I לפי החוקים, מז׳ור ומינור', [h('h15-iivi', { swing: true }), h('h15-iivi', { option: 1, swing: true })], cyc4, [2.33, 4]),
@@ -5963,7 +5963,7 @@ export function catalog(): FamilyDef[] {
         // scale line and with enclosures. New technique items: rubato first, then quarters, then the tempo ladder
         // (rubato.ts); all 12 keys (cyc4). Path ~1450–1650 (path.ts KEYS_LEVEL_DIFF).
         L('harris', 19, 'The pivot: maj7, m7, 7, m7♭5', 'הפיבוט: maj7, ‏m7, ‏7, ‏m7♭5', [0, 1, 2, 3].map((o) => h('h19-pivot', { option: o })), cyc4, [2.33, 3.33]),
-        L('harris', 20, 'The pivot: 6 and diminished 7th', 'הפיבוט: 6 ודימיניש', [4, 5].map((o) => h('h19-pivot', { option: o })), cyc4, [2.33, 3.33]),
+        L('harris', 20, 'The pivot: 6 and diminished 7th', 'הפיבוט: 6 ומוקטן', [4, 5].map((o) => h('h19-pivot', { option: o })), cyc4, [2.33, 3.33]),
         L('harris', 21, 'The pivot from every chord tone, and the mirror', 'הפיבוט מכל צליל אקורד, ובמראה', [0, 1, 2, 3].map((o) => h('h20-pivotrot', { option: o })), cyc4, [2.33, 3.73]),
         L('harris', 22, 'The pivot through ii–V–I, the scale down by the rules', 'הפיבוט דרך ii–V–I, הסולם למטה לפי החוקים', [h('h21-pivotiivi'), h('h21-pivotiivi', { option: 1 })], cyc4, [2.33, 4]),
         L('harris', 23, 'Descending scale with a pivot inside: 6 and 7', 'סולם יורד עם פיבוט בתוכו: 6 ו־7', [h('h22-scalepivot'), h('h22-scalepivot', { option: 1 })], cyc4, [2.33, 4]),
@@ -5971,7 +5971,7 @@ export function catalog(): FamilyDef[] {
         // Owner 2026-11-14: the minor 6th-diminished scale (m6 + the diminished a half step under the root), up and down.
         L('harris', 25, 'The minor 6th-diminished scale, up and down', 'סולם מינור השישית־מוקטן, עולה ויורד', [h('h1-linear', { option: 1 }), h('h1-linear', { option: 1, hands: 'L' }), h('h1-linear', { option: 1, hands: 'RL' })], cyc4),
         // The other two of Barry Harris's four diminished scales: dominant 7th-diminished and 7♭5-diminished.
-        L('harris', 26, 'The dominant diminished scales (7 and 7♭5), up and down', 'סולמות הדימיניש של הדומיננט (7 ו־7♭5), עולים ויורדים', [2, 3].flatMap((o) => [h('h1-linear', { option: o }), h('h1-linear', { option: o, hands: 'L' }), h('h1-linear', { option: o, hands: 'RL' })]), cyc4),
+        L('harris', 26, 'The dominant diminished scales (7 and 7♭5), up and down', 'סולמות המוקטן של הדומיננט (7 ו־7♭5), עולים ויורדים', [2, 3].flatMap((o) => [h('h1-linear', { option: o }), h('h1-linear', { option: o, hands: 'L' }), h('h1-linear', { option: o, hands: 'RL' })]), cyc4),
       ],
     },
     {
@@ -5992,8 +5992,8 @@ export function catalog(): FamilyDef[] {
         JT('k-sixdim', 10, 'More forms: the minor blues, the bridge of rhythm changes, a ballad', 'עוד צורות: הבלוז המינורי, הגשר של ריתם צ׳יינג׳ס, בלדה', [0, 1, 2].map((o) => sd('sd-forms', { option: o, hands: 'RL' })), [0, 5, 10, 7, 3], [60, 92]),
         // HARRIS_2 (AUDIT-CONTENT-THEORY §ז.2): the auxiliary diminished with its common tones held (BH-C), chords move to
         // chords (BH-D), one minor 6th over three basses in all twelve keys (BH-E).
-        JT('k-sixdim', 11, 'The auxiliary diminished: common tones held', 'הדימיניש העזר: הצלילים המשותפים מוחזקים', [sd('sd-aux', { hands: 'RL' }), sd('sd-aux', { option: 1, hands: 'RL' })], cyc4, [50, 84]),
-        JT('k-sixdim', 12, 'Chords move to chords: to the diminished and back, the bass too', 'אקורדים זזים לאקורדים: אל הדימיניש וחזרה, גם הבס', [sd('sd-move', { hands: 'RL' }), sd('sd-move', { minor: true, hands: 'RL' })], cyc4, [60, 100]),
+        JT('k-sixdim', 11, 'The auxiliary diminished: common tones held', 'המוקטן העזר: הצלילים המשותפים מוחזקים', [sd('sd-aux', { hands: 'RL' }), sd('sd-aux', { option: 1, hands: 'RL' })], cyc4, [50, 84]),
+        JT('k-sixdim', 12, 'Chords move to chords: to the diminished and back, the bass too', 'אקורדים זזים לאקורדים: אל המוקטן וחזרה, גם הבס', [sd('sd-move', { hands: 'RL' }), sd('sd-move', { minor: true, hands: 'RL' })], cyc4, [60, 100]),
         JT('k-sixdim', 13, 'One minor 6th, three basses: m6 = m7♭5 = 9, in all twelve keys', 'מינור 6 אחד, שלושה בסים: m6 = m7♭5 = 9, בכל שנים־עשר הסולמות', [sd('sd-m6keys', { hands: 'RL' }), sd('sd-m6keys', { option: 1, hands: 'RL' })], cyc4, [60, 100]),
       ],
     },
@@ -6003,25 +6003,25 @@ export function catalog(): FamilyDef[] {
       style: 'jazz',
       levels: [
         L('voicings', 1, 'Triads I–IV–V, smooth', 'משולשים I–IV–V, חלק', [v('v-triads')], [0, 7, 5]),
-        L('voicings', 2, '7th chords, root position', 'אקורדי ספטימה, מצב יסודי', [v('v-sevenths')], [0, 7, 5, 2, 10, 9]),
-        L('voicings', 3, 'Shells ii–V–I', 'קונכיות ii–V–I', [v('shells'), v('shells', { option: 1 })], cyc4),
+        L('voicings', 2, '7th chords, root position', 'ספטאקורדים, מצב יסודי', [v('v-sevenths')], [0, 7, 5, 2, 10, 9]),
+        L('voicings', 3, 'Shells ii–V–I', 'שלדים ii–V–I', [v('shells'), v('shells', { option: 1 })], cyc4),
         L(
           'voicings',
           4,
           'Rootless A / B ii–V–I, minor ii–V–i',
-          'ללא יסוד A / B, ii–V–I מינורי',
+          'ללא שורש A / B, ii–V–I מינורי',
           [v('rootless'), v('rootless', { option: 1 }), v('rootless', { option: 2 })],
           cyc4,
         ),
         L('voicings', 5, 'One-minute changes', 'החלפות בדקה', [v('one-minute'), v('one-minute', { option: 1 }), v('one-minute', { option: 2 })], cyc4),
-        L('voicings', 6, 'Blues with shells', 'בלוז בקונכיות', [v('blues-shells')], [5, 10, 0, 3, 7]),
+        L('voicings', 6, 'Blues with shells', 'בלוז בשלדים', [v('blues-shells')], [5, 10, 0, 3, 7]),
         L('voicings', 7, 'Quartal "So What"', 'קוורטל "So What"', [{ ...v('so-what'), hands: 'RL' }], [2, 7, 0, 9, 4]),
         L('voicings', 8, 'Quartal voicings through the dorian scale', 'קולות קוורטליים דרך הסולם הדורי', [v('quartal'), v('quartal', { option: 1, hands: 'RL' })], [2, 9, 4, 7, 0, 5]),
         L('voicings', 9, 'Two-handed voicings and drop 2', 'קולות בשתי ידיים ודרופ 2', [v('two-hand', { hands: 'RL' }), v('drop2', { hands: 'RL' })], cyc4),
         L('voicings', 10, 'Tritone substitution ii–♭II7–I', 'תחליף טריטון ii–♭II7–I', [v('tritone-sub')], cyc4),
         L('voicings', 11, 'Comping rhythms: Charleston, reverse, anticipations, Red Garland', "מקצבי ליווי: צ'רלסטון, הפוך, הקדמות, רד גרלנד", [0, 1, 2, 3].map((o) => v('comp', { option: o, swing: true })), cyc4),
-        L('voicings', 12, 'Coltrane changes with root and guide tones', 'מהלכי קולטריין עם יסוד וצלילים מנחים', [v('coltrane-v')], [0, 5, 10, 3, 7, 2]),
-        L('voicings', 13, 'Rootless A / B through the progressions', 'בלי יסוד A / B לאורך המהלכים', [cv('lv:two-five-one', 'rootless-a'), cv('lv:two-five-one', 'rootless-b'), cv('lv:minor-two-five', 'rootless'), cv('lv:turnaround', 'rootless'), cv('lv:tritone-subs', 'rootless'), cv('lv:extensions', 'rootless')], [0, 5, 10, 3]),
+        L('voicings', 12, 'Coltrane changes with root and guide tones', 'מהלכי קולטריין עם שורש וצלילים מנחים', [v('coltrane-v')], [0, 5, 10, 3, 7, 2]),
+        L('voicings', 13, 'Rootless A / B through the progressions', 'בלי שורש A / B לאורך המהלכים', [cv('lv:two-five-one', 'rootless-a'), cv('lv:two-five-one', 'rootless-b'), cv('lv:minor-two-five', 'rootless'), cv('lv:turnaround', 'rootless'), cv('lv:tritone-subs', 'rootless'), cv('lv:extensions', 'rootless')], [0, 5, 10, 3]),
         L('voicings', 14, 'Comping rhythms on standards', 'מקצבי ליווי על סטנדרטים', [cv('std:autumn', 'rootless', 'charleston'), cv('std:fly', 'rootless', 'reverse'), cv('std:satin', 'shell', 'garland'), cv('std:blue-bossa', 'rootless', 'anticip'), cv('std:a-train', 'shell', 'four')], [0]),
         L('voicings', 15, 'Drop 2, drop 3 and block chords on standards', 'דרופ 2, דרופ 3 ואקורדי בלוק על סטנדרטים', [cv('std:autumn', 'drop2'), cv('std:attya', 'drop2', 'charleston'), cv('std:fly', 'drop3'), cv('std:satin', 'block'), cv('std:solar', 'drop2', 'reverse')], [0]),
         L('voicings', 16, 'Open, two-handed, quartal and upper structures', 'פתוח, שתי ידיים, קוורטלי ומשולשי מבנה עליון', [cv('lv:two-five-one', 'open'), cv('std:autumn', 'two-hand'), cv('std:so-what', 'quartal'), cv('lv:altered-chain', 'upper'), cv('std:ladybird', 'two-hand', 'charleston'), cv('lv:coltrane', 'open')], [0]),
@@ -6041,7 +6041,7 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 4, 'Reharmonising: tritone subs, backdoor, passing diminished, an added ii–V', 'הרמוניה מחודשת: תחליפי טריטון, דלת אחורית, מוקטנים עוברים, ii–V נוסף', [0, 1, 2, 3].map((o) => rh('rh-reharm', { option: o })), [0, 5, 10, 7, 3], [60, 100]),
         JT('k-reharm', 5, 'Modal comping over a pedal', 'ליווי מודאלי מעל פדל', [rh('rh-modal'), rh('rh-modal', { option: 1 })], [2, 7, 0, 9, 4, 5], [70, 120]),
         JT('k-reharm', 6, 'Chains: ii–Vs by whole steps, the family of dominants', 'שרשראות: ii–V בטונים, משפחת הדומיננטות', [rh('rh-chains'), rh('rh-chains', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 104]),
-        JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
+        JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: ווקינג בס, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
         JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
         // HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): borrowed chords in comping (H-3), planing and constant structure (H-5).
         // HARMONY-REHARM: 9 and 10 in all 12 keys from C (they listed 6).
@@ -6135,7 +6135,7 @@ export function catalog(): FamilyDef[] {
         JT('k-bebop', 4, 'Lines over the jazz blues', 'קווים על בלוז ג׳אז', [0, 1, 2].map((o) => bb('bb-blues', { option: o })), [5, 10, 0, 7, 3, 8], [90, 160]),
         JT('k-bebop', 5, 'Lines over rhythm changes', 'קווים על ריתם צ׳יינג׳ס', [bb('bb-rhythm'), bb('bb-rhythm', { option: 1 })], [10, 3, 8, 1, 0, 5], [100, 180]),
         JT('k-bebop', 6, 'Lines over standards, major and minor', 'קווים על סטנדרטים, מז׳ור ומינור', [bb('bb-standard'), bb('bb-standard', { option: 1 })], [0, 5, 10, 7], [90, 160]),
-        JT('k-bebop', 7, 'Both hands: shells and a line', 'שתי ידיים: קונכיות וקו', [bb('bb-hands', { hands: 'RL' }), bb('bb-hands', { option: 1, hands: 'RL' })], cyc4, [70, 120]),
+        JT('k-bebop', 7, 'Both hands: shells and a line', 'שתי ידיים: שלדים וקו', [bb('bb-hands', { hands: 'RL' }), bb('bb-hands', { option: 1, hands: 'RL' })], cyc4, [70, 120]),
         JT('k-bebop', 8, 'Trading fours with the band', 'חילופי ארבע עם הלהקה', [0, 1, 2].map((o) => bb('bb-trade', { option: o })), [0, 5, 10, 7], [90, 140]),
         JT('k-bebop', 9, 'Lines over whole forms: rhythm changes AABA, the bridge, the minor blues', 'קווים על צורות שלמות: כל ריתם צ׳יינג׳ס, הגשר, הבלוז המינורי', [0, 1, 2].map((o) => bb('bb-form', { option: o })), [10, 3, 8, 0, 5], [90, 170]),
         JT('k-bebop', 10, 'The Coltrane matrix: lines through keys a major 3rd apart', 'מטריצת קולטריין: קווים בסולמות במרחק טרצה גדולה', [bb('bb-matrix'), bb('bb-matrix', { option: 1 })], [0, 5, 10, 3, 7, 2], [70, 140]),
@@ -6147,7 +6147,7 @@ export function catalog(): FamilyDef[] {
       style: 'jazz',
       levels: [
         L('accomp', 1, 'Alberti bass', 'בס אלברטי', [m('alberti')], [0, 7, 5]),
-        L('accomp', 2, 'Walking bass: roots + approach', 'בס מהלך: יסודות + גישה', [m('walking'), m('walking', { option: 1 })], [5, 10, 0, 7, 3]),
+        L('accomp', 2, 'Walking bass: roots + approach', 'ווקינג בס: שורשים + גישה', [m('walking'), m('walking', { option: 1 })], [5, 10, 0, 7, 3]),
         L('accomp', 3, 'Stride: single bass and octaves', 'סטרייד: בס בודד ואוקטבות', [m('stride'), m('stride', { option: 1 })], [0, 5, 7, 10, 3]),
         L(
           'accomp',
@@ -6160,8 +6160,8 @@ export function catalog(): FamilyDef[] {
         L('accomp', 5, 'Boogie-woogie left hand', 'בוגי-ווגי ביד שמאל', [0, 1, 2].map((o) => m('boogie', { option: o, swing: true })), [0, 5, 7, 10, 3, 9]),
         L('accomp', 6, 'Latin: bossa nova and montuno', 'לטיני: בוסה נובה ומונטונו', [m('bossa', { hands: 'RL' }), m('montuno', { hands: 'RL' })], [0, 5, 7, 2, 10, 9]),
         L('accomp', 7, 'Pop left-hand patterns', 'תבניות פופ ליד שמאל', [m('pop-lh'), m('pop-lh', { option: 1 })], [0, 7, 5, 2, 9, 4]),
-        L('accomp', 8, 'Walking bass through changes: ii–V–I and rhythm changes', 'בס מהלך דרך מהלכים: ii–V–I וריתם צ׳יינג׳ס', [m('walk-changes'), m('walk-changes', { option: 1 })], [0, 5, 10, 3, 7]),
-        L('accomp', 9, 'Stride and walking bass in more keys', 'סטרייד ובס מהלך בעוד סולמות', [m('stride', { option: 1 }), m('stride', { option: 2 }), m('walking', { option: 1 })], [2, 9, 4, 8, 1, 6, 11]),
+        L('accomp', 8, 'Walking bass through changes: ii–V–I and rhythm changes', 'ווקינג בס דרך מהלכים: ii–V–I וריתם צ׳יינג׳ס', [m('walk-changes'), m('walk-changes', { option: 1 })], [0, 5, 10, 3, 7]),
+        L('accomp', 9, 'Stride and walking bass in more keys', 'סטרייד ו־ווקינג בס בעוד סולמות', [m('stride', { option: 1 }), m('stride', { option: 2 }), m('walking', { option: 1 })], [2, 9, 4, 8, 1, 6, 11]),
         L('accomp', 10, 'Alberti, pop, boogie and Latin left hands in more keys', 'אלברטי, פופ, בוגי ולטיני ביד שמאל בעוד סולמות', [
           m('alberti'),
           m('pop-lh'),
@@ -6197,8 +6197,8 @@ export function catalog(): FamilyDef[] {
         // PIANO_AUDIT P3: two-part playback — a melody over a bass, both hands.
         E(9, 'Two parts: melody and bass', 'שני קולות: מנגינה ובס', [{ ...ke('two-part'), hands: 'RL' }, { ...ke('two-part', 1), hands: 'RL' }], [0, 7, 5, 2, 10]),
         // Progressions by ear (progEar.ts), all 12 keys: played back with the bass in the LH, graded per chord.
-        E(10, 'ii–V–I by ear, as shells', 'ii–V–I בשמיעה, בקונכיות', [{ ...ke('prog-iivi'), hands: 'RL' }, { ...ke('prog-iivi', 1), hands: 'RL' }], ALL12),
-        E(11, 'ii–V–I by ear, rootless A / B', 'ii–V–I בשמיעה, בלי יסוד A / B', [{ ...ke('prog-rootless'), hands: 'RL' }, { ...ke('prog-rootless', 1), hands: 'RL' }], ALL12),
+        E(10, 'ii–V–I by ear, as shells', 'ii–V–I בשמיעה, בשלדים', [{ ...ke('prog-iivi'), hands: 'RL' }, { ...ke('prog-iivi', 1), hands: 'RL' }], ALL12),
+        E(11, 'ii–V–I by ear, rootless A / B', 'ii–V–I בשמיעה, בלי שורש A / B', [{ ...ke('prog-rootless'), hands: 'RL' }, { ...ke('prog-rootless', 1), hands: 'RL' }], ALL12),
         E(12, 'Eight bars: secondaries and inversions', 'שמונה תיבות: משניות והיפוכים', [{ ...ke('prog-secinv'), hands: 'RL' }], ALL12),
         E(13, 'Tritone subs and the backdoor by ear', 'תחליפי טריטון ודלת אחורית בשמיעה', [{ ...ke('prog-subs'), hands: 'RL' }], ALL12),
         E(14, 'Altered dominants and upper structures', 'דומיננטות אלטרד ומבנים עליונים', [{ ...ke('prog-altered'), hands: 'RL' }, { ...ke('prog-altered', 1), hands: 'RL' }], ALL12),

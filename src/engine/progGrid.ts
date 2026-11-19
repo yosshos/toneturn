@@ -588,7 +588,7 @@ export function gridLine(q: Pick<GridQuestion, 'slots' | 'extras'>, answer: stri
   const he = lang === 'he';
   const part = (ok: number, of: number) => (ok === of ? '✓' : `${ok}/${of}`);
   const third = q.extras.some((x) => x.startsWith('/')) ? (he ? 'בס' : 'bass') : he ? 'צבע' : 'colour';
-  const xs = [`${he ? 'יסודות' : 'Roots'} ${part(g.roots.ok, g.roots.of)}`, `${he ? 'סוג' : 'quality'} ${part(g.qualities.ok, g.qualities.of)}`];
+  const xs = [`${he ? 'שורשים' : 'Roots'} ${part(g.roots.ok, g.roots.of)}`, `${he ? 'סוג' : 'quality'} ${part(g.qualities.ok, g.qualities.of)}`];
   if (g.extras) xs.push(`${third} ${part(g.extras.ok, g.extras.of)}`);
   return xs.join(' · ');
 }
@@ -624,7 +624,7 @@ export function gridWhy(q: Pick<GridQuestion, 'slots' | 'extras' | 'spell'>, ans
   const gotSym = cellSym(got[i], q.spell);
   const part = !m.root
     ? he
-      ? 'שמעו את הבס: לאן היסוד זז'
+      ? 'שמעו את הבס: לאן השורש זז'
       : 'follow the bass: where the root moves'
     : !m.quality
       ? he

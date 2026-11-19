@@ -170,14 +170,14 @@ function genScales2(s: DrillSpec, tu: Tuning): Drill {
       const up = cagedConnect(tu, key, op === 2 ? 1 : op);
       const line = op === 2 ? [...up].reverse() : upDown(up);
       const gs = markSlides(line.map((x) => ({ ...x, stroke: 'D' as Stroke })));
-      const nm = op === 0 ? t('from the root on 6', 'מהיסוד במיתר 6') : op === 1 ? t('from the root on 5', 'מהיסוד במיתר 5') : t('descending from the top', 'יורד מלמעלה');
+      const nm = op === 0 ? t('from the root on 6', 'מהשורש במיתר 6') : op === 1 ? t('from the root on 5', 'מהשורש במיתר 5') : t('descending from the top', 'יורד מלמעלה');
       return finish(s, tu, seqEv(gs, 0.5), { title: T(`Connecting positions: two octaves across three shapes, ${nm.en}`, `חיבור מצבים: שתי אוקטבות דרך שלוש צורות, ${nm.he}`, key), bpm: 70, evenness: true });
     }
     case '3nps-neck': {
       const up = threeNpsNeck(tu, key, op);
       const gs = markSlides(upDown(up).map((x, i) => ({ ...x, stroke: (i % 2 === 0 ? 'D' : 'U') as Stroke })));
       const from = ['root', '2nd', '3rd', '4th', '5th', '6th', '7th'][op];
-      const fromHe = ['היסוד', 'הדרגה 2', 'הדרגה 3', 'הדרגה 4', 'הדרגה 5', 'הדרגה 6', 'הדרגה 7'][op];
+      const fromHe = ['השורש', 'הדרגה 2', 'הדרגה 3', 'הדרגה 4', 'הדרגה 5', 'הדרגה 6', 'הדרגה 7'][op];
       return finish(s, tu, seqEv(gs, 1 / 3), { title: T(`3 notes per string across the neck, slide shift, from the ${from}`, `3 צלילים במיתר לאורך הצוואר, מעבר בהחלקה, מ${fromHe}`, key), bpm: 60, evenness: true });
     }
     case 'interval-seq': {
@@ -280,7 +280,7 @@ function genRhythm2(s: DrillSpec, tu: Tuning): Drill {
         const fill = W.slice(iRoot, iTop + 1).reverse();
         fill.forEach((x, k) => evs.push({ beat: b + k * 0.25, dur: k === fill.length - 1 ? 4 - k * 0.25 : 0.25, notes: [{ ...x, stroke: k % 2 === 0 ? 'D' : 'U' }] }));
       }
-      return finish(s, tu, evs, { title: T(`Mizrahi: maqsum strum and a Hijaz fill${op === 0 ? '' : ' (barre chords)'}`, `מזרחית: פריטת מקסום ומילוי חיג׳אז${op === 0 ? '' : ' (אקורדי ברה)'}`, key), bpm: 80, evenness: true, keySig: SIG[mod(key + 5, 12)] });
+      return finish(s, tu, evs, { title: T(`Mizrahi: maqsum strum and a Hijaz fill${op === 0 ? '' : ' (barre chords)'}`, `מזרחית: פריטת מקסום ומעבר חיג׳אז${op === 0 ? '' : ' (אקורדי ברה)'}`, key), bpm: 80, evenness: true, keySig: SIG[mod(key + 5, 12)] });
     }
   }
   throw new Error(`Unknown rhythm kind ${s.kind}`);
@@ -464,7 +464,7 @@ function genLegato2(s: DrillSpec, tu: Tuning): Drill {
       const down = up.slice(0, -1).reverse();
       const gs = [...tag(up, 'up'), ...tag([up[up.length - 1], ...down], 'down').slice(1)];
       const from = ['root', '2nd', '3rd', '4th', '5th', '6th', '7th'][op];
-      const fromHe = ['היסוד', 'הדרגה 2', 'הדרגה 3', 'הדרגה 4', 'הדרגה 5', 'הדרגה 6', 'הדרגה 7'][op];
+      const fromHe = ['השורש', 'הדרגה 2', 'הדרגה 3', 'הדרגה 4', 'הדרגה 5', 'הדרגה 6', 'הדרגה 7'][op];
       return finish(s, tu, seqEv(gs, 1 / 3), { title: T(`Legato with position shifts (3 per string), from the ${from}`, `לגאטו עם מעברי מצב (3 במיתר), מ${fromHe}`, key), bpm: 60, evenness: true });
     }
     case 'tap8': {
@@ -585,7 +585,7 @@ function genReading2(s: DrillSpec, tu: Tuning): Drill {
         const sh = chordShape(key + d, q);
         for (const at of [0, 2]) evs.push({ beat: 16 + bar * 4 + at, dur: 2, notes: sh.dots.map((x) => ({ s: x.s, f: x.f, finger: x.finger, tech: 'strum-down' as GuitarTechnique, stroke: 'D' as Stroke })) });
       });
-      const d = finish(s, tu, evs, { title: T(`Lead sheet: play the melody, then comp the chords (${op + 1})`, `דף תווים: לנגן את המנגינה, ואז ללוות באקורדים (${op + 1})`, key), bpm: 70, evenness: false, goal: { chordTonesOnBeats: true } });
+      const d = finish(s, tu, evs, { title: T(`Lead sheet: play the melody, then comp the chords (${op + 1})`, `דף אקורדים: לנגן את המנגינה, ואז ללוות באקורדים (${op + 1})`, key), bpm: 70, evenness: false, goal: { chordTonesOnBeats: true } });
       return { ...d, chart: [...chart, ...chart] };
     }
   }
@@ -625,13 +625,13 @@ function genArps2(s: DrillSpec, tu: Tuning): Drill {
       const ms = [...k.ints.map((i) => R + i), R + 12 + k.ints[1] + (k.name === '13' ? 12 : 0)].filter((m, i, a) => i === 0 || m > a[i - 1]);
       const ps = placeLine(tu, ms, rf + 1, [rs, rs - 1, rs - 2, rs - 3, rs - 4, rs - 5].filter((x) => x >= 1));
       const gs = upDown(ps).map((x, i) => ({ ...x, stroke: (i % 2 === 0 ? 'D' : 'U') as Stroke }));
-      return finish(s, tu, seqEv(gs, 0.5), { title: t(`${NAMES[key]}${k.name} arpeggio, root on ${rs}`, `ארפג׳יו ${NAMES[key]}${k.name}, יסוד על ${rs}`), bpm: 70, evenness: true });
+      return finish(s, tu, seqEv(gs, 0.5), { title: t(`${NAMES[key]}${k.name} arpeggio, root on ${rs}`, `ארפג׳יו ${NAMES[key]}${k.name}, שורש על ${rs}`), bpm: 70, evenness: true });
     }
     case 'ust': {
       // Upper-structure triads over a dominant: the root, then the triad of II (9-♯11-13), ♭VI (♭13-R-♯9) or VI (13-♭9-3).
       const UST = [
         { d: 2, en: 'II (9, ♯11, 13)', he: 'II (9, ♯11, 13)' },
-        { d: 8, en: '♭VI (♭13, R, ♯9)', he: '♭VI (♭13, יסוד, ♯9)' },
+        { d: 8, en: '♭VI (♭13, R, ♯9)', he: '♭VI (♭13, שורש, ♯9)' },
         { d: 9, en: 'VI (13, ♭9, 3)', he: 'VI (13, ♭9, 3)' },
       ];
       const u = UST[op % 3];
@@ -926,7 +926,7 @@ export function core2Levels(): Partial<Record<FamilyId, GuitarLevelDef[]>> {
     'g-rhythm': [
       L('g-rhythm', 8, 'Rock riffs: power chords and single notes, muting between hits', 'ריפים של רוק: אקורדי פאוור וצלילים בודדים, השתקה בין המכות', [0, 1, 2].map((o) => R('rock-riff', { option: o })), [4, 9, 7, 2, 0, 5], [80, 110], '16ths', 4, { genres: ['rock', 'metal', 'blues', 'pop'] }),
       L('g-rhythm', 9, 'Neo-soul: upper triads, double stops and grace notes', 'ניאו-סול: משולשים עליונים, צלילים כפולים וקישוטים', [0, 1].map((o) => R('neo-soul', { option: o })), [7, 0, 2, 9, 4, 5], [70, 95], '16ths', 6, { genres: ['funk', 'pop'] }),
-      L('g-rhythm', 10, 'Mizrahi: maqsum strum and Hijaz fills', 'מזרחית: פריטת מקסום ומילויי חיג׳אז', [0, 1].map((o) => R('mizrahi', { option: o })), [4, 9, 2, 7], [80, 110], '8ths / 16ths', 5, { genres: ['pop', 'latin'] }),
+      L('g-rhythm', 10, 'Mizrahi: maqsum strum and Hijaz fills', 'מזרחית: פריטת מקסום ומעברי חיג׳אז', [0, 1].map((o) => R('mizrahi', { option: o })), [4, 9, 2, 7], [80, 110], '8ths / 16ths', 5, { genres: ['pop', 'latin'] }),
     ],
     'g-lead': [
       L('g-lead', 8, 'Bends in phrases: bend, release, vibrato on the target', 'כיפופים במשפטים: כיפוף, שחרור, ויברטו על המטרה', [0, 1].map((o) => E('bend-phrase', { option: o })), GKEYS_MINOR.slice(0, 6), [60, 90], '8ths', 6),
@@ -944,7 +944,7 @@ export function core2Levels(): Partial<Record<FamilyId, GuitarLevelDef[]>> {
     'g-reading': [
       L('g-reading', 6, 'Rhythm charts: play time, catch the hits', 'צ׳ארטים קצביים: לשמור על הזמן, לתפוס את המכות', [0, 1, 2].map((o) => RD('chart-hits', { option: o })), [7, 0, 2, 9, 4], [70, 100], 'quarters / 8ths', 5),
       L('g-reading', 7, 'Reading in two positions, ledger lines above the staff', 'קריאה בשני מצבים, קווי עזר מעל החמשה', [0, 1, 2].map((o) => RD('two-pos', { option: o, perBeat: 2 })), [0, 7, 2, 5, 9, 10], [70, 90], '8ths', 6),
-      L('g-reading', 8, 'Lead sheets: the melody, then comp the chords', 'דפי תווים: המנגינה, ואז ליווי באקורדים', [0, 1, 2].map((o) => RD('lead-sheet', { option: o })), [0, 7, 5, 2], [70, 90], 'quarters / 8ths', 7),
+      L('g-reading', 8, 'Lead sheets: the melody, then comp the chords', 'דף אקורדים: המנגינה, ואז ליווי באקורדים', [0, 1, 2].map((o) => RD('lead-sheet', { option: o })), [0, 7, 5, 2], [70, 90], 'quarters / 8ths', 7),
     ],
     'g-arps': [
       L('g-arps', 6, '7th arpeggios in all five CAGED shapes', 'ארפג׳יו ספטאקורד בכל חמש צורות CAGED', [0, 1, 2, 3, 4].flatMap((p) => [0, 1, 2, 3].map((o) => A('caged7', { option: o, position: p }))), [0, 5, 7, 2, 9, 4], [70, 100], '8ths', 6),

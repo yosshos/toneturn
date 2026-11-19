@@ -128,7 +128,7 @@ export const CONTEXTS: { id: LickContext; name: T2; short: T2 }[] = [
   { id: 'altered', name: { en: 'Altered dominant', he: 'דומיננט אלטרד' }, short: { en: 'alt', he: 'אלטרד' } },
   { id: 'blues', name: { en: 'Blues', he: 'בלוז' }, short: { en: 'blues', he: 'בלוז' } },
   { id: 'barry', name: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, short: { en: 'Barry', he: 'בארי' } },
-  { id: 'enclosure', name: { en: 'Bebop enclosures', he: 'הקפות ביבופ' }, short: { en: 'enclose', he: 'הקפה' } },
+  { id: 'enclosure', name: { en: 'Bebop enclosures', he: 'כיתורי ביבופ' }, short: { en: 'enclose', he: 'כיתור' } },
   { id: 'guide', name: { en: 'Guide-tone lines', he: 'קווי צלילים מנחים' }, short: { en: 'guide', he: 'מנחים' } },
 ];
 
@@ -193,7 +193,7 @@ export const LICKS: Lick[] = [
   // ── enclosures ──
   L('enc-third', 'enclosure', 1, 'Above, below, the 3rd', 'מלמעלה, מלמטה, הטרצה', [[0, 'maj7', 4]], '5 3 4h 7q'),
   L('enc-root', 'enclosure', 2, 'Enclose the root of V', 'להקיף את השורש של V', V_I, '9 6 7q 5 2 -1 1 | 0w'),
-  L('enc-double', 'enclosure', 3, 'Double chromatic enclosure', 'הקפה כרומטית כפולה', [[0, 'maj7', 4]], '9 8 6 7d 4q'),
+  L('enc-double', 'enclosure', 3, 'Double chromatic enclosure', 'כיתור כרומטי כפול', [[0, 'maj7', 4]], '9 8 6 7d 4q'),
   L('enc-minor', 'enclosure', 4, 'Enclose the minor 3rd, then climb', 'להקיף את הטרצה הקטנה, ולטפס', [[0, 'm6', 8]], '5 2 3q 7 9 11 14 | 12w'),
   // ── guide tones ──
   L('guide-halves', 'guide', 1, '3rds and 7ths in half notes', 'טרצות וספטימות בחצאים', II_V_I, '5h 12h | 11h 5h | 4h 11h'),

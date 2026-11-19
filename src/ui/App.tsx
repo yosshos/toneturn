@@ -70,7 +70,7 @@ import { vocalUnit } from '../content/units';
 const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer, RefresherContext } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
-import { lessonForUnit, MINI_LESSONS } from '../content/minilessons';
+import { ladderLessonKey, lessonForUnit, MINI_LESSONS } from '../content/minilessons';
 import { guitarAddOnsOf, guitarVoiceOf } from '../engine/drills/guitarMeta';
 import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
@@ -1448,14 +1448,16 @@ export function App() {
       drillSession.current = { takes: 0, clean: 0 };
       // A family with its own quick lesson ("tech:<family>": bass and drums niche families) opens with it the first time.
       // DRUMS P2: a level with its own quick lesson ("tech:<level id>", e.g. the pocket) opens with that one instead.
-      return gate(lessonForUnit(`tech:${step.ladder.ref}`) ? `tech:${step.ladder.ref}` : `tech:${step.ladder.family}`, () => go('drills'));
+      // Curriculum audit R7: else the family's existing lesson (guitar families, voice leading, 7th chords, numerals …).
+      return gate(ladderLessonKey('tech', step.ladder), () => go('drills'));
     }
     if (step.kind === 'vocal' && step.ladder) {
       toolFrom.current = 'path';
       setVocalWarmup(false);
       setVocalLevel(Number(step.ladder.ref));
       // A vocal level with its own quick lesson ("vocal:<level>", the first steps) opens with it the first time.
-      return gate(`vocal:${step.ladder.ref}`, () => go('vocal'));
+      // Curriculum audit R2: else the family's track lesson (breath, pitch, scales, sight, scat …), as the Vocal screen does.
+      return gate(ladderLessonKey('vocal', step.ladder), () => go('vocal'));
     }
     // A game inside the unit (0.38): its result is recorded as the step's stars when the game ends.
     if (step.kind === 'game' && step.game) {

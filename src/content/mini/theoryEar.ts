@@ -34,7 +34,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Keep stacking thirds past the 7th: 9, 11, 13. Alter them (♭9 ♯9 ♯11 ♭13) for spice, or swap the 3 for a 4 for sus.', he: 'ממשיכים לערום טרצות מעל ה־7: ‏9, 11, 13. משנים אותן (♭9 ♯9 ♯11 ♭13) בשביל תבלין, או מחליפים את ה־3 ב־4 בשביל sus.' },
     steps: [
       {
-        say: { en: 'Hey {name}! A seventh chord is a stack of thirds: 1, 3, 5, 7. Keep stacking thirds and you reach 9, 11 and 13 — the extensions.', he: 'היי {name}! אקורד ספטימה בנוי מטרצות זו על גבי זו: 1, 3, 5, 7. ממשיכים להוסיף טרצות ומגיעים ל־9, 11 ו־13 — ההרחבות.' },
+        say: { en: 'Hey {name}! A seventh chord is a stack of thirds: 1, 3, 5, 7. Keep stacking thirds and you reach 9, 11 and 13 — the extensions.', he: 'היי {name}! ספטאקורד בנוי מטרצות זו על גבי זו: 1, 3, 5, 7. ממשיכים להוסיף טרצות ומגיעים ל־9, 11 ו־13 — ההרחבות.' },
         play: [arp([43, 59, 62, 65]), ch([43, 59, 62, 65], 1.4)],
         show: { notes: [43, 59, 62, 65], chord: true, key: 'C', text: { en: 'G7 = 1 3 5 7', he: 'G7 = 1 3 5 7' } },
       },
@@ -105,7 +105,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [40, 56, 62, 67], chord: true, key: 'E', text: { en: 'E7♯9', he: 'E7♯9' } },
       },
       {
-        say: { en: 'To keep: extensions are 2, 4 and 6 an octave up, sitting above a seventh chord. Dominants take every alteration; the 11 needs care on major chords.', he: 'לזכור: הרחבות הן 2, 4 ו־6 אוקטבה למעלה, מעל אקורד ספטימה. הדומיננט מקבל כל שינוי; עם ה־11 צריך זהירות באקורדי מז׳ור.' },
+        say: { en: 'To keep: extensions are 2, 4 and 6 an octave up, sitting above a seventh chord. Dominants take every alteration; the 11 needs care on major chords.', he: 'לזכור: הרחבות הן 2, 4 ו־6 אוקטבה למעלה, מעל ספטאקורד. הדומיננט מקבל כל שינוי; עם ה־11 צריך זהירות באקורדי מז׳ור.' },
         show: { text: { en: '9 = 2 · 11 = 4 · 13 = 6', he: '9 = 2 · 11 = 4 · 13 = 6' } },
       },
     ],
@@ -160,7 +160,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [48, 55, 64], chord: true, key: 'C', text: { en: 'C close · C open', he: 'C צפוף · C פתוח' } },
       },
       {
-        say: { en: 'Classical figures name inversions. A triad in root position, first inversion is 6, second inversion is 6/4. For seventh chords: 7, 6/5, 4/3 and 4/2. Here are C, C/E and C/G.', he: 'בהרמוניה קלאסית מסמנים היפוכים בספרות. משולש במצב יסודי, היפוך ראשון הוא 6, היפוך שני הוא 6/4. באקורדי ספטימה: 7, ‏6/5, ‏4/3 ו־4/2. הנה C, ‏C/E ו־C/G.' },
+        say: { en: 'Classical figures name inversions. A triad in root position, first inversion is 6, second inversion is 6/4. For seventh chords: 7, 6/5, 4/3 and 4/2. Here are C, C/E and C/G.', he: 'בהרמוניה קלאסית מסמנים היפוכים בספרות. משולש במצב יסודי, היפוך ראשון הוא 6, היפוך שני הוא 6/4. בספטאקורדים: 7, ‏6/5, ‏4/3 ו־4/2. הנה C, ‏C/E ו־C/G.' },
         play: [ch([48, 52, 55], 0.9), ch([52, 55, 60], 0.9), ch([55, 60, 64], 1.2)],
         show: { notes: [52, 55, 60], chord: true, key: 'C', text: { en: 'root · 6 · 6/4', he: 'יסודי · 6 · 6/4' } },
       },
@@ -892,7 +892,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 63, 66], chord: true, key: 'C', text: { en: 'Cm · C° · C+', he: 'Cm · C° · C+' } },
       },
       {
-        say: { en: 'Sevenths add one more letter. G7 is G, B, D, F: a major triad with a minor seventh. Gmaj7 raises it to F♯.', he: 'אקורדי ספטימה מוסיפים עוד אות. G7 הוא סול, סי, רה, פה: משולש מז׳ורי עם ספטימה קטנה. ב־Gmaj7 היא עולה לפה דיאז.' },
+        say: { en: 'Sevenths add one more letter. G7 is G, B, D, F: a major triad with a minor seventh. Gmaj7 raises it to F♯.', he: 'ספטאקורדים מוסיפים עוד אות. G7 הוא סול, סי, רה, פה: משולש מז׳ורי עם ספטימה קטנה. ב־Gmaj7 היא עולה לפה דיאז.' },
         play: [ch([55, 59, 62, 65], 1.2), ch([55, 59, 62, 66], 1.4)],
         show: { notes: [55, 59, 62, 65], chord: true, key: 'C', text: { en: 'G7 G B D F · Gmaj7 F♯', he: 'G7 סול סי רה פה · Gmaj7 פה♯' } },
       },
@@ -1218,7 +1218,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 57, 59, 60, 62, 64, 65, 67], key: 'C', text: { en: 'G7 → G Mixolydian', he: 'G7 ← סול מיקסולידי' } },
       },
       {
-        say: { en: 'Jazz adds color. 7alt takes the altered scale, 13♭9 the half-whole diminished, and 7♯11 the Lydian dominant.', he: 'הג׳אז מוסיף צבע. 7alt מקבל את סולם האלטרד, 13♭9 את הדימיניש חצי־שלם, ו־7♯11 את הלידי הדומיננטי.' },
+        say: { en: 'Jazz adds color. 7alt takes the altered scale, 13♭9 the half-whole diminished, and 7♯11 the Lydian dominant.', he: 'הג׳אז מוסיף צבע. 7alt מקבל את סולם האלטרד, 13♭9 את המוקטן חצי־שלם, ו־7♯11 את הלידי הדומיננטי.' },
         play: [ch([43, 59, 65, 70, 75], 1.4), ch([43, 59, 65, 69, 73], 1.4)],
         show: { notes: [43, 59, 65, 70, 75], chord: true, key: 'C', text: { en: '7alt · 13♭9 · 7♯11', he: '7alt · 13♭9 · 7♯11' } },
       },
@@ -1254,7 +1254,7 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [55, 56, 58, 59, 61, 63, 65, 67], key: 'C', text: { en: 'G altered: G A♭ B♭ B C♯ E♭ F', he: 'סול אלטרד: סול לה♭ סי♭ סי דו♯ מי♭ פה' } },
       },
       {
-        say: { en: 'For dominants, ask three questions. Is the 9 natural or altered? Is the 11 natural or sharp? Is the 13 natural or flat? Natural 9 and 13 point to Mixolydian; ♭9 with natural 13 to half-whole diminished; ♭9 and ♭13 to altered or Phrygian dominant.', he: 'בדומיננטים שאלו שלוש שאלות. ה־9 טבעי או אלטרד? ה־11 טבעי או מוגבה? ה־13 טבעי או מונמך? 9 ו־13 טבעיים — מיקסולידי; ♭9 עם 13 טבעי — דימיניש חצי־שלם; ♭9 ו־♭13 — אלטרד או פריגי דומיננטי.' },
+        say: { en: 'For dominants, ask three questions. Is the 9 natural or altered? Is the 11 natural or sharp? Is the 13 natural or flat? Natural 9 and 13 point to Mixolydian; ♭9 with natural 13 to half-whole diminished; ♭9 and ♭13 to altered or Phrygian dominant.', he: 'בדומיננטים שאלו שלוש שאלות. ה־9 טבעי או אלטרד? ה־11 טבעי או מוגבה? ה־13 טבעי או מונמך? 9 ו־13 טבעיים — מיקסולידי; ♭9 עם 13 טבעי — מוקטן חצי־שלם; ♭9 ו־♭13 — אלטרד או פריגי דומיננטי.' },
         play: [ns([55, 56, 58, 59, 61, 62, 64, 65, 67], 0.26)],
         show: { notes: [55, 56, 58, 59, 61, 62, 64, 65, 67], key: 'C', text: { en: 'G half-whole: G A♭ B♭ B C♯ D E F', he: 'סול חצי־שלם: סול לה♭ סי♭ סי דו♯ רה מי פה' } },
       },

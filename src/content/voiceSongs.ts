@@ -376,7 +376,7 @@ export const P2_SONGS: VoiceSong[] = [
   },
   {
     id: 'call-and-answer',
-    title: { en: 'Call and Answer', he: 'קריאה ותשובה' },
+    title: { en: 'Call and Answer', he: 'שאלה ותשובה' },
     credit: OWN,
     tier: 'own',
     meter: 4,
@@ -387,7 +387,7 @@ export const P2_SONGS: VoiceSong[] = [
     level: 4,
     style: 'swing',
     bpm: 108,
-    form: { en: '12-bar blues, call and response', he: 'בלוז של 12 תיבות, קריאה ותשובה' },
+    form: { en: '12-bar blues, call and response', he: 'בלוז של 12 תיבות, שאלה ותשובה' },
   },
 ];
 

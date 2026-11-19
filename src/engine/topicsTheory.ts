@@ -192,7 +192,7 @@ TOPIC_GEN['chord-spelling'] = {
     // triads it used to mix in come with the dominant seventh at G5; then the seventh chords, then the ninths.
     { en: 'Triads, major and minor', he: 'משולשים, מז׳ור ומינור' },
     { en: 'Diminished, augmented, dominant 7th', he: 'מוקטן, מוגדל, ספטאקורד דומיננטי' },
-    { en: 'Seventh chords', he: 'אקורדי ספטימה' },
+    { en: 'Seventh chords', he: 'ספטאקורדים' },
     { en: 'Ninths and alterations', he: '9, 11, 13 ואלטרציות' },
   ],
   gen(seed, level, id) {
@@ -411,7 +411,7 @@ const SCALES: Record<string, ReturnType<typeof nm>> = {
   aeolian: nm('Aeolian (natural minor)', 'איאולי (מינור טבעי)', 'aeolian', 'natural minor'),
   locrian: nm('Locrian', 'לוקרי', 'locrian'),
   altered: nm('Altered (super-Locrian)', 'אלטרד (סופר־לוקרי)', 'altered', 'super locrian', 'alt'),
-  hw: nm('Half-whole diminished', 'דימיניש חצי־שלם', 'half whole', 'diminished scale', 'octatonic'),
+  hw: nm('Half-whole diminished', 'מוקטן חצי־שלם', 'half whole', 'diminished scale', 'octatonic'),
   lydom: nm('Lydian dominant', 'לידי דומיננטי', 'lydian dominant', 'lydian flat seven', 'overtone'),
   wholetone: nm('Whole tone', 'טון שלם', 'whole tone'),
   melmin: nm('Melodic minor', 'מינור מלודי', 'melodic minor', 'jazz minor'),

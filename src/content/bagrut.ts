@@ -200,7 +200,7 @@ export const EXAMS: ExamDef[] = [
     title: { en: 'Bar-Ilan music department: entrance exam', he: 'המחלקה למוזיקה, בר-אילן: מבחן כניסה' },
     blurb: {
       en: 'Notation and theory (75 minutes in the published sample) and ear training (30 minutes): intervals, major and minor scales, one-voice dictation, root-position triads.',
-      he: 'תיווי ותיאוריה (שעה ורבע במבחן לדוגמה) ופיתוח שמיעה (30 דקות): מרווחים, סולמות מז\'ור ומינור, הכתבה חד-קולית, משולשים במצב יסודי.',
+      he: 'תיווי ותיאוריה (שעה ורבע במבחן לדוגמה) ופיתוח שמיעה (30 דקות): מרווחים, סולמות מז׳ור ומינור, הכתבה חד-קולית, משולשים במצב יסודי.',
     },
     sections: [
       s('b-clefs', 'Alto clef', 'מפתח דו אלט', 'note-reading', 3, 8, 3),
@@ -214,7 +214,7 @@ export const EXAMS: ExamDef[] = [
       s('b-terms', 'Musical terms', 'מונחים מוזיקליים', 'musical-terms', 3, 7, 5),
       s('b-texture', 'Texture', 'מרקם', 'voice-count', 4, 3, 3),
       s('b-ear-intervals', 'Intervals by ear', 'מרווחים בשמיעה', 'intervals-all', 2, 8, 5),
-      s('b-ear-scales', 'Major or minor?', 'מז\'ור או מינור?', 'scale-types', 1, 4, 3),
+      s('b-ear-scales', 'Major or minor?', 'מז׳ור או מינור?', 'scale-types', 1, 4, 3),
       s('b-ear-melody', 'One-voice dictation', 'הכתבה חד-קולית', 'staff-dictation', 4, 2, 10),
       s('b-ear-triads', 'Root-position triads', 'משולשים במצב יסודי', 'triads', 2, 6, 4),
       s('b-solfege', 'Sing an interval', 'שירת מרווחים', 'sing-intervals', 2, 4, 4),

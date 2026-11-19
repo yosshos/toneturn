@@ -808,7 +808,7 @@ TOPIC_GEN['rhythm-transform'] = {
       for (let k = 0; k < 16; k++) if (k % 2 === 0) out.push({ midi: 76, start: k * e, duration: 0.04, velocity: k % 8 === 0 ? 0.5 : 0.28, perc: k % 8 === 0 ? 'accent' : 'click' });
       for (let r = 0; r <= reps; r++) out.push(N(r === reps ? 72 : 64, r * 3 * e, e * 0.9, 0.85), N(67, (r * 3 + 1) * e, e * 0.9, 0.5));
       names.b4 = nm('Beat 4', 'פעמה 4', 'four');
-      names.b1and = nm('The “and” of 1, bar 2', 'ה"ו" של 1, תיבה 2', 'and of one');
+      names.b1and = nm('The “and” of 1, bar 2', 'ה"וְ" של 1, תיבה 2', 'and of one');
       names.b3 = nm('Beat 3, bar 2', 'פעמה 3, תיבה 2', 'three of bar two');
       return choiceQ({ id, topic: 'rhythm-transform', level, seed, skill: 'transpose', difficulty: 1600, ask: { en: 'A 3-eighth figure over 4/4. Where does the high note land?', he: 'דמות של 3 שמיניות על 4/4. איפה נוחת הצליל הגבוה?' }, names, answer, choices: ['b4', 'b1and', 'b3'], stimulus: [ev(out, 16 * e + 0.3)] });
     }

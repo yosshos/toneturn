@@ -167,7 +167,7 @@ function compChart(s: DrillSpec, tu: Tuning): Drill {
     if (!evs.some((e) => e.beat >= start - 1e-6 && e.beat < start + c.beats - 1e-6)) evs.push({ beat: start, dur: Math.min(c.beats, 1.5), notes: strum(v) });
   }
   const vEn = voicing === 'drop2' ? 'drop-2, voice-led' : 'shells';
-  const vHe = voicing === 'drop2' ? 'דרופ 2, הובלת קולות' : 'קונכיות';
+  const vHe = voicing === 'drop2' ? 'דרופ 2, הובלת קולות' : 'שלדים';
   const nm = nameInKey({ en: std.name, he: STD_NAME_HE[id] ?? std.name }, ch.tonic);
   const d = finish(s, tu, evs, { title: t(`${nm.en}: the whole chart (${bars} bars), ${vEn}, ${rh.en}`, `${nm.he}: כל דף האקורדים (${bars} תיבות), ${vHe}, ${rh.he}`), bpm: guitarStdTempo(id)[0], evenness: false, keySig: 'C' });
   const band = rhythm === 'bossa' || std.style === 'bossa' ? 'bossa' : rhythm === 'shuffle' ? 'shuffle' : 'swing';
@@ -211,7 +211,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         }
         if (!evs.some((e) => e.beat >= start - 1e-6 && e.beat < start + c.beats - 1e-6)) evs.push({ beat: start, dur: c.beats, notes: strum(v) });
       }
-      const d = finish(s, tu, evs, { title: t(`Comping ${ch.name} (8 bars): ${drop ? 'drop-2' : 'shells'}, ${rh.en} · ${keyLabel(ch.tonic)}`, `ליווי ${ch.name} (8 תיבות): ${drop ? 'דרופ 2' : 'קונכיות'}, ${rh.he} · ${keyLabel(ch.tonic)}`), bpm: 100, evenness: false, keySig: 'C' });
+      const d = finish(s, tu, evs, { title: t(`Comping ${ch.name} (8 bars): ${drop ? 'drop-2' : 'shells'}, ${rh.en} · ${keyLabel(ch.tonic)}`, `ליווי ${ch.name} (8 תיבות): ${drop ? 'דרופ 2' : 'שלדים'}, ${rh.he} · ${keyLabel(ch.tonic)}`), bpm: 100, evenness: false, keySig: 'C' });
       return { ...d, tonic: ch.tonic, chart: ch.syms, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
     }
     case 'vl-ear': {
@@ -313,7 +313,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         evs.push({ beat: i * 2, dur: 1, notes: strum(v) }, { beat: i * 2 + 1, dur: 1, notes: strum(v) });
         if (i % 2 === 1) syms.push(`${NAMES[mod(key + chords[i - 1][0], 12)]}${symOf({ iv: chords[i - 1][1] })} ${NAMES[root]}${symOf({ iv })}`);
       });
-      const d = finish(s, tu, evs, { title: t(`Rhythm changes (A section)${sub ? ' with tritone substitutions' : ''}: ${op % 2 ? 'drop-3' : 'shells'} · ${NAMES[key]}`, `ריתם צ׳יינג׳ס (חלק A)${sub ? ' עם תחליפי טריטון' : ''}: ${op % 2 ? 'דרופ 3' : 'קונכיות'} · ${NAMES[key]}`), bpm: 140, evenness: true });
+      const d = finish(s, tu, evs, { title: t(`Rhythm changes (A section)${sub ? ' with tritone substitutions' : ''}: ${op % 2 ? 'drop-3' : 'shells'} · ${NAMES[key]}`, `ריתם צ׳יינג׳ס (חלק A)${sub ? ' עם תחליפי טריטון' : ''}: ${op % 2 ? 'דרופ 3' : 'שלדים'} · ${NAMES[key]}`), bpm: 140, evenness: true });
       return { ...d, chart: syms, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
     }
     case 'solo-texture': {
@@ -338,7 +338,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         }
       });
       evs.sort((a, b) => a.beat - b.beat);
-      return finish(s, tu, evs, { title: t(`Solo guitar: walking bass with guide tones on the ${op === 1 ? '"and" of 1 and 3' : '"and" of 2 and 4'} · ${NAMES[key]}`, `גיטרת סולו: בס מהלך עם צלילים מנחים על ${op === 1 ? 'ה"וְ" של 1 ו-3' : 'ה"וְ" של 2 ו-4'} · ${NAMES[key]}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Solo guitar: walking bass with guide tones on the ${op === 1 ? '"and" of 1 and 3' : '"and" of 2 and 4'} · ${NAMES[key]}`, `גיטרת סולו: ווקינג בס עם צלילים מנחים על ${op === 1 ? 'ה"וְ" של 1 ו-3' : 'ה"וְ" של 2 ו-4'} · ${NAMES[key]}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true } });
     }
   }
   return null;
@@ -377,7 +377,7 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
       const octs = str === 6 ? 2 : 1;
       const ms = Array.from({ length: sc.length * octs + 1 }, (_, i) => R + 12 * Math.floor(i / sc.length) + sc[i % sc.length]);
       evs = swing8(inPosition(tu, upDown(ms), rf));
-      title = t(`${op >= 2 ? 'Minor' : 'Major'} 6th-diminished scale, root on string ${str} · ${NAMES[key]}`, `סולם ${op >= 2 ? 'מינור' : 'מז׳ור'} שש-מוקטן, יסוד על מיתר ${str} · ${NAMES[key]}`);
+      title = t(`${op >= 2 ? 'Minor' : 'Major'} 6th-diminished scale, root on string ${str} · ${NAMES[key]}`, `סולם ${op >= 2 ? 'מינור' : 'מז׳ור'} שש-מוקטן, שורש על מיתר ${str} · ${NAMES[key]}`);
       bpm = 80;
       break;
     }
@@ -427,7 +427,7 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
       const rf = Math.max(1, mod(base - 40, 12) + (base - 40 >= 12 ? 12 : 0));
       evs = swing8(inPosition(tu, ms, Math.max(1, Math.min(10, rf + 2))), 0, ms.map((m) => [0, 4, 7, 10].includes(mod(m - V, 12))));
       goal = { chordTonesOnBeats: true };
-      title = t(`Dominant scale down from the ${['', 'root', '', '3rd', '', '5th', '', '7th'][deg]}${ext ? ' (extended rules)' : ''}, chord tones on the beats · ${NAMES[V]}7`, `סולם הדומיננטה יורד מה${['', 'יסוד', '', 'טרצה', '', 'קווינטה', '', 'ספטימה'][deg]}${ext ? ' (חוקים מורחבים)' : ''}, צלילי אקורד על הפעמות · ${NAMES[V]}7`);
+      title = t(`Dominant scale down from the ${['', 'root', '', '3rd', '', '5th', '', '7th'][deg]}${ext ? ' (extended rules)' : ''}, chord tones on the beats · ${NAMES[V]}7`, `סולם הדומיננטה יורד מה${['', 'שורש', '', 'טרצה', '', 'קווינטה', '', 'ספטימה'][deg]}${ext ? ' (חוקים מורחבים)' : ''}, צלילי אקורד על הפעמות · ${NAMES[V]}7`);
       bpm = 80;
       break;
     }
@@ -536,7 +536,7 @@ export function generateHarris(s: DrillSpec, tu: Tuning): Drill {
           at(i * 4, [...ps, ps[0]], true);
           near = Math.min(...ps.map((p) => p.f));
         });
-        title = t(`${NAMES[key]}${ARP_SYM[q]} pivot: root on top, drop to the 3rd, climb — strings 4-3-2, then 3-2-1`, `פיבוט ${NAMES[key]}${ARP_SYM[q]}: יסוד למעלה, ירידה לטרצה, עלייה — מיתרים 4-3-2, ואז 3-2-1`);
+        title = t(`${NAMES[key]}${ARP_SYM[q]} pivot: root on top, drop to the 3rd, climb — strings 4-3-2, then 3-2-1`, `פיבוט ${NAMES[key]}${ARP_SYM[q]}: שורש למעלה, ירידה לטרצה, עלייה — מיתרים 4-3-2, ואז 3-2-1`);
       } else {
         const chords: [number, ArpQuality][] = [[2, 'm7'], [7, '7'], [0, 'maj7']];
         let near = 5;
@@ -700,7 +700,7 @@ export function generateTheoryGuitar(s: DrillSpec, tu: Tuning): Drill {
           if (rep === 0) syms.push(NAMES[r] + sy);
         });
       const sk = `${Math.min(...set2)}–${Math.max(...set2)}`;
-      const d = finish(s, tu, evs, { title: t(`Rootless voicings, ${minor ? 'minor ii–V–i' : 'ii–V–I'} on strings ${sk} · ${K}`, `קולות בלי יסוד, ${minor ? 'ii–V–i מינורי' : 'ii–V–I'} על מיתרים ${sk} · ${K}`), bpm: 70, evenness: false, keySig: 'C' });
+      const d = finish(s, tu, evs, { title: t(`Rootless voicings, ${minor ? 'minor ii–V–i' : 'ii–V–I'} on strings ${sk} · ${K}`, `קולות בלי שורש, ${minor ? 'ii–V–i מינורי' : 'ii–V–I'} על מיתרים ${sk} · ${K}`), bpm: 70, evenness: false, keySig: 'C' });
       return { ...d, chart: [syms[0], syms[1], syms[2], syms[2], syms[0], syms[1], syms[2], syms[2]], band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
     }
     case 'tp-quartal': {
@@ -762,7 +762,7 @@ export function generateTheoryGuitar(s: DrillSpec, tu: Tuning): Drill {
           barSyms = [];
         }
       }
-      const d = finish(s, tu, evs, { title: t(`Giant Steps, bars 1–8: ${op === 1 ? 'drop-2 on strings 4–1, voice-led' : 'shells'}${key ? ` · moved to ${NAMES[mod(11 + key, 12)]}` : ''}`, `Giant Steps, תיבות 1–8: ${op === 1 ? 'דרופ 2 על מיתרים 4–1, הובלת קולות' : 'קונכיות'}${key ? ` · ב־${NAMES[mod(11 + key, 12)]}` : ''}`), bpm: 60, evenness: false, keySig: 'C' });
+      const d = finish(s, tu, evs, { title: t(`Giant Steps, bars 1–8: ${op === 1 ? 'drop-2 on strings 4–1, voice-led' : 'shells'}${key ? ` · moved to ${NAMES[mod(11 + key, 12)]}` : ''}`, `Giant Steps, תיבות 1–8: ${op === 1 ? 'דרופ 2 על מיתרים 4–1, הובלת קולות' : 'שלדים'}${key ? ` · ב־${NAMES[mod(11 + key, 12)]}` : ''}`), bpm: 60, evenness: false, keySig: 'C' });
       return { ...d, chart: bars, band: { style: 'swing', bass: true }, drums: { groove: 'swing' } };
     }
     case 'tp-ust': {

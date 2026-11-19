@@ -384,7 +384,7 @@ TOPIC_GEN['chord-read'] = {
   levels: [
     { en: 'Major and minor on the keys', he: 'מז׳ור ומינור על הקלידים' },
     { en: '+ diminished and augmented, on the staff', he: '+ מוקטן ומוגדל, על החמשה' },
-    { en: 'Seventh chords', he: 'אקורדי ספט' },
+    { en: 'Seventh chords', he: 'ספטאקורדים' },
     { en: 'Inversions as slash chords (C/E)', he: 'היפוכים כאקורדי סלאש (C/E)' },
     { en: 'Guitar shapes: open, CAGED, string sets', he: 'צורות בגיטרה: פתוחים, CAGED, קבוצות מיתרים' },
     { en: 'Extensions: 9, 11, 13, add9, sus', he: 'הרחבות: 9, 11, 13, add9, sus' },

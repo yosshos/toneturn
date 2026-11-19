@@ -71,7 +71,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'Comp and solo on one instrument', he: 'ללוות ולאלתר על כלי אחד' },
-    takeaway: { en: 'Piano: the left hand comps written shells or rootless voicings, the right hand improvises under the cards. Guitar: a bar of chords, a bar of line. Bass: a bar of walking, a bar of fill.', he: 'פסנתר: יד שמאל מלווה בשלדים או בקולות בלי יסוד, יד ימין מאלתרת לפי הכרטיסים. גיטרה: תיבת אקורדים, תיבת קו. בס: תיבת הליכה, תיבת מילוי.' },
+    takeaway: { en: 'Piano: the left hand comps written shells or rootless voicings, the right hand improvises under the cards. Guitar: a bar of chords, a bar of line. Bass: a bar of walking, a bar of fill.', he: 'פסנתר: יד שמאל מלווה בשלדים או בקולות בלי שורש, יד ימין מאלתרת לפי הכרטיסים. גיטרה: תיבת אקורדים, תיבת קו. בס: תיבת ווקינג, תיבת מעבר.' },
     steps: [
       {
         say: { en: 'Hi {name}! Now you are the band and the soloist. The comping is written and graded note for note.', he: 'היי {name}! עכשיו אתם גם הלהקה וגם הסולן. הליווי כתוב ונבדק צליל אחר צליל.' },
@@ -82,7 +82,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([43, 53, 59], 0.6), notes([65, 64, 62, 59], 0.25)],
       },
       {
-        say: { en: 'Shells are the root with the 3rd or the 7th; rootless voicings leave the root to the bass and keep 3, 5, 7 and 9.', he: 'שלדים הם היסוד עם הטרצה או הספטימה; קולות בלי יסוד משאירים את היסוד לבס ושומרים 3, 5, 7 ו־9.' },
+        say: { en: 'Shells are the root with the 3rd or the 7th; rootless voicings leave the root to the bass and keep 3, 5, 7 and 9.', he: 'שלדים הם השורש עם הטרצה או הספטימה; קולות בלי שורש משאירים את השורש לבס ושומרים 3, 5, 7 ו־9.' },
         play: [chord([43, 53, 59], 0.7), rest(0.2), chord([53, 57, 59, 64], 0.9)],
       },
       {
@@ -109,7 +109,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'On guitar, change position as little as you can between the chord bar and the line bar: the line starts where the chord shape lies.', he: 'בגיטרה, החליפו תנוחה כמה שפחות בין תיבת האקורד לתיבת הקו: הקו מתחיל איפה שצורת האקורד נמצאת.' },
       },
       {
-        say: { en: 'On bass, the fill ends on a chord tone of the next bar’s chord, so the walk that follows starts at home.', he: 'בבס, המילוי נגמר על צליל אקורד של האקורד בתיבה הבאה, כך שההליכה שאחריו מתחילה בבית.' },
+        say: { en: 'On bass, the fill ends on a chord tone of the next bar’s chord, so the walk that follows starts at home.', he: 'בבס, המעבר נגמר על צליל אקורד של האקורד בתיבה הבאה, כך שההליכה שאחריו מתחילה בבית.' },
       },
       {
         say: { en: 'How it is graded: the written comping is checked note for note, like any voicing drill. Your line is checked by the level’s cards, and each card shows how many times you kept it, so you can see which part slipped when the tempo went up.', he: 'איך זה נבדק: הליווי הכתוב נבדק צליל אחר צליל, כמו כל תרגיל קולות. הקו שלכם נבדק לפי הכרטיסים של הרמה, וכל כרטיס מראה כמה פעמים שמרתם עליו, כך שרואים איזה חלק החליק כשהטמפו עלה.' },

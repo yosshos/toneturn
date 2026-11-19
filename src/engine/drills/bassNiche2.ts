@@ -279,7 +279,7 @@ function genExt(s: DrillSpec, tu: Tuning): Drill {
       const prog: Prog = [...PROGS.jazz, ...PROGS.jazz];
       const line = overProg(tu, key, prog, (R, c) => [0, 1, 2, 3].flatMap((b) => [0, 7, 12, 12 + third(c[1])].map((x, k): BN => ({ b: b + k / 4, d: 0.25, p: R + x, tech: k === 0 ? 'hammer' : 'tap', acc: k === 0 }))));
       line.push(endOn(tu, key, prog.length * 4, 1));
-      return drillOf(s, tu, line, { ...tt('Tapping: root, 5th, octave, 10th', 'טאפינג: יסוד, קווינטה, אוקטבה, דצימה'), chart: chartOf(key, prog), open: false });
+      return drillOf(s, tu, line, { ...tt('Tapping: root, 5th, octave, 10th', 'טאפינג: שורש, קווינטה, אוקטבה, דצימה'), chart: chartOf(key, prog), open: false });
     }
     case 'tap-iivi': {
       // Tapped arpeggios through ii–V–I: 1-3-5-7 up and the octave back down in 16ths, the root by the fretting hand.
@@ -302,7 +302,7 @@ function genExt(s: DrillSpec, tu: Tuning): Drill {
         const r = key + c[0];
         for (const k of [0, 1]) line.push(op % 2 ? dstop(tu, r, E, D, seventh(c[1]), bar * 4 + k * 2, 2) : dstop(tu, r, E, G, 12 + third(c[1]), bar * 4 + k * 2, 2));
       });
-      return drillOf(s, tu, line, { ...(op % 2 ? tt('Shells on ii–V–I: root and 7th', 'קונכיות על ii–V–I: יסוד וספטימה') : tt('10ths on ii–V–I', 'דצימות על ii–V–I')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 } });
+      return drillOf(s, tu, line, { ...(op % 2 ? tt('Shells on ii–V–I: root and 7th', 'שלדים על ii–V–I: שורש וספטימה') : tt('10ths on ii–V–I', 'דצימות על ii–V–I')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 } });
     }
     case 'comp': {
       // Comping on the bass: root–7th shells in the Charleston rhythm (1, the "and" of 2), over the blues (op 0) or
@@ -313,7 +313,7 @@ function genExt(s: DrillSpec, tu: Tuning): Drill {
         const r = key + c[0];
         line.push(dstop(tu, r, E, D, seventh(c[1]), bar * 4, 1.5), dstop(tu, r, E, D, seventh(c[1]), bar * 4 + 1.5, 1.5));
       });
-      return drillOf(s, tu, line, { ...(op % 2 ? tt('Comping shells: ii–V–I', 'ליווי בקונכיות: ii–V–I') : tt('Comping shells: the blues', 'ליווי בקונכיות: בלוז')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 }, drums: { groove: 'swing' }, band: false });
+      return drillOf(s, tu, line, { ...(op % 2 ? tt('Comping shells: ii–V–I', 'ליווי בשלדים: ii–V–I') : tt('Comping shells: the blues', 'ליווי בשלדים: בלוז')), chart: chartOf(key, prog), evenness: false, open: false, bass: { doubleStops: 0.8 }, drums: { groove: 'swing' }, band: false });
     }
     case 'shell37': {
       // 3–7 shells (b-ext 9): root on the E string, the 7th on the D string, the 3rd (a 10th) on the G string — the
@@ -529,11 +529,11 @@ export function extFamily(L: LFn, fam: FamFn): GuitarFamilyDef {
     L('b-ext', 3, 'Artificial harmonics', 'הרמוניקים מלאכותיים', [EX('art-harm', { perBeat: 1 })], [4, 9, 2, 7], [60, 80], 'quarters'),
     L('b-ext', 4, 'Two-hand tapping: R-5-8-10', 'טאפינג בשתי ידיים: R-5-8-10', [EX('tap', { perBeat: 4 })], K, [60, 100], '16ths'),
     L('b-ext', 5, 'Tapped arpeggios through ii–V–I', 'ארפג׳יו בטאפינג על ii–V–I', [EX('tap-iivi', { perBeat: 4 })], K, [60, 100], '16ths'),
-    L('b-ext', 6, 'Double-stops: 10ths and shells', 'צלילים כפולים: דצימות וקונכיות', [EX('dstop', { perBeat: 0.5 }), EX('dstop', { perBeat: 0.5, option: 1 })], K, [60, 100], 'halves'),
+    L('b-ext', 6, 'Double-stops: 10ths and shells', 'צלילים כפולים: דצימות ושלדים', [EX('dstop', { perBeat: 0.5 }), EX('dstop', { perBeat: 0.5, option: 1 })], K, [60, 100], 'halves'),
     L('b-ext', 7, 'Comping on the bass', 'ליווי אקורדים על הבס', [EX('comp'), EX('comp', { option: 1 })], [5, 10, 7, 0], [80, 120], 'Charleston'),
     L('b-ext', 8, 'Fretless intonation', 'אינטונציה בפרטלס', [EX('fretless', { perBeat: 0.5, tuning: 'bass-fretless' })], K, [60, 90], 'halves'),
     // Additive (ids 1–8 unchanged): the full shell — root, 7th and 3rd — after the root–7th comping of level 7.
-    L('b-ext', 9, '3–7 shells: root, 7th and 10th', 'שלדי 3–7: יסוד, ספטימה ודצימה', [EX('shell37'), EX('shell37', { option: 1 })], [5, 10, 7, 0], [80, 120], 'Charleston'),
+    L('b-ext', 9, '3–7 shells: root, 7th and 10th', 'שלדי 3–7: שורש, ספטימה ודצימה', [EX('shell37'), EX('shell37', { option: 1 })], [5, 10, 7, 0], [80, 120], 'Charleston'),
   ]);
 }
 
