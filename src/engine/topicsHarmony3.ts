@@ -786,7 +786,7 @@ TOPIC_GEN['negative-harmony'] = {
     });
   },
 };
-TOPIC_TAGS['negative-harmony'] = (l) => (l >= 4 ? tg(['cadences', 'cadence', 1], ['theory', 'harmony', 0.5]) : tg(['theory', 'harmony', 1]));
+TOPIC_TAGS['negative-harmony'] = (l) => (l >= 4 ? tg(['cadences', 'cadence', 0.6], ['theory', 'harmony', 0.4]) : tg(['theory', 'harmony', 1]));
 
 // keep JQ referenced for the symbol table's keys (QSYM) — tensions are voiced by jazzProgStim
 void JQ;
