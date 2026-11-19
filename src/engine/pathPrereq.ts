@@ -119,6 +119,10 @@ const VOICE_DRUMS: Record<string, string[]> = {
   'transcribe:voice:1': ['vocal:1203', 'lesson:sing-home-five'],
   'topic:drum-read:1': ['tech:d-notation-2', 'tech:d-rock-2'],
   'topic:drum-style:1': ['tech:d-jazz-1', 'tech:d-latin-1'],
+  // B5 / B3 (owner 2026-11-19): snare reading after the note-values practice of units 1–2; the guide tones on a blues
+  // after the chord lessons the voice course shares with Ear (what a chord is, major / minor).
+  'tech:d-read-1': ['topic:drum-values:1'],
+  'vocal:2304': ['lesson:major-minor'],
 };
 
 export const FLOW_PREREQ: Record<string, string[]> = { ...EAR, ...JAZZ, ...INSTRUMENTS, ...VOICE_DRUMS };
@@ -149,6 +153,8 @@ export const LADDER_WAITS: Record<string, string[]> = {
   'tech:d-ear-3': ['tech:d-read-1'],
   'tech:d-notation-3': ['tech:d-diddles-5'],
   'tech:d-rock-1': ['tech:d-first-5'],
+  // B8: the jazz ride's skip note is the last triplet — the triplet feel (d-shuffle 1) comes first.
+  'tech:d-jazz-1': ['tech:d-shuffle-1'],
 };
 
 /** Unit games and bonus games: the step that teaches the game's concept first (every course). */

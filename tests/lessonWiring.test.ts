@@ -16,12 +16,10 @@ const FAMILIES_WITHOUT_LESSON = [
   // bass (the bass-guitar family under the guitar catalogue, the upright families too)
   'g-bass', 'b-pluck', 'b-pocket', 'b-fret', 'b-length', 'b-styles', 'b-ghost', 'b-pick', 'b-impro', 'b-legato', 'b-slap', 'b-feel',
   'b-up-arco', 'b-up-pizz', 'b-up-pos', 'b-up-scales',
-  // drums
-  'd-strokes', 'd-ear', 'd-indep', 'd-rolls', 'd-fills', 'd-funk', 'd-latin',
 ].sort();
 
 /** Question topics whose level 1 has no mini-lesson yet. */
-const TOPICS_WITHOUT_LESSON = ['drum-style', 'song-strum', 'sight-modulate'].sort();
+const TOPICS_WITHOUT_LESSON = ['song-strum', 'sight-modulate'].sort();
 
 const cat = stepCatalogue();
 
@@ -60,6 +58,17 @@ describe('every first path level opens with its teaching screen', () => {
     expect(key('g-jazz-1', 'g-jazz')).toBe('g-jazz-comp');
     expect(key('d-rock-1', 'd-rock')).toBe('first-rock');
     expect(key('d-diddles-1', 'd-diddles')).toBe('drum-paradiddle');
+    // VOICE-DRUMS B5–B11: the drums' own lessons
+    expect(key('d-read-1', 'd-read')).toBe('drum-values');
+    expect(key('d-strokes-4', 'd-strokes')).toBe('drum-accents');
+    expect(key('d-funk-1', 'd-funk')).toBe('drum-accents');
+    expect(key('d-diddles-5', 'd-diddles')).toBe('drum-flams');
+    expect(key('d-shuffle-1', 'd-shuffle')).toBe('drum-shuffle');
+    expect(key('d-jazz-1', 'd-jazz')).toBe('drum-swing-ride');
+    expect(key('d-latin-3', 'd-latin')).toBe('drum-clave');
+    expect(key('d-mideast-1', 'd-mideast')).toBe('drum-mideast');
+    expect(lessonForUnit('topic:drum-values')?.id).toBe('drum-values');
+    expect(lessonForUnit('topic:drum-style')?.id).toBe('drum-styles-ear');
     // a level with its own lesson keeps it
     expect(key('k-lh-4', 'k-lh')).toBe('sp-shells');
     expect(lessonForUnit('topic:voice-leading')?.id).toBe('four-parts');
@@ -70,5 +79,9 @@ describe('every first path level opens with its teaching screen', () => {
     expect(v(101, 'v-scale')).toBe('vocal-scales');
     expect(v(1501, 'v-scat')).toBe('voice-scat');
     expect(v(2101, 'v-first')).toBe('first-voice');
+    // VOICE-DRUMS B3, B4: the blues entry split in two; the ear family's own lesson (no longer the drift lesson).
+    expect(v(2301, 'v-jazz1')).toBe('voice-jazz-start');
+    expect(v(2304, 'v-jazz1')).toBe('voice-guide-tones');
+    expect(v(1203, 'v-ear')).toBe('voice-ear');
   });
 });

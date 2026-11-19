@@ -15,6 +15,9 @@ import { pc } from '../engine/pitch';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
+import { RhythmStaff } from './RhythmStaff';
+import { KitStaff } from './KitStaff';
+import { rhythmFromKey } from '../engine/rhythm';
 import { piano, SIMULATED, tts } from './services';
 
 import { personal } from '../content/personal';
@@ -207,6 +210,8 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
           {step.show?.notes && step.show.notes.length > 0 && (
             <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
           )}
+          {step.show?.rhythm && <div className="mini-notation" dir="ltr"><RhythmStaff rhythm={rhythmFromKey(step.show.rhythm)} label={step.show.text?.[lang] ?? lesson.title[lang]} compact /></div>}
+          {step.show?.kit && <div className="mini-notation" dir="ltr"><KitStaff bar={step.show.kit} label={step.show.text?.[lang] ?? lesson.title[lang]} /></div>}
           <p className="mini-caption" aria-live="polite">
             {SIMULATED ? personal(step.say[lang], name) : <TypedText key={`${deep}-${i}`} text={personal(step.say[lang], name)} sound={!speaking} msPerWord={speaking ? (msPerWord ?? 260) : 120} onDone={() => {
               typedFinished.current = true;

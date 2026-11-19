@@ -28,6 +28,8 @@ import './topicsProgGames';
 import './topicsGaps';
 import './topicsChartAnalysis';
 import './topicsDrumStyle'; // DRUMS_NICHE_PLAN: name the style by ear (drums course, optional)
+import './topicsDrumValues'; // VOICE-DRUMS audit B5: note values and rests on the snare (drums units 1–2)
+import './topicsDrumValues'; // VOICE-DRUMS audit B5: note values and rests on the snare (drums units 1–2)
 import './topicsJazzEar'; // EAR_THEORY_AUDIT: advanced jazz ear and prog rhythm
 import './topicsRhythmGaps'; // AUDIT-CONTENT-THEORY R-1, R-5: poly-tap 5:4 / 5:3 / 7:4, metric-tap, hemiola-tap
 import './topicsTheoryPlay'; // THEORY_PLAY (TP-1…TP-4): triad pairs, pentatonic superimposition, polychords, reharm it yourself

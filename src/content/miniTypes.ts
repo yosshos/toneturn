@@ -1,6 +1,7 @@
 // Mini-lessons (spec X): a 60–90 second spoken lesson with examples before every unit. Pure data.
 
 import type { Stimulus } from '../engine/lesson';
+import type { KitBar } from '../engine/kitRead';
 
 /** Where a learned topic is filed in "Topics I learned". */
 export type AreaId = 'ear' | 'harmony' | 'rhythm' | 'theory' | 'voice' | 'jazz' | 'world' | 'play';
@@ -24,6 +25,10 @@ export interface MiniShow {
   durs?: number[];
   /** A big short text / symbol, e.g. "1 – 3 – 5", "C7 → F", "♩ ♩ ♫ ♩". */
   text?: Bi;
+  /** One-line rhythm notation (a rhythm key as in rhythmFromKey: "q.ee.qr.h", "m6:…"): note values and rests. */
+  rhythm?: string;
+  /** A bar of drum-kit notation (the compact kit staff: hands up, feet down, ghosts, accents, flams, triplets). */
+  kit?: KitBar;
 }
 
 export interface MiniStep {
