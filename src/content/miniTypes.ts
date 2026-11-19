@@ -21,6 +21,8 @@ export interface MiniShow {
   key?: string;
   /** Staff clef. */
   clef?: 'treble' | 'bass' | 'alto' | 'tenor';
+  /** `notes` are written guitar pitch (the guitar sounds an octave lower): the neck view shows them an octave down. */
+  written?: boolean;
   /** Written note lengths in beats (staff), one per note. */
   durs?: number[];
   /** A big short text / symbol, e.g. "1 – 3 – 5", "C7 → F", "♩ ♩ ♫ ♩". */

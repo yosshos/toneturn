@@ -208,7 +208,7 @@ export function MiniLessonPlayer({ t, settings, lesson, name, onFinish, startDee
             </p>
           )}
           {step.show?.notes && step.show.notes.length > 0 && (
-            <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} />
+            <NotesView midis={step.show.notes} keyPc={step.show.key ? pc(step.show.key) : null} settings={settings} chord={step.show.chord} durs={step.show.durs} clef={step.show.clef} tabShift={step.show.written ? -12 : 0} />
           )}
           {step.show?.rhythm && <div className="mini-notation" dir="ltr"><RhythmStaff rhythm={rhythmFromKey(step.show.rhythm)} label={step.show.text?.[lang] ?? lesson.title[lang]} compact /></div>}
           {step.show?.kit && <div className="mini-notation" dir="ltr"><KitStaff bar={step.show.kit} label={step.show.text?.[lang] ?? lesson.title[lang]} /></div>}
