@@ -53,7 +53,9 @@ export const KEYS_PLACEMENT: Record<string, number> = {
   // sat at 1680, after scales-6 / scales-18 had taught the same.
   'scales-15': 1020,
   // Minor triads in inversions, each hand: right after the major inversions (arpeggios-2, 840), not at 1330.
-  'arpeggios-9': 860,
+  // Curriculum flow (Instruments audit K7): after the major and minor triads hands together (arpeggios-3, 910), so minor
+  // triads are played in root position before their inversions.
+  'arpeggios-9': 930,
   // Minor broken and blocked chords: with the broken chords through the inversions (arpeggios-8, 1260).
   'arpeggios-14': 1300,
   // RCM G2–G3 pieces: direct and legato pedal (the only pedal level sat at 1400).
@@ -130,7 +132,9 @@ export const DRUM_PLACEMENT: Record<string, number> = {
   'd-feet-7': G(8) - 20, // 1400
   'd-feet-8': 1470,
   // RSL G4–G5: 8-bar whole-kit sight-reading (sat at 1540).
-  'd-read-11': G(5), // 1150
+  // Curriculum flow (Voice-Drums audit R10): after d-read 8 (tom fills, 1379) — the unseen 8 bars use 16th kick, ride,
+  // tom fills and dynamics, which d-read 5–8 teach; at G5 it came before all of them.
+  'd-read-11': 1390,
 };
 
 /**

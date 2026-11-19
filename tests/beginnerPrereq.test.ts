@@ -29,7 +29,7 @@ function walk(n: number, course: CourseId = 'ear', track: PathInput['track'] = '
 }
 
 const tracks = ['explorer', 'hobby', 'student'] as const;
-const walks = Object.fromEntries(tracks.map((t) => [t, walk(6, 'ear', t)])) as Record<(typeof tracks)[number], string[][]>;
+const walks = Object.fromEntries(tracks.map((t) => [t, walk(12, 'ear', t)])) as Record<(typeof tracks)[number], string[][]>;
 const unitOf = (units: string[][], id: string) => units.findIndex((u) => u.includes(id));
 
 describe('a unit game waits for the step that teaches its concept', () => {

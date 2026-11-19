@@ -114,7 +114,7 @@ describe('the known misplacements now sit in their grade band (AUDIT-6)', () => 
     ['tech:scales-29', G(2), G(3)], // blues: RSL G3
     ['tech:scales-19', G(2), G(4)], // Dorian: RSL G1–G2 (each hand), within a grade or two
     ['tech:scales-7', G(2), G(3)], // chromatic: ABRSM G2–G3
-    ['tech:arpeggios-9', 800, 900],
+    ['tech:arpeggios-9', 900, 960], // curriculum flow K7: after the minor triads hands together (arpeggios-3, 910)
     ['tech:control-10', G(2), G(3)], // pedal: RCM G2–G3
     ['tech:scales-15', 990, 1060],
     ['tech:k-rhythm-2', G(4), G(6)], // 3:2, 4:3: ABRSM G5–G6
@@ -130,7 +130,7 @@ describe('the known misplacements now sit in their grade band (AUDIT-6)', () => 
     ['tech:d-count-3', G(6), G(8)], // 7/8: G6–G8
     ['tech:d-prog-1', G(6), G(8)], // odd-meter rock
     ['tech:d-feet-6', G(6), G(8)], // double pedal
-    ['tech:d-read-11', G(4), G(6)], // 8-bar unseen: G4–G5
+    ['tech:d-read-11', 1380, 1400], // curriculum flow R10: after d-read 8 (tom fills, 1379), whose material it reads
     // voice
     ['vocal:1601', 1400, 1600], // bebop lines (sat at 910)
     ['vocal:2001', G(1), G(3) + 20], // arpeggios: RSL G1–G3

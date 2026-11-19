@@ -4,6 +4,7 @@
 // 1400 standards, 1500 scat, 1600 agility, 1700 harmony, 1800 inflections, 1900 sight). Pure data.
 
 import { vocalVerified } from './verifiedContent';
+import { rampOrder } from './rampLevel';
 import { BARRY_LEVELS, HARMONY_LEVELS, LADDER, MODE_LEVELS, ORNAMENT_LEVELS, SIGHT_LEVELS, type VocalItem, type VocalLevel } from './vocal';
 import { SONGBOOK, songNotes } from '../content/songbook';
 import { VOICE_TOP_FAMILIES, VOICE_TOP_LEVELS, VOICE_TOP_NAMES } from './voiceTop';
@@ -594,6 +595,13 @@ BARRY_LEVELS.forEach((l, i) => BY_REF.set(301 + i, l));
 SIGHT_LEVELS.forEach((l, i) => BY_REF.set(401 + i, l));
 ORNAMENT_LEVELS.forEach((l, i) => BY_REF.set(501 + i, l));
 for (const l of NEW_LEVELS) BY_REF.set(l.level, l);
+
+// Curriculum flow (rule 3, Voice-Drums audit R9/V14): a level's items rise in difficulty (ties and unrated items keep
+// their written order), so a session climbs instead of dropping back after a hard item.
+for (const [n, l] of BY_REF) {
+  const items = rampOrder(l.items, (it) => (it as { difficulty?: number }).difficulty);
+  if (items.some((it, i) => it !== l.items[i])) BY_REF.set(n, { ...l, items });
+}
 
 export const vocalLevelByRef = (n: number): VocalLevel | undefined => BY_REF.get(n);
 export const familyOfRef = (n: number): VoiceFamily | undefined => VOICE_FAMILIES.find((f) => f.refs.includes(n));

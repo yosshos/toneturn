@@ -27,6 +27,8 @@ import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
 import { FIRST_RANK, NEW_FIRST_FAMILIES } from './drills/firstStepsDiff'; // AUDIT-6 Stage B
 import { GUITAR_TOP_RANK } from './drills/guitarTop';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
+import { FLOW_GAME_PREREQ, FLOW_PREREQ, LADDER_WAITS, REP_PREREQ } from './pathPrereq';
+import { REPERTOIRE, repRefs } from './repertoire';
 
 // ---------------------------------------------------------------- types
 
@@ -87,6 +89,8 @@ export interface UnitStep {
   why?: { en: string; he: string };
   /** The first step of a skill never measured: a short probe (P6). */
   probe?: boolean;
+  /** Curriculum-flow rule 5: a teaching step the rating window passed by, back as a quick check (also `probe`). */
+  catchup?: boolean;
 }
 
 export type Section = 'beginner' | 'developing' | 'solid' | 'advanced';
@@ -203,6 +207,11 @@ export interface PathInput {
   ladderFamilies?: string[];
   /** Ladder level ids left out of the path (N10: low-B levels on a bass without a low B). */
   ladderHidden?: string[];
+  /**
+   * Curriculum-flow rule 7 (shared credit): step ids passed in the player's other courses. A bridge step (a
+   * prerequisite that lives in another course, scheduled in this one) already passed there counts as passed here.
+   */
+  otherDone?: string[];
 }
 
 export interface PathView {
@@ -407,15 +416,19 @@ export const LADDER_RANK: Record<string, number> = {
 };
 /** The first-steps families (AUDIT-CONTENT-THEORY §ז.2): their levels count ✓ for a player who already plays past them. */
 export const FIRST_STEP_FAMILIES = ['k-first', 'v-first', ...NEW_FIRST_FAMILIES];
-/** Levels that wait for another family's level on the path: one-octave scales after the thumb passes under. */
-export const LADDER_AFTER: Record<string, string> = { 'tech:scales-1': 'tech:k-first-3' };
+/**
+ * Levels that wait for other families' levels on the path: one-octave scales after the thumb passes under, and the
+ * curriculum-flow waits (pathPrereq.ts LADDER_WAITS: 7th-chord arpeggios before 7th-chord voicings, …). Never a later
+ * level of the same family (ladderPrev would deadlock).
+ */
+export const LADDER_AFTER: Record<string, string[]> = { 'tech:scales-1': ['tech:k-first-3'], ...LADDER_WAITS };
 /** An unstarted family this far (two ladder steps) below everything started opens at once: a gap the old order left. */
 const GAP_STEPS = 140;
 /**
  * Steps that wait for another step (when both are on the player's path). AUDIT-CONTENT-THEORY §ב.1: reading notes on
  * the staff is taught before the steps that read from it — staff dictation, reading chords off the staff, spelling scales.
  */
-export const STEP_PREREQ: Record<string, string[]> = {
+const OWN_STEP_PREREQ: Record<string, string[]> = {
   'topic:staff-dictation:1': ['topic:note-reading:1'],
   'topic:chord-read:2': ['topic:note-reading:1'],
   'topic:scale-spelling:1': ['topic:note-reading:1'],
@@ -441,6 +454,13 @@ export const STEP_PREREQ: Record<string, string[]> = {
   'topic:chord-spelling:1': ['lesson:chord-intro'],
   'topic:voice-count:1': ['lesson:chord-intro'],
 };
+const unionOf = (...ts: Record<string, string[]>[]): Record<string, string[]> => {
+  const out: Record<string, string[]> = {};
+  for (const t of ts) for (const [k, v] of Object.entries(t)) out[k] = [...new Set([...(out[k] ?? []), ...v])];
+  return out;
+};
+/** The step prerequisites: the tester's beginner list above + the curriculum-flow tables (pathPrereq.ts FLOW_PREREQ). */
+export const STEP_PREREQ: Record<string, string[]> = unionOf(OWN_STEP_PREREQ, FLOW_PREREQ);
 /**
  * Prerequisites for a beginner only (tester 2026-11-18): they hold while the player's frontier on the prerequisite's
  * skill is still in the beginner section (below 900), so a newcomer hears up and down (high / low) before the scale
@@ -454,7 +474,7 @@ export const BEGINNER_PREREQ: Record<string, string[]> = {
  * until the step that introduces the concept was passed (or placed) in an earlier unit — when that step is on the
  * player's path at all. Tester 2026-11-18: the Ear course's first unit played Chord Rush before any chord lesson.
  */
-export const GAME_PREREQ: Record<string, string[]> = {
+const OWN_GAME_PREREQ: Record<string, string[]> = {
   'rush-chord': ['topic:chord-read:1'],
   'rush-interval': ['lesson:intervals'],
   'rush-progression': ['lesson:cadences'],
@@ -469,12 +489,86 @@ export const GAME_PREREQ: Record<string, string[]> = {
   darkside: ['lesson:major-minor', 'lesson:cadences'],
   whichpair: ['lesson:major-minor'],
 };
+/** Unit games, bonus games (and, by the game's name, the jazz course's bonus steps): the Ear list + every course's (pathPrereq.ts). */
+export const GAME_PREREQ: Record<string, string[]> = unionOf(OWN_GAME_PREREQ, FLOW_GAME_PREREQ);
+/**
+ * Every step some other step waits for (a concept carrier): when the rating window has passed it by, it comes back as
+ * a quick check instead of being skipped for good (curriculum-flow rule 5).
+ */
+export const PREREQ_TARGETS: Set<string> = new Set([
+  ...Object.values(STEP_PREREQ).flat(),
+  ...Object.values(BEGINNER_PREREQ).flat(),
+  ...Object.values(GAME_PREREQ).flat(),
+  ...Object.values(PREREQ).flat().map((l) => `lesson:${l}`),
+]);
+/** Repertoire steps wait for their concept: REP_PREREQ + the item's own topic levels (its "lesson" ways). */
+export const REP_STEP_PREREQ: Record<string, string[]> = (() => {
+  const out: Record<string, string[]> = { ...REP_PREREQ };
+  for (const [course, items] of Object.entries(REPERTOIRE))
+    for (const it of items) {
+      const id = `rep:${course}:${it.id}`;
+      out[id] = [...new Set([...(out[id] ?? []), ...repRefs(it).topics.map((t) => `topic:${t.topic}:${t.level}`)])];
+    }
+  return out;
+})();
 /**
  * Tester 2026-11-18: in the first two sections (below solid) a step that builds on another lesson (PREREQ /
  * STEP_PREREQ) waits for a unit after the one that teaches it — never the same unit, so a newcomer meets one new idea
  * and passes it before the next one leans on it. Later, a prerequisite earlier in the same unit is enough.
  */
 export const EARLY_PREREQ_BELOW = 1150;
+/** Curriculum-flow rule 2 (owner 2026-11-19): new concepts per unit — one new idea at a time, at every level. */
+export const MAX_NEW_CONCEPTS = 1;
+/** The courses played on an instrument or the voice: their question steps follow the technique road (rule 4). */
+export const PLAYING_COURSES: CourseId[] = ['keys', 'guitar', 'bass', 'voice', 'drums'];
+/** How far a bridge step's own prerequisites are followed into the other course (rule 7). */
+const BRIDGE_DEPTH = 3;
+
+/**
+ * Curriculum-flow rule 7: prerequisites that live in another course are scheduled in this one as bridge steps (the
+ * same step id, so the credit is shared): a topic's nearest lower level when none of its lower levels is on this path
+ * (Jazz voicings 3 after Ear's voicings 2), and a step / lesson prerequisite of another course (lesson:jazz-1 after
+ * Ear's cadence lesson; the voice's sing-names after the note-names lesson). A bridge's own prerequisites are followed
+ * BRIDGE_DEPTH steps deep; a prerequisite no course of this player can offer stays unmet and never blocks.
+ */
+export function withBridges(base: PathStep[], inp: PathInput, byId: Map<string, PathStep>): PathStep[] {
+  if (!inp.course) return base;
+  const have = new Set(base.map((s) => s.id));
+  const extra: PathStep[] = [];
+  const canBridge = (p: PathStep) =>
+    !p.ladder && !isUnitEndStep(p) && p.kind !== 'game' && eligible(p, { ...inp, course: undefined, ladderFamilies: undefined, packs: p.pack ? [...inp.packs, p.pack] : inp.packs });
+  const needs = (s: PathStep): string[] => {
+    const out = [...(s.kind === 'lesson' ? (PREREQ[s.lesson!] ?? []).map((p) => `lesson:${p}`) : []), ...(STEP_PREREQ[s.id] ?? [])];
+    if (s.kind === 'topic' && (s.level ?? 1) > 1) {
+      const lower = Array.from({ length: s.level! - 1 }, (_, i) => `topic:${s.topic}:${s.level! - 1 - i}`).filter((id) => byId.has(id));
+      // The whole lower chain of the topic comes along (Jazz grid dictation 5 after Ear's 1–4), at the same depth.
+      if (lower.length && !lower.some((id) => have.has(id))) out.push(...lower);
+    }
+    return out;
+  };
+  let wave = base;
+  for (let d = 0; d < BRIDGE_DEPTH && wave.length; d++) {
+    const next: PathStep[] = [];
+    for (const s of wave)
+      for (const pid of needs(s)) {
+        if (have.has(pid)) continue;
+        const p = byId.get(pid);
+        if (!p || !canBridge(p)) continue;
+        have.add(pid);
+        extra.push(p);
+        next.push(p);
+      }
+    wave = next;
+  }
+  return extra.length ? [...base, ...extra] : base;
+}
+/** The previous measured level (licks / transcription) of the same course, in MEASURED_STEP_LEVELS order. */
+function measuredPrev(id: string): string | undefined {
+  const [game, course, lv] = id.split(':');
+  const ls = (MEASURED_STEP_LEVELS as Record<string, Record<string, number[]>>)[game]?.[course] ?? [];
+  const i = ls.indexOf(Number(lv));
+  return i > 0 ? `${game}:${course}:${ls[i - 1]}` : undefined;
+}
 /**
  * PIANO_JAZZ: the jazz-piano families come after the lines and voicings they build on — Barry Harris harmony after the
  * Harris lines' block chords, bebop lines after guide tones and the first Harris lines, jazz-piano harmony after the
@@ -526,7 +620,11 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // scale-harmonization ladder (lines / 3rds ~900–1100, triads / 7ths 1100–1350, drops, borrowing, Harris 1350–1700).
   // scales 1–15 keep their places (700 + 70 a level), so the 18 new levels don't squeeze them under PATH_CAP.
   ...Object.fromEntries(Array.from({ length: 15 }, (_, i) => [`scales-${i + 1}`, 700 + 70 * i])),
-  'scales-16': 920, 'scales-17': 990, 'scales-18': 1060,
+  // Curriculum flow (Instruments audit K6): harmonic minor hands together after harmonic minor hands separately
+  // (scales-5, 980) and natural minor (scales-17, 990).
+  'scales-16': 1000, 'scales-17': 990, 'scales-18': 1060,
+  // K1: maj7 / m7 / ø7 arpeggios before the 7th-chord voicings and shells that use them (voicings-2, k-lh-4 wait for it).
+  'arpeggios-7': 960,
   'scales-19': 1530, 'scales-20': 1570, 'scales-21': 1610, 'scales-22': 1650, 'scales-23': 1690, 'scales-24': 1730, 'scales-25': 1770, 'scales-26': 1810, 'scales-27': 1850,
   'scales-28': 1490, 'scales-29': 1510, 'scales-30': 1860, 'scales-31': 1870, 'scales-32': 1885, 'scales-33': 1900,
   'harris-25': 1020, 'harris-26': 1100,
@@ -825,10 +923,20 @@ export interface CheckVerdict {
 /** Beyond the beginner section: a ladder level this hard, done or ✓ by test, means the first steps are behind the player. */
 const PAST_FIRST_STEPS = 840;
 let LADDER_BY_ID: Map<string, PathStep> | null = null;
-/** Has the player done (or tested out of) a ladder level of the same instrument / the voice past the first steps? */
+/**
+ * Has the player arrived already playing past the first steps of this instrument / the voice? Curriculum-flow rule 1
+ * (all three audits, R1): only evidence from outside the path counts — a level test / placement (✓ by test), or a
+ * ladder level done that the path never scheduled (the Drills hub). A player walking the first steps on the path
+ * (any level of the family passed) finishes them there: the path's own unit-3 levels (fingers-3, g-chords-3,
+ * b-time-3, d-time-3, vocal:601) no longer tick the rest off.
+ */
 export function playsPastFirstSteps(s: PathStep, facts: PathFacts): boolean {
   if (!LADDER_BY_ID) LADDER_BY_ID = new Map(ladderSteps().map((x) => [x.id, x] as const));
-  const ids = [...Object.entries(facts.steps ?? {}).filter(([, v]) => v.stars > 0).map(([k]) => k), ...Object.keys(facts.tests ?? {})];
+  const fam = s.ladder!.family;
+  const done = Object.entries(facts.steps ?? {}).filter(([, v]) => v.stars > 0).map(([k]) => k);
+  if (done.some((id) => LADDER_BY_ID!.get(id)?.ladder?.family === fam)) return false;
+  const scheduled = new Set((facts.units ?? []).flatMap((u) => u.steps));
+  const ids = [...done.filter((id) => !scheduled.has(id)), ...Object.keys(facts.tests ?? {})];
   return ids.some((id) => {
     const o = LADDER_BY_ID!.get(id);
     return !!o && o.kind === s.kind && o.ladder!.instrument === s.ladder!.instrument && !FIRST_STEP_FAMILIES.includes(o.ladder!.family) && o.difficulty >= PAST_FIRST_STEPS;
@@ -948,8 +1056,12 @@ const median = (xs: number[]) => {
 
 /** Build the path (§5): past units (facts), the current unit (frozen), and the next two projected units. */
 export function buildPath(inp: PathInput): PathView {
-  const all = stepCatalogue().filter((s) => eligible(s, inp));
   const byId = new Map(stepCatalogue().map((s) => [s.id, s] as const));
+  const own = stepCatalogue().filter((s) => eligible(s, inp));
+  const all = withBridges(own, inp, byId);
+  const ownIds = new Set(own.map((s) => s.id));
+  /** A bridge step (rule 7): taken in a first pass only as the prerequisite of a step of this course. */
+  const bridged = (s: PathStep) => !ownIds.has(s.id);
   const subs = subEvidence(inp.events);
   const doneSteps = inp.facts.steps ?? {};
   const verdict = new Map<string, CheckVerdict>();
@@ -1001,7 +1113,9 @@ export function buildPath(inp: PathInput): PathView {
     if (!F.has(k)) F.set(k, frontierOf(k, inp));
     return F.get(k)!;
   };
-  const taken = new Set<string>([...placedIds, ...all.filter((s) => isDone(s.id) || isChecked(s.id)).map((s) => s.id)]);
+  // Shared credit (curriculum-flow rule 7): a bridge step passed in another course counts here too.
+  const otherDone = new Set(inp.otherDone ?? []);
+  const taken = new Set<string>([...placedIds, ...all.filter((s) => isDone(s.id) || isChecked(s.id) || otherDone.has(s.id)).map((s) => s.id)]);
   const seenSubs = new Set<string>([...subs.keys()].filter((k) => (subs.get(k)?.n ?? 0) > 0));
   for (const s of all) if (taken.has(s.id)) seenSubs.add(s.sub);
   const weights = areaWeights(inp);
@@ -1027,21 +1141,47 @@ export function buildPath(inp: PathInput): PathView {
   ];
   /** A prerequisite still to come (EARLY_PREREQ_BELOW: early on, one scheduled in this same unit is not enough). */
   const waitsFor = (s: PathStep, pid: string, scheduled: Set<string>) => onPath.has(pid) && !taken.has(pid) && !(s.difficulty >= EARLY_PREREQ_BELOW && scheduled.has(pid));
+  /**
+   * Curriculum-flow rule 7: a topic level waits for the nearest lower level of the topic on this player's path (a
+   * hidden level, or one of another course that was not bridged, is skipped) — not just level − 1.
+   */
+  const prevLevel = (s: PathStep): string | undefined => {
+    if (s.kind !== 'topic') return undefined;
+    for (let l = (s.level ?? 1) - 1; l >= 1; l--) {
+      const id = `topic:${s.topic}:${l}`;
+      if (onPath.has(id)) return id;
+    }
+    return undefined;
+  };
+  /** A concept carrier (rule 5): a teaching lesson, a step something waits for, or a topic's first level on the path. */
+  const carrier = (s: PathStep) => !!s.teach || PREREQ_TARGETS.has(s.id) || (s.kind === 'topic' && !prevLevel(s));
+  /** A practice level the rating window has passed by (more than 150 below the skill): known, it no longer blocks. */
+  const passedBy = (pid: string) => {
+    const p = byId.get(pid);
+    return !!p && !carrier(p) && p.difficulty < fr(p.skill) - 150;
+  };
+  /** The sub-skills some step of this path trains (a SUB_PREREQ no step can meet never blocks: rule 7 / audit R4). */
+  const pathSubs = new Set(all.map((s) => s.sub));
   /** Everything but the step prerequisites: the previous level of a topic / ladder, and the sub-skills it needs. */
   const baseOk = (s: PathStep, scheduled: Set<string>) => {
-    // Previous level of the same topic first.
-    if (s.kind === 'topic' && (s.level ?? 1) > 1) {
-      const prev = `topic:${s.topic}:${(s.level ?? 1) - 1}`;
-      if (byId.has(prev) && onPath.has(prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
-    }
+    // The previous level of the same topic first — passed in an earlier unit (rule 3: one level of a topic per unit).
+    // A passed-by level lets the next one through only when everything below it is passed or passed by too (the
+    // topic's first level, a concept carrier, is never passed by: it comes back as a quick check).
+    for (let prev = prevLevel(s); prev && !taken.has(prev); prev = prevLevel(byId.get(prev)!)) if (!passedBy(prev)) return false;
     if (s.ladder) {
-      const prev = ladderPrev.get(s.id);
+      const lp = ladderPrev.get(s.id);
       // A previous level left out of this path (N10: low B on a 4-string) doesn't block the next one.
-      if (prev && onPath.has(prev) && !taken.has(prev) && !scheduled.has(prev)) return false;
+      if (lp && onPath.has(lp) && !taken.has(lp) && !scheduled.has(lp)) return false;
+    }
+    // Licks / transcription: the previous measured level of the course first (Instruments audit R5).
+    if (s.game === 'licks' || s.game === 'transcribe') {
+      const mp = measuredPrev(s.id);
+      if (mp && onPath.has(mp) && !taken.has(mp) && !passedBy(mp)) return false;
     }
     for (const p of SUB_PREREQ[s.sub] ?? []) {
       const area = domainOf(p.split('/')[0] as SkillId);
       if (inp.leaveOut.includes(area)) continue; // P15
+      if (!pathSubs.has(p)) continue;
       if (!seenSubs.has(p)) return false;
     }
     return true;
@@ -1050,7 +1190,7 @@ export function buildPath(inp: PathInput): PathView {
 
   /** The step ids a step builds on: its topic's previous level, its ladder's previous level, PREREQ, STEP_PREREQ. */
   const prereqIdsOf = (s: PathStep): string[] => [
-    ...(s.kind === 'topic' && (s.level ?? 1) > 1 ? [`topic:${s.topic}:${(s.level ?? 1) - 1}`] : []),
+    ...(prevLevel(s) ? [prevLevel(s)!] : []),
     ...(s.ladder && ladderPrev.get(s.id) ? [ladderPrev.get(s.id)!] : []),
     ...stepPrereqs(s),
   ];
@@ -1105,29 +1245,47 @@ export function buildPath(inp: PathInput): PathView {
     const levelsTaken = (f: string) => all.filter((s) => s.ladder?.family === f && taken.has(s.id)).length;
     const started = fams.filter((f) => levelsTaken(f) > 0);
     const deep = fams.filter((f) => levelsTaken(f) >= 2).length;
-    const k = Math.min(fams.length, Math.max(2, started.length, 2 + deep));
     // A family whose next level waits for another family's level (LADDER_AFTER) is not opened yet.
     const ready = (f: string) => {
       const nx = nextLevel(f);
-      const after = nx && LADDER_AFTER[nx.id];
-      return !!nx && !(after && all.some((x) => x.id === after) && !taken.has(after));
+      return !!nx && !(LADDER_AFTER[nx.id] ?? []).some((after) => onPath.has(after) && !taken.has(after));
     };
+    // A started family that can't go on (finished, or its next level waits for another family) never gets "two
+    // levels in": it no longer holds the next family back (the flow waits made such families common).
+    const stuck = started.filter((f) => levelsTaken(f) < 2 && !ready(f)).length;
+    const k = Math.min(fams.length, Math.max(2, started.length, 2 + deep + stuck));
     const fresh = byDifficulty(fams.filter((f) => !started.includes(f) && ready(f)));
     const easiestStarted = Math.min(...started.map((f) => nextLevel(f)?.difficulty ?? Infinity));
-    const gap = started.length ? fresh.filter((f) => (nextLevel(f)?.difficulty ?? Infinity) <= easiestStarted - GAP_STEPS) : [];
+    // Rule 2: a gap family (far below everything started) opens one at a time, not all at once (E11).
+    const gap = started.length ? fresh.filter((f) => (nextLevel(f)?.difficulty ?? Infinity) <= easiestStarted - GAP_STEPS).slice(0, 1) : [];
     return [...new Set([...started, ...fresh.slice(0, Math.max(0, k - started.length)), ...gap])];
   };
-  /** One step per family, the easiest next levels first; at most about half the unit (owner's daily mix). */
+  const isFirstFamily = (f: string) => FIRST_STEP_FAMILIES.includes(f);
+  /**
+   * One step per family, the easiest next levels first; at most about half the unit (owner's daily mix).
+   * Curriculum-flow rules 1–2: at most one family the player has not started yet per unit (the first steps don't
+   * count), and while a first-steps family on the path is unfinished, the other families stay below the first-steps
+   * band (PAST_FIRST_STEPS) so the first steps keep pace with the rest.
+   */
   const pickLadder = (room: number, scheduled: Set<string>): PathStep[] => {
     const fams = byDifficulty(openFamilies(), scheduled);
     if (!fams.length || room <= 0) return [];
     const out: PathStep[] = [];
-    const waiting = (id: string | undefined) => !!id && all.some((x) => x.id === id) && !taken.has(id) && !scheduled.has(id);
+    const waiting = (id: string | undefined) => !!id && onPath.has(id) && !taken.has(id) && !scheduled.has(id);
+    const firstLeft = all.filter((s) => s.ladder && isFirstFamily(s.ladder.family) && !taken.has(s.id)).map((s) => s.difficulty);
+    const firstPending = firstLeft.length > 0;
+    const firstCap = Math.max(PAST_FIRST_STEPS, Math.min(...firstLeft) + 100);
+    let fresh = 0;
     for (const f of fams) {
       if (out.length >= room) break;
       const next = nextLevel(f, scheduled);
       if (!next) continue;
-      if (waiting(ladderPrev.get(next.id)) || waiting(LADDER_AFTER[next.id])) continue;
+      // A wait on another family: below EARLY_PREREQ_BELOW that level is passed in an earlier unit, never the same one.
+      if (waiting(ladderPrev.get(next.id)) || (LADDER_AFTER[next.id] ?? []).some((id) => (next.difficulty < EARLY_PREREQ_BELOW ? onPath.has(id) && !taken.has(id) : waiting(id)))) continue;
+      const unstarted = !isFirstFamily(f) && !all.some((s) => s.ladder?.family === f && taken.has(s.id));
+      if (unstarted && fresh >= 1) continue;
+      if (firstPending && !isFirstFamily(f) && next.difficulty >= firstCap) continue;
+      if (unstarted) fresh++;
       out.push(next);
       scheduled.add(next.id);
     }
@@ -1147,8 +1305,49 @@ export function buildPath(inp: PathInput): PathView {
     const open = all.filter((s) => !taken.has(s.id) && !s.ladder && !isUnitEndStep(s));
     const live = [...new Set(open.map((s) => s.domain))];
     const shares = unitShares(weights, live, slots - ladder.length, n);
-    const picked: { s: PathStep; probe?: boolean; isNew?: boolean }[] = ladder.map((s) => ({ s }));
-    let newSubs = 0;
+    const picked: { s: PathStep; probe?: boolean; isNew?: boolean; catchup?: boolean }[] = ladder.map((s) => ({ s }));
+    // Rule 4: in the playing courses the question steps stay near the technique road (the unit's hardest ladder level,
+    // or the easiest next one); everywhere, no step more than 250 above the unit (the median frontier of its skills).
+    const road = ladder.length ? Math.max(...ladder.map((s) => s.difficulty)) : Math.min(...(inp.ladderFamilies ?? []).map((f) => nextLevel(f)?.difficulty ?? Infinity));
+    const roadCap = inp.course && PLAYING_COURSES.includes(inp.course) && Number.isFinite(road) ? road + 150 : Infinity;
+    // The unit's level: the median frontier of the skills it can draw on that the player has already worked in.
+    const unitSkills = [...new Set(open.filter((s) => shares.has(s.domain)).map((s) => s.skill))];
+    const worked = unitSkills.filter((k) => !!inp.ratings[k]?.n || placed(inp.events, k) || all.some((s) => s.skill === k && taken.has(s.id)));
+    const unitTarget = median((worked.length ? worked : unitSkills).map((k) => fr(k) - (warm ? 50 : 0)));
+    const cap = roadCap;
+    const capUnit = Math.min(roadCap, unitSkills.length ? unitTarget + 250 : Infinity);
+    // Rule 2: one new concept per unit, counted per topic (a teaching lesson and one topic of its sub-skill count once;
+    // a catch-up quick check is not new). Placement included: a topic with a placed / ✓ level is started.
+    const conceptOf = (s: PathStep): string | undefined => (s.kind === 'topic' ? s.topic : s.game === 'licks' || s.game === 'transcribe' ? `${s.game}:${s.id.split(':')[1]}` : s.kind === 'lesson' ? s.id : undefined);
+    const started = new Set<string>();
+    for (const id of taken) {
+      const s = byId.get(id);
+      const c = s && conceptOf(s);
+      if (c) started.add(c);
+    }
+    let newConcepts = 0;
+    // A counted concept may take one partner of the other kind in its sub-skill: a teaching lesson ↔ one topic.
+    const pairOpen = new Set<string>();
+    const partnerKey = (s: PathStep) => (s.teach ? `topic>${s.sub}` : s.kind === 'topic' ? `lesson>${s.sub}` : '');
+    const ownKey = (s: PathStep) => (s.teach ? `lesson>${s.sub}` : s.kind === 'topic' ? `topic>${s.sub}` : '');
+    const isNewConcept = (s: PathStep) => {
+      const c = conceptOf(s);
+      if (!c || started.has(c)) return false;
+      return !pairOpen.has(ownKey(s));
+    };
+    const countConcept = (s: PathStep) => {
+      const c = conceptOf(s);
+      if (!c || started.has(c)) return;
+      if (pairOpen.has(ownKey(s))) pairOpen.delete(ownKey(s));
+      else {
+        newConcepts++;
+        if (partnerKey(s)) pairOpen.add(partnerKey(s));
+      }
+      started.add(c);
+    };
+    let catchups = 0;
+    const catchArea = new Set<DomainId>();
+    for (const pass of [0, 1])
     for (const [area, count] of shares) {
       const themed = (k: SkillId) => (open.some((s) => s.skill === k && inTheme(s.sub, theme)) ? 1 : 0);
       const skills = [...new Set(open.filter((s) => s.domain === area).map((s) => s.skill))].sort((a, b) => themed(b) - themed(a) || imp(b) - imp(a) || a.localeCompare(b));
@@ -1159,50 +1358,96 @@ export function buildPath(inp: PathInput): PathView {
       let cross = 0;
       while (picked.filter((p) => p.s.domain === area && !p.s.ladder).length + cross < count && guard++ < 40 && skills.length) {
         const skill = skills[k++ % skills.length];
-        const f = fr(skill) - (warm ? 50 : 0);
-        // Cognitive load (P11, tuned): new sub-skills at most half of an area's share and half of the unit.
-        const areaNew = picked.filter((p) => p.s.domain === area && !p.s.ladder && p.isNew).length;
-        const allowNew = newSubs < Math.ceil(L / 2) && areaNew < Math.ceil(count / 2);
-        const free = (s: PathStep) => !scheduled.has(s.id) && (allowNew || seenSubs.has(s.sub));
-        const ok = (s: PathStep) => s.skill === skill && free(s) && prereqOk(s, scheduled);
-        const inWindow = (s: PathStep) => s.difficulty >= f - 150 && s.difficulty <= f + 200;
-        const above = (s: PathStep) => s.difficulty > f + 200 && s.difficulty <= f + 350;
+        const f = Math.min(fr(skill), roadCap) - (warm ? 50 : 0);
+        const allowNew = newConcepts < MAX_NEW_CONCEPTS;
+        const free = (s: PathStep) => !scheduled.has(s.id) && (allowNew || !isNewConcept(s));
+        const ok = (s: PathStep) => s.skill === skill && (pass === 1 || !bridged(s)) && free(s) && prereqOk(s, scheduled);
+        const capAbove = f < 1150 ? 250 : 350;
+        const inWindow = (s: PathStep) => s.difficulty >= f - 150 && s.difficulty <= f + 200 && s.difficulty <= capUnit;
+        const above = (s: PathStep) => s.difficulty > f + 200 && s.difficulty <= f + capAbove && s.difficulty <= capUnit;
         const byNear = (a: PathStep, b: PathStep) => near(a, f) - near(b, f) || a.id.localeCompare(b.id);
         const byDiff = (a: PathStep, b: PathStep) => a.difficulty - b.difficulty || a.id.localeCompare(b.id);
-        const cands = open.filter((s) => ok(s) && inWindow(s));
-        let best = cands.sort(byNear)[0];
-        if (!best) {
-          // Nothing in the window: the easiest open step above it, if prerequisites allow.
-          best = open.filter((s) => ok(s) && above(s)).sort(byDiff)[0];
-        }
-        // A beginner in this skill: the step it would take if nothing waited — when that waits for a lesson, the lesson
-        // comes first (pullPrereq). Past the beginner section the old choice stands.
-        const wanted = (s: PathStep) => s.skill === skill && free(s) && baseOk(s, scheduled);
-        const want = f < 900 ? (open.filter((s) => wanted(s) && inWindow(s)).sort(byNear)[0] ?? open.filter((s) => wanted(s) && above(s)).sort(byDiff)[0]) : undefined;
-        if (want && want !== best && !prereqOk(want, scheduled)) {
-          const pulled = pullPrereq(want, scheduled, (p) => p.domain === want.domain && open.includes(p) && free(p) && p.difficulty <= fr(p.skill) - (warm ? 50 : 0) + 350);
-          if (pulled) best = pulled;
+        // Rule 5: a concept carrier the window has passed by comes back as a quick check (one per area per unit).
+        const behind = (s: PathStep) => s.difficulty < f - 150 && carrier(s);
+        let best = !catchArea.has(area) ? open.filter((s) => s.skill === skill && (pass === 1 || !bridged(s)) && !scheduled.has(s.id) && behind(s) && prereqOk(s, scheduled)).sort(byDiff)[0] : undefined;
+        let catchup = !!best;
+        if (!best) best = open.filter((s) => ok(s) && inWindow(s)).sort(byNear)[0];
+        // Nothing in the window: the easiest open step above it, if prerequisites allow.
+        if (!best) best = open.filter((s) => ok(s) && above(s)).sort(byDiff)[0];
+        // The step this skill would take if nothing waited — when that waits for a lesson / step it builds on, that
+        // prerequisite comes first (pullPrereq; tester 2026-11-18 for beginners, every level since rule 5).
+        if (!catchup) {
+          const wanted = (s: PathStep) => s.skill === skill && (pass === 1 || !bridged(s)) && free(s) && baseOk(s, scheduled);
+          const want = open.filter((s) => wanted(s) && inWindow(s)).sort(byNear)[0] ?? open.filter((s) => wanted(s) && above(s)).sort(byDiff)[0];
+          if (want && want !== best && !prereqOk(want, scheduled)) {
+            const pulled = pullPrereq(want, scheduled, (p) => (p.domain === want.domain || !!p.teach) && open.includes(p) && !scheduled.has(p.id) && (allowNew || !isNewConcept(p) || p.difficulty < fr(p.skill) - 150) && p.difficulty <= Math.min(cap, fr(p.skill) - (warm ? 50 : 0) + 350));
+            // A bridge step (another course's prerequisite) does not push this course's own step out of the first pass.
+            if (pulled && !(pass === 0 && bridged(pulled))) {
+              best = pulled;
+              catchup = pulled.difficulty < fr(pulled.skill) - (warm ? 50 : 0) - 150;
+            }
+          }
         }
         if (!best) continue;
-        const isNew = !seenSubs.has(best.sub);
-        if (isNew) {
-          newSubs++;
+        if (catchup) {
+          catchArea.add(area);
+          catchups++;
+        }
+        const isNew = !catchup && isNewConcept(best);
+        if (isNew && best.kind === 'topic') {
+          // The teaching lesson of a new topic's sub-skill comes with it (one concept).
           const teach = open.find((s) => s.teach && s.sub === best!.sub && !scheduled.has(s.id) && prereqOk(s, scheduled));
           if (teach && teach.id !== best.id && picked.filter((p) => p.s.domain === area && !p.s.ladder).length + 1 < count) {
+            countConcept(teach);
             picked.push({ s: teach });
             if (teach.domain !== area) cross++;
             scheduled.add(teach.id);
           }
         }
+        if (!catchup) countConcept(best);
+        else {
+          const c = conceptOf(best);
+          if (c) started.add(c);
+        }
         const unmeasured = !inp.ratings[best.skill]?.n && !placed(inp.events, best.skill) && !picked.some((p) => p.s.skill === best!.skill);
-        picked.push({ s: best, probe: unmeasured, isNew });
+        picked.push({ s: best, probe: unmeasured || catchup, isNew, catchup });
         if (best.domain !== area) cross++;
         scheduled.add(best.id);
         seenSubs.add(best.sub);
       }
     }
+    // Never a dead end, never a near-empty unit (rule 7): a unit with fewer than three steps is filled from the open
+    // steps whose prerequisites are met — nearest to their skill's frontier first (the road cap still holds); an empty
+    // one takes the first step on the chain of the easiest step that waits. The rating windows don't apply here.
+    if (picked.length < 3) {
+      const byDiff = (a: PathStep, b: PathStep) => Math.abs(a.difficulty - fr(a.skill)) - Math.abs(b.difficulty - fr(b.skill)) || a.difficulty - b.difficulty || a.id.localeCompare(b.id);
+      // A practice level the window passed by is known: not material for this unit.
+      const live2 = open.filter((s) => !(s.difficulty < fr(s.skill) - 150 && !carrier(s)));
+      const nearRoad = live2.filter((s) => s.difficulty <= roadCap);
+      const pool = (picked.length ? nearRoad.filter((s) => s.difficulty <= capUnit) : nearRoad.length ? nearRoad : live2.length ? live2 : open).sort(byDiff);
+      // Up to three steps of different topics, one new concept at most, the easiest first.
+      const topicsIn = new Set(picked.map((p) => p.s.topic).filter((t): t is string => !!t));
+      for (let i = picked.length; i < Math.min(3, slots); i++) {
+        const cands = pool.filter((s) => !scheduled.has(s.id) && !(s.topic && topicsIn.has(s.topic)) && (newConcepts < MAX_NEW_CONCEPTS || !isNewConcept(s)));
+        let best = cands.find((s) => prereqOk(s, scheduled));
+        if (!best && !picked.length)
+          for (const s of cands.filter((x) => baseOk(x, scheduled))) {
+            best = pullPrereq(s, scheduled, (p) => open.includes(p) && !scheduled.has(p.id));
+            if (best) break;
+          }
+        // Prerequisites no step can meet: the easiest step goes ahead rather than the path stopping.
+        if (!best && !picked.length) best = cands.find((s) => baseOk(s, scheduled)) ?? [...cands].sort((a, b) => a.difficulty - b.difficulty || a.id.localeCompare(b.id))[0];
+        if (!best) break;
+        countConcept(best);
+        picked.push({ s: best });
+        scheduled.add(best.id);
+        seenSubs.add(best.sub);
+        if (best.topic) topicsIn.add(best.topic);
+      }
+    }
+    void catchups;
     // Order (P17): interleave areas, rising difficulty inside each area.
-    const byArea = new Map<DomainId, { s: PathStep; probe?: boolean }[]>();
+    const byArea = new Map<DomainId, { s: PathStep; probe?: boolean; catchup?: boolean }[]>();
     for (const p of picked) byArea.set(p.s.domain, [...(byArea.get(p.s.domain) ?? []), p]);
     for (const xs of byArea.values()) {
       xs.sort((a, b) => a.s.difficulty - b.s.difficulty || a.s.id.localeCompare(b.s.id));
@@ -1216,7 +1461,7 @@ export function buildPath(inp: PathInput): PathView {
         }
       }
     }
-    const order: { s: PathStep; probe?: boolean }[] = [];
+    const order: { s: PathStep; probe?: boolean; catchup?: boolean }[] = [];
     const queues = [...byArea.entries()].sort((a, b) => (weights.get(b[0]) ?? 0) - (weights.get(a[0]) ?? 0)).map(([, xs]) => xs);
     while (queues.some((q) => q.length)) for (const q of queues) if (q.length) order.push(q.shift()!);
     // Prerequisites first (tester 2026-11-18): the difficulty sort put "same note, two homes" (900) before the degrees
@@ -1234,21 +1479,27 @@ export function buildPath(inp: PathInput): PathView {
       F.set(p.s.skill, Math.max(fr(p.s.skill), Math.min(fr(p.s.skill) + 40, p.s.difficulty + 50)));
     }
     const unitId = `u${n}`;
-    const steps: UnitStep[] = order.map((p) => stateOf(p.s, p.probe ? { probe: true } : {}));
+    const steps: UnitStep[] = order.map((p) => stateOf(p.s, p.catchup ? { probe: true, catchup: true, why: { en: 'A quick check of something the next steps build on', he: 'בדיקה קצרה של משהו שהצעדים הבאים נשענים עליו' } } : p.probe ? { probe: true } : {}));
     if (inp.reviewDue >= 3 && n === units.length + 1) steps.push({ step: virtualStep(`review:${unitId}`, unitId)!, state: 'open' });
     // A game for the unit's leading area (0.38), before the checkpoint — a lighter, faster round of the same skills.
     const lead = order[0]?.s.domain;
     const gInp = { ...inp, noDrills: inp.noDrills || !!inp.ladderFamilies?.length };
     const gDiff = median(order.map((p) => p.s.difficulty)) || 1000;
     const ready = (g: string) => (GAME_PREREQ[g] ?? []).every((pid) => !onPath.has(pid) || takenBefore.has(pid));
+    // Rule 6 / audits R5–R6: repertoire and bonus steps wait for their concept too.
+    const endReady = (s: PathStep) => (s.rep ? REP_STEP_PREREQ[s.id] ?? [] : s.game ? GAME_PREREQ[s.game] ?? [] : []).every((pid) => !onPath.has(pid) || takenBefore.has(pid));
     let game = lead ? gameForArea(lead, n, gInp, gDiff, ready) : null;
     // GAME_PREREQ: when the leading area's games all wait for a concept, the next area of the unit that has a game ready.
     if (lead && !game && gameForArea(lead, n, gInp, gDiff))
       for (const a of [...new Set(order.map((p) => p.s.domain))].filter((a) => a !== lead)) if ((game = gameForArea(a, n, gInp, gDiff, ready))) break;
-    if (game && order.length >= 4) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
+    // A one-area unit (one new idea): a ready game of another area of the course (Name That Tune in Ear unit 1).
+    if (lead && !game && gameForArea(lead, n, gInp, gDiff))
+      for (const a of live.filter((a) => !order.some((p) => p.s.domain === a))) if ((game = gameForArea(a, n, gInp, gDiff, ready))) break;
+    // (Curriculum flow: units are shorter now — one new idea each — so a unit of two steps gets its game round too.)
+    if (game && order.length >= 2) steps.push(stateOf(virtualStep(`game:${unitId}:${game}`, unitId, order.map((p) => p.s))!));
     // PIANO_JAZZ P2: a repertoire item / an optional bonus game at the unit's end, where its depth fits the unit.
     if (order.length >= 3)
-      for (const x of unitEndSteps(n, median(order.map((p) => p.s.difficulty)), all.filter((s) => isUnitEndStep(s) && !taken.has(s.id)))) {
+      for (const x of unitEndSteps(n, median(order.map((p) => p.s.difficulty)), all.filter((s) => isUnitEndStep(s) && !taken.has(s.id) && endReady(s)))) {
         taken.add(x.id);
         steps.push(stateOf(x));
       }

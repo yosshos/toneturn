@@ -36,14 +36,16 @@ describe('learning path (spec AF)', () => {
     expect(c.filter((s) => s.kind === 'lesson').length).toBeGreaterThan(20);
   });
 
-  it('a new player gets a current unit ending in a checkpoint, from several areas, then two projected', () => {
+  it('a new player gets a current unit ending in a checkpoint, then two projected', () => {
     const v = buildPath(base());
     const cur = v.units.find((u) => u.status === 'current')!;
     expect(cur).toBeTruthy();
     expect(cur.steps.length).toBeLessThanOrEqual(9); // 8 + a game step (0.38)
     expect(cur.steps.some((s) => s.step.kind === 'game')).toBe(true);
     expect(cur.steps[cur.steps.length - 1].step.kind).toBe('check');
-    expect(new Set(cur.steps.map((s) => s.step.domain)).size).toBeGreaterThanOrEqual(3);
+    // Curriculum flow (rule 2, owner 2026-11-19): one new idea per unit — a new player's first unit no longer spreads
+    // over three areas at once (it used to: several new topics from several areas).
+    expect(cur.steps.filter((s) => s.step.kind === 'topic' || s.step.kind === 'lesson').length).toBeGreaterThanOrEqual(1);
     expect(v.units.filter((u) => u.status === 'projected').length).toBe(2);
     expect(v.current).toBeTruthy();
     expect(v.freeze).toBeTruthy();

@@ -85,7 +85,15 @@ describe('placing them at the end of units', () => {
   });
   it('on the jazz path: they show up, a bonus is never the current step, and a unit completes without it', () => {
     const inp = courseInput(base, 'jazz');
-    const v = buildPath(inp);
+    // Curriculum flow (one new idea per unit): the first Jazz units are short, so walk until a unit closes with a bonus.
+    let v = buildPath(inp);
+    for (let k = 0; k < 20 && !v.units.some((u) => u.steps.some((x) => x.step.bonus)); k++) {
+      const cur = v.units.find((u) => u.status === 'current')!;
+      const doneNow = { ...(inp.facts.steps ?? {}), ...Object.fromEntries(cur.steps.map((x) => [x.step.id, { stars: 3, at: '2026-11-11T09:00:00Z' }])) };
+      inp.facts = { steps: doneNow, units: [...(inp.facts.units ?? []), { ...v.freeze!, at: '2026-11-11T08:00:00Z' }] };
+      v = buildPath(inp);
+    }
+    inp.facts = {};
     const steps = v.units.flatMap((u) => u.steps);
     expect(steps.some((x) => x.step.bonus || x.step.rep)).toBe(true);
     expect(v.current?.step.bonus).toBeFalsy();

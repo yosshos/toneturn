@@ -35,7 +35,8 @@ export const AUDIT7_PLACEMENT: Record<string, number> = {
   'k-classic-9': G(8) + 30, // 1450: Bach, Prelude in C minor BWV 847, bars 1–8 (G8)
   // #12 drums: the RSL I&I task (develop a groove, a solo break, back) at G4–G5; the triple-stroke roll and the triple
   // paradiddle at G4–G5 (they sat at 1450–1470), the 10- and 11-stroke rolls at G6, a grade after the 5/7/9 (d-rolls 6).
-  'd-fills-9': G(4) + 60, // 1120
+  // Curriculum flow (Voice-Drums audit R10): developing the groove, a solo and coming back after d-fills 8 (your own fill, 1372).
+  'd-fills-9': 1380,
   'd-pas-2': G(4) + 40, // 1100: triple-stroke roll
   'd-pas-3': G(4) + 70, // 1130: triple paradiddle (RSL G4–G5)
   'd-pas-4': G(6) + 20, // 1260: 10- and 11-stroke rolls

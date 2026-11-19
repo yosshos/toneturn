@@ -58,3 +58,6 @@ export function rampLevels(items: readonly { topic: string; level: number }[], d
 /** True when a sequence already follows the ramp (rampLevels changes nothing): for content tests. */
 export const isGentle = (items: readonly { topic: string; level: number }[], difficultyOf?: (topic: string, level: number) => number): boolean =>
   rampLevels(items, difficultyOf).every((l, i) => l === items[i].level);
+
+// The ramp inside a level (curriculum flow, rule 3): vocal levels, lessons, drum tempo ladders.
+export { RAMP_MIN_ITEMS, RAMP_SPREAD, rampIssues, rampOrder, rampPad, tempoRampOk } from './rampLevel';

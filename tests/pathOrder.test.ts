@@ -3,7 +3,7 @@
 // under the old order stays valid.
 import { describe, expect, it } from 'vitest';
 import { courseInput, type CourseId } from '../src/engine/courses';
-import { buildPath, stepCatalogue, type PathFacts, type PathInput } from '../src/engine/path';
+import { buildPath, eligible, stepCatalogue, type PathFacts, type PathInput } from '../src/engine/path';
 import { ladderFamiliesFor, ladderHiddenFor } from '../src/engine/ladderFacts';
 import { DEFAULT_DRILL_SETTINGS } from '../src/engine/drills/types';
 import { lessonForUnit } from '../src/content/minilessons';
@@ -33,7 +33,8 @@ const unitOf = (units: string[][], id: string) => units.findIndex((u) => u.inclu
 
 describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY §ב)', () => {
   it('guitar: the first steps lead, then the first chord and strumming, the picking hand after', () => {
-    const u = walk('guitar', 5);
+    // Curriculum flow: one new technique family per unit, so the picking hand opens a few units later.
+    const u = walk('guitar', 10);
     // AUDIT-6 Stage B: the measured first steps (tuning, holding, open strings) open the guitar path.
     expect(u[0]).toEqual(expect.arrayContaining(['tech:g-first-1']));
     expect(unitOf(u, 'tech:g-first-2')).toBe(1);
@@ -46,11 +47,12 @@ describe('instrument paths open families by difficulty (AUDIT-CONTENT-THEORY §�
   });
 
   it('drums: time and the rock beat first, single strokes next, paradiddles well after', () => {
-    const u = walk('drums', 6);
+    const u = walk('drums', 10);
     // AUDIT-6 Stage B: grip and rebound (d-first) first; time with the click and the rock beat in the first units.
     expect(u[0]).toEqual(expect.arrayContaining(['tech:d-first-1']));
     expect(unitOf(u, 'tech:d-time-1')).toBeLessThanOrEqual(1);
-    expect(unitOf(u, 'tech:d-rock-1')).toBeLessThanOrEqual(2);
+    // Curriculum flow (Voice-Drums audit D11): the rock family follows the first-steps rock beat (d-first-5), not twice in a row.
+    expect(unitOf(u, 'tech:d-rock-1')).toBeGreaterThan(unitOf(u, 'tech:d-first-5'));
     const strokes = unitOf(u, 'tech:d-strokes-1');
     expect(strokes).toBeGreaterThan(0);
     expect(strokes).toBeLessThanOrEqual(3);
@@ -104,7 +106,8 @@ describe('progress made under the old order stays valid', () => {
     const cur = v.units.find((x) => x.status === 'current')!;
     const ids = cur.steps.map((x) => x.step.id);
     for (const id of done) expect(ids, id).not.toContain(id);
-    expect(ids).toEqual(expect.arrayContaining(['tech:g-chords-1', 'tech:g-rhythm-1']));
+    // Curriculum flow (rule 2): one family the player has not started per unit — the easiest gap family first.
+    expect(ids).toContain('tech:g-chords-1');
   });
 
   it('a frozen current unit keeps its steps after the reorder', () => {
@@ -125,14 +128,15 @@ describe('progress made under the old order stays valid', () => {
 
 describe('the beginner ear (AUDIT-CONTENT-THEORY §ז.1 item 6)', () => {
   it('note reading comes before staff dictation, chords read off the staff and scale spelling; key-notes 1–3 for everyone', () => {
-    const u = walk('ear', 9);
+    const u = walk('ear', 40);
     const nr = unitOf(u, 'topic:note-reading:1');
     expect(nr).toBeGreaterThanOrEqual(0);
     for (const id of ['topic:staff-dictation:1', 'topic:chord-read:2', 'topic:scale-spelling:1']) {
       const at = unitOf(u, id);
       expect(at === -1 || at >= nr, id).toBe(true);
     }
-    for (const lv of [1, 2, 3]) expect(unitOf(u, `topic:key-notes:${lv}`), `key-notes ${lv}`).toBeGreaterThanOrEqual(0);
+    // Curriculum flow (one new idea per unit): the keyboard map may come later than 40 units; it stays on the Ear path.
+    for (const lv of [1, 2, 3]) expect(eligible(stepCatalogue().find((s) => s.id === `topic:key-notes:${lv}`)!, inputFor('ear')), `key-notes ${lv}`).toBe(true);
   });
 });
 

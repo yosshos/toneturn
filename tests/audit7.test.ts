@@ -266,7 +266,8 @@ describe('#12 drums: develop the groove, solo, come back; rudiments at their gra
     expect(d('d-pas-3')).toBeLessThanOrEqual(1150);
     expect(d('d-pas-2')).toBeLessThanOrEqual(1150);
     expect(d('d-pas-4')).toBeLessThan(1300);
-    expect(d('d-fills-9')).toBe(1120);
+    // Curriculum flow (Voice-Drums audit R10): after d-fills 8 (your own fill, 1372) — it builds on fills 5–8.
+    expect(d('d-fills-9')).toBe(1380);
     expect(NON_MONOTONE_FAMILIES).toEqual(expect.arrayContaining(['d-pas', 'd-fills']));
     const pas3 = generateDrums({ family: 'd-pas', kind: '3:triplepara', option: 0, key: 0, hands: 'RL', instrument: 'drums' });
     expect(pas3.drum!.tier).toBe(2);

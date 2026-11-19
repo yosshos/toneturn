@@ -84,7 +84,8 @@ describe('the beginner path: what a step builds on comes first, in an earlier un
     }
     return out;
   }
-  const units = walk(5);
+  // Curriculum flow (one new idea per unit): units are shorter, so the beginner window is ten units now.
+  const units = walk(10);
   const unitOf = (id: string) => units.findIndex((u) => u.includes(id));
 
   it('same note in two homes after the degrees lesson; meter and articulation after the pulse lesson', () => {
