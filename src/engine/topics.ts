@@ -61,6 +61,8 @@ import './topicsEarStart';
 import './topicsStageC';
 // AUDIT-7 #1: written theory from ABRSM grade 1 — note values and rests, interval numbers.
 import './topicsTheoryStart';
+// Symmetry unit (2026-11-19): dividing the octave, P / L / R, interval vectors (after the symmetric scales).
+import './topicsSymmetry';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

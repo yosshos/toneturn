@@ -187,6 +187,10 @@ const SHORT: Record<string, L2> = {
   planing: { en: 'Planing', he: 'פליינינג' },
   'form-ear': { en: 'Form by ear', he: 'צורה בשמיעה' },
   'negative-harmony': { en: 'Negative harmony', he: 'הרמוניה שלילית' },
+  // Symmetry unit (2026-11-19)
+  'octave-division': { en: 'Equal parts', he: 'חלקים שווים' },
+  'neo-riemann': { en: 'P · L · R', he: 'P · L · R' },
+  'interval-vector': { en: 'Interval vector', he: 'וקטור מרווחים' },
   // AUDIT-CONTENT-THEORY §ה.2
   'vl-ear': { en: 'Hear the voices', he: 'שומעים קולות' },
   // AUDIT-GAPS-2 #5/#19

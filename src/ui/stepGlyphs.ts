@@ -104,6 +104,8 @@ export const GAME_STEP_GLYPH: Record<string, GlyphKind> = {
   thirdjump: 'thirdjump', darkside: 'darkside',
   // Triad pairs, deep: the Which Pair? game.
   whichpair: 'whichpair',
+  // Symmetry unit: the Tonnetz game.
+  tonnetz: 'tonnetz',
 };
 /**
  * A bonus step's symbol where its game id is shared with another step kind: the Transcription Race (route 'transcribe')

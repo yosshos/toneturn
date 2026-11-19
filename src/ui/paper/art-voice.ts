@@ -419,4 +419,17 @@ export const ART_VOICE: Record<string, Art> = {
     P('M32 41 L38 28 L44 41 Z', 'accent'),
     det(Ci(38, 17.5, 1.6, 'light'), Ci(38, 36.5, 1.6, 'light')),
   ),
+  /** Tonnetz (Symmetry unit): three triangles of the triad grid as sheets — the current triad in the accent, its two
+   *  neighbours in the body and a light tint, a note head on the shared corner. */
+  tonnetz: art(
+    'lilac',
+    'tan',
+    P('M4 40 L14 22 L24 40 Z', 'light'),
+    P('M14 22 L24 40 L34 22 Z', 'accent'),
+    P('M24 40 L34 22 L44 40 Z', 'body'),
+    P('M14 22 L24 4 L34 22 Z', 'body'),
+    det(L(14, 22, 34, 22, 'line', 1.1), L(24, 40, 24, 30, 'line', 1)),
+    H(24, 40.5, 3.6, 'ink'),
+    rich(P('M17 24.5 L24 36.5', 'shine', 1.1)),
+  ),
 };

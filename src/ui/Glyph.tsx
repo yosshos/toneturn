@@ -1922,6 +1922,17 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Symmetry unit: the Tonnetz game — a patch of the triad grid, one triangle filled (the current triad) and the one it
+// flips to across a shared edge.
+Object.assign(GLYPHS, {
+  tonnetz: (
+    <>
+      <path d="M-28 16 H28 M-14 -8 H14 M-28 16 L-14 -8 L0 16 L14 -8 L28 16 M-14 -8 L0 -32 L14 -8" {...sw} strokeWidth={2} strokeLinejoin="round" />
+      <path d="M-14 -8 L0 16 L14 -8 Z" fill={I} />
+      <path d="M-24 6 Q-20 -2 -12 2" {...sw} strokeWidth={2} />
+    </>
+  ),
+});
 // Paper redraw: names that exist only in the Paper set (the Jazz course's saxophone, Encore, the games card) get the
 // nearest old drawing so raw GLYPHS users still draw something.
 Object.assign(GLYPHS, { jazz: GLYPHS.prog, encore: GLYPHS.echo, games: GLYPHS.puzzle });

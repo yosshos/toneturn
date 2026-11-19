@@ -46,6 +46,8 @@ export const SUB_SKILLS: SubSkill[] = [
   S('chords', 'barry', 'Barry Harris harmony', 'הרמוניית בארי האריס'),
   // AUDIT-CONTENT-THEORY §ה.2: voice leading heard (vl-ear), next to the written theory/voice-leading.
   S('chords', 'voice-leading', 'Voice leading by ear', 'הובלת קולות בשמיעה'),
+  // Symmetry unit (2026-11-19): symmetric chords, P / L / R and interval content by ear (topicsSymmetry.ts, Tonnetz).
+  S('chords', 'symmetry', 'Symmetric chords and moves by ear', 'אקורדים סימטריים ומהלכים בשמיעה'),
   S('cadences', 'cadence', 'Cadences', 'קדנצות'),
   S('cadences', 'progression', 'Progressions', 'מהלכי אקורדים'),
   S('cadences', 'modulation', 'Key changes', 'מעברי סולם'),
@@ -119,6 +121,7 @@ export const SUB_SKILLS: SubSkill[] = [
   // 0.38 (spec AE)
   S('cadences', 'chromatic', 'Color chords', 'אקורדי צבע'),
   S('theory', 'chromatic', 'Color chords on paper', 'אקורדי צבע בכתב'),
+  S('theory', 'symmetry', 'Symmetry and transformations', 'סימטריה וטרנספורמציות'),
   S('sequences', 'inner', 'Inner hearing', 'שמיעה פנימית'),
   S('form', 'song', 'Song form', 'מבנה שיר'),
   S('form', 'style', 'Style and period', 'סגנון ותקופה'),

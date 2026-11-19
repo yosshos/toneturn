@@ -1502,6 +1502,13 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M14 19l2.5-5 2.5 5z M17 12l2.5-5 2.5 5z', false)}
     </>
   ),
+  // Tonnetz (Symmetry unit): a strip of the triad grid, one triangle filled.
+  'special:game:tonnetz': () => (
+    <>
+      {p('M3 19h18 M7.5 11h9 M3 19l4.5-8 4.5 8 4.5-8 4.5 8', false)}
+      {p('M7.5 11l4.5 8 4.5-8z', true)}
+    </>
+  ),
   // Game tiers (GAMES_TIERS_PLAN): a crescendo hairpin over a bar line — getting louder, level by level.
   'special:tier': () => (
     <>
