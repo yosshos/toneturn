@@ -107,6 +107,8 @@ const GAMES: Record<string, { tags: (d: Record<string, unknown>) => Tag[]; diff:
   strumchange: { tags: () => T2(['instrument', 'guitar-tech', 0.7], ['timing', 'precision', 0.3]), diff: () => 850 },
   rebound: { tags: () => T2(['instrument', 'drum-tech', 0.7], ['timing', 'steady', 0.3]), diff: () => 850 },
   singback: { tags: () => T2(['singing', 'match', 0.6], ['timing', 'precision', 0.4]), diff: () => 850 },
+  // Owner 2026-11-19: Euclid — set the onsets on the circle by ear; the top tier taps them back in time.
+  euclid: { tags: (d) => (Number(d.level) >= 6 ? T2(['rhythm-dictation', 'euclid', 0.5], ['timing', 'precision', 0.5]) : T2(['rhythm-dictation', 'euclid', 0.7], ['rhythm-dictation', 'world', 0.3])), diff: () => 1400 },
 };
 
 /** Normalised accuracy 0..1 of a finished game from what it reports. */

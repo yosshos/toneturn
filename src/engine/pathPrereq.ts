@@ -53,6 +53,13 @@ const EAR: Record<string, string[]> = {
   'topic:odd-meter:1': ['topic:time-signatures:1'],
   'topic:prog-meter:1': ['topic:odd-meter:1'],
   'topic:metric-tap:1': ['topic:click-subdivide:2'],
+  // Owner 2026-11-19 (post-tonal pack): Messiaen's modes after the trichords and the whole-tone / diminished scales by
+  // ear; twelve-tone rows after them and after inversion / retrograde ("Moving music around").
+  'topic:messiaen-modes:1': ['topic:set-classes:1', 'topic:scale-types:4'],
+  'topic:twelve-tone:1': ['topic:messiaen-modes:1', 'topic:melodic-transform:1'],
+  // Euclidean rhythms after the tresillo (rhythm-r3) and syncopation by ear; rotations after displacement.
+  'topic:euclid-rhythms:1': ['lesson:rhythm-r3', 'topic:syncopation:1'],
+  'topic:euclid-rhythms:4': ['topic:displacement:1'],
 };
 
 /**
@@ -218,6 +225,8 @@ export const FLOW_GAME_PREREQ: Record<string, string[]> = {
   polylock: ['tech:d-prog-5', 'tech:advanced-2'],
   riffecho: [],
   'rush-scale': ['topic:scale-types:1'],
+  // Owner 2026-11-19: the Euclid game after the Euclidean-rhythm topic's first level.
+  euclid: ['topic:euclid-rhythms:1'],
 };
 
 /** Repertoire steps: the concept they play first (Voice-Drums audit R6); the item's own topic ways are added in path.ts. */

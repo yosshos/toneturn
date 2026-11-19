@@ -1922,6 +1922,21 @@ Object.assign(GLYPHS, {
     </>
   ),
 });
+// Euclid (owner 2026-11-19): a circle of eight pulses, the tresillo E(3,8)'s three onsets joined into a triangle.
+Object.assign(GLYPHS, {
+  euclid: (
+    <>
+      <circle cx={0} cy={0} r={22} {...sw} strokeWidth={2} />
+      <path d="M0 -22 L15.6 15.6 L-22 0 Z" fill={I} opacity={0.35} />
+      {[[15.6, -15.6], [22, 0], [0, 22], [-15.6, 15.6], [-15.6, -15.6]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={2.4} fill={I} />
+      ))}
+      <circle cx={0} cy={-22} r={5.2} fill={I} />
+      <circle cx={15.6} cy={15.6} r={5.2} fill={I} />
+      <circle cx={-22} cy={0} r={5.2} fill={I} />
+    </>
+  ),
+});
 // Paper redraw: names that exist only in the Paper set (the Jazz course's saxophone, Encore, the games card) get the
 // nearest old drawing so raw GLYPHS users still draw something.
 Object.assign(GLYPHS, { jazz: GLYPHS.prog, encore: GLYPHS.echo, games: GLYPHS.puzzle });

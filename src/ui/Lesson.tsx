@@ -61,6 +61,7 @@ import { keepingPitch, type LessonTakeInfo } from './recKeep';
 import { InputCheck } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
 import { SessionRecToggle } from './SessionRecSwitch';
+import { CycleBuild, RhythmCircle } from './RhythmCircle';
 
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
@@ -286,7 +287,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       if (view.stage !== 'question') return;
       const q = view.question;
       const k = e.key.toLowerCase();
-      if (/^[1-9]$/.test(e.key) && view.phase === 'listening' && 'choices' in q && q.choices.length && !(q.kind === 'rhythm-dict' && q.mode === 'build')) {
+      if (/^[1-9]$/.test(e.key) && view.phase === 'listening' && 'choices' in q && q.choices.length && !(q.kind === 'rhythm-dict' && q.mode === 'build') && !(q.kind === 'choice' && q.cycle?.build)) {
         const c = q.choices[Number(e.key) - 1];
         if (c !== undefined) ctrl.answer(c);
       } else if (e.key === 'Enter' && view.awaitNext) ctrl.next();
@@ -590,8 +591,12 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
             ) : q.kind === 'rhythm-read' ? (
               <ReadPrompt q={q} v={v} lang={lang} onTap={(ms) => ctrl.tapBeat(ms)} onRelease={(ms) => ctrl.tapRelease(ms)} t={t} onLane={(ms, lane) => ctrl.tapBeat(ms, lane)} />
             ) : (
-              q.kind === 'choice' && (q.text || q.show || q.diagram || q.chart) ? (
+              q.kind === 'choice' && q.cycle?.build ? (
+                // Euclidean rhythms: tap the slots on the circle, then Check (owner 2026-11-19).
+                <CycleBuild key={`${v.index}-${v.session.turn}`} n={q.cycle.n} lang={lang} anyRotation={q.cycle.anyRotation} disabled={!awaiting || answered} result={answered ? q.answer : null} onSubmit={(a) => ctrl.answer(a)} />
+              ) : q.kind === 'choice' && (q.text || q.show || q.diagram || q.chart || q.cycle) ? (
                 <div className="choice-show">
+                  {q.cycle && <RhythmCircle n={q.cycle.n} pattern={q.cycle.show} size={q.cycle.show ? 120 : 132} />}
                   {q.chart && (
                     <figure className="chart-page" dir="ltr" aria-label={q.chart.title} data-chart-page="1">
                       <figcaption>{q.chart.title}</figcaption>
@@ -606,7 +611,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                     </figure>
                   )}
                   {q.text && <p className="choice-text" dir={/[֐-׿]/.test(q.text[lang]) ? 'rtl' : 'ltr'}>{q.text[lang]}</p>}
-                  {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} />}
+                  {q.show && <NoteStaff notes={q.show.midis} chord={!!q.show.chord} keyPc={q.show.key ?? null} clef={q.show.clef ?? 'treble'} durs={q.show.durs} meter={q.show.meter} />}
                   {q.diagram && <DiagramView d={q.diagram} settings={settings} />}
                 </div>
               ) : q.kind === 'grid' ? (
@@ -677,8 +682,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           {showButtons && q.kind === 'rhythm-dict' && q.mode === 'build' && (
             <RhythmBuilder key={`${v.index}-${v.session.turn}`} q={q} lang={lang} t={t} disabled={!awaiting} onSubmit={(a) => ctrl.answer(a)} />
           )}
-          {showButtons && !(q.kind === 'rhythm-dict' && q.mode === 'build') && (
-            <div className={`answers n-${q.choices.length} fmt-${fmt}`}>
+          {showButtons && !(q.kind === 'rhythm-dict' && q.mode === 'build') && !(q.kind === 'choice' && q.cycle?.build) && (
+            <div className={`answers n-${q.choices.length} fmt-${fmt}${q.kind === 'choice' && q.cycle?.choices ? ' rc-answers' : ''}`}>
               {q.choices.map((c) => {
                 const lb = choiceLabel(q, c, lang, nm);
                 return (
@@ -691,6 +696,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
                   >
                     {q.kind === 'rhythm-dict' ? (
                       <RhythmStaff rhythm={rhythmFromKey(String(c), q.rhythm.bars)} label={lb.small} compact height={80} />
+                    ) : q.kind === 'choice' && q.cycle?.choices ? (
+                      <RhythmCircle n={q.cycle.n} pattern={String(c)} size={72} />
                     ) : fmt === 'staff' && staffOf(c) ? (
                       <span className="answer-staff" dir="ltr">
                         <NoteStaff {...staffOf(c)!} />

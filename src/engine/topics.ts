@@ -61,6 +61,8 @@ import './topicsEarStart';
 import './topicsStageC';
 // AUDIT-7 #1: written theory from ABRSM grade 1 — note values and rests, interval numbers.
 import './topicsTheoryStart';
+// Owner 2026-11-19: Messiaen's modes, twelve-tone rows (post-tonal pack) and Euclidean rhythms (Ear, rhythm by ear).
+import './topicsPostTonal';
 import { applyDepth } from './topicsDepth';
 
 // ================================================================ T. Barry Harris

@@ -978,6 +978,21 @@ GAME_TIERS.singback = {
   },
 };
 
+/** Euclid (owner 2026-11-19): Euclidean rhythms on a circle — set the onsets by ear, then tap them back in time. */
+GAME_TIERS.euclid = {
+  game: 'euclid',
+  source: () => 'rhythm-dictation',
+  clear: 'accuracy',
+  tiers: {
+    pp: { label: L('Small circles: 4, 5 and 8 pulses', 'מעגלים קטנים: 4, 5 ו־8 משבצות'), levels: [1], params: { ppm: 220 }, target: 80 },
+    p: { label: L('+ spread k hits evenly; 7 and 9', '+ לפזר k מכות באופן שווה; 7 ו־9'), levels: [2], params: { ppm: 240 }, target: 80 },
+    mp: { label: L('Circles of 9 and 12', 'מעגלים של 9 ו־12'), levels: [3], params: { ppm: 260 }, target: 80 },
+    mf: { label: L('Rotations: the start moves', 'רוטציות: נקודת ההתחלה זזה'), levels: [4], params: { ppm: 260 }, target: 80 },
+    f: { label: L('Circles of 16, rotated', 'מעגלים של 16, עם רוטציות'), levels: [5], params: { ppm: 300 }, target: 80 },
+    ff: { label: L('Tap it back in time', 'מקישים בחזרה בזמן'), levels: [6], params: { ppm: 240 }, target: 80 },
+  },
+};
+
 /** Games whose on-screen (touch) input is practice only: it never clears a tier. */
 export const MEASURED_ONLY = new Set(['bhtime', 'riffecho', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'whichbrother', 'compcaller', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback']);
 
