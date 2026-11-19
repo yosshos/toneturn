@@ -811,6 +811,12 @@ export const LEAD_LESSON_THEME: Record<string, string> = {
   'lesson:bflat-two-homes': 'home',
   'lesson:cadences': 'harmony',
   'lesson:rhythm-r1': 'pulse',
+  // The shared theory lessons (2026-11-19).
+  'lesson:chord-numbers': 'harmony',
+  'lesson:sevenths': 'chords',
+  'lesson:six-dim': 'chords',
+  'lesson:scales-mm': 'steps',
+  'lesson:mode-colours': 'colour',
 };
 export function unitThemeOf(course: CourseId, pathTheme: string | undefined, steps: readonly { id: string; sub?: string }[], themes: readonly { id: string; subs: string[] }[]): string | undefined {
   if (course !== 'ear' && course !== 'jazz') return pathTheme;

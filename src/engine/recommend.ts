@@ -85,8 +85,8 @@ export function placementUnlocks(ratings: Ratings): LessonId[] {
 
 /** The path grouped into topics (every path lesson in exactly one) — for "done X of Y" bars. */
 export const TOPICS: { id: 'degrees' | 'harmony' | 'intervals' | 'singing' | 'rhythm'; lessons: LessonId[] }[] = [
-  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'note-sequences', 'transpose', 'dictation'] },
-  { id: 'harmony', lessons: ['chord-intro', 'major-minor', 'cadences', 'inversions', 'jazz-1', 'slash-chords', 'jazz-2'] },
+  { id: 'degrees', lessons: ['bflat-two-homes', 'degrees-135', 'notes-degrees', 'scales-mm', 'mode-colours', 'note-sequences', 'transpose', 'dictation'] },
+  { id: 'harmony', lessons: ['chord-intro', 'major-minor', 'chord-numbers', 'cadences', 'inversions', 'sevenths', 'jazz-welcome', 'jazz-1', 'six-dim', 'slash-chords', 'jazz-2'] },
   { id: 'intervals', lessons: ['intervals', 'songs'] },
   { id: 'singing', lessons: ['sing-home-five', 'sing-names', 'sing-degrees', 'chord-tones', 'runs'] },
   { id: 'rhythm', lessons: ['rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'rhythm-r4', 'rhythm-r5', 'rhythm-shift', 'rhythm-r6', 'rhythm-r7', 'rhythm-r8'] },

@@ -74,12 +74,8 @@ export const UNITS: Record<string, string> = {
   'tech:d-jazz': 'swing-ratio', // the swung ride
   'tech:d-mideast': 'eastern-rhythm', // dum and tak, maqsum, malfuf
 
-  // ---- Topics with no mini-lesson of their own (EAR-JAZZ F25)
-  'topic:voicing-type': 'voicings', // close, drop 2, shell, rootless
-  'topic:chart-analysis': 'jazz-changes', // where are the ii–Vs?
-  'topic:jazz-chains': 'jazz-changes', // backdoor, tritone sub
-  'topic:chorale-rn': 'four-parts',
-  'topic:blues-ear': 'jazz-form',
+  // ---- Topics with no mini-lesson of their own (EAR-JAZZ F25): voicing-type, chart-analysis, jazz-chains, chorale-rn and
+  // blues-ear now have their own (mini/theoryCore.ts UNITS, which also wins for the 7th-chord, numeral and mode levels).
   'topic:song-sing': 'songs',
   'topic:song-play': 'songs',
 };

@@ -69,6 +69,17 @@ export const isKeysForAll = (s: Partial<Pick<PathStep, 'topic' | 'level'>>): boo
  * with key-notes 1–3.
  */
 export const VOICE_SHARED_LESSONS: string[] = ['degrees-135', 'notes-degrees', 'chord-intro', 'major-minor'];
+/**
+ * Curriculum audit 2026-11-19 (INSTRUMENTS L1, L2, L4, D2): the shared theory lessons the instrument courses use — chords
+ * of the key (cadences, root finders, I–IV–V), seventh chords (7th arpeggios, voicings, shells), the scales (minor
+ * scales on keys and guitar) and the modes (Dorian levels, modal improvising). Same step id as in Ear, shared credit.
+ * The technique level that first uses one also opens with its short lesson (mini/theoryCore.ts UNITS).
+ */
+export const THEORY_SHARED_LESSONS: Partial<Record<CourseId, string[]>> = {
+  keys: ['chord-numbers', 'sevenths', 'scales-mm', 'mode-colours'],
+  guitar: ['chord-numbers', 'sevenths', 'scales-mm', 'mode-colours'],
+  bass: ['chord-numbers', 'sevenths', 'mode-colours'],
+};
 
 /**
  * AUDIT-6 J-W2: the performed jazz families — improvising, comping, walking, scat — that the Jazz course path also
@@ -119,6 +130,7 @@ export function inCourse(s: Pick<PathStep, 'domain' | 'sung' | 'forPlays' | 'pac
   // so they belong to the Ear course too (the one shared exception).
   if (c === 'ear' && isKeysForAll(s)) return true;
   if (c === 'voice' && s.kind === 'lesson' && !!s.lesson && VOICE_SHARED_LESSONS.includes(s.lesson)) return true;
+  if (s.kind === 'lesson' && !!s.lesson && THEORY_SHARED_LESSONS[c]?.includes(s.lesson)) return true;
   if (c === 'jazz' && s.ladder && JAZZ_LADDER_FAMILIES.includes(s.ladder.family)) return true;
   const voiceish = !!s.sung || s.domain === 'voice';
   const instr = s.forPlays?.map((p) => INSTR[p]).filter(Boolean) as CourseId[] | undefined;

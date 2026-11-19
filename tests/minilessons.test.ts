@@ -6,7 +6,7 @@ import { renderStimulus } from '../src/engine/lesson';
 const words = (s: string) => s.replace(/\{name\}/g, '').split(/\s+/).filter(Boolean).length;
 const AREAS = ['ear', 'harmony', 'rhythm', 'theory', 'voice', 'jazz', 'world', 'play'];
 /** Short on purpose (owner 2026-11-18, few words per screen): a first look at a concept, not the 60–90 s lesson. */
-const SHORT = new Set(['chord-intro']);
+const SHORT = new Set(['chord-intro', 'sevenths', 'chord-numbers', 'scales-mm', 'mode-colours', 'beyond-octave', 'six-dim', 'jazz-welcome', 'blues-ear', 'voicing-type', 'chart-analysis', 'jazz-chains', 'chorale-rn']);
 
 describe('mini-lessons (spec X)', () => {
   const all = Object.values(MINI_LESSONS);

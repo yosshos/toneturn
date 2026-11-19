@@ -33,6 +33,7 @@ export const FIXED_LESSONS: LessonId[] = [
   'sing-names', 'sing-degrees', 'rhythm-r1', 'rhythm-r2', 'rhythm-r3', 'rhythm-r4', 'rhythm-r5', 'rhythm-r6', 'rhythm-r7',
   'rhythm-r8', 'note-sequences', 'songs', 'jazz-1', 'runs', 'runs-workshop', 'modes', 'wrong-notes', 'dictation', 'jazz-2',
   'basics-pitch', 'basics-shape', 'basics-beat', 'basics-voice', 'transpose', 'rhythm-shift', 'chord-tones', 'chord-intro', 'slash-chords',
+  'chord-numbers', 'sevenths', 'scales-mm', 'mode-colours', 'six-dim', 'jazz-welcome',
 ];
 
 const NAMINGS: Naming[] = ['letter', 'solfege'];
