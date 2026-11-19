@@ -67,3 +67,27 @@ take per step in the real exercise screen (count-in, click, now-cue); clean = th
 15 points (one more take, starting at once). The result is each family's start (drillStart, the level after the hardest
 clean one). The old 2½-minute probe is gone. 0.85: range and microphone-delay setup before the first take, the mic asked for at Start, auto-advance after each graded take (1.8 s pass / 2.8 s miss), progress saved (toneturn.voiceTest.v1) and resumed. The generic placement's voice domain (singing, technique, agility
 ratings) stays for the Skill Map's "measure voice".
+
+## Everything the course covers (2026-11-19)
+
+Owner: "the level test must check everything the course covers" (he saw radar axes it never tested). Every family a
+course's path teaches is now placed by some step — measured by a step of its own, or placed by a step that asks the
+same skill at that level — and every radar axis has a measured section (tests/levelTestCoverage.test.ts).
+
+- **Search:** a long section climbs further on a clean take (`jumpOf`: two steps, or ⌈(n−2)/3⌉), so its top step is
+  reachable within the four takes (before, steps past the 8th of a section were never offered).
+- **Piano:** new section *Rhythm and meter* (k-rhythm 1 · 4 odd meters · 6 cross-rhythms). The first steps (k-first)
+  are placed by the hands steps and by any step harder than the whole family. The jazz pianist's test shows the core
+  hands steps the jazz path keeps (`pathPianoLevels`) — the hands section used to vanish for the jazz emphasis.
+- **Guitar:** voice leading on the neck (g-vl 1–2) tops the chords section; the prog add-on's odd-meter riffs (g-prog
+  1–2) top the rhythm section; short Fingerstyle and Flamenco sections with those add-ons.
+- **Bass:** legato and natural harmonics (b-legato 3, b-ext 1) top the hands section; the tumbao (b-latin 1) tops time;
+  an AABA tune (b-jform 2) tops walking and places the standards ladder. New sections: Fills and solos (b-impro), Slap,
+  Pick (+ the prog track's pick riffs), Odd meters (b-odd, b-poly; prog track), Bowing (upright only). The upright
+  track's positions, scales, pizzicato, walking and reading are placed by the hands, walking and reading steps.
+- **Drums:** reading places meter counting (d-count); new sections Middle-Eastern grooves, Latin grooves, Odd meters
+  (d-count 3, d-prog 3 and 6) and Song form (d-form 2, d-song 3 and 5).
+- **Voice:** new sections Breath & sustain (v-breath), Dynamics (v-dyn) and Standards (v-standards, one take with the
+  band like a song); harmony singing (v-harmony 1–3) is placed by the ear section's harmony-hold steps
+  (`withRelatedStarts`). Vibrato, range, inflections, scat and Barry Harris lines have no section yet.
+
