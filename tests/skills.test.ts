@@ -335,8 +335,9 @@ describe('controller: adaptive placement and sequence answers', () => {
     stt.expected = () => c.getView().question.answer;
     await c.start();
     expect(c.getView().stage).not.toBe('intro');
-    // Rhythm reading is tapped on the pad (a scripted voice cannot tap): stop when it comes up.
-    await until(() => c.getView().stage === 'complete' || c.getView().question.id.startsWith('p:rhythm-reading'), 20000);
+    // Rhythm is tapped (reading on the pad; a written bar picked by tapping it, owner 2026-11-19) — a scripted voice
+    // cannot tap: stop when either comes up.
+    await until(() => c.getView().stage === 'complete' || /^p:rhythm-(reading|dictation)/.test(c.getView().question.id), 20000);
     const qs = c.getView().session.lesson.questions;
     const levels: Record<string, number[]> = {};
     for (const q of qs.slice(0, c.getView().index)) {

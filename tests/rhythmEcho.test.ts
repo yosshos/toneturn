@@ -22,6 +22,13 @@ describe('rhythm by performance', () => {
     expect(rhythmByPerformance(lesson, false)).toBe(lesson);
     expect(rhythmByPerformance(lesson, true).questions.map((q) => q.kind)).toEqual(['rhythm-read', 'rhythm-dict']);
   });
+  it('with two heard items the first stays a tapped choice of the written bar, the second is played back', () => {
+    const second = rhythmDictQuestion('q5', 2, 2, 9);
+    const lesson = { id: 'rhythm-r2', version: 1, skill: 'rhythm-reading', scoring: {}, intro: [], questions: [dict, second] } as unknown as LessonDef;
+    const out = rhythmByPerformance(lesson, true).questions;
+    expect(out[0]).toBe(dict);
+    expect(out[1].kind).toBe('rhythm-read');
+  });
   it('no prompt asks for rhythm syllables', () => {
     for (const l of ['he', 'en'] as const) {
       const texts = [hintText(dict, l, true), hintText(dict, l, false), sayChoices(dict, l), hintText(asRhythmEcho(dict), l, true)];

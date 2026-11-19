@@ -191,21 +191,21 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
   },
   'rhythm-r2': {
     title: { en: 'Rhythm 2: eighth notes', he: 'קצב 2: שמיניות' },
-    blurb: { en: 'Two eighths per beat: ti-ti. Read it, tap it, hear it.', he: 'שתי שמיניות בפעמה: טי-טי. קוראים, מקישים, שומעים.' },
+    blurb: { en: 'Two eighths per beat, counted “1 &”. Read it, tap it, hear it.', he: 'שתי שמיניות בפעמה, סופרים “1 ו”. קוראים, מקישים, שומעים.' },
     icon: 'drum',
-    tip: { en: 'Say “ti-ti ta” while walking: steps are the beat.', he: 'אמרו "טי-טי טה" תוך כדי הליכה: הצעדים הם הפעמה.' },
+    tip: { en: 'Count “1 & 2” while walking: steps are the beat.', he: 'ספרו "1 ו 2" תוך כדי הליכה: הצעדים הם הפעמה.' },
   },
   'rhythm-r3': {
     title: { en: 'Rhythm 3: dotted quarter', he: 'קצב 3: רבע מנוקד' },
-    blurb: { en: 'Long-short across two beats: ta-i ti.', he: 'ארוך-קצר על פני שתי פעמות: טה-אי טי.' },
+    blurb: { en: 'Long-short across two beats: dotted quarter, eighth.', he: 'ארוך-קצר על פני שתי פעמות: רבע מנוקד ושמינית.' },
     icon: 'drum',
     tip: { en: 'Many folk songs start with ♩. ♪ — find one you know.', he: 'הרבה שירי עם מתחילים ב-♩. ♪ — מצאו אחד שאתם מכירים.' },
   },
   'rhythm-r4': {
     title: { en: 'Rhythm 4: sixteenths', he: 'קצב 4: שש-עשריות' },
-    blurb: { en: 'Four to a beat: tika-tika, ti tika, tika ti.', he: 'ארבע בפעמה: טיקה-טיקה, טי טיקה, טיקה טי.' },
+    blurb: { en: 'Four to a beat, and the shapes made from them.', he: 'ארבע בפעמה, והצורות שנבנות מהן.' },
     icon: 'drum',
-    tip: { en: 'Whisper “tika-tika” while tapping the beat with your foot.', he: 'לחשו "טיקה-טיקה" ותקישו את הפעמה ברגל.' },
+    tip: { en: 'Keep the beat slow in your foot; the sixteenths are small steps inside it.', he: 'החזיקו פעמה איטית ברגל; השש־עשריות הן צעדים קטנים בתוכה.' },
   },
   'rhythm-r5': {
     title: { en: 'Rhythm 5: syncopation', he: 'קצב 5: סינקופה' },
@@ -215,7 +215,7 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
   },
   'rhythm-r6': {
     title: { en: 'Rhythm 6: triplets', he: 'קצב 6: טריולות' },
-    blurb: { en: 'Three in a beat: tri-o-la — and how it differs from ti-ti.', he: 'שלוש בפעמה: טרי-או-לה — ובמה זה שונה מטי-טי.' },
+    blurb: { en: 'Three in a beat: tri-o-la — and how it differs from two eighths.', he: 'שלוש בפעמה: טרי-או-לה — ובמה זה שונה משתי שמיניות.' },
     icon: 'drum',
     tip: { en: 'Say “straw-ber-ry” for triplets and “ap-ple” for eighths over the same beat.', he: 'אמרו "תות-שָׂ-דה" לטריולה ו"תפּוּ-ח" לשמיניות על אותה פעמה.' },
   },
@@ -380,8 +380,8 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
       }[c.name][l];
     case 'rhythm':
       return l === 'en'
-        ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. Count it: ${unspoken(describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l))}.`
-        : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}. סופרים: ${unspoken(describeRhythm(rhythmFromKey(c.rhythm), 'syllables', l))}.`;
+        ? `Here is a bar: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}.`
+        : `זו תיבה: ${describeRhythm(rhythmFromKey(c.rhythm), 'names', l)}.`;
     case 'seventh':
       return {
         maj7: { en: 'A major seventh chord: dreamy and settled. Home in jazz.', he: 'אקורד מז׳ור 7: חלומי ורגוע. הבית בג׳אז.' },
@@ -804,7 +804,7 @@ function revealCore(q: Question, l: Lang, nm: Naming): string {
     case 'rhythm-read':
       {
         // 0.66 (owner): a long passage ran under the buttons — the first two bars are enough to hear how it goes.
-        const bars = unspoken(describeRhythm(q.rhythm, 'syllables', l)).split(' | ');
+        const bars = unspoken(describeRhythm(q.rhythm, 'names', l)).split(' | ');
         const shown = bars.length > 2 ? `${bars.slice(0, 2).join(' | ')} …` : bars.join(' | ');
         return l === 'en' ? `Here is how it goes: ${shown}` : `ככה זה נשמע: ${shown}`;
       }

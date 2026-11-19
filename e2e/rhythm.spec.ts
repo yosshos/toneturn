@@ -38,10 +38,20 @@ test.describe('rhythm reading & dictation', () => {
     await expect(page.locator('.feedback.correct')).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('.read-strip .rs')).not.toHaveCount(0);
 
-    // Dictation (owner 2026-11-19): heard, then played back on the pad — no notated choices, no syllables.
-    await expect(page.locator('.read-prompt[data-by-ear="1"]')).toBeVisible({ timeout: 120_000 });
-    await expect(page.locator('.answer.rhythm-opt')).toHaveCount(0);
+    // Q2: dictation — four written bars, picked by tapping (owner 2026-11-19: never said as "ta ti-ti").
+    await expect(page.locator('.answer.rhythm-opt')).toHaveCount(4, { timeout: 60_000 });
+    await expect(page.locator('.answer.rhythm-opt .rhythm-staff svg').first()).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(/ti-ti/);
     await page.screenshot({ path: 'test-results/rhythm-dictation.png' });
+    // The second heard bar is played back on the pad.
+    for (let i = 0; i < 240 && !(await page.locator('.read-prompt[data-by-ear="1"]').isVisible()); i++) {
+      if (await page.locator('[data-continue]').isVisible()) await page.locator('[data-continue]').click().catch(() => {});
+      else if (await page.locator('.answer.rhythm-opt:not([disabled])').first().isVisible()) await page.locator('.answer.rhythm-opt').first().click().catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    await expect(page.locator('.read-prompt[data-by-ear="1"]')).toBeVisible();
+    await expect(page.locator('.answer.rhythm-opt')).toHaveCount(0);
+    await page.screenshot({ path: 'test-results/rhythm-echo.png' });
   });
 });
 

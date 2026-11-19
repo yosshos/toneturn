@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('Ear course: the dictation item of Rhythm 1 is a play-it-back echo', async ({ page }) => {
+test('Ear course Rhythm 1: the first heard bar is picked by tapping, the second is played back', async ({ page }) => {
   test.setTimeout(240_000);
   await page.goto('/manifest.webmanifest');
   await page.evaluate(async () => {
@@ -47,7 +47,17 @@ test('Ear course: the dictation item of Rhythm 1 is a play-it-back echo', async 
     }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
   });
 
-  await expect(page.locator('.read-prompt[data-by-ear="1"]')).toBeVisible({ timeout: 180_000 });
+  // The first heard bar: pick the written one of four, by tapping — no syllables anywhere.
+  await expect(page.locator('.answer.rhythm-opt')).toHaveCount(4, { timeout: 180_000 });
+  await expect(page.locator('body')).not.toContainText(/טי-טי|ti-ti/);
+  await page.screenshot({ path: 'docs/fresh-shots/ear-choose-he.png' });
+  // The second: played back.
+  for (let i = 0; i < 240 && !(await page.locator('.read-prompt[data-by-ear="1"]').isVisible()); i++) {
+    if (await page.locator('[data-continue]').isVisible()) await page.locator('[data-continue]').click().catch(() => {});
+    else if (await page.locator('.answer.rhythm-opt:not([disabled])').first().isVisible()) await page.locator('.answer.rhythm-opt').first().click().catch(() => {});
+    await page.waitForTimeout(500);
+  }
+  await expect(page.locator('.read-prompt[data-by-ear="1"]')).toBeVisible();
   await expect(page.locator('.answer.rhythm-opt')).toHaveCount(0);
   await expect(page.locator('body')).not.toContainText(/טי-טי|ti-ti/);
   await page.screenshot({ path: 'docs/fresh-shots/ear-echo-he.png' });

@@ -111,24 +111,24 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1  2  3  4', he: '1  2  3  4' } },
       },
       {
-        say: { en: 'A quarter note lasts exactly one beat. Say "ta" on each one.', he: 'רבע נמשך בדיוק פעמה אחת. אמרו "טה" על כל אחד.' },
+        say: { en: 'A quarter note lasts exactly one beat. Count each one: 1, 2, 3, 4.', he: 'רבע נמשך בדיוק פעמה אחת. ספרו כל אחד: 1, 2, 3, 4.' },
         play: [R('q.q.q.q', 70)],
-        show: { text: { en: '♩ ♩ ♩ ♩  ·  ta ta ta ta', he: '♩ ♩ ♩ ♩  ·  טה טה טה טה' } },
+        show: { text: { en: '♩ ♩ ♩ ♩  ·  1 2 3 4', he: '♩ ♩ ♩ ♩  ·  1 2 3 4' } },
       },
       {
-        say: { en: 'A half note lasts two beats: ta-a. You play it once and let it ring through the next beat.', he: 'חצי נמשך שתי פעמות: טה-אה. מנגנים אותו פעם אחת ונותנים לו להתמשך גם על הפעמה הבאה.' },
+        say: { en: 'A half note lasts two beats. You play it once and let it ring through the next beat.', he: 'חצי נמשך שתי פעמות. מנגנים אותו פעם אחת ונותנים לו להתמשך גם על הפעמה הבאה.' },
         play: [R('q.q.h', 70)],
-        show: { text: { en: '♩ ♩ 𝅗𝅥  ·  ta ta ta-a', he: '♩ ♩ 𝅗𝅥  ·  טה טה טה-אה' } },
+        show: { text: { en: '♩ ♩ 𝅗𝅥  ·  1 2 3 (4)', he: '♩ ♩ 𝅗𝅥  ·  1 2 3 (4)' } },
       },
       {
-        say: { en: 'A whole note fills all four beats: ta-a-a-a. One sound, a long ride.', he: 'שלם ממלא את כל ארבע הפעמות: טה-אה-אה-אה. צליל אחד, נסיעה ארוכה.' },
+        say: { en: 'A whole note fills all four beats. One sound, a long ride.', he: 'שלם ממלא את כל ארבע הפעמות. צליל אחד, נסיעה ארוכה.' },
         play: [R('w', 70)],
-        show: { text: { en: '𝅝  ·  ta-a-a-a', he: '𝅝  ·  טה-אה-אה-אה' } },
+        show: { text: { en: '𝅝  ·  1 (2 3 4)', he: '𝅝  ·  1 (2 3 4)' } },
       },
       {
-        say: { en: 'A rest is a beat of silence. You still count it — you just don\'t play. Whisper "sh" in its place.', he: 'הפסקה היא פעמה של שקט. עדיין סופרים אותה — פשוט לא מנגנים. לחשו "שְׁ" במקומה.' },
+        say: { en: 'A rest is a beat of silence. You still count it — you just don\'t play. Whisper its number instead.', he: 'הפסקה היא פעמה של שקט. עדיין סופרים אותה — פשוט לא מנגנים. לחשו את המספר שלה במקום.' },
         play: [R('q.qr.q.qr', 70)],
-        show: { text: { en: '♩ 𝄽 ♩ 𝄽  ·  ta sh ta sh', he: '♩ 𝄽 ♩ 𝄽  ·  טה שְׁ טה שְׁ' } },
+        show: { text: { en: '♩ 𝄽 ♩ 𝄽  ·  1 (2) 3 (4)', he: '♩ 𝄽 ♩ 𝄽  ·  1 (2) 3 (4)' } },
       },
       {
         say: { en: 'When you tap, hold your finger down on long notes, for their full length. The app checks that too.', he: 'כשאתם מקישים, החזיקו את האצבע לחוצה על צלילים ארוכים, לכל האורך שלהם. האפליקציה בודקת גם את זה.' },
@@ -137,7 +137,7 @@ export const LESSONS: MiniLesson[] = [
       },
       {
         say: { en: 'Your turn! After the count-in, tap the pad or press Space on every note you read. Then hear a bar and pick the notation that matches.', he: 'תורכם! אחרי הספירה, הקישו על הכפתור או על רווח בכל תו שאתם קוראים. אחר כך שמעו תיבה ובחרו את התווים שמתאימים לה.' },
-        show: { text: { en: '♩ = 1   𝅗𝅥 = 2   𝅝 = 4   𝄽 = sh', he: '♩ = 1   𝅗𝅥 = 2   𝅝 = 4   𝄽 = שְׁ' } },
+        show: { text: { en: '♩ = 1   𝅗𝅥 = 2   𝅝 = 4   𝄽 = (1)', he: '♩ = 1   𝅗𝅥 = 2   𝅝 = 4   𝄽 = (1)' } },
       },
     ],
     more: [
@@ -158,7 +158,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'To read a rhythm by ear, follow the beat and ask one question: on which beats does a new sound start? Here, on 1 and 4. Beat 2 is still ringing, beat 3 is silent. A note lasts until the next start or rest.', he: 'כדי לקרוא מקצב בשמיעה, עקבו אחרי הפעמה ושאלו שאלה אחת: על אילו פעמות מתחיל צליל חדש? כאן, על 1 ועל 4. פעמה 2 עדיין מתמשכת, פעמה 3 שקטה. צליל נמשך עד ההתחלה הבאה או עד ההפסקה.' },
         play: [R('h.qr.q', 76)],
-        show: { text: { en: '𝅗𝅥 𝄽 ♩  ·  1 (2) sh 4', he: '𝅗𝅥 𝄽 ♩  ·  1 (2) שְׁ 4' } },
+        show: { text: { en: '𝅗𝅥 𝄽 ♩  ·  1 (2) (3) 4', he: '𝅗𝅥 𝄽 ♩  ·  1 (2) (3) 4' } },
       },
       {
         say: { en: 'To perform it, count out loud, 1, 2, 3, 4, and clap only where a note starts. On a half note, keep your hand moving through the second beat, so the length is felt, not guessed. Start slowly, around 60 to 70 BPM.', he: 'כדי לבצע, ספרו בקול, 1, 2, 3, 4, ומחאו כף רק איפה שתו מתחיל. על חצי, המשיכו להזיז את היד דרך הפעמה השנייה, כך שהאורך מורגש ולא מנוחש. התחילו לאט, בסביבות 60 עד 70 BPM.' },
@@ -166,7 +166,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'The common mistakes: cutting long notes short, and hurrying through rests to reach the next note. A rest lasts exactly as long as the note it replaces. Hear two rests held honestly.', he: 'הטעויות הנפוצות: לקצר צלילים ארוכים, ולמהר דרך ההפסקות כדי להגיע לתו הבא. הפסקה נמשכת בדיוק כמו התו שהיא מחליפה. שמעו שתי הפסקות שמוחזקות ביושר.' },
         play: [R('q.qr.qr.q', 72)],
-        show: { text: { en: 'ta sh sh ta', he: 'טה שְׁ שְׁ טה' } },
+        show: { text: { en: '1 (2) (3) 4', he: '1 (2) (3) 4' } },
       },
       {
         say: { en: 'In real music, quarters often carry a walking bass line or a steady strum, while halves and wholes hold the long notes of hymns, chorales and sustained pads under a band. Rests give phrases room to breathe.', he: 'במוזיקה אמיתית, רבעים נושאים לעתים קרובות קו בס מהלך או פריטה יציבה, וחצאים ושלמים מחזיקים את הצלילים הארוכים של מזמורים, כוראלים ומשטחי צליל מתמשכים מתחת ללהקה. ההפסקות נותנות למשפטים מקום לנשום.' },
@@ -183,36 +183,36 @@ export const LESSONS: MiniLesson[] = [
     area: 'rhythm',
     emoji: '🥁',
     title: { en: 'Eighth notes', he: 'שמיניות' },
-    takeaway: { en: 'Two eighth notes share one beat equally: ti-ti, counted "1 &".', he: 'שתי שמיניות חולקות פעמה אחת שווה בשווה: טי-טי, סופרים "1 ו".' },
+    takeaway: { en: 'Two eighth notes share one beat equally, counted "1 &".', he: 'שתי שמיניות חולקות פעמה אחת שווה בשווה, סופרים "1 ו".' },
     steps: [
       {
-        say: { en: 'Hi {name}! Split one beat into two equal halves and you get two eighth notes. We say ti-ti.', he: 'היי {name}! מחלקים פעמה אחת לשני חצאים שווים ומקבלים שתי שמיניות. אומרים טי-טי.' },
+        say: { en: 'Hi {name}! Split one beat into two equal halves and you get two eighth notes.', he: 'היי {name}! מחלקים פעמה אחת לשני חצאים שווים ומקבלים שתי שמיניות.' },
         play: [R('ee.ee.ee.ee', 76)],
-        show: { text: { en: '♫ ♫ ♫ ♫  ·  ti-ti ti-ti ti-ti ti-ti', he: '♫ ♫ ♫ ♫  ·  טי-טי טי-טי טי-טי טי-טי' } },
+        show: { text: { en: '♫ ♫ ♫ ♫  ·  1 & 2 & 3 & 4 &', he: '♫ ♫ ♫ ♫  ·  1 ו 2 ו 3 ו 4 ו' } },
       },
       {
         say: { en: 'Count them with "and". The numbers sit on the beat; each "and" falls exactly halfway to the next one.', he: 'סופרים אותן עם "ו". המספרים יושבים על הפעמה; כל "ו" נופל בדיוק באמצע הדרך לפעמה הבאה.' },
         play: [R('ee.q.ee.q', 76)],
-        show: { text: { en: '1 & 2 & 3 & 4 &', he: '1 ו 2 ו 3 ו 4 ו' } },
+        show: { text: { en: '1 & 2  3 & 4', he: '1 ו 2  3 ו 4' } },
       },
       {
-        say: { en: 'Two eighths take the same time as one quarter. Listen: ta, then ti-ti — same beat, twice as busy.', he: 'שתי שמיניות לוקחות בדיוק את הזמן של רבע אחד. הקשיבו: טה, ואז טי-טי — אותה פעמה, פי שניים עסוקה.' },
+        say: { en: 'Two eighths take the same time as one quarter. Listen: one quarter, then two eighths — same beat, twice as busy.', he: 'שתי שמיניות לוקחות בדיוק את הזמן של רבע אחד. הקשיבו: רבע, ואז שתי שמיניות — אותה פעמה, פי שניים עסוקה.' },
         play: [R('q.ee.q.ee', 76)],
-        show: { text: { en: '♩ ♫ ♩ ♫  ·  ta ti-ti ta ti-ti', he: '♩ ♫ ♩ ♫  ·  טה טי-טי טה טי-טי' } },
+        show: { text: { en: '♩ ♫ ♩ ♫  ·  1 2 & 3 4 &', he: '♩ ♫ ♩ ♫  ·  1 2 ו 3 4 ו' } },
       },
       {
-        say: { en: 'Now mixed with a half note: ti-ti, ta, ta-a. Feel the gears shift from fast to slow.', he: 'עכשיו בשילוב עם חצי: טי-טי, טה, טה-אה. הרגישו איך ההילוך עובר ממהיר לאיטי.' },
+        say: { en: 'Now mixed with a half note: two eighths, a quarter, a half. Feel the gears shift from fast to slow.', he: 'עכשיו בשילוב עם חצי: שתי שמיניות, רבע, חצי. הרגישו איך ההילוך עובר ממהיר לאיטי.' },
         play: [R('ee.q.h', 76)],
-        show: { text: { en: '♫ ♩ 𝅗𝅥  ·  ti-ti ta ta-a', he: '♫ ♩ 𝅗𝅥  ·  טי-טי טה טה-אה' } },
+        show: { text: { en: '♫ ♩ 𝅗𝅥  ·  1 & 2 3 (4)', he: '♫ ♩ 𝅗𝅥  ·  1 ו 2 3 (4)' } },
       },
       {
-        say: { en: 'The usual slip is rushing the second eighth. Keep both halves even — the two "ti"s are twins.', he: 'הטעות הנפוצה היא למהר עם השמינית השנייה. שמרו על שני החצאים שווים — שני ה"טי" הם תאומים.' },
+        say: { en: 'The usual slip is rushing the second eighth. Keep both halves even — the two eighths are twins.', he: 'הטעות הנפוצה היא למהר עם השמינית השנייה. שמרו על שני החצאים שווים — שתי השמיניות הן תאומות.' },
         play: [R('ee.ee.q.q', 76)],
-        show: { text: { en: 'ti = ti', he: 'טי = טי' } },
+        show: { text: { en: '♪ = ♪', he: '♪ = ♪' } },
       },
       {
-        say: { en: 'Your turn! Tap every note you read after the count-in — two even taps for ti-ti. Then hear a bar and choose it, or just say it: "ta ti-ti ta ta".', he: 'תורכם! הקישו על כל תו שאתם קוראים אחרי הספירה — שתי הקשות שוות לטי-טי. אחר כך שמעו תיבה ובחרו אותה, או פשוט אמרו: "טה טי-טי טה טה".' },
-        show: { text: { en: '♫ = ti-ti = 1 beat', he: '♫ = טי-טי = פעמה אחת' } },
+        say: { en: 'Your turn! Tap every note you read after the count-in — two even taps for two eighths. Then hear a bar: pick it, or tap it back.', he: 'תורכם! הקישו על כל תו שאתם קוראים אחרי הספירה — שתי הקשות שוות לשתי שמיניות. אחר כך שמעו תיבה: בחרו אותה, או הקישו אותה בחזרה.' },
+        show: { text: { en: '♫ = 1 & = 1 beat', he: '♫ = 1 ו = פעמה אחת' } },
       },
     ],
     more: [
@@ -253,7 +253,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'rhythm',
     emoji: '🥁',
     title: { en: 'The dotted quarter', he: 'הרבע המנוקד' },
-    takeaway: { en: 'A dot adds half the note\'s length: a dotted quarter is 1½ beats, usually followed by an eighth (ta-i ti).', he: 'נקודה מוסיפה חצי מאורך התו: רבע מנוקד הוא פעמה וחצי, ובדרך כלל אחריו שמינית (טה-אי טי).' },
+    takeaway: { en: 'A dot adds half the note\'s length: a dotted quarter is 1½ beats, usually followed by an eighth: long, short.', he: 'נקודה מוסיפה חצי מאורך התו: רבע מנוקד הוא פעמה וחצי, ובדרך כלל אחריו שמינית: ארוך, קצר.' },
     steps: [
       {
         say: { en: 'Hey {name}! A dot after a note adds half its length. A quarter is one beat, so a dotted quarter lasts one and a half.', he: 'היי {name}! נקודה אחרי תו מוסיפה חצי מהאורך שלו. רבע הוא פעמה אחת, אז רבע מנוקד נמשך פעמה וחצי.' },
@@ -261,24 +261,24 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♩. = 1 + ½ beat', he: '♩. = 1 + ½ פעמה' } },
       },
       {
-        say: { en: 'It almost always brings an eighth along, so together they fill two beats: long, short. We say ta-i ti.', he: 'כמעט תמיד באה איתו שמינית, וביחד הן ממלאות שתי פעמות: ארוך, קצר. אומרים טה-אי טי.' },
+        say: { en: 'It almost always brings an eighth along, so together they fill two beats: long, short.', he: 'כמעט תמיד באה איתו שמינית, וביחד הן ממלאות שתי פעמות: ארוך, קצר.' },
         play: [R('dqe.dqe', 80)],
-        show: { text: { en: '♩. ♪  ·  ta-i ti', he: '♩. ♪  ·  טה-אי טי' } },
+        show: { text: { en: '♩. ♪  ·  1 (& 2) &  3 (& 4) &', he: '♩. ♪  ·  1 (ו 2) ו  3 (ו 4) ו' } },
       },
       {
         say: { en: 'Count it: the long note starts on 1 and holds right through 2. The eighth lands on the "and" of 2.', he: 'ספרו: הצליל הארוך מתחיל על 1 ונמשך גם דרך 2. השמינית נוחתת על ה"וְ" של 2.' },
         play: [R('dqe.q.q', 80)],
-        show: { text: { en: '1 (& 2) &  ·  ta-i ti', he: '1 (ו 2) ו  ·  טה-אי טי' } },
+        show: { text: { en: '1 (& 2) &  3  4', he: '1 (ו 2) ו  3  4' } },
       },
       {
         say: { en: 'Compare: two quarters, then the dotted pair. Same two beats — but the second note moves later, onto the "and".', he: 'השוו: שני רבעים, ואז הזוג המנוקד. אותן שתי פעמות — אבל הצליל השני זז מאוחר יותר, אל ה"ו".' },
         play: [R('q.q.dqe', 80)],
-        show: { text: { en: 'ta ta  |  ta-i ti', he: 'טה טה  |  טה-אי טי' } },
+        show: { text: { en: '1 2  |  3 (& 4) &', he: '1 2  |  3 (ו 4) ו' } },
       },
       {
         say: { en: 'That long-short gives a tune a little skip forward. Hear it mixed with eighths.', he: 'הארוך-קצר הזה נותן למנגינה קפיצה קטנה קדימה. שמעו אותו בשילוב עם שמיניות.' },
         play: [R('dqe.ee.q', 80)],
-        show: { text: { en: 'ta-i ti  ti-ti  ta', he: 'טה-אי טי  טי-טי  טה' } },
+        show: { text: { en: '1 (& 2) &  3 &  4', he: '1 (ו 2) ו  3 ו  4' } },
       },
       {
         say: { en: 'Your turn! Tap what you read: hold the long note, then a quick tap on the "and". Then hear a bar and pick its notation.', he: 'תורכם! הקישו את מה שאתם קוראים: החזיקו את הצליל הארוך, ואז הקשה קצרה על ה"ו". אחר כך שמעו תיבה ובחרו את התווים שלה.' },
@@ -296,17 +296,17 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '♩. = ♩‿♪', he: '♩. = ♩‿♪' } },
       },
       {
-        say: { en: 'Compare ta ti-ti with ta-i ti. Both last two beats and both end on the "and" of the second beat. The only difference: in the dotted version, nothing new happens on that second beat.', he: 'השוו טה טי-טי לטה-אי טי. שתיהן נמשכות שתי פעמות ושתיהן נגמרות על ה"וְ" של הפעמה השנייה. ההבדל היחיד: בגרסה המנוקדת, שום דבר חדש לא קורה על הפעמה השנייה.' },
+        say: { en: 'Compare a quarter and two eighths with the dotted pair. Both last two beats and both end on the "and" of the second beat. The only difference: in the dotted version, nothing new happens on that second beat.', he: 'השוו רבע ושתי שמיניות לזוג המנוקד. שתיהן נמשכות שתי פעמות ושתיהן נגמרות על ה"וְ" של הפעמה השנייה. ההבדל היחיד: בגרסה המנוקדת, שום דבר חדש לא קורה על הפעמה השנייה.' },
         play: [R('q.ee.dqe', 80)],
-        show: { text: { en: 'ta ti-ti  |  ta-i ti', he: 'טה טי-טי  |  טה-אי טי' } },
+        show: { text: { en: '1 2 &  |  3 (& 4) &', he: '1 2 ו  |  3 (ו 4) ו' } },
       },
       {
         say: { en: 'The secret is subdividing. Count eighths: "1 & 2 &". Start the long note on 1, hold it through "& 2", and play the short one on the last "&". The pair can start on any beat — here it begins on beat 2.', he: 'הסוד הוא חלוקה פנימית. ספרו שמיניות: "1 ו 2 ו". התחילו את הצליל הארוך על 1, החזיקו אותו דרך "ו 2", ונגנו את הקצר על ה"ו" האחרון. הזוג יכול להתחיל בכל פעמה — כאן הוא מתחיל על פעמה 2.' },
         play: [R('q.dqe.q', 80)],
-        show: { text: { en: 'ta  ta-i ti  ta', he: 'טה  טה-אי טי  טה' } },
+        show: { text: { en: '1  2 (& 3) &  4', he: '1  2 (ו 3) ו  4' } },
       },
       {
-        say: { en: 'The usual mistake is playing the eighth too early, right on the beat, which turns ta-i ti into two plain quarters. The opposite slip is confusing it with a dotted eighth and sixteenth, a much tighter skip inside a single beat.', he: 'הטעות הרגילה היא לנגן את השמינית מוקדם מדי, בדיוק על הפעמה, וכך טה-אי טי הופך לשני רבעים רגילים. הטעות ההפוכה היא לבלבל אותו עם שמינית מנוקדת ושש־עשרית, קפיצה צפופה הרבה יותר בתוך פעמה אחת.' },
+        say: { en: 'The usual mistake is playing the eighth too early, right on the beat, which turns the dotted pair into two plain quarters. The opposite slip is confusing it with a dotted eighth and sixteenth, a much tighter skip inside a single beat.', he: 'הטעות הרגילה היא לנגן את השמינית מוקדם מדי, בדיוק על הפעמה, וכך הזוג המנוקד הופך לשני רבעים רגילים. הטעות ההפוכה היא לבלבל אותו עם שמינית מנוקדת ושש־עשרית, קפיצה צפופה הרבה יותר בתוך פעמה אחת.' },
       },
       {
         say: { en: 'Two dotted quarters and a quarter make 3 + 3 + 2 eighths: the tresillo. It is the backbone of Cuban music, of reggaeton and of countless pop grooves. Hear it on a low drum.', he: 'שני רבעים מנוקדים ורבע יוצרים 3 + 3 + 2 שמיניות: הטרסיו (tresillo). זה עמוד השדרה של המוזיקה הקובנית, של הרגאטון ושל אינספור גרוב בפופ. שמעו אותו על תוף נמוך.' },
@@ -325,27 +325,27 @@ export const LESSONS: MiniLesson[] = [
     area: 'rhythm',
     emoji: '🥁',
     title: { en: 'Sixteenth notes', he: 'שש־עשריות' },
-    takeaway: { en: 'Four sixteenths fill one beat (tika-tika); glue two into an eighth for ti tika or tika ti.', he: 'ארבע שש־עשריות ממלאות פעמה אחת (טיקה-טיקה); מדביקים שתיים לשמינית ומקבלים טי טיקה או טיקה טי.' },
+    takeaway: { en: 'Four sixteenths fill one beat; glue two into an eighth for eighth–two sixteenths or two sixteenths–eighth.', he: 'ארבע שש־עשריות ממלאות פעמה אחת; מדביקים שתיים לשמינית ומקבלים שמינית ושתי שש־עשריות, או שתי שש־עשריות ושמינית.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Split one beat into four equal parts and you get sixteenth notes. We say tika-tika.', he: 'היי {name}! מחלקים פעמה אחת לארבעה חלקים שווים ומקבלים שש־עשריות. אומרים טיקה-טיקה.' },
+        say: { en: 'Hi {name}! Split one beat into four equal parts and you get sixteenth notes.', he: 'היי {name}! מחלקים פעמה אחת לארבעה חלקים שווים ומקבלים שש־עשריות.' },
         play: [R('ssss.q.ssss.q', 66)],
-        show: { text: { en: '♬♬ ♩ ♬♬ ♩  ·  tika-tika ta', he: '♬♬ ♩ ♬♬ ♩  ·  טיקה-טיקה טה' } },
+        show: { text: { en: '♬♬ ♩ ♬♬ ♩  ·  1 e & a 2  3 e & a 4', he: '♬♬ ♩ ♬♬ ♩  ·  ארבע שש־עשריות, רבע' } },
       },
       {
-        say: { en: 'Glue the first two together into one eighth and you get ti tika: long, short, short.', he: 'מדביקים את שתי הראשונות לשמינית אחת ומקבלים טי טיקה: ארוך, קצר, קצר.' },
+        say: { en: 'Glue the first two together into one eighth: long, short, short.', he: 'מדביקים את שתי הראשונות לשמינית אחת: ארוך, קצר, קצר.' },
         play: [R('es.es.h', 66)],
-        show: { text: { en: '♪ ♬  ·  ti tika', he: '♪ ♬  ·  טי טיקה' } },
+        show: { text: { en: '♪ ♬  ·  1 & a', he: '♪ ♬  ·  שמינית ושתי שש־עשריות' } },
       },
       {
-        say: { en: 'Glue the last two instead and it flips: tika ti — short, short, long.', he: 'מדביקים במקום זה את שתי האחרונות וזה מתהפך: טיקה טי — קצר, קצר, ארוך.' },
+        say: { en: 'Glue the last two instead and it flips: short, short, long.', he: 'מדביקים במקום זה את שתי האחרונות וזה מתהפך: קצר, קצר, ארוך.' },
         play: [R('se.se.h', 66)],
-        show: { text: { en: '♬ ♪  ·  tika ti', he: '♬ ♪  ·  טיקה טי' } },
+        show: { text: { en: '♬ ♪  ·  1 e &', he: '♬ ♪  ·  שתי שש־עשריות ושמינית' } },
       },
       {
         say: { en: 'All three in a row. Listen for where the quick pair sits: at the start of the beat, or at the end?', he: 'שלושתם ברצף. הקשיבו איפה יושב הזוג המהיר: בתחילת הפעמה, או בסוף?' },
         play: [R('ssss.es.se.q', 66)],
-        show: { text: { en: 'tika-tika  ti tika  tika ti  ta', he: 'טיקה-טיקה  טי טיקה  טיקה טי  טה' } },
+        show: { text: { en: '1 e & a  2 & a  3 e &  4', he: 'ארבע שש־עשריות · ארוך-קצר-קצר · קצר-קצר-ארוך · רבע' } },
       },
       {
         say: { en: 'Keep the beat slow and steady in your body. The sixteenths are tiny steps inside it — they never push it faster.', he: 'שמרו על פעמה איטית ויציבה בגוף. השש־עשריות הן צעדים קטנים בתוכה — הן אף פעם לא מאיצות אותה.' },
@@ -353,8 +353,8 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1 beat = 4 × ♬', he: 'פעמה = 4 שש־עשריות' } },
       },
       {
-        say: { en: 'Your turn! Tap what you read, then hear a bar and choose it. In the last round you build the bar yourself from blocks: tika-tika, ti tika, tika ti.', he: 'תורכם! הקישו את מה שאתם קוראים, ואז שמעו תיבה ובחרו אותה. בסיבוב האחרון אתם בונים את התיבה בעצמכם מקוביות: טיקה-טיקה, טי טיקה, טיקה טי.' },
-        show: { text: { en: 'tika-tika · ti tika · tika ti', he: 'טיקה-טיקה · טי טיקה · טיקה טי' } },
+        say: { en: 'Your turn! Tap what you read, then hear a bar and choose it. In the last round you build the bar yourself from blocks: four sixteenths, eighth–two sixteenths, two sixteenths–eighth.', he: 'תורכם! הקישו את מה שאתם קוראים, ואז שמעו תיבה ובחרו אותה. בסיבוב האחרון אתם בונים את התיבה בעצמכם מקוביות: ארבע שש־עשריות, שמינית ושתי שש־עשריות, שתי שש־עשריות ושמינית.' },
+        show: { text: { en: '1 e & a · 1 & a · 1 e &', he: 'ארבע שש־עשריות · ארוך-קצר-קצר · קצר-קצר-ארוך' } },
       },
     ],
     more: [
@@ -363,13 +363,13 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '1 e & a  2 e & a', he: '1 אִי וְ אָה  2 אִי וְ אָה' } },
       },
       {
-        say: { en: 'Inside one beat, sixteenths can merge. Ti tika is an eighth then two sixteenths, sounding on 1, &, a. Tika ti is two sixteenths then an eighth, sounding on 1, e, &. Hear them alternate.', he: 'בתוך פעמה אחת, שש־עשריות יכולות להתמזג. טי טיקה היא שמינית ואז שתי שש־עשריות, שנשמעות על 1, &, a. טיקה טי היא שתי שש־עשריות ואז שמינית, שנשמעות על 1, e, &. שמעו אותן מתחלפות.' },
+        say: { en: 'Inside one beat, sixteenths can merge. An eighth then two sixteenths sounds on 1, &, a. Two sixteenths then an eighth sound on 1, e, &. Hear them alternate.', he: 'בתוך פעמה אחת, שש־עשריות יכולות להתמזג. שמינית ואז שתי שש־עשריות נשמעות על 1, &, a. שתי שש־עשריות ואז שמינית נשמעות על 1, e, &. שמעו אותן מתחלפות.' },
         play: [R('es.se.es.se', 66)],
         show: { text: { en: '1 & a  ·  1 e &', he: '1 & a  ·  1 e &' } },
       },
       {
-        say: { en: 'Listening strategy: find the "&" first. If the quick pair comes after it, the beat is ti tika; if before it, tika ti. If all four slots sound, it is tika-tika.', he: 'אסטרטגיית האזנה: מצאו קודם את ה־וְ. אם הזוג המהיר בא אחריו, הפעמה היא טי טיקה; אם לפניו, טיקה טי. אם כל ארבע המשבצות נשמעות, זה טיקה-טיקה.' },
-        show: { text: { en: 'pair after & → ti tika · before → tika ti', he: 'זוג אחרי & ← טי טיקה · לפני ← טיקה טי' } },
+        say: { en: 'Listening strategy: find the "&" first. If the quick pair comes after it, the beat is long-short-short; if before it, short-short-long. If all four slots sound, it is four sixteenths.', he: 'אסטרטגיית האזנה: מצאו קודם את ה־וְ. אם הזוג המהיר בא אחריו, הפעמה היא ארוך-קצר-קצר; אם לפניו, קצר-קצר-ארוך. אם כל ארבע המשבצות נשמעות, אלה ארבע שש־עשריות.' },
+        show: { text: { en: 'pair after & → 1 & a · before → 1 e &', he: 'זוג אחרי & ← ארוך-קצר-קצר · לפני ← קצר-קצר-ארוך' } },
       },
       {
         say: { en: 'To perform, keep your hand moving in steady sixteenths the whole time — down, up, down, up — and only touch the drum or the strings where a note is written. Drummers and guitarists both work this way. Start slowly.', he: 'לביצוע, השאירו את היד זזה בשש־עשריות קבועות כל הזמן — למטה, למעלה, למטה, למעלה — ונגעו בתוף או במיתרים רק איפה שכתוב תו. גם מתופפים וגם גיטריסטים עובדים כך. התחילו לאט.' },
@@ -377,9 +377,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '↓ ↑ ↓ ↑', he: '↓ ↑ ↓ ↑' } },
       },
       {
-        say: { en: 'The common mistake is blurring ti tika into a triplet, making all three notes even. Listen: ti tika, then tri-o-la. In ti tika, the first note is twice as long as each of the other two.', he: 'הטעות הנפוצה היא למרוח את טי טיקה לטריולה, ולהפוך את שלושת הצלילים לשווים. הקשיבו: טי טיקה, ואז טרי-או-לה. בטי טיקה, הצליל הראשון ארוך פי שניים מכל אחד משני האחרים.' },
+        say: { en: 'The common mistake is blurring long-short-short into a triplet, making all three notes even. Listen: long-short-short, then tri-o-la. In long-short-short, the first note is twice as long as each of the other two.', he: 'הטעות הנפוצה היא למרוח את ארוך-קצר-קצר לטריולה, ולהפוך את שלושת הצלילים לשווים. הקשיבו: ארוך-קצר-קצר, ואז טרי-או-לה. בצורה הראשונה, הצליל הראשון ארוך פי שניים מכל אחד משני האחרים.' },
         play: [R('es.trip.es.trip', 66)],
-        show: { text: { en: 'ti tika ≠ tri-o-la', he: 'טי טיקה ≠ טרי-או-לה' } },
+        show: { text: { en: '1 & a ≠ tri-o-la', he: 'ארוך-קצר-קצר ≠ טרי-או-לה' } },
       },
       {
         say: { en: 'Sixteenths drive funk and disco: the hi-hat and the scratchy rhythm guitar often run in constant sixteenths. They are also the language of fast melodic runs and of many rap flows.', he: 'שש־עשריות מניעות פאנק ודיסקו: ההיי־האט וגיטרת הקצב המגרדת רצים לעתים קרובות בשש־עשריות רצופות. הן גם השפה של ריצות מלודיות מהירות ושל הרבה פלואו בראפ.' },
@@ -396,7 +396,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'rhythm',
     emoji: '🥁',
     title: { en: 'Syncopation', he: 'סינקופה' },
-    takeaway: { en: 'Syncopation puts the note on the "and" instead of the beat: syn-co-pa (eighth, quarter, eighth) and sh-ti (eighth rest, eighth).', he: 'סינקופה שמה את הצליל על ה"ו" במקום על הפעמה: סין-קו-פה (שמינית, רבע, שמינית) ושְׁ-טי (הפסקת שמינית, שמינית).' },
+    takeaway: { en: 'Syncopation puts the note on the "and" instead of the beat: syn-co-pa (eighth, quarter, eighth) and the lone "and" (eighth rest, eighth).', he: 'סינקופה שמה את הצליל על ה"ו" במקום על הפעמה: סין-קו-פה (שמינית, רבע, שמינית) וה"ו" הבודד (הפסקת שמינית, שמינית).' },
     steps: [
       {
         say: { en: 'Hey {name}! Most notes like to land on the beat. Syncopation is when a note jumps in on the "and" between beats.', he: 'היי {name}! רוב הצלילים אוהבים לנחות על הפעמה. סינקופה היא כשצליל קופץ פנימה על ה"ו" שבין הפעמות.' },
@@ -411,21 +411,21 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Compare with plain eighths. In syn-co-pa, beat 2 gets no new note — it\'s swallowed by the long one.', he: 'השוו לשמיניות רגילות. בסין-קו-פה אין צליל חדש על פעמה 2 — הארוך בולע אותה.' },
         play: [R('ee.ee.syn', 84)],
-        show: { text: { en: 'ti-ti ti-ti  |  syn-co-pa', he: 'טי-טי טי-טי  |  סין-קו-פה' } },
+        show: { text: { en: '1 & 2 &  |  syn-co-pa', he: '1 ו 2 ו  |  סין-קו-פה' } },
       },
       {
-        say: { en: 'The eighth rest is the other off-beat trick: silence on the beat, a note on the "and". Say sh-ti.', he: 'הפסקת השמינית היא הטריק השני: שקט על הפעמה, צליל על ה"ו". אומרים שְׁ-טי.' },
+        say: { en: 'The eighth rest is the other off-beat trick: silence on the beat, a note on the "and" — a lone "and".', he: 'הפסקת השמינית היא הטריק השני: שקט על הפעמה, צליל על ה"ו" — "ו" לבד.' },
         play: [R('q.ere.q.ere', 84)],
-        show: { text: { en: '𝄾 ♪  ·  sh-ti', he: '𝄾 ♪  ·  שְׁ-טי' } },
+        show: { text: { en: '𝄾 ♪  ·  1 (2) &  3 (4) &', he: '𝄾 ♪  ·  1 (2) ו  3 (4) ו' } },
       },
       {
         say: { en: 'Feel the beat firmly in your foot, so the off-beats can pull against it. That tug is what makes music groove.', he: 'הרגישו את הפעמה חזק ברגל, כדי שהצלילים שבין הפעמות יוכלו למשוך נגדה. המשיכה הזאת היא מה שעושה גרוב.' },
         play: [R('syn.ere.q', 84)],
-        show: { text: { en: 'syn-co-pa  sh-ti  ta', he: 'סין-קו-פה  שְׁ-טי  טה' } },
+        show: { text: { en: 'syn-co-pa  (3) &  4', he: 'סין-קו-פה  (3) ו  4' } },
       },
       {
         say: { en: 'Your turn! Tap what you read — notes on the "and" get a tap, the beat under them doesn\'t. Then hear a bar and choose or build it.', he: 'תורכם! הקישו את מה שאתם קוראים — צליל על ה"ו" מקבל הקשה, הפעמה שמתחתיו לא. אחר כך שמעו תיבה ובחרו או בנו אותה.' },
-        show: { text: { en: 'syn-co-pa · sh-ti', he: 'סין-קו-פה · שְׁ-טי' } },
+        show: { text: { en: 'syn-co-pa · (1) &', he: 'סין-קו-פה · (1) ו' } },
       },
     ],
     more: [
@@ -445,15 +445,15 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Listening strategy: tap the beat with your foot and notice two things — notes that fall between the taps, and taps with no new sound above them. Here every note sits on an "and", and no beat sounds at all.', he: 'אסטרטגיית האזנה: הקישו את הפעמה ברגל ושימו לב לשני דברים — צלילים שנופלים בין ההקשות, והקשות שאין מעליהן צליל חדש. כאן כל צליל יושב על "ו", ואף פעמה לא נשמעת בכלל.' },
         play: [R('ere.ere.ere.ere', 84)],
-        show: { text: { en: 'sh-ti ×4', he: 'שְׁ-טי ×4' } },
+        show: { text: { en: '(1) & (2) & (3) & (4) &', he: '(1) ו (2) ו (3) ו (4) ו' } },
       },
       {
         say: { en: 'To perform: count all the eighths aloud, "1 & 2 &", and say the "ands" louder than the numbers. Keep the foot on the beat whatever the hands do. Start slowly; syncopation is about precision, not speed.', he: 'לביצוע: ספרו את כל השמיניות בקול, "1 ו 2 ו", ואמרו את ה"ו" חזק יותר מהמספרים. השאירו את הרגל על הפעמה לא משנה מה הידיים עושות. התחילו לאט; סינקופה היא עניין של דיוק, לא של מהירות.' },
       },
       {
-        say: { en: 'The common mistake is letting the off-beat become the new beat. After a few syncopations the ear flips, and you end up half a beat out. Keep the pulse in your body and listen: quarter, sh-ti, syn-co-pa.', he: 'הטעות הנפוצה היא לתת לאוף־ביט להפוך לפעמה החדשה. אחרי כמה סינקופות האוזן מתהפכת, ואתם מוצאים את עצמכם חצי פעמה בחוץ. החזיקו את הדופק בגוף והקשיבו: רבע, שְׁ-טי, סין-קו-פה.' },
+        say: { en: 'The common mistake is letting the off-beat become the new beat. After a few syncopations the ear flips, and you end up half a beat out. Keep the pulse in your body and listen: quarter, a lone "and", syn-co-pa.', he: 'הטעות הנפוצה היא לתת לאוף־ביט להפוך לפעמה החדשה. אחרי כמה סינקופות האוזן מתהפכת, ואתם מוצאים את עצמכם חצי פעמה בחוץ. החזיקו את הדופק בגוף והקשיבו: רבע, "ו" לבד, סין-קו-פה.' },
         play: [R('q.ere.syn', 84)],
-        show: { text: { en: 'ta  sh-ti  syn-co-pa', he: 'טה  שְׁ-טי  סין-קו-פה' } },
+        show: { text: { en: '1  (2) &  syn-co-pa', he: '1  (2) ו  סין-קו-פה' } },
       },
       {
         say: { en: 'Syncopation is the engine of ragtime — Scott Joplin built a whole style on it — and of jazz, funk, Latin music and modern pop. In ska, the guitar plays short chords on the "ands", against the bass.', he: 'סינקופה היא המנוע של הרגטיים — סקוט ג׳ופלין בנה עליה סגנון שלם — ושל ג׳אז, פאנק, מוזיקה לטינית ופופ מודרני. בסקה, הגיטרה מנגנת אקורדים קצרים על ה"ו", מול הבס.' },
@@ -478,9 +478,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '³♪♪♪  ·  tri-o-la', he: '³♪♪♪  ·  טרי-או-לה' } },
       },
       {
-        say: { en: 'Hear the difference on the same beat: ti-ti, then tri-o-la. Two marches; three rolls.', he: 'שמעו את ההבדל על אותה פעמה: טי-טי, ואז טרי-או-לה. שתיים צועד; שלוש מתגלגל.' },
+        say: { en: 'Hear the difference on the same beat: two eighths, then tri-o-la. Two marches; three rolls.', he: 'שמעו את ההבדל על אותה פעמה: שתי שמיניות, ואז טרי-או-לה. שתיים צועד; שלוש מתגלגל.' },
         play: [R('ee.trip.ee.trip', 72)],
-        show: { text: { en: 'ti-ti  tri-o-la  ti-ti  tri-o-la', he: 'טי-טי  טרי-או-לה  טי-טי  טרי-או-לה' } },
+        show: { text: { en: '1 &  tri-o-la  3 &  tri-o-la', he: '1 ו  טרי-או-לה  3 ו  טרי-או-לה' } },
       },
       {
         say: { en: 'A word trick: "ap-ple" for two, "straw-ber-ry" for three. Say them over the beat.', he: 'טריק של מילים: "תַּ-פּוּז" לשתיים, "תַּ-פּוּ-זִים" לשלוש. אמרו אותן על הפעמה.' },
@@ -495,10 +495,10 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Mixed with quarters and halves, it\'s a little ripple in the flow.', he: 'בשילוב עם רבעים וחצאים, זה אדווה קטנה בזרם.' },
         play: [R('q.trip.h', 72)],
-        show: { text: { en: 'ta  tri-o-la  ta-a', he: 'טה  טרי-או-לה  טה-אה' } },
+        show: { text: { en: '1  tri-o-la  3 (4)', he: '1  טרי-או-לה  3 (4)' } },
       },
       {
-        say: { en: 'Your turn! Tap what you read — three even taps inside one beat. Then hear a bar: is it ti-ti or tri-o-la? Choose it, or build it from blocks.', he: 'תורכם! הקישו את מה שאתם קוראים — שלוש הקשות שוות בתוך פעמה אחת. אחר כך שמעו תיבה: טי-טי או טרי-או-לה? בחרו אותה, או בנו אותה מקוביות.' },
+        say: { en: 'Your turn! Tap what you read — three even taps inside one beat. Then hear a bar: two or three per beat? Choose it, or build it from blocks.', he: 'תורכם! הקישו את מה שאתם קוראים — שלוש הקשות שוות בתוך פעמה אחת. אחר כך שמעו תיבה: שתיים או שלוש בפעמה? בחרו אותה, או בנו אותה מקוביות.' },
         show: { text: { en: '2 or 3 per beat?', he: '2 או 3 בפעמה?' } },
       },
     ],
@@ -521,9 +521,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '2 · 3 · 4 · 3', he: '2 · 3 · 4 · 3' } },
       },
       {
-        say: { en: 'The common mistake is rushing the first two notes, which turns a triplet into tika ti — two sixteenths and an eighth. Compare: tika ti, then a true triplet. In the triplet, all three gaps are equal.', he: 'הטעות הנפוצה היא למהר עם שני הצלילים הראשונים, וכך הטריולה הופכת לטיקה טי — שתי שש־עשריות ושמינית. השוו: טיקה טי, ואז טריולה אמיתית. בטריולה, כל שלושת המרווחים שווים.' },
+        say: { en: 'The common mistake is rushing the first two notes, which turns a triplet into short-short-long — two sixteenths and an eighth. Compare: short-short-long, then a true triplet. In the triplet, all three gaps are equal.', he: 'הטעות הנפוצה היא למהר עם שני הצלילים הראשונים, וכך הטריולה הופכת לקצר-קצר-ארוך — שתי שש־עשריות ושמינית. השוו: קצר-קצר-ארוך, ואז טריולה אמיתית. בטריולה, כל שלושת המרווחים שווים.' },
         play: [R('se.trip.se.trip', 66)],
-        show: { text: { en: 'tika ti ≠ tri-o-la', he: 'טיקה טי ≠ טרי-או-לה' } },
+        show: { text: { en: '1 e & ≠ tri-o-la', he: 'קצר-קצר-ארוך ≠ טרי-או-לה' } },
       },
       {
         say: { en: 'Triplets are central to blues and shuffle, to the piano chords of 1950s ballads and doo-wop, and to drum fills everywhere. A 4/4 bar filled with eighth-note triplets is effectively 12/8: the two notations meet.', he: 'טריולות הן מרכזיות בבלוז ובשאפל, באקורדי הפסנתר של בלדות ודו־וופ משנות ה־50, ובמעברים של תופים בכל מקום. תיבת 4/4 מלאה בטריולות שמיניות היא למעשה 12/8: שני הכתיבים נפגשים.' },
@@ -548,9 +548,9 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '3/4  ·  ONE two three', he: '3/4  ·  אחת שתיים שלוש' } },
       },
       {
-        say: { en: 'The dotted half lasts three beats — two, plus half of two. One note fills a whole 3/4 bar: ta-a-a.', he: 'חצי מנוקד נמשך שלוש פעמות — שתיים, ועוד חצי משתיים. צליל אחד ממלא תיבה שלמה של 3/4: טה-אה-אה.' },
+        say: { en: 'The dotted half lasts three beats — two, plus half of two. One note fills a whole 3/4 bar.', he: 'חצי מנוקד נמשך שלוש פעמות — שתיים, ועוד חצי משתיים. צליל אחד ממלא תיבה שלמה של 3/4.' },
         play: [R('m3:q.q.q.dh', 84, 2)],
-        show: { text: { en: '𝅗𝅥. = 3 beats  ·  ta-a-a', he: '𝅗𝅥. = 3 פעמות  ·  טה-אה-אה' } },
+        show: { text: { en: '𝅗𝅥. = 3 beats  ·  1 (2 3)', he: '𝅗𝅥. = 3 פעמות  ·  1 (2 3)' } },
       },
       {
         say: { en: '6/8 rocks instead. Six eighths in two big beats of three: ONE-two-three FOUR-five-six. Each big beat is a dotted quarter, and the clicks mark only those.', he: '6/8 דווקא מתנדנד. שש שמיניות בשתי פעמות גדולות של שלוש: אחת-שתיים-שלוש ארבע-חמש-שש. כל פעמה גדולה היא רבע מנוקד, והקליקים מסמנים רק אותן.' },
@@ -558,7 +558,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '6/8  ·  1 2 3  4 5 6', he: '6/8  ·  1 2 3  4 5 6' } },
       },
       {
-        say: { en: 'Inside a big beat you\'ll meet ta-i-i (one long note), ta ti (quarter, eighth) and ti ta (eighth, quarter).', he: 'בתוך פעמה גדולה תפגשו טה-אי-אי (צליל אחד ארוך), טה טי (רבע, שמינית) וטי טה (שמינית, רבע).' },
+        say: { en: 'Inside a big beat you\'ll meet a dotted quarter (one long note), quarter–eighth and eighth–quarter.', he: 'בתוך פעמה גדולה תפגשו רבע מנוקד (צליל אחד ארוך), רבע ושמינית, ושמינית ורבע.' },
         play: [R('m6:dq.qe.eq.dq', 84, 2)],
         show: { text: { en: '♩.  ·  ♩ ♪  ·  ♪ ♩', he: '♩.  ·  ♩ ♪  ·  ♪ ♩' } },
       },
@@ -599,9 +599,9 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'To perform, conduct or tap the real beats: three per bar in 3/4, two per bar in 6/8 at a moderate tempo. Count 6/8 as "1 2 3 4 5 6" with the weight on 1 and 4, so the big beats stay in your body.', he: 'לביצוע, נצחו או הקישו את הפעמות האמיתיות: שלוש בתיבה ב־3/4, שתיים בתיבה ב־6/8 בקצב בינוני. ספרו 6/8 כ"1 2 3 4 5 6" עם המשקל על 1 ועל 4, כך שהפעמות הגדולות נשארות בגוף.' },
       },
       {
-        say: { en: 'The common mistake is treating 6/8 as six equal beats, or as a fast 3/4. It has a lilt: long-short, long-short. Hear ta ti, the typical 6/8 figure, swaying in two.', he: 'הטעות הנפוצה היא להתייחס ל־6/8 כאל שש פעמות שוות, או כאל 3/4 מהיר. יש לו נדנוד: ארוך-קצר, ארוך-קצר. שמעו טה טי, הדמות הטיפוסית של 6/8, מתנדנדת בשתיים.' },
+        say: { en: 'The common mistake is treating 6/8 as six equal beats, or as a fast 3/4. It has a lilt: long-short, long-short. Hear quarter, eighth, the typical 6/8 figure, swaying in two.', he: 'הטעות הנפוצה היא להתייחס ל־6/8 כאל שש פעמות שוות, או כאל 3/4 מהיר. יש לו נדנוד: ארוך-קצר, ארוך-קצר. שמעו רבע ושמינית, הדמות הטיפוסית של 6/8, מתנדנדת בשתיים.' },
         play: [R('m6:qe.qe.qe.qe', 84, 2)],
-        show: { text: { en: '♩ ♪  ♩ ♪  ·  ta ti ta ti', he: '♩ ♪  ♩ ♪  ·  טה טי טה טי' } },
+        show: { text: { en: '♩ ♪  ♩ ♪  ·  quarter, eighth', he: '♩ ♪  ♩ ♪  ·  רבע, שמינית' } },
       },
       {
         say: { en: 'In real music, 3/4 is the waltz, from Johann Strauss to film scores. 6/8 drives Irish jigs and many lullabies. 12/8 is the home of the slow blues and of 1950s ballads with piano triplets.', he: 'במוזיקה אמיתית, 3/4 הוא הוואלס, מיוהן שטראוס ועד מוזיקת סרטים. 6/8 מניע ג׳יגים איריים והרבה שירי ערש. 12/8 הוא הבית של הבלוז האיטי ושל בלדות משנות ה־50 עם טריולות בפסנתר.' },
@@ -621,7 +621,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Swing eighths are written even but played long-short (2:1); a quarter-note triplet puts three even notes across two beats.', he: 'שמיניות סווינג כתובות שוות אבל מנוגנות ארוך-קצר (2:1); טריולת רבעים מכניסה שלושה צלילים שווים לשתי פעמות.' },
     steps: [
       {
-        say: { en: 'Hi {name}, this is jazz rhythm. Swing eighths are written as plain ti-ti, but played long-short. First even, then swung.', he: 'היי {name}, זה הקצב של הג׳אז. שמיניות סווינג כתובות כמו טי-טי רגיל, אבל מנוגנות ארוך-קצר. קודם שוות, ואז בסווינג.' },
+        say: { en: 'Hi {name}, this is jazz rhythm. Swing eighths are written as plain eighths, but played long-short. First even, then swung.', he: 'היי {name}, זה הקצב של הג׳אז. שמיניות סווינג כתובות כמו שמיניות רגילות, אבל מנוגנות ארוך-קצר. קודם שוות, ואז בסווינג.' },
         play: [R('ee.ee.ee.ee', 116), R('sw:ee.ee.ee.ee', 116)],
         show: { text: { en: '♫ written → long-short played', he: '♫ כתוב ← ארוך-קצר מנוגן' } },
       },
@@ -633,12 +633,12 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Syncopations swing too: a note on the "and" arrives late and lazy, on that last third.', he: 'גם סינקופות מתנדנדות: צליל על ה"ו" מגיע מאוחר ובעצלתיים, על השליש האחרון הזה.' },
         play: [R('sw:ee.syn.q', 116)],
-        show: { text: { en: 'ti-ti  syn-co-pa  ta', he: 'טי-טי  סין-קו-פה  טה' } },
+        show: { text: { en: '1 &  syn-co-pa  4', he: '1 ו  סין-קו-פה  4' } },
       },
       {
-        say: { en: 'New shape: the quarter-note triplet. Three even notes stretched across two beats: ta-ta-ta. Only the first one lands on a beat.', he: 'צורה חדשה: טריולת רבעים. שלושה צלילים שווים שנמתחים על פני שתי פעמות: טה-טה-טה. רק הראשון נוחת על פעמה.' },
+        say: { en: 'New shape: the quarter-note triplet. Three even notes stretched across two beats. Only the first one lands on a beat.', he: 'צורה חדשה: טריולת רבעים. שלושה צלילים שווים שנמתחים על פני שתי פעמות. רק הראשון נוחת על פעמה.' },
         play: [R('q.q.qtrip', 116)],
-        show: { text: { en: 'ta ta  |  ³ta-ta-ta', he: 'טה טה  |  ³טה-טה-טה' } },
+        show: { text: { en: '1 2  |  ³♩♩♩', he: '1 2  |  ³♩♩♩' } },
       },
       {
         say: { en: 'It floats over the beat, as if the band slowed down for a moment — but the beat never moves.', he: 'היא מרחפת מעל הפעמה, כאילו הלהקה האטה לרגע — אבל הפעמה לא זזה.' },
@@ -658,7 +658,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'In swing, the off-beat eighth often gets a light accent, and the drummer\'s hi-hat closes on beats 2 and 4. Hear swung eighths with quarters between them: each "and" lands late, with a small push.', he: 'בסווינג, השמינית שבין הפעמות מקבלת לעתים קרובות הדגשה קלה, וההיי־האט של המתופף נסגר על פעמות 2 ו־4. שמעו שמיניות סווינג עם רבעים ביניהן: כל "ו" נוחת מאוחר, עם דחיפה קטנה.' },
         play: [R('sw:ee.q.ee.q', 116)],
-        show: { text: { en: 'doo-ba  ta  doo-ba  ta', he: 'דו-בה  טה  דו-בה  טה' } },
+        show: { text: { en: 'doo-ba  2  doo-ba  4', he: 'דו-בה  2  דו-בה  4' } },
       },
       {
         say: { en: 'A quarter-note triplet fits three quarters into the time of two beats, so each note lasts two thirds of a beat. It is exactly every other note of an eighth-note triplet. Hear two beats of eighth triplets, then the quarter triplet.', he: 'טריולת רבעים מכניסה שלושה רבעים לזמן של שתי פעמות, כך שכל צליל נמשך שני שלישים של פעמה. זה בדיוק כל צליל שני מטריולת שמיניות. שמעו שתי פעמות של טריולות שמיניות, ואז את טריולת הרבעים.' },
@@ -675,7 +675,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Swing eighths are the default in most jazz, from big bands to bebop, and in the blues shuffle. Quarter-note triplets show up in melodies that seem to float over the bar line, in drum fills and in big-band ensemble hits.', he: 'שמיניות סווינג הן ברירת המחדל ברוב הג׳אז, מהביג בנד ועד הביבופ, ובשאפל של הבלוז. טריולות רבעים מופיעות במנגינות שנדמה שהן מרחפות מעל קו התיבה, במעברים של תופים ובמכות משותפות של ביג בנד.' },
         play: [R('sw:ee.qtrip.q', 116)],
-        show: { text: { en: 'doo-ba  ³ta-ta-ta  ta', he: 'דו-בה  ³טה-טה-טה  טה' } },
+        show: { text: { en: 'doo-ba  ³♩♩♩  4', he: 'דו-בה  ³♩♩♩  4' } },
       },
       {
         say: { en: 'To keep: swing is written even and played two thirds plus one third. A quarter triplet is three even notes across two beats.', he: 'לזכור: סווינג כתוב שווה ומנוגן שני שלישים ועוד שליש. טריולת רבעים היא שלושה צלילים שווים על פני שתי פעמות.' },
@@ -1099,7 +1099,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Hi {name}! Beat Echo is a memory game for your hands. I play a rhythm, you tap it back.', he: 'היי {name}! הד קצבי הוא משחק זיכרון לידיים. אני מנגן קצב, ואתם מקישים אותו בחזרה.' },
         play: [echo([0, 1, 1.5], 2, 90, false)],
-        show: { text: { en: 'ta ti-ti', he: 'טה טי-טי' } },
+        show: { text: { en: '1  2 &', he: '1  2 ו' } },
       },
       {
         say: { en: 'Four clicks set the tempo. Then the rhythm plays on a woodblock, over a soft pulse.', he: 'ארבעה קליקים קובעים את הקצב. ואז הקצב מתנגן על בלוק עץ, מעל דופק רך.' },
@@ -1113,16 +1113,16 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Each beat holds a quarter or two eighths. From four beats on, watch out for silent beats and lone off-beat eighths.', he: 'בכל פעמה יש רבע או שתי שמיניות. מארבע פעמות והלאה, היזהרו מפעמות שקטות ומשמיניות בודדות בין הפעמות.' },
         play: [echo([0, 0.5, 1, 3.5], 4, 90, false)],
-        show: { text: { en: 'ti-ti  ta  sh  sh-ti', he: 'טי-טי  טה  שְׁ  שְׁ-טי' } },
+        show: { text: { en: '1 &  2  (3)  (4) &', he: '1 ו  2  (3)  (4) ו' } },
       },
       {
         say: { en: 'You start at two beats. Every rhythm you nail grows by one beat. Playing solo, one miss ends the game — so your longest echo is your score.', he: 'מתחילים בשתי פעמות. כל קצב שאתם מצליחים מתארך בפעמה אחת. במשחק לבד, טעות אחת מסיימת — אז ההד הכי ארוך שלכם הוא הניקוד.' },
         show: { text: { en: '2 → 3 → 4 → …', he: '2 ← 3 ← 4 ← …' } },
       },
       {
-        say: { en: 'Trick: don\'t memorize taps — sing it in your head, "ti-ti ta sh sh-ti", and tap what you sing.', he: 'טריק: אל תשננו הקשות — שירו את זה בראש, "טי-טי טה שְׁ שְׁ-טי", והקישו את מה שאתם שרים.' },
+        say: { en: 'Trick: don\'t memorize taps — count it in your head, beat by beat, and tap what you count.', he: 'טריק: אל תשננו הקשות — ספרו את זה בראש, פעמה אחר פעמה, והקישו את מה שאתם סופרים.' },
         play: [echo([0, 0.5, 1, 3.5], 4, 90, false)],
-        show: { text: { en: 'sing it, then tap it', he: 'שרים, ואז מקישים' } },
+        show: { text: { en: 'count it, then tap it', he: 'סופרים, ואז מקישים' } },
       },
       {
         say: { en: 'Your turn! Listen, wait for the four clicks, then tap the pad or press Space. How long can you go?', he: 'תורכם! הקשיבו, חכו לארבעת הקליקים, ואז הקישו על הכפתור או על רווח. כמה רחוק תגיעו?' },
@@ -1135,33 +1135,33 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'call → response', he: 'קריאה ← תשובה' } },
       },
       {
-        say: { en: 'The key is chunking. Every beat in the game is one of four shapes: ta, ti-ti, a silent beat, or sh-ti. Name each beat as it passes, and a long rhythm becomes a short list of words.', he: 'המפתח הוא חלוקה לגושים. כל פעמה במשחק היא אחת מארבע צורות: טה, טי-טי, פעמה שקטה, או שְׁ-טי. תנו שם לכל פעמה כשהיא עוברת, ומקצב ארוך הופך לרשימה קצרה של מילים.' },
+        say: { en: 'The key is chunking. Every beat in the game is one of four shapes: one note, two notes, a silent beat, or a lone ‘and’. Name each beat as it passes, and a long rhythm becomes a short list of words.', he: 'המפתח הוא חלוקה לגושים. כל פעמה במשחק היא אחת מארבע צורות: צליל אחד, שני צלילים, פעמה שקטה, או "ו" לבד. תנו שם לכל פעמה כשהיא עוברת, ומקצב ארוך הופך לרשימה קצרה של מילים.' },
         play: [echo([0, 1, 1.5, 2, 3.5], 4, 90, false)],
-        show: { text: { en: 'ta  ti-ti  ta  sh-ti', he: 'טה  טי-טי  טה  שְׁ-טי' } },
+        show: { text: { en: '1  2 &  3  (4) &', he: '1  2 ו  3  (4) ו' } },
       },
       {
         say: { en: 'Listening strategy: anchor on the soft pulse under the woodblock. For each pulse, ask: did a note start with it, after it, both, or neither? Those four answers are the four shapes.', he: 'אסטרטגיית האזנה: היאחזו בדופק הרך שמתחת לבלוק העץ. על כל דופק שאלו: האם צליל התחיל איתו, אחריו, גם וגם, או אף אחד? ארבע התשובות האלה הן ארבע הצורות.' },
-        show: { text: { en: 'with = ta · both = ti-ti · after = sh-ti · neither = sh', he: 'איתו = טה · גם וגם = טי-טי · אחריו = שְׁ-טי · אף אחד = שְׁ' } },
+        show: { text: { en: 'with = 1 · both = 1 & · after = (1) & · neither = (1)', he: 'איתו = 1 · גם וגם = 1 ו · אחריו = (1) ו · אף אחד = (1)' } },
       },
       {
         say: { en: 'To answer well, keep the beat in your foot or head through the count-in, and keep it going while you tap. Short, relaxed taps are more precise than heavy ones. Start on the beat right after the fourth click.', he: 'כדי לענות טוב, החזיקו את הפעמה ברגל או בראש לאורך הספירה, והמשיכו אותה בזמן שאתם מקישים. הקשות קצרות ורפויות מדויקות יותר מכבדות. התחילו על הפעמה שמיד אחרי הקליק הרביעי.' },
       },
       {
-        say: { en: 'Two classic mistakes: a lone off-beat note gets pulled onto the beat, and a silent beat gets skipped, so the answer comes out shorter than the call. Hear both traps: ta, sh-ti, ta, then a silent beat.', he: 'שתי טעויות קלאסיות: צליל בודד בין הפעמות נמשך אל הפעמה, ופעמה שקטה מדולגת, כך שהתשובה יוצאת קצרה מהקריאה. שמעו את שתי המלכודות: טה, שְׁ-טי, טה, ואז פעמה שקטה.' },
+        say: { en: 'Two classic mistakes: a lone off-beat note gets pulled onto the beat, and a silent beat gets skipped, so the answer comes out shorter than the call. Hear both traps: a quarter, a lone ‘and’, a quarter, then a silent beat.', he: 'שתי טעויות קלאסיות: צליל בודד בין הפעמות נמשך אל הפעמה, ופעמה שקטה מדולגת, כך שהתשובה יוצאת קצרה מהקריאה. שמעו את שתי המלכודות: רבע, "ו" לבד, רבע, ואז פעמה שקטה.' },
         play: [echo([0, 1.5, 2], 4, 90, false)],
-        show: { text: { en: 'ta  sh-ti  ta  sh', he: 'טה  שְׁ-טי  טה  שְׁ' } },
+        show: { text: { en: '1  (2) &  3  (4)', he: '1  (2) ו  3  (4)' } },
       },
       {
         say: { en: 'Once rhythms grow past four beats, group them in pairs of beats, the way you remember a phone number in chunks. Three short phrases are far easier to hold than six separate beats.', he: 'כשהמקצבים עוברים ארבע פעמות, קבצו אותם לזוגות של פעמות, כמו שזוכרים מספר טלפון בגושים. שלושה משפטים קצרים הרבה יותר קל להחזיק משש פעמות נפרדות.' },
         play: [echo([0, 0.5, 1, 2, 2.5, 3, 4, 5.5], 6, 90, false)],
-        show: { text: { en: 'ti-ti ta | ti-ti ta | ta sh-ti', he: 'טי-טי טה | טי-טי טה | טה שְׁ-טי' } },
+        show: { text: { en: '1 & 2 | 3 & 4 | 5 (6) &', he: '1 ו 2 | 3 ו 4 | 5 (6) ו' } },
       },
       {
         say: { en: 'Call and response runs through African drumming, gospel and the blues. Jazz musicians "trade fours", answering each other in four-bar solos, and many drum traditions are taught entirely by ear, phrase by phrase.', he: 'שאלה ותשובה עוברת דרך התיפוף האפריקאי, הגוספל והבלוז. נגני ג׳אז "מחליפים ארבע", עונים זה לזה בסולואים של ארבע תיבות, והרבה מסורות תיפוף נלמדות כולן בשמיעה, משפט אחר משפט.' },
       },
       {
         say: { en: 'To keep: hear in beat-sized words, keep the pulse running, and never skip the silent beats.', he: 'לזכור: שומעים במילים בגודל של פעמה, שומרים על הדופק רץ, ואף פעם לא מדלגים על הפעמות השקטות.' },
-        show: { text: { en: 'ta · ti-ti · sh · sh-ti', he: 'טה · טי-טי · שְׁ · שְׁ-טי' } },
+        show: { text: { en: '1 · 1 & · (1) · (1) &', he: '1 · 1 ו · (1) · (1) ו' } },
       },
     ],
   },

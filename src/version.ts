@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.5',
+    date: '2026-11-19',
+    en: ['Each rhythm lesson asks once to pick the written bar you heard — tap it, nothing to say — and once to play it back. Lessons now count “1 & 2 &” instead of “ta ti-ti”.'],
+    he: ['בכל שיעור קצב: פעם אחת בוחרים את התיבה הכתובה ששמעתם — בהקשה, בלי להגיד כלום — ופעם אחת מחזירים אותה. השיעורים סופרים עכשיו "1 ו 2 ו" במקום "טה טי-טי".'],
+  },
+  {
     version: '0.107.4',
     date: '2026-11-19',
     en: ['Rhythm questions: hear the rhythm, then play it back — tap the big pad, or say it in time on a short syllable like “dum”. No more “ta ti-ti” answers.'],

@@ -415,7 +415,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Your turn: listen, count, and echo it on the snare.', he: 'תורכם: מקשיבים, סופרים, ומחזירים הד בסנר.' }, show: { text: { en: 'hear · count · play', he: 'שומעים · סופרים · מנגנים' } } },
     ],
     more: [
-      { say: { en: 'Say the rhythm in your head as syllables: ta for a quarter, ti-ti for two eighths. A rhythm you can say, you can play.', he: 'אמרו את הקצב בראש בהברות: טה לרבע, טי־טי לשתי שמיניות. קצב שאפשר להגיד, אפשר לנגן.' }, play: [snare('q.ee.ee.q', 84)] },
+      { say: { en: 'Count the rhythm in your head: a number for each beat, "and" for the second eighth. A rhythm you can count, you can play.', he: 'ספרו את הקצב בראש: מספר לכל פעמה, "וְ" לשמינית השנייה. קצב שאפשר לספור, אפשר לנגן.' }, play: [snare('q.ee.ee.q', 84)] },
       { say: { en: 'Keep the beat in your body while you listen, with a foot or a nod. Your bar starts from that beat, not from the last note you heard.', he: 'שמרו על הפעמה בגוף בזמן ההקשבה, ברגל או בהנהון. התיבה שלכם מתחילה מהפעמה הזאת, לא מהצליל האחרון ששמעתם.' } },
       { say: { en: 'The common mistake: copying the speed of the last notes and rushing the start. The bar has four beats whatever the rhythm.', he: 'הטעות הנפוצה: להעתיק את המהירות של הצלילים האחרונים ולמהר בהתחלה. בתיבה יש ארבע פעמות, לא משנה מה הקצב.' } },
       { say: { en: 'Later the echo grows: sixteenths, then a whole groove on kick, snare and hi-hat. Listen to one part at a time, the kick first, then the snare.', he: 'בהמשך ההד גדל: שש־עשריות, ואחר כך גרוב שלם בקיק, סנר והיי־האט. מקשיבים לחלק אחד בכל פעם, קודם הקיק ואז הסנר.' }, play: [kit(84, [ROCK], { count: true })] },

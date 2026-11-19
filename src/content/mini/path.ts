@@ -999,19 +999,19 @@ export const LESSONS: MiniLesson[] = [
         show: { notes: [60, 62, 64, 60], key: 'C', text: { en: '1 2 3 1', he: '1 2 3 1' } },
       },
       {
-        say: { en: 'Pass two: the rhythm — how long is each note? Here: ta, ta, ta-a. Two quarters and a half note.', he: 'מעבר שני: הקצב — כמה זמן נמשך כל צליל? כאן: טה, טה, טה־א. שני רבעים וחצי.' },
+        say: { en: 'Pass two: the rhythm — how long is each note? Here: two quarters and a half note.', he: 'מעבר שני: הקצב — כמה זמן נמשך כל צליל? כאן: שני רבעים וחצי.' },
         play: [melody([64, 62, 60], [1, 1, 2], 70)],
-        show: { notes: [64, 62, 60], key: 'C', durs: [1, 1, 2], text: { en: 'ta ta ta-a', he: 'טה טה טה־א' } },
+        show: { notes: [64, 62, 60], key: 'C', durs: [1, 1, 2], text: { en: '1 2 3 (4)', he: '1 2 3 (4)' } },
       },
       {
-        say: { en: 'Eighth notes come in pairs, two to a beat: ti-ti. Listen: ta, ti-ti, ta, ta.', he: 'שמיניות מגיעות בזוגות, שתיים בפעמה: טי־טי. הקשיבו: טה, טי־טי, טה, טה.' },
+        say: { en: 'Eighth notes come in pairs, two to a beat. Listen: a quarter, two eighths, two quarters.', he: 'שמיניות מגיעות בזוגות, שתיים בפעמה. הקשיבו: רבע, שתי שמיניות, שני רבעים.' },
         play: [melody([64, 65, 64, 62, 60], [1, 0.5, 0.5, 1, 1], 76)],
-        show: { notes: [64, 65, 64, 62, 60], key: 'C', durs: [1, 0.5, 0.5, 1, 1], text: { en: 'ta ti-ti ta ta', he: 'טה טי־טי טה טה' } },
+        show: { notes: [64, 65, 64, 62, 60], key: 'C', durs: [1, 0.5, 0.5, 1, 1], text: { en: '1 2 & 3 4', he: '1 2 ו 3 4' } },
       },
       {
-        say: { en: 'And the dotted quarter: long, then short — ta-i ti.', he: 'והרבע המנוקד: ארוך, ואז קצר — טה־אי טי.' },
+        say: { en: 'And the dotted quarter: long, then short.', he: 'והרבע המנוקד: ארוך, ואז קצר.' },
         play: [melody([60, 64, 62, 60], [1.5, 0.5, 1, 1], 80)],
-        show: { notes: [60, 64, 62, 60], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: 'ta-i ti ta ta', he: 'טה־אי טי טה טה' } },
+        show: { notes: [60, 64, 62, 60], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: '1 (& 2) & 3 4', he: '1 (ו 2) ו 3 4' } },
       },
       {
         say: { en: 'Your turn! Hear a bar, say its degrees in order, then pick the rhythm you heard. Notes first, rhythm second — one thing at a time.', he: 'תורכם! שומעים תיבה, אומרים את הדרגות לפי הסדר, ואז בוחרים את הקצב ששמעתם. קודם צלילים, אחר כך קצב — דבר אחד בכל פעם.' },
@@ -1036,12 +1036,12 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Pass two, rhythm. Tap the beat and notice which notes take one beat, which share a beat, and which hold longer. Here: two eighths, then three quarters.', he: 'מעבר שני, קצב. תופפו את הפעמה ושימו לב אילו צלילים לוקחים פעמה אחת, אילו חולקים פעמה, ואילו נמשכים יותר. כאן: שתי שמיניות, ואז שלושה רבעים.' },
         play: [melody([60, 62, 64, 65, 67], [0.5, 0.5, 1, 1, 1], 76)],
-        show: { notes: [60, 62, 64, 65, 67], key: 'C', durs: [0.5, 0.5, 1, 1, 1], text: { en: 'ti-ti ta ta ta', he: 'טי־טי טה טה טה' } },
+        show: { notes: [60, 62, 64, 65, 67], key: 'C', durs: [0.5, 0.5, 1, 1, 1], text: { en: '1 & 2 3 4', he: '1 ו 2 3 4' } },
       },
       {
         say: { en: 'A dot adds half the note’s value. A dotted quarter lasts one and a half beats and is usually followed by an eighth; a dotted half lasts three beats.', he: 'נקודה מוסיפה חצי מערך התו. רבע מנוקד נמשך פעמה וחצי ובדרך כלל אחריו באה שמינית; חצי מנוקד נמשך שלוש פעמות.' },
         play: [melody([67, 65, 64, 62], [1.5, 0.5, 1, 1], 76), rest(0.3), melody([64, 60], [3, 1], 76)],
-        show: { notes: [67, 65, 64, 62], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: 'ta-i ti ta ta', he: 'טה־אי טי טה טה' } },
+        show: { notes: [67, 65, 64, 62], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: '1 (& 2) & 3 4', he: '1 (ו 2) ו 3 4' } },
       },
       {
         say: { en: 'Do not write during the first hearing. Listen, sing it back in your head, then write. On every replay, fill in only what is still missing.', he: 'אל תכתבו בהשמעה הראשונה. הקשיבו, שירו בראש, ורק אז כתבו. בכל השמעה חוזרת, השלימו רק את מה שעוד חסר.' },
@@ -1050,7 +1050,7 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'The common mistake is straightening uneven rhythms. A dotted figure easily turns into even quarters on paper. Clap it back before choosing. Dotted, then even:', he: 'הטעות הנפוצה היא ליישר קצבים לא שווים. צורה מנוקדת הופכת בקלות לרבעים שווים על הדף. מחאו אותה בחזרה לפני שבוחרים. מנוקד, ואז שווה:' },
         play: [melody([60, 60, 62, 64], [1.5, 0.5, 1, 1], 80), rest(0.4), melody([60, 60, 62, 64], [1, 1, 1, 1], 80)],
-        show: { notes: [60, 60, 62, 64], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: 'ta-i ti ≠ ta ta', he: 'טה־אי טי ≠ טה טה' } },
+        show: { notes: [60, 60, 62, 64], key: 'C', durs: [1.5, 0.5, 1, 1], text: { en: '1 (& 2) & ≠ 1 2 &', he: '1 (ו 2) ו ≠ 1 2 ו' } },
       },
       {
         say: { en: 'Dictation is the heart of ear-training exams and of transcribing solos. The same two passes work for one bar or a whole song.', he: 'הכתבה היא הלב של מבחני פיתוח שמיעה ושל תמלול סולואים. אותם שני מעברים עובדים לתיבה אחת או לשיר שלם.' },

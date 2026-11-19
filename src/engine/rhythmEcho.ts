@@ -25,8 +25,12 @@ export function asRhythmEcho(q: Question): Question {
   return echo;
 }
 
-/** Every heard-rhythm item answered by performing it, when `on`. Build-from-blocks items stay (they are tapped). */
+/** Heard-rhythm items answered by performing, when `on` (owner 2026-11-19, both asked for): in a lesson with two or more
+ *  "which bar did you hear" items, the first stays a pick-the-written-bar choice (tapped, never said) and the rest are
+ *  played back; a lone item is played back. Build-from-blocks items stay (they are tapped). */
 export function rhythmByPerformance(lesson: LessonDef, on: boolean): LessonDef {
-  if (!on || !lesson.questions.some((q) => q.kind === 'rhythm-dict' && q.mode !== 'build')) return lesson;
-  return { ...lesson, questions: lesson.questions.map(asRhythmEcho) };
+  const heard = lesson.questions.filter((q) => q.kind === 'rhythm-dict' && q.mode !== 'build');
+  if (!on || !heard.length) return lesson;
+  const keep = heard.length >= 2 ? heard[0] : null;
+  return { ...lesson, questions: lesson.questions.map((q) => (q === keep ? q : asRhythmEcho(q))) };
 }

@@ -1192,7 +1192,8 @@ export class LessonController {
       let ev: { timeMs: number | null; modality: Modality } = { timeMs: null, modality: 'buttons' };
 
       // R11: notes placed at an exact pitch (neck, staff) can't be spoken: those wait for the surface even in voice mode.
-      if (this.view.mode === 'buttons' || this.view.needsListenTap || (q.kind === 'place' && q.match === 'exact') || q.kind === 'grid') {
+      // A written bar is picked by tapping it, never by saying "ta ti-ti" (owner 2026-11-19).
+      if (this.view.mode === 'buttons' || this.view.needsListenTap || (q.kind === 'place' && q.match === 'exact') || q.kind === 'grid' || q.kind === 'rhythm-dict') {
         this.setSession(newTurn(this.s, 'listening'), { mic: 'off' });
         const r = await this.waitFor(signal);
         if (r.kind === 'listen') {

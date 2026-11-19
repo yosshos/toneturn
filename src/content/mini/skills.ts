@@ -362,17 +362,17 @@ export const MEMORY_LESSONS: MiniLesson[] = [
     area: 'rhythm',
     emoji: '🧠',
     title: { en: 'Rhythm memory', he: 'זיכרון ריתמי' },
-    takeaway: { en: 'Chunk it: hear a rhythm as short words of one or two beats, and say them to yourself. Short words are easy to keep.', he: 'חלקו לחתיכות: שמעו מקצב כמילים קצרות של פעמה או שתיים, ואמרו אותן לעצמכם. מילים קצרות קל לשמור.' },
+    takeaway: { en: 'Chunk it: hear a rhythm in pieces of one or two beats, and count them to yourself. Short pieces are easy to keep.', he: 'חלקו לחתיכות: שמעו מקצב בחתיכות של פעמה או שתיים, וספרו אותן לעצמכם. חתיכות קצרות קל לשמור.' },
     steps: [
       {
         say: { en: 'Hey {name}! Remembering a rhythm is a real skill — drummers, dancers and singers use it all the time. Here is one bar.', he: 'היי {name}! לזכור מקצב זו מיומנות אמיתית — מתופפים, רקדנים וזמרים משתמשים בה כל הזמן. הנה תיבה אחת.' },
         play: [beat([2, 2, 1, 1, 2])],
-        show: { text: { en: 'ta · ta · ti-ti · ta', he: 'טה · טה · טי־טי · טה' } },
+        show: { text: { en: '1 · 2 · 3 & · 4', he: '1 · 2 · 3 ו · 4' } },
       },
       {
-        say: { en: 'The trick is chunking. Do not count every note — hear short words: "ta", "ti-ti", "ta-a". Two or three words fill a bar.', he: 'הטריק הוא לחלק לחתיכות. אל תספרו כל תו — שמעו מילים קצרות: "טה", "טי־טי", "טה־א". שתיים־שלוש מילים ממלאות תיבה.' },
+        say: { en: 'The trick is chunking. Do not track every note — hear beat-sized pieces: a pair of eighths, a quarter, a half. Two or three pieces fill a bar.', he: 'הטריק הוא לחלק לחתיכות. אל תעקבו אחרי כל תו — שמעו חתיכות בגודל של פעמה: זוג שמיניות, רבע, חצי. שתיים־שלוש חתיכות ממלאות תיבה.' },
         play: [beat([1, 1, 2, 4])],
-        show: { text: { en: 'ti-ti · ta · ta-a', he: 'טי־טי · טה · טה־א' } },
+        show: { text: { en: '1 & · 2 · 3 (4)', he: '1 ו · 2 · 3 (4)' } },
       },
       {
         say: { en: 'Now the same or different? First the rhythm, then again — but one note moved by half a beat. Hear where it jumped?', he: 'עכשיו, אותו דבר או שונה? קודם המקצב, ואז שוב — אבל צליל אחד זז בחצי פעמה. שמעתם איפה הוא קפץ?' },
@@ -380,7 +380,7 @@ export const MEMORY_LESSONS: MiniLesson[] = [
         show: { text: { en: 'one note moved', he: 'צליל אחד זז' } },
       },
       {
-        say: { en: 'Longer rhythms: say the words to yourself while you listen, then keep them going through what comes next. That is how you hold four bars.', he: 'מקצבים ארוכים: אמרו את המילים לעצמכם בזמן ההאזנה, והמשיכו להחזיק אותן דרך מה שבא אחר כך. כך מחזיקים ארבע תיבות.' },
+        say: { en: 'Longer rhythms: count the pieces to yourself while you listen, then keep them going through what comes next. That is how you hold four bars.', he: 'מקצבים ארוכים: ספרו את החתיכות לעצמכם בזמן ההאזנה, והמשיכו להחזיק אותן דרך מה שבא אחר כך. כך מחזיקים ארבע תיבות.' },
         play: [beat([2, 2, 1, 1, 2, 1, 1, 2, 4])],
       },
       {
@@ -390,13 +390,13 @@ export const MEMORY_LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Short-term memory holds only a few chunks at a time. A bar of eight separate notes is too many; two or three rhythm "words" is easy. Rhythm memory is the art of grouping.', he: 'הזיכרון לטווח קצר מחזיק רק כמה חתיכות בכל פעם. תיבה של שמונה צלילים נפרדים זה יותר מדי; שתיים־שלוש "מילים" ריתמיות זה קל. זיכרון ריתמי הוא אמנות הקיבוץ.' },
+        say: { en: 'Short-term memory holds only a few chunks at a time. A bar of eight separate notes is too many; two or three beat-sized pieces is easy. Rhythm memory is the art of grouping.', he: 'הזיכרון לטווח קצר מחזיק רק כמה חתיכות בכל פעם. תיבה של שמונה צלילים נפרדים זה יותר מדי; שתיים־שלוש חתיכות בגודל פעמה זה קל. זיכרון ריתמי הוא אמנות הקיבוץ.' },
         play: [beat([1, 1, 1, 1, 2, 2])],
-        show: { text: { en: 'ti-ti · ti-ti · ta · ta', he: 'טי־טי · טי־טי · טה · טה' } },
+        show: { text: { en: '1 & · 2 & · 3 · 4', he: '1 ו · 2 ו · 3 · 4' } },
       },
       {
-        say: { en: 'Two syllable systems are common: words like ta and ti-ti, or counting "1 and 2 and". Use whichever you already know; the point is to name each beat, not each note.', he: 'יש שתי שיטות הברות נפוצות: מילים כמו טה וטי־טי, או ספירה "1 וְ 2 וְ". השתמשו במה שאתם כבר מכירים; העיקר לתת שם לכל פעמה, לא לכל צליל.' },
-        show: { text: { en: 'ta · ti-ti = 1 · 2 &', he: 'טה · טי־טי = 1 · 2 וְ' } },
+        say: { en: 'Count it: "1 and 2 and". The numbers fall on the beats and each "and" halfway. The point is to place each note against the beat.', he: 'ספרו: "1 וְ 2 וְ". המספרים נופלים על הפעמות וכל "וְ" באמצע. העיקר למקם כל צליל מול הפעמה.' },
+        show: { text: { en: '1 · 2 &', he: '1 · 2 וְ' } },
       },
       {
         say: { en: 'Keep the beat in your body as a frame. The pulse is the grid; each note is either on a beat or between beats. The ones between beats — syncopations — are what you most need to remember.', he: 'החזיקו את הפעמה בגוף כמסגרת. הפעמה היא הרשת; כל צליל נמצא או על פעמה או ביניהן. אלה שבין הפעמות — הסינקופות — הם מה שהכי חשוב לזכור.' },

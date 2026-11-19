@@ -913,7 +913,7 @@ function IntroCardView({ card, state, t, lang, nm }: { card: IntroCard; state: s
         <div className={`intro-card wide ${state}`}>
           <RhythmStaff rhythm={rhythmFromKey(card.rhythm)} label={describeRhythm(rhythmFromKey(card.rhythm), 'names', lang)} />
           <span className="intro-deg" dir="auto">
-            {describeRhythm(rhythmFromKey(card.rhythm), 'syllables', lang)}
+            {describeRhythm(rhythmFromKey(card.rhythm), 'names', lang)}
           </span>
         </div>
       );

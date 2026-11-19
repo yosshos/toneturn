@@ -204,7 +204,7 @@ describe('rhythm lessons in the controller', () => {
     expect(res.items!.filter((x) => x.skill === 'timing')).toHaveLength(3);
   });
 
-  it('Voice mode: "ta" onsets from the microphone; no input at all is unclear, not wrong', async () => {
+  it('Voice mode: "ta" onsets from the microphone; no input at all is unclear, not wrong; written bars are tapped', async () => {
     const lesson = rhythmLesson(1, 4);
     const audio = new FakeAudio();
     const knock = new FakeKnock();
@@ -228,6 +228,16 @@ describe('rhythm lessons in the controller', () => {
     };
     await c.start();
     c.skipIntro();
+    // A written bar is picked by tapping it, even in voice mode (owner 2026-11-19: never said as "ta ti-ti").
+    for (let i = 0; i < lesson.questions.length; i++) {
+      const q = lesson.questions[i];
+      if (q.kind === 'rhythm-dict') {
+        await until(() => c.getView().index === i && c.getView().phase === 'listening');
+        expect(c.getView().mic).toBe('off');
+        c.answer(q.answer);
+      }
+      await until(() => c.getView().session.records[i].outcome !== 'pending');
+    }
     await until(() => c.getView().stage === 'complete');
     const recs = c.getView().session.records;
     expect(recs.every((r) => r.outcome === 'correct')).toBe(true);
