@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.107.0',
+    date: '2026-11-19',
+    en: ['Testing round: everyone starts over. We reordered the steps in every course, so progress was cleared on purpose; your language, nickname, calibration and recordings were kept.', 'About seventy new lessons, so no step comes before its lesson: seventh chords, chords of the key and Roman numerals, scales, mode colours, the 6 chord and the diminished seventh, a welcome to jazz, walking lines, reading the staff on guitar and bass, pentatonic boxes, left-hand styles, and an opening lesson for every technique family.', 'Drums: note values and rests, accents and ghost notes, flams, shuffle and swing ride, bossa and clave, Middle-Eastern rhythms, fills, rolls and independence. Voice: swing and the blues form, guide tones, and the singer’s ear.', 'Walking bass is now called בס מהלך in Hebrew.'],
+    he: ['סבב בדיקה: כולם מתחילים מחדש. סידרנו מחדש את השלבים בכל הקורסים, ולכן ההתקדמות נמחקה בכוונה; השפה, הכינוי, הכיול וההקלטות נשמרו.', 'כשבעים שיעורים חדשים, כך שאף שלב לא בא לפני השיעור שלו: ספטאקורדים, אקורדי הסולם וספרות רומיות, סולמות, צבעי המודוסים, אקורד 6 והמוקטן, ברוכים הבאים לג׳אז, בס מהלך, קריאת תווים בגיטרה ובבס, תיבות פנטטוניות, סגנונות יד שמאל, ושיעור פתיחה לכל משפחת טכניקה.', 'תופים: ערכי תווים והפסקות, הדגשות ותווי רפאים, פלאמים, שאפל ורייד בסווינג, בוסה וקלאבה, מקצבים מזרחיים, מעברים, גלגולים ועצמאות. שירה: סווינג וצורת הבלוז, צלילים מנחים, והאוזן של הזמר.', 'Walking bass נקרא עכשיו בעברית "בס מהלך".'],
+  },
+  {
     version: '0.106.0',
     date: '2026-11-19',
     en: ['Every course, at every level: one new idea per unit, the rest of the unit practises what you just learned, and a topic climbs one level at a time.', 'No step comes before the lesson that teaches it: many topics now open with their lesson, and a lesson you skipped comes back as a quick check before anything that needs it. The Jazz path no longer runs out.', 'The first steps of each instrument are no longer skipped, and a step you passed in one course counts in the others.', 'One Hebrew term per idea across the app, and a fix to the upper-structures explanation (VI gives 13 with ♭9).'],

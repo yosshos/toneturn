@@ -8,7 +8,7 @@ import { DEFAULT_SETTINGS, emptyProgress, migrateSettings, PROGRESS_EPOCH, type 
 
 export { PROGRESS_EPOCH };
 /** Results completed before this moment belong to the old path. */
-export const PROGRESS_CUTOFF = '2026-11-19T06:00:00Z';
+export const PROGRESS_CUTOFF = '2026-11-19T07:30:00Z';
 const EPOCH_KEY = 'toneturn.epoch';
 
 /** Settings that survive a fresh start: the person, the device and their own material — never progress. */
