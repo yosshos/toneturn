@@ -45,6 +45,8 @@ import { UNITS as AUDIT7 } from './mini/audit7'; // AUDIT-7: written theory from
 import { UNITS as TPAIR_DEEP } from './mini/triadPairsDeep'; // triad pairs, deep (2026-11-16)
 // Curriculum audit 2026-11-19: existing lessons wired to the path steps that first use them.
 import { UNITS as PATH_WIRING, VOCAL_FAMILY_UNIT } from './mini/pathWiring';
+// Curriculum audit 2026-11-19: the new shared-theory and jazz lessons (spread last: they replace the stop-gaps).
+import { UNITS as THEORY_CORE } from './mini/theoryCore';
 
 export { VOCAL_FAMILY_UNIT };
 
@@ -97,6 +99,12 @@ export const UNIT_LESSON: Record<string, string> = {
   'bflat-two-homes': 'bflat-two-homes',
   'degrees-135': 'degrees-135',
   'chord-intro': 'chord-intro',
+  'chord-numbers': 'chord-numbers',
+  sevenths: 'sevenths',
+  'scales-mm': 'scales-mm',
+  'mode-colours': 'mode-colours',
+  'six-dim': 'six-dim',
+  'jazz-welcome': 'jazz-welcome',
   'major-minor': 'major-minor',
   cadences: 'cadences',
   'sing-home-five': 'sing-home-five',
@@ -207,7 +215,6 @@ export const UNIT_LESSON: Record<string, string> = {
   'topic:find-tonic': 'home-and-scales',
   'topic:octave': 'home-and-scales',
   'topic:scale-types': 'home-and-scales',
-  'topic:compound-intervals': 'home-and-scales',
   'topic:voice-count': 'texture',
   'topic:theory-facts': 'game-truefalse',
   // Vocal tracks
@@ -259,6 +266,8 @@ export const UNIT_LESSON: Record<string, string> = {
   // SPEC-MY-SONG: practise over your own recording (play along; transcribe in ear / jazz).
   'game:mysong': 'my-song',
   'game:mysong-ear': 'my-song-ear',
+  // Last, so it wins (curriculum audit 2026-11-19): the new theory and jazz lessons replace the stop-gaps.
+  ...THEORY_CORE,
 };
 
 const VOICE_UNIT: Record<number, string> = { 6: 'vocal:breath', 7: 'vocal:drift', 8: 'vocal:registers', 9: 'vocal:dynamics', 10: 'vocal:jazz-vibrato', 11: 'vocal:time', 12: 'vocal:ear', 13: 'vocal:band', 14: 'vocal:standards', 15: 'vocal:scat', 16: 'vocal:bebop', 17: 'vocal:harmony-more', 18: 'vocal:inflect', 19: 'vocal:sight', 20: 'vocal:scales' };

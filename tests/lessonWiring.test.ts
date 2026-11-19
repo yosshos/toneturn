@@ -34,15 +34,18 @@ describe('every first path level opens with its teaching screen', () => {
   });
   it('the audits\' wiring: 7th chords, numerals, Harris, guide tones, modes, voice leading, guitar families', () => {
     const key = (ref: string, family: string) => lessonForUnit(ladderLessonKey('tech', { family, ref }) ?? '')?.id;
-    expect(key('voicings-2', 'voicings')).toBe('seventh-types');
-    expect(key('b-chord-6', 'b-chord')).toBe('seventh-types');
-    expect(key('g-chords-3', 'g-chords')).toBe('seventh-types');
-    expect(key('cadences-1', 'cadences')).toBe('roman-numerals');
-    expect(key('b-ear-3', 'b-ear')).toBe('roman-numerals');
-    expect(key('g-ear-6', 'g-ear')).toBe('roman-numerals');
+    // 2026-11-19: the new shared-theory lessons (mini/theoryCore.ts) open the levels that first use them.
+    expect(key('voicings-2', 'voicings')).toBe('sevenths');
+    expect(key('b-chord-6', 'b-chord')).toBe('sevenths');
+    expect(key('g-chords-3', 'g-chords')).toBe('sevenths');
+    expect(key('arpeggios-4', 'arpeggios')).toBe('sevenths');
+    expect(key('cadences-1', 'cadences')).toBe('chord-numbers');
+    expect(key('b-ear-3', 'b-ear')).toBe('chord-numbers');
+    expect(key('g-ear-6', 'g-ear')).toBe('chord-numbers');
     expect(key('harris-1', 'harris')).toBe('bh-scale');
     expect(key('jazz-1', 'jazz')).toBe('guide-tones');
-    expect(key('scales-19', 'scales')).toBe('modes');
+    expect(key('scales-19', 'scales')).toBe('mode-colours');
+    expect(key('b-scale-4', 'b-scale')).toBe('mode-colours');
     expect(key('b-pocket-3', 'b-pocket')).toBe('swing-ratio');
     expect(key('k-vl-1', 'k-vl')).toBe('vl-triads');
     expect(key('k-vl-3', 'k-vl')).toBe('vl-guide');
@@ -77,6 +80,9 @@ describe('every first path level opens with its teaching screen', () => {
     // a level with its own lesson keeps it
     expect(key('k-lh-4', 'k-lh')).toBe('sp-shells');
     expect(lessonForUnit('topic:voice-leading')?.id).toBe('four-parts');
+    // EAR-JAZZ M3 / M5: the topics that borrowed another topic's lesson now have their own.
+    for (const t of ['blues-ear', 'voicing-type', 'chart-analysis', 'jazz-chains', 'chorale-rn']) expect(lessonForUnit(`topic:${t}`)?.id).toBe(t);
+    expect(lessonForUnit('topic:compound-intervals')?.id).toBe('beyond-octave');
   });
   it('vocal families fall back to their track lesson', () => {
     const v = (ref: number, family: string) => lessonForUnit(ladderLessonKey('vocal', { family, ref: String(ref) }) ?? '')?.id;

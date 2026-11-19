@@ -84,6 +84,42 @@ export const LESSON_META: Record<LessonId, LessonMeta> = {
     icon: 'chord',
     tip: { en: 'Play any three white keys, skipping one between each: you just played a chord.', he: 'נגנו שלושה קלידים לבנים, ודלגו על אחד בין כל שניים: ניגנתם אקורד.' },
   },
+  'chord-numbers': {
+    title: { en: 'Chords of the key', he: 'האקורדים של הסולם' },
+    blurb: { en: 'A chord on every scale step, named by number: I, IV, V — and ii, vi, V7.', he: 'אקורד על כל דרגה בסולם, בשם של מספר: I, ‏IV, ‏V — וגם ii, ‏vi, ‏V7.' },
+    icon: 'chord',
+    tip: { en: 'Play I, IV, V, I in two keys: the numbers stay, only the letters change.', he: 'נגנו I, ‏IV, ‏V, ‏I בשני סולמות: המספרים נשארים, רק השמות משתנים.' },
+  },
+  sevenths: {
+    title: { en: 'Seventh chords', he: 'ספטאקורדים' },
+    blurb: { en: 'A triad plus a seventh: maj7, 7, m7, ø7 and °7.', he: 'משולש ועוד ספטימה: maj7, ‏7, ‏m7, ‏ø7 ו־°7.' },
+    icon: 'chord',
+    tip: { en: 'Hear the triad first, bright or dark, then the top note: a half step or a whole step under the octave.', he: 'קודם שמעו את המשולש, בהיר או כהה, ואז את הצליל העליון: חצי טון או טון שלם מתחת לאוקטבה.' },
+  },
+  'scales-mm': {
+    title: { en: 'Major and minor scales', he: 'סולם מז׳ור וסולם מינור' },
+    blurb: { en: 'Whole and half steps, natural minor, the relative minor, harmonic minor.', he: 'טון שלם וחצי טון, מינור טבעי, הסולם המקביל, מינור הרמוני.' },
+    icon: 'steps',
+    tip: { en: 'Sing a major scale, then lower 3, 6 and 7: you just sang natural minor.', he: 'שירו סולם מז׳ור, ואז הנמיכו את 3, ‏6 ו־7: שרתם מינור טבעי.' },
+  },
+  'mode-colours': {
+    title: { en: 'Modes: colours of one scale', he: 'מודוסים: צבעים של סולם אחד' },
+    blurb: { en: 'Dorian, Mixolydian, Lydian, Phrygian: major or minor with one note changed.', he: 'דורי, מיקסולידי, לידי, פריגי: מז׳ור או מינור עם צליל אחד שונה.' },
+    icon: 'steps',
+    tip: { en: 'Hold a low note and play the white keys from it: every starting note gives another mode.', he: 'החזיקו צליל נמוך ונגנו את הקלידים הלבנים ממנו: כל צליל התחלה נותן מודוס אחר.' },
+  },
+  'six-dim': {
+    title: { en: 'The 6 chord and the diminished 7th', he: 'אקורד 6 והספטאקורד המוקטן' },
+    blurb: { en: 'C6 and B°7 take turns: the two chords of Barry Harris’s harmony.', he: 'C6 ו־B°7 מתחלפים: שני האקורדים של ההרמוניה של בארי האריס.' },
+    icon: 'chord',
+    tip: { en: 'Play C6, then B°7, then C6 again, slowly: hear the breath in and out.', he: 'נגנו C6, ואז B°7, ואז שוב C6, לאט: שמעו את הנשימה פנימה והחוצה.' },
+  },
+  'jazz-welcome': {
+    title: { en: 'Welcome to jazz', he: 'ברוכים הבאים לג׳אז' },
+    blurb: { en: 'Swing feel, the 12-bar blues, and ii–V–I.', he: 'תחושת סווינג, בלוז של 12 תיבות, ו־ii–V–I.' },
+    icon: 'ear',
+    tip: { en: 'Put on a jazz record and count the bars of a blues in fours: the IV chord arrives at bar 5.', he: 'שימו תקליט ג׳אז וספרו את תיבות הבלוז בארבעיות: אקורד IV מגיע בתיבה 5.' },
+  },
   'chord-tones': {
     title: { en: 'Sing inside the chord', he: 'לשיר בתוך האקורד' },
     blurb: { en: 'Hear a chord, sing its root, third or fifth — and finish the tune.', he: 'שומעים אקורד, שרים את השורש, הטרצה או הקווינטה — ומסיימים את המנגינה.' },
@@ -304,6 +340,11 @@ export function introText(lesson: LessonDef, step: IntroStep, l: Lang, nm: Namin
         'swing-lick': { en: 'Jazz eighths swing: long–short, long–short. Listen to the lick, then you will write and sing licks like it.', he: 'שמיניות בג׳אז מתנדנדות: ארוך–קצר, ארוך–קצר. הקשיבו לליק, ואחר כך תכתבו ותשירו ליקים כאלה.' },
         'bass-line': { en: 'Listen to the lowest note of each chord: one, seven, six, five — the bass walks down while the chords change.', he: 'הקשיבו לצליל הנמוך ביותר בכל אקורד: אחת, שבע, שש, חמש — הבס יורד בזמן שהאקורדים מתחלפים.' },
         dictation: { en: 'A short melody with its rhythm. First write its notes as degrees, then choose its rhythm.', he: 'מנגינה קצרה עם הקצב שלה. קודם כותבים את הצלילים כדרגות, ואז בוחרים את הקצב.' },
+        'chord-numbers': { en: 'One, four, five, one: chords named by their scale step.', he: 'אחת, ארבע, חמש, אחת: אקורדים בשם של הדרגה שלהם.' },
+        'scales-mm': { en: 'C major, then C natural minor: three notes come down.', he: 'דו מז׳ור, ואז דו מינור טבעי: שלושה צלילים יורדים.' },
+        'mode-colours': { en: 'Same home, one note changed: plain major, then Mixolydian.', he: 'אותו בית, צליל אחד שונה: מז׳ור רגיל, ואז מיקסולידי.' },
+        'six-dim': { en: 'C6, then B diminished 7th, then C6: rest, tension, rest.', he: 'C6, ואז B°7, ואז C6: מנוחה, מתח, מנוחה.' },
+        'jazz-welcome': { en: 'Swung eighths, long–short. Then two, five, one: the move that brings jazz home.', he: 'שמיניות בסווינג, ארוך–קצר. ואז שתיים, חמש, אחת: המהלך שמחזיר את הג׳אז הביתה.' },
       }[c.topic][l];
     case 'key-degree':
       return c.degree === 1 ? narration.introBb(l, nm, c.key, c.note) : narration.introEb(l, nm, c.key, c.note);

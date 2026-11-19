@@ -98,12 +98,8 @@ export const UNITS: Record<string, string> = {
   'vocal:2304': 'voice-guide-tones', // guide tones on a blues (v-jazz1·4)
   'vocal:1203': 'voice-ear', // the singer's ear (v-ear·1: sing it back)
 
-  // ---- Topics with no mini-lesson of their own (EAR-JAZZ F25)
-  'topic:voicing-type': 'voicings', // close, drop 2, shell, rootless
-  'topic:chart-analysis': 'jazz-changes', // where are the ii–Vs?
-  'topic:jazz-chains': 'jazz-changes', // backdoor, tritone sub
-  'topic:chorale-rn': 'four-parts',
-  'topic:blues-ear': 'jazz-form',
+  // ---- Topics with no mini-lesson of their own (EAR-JAZZ F25): voicing-type, chart-analysis, jazz-chains, chorale-rn and
+  // blues-ear now have their own (mini/theoryCore.ts UNITS, which also wins for the 7th-chord, numeral and mode levels).
   'topic:song-sing': 'songs',
   'topic:song-play': 'songs',
 

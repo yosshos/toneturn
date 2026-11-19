@@ -35,7 +35,7 @@ import { LESSONS as RHYTHM_GAPS } from './mini/rhythmGaps'; // AUDIT-CONTENT-THE
 import { LESSONS as DRUMS_CORE } from './mini/drumsCore';
 import { LESSONS as VOICE_CORE } from './mini/voiceCore';
 
-export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK, ...HARRIS_LINES, ...REHARM_COLOR, ...SOLO_PIANO, ...FIRST_STEPS_MORE, ...STAGE_C, ...AUDIT7, ...GIG, ...TPAIR_DEEP, ...DRUMS_CORE, ...VOICE_CORE, ...INSTRUMENT_CORE, ...FAMILY_KEYS_GUITAR, ...FAMILY_BASS].filter((l) => lessonVerified(l.id)).map((l) => [l.id, l]));
+export const MINI_LESSONS: Record<string, MiniLesson> = Object.fromEntries([...EXAMPLE, ...PATH, ...RHYTHM, ...JAZZ, ...THEORY_EAR, ...VOICE, ...SKILLS, ...MEMORY_LESSONS, ...BASICS, ...AD, ...INSTRUMENT, ...WRITTEN, ...HARMONY2, ...PITCH2, ...TIME2, ...SOUND, ...CHORDREAD, ...PROG_GAMES, ...JAZZ_EAR, ...PIANO_JAZZ, ...LICKS, ...BASS_NICHE, ...DRUMS, ...DRUMS_MORE, ...VOICE_COURSE, ...GUITAR, ...BASS_NICHE2, ...MY_SONG, ...RHYTHM_GAPS, ...VOICE_LEAD, ...THEORY_PLAY, ...FIRST_STEPS, ...HARRIS2, ...HARMONY3, ...VL_EAR, ...KEY_MOVES, ...BEBOP_VOCAB, ...PHRASES_BY_EAR, ...SOLO_RULES, ...PROG_GRID, ...HEADS_LESSONS, ...JAZZ_CONTEXT, ...SCALE_WORK, ...HARRIS_LINES, ...REHARM_COLOR, ...SOLO_PIANO, ...FIRST_STEPS_MORE, ...STAGE_C, ...AUDIT7, ...GIG, ...TPAIR_DEEP, ...DRUMS_CORE, ...VOICE_CORE, ...INSTRUMENT_CORE, ...FAMILY_KEYS_GUITAR, ...FAMILY_BASS, ...THEORY_CORE].filter((l) => lessonVerified(l.id)).map((l) => [l.id, l]));
 // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): one lesson per stage of k-vl / g-vl.
 import { LESSONS as VOICE_LEAD } from './mini/voiceLead';
 
@@ -97,3 +97,6 @@ import { LESSONS as TPAIR_DEEP } from './mini/triadPairsDeep';
 import { LESSONS as INSTRUMENT_CORE } from './mini/instrumentCore';
 import { LESSONS as FAMILY_KEYS_GUITAR } from './mini/familyKeysGuitar';
 import { LESSONS as FAMILY_BASS } from './mini/familyBass';
+// Curriculum audit 2026-11-19: shared theory (7th chords, chords of the key, scales, modes, beyond the octave), the 6 chord
+// and the dim7, the jazz welcome, and the jazz topics that had no teaching page.
+import { LESSONS as THEORY_CORE } from './mini/theoryCore';

@@ -9,6 +9,7 @@ import { opening, SONGS, type SongOpening } from './songs';
 import { atTempo, buildRun, MAX_RUN_LEVEL, runAt, runDifficulty, type RunMaterial, type RunShape, type RunSpec } from './runs';
 import { majorScale, pc, pcValue, voiceChord, type ChordQuality, type PitchClass } from './pitch';
 import { basicsBeat, basicsPitch, basicsShape, basicsVoice, chordIntroLesson, chordTonesLesson, rhythmShiftLesson, transposeLesson } from './basics';
+import { chordNumbersLesson, jazzWelcomeLesson, modeColoursLesson, scalesMmLesson, seventhsLesson, sixDimLesson } from './theoryLessons';
 import { options as rhythmOptions, rhythmAt, rhythmFromKey, rhythmKey, rhythmSound, type Rhythm, type RhythmLevel } from './rhythm';
 
 export const CONTENT_SCHEMA_VERSION = 2;
@@ -654,7 +655,7 @@ export type IntroCard =
   | { kind: 'seventh'; quality: SeventhQuality }
   | { kind: 'song'; song: string }
   /** Lesson-specific explanation (text from content), with a row of scale degrees or step names. */
-  | { kind: 'explain'; topic: 'melodic-minor' | 'bass-line' | 'dictation' | 'swing-lick'; steps: string[] };
+  | { kind: 'explain'; topic: 'melodic-minor' | 'bass-line' | 'dictation' | 'swing-lick' | 'chord-numbers' | 'scales-mm' | 'mode-colours' | 'six-dim' | 'jazz-welcome'; steps: string[] };
 
 export interface IntroStep {
   id: string;
@@ -724,7 +725,13 @@ export type LessonId =
   | 'transpose'
   | 'rhythm-shift'
   | 'chord-tones'
-  | 'chord-intro';
+  | 'chord-intro'
+  | 'chord-numbers'
+  | 'sevenths'
+  | 'scales-mm'
+  | 'mode-colours'
+  | 'six-dim'
+  | 'jazz-welcome';
 
 /** Small deterministic PRNG for seeded generation in tests and replays. */
 export function mulberry32(seed: number): () => number {
@@ -1539,11 +1546,13 @@ export const LESSON_ORDER: LessonId[] = [
   'degrees-135',
   'chord-intro',
   'major-minor',
+  'chord-numbers',
   'cadences',
   'sing-home-five',
   'intervals',
   'inversions',
   'notes-degrees',
+  'scales-mm',
   'sing-names',
   'sing-degrees',
   'chord-tones',
@@ -1559,7 +1568,11 @@ export const LESSON_ORDER: LessonId[] = [
   'rhythm-r8',
   'note-sequences',
   'transpose',
+  'sevenths',
+  'mode-colours',
+  'jazz-welcome',
   'jazz-1',
+  'six-dim',
   'songs',
   'slash-chords',
   'dictation',
@@ -1584,6 +1597,18 @@ export function makeLesson(id: LessonId, seed = Date.now()): LessonDef {
       return chordTonesLesson(seed);
     case 'chord-intro':
       return chordIntroLesson(seed);
+    case 'chord-numbers':
+      return chordNumbersLesson(seed);
+    case 'sevenths':
+      return seventhsLesson(seed);
+    case 'scales-mm':
+      return scalesMmLesson(seed);
+    case 'mode-colours':
+      return modeColoursLesson(seed);
+    case 'six-dim':
+      return sixDimLesson(seed);
+    case 'jazz-welcome':
+      return jazzWelcomeLesson(seed);
     case 'modes':
       return modesLesson(1, seed);
     case 'slash-chords':

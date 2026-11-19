@@ -281,7 +281,7 @@ export const PACK_LEVELS: Record<string, Pack> = Object.fromEntries([
   'grid-dictation:5', 'grid-dictation:7', 'grid-dictation:8',
   'scale-types:5', 'progressions:2', 'next-chord:2', 'song-form:6',
 ].map((k) => [k, 'jazz' as Pack]));
-const PACK_LESSONS: Partial<Record<string, Pack>> = { 'jazz-1': 'jazz', 'jazz-2': 'jazz', runs: undefined };
+const PACK_LESSONS: Partial<Record<string, Pack>> = { 'jazz-1': 'jazz', 'jazz-2': 'jazz', 'six-dim': 'jazz', 'jazz-welcome': 'jazz', runs: undefined };
 const SUNG_SKILLS: SkillId[] = ['singing', 'technique', 'agility'];
 
 let CATALOGUE: PathStep[] | null = null;

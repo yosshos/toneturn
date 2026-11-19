@@ -125,7 +125,31 @@ const VOICE_DRUMS: Record<string, string[]> = {
   'vocal:2304': ['lesson:major-minor'],
 };
 
-export const FLOW_PREREQ: Record<string, string[]> = { ...EAR, ...JAZZ, ...INSTRUMENTS, ...VOICE_DRUMS };
+/**
+ * The shared theory lessons (2026-11-19, src/engine/theoryLessons.ts): the steps that use a concept wait for the lesson
+ * that teaches it. Chords of the key before the cadence lesson (which says "V7 → I", "I – vi – IV – V"); seventh chords
+ * after the diminished triad and before the 7th-chord topic; the scales before scale types; modes before modes by ear,
+ * jazz chord-scales and the Dorian / melodic-minor lesson; the 6 chord and the dim7 (after the seventh chords) before
+ * every Barry Harris entry topic. Merged into the tables above (a key here adds to theirs, never replaces it).
+ */
+const THEORY: Record<string, string[]> = {
+  'lesson:cadences': ['lesson:chord-numbers'],
+  'lesson:sevenths': ['topic:triads:1'],
+  'topic:seventh-chords:1': ['lesson:sevenths'],
+  'topic:scale-types:1': ['lesson:scales-mm'],
+  'topic:modes-ear:1': ['lesson:mode-colours'],
+  'topic:chord-scale:1': ['lesson:mode-colours'],
+  'lesson:jazz-2': ['lesson:mode-colours'],
+  'lesson:six-dim': ['lesson:sevenths'],
+  ...Object.fromEntries(['bh-three-dim', 'bh-family', 'chromatic-added', 'bh-pivot-arp'].map((t) => [`topic:${t}:1`, ['lesson:six-dim']])),
+};
+const merge = (...ts: Record<string, string[]>[]): Record<string, string[]> => {
+  const out: Record<string, string[]> = {};
+  for (const t of ts) for (const [k, v] of Object.entries(t)) out[k] = [...new Set([...(out[k] ?? []), ...v])];
+  return out;
+};
+
+export const FLOW_PREREQ: Record<string, string[]> = merge({ ...EAR, ...JAZZ, ...INSTRUMENTS, ...VOICE_DRUMS }, THEORY);
 
 /**
  * Ladder levels that wait for a level of another family (path.ts LADDER_AFTER): never a later level of the same

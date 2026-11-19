@@ -8,7 +8,7 @@ const AREAS = ['ear', 'harmony', 'rhythm', 'theory', 'voice', 'jazz', 'world', '
 /** Short on purpose (owner 2026-11-18, few words per screen): a first look at a concept, not the 60–90 s lesson. */
 const SHORT = new Set(['chord-intro',
   // CURRICULUM-AUDIT-VOICE-DRUMS B3–B11 (owner 2026-11-19): one idea a screen.
-  'drum-values', 'drum-strokes', 'drum-accents', 'drum-flams', 'drum-shuffle', 'drum-swing-ride', 'drum-brazil', 'drum-clave', 'drum-mideast', 'drum-fills', 'drum-rolls', 'drum-indep', 'drum-echo', 'drum-styles-ear', 'voice-jazz-start', 'voice-guide-tones', 'voice-ear']);
+  'drum-values', 'drum-strokes', 'drum-accents', 'drum-flams', 'drum-shuffle', 'drum-swing-ride', 'drum-brazil', 'drum-clave', 'drum-mideast', 'drum-fills', 'drum-rolls', 'drum-indep', 'drum-echo', 'drum-styles-ear', 'voice-jazz-start', 'voice-guide-tones', 'voice-ear', 'sevenths', 'chord-numbers', 'scales-mm', 'mode-colours', 'beyond-octave', 'six-dim', 'jazz-welcome', 'blues-ear', 'voicing-type', 'chart-analysis', 'jazz-chains', 'chorale-rn']);
 
 describe('mini-lessons (spec X)', () => {
   const all = Object.values(MINI_LESSONS);

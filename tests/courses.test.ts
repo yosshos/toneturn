@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courseInput, coursesFromProfile, inCourse, JAZZ_LADDER_FAMILIES, switchCourse, VOICE_SHARED_LESSONS, type CourseId } from '../src/engine/courses';
+import { courseInput, coursesFromProfile, inCourse, JAZZ_LADDER_FAMILIES, switchCourse, VOICE_SHARED_LESSONS, THEORY_SHARED_LESSONS, type CourseId } from '../src/engine/courses';
 import { eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { migrateSettings, DEFAULT_SETTINGS } from '../src/storage/progress';
 
@@ -41,6 +41,11 @@ describe('courses (SPEC-COURSES)', () => {
       // Curriculum audit R3(a): the Ear lessons the voice course builds on are shared with it.
       if (s.kind === 'lesson' && VOICE_SHARED_LESSONS.includes(s.lesson!)) {
         expect(inCourse(s, 'ear') && inCourse(s, 'voice'), s.id).toBe(true);
+        continue;
+      }
+      // 2026-11-19: the shared theory lessons (chords of the key, 7ths, scales, modes) are in Ear and the instrument courses.
+      if (s.kind === 'lesson' && Object.values(THEORY_SHARED_LESSONS).some((ls) => ls!.includes(s.lesson!))) {
+        expect(inCourse(s, 'ear') && (['keys', 'guitar', 'bass'] as CourseId[]).every((c) => !THEORY_SHARED_LESSONS[c]?.includes(s.lesson!) || inCourse(s, c)), s.id).toBe(true);
         continue;
       }
       const instr = (['keys', 'guitar', 'bass'] as CourseId[]).some((c) => inCourse(s, c));
