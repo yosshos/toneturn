@@ -228,7 +228,7 @@ export const UNIT_LESSON: Record<string, string> = {
   'vocal:dynamics': 'voice-dynamics',
   'vocal:jazz-vibrato': 'voice-dynamics',
   'vocal:time': 'voice-time',
-  'vocal:ear': 'voice-drift',
+  'vocal:ear': 'voice-ear',
   'vocal:band': 'voice-band',
   'vocal:standards': 'voice-standards',
   'vocal:scat': 'voice-scat',

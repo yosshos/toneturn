@@ -7,6 +7,7 @@
 export const TOPIC_MARK: Record<string, string> = {
   // Drums (DRUMS_NICHE_PLAN): name the band's style by ear.
   'drum-style': 'style',
+  'drum-values': '♩ ♫',
   // Ear & theory: pitch, intervals, chords
   'basics-highlow': 'Hi·Lo',
   'basics-samediff': '=?',

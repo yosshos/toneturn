@@ -204,6 +204,7 @@ const TOPIC_CONTRAST: Record<string, { en: string; he: string }> = {
   'odd-meter': { en: 'Count the groups — short, short, long — not every eighth.', he: 'ספרו קבוצות — קצר, קצר, ארוך — לא כל שמינית.' },
   'swing-ratio': { en: 'Listen to where the short note lands inside the beat.', he: 'הקשיבו איפה נוחת הצליל הקצר בתוך הפעמה.' },
   'drum-style': { en: 'Listen to the ride or hat first: triplets or straight, then where the kick and the snare sit.', he: 'הקשיבו קודם לרייד או להיי־האט: טריולות או ישר, ואז איפה יושבים הקיק והסנר.' },
+  'drum-values': { en: 'Count the beat while you listen: one stroke a count is quarters, two are eighths, a count with no stroke is a rest.', he: 'ספרו את הפעמה בזמן ההאזנה: מכה אחת לכל ספירה היא רבעים, שתיים הן שמיניות, ספירה בלי מכה היא הפסקה.' },
   'bh-convert': { en: 'Lowered note = dominant (restless); raised note = minor 6 (dark, at rest).', he: 'צליל שירד = דומיננט (חסר מנוחה); צליל שעלה = מינור 6 (כהה ונח).' },
   'bh-convert-2': { en: 'Still restless? A dominant. At rest: sunny major 6 or shadowy minor 6?', he: 'עדיין חסר מנוחה? דומיננט. נח: מז׳ור 6 מואר או מינור 6 מוצל?' },
   'bh-keys': { en: 'Hum the first home note, then compare the new home with it.', he: 'זמזמו את צליל הבית הראשון, ואז השוו אליו את הבית החדש.' },

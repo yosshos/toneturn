@@ -63,16 +63,34 @@ export const UNITS: Record<string, string> = {
   'tech:b-posread': 'note-reading',
   'tech:b-up-read': 'note-reading',
 
-  // ---- Drums (CURRICULUM-AUDIT-VOICE-DRUMS R2)
+  // ---- Drums (CURRICULUM-AUDIT-VOICE-DRUMS R2; B5–B11, drumsCore.ts, owner 2026-11-19)
   'tech:d-time': 'first-sticks', // counting 1 e & a
   'tech:d-rock': 'first-rock',
   'tech:d-diddles': 'drum-paradiddle',
   'tech:d-feet': 'drum-feet',
   'tech:d-pas-1': 'drum-buzz',
-  'tech:d-read': 'note-values', // quarters, 8ths, rests
-  'tech:d-shuffle': 'rhythm-r6', // triplets
-  'tech:d-jazz': 'swing-ratio', // the swung ride
-  'tech:d-mideast': 'eastern-rhythm', // dum and tak, maqsum, malfuf
+  'tech:d-read': 'drum-values', // quarters, 8ths, rests on the snare
+  'topic:drum-values': 'drum-values', // the practice step of units 1–2
+  'tech:d-strokes': 'drum-strokes', // even strokes, three heights
+  'tech:d-strokes-4': 'drum-accents', // accent and taps
+  'tech:d-funk': 'drum-accents', // snare ghosts, accents on 2 and 4
+  'tech:d-diddles-5': 'drum-flams', // flams
+  'tech:d-diddles-7': 'drum-flams', // drags
+  'tech:d-shuffle': 'drum-shuffle', // triplets, the shuffle, 12/8
+  'tech:d-jazz': 'drum-swing-ride', // the ride pattern, the foot on 2 and 4, feathering
+  'tech:d-latin': 'drum-brazil', // bossa nova, samba
+  'tech:d-latin-3': 'drum-clave', // son and rumba clave
+  'tech:d-indep-8': 'drum-clave', // clave over the groove
+  'tech:d-mideast': 'drum-mideast', // dum, tak, ka on the kit: maqsum, baladi, malfuf
+  'tech:d-fills': 'drum-fills', // one-beat fill, land on 1
+  'tech:d-rolls': 'drum-rolls', // singles, doubles, rolls
+  'tech:d-indep': 'drum-indep', // one limb at a time
+  'tech:d-ear': 'drum-echo', // echo a bar
+  'topic:drum-style': 'drum-styles-ear', // rock, swing, bossa, reggae by ear
+
+  // ---- Voice (CURRICULUM-AUDIT-VOICE-DRUMS B3, B4; voiceCore.ts)
+  'vocal:2304': 'voice-guide-tones', // guide tones on a blues (v-jazz1·4)
+  'vocal:1203': 'voice-ear', // the singer's ear (v-ear·1: sing it back)
 
   // ---- Topics with no mini-lesson of their own (EAR-JAZZ F25)
   'topic:voicing-type': 'voicings', // close, drop 2, shell, rootless

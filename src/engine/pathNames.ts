@@ -102,6 +102,7 @@ const SHORT: Record<string, L2> = {
   'metric-tap': { en: 'New beat', he: 'פעמה חדשה' },
   'hemiola-tap': { en: 'Hemiola', he: 'המיולה' },
   'drum-read': { en: 'Drum reading', he: 'קריאת תופים' },
+  'drum-values': { en: 'Note values', he: 'ערכי תווים' },
   'rhythm-errors': { en: 'Rhythm slips', he: 'טעויות קצב' },
   'tempo-react': { en: 'Reaction', he: 'תגובה' },
   'sight-tap': { en: 'Sing & tap', he: 'לשיר ולהקיש' },

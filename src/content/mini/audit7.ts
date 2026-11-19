@@ -9,6 +9,34 @@ const notes = (midis: number[], each = 0.4): Stimulus => ({ kind: 'notes', midis
 const chord = (midis: number[], duration = 1.2): Stimulus => ({ kind: 'chord', midis, duration });
 const note = (midi: number, duration = 1.2): Stimulus => ({ kind: 'note', midi, duration });
 
+/** Eighths on one note, `beat` seconds a beat: straight (1:1) or swung (2:1, the triplet feel). */
+const eighths = (midi: number, beat: number, beats: number, swing: boolean): Stimulus => ({
+  kind: 'events',
+  events: Array.from({ length: beats }).flatMap((_, k) => [
+    { midi, start: k * beat, duration: beat * (swing ? 0.6 : 0.45), velocity: 0.7 },
+    { midi, start: k * beat + beat * (swing ? 2 / 3 : 0.5), duration: beat * 0.3, velocity: 0.5 },
+  ]),
+  length: beats * beat + 0.3,
+});
+const swung = (midi: number, beat: number, beats: number) => eighths(midi, beat, beats, true);
+const straight = (midi: number, beat: number, beats: number) => eighths(midi, beat, beats, false);
+/** Clicks on 2 and 4 under swung eighths. */
+const onTwoFour = (beat: number, beats: number): Stimulus => {
+  const e = (eighths(60, beat, beats, true) as Extract<Stimulus, { kind: 'events' }>).events;
+  const clicks = Array.from({ length: beats }, (_, k) => k).filter((k) => k % 2 === 1).map((k) => ({ midi: 0, start: k * beat, duration: 0.05, velocity: 0.7, perc: 'click' as const }));
+  return { kind: 'events', events: [...e, ...clicks], length: beats * beat + 0.3 };
+};
+/** A one-bar scat call on one note (onsets in beats), after two clicks on 2 and 4 of a count-in bar. */
+const call = (onsets: number[], beat: number): Stimulus => ({
+  kind: 'events',
+  events: [
+    { midi: 0, start: beat, duration: 0.05, velocity: 0.7, perc: 'click' as const },
+    { midi: 0, start: 3 * beat, duration: 0.05, velocity: 0.7, perc: 'click' as const },
+    ...onsets.map((o) => ({ midi: 60, start: 4 * beat + o * beat, duration: beat * 0.4, velocity: 0.75 })),
+  ],
+  length: 8 * beat + 0.3,
+});
+
 export const LESSONS: MiniLesson[] = [
   {
     id: 'note-values',
@@ -76,26 +104,31 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Where it lives: every choir rehearsal and every lesson starts with hearing and singing back. Recap: listen fully, then sing: note, rhythm, melody, song.', he: 'איפה זה חי: כל חזרה של מקהלה וכל שיעור מתחילים בשמיעה ושירה בחזרה. סיכום: מקשיבים עד הסוף, ואז שרים: צליל, קצב, מנגינה, שיר.' } },
     ],
   },
+  // CURRICULUM-AUDIT-VOICE-DRUMS B3 (owner 2026-11-19): split in two — swing and the 12-bar form here (before v-jazz1·1,
+  // the scat calls and the blues head); the guide tones in voiceCore.ts `voice-guide-tones` (before v-jazz1·4).
   {
     id: 'voice-jazz-start',
     area: 'jazz',
     emoji: 'improv',
-    title: { en: 'The blues, sung', he: 'הבלוז, בשירה' },
-    takeaway: { en: 'Copy short scat calls, sing a blues head, then the guide tones: the 3rd and 7th of each chord.', he: 'מעתיקים קריאות סקאט קצרות, שרים נושא בלוז, ואז את הצלילים המנחים: הטרצה והספטימה של כל אקורד.' },
+    title: { en: 'Swing and the 12-bar blues', he: 'סווינג ובלוז 12 תיבות' },
+    takeaway: { en: 'Swing eighths are long-short, the click falls on 2 and 4; a scat call is one swung bar to copy; the blues is twelve bars in three lines: the tune, the tune again, an answer.', he: 'שמיניות בסווינג הן ארוך־קצר, הקליק נופל על 2 ו־4; קריאת סקאט היא תיבה אחת בסווינג להעתקה; הבלוז הוא שתים־עשרה תיבות בשלוש שורות: המנגינה, המנגינה שוב, ותשובה.' },
     steps: [
-      { say: { en: 'Jazz singing starts with the blues: twelve bars, three chords, and a swing feel. The clicks fall on beats two and four, where the drummer’s hi-hat closes.', he: 'שירת ג׳אז מתחילה בבלוז: שתים־עשרה תיבות, שלושה אקורדים ותחושת סווינג. הקליקים נופלים על פעמות שתיים וארבע, שם ההיי־האט של המתופף נסגר.' }, play: [chord([48, 58, 64]), chord([53, 63, 69]), chord([48, 58, 64])] },
-      { say: { en: 'A scat call is a short rhythm on a syllable like “doo” or “bah”. Listen to one bar, then copy it on one note, swung.', he: 'קריאת סקאט היא קצב קצר על הברה כמו ״דו״ או ״בה״. הקשיבו לתיבה אחת, ואז העתיקו אותה על צליל אחד, בסווינג.' }, play: [notes([60, 60, 60], 0.45)] },
-      { say: { en: 'A blues head is the tune of a blues. Ours is a riff, the same riff over the four chord, and then an answer.', he: 'נושא בלוז הוא המנגינה של בלוז. שלנו הוא ריף, אותו ריף על אקורד הרביעית, ואז תשובה.' }, play: [notes([67, 67, 63, 60], 0.4)] },
-      { say: { en: 'Guide tones are the third and the seventh of each chord. Two notes are enough to spell the whole harmony, and they move by small steps.', he: 'צלילים מנחים הם הטרצה והספטימה של כל אקורד. שני צלילים מספיקים כדי לאיית את כל ההרמוניה, והם זזים בצעדים קטנים.' }, play: [chord([48, 64, 70]), chord([53, 63, 69])] },
-      { say: { en: 'Your turn: copy the calls, sing the head with the band, then a guide tone on every half note. Every note is measured.', he: 'תורכם: העתיקו את הקריאות, שירו את הנושא עם הלהקה, ואז צליל מנחה על כל חצי. כל צליל נמדד.' } },
+      { say: { en: 'Swing eighths are uneven: long, short. Say doo-ba, doo-ba.', he: 'שמיניות בסווינג לא שוות: ארוך, קצר. אמרו דו־בה, דו־בה.' }, show: { text: { en: 'doo-ba doo-ba', he: 'דו־בה דו־בה' } }, play: [swung(60, 0.6, 4)] },
+      { say: { en: 'Straight first, then swung. The second note comes later and lighter.', he: 'קודם ישר, ואז בסווינג. הצליל השני מגיע מאוחר וקל יותר.' }, show: { text: { en: 'straight → swing', he: 'ישר ← סווינג' } }, play: [straight(60, 0.6, 4), swung(60, 0.6, 4)] },
+      { say: { en: 'In jazz the click falls on 2 and 4, like the drummer’s hi-hat.', he: 'בג׳אז הקליק נופל על 2 ו־4, כמו ההיי־האט של המתופף.' }, show: { text: { en: '1 [2] 3 [4]', he: '1 [2] 3 [4]' } }, play: [onTwoFour(0.6, 8)] },
+      { say: { en: 'A scat call: one short swung bar on “doo”. Listen, then copy it.', he: 'קריאת סקאט: תיבה קצרה אחת בסווינג על ״דו״. מקשיבים, ואז מעתיקים.' }, play: [call([0, 0.67, 1, 2], 0.65)] },
+      { say: { en: 'The blues is twelve bars long, and it repeats again and again.', he: 'הבלוז הוא באורך שתים־עשרה תיבות, והוא חוזר שוב ושוב.' }, show: { text: { en: '12 bars', he: '12 תיבות' } }, play: [chord([48, 58, 64]), chord([53, 63, 69]), chord([48, 58, 64])] },
+      { say: { en: 'Three lines of four bars: the tune, the tune again, an answer.', he: 'שלוש שורות של ארבע תיבות: המנגינה, המנגינה שוב, ותשובה.' }, show: { text: { en: 'A · A · B', he: 'A · A · B' } }, play: [notes([67, 67, 63, 60], 0.4), notes([67, 67, 63, 60], 0.4), notes([70, 67, 63, 60], 0.4)] },
+      { say: { en: 'Your turn: copy the calls, then sing the head with the band.', he: 'תורכם: מעתיקים את הקריאות, ואז שרים את הנושא עם הלהקה.' } },
     ],
     more: [
-      { say: { en: 'Swing eighths are uneven: the first of each pair is longer, the second shorter and lighter. Say “doo-bah, doo-bah” with a lilt.', he: 'שמיניות בסווינג אינן שוות: הראשונה בכל זוג ארוכה יותר, השנייה קצרה וקלה יותר. אמרו ״דו־בה, דו־בה״ בנדנוד.' }, play: [{ kind: 'events', events: [0, 1, 2, 3].flatMap((k) => [{ midi: 60, start: k * 0.6, duration: 0.35, velocity: 0.7 }, { midi: 60, start: k * 0.6 + 0.4, duration: 0.18, velocity: 0.5 }]), length: 2.6 }] },
-      { say: { en: 'The twelve bars: four on the one chord, two on the four chord, two on the one, then the five, the four, and home.', he: 'שתים־עשרה התיבות: ארבע על אקורד הראשונה, שתיים על הרביעית, שתיים על הראשונה, ואז החמישית, הרביעית, והביתה.' } },
-      { say: { en: 'Over C7 the guide tones are E and B flat; over F7 they are A and E flat. E falls to E flat, B flat falls to A: half steps.', he: 'מעל C7 הצלילים המנחים הם מי וסי במול; מעל F7 הם לה ומי במול. מי יורד למי במול, סי במול יורד ללה: חצאי טונים.' }, play: [notes([64, 63], 0.6), notes([70, 69], 0.6)] },
-      { say: { en: 'A common mistake is singing the root because it feels safe. The root belongs to the bass player; the third and seventh are yours.', he: 'טעות נפוצה היא לשיר את השורש כי הוא מרגיש בטוח. השורש שייך לבסיסט; הטרצה והספטימה שלכם.' } },
-      { say: { en: 'A practice tip: sing the head on “doo” first, then on “bah”, then with your own syllables. The syllable never counts, only the pitch and the time, so choose what swings for you.', he: 'טיפ לתרגול: שירו את הנושא קודם על ״דו״, אחר כך על ״בה״, ואז בהברות שלכם. ההברה אף פעם לא נחשבת, רק הגובה והזמן, אז בחרו מה שמתנדנד לכם.' }, play: [notes([67, 67, 63, 60], 0.4)] },
-      { say: { en: 'Where it lives: every jazz singer’s first standards are blues tunes, and every scat solo grows from short calls. Recap: calls, the head, guide tones.', he: 'איפה זה חי: הסטנדרטים הראשונים של כל זמר ג׳אז הם בלוזים, וכל סולו סקאט צומח מקריאות קצרות. סיכום: קריאות, הנושא, צלילים מנחים.' } },
+      { say: { en: 'Swing is not a fixed ratio. Near a triplet, the first eighth takes about two thirds of the beat; at fast tempos the eighths get straighter.', he: 'סווינג הוא לא יחס קבוע. ליד הטריולה, השמינית הראשונה לוקחת בערך שני שלישים מהפעמה; בטמפו מהיר השמיניות מתיישרות.' }, play: [swung(60, 0.5, 4)] },
+      { say: { en: 'The twelve bars: four on the one chord, two on the four chord, two on the one, then the five, the four, and home for two.', he: 'שתים־עשרה התיבות: ארבע על אקורד הראשונה, שתיים על הרביעית, שתיים על הראשונה, ואז החמישית, הרביעית, ושתיים בבית.' }, show: { text: { en: 'I I I I · IV IV I I · V IV I I', he: 'I I I I · IV IV I I · V IV I I' } }, play: [chord([48, 58, 64], 0.9), chord([53, 63, 69], 0.9), chord([48, 58, 64], 0.9), chord([55, 65, 71], 0.9), chord([53, 63, 69], 0.9), chord([48, 58, 64], 1.2)] },
+      { say: { en: 'Each line often leaves room: the singer takes two bars, the band answers in the other two.', he: 'כל שורה משאירה הרבה פעמים מקום: הזמר לוקח שתי תיבות, והלהקה עונה בשתיים האחרות.' } },
+      { say: { en: 'A common mistake is swinging too hard, a stiff dotted rhythm. Keep it relaxed, like speech.', he: 'טעות נפוצה היא סווינג חזק מדי, קצב מנוקד ונוקשה. שומרים על זה רגוע, כמו דיבור.' } },
+      { say: { en: 'A practice tip: sing the head on “doo” first, then on “bah”, then with your own syllables. The syllable never counts, only the pitch and the time.', he: 'טיפ לתרגול: שירו את הנושא קודם על ״דו״, אחר כך על ״בה״, ואז בהברות שלכם. ההברה אף פעם לא נחשבת, רק הגובה והזמן.' }, play: [notes([67, 67, 63, 60], 0.4)] },
+      { say: { en: 'Listen for the form in recordings: count the bars on your fingers, one hand for each line of four. When the band goes back to the top, you should be at twelve.', he: 'הקשיבו לצורה בהקלטות: ספרו את התיבות על האצבעות, יד אחת לכל שורה של ארבע. כשהלהקה חוזרת להתחלה, אתם אמורים להיות בשתים־עשרה.' } },
+      { say: { en: 'Where it lives: every jazz singer’s first standards are blues tunes, and every scat solo grows from short calls. Recap: long-short, 2 and 4, twelve bars.', he: 'איפה זה חי: הסטנדרטים הראשונים של כל זמר ג׳אז הם בלוזים, וכל סולו סקאט צומח מקריאות קצרות. סיכום: ארוך־קצר, 2 ו־4, שתים־עשרה תיבות.' } },
     ],
   },
   {

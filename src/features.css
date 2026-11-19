@@ -1693,6 +1693,8 @@
 .mini-player, .mini-celebrate { box-sizing: border-box; max-width: 560px; min-width: 0; }
 .mini-stage { min-width: 0; max-width: 100%; overflow: hidden; }
 .mini-stage .notes-view { max-width: 100%; }
+.mini-notation { inline-size: min(100%, 360px); }
+.mini-notation .rhythm-staff { margin: 0 auto; inline-size: fit-content; max-inline-size: 100%; }
 .mini-overlay { overflow-x: hidden; }
 
 /* The placement topic strip wraps instead of scrolling sideways (phones) */
