@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.106.0',
+    date: '2026-11-19',
+    en: ['Every course, at every level: one new idea per unit, the rest of the unit practises what you just learned, and a topic climbs one level at a time.', 'No step comes before the lesson that teaches it: many topics now open with their lesson, and a lesson you skipped comes back as a quick check before anything that needs it. The Jazz path no longer runs out.', 'The first steps of each instrument are no longer skipped, and a step you passed in one course counts in the others.', 'One Hebrew term per idea across the app, and a fix to the upper-structures explanation (VI gives 13 with ♭9).'],
+    he: ['בכל קורס ובכל רמה: רעיון חדש אחד ביחידה, שאר היחידה מתרגלת את מה שלמדתם, ונושא עולה רמה אחת בכל פעם.', 'אף שלב לא בא לפני השיעור שמלמד אותו: נושאים רבים נפתחים עכשיו בשיעור שלהם, ושיעור שדילגתם עליו חוזר כבדיקה קצרה לפני מה שצריך אותו. מסלול הג׳אז כבר לא נגמר באמצע.', 'הצעדים הראשונים בכל כלי כבר לא מדולגים, ושלב שעברתם בקורס אחד נחשב גם בקורסים האחרים.', 'מונח עברי אחד לכל מושג בכל האפליקציה, ותיקון בהסבר המבנים העליונים (VI נותן 13 עם ♭9).'],
+  },
+  {
     version: '0.105.0',
     date: '2026-11-19',
     en: ['Every course now opens with a short animated tour of what awaits you, and each unit opens with a short intro the first time you enter it. Replay both from the course page.', 'Gentler pacing: each level gives you two or three questions before it climbs, and the first lessons teach one topic at a time.', 'The Ear course now starts with high and low, and a new lesson, “What is a chord?”, comes before major and minor. Games wait until their concept has been taught.'],
