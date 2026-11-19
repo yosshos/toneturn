@@ -72,6 +72,9 @@ export async function freshStartIfNeeded(store: FreshStore): Promise<boolean> {
     return false;
   }
   if (seen === PROGRESS_EPOCH) return false;
+  // Automated browsers (the e2e suite seeds its own state) are left alone unless a test asks for the fresh start.
+  const auto = typeof navigator !== 'undefined' && navigator.webdriver === true;
+  if (auto && !l.getItem('toneturn.e2e.fresh')) return false;
   const [settings, progress] = await Promise.all([store.loadSettings(), store.loadProgress()]);
   const used = progress.history.length > 0 || Boolean(settings.firstUseAt) || Boolean(settings.intake) || Boolean(settings.activeCourse);
   if (used) {
