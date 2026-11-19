@@ -449,7 +449,7 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
 /** A course's six radar axes with short labels (final bass check: "Plucking hand" and "Fretting hand" both cut to
  *  "יד" — two axes with one name). */
 const RADAR_FAMILIES: Partial<Record<CourseId, [family: string, he: string, en: string][]>> = {
-  bass: [['b-pluck', 'פריטה', 'Plucking'], ['b-fret', 'לחיצה', 'Fretting'], ['b-time', 'זמן', 'Time'], ['b-chord', 'הרמוניה', 'Harmony'], ['b-walk', 'ווקינג', 'Walking'], ['b-read', 'קריאה', 'Reading']],
+  bass: [['b-pluck', 'פריטה', 'Plucking'], ['b-fret', 'לחיצה', 'Fretting'], ['b-time', 'זמן', 'Time'], ['b-chord', 'הרמוניה', 'Harmony'], ['b-walk', 'בס מהלך', 'Walking'], ['b-read', 'קריאה', 'Reading']],
   // PIANO_AUDIT I4: the first six catalogue families left the ear out and put "advanced" on the radar of a beginner.
   keys: [['scales', 'סולמות', 'Scales'], ['arpeggios', 'ארפג׳יו', 'Arpeggios'], ['fingers', 'אצבעות', 'Fingers'], ['control', 'מגע', 'Touch'], ['cadences', 'הרמוניה', 'Harmony'], ['k-ear', 'שמיעה', 'Ear']],
 };

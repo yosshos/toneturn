@@ -279,7 +279,7 @@ export const LADDER: Record<CourseId, T2[]> = {
   bass: [
     { en: 'Roots & pocket', he: 'שורשים וכיס' },
     { en: 'Grooves & blues', he: 'גרובים ובלוז' },
-    { en: 'Walking', he: 'ווקינג' },
+    { en: 'Walking', he: 'בס מהלך' },
     { en: 'Advanced', he: 'מתקדמים' },
   ],
   drums: [
@@ -482,7 +482,7 @@ export type JazzWho = 'voice' | 'keys' | 'bass' | 'guitar' | null;
 const JAZZ_WELL: Record<'voice' | 'keys' | 'bass' | 'guitar', TasteDef> = {
   voice: T('jazz', 'well', 'Trade 2s with the band', 'חילופי שתיים עם הלהקה', 'Scat two bars, the band answers, over a swing blues.', 'סקאט של שתי תיבות, הלהקה עונה, על בלוז בסווינג.', { kind: 'vocal', level: 1510 }),
   keys: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of a line, the band answers.', 'לנגן ארבע תיבות של קו, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'k-bebop-8', items: [0] }] }),
-  bass: T('jazz', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'ווקינג, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
+  bass: T('jazz', 'well', 'Trade 4s with the drums', 'חילופי ארבע עם התופים', 'Walk, then take four bars while the drums answer.', 'בס מהלך, ואז ארבע תיבות שלכם והתופים עונים.', { kind: 'drills', picks: [{ level: 'b-impro-14', items: [0] }] }),
   // A guitarist trades 4s on a ii–V–I (g-impro 7, option 0), judged by mic or MIDI like the guitar line drills.
   guitar: T('jazz', 'well', 'Trade 4s with the band', 'חילופי ארבע עם הלהקה', 'Play four bars of your own line on the guitar, the band answers.', 'לנגן בגיטרה ארבע תיבות של קו משלכם, והלהקה עונה.', { kind: 'drills', picks: [{ level: 'g-impro-7', match: ':op0:' }] }),
 };
@@ -590,7 +590,7 @@ export const REAL_MUSIC: Record<CourseId, Record<SelfReport, TasteDef>> = {
   bass: {
     new: R('bass', 'new', 'Walk a blues chorus', 'ללכת סבב בלוז', 'Roots and fifths in quarters through all 12 bars, with the band.', 'שורשים וקווינטות ברבעים לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-2', items: [0], band: { style: 'swing', chart: BLUES_E, drums: 'swing' } }] }),
     bit: R('bass', 'bit', 'A shuffle chorus', 'סבב שאפל', 'Boogie shapes through a whole 12-bar blues, with the band.', 'צורות בוגי לאורך בלוז שלם של 12 תיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-styles-4', items: [0] }] }),
-    well: R('bass', 'well', 'Walk a blues chorus', 'ללכת סבב בלוז', 'A walking line, R–3–5–6, through all 12 bars, with the band.', 'קו ווקינג, R–3–5–6, לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-3', items: [1], band: { style: 'swing', chart: BLUES_C, drums: 'swing' } }] }),
+    well: R('bass', 'well', 'Walk a blues chorus', 'ללכת סבב בלוז', 'A walking line, R–3–5–6, through all 12 bars, with the band.', 'קו בס מהלך, R–3–5–6, לאורך כל 12 התיבות, עם הלהקה.', { kind: 'drills', picks: [{ level: 'b-walk-3', items: [1], band: { style: 'swing', chart: BLUES_C, drums: 'swing' } }] }),
   },
   drums: {
     new: R('drums', 'new', 'Verse to chorus', 'מבית לפזמון', 'Hold the verse groove, fill on the cue and lift into the chorus, with the band.', 'להחזיק את הגרוב של הבית, מעבר ברמז ולעלות לפזמון, עם הלהקה.', { kind: 'drills', picks: [{ level: 'd-song-1', items: [0] }] }),

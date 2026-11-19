@@ -41,9 +41,9 @@ export const TUNE_LADDERS: Record<LadderInst, TuneStep[]> = {
   bass: [
     S('b-tune', 'tn-root', 'Roots', 'שורשים'),
     S('b-tune', 'tn-two', 'Two-feel', 'בשתיים'),
-    S('b-tune', 'tn-walk', 'Walking', 'ווקינג'),
-    S('b-tune', 'tn-appr', 'Walking with approaches', 'ווקינג עם צלילי גישה'),
-    S('b-tune', 'tn-walk', 'Walking in all 12 keys', 'ווקינג בכל 12 הסולמות', true),
+    S('b-tune', 'tn-walk', 'Walking', 'בס מהלך'),
+    S('b-tune', 'tn-appr', 'Walking with approaches', 'בס מהלך עם צלילי גישה'),
+    S('b-tune', 'tn-walk', 'Walking in all 12 keys', 'בס מהלך בכל 12 הסולמות', true),
   ],
 };
 export const ladderInstOf = (family: FamilyId): LadderInst | null => (family === 'k-tune' ? 'piano' : family === 'g-tune' ? 'guitar' : family === 'b-tune' ? 'bass' : null);

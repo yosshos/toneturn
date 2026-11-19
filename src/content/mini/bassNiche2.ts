@@ -13,7 +13,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄢',
     title: { en: 'The standards ladder', he: 'סולם הסטנדרטים' },
-    takeaway: { en: 'Five tiers of tunes, from blues forms to Coltrane changes: walk a whole chorus from the chart, at the tier’s tempo, without losing the form.', he: 'חמש דרגות של שירים, מצורות בלוז ועד קולטריין צ׳יינג׳ס: ווקינג של סבב שלם מהצ׳ארט, בטמפו של הדרגה, בלי לאבד את הצורה.' },
+    takeaway: { en: 'Five tiers of tunes, from blues forms to Coltrane changes: walk a whole chorus from the chart, at the tier’s tempo, without losing the form.', he: 'חמש דרגות של שירים, מצורות בלוז ועד קולטריין צ׳יינג׳ס: בס מהלך של סבב שלם מהצ׳ארט, בטמפו של הדרגה, בלי לאבד את הצורה.' },
     steps: [
       {
         say: { en: 'Hi {name}! A working jazz bassist knows tunes, not exercises. This ladder sorts the tunes into five tiers.', he: 'היי {name}! בסיסט ג׳אז שעובד מכיר שירים, לא תרגילים. הסולם הזה מסדר את השירים בחמש דרגות.' },
@@ -32,7 +32,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'B – G – E♭', he: 'B – G – E♭' } },
       },
       {
-        say: { en: 'Your turn: only the chart is shown. Walk one chorus; I check the chord tones on every change, and on long forms that the second half keeps the tempo of the first.', he: 'תורכם: רק הצ׳ארט מוצג. ווקינג של סבב אחד; אני בודק צלילי אקורד בכל חילוף, ובצורות ארוכות שהחצי השני שומר על הטמפו של הראשון.' },
+        say: { en: 'Your turn: only the chart is shown. Walk one chorus; I check the chord tones on every change, and on long forms that the second half keeps the tempo of the first.', he: 'תורכם: רק הצ׳ארט מוצג. בס מהלך של סבב אחד; אני בודק צלילי אקורד בכל חילוף, ובצורות ארוכות שהחצי השני שומר על הטמפו של הראשון.' },
         play: [notes([31, 35, 38, 41], 0.55)],
       },
     ],
@@ -56,7 +56,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([35, 43, 39, 47], 0.6)],
       },
       {
-        say: { en: 'The usual mistake is losing the form in the bridge. Sing the melody in your head while you walk; it tells you where you are.', he: 'הטעות הנפוצה היא לאבד את הצורה בגשר. שרים את המנגינה בראש בזמן הווקינג; היא אומרת לכם איפה אתם.' },
+        say: { en: 'The usual mistake is losing the form in the bridge. Sing the melody in your head while you walk; it tells you where you are.', he: 'הטעות הנפוצה היא לאבד את הצורה בגשר. שרים את המנגינה בראש בזמן הבס המהלך; היא אומרת לכם איפה אתם.' },
       },
       {
         say: { en: 'To keep: tier by tier, a whole chorus, from the chart. When every tier is done, the set list badge is yours.', he: 'מה לזכור: דרגה אחרי דרגה, סבב שלם, מהצ׳ארט. כשכל הדרגות הושלמו, תג רשימת השירים שלכם.' },

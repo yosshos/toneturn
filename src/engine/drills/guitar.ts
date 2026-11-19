@@ -1970,7 +1970,7 @@ function genJazz(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'walking': {
       bassWalk(tu, key, evs, [6, 5, 4], 40);
-      title = t(`Walking bass on guitar, ii–V–I · ${NAMES[key]}`, `ווקינג בס על גיטרה, ii–V–I · ${NAMES[key]}`);
+      title = t(`Walking bass on guitar, ii–V–I · ${NAMES[key]}`, `בס מהלך על גיטרה, ii–V–I · ${NAMES[key]}`);
       return finish(s, tu, evs, { title, bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     case 'comp': {
@@ -2353,12 +2353,12 @@ export function genBass(s: DrillSpec, tu: Tuning): Drill {
       });
       const end = place(tu, rootP(key), [nStr, nStr - 1], 0, 7)!;
       evs.push({ beat, dur: 2, notes: [{ ...end, ct: true, stroke: 'i' }] });
-      return finish(s, tu, evs, { title: t(`Walking bass, 12-bar blues · ${NAMES[key]}`, `ווקינג בס, בלוז 12 תיבות · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Walking bass, 12-bar blues · ${NAMES[key]}`, `בס מהלך, בלוז 12 תיבות · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     case 'walking': {
       const evs: Ev[] = [];
       bassWalk(tu, key, evs, [4, 3, 2], 28);
-      return finish(s, tu, evs, { title: t(`Walking bass ii–V–I · ${NAMES[key]}`, `ווקינג בס ii–V–I · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Walking bass ii–V–I · ${NAMES[key]}`, `בס מהלך ii–V–I · ${NAMES[key]}`), bpm: 90, evenness: true, goal: { chordTonesOnBeats: true } });
     }
     default:
       throw new Error(`Unknown bass kind ${s.kind}`);
@@ -2625,14 +2625,14 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-jazz', 3, 'Drop-3 ii–V–I', 'ii–V–I בדרופ 3', [J('drop3')], CYC4),
       L('g-jazz', 4, 'Drop-2 ii–V–I, voice-led', 'ii–V–I בדרופ 2, הובלת קולות', [J('iivi-drop2')], CYC4),
       L('g-jazz', 5, 'Guide-tone lines', 'קווי צלילים מנחים', [J('guide-tones', { option: 0 }), J('guide-tones', { option: 1 })], CYC4),
-      L('g-jazz', 6, 'Walking bass on guitar', 'ווקינג בס על גיטרה', [J('walking')], CYC4),
+      L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
       L('g-jazz', 7, 'Harmonized scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
       // GUITAR_DEEPENING §4.2: jazz for the niche.
       LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: שלדים ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
       LT('g-jazz', 9, 'Voice leading by ear and by hand: guide tones, then drop-2 by step', 'הובלת קולות בשמיעה וביד: צלילים מנחים, ואז דרופ 2 בצעדים', [J('vl-ear', { option: 0 }), J('vl-ear', { option: 1 })], CYC4, [70, 100], 'halves', 7),
       LT('g-jazz', 10, 'Chord melody: our melody on top of drop-2 voicings', 'אקורד-מלודיה: המנגינה שלנו מעל קולות דרופ 2', range(4).map((o) => J('chord-melody', { option: o })), CYC4.slice(0, 6), [60, 90], 'halves', 8),
       LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: שלדים ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
-      LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: ווקינג בס עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
+      LT('g-jazz', 12, 'Solo-guitar texture: walking bass with guide tones above', 'מרקם של גיטרת סולו: בס מהלך עם צלילים מנחים מעליו', [J('solo-texture', { option: 0, swing: true }), J('solo-texture', { option: 1, swing: true })], CYC4, [80, 120], 'quarters + 8ths', 9),
       // GUITAR_DEEPENING P2: comp a whole standard's chart, in its own key, each at its own tempo (the repertoire's guitar standards).
       LT('g-jazz', 13, 'Comp a whole standard: the full chart with the band', 'ליווי סטנדרט שלם: כל דף האקורדים עם הלהקה', GUITAR_STD.map((x) => {
         const [a, b] = guitarStdTempo(x.id);
@@ -2755,7 +2755,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
         L('g-bass', 3, 'Grooves: root–5th–octave, ghost notes, rock 8ths, Motown, tumbao', 'גרובים: שורש–קווינטה–אוקטבה, צלילי רפאים, שמיניות רוק, מוטאון, טומבאו', [B('r58'), B('ghost'), B('groove', { option: 0 }), B('groove', { option: 1 }), B('groove', { option: 2 })], GKEYS_MAJOR),
         L('g-bass', 4, 'Arpeggios: triads and 7ths', 'ארפג׳יו: משולשים וספטאקורדים', [B('arp'), B('arp', { option: 0 }), B('arp', { option: 1 }), B('arp', { option: 2 })], GKEYS_MAJOR),
         L('g-bass', 5, 'Octaves and slap (disco / funk)', 'אוקטבות וסלאפ (דיסקו / פאנק)', [B('octaves'), B('slap'), B('slap', { option: 1 })], [4, 9, 2, 7, 0, 5]),
-        L('g-bass', 6, 'Walking bass: ii–V–I and the blues', 'ווקינג בס: ii–V–I והבלוז', [B('walking'), B('walk-blues')], CYC4),
+        L('g-bass', 6, 'Walking bass: ii–V–I and the blues', 'בס מהלך: ii–V–I והבלוז', [B('walking'), B('walk-blues')], CYC4),
       ],
       ['bass'],
     ),

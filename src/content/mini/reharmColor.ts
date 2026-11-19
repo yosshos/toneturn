@@ -724,7 +724,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'On the piano, play G7 to each target with smooth voice leading: the 7th falls, the 3rd moves by step.', he: 'בפסנתר נגנו G7 אל כל יעד בהובלת קולות חלקה: הספטימה יורדת, הטרצה זזה בצעד.' },
       },
       {
-        say: { en: 'The bass player hears it first: plan the walking line to the new target so the band lands together.', he: 'נגן הבס שומע את זה ראשון: מתכננים את קו הווקינג אל היעד החדש כדי שהלהקה תנחת יחד.' },
+        say: { en: 'The bass player hears it first: plan the walking line to the new target so the band lands together.', he: 'נגן הבס שומע את זה ראשון: מתכננים את קו הבס המהלך אל היעד החדש כדי שהלהקה תנחת יחד.' },
         play: [notes([43, 42, 44], 0.5)],
       },
       {

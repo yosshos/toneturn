@@ -1220,7 +1220,7 @@ export function rulesFromText(text: string, kind: 'walk' | 'chordTones' | 'neare
 const lowRoot = (tu: Tuning, pc: number): number | null => (lowest(tu) < 28 ? lowest(tu) + mod(pc - lowest(tu), 12) : null);
 
 export type Feel = 'walk' | 'two' | 'bossa' | 'ballad';
-export const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'ווקינג בארבע'), two: tt('two-feel', 'בתחושה של שתיים'), bossa: tt('bossa pattern', 'תבנית בוסה'), ballad: tt('ballad in 2', 'בלדה בשתיים') };
+export const FEEL_T: Record<Feel, T2> = { walk: tt('walking in 4', 'בס מהלך בארבע'), two: tt('two-feel', 'בתחושה של שתיים'), bossa: tt('bossa pattern', 'תבנית בוסה'), ballad: tt('ballad in 2', 'בלדה בשתיים') };
 /**
  * B13 / B18: standards for the walking levels — the changes from standards.ts (chord progressions only), each with the
  * tune's real key and the bass feel it calls for. The first four keep their option numbers (walk L11).
@@ -1349,7 +1349,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
         return [...three, below >= lowest(tu) && (bar % 2 === 0 || next + 1 === three[2]) ? below : next + 1];
       }, [3]);
       line.push(endOn(tu, key, 48, 2));
-      return drillOf(s, tu, alt(line), { en: 'First walking line: R–3–5 and a half step into each chord (blues)', he: 'קו ווקינג ראשון: R–3–5 וחצי טון אל כל אקורד (בלוז)', chart: chartOf(key, blues), goal: { chordTonesOnBeats: true } });
+      return drillOf(s, tu, alt(line), { en: 'First walking line: R–3–5 and a half step into each chord (blues)', he: 'קו בס מהלך ראשון: R–3–5 וחצי טון אל כל אקורד (בלוז)', chart: chartOf(key, blues), goal: { chordTonesOnBeats: true } });
     }
     case 'chrom':
     case 'dom':
@@ -1374,7 +1374,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       // own walking line stays as the opt-in model.
       const line = refWalk(tu, textOf(key, blues), `b-walk:free:${key}:${op}`, false);
       line.push(endOn(tu, key, 48, 2));
-      return drillOf(s, tu, alt(line), { en: 'Free walking, mixed approaches (blues)', he: 'ווקינג חופשי, גישות מעורבות (בלוז)', chart: chartOf(key, blues), show: 'chart', bass: { rules: rulesOf(key, blues, 'walk') }, drums: { groove: 'swing' } });
+      return drillOf(s, tu, alt(line), { en: 'Free walking, mixed approaches (blues)', he: 'בס מהלך חופשי, גישות מעורבות (בלוז)', chart: chartOf(key, blues), show: 'chart', bass: { rules: rulesOf(key, blues, 'walk') }, drums: { groove: 'swing' } });
     }
     case 'skips': {
       // A walking line over the blues with ghosted triplet skips.
@@ -1390,7 +1390,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       }
       line.sort((a, b) => a.b - b.b);
       line.push(endOn(tu, key, 48, 2));
-      return drillOf(s, tu, alt(line), { en: 'Walking with triplet skips (blues)', he: 'ווקינג עם קפיצות טריולה (בלוז)', chart: chartOf(key, blues), evenness: false });
+      return drillOf(s, tu, alt(line), { en: 'Walking with triplet skips (blues)', he: 'בס מהלך עם קפיצות טריולה (בלוז)', chart: chartOf(key, blues), evenness: false });
     }
     case 'cycle': {
       // B4: ii–V–I up in 4ths through four keys, then home: the line ends on the tonic of its own key.
@@ -1456,7 +1456,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       const prog: Prog = [[2, 'm7'], [7, '7'], [0, 'maj7'], [0, 'maj7']];
       const line = walk(prog, (R, c, next, bar) => [R, R + QI[c[1]][1], R + QI[c[1]][2], approach('chrom', R + QI[c[1]][2], next, bar)], [3]);
       line.push(endOn(tu, key, 16, 2));
-      return drillOf(s, tu, alt(line), { en: 'Walk the chart: Dm7 – G7 – Cmaj7', he: 'ווקינג לפי הצ׳ארט: Dm7 – G7 – Cmaj7', chart: chartOf(key, prog), show: 'chart', bass: { rules: rulesOf(key, prog, 'walk') } });
+      return drillOf(s, tu, alt(line), { en: 'Walk the chart: Dm7 – G7 – Cmaj7', he: 'בס מהלך לפי הצ׳ארט: Dm7 – G7 – Cmaj7', chart: chartOf(key, prog), show: 'chart', bass: { rules: rulesOf(key, prog, 'walk') } });
     }
     case 'solo': {
       // Bagrut (5 units): a two-chorus solo over the blues — chord-scale notes, free rhythm; only the chart is shown.
@@ -1480,7 +1480,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
       prog.splice(prog.length - 2, 2, [7, '7'], [0, 'maj7']);
       const line = refWalk(tu, textOf(key, prog), `b-walk:sight:${key}:${op}`, false);
       line.push(endOn(tu, key, prog.length * 4, 2));
-      return drillOf(s, tu, alt(line), { en: 'Sight-read and improvise the walk', he: 'קריאה מהדף ואלתור ווקינג', chart: chartOf(key, prog), show: 'chart', bass: { rules: rulesOf(key, prog, 'walk') }, drums: { groove: 'swing' } });
+      return drillOf(s, tu, alt(line), { en: 'Sight-read and improvise the walk', he: 'קריאה מהדף ואלתור בס מהלך', chart: chartOf(key, prog), show: 'chart', bass: { rules: rulesOf(key, prog, 'walk') }, drums: { groove: 'swing' } });
     }
     case 'lowb': {
       // B13: walking in the low register of a 5- / 6-string (roots from B0); on a 4-string the low E is the floor.
@@ -1492,7 +1492,7 @@ export function genWalk(s: DrillSpec, tu: Tuning): Drill {
         return [...three, approach('chrom', three[2], tgt, bar)];
       }, [3]);
       line.push({ b: 32, d: 2, p: lowRoot(tu, key) ?? rootOf(tu, key) });
-      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'ווקינג באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
+      return drillOf(s, tu, alt(line), { en: 'Low register walk (low B on 5-string)', he: 'בס מהלך באזור הנמוך (B נמוך בבס 5 מיתרים)', chart: chartOf(key, iivi), goal: { chordTonesOnBeats: true }, drums: { groove: 'swing' } });
     }
     case 'two-four': {
       // A blues chorus in 2 (half notes), then a chorus in 4 (walking).
@@ -2637,7 +2637,7 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 4, 'Root finder: ii, iii, vi, V7', 'מוצא השורשים: ii, iii, vi, V7', [EA('roots', { option: 1 })], all12(K6), [70, 100], 'halves'),
       L('b-ear', 5, 'Rhythm recall on the E string', 'זיכרון מקצב על מיתר E', [EA('rhythm', { option: 0 }), EA('rhythm', { option: 1 })], OPEN, [70, 100], E8),
       L('b-ear', 6, 'Melodic recall: play it back', 'זיכרון מלודי: לנגן בחזרה', [EA('melodic')], all12(K6), [60, 90], E8),
-      L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו ווקינג', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], all12(K6), [70, 110], Qn),
+      L('b-ear', 7, 'Transcribe a walking line', 'לתמלל קו בס מהלך', [EA('transcribe', { perBeat: 1 }), EA('transcribe', { perBeat: 1, option: 1 })], all12(K6), [70, 110], Qn),
       L('b-ear', 8, 'Inversions and slash bass by ear', 'היפוכים ובס סלאש בשמיעה', [EA('slash', { perBeat: 0.5 }), EA('slash', { perBeat: 0.5, option: 1 })], all12(K6), [60, 90], 'halves'),
       // RSL ear tests Gr 6–8: chord quality, answered on the bass (its arpeggio), so it is measured.
       L('b-ear', 9, 'Chord quality by ear: play its arpeggio', 'סוג האקורד בשמיעה: לנגן את הארפג׳יו שלו', [EA('quality', { perBeat: 1 }), EA('quality', { perBeat: 1, option: 1 })], all12(K6), [60, 90], Qn),
@@ -2649,7 +2649,7 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ear', 14, 'Where am I? Play the next section', 'איפה אני? לנגן את הקטע הבא', [EA('where', { perBeat: 0.5 }), EA('where', { perBeat: 0.5, option: 1 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
       L('b-ear', 15, 'The band drops in: find your place', 'הלהקה נכנסת באמצע: למצוא את המקום', [EA('dropin', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
       L('b-ear', 16, 'Hear a chorus, play the bridge', 'לשמוע סבב, לנגן את הגשר', [EA('bridge', { perBeat: 0.5 })], all12([5, 10, 0, 7]), [80, 120], 'halves'),
-      L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של ווקינג', [EA('transcribe-long', { perBeat: 1 })], all12(K6), [80, 140], Qn),
+      L('b-ear', 17, 'Play back 4 bars of walking', 'לנגן בחזרה 4 תיבות של בס מהלך', [EA('transcribe-long', { perBeat: 1 })], all12(K6), [80, 140], Qn),
       L('b-ear', 18, 'Play back 8 bars, or a bebop phrase', 'לנגן בחזרה 8 תיבות, או משפט ביבופ', [EA('transcribe-long', { perBeat: 1, option: 1 }), EA('transcribe-long', { option: 2 })], all12(K6), [80, 120], 'quarters / 8ths'),
       L('b-ear', 19, 'Play back a 7/8 riff or a tumbao', 'לנגן בחזרה ריף ב־7/8 או טומבאו', [EA('riff-ear', { tempo: 160 }), EA('riff-ear', { option: 1 })], [4, 9, 2, 7], [70, 100], '8ths'),
       // BASS_NICHE_PLAN E5: meter by ear — the groove's grouping, the new beat after a metric modulation.
@@ -2747,31 +2747,31 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-ghost', 5, 'Two-bar funk lines', 'קווי פאנק בשתי תיבות', [GH('funk-line', { perBeat: 4 }), GH('funk-line', { perBeat: 4, option: 1 })], 'major', [70, 100], S16),
       L('b-ghost', 6, 'Stylistic study: 8 bars', 'אטיוד סגנוני: 8 תיבות', [GH('study', { perBeat: 4 })], K4, [80, 105], S16),
     ]),
-    fam('b-walk', 'Walking bass, step by step', 'ווקינג בס, צעד אחר צעד', [
+    fam('b-walk', 'Walking bass, step by step', 'בס מהלך, צעד אחר צעד', [
       L('b-walk', 1, 'Two-feel: roots and 5ths', 'בשתיים: שורשים וקווינטות', [WK('two-feel', { perBeat: 0.5 })], [5, 10], [80, 140], 'halves'),
       L('b-walk', 2, 'Quarter-note roots and 5ths', 'שורשים וקווינטות ברבעים', [WK('r5walk', { perBeat: 1 }), WK('r5walk', { perBeat: 1, option: 1 })], K6, [80, 140], Qn),
       L('b-walk', 3, 'Arpeggio walk', 'הליכת ארפג׳יו', [WK('arpwalk', { perBeat: 1 }), WK('arpwalk', { perBeat: 1, option: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 4, 'Chromatic approach on beat 4', 'גישה כרומטית בפעמה 4', [WK('chrom', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 5, 'Dominant approach', 'גישה דומיננטית', [WK('dom', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 6, 'Scale-step approach', 'גישה בצעד סולמי', [WK('scaleapp', { perBeat: 1 })], 'major', [90, 150], Qn),
-      L('b-walk', 7, 'Walking with mixed approaches', 'ווקינג עם גישות מעורבות', [WK('free', { perBeat: 1 }), WK('free', { perBeat: 1, option: 1 })], 'major', [100, 160], Qn),
+      L('b-walk', 7, 'Walking with mixed approaches', 'בס מהלך עם גישות מעורבות', [WK('free', { perBeat: 1 }), WK('free', { perBeat: 1, option: 1 })], 'major', [100, 160], Qn),
       L('b-walk', 8, 'Ghosted skips and triplet drops', 'קפיצות רפאים וטריולות', [WK('skips', { perBeat: 1 })], [5, 10, 7, 0], [100, 160], 'quarters + triplets'),
       L('b-walk', 9, 'ii–V–I through all keys', 'ii–V–I בכל הסולמות', [WK('cycle', { perBeat: 1 })], 'major', [100, 180], Qn),
       L('b-walk', 10, 'Rhythm changes: two chords a bar', 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה', [WK('rhythm', { perBeat: 1 })], [10, 3, 5], [100, 200], Qn),
       L('b-walk', 11, 'Standards: one chorus', 'סטנדרטים: סבב אחד', [0, 1, 2, 3].map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
       L('b-walk', 12, 'Up-tempo, in 2 and in 4', 'טמפו מהיר, בשתיים ובארבע', [WK('two-four', { perBeat: 1 })], [5, 10], [160, 240], 'halves / quarters'),
       // 0.64 (B18): more standards, each in its own key and feel; the bagrut solo and sight-read improvisation; low B.
-      L('b-walk', 13, 'More standards: walking in 4', 'עוד סטנדרטים: ווקינג בארבע', stdOps((f, i) => i >= 4 && i < STD_FIRST && f === 'walk').map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
+      L('b-walk', 13, 'More standards: walking in 4', 'עוד סטנדרטים: בס מהלך בארבע', stdOps((f, i) => i >= 4 && i < STD_FIRST && f === 'walk').map((o) => WK('standard', { perBeat: 1, option: o })), [0], [100, 180], Qn),
       L('b-walk', 14, 'Standards in 2, ballads and bossa', 'סטנדרטים בשתיים, בלדות ובוסה', stdOps((f, i) => i >= 4 && i < STD_FIRST && f !== 'walk').map((o) => WK('standard', { perBeat: 0.5, option: o })), [0], [70, 150], 'halves / bossa'),
       L('b-walk', 15, 'A two-chorus solo over the blues', 'סולו של שני סבבים על בלוז', [WK('solo')], [5, 10, 7], [80, 140], E8),
-      L('b-walk', 16, 'Sight-read and improvise the walk', 'קריאה מהדף ואלתור ווקינג', [WK('sight-impro', { perBeat: 1 }), WK('sight-impro', { perBeat: 1, option: 1 })], 'major', [90, 160], Qn),
-      L('b-walk', 17, 'Walking in the low register (low B)', 'ווקינג באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
+      L('b-walk', 16, 'Sight-read and improvise the walk', 'קריאה מהדף ואלתור בס מהלך', [WK('sight-impro', { perBeat: 1 }), WK('sight-impro', { perBeat: 1, option: 1 })], 'major', [90, 160], Qn),
+      L('b-walk', 17, 'Walking in the low register (low B)', 'בס מהלך באזור הנמוך (B נמוך)', [WK('lowb', { perBeat: 1 })], 'major', [90, 150], Qn),
       L('b-walk', 18, 'Standards III: forms, cycles and Coltrane changes', 'סטנדרטים 3: צורות, מעגלים ושינויי קולטריין', BASS_STD.map((x, i) => (i >= STD_FIRST ? WK('standard', { perBeat: x.feel === 'walk' ? 1 : 0.5, option: i }) : null)).filter((x): x is NonNullable<typeof x> => x !== null), [0], [90, 180], 'quarters / halves'),
       // BASS_NICHE_PLAN J5: walking in 3/4 (a jazz waltz, the blues waltz).
       ...waltzLevels(L),
       // AUDIT-7 #2: the first real walking line over a blues, below 1000 (audit7Placement.ts: between the arpeggio walk
       // and the chromatic approach over ii–V–I), all 12 keys.
-      L('b-walk', 21, 'First walking line over a blues: R–3–5 and a half step in', 'קו ווקינג ראשון על בלוז: R–3–5 וחצי טון פנימה', [WK('blues-chrom', { perBeat: 1 })], 'major', [80, 140], Qn),
+      L('b-walk', 21, 'First walking line over a blues: R–3–5 and a half step in', 'קו בס מהלך ראשון על בלוז: R–3–5 וחצי טון פנימה', [WK('blues-chrom', { perBeat: 1 })], 'major', [80, 140], Qn),
     ]),
     // 0.66: fills and short solos that land on chord tones — a ladder up to the walk family's two-chorus blues solo.
     fam('b-impro', 'Fills and target notes', 'מעברים וצלילי מטרה', [
@@ -2995,12 +2995,12 @@ function uprightFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-up-pizz', 3, 'Sustain at tempo', 'צליל מתמשך בטמפו', [PZ('pizz', { perBeat: 1, option: 2 })], [5, 10, 7, 0], [140, 200], Qn),
       L('b-up-pizz', 4, 'Pizz study: Grades 4–5 style', 'אטיוד בפיציקטו: סגנון שלבים 4–5', [PZ('etude', { option: 1 })], [7, 2, 9, 5], [70, 110], E8),
     ]),
-    fam('b-up-walk', 'Upright: walking', 'קונטרבס: ווקינג', [
+    fam('b-up-walk', 'Upright: walking', 'קונטרבס: בס מהלך', [
       L('b-up-walk', 1, 'Two-feel roots and 5ths', 'בשתיים: שורשים וקווינטות', [WU('two-feel', { perBeat: 0.5 })], [5, 10], [80, 140], 'halves'),
       L('b-up-walk', 2, 'Quarter-note roots and 5ths', 'שורשים וקווינטות ברבעים', [WU('r5walk', { perBeat: 1 })], [5, 10, 7], [80, 140], Qn),
       L('b-up-walk', 3, 'Arpeggio walk', 'הליכת ארפג׳יו', [WU('arpwalk', { perBeat: 1 })], [5, 10, 7, 0], [90, 150], Qn),
       L('b-up-walk', 4, 'Chromatic approach', 'גישה כרומטית', [WU('chrom', { perBeat: 1 })], 'major', [90, 150], Qn),
-      L('b-up-walk', 5, 'Free walking (blues)', 'ווקינג חופשי (בלוז)', [WU('free', { perBeat: 1 })], [5, 10, 7, 0], [100, 160], Qn),
+      L('b-up-walk', 5, 'Free walking (blues)', 'בס מהלך חופשי (בלוז)', [WU('free', { perBeat: 1 })], [5, 10, 7, 0], [100, 160], Qn),
       // BASS_NICHE_PLAN J7: the upright jazz top (standards in tune, up-tempo pizz, a thumb-position solo, an arco head).
       ...uprightTopLevels(L),
     ]),

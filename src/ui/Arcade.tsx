@@ -774,13 +774,13 @@ const DRUMS_BLURB: Record<string, { en: string; he: string }> = {
 };
 /** The bass course's own words on shared game cards and rows (final bass check). */
 const BASS_BLURB: Record<string, { en: string; he: string }> = {
-  drills: { en: 'Plucking, groove, walking and reading — measured on your bass.', he: 'פריטה, גרוב, ווקינג וקריאה — נמדדים על הבס שלכם.' },
+  drills: { en: 'Plucking, groove, walking and reading — measured on your bass.', he: 'פריטה, גרוב, בס מהלך וקריאה — נמדדים על הבס שלכם.' },
   'rush-fretboard': { en: 'Find the note on the bass neck — 60 seconds.', he: 'מצאו את התו על צוואר הבס — 60 שניות.' },
   'rush-note': { en: 'Read bass-clef notes as fast as you can.', he: 'קראו תווים במפתח פה הכי מהר שאפשר.' },
   tuneup: { en: 'Tune the four bass strings by ear.', he: 'מכוונים את ארבעת מיתרי הבס בשמיעה.' },
 };
 const BASS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
-  drills: { en: ['Technique', 'Plucking, groove, walking, reading'], he: ['טכניקה', 'פריטה, גרוב, ווקינג וקריאה'] },
+  drills: { en: ['Technique', 'Plucking, groove, walking, reading'], he: ['טכניקה', 'פריטה, גרוב, בס מהלך וקריאה'] },
   songs: { en: ['Songs', 'Real tunes on the bass'], he: ['שירים', 'מנגינות אמיתיות על הבס'] },
 };
 /** The keys course's own words on its rows (PIANO_AUDIT I7: "your instrument" and "play and sing" were generic). */

@@ -412,7 +412,7 @@ export const LESSONS: MiniLesson[] = [
         play: [clip('modern')],
       },
       {
-        say: { en: 'Jazz: swung eighth notes, a walking bass, a ride cymbal and short chord jabs.', he: 'ג׳אז: שמיניות בסווינג, ווקינג בס, מצילת רייד ודקירות קצרות של אקורדים.' },
+        say: { en: 'Jazz: swung eighth notes, a walking bass, a ride cymbal and short chord jabs.', he: 'ג׳אז: שמיניות בסווינג, בס מהלך, מצילת רייד ודקירות קצרות של אקורדים.' },
         play: [clip('jazz')],
       },
       {
@@ -441,7 +441,7 @@ export const LESSONS: MiniLesson[] = [
         play: [clip('modern')],
       },
       {
-        say: { en: 'Jazz: a swing feel with long-short eighths, seventh chords and extensions, improvisation, and a walking bass. Pop: a steady backbeat on 2 and 4, short chord loops, verse–chorus form and a hook.', he: 'ג׳אז: תחושת סווינג עם שמיניות ארוך־קצר, ספטאקורדים וטנשנים, אימפרוביזציה ו־ווקינג בס. פופ: ביט יציב עם הדגשה על 2 ו־4, לופים קצרים של אקורדים, מבנה בית־פזמון והוק.' },
+        say: { en: 'Jazz: a swing feel with long-short eighths, seventh chords and extensions, improvisation, and a walking bass. Pop: a steady backbeat on 2 and 4, short chord loops, verse–chorus form and a hook.', he: 'ג׳אז: תחושת סווינג עם שמיניות ארוך־קצר, ספטאקורדים וטנשנים, אימפרוביזציה ובס מהלך. פופ: ביט יציב עם הדגשה על 2 ו־4, לופים קצרים של אקורדים, מבנה בית־פזמון והוק.' },
         play: [clip('jazz')],
       },
       {

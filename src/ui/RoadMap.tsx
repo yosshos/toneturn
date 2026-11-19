@@ -8,7 +8,7 @@ import { expandForm, type FormSection } from '../engine/drills/roadmap';
 import { timeMapOf } from '../engine/drills/timeline';
 
 type Lang = 'en' | 'he';
-const NAME_HE: Record<string, string> = { Intro: 'פתיחה', Head: 'נושא', Walk: 'ווקינג', Blues: 'בלוז', Stops: 'עצירות', Swing: 'סווינג', 'Last A': 'A אחרון', Tag: 'טאג', End: 'סיום', Interlude: 'מעבר', Bridge: 'גשר', Solo: 'סולו', Vamp: 'וואמפ', Outro: 'סיום' };
+const NAME_HE: Record<string, string> = { Intro: 'פתיחה', Head: 'נושא', Walk: 'בס מהלך', Blues: 'בלוז', Stops: 'עצירות', Swing: 'סווינג', 'Last A': 'A אחרון', Tag: 'טאג', End: 'סיום', Interlude: 'מעבר', Bridge: 'גשר', Solo: 'סולו', Vamp: 'וואמפ', Outro: 'סיום' };
 const nameOf = (n: string, lang: Lang) => (lang === 'he' ? NAME_HE[n] ?? n : n);
 
 /** What the player does in a section, in a few words (the section's own cue first). */

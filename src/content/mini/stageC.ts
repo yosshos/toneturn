@@ -49,7 +49,7 @@ export const LESSONS: MiniLesson[] = [
     steps: [
       { say: { en: 'First the walking line alone: the root on each chord, chord tones between, a half step into the next root.', he: 'קודם הקו המהלך לבד: השורש בכל אקורד, צלילי אקורד ביניהם, חצי טון אל השורש הבא.' }, play: [notes([41, 45, 48, 51, 46, 50, 53, 47], 0.45)] },
       { say: { en: 'Then the shell above it, short, on the "and" of 2 and 4, the comping a pianist would play.', he: 'אחר כך השלד מעליו, קצר, על ה"וְ" של 2 ו-4, הליווי שפסנתרן היה מנגן.' }, play: [chord([41, 57, 63], 0.4), chord([46, 56, 62], 0.4)] },
-      { say: { en: 'In chord-melody the melody stays on top. Under it go drop 2 chords, a walking bass, or a passing diminished.', he: 'באקורד-מלודיה המנגינה נשארת למעלה. מתחתיה באים אקורדי דרופ 2, ווקינג בס, או מוקטן עובר.' }, play: [chord([48, 64, 67, 71], 0.9), chord([47, 62, 65, 69], 0.9), chord([45, 60, 64, 67], 1.2)] },
+      { say: { en: 'In chord-melody the melody stays on top. Under it go drop 2 chords, a walking bass, or a passing diminished.', he: 'באקורד-מלודיה המנגינה נשארת למעלה. מתחתיה באים אקורדי דרופ 2, בס מהלך, או מוקטן עובר.' }, play: [chord([48, 64, 67, 71], 0.9), chord([47, 62, 65, 69], 0.9), chord([45, 60, 64, 67], 1.2)] },
       { say: { en: 'An arrangement plans the whole tune: an intro from the last four bars, the chorus, a reharmonised chorus, a tag.', he: 'עיבוד מתכנן את כל השיר: פתיחה מארבע התיבות האחרונות, הפזמון, פזמון בהרמון מחדש, תג.' } },
       { say: { en: 'A ballad chorus is played rubato: the time is yours and the notes are measured. Keep the bass even, the chords lighter. Your turn.', he: 'פזמון בלדה מנוגן רובאטו: הזמן שלכם והצלילים נמדדים. שמרו על בס שווה, ואקורדים קלים יותר. תורכם.' } },
     ],
@@ -59,7 +59,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Reharmonising a chorus: tritone substitutions, extra two-fives, a backdoor dominant. The melody stays the same while the colours change under it.', he: 'הרמון מחדש של פזמון: תחליפי טריטון, שני-חמש נוספים, דומיננט דלת אחורית. המנגינה נשארת אותו דבר והצבעים משתנים מתחתיה.' }, play: [chord([43, 59, 65, 71], 0.8), chord([49, 59, 65, 71], 0.8), chord([48, 60, 64, 71], 1)] },
       { say: { en: 'The tag repeats the last two bars before the final chord, so the ending is felt coming, not stumbled into.', he: 'התג חוזר על שתי התיבות האחרונות לפני האקורד הסופי, כך שהסיום מורגש כשהוא מגיע ולא נופלים אליו.' } },
       { say: { en: 'A common mistake is a bass that rushes under a busy melody. Practise the bass and the melody alone first, then together, slowly.', he: 'טעות נפוצה היא בס שממהר מתחת למנגינה עמוסה. תרגלו קודם את הבס ואת המנגינה לבד, ואז יחד, לאט.' } },
-      { say: { en: 'Where it lives: solo jazz guitarists play whole sets this way, the bass walking under shells and the melody, with an intro and a tag around every tune.', he: 'איפה זה חי: גיטריסטים של ג׳אז סולו מנגנים כך הופעות שלמות, הווקינג בס מתחת לשלדים ולמנגינה, עם פתיחה ותג סביב כל שיר.' } },
+      { say: { en: 'Where it lives: solo jazz guitarists play whole sets this way, the bass walking under shells and the melody, with an intro and a tag around every tune.', he: 'איפה זה חי: גיטריסטים של ג׳אז סולו מנגנים כך הופעות שלמות, הבס המהלך מתחת לשלדים ולמנגינה, עם פתיחה ותג סביב כל שיר.' } },
       { say: { en: 'Recap: bass on the beat, shells on the "and", the melody on top, and a plan from the intro to the tag.', he: 'סיכום: בס על הפעמה, שלדים על ה"וְ", המנגינה למעלה, ותוכנית מהפתיחה ועד התג.' } },
     ],
   },

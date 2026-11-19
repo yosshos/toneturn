@@ -617,7 +617,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'The usual mistake is looking for each note alone. Think in shapes from the root, and say the chord tone you land on.', he: 'הטעות הנפוצה היא לחפש כל צליל לבד. חושבים בצורות מהשורש, ואומרים בקול על איזה צליל אקורד נוחתים.' },
       },
       {
-        say: { en: 'Walking lines use all of it: a chord tone on the first beat, then steps, and an approach note on the last beat into the next chord.', he: 'קווי ווקינג משתמשים בכל זה: צליל אקורד על הפעמה הראשונה, אחר כך צעדים, וצליל גישה בפעמה האחרונה אל האקורד הבא.' },
+        say: { en: 'Walking lines use all of it: a chord tone on the first beat, then steps, and an approach note on the last beat into the next chord.', he: 'קווי בס מהלך משתמשים בכל זה: צליל אקורד על הפעמה הראשונה, אחר כך צעדים, וצליל גישה בפעמה האחרונה אל האקורד הבא.' },
         play: [notes([31, 33, 35, 37, 38], 0.45)],
         show: { text: { en: 'G A B C♯ → D', he: 'G A B C♯ → D' } },
       },

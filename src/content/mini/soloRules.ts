@@ -71,7 +71,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'jazz',
     emoji: '𝄞',
     title: { en: 'Comp and solo on one instrument', he: 'ללוות ולאלתר על כלי אחד' },
-    takeaway: { en: 'Piano: the left hand comps written shells or rootless voicings, the right hand improvises under the cards. Guitar: a bar of chords, a bar of line. Bass: a bar of walking, a bar of fill.', he: 'פסנתר: יד שמאל מלווה בשלדים או בקולות בלי שורש, יד ימין מאלתרת לפי הכרטיסים. גיטרה: תיבת אקורדים, תיבת קו. בס: תיבת ווקינג, תיבת מעבר.' },
+    takeaway: { en: 'Piano: the left hand comps written shells or rootless voicings, the right hand improvises under the cards. Guitar: a bar of chords, a bar of line. Bass: a bar of walking, a bar of fill.', he: 'פסנתר: יד שמאל מלווה בשלדים או בקולות בלי שורש, יד ימין מאלתרת לפי הכרטיסים. גיטרה: תיבת אקורדים, תיבת קו. בס: תיבת בס מהלך, תיבת מעבר.' },
     steps: [
       {
         say: { en: 'Hi {name}! Now you are the band and the soloist. The comping is written and graded note for note.', he: 'היי {name}! עכשיו אתם גם הלהקה וגם הסולן. הליווי כתוב ונבדק צליל אחר צליל.' },

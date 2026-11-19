@@ -109,9 +109,9 @@ export const CMARR_ROWS = (): Row[] => {
 export const SOLOJAZZ_ROWS = (): Row[] => {
   const S = (kind: string, o: Partial<SpecTemplate> = {}) => sp('g-solojazz', kind, o);
   return [
-    ['Walking bass and guide tones through ii–V–I, at tempo', 'ווקינג בס וצלילים מנחים ב-ii–V–I, בטמפו', [S('g-jazz>solo-texture', { option: 0, swing: true }), S('g-jazz>solo-texture', { option: 1, swing: true })], CYC4, [100, 160], 'quarters + 8ths', 9],
-    ['Walking bass with shells on the blues', 'ווקינג בס עם שלדים על הבלוז', [S('sj-blues', { option: 0, swing: true }), S('sj-blues', { option: 1, swing: true })], CYC4, [90, 150], 'quarters + 8ths', 10],
-    ['Walking bass with shells on rhythm changes', 'ווקינג בס עם שלדים על ריתם צ׳יינג׳ס', [S('sj-rhythm', { option: 0, swing: true }), S('sj-rhythm', { option: 1, swing: true })], CYC4, [100, 170], 'quarters + 8ths', 10],
+    ['Walking bass and guide tones through ii–V–I, at tempo', 'בס מהלך וצלילים מנחים ב-ii–V–I, בטמפו', [S('g-jazz>solo-texture', { option: 0, swing: true }), S('g-jazz>solo-texture', { option: 1, swing: true })], CYC4, [100, 160], 'quarters + 8ths', 9],
+    ['Walking bass with shells on the blues', 'בס מהלך עם שלדים על הבלוז', [S('sj-blues', { option: 0, swing: true }), S('sj-blues', { option: 1, swing: true })], CYC4, [90, 150], 'quarters + 8ths', 10],
+    ['Walking bass with shells on rhythm changes', 'בס מהלך עם שלדים על ריתם צ׳יינג׳ס', [S('sj-rhythm', { option: 0, swing: true }), S('sj-rhythm', { option: 1, swing: true })], CYC4, [100, 170], 'quarters + 8ths', 10],
     ['A whole head solo: two choruses, guide tones then drop 2', 'שיר שלם סולו: שני פזמונים, צלילים מנחים ואז דרופ 2', SERVED.map((idx) => S('sj-head', { option: opt(idx) })), HEAD_KEYS, [56, 100], 'three voices', 11],
   ];
 };
@@ -353,7 +353,7 @@ function soloForm(s: DrillSpec, tu: Tuning): Drill {
     }
   evs.sort((a, b) => a.beat - b.beat);
   const what = kind === 'sj-blues' ? t('the jazz blues', 'הבלוז בג׳אז') : t('rhythm changes, A section', 'ריתם צ׳יינג׳ס, חלק A');
-  const d = finish(s, tu, evs, { title: tt(`Solo guitar on ${what.en}: walking bass, shells on the "and"`, `גיטרת סולו על ${what.he}: ווקינג בס, שלדים על ה"וְ"`, key), bpm: 90, evenness: false, keySig: SIG[key], goal: { chordTonesOnBeats: true } });
+  const d = finish(s, tu, evs, { title: tt(`Solo guitar on ${what.en}: walking bass, shells on the "and"`, `גיטרת סולו על ${what.he}: בס מהלך, שלדים על ה"וְ"`, key), bpm: 90, evenness: false, keySig: SIG[key], goal: { chordTonesOnBeats: true } });
   return { ...d, chart: text.split('|').map((x) => x.trim().replace(/b/g, '♭')) };
 }
 

@@ -39,7 +39,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   roots: tt('Hear the chords — then play their roots, two per bar', 'שמעו את האקורדים — ואז נגנו את השורשים, שניים בתיבה'),
   rhythm: tt('Hear a two-bar rhythm — echo it on the open E', 'שמעו מקצב של שתי תיבות — החזירו אותו על מיתר E פתוח'),
   melodic: tt('Hear a two-bar line — play it back', 'שמעו קו של שתי תיבות — נגנו אותו בחזרה'),
-  transcribe: tt('Hear two bars of walking bass — play them back', 'שמעו שתי תיבות של ווקינג בס — נגנו אותן בחזרה'),
+  transcribe: tt('Hear two bars of walking bass — play them back', 'שמעו שתי תיבות של בס מהלך — נגנו אותן בחזרה'),
   quality: tt('Hear a chord over its root — then play its arpeggio: root, 3rd, 5th, 7th', 'שמעו אקורד מעל השורש שלו — ואז נגנו את הארפג׳יו שלו: שורש, טרצה, קווינטה, ספטימה'),
   slash: tt('Hear the chords — play the BASS note of each (not always the root)', 'שמעו את האקורדים — נגנו את צליל הבס של כל אחד (לא תמיד השורש)'),
   quality2: tt('Hear a chord over its root — then play its four notes: root, 3rd or 4th, 5th, 6th or 7th', 'שמעו אקורד מעל השורש שלו — ואז נגנו את ארבעת הצלילים שלו: שורש, טרצה או קוורטה, קווינטה, סקסטה או ספטימה'),
@@ -53,7 +53,7 @@ const ASK: Record<string, { en: string; he: string }> = {
   'riff-ear': tt('Hear a two-bar riff — play it back', 'שמעו ריף של שתי תיבות — נגנו אותו בחזרה'),
   'groups-ear': tt('Hear the groove’s accents — play a root on each group start', 'שמעו את ההדגשות של הגרוב — נגנו שורש בתחילת כל קבוצה'),
   'mod-ear': tt('Hear the beat change — play quarters on the new beat', 'שמעו את הפעמה משתנה — נגנו רבעים בפעמה החדשה'),
-  'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת ווקינג על המהלך — ואז נגנו את השורש של כל אקורד, בפעמה הראשונה שלו'),
+  'walk-ear': tt('The band walks the changes — then play the root of each chord, on its first beat', 'הלהקה מנגנת בס מהלך על המהלך — ואז נגנו את השורש של כל אקורד, בפעמה הראשונה שלו'),
   'ie-intro': tt('The band plays an intro — then play its roots: which intro was it?', 'הלהקה מנגנת פתיחה — ואז נגנו את השורשים שלה: איזו פתיחה זו?'),
   'ie-end': tt('The band plays an ending — then play its roots: which ending was it?', 'הלהקה מנגנת סיום — ואז נגנו את השורשים שלו: איזה סיום זה?'),
   'form-ear': tt('Hear a whole 32-bar chorus — then play its roots through the form', 'שמעו סבב שלם של 32 תיבות — ואז נגנו את השורשים שלו לאורך כל הצורה'),
@@ -174,7 +174,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
       }
       band(0, 8);
       // Bagrut transcription: after playing it back, write the line (tap it on the neck), graded note for note.
-      const d = finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של ווקינג בס' }, chartOf(key, prog));
+      const d = finishEar(s, tu, line, notes, windows, 'transcribe', { en: 'Transcribe two bars of walking bass', he: 'תמלול שתי תיבות של בס מהלך' }, chartOf(key, prog));
       return { ...d, write: { pitches: line.map((x) => x.p) } };
     }
     case 'quality': {
@@ -452,7 +452,7 @@ export function generateBassEar(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: bars * 4 + w.beat, d: 1, p: m });
       }
       band(0, bars * 4);
-      const d = finishEar(s, tu, line, notes, windows, 'transcribe', bars === 4 ? { en: 'Play back 4 bars of walking', he: 'לנגן בחזרה 4 תיבות של ווקינג' } : { en: 'Play back 8 bars of walking', he: 'לנגן בחזרה 8 תיבות של ווקינג' }, chartOf(key, prog));
+      const d = finishEar(s, tu, line, notes, windows, 'transcribe', bars === 4 ? { en: 'Play back 4 bars of walking', he: 'לנגן בחזרה 4 תיבות של בס מהלך' } : { en: 'Play back 8 bars of walking', he: 'לנגן בחזרה 8 תיבות של בס מהלך' }, chartOf(key, prog));
       return bars === 4 ? { ...d, write: { pitches: line.map((x) => x.p) } } : d;
     }
     case 'riff-ear': {

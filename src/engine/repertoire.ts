@@ -275,24 +275,24 @@ const BASS_ITEMS: RepItem[] = [
   S('saints', 1, b('Melody with a pickup', 'מנגינה עם פתיחה מתרוממת'), [{ k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-basic')),
   S('ode', 1, b('Stepwise melody in position', 'מנגינה בצעדים בפוזיציה'), [{ k: 'song', song: 'ode', part: 'melody' }]),
   O('roots', 1, b('Roots of a chord chart', 'שורשים של דף אקורדים'), b('Roots, then root and 5th', 'שורשים, ואז שורש וקווינטה'), [L('b-chord-1'), L('b-chord-2')], TO.i4v('blues-basic')),
-  C('blues-basic', 2, b('The 12-bar blues, walked', 'בלוז 12 תיבות, בווקינג'), [BASS('blues-basic'), L('b-styles-4'), CH('blues-basic')], TO.blues('blues-f')),
+  C('blues-basic', 2, b('The 12-bar blues, walked', 'בלוז 12 תיבות, בבס מהלך'), [BASS('blues-basic'), L('b-styles-4'), CH('blues-basic')], TO.blues('blues-f')),
   C('turnarounds-f', 2, b('The I–vi–ii–V turnaround', 'הטרנאראונד I–vi–ii–V'), [BASS('turnarounds-f'), CH('turnarounds-f')], TO.turn('rhythm-full')),
   C('two-five-keys', 2, b('ii–V–I through all keys', 'ii–V–I בכל הסולמות'), [BASS('two-five-keys'), L('b-walk-9')], TO.autumn('autumn')),
   C('blues-f', 2, b('The jazz blues in 4', 'בלוז ג׳אז בארבע'), [BASS('blues-f'), CH('blues-f')], TO.jazzBlues('bird-blues')),
-  C('fly', 3, b('Walking a cycle of fifths', 'ווקינג על מעגל קווינטות'), [BASS('fly'), CH('fly')]),
-  C('autumn', 3, b('Major and minor ii–V–I, walked', 'ii–V–I מז׳ורי ומינורי, בווקינג'), [BASS('autumn'), CH('autumn')]),
+  C('fly', 3, b('Walking a cycle of fifths', 'בס מהלך על מעגל קווינטות'), [BASS('fly'), CH('fly')]),
+  C('autumn', 3, b('Major and minor ii–V–I, walked', 'ii–V–I מז׳ורי ומינורי, בבס מהלך'), [BASS('autumn'), CH('autumn')]),
   C('blue-bossa', 3, b('Bossa bass and a key change', 'בס בוסה ומעבר סולם'), [BASS('blue-bossa'), L('b-styles-7'), CH('blue-bossa')]),
   C('a-train', 3, b('A two-feel through an AABA', 'תחושת שתיים לאורך AABA'), [BASS('a-train'), CH('a-train')]),
-  C('so-what', 3, b('Modal walking: dorian, a half step up', 'ווקינג מודאלי: דורי, וחצי טון למעלה'), [BASS('so-what'), CH('so-what')]),
+  C('so-what', 3, b('Modal walking: dorian, a half step up', 'בס מהלך מודאלי: דורי, וחצי טון למעלה'), [BASS('so-what'), CH('so-what')]),
   C('misty', 3, b('A ballad: half notes and space', 'בלדה: חצאים ומרווח'), [BASS('misty'), CH('misty')]),
   C('rhythm-full', 4, b('Rhythm changes: two chords a bar', 'ריתם צ׳יינג׳ס: שני אקורדים בתיבה'), [BASS('rhythm-full'), L('b-walk-10')]),
   C('bird-blues', 4, b('Bird blues: a ii–V in every bar', 'בלוז בירד: ii–V בכל תיבה'), [BASS('bird-blues'), CH('bird-blues')]),
   C('stella', 4, b('Half-diminished ii–Vs, 32 bars', 'ii–V חצי־מוקטנים, 32 תיבות'), [BASS('stella'), CH('stella')]),
-  C('giant', 4, b('Coltrane changes, walked', 'קולטריין צ׳יינג׳ס, בווקינג'), [BASS('giant'), CH('giant-slow')]),
+  C('giant', 4, b('Coltrane changes, walked', 'קולטריין צ׳יינג׳ס, בבס מהלך'), [BASS('giant'), CH('giant-slow')]),
   // AUDIT-6 §5: the advanced tier reaches past 1400 — more standards walked from their chord charts.
   C('tune-up', 4, b('ii–V–Is down a whole step', 'ii–V–I שיורדים בטון שלם'), [BASS('tune-up'), CH('tune-up')]),
   C('never-another', 4, b('Long form, back-cycling dominants', 'צורה ארוכה, דומיננטות במעגל לאחור'), [BASS('never-another'), CH('never-another')]),
-  C('ladybird', 4, b('Tritone subs walked', 'תחליפי טריטון בווקינג'), [BASS('ladybird'), CH('ladybird')]),
+  C('ladybird', 4, b('Tritone subs walked', 'תחליפי טריטון בבס מהלך'), [BASS('ladybird'), CH('ladybird')]),
   C('miss-jones', 4, b('A bridge in keys a major third apart', 'גשר בסולמות במרחק טרצה גדולה'), [BASS('miss-jones'), CH('miss-jones')]),
   C('solar', 4, b('Minor-major to major, every two bars', 'ממינור־מז׳ור למז׳ור, כל שתי תיבות'), [BASS('solar'), CH('solar')]),
   C('valentine', 4, b('A minor ballad: the line cliché in the bass', 'בלדה מינורית: קו כרומטי בבס'), [BASS('valentine'), CH('valentine')]),
@@ -439,7 +439,7 @@ export function wayLabel(w: RepWay, course: CourseId): Bi {
     case 'chartDrill':
       return w.voicing.startsWith('stride') ? b('Stride left hand', 'יד שמאל בסטרייד') : w.voicing === 'quartal' ? b('Quartal voicings', 'וויסינג קוורטלי') : w.voicing === 'rootless' ? b('Rootless voicings, comping', 'וויסינג בלי שורש, ליווי') : w.voicing === 'shell' ? b('Shell voicings', 'שלדים (שלושה צלילים)') : w.voicing === 'guide' ? b('Guide tones, comping', 'צלילים מנחים, ליווי') : b('Voicings', 'וויסינגים');
     case 'bassStd':
-      return b('Walk the changes', 'ווקינג על המהלך');
+      return b('Walk the changes', 'בס מהלך על המהלך');
     case 'guitarStd':
       return b('Comp the whole chart', 'ללוות את כל דף האקורדים');
     case 'level':

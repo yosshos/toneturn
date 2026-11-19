@@ -744,7 +744,7 @@ function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dril
 }
 
 /** Bass levels (0.64): the level's tempo (start → target) and its exam / bagrut tags (B14), small and quiet. */
-const GRADE_HE: Record<string, string> = { 'session: playback': 'מיומנויות סשן: חיקוי', 'session: improvising': 'מיומנויות סשן: אלתור', 'walking core': 'ליבת הווקינג', reading: 'קריאה', 'time & groove': 'זמן וגרוב', transcription: 'תמלול', 'pieces with a band': 'יצירות עם להקה', '2-chorus solo': 'סולו של שני סבבים', 'sight-read improvisation': 'אלתור מקריאה ראשונה', improvisation: 'אלתור', ballad: 'בלדה', blues: 'בלוז' };
+const GRADE_HE: Record<string, string> = { 'session: playback': 'מיומנויות סשן: חיקוי', 'session: improvising': 'מיומנויות סשן: אלתור', 'walking core': 'ליבת הבס המהלך', reading: 'קריאה', 'time & groove': 'זמן וגרוב', transcription: 'תמלול', 'pieces with a band': 'יצירות עם להקה', '2-chorus solo': 'סולו של שני סבבים', 'sight-read improvisation': 'אלתור מקריאה ראשונה', improvisation: 'אלתור', ballad: 'בלדה', blues: 'בלוז' };
 function LevelMeta({ l, lang }: { l: LevelDef; lang: Lang }) {
   const g = l as GuitarLevelDef;
   if (!g.tempo && !g.exam?.length) return null;

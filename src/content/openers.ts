@@ -269,7 +269,7 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
       eyebrow: { he: 'קורס בס', en: 'Bass course' },
       ask: { he: 'מה הבסיסט מחזיק?', en: 'What does the bassist hold?' },
       promise: { he: 'את הזמן ואת ההרמוניה. בסוף הקורס, גם אתם.', en: 'The time and the harmony. By the end, so will you.' },
-      lead: { he: 'נעולים עם המתופף, ואז ווקינג על בלוז.', en: 'Locked with the drummer, then walking a blues.' },
+      lead: { he: 'נעולים עם המתופף, ואז בס מהלך על בלוז.', en: 'Locked with the drummer, then walking a blues.' },
       cards: [
         { label: { he: 'C', en: 'C' }, badge: '1', snd: { n: [[36, 0, 0.5, 0.75]], p: [['kick', 0, 0.8]], bass: true } },
         { label: { he: 'F', en: 'F' }, badge: '4', snd: { n: [[41, 0, 0.5, 0.75]], p: [['kick', 0, 0.8]], bass: true } },
@@ -283,14 +283,14 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
       title: { he: 'חמש תחנות, ואז רחוק יותר', en: 'Five stops, then further' },
       lead: { he: 'כל יחידה: זמן, צוואר הבס והאוזן.', en: 'Every unit: time, the neck and your ear.' },
       say: { he: 'הדרך בנויה מתחנות.', en: 'The road is built from stops.' },
-      then: { he: 'ומשם: גרובים, בלוז, ווקינג וסטנדרטים', en: 'Then grooves, the blues, walking and standards' },
-      thenSay: { he: 'ומשם, עד ווקינג על סטנדרטים.', en: 'And from there, all the way to walking the standards.' },
+      then: { he: 'ומשם: גרובים, בלוז, בס מהלך וסטנדרטים', en: 'Then grooves, the blues, walking and standards' },
+      thenSay: { he: 'ומשם, עד בס מהלך על סטנדרטים.', en: 'And from there, all the way to walking the standards.' },
       stations: [
         { ref: { family: 'b-first' }, name: { he: 'צעדים ראשונים', en: 'First steps' }, desc: { he: 'אחיזה, כיוון, פריטה', en: 'Holding, tuning, plucking' }, say: { he: 'מתחילים בצעדים ראשונים.', en: 'You start with first steps.' }, snd: { n: line([28, 33, 38, 43], 0.25, 0.5, 0.7), bass: true } },
         { ref: { family: 'b-time' }, name: { he: 'זמן וחלוקות', en: 'Time & subdivision' }, desc: { he: 'דופק יציב עם הקליק', en: 'A steady pulse with the click' }, say: { he: 'זמן וחלוקות.', en: 'Time and subdivision.' }, snd: { n: line([36, 36, 36, 36], 0.3, 0.25, 0.7), p: hits([['click', 0], ['click', 1], ['click', 2], ['click', 3]], 0.3, 0.6), bass: true } },
         { ref: { family: 'b-chord' }, name: { he: 'שורש וקווינטה', en: 'Root and fifth' }, desc: { he: 'צלילי האקורד', en: 'The chord tones' }, say: { he: 'שורש, קווינטה וצלילי אקורד.', en: 'Root, fifth and chord tones.' }, snd: { n: line([36, 43, 41, 48], 0.3, 0.3, 0.7), bass: true } },
         { ref: { family: 'b-pocket' }, name: { he: 'הכיס', en: 'The pocket' }, desc: { he: 'נעולים עם התופים', en: 'Locked with the drums' }, say: { he: 'הכיס: נעולים עם התופים.', en: 'The pocket: locked with the drums.' }, snd: { n: [[36, 0, 0.25, 0.75], [36, 0.6, 0.25, 0.7], [43, 0.9, 0.25, 0.7]], p: hits([['kick', 0], ['snare', 1], ['kick', 2], ['kick', 3], ['snare', 4]], 0.3), bass: true } },
-        { ref: { family: 'b-walk' }, name: { he: 'ווקינג', en: 'Walking' }, desc: { he: 'צליל בכל פעמה, על בלוז', en: 'A note a beat, over a blues' }, say: { he: 'ווקינג, צליל בכל פעמה.', en: 'Walking: a note on every beat.' }, snd: { n: line([36, 40, 43, 45, 46, 45], 0.22, 0.24, 0.7), p: hits([['ride', 0], ['ride', 2], ['ride', 4]], 0.22, 0.5), bass: true } },
+        { ref: { family: 'b-walk' }, name: { he: 'בס מהלך', en: 'Walking' }, desc: { he: 'צליל בכל פעמה, על בלוז', en: 'A note a beat, over a blues' }, say: { he: 'בס מהלך, צליל בכל פעמה.', en: 'Walking: a note on every beat.' }, snd: { n: line([36, 40, 43, 45, 46, 45], 0.22, 0.24, 0.7), p: hits([['ride', 0], ['ride', 2], ['ride', 4]], 0.22, 0.5), bass: true } },
       ],
     },
     how: {
@@ -309,7 +309,7 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
     rungs: [
       { he: 'שורשים, זמן, כיס', en: 'Roots, time, pocket' },
       { he: 'גרובים ובלוז', en: 'Grooves and the blues' },
-      { he: 'ווקינג על מהלכים', en: 'Walking through changes' },
+      { he: 'בס מהלך על מהלכים', en: 'Walking through changes' },
       { he: 'סולו, מעברים, סטנדרטים', en: 'Solos, fills, standards' },
     ],
   },
@@ -770,7 +770,7 @@ export const COURSE_UNIT: Partial<Record<CourseId, { what: T2; whatSay: T2; why:
     why: {
       beginner: { he: 'הלהקה נשענת על הזמן של הבסיסט.', en: 'The band leans on the bassist’s time.' },
       developing: { he: 'צלילי האקורד הם מה שהבס מוסיף להרמוניה.', en: 'Chord tones are what the bass adds to the harmony.' },
-      solid: { he: 'ווקינג טוב נושא את כל הלהקה.', en: 'A good walking line carries the whole band.' },
+      solid: { he: 'בס מהלך טוב נושא את כל הלהקה.', en: 'A good walking line carries the whole band.' },
       advanced: { he: 'שליטה בכל הסולמות משחררת אתכם לנגן.', en: 'Fluency in every key frees you to play.' },
     },
   },

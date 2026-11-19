@@ -157,7 +157,7 @@ export const LESSONS: MiniLesson[] = [
       },
       { say: { en: 'Check every strong melody note against the new chord. A chord tone or a tension is fine; the 11th over a major chord clashes.', he: 'בדקו כל צליל חזק במנגינה מול האקורד החדש. צליל אקורד או מתח זה בסדר; האונדצימה מעל אקורד מז׳ורי מתנגשת.' }, play: [...fitStim(74), { kind: 'rest', duration: 0.4 }, ...fitStim(77)] },
       { say: { en: 'The backdoor, a passing diminished, a line cliché: each fits only where its chords are. The studio on the family page shows you where.', he: 'הדלת האחורית, מוקטן עובר, קו קלישאה: כל אחד מתאים רק במקום שבו האקורדים שלו נמצאים. הסטודיו בעמוד המשפחה מראה לכם איפה.' }, play: compStim(['backdoor', 'pdim', 'cliche']) },
-      { say: { en: 'Then play your reharm: comp it, walk it on the bass, and play the melody over it, in all twelve keys.', he: 'ואז מנגנים את ההרמון שלכם: מלווים אותו, עושים עליו ווקינג בבס, ומנגנים מעליו את המנגינה, בכל שנים־עשר הסולמות.' } },
+      { say: { en: 'Then play your reharm: comp it, walk it on the bass, and play the melody over it, in all twelve keys.', he: 'ואז מנגנים את ההרמון שלכם: מלווים אותו, עושים עליו בס מהלך, ומנגנים מעליו את המנגינה, בכל שנים־עשר הסולמות.' } },
     ],
     more: [
       { say: { en: 'A tritone sub keeps the 3rd and 7th of the dominant and slides the bass down a half step into the next chord. Under a melody root it gives a sharp 11.', he: 'תחליף טריטון שומר על הטרצה והספטימה של הדומיננט ומחליק את הבס חצי טון למטה אל האקורד הבא. מתחת לשורש במנגינה הוא נותן ♯11.' } },

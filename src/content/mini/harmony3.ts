@@ -224,7 +224,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G13 · G7♭9 · G7alt · G7♯11', he: 'G13 · G7♭9 · G7alt · G7♯11' } },
       },
       {
-        say: { en: 'A walking bass line: the root on beat 1, chord or scale tones in the middle, then a half step into the next root, from below or from above. Your turn.', he: 'קו ווקינג: השורש בפעמה 1, צלילי אקורד או סולם באמצע, ואז חצי טון אל השורש הבא, מלמטה או מלמעלה. תורכם.' },
+        say: { en: 'A walking bass line: the root on beat 1, chord or scale tones in the middle, then a half step into the next root, from below or from above. Your turn.', he: 'קו בס מהלך: השורש בפעמה 1, צלילי אקורד או סולם באמצע, ואז חצי טון אל השורש הבא, מלמטה או מלמעלה. תורכם.' },
         play: [notes([38, 41, 45, 42, 43, 47, 50, 49, 48], 0.42)],
         show: { text: { en: 'D F A F♯ | G B D D♭ | C', he: 'D F A F♯ | G B D D♭ | C' } },
       },

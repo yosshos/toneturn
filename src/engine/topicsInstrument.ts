@@ -494,7 +494,7 @@ TOPIC_GEN['fret-scales'] = {
     { en: 'Minor pentatonic, box 1', he: 'פנטטונית מינורית, תיבה 1' },
     { en: 'Which pentatonic box (1–5)?', he: 'איזו תיבה פנטטונית (1–5)?' },
     { en: 'Three notes per string', he: 'שלושה צלילים למיתר' },
-    { en: 'Bass: walking approach notes', he: 'בס: צלילי גישה בווקינג' },
+    { en: 'Bass: walking approach notes', he: 'בס: צלילי גישה בבס מהלך' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);
@@ -601,7 +601,7 @@ TOPIC_GEN['bass-shapes'] = {
   levels: [
     { en: 'Root, fifth, octave', he: 'שורש, קווינטה, אוקטבה' },
     { en: 'Arpeggio shapes', he: 'צורות ארפג׳יו' },
-    { en: 'Walking approach notes', he: 'צלילי גישה בווקינג' },
+    { en: 'Walking approach notes', he: 'צלילי גישה בבס מהלך' },
   ],
   gen(seed, level, id) {
     const [topic, lv] = BASS_SHAPE_SRC[level - 1];

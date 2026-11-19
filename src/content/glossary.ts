@@ -1107,11 +1107,11 @@ export const GLOSSARY: Term[] = [
   },
   {
     id: 'walking-bass',
-    label: { en: 'walking bass', he: 'ווקינג (בס)' },
+    label: { en: 'walking bass', he: 'בס מהלך' },
     explain: { en: 'A bass line with one note on every beat, walking through the chords: chord tones on the strong beats, a step or a half step into the next root.', he: 'קו בס עם צליל בכל פעמה, שצועד דרך האקורדים: צלילי אקורד בפעמות החזקות, וצעד או חצי טון אל השורש הבא.' },
     example: { en: 'Over C7 to F7: C, E, G, F♯ — and F arrives on beat 1.', he: 'מעל C7 אל F7: דו, מי, סול, פה דיאז — ופה מגיע בפעמה 1.' },
     play: [line([36, 40, 43, 42, 41], 0.45, 0.4)],
-    match: { en: /\bwalking[- ]?bass(es)?\b/i, he: heWord('ווקינג|הווקינג|בווקינג') },
+    match: { en: /\bwalking[- ]?bass(es)?\b/i, he: heWord('בס מהלך|הבס המהלך|בבס מהלך|ווקינג|הווקינג|בווקינג') },
   },
   {
     id: 'lead-sheet',

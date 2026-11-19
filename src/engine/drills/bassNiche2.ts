@@ -54,13 +54,13 @@ function genWaltz(s: DrillSpec, tu: Tuning): Drill {
     // 3/4 walking, one chord a bar, an approach on 3: I–vi–ii–V–iii–VI–ii–V (op 0) or a minor i–iv–ii°–V (op 1).
     const prog: Prog = op % 2 ? [[0, 'm7'], [0, 'm7'], [5, 'm7'], [5, 'm7'], [2, 'm7b5'], [7, '7'], [0, 'm7'], [7, '7']] : [[0, 'maj7'], [9, 'm7'], [2, 'm7'], [7, '7'], [4, 'm7'], [9, '7'], [2, 'm7'], [7, '7']];
     bars = chartOf(key, prog);
-    name = op % 2 ? tt('Jazz waltz in minor: walking in 3', 'ואלס ג׳אז במינור: ווקינג בשלוש') : tt('Jazz waltz: walking in 3', 'ואלס ג׳אז: ווקינג בשלוש');
+    name = op % 2 ? tt('Jazz waltz in minor: walking in 3', 'ואלס ג׳אז במינור: בס מהלך בשלוש') : tt('Jazz waltz: walking in 3', 'ואלס ג׳אז: בס מהלך בשלוש');
   } else {
     // A chorus of the blues waltz (standards.ts, in F), moved to the level's key.
     const st = STANDARD_CHANGES.find((x) => x.id === 'blues-waltz')!;
     // Spelled for the key it lands in (A♯ in B, not B♭), shown with ♭ / ♯.
     bars = transposeTextIn(st.text, key - 5, { key }).split('|').map((b) => b.trim().replace(/([A-G])b/g, '$1♭').replace(/([A-G])#/g, '$1♯'));
-    name = tt('Blues waltz: a chorus walking in 3', 'בלוז ואלס: סבב ווקינג בשלוש');
+    name = tt('Blues waltz: a chorus walking in 3', 'בלוז ואלס: סבב בס מהלך בשלוש');
   }
   const text = bars.map(ascii).join(' | ');
   const rules = rules3(text);
@@ -501,7 +501,7 @@ const spOf =
 export function waltzLevels(L: LFn): GuitarLevelDef[] {
   const WK = spOf('b-walk');
   return [
-    L('b-walk', 19, 'Jazz waltz: walking in 3', 'ואלס ג׳אז: ווקינג בשלוש', [WK('waltz', { perBeat: 1 }), WK('waltz', { perBeat: 1, option: 1 })], [0, 5, 10, 7], [120, 180], 'quarters'),
+    L('b-walk', 19, 'Jazz waltz: walking in 3', 'ואלס ג׳אז: בס מהלך בשלוש', [WK('waltz', { perBeat: 1 }), WK('waltz', { perBeat: 1, option: 1 })], [0, 5, 10, 7], [120, 180], 'quarters'),
     L('b-walk', 20, 'A blues-waltz chorus', 'סבב של בלוז ואלס', [WK('blues-waltz', { perBeat: 1 })], [5, 10, 7, 0], [120, 200], 'quarters'),
   ];
 }
@@ -563,7 +563,7 @@ export function uprightTopLevels(L: LFn): GuitarLevelDef[] {
   const WU = spOf('b-up-walk', { tuning: 'upright' });
   return [
     L('b-up-walk', 6, 'Standards on the upright, in tune', 'סטנדרטים על הקונטרבס, מכוונים', UP_STD.map((_, o) => WU('up-std', { perBeat: 1, option: o })), [0], [100, 180], 'quarters'),
-    L('b-up-walk', 7, 'Up-tempo pizzicato walking', 'ווקינג בפיציקטו בטמפו מהיר', [WU('up-fast', { perBeat: 1 })], [10, 5, 3], [160, 260], 'quarters'),
+    L('b-up-walk', 7, 'Up-tempo pizzicato walking', 'בס מהלך בפיציקטו בטמפו מהיר', [WU('up-fast', { perBeat: 1 })], [10, 5, 3], [160, 260], 'quarters'),
     L('b-up-walk', 8, 'A solo in thumb position', 'סולו במצב אגודל', [WU('up-solo', { swing: true }), WU('up-solo', { swing: true, option: 1 })], [5, 10, 7, 0], [90, 150], 'swung 8ths'),
     L('b-up-walk', 9, 'Arco head-style line', 'קו נושא בקשת', [WU('up-arco', { perBeat: 0.5 }), WU('up-arco', { perBeat: 0.5, option: 1 })], [0, 5, 10, 7], [60, 90], 'halves'),
   ];

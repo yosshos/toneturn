@@ -377,8 +377,8 @@ const TUNE_WHAT: Record<string, T2> = {
   'tn-rhsolo': t('a solo chorus over the reharm', 'סבב סולו על ההרמון החדש'),
   'tn-ownsolo': t('a solo chorus over my reharm', 'סבב סולו על ההרמון שלי'),
   'tn-two': t('two-feel', 'בשתיים'),
-  'tn-walk': t('walking', 'ווקינג'),
-  'tn-appr': t('walking with approaches', 'ווקינג עם צלילי גישה'),
+  'tn-walk': t('walking', 'בס מהלך'),
+  'tn-appr': t('walking with approaches', 'בס מהלך עם צלילי גישה'),
   'em-appr': t('the melody, approached from below', 'המנגינה, עם גישה מלמטה'),
   'em-encl': t('the melody, enclosed', 'המנגינה, עם כיתורים'),
   'em-pivot': t('the melody, pivots on long notes', 'המנגינה, פיבוטים על צלילים ארוכים'),
@@ -570,7 +570,7 @@ const CM_WHAT: Record<string, T2> = {
   'cm-chorus': t('a whole chorus', 'פזמון שלם'),
   'cm-six': t('6-dim blocks in drop 2', 'בלוקים שש-מוקטן בדרופ 2'),
   'cm-every': t('drop 2 under every note', 'דרופ 2 מתחת לכל צליל'),
-  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + ווקינג בס'),
+  'cm-solo': t('solo guitar: chords + walking bass', 'גיטרה סולו: אקורדים + בס מהלך'),
 };
 
 /** Place a melody note on the top strings near a fret (strings 1–3). */
@@ -1126,7 +1126,7 @@ const CMEL: [string, string, string, number][] = [
   // AUDIT-DEPTH-3 C1 on the guitar and #4: 6-dim blocks, drop 2 under every note (8 bars), the solo-guitar chorus.
   ['cm-six', '6-dim blocks in drop 2 under the melody', 'בלוקים שש-מוקטן בדרופ 2 מתחת למנגינה', 10],
   ['cm-every', 'Drop 2 under every melody note, eight bars', 'דרופ 2 מתחת לכל צליל של המנגינה, שמונה תיבות', 10],
-  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומעברי ווקינג בס', 11],
+  ['cm-solo', 'Solo guitar: chord-melody and walking-bass fills', 'גיטרה סולו: אקורד-מלודיה ומעברי בס מהלך', 11],
 ];
 export function guitarChordMelodyFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cmel';
@@ -1182,11 +1182,11 @@ export function guitarTuneFamily(): GuitarFamilyDef {
 const TUNE_BASS: [string, string, string][] = [
   ['tn-root', 'Roots through the head', 'שורשים לאורך השיר'],
   ['tn-two', 'Two-feel through the head', 'בשתיים לאורך השיר'],
-  ['tn-walk', 'Walking the head', 'ווקינג על השיר'],
-  ['tn-appr', 'Walking with approach notes', 'ווקינג עם צלילי גישה'],
-  ['tn-rh1', 'Walk the reharm: tritone subs and extra ii–Vs', 'ווקינג על ההרמון החדש: טריטון ו־ii–V נוסף'],
-  ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'ווקינג על ההרמון החדש: דלת אחורית, מוקטן, קלישאה'],
-  ['tn-rh3', 'Walk the reharm: Coltrane subs', 'ווקינג על ההרמון החדש: קולטריין'],
+  ['tn-walk', 'Walking the head', 'בס מהלך על השיר'],
+  ['tn-appr', 'Walking with approach notes', 'בס מהלך עם צלילי גישה'],
+  ['tn-rh1', 'Walk the reharm: tritone subs and extra ii–Vs', 'בס מהלך על ההרמון החדש: טריטון ו־ii–V נוסף'],
+  ['tn-rh2', 'Walk the reharm: backdoor, passing dim, line cliché', 'בס מהלך על ההרמון החדש: דלת אחורית, מוקטן, קלישאה'],
+  ['tn-rh3', 'Walk the reharm: Coltrane subs', 'בס מהלך על ההרמון החדש: קולטריין'],
   ['em-appr', 'The melody on the bass, approached from below', 'המנגינה בבס, עם גישה מלמטה'],
   ['em-encl', 'The melody on the bass, enclosed', 'המנגינה בבס, עם כיתורים'],
   ['em-pivot', 'The melody on the bass, pivots on long notes', 'המנגינה בבס, פיבוטים על צלילים ארוכים'],

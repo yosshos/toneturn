@@ -368,7 +368,7 @@ TOPIC_GEN['jazz-dictation'] = {
     { en: 'Tritone substitutes', he: 'תחליפי טריטון' },
     { en: 'The backdoor', he: 'הדלת האחורית' },
     { en: 'The dominant’s colour', he: 'הצבע של הדומיננט' },
-    { en: 'A walking bass line', he: 'קו ווקינג' },
+    { en: 'A walking bass line', he: 'קו בס מהלך' },
   ],
   gen(seed, level, id) {
     const rnd = rng(seed);

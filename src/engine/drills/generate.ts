@@ -2483,7 +2483,7 @@ function genWalking(s: DrillSpec): Drill {
   return finish(
     s,
     buf,
-    title([t(`Walking bass, blues in ${keyName(key)}`, `ווקינג בס, בלוז ב-${keyName(key)}`), nm], sp),
+    title([t(`Walking bass, blues in ${keyName(key)}`, `בס מהלך, בלוז ב-${keyName(key)}`), nm], sp),
     { evenness: true, hands: false, chordTonesOnBeats: true },
     80,
     4,
@@ -3278,7 +3278,7 @@ function genWalkChanges(s: DrillSpec): Drill {
   });
   buf.add(b, 2, [{ pitch: rootP(0), hand: 'L', chordTone: true }]);
   const nm = rhythm ? t('rhythm changes, A section', 'ריתם צ׳יינג׳ס, חלק A') : t('ii–V–I–VI7 cycle', 'מעגל ii–V–I–VI7');
-  return finish(s, buf, title([t(`Walking bass through changes in ${keyName(key)}`, `ווקינג בס דרך מהלך אקורדים ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false, chordTonesOnBeats: true }, 80, 4, SIG[key]);
+  return finish(s, buf, title([t(`Walking bass through changes in ${keyName(key)}`, `בס מהלך דרך מהלך אקורדים ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false, chordTonesOnBeats: true }, 80, 4, SIG[key]);
 }
 
 // ───────────────────────────── dispatch ─────────────────────────────
@@ -6041,7 +6041,7 @@ export function catalog(): FamilyDef[] {
         JT('k-reharm', 4, 'Reharmonising: tritone subs, backdoor, passing diminished, an added ii–V', 'הרמוניה מחודשת: תחליפי טריטון, דלת אחורית, מוקטנים עוברים, ii–V נוסף', [0, 1, 2, 3].map((o) => rh('rh-reharm', { option: o })), [0, 5, 10, 7, 3], [60, 100]),
         JT('k-reharm', 5, 'Modal comping over a pedal', 'ליווי מודאלי מעל פדל', [rh('rh-modal'), rh('rh-modal', { option: 1 })], [2, 7, 0, 9, 4, 5], [70, 120]),
         JT('k-reharm', 6, 'Chains: ii–Vs by whole steps, the family of dominants', 'שרשראות: ii–V בטונים, משפחת הדומיננטות', [rh('rh-chains'), rh('rh-chains', { option: 1 })], [0, 5, 10, 3, 7, 2], [60, 104]),
-        JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: ווקינג בס, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
+        JT('k-reharm', 7, 'Solo piano: walking bass, 10ths, two-feel', 'פסנתר סולו: בס מהלך, דצימות, בשניים', [0, 1, 2].map((o) => rh('rh-solo', { option: o, swing: true })), [0, 5, 7, 10, 3], [80, 140]),
         JT('k-reharm', 8, 'Upper structures over a pedal: lydian and sus', 'מבנים עליונים מעל פדל: לידי וסאס', [rh('rh-pedal'), rh('rh-pedal', { option: 1 })], [2, 7, 0, 5, 10, 3], [60, 100]),
         // HARMONY_3 (AUDIT-CONTENT-THEORY §ז.2): borrowed chords in comping (H-3), planing and constant structure (H-5).
         // HARMONY-REHARM: 9 and 10 in all 12 keys from C (they listed 6).
@@ -6147,7 +6147,7 @@ export function catalog(): FamilyDef[] {
       style: 'jazz',
       levels: [
         L('accomp', 1, 'Alberti bass', 'בס אלברטי', [m('alberti')], [0, 7, 5]),
-        L('accomp', 2, 'Walking bass: roots + approach', 'ווקינג בס: שורשים + גישה', [m('walking'), m('walking', { option: 1 })], [5, 10, 0, 7, 3]),
+        L('accomp', 2, 'Walking bass: roots + approach', 'בס מהלך: שורשים + גישה', [m('walking'), m('walking', { option: 1 })], [5, 10, 0, 7, 3]),
         L('accomp', 3, 'Stride: single bass and octaves', 'סטרייד: בס בודד ואוקטבות', [m('stride'), m('stride', { option: 1 })], [0, 5, 7, 10, 3]),
         L(
           'accomp',
@@ -6160,8 +6160,8 @@ export function catalog(): FamilyDef[] {
         L('accomp', 5, 'Boogie-woogie left hand', 'בוגי-ווגי ביד שמאל', [0, 1, 2].map((o) => m('boogie', { option: o, swing: true })), [0, 5, 7, 10, 3, 9]),
         L('accomp', 6, 'Latin: bossa nova and montuno', 'לטיני: בוסה נובה ומונטונו', [m('bossa', { hands: 'RL' }), m('montuno', { hands: 'RL' })], [0, 5, 7, 2, 10, 9]),
         L('accomp', 7, 'Pop left-hand patterns', 'תבניות פופ ליד שמאל', [m('pop-lh'), m('pop-lh', { option: 1 })], [0, 7, 5, 2, 9, 4]),
-        L('accomp', 8, 'Walking bass through changes: ii–V–I and rhythm changes', 'ווקינג בס דרך מהלכים: ii–V–I וריתם צ׳יינג׳ס', [m('walk-changes'), m('walk-changes', { option: 1 })], [0, 5, 10, 3, 7]),
-        L('accomp', 9, 'Stride and walking bass in more keys', 'סטרייד ו־ווקינג בס בעוד סולמות', [m('stride', { option: 1 }), m('stride', { option: 2 }), m('walking', { option: 1 })], [2, 9, 4, 8, 1, 6, 11]),
+        L('accomp', 8, 'Walking bass through changes: ii–V–I and rhythm changes', 'בס מהלך דרך מהלכים: ii–V–I וריתם צ׳יינג׳ס', [m('walk-changes'), m('walk-changes', { option: 1 })], [0, 5, 10, 3, 7]),
+        L('accomp', 9, 'Stride and walking bass in more keys', 'סטרייד ובס מהלך בעוד סולמות', [m('stride', { option: 1 }), m('stride', { option: 2 }), m('walking', { option: 1 })], [2, 9, 4, 8, 1, 6, 11]),
         L('accomp', 10, 'Alberti, pop, boogie and Latin left hands in more keys', 'אלברטי, פופ, בוגי ולטיני ביד שמאל בעוד סולמות', [
           m('alberti'),
           m('pop-lh'),

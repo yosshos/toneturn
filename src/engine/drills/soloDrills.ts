@@ -645,7 +645,7 @@ function bassDuo(s: DrillSpec, tu: Tuning, key: number, op: number): Drill {
   const windows: [number, number][] = [];
   for (let b = 4; b < beats - 4; b += 8) windows.push([b, Math.min(beats, b + 4)]);
   const model = modelLine('roots', chords, 36, 60, `bduo:${op}:${key}`);
-  const nm = t(`Walk a bar, fill a bar: ${SOLO_FORMS[it.form].name.en}`, `תיבת ווקינג, תיבת מעבר: ${SOLO_FORMS[it.form].name.he}`);
+  const nm = t(`Walk a bar, fill a bar: ${SOLO_FORMS[it.form].name.en}`, `תיבת בס מהלך, תיבת מעבר: ${SOLO_FORMS[it.form].name.he}`);
   const d = drillOf({ ...s, key }, tu, alt(line), { en: nm.en, he: nm.he, chart: chartOf(chords, key), evenness: true, keySig: SIG[key] });
   return { ...d, beats, goal: { ...d.goal, evenness: false, hands: false, ...freeGoal(chords, windows, ['target-ct', 'inside'], model, 2) }, ...bandFor('bass') };
 }
@@ -664,7 +664,7 @@ export function bassSoloFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
     L('b-solo', 4, 'Improvise with enclosures', 'אלתור עם כיתורים', imp([6, 8]), SOLO_KEYS, [80, 150], IM),
     L('b-solo', 5, 'Triad pairs and superimposed pentatonics', 'זוגות משולשים ופנטטוניות מונחות', imp([13, 15]), SOLO_KEYS, [70, 140], IM),
     L('b-solo', 6, 'Use the licks you learned', 'להשתמש בליקים שלמדתם', imp([17]), SOLO_KEYS, [80, 150], IM),
-    L('b-solo', 7, 'Walk a bar, fill a bar', 'תיבת ווקינג, תיבת מעבר', [0, 1, 3].map((o) => v('sl-duo', o)), SOLO_KEYS, [80, 160], 'walking 4 / fills'),
+    L('b-solo', 7, 'Walk a bar, fill a bar', 'תיבת בס מהלך, תיבת מעבר', [0, 1, 3].map((o) => v('sl-duo', o)), SOLO_KEYS, [80, 160], 'walking 4 / fills'),
     L('b-solo', 8, 'Write and play your own solo chorus', 'לכתוב ולנגן כורוס סולו משלכם', [0, 1, 2].map((o) => v('sl-chorus', o)), SOLO_KEYS, [70, 150], 'swung 8ths'),
   ]);
 }

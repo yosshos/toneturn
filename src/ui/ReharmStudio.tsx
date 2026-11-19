@@ -166,7 +166,7 @@ export function ReharmStudio({ family, lang, onRun }: { family: FamilyId; lang: 
       </p>
       <div className="rh-go">
         <button className="btn" disabled={!r.changed.length} onClick={() => play(false)} data-rh-play="comp">
-          {inst === 'bass' ? L('Walk it', 'ווקינג עליו') : L('Comp it', 'ליווי')}
+          {inst === 'bass' ? L('Walk it', 'לנגן עליו בס מהלך') : L('Comp it', 'ליווי')}
         </button>
         {inst !== 'bass' && (
           <button className="btn ghost" disabled={!r.changed.length} onClick={() => play(true)} data-rh-play="melody">

@@ -169,10 +169,10 @@ export const LESSONS: MiniLesson[] = [
     id: 'bass-blues-walk',
     area: 'jazz',
     emoji: 'walk',
-    title: { en: 'A first walking line', he: 'קו ווקינג ראשון' },
+    title: { en: 'A first walking line', he: 'קו בס מהלך ראשון' },
     takeaway: { en: 'Root, 3rd, 5th on beats 1–3, then a half step into the next chord on beat 4.', he: 'שורש, טרצה, קווינטה בפעמות 1–3, ואז חצי טון אל האקורד הבא בפעמה 4.' },
     steps: [
-      { say: { en: 'A walking bass plays one note on every beat. Roots and fifths came first; now the line walks up the chord itself.', he: 'ווקינג בס מנגן צליל אחד בכל פעמה. קודם באו שורשים וקווינטות; עכשיו הקו הולך במעלה האקורד עצמו.' }, play: [notes([36, 43, 36, 43], 0.45)] },
+      { say: { en: 'A walking bass plays one note on every beat. Roots and fifths came first; now the line walks up the chord itself.', he: 'בס מהלך מנגן צליל אחד בכל פעמה. קודם באו שורשים וקווינטות; עכשיו הקו הולך במעלה האקורד עצמו.' }, play: [notes([36, 43, 36, 43], 0.45)] },
       { say: { en: 'On beats one to three play the root, the third and the fifth of the chord. They tell the band exactly which chord it is.', he: 'בפעמות אחת עד שלוש נגנו את השורש, הטרצה והקווינטה של האקורד. הם אומרים ללהקה בדיוק איזה אקורד זה.' }, play: [notes([36, 40, 43], 0.45)] },
       { say: { en: 'Beat four leads into the next chord from a half step away, below or above. The ear hears the new root coming.', he: 'פעמה ארבע מובילה אל האקורד הבא מחצי טון, מלמטה או מלמעלה. האוזן שומעת את השורש החדש מגיע.' }, play: [notes([36, 40, 43, 40, 41], 0.45)] },
       { say: { en: 'Over the twelve bars of the blues the plan is the same in every bar. Keep the quarter notes even and the same length.', he: 'על שתים־עשרה התיבות של הבלוז התוכנית זהה בכל תיבה. שמרו על רבעים שווים ובאותו אורך.' }, play: [notes([41, 45, 48, 47, 36], 0.45)] },

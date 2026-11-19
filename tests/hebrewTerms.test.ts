@@ -22,7 +22,7 @@ const BANNED: { concept: string; chosen: string; bad: RegExp }[] = [
   { concept: 'guide tones', chosen: 'צלילים מנחים', bad: /צלילים (ה)?מובילים/ },
   { concept: 'major (geresh)', chosen: 'מז׳ור', bad: /מז\\?'ור/ },
   { concept: 'lead sheet', chosen: 'דף אקורדים', bad: /לידשיט|דפי תווים|דף תווים/ },
-  { concept: 'walking bass', chosen: 'ווקינג', bad: /בס מהלך/ },
+  { concept: 'walking bass', chosen: 'בס מהלך', bad: /ווקינג/ },
   { concept: 'kick', chosen: 'קיק', bad: /בס[־-]דראם/ },
   { concept: 'hi-hat', chosen: 'היי־האט', bad: new RegExp(`היי[־-]הט${NA}`) },
   { concept: 'fill', chosen: 'מעבר', bad: new RegExp(`${NH}[ובלהמ]{0,2}מילוי(ים|י)?${NA}|${NH}[בוה]?פילים${NA}`) },
@@ -41,6 +41,7 @@ const ALLOWED: RegExp[] = [
   /בסיס יסודות התחלה/, // words that open the basics (speech)
   /'(שש |מינור שש )?דימיניש'/, // spoken aliases of the diminished
   /קוראים לו גם "דימיניש"/, // the glossary names the jazz word once
+  /\|ווקינג\|הווקינג\|בווקינג/, // the glossary still recognises the loanword
 ];
 
 function files(dir: string, out: string[] = []): string[] {

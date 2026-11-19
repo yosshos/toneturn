@@ -47,7 +47,7 @@ export const BASS_PROBES: BassProbe[] = [
     // Task 4: walk four bars of Dm7–G7–Cmaj7 at 100 from the chart only; the rule report places walking.
     family: 'b-walk',
     spec: { family: 'b-walk', kind: 'probe-walk', key: 0, hands: 'R', perBeat: 1, instrument: 'bass', tempo: 100 },
-    title: { en: 'Walk the chart: Dm7 – G7 – Cmaj7', he: 'ווקינג לפי הצ׳ארט: Dm7 – G7 – Cmaj7' },
+    title: { en: 'Walk the chart: Dm7 – G7 – Cmaj7', he: 'בס מהלך לפי הצ׳ארט: Dm7 – G7 – Cmaj7' },
     instruments: ['bass'],
     seeds: ['b-chord'],
     mode: 'once',

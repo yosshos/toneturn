@@ -338,7 +338,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         }
       });
       evs.sort((a, b) => a.beat - b.beat);
-      return finish(s, tu, evs, { title: t(`Solo guitar: walking bass with guide tones on the ${op === 1 ? '"and" of 1 and 3' : '"and" of 2 and 4'} · ${NAMES[key]}`, `גיטרת סולו: ווקינג בס עם צלילים מנחים על ${op === 1 ? 'ה"וְ" של 1 ו-3' : 'ה"וְ" של 2 ו-4'} · ${NAMES[key]}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true } });
+      return finish(s, tu, evs, { title: t(`Solo guitar: walking bass with guide tones on the ${op === 1 ? '"and" of 1 and 3' : '"and" of 2 and 4'} · ${NAMES[key]}`, `גיטרת סולו: בס מהלך עם צלילים מנחים על ${op === 1 ? 'ה"וְ" של 1 ו-3' : 'ה"וְ" של 2 ו-4'} · ${NAMES[key]}`), bpm: 80, evenness: false, goal: { chordTonesOnBeats: true } });
     }
   }
   return null;

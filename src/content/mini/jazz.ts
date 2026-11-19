@@ -1349,7 +1349,7 @@ export const LESSONS: MiniLesson[] = [
     area: 'play',
     emoji: '🥁',
     title: { en: 'Play along with the band', he: 'לנגן עם הלהקה' },
-    takeaway: { en: 'The band: a walking bass (one note a beat), Charleston comping (beat 1 and the "and" of 2) and a swung ride — over ii–V–I, minor ii–V–i or blues.', he: 'הלהקה: ווקינג בס (צליל לכל פעמה), ליווי צ׳רלסטון (פעמה 1 וה"וְ" של 2) ורייד בסווינג — מעל ii–V–I, ii–V–i במינור או בלוז.' },
+    takeaway: { en: 'The band: a walking bass (one note a beat), Charleston comping (beat 1 and the "and" of 2) and a swung ride — over ii–V–I, minor ii–V–i or blues.', he: 'הלהקה: בס מהלך (צליל לכל פעמה), ליווי צ׳רלסטון (פעמה 1 וה"וְ" של 2) ורייד בסווינג — מעל ii–V–I, ii–V–i במינור או בלוז.' },
     steps: [
       {
         say: { en: 'Hey {name}! Time to play with a band — a tiny one living in your phone. Bass, piano and ride cymbal loop a chord chart while you join in.', he: 'היי {name}! הגיע הזמן לנגן עם להקה — קטנה, שגרה לכם בטלפון. בס, פסנתר ומצילת רייד מנגנים בלופ רצף אקורדים, ואתם מצטרפים.' },
@@ -1357,7 +1357,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'Dm7 | G7 | Cmaj7 | Cmaj7', he: 'Dm7 | G7 | Cmaj7 | Cmaj7' } },
       },
       {
-        say: { en: 'The bass walks: one note per beat, climbing through the chord, then stepping into the next chord by a half step.', he: 'ווקינג בס: צליל אחד לכל פעמה, מטפס באקורד, ואז נכנס לאקורד הבא בחצי טון.' },
+        say: { en: 'The bass walks: one note per beat, climbing through the chord, then stepping into the next chord by a half step.', he: 'בס מהלך: צליל אחד לכל פעמה, מטפס באקורד, ואז נכנס לאקורד הבא בחצי טון.' },
         play: [band('ii-V-I', 132, (m) => m < 55)],
         show: { text: { en: '♩ ♩ ♩ ♩', he: '♩ ♩ ♩ ♩' } },
       },
@@ -1394,7 +1394,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'bass · piano · drums · you', he: 'בס · פסנתר · תופים · אתם' } },
       },
       {
-        say: { en: 'A walking bass line, beat by beat: the root on beat 1, chord or scale notes on 2 and 3, and on 4 an approach note — often a half step from the next root. Here D, E, F, F♯ lead to G.', he: 'קו ווקינג בס, פעמה אחרי פעמה: השורש בפעמה 1, צלילי אקורד או סולם ב־2 וב־3, ובפעמה 4 צליל גישה — לרוב חצי טון מהשורש הבא. כאן רה, מי, פה, פה דיאז מובילים לסול.' },
+        say: { en: 'A walking bass line, beat by beat: the root on beat 1, chord or scale notes on 2 and 3, and on 4 an approach note — often a half step from the next root. Here D, E, F, F♯ lead to G.', he: 'קו בס מהלך, פעמה אחרי פעמה: השורש בפעמה 1, צלילי אקורד או סולם ב־2 וב־3, ובפעמה 4 צליל גישה — לרוב חצי טון מהשורש הבא. כאן רה, מי, פה, פה דיאז מובילים לסול.' },
         play: [timed(120, [[38, 0, 1], [40, 1, 1], [41, 2, 1], [42, 3, 1], [43, 4, 1], [47, 5, 1], [50, 6, 1], [49, 7, 1], [48, 8, 2]])],
         show: { notes: [38, 40, 41, 42, 43], key: 'C', clef: 'bass', text: { en: 'D E F F♯ → G', he: 'D E F F♯ → G' } },
       },
@@ -1425,7 +1425,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A practice ladder: roots with the bass, then 3rds and 7ths with the piano, then a simple rhythm on the Charleston hits, then short phrases. Raise the tempo only when it all feels easy.', he: 'סולם תרגול: שורשים עם הבס, אחר כך טרצות וספטימות עם הפסנתר, אחר כך קצב פשוט על נקישות הצ׳רלסטון, ואז משפטים קצרים. העלו טמפו רק כשהכול מרגיש קל.' },
       },
       {
-        say: { en: 'In real music: the Charleston rhythm comes from James P. Johnson’s 1923 song “Charleston”. Walking bass grew up in the swing era, and bebop drummers such as Kenny Clarke moved the time onto the ride cymbal.', he: 'במוזיקה אמיתית: קצב הצ׳רלסטון בא מהשיר "Charleston" של ג׳יימס פ. ג׳ונסון משנת 1923. הווקינג בס צמח בתקופת הסווינג, ומתופפי ביבופ כמו קני קלארק העבירו את הזמן למצילת הרייד.' },
+        say: { en: 'In real music: the Charleston rhythm comes from James P. Johnson’s 1923 song “Charleston”. Walking bass grew up in the swing era, and bebop drummers such as Kenny Clarke moved the time onto the ride cymbal.', he: 'במוזיקה אמיתית: קצב הצ׳רלסטון בא מהשיר "Charleston" של ג׳יימס פ. ג׳ונסון משנת 1923. הבס המהלך צמח בתקופת הסווינג, ומתופפי ביבופ כמו קני קלארק העבירו את הזמן למצילת הרייד.' },
       },
       {
         say: { en: 'To keep: the bass walks, the piano hits 1 and the “and” of 2, the ride swings — count the bars and fit into the space they leave.', he: 'לזכור: הבס צועד, הפסנתר מנקש על 1 ועל ה"וְ" של 2, הרייד מסווינג — ספרו תיבות והשתלבו במרווח שהם משאירים.' },

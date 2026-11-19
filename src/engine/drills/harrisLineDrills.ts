@@ -808,7 +808,7 @@ function bassTies(s: DrillSpec, tu: Tuning, op: number): Drill {
     if (bar < cs.length - 1) line.push({ b: b0 + 3.5, d: 1.5, p: nextRoot, ct: true });
     else line.push({ b: b0 + 3.5, d: 0.5, p: R(key), ct: true });
   });
-  const name = op === 1 ? t('Walking on the upbeats: the "and" of 2 tied, the root pushed onto the "and" of 4', 'ווקינג על הקצב החלש: ה"וְ" של 2 קשור, השורש נדחף ל"וְ" של 4') : t('Walking with ties: each root pushed onto the "and" of 4 and tied over the bar', 'ווקינג עם קשתות: כל שורש נדחף ל"וְ" של 4 וקשור מעבר לתיבה');
+  const name = op === 1 ? t('Walking on the upbeats: the "and" of 2 tied, the root pushed onto the "and" of 4', 'בס מהלך על הקצב החלש: ה"וְ" של 2 קשור, השורש נדחף ל"וְ" של 4') : t('Walking with ties: each root pushed onto the "and" of 4 and tied over the bar', 'בס מהלך עם קשתות: כל שורש נדחף ל"וְ" של 4 וקשור מעבר לתיבה');
   return drillOf(s, tu, alt(line), { ...name, chart: chartLc(cs), show: 'chart', evenness: false, drums: { groove: 'swing' } });
 }
 
@@ -836,7 +836,7 @@ const B_ROWS: { en: string; he: string; items: [string, number][]; tempo: [numbe
   { en: 'The 5-4-3-2 phrases and the lick', he: 'משפטי 5-4-3-2 והליק', items: [['hl-5432', 0], ['hl-5432', 1], ['hl-5432', 2], ['hl-5432', 3], ['hl-lick', 0]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'Seven down to the 3rd; 3 to ♭9 over the family', he: 'שבע למטה לטרצה; 3 עד ♭9 על המשפחה', items: [['hl-sevendown', 0], ['hl-sevendown', 1], ['hl-3b9', 0]], tempo: LINE_TEMPO, sub: '8ths' },
   { en: 'The triplet rules and the miscellaneous rule', he: 'חוקי הטריולה והחוק השונה', items: [['hl-triplet', 0], ['hl-triplet', 3], ['hl-misc', 0]], tempo: LINE_TEMPO, sub: '8ths and triplets' },
-  { ...pick(isVerified('item:hl-feel6'), ['Walking with ties on the upbeats; feel 6 in 4', 'ווקינג עם קשתות על הקצב החלש; להרגיש 6 בתוך 4'], ['Walking with ties on the upbeats', 'ווקינג עם קשתות על הקצב החלש']), items: [['hl-walkties', 0], ['hl-walkties', 1], ['hl-feel6', 0]], tempo: [100, 180], sub: 'quarters and ties' },
+  { ...pick(isVerified('item:hl-feel6'), ['Walking with ties on the upbeats; feel 6 in 4', 'בס מהלך עם קשתות על הקצב החלש; להרגיש 6 בתוך 4'], ['Walking with ties on the upbeats', 'בס מהלך עם קשתות על הקצב החלש']), items: [['hl-walkties', 0], ['hl-walkties', 1], ['hl-feel6', 0]], tempo: [100, 180], sub: 'quarters and ties' },
   { en: 'Compose a line over a move, then in a tune', he: 'לחבר קו מעל מהלך, ואז בתוך שיר', items: [['hl-compose', 0], ['hl-compose', 1], ['hl-compose', 2]], tempo: [80, 140], sub: 'free 8ths' },
   { ...pick(isVerified('item:hl-arps-down'), ['Major arpeggios chromatically down; the ABCs in 3rds', 'ארפג׳ים מז׳וריים בירידה כרומטית; האלף־בית בטרצות'], ['The ABCs: note by note, then in 3rds', 'האלף־בית: צליל אחר צליל, ואז בטרצות']), items: [['hl-arps-down', 0], ['hl-arps-down', 2], ['hl-abc', 0], ['hl-abc', 1], ['hl-abc', 2]], tempo: LINE_TEMPO, sub: '8ths' },
 ];

@@ -347,7 +347,7 @@ function genSwing(s: DrillSpec, tu: Tuning): Drill {
       const cs = op % 2 ? repeatLc(lcText(transposeTextIn(STANDARD_CHANGES.find((x) => x.id === 'rhythm-a')!.text, key - 10, { key })), 2) : blues(2);
       const total = cs.reduce((a, c) => a + c.beats, 0);
       const line = [...walkOf(tu, cs, `b-swing:up:${key}:${op}`), closeOn(tu, key, total)];
-      return out(cs, line, op % 2 ? tt('Up-tempo walk: rhythm changes', 'ווקינג בטמפו מהיר: ריתם צ׳יינג׳ס') : tt('Up-tempo walk: the blues', 'ווקינג בטמפו מהיר: בלוז'), { long: 0.85, ride: [-20, 10], drift: 0.02, chorusBeats: total / 2 }, 'swing-fast');
+      return out(cs, line, op % 2 ? tt('Up-tempo walk: rhythm changes', 'בס מהלך בטמפו מהיר: ריתם צ׳יינג׳ס') : tt('Up-tempo walk: the blues', 'בס מהלך בטמפו מהיר: בלוז'), { long: 0.85, ride: [-20, 10], drift: 0.02, chorusBeats: total / 2 }, 'swing-fast');
     }
     case 'two-four': {
       // Very fast (260 → 320): a chorus in 2, then a chorus in 4, long notes and with the ride.
@@ -729,7 +729,7 @@ function genBarry(s: DrillSpec, tu: Tuning): Drill {
       // The same idea in a quarter-note walk: chord tones on 1 and 3, passing notes (scale or chromatic) on 2 and 4.
       const cs = repeatLc(lcOf(key, op % 2 ? PROGS.jazz : PROGS.iivi), 3);
       const line = ctLine(cs, rnd, { per: 1, every: 2, lo: Math.max(lowest(tu), 28), hi: 50, from: R + 7 });
-      return drillOf(s, tu, alt(line), { ...tt('Walking: chord tones on 1 and 3, passing notes between', 'ווקינג: צלילי אקורד על 1 ו-3, צלילים עוברים ביניהם'), chart: chartLc(cs), show: 'chart', bass: { rules: rulesFor(cs, 'downbeatCt', { every: 2 }) }, drums: { groove: 'swing' } });
+      return drillOf(s, tu, alt(line), { ...tt('Walking: chord tones on 1 and 3, passing notes between', 'בס מהלך: צלילי אקורד על 1 ו-3, צלילים עוברים ביניהם'), chart: chartLc(cs), show: 'chart', bass: { rules: rulesFor(cs, 'downbeatCt', { every: 2 }) }, drums: { groove: 'swing' } });
     }
     case 'bebop': {
       // A chorus of bebop lines: ii–V–I (op 0) or the rhythm-changes A section (op 1), chord tones on every beat.
@@ -913,7 +913,7 @@ function genJForm(s: DrillSpec, tu: Tuning): Drill {
       const first = blues.slice(0, 4);
       const rest = blues.slice(4);
       const plan: FormPlan = { sections: [sec('Stops', 'head', first, { groove: 'stop', band: 'stop', hits: [0, 4, 8, 12] }), sec('Swing', 'solo', rest, { groove: 'swing', band: 'swing' })], order: [0, 1, 0, 1] };
-      return formDrill(s, tu, plan, (sp, cs) => (sp.section === 0 ? cs.map((c, i) => ({ b: sp.startBeat + i * 4, d: 1, p: rootOf(tu, c.root), ct: true })) : walkOf(tu, cs, seed(`w${sp.pass}`), sp.startBeat)), (i) => (i === 0 ? first : rest), tt('Stop-time hits, then walking (blues)', 'עצירות עם הלהקה, ואז ווקינג (בלוז)'));
+      return formDrill(s, tu, plan, (sp, cs) => (sp.section === 0 ? cs.map((c, i) => ({ b: sp.startBeat + i * 4, d: 1, p: rootOf(tu, c.root), ct: true })) : walkOf(tu, cs, seed(`w${sp.pass}`), sp.startBeat)), (i) => (i === 0 ? first : rest), tt('Stop-time hits, then walking (blues)', 'עצירות עם הלהקה, ואז בס מהלך (בלוז)'));
     }
     case 'tag': {
       // The last A, a tag (iii–VI–ii–V turned around three times), and the final hit.
@@ -1117,14 +1117,14 @@ export function jazzFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-swing', 3, 'Centred and laid back, on request', 'במרכז ומאחורי הפעמה, לפי בקשה', [SW('place', { perBeat: 1, option: 1 }), SW('place', { perBeat: 1, option: 2 })], K, [120, 180], Qn),
       L('b-swing', 4, 'The drums drop out', 'התופים יוצאים', [SW('dropout', { perBeat: 1 })], K, [140, 200], Qn),
       L('b-swing', 5, 'Three choruses without drift', 'שלושה סבבים בלי לזוז בטמפו', [SW('choruses', { perBeat: 1 })], K, [160, 220], Qn),
-      L('b-swing', 6, 'Up-tempo walking', 'ווקינג בטמפו מהיר', [SW('uptempo', { perBeat: 1 }), SW('uptempo', { perBeat: 1, option: 1 })], [10, 5, 3], [220, 280], Qn),
+      L('b-swing', 6, 'Up-tempo walking', 'בס מהלך בטמפו מהיר', [SW('uptempo', { perBeat: 1 }), SW('uptempo', { perBeat: 1, option: 1 })], [10, 5, 3], [220, 280], Qn),
       L('b-swing', 7, 'Very fast: in 2 and in 4', 'מהיר מאוד: בשתיים ובארבע', [SW('two-four', { perBeat: 1 })], [10, 5], [240, 320], 'halves / quarters'),
     ]),
     fam('b-barry', 'Barry Harris on the bass', 'בארי האריס על הבס', [
       L('b-barry', 1, 'The 6th-diminished scale', 'סולם השש-מוקטן', [BH('sixdim', { swing: true }), BH('sixdim', { swing: true, option: 1 })], [0, 5, 7, 10], [80, 140], 'swung 8ths'),
       L('b-barry', 2, 'Diminished as a passing chord', 'מוקטן כאקורד עובר', [BH('dimpass', { perBeat: 1 }), BH('dimpass', { perBeat: 1, option: 1 })], [0, 5, 7, 10], [100, 160], Qn),
       L('b-barry', 3, 'Half-step rules: chord tones on the beats', 'חוקי חצי הטון: צלילי אקורד על הפעמות', [BH('halfstep', { swing: true }), BH('halfstep', { swing: true, option: 1 })], [0, 5, 7, 10, 3], [90, 160], 'swung 8ths'),
-      L('b-barry', 4, 'The rule in a walk: 1 and 3', 'החוק בווקינג: 1 ו-3', [BH('walk13', { perBeat: 1 }), BH('walk13', { perBeat: 1, option: 1 })], [0, 5, 7, 10, 3], [110, 180], Qn),
+      L('b-barry', 4, 'The rule in a walk: 1 and 3', 'החוק בבס מהלך: 1 ו-3', [BH('walk13', { perBeat: 1 }), BH('walk13', { perBeat: 1, option: 1 })], [0, 5, 7, 10, 3], [110, 180], Qn),
       L('b-barry', 5, 'Pivots: break the line', 'פיבוט: לשבור את הקו', [BH('pivot', { swing: true })], [0, 5, 7, 10, 3], [100, 160], 'swung 8ths'),
       L('b-barry', 6, 'A chorus of bebop lines', 'סבב של קווי ביבופ', [BH('bebop', { swing: true }), BH('bebop', { swing: true, option: 1 })], [0, 5, 10, 3], [120, 200], 'swung 8ths'),
       // BH-G (AUDIT-CONTENT-THEORY §ז.2): the pivot arpeggio, then a descending scale with a pivot inside — all 12 keys,

@@ -730,7 +730,7 @@ export const ORG_ROWS: Row[] = [
   { kind: 'org-walk', ops: [0], rating: 1300, en: 'Organ blues: LH in half notes, a held RH pad', he: 'בלוז באורגן: יד שמאל בחצאים, משטח ביד ימין', tempo: [70, 130] },
   { kind: 'org-walk', ops: [1], rating: 1380, en: 'Organ blues: the LH walks in quarters', he: 'בלוז באורגן: יד שמאל מהלכת ברבעים', tempo: [80, 140] },
   { kind: 'org-inner', ops: [0], rating: 1450, en: 'A pad with a moving inner voice', he: 'משטח עם קול פנימי נע', tempo: [70, 120] },
-  { kind: 'org-walk', ops: [2], rating: 1520, en: 'Organ minor blues: walk and pad', he: 'בלוז מינורי באורגן: ווקינג ומשטח', tempo: [80, 140] },
+  { kind: 'org-walk', ops: [2], rating: 1520, en: 'Organ minor blues: walk and pad', he: 'בלוז מינורי באורגן: בס מהלך ומשטח', tempo: [80, 140] },
   { kind: 'org-texture', ops: [0], rating: 1600, en: 'Thin and full: texture under a soloist', he: 'דק ומלא: מרקם מתחת לסולן', tempo: [80, 140] },
   { kind: 'org-ballad', ops: [0], rating: 1700, en: 'Organ ballad on the common-tone ladder', he: 'בלדה באורגן על סולם הצליל המשותף', tempo: [50, 72] },
   { kind: 'org-ballad', ops: [1], rating: 1720, en: 'Organ ballad: the 3rd held on top', he: 'בלדה באורגן: הטרצה נשארת למעלה', tempo: [50, 72] },
@@ -1200,11 +1200,11 @@ export const BC_ROWS: { kind: string; ops: number[]; rating: number; en: string;
   { kind: 'bc-pedal', ops: [0, 1], rating: 1150, en: 'Hold the pedal: the tonic under moving chords', he: 'להחזיק את הפדל: הטוניקה מתחת לאקורדים שזזים', tempo: [60, 100], sub: 'whole and half notes' },
   { kind: 'bc-thirds', ops: [0, 1], rating: 1250, en: 'Roots by thirds: chromatic mediants', he: 'שורשים בטרצות: מדיאנטות כרומטיות', tempo: [60, 100], sub: 'halves' },
   { kind: 'bc-dompedal', ops: [0], rating: 1350, en: 'The dominant pedal into the tonic', he: 'פדל הדומיננטה אל הטוניקה', tempo: [60, 110], sub: 'quarters' },
-  { kind: 'bc-plagal', ops: [0], rating: 1450, en: 'Walk the minor plagal endings', he: 'ווקינג על הסיומים הפלגליים המינוריים', tempo: [70, 140], sub: 'quarters' },
+  { kind: 'bc-plagal', ops: [0], rating: 1450, en: 'Walk the minor plagal endings', he: 'בס מהלך על הסיומים הפלגליים המינוריים', tempo: [70, 140], sub: 'quarters' },
   { kind: 'bc-counter', ops: [0, 1], rating: 1500, en: 'The counter-line: your note renames the chord', he: 'הקו הנגדי: הצליל שלכם נותן לאקורד שם חדש', tempo: [60, 100], sub: 'halves' },
-  { kind: 'bc-iio', ops: [0], rating: 1550, en: 'Walk iiø7 – V7♭9 – I in major', he: 'ווקינג על iiø7 – V7♭9 – I במז׳ור', tempo: [70, 140], sub: 'quarters' },
+  { kind: 'bc-iio', ops: [0], rating: 1550, en: 'Walk iiø7 – V7♭9 – I in major', he: 'בס מהלך על iiø7 – V7♭9 – I במז׳ור', tempo: [70, 140], sub: 'quarters' },
   { kind: 'bc-push', ops: [0], rating: 1560, en: 'The pedal with the "and" of 4 pushed', he: 'הפדל עם ה"וְ" של 4 דחוף', tempo: [70, 130], sub: 'quarters and pushes' },
-  { kind: 'bc-ctwalk', ops: [0, 1], rating: 1650, en: 'Walk a common-tone phrase', he: 'ווקינג על משפט בצליל משותף', tempo: [70, 140], sub: 'quarters' },
+  { kind: 'bc-ctwalk', ops: [0, 1], rating: 1650, en: 'Walk a common-tone phrase', he: 'בס מהלך על משפט בצליל משותף', tempo: [70, 140], sub: 'quarters' },
 ];
 /** A walking bar: root, two chord tones, a half step into the next root. */
 function walkBar(R: (pc: number) => number, root: number, ints: number[], next: number, b0: number, beats = 4): BN[] {
@@ -1271,7 +1271,7 @@ export function genBassCounter(s0: DrillSpec, tu: Tuning): Drill {
       const prog: [number, number[], string][] = [[0, [0, 4, 7], 'maj7'], [5, [0, 3, 7], 'm6'], [0, [0, 4, 7], 'maj7'], [8, [0, 4, 7], 'maj7'], [0, [0, 4, 7], 'maj7'], [10, [0, 4, 7], '7'], [0, [0, 4, 7], 'maj7']];
       const line: BN[] = [];
       prog.forEach(([d, ints], i) => line.push(...walkBar(R, mod12(key + d), ints, mod12(key + prog[(i + 1) % prog.length][0]), i * 4)));
-      return drillOf(s, tu, alt(line), { en: `Minor plagal walk in ${kn}: ivm6, ♭VImaj7, ♭VII7 → I`, he: `ווקינג פלגלי מינורי ב־${kn}: ivm6, ♭VImaj7, ♭VII7 → I`, chart: prog.map(([d, , q]) => N(d) + q), keySig: SIG[key] });
+      return drillOf(s, tu, alt(line), { en: `Minor plagal walk in ${kn}: ivm6, ♭VImaj7, ♭VII7 → I`, he: `בס מהלך פלגלי מינורי ב־${kn}: ivm6, ♭VImaj7, ♭VII7 → I`, chart: prog.map(([d, , q]) => N(d) + q), keySig: SIG[key] });
     }
     case 'bc-counter': {
       // C.8: the held note (the band's top voice) stays; the bass walks down by half steps and renames the chord.
@@ -1297,7 +1297,7 @@ export function genBassCounter(s0: DrillSpec, tu: Tuning): Drill {
         b += beats;
       });
       const names = prog.map(([d, , q]) => N(d) + q);
-      return drillOf(s, tu, alt(line), { en: `Walk iiø7 – V7♭9 – I, then ii – V – I in ${kn}`, he: `ווקינג על iiø7 – V7♭9 – I, ואז ii – V – I ב־${kn}`, chart: [`${names[0]} ${names[1]}`, names[2], `${names[3]} ${names[4]}`, names[5]], keySig: SIG[key] });
+      return drillOf(s, tu, alt(line), { en: `Walk iiø7 – V7♭9 – I, then ii – V – I in ${kn}`, he: `בס מהלך על iiø7 – V7♭9 – I, ואז ii – V – I ב־${kn}`, chart: [`${names[0]} ${names[1]}`, names[2], `${names[3]} ${names[4]}`, names[5]], keySig: SIG[key] });
     }
     case 'bc-push': {
       const g = R(key + 7);
@@ -1318,7 +1318,7 @@ export function genBassCounter(s0: DrillSpec, tu: Tuning): Drill {
         const ints = CT_Q[c.q].ints;
         line.push(...walkBar(R, c.root, [0, ints[1] % 12, ints[2] % 12], ch[(i + 1) % ch.length].root, i * 4));
       });
-      return drillOf(s, tu, alt(line), { en: `Walk the common-tone phrase: ${ch.map((c) => c.sym).join(' – ')} (${heldName(key)} on top)`, he: `ווקינג על משפט הצליל המשותף: ${ch.map((c) => c.sym).join(' – ')} (${heldName(key)} למעלה)`, chart: ch.map((c) => c.sym), keySig: SIG[key] });
+      return drillOf(s, tu, alt(line), { en: `Walk the common-tone phrase: ${ch.map((c) => c.sym).join(' – ')} (${heldName(key)} on top)`, he: `בס מהלך על משפט הצליל המשותף: ${ch.map((c) => c.sym).join(' – ')} (${heldName(key)} למעלה)`, chart: ch.map((c) => c.sym), keySig: SIG[key] });
     }
   }
   throw new Error(`Unknown b-counter kind ${s.kind}`);

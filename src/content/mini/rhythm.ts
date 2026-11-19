@@ -169,7 +169,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'ta sh sh ta', he: 'טה שְׁ שְׁ טה' } },
       },
       {
-        say: { en: 'In real music, quarters often carry a walking bass line or a steady strum, while halves and wholes hold the long notes of hymns, chorales and sustained pads under a band. Rests give phrases room to breathe.', he: 'במוזיקה אמיתית, רבעים נושאים לעתים קרובות קו ווקינג או פריטה יציבה, וחצאים ושלמים מחזיקים את הצלילים הארוכים של מזמורים, כוראלים ומשטחי צליל מתמשכים מתחת ללהקה. ההפסקות נותנות למשפטים מקום לנשום.' },
+        say: { en: 'In real music, quarters often carry a walking bass line or a steady strum, while halves and wholes hold the long notes of hymns, chorales and sustained pads under a band. Rests give phrases room to breathe.', he: 'במוזיקה אמיתית, רבעים נושאים לעתים קרובות קו בס מהלך או פריטה יציבה, וחצאים ושלמים מחזיקים את הצלילים הארוכים של מזמורים, כוראלים ומשטחי צליל מתמשכים מתחת ללהקה. ההפסקות נותנות למשפטים מקום לנשום.' },
       },
       {
         say: { en: 'To keep: the beat is the ruler. Quarter = 1, half = 2, whole = 4, and each rest lasts exactly as long as its note.', he: 'לזכור: הפעמה היא הסרגל. רבע = 1, חצי = 2, שלם = 4, וכל הפסקה נמשכת בדיוק כמו התו שלה.' },

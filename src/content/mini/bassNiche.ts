@@ -17,7 +17,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Swing is measured: long quarters, a steady place against the ride, and the same tempo in the last chorus as in the first.', he: 'סווינג נמדד: רבעים ארוכים, מקום קבוע מול הרייד, ואותו טמפו בסבב האחרון כמו בראשון.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Right notes are half of walking. The other half is time, and time can be measured.', he: 'היי {name}! צלילים נכונים הם חצי מהווקינג. החצי השני הוא הזמן, ואת הזמן אפשר למדוד.' },
+        say: { en: 'Hi {name}! Right notes are half of walking. The other half is time, and time can be measured.', he: 'היי {name}! צלילים נכונים הם חצי מהבס המהלך. החצי השני הוא הזמן, ואת הזמן אפשר למדוד.' },
         play: [notes([31, 35, 38, 40, 41, 40, 38, 35], 0.5)],
       },
       {
@@ -34,7 +34,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([29, 33, 36, 39, 34, 38, 41, 44], 0.45)],
       },
       {
-        say: { en: 'Your turn: walk with the band. I measure the length of every note, where it sits against the ride, and the tempo of every chorus.', he: 'תורכם: ווקינג עם הלהקה. אני מודד את האורך של כל צליל, איפה הוא יושב מול הרייד, ואת הטמפו של כל סבב.' },
+        say: { en: 'Your turn: walk with the band. I measure the length of every note, where it sits against the ride, and the tempo of every chorus.', he: 'תורכם: בס מהלך עם הלהקה. אני מודד את האורך של כל צליל, איפה הוא יושב מול הרייד, ואת הטמפו של כל סבב.' },
         play: [notes([31, 35, 38, 41], 0.55)],
       },
     ],
@@ -57,10 +57,10 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'The usual mistake is rushing when the drums stop. Count the bars in your head and keep the same length of beat.', he: 'הטעות הנפוצה היא להאיץ כשהתופים נעצרים. סופרים את התיבות בראש ושומרים על אותו אורך פעמה.' },
       },
       {
-        say: { en: 'Listen to the great walking bassists on records: the notes are simple, but every quarter is full and sits in the same place for chorus after chorus. That is the sound these levels measure.', he: 'הקשיבו לבסיסטים הגדולים של הווקינג בהקלטות: הצלילים פשוטים, אבל כל רבע מלא ויושב באותו מקום סבב אחרי סבב. זה הצליל שהשלבים האלה מודדים.' },
+        say: { en: 'Listen to the great walking bassists on records: the notes are simple, but every quarter is full and sits in the same place for chorus after chorus. That is the sound these levels measure.', he: 'הקשיבו לבסיסטים הגדולים של הבס המהלך בהקלטות: הצלילים פשוטים, אבל כל רבע מלא ויושב באותו מקום סבב אחרי סבב. זה הצליל שהשלבים האלה מודדים.' },
       },
       {
-        say: { en: 'To keep: long, placed, steady. The notes come from the walking rules; the swing comes from these three.', he: 'מה לזכור: ארוך, ממוקם, יציב. הצלילים באים מחוקי הווקינג; הסווינג בא משלושת אלה.' },
+        say: { en: 'To keep: long, placed, steady. The notes come from the walking rules; the swing comes from these three.', he: 'מה לזכור: ארוך, ממוקם, יציב. הצלילים באים מחוקי הבס המהלך; הסווינג בא משלושת אלה.' },
         show: { text: { en: 'long · placed · steady', he: 'ארוך · ממוקם · יציב' } },
       },
     ],
@@ -86,7 +86,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'G F♯ F E D C B A G', he: 'G F♯ F E D C B A G' } },
       },
       {
-        say: { en: 'The same idea works in a walk: chord tones on one and three, and passing notes, scale or chromatic, on two and four.', he: 'אותו רעיון עובד בווקינג: צלילי אקורד על אחת ושלוש, וצלילים עוברים, מהסולם או כרומטיים, על שתיים וארבע.' },
+        say: { en: 'The same idea works in a walk: chord tones on one and three, and passing notes, scale or chromatic, on two and four.', he: 'אותו רעיון עובד בבס מהלך: צלילי אקורד על אחת ושלוש, וצלילים עוברים, מהסולם או כרומטיים, על שתיים וארבע.' },
         play: [notes([38, 40, 41, 42, 43, 41, 40, 39], 0.5)],
       },
       {
@@ -113,7 +113,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'The usual mistake is adding half steps everywhere. Add one only where a chord tone would slip off the beat.', he: 'הטעות הנפוצה היא להוסיף חצאי טונים בכל מקום. מוסיפים רק במקום שבו צליל אקורד היה מחליק מהפעמה.' },
       },
       {
-        say: { en: 'You will hear these lines in bebop solos on every instrument. On the bass they make a solo chorus sound like the horns, and they make a walking line sound inevitable.', he: 'את הקווים האלה שומעים בסולואים של ביבופ על כל כלי. על הבס הם גורמים לסבב סולו להישמע כמו כלי הנשיפה, ולקו ווקינג להישמע מתבקש.' },
+        say: { en: 'You will hear these lines in bebop solos on every instrument. On the bass they make a solo chorus sound like the horns, and they make a walking line sound inevitable.', he: 'את הקווים האלה שומעים בסולואים של ביבופ על כל כלי. על הבס הם גורמים לסבב סולו להישמע כמו כלי הנשיפה, ולקו בס מהלך להישמע מתבקש.' },
       },
       {
         say: { en: 'To keep: downbeats are chord tones. Everything between them is a passing note that leads to the next one.', he: 'מה לזכור: הפעמות החזקות הן צלילי אקורד. כל מה שביניהן הוא צליל עובר שמוביל לבא.' },
@@ -133,7 +133,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'A A B A', he: 'A A B A' } },
       },
       {
-        say: { en: 'A common plan: the A sections in two, half notes on one and three, and the bridge in four, walking quarters.', he: 'תוכנית נפוצה: קטעי A בשתיים, חצאים על אחת ושלוש, והגשר בארבע, רבעים של ווקינג.' },
+        say: { en: 'A common plan: the A sections in two, half notes on one and three, and the bridge in four, walking quarters.', he: 'תוכנית נפוצה: קטעי A בשתיים, חצאים על אחת ושלוש, והגשר בארבע, רבעים של בס מהלך.' },
         play: [notes([36, 43, 33, 40], 0.9), notes([40, 44, 47, 45, 33, 37, 40, 43], 0.45)],
       },
       {
