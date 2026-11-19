@@ -429,6 +429,8 @@ export function App() {
     reportedDays.current = key;
     void reportStreakDays(days).catch(() => {});
   }, [user, gems.streak.freezeDays, gems.streak.repairedDays]);
+  // Testing round (owner 2026-11-19): after a fresh start, say so once, so it never looks like a bug.
+  const [freshNotice, setFreshNotice] = useState(false);
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -436,7 +438,8 @@ export function App() {
     // Once per epoch every device starts over (storage/freshStart.ts), before anything reads settings or progress.
     void freshStartIfNeeded(store)
       .catch(() => false)
-      .then(() => {
+      .then((wiped) => {
+        if (wiped) setFreshNotice(true);
         void store.loadSettings().then(setSettings).catch(() => setSettings(DEFAULT_SETTINGS));
         void store.loadProgress().then((p) => {
           setProgress(p);
@@ -2695,6 +2698,22 @@ export function App() {
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
+      )}
+      {freshNotice && (
+        <div className="sheet-backdrop" onClick={() => setFreshNotice(false)}>
+          <div className="sheet fresh-sheet" role="dialog" aria-modal="true" aria-labelledby="fresh-title" onClick={(e) => e.stopPropagation()} data-fresh-notice>
+            <h2 id="fresh-title">{s.uiLang === 'he' ? 'מצב בדיקה: מתחילים מחדש' : 'Testing round: a fresh start'}</h2>
+            <p>
+              {s.uiLang === 'he'
+                ? 'סידרנו מחדש את השלבים בכל הקורסים, ולכן ההתקדמות של כל הבודקים נמחקה בכוונה. כך תוכלו לחוות את ההתחלה כמו משתמש חדש: בחירת קורס, הפתיחה המונפשת והיחידות הראשונות.'
+                : 'We reordered the steps in every course, so every tester’s progress was cleared on purpose. Now you can try the start as a new player would: choosing a course, the animated opening and the first units.'}
+            </p>
+            <p className="muted">{s.uiLang === 'he' ? 'השפה, הכינוי, הכיול וההקלטות שלכם נשמרו.' : 'Your language, nickname, calibration and recordings were kept.'}</p>
+            <button className="btn mega" autoFocus onClick={() => setFreshNotice(false)}>
+              {s.uiLang === 'he' ? 'מתחילים' : 'Start'}
+            </button>
+          </div>
+        </div>
       )}
       {consentThen && (
         <div className="sheet-backdrop" onClick={() => setConsentThen(null)}>
