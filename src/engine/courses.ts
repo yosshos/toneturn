@@ -282,7 +282,8 @@ export interface CourseState {
   jazzFocus?: CourseId[];
   /** SPEC-JAZZ-FOLD §3: the courses where climbing opened the jazz pack. */
   jazzOpen?: CourseId[];
-  /** A one-time notice still to show: 'fold' (the Jazz course became jazz focus) or the course whose jazz just opened. */
+  /** A one-time notice still to show: the course whose jazz just opened by climbing (owner 2026-11-19: no notice for
+   *  the fold itself — the app has no users yet). 'fold' is a leftover value, cleared silently. */
   jazzNotice?: 'fold' | CourseId;
   /** Per-course records keyed by course id that move with the course (courseStart, openers.course). */
   courseStart?: Partial<Record<CourseId, unknown>>;
@@ -320,7 +321,7 @@ export function migrateJazzCourse<T extends CourseState>(s: T): T {
   const focus = Array.from(new Set<CourseId>([...(s.jazzFocus ?? []), ...courses.filter((c) => JAZZ_FOCUS_COURSES.includes(c))]));
   // The jazz pack stays open there too (jazzOpen), so switching jazz focus off later never hides what they did.
   const open = Array.from(new Set<CourseId>([...(s.jazzOpen ?? []), ...focus]));
-  const out: CourseState = { ...s, courses, jazzFocus: focus, jazzOpen: open, jazzNotice: 'fold', pathFactsBy: factsBy as CourseState['pathFactsBy'], pathKeepBy: keepBy as CourseState['pathKeepBy'] };
+  const out: CourseState = { ...s, courses, jazzFocus: focus, jazzOpen: open, pathFactsBy: factsBy as CourseState['pathFactsBy'], pathKeepBy: keepBy as CourseState['pathKeepBy'] };
   if (wasActive) {
     // The jazz path was the live one: Ear becomes the live course, the jazz facts merged with Ear's parked ones (Ear's
     // own units order first, so its path does not jump).

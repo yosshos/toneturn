@@ -174,7 +174,7 @@ describe('migration of an old Jazz-course player (SPEC-JAZZ-FOLD §5)', () => {
     expect(m.courses).toEqual(['ear', 'keys']);
     expect(m.activeCourse).toBe('ear');
     expect(m.jazzFocus).toEqual(expect.arrayContaining(['ear', 'keys']));
-    expect(m.jazzNotice).toBe('fold');
+    expect(m.jazzNotice).toBeUndefined(); // owner 2026-11-19: no notice for the fold
     expect(m.jazzOpen).toEqual(expect.arrayContaining(['ear', 'keys']));
     // Ear's live facts: Ear's own and the jazz path's (the same step ids).
     for (const id of ['topic:intervals-all:1', 'topic:bh-convert:1', 'lesson:jazz-1', 'tech:k-comp-1']) expect(m.pathFacts?.steps?.[id], id).toBeTruthy();

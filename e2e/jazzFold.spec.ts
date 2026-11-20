@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 // SPEC-JAZZ-FOLD (owner 2026-11-19): the Jazz course is folded into the other courses. A player of the old Jazz course
-// lands in Ear & theory with jazz focus on, keeps everything, gets a one-time notice, and finds the jazz steps on the
+// lands in Ear & theory with jazz focus on, keeps everything, and finds the jazz steps on the
 // Ear path and the jazz rows on Practice.
 test.describe('the Jazz course folded into Ear (jazz focus)', () => {
   test.use({ viewport: { width: 390, height: 844 } });
@@ -34,11 +34,9 @@ test.describe('the Jazz course folded into Ear (jazz focus)', () => {
       });
     });
     await page.goto('/?unlock#/path');
-    // Ear is the active course; the one-time notice says what happened.
+    // Ear is the active course; no notice about the fold (owner 2026-11-19: no users yet).
     await expect(page.locator('[data-course-chip="ear"]:visible').first()).toBeVisible();
-    const note = page.locator('[data-jazz-notice="fold"]');
-    await expect(note).toBeVisible();
-    await expect(note).toContainText('מיקוד ג׳אז');
+    await expect(page.locator('[data-jazz-notice="fold"]')).toHaveCount(0);
     // The path header: jazz focus on (exam prep off), fitting the phone.
     const sw = page.locator('[data-jazz-focus]').first();
     await expect(sw).toHaveAttribute('aria-checked', 'true');

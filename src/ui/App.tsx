@@ -707,34 +707,10 @@ export function App() {
   const jazzToOpen = useMemo(() => (settings && progressReady ? coursesToOpen(settings, ratingsOf(progress)) : []), [settings, progress, progressReady]);
   useEffect(() => {
     if (!settings || !jazzToOpen.length) return;
-    updateSettings({ jazzOpen: Array.from(new Set([...(settings.jazzOpen ?? []), ...jazzToOpen])), jazzNotice: settings.jazzNotice ?? jazzToOpen[0] });
+    updateSettings({ jazzOpen: Array.from(new Set([...(settings.jazzOpen ?? []), ...jazzToOpen])), jazzNotice: undefined });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jazzToOpen.join(',')]);
-  // The one-time jazz notice (the Jazz course folded into jazz focus, or a course's jazz just opened): a short toast,
-  // then the flag is cleared so it never comes back.
-  const [jazzToast, setJazzToast] = useState<{ kind: 'fold' | CourseId; text: string } | null>(null);
-  useEffect(() => {
-    const n = settings?.jazzNotice;
-    if (!n) return;
-    const he = (settings?.uiLang ?? 'he') === 'he';
-    const cname = n === 'fold' ? '' : courseOf(n).name[he ? 'he' : 'en'];
-    const text =
-      n === 'fold'
-        ? he
-          ? 'קורס הג׳אז הוא עכשיו חלק מהקורסים שלכם: מיקוד ג׳אז פועל בהם, וכל ההתקדמות נשמרה.'
-          : 'The Jazz course is now part of your courses as jazz focus. All your progress is kept.'
-        : he
-          ? `התקדמתם יפה: הג׳אז נפתח בקורס ${cname}.`
-          : `Well climbed: jazz is now open in ${cname}.`;
-    setJazzToast({ kind: n, text });
-    updateSettings({ jazzNotice: undefined });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.jazzNotice]);
-  useEffect(() => {
-    if (!jazzToast) return;
-    const id = window.setTimeout(() => setJazzToast(null), 8000);
-    return () => window.clearTimeout(id);
-  }, [jazzToast]);
+  // Owner 2026-11-19: no notices while the app is in development (no real users yet) — jazz opens quietly.
   useEffect(() => {
     // The globe switches the whole app: screens, spoken answers and the voice that answers (owner feedback 2026-11-18).
     registerLangSetter((lang) => updateSettings({ uiLang: lang, inputLang: lang, outputLang: lang }));
@@ -2970,11 +2946,6 @@ export function App() {
       {awardToast && (
         <button className="award-toast" role="status" onClick={() => (setAwardToast(null), go('skills'))}>
           {awardToast}
-        </button>
-      )}
-      {jazzToast && !awardToast && (
-        <button className="award-toast jazz-toast" role="status" data-jazz-notice={jazzToast.kind} onClick={() => setJazzToast(null)}>
-          {jazzToast.text}
         </button>
       )}
       {challenge !== undefined && (

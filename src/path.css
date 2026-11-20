@@ -693,10 +693,6 @@ html[data-motion='reduced'] .back-to-step {
   align-items: center;
 }
 
-/* SPEC-JAZZ-FOLD: the one-time jazz notice reads like an award toast but never takes a tap from what is under it. */
-.jazz-toast {
-  pointer-events: none;
-}
 .award-toast {
   position: fixed;
   inset-inline: 16px;
