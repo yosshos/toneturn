@@ -1,8 +1,8 @@
 // One drill take (spec AI §3): the notes, the metronome with a count-in, MIDI recording (velocity, release,
 // both hands), then the analysis right away — verdict, the evenness strip, the velocity curve, the hands chart.
-
+
 import { DEVICE_ONLY_ABOVE, MIDI_IN_MS } from '../engine/latency';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import { splitDur } from '../engine/piece/layout';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
@@ -410,7 +410,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   // paged like the bass, never four or more staff cards in a scrolling box.
   const ht = !bass && rh.length > 0 && lh.length > 0;
   const paged = bass || !!drill.paged || ht;
-  const winSize = ht ? 1 : 2;
+  // Owner 2026-11-20 (desktop): one system at a time hid the next line, so the cursor jumped to music never seen —
+  // a phone keeps one system (one screen), a wide screen shows the next one too (faded, the look-ahead).
+  const winSize = ht && phone() ? 1 : 2;
   const k = keyName(drill.keySig);
   const firstOfChord = (ns: typeof rh) => ns.filter((n, i) => n.chordId === undefined || ns.findIndex((m) => m.chordId === n.chordId) === i);
   /** Under a marked note (0.52): what was really played — the note name for a wrong pitch, ms early / late off time. */
@@ -443,8 +445,15 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || drill.paged || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
+  // Owner 2026-11-20: reading-play must be perfect — while a take runs, every line is drawn and the score box scrolls
+  // smoothly: the line being played near the top, the next one or two below it, the scroll easing in over the last part
+  // of each line and landing as the next line starts (tied to the beat, not to a clock), as score-following apps do.
+  const playing = beat >= 0 && !result;
+  const boxRef = useRef<HTMLDivElement>(null);
   const win = useLineWindow(nLines, beat >= 0 ? (sl ? lineAtQ(beat * qk) * per : beat * qk) : -1, per, firstBad ? lineOf(firstBad) : 0, winSize);
-  const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean) => {
+  /** Items per line of each staff (hands together: both lines of a system are drawn as wide as the fuller one). */
+  const lineItems = new Map<string, number>();
+  const draw = (ns: typeof rh, clef: 'treble' | 'bass' | 'tenor', windowed: boolean, sysWidth?: (li: number) => number | undefined) => {
     const all = shown(ns);
     const lines: (typeof all)[] = [];
     for (const n of all) (lines[lineOf(n)] ??= []).push(n);
@@ -454,7 +463,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       if (!lines[li] && all.some((n) => bq(n) < ls - 1e-6 && bq(n) + dq(n) > ls + 0.24)) lines[li] = [];
     }
     return lines.map((xs, li) => {
-      if (!xs || (windowed && (li < win.from || li >= win.from + winSize))) return null;
+      if (!xs || (windowed && !playing && (li < win.from || li >= win.from + winSize))) return null;
       const fing = fingering && xs.some((n) => n.finger);
       const labels = result ? xs.map((n) => playedLabel(n) || (fing && n.finger ? String(n.finger) : '')) : fing ? xs.map((n) => (n.finger ? String(n.finger) : '')) : undefined;
       const marks = result ? xs.map((n) => markFor(n, ns)) : undefined;
@@ -601,6 +610,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           now={now}
           ahead={ahead}
           spacing={htPhone ? htSpacing(items) : phone() ? 32 : 44}
+          minWidth={(lineItems.set(`${clef}${li}`, items.length), sysWidth?.(li))}
           fit={htPhone}
           key={`${clef}${li}`}
           notes={items.map((x) => (x.n ? x.n.pitch + shift : (x.p ?? 71)))}
@@ -634,8 +644,29 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       );
     });
   };
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    if (!playing) return;
+    const q = beat * qk;
+    const L = lineAtQ(q);
+    const from = sl ? (sl[L]?.from ?? L * per) : L * per;
+    const to = sl ? (sl[L]?.to ?? from + per) : from + per;
+    const f = to > from ? Math.min(1, Math.max(0, (q - from) / (to - from))) : 0;
+    const lineEl = (i: number) => box.querySelector<HTMLElement>(`[data-ht-system="${i}"], [data-staff-line="${i}"]`);
+    const cur = lineEl(L);
+    if (!cur) return;
+    const next = lineEl(L + 1);
+    const b0 = box.getBoundingClientRect().top - box.scrollTop;
+    const top = (el: HTMLElement) => el.getBoundingClientRect().top - b0 - 6;
+    // ease over the last 40% of the line (smoothstep), so the eye has the next line in place before it is due
+    const u = Math.min(1, Math.max(0, (f - 0.6) / 0.4));
+    const s = u * u * (3 - 2 * u);
+    const y = next ? top(cur) + s * (top(next) - top(cur)) : top(cur);
+    box.scrollTop = Math.max(0, Math.min(y, box.scrollHeight - box.clientHeight));
+  });
   return (
-    <div className={`drill-staff ${ht ? 'ht' : ''}`} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
+    <div ref={boxRef} className={`drill-staff ${ht ? 'ht' : ''} ${playing ? 'following' : ''}`} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
       {/* Slice 8: the chords over the staff in the shared chart (compact: four bars a row, the bar being played lit). */}
       {drill.chart && !paged && <ChordChart cells={drill.chart.map((c, i) => ({ chord: c, ...(!result && roles?.[i]?.length ? { dots: roles[i] } : {}) }))} meter={drill.meter || 4} beat={result ? -1 : beat} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />}
       {drill.chart &&
@@ -645,8 +676,27 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           const z = sl ? sl.slice(0, win.from + winSize).reduce((x, l) => x + l.bars.length, 0) : ((win.from + winSize) * per) / meter;
           return <ChordChart cells={drill.chart.slice(a, z).map((c, i) => ({ chord: c, ...(!result && roles?.[a + i]?.length ? { dots: roles[a + i] } : {}) }))} first={a} meter={drill.meter || 4} beat={result || beat < 0 ? -1 : beat - a * (drill.meter || 4)} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />;
         })()}
-      {draw(rh, rhClef, paged)}
-      {draw(lh, 'bass', paged)}
+      {ht
+        ? (() => {
+            // Hands together: each system is the RH line over the LH line of the same bars (2026-11-20: with two systems
+            // on a wide screen, all the RH lines came first and the LH lines after them).
+            draw(rh, rhClef, paged);
+            draw(lh, 'bass', paged);
+            const sp = htPhone ? undefined : phone() ? 32 : 44;
+            const sys = (li: number) => (sp ? 90 + sp * Math.max(lineItems.get(`${rhClef}${li}`) ?? 0, lineItems.get(`bass${li}`) ?? 0) : undefined);
+            const R = draw(rh, rhClef, paged, sys);
+            const L = draw(lh, 'bass', paged, sys);
+            return Array.from({ length: Math.max(R.length, L.length) }, (_, li) =>
+              R[li] || L[li] ? (
+                <div className="ht-system" key={`sys${li}`} data-ht-system={li}>
+                  {R[li]}
+                  {L[li]}
+                </div>
+              ) : null,
+            );
+          })()
+        : draw(rh, rhClef, paged).map((el, li) => (el ? <div className="staff-line" key={`ln${li}`} data-staff-line={li}>{el}</div> : null))}
+      {!ht && lh.length > 0 && draw(lh, 'bass', paged)}
       {paged && win.pager}
       {drill.ornaments?.length ? <OrnamentLegend drill={drill} lang={lang} /> : null}
     </div>

@@ -2599,3 +2599,11 @@ button.chip.on {
 /* Owner 2026-11-20: the app's sound for MIDI keys — top-bar switch and the first-connection question. */
 .keys-sound-btn.off { opacity: 0.75; }
 .keys-sound-choices { display: grid; gap: 10px; margin-top: 12px; }
+/* Hands together (2026-11-20): a system = the RH and LH lines of the same bars; on a wide screen the next system shows too. */
+.drill-staff.ht .ht-system { display: grid; gap: 2px; }
+.drill-staff.ht .ht-system + .ht-system { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line, #ddd); }
+/* A wide, tall screen: both systems of a hands-together score in view (the box no longer scrolls the next one away). */
+@media (min-width: 900px) and (min-height: 700px) {
+  :root:root .drills-screen .drill-run .drill-staff { max-height: 70vh; }
+  :root:root .drills-screen[data-drills] .drill-staff.ht .note-staff svg { max-height: 104px; }
+}

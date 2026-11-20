@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.109.4',
+    date: '2026-11-20',
+    en: ['Reading while you play: the score scrolls smoothly with the beat — the line you play near the top, the next lines below it, the scroll landing as the next line starts. Hands together: treble and bass of the same bars stay together and line up; on a computer the next system is in view.'],
+    he: ['נגינה מקריאה: התווים נגללים בצורה רכה עם הקצב — השורה שמנגנים למעלה, השורות הבאות מתחתיה, והגלילה נוחתת כשהשורה הבאה מתחילה. שתי ידיים: המפתח העליון והתחתון של אותן תיבות נשארים יחד ומיושרים; במחשב רואים גם את המערכת הבאה.'],
+  },
+  {
     version: '0.109.3',
     date: '2026-11-20',
     en: ['On a Bluetooth speaker or headphones, the score’s cursor now waits for the click you actually hear (after the MIDI timing calibration), instead of running ahead of the sound.'],

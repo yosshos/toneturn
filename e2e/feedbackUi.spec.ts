@@ -503,7 +503,7 @@ for (const lang of ['en', 'he'] as const)
   for (const [plays, family, level] of CHARTS.filter(([, , l]) => l !== 'b-walk-7'))
     test(`note-role dots on the chart while the take runs (${plays} ${level}, ${lang})`, async ({ page }) => {
       await liveInit(1.5)(page);
-      await seed(page, lang, plays, { headphones: false, drills: { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: plays === 'keys' ? 'piano' : plays, guitarAddOns: ['jazz'], bassTrack: 'both' } });
+      await seed(page, lang, plays, { jazzFocus: [plays], headphones: false, drills: { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true, instrument: plays === 'keys' ? 'piano' : plays, guitarAddOns: ['jazz'], bassTrack: 'both' } });
       await openLevel(page, lang, family, level);
       await expect(page.locator('.cc-dot')).toHaveCount(0);
       const speaker = page.locator('[data-drums-choice="speaker"]');
