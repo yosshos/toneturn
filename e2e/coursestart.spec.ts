@@ -171,4 +171,26 @@ test.describe('course start', () => {
     await welcome(page, 'keys', 'bit');
     await expect(page.locator('[data-course-start="setup"][data-cs-course="keys"]')).toBeVisible();
   });
+  // Owner 2026-11-20: picked ear + piano together, answered "I know it" once — piano never asked and started as new.
+  test('two courses picked in onboarding: each asks its own question, naming the course', async ({ page }) => {
+    await page.goto('/?sim=1&welcome=1&lang=en');
+    await page.locator('[data-ob="start"]').click();
+    await page.locator('[data-ob="listen"]').click();
+    await expect(page.locator('[data-ob="taste-0"]')).toBeEnabled({ timeout: 10_000 });
+    await page.locator('[data-ob="taste-0"]').click();
+    await page.locator('[data-ob="taste-next"]').click();
+    await page.locator('[data-ob="course-ear"]').click();
+    await page.locator('[data-ob="course-keys"]').click();
+    await page.locator('[data-ob="courses-next"]').click();
+    await expect(page.locator('[data-cs-q="ear"]')).toContainText('Ear');
+    await welcome(page, 'ear', 'well');
+    await setup(page, 'ear');
+    await playLesson(page);
+    await page.locator('[data-next="path"]').click();
+    // Piano, already in the list: its own welcome and question.
+    await page.locator('[data-course-chip]:visible').first().click();
+    await page.locator('.course-list [data-course="keys"]').first().click();
+    await expect(page.locator('[data-cs-q="keys"]')).toContainText('Piano');
+    await welcome(page, 'keys', 'well');
+  });
 });

@@ -176,6 +176,11 @@ export function courseHasProgress(c: CourseId, p: ProgressFacts): boolean {
  * Returns the same object when nothing changes.
  */
 export function migrateCourseStart(m: CourseStartMap | undefined, courses: CourseId[], p: ProgressFacts): CourseStartMap | undefined {
+  // Owner 2026-11-20: a new player (ear + piano from onboarding) never got the piano question — shared credit (the
+  // keyboard map, shared theory lessons, cross-course ✓) gave piano "progress" and it was taken for an old player.
+  // Only players from before course starts existed (no start state at all) are migrated; a player who came through
+  // onboarding answers each course's own question when they first open it.
+  if (m && Object.keys(m).length) return m;
   let out = m;
   for (const c of courses) {
     if (out?.[c] || !courseHasProgress(c, p)) continue;

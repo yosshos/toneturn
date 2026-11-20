@@ -114,6 +114,12 @@ describe('course start: migration of existing players', () => {
     expect(migrateCourseStart(m0, ['ear'], p)).toBe(m0);
   });
 
+  it("a player from onboarding gets every later course's own question, even with shared credit there", () => {
+    const m0: CourseStartMap = { ear: { fromOnboarding: true, report: 'well', tasteAt: NOW } };
+    const p: ProgressFacts = { activeCourse: 'keys', pathFacts: { steps: { 'topic:key-notes:1': { stars: 2, at: NOW } } }, history: [{ lessonId: 'chord-intro', completedAt: NOW, course: 'keys' }] };
+    expect(migrateCourseStart(m0, ['ear', 'keys'], p)).toBe(m0);
+  });
+
   it('piano technique counts for keys, not for guitar', () => {
     expect(courseHasProgress('keys', { history: [], drillFamilies: ['scales'] })).toBe(true);
     expect(courseHasProgress('guitar', { history: [], drillFamilies: ['scales'] })).toBe(false);

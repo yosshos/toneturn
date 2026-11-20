@@ -105,7 +105,8 @@ export function CourseWelcome({ course, lang, report, onReport, onBack, track, o
           </div>
         </div>
       )}
-      <h2 className="cs-q">{lang === 'he' ? 'איפה אתם?' : 'Where are you?'}</h2>
+      {/* Owner 2026-11-20: the question names its course — each course is asked on its own. */}
+      <h2 className="cs-q" data-cs-q={course}>{lang === 'he' ? `איפה אתם ב${def.name.he}?` : `Where are you in ${def.name.en}?`}</h2>
       <div className="ob-choices" role="radiogroup">
         {reportOptions(course, lang).map((o) => (
           <button

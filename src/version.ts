@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.109.1',
+    date: '2026-11-20',
+    en: ['Each course asks where you are in that course, by name ("Where are you in Piano?"), and a course picked at sign-up always asks its own question.'],
+    he: ['כל קורס שואל איפה אתם בו, בשמו ("איפה אתם בפסנתר?"), וכל קורס שבחרתם בהרשמה שואל את השאלה שלו.'],
+  },
+  {
     version: '0.109.0',
     date: '2026-11-20',
     en: ['Jazz is now the top of every course instead of a course of its own: jazz ear and theory in Ear & theory, jazz playing in each instrument and the voice. It opens by your background, with jazz focus, or when you climb to mf.'],
