@@ -101,6 +101,7 @@ import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../s
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
 import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
+import { KeysSoundAsk, useMidiDevices, type KeysSoundProp } from './KeysSound';
 import { LessonScreen } from './Lesson';
 import { SettingsScreen } from './SettingsScreen';
 import { Diagnostics } from './Diagnostics';
@@ -663,6 +664,11 @@ export function App() {
       piano.liveAllOff();
     };
   }, [s.midiInput, s.midiSound, s.computerKeys, s.activeCourse]);
+  // Owner 2026-11-20: the app's sound for MIDI keys, one tap away in the top bar while a keyboard is connected, and one
+  // question when a keyboard first connects (a digital piano has its own speakers; the app's echo arrives late).
+  const keysSound: KeysSoundProp | undefined = s.midiInput && s.activeCourse !== 'drums' ? { on: s.midiSound !== false, toggle: () => updateSettings({ midiSound: s.midiSound === false, midiSoundAsked: true }), lang: s.uiLang } : undefined;
+  const midiNames = useMidiDevices(!!s.midiInput && s.activeCourse !== 'drums');
+  const askKeysSound = !!s.midiInput && s.activeCourse !== 'drums' && !s.midiSoundAsked && midiNames.length > 0 ? midiNames[0] : null;
   // Drums: pad controllers without a sound module — the app plays the kit's sound on each hit (kit card, default off).
   const drumSounds = s.activeCourse === 'drums' && !!s.drumKit?.sounds && !s.drumKit?.mic;
   useEffect(() => {
@@ -2415,12 +2421,13 @@ export function App() {
       )}
       {isTab && route !== 'home' && !mini && (
         <div className="tab-topbar">
-          <TopBar t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
+          <TopBar keysSound={keysSound} t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
         </div>
       )}
       {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go(toolFrom.current)} />}
       {route === 'home' && (
         <Home
+          keysSound={keysSound}
           t={t}
           settings={s}
           progress={progress}
@@ -2741,6 +2748,7 @@ export function App() {
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
+      {askKeysSound && <KeysSoundAsk device={askKeysSound} lang={s.uiLang} onAnswer={(appSound) => updateSettings({ midiSound: appSound, midiSoundAsked: true })} />}
       {freshNotice && (
         <div className="sheet-backdrop" onClick={() => setFreshNotice(false)}>
           <div className="sheet fresh-sheet" role="dialog" aria-modal="true" aria-labelledby="fresh-title" onClick={(e) => e.stopPropagation()} data-fresh-notice>

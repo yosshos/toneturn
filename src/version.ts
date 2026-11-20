@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.109.2',
+    date: '2026-11-20',
+    en: ['With a MIDI keyboard connected, a speaker button at the top (and in lessons and technique) turns the app’s sound for your keys off or on, so a digital piano can play through its own speakers while you still hear the app. The first time a keyboard connects, the app asks.'],
+    he: ['כשמקלדת מידי מחוברת, כפתור רמקול למעלה (וגם בשיעורים ובטכניקה) מכבה או מדליק את צליל הקלידים מהאפליקציה, כך שפסנתר דיגיטלי מנגן מהרמקולים שלו ועדיין שומעים את האפליקציה. בפעם הראשונה שמקלדת מתחברת, האפליקציה שואלת.'],
+  },
+  {
     version: '0.109.1',
     date: '2026-11-20',
     en: ['Each course asks where you are in that course, by name ("Where are you in Piano?"), and a course picked at sign-up always asks its own question.'],

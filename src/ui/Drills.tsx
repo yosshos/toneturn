@@ -1,6 +1,7 @@
 // Technique drills (spec AI): the hub (today's items, families, the technique map), a family's levels with the
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
-
+
+import { KeysSoundButton } from './KeysSound';
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
@@ -259,6 +260,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <Icon k="back" />
       </button>
       <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
+      {settings.midiInput && settings.activeCourse !== 'drums' && <KeysSoundButton on={settings.midiSound !== false} toggle={() => onSettings({ midiSound: settings.midiSound === false, midiSoundAsked: true })} lang={lang === 'he' ? 'he' : 'en'} />}
     </header>
   );
   const setDs = (p: Partial<DrillSettings>) => onSettings({ drills: { ...ds, ...p } });

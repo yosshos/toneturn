@@ -218,6 +218,8 @@ export interface Settings {
   midiBendRange?: number;
   /** Sound the keys through the app (on unless turned off: most MIDI keyboards have no speakers). */
   midiSound?: boolean;
+  /** The one-time "does your keyboard make its own sound?" question was answered (owner 2026-11-20). */
+  midiSoundAsked?: boolean;
   /** Volume of your own keys (0–1.5), apart from the app's playback. */
   midiVolume?: number;
   /** Touch response of the keys. */

@@ -2595,3 +2595,7 @@ button.chip.on {
   --cae: initial;
   --cl: initial;
 }
+
+/* Owner 2026-11-20: the app's sound for MIDI keys — top-bar switch and the first-connection question. */
+.keys-sound-btn.off { opacity: 0.75; }
+.keys-sound-choices { display: grid; gap: 10px; margin-top: 12px; }

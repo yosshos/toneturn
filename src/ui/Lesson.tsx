@@ -1,4 +1,5 @@
-import { TypedText } from './TypedText';
+import { TypedText } from './TypedText';
+import { KeysSoundButton } from './KeysSound';
 import { useNarration } from './TalkToggle';
 import { DOMAIN_COLOR, Glyph } from './Glyph';
 import { isTimeOnly } from '../engine/timeOnly';
@@ -500,6 +501,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         </button>
         <Rounds v={v} t={t} />
         <TalkToggle lang={lang} />
+        {onSettings && settings.midiInput && settings.activeCourse !== 'drums' && <KeysSoundButton on={settings.midiSound !== false} toggle={() => onSettings({ midiSound: settings.midiSound === false, midiSoundAsked: true })} lang={lang} />}
         <ModeSwitch mode={v.mode} onChange={(m) => ctrl.setMode(m)} t={t} />
       </header>
       {lesson.id === 'placement' && <TopicStrip v={v} t={t} />}
