@@ -1,6 +1,7 @@
 // One drill take (spec AI §3): the notes, the metronome with a count-in, MIDI recording (velocity, release,
 // both hands), then the analysis right away — verdict, the evenness strip, the velocity curve, the hands chart.
-
+
+import { DEVICE_ONLY_ABOVE, MIDI_IN_MS } from '../engine/latency';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import { splitDur } from '../engine/piece/layout';
@@ -1135,18 +1136,27 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           if (Math.abs(b - sent) >= 0.01) onBeat((sent = b));
         }, 33)
       : 0;
+    // MIDI with an unreported output delay (Bluetooth): the play-along calibration's device latency, when it is above
+    // what a human habit explains (latency.ts DEVICE_ONLY_ABOVE), is the speaker's delay — the cursor follows the heard click.
+    const visLag = useMidi && cal.latencyMs > DEVICE_ONLY_ABOVE ? Math.round(cal.latencyMs - MIDI_IN_MS) : 0;
+    const beatAt = (i: number) => {
+      setBeat(i);
+      const t = performance.now();
+      const gap = tl.clicks[i + 1] ? (tl.clicks[i + 1].t - tl.clicks[i].t) * 1000 : 0;
+      lastBeat = { i, t, dt: gap > 60 ? gap : lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
+      if (onBeat && i - plan.countIn !== sent) onBeat((sent = i - plan.countIn));
+      if (i >= plan.countIn) setPhase('play');
+    };
     try {
       if (backing.length) void piano.play(backing, plan.responseEnd + 0.5, abort.signal).catch(() => {});
       await piano.playTimeline(
         tl,
         abort.signal,
         (i) => {
-          setBeat(i);
-          const t = performance.now();
-          const gap = tl.clicks[i + 1] ? (tl.clicks[i + 1].t - tl.clicks[i].t) * 1000 : 0;
-          lastBeat = { i, t, dt: gap > 60 ? gap : lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
-          if (onBeat && i - plan.countIn !== sent) onBeat((sent = i - plan.countIn));
-          if (i >= plan.countIn) setPhase('play');
+          // Owner 2026-11-20 (Bluetooth speaker): an output delay the browser does not report (found by the MIDI
+          // play-along calibration, above DEVICE_ONLY_ABOVE) — the score's cursor waits for the click to be heard.
+          if (visLag > 0) return void window.setTimeout(() => !abort.signal.aborted && beatAt(i), visLag);
+          beatAt(i);
         },
         (perf) => {
           zero = perf;

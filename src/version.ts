@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.109.3',
+    date: '2026-11-20',
+    en: ['On a Bluetooth speaker or headphones, the score’s cursor now waits for the click you actually hear (after the MIDI timing calibration), instead of running ahead of the sound.'],
+    he: ['ברמקול או באוזניות בלוטות׳, הסמן על התווים מחכה עכשיו לקליק שאתם שומעים בפועל (אחרי כיול התזמון של המידי), ולא רץ לפני הצליל.'],
+  },
+  {
     version: '0.109.2',
     date: '2026-11-20',
     en: ['With a MIDI keyboard connected, a speaker button at the top (and in lessons and technique) turns the app’s sound for your keys off or on, so a digital piano can play through its own speakers while you still hear the app. The first time a keyboard connects, the app asks.'],
