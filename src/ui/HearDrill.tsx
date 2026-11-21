@@ -6,7 +6,6 @@ import type { Drill } from '../engine/drills/types';
 import type { NoteEvent } from '../engine/lesson';
 import { isDrumDrill } from '../engine/drills/events';
 import { piano } from './services';
-import { express } from '../audio/expression';
 import { Icon } from './icons';
 
 /** Items with written pitches to hear (not drums, singing, untimed note finding, or empty). */
@@ -19,10 +18,7 @@ const AHEAD_MS = 60;
 export async function playDrill(d: Drill, bpm: number, signal: AbortSignal, onBeat?: (b: number) => void): Promise<void> {
   await piano.unlock();
   const spb = 60 / Math.max(30, bpm);
-  const raw: NoteEvent[] = d.notes.map((n) => ({ midi: n.pitch, start: n.beat * spb, duration: Math.max(0.08, n.dur * spb * 0.95), velocity: n.accent ? 0.78 : 0.6 }));
-  // owner 2026-11-21: the model is played musically (phrasing, metre, articulation), on the grid; an item whose goal
-  // is a dynamics or touch shows that goal, lightly shaped
-  const ev = express(raw, { bpm, feel: d.spec.swing ? 'swing' : 'straight', amount: d.goal.dynamics || d.goal.articulation ? 0.25 : 0.6, seed: d.notes.length + Math.round(bpm) });
+  const ev: NoteEvent[] = d.notes.map((n) => ({ midi: n.pitch, start: n.beat * spb, duration: Math.max(0.08, n.dur * spb * 0.95), velocity: n.accent ? 0.78 : 0.6 }));
   const length = Math.max(d.beats, ...d.notes.map((n) => n.beat + n.dur)) * spb + 0.25;
   const t0 = performance.now() + AHEAD_MS;
   let raf = 0;
