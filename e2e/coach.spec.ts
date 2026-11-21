@@ -43,11 +43,13 @@ test('coach: pause holds the session on the result; resume moves on', async ({ p
   await expect(page.locator('[data-coach="result"]')).toBeVisible({ timeout: 30_000 });
   await page.locator('[data-coach-pause="running"]').click();
   const id = await page.locator('.coach-run').getAttribute('data-drill');
+  const before = await page.locator('.coach-run').textContent();
   await page.waitForTimeout(3500);
   await expect(page.locator('[data-coach="result"]')).toBeVisible();
   expect(await page.locator('.coach-run').getAttribute('data-drill')).toBe(id);
   await page.locator('[data-coach-pause="paused"]').click();
-  await expect(page.locator('[data-coach="result"]')).toBeHidden({ timeout: 10_000 });
+  // Resumed: the session moves on (fake takes are instant, so the next result may already be up).
+  await expect.poll(async () => page.locator('.coach-run').textContent(), { timeout: 15_000 }).not.toBe(before);
 });
 
 test('listen: a reading take has Listen beside Play', async ({ page }) => {

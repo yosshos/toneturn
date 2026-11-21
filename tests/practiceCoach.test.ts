@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { coachAfter, coachStage, coachStart, coachTake, KEYS_TO_PROMOTE, MISSES_TO_PARK, rubatoDoneByCoach, SESSION_MIN, type CoachState } from '../src/engine/drills/coach';
+import { coachAfter, coachStage, coachStart, coachTake, EASY_TO_SKILLED, KEYS_TO_PROMOTE, MISSES_TO_PARK, rubatoDoneByCoach, SESSION_MIN, type CoachState } from '../src/engine/drills/coach';
+import { targetBpmOf } from '../src/engine/drills/plan';
 import { familyById } from '../src/engine/drills/plan';
 import { newItem } from '../src/engine/drills/ladder';
 import { rubatoStage, withStageTake } from '../src/engine/drills/rubato';
@@ -106,5 +107,92 @@ describe('practice coach (scales)', () => {
     const r = play(c, {}, true, SESSION_MIN * 60_000 + 1);
     expect(r.nx.end).toBe(true);
     expect(r.nx.line.he).toMatch(/זה הסשן/);
+  });
+});
+
+describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
+  type V = 'clean' | 'easy' | 'almost' | 'not';
+  const mv = (v: V, bpm: number): TakeMetrics =>
+    ({ verdict: v === 'easy' ? 'clean' : v, wrong: v === 'not' ? 2 : 0, missing: 0, hesitations: 0, accuracy: v === 'not' ? 0.8 : 1, bpm, timingSD: v === 'easy' ? 8 : 28, handsAbs: null }) as unknown as TakeMetrics;
+  function go(c: CoachState, items: Record<string, ItemState>, v: V) {
+    const t = coachTake(fam, c, items, order);
+    const s0 = items[t.drill.itemId] ?? newItem(t.drill);
+    const ok = v === 'clean' || v === 'easy';
+    const s = t.stage ? withStageTake(s0, t.stage, mv(v, t.bpm)) : ok ? { ...s0, cleanBpm: Math.max(s0.cleanBpm, t.bpm), takes: s0.takes + 1 } : { ...s0, takes: s0.takes + 1 };
+    const items2 = { ...items, [t.drill.itemId]: s };
+    return { t, items: items2, nx: coachAfter(fam, c, t, mv(v, t.bpm), items2, order, 0) };
+  }
+
+  it('a player past the basics starts hands together, with no free time, and climbs to the target before moving on', () => {
+    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    expect(fam.levels[c.step].specs.some((s) => (s as { hands?: string }).hands === 'RL')).toBe(true);
+    let items: Record<string, ItemState> = {};
+    const first = coachTake(fam, c, items, order);
+    expect(first.stage).toBeNull();
+    const target = targetBpmOf(first.level, first.drill);
+    const tempos: number[] = [];
+    for (let k = 0; k < 12; k++) {
+      const r = go(c, items, 'clean');
+      if (r.t.drill.itemId !== first.drill.itemId) break;
+      tempos.push(r.t.bpm);
+      items = r.items;
+      c = r.nx.state;
+    }
+    expect(tempos[0]).toBe(first.drill.startBpm);
+    expect(Math.max(...tempos)).toBe(target);
+    for (let k = 1; k < tempos.length; k++) expect(tempos[k]).toBeGreaterThanOrEqual(tempos[k - 1]);
+    // the next item starts near the tempo just reached, not back at its start
+    const nextT = coachTake(fam, c, items, order);
+    expect(nextT.drill.itemId).not.toBe(first.drill.itemId);
+    expect(nextT.bpm).toBeGreaterThan(nextT.drill.startBpm);
+  });
+
+  it('easy takes climb two steps at once', () => {
+    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    const a = go(c, {}, 'easy');
+    c = a.nx.state;
+    expect(coachTake(fam, c, a.items, order).bpm).toBeGreaterThanOrEqual(Math.round(a.t.bpm * 1.12) - 1);
+    expect(a.nx.line.en).toMatch(/Faster/);
+  });
+
+  it('a player who reported no experience but plays easily is moved past the rubato', () => {
+    let c = coachStart(fam, {}, order, 0);
+    let items: Record<string, ItemState> = {};
+    expect(coachTake(fam, c, items, order).stage).toBe('free');
+    for (let k = 0; k < EASY_TO_SKILLED; k++) {
+      const r = go(c, items, 'easy');
+      items = r.items;
+      c = r.nx.state;
+    }
+    expect(c.skilled).toBe(true);
+    expect(coachTake(fam, c, items, order).stage).toBeNull();
+  });
+
+  it('"almost" holds the tempo and never parks the item', () => {
+    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    let items: Record<string, ItemState> = {};
+    const first = coachTake(fam, c, items, order);
+    for (let k = 0; k < 6; k++) {
+      const r = go(c, items, 'almost');
+      expect(r.t.drill.itemId).toBe(first.drill.itemId);
+      items = r.items;
+      c = r.nx.state;
+    }
+    expect(c.weak).toHaveLength(0);
+    expect(c.misses).toBe(0);
+  });
+
+  it('a slowed clean take does not pass the key', () => {
+    let c = coachStart(fam, {}, order, 0);
+    const t0 = coachTake(fam, c, {}, order);
+    const items: Record<string, ItemState> = { [t0.drill.itemId]: { ...newItem(t0.drill), rubato: { free: 2, quarters: 1 } } };
+    let r = go(c, items, 'not');
+    r = go(r.nx.state, r.items, 'not'); // → slower
+    const slowed = coachTake(fam, r.nx.state, r.items, order);
+    expect(slowed.bpm).toBeLessThan(t0.drill.startBpm);
+    const r3 = go(r.nx.state, r.items, 'clean');
+    // the same item again, climbing back — not the other hand
+    expect(r3.nx.state.spec).toBe(0);
+    expect(coachTake(fam, r3.nx.state, r3.items, order).drill.itemId).toBe(t0.drill.itemId);
   });
 });

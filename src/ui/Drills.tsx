@@ -19,7 +19,15 @@ import { RubatoTake } from './RubatoTake';
 import { hearable, playDrill } from './HearDrill';
 import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
-import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachState, type CoachTake } from '../engine/drills/coach';
+import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
+/** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
+function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId): CoachBackground {
+  const inst = ds.instrument ?? 'piano';
+  const course = inst === 'piano' ? 'keys' : inst;
+  const report = (settings.courseStart as Record<string, { report?: string } | undefined> | undefined)?.[course]?.report;
+  const from = settings.drillStart?.[fam];
+  return { skilled: report === 'bit' || report === 'well', from };
+}
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
 import { RULE_NAME } from '../engine/improvRules';
@@ -277,6 +285,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}` : 'run'}
           coach={view.coach}
+          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id) : undefined}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
           lang={lang}
@@ -909,7 +918,7 @@ const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some(
 const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
 const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, onTitle }: { /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, coachBg, onTitle }: { /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -920,7 +929,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [chorusEd, setChorusEd] = useState(false);
   const local = useRef<Record<string, ItemState>>({});
   // The practice coach: its state, the take it asks for, its line after a take, pause, and the session's end.
-  const coachRef = useRef<CoachState | null>(coach ? coachStart(coach, items, ds.keyOrder) : null);
+  const coachRef = useRef<CoachState | null>(coach ? coachStart(coach, items, ds.keyOrder, Date.now(), coachBg) : null);
   const freeOk = (d: Drill) => !noRubatoFor(d, atTarget);
   const [cTake, setCTake] = useState<CoachTake | null>(() => (coach && coachRef.current ? coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk) : null));
   const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.111.0',
+    date: '2026-11-21',
+    en: ['Continuous practice climbs: the tempo rises inside the session (faster after clean takes, two steps when it is easy), “almost” no longer counts as a miss, a slowed take never passes, and players past the basics (your course answers, the level test, or easy takes) skip free time and start hands together.'],
+    he: ['האימון הרציף מטפס: הטמפו עולה בתוך הסשן (מהר יותר אחרי נגינות נקיות, שתי מדרגות כשזה קל), "כמעט" כבר לא נחשב כישלון, נגינה מואטת לא מעבירה שלב, ומי שמעבר לבסיס (לפי ההרשמה, מבחן הרמה או נגינות קלות) מדלג על הרובאטו ומתחיל בידיים יחד.'],
+  },
+  {
     version: '0.110.5',
     date: '2026-11-21',
     en: ['The narrator says abbreviations in words: “one octave, right hand, 66 beats a minute”, not “1 oct, RH”.'],
