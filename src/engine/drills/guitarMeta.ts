@@ -54,6 +54,10 @@ export const GUITAR_META: Record<string, GuitarLevelMeta> = {
   'g-scales-13': { tempo: [80, 112], sub: '8ths', grade: 5 },
   'g-scales-14': { tempo: [80, 116], sub: '8ths', grade: 6 },
   'g-scales-15': { tempo: [80, 120], sub: '8ths', grade: 7 },
+  // TECHNIQUE-COVERAGE-AUDIT §4.6 #7: the minor scales in all five positions (RSL grades 5–7, after the one-position levels).
+  'g-scales-16': { tempo: [80, 112], sub: '8ths', grade: 6 },
+  'g-scales-17': { tempo: [80, 116], sub: '8ths', grade: 6 },
+  'g-scales-18': { tempo: [80, 120], sub: '8ths', grade: 7 },
   'g-arps-1': { tempo: [60, 90], sub: '8ths', grade: 3 },
   'g-arps-2': { tempo: [60, 90], sub: '8ths', grade: 4 },
   'g-arps-3': { tempo: [60, 100], sub: '8ths', grade: 5 },

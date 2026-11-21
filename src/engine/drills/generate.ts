@@ -1189,6 +1189,101 @@ function genHanon(s: DrillSpec): Drill {
   return finish(s, buf, title([name], s), goalOf(s, true), bpmFor(2.2, perBeat));
 }
 
+/**
+ * Hanon, The Virtuoso Pianist, Part I Nos. 2–20 (public domain, 1873; checked note by note against the Schirmer 1900
+ * edition as typeset by the Mutopia Project, Mutopia-2015/07/23-2037). Scale degrees above the tonic, two octaves as
+ * printed (RH from C3, LH an octave lower playing the same notes). Each group of eight 16ths is a figure on a base
+ * degree: the ascent runs `n` groups from `start` up by step, the descent `dn` groups from `top` down by step. Hanon
+ * changes the last group of a half where a note would repeat at the turn (`upLast`, `downLast`), No. 12 opens with a
+ * narrower first group and closes with an extra one, and No. 20 ends on a two-note chord.
+ */
+export interface HanonDef {
+  up: number[];
+  down: number[];
+  top: number;
+  n?: number;
+  dn?: number;
+  start?: number;
+  first?: number[];
+  upLast?: number[];
+  downLast?: number[];
+  tail?: [number, number[]][];
+  endR?: number[];
+  endL?: number[];
+}
+export const HANON_PART1: Record<number, HanonDef> = {
+  2: { up: [0, 2, 5, 4, 3, 4, 3, 2], down: [0, -3, -5, -4, -3, -4, -3, -2], top: 18 },
+  3: { up: [0, 2, 5, 4, 3, 2, 3, 4], down: [0, -3, -5, -4, -3, -2, -3, -4], top: 18 },
+  4: { up: [0, 1, 0, 2, 5, 4, 3, 2], down: [0, -1, 0, -3, -5, -4, -3, -2], top: 18 },
+  5: { up: [0, 5, 4, 5, 3, 4, 2, 3], down: [0, 1, 0, 2, 1, 3, 2, 4], top: 14 },
+  6: { up: [0, 5, 4, 5, 3, 5, 2, 5], down: [0, -5, -4, -5, -3, -5, -2, -5], top: 18, upLast: [0, 5, 4, 5, 3, 5, 2, 1], downLast: [0, -5, -4, -5, -3, -5, -2, -3] },
+  7: { up: [0, 2, 1, 3, 2, 4, 3, 2], down: [0, -2, -1, -3, -2, -4, -3, -2], top: 18 },
+  8: { up: [0, 2, 4, 5, 3, 4, 2, 3], down: [0, -2, -4, -5, -3, -4, -2, -3], top: 18 },
+  9: { up: [0, 2, 3, 2, 4, 3, 5, 4], down: [0, -2, -3, -2, -4, -3, -5, -4], top: 18, downLast: [0, -2, -3, -2, -4, -3, -4, -3] },
+  10: { up: [0, 5, 4, 3, 2, 3, 2, 3], down: [0, -5, -4, -3, -2, -3, -2, -3], top: 18 },
+  11: { up: [0, 2, 5, 4, 5, 4, 3, 4], down: [0, -3, -5, -4, -5, -4, -3, -4], top: 18 },
+  12: { first: [4, 0, 2, 1, 0, 1, 2, 0], up: [5, 0, 2, 1, 0, 1, 2, 0], upLast: [5, 0, 2, 1, 0, 1, 2, 3], down: [0, 5, 3, 4, 5, 4, 3, 5], top: 13, tail: [[0, [0, 4, 2, 3, 4, 3, 2, 3]]] },
+  13: { up: [2, 0, 3, 1, 4, 2, 3, 4], down: [2, 4, 1, 3, 2, 0, 1, 2], top: 14 },
+  14: { up: [0, 1, 3, 2, 3, 2, 4, 3], down: [0, -1, -3, -2, -3, -2, -4, -3], top: 18 },
+  15: { up: [0, 2, 1, 3, 2, 4, 3, 5], upLast: [0, 2, 1, 3, 2, 4, 3, 4], down: [0, -2, -1, -3, -2, -4, -3, -5], downLast: [0, -2, -1, -3, -2, -4, -3, -4], top: 18 },
+  16: { up: [0, 2, 1, 2, 5, 4, 3, 4], down: [0, -3, -2, -3, -5, -4, -3, -4], top: 18 },
+  17: { up: [0, 2, 5, 4, 6, 5, 4, 5], upLast: [0, 2, 5, 4, 6, 5, 4, 3], down: [0, -3, -5, -4, -6, -5, -4, -6], downLast: [0, -3, -5, -4, -6, -5, -4, -5], top: 18, dn: 13 },
+  18: { up: [0, 1, 3, 2, 4, 3, 1, 2], down: [0, -1, -3, -2, -4, -3, -1, -2], top: 18 },
+  19: { up: [0, 5, 3, 4, 5, 3, 2, 4], down: [0, -5, -3, -4, -5, -3, -2, -4], top: 18 },
+  20: { start: 2, n: 15, up: [0, 2, 5, 7, 5, 4, 5, 3], upLast: [0, 2, 5, 7, 5, 4, 5, 2], down: [0, -2, -5, -7, -5, -6, -5, -7], downLast: [0, -2, -5, -7, -5, -6, -5, -6], top: 23, dn: 15, endR: [2, 7], endL: [0, 7] },
+};
+/** The Hanon numbers encoded (2–20). */
+export const HANON_NUMBERS = Object.keys(HANON_PART1).map(Number);
+
+/** One Hanon number as scale degrees: the 8-note groups in order, then the closing note(s) per hand. */
+export function hanonDegrees(no: number): { groups: number[][]; endR: number[]; endL: number[] } {
+  const h = HANON_PART1[no];
+  if (!h) throw new Error(`Hanon No. ${no} is not encoded`);
+  const n = h.n ?? 14;
+  const dn = h.dn ?? 14;
+  const start = h.start ?? 0;
+  const groups: number[][] = [];
+  for (let i = 0; i < n; i++) {
+    const fig = i === 0 && h.first ? h.first : i === n - 1 && h.upLast ? h.upLast : h.up;
+    groups.push(fig.map((x) => start + i + x));
+  }
+  for (let j = 0; j < dn; j++) {
+    const fig = j === dn - 1 && h.downLast ? h.downLast : h.down;
+    groups.push(fig.map((x) => h.top - j + x));
+  }
+  for (const [b, fig] of h.tail ?? []) groups.push(fig.map((x) => b + x));
+  return { groups, endR: h.endR ?? [0], endL: h.endL ?? [0] };
+}
+
+/** Finger inside a group of up to five notes: RH thumb on the lowest and 5 on the highest (LH mirrored). */
+function groupFinger(group: number[], deg: number, hand: Hand): number | undefined {
+  const distinct = [...new Set(group)].sort((a, b) => a - b);
+  if (distinct.length > 5) return undefined;
+  const rank = distinct.indexOf(deg);
+  const last = distinct.length - 1;
+  if (hand === 'R') return rank === last ? 5 : rank + 1;
+  return rank === 0 ? 5 : last - rank + 1;
+}
+
+function genHanonPart1(s: DrillSpec): Drill {
+  const no = HANON_PART1[s.option ?? 2] ? (s.option ?? 2) : 2;
+  const { groups, endR, endL } = hanonDegrees(no);
+  const ints = SCALE_INTERVALS.major;
+  const base = pitchIn(s.key, 47); // as printed: RH from C3 (B2–B♭3 in the other keys), LH an octave lower
+  const handsUsed: Hand[] = s.hands === 'RL' ? ['R', 'L'] : [s.hands];
+  const steps: Step[] = groups.flatMap((g) => g.map((deg) => handsUsed.map((h) => ({ pitch: degPitch(h === 'R' ? base : base - 12, ints, deg), hand: h, finger: groupFinger(g, deg, h) }))));
+  steps.push(
+    handsUsed.flatMap((h) => {
+      const ds = h === 'R' ? endR : endL;
+      return ds.map((deg, i) => ({ pitch: degPitch(h === 'R' ? base : base - 12, ints, deg), hand: h, finger: ds.length === 1 ? (h === 'R' ? 1 : 5) : h === 'R' ? (i === 0 ? 1 : 5) : i === 0 ? 5 : 1 }));
+    }),
+  );
+  const perBeat = s.perBeat ?? 4;
+  const buf = new Buf();
+  buf.steps(steps, 1 / perBeat, s.variant, s.dynamics, 0, 2);
+  return finish(s, buf, title([t(`Hanon No. ${no} in ${keyLabel(s)}`, `האנון מס׳ ${no} ב-${keyLabel(s)}`)], s), goalOf(s, true), bpmFor(2.67, perBeat));
+}
+
 export const TRILL_PAIRS: [number, number][] = [
   [1, 3],
   [2, 3],
@@ -5167,6 +5262,8 @@ function generateRaw(spec: DrillSpec): Drill {
     case 'hanon-1':
     case 'hanon-style':
       return genHanon(s);
+    case 'hanon':
+      return genHanonPart1(s);
     case 'trill':
       return genTrill(s);
     case 'repeated':
@@ -5538,6 +5635,20 @@ export function catalog(): FamilyDef[] {
           sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'six-dim' }),
           sc({ hands: 'RL', octaves: 4, perBeat: 4, scale: 'six-dim-m', minor: true }),
         ], 'major', [SN[3], SN[7]]),
+        // TECHNIQUE-COVERAGE-AUDIT §4.6 #5: the bebop scales were right hand only (scales-12, jazz-5) — now the left hand
+        // and hands together (the bebop major is the 6th-diminished scale, scales-30).
+        L('scales', 34, 'Bebop scales: left hand and hands together', 'סולמות ביבופ: יד שמאל וידיים יחד', [
+          sc({ scale: 'bebop-dom', hands: 'L' }),
+          sc({ scale: 'bebop-dom', hands: 'RL' }),
+          sc({ kind: 'jscale', option: 6, hands: 'L' }),
+          sc({ kind: 'jscale', option: 6, hands: 'RL' }),
+        ], 'major', [SN[2], SN[4]]),
+        // §4.6 #3: melodic minor a 3rd, 6th and 10th apart (harmonic minor is in scales-13).
+        L('scales', 35, 'Melodic minor a 3rd, 6th and 10th apart', 'מינור מלודי בהפרש טרצה, סקסטה ודצימה', [
+          sc({ hands: 'RL', minor: true, scale: 'melodic', motion: 'third' }),
+          sc({ hands: 'RL', minor: true, scale: 'melodic', motion: 'sixth' }),
+          sc({ hands: 'RL', minor: true, scale: 'melodic', motion: 'tenth' }),
+        ], 'minor', [SN[2], SN[4]]),
       ],
     },
     {
@@ -5616,6 +5727,17 @@ export function catalog(): FamilyDef[] {
           [ar({ kind: 'broken', minor: true }), ar({ kind: 'broken', minor: true, option: 1 }), ar({ kind: 'broken', minor: true, hands: 'RL' }), ar({ kind: 'blocked', minor: true, hands: 'RL' })],
           'minor',
         ),
+        // TECHNIQUE-COVERAGE-AUDIT §4.6 #4: contrary motion beyond the major triad (arpeggios-6), and the dominant and
+        // diminished 7ths at 4 octaves hands together (ABRSM Grades 6–8, RCM Levels 8–10).
+        L('arpeggios', 15, 'Contrary motion: minor, dominant 7th and diminished 7th', 'תנועה נגדית: מינור, ספטאקורד דומיננטי וספטאקורד מוקטן', [
+          ar({ hands: 'RL', octaves: 2, motion: 'contrary', minor: true }),
+          ar({ kind: 'arp-dom7', hands: 'RL', octaves: 2, motion: 'contrary' }),
+          ar({ kind: 'arp-dim7', hands: 'RL', octaves: 2, motion: 'contrary' }),
+        ], 'major', [AN[4], AN[6]]),
+        L('arpeggios', 16, 'Dominant 7th and diminished 7th, 4 octaves hands together', 'ספטאקורד דומיננטי ומוקטן, 4 אוקטבות בידיים יחד', [
+          ar({ kind: 'arp-dom7', hands: 'RL', octaves: 4, perBeat: 4 }),
+          ar({ kind: 'arp-dim7', hands: 'RL', octaves: 4, perBeat: 4 }),
+        ], 'major', [AN[5], AN[7]]),
       ],
     },
     {
@@ -5745,6 +5867,12 @@ export function catalog(): FamilyDef[] {
           f({ kind: 'hanon-style', hands: 'RL', option: 5, perBeat: 4 }),
           f({ kind: 'hanon-style', hands: 'RL', option: 6, perBeat: 4 }),
         ], 'major', [SN[3], SN[5]]),
+        // TECHNIQUE-COVERAGE-AUDIT §4.6 #2: Hanon Part I Nos. 2–20 as printed (two octaves, 16ths, hands together), in all
+        // 12 keys — Hanon's own advice is to learn them a few at a time. No. 20 spans three octaves (octaves: 3 marks its range).
+        L('fingers', 15, 'Hanon Nos. 2–5, hands together', 'האנון מס׳ 2–5, ידיים יחד', [2, 3, 4, 5].map((o) => f({ kind: 'hanon', hands: 'RL', option: o, perBeat: 4 })), 'major', [SN[2], SN[4]]),
+        L('fingers', 16, 'Hanon Nos. 6–10, hands together', 'האנון מס׳ 6–10, ידיים יחד', [6, 7, 8, 9, 10].map((o) => f({ kind: 'hanon', hands: 'RL', option: o, perBeat: 4 })), 'major', [SN[2], SN[4]]),
+        L('fingers', 17, 'Hanon Nos. 11–15, hands together', 'האנון מס׳ 11–15, ידיים יחד', [11, 12, 13, 14, 15].map((o) => f({ kind: 'hanon', hands: 'RL', option: o, perBeat: 4 })), 'major', [SN[3], SN[5]]),
+        L('fingers', 18, 'Hanon Nos. 16–20, hands together', 'האנון מס׳ 16–20, ידיים יחד', [16, 17, 18, 19, 20].map((o) => f({ kind: 'hanon', hands: 'RL', option: o, perBeat: 4, ...(o === 20 ? { octaves: 3 } : {}) })), 'major', [SN[3], SN[5]]),
       ],
     },
     {
@@ -5895,6 +6023,14 @@ export function catalog(): FamilyDef[] {
           x('leaps', { hands: 'RL', option: 2 }),
           x('double-notes', { hands: 'R', option: 1, minor: true }),
         ], [0, 7, 5, 2, 10, 9, 4, 3]),
+        // TECHNIQUE-COVERAGE-AUDIT §4.6 #3: the minor forms — harmonic-minor octaves (each hand, hands together) and
+        // double 3rds in the left hand (the right hand's are in advanced-4).
+        L('advanced', 9, 'Minor: scales in octaves, double 3rds in the left hand', 'מינור: סולמות באוקטבות, טרצות כפולות ביד שמאל', [
+          x('octaves', { hands: 'R', octaves: 2, minor: true }),
+          x('octaves', { hands: 'L', octaves: 2, minor: true }),
+          x('octaves', { hands: 'RL', octaves: 2, minor: true }),
+          x('double-notes', { hands: 'L', option: 0, minor: true }),
+        ], 'minor'),
       ],
     },
     {

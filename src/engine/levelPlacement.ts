@@ -81,6 +81,15 @@ export const KEYS_PLACEMENT: Record<string, number> = {
   'k-impro-5': 1000,
   'k-impro-6': 1080,
   'k-impro-7': 1120,
+  // TECHNIQUE-COVERAGE-AUDIT §4.6. Hanon Part I in all 12 keys, hands together in 16ths at up to ♩ = 80: ABRSM / Trinity
+  // G6–G7 study speed, after Hanon No. 1 in 16ths (fingers-6); the notes' difficulty agrees (encore model ~1270–1320).
+  'fingers-15': G(6), // 1240
+  'fingers-16': G(6) + 30, // 1270
+  'fingers-17': G(6) + 60, // 1300
+  'fingers-18': G(7), // 1330
+  // Contrary-motion minor, dominant and diminished 7th arpeggios: ABRSM G5; 7ths at 4 octaves hands together: ABRSM G6.
+  'arpeggios-15': G(5), // 1150
+  'arpeggios-16': G(6), // 1240
 };
 
 // ---------------------------------------------------------------- bass (§3.5 pri 2)
