@@ -1,6 +1,6 @@
 // Technique drills (spec AI): the hub (today's items, families, the technique map), a family's levels with the
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
-
+
 import { KeysSoundButton } from './KeysSound';
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
@@ -16,6 +16,9 @@ import { chartCells, noteRoles, rulesKept } from '../engine/drills/chartCells';
 import { ChordChart } from './ChordChart';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
+import { hearable, playDrill } from './HearDrill';
+import { piano, tts } from './services';
+import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachState, type CoachTake } from '../engine/drills/coach';
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
 import { RULE_NAME } from '../engine/improvRules';
@@ -241,7 +244,7 @@ export interface DrillsProps {
   onPieces?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
   const tx = T[lang];
@@ -253,7 +256,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const runQueue = useMemo(() => (view.k === 'run' ? withBassTuning(view.queue, bassTuning) : []), [view, bassTuning]);
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
-  useEffect(() => setRunIdx(null), [view]);
+  const [coachTitle, setCoachTitle] = useState<string | null>(null);
+  useEffect(() => (setRunIdx(null), setCoachTitle(null)), [view]);
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
@@ -268,8 +272,11 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'run')
     return (
       <main className="drills-screen" data-drills="run">
-        {head(runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
+        {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
         <DrillRun
+          key={view.coach ? `coach:${view.coach.id}` : 'run'}
+          coach={view.coach}
+          onTitle={setCoachTitle}
           onIndex={setRunIdx}
           lang={lang}
           ds={ds}
@@ -397,6 +404,15 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <VoiceLeadLessons family={view.f.id} settings={settings} />
         <ReharmStudio family={view.f.id} lang={lang} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
         <TuneLadder family={view.f.id} lang={lang} items={items} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        {coachable(view.f, ds.keyOrder) && (
+          <button className="coach-entry" onClick={() => setView({ k: 'run', queue: [], i: 0, from: view, coach: view.f })} data-coach-open={view.f.id}>
+            <Icon k="play" size={20} />
+            <span>
+              <b>{lang === 'he' ? 'אימון רציף' : 'Continuous practice'}</b>
+              <small>{lang === 'he' ? 'מתחיל איפה שאתם, עולה בקושי, וממשיך לבד בין נגינה לנגינה' : 'Starts where you are, climbs, and moves on by itself between takes'}</small>
+            </span>
+          </button>
+        )}
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
@@ -884,7 +900,15 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
   );
 }
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn }: { /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+/** Chords heard by a microphone can't be followed note by note: those items keep the timed take. */
+const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some((n, k) => d.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
+/** No free-time step for this item: mic chords, a goal the microphone can't measure (loudness, pedal — it waits for a MIDI
+ *  keyboard in the timed take), a checkpoint at target tempo, or automated runs (e2e) without ?rubato in the address. */
+/** Automated runs (e2e) look at the review at length: hands-free there only with ?handsfree in the address. */
+const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
+const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
+
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, onTitle }: { /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -893,12 +917,65 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // AUDIT-DEPTH-3 C6: a solo chorus rewritten in the editor replaces its item in the queue (same item id).
   const [edited, setEdited] = useState<Record<number, Drill>>({});
   const [chorusEd, setChorusEd] = useState(false);
-  const drill = edited[i] ?? queue[i];
   const local = useRef<Record<string, ItemState>>({});
+  // The practice coach: its state, the take it asks for, its line after a take, pause, and the session's end.
+  const coachRef = useRef<CoachState | null>(coach ? coachStart(coach, items, ds.keyOrder) : null);
+  const freeOk = (d: Drill) => !noRubatoFor(d, atTarget);
+  const [cTake, setCTake] = useState<CoachTake | null>(() => (coach && coachRef.current ? coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk) : null));
+  const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);
+  const [cStarted, setCStarted] = useState(false);
+  const [cPaused, setCPaused] = useState(false);
+  const [cDemo, setCDemo] = useState(false);
+  const cXp = useRef(0);
+  const cTimer = useRef<number | null>(null);
+  const cSpeech = useRef<AbortController | null>(null);
+  useEffect(() => () => (cTimer.current && window.clearTimeout(cTimer.current), cSpeech.current?.abort()), []);
+  const drill = coach ? cTake!.drill : (edited[i] ?? queue[i]);
+  // Hands-free (owner 2026-11-21, app-wide): a list of items (a path step, the workout, a level) moves on by itself too —
+  // after a take, one line (spoken / shown), then again / slower / the next stage / the next item, no button. Pause
+  // holds it; any button of the review takes over. Singing and writing items keep their buttons.
+  const hfOn = !coach && !!drill && !drill.sung && !drill.write && !drill.drumWrite && !HF_OFF;
+  const hfMiss = useRef(0);
+  const [hf, setHf] = useState<{ line: { en: string; he: string }; clean: boolean } | null>(null);
+  const [hfPaused, setHfPaused] = useState(false);
+  const hfTimer = useRef<number | null>(null);
+  const hfSpeech = useRef<AbortController | null>(null);
+  const hfAction = useRef<(() => void) | null>(null);
+  const hfStop = () => {
+    if (hfTimer.current) window.clearTimeout(hfTimer.current);
+    hfTimer.current = null;
+    hfSpeech.current?.abort();
+    hfAction.current = null;
+    setHf(null);
+    setHfPaused(false);
+  };
+  useEffect(() => () => (hfTimer.current && window.clearTimeout(hfTimer.current), hfSpeech.current?.abort()), []);
+  const hfSchedule = (line: { en: string; he: string }, clean: boolean, action: () => void) => {
+    hfAction.current = action;
+    setHf({ line, clean });
+    hfSpeech.current?.abort();
+    const sp = new AbortController();
+    hfSpeech.current = sp;
+    const t0 = performance.now();
+    void tts
+      .speak(line[lang], lang, sp.signal)
+      .catch(() => {})
+      .then(() => {
+        if (sp.signal.aborted) return;
+        hfTimer.current = window.setTimeout(() => {
+          hfTimer.current = null;
+          const a = hfAction.current;
+          hfAction.current = null;
+          setHf(null);
+          a?.();
+        }, Math.max(0, COACH_REVIEW_MS - (performance.now() - t0)) + 300);
+      });
+  };
+  useEffect(() => void (coach && drill && onTitle?.(drill.title[lang])), [coach, drill, lang]); // eslint-disable-line react-hooks/exhaustive-deps
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   // A checkpoint's technique part plays every item at its level's target tempo (SPEC-PATH-ROLE §4).
   const bpmOf = (d: Drill) => (atTarget ? itemTargetBpm(d) : stateOf(d).goalBpm);
-  const [bpm, setBpm] = useState(() => (drill ? bpmOf(drill) : 60));
+  const [bpm, setBpm] = useState(() => (coach && cTake ? cTake.bpm : drill ? bpmOf(drill) : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });
@@ -940,6 +1017,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       </section>
     );
   const go = (j: number) => {
+    hfStop();
+    hfMiss.current = 0;
     setRes(null);
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean);
     setI(j);
@@ -970,6 +1049,22 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     lastTake.current = { id: drill.itemId, m };
     setSel(null);
     setRes({ m, lad });
+    if (coach) return coachNext(m, drillXp(m));
+    if (hfOn) {
+      const nextD = queue[i + 1];
+      const nextTx = nextD ? (lang === 'he' ? ` עכשיו: ${nextD.title.he}.` : ` Now: ${nextD.title.en}.`) : lang === 'he' ? ' זה הכול לרשימה.' : ' That is the list.';
+      if (m.verdict === 'clean') {
+        hfMiss.current = 0;
+        if (lad.next.action === 'raise' && ds.continuous === 'raise-tempo')
+          return hfSchedule({ he: `נקי. מהר יותר: ♩${lad.next.bpm}.`, en: `Clean. Faster: ♩${lad.next.bpm}.` }, true, () => (setRes(null), setBpm(lad.next.bpm), setAgain(true), setTake((t) => t + 1)));
+        return hfSchedule({ he: `נקי.${nextTx}`, en: `Clean.${nextTx}` }, true, () => go(i + 1));
+      }
+      const n = ++hfMiss.current;
+      const ml = missLine(m);
+      if (n === 1) return hfSchedule({ he: `${ml.he} — שוב.`, en: `${ml.en} — again.` }, false, () => (setRes(null), setAgain(true), setTake((t) => t + 1)));
+      if (n === 2) return hfSchedule({ he: `${ml.he}. לאט יותר.`, en: `${ml.en}. Slower.` }, false, () => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1)));
+      return hfSchedule({ he: `נחזור לזה אחר כך.${nextTx}`, en: `We'll come back to this.${nextTx}` }, false, () => go(i + 1));
+    }
     if (lad.next.action === 'next-key' || lad.next.action === 'next-drill') {
       // Continuous: move on right after showing the result briefly.
       const j = lad.next.action === 'next-key' ? i + 1 : queue.findIndex((d, k) => k > i && d.spec.kind !== drill.spec.kind);
@@ -980,13 +1075,47 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   };
   const std = standardOfSpec(drill.spec);
   // Chords heard by a microphone can't be followed note by note: those items keep the timed take.
-  const micChords = !midi.devices.length && drill.notes.some((n, k) => drill.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
-  // A goal the microphone can't measure (loudness, pedal) waits for a MIDI keyboard in the timed take; automated runs
-  // (e2e) keep the timed take unless ?rubato is in the address (the brief page's rule).
-  const noRubato = micChords || (!midi.devices.length && micUnmeasurable(drill).length > 0) || RUBATO_OFF || !!atTarget;
+  const micChords = micChordsOf(drill);
+  const noRubato = noRubatoFor(drill, atTarget);
   // Siskind's stop-start rubato ballad (Drill.rubatoOnly): always in free time — unless the microphone can't follow its chords.
   const rubatoOnly = !!drill.rubatoOnly && !micChords;
-  const stage: RubatoStage | null = rubatoOnly ? 'free' : noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
+  const stage: RubatoStage | null = coach ? (noRubato ? null : (cTake?.stage ?? null)) : rubatoOnly ? 'free' : noRubato ? null : oneFree && hasRubato(drill) ? 'free' : rubatoStage(stateOf(drill), drill);
+  // The coach after a take: its line (spoken / shown), then the next take starts by itself — no button (owner 2026-11-21).
+  const coachNext = (m: TakeMetrics, xp: number) => {
+    if (!coach || !coachRef.current || !cTake) return;
+    cXp.current += xp;
+    const after = { ...items, ...local.current };
+    const nx = coachAfter(coach, coachRef.current, { ...cTake, stage }, m, after, ds.keyOrder, Date.now(), freeOk);
+    coachRef.current = nx.state;
+    setCLine({ line: nx.line, end: nx.end, clean: m.verdict === 'clean' });
+    if (nx.end) return;
+    cSpeech.current?.abort();
+    const sp = new AbortController();
+    cSpeech.current = sp;
+    const t0 = performance.now();
+    void tts
+      .speak(nx.line[lang], lang, sp.signal)
+      .catch(() => {})
+      .then(() => {
+        if (sp.signal.aborted) return;
+        // The result stays on the score a moment (at least ~1.8 s), then the next take counts in.
+        cTimer.current = window.setTimeout(() => coachGo(), Math.max(0, COACH_REVIEW_MS - (performance.now() - t0)) + 300);
+      });
+  };
+  const coachGo = () => {
+    if (!coach || !coachRef.current) return;
+    cTimer.current = null;
+    const t = coachTake(coach, coachRef.current, { ...items, ...local.current }, ds.keyOrder, freeOk);
+    setCTake(t);
+    setBpm(t.bpm);
+    setRes(null);
+    setStageRes(null);
+    setCLine(null);
+    setLive(null);
+    setCDemo(t.demo && hearable(t.drill));
+    setAgain(!(t.demo && hearable(t.drill)));
+    setTake((k) => k + 1);
+  };
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
   // Practice or calm (§4.1): live marks while the item is learned (free / quarters steps, its first clean takes at tempo).
   const liveOn = liveMarksOn(ds.liveMarks, { learningStep: stage !== null, cleanTakes: stateOf(drill).passLog?.length ?? (stateOf(drill).cleanBpm > 0 ? 2 : 0) });
@@ -994,7 +1123,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     // A rubato-only item: the free take is the take (it counts; its target is its start tempo, off the ladder).
     if (rubatoOnly) return done({ ...m, bpm: bpm }, []);
     const before = stateOf(drill);
-    const next = oneFree ? before : withStageTake(before, st, m);
+    let next = oneFree ? before : withStageTake(before, st, m);
+    // The coach's shorter rubato for a further key (coach.ts coachStage): one clean free take, then its tempo.
+    if (coach && cTake && st === 'free' && m.verdict === 'clean' && rubatoStage(next, drill) && !coachStage(cTake.level, cTake.spec, drill, { ...items, ...local.current, [drill.itemId]: next }, ds.keyOrder)) next = rubatoDoneByCoach(next, drill);
     local.current[drill.itemId] = next;
     count.current.takes++;
     // Measured practice: it shows on the profile and earns a little XP, but no rating events (no tempo was measured).
@@ -1002,6 +1133,20 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     onTake(next, [], Math.max(1, Math.floor(drillXp(m) / 2)), takeInfo(drill, m));
     setOneFree(false);
     setStageRes({ m, stage: st });
+    if (coach) coachNext(m, Math.max(1, Math.floor(drillXp(m) / 2)));
+    else if (hfOn) {
+      const redo = () => (setStageRes(null), setAgain(true), setTake((t) => t + 1));
+      if (m.verdict === 'clean') {
+        hfMiss.current = 0;
+        const ns = rubatoStage(next, drill);
+        const line = ns === null ? { he: `נקי. עכשיו בטמפו: ♩${next.goalBpm}.`, en: `Clean. Now at tempo: ♩${next.goalBpm}.` } : ns === 'quarters' ? { he: 'נקי. עכשיו בזמן: ברבעים, ♩60.', en: 'Clean. Now in time: quarters at ♩60.' } : { he: 'נקי. עוד פעם אחת בלי קצב.', en: 'Clean. Once more in free time.' };
+        return hfSchedule(line, true, redo);
+      }
+      const n = ++hfMiss.current;
+      const ml = missLine(m);
+      if (n < 3) return hfSchedule({ he: `${ml.he}. שוב, בלי למהר.`, en: `${ml.en}. Again, no rush.` }, false, redo);
+      return hfSchedule({ he: 'נחזור לזה אחר כך.', en: "We'll come back to this." }, false, () => go(i + 1));
+    }
   };
   // Piano fingering on the score: the review's "Other fingering?" and (the switch on) the next-key finger.
   const pianoFingered = !isGuitarDrill(drill) && !isDrumDrill(drill) && !drill.sung && hasFingering(drill);
@@ -1009,6 +1154,152 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const freeN = Math.min(RUBATO_CLEAN, (stateOf(drill).rubato?.free ?? 0) + 1);
   const he = lang === 'he';
   const stageTx = rubatoOnly ? (he ? 'רובאטו: אקורד, עצירה, ואז המנגינה — בלי קצב' : 'Rubato: a chord, a stop, then the melody — no pulse') : stage === 'free' ? (he ? `בלי קצב — הצלילים בלבד (${freeN}/${RUBATO_CLEAN})` : `Free time — the notes only (${freeN}/${RUBATO_CLEAN})`) : stage === 'quarters' ? (he ? 'ברבעים, ♩60 — צליל על כל פעמה' : 'In quarters, ♩60 — a note on every beat') : null;
+  // The hands-free bar over a review: the line, and pause / resume. Any other button of the review takes over.
+  const hfBar = hf ? (
+    <div className={`coach-bar ${hf.clean ? 'ok' : 'miss'}`} data-hf-bar="1">
+      <p className="coach-line" aria-live="polite">
+        {hf.line[lang]}
+      </p>
+      <span className="coach-btns">
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => {
+            if (hfPaused) {
+              setHfPaused(false);
+              const a = hfAction.current;
+              hfAction.current = null;
+              setHf(null);
+              a?.();
+            } else {
+              setHfPaused(true);
+              if (hfTimer.current) window.clearTimeout(hfTimer.current);
+              hfTimer.current = null;
+              hfSpeech.current?.abort();
+            }
+          }}
+          aria-label={hfPaused ? (he ? 'להמשיך' : 'Resume') : he ? 'השהיה' : 'Pause'}
+          data-hf-pause={hfPaused ? 'paused' : 'running'}
+        >
+          <Icon k={hfPaused ? 'play' : 'pause'} size={18} />
+        </button>
+      </span>
+    </div>
+  ) : null;
+  const hfTakeOver = (e: React.MouseEvent) => {
+    const b = (e.target as HTMLElement).closest('button');
+    if (hf && b && !b.closest('[data-hf-bar]')) hfStop();
+  };
+  if (coach && cTake) {
+    const cs = coachRef.current!;
+    const stepTx = he ? `שלב ${cs.step + 1} מתוך ${cs.steps.length}` : `Step ${cs.step + 1} of ${cs.steps.length}`;
+    const endNow = () => {
+      if (cTimer.current) window.clearTimeout(cTimer.current);
+      cSpeech.current?.abort();
+      setCLine({ line: coachSummary(coach, cs, { he: '', en: '' }), end: true, clean: true });
+    };
+    // The session's end: what happened, the XP, and back.
+    if (cLine?.end)
+      return (
+        <section className="drill-result v-clean coach-end" data-coach-end="1">
+          <h2>{he ? 'סוף הסשן' : 'Session done'}</h2>
+          <p>{cLine.line[lang].trim()}</p>
+          <p className="coach-xp" data-coach-xp={cXp.current}>
+            <bdi dir="ltr">+{cXp.current} XP</bdi>
+          </p>
+          <button className="btn primary" onClick={() => onEnd(count.current.takes, count.current.clean)} data-coach-back="1">
+            {tx.backToLevel}
+          </button>
+        </section>
+      );
+    // Before the first take: the one press that starts the session.
+    if (!cStarted)
+      return (
+        <section className="coach-intro" data-coach-intro="1">
+          <p className="coach-step">
+            {stepTx} · {cTake.level.title[lang]}
+          </p>
+          <h2>{cTake.kind === 'warmup' ? (he ? 'חימום' : 'Warm-up') : he ? 'אימון רציף' : 'Continuous practice'}</h2>
+          <p>{announce(cTake, lang)}</p>
+          <p className="muted">{he ? 'הידיים נשארות על הכלי: אחרי כל נגינה ממשיכים לבד, עם הערה קצרה. אפשר לעצור בכל רגע.' : 'Hands stay on the instrument: after each take the session moves on by itself, with a short note. Pause any time.'}</p>
+          <button
+            className="btn mega primary"
+            onClick={() => {
+              void piano.unlock();
+              setCStarted(true);
+              const demo = cTake.demo && hearable(cTake.drill);
+              setCDemo(demo);
+              setAgain(!demo);
+              setTake((k) => k + 1);
+            }}
+            data-coach-start="1"
+          >
+            <Icon k="play" /> {he ? 'מתחילים' : 'Start'}
+          </button>
+        </section>
+      );
+    const shownRes = res?.m ?? stageRes?.m ?? null;
+    const bar = (
+      <div className={`coach-bar ${cLine ? (cLine.clean ? 'ok' : 'miss') : ''}`} data-coach-bar="1">
+        <p className="coach-line" aria-live="polite" data-coach-line={cLine ? '1' : '0'}>
+          {cLine ? cLine.line[lang] : cDemo ? (he ? 'מקשיבים קודם…' : 'Listen first…') : announce({ ...cTake, stage }, lang)}
+        </p>
+        <span className="coach-meta">{stepTx}</span>
+        <span className="coach-btns">
+          {cLine && !cLine.end && (
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => {
+                if (cPaused) {
+                  setCPaused(false);
+                  coachGo();
+                } else {
+                  setCPaused(true);
+                  if (cTimer.current) window.clearTimeout(cTimer.current);
+                  cTimer.current = null;
+                  cSpeech.current?.abort();
+                }
+              }}
+              aria-label={cPaused ? (he ? 'להמשיך' : 'Resume') : he ? 'השהיה' : 'Pause'}
+              data-coach-pause={cPaused ? 'paused' : 'running'}
+            >
+              <Icon k={cPaused ? 'play' : 'pause'} size={18} />
+            </button>
+          )}
+          <button type="button" className="icon-btn" onClick={endNow} aria-label={he ? 'לסיים את הסשן' : 'End session'} data-coach-stop="1">
+            <Icon k="stop" size={18} />
+          </button>
+        </span>
+      </div>
+    );
+    if (shownRes)
+      return (
+        <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="result">
+          {bar}
+          <DrillScore drill={stageRes?.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={shownRes} beat={-1} lang={lang} />
+          {bestPop}
+        </div>
+      );
+    if (cDemo)
+      return (
+        <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="demo">
+          {bar}
+          <DrillScore drill={takeDrill} ds={ds} beat={beat} lang={lang} bpm={stage === 'quarters' ? QUARTERS_BPM : bpm} />
+          <CoachDemo drill={takeDrill} bpm={stage === 'quarters' ? QUARTERS_BPM : cTake.bpm} lang={lang} onBeat={setBeat} onDone={() => (setBeat(-1), setCDemo(false), setAgain(true), setTake((k) => k + 1))} />
+        </div>
+      );
+    return (
+      <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="take" data-coach-stage={stage ?? 'tempo'}>
+        {bar}
+        <DrillScore drill={shownDrill(takeDrill, own)} ds={ds} beat={beat} lang={lang} bpm={bpm} live={live} cue={counting} />
+        {fingerKeysOn && <FingerKeys drill={shownDrill(takeDrill, own)} beat={beat} lang={lang} />}
+        {stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
+        {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} />}
+        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} />}
+      </div>
+    );
+  }
   if (stageRes) {
     const nextStage = rubatoStage(stateOf(drill), drill);
     const line =
@@ -1028,7 +1319,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
               ? 'עוד פעם אחת נקייה בלי קצב.'
               : 'One more clean take in free time.';
     return (
-      <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage}>
+      <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage} onClickCapture={hfTakeOver}>
+        {hfBar}
         <DrillScore drill={stageRes.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={stageRes.m} beat={-1} lang={lang} />
         <TakeReview drill={drill} cal={cal}
           m={stageRes.m}
@@ -1103,7 +1395,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const loopSel: [number, number] | null = sel ?? (wb !== null ? [wb, wb] : null);
   const pickBar = (i: number) => setSel((cur) => (cur && cur[0] === cur[1] && cur[0] !== i ? [Math.min(cur[0], i), Math.max(cur[0], i)] : [i, i]));
   return (
-    <div className="drill-run" data-drill={drill.itemId}>
+    <div className="drill-run" data-drill={drill.itemId} onClickCapture={hfTakeOver}>
+      {res && hfBar}
       <div className="drill-goal tempo-ladder" data-tempo-step={stage ?? 'tempo'}>
         <span className="tl-count">
           <bdi dir="ltr">
@@ -1267,6 +1560,33 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         </>
       )}
       {bestPop}
+    </div>
+  );
+}
+
+/** The coach's pause on the result before the next take counts in (plus the spoken line). */
+const COACH_REVIEW_MS = 1800;
+
+/** A new step: the coach plays it once (cursor running), then the take counts in. Skippable. */
+function CoachDemo({ drill, bpm, lang, onBeat, onDone }: { drill: Drill; bpm: number; lang: Lang; onBeat: (b: number) => void; onDone: () => void }) {
+  const fin = useRef(onDone);
+  fin.current = onDone;
+  const ac = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const a = new AbortController();
+    ac.current = a;
+    let done = false;
+    const end = () => void (!done && ((done = true), fin.current()));
+    void playDrill(drill, bpm, a.signal, onBeat)
+      .catch(() => {})
+      .then(() => window.setTimeout(end, a.signal.aborted ? 0 : 500));
+    return () => a.abort();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className="drill-take coach-demo" data-coach-demo="1">
+      <button type="button" className="link" onClick={() => ac.current?.abort()} data-coach-skip-demo="1">
+        {lang === 'he' ? 'לדלג ולנגן' : 'Skip and play'}
+      </button>
     </div>
   );
 }
@@ -1670,7 +1990,7 @@ function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone, autoStart = f
     <>
       <DrillScore drill={drill} ds={ds} result={last} beat={last ? -1 : beat} lang={lang} />
       {last && <MarkLegend lang={lang} />}
-      {!last && <DrillTake drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={autoStart} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />}
+      {!last && <DrillTake hear={false} drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={autoStart} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />}
     </>
   );
 }

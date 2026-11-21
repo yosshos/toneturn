@@ -1,0 +1,318 @@
+// The practice coach (owner 2026-11-21, docs/SPEC-COACH.md): a technique family played as one continuous session that
+// climbs — RH, LH → hands together → contrary motion → thirds … — instead of one level walked key by key with a click
+// after every take. The coach picks the next take after each one (the same item at the next tempo step, the other hand,
+// the next key, a harder step, slower, or a weak spot to revisit) and says so in one short line; the screen moves on by
+// itself. Pure: the screen keeps the state and plays the takes.
+
+import type { Drill, DrillSettings, FamilyId, ItemState, TakeMetrics } from './types';
+import type { FamilyDef, LevelDef } from './generate';
+import { levelKeys, specDrills } from './plan';
+import { newItem } from './ladder';
+import { hasQuarters, hasRubato, QUARTERS_BPM, QUARTERS_CLEAN, RUBATO_CLEAN, rubatoStage, type RubatoStage } from './rubato';
+
+type T2 = { en: string; he: string };
+type Order = DrillSettings['keyOrder'];
+
+/** Keys clean at tempo (every item of the step in that key) before the coach moves up a step. */
+export const KEYS_TO_PROMOTE = 2;
+/** Misses on one item before the coach parks it as a weak spot and moves on. */
+export const MISSES_TO_PARK = 3;
+/** A weak spot comes back after this many takes. */
+export const REVIEW_EVERY = 5;
+/** The session's length (minutes); the coach wraps up after the take that crosses it. */
+export const SESSION_MIN = 12;
+/** "Slower" steps: −10 % each, never below ♩30. */
+const SLOWER = 0.9;
+
+export interface CoachSpot {
+  step: number;
+  key: number;
+}
+
+export interface CoachState {
+  family: FamilyId;
+  /** The family's level ids, easiest first. */
+  steps: string[];
+  step: number;
+  /** The keys of the current step, in the session's order. */
+  keys: number[];
+  keyIdx: number;
+  /** The item of the step's level being played in this key (RH, then LH …). */
+  spec: number;
+  /** Keys of the current step clean at tempo (before or in this session). */
+  passed: number[];
+  /** …of which in this session. */
+  passedNow: number;
+  misses: number;
+  slower: number;
+  weak: CoachSpot[];
+  /** A warm-up take (the step below, a key the player knows) or a weak spot being revisited. */
+  side: (CoachSpot & { kind: 'warmup' | 'review'; spec: number }) | null;
+  /** The step's first take: the coach plays it once before asking for it. */
+  demo: boolean;
+  takes: number;
+  clean: number;
+  promoted: number;
+  sinceReview: number;
+  startedAt: number;
+}
+
+export interface CoachTake {
+  drill: Drill;
+  level: LevelDef;
+  /** Free time / quarters (rubato first), or null = the item's tempo. */
+  stage: RubatoStage | null;
+  bpm: number;
+  /** Play it to the player first (a new step). */
+  demo: boolean;
+  kind: 'warmup' | 'review' | 'main';
+  /** The item's index among its level's specs (RH / LH …). */
+  spec: number;
+}
+
+const levelOf = (fam: FamilyDef, id: string): LevelDef => fam.levels.find((l) => l.id === id) ?? fam.levels[0];
+const drillOf = (level: LevelDef, spec: number, key: number, order: Order): Drill => {
+  const ds = specDrills(level, spec, order);
+  return ds.find((d) => d.spec.key === key) ?? ds[0];
+};
+const st = (items: Record<string, ItemState>, d: Drill): ItemState => items[d.itemId] ?? newItem(d);
+/** Played clean at its tempo at least once (a take that counted). */
+const cleanAtTempo = (s: ItemState | undefined): boolean => !!s && s.cleanBpm > 0;
+
+/** Every item of the level clean at tempo in this key. */
+function keyClean(level: LevelDef, key: number, items: Record<string, ItemState>, order: Order): boolean {
+  return level.specs.every((_, k) => cleanAtTempo(items[drillOf(level, k, key, order).itemId]));
+}
+
+/** A step is solid when it is clean at tempo in KEYS_TO_PROMOTE keys. */
+function solid(level: LevelDef, items: Record<string, ItemState>, order: Order): boolean {
+  return levelKeys(level, order).filter((k) => keyClean(level, k, items, order)).length >= KEYS_TO_PROMOTE;
+}
+
+/** The step's keys: unplayed-or-unclean first in the player's order (the familiar first keys lead). */
+function keysOf(level: LevelDef, items: Record<string, ItemState>, order: Order): { keys: number[]; passed: number[] } {
+  const all = levelKeys(level, order);
+  const passed = all.filter((k) => keyClean(level, k, items, order));
+  return { keys: [...all.filter((k) => !passed.includes(k)), ...passed], passed };
+}
+
+/** The family's first level the player is not yet solid in (no background → the first level). */
+export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, order: Order, now = Date.now()): CoachState {
+  const steps = fam.levels.map((l) => l.id);
+  let step = fam.levels.findIndex((l) => !solid(l, items, order));
+  if (step < 0) step = steps.length - 1;
+  const { keys, passed } = keysOf(fam.levels[step], items, order);
+  // Warm up on the step below, in the first key it is clean in (a teacher's opening scale).
+  let side: CoachState['side'] = null;
+  if (step > 0) {
+    const below = fam.levels[step - 1];
+    const k = levelKeys(below, order).find((x) => keyClean(below, x, items, order));
+    if (k !== undefined) side = { kind: 'warmup', step: step - 1, key: k, spec: below.specs.length - 1 };
+  }
+  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now };
+}
+
+/**
+ * The stage of an item in the coach: rubato first (2 clean free takes, 1 in quarters) for the step's first key; a key
+ * after it shares the motion and the fingering pattern — one clean free take, then its tempo.
+ */
+export function coachStage(level: LevelDef, spec: number, drill: Drill, items: Record<string, ItemState>, order: Order): RubatoStage | null {
+  const base = rubatoStage(items[drill.itemId], drill);
+  if (!base) return null;
+  const known = specDrills(level, spec, order).some((d) => d.itemId !== drill.itemId && (cleanAtTempo(items[d.itemId]) || (items[d.itemId]?.rubato?.free ?? 0) >= RUBATO_CLEAN));
+  if (!known) return base;
+  return (items[drill.itemId]?.rubato?.free ?? 0) >= 1 ? null : 'free';
+}
+
+/** After a clean free take that finishes the coach's shortened rubato: the item's rubato marked done. */
+export function rubatoDoneByCoach(s: ItemState, drill: Drill): ItemState {
+  return { ...s, rubato: { free: Math.max(RUBATO_CLEAN, s.rubato?.free ?? 0), quarters: hasQuarters(drill) ? Math.max(QUARTERS_CLEAN, s.rubato?.quarters ?? 0) : s.rubato?.quarters ?? 0 } };
+}
+
+/** Whether an item can be played in free time here (a microphone can't follow chords in free time …); default yes. */
+export type FreeOk = (d: Drill) => boolean;
+
+/** The take the coach asks for now. */
+export function coachTake(fam: FamilyDef, c: CoachState, items: Record<string, ItemState>, order: Order, freeOk: FreeOk = () => true): CoachTake {
+  if (c.side) {
+    const level = levelOf(fam, c.steps[c.side.step]);
+    const drill = drillOf(level, c.side.spec, c.side.key, order);
+    const stage = c.side.kind === 'warmup' || !freeOk(drill) ? null : coachStage(level, c.side.spec, drill, items, order);
+    return { drill, level, stage, bpm: stage === 'quarters' ? QUARTERS_BPM : st(items, drill).goalBpm, demo: false, kind: c.side.kind, spec: c.side.spec };
+  }
+  const level = levelOf(fam, c.steps[c.step]);
+  const drill = drillOf(level, c.spec, c.keys[c.keyIdx], order);
+  const stage = freeOk(drill) ? coachStage(level, c.spec, drill, items, order) : null;
+  const bpm = stage === 'quarters' ? QUARTERS_BPM : Math.max(30, Math.round(st(items, drill).goalBpm * SLOWER ** c.slower));
+  return { drill, level, stage, bpm, demo: c.demo && c.spec === 0, kind: 'main', spec: c.spec };
+}
+
+/** What a missed take missed, in a few words. */
+export function missLine(m: TakeMetrics): T2 {
+  const n = (m.wrong ?? 0) + (m.missing ?? 0);
+  if (n === 1) return { he: 'פספסת תו אחד', en: 'One note missed' };
+  if (n > 1 && n <= 3) return { he: `פספסת ${n} תווים`, en: `${n} notes missed` };
+  if (n > 3) return { he: 'עוד לא בידיים', en: 'Not in the fingers yet' };
+  if ((m.hesitations ?? 0) > 0) return { he: 'היו עצירות', en: 'A few stops' };
+  return { he: 'הקצב לא יציב', en: 'The time wavered' };
+}
+
+const PRAISE: T2[] = [
+  { he: 'נקי.', en: 'Clean.' },
+  { he: 'יפה.', en: 'Nice.' },
+  { he: 'מצוין.', en: 'Great.' },
+];
+
+export interface CoachNext {
+  state: CoachState;
+  /** The coach's line: how it went, and what comes next. */
+  line: T2;
+  /** The session is over (its time is up, or the family's top step is solid). */
+  end: boolean;
+}
+
+/** The next key of the step that is not yet passed (wrapping); the current one when all are. */
+function nextKeyIdx(c: CoachState): number {
+  for (let k = 1; k <= c.keys.length; k++) {
+    const j = (c.keyIdx + k) % c.keys.length;
+    if (!c.passed.includes(c.keys[j])) return j;
+  }
+  return (c.keyIdx + 1) % c.keys.length;
+}
+
+/**
+ * After a take: the coach's next state and line. `items` = the item states after the take was saved (its ladder,
+ * its rubato stage).
+ */
+export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: TakeMetrics, items: Record<string, ItemState>, order: Order, now = Date.now(), freeOk: FreeOk = () => true): CoachNext {
+  const clean = m.verdict === 'clean';
+  const c: CoachState = { ...c0, takes: c0.takes + 1, clean: c0.clean + (clean ? 1 : 0), sinceReview: c0.sinceReview + 1, demo: false };
+  const praise = PRAISE[c.takes % PRAISE.length];
+  const timeUp = now - c.startedAt >= SESSION_MIN * 60_000;
+  const next = (line: T2): CoachNext => {
+    // A weak spot comes back every few takes (never over a new step's first take).
+    if (!timeUp && !c.side && !c.demo && c.weak.length && c.sinceReview >= REVIEW_EVERY) {
+      const w = c.weak[0];
+      c.side = { kind: 'review', step: w.step, key: w.key, spec: 0 };
+      c.sinceReview = 0;
+      const lv = levelOf(fam, c.steps[w.step]);
+      const d = drillOf(lv, 0, w.key, order);
+      return { state: c, line: { he: `${line.he} חוזרים לנקודה קשה: ${d.title.he}.`, en: `${line.en} Back to a hard spot: ${d.title.en}.` }, end: false };
+    }
+    if (timeUp) return { state: c, line: summary(fam, c, line), end: true };
+    const t = coachTake(fam, c, items, order, freeOk);
+    return { state: c, line: { he: `${line.he} ${announce(t, 'he')}`, en: `${line.en} ${announce(t, 'en')}` }, end: false };
+  };
+
+  // A warm-up: whatever happened, on to the session's step.
+  if (c.side?.kind === 'warmup') {
+    c.side = null;
+    c.demo = true;
+    return next(clean ? { he: 'חימום נקי.', en: 'Warm-up clean.' } : { he: 'זה החימום.', en: 'That was the warm-up.' });
+  }
+  // A weak spot revisited: back to where the session was.
+  if (c.side?.kind === 'review') {
+    const spot = c.side;
+    const level = levelOf(fam, c.steps[spot.step]);
+    const stillLearning = clean && take.stage !== null;
+    if (clean && !stillLearning) {
+      if (spot.spec + 1 < level.specs.length) {
+        c.side = { ...spot, spec: spot.spec + 1 };
+        return next(praise);
+      }
+      c.weak = c.weak.filter((w) => !(w.step === spot.step && w.key === spot.key));
+      c.side = null;
+      return next({ he: 'עכשיו זה יושב.', en: 'That one sits now.' });
+    }
+    if (stillLearning) return next(praise);
+    c.side = null;
+    c.weak = [...c.weak.filter((w) => !(w.step === spot.step && w.key === spot.key)), spot];
+    return next({ he: `${missLine(m).he}. נחזור אליו שוב.`, en: `${missLine(m).en}. We'll come back to it.` });
+  }
+
+  const level = levelOf(fam, c.steps[c.step]);
+  if (clean) {
+    c.misses = 0;
+    // Free time / quarters: the same item again at its next stage (the item state moved it on).
+    if (take.stage !== null) return next(praise);
+    c.slower = 0;
+    // The other hand / the next item of the step, same key.
+    if (c.spec + 1 < level.specs.length) {
+      c.spec++;
+      return next(praise);
+    }
+    // The key is done.
+    const key = c.keys[c.keyIdx];
+    if (!c.passed.includes(key)) c.passed = [...c.passed, key];
+    c.passedNow++;
+    c.spec = 0;
+    if (c.passed.length >= KEYS_TO_PROMOTE && c.passedNow >= 1) {
+      if (c.step + 1 < c.steps.length) {
+        c.step++;
+        c.promoted++;
+        const nl = levelOf(fam, c.steps[c.step]);
+        const kp = keysOf(nl, items, order);
+        // The new step starts in a key the player just played (familiar), then the rest.
+        const first = c.keys[0];
+        c.keys = [first, ...kp.keys.filter((k) => k !== first)].filter((k) => levelKeys(nl, order).includes(k));
+        if (!c.keys.length) c.keys = kp.keys;
+        c.passed = kp.passed;
+        c.passedNow = 0;
+        c.keyIdx = 0;
+        c.demo = true;
+        return next({ he: `${praise.he} שלב חדש: ${nl.title.he}. קודם נקשיב.`, en: `${praise.en} New step: ${nl.title.en}. Listen first.` });
+      }
+      // The family's top step is solid: keep going through its keys (the ladder raises each item's tempo).
+    }
+    c.keyIdx = nextKeyIdx(c);
+    return next(praise);
+  }
+
+  // A miss.
+  c.misses++;
+  const ml = missLine(m);
+  if (c.misses === 1) return next({ he: `${ml.he} — שוב.`, en: `${ml.en} — again.` });
+  if (c.misses === 2 && take.stage === null) {
+    c.slower++;
+    return next({ he: `${ml.he}. לאט יותר.`, en: `${ml.en}. Slower.` });
+  }
+  if (c.misses < MISSES_TO_PARK) return next({ he: `${ml.he}. שוב, בלי למהר.`, en: `${ml.en}. Again, no rush.` });
+  // Parked: a weak spot to revisit; on to the next key.
+  const key = c.keys[c.keyIdx];
+  if (!c.weak.some((w) => w.step === c.step && w.key === key)) c.weak = [...c.weak, { step: c.step, key }];
+  c.misses = 0;
+  c.slower = 0;
+  c.spec = 0;
+  c.keyIdx = nextKeyIdx(c);
+  return next({ he: 'נחזור לזה אחר כך.', en: "We'll come back to this." });
+}
+
+/** "Now: G major · hands together · ♩80" (free time: "in free time"). */
+export function announce(t: CoachTake, lang: 'he' | 'en'): string {
+  const title = t.drill.title[lang];
+  const how =
+    t.stage === 'free'
+      ? lang === 'he'
+        ? 'בלי קצב'
+        : 'in free time'
+      : `♩${t.bpm}`;
+  return lang === 'he' ? `עכשיו: ${title}, ${how}.` : `Now: ${title}, ${how}.`;
+}
+
+/** The session's closing line (also when the player ends it). */
+export function summary(fam: FamilyDef, c: CoachState, last: T2): T2 {
+  const lv = levelOf(fam, c.steps[c.step]);
+  const up = c.promoted ? { he: ` עלית ${c.promoted === 1 ? 'שלב' : `${c.promoted} שלבים`}.`, en: ` ${c.promoted === 1 ? 'One step up' : `${c.promoted} steps up`}.` } : { he: '', en: '' };
+  return {
+    he: `${last.he} זה הסשן: ${c.clean} נקיים מתוך ${c.takes}.${up.he} בפעם הבאה ממשיכים מ${lv.title.he}.`,
+    en: `${last.en} That's the session: ${c.clean} clean of ${c.takes}.${up.en} Next time from ${lv.title.en}.`,
+  };
+}
+
+/** The coach runs on families whose items have notes to play (not ear call-and-response, writing, singing). */
+export function coachable(fam: FamilyDef, order: Order): boolean {
+  const l = fam.levels[0];
+  if (!l) return false;
+  const d = specDrills(l, 0, order)[0];
+  return !!d && !d.sung && !d.write && !d.listen && (hasRubato(d) || d.notes.length > 0);
+}

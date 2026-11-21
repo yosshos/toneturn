@@ -668,7 +668,8 @@ export function App() {
   // question when a keyboard first connects (a digital piano has its own speakers; the app's echo arrives late).
   const keysSound: KeysSoundProp | undefined = s.midiInput && s.activeCourse !== 'drums' ? { on: s.midiSound !== false, toggle: () => updateSettings({ midiSound: s.midiSound === false, midiSoundAsked: true }), lang: s.uiLang } : undefined;
   const midiNames = useMidiDevices(!!s.midiInput && s.activeCourse !== 'drums');
-  const askKeysSound = !!s.midiInput && s.activeCourse !== 'drums' && !s.midiSoundAsked && midiNames.length > 0 ? midiNames[0] : null;
+  // Automated runs (e2e, stub keyboards) are asked only with ?keysask in the address — the sheet would cover every MIDI test.
+  const askKeysSound = !!s.midiInput && s.activeCourse !== 'drums' && !s.midiSoundAsked && midiNames.length > 0 && !(typeof navigator !== 'undefined' && navigator.webdriver && !params.has('keysask')) ? midiNames[0] : null;
   // Drums: pad controllers without a sound module — the app plays the kit's sound on each hit (kit card, default off).
   const drumSounds = s.activeCourse === 'drums' && !!s.drumKit?.sounds && !s.drumKit?.mic;
   useEffect(() => {

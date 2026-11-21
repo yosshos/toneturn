@@ -279,7 +279,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
         <>
           {!play && <p className="field-hint">{inst === 'voice' ? tx.backVoice : tx.backHow}</p>}
           {!play && (
-            <DrillTake
+            <DrillTake hear={false}
               key={`${phrase.id}:${take}`}
               autoStart={againTake}
               drill={drill}

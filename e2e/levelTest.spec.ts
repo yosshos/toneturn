@@ -41,7 +41,8 @@ for (const inst of ['guitar', 'bass'] as const)
     await page.locator(`[data-inst="${inst}"]`).click();
     await page.locator('[data-drills-test]').click();
     await expect(page.locator(`[data-level-test="${inst}"]`)).toBeVisible();
-    expect(await page.locator('.lt-sections li').count()).toBeGreaterThanOrEqual(5);
+    const sections = await page.locator('.lt-sections li').count();
+    expect(sections).toBeGreaterThanOrEqual(5);
     await page.locator('[data-test-start]').click();
     const probe = page.locator('[data-test-probe]');
     // AUDIT-CONTENT-THEORY §ב.3: the guitar test follows the course path — chords first; bass opens with the hands.
@@ -55,7 +56,8 @@ for (const inst of ['guitar', 'bass'] as const)
     }
     await expect(page.locator('[data-level-test-done]')).toBeVisible();
     expect(new Set(seen).size).toBeGreaterThanOrEqual(5);
-    expect(seen.length).toBeLessThanOrEqual(14);
+    // One take per section when every one is too hard (SPEC-LEVEL-TEST: breadth first, a miss moves on).
+    expect(seen.length).toBeLessThanOrEqual(Math.max(14, sections * 2));
   });
 
 // 0.84: the voice course's test — the course's own families in sections; skipping moves through all of them.

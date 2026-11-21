@@ -114,7 +114,7 @@ describe('icon motion styles', () => {
     walk('src');
     expect(users.sort()).toEqual(['src/ui/Path.tsx', 'src/ui/Streak.tsx', 'src/ui/paper/Gallery.tsx']);
     // the streak flame only flickers on the home screen (TopBar home → StreakChip home)
-    expect(readFileSync('src/ui/Home.tsx', 'utf8')).toMatch(/<TopBar [^>]*\bhome\b \/>/);
+    expect(readFileSync('src/ui/Home.tsx', 'utf8')).toMatch(/<TopBar [^>]*\bhome\b[^>]*\/>/);
     expect(readFileSync('src/ui/App.tsx', 'utf8')).not.toMatch(/<TopBar [^>]*\bhome\b/);
   });
 });

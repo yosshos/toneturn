@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.0',
+    date: '2026-11-21',
+    en: ['Continuous practice in technique: one press starts a session that begins where you are and climbs — right hand, left hand, the next key, hands together, contrary motion … The next take starts by itself after a short note on the last one; pause or end any time. Every reading exercise has Listen beside Play, and a new step is played to you first.'],
+    he: ['אימון רציף בטכניקה: לחיצה אחת פותחת סשן שמתחיל איפה שאתם ועולה בקושי — יד ימין, יד שמאל, הסולם הבא, שתי ידיים, תנועה נגדית… הנגינה הבאה מתחילה לבד אחרי הערה קצרה על הקודמת; אפשר לעצור או לסיים בכל רגע. בכל תרגיל קריאה יש כפתור הקשבה ליד נגינה, ושלב חדש מושמע לכם קודם.'],
+  },
+  {
     version: '0.109.4',
     date: '2026-11-20',
     en: ['Reading while you play: the score scrolls smoothly with the beat — the line you play near the top, the next lines below it, the scroll landing as the next line starts. Hands together: treble and bass of the same bars stay together and line up; on a computer the next system is in view.'],

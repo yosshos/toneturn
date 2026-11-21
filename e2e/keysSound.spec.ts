@@ -29,7 +29,7 @@ test('a digital piano connects: the app asks once, then the top-bar switch turns
       r.onerror = rej;
     });
   });
-  await page.goto('/');
+  await page.goto('/?keysask');
   const ask = page.locator('[data-keys-sound-ask]');
   await expect(ask).toBeVisible({ timeout: 60_000 });
   await expect(ask).toContainText('ES920');

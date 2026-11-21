@@ -20,6 +20,7 @@ import { listenLoop } from './Flight';
 import { piano } from './services';
 import { InputCheck, InputWatchdog } from './InputCheck';
 import { Icon } from './icons';
+import { HearButton } from './HearDrill';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -29,7 +30,7 @@ const TX = {
 /** Silence after the last note that ends a take once at least half the notes are in. */
 const QUIET_MS = 5000;
 
-export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean }) {
+export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false, hear = true }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean; /** The Listen button beside Play (off in a level test). */ hear?: boolean }) {
   onDone = useKeptTakes(drill, 0, onDone); // My recordings: free-time takes are kept too (no tempo)
   const tx = TX[lang];
   const [on, setOn] = useState(false);
@@ -174,9 +175,12 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
           {tx.done}
         </button>
       ) : (
-        <button className="btn mega" onClick={() => void start()} data-rubato-start="1">
-          <Icon k="play" /> {tx.play}
-        </button>
+        <div className="take-start">
+          {hear && <HearButton drill={drill} bpm={drill.startBpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
+          <button className="btn mega" onClick={() => void start()} data-rubato-start="1">
+            <Icon k="play" /> {tx.play}
+          </button>
+        </div>
       )}
     </div>
   );

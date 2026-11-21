@@ -2607,3 +2607,27 @@ button.chip.on {
   :root:root .drills-screen .drill-run .drill-staff { max-height: 70vh; }
   :root:root .drills-screen[data-drills] .drill-staff.ht .note-staff svg { max-height: 104px; }
 }
+
+/* Practice coach (coach.ts, owner 2026-11-21): the entry on a family page, the start page, the slim bar over the score
+   (the coach's line · step · pause / end), and Listen beside Play. */
+.coach-entry { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; margin: 4px 0 12px; border-radius: 12px; cursor: pointer; background: color-mix(in srgb, var(--purple) 12%, transparent); border: 1px solid color-mix(in srgb, var(--purple) 35%, transparent); }
+.coach-entry span { display: grid; gap: 2px; }
+.coach-entry small { color: var(--ink-dim); }
+.coach-entry:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.coach-intro { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 24px 16px; max-width: 520px; margin: 0 auto; }
+.coach-intro h2 { margin: 0; }
+.coach-intro .coach-step { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.coach-intro .muted { color: var(--ink-dim); font-size: 14px; }
+.coach-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 0 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); min-height: 48px; }
+.coach-bar.ok { background: color-mix(in srgb, var(--mint) 18%, transparent); }
+.coach-bar.miss { background: color-mix(in srgb, var(--tangerine) 16%, transparent); }
+.coach-bar .coach-line { flex: 1; margin: 0; font-weight: 600; line-height: 1.35; }
+.coach-bar .coach-meta { color: var(--ink-dim); font-size: 13px; white-space: nowrap; }
+.coach-bar .coach-btns { display: flex; gap: 4px; }
+.coach-demo { padding: 6px 0; }
+.coach-end .coach-xp { font-family: var(--display); font-size: 22px; margin: 4px 0 10px; }
+.take-start { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.take-start .btn.mega { flex: 0 1 auto; min-width: 0; margin: 0; }
+.hear-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+@media (max-width: 520px) { .hear-btn { padding-inline: 12px; } }
+@media (max-width: 420px) { .coach-bar .coach-meta { display: none; } }
