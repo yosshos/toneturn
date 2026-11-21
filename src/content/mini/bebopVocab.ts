@@ -3,6 +3,9 @@
 // tests. See ../miniTypes.ts for the format.
 import type { Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
+import { gatedOr, isVerified } from '../../engine/verifiedContent';
+/** "3 to ♭9" stays out until a primary source confirms it (verifiedContent bh-3-to-b9; owner 2026-11-21). */
+const B9 = isVerified('card:bh-3b9');
 
 const chord = (midis: number[], duration = 1.2): Stimulus => ({ kind: 'chord', midis, duration });
 const notes = (midis: number[], each = 0.28): Stimulus => ({ kind: 'notes', midis, each });
@@ -178,8 +181,10 @@ export const LESSONS: MiniLesson[] = [
     id: 'vocab-harris',
     area: 'jazz',
     emoji: '𝄞',
-    title: { en: 'Barry Harris: minor, 3 to ♭9, triplets', he: 'בארי האריס: מינור, 3 עד ♭9, טריולות' },
-    takeaway: { en: 'Over V7 play the minor 6th a 5th above (Dm6 over G7); 3–5–7–♭9 on the V, the ♭9 falling to the 5th of I; a triplet down the scale keeps chord tones on the beats.', he: 'מעל V7 מנגנים את המינור 6 קווינטה מעל (Dm6 מעל G7); 3–5–7–♭9 על ה־V, וה־♭9 יורד לקווינטה של I; טריולה יורדת בסולם שומרת צלילי אקורד על הפעמות.' },
+    title: B9 ? { en: 'Barry Harris: minor, 3 to ♭9, triplets', he: 'בארי האריס: מינור, 3 עד ♭9, טריולות' } : { en: 'Barry Harris: minor and triplets', he: 'בארי האריס: מינור וטריולות' },
+    takeaway: B9
+      ? { en: 'Over V7 play the minor 6th a 5th above (Dm6 over G7); 3–5–7–♭9 on the V, the ♭9 falling to the 5th of I; a triplet down the scale keeps chord tones on the beats.', he: 'מעל V7 מנגנים את המינור 6 קווינטה מעל (Dm6 מעל G7); 3–5–7–♭9 על ה־V, וה־♭9 יורד לקווינטה של I; טריולה יורדת בסולם שומרת צלילי אקורד על הפעמות.' }
+      : { en: 'Over V7 play the minor 6th a 5th above (Dm6 over G7); a triplet down the scale keeps chord tones on the beats.', he: 'מעל V7 מנגנים את המינור 6 קווינטה מעל (Dm6 מעל G7); טריולה יורדת בסולם שומרת צלילי אקורד על הפעמות.' },
     steps: [
       {
         say: { en: 'Hi {name}! Make it minor: over G7 think D minor. D minor 6 is D, F, A, B: the 5th, flat 7, 9 and 3 of G.', he: 'היי {name}! להפוך למינור: מעל G7 חושבים רה מינור. רה מינור 6 הוא רה, פה, לה, סי: הקווינטה, ה־♭7, ה־9 והטרצה של סול.' },
@@ -191,11 +196,17 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([59, 62, 65, 69], 0.3)],
         show: { notes: [59, 62, 65, 69], text: { en: 'Bm7♭5 = Dm6', he: 'Bm7♭5 = Dm6' } },
       },
-      {
+      ...gatedOr('bh-3b9', {
         say: { en: '3 to flat 9: on G7 play B, D, F, A flat. The A flat falls to G, the 5th of C.', he: '3 עד ♭9: על G7 מנגנים סי, רה, פה, לה במול. הלה במול יורד לסול, הקווינטה של דו.' },
         play: [chord(G7, 0.8), notes([59, 62, 65, 68], 0.3), chord(CMAJ7, 0.4), notes([67], 0.7)],
         show: { notes: [59, 62, 65, 68, 67], text: { en: '3 5 7 ♭9 → 5', he: '3 5 7 ♭9 ← 5' } },
-      },
+      }, [
+        {
+          say: { en: 'Now as a line: over G7, the D minor 6 arpeggio down, B, A, F, D, then land on E, the 3rd of C.', he: 'עכשיו כקו: מעל G7, ארפג׳יו רה מינור 6 בירידה, סי, לה, פה, רה, ואז נחיתה על מי, הטרצה של דו.' },
+          play: [chord(G7, 0.8), notes([71, 69, 65, 62], 0.3), chord(CMAJ7, 0.4), notes([64], 0.7)],
+          show: { notes: [71, 69, 65, 62, 64], text: { en: 'Dm6 / G7 → E', he: 'Dm6 / G7 ← E' } },
+        },
+      ]),
       {
         say: { en: 'The triplet rule: going down the scale, a triplet from the root reaches the next chord tone on the beat. G, F, E, then D.', he: 'חוק הטריולה: בירידה בסולם, טריולה מהשורש מגיעה לצליל האקורד הבא על הפעמה. סול, פה, מי, ואז רה.' },
         play: [notes([67, 65, 64], 0.18), notes([62, 60, 59], 0.3)],
@@ -213,9 +224,13 @@ export const LESSONS: MiniLesson[] = [
       {
         say: { en: 'Try it in the drill: the D minor scale over D minor 7, then the D minor 6 arpeggio over G7, landing on E, the 3rd of C.', he: 'נסו בתרגיל: סולם רה מינור מעל Dm7, ואחר כך ארפג׳יו רה מינור 6 מעל G7, ונחיתה על מי, הטרצה של דו.' },
       },
-      {
+      ...gatedOr('bh-3b9', {
         say: { en: 'The 3 to flat 9 cell is a diminished 7th chord built on the 3rd. Its four notes all lead somewhere in the I chord.', he: 'התא 3 עד ♭9 הוא אקורד מוקטן שנבנה על הטרצה. כל ארבעת הצלילים שלו מובילים למקום כלשהו באקורד I.' },
-      },
+      }, [
+        {
+          say: { en: 'The same move works over every dominant: G7 takes D minor 6, C7 takes G minor 6, F7 takes C minor 6. Always the minor 6 a 5th above the root.', he: 'אותו מהלך עובד מעל כל דומיננט: G7 מקבל רה מינור 6, C7 מקבל סול מינור 6, F7 מקבל דו מינור 6. תמיד המינור 6 קווינטה מעל השורש.' },
+        },
+      ]),
       {
         say: { en: 'From the 3rd a triplet works too: B, A, G, then F. A triplet from the 5th or 7th would put a tension on the beat, so the rule avoids it.', he: 'גם מהטרצה טריולה עובדת: סי, לה, סול, ואז פה. טריולה מהקווינטה או מהספטימה הייתה שמה מתח על הפעמה, ולכן החוק נמנע ממנה.' },
         play: [notes([71, 69, 67], 0.18), notes([65], 0.6)],

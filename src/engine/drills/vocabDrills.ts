@@ -11,6 +11,9 @@
 import type { Drill, DrillSpec, ExpNote, FamilyId, BassFamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { itemIdOf } from './generate';
+import { isVerified } from '../verifiedContent';
+/** "3 to ♭9" stays out until a primary source confirms it (verifiedContent bh-3-to-b9; owner 2026-11-21). */
+const B9 = (): boolean => isVerified('item:v-3b9');
 import type { Tuning } from '../fretboard';
 import type { GuitarFamilyDef, GuitarLevelDef, GuitarStyle, Ev } from './guitar';
 import { finish as gFinish, place } from './guitar';
@@ -147,7 +150,7 @@ export function keysVocabFamily(): FamilyDef {
       JT(5, 'Enclosures: scale step above, double chromatic', 'כיתורים: צעד בסולם מעל, כרומטי כפול', lead([11, 12, 13, 14, 15]), [60, 130]),
       JT(6, 'The bebop enclosure and the delayed resolution', 'כיתור הביבופ והפתרון המושהה', lead([16, 17, 18]), [60, 130]),
       JT(7, 'Enclose every chord tone through ii–V–I', 'כיתור לכל צליל אקורד לאורך ii–V–I', lead([19, 20, 21, 22, 23]), [70, 140]),
-      JT(8, 'Barry Harris: 3 to ♭9 and the triplet rules', 'בארי האריס: 3 עד ♭9 וחוקי הטריולה', [v('v-3b9', 0), v('v-3b9', 1), v('v-trip', 0), v('v-trip', 1)], [70, 140]),
+      JT(8, B9() ? 'Barry Harris: 3 to ♭9 and the triplet rules' : 'Barry Harris: the triplet rules', B9() ? 'בארי האריס: 3 עד ♭9 וחוקי הטריולה' : 'בארי האריס: חוקי הטריולה', [v('v-3b9', 0), v('v-3b9', 1), v('v-trip', 0), v('v-trip', 1)], [70, 140]),
       JT(9, 'Barry Harris: make it minor', 'בארי האריס: להפוך למינור', [v('v-minor', 0), v('v-minor', 1)], [70, 140]),
       JT(10, 'Time: click on 2 and 4, the gap, the "and"', 'זמן: קליק על 2 ו-4, החור, ה"וְ"', [2, 3, 4, 5, 6, 7].map((o) => v('v-time', o, o >= 5 ? { hands: 'L' } : {})), [90, 160]),
     ],
@@ -219,7 +222,7 @@ export function guitarVocabFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
     LT('g-bebop', 7, 'Lines over minor ii–V–i and altered dominants', 'קווים על ii–V–i מינורי ודומיננט אלטרד', vs('v-line', [0, 1]), CYC4, [80, 150], SW, 7),
     LT('g-bebop', 8, 'Lines over the blues and turnarounds', 'קווים על בלוז וטרנאראונדים', vs('v-line', [2, 5, 6, 7]), CYC4, [80, 160], SW, 7),
     LT('g-bebop', 9, 'Lines over rhythm changes: A section and bridge', 'קווים על ריתם צ׳יינג׳ס: חלק A והגשר', vs('v-line', [3, 4]), CYC4, [90, 170], SW, 8),
-    LT('g-bebop', 10, 'Barry Harris: 3 to ♭9 and the triplet rules', 'בארי האריס: 3 עד ♭9 וחוקי הטריולה', [...vs('v-3b9', [0, 1]), ...vs('v-trip', [0, 1])], CYC4, [70, 140], SW, 8),
+    LT('g-bebop', 10, B9() ? 'Barry Harris: 3 to ♭9 and the triplet rules' : 'Barry Harris: the triplet rules', B9() ? 'בארי האריס: 3 עד ♭9 וחוקי הטריולה' : 'בארי האריס: חוקי הטריולה', [...vs('v-3b9', [0, 1]), ...vs('v-trip', [0, 1])], CYC4, [70, 140], SW, 8),
     LT('g-bebop', 11, 'Barry Harris: make it minor', 'בארי האריס: להפוך למינור', vs('v-minor', [0, 1]), CYC4, [70, 140], SW, 8),
     LT('g-bebop', 12, 'Time: click on 2 and 4, the gap, the "and"', 'זמן: קליק על 2 ו-4, החור, ה"וְ"', vs('v-time', [2, 3, 4, 5, 6, 7]), CYC4, [90, 160], 'swing 8ths / Charleston', 8),
   ]);
@@ -258,6 +261,6 @@ export function bassVocabFamily(L: BLFn, fam: BFamFn): GuitarFamilyDef {
     // The tritone turnaround stays on the guitar: the bass charts spell sharp keys with sharps only.
     L('b-bebop', 5, 'Lines over the blues and turnarounds', 'קווים על בלוז וטרנאראונדים', vs('v-line', [2, 5, 6]), 'major', [80, 160], SW),
     L('b-bebop', 6, 'Lines over rhythm changes: A section and bridge', 'קווים על ריתם צ׳יינג׳ס: חלק A והגשר', vs('v-line', [3, 4]), 'major', [90, 170], SW),
-    L('b-bebop', 7, 'Barry Harris: 3 to ♭9, triplets, make it minor', 'בארי האריס: 3 עד ♭9, טריולות, להפוך למינור', [...vs('v-3b9', [0, 1]), ...vs('v-trip', [0, 1]), ...vs('v-minor', [0, 1])], 'major', [70, 140], SW),
+    L('b-bebop', 7, B9() ? 'Barry Harris: 3 to ♭9, triplets, make it minor' : 'Barry Harris: triplets, make it minor', B9() ? 'בארי האריס: 3 עד ♭9, טריולות, להפוך למינור' : 'בארי האריס: טריולות, להפוך למינור', [...vs('v-3b9', [0, 1]), ...vs('v-trip', [0, 1]), ...vs('v-minor', [0, 1])], 'major', [70, 140], SW),
   ]);
 }

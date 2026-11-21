@@ -71,7 +71,8 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
   {
     id: 'bh-3-to-b9',
     why: '3 to ♭9 (B D F A♭ over G7) as a Harris line device like 3 to 9: one secondary source (Larsen); forums say "on the third of every dominant, the diminished" but never as a named line arpeggio.',
-    hides: ['item:hl-3b9', 'card:bh-3b9'],
+    // 2026-11-21: researched again, still no primary source -> out everywhere, the vocabulary cell too (owner).
+    hides: ['item:hl-3b9', 'item:v-3b9', 'card:bh-3b9'],
   },
   {
     id: 'bh-b7-major-pivot',
