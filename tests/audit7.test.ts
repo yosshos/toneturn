@@ -320,7 +320,7 @@ describe('wiring: path, courses, glyphs, badges, level test, skill map', () => {
     }
   });
   it('badges: a title per level (k-read 15, k-pop 6, k-pedal 3, k-classic, g-scales 15), named bass milestones, drawn art', () => {
-    for (const [f, n] of [['k-read', 15], ['k-pop', 6], ['k-pedal', 3], ['k-classic', PD_PIECES.length], ['g-scales', 15]] as const) expect(BADGES.filter((b) => b.id.startsWith(`tech:${f}:`)).length, f).toBe(n);
+    for (const [f, n] of [['k-read', 15], ['k-pop', 6], ['k-pedal', 3], ['k-classic', PD_PIECES.length], ['g-scales', 18]] as const) expect(BADGES.filter((b) => b.id.startsWith(`tech:${f}:`)).length, f).toBe(n);
     for (const f of ['b-riff', 'b-feel']) expect(BADGES.some((b) => b.group === f && !/:/.test(b.name.en)), f).toBe(true);
     for (const b of BADGES.filter((x) => /^tech:k-(pop|pedal|classic):/.test(x.id))) expect(resolveGlyph(b).fallback, b.id).toBe(false);
     const names = BADGES.map((b) => b.name.en);

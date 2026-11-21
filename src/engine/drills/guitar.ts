@@ -95,6 +95,30 @@ export const SCALES: Record<string, number[]> = {
 };
 /** Mode n (0 ionian … 6 locrian) of the major scale, as intervals from its own tonic. */
 export const modeInts = (n: number): number[] => MAJOR.map((_, i) => mod(MAJOR[(i + n) % 7] - MAJOR[n], 12));
+/** Mode `deg` of a 7-note scale, from its own tonic. */
+const rotate = (sc: number[], deg: number): number[] => sc.map((_, i) => mod(sc[(i + deg) % 7] - sc[deg], 12));
+const MM_INTS = [0, 2, 3, 5, 7, 9, 11];
+const HM_INTS = [0, 2, 3, 5, 7, 8, 11];
+/**
+ * SPEC-PRACTICE-KEYS §6: g-scales 'mode' options 12–24 — melodic-minor modes 2–6 (the altered, 7, is option 11), the
+ * harmonic-minor modes 2–7, diminished whole–half, the bebop dominant. sig: the key signature's tonic above the root
+ * (the root's own major for the minor modes and symmetric scales, as options 9–11; the bebop dominant its parent major).
+ */
+export const MORE_MODES: { ints: number[]; name: T2; sig: number }[] = [
+  { ints: rotate(MM_INTS, 1), name: t('dorian ♭2', 'דורי ♭2'), sig: 0 },
+  { ints: rotate(MM_INTS, 2), name: t('lydian augmented', 'לידי מוגדל'), sig: 0 },
+  { ints: rotate(MM_INTS, 3), name: t('lydian dominant', 'לידי דומיננטי'), sig: 0 },
+  { ints: rotate(MM_INTS, 4), name: t('mixolydian ♭6', 'מיקסולידי ♭6'), sig: 0 },
+  { ints: rotate(MM_INTS, 5), name: t('locrian ♮2', 'לוקרי ♮2'), sig: 0 },
+  { ints: rotate(HM_INTS, 1), name: t('locrian ♮6', 'לוקרי ♮6'), sig: 0 },
+  { ints: rotate(HM_INTS, 2), name: t('ionian ♯5', 'יוני ♯5'), sig: 0 },
+  { ints: rotate(HM_INTS, 3), name: t('dorian ♯4', 'דורי ♯4'), sig: 0 },
+  { ints: rotate(HM_INTS, 4), name: t('phrygian dominant', 'פריגי דומיננטי'), sig: 0 },
+  { ints: rotate(HM_INTS, 5), name: t('lydian ♯2', 'לידי ♯2'), sig: 0 },
+  { ints: rotate(HM_INTS, 6), name: t('altered ♭♭7', 'אלטרד ♭♭7'), sig: 0 },
+  { ints: [0, 2, 3, 5, 6, 8, 9, 11], name: t('diminished scale (whole–half)', 'סולם מוקטן (שלם–חצי)'), sig: 0 },
+  { ints: [0, 2, 4, 5, 7, 9, 10, 11], name: t('bebop dominant', 'ביבופ דומיננטי'), sig: 5 },
+];
 const MODE_T = [
   t('Ionian', 'יוני'),
   t('Dorian', 'דורי'),
@@ -925,18 +949,21 @@ function genScales(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'mode': {
       // 0–6 the modes of the major scale, 7 harmonic minor, 8 melodic minor, 9 whole-tone, 10 diminished (half–whole),
-      // 11 altered (the 7th mode of melodic minor) — the Rockschool grade 6–8 scales.
-      const m = (s.option ?? 1) % 12;
-      const ints = m < 7 ? modeInts(m) : [SCALES.harmonic, SCALES.melodic, [0, 2, 4, 6, 8, 10], [0, 1, 3, 4, 6, 7, 9, 10], [0, 1, 3, 4, 6, 8, 10]][m - 7];
+      // 11 altered (the 7th mode of melodic minor) — the Rockschool grade 6–8 scales. SPEC-PRACTICE-KEYS §6: 12–24 the
+      // rest of the melodic- and harmonic-minor modes, diminished whole–half and the bebop dominant (MORE_MODES).
+      const m = (s.option ?? 1) % (12 + MORE_MODES.length);
+      const more = m >= 12 ? MORE_MODES[m - 12] : null;
+      const ints = more ? more.ints : m < 7 ? modeInts(m) : [SCALES.harmonic, SCALES.melodic, [0, 2, 4, 6, 8, 10], [0, 1, 3, 4, 6, 7, 9, 10], [0, 1, 3, 4, 6, 8, 10]][m - 7];
       const lo = mod(lowFret(tu, key, 6) - 1, 12);
       line = upDown(windowScale(tu, key, ints, lo, lo + 4));
-      const nm =
-        m < 7
+      const nm = more
+        ? more.name
+        : m < 7
           ? MODE_T[m]
           : [t('harmonic minor', 'מינור הרמוני'), t('melodic minor', 'מינור מלודי'), t('whole-tone scale', 'סולם טונים שלמים'), t('diminished scale (half–whole)', 'סולם מוקטן (חצי–שלם)'), t('altered scale', 'סולם אלטרד')][m - 7];
       title = t(`${NAMES[key]} ${nm.en} in position`, `${NAMES[key]} ${nm.he} במצב`);
       // Key signature of the parent major scale (D Dorian → C: none; C Dorian → B♭: two flats); minors: the relative major.
-      modeSig = m < 7 ? SIG[mod(key - MAJOR[m], 12)] : m < 9 ? SIG[mod(key + 3, 12)] : SIG[key];
+      modeSig = more ? SIG[mod(key + more.sig, 12)] : m < 7 ? SIG[mod(key - MAJOR[m], 12)] : m < 9 ? SIG[mod(key + 3, 12)] : SIG[key];
       break;
     }
     case 'one-string': {
@@ -2569,6 +2596,10 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-scales', 13, 'Harmonic minor and natural minor in position', 'מינור הרמוני ומינור טבעי במצב', [S('mode', { option: 7 }), S('mode', { option: 5 })], 'major'),
       L('g-scales', 14, 'Dorian and Mixolydian in position', 'דורי ומיקסולידי במצב', [S('mode', { option: 1 }), S('mode', { option: 4 })], 'major'),
       L('g-scales', 15, 'Lydian, Phrygian and melodic minor in position', 'לידי, פריגי ומינור מלודי במצב', [S('mode', { option: 3 }), S('mode', { option: 2 }), S('mode', { option: 8 })], 'major'),
+      // SPEC-PRACTICE-KEYS §6: the remaining modes of melodic and harmonic minor, diminished whole–half, bebop dominant.
+      L('g-scales', 16, 'Melodic-minor modes in position', 'המודוסים של מינור מלודי במצב', [12, 13, 14, 15, 16].map((m) => S('mode', { option: m })), 'major'),
+      L('g-scales', 17, 'Harmonic-minor modes in position', 'המודוסים של מינור הרמוני במצב', [17, 18, 19, 20, 21, 22].map((m) => S('mode', { option: m })), 'major'),
+      L('g-scales', 18, 'Diminished whole–half and bebop dominant in position', 'מוקטן שלם–חצי וביבופ דומיננטי במצב', [23, 24].map((m) => S('mode', { option: m })), 'major'),
     ]),
     fam('g-arps', 'Arpeggios', 'ארפג׳יו', 'classical', ['all'], [
       L('g-arps', 1, 'Major and minor triads, root on 6 and 5', 'משולשים מז׳ור ומינור, שורש על 6 ו-5', [A('triad', { position: 6 }), A('triad', { position: 5 }), A('triad', { position: 6, minor: true }), A('triad', { position: 5, minor: true })], 'major'),

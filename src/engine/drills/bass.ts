@@ -1122,6 +1122,22 @@ const BSCALES: { ints: number[]; en: string; he: string }[] = [
   { ints: [0, 2, 4, 6, 8, 10], en: 'Whole-tone', he: 'טון שלם' },
   { ints: [0, 1, 3, 4, 6, 7, 9, 10], en: 'Diminished (half-whole)', he: 'מוקטן (חצי-שלם)' },
   { ints: [0, 1, 3, 4, 6, 8, 10], en: 'Altered', he: 'אלטרד' },
+  // SPEC-PRACTICE-KEYS §6 (options 14–27): locrian, diminished whole-half, the rest of the melodic- and harmonic-minor
+  // modes, the bebop dominant.
+  { ints: [0, 1, 3, 5, 6, 8, 10], en: 'Locrian', he: 'לוקרי' },
+  { ints: [0, 2, 3, 5, 6, 8, 9, 11], en: 'Diminished (whole-half)', he: 'מוקטן (שלם-חצי)' },
+  { ints: [0, 1, 3, 5, 7, 9, 10], en: 'Dorian ♭2', he: 'דורי ♭2' },
+  { ints: [0, 2, 4, 6, 8, 9, 11], en: 'Lydian augmented', he: 'לידי מוגדל' },
+  { ints: [0, 2, 4, 6, 7, 9, 10], en: 'Lydian dominant', he: 'לידי דומיננטי' },
+  { ints: [0, 2, 4, 5, 7, 8, 10], en: 'Mixolydian ♭6', he: 'מיקסולידי ♭6' },
+  { ints: [0, 2, 3, 5, 6, 8, 10], en: 'Locrian ♮2', he: 'לוקרי ♮2' },
+  { ints: [0, 1, 3, 5, 6, 9, 10], en: 'Locrian ♮6', he: 'לוקרי ♮6' },
+  { ints: [0, 2, 4, 5, 8, 9, 11], en: 'Ionian ♯5', he: 'יוני ♯5' },
+  { ints: [0, 2, 3, 6, 7, 9, 10], en: 'Dorian ♯4', he: 'דורי ♯4' },
+  { ints: [0, 1, 4, 5, 7, 8, 10], en: 'Phrygian dominant', he: 'פריגי דומיננטי' },
+  { ints: [0, 3, 4, 6, 7, 9, 11], en: 'Lydian ♯2', he: 'לידי ♯2' },
+  { ints: [0, 1, 3, 4, 6, 8, 9], en: 'Altered ♭♭7', he: 'אלטרד ♭♭7' },
+  { ints: [0, 2, 4, 5, 7, 9, 10, 11], en: 'Bebop dominant', he: 'ביבופ דומיננטי' },
 ];
 function genScale(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
@@ -2674,6 +2690,10 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-scale', 10, 'The five pentatonic positions, one by one', 'חמשת מצבי הפנטטוני, אחד אחד', [0, 1, 2, 3, 4].map((ps) => SC('penta-pos', { position: ps, minor: true })), K4, [70, 100], E8),
       // 0.66: on a 6-string bass only (hidden on 4 / 5 strings, plan.SIX_STRING_LEVELS).
       L('b-scale', 11, 'Three notes per string (6-string)', 'שלושה צלילים למיתר (6 מיתרים)', [SC('nps3', { tuning: 'bass6' }), SC('nps3', { option: 1, tuning: 'bass6' })], K4, [60, 100], E8),
+      // SPEC-PRACTICE-KEYS §6: the remaining modes, one octave in position.
+      L('b-scale', 12, 'Locrian, diminished whole-half and bebop dominant', 'לוקרי, מוקטן שלם-חצי וביבופ דומיננטי', [SC('scale', { option: 14 }), SC('scale', { option: 15 }), SC('scale', { option: 27 })], 'major', [70, 100], E8),
+      L('b-scale', 13, 'The melodic-minor modes', 'המודוסים של מינור מלודי', [16, 17, 18, 19, 20].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
+      L('b-scale', 14, 'The harmonic-minor modes', 'המודוסים של מינור הרמוני', [21, 22, 23, 24, 25, 26].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
     ]),
     fam('b-length', 'Muting and note length', 'השתקה ואורך צליל', [
       L('b-length', 1, 'Real rests', 'הפסקות אמיתיות', [LN('rests', { perBeat: 1 }), LN('rests', { perBeat: 1, option: 1 })], ANY, [70, 110], Qn),

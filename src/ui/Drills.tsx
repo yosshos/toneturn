@@ -519,6 +519,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
   // AUDIT-SCALES: hand independence; the harmonization ladder with the scales.
   'k-indep': 'hands', 'k-sharm': 'scales', 'g-harm': 'scales',
+  // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales.
+  'k-modes': 'scales', 'k-mmhm': 'scales',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
   harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'k-vocab': 'styles', 'k-solo': 'styles', 'k-ctx': 'styles', 'k-harrisline': 'styles', 'g-harrisline': 'styles', 'b-harrisline': 'styles', 'k-ctone': 'chords', 'k-mediant': 'chords', 'k-organ': 'styles', 'k-tpair': 'styles', 'g-tpair': 'styles', 'b-tpair': 'styles', 'g-ctone': 'chords', 'g-color': 'chords', 'b-counter': 'chords', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
   // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap). B17 (0.64): time and

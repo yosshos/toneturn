@@ -55,6 +55,9 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-rhythm': 'krhythm', 'g-meter': 'gmeter',
   // AUDIT-SCALES: hand independence, the scale-harmonization ladder on the keys and on the neck.
   'k-indep': 'indep', 'k-sharm': 'harmlad', 'g-harm': 'gharmlad',
+  // SPEC-PRACTICE-KEYS §6: the modes on one root (a scale climbing from one repeated tonic); melodic / harmonic minor
+  // modes and symmetric scales (an even, stepped ladder of whole tones).
+  'k-modes': 'modesroot', 'k-mmhm': 'modesmm',
   // Solo jazz piano (Siskind): a bass note under a two-note shell; three mangos over two hands; a comping hit on the
   // "and"; phrases with rests between them.
   'k-lh': 'lhshell', 'k-tex': 'mango', 'k-comp': 'compvoc', 'k-impro': 'phrasing',

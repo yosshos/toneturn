@@ -624,6 +624,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           vox={two ? items.map((x) => x.v) : undefined}
           graces={items.some((x) => x.n?.graces?.length) ? items.map((x) => x.n?.graces) : undefined}
           sharps={drill.sharps}
+          spells={items.some((x) => x.n?.spell) ? items.map((x) => x.n?.spell) : undefined}
           orns={items.some((x) => x.orn) ? items.map((x) => x.orn) : undefined}
           chord={false}
           keyPc={k}

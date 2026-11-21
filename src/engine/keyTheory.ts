@@ -3,6 +3,9 @@
 // with their parent scales, the symmetric scales — and a three-question warm-up. Standard theory only; pure.
 
 import { keyName } from './drills/generate';
+import { HARMONIC_MINOR, HM_MODES, MAJOR, MELODIC_MINOR, MM_MODES, modeOf, NATURAL_MINOR } from './scaleModes';
+
+export { HARMONIC_MINOR, HM_MODES, MAJOR, MELODIC_MINOR, MM_MODES, modeOf, NATURAL_MINOR };
 
 const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 const NATURAL = [0, 2, 4, 5, 7, 9, 11];
@@ -21,11 +24,6 @@ export function spellScale(tonic: string, ints: number[]): string[] {
     return LETTERS[l] + (ACC[d] ?? '?');
   });
 }
-
-export const MAJOR = [0, 2, 4, 5, 7, 9, 11];
-export const NATURAL_MINOR = [0, 2, 3, 5, 7, 8, 10];
-export const HARMONIC_MINOR = [0, 2, 3, 5, 7, 8, 11];
-export const MELODIC_MINOR = [0, 2, 3, 5, 7, 9, 11];
 
 /** Sharps (+) or flats (−) in the key signature of a scale spelling. */
 export const signature = (notes: string[]): number => notes.reduce((n, x) => n + (x.includes('♯') ? 1 : x.includes('♭') ? -1 : 0), 0);
@@ -93,25 +91,12 @@ export function keyFacts(root: number, minor: boolean): KeyFacts {
   };
 }
 
+
 /** The modes of melodic and harmonic minor on a root, each with its parent scale (standard names). */
 export function minorModesOn(root: number): { name: T2; notes: string[]; parent: string }[] {
   const tonic = tonicOf(root, false);
-  const MM: [number, T2][] = [
-    [1, t('dorian ♭2', 'דורי ♭2')],
-    [2, t('lydian augmented', 'לידי מוגדל')],
-    [3, t('lydian dominant', 'לידי דומיננטי')],
-    [4, t('mixolydian ♭6', 'מיקסולידי ♭6')],
-    [5, t('locrian ♮2', 'לוקרי ♮2')],
-    [6, t('altered', 'אלטרד')],
-  ];
-  const HM: [number, T2][] = [
-    [1, t('locrian ♮6', 'לוקרי ♮6')],
-    [2, t('ionian ♯5', 'יוני ♯5')],
-    [3, t('dorian ♯4', 'דורי ♯4')],
-    [4, t('phrygian dominant', 'פריגי דומיננטי')],
-    [5, t('lydian ♯2', 'לידי ♯2')],
-    [6, t('altered ♭♭7', 'אלטרד ♭♭7')],
-  ];
+  const MM = MM_MODES;
+  const HM = HM_MODES;
   const out: { name: T2; notes: string[]; parent: string }[] = [];
   for (const [scale, list, pName] of [[MELODIC_MINOR, MM, t('melodic minor', 'מינור מלודי')], [HARMONIC_MINOR, HM, t('harmonic minor', 'מינור הרמוני')]] as const) {
     for (const [deg, name] of list) {
@@ -120,7 +105,7 @@ export function minorModesOn(root: number): { name: T2; notes: string[]; parent:
       // the parent's name as usually written (D♭ melodic minor for C altered)
       const pTonic = keyName(pRoot);
       // the mode spelled from the page's root, one letter per degree (C altered: C D♭ E♭ F♭ G♭ A♭ B♭)
-      const ints = [...scale.slice(deg), ...scale.slice(0, deg).map((x) => x + 12)].map((x) => x - scale[deg]);
+      const ints = modeOf(scale, deg);
       const notes = spellScale(tonic, ints);
       out.push({ name: { en: `${tonic} ${name.en}`, he: `${tonic} ${name.he}` }, notes, parent: `${pTonic} ${pName.en}|${pTonic} ${pName.he}` });
     }
