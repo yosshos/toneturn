@@ -6,7 +6,8 @@
 // notes — the screen checks it against the chord-scales). Pure: returns the events; generate.ts turns them into a Drill.
 //
 // The spec's kind encodes everything:  chart~<ref>~<voicing>~<rhythm>~<mode>
-//   ref: "lv:<id>" improvisation level · "std:<id>" standard · "tpl:<id>" template · "txt:<uri-encoded text>" own chart
+//   ref: "lv:<id>" improvisation level · "std:<id>" standard · "tpl:<id>" template · "txt:<uri-encoded text>" own chart ·
+//        "cad:<id>" a cadence of the cadence library (cadences.ts, written in C / C minor)
 
 import { CHART_TEMPLATES, IMPROV_LEVELS, parseChart, type ChartChordEv } from '../charts';
 import { STANDARD_CHANGES } from '../standards';
@@ -14,8 +15,9 @@ import { autoScale } from '../improvRules';
 import { MODE_STEPS } from '../modes';
 import type { Hand } from './types';
 import { moved, nameInKey, refHome, transposeSymIn, type Home } from '../stdKey';
+import { cadenceById, cadencePlayText, cadenceTitle } from '../cadences';
 
-export type ChartVoicing = 'shell' | 'guide' | 'rootless-a' | 'rootless-b' | 'rootless' | 'close4' | 'drop2' | 'drop3' | 'open' | 'two-hand' | 'quartal' | 'upper' | 'block' | 'stride-single' | 'stride-octave' | 'stride-tenth' | 'stride-broken' | 'stride-walk';
+export type ChartVoicing = 'shell' | 'guide' | 'rootless-a' | 'rootless-b' | 'rootless' | 'close4' | 'drop2' | 'drop3' | 'open' | 'two-hand' | 'quartal' | 'upper' | 'block' | 'stride-single' | 'stride-octave' | 'stride-tenth' | 'stride-broken' | 'stride-walk' | 'walk-lh';
 export type CompRhythm = 'whole' | 'charleston' | 'reverse' | 'garland' | 'anticip' | 'four' | 'stride';
 export type ChartMode = 'comp' | 'improv';
 
@@ -43,6 +45,7 @@ export const VOICING_NAME: Record<ChartVoicing, Bi> = {
   'stride-tenth': { en: 'Stride: tenths', he: 'סטרייד: דצימות' },
   'stride-broken': { en: 'Stride: broken tenths', he: 'סטרייד: דצימות שבורות' },
   'stride-walk': { en: 'Stride: walking bass on 3', he: 'סטרייד: בס הולך על 3' },
+  'walk-lh': { en: 'Walking bass in the left hand', he: 'בס מהלך ביד שמאל' },
 };
 export const RHYTHM_NAME: Record<CompRhythm, Bi> = {
   whole: { en: 'One per chord', he: 'אחד לכל אקורד' },
@@ -58,6 +61,8 @@ export interface ChartRef {
   text: string;
   title: Bi;
   bpm: number;
+  /** The chart's tonic as written (when the ref tables don't know it: the cadence library). */
+  home?: Home;
 }
 
 /** Resolve a chart reference. */
@@ -78,6 +83,10 @@ export function chartRef(ref: string): ChartRef | null {
   if (k === 'tpl') {
     const t = CHART_TEMPLATES.find((x) => x.id === id);
     return t ? { text: t.text, title: t.title, bpm: t.bpm } : null;
+  }
+  if (k === 'cad') {
+    const c = cadenceById(id);
+    return c ? { text: cadencePlayText(c), title: cadenceTitle(c), bpm: c.bpm, home: { key: 0, ...(c.minor ? { minor: true } : {}) } } : null;
   }
   if (k === 'txt') {
     try {
@@ -265,7 +274,7 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
   const meter = 4;
   const parsed0 = parseChart(ref.text, meter);
   if (!parsed0.chords.length) return null;
-  const tonic = moved(refHome(k.ref, ref.text), key);
+  const tonic = moved(ref.home ?? refHome(k.ref, ref.text), key);
   const chords = parsed0.chords.map((c) => ({ ...c, root: mod(c.root + key), bass: mod(c.bass + key) }));
   const bars = parsed0.bars;
   const stride = k.voicing.startsWith('stride');
@@ -287,7 +296,26 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
   };
   const lowRoot = (pc: number, lo = 36) => lo + mod(pc - lo);
 
-  if (stride) {
+  if (k.voicing === 'walk-lh') {
+    // Walking bass in the left hand, a note a beat: each chord's root (its slash bass) on its first beat, then its 3rd
+    // and 5th, and on the beat before the next chord a half step from that chord's root (from the side the line is on).
+    let last = 0;
+    for (let b = 0; b < bars * meter; b++) {
+      const c = chordAt(b);
+      const nx = chordAt(b + 1);
+      const R = roles(c);
+      const root = lowRoot(c.bass);
+      const pos = b - (c.bar * meter + c.at);
+      let p: number;
+      if (pos < 1e-6) p = root;
+      else if (nx !== c && b + 1 < bars * meter) {
+        const tgt = lowRoot(nx.bass);
+        p = last > tgt ? tgt + 1 : tgt - 1;
+      } else p = root + ([R.third, R.fifth, R.third][Math.min(2, Math.round(pos) - 1)] ?? R.third);
+      last = p;
+      push(b, 1, c, [{ pitch: p, hand: 'L' }], [mod(p)]);
+    }
+  } else if (stride) {
     // Stride: bass on 1 and 3, a chord in the middle register on 2 and 4.
     for (let b = 0; b < bars * meter; b++) {
       const c = chordAt(b);

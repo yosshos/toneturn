@@ -258,6 +258,8 @@ export const ART_KEYS: Record<string, Art> = {
   /** Rhythm & meter on the keys: the "5:4" mark. */
   krhythm: art('tan', 'purple', markParts('5:4', det(R(28, 36, 2.4, 2.4, 0.6, 'ink'), R(32, 36, 2.4, 2.4, 0.6, 'ink'), R(36, 36, 2.4, 2.4, 0.6, 'ink'), R(40, 36, 2.4, 2.4, 0.6, 'ink')))),
   /** On the bandstand (keys): the "Gig" mark over a strip of keys. */
+  /** The cadence chart library (keys): the "V→I" mark. */
+  kcadlib: art('lilac', 'purple', markParts('V→I')),
   kgig: art('lilac', 'purple', markParts('Gig', [R(7, 10.4, 18, 4.2, 1.2, 'body'), ...det(L(11.5, 10.4, 11.5, 14.6, 'line', 0.8), L(16, 10.4, 16, 14.6, 'line', 0.8), L(20.5, 10.4, 20.5, 14.6, 'line', 0.8))])),
   /** Theory you play: two triads, a whole step apart (a triad pair). */
   tpair: art(

@@ -84,6 +84,7 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   // (their tabs by the item's own scale).
   'k-modes': { role: 'scale', group: 'major' },
   'k-mmhm': { role: 'scale' },
+  'k-cadlib': { role: 'cadence' },
   // ── guitar
   'g-first': { scope: 'neutral', role: 'pattern' },
   'g-riff': { scope: 'apply', role: 'apply' },
@@ -125,6 +126,7 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'g-cmarr': { scope: 'apply', role: 'apply' },
   'g-solojazz': { scope: 'apply', role: 'apply' },
   'g-hlfast': { role: 'harris' },
+  'g-cadlib': { role: 'cadence' },
   // ── bass
   'g-bass': { role: 'scale', neutralKinds: ['spider', 'ghost', 'groove'] },
   'b-first': { scope: 'neutral', role: 'pattern' },
@@ -172,6 +174,7 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'b-up-pizz': { scope: 'neutral', role: 'control' },
   'b-up-walk': { role: 'line' },
   'b-up-read': { scope: 'apply', role: 'apply' },
+  'b-cadlib': { role: 'cadence' },
 };
 
 // ── the group, from the item itself (the mode it is in or the scale it is) ──

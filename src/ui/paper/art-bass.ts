@@ -371,6 +371,8 @@ export const ART_BASS: Record<string, Art> = {
     rich(H(4.9, 30.2, 1.4, 'light'), H(24.9, 26.2, 1.4, 'light')),
   ),
   /** On the bandstand, bass: the mark 'Gig·4' with the four tuning pegs. */
+  /** The cadence chart library on the bass: "V→I·4". */
+  bcadlib: { hue: 'sky', hue2: 'purple', parts: markParts('V→I·4') },
   bgig: { hue: 'sky', hue2: 'purple', parts: markParts('Gig·4', [Ci(9.5, 13.5, 1.9, 'body'), Ci(15, 13.5, 1.9, 'body'), Ci(20.5, 13.5, 1.9, 'body'), Ci(26, 13.5, 1.9, 'body')]) },
   /** Walk the Changes (game): two chord plaques and a walking line climbing under them. */
   walkchanges: art(

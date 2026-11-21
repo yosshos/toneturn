@@ -7,6 +7,7 @@ import { chartKind, type ChartMode, type ChartVoicing, type CompRhythm } from '.
 import { genVoiceLead, pianoVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds (keyMoveDrills.ts).
 import { genKeyMovePiano, pianoKeyMoveFamily } from './keyMoveDrills';
+import { pianoCadenceFamily } from './cadenceLibrary';
 import { widenFamilies } from './keys12';
 import { chartDrillData, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
@@ -1033,6 +1034,21 @@ const CAD_T: Record<string, T2> = {
   'cadence-deceptive': t('I–IV–V7–vi (deceptive)–ii–V7–I', 'I–IV–V7–vi (מטעה)–ii–V7–I'),
   'cadence-picardy': t('i–iv–V7–I (Picardy 3rd)', 'i–iv–V7–I (טרצה פיקרדית)'),
 };
+/**
+ * The same cadences in a minor key, numbered as cadenceProg writes them (JAZZ-CADENCE-INVENTORY §3.4 item 2): the tonic
+ * and subdominant minor (i, iv), the supertonic diminished (ii°: D F A♭ in C minor), the submediant major (VI: A♭ C E♭),
+ * the dominant with the raised 7th (V7). ii° over the subdominant bass is ii°6.
+ */
+const CAD_T_MINOR: Record<string, T2> = {
+  'cadence-64': t('i–iv–i6/4–V7–i', 'i–iv–i6/4–V7–i'),
+  'cadence-ii6': t('i–ii°6–V7–i', 'i–ii°6–V7–i'),
+  'cadence-circle': t('i–VI–ii°–V7–i', 'i–VI–ii°–V7–i'),
+  'cadence-n6': t('i–N6–V7–i (Neapolitan)', 'i–N6–V7–i (נפוליטני)'),
+  'cadence-aug6': t('i–Ger+6–i6/4–V7–i', 'i–Ger+6–i6/4–V7–i'),
+  'cadence-plagal': t('i–V7–i–iv–i (plagal "Amen")', 'i–V7–i–iv–i (פלגאלית "אמן")'),
+  'cadence-deceptive': t('i–iv–V7–VI (deceptive)–ii°6–V7–i', 'i–iv–V7–VI (מטעה)–ii°6–V7–i'),
+  'cadence-picardy': t('i–iv–V7–I (Picardy 3rd)', 'i–iv–V7–I (טרצה פיקרדית)'),
+};
 const TOP_T = [t('root on top', 'שורש למעלה'), t('3rd on top', 'טרצה למעלה'), t('5th on top', 'קווינטה למעלה')];
 
 /** Parallel 5ths / octaves (or unisons) between any two voices of two successive sonorities (same voice count, by position). */
@@ -1109,7 +1125,7 @@ function genCadence(s: DrillSpec): Drill {
   const ttl = title(
     [
       t(`${keyLabel(s)} ${s.minor ? 'minor' : 'major'} cadence`, `קדנצה ${keyLabel(s)} ${s.minor ? 'מינור' : "מז׳ור"}`),
-      CAD_T[s.kind] ?? CAD_T['cadence-1'],
+      (s.minor ? CAD_T_MINOR[s.kind] : undefined) ?? CAD_T[s.kind] ?? CAD_T['cadence-1'],
       TOP_T[pos],
     ],
     s,
@@ -1848,13 +1864,18 @@ function genHarris(s: DrillSpec): Drill {
       );
       line.push({ p: R0 + 24, beat: 8, dur: 1, ct: true });
       const names = [0, 3, 6, 9].map((b) => keyName(key + b) + '7').join(' · ');
-      return lineDrill(
-        s,
-        line,
-        title([H(8, `brothers: 3-to-9 over ${names}`, `"אחים": 3 עד 9 על ${names}`)], s),
-        { chordTonesOnBeats: true },
-        SIG[mod(key + 5, 12)],
-      );
+      // The four brothers resolve to the key a 5th below the first (C7 → F): the item files under that tonic, as the
+      // brothers in context do (k-ctx-1; JAZZ-CADENCE-INVENTORY §3.4 item 3).
+      return {
+        ...lineDrill(
+          s,
+          line,
+          title([H(8, `brothers: 3-to-9 over ${names}`, `"אחים": 3 עד 9 על ${names}`)], s),
+          { chordTonesOnBeats: true },
+          SIG[mod(key + 5, 12)],
+        ),
+        tonic: { key: mod(key + 5, 12) },
+      };
     }
     case 'h11-arp-scale': {
       // Arpeggio up from a chord tone (8ths), then the dominant scale down from the next chord tone above, by the rules.
@@ -6419,6 +6440,8 @@ export function catalog(): FamilyDef[] {
     // SPEC-PRACTICE-KEYS §6: the major modes on a root as full scales; melodic / harmonic minor modes and symmetric scales.
     keysModesFamily(),
     keysMmhmFamily(),
+    // The jazz cadence chart library (JAZZ-CADENCE-INVENTORY gap list 1–7): every cadence in nine voicings, 12 keys.
+    pianoCadenceFamily(),
   ]));
 }
 

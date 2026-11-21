@@ -176,6 +176,8 @@ function secondTag(drill: Drill): Tags[number] | null {
     if (k === 'gg-b10' || k === 'gg-brh' || k === 'gg-b2h' || k === 'gg-two') return { skill: 'chords', sub: 'chords/voicing', w: 0.3 };
     return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   }
+  // The cadence chart library: progressions that land on a key.
+  if (f === 'k-cadlib' || f === 'g-cadlib' || f === 'b-cadlib') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   if (f === 'k-keys' || f === 'g-keys' || f === 'b-keys')
     return drill.spec.kind === 'km-turn' || drill.spec.kind === 'km-bridge' ? { skill: 'cadences', sub: 'cadences/progression', w: 0.3 } : { skill: 'cadences', sub: 'cadences/modulation', w: 0.3 };
   // HARMONY-REHARM (colorDrills.ts): colour reharm rates reharmonisation; organ comping rates voicings.

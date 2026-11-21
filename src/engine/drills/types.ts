@@ -59,6 +59,9 @@ export type FamilyId =
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
+  // The jazz cadence chart library (cadences.ts, cadenceLibrary.ts): every cadence in voicings, all 12 keys.
+  | 'k-cadlib'
+  | 'g-cadlib'
   // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder (piano, guitar).
   | 'k-indep'
   // SPEC-PRACTICE-KEYS §6: the major modes on a root as full scale items; the melodic / harmonic minor modes and the
@@ -183,6 +186,7 @@ export type BassFamilyId =
   | 'b-up-read'
   // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, the turnarounds and the rhythm-changes bridge.
   | 'b-keys'
+  | 'b-cadlib'
   // AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm.
   | 'b-tune'
   // AUDIT-DEPTH-3: improvising with the vocabulary under rule cards (b-solo) and jazz in context (b-ctx) on the bass.

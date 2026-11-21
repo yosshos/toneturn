@@ -32,6 +32,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-vl': 'voicelead', 'g-vl': 'voicelead',
   // AUDIT-GAPS-2: key changes and turnarounds (a note carried to a new key; over strings on the guitar and the bass).
   'k-keys': 'keymove', 'g-keys': 'gkeymove', 'b-keys': 'bkeymove',
+  // The jazz cadence chart library (a "V→I" mark; ·6 the neck, ·4 the bass).
+  'k-cadlib': 'kcadlib', 'g-cadlib': 'gcadlib', 'b-cadlib': 'bcadlib',
   // AUDIT-DEPTH-3: heads — harmonise a melody, chord-melody, comp a head (piano, guitar, bass).
   'k-harm': 'harmmel', 'g-cmel': 'chordmel', 'k-tune': 'tunecomp', 'g-tune': 'gtunecomp', 'b-tune': 'btunecomp',
   // AUDIT-DEPTH-3: improvising under rule cards (a free line out of a card) and jazz in context (the four brothers).

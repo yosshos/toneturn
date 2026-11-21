@@ -585,6 +585,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-vl': 'chords', 'g-vl': 'chords',
   // AUDIT-GAPS-2: key changes and turnarounds (harmony you play).
   'k-keys': 'chords', 'g-keys': 'chords', 'b-keys': 'chords',
+  'k-cadlib': 'chords', 'g-cadlib': 'chords', 'b-cadlib': 'chords',
   // AUDIT-DEPTH-3: heads — harmonising and chord-melody are harmony you play; comping a head is a style.
   'k-harm': 'chords', 'g-cmel': 'chords', 'k-tune': 'styles', 'g-tune': 'styles', 'b-tune': 'styles',
   // Solo jazz piano (Siskind): the left hand and the comping vocabulary with chords, textures and improv habits as styles.
