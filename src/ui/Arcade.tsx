@@ -982,7 +982,8 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                 );
               })}
             {rows.includes('games') &&
-              (COURSE_TILE_CATS[course] ?? []).map((c) => {
+              // Owner 2026-11-21: one category only (the instrument courses, voice) is the same list as "Games" — one tile.
+              (COURSE_TILE_CATS[course] ?? []).filter((_, __, cats) => cats.length > 1).map((c) => {
                 const gc = GAME_CATS.find((x) => x.id === c)!;
                 return (
                   <button
