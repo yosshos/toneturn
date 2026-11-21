@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.4',
+    date: '2026-11-21',
+    en: ['Fix: the metronome click during a take is now as loud as the count-in (it was lost under the keyboard).'],
+    he: ['תיקון: קליק המטרונום בזמן הנגינה חזק עכשיו כמו הספירה (הוא נבלע בצליל הקלידים).'],
+  },
+  {
     version: '0.110.3',
     date: '2026-11-21',
     en: ['Fix: “Turn sound on” now opens a fresh audio channel on the default output when the stuck one will not start.'],

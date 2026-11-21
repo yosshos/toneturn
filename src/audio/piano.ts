@@ -2129,11 +2129,13 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     hp.type = 'highpass';
     hp.frequency.value = 900;
     g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(kind === 'accent' ? 0.55 : 0.32, at + 0.001);
-    g.gain.setTargetAtTime(0, at + 0.002, 0.012);
+    // 0.110.4 (owner 2026-11-21: "only a count-in, no metronome"): the click was ~9 dB under the count-in's woodblock and
+    // vanished under a keyboard's own sound. Now about as loud as the count-in, and a little longer.
+    g.gain.linearRampToValueAtTime(kind === 'accent' ? 1.0 : 0.8, at + 0.001);
+    g.gain.setTargetAtTime(0, at + 0.002, 0.02);
     o.connect(hp).connect(g);
     o.start(at);
-    o.stop(at + 0.08);
+    o.stop(at + 0.12);
   }
 
   /** performance.now() time at which audio scheduled for context time `t` is heard. */
