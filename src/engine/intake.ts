@@ -1,7 +1,7 @@
 // "Getting to know you" — the intake questionnaire (product owner, 2026-11-06). Before finding the level, a few
 // light questions tell the app who is playing: a curious listener, a hobby musician, a student or a pro. The
 // answers pick the track (what to recommend first), the note names, the daily length, a "clean view" for
-// learners who only want to practise, the voice range (sung, gently), and — above all — the player's own order
+// learners who only want to practice, the voice range (sung, gently), and — above all — the player's own order
 // of practice areas, which reorders the path: rhythm first and singing last gives a rhythm-first path.
 // Pure functions; the UI is src/ui/Intake.tsx.
 

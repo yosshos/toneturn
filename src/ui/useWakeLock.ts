@@ -1,4 +1,4 @@
-// Keep the screen on while the app is open (owner feedback 2026-11-18): a practising musician's phone sits on a stand,
+// Keep the screen on while the app is open (owner feedback 2026-11-18): a practicing musician's phone sits on a stand,
 // hands busy. Screen Wake Lock API (Chrome/Edge/Android, Safari 16.4+); the browser drops the lock whenever the tab
 // is hidden, so it is taken again each time the app comes back. Where the API is missing this does nothing.
 import { useEffect } from 'react';

@@ -5,7 +5,7 @@
 //    travel in the assignment's `ref` as a compact code (`phrase1:` + JSON, notes packed 5 bytes each, base64url):
 //    ≤ 4 KB for 16 bars (§11.4 sync model — note data only; the teacher's audio only when attached).
 //  · The student's copy is an ordinary Encore phrase (Lick v3) with `source: { kind: 'teacher' }` and the teacher's
-//    fields locked (`plan.locked`); it practises like any phrase (slower and in any order are always allowed).
+//    fields locked (`plan.locked`); it practices like any phrase (slower and in any order are always allowed).
 //  · Each key passed at the target (the level rule: 3 clean takes on 2 days) becomes one submission —
 //    score = accuracy × timing factor, metrics `{ key, bpm, acc, timingSD, hands, takes }` (§11.3).
 //  · The teacher's inbox grades automatically by the strictness (owner decision §20.9) and the teacher may override.
@@ -328,7 +328,7 @@ export function withAssignedPhrase(book: LickBook | undefined, l: Lick): LickBoo
 }
 
 export const isTeacherPhrase = (l: Lick): boolean => l.source?.kind === 'teacher';
-/** The instrument a teacher phrase is practised on (the assignment's; old assignments: piano). */
+/** The instrument a teacher phrase is practiced on (the assignment's; old assignments: piano). */
 export const phraseInstOf = (l: Pick<Lick, 'instrument'>): LickInstrument => l.instrument ?? 'piano';
 export const assignmentIdOf = (l: Lick): string | null => (l.source?.kind === 'teacher' ? l.source.assignmentId : null);
 /** The keys the teacher asked for (all 12 when 'all'). */

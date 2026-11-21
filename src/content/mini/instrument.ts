@@ -684,7 +684,7 @@ LESSONS.push(
         say: { en: 'The usual mistake is counting frets one by one. Look at the shape instead: the hand learns the distance, and the ear checks it.', he: 'הטעות הנפוצה היא לספור סריגים אחד אחד. מסתכלים על הצורה במקום: היד לומדת את המרחק, והאוזן בודקת אותו.' },
       },
       {
-        say: { en: 'To keep: octave two over and two up, fifth one over and two up, fourth straight across. Practise them from every root on the E and A strings.', he: 'מה לזכור: אוקטבה שניים מעל ושניים קדימה, קווינטה אחד מעל ושניים קדימה, קוורטה ישר מעל. תרגלו אותן מכל שורש על מיתרי E ו־A.' },
+        say: { en: 'To keep: octave two over and two up, fifth one over and two up, fourth straight across. Practice them from every root on the E and A strings.', he: 'מה לזכור: אוקטבה שניים מעל ושניים קדימה, קווינטה אחד מעל ושניים קדימה, קוורטה ישר מעל. תרגלו אותן מכל שורש על מיתרי E ו־A.' },
         show: { text: { en: '8 · 5 · 4', he: '8 · 5 · 4' } },
       },
     ],

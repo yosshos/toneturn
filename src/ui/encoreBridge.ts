@@ -1,4 +1,4 @@
-// The bridge from My recordings to Encore (SPEC-PHRASE-STUDIO §6.4 "Practise this span", §6.6): the player hands a
+// The bridge from My recordings to Encore (SPEC-PHRASE-STUDIO §6.4 "Practice this span", §6.6): the player hands a
 // take and an A–B span (seconds on the take's timeline; beat 0 = 0 for MIDI takes) to Encore's trim screen. Encore
 // part B owns the route `#/encore/new`; this only navigates there.
 

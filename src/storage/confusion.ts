@@ -1,12 +1,12 @@
 // The confusion map (0.50): which answers a player mixes up — per topic, the pair "right → given" with a count and the
-// latest level, kept on this device. Feeds the Insights screen and the "boss fights" (practise exactly that pair).
+// latest level, kept on this device. Feeds the Insights screen and the "boss fights" (practice exactly that pair).
 
 import type { Question } from '../engine/lesson';
 import { indexedKV, memoryKV, type KV } from './kv';
 
 export interface Confusion {
   topic: string;
-  /** Topic generator id and level when the question came from one (to practise it). */
+  /** Topic generator id and level when the question came from one (to practice it). */
   gen?: { id: string; level: number };
   right: { en: string; he: string };
   given: { en: string; he: string };

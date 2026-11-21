@@ -50,7 +50,7 @@ export function mockSittings(history: ExamResultLike[]): MockSitting[] {
 }
 
 export interface ExamCard {
-  /** The mock to sit next: the exam last sat (practise it again), else the first Bagrut. */
+  /** The mock to sit next: the exam last sat (practice it again), else the first Bagrut. */
   exam: ExamDef;
   minutes: number;
   /** When it was last sat (absent = never). */

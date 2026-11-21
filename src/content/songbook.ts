@@ -1,4 +1,4 @@
-// Songbook (owner 2026-11-07): public-domain songs to practise as real music — sing the phrases, play the melody,
+// Songbook (owner 2026-11-07): public-domain songs to practice as real music — sing the phrases, play the melody,
 // play the chords. Only melodies and harmonies that are free to use everywhere: traditional / folk tunes and
 // composers who died long ago (see docs/research/MUSIC_SOURCES_LEGAL.md). No lyrics are stored (some lyrics or
 // translations are still protected); titles only.

@@ -43,7 +43,7 @@ export const PHRASE_KINDS = ['ph-ct', 'ph-appr', 'ph-encl', 'ph-bebop', 'ph-251'
 export type PhraseKind = (typeof PHRASE_KINDS)[number];
 /** The rating of each level (1-based level − 1). */
 export const PHRASE_RATING = [1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900];
-/** Options of each kind (the variants a level practises in all 12 keys). */
+/** Options of each kind (the variants a level practices in all 12 keys). */
 export const PHRASE_OPTIONS: Record<PhraseKind, number> = { 'ph-ct': 3, 'ph-appr': 3, 'ph-encl': 5, 'ph-bebop': 3, 'ph-251': 2, 'ph-alt': 3, 'ph-solo': 2, 'ph-form': 2 };
 /** Levels whose 8ths swing (the bebop rungs). */
 export const PHRASE_SWING: Record<PhraseKind, boolean> = { 'ph-ct': false, 'ph-appr': false, 'ph-encl': true, 'ph-bebop': true, 'ph-251': true, 'ph-alt': true, 'ph-solo': true, 'ph-form': true };

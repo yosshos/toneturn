@@ -66,7 +66,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'on time first', he: 'קודם בזמן' } },
       },
       {
-        say: { en: 'Practise away from the app too: sing a line you know, then find it on one string first, then inside one position. The ear and the hand learn together.', he: 'מתרגלים גם מחוץ לאפליקציה: שרים קו שמכירים, ואז מוצאים אותו קודם על מיתר אחד ואחר כך בתוך מצב אחד. האוזן והיד לומדות יחד.' },
+        say: { en: 'Practice away from the app too: sing a line you know, then find it on one string first, then inside one position. The ear and the hand learn together.', he: 'מתרגלים גם מחוץ לאפליקציה: שרים קו שמכירים, ואז מוצאים אותו קודם על מיתר אחד ואחר כך בתוך מצב אחד. האוזן והיד לומדות יחד.' },
         play: [notes([57, 59, 60, 62, 64], 0.3)],
       },
     ],
@@ -232,7 +232,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'equal eighths', he: 'שמיניות שוות' } },
       },
       {
-        say: { en: 'Practise with the click on group starts only, then on the first beat of each bar only, until the groups live in your body and not in the click.', he: 'מתרגלים עם קליק רק בתחילת כל קבוצה, ואז רק על הפעמה הראשונה בכל תיבה, עד שהקבוצות חיות בגוף ולא בקליק.' },
+        say: { en: 'Practice with the click on group starts only, then on the first beat of each bar only, until the groups live in your body and not in the click.', he: 'מתרגלים עם קליק רק בתחילת כל קבוצה, ואז רק על הפעמה הראשונה בכל תיבה, עד שהקבוצות חיות בגוף ולא בקליק.' },
         play: [pulse(7, 0.25, [0])],
       },
     ],

@@ -43,7 +43,7 @@ export function StreakChip({ t, st, onOpen, home = false }: { t: Strings; st: St
   );
 }
 
-/** Days practised in the current run (counting back from today, skipping freeze / repaired days). */
+/** Days practiced in the current run (counting back from today, skipping freeze / repaired days). */
 export function runDays(st: StreakState, today: string): Set<string> {
   const freeze = new Set(st.freezeDays);
   const repaired = new Set(st.repairedDays);

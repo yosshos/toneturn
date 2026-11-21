@@ -2232,10 +2232,10 @@ button.chip.on {
 .ch-levels .lv-best { flex: none; }
 .ch-levels .lv-best.good { color: var(--accent, var(--mint)); }
 
-.ch-practise { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
-.ch-practise summary { cursor: pointer; font-weight: 600; }
-.ch-practise .ch-rules { margin: 8px 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.ch-practise .btn { width: 100%; }
+.ch-practice { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.ch-practice summary { cursor: pointer; font-weight: 600; }
+.ch-practice .ch-rules { margin: 8px 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ch-practice .btn { width: 100%; }
 .drill-rh { margin: 4px 0; }
 
 /* mixer */

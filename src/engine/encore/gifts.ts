@@ -9,13 +9,13 @@
 //
 // Gifts — one gift per practice day (owner, 2026-11-16, to keep anyone from being flooded): on a day with measured
 // practice (the streak's 5 measured minutes) a player may send ONE gift — a fermata OR a phrase dedication. Today's
-// allowance only; it does not build up. Practise-with-me invites are separate: up to 3 a day, each lives 30 minutes.
+// allowance only; it does not build up. Practice-with-me invites are separate: up to 3 a day, each lives 30 minutes.
 //  · פרמטה (Fermata): a streak freeze for the friend. It holds the first missed day after it arrives (engine/streak.ts).
 //  · הקדשת משפט (Dedicate a phrase): one of my Encore phrases lands in their library marked "from <name>", with an
 //    optional short note. When they make it "yours" (rank f — the target in every needed key) both get
 //    DEDICATION_XP, once. Personal XP only: it raises the total and the day's goal ring, it is never posted as a lesson
 //    result, so the weekly league (summed on the server from results) does not see it; no rating events either.
-//  · תרגל איתי עכשיו (Practise with me now): both practise measured exercises at the same time; while both were active
+//  · תרגל איתי עכשיו (Practice with me now): both practice measured exercises at the same time; while both were active
 //    within the last 10 minutes a small "together" mark shows; when both have 5 measured minutes since the session
 //    started, the duet streak counts that day (a duet starts if they had none).
 
@@ -70,7 +70,7 @@ export const NOTE_MAX = 140;
 
 export type GiftKind = 'fermata' | 'dedication';
 export type GiftAllowance = 'ready' | 'used' | 'practise-first';
-/** Today's gift: practise first (5 measured minutes), then one gift; the next day starts over (nothing carries over). */
+/** Today's gift: practice first (5 measured minutes), then one gift; the next day starts over (nothing carries over). */
 export function giftAllowance(o: { measuredToday: boolean; sentToday: number }): GiftAllowance {
   if (o.sentToday >= GIFTS_PER_PRACTICE_DAY) return 'used';
   return o.measuredToday ? 'ready' : 'practise-first';
@@ -78,7 +78,7 @@ export function giftAllowance(o: { measuredToday: boolean; sentToday: number }):
 export const ALLOWANCE_TEXT: Record<GiftAllowance, { en: string; he: string }> = {
   ready: { en: "One gift per practice day — today's is still yours to give", he: 'מתנה אחת ליום תרגול — נשארה לך היום' },
   used: { en: "Today's gift was sent", he: 'המתנה של היום נשלחה' },
-  'practise-first': { en: 'Practise today to send a gift', he: 'תרגלו היום כדי לשלוח מתנה' },
+  'practise-first': { en: 'Practice today to send a gift', he: 'תרגלו היום כדי לשלוח מתנה' },
 };
 export const invitesLeft = (sentToday: number) => Math.max(0, INVITES_PER_DAY - sentToday);
 
@@ -121,7 +121,7 @@ export function dedicatable(book: LickBook | undefined): Lick[] {
 /** Bonus XP grants are idempotent by key ("ded:<gift>:to" / "ded:<gift>:from"). */
 export const bonusKey = (giftId: string, side: 'to' | 'from') => `ded:${giftId}:${side}`;
 
-// ───────────────────────────── practise together ─────────────────────────────
+// ───────────────────────────── practice together ─────────────────────────────
 
 export const TOGETHER_MIN_MS = 5 * 60_000;
 export const TOGETHER_WINDOW_MS = 10 * 60_000;
@@ -135,7 +135,7 @@ export interface TogetherSide {
   /** When this side last gained measured time (ISO), or null. */
   activeAt: string | null;
 }
-/** Both practised within the same 10-minute window (and recently): the live "together" mark. */
+/** Both practiced within the same 10-minute window (and recently): the live "together" mark. */
 export function practisingTogether(a: TogetherSide, b: TogetherSide, now: number): boolean {
   if (!a.activeAt || !b.activeAt) return false;
   const ta = Date.parse(a.activeAt);
@@ -148,7 +148,7 @@ export const inviteExpired = (createdAt: string, now: number) => now - Date.pars
 /** What a side may claim: never more than the time since the session started (the server caps the same way). */
 export const cappedMs = (ms: number, startedAt: string, now: number) => Math.max(0, Math.min(Math.round(ms), now - Date.parse(startedAt)));
 
-/** The duet streak with together days: a day counts when both practised OR a together session finished that day. */
+/** The duet streak with together days: a day counts when both practiced OR a together session finished that day. */
 export function duetStreak(o: { meDays: Set<string>; themDays: Set<string>; togetherDays: Set<string>; today: string; since?: string }): number {
   const both = (d: string) => o.togetherDays.has(d) || (o.meDays.has(d) && o.themDays.has(d));
   const prev = (d: string) => new Date(Date.parse(`${d}T12:00:00Z`) - 86_400_000).toISOString().slice(0, 10);

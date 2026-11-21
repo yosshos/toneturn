@@ -146,7 +146,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'In drop 2 and drop 3 the same idea spreads over two hands, or over a string set on the guitar: the dropped voice can borrow too, low in the left hand.', he: 'בדרופ 2 ובדרופ 3 אותו רעיון מתפרס על שתי ידיים, או על קבוצת מיתרים בגיטרה: גם הקול שירד יכול לשאול, נמוך ביד שמאל.' },
       },
       {
-        say: { en: 'A common mistake is lifting the whole hand when one finger moves. Practise slowly, rubato first, with the held keys pressed and only the borrowing finger free.', he: 'טעות נפוצה היא להרים את כל היד כשאצבע אחת זזה. מתרגלים לאט, קודם בלי קצב, עם הקלידים המוחזקים לחוצים ורק האצבע השואלת חופשייה.' },
+        say: { en: 'A common mistake is lifting the whole hand when one finger moves. Practice slowly, rubato first, with the held keys pressed and only the borrowing finger free.', he: 'טעות נפוצה היא להרים את כל היד כשאצבע אחת זזה. מתרגלים לאט, קודם בלי קצב, עם הקלידים המוחזקים לחוצים ורק האצבע השואלת חופשייה.' },
       },
     ],
   },
@@ -193,7 +193,7 @@ export const LESSONS: MiniLesson[] = [
         play: [ev([...[0, 1, 2].map((i) => ({ midi: 64, start: i * 0.4, duration: 0.38, velocity: 0.6 })), ...[0, 1].map((i) => ({ midi: 48, start: i * 0.6, duration: 0.58, velocity: 0.5 }))], 1.4)],
       },
       {
-        say: { en: 'A common mistake: the staccato hand drags the legato hand short, or the soft hand gets loud with the other. Practise each hand alone first, then together slowly.', he: 'טעות נפוצה: היד בסטקטו מקצרת גם את היד בלגאטו, או שהיד הרכה מתחזקת יחד עם השנייה. מתרגלים קודם כל יד לבד, ואז יחד, לאט.' },
+        say: { en: 'A common mistake: the staccato hand drags the legato hand short, or the soft hand gets loud with the other. Practice each hand alone first, then together slowly.', he: 'טעות נפוצה: היד בסטקטו מקצרת גם את היד בלגאטו, או שהיד הרכה מתחזקת יחד עם השנייה. מתרגלים קודם כל יד לבד, ואז יחד, לאט.' },
       },
       {
         say: { en: 'An ostinato frees the mind for the melody only when it runs by itself. Repeat the left-hand figure until you can talk over it, then add the right hand.', he: 'אוסטינטו משחרר את הראש למנגינה רק כשהוא רץ מעצמו. חוזרים על הדמות של יד שמאל עד שאפשר לדבר מעליה, ואז מוסיפים את יד ימין.' },

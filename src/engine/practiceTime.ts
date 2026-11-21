@@ -204,7 +204,7 @@ export function bookItem(l: PracticeLedger, id: string, day: string, x: { n?: nu
   let items = { ...l.items, [id]: list };
   const ids = Object.keys(items);
   if (ids.length > KEEP_ITEMS) {
-    // Keep the most recently practised items.
+    // Keep the most recently practiced items.
     const drop = ids.sort((a, b) => (items[a][items[a].length - 1]?.d ?? '').localeCompare(items[b][items[b].length - 1]?.d ?? '')).slice(0, ids.length - KEEP_ITEMS);
     items = { ...items };
     for (const k of drop) delete items[k];

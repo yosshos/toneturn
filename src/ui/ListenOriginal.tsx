@@ -1,14 +1,14 @@
 // "Listen to the original" (owner 2026-11-11): a standard's reference recordings as small link buttons — Spotify and
 // YouTube, opened in a new tab / the app — with artist · year · key. Links out only; nothing is embedded or played here.
 // When the recording's key differs from the practice key: a one-line note and, where the chart can transpose, a
-// "practise in X" button.
+// "practice in X" button.
 import { keyLabel, keyName, referenceOf, sameKey, type RecKey, type Recording, type StandardRef } from '../content/references';
 import { Icon } from './icons';
 
 type Lang = 'en' | 'he';
 
 const TX = {
-  en: { tune: 'Listen to the original', form: 'A famous tune on this form', spotify: 'Spotify', youtube: 'YouTube', inKey: 'This recording is in ', youIn: 'you practise in ', practise: 'Practise in ', unsure: 'key not confirmed' },
+  en: { tune: 'Listen to the original', form: 'A famous tune on this form', spotify: 'Spotify', youtube: 'YouTube', inKey: 'This recording is in ', youIn: 'you practice in ', practise: 'Practice in ', unsure: 'key not confirmed' },
   he: { tune: 'להאזנה למקור', form: 'שיר מפורסם על הצורה הזאת', spotify: 'Spotify', youtube: 'YouTube', inKey: 'ההקלטה הזאת ב־', youIn: 'מתרגלים ב־', practise: 'לתרגל ב־', unsure: 'הסולם לא מאומת' },
 };
 
@@ -40,7 +40,7 @@ const recLine = (r: Recording, lang: Lang) => `${r.artist} · ${r.year} · ${key
 
 /**
  * The row: label, then one line per recording (links + artist · year · key). `compact` shows only the first recording
- * on one line (run screens). `practiceKey` = the key the player practises in now; `onPractiseIn` transposes to a pitch class.
+ * on one line (run screens). `practiceKey` = the key the player practices in now; `onPractiseIn` transposes to a pitch class.
  */
 export function ListenOriginal({ id, lang, practiceKey, onPractiseIn, compact }: { id: string | null | undefined; lang: Lang; practiceKey?: RecKey; onPractiseIn?: (pc: number) => void; compact?: boolean }) {
   const ref = referenceOf(id);
@@ -92,7 +92,7 @@ function ListenRow({ ref_: ref, lang, practiceKey, onPractiseIn, compact }: { re
             )}
           </small>
           {onPractiseIn && (
-            <button className="btn small lo-practise" onClick={() => onPractiseIn(first.key.pc)} data-listen-practise={first.key.pc}>
+            <button className="btn small lo-practice" onClick={() => onPractiseIn(first.key.pc)} data-listen-practice={first.key.pc}>
               {tx.practise}
               <span dir="ltr">{keyName(first.key.pc)}</span>
             </button>

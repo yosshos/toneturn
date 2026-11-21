@@ -1,4 +1,4 @@
-// Which standard a drill is built on (reference recordings, owner 2026-11-11), and the key it is practised in:
+// Which standard a drill is built on (reference recordings, owner 2026-11-11), and the key it is practiced in:
 //   piano chart drills "chart~std:<id>~…" (written key + spec key) · bass walking "standard" (BASS_STD, own key) ·
 //   bass solo chorus "std-solo" (STD_SOLO, own key) · bass Latin jazz "latin-jazz" (own key) · bass rhythm-changes
 //   lines (uptempo / bebop odd options, rhythm-solo: moved to the spec key) · guitar comping "comp-std" and chord-scale
@@ -42,12 +42,12 @@ function resolve(s: SpecLike): { id: string; mode: KeyMode } | null {
   return null;
 }
 
-/** The standards.ts id a drill spec practises, or null. */
+/** The standards.ts id a drill spec practices, or null. */
 export function standardIdOfSpec(s: SpecLike): string | null {
   return resolve(s)?.id ?? null;
 }
 
-/** The reference and the key this drill is practised in. */
+/** The reference and the key this drill is practiced in. */
 export function standardOfSpec(s: SpecLike & Pick<DrillSpec, 'key'>): { ref: StandardRef; key: RecKey } | null {
   const r = resolve(s);
   const ref = referenceOf(r?.id);

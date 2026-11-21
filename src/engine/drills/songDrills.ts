@@ -1,4 +1,4 @@
-// Song drills (owner 2026-11-07): practise real (public-domain) songs on the instrument, not only exercises —
+// Song drills (owner 2026-11-07): practice real (public-domain) songs on the instrument, not only exercises —
 // the melody (right hand / on the neck), the chords (left hand / strummed shapes) or both hands. Built on the drill
 // creator's format, so the tempo ladder, the ✓/✗ marks, MIDI / microphone and the tab view all work unchanged.
 

@@ -103,7 +103,7 @@ const REP_AREA: Record<RepCourse, Pick<PathStep, 'domain' | 'skill' | 'sub'>> = 
 
 /**
  * SPEC-JAZZ-FOLD §2: a repertoire item that is jazz content (on the path only with the jazz pack): the jazz standards
- * collection; a course's standards played over a standard's changes (and the singer's standards); an item practised on a
+ * collection; a course's standards played over a standard's changes (and the singer's standards); an item practiced on a
  * jazz technique family's level (walking a ii–V, the swing ride, comping a ii–V on the neck).
  */
 export function isJazzRep(course: RepCourse, it: RepItem): boolean {

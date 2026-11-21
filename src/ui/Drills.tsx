@@ -805,7 +805,7 @@ export function HeatRow({ cells }: { cells?: KeyCell[] | null }) {
   return <KeyMap12 cells={cells} lang="en" label="" compact />;
 }
 
-/** A skill's 12-key map (key mastery): tap a key to practise the skill in it; weak keys named under the map. */
+/** A skill's 12-key map (key mastery): tap a key to practice the skill in it; weak keys named under the map. */
 function SkillKeyMap({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
   const sk = useMemo(() => skillKeysOf(f.id, items), [f.id, items]);
   const avail = useMemo(() => new Set(f.levels.flatMap((l) => levelKeys(l, ds.keyOrder))), [f, ds.keyOrder]);

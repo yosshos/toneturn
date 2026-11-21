@@ -1096,13 +1096,13 @@ export function lessonMastered(p: Progress, id: string): boolean {
 
 // ======================================================================= streak 2.0 & gems (spec N)
 
-/** Fold one completed session into the long-lived stats (days practised, ≥80 % sessions, XP per day). */
+/** Fold one completed session into the long-lived stats (days practiced, ≥80 % sessions, XP per day). */
 export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonNullable<Progress['stats']> {
   const day = localDay(new Date(r.completedAt));
   const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
   const good = r.lessonId !== 'weekly-puzzle' && r.lessonId !== SHARER_RESULT_ID && r.total > 0 && r.firstTry / r.total >= 0.8;
   // AUDIT-5 #4: logged minutes are practice time, not a measured practice day.
-  // a friend's mastery of my phrase (the sharer's bonus) is XP, not a day I practised
+  // a friend's mastery of my phrase (the sharer's bonus) is XP, not a day I practiced
   const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM) && r.lessonId !== SHARER_RESULT_ID;
   const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + (r.xpCounted ? 0 : r.xp) };
   const keys = Object.keys(xpByDay).sort();

@@ -1,6 +1,6 @@
 // Duet streaks (SPEC-SOCIAL §3, owner OK 2026-11-08): a streak kept together with a friend — a day counts only when
-// both practised. Shown at the top of Community → Friends: up to five duets with today's status for both, invites to
-// accept, a nudge when the partner has not practised yet, and "start a duet" with a friend.
+// both practiced. Shown at the top of Community → Friends: up to five duets with today's status for both, invites to
+// accept, a nudge when the partner has not practiced yet, and "start a duet" with a friend.
 
 import { Icon } from './icons';
 import { useCallback, useEffect, useState } from 'react';

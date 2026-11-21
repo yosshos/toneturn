@@ -24,7 +24,7 @@ export const LESSONS: MiniLesson[] = [
     takeaway: { en: 'Open a recording of your own; the app finds its beat and its line, and measures only what it found clearly.', he: 'פותחים הקלטה משלכם; האפליקציה מוצאת את הפעמה ואת הקו, ומודדת רק את מה שמצאה בבירור.' },
     steps: [
       {
-        say: { en: 'Hi {name}! Here you practise over a recording of your own: a voice memo, your band at rehearsal, a take you made. It stays on this phone.', he: 'היי {name}! כאן מתרגלים מעל הקלטה משלכם: הקלטה קולית, הלהקה שלכם בחזרה, טייק שהקלטתם. היא נשארת בטלפון הזה.' },
+        say: { en: 'Hi {name}! Here you practice over a recording of your own: a voice memo, your band at rehearsal, a take you made. It stays on this phone.', he: 'היי {name}! כאן מתרגלים מעל הקלטה משלכם: הקלטה קולית, הלהקה שלכם בחזרה, טייק שהקלטתם. היא נשארת בטלפון הזה.' },
         play: [mel(TUNE, TUNE_BEATS)],
       },
       {

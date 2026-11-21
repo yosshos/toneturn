@@ -1,6 +1,6 @@
 // Plateau detector (AUDIT-5 §4 #5, P19). Pure.
 //
-// A plateau is an item or skill that stopped improving although it is being practised: the clean tempo (drills) or
+// A plateau is an item or skill that stopped improving although it is being practiced: the clean tempo (drills) or
 // the rating (skills) stayed flat for at least three weeks while the player kept working on it. A fading item is
 // one whose recent takes fall clearly below what it once reached. Each finding carries one concrete change of
 // approach (Ericsson's "OK plateau": go back to effortful, error-producing work, or change the task), built from
@@ -28,7 +28,7 @@ export interface PlateauFinding {
   /** The measure now (clean tempo, rating) and the best before the window. */
   now: number;
   best: number;
-  /** Practice days in the window (the evidence that it was practised). */
+  /** Practice days in the window (the evidence that it was practiced). */
   days: number;
   how: PlateauHow;
   /** A suggestion tried earlier on this item, and whether it has since paid off ("broke through"). */
@@ -90,7 +90,7 @@ export function itemFading(st: ItemState, ledger: ItemDay[] | undefined, today: 
   return null;
 }
 
-/** A skill's weekly ratings (snapshots) flat for 3+ weeks while it was practised every one of those weeks. */
+/** A skill's weekly ratings (snapshots) flat for 3+ weeks while it was practiced every one of those weeks. */
 export function skillPlateaus(
   snapshots: { week: string; ratings: Partial<Record<string, number>> }[],
   eventsPerWeek: (skill: string, week: string) => number,
@@ -104,14 +104,14 @@ export function skillPlateaus(
     const last4 = snaps.slice(-4).map((s) => s.ratings[k]).filter((x): x is number => typeof x === 'number');
     const all = snaps.map((s) => s.ratings[k]).filter((x): x is number => typeof x === 'number');
     if (last4.length < 4) continue;
-    const practised = snaps.slice(-3).every((s) => eventsPerWeek(k, s.week) >= 5);
+    const practiced = snaps.slice(-3).every((s) => eventsPerWeek(k, s.week) >= 5);
     const peak = maxOf(all.slice(0, -2));
     const nowR = last4[last4.length - 1];
     if (peak > 0 && nowR < peak - 40) {
       out.push({ kind: 'fading', scope: 'skill', id: k, now: nowR, best: peak, days: 0, how: 'mix' });
       continue;
     }
-    if (!practised) continue;
+    if (!practiced) continue;
     const range = maxOf(last4) - Math.min(...last4);
     if (range <= 15 && nowR <= last4[0] + 10) {
       const tried = [...tries].reverse().find((t) => t.id === `skill:${k}`);
@@ -161,7 +161,7 @@ export function stepBack(st: ItemState): ItemState {
   return { ...st, goalBpm: Math.max(40, Math.min(st.goalBpm, Math.round(base * 0.85))), streak: 0, fails: 0 };
 }
 
-/** Another key for a family: one not yet touched, else the least-practised one (not `key`). */
+/** Another key for a family: one not yet touched, else the least-practiced one (not `key`). */
 export function otherKey(items: Record<string, ItemState>, family: string, key: number, order: number[]): number {
   const takes = new Map<number, number>();
   for (const st of Object.values(items)) if (st.family === family) takes.set(st.key, (takes.get(st.key) ?? 0) + st.takes);

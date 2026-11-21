@@ -66,7 +66,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'A common mistake is a left hand that drifts up toward the melody until the hands crash. Keep the left hand below middle C and let the right hand rise.', he: 'טעות נפוצה היא יד שמאל שמטפסת לכיוון המנגינה עד שהידיים מתנגשות. השאירו את יד שמאל מתחת לדו האמצעי ותנו ליד ימין לעלות.' }, play: [chord([48, 52, 59], 0.8), notes([67, 72, 76], 0.3)] },
       { say: { en: 'Recap: the bass low, the 3rd and 7th between C3 and G4, the melody above middle C, effects at the top.', he: 'סיכום: הבס נמוך, הטרצה והספטימה בין C3 ל־G4, המנגינה מעל דו האמצעי, אפקטים למעלה.' } },
       { say: { en: 'Where it lives: listen to any solo pianist play a ballad — the bass rings low, the chords sit warm in the middle, and the melody sings clearly above them, never buried.', he: 'איפה זה חי: הקשיבו לכל פסנתרן סולו שמנגן בלדה — הבס מצלצל נמוך, האקורדים יושבים חמים באמצע, והמנגינה שרה בבירור מעליהם, אף פעם לא קבורה.' } },
-      { say: { en: 'Practise it with one chord: play it as a bass note, a shell, a bass shell and a rootless voicing, and say aloud which register each one lives in.', he: 'מתאמנים עם אקורד אחד: מנגנים אותו כצליל בס, כשלד, כשלד בס וכוויסינג בלי שורש, ואומרים בקול באיזה רגיסטר כל אחד גר.' } },
+      { say: { en: 'Practice it with one chord: play it as a bass note, a shell, a bass shell and a rootless voicing, and say aloud which register each one lives in.', he: 'מתאמנים עם אקורד אחד: מנגנים אותו כצליל בס, כשלד, כשלד בס וכוויסינג בלי שורש, ואומרים בקול באיזה רגיסטר כל אחד גר.' } },
     ],
   },
   {
@@ -139,7 +139,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Vary it: low-high-high-low, the Peace Piece pattern — the bass on 4 walks into the next bar.', he: 'מגוונים: נמוך־גבוה־גבוה־נמוך, תבנית פיס פיס — הבס על 4 הולך אל התיבה הבאה.' }, play: [PEACE] },
       { say: { en: 'Anticipate the bass, group 3 + 3 + 2, play 3 against 4 — and take breaks while the right hand fills.', he: 'מקדימים את הבס, מקבצים 3 + 3 + 2, מנגנים 3 נגד 4 — ולוקחים הפסקות כשיד ימין ממלאת.' } },
       { say: { en: 'Stride-style comping: the left hand still covers bass and chord, but syncopated — Charleston, reverse, Red Garland.', he: 'ליווי בסגנון סטרייד: יד שמאל עדיין מכסה בס ואקורד, אבל בסינקופה — צ׳רלסטון, הפוך, רד גרלנד.' } },
-      { say: { en: 'Keep the bass low and the chord in the middle: the jump between them is the skill, so practise it slowly without looking.', he: 'שומרים את הבס נמוך ואת האקורד באמצע: הקפיצה ביניהם היא המיומנות, אז מתאמנים עליה לאט בלי להסתכל.' }, play: [chord([36], 0.5), chord([52, 55, 59], 0.5), chord([31], 0.5), chord([52, 55, 59], 0.5)] },
+      { say: { en: 'Keep the bass low and the chord in the middle: the jump between them is the skill, so practice it slowly without looking.', he: 'שומרים את הבס נמוך ואת האקורד באמצע: הקפיצה ביניהם היא המיומנות, אז מתאמנים עליה לאט בלי להסתכל.' }, play: [chord([36], 0.5), chord([52, 55, 59], 0.5), chord([31], 0.5), chord([52, 55, 59], 0.5)] },
       { say: { en: 'Every take is measured in all twelve keys: free time first, then in time on the tempo ladder. Your turn — slowly, and listen to each register.', he: 'כל ניסיון נמדד בכל שנים־עשר הסולמות: קודם בלי קצב, ואז בזמן על סולם הטמפו. תורכם — לאט, ולהקשיב לכל רגיסטר.' } },
     ],
     more: [
@@ -149,7 +149,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'A common mistake is to rush the jump back to the bass. Land the bass on time and let the chord be short.', he: 'טעות נפוצה היא למהר בקפיצה חזרה לבס. מנחיתים את הבס בזמן, והאקורד קצר.' }, play: [SHELL_STRIDE] },
       { say: { en: 'Recap: stride, walking 10ths, the variations, breaks, stride-style comping and the shuttle — each a new way for one hand to do two jobs.', he: 'סיכום: סטרייד, דצימות הולכות, הווריאציות, הפסקות, ליווי בסגנון סטרייד והשאטל — כל אחד דרך חדשה ליד אחת לעשות שתי עבודות.' } },
       { say: { en: 'Where it lives: the stride masters used walking 10ths and anticipations to keep the left hand from sounding like a machine. Change one thing every four bars and listen to how the groove opens.', he: 'איפה זה חי: אמני הסטרייד השתמשו בדצימות הולכות ובהקדמות כדי שיד שמאל לא תישמע כמו מכונה. משנים דבר אחד כל ארבע תיבות ומקשיבים איך הגרוב נפתח.' } },
-      { say: { en: 'Practise every variation in all twelve keys, free time first.', he: 'מתאמנים על כל וריאציה בכל שנים־עשר הסולמות, קודם בלי קצב.' } },
+      { say: { en: 'Practice every variation in all twelve keys, free time first.', he: 'מתאמנים על כל וריאציה בכל שנים־עשר הסולמות, קודם בלי קצב.' } },
     ],
   },
   {
@@ -176,7 +176,7 @@ export const LESSONS: MiniLesson[] = [
       { say: { en: 'Hear the repeated-quarter style: the voicing rings, and one soft inner note keeps the time.', he: 'שמעו את סגנון הרבעים החוזרים: הוויסינג מצלצל, וצליל פנימי שקט אחד שומר על הזמן.' }, play: [chord([...SHARED, 64], 0.7), chord([SHARED[2] ?? 50], 0.7), chord([SHARED[2] ?? 50], 0.7), chord([SHARED[2] ?? 50], 0.7)] },
       { say: { en: 'A common mistake is to double the melody note inside the chord. Leave it out of the middle and the melody stands clear.', he: 'טעות נפוצה היא להכפיל את צליל המנגינה בתוך האקורד. משאירים אותו מחוץ לאמצע, והמנגינה בולטת.' }, play: [chord([36, 47, 52, 55, 64], 1), rest(), chord([...SHARED, 64], 1)] },
       { say: { en: 'Recap: four rules, three ballad styles, then inner voices and four-voice training.', he: 'סיכום: ארבעה כללים, שלושה סגנונות בלדה, ואז קולות פנימיים ואימון ארבעה קולות.' } },
-      { say: { en: 'Where it lives: pianists like Mehldau, Hersch and Jarrett use the repeated-quarter style for intimate ballads, and many begin a ballad in stop-start rubato before the time comes in. Practise each chord slowly first: find the voicing, check the four rules, then play it in time.', he: 'איפה זה חי: פסנתרנים כמו מלדאו, הרש וג׳רט משתמשים בסגנון הרבעים החוזרים לבלדות אינטימיות, ורבים פותחים בלדה ברובאטו עצור־וזז לפני שהזמן נכנס. מתאמנים קודם על כל אקורד לאט: מוצאים את הוויסינג, בודקים את ארבעת הכללים, ואז מנגנים בזמן.' } },
+      { say: { en: 'Where it lives: pianists like Mehldau, Hersch and Jarrett use the repeated-quarter style for intimate ballads, and many begin a ballad in stop-start rubato before the time comes in. Practice each chord slowly first: find the voicing, check the four rules, then play it in time.', he: 'איפה זה חי: פסנתרנים כמו מלדאו, הרש וג׳רט משתמשים בסגנון הרבעים החוזרים לבלדות אינטימיות, ורבים פותחים בלדה ברובאטו עצור־וזז לפני שהזמן נכנס. מתאמנים קודם על כל אקורד לאט: מוצאים את הוויסינג, בודקים את ארבעת הכללים, ואז מנגנים בזמן.' } },
       { say: { en: 'The corner thumb and the hand split change with each chord: sometimes the left hand takes two shared notes, sometimes one. Choose the split that keeps both hands relaxed.', he: 'האגודל הפינתי וחלוקת הידיים משתנים בכל אקורד: לפעמים יד שמאל לוקחת שני צלילים משותפים, לפעמים אחד. בוחרים את החלוקה שמשאירה את שתי הידיים רפויות.' } },
     ],
   },

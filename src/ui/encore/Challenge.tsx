@@ -735,12 +735,12 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
         </div>
       )}
       {ph.mine ? (
-        <button className="btn primary enc-full" onClick={() => (location.hash = `/encore/phrase/${myLick?.id ?? ''}`)} disabled={!myLick} data-chl-practise="1">
-          {L(lang, 'Practise it', 'לתרגל')}
+        <button className="btn primary enc-full" onClick={() => (location.hash = `/encore/phrase/${myLick?.id ?? ''}`)} disabled={!myLick} data-chl-practice="1">
+          {L(lang, 'Practice it', 'לתרגל')}
         </button>
       ) : myLick ? (
-        <button className="btn primary enc-full" onClick={() => (location.hash = `/encore/phrase/${myLick.id}`)} data-chl-practise="1">
-          {L(lang, 'Keep practising', 'להמשיך לתרגל')}
+        <button className="btn primary enc-full" onClick={() => (location.hash = `/encore/phrase/${myLick.id}`)} data-chl-practice="1">
+          {L(lang, 'Keep practicing', 'להמשיך לתרגל')}
         </button>
       ) : (
         <button className="btn primary enc-full" onClick={take} data-chl-take="1">

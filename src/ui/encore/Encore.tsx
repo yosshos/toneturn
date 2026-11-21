@@ -1,5 +1,5 @@
 // Encore / הדרן — "My phrases" (SPEC-PHRASE-STUDIO): keep a phrase from any take or just play, trim it to ≤ 8 bars, fix
-// the context, plan it (target tempo, 12 keys easiest first, hands), practise it on the drills engine through the
+// the context, plan it (target tempo, 12 keys easiest first, hands), practice it on the drills engine through the
 // 12-key × tempo map until it is yours. Routes: #/encore, /library, /record, /caught/<take>, /new?take=…&from=…&to=…,
 // /context?take=…, /plan/<id>, /phrase/<id>, /run/<id>/<key>[/<hand>], /yours/<id>, /pattern[/<id>].
 // Every screen fits one phone screen (320×720); musical time runs left → right; Latin is isolated in Hebrew.
@@ -54,7 +54,7 @@ export interface EncoreProps {
   onSettings: (p: Partial<Settings>) => void;
   onTake: EncoreTakeFn;
   onBack: () => void;
-  /** Patterns practise as before, in the technique hub. */
+  /** Patterns practice as before, in the technique hub. */
   onDrills: () => void;
 }
 
@@ -78,7 +78,7 @@ export function EncoreScreen(p: EncoreProps) {
   const r = parseEncoreHash(hash);
   // v2: the course's instrument, the singer's range and the tunings for placement (§7.4)
   INST = lickInstrumentOf(settings);
-  // a teacher's phrase is practised on the instrument the teacher assigned (its plan, map and run), whatever the course
+  // a teacher's phrase is practiced on the instrument the teacher assigned (its plan, map and run), whatever the course
   const routed = r.id ? (settings.lickBook?.own ?? []).find((x) => x.id === r.id!.split('~')[0]) : undefined;
   if (routed && isTeacherPhrase(routed)) INST = phraseInstOf(routed);
   setInstrumentCtx({ range: settings.voiceRange ?? null, bassTuning: bassTuningOf(settings) ?? 'bass', guitarTuning: settings.tuning && settings.tuning !== 'upright' && !settings.tuning.startsWith('bass') ? settings.tuning : 'standard' });
@@ -98,7 +98,7 @@ export function EncoreScreen(p: EncoreProps) {
     if (m.verdict === 'skip') return p.onTake(st, [], 0, { ...m, verdict: 'not' });
     p.onTake(st, evs, xp, m);
   };
-  // off the piano a two-hand phrase is practised as its main line (forInstrument); saving never drops its left hand
+  // off the piano a two-hand phrase is practiced as its main line (forInstrument); saving never drops its left hand
   const byId = (id?: string) => {
     const l = id ? (bookRef.current.own ?? []).find((x) => x.id === id) : undefined;
     return l ? forInstrument(l, INST) : undefined;
@@ -1163,7 +1163,7 @@ function PhraseView({ lang, head, l, items, book, onDelete }: { lang: Lang; head
           ))}
         </span>
         <small className="tiny">
-          <bdi dir="ltr">{days}</bdi> {he ? 'ימי תרגול' : 'days practised'}
+          <bdi dir="ltr">{days}</bdi> {he ? 'ימי תרגול' : 'days practiced'}
           {bestTempo(l, items, INST) > 0 && (
             <>
               {' · '}

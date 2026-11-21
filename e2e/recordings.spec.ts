@@ -142,7 +142,7 @@ for (const lang of ['en', 'he'] as const) {
     await expect(player).toHaveAttribute('data-rec-playing', '0');
 
     // "Practise this span" opens Encore with the take and the span
-    await page.locator('[data-rec-practise]').click();
+    await page.locator('[data-rec-practice]').click();
     await expect.poll(() => page.evaluate(() => location.hash)).toMatch(new RegExp(`^#/encore/new\\?take=${encodeURIComponent(id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}&from=-?[\\d.]+&to=[\\d.]+`));
 
     // delete → the bin → restore

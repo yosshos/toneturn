@@ -1,5 +1,5 @@
 // Lick & vocabulary trainer (docs/SPEC-LICKS-TRANSCRIPTION.md): a library of our own licks by chord context and
-// level, each practised measured in all 12 keys up a tempo ladder on the course's instrument, then kept with spaced
+// level, each practiced measured in all 12 keys up a tempo ladder on the course's instrument, then kept with spaced
 // review and used in the improv studio. Pure.
 //
 // OWN MATERIAL ONLY. Every lick below was written for this app in the jazz tradition — chord tones on the beats,
@@ -442,7 +442,7 @@ export function lickStars(l: Lick, inst: LickInstrument, items: Record<string, I
 }
 export const LICK_KNOWN_STARS = 3;
 
-/** The next key to practise: the first key (in order) not passed at the target, preferring keys already started. */
+/** The next key to practice: the first key (in order) not passed at the target, preferring keys already started. */
 export function nextLickKey(l: Lick, inst: LickInstrument, items: Record<string, ItemState>): number {
   const g = lickGrid(l, inst, items);
   const started = g.find((c) => !c.passed && c.rung > 0);

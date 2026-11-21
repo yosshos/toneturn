@@ -1,4 +1,4 @@
-// "Practise with me now" (owner 2026-11-16): a small live mark while a together session is open. My measured time
+// "Practice with me now" (owner 2026-11-16): a small live mark while a together session is open. My measured time
 // counts from the moment the session became active on this device (the practice ledger — measured practice only);
 // it beats to the server every 15 s and whenever the ledger changes. "Together" lights while both gained measured
 // time within the same 10-minute window; when both have 5 measured minutes the duet streak counts the day.

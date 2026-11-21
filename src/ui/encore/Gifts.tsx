@@ -1,6 +1,6 @@
 // Gifts between friends (owner decisions 2026-11-16) — #/challenges/gifts[/<friend>[/dedicate]]: today's allowance
-// (one gift per practice day), "for you" (fermatas, dedications, practise-together invites), and per friend: a
-// fermata, a phrase dedication, "practise with me now". Quiet and mature: words and Paper drawings (src/ui/paper/
+// (one gift per practice day), "for you" (fermatas, dedications, practice-together invites), and per friend: a
+// fermata, a phrase dedication, "practice with me now". Quiet and mature: words and Paper drawings (src/ui/paper/
 // art-gifts.ts for the content marks, the chrome cut inside buttons), no emoji, no counts of anyone else's.
 // Rules: src/engine/encore/gifts.ts; server: migration 20261205000000_toneturn_friend_gifts.sql.
 
@@ -117,7 +117,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
                 <span className="row">
                   <GiftArt kind="together" size={22} />
                   <span className="grow">
-                    <Bi text={s.friendName} /> {L(lang, 'invites you to practise together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
+                    <Bi text={s.friendName} /> {L(lang, 'invites you to practice together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
                   </span>
                 </span>
                 <span className="row">
@@ -126,13 +126,13 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
                     disabled={busy}
                     onClick={() =>
                       void answerTogether(s.id, true)
-                        .then(() => (saveTogether({ id: s.id, friendName: s.friendName, base: measuredToday(), day: localDay() }), setMsg(L(lang, 'Practising together — five measured minutes each.', 'מתרגלים יחד — חמש דקות נמדדות לכל אחד.'))))
+                        .then(() => (saveTogether({ id: s.id, friendName: s.friendName, base: measuredToday(), day: localDay() }), setMsg(L(lang, 'Practicing together — five measured minutes each.', 'מתרגלים יחד — חמש דקות נמדדות לכל אחד.'))))
                         .catch(() => setMsg(L(lang, 'The invite has expired.', 'ההזמנה פגה.')))
                         .finally(reload)
                     }
                     data-gift-invite-accept={s.id}
                   >
-                    {L(lang, 'Practise together', 'לתרגל יחד')}
+                    {L(lang, 'Practice together', 'לתרגל יחד')}
                   </button>
                   <button className="btn small ghost" disabled={busy} onClick={() => void answerTogether(s.id, false).catch(() => {}).finally(reload)} data-gift-invite-decline={s.id}>
                     {L(lang, 'Not now', 'לא עכשיו')}
@@ -170,8 +170,8 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
                     </small>
                   )}
                   {!g.done && (
-                    <button className="btn small ghost" onClick={() => (location.hash = `/encore/phrase/${dedicationLickId(g.id)}`)} data-gift-practise={g.id}>
-                      {L(lang, 'Practise it', 'לתרגל')}
+                    <button className="btn small ghost" onClick={() => (location.hash = `/encore/phrase/${dedicationLickId(g.id)}`)} data-gift-practice={g.id}>
+                      {L(lang, 'Practice it', 'לתרגל')}
                     </button>
                   )}
                 </div>
@@ -221,7 +221,7 @@ export function GiftsView({ lang, settings, head, friend, dedicate }: ChallengeP
                     </button>
                     <button className="btn small ghost" disabled={busy || left === 0 || openWith.has(f.id)} onClick={() => void invite(f)} data-gift-together={f.id}>
                       <Icon k="together" size={14} />
-                      {openWith.has(f.id) ? L(lang, 'Invited', 'הוזמן/ה') : L(lang, 'Practise with me', 'תרגל/י איתי')}
+                      {openWith.has(f.id) ? L(lang, 'Invited', 'הוזמן/ה') : L(lang, 'Practice with me', 'תרגל/י איתי')}
                     </button>
                   </span>
                 )}
@@ -339,7 +339,7 @@ export function GiftInboxCard({ lang }: { lang: Lang }) {
         <small key={s.id} className="row">
           <GiftArt kind="together" size={20} />
           <span>
-            <Bi text={s.friendName} /> {L(lang, 'invites you to practise together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
+            <Bi text={s.friendName} /> {L(lang, 'invites you to practice together now', 'מזמין/ה אותך לתרגל יחד עכשיו')}
           </span>
         </small>
       ))}

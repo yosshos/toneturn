@@ -125,7 +125,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake: playing loud. A ballad lives at piano to mezzo-piano; let the top note sing a little above the rest.', he: 'טעות נפוצה: לנגן חזק. בלדה חיה בפיאנו עד מצו־פיאנו; תנו לצליל העליון לשיר מעט מעל השאר.' },
       },
       {
-        say: { en: 'Practise each half of the chart on its own: bars one to eight, then nine to sixteen. Then play all sixteen bars without stopping, in free time first.', he: 'תרגלו כל חצי של דף האקורדים לבד: תיבות אחת עד שמונה, ואז תשע עד שש־עשרה. אחר כך נגנו את כל שש־עשרה התיבות בלי לעצור, קודם בזמן חופשי.' },
+        say: { en: 'Practice each half of the chart on its own: bars one to eight, then nine to sixteen. Then play all sixteen bars without stopping, in free time first.', he: 'תרגלו כל חצי של דף האקורדים לבד: תיבות אחת עד שמונה, ואז תשע עד שש־עשרה. אחר כך נגנו את כל שש־עשרה התיבות בלי לעצור, קודם בזמן חופשי.' },
       },
       {
         say: { en: 'Recap: 10ths below, four notes above, small steps between chords, straight eighths, and patience.', he: 'לסיכום: דצימות למטה, ארבעה צלילים למעלה, צעדים קטנים בין האקורדים, שמיניות ישרות, וסבלנות.' },
@@ -181,7 +181,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([67, 70, 72, 75], 0.3)],
       },
       {
-        say: { en: 'The result screen names the part that slipped: the intro, the head, the solo chorus, the head out or the ending. Practise that part alone, then try the whole take again.', he: 'מסך התוצאה מציין את החלק שהחליק: הפתיחה, הנושא, סבב הסולו, הנושא בחזרה או הסיום. תרגלו את החלק הזה לבד, ואז נסו שוב את הטייק כולו.' },
+        say: { en: 'The result screen names the part that slipped: the intro, the head, the solo chorus, the head out or the ending. Practice that part alone, then try the whole take again.', he: 'מסך התוצאה מציין את החלק שהחליק: הפתיחה, הנושא, סבב הסולו, הנושא בחזרה או הסיום. תרגלו את החלק הזה לבד, ואז נסו שוב את הטייק כולו.' },
       },
       {
         say: { en: 'A common mistake: losing the form in the solo. Keep the chart in view and land on the first bar of the head out.', he: 'טעות נפוצה: ללכת לאיבוד בצורה בזמן הסולו. השאירו את דף האקורדים מול העיניים ונחתו על התיבה הראשונה של הנושא בחזרה.' },

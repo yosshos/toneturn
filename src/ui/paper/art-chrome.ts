@@ -77,7 +77,7 @@ const CORE = {
   gift: art('purple', 'rose', R(9, 20, 30, 18.5, 4, 'body'), an('hop', {}, R(6.5, 12.5, 35, 8.5, 3, 'body'), P('M24 12.5 Q16 3 12.2 7 Q10.6 11 24 12.5 Q37.4 11 35.8 7 Q32 3 24 12.5 Z', 'body')), R(21.6, 12.5, 4.8, 26, 0, 'light')),
   /** A phrase dedicated to a friend: a gift tag sheet with its eyelet, a note head cut out of it. */
   dedicate: art('purple', 'rose', an('swing', { o: [12, 22] }, P('M15 7.5 H37.5 Q41.5 7.5 41.5 11.5 V32.5 Q41.5 36.5 37.5 36.5 H15 L5.5 22 Z', 'body')), Ci(12.5, 22, 2.8, 'light'), an('nod', {}, E(28, 22, 6.2, 4.6, -20, 'light'))),
-  /** Practise with me now: two notes on one beam (a sheet), stems as paper strips. */
+  /** Practice with me now: two notes on one beam (a sheet), stems as paper strips. */
   together: art('purple', 'rose', SL(17, 33, 17, 13, 4.6), SL(35, 29, 35, 9, 4.6), an('wave', {}, P('M14.7 10 L37.3 5 L37.3 11.8 L14.7 16.8 Z', 'body')), an('nod', {}, head(12.5, 33, 6.6)), an('nod', { d: 1 }, head(30.5, 29, 6.6, 'accent'))),
   wave: art('purple', 'rose', an('vibrate', {}, S('M4.5 22 Q9 12 13.5 22 T22.5 22 T31.5 22 T40.5 22', 5.6))),
   /** The refresher / theory page (an open book). */

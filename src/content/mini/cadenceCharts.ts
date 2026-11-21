@@ -71,7 +71,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'On the bass, a walking line plays each chord’s root on its first beat and leads into the next chord with a chord tone or a half step.', he: 'בבס, קו מהלך מנגן את השורש של כל אקורד בפעמה הראשונה שלו, ומוביל לאקורד הבא בצליל של האקורד או בחצי טון.' },
       },
       {
-        say: { en: 'Practise one chart through all 12 keys, round the cycle of fourths, slowly at first. Say the numerals aloud as you play, then the chord names.', he: 'תרגלו דף אחד בכל 12 הסולמות, במעגל הקוורטות, לאט בהתחלה. אמרו בקול את הספרות תוך כדי נגינה, ואחר כך את שמות האקורדים.' },
+        say: { en: 'Practice one chart through all 12 keys, round the cycle of fourths, slowly at first. Say the numerals aloud as you play, then the chord names.', he: 'תרגלו דף אחד בכל 12 הסולמות, במעגל הקוורטות, לאט בהתחלה. אמרו בקול את הספרות תוך כדי נגינה, ואחר כך את שמות האקורדים.' },
       },
     ],
   },

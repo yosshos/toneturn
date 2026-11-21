@@ -1,4 +1,4 @@
-// What to practise next, per skill and level: each skill has a ladder of lessons from easiest to
+// What to practice next, per skill and level: each skill has a ladder of lessons from easiest to
 // hardest; the player's rating picks the rung. Placement also unlocks the path below that rung.
 
 import type { LessonId, SkillId } from './lesson';
@@ -50,7 +50,7 @@ export function recommendFor(skill: SkillId, ratings: Ratings, mastered: (id: Le
   if (skill === 'absolute') return { kind: 'absolute' };
   if (skill === 'modes') return { kind: 'modes', level: modesLevelFor(ratings.modes?.n ? ratings.modes.r : null) };
   if (skill === 'improv') return { kind: 'perform' };
-  // Skills practised in their topic, at the level the rating says.
+  // Skills practiced in their topic, at the level the rating says.
   const TOPIC_FOR: Partial<Record<SkillId, [string, number]>> = { tempo: ['tempo', 6], pitch: ['fine-pitch', 3], sight: ['sight-read', 3], theory: ['interval-spelling', 3], transpose: ['transpose', 4], meter: ['meter-feel', 4], form: ['voice-count', 3], expression: ['dynamics', 3] };
   const tf = TOPIC_FOR[skill];
   if (tf) {

@@ -1,5 +1,5 @@
 // Paper drawings for the gifts between friends (SPEC-PHRASE-STUDIO §20.1): the gift itself, the fermata that holds a
-// friend's missed day, a phrase dedicated to a friend, and "practise with me now". Layered tonal sheets, no outlines:
+// friend's missed day, a phrase dedicated to a friend, and "practice with me now". Layered tonal sheets, no outlines:
 // a light sheet under body sheets, details in the deep tone, the tilted note head as the accent.
 import { an, Ci, det, H, L, P, R, rich, art, type Art } from './kit';
 
@@ -46,7 +46,7 @@ export const ART_GIFTS: Record<string, Art> = {
     P('M24.6 16.6 L37.7 13.6 L37.7 17.2 L24.6 20.2 Z', 'ink'),
     rich(R(18, 11.5, 14, 1.6, 0.8, 'body')),
   ),
-  /** Practise with me now: two notes on one beam over a shared light sheet — one in the body hue, one in the accent. */
+  /** Practice with me now: two notes on one beam over a shared light sheet — one in the body hue, one in the accent. */
   'gift-together': art(
     'rose',
     'purple',

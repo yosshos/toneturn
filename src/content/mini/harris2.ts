@@ -186,7 +186,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to move only the top voice and leave the others. Then two voices clash with the diminished. All four go together, every time.', he: 'טעות נפוצה היא להזיז רק את הקול העליון ולהשאיר את האחרים. אז שני קולות מתנגשים עם המוקטן. כל הארבעה זזים יחד, בכל פעם.' },
       },
       {
-        say: { en: 'Practise it slowly first, out of time, until your hand finds each neighbour without looking. Then add the click: one chord a beat, and the bass moving with the lowest voice.', he: 'מתרגלים קודם לאט, בלי קצב, עד שהיד מוצאת כל שכן בלי להסתכל. אחר כך מוסיפים מטרונום: אקורד לפעמה, והבס זז עם הקול הנמוך.' },
+        say: { en: 'Practice it slowly first, out of time, until your hand finds each neighbour without looking. Then add the click: one chord a beat, and the bass moving with the lowest voice.', he: 'מתרגלים קודם לאט, בלי קצב, עד שהיד מוצאת כל שכן בלי להסתכל. אחר כך מוסיפים מטרונום: אקורד לפעמה, והבס זז עם הקול הנמוך.' },
       },
       {
         say: { en: 'Recap: 6th chord, diminished, 6th chord — up and down, from every position, bass included. Small steps, all voices.', he: 'לסיכום: אקורד 6, מוקטן, אקורד 6 — למעלה ולמטה, מכל מצב, כולל הבס. צעדים קטנים, כל הקולות.' },

@@ -94,7 +94,7 @@ for (const lang of ['en', 'he'] as const)
     expect(weak).toEqual(WEAK);
     await expect(keys).toContainText('D♭');
     await expect(keys).toContainText('F♯');
-    await expect(keys.locator('[data-keys-practise]')).toBeVisible();
+    await expect(keys.locator('[data-keys-practice]')).toBeVisible();
     // The profile lists them as weak-key patterns.
     await expect(page.locator('[data-profile-pattern^="k:scales:"]').first()).toBeVisible();
     await noSideScroll(page, 'insights');

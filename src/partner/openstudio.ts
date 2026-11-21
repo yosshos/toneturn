@@ -70,7 +70,7 @@ export const OPENSTUDIO: PartnerConfig = {
   },
   courses: ['keys', 'guitar'],
   copy: {
-    'ob.slogan': { en: 'Practise what your teachers teach. Measured.', he: 'לתרגל את מה שהמורים מלמדים. במדידה.' },
+    'ob.slogan': { en: 'Practice what your teachers teach. Measured.', he: 'לתרגל את מה שהמורים מלמדים. במדידה.' },
     'ob.sub': { en: 'Piano and guitar drills mapped to your courses, in every key.', he: 'תרגילי פסנתר וגיטרה לפי הקורסים שלך, בכל הסולמות.' },
     'depth.title': { en: 'The practice layer for your courses', he: 'שכבת התרגול לקורסים שלך' },
     'depth.card': { en: 'What is inside: the depth, the maps, and how practice is measured', he: 'מה יש בפנים: העומק, המפות ואיך התרגול נמדד' },

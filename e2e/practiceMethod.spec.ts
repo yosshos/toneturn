@@ -59,7 +59,7 @@ for (const lang of ['en', 'he'] as const) {
     await expect(page.locator('[data-flow-step]')).toHaveCount(7);
     await page.locator('[data-flow-done="1"]').click();
     await expect(page.locator('[data-lick-flow="2"]')).toBeVisible();
-    await expect(page.locator('[data-flow-practise]')).toBeVisible();
+    await expect(page.locator('[data-flow-practice]')).toBeVisible();
     expect(await problems(page)).toEqual([]);
   });
 

@@ -85,7 +85,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: '4 → 1, on time', he: '4 ← 1, בזמן' } },
       },
       {
-        say: { en: 'Practise one chord change at a time, in all twelve keys. Sing the target before you play beat four: when the ear knows where the line is going, the hand follows.', he: 'מתרגלים חילוף אקורד אחד בכל פעם, בכל שנים־עשר הסולמות. שרים את היעד לפני שמנגנים את פעמה ארבע: כשהאוזן יודעת לאן הקו הולך, היד הולכת אחריה.' },
+        say: { en: 'Practice one chord change at a time, in all twelve keys. Sing the target before you play beat four: when the ear knows where the line is going, the hand follows.', he: 'מתרגלים חילוף אקורד אחד בכל פעם, בכל שנים־עשר הסולמות. שרים את היעד לפני שמנגנים את פעמה ארבע: כשהאוזן יודעת לאן הקו הולך, היד הולכת אחריה.' },
         play: [notes([36, 40, 43, 42, 41], 0.45)],
       },
     ],
@@ -425,7 +425,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'left hand: one level softer', he: 'יד שמאל: דרגה אחת שקטה יותר' } },
       },
       {
-        say: { en: 'Practise the left hand alone until it runs without thought, then add the melody one bar at a time. Every style here goes into all twelve keys.', he: 'מתרגלים את יד שמאל לבד עד שהיא רצה בלי מחשבה, ואז מוסיפים את המנגינה תיבה אחרי תיבה. כל סגנון כאן עובר לכל שנים־עשר הסולמות.' },
+        say: { en: 'Practice the left hand alone until it runs without thought, then add the melody one bar at a time. Every style here goes into all twelve keys.', he: 'מתרגלים את יד שמאל לבד עד שהיא רצה בלי מחשבה, ואז מוסיפים את המנגינה תיבה אחרי תיבה. כל סגנון כאן עובר לכל שנים־עשר הסולמות.' },
       },
     ],
   },

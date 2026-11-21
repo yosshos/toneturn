@@ -1,8 +1,8 @@
-// Priority scheduler (spec AD §5): which sub-skill to practise next, and with which exercise.
+// Priority scheduler (spec AD §5): which sub-skill to practice next, and with which exercise.
 //
 //   priority(sub) = importance(skill, track) × (1 + intakeBoost(domain)) × gap(sub) × freshness(sub) × ready(sub)
 //   gap           = clamp((target − R)/200 + (0.85 − ewma), 0.2, 2)
-//   freshness     = 1 + min(1, days since last practised / 7)   (1 for never practised)
+//   freshness     = 1 + min(1, days since last practiced / 7)   (1 for never practiced)
 //   ready         = 0 until the sub-skill's prerequisites are met
 //
 // The exercise is the topic level that trains the sub-skill most (its tag weight) at the player's level
@@ -73,7 +73,7 @@ export interface SubPriority {
   sub: string;
   skill: SkillId;
   score: number;
-  /** Why: 'new' (never practised), 'weak' (behind), 'review' (not practised lately). */
+  /** Why: 'new' (never practiced), 'weak' (behind), 'review' (not practiced lately). */
   why: 'new' | 'weak' | 'review';
 }
 
@@ -90,7 +90,7 @@ export function subPriorities(inp: SchedulerInput): SubPriority[] {
   for (const s of SUB_SKILLS) {
     if (s.skill === 'absolute') continue;
     if (!inp.voice && VOICE_SKILLS.includes(s.skill)) continue;
-    if (!exerciseFor(s.id, inp.ratings) && !VOICE_SKILLS.includes(s.skill)) continue; // nothing to practise it with here
+    if (!exerciseFor(s.id, inp.ratings) && !VOICE_SKILLS.includes(s.skill)) continue; // nothing to practice it with here
     const imp = IMPORTANCE[track][s.skill] ?? (VOICE_SKILLS.includes(s.skill) ? 0.6 : 0.5);
     if (imp <= 0) continue;
     if ((SUB_PREREQ[s.id] ?? []).some((p) => !met(p, inp))) continue;

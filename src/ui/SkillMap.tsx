@@ -356,15 +356,42 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
   const he = lang === 'he';
   const started = axes.filter((a) => a.v !== null);
   const next = started.length ? started.reduce((a, b) => (b.v! < a.v! ? b : a)) : null;
+  // owner 2026-11-21: the map lives here only (not on Overview), and it is clickable — an axis opens its area
+  const [open, setOpen] = useState<string | null>(null);
+  const R = 92;
+  const pt = (k: number, f: number) => {
+    const ang = (Math.PI * 2 * k) / axes.length - Math.PI / 2;
+    return [130 + Math.cos(ang) * R * f, 120 + Math.sin(ang) * R * f];
+  };
+  const poly = (f: (k: number) => number) => axes.map((_, k) => pt(k, f(k)).map((x) => x.toFixed(1)).join(',')).join(' ');
+  const val = axes.map((a) => Math.max(0.1, Math.min(1, a.v ?? 0.1)));
+  const pick = (id: string) => {
+    setOpen(id);
+    requestAnimationFrame(() => document.querySelector(`[data-section="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  };
   return (
     <main className="panel-screen skillmap" data-skillmap-course={course}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={t.back}>
           <Icon k="back" />
         </button>
-        <h1>{he ? 'התחומים' : 'Areas'}</h1>
+        <h1>{t.skillMap}</h1>
       </header>
-      <p className="field-hint">{he ? 'התחומים של הקורס (המפה שלהם בסקירה). פתחו תחום כדי לראות מה הוא כולל.' : 'The areas of this course (their map is on Overview). Open one to see what it covers.'}</p>
+      <p className="field-hint">{he ? 'המפה של התחומים בקורס. לחצו על תחום כדי לראות מה הוא כולל.' : 'The map of the course areas. Tap an area to see what it covers.'}</p>
+      <svg className="radar sections" viewBox="-40 -10 340 260" role="img" aria-label={axes.map((a) => `${a.label} ${a.v === null ? '—' : Math.round(a.v * 100) + '%'}`).join(', ')} style={{ direction: 'ltr' }}>
+        {[1, 0.66, 0.33].map((f) => (
+          <polygon key={f} points={poly(() => f)} fill="none" stroke="var(--staff-line)" strokeWidth="1.5" />
+        ))}
+        {started.length > 0 && <polygon points={poly((k) => val[k])} fill="color-mix(in srgb, var(--purple) 22%, transparent)" stroke="var(--purple)" strokeWidth="2.5" strokeLinejoin="round" />}
+        {axes.map((a, k) => {
+          const [x, y] = pt(k, 1.25);
+          return (
+            <text key={a.id} x={x} y={y} textAnchor={x < 120 ? 'end' : x > 140 ? 'start' : 'middle'} dominantBaseline="middle" className={`sm-axis ${a.v === null ? 'off' : ''} ${open === a.id ? 'sel' : ''}`} fontSize="13" onClick={() => pick(a.id)} style={{ cursor: 'pointer' }} data-axis={a.id}>
+              {a.label}
+            </text>
+          );
+        })}
+      </svg>
       {next && (
         <p className="sm-next" data-section-next={next.id}>
           {he ? 'הבא לעבודה: ' : 'Next to work on: '}
@@ -375,7 +402,7 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
         {secs.map((sec, i) => {
           const a = axes[i];
           return (
-            <details key={sec.id} className="sm-area" data-section={sec.id}>
+            <details key={sec.id} className="sm-area" data-section={sec.id} open={open === sec.id} onToggle={(e) => ((e.target as HTMLDetailsElement).open ? setOpen(sec.id) : open === sec.id && setOpen(null))}>
               <summary>
                 <b>{sec.name[lang]}</b>
                 <small>{a.v === null ? (he ? 'עוד לא נמדד' : 'not measured yet') : `${a.done} / ${a.levels} ${he ? 'שלבים' : 'levels'}`}</small>
@@ -400,7 +427,7 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
                 })}
               </ul>
               <button className="link" onClick={() => (location.hash = '/drills')} data-section-practice={sec.id}>
-                {he ? 'לתרגל' : 'Practise'}
+                {he ? 'לתרגל' : 'Practice'}
               </button>
             </details>
           );

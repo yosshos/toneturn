@@ -76,7 +76,7 @@ export const RX = {
   onlyMe: { en: 'Only me', he: 'רק אני' },
   withBand: { en: 'With the band', he: 'עם הלהקה' },
   onlyBand: { en: 'Only the band', he: 'רק הלהקה' },
-  practise: { en: 'Practise this span', he: 'לתרגל את הקטע' },
+  practise: { en: 'Practice this span', he: 'לתרגל את הקטע' },
   back5: { en: 'Back 5 seconds', he: '5 שניות אחורה' },
   fwd5: { en: 'Forward 5 seconds', he: '5 שניות קדימה' },
   allOfItem: { en: 'All takes of this', he: 'כל הניסיונות של זה' },

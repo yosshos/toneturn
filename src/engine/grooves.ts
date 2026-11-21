@@ -1,4 +1,4 @@
-// The metronome's groove bank (owner, 2026-11-07): drum patterns to practise with instead of a click, sorted by
+// The metronome's groove bank (owner, 2026-11-07): drum patterns to practice with instead of a click, sorted by
 // style. A pattern is one bar on a grid of `sub` steps per beat; each lane is a string, one character per step:
 //   x = hit, o = soft (ghost) hit, . = rest.   Lanes: k kick, s snare, h hi-hat, r rim / side-stick (soft snare).
 // Original patterns written for the app (common textbook grooves, no recordings). Pure data + helpers.

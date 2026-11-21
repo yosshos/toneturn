@@ -94,7 +94,7 @@ test.describe('the lick trainer by ear', () => {
       const revealed = await overflow(page);
       // Revealed, it is the lick's practice screen (checked at 390 × 844 in licks.spec): the reveal adds no height to it.
       await page.locator('.screen-head .icon-btn').click();
-      await page.locator('[data-lick-practise]').click();
+      await page.locator('[data-lick-practice]').click();
       await expect(page.locator('[data-lick-run="practice"]')).toBeVisible();
       expect(revealed, `revealed ${lang}`).toBeLessThanOrEqual((await overflow(page)) + 4);
     });

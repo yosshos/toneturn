@@ -61,7 +61,7 @@ export interface CourseMapRow {
   course: string;
   /** Which of our courses it lands in. */
   area: 'keys' | 'guitar' | 'ear' | 'jazz';
-  /** What it practises, in a few words. */
+  /** What it practices, in a few words. */
   what: Bi;
   /** Our families and topics that drill it. */
   links: DepthLink[];

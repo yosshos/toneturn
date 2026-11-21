@@ -50,7 +50,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'C7: … A C B♭ B C', he: 'C7: … A C B♭ B C' } },
       },
       {
-        say: { en: 'Practise it in all twelve keys: free time first, then on the click, with every scale degree landing on the beat. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, אחר כך עם הקליק, וכל דרגה של הסולם נוחתת על הפעמה. תורכם.' },
+        say: { en: 'Practice it in all twelve keys: free time first, then on the click, with every scale degree landing on the beat. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, אחר כך עם הקליק, וכל דרגה של הסולם נוחתת על הפעמה. תורכם.' },
       },
     ],
     more: [
@@ -158,7 +158,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'The dominant rule from every degree: start on each degree in turn, on the beat, and come down the scale. From 1, 3, 5 or flat 7 add one half step; from 3, 5 or flat 7 you may add three; from 2, 4 or 6 add none, or two.', he: 'חוק הדומיננט מכל דרגה: מתחילים מכל דרגה בתורה, על הפעמה, ויורדים בסולם. מ־1, 3, 5 או ♭7 מוסיפים חצי טון אחד; מ־3, 5 או ♭7 אפשר גם שלושה; מ־2, 4 או 6 אף אחד, או שניים.' },
       }, [
         {
-          say: { en: 'Practise each device round the cycle of fourths: C7, F7, B flat 7, and on through all twelve keys. Free time first, then the click, then a whole tune.', he: 'מתרגלים כל כלי לפי מעגל הקוורטות: C7, ‏F7, ‏B♭7, וכך הלאה בכל שנים־עשר הסולמות. קודם בזמן חופשי, אחר כך עם הקליק, ואז שיר שלם.' },
+          say: { en: 'Practice each device round the cycle of fourths: C7, F7, B flat 7, and on through all twelve keys. Free time first, then the click, then a whole tune.', he: 'מתרגלים כל כלי לפי מעגל הקוורטות: C7, ‏F7, ‏B♭7, וכך הלאה בכל שנים־עשר הסולמות. קודם בזמן חופשי, אחר כך עם הקליק, ואז שיר שלם.' },
         },
       ]),
       {

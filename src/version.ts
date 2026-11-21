@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.114.3',
+    date: '2026-11-22',
+    en: ['The areas map lives on Skills only, and it is clickable: tap an area to open its families; a tidier area card. “Practice” spelled the same everywhere.'],
+    he: ['מפת התחומים נמצאת רק בכישורים, והיא לחיצה: נגיעה בתחום פותחת את המשפחות שלו; כרטיס תחום מסודר יותר.'],
+  },
+  {
     version: '0.114.2',
     date: '2026-11-21',
     en: ['Progress in an instrument course shows the course’s own areas (piano: technique, dynamics, time, harmony, comping, improvisation, by ear, reading): the map once on Overview, the areas with their families on Skills; no leftovers of the ear course.'],
@@ -178,7 +184,7 @@ export const CHANGELOG: ChangeEntry[] = [
   {
     version: '0.106.0',
     date: '2026-11-19',
-    en: ['Every course, at every level: one new idea per unit, the rest of the unit practises what you just learned, and a topic climbs one level at a time.', 'No step comes before the lesson that teaches it: many topics now open with their lesson, and a lesson you skipped comes back as a quick check before anything that needs it. The Jazz path no longer runs out.', 'The first steps of each instrument are no longer skipped, and a step you passed in one course counts in the others.', 'One Hebrew term per idea across the app, and a fix to the upper-structures explanation (VI gives 13 with ♭9).'],
+    en: ['Every course, at every level: one new idea per unit, the rest of the unit practices what you just learned, and a topic climbs one level at a time.', 'No step comes before the lesson that teaches it: many topics now open with their lesson, and a lesson you skipped comes back as a quick check before anything that needs it. The Jazz path no longer runs out.', 'The first steps of each instrument are no longer skipped, and a step you passed in one course counts in the others.', 'One Hebrew term per idea across the app, and a fix to the upper-structures explanation (VI gives 13 with ♭9).'],
     he: ['בכל קורס ובכל רמה: רעיון חדש אחד ביחידה, שאר היחידה מתרגלת את מה שלמדתם, ונושא עולה רמה אחת בכל פעם.', 'אף שלב לא בא לפני השיעור שמלמד אותו: נושאים רבים נפתחים עכשיו בשיעור שלהם, ושיעור שדילגתם עליו חוזר כבדיקה קצרה לפני מה שצריך אותו. מסלול הג׳אז כבר לא נגמר באמצע.', 'הצעדים הראשונים בכל כלי כבר לא מדולגים, ושלב שעברתם בקורס אחד נחשב גם בקורסים האחרים.', 'מונח עברי אחד לכל מושג בכל האפליקציה, ותיקון בהסבר המבנים העליונים (VI נותן 13 עם ♭9).'],
   },
   {
@@ -288,7 +294,7 @@ export const CHANGELOG: ChangeEntry[] = [
     date: '2026-11-17',
     en: [
       'A new look for every icon and button: layered paper drawings in one language, with small, gentle motion when you tap (none if your device asks for reduced motion).',
-      'Encore challenges: share a phrase you mastered and challenge friends to beat your tempo. React with "Encore!" plus groove, sound or idea, and give a friend a fermata, dedicate a phrase, or invite them to practise together now.',
+      'Encore challenges: share a phrase you mastered and challenge friends to beat your tempo. React with "Encore!" plus groove, sound or idea, and give a friend a fermata, dedicate a phrase, or invite them to practice together now.',
       'Deeper content: harmonise, embellish and reharmonise a tune, more public-domain tunes, and a tune ladder. Fixes: profile saving, Community tabs on small screens, and bottom-bar labels.',
     ],
     he: [
@@ -454,7 +460,7 @@ export const CHANGELOG: ChangeEntry[] = [
     date: '2026-11-14',
     en: [
       'The pivot (Barry Harris): the root on top, then drop to the next chord tone below and climb — Cmaj7 as C, then E G B. A lesson, an ear topic and drills on keys, guitar and bass in all 12 keys, on every chord type, from any chord tone, through ii–V–I, and combined with a scale line and with an enclosure. The old pivot lesson is now “Scale line with a pivot”.',
-      'Every key counts: for each skill on keys, guitar and bass the app now tracks which of the 12 keys you control and which are weak. Today, the workout and the path put weak keys first (a setting turns it off), each family shows a 12-key map — tap a key to practise it — and Insights has a Keys card. The AI teacher names your weak keys and builds the week around them.',
+      'Every key counts: for each skill on keys, guitar and bass the app now tracks which of the 12 keys you control and which are weak. Today, the workout and the path put weak keys first (a setting turns it off), each family shows a 12-key map — tap a key to practice it — and Insights has a Keys card. The AI teacher names your weak keys and builds the week around them.',
     ],
     he: [
       'הפיבוט (בארי האריס): השורש למעלה, ואז יורדים לצליל האקורד הבא מתחת ועולים — Cmaj7 כ־C ואז E G B. שיעור, נושא שמיעה ותרגילים בקלידים, בגיטרה ובבס בכל 12 הסולמות, על כל סוגי האקורדים, מכל צליל באקורד, דרך ii–V–I, ובשילוב עם קו סולם ועם enclosure. שיעור הפיבוט הישן נקרא עכשיו "קו סולם עם פיבוט".',
@@ -525,7 +531,7 @@ export const CHANGELOG: ChangeEntry[] = [
     version: '0.86.0',
     date: '2026-11-14',
     en: [
-      'Your player profile, at the top of Insights: your strengths, the patterns that keep coming back (with how many weeks in a row) and the ones that went away while you kept practising — drawn from everything measured: technique, timing, the pairs you mix up, the Ear Index. A pattern shows only after it repeats, and each one opens the exercise that trains it.',
+      'Your player profile, at the top of Insights: your strengths, the patterns that keep coming back (with how many weeks in a row) and the ones that went away while you kept practicing — drawn from everything measured: technique, timing, the pairs you mix up, the Ear Index. A pattern shows only after it repeats, and each one opens the exercise that trains it.',
       'After a lesson: when today’s tricky pair has come back for weeks, the summary says so.',
     ],
     he: [
@@ -778,7 +784,7 @@ export const CHANGELOG: ChangeEntry[] = [
     date: '2026-11-11',
     en: [
       'Listen to the original: every standard links a classic recording on Spotify and YouTube, with its key',
-      'Charts offer "Practise in" the recording key when it differs from the chart',
+      'Charts offer "Practice in" the recording key when it differs from the chart',
     ],
     he: [
       'האזנה למקור: לכל סטנדרט קישור לביצוע מוביל בספוטיפיי וביוטיוב, עם הסולם שלו',
@@ -1088,7 +1094,7 @@ export const CHANGELOG: ChangeEntry[] = [
       "Teachers: assign a topic level, a technique level, a chord chart with rules or a piece, with strictness, target tempo and a note; a grading inbox, a class map, and a parent link with a weekly summary",
       "Progression games: Where is home?, What comes next?, Which chord changed?, Figure it out — and the Progression of the day, a daily puzzle to share",
       "Improvisation studio: phrasing rules, vary a phrase, and trading fours with the app answering your idea developed",
-      "Exams: the music Bagrut by track and conservatory entrance exams (Jerusalem Academy, Tel Aviv, Bar-Ilan, Rimon) — every section to practise, and timed mock exams",
+      "Exams: the music Bagrut by track and conservatory entrance exams (Jerusalem Academy, Tel Aviv, Bar-Ilan, Rimon) — every section to practice, and timed mock exams",
       "Songbook by the chords you know: pick your chords and see the key each song fits — or the one new chord it needs",
       "Plans: prices, sales and the free tier set from an admin panel; Voice Flight stays inside your range; American spelling and a full proofread",
     ],

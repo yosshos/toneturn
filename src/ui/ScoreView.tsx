@@ -51,7 +51,7 @@ export function ScoreView({
   cursorBeat?: number | null;
   /** The bar to highlight (piece bar index). */
   activeBar?: number | null;
-  /** A practised range to tint. */
+  /** A practiced range to tint. */
   rangeFrom?: number;
   rangeTo?: number;
   /** Colour per Piece.notes index after a take. */

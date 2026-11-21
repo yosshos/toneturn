@@ -222,7 +222,7 @@ export const LESSONS: MiniLesson[] = [
     ],
     more: [
       {
-        say: { en: 'Each chord has four drop 2 voicings, one with each chord tone on top. Practise ii–V–I from all four.', he: 'לכל אקורד יש ארבעה קולות דרופ 2, אחד עם כל צליל אקורד למעלה. מתרגלים ii–V–I מכל הארבעה.' },
+        say: { en: 'Each chord has four drop 2 voicings, one with each chord tone on top. Practice ii–V–I from all four.', he: 'לכל אקורד יש ארבעה קולות דרופ 2, אחד עם כל צליל אקורד למעלה. מתרגלים ii–V–I מכל הארבעה.' },
         play: [ch([53, 60, 62, 69], 0.7), ch([57, 62, 65, 72], 0.7), ch([60, 65, 69, 74], 0.7), ch([62, 69, 72, 77])],
       },
       {
@@ -299,7 +299,7 @@ export const LESSONS: MiniLesson[] = [
         play: [ch([50, 69, 72, 74, 77], 0.8), ch([50, 72, 74, 77, 81])],
       },
       {
-        say: { en: 'Practise the right hand alone first: three notes moving by step over the changes. Then add the left hand, which only follows the roots.', he: 'מתרגלים קודם את יד ימין לבד: שלושה צלילים שזזים בצעדים לאורך המהלך. אחר כך מוסיפים את יד שמאל, שרק הולכת אחרי השורשים.' },
+        say: { en: 'Practice the right hand alone first: three notes moving by step over the changes. Then add the left hand, which only follows the roots.', he: 'מתרגלים קודם את יד ימין לבד: שלושה צלילים שזזים בצעדים לאורך המהלך. אחר כך מוסיפים את יד שמאל, שרק הולכת אחרי השורשים.' },
         play: [ch([65, 69, 76], 0.8), ch([59, 64, 69], 0.8), ch([64, 67, 74])],
       },
       {

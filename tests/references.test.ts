@@ -104,7 +104,7 @@ describe('Listen to the original row', () => {
     const html = renderToStaticMarkup(h(ListenOriginal, { id: 'ipanema', lang: 'he', onPractiseIn: () => undefined }));
     expect(html).toContain('data-listen-key-differs="1"');
     expect(html).toContain('להאזנה למקור');
-    expect(html).toContain('data-listen-practise="1"');
+    expect(html).toContain('data-listen-practice="1"');
     const same = renderToStaticMarkup(h(ListenOriginal, { id: 'misty', lang: 'en', onPractiseIn: () => undefined }));
     expect(same).not.toContain('data-listen-key-differs');
   });

@@ -182,7 +182,7 @@ export interface Finding {
   text: { en: string; he: string };
   /** A likely cause, not a fact (a finger behind a recurring weakness): the coach words it as "probably". */
   hypothesis?: boolean;
-  /** What to practise. */
+  /** What to practice. */
   prescribe: { family?: string; kind?: string; key?: number; scale?: string; topic?: string; note: { en: string; he: string } };
 }
 

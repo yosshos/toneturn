@@ -14,12 +14,16 @@ test('piano: overview radar and skill map show the course sections', async ({ pa
     });
   });
   await page.goto('/#/skills');
-  await expect(page.locator('.ov-radar')).toBeVisible({ timeout: 60_000 });
-  await expect(page.locator('.ov-radar svg')).toContainText('Time');
+  await expect(page.locator('.ov-dyn')).toBeVisible({ timeout: 60_000 });
+  await expect(page.locator('.ov-radar')).toHaveCount(0); // the map lives on Skills only (owner 2026-11-21)
   await page.screenshot({ path: 'test-results/overview-keys.png', fullPage: true });
   await page.getByRole('tab', { name: /Skills/ }).click();
   await expect(page.locator('[data-skillmap-course="keys"]')).toBeVisible();
   await expect(page.locator('[data-section="time"]')).toBeVisible();
-  await expect(page.locator('.radar.sections')).toHaveCount(0); // the map is on Overview only (owner 2026-11-21)
+  await page.locator('[data-axis="time"]').click();
+  await expect(page.locator('[data-section="time"]')).toHaveAttribute('open', '');
   await page.screenshot({ path: 'test-results/skillmap-keys.png', fullPage: true });
+  await page.locator('[data-axis="technique"]').click();
+  await page.locator('[data-section="technique"]').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/skillmap-open.png' });
 });

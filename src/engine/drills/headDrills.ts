@@ -246,7 +246,7 @@ function genHarmWritten(s: DrillSpec, style: HarmStyle): Drill {
     const t1 = 1;
     const t2 = dur >= 3 - 1e-6 ? 1 : 0.5;
     // borrowing: the block, then the block with one voice moved to the dim, then the block again (struck each time,
-    // as Barry's borrowing is practised: sd-borrow); the bass holds under all three
+    // as Barry's borrowing is practiced: sd-borrow); the bass holds under all three
     const borrow = mover >= 0 && moved !== null;
     const first = borrow ? t1 : dur;
     lower.forEach((p) => notes.push({ pitch: p, beat, dur: first, hand: 'R', chordId: cid }));

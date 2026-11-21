@@ -112,7 +112,7 @@ export async function giftsView(day = localDay()): Promise<GiftsView> {
 export type SendAnswer = 'ok' | 'practise-first' | 'used' | 'not-friends' | 'error';
 const answerOf = (e: unknown): SendAnswer => {
   const m = String((e as Error)?.message ?? e);
-  return /practise first/.test(m) ? 'practise-first' : /one gift a day/.test(m) ? 'used' : /not friends/.test(m) ? 'not-friends' : 'error';
+  return /practice first/.test(m) ? 'practise-first' : /one gift a day/.test(m) ? 'used' : /not friends/.test(m) ? 'not-friends' : 'error';
 };
 /** Today's gift: a fermata. measuredMs = today's measured practice on this device (the server's proof). */
 export async function sendFermata(friend: string, measuredMs: number, day = localDay()): Promise<SendAnswer> {
@@ -141,7 +141,7 @@ export const reportDedicationDone = (id: string) => challengeRpc<void>('toneturn
 export const claimDedicationBonus = async (id: string): Promise<boolean> => !!(await challengeRpc<boolean>('toneturn_dedication_bonus', { p_gift: id }));
 
 export type InviteAnswer = { ok: true; id: string } | { ok: false; why: 'limit' | 'not-friends' | 'error' };
-/** Invite a friend to practise together now (three a day; the invite lives 30 minutes). */
+/** Invite a friend to practice together now (three a day; the invite lives 30 minutes). */
 export async function inviteTogether(friend: string, day = localDay()): Promise<InviteAnswer> {
   try {
     const id = await challengeRpc<string>('toneturn_together_invite', { p_friend: friend, p_day: day });

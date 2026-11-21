@@ -802,7 +802,7 @@ export interface ProbeScores {
   guide?: number;
 }
 /**
- * Where each family starts after the probe: the levels before `start` are ✓ by test (they stay open to practise).
+ * Where each family starts after the probe: the levels before `start` are ✓ by test (they stay open to practice).
  * Cautious (the path's ✓ rule): one or two levels per family at most, from a clear pass (≥ 0.85); jazz-experienced
  * singers (the guide-tone line passed too) skip the first stage's opening levels.
  */

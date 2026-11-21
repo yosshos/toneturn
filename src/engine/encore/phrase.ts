@@ -36,7 +36,7 @@ export function phraseItemId(l: Lick, inst: LickInstrument, key: number, hand?: 
 }
 /** 6/8 counts eighths (one beat = ♪): the bar's two groups of three. Other meters have no groups. */
 export const groupsOf = (m: number): number[] => (m === 6 ? [3, 3] : [m]);
-/** The hands a phrase is practised in, in order (a two-hand phrase: right, left, then together by default). */
+/** The hands a phrase is practiced in, in order (a two-hand phrase: right, left, then together by default). */
 export function handsOf(l: Lick): Hand[] {
   if (!twoHands(l)) return [l.notes.length ? 'R' : 'L'];
   const h = l.plan?.hands ?? 'R-then-RL';
@@ -354,7 +354,7 @@ export function phraseDrill(l: Lick, key: number, hand: Hand = finalHand(l), o: 
   const mdl = (mk: PhraseMark | null | undefined) => (inst === 'piano' && mk ? { ...(mk.vel !== undefined ? { modelVel: mk.vel } : {}), ...(mk.stac ? { stac: true } : {}) } : {});
   if (hand !== 'L') l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] + (neck?.shift ?? 0), beat: n[1], dur: n[2], hand: 'R', chordTone: chordToneOf(n[0], n[1]), ...(neck ? tabOf(neck, i) : fin(fg?.rh[i])), ...mdl(l.marks?.[i]) }));
   if (hand !== 'R' && l.lh) l.lh.forEach((n, i) => notes.push({ pitch: ps.lh[i], beat: n[1], dur: n[2], hand: 'L', chordTone: chordToneOf(n[0], n[1]), ...fin(fg?.lh[i]), ...mdl(l.lhMarks?.[i]) }));
-  // a one-hand phrase practised "left": its notes an octave down in the left hand
+  // a one-hand phrase practiced "left": its notes an octave down in the left hand
   if (hand === 'L' && !l.lh?.length) {
     const lf = fg ? suggestFingers(l.notes.map((n, i) => ({ pitch: ps.rh[i] - 12, beat: n[1] })), 'L') : null;
     l.notes.forEach((n, i) => notes.push({ pitch: ps.rh[i] - 12, beat: n[1], dur: n[2], hand: 'L', ...fin(lf?.[i]), ...mdl(l.marks?.[i]) }));
@@ -562,7 +562,7 @@ export function keyStage(l: Lick, items: Record<string, ItemState>, key: number,
   return (r?.free ?? 0) < 1 ? 'free' : null;
 }
 
-/** The key to practise next: the first key in order not passed at the target (a started one first). */
+/** The key to practice next: the first key in order not passed at the target (a started one first). */
 export function nextKey(l: Lick, items: Record<string, ItemState>, inst: LickInstrument = 'piano', hand: Hand = finalHand(l)): number {
   const keys = keyOrder(l, planOf(l), inst);
   const open = keys.filter((k) => !keyPassed(l, items, k, inst, hand));
@@ -623,7 +623,7 @@ export function promotion(l: Lick, items: Record<string, ItemState>, book?: Lick
   return { rank, to: rank + 1, value: Math.min(0.95, Math.max(0, (n - lo) / (hi - lo))), need: hi - n };
 }
 
-/** Days practised (any key / hand), for the ticks under the map. */
+/** Days practiced (any key / hand), for the ticks under the map. */
 export function daysPractised(l: Lick, items: Record<string, ItemState>, inst: LickInstrument = 'piano'): number {
   const days = new Set<string>();
   for (const [id, st] of Object.entries(items)) {
@@ -734,5 +734,5 @@ export function instKeyCost(l: Lick, key: number, inst: LickInstrument, pitches:
   return 0;
 }
 
-/** A phrase as one instrument practises it: off the piano a two-hand phrase is its main line (the right hand). */
+/** A phrase as one instrument practices it: off the piano a two-hand phrase is its main line (the right hand). */
 export const forInstrument = (l: Lick, inst: LickInstrument): Lick => (inst !== 'piano' && l.lh?.length ? { ...l, lh: undefined } : l);

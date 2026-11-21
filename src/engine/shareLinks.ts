@@ -23,7 +23,7 @@ export function friendInviteText(name: string, code: string, lang: Lang): string
   const who = name.trim();
   return lang === 'he'
     ? `${who ? `הזמנה מ־${who}: ` : ''}בואו להתאמן איתי בחוש ה־7 — אימון שמיעה, שירה ונגינה, כמה דקות ביום.\nבקישור נשלחת אליי בקשת חברות, ונתחרה בליגה השבועית (קוד חבר: ${code}).`
-    : `${who ? `${who} wants to practise with you on` : 'Practise with me on'} The 7th Sense — ear training, singing and playing, a few minutes a day.\nThe link sends me your friend request — see you in this week's league (friend code: ${code}).`;
+    : `${who ? `${who} wants to practice with you on` : 'Practice with me on'} The 7th Sense — ear training, singing and playing, a few minutes a day.\nThe link sends me your friend request — see you in this week's league (friend code: ${code}).`;
 }
 
 /** The closing line of a result share (puzzle, daily, tempo best): an invitation, then the link on its own line. */

@@ -323,7 +323,7 @@ export function runSummary(g: RunGrade, l: 'en' | 'he'): string {
   return parts.join(l === 'en' ? '; ' : '; ');
 }
 
-/** Diagnosis by the weakest factor (spec K): what to practise next on this run. */
+/** Diagnosis by the weakest factor (spec K): what to practice next on this run. */
 export function runDiagnosis(g: RunGrade, l: 'en' | 'he'): string {
   const f = [
     { k: 'pitch', v: g.pitch, en: 'Weakest: pitch — slow the run to 60 % and land every note.', he: 'החלש ביותר: גובה — האטו את הראן ל־60% ונחתו על כל צליל.' },

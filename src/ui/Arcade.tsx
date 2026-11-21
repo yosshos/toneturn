@@ -724,7 +724,7 @@ export interface PracticeHub {
   exams?: () => void;
   pieces?: () => void;
   mixer?: () => void;
-  /** SPEC-MY-SONG: practise over your own recording, measured with the course's own machinery. */
+  /** SPEC-MY-SONG: practice over your own recording, measured with the course's own machinery. */
   mysong?: () => void;
 }
 /** Owner 2026-11-21: the rows that sit in the folded "More practice" sub-section, not among the big tiles. */

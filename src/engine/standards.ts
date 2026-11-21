@@ -1,5 +1,5 @@
 // Standards' changes (owner 2026-11-08): the chord progressions of well-known jazz tunes, to improvise over and to
-// practise voicings / comping / stride on. Chord progressions only — never the melodies or lyrics. Written in the usual
+// practice voicings / comping / stride on. Chord progressions only — never the melodies or lyrics. Written in the usual
 // lead-sheet keys; exercises transpose them. Bar text as in charts.ts ("|" between bars, two chords split a bar).
 
 import type { ChartStyle } from './charts';

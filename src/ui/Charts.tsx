@@ -219,7 +219,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const [scales, setScales] = useState<Record<number, ModeId>>(chart.scales ?? {});
   const [pickBar, setPickBar] = useState<number | null>(null);
   const [rulesRep, setRulesRep] = useState<RulesReport | null>(null);
-  // Practise this progression at the piano: a voicing (or a stride left hand), a comping rhythm, comp or LH + RH improv.
+  // Practice this progression at the piano: a voicing (or a stride left hand), a comping rhythm, comp or LH + RH improv.
   const [pv, setPv] = useState<ChartVoicing>('rootless');
   const [pr, setPr] = useState<CompRhythm>('charleston');
   const [pm, setPm] = useState<ChartMode>('comp');
@@ -722,10 +722,10 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         </div>
       )}
       {onDrill && !playing && (
-        <details className="ch-practise" data-chart-practise="1">
+        <details className="ch-practice" data-chart-practice="1">
           <summary>{lang === 'he' ? 'לתרגל בפסנתר: וויסינג, קומפינג, סטרייד' : 'Practice at the piano: voicings, comping, stride'}</summary>
           <div className="ch-rules">
-            <select value={pv} onChange={(e) => setPv(e.target.value as ChartVoicing)} aria-label="voicing" data-practise-voicing="1">
+            <select value={pv} onChange={(e) => setPv(e.target.value as ChartVoicing)} aria-label="voicing" data-practice-voicing="1">
               <optgroup label={lang === 'he' ? 'וויסינג' : 'Voicings'}>
                 {VOICINGS.map((v) => (
                   <option key={v} value={v}>
@@ -741,19 +741,19 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
                 ))}
               </optgroup>
             </select>
-            <select value={pr} onChange={(e) => setPr(e.target.value as CompRhythm)} disabled={pv.startsWith('stride')} aria-label="rhythm" data-practise-rhythm="1">
+            <select value={pr} onChange={(e) => setPr(e.target.value as CompRhythm)} disabled={pv.startsWith('stride')} aria-label="rhythm" data-practice-rhythm="1">
               {RHYTHMS.map((r) => (
                 <option key={r} value={r}>
                   {RHYTHM_NAME[r][lang]}
                 </option>
               ))}
             </select>
-            <select value={pm} onChange={(e) => setPm(e.target.value as ChartMode)} aria-label="mode" data-practise-mode="1">
+            <select value={pm} onChange={(e) => setPm(e.target.value as ChartMode)} aria-label="mode" data-practice-mode="1">
               <option value="comp">{lang === 'he' ? 'רק ליווי' : 'Comp only'}</option>
               <option value="improv">{lang === 'he' ? 'שמאל מלווה, ימין מאלתרת' : 'LH comps, RH improvises'}</option>
             </select>
           </div>
-          <button className="btn" disabled={!parsed.chords.length || parsed.errors.length > 0} onClick={() => (stop(), onDrill(chartKind(`txt:${encodeURIComponent(`${title.trim()}\n${text}`)}`, pv, pv.startsWith('stride') ? 'whole' : pr, pm), pv.startsWith('stride')))} data-practise-go="1">
+          <button className="btn" disabled={!parsed.chords.length || parsed.errors.length > 0} onClick={() => (stop(), onDrill(chartKind(`txt:${encodeURIComponent(`${title.trim()}\n${text}`)}`, pv, pv.startsWith('stride') ? 'whole' : pr, pm), pv.startsWith('stride')))} data-practice-go="1">
             {lang === 'he' ? 'להתחיל — הטמפו עולה כשנקי' : 'Start — the tempo climbs as it gets clean'}
           </button>
         </details>

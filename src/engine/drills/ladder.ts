@@ -320,7 +320,7 @@ export function todaysItems(states: ItemState[] | Record<string, ItemState>, can
   }
   for (const x of weakSorted) if (added < nWeak && !has(x.d)) (push(x.d, 'weak'), added++);
 
-  // 3. Maintenance: mastered (clean at ≥ 90 % of goal), longest since practised.
+  // 3. Maintenance: mastered (clean at ≥ 90 % of goal), longest since practiced.
   const maint = scored.filter((x) => !has(x.d) && x.st.cleanBpm >= 0.9 * x.st.goalBpm).sort((a, b) => b.days - a.days)[0];
   if (maint) push(maint.d, 'maintenance');
 
@@ -345,7 +345,7 @@ export function todaysItems(states: ItemState[] | Record<string, ItemState>, can
 }
 
 /**
- * Family level for the Technique map: the mean tempo band (1–7) of the clean tempos of the family's practised items
+ * Family level for the Technique map: the mean tempo band (1–7) of the clean tempos of the family's practiced items
  * (0 = nothing clean yet), one decimal. Pass the drills to convert bpm → notes/s exactly; otherwise 8ths are assumed.
  */
 export function familyLevel(states: ItemState[] | Record<string, ItemState>, family: FamilyId, drills?: Drill[] | Record<string, Drill>): number {

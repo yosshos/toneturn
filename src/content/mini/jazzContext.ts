@@ -70,7 +70,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to treat the brothers as a chain of keys. They are four names for one job: the V of the same I.', he: 'טעות נפוצה היא לראות באחים שרשרת של סולמות. הם ארבעה שמות לתפקיד אחד: ה־V של אותו I.' },
       },
       {
-        say: { en: 'Practise them in all twelve keys. In F the brothers are C7, E flat 7, G flat 7 and A7, and their shared diminished is E, G, B flat, D flat.', he: 'מתרגלים אותם בכל שנים־עשר הסולמות. בפה האחים הם C7, ‏E♭7, ‏G♭7 ו־A7, והמוקטן המשותף שלהם הוא מי, סול, סי במול, רה במול.' },
+        say: { en: 'Practice them in all twelve keys. In F the brothers are C7, E flat 7, G flat 7 and A7, and their shared diminished is E, G, B flat, D flat.', he: 'מתרגלים אותם בכל שנים־עשר הסולמות. בפה האחים הם C7, ‏E♭7, ‏G♭7 ו־A7, והמוקטן המשותף שלהם הוא מי, סול, סי במול, רה במול.' },
       },
       {
         say: { en: 'Bass players walk the brother roots: D, then D flat, then C is a chromatic line that every bassist knows.', he: 'נגני בס מהלכים על שורשי האחים: רה, ואז רה במול, ואז דו — קו כרומטי שכל בסיסט מכיר.' },
@@ -127,7 +127,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to resolve B flat 7 to E flat. Here it goes up a whole step, home to C.', he: 'טעות נפוצה היא לפתור את B♭7 למי במול. כאן הוא עולה טון שלם, הביתה לדו.' },
       },
       {
-        say: { en: 'Practise the backdoor in all twelve keys. In F it is B flat minor 7 to E flat 7 to F; in G it is C minor 7 to F7 to G. Say the chords before you play them.', he: 'מתרגלים את הדלת האחורית בכל שנים־עשר הסולמות. בפה זה B♭m7 ל־E♭7 לפה; בסול זה Cm7 ל־F7 לסול. אומרים את האקורדים לפני שמנגנים אותם.' },
+        say: { en: 'Practice the backdoor in all twelve keys. In F it is B flat minor 7 to E flat 7 to F; in G it is C minor 7 to F7 to G. Say the chords before you play them.', he: 'מתרגלים את הדלת האחורית בכל שנים־עשר הסולמות. בפה זה B♭m7 ל־E♭7 לפה; בסול זה Cm7 ל־F7 לסול. אומרים את האקורדים לפני שמנגנים אותם.' },
       },
     ],
   },
@@ -228,7 +228,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to rush the last bar. C major 7 is home: hold it, and let the band arrive with you.', he: 'טעות נפוצה היא למהר בתיבה האחרונה. Cmaj7 הוא הבית: החזיקו אותו, ותנו ללהקה להגיע איתכם.' },
       },
       {
-        say: { en: 'Practise it slowly first, two beats a chord, and say each new key as you reach it: A flat, E, C. Then try the same three keys from the other tonics, so the shape becomes yours in all twelve keys.', he: 'מתרגלים קודם לאט, שתי פעמות לאקורד, ואומרים כל סולם חדש כשמגיעים אליו: לה במול, מי, דו. אחר כך מנסים את אותם שלושה סולמות מטוניקות אחרות, כך שהצורה הופכת לשלכם בכל שנים־עשר הסולמות.' },
+        say: { en: 'Practice it slowly first, two beats a chord, and say each new key as you reach it: A flat, E, C. Then try the same three keys from the other tonics, so the shape becomes yours in all twelve keys.', he: 'מתרגלים קודם לאט, שתי פעמות לאקורד, ואומרים כל סולם חדש כשמגיעים אליו: לה במול, מי, דו. אחר כך מנסים את אותם שלושה סולמות מטוניקות אחרות, כך שהצורה הופכת לשלכם בכל שנים־עשר הסולמות.' },
       },
     ],
   },
@@ -278,7 +278,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'A common mistake is to slow down in the tag. Keep the time steady; only the last chord is held.', he: 'טעות נפוצה היא להאט בתג. שומרים על זמן יציב; רק האקורד האחרון מוחזק.' },
       },
       {
-        say: { en: 'Practise each intro and ending in all twelve keys, with the band or a click. Count the bars out loud, so you always know where the form starts and where the last chord falls.', he: 'מתרגלים כל פתיחה וכל סיום בכל שנים־עשר הסולמות, עם הלהקה או עם קליק. סופרים את התיבות בקול, כך שתמיד יודעים איפה הצורה מתחילה ואיפה נופל האקורד האחרון.' },
+        say: { en: 'Practice each intro and ending in all twelve keys, with the band or a click. Count the bars out loud, so you always know where the form starts and where the last chord falls.', he: 'מתרגלים כל פתיחה וכל סיום בכל שנים־עשר הסולמות, עם הלהקה או עם קליק. סופרים את התיבות בקול, כך שתמיד יודעים איפה הצורה מתחילה ואיפה נופל האקורד האחרון.' },
       },
     ],
   },

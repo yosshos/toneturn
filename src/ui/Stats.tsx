@@ -333,21 +333,12 @@ export function TotalsTiles({ tot, lang }: { tot: FrameTotals; lang: Lang }) {
 }
 
 /** Overview: who you are now — overall level, areas and ranks, the month's challenge, your records. */
-function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
+function OverviewV2({ lang, ratings, days }: { lang: 'he' | 'en'; ratings: Parameters<typeof domainValue>[0]; days: Record<string, { xp: number }> | undefined; progress: Progress }) {
   const he = lang === 'he';
   // 0.64 (owner): Progress is the active course's — its level, its radar.
-  const { active: course, mine, jazzOn } = useCourse();
+  const { active: course, mine } = useCourse();
   const cdef = courseOf(course);
   const { r, i, next, into } = courseLevel(course, ratings, mine);
-  const axes = courseAxes(course, ratings, progress, lang, jazzOn);
-  const val = axes.map((a) => Math.max(0.12, Math.min(1, a.v ?? 0.12)));
-  const AX = axes;
-  const R = 92;
-  const pt = (k: number, f: number) => {
-    const ang = (Math.PI * 2 * k) / AX.length - Math.PI / 2;
-    return [130 + Math.cos(ang) * R * f, 120 + Math.sin(ang) * R * f];
-  };
-  const poly = (f: (k: number) => number) => AX.map((_, k) => pt(k, f(k)).map((x) => x.toFixed(1)).join(',')).join(' ');
   const week = Array.from({ length: 7 }, (_, k) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - k));
@@ -374,22 +365,6 @@ function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; rati
           <i style={{ width: `${r === null ? 0 : into * 100}%` }} />
         </span>
       </section>
-      <section className="ov-card ov-radar" aria-label={he ? 'התחומים שלך' : 'Your areas'}>
-        <svg viewBox="0 0 260 245" role="img" aria-label={AX.map((a, k) => `${a.label} ${Math.round(val[k] * 100)}%`).join(', ')}>
-          {[1, 0.66, 0.33].map((f) => (
-            <polygon key={f} points={poly(() => f)} fill="none" stroke="var(--staff-line)" strokeWidth="1.5" />
-          ))}
-          <polygon points={poly((k) => val[k])} fill="var(--lemon)" stroke="var(--ink-c)" strokeWidth="3" strokeLinejoin="round" />
-          {AX.map((a, k) => {
-            const [x, y] = pt(k, 1.22);
-            return (
-              <text key={a.label} x={x} y={y + 4} textAnchor="middle" className="ov-axis">
-                {a.label}
-              </text>
-            );
-          })}
-        </svg>
-      </section>
       <section className="ov-card ov-week" aria-label={he ? 'השבוע' : 'This week'}>
         <div className="ov-head">
           <small>
@@ -412,7 +387,8 @@ function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; rati
 /** The radar of a course (0.64): ear & theory → its areas (with the jazz pack open, improvising too — the old Jazz
  *  course's axis, SPEC-JAZZ-FOLD); an instrument → its technique families (share of levels passed); voice → its vocal
  *  programs. Values 0..1, null = not started. */
-function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en', jazz = false): { label: string; v: number | null }[] {
+/** A course's radar axes (kept for the voice and ear courses' maps; Overview no longer draws a radar — owner 2026-11-21). */
+export function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0], progress: Progress, lang: 'he' | 'en', jazz = false): { label: string; v: number | null }[] {
   const skill = (k: SkillId, he: string, en: string) => ({ label: lang === 'he' ? he : en, v: ratings[k]?.n ? Math.max(0, Math.min(1, (ratings[k]!.r - 600) / 1000)) : null });
   // Owner 2026-11-19: the ear radar showed Voice (not this course's) and called improvising "Harmony" — now the axes
   // are what the course teaches and its level test measures (courses.ts COURSE_PLACEMENT_SKILLS).
@@ -517,7 +493,7 @@ function Fold({ title, open, children }: { title: string; open?: boolean; childr
 }
 
 /** Activity: how much and how well, over a chosen time frame — totals, the overall trend, the calendar, when you
- *  practise best, the highlights (best sessions + tricky answers), and the session history — each section folded. */
+ *  practice best, the highlights (best sessions + tricky answers), and the session history — each section folded. */
 export function ActivityView(props: ProgressTabsProps) {
   const { t, lang, progress } = props;
   const ps = P(progress);

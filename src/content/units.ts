@@ -272,7 +272,7 @@ export const UNIT_LESSON: Record<string, string> = {
   'game:chordfinder': 'g-chord-finder',
   // The chord & cadence builder (keys and guitar Tools).
   'game:chordbuilder': 'chord-builder',
-  // SPEC-MY-SONG: practise over your own recording (play along; transcribe in ear / jazz).
+  // SPEC-MY-SONG: practice over your own recording (play along; transcribe in ear / jazz).
   'game:mysong': 'my-song',
   'game:mysong-ear': 'my-song-ear',
   // Last, so it wins (curriculum audit 2026-11-19): the new theory and jazz lessons replace the stop-gaps.

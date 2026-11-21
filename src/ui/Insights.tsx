@@ -36,7 +36,7 @@ const TX = {
     tech: 'Technique', hands: 'Hand map', handsHint: 'Each finger’s loudness against the hand’s average', keys: 'Key map', keysHint: 'Misses by key (darker = weaker)',
     groove: 'Groove fingerprint', grooveHint: 'Where your notes land against the beat (− early, + late), and how wide they spread',
     conf: 'Confusion map', confHint: 'The pairs you mix up most', boss: 'Practice this pair', trouble: 'Trouble bars', practise: 'Practice', none: 'Not enough data yet — keep practicing and this fills in.',
-    profile: 'Your player profile', profileHint: 'From everything measured so far — a pattern shows only after it repeats.', strengths: 'Strengths', patterns: 'Recurring patterns', gone: 'Gone since you practised', isNew: 'new', weeksN: '{n} weeks running', building: 'Your profile builds as you practise: a few measured sessions and the first patterns appear.', clear: 'No recurring pattern right now.',
+    profile: 'Your player profile', profileHint: 'From everything measured so far — a pattern shows only after it repeats.', strengths: 'Strengths', patterns: 'Recurring patterns', gone: 'Gone since you practiced', isNew: 'new', weeksN: '{n} weeks running', building: 'Your profile builds as you practice: a few measured sessions and the first patterns appear.', clear: 'No recurring pattern right now.',
     early: 'early', late: 'late', back: 'Back', sub: { beat: 'Beats', '8': 'Eighths', '16': 'Sixteenths', trip: 'Triplets' } as Record<string, string>, bars: 'bars', weeks: 'Your timing by week', train: 'Train your groove',
   },
   he: {
@@ -223,7 +223,7 @@ const SOURCE_CARD: Record<ProfileSource, Parameters<typeof showsInsight>[0]> = {
 
 /**
  * Key mastery (owner 2026-11-14): per instrument the 12 keys across its skills, the weakest keys and one suggestion —
- * the skill with most weak keys, in those keys, at its goal tempo. Tapping Practise starts that skill in its weakest key.
+ * the skill with most weak keys, in those keys, at its goal tempo. Tapping Practice starts that skill in its weakest key.
  */
 function KeysCard({ keys, lang, onDrillKey, onDrills }: { keys: InstrumentKeys[]; lang: 'en' | 'he'; onDrillKey?: (family: FamilyId, key: number) => void; onDrills: () => void }) {
   const he = lang === 'he';
@@ -267,7 +267,7 @@ function KeysCard({ keys, lang, onDrillKey, onDrills }: { keys: InstrumentKeys[]
                 <small>{tip}</small>
               </span>
               {top && (
-                <button className="btn ghost small" onClick={() => (onDrillKey ? onDrillKey(top.family, ks[0]) : onDrills())} data-keys-practise={`${top.family}:${ks[0]}`}>
+                <button className="btn ghost small" onClick={() => (onDrillKey ? onDrillKey(top.family, ks[0]) : onDrills())} data-keys-practice={`${top.family}:${ks[0]}`}>
                   {he ? 'לתרגל' : 'Practice'}
                 </button>
               )}

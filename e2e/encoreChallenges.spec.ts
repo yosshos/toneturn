@@ -120,7 +120,7 @@ for (const lang of ['en', 'he'] as Lang[]) {
     // my lick remembers its share
     await page.locator('[data-share-open]').click();
     await expect(page.locator(`[data-chl="page"][data-chl-code="${code}"]`)).toBeVisible();
-    await expect(page.locator('[data-chl-practise]')).toBeVisible();
+    await expect(page.locator('[data-chl-practice]')).toBeVisible();
     await check(page, lang, 'page-mine');
 
     // the gallery: featured, friends, rising — a finite page
@@ -164,7 +164,7 @@ for (const lang of ['en', 'he'] as Lang[]) {
     expect(mine).toBeTruthy();
     expect(mine.best_bpm).toBeGreaterThan(0);
     expect(mine.flagged).toBe(false);
-    await expect(page.locator('[data-chl-practise]')).toBeVisible();
+    await expect(page.locator('[data-chl-practice]')).toBeVisible();
     await check(page, lang, 'page-taken');
 
     // "הדרן!" (a reaction), then "beat my tempo" makes a link

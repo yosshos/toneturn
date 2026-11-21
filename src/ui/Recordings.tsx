@@ -2,7 +2,7 @@
 // The library: a timeline by day → practice session → takes, filter chips, search, star, rename, folders, delete to a
 // 30-day bin, bulk select, and the storage meter. The player: the take's roll (MIDI) or waveform (audio), loop whole or
 // A–B (snapped to bars when the tempo is known), speed 50–125 % with the pitch kept, "only me / with the band / only
-// the band" for MIDI takes with a known backing, and "Practise this span" into Encore. Listening is not practice:
+// the band" for MIDI takes with a known backing, and "Practice this span" into Encore. Listening is not practice:
 // the route is outside the practice clock (practiceTime.ts NOT_PRACTICE).
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -413,7 +413,7 @@ function Library({ lang, onBack, onOpen }: { lang: Lang; onBack: () => void; onO
       {!bin && !selecting && <SessionRecToggle lang={lang} />}
 
       <div className="rec-timeline" data-rec-count={data.takes.length} data-rec-more={data.next ? '1' : '0'}>
-        {data.ready && !data.takes.length && (!facets.total && !bin ? <EmptyState glyph="record" text={RX.empty[lang]} data="recordings" action={{ label: lang === 'he' ? 'לתרגל' : 'Practise', onClick: () => (location.hash = '#/arcade') }} /> : <p className="rec-empty">{RX.emptyFilter[lang]}</p>)}
+        {data.ready && !data.takes.length && (!facets.total && !bin ? <EmptyState glyph="record" text={RX.empty[lang]} data="recordings" action={{ label: lang === 'he' ? 'לתרגל' : 'Practice', onClick: () => (location.hash = '#/arcade') }} /> : <p className="rec-empty">{RX.emptyFilter[lang]}</p>)}
         {byDay.map((d) => (
           <section key={d.day} className="rec-day">
             {!bin && <h2 className="rec-day-h">{d.label}</h2>}
@@ -1146,7 +1146,7 @@ function PlayerBody({ take, lang, onBack, onOpen }: { take: RecTake; lang: Lang;
       )}
 
       <div className="rec-actions">
-        <button className="btn primary" onClick={() => (stopAll(), openEncoreFromTake(take.id, ab))} data-rec-practise="1">
+        <button className="btn primary" onClick={() => (stopAll(), openEncoreFromTake(take.id, ab))} data-rec-practice="1">
           {RX.practise[lang]}
         </button>
         {take.itemId && (

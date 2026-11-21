@@ -68,7 +68,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'E♭9 (9) · B7♯11 (E♯) · D7♯9 (E♯)', he: 'E♭9 (9) · B7♯11 (E♯) · D7♯9 (E♯)' } },
       },
       {
-        say: { en: 'Practise it in all twelve keys: free time first, the note always on top, each chord moving to the nearest voicing. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, הצליל תמיד למעלה, וכל אקורד עובר לקול הקרוב. תורכם.' },
+        say: { en: 'Practice it in all twelve keys: free time first, the note always on top, each chord moving to the nearest voicing. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, הצליל תמיד למעלה, וכל אקורד עובר לקול הקרוב. תורכם.' },
       },
     ],
     more: [

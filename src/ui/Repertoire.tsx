@@ -263,7 +263,7 @@ function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; it
             </label>
             {x.topic && (
               <button className="link" onClick={() => onWay(item, { k: 'topic', topic: x.topic!, level: 1 })} data-memo-topic={x.topic}>
-                {he ? 'לתרגל' : 'Practise'} <Icon k="fwd" />
+                {he ? 'לתרגל' : 'Practice'} <Icon k="fwd" />
               </button>
             )}
           </li>

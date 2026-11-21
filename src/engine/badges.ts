@@ -147,7 +147,7 @@ function derived(x: BadgeInput): Derived {
   if (hit) return hit;
   const sd = x.statsDays ?? {};
   const days = [...new Set([...(x.days ?? []), ...Object.entries(sd).filter(([, d]) => d.items > 0 || d.sessions > 0).map(([d]) => d)])].sort();
-  // Most areas practised in any 7-day window.
+  // Most areas practiced in any 7-day window.
   let bestWeekAreas = 0;
   for (const d of Object.keys(sd)) {
     const areas = new Set<string>();

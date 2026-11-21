@@ -73,9 +73,9 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-chart-open]')).toHaveCount(1);
     // Standards' changes → practise at the piano as a voicing drill (opens the drill run with the chart).
     await page.locator('[data-standard="autumn"]').click();
-    await page.locator('[data-chart-practise] summary').click();
-    await page.locator('[data-practise-voicing]').selectOption('drop2');
-    await page.locator('[data-practise-go]').click();
+    await page.locator('[data-chart-practice] summary').click();
+    await page.locator('[data-practice-voicing]').selectOption('drop2');
+    await page.locator('[data-practice-go]').click();
     await expect(page.locator('.drill-run')).toBeVisible();
     await expect(page.locator('[data-song-chart="32"]')).toBeVisible();
     await page.locator('.screen-head .icon-btn').first().click();

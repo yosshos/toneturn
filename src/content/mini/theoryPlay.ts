@@ -117,7 +117,7 @@ export const LESSONS: MiniLesson[] = [
         play: [chord([48, 64, 70, 75], 1), notes([75, 73, 70, 68, 66], 0.24), chord([41, 57, 64, 69], 1.2)],
       },
       {
-        say: { en: 'Practise it slowly over a vamp first, then over a ii–V–I: a different pentatonic on each chord, chosen for the colour you want to hear, not for the key of the tune.', he: 'תרגלו קודם לאט מעל וואמפ, ואז מעל ii–V–I: פנטטוני אחר על כל אקורד, שנבחר לפי הצבע שאתם רוצים לשמוע, לא לפי הסולם של השיר.' },
+        say: { en: 'Practice it slowly over a vamp first, then over a ii–V–I: a different pentatonic on each chord, chosen for the colour you want to hear, not for the key of the tune.', he: 'תרגלו קודם לאט מעל וואמפ, ואז מעל ii–V–I: פנטטוני אחר על כל אקורד, שנבחר לפי הצבע שאתם רוצים לשמוע, לא לפי הסולם של השיר.' },
       },
       {
         say: { en: 'To keep: same five-note shape, new root, new colour.', he: 'מה לזכור: אותה צורה של חמישה צלילים, שורש חדש, צבע חדש.' },

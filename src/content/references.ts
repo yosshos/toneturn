@@ -1,4 +1,4 @@
-// Reference recordings (owner 2026-11-11): every standard the app practises (standards.ts) links out to one or two
+// Reference recordings (owner 2026-11-11): every standard the app practices (standards.ts) links out to one or two
 // leading recordings on Spotify and YouTube, so the player can go from the app straight to the original.
 // Linking out only — the app never embeds or plays their audio. Research and sources: docs/research/STANDARDS_REFERENCES.md.
 //
@@ -138,7 +138,7 @@ export function keyLabel(k: RecKey, lang: 'en' | 'he'): string {
   if (k.mode) return `${n} ${k.mode[lang]}`;
   return `${n} ${k.minor ? (lang === 'he' ? 'מינור' : 'minor') : lang === 'he' ? 'מז׳ור' : 'major'}`;
 }
-/** The note name of a pitch class (for "practise in E♭"). */
+/** The note name of a pitch class (for "practice in E♭"). */
 export const keyName = (pc: number): string => KEY_EN[pcMod(pc)];
 /** Same tonic (major / minor / mode don't count: the reference is the same tune). */
 export const sameKey = (a: RecKey, b: RecKey): boolean => pcMod(a.pc) === pcMod(b.pc);

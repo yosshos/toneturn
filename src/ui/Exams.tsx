@@ -1,5 +1,5 @@
 // Bagrut & conservatory (0.54): one place for exam preparation. Each exam lists its sections (what is asked, how many
-// items, the minutes); practise any section on its own, or sit the mock exam — all sections in order, timed — and get a
+// items, the minutes); practice any section on its own, or sit the mock exam — all sections in order, timed — and get a
 // readiness report by section afterwards (from the recap and the skill map). Data: src/content/bagrut.ts (research in
 // docs/research/BAGRUT_AND_CONSERVATORY.md).
 import { useState } from 'react';
@@ -57,7 +57,7 @@ export function ExamsScreen({ lang, onBack, onPractise, onMock }: { lang: Lang; 
                           · {s.items} {tx.items} · {s.minutes} {tx.min}
                         </small>
                       </span>
-                      <button className="btn ghost small" onClick={() => onPractise(s.topic, s.level)} data-exam-practise={s.id}>
+                      <button className="btn ghost small" onClick={() => onPractise(s.topic, s.level)} data-exam-practice={s.id}>
                         {tx.practise}
                       </button>
                     </li>

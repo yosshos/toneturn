@@ -58,7 +58,7 @@ export const ADV_QUEST_GAMES = ['rush-voicing', 'rush-scale', 'rush-standard', '
 const POOL: Record<string, Make> = {
   run10: (d) => ({ id: 'run10', title: { en: '10 right answers in a row', he: '10 תשובות נכונות ברצף' }, now: bestRun(d.events, d.day), target: 10, color: '#3AB8FF', glyph: 'intervals' }),
   steps2: (d) => ({ id: 'steps2', title: { en: 'Finish 2 path steps', he: 'לסיים 2 צעדים במסלול' }, now: d.stepsToday, target: 2, color: '#FFD43B', glyph: 'scales' }),
-  min10: (d) => ({ id: 'min10', title: { en: 'Practise 10 minutes', he: 'להתאמן 10 דקות' }, now: Math.round(d.minutesToday), target: 10, color: '#12C9B4', glyph: 'tempo' }),
+  min10: (d) => ({ id: 'min10', title: { en: 'Practice 10 minutes', he: 'להתאמן 10 דקות' }, now: Math.round(d.minutesToday), target: 10, color: '#12C9B4', glyph: 'tempo' }),
   sing3: (d) => ({ id: 'sing3', title: { en: 'Sing 3 melodies', he: 'לשיר 3 מנגינות' }, now: d.sessions.filter((s) => /sing|vocal/.test(s)).length, target: 3, color: '#12C9B4', glyph: 'sing' }),
   tech3: (d) => ({ id: 'tech3', title: { en: '3 technique sessions', he: '3 אימוני טכניקה' }, now: d.sessions.filter((s) => s.startsWith('tech') || s.startsWith('technique')).length, target: 3, color: '#FFD43B', glyph: d.course === 'drums' ? 'sticks' : d.course === 'guitar' ? 'guitar' : d.course === 'bass' ? 'bass' : 'keys' }),
   // Exam prep (0.67): what the Bagrut and entrance exams test — theory, reading, dictation, cadences.
@@ -73,7 +73,7 @@ const POOL: Record<string, Make> = {
   lick3: (d) => ({ id: 'lick3', title: { en: '3 clean lick takes', he: '3 ביצועים נקיים של ליקים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:lick:') && e.correct).length, target: 3, color: '#A78BFA', glyph: 'lick' }),
   tx2: (d) => ({ id: 'tx2', title: { en: 'Transcribe 2 phrases', he: 'לתמלל 2 משפטים' }, now: d.events.filter((e) => sameDay(e.at, d.day) && e.id.startsWith('g:tx:') && (e.score ?? 0) >= 0.7).length, target: 2, color: '#3AB8FF', glyph: 'transcribe' }),
   // Repertoire (SPEC-REPERTOIRE): a piece of the course's repertoire, and one from Blues & progressions.
-  rep1: (d) => ({ id: 'rep1', title: { en: 'Practise a repertoire piece', he: 'להתאמן על יצירה מהרפרטואר' }, now: d.sessions.filter((s) => parseRepLesson(s)?.course === d.course).length, target: 1, color: '#12C9B4', glyph: 'scales' }),
+  rep1: (d) => ({ id: 'rep1', title: { en: 'Practice a repertoire piece', he: 'להתאמן על יצירה מהרפרטואר' }, now: d.sessions.filter((s) => parseRepLesson(s)?.course === d.course).length, target: 1, color: '#12C9B4', glyph: 'scales' }),
   rep2: (d) => ({ id: 'rep2', title: { en: 'A piece from Blues & progressions', he: 'יצירה מבלוז ומהלכים' }, now: d.sessions.filter((s) => { const r = parseRepLesson(s); return !!r && r.course === d.course && repItem(r.course, r.id)?.tier === 2; }).length, target: 1, color: '#A78BFA', glyph: 'scales' }),
   // Game badges (gameBadges.ts): the newer drum games and the advanced games get a quest of their own — meet the goal
   // of your level once today (a measured run, gameTiers.clearsRun).

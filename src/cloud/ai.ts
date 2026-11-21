@@ -32,7 +32,7 @@ function scripted(kind: AiKind, r: AiRequest): AiResult {
   const nm = typeof r.context.nearMastery === 'string' && r.context.nearMastery ? r.context.nearMastery.split(' | ')[0] : '';
   const t: Record<AiKind, string> = {
     card: he ? 'הזיהוי של מז׳ור ומינור יציב. בפעם הבאה: שורות II–V ב־E♭ וב־A♭ ב־♩80.' : 'Major and minor are steady now. Next time: ii–V lines in E♭ and A♭ at ♩80.',
-    weekly: he ? `השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.${keysHe}${nm ? ` קרוב לשליטה: ${nm}.` : ''}` : `Your time steadied this week. The sixth/seventh mix-up still recurs — practise the two side by side.${keysEn}${nm ? ` Close to mastery: ${nm}.` : ''}`,
+    weekly: he ? `השבוע הזמן שלכם התייצב. הבלבול בין סקסטה לספטימה עדיין חוזר — שווה לתרגל את שתיהן זו לצד זו.${keysHe}${nm ? ` קרוב לשליטה: ${nm}.` : ''}` : `Your time steadied this week. The sixth/seventh mix-up still recurs — practice the two side by side.${keysEn}${nm ? ` Close to mastery: ${nm}.` : ''}`,
     explain: he ? 'הסבר לדוגמה (מצב סימולציה).' : 'A sample explanation (simulation mode).',
     hint: he ? 'הקשיבו לכיוון: האם הצליל השני עולה או יורד?' : 'Listen to the direction: does the second note go up or down?',
   };

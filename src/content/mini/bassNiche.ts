@@ -50,7 +50,7 @@ export const LESSONS: MiniLesson[] = [
         say: { en: 'Playing on top pushes the band forward; it suits fast tunes. Laid back makes a ballad or a slow blues heavy and warm.', he: 'נגינה על הקצה דוחפת את הלהקה קדימה; היא מתאימה לשירים מהירים. מאחורי הפעמה נותנת לבלדה או לבלוז איטי כובד וחום.' },
       },
       {
-        say: { en: 'Up-tempo, from 220 to over 300, the hand stays loose and the notes stay long. Practise at the edge of clean, then step back.', he: 'בטמפו מהיר, מ-220 ועד מעל 300, היד נשארת רפויה והצלילים נשארים ארוכים. מתרגלים בקצה של הנקי, ואז חוזרים צעד אחורה.' },
+        say: { en: 'Up-tempo, from 220 to over 300, the hand stays loose and the notes stay long. Practice at the edge of clean, then step back.', he: 'בטמפו מהיר, מ-220 ועד מעל 300, היד נשארת רפויה והצלילים נשארים ארוכים. מתרגלים בקצה של הנקי, ואז חוזרים צעד אחורה.' },
         play: [notes([33, 37, 40, 43, 38, 42, 45, 47], 0.3)],
       },
       {

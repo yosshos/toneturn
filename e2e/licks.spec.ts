@@ -27,7 +27,7 @@ test('lick trainer: library, a lick with its 12-key grid, a measured run — eac
   await expect(page.locator('[data-lick-useit]')).toBeDisabled();
   await fits(page);
   await noEmoji(page);
-  await page.locator('[data-lick-practise]').click();
+  await page.locator('[data-lick-practice]').click();
   await expect(page.locator('[data-lick-run="practice"]')).toBeVisible();
   await expect(page.locator('.drill-take')).toBeVisible();
   await fits(page);

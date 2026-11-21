@@ -48,7 +48,7 @@ function save(key: string, v: unknown, kv: KV | null = ls()): void {
 
 // ───────────────────────────── 1. the four-slot session ─────────────────────────────
 
-/** What a technique item practises, for the tunes and listening slots. */
+/** What a technique item practices, for the tunes and listening slots. */
 export type Concept = 'shells' | 'rootless' | 'guide' | 'stride' | 'walking' | 'comping' | 'harmonise' | 'lines' | 'ballad';
 
 /**

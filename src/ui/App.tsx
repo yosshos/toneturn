@@ -1162,7 +1162,7 @@ export function App() {
       const r = ratingsOf(progress).agility;
       openGenerated(runsWorkshop(runLevelFor(r?.n ? r.r : null)), undefined, false, { key: 'runs-workshop', title: t.skillNames.agility });
     });
-  // Practise a skill at the player's level: the lesson on that skill's ladder that fits their rating.
+  // Practice a skill at the player's level: the lesson on that skill's ladder that fits their rating.
   const practiceSkill = (k: SkillId) => {
     const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
     if (rec.kind === 'puzzle') return openPuzzle();
@@ -1537,7 +1537,7 @@ export function App() {
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
     if (def) return gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, x.state === 'tested' ? { keepStep: step.id } : {}) : undefined }));
-    // A step that can't build a session (0.68.1): never a dead tap — practise its skill instead.
+    // A step that can't build a session (0.68.1): never a dead tap — practice its skill instead.
     pendingStep.current = null;
     practiceSkill(step.skill);
   };
@@ -1605,9 +1605,9 @@ export function App() {
     if (!t0) return null;
     return store.recordCompletion({ lessonId, lessonVersion: 1, sessionId: `tech-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: c0, total: t0, xp, xpCounted: true, missed: [], items: [], ...(settings?.activeCourse ? { course: settings.activeCourse } : {}) });
   };
-  /** A progression from Charts practised as a drill (voicings / comping / stride). */
+  /** A progression from Charts practiced as a drill (voicings / comping / stride). */
   const chartQueue = useRef<Drill[] | null>(null);
-  /** Repertoire (SPEC-REPERTOIRE): the item being practised (its result is recorded when the practice ends) and the
+  /** Repertoire (SPEC-REPERTOIRE): the item being practiced (its result is recorded when the practice ends) and the
    *  item page to come back to. */
   const repOpen = useRef<{ course: RepCourse; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
   const repShown = useRef<string | null>(null);
@@ -1722,7 +1722,7 @@ export function App() {
       return go('path');
     }
     if (from === 'workout') chartQueue.current = null;    if (from === 'repertoire') {
-      // A repertoire item practised as drills: one result for the item (score = clean takes / takes), with the course.
+      // A repertoire item practiced as drills: one result for the item (score = clean takes / takes), with the course.
       chartQueue.current = null;
       const rp = repOpen.current;
       repOpen.current = null;

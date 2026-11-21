@@ -10,7 +10,7 @@ const MAX_FOLLOWUPS = 4;
 
 const TX = {
   he: { explain: 'עוד הסבר', hint: 'רמז', loading: 'חושב…', ask: 'שאלת המשך', send: 'לשאול', close: 'סגירה', note: 'נכתב בעזרת בינה מלאכותית ועלול לטעות.', hintNote: 'שאלה שנעזרתם בה ברמז נחשבת "כמעט".', limit: 'אפשר להמשיך לתרגל — ההסבר כאן כשתצטרכו.' },
-  en: { explain: 'Explain more', hint: 'Hint', loading: 'Thinking…', ask: 'Ask a follow-up', send: 'Ask', close: 'Close', note: 'Written with AI and may be wrong.', hintNote: 'A question you took a hint on counts as "almost".', limit: 'Keep practising — the explanation stays here when you need it.' },
+  en: { explain: 'Explain more', hint: 'Hint', loading: 'Thinking…', ask: 'Ask a follow-up', send: 'Ask', close: 'Close', note: 'Written with AI and may be wrong.', hintNote: 'A question you took a hint on counts as "almost".', limit: 'Keep practicing — the explanation stays here when you need it.' },
 };
 
 export function AiExplain({ kind, lang, naming, context, jazz, onClose }: { kind: 'explain' | 'hint'; lang: 'he' | 'en'; naming?: string; context: Record<string, unknown>; jazz?: boolean; onClose: () => void }) {

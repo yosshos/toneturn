@@ -52,7 +52,7 @@ export function LessonAside({ lang, index, total, firstTry, answered, title }: {
 export function TodayAside({ lang, progress, streak, puzzleRows, onPuzzle, onDaily, onExams, onImprov }: { lang: Lang; progress: Progress; streak: number; puzzleRows: string[][] | undefined; onPuzzle: () => void; onDaily: () => void; onExams: () => void; onImprov: () => void }) {
   const he = lang === 'he';
   const today = localDay(new Date());
-  // this week (Monday first): practised days
+  // this week (Monday first): practiced days
   const days = new Set(progress.history.map((h) => localDay(new Date(h.completedAt))));
   const now = new Date();
   const monday = new Date(now);

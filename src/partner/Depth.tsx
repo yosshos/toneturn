@@ -256,7 +256,7 @@ export function DepthScreen({ lang, onBack, onOpen, partner = ACTIVE_PARTNER }: 
 
       <section className="dp-sec">
         <h2>{L(lang, 'The maps', 'המפות')}</h2>
-        <p className="dp-sub">{L(lang, 'Open a map, then tap a family or topic to practise it. The number is its levels.', 'פתחו מפה והקישו על משפחה או נושא כדי לתרגל. המספר הוא מספר השלבים.')}</p>
+        <p className="dp-sub">{L(lang, 'Open a map, then tap a family or topic to practice it. The number is its levels.', 'פתחו מפה והקישו על משפחה או נושא כדי לתרגל. המספר הוא מספר השלבים.')}</p>
         <div className="dp-maps">
           {DEPTH_MAPS.map((m) => (
             <details key={m.id} className="dp-map" data-depth-map={m.id} open={wide}>
@@ -344,7 +344,7 @@ export function DepthScreen({ lang, onBack, onOpen, partner = ACTIVE_PARTNER }: 
           <div className="dp-fit" role="table">
             <div className="dp-fit-row head" role="row">
               <span role="columnheader">{L(lang, 'Course or topic', 'קורס או נושא')}</span>
-              <span role="columnheader">{L(lang, 'Practised here as', 'מתורגל כאן כ־')}</span>
+              <span role="columnheader">{L(lang, 'Practiced here as', 'מתורגל כאן כ־')}</span>
             </div>
             {partner.courseMap.map((r) => (
               <div key={r.course} className="dp-fit-row" role="row" data-depth-fit={r.course}>

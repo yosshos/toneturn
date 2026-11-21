@@ -1,4 +1,4 @@
-// Key mastery (docs/SPEC-AI.md §"Key mastery", owner 2026-11-14): every technique and jazz skill is practised in all 12
+// Key mastery (docs/SPEC-AI.md §"Key mastery", owner 2026-11-14): every technique and jazz skill is practiced in all 12
 // keys. Per skill (a drill family, or a family's drill kind) and per key: a 0–1 mastery from the clean tempo against
 // the item's target (or the skill's top tempo), the accuracy, and how recently it was played; and a status. A key with
 // too few takes is "untried", never "weak" (the same rule as the profile: no judgement without enough measures).

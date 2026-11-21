@@ -29,7 +29,7 @@ export const REP_TIERS: { n: RepTier; name: Bi; blurb: Bi }[] = [
   { n: 4, name: { en: 'Advanced', he: 'מתקדם' }, blurb: { en: 'Rhythm changes, Coltrane, odd meters', he: 'ריתם צ׳יינג׳ס, קולטריין, משקלים מורכבים' } },
 ];
 
-/** How an item is practised — each one is measured by the screen it opens. */
+/** How an item is practiced — each one is measured by the screen it opens. */
 export type RepWay =
   /** A songbook song as a drill (piano melody / chords / both; guitar strummed chords or melody; bass melody). */
   | { k: 'song'; song: string; part: 'melody' | 'chords' | 'both' }

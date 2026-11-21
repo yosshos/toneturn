@@ -168,7 +168,7 @@ export function withLadderFacts(
   for (const fam of [...catalog(), ...guitarCatalog()]) {
     if (!opts.families.includes(fam.id)) continue;
     const start = opts.start[fam.id as FamilyId] ?? 1;
-    // Levels the playing test proved are ✓ by test (they stay open to practise): below the start by number, and by
+    // Levels the playing test proved are ✓ by test (they stay open to practice): below the start by number, and by
     // difficulty every level at or below the hardest of them (levels put in front later count too).
     const tested = testedLevelIds(fam.levels, start, techDifficulty);
     for (const lv of fam.levels) {

@@ -1,5 +1,5 @@
 import { EmptyState } from './EmptyState';
-// "My song" in every course (SPEC-MY-SONG): the player's own recordings, kept on this device, practised with each
+// "My song" in every course (SPEC-MY-SONG): the player's own recordings, kept on this device, practiced with each
 // course's own measuring — keys / guitar / bass / drums play along (timing against the detected beat, notes against
 // the line where it came out cleanly), ear / jazz transcribe its phrases. The slow-down tool's waveform and speeds are
 // shared (SlowDown.tsx); the slowing keeps the pitch (WSOLA) so the take stays on the recording's clock. A half-done

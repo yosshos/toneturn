@@ -500,7 +500,7 @@ function giftRpc(d: Db, fn: string, a: Record<string, unknown>): unknown {
   for (const t of together) {
     if (t.status === 'pending' && now - Date.parse(t.created_at) > INVITE_TTL_MS) t.status = 'ended';
     if (t.status === 'active' && t.accepted_at && now - Date.parse(t.accepted_at) > SESSION_TTL_MS) t.status = 'ended';
-    // the mock friends answer my invite at once, as if they had been practising a while (five minutes in already)
+    // the mock friends answer my invite at once, as if they had been practicing a while (five minutes in already)
     if (t.status === 'pending' && t.from === me() && friends.includes(t.to)) {
       t.status = 'active';
       t.accepted_at = new Date(now - 6 * 60_000).toISOString();
@@ -537,7 +537,7 @@ function giftRpc(d: Db, fn: string, a: Record<string, unknown>): unknown {
       need(kind === 'fermata' || kind === 'dedication', 'bad kind');
       need(mayGift(a.p_friend), 'not friends');
       need(okDay(a.p_day), 'bad day');
-      need(Number(a.p_measured_ms ?? 0) >= 300_000, 'practise first');
+      need(Number(a.p_measured_ms ?? 0) >= 300_000, 'practice first');
       need(!gifts.some((g) => g.from === me() && g.day === a.p_day), 'one gift a day');
       need(!spam(), 'slow down');
       if (kind === 'dedication') need(String(a.p_ref ?? '').startsWith('phrase1:') && String(a.p_ref).length <= 6000, 'bad phrase');
@@ -587,7 +587,7 @@ function giftRpc(d: Db, fn: string, a: Record<string, unknown>): unknown {
       t!.status = a.p_accept ? 'active' : 'declined';
       if (a.p_accept) {
         t!.accepted_at = new Date(now - 6 * 60_000).toISOString();
-        // the mock friend practises along: five minutes in already, active now
+        // the mock friend practices along: five minutes in already, active now
         t!.from_ms = TOGETHER_MIN_MS;
         t!.from_active = new Date(now).toISOString();
       }

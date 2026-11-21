@@ -268,7 +268,7 @@ export async function duetAction(friend: string, action: 'invite' | 'accept' | '
   if (error) throw error;
 }
 
-/** A friendly nudge (one per friend per day; the server checks their setting and that they have not practised). */
+/** A friendly nudge (one per friend per day; the server checks their setting and that they have not practiced). */
 export async function nudge(friend: string, message: 'practise' | 'duet'): Promise<'ok' | 'done' | 'off' | 'error'> {
   const sb = supabase();
   if (!sb) return 'error';

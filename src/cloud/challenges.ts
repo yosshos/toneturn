@@ -409,7 +409,7 @@ export async function phraseTraces(l: Lick, inst: LickInstrument): Promise<TakeT
 }
 
 /**
- * Post my result for every shared phrase I practise (taken or my own), when it changed. Results come only from
+ * Post my result for every shared phrase I practice (taken or my own), when it changed. Results come only from
  * measured takes (the drill items); nothing is sent while the flag is off or for a phrase whose id is unknown here.
  */
 export async function syncChallengeResults(book: LickBook | undefined, items: Record<string, ItemState>): Promise<number> {

@@ -1,7 +1,7 @@
 // The player profile (docs/SPEC-AI.he.md §8, owner 2026-11-14): one picture from every measure the app already keeps —
 // the technique model, the groove fingerprint, the confusion map and the Ear Index — with a timeline. Each week keeps a
 // small snapshot of the patterns that were showing, so a pattern can be "new", "recurring for N weeks", or "gone"
-// (and gone only counts when the player kept practising: no practice proves nothing). Only measured, repeated
+// (and gone only counts when the player kept practicing: no practice proves nothing). Only measured, repeated
 // findings make it in (the models' own sample thresholds, plus a confidence floor). Pure.
 //
 // The digest at the end is what a coach (stage B) would phrase — never more than what was measured here.
@@ -31,7 +31,7 @@ export interface ProfileItem {
   hypothesis?: boolean;
 }
 
-/** How much practice stood behind the measures (to tell "gone" from "not practised"). */
+/** How much practice stood behind the measures (to tell "gone" from "not practiced"). */
 export interface ProfileCounters {
   takes: number;
   taps: number;
@@ -194,7 +194,7 @@ export function profileItems({ model, groove, pairs, ear, now, keys, titleOf }: 
       source: 'confusions',
       tone: 'pattern',
       text: { en: `You mix up ${c.right.en} and ${c.given.en} (${c.both} times)`, he: `מתבלבלים בין ${c.right.he} ל־${c.given.he} (${c.both} פעמים)` },
-      note: { en: 'Practise the two side by side until they sound different', he: 'לתרגל את שניהם זה לצד זה עד שהם נשמעים שונים' },
+      note: { en: 'Practice the two side by side until they sound different', he: 'לתרגל את שניהם זה לצד זה עד שהם נשמעים שונים' },
       confidence: Math.min(1, c.both / 10),
       action: c.gen ? { kind: 'topic', id: c.gen.id, level: c.gen.level } : undefined,
     });
@@ -234,7 +234,7 @@ function streak(h: ProfileHistory, id: string): number {
 
 /**
  * The profile as shown: strengths, patterns (recurring ones first) and patterns that went away while the player kept
- * practising. `h` should already hold this week's snapshot (withSnapshot).
+ * practicing. `h` should already hold this week's snapshot (withSnapshot).
  */
 export function buildProfile(items: ProfileItem[], h: ProfileHistory, c: ProfileCounters, k = { strengths: 2, patterns: 3, gone: 2 }): Profile {
   const rows: ProfileRow[] = items.map((i) => {

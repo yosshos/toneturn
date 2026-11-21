@@ -27,7 +27,7 @@ export const courseGames = (course: CourseId, jazzOn: boolean): string[] => (jaz
 /** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
  *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
  *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines.
- *  SPEC-MY-SONG: "My song" (practise over your own recording, measured) in every course. */
+ *  SPEC-MY-SONG: "My song" (practice over your own recording, measured) in every course. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
   // Owner 2026-11-21: by importance — Technique first, then Encore (SPEC-PHRASE-STUDIO), then (jazz open) Charts and

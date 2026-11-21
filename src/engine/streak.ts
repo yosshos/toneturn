@@ -40,7 +40,7 @@ const weekOf = (d: string) => {
 };
 
 export interface StreakState {
-  /** Streak as of today (today counts once practised; an unpractised today does not break it yet). */
+  /** Streak as of today (today counts once practiced; an unpractised today does not break it yet). */
   count: number;
   practicedToday: boolean;
   /** Freezes ready to protect a missed day. */

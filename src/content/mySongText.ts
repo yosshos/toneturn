@@ -24,7 +24,7 @@ export const MS = {
   save: t('Save', 'שמירה'),
   last: t('Last', 'אחרון'),
   never: t('Not played yet', 'עוד לא נוגן'),
-  open: t('Practise', 'לתרגל'),
+  open: t('Practice', 'לתרגל'),
   back: t('Back', 'חזרה'),
   resumed: t('Picking up where you stopped.', 'ממשיכים מאיפה שעצרתם.'),
   section: t('Section', 'קטע'),

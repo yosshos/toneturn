@@ -777,17 +777,20 @@
   box-shadow: none;
 }
 
-/* An instrument course's skill map (owner 2026-11-21): its sections, each with its families and levels passed */
+/* An instrument course's skill map (owner 2026-11-21): its sections, each with its families and levels passed. The open
+   area keeps the card's inner margin, the families are rows (name · levels) and Practice is a small button. */
 .skillmap .radar.sections { width: 100%; max-width: 420px; display: block; margin: 0 auto 6px; }
 .skillmap .radar.sections .sm-axis { fill: var(--ink); font-weight: 700; }
 .skillmap .radar.sections .sm-axis.off { fill: var(--ink-soft); font-weight: 500; }
+.skillmap .radar.sections .sm-axis.sel { fill: var(--purple); text-decoration: underline; }
 .skillmap .sm-next { margin: 0 0 10px; font-size: 14px; }
-.skillmap [data-section] > summary { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name n' 'bar bar'; gap: 6px 10px; cursor: pointer; list-style: none; }
-.skillmap [data-section] > summary::-webkit-details-marker { display: none; }
+.skillmap [data-section] > summary { grid-template-columns: 1fr auto; grid-template-areas: 'name n' 'bar bar'; gap: 6px 10px; }
 .skillmap [data-section] > summary b { grid-area: name; }
-.skillmap [data-section] > summary small { grid-area: n; color: var(--ink-soft); }
-.skillmap .sm-bar { grid-area: bar; display: block; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
-.skillmap .sm-bar i { display: block; height: 100%; background: var(--purple); }
-.skillmap .sm-fams { list-style: none; margin: 4px 0 6px; padding: 0; display: grid; gap: 4px; font-size: 14px; }
-.skillmap .sm-fams li { display: flex; justify-content: space-between; gap: 10px; }
-.skillmap .sm-fams small { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.skillmap [data-section] > summary small { grid-area: n; color: var(--ink-soft); font-size: 0.8rem; }
+.skillmap [data-section] .sm-bar { grid-area: bar; }
+.skillmap [data-section] .sm-bar i { display: block; height: 100%; border-radius: 99px; background: var(--purple); }
+.skillmap [data-section] > .field-hint { margin: 0 14px 8px; font-size: 0.85rem; }
+.skillmap .sm-fams { list-style: none; margin: 0 14px 10px; padding: 8px 0 0; border-top: 1px solid var(--line); display: grid; gap: 6px; font-size: 0.9rem; }
+.skillmap .sm-fams li { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 12px; min-width: 0; }
+.skillmap .sm-fams small { color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.skillmap [data-section] > .link { display: inline-block; margin: 0 14px 12px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card-2); font: 700 0.85rem/1.2 var(--font); color: var(--ink); text-decoration: none; }

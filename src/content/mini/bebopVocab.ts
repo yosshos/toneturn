@@ -64,7 +64,7 @@ export const LESSONS: MiniLesson[] = [
         play: [notes([43, 46, 47, 48], 0.4)],
       },
       {
-        say: { en: 'How to practise: one approach type at a time, slowly, into every chord tone. Say the target before you play it, then let the lead-in find it.', he: 'איך מתרגלים: סוג גישה אחד בכל פעם, לאט, אל כל צליל באקורד. אמרו את צליל המטרה לפני שאתם מנגנים אותו, ואז תנו לצליל הגישה למצוא אותו.' },
+        say: { en: 'How to practice: one approach type at a time, slowly, into every chord tone. Say the target before you play it, then let the lead-in find it.', he: 'איך מתרגלים: סוג גישה אחד בכל פעם, לאט, אל כל צליל באקורד. אמרו את צליל המטרה לפני שאתם מנגנים אותו, ואז תנו לצליל הגישה למצוא אותו.' },
       },
       {
         say: { en: 'To keep: target on the beat, approach just before it, from below, above, two half steps away or the 5th.', he: 'מה לזכור: המטרה על הפעמה, הגישה רגע לפניה, מלמטה, מלמעלה, משני חצאי טונים או מהקווינטה.' },

@@ -52,7 +52,7 @@ export const PIVOT_LESSON: MiniLesson = {
       show: { text: { en: 'C6 · C°7', he: 'C6 · C°7' } },
     },
     {
-      say: { en: 'Practise it in all twelve keys: first in free time, then on the click. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, אחר כך עם הקליק. תורכם.' },
+      say: { en: 'Practice it in all twelve keys: first in free time, then on the click. Your turn.', he: 'מתרגלים בכל שנים־עשר הסולמות: קודם בזמן חופשי, אחר כך עם הקליק. תורכם.' },
       play: [chord([48, 52, 55, 59], 0.8), notes(MAJ7)],
       show: { text: { en: 'top → drop → climb', he: 'למעלה ← ירידה ← עלייה' } },
     },

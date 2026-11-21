@@ -213,7 +213,7 @@ test('Encore: "Practise this span" in the recordings player opens trim on that t
   await expect(player).toBeVisible();
   await page.locator('[data-rec-seta]').click();
   const ab = (await player.getAttribute('data-rec-ab'))!.split(':').map(Number);
-  await page.locator('[data-rec-practise]').click();
+  await page.locator('[data-rec-practice]').click();
   await expect(page.locator('[data-encore="trim"]')).toBeVisible();
   expect(page.url()).toContain(`take=${encodeURIComponent(id)}`);
   const sel = (await page.locator('[data-encore="trim"]').getAttribute('data-sel'))!.split('-').map(Number);

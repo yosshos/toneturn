@@ -965,7 +965,7 @@ export const LESSONS: MiniLesson[] = [
         show: { text: { en: 'A A♭ G ✗ · C B B♭ ✓', he: 'A A♭ G ✗ · C B B♭ ✓' } },
       },
       {
-        say: { en: 'Practise slowly, the click on 2 and 4, from every degree of C7.', he: 'תרגלו לאט, הקליק על 2 ו־4, מכל דרגה של C7.' },
+        say: { en: 'Practice slowly, the click on 2 and 4, from every degree of C7.', he: 'תרגלו לאט, הקליק על 2 ו־4, מכל דרגה של C7.' },
       },
       {
         say: { en: 'In real music: the line from 1 with B added is what David Baker later called the dominant bebop scale. Charlie Parker’s and Bud Powell’s lines are full of these passing half steps.', he: 'במוזיקה אמיתית: הקו מ־1 עם סי מוסף הוא מה שדייוויד בייקר כינה מאוחר יותר סולם ביבופ דומיננטי. הקווים של צ׳רלי פרקר ובאד פאוול מלאים בחצאי טונים עוברים כאלה.' },

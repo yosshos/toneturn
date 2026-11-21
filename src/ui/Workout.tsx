@@ -238,7 +238,7 @@ function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, on
   );
 }
 
-/** An area preset belongs to the courses that practise that area (no "voice focus" in the guitar course). */
+/** An area preset belongs to the courses that practice that area (no "voice focus" in the guitar course). */
 const PRESET_AREA: Partial<Record<Preset, DomainId>> = { ear: 'pitch', rhythm: 'time', reading: 'reading', voice: 'voice', instrument: 'instrument', 'four-slot': 'instrument' };
 
 /** The editor (W17): sticky total, per block − / + · ✕ · drag; ⋯ for lock and swap; Add; presets; save as default. */

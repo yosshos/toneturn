@@ -33,7 +33,7 @@ export type TakeFn = (state: ItemState, evs: RatingEvent[], xp: number, m?: { ve
 const TX = {
   en: {
     title: 'Licks', all: 'All', review: 'Review', mine: 'My licks', none: 'Nothing due — your licks are fresh.', noneMine: 'Licks you know (3 stars) and your own transcribed phrases land here.',
-    practise: 'Practise', useIt: 'Use it', add: 'Add to my licks', remove: 'Remove from my licks', locked: 'Use it opens at 3 stars (three keys at the target tempo).',
+    practise: 'Practice', useIt: 'Use it', add: 'Add to my licks', remove: 'Remove from my licks', locked: 'Use it opens at 3 stars (three keys at the target tempo).',
     keys: 'Keys', tempo: 'Tempo', lv: 'Level', due: 'due', start: 'Start', stop: 'Stop', listen: 'Hear it',
     useHow: (n: string) => `Improvise over the band. Use "${n}" at least twice — in any key the band is in, over the right chords.`,
     found: 'Found', exact: 'the lick', shape: 'its shape', wrongChord: 'over another chord', passed: 'Used it — it is yours.', notYet: 'Not twice over the right chords yet.',
@@ -364,7 +364,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
-  // Encore phrases (Lick v3) live in the same book but practise in Encore (their own plan and map).
+  // Encore phrases (Lick v3) live in the same book but practice in Encore (their own plan and map).
   const own = (book.own ?? []).filter((l) => !(l.v === 3 || l.id.startsWith('enc-')));
   const all = [...LICKS, ...own];
   const due = dueLicks(book.review).filter((id) => lickById(id, own));
@@ -476,7 +476,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         <DrillScore drill={preview} ds={drillSettingsOf(settings)} lang={lang} />
         <LickGrid l={l} inst={inst} items={itemsNow} lang={lang} />
         <div className="drill-actions lk-actions">
-          <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practise="1">
+          <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1">
             {tx.practise} · {keyName(key)}
           </button>
           <button className="btn" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1">
@@ -611,8 +611,8 @@ function AbsorbFlow({ lang, lickId, stars, onPractise }: { lang: Lang; lickId: s
               </small>
             )}
             {now && x.n === 2 && (
-              <button className="btn small" onClick={onPractise} data-flow-practise="1">
-                {he ? 'לתרגל בסולמות' : 'Practise in keys'}
+              <button className="btn small" onClick={onPractise} data-flow-practice="1">
+                {he ? 'לתרגל בסולמות' : 'Practice in keys'}
               </button>
             )}
             {now && x.n !== 2 && (

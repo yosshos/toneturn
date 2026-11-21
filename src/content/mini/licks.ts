@@ -57,7 +57,7 @@ export const LESSONS: MiniLesson[] = [
         play: [mel([67, 66, 65, 64, 62, 60, 59, 57, 55], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 1])],
       },
       {
-        say: { en: 'Practise slowly enough to be clean, then climb. The ladder raises the tempo only after clean takes, and a level counts only on two different days.', he: 'מתרגלים לאט מספיק כדי להיות נקיים, ואז מטפסים. הסולם מעלה את הטמפו רק אחרי ביצועים נקיים, ושלב נחשב רק בשני ימים שונים.' },
+        say: { en: 'Practice slowly enough to be clean, then climb. The ladder raises the tempo only after clean takes, and a level counts only on two different days.', he: 'מתרגלים לאט מספיק כדי להיות נקיים, ואז מטפסים. הסולם מעלה את הטמפו רק אחרי ביצועים נקיים, ושלב נחשב רק בשני ימים שונים.' },
       },
       {
         say: { en: 'Learn the lick in the keys the music lives in: around the circle of fourths, the way ii–V–Is move through standards. After C comes F, then B flat, then E flat.', he: 'לומדים את הליק בסולמות שבהם המוזיקה חיה: סביב מעגל הקוורטות, כמו שמהלכי ii–V–I זזים בסטנדרטים. אחרי דו בא פה, אחר כך סי במול, ואז מי במול.' },

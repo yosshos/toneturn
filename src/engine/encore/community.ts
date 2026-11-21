@@ -260,7 +260,7 @@ export interface ChallengeResult {
   source: InputSource;
   /** Hash of the best take's onset deviations + velocities (an admin may ask for that take on a report). */
   digest: string;
-  /** Measured takes at tempo (all keys) and days practised: the server's ladder checks. */
+  /** Measured takes at tempo (all keys) and days practiced: the server's ladder checks. */
   takes: number;
   days: number;
   /** A MIDI take that looks like a sequencer: graded, never on boards. */
