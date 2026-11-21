@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.112.0',
+    date: '2026-11-21',
+    en: ['Practice by key: the 12 keys as cards (major, minor, melodic / harmonic minor modes, symmetric), each key page opening with its continuous session and a row per kind of exercise — scales and modes, arpeggios, cadences, patterns, control and dynamics, Barry Harris, voicings, lines — with your best tempo, accuracy and timing; general technique below. By topic, a family splits the same way, and its card shows in how many of the 12 keys you play it well.'],
+    he: ['תרגול לפי סולם: 12 הסולמות ככרטיסים (מז׳ור, מינור, מודים של מינור מלודי והרמוני, סימטריים); כל דף סולם נפתח באימון רציף, ואחריו שורה לכל סוג תרגיל — סולמות ומודים, ארפג׳יו, קדנצות, תבניות, שליטה ודינמיקה, בארי האריס, ווייסינגים, קווים — עם הטמפו הנקי הגבוה, הדיוק והקצב; טכניקה כללית למטה. לפי נושא, כל משפחה מתחלקת באותו אופן, והכרטיס שלה מראה בכמה מ־12 הסולמות היא כבר טובה.'],
+  },
+  {
     version: '0.111.1',
     date: '2026-11-21',
     en: ['Continuous practice asks for the key order before it starts: circle of fifths up or down, chromatic up or down.'],

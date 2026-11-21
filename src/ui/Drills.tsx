@@ -91,6 +91,11 @@ import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
+import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
+import { buildKeyIndex } from '../engine/drills/keyIndex';
+import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
+/** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
+const GENERAL_FAMILY = (id: string): boolean => FAMILY_FACETS[id]?.scope === 'neutral';
 
 type Lang = 'he' | 'en';
 const T = {
@@ -254,7 +259,7 @@ export interface DrillsProps {
   onPieces?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
   const tx = T[lang];
@@ -267,6 +272,16 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
   const [coachTitle, setCoachTitle] = useState<string | null>(null);
+  // Practice by key (SPEC-PRACTICE-KEYS): the view and the scale-family tab, remembered on this device.
+  const [pView, setPViewState] = useState<PracticeView>(() => lsGet('toneturn.practiceView') === 'key' ? 'key' : 'topic');
+  const setPView = (v: PracticeView) => (setPViewState(v), lsSet('toneturn.practiceView', v));
+  const [kGroup, setKGroupState] = useState<FacetGroup>(() => (lsGet('toneturn.keyGroup') as FacetGroup | null) ?? 'major');
+  const setKGroup = (g: FacetGroup) => (setKGroupState(g), lsSet('toneturn.keyGroup', g));
+  const keyIdx = useMemo(
+    () => (ds.instrument === 'drums' || (pView !== 'key' && view.k !== 'keypage') ? null : buildKeyIndex(shownFamilies({ ...ds, bassTuning }), ds.keyOrder)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(ds), bassTuning, pView, view.k === 'keypage'],
+  );
   useEffect(() => (setRunIdx(null), setCoachTitle(null)), [view]);
   const head = (title: string, back: () => void) => (
     <header className="screen-head">
@@ -408,6 +423,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         />
       </main>
     );
+  if (view.k === 'keypage' && keyIdx)
+    return (
+      <main className="drills-screen" data-drills="keypage">
+        {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
+        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+      </main>
+    );
   if (view.k === 'family')
     return (
       <main className="drills-screen" data-drills="family">
@@ -445,8 +467,35 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onVoice={onVoice}
       onKit={(start) => setView({ k: 'kit', start })}
       onKitSave={(k) => onSettings({ drumKit: k })}
+      pView={pView}
+      onPView={setPView}
+      keyGrid={
+        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
+      }
     />
   );
+}
+
+const lsGet = (k: string): string | null => {
+  try {
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+};
+const lsSet = (k: string, v: string) => {
+  try {
+    localStorage.setItem(k, v);
+  } catch {
+    /* fine */
+  }
+};
+/** "C major" / "C minor" / "C: melodic & harmonic minor modes" / "C: symmetric". */
+function keyPageTitle(root: number, g: FacetGroup, lang: Lang): string {
+  const he = lang === 'he';
+  if (g === 'major') return he ? `${keyName(root)} מז׳ור` : `${keyName(root)} major`;
+  if (g === 'minor') return he ? `${keyName(root, true)} מינור` : `${keyName(root, true)} minor`;
+  return `${keyName(root)}: ${g === 'mmhm' ? (he ? 'מודים של מינור מלודי והרמוני' : 'melodic & harmonic minor modes') : he ? 'סימטריים' : 'symmetric'}`;
 }
 
 
@@ -514,7 +563,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; he: string } =>
   drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : piano && k === 'ear' ? { en: 'Pianist’s ear', he: 'שמיעה לפסנתרנים' } : piano && k === 'styles' ? { en: 'Jazz piano', he: 'פסנתר ג׳אז' } : TOPIC_NAME[k];
 
-function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, onAddOns }: { onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, onAddOns, pView, onPView, keyGrid }: { /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
@@ -559,6 +608,7 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
               <i key={l.id} className={levelDone(l, items, ds.keyOrder) ? 'on' : l.id === cur.id ? 'now' : ''} />
             ))}
           </span>
+          {!drums && lv > 0 && <KeysCount cells={skillKeysOf(f.id, items)?.cells} lang={lang} />}
           {!drums && lv > 0 && <HeatRow cells={skillKeysOf(f.id, items)?.cells} />}
         </button>
       );
@@ -593,6 +643,11 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       </div>
       )}
       {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
+      {!drums && onPView && <ViewSwitch view={pView ?? 'topic'} onView={onPView} lang={lang} />}
+      {!drums && pView === 'key' && keyGrid ? (
+        keyGrid(<div className="drill-families">{fams.filter((f) => GENERAL_FAMILY(f.id)).map(famCard)}</div>)
+      ) : (
+      <>
       {drums && onKit && <KitCard kit={settings.drumKit} lang={lang} onSetup={onKit} onKit={onKitSave} />}
       {/* DRUMS_NICHE_PLAN d-song L8: drum your own song's form over a typed chord chart. */}
       {drums && <DrumSongCard lang={lang} onRun={onRun} />}
@@ -670,6 +725,8 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
           </div>
         </>
       )}
+      </>
+      )}
       <div className="drill-actions">
         <button className="btn ghost" onClick={onSettings} data-drills-settings="1">
           {tx.settings}
@@ -682,6 +739,12 @@ function Hub({ lang, ds, settings, items, head, onFamily, onRun, onSettings, onC
       </div>
     </main>
   );
+}
+
+/** Owner 2026-11-21: on a topic card, in how many of the 12 keys the skill is played well (fine or strong). */
+function KeysCount({ cells, lang }: { cells?: KeyCell[] | null; lang: Lang }) {
+  const n = (cells ?? []).filter((c) => c.status === 'ok' || c.status === 'strong').length;
+  return <small data-keys-count={n}>{lang === 'he' ? `סולמות: ${n} / 12` : `Keys: ${n} / 12`}</small>;
 }
 
 /** The family card's key strip (key mastery): 12 thin cells in fifths order, a marker under weak keys. Piano, guitar and bass. */
@@ -748,10 +811,25 @@ function FamilyLesson({ family, settings }: { family: string; settings: Settings
 function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
   const cur = currentLevel(f, items, ds.keyOrder, start);
   const [open, setOpen] = useState<string>(cur.id);
+  // SPEC-PRACTICE-KEYS §3: the family split by scale family (major · minor · melodic/harmonic modes · symmetric) where
+  // it has more than one; a level shows under every group one of its items is in.
+  const levelGroups = useMemo(() => new Map(f.levels.map((l) => [l.id, new Set(l.specs.flatMap((_, k) => specDrills(l, k, ds.keyOrder).slice(0, 1).map((d) => facetGroup(d))))])), [f, ds.keyOrder]);
+  const famGroups = (['major', 'minor', 'mmhm', 'symmetric'] as FacetGroup[]).filter((g) => f.levels.some((l) => levelGroups.get(l.id)?.has(g)));
+  const [grp, setGrp] = useState<FacetGroup | 'all'>('all');
+  const levels = grp === 'all' ? f.levels : f.levels.filter((l) => levelGroups.get(l.id)?.has(grp));
   return (
     <div className="drill-levels">
       {ds.instrument !== 'drums' && <SkillKeyMap lang={lang} ds={ds} f={f} items={items} start={start} onRun={onRun} />}
-      {f.levels.map((l) => {
+      {famGroups.length > 1 && (
+        <div className="chips key-groups" role="tablist" aria-label={lang === 'he' ? 'משפחת סולמות' : 'Scale family'}>
+          {(['all', ...famGroups] as const).map((g) => (
+            <button key={g} type="button" role="tab" aria-selected={grp === g} className={`chip ${grp === g ? 'on' : ''}`} onClick={() => setGrp(g)} data-family-group={g}>
+              {g === 'all' ? (lang === 'he' ? 'הכל' : 'All') : GROUP_NAME[g][lang]}
+            </button>
+          ))}
+        </div>
+      )}
+      {levels.map((l) => {
         const done = levelDone(l, items, ds.keyOrder);
         const stars = levelStars(l, items, ds.keyOrder);
         return (

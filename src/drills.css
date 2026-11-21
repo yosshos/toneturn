@@ -622,3 +622,47 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .orn-legend .orn-item { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; color: var(--ink); }
 .orn-legend .orn-icon { width: 22px; height: 11px; flex: none; stroke: currentColor; fill: none; }
 .orn-legend .orn-icon text { fill: currentColor; stroke: none; }
+
+/* Practice by key (owner 2026-11-21, SPEC-PRACTICE-KEYS): Topic | Key switch, 12 key cards in the key-mastery fills,
+   a key page with the continuous session first and a row per kind of exercise. One screen on a phone: 3 cards a row. */
+.practice-view { display: inline-flex; gap: 2px; padding: 3px; margin: 4px 0 10px; border-radius: 12px; background: var(--card-2); }
+.practice-view button { all: unset; box-sizing: border-box; padding: 7px 14px; border-radius: 10px; font: 700 14px/1.2 var(--font); color: var(--ink-soft); cursor: pointer; }
+.practice-view button.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.practice-view button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.key-groups { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.key-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .key-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.key-card { all: unset; box-sizing: border-box; display: grid; gap: 4px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--outline); background: var(--card); color: var(--ink); cursor: pointer; min-width: 0; }
+.key-card b { font: 400 22px/1 var(--display); }
+.key-card small { color: var(--ink-soft); font-size: 12px; }
+.key-card.st-untried { border-style: dashed; border-color: var(--line-strong); }
+.key-card.st-ok { background: color-mix(in srgb, var(--lilac) 35%, var(--card)); }
+.key-card.st-strong { background: var(--purple); border-color: var(--purple); color: var(--paper); }
+.key-card.st-strong small { color: color-mix(in srgb, var(--paper) 80%, transparent); }
+.key-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.kp-bar { display: block; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+.kp-bar i { display: block; height: 100%; background: var(--purple); border-radius: 2px; }
+.key-card.st-strong .kp-bar { background: color-mix(in srgb, var(--paper) 30%, transparent); }
+.key-card.st-strong .kp-bar i { background: var(--paper); }
+.key-page { display: grid; gap: 8px; }
+.kp-legend { margin: 0; }
+.kp-row { display: grid; gap: 6px; }
+.kp-row-head { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name n' 'bar bar'; gap: 6px 10px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--card-2); cursor: pointer; }
+.kp-row-head b { grid-area: name; font-size: 15px; }
+.kp-row-head small { grid-area: n; color: var(--ink-soft); font-size: 13px; }
+.kp-row-head .kp-bar { grid-area: bar; }
+.kp-row-head:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.kp-entries { list-style: none; margin: 0 0 4px; padding: 0 0 0 0; display: grid; gap: 4px; }
+.kp-entry { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--card) 70%, transparent); border: 1px solid var(--line); cursor: pointer; min-width: 0; }
+.kp-entry.done { border-color: color-mix(in srgb, var(--purple) 45%, var(--line)); }
+.kp-name { display: grid; gap: 1px; min-width: 0; font-size: 14px; }
+.kp-name small { color: var(--ink-soft); font-size: 11px; }
+.kp-nums { color: var(--ink-soft); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kp-entry:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.kc-dots { display: flex; gap: 4px; }
+.kc-dots i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line-strong); }
+.kc-dots i.tried { border-color: var(--purple); }
+.kc-dots i.some { background: color-mix(in srgb, var(--purple) 55%, var(--card)); border-color: var(--purple); }
+.kc-dots i.strong { background: var(--purple); border-color: var(--purple); }
+.key-card.st-strong .kc-dots i { border-color: var(--paper); }
+.key-card.st-strong .kc-dots i.some, .key-card.st-strong .kc-dots i.strong { background: var(--paper); }
