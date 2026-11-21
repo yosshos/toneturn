@@ -93,3 +93,28 @@ test('sound kept closed by the browser: the coach demo still skips, and a bar of
   await page.locator('[data-coach-skip-demo]').click();
   await expect(page.locator('[data-coach="take"]')).toBeVisible({ timeout: 3000 });
 });
+
+test('sound kept closed: Turn sound on opens a fresh audio channel and the bar goes away', async ({ page }) => {
+  // The audio channel the app opened first is stuck (a failed device or buffer); a fresh one runs.
+  await page.addInitScript(() => {
+    const real = AudioContext.prototype.resume;
+    const desc = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, 'state')!;
+    // every context that asked to start before __fresh stays stuck; a context made after it runs
+    const stuck = new WeakSet<object>();
+    const w = window as unknown as { __fresh?: boolean };
+    AudioContext.prototype.resume = function (this: AudioContext) {
+      if (!w.__fresh) stuck.add(this);
+      return stuck.has(this) ? new Promise(() => {}) : real.call(this);
+    };
+    Object.defineProperty(AudioContext.prototype, 'state', { get(this: AudioContext) { return stuck.has(this) || !w.__fresh ? 'suspended' : desc.get!.call(this); }, configurable: true });
+  });
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-coach-open="scales"]').click();
+  await page.locator('[data-coach-start]').click();
+  await expect(page.locator('[data-sound-blocked]')).toBeVisible({ timeout: 5000 });
+  await page.evaluate(() => ((window as unknown as { __fresh: boolean }).__fresh = true));
+  await page.locator('[data-sound-open]').click();
+  await expect(page.locator('[data-sound-blocked]')).toHaveCount(0, { timeout: 5000 });
+  expect(await page.evaluate(() => (window as unknown as { __sound: { audioRunning: boolean } }).__sound.audioRunning)).toBe(true);
+});

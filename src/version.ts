@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.3',
+    date: '2026-11-21',
+    en: ['Fix: “Turn sound on” now opens a fresh audio channel on the default output when the stuck one will not start.'],
+    he: ['תיקון: "להפעיל צליל" פותח עכשיו ערוץ שמע חדש על התקן ברירת המחדל, כשהערוץ התקוע לא מתחיל.'],
+  },
+  {
     version: '0.110.2',
     date: '2026-11-21',
     en: ['Fix: when the browser kept the sound closed, Play, Listen and the coach’s demo waited for ever. Now they go on, Skip always works, and a small bar offers to turn the sound on.'],

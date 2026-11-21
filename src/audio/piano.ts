@@ -1238,7 +1238,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       // Settings → MIDI → live play latency: 'low' asks for the smallest buffer (Chromium/Firefox; Safari ignores it).
       try {
-        this.ctx = new Ctor({ latencyHint: latencyHintOf(this.latencyMode) });
+        this.ctx = new Ctor({ latencyHint: this.safeAudio ? 'interactive' : latencyHintOf(this.latencyMode) });
       } catch {
         this.ctx = new Ctor({ latencyHint: 'interactive' });
       }
@@ -1258,7 +1258,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       }, 1500);
       this.sweepTimer ??= setInterval(() => this.sweep(), 30_000);
     }
-    if (this.sinkId !== null) void this.setOutputDevice(this.sinkId);
+    if (this.sinkId !== null && !this.safeAudio) void this.setOutputDevice(this.sinkId);
     if (this.ctx.state === 'running') return this.setBlocked(false);
     // 0.110.2: never wait for ever. A browser that keeps the sound closed (no tap yet, or a stuck output device) left
     // resume() pending, and every Play / Listen / coach demo waiting on it froze (owner 2026-11-21). Wait a moment, then
@@ -1267,6 +1267,36 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     const ok = await Promise.race([ctx.resume().then(() => true, () => false), new Promise<boolean>((r) => setTimeout(() => r(false), UNLOCK_WAIT_MS))]);
     this.setBlocked(!ok && ctx.state !== 'running');
     if (!ctx.onstatechange) ctx.onstatechange = () => ctx.state === 'running' && this.setBlocked(false);
+  }
+
+  /** After a repair: the default output and buffer (a chosen device or the low-latency buffer may be what failed). */
+  private safeAudio = false;
+
+  /**
+   * The "Turn sound on" tap (0.110.3): resume; if the browser still keeps it closed, close this audio context and open a
+   * fresh one on the default output with the default buffer (the decoded samples are kept). Returns the new state.
+   */
+  async repair(): Promise<string> {
+    const old = this.ctx;
+    if (old) {
+      await Promise.race([old.resume().catch(() => {}), new Promise((r) => setTimeout(r, 800))]);
+      if (old.state === 'running') {
+        this.setBlocked(false);
+        return 'running';
+      }
+      old.onstatechange = null;
+      void old.close().catch(() => {});
+    }
+    // the per-graph state, as renderOffline's clone resets it; banks and settings stay
+    Object.assign(this, {
+      ctx: null, voices: new Set(), active: new Map(), fxPlaying: new Set(), live: new Map(), liveHeld: new Set(), liveSostenuto: new Set(),
+      liveSampleBus: null, liveSynthBus: null, pedalSend: null, leslie: null, tineTrem: null, drone: null, roomWet: null, delayNode: null, delayFb: null, strips: {}, liveRoute: false,
+    });
+    this.safeAudio = true;
+    await this.unlock();
+    const st = this.ctx ? (this.ctx as AudioContext).state : 'none';
+    console.warn('[sound] repair:', st);
+    return st;
   }
 
   /** The sound could not start (SoundBlocked shows a one-tap fix). */
