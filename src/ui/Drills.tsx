@@ -92,7 +92,7 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
-import { buildKeyIndex, keySession, pickWeekKey, weekOf, type KeyIndex } from '../engine/drills/keyIndex';
+import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
@@ -1039,7 +1039,10 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const cTimer = useRef<number | null>(null);
   const cSpeech = useRef<AbortController | null>(null);
   useEffect(() => () => (cTimer.current && window.clearTimeout(cTimer.current), cSpeech.current?.abort()), []);
-  const drill = coach ? cTake!.drill : (edited[i] ?? queue[i]);
+  // the dynamics lens (owner 2026-11-21) on the coach's takes too: the same exercise with a shape or touch, picked on the intro
+  const [cLens, setCLensState] = useState<Lens>(() => (lsGet('toneturn.lens') as Lens | null) ?? 'none');
+  const setCLens = (l: Lens) => (setCLensState(l), lsSet('toneturn.lens', l));
+  const drill = coach ? withLens(cTake!.drill, cLens, true) : (edited[i] ?? queue[i]);
   // Hands-free (owner 2026-11-21, app-wide): a list of items (a path step, the workout, a level) moves on by itself too —
   // after a take, one line (spoken / shown), then again / slower / the next stage / the next item, no button. Pause
   // holds it; any button of the review takes over. Singing and writing items keep their buttons.
@@ -1345,6 +1348,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
               ))}
             </div>
           )}
+          <div className="chips coach-order" role="radiogroup" aria-label={he ? 'עדשת דינמיקה' : 'Dynamics lens'}>
+            {LENSES.map((l) => (
+              <button key={l} type="button" role="radio" aria-checked={cLens === l} className={`chip ${cLens === l ? 'on' : ''}`} onClick={() => setCLens(l)} data-coach-lens={l} title={LENS_NAME[l][lang]}>
+                {LENS_SHORT[l][lang]}
+              </button>
+            ))}
+          </div>
           <button
             className="btn mega primary"
             onClick={() => {

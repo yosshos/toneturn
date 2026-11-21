@@ -182,10 +182,22 @@ export const LENS_NAME: Record<Lens, { en: string; he: string }> = {
   'even-f': { en: 'Even forte', he: 'פורטה אחיד' },
   staccato: { en: 'Staccato', he: 'סטקטו' },
 };
+/** The lens chips' short names (the full name is the tooltip and the take's title). */
+export const LENS_SHORT: Record<Lens, { en: string; he: string }> = {
+  none: { en: 'As written', he: 'כמו שכתוב' },
+  cresc: { en: 'Cresc.', he: 'קרשנדו' },
+  accent4: { en: 'Accents', he: 'הטעמות' },
+  'even-p': { en: 'p', he: 'p' },
+  'even-f': { en: 'f', he: 'f' },
+  staccato: { en: 'Staccato', he: 'סטקטו' },
+};
 const LENS_ROLES = new Set(['scale', 'arpeggio', 'pattern']);
 
-/** A drill through a lens; unchanged for 'none', for chords and for items with their own dynamics already. */
-export function withLens(d: Drill, lens: Lens): Drill {
+/**
+ * A drill through a lens; unchanged for 'none', for chords and for items with their own dynamics already. `keepId`: the
+ * coach's takes stay on the item (it follows the item's climb), a crescendo take counting as a take of the item.
+ */
+export function withLens(d: Drill, lens: Lens, keepId = false): Drill {
   if (lens === 'none') return d;
   const fc = keyFacet(d);
   if (!fc || !LENS_ROLES.has(fc.role) || d.spec.dynamics || d.goal.dynamics) return d;
@@ -199,7 +211,7 @@ export function withLens(d: Drill, lens: Lens): Drill {
   const dynamics = lens === 'staccato' ? undefined : lens;
   return {
     ...d,
-    itemId: `${d.itemId}:lens-${lens}`,
+    itemId: keepId ? d.itemId : `${d.itemId}:lens-${lens}`,
     notes,
     spec: { ...d.spec, ...(dynamics ? { dynamics } : { articulation: 'staccato' as const }) },
     goal: { ...d.goal, ...(dynamics ? { dynamics } : { articulation: 'staccato' as const }) },
