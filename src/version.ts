@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.5',
+    date: '2026-11-21',
+    en: ['The narrator says abbreviations in words: “one octave, right hand, 66 beats a minute”, not “1 oct, RH”.'],
+    he: ['הקריין אומר ראשי תיבות במילים: "one octave, right hand" במקום "1 oct, RH".'],
+  },
+  {
     version: '0.110.4',
     date: '2026-11-21',
     en: ['Fix: the metronome click during a take is now as loud as the count-in (it was lost under the keyboard).'],

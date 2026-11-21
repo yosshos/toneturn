@@ -30,4 +30,16 @@ describe('speakable', () => {
     expect(speakable(`ככה זה נשמע: ${unspoken('טָה טִי-טִי')}.`, 'he')).toBe('ככה זה נשמע.');
     expect(shown(`Count it: ${unspoken('ta ti-ti')}.`)).toBe('Count it: ta ti-ti.');
   });
+  it('says the abbreviations of titles in words (owner 2026-11-21)', () => {
+    expect(speakable('Now: C major · 1 oct · RH, ♩66.', 'en')).toBe('Now: C major, one octave, right hand, 66 beats a minute.');
+    expect(speakable('G major cadence · I–IV–V–I · root on top · HT', 'en')).toBe('G major cadence, one, four, five, one, root on top, hands together');
+    expect(speakable('C major · 2 oct · LH · even mf', 'en')).toBe('C major, 2 octaves, left hand, even mezzo forte');
+    expect(speakable('cresc. out, dim. back · p then f', 'en')).toBe('crescendo out, diminuendo back, piano then forte');
+    expect(speakable('עכשיו: סולם דו · 2 אוק׳ · יד ימין, ♩60.', 'he')).toBe('עכשיו: סולם דו, 2 אוקטבות, יד ימין, 60 לדקה.');
+  });
+
+  it('leaves single letters that are not dynamics alone', () => {
+    expect(speakable('Play f and g', 'en')).toBe('Play f and g');
+    expect(speakable('Cdim. then G7', 'en')).toBe('C diminished. then G seven');
+  });
 });

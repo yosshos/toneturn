@@ -55,9 +55,37 @@ function romanWords(tok: string, l: Lang): string | null {
   return `${acc}${NUM[l][n]}${q}`;
 }
 
+/**
+ * Abbreviations the screen uses to stay short (owner 2026-11-21: "1 oct, RH" was read letter by letter): the narrator
+ * says the words. Runs before the symbols are dropped, so "♩66" and the "·" between title parts are read too.
+ */
+const DYN_W: Record<string, { en: string; he: string }> = {
+  ppp: { en: 'triple piano', he: 'פיאניסימו מאוד' }, pp: { en: 'pianissimo', he: 'פיאניסימו' }, p: { en: 'piano', he: 'פיאנו' },
+  mp: { en: 'mezzo piano', he: 'מצו פיאנו' }, mf: { en: 'mezzo forte', he: 'מצו פורטה' }, f: { en: 'forte', he: 'פורטה' },
+  ff: { en: 'fortissimo', he: 'פורטיסימו' }, fff: { en: 'triple forte', he: 'פורטיסימו מאוד' }, sfz: { en: 'sforzando', he: 'ספורצנדו' },
+};
+function expandAbbrev(t: string, l: Lang): string {
+  const en = l === 'en';
+  // the tempo: "♩66" / "♩ = 66" (prose that says "BPM" is left as recorded)
+  t = t.replace(/♩\s*=?\s*(\d{2,3})/g, (_, n) => (en ? ` ${n} beats a minute` : ` ${n} לדקה`));
+  // the parts of a title: "C major · 2 oct · RH" — a short pause between them
+  t = t.replace(/\s*[·•]\s*/g, ', ');
+  // hands
+  t = t.replace(/\bRH\b/g, en ? 'right hand' : 'יד ימין').replace(/\bLH\b/g, en ? 'left hand' : 'יד שמאל').replace(/\bHT\b|\bHS\b/g, (m) => (m === 'HT' ? (en ? 'hands together' : 'ידיים יחד') : en ? 'hands separately' : 'ידיים לחוד'));
+  // octaves: "1 oct" / "2 oct" / "2 אוק׳"
+  t = t.replace(/\b(\d)\s*oct\b\.?/g, (_, n) => (n === '1' ? 'one octave' : `${n} octaves`));
+  t = t.replace(/(\d)\s*אוק[׳']/g, (_, n) => (n === '1' ? 'אוקטבה אחת' : `${n} אוקטבות`));
+  // a technique title's dynamics ("even mf", "p then f", "cresc. out, dim. back"); prose listing the marks stays as recorded
+  t = t.replace(/\b(cresc|dim)\. (out|back)\b/g, (_, d, w) => `${d === 'cresc' ? (en ? 'crescendo' : 'קרשנדו') : en ? 'diminuendo' : 'דימינואנדו'} ${w}`);
+  t = t.replace(/\beven (pp|p|mp|mf|f|ff)\b/g, (_, d) => `even ${DYN_W[d][l]}`);
+  t = t.replace(/\bp then f\b/g, en ? 'piano then forte' : 'פיאנו ואז פורטה');
+  return t;
+}
+
 /** Narration text → words a speech engine says naturally. Pure. */
 export function speakable(text: string, l: Lang): string {
   let t = text.replace(/⟦[^⟧]*⟧/g, ' ');
+  t = expandAbbrev(t, l);
   // Emoji, arrows and decorative symbols are for the eye.
   t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{266C}\u{2670}-\u{27BF}\u{2B00}-\u{2BFF}↗↘⌣⌢→←↑↓⬆⬇♩♪♫·•|]/gu, ' ').replace(/️/g, '');
   // Progressions: "iv7–♭VII7–I" → "four minor seven, flat seven seven, one".
