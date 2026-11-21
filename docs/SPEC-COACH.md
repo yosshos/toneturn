@@ -39,7 +39,7 @@ Owner, 2026-11-21, after trying piano technique → scales:
 
 ## Tests
 
-- `tests/coach.test.ts`:
+- `tests/practiceCoach.test.ts`:
   - a new player's start;
   - the climb to a new step after 2 keys;
   - miss → again → slower → parked → reviewed;
