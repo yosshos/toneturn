@@ -42,6 +42,7 @@ import { withSplash, type CcSample } from '../engine/drills/drumSplash';
 import { kitKind, openness, VOICE_NOTE, type KitProfile } from '../engine/drumKit';
 import { acousticHits, acousticOk, acousticOnsets, drillAcousticVoices } from '../engine/drumAcoustic';
 import type { NoteEvent } from '../engine/lesson';
+import { express } from '../audio/expression';
 import { fakeTake, fakeTakeOn, fakeLiveOn } from './fakeTake';
 import { liveGrade, liveMarkable, pocketRowKeys, type LiveTake } from '../engine/drills/liveGrade';
 import { PocketMeter } from './PocketMeter';
@@ -840,7 +841,10 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean, clock?: (bea
   if (drums) for (const n of unisonLine(drill)) out.push({ midi: n.midi, start: at(n.beat), duration: len(n.beat, n.len), velocity: n.vel, inst: n.inst === 'bass' ? 'bass' : 'piano' });
   for (const n of drill.listen?.notes ?? [])
     for (const m of n.midi) out.push(n.perc ? { midi: m, start: at(n.beat), duration: len(n.beat, n.dur), velocity: n.vel ?? 0.45, perc: n.perc } : { midi: m, start: at(n.beat), duration: len(n.beat, n.dur), velocity: n.inst === 'bass' ? 0.85 : 0.5, inst: n.inst === 'bass' ? ('bass' as const) : ('piano' as const) });
-  return out;
+  // owner 2026-11-21: the band plays like a band — accents, the ride's skip notes back, the bass on 1, a human touch
+  // (a few ms; the grading clock is the click, not the band). Ear calls (listen.notes) stay as written.
+  if (!out.length || drill.listen?.notes?.length) return out;
+  return express(out, { bpm: 60 / beatS, feel: drill.spec.swing ? 'swing' : 'straight', timingMs: 5, amount: 0.8, seed: Math.round(beatS * 1000) });
 }
 
 /** Items whose prep time has run (or was skipped) in this session: prep comes once per item, not before every take. */
