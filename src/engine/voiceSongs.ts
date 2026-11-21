@@ -24,12 +24,13 @@ export function fromSongbook(s: SongDef): VoiceSong {
     const inBar = chords.filter((c) => Math.floor(c.at / s.meter + 1e-9) === b);
     bars.push(inBar.length ? inBar.map((c) => chordName(c, 0, true)).join(' ') : '%');
   }
-  const style: ChartStyle = s.meter === 3 || s.meter === 1.5 ? 'waltz' : s.style === 'spiritual' ? 'ballad' : BAND_STYLES[Math.abs(hash(s.id)) % BAND_STYLES.length];
+  // A swung tune (feel 'swing') is sung over the swing band, a jazz ballad over the ballad band.
+  const style: ChartStyle = s.feel === 'swing' ? 'swing' : s.feel === 'ballad' ? 'ballad' : s.meter === 3 || s.meter === 1.5 ? 'waltz' : s.style === 'spiritual' ? 'ballad' : BAND_STYLES[Math.abs(hash(s.id)) % BAND_STYLES.length];
   return {
     id: s.id,
     title: s.title,
     credit: { en: s.credit, he: s.credit },
-    tier: 'pd',
+    tier: s.own ? 'own' : 'pd',
     meter: s.meter === 1.5 ? 3 : s.meter,
     minor: s.minor,
     melody: s.melody,
@@ -37,7 +38,7 @@ export function fromSongbook(s: SongDef): VoiceSong {
     phrases: s.phrases,
     level: s.level,
     style,
-    bpm: style === 'ballad' ? 76 : style === 'waltz' ? 132 : 92,
+    bpm: style === 'ballad' ? 76 : style === 'waltz' ? 132 : style === 'swing' ? (s.level <= 2 ? 96 : 108) : 92,
   };
 }
 

@@ -81,24 +81,24 @@ describe('repertoire results and the goal', () => {
     const res = repResults({ 'rep-keys-autumn': { best: 8, completions: 2 } }, 'keys');
     expect(res.autumn).toEqual({ best: 0.8, plays: 2 });
     expect(hasFirstStandard('keys', res)).toBe(true);
-    expect(hasFirstStandard('keys', repResults({ 'rep-keys-twinkle': { best: 10, completions: 1 } }, 'keys'))).toBe(false);
+    expect(hasFirstStandard('keys', repResults({ 'rep-keys-low-road-blues': { best: 10, completions: 1 } }, 'keys'))).toBe(false);
   });
   it('walks the road: 2 foundations, 2 progressions, then a standard', () => {
     let g = repGoal('keys', {});
     expect(g).toMatchObject({ id: 'first-standard', now: 0, target: 5 });
     expect(g.next?.tier).toBe(1);
-    g = repGoal('keys', learned(['twinkle', 'saints']));
+    g = repGoal('keys', learned(['low-road-blues', 'saints']));
     expect(g.now).toBe(2);
     expect(g.next?.tier).toBe(2);
-    g = repGoal('keys', learned(['twinkle', 'saints', 'blues-basic', 'turnarounds-f']));
+    g = repGoal('keys', learned(['low-road-blues', 'saints', 'blues-basic', 'turnarounds-f']));
     expect(g.now).toBe(4);
     expect(g.next?.standard).toBe(true);
-    g = repGoal('keys', learned(['twinkle', 'saints', 'blues-basic', 'turnarounds-f', 'autumn']));
+    g = repGoal('keys', learned(['low-road-blues', 'saints', 'blues-basic', 'turnarounds-f', 'autumn']));
     expect(g.id).toBe('five-standards');
     expect(g.now).toBe(1);
   });
   it('a started item comes before a fresh one', () => {
-    expect(repGoal('keys', { jingle: { best: 0.5, plays: 1 } }).next?.id).toBe('jingle');
+    expect(repGoal('keys', { homeward: { best: 0.5, plays: 1 } }).next?.id).toBe('homeward');
   });
   it('every course has a goal and a next item from the first day', () => {
     for (const c of COURSES) {

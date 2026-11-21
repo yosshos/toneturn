@@ -101,8 +101,8 @@ const stdTitle = (id: string): Bi => {
 const isolateChords = (he: string) => he.replace(/[A-Za-z0-9♭♯#°ø+]+(?:[–-][A-Za-z0-9♭♯#°ø+]+)+/g, (m) => '⁦' + m.replace(/[–-]/g, (d) => d + '⁠') + '⁩');
 const b = (en: string, he: string): Bi => ({ en, he: isolateChords(he) });
 
-/** A songbook tune (public domain). */
-const S = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepItem['leads'], extra: Partial<RepItem> = {}): RepItem => ({ id, tier, title: songTitle(id), teaches, ways, legal: 'pd', ref: { kind: 'song', id }, ...(leads ? { leads } : {}), ...extra });
+/** A songbook tune: public domain, or one of our own jazz-idiom tunes (`own`). */
+const S = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepItem['leads'], extra: Partial<RepItem> = {}): RepItem => ({ id, tier, title: songTitle(id), teaches, ways, legal: song(id)?.own ? 'own' : 'pd', ref: { kind: 'song', id }, ...(leads ? { leads } : {}), ...extra });
 /** A chord-only chart of a standard or a form. */
 const C = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepItem['leads'], extra: Partial<RepItem> = {}): RepItem => ({ id, tier, title: stdTitle(id), teaches, ways, legal: 'chords', ref: { kind: 'standard', id }, ...(tier >= 3 ? { standard: true } : {}), ...(leads ? { leads } : {}), ...extra });
 /** Our own material (a groove level, a topic) — `title` names it. */
@@ -141,13 +141,16 @@ const TO = {
 // ------------------------------------------------------------------ the catalogue, per course
 
 const KEYS: RepItem[] = [
-  S('twinkle', 1, b('Three chords: I–IV–V', 'שלושה אקורדים: I–IV–V'), [{ k: 'song', song: 'twinkle', part: 'both' }, { k: 'song', song: 'twinkle', part: 'chords' }], TO.i4v('blues-basic')),
+  // Foundations swing (owner 2026-11-21): our own jazz-idiom tunes and traditional songs played swung — no children's songs.
+  S('low-road-blues', 1, b('Three chords: I7–IV7–V7, one riff', 'שלושה אקורדים: I7–IV7–V7, ריף אחד'), [{ k: 'song', song: 'low-road-blues', part: 'melody' }, { k: 'song', song: 'low-road-blues', part: 'both' }], TO.i4v('blues-basic')),
   S('saints', 1, b('I–I7–IV and a pickup', 'I–I7–IV ופתיחה מתרוממת'), [{ k: 'song', song: 'saints', part: 'both' }, { k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-f')),
-  S('jingle', 1, b('The secondary dominant II7', 'הדומיננטה המשנית II7'), [{ k: 'song', song: 'jingle', part: 'both' }, { k: 'song', song: 'jingle', part: 'chords' }], TO.ii7('a-train')),
-  S('tannenbaum', 1, b('ii–V7–I in a simple tune', 'ii–V7–I במנגינה פשוטה'), [{ k: 'song', song: 'tannenbaum', part: 'both' }, { k: 'song', song: 'tannenbaum', part: 'chords' }], TO.iiv('two-five-keys')),
-  S('canon-d', 1, b('I–V–vi–iii–IV: the minor chords of a key', 'I–V–vi–iii–IV: האקורדים המינוריים של הסולם'), [{ k: 'song', song: 'canon-d', part: 'chords' }, { k: 'song', song: 'canon-d', part: 'both' }], TO.vi('turnarounds-f')),
-  S('greensleeves', 1, b('A minor key: i–III–VII–v', 'סולם מינורי: i–III–VII–v'), [{ k: 'song', song: 'greensleeves', part: 'both' }, { k: 'song', song: 'greensleeves', part: 'melody' }], TO.minor('minor-two-five-keys')),
+  S('homeward', 1, b('ii–V7–I in a simple tune', 'ii–V7–I במנגינה פשוטה'), [{ k: 'song', song: 'homeward', part: 'both' }, { k: 'song', song: 'homeward', part: 'chords' }], TO.iiv('two-five-keys')),
+  S('last-light', 1, b('A ballad: iii7–VI7–ii7–V7', 'בלדה: iii7–VI7–ii7–V7'), [{ k: 'song', song: 'last-light', part: 'both' }, { k: 'song', song: 'last-light', part: 'chords' }], TO.vi('turnarounds-f')),
+  S('rooftop-riff', 1, b('A riff tune and secondary dominants', 'שיר ריף ודומיננטות משניות'), [{ k: 'song', song: 'rooftop-riff', part: 'melody' }, { k: 'song', song: 'rooftop-riff', part: 'both' }], TO.ii7('a-train')),
+  S('cellar-steps', 1, b('A minor key: the minor blues', 'סולם מינורי: הבלוז המינורי'), [{ k: 'song', song: 'cellar-steps', part: 'melody' }, { k: 'song', song: 'cellar-steps', part: 'both' }], TO.minor('minor-two-five-keys')),
   C('blues-basic', 2, b('The 12-bar blues: I7–IV7–V7', 'בלוז 12 תיבות: I7–IV7–V7'), [PIANO('blues-basic', 'shell', 'whole'), PIANO('blues-basic', 'stride-single', 'stride')], TO.blues('blues-f')),
+  S('shade-tree', 2, b('A blues head: the blue third and a turnaround', 'ראש בלוז: הטרצה הכחולה וטרנאראונד'), [{ k: 'song', song: 'shade-tree', part: 'melody' }, { k: 'song', song: 'shade-tree', part: 'both' }], TO.jazzBlues('bird-blues')),
+  S('ninth-street', 2, b('A ii–V–I line: the 7th falls to the 3rd', 'קו ii–V–I: הספטימה יורדת לטרצה'), [{ k: 'song', song: 'ninth-street', part: 'melody' }, { k: 'song', song: 'ninth-street', part: 'both' }], TO.autumn('autumn')),
   C('turnarounds-f', 2, b('The I–vi–ii–V turnaround', 'הטרנאראונד I–vi–ii–V'), [PIANO('turnarounds-f', 'shell', 'whole'), PIANO('turnarounds-f', 'guide', 'charleston')], TO.turn('rhythm-a')),
   C('two-five-keys', 2, b('Major ii–V–I in every key', 'ii–V–I מז׳ורי בכל הסולמות'), [PIANO('two-five-keys', 'shell', 'whole'), PIANO('two-five-keys', 'rootless', 'charleston')], TO.autumn('autumn')),
   C('minor-two-five-keys', 2, b('Minor ii–V–i', 'ii–V–i מינורי'), [PIANO('minor-two-five-keys', 'shell', 'whole'), PIANO('minor-two-five-keys', 'rootless', 'charleston')], TO.minorIiv('blue-bossa')),
@@ -231,8 +234,8 @@ const VS = (id: string, tier: RepTier, teaches: Bi, ways: RepWay[], leads?: RepI
   return { id, tier, title: vs?.title ?? songTitle(id), teaches, ways, legal: vs && 'tier' in vs && vs.tier === 'own' ? 'own' : 'pd', ref: { kind: 'song', id }, ...(leads ? { leads } : {}), ...extra };
 };
 const VOICE: RepItem[] = [
-  VS('twinkle', 1, b('One phrase over a pop groove', 'פראזה אחת מעל גרוב פופ'), [V(1301), V(1303)], TO.i4v('blue-window')),
-  VS('ode', 1, b('Two phrases, rhythm graded', 'שתי פראזות, עם ציון לקצב'), [V(1302)]),
+  VS('low-road-blues', 1, b('One phrase over a swing groove', 'פראזה אחת מעל גרוב סווינג'), [V(1301), V(1303)], TO.i4v('blue-window')),
+  VS('homeward', 1, b('Two phrases, rhythm graded', 'שתי פראזות, עם ציון לקצב'), [V(1302)]),
   VS('morning-line', 1, b('Verse and chorus on I–V–vi–IV', 'בית ופזמון על I–V–vi–IV'), [V(1301), V(1303)], TO.vi('guide-tones')),
   VS('greensleeves', 1, b('A minor key, a longer song', 'סולם מינורי, שיר ארוך יותר'), [V(1306)], TO.minor('corner-light')),
   VS('blue-window', 2, b('A 12-bar blues head', 'ראש של בלוז 12 תיבות'), [V(1401)], TO.i7iv('saints-jazz')),
@@ -248,10 +251,10 @@ const VOICE: RepItem[] = [
 ];
 
 const GUITAR: RepItem[] = [
-  S('twinkle', 1, b('Three open chords: I–IV–V', 'שלושה אקורדים פתוחים: I–IV–V'), [{ k: 'song', song: 'twinkle', part: 'chords' }, { k: 'song', song: 'twinkle', part: 'melody' }], TO.i4v('blues-basic')),
-  S('oh-susanna', 1, b('I–IV–V7 and a steady strum', 'I–IV–V7 ופריטה יציבה'), [{ k: 'song', song: 'oh-susanna', part: 'chords' }, { k: 'song', song: 'oh-susanna', part: 'melody' }], TO.i4v('blues-basic')),
+  S('low-road-blues', 1, b('Three seventh chords: I7–IV7–V7', 'שלושה ספטאקורדים: I7–IV7–V7'), [{ k: 'song', song: 'low-road-blues', part: 'chords' }, { k: 'song', song: 'low-road-blues', part: 'melody' }], TO.i4v('blues-basic')),
+  S('homeward', 1, b('ii7–V7–I and a steady strum', 'ii7–V7–I ופריטה יציבה'), [{ k: 'song', song: 'homeward', part: 'chords' }, { k: 'song', song: 'homeward', part: 'melody' }], TO.iiv('two-five-keys')),
   S('saints', 1, b('I–I7–IV: the blues move', 'I–I7–IV: התנועה של הבלוז'), [{ k: 'song', song: 'saints', part: 'chords' }, { k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-basic')),
-  S('greensleeves', 1, b('A minor key in 3/4', 'סולם מינורי ב־3/4'), [{ k: 'song', song: 'greensleeves', part: 'chords' }, { k: 'song', song: 'greensleeves', part: 'melody' }], TO.minor('minor-blues')),
+  S('cellar-steps', 1, b('A minor key: i7–iv7–V7', 'סולם מינורי: i7–iv7–V7'), [{ k: 'song', song: 'cellar-steps', part: 'chords' }, { k: 'song', song: 'cellar-steps', part: 'melody' }], TO.minorIv('minor-blues')),
   O('strums', 1, b('Strumming patterns', 'דפוסי פריטה'), b('Quarters, down-up 8ths and the waltz', 'רבעים, שמיניות למטה־למעלה וואלס'), [L('g-rhythm-1'), L('g-rhythm-2')]),
   C('blues-basic', 2, b('The 12-bar blues and the shuffle', 'בלוז 12 תיבות והשאפל'), [GS('blues-basic'), L('g-rhythm-3'), L('g-impro-1'), CH('blues-basic')], TO.blues('blues-f')),
   C('minor-blues', 2, b('Minor blues: roots on beat 1', 'בלוז מינורי: שורשים על 1'), [GS('minor-blues'), L('g-impro-1'), CH('minor-blues')], TO.minorIiv('blue-bossa')),
@@ -275,9 +278,9 @@ const GUITAR: RepItem[] = [
 ];
 
 const BASS_ITEMS: RepItem[] = [
-  S('twinkle', 1, b('Melody on the neck, I–IV–V underneath', 'מנגינה על הצוואר, I–IV–V מתחת'), [{ k: 'song', song: 'twinkle', part: 'melody' }], TO.i4v('blues-basic')),
+  S('low-road-blues', 1, b('Melody on the neck, a blues underneath', 'מנגינה על הצוואר, בלוז מתחת'), [{ k: 'song', song: 'low-road-blues', part: 'melody' }], TO.i4v('blues-basic')),
   S('saints', 1, b('Melody with a pickup', 'מנגינה עם פתיחה מתרוממת'), [{ k: 'song', song: 'saints', part: 'melody' }], TO.i7iv('blues-basic')),
-  S('ode', 1, b('Stepwise melody in position', 'מנגינה בצעדים בפוזיציה'), [{ k: 'song', song: 'ode', part: 'melody' }]),
+  S('homeward', 1, b('Stepwise melody in position', 'מנגינה בצעדים בפוזיציה'), [{ k: 'song', song: 'homeward', part: 'melody' }], TO.iiv('two-five-keys')),
   O('roots', 1, b('Roots of a chord chart', 'שורשים של דף אקורדים'), b('Roots, then root and 5th', 'שורשים, ואז שורש וקווינטה'), [L('b-chord-1'), L('b-chord-2')], TO.i4v('blues-basic')),
   C('blues-basic', 2, b('The 12-bar blues, walked', 'בלוז 12 תיבות, בבס מהלך'), [BASS('blues-basic'), L('b-styles-4'), CH('blues-basic')], TO.blues('blues-f')),
   C('turnarounds-f', 2, b('The I–vi–ii–V turnaround', 'הטרנאראונד I–vi–ii–V'), [BASS('turnarounds-f'), CH('turnarounds-f')], TO.turn('rhythm-full')),

@@ -109,6 +109,8 @@ export const themeGlyph = (theme: string | undefined): GlyphKind => EAR_THEME_GL
 
 // Shared demo sounds
 const C4 = 60;
+/** The riff of Low Road Blues (our own tune, songbook 'low-road-blues'), swung: C, E–G on a swung 8th pair, A, G. */
+const LOW_ROAD_RIFF: Ev[] = [[60, 0, 0.32, 0.55], [64, 0.36, 0.2, 0.5], [67, 0.6, 0.1, 0.5], [69, 0.72, 0.3, 0.55], [67, 1.08, 0.5, 0.55]];
 const NOTE_HIGHER: HowDemo = {
   title: { he: 'מקשיבים. עונים. יודעים.', en: 'Listen. Answer. Know.' },
   lead: { he: 'תשובה בקול או בלחיצה. בלי להקליד.', en: 'Answer out loud or with a tap. No typing.' },
@@ -392,7 +394,7 @@ export const COURSE_OPENERS: Record<CourseId, CourseOpenerDef> = {
         { ref: { family: 'v-first' }, name: { he: 'צעדים ראשונים', en: 'First steps' }, desc: { he: 'צליל אחד, מדויק', en: 'One note, in tune' }, say: { he: 'מתחילים בצליל אחד, מדויק.', en: 'You start with one note, in tune.' }, snd: snd(line([60], 0.3, 0.6, 0.6), { n: [[60, 0.8, 0.8, 0.55]], hum: true }) },
         { ref: { family: 'v-breath' }, name: { he: 'נשימה והחזקה', en: 'Breath & sustain' }, desc: { he: 'צליל ארוך ויציב', en: 'A long, steady note' }, say: { he: 'נשימה והחזקה.', en: 'Breath and sustain.' }, snd: { n: [[64, 0, 1.4, 0.55]], hum: true } },
         { ref: { family: 'v-pitch' }, name: { he: 'גובה ואינטונציה', en: 'Pitch & intonation' }, desc: { he: 'לשמוע ולתקן', en: 'Hear it, correct it' }, say: { he: 'גובה ואינטונציה.', en: 'Pitch and intonation.' }, snd: { n: line([60, 62, 64], 0.35, 0.4, 0.55), hum: true } },
-        { ref: { family: 'v-songs' }, name: { he: 'שירים עם להקה', en: 'Songs with the band' }, desc: { he: 'שירים בנחלת הכלל', en: 'Public-domain songs' }, say: { he: 'שירים עם להקה.', en: 'Songs with the band.' }, snd: snd(ch([48, 55, 64], 0, 1.2, 0.35), { n: line([67, 67, 69, 67], 0.25, 0.3, 0.55), hum: true }) },
+        { ref: { family: 'v-songs' }, name: { he: 'שירים עם להקה', en: 'Songs with the band' }, desc: { he: 'שירים בנחלת הכלל', en: 'Public-domain songs' }, say: { he: 'שירים עם להקה.', en: 'Songs with the band.' }, snd: snd(ch([48, 58, 64], 0, 1.4, 0.35), { n: LOW_ROAD_RIFF, hum: true }) },
         { ref: { family: 'v-scat' }, name: { he: 'סקאט ואלתור', en: 'Scat & improvising' }, desc: { he: 'לאלתר בקול', en: 'Improvise with your voice' }, say: { he: 'ובסוף, סקאט.', en: 'And then, scat.' }, snd: { n: [[67, 0, 0.18, 0.55], [70, 0.24, 0.12, 0.5], [69, 0.36, 0.18, 0.55], [67, 0.6, 0.18, 0.5], [64, 0.84, 0.4, 0.55]], hum: true } },
       ],
     },
@@ -581,6 +583,13 @@ export interface UnitThemeCopy {
 
 const ev = (ms: number[], step = 0.34, d = 0.3): LanePass['ev'] => ms.map((m, i) => ({ m: [m], t: i * step, d }));
 const pev = (ps: PercKind[], step = 0.2): LanePass['ev'] => ps.map((p, i) => ({ p, t: i * step }));
+/** A swung line: [midi, beat position, beats]; an 8th on the "and" sounds two thirds into the beat. */
+const sev = (ns: [number, number, number][], beat = 0.4): LanePass['ev'] => {
+  const at = (b: number) => (Math.abs(b - Math.floor(b) - 0.5) < 1e-6 ? Math.floor(b) + 2 / 3 : b);
+  return ns.map(([m, b, len]) => ({ m: [m], t: at(b) * beat, d: Math.max(0.1, (at(b + len) - at(b)) * beat - 0.04) }));
+};
+/** The riff of Rooftop Riff (our own tune, songbook 'rooftop-riff'), in C: E G · E G A G, swung. */
+const ROOFTOP_RIFF = sev([[64, 0, 0.5], [67, 0.5, 0.5], [64, 1.5, 0.5], [67, 2, 1], [69, 3, 0.5], [67, 3.5, 0.5]]);
 const swung = (n: number, beat = 0.4): LanePass['ev'] => Array.from({ length: n }, (_, i) => ({ p: 'ride' as PercKind, t: Math.floor(i / 2) * beat + (i % 2 ? beat * (2 / 3) : 0) }));
 
 /** Unit themes (path.ts THEMES): what, why and a sound demo. Used by the Ear and Jazz courses. */
@@ -681,8 +690,8 @@ export const UNIT_THEMES: Record<string, UnitThemeCopy> = {
     goal: { he: 'בסוף: תזכרו ותכתבו משפטים קצרים', en: 'By the end: remember and write short phrases' },
     goalSay: { he: 'בסוף היחידה תזכרו ותכתבו משפטים קצרים.', en: 'By the end, you will remember and write short phrases.' },
     demo: [
-      { cap: { he: 'מקשיבים…', en: 'Listen…' }, ev: ev([64, 62, 60, 62, 64, 64, 64]) },
-      { cap: { he: '…ומנגנים בחזרה', en: '…and play it back' }, ev: ev([64, 62, 60, 62, 64, 64, 64]), end: 'home' },
+      { cap: { he: 'מקשיבים…', en: 'Listen…' }, ev: ROOFTOP_RIFF },
+      { cap: { he: '…ומנגנים בחזרה', en: '…and play it back' }, ev: ROOFTOP_RIFF, end: 'home' },
     ],
     base: 60,
   },

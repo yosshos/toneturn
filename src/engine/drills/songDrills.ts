@@ -134,7 +134,9 @@ function songDrillRaw(s: SongDef, part: SongPart, instrument: 'piano' | 'guitar'
     const i = SONGBOOK.indexOf(s);
     return generateGuitar({ family: 'g-chords', kind: 'song', key: s.key, hands: 'R', instrument: 'guitar', option: i });
   }
-  const d = customToDrill(songCustom(s, part, instrument), s.key);
+  const d0 = customToDrill(songCustom(s, part, instrument), s.key);
+  // A swung tune (songbook `feel`): the 8th on the "and" is played and graded two thirds into the beat.
+  const d = s.feel ? { ...d0, spec: { ...d0.spec, swing: true } } : d0;
   return { ...d, title: { en: `${s.title.en} · ${PART_NAME[part].en}`, he: `${s.title.he} · ${PART_NAME[part].he}` } };
 }
 
