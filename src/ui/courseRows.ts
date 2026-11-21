@@ -30,11 +30,12 @@ export const courseGames = (course: CourseId, jazzOn: boolean): string[] => (jaz
  *  SPEC-MY-SONG: "My song" (practise over your own recording, measured) in every course. */
 export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
-  voice: ['encore', 'drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
-  // SPEC-PHRASE-STUDIO §17: Encore is the first Train row where it plays — v1 piano (keys, jazz), v2 guitar, bass, voice.
-  keys: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  guitar: ['encore', 'drills', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  bass: ['encore', 'drills', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  // Owner 2026-11-21: by importance — Technique first, then Encore (SPEC-PHRASE-STUDIO), then (jazz open) Charts and
+  // Improvise, then the rest.
+  voice: ['drills', 'encore', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  keys: ['drills', 'encore', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  guitar: ['drills', 'encore', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
+  bass: ['drills', 'encore', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
   drums: ['drills', 'repertoire', 'mysong', 'games'],
 };
 /**
@@ -56,6 +57,9 @@ export function courseRows(course: CourseId, examPrep = false, jazz: 'off' | 'on
   const base = COURSE_ROWS[course];
   const jz = jazz === 'off' ? [] : (JAZZ_ROWS[course] ?? []).filter((r) => !base.includes(r));
   if (!jz.length) return base;
+  // Owner 2026-11-21: in the playing courses Charts and Improvise come right after Technique and Encore (focus or open).
+  const enc = base.indexOf('encore');
+  if (enc >= 0) return [...base.slice(0, enc + 1), ...jz, ...base.slice(enc + 1)];
   if (jazz === 'focus') return [...jz, ...base];
   // Open: after the course's own play rows, before My song and the games.
   const at = base.findIndex((r) => r === 'mysong' || r === 'games');

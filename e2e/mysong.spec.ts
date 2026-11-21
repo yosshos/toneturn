@@ -90,6 +90,8 @@ for (const [course, lang] of [
 test('my song: the Practice tile opens it (guitar, he)', async ({ page }) => {
   await seed(page, 'guitar', 'he');
   await page.goto('/#/arcade');
+  // owner 2026-11-21: My song sits in the folded "More practice" sub-section
+  await page.locator('[data-hub-group="more"] summary').click({ timeout: 60_000 });
   const tile = page.locator('[data-hub="mysong"]');
   await expect(tile).toBeVisible({ timeout: 60_000 });
   await tile.click();

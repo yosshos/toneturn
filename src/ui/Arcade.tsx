@@ -727,6 +727,8 @@ export interface PracticeHub {
   /** SPEC-MY-SONG: practise over your own recording, measured with the course's own machinery. */
   mysong?: () => void;
 }
+/** Owner 2026-11-21: the rows that sit in the folded "More practice" sub-section, not among the big tiles. */
+const MORE_ROWS = ['pieces', 'mysong', 'transcribe', 'licks'];
 /** Practice-page cards and tools in the Paper language: each hub row → its glyph (a chrome note when a glyph is missing). */
 const HUB_ART: Record<string, string> = {
   encore: 'encore', repertoire: 'repstep', standards: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
@@ -960,7 +962,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
               then the tools as round buttons. */}
           <div className="pt-grid">
             {rows
-              .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
+              .filter((k) => k !== 'games' && !MORE_ROWS.includes(k) && hub[k as keyof PracticeHub])
               .map((k) => {
                 const tx = (k === 'mysong' ? mySongTx(course) : course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
@@ -1011,6 +1013,25 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
               </button>
             )}
           </div>
+          {/* Owner 2026-11-21: the extra features in a small folded sub-section under the main rows. */}
+          {rows.some((k) => MORE_ROWS.includes(k) && hub[k as keyof PracticeHub]) && (
+            <details className="pt-more" data-hub-group="more">
+              <summary>{lang === 'he' ? 'עוד תרגול' : 'More practice'}</summary>
+              <div className="pt-tool-row">
+                {rows
+                  .filter((k) => MORE_ROWS.includes(k) && hub[k as keyof PracticeHub])
+                  .map((k) => {
+                    const tx = (k === 'mysong' ? mySongTx(course) : ROW_TX[k])[lang];
+                    return (
+                      <button key={k} className="pt-tool" onClick={hub[k as keyof PracticeHub] as () => void} data-hub={k} aria-label={tx[0]} title={tx[1]}>
+                        <HubIcon k={k} size={22} />
+                        <small>{tx[0]}</small>
+                      </button>
+                    );
+                  })}
+              </div>
+            </details>
+          )}
           <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
             <h2>{HUB_TX.tools[lang]}</h2>
             <div className="pt-tool-row">

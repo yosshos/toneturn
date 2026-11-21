@@ -1933,3 +1933,7 @@ main.lesson.await-next .read-prompt .beat-light { display: none; }
 /* Bottom bar: the longest label ("Community") fits at phone width without an ellipsis. */
 :root[data-theme] .tab .tab-label { font-size: 0.64rem; letter-spacing: -0.02em; }
 @media (max-width: 380px) { :root[data-theme] .tab .tab-label { font-size: 0.6rem; } }
+/* Owner 2026-11-21: "More practice" — the extra features folded under the main tiles */
+:root[data-theme] .pt-more { margin: 4px 0 14px; }
+:root[data-theme] .pt-more > summary { cursor: pointer; margin: 0 2px 8px; font-size: 0.85rem; font-weight: 800; color: var(--ink); list-style-position: inside; }
+:root[data-theme] .pt-more > summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 6px; }

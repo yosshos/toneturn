@@ -21,12 +21,14 @@ import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
 import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
 /** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
-function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId): CoachBackground {
+/** The core technique families whose passes set the player's tier (SPEC-COACH-2 §1). */
+const CORE_FAMILIES = ['scales', 'arpeggios', 'g-scales', 'g-arps', 'b-scale', 'b-chord'];
+function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId, tier = -1): CoachBackground {
   const inst = ds.instrument ?? 'piano';
   const course = inst === 'piano' ? 'keys' : inst;
   const report = (settings.courseStart as Record<string, { report?: string } | undefined> | undefined)?.[course]?.report;
   const from = settings.drillStart?.[fam];
-  return { skilled: report === 'bit' || report === 'well', from };
+  return { skilled: report === 'bit' || report === 'well' || tier >= 2, from };
 }
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
@@ -92,6 +94,8 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
+import { playerTier } from '../engine/drills/tiers';
+import { setGradeTier } from '../engine/drills/analyze';
 import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
@@ -273,6 +277,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
   const [coachTitle, setCoachTitle] = useState<string | null>(null);
+  // SPEC-COACH-2 §1/§5: the player's technique tier from the core skills (scales, arpeggios) — it sets the timing
+  // tolerance of every take and tells the coach the player is past the basics.
+  const techTier = useMemo(() => {
+    const core = familiesOf(ds.instrument ?? 'piano').filter((f) => CORE_FAMILIES.includes(f.id));
+    return playerTier(core.flatMap((f) => f.levels.flatMap((l) => levelDrills(l, ds.keyOrder))), items);
+  }, [ds.instrument, ds.keyOrder, items]);
+  useEffect(() => setGradeTier(techTier), [techTier]);
   // Practice by key (SPEC-PRACTICE-KEYS): the view and the scale-family tab, remembered on this device.
   const [pView, setPViewState] = useState<PracticeView>(() => lsGet('toneturn.practiceView') === 'key' ? 'key' : 'topic');
   const setPView = (v: PracticeView) => (setPViewState(v), lsSet('toneturn.practiceView', v));
@@ -304,7 +315,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id) : undefined}
+          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id, techTier) : undefined}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
