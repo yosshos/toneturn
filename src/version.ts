@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.114.1',
+    date: '2026-11-21',
+    en: ['Voicings keep every tension (a 7♭9 always has its ♭9, in drop 2, drop 3 and four-way close too); quartal So What ii–V–I in two versions; the Kenny Barron voicing on every minor 7 and in a ii–V–I; the harmonic minor formula pattern over four octaves; guitar shells for every cadence.'],
+    he: ['הווייסינגים שומרים על כל טנשן (ל־7♭9 תמיד יש ♭9, גם בדרופ 2, דרופ 3 ובפור־וויי קלוז); ii–V–I קוורטלי (So What) בשתי גרסאות; הווייסינג של קני בארון על כל מינור 7 וב־ii–V–I; פורמולה במינור הרמוני על ארבע אוקטבות; שלדים בגיטרה לכל קדנצה.'],
+  },
+  {
     version: '0.114.0',
     date: '2026-11-21',
     en: ['New technique: the jazz cadence library (37 cadences in nine voicings on piano, four on guitar, walking bass), colours of the diminished, every mode on a root (major, melodic and harmonic minor) and the symmetric scales as full scales, Hanon 2–20, minor octaves and double 3rds, contrary 7th arpeggios, guitar minor scales in five positions, bass diatonic 7ths. The coach: technique tiers set the timing tolerance, a short level check on a first session, a note at the end. Practice: Technique first, extras under More practice, Licks inside Encore. Swing tunes replace the children’s songs in the openers and the first repertoire.'],
