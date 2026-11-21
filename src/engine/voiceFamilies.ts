@@ -95,9 +95,9 @@ const SONG = (id: string, s: Omit<NonNullable<VocalItem['song']>, 'id'>, difficu
 
 export const SONG_LEVELS: VocalLevel[] = [
   // L2: one phrase over a pop groove (the Song Singer road starts here)
-  lv(1301, 0.7, [SONG('twinkle', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 950), SONG('morning-line', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 1000), SONG('jacques', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 1000)]),
+  lv(1301, 0.7, [SONG('twinkle', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 950), SONG('morning-line', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 1000), SONG('low-road-blues', { phrases: [0, 0], band: true, rhythm: false, need: 0.7 }, 1000)]),
   // L3: two phrases, rhythm graded
-  lv(1302, 0.7, [SONG('ode', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050), SONG('morning-line', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050), SONG('london', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050)]),
+  lv(1302, 0.7, [SONG('ode', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050), SONG('morning-line', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050), SONG('homeward', { phrases: [0, 1], band: true, rhythm: true, need: 0.7 }, 1050)]),
   // L4 (milestone Song Singer): a whole song, every phrase ≥ 0.75, the weakest looped slower until it passes
   lv(1303, 0.75, [SONG('twinkle', { band: true, rhythm: true, need: 0.75 }, 1100), SONG('morning-line', { band: true, rhythm: true, need: 0.75 }, 1100), SONG('saints', { band: true, rhythm: true, need: 0.75 }, 1150)]),
   // L5: our own pop songs — and the chorus louder than the verse

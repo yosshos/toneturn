@@ -22,17 +22,18 @@ Owner concept (2026-11-10): the niche is sophisticated music. Simple songs are t
 
 | Course | 1 Foundations | 2 Blues & progressions | 3 Standards | 4 Advanced |
 |---|---|---|---|---|
-| keys | Twinkle (I–IV–V), Saints (I–I7–IV), Jingle Bells (II7), O Tannenbaum (ii–V7–I), Canon (vi, iii), Greensleeves (minor) | 12-bar blues, I–vi–ii–V, ii–V–I all keys, minor ii–V–i, jazz blues, dorian vamp | Autumn Leaves, Fly Me to the Moon (A), Blue Bossa, A Train, So What, Misty (A), Satin Doll, All the Things You Are | Rhythm changes A, whole rhythm changes, Bird blues, Stella, Solar, Giant Steps |
+| keys | Low Road Blues (I7–IV7–V7), Saints swung (I–I7–IV), Homeward (ii–V7–I), Last Light (ballad iii–VI7–ii–V), Rooftop Riff (secondary dominants), Cellar Steps (minor blues) | 12-bar blues, Shade Tree Blues (head), Ninth Street Walk (ii–V–I line), I–vi–ii–V, ii–V–I all keys, minor ii–V–i, jazz blues, dorian vamp | Autumn Leaves, Fly Me to the Moon (A), Blue Bossa, A Train, So What, Misty (A), Satin Doll, All the Things You Are | Rhythm changes A, whole rhythm changes, Bird blues, Stella, Solar, Giant Steps |
 | jazz | progressions by ear, guide-tone lines | blues, jazz blues, ii–V–I, minor blues | Autumn Leaves, Blue Bossa, So What, Satin Doll, Song for My Father (A), Misty | rhythm changes, Bird blues, Lady Bird, Giant Steps |
 | ear | pop progressions, sing tunes back | the blues, ii–V–I, turnarounds by ear | read Autumn Leaves' chart, chord functions, tritone subs and backdoor | rhythm changes, which blues, Coltrane changes, odd-time grooves |
-| voice | Twinkle, Ode to Joy, Morning Line (ours), Greensleeves, all with the band | Blue Window (our 12-bar head), roots of I–IV–V, scat guide tones | Saints (jazz head), Swing Low (jazz), Corner Light, Slow Harbor, Rio Gray | Fast Tracks (rhythm changes A), scat chord-tone landing |
-| guitar | Twinkle, Oh! Susanna, Saints, Greensleeves (strummed chords / melody), strumming patterns | blues + shuffle, minor blues, shells ii–V–I, jazz blues | Autumn Leaves, Blue Bossa, Fly Me to the Moon, So What, A Train | rhythm changes, Bird blues, Giant Steps, 12-beat compás |
-| bass | Twinkle, Saints, Ode (melody on the neck), roots of a chart | 12-bar blues walked, I–vi–ii–V, ii–V–I all keys, jazz blues | Fly, Autumn Leaves, Blue Bossa, A Train, So What, Misty | rhythm changes, Bird blues, Stella, Giant Steps |
+| voice | Low Road Blues, Homeward (ours, swung), Morning Line (ours), Greensleeves, all with the band | Blue Window (our 12-bar head), roots of I–IV–V, scat guide tones | Saints (jazz head), Swing Low (jazz), Corner Light, Slow Harbor, Rio Gray | Fast Tracks (rhythm changes A), scat chord-tone landing |
+| guitar | Low Road Blues, Homeward, Saints, Cellar Steps (strummed chords / melody), strumming patterns | blues + shuffle, minor blues, shells ii–V–I, jazz blues | Autumn Leaves, Blue Bossa, Fly Me to the Moon, So What, A Train | rhythm changes, Bird blues, Giant Steps, 12-beat compás |
+| bass | Low Road Blues, Saints, Homeward (melody on the neck), roots of a chart | 12-bar blues walked, I–vi–ii–V, ii–V–I all keys, jazz blues | Fly, Autumn Leaves, Blue Bossa, A Train, So What, Misty | rhythm changes, Bird blues, Stella, Giant Steps |
 | drums | rock beat, groove and fill | shuffle, slow blues 12/8, swing ride | swing a standard (Autumn Leaves form), bossa (Blue Bossa), jazz waltz, samba | up-tempo rhythm changes, trading 4s, 9/8, 7/8 and 10/8 |
 
 - Tiers 3–4 are flagged `standard` and count towards the goal and the badge. Tiers 1–2 never do (a test enforces this).
 - **Legal** (docs/research/STANDARDS_LEGAL.md):
-  - Melodies come only from the public-domain songbook (`content/songbook.ts`) or our own voice songs (`content/voiceSongs.ts`).
+  - Melodies come only from the songbook (`content/songbook.ts`: public-domain tunes and, since 2026-11-21, our own swung jazz-idiom tunes marked `own`) or our own voice songs (`content/voiceSongs.ts`).
+  - Foundations swing (owner 2026-11-21): children's songs (`CHILDREN_SONG_IDS`) stay in the songbook list for absolute beginners but are never a repertoire step past the second, nor an opener sound (tests/swingMaterial.test.ts).
   - Standards are our chord-only charts (`engine/standards.ts`), shown with their real titles.
   - Grooves and topics are our own material.
 

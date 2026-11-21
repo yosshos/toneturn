@@ -2,6 +2,10 @@
 // play the chords. Only melodies and harmonies that are free to use everywhere: traditional / folk tunes and
 // composers who died long ago (see docs/research/MUSIC_SOURCES_LEGAL.md). No lyrics are stored (some lyrics or
 // translations are still protected); titles only.
+// Since 2026-11-21 it also holds our own jazz-idiom tunes (`own: true`, swung via `feel`): blues heads, a riff tune,
+// ii–V–I lines and a ballad, the default material of the repertoire road. Israeli copyright is life + 70 years, so a
+// 1920s standard that is public domain in the US is still not allowed here — only traditional tunes, composers who
+// died 70+ years ago (Joplin, †1917, would qualify) and our originals.
 //
 // Notation (one bar per "|", tokens separated by spaces), in scale degrees of the song's key:
 //   degree 1–7, then an optional accidental ("#" / "b"), then octave marks ("," = down, "'" = up), then a length:
@@ -27,8 +31,22 @@ export interface SongDef {
   /** 1 easy … 5 hard (range, leaps, rhythm). */
   level: number;
   /** Genre / style tag. */
-  style: 'folk' | 'classical' | 'children' | 'holiday' | 'spiritual' | 'dance';
+  style: 'folk' | 'classical' | 'children' | 'holiday' | 'spiritual' | 'dance' | 'blues' | 'jazz';
+  /**
+   * How the eighths are played: 'swing' = swung (the "and" two thirds into the beat; song drills set spec.swing and
+   * the band swings), 'ballad' = a slow jazz ballad. Absent: straight, as the folk and classical tunes are.
+   */
+  feel?: 'swing' | 'ballad';
+  /** Our own melody, written for the app (no rights to clear anywhere). Absent: public domain. */
+  own?: boolean;
 }
+
+/**
+ * Children's songs and nursery tunes (owner 2026-11-21): kept in the songbook for absolute beginners and the Practice
+ * song list, but never the default material of the openers or of the repertoire road past its first two steps
+ * (tests/swingMaterial.test.ts).
+ */
+export const CHILDREN_SONG_IDS = ['twinkle', 'mary', 'yonatan', 'jacques', 'london', 'old-macdonald', 'yankee', 'row', 'happy-birthday', 'jingle', 'hot-cross-buns', 'au-clair', 'alouette', 'we-wish', 'tannenbaum', 'clementine', 'brahms-lullaby'];
 
 export interface SongNote {
   /** Semitones from the tonic (can be negative / above the octave); null = rest. */
@@ -382,6 +400,8 @@ export const SONGBOOK: SongDef[] = [
     phrases: [4, 8, 12],
     level: 2,
     style: 'spiritual',
+    // Played with a swing feel (the New Orleans way); the melody is the traditional one.
+    feel: 'swing',
   },
   {
     id: 'michael-row',
@@ -634,6 +654,120 @@ export const SONGBOOK: SongDef[] = [
     phrases: [5],
     level: 5,
     style: 'dance',
+  },
+  // ---- added 2026-11-21: jazz-idiom originals (owner: "make them swing"). Written for The 7th Sense; every melody
+  // below is our own and quotes no existing head — only the shared vocabulary of the style (blue notes, riffs over
+  // I7–IV7, guide tones through ii–V–I). The first two are the easy versions: narrow range, mostly steps and thirds,
+  // a clear quarter-note rhythm with a few swung eighths.
+  {
+    id: 'low-road-blues',
+    title: { en: 'Low Road Blues', he: 'בלוז הדרך הנמוכה' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 0,
+    // 12-bar blues, beginner: one riff on I7, the same rhythm on IV7 and V7; range C–A (a sixth).
+    melody: '1 3e 5e 6 5 | 3h 1h | 1 3e 5e 6 5 | 3h. r | 4 6e 4e 6 4 | 6h 4h | 1 3e 5e 6 5 | 3h. r | 2 4e 5e 4 2 | 6h 4h | 3 2 1h | 1h rh',
+    chords: 'I7 | I7 | I7 | I7 | IV7 | IV7 | I7 | I7 | V7 | IV7 | I7 | I7 V7',
+    phrases: [4, 8],
+    level: 1,
+    style: 'blues',
+    feel: 'swing',
+    own: true,
+  },
+  {
+    id: 'homeward',
+    title: { en: 'Homeward', he: 'בדרך הביתה' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 5,
+    // ii–V–I twice, beginner: chord tones on the strong beats, steps between them, home on the 3rd and the root; range B–A.
+    melody: '4 3e 2e 1 2 | 4h 2h | 3 2e 1e 3 5 | 3h. r | 6 5e 4e 2 4 | 5 4 2 7, | 1h 3h | 1w',
+    chords: 'ii7 | V7 | Imaj7 | Imaj7 | ii7 | V7 | Imaj7 | Imaj7',
+    phrases: [4],
+    level: 1,
+    style: 'jazz',
+    feel: 'swing',
+    own: true,
+  },
+  {
+    id: 'last-light',
+    title: { en: 'Last Light', he: 'אור אחרון' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 3,
+    // A ballad phrase, 8 bars: I–vi–ii–V, then iii–VI7–ii–V–I; long notes, every one a chord tone or a passing step.
+    melody: '5h 3q. 2e | 1h 5,h | 6, 1 4 3 | 4w | 3h 5 3 | 1#h 6,h | 2 4 5 4 | 3w',
+    chords: 'Imaj7 | vi7 | ii7 | V7 | iii7 | VI7 | ii7 V7 | Imaj7',
+    phrases: [4],
+    level: 2,
+    style: 'jazz',
+    feel: 'ballad',
+    own: true,
+  },
+  {
+    id: 'shade-tree',
+    title: { en: 'Shade Tree Blues', he: 'בלוז בצל העץ' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 5,
+    // 12-bar jazz blues head (quick change to IV7 in bar 2): a riff with the blue third (♭3 → 3), the riff up a 4th on
+    // IV7, then a ii–V answer and a I–VI7–ii–V turnaround.
+    melody: "re 5,e 7b,e 1e 3be 3e 1e 5,e | 1h rh | re 5,e 7b,e 1e 3be 3e 5e 7be | 1'h rh | re 1e 3be 4e 6be 6e 4e 1e | 4h rh | re 5,e 7b,e 1e 3be 3e 1e 5,e | 6,h rh | re 2e 4e 5e 6 4 | 5,q. 7,e 2 4 | 3 1 6, 5, | 2 4 7, 5,",
+    chords: 'I7 | IV7 | I7 | I7 | IV7 | IV7 | I7 | VI7 | ii7 | V7 | I7 VI7 | ii7 V7',
+    phrases: [4, 8],
+    level: 3,
+    style: 'blues',
+    feel: 'swing',
+    own: true,
+  },
+  {
+    id: 'cellar-steps',
+    title: { en: 'Cellar Steps', he: 'מדרגות למרתף' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    minor: true,
+    key: 0,
+    // 12-bar minor blues head: a rising i7 arpeggio riff, the riff up a 4th on iv7, VI7–V7 and home.
+    melody: "re 1e 3e 5e 7 5 | 6e 5e 3 1h | re 1e 3e 5e 7 1' | 7h. r | re 4e 6e 1'e 3' 1' | 2'e 1'e 6 4h | re 1e 3e 5e 7 5 | 3h rh | 6h 1' 6 | 5 4 2 7#, | 1 3e 5e 1'e 7e 5 | 1h. r",
+    chords: 'i7 | i7 | i7 | i7 | iv7 | iv7 | i7 | i7 | VI7 | V7 | i7 | i7',
+    phrases: [4, 8],
+    level: 3,
+    style: 'blues',
+    feel: 'swing',
+    own: true,
+  },
+  {
+    id: 'rooftop-riff',
+    title: { en: 'Rooftop Riff', he: 'ריף על הגג' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 7,
+    // A riff tune, AABA in 16 bars: a two-bar riff over I–vi–ii–V, a bridge of secondary dominants III7–VI7–II7–V7
+    // (each bar outlines its chord), and the riff home over iii7–VI7–ii7–V7–I.
+    melody:
+      "3e 5e re 3e 5 6e 5e | 1e 2e re 1e 6,h | 3e 5e re 3e 5 6e 5e | 2e 1e re 2e 5,h | 3e 5e re 3e 5 6e 5e | 1e 2e re 1e 6,h | 3e 5e re 3e 5 6e 5e | 2e 1e re 2e 5,h | 5#e 7e re 5#e 7h | 5e 3e re 5e 1#h | 1e 2e re 1e 4#h | 4e 2e re 4e 7,h | 3e 5e re 3e 5 6e 5e | 3e 5e re 3e 5 6e 5e | 1e 2e re 1e 6,h | 1h. r",
+    chords: 'Imaj7 vi7 | ii7 V7 | Imaj7 vi7 | ii7 V7 | Imaj7 vi7 | ii7 V7 | Imaj7 vi7 | ii7 V7 | III7 | VI7 | II7 | V7 | Imaj7 vi7 | iii7 VI7 | ii7 V7 | Imaj7',
+    phrases: [4, 8, 12],
+    level: 3,
+    style: 'jazz',
+    feel: 'swing',
+    own: true,
+  },
+  {
+    id: 'ninth-street',
+    title: { en: 'Ninth Street Walk', he: 'הליכה ברחוב התשיעי' },
+    credit: 'Original, written for The 7th Sense (2026)',
+    meter: 4,
+    key: 10,
+    // A ii–V–I line, twice: eighth-note lines through ii7 and V7 whose last note, the 7th of V7, resolves down a half
+    // step to the 3rd of Imaj7 on the downbeat.
+    melody: "2 4e 6e 1'e 7e 6e 5e | 2e 7,e 5,e 7,e 2e 5e 4 | 3q. 5e 7 5 | 3h rh | 1' 6e 4e 2e 1e 7,e 2e | 5,e 7,e 2e 4e 6 4 | 3e 5e 7e 2'e 1' 5 | 3h. r",
+    chords: 'ii7 | V7 | Imaj7 | Imaj7 | ii7 | V7 | Imaj7 | Imaj7',
+    phrases: [4],
+    level: 4,
+    style: 'jazz',
+    feel: 'swing',
+    own: true,
   },
 ];
 
