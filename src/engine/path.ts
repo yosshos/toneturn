@@ -636,6 +636,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   'scales-19': 1530, 'scales-20': 1570, 'scales-21': 1610, 'scales-22': 1650, 'scales-23': 1690, 'scales-24': 1730, 'scales-25': 1770, 'scales-26': 1810, 'scales-27': 1850,
   'scales-28': 1490, 'scales-29': 1510, 'scales-30': 1860, 'scales-31': 1870, 'scales-32': 1885, 'scales-33': 1900,
   'harris-25': 1020, 'harris-26': 1100,
+  // Colours of the diminished (dimColours.ts): after Harris's diminished moves (harris-13, 1360) — the half-step moves
+  // first, then the whole-step and two-note colours, drop 2 and the whole run.
+  'k-dimcol-1': 1380, 'k-dimcol-2': 1400, 'k-dimcol-3': 1440, 'k-dimcol-4': 1480, 'k-dimcol-5': 1520, 'k-dimcol-6': 1570, 'k-dimcol-7': 1630,
   ...K_INDEP_DIFF,
   ...K_HARM_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.

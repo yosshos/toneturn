@@ -36,6 +36,7 @@ export const UNITS: Record<string, string> = {
   'tech:k-pop': 'first-chord-symbols', // block chords from symbols, the pop LH
   'tech:k-bebop': 'vocab-lines',
   'tech:k-sixdim': 'key-sixdim',
+  'tech:k-dimcol': 'bh-brothers', // colours of the diminished open on the brothers: one dim, four dominants
   'tech:accomp': 'piano-lh-styles', // L9: root–5th, Alberti, stride, shells (accomp-1 is the Alberti bass)
   'tech:accomp-2': 'walk-approach', // L5: walking bass — chord tones on 1 and 3, approach notes on 4
   'tech:k-read-2': 'first-rhythms', // L8: quarters, 8ths and rests
