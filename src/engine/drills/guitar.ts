@@ -32,6 +32,7 @@ import { GUITAR_PROBE_STEPS } from './guitarProbes';
 import { generateGuitarVL, guitarVoiceLeadFamily } from './voiceLeadDrills';
 // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds on the neck (keyMoveDrills.ts).
 import { generateGuitarKeyMove, guitarKeyMoveFamily } from './keyMoveDrills';
+import { generateGuitarCadence, guitarCadenceFamily } from './cadenceLibrary';
 import { genGuitarVocab, guitarVocabFamily } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import { genGuitarPhrase, guitarPhraseFamily } from './phraseDrills'; // phrases by ear
 // AUDIT-DEPTH-3 #4, C3/C4: chord-melody and a head comped on the neck (headDrills.ts).
@@ -2432,6 +2433,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarVL(s, tu);
     case 'g-keys':
       return generateGuitarKeyMove(s, tu);
+    case 'g-cadlib':
+      return generateGuitarCadence(s, tu);
     case 'g-cmel':
     case 'g-tune':
       return generateGuitarHead(s, tu);
@@ -2726,6 +2729,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarVoiceLeadFamily(),
     // AUDIT-GAPS-2 #5/#6/#12: key changes and turnarounds, drop 2 on string sets (jazz add-on, keyMoveDrills.ts).
     guitarKeyMoveFamily(),
+    // The jazz cadence chart library on the neck: shells, drop 2, drop 3, rootless (jazz add-on, cadenceLibrary.ts).
+    guitarCadenceFamily(),
     // AUDIT-GAPS-2 High #1, #2, #3, #7, #8, #10: bebop vocabulary and lines over forms on the neck (the jazz add-on).
     guitarVocabFamily(LT, fam),
     // Phrases by ear on the neck (the jazz add-on): hear a phrase over its chords, play it back (phraseDrills.ts).

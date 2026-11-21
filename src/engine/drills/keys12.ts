@@ -23,11 +23,11 @@ export function all12(keys: number[]): number[] {
  */
 export const TWELVE_KEY_FAMILIES: string[] = [
   // piano
-  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-tpair',
+  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-tpair', 'k-cadlib',
   // guitar
-  'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair',
+  'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair', 'g-cadlib',
   // bass (the jazz track)
-  'b-barry', 'b-harrisline', 'b-counter', 'b-tpair', 'b-impro', 'b-walk', 'b-swing', 'b-jform', 'b-latin', 'b-std',
+  'b-barry', 'b-harrisline', 'b-counter', 'b-tpair', 'b-impro', 'b-walk', 'b-swing', 'b-jform', 'b-latin', 'b-std', 'b-cadlib',
   // AUDIT-7 #6: the bass's arpeggio and scale levels (they ran in 4–6 keys). Every key fits the 4-string range: the
   // generators start from the root in E1–D♯2 (bass.ts rootOf) and fold into the neck (fold), tests/audit7.test.ts.
   'b-chord', 'b-scale',

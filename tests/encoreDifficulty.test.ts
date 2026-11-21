@@ -153,11 +153,12 @@ describe('calibration against the built-in levels (§10.8)', () => {
   // §10.8.7): improvisation, pedalling and gig skills (accompanying, stamina), the sight-reading quick-study levels
   // (k-read 13–15: changing metres at sight, a lead sheet with band hits, any key with a 30-second look) and every level
   // played with the band (the k-tpair vamp / ii–V / comping / blues / form levels).
+  // The cadence chart library (k-cadlib) is placed by the voicing it asks for, not by its notes' difficulty: left out.
   const rows: { id: string; fam: string; placed: number; D: number }[] = [];
   for (const fam of catalog())
     for (const lv of fam.levels) {
       const placed = LEVEL_PLACEMENT[lv.id];
-      if (!placed || /impro|pedal|gig/.test(lv.id) || /^k-read-1[3-5]$/.test(lv.id) || /^control-1[3-6]$/.test(lv.id)) continue; // control-13…16: touch/dynamics levels (MEASUREMENT-AUDIT E1–E4), placed by what the notes can't show
+      if (!placed || /impro|pedal|gig|cadlib/.test(lv.id) || /^k-read-1[3-5]$/.test(lv.id) || /^control-1[3-6]$/.test(lv.id)) continue; // control-13…16: touch/dynamics levels (MEASUREMENT-AUDIT E1–E4), placed by what the notes can't show
       let ds;
       try {
         ds = levelDrills(lv, 'fifths-up');

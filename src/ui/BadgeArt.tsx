@@ -938,6 +938,19 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M4 13c1-7 11-9 15-5 M15.5 6.2l3.6 2 1.2-3.8 M2 21h20', false)}
     </>
   ),
+  // The cadence chart library: a short chart (two bars) and an arrow landing on the tonic (guitar: over a string).
+  'family:k-cadlib': () => (
+    <>
+      {p('M3 5v14 M7.5 5v14 M12 5v14 M3 5h9 M3 19h9 M13.5 12h3.5 M15.2 9.8l2 2.2-2 2.2', false)}
+      {head(20, 12, 2.4)}
+    </>
+  ),
+  'family:g-cadlib': () => (
+    <>
+      {p('M3 3v14 M7.5 3v14 M12 3v14 M3 3h9 M3 17h9 M13.5 10h3.5 M15.2 7.8l2 2.2-2 2.2 M2 21h20', false)}
+      {head(20, 10, 2.4)}
+    </>
+  ),
   // AUDIT-DEPTH-3: heads — the melody note on top of a stacked chord; a lead sheet's bars with comping slashes.
   'family:k-harm': () => (
     <>

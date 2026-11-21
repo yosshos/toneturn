@@ -106,13 +106,13 @@ const CHORDS_JAZZ: Rung[] = [
   r('voicings-2', 5, { 'k-first': 11, cadences: 2, voicings: 3, 'k-vl': 2 }),
   r('voicings-3', 10, { 'k-first': 11, cadences: 3, voicings: 4, 'k-sixdim': 1, 'k-vl': 3 }),
   r('voicings-4', 3, { 'k-first': 11, cadences: 4, voicings: 5, 'k-sixdim': 2, 'k-reharm': 1, 'k-vl': 4 }),
-  r('voicings-9', 2, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4 }),
+  r('voicings-9', 2, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4, 'k-cadlib': 4 }),
   // HARMONY-REHARM: drop 2 under a held note (one note, many chords) places the common-tone and mediant ladders.
-  r('k-ctone-3', 7, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4, 'k-ctone': 4, 'k-mediant': 2 }),
+  r('k-ctone-3', 7, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4, 'k-ctone': 4, 'k-mediant': 2, 'k-cadlib': 4 }),
   // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
-  r('k-keys-7', 9, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
+  r('k-keys-7', 9, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-cadlib': 9 }),
   // AUDIT-DEPTH-3: a phrase of a head in drop 2 with the melody on top (proves harmonising and drop-2 comping of a head).
-  r('k-harm-4', 4, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-harm': 5, 'k-tune': 5 }),
+  r('k-harm-4', 4, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-harm': 5, 'k-tune': 5, 'k-cadlib': 12 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),
@@ -280,22 +280,22 @@ const G_JAZZ: Rung[] = [
   r('g-jazz-1', 0, { 'g-jazz': 2, 'g-harris': 1, 'g-jblues': 5 }),
   r('g-jazz-2', 5, { 'g-jazz': 3, 'g-harris': 2, 'g-bebop': 2 }),
   r('g-jazz-4', 10, { 'g-jazz': 5, 'g-harris': 3, 'g-bebop': 3 }),
-  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5 }),
+  r('g-jazz-8', 3, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5, 'g-cadlib': 1 }),
   // HARMONY-REHARM: drop 2 under a held note on the neck places the common-tone and colour-harmony families.
-  r('g-ctone-2', 4, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5, 'g-ctone': 3, 'g-color': 5 }),
+  r('g-ctone-2', 4, { 'g-jazz': 9, 'g-harris': 5, 'g-theory': 1, 'g-keys': 2, 'g-bebop': 5, 'g-ctone': 3, 'g-color': 5, 'g-cadlib': 1 }),
   // AUDIT-GAPS-2: bebop lines on the neck (grade 7).
-  r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8, 'g-harrisline': 5 }),
+  r('g-bebop-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 4, 'g-bebop': 8, 'g-harrisline': 5, 'g-cadlib': 3 }),
   // AUDIT-GAPS-2: key changes in drop 2 (one diminished, four keys).
-  r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8 }),
+  r('g-keys-7', 2, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cadlib': 4 }),
   // AUDIT-DEPTH-3: chord-melody, drop 2 under a head's melody.
-  r('g-cmel-4', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5 }),
+  r('g-cmel-4', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5, 'g-cadlib': 6 }),
   // AUDIT-DEPTH-3: a brother for the V on the neck, then improvising by the rules.
-  r('g-ctx-1', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5, 'g-ctx': 2 }),
-  r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4, 'g-gig': 1 }),
+  r('g-ctx-1', 7, { 'g-jazz': 9, 'g-harris': 6, 'g-theory': 2, 'g-keys': 8, 'g-bebop': 8, 'g-cmel': 5, 'g-tune': 5, 'g-ctx': 2, 'g-cadlib': 6 }),
+  r('g-solo-3', 0, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4, 'g-gig': 1, 'g-cadlib': 7 }),
   // Triad pairs, deep: the hexatonic scale in position (grade 8) places the triad pairs on the neck.
-  r('g-tpair-4', 5, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4, 'g-gig': 1, 'g-tpair': 5 }),
+  r('g-tpair-4', 5, { 'g-jazz': 10, 'g-harris': 7, 'g-theory': 3, 'g-keys': 9, 'g-bebop': 9, 'g-cmel': 6, 'g-tune': 6, 'g-ctx': 3, 'g-solo': 4, 'g-gig': 1, 'g-tpair': 5, 'g-cadlib': 7 }),
   // STAGE C: Harris lines at bebop tempo places the diploma jazz families (lines at tempo, solo guitar, arranging).
-  r('g-hlfast-1', 0, { 'g-jazz': 12, 'g-harris': 10, 'g-theory': 5, 'g-keys': 12, 'g-bebop': 12, 'g-cmel': 6, 'g-tune': 8, 'g-ctx': 8, 'g-solo': 8, 'g-harrisline': 9, 'g-hlfast': 2, 'g-solojazz': 2, 'g-cmarr': 1, 'g-tpair': 5 }),
+  r('g-hlfast-1', 0, { 'g-jazz': 12, 'g-harris': 10, 'g-theory': 5, 'g-keys': 12, 'g-bebop': 12, 'g-cmel': 6, 'g-tune': 8, 'g-ctx': 8, 'g-solo': 8, 'g-harrisline': 9, 'g-hlfast': 2, 'g-solojazz': 2, 'g-cmarr': 1, 'g-tpair': 5, 'g-cadlib': 10 }),
 ];
 
 // Owner 2026-11-19: the fingerstyle and flamenco add-ons (shown only when ticked) get a short section each — the
@@ -370,18 +370,18 @@ const B_WALK: Rung[] = [
   r('b-walk-7', 7, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2, 'b-up-walk': 6, 'b-up-pizz': 4 }),
   // HARMONY-REHARM: the counter-line — the bass reharmonizes under a held note.
   r('b-counter-7', 3, { 'b-walk': 8, 'b-swing': 3, 'b-barry': 2, 'b-counter': 8, 'b-up-walk': 6, 'b-up-pizz': 4 }),
-  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 2, 'b-bebop': 2, 'b-up-walk': 6, 'b-up-pizz': 4 }),
+  r('b-walk-9', 0, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 3, 'b-keys': 2, 'b-bebop': 2, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 1 }),
   // AUDIT-GAPS-2: bebop lines on the bass (rhythm changes, the bridge).
-  r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7, 'b-harrisline': 5, 'b-up-walk': 6, 'b-up-pizz': 4 }),
+  r('b-bebop-6', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 4, 'b-bebop': 7, 'b-harrisline': 5, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 2 }),
   // AUDIT-GAPS-2: the line through a key change (one diminished, four keys).
-  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3, 'b-up-walk': 6, 'b-up-pizz': 4 }),
+  r('b-keys-7', 5, { 'b-walk': 10, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 3 }),
   // AUDIT-DEPTH-3: walking through the brothers, then a solo that implies the roots.
-  r('b-ctx-1', 7, { 'b-walk': 11, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3, 'b-ctx': 2, 'b-up-walk': 6, 'b-up-pizz': 4 }),
-  r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-up-walk': 6, 'b-up-pizz': 4 }),
+  r('b-ctx-1', 7, { 'b-walk': 11, 'b-swing': 4, 'b-barry': 4, 'b-keys': 8, 'b-bebop': 7, 'b-tune': 3, 'b-ctx': 2, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 4 }),
+  r('b-solo-1', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 5 }),
   // Triad pairs, deep: alternating inversions over two octaves places the triad pairs on the bass.
-  r('b-tpair-2', 3, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-tpair': 3, 'b-up-walk': 6, 'b-up-pizz': 4 }),
+  r('b-tpair-2', 3, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-tpair': 3, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-cadlib': 5 }),
   // Owner 2026-11-19: a standard's AABA form, two-feel to four on the bridge, places the form and standards ladders.
-  r('b-jform-2', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-tpair': 3, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-jform': 3, 'b-std': 2 }),
+  r('b-jform-2', 0, { 'b-walk': 12, 'b-swing': 5, 'b-barry': 5, 'b-keys': 9, 'b-bebop': 7, 'b-tune': 4, 'b-ctx': 3, 'b-solo': 2, 'b-gig': 1, 'b-tpair': 3, 'b-up-walk': 6, 'b-up-pizz': 4, 'b-jform': 3, 'b-std': 2, 'b-cadlib': 6 }),
 ];
 const B_READING: Rung[] = [
   // AUDIT-6 Stage B: bass TAB (b-first 7) before the bass clef.

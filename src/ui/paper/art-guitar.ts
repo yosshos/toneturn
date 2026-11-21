@@ -445,6 +445,8 @@ export const ART_GUITAR: Record<string, Art> = {
     ),
   ),
   /** On the bandstand (guitar): "Gig·6" with a pick. */
+  /** The cadence chart library on the neck: "V→I·6". */
+  gcadlib: art('tan', 'purple', markParts('V→I·6')),
   ggig: art(
     'tan',
     'purple',

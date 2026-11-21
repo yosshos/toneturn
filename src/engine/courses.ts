@@ -138,11 +138,11 @@ export const JAZZ_LADDER_FAMILIES: string[] = [
  */
 export const JAZZ_FAMILIES: string[] = [
   // piano
-  'harris', 'k-sixdim', 'voicings', 'k-reharm', 'k-theory', 'jazz', 'k-bebop', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune', 'k-solo', 'k-ctx', 'k-harrisline', 'k-ctone', 'k-mediant', 'k-organ', 'k-tpair', 'k-lh', 'k-tex', 'k-comp', 'k-gig',
+  'harris', 'k-sixdim', 'voicings', 'k-reharm', 'k-theory', 'jazz', 'k-bebop', 'k-keys', 'k-vocab', 'k-phrase', 'k-harm', 'k-tune', 'k-solo', 'k-ctx', 'k-harrisline', 'k-ctone', 'k-mediant', 'k-organ', 'k-tpair', 'k-lh', 'k-tex', 'k-comp', 'k-gig', 'k-cadlib',
   // guitar
-  'g-jazz', 'g-jblues', 'g-theory', 'g-harris', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-ctx', 'g-solo', 'g-gig', 'g-cmarr', 'g-solojazz', 'g-hlfast',
+  'g-jazz', 'g-jblues', 'g-theory', 'g-harris', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair', 'g-keys', 'g-bebop', 'g-phrase', 'g-cmel', 'g-tune', 'g-ctx', 'g-solo', 'g-gig', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-cadlib',
   // bass
-  'b-walk', 'b-swing', 'b-barry', 'b-harrisline', 'b-counter', 'b-tpair', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-tune', 'b-bebop', 'b-phrase', 'b-ctx', 'b-solo', 'b-gig',
+  'b-walk', 'b-swing', 'b-barry', 'b-harrisline', 'b-counter', 'b-tpair', 'b-jform', 'b-latin', 'b-std', 'b-keys', 'b-tune', 'b-bebop', 'b-phrase', 'b-ctx', 'b-solo', 'b-gig', 'b-cadlib',
   // drums
   'd-jazz', 'd-brush', 'd-trade',
   // voice

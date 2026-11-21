@@ -35,6 +35,7 @@ import { bassTpairFamily, genTpairBass } from './tpairDrills'; // triad pairs, d
 import type { LevelExamTag } from './types';
 // AUDIT-GAPS-2 #6/#11/#12: the line under each key change, turnarounds and the rhythm-changes bridge (keyMoveDrills.ts).
 import { bassKeyMoveFamily, generateBassKeyMove } from './keyMoveDrills';
+import { bassCadenceFamily, generateBassCadence } from './cadenceLibrary';
 // AUDIT-DEPTH-3 C3/C4: a head on the bass — roots, two-feel, walking, approaches, walking the reharm (headDrills.ts).
 import { bassTuneFamily, generateBassHead } from './headDrills';
 
@@ -2497,6 +2498,8 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
       return generateBassNiche2(s, tu);
     case 'b-keys':
       return generateBassKeyMove(s, tu);
+    case 'b-cadlib':
+      return generateBassCadence(s, tu);
     // AUDIT-GAPS-2: bebop vocabulary and lines over forms (vocabDrills.ts).
     case 'b-bebop':
       return genBassVocab(s, tu);
@@ -2793,6 +2796,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
     standardsFamily(L, fam),
     // AUDIT-GAPS-2: key changes, turnarounds and the rhythm-changes bridge (jazz track).
     bassKeyMoveFamily(),
+    // The jazz cadence chart library walked: approach notes, free walking, the pedal (jazz track, cadenceLibrary.ts).
+    bassCadenceFamily(),
     // AUDIT-GAPS-2 High #1, #10: enclosures, digital patterns, bebop lines over forms, Barry Harris lines (jazz track).
     bassVocabFamily(L, fam),
     // Phrases by ear on the bass (jazz track): hear a phrase over its chords, play it back (phraseDrills.ts).
