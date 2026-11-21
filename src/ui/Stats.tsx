@@ -9,6 +9,7 @@ import { courseLevel, DYN } from '../engine/courseSocial';
 import { ladderFamiliesFor, TECH_DONE_STARS, techStars } from '../engine/ladderFacts';
 import { familyById } from '../engine/drills/plan';
 import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
+import { COURSE_SECTIONS, sectionAxes } from '../engine/courseSections';
 import { VOCAL_PROGRAMS } from '../engine/path';
 import { Glyph, glyphForEmoji } from './Glyph';
 import { useMemo, useState, type ReactNode } from 'react';
@@ -370,7 +371,7 @@ function OverviewV2({ lang, ratings, days, progress }: { lang: 'he' | 'en'; rati
         </div>
         <p className="ov-next">{r === null ? (he ? 'עוד לא נמדד — כמה תרגילים ונדע' : 'Not measured yet — a few exercises and we will know') : next ? (he ? `עוד ${next.from - r} נקודות ל־${next.name}` : `${next.from - r} points to ${next.name}`) : he ? 'בדרגה הגבוהה ביותר' : 'At the top level'}</p>
         <span className="ov-bar" aria-hidden="true">
-          <i style={{ width: `${into * 100}%` }} />
+          <i style={{ width: `${r === null ? 0 : into * 100}%` }} />
         </span>
       </section>
       <section className="ov-card ov-radar" aria-label={he ? 'התחומים שלך' : 'Your areas'}>
@@ -444,6 +445,10 @@ function courseAxes(course: CourseId, ratings: Parameters<typeof domainValue>[0]
       return { label: lang === 'he' ? he : en, v: n ? n / Math.max(1, refs.length) : null };
     });
   }
+  // SPEC-COURSE-SECTIONS (owner 2026-11-21): an instrument course's axes are its sections — technique as one axis,
+  // time its own on piano — each the share of its families' levels passed (time also blends the timing of every take).
+  const secs = COURSE_SECTIONS[course];
+  if (secs) return sectionAxes(secs, progress.drillItems ?? {}, lang);
   // Drums: the seven core families (reading too — it fell off at six, DRUMS_AUDIT I11); bass has its own six.
   const own = RADAR_FAMILIES[course];
   const fams = own ? own.map((x) => x[0]) : ladderFamiliesFor(course, DEFAULT_DRILL_SETTINGS).slice(0, course === 'drums' ? 7 : 6);
@@ -475,10 +480,12 @@ export function OverviewView(props: ProgressTabsProps) {
   const pl = o ? percentile(o.r, leagueLevels ?? []) : null;
   const pf = o ? percentile(o.r, friendLevels ?? []) : null;
   const peak = ps.peaks?.overall;
+  // owner 2026-11-21: the overall (ear) rating belongs to the Ear course; an instrument course has its level on top.
+  const instrument = !!COURSE_SECTIONS[useCourse().active];
   return (
     <div className="ps-view">
       <OverviewV2 lang={lang} ratings={ratings} days={ps.statsDays} progress={progress} />
-      <section className="set-card ps-overall">
+      {!instrument && <section className="set-card ps-overall">
         <div className="ps-overall-head">
           <div>
             <small>{SX.overall[lang]}</small>
@@ -490,7 +497,7 @@ export function OverviewView(props: ProgressTabsProps) {
         {peak && <p className="field-hint">{fill(SX.bestEver[lang], { r: peak.r, d: fmtDay(localDay(new Date(peak.at)), lang) })}</p>}
         {pl !== null && <p className="ps-pct">{fill(SX.better[lang], { p: pl, g: SX.league[lang] })}</p>}
         {pf !== null && <p className="ps-pct">{fill(SX.better[lang], { p: pf, g: SX.friends[lang] })}</p>}
-      </section>
+      </section>}
       {props.overview}
       <RecordsCard progress={progress} lang={lang} />
     </div>

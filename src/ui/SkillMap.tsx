@@ -14,10 +14,20 @@ import { LESSON_META } from '../game/content';
 import { LESSON_ORDER } from '../engine/lesson';
 import { foldSubs, subsOf, type SubStat } from '../engine/taxonomy';
 import { Icon } from './icons';
+import { COURSE_SECTIONS, sectionAxes } from '../engine/courseSections';
+import { familyById } from '../engine/drills/plan';
+import { TECH_DONE_STARS, techStars } from '../engine/ladderFacts';
+import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
-export function SkillMap({
+/** Progress → Skills: an instrument course shows its sections (SPEC-COURSE-SECTIONS); Ear its skills by area. */
+export function SkillMap(props: Parameters<typeof EarSkillMap>[0]) {
+  const course = useCourse().active;
+  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} /> : <EarSkillMap {...props} />;
+}
+
+function EarSkillMap({
   t,
   progress,
   onBack,
@@ -330,5 +340,72 @@ export function EarChordCard({ t, ratings, bestLeague }: { t: Strings; ratings: 
         <p className="field-hint">{t.earChordHint}</p>
       </div>
     </section>
+  );
+}
+
+/**
+ * An instrument course's skill map (owner 2026-11-21: the ear's map showed in Piano — a leftover from before the
+ * courses split): its sections as the radar's axes (technique one axis, time its own on piano), then one row per section
+ * with its families and how many of their levels are passed; the weakest started section is the next to work on.
+ */
+function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void }) {
+  const course = useCourse().active;
+  const secs = COURSE_SECTIONS[course]!;
+  const items = progress.drillItems ?? {};
+  const axes = sectionAxes(secs, items, lang);
+  const he = lang === 'he';
+  const started = axes.filter((a) => a.v !== null);
+  const next = started.length ? started.reduce((a, b) => (b.v! < a.v! ? b : a)) : null;
+  return (
+    <main className="panel-screen skillmap" data-skillmap-course={course}>
+      <header className="screen-head">
+        <button className="icon-btn" onClick={onBack} aria-label={t.back}>
+          <Icon k="back" />
+        </button>
+        <h1>{he ? 'התחומים' : 'Areas'}</h1>
+      </header>
+      <p className="field-hint">{he ? 'התחומים של הקורס (המפה שלהם בסקירה). פתחו תחום כדי לראות מה הוא כולל.' : 'The areas of this course (their map is on Overview). Open one to see what it covers.'}</p>
+      {next && (
+        <p className="sm-next" data-section-next={next.id}>
+          {he ? 'הבא לעבודה: ' : 'Next to work on: '}
+          <b>{next.label}</b>
+        </p>
+      )}
+      <section className="sm-areas" aria-label={t.skillMap}>
+        {secs.map((sec, i) => {
+          const a = axes[i];
+          return (
+            <details key={sec.id} className="sm-area" data-section={sec.id}>
+              <summary>
+                <b>{sec.name[lang]}</b>
+                <small>{a.v === null ? (he ? 'עוד לא נמדד' : 'not measured yet') : `${a.done} / ${a.levels} ${he ? 'שלבים' : 'levels'}`}</small>
+                <span className="sm-bar" aria-hidden="true">
+                  <i style={{ width: `${a.levels ? Math.round((a.done / a.levels) * 100) : 0}%` }} />
+                </span>
+              </summary>
+              <p className="field-hint">{sec.desc[lang]}</p>
+              <ul className="sm-fams">
+                {sec.families.map((id) => {
+                  const f = familyById(id as FamilyId);
+                  if (!f) return null;
+                  const done = f.levels.filter((l) => techStars(l, items, DEFAULT_DRILL_SETTINGS.keyOrder) >= TECH_DONE_STARS).length;
+                  return (
+                    <li key={id}>
+                      <span>{f.title[lang]}</span>
+                      <small dir="ltr">
+                        {done} / {f.levels.length}
+                      </small>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button className="link" onClick={() => (location.hash = '/drills')} data-section-practice={sec.id}>
+                {he ? 'לתרגל' : 'Practise'}
+              </button>
+            </details>
+          );
+        })}
+      </section>
+    </main>
   );
 }

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.114.2',
+    date: '2026-11-21',
+    en: ['Progress in an instrument course shows the course’s own areas (piano: technique, dynamics, time, harmony, comping, improvisation, by ear, reading): the map once on Overview, the areas with their families on Skills; no leftovers of the ear course.'],
+    he: ['ההתקדמות בקורס כלי מראה את התחומים של הקורס (פסנתר: טכניקה, דינמיקה, זמן, הרמוניה, ליווי, אלתור, משמיעה, קריאה): המפה פעם אחת בסקירה, והתחומים עם המשפחות שלהם בכישורים; בלי שאריות של קורס השמיעה.'],
+  },
+  {
     version: '0.114.1',
     date: '2026-11-21',
     en: ['Voicings keep every tension (a 7♭9 always has its ♭9, in drop 2, drop 3 and four-way close too); quartal So What ii–V–I in two versions; the Kenny Barron voicing on every minor 7 and in a ii–V–I; the harmonic minor formula pattern over four octaves; guitar shells for every cadence.'],

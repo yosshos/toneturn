@@ -1,3 +1,5 @@
+import { COURSE_SECTIONS } from '../engine/courseSections';
+import { challengeFor } from '../engine/ranks';
 import { SoundBlocked } from './SoundBlocked';
 import { TodayCards } from './TodayCards';
 import { GrooveEchoModes } from './GrooveEchoModes';
@@ -2729,7 +2731,7 @@ export function App() {
             <>
               <button className="set-card in-entry" onClick={() => go('insights')} data-open-insights="1">
                 <span className="in-entry-n" dir="ltr">
-                  {earIndex(ratingsOf(progress))?.r ?? '—'}
+                  {COURSE_SECTIONS[s.activeCourse ?? 'ear'] ? <Icon k="quaver" /> : (earIndex(ratingsOf(progress))?.r ?? '—')}
                 </span>
                 <span className="in-entry-text">
                   <b>{s.uiLang === 'he' ? 'תובנות' : 'Insights'}</b>
@@ -2741,9 +2743,11 @@ export function App() {
               </button>
               <DiaryEntryCard lang={s.uiLang} onOpen={() => go('diary')} />
               <RecordingsEntryCard lang={s.uiLang} />
-              <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />
-              <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />
-              <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />
+              {/* owner 2026-11-21: an instrument course shows its own sections (the radar, Skills) — not the ear's chord,
+                  areas and a challenge from another course */}
+              {!COURSE_SECTIONS[s.activeCourse ?? 'ear'] && <EarChordCard t={t} ratings={ratingsOf(progress)} bestLeague={s.bestLeague} />}
+              {!COURSE_SECTIONS[s.activeCourse ?? 'ear'] && <DomainTiles t={t} progress={progress} onPractice={practiceSkill} lang={s.uiLang} onTechnique={() => go('drills')} onLearn={{ has: (k) => !!miniForSkill(k), open: (k) => openRefresher(miniForSkill(k)!, () => undefined) }} />}
+              {challengeInCourse(s.activeCourse ?? 'ear') && <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />}
             </>
           }
           map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
@@ -3714,4 +3718,9 @@ export function App() {
     </MiniGateContext.Provider>
     </CourseContext.Provider>
   );
+}
+
+/** The month's area challenge only in a course that has that area (owner 2026-11-21: "Voice" in Piano). */
+function challengeInCourse(course: CourseId): boolean {
+  return COURSE_AREAS[course].includes(challengeFor(new Date().toISOString().slice(0, 7)).area as DomainId);
 }
