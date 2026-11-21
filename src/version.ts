@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.114.0',
+    date: '2026-11-21',
+    en: ['New technique: the jazz cadence library (37 cadences in nine voicings on piano, four on guitar, walking bass), colours of the diminished, every mode on a root (major, melodic and harmonic minor) and the symmetric scales as full scales, Hanon 2–20, minor octaves and double 3rds, contrary 7th arpeggios, guitar minor scales in five positions, bass diatonic 7ths. The coach: technique tiers set the timing tolerance, a short level check on a first session, a note at the end. Practice: Technique first, extras under More practice, Licks inside Encore. Swing tunes replace the children’s songs in the openers and the first repertoire.'],
+    he: ['טכניקה חדשה: ספריית הקדנצות בג׳אז (37 קדנצות בתשעה ווייסינגים בפסנתר, ארבעה בגיטרה, בס מהלך), צבעי המוקטן, כל המודים על שורש (מז׳ור, מינור מלודי והרמוני) והסולמות הסימטריים כסולמות מלאים, הנון 2–20, אוקטבות וטרצות כפולות במינור, ארפג׳יו 7 בתנועה נגדית, סולמות מינור בחמש פוזיציות בגיטרה, ספטאקורדים דיאטוניים בבס. המאמן: דרגות טכניקה קובעות את סף הקצב, בדיקת רמה קצרה בפעם הראשונה, והערה בסוף. Practice: טכניקה ראשונה, השאר תחת עוד תרגול, ליקים בתוך הדרן. מנגינות סווינג במקום שירי ילדים בפותחים ובצעדי הרפרטואר הראשונים.'],
+  },
+  {
     version: '0.113.0',
     date: '2026-11-21',
     en: ['Practice by key: a key of the week (your weakest key, or the next new one), Know the key (signature, chords, ii–V–I, 6th-diminished, the relative and parallel keys, three quick questions), dynamics as a lens on any scale, arpeggio or pattern (crescendo, accents, p, f, staccato), the circle of fifths on wide screens, the current level in each row, and key order by fingering.'],
