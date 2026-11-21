@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.111.1',
+    date: '2026-11-21',
+    en: ['Continuous practice asks for the key order before it starts: circle of fifths up or down, chromatic up or down.'],
+    he: ['האימון הרציף שואל לפני ההתחלה על סדר הסולמות: מעגל הקווינטות עולה או יורד, כרומטי עולה או יורד.'],
+  },
+  {
     version: '0.111.0',
     date: '2026-11-21',
     en: ['Continuous practice climbs: the tempo rises inside the session (faster after clean takes, two steps when it is easy), “almost” no longer counts as a miss, a slowed take never passes, and players past the basics (your course answers, the level test, or easy takes) skip free time and start hands together.'],

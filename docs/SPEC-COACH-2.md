@@ -198,3 +198,34 @@ never on the card. No emoji. One screen per view on a phone.
 
 After each stage: the course-change checklist (openers, skill map, level test), e2e on the coach, and the owner's
 check on his own keyboard.
+
+## 10. Owner decisions, 2026-11-21
+
+- **Approved:** fixes first; the by-key mixed session is the default from T2; the key view has 12 cards plus a minor
+  toggle; the placement probe can be skipped (memory coach-2-decisions).
+- **The key page holds everything "in" the key.**
+  - The key's scales and arpeggios.
+  - Its cadences, including ii–V–I, the minor ii–V–i, backdoor and tritone substitution, all tonic-based: a cadence to
+    C is on the C page.
+  - Its dominant material: G7 lines, the rules and the dominant family.
+  - Its 6th-diminished (Harris).
+  - Root-built colour items, such as chord scales and triad pairs over a chord, sit in their own row on the page,
+    headed by the chord name.
+  - Fix first (TECHNIQUE-COVERAGE-AUDIT §2): minor material that is tagged major (178 levels), and the root-versus-tonic
+    clash, e.g. piano `harris-2` uses C7 at key C while guitar `g-harris-3` uses G7.
+- **Modes get a third tab**, next to Major and Minor, so the tabs are Major | Minor | Modes. In the Modes tab:
+  - **Filing:** modes are filed by parent key. The C page holds D dorian, E phrygian and so on, plus the modes of C
+    harmonic minor and C melodic minor.
+  - **Practice:** every mode is practised in all the ways a scale is: each hand, hands together, contrary motion,
+    3rds/6ths/10ths apart, rhythm variants, and 1 to 4 octaves by tier.
+  - **Two whole-key exercises:**
+    - "through the parent": C ionian, D dorian, E phrygian … each from its own degree;
+    - "on one root": C ionian, C dorian, C phrygian … each mode on the same root, to hear its colour (the jazz habit).
+  - **Content to add:** the modes of harmonic minor (e.g. phrygian dominant) and of melodic minor (e.g. lydian dominant,
+    altered). Today the scales family has the major modes and a few jazz scales (scales-12). Only standard,
+    textbook mode names and spellings go in.
+- **Continuous practice is the default.** The main button on every key page and every topic page starts the coach. The
+  list of single exercises is the secondary way in.
+- **A topic session asks for the key order** on its opening screen: circle of fifths up or down, chromatic up or down.
+  Built in 0.111.1; it uses the existing setting.
+- **"3 to ♭9"** is out everywhere. A second search found no primary source.

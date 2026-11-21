@@ -2618,6 +2618,8 @@ button.chip.on {
 .coach-intro h2 { margin: 0; }
 .coach-intro .coach-step { margin: 0; color: var(--ink-dim); font-size: 14px; }
 .coach-intro .muted { color: var(--ink-dim); font-size: 14px; }
+/* the key order of a topic session (owner 2026-11-21) */
+.coach-intro .coach-order { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .coach-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 0 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); min-height: 48px; }
 .coach-bar.ok { background: color-mix(in srgb, var(--mint) 18%, transparent); }
 .coach-bar.miss { background: color-mix(in srgb, var(--tangerine) 16%, transparent); }

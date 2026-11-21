@@ -120,3 +120,14 @@ test('sound kept closed: Turn sound on opens a fresh audio channel and the bar g
   await expect(page.locator('[data-sound-blocked]')).toHaveCount(0, { timeout: 5000 });
   expect(await page.evaluate(() => (window as unknown as { __sound: { audioRunning: boolean } }).__sound.audioRunning)).toBe(true);
 });
+
+test('coach intro: the key order is picked before the session (chromatic, circle of fifths up / down)', async ({ page }) => {
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-coach-open="scales"]').click();
+  await expect(page.locator('[data-coach-order="fifths-up"]')).toHaveAttribute('aria-checked', 'true');
+  await page.locator('[data-coach-order="chromatic-up"]').click();
+  await expect(page.locator('[data-coach-order="chromatic-up"]')).toHaveAttribute('aria-checked', 'true');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: 'test-results/coach-order.png' });
+});

@@ -36,7 +36,7 @@ import { PART_NAME, songDrill } from '../engine/drills/songDrills';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import type { RatingEvent } from '../engine/rating';
-import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, ItemState, PlayedNote, TakeMetrics } from '../engine/drills/types';
+import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, ItemState, KeyOrder, PlayedNote, TakeMetrics } from '../engine/drills/types';
 import { DEFAULT_DRILL_SETTINGS } from '../engine/drills/types';
 import { keyName } from '../engine/drills/generate';
 import type { FamilyDef, LevelDef } from '../engine/drills/generate';
@@ -286,6 +286,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           key={view.coach ? `coach:${view.coach.id}` : 'run'}
           coach={view.coach}
           coachBg={view.coach ? coachBackground(settings, ds, view.coach.id) : undefined}
+          onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
           lang={lang}
@@ -918,7 +919,7 @@ const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some(
 const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
 const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, coachBg, onTitle }: { /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, coachBg, onKeyOrder, onTitle }: { /** The order of keys in a topic session (owner 2026-11-21: chromatic, or the circle of fifths up / down). */ onKeyOrder?: (o: KeyOrder) => void; /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -934,6 +935,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [cTake, setCTake] = useState<CoachTake | null>(() => (coach && coachRef.current ? coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk) : null));
   const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);
   const [cStarted, setCStarted] = useState(false);
+  // The key order picked on the intro: the session is laid out again (before it starts only).
+  useEffect(() => {
+    if (!coach || cStarted) return;
+    coachRef.current = coachStart(coach, items, ds.keyOrder, Date.now(), coachBg);
+    setCTake(coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk));
+  }, [ds.keyOrder]); // eslint-disable-line react-hooks/exhaustive-deps
   const [cPaused, setCPaused] = useState(false);
   const [cDemo, setCDemo] = useState(false);
   const cXp = useRef(0);
@@ -1237,6 +1244,15 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           <h2>{cTake.kind === 'warmup' ? (he ? 'חימום' : 'Warm-up') : he ? 'אימון רציף' : 'Continuous practice'}</h2>
           <p>{announce(cTake, lang)}</p>
           <p className="muted">{he ? 'הידיים נשארות על הכלי: אחרי כל נגינה ממשיכים לבד, עם הערה קצרה. אפשר לעצור בכל רגע.' : 'Hands stay on the instrument: after each take the session moves on by itself, with a short note. Pause any time.'}</p>
+          {onKeyOrder && (
+            <div className="chips coach-order" role="radiogroup" aria-label={he ? 'סדר הסולמות' : 'Key order'}>
+              {(['fifths-up', 'fifths-down', 'chromatic-up', 'chromatic-down'] as KeyOrder[]).map((o) => (
+                <button key={o} type="button" role="radio" aria-checked={ds.keyOrder === o} className={`chip ${ds.keyOrder === o ? 'on' : ''}`} onClick={() => onKeyOrder(o)} data-coach-order={o}>
+                  {tx.orders[o]}
+                </button>
+              ))}
+            </div>
+          )}
           <button
             className="btn mega primary"
             onClick={() => {
