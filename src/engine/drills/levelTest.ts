@@ -75,6 +75,8 @@ const HANDS: Rung[] = [
   r('fingers-6', 10, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
   // AUDIT-7 #11: a graded piece (Bach's Prelude in C, G5) places the classical tier and the pedal's first steps.
   r('k-classic-6', 0, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2 }),
+  // SPEC-PRACTICE-KEYS §6: aeolian each hand, 1 and 2 octaves (~1540) places the modes on a root.
+  r('k-modes-1', 5, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2, 'k-modes': 2 }),
 ];
 // MEASUREMENT-AUDIT G8: touch is tested before it is placed (control used to be inferred from the hands steps): one
 // level, a crescendo out and back, voicing, the pedal, dynamics in contrary motion, soft at speed. MIDI only — by
@@ -184,6 +186,9 @@ const LINES: Rung[] = [
   r('k-solo-4', 10, { 'k-first': 11, harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22, 'k-gig': 1 }),
   // Triad pairs, deep: the hexatonic scale over two and three octaves (~1540) places the triad-pair family.
   r('k-tpair-6', 3, { 'k-first': 11, harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22, 'k-gig': 1, 'k-tpair': 7 }),
+  // SPEC-PRACTICE-KEYS §6: dorian ♭2 each hand and hands together (~1640) places the melodic / harmonic minor modes
+  // (and the symmetric scales hands together below it, 1600–1630).
+  r('k-mmhm-1', 7, { 'k-first': 11, harris: 15, jazz: 7, 'k-bebop': 6, 'k-theory': 3, 'k-vocab': 9, 'k-ctx': 4, 'k-solo': 5, 'k-harrisline': 22, 'k-gig': 1, 'k-tpair': 7, 'k-mmhm': 2 }),
 ];
 
 // Owner 2026-11-19: rhythm & meter (k-rhythm) is a course family of every emphasis that no other step measured —

@@ -25,6 +25,7 @@ import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, so
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
 import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
 import { genKeysClassic, keysClassicFamily } from './keysClassic'; // AUDIT-7 #11: public-domain classical pieces
+import { genModeScale, keysModesFamily, keysMmhmFamily } from './modeScales'; // SPEC-PRACTICE-KEYS §6: modes as full scales
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
 import { colourPcs, keyName as progKeyName, voiceChords } from '../progGrid';
 // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody, comp a head, reharmonise it (headDrills.ts).
@@ -522,16 +523,34 @@ const keyLabel = (s: DrillSpec): string => keyName(s.key, !!s.minor);
 
 // ───────────────────────────── S: scales (and K articulation / dynamics, X octaves) ─────────────────────────────
 
-function genScale(s: DrillSpec): Drill {
+/**
+ * A scale outside the ScaleType list run through the same forms (modeScales.ts: the modes on a root, melodic / harmonic
+ * minor modes, the symmetric scales): its intervals, its name, the key signature, per-pitch-class spelling (one letter
+ * per degree), and whether the automatic fingering applies (off where no standard fingering is sure).
+ */
+export interface CustomScale {
+  ints: number[];
+  name: T2;
+  keySig: string;
+  spell?: Record<number, string>;
+  finger: boolean;
+}
+
+/** The scale drill of a custom scale (every form genScale knows: each hand, together, contrary, apart, 1–4 octaves). */
+export function genScaleWith(s: DrillSpec, custom: CustomScale): Drill {
+  return genScale(s, custom);
+}
+
+function genScale(s: DrillSpec, custom?: CustomScale): Drill {
   const type = scaleTypeOf(s);
-  const up = scaleIntervals(type);
+  const up = custom ? custom.ints : scaleIntervals(type);
   const n = up.length;
   const oct = s.octaves ?? 2;
   const N = n * oct;
   const seven = n === 7;
   let motion: Motion = s.hands === 'RL' ? (s.motion ?? 'parallel') : 'parallel';
   // Chromatic scales may also run a minor 3rd / major 6th apart (ABRSM grades 6–8); other non-7-note scales stay parallel.
-  const chromApart = type === 'chromatic' && (motion === 'third' || motion === 'sixth');
+  const chromApart = !custom && type === 'chromatic' && (motion === 'third' || motion === 'sixth');
   if (!seven && !chromApart && motion !== 'parallel' && motion !== 'contrary') motion = 'parallel';
   const apart = chromApart ? 3 : 2;
   const octavesKind = s.kind === 'octaves';
@@ -597,9 +616,9 @@ function genScale(s: DrillSpec): Drill {
     tR = pitchIn(s.key, 52);
     tL = tR - 24;
   }
-  const row = type === 'chromatic' ? null : fingRowFor(type, s.key);
-  const auto = type === 'chromatic' || row ? null : autoFingering(s.key, up);
-  const rowDown = type === 'chromatic' ? null : fingRowFor(type, s.key, true);
+  const row = custom || type === 'chromatic' ? null : fingRowFor(type, s.key);
+  const auto = custom ? (custom.finger ? autoFingering(s.key, up) : null) : type === 'chromatic' || row ? null : autoFingering(s.key, up);
+  const rowDown = custom || type === 'chromatic' ? null : fingRowFor(type, s.key, true);
   const handsUsed: Hand[] = s.hands === 'RL' ? ['R', 'L'] : [s.hands];
   const kOf = (h: Hand, i: number) => (h === 'R' ? path[i][0] + oR : path[i][1] + oL);
   const range = (h: Hand) => {
@@ -616,10 +635,10 @@ function genScale(s: DrillSpec): Drill {
       const pk = prevK[h];
       const down = pk !== null && k < pk;
       prevK[h] = k;
-      const p = degPitch(h === 'R' ? tR : tL, scaleIntervals(type, down), k);
+      const p = degPitch(h === 'R' ? tR : tL, custom ? custom.ints : scaleIntervals(type, down), k);
       let finger: number | undefined;
       if (octavesKind) finger = undefined;
-      else if (type === 'chromatic') finger = chromaticFinger(h, p, i === 0);
+      else if (!custom && type === 'chromatic') finger = chromaticFinger(h, p, i === 0);
       else if (row && rowDown && seven) {
         const [lo, hi] = ranges[h];
         // Endpoints that are not tonics take the cycle finger (scales a 3rd / 6th apart). Melodic minor: the row of the
@@ -654,7 +673,7 @@ function genScale(s: DrillSpec): Drill {
   const ttl = title(
     [
       octavesKind ? t('Octaves', 'אוקטבות') : null,
-      t(`${keyLabel(s)} ${SCALE_T[type].en}`, `${keyLabel(s)} ${SCALE_T[type].he}`),
+      custom ? custom.name : t(`${keyLabel(s)} ${SCALE_T[type].en}`, `${keyLabel(s)} ${SCALE_T[type].he}`),
       motion !== 'parallel' ? MOTION_T[motion] : null,
       t(`${oct} oct`, `${oct} אוק׳`),
     ],
@@ -662,7 +681,9 @@ function genScale(s: DrillSpec): Drill {
   );
   const fam = s.family;
   const nps = fam === 'control' ? 2.0 : fam === 'advanced' ? 1.8 : oct >= 3 ? 2.4 : 2.2;
-  return finish(s, buf, ttl, goalOf(s, true), bpmFor(nps, perBeat));
+  const d = finish(s, buf, ttl, goalOf(s, true), bpmFor(nps, perBeat), 4, custom?.keySig);
+  if (custom?.spell) for (const nt of d.notes) nt.spell = custom.spell[mod(nt.pitch, 12)];
+  return d;
 }
 
 // ───────────────────────────── A: arpeggios and broken chords ─────────────────────────────
@@ -5234,6 +5255,8 @@ function generateRaw(spec: DrillSpec): Drill {
   // AUDIT-7 #10, #11: pop accompaniment, pedalling 2–4, the public-domain classical tier.
   if (s.family === 'k-pop' || s.family === 'k-pedal') return genKeysPop(s);
   if (s.family === 'k-classic') return genKeysClassic(s);
+  // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales (modeScales.ts).
+  if (s.family === 'k-modes' || s.family === 'k-mmhm') return genModeScale(s);
   if (s.kind.startsWith('chart~')) return genChart(s);
   switch (s.kind) {
     case 'scale':
@@ -6393,6 +6416,9 @@ export function catalog(): FamilyDef[] {
     keysClassicFamily(),
     // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).
     keysGigFamily(),
+    // SPEC-PRACTICE-KEYS §6: the major modes on a root as full scales; melodic / harmonic minor modes and symmetric scales.
+    keysModesFamily(),
+    keysMmhmFamily(),
   ]));
 }
 

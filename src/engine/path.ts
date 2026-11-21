@@ -8,6 +8,7 @@
 import { gameVerified, topicVerified } from './verifiedContent';
 import { K_HARM_DIFF } from './drills/harmLadder';
 import { K_INDEP_DIFF } from './drills/indepDrills';
+import { MODE_LEVEL_DIFF } from './drills/modeScales';
 import { questionTags } from './taxonomy';
 import { SUB_PREREQ, IMPORTANCE } from './scheduler';
 import { DOMAINS, domainOf, evidence, expected, type DomainId, type RatingEvent, type Ratings } from './rating';
@@ -643,6 +644,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // first, then the whole-step and two-note colours, drop 2 and the whole run.
   'k-dimcol-1': 1380, 'k-dimcol-2': 1400, 'k-dimcol-3': 1440, 'k-dimcol-4': 1480, 'k-dimcol-5': 1520, 'k-dimcol-6': 1570, 'k-dimcol-7': 1630,
   ...K_INDEP_DIFF,
+  // SPEC-PRACTICE-KEYS §6: the modes as full scales (major modes 1540–1890; symmetric 1600–1880, melodic / harmonic
+  // minor modes 1640–1895).
+  ...MODE_LEVEL_DIFF,
   ...K_HARM_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
@@ -678,7 +682,7 @@ export const PATH_CAP = 1900;
 export const NON_MONOTONE_FAMILIES = [
   // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
   'g-ctx',
-  'harris', 'scales', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
+  'harris', 'scales', 'k-mmhm', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
   // pentatonic one by one, the jazz waltz, the 3–7 shells; the drum rudiments, 7/8 and the unseen reading).

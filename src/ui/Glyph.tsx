@@ -1351,6 +1351,29 @@ Object.assign(GLYPHS, {
       <path d="M-6 -20 L4 -24" {...sw} strokeWidth={2.4} />
     </>
   ),
+  // SPEC-PRACTICE-KEYS §6
+  /** The modes on one root: three scale runs fanning up from one shared tonic. */
+  modesroot: (
+    <>
+      <ellipse cx={-18} cy={18} rx={7} ry={4.8} fill="none" stroke={I} strokeWidth={2.6} transform="rotate(-20 -18 18)" />
+      <path d="M-11 15 L22 -20 M-11 16 L22 -4 M-11 17 L22 12" {...sw} strokeWidth={2.2} strokeDasharray="3 4" />
+      {head(22, -20, 4.4, 3.2)}
+      {head(22, -4, 4.4, 3.2)}
+      {head(22, 12, 4.4, 3.2)}
+    </>
+  ),
+  /** Melodic / harmonic minor modes and the symmetric scales: an even ladder of heads under a bracket. */
+  modesmm: (
+    <>
+      {head(-20, 18, 4.4, 3.2)}
+      {head(-12, 10, 4.4, 3.2)}
+      {head(-4, 2, 4.4, 3.2)}
+      {head(4, -6, 4.4, 3.2)}
+      {head(12, -14, 4.4, 3.2)}
+      {head(20, -22, 4.4, 3.2)}
+      <path d="M-24 6 L-24 0 L8 -32 L14 -26" {...sw} strokeWidth={2.2} />
+    </>
+  ),
 });
 // AUDIT-DEPTH-3: heads — a melody note on top of a stacked chord (harmonise; over strings: chord-melody), and a lead
 // sheet's bars with comping slashes (comp a head; over strings on the guitar, a thick string on the bass).

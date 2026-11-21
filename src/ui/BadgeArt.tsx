@@ -650,6 +650,27 @@ export const GLYPHS: Record<string, Glyph> = {
       {head(19, 5, 1.8)}
     </>
   ),
+  // SPEC-PRACTICE-KEYS §6: the modes on one root (runs fanning up from one tonic); melodic / harmonic minor modes and
+  // symmetric scales (an even ladder under a bracket).
+  'family:k-modes': () => (
+    <>
+      <ellipse cx={5} cy={18} rx={3} ry={2} fill="none" />
+      {p('M8 17L19 6 M8 18L19 12 M8 19L19 18', false)}
+      {head(20, 6, 1.8)}
+      {head(20, 12, 1.8)}
+      {head(20, 18, 1.8)}
+    </>
+  ),
+  'family:k-mmhm': () => (
+    <>
+      {head(4, 20, 1.7)}
+      {head(8, 17, 1.7)}
+      {head(12, 14, 1.7)}
+      {head(16, 11, 1.7)}
+      {head(20, 8, 1.7)}
+      {p('M2 10V7L14 2l2 2', false)}
+    </>
+  ),
   'family:g-harm': () => (
     <>
       <path d="M2 6h20 M2 11h20 M2 16h20 M2 21h20" strokeWidth={0.8} />

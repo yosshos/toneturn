@@ -18,6 +18,9 @@ export const UNITS: Record<string, string> = {
   // ---- Keys
   'tech:scales': 'key-scales', // the major-scale pattern, sharps one by one
   'tech:scales-19': 'modes', // Dorian: the first mode on the scale ladder
+  // SPEC-PRACTICE-KEYS §6: the modes on a root; the melodic / harmonic minor modes and symmetric scales (chord scales).
+  'tech:k-modes': 'mode-colours',
+  'tech:k-mmhm': 'chord-scale',
   'tech:arpeggios': 'key-shapes', // triads, inversions as shapes
   'tech:arpeggios-4': 'seventh-types', // dominant 7th
   'tech:arpeggios-5': 'seventh-types', // diminished 7th

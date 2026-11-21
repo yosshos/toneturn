@@ -80,6 +80,10 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'k-pedal': { role: 'control' },
   'k-classic': { scope: 'apply', role: 'apply' },
   'k-gig': { scope: 'apply', role: 'apply' },
+  // SPEC-PRACTICE-KEYS §6: the major modes on a root (major tab); melodic / harmonic minor modes and symmetric scales
+  // (their tabs by the item's own scale).
+  'k-modes': { role: 'scale', group: 'major' },
+  'k-mmhm': { role: 'scale' },
   // ── guitar
   'g-first': { scope: 'neutral', role: 'pattern' },
   'g-riff': { scope: 'apply', role: 'apply' },
@@ -172,7 +176,7 @@ export const FAMILY_FACETS: Record<string, Fam> = {
 
 // ── the group, from the item itself (the mode it is in or the scale it is) ──
 const ESC = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const SYM = /whole-tone|whole tone|half-whole|whole-half|half–whole|augmented \(symmetric\)/i;
+const SYM = /whole-tone|whole tone|half-whole|whole-half|half–whole|whole–half|augmented \(symmetric\)/i;
 const MMHM = /altered|7alt|lydian dominant|lydian augmented|locrian ♮2|dorian ♭2|mixolydian ♭6|phrygian dominant|super-?locrian|melodic[- ]minor mode|harmonic[- ]minor mode|lydian ♯2|ionian ♯5|dorian ♯4|locrian ♮6/i;
 /** The colour of a cadence's chord is the cadence's (a "V altered" in a ii–V–I in C stays with C). */
 const CADENCE = /ii–V|I–IV|turnaround|cadence|on the V\b|the V altered|secondary dominants|→ ?[A-G][♭♯]?(maj7|6)?\b/i;
@@ -185,6 +189,8 @@ const MINOR_RN = /ii–V–i(?![A-Za-z])|(^|[^A-Za-z♭♯])i–iv(?![A-Za-z])|\
 
 /** The group of a drill (see the head comment). */
 export function facetGroup(d: Drill): FacetGroup {
+  const fixed = FAMILY_FACETS[d.spec.family]?.group;
+  if (fixed) return fixed;
   const t = d.title.en;
   if (d.tonic ? d.tonic.minor : d.spec.minor) return 'minor';
   const k = d.tonic ? d.tonic.key : d.spec.key;

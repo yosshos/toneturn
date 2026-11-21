@@ -61,6 +61,10 @@ export type FamilyId =
   | 'g-keys'
   // AUDIT-SCALES (owner 2026-11-14): hand independence (Philipp style) and the scale-harmonization ladder (piano, guitar).
   | 'k-indep'
+  // SPEC-PRACTICE-KEYS §6: the major modes on a root as full scale items; the melodic / harmonic minor modes and the
+  // symmetric scales (modeScales.ts).
+  | 'k-modes'
+  | 'k-mmhm'
   | 'k-sharm'
   | 'g-harm'
   // AUDIT-DEPTH-3 #2–#4, C1/C3/C4: heads — harmonise a melody (piano), chord-melody (guitar), comp a head step by step
@@ -230,6 +234,8 @@ export interface ExpNote {
   hand: Hand;
   /** Suggested finger 1–5 (help only, never graded). */
   finger?: number;
+  /** The note's written name when the key signature alone would spell it otherwise ("F♭", "B𝄫", "E♯"): modes spelled one letter per degree. */
+  spell?: string;
   /** Notes sharing a chordId sound together (blocked chords, octaves, hands together). */
   chordId?: number;
   /** Louder than its neighbours (accent / melody / voicing top note). */

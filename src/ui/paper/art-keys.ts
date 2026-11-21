@@ -449,6 +449,33 @@ export const ART_KEYS: Record<string, Art> = {
     H(39, 19, 3.6, 'accent'),
     det(R(4, 45.4, 40, 1.8, 0.9, 'mark')),
   ),
+  /** SPEC-PRACTICE-KEYS §6 — the modes on one root: three scale runs fanning up from one shared tonic. */
+  modesroot: art(
+    'teal',
+    'purple',
+    E(10, 39, 7.4, 5, -20, 'body'),
+    E(10, 39, 3.6, 2.2, 30, 'light'),
+    L(17, 36, 38, 10, 'wire', 1.6),
+    L(17, 37, 38, 22, 'wire', 1.6),
+    L(17, 38, 38, 34, 'wire', 1.6),
+    H(40, 9, 3.4, 'accent'),
+    H(40, 21, 3.4, 'accent'),
+    H(40, 33, 3.4, 'accent'),
+    det(R(3, 45.4, 42, 1.8, 0.9, 'mark')),
+  ),
+  /** The melodic / harmonic minor modes and the symmetric scales: an even ladder of heads under a bracket. */
+  modesmm: art(
+    'purple',
+    'lilac',
+    P('M4 24 L4 18 L30 3 L34 8', 'accentline', 2),
+    H(7, 42, 3.4, 'body'),
+    H(14, 36, 3.4, 'body'),
+    H(21, 30, 3.4, 'accent'),
+    H(28, 24, 3.4, 'body'),
+    H(35, 18, 3.4, 'body'),
+    H(42, 12, 3.4, 'accent'),
+    det(R(3, 45.4, 42, 1.8, 0.9, 'mark')),
+  ),
   /** Harmonise a melody: the melody note on top of a stacked chord. */
   harmmel: art(
     'lilac',
