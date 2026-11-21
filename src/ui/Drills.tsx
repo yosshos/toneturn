@@ -21,12 +21,39 @@ import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
 import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
 /** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
-function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId): CoachBackground {
+/**
+ * SPEC-COACH-2 §7 (AI decisions 2026-11-14: Haiku cards): after a coach session, one or two sentences from the
+ * session's measured numbers — what went well, the next step. Signed-in players only; without a session, offline or over
+ * the daily cap nothing shows (the app works as before). Decisions (tempo, level) stay in the coach.
+ */
+function CoachDebrief({ lang, c, fam, tier }: { lang: Lang; c: CoachState; fam: FamilyDef; tier: number }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    const step = fam.levels.find((l) => l.id === c.steps[c.step]);
+    const weak = c.weak.map((w) => fam.levels.find((l) => l.id === c.steps[w.step])?.title.en ?? '').filter(Boolean);
+    void askAi('card', {
+      lang,
+      context: { session: 'technique coach', skill: fam.title.en, takes: c.takes, clean: c.clean, stepsUp: c.promoted, nowAt: step?.title.en ?? '', weakSpots: weak.slice(0, 3), pastBasics: c.skilled, tier: tier >= 0 ? `T${tier}` : 'unknown', minutes: Math.round((Date.now() - c.startedAt) / 60000) },
+    }).then((r) => live && 'text' in r && setText(r.text));
+    return () => void (live = false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!text) return null;
+  return (
+    <p className="coach-debrief" data-coach-debrief="1">
+      {text}
+    </p>
+  );
+}
+
+/** The core technique families whose passes set the player's tier (SPEC-COACH-2 §1). */
+const CORE_FAMILIES = ['scales', 'arpeggios', 'g-scales', 'g-arps', 'b-scale', 'b-chord'];
+function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId, tier = -1): CoachBackground {
   const inst = ds.instrument ?? 'piano';
   const course = inst === 'piano' ? 'keys' : inst;
   const report = (settings.courseStart as Record<string, { report?: string } | undefined> | undefined)?.[course]?.report;
   const from = settings.drillStart?.[fam];
-  return { skilled: report === 'bit' || report === 'well', from };
+  return { skilled: report === 'bit' || report === 'well' || tier >= 2, from };
 }
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
 import { levelRecord } from '../engine/drumRecords';
@@ -92,7 +119,10 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
-import { buildKeyIndex, keySession, pickWeekKey, weekOf, type KeyIndex } from '../engine/drills/keyIndex';
+import { playerTier } from '../engine/drills/tiers';
+import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
+import { askAi } from '../cloud/ai';
+import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
@@ -141,7 +171,7 @@ export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax:
 // B7: in the guitar / bass course with the microphone chosen over a connected MIDI device, the mic's latency applies.
 const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length && !((s.activeCourse === 'guitar' || s.activeCourse === 'bass') && guitarInputPref() === 'mic') ? 'midi' : 'mic') });
 /** Family stripe colours: domain tokens only (COURSE-FEEDBACK-UI §3.3) — play lemon, harmony lilac, ear sky, theory tangerine, time pink, improvisation purple. */
-const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-gig': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' , 'k-tpair': 'var(--tangerine)', 'g-tpair': 'var(--tangerine)', 'b-tpair': 'var(--tangerine)'};
+const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-dimcol': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-gig': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' , 'k-tpair': 'var(--tangerine)', 'g-tpair': 'var(--tangerine)', 'b-tpair': 'var(--tangerine)'};
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
 
 /** Drill settings with the instrument defaulting to the player's (guitar / bass players get guitar drills). */
@@ -273,6 +303,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   /** The item the run is on now (DrillRun reports it), for the header; reset with every new run. */
   const [runIdx, setRunIdx] = useState<number | null>(null);
   const [coachTitle, setCoachTitle] = useState<string | null>(null);
+  // SPEC-COACH-2 §1/§5: the player's technique tier from the core skills (scales, arpeggios) — it sets the timing
+  // tolerance of every take and tells the coach the player is past the basics.
+  const techTier = useMemo(() => {
+    const core = familiesOf(ds.instrument ?? 'piano').filter((f) => CORE_FAMILIES.includes(f.id));
+    return playerTier(core.flatMap((f) => f.levels.flatMap((l) => levelDrills(l, ds.keyOrder))), items);
+  }, [ds.instrument, ds.keyOrder, items]);
+  useEffect(() => setGradeTier(techTier), [techTier]);
   // Practice by key (SPEC-PRACTICE-KEYS): the view and the scale-family tab, remembered on this device.
   const [pView, setPViewState] = useState<PracticeView>(() => lsGet('toneturn.practiceView') === 'key' ? 'key' : 'topic');
   const setPView = (v: PracticeView) => (setPViewState(v), lsSet('toneturn.practiceView', v));
@@ -304,7 +341,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id) : undefined}
+          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id, techTier) : undefined}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
@@ -522,7 +559,7 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales.
   'k-modes': 'scales', 'k-mmhm': 'scales',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',
-  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'k-vocab': 'styles', 'k-solo': 'styles', 'k-ctx': 'styles', 'k-harrisline': 'styles', 'g-harrisline': 'styles', 'b-harrisline': 'styles', 'k-ctone': 'chords', 'k-mediant': 'chords', 'k-organ': 'styles', 'k-tpair': 'styles', 'g-tpair': 'styles', 'b-tpair': 'styles', 'g-ctone': 'chords', 'g-color': 'chords', 'b-counter': 'chords', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
+  harris: 'styles', jazz: 'styles', 'k-sixdim': 'styles', 'k-dimcol': 'styles', 'k-bebop': 'styles', 'k-reharm': 'styles', 'k-theory': 'styles', 'k-vocab': 'styles', 'k-solo': 'styles', 'k-ctx': 'styles', 'k-harrisline': 'styles', 'g-harrisline': 'styles', 'b-harrisline': 'styles', 'k-ctone': 'chords', 'k-mediant': 'chords', 'k-organ': 'styles', 'k-tpair': 'styles', 'g-tpair': 'styles', 'b-tpair': 'styles', 'g-ctone': 'chords', 'g-color': 'chords', 'b-counter': 'chords', 'g-lead': 'styles', 'g-flamenco': 'styles', 'g-jazz': 'styles', 'g-impro': 'styles',
   // Bass course (unlisted b-* families fall under hands: pluck, fret, length, legato, pick, slap). B17 (0.64): time and
   // pocket are their own topic, reading has one, the bass ear one, and the upright track is grouped on its own.
   'b-scale': 'scales', 'b-read': 'reading', 'b-posread': 'reading', 'b-impro': 'styles', 'b-swing': 'time', 'b-odd': 'time', 'b-poly': 'time', 'b-prog': 'styles', 'b-barry': 'styles', 'b-bebop': 'styles', 'b-jform': 'styles', 'b-latin': 'styles', 'b-std': 'chords', 'b-chord': 'chords', 'b-walk': 'chords', 'b-time': 'time', 'b-pocket': 'time', 'b-ghost': 'styles', 'b-styles': 'styles', 'b-ear': 'ear',
@@ -1030,18 +1067,23 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);
   const [cStarted, setCStarted] = useState(false);
   // The key order picked on the intro: the session is laid out again (before it starts only).
+  // SPEC-COACH-2 §3.2: the placement probe on a first session — the intro can skip it.
+  const [noProbe, setNoProbe] = useState(false);
   useEffect(() => {
     if (!coach || cStarted) return;
-    coachRef.current = coachStart(coach, items, ds.keyOrder, Date.now(), coachBg);
+    coachRef.current = coachStart(coach, items, ds.keyOrder, Date.now(), { ...coachBg, noProbe });
     setCTake(coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk));
-  }, [ds.keyOrder]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ds.keyOrder, noProbe]); // eslint-disable-line react-hooks/exhaustive-deps
   const [cPaused, setCPaused] = useState(false);
   const [cDemo, setCDemo] = useState(false);
   const cXp = useRef(0);
   const cTimer = useRef<number | null>(null);
   const cSpeech = useRef<AbortController | null>(null);
   useEffect(() => () => (cTimer.current && window.clearTimeout(cTimer.current), cSpeech.current?.abort()), []);
-  const drill = coach ? cTake!.drill : (edited[i] ?? queue[i]);
+  // the dynamics lens (owner 2026-11-21) on the coach's takes too: the same exercise with a shape or touch, picked on the intro
+  const [cLens, setCLensState] = useState<Lens>(() => (lsGet('toneturn.lens') as Lens | null) ?? 'none');
+  const setCLens = (l: Lens) => (setCLensState(l), lsSet('toneturn.lens', l));
+  const drill = coach ? withLens(cTake!.drill, cLens, true) : (edited[i] ?? queue[i]);
   // Hands-free (owner 2026-11-21, app-wide): a list of items (a path step, the workout, a level) moves on by itself too —
   // after a take, one line (spoken / shown), then again / slower / the next stage / the next item, no button. Pause
   // holds it; any button of the review takes over. Singing and writing items keep their buttons.
@@ -1320,6 +1362,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         <section className="drill-result v-clean coach-end" data-coach-end="1">
           <h2>{he ? 'סוף הסשן' : 'Session done'}</h2>
           <p>{cLine.line[lang].trim()}</p>
+          {coachRef.current && coach && <CoachDebrief lang={lang} c={coachRef.current} fam={coach} tier={getGradeTier()} />}
           <p className="coach-xp" data-coach-xp={cXp.current}>
             <bdi dir="ltr">+{cXp.current} XP</bdi>
           </p>
@@ -1347,6 +1390,19 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
               ))}
             </div>
           )}
+          {(coachRef.current?.probe || noProbe) && (
+            <label className="check coach-probe" data-coach-probe={noProbe ? 'off' : 'on'}>
+              <input type="checkbox" checked={!noProbe} onChange={(e) => setNoProbe(!e.target.checked)} />
+              <span>{he ? 'בדיקת רמה קצרה בהתחלה (כ־4 נגינות)' : 'A short level check first (about 4 takes)'}</span>
+            </label>
+          )}
+          <div className="chips coach-order" role="radiogroup" aria-label={he ? 'עדשת דינמיקה' : 'Dynamics lens'}>
+            {LENSES.map((l) => (
+              <button key={l} type="button" role="radio" aria-checked={cLens === l} className={`chip ${cLens === l ? 'on' : ''}`} onClick={() => setCLens(l)} data-coach-lens={l} title={LENS_NAME[l][lang]}>
+                {LENS_SHORT[l][lang]}
+              </button>
+            ))}
+          </div>
           <button
             className="btn mega primary"
             onClick={() => {

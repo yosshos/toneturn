@@ -598,6 +598,16 @@ export const GLYPHS: Record<string, Glyph> = {
       <circle cx={17.5} cy={8} r={3.2} fill="none" />
     </>
   ),
+  // Colours of the diminished: the dim's stacked notes, the top one stepped up to a new colour (arrow).
+  'family:k-dimcol': () => (
+    <>
+      {head(7, 19, 2.2)}
+      {head(7, 14.5, 2.2)}
+      {head(7, 10, 2.2)}
+      {head(17, 5.5, 2.2)}
+      {p('M9.6 18.6V7 M10.5 6.5h3.5 M12.6 4.8l1.6 1.7-1.6 1.7', false)}
+    </>
+  ),
   'family:k-bebop': () => (
     <>
       {head(4, 9, 2)}

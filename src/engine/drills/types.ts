@@ -36,6 +36,8 @@ export type FamilyId =
   | 'k-organ'
   // Triad pairs, deep (owner 2026-11-16, tpairDrills.ts): patterns, voicings, lines over changes, side-slip.
   | 'k-tpair'
+  // Colours of the diminished (docs/research/DIM-COLOURS.md, dimColours.ts): every dominant colour one dim chord holds.
+  | 'k-dimcol'
   // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C, soloPianoDrills.ts): the left hand
   // for solo piano, solo-piano textures through the heads, the comping vocabulary, improvisation habits.
   | 'k-lh'

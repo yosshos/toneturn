@@ -933,6 +933,22 @@ function genScales(s: DrillSpec, tu: Tuning): Drill {
       title = t(`Major scale, ${CAGED_NAMES[(s.position ?? 0) % 5]}-shape position · ${NAMES[key]}`, `סולם מז׳ור, מצב צורת ${CAGED_NAMES[(s.position ?? 0) % 5]} · ${NAMES[key]}`);
       break;
     }
+    case 'caged-minor': {
+      // TECHNIQUE-COVERAGE-AUDIT §4.6 #7: the minor scales in the five positions of the relative major's CAGED windows
+      // (natural minor = the relative major's notes; harmonic and melodic minor raise the 7th / the 6th and 7th inside
+      // the same window). Melodic minor in its rising form both ways, as in position playing (g-scales-15).
+      const pos = (s.position ?? 0) % 5;
+      const op = (s.option ?? 0) % 3;
+      const rel = mod(key + 3, 12);
+      const [lo, hi] = cagedWindow(tu, rel, pos);
+      line = upDown(windowScale(tu, key, [SCALES.minor, SCALES.harmonic, SCALES.melodic][op], lo, hi));
+      const nm = [t('natural minor', 'מינור טבעי'), t('harmonic minor', 'מינור הרמוני'), t('melodic minor', 'מינור מלודי')][op];
+      title = t(
+        `${NAMES[key]} ${nm.en}, position ${pos + 1} (the ${CAGED_NAMES[pos]} shape of ${NAMES[rel]} major) · ${kn(s)}`,
+        `${NAMES[key]} ${nm.he}, מצב ${pos + 1} (צורת ${CAGED_NAMES[pos]} של ${NAMES[rel]} מז׳ור) · ${kn(s)}`,
+      );
+      break;
+    }
     case '3nps': {
       const pat = threeNpsPattern(tu, key, MAJOR, (s.position ?? 0) % 7);
       const up: GN[] = [];
@@ -2596,10 +2612,14 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-scales', 13, 'Harmonic minor and natural minor in position', 'מינור הרמוני ומינור טבעי במצב', [S('mode', { option: 7 }), S('mode', { option: 5 })], 'major'),
       L('g-scales', 14, 'Dorian and Mixolydian in position', 'דורי ומיקסולידי במצב', [S('mode', { option: 1 }), S('mode', { option: 4 })], 'major'),
       L('g-scales', 15, 'Lydian, Phrygian and melodic minor in position', 'לידי, פריגי ומינור מלודי במצב', [S('mode', { option: 3 }), S('mode', { option: 2 }), S('mode', { option: 8 })], 'major'),
+      // TECHNIQUE-COVERAGE-AUDIT §4.6 #7: the minor scales in all five positions, mirroring g-scales-5 (CAGED).
+      L('g-scales', 16, 'Natural minor in all 5 positions', 'מינור טבעי בכל 5 המצבים', range(5).map((p) => S('caged-minor', { position: p, option: 0, minor: true })), 'minor'),
+      L('g-scales', 17, 'Harmonic minor in all 5 positions', 'מינור הרמוני בכל 5 המצבים', range(5).map((p) => S('caged-minor', { position: p, option: 1, minor: true })), 'minor'),
+      L('g-scales', 18, 'Melodic minor in all 5 positions', 'מינור מלודי בכל 5 המצבים', range(5).map((p) => S('caged-minor', { position: p, option: 2, minor: true })), 'minor'),
       // SPEC-PRACTICE-KEYS §6: the remaining modes of melodic and harmonic minor, diminished whole–half, bebop dominant.
-      L('g-scales', 16, 'Melodic-minor modes in position', 'המודוסים של מינור מלודי במצב', [12, 13, 14, 15, 16].map((m) => S('mode', { option: m })), 'major'),
-      L('g-scales', 17, 'Harmonic-minor modes in position', 'המודוסים של מינור הרמוני במצב', [17, 18, 19, 20, 21, 22].map((m) => S('mode', { option: m })), 'major'),
-      L('g-scales', 18, 'Diminished whole–half and bebop dominant in position', 'מוקטן שלם–חצי וביבופ דומיננטי במצב', [23, 24].map((m) => S('mode', { option: m })), 'major'),
+      L('g-scales', 19, 'Melodic-minor modes in position', 'המודוסים של מינור מלודי במצב', [12, 13, 14, 15, 16].map((m) => S('mode', { option: m })), 'major'),
+      L('g-scales', 20, 'Harmonic-minor modes in position', 'המודוסים של מינור הרמוני במצב', [17, 18, 19, 20, 21, 22].map((m) => S('mode', { option: m })), 'major'),
+      L('g-scales', 21, 'Diminished whole–half and bebop dominant in position', 'מוקטן שלם–חצי וביבופ דומיננטי במצב', [23, 24].map((m) => S('mode', { option: m })), 'major'),
     ]),
     fam('g-arps', 'Arpeggios', 'ארפג׳יו', 'classical', ['all'], [
       L('g-arps', 1, 'Major and minor triads, root on 6 and 5', 'משולשים מז׳ור ומינור, שורש על 6 ו-5', [A('triad', { position: 6 }), A('triad', { position: 5 }), A('triad', { position: 6, minor: true }), A('triad', { position: 5, minor: true })], 'major'),

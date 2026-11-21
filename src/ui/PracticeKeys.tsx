@@ -7,7 +7,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
-import { cleanAt, currentEntry, groupsOf, keySession, LENS_NAME, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { cleanAt, currentEntry, groupsOf, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
@@ -35,16 +35,6 @@ export const ROLE_NAME: Record<FacetRole, { en: string; he: string }> = {
   colour: { en: 'Colours', he: 'צבעים' },
   comping: { en: 'Comping', he: 'ליווי' },
   apply: { en: 'In music', he: 'ביישום' },
-};
-
-/** The lens chips' short names (the full name is the tooltip and the take's title). */
-const LENS_SHORT: Record<Lens, { en: string; he: string }> = {
-  none: { en: 'As written', he: 'כמו שכתוב' },
-  cresc: { en: 'Cresc.', he: 'קרשנדו' },
-  accent4: { en: 'Accents', he: 'הטעמות' },
-  'even-p': { en: 'p', he: 'p' },
-  'even-f': { en: 'f', he: 'f' },
-  staccato: { en: 'Staccato', he: 'סטקטו' },
 };
 
 /** The key's name on a tab: C, Cm. */

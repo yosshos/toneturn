@@ -182,7 +182,7 @@ describe('calibration against the built-in levels (§10.8)', () => {
   };
   const mae = (rs: typeof rows) => rs.reduce((s, r) => s + Math.abs(r.placed - r.D), 0) / rs.length;
   it('v2 keeps the order of the placed levels: ρ ≈ 0.81, mean error ≈ 123 over the 62 note-measurable piano levels (all 72: 0.84 / 144; v1: 0.59 / 240)', () => {
-    expect(rows.length).toBe(62);
+    expect(rows.length).toBe(68); // + TECHNIQUE-COVERAGE-AUDIT §4.6: fingers 15–18 (Hanon Part I), arpeggios 15–16
     expect(rows.some((r) => /^k-read-1[3-5]$/.test(r.id) || /^k-tpair-(9|1[1-6])$/.test(r.id))).toBe(false);
     const rho = spearman(rows);
     console.log(`encore difficulty calibration v${PHRASE_DIFF_V}: n=${rows.length} spearman=${rho.toFixed(3)} mae=${mae(rows).toFixed(0)}`);

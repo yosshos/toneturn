@@ -46,7 +46,8 @@ for (const lang of ['en', 'he'] as const) {
     await page.goto('about:blank');
     await page.goto(`/?unlock=all&lang=${lang}#/arcade`);
     // The voice course's Arcade: the voice games tile opens its list.
-    await page.locator('[data-hub-cat="voice"]').first().click();
+    // one category in the voice course: the Games tile (owner 2026-11-21, no duplicate category tile)
+    await page.locator('[data-hub="games"]').first().click();
     const title = page.locator('.play-card.singinterval b').first();
     await expect(title).toBeVisible();
     await expect(title).toHaveText(lang === 'he' ? 'ספרינט שירה' : 'Interval Sing');

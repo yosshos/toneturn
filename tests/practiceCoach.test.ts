@@ -26,7 +26,7 @@ function play(c: CoachState, items: Record<string, ItemState>, clean: boolean, n
 
 describe('practice coach (scales)', () => {
   it('a new player starts at level 1, right hand, free time, and hears it first', () => {
-    const c = coachStart(fam, {}, order, 0);
+    const c = coachStart(fam, {}, order, 0, { noProbe: true });
     expect(c.step).toBe(0);
     expect(c.side).toBeNull();
     const t = coachTake(fam, c, {}, order);
@@ -36,7 +36,7 @@ describe('practice coach (scales)', () => {
   });
 
   it('climbs: RH → LH in a key, the next key, then a new step once two keys are clean — no click needed', () => {
-    let c = coachStart(fam, {}, order, 0);
+    let c = coachStart(fam, {}, order, 0, { noProbe: true });
     let items: Record<string, ItemState> = {};
     const seen: string[] = [];
     let promotedAt = -1;
@@ -62,7 +62,7 @@ describe('practice coach (scales)', () => {
 
   it('a miss: again, then slower, then parked as a weak spot and on to the next key; the spot comes back', () => {
     // Skip the rubato: a player past it (items played at tempo before).
-    let c = coachStart(fam, {}, order, 0);
+    let c = coachStart(fam, {}, order, 0, { noProbe: true });
     let items: Record<string, ItemState> = {};
     const t0 = coachTake(fam, c, items, order);
     items[t0.drill.itemId] = { ...newItem(t0.drill), rubato: { free: 2, quarters: 1 } };
@@ -89,21 +89,21 @@ describe('practice coach (scales)', () => {
 
   it('a player solid on level 1 warms up on it, then starts level 2', () => {
     // Play level 1 clean in two keys (both hands).
-    let c = coachStart(fam, {}, order, 0);
+    let c = coachStart(fam, {}, order, 0, { noProbe: true });
     let it: Record<string, ItemState> = {};
     for (let k = 0; k < 40 && c.step === 0; k++) {
       const r = play(c, it, true);
       it = r.items;
       c = r.nx.state;
     }
-    const again = coachStart(fam, it, order, 0);
+    const again = coachStart(fam, it, order, 0, { noProbe: true });
     expect(again.step).toBe(1);
     expect(again.side?.kind).toBe('warmup');
     expect(coachTake(fam, again, it, order).kind).toBe('warmup');
   });
 
   it('wraps up when the session time is over, with a summary', () => {
-    const c = coachStart(fam, {}, order, 0);
+    const c = coachStart(fam, {}, order, 0, { noProbe: true });
     const r = play(c, {}, true, SESSION_MIN * 60_000 + 1);
     expect(r.nx.end).toBe(true);
     expect(r.nx.line.he).toMatch(/זה הסשן/);
@@ -124,7 +124,7 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
   }
 
   it('a player past the basics starts hands together, with no free time, and climbs to the target before moving on', () => {
-    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    let c = coachStart(fam, {}, order, 0, { skilled: true, noProbe: true });
     expect(fam.levels[c.step].specs.some((s) => (s as { hands?: string }).hands === 'RL')).toBe(true);
     let items: Record<string, ItemState> = {};
     const first = coachTake(fam, c, items, order);
@@ -148,7 +148,7 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
   });
 
   it('easy takes climb two steps at once', () => {
-    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    let c = coachStart(fam, {}, order, 0, { skilled: true, noProbe: true });
     const a = go(c, {}, 'easy');
     c = a.nx.state;
     expect(coachTake(fam, c, a.items, order).bpm).toBeGreaterThanOrEqual(Math.round(a.t.bpm * 1.12) - 1);
@@ -156,7 +156,7 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
   });
 
   it('a player who reported no experience but plays easily is moved past the rubato', () => {
-    let c = coachStart(fam, {}, order, 0);
+    let c = coachStart(fam, {}, order, 0, { noProbe: true });
     let items: Record<string, ItemState> = {};
     expect(coachTake(fam, c, items, order).stage).toBe('free');
     for (let k = 0; k < EASY_TO_SKILLED; k++) {
@@ -169,7 +169,7 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
   });
 
   it('"almost" holds the tempo and never parks the item', () => {
-    let c = coachStart(fam, {}, order, 0, { skilled: true });
+    let c = coachStart(fam, {}, order, 0, { skilled: true, noProbe: true });
     let items: Record<string, ItemState> = {};
     const first = coachTake(fam, c, items, order);
     for (let k = 0; k < 6; k++) {
@@ -183,7 +183,7 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
   });
 
   it('a slowed clean take does not pass the key', () => {
-    let c = coachStart(fam, {}, order, 0);
+    let c = coachStart(fam, {}, order, 0, { noProbe: true });
     const t0 = coachTake(fam, c, {}, order);
     const items: Record<string, ItemState> = { [t0.drill.itemId]: { ...newItem(t0.drill), rubato: { free: 2, quarters: 1 } } };
     let r = go(c, items, 'not');
@@ -194,5 +194,28 @@ describe('practice coach 2, stage 1 (owner 2026-11-21: "I was bored")', () => {
     // the same item again, climbing back — not the other hand
     expect(r3.nx.state.spec).toBe(0);
     expect(coachTake(fam, r3.nx.state, r3.items, order).drill.itemId).toBe(t0.drill.itemId);
+  });
+});
+
+describe('the placement probe (SPEC-COACH-2 §3.2)', () => {
+  const mm = (v: 'easy' | 'clean' | 'not'): TakeMetrics => ({ verdict: v === 'not' ? 'not' : 'clean', wrong: v === 'not' ? 2 : 0, missing: 0, hesitations: 0, accuracy: v === 'not' ? 0.8 : 1, bpm: 66, timingSD: v === 'easy' ? 6 : 28, handsAbs: null }) as unknown as TakeMetrics;
+  it('a first session on a family probes: easy takes jump two levels, a miss ends it', () => {
+    let c = coachStart(fam, {}, order, 0);
+    expect(c.probe).not.toBeNull();
+    const t1 = coachTake(fam, c, {}, order);
+    let nx = coachAfter(fam, c, t1, mm('easy'), {}, order, 0);
+    expect(nx.state.step).toBe(2);
+    expect(nx.state.skilled).toBe(true);
+    c = nx.state;
+    nx = coachAfter(fam, c, coachTake(fam, c, {}, order), mm('not'), {}, order, 0);
+    expect(nx.state.step).toBe(1);
+    expect(nx.state.probe).toBeNull();
+    expect(nx.line.en).toMatch(/Found your level/);
+  });
+  it('no probe when skipped, when the family was played, or with a level-test start', () => {
+    expect(coachStart(fam, {}, order, 0, { noProbe: true }).probe).toBeNull();
+    expect(coachStart(fam, {}, order, 0, { from: 3 }).probe).toBeNull();
+    const played = { x: { family: 'scales', takes: 2 } } as unknown as Record<string, ItemState>;
+    expect(coachStart(fam, played, order, 0).probe).toBeNull();
   });
 });

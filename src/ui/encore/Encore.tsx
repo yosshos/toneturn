@@ -237,6 +237,14 @@ export function EncoreScreen(p: EncoreProps) {
           ))}
         </section>
       )}
+      {/* Owner 2026-11-21: Licks folded into Encore — your phrases here, the ready-made lick library one tap away
+          (the same 12-key engine and tempo ladder). */}
+      <button className="enc-card" onClick={() => (location.hash = '/licks')} data-enc-licks="1">
+        <span className="grow col">
+          <b className="t2">{he ? 'ליקים מהספרייה' : 'Library licks'}</b>
+          <small className="t3">{he ? 'ליקים מוכנים של הגדולים, ב־12 סולמות ובטמפו עולה' : 'Ready-made licks of the masters, in 12 keys, tempo climbing'}</small>
+        </span>
+      </button>
       <Shelf lang={lang} />
       <button className="enc-block enc-card-soft enc-lib-sum" onClick={() => nav('library')} data-enc-libsum="1">
         <span className="row">

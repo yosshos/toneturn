@@ -104,14 +104,14 @@ describe('modes as full scales (SPEC-PRACTICE-KEYS §6)', () => {
       const l = families(inst).flatMap((f) => f.levels).find((x) => x.id === id)!;
       return l.specs.map((_, i) => specDrills(l, i, 'fifths-up').find((d) => d.spec.key % 12 === 0)!);
     };
-    const gm = at('guitar', 'g-scales-16').concat(at('guitar', 'g-scales-17'));
+    const gm = at('guitar', 'g-scales-19').concat(at('guitar', 'g-scales-20'));
     expect(gm.map((d) => d.title.en.split(' in position')[0])).toEqual(['C dorian ♭2', 'C lydian augmented', 'C lydian dominant', 'C mixolydian ♭6', 'C locrian ♮2', 'C locrian ♮6', 'C ionian ♯5', 'C dorian ♯4', 'C phrygian dominant', 'C lydian ♯2', 'C altered ♭♭7']);
     expect(gm.every((d) => keyFacet(d)!.group === 'mmhm')).toBe(true);
-    const g18 = at('guitar', 'g-scales-18');
+    const g18 = at('guitar', 'g-scales-21');
     expect(g18.map((d) => keyFacet(d)!.group)).toEqual(['symmetric', 'major']);
     // the phrygian dominant on the neck: C D♭ E F G A♭ B♭
     expect([...new Set(gm[8].notes.map((n) => n.pitch % 12))].sort((a, b) => a - b)).toEqual([0, 1, 4, 5, 7, 8, 10]);
-    const bm = [...at('bass', 'b-scale-12'), ...at('bass', 'b-scale-13'), ...at('bass', 'b-scale-14')];
+    const bm = [...at('bass', 'b-scale-13'), ...at('bass', 'b-scale-14'), ...at('bass', 'b-scale-15')];
     expect(bm.map((d) => keyFacet(d)!.group)).toEqual(['major', 'symmetric', 'major', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm', 'mmhm']);
     expect([...new Set(bm[11].notes.map((n) => n.pitch % 12))].sort((a, b) => a - b)).toEqual([0, 1, 4, 5, 7, 8, 10]);
   });

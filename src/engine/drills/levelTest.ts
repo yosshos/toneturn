@@ -112,9 +112,10 @@ const CHORDS_JAZZ: Rung[] = [
   // HARMONY-REHARM: drop 2 under a held note (one note, many chords) places the common-tone and mediant ladders.
   r('k-ctone-3', 7, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 4, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 4, 'k-ctone': 4, 'k-mediant': 2 }),
   // AUDIT-GAPS-2: key changes — one diminished, four keys, voice-led (the top step: it proves the voice leading too).
-  r('k-keys-7', 9, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8 }),
+  // It is also Harris's lower-one-note move into four keys: colours of the diminished level 1 (k-dimcol starts at 2).
+  r('k-keys-7', 9, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-dimcol': 2 }),
   // AUDIT-DEPTH-3: a phrase of a head in drop 2 with the melody on top (proves harmonising and drop-2 comping of a head).
-  r('k-harm-4', 4, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-harm': 5, 'k-tune': 5 }),
+  r('k-harm-4', 4, { 'k-first': 11, cadences: 5, voicings: 10, 'k-sixdim': 5, 'k-reharm': 3, 'k-vl': 7, 'k-theory': 1, 'k-keys': 8, 'k-dimcol': 2, 'k-harm': 5, 'k-tune': 5 }),
 ];
 const CHORDS_CLASSICAL: Rung[] = [
   r('cadences-1', 7, { cadences: 2 }),

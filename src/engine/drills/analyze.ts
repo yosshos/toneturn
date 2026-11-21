@@ -4,6 +4,7 @@
 import { absorbGraces } from './grace';
 import type { Drill, DrillCalibration, DynamicsGoal, ExpNote, Hand, NoteResult, PlayedNote, TakeMetrics, Verdict } from './types';
 import { vlDistance } from './generate';
+import { tierOfNps, tierTiming } from './tierBounds';
 import { hasTimeline, timeMapOf, timelineMs } from './timeline';
 import { analyzeVoiceLeadTake } from './voiceLeadAnalyze';
 import { analyzeHeldChoiceTake } from './ctFreeAnalyze';
@@ -445,6 +446,15 @@ export function bassThresholds(band: number, mic: boolean): { cv: number; sd: nu
 export const IOI_FLOOR_MS = { midi: 12, mic: 25 } as const;
 
 /**
+ * The player's technique tier (SPEC-COACH-2 §5; tiers.ts), set by the screen from the player's items. −1 = unknown: the
+ * tempo-band limits as before. Known: the onset SD and IOI CV as shares of the take's IOI (tierTiming), with the IOI
+ * floor below and 45 ms above; an item faster than the player's tier gets one step of slack.
+ */
+let gradeTier = -1;
+export const setGradeTier = (t: number): void => void (gradeTier = Number.isFinite(t) ? t : -1);
+export const getGradeTier = (): number => gradeTier;
+
+/**
  * VOICE_CURRICULUM P2: a sung onset is only good to about ±25–40 ms on a phone (the attack of a consonant, the
  * settling of a pitch after a legato move), and a sung eighth line is often legato — so a sung take (licks on the
  * voice) keeps the pitch rule but gets the voice's timing limits: onset SD ≤ 40 ms (worst onset 2.5 × that) and a
@@ -818,6 +828,14 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
   // A1: the evenness limit never asks for less IOI spread than the floor (ms) at the take's written IOI. (Callers with
   // their own limits — the bass, A7 — keep them.)
   const ioiMs = 1000 / Math.max(0.1, nps);
+  // SPEC-COACH-2 §5: by the player's tier, when it is known (not the bass / voice / phrase limits of their own).
+  if (gradeTier >= 0 && !opts.thresholds && !opts.voice && tolK <= 1) {
+    const eff = tierOfNps(nps) > gradeTier ? Math.max(0, gradeTier - 1) : gradeTier;
+    const share = tierTiming(eff);
+    const floor = opts.mic ? 28 : IOI_FLOOR_MS.midi;
+    th.sd = Math.min(45, Math.max(floor, share.sd * ioiMs));
+    th.cv = share.cv;
+  }
   if (!opts.thresholds) th.cv = Math.max(th.cv, IOI_FLOOR_MS[opts.mic ? 'mic' : 'midi'] / ioiMs);
 
   const perNote: NoteResult[] = exp.map((e, i) => {

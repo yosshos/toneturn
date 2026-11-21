@@ -78,7 +78,15 @@ export interface CoachState {
   easy: number;
   /** The share of its target the last passed item was played at: the next item starts near it (tempo carried over). */
   carry: number;
+  /**
+   * The placement probe (SPEC-COACH-2 §3.2): the first session on a family jumps levels by the takes — easy → two up,
+   * clean → one up, almost → stay, a miss → one down and the probe ends — for at most PROBE_TAKES takes. null = off.
+   */
+  probe: { takes: number } | null;
 }
+
+/** Takes in the placement probe. */
+export const PROBE_TAKES = 4;
 
 export interface CoachTake {
   drill: Drill;
@@ -128,6 +136,8 @@ export interface CoachBackground {
   skilled?: boolean;
   /** The level test's start level in this family (drillStart), when there is one. */
   from?: number;
+  /** Skip the placement probe (the intro's "No check"); a family already played never probes. */
+  noProbe?: boolean;
 }
 
 /** The first level of the family with a hands-together item: where a player past the basics starts. */
@@ -152,7 +162,30 @@ export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, ord
     const k = levelKeys(below, order).find((x) => keyClean(below, x, items, order));
     if (k !== undefined) side = { kind: 'warmup', step: step - 1, key: k, spec: below.specs.length - 1 };
   }
-  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0 };
+  // The probe only on a family never played, without a level test start, and not skipped.
+  const fresh = !Object.values(items).some((x) => x.family === fam.id && x.takes > 0);
+  const probe = fresh && bg.from === undefined && !bg.noProbe ? { takes: 0 } : null;
+  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side: probe ? null : side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0, probe };
+}
+
+/** Move the session to another step (promotion or the probe): its keys, starting in a key just played. */
+function toStep(fam: FamilyDef, c: CoachState, step: number, items: Record<string, ItemState>, order: Order): LevelDef {
+  c.step = step;
+  const nl = levelOf(fam, c.steps[c.step]);
+  const kp = keysOf(nl, items, order);
+  const first = c.keys[0];
+  c.keys = [first, ...kp.keys.filter((k) => k !== first)].filter((k) => levelKeys(nl, order).includes(k));
+  if (!c.keys.length) c.keys = kp.keys;
+  c.passed = kp.passed;
+  c.passedNow = 0;
+  c.keyIdx = 0;
+  c.spec = 0;
+  c.up = 0;
+  c.run = 0;
+  c.slower = 0;
+  c.misses = 0;
+  c.almost = 0;
+  return nl;
 }
 
 /**
@@ -292,6 +325,30 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     return next({ he: `${missLine(m).he}. נחזור אליו שוב.`, en: `${missLine(m).en}. We'll come back to it.` });
   }
 
+  // The placement probe: jump levels by the take, then climb as usual (SPEC-COACH-2 §3.2).
+  if (c.probe && take.kind === 'main') {
+    const easyP = clean && easyTake(m, take.drill);
+    const n = c.probe.takes + 1;
+    const last = c.steps.length - 1;
+    const jump = easyP ? 2 : clean ? 1 : m.verdict === 'almost' ? 0 : -1;
+    const done = n >= PROBE_TAKES || jump < 0 || (jump > 0 && c.step >= last);
+    if (easyP) c.skilled = true;
+    const target = Math.max(0, Math.min(last, c.step + jump));
+    c.probe = done ? null : { takes: n };
+    if (target !== c.step) {
+      const nl = toStep(fam, c, target, items, order);
+      c.demo = true;
+      return next(
+        done
+          ? { he: `מצאנו את הרמה: ${nl.title.he}. ממשיכים מכאן.`, en: `Found your level: ${nl.title.en}. On from here.` }
+          : jump > 0
+            ? { he: `${PRAISE[0].he} קופצים ל־${nl.title.he}.`, en: `${PRAISE[0].en} Up to ${nl.title.en}.` }
+            : { he: `נשארים ב־${nl.title.he}.`, en: `Staying at ${nl.title.en}.` },
+      );
+    }
+    if (done) return next({ he: `מצאנו את הרמה: ${levelOf(fam, c.steps[c.step]).title.he}. ממשיכים מכאן.`, en: `Found your level: ${levelOf(fam, c.steps[c.step]).title.en}. On from here.` });
+  }
+
   const level = levelOf(fam, c.steps[c.step]);
   if (clean) {
     c.misses = 0;
@@ -335,17 +392,8 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     c.spec = 0;
     if (c.passed.length >= KEYS_TO_PROMOTE && c.passedNow >= 1) {
       if (c.step + 1 < c.steps.length) {
-        c.step++;
         c.promoted++;
-        const nl = levelOf(fam, c.steps[c.step]);
-        const kp = keysOf(nl, items, order);
-        // The new step starts in a key the player just played (familiar), then the rest.
-        const first = c.keys[0];
-        c.keys = [first, ...kp.keys.filter((k) => k !== first)].filter((k) => levelKeys(nl, order).includes(k));
-        if (!c.keys.length) c.keys = kp.keys;
-        c.passed = kp.passed;
-        c.passedNow = 0;
-        c.keyIdx = 0;
+        const nl = toStep(fam, c, c.step + 1, items, order);
         c.demo = true;
         return next({ he: `${praise.he} שלב חדש: ${nl.title.he}. קודם נקשיב.`, en: `${praise.en} New step: ${nl.title.en}. Listen first.` });
       }

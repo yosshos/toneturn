@@ -131,3 +131,12 @@ test('coach intro: the key order is picked before the session (chromatic, circle
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'test-results/coach-order.png' });
 });
+
+test('coach intro: the dynamics lens is picked before the session and applies to its takes', async ({ page }) => {
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-practice-view="topic"]').click().catch(() => {});
+  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-coach-open="scales"]').click();
+  await page.locator('[data-coach-lens="cresc"]').click();
+  await expect(page.locator('[data-coach-lens="cresc"]')).toHaveAttribute('aria-checked', 'true');
+});

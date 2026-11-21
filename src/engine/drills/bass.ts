@@ -8,6 +8,7 @@
 // (only inside functions), and guitar.ts only calls into this module from inside functions.
 
 import { ruleSafe } from './bassRuleSafe';
+import { H_SCALES, ladderEvents } from './harmLadder'; // the scale-harmonization ladder's 7th arpeggios (hl-7a)
 import { all12 } from './keys12';
 import type { BassGoal, Drill, DrillGoal, DrillSpec, FamilyId, BassFamilyId } from './types';
 import type { SpecTemplate } from './generate';
@@ -990,6 +991,15 @@ function genChord(s: DrillSpec, tu: Tuning): Drill {
       const line = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 1 : 0.5, p, ct: true }));
       return drillOf(s, tu, alt(line), { en: ['Two-octave major arpeggio', 'Two-octave minor arpeggio', 'Two-octave dominant 7 arpeggio'][op % 3], he: ['ארפג׳יו מז׳ור בשתי אוקטבות', 'ארפג׳יו מינור בשתי אוקטבות', 'ארפג׳יו ספטאקורד דומיננטי בשתי אוקטבות'][op % 3], open: false, bass: { shiftGap: 40 } });
     }
+    case 'dia7': {
+      // TECHNIQUE-COVERAGE-AUDIT §4.6 #8: diatonic 7th arpeggios through the key, the piano / guitar ladder's hl-7a step
+      // (harmLadder.ts): a 7th chord on every degree up two octaves, then down from the top (op = the H_SCALES index:
+      // 0 major, 5 natural minor, 7 harmonic minor).
+      const sc = H_SCALES[[0, 5, 7].includes(op) ? op : 0];
+      const evs = ladderEvents(key, sc, '7a', rootOf(tu, key), 2);
+      const line: BN[] = evs.map((e) => ({ b: e.beat, d: e.dur, p: e.ps[0], ct: true }));
+      return drillOf(s, tu, alt(line), { en: `Diatonic 7th arpeggios through the ${sc.name.en} scale`, he: `ארפג׳יו ספטאקורדים דיאטוניים לאורך סולם ${sc.name.he}`, open: false, bass: { shiftGap: 40 } });
+    }
     case 'arp7x2':
     case 'arp9':
     case 'arpalt': {
@@ -1155,6 +1165,16 @@ function genScale(s: DrillSpec, tu: Tuning): Drill {
       const line: BN[] = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 1 : 0.5, p }));
       line[0] = { ...line[0], s: str, f };
       return drillOf(s, tu, alt(line), { en: `${sc.en}${(s.position ?? 0) === 1 ? ', 2nd position' : ''}`, he: `${sc.he}${(s.position ?? 0) === 1 ? ', מצב שני' : ''}`, pos: Math.max(1, f - 1), open: f === 0, stay: true });
+    }
+    case 'scale2': {
+      // TECHNIQUE-COVERAGE-AUDIT §4.6 #8: two-octave minor scales with shifts — natural, harmonic, melodic (op 0–2;
+      // melodic in its rising form both ways, as b-scale-7).
+      const sc = BSCALES[[5, 6, 7][op % 3]];
+      const R = rootOf(tu, key);
+      const up = [...sc.ints, ...sc.ints.map((x) => x + 12), 24].map((x) => R + x);
+      const ps = [...up, ...up.slice(0, -1).reverse()];
+      const line = ps.map((p, i) => ({ b: i / 2, d: i === ps.length - 1 ? 1 : 0.5, p }));
+      return drillOf(s, tu, alt(line), { en: `Two-octave ${sc.en.toLowerCase()} scale`, he: `סולם ${sc.he} בשתי אוקטבות`, open: false, bass: { shiftGap: 40 } });
     }
     case 'penta5': {
       // The minor pentatonic over two octaves: up through the five positions, shifting, and back.
@@ -2645,6 +2665,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-chord', 12, '9th arpeggios', 'ארפג׳יו נונות', [0, 1, 2].map((o) => CH('arp9', { option: o })), K6, [60, 100], E8),
       L('b-chord', 13, 'Altered-dominant arpeggios', 'ארפג׳יו דומיננטיים אלטרד', [0, 1, 2, 3].map((o) => CH('arpalt', { option: o })), K4, [60, 100], E8),
       L('b-chord', 14, 'High-register chords', 'אקורדים באזור הגבוה', [CH('hichords', { perBeat: 0.5 }), CH('hichords', { perBeat: 0.5, option: 1 })], K6, [60, 90], 'halves'),
+      // TECHNIQUE-COVERAGE-AUDIT §4.6 #8: diatonic 7th arpeggios through the key (the hl-7a step of k-sharm / g-harm).
+      L('b-chord', 15, 'Diatonic 7th arpeggios through the major scale', 'ארפג׳יו ספטאקורדים דיאטוניים לאורך הסולם המז׳ורי', [CH('dia7', { option: 0 })], 'major', [50, 96], E8),
+      L('b-chord', 16, 'Diatonic 7th arpeggios through natural and harmonic minor', 'ארפג׳יו ספטאקורדים דיאטוניים לאורך מינור טבעי והרמוני', [CH('dia7', { option: 5, minor: true }), CH('dia7', { option: 7, minor: true })], 'minor', [50, 96], E8),
     ]),
     fam('b-ear', 'Bass ear', 'שמיעה לבסיסטים', [
       L('b-ear', 1, 'Higher or lower, in the bass register', 'גבוה או נמוך, באזור הבס', [EA('hilo'), EA('hilo', { option: 1 })], ANY, [60, 80], 'whole notes'),
@@ -2690,10 +2713,12 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-scale', 10, 'The five pentatonic positions, one by one', 'חמשת מצבי הפנטטוני, אחד אחד', [0, 1, 2, 3, 4].map((ps) => SC('penta-pos', { position: ps, minor: true })), K4, [70, 100], E8),
       // 0.66: on a 6-string bass only (hidden on 4 / 5 strings, plan.SIX_STRING_LEVELS).
       L('b-scale', 11, 'Three notes per string (6-string)', 'שלושה צלילים למיתר (6 מיתרים)', [SC('nps3', { tuning: 'bass6' }), SC('nps3', { option: 1, tuning: 'bass6' })], K4, [60, 100], E8),
+      // §4.6 #8: two-octave minor scales (the minor arpeggios over two octaves are b-chord 7 and 11).
+      L('b-scale', 12, 'Two-octave minor scales: natural, harmonic, melodic', 'סולמות מינור בשתי אוקטבות: טבעי, הרמוני, מלודי', [0, 1, 2].map((o) => SC('scale2', { option: o, minor: true })), 'minor', [60, 100], E8),
       // SPEC-PRACTICE-KEYS §6: the remaining modes, one octave in position.
-      L('b-scale', 12, 'Locrian, diminished whole-half and bebop dominant', 'לוקרי, מוקטן שלם-חצי וביבופ דומיננטי', [SC('scale', { option: 14 }), SC('scale', { option: 15 }), SC('scale', { option: 27 })], 'major', [70, 100], E8),
-      L('b-scale', 13, 'The melodic-minor modes', 'המודוסים של מינור מלודי', [16, 17, 18, 19, 20].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
-      L('b-scale', 14, 'The harmonic-minor modes', 'המודוסים של מינור הרמוני', [21, 22, 23, 24, 25, 26].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
+      L('b-scale', 13, 'Locrian, diminished whole-half and bebop dominant', 'לוקרי, מוקטן שלם-חצי וביבופ דומיננטי', [SC('scale', { option: 14 }), SC('scale', { option: 15 }), SC('scale', { option: 27 })], 'major', [70, 100], E8),
+      L('b-scale', 14, 'The melodic-minor modes', 'המודוסים של מינור מלודי', [16, 17, 18, 19, 20].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
+      L('b-scale', 15, 'The harmonic-minor modes', 'המודוסים של מינור הרמוני', [21, 22, 23, 24, 25, 26].map((o) => SC('scale', { option: o })), 'major', [70, 100], E8),
     ]),
     fam('b-length', 'Muting and note length', 'השתקה ואורך צליל', [
       L('b-length', 1, 'Real rests', 'הפסקות אמיתיות', [LN('rests', { perBeat: 1 }), LN('rests', { perBeat: 1, option: 1 })], ANY, [70, 110], Qn),
