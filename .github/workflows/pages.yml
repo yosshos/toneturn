@@ -26,6 +26,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+        env:
+          # onnxruntime-node (transitive) tries a CUDA download on Linux that fails in CI; the CPU build is enough
+          npm_config_onnxruntime_node_install_cuda: skip
       - run: npx tsc -b
       - run: npx vitest run
       - name: Build for /toneturn/
