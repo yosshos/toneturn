@@ -10,6 +10,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   scales: 'scales', arpeggios: 'arp', cadences: 'prog', fingers: 'fingers1234', control: 'hairpin', advanced: 'octave', harris: 'improv', voicings: 'voicing', jazz: 'target', accomp: 'walk', 'k-ear': 'keysear',
   // PIANO_JAZZ: the jazz-piano families.
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
+  // Colours of the diminished: the diminished chord's symbol (its colours grow out of it).
+  'k-dimcol': 'sixdim',
   // THEORY_PLAY: theory you play (two stacked triads).
   'k-theory': 'tpair', 'g-theory': 'gtpair',
   // AUDIT-GAPS-2: bebop vocabulary (an enclosed target) on the keys, the neck and the bass.

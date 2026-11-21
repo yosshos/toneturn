@@ -30,7 +30,8 @@ export interface KeyFacet {
 
 export const FACET_GROUPS: FacetGroup[] = ['major', 'minor', 'mmhm', 'symmetric'];
 
-type Fam = { scope?: FacetScope; role: FacetRole; neutralKinds?: string[]; kinds?: Record<string, FacetRole> };
+/** `group`: the tab is fixed by the family (its chord names would read as another mode: "A♭m6" in a major item). */
+type Fam = { scope?: FacetScope; role: FacetRole; group?: FacetGroup; neutralKinds?: string[]; kinds?: Record<string, FacetRole> };
 
 /** Every family of piano, guitar and bass (guard test: a family missing here fails). */
 export const FAMILY_FACETS: Record<string, Fam> = {
@@ -67,6 +68,9 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'k-mediant': { role: 'colour' },
   'k-organ': { scope: 'apply', role: 'apply' },
   'k-tpair': { role: 'colour' },
+  // Harris's half-step moves sit on the Harris row; the whole-step and two-note colours (and the run) on Colour.
+  // Every item resolves to major 6th chords: the major tab, whatever m6 chords its title names.
+  'k-dimcol': { role: 'colour', group: 'major', kinds: { 'dc-lower': 'harris', 'dc-raise': 'harris' } },
   'k-lh': { role: 'voicing' },
   'k-tex': { scope: 'apply', role: 'apply' },
   'k-comp': { role: 'comping' },
@@ -215,5 +219,5 @@ export function keyFacet(d: Drill): KeyFacet | null {
   let role: FacetRole = f.kinds?.[kind] ?? f.role;
   // a scale or pattern item that measures touch also counts as control work (the Control row lists it)
   if (control && (role === 'scale' || role === 'pattern' || role === 'arpeggio') && f.role === 'control') role = 'control';
-  return { scope, root: ((d.tonic ? d.tonic.key : d.spec.key) % 12 + 12) % 12, group: facetGroup(d), role, control };
+  return { scope, root: ((d.tonic ? d.tonic.key : d.spec.key) % 12 + 12) % 12, group: f.group ?? facetGroup(d), role, control };
 }
