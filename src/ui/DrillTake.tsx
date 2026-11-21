@@ -54,6 +54,7 @@ import { spellIn } from '../engine/aids';
 import { markTakeZero, useKeptTakes } from './recKeep';
 import { Icon } from './icons';
 import { HearButton } from './HearDrill';
+import { useAnyNote } from './anyNote';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -911,6 +912,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const prep = usePrep(drill);
   const startRef = useRef<(() => Promise<void>) | null>(null);
   const autoGo = autoStart && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
+  // A note on the keyboard (or any computer key) = Play: the count-in starts (owner 2026-11-21, hands stay on the keys).
+  useAnyNote(phase === 'ready' && !autoGo && !askDrums && !drumBlocked && !pianoBlocked && !drill.untimed, () => void startRef.current?.());
   useEffect(() => {
     if (!autoGo) return;
     prep.skip();

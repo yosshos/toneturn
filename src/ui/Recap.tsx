@@ -21,6 +21,7 @@ import { namingFor, type Settings } from '../storage/progress';
 import { levelOf } from '../engine/level';
 import { Note, withNote } from './bits';
 import { median } from '../engine/scoring';
+import { AnyNoteHint, useAnyNote } from './anyNote';
 import { itemPoints, paceTarget, sectionScore } from '../engine/fluency';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -144,6 +145,8 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
     setPage(n);
     pagesRef.current?.children[n]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
   };
+  // Hands on the instrument (owner 2026-11-21): a note / any key = Continue, and on the last card the next lesson.
+  useAnyNote(page < pages - 1 || !!onNext, () => (page < pages - 1 ? go(page + 1) : onNext?.()));
   return (
     <main className="recap paged" data-recap-page={page}>
       {/* 0.64 (owner): the recap is a few cards, one screen each, with Continue — like a story, not a long scroll. */}
@@ -334,10 +337,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
 
       <div className="recap-actions">
         {onNext && (
-          <button className="btn mega" onClick={onNext}>
+          <button className="btn mega" onClick={onNext} data-recap-continue="1">
             {nextLabel ?? t.nextLesson} <Icon k="fwd" />
           </button>
         )}
+        {onNext && <AnyNoteHint lang={lang === 'he' ? 'he' : 'en'} />}
         {secondary && (
           <button className="btn" onClick={secondary.open} data-recap-secondary="1">
             {secondary.label} <Icon k="fwd" />

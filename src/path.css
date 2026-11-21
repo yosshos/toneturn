@@ -2631,3 +2631,5 @@ button.chip.on {
 .hear-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; margin: 0; }
 @media (max-width: 520px) { .hear-btn { padding-inline: 12px; } }
 @media (max-width: 420px) { .coach-bar .coach-meta { display: none; } }
+/* "Play a note to continue" (anyNote.tsx): a quiet line under the button that waits. */
+.any-note-hint { margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); text-align: center; }

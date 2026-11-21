@@ -62,6 +62,7 @@ import { keepingPitch, type LessonTakeInfo } from './recKeep';
 import { InputCheck } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
 import { SessionRecToggle } from './SessionRecSwitch';
+import { ANY_NOTE_ARM_MS, AnyNoteHint, useAnyNote } from './anyNote';
 import { CycleBuild, RhythmCircle } from './RhythmCircle';
 
 interface Props {
@@ -276,6 +277,10 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [ctrl]);
+
+  // After a missed answer the lesson waits for Continue: a note on the MIDI keyboard continues too (owner 2026-11-21 —
+  // hands stay on the keys). Computer keys keep their shortcuts (Enter continues).
+  useAnyNote(v.stage === 'question' && !!v.awaitNext, () => ctrl.next(), ANY_NOTE_ARM_MS, { keys: false });
 
   // Keyboard shortcuts (SPEC-DESKTOP §5): 1–9 answer, Space repeat, Enter continue, C compare, H hint, S skip, Esc pause.
   // Never while typing in a field, and Space / Enter stay the beat in rhythm reading (above).
@@ -1688,6 +1693,7 @@ function briefInput(q: Question | undefined, voiceMode: boolean): InputCheckMode
 function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; input?: InputCheckMode | null; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void }) {
   const he = lang === 'he';
   const [kept, setKept] = useState(false);
+  useAnyNote(true, onPlay);
   return (
     <section className="ex-brief" data-brief="1">
       <small className="ex-kicker">{brief.kicker}</small>
@@ -1711,6 +1717,7 @@ function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay
           <Icon k={voice ? 'mic' : 'play'} size={38} />
         </button>
       </div>
+      <AnyNoteHint lang={lang} />
       {/* §20.11: the whole-session recording also from the gate page of an exercise that listens */}
       {(input || voice) && <SessionRecToggle lang={lang} className="ex-sessrec" />}
       {(onHide || onKeep) && (

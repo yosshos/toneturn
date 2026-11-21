@@ -17,6 +17,7 @@ import { ChordChart } from './ChordChart';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
 import { hearable, playDrill } from './HearDrill';
+import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
 import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachState, type CoachTake } from '../engine/drills/coach';
 const RUBATO_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('rubato');
@@ -1007,6 +1008,11 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // The new-best-tempo moment, over the review; any tap closes it.
   const [best, setBest] = useState<{ bpm: number; prev: number; title: string } | null>(null);
   const bestPop = best ? <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={best.title} onClose={() => setBest(null)} /> : null;
+  useAnyNote(!drill, () => onEnd(count.current.takes, count.current.clean));
+  // The coach's one press (start) and its end page: a note does it too.
+  useAnyNote(!!coach && (!cStarted || !!cLine?.end), () => (cLine?.end ? onEnd(count.current.takes, count.current.clean) : document.querySelector<HTMLButtonElement>('[data-coach-start]')?.click()));
+  // A review waiting (hands-free paused, or off): a note = Next.
+  useAnyNote(!coach && !!drill && !!res && (!hf || hfPaused), () => go(i + 1));
   if (!drill)
     return (
       <section className="drill-result v-clean">

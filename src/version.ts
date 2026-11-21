@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.1',
+    date: '2026-11-21',
+    en: ['Hands stay on the instrument between steps too: on an exercise’s opening page, a take waiting for Play, a result waiting for Next and the lesson summary, playing any note (or pressing any key) goes on.'],
+    he: ['הידיים נשארות על הכלי גם בין שלבים: בדף הפתיחה של תרגיל, בטייק שמחכה לנגן, בתוצאה שמחכה להמשך ובסיכום השיעור — צליל כלשהו (או הקשה על מקש) ממשיך.'],
+  },
+  {
     version: '0.110.0',
     date: '2026-11-21',
     en: ['Continuous practice in technique: one press starts a session that begins where you are and climbs — right hand, left hand, the next key, hands together, contrary motion … The next take starts by itself after a short note on the last one; pause or end any time. Every reading exercise has Listen beside Play, and a new step is played to you first.'],
