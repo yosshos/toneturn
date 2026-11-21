@@ -1039,11 +1039,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);
   const [cStarted, setCStarted] = useState(false);
   // The key order picked on the intro: the session is laid out again (before it starts only).
+  // SPEC-COACH-2 §3.2: the placement probe on a first session — the intro can skip it.
+  const [noProbe, setNoProbe] = useState(false);
   useEffect(() => {
     if (!coach || cStarted) return;
-    coachRef.current = coachStart(coach, items, ds.keyOrder, Date.now(), coachBg);
+    coachRef.current = coachStart(coach, items, ds.keyOrder, Date.now(), { ...coachBg, noProbe });
     setCTake(coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk));
-  }, [ds.keyOrder]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ds.keyOrder, noProbe]); // eslint-disable-line react-hooks/exhaustive-deps
   const [cPaused, setCPaused] = useState(false);
   const [cDemo, setCDemo] = useState(false);
   const cXp = useRef(0);
@@ -1358,6 +1360,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
                 </button>
               ))}
             </div>
+          )}
+          {(coachRef.current?.probe || noProbe) && (
+            <label className="check coach-probe" data-coach-probe={noProbe ? 'off' : 'on'}>
+              <input type="checkbox" checked={!noProbe} onChange={(e) => setNoProbe(!e.target.checked)} />
+              <span>{he ? 'בדיקת רמה קצרה בהתחלה (כ־4 נגינות)' : 'A short level check first (about 4 takes)'}</span>
+            </label>
           )}
           <div className="chips coach-order" role="radiogroup" aria-label={he ? 'עדשת דינמיקה' : 'Dynamics lens'}>
             {LENSES.map((l) => (
