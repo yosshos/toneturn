@@ -635,6 +635,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   'arpeggios-7': 960,
   'scales-19': 1530, 'scales-20': 1570, 'scales-21': 1610, 'scales-22': 1650, 'scales-23': 1690, 'scales-24': 1730, 'scales-25': 1770, 'scales-26': 1810, 'scales-27': 1850,
   'scales-28': 1490, 'scales-29': 1510, 'scales-30': 1860, 'scales-31': 1870, 'scales-32': 1885, 'scales-33': 1900,
+  // TECHNIQUE-COVERAGE-AUDIT §4.6: bebop scales LH / hands together after the RH (scales-12, 1470); melodic minor a
+  // 3rd / 6th / 10th apart after harmonic minor's (scales-13, 1540).
+  'scales-34': 1520, 'scales-35': 1580,
   'harris-25': 1020, 'harris-26': 1100,
   ...K_INDEP_DIFF,
   ...K_HARM_DIFF,
@@ -681,7 +684,9 @@ export const NON_MONOTONE_FAMILIES = [
   'd-fills', 'd-pas',
   // HARMONY-REHARM: b-ear 24 (borrowed chords by ear) sits at its own rating among the cadence levels; the guitar's
   // open-string pedal (g-color 13–15, grades 5–6) is placed by grade after the grade 7–9 colour levels.
-  'b-ear', 'g-color'];
+  'b-ear', 'g-color',
+  // TECHNIQUE-COVERAGE-AUDIT §4.6: Hanon Part I (fingers 15–18) sits at its grade, before the later finger levels.
+  'fingers'];
 /** Path steps per level for a family of `n` levels starting `later` steps in: LADDER_SPREAD, squeezed under PATH_CAP. */
 export function spreadOf(family: string, n: number, later: number): number {
   const base = LADDER_SPREAD[family] ?? 1;
