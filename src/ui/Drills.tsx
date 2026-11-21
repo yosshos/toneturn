@@ -1578,19 +1578,24 @@ function CoachDemo({ drill, bpm, lang, onBeat, onDone }: { drill: Drill; bpm: nu
   const fin = useRef(onDone);
   fin.current = onDone;
   const ac = useRef<AbortController | null>(null);
+  const skip = useRef<() => void>(() => {});
   useEffect(() => {
     const a = new AbortController();
     ac.current = a;
     let done = false;
-    const end = () => void (!done && ((done = true), fin.current()));
+    const end = () => void (!done && ((done = true), window.clearTimeout(guard), fin.current()));
+    // Skip ends the demo at once, whatever the sound is doing (0.110.2: it waited on a sound that never started).
+    skip.current = () => (a.abort(), end());
+    // And a demo that runs far past its length (no sound) ends by itself.
+    const guard = window.setTimeout(end, (Math.max(drill.beats, 1) * 60) / Math.max(30, bpm) * 1000 + 4000);
     void playDrill(drill, bpm, a.signal, onBeat)
       .catch(() => {})
       .then(() => window.setTimeout(end, a.signal.aborted ? 0 : 500));
-    return () => a.abort();
+    return () => (a.abort(), window.clearTimeout(guard));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="drill-take coach-demo" data-coach-demo="1">
-      <button type="button" className="link" onClick={() => ac.current?.abort()} data-coach-skip-demo="1">
+      <button type="button" className="link" onClick={() => skip.current()} data-coach-skip-demo="1">
         {lang === 'he' ? 'לדלג ולנגן' : 'Skip and play'}
       </button>
     </div>

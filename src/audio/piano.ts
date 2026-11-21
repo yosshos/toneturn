@@ -91,6 +91,9 @@ export function voiceOf(e: Pick<NoteEvent, 'inst' | 'midi'>, course: 'bass' | nu
 /** The highest note the course's bass voice takes (C4; the pizzicato set reaches about C♯4). */
 export const BASS_VOICE_TOP = 60;
 
+/** How long unlock() waits for the browser to open the sound before going on (0.110.2). */
+export const UNLOCK_WAIT_MS = 1500;
+
 export class PianoEngine implements AudioEngine, RhythmAudio {
   private ctx: AudioContext | null = null;
   private pianoBus!: GainNode;
@@ -1256,7 +1259,28 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       this.sweepTimer ??= setInterval(() => this.sweep(), 30_000);
     }
     if (this.sinkId !== null) void this.setOutputDevice(this.sinkId);
-    if (this.ctx.state !== 'running') await this.ctx.resume();
+    if (this.ctx.state === 'running') return this.setBlocked(false);
+    // 0.110.2: never wait for ever. A browser that keeps the sound closed (no tap yet, or a stuck output device) left
+    // resume() pending, and every Play / Listen / coach demo waiting on it froze (owner 2026-11-21). Wait a moment, then
+    // go on silently and say so (SoundBlocked): the next tap opens it.
+    const ctx = this.ctx;
+    const ok = await Promise.race([ctx.resume().then(() => true, () => false), new Promise<boolean>((r) => setTimeout(() => r(false), UNLOCK_WAIT_MS))]);
+    this.setBlocked(!ok && ctx.state !== 'running');
+    if (!ctx.onstatechange) ctx.onstatechange = () => ctx.state === 'running' && this.setBlocked(false);
+  }
+
+  /** The sound could not start (SoundBlocked shows a one-tap fix). */
+  blocked = false;
+  private blockedL = new Set<(b: boolean) => void>();
+  onBlocked(cb: (b: boolean) => void): () => void {
+    this.blockedL.add(cb);
+    return () => void this.blockedL.delete(cb);
+  }
+  private setBlocked(b: boolean) {
+    if (this.blocked === b) return;
+    this.blocked = b;
+    if (b) console.warn('[sound] the browser kept the sound closed:', this.ctx?.state);
+    this.blockedL.forEach((l) => l(b));
   }
 
   private build(ctx: AudioContext) {

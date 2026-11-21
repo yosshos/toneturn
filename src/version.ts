@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.110.2',
+    date: '2026-11-21',
+    en: ['Fix: when the browser kept the sound closed, Play, Listen and the coach’s demo waited for ever. Now they go on, Skip always works, and a small bar offers to turn the sound on.'],
+    he: ['תיקון: כשהדפדפן לא הפעיל צליל, הכפתורים נגן, להקשיב וההדגמה של האימון הרציף נתקעו. עכשיו הם ממשיכים, "לדלג" תמיד עובד, ופס קטן מציע להפעיל צליל.'],
+  },
+  {
     version: '0.110.1',
     date: '2026-11-21',
     en: ['Hands stay on the instrument between steps too: on an exercise’s opening page, a take waiting for Play, a result waiting for Next and the lesson summary, playing any note (or pressing any key) goes on.'],

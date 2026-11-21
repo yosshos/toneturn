@@ -2359,3 +2359,24 @@ p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
   font-size: 0.74rem;
   color: var(--ink-dim);
 }
+
+/* 0.110.2: the browser kept the sound closed — one tap opens it (SoundBlocked.tsx). */
+.sound-blocked {
+  position: fixed;
+  inset-inline: 0;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 14px;
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  font-size: 0.92rem;
+}

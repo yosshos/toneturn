@@ -75,3 +75,21 @@ test('hands-free: a level run moves on after a take with no button (again, slowe
   await expect.poll(async () => page.locator('.drill-run').getAttribute('data-drill'), { timeout: 60_000 }).not.toBe(first);
   await expect(page.locator('.take-review button:focus')).toHaveCount(0);
 });
+
+test('sound kept closed by the browser: the coach demo still skips, and a bar offers to turn sound on', async ({ page }) => {
+  // A browser that never opens the sound: resume() stays pending (0.110.2 — the demo, Play and Listen froze on it).
+  await page.addInitScript(() => {
+    AudioContext.prototype.resume = function () {
+      return new Promise(() => {});
+    };
+    Object.defineProperty(AudioContext.prototype, 'state', { get: () => 'suspended', configurable: true });
+  });
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-coach-open="scales"]').click();
+  await page.locator('[data-coach-start]').click();
+  await expect(page.locator('[data-coach-demo]')).toBeVisible();
+  await expect(page.locator('[data-sound-blocked]')).toBeVisible({ timeout: 5000 });
+  await page.locator('[data-coach-skip-demo]').click();
+  await expect(page.locator('[data-coach="take"]')).toBeVisible({ timeout: 3000 });
+});

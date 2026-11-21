@@ -1,3 +1,4 @@
+import { SoundBlocked } from './SoundBlocked';
 import { TodayCards } from './TodayCards';
 import { GrooveEchoModes } from './GrooveEchoModes';
 import { qualityOf } from '../audio/quality';
@@ -2749,6 +2750,7 @@ export function App() {
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
+      <SoundBlocked lang={s.uiLang} />
       {askKeysSound && <KeysSoundAsk device={askKeysSound} lang={s.uiLang} onAnswer={(appSound) => updateSettings({ midiSound: appSound, midiSoundAsked: true })} />}
       {freshNotice && (
         <div className="sheet-backdrop" onClick={() => setFreshNotice(false)}>
