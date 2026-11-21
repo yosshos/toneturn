@@ -666,3 +666,30 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .kc-dots i.strong { background: var(--purple); border-color: var(--purple); }
 .key-card.st-strong .kc-dots i { border-color: var(--paper); }
 .key-card.st-strong .kc-dots i.some, .key-card.st-strong .kc-dots i.strong { background: var(--paper); }
+/* the circle of fifths (wide screens): the 12 cards around a square, C at the top, clockwise */
+.key-grid.circle { position: relative; display: block; width: min(100%, 500px, 62vh); aspect-ratio: 1; margin: 12px auto 4px; }
+.key-grid.circle .key-card { position: absolute; width: 88px; padding: 8px 10px; transform: translate(-50%, -50%); }
+.key-grid.circle .key-card b { font-size: 19px; }
+.kc-centre { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--ink-soft); font: 400 18px/1.2 var(--display); text-align: center; }
+.kp-row-head { grid-template-areas: 'name n' 'now now' 'bar bar'; }
+.kp-now { grid-area: now; color: var(--ink-soft); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.key-card.week { box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 45%, transparent); }
+/* Know the key (owner 2026-11-21): the key's facts and a three-question warm-up, folded by default */
+.kk { display: grid; gap: 8px; padding: 0; }
+.kk-head { all: unset; box-sizing: border-box; display: grid; gap: 2px; padding: 12px 14px; cursor: pointer; }
+.kk-head small { color: var(--ink-soft); font-size: 13px; }
+.kk-head:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; border-radius: 14px; }
+.kk-facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; padding: 0 14px; font-size: 14px; }
+.kk-facts dt { color: var(--ink-soft); }
+.kk-facts dt small { color: var(--ink-soft); font-size: 12px; }
+.kk-facts dd { margin: 0; font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
+.kk-pair { display: contents; }
+.kk-links { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px; }
+.kk-quiz { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 8px; }
+.kk-quiz li { display: grid; gap: 6px; font-size: 14px; }
+.kk-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.kk-opts .chip.right { background: var(--purple); border-color: var(--purple); color: var(--paper); opacity: 1; }
+.kk-opts .chip.wrong { border-color: var(--pink); text-decoration: line-through; opacity: 1; }
+.kp-lens { display: grid; gap: 4px; }
+.kp-lens small { color: var(--ink-soft); font-size: 12px; }
+.kp-lens .chips { display: flex; flex-wrap: wrap; gap: 6px; }

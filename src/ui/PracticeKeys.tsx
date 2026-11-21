@@ -4,12 +4,14 @@
 // control & dynamics), each with its levels in this key and their numbers: best clean tempo, accuracy, timing spread.
 // The key-neutral families (rhythm, independence, mechanics) sit under the cards as General technique.
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
-import { cleanAt, currentEntry, groupsOf, keySession, measure, ROLE_ORDER, type KeyEntry, type KeyIndex } from '../engine/drills/keyIndex';
+import { cleanAt, currentEntry, groupsOf, keySession, LENS_NAME, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
+import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
+import { weekOf } from '../engine/drills/keyIndex';
 
 type Lang = 'he' | 'en';
 export type PracticeView = 'topic' | 'key';
@@ -33,6 +35,16 @@ export const ROLE_NAME: Record<FacetRole, { en: string; he: string }> = {
   colour: { en: 'Colours', he: 'צבעים' },
   comping: { en: 'Comping', he: 'ליווי' },
   apply: { en: 'In music', he: 'ביישום' },
+};
+
+/** The lens chips' short names (the full name is the tooltip and the take's title). */
+const LENS_SHORT: Record<Lens, { en: string; he: string }> = {
+  none: { en: 'As written', he: 'כמו שכתוב' },
+  cresc: { en: 'Cresc.', he: 'קרשנדו' },
+  accent4: { en: 'Accents', he: 'הטעמות' },
+  'even-p': { en: 'p', he: 'p' },
+  'even-f': { en: 'f', he: 'f' },
+  staccato: { en: 'Staccato', he: 'סטקטו' },
 };
 
 /** The key's name on a tab: C, Cm. */
@@ -65,22 +77,46 @@ function GroupTabs({ groups, group, onGroup, lang }: { groups: FacetGroup[]; gro
   );
 }
 
-/** The groups shown: all the root has, the melodic / harmonic-minor modes not in a classical-only emphasis. */
-export function shownGroups(idx: KeyIndex, ds: DrillSettings): FacetGroup[] {
+/**
+ * The groups shown (owner 2026-11-21: the advanced tabs only from the right level): major, minor and symmetric (the
+ * chromatic scale is early technique) always; the melodic / harmonic-minor modes for a player past the basics or in a
+ * jazz focus, or once one of them was played — never in a classical-only emphasis.
+ */
+export function shownGroups(idx: KeyIndex, ds: DrillSettings, advanced = true, items: Record<string, ItemState> = {}): FacetGroup[] {
   const all = new Set<FacetGroup>();
   for (let r = 0; r < 12; r++) for (const g of groupsOf(idx, r)) all.add(g);
-  return (['major', 'minor', 'mmhm', 'symmetric'] as FacetGroup[]).filter((g) => all.has(g) && !(g === 'mmhm' && ds.emphasis === 'classical'));
+  const triedModes = () => {
+    for (let r = 0; r < 12; r++) for (const es of Object.values(idx.pages[r].mmhm)) for (const e of es ?? []) if (e.drills.some((d) => (items[d.itemId]?.takes ?? 0) > 0)) return true;
+    return false;
+  };
+  return (['major', 'minor', 'mmhm', 'symmetric'] as FacetGroup[]).filter((g) => all.has(g) && (g !== 'mmhm' || (ds.emphasis !== 'classical' && (advanced || ds.emphasis === 'jazz' || triedModes()))));
 }
+
+/** The circle of fifths on a wide screen (owner 2026-11-21); the grid on a phone. */
+function useWide(min = 900): boolean {
+  const q = () => typeof window !== 'undefined' && !!window.matchMedia?.(`(min-width: ${min}px)`).matches;
+  const [wide, setWide] = useState(q);
+  useEffect(() => {
+    const m = window.matchMedia?.(`(min-width: ${min}px)`);
+    if (!m) return;
+    const on = () => setWide(m.matches);
+    m.addEventListener?.('change', on);
+    return () => m.removeEventListener?.('change', on);
+  }, [min]);
+  return wide;
+}
+/** The circle, clockwise from C at the top. */
+const CIRCLE = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
 /** The core rows a key card shows as dots (owner 2026-11-21: dynamics included). */
 const CORE: FacetRole[] = ['scale', 'arpeggio', 'cadence', 'pattern', 'control'];
 
 /** A row's level: the level worked on (its place among the row's levels) — promotion, never a "full" bar by count. */
-function rowLevel(entries: KeyEntry[], items: Record<string, ItemState>): { at: number; of: number; done: number } {
+function rowLevel(entries: KeyEntry[], items: Record<string, ItemState>): { at: number; of: number; done: number; cur: KeyEntry | null } {
   const sorted = [...entries].sort((a, b) => a.level.level - b.level.level);
   const cur = currentEntry(sorted, items);
   const done = sorted.filter((e) => e.drills.every((d) => cleanAt(items[d.itemId], d))).length;
-  return { at: cur ? sorted.indexOf(cur) + 1 : 1, of: sorted.length, done };
+  return { at: cur ? sorted.indexOf(cur) + 1 : 1, of: sorted.length, done, cur };
 }
 
 function LevelBar({ done, of }: { done: number; of: number }) {
@@ -92,23 +128,37 @@ function LevelBar({ done, of }: { done: number; of: number }) {
 }
 
 /** The 12 key cards of a tab, in the player's key order, and General technique under them. */
-export function KeyGrid({ idx, items, lang, ds, group, onGroup, onKey, general }: { idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
+export function KeyGrid({ idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
   const he = lang === 'he';
-  const groups = shownGroups(idx, ds);
+  const groups = shownGroups(idx, ds, advanced, items);
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
-  const order = keysInOrder(ds.keyOrder === 'difficulty' ? 'fifths-up' : ds.keyOrder, false);
+  const wide = useWide();
+  const order = wide ? CIRCLE : keysInOrder(ds.keyOrder, false);
   return (
     <section className="key-grid-wrap" data-key-grid={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
-      <div className="key-grid">
-        {order.map((root) => {
+      {weekRoot !== null && onWeek && (
+        <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot}>
+          <Icon k="play" size={20} />
+          <span>
+            <b>
+              {he ? 'סולם השבוע: ' : 'Key of the week: '}
+              <bdi dir="ltr">{nameOf(weekRoot, g)}</bdi>
+            </b>
+            <small>{he ? 'אימון רציף בכל סוגי התרגילים בסולם, ברמה שלכם' : 'Continuous practice across the key, at your level'}</small>
+          </span>
+        </button>
+      )}
+      <div className={`key-grid ${wide ? 'circle' : ''}`} data-key-layout={wide ? 'circle' : 'grid'}>
+        {wide && <span className="kc-centre" aria-hidden="true">{he ? 'מעגל הקווינטות' : 'Circle of fifths'}</span>}
+        {order.map((root, ci) => {
           const rows = idx.pages[root][g];
           const drills = ROLE_ORDER.filter((r) => r !== 'apply').flatMap((r) => (rows[r] ?? []).flatMap((e) => e.drills));
           if (!drills.length) return null;
           const m = measure(dedupe(drills), items);
           const line = m.status === 'untried' ? (he ? 'עוד לא' : 'Not yet') : he ? `${m.clean} נקיים` : `${m.clean} clean`;
           return (
-            <button key={root} type="button" className={`key-card st-${m.status}`} onClick={() => onKey(root)} data-key-card={root} aria-label={`${nameOf(root, g)}: ${line}`}>
+            <button key={root} type="button" className={`key-card st-${m.status} ${root === weekRoot ? 'week' : ''}`} style={wide ? circlePos(ci) : undefined} onClick={() => onKey(root)} data-key-card={root} aria-label={`${nameOf(root, g)}: ${line}`}>
               <b dir="ltr">{nameOf(root, g)}</b>
               <small>{line}</small>
               <span className="kc-dots" aria-hidden="true">
@@ -134,6 +184,12 @@ export function KeyGrid({ idx, items, lang, ds, group, onGroup, onKey, general }
   );
 }
 
+/** A card's place on the circle (percent of the square), clockwise from the top. */
+const circlePos = (i: number): CSSProperties => {
+  const a = (i / 12) * 2 * Math.PI;
+  return { left: `${50 + 41 * Math.sin(a)}%`, top: `${50 - 41 * Math.cos(a)}%` };
+};
+
 const dedupe = (ds: Drill[]): Drill[] => {
   const seen = new Set<string>();
   return ds.filter((d) => (seen.has(d.itemId) ? false : (seen.add(d.itemId), true)));
@@ -142,18 +198,36 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun }: { idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey }: { /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
-  const groups = shownGroups(idx, ds).filter((g) => groupsOf(idx, root).includes(g));
+  const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
   const rows = idx.pages[root][g];
   const [open, setOpen] = useState<FacetRole | null>(null);
+  // Dynamics as a lens (owner 2026-11-21): the session and every single-line exercise through a touch, remembered here.
+  const [lens, setLensState] = useState<Lens>(() => {
+    try {
+      return (localStorage.getItem('toneturn.lens') as Lens | null) ?? 'none';
+    } catch {
+      return 'none';
+    }
+  });
+  const setLens = (l: Lens) => {
+    setLensState(l);
+    try {
+      localStorage.setItem('toneturn.lens', l);
+    } catch {
+      /* fine */
+    }
+  };
+  const run = (q: Drill[]) => onRun(q.map((d) => withLens(d, lens)));
   const session = keySession(idx, root, g, items);
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
+      <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
       {session.length > 0 && (
-        <button className="coach-entry" onClick={() => onRun(session)} data-key-session={root}>
+        <button className="coach-entry" onClick={() => run(session)} data-key-session={root}>
           <Icon k="play" size={20} />
           <span>
             <b>
@@ -164,6 +238,16 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun }: {
           </span>
         </button>
       )}
+      <div className="kp-lens">
+        <small>{he ? 'עדשת דינמיקה' : 'Dynamics lens'}</small>
+        <div className="chips" role="radiogroup" aria-label={he ? 'עדשת דינמיקה' : 'Dynamics lens'}>
+          {LENSES.map((l) => (
+            <button key={l} type="button" role="radio" aria-checked={lens === l} className={`chip ${lens === l ? 'on' : ''}`} onClick={() => setLens(l)} data-lens={l} title={LENS_NAME[l][lang]}>
+              {LENS_SHORT[l][lang]}
+            </button>
+          ))}
+        </div>
+      </div>
       <p className="field-hint kp-legend" dir="auto">
         {he ? '♩ הטמפו הנקי הגבוה · דיוק · סטיית קצב' : '♩ best clean tempo · accuracy · timing spread'}
       </p>
@@ -177,6 +261,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun }: {
             <button type="button" className="kp-row-head" onClick={() => setOpen(isOpen ? null : r)} aria-expanded={isOpen}>
               <b>{ROLE_NAME[r][lang]}</b>
               <small>{he ? `שלב ${lv.at} מתוך ${lv.of}` : `Level ${lv.at} of ${lv.of}`}</small>
+              {lv.cur && <span className="kp-now">{lv.cur.level.title[lang]}</span>}
               <LevelBar done={lv.done} of={lv.of} />
             </button>
             {isOpen && (
@@ -186,7 +271,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun }: {
                   const done = e.drills.every((d) => cleanAt(items[d.itemId], d));
                   return (
                     <li key={`${e.family.id}:${e.level.id}`}>
-                      <button type="button" className={`kp-entry ${done ? 'done' : ''}`} onClick={() => onRun(e.drills)} data-kp-entry={e.level.id}>
+                      <button type="button" className={`kp-entry ${done ? 'done' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id}>
                         <span className="kp-name">
                           <small>{e.family.title[lang]}</small>
                           {e.level.title[lang]}
@@ -206,5 +291,124 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun }: {
         );
       })}
     </div>
+  );
+}
+
+const SYM_SCALES: { name: { en: string; he: string }; ints: number[] }[] = [
+  { name: { en: 'whole-tone', he: 'טונים שלמים' }, ints: [0, 2, 4, 6, 8, 10] },
+  { name: { en: 'diminished half–whole', he: 'מוקטן חצי–שלם' }, ints: [0, 1, 3, 4, 6, 7, 9, 10] },
+  { name: { en: 'diminished whole–half', he: 'מוקטן שלם–חצי' }, ints: [0, 2, 3, 5, 6, 8, 9, 11] },
+];
+
+/**
+ * "Know the key" (owner 2026-11-21): the key's facts before playing — signature, scale, the chord on each degree, the
+ * ii–V–I, the 6th-diminished, the relative and parallel keys (one tap away) — and a three-question warm-up. The modes
+ * tab lists the melodic / harmonic-minor modes on the root with their parents; the symmetric tab its scales.
+ */
+function KnowTheKey({ root, group, lang, onOpenKey }: { root: number; group: FacetGroup; lang: Lang; onOpenKey?: (root: number, group: FacetGroup) => void }) {
+  const he = lang === 'he';
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Record<number, string>>({});
+  const head = (
+    <button type="button" className="kk-head" onClick={() => setOpen(!open)} aria-expanded={open} data-know-key={root}>
+      <b>{he ? 'הכירו את הסולם' : 'Know the key'}</b>
+      <small>{open ? (he ? 'סגירה' : 'Close') : he ? 'עובדות ושלוש שאלות לפני שמנגנים' : 'Facts and three questions before you play'}</small>
+    </button>
+  );
+  if (!open) return <section className="kk card">{head}</section>;
+  const sig = (n: number) => (n === 0 ? (he ? 'בלי סימני היתק' : 'no sharps or flats') : n > 0 ? `${n}♯` : `${-n}♭`);
+  let body: ReactNode = null;
+  if (group === 'major' || group === 'minor') {
+    const f = keyFacts(root, group === 'minor');
+    const seed = Number(weekOf().replace(/-/g, '')) + root;
+    const quiz = keyQuiz(root, group === 'minor', seed);
+    body = (
+      <>
+        <dl className="kk-facts">
+          <dt>{he ? 'סימני היתק' : 'Key signature'}</dt>
+          <dd dir="ltr">{sig(f.signature)}</dd>
+          <dt>{he ? 'הסולם' : 'Scale'}</dt>
+          <dd dir="ltr">{f.notes.join(' ')}</dd>
+          {f.more.map((m) => (
+            <span key={m.name.en} className="kk-pair">
+              <dt>{m.name[lang]}</dt>
+              <dd dir="ltr">{m.notes.join(' ')}</dd>
+            </span>
+          ))}
+          <dt>{he ? 'האקורדים בסולם' : 'Chords of the key'}</dt>
+          <dd dir="ltr">{f.chords.join(' · ')}</dd>
+          <dt>ii–V–{group === 'minor' ? 'i' : 'I'}</dt>
+          <dd dir="ltr">{f.cadence}</dd>
+          <dt>{he ? 'שישית־מוקטן' : '6th-diminished'}</dt>
+          <dd dir="ltr">{f.sixDim}</dd>
+        </dl>
+        {onOpenKey && (
+          <div className="kk-links">
+            <button type="button" className="chip" onClick={() => onOpenKey(f.relative.root, f.relative.minor ? 'minor' : 'major')} data-kk-relative={f.relative.root}>
+              {he ? 'היחסי: ' : 'Relative: '}
+              <bdi dir="ltr">{f.relative.name}</bdi>
+            </button>
+            <button type="button" className="chip" onClick={() => onOpenKey(f.parallel.root, f.parallel.minor ? 'minor' : 'major')} data-kk-parallel={f.parallel.root}>
+              {he ? 'המקביל: ' : 'Parallel: '}
+              <bdi dir="ltr">{f.parallel.name}</bdi>
+            </button>
+          </div>
+        )}
+        <ol className="kk-quiz">
+          {quiz.map((q, k) => (
+            <li key={k} data-kk-q={k}>
+              <span>{q.q[lang]}</span>
+              <span className="kk-opts">
+                {q.options.map((o) => {
+                  const sel = picked[k] === o;
+                  const state = picked[k] === undefined ? '' : o === q.answer ? 'right' : sel ? 'wrong' : '';
+                  return (
+                    <button key={o} type="button" className={`chip ${state}`} disabled={picked[k] !== undefined} onClick={() => setPicked({ ...picked, [k]: o })} dir="ltr">
+                      {o}
+                    </button>
+                  );
+                })}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </>
+    );
+  } else if (group === 'mmhm') {
+    body = (
+      <dl className="kk-facts">
+        {minorModesOn(root).map((m) => {
+          const [pen, phe] = m.parent.split('|');
+          return (
+            <span key={m.name.en} className="kk-pair">
+              <dt>
+                {m.name[lang]} <small>({he ? `מ־${phe}` : `of ${pen}`})</small>
+              </dt>
+              <dd dir="ltr">{m.notes.join(' ')}</dd>
+            </span>
+          );
+        })}
+      </dl>
+    );
+  } else {
+    const names = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+    body = (
+      <dl className="kk-facts">
+        {SYM_SCALES.map((sc) => (
+          <span key={sc.name.en} className="kk-pair">
+            <dt>{sc.name[lang]}</dt>
+            <dd dir="ltr">{sc.ints.map((i) => names[(root + i) % 12]).join(' ')}</dd>
+          </span>
+        ))}
+        <dt>{he ? 'אותם צלילים' : 'Same notes'}</dt>
+        <dd>{he ? 'טונים שלמים חוזר כל 2 סולמות, מוקטן כל 3' : 'whole-tone repeats every 2 keys, diminished every 3'}</dd>
+      </dl>
+    );
+  }
+  return (
+    <section className="kk card">
+      {head}
+      {body}
+    </section>
   );
 }

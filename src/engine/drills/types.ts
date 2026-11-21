@@ -203,7 +203,8 @@ export type Motion = 'parallel' | 'contrary' | 'third' | 'sixth' | 'tenth' | 'fo
 export type ScaleType = 'major' | 'harmonic' | 'melodic' | 'natural' | 'chromatic' | 'mixolydian' | 'bebop-dom' | 'six-dim' | 'blues' | 'pentatonic'
   // AUDIT-SCALES: the other modes and the minor 6th-diminished scale (Cm6 + B°7) as scale items.
   | 'dorian' | 'phrygian' | 'lydian' | 'locrian' | 'six-dim-m';
-export type KeyOrder = 'chromatic-up' | 'chromatic-down' | 'fifths-up' | 'fifths-down' | 'difficulty';
+/** 'fingering' (owner 2026-11-21): by fingering family — the white-key group, then the black-key thumbs, then F and the flats. */
+export type KeyOrder = 'chromatic-up' | 'chromatic-down' | 'fifths-up' | 'fifths-down' | 'difficulty' | 'fingering';
 
 /** One expected note of a drill. */
 /**

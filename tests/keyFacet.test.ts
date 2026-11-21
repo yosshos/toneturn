@@ -72,3 +72,33 @@ describe('key facet: the dump for review', () => {
     console.log('FACET', JSON.stringify(c), 'fixed-minor', fixed);
   });
 });
+
+describe('key of the week', () => {
+  it('the first unplayed key in order, then the weakest tried one', async () => {
+    const { buildKeyIndex, pickWeekKey, tabDrills, weekOf } = await import('../src/engine/drills/keyIndex');
+    const idx = buildKeyIndex(families('piano').filter((f) => f.id === 'scales'), 'fifths-up');
+    const order = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+    expect(pickWeekKey(idx, 'major', {}, order)).toBe(0);
+    // C played well → the next unplayed key (G)
+    const items: Record<string, import('../src/engine/drills/types').ItemState> = {};
+    for (const d of tabDrills(idx, 0, 'major')) items[d.itemId] = { itemId: d.itemId, family: d.spec.family, key: 0, hands: d.spec.hands, cleanBpm: d.startBpm * 1.3, goalBpm: d.startBpm, streak: 0, fails: 0, takes: 5, last: new Date().toISOString(), history: [], ewma: { acc: 1 } } as never;
+    expect(pickWeekKey(idx, 'major', items, order)).toBe(7);
+    expect(weekOf('2026-11-21T10:00:00Z')).toBe('2026-11-16');
+  });
+});
+
+describe('dynamics as a lens', () => {
+  it('a scale through each lens is its own item with the goal the take measures; chords stay as they are', async () => {
+    const { withLens } = await import('../src/engine/drills/keyIndex');
+    const scale = ALL.find((d) => d.title.en === 'C major · 2 oct · RH')!;
+    const c = withLens(scale, 'cresc');
+    expect(c.itemId).toBe(`${scale.itemId}:lens-cresc`);
+    expect(c.goal.dynamics).toBe('cresc');
+    const a = withLens(scale, 'accent4');
+    expect(a.notes.filter((n) => n.accent).length).toBeGreaterThan(3);
+    expect(withLens(scale, 'staccato').goal.articulation).toBe('staccato');
+    expect(withLens(scale, 'none')).toBe(scale);
+    const cad = ALL.find((d) => d.spec.family === 'cadences')!;
+    expect(withLens(cad, 'cresc')).toBe(cad);
+  });
+});

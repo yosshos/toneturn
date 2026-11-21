@@ -138,3 +138,71 @@ export function keySession(idx: KeyIndex, root: number, group: FacetGroup, items
   for (let k = 0; k < rounds; k++) out.push(...picks);
   return out;
 }
+
+/** The ISO-ish week number of a date (Monday weeks), for the key of the week. */
+export function weekOf(now: number | string = Date.now()): string {
+  const d = new Date(typeof now === 'number' ? now : Date.parse(now));
+  const day = (d.getUTCDay() + 6) % 7;
+  const mon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day);
+  return new Date(mon).toISOString().slice(0, 10);
+}
+
+/**
+ * The key of the week (owner 2026-11-21): a weak key first (the weakest), else the first key in the player's order not
+ * played yet, else the key played least well. Kept for the week by the screen (it asks once a week).
+ */
+export function pickWeekKey(idx: KeyIndex, group: FacetGroup, items: Record<string, ItemState>, order: number[], now: number | string = Date.now()): number | null {
+  const ms = order
+    .map((r) => {
+      const d = tabDrills(idx, r, group);
+      return d.length ? { r, m: measure(d, items, now) } : null;
+    })
+    .filter((x): x is { r: number; m: Measure } => x !== null);
+  if (!ms.length) return null;
+  const weak = ms.filter((x) => x.m.status === 'weak').sort((a, b) => a.m.mastery - b.m.mastery);
+  if (weak.length) return weak[0].r;
+  const fresh = ms.find((x) => x.m.status === 'untried');
+  if (fresh) return fresh.r;
+  return ms.slice().sort((a, b) => a.m.mastery - b.m.mastery)[0].r;
+}
+
+/**
+ * Dynamics as a lens (owner 2026-11-21): any single-line exercise (a scale, an arpeggio, a finger pattern) played with
+ * a shape or a touch the take then measures — crescendo out and diminuendo back, accents every 4th, even piano, even
+ * forte, staccato. The lens is its own item (the id gets a suffix), so its progress is kept apart; MIDI measures it
+ * (the microphone can't hear velocity — the take says so, as for the control family).
+ */
+export type Lens = 'none' | 'cresc' | 'accent4' | 'even-p' | 'even-f' | 'staccato';
+export const LENSES: Lens[] = ['none', 'cresc', 'accent4', 'even-p', 'even-f', 'staccato'];
+export const LENS_NAME: Record<Lens, { en: string; he: string }> = {
+  none: { en: 'As written', he: 'כמו שכתוב' },
+  cresc: { en: 'Crescendo out, diminuendo back', he: 'קרשנדו בעלייה, דימינואנדו בירידה' },
+  accent4: { en: 'Accent every 4th', he: 'הטעמה כל 4' },
+  'even-p': { en: 'Even piano', he: 'פיאנו אחיד' },
+  'even-f': { en: 'Even forte', he: 'פורטה אחיד' },
+  staccato: { en: 'Staccato', he: 'סטקטו' },
+};
+const LENS_ROLES = new Set(['scale', 'arpeggio', 'pattern']);
+
+/** A drill through a lens; unchanged for 'none', for chords and for items with their own dynamics already. */
+export function withLens(d: Drill, lens: Lens): Drill {
+  if (lens === 'none') return d;
+  const fc = keyFacet(d);
+  if (!fc || !LENS_ROLES.has(fc.role) || d.spec.dynamics || d.goal.dynamics) return d;
+  // one note at a time only (a lens on block chords would grade the wrong thing)
+  const beats = new Map<number, number>();
+  for (const n of d.notes) beats.set(n.beat, (beats.get(n.beat) ?? 0) + 1);
+  if ([...beats.values()].some((c) => c > 2)) return d;
+  const name = LENS_NAME[lens];
+  const steps = [...beats.keys()].sort((a, b) => a - b);
+  const notes = lens === 'accent4' ? d.notes.map((n) => (steps.indexOf(n.beat) % 4 === 0 ? { ...n, accent: true } : n)) : d.notes;
+  const dynamics = lens === 'staccato' ? undefined : lens;
+  return {
+    ...d,
+    itemId: `${d.itemId}:lens-${lens}`,
+    notes,
+    spec: { ...d.spec, ...(dynamics ? { dynamics } : { articulation: 'staccato' as const }) },
+    goal: { ...d.goal, ...(dynamics ? { dynamics } : { articulation: 'staccato' as const }) },
+    title: { en: `${d.title.en} · ${name.en}`, he: `${d.title.he} · ${name.he}` },
+  };
+}

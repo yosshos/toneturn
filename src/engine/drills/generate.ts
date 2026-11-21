@@ -118,6 +118,10 @@ export function keysInOrder(order: KeyOrder, minor = false): number[] {
       return seq(5);
     case 'difficulty':
       return (minor ? DIFF_MINOR : DIFF_MAJOR).slice();
+    case 'fingering':
+      // the common teaching order by shared fingering: C G D A E (one pattern), B F♯ D♭ (thumbs on the white keys
+      // between black-key groups), then F and the flats; minors A E D G C, then B F♯ C♯ G♯, then F B♭ E♭
+      return (minor ? [9, 4, 2, 7, 0, 11, 6, 1, 8, 5, 10, 3] : [0, 7, 2, 9, 4, 11, 6, 1, 5, 10, 3, 8]).slice();
   }
 }
 

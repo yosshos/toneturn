@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.113.0',
+    date: '2026-11-21',
+    en: ['Practice by key: a key of the week (your weakest key, or the next new one), Know the key (signature, chords, ii–V–I, 6th-diminished, the relative and parallel keys, three quick questions), dynamics as a lens on any scale, arpeggio or pattern (crescendo, accents, p, f, staccato), the circle of fifths on wide screens, the current level in each row, and key order by fingering.'],
+    he: ['תרגול לפי סולם: סולם השבוע (החלש ביותר, או הבא שעוד לא ניגנתם), "הכירו את הסולם" (סימני היתק, אקורדים, ii–V–I, שישית־מוקטן, הסולם היחסי והמקביל ושלוש שאלות קצרות), דינמיקה כעדשה על כל סולם, ארפג׳יו או תבנית (קרשנדו, הטעמות, p, f, סטקטו), מעגל הקווינטות במסך רחב, השלב הנוכחי בכל שורה, וסדר סולמות לפי אצבוע.'],
+  },
+  {
     version: '0.112.0',
     date: '2026-11-21',
     en: ['Practice by key: the 12 keys as cards (major, minor, melodic / harmonic minor modes, symmetric), each key page opening with its continuous session and a row per kind of exercise — scales and modes, arpeggios, cadences, patterns, control and dynamics, Barry Harris, voicings, lines — with your best tempo, accuracy and timing; general technique below. By topic, a family splits the same way, and its card shows in how many of the 12 keys you play it well.'],

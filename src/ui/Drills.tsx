@@ -92,7 +92,8 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
-import { buildKeyIndex } from '../engine/drills/keyIndex';
+import { buildKeyIndex, keySession, pickWeekKey, weekOf, type KeyIndex } from '../engine/drills/keyIndex';
+import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
 const GENERAL_FAMILY = (id: string): boolean => FAMILY_FACETS[id]?.scope === 'neutral';
@@ -104,7 +105,7 @@ const T = {
     role: { 'warm-up': 'Warm-up', weak: 'Work on', maintenance: 'Keep fresh', variant: 'Variation', new: 'New' } as Record<string, string>,
     noMidi: 'Connect a MIDI keyboard for the full analysis (velocity, hands, legato). The microphone works for pitch and timing.',
     fingering: 'Show fingering', order: 'Key order', cont: 'Continuous practice', contAcc: 'Accuracy to move on', emphasis: 'Style', inPath: 'Drills in my path', inWorkout: 'Drills in the daily workout',
-    orders: { 'fifths-up': 'Circle of fifths ↑', 'fifths-down': 'Circle of fifths ↓', 'chromatic-up': 'Chromatic ↑', 'chromatic-down': 'Chromatic ↓', difficulty: 'Easiest first' } as Record<string, string>,
+    orders: { 'fifths-up': 'Circle of fifths ↑', 'fifths-down': 'Circle of fifths ↓', 'chromatic-up': 'Chromatic ↑', 'chromatic-down': 'Chromatic ↓', difficulty: 'Easiest first', fingering: 'By fingering' } as Record<string, string>,
     conts: { off: 'Off', 'raise-tempo': 'Raise the tempo', 'next-key': 'Next key', 'next-drill': 'Next drill' } as Record<string, string>,
     emph: { both: 'Both', classical: 'Classical', jazz: 'Jazz' } as Record<string, string>,
     latency: 'Latency (ms)', softest: 'Play your softest note', loudest: 'Play your loudest note', range: 'Velocity range', save: 'Save', cancel: 'Cancel', del: 'Delete',
@@ -119,7 +120,7 @@ const T = {
     role: { 'warm-up': 'חימום', weak: 'לחזק', maintenance: 'לשמור טרי', variant: 'וריאציה', new: 'חדש' } as Record<string, string>,
     noMidi: 'חברו מקלדת MIDI לניתוח המלא (עוצמה, ידיים, לגאטו). המיקרופון מספיק לגובה ולתזמון.',
     fingering: 'להציג אצבוע', order: 'סדר הסולמות', cont: 'תרגול רציף', contAcc: 'דיוק כדי להתקדם', emphasis: 'סגנון', inPath: 'תרגילים במסלול שלי', inWorkout: 'תרגילים באימון היומי',
-    orders: { 'fifths-up': 'מעגל הקווינטות ↑', 'fifths-down': 'מעגל הקווינטות ↓', 'chromatic-up': 'כרומטי ↑', 'chromatic-down': 'כרומטי ↓', difficulty: 'מהקל לקשה' } as Record<string, string>,
+    orders: { 'fifths-up': 'מעגל הקווינטות ↑', 'fifths-down': 'מעגל הקווינטות ↓', 'chromatic-up': 'כרומטי ↑', 'chromatic-down': 'כרומטי ↓', difficulty: 'מהקל לקשה', fingering: 'לפי אצבוע' } as Record<string, string>,
     conts: { off: 'כבוי', 'raise-tempo': 'להעלות טמפו', 'next-key': 'לסולם הבא', 'next-drill': 'לתרגיל הבא' } as Record<string, string>,
     emph: { both: 'שניהם', classical: 'קלאסי', jazz: 'ג׳אז' } as Record<string, string>,
     latency: 'השהיה (מ״ש)', softest: 'נגנו את התו הכי שקט', loudest: 'נגנו את התו הכי חזק', range: 'טווח עוצמה', save: 'שמירה', cancel: 'ביטול', del: 'מחיקה',
@@ -277,6 +278,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const setPView = (v: PracticeView) => (setPViewState(v), lsSet('toneturn.practiceView', v));
   const [kGroup, setKGroupState] = useState<FacetGroup>(() => (lsGet('toneturn.keyGroup') as FacetGroup | null) ?? 'major');
   const setKGroup = (g: FacetGroup) => (setKGroupState(g), lsSet('toneturn.keyGroup', g));
+  // the advanced tabs (melodic / harmonic-minor modes) for a player past the basics: the course answers or the level test
+  const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
   const keyIdx = useMemo(
     () => (ds.instrument === 'drums' || (pView !== 'key' && view.k !== 'keypage') ? null : buildKeyIndex(shownFamilies({ ...ds, bassTuning }), ds.keyOrder)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -427,7 +430,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
-        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
       </main>
     );
   if (view.k === 'family')
@@ -470,7 +473,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       pView={pView}
       onPView={setPView}
       keyGrid={
-        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
+        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => setView({ k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } })} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
       }
     />
   );
@@ -490,6 +493,16 @@ const lsSet = (k: string, v: string) => {
     /* fine */
   }
 };
+/** The key of the week for this instrument and tab: picked once a week and kept on this device. */
+function weekKey(idx: KeyIndex, g: FacetGroup, items: Record<string, ItemState>, ds: DrillSettings): number | null {
+  const week = weekOf();
+  const tag = `${week}|${ds.instrument ?? 'piano'}|${g}`;
+  const kept = lsGet('toneturn.weekKey');
+  if (kept?.startsWith(tag + '|')) return Number(kept.split('|')[3]);
+  const r = pickWeekKey(idx, g, items, keysInOrder(ds.keyOrder, g === 'minor'));
+  if (r !== null) lsSet('toneturn.weekKey', `${tag}|${r}`);
+  return r;
+}
 /** "C major" / "C minor" / "C: melodic & harmonic minor modes" / "C: symmetric". */
 function keyPageTitle(root: number, g: FacetGroup, lang: Lang): string {
   const he = lang === 'he';
@@ -1325,7 +1338,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           <p className="muted">{he ? 'הידיים נשארות על הכלי: אחרי כל נגינה ממשיכים לבד, עם הערה קצרה. אפשר לעצור בכל רגע.' : 'Hands stay on the instrument: after each take the session moves on by itself, with a short note. Pause any time.'}</p>
           {onKeyOrder && (
             <div className="chips coach-order" role="radiogroup" aria-label={he ? 'סדר הסולמות' : 'Key order'}>
-              {(['fifths-up', 'fifths-down', 'chromatic-up', 'chromatic-down'] as KeyOrder[]).map((o) => (
+              {(['fifths-up', 'fifths-down', 'chromatic-up', 'chromatic-down', 'fingering'] as KeyOrder[]).map((o) => (
                 <button key={o} type="button" role="radio" aria-checked={ds.keyOrder === o} className={`chip ${ds.keyOrder === o ? 'on' : ''}`} onClick={() => onKeyOrder(o)} data-coach-order={o}>
                   {tx.orders[o]}
                 </button>

@@ -48,3 +48,31 @@ test('practice by topic: a family splits by scale family (major, minor, modes, s
   expect(minor).toBeLessThan(all);
   await expect(page.locator('[data-coach-open="scales"]')).toBeVisible();
 });
+
+test('a key page: know the key (facts, related keys, warm-up), the dynamics lens, and the key of the week', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await expect(page.locator('[data-week-key]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.key-card.week')).toHaveCount(1);
+  await page.locator('[data-key-card="0"]').click();
+  await page.locator('[data-know-key="0"]').click();
+  await expect(page.locator('.kk-facts')).toContainText('Dm7 – G7 – Cmaj7');
+  await page.locator('[data-kk-q="0"] .chip').first().click();
+  await expect(page.locator('[data-kk-q="0"] .chip.right')).toHaveCount(1);
+  await page.screenshot({ path: 'test-results/keys-know.png' });
+  await page.locator('[data-kk-relative="9"]').click();
+  await expect(page.locator('[data-key-page="9"][data-key-group-shown="minor"]')).toBeVisible();
+  await page.locator('[data-lens="cresc"]').click();
+  await expect(page.locator('[data-lens="cresc"]')).toHaveAttribute('aria-checked', 'true');
+  await page.locator('[data-key-session="9"]').click();
+  await expect(page.locator('.drill-run')).toBeVisible({ timeout: 20_000 });
+});
+
+test('wide screens: the keys on the circle of fifths', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await expect(page.locator('[data-key-layout="circle"]')).toBeVisible({ timeout: 30_000 });
+  await page.screenshot({ path: 'test-results/keys-circle.png' });
+});
