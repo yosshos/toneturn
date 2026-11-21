@@ -56,14 +56,29 @@ Deno.serve(async (req) => {
       const audioConfig: Record<string, unknown> = { audioEncoding: 'MP3' };
       if (b.rate) audioConfig.speakingRate = b.rate;
       if (b.pitch) audioConfig.pitch = b.pitch;
+      const input: Record<string, unknown> = b.ssml ? { ssml: b.ssml } : { text: b.text };
+      if (b.prompt) input.prompt = b.prompt;
+      const voice: Record<string, unknown> = { languageCode: lang, name: b.voice };
+      if (b.model) voice.model_name = b.model; // Gemini-TTS, e.g. gemini-2.5-pro-tts
       const r = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize', {
         method: 'POST',
         headers: { ...auth, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: b.ssml ? { ssml: b.ssml } : { text: b.text }, voice: { languageCode: lang, name: b.voice }, audioConfig }),
+        body: JSON.stringify({ input, voice, audioConfig }),
       });
       const j = await r.json();
       if (!r.ok) return json({ error: j.error?.message ?? r.status }, 502);
       return json({ mp3: j.audioContent });
+    }
+    if (b.action === 'hear') {
+      // Intelligibility check: Google Speech-to-Text on a generated clip.
+      const r = await fetch('https://speech.googleapis.com/v1p1beta1/speech:recognize', {
+        method: 'POST',
+        headers: { ...auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: { encoding: 'MP3', sampleRateHertz: b.hz ?? 24000, languageCode: lang }, audio: { content: b.mp3 } }),
+      });
+      const j = await r.json();
+      if (!r.ok) return json({ error: j.error?.message ?? r.status }, 502);
+      return json({ text: (j.results ?? []).map((x: { alternatives: { transcript: string }[] }) => x.alternatives?.[0]?.transcript ?? '').join(' ') });
     }
     return json({ error: 'unknown action' }, 400);
   } catch (e) {
