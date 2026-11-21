@@ -2635,3 +2635,4 @@ button.chip.on {
 @media (max-width: 420px) { .coach-bar .coach-meta { display: none; } }
 /* "Play a note to continue" (anyNote.tsx): a quiet line under the button that waits. */
 .any-note-hint { margin: 6px 0 0; font-size: 13px; color: var(--ink-dim); text-align: center; }
+.coach-end .coach-debrief { margin: 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--purple) 10%, transparent); font-size: 14px; line-height: 1.5; }

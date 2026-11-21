@@ -21,6 +21,31 @@ import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
 import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
 /** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
+/**
+ * SPEC-COACH-2 §7 (AI decisions 2026-11-14: Haiku cards): after a coach session, one or two sentences from the
+ * session's measured numbers — what went well, the next step. Signed-in players only; without a session, offline or over
+ * the daily cap nothing shows (the app works as before). Decisions (tempo, level) stay in the coach.
+ */
+function CoachDebrief({ lang, c, fam, tier }: { lang: Lang; c: CoachState; fam: FamilyDef; tier: number }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    const step = fam.levels.find((l) => l.id === c.steps[c.step]);
+    const weak = c.weak.map((w) => fam.levels.find((l) => l.id === c.steps[w.step])?.title.en ?? '').filter(Boolean);
+    void askAi('card', {
+      lang,
+      context: { session: 'technique coach', skill: fam.title.en, takes: c.takes, clean: c.clean, stepsUp: c.promoted, nowAt: step?.title.en ?? '', weakSpots: weak.slice(0, 3), pastBasics: c.skilled, tier: tier >= 0 ? `T${tier}` : 'unknown', minutes: Math.round((Date.now() - c.startedAt) / 60000) },
+    }).then((r) => live && 'text' in r && setText(r.text));
+    return () => void (live = false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!text) return null;
+  return (
+    <p className="coach-debrief" data-coach-debrief="1">
+      {text}
+    </p>
+  );
+}
+
 /** The core technique families whose passes set the player's tier (SPEC-COACH-2 §1). */
 const CORE_FAMILIES = ['scales', 'arpeggios', 'g-scales', 'g-arps', 'b-scale', 'b-chord'];
 function coachBackground(settings: Settings, ds: DrillSettings, fam: FamilyId, tier = -1): CoachBackground {
@@ -95,7 +120,8 @@ import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
 import { playerTier } from '../engine/drills/tiers';
-import { setGradeTier } from '../engine/drills/analyze';
+import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
+import { askAi } from '../cloud/ai';
 import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
@@ -1334,6 +1360,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         <section className="drill-result v-clean coach-end" data-coach-end="1">
           <h2>{he ? 'סוף הסשן' : 'Session done'}</h2>
           <p>{cLine.line[lang].trim()}</p>
+          {coachRef.current && coach && <CoachDebrief lang={lang} c={coachRef.current} fam={coach} tier={getGradeTier()} />}
           <p className="coach-xp" data-coach-xp={cXp.current}>
             <bdi dir="ltr">+{cXp.current} XP</bdi>
           </p>
