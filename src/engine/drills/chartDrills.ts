@@ -7,7 +7,8 @@
 //
 // The spec's kind encodes everything:  chart~<ref>~<voicing>~<rhythm>~<mode>
 //   ref: "lv:<id>" improvisation level · "std:<id>" standard · "tpl:<id>" template · "txt:<uri-encoded text>" own chart ·
-//        "cad:<id>" a cadence of the cadence library (cadences.ts, written in C / C minor)
+//        "cad:<id>" a cadence of the cadence library (cadences.ts, written in C / C minor) ·
+//        "set:<id>" a built-in practice chart that is not a cadence (CHART_SETS, with its own home key)
 
 import { CHART_TEMPLATES, IMPROV_LEVELS, parseChart, type ChartChordEv } from '../charts';
 import { STANDARD_CHANGES } from '../standards';
@@ -17,7 +18,7 @@ import type { Hand } from './types';
 import { moved, nameInKey, refHome, transposeSymIn, type Home } from '../stdKey';
 import { cadenceById, cadencePlayText, cadenceTitle } from '../cadences';
 
-export type ChartVoicing = 'shell' | 'guide' | 'rootless-a' | 'rootless-b' | 'rootless' | 'close4' | 'drop2' | 'drop3' | 'open' | 'two-hand' | 'quartal' | 'upper' | 'block' | 'stride-single' | 'stride-octave' | 'stride-tenth' | 'stride-broken' | 'stride-walk' | 'walk-lh';
+export type ChartVoicing = 'shell' | 'guide' | 'rootless-a' | 'rootless-b' | 'rootless' | 'close4' | 'drop2' | 'drop3' | 'open' | 'two-hand' | 'quartal' | 'upper' | 'block' | 'stride-single' | 'stride-octave' | 'stride-tenth' | 'stride-broken' | 'stride-walk' | 'walk-lh' | 'sowhat1' | 'sowhat2' | 'barron';
 export type CompRhythm = 'whole' | 'charleston' | 'reverse' | 'garland' | 'anticip' | 'four' | 'stride';
 export type ChartMode = 'comp' | 'improv';
 
@@ -46,6 +47,9 @@ export const VOICING_NAME: Record<ChartVoicing, Bi> = {
   'stride-broken': { en: 'Stride: broken tenths', he: 'סטרייד: דצימות שבורות' },
   'stride-walk': { en: 'Stride: walking bass on 3', he: 'סטרייד: בס הולך על 3' },
   'walk-lh': { en: 'Walking bass in the left hand', he: 'בס מהלך ביד שמאל' },
+  sowhat1: { en: 'Quartal (So What), variation 1', he: 'קוורטלי (So What), גרסה 1' },
+  sowhat2: { en: 'Quartal (So What), variation 2', he: 'קוורטלי (So What), גרסה 2' },
+  barron: { en: 'Kenny Barron voicing', he: 'הווייסינג של קני בארון' },
 };
 export const RHYTHM_NAME: Record<CompRhythm, Bi> = {
   whole: { en: 'One per chord', he: 'אחד לכל אקורד' },
@@ -64,6 +68,17 @@ export interface ChartRef {
   /** The chart's tonic as written (when the ref tables don't know it: the cadence library). */
   home?: Home;
 }
+
+/** Built-in practice charts that are not cadences (written from C; the drill's key moves them). */
+export const CHART_SETS: Record<string, ChartRef> = {
+  // every minor 7th chord, round the circle of fifths (C, F, B♭ …): the Kenny Barron voicing on each
+  'm7-cycle': {
+    text: 'Cm7 | Fm7 | Bbm7 | Ebm7 | Abm7 | Dbm7 | Gbm7 | Bm7 | Em7 | Am7 | Dm7 | Gm7',
+    title: { en: 'Minor 7th chords round the circle of fifths', he: 'אקורדי m7 במעגל הקווינטות' },
+    bpm: 100,
+    home: { key: 0, minor: true },
+  },
+};
 
 /** Resolve a chart reference. */
 export function chartRef(ref: string): ChartRef | null {
@@ -88,6 +103,7 @@ export function chartRef(ref: string): ChartRef | null {
     const c = cadenceById(id);
     return c ? { text: cadencePlayText(c), title: cadenceTitle(c), bpm: c.bpm, home: { key: 0, ...(c.minor ? { minor: true } : {}) } } : null;
   }
+  if (k === 'set') return CHART_SETS[id] ?? null;
   if (k === 'txt') {
     try {
       // "title⏎text" (the title is optional)
@@ -124,15 +140,51 @@ interface Roles {
 export function roles(c: { iv: number[] }): Roles {
   const iv = c.iv;
   const has = (x: number) => iv.includes(x);
-  const third = has(3) ? 3 : has(4) ? 4 : has(5) ? 5 : has(2) ? 2 : 4;
+  // an "11" chord (1-5-♭7-9-11, no 3rd) is a sus chord
+  const third = has(3) ? 3 : has(4) ? 4 : has(5) || has(17) ? 5 : has(2) ? 2 : 4;
   const fifth = has(6) && !has(7) ? 6 : has(8) && !has(7) ? 8 : 7;
   const seventh = has(10) ? 10 : has(11) ? 11 : has(9) ? 9 : third === 3 ? 10 : 9; // triads become 6 / m7 sounds
   const dom = third === 4 && seventh === 10;
-  const alt = dom && (has(13) || has(15) || has(20));
+  // altered: a ♯9 or ♭13, or a ♭9 without the natural 13 (a 13♭9 keeps its 13)
+  const alt = dom && (has(15) || has(20) || (has(13) && !has(21)));
   const ninth = has(13) ? 13 : has(15) ? 15 : third === 3 && fifth === 6 ? 12 /* m7♭5: the root */ : seventh === 9 && fifth === 6 ? 12 /* dim7 */ : 14;
-  const color = dom ? (alt ? 20 : 21) - 12 : fifth;
+  // The colour tone (rootless voicings' 5th slot): the chord's own 13 / ♭13 / ♯11 / 11 when the symbol has one; else
+  // the 13th on a dominant (♭13 on an altered one) and the 5th on the rest.
+  const color = dom
+    ? has(21) ? 9 : has(20) ? 8 : has(18) ? 6 : alt ? 8 : 9
+    : has(21) && seventh !== 9 ? 9 : has(18) && fifth === 7 ? 6 : has(17) && third === 3 ? 5 : fifth;
   return { third, fifth, seventh, ninth, color, dom, alt };
 }
+
+/**
+ * The four tones (offsets from the root, inside an octave, rising) of a chord's 4-note form — four-way close, drop 2,
+ * drop 3, block: 1-3-5-7 with the symbol's own tensions in place, so none is dropped. A 9th of the symbol (♭9, 9, ♯9)
+ * replaces the root (a 7♭9 is 3-5-♭7-♭9, the diminished 7th on its 3rd); a ♯11, ♭13, 13 (or a m11's 11) replaces a
+ * perfect 5th (a 7alt is 3-♭13-♭7-♭9). A m7♭5's ♭5 and a dim7's ♭5 and 𝄫7 are chord tones and stay.
+ */
+export function fourTones(c: { iv: number[] }): number[] {
+  const R = roles(c);
+  const has = (x: number) => c.iv.includes(x);
+  const low = has(13) || has(14) || has(15) ? R.ninth : 0;
+  const five = R.fifth !== 7 ? R.fifth : has(20) ? 8 : has(18) ? 6 : has(21) && R.seventh !== 9 ? 9 : has(17) && R.third === 3 ? 5 : 7;
+  return [...new Set([low, R.third, five, R.seventh].map((x) => mod(x)))].sort((a, b) => a - b);
+}
+
+/** The pitch classes (offsets from the root) a chord's symbol defines beyond its triad and 7th: its altered 9ths,
+ * ♯11, ♭13, 13, a m7♭5's / dim7's ♭5 and a dim7's 𝄫7 — no voicing type may leave them out (the shell and guide tones,
+ * 1-3-7 and 3-7 by definition, aside). Each entry is a set of alternatives: a 7alt names no particular altered 9th,
+ * so its ♭9 or its ♯9 will do (and its ♭13). */
+export function definingTones(c: { iv: number[] }): number[][] {
+  const R = roles(c);
+  const altChord = c.iv.includes(13) && c.iv.includes(15);
+  const out: number[][] = c.iv.filter((x) => (x === 13 || x === 15 ? !altChord : x === 18 || x === 20 || x === 21)).map((x) => [mod(x)]);
+  if (altChord) out.push([1, 3]);
+  if (R.fifth !== 7) out.push([R.fifth]);
+  if (R.seventh === 9 && R.fifth === 6) out.push([9]);
+  return out;
+}
+/** Does a set of offsets from the root hold every tone the chord's symbol defines? */
+export const keepsDefining = (c: { iv: number[] }, offs: number[]): boolean => definingTones(c).every((g) => g.some((d) => offs.some((x) => mod(x) === d)));
 
 /** Lay pitch offsets (relative to the root pc) into a register: the lowest note lands in [lo, lo + 12). */
 function place(root: number, offs: number[], lo: number): number[] {
@@ -159,6 +211,41 @@ export interface Voiced {
   rh: number[];
 }
 
+const isQ = (c: { iv: number[] }, q: number[]) => c.iv.length === q.length && q.every((x, i) => c.iv[i] === x);
+const M7 = [0, 3, 7, 10];
+const DOM7 = [0, 4, 7, 10];
+const MAJ7 = [0, 4, 7, 11];
+const M11 = [0, 3, 7, 10, 14, 17];
+
+/**
+ * The So What chord (Wikipedia "So What chord"; thejazzpianosite.com, So What chord lesson): bottom to top three perfect
+ * 4ths and a major 3rd, two notes in the left hand and three in the right — on D: D-G / C-F-A, Dm11. In the major
+ * ii–V–I (offsets from each chord's root, so it runs in every key):
+ *  - variation 1: ii7 = the So What on its root; V7 = the same shape (on the V's 5th), read as V9sus; Imaj7 = the So
+ *    What on its 3rd (E-A / D-G-B in C, Cmaj13) — both hands up a step;
+ *  - variation 2: ii7 the same; V7 = the open V9 (5-1 / 3-♭7-9: D-G / B-F-A); Imaj7 = the So What on its 7th
+ *    (B-E / A-D-F♯, Cmaj13♯11).
+ * Only m7, 7 and maj7 have a stated mapping (null for the rest: no minor ii–V, m7♭5 or altered So What is invented).
+ */
+export function soWhatOffsets(c: { iv: number[] }, variation: 1 | 2): number[] | null {
+  if (isQ(c, M7)) return [0, 5, 10, 15, 19];
+  if (isQ(c, DOM7)) return variation === 1 ? [7, 12, 17, 22, 26] : [7, 12, 16, 22, 26];
+  if (isQ(c, MAJ7)) return variation === 1 ? [4, 9, 14, 19, 23] : [11, 16, 21, 26, 30];
+  return null;
+}
+
+/**
+ * The Kenny Barron voicing (thejazzpianosite.com, jazztutorial.com, learnjazzpiano.com, pianowithjonny.com): a stack of
+ * fifths in each hand, six notes — LH root, 5th, 9th; RH ♭3, ♭7, 11, starting a half step above the LH's top note
+ * (Cm11: C-G-D / E♭-B♭-F), on m7 / m11 chords. The major variant keeps the LH and builds the RH from the major 3rd:
+ * maj7♯11 (C-G-D / E-B-F♯), used here on a maj7. Null on any other chord (the sources cover no other).
+ */
+export function barronOffsets(c: { iv: number[] }): number[] | null {
+  if (isQ(c, M7) || isQ(c, M11)) return [0, 7, 14, 15, 22, 29];
+  if (isQ(c, MAJ7)) return [0, 7, 14, 16, 23, 30];
+  return null;
+}
+
 /** One chord as a voicing (absolute MIDI), led smoothly from the previous one. */
 export function voice(c: ChartChordEv, v: ChartVoicing, prev: Voiced | null): Voiced {
   const R = roles(c);
@@ -177,9 +264,10 @@ export function voice(c: ChartChordEv, v: ChartVoicing, prev: Voiced | null): Vo
     case 'rootless':
       return lhOnly([place(r, [T, X, S, N], 50), place(r, [S, N, T + 12, X + 12], 50)]);
     case 'quartal': {
-      // stacked fourths inside the chord-scale, from the first of 9, 3, 5, 1 that gives perfect fourths
+      // stacked fourths inside the chord-scale, from the first of 9, 3, 5, 1 (then the scale's other tones) that gives
+      // perfect fourths holding every tone the symbol defines (a m7♭5's ♭5, a 7♭9's ♭9); else rootless A
       const scale = MODE_STEPS[autoScale(c.iv)].map((x) => x % 12);
-      for (const start of [N % 12, T, F, 0]) {
+      for (const start of [...new Set([N % 12, T, F, 0, ...scale])]) {
         const notes = [start];
         let ok = true;
         for (let k = 0; k < 3 && ok; k++) {
@@ -187,18 +275,18 @@ export function voice(c: ChartChordEv, v: ChartVoicing, prev: Voiced | null): Vo
           if (scale.includes(mod(next))) notes.push(next);
           else ok = false;
         }
-        if (ok) return lhOnly([place(r, notes, 50)]);
+        if (ok && keepsDefining(c, notes)) return lhOnly([place(r, notes, 50)]);
       }
       return lhOnly([place(r, [T, X, S, N], 50)]);
     }
     case 'close4': {
-      const pcs = [0, T, F, S];
+      const pcs = fourTones(c);
       const inv = [0, 1, 2, 3].map((k) => place(r, [...pcs.slice(k), ...pcs.slice(0, k).map((x) => x + 12)], 57));
       return { lh: [], rh: nearest(inv.flatMap((x) => octaves(x, 55, 79)), prev?.rh ?? null) };
     }
     case 'drop2':
     case 'drop3': {
-      const pcs = [0, T, F, S];
+      const pcs = fourTones(c);
       const inv = [0, 1, 2, 3].map((k) => place(r, [...pcs.slice(k), ...pcs.slice(0, k).map((x) => x + 12)], 60));
       const dropped = inv.map((cl) => {
         const top = cl.slice().sort((a, b) => b - a);
@@ -223,15 +311,34 @@ export function voice(c: ChartChordEv, v: ChartVoicing, prev: Voiced | null): Vo
     }
     case 'upper': {
       // LH guide tones; RH a triad that colours the chord: II (9, ♯11, 13) on dominants, ♭VI (♭13, 1, ♯9) on altered,
-      // II on maj7 (lydian), IV on m7 (dorian 11-13-1), ♭III on m7♭5.
+      // II on maj7 (lydian), IV on m7 (dorian 11-13-1), ♭III on m7♭5; VI (13, ♭9, 3) on a 13♭9, ♭V (♯11, ♭7, ♭9) on a
+      // 7♭9, the diminished triad on the ♭3 of a dim7. A chord whose tones these leave out is voiced two-handed.
       const lh = nearest([place(r, [T, S], 50), place(r, [S, T + 12], 50)], prev?.lh ?? null);
-      const tri = R.alt ? [8, 12, 15] : R.dom ? [2, 6, 9] : T === 4 ? [2, 6, 9] : F === 6 ? [3, 6, 10] : [5, 9, 12];
+      const has = (x: number) => c.iv.includes(x);
+      const tri =
+        R.dom && has(13) && has(21) ? [9, 13, 16]
+        : R.dom && has(13) && !has(15) && !has(20) ? [6, 10, 13]
+        : R.alt ? [8, 12, 15] : R.dom ? [2, 6, 9] : T === 4 ? [2, 6, 9] : F === 6 && S === 9 ? [3, 6, 9] : F === 6 ? [3, 6, 10] : [5, 9, 12];
+      if (!keepsDefining(c, [T, S, ...tri])) return voice(c, 'two-hand', prev);
       const rh = nearest(octaves(place(r, tri, 62), 60, 82), prev?.rh ?? null);
       return { lh, rh };
     }
+    case 'sowhat1':
+    case 'sowhat2':
+    case 'barron': {
+      // a fixed two-handed shape (So What: 2 + 3 notes; Barron: 3 + 3), moved whole by octaves to lead smoothly
+      const offs = v === 'barron' ? barronOffsets(c) : soWhatOffsets(c, v === 'sowhat1' ? 1 : 2);
+      // a chord the shape has no stated form for: the dominant of a Barron ii–V–I in two hands (LH 3-7, RH 9-5-3)
+      if (!offs) return voice(c, v === 'barron' ? 'two-hand' : 'rootless', prev);
+      const nL = v === 'barron' ? 3 : 2;
+      const base = place(r, offs, v === 'barron' ? 41 : 45);
+      const cands = [base, base.map((m) => m - 12), base.map((m) => m + 12)].filter((x) => x[0] >= 40 && x[x.length - 1] <= 86);
+      const pick = nearest(cands.length ? cands : [base], prev ? [...prev.lh, ...prev.rh] : null);
+      return { lh: pick.slice(0, nL), rh: pick.slice(nL) };
+    }
     case 'block': {
       // locked hands: a close 4-note chord in the RH with its top note doubled an octave lower in the LH
-      const pcs = [0, T, F, S];
+      const pcs = fourTones(c);
       const inv = [0, 1, 2, 3].map((k) => place(r, [...pcs.slice(k), ...pcs.slice(0, k).map((x) => x + 12)], 64));
       const rh = nearest(inv.flatMap((x) => octaves(x, 62, 84)), prev?.rh ?? null);
       return { lh: [rh[rh.length - 1] - 12], rh };
@@ -349,8 +456,10 @@ export function chartDrillData(kind: string, key: number): ChartDrillData | null
         }
         push(b, 1, c, bass.map((p) => ({ pitch: p, hand: 'L' as Hand })), [...new Set(bass.map((p) => mod(p)))]);
       } else {
-        // the stride chord: 3-5-7 (or 3-7-9) between G3 and E4, close
-        const chord = place(c.root, [R.third, R.fifth, R.seventh], 52);
+        // the stride chord: 3-5-7 between G3 and E4, close — with the symbol's tensions in place (fourTones less the
+        // root): a 9th pushes the 5th out (a 7♭9 is 3-♭7-♭9), a ♭13 / ♯11 replaces it
+        const ft = fourTones(c).filter((x) => x !== 0);
+        const chord = place(c.root, ft.length > 3 && ft.includes(7) ? ft.filter((x) => x !== 7) : ft, 52);
         push(b, 1, c, chord.map((p) => ({ pitch: p, hand: 'L' as Hand })));
       }
     }

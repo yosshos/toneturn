@@ -1,17 +1,19 @@
 // The jazz cadence chart library as drills (docs/research/JAZZ-CADENCE-INVENTORY.md gap list items 1–7): every cadence
 // of cadences.ts, in all 12 keys, on three instruments.
 //  - piano (k-cadlib): through the "any chart" engine (chartDrills.ts, ref "cad:<id>") in shells, guide tones, rootless
-//    A / B, drop 2, drop 3, four-way close, two hands (LH 3-7, RH 9-5-3), stride tenths and a walking left hand;
+//    A / B, drop 2, drop 3, four-way close, two hands (LH 3-7, RH 9-5-3), stride tenths and a walking left hand; then
+//    the quartal So What ii–V–I (variations 1 and 2) and the Kenny Barron voicing (every m7, then the ii–V–I);
 //  - guitar (g-cadlib): shells (root on 6 or 5), drop 2 (strings 4–1 / 5–2), drop 3 (6-4-3-2 / 5-3-2-1) and rootless
 //    voicings, each chord voice-led from the one before;
 //  - bass (b-cadlib): a written approach-note walk (root, 3rd, 5th, a half step into the next root), the band's free
 //    walking line under the walking rules, and the pedal for the dominant-pedal chart.
-// Quartal voicings are left out on purpose: the inventory flags that a quartal V7 needs a voicing rule first.
+// Quartal voicings only as the So What ii–V–I (the sources' stated V7 rule: the ii's shape as V9sus, or the open V9),
+// on the major ii–V–I and the I–vi–ii–V turnaround only (no minor ii–V, m7♭5 or altered So What is stated).
 // Imports guitar.ts / bass.ts only inside functions (they import this module).
 
 import type { Drill, DrillSpec, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
-import { chartKind, roles, type ChartVoicing, type CompRhythm } from './chartDrills';
+import { chartKind, fourTones, roles, type ChartVoicing, type CompRhythm } from './chartDrills';
 import { finish, mod, SIG, type Ev, type GN, type GuitarFamilyDef, type GuitarLevelDef } from './guitar';
 import { alt, drillOf, refWalk, rootOf, lowest, rulesFromText, type BN } from './bass';
 import { ruleSafe } from './bassRuleSafe';
@@ -99,6 +101,14 @@ export function pianoCadenceFamily(): FamilyDef {
   lv(['two'], ['core']);
   lv(['two'], ['sub']);
   lv(['close4', 'two'], ['form']);
+  // The So What chord (soWhatOffsets): only charts whose every chord is a m7, 7 or maj7 of a major ii–V–I.
+  const SO_WHAT = ['ii-v-i', 'turnaround'].map((id) => cadenceById(id)!);
+  add('Quartal (So What) ii–V–I · variation 1: V9sus, the I up a step', 'קוורטלי (So What) ii–V–I · גרסה 1: אותו מבנה על ה־V, ה־I צעד למעלה', SO_WHAT.map((c) => P(c, 'sowhat1')));
+  add('Quartal (So What) ii–V–I · variation 2: open V9, the I as maj13♯11', 'קוורטלי (So What) ii–V–I · גרסה 2: V9 פתוח, ה־I כ־maj13♯11', SO_WHAT.map((c) => P(c, 'sowhat2')));
+  // The Kenny Barron voicing (barronOffsets): every m7 round the circle of fifths, then on the ii (and vi) of the
+  // ii–V–I and the turnaround, the V in two hands, the I as the major variant (maj7♯11).
+  add('Kenny Barron voicing on every minor 7th', 'הווייסינג של קני בארון על כל אקורד m7', [{ family: fam, kind: chartKind('set:m7-cycle', 'barron', 'whole'), hands: 'L', swing: true, tempo: 60 }]);
+  add('Kenny Barron voicing · ii–V–I with the Barron on the ii', 'הווייסינג של קני בארון · ii–V–I עם בארון על ה־ii', SO_WHAT.map((c) => P(c, 'barron')));
   return { id: fam, title: t('Cadence charts', 'דפי קדנצות'), style: 'jazz', levels };
 }
 
@@ -140,8 +150,9 @@ function placements(tu: Tuning, pcs: number[], sets: number[][], shape: (ms: num
 /** The candidate voicings of one chord in a guitar voicing type. */
 function guitarCands(tu: Tuning, c: ChartChordEv, v: string): P[][] {
   const R = roles(c);
-  // A 9sus4 is voiced R-4-♭7-9 (the 9th in place of the 5th), so it differs from the plain 7sus4.
-  const four = (R.third === 5 && c.iv.includes(14) ? [0, 5, R.seventh, 14] : [0, R.third, R.fifth, R.seventh]).map((x) => c.root + x);
+  // A 9sus4 is voiced R-4-♭7-9 (the 9th in place of the 5th), so it differs from the plain 7sus4; every other chord
+  // takes the piano's 4-note form (fourTones: a 7♭9 is 3-5-♭7-♭9, never without its ♭9).
+  const four = (R.third === 5 && c.iv.includes(14) ? [0, 5, R.seventh, 14] : fourTones(c)).map((x) => c.root + x);
   switch (v) {
     case 'shell':
       return placements(tu, [c.root, c.root + R.third, c.root + R.seventh], [[6, 4, 3], [5, 4, 3]], (ms) => mod(ms[0] - c.root, 12) === 0);
@@ -185,8 +196,6 @@ export function generateGuitarCadence(s: DrillSpec, tu: Tuning): Drill {
   return { ...d, tonic: ch.tonic, chart: ch.bars, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
 }
 
-/** Charts whose guitar shells are those of another chart (ii–V–I, the sus cadence). */
-const SHELL_SAME = ['half-dim-to-major', 'sus-9'];
 /** g-cadlib: the library comped on the neck (the jazz add-on). */
 export function guitarCadenceFamily(): GuitarFamilyDef {
   const fam: FamilyId = 'g-cadlib';
@@ -200,8 +209,9 @@ export function guitarCadenceFamily(): GuitarFamilyDef {
       id: `${fam}-${n}`,
       level: n,
       title: t(`${vn.en[0].toUpperCase()}${vn.en.slice(1)} · ${gName.en}`, `${vn.he} · ${gName.he}`),
-      // A shell (R-3-7) can't tell a m7♭5 from a m7 or a 9sus4 from a 7sus4: those charts come with the 4-note voicings.
-      specs: of(gs).filter((c) => v !== 'shell' || !SHELL_SAME.includes(c.id)).map((c): SpecTemplate => ({ family: fam, kind: `cad~${c.id}~${v}`, hands: 'R', instrument: 'guitar', swing: true, tempo: tempo[0] })),
+      // Every chart, in shells too (owner 2026-11-21: a shell that can't tell a m7♭5 from a m7, or a 9sus4 from a
+      // 7sus4, is fine).
+      specs: of(gs).map((c): SpecTemplate => ({ family: fam, kind: `cad~${c.id}~${v}`, hands: 'R', instrument: 'guitar', swing: true, tempo: tempo[0] })),
       keys: CADLIB_KEYS,
       tempo,
       sub: 'one voicing a chord',

@@ -32,7 +32,10 @@ describe('guitar audit: content', () => {
       for (const d of drills) {
         const sig = d.notes.map((n) => `${n.beat}:${n.string}:${n.fret}:${n.technique ?? ''}:${n.stroke ?? ''}:${n.finger ?? ''}:${n.bendCents ?? ''}:${n.accent ? 1 : 0}`).join(' ');
         const prev = seen.get(sig);
-        if (prev && prev !== d.itemId) bad.push(`${level}: ${prev} = ${d.itemId}`);
+        // owner 2026-11-21: cadence-chart shells may repeat — a shell can't tell a m7♭5 from a m7 or a 9sus4 from a
+        // 7sus4, and those charts stay in the shell levels anyway (half-dim-to-major = ii-v-i, sus-9 = sus)
+        const shellTwin = /^g-cadlib:cad~[^~]+~shell:/.test(d.itemId) && /^g-cadlib:cad~[^~]+~shell:/.test(prev ?? '');
+        if (prev && prev !== d.itemId && !shellTwin) bad.push(`${level}: ${prev} = ${d.itemId}`);
         seen.set(sig, d.itemId);
       }
     }

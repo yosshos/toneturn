@@ -639,6 +639,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // TECHNIQUE-COVERAGE-AUDIT §4.6: bebop scales LH / hands together after the RH (scales-12, 1470); melodic minor a
   // 3rd / 6th / 10th apart after harmonic minor's (scales-13, 1540).
   'scales-34': 1520, 'scales-35': 1580,
+  // RCM Levels 9–10: the harmonic minor formula pattern, 4 octaves — after the 4-octave scales (scales-10, 1330) and
+  // harmonic minor in contrary motion (scales-13, 1540).
+  'scales-36': 1560,
   'harris-25': 1020, 'harris-26': 1100,
   // Colours of the diminished (dimColours.ts): after Harris's diminished moves (harris-13, 1360) — the half-step moves
   // first, then the whole-step and two-note colours, drop 2 and the whole run.

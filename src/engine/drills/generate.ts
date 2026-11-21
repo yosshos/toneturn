@@ -559,6 +559,9 @@ function genScale(s: DrillSpec, custom?: CustomScale): Drill {
   if (octavesKind && oct < 3) base = pitchIn(s.key, 48);
   // 3–4 octaves: start low enough that the run stays on an 88-key keyboard (RH from C3 / G2 region).
   if (oct >= 3 && motion !== 'contrary' && motion !== 'formula') base = pitchIn(s.key, oct >= 4 ? 43 : 48);
+  // The 4-octave formula pattern (out two octaves each way, then the RH two more up): from the tonic at A2–G♯3, so the
+  // LH bottoms out at A0–G♯1 and the RH tops out at A6–G♯7 (all on the keyboard).
+  if (oct >= 4 && motion === 'formula') base = pitchIn(s.key, 45);
 
   // Path: (kR, kL) pairs; tonics and index offsets per hand.
   let tR = base;
@@ -5693,6 +5696,12 @@ export function catalog(): FamilyDef[] {
           sc({ hands: 'RL', minor: true, scale: 'melodic', motion: 'sixth' }),
           sc({ hands: 'RL', minor: true, scale: 'melodic', motion: 'tenth' }),
         ], 'minor', [SN[2], SN[4]]),
+        // The harmonic minor formula pattern over four octaves (RCM Piano Syllabus 2022, Levels 9–10): the major's
+        // formula (scales-9) with the harmonic minor — out two octaves in contrary motion, two more up in parallel, back
+        // down in parallel and in again in contrary motion.
+        L('scales', 36, 'Harmonic minor formula pattern, 4 octaves', 'תבנית פורמולה במינור הרמוני, 4 אוקטבות', [
+          sc({ hands: 'RL', minor: true, scale: 'harmonic', motion: 'formula', octaves: 4, perBeat: 4 }),
+        ], 'minor', [SN[3], SN[7]]),
       ],
     },
     {

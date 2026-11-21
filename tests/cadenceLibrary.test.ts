@@ -49,9 +49,11 @@ describe('the cadence chart library (JAZZ-CADENCE-INVENTORY gap list 1–7)', ()
     const seen = new Set<string>();
     for (const { s, keys } of specsOf(id)) {
       expect([...keys].sort((a, b) => a - b), s.kind).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-      const c = CADENCES.find((x) => x.id === cadId(s.kind))!;
+      // a built-in practice chart that is not a cadence (the Barron's m7 cycle, from C minor)
+      const set = s.kind.startsWith('chart~set:');
+      const c = set ? ({ id: s.kind, minor: true } as (typeof CADENCES)[number]) : CADENCES.find((x) => x.id === cadId(s.kind))!;
       expect(c, s.kind).toBeDefined();
-      seen.add(c.id);
+      if (!set) seen.add(c.id);
       for (const key of keys) {
         const d: Drill = generate({ ...s, key });
         expect(d.notes.length, `${s.kind} ${key}`).toBeGreaterThan(0);
@@ -71,11 +73,16 @@ describe('the cadence chart library (JAZZ-CADENCE-INVENTORY gap list 1–7)', ()
     const seen = check('k-cadlib', 'piano');
     expect([...seen].sort()).toEqual(CADENCES.filter((c) => !c.slash).map((c) => c.id).sort());
     const kinds = specsOf('k-cadlib').map((x) => x.s.kind.split('~')[2]);
-    for (const v of ['shell', 'guide', 'rootless', 'drop2', 'drop3', 'close4', 'two-hand', 'stride-tenth', 'walk-lh']) expect(kinds, v).toContain(v);
+    for (const v of ['shell', 'guide', 'rootless', 'drop2', 'drop3', 'close4', 'two-hand', 'stride-tenth', 'walk-lh', 'sowhat1', 'sowhat2', 'barron']) expect(kinds, v).toContain(v);
+    expect(fam('k-cadlib').levels).toHaveLength(26);
   });
 
   it('guitar: shells, drop 2, drop 3, rootless over every cadence, in all 12 keys', () => {
     const seen = check('g-cadlib', 'guitar');
+    // shells take every chart, the m7♭5 and 9sus4 ones too (owner 2026-11-21)
+    const shellIds = fam('g-cadlib').levels.filter((l) => l.specs[0].kind.endsWith('~shell')).flatMap((l) => l.specs.map((x) => cadId(x.kind)));
+    expect(shellIds.sort()).toEqual(CADENCES.filter((c) => !c.slash).map((c) => c.id).sort());
+    expect(specsOf('g-cadlib')).toHaveLength(4 * CADENCES.filter((c) => !c.slash).length);
     expect([...seen].sort()).toEqual(CADENCES.filter((c) => !c.slash).map((c) => c.id).sort());
     for (const { s } of specsOf('g-cadlib')) {
       const d = generate({ ...s, key: 7 });

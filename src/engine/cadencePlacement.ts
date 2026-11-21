@@ -1,7 +1,7 @@
 // The jazz cadence chart library (drills/cadenceLibrary.ts): where each level sits on its course path — plugged into
 // levelPlacement's PLACEMENT_TABLES. The library is jazz-voicing work: the piano's shells and guide tones start with the
 // key-change levels (~1250, after the voicing family's shells and rootless levels), drop 2 / drop 3, four-way close and
-// two hands follow up to ~1850; the bass walks the ii–V family from ~1150. The guitar levels sit by their grade.
+// two hands follow up to ~1850, the So What and Kenny Barron levels to ~1880; the bass walks the ii–V family from ~1150. The guitar levels sit by their grade.
 // Pure data (no engine imports: levelPlacement is read by the path, which the drill catalogues import).
 
 export const CADENCE_PLACEMENT: Record<string, number> = {
@@ -28,6 +28,10 @@ export const CADENCE_PLACEMENT: Record<string, number> = {
   'k-cadlib-20': 1770, // two hands · ii–V family
   'k-cadlib-21': 1800, // two hands · substitutes
   'k-cadlib-22': 1840, // four-way close and two hands · longer
+  'k-cadlib-23': 1850, // quartal (So What) ii–V–I · variation 1
+  'k-cadlib-24': 1860, // quartal (So What) ii–V–I · variation 2
+  'k-cadlib-25': 1870, // Kenny Barron voicing on every m7
+  'k-cadlib-26': 1880, // Kenny Barron voicing · ii–V–I
   // bass (b-cadlib, the jazz track)
   'b-cadlib-1': 1150, // approach notes · ii–V family
   'b-cadlib-2': 1250, // approach notes · substitutes
