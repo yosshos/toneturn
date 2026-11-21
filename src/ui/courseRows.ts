@@ -32,10 +32,11 @@ export const COURSE_ROWS: Record<CourseId, string[]> = {
   ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
   // Owner 2026-11-21: by importance — Technique first, then Encore (SPEC-PHRASE-STUDIO), then (jazz open) Charts and
   // Improvise, then the rest.
-  voice: ['drills', 'encore', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
-  keys: ['drills', 'encore', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  guitar: ['drills', 'encore', 'repertoire', 'pieces', 'licks', 'transcribe', 'mysong', 'games'],
-  bass: ['drills', 'encore', 'repertoire', 'licks', 'transcribe', 'mysong', 'games'],
+  // Licks live inside Encore (its library, owner 2026-11-21); the route stays for path steps.
+  voice: ['drills', 'encore', 'repertoire', 'transcribe', 'mysong', 'games'],
+  keys: ['drills', 'encore', 'repertoire', 'pieces', 'transcribe', 'mysong', 'games'],
+  guitar: ['drills', 'encore', 'repertoire', 'pieces', 'transcribe', 'mysong', 'games'],
+  bass: ['drills', 'encore', 'repertoire', 'transcribe', 'mysong', 'games'],
   drums: ['drills', 'repertoire', 'mysong', 'games'],
 };
 /**
