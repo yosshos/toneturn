@@ -116,7 +116,10 @@ describe('the key session ladder (owner 2026-11-22)', () => {
     expect(ids.at(-1)).toBe('k-sharm-3-again');
     // beyond the spine: contrary motion or balance, and Hanon / hand independence in the key
     expect(ids.some((i) => /^(scales-4|scales-11|control-8)$/.test(i))).toBe(true);
-    expect(ids.filter((i) => /^(fingers|k-indep)-/.test(i)).length).toBe(2);
+    expect(ids.filter((i) => /^(fingers|k-indep|k-keyx|advanced)-/.test(i)).length).toBe(2);
+    // the owner's approach licks come after the shapes they lead into
+    expect(ids.filter((i) => i.startsWith('k-keylick-')).length).toBe(2);
+    expect(ids.findIndex((i) => i.startsWith('k-keylick-'))).toBeGreaterThan(ids.indexOf('k-sharm-11'));
     expect(new Set(ids).size).toBe(ids.length);
     for (const l of fam.levels) for (let k = 0; k < l.specs.length; k++) expect(specDrills(l, k, 'fifths-up').every((d) => (d.tonic ? d.tonic.key : d.spec.key) % 12 === 2)).toBe(true);
     // the harmonised scale is the major one (option 0), not the modes

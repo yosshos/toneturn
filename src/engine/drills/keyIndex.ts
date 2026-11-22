@@ -258,10 +258,12 @@ export function ladderRungs(group: 'major' | 'minor'): LadderRung[] {
     { fam: 'k-sharm', id: sharm(11), min: 1, pick: opt(so), block: 'S' as const },
     { fam: 'k-sharm', id: sharm(13), min: 4, pick: opt(so), block: 'B' as const },
     { fam: 'k-sharm', id: sharm(15), min: 5, pick: opt(so), block: 'B' as const },
-    // the owner's approach licks (k-keylick), when the family exists: L1, L2, L3 up and down
-    { fam: 'k-keylick', id: 'k-keylick-1', min: 2, pick: minor ? isMinor : notMinor, block: 'C' as const },
-    { fam: 'k-keylick', id: 'k-keylick-2', min: 3, pick: minor ? isMinor : notMinor, block: 'C' as const },
-    { fam: 'k-keylick', id: 'k-keylick-3', min: 4, pick: minor ? isMinor : notMinor, block: 'C' as const },
+    // the owner's approach licks (k-keylick, SPEC-KEY-SESSION §C): lick 1, 2, 3 on the 3rds, triads and 7ths, then hands together
+    ...([[1, 1], [2, 1], [3, 2], [4, 3], [5, 3], [6, 3], [7, 4], [8, 4], [9, 4], [10, 5], [11, 5], [12, 6]] as const).map(([n, min]) => ({ fam: 'k-keylick', id: `k-keylick-${n}`, min, pick: minor ? isMinor : notMinor, block: 'C' as const })),
+    // more in the key (k-keyx): broken octaves, octave leaps, the canon, bass leaps, the scale over an ostinato
+    ...(minor
+      ? [{ fam: 'k-keyx', id: 'k-keyx-6', min: 3, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-7', min: 3, block: 'D' as const }]
+      : [{ fam: 'k-keyx', id: 'k-keyx-5', min: 2, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-3', min: 3, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-1', min: 3, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-4', min: 3, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-2', min: 4, block: 'D' as const }]),
     ...(minor ? [] : [
       { fam: 'fingers', id: 'fingers-15', min: 2, block: 'D' as const },
       { fam: 'fingers', id: 'fingers-16', min: 4, block: 'D' as const },
@@ -335,7 +337,7 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order
-  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 1, D: 2, E: 1, F: 1 };
+  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1 };
   const taken: Record<string, number> = {};
   const pickd = ranked.filter((x) => {
     const b = open[x.i].block;
