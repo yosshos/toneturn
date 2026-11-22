@@ -116,11 +116,9 @@ The default comes from the profile.
 - **Trading by ear:** the band "answers" with a phrase, and you reply to its rhythm or motif.
 - **The lead sheet itself:** it can be turned off after the progression is known (memory). This connects to the memorising steps in Repertoire.
 
-### 3.5 The Ear course (the other way round)
+### 3.5 The Ear course: unchanged
 
-In the Ear course you answer by tapping. The bridge to playing:
-- **"Now play it":** after a correct identification (an interval, a chord, a phrase), an option to play it on an instrument if one is connected.
-- **Reading in the Ear course:** the reading exercises that exist (notes, key signatures) stay; the "page, sight" channel measures them the same way.
+The owner, 2026-11-22: in the Ear course (ear and theory) you name notes and degrees; you don't play. "Now play it" is withdrawn. The bridge between hearing and playing lives in the instrument courses: their by-ear families and the ear channel above.
 
 ## 4. The skill map and the level test
 
@@ -149,8 +147,23 @@ In the Ear course you answer by tapping. The bridge to playing:
 4. The profile and the rotation (2.2) in the coach and the daily workout; the two checks in the level test.
 5. Repertoire and Improvise: melody by ear, chords from memory, trading by ear.
 
-## 8. Questions for the owner
+## 8. Owner's answers (2026-11-22)
 
-1. **The mix:** about 70/20/10 (strong / weak / memory), tilted by the gap. Is that the right starting point?
-2. **Concept by default in technique:** known patterns shown by name only, notation one tap away. Or keep notation on screen until the player turns it off?
-3. **The onboarding question:** ask "by ear / from notes / both" when starting a course, or rely only on the measurement (the level test and the first takes)?
+1. **The mix:** 70/20/10 (strong / weak / memory), tilted by the gap. **Approved.**
+2. **Concept by default in technique:** it depends on how well the player knows the pattern. Specified in §8a.
+3. **Course start:** no "ear / notes / both" question. When the player chooses an instrument, two self-ratings from 1 to 5: playing by ear and playing from notes. They seed the channel profile (2.1); the measurement takes over from there.
+
+## 8a. Presentation by mastery (answer 2)
+
+What the player is shown depends on how well **they** know the pattern, not on a setting:
+
+| Stage of the item | Default presentation |
+|---|---|
+| New, never played | the strong channel per the profile (notation or ear) |
+| Learning (played, below target) | full notation, or ear with notation after |
+| Closed in this key | rhythm and name; notation one tap away |
+| **The pattern** closed in 3 or more keys (for example triads along the scale) | a new key starts at **name only**: the pattern is known and only the key changes |
+| Passed in memory | name only; a miss brings back one step of notation |
+
+- A notation button is always there, and a press is never penalised. It only marks the take as "page-known" for measurement.
+- A player with a reading weakness (the profile) gets, on top of this, the daily sight dose (§3.1). So reading is practised on new material, not by keeping notation on familiar material.
