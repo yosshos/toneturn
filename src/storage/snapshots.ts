@@ -5,6 +5,7 @@
 import { backfillSnapshots, daySnapshot, pruneSnapshots, type Snapshot } from '../engine/snapshot';
 import type { ItemState } from '../engine/drills/types';
 import { indexedKV, memoryKV, type KV } from './kv';
+import { pushSnapshot } from '../cloud/snapshots';
 
 interface Stored {
   v: 1;
@@ -44,6 +45,8 @@ export async function recordSnapshot(today: string, items: Record<string, ItemSt
     days[today] = daySnapshot(today, items, ledgerDays[today] ?? {});
     days = pruneSnapshots(days, today);
     await store().set<Stored>('all', { v: 1, backfilled: true, days });
+    // the summary syncs for class members' teachers (a no-op until the migration is applied, SNAPSHOTS_SYNCED)
+    void pushSnapshot(days[today]);
     return days;
   } catch {
     return {};
