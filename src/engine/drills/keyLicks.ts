@@ -26,16 +26,13 @@
 import type { Drill, DrillGoal, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { generate, itemIdOf, rhBase } from './generate';
-import { H_SCALES, type HScale } from './harmLadder';
+import { H_SCALES, hSig, hTonic, type HScale } from './harmLadder';
 import { spellScale } from '../keyTheory';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
 const mod = (n: number, m = 12): number => ((n % m) + m) % m;
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
-const MAJ_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
-const MIN_N = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'];
-const SIG = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 const LETTERS = 'CDEFGAB';
 const NATURAL = [0, 2, 4, 5, 7, 9, 11];
 const ACC: Record<number, string> = { [-1]: '♭', 0: '', 1: '♯' };
@@ -43,8 +40,16 @@ const pitchIn = (pc: number, lo: number): number => lo + mod(pc - lo, 12);
 
 /** The two scales of these families (the k-sharm table): option 0 = major, 7 = harmonic minor. */
 export const LICK_SCALES = [0, 7];
-const scaleOf = (s: DrillSpec): HScale => H_SCALES[(s.option ?? 0) % 100 === 7 ? 7 : 0];
-const kName = (key: number, sc: HScale): string => (sc.minor ? MIN_N : MAJ_N)[mod(key, 12)];
+/**
+ * BUILD-PLAN phase 7: the same licks in the Aeolian (option 5, the major key from its 6th degree), the modes from the
+ * root (1–4, 6) and melodic minor (8) — the k-sharm table's seven-note scales; the rules are the same on any of them.
+ */
+export const LICK_MORE_SCALES = [1, 2, 3, 4, 5, 6, 8];
+const scaleOf = (s: DrillSpec): HScale => {
+  const o = (s.option ?? 0) % 100;
+  return H_SCALES[o <= 8 ? o : 0];
+};
+const kName = hTonic;
 
 // ───────────────────────────── spelling ─────────────────────────────
 
@@ -182,7 +187,7 @@ function genLick(s: DrillSpec): Drill {
   });
   const h = handsT(s);
   const title = t(`${kName(key, sc)} ${sc.name.en}: ${LICK_T[lick].en} into ${SHAPE_T[shape].en}, ${DIR_T[dir].en}${h.en}`, `${kName(key, sc)} ${sc.name.he}: ${LICK_T[lick].he}, אל ${SHAPE_T[shape].he}, ${DIR_T[dir].he}${h.he}`);
-  return drillOf(s, n, title, shape === '7' ? 54 : shape === '1' ? 66 : 60, {}, SIG[mod(key + sc.sig, 12)]);
+  return drillOf(s, n, title, shape === '7' ? 54 : shape === '1' ? 66 : 60, {}, hSig(key, sc));
 }
 
 // ───────────────────────────── more exercises in the key (k-keyx) ─────────────────────────────
@@ -210,7 +215,7 @@ function genKeyX(s: DrillSpec): Drill {
   const n = new Notes();
   const head = `${kName(key, sc)} ${sc.name.en}`;
   const headHe = `${kName(key, sc)} ${sc.name.he}`;
-  const sig = SIG[mod(key + sc.sig, 12)];
+  const sig = hSig(key, sc);
   const hand: 'R' | 'L' = s.hands === 'L' ? 'L' : 'R';
   const hn = hand === 'L' ? t(' · LH', ' · יד שמאל') : t(' · RH', ' · יד ימין');
   const upDown = (top: number): number[] => [...Array.from({ length: top + 1 }, (_, i) => i), ...Array.from({ length: top }, (_, i) => top - 1 - i)];
@@ -271,7 +276,7 @@ export function genKeyLicks(s: DrillSpec): Drill {
 // ───────────────────────────── catalogues ─────────────────────────────
 
 /** Path difficulty (path.ts KEYS_LEVEL_DIFF): after the harmonised scale's arpeggios (k-sharm 7ths ~1230–1340). */
-export const K_KEYLICK_DIFF: Record<string, number> = Object.fromEntries([1100, 1150, 1210, 1270, 1290, 1330, 1370, 1410, 1430, 1470, 1510, 1550, 1580, 1610, 1640].map((d, i) => [`k-keylick-${i + 1}`, d]));
+export const K_KEYLICK_DIFF: Record<string, number> = Object.fromEntries([1100, 1150, 1210, 1270, 1290, 1330, 1370, 1410, 1430, 1470, 1510, 1550, 1580, 1610, 1640, 1650, 1670, 1690, 1720, 1740].map((d, i) => [`k-keylick-${i + 1}`, d]));
 export const K_KEYX_DIFF: Record<string, number> = Object.fromEntries([1180, 1220, 1260, 1300, 1340, 1360, 1380].map((d, i) => [`k-keyx-${i + 1}`, d]));
 
 export function keyLickFamily(): FamilyDef {
@@ -293,6 +298,14 @@ export function keyLickFamily(): FamilyDef {
   LV('Hands together in octaves: lick 1 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק גישה 1 אל הדרגות, המשולשים והספטאקורדים', ht(['1']), [50, 100]);
   LV('Hands together in octaves: lick 2 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק 2 אל הדרגות, המשולשים והספטאקורדים', ht(['2ba', '2ab']), [50, 96]);
   LV('Hands together in octaves: lick 3 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק 3 אל הדרגות, המשולשים והספטאקורדים', ht(['3']), [46, 92]);
+  // BUILD-PLAN phase 7 (matrix breadth): the Aeolian inside the major key (from its 6th degree, so the relative major's
+  // signature), the modes from the root, melodic minor — appended, so the levels above keep their ids and their items.
+  const one = (licks: Lick[], shapes: Shape[], options: number[]): SpecTemplate[] => options.flatMap((o) => licks.flatMap((l) => shapes.flatMap((sh) => [it(l, sh, 'up', o), it(l, sh, 'down', o)])));
+  LV('Aeolian (the major key from its 6th degree): approach lick 1 into 3rds, triads and 7th chords, up and down', 'איאולי (הסולם המז׳ורי מהדרגה השישית): ליק גישה 1 אל הטרצות, המשולשים והספטאקורדים, למעלה ולמטה', one(['1'], ['3', 't', '7'], [5]), [56, 112]);
+  LV('Aeolian: lick 2, the enclosure (both orders), into triads and 7th chords', 'איאולי: ליק 2, כיתור (בשני הסדרים), אל המשולשים והספטאקורדים', one(['2ba', '2ab'], ['t', '7'], [5]), [52, 104]);
+  LV('Aeolian: lick 3, the long enclosure, into triads and 7th chords', 'איאולי: ליק 3, הכיתור הארוך, אל המשולשים והספטאקורדים', one(['3'], ['t', '7'], [5]), [50, 100]);
+  LV('The modes from the root: approach lick 1 into the 7th chords (dorian, phrygian, lydian, mixolydian, locrian)', 'המודוסים מהשורש: ליק גישה 1 אל הספטאקורדים (דורי, פריגי, לידי, מיקסולידי, לוקרי)', one(['1'], ['7'], [1, 2, 3, 4, 6]), [50, 100]);
+  LV('Melodic minor: licks 1 and 2 into triads and 7th chords', 'מינור מלודי: ליקים 1 ו־2 אל המשולשים והספטאקורדים', one(['1', '2ba', '2ab'], ['t', '7'], [8]), [50, 100]);
   return { id: 'k-keylick', title: t('Approach licks through the scale', 'ליקי גישה לאורך הסולם'), style: 'both', levels };
 }
 

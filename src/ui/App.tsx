@@ -2273,7 +2273,9 @@ export function App() {
   const workoutSubs = useMemo((): Partial<Record<string, string>> => {
     const he = s.uiLang === 'he';
     const out: Partial<Record<string, string>> = {};
-    const wk = s.activeCourse === 'keys' ? weekKeyIfKept('major', 'piano') : null;
+    // the key of the week on the technique block: the piano, and (phase 7) the guitar and the bass ladders
+    const wkInst = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? s.activeCourse : null;
+    const wk = wkInst ? weekKeyIfKept('major', wkInst) : null;
     if (wk !== null) {
       const n = keptPlan(today)?.cells.length ?? 0;
       const name = `${keyNameOf(wk)}`;

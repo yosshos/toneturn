@@ -121,7 +121,9 @@ describe('the key session ladder (owner 2026-11-22)', () => {
     expect(ids.filter((i) => i.startsWith('k-keylick-')).length).toBe(2);
     expect(ids.findIndex((i) => i.startsWith('k-keylick-'))).toBeGreaterThan(ids.indexOf('k-sharm-11'));
     expect(new Set(ids).size).toBe(ids.length);
-    for (const l of fam.levels) for (let k = 0; k < l.specs.length; k++) expect(specDrills(l, k, 'fifths-up').every((d) => (d.tonic ? d.tonic.key : d.spec.key) % 12 === 2)).toBe(true);
+    // all in D — the one later rung a session (phase 7: the Aeolian, from D major's 6th degree) on B, with D major's signature
+    for (const l of fam.levels) for (let k = 0; k < l.specs.length; k++) expect(specDrills(l, k, 'fifths-up').every((d) => (/^key-2-aeolian-/.test(l.id) ? d.spec.key % 12 === 11 && d.keySig === 'D' : (d.tonic ? d.tonic.key : d.spec.key) % 12 === 2))).toBe(true);
+    expect(fam.levels.filter((l) => /^key-2-aeolian-/.test(l.id)).length).toBeLessThanOrEqual(1);
     // the harmonised scale is the major one (option 0), not the modes
     expect(fam.levels.find((l) => l.id === 'key-2-k-sharm-3')!.specs.every((s) => (s as { option?: number }).option === 0)).toBe(true);
   });

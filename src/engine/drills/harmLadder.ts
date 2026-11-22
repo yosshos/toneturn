@@ -68,8 +68,46 @@ export const H_OTHERS = [7, 8, 9, 10, 11, 12];
 export const H_HARRIS = [9, 10, 11, 12];
 
 const scaleOf = (s: DrillSpec): HScale => H_SCALES[Math.min(H_SCALES.length - 1, Math.max(0, (s.option ?? 0) % 100))];
-const kName = (key: number, sc: HScale): string => (sc.minor ? MIN_N : MAJ_N)[mod(key, 12)];
-const deg = (tonic: number, ints: number[], k: number): number => tonic + 12 * Math.floor(k / ints.length) + ints[mod(k, ints.length)];
+// The spelling of the seven diatonic modes (BUILD-PLAN phase 7: modes from the root in every key). A mode's tonic is
+// the enharmonic name whose scale needs fewer accidentals (F♯ mixolydian, not G♭ with an F♭; a tie keeps the table's
+// name: G♭ major, G♯ dorian), and the key signature is its parent major's, read from that spelling (G♯ dorian → F♯
+// major), so the title and the staff never disagree. The major scale and the Aeolian come out as before.
+const LETTERS = 'CDEFGAB';
+const NATURAL = [0, 2, 4, 5, 7, 9, 11];
+const ACC: Record<number, string> = { [-2]: '𝄫', [-1]: '♭', 0: '', 1: '♯', 2: '𝄪' };
+const SIG_OF: Record<string, string> = { C: 'C', G: 'G', D: 'D', A: 'A', E: 'E', B: 'B', 'F♯': 'F#', 'C♯': 'C#', F: 'F', 'B♭': 'Bb', 'E♭': 'Eb', 'A♭': 'Ab', 'D♭': 'Db', 'G♭': 'Gb', 'C♭': 'Cb' };
+/** One letter per degree from a spelled tonic (as keyTheory.spellScale; local, so this generator imports no UI theory). */
+export function spellH(tonic: string, ints: number[]): string[] {
+  const li = LETTERS.indexOf(tonic[0]);
+  const tAcc = tonic.slice(1) === '♭' ? -1 : tonic.slice(1) === '♯' ? 1 : 0;
+  const tpc = mod(NATURAL[li] + tAcc, 12);
+  return ints.map((iv, k) => {
+    const l = (li + k) % 7;
+    let d = mod(tpc + iv - NATURAL[l], 12);
+    if (d > 6) d -= 12;
+    return LETTERS[l] + (ACC[d] ?? '?');
+  });
+}
+const accCount = (ns: string[]): number => ns.reduce((n, x) => n + (x.length - 1) * (/[𝄫𝄪]/u.test(x) ? 2 : 1), 0);
+/** The other spelling of a black key (C♯ ↔ D♭ …). A natural tonic never needs more than 6 accidentals in a mode, so it stays. */
+const TWIN: Record<string, string> = { 'C♯': 'D♭', 'D♭': 'C♯', 'D♯': 'E♭', 'E♭': 'D♯', 'F♯': 'G♭', 'G♭': 'F♯', 'G♯': 'A♭', 'A♭': 'G♯', 'A♯': 'B♭', 'B♭': 'A♯' };
+const DIATONIC = (sc: HScale): number => (sc.chord ? -1 : H_MODES.find((i) => H_SCALES[i] === sc) ?? -1);
+/** A scale's tonic name in a key. */
+export function hTonic(key: number, sc: HScale): string {
+  const base = (sc.minor ? MIN_N : MAJ_N)[mod(key, 12)];
+  const twin = TWIN[base];
+  if (DIATONIC(sc) < 0 || !twin) return base;
+  return accCount(spellH(twin, sc.ints)) < accCount(spellH(base, sc.ints)) ? twin : base;
+}
+/** A scale's key signature in a key: the parent major's (the seven modes: from the spelled scale). */
+export function hSig(key: number, sc: HScale): string {
+  const m = DIATONIC(sc);
+  if (m < 0) return SIG[mod(key + sc.sig, 12)];
+  const parent = spellH(hTonic(key, sc), sc.ints)[(7 - m) % 7];
+  return SIG_OF[parent] ?? SIG[mod(key + sc.sig, 12)];
+}
+const kName = hTonic;
+const deg =(tonic: number, ints: number[], k: number): number => tonic + 12 * Math.floor(k / ints.length) + ints[mod(k, ints.length)];
 const isHarris = (sc: HScale): boolean => !!sc.chord;
 
 // ───────────────────────────── the ladder's music (instrument-free) ─────────────────────────────
@@ -406,7 +444,7 @@ export function genHarmPiano(s: DrillSpec): Drill {
   const hn = s.hands === 'RL' && !drop ? t(' · LH root', ' · שורש ביד שמאל') : t('', '');
   const title = t(`${kName(key, sc)} ${sc.name.en}: ${STEP_T[step].en}${hn.en}`, `${kName(key, sc)} ${sc.name.he}: ${STEP_T[step].he}${hn.he}`);
   const bpm = { line: 72, '3b': 66, '3t': 60, ta: 50, tb: 50, '7a': 60, '7b': 50, d2: 46, d3: 46, d24: 46 }[step];
-  return pDrill(s, n, title, bpm, goal, SIG[mod(key + sc.sig, 12)]);
+  return pDrill(s, n, title, bpm, goal, hSig(key, sc));
 }
 
 function genBorrowPiano(s: DrillSpec, key: number): Drill {
@@ -508,7 +546,7 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
   const step = s.kind.replace(/^hl-/, '') as HStep;
   const evs: Ev[] = [];
   let title: T2;
-  const sig = SIG[mod(key + sc.sig, 12)];
+  const sig = hSig(key, sc);
   const lineStep = step === 'line' || step === '3b' || step === 'ta' || step === '7a';
   if (lineStep || step === '3t') {
     const { map, tonic, lo } = positionMap(tu, key, sc, 2);

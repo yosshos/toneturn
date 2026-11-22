@@ -242,10 +242,220 @@ export interface LadderRung {
   /** A the scale, S the harmonised spine (3rds, triads, 7ths), B its other forms, C licks, D fingers/hands, E cadence, F jazz,
    *  G language in the key (the player's licks, phase 4). */
   block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+  /**
+   * BUILD-PLAN phase 7 (matrix breadth): a later rung inside the row — the Aeolian of a major key (from its 6th degree),
+   * melodic minor in a minor row, a mode from the root in a major row. Not a new key family: the cell stays in its row.
+   */
+  mode?: KeyMode;
+  /** Makes the rung's id unique in the row (`aeolian:k-sharm-3`); a tag with a name (RUNG_TAG_NAME) starts the title. */
+  tag?: string;
+  /** The rung's tonic in semitones above the row's root (the Aeolian: 9, the major key's 6th degree). */
+  off?: number;
+  /** The rung's own title (after the mode's name); else the level's. */
+  title?: { en: string; he: string };
 }
 
-/** The candidate rungs of a key, in teaching order (minor: the harmonic-minor rows). */
-export function ladderRungs(group: 'major' | 'minor'): LadderRung[] {
+/** The instruments with a per-key ladder (drums have no keys: their 70/30 is technique / grooves, fills, trading). */
+export type LadderInst = 'piano' | 'guitar' | 'bass';
+export type KeyMode = 'aeolian' | 'melodic' | 'dorian' | 'phrygian' | 'lydian' | 'mixolydian' | 'locrian';
+/** The Aeolian inside every major key opens just past the first steps (SPEC-DAILY-WORKOUT §1). */
+export const AEOLIAN_FROM_TIER = 1;
+/** Melodic minor (the minor rows) and the modes from the root (the major rows) open at T4 (SPEC-DAILY-WORKOUT §1). */
+export const MELODIC_FROM_TIER = 4;
+export const MODES_FROM_TIER = 4;
+/** The name a later rung's title starts with. */
+export const RUNG_TAG_NAME: Record<string, { en: string; he: string }> = {
+  aeolian: { en: 'Aeolian, from the 6th degree', he: 'איאולי, מהדרגה השישית' },
+  melodic: { en: 'Melodic minor', he: 'מינור מלודי' },
+  m6dim: { en: 'Minor 6th-diminished', he: 'מינור שישית-מוקטן' },
+  dorian: { en: 'Dorian', he: 'דורי' },
+  phrygian: { en: 'Phrygian', he: 'פריגי' },
+  lydian: { en: 'Lydian', he: 'לידי' },
+  mixolydian: { en: 'Mixolydian', he: 'מיקסולידי' },
+  locrian: { en: 'Locrian', he: 'לוקרי' },
+};
+/** A rung's id in its row (the cell's `rung`): the level id, prefixed by its tag. */
+export const rungIdOf = (r: Pick<LadderRung, 'id' | 'tag'>): string => (r.tag ? `${r.tag}:${r.id}` : r.id);
+
+type Spec = LevelDef['specs'][number];
+const optIs = (o: number) => (sp: Spec) => ((sp as { option?: number }).option ?? 0) === o;
+const kindIs = (re: RegExp) => (sp: Spec) => re.test((sp as { kind: string }).kind);
+const scaleIs = (sc: string) => (sp: Spec) => (sp as { scale?: string }).scale === sc;
+const isMinorSp = (sp: Spec) => !!(sp as { minor?: boolean }).minor;
+const T = (en: string, he: string) => ({ en, he });
+
+/** The warm-up scale of a key at a tier, per instrument (the first step of every session). */
+function warmOf(inst: LadderInst, minor: boolean, t: number): { fam: string; id: string; pick?: (sp: Spec) => boolean } {
+  if (inst === 'guitar') return minor ? (t <= 3 ? { fam: 'g-scales', id: 'g-scales-13', pick: optIs(7) } : { fam: 'g-scales', id: 'g-scales-17' }) : { fam: 'g-scales', id: t <= 1 ? 'g-scales-4' : t <= 3 ? 'g-scales-5' : t <= 5 ? 'g-scales-6' : 'g-scales-9' };
+  if (inst === 'bass') return minor ? (t <= 3 ? { fam: 'b-scale', id: 'b-scale-7', pick: optIs(6) } : { fam: 'b-scale', id: 'b-scale-12', pick: optIs(1) }) : t <= 1 ? { fam: 'b-scale', id: 'b-scale-2' } : { fam: 'b-fret', id: 'b-fret-5' };
+  const id = minor ? (t <= 1 ? 'scales-17' : t <= 3 ? 'scales-5' : t <= 5 ? 'scales-13' : 'scales-33') : t <= 1 ? 'scales-1' : t <= 3 ? 'scales-3' : t <= 5 ? 'scales-8' : 'scales-10';
+  return { fam: 'scales', id, pick: minor ? undefined : (sp) => !isMinorSp(sp) };
+}
+
+/**
+ * The guitar's ladder of one key (BUILD-PLAN §2 "ladders for guitar and bass", phase 7), the keys ladder's rung
+ * structure from the guitar catalogue: A the scale's forms (3 notes per string, CAGED connected, interval sequences),
+ * S the harmonised spine (g-harm: 3rds, triads, 7ths along the whole scale, in position), B its other forms (triad
+ * shapes and inversions, double stops, block triads on string sets, drop 2), D the hands (finger permutations,
+ * alternate picking, hammer-ons / pull-offs, string crossing, 3nps legato, string skipping, sweeps), E the ii–V–I on the
+ * neck (shells, triads on string sets, drop 2, rootless), F jazz (Harris's 6th-diminished). No approach-lick block yet:
+ * the owner's licks exist on the piano only. Minor: the harmonic-minor rows.
+ */
+function guitarRungs(minor: boolean): LadderRung[] {
+  const h = minor ? 7 : 0;
+  const harm = (n: number, min: number, block: 'S' | 'B'): LadderRung => ({ fam: 'g-harm', id: `g-harm-${n}`, min, pick: optIs(h), block });
+  const cad = (n: number, min: number): LadderRung => ({ fam: 'g-cadlib', id: `g-cadlib-${n}`, min, pick: kindIs(minor ? /^cad~m-ii-v-i~/ : /^cad~ii-v-i~/), block: 'E' });
+  return [
+    ...(minor ? [] : [{ fam: 'g-picking', id: 'g-picking-3', min: 2, block: 'A' as const }, { fam: 'g-scales', id: 'g-scales-8', min: 3, block: 'A' as const }, { fam: 'g-scales', id: 'g-scales-10', min: 4, block: 'A' as const }]),
+    harm(2, 0, 'S'),
+    harm(4, 0, 'S'),
+    harm(6, 1, 'S'),
+    ...(minor ? [] : [{ fam: 'g-arps', id: 'g-arps-2', min: 1, block: 'B' as const }, { fam: 'g-arps', id: 'g-arps-3', min: 2, block: 'B' as const }]),
+    harm(3, 3, 'B'),
+    harm(5, 3, 'B'),
+    harm(7, 4, 'B'),
+    ...(minor ? [] : [harm(8, 5, 'B')]),
+    ...(minor
+      ? [{ fam: 'g-picking', id: 'g-picking-6', min: 5, pick: isMinorSp, block: 'D' as const }]
+      : [
+          { fam: 'g-fretting', id: 'g-fretting-2', min: 0, block: 'D' as const },
+          { fam: 'g-picking', id: 'g-picking-1', min: 0, block: 'D' as const },
+          { fam: 'g-legato', id: 'g-legato-1', min: 1, block: 'D' as const },
+          { fam: 'g-legato', id: 'g-legato-2', min: 1, block: 'D' as const },
+          { fam: 'g-picking', id: 'g-picking-2', min: 1, block: 'D' as const },
+          { fam: 'g-legato', id: 'g-legato-5', min: 3, block: 'D' as const },
+          { fam: 'g-picking', id: 'g-picking-4', min: 3, block: 'D' as const },
+          { fam: 'g-picking', id: 'g-picking-6', min: 5, pick: (sp: Spec) => !isMinorSp(sp), block: 'D' as const },
+        ]),
+    cad(1, 2),
+    ...(minor ? [] : [{ fam: 'g-vl', id: 'g-vl-1', min: 3, block: 'E' as const }]),
+    cad(4, 4),
+    ...(minor ? [] : [cad(9, 6), { fam: 'g-harris', id: 'g-harris-1', min: 5, jazz: true, block: 'F' as const }, { fam: 'g-harris', id: 'g-harris-2', min: 5, jazz: true, block: 'F' as const }]),
+  ];
+}
+
+/**
+ * The bass's ladder of one key (phase 7), from the bass catalogue: A the scale's forms (octaves and 10ths, the scale in
+ * 4ths), S the spine (the scale in diatonic 3rds, diatonic 7th arpeggios through the scale), B the arpeggios (triads,
+ * 7ths, inversions, two octaves, 9ths), D the hands (finger permutations, string skipping, shifts, 16th stamina, accents,
+ * the upper register), E the changes (chord tones through a progression, the nearest chord tone, walking a ii–V–I with
+ * approach notes, then freely), F jazz (Harris: the 6th-diminished scale, the half-step rules). No approach-lick block.
+ */
+function bassRungs(minor: boolean): LadderRung[] {
+  const cad = (n: number, min: number): LadderRung => ({ fam: 'b-cadlib', id: `b-cadlib-${n}`, min, pick: kindIs(minor ? /^cad~m-ii-v-i~/ : /^cad~ii-v-i~/), block: 'E' });
+  if (minor)
+    return [
+      { fam: 'b-chord', id: 'b-chord-16', min: 2, pick: optIs(7), block: 'S' },
+      { fam: 'b-chord', id: 'b-chord-4', min: 2, pick: isMinorSp, block: 'B' },
+      cad(1, 4),
+      cad(3, 5),
+    ];
+  return [
+    { fam: 'b-fret', id: 'b-fret-7', min: 3, block: 'A' },
+    { fam: 'b-scale', id: 'b-scale-6', tag: '4ths', min: 3, pick: optIs(1), block: 'A', title: T('The major scale in 4ths', 'הסולם המז׳ורי בקוורטות') },
+    { fam: 'b-scale', id: 'b-scale-6', min: 1, pick: (sp) => !(sp as { option?: number }).option, block: 'S', title: T('The major scale in diatonic 3rds', 'הסולם המז׳ורי בטרצות דיאטוניות') },
+    { fam: 'b-chord', id: 'b-chord-15', min: 2, block: 'S' },
+    { fam: 'b-chord', id: 'b-chord-4', min: 0, pick: (sp) => !isMinorSp(sp), block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-6', min: 1, block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-5', min: 2, block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-7', min: 3, block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-11', min: 4, block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-12', min: 5, block: 'B' },
+    { fam: 'b-fret', id: 'b-fret-2', min: 0, block: 'D' },
+    { fam: 'b-pluck', id: 'b-pluck-4', min: 1, block: 'D' },
+    { fam: 'b-fret', id: 'b-fret-4', min: 2, block: 'D' },
+    { fam: 'b-pluck', id: 'b-pluck-5', min: 2, block: 'D' },
+    { fam: 'b-pluck', id: 'b-pluck-6', min: 3, block: 'D' },
+    { fam: 'b-fret', id: 'b-fret-8', min: 4, block: 'D' },
+    { fam: 'b-chord', id: 'b-chord-8', min: 1, block: 'E' },
+    { fam: 'b-chord', id: 'b-chord-9', min: 2, block: 'E' },
+    cad(1, 4),
+    cad(3, 5),
+    { fam: 'b-barry', id: 'b-barry-1', min: 5, jazz: true, block: 'F' },
+    { fam: 'b-barry', id: 'b-barry-3', min: 5, jazz: true, block: 'F' },
+  ];
+}
+
+/**
+ * The later rungs of a row (BUILD-PLAN phase 7, after the row's own ladder; behind the tier, so a beginner never sees
+ * them):
+ * - major rows: the Aeolian of the key, played from its 6th degree (A Aeolian in C major: the C major scale, the
+ *   relative major's signature) — the scale, the harmonised spine and its forms, the approach licks (piano) — from T1;
+ *   then (T4+) the modes from the root: each mode only its scale, its 7th chords along it and lick 1 into them (piano);
+ * - minor rows (harmonic minor): melodic minor on the same tonic (T4+) — the scale, its harmonisation, the licks; the
+ *   minor 6th-diminished (Harris) at the jazz top.
+ * The items are the catalogue's own (k-sharm / g-harm / b-chord options, the scales families, k-keylick 16–20), so a
+ * take counts once for the cell, the level, the path and the level test.
+ */
+export function laterRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'): LadderRung[] {
+  const A = AEOLIAN_FROM_TIER;
+  const M = MELODIC_FROM_TIER;
+  const D = MODES_FROM_TIER;
+  const aeol = (r: Omit<LadderRung, 'mode' | 'tag' | 'off'>): LadderRung => ({ ...r, min: Math.max(A, r.min), mode: 'aeolian', tag: 'aeolian', off: 9 });
+  const mel = (r: Omit<LadderRung, 'mode' | 'tag'>, tag = 'melodic'): LadderRung => ({ ...r, min: Math.max(M, r.min), mode: 'melodic', tag });
+  const MODES: [KeyMode, number, number][] = [['dorian', 1, D], ['mixolydian', 4, D], ['lydian', 3, D], ['phrygian', 2, D + 1], ['locrian', 6, D + 1]];
+  const scaleT = { one: T('the scale, one octave, each hand', 'הסולם, אוקטבה אחת, כל יד'), ht: T('the scale, hands together, parallel and contrary', 'הסולם, ידיים יחד, מקבילה ונגדית'), four: T('the scale, 4 octaves hands together', 'הסולם, 4 אוקטבות ידיים יחד'), pos: T('the scale in position', 'הסולם במצב'), all: T('the scale in all five positions', 'הסולם בכל חמשת המצבים'), two: T('the scale over two octaves', 'הסולם בשתי אוקטבות'), it: T('the scale', 'הסולם') };
+  if (inst === 'guitar') {
+    if (group === 'minor')
+      return [
+        mel({ fam: 'g-scales', id: 'g-scales-15', min: M, max: 5, pick: optIs(8), block: 'A', title: scaleT.pos }),
+        mel({ fam: 'g-scales', id: 'g-scales-18', min: 6, block: 'A', title: scaleT.all }),
+        ...[2, 4, 6].map((n) => mel({ fam: 'g-harm', id: `g-harm-${n}`, min: M, pick: optIs(8), block: 'S' })),
+        mel({ fam: 'g-harm', id: 'g-harm-7', min: 5, pick: optIs(8), block: 'B' }),
+      ];
+    return [
+      aeol({ fam: 'g-scales', id: 'g-scales-13', min: A, max: 3, pick: optIs(5), block: 'A', title: scaleT.pos }),
+      aeol({ fam: 'g-scales', id: 'g-scales-16', min: 4, block: 'A', title: scaleT.all }),
+      ...([[2, 1, 'S'], [4, 1, 'S'], [6, 1, 'S'], [3, 3, 'B'], [5, 3, 'B'], [7, 4, 'B']] as const).map(([n, min, block]) => aeol({ fam: 'g-harm', id: `g-harm-${n}`, min, pick: optIs(5), block })),
+      ...MODES.flatMap(([mode, o, min]): LadderRung[] => [
+        { fam: 'g-scales', id: o === 6 ? 'g-scales-7' : o === 1 || o === 4 ? 'g-scales-14' : 'g-scales-15', min, pick: o === 6 ? (sp) => kindIs(/^mode$/)(sp) && optIs(6)(sp) : optIs(o), block: 'A', mode, tag: mode, title: scaleT.pos },
+        { fam: 'g-harm', id: 'g-harm-6', min, pick: optIs(o), block: 'S', mode, tag: mode },
+      ]),
+    ];
+  }
+  if (inst === 'bass') {
+    if (group === 'minor')
+      return [mel({ fam: 'b-scale', id: 'b-scale-7', min: M, max: 5, pick: optIs(7), block: 'A', title: scaleT.pos }), mel({ fam: 'b-scale', id: 'b-scale-12', min: 6, pick: optIs(2), block: 'A', title: scaleT.two })];
+    return [
+      aeol({ fam: 'b-scale', id: 'b-scale-3', min: A, max: 2, pick: optIs(5), block: 'A', title: scaleT.pos }),
+      aeol({ fam: 'b-scale', id: 'b-scale-12', min: 3, pick: optIs(0), block: 'A', title: scaleT.two }),
+      aeol({ fam: 'b-chord', id: 'b-chord-16', min: 2, pick: optIs(5), block: 'S', title: T('diatonic 7th arpeggios through the scale', 'ארפג׳יו ספטאקורדים דיאטוניים לאורך הסולם') }),
+      ...MODES.map(([mode, o, min]): LadderRung => ({ fam: 'b-scale', id: o === 6 ? 'b-scale-13' : o === 1 || o === 4 ? 'b-scale-4' : 'b-scale-8', min, pick: optIs(o === 6 ? 14 : o), block: 'A', mode, tag: mode, title: scaleT.pos })),
+    ];
+  }
+  if (group === 'minor')
+    return [
+      mel({ fam: 'scales', id: 'scales-18', min: M, max: 5, pick: scaleIs('melodic'), block: 'A', title: scaleT.ht }),
+      mel({ fam: 'scales', id: 'scales-35', min: 5, block: 'A' }),
+      mel({ fam: 'scales', id: 'scales-33', min: 6, pick: scaleIs('melodic'), block: 'A', title: scaleT.four }),
+      ...[4, 8, 12].map((n) => mel({ fam: 'k-sharm', id: `k-sharm-${n}`, min: M, pick: optIs(8), block: 'S' })),
+      mel({ fam: 'k-sharm', id: 'k-sharm-14', min: 5, pick: optIs(8), block: 'B' }),
+      mel({ fam: 'k-sharm', id: 'k-sharm-16', min: 6, pick: optIs(8), block: 'B' }),
+      mel({ fam: 'k-keylick', id: 'k-keylick-20', min: M, block: 'C', title: T('licks 1 and 2 into the triads and 7th chords', 'ליקים 1 ו־2 אל המשולשים והספטאקורדים') }),
+      // Harris's minor 6th-diminished at the jazz top (a jazz focus opens it two tiers earlier, never below T4)
+      mel({ fam: 'scales', id: 'scales-31', min: 6, jazz: true, block: 'F', title: scaleT.it }, 'm6dim'),
+      mel({ fam: 'k-sharm', id: 'k-sharm-12', min: 6, jazz: true, pick: optIs(10), block: 'F', title: T('the chord and the diminished in turn, arpeggiated', 'האקורד והמוקטן לסירוגין, בארפג׳יו') }, 'm6dim'),
+    ];
+  return [
+    aeol({ fam: 'scales', id: 'scales-17', min: A, max: 1, pick: scaleIs('natural'), block: 'A', title: scaleT.one }),
+    aeol({ fam: 'scales', id: 'scales-18', min: 2, max: 5, pick: scaleIs('natural'), block: 'A', title: scaleT.ht }),
+    aeol({ fam: 'scales', id: 'scales-33', min: 6, pick: scaleIs('natural'), block: 'A', title: scaleT.four }),
+    ...([[3, 1, 'S'], [7, 1, 'S'], [11, 1, 'S'], [5, 3, 'B'], [9, 3, 'B'], [13, 4, 'B'], [15, 5, 'B']] as const).map(([n, min, block]) => aeol({ fam: 'k-sharm', id: `k-sharm-${n}`, min, pick: optIs(5), block })),
+    aeol({ fam: 'k-keylick', id: 'k-keylick-16', min: 2, block: 'C', title: T('approach lick 1 into 3rds, triads and 7th chords', 'ליק גישה 1 אל הטרצות, המשולשים והספטאקורדים') }),
+    aeol({ fam: 'k-keylick', id: 'k-keylick-17', min: 3, block: 'C', title: T('lick 2, the enclosure, into triads and 7th chords', 'ליק 2, כיתור, אל המשולשים והספטאקורדים') }),
+    aeol({ fam: 'k-keylick', id: 'k-keylick-18', min: 4, block: 'C', title: T('lick 3, the long enclosure, into triads and 7th chords', 'ליק 3, הכיתור הארוך, אל המשולשים והספטאקורדים') }),
+    ...MODES.flatMap(([mode, o, min]): LadderRung[] => [
+      { fam: 'scales', id: ({ 1: 'scales-19', 2: 'scales-24', 3: 'scales-22', 4: 'scales-21', 6: 'scales-26' } as Record<number, string>)[o], min, block: 'A', mode, tag: mode, title: scaleT.it },
+      { fam: 'k-sharm', id: 'k-sharm-11', min, pick: optIs(o), block: 'S', mode, tag: mode },
+      { fam: 'k-keylick', id: 'k-keylick-19', min, pick: optIs(o), block: 'C', mode, tag: mode, title: T('approach lick 1 into the 7th chords', 'ליק גישה 1 אל הספטאקורדים') },
+    ]),
+  ];
+}
+
+/** The candidate rungs of a key, in teaching order (minor: the harmonic-minor rows), per instrument. */
+export function ladderRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'): LadderRung[] {
+  if (inst === 'guitar') return guitarRungs(group === 'minor');
+  if (inst === 'bass') return bassRungs(group === 'minor');
   const minor = group === 'minor';
   const opt = (o: number) => (sp: LevelDef['specs'][number]) => (sp as { option?: number }).option === o;
   const sharm = (n: number) => `k-sharm-${minor ? n + 1 : n}`;
@@ -324,47 +534,57 @@ const oneKeyTitle = (l: LevelDef): { en: string; he: string } => {
 };
 
 /** Every rung of a key open at the tier, built for that key: the warm-up scale, then the ladder's rungs (teaching order i). */
-export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean; /** The player's lick pool (vocab.lickPool): block G. */ licks?: Lick[] } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
+export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean; /** The player's lick pool (vocab.lickPool): block G (piano). */ licks?: Lick[]; /** The instrument's ladder (default the piano's). */ instrument?: LadderInst } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
   const minor = group === 'minor';
+  const inst = opts.instrument ?? 'piano';
   const t = Math.max(0, tier);
   const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
-  const scale = minor ? (t <= 1 ? 'scales-17' : t <= 3 ? 'scales-5' : t <= 5 ? 'scales-13' : 'scales-33') : t <= 1 ? 'scales-1' : t <= 3 ? 'scales-3' : t <= 5 ? 'scales-8' : 'scales-10';
-  const make = (fam: string, id: string, pick?: LadderRung['pick'], n = 0): LevelDef | null => {
+  const w = warmOf(inst, minor, t);
+  const make = (fam: string, id: string, pick?: LadderRung['pick'], r?: LadderRung): LevelDef | null => {
     const l = byId(fam, id);
     if (!l) return null;
     const specs = pick ? l.specs.filter(pick) : l.specs;
-    return specs.length ? { ...l, id: `key-${root}-${l.id}${n ? `-${n}` : ''}`, title: oneKeyTitle(l), level: 0, specs, keys: [root] } : null;
+    if (!specs.length) return null;
+    // a later rung (phase 7): its tag in the level id, its tonic from the row's root (the Aeolian: the 6th degree)
+    const tag = r?.tag;
+    const base = r?.title ?? oneKeyTitle(l);
+    const name = tag ? RUNG_TAG_NAME[tag] : undefined;
+    const title = name ? { en: `${name.en}: ${base.en}`, he: `${name.he}: ${base.he}` } : base;
+    return { ...l, id: `key-${root}-${tag ? `${tag}-` : ''}${l.id}`, title, level: 0, specs, keys: [(((root + (r?.off ?? 0)) % 12) + 12) % 12] };
   };
-  const warm = make('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
-  // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier)
-  const open = ladderRungs(group).filter((r) => r.id !== scale && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
-  const built = open.map((r, i) => ({ i, rung: r, lvl: make(r.fam, r.id, r.pick) })).filter((x): x is { i: number; rung: LadderRung; lvl: LevelDef } => !!x.lvl);
-  // block G, language in the key (SPEC-DAILY-WORKOUT §6, phase 4): every lick of the pool in this key, after the ladder
-  for (const l of (opts.licks ?? []).filter((x) => lickGroup(x) === group))
-    built.push({ i: open.length + built.length, rung: { fam: 'licks', id: `lick-${l.id}`, min: 0, block: 'G' }, lvl: lickRungLevel(l, root) });
+  const warm = make(w.fam, w.id, w.pick);
+  // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier); the later rungs (phase 7) after the row's own
+  const open = [...ladderRungs(group, inst), ...laterRungs(group, inst)].filter((r) => (r.tag || r.id !== w.id) && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
+  const built = open.map((r, i) => ({ i, rung: r, lvl: make(r.fam, r.id, r.pick, r) })).filter((x): x is { i: number; rung: LadderRung; lvl: LevelDef } => !!x.lvl);
+  // block G, language in the key (SPEC-DAILY-WORKOUT §6, phase 4): every lick of the pool in this key, after the ladder (piano)
+  if (inst === 'piano')
+    for (const l of (opts.licks ?? []).filter((x) => lickGroup(x) === group))
+      built.push({ i: open.length + built.length, rung: { fam: 'licks', id: `lick-${l.id}`, min: 0, block: 'G' }, lvl: lickRungLevel(l, root) });
   return { warm, built };
 }
 
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[] } = {}): FamilyDef | null {
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[]; instrument?: LadderInst } = {}): FamilyDef | null {
   if (group !== 'major' && group !== 'minor') return null;
   const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
   const score = (l: LevelDef) => rungNeed(l, items);
   const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
-  // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order
-  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1 };
+  // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order.
+  // The later rungs (the Aeolian, melodic minor, the modes: phase 7) give one rung a session between them (M).
+  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1, M: 1 };
   const taken: Record<string, number> = {};
   const pickd = ranked.filter((x) => {
-    const b = x.rung.block;
+    const b = x.rung.mode ? 'M' : x.rung.block;
     taken[b] = (taken[b] ?? 0) + 1;
     return taken[b] <= (per[b] ?? 1);
   });
-  const chosen = pickd.slice(0, opts.rungs ?? 99).sort((a, b) => a.i - b.i).map((x) => x.lvl);
+  const chosenR = pickd.slice(0, opts.rungs ?? 99).sort((a, b) => a.i - b.i);
+  const chosen = chosenR.map((x) => x.lvl);
   const steps: LevelDef[] = [];
   if (warm) steps.push(warm);
   steps.push(...chosen);
   // a closing visit to the first harmonised rung: it starts just under the best clean tempo just reached
-  const back = chosen.find((l) => /k-sharm/.test(l.id));
+  const back = chosenR.find((x) => x.rung.block === 'S' && !x.rung.mode)?.lvl;
   if (back) steps.push({ ...back, id: `${back.id}-again`, title: { en: `${back.title.en}: again, from your best tempo`, he: `${back.title.he}: שוב, מהטמפו הכי טוב שלך` } });
   steps.forEach((l, k) => (l.level = k + 1));
   if (steps.length < 2) return null;
