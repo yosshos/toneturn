@@ -317,8 +317,8 @@ const oneKeyTitle = (l: LevelDef): { en: string; he: string } => {
   return { en: cut(l.title.en), he: cut(l.title.he) };
 };
 
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number } = {}): FamilyDef | null {
-  if (group !== 'major' && group !== 'minor') return null;
+/** Every rung of a key open at the tier, built for that key: the warm-up scale, then the ladder's rungs (teaching order i). */
+export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
   const minor = group === 'minor';
   const t = Math.max(0, tier);
   const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
@@ -332,7 +332,13 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   const warm = make('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
   // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier)
   const open = ladderRungs(group).filter((r) => r.id !== scale && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
-  const built = open.map((r, i) => ({ i, lvl: make(r.fam, r.id, r.pick) })).filter((x): x is { i: number; lvl: LevelDef } => !!x.lvl);
+  const built = open.map((r, i) => ({ i, rung: r, lvl: make(r.fam, r.id, r.pick) })).filter((x): x is { i: number; rung: LadderRung; lvl: LevelDef } => !!x.lvl);
+  return { warm, built };
+}
+
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number } = {}): FamilyDef | null {
+  if (group !== 'major' && group !== 'minor') return null;
+  const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
   const score = (l: LevelDef) => rungNeed(l, items);
   const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
@@ -340,7 +346,7 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1 };
   const taken: Record<string, number> = {};
   const pickd = ranked.filter((x) => {
-    const b = open[x.i].block;
+    const b = x.rung.block;
     taken[b] = (taken[b] ?? 0) + 1;
     return taken[b] <= (per[b] ?? 1);
   });
