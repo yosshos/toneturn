@@ -191,6 +191,61 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* "Why today" (SPEC-PATH-TODAY-PRACTICE §2): a quiet chip beside a block's name. */
+:root:root .st-st-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+:root:root .st-st-h b {
+  min-width: 0;
+}
+:root:root .wk-why {
+  flex: none;
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font: 500 0.7rem/1.3 var(--font);
+  color: var(--ink);
+  background: var(--ss-surface-2);
+  border: 1px solid var(--ss-line);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+:root:root .wk-why-row {
+  display: flex;
+  min-width: 0;
+}
+:root:root .wk-why-row:empty {
+  display: none;
+}
+:root:root .wk-why-row .wk-why {
+  margin-inline-start: 0;
+}
+:root:root .st-st-h .wk-why {
+  margin-inline-start: 0;
+}
+:root:root .wk-why.why-teacher {
+  border-color: color-mix(in srgb, var(--purple) 45%, var(--ss-line));
+}
+:root:root .wk-why.why-path {
+  border-color: color-mix(in srgb, var(--mint) 60%, var(--ss-line));
+}
+:root:root .wk-run-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -4px 0 4px;
+  font: 400 0.85rem/1.4 var(--font);
+  color: var(--ss-muted);
+}
+:root:root .wk-run-sub .wk-why {
+  margin-inline-start: 0;
+}
 :root:root .st-steps li.done .st-st b {
   color: var(--ss-muted);
   font-weight: 500;

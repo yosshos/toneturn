@@ -647,6 +647,13 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .key-page { display: grid; gap: 8px; }
 .key-matrix-line { margin: 2px 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.4; }
 .key-today { display: grid; gap: 8px; }
+/* BUILD-PLAN phase 2: items in today's plan carry a small, quiet mark (the key grid, the key page). */
+.key-card { position: relative; }
+.kc-today { position: absolute; inset-block-start: 6px; inset-inline-end: 8px; font-size: 10px; line-height: 1; padding: 3px 6px; border-radius: 999px; background: color-mix(in srgb, var(--purple) 14%, var(--card)); color: var(--ink); border: 1px solid color-mix(in srgb, var(--purple) 40%, transparent); }
+.key-card.st-strong .kc-today { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+.today-chip { display: inline-block; margin-inline-start: 6px; font-size: 11px; line-height: 1.2; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--purple) 12%, transparent); color: var(--ink); border: 1px solid color-mix(in srgb, var(--purple) 35%, transparent); vertical-align: middle; }
+.kp-today { margin: 2px 0; font-size: 0.85rem; color: var(--ink-dim); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kp-today .today-chip { margin-inline-start: 0; }
 .kp-legend { margin: 0; }
 .kp-row { display: grid; gap: 6px; }
 .kp-row-head { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name n' 'bar bar'; gap: 6px 10px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--card-2); cursor: pointer; }

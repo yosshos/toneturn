@@ -10,7 +10,7 @@ test.describe("today's workout", () => {
     await expect(blocks.first()).toBeVisible();
     const n0 = await blocks.count();
     // Total → 20 minutes: the blocks rescale and sum to 20.
-    await page.locator('.wk-chips .chip', { hasText: '20′' }).click();
+    await page.locator('.wk-chips .chip', { hasText: /^20′$/ }).click(); // not 120′
     await expect(page.locator('.wk-stepper b')).toContainText('20');
     // A block's minutes: + 1 → the total follows.
     await blocks.first().getByRole('button', { name: '+1' }).click();

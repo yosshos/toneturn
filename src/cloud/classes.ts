@@ -7,6 +7,13 @@ export interface Assignment {
   lessonId: string;
   dueOn: string | null;
   createdAt: string;
+  /**
+   * SPEC-PATH-TODAY-PRACTICE §5.1 (owner): the work in minutes (absent: one lesson, workout2 ASSIGN_MIN), and what the
+   * daily workout does when the assignments don't fit today's window — spread until the due date (the default, also
+   * when absent) or all today (today's window grows). Not stored on the server yet: the teacher's form adds them later.
+   */
+  minutes?: number;
+  ifShort?: 'spread' | 'today';
 }
 export interface StudentRow {
   userId: string;

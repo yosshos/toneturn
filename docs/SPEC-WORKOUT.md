@@ -66,7 +66,7 @@ From the workout card on Home → **Edit** (or long-press a block).
 **Scope** (asked when leaving the editor, once per edit): **Today only** (default) · **Make this my default**
 (saves the template; tomorrow's suggestion uses it). A small "Edited for today" chip on the card, tap to reset.
 
-Limits: 1–12 blocks, total 5–90 min, each block 1–30 min.
+Limits: 1–12 blocks, total 5–180 min, each block 2–90 min (BUILD-PLAN-2026-11 phase 2; W4).
 
 ## 5. Running the workout
 
@@ -173,7 +173,7 @@ for the matching workout block's time.
 | W1 | **One model on Home:** the workout card *is* the mission card (D7 amended): it shows the next step as its first line; the warm-up is the workout's first block. Free practice stays below. |
 | W2 | **Path minutes are credited from any path play today:** a step finished from the road counts for the Path / matching Area block; a block is done when its minutes are used. Path work is in whole steps: the step in progress always finishes; another step starts only if ≥ 2 min are left in the block. |
 | W3 | **Active time:** from the item's prompt to the answer, playback and the sing window included; the feedback counts up to 3 s; the clock stops after 15 s with no input ("paused"). |
-| W4 | **Order and small totals:** vocal warm-up → warm-up → path → areas → game. Exact suggestions: **5** = path 3 + top area 2 · **10** = warm-up 2 + path 4 + 2 areas 2+2 · **15** = warm-up 2 + path 5 + areas 3+2 + game 3 · **20** = warm-up 2 + path 6 + areas 4+3+2 + game 3 · **30+** = proportional. Total 5–60. |
+| W4 | **Order and small totals:** vocal warm-up → warm-up → path → areas → game. Exact suggestions: **5** = path 3 + top area 2 · **10** = warm-up 2 + path 4 + 2 areas 2+2 · **15** = warm-up 2 + path 5 + areas 3+2 + game 3 · **20** = warm-up 2 + path 6 + areas 4+3+2 + game 3 · **30+** = proportional. Total 5–180 (BUILD-PLAN-2026-11 phase 2: the window rises to 180 minutes for serious musicians; a block up to 90). An instrument course with technique in the workout splits by BUILD-PLAN D2 instead: review (due) → path ≈ 20 % → technique (the key × exercise matrix on the piano) → improvisation 70/30 (a beginner 85/15; classical: repertoire; drums: grooves, fills, trading); the teacher's section is added first (SPEC-PATH-TODAY-PRACTICE §5.1). |
 | W5 | **Blocks ≥ 2 min** (a 6-item set fits); a rescale that would push one under 2 offers to drop it. Locked blocks summing over a new total → the change is refused with "unlock a block". Largest-remainder rounding. |
 | W6 | **Template validation:** on load, a block whose target is gone (area left out, topic hidden / locked, game removed) is replaced by the nearest area or dropped; a default older than 30 days shows "refresh my default?". |
 | W7 | **Games:** solo games only, the round in progress finishes; never multiplayer inside a workout. |

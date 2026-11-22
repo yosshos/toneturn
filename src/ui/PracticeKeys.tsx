@@ -9,7 +9,8 @@ import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
 import { families as familiesOf } from '../engine/drills/plan';
 import type { FamilyDef } from '../engine/drills/generate';
-import { fillMinutes, matrixOrder, type MatrixCell, type MatrixSummary, type MatrixView } from '../engine/drills/keyMatrix';
+import type { MatrixCell, MatrixSummary, MatrixView } from '../engine/drills/keyMatrix';
+import { whyCounts, type PlanCell } from '../engine/drills/todayPlan';
 import { cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
@@ -136,45 +137,40 @@ function MatrixLine({ m, lang }: { m: MatrixInfo; lang: Lang }) {
   );
 }
 
-const MV_KEY = 'toneturn.matrixView';
-const readMv = (): MatrixView => {
-  try {
-    const v = localStorage.getItem(MV_KEY);
-    return v === 'key' || v === 'exercise' ? v : 'weak';
-  } catch {
-    return 'weak';
-  }
-};
-/** Today's chunk of the matrix (SPEC-DAILY-WORKOUT §3–4): the view chips (remembered) and the start button. */
-function TodayKeys({ m, lang, onToday }: { m: NonNullable<MatrixInfo>; lang: Lang; onToday: (v: MatrixView) => void }) {
+/** Today's technique (BUILD-PLAN phase 2): the cells of the plan, the view of its rest, and the marks per key. */
+export interface TodayInfo {
+  plan: PlanCell[];
+  view: MatrixView;
+  onView: (v: MatrixView) => void;
+  /** Today's cells per key ('major-0' → count). */
+  byKey?: Map<string, number>;
+}
+/**
+ * Part of today's workout (BUILD-PLAN phase 2: no private "today" here): the same cells as the workout's technique
+ * block — half from the key of the week, the rest in the chosen view (remembered) — and the button that runs them.
+ */
+function TodayKeys({ today, lang, onToday }: { today: TodayInfo; lang: Lang; onToday: () => void }) {
   const he = lang === 'he';
-  const [mv, setMv] = useState<MatrixView>(readMv);
-  const pick = (v: MatrixView) => {
-    setMv(v);
-    try {
-      localStorage.setItem(MV_KEY, v);
-    } catch {
-      /* fine */
-    }
-  };
-  const today = fillMinutes(matrixOrder(m.cellsList ?? [], mv), Math.round(m.perDay * 0.7));
-  const mins = Math.round(today.reduce((n, c) => n + c.minutes, 0));
+  const { plan, view: mv } = today;
+  const mins = Math.round(plan.reduce((n, p) => n + p.cell.minutes, 0));
+  const w = whyCounts(plan);
+  const parts = [w.week ? (he ? `${w.week} בסולם השבוע` : `${w.week} in the key of the week`) : '', w.strengthen ? (he ? `${w.strengthen} לחיזוק` : `${w.strengthen} to strengthen`) : '', w.review ? (he ? `${w.review} חזרה` : `${w.review} review`) : ''].filter(Boolean);
   const VIEWS: [MatrixView, string, string][] = [['weak', 'Weakest first', 'קודם החלש'], ['key', 'By key', 'לפי סולם'], ['exercise', 'By exercise', 'לפי תרגיל']];
   return (
-    <div className="key-today" data-key-today={mv}>
+    <div className="key-today" data-key-today={mv} data-today-plan={plan.length}>
       <div className="chips" role="radiogroup" aria-label={he ? 'סדר העבודה' : 'Order of work'}>
         {VIEWS.map(([v, en, h]) => (
-          <button key={v} className={`chip ${mv === v ? 'on' : ''}`} role="radio" aria-checked={mv === v} onClick={() => pick(v)} data-matrix-view={v}>
+          <button key={v} className={`chip ${mv === v ? 'on' : ''}`} role="radio" aria-checked={mv === v} onClick={() => today.onView(v)} data-matrix-view={v}>
             {he ? h : en}
           </button>
         ))}
       </div>
-      {today.length > 0 && (
-        <button className="coach-entry" onClick={() => onToday(mv)} data-key-today-run={today.length}>
+      {plan.length > 0 && (
+        <button className="coach-entry" onClick={onToday} data-key-today-run={plan.length} data-today-part="1">
           <Icon k="play" size={20} />
           <span>
-            <b>{he ? `האימון של היום בסולמות · כ־${mins} דקות` : `Today's key workout · about ${mins} min`}</b>
-            <small>{he ? `${today.length} תרגילים, מ${today[0].level.title.he}` : `${today.length} exercises, from ${today[0].level.title.en}`}</small>
+            <b>{he ? `חלק מהאימון של היום · כ־${mins} דקות` : `Part of today's workout · about ${mins} min`}</b>
+            <small>{he ? `${plan.length} תרגילים: ${parts.join(' · ')}` : `${plan.length} exercises: ${parts.join(' · ')}`}</small>
           </span>
         </button>
       )}
@@ -182,7 +178,7 @@ function TodayKeys({ m, lang, onToday }: { m: NonNullable<MatrixInfo>; lang: Lan
   );
 }
 
-export function KeyGrid({ matrix, onToday, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** SPEC-DAILY-WORKOUT: today's chunk of the matrix in the chosen view. */ onToday?: (view: MatrixView) => void; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
+export function KeyGrid({ matrix, today, onToday, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** BUILD-PLAN phase 2: today's technique cells (the workout's block) and their marks. */ today?: TodayInfo; /** Run today's technique cells. */ onToday?: () => void; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items);
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -192,7 +188,7 @@ export function KeyGrid({ matrix, onToday, idx, items, lang, ds, group, onGroup,
     <section className="key-grid-wrap" data-key-grid={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <MatrixLine m={matrix} lang={lang} />
-      {matrix?.cellsList && onToday && <TodayKeys m={matrix} lang={lang} onToday={onToday} />}
+      {today && onToday && <TodayKeys today={today} lang={lang} onToday={onToday} />}
       {weekRoot !== null && onWeek && (
         <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot}>
           <Icon k="play" size={20} />
@@ -213,8 +209,16 @@ export function KeyGrid({ matrix, onToday, idx, items, lang, ds, group, onGroup,
           if (!drills.length) return null;
           const m = measure(dedupe(drills), items);
           const line = m.status === 'untried' ? (he ? 'עוד לא' : 'Not yet') : he ? `${m.clean} נקיים` : `${m.clean} clean`;
+          // a key with cells in today's plan carries a small mark (BUILD-PLAN phase 2)
+          const nToday = today?.byKey?.get(`${g}-${root}`) ?? 0;
+          const todayTx = nToday ? (he ? `, ${nToday} באימון של היום` : `, ${nToday} in today's workout`) : '';
           return (
-            <button key={root} type="button" className={`key-card st-${m.status} ${root === weekRoot ? 'week' : ''}`} style={wide ? circlePos(ci) : undefined} onClick={() => onKey(root)} data-key-card={root} aria-label={`${nameOf(root, g)}: ${line}`}>
+            <button key={root} type="button" className={`key-card st-${m.status} ${root === weekRoot ? 'week' : ''}`} style={wide ? circlePos(ci) : undefined} onClick={() => onKey(root)} data-key-card={root} data-today={nToday || undefined} aria-label={`${nameOf(root, g)}: ${line}${todayTx}`}>
+              {nToday > 0 && (
+                <span className="kc-today" aria-hidden="true">
+                  {he ? 'היום' : 'Today'}
+                </span>
+              )}
               <b dir="ltr">{nameOf(root, g)}</b>
               <small>{line}</small>
               <span className="kc-dots" aria-hidden="true">
@@ -254,7 +258,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach }: { matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach }: { /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -286,6 +290,12 @@ export function KeyPage({ matrix, idx, root, group, items, lang, ds, onGroup, on
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
+      {today && today.n > 0 && (
+        <p className="kp-today" data-kp-today={today.n}>
+          <span className="today-chip">{he ? 'חלק מהאימון של היום' : "Part of today's workout"}</span>
+          {he ? `${today.n} תרגילים בסולם הזה` : `${today.n} ${today.n === 1 ? 'exercise' : 'exercises'} in this key`}
+        </p>
+      )}
       {mk && (
         <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
           {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
@@ -334,11 +344,15 @@ export function KeyPage({ matrix, idx, root, group, items, lang, ds, onGroup, on
                 {entries.map((e) => {
                   const em = measure(e.drills, items);
                   const done = e.drills.every((d) => cleanAt(items[d.itemId], d));
+                  const inToday = !!today?.ids.size && e.drills.some((d) => today.ids.has(d.itemId));
                   return (
                     <li key={`${e.family.id}:${e.level.id}`}>
-                      <button type="button" className={`kp-entry ${done ? 'done' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id}>
+                      <button type="button" className={`kp-entry ${done ? 'done' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id} data-today={inToday ? '1' : undefined}>
                         <span className="kp-name">
-                          <small>{e.family.title[lang]}</small>
+                          <small>
+                            {e.family.title[lang]}
+                            {inToday && <span className="today-chip">{he ? 'היום' : 'Today'}</span>}
+                          </small>
                           {e.level.title[lang]}
                         </span>
                         {em.tried > 0 && (

@@ -48,7 +48,7 @@ import { coolDown, loadPricing, myPlan, type MyPlan, type Pricing } from '../clo
 import { GrooveTrainerScreen } from './GrooveTrainer';
 import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
-import type { Drill, FamilyId } from '../engine/drills/types';
+import type { Drill, FamilyId, ItemState } from '../engine/drills/types';
 import { catalog, generate } from '../engine/drills/generate';
 import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
@@ -138,7 +138,9 @@ import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
-import { addSession, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, validateTemplate, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
+import { addSession, blockLeftMs, creditBlock, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, teacherToday, techBlockOf, validateTemplate, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
+import { keptPlan, matrixTierOf, weekKeyIfKept } from './todayTech';
+import { keyName as keyNameOf } from '../engine/drills/generate';
 import { subPriorities } from '../engine/scheduler';
 import { foldSubs } from '../engine/taxonomy';
 import { DOMAINS, evidence, weakestSkill } from '../engine/rating';
@@ -1591,6 +1593,10 @@ export function App() {
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
   const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | null>(null);
+  /** BUILD-PLAN phase 2: the workout's technique block opens today's matrix cells (the same plan as the technique screen). */
+  const drillToday = useRef(false);
+  /** Drill item writes in order (a take, then the coach's ceiling on it — never one overwriting the other). */
+  const drillWrites = useRef<Promise<unknown>>(Promise.resolve());
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1742,7 +1748,10 @@ export function App() {
       else if (stars > 0) void store.saveProgress(award(progress)).then(() => setProgress(award(progress)));
       return go('path');
     }
-    if (from === 'workout') chartQueue.current = null;    if (from === 'repertoire') {
+    if (from === 'workout') {
+      chartQueue.current = null;
+      drillToday.current = false;
+    }    if (from === 'repertoire') {
       // A repertoire item practiced as drills: one result for the item (score = clean takes / takes), with the course.
       chartQueue.current = null;
       const rp = repOpen.current;
@@ -2057,7 +2066,10 @@ export function App() {
   const yday = localDay(new Date(now0.getTime() - 86400000));
   const today = now0.getHours() < 4 && (loadSlot<WorkoutRun>(`workout:${yday}`)?.data?.finished === false) ? yday : localDay(now0);
   const nudge = s.workoutNudge && s.workoutNudge.until >= today ? s.workoutNudge.delta : 0;
-  const baseMinutes = Math.max(5, Math.min(60, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
+  // BUILD-PLAN phase 2: a window up to 180 minutes (SPEC-DAILY-WORKOUT §4).
+  const baseMinutes = Math.max(5, Math.min(180, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
+  // SPEC-PATH-TODAY-PRACTICE §5.1: the open class assignments, today's share (spread until the due date by default).
+  const teacherTp = useMemo(() => teacherToday(assigned.map((a) => ({ id: a.lessonId, dueOn: a.dueOn, minutes: a.minutes, ifShort: a.ifShort })), localDay(now0), baseMinutes), [assigned, baseMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
   // Learned pieces due for a review run (SPEC-PIECE §2.10): the pieces live in IndexedDB, so the count loads once a day
   // and again after the pieces screen closes.
@@ -2075,10 +2087,14 @@ export function App() {
     // 0.61 (SPEC-COURSES): the workout belongs to the active course — its own areas, its goal, its warm-ups only.
     const course = courseOf(s.activeCourse);
     const own = COURSE_AREAS[course.id];
-    return suggestWorkout({ total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
+    // D2: the technique tier sets the split (a beginner 85/15); a classical emphasis plays repertoire beside technique.
+    const dsW = drillSettingsOf(s);
+    const techTier = course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' ? matrixTierOf(s, dsW, progress.drillItems ?? {}) : undefined;
+    return suggestWorkout({ techTier, emphasis: dsW.emphasis, teacher: teacherTp, total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode]);
-  const todayBlocks = s.workoutToday?.day === today ? s.workoutToday.blocks : suggestedWorkout;
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
+  // Today's edits keep the teacher's section (it is added, never replaced: §5.1).
+  const todayBlocks = s.workoutToday?.day === today ? withTeacher(s.workoutToday.blocks, teacherTp) : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
   const wrunRef = useRef(wrun);
   wrunRef.current = wrun;
@@ -2089,6 +2105,39 @@ export function App() {
   };
   /** A session started from the workout (credited when it completes). */
   const workoutPending = useRef<{ t0: number } | null>(null);
+  // BUILD-PLAN phase 2: today's technique block — its minutes and what is left (the technique screen's "part of today's
+  // workout" runs the same cells, as long as the block). No technique block today: no "today" on the technique screen.
+  const wBlocks = wrun && wrun.day === today ? wrun.blocks : todayBlocks;
+  const techMin = wBlocks.filter((b) => b.target.kind === 'keys').reduce((n, b) => n + b.minutes, 0);
+  const techLeft = wrun && wrun.day === today ? wrun.blocks.reduce((n, b, i) => n + (b.target.kind === 'keys' ? blockLeftMs(wrun, i) : 0), 0) / 60000 : techMin;
+  const drillsToday = techMin > 0 ? { minutes: techMin, left: Math.max(0, techLeft), day: today } : undefined;
+  /**
+   * SPEC-PATH-TODAY-PRACTICE §3.4: a take on an item of today's technique plan counts toward today's workout wherever it
+   * is played (Practice, the key page, the workout itself) — its active time goes to the technique block.
+   */
+  const creditTodayTake = (st: ItemState, prevMs: number) => {
+    if (!techMin || !keptPlan(today)?.items.includes(st.itemId)) return;
+    const ms = Math.max(0, (st.activeMs ?? 0) - prevMs) || 15000;
+    const r0 = wrunRef.current && wrunRef.current.day === today ? wrunRef.current : startRun(today, withContext(todayBlocks));
+    const tb = techBlockOf(r0);
+    if (tb) saveRun(creditBlock(r0, tb.id, ms));
+  };
+  /** Today's lines under some blocks: the key of the week on the technique block, the teacher's class and due date. */
+  const workoutSubs = useMemo((): Partial<Record<string, string>> => {
+    const he = s.uiLang === 'he';
+    const out: Partial<Record<string, string>> = {};
+    const wk = s.activeCourse === 'keys' ? weekKeyIfKept('major', 'piano') : null;
+    if (wk !== null) {
+      const n = keptPlan(today)?.cells.length ?? 0;
+      const name = `${keyNameOf(wk)}`;
+      out.keys = he ? `סולם השבוע: ${name} מז׳ור${n ? ` · ${n} תרגילים` : ''}` : `Key of the week: ${name} major${n ? ` · ${n} exercises` : ''}`;
+      out.improv = he ? `בסולם השבוע: ${name} מז׳ור` : `In the key of the week: ${name} major`;
+    }
+    const a = assigned[0];
+    if (a) out.teacher = he ? `${a.className}${a.dueOn ? ` · עד ${a.dueOn.slice(8, 10)}.${a.dueOn.slice(5, 7)}` : ''}` : `${a.className}${a.dueOn ? ` · due ${a.dueOn.slice(5)}` : ''}`;
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.uiLang, s.activeCourse, assigned, today, route]);
   const [wctx, setWctx] = useState<{ nomic: boolean; quiet: boolean; noinst: boolean }>({ nomic: !!s.noMic, quiet: false, noinst: false });
   /** W10: today's context swaps blocks that need the mic / sound / an instrument. */
   const withContext = (bs: Block[]): Block[] =>
@@ -2130,7 +2179,23 @@ export function App() {
     const b = r.blocks[r.at];
     if (r.finished || !b) return null;
     const tg = b.target;
-    if (tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice') return { title: blockLabel(t, tg, s.uiLang), open: () => go('workoutrun') };
+    if (tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice' || tg.kind === 'improv' || tg.kind === 'keys') return { title: blockLabel(t, tg, s.uiLang), open: () => go('workoutrun') };
+    // §5.1: the teacher's section — the first open assignment (done ones drop out of the list).
+    if (tg.kind === 'teacher') {
+      const a = assigned.find((x) => !tg.ids || tg.ids.includes(x.lessonId)) ?? assigned[0];
+      if (a) return { title: `${blockLabel(t, tg, s.uiLang)} · ${lessonTitle(a.lessonId as LessonId)}`, open: () => openAssignment(a.lessonId) };
+      // every assignment is done (or the list hasn't loaded): on to the next block
+      return {
+        title: blockLabel(t, tg, s.uiLang),
+        open: () => {
+          workoutPending.current = null;
+          const nr = nextBlock(r);
+          saveRun(nr);
+          if (!nr.finished) runCurrent(nr);
+          else go('workoutrun');
+        },
+      };
+    }
     const ratings = ratingsOf(progress);
     if (tg.kind === 'warmup' || tg.kind === 'mistakes') {
       if (dueReviews(progress.review, new Date()).length > 0 && canReview()) return { title: t.review, open: () => openReview() };
@@ -2161,7 +2226,7 @@ export function App() {
   const runCurrent = (r: WorkoutRun) => {
     const nx = workoutNext(r);
     const tg = r.blocks[r.at]?.target;
-    if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice' || (tg.kind === 'strengthen' && instrumentCourse)) return go('workoutrun');
+    if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice' || tg.kind === 'improv' || tg.kind === 'keys' || (tg.kind === 'strengthen' && instrumentCourse)) return go('workoutrun');
     workoutPending.current = { t0: Date.now() };
     openFrom.current.path = false;
     nx.open();
@@ -2469,6 +2534,7 @@ export function App() {
               onEdit={() => go('workout')}
               onReset={() => updateSettings({ workoutToday: undefined })}
               leadsTo={leadsLine}
+              subs={workoutSubs}
             />
           }
           today={
@@ -3022,6 +3088,7 @@ export function App() {
           ctx={wctx}
           onCtx={setWctx}
           leadsTo={leadsLine}
+          subs={workoutSubs}
           addOptions={{
             suggested: subPriorities({ ratings: ratingsOf(progress), subs: foldSubs(progress.ratingEvents ?? []), track: s.track ?? null, priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, voice: s.mode === 'voice', now: new Date() })
               .slice(0, 12)
@@ -3038,11 +3105,29 @@ export function App() {
           listen={listenCard(tuneSlotLevels(progress.drillItems ?? {}).concept)}
           lang={s.uiLang}
           run={wrun}
+          subs={workoutSubs}
           onGo={() => {
             const b = wrun.blocks[wrun.at];
+            // BUILD-PLAN phase 2: the piano's technique block — today's matrix cells under the coach, as long as the block;
+            // its time is counted take by take (creditTodayTake), so stopping resumes the block at the cell.
+            if (b.target.kind === 'keys' && drillSettingsOf(s).instrument === 'piano' && s.activeCourse === 'keys') {
+              chartQueue.current = null;
+              drillFrom.current = 'workout';
+              drillToday.current = true;
+              drillSessionXp.current = 0;
+              drillSession.current = { takes: 0, clean: 0 };
+              return go('drills');
+            }
+            // D2: the improvisation share (repertoire for a classical emphasis, grooves on the drums) runs on its screen.
+            if (b.target.kind === 'improv') {
+              saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
+              const mode = b.target.mode ?? 'improv';
+              return go(mode === 'repertoire' ? 'pieces' : mode === 'grooves' ? 'groove-echo' : 'improv');
+            }
             // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
-            // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first.
-            if (b.target.kind === 'strengthen' && instrumentCourse) {
+            // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first
+            // (also the technique block on the guitar, bass and drums: other instruments keep this until their ladders).
+            if ((b.target.kind === 'strengthen' || b.target.kind === 'keys') && instrumentCourse) {
               saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
               let q = strengthenDrills(mview, mctx);
               // AUDIT-5 #5: an item on a plateau leads the block (once in the opened levels' pool or not, it is edge work).
@@ -3349,8 +3434,12 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
+          today={drillsToday}
+          startToday={drillFrom.current === 'workout' && drillToday.current}
+          onItem={(st) => void (drillWrites.current = drillWrites.current.then(() => store.setDrillItem(st)).then(setProgress).catch(() => {}))}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
+            creditTodayTake(st, progress.drillItems?.[st.itemId]?.activeMs ?? 0);
             const ct = checkTech.current;
             if (drillFrom.current === 'check' && ct && m?.verdict === 'clean') {
               // The checkpoint's technique part: a clean take at the level's target tempo during the part.
@@ -3363,7 +3452,7 @@ export function App() {
               const d = chartQueue.current?.find((x) => x.itemId === st.itemId) ?? chartQueue.current?.[0];
               tasteTake.current = { acc: Math.max(tasteTake.current.acc, st.ewma.acc), bars: tasteTake.current.bars + (d ? Math.round(d.beats / (d.meter || 4)) : 0) };
             }
-            void store.recordDrill(st, evs, xp, m).then(setProgress);
+            void (drillWrites.current = drillWrites.current.then(() => store.recordDrill(st, evs, xp, m)).then(setProgress).catch(() => {}));
           }}
           onBack={() => {
             if (drillFrom.current) return drillQueueDone(0, 0);
