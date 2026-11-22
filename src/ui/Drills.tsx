@@ -122,7 +122,7 @@ import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './P
 import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
-import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
@@ -290,7 +290,7 @@ export interface DrillsProps {
   onPieces?: () => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
   const tx = T[lang];
@@ -341,7 +341,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? coachBackground(settings, ds, view.coach.id, techTier) : undefined}
+          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}) } : undefined}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
@@ -467,7 +467,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
-        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
       </main>
     );
   if (view.k === 'family')
@@ -510,7 +510,10 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       pView={pView}
       onPView={setPView}
       keyGrid={
-        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => setView({ k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } })} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
+        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
+          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0) : null;
+          setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
+        }} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
       }
     />
   );

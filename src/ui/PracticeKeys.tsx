@@ -7,7 +7,9 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
-import { cleanAt, currentEntry, groupsOf, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { families as familiesOf } from '../engine/drills/plan';
+import type { FamilyDef } from '../engine/drills/generate';
+import { cleanAt, currentEntry, groupsOf, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
@@ -188,7 +190,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey }: { /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach }: { /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -212,19 +214,21 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
   };
   const run = (q: Drill[]) => onRun(q.map((d) => withLens(d, lens)));
   const session = keySession(idx, root, g, items);
+  // the coach over the key's ladder: the scale at the player's tier, then 3rds, triads and 7ths along the whole scale
+  const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0) : null;
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
       {session.length > 0 && (
-        <button className="coach-entry" onClick={() => run(session)} data-key-session={root}>
+        <button className="coach-entry" onClick={() => (ladder && onCoach ? onCoach(ladder) : run(session))} data-key-session={root} data-key-ladder={ladder ? ladder.levels.length : 0}>
           <Icon k="play" size={20} />
           <span>
             <b>
               {he ? 'אימון רציף ב־' : 'Continuous practice in '}
               <bdi dir="ltr">{nameOf(root, g)}</bdi>
             </b>
-            <small>{he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
+            <small>{ladder ? (he ? 'הסולם ברמה שלכם, ואז טרצות, משולשים וספטאקורדים לאורך כל הסולם, וקדנצה. הטמפו עולה כשזה נקי' : 'The scale at your level, then 3rds, triads and 7th chords along the whole scale, and a cadence; the tempo climbs when it is clean') : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
           </span>
         </button>
       )}

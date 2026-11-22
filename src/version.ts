@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.114.4',
+    date: '2026-11-22',
+    en: ['Continuous practice in a key is now the coach over a ladder: the scale at your level, then 3rds, triads and 7th chords along the whole scale, then a cadence — the tempo climbs as you play clean, and the basics are skipped when you are past them.'],
+    he: ['אימון רציף בסולם הוא עכשיו המאמן על סולם תרגילים: הסולם ברמה שלכם, ואז טרצות, משולשים וספטאקורדים לאורך כל הסולם, וקדנצה — הטמפו עולה כשמנגנים נקי, והבסיס נדלג כשאתם מעבר לו.'],
+  },
+  {
     version: '0.114.3',
     date: '2026-11-22',
     en: ['The areas map lives on Skills only, and it is clickable: tap an area to open its families; a tidier area card. “Practice” spelled the same everywhere.'],

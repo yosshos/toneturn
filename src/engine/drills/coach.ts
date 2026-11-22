@@ -120,7 +120,9 @@ function keyClean(level: LevelDef, key: number, items: Record<string, ItemState>
 
 /** A step is solid when it is clean at tempo in KEYS_TO_PROMOTE keys. */
 function solid(level: LevelDef, items: Record<string, ItemState>, order: Order): boolean {
-  return levelKeys(level, order).filter((k) => keyClean(level, k, items, order)).length >= KEYS_TO_PROMOTE;
+  // a one-key level (the key session's ladder, SPEC-PRACTICE-KEYS) is solid once that key is clean
+  const ks = levelKeys(level, order);
+  return ks.filter((k) => keyClean(level, k, items, order)).length >= Math.min(KEYS_TO_PROMOTE, ks.length);
 }
 
 /** The step's keys: unplayed-or-unclean first in the player's order (the familiar first keys lead). */
@@ -390,7 +392,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     if (!c.passed.includes(key)) c.passed = [...c.passed, key];
     c.passedNow++;
     c.spec = 0;
-    if (c.passed.length >= KEYS_TO_PROMOTE && c.passedNow >= 1) {
+    if (c.passed.length >= Math.min(KEYS_TO_PROMOTE, c.keys.length) && c.passedNow >= 1) {
       if (c.step + 1 < c.steps.length) {
         c.promoted++;
         const nl = toStep(fam, c, c.step + 1, items, order);

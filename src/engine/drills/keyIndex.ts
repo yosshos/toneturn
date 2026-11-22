@@ -218,3 +218,35 @@ export function withLens(d: Drill, lens: Lens, keepId = false): Drill {
     title: { en: `${d.title.en} · ${name.en}`, he: `${d.title.he} · ${name.he}` },
   };
 }
+
+/**
+ * The key's continuous session as a coach ladder (owner 2026-11-22: "the scale linear, then thirds, then triads, then
+ * four-note chords — along the whole scale"): the scale at the player's tier, then the scale harmonised along its whole
+ * length — diatonic 3rds, triads on every degree, 7th chords on every degree (and, from T4, block 7ths and drop 2) —
+ * then a cadence at the tier. A one-key family the coach runs like any other: the tempo climbs, the basics are skipped
+ * for a player past them, "almost" holds. Piano major / minor; null where the ladder has no material (then the list).
+ */
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number): FamilyDef | null {
+  if (group !== 'major' && group !== 'minor') return null;
+  const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
+  const minor = group === 'minor';
+  const t = Math.max(0, tier);
+  const scale = minor ? (t <= 1 ? 'scales-17' : t <= 3 ? 'scales-5' : t <= 5 ? 'scales-13' : 'scales-33') : t <= 1 ? 'scales-1' : t <= 3 ? 'scales-3' : t <= 5 ? 'scales-8' : 'scales-10';
+  // the harmonised scale (k-sharm): option 0 = major; 7 = harmonic minor
+  const opt = minor ? 7 : 0;
+  const ladder = ['k-sharm-3', 'k-sharm-7', 'k-sharm-11', ...(t >= 4 ? ['k-sharm-13', 'k-sharm-15'] : [])].map((id) => (minor ? id.replace(/\d+$/, (n) => String(Number(n) + 1)) : id));
+  const cadence = t <= 1 ? 'cadences-1' : t <= 3 ? 'cadences-2' : 'k-cadlib-1';
+  const steps: LevelDef[] = [];
+  const add = (fam: string, id: string, pick?: (sp: LevelDef['specs'][number]) => boolean) => {
+    const l = byId(fam, id);
+    if (!l) return;
+    const specs = pick ? l.specs.filter(pick) : l.specs;
+    if (!specs.length) return;
+    steps.push({ ...l, id: `key-${root}-${l.id}`, level: steps.length + 1, specs, keys: [root] });
+  };
+  add('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
+  for (const id of ladder) add('k-sharm', id, (sp) => (sp as { option?: number }).option === opt);
+  add(cadence.startsWith('k-cadlib') ? 'k-cadlib' : 'cadences', cadence, (sp) => !!(sp as { minor?: boolean }).minor === minor);
+  if (steps.length < 2) return null;
+  return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
+}

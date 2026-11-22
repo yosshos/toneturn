@@ -102,3 +102,20 @@ describe('dynamics as a lens', () => {
     expect(withLens(cad, 'cresc')).toBe(cad);
   });
 });
+
+describe('the key session ladder (owner 2026-11-22)', () => {
+  it('D major past the basics: the scale hands together, then 3rds, triads and 7ths along the whole scale, then a cadence — all in D', async () => {
+    const { keyLadder } = await import('../src/engine/drills/keyIndex');
+    const { specDrills } = await import('../src/engine/drills/plan');
+    const fam = keyLadder(families('piano'), 2, 'major', 3)!;
+    expect(fam.levels.map((l) => l.id.replace(/^key-2-/, ''))).toEqual(['scales-3', 'k-sharm-3', 'k-sharm-7', 'k-sharm-11', 'cadences-2']);
+    for (const l of fam.levels) for (let k = 0; k < l.specs.length; k++) expect(specDrills(l, k, 'fifths-up').every((d) => (d.tonic ? d.tonic.key : d.spec.key) % 12 === 2)).toBe(true);
+    // the harmonised scale is the major one (option 0), not the modes
+    expect(fam.levels[1].specs.every((s) => (s as { option?: number }).option === 0)).toBe(true);
+  });
+  it('an advanced player gets block 7ths and drop 2 too; a beginner the one-octave scale', async () => {
+    const { keyLadder } = await import('../src/engine/drills/keyIndex');
+    expect(keyLadder(families('piano'), 0, 'major', 5)!.levels.map((l) => l.id)).toEqual(expect.arrayContaining(['key-0-k-sharm-13', 'key-0-k-sharm-15']));
+    expect(keyLadder(families('piano'), 0, 'major', 0)!.levels[0].id).toBe('key-0-scales-1');
+  });
+});

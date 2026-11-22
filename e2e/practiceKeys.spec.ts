@@ -32,8 +32,11 @@ test('practice by key: the continuous session starts a run', async ({ page }) =>
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-practice-view="key"]').click();
   await page.locator('[data-key-card="0"]').click();
+  // owner 2026-11-22: the key's continuous session is the coach over the key's ladder (scale → 3rds → triads → 7ths)
+  await expect(page.locator('[data-key-session="0"]')).toHaveAttribute('data-key-ladder', /[3-9]/);
   await page.locator('[data-key-session="0"]').click();
-  await expect(page.locator('.drill-run')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+  await page.screenshot({ path: 'test-results/key-ladder-intro.png' });
 });
 
 test('practice by topic: a family splits by scale family (major, minor, modes, symmetric)', async ({ page }) => {
@@ -66,7 +69,7 @@ test('a key page: know the key (facts, related keys, warm-up), the dynamics lens
   await page.locator('[data-lens="cresc"]').click();
   await expect(page.locator('[data-lens="cresc"]')).toHaveAttribute('aria-checked', 'true');
   await page.locator('[data-key-session="9"]').click();
-  await expect(page.locator('.drill-run')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
 });
 
 test('wide screens: the keys on the circle of fifths', async ({ page }) => {
