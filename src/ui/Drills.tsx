@@ -123,6 +123,7 @@ import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './P
 import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
+import { keyMatrix, matrixSummary, projectionDays } from '../engine/drills/keyMatrix';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
@@ -318,6 +319,15 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const setKGroup = (g: FacetGroup) => (setKGroupState(g), lsSet('toneturn.keyGroup', g));
   // the advanced tabs (melodic / harmonic-minor modes) for a player past the basics: the course answers or the level test
   const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
+  // SPEC-DAILY-WORKOUT: the key × exercise matrix (piano), its summary and the projection at the player's minutes a day
+  const matrixTier = techTier >= 0 ? techTier : keysAdvanced ? 2 : 0;
+  const keyMatrixSum = useMemo(() => {
+    // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
+    if ((ds.instrument ?? 'piano') !== 'piano' || !(pView === 'key' || view.k === 'keypage')) return null;
+    const sum = matrixSummary(keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz' }));
+    const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
+    return { ...sum, perDay, days: projectionDays(sum, perDay) };
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, pView, view.k]);
   const keyIdx = useMemo(
     () => (ds.instrument === 'drums' || (pView !== 'key' && view.k !== 'keypage') ? null : buildKeyIndex(shownFamilies({ ...ds, bassTuning }), ds.keyOrder)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -468,7 +478,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
-        <KeyPage idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <KeyPage matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
       </main>
     );
   if (view.k === 'family')
@@ -511,7 +521,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       pView={pView}
       onPView={setPView}
       keyGrid={
-        keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
+        keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
           const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null

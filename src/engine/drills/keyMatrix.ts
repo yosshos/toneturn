@@ -7,7 +7,7 @@
 import type { FamilyDef, LevelDef } from './generate';
 import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
-import { openKeyRungs, rungNeed, type LadderRung } from './keyIndex';
+import { openKeyRungs, type LadderRung } from './keyIndex';
 
 export type MatrixGroup = 'major' | 'minor';
 export type MatrixView = 'weak' | 'key' | 'exercise';
@@ -44,37 +44,70 @@ const CLIMB_MEAN = 1.1;
  * gap, times the takes it is expected to need. A played item's tempo is its best clean one; a new one starts at its own.
  */
 export function cellMinutes(level: LevelDef, items: Record<string, ItemState>): number {
+  return minutesOf(cellDrills(level), items);
+}
+
+/** A cell's items, each with its target tempo (computed once: generating and finding targets is the slow part). */
+interface CellDrill {
+  itemId: string;
+  beats: number;
+  startBpm: number;
+  target: number;
+}
+const cellDrills = (level: LevelDef): CellDrill[] => level.specs.flatMap((_, k) => specDrills(level, k, 'fifths-up').map((d) => ({ itemId: d.itemId, beats: d.beats, startBpm: d.startBpm, target: itemTargetBpm(d) })));
+
+function minutesOf(ds: CellDrill[], items: Record<string, ItemState>): number {
   let s = 0;
   let firstNew = true;
-  for (let k = 0; k < level.specs.length; k++)
-    for (const d of specDrills(level, k, 'fifths-up')) {
-      const st = items[d.itemId];
-      const target = itemTargetBpm(d);
-      const played = !!st && st.takes > 0;
-      const bpm = Math.max(30, played && st.cleanBpm ? st.cleanBpm : (d.startBpm || 60) * CLIMB_MEAN);
-      const takeS = (d.beats * 60) / bpm + GAP_S;
-      let takes: number;
-      if (!played) {
-        takes = firstNew ? TAKES.new : TAKES.newNext;
-        firstNew = false;
-      } else takes = st.cleanBpm >= target ? TAKES.closed : TAKES.below;
-      s += takeS * takes;
-    }
+  for (const d of ds) {
+    const st = items[d.itemId];
+    const target = d.target;
+    const played = !!st && st.takes > 0;
+    const bpm = Math.max(30, played && st.cleanBpm ? st.cleanBpm : (d.startBpm || 60) * CLIMB_MEAN);
+    const takeS = (d.beats * 60) / bpm + GAP_S;
+    let takes: number;
+    if (!played) {
+      takes = firstNew ? TAKES.new : TAKES.newNext;
+      firstNew = false;
+    } else takes = st.cleanBpm >= target ? TAKES.closed : TAKES.below;
+    s += takeS * takes;
+  }
   return s / 60;
 }
 
 /** Every open cell of the matrix: 12 major keys (and harmonic minor from T2), every rung open at the tier. */
-export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[] } = {}): MatrixCell[] {
+type CellShape = Omit<MatrixCell, 'need' | 'minutes'> & { drills: CellDrill[] };
+/** The matrix's structure per tier / focus / groups: it does not depend on the player's items, so it is built once. */
+const shapeCache = new Map<string, CellShape[]>();
+
+function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[] }): CellShape[] {
   const groups = opts.groups ?? (tier >= MINOR_FROM_TIER ? ['major', 'minor'] : ['major']);
-  const out: MatrixCell[] = [];
+  const key = `${fams.length}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}`;
+  const hit = shapeCache.get(key);
+  if (hit) return hit;
+  const out: CellShape[] = [];
   for (const group of groups)
     for (let root = 0; root < 12; root++) {
       const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
-      const cell = (level: LevelDef, rung: string, block: MatrixCell['block'], i: number): MatrixCell => ({ root, group, rung, block, i, level, need: rungNeed(level, items), minutes: cellMinutes(level, items) });
+      const cell = (level: LevelDef, rung: string, block: MatrixCell['block'], i: number): CellShape => ({ root, group, rung, block, i, level, drills: cellDrills(level) });
       if (warm) out.push(cell(warm, warm.id.replace(`key-${root}-`, ''), 'W', -1));
       for (const b of built) out.push(cell(b.lvl, b.rung.id, b.rung.block, b.i));
     }
+  shapeCache.set(key, out);
   return out;
+}
+
+/** How much a cell needs work (as rungNeed), from its precomputed items. */
+function needOf(ds: CellDrill[], items: Record<string, ItemState>): MatrixCell['need'] {
+  const sts = ds.map((d) => items[d.itemId]).filter((x): x is ItemState => !!x && x.takes > 0);
+  if (!sts.length) return { s: 0, share: 0, last: '' };
+  const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, d.target)));
+  const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
+  return { s: share >= 1 ? 2 : 1, share, last };
+}
+
+export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[] } = {}): MatrixCell[] {
+  return matrixShape(fams, tier, opts).map(({ drills, ...c }) => ({ ...c, need: needOf(drills, items), minutes: minutesOf(drills, items) }));
 }
 
 const needCmp = (a: MatrixCell, b: MatrixCell): number => a.need.s - b.need.s || a.need.share - b.need.share || a.need.last.localeCompare(b.need.last);

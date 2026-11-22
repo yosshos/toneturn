@@ -9,6 +9,7 @@ import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
 import { families as familiesOf } from '../engine/drills/plan';
 import type { FamilyDef } from '../engine/drills/generate';
+import type { MatrixSummary } from '../engine/drills/keyMatrix';
 import { cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
@@ -120,7 +121,22 @@ function LevelBar({ done, of }: { done: number; of: number }) {
 }
 
 /** The 12 key cards of a tab, in the player's key order, and General technique under them. */
-export function KeyGrid({ idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
+/** The matrix as the player reads it (SPEC-DAILY-WORKOUT §2, §5): exercises, closed, time left, and the projection. */
+type MatrixInfo = (MatrixSummary & { perDay: number; days: number | null }) | null | undefined;
+const hrs = (m: number, he: boolean): string => (m < 90 ? (he ? `כ־${Math.round(m)} דקות` : `about ${Math.round(m)} min`) : he ? `כ־${Math.round(m / 60)} שעות` : `about ${Math.round(m / 60)} h`);
+const span = (d: number, he: boolean): string => (d <= 14 ? (he ? `${d} ימים` : `${d} days`) : d <= 90 ? (he ? `${Math.round(d / 7)} שבועות` : `${Math.round(d / 7)} weeks`) : he ? `${Math.round(d / 30)} חודשים` : `${Math.round(d / 30)} months`);
+function MatrixLine({ m, lang }: { m: MatrixInfo; lang: Lang }) {
+  if (!m || !m.cells) return null;
+  const he = lang === 'he';
+  return (
+    <p className="key-matrix-line" data-key-matrix={m.cells} data-key-matrix-closed={m.closed}>
+      {he ? `כל התרגילים בכל הסולמות ברמה שלכם: ${m.cells} · סגורים ${m.closed} · נשארו ${hrs(m.minutesLeft, true)}` : `Every exercise in every key at your level: ${m.cells} · closed ${m.closed} · ${hrs(m.minutesLeft, false)} left`}
+      {m.days !== null ? (he ? ` · ב־${m.perDay} דקות ביום: ${span(m.days, true)}` : ` · at ${m.perDay} min a day: ${span(m.days, false)}`) : ''}
+    </p>
+  );
+}
+
+export function KeyGrid({ matrix, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items);
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -129,6 +145,7 @@ export function KeyGrid({ idx, items, lang, ds, group, onGroup, onKey, general, 
   return (
     <section className="key-grid-wrap" data-key-grid={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
+      <MatrixLine m={matrix} lang={lang} />
       {weekRoot !== null && onWeek && (
         <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot}>
           <Icon k="play" size={20} />
@@ -190,7 +207,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach }: { /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach }: { matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -217,10 +234,16 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
   // the coach over the key's ladder: the scale at the player's tier, then 3rds, triads and 7ths along the whole scale
   const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
   const focus = ladder ? ladderFocus(ladder, items) : null;
+  const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
+      {mk && (
+        <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
+          {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
+        </p>
+      )}
       {session.length > 0 && (
         <button className="coach-entry" onClick={() => (ladder && onCoach ? onCoach(ladder) : run(session))} data-key-session={root} data-key-ladder={ladder ? ladder.levels.length : 0}>
           <Icon k="play" size={20} />
@@ -229,7 +252,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
               {he ? 'אימון רציף ב־' : 'Continuous practice in '}
               <bdi dir="ltr">{nameOf(root, g)}</bdi>
             </b>
-            <small>{ladder ? `${he ? `${ladder.levels.length} תרגילים: הסולם, טרצות, משולשים וספטאקורדים לאורך כל הסולם, ומה שהכי צריך חיזוק` : `${ladder.levels.length} exercises: the scale, 3rds, triads and 7th chords along the whole scale, and what needs work most`}${focus ? (he ? `. בדגש היום: ${focus.title.he}` : `. Today's focus: ${focus.title.en}`) : ''}` : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
+            <small>{ladder ? `${he ? `${ladder.levels.filter((l) => !l.id.endsWith('-again')).length} תרגילים: הסולם, טרצות, משולשים וספטאקורדים לאורך כל הסולם, ומה שהכי צריך חיזוק` : `${ladder.levels.filter((l) => !l.id.endsWith('-again')).length} exercises: the scale, 3rds, triads and 7th chords along the whole scale, and what needs work most`}${focus ? (he ? `. בדגש היום: ${focus.title.he}` : `. Today's focus: ${focus.title.en}`) : ''}` : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
           </span>
         </button>
       )}

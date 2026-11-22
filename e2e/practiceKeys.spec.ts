@@ -10,6 +10,8 @@ test('practice by key: cards, tabs, a key page with its continuous session and r
   await page.locator('[data-practice-view="key"]').click();
   await expect(page.locator('[data-key-card]')).toHaveCount(12, { timeout: 30_000 });
   await expect(page.locator('[data-key-general]')).toBeVisible();
+  // SPEC-DAILY-WORKOUT: the matrix line (every exercise in every key, closed, time left, the projection)
+  await expect(page.locator('[data-key-matrix]')).toBeVisible();
   await page.screenshot({ path: 'test-results/keys-grid.png', fullPage: true });
   await page.locator('[data-key-group="minor"]').click();
   await expect(page.locator('[data-key-card="9"]')).toContainText('Am');
@@ -17,6 +19,7 @@ test('practice by key: cards, tabs, a key page with its continuous session and r
   await page.locator('[data-key-card="0"]').click();
   await expect(page.locator('[data-key-page="0"]')).toBeVisible();
   await expect(page.locator('[data-key-session="0"]')).toBeVisible();
+  await expect(page.locator('[data-key-matrix-key]')).toBeVisible();
   await expect(page.locator('[data-kp-row="scale"]')).toBeVisible();
   await expect(page.locator('[data-kp-row="control"]')).toBeVisible();
   await page.screenshot({ path: 'test-results/keys-page.png' });
