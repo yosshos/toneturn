@@ -22,7 +22,7 @@ const S = (id: string, en: string, he: string, den: string, dhe: string, familie
 
 export const COURSE_SECTIONS: Partial<Record<CourseId, CourseSection[]>> = {
   keys: [
-    S('technique', 'Technique', 'טכניקה', 'Scales, arpeggios, modes, fingers, hand independence', 'סולמות, ארפג׳יו, מודים, אצבעות, עצמאות הידיים', ['k-first', 'scales', 'arpeggios', 'fingers', 'advanced', 'k-indep', 'k-modes', 'k-mmhm']),
+    S('technique', 'Technique', 'טכניקה', 'Scales, arpeggios, modes, fingers, hand independence', 'סולמות, ארפג׳יו, מודים, אצבעות, עצמאות הידיים', ['k-first', 'scales', 'arpeggios', 'fingers', 'advanced', 'k-indep', 'k-modes', 'k-mmhm', 'k-keylick', 'k-keyx']),
     S('tone', 'Dynamics', 'דינמיקה', 'Touch, dynamics, balance, voicing the melody, pedal, phrasing', 'מגע, דינמיקה, איזון, הבלטת מנגינה, פדל, משפטים', ['control', 'k-pedal', 'k-classic']),
     S('time', 'Time', 'זמן', 'Steady time in every take, subdivision, meters, polyrhythm', 'זמן יציב בכל נגינה, חלוקה, משקלים, פוליריתמיקה', ['k-rhythm'], true),
     S('harmony', 'Harmony', 'הרמוניה', 'Chords, voicings, voice leading, cadences', 'אקורדים, ווייסינגים, הובלת קולות, קדנצות', ['cadences', 'voicings', 'k-vl', 'k-theory', 'k-keys', 'k-sharm', 'k-harm', 'k-sixdim', 'k-reharm', 'k-ctone', 'k-mediant', 'k-cadlib', 'k-dimcol']),

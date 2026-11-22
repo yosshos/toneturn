@@ -39,6 +39,10 @@ export const UNITS: Record<string, string> = {
   'tech:k-pop': 'first-chord-symbols', // block chords from symbols, the pop LH
   'tech:k-bebop': 'vocab-lines',
   'tech:k-sixdim': 'key-sixdim',
+  // SPEC-KEY-SESSION: the approach licks open on approach notes, lick 2 on the enclosures; more in the key on the advanced page.
+  'tech:k-keylick': 'vocab-approach',
+  'tech:k-keylick-4': 'vocab-enclose',
+  'tech:k-keyx': 'fam-advanced',
   'tech:k-dimcol': 'bh-brothers', // colours of the diminished open on the brothers: one dim, four dominants
   'tech:accomp': 'piano-lh-styles', // L9: root–5th, Alberti, stride, shells (accomp-1 is the Alberti bass)
   'tech:accomp-2': 'walk-approach', // L5: walking bass — chord tones on 1 and 3, approach notes on 4

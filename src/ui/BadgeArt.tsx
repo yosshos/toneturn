@@ -608,6 +608,24 @@ export const GLYPHS: Record<string, Glyph> = {
       {p('M9.6 18.6V7 M10.5 6.5h3.5 M12.6 4.8l1.6 1.7-1.6 1.7', false)}
     </>
   ),
+  // SPEC-KEY-SESSION: approach licks — a small chromatic head leading into a climbing triad; more in the key — a broken
+  // octave under a leap arc.
+  'family:k-keylick': () => (
+    <>
+      {head(4, 18, 1.8)}
+      {p('M6.5 17l3.5 -1.5', false)}
+      {head(11, 16, 2.2)}
+      {head(15, 11.5, 2.2)}
+      {head(19, 7, 2.2)}
+    </>
+  ),
+  'family:k-keyx': () => (
+    <>
+      {head(6, 18, 2.4)}
+      {head(18, 6, 2.4)}
+      {p('M7.5 15.5Q9 4 16 4.5', false)}
+    </>
+  ),
   'family:k-bebop': () => (
     <>
       {head(4, 9, 2)}

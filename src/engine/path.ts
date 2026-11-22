@@ -8,6 +8,7 @@
 import { gameVerified, topicVerified } from './verifiedContent';
 import { K_HARM_DIFF } from './drills/harmLadder';
 import { K_INDEP_DIFF } from './drills/indepDrills';
+import { K_KEYLICK_DIFF, K_KEYX_DIFF } from './drills/keyLicks';
 import { MODE_LEVEL_DIFF } from './drills/modeScales';
 import { questionTags } from './taxonomy';
 import { SUB_PREREQ, IMPORTANCE } from './scheduler';
@@ -651,6 +652,9 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // minor modes 1640–1895).
   ...MODE_LEVEL_DIFF,
   ...K_HARM_DIFF,
+  // SPEC-KEY-SESSION: the approach licks after the harmonised scale's arpeggios; the key's extra exercises alongside.
+  ...K_KEYLICK_DIFF,
+  ...K_KEYX_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
   // HARMONY-REHARM (colorDrills.ts): one note many chords, mediants, organ, k-reharm 11–22 and b-counter, ~1050–1800.

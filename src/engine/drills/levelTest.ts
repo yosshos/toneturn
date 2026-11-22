@@ -72,11 +72,12 @@ const HANDS: Rung[] = [
   r('arpeggios-3', 5, { 'k-first': 11, scales: 5, fingers: 3, arpeggios: 4, control: 3, 'k-sharm': 4, 'k-indep': 1 }),
   r('scales-5', 9, { 'k-first': 11, scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 6, 'k-indep': 2 }),
   r('k-indep-5', 3, { 'k-first': 11, scales: 6, fingers: 5, arpeggios: 5, control: 5, advanced: 1, 'k-sharm': 8, 'k-indep': 4 }),
-  r('fingers-6', 10, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5 }),
+  // SPEC-KEY-SESSION: 7th chords through the scale and Hanon place the first approach lick and the key's octaves and leaps.
+  r('fingers-6', 10, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-keylick': 1, 'k-keyx': 2 }),
   // AUDIT-7 #11: a graded piece (Bach's Prelude in C, G5) places the classical tier and the pedal's first steps.
-  r('k-classic-6', 0, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2 }),
+  r('k-classic-6', 0, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-keylick': 1, 'k-keyx': 2, 'k-classic': 6, 'k-pedal': 2 }),
   // SPEC-PRACTICE-KEYS §6: aeolian each hand, 1 and 2 octaves (~1540) places the modes on a root.
-  r('k-modes-1', 5, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-classic': 6, 'k-pedal': 2, 'k-modes': 2 }),
+  r('k-modes-1', 5, { 'k-first': 11, scales: 8, fingers: 7, arpeggios: 7, control: 7, advanced: 3, 'k-sharm': 12, 'k-indep': 5, 'k-keylick': 1, 'k-keyx': 2, 'k-classic': 6, 'k-pedal': 2, 'k-modes': 2 }),
 ];
 // MEASUREMENT-AUDIT G8: touch is tested before it is placed (control used to be inferred from the hands steps): one
 // level, a crescendo out and back, voicing, the pedal, dynamics in contrary motion, soft at speed. MIDI only — by

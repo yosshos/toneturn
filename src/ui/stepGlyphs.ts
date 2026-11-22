@@ -12,6 +12,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-sixdim': 'sixdim', 'k-bebop': 'bebop', 'k-reharm': 'reharm',
   // Colours of the diminished: the diminished chord's symbol (its colours grow out of it).
   'k-dimcol': 'sixdim',
+  // SPEC-KEY-SESSION: a chromatic note leading into a triad (approach licks); a broken octave leaping (more in the key).
+  'k-keylick': 'keylick', 'k-keyx': 'keyx',
   // THEORY_PLAY: theory you play (two stacked triads).
   'k-theory': 'tpair', 'g-theory': 'gtpair',
   // AUDIT-GAPS-2: bebop vocabulary (an enclosed target) on the keys, the neck and the bass.

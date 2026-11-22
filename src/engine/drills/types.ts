@@ -38,6 +38,9 @@ export type FamilyId =
   | 'k-tpair'
   // Colours of the diminished (docs/research/DIM-COLOURS.md, dimColours.ts): every dominant colour one dim chord holds.
   | 'k-dimcol'
+  // SPEC-KEY-SESSION §1C, §1b (keyLicks.ts): the owner's approach licks through the harmonised scale; more in the key.
+  | 'k-keylick'
+  | 'k-keyx'
   // Solo jazz piano after Jeremy Siskind (docs/research/SISKIND-SOLO-PIANO.md Part C, soloPianoDrills.ts): the left hand
   // for solo piano, solo-piano textures through the heads, the comping vocabulary, improvisation habits.
   | 'k-lh'

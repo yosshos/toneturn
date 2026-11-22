@@ -85,6 +85,10 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'k-modes': { role: 'scale', group: 'major' },
   'k-mmhm': { role: 'scale' },
   'k-cadlib': { role: 'cadence' },
+  // SPEC-KEY-SESSION: the approach licks sit with the harmonised scale; the key's extra exercises are patterns, the
+  // bass-leap cadences comping.
+  'k-keylick': { role: 'harmony' },
+  'k-keyx': { role: 'pattern', kinds: { 'kx-waltz': 'comping', 'kx-stride': 'comping' } },
   // ── guitar
   'g-first': { scope: 'neutral', role: 'pattern' },
   'g-riff': { scope: 'apply', role: 'apply' },
