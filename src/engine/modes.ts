@@ -29,6 +29,8 @@ export type ModeId =
   // others
   | 'whole-tone'
   | 'diminished'
+  /** Whole–half from a dim7's root (the passing diminished, SPEC-RBI-ROTATION §1). */
+  | 'whole-half'
   | 'major-pentatonic'
   | 'minor-pentatonic'
   | 'blues'
@@ -70,6 +72,7 @@ export const MODE_STEPS: Record<ModeId, number[]> = {
   ultralocrian: [0, 1, 3, 4, 6, 8, 9, 12],
   'whole-tone': [0, 2, 4, 6, 8, 10, 12],
   diminished: [0, 1, 3, 4, 6, 7, 9, 10, 12],
+  'whole-half': [0, 2, 3, 5, 6, 8, 9, 11, 12],
   'major-pentatonic': [0, 2, 4, 7, 9, 12],
   'minor-pentatonic': [0, 3, 5, 7, 10, 12],
   blues: [0, 3, 5, 6, 7, 10, 12],
@@ -111,6 +114,7 @@ export const MODE_FAMILY: Record<ModeId, 'major' | 'melodic' | 'harmonic' | 'oth
   ultralocrian: 'harmonic',
   'whole-tone': 'other',
   diminished: 'other',
+  'whole-half': 'other',
   'major-pentatonic': 'other',
   'minor-pentatonic': 'other',
   blues: 'other',
@@ -153,6 +157,7 @@ export const MODE_NAMES: Record<ModeId, { en: string; he: string; say: { en: str
   ultralocrian: { en: 'Ultralocrian', he: 'אולטרה־לוקרי', say: { en: ['ultralocrian', 'ultra locrian', 'altered double flat seven', 'super locrian double flat seven'], he: ['אולטרה לוקרי', 'אולטרלוקרי'] } },
   'whole-tone': { en: 'Whole tone', he: 'טון שלם', say: { en: ['whole tone'], he: ['טון שלם', 'טונים שלמים'] } },
   diminished: { en: 'Diminished (half–whole)', he: 'מוקטן (חצי–שלם)', say: { en: ['diminished', 'half whole', 'octatonic', 'dominant diminished', 'symmetric diminished'], he: ['מוקטן', 'דימיניש', 'חצי שלם'] } },
+  'whole-half': { en: 'Diminished (whole–half)', he: 'מוקטן (שלם–חצי)', say: { en: ['whole half', 'whole half diminished', 'diminished scale'], he: ['שלם חצי', 'מוקטן שלם חצי'] } },
   'major-pentatonic': { en: 'Major pentatonic', he: 'פנטטוני מז׳ורי', say: { en: ['major pentatonic', 'pentatonic major'], he: ['פנטטוני מז׳ורי', 'פנטטוני מזורי'] } },
   'minor-pentatonic': { en: 'Minor pentatonic', he: 'פנטטוני מינורי', say: { en: ['minor pentatonic', 'pentatonic minor'], he: ['פנטטוני מינורי'] } },
   blues: { en: 'Blues (minor)', he: 'בלוז (מינורי)', say: { en: ['blues', 'minor blues'], he: ['בלוז', 'בלוז מינורי'] } },
