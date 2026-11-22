@@ -90,3 +90,7 @@
 ## 4. Addendum (2026-11-22): path, Today, Practice and the teacher
 
 docs/SPEC-PATH-TODAY-PRACTICE.md: one item page whatever the way in; the menu Today · Practice · Path; "the full practice of the step" from the path; the teacher's section is added to the daily workout (never replaces it); the channel can be required in an assignment. Its §6 slots the work into phases 2–6.
+
+## 5. Addendum (2026-11-22): progress over time
+
+docs/SPEC-PROGRESS-CHARTS.md. **Phase 1b (next): daily snapshots** (status ladder per area, tempo index, minutes by area and channel, the channel profile, keys, vocabulary, improv) in IndexedDB, with the past back-filled and the summary synced for class members, so history builds up before the charts ship (phase 6, with item, place and Today mini-charts earlier).
