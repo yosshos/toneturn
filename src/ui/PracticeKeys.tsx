@@ -9,7 +9,7 @@ import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
 import { families as familiesOf } from '../engine/drills/plan';
 import type { FamilyDef } from '../engine/drills/generate';
-import { cleanAt, currentEntry, groupsOf, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
@@ -216,6 +216,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
   const session = keySession(idx, root, g, items);
   // the coach over the key's ladder: the scale at the player's tier, then 3rds, triads and 7ths along the whole scale
   const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
+  const focus = ladder ? ladderFocus(ladder, items) : null;
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
@@ -228,7 +229,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
               {he ? 'אימון רציף ב־' : 'Continuous practice in '}
               <bdi dir="ltr">{nameOf(root, g)}</bdi>
             </b>
-            <small>{ladder ? (he ? 'הסולם ברמה שלכם, ואז טרצות, משולשים וספטאקורדים לאורך כל הסולם, וקדנצה. הטמפו עולה כשזה נקי' : 'The scale at your level, then 3rds, triads and 7th chords along the whole scale, and a cadence; the tempo climbs when it is clean') : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
+            <small>{ladder ? `${he ? `${ladder.levels.length} תרגילים: הסולם, טרצות, משולשים וספטאקורדים לאורך כל הסולם, ומה שהכי צריך חיזוק` : `${ladder.levels.length} exercises: the scale, 3rds, triads and 7th chords along the whole scale, and what needs work most`}${focus ? (he ? `. בדגש היום: ${focus.title.he}` : `. Today's focus: ${focus.title.en}`) : ''}` : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>
           </span>
         </button>
       )}

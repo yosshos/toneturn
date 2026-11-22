@@ -279,6 +279,42 @@ export function ladderRungs(group: 'major' | 'minor'): LadderRung[] {
   ];
 }
 
+/**
+ * How much a rung of the key needs work: s 0 never played in this key, 1 played below its target, 2 at its target;
+ * share = the slowest item's best clean tempo over its target; last = when it was last played.
+ */
+export function rungNeed(l: LevelDef, items: Record<string, ItemState>): { s: 0 | 1 | 2; share: number; last: string } {
+  const ds = l.specs.flatMap((_, k) => specDrills(l, k, 'fifths-up'));
+  const sts = ds.map((d) => items[d.itemId]).filter((x): x is ItemState => !!x && x.takes > 0);
+  if (!sts.length) return { s: 0, share: 0, last: '' };
+  const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, itemTargetBpm(d))));
+  const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
+  return { s: share >= 1 ? 2 : 1, share, last };
+}
+
+/** The rung a key's session leans on: the played one furthest below its target, else the first new one past the warm-up. */
+export function ladderFocus(fam: FamilyDef, items: Record<string, ItemState>): LevelDef | null {
+  const ls = fam.levels.slice(1).filter((l) => !l.id.endsWith('-again'));
+  const played = ls.map((l) => ({ l, n: rungNeed(l, items) })).filter((x) => x.n.s === 1).sort((a, b) => a.n.share - b.n.share);
+  return played[0]?.l ?? ls.find((l) => rungNeed(l, items).s === 0) ?? null;
+}
+
+/** A rung's title for one key: no "and the modes" / "in C, G, F" / "all keys" (the session is in one key). */
+const ONE_KEY_TITLE: Record<string, { en: string; he: string }> = {
+  'cadences-1': { en: 'I–IV–V–I', he: 'I–IV–V–I' },
+  'cadences-3': { en: 'Minor cadence: i–iv–i6/4–V–i', he: 'קדנצה במינור: i–iv–i6/4–V–i' },
+  'cadences-7': { en: 'Minor: deceptive, plagal, Picardy 3rd', he: 'מינור: מטעה, פלגאלית, טרצה פיקרדית' },
+  'advanced-9': { en: 'Scales in octaves, double 3rds in the left hand', he: 'סולם באוקטבות, טרצות כפולות ביד שמאל' },
+  'scales-13': { en: 'Contrary motion, a 3rd / 6th / 10th apart', he: 'תנועה נגדית, בהפרש טרצה / סקסטה / דצימה' },
+};
+const oneKeyTitle = (l: LevelDef): { en: string; he: string } => {
+  const o = ONE_KEY_TITLE[l.id];
+  if (o) return o;
+  if (!l.id.startsWith('k-sharm-')) return l.title;
+  const cut = (t: string) => t.replace(/[:;] *(מז׳ור והמודוסים|מינור וסולמות האריס|major and the modes|minor and the Harris scales|מינור|minor)(?![A-Za-z]).*$/u, '').replace(/[:;] *(מינור הרמוני|harmonic).*$/u, '');
+  return { en: cut(l.title.en), he: cut(l.title.he) };
+};
+
 export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number } = {}): FamilyDef | null {
   if (group !== 'major' && group !== 'minor') return null;
   const minor = group === 'minor';
@@ -289,21 +325,13 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
     const l = byId(fam, id);
     if (!l) return null;
     const specs = pick ? l.specs.filter(pick) : l.specs;
-    return specs.length ? { ...l, id: `key-${root}-${l.id}${n ? `-${n}` : ''}`, level: 0, specs, keys: [root] } : null;
+    return specs.length ? { ...l, id: `key-${root}-${l.id}${n ? `-${n}` : ''}`, title: oneKeyTitle(l), level: 0, specs, keys: [root] } : null;
   };
   const warm = make('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
   // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier)
   const open = ladderRungs(group).filter((r) => r.id !== scale && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
   const built = open.map((r, i) => ({ i, lvl: make(r.fam, r.id, r.pick) })).filter((x): x is { i: number; lvl: LevelDef } => !!x.lvl);
-  // what the player needs most: never played (in teaching order), then the lowest share of the target, then the oldest
-  const score = (l: LevelDef) => {
-    const ds = l.specs.flatMap((_, k) => specDrills(l, k, 'fifths-up'));
-    const sts = ds.map((d) => items[d.itemId]).filter(Boolean) as ItemState[];
-    if (!sts.length) return { s: 0, share: 0, last: '' };
-    const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, itemTargetBpm(d))));
-    const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
-    return { s: share >= 1 ? 2 : 1, share, last };
-  };
+  const score = (l: LevelDef) => rungNeed(l, items);
   const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order
@@ -318,9 +346,9 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   const steps: LevelDef[] = [];
   if (warm) steps.push(warm);
   steps.push(...chosen);
-  // a closing visit to the first harmonised rung, faster (its tempo starts from the best just played)
+  // a closing visit to the first harmonised rung: it starts just under the best clean tempo just reached
   const back = chosen.find((l) => /k-sharm/.test(l.id));
-  if (back) steps.push({ ...back, id: `${back.id}-again` });
+  if (back) steps.push({ ...back, id: `${back.id}-again`, title: { en: `${back.title.en}: again, from your best tempo`, he: `${back.title.he}: שוב, מהטמפו הכי טוב שלך` } });
   steps.forEach((l, k) => (l.level = k + 1));
   if (steps.length < 2) return null;
   return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
