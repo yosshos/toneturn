@@ -75,7 +75,7 @@ export function studioShareCardSvg(o: { title: string; by: string; bpm: number; 
   const bx = he ? W - 106 : 106;
   const tx = he ? W - 200 : 200;
   const brand = he ? 'החוש ה־7' : 'The 7th Sense';
-  const kind = o.words?.kind ?? (he ? 'אתגר הדרן' : 'Encore challenge');
+  const kind = o.words?.kind ?? (he ? 'אתגר ליקים' : 'Lick challenge');
   const who = o.words?.who ?? (he ? `${o.by} מאתגר/ת אותך` : `${o.by} challenges you`);
   const tempo = o.words?.tempo ?? (he ? `♩${o.bpm} · ${o.keys} סולמות` : `♩${o.bpm} · ${o.keys} keys`);
   const foot = o.words?.foot ?? (he ? `רמה ${o.level}` : `Level ${o.level}`);

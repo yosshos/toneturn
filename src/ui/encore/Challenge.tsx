@@ -256,14 +256,14 @@ export function ChallengeScreen(p: ChallengeProps) {
   if (!CHALLENGES_ON())
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="off">
-        {top(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
+        {top(L(lang, 'Lick challenges', 'אתגרי ליקים'), undefined, p.onBack)}
         <p className="t3">{L(lang, 'Not available yet — coming with the next server update.', 'עוד לא זמין — יגיע עם עדכון השרת הבא.')}</p>
       </main>
     );
   if (!p.signedIn && r.view !== 'page')
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="signin">
-        {top(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
+        {top(L(lang, 'Lick challenges', 'אתגרי ליקים'), undefined, p.onBack)}
         <p className="t3">{L(lang, 'Sign in to share phrases and take challenges.', 'כדי לשתף משפטים ולקבל אתגרים צריך להתחבר.')}</p>
         <button className="btn primary enc-full" onClick={p.onSignIn} data-chl-signin="1">
           {L(lang, 'Sign in', 'להתחבר')}
@@ -566,7 +566,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
   if (!signedIn)
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="page-signin">
-        {head(L(lang, 'Encore challenge', 'אתגר הדרן'))}
+        {head(L(lang, 'Lick challenge', 'אתגר ליקים'))}
         <p className="t3">{L(lang, 'Sign in to take the challenge and appear on the board.', 'כדי לקבל את האתגר ולהופיע בלוח צריך להתחבר.')}</p>
         <button className="btn primary enc-full" onClick={onSignIn}>
           {L(lang, 'Sign in', 'להתחבר')}
@@ -576,14 +576,14 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
   if (!opened)
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="page-loading">
-        {head(L(lang, 'Encore challenge', 'אתגר הדרן'))}
+        {head(L(lang, 'Lick challenge', 'אתגר ליקים'))}
         <p className="t3">…</p>
       </main>
     );
   if (opened.kind !== 'phrase' || hiddenSet().has(`${opened.p.id}:`))
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="page-none">
-        {head(L(lang, 'Encore challenge', 'אתגר הדרן'), undefined, () => go(''))}
+        {head(L(lang, 'Lick challenge', 'אתגר ליקים'), undefined, () => go(''))}
         <p className="t3" data-chl-locked={opened.kind === 'locked' ? opened.scope : 'none'}>
           {opened.kind === 'locked' ? (
             opened.scope === 'friends' ? (
@@ -666,7 +666,7 @@ function ChallengePage({ lang, settings, items, onSettings, head, code, beat, si
       {head(
         <Bi text={ph.title} />,
         <>
-          {L(lang, 'Encore challenge · by ', 'אתגר הדרן · מאת ')}
+          {L(lang, 'Lick challenge · by ', 'אתגר ליקים · מאת ')}
           <Bi text={ph.ownerName} />
         </>,
         () => go(''),
@@ -830,7 +830,7 @@ function GalleryView({ lang, settings, items, head, onBack }: ChallengeProps & {
   );
   return (
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="gallery">
-      {head(L(lang, 'Encore challenges', 'אתגרי הדרן'), L(lang, 'Community · this week', 'קהילה · השבוע'), onBack, (
+      {head(L(lang, 'Lick challenges', 'אתגרי ליקים'), L(lang, 'Community · this week', 'קהילה · השבוע'), onBack, (
         <span className="row chl-head-btns">
           <button className="icon-btn" onClick={() => go('gifts')} aria-label={L(lang, 'Gifts between friends', 'מתנות בין חברים')} data-chl-gifts="1">
             <GiftIcon size={16} />
@@ -910,7 +910,7 @@ function MineView({ lang, head }: { lang: Lang; head: Head }) {
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="mine">
       {head(L(lang, 'My shared phrases', 'המשפטים ששיתפתי'), undefined, () => go(''))}
       <div className="chl-list">
-        {list && !list.length && <p className="t3">{L(lang, 'Nothing shared yet. Share from a phrase in Encore.', 'עוד לא שיתפת. משתפים מתוך משפט בהדרן.')}</p>}
+        {list && !list.length && <p className="t3">{L(lang, 'Nothing shared yet. Share from one of your phrases in Licks.', 'עוד לא שיתפת. משתפים מתוך משפט שלך בליקים.')}</p>}
         {list?.map((p) => (
           <div key={p.id} className="enc-card col" data-mine-phrase={p.code}>
             <button className="chl-plain row" onClick={() => go(`p/${p.code}`)}>
@@ -958,7 +958,7 @@ function ReviewView({ lang, head }: { lang: Lang; head: Head }) {
   const kindName = (k: ReportKind) => (k === 'copied' ? L(lang, 'not their own', 'לא שלו/ה') : k === 'implausible' ? L(lang, 'implausible', 'לא אמין') : L(lang, 'other', 'אחר'));
   return (
     <main className="panel-screen enc-screen chl-screen chl-fit" data-chl="review">
-      {head(L(lang, 'Reports to review', 'דיווחים לבדיקה'), L(lang, 'Encore challenges', 'אתגרי הדרן'), () => go(''))}
+      {head(L(lang, 'Reports to review', 'דיווחים לבדיקה'), L(lang, 'Lick challenges', 'אתגרי ליקים'), () => go(''))}
       {list === null && <p className="t3">{L(lang, 'Admins only.', 'למנהלים בלבד.')}</p>}
       <div className="chl-list">
         {list?.length === 0 && <p className="t3">{L(lang, 'Nothing to review.', 'אין מה לבדוק.')}</p>}
@@ -1098,7 +1098,7 @@ export function PhrasePublicScreen({ code, beat, lang, signedIn, onOpenInApp, on
     <main className="panel-screen enc-screen chl-screen chl-public" data-chl="public" data-public-code={code}>
       <header className="row chl-brand">
         <EncoreGlyph size={16} />
-        <b className="t2 grow">{L(lang, 'The 7th Sense · Encore challenge', 'החוש ה־7 · אתגר הדרן')}</b>
+        <b className="t2 grow">{L(lang, 'The 7th Sense · Lick challenge', 'החוש ה־7 · אתגר ליקים')}</b>
         <button className="link" onClick={onHome}>
           {L(lang, 'Home', 'לדף הבית')}
         </button>
@@ -1106,7 +1106,7 @@ export function PhrasePublicScreen({ code, beat, lang, signedIn, onOpenInApp, on
       {p === undefined && <p className="t3">…</p>}
       {p === null && (
         <p className="t3" data-public-none="1">
-          {CHALLENGES_ON() ? L(lang, 'This phrase is not public, or the link is wrong. Friends-only phrases open inside the app.', 'המשפט הזה לא ציבורי, או שהקישור שגוי. משפטים לחברים נפתחים בתוך האפליקציה.') : L(lang, 'Encore challenges are not available yet.', 'אתגרי הדרן עוד לא זמינים.')}
+          {CHALLENGES_ON() ? L(lang, 'This phrase is not public, or the link is wrong. Friends-only phrases open inside the app.', 'המשפט הזה לא ציבורי, או שהקישור שגוי. משפטים לחברים נפתחים בתוך האפליקציה.') : L(lang, 'Lick challenges are not available yet.', 'אתגרי ליקים עוד לא זמינים.')}
         </p>
       )}
       {p && (

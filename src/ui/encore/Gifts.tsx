@@ -284,7 +284,7 @@ function DedicateView({ lang, settings, head, f, allowance, youngMe, ms }: { lan
         <span>{ALLOWANCE_TEXT[allowance][lang]}</span>
       </p>
       <div className="chl-list" role="radiogroup" aria-label={L(lang, 'My phrases', 'המשפטים שלי')}>
-        {!list.length && <p className="t3">{L(lang, 'No phrase of your own yet. Keep one in Encore first.', 'עוד אין משפט משלך. שומרים משפט בהדרן קודם.')}</p>}
+        {!list.length && <p className="t3">{L(lang, 'No phrase of your own yet. Keep one in Licks › Mine first.', 'עוד אין משפט משלך. שומרים משפט בליקים › שלי קודם.')}</p>}
         {list.map((l) => (
           <label key={l.id} className={`enc-card row gift-pick ${id === l.id ? 'on' : ''}`} data-gift-pick={l.id}>
             <input type="radio" name="gift-ph" checked={id === l.id} onChange={() => setId(l.id)} />

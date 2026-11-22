@@ -26,7 +26,7 @@ export function EncoreTodayCard({ lang, book, items, onOpen, inst = 'piano', ran
     <button type="button" className="tc-card tc-encore" onClick={() => onOpen(`/encore/run/${d.l.id}~${d.key}`)} data-today-encore={d.l.id} data-today-encore-why={d.why}>
       <EncoreGlyph size={16} />
       <span className="grow" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <small>{he ? 'הדרן' : 'Encore'}</small>
+        <small>{he ? 'ליקים' : 'Licks'}</small>
         <b>
           <Bi text={T(d.l.name, lang)} />
         </b>

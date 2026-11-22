@@ -185,7 +185,7 @@ export function EncoreScreen(p: EncoreProps) {
     const ds = drillSettingsOf(settings);
     return (
       <main className="drills-screen enc-screen" data-encore="pattern">
-        {head(he ? 'תבנית חדשה' : 'New pattern', he ? 'הדרן' : 'Encore', () => nav('library'))}
+        {head(he ? 'תבנית חדשה' : 'New pattern', he ? 'ליקים' : 'Licks', () => nav('library'))}
         <DrillCreator
           lang={lang}
           edit={edit}
@@ -220,7 +220,7 @@ export function EncoreScreen(p: EncoreProps) {
       {p.hub ? (
         <LicksHead lang={lang} section="mine" onBack={p.onBack} book={bookRef.current} extra={libBtn} />
       ) : (
-        head(he ? 'הדרן' : 'Encore', he ? 'המשפטים שלי' : 'My phrases', p.onBack, libBtn)
+        head(he ? 'ליקים' : 'Licks', he ? 'המשפטים שלי' : 'My phrases', p.onBack, libBtn)
       )}
       {due.length > 0 && (
         <section className="enc-block" data-enc-due={due.length}>
@@ -568,7 +568,7 @@ function CaughtView({ lang, head, takeId }: { lang: Lang; head: Head; takeId: st
 function Missing({ lang, head }: { lang: Lang; head: Head }) {
   return (
     <main className="panel-screen enc-screen" data-encore="missing">
-      {head(lang === 'he' ? 'הדרן' : 'Encore', undefined, () => nav(''))}
+      {head(lang === 'he' ? 'ליקים' : 'Licks', undefined, () => nav(''))}
       <p className="t3">{lang === 'he' ? 'הניסיון הזה לא נמצא במכשיר.' : 'This take is not on this device.'}</p>
     </main>
   );
@@ -639,10 +639,10 @@ function TrimInner({ lang, head, take, from, to, step, settings, onSave }: { lan
   const setS = (x: TrimState) => {
     setS0(x);
     // never lose progress: the trim state sits in a resume slot (Back / reload returns to the same handles)
-    saveSlot(`encore:trim:${take.id}`, { title: he ? 'הדרן · בחירת תיבות' : 'Encore · choosing bars', route: `encore/new?take=${take.id}`, done: 0, total: 1, data: x });
+    saveSlot(`encore:trim:${take.id}`, { title: he ? 'ליקים · בחירת תיבות' : 'Licks · choosing bars', route: `encore/new?take=${take.id}`, done: 0, total: 1, data: x });
   };
   useEffect(() => {
-    saveSlot(`encore:trim:${take.id}`, { title: he ? 'הדרן · בחירת תיבות' : 'Encore · choosing bars', route: `encore/new?take=${take.id}`, done: 0, total: 1, data: s });
+    saveSlot(`encore:trim:${take.id}`, { title: he ? 'ליקים · בחירת תיבות' : 'Licks · choosing bars', route: `encore/new?take=${take.id}`, done: 0, total: 1, data: s });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const m = s.meter;
@@ -1448,7 +1448,7 @@ function LibraryView({ lang, head, book, custom, items, onMakePhrase }: { lang: 
   const nPh = all.filter((x) => x.kind === 'phrase').length;
   return (
     <main className="panel-screen enc-screen enc-scroll" data-encore="library">
-      {head(he ? 'המשפטים שלי' : 'My phrases', he ? 'הדרן' : 'Encore', () => nav(''), (
+      {head(he ? 'המשפטים שלי' : 'My phrases', he ? 'ליקים' : 'Licks', () => nav(''), (
         <button className="icon-btn" onClick={() => nav('record')} aria-label={he ? 'הקלטה חדשה' : 'New recording'} data-lib-add="1">
           <Icon k="plus" />
         </button>
