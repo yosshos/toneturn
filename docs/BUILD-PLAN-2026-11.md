@@ -6,7 +6,7 @@
 
 ## 0. Decisions
 
-### 0.1 The owner decides (product / learning)
+### 0.1 The owner decides (product / learning): all five recommendations approved 2026-11-22 ("start and don't stop until done")
 
 | # | Question | Recommendation |
 |---|---|---|
