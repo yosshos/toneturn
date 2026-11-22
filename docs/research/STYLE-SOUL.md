@@ -466,3 +466,11 @@ Proposal **[?]**: let organ rungs set the registration (jazz 888000000 + perc 3r
 - **Organ:** a full section (§10) on technique and what MIDI can measure: legato overlap and gaps, the detached touch that retriggers percussion, CC11/CC7 swell, glissando speed and grace-note slides, and hand independence by register. Not measurable: Leslie timing taste, tone, palm vs finger. Three sound gaps to fix: velocity should be off for organ rungs, percussion should be single-trigger, and CC11 should reach the organ voice.
 - **Rhodes / Wurlitzer and vibes:** EPs are velocity-sensitive with tone change (the Wurlitzer "bite" is [V]), a stereo tremolo and a sustain pedal. Vibes from a keyboard is piano technique with vibes-style voicings, not vibraphone technique.
 - **Ladders (§9) are proposals [?]:** T0–T6 per instrument with tempi. They reuse existing rungs wherever they exist.
+
+## Owner addition (2026-11-22, owner-confirmed)
+
+- **I–IV–I–IV through the inversions** (in this research already): the plagal rocking chord moved up, root position → 1st inversion → 2nd inversion, the voices moving by step.
+- **ii–I and I–ii through the inversions** (owner, "very common"): the same rocking motion between the minor ii and I, in both directions, climbing (and descending) through the inversions.
+  - In C: C → Dm/F → C/E → Dm/A → C/G → Dm/C …
+  - The top voice moves by step; the hands keep a close position.
+  - [V owner] It is a gospel exercise in its own right, in all 12 keys, for the style block (H) of the per-key matrix, with I–IV–I–IV beside it.
