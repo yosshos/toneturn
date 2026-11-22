@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.115.0',
+    date: '2026-11-22',
+    en: ['Practice in a key is a full workout: the scale at your level, 3rds, triads and 7th chords along the whole scale every time, the approach licks (lick 1, 2, 3 up and down the scale), contrary motion, Hanon, hand independence, octaves, leaps, a canon and a cadence, the ones you need most first', 'The coach knows your limit: three takes at the top without a faster clean take, it saves your best and moves on', 'The cursor over the notes follows the sound and stops on the last note'],
+    he: ['אימון בסולם הוא אימון מלא: הסולם ברמה שלכם, טרצות, משולשים וספטאקורדים לאורך כל הסולם בכל פעם, ליקי הגישה (ליק 1, 2, 3 במעלה הסולם ובמורדו), תנועה נגדית, האנון, עצמאות ידיים, אוקטבות, קפיצות, קנון וקדנצה, קודם מה שהכי צריך חיזוק', 'המאמן מזהה את הגבול שלכם: שלושה ניסיונות בלי טמפו נקי מהיר יותר, והוא שומר את השיא וממשיך', 'הסמן מעל התווים צמוד לצליל ונעצר על התו האחרון'],
+  },
+  {
     version: '0.114.4',
     date: '2026-11-22',
     en: ['Continuous practice in a key is now the coach over a ladder: the scale at your level, then 3rds, triads and 7th chords along the whole scale, then a cadence — the tempo climbs as you play clean, and the basics are skipped when you are past them.'],
