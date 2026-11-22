@@ -63,7 +63,7 @@ styleFocus: { [course]: { main: StyleId; also: StyleId[] /* up to 2 */ } }
 
 | Place | Effect |
 |---|---|
-| **The daily workout** | Within technique, the style block (§5) draws about **60%** from the main style, **30%** from the "also" styles and **10%** from the rest (exposure). Within the improvisation share: the band and the tune in the main style in about 60% of sessions. **Jazz focus keeps the jazz core:** with another main style, the basic jazz harmony (ii–V–I, guide tones) is still at least 25% of improvisation (the app is jazz first). |
+| **The daily workout** | Within technique, the style block (§5) draws about **60%** from the main style, **30%** from the "also" styles and **10%** from the rest (exposure). Within the improvisation share: the band and the tune in the main style in about 60% of sessions. (The jazz core is not weighted at all: it is the backbone of the path for everyone, §8.3.) |
 | **Technique** | The per-key matrix gets **a style block (H)**: comping patterns and grooves of the focus styles in every key. "Weakest first" weights by the shares above. |
 | **Repertoire** | The default tab opens on the main style; the next-goal card follows it ("your third bossa"); "All styles" is one tap away. |
 | **Improvise** | The band's default style = the main style; improvisation levels and rules by style ("on the clave", "a samba phrase"); "today's improvisation" in the main style. |
@@ -106,8 +106,12 @@ The old fields are kept read-only for one version, then removed.
 4. The style block (H) in the matrix, filled as the styles are built (Brazilian and Afro-Cuban first).
 5. The "My styles" strip on the skill map; the check in the level test; the recognition game.
 
-## 8. Questions for the owner
+## 8. Owner's answers (2026-11-22)
 
-1. **The jazz pack as a lock:** remove it (everything open, with difficulty set by level), as "open from the start" implies? This changes the SPEC-JAZZ-FOLD decision that jazz opens by background.
-2. **How many styles in focus:** a main one plus up to 2 more (proposed), or a main one only?
-3. **A floor for jazz:** with another main style, keep basic jazz harmony at least 25% of improvisation (proposed), or let the player decide entirely?
+1. **No locks** ("I don't believe in locking"). The jazz pack is removed as a lock in every course. What used to open it (background, climbing) only sets the starting level in jazz harmony. This supersedes SPEC-JAZZ-FOLD §2–3 on gating.
+2. **A main style and up to 2 more.**
+3. **"Jazz first" without a percentage floor** (owner's view; I agree).
+   - **Why:** the neighbour styles are jazz-adjacent, so their content already rests on jazz harmony. A bossa standard is ii–V–I, a montuno sits on ii–V, soul-jazz rests on the blues. A separate floor would only duplicate what is already there.
+   - **The jazz core is the backbone of the shared curriculum for everyone:** ii–V–I, guide tones, voicings, ear for jazz harmony. These are the core units of the path, and they are not weighted by focus.
+   - **The focus weights (§4) apply only to style-specific content:** comping patterns, grooves, tunes, the band, style licks.
+   - So there is no 25% floor in improvisation. A player with a classical or pop main style still meets the jazz core through the path.
