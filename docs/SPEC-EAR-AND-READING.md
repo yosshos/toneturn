@@ -149,7 +149,12 @@ The owner, 2026-11-22: in the Ear course (ear and theory) you name notes and deg
 
 ## 8. Owner's answers (2026-11-22)
 
-1. **The mix:** 70/20/10 (strong / weak / memory), tilted by the gap. **Approved.**
+1. **The mix:** 70/20/10 (strong / weak / memory) is the **starting point only**. **Approved.** It is not fixed. Every week the coach recomputes it from the measured profile:
+   - **The weak channel:** the larger the gap between ear and reading, the larger its share (from 20% up to about 35%). As the gap closes, its share returns toward 20%. If the two channels are equal, the mix is balanced (about 45/45/10).
+   - **Memory:** it grows with the number of items closed in the fingers (from 10% up to about 25%), so the player increasingly plays what they know without help.
+   - **The strong channel:** it gets whatever remains.
+   - **Changes are gradual:** at most about 5 points a week, so the practice does not jump around.
+   - **The player sees the current mix and why** ("reading 28%: the gap between ear and reading is still large").
 2. **Concept by default in technique:** it depends on how well the player knows the pattern. Specified in §8a.
 3. **Course start:** no "ear / notes / both" question. When the player chooses an instrument, two self-ratings from 1 to 5: playing by ear and playing from notes. They seed the channel profile (2.1); the measurement takes over from there.
 
