@@ -1,0 +1,32 @@
+/* The "Over time" tab (docs/SPEC-PROGRESS-CHARTS.md §2): cards of small charts; the chart areas are LTR islands. */
+.pt-wrap { display: grid; gap: 14px; }
+.pt-frames { flex-wrap: wrap; }
+.pt-empty { margin: 8px 0; font-size: 0.85rem; color: var(--ink-dim); }
+.pt-insights { margin: 0; padding: 10px 14px; list-style: none; display: grid; gap: 4px; background: var(--card-2); border-radius: 12px; font-size: 0.9rem; color: var(--ink-soft); }
+.pt-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .pt-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pt-tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+.pt-tile span { font-size: 0.75rem; color: var(--ink-dim); }
+.pt-tile b { font-size: 1.35rem; color: var(--ink); }
+.pt-tile small { font-size: 0.75rem; color: var(--ink-soft); }
+.pt-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
+.pt-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pt-card-head h3 { margin: 0; font-size: 1rem; color: var(--ink); }
+.pt-sub { margin: -4px 0 0; font-size: 0.78rem; color: var(--ink-dim); }
+.pt-tablebtn { font: inherit; font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong, var(--line)); background: var(--card); color: var(--ink); cursor: pointer; min-height: 32px; }
+.pt-multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.pt-multiple { display: grid; gap: 2px; }
+.pt-mname { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--ink-soft); }
+.pt-mname i, .pt-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.pt-chart { position: relative; }
+.pt-chart svg { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.pt-target { stroke: var(--ink-dim); stroke-width: 1; stroke-dasharray: 4 4; }
+.pt-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; color: var(--ink-soft); margin-bottom: 4px; }
+.pt-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.pt-hovertable { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; color: var(--ink-soft); margin-top: 4px; }
+.pt-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.pt-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.pt-heat { display: grid; gap: 3px; }
+.pt-heat-row { display: grid; grid-template-columns: 28px repeat(auto-fit, minmax(8px, 1fr)); gap: 3px; align-items: center; }
+.pt-heat-row span { font-size: 0.72rem; color: var(--ink-soft); }
+.pt-heat-row i { height: 12px; border-radius: 3px; display: block; }
