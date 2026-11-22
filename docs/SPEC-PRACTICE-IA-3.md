@@ -137,9 +137,10 @@ The game `#/transcribe` stays the race.
 4. Workout blocks for Repertoire and Improvise.
 5. Guard tests (every old route lands, every id is kept), the e2e for each place on one phone screen, Hebrew and English.
 
-## 7. Questions for the owner
+## 7. Owner's answers (2026-11-22) and what is still open
 
-1. **Licks:** keep it as one of the four places (as decided with Encore), or a "Language" section inside Technique (one entry fewer)?
-2. **Transcribe:** inside Licks, as a way to add a lick?
-3. **My song and My pieces:** inside Repertoire, as a piece's page and as sources in "Add a piece"?
-4. **Improvise:** a place of its own *and* a button on every piece, or only inside Repertoire?
+- **My song and My pieces → Repertoire.** Approved: a piece's page, plus sources in "Add a piece".
+- **Transcribe → Repertoire.** "Transcribe a phrase" sits on the piece page. The graded coach levels: open, decided together with the Licks question. The result of a transcription always goes into Licks › Mine.
+- **Improvise:** a place of its own *and* a button on every piece. **Approved.**
+- **Licks:** open, being brainstormed. The leading option is a place of its own (the "language" pillar), with doors from the key session, Improvise (docs/SPEC-LICKS-IN-IMPROV.md) and the piece page.
+- **Mockup:** an artifact canvas "Repertoire screens": phone and wide screen; Practice, the list, three piece pages, Add a piece.
