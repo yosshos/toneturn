@@ -6,6 +6,7 @@
 import type { Drill, DrillSettings, ItemState } from './types';
 import type { FamilyDef, LevelDef } from './generate';
 import { itemTargetBpm, specDrills } from './plan';
+import { itemStatus } from './itemStatus';
 import { FACET_GROUPS, FAMILY_FACETS, keyFacet, type FacetGroup, type FacetRole } from './keyFacet';
 import { itemMastery, MIN_TAKES, STRONG_FROM, WEAK_BELOW, type KeyStatus } from '../analysis/keyMastery';
 
@@ -64,7 +65,8 @@ export function buildKeyIndex(fams: FamilyDef[], order: Order): KeyIndex {
 export const groupsOf = (idx: KeyIndex, root: number): FacetGroup[] => FACET_GROUPS.filter((g) => Object.keys(idx.pages[root][g]).length > 0);
 
 /** Clean at the drill's own tempo (a slowed take never counts). */
-export const cleanAt = (st: ItemState | undefined, d: Drill): boolean => !!st && st.cleanBpm > 0 && st.cleanBpm >= d.startBpm - 0.5;
+/** Closed by the one rule (BUILD-PLAN D1, itemStatus.ts): 3 clean takes at ≥ 95 % of the target on 2 days. */
+export const cleanAt = (st: ItemState | undefined, d: Drill): boolean => itemStatus(st, d.startBpm, itemTargetBpm(d)) === 'closed';
 
 export interface Measure {
   /** Drills in the set / clean at tempo / tried. */
@@ -291,7 +293,8 @@ export function rungNeed(l: LevelDef, items: Record<string, ItemState>): { s: 0 
   if (!sts.length) return { s: 0, share: 0, last: '' };
   const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, itemTargetBpm(d))));
   const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
-  return { s: share >= 1 ? 2 : 1, share, last };
+  const closed = ds.every((d) => itemStatus(items[d.itemId], d.startBpm, itemTargetBpm(d)) === 'closed');
+  return { s: closed ? 2 : 1, share, last };
 }
 
 /** The rung a key's session leans on: the played one furthest below its target, else the first new one past the warm-up. */

@@ -123,6 +123,7 @@ import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './P
 import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
+import { defaultChannel } from '../engine/drills/channel';
 import { fillMinutes, keyMatrix, matrixOrder, matrixSummary, projectionDays, type MatrixView } from '../engine/drills/keyMatrix';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
@@ -1220,7 +1221,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     void recordTakeAnalysis(drill, m, bpm, own).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
     const st0 = stateOf(drill);
-    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99 });
+    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: defaultChannel(drill, st0), activeMs: (drill.beats * 60000) / Math.max(30, bpm) });
     // Studio look: a ladder step cleared above the previous best tempo is the moment (one tap continues).
     const nb = newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean');
     if (nb) setBest({ ...nb, title: drill.title[lang] });
@@ -2121,7 +2122,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     if (!rung) return;
     const d = rung.drill;
     const stt = items[d.itemId] ?? newItem(d);
-    const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d) });
+    const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d), channel: defaultChannel(d, stt), activeMs: (d.beats * 60000) / Math.max(30, d.startBpm) });
     onTake(lad.state, drillEvents(d, m, new Date().toISOString(), session.current, n.current++), drillXp(m), takeInfo(d, m));
     setLast(m);
     // Show the marks for a moment, then move on by itself (owner: a mistake should simply move the test on).

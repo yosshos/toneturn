@@ -8,6 +8,7 @@ import type { FamilyDef, LevelDef } from './generate';
 import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
 import { openKeyRungs, type LadderRung } from './keyIndex';
+import { itemStatus } from './itemStatus';
 
 export type MatrixGroup = 'major' | 'minor';
 export type MatrixView = 'weak' | 'key' | 'exercise';
@@ -82,7 +83,7 @@ const shapeCache = new Map<string, CellShape[]>();
 
 function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[] }): CellShape[] {
   const groups = opts.groups ?? (tier >= MINOR_FROM_TIER ? ['major', 'minor'] : ['major']);
-  const key = `${fams.length}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}`;
+  const key = `${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}`;
   const hit = shapeCache.get(key);
   if (hit) return hit;
   const out: CellShape[] = [];
@@ -103,7 +104,9 @@ function needOf(ds: CellDrill[], items: Record<string, ItemState>): MatrixCell['
   if (!sts.length) return { s: 0, share: 0, last: '' };
   const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, d.target)));
   const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
-  return { s: share >= 1 ? 2 : 1, share, last };
+  // closed = every item closed by the one rule (BUILD-PLAN D1: 3 clean takes at ≥ 95 % of target on 2 days)
+  const closed = ds.every((d) => itemStatus(items[d.itemId], d.startBpm, d.target) === 'closed');
+  return { s: closed ? 2 : 1, share, last };
 }
 
 export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[] } = {}): MatrixCell[] {

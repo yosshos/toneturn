@@ -6,7 +6,7 @@ import { cellMinutes, fillMinutes, keyMatrix, matrixOrder, matrixSummary, projec
 
 const fams = families('piano');
 const close = (c: MatrixCell, items: Record<string, ItemState>) => {
-  for (let k = 0; k < c.level.specs.length; k++) for (const d of specDrills(c.level, k, 'fifths-up')) items[d.itemId] = { ...newItem(d), takes: 6, cleanBpm: itemTargetBpm(d), last: '2026-11-20' };
+  for (let k = 0; k < c.level.specs.length; k++) for (const d of specDrills(c.level, k, 'fifths-up')) items[d.itemId] = { ...newItem(d), takes: 6, cleanBpm: itemTargetBpm(d), last: '2026-11-20', passLog: ['2026-11-19', '2026-11-20', '2026-11-20'].map((at) => ({ at, bpm: itemTargetBpm(d) })) };
 };
 
 describe('the key × exercise matrix (SPEC-DAILY-WORKOUT)', () => {

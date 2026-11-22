@@ -5,6 +5,7 @@ import { DEFAULT_DRILL_SETTINGS } from './types';
 import { median, tempoBand, npsOf } from './analyze';
 
 export { tempoBand, npsOf, bandOfBpm } from './analyze';
+import { tallyChannel, type Channel } from './channel';
 
 export type LadderAction = 'again' | 'raise' | 'lower' | 'next-key' | 'next-drill';
 export interface LadderResult {
@@ -21,6 +22,9 @@ export interface TakeOpts {
   targetBpm?: number;
   /** The player pressed "Slower" for this take: it never counts toward the level. */
   slower?: boolean;
+  /** BUILD-PLAN phase 1: how the take was played (itemStatus.ts Channel; default page-known) and its active length. */
+  channel?: Channel;
+  activeMs?: number;
 }
 
 /** Level pass (A4): 3 clean takes at ≥ 95 % of the target tempo, on at least 2 different days. */
@@ -118,6 +122,8 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
   upd('acc', metrics.accuracy);
   s.takes += 1;
   s.last = at;
+  s.channels = tallyChannel(s.channels, opts.channel ?? 'page-known', metrics.verdict === 'clean', bpm);
+  if (opts.activeMs && opts.activeMs > 0) s.activeMs = (s.activeMs ?? 0) + Math.round(opts.activeMs);
   const B = Math.round(bpm);
   const goal0 = s.goalBpm;
   const clean = metrics.verdict === 'clean';

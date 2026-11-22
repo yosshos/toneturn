@@ -136,7 +136,9 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   };
   const done = (m: TakeMetrics, _p: PlayedNote[]) => {
     const st0 = stateOf(drill);
-    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: lickTarget(lick), slower: bpm < (st0.goalBpm ?? 0) * 0.99 });
+    // the channel: by ear with the notes still hidden = ear (fresh on the item's first take); otherwise read from the page
+    const ch = byEar && !earNow.revealed ? (st0.takes ? 'ear-known' : 'ear-fresh') : 'page-known';
+    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: lickTarget(lick), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: ch, activeMs: (drill.beats * 60000) / Math.max(30, bpm) });
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;

@@ -1082,6 +1082,11 @@ export interface ItemState {
   passLog?: { at: string; bpm: number }[];
   /** 0.88 rubato first (rubato.ts): clean free-time and quarter-note takes; absent on items played before. */
   rubato?: { free: number; quarters: number; skipped?: boolean };
+  // ---- BUILD-PLAN-2026-11 phase 1: the take's channel and active time (absent on older items) ----
+  /** Takes per channel (itemStatus.ts Channel): count, clean count, best clean tempo. */
+  channels?: Partial<Record<'page-sight' | 'page-known' | 'ear-fresh' | 'ear-known' | 'unaided', { n: number; clean: number; best: number }>>;
+  /** Active milliseconds played on this item (the take lengths), for time per cell. */
+  activeMs?: number;
 }
 
 /** The player's own drill (spec AI §12 owner request): a pattern in scale degrees, run through every key. */
