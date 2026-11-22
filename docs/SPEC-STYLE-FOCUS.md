@@ -115,3 +115,58 @@ The old fields are kept read-only for one version, then removed.
    - **The jazz core is the backbone of the shared curriculum for everyone:** ii–V–I, guide tones, voicings, ear for jazz harmony. These are the core units of the path, and they are not weighted by focus.
    - **The focus weights (§4) apply only to style-specific content:** comping patterns, grooves, tunes, the band, style licks.
    - So there is no 25% floor in improvisation. A player with a classical or pop main style still meets the jazz core through the path.
+
+
+## 9. Exposure to styles the player didn't choose (owner, 2026-11-22)
+
+**The problem:** a player who chose a focus a year ago may forget there are other styles. From each style they would get tools: a straight-ahead jazz player gets voicings and inner-voice movement from gospel, and groove and language from Latin.
+
+### 9.1 "A style taster": a purposeful taste, not random
+
+- **About once every two weeks,** one short taste (about 5 minutes) of a style outside the focus, as a card in Today or at the end of a session. Never inside an exercise.
+- **The taste has three parts:**
+  1. one groove or comping pattern;
+  2. one lick in the style;
+  3. 8 bars over the band in the style.
+- **Above the taste, one sentence on what this player gains,** relative to their main style (table §9.3). For example: "From gospel: the move from IV to I and the inner voices — straight into your ballads."
+- **At the end, one question:** "Add gospel to your styles?" with three answers:
+  - **add** (as an "also" style; if there are already 3, choose one to swap out);
+  - **not now;**
+  - **don't offer this style** for 6 months.
+
+### 9.2 Which style, when
+
+- **Rotation** over the styles not chosen, in order of:
+  1. relevance to the main style (§9.3);
+  2. **the player's weak area.** Weak timing → a groove style (Afro-Cuban, funk). Weak voicings → gospel. Weak melody → bossa;
+  3. the longest since a taste.
+- **No more than one question every two weeks.** A style the player turned down doesn't return for 6 months.
+- **The weekly coach (AI)** may suggest a style taster with a reason taken from the data ("your syncopation is weak: try a montuno").
+- **The 10% "exposure" in the daily workout (§4)** comes mostly from the styles that were tasted and not turned down.
+
+### 9.3 What each style gives (a sentence for the card; each claim is common teaching practice, checked during the styles research)
+
+| Main style | Recommended neighbour | What it gives |
+|---|---|---|
+| Jazz | gospel / soul | plagal (IV–I) motion, moving inner voices, the blues feel, call and response |
+| Jazz | Afro-Cuban | clave and syncopation, the montuno as rhythmic comping, Latin-jazz language |
+| Jazz | Brazilian | bossa harmony and comping, the samba feel, long lines over moving harmony |
+| Jazz | New Orleans | stride and the roots of jazz piano, the 2-feel, second-line groove |
+| Jazz | classical | voice leading, touch and dynamics, reading |
+| Brazilian / Afro-Cuban | jazz | ii–V–I, guide tones, improvisation over changes |
+| Soul / funk | jazz, Afro-Cuban | richer harmony; syncopation and groove |
+| Classical | jazz, Brazilian | improvisation, comping from chord symbols, rhythmic freedom |
+| Pop / rock | soul, jazz, Brazilian | a richer groove, 7th chords and voicings, a first step into improvisation |
+
+### 9.4 A periodic look at the preferences
+
+- **Every 6 months,** a short card: "Your styles: jazz, bossa. Do they still suit you?" It shows how much time went to each style in those months, and which styles were tasted and liked. One tap to change, and the rest stays as it is.
+- **A player who practises a lot in a style outside the focus** (more than 20% of improvisation or repertoire time over a month) gets "add bossa to your styles?" right away, because that's what they're doing anyway.
+
+### 9.5 Order of work
+
+Inside the styles stage, after the focus model (§7):
+- the style taster (card, three parts, a sentence, a question);
+- the rotation by relevance and weakness;
+- the "every 6 months" check, and the trigger for extensive practice;
+- the AI coach's suggestion (after the coach's tilt in phase 8).
