@@ -111,3 +111,6 @@ export const STANDARD_CHANGES: StandardChanges[] = [
   { id: 'ballad-cliche', group: 'ballad', name: 'Minor ballad with a line cliché', part: FULL, text: 'Dm Dm(maj7) | Dm7 Dm6 | Gm Gm(maj7) | Gm7 C7 | Fmaj7 | Em7b5 A7 | Dm7 G7 | Em7b5 A7', style: 'ballad', bpm: 60, level: 2 },
   { id: 'ballad-backcycle', group: 'ballad', name: 'Ballad with back-cycling dominants', part: FULL, text: 'Ebmaj7 | C7b9 | Fm7 | Bb7 | Gm7 C7 | Fm7 Bb7 | Ebmaj7 Ab7 | Gm7 C7 | Fm7 | Bb7 | Ebmaj7 Cm7 | Fm7 Bb7', style: 'ballad', bpm: 66, level: 3 },
 ];
+
+/** A Brazilian (bossa) tune: its 8ths are straight, never swung (STYLE-BRAZIL §0.2: swing = 0 on every Brazilian item). */
+export const isStraightStd = (id: string): boolean => STANDARD_CHANGES.find((x) => x.id === id)?.style === 'bossa';

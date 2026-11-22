@@ -9,7 +9,7 @@ import type { Drill, DrillSpec } from './types';
 import { noteAt, type Tuning } from '../fretboard';
 import { keyLabel, moved, nameInKey, noteNameIn, rootNameIn, standardHome, type Home } from '../stdKey';
 import { bassWalk, drop2Voicings, finish, mod, nearestVoicing, place, rng, t, upDown, NAMES, type Ev, type GN, type T2 } from './guitar';
-import { STANDARD_CHANGES } from '../standards';
+import { isStraightStd, STANDARD_CHANGES } from '../standards';
 import { parseChart, type ChartChordEv } from '../charts';
 import { barryLine, DIM7, moveDim, pivot, ruleFor } from '../barry';
 import { ARP_SYM, pivotArp, pivotEnclosureLine, scalePivotLine, type ArpQuality, type LineNote } from '../pivotArp'; // BH-G: the pivot
@@ -177,6 +177,11 @@ function compChart(s: DrillSpec, tu: Tuning): Drill {
 /** Standards for the comping levels (ids in standards.ts; chords only). */
 export const JAZZ_STANDARDS = ['autumn', 'blue-bossa', 'tune-up', 'satin', 'fly', 'stella'];
 const exists = (id: string) => STANDARD_CHANGES.some((x) => x.id === id);
+/** The standard of a comp-std option (two options a tune: shells, drop-2). */
+export const compStdId = (op: number): string => {
+  const ids = JAZZ_STANDARDS.filter(exists);
+  return ids[Math.floor(op / 2) % ids.length];
+};
 
 /** Comping rhythms per bar (beat, length): Charleston, Freddie Green four, anticipations. */
 const COMP_RHYTHMS: { en: string; he: string; hits: [number, number][] }[] = [
@@ -194,8 +199,10 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
       return compChart(s, tu);
     case 'comp-std': {
       // L8: shells (even options) or drop-2 (odd) through a standard's first 8 bars, in one comping rhythm, with the band.
-      const ids = JAZZ_STANDARDS.filter(exists);
-      const ch = chartOf(ids[Math.floor(op / 2) % ids.length], key);
+      const id = compStdId(op);
+      const ch = chartOf(id, key);
+      // A bossa tune (Blue Bossa) is never swung: the bossa groove and band, straight 8ths (STYLE-BRAZIL §0.2).
+      const feel = isStraightStd(id) ? 'bossa' : 'swing';
       const rh = COMP_RHYTHMS[(Math.floor(op / 2) + op) % COMP_RHYTHMS.length];
       const drop = op % 2 === 1;
       let near = 5;
@@ -212,7 +219,7 @@ export function generateJazz2(s: DrillSpec, tu: Tuning): Drill | null {
         if (!evs.some((e) => e.beat >= start - 1e-6 && e.beat < start + c.beats - 1e-6)) evs.push({ beat: start, dur: c.beats, notes: strum(v) });
       }
       const d = finish(s, tu, evs, { title: t(`Comping ${ch.name} (8 bars): ${drop ? 'drop-2' : 'shells'}, ${rh.en} · ${keyLabel(ch.tonic)}`, `ליווי ${ch.name} (8 תיבות): ${drop ? 'דרופ 2' : 'שלדים'}, ${rh.he} · ${keyLabel(ch.tonic)}`), bpm: 100, evenness: false, keySig: 'C' });
-      return { ...d, tonic: ch.tonic, chart: ch.syms, drums: { groove: 'swing' }, band: { style: 'swing', bass: true } };
+      return { ...d, tonic: ch.tonic, chart: ch.syms, drums: { groove: feel }, band: { style: feel, bass: true } };
     }
     case 'vl-ear': {
       // L9: hear a ii–V–I (in a key the title doesn't name), then play its guide tones (3–7–3, half notes) and comp it

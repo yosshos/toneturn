@@ -831,8 +831,8 @@ function backingEvents(drill: Drill, beatS: number, drums: boolean, clock?: (bea
   const len = (b: number, l: number) => (clock ? clock(b + l) - clock(b) : l * beatS);
   const out: NoteEvent[] = [];
   if (drums && drill.drums) {
-    const PERC = { k: 'kick', s: 'snare', h: 'hat', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
-    for (const h of drillDrumHits(drill)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
+    const PERC = { k: 'kick', s: 'snare', h: 'hat', r: 'rim', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
+    for (const h of drillDrumHits(drill)) out.push({ midi: 36, start: at(h.beat), duration: 0.2, velocity: h.d === 'h' ? 0.4 : h.d === 'r' ? 0.6 : h.d === 'crash' ? 0.7 : 0.85, perc: PERC[h.d] });
   }
   // The harmony band (bassBand.ts / bandTimeline.ts): comping on the same clock, only where the drums may play (headphones / MIDI).
   if (drums) for (const h of drillBandHits(drill)) for (const m of h.notes) out.push({ midi: m, start: at(h.beat), duration: len(h.beat, h.len), velocity: h.vel, inst: 'piano' });

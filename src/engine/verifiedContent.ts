@@ -203,7 +203,7 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
   // ───────────── Our own transcriptions (drums) ─────────────
   {
     id: 'latin-kit-patterns',
-    why: 'Mambo, songo, Mozambique (d-latin 8–10): son clave and the tumbao kick (&2 and 4) confirmed; the bells, the songo / Mozambique snare and kick and the hi-hat foot not (sources are notation images or books) — omitted for lack of verified knowledge.',
+    why: 'Mambo, songo, Mozambique (d-latin 8–10): son clave and the tumbao kick (&2 and 4) confirmed; songo rebuilt 2026-11-22 to the verified hands (right hand on the four beats, left hand on the offbeats; STYLE-AFROCUBAN F4); the mambo / Mozambique bells, the Mozambique snare, the songo kick and accents and the hi-hat foot not (sources are notation images or books) — omitted for lack of verified knowledge.',
     hides: ['level:d-latin-8', 'level:d-latin-9', 'level:d-latin-10'],
     unsourced: true,
   },

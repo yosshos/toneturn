@@ -8,6 +8,7 @@ import { generate, keysInOrder } from './drills/generate';
 import { itemPass } from './drills/ladder';
 import { itemTargetBpm } from './drills/plan';
 import { offsetsInOrder, standardHome, type Home } from './stdKey';
+import { isStraightStd } from './standards';
 import { songDrill } from './drills/songDrills';
 import { BASS_STD, bassStandardSpec } from './drills/bass';
 import { STD_LADDER } from './drills/bassNiche2';
@@ -44,7 +45,8 @@ export function repDrills(w: RepWay, course: RepCourse, items: Record<string, It
     case 'chartDrill': {
       const kind = `chart~std:${w.std}~${w.voicing}~${w.rhythm === 'stride' || w.voicing.startsWith('stride') ? 'stride' : w.rhythm}~comp`;
       const family = w.voicing.startsWith('stride') ? 'accomp' : 'voicings';
-      return throughKeys(standardHome(w.std), (key) => generate({ family, kind, key, hands: 'L', swing: true }), items, keyOrder);
+      // A bossa tune is straight (STYLE-BRAZIL §0.2), every other standard swung.
+      return throughKeys(standardHome(w.std), (key) => generate({ family, kind, key, hands: 'L', swing: !isStraightStd(w.std) }), items, keyOrder);
     }
     case 'bassStd': {
       // The standards ladder (b-std) first: the old one-chorus levels are retired (owner 2026-11-11), the ladder carries them.
@@ -62,7 +64,7 @@ export function repDrills(w: RepWay, course: RepCourse, items: Record<string, It
       // The standard's whole chart on the guitar (g-jazz 13): the tune's feel unless the way names one, through the keys.
       const option = guitarStdOption(w.std, w.voicing, w.rhythm);
       if (option === null) return [];
-      return throughKeys(standardHome(w.std), (key) => generate({ family: 'g-jazz', kind: 'comp-chart', key, hands: 'R', instrument: 'guitar', option, ...(decodeGuitarStd(option).rhythm !== 'bossa' ? { swing: true } : {}), tempo: guitarStdTempo(w.std)[0] }), items, keyOrder);
+      return throughKeys(standardHome(w.std), (key) => generate({ family: 'g-jazz', kind: 'comp-chart', key, hands: 'R', instrument: 'guitar', option, ...(decodeGuitarStd(option).rhythm !== 'bossa' && !isStraightStd(w.std) ? { swing: true } : {}), tempo: guitarStdTempo(w.std)[0] }), items, keyOrder);
     }
     case 'level':
       return techQueue(w.ref, items, keyOrder, 4);

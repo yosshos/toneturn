@@ -40,7 +40,7 @@ import {
   type GuitarTechnique,
   type Stroke,
 } from './guitar';
-import { STANDARD_CHANGES } from '../standards';
+import { isStraightStd, STANDARD_CHANGES } from '../standards';
 import { parseChart } from '../charts';
 
 /** The new kinds per family (the dispatcher sends these here). */
@@ -951,7 +951,7 @@ export function core2Levels(): Partial<Record<FamilyId, GuitarLevelDef[]>> {
       L('g-arps', 7, '9th and 13th arpeggios; upper-structure triads', 'ארפג׳יו נונה ו-13; משולשי מבנה עליון', [...[0, 1, 2, 3].flatMap((o) => [A('ext-arp', { option: o, position: 6 }), A('ext-arp', { option: o, position: 5 })]), ...[0, 1, 2].map((o) => A('ust', { option: o }))], CYC6, [70, 110], '8ths', 8),
     ],
     'g-impro': [
-      L('g-impro', 5, "Chord-scale lines through a standard's changes", 'קווי סולם-אקורד על ההרמוניה של סטנדרט', CORE2_STANDARDS.map((_, o) => I('chord-scale', { option: o, swing: true })), [0, 5, 7], [80, 110], 'swing 8ths', 7, { addOn: 'jazz' }),
+      L('g-impro', 5, "Chord-scale lines through a standard's changes", 'קווי סולם-אקורד על ההרמוניה של סטנדרט', CORE2_STANDARDS.map((id, o) => I('chord-scale', { option: o, ...(isStraightStd(id) ? {} : { swing: true }) })), [0, 5, 7], [80, 110], 'swing 8ths', 7, { addOn: 'jazz' }),
       L('g-impro', 6, 'Motif and rhythmic displacement through the form', 'מוטיב והזזה קצבית לאורך הצורה', [0, 1, 2, 3, 4, 5].map((o) => I('motif', { option: o, swing: true })), BLUES_KEYS, [80, 110], 'swing 8ths', 8, { addOn: 'jazz' }),
       L('g-impro', 7, 'Trading 4s and 2s with the band: your own line, a chord tone on 1 and 3', 'חילופי ארבע ושתיים עם הלהקה: קו משלכם, צליל אקורד ב-1 וב-3', Array.from({ length: GUITAR_TRADES }, (_, o) => I('trade', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing 8ths', 8, { addOn: 'jazz' }),
     ],

@@ -1035,8 +1035,10 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'brazil': {
       // Brazilian 16ths: partido alto (op 0) or baião (op 1), on I – V7.
+      // Baião (STYLE-BRAZIL §3.1, [V] Hubbard + Patitucci): x..x....x..x.... — the root on 1 and 3, the 5th on the 16th
+      // before 2 and 4 tied over the beat (no note on 2 or 4). The partido-alto cell is unverified (STYLE-BRAZIL task B2).
       const prog: Prog = [[0, 'M'], [0, 'M'], [7, '7'], [7, '7'], [0, 'M'], [0, 'M'], [7, '7'], [0, 'M']];
-      const CELL: [number, number, number][] = op % 2 ? [[0, 0.75, 0], [0.75, 0.25, 7], [1, 1, 12], [2, 0.75, 0], [2.75, 0.25, 7], [3, 1, 10]] : [[0, 0.5, 0], [0.75, 0.25, 12], [1.5, 0.5, 7], [2.25, 0.5, 0], [3, 0.5, 7], [3.5, 0.5, 10]];
+      const CELL: [number, number, number][] = op % 2 ? [[0, 0.75, 0], [0.75, 1.25, 7], [2, 0.75, 0], [2.75, 1.25, 7]] : [[0, 0.5, 0], [0.75, 0.25, 12], [1.5, 0.5, 7], [2.25, 0.5, 0], [3, 0.5, 7], [3.5, 0.5, 10]];
       const line: BN[] = [];
       prog.forEach((c, bar) => {
         const r = rootOf(tu, key + c[0]);

@@ -10,7 +10,7 @@
 //        "cad:<id>" a cadence of the cadence library (cadences.ts, written in C / C minor) ·
 //        "set:<id>" a built-in practice chart that is not a cadence (CHART_SETS, with its own home key)
 
-import { CHART_TEMPLATES, IMPROV_LEVELS, parseChart, type ChartChordEv } from '../charts';
+import { CHART_TEMPLATES, IMPROV_LEVELS, parseChart, type ChartChordEv, type ChartStyle } from '../charts';
 import { STANDARD_CHANGES } from '../standards';
 import { autoScale } from '../improvRules';
 import { MODE_STEPS } from '../modes';
@@ -67,6 +67,8 @@ export interface ChartRef {
   bpm: number;
   /** The chart's tonic as written (when the ref tables don't know it: the cadence library). */
   home?: Home;
+  /** The chart's style when the source has one (a bossa chart is played straight, never swung). */
+  style?: ChartStyle;
 }
 
 /** Built-in practice charts that are not cadences (written from C; the drill's key moves them). */
@@ -86,18 +88,18 @@ export function chartRef(ref: string): ChartRef | null {
   const id = rest.join(':');
   if (k === 'lv') {
     const l = IMPROV_LEVELS.find((x) => x.id === id);
-    return l ? { text: l.text, title: l.title, bpm: l.bpm } : null;
+    return l ? { text: l.text, title: l.title, bpm: l.bpm, style: l.style } : null;
   }
   if (k === 'std') {
     const s = STANDARD_CHANGES.find((x) => x.id === id);
     // a technique drill on a long form takes its first section (the whole tune is for improvising)
     const bars = s ? s.text.split('|') : [];
     const text = bars.length > 16 ? bars.slice(0, 8).join('|') : s?.text;
-    return s && text ? { text, title: { en: `${s.name} (${s.part.en})`, he: `${s.name} (${s.part.he})` }, bpm: s.bpm } : null;
+    return s && text ? { text, title: { en: `${s.name} (${s.part.en})`, he: `${s.name} (${s.part.he})` }, bpm: s.bpm, style: s.style } : null;
   }
   if (k === 'tpl') {
     const t = CHART_TEMPLATES.find((x) => x.id === id);
-    return t ? { text: t.text, title: t.title, bpm: t.bpm } : null;
+    return t ? { text: t.text, title: t.title, bpm: t.bpm, style: t.style } : null;
   }
   if (k === 'cad') {
     const c = cadenceById(id);
@@ -118,6 +120,12 @@ export function chartRef(ref: string): ChartRef | null {
   return null;
 }
 export const chartKind = (ref: string, v: ChartVoicing, r: CompRhythm, m: ChartMode = 'comp') => `chart~${ref}~${v}~${r}~${m}`;
+/** A chart drill on a bossa chart: straight 8ths, never swung (STYLE-BRAZIL §0.2). */
+export function chartIsStraight(kind: string): boolean {
+  const k = parseChartKind(kind);
+  return !!k && chartRef(k.ref)?.style === 'bossa';
+}
+
 export function parseChartKind(kind: string): { ref: string; voicing: ChartVoicing; rhythm: CompRhythm; mode: ChartMode } | null {
   const p = kind.split('~');
   if (p[0] !== 'chart' || p.length < 5) return null;

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { defaultAccents, GROOVES, grooveHits, grooveSteps, STYLE_NAME, tapBpm, tempoName, DRUM_KITS, KIT_FILES, KIT_NAME } from '../src/engine/grooves';
+import { defaultAccents, GROOVES, grooveCycle, grooveHits, STYLE_NAME, tapBpm, tempoName, DRUM_KITS, KIT_FILES, KIT_NAME } from '../src/engine/grooves';
 import { existsSync } from 'node:fs';
 
 describe('metronome groove bank', () => {
-  it('every lane fits the bar exactly and uses x . o only', () => {
+  it('every lane fits the bar (both bars of a two-bar timeline) exactly and uses x . o only', () => {
     for (const g of GROOVES) {
-      const n = grooveSteps(g);
+      const n = grooveCycle(g);
       for (const lane of [g.k, g.s, g.h, g.r]) {
         if (lane === undefined) continue;
         expect(lane, `${g.id}`).toMatch(/^[xo.]*$/);

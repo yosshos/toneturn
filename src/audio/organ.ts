@@ -3,7 +3,10 @@
 //     seventeenth, nineteenth, twenty-second), each 0–8 in 3 dB steps, as on the real instrument;
 //   • the tonewheels' gentle imperfection — a little leakage of neighbouring wheels and a touch of harmonic content;
 //   • key click — the contacts closing, a short bright burst at every key down;
-//   • percussion — a decaying 2nd or 3rd harmonic on the attack (the jazz "touch");
+//   • percussion — a decaying 2nd or 3rd harmonic on the attack (the jazz "touch"), single-trigger as on the B-3: it
+//     sounds only when every key was up before, so a legato line or chord sounds it once (STYLE-SOUL §10.1);
+//   • no velocity: the level never follows how hard a key is struck; loudness comes from the expression (swell)
+//     pedal, MIDI CC11 (STYLE-SOUL §10.2);
 //   • the rotating speaker — horn and drum spinning at different speeds: Doppler pitch wobble, amplitude and stereo
 //     movement; slow (chorale) or fast (tremolo), ramping between them as the real motors do.
 // Registrations follow the classic settings.
@@ -37,6 +40,40 @@ export function partials(f0: number, bars: number[]): { f: number; a: number }[]
   });
   const sum = out.reduce((s, p) => s + p.a, 0) || 1;
   return out.map((p) => ({ f: p.f, a: p.a / Math.max(1.8, sum) }));
+}
+
+/** The level of every organ key: fixed, as a real tonewheel organ ignores velocity (STYLE-SOUL §10.1, gap 1). */
+export const ORGAN_LEVEL = 0.6;
+
+/** The swell pedal (CC11 0–127) as a gain: the organ's whole volume, never quite silent at heel-down. */
+export const swellGain = (cc11: number): number => {
+  const v = Math.max(0, Math.min(127, cc11)) / 127;
+  return 0.1 + 0.9 * v;
+};
+
+/** Keys pressed within this time of the first count as one chord: they all get the percussion. */
+export const PERC_CHORD_S = 0.03;
+
+/**
+ * Single-trigger percussion (STYLE-SOUL §10.1, gap 2): a key going down sounds the percussion only when no other key
+ * has been held since before it (a chord's keys, pressed together, all sound it). Legato (the last key still down
+ * when the next one goes down) suppresses it; a detached touch retriggers it. Keys are {start, end} on the audio clock;
+ * a live key's end is Infinity until its release.
+ */
+export class PercussionGate {
+  private keys: { start: number; end: number }[] = [];
+  press(start: number, end: number): { fires: boolean; key: { start: number; end: number } } {
+    // forget keys released long ago
+    this.keys = this.keys.filter((k) => k.end > start - 5);
+    const fires = !this.keys.some((k) => k.start <= start - PERC_CHORD_S && k.end > start + 0.001);
+    const key = { start, end };
+    this.keys.push(key);
+    return { fires, key };
+  }
+  /** A key let go (a live release, or everything stopped). */
+  release(key: { start: number; end: number }, at: number) {
+    key.end = Math.min(key.end, at);
+  }
 }
 
 /** The rotating speaker: horn and drum rotor speeds (Hz) for slow / fast. */
@@ -100,10 +137,11 @@ export class Leslie {
 }
 
 /**
- * One organ key: the drawbar partials (with a hair of wheel leakage), key click, and percussion. Returns the output
- * node and the sources so the caller can stop them; the note holds until `end` (organ notes do not decay).
+ * One organ key: the drawbar partials (with a hair of wheel leakage), key click, and percussion (when `perc`: the
+ * single-trigger gate decides). No velocity: every key at ORGAN_LEVEL. Returns the output node and the sources so the
+ * caller can stop them; the note holds until `end` (organ notes do not decay).
  */
-export function organKey(ctx: BaseAudioContext, f0: number, reg: Registration, start: number, end: number, velocity: number, out: AudioNode) {
+export function organKey(ctx: BaseAudioContext, f0: number, reg: Registration, start: number, end: number, out: AudioNode, perc = true) {
   const g = ctx.createGain();
   g.gain.setValueAtTime(0, start);
   g.gain.linearRampToValueAtTime(1, start + 0.005); // contacts close fast
@@ -112,7 +150,7 @@ export function organKey(ctx: BaseAudioContext, f0: number, reg: Registration, s
   g.connect(out);
   const srcs: AudioScheduledSourceNode[] = [];
   const stop = Math.max(start + 0.02, end) + 0.05;
-  const level = 0.55 + 0.1 * velocity; // a real organ ignores velocity; a little life here is kinder to exercises
+  const level = ORGAN_LEVEL;
   for (const p of partials(f0, reg.bars)) {
     const o = ctx.createOscillator();
     o.frequency.value = p.f;
@@ -126,8 +164,8 @@ export function organKey(ctx: BaseAudioContext, f0: number, reg: Registration, s
     o.stop(stop);
     srcs.push(o);
   }
-  // percussion: the 2nd (4′) or 3rd (2⅔′) harmonic, decaying fast
-  if (reg.perc) {
+  // percussion: the 2nd (4′) or 3rd (2⅔′) harmonic, decaying fast (single-trigger: only when the gate fires)
+  if (reg.perc && perc) {
     const o = ctx.createOscillator();
     o.frequency.value = f0 * (reg.perc === 'second' ? 2 : 3);
     const pg = ctx.createGain();

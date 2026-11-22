@@ -319,7 +319,7 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
  * The drum hits of a groove under a drill (B5): kick and snare (and hats) per bar from the GROOVES lanes, a fill in the
  * `fills` bars (snare 16ths into toms on beats 3–4, crash on the next 1). Beats from beat 0 of the drill.
  */
-export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
+export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'r' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
   // The constant grid; timeline drills (mixed meters, polymeter) use bandTimeline.ts drillDrumHits.
   return drumHitsOnBars(dr, constantBars(beats, meter), beats, pulse);
 }
