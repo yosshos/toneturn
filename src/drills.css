@@ -702,3 +702,24 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .kp-lens { display: grid; gap: 4px; }
 .kp-lens small { color: var(--ink-soft); font-size: 12px; }
 .kp-lens .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Phase 6 (SPEC-EAR-AND-READING §8a): presentation by mastery on the take screen, and the hub's channel line. */
+.fs-card { gap: 10px; }
+.fs-mode { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; }
+.fs-mode b { font-size: 0.95rem; color: var(--ink); }
+.fs-mode span { color: var(--ink-dim); font-size: 0.9rem; }
+.fs-mode .fs-name { color: var(--ink); font-weight: 600; }
+.fs-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.fs-show { display: inline-flex; align-items: center; gap: 6px; }
+.fs-rhythm { display: grid; gap: 6px; }
+.fs-rhythm .fs-mode .fs-show { margin-inline-start: auto; }
+.ch-strip { display: grid; gap: 8px; margin: 0 0 10px; }
+.ch-mix { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 0; font-size: 0.85rem; color: var(--ink-dim); }
+.ch-mix b { color: var(--ink); font-weight: 600; }
+.ch-mix span { color: var(--ink); }
+.ch-mix small { flex-basis: 100%; font-size: 0.8rem; }
+.ch-sight { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border-radius: 12px; cursor: pointer; background: var(--card); border: 1px solid var(--line); color: var(--ink); }
+.ch-sight span { display: grid; gap: 2px; }
+.ch-sight small { color: var(--ink-dim); font-size: 0.8rem; }
+.ch-sight:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+.ch-sight.done { cursor: default; opacity: 0.75; }

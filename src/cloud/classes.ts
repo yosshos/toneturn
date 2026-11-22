@@ -1,6 +1,7 @@
 // Teacher / class mode (needs sign-in). All reads and writes go through server functions.
 
 import { supabase } from './cloud';
+import { teacherMockOn } from './teacher';
 
 export interface Assignment {
   id: string;
@@ -70,6 +71,8 @@ export function classesFromRaw(r: {
 }
 
 async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+  // the dev mock (tt.mockTeacher = 1): the demo class (teacherMock.ts)
+  if (teacherMockOn()) return (await (await import('./teacherMock')).mockTeacherRpc(fn, args)) as T;
   const sb = supabase();
   if (!sb) throw new Error('Cloud is not configured');
   const { data, error } = await sb.rpc(fn, args);

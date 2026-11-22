@@ -1,3 +1,5 @@
+import { RATED_COURSES } from '../engine/channelPlan';
+import { RatingRow } from './CourseStart';
 import { APP_VERSION } from '../version';
 import { InstrumentArt } from './InstrumentArt';
 import { RecordingSettings } from './Recordings';
@@ -225,6 +227,23 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
         options={(['levels', 'activity', 'nothing'] as const).map((k) => [k, L.shareNames[k]] as [typeof k, string])}
         onChange={(shareStats) => onChange({ shareStats })}
       />
+    </section>
+  );
+}
+
+/** Phase 6 (SPEC-EAR-AND-READING §8.3): the active instrument course's two self-ratings (by ear, from notes), 1–5. */
+function ChannelSelfCard({ lang, s, onChange }: { lang: 'he' | 'en'; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+  const course = s.activeCourse;
+  if (!course || !(RATED_COURSES as readonly string[]).includes(course)) return null;
+  const he = lang === 'he';
+  const v = s.channelSelf?.[course] ?? {};
+  const set = (p: Partial<typeof v>) => onChange({ channelSelf: { ...(s.channelSelf ?? {}), [course]: { ...v, ...p } } });
+  return (
+    <section className="set-card set-rates" data-channel-self={course}>
+      <h2>{he ? 'משמיעה ומתווים' : 'By ear and from notes'}</h2>
+      <p className="field-hint">{he ? 'ההערכה שלכם, 1 עד 5. המדידה מהנגינות מחליפה אותה בהדרגה.' : 'Your own estimate, 1 to 5. Measured takes replace it step by step.'}</p>
+      <RatingRow id="ear" lang={lang} label={he ? 'לנגן משמיעה' : 'Playing by ear'} value={v.ear} onPick={(ear) => set({ ear })} />
+      <RatingRow id="reading" lang={lang} label={he ? 'לנגן מתווים' : 'Playing from notes'} value={v.reading} onPick={(reading) => set({ reading })} />
     </section>
   );
 }
@@ -519,6 +538,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         </Group>
 
         <Group id="instrument" icon={<SetIcon k="instrument" />} title={t.instrumentTitle} sub={G.instrument[lang]}>
+          <ChannelSelfCard lang={lang} s={s} onChange={onChange} />
           <section className="set-card">
             <p className="field-hint">{t.instrumentHint}</p>
             <Seg

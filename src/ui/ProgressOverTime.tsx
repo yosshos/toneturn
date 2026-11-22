@@ -10,7 +10,15 @@ import { areasOf, channelSeries, closedSeries, defaultFrame, framesFor, inFrame,
 import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
 import { loadSnapshots } from '../storage/snapshots';
 import { localDay } from '../storage/progress';
+import { SinceLesson } from './SinceLesson';
+import { useClassMedian } from './useClassMedian';
 import '../progress-time.css';
+
+/** The Monday a day's week starts on (the minutes chart's columns). */
+const weekStart = (day: string) => {
+  const d = new Date(day + 'T00:00:00Z');
+  return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86400000).toISOString().slice(0, 10);
+};
 
 type Lang = 'he' | 'en';
 type L = { en: string; he: string };
@@ -41,12 +49,14 @@ const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDat
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** One series over time: a 2px line, a crosshair tooltip, the first and last day on the axis, an optional target line. */
-function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)), target, lo, hi }: { pts: Point[]; color: string; name: string; lang: Lang; fmt?: (v: number) => string; target?: number; lo?: number; hi?: number }) {
+function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)), target, lo, hi, refPts }: { pts: Point[]; color: string; name: string; lang: Lang; fmt?: (v: number) => string; target?: number; lo?: number; hi?: number; /** SPEC-PROGRESS-CHARTS §8.1: the class median, a grey line on the same scale (no names). */ refPts?: Point[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   if (pts.length < 2) return <p className="pt-empty">{lang === 'he' ? 'עוד אין מספיק ימים' : 'Not enough days yet'}</p>;
   const w = 300, h = 120, pad = { l: 34, r: 10, t: 10, b: 20 };
-  const vs = pts.map((p) => p.v).concat(target !== undefined ? [target] : []);
+  const days = new Map(pts.map((p, i) => [p.day, i]));
+  const refLine = (refPts ?? []).filter((p) => days.has(p.day));
+  const vs = pts.map((p) => p.v).concat(target !== undefined ? [target] : [], refLine.map((p) => p.v));
   const min = lo ?? Math.min(...vs), max = hi ?? Math.max(...vs, min + 1e-6);
   const x = (i: number) => pad.l + (i / (pts.length - 1)) * (w - pad.l - pad.r);
   const y = (v: number) => h - pad.b - ((v - min) / (max - min || 1)) * (h - pad.t - pad.b);
@@ -69,6 +79,7 @@ function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)),
         {target !== undefined && <line x1={pad.l} x2={w - pad.r} y1={y(target)} y2={y(target)} className="pt-target" />}
         <text x={x(0)} y={h - 5} className="tg-tick">{fmtDay(pts[0].day, lang)}</text>
         <text x={x(pts.length - 1)} y={h - 5} className="tg-tick" textAnchor="end">{fmtDay(pts[pts.length - 1].day, lang)}</text>
+        {refLine.length > 1 && <path d={refLine.map((p, i) => `${i ? 'L' : 'M'}${x(days.get(p.day)!).toFixed(1)} ${y(p.v).toFixed(1)}`).join(' ')} fill="none" className="pt-median" strokeWidth={2} strokeLinejoin="round" data-median-line="1" />}
         <path d={d} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={h - pad.b} className="tg-cross" />}
         <circle cx={x(hover ?? pts.length - 1)} cy={y((hp ?? pts[pts.length - 1]).v)} r={4} fill={color} stroke="var(--card)" strokeWidth={2} />
@@ -84,12 +95,12 @@ function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)),
 }
 
 /** Stacked columns (one per week): rounded tops, a 2px surface gap between segments, a legend above. */
-function StackCols({ cols, keys, colorOf, labelOf, lang }: { cols: { week: string; by: Record<string, number> }[]; keys: string[]; colorOf: (k: string) => string; labelOf: (k: string) => string; lang: Lang }) {
+function StackCols({ cols, keys, colorOf, labelOf, lang, marks }: { cols: { week: string; by: Record<string, number> }[]; keys: string[]; colorOf: (k: string) => string; labelOf: (k: string) => string; lang: Lang; /** The class median per week (minutes): a grey tick on each column. */ marks?: Record<string, number> }) {
   const [hover, setHover] = useState<number | null>(null);
   if (!cols.length) return <p className="pt-empty">{lang === 'he' ? 'עוד אין נתונים' : 'No data yet'}</p>;
   const w = 300, h = 130, pad = { l: 8, r: 8, t: 8, b: 20 };
   const tot = cols.map((c) => keys.reduce((n, k) => n + (c.by[k] ?? 0), 0));
-  const max = Math.max(1, ...tot);
+  const max = Math.max(1, ...tot, ...cols.map((c) => marks?.[c.week] ?? 0));
   const bw = Math.min(28, (w - pad.l - pad.r) / cols.length - 6);
   const xOf = (i: number) => pad.l + ((i + 0.5) * (w - pad.l - pad.r)) / cols.length - bw / 2;
   const scale = (v: number) => (v / max) * (h - pad.t - pad.b);
@@ -120,6 +131,8 @@ function StackCols({ cols, keys, colorOf, labelOf, lang }: { cols: { week: strin
             </g>
           );
         })}
+        {marks &&
+          cols.map((c, i) => (marks[c.week] !== undefined ? <line key={`m${c.week}`} x1={xOf(i) - 4} x2={xOf(i) + bw + 4} y1={h - pad.b - scale(marks[c.week])} y2={h - pad.b - scale(marks[c.week])} className="pt-median" strokeWidth={2} data-median-mark="1" /> : null))}
         <text x={xOf(0)} y={h - 5} className="tg-tick">{fmtDay(cols[0].week, lang)}</text>
         <text x={xOf(cols.length - 1) + bw} y={h - 5} className="tg-tick" textAnchor="end">{fmtDay(cols[cols.length - 1].week, lang)}</text>
       </svg>
@@ -171,9 +184,12 @@ function Card({ title, sub, children, table, lang }: { title: string; sub?: stri
 
 const STATUS_SHADES = ['#e9e4f8', '#c3b6ee', '#8f7ae0', '#5a3fc7'];
 
-export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string }) {
+export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course, median }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string; /** SPEC-PROGRESS-CHARTS §8.1: the class median (the teacher turned it on, the summaries sync) — grey lines on the tempo and minutes charts. */ median?: { day: string; tempo: number; minutes: number }[] | null }) {
   const he = lang === 'he';
   const dark = useDark();
+  // the class median: given (tests), or fetched when the summaries sync and the teacher turned it on
+  const fetchedMedian = useClassMedian(median === undefined && !snapshots, today);
+  const med = median === undefined ? fetchedMedian : median;
   const [all, setAll] = useState<Record<string, Snapshot> | null>(snapshots ?? null);
   useEffect(() => {
     if (!snapshots) void loadSnapshots().then(setAll);
@@ -202,6 +218,9 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
   const keys = keysByWeek(snaps);
   const ear = channelSeries(snaps, 'ear'), read = channelSeries(snaps, 'reading');
   const neutral = dark ? '#9aa0a8' : '#8a8f98';
+  const medTempo: Point[] | undefined = med?.length ? med.map((m) => ({ day: m.day, v: m.tempo })) : undefined;
+  const medWeeks: Record<string, number> | undefined = med?.length ? med.reduce<Record<string, number>>((acc, m) => ((acc[weekStart(m.day)] = (acc[weekStart(m.day)] ?? 0) + m.minutes), acc), {}) : undefined;
+  const medNote = med?.length ? (he ? 'קו אפור: חציון הכיתה' : 'Grey line: the class median') : null;
   return (
     <div className="pt-wrap" data-progress-time={fr}>
       <div className="chips pt-frames" role="radiogroup" aria-label={he ? 'טווח זמן' : 'Time frame'}>
@@ -249,7 +268,7 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         <StackCols cols={status} keys={statusKeys} colorOf={(k) => STATUS_SHADES[statusKeys.indexOf(k as ItemStatus) + 1]} labelOf={(k) => tx(STATUS_WORD[k as ItemStatus], lang)} lang={lang} />
       </Card>
 
-      <Card lang={lang} title={he ? 'קרבה לטמפו היעד' : 'Closeness to the target tempo'} sub={he ? 'הקו המקווקו: היעד' : 'Dashed line: the target'}>
+      <Card lang={lang} title={he ? 'קרבה לטמפו היעד' : 'Closeness to the target tempo'} sub={(he ? 'הקו המקווקו: היעד' : 'Dashed line: the target') + (medNote ? ` · ${medNote}` : '')}>
         <div className="pt-multiples">
           {areas.filter((a) => tempoSeries(snaps, a).length > 1).slice(0, 4).map((a) => (
             <div key={a} className="pt-multiple">
@@ -257,7 +276,7 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
                 <i style={{ background: areaColor(a, dark ? 'dark' : 'light') }} />
                 {areaName(a)}
               </span>
-              <SmallLine pts={tempoSeries(snaps, a)} color={areaColor(a, dark ? 'dark' : 'light')} name={areaName(a)} lang={lang} fmt={pct} target={1} lo={0} hi={1.1} />
+              <SmallLine pts={tempoSeries(snaps, a)} color={areaColor(a, dark ? 'dark' : 'light')} name={areaName(a)} lang={lang} fmt={pct} target={1} lo={0} hi={1.1} refPts={medTempo} />
             </div>
           ))}
         </div>
@@ -294,9 +313,11 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         </Card>
       )}
 
-      <Card lang={lang} title={he ? 'לאן הולכות הדקות' : 'Where the minutes go'} table={mins.map((m) => [fmtDay(m.week, lang), Object.entries(m.by).map(([k, v]) => `${k} ${v}`).join(' · ')])}>
-        <StackCols cols={mins} keys={minKeys} colorOf={(k) => (k === 'other' ? neutral : areaColor(k, dark ? 'dark' : 'light'))} labelOf={(k) => (k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k))} lang={lang} />
+      <Card lang={lang} title={he ? 'לאן הולכות הדקות' : 'Where the minutes go'} sub={medNote ?? undefined} table={mins.map((m) => [fmtDay(m.week, lang), Object.entries(m.by).map(([k, v]) => `${k} ${v}`).join(' · ') + (medWeeks?.[m.week] !== undefined ? ` · ${he ? 'חציון' : 'median'} ${Math.round(medWeeks[m.week])}` : '')])}>
+        <StackCols cols={mins} keys={minKeys} colorOf={(k) => (k === 'other' ? neutral : areaColor(k, dark ? 'dark' : 'light'))} labelOf={(k) => (k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k))} lang={lang} marks={medWeeks} />
       </Card>
+
+      <SinceLesson snaps={all} lang={lang} today={today} areaName={areaName} />
     </div>
   );
 }

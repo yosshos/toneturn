@@ -36,6 +36,15 @@ async function welcome(page: Page, course: string, report: 'new' | 'bit' | 'well
   await expect(w.locator('.cs-ladder li')).toHaveCount(4);
   await fits(page, `${course} welcome`);
   await page.locator(`[data-report="${report}"]`).click();
+  // Phase 6 (SPEC-EAR-AND-READING §8.3): an instrument course asks two 1–5 self-ratings (by ear, from notes).
+  if (course !== 'ear' && course !== 'voice') {
+    const r = page.locator(`[data-course-start="ratings"][data-cs-course="${course}"]`);
+    await expect(r).toBeVisible();
+    await fits(page, `${course} ratings`);
+    await r.locator('[data-cs-rate="ear"] [data-rate="4"]').click();
+    await r.locator('[data-cs-rate="reading"] [data-rate="2"]').click();
+    await r.locator('[data-cs-ratings-done]').click();
+  }
 }
 
 /** Setup: the simulator "plays" a note (or the listening check picks headphones); drums skip the kit wizard. */

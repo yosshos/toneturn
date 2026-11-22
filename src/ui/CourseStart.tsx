@@ -15,6 +15,7 @@ import { Toni } from './Toni';
 import { piano, SIMULATED } from './services';
 import { Icon } from './icons';
 import { FILM } from '../content/openers';
+import { RATED_COURSES, type ChannelSelf } from '../engine/channelPlan';
 
 type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
@@ -69,10 +70,14 @@ function Head({ lang, onBack, step, of }: { lang: Lang; onBack: () => void; step
 export type BassTrack = 'jazz' | 'prog' | 'both';
 const TRACK_T: Record<BassTrack, T2> = { both: { en: 'Both', he: 'שניהם' }, jazz: { en: 'Jazz', he: 'ג׳אז' }, prog: { en: 'Prog / fusion', he: 'פרוג / פיוז׳ן' } };
 
-export function CourseWelcome({ course, lang, report, onReport, onBack, track, onTrack }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void; /** Bass: the chosen direction (absent = both). */ track?: BassTrack; onTrack?: (t: BassTrack) => void }) {
+export function CourseWelcome({ course, lang, report, onReport, onBack, track, onTrack, self, onSelf }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void; /** Bass: the chosen direction (absent = both). */ track?: BassTrack; onTrack?: (t: BassTrack) => void; /** Phase 6 (SPEC-EAR-AND-READING §8.3): an instrument course asks two 1–5 self-ratings after "Where are you?". */ self?: ChannelSelf; onSelf?: (s: ChannelSelf) => void }) {
   const def = courseOf(course);
   const [picked, setPicked] = useState<SelfReport | null>(report ?? null);
   const [tr, setTr] = useState<BassTrack>(track ?? 'both');
+  const rated = !!onSelf && (RATED_COURSES as readonly string[]).includes(course);
+  const [rating, setRating] = useState(false);
+  if (rating && picked && onSelf)
+    return <SelfRatings course={course} lang={lang} self={self} onBack={() => setRating(false)} onDone={(v) => (onSelf(v), onReport(picked))} />;
   return (
     <main className="onboarding cs-screen cs-welcome" data-course-start="welcome" data-cs-course={course}>
       <Head lang={lang} onBack={onBack} step={0} of={3} />
@@ -117,7 +122,7 @@ export function CourseWelcome({ course, lang, report, onReport, onBack, track, o
             data-report={o.v}
             onClick={() => {
               setPicked(o.v);
-              window.setTimeout(() => onReport(o.v), 160);
+              window.setTimeout(() => (rated ? setRating(true) : onReport(o.v)), 160);
             }}
           >
             <b>{o.label}</b>
@@ -125,6 +130,50 @@ export function CourseWelcome({ course, lang, report, onReport, onBack, track, o
           </button>
         ))}
       </div>
+    </main>
+  );
+}
+
+/** One 1–5 self-rating row (a radio group of five small chips, the ends named). */
+export function RatingRow({ label, value, lang, onPick, id }: { label: string; value?: number; lang: Lang; onPick: (v: number) => void; id: string }) {
+  const ends = lang === 'he' ? ['בכלל לא', 'מצוין'] : ['Not at all', 'Very well'];
+  return (
+    <div className="cs-rate" data-cs-rate={id} data-cs-rate-value={value ?? ''}>
+      <span className="cs-rate-label" id={`cs-rate-${id}`}>{label}</span>
+      <div className="cs-rate-chips" role="radiogroup" aria-labelledby={`cs-rate-${id}`}>
+        {[1, 2, 3, 4, 5].map((v) => (
+          <button key={v} type="button" role="radio" aria-checked={value === v} className={`chip ${value === v ? 'on' : ''}`} onClick={() => onPick(v)} data-rate={v}>
+            <bdi dir="ltr">{v}</bdi>
+          </button>
+        ))}
+      </div>
+      <small className="cs-rate-ends" aria-hidden="true">
+        <span>1 · {ends[0]}</span>
+        <span>5 · {ends[1]}</span>
+      </small>
+    </div>
+  );
+}
+
+/** The two self-ratings of an instrument course (owner 2026-11-22): playing by ear, playing from notes — 1 to 5. */
+export function SelfRatings({ course, lang, self, onBack, onDone }: { course: CourseId; lang: Lang; self?: ChannelSelf; onBack: () => void; onDone: (v: ChannelSelf) => void }) {
+  const def = courseOf(course);
+  const [v, setV] = useState<ChannelSelf>(self ?? {});
+  const he = lang === 'he';
+  return (
+    <main className="onboarding cs-screen cs-welcome cs-ratings" data-course-start="ratings" data-cs-course={course}>
+      <Head lang={lang} onBack={onBack} step={0} of={3} />
+      <div className="cs-course">
+        <Glyph kind={def.glyph} color={def.color} size={30} />
+        <b>{def.name[lang]}</b>
+      </div>
+      <h1>{he ? 'איך אתם לומדים מוזיקה?' : 'How do you learn music?'}</h1>
+      <p className="field-hint">{he ? 'הערכה שלכם, מ־1 עד 5. האפליקציה תמדוד מכאן והלאה.' : 'Your own estimate, 1 to 5. The app measures from here on.'}</p>
+      <RatingRow id="ear" lang={lang} label={he ? 'לנגן משמיעה' : 'Playing by ear'} value={v.ear} onPick={(ear) => setV((x) => ({ ...x, ear }))} />
+      <RatingRow id="reading" lang={lang} label={he ? 'לנגן מתווים' : 'Playing from notes'} value={v.reading} onPick={(reading) => setV((x) => ({ ...x, reading }))} />
+      <button className="btn primary" onClick={() => onDone(v)} data-cs-ratings-done="1">
+        {he ? 'המשך' : 'Continue'}
+      </button>
     </main>
   );
 }

@@ -3095,7 +3095,7 @@ export function App() {
       )}
       {route === 'coursestart' &&
         (cStage === 'welcome' || csWelcomeAgain ? (
-          <CourseWelcome key={activeC} course={activeC} lang={s.uiLang} report={cStart?.report} onReport={onCourseReport} onBack={() => (csWelcomeAgain ? setCsWelcomeAgain(false) : go('home'))} track={drillSettingsOf(s).bassTrack} onTrack={(t) => updateSettings({ drills: { ...drillSettingsOf(s), bassTrack: t } })} />
+          <CourseWelcome key={activeC} course={activeC} lang={s.uiLang} report={cStart?.report} onReport={onCourseReport} onBack={() => (csWelcomeAgain ? setCsWelcomeAgain(false) : go('home'))} track={drillSettingsOf(s).bassTrack} onTrack={(t) => updateSettings({ drills: { ...drillSettingsOf(s), bassTrack: t } })} self={s.channelSelf?.[activeC]} onSelf={(v) => updateSettings({ channelSelf: { ...(s.channelSelf ?? {}), [activeC]: v } })} />
         ) : cStage === 'setup' ? (
           <CourseSetup
             key={activeC}

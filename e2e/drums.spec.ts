@@ -376,6 +376,7 @@ test.describe('drums course', () => {
       await page.locator('[data-ob="course-drums"]').click();
       await page.locator('[data-ob="courses-next"]').click();
       await page.locator('[data-report="new"]').click();
+      await page.locator('[data-cs-ratings-done]').click(); // phase 6: the two self-ratings (optional)
       await expect(page.locator('[data-course-start="setup"] [data-kit-quick="1"]')).toBeVisible();
       await page.locator('[data-kit-connect]').click();
       await expect(page.locator('[data-kit-step="map"]')).toBeVisible();

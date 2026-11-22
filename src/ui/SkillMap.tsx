@@ -386,7 +386,7 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
         {axes.map((a, k) => {
           const [x, y] = pt(k, 1.25);
           return (
-            <text key={a.id} x={x} y={y} textAnchor={x < 120 ? 'end' : x > 140 ? 'start' : 'middle'} dominantBaseline="middle" className={`sm-axis ${a.v === null ? 'off' : ''} ${open === a.id ? 'sel' : ''}`} fontSize="13" onClick={() => pick(a.id)} style={{ cursor: 'pointer' }} data-axis={a.id}>
+            <text key={a.id} x={x} y={y} textAnchor={x < 120 ? 'end' : x > 140 ? 'start' : 'middle'} dominantBaseline="middle" className={`sm-axis ${a.v === null ? 'off' : ''} ${open === a.id ? 'sel' : ''}`} fontSize="13" onClick={() => pick(a.id)} style={{ cursor: 'pointer' }} data-axis={a.id} data-axis-v={a.v === null ? '' : Math.round(a.v * 100)}>
               {a.label}
             </text>
           );
@@ -411,6 +411,12 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
                 </span>
               </summary>
               <p className="field-hint">{sec.desc[lang]}</p>
+              {/* phase 6 (BUILD-PLAN §0.2): these two axes are measured from takes by channel, not from levels */}
+              {(sec.id === 'byear' || sec.id === 'reading') && a.v !== null && (
+                <p className="field-hint" data-section-measured={sec.id}>
+                  {sec.id === 'byear' ? (he ? `נמדד מנגינות משמיעה של חומר חדש: ${Math.round(a.v * 100)}%` : `Measured from first takes by ear: ${Math.round(a.v * 100)}%`) : he ? `נמדד מקריאה מהדף של חומר חדש: ${Math.round(a.v * 100)}%` : `Measured from sight-reading takes: ${Math.round(a.v * 100)}%`}
+                </p>
+              )}
               <ul className="sm-fams">
                 {sec.families.map((id) => {
                   const f = familyById(id as FamilyId);

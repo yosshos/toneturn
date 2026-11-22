@@ -8,12 +8,16 @@ import { SKILLS } from '../engine/rating';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
-import { classDetail, myAssignments, type AssignItem, type ClassDetail } from '../cloud/teacher';
+import { classDetail, myAssignments, teacherMockOn, type AssignItem, type ClassDetail } from '../cloud/teacher';
+import { ClassCharts, ClassMedianSetting } from './ClassCharts'; // phase 6: the teacher charts (only while the summaries sync)
 import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
 import { Icon } from './icons';
 
 export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
+  // the dev mock (tt.mockTeacher = 1): the demo class stands in for a signed-in teacher (teacherMock.ts)
+  const mock = teacherMockOn();
+  const signedIn = !!user || mock;
   const [data, setData] = useState<MyClasses | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [code, setCode] = useState('');
@@ -30,8 +34,8 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenI
     }
   }, []);
   useEffect(() => {
-    if (user) void load();
-  }, [user, load]);
+    if (signedIn) void load();
+  }, [signedIn, load]);
   const act = async (f: () => Promise<unknown>) => {
     setBusy(true);
     try {
@@ -56,9 +60,9 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenI
         </header>
       )}
       <p className="field-hint">{t.classesHint}</p>
-      {!cloudConfigured ? (
+      {!cloudConfigured && !mock ? (
         <p className="set-card">{t.onlineUnavailable}</p>
-      ) : !user ? (
+      ) : !signedIn ? (
         <section className="set-card">
           <p>{t.signInForClasses}</p>
           <button className="btn google" onClick={() => void signInWithGoogle()}>
@@ -151,6 +155,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
           {t.classCode}: <b dir="ltr" className="class-code">{c.code}</b>
         </small>
       </div>
+      <ClassMedianSetting classId={c.id} lang={lang} />
       <ClassBoardCard lang={lang} classId={c.id} teacher />
       <h3>
         {t.students} ({c.students.length})
@@ -246,6 +251,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
       <AssignForm classId={c.id} lang={lang} t={t} busy={busy} onAssigned={loadDetail} onError={onError} />
       {detail && <GradingInbox detail={detail} lang={lang} t={t} onChanged={loadDetail} />}
       {detail && <ClassHeatmap c={c} minutes={detail.minutes} lang={lang} t={t} />}
+      {c.students.length > 0 && <ClassCharts classId={c.id} students={c.students.map((s) => ({ id: s.userId, name: s.name }))} lang={lang} />}
       <button
         className="btn ghost small danger"
         disabled={busy}

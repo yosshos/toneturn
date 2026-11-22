@@ -8,7 +8,26 @@ import type { Snapshot } from '../engine/snapshot';
 
 export const SNAPSHOTS_SYNCED = false; // migration 20261208000000 — NOT APPLIED yet
 
+/** Tests and the dev mock (localStorage tt.mockSnapshots = 1, dev builds only) answer the RPCs instead. */
+type Backend = (fn: string, args: Record<string, unknown>) => Promise<unknown>;
+let backend: Backend | null = null;
+export function setSnapshotsBackend(b: Backend | null) {
+  backend = b;
+}
+export const snapshotsMockOn = (): boolean => {
+  if (!import.meta.env.DEV) return false;
+  try {
+    return typeof localStorage !== 'undefined' && localStorage.getItem('tt.mockSnapshots') === '1';
+  } catch {
+    return false;
+  }
+};
+/** The teacher charts and the student's median line show only when the summaries sync (or a test backend answers). */
+export const snapshotsOn = (): boolean => SNAPSHOTS_SYNCED || !!backend || snapshotsMockOn();
+
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T | null> {
+  if (!backend && snapshotsMockOn()) backend = (await import('./snapshotsMock')).mockSnapshotRpc;
+  if (backend) return ((await backend(fn, args)) ?? null) as T | null;
   if (!SNAPSHOTS_SYNCED) return null;
   const sb = supabase();
   if (!sb) return null;
@@ -36,6 +55,15 @@ export async function classSnapshots(classId: string, from: string): Promise<Rec
 
 /** The teacher's switch: show students the anonymous class median. */
 export const setClassMedian = (classId: string, on: boolean) => rpc<void>('toneturn_class_set_median', { p_class: classId, p_on: on });
+
+/** The teacher: is the switch on (the class settings show it)? False when unknown. */
+export async function classMedianOn(classId: string): Promise<boolean> {
+  try {
+    return !!(await rpc<boolean>('toneturn_class_median_on', { p_class: classId }));
+  } catch {
+    return false;
+  }
+}
 
 /** A student: the class median per day (only when the teacher turned it on; 3+ students). */
 export async function classMedian(classId: string, from: string): Promise<{ day: string; tempo: number; minutes: number }[]> {
