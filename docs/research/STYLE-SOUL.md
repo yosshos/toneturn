@@ -474,3 +474,15 @@ Proposal **[?]**: let organ rungs set the registration (jazz 888000000 + perc 3r
   - In C: C → Dm/F → C/E → Dm/A → C/G → Dm/C …
   - The top voice moves by step; the hands keep a close position.
   - [V owner] It is a gospel exercise in its own right, in all 12 keys, for the style block (H) of the per-key matrix, with I–IV–I–IV beside it.
+
+## Gospel and the 7th degree (owner question, 2026-11-22; agreed as a tendency, not a rule)
+
+- **Melody:** gospel and spiritual melodies often avoid the leading tone (the 7th degree).
+  - [V] Ethan Hein's analysis of Aretha Franklin's "Gospel Blues": she avoids the leading tone even where it is written, singing the 6th or the 2nd instead, and bends the 3rd toward ♭3.
+  - [V] A gospel piano method treats harmonising a leading tone in the melody as a special case.
+  - [C] Chris Weisman defines the "gospel scale" as major without the 7th (1 2 3 4 5 6), and notes that most sources call it instead 1 2 ♭3 3 5 6 (the major blues scale). There is no single accepted definition.
+- **Harmony:** the 7th is present. The ii–V–I with a maj7 on I is very common in gospel teaching (Hear and Play), the V7 carries the leading tone, and bass walk-ups use the 7th as a leading tone (PianoGroove). What stands out is the plagal IV–I motion and the ♭7 blues colour (I7 → IV).
+- **In the app:**
+  - for improvisation and melody in the gospel style, a "gospel scale" option in both forms, 1 2 3 4 5 6 and 1 2 ♭3 3 5 6, with an optional rule to avoid the 7th on stressed beats;
+  - in harmony the 7th stays in the voicings and the ii–V–I, and the exercises stress IV–I and the ♭7.
+- **Sources:** https://www.ethanhein.com/wp/2026/the-gospel-according-to-aretha/ · https://chrisweisman.substack.com/p/cw68 · https://gospel.hearandplay.com/main/?p=887 · https://www.pianogroove.com/?p=5361
