@@ -94,7 +94,7 @@ function StackCols({ cols, keys, colorOf, labelOf, lang }: { cols: { week: strin
   const xOf = (i: number) => pad.l + ((i + 0.5) * (w - pad.l - pad.r)) / cols.length - bw / 2;
   const scale = (v: number) => (v / max) * (h - pad.t - pad.b);
   return (
-    <div className="pt-chart" dir="ltr">
+    <div className="pt-chart pt-stack" dir="ltr">
       <div className="pt-legend">
         {keys.map((k) => (
           <span key={k}>
@@ -171,7 +171,7 @@ function Card({ title, sub, children, table, lang }: { title: string; sub?: stri
 
 const STATUS_SHADES = ['#e9e4f8', '#c3b6ee', '#8f7ae0', '#5a3fc7'];
 
-export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot> }) {
+export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string }) {
   const he = lang === 'he';
   const dark = useDark();
   const [all, setAll] = useState<Record<string, Snapshot> | null>(snapshots ?? null);
@@ -190,7 +190,8 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         {he ? 'הגרפים יתמלאו אחרי כמה ימי אימון.' : 'The charts fill in after a few days of practice.'}
       </p>
     );
-  const areas = areasOf(snaps).slice(0, 6);
+  const own = (a: string) => !course || !['keys', 'guitar', 'bass', 'drums'].includes(course) || a === 'lick' || a.startsWith(`${course}:`);
+  const areas = areasOf(snaps).filter(own).slice(0, 6);
   const tiles = weekTiles(all, today);
   const TILE: Record<string, L> = { minutes: { en: 'Minutes', he: 'דקות' }, closed: { en: 'Closed', he: 'נסגרו' }, days: { en: 'Practice days', he: 'ימי אימון' }, tempo: { en: 'Of target tempo', he: 'מטמפו היעד' } };
   const ins = insights(snaps, areaName, lang);
@@ -217,11 +218,11 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
           ))}
         </ul>
       )}
-      <div className="pt-tiles">
+      <div className="pgt-tiles">
         {tiles.map((t) => {
           const d = t.now - t.prev;
           return (
-            <div key={t.id} className="pt-tile" data-tile={t.id}>
+            <div key={t.id} className="pgt-tile" data-tile={t.id}>
               <span>{tx(TILE[t.id], lang)}</span>
               <b dir="ltr">{t.id === 'tempo' ? `${t.now}%` : t.now}</b>
               <small dir="ltr">{d === 0 ? '=' : `${d > 0 ? '▲' : '▼'} ${Math.abs(d)}`}</small>

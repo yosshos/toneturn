@@ -25,6 +25,10 @@ const SLOT: Record<string, number> = {
   form: 6,
   tone: 6,
   reading: 7,
+  // the minutes chart's kinds of practice (snapshot.minuteArea): technique and improvisation keep their area's hue
+  repertoire: 1,
+  ear: 4,
+  games: 3,
 };
 /** The lick book's area shares the improvisation hue. */
 export const NEUTRAL = { light: '#8a8f98', dark: '#9aa0a8' } as const;

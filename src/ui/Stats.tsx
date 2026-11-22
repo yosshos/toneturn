@@ -51,6 +51,7 @@ import { fmtDay, FrameChips, FrameDelta, Spark, TrendDetail, useStatsFrame } fro
 import { useLedger } from './useLedger';
 import { msByDay, withLedgerMs } from '../engine/practiceTime';
 import { Icon } from './icons';
+import { ProgressOverTime } from './ProgressOverTime';
 
 /** AUDIT-5 #1: the stats days with the practice clock's measured time (lessons, technique, games, songs …). */
 function usePracticeDays(days: StatsDays | undefined): StatsDays | undefined {
@@ -80,7 +81,7 @@ export const Dur = ({ ms, lang }: { ms: number; lang: Lang }) => <bdi data-dur="
 // ======================================================================= strings
 
 export const SX = {
-  tabs: { overview: { en: 'Overview', he: 'סקירה' }, skills: { en: 'Skills', he: 'מיומנויות' }, activity: { en: 'Activity', he: 'פעילות' }, awards: { en: 'Awards', he: 'הישגים' } } as Record<ProgressTab, L>,
+  tabs: { overview: { en: 'Overview', he: 'סקירה' }, time: { en: 'Over time', he: 'לאורך זמן' }, skills: { en: 'Skills', he: 'מיומנויות' }, activity: { en: 'Activity', he: 'פעילות' }, awards: { en: 'Awards', he: 'הישגים' } } as Record<ProgressTab, L>,
   progress: { en: 'Progress', he: 'התקדמות' },
   historyTitle: { en: 'Session history', he: 'היסטוריית אימונים' },
   highlights: { en: 'Highlights', he: 'נקודות בולטות' },
@@ -233,8 +234,8 @@ const areaLevel = (r: ReturnType<typeof foldFromMemo>, d: DomainId) => {
 // ======================================================================= ProgressTabs
 
 /** Four tabs (owner 2026-11-07: six overlapping tabs, cut labels, the same data twice). */
-export type ProgressTab = 'overview' | 'skills' | 'activity' | 'awards';
-const TABS: ProgressTab[] = ['overview', 'skills', 'activity', 'awards'];
+export type ProgressTab = 'overview' | 'time' | 'skills' | 'activity' | 'awards';
+const TABS: ProgressTab[] = ['overview', 'time', 'skills', 'activity', 'awards'];
 /** Old tab names (links, stored state) → their new home. */
 const OLD_TAB: Record<string, ProgressTab> = { map: 'skills', stats: 'overview', insights: 'activity', history: 'activity', badges: 'awards' };
 export const toTab = (x: string | null | undefined): ProgressTab | null => (x ? (TABS.includes(x as ProgressTab) ? (x as ProgressTab) : (OLD_TAB[x] ?? null)) : null);
@@ -264,8 +265,18 @@ export interface ProgressTabsProps {
   initial?: ProgressTab | string;
 }
 
+/** The over-time charts' names: a course section ("keys:technique"), the lick book, or a kind of practice (minutes). */
+const KIND_NAME: Record<string, L> = { technique: { en: 'Technique', he: 'טכניקה' }, improv: { en: 'Improvisation', he: 'אלתור' }, repertoire: { en: 'Repertoire', he: 'רפרטואר' }, ear: { en: 'Ear and theory', he: 'שמיעה ותיאוריה' }, games: { en: 'Games', he: 'משחקים' }, other: { en: 'Other', he: 'אחר' }, lick: { en: 'Licks', he: 'ליקים' } };
+export function areaLabel(area: string, lang: Lang): string {
+  if (KIND_NAME[area]) return KIND_NAME[area][lang];
+  const [course, id] = area.split(':');
+  const sec = (COURSE_SECTIONS as Record<string, { id: string; name: L }[] | undefined>)[course]?.find((x) => x.id === id);
+  return sec ? sec.name[lang] : area;
+}
+
 export function ProgressTabs(props: ProgressTabsProps) {
   const { lang } = props;
+  const courseId = useCourse()?.active;
   const [tab, setTabState] = useState<ProgressTab>(() => {
     const i = toTab(props.initial as string | undefined);
     if (i) return i;
@@ -294,6 +305,7 @@ export function ProgressTabs(props: ProgressTabsProps) {
       </div>
       <div role="tabpanel" id={`ps-panel-${tab}`} aria-labelledby={`ps-tab-${tab}`} className="ps-panel">
         {tab === 'overview' && <OverviewView {...props} />}
+        {tab === 'time' && <ProgressOverTime lang={lang} areaName={(a) => areaLabel(a, lang)} course={courseId} />}
         {tab === 'skills' && (props.map ?? props.children)}
         {tab === 'activity' && <ActivityView {...props} />}
         {tab === 'awards' && (

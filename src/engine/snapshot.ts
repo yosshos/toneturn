@@ -9,6 +9,7 @@ import { channelProfile } from './drills/channel';
 import { PASS_DAYS, PASS_SHARE, PASS_TAKES } from './drills/ladder';
 import { sectionOfFamily } from './courseSections';
 import type { CourseId } from './courses';
+import { parseBucket } from './practiceTime';
 
 export interface Snapshot {
   day: string;
@@ -16,7 +17,7 @@ export interface Snapshot {
   status: Record<string, Partial<Record<ItemStatus, number>>>;
   /** Median share of target among the played, not-closed items, per area (0..1+). */
   tempo: Record<string, number>;
-  /** Active minutes that day per ledger bucket. */
+  /** Active minutes that day per kind of practice (minuteArea: technique, improv, repertoire, ear, games, other). */
   minutes: Record<string, number>;
   /** The channel profile (null without enough measured takes). */
   channels: { ear: number | null; reading: number | null };
@@ -43,6 +44,31 @@ export function areaOf(st: Pick<ItemState, 'family' | 'itemId'>): string {
   const c = courseOfFamily(f);
   return `${c}:${sectionOfFamily(c, f)?.id ?? 'other'}`;
 }
+
+/** A ledger bucket's kind of practice, as the daily plan names it (the minutes chart's few categories). */
+export function minuteArea(bucket: string): 'technique' | 'improv' | 'repertoire' | 'ear' | 'games' | 'other' {
+  const k = parseBucket(bucket).kind;
+  if (k === 'technique' || k === 'vocal') return 'technique';
+  if (k === 'improv') return 'improv';
+  if (k === 'song' || k === 'chart' || k === 'piece') return 'repertoire';
+  if (k === 'ear' || k === 'lesson') return 'ear';
+  if (k === 'game') return 'games';
+  return 'other';
+}
+
+const minutesOf = (byBucket: Record<string, number>): { minutes: Record<string, number>; total: number } => {
+  const minutes: Record<string, number> = {};
+  let total = 0;
+  for (const [b, ms] of Object.entries(byBucket)) {
+    const m = ms / 60000;
+    if (m <= 0) continue;
+    const a = minuteArea(b);
+    minutes[a] = (minutes[a] ?? 0) + m;
+    total += m;
+  }
+  for (const a of Object.keys(minutes)) minutes[a] = Math.round(minutes[a] * 10) / 10;
+  return { minutes, total };
+};
 
 const median = (xs: number[]): number => {
   if (!xs.length) return 0;
@@ -75,12 +101,7 @@ export function daySnapshot(day: string, items: Record<string, ItemState>, minut
       if (s === 'closed') lc++;
     }
   }
-  const minutes: Record<string, number> = {};
-  let total = 0;
-  for (const [b, ms] of Object.entries(minutesOfDay)) {
-    const m = Math.round((ms / 60000) * 10) / 10;
-    if (m > 0) (minutes[b] = m), (total += m);
-  }
+  const { minutes, total } = minutesOf(minutesOfDay);
   return {
     day,
     status,
@@ -137,12 +158,7 @@ export function backfillSnapshots(items: Record<string, ItemState>, ledgerDays: 
       if (target > 0 && s !== 'closed') (shares[x.area] ??= []).push(Math.min(1.5, best / target));
       if (x.area === 'lick') (lp++, s === 'closed' && lc++);
     }
-    const minutes: Record<string, number> = {};
-    let total = 0;
-    for (const [b, ms] of Object.entries(ledgerDays[day] ?? {})) {
-      const m = Math.round((ms / 60000) * 10) / 10;
-      if (m > 0) (minutes[b] = m), (total += m);
-    }
+    const { minutes, total } = minutesOf(ledgerDays[day] ?? {});
     out[day] = {
       day,
       status,

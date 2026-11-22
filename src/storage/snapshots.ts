@@ -2,7 +2,7 @@
 // day (about 1 KB a day; a year daily, weekly before that). The past is back-filled once from the items and the
 // practice ledger; today's snapshot is rewritten after every change of progress (idempotent).
 
-import { backfillSnapshots, daySnapshot, pruneSnapshots, type Snapshot } from '../engine/snapshot';
+import { backfillSnapshots, daySnapshot, minuteArea, pruneSnapshots, type Snapshot } from '../engine/snapshot';
 import type { ItemState } from '../engine/drills/types';
 import { indexedKV, memoryKV, type KV } from './kv';
 import { pushSnapshot } from '../cloud/snapshots';
@@ -41,6 +41,13 @@ export async function recordSnapshot(today: string, items: Record<string, ItemSt
   try {
     const cur = (await store().get<Stored>('all')) ?? { v: 1 as const, days: {} };
     let days = { ...cur.days };
+    // 0.117.0 kept raw ledger bucket keys in `minutes`: fold them into the kinds of practice once
+    for (const [d, snap] of Object.entries(days))
+      if (Object.keys(snap.minutes).some((k) => k.includes('|'))) {
+        const m: Record<string, number> = {};
+        for (const [k, v] of Object.entries(snap.minutes)) m[k.includes('|') ? minuteArea(k) : k] = Math.round(((m[k.includes('|') ? minuteArea(k) : k] ?? 0) + v) * 10) / 10;
+        days[d] = { ...snap, minutes: m };
+      }
     if (!cur.backfilled) days = { ...backfillSnapshots(items, ledgerDays, today, days), ...days };
     days[today] = daySnapshot(today, items, ledgerDays[today] ?? {});
     days = pruneSnapshots(days, today);

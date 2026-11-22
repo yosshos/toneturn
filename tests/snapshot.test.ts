@@ -34,7 +34,7 @@ describe('daily snapshots (SPEC-PROGRESS-CHARTS §1)', () => {
     expect(areaOf({ itemId: 'lick:maj-arp:0', family: 'licks' } as ItemState)).toBe('lick');
   });
   it("today's snapshot: statuses by the one rule, the tempo index of open items, minutes, keys", () => {
-    const s = daySnapshot('2026-11-12', { a: closedItem, b: learning, c: guitar }, { technique: 600000, ear: 120000 });
+    const s = daySnapshot('2026-11-12', { a: closedItem, b: learning, c: guitar }, { 'keys|technique|scales|0|run': 600000, '|ear|intervals||run': 120000 });
     expect(s.status['keys:technique']).toEqual({ closed: 1 });
     expect(s.status['keys:harmony']).toEqual({ learning: 1 });
     expect(s.status['guitar:harmony']).toEqual({ almost: 1 });
@@ -49,7 +49,7 @@ describe('daily snapshots (SPEC-PROGRESS-CHARTS §1)', () => {
     expect(closedOn(learning)).toBeNull();
   });
   it('back-fill: each past day as it stood (an item counts from its first day, closed from the day it closed)', () => {
-    const days = backfillSnapshots({ a: closedItem, b: learning }, { '2026-11-10': { technique: 300000 } }, '2026-11-13');
+    const days = backfillSnapshots({ a: closedItem, b: learning }, { '2026-11-10': { 'keys|technique|scales|0|run': 300000 } }, '2026-11-13');
     expect(Object.keys(days).sort()).toEqual(['2026-11-10', '2026-11-11', '2026-11-12']);
     expect(days['2026-11-10'].status['keys:technique']).toEqual({ almost: 1 });
     expect(days['2026-11-10'].status['keys:harmony']).toBeUndefined();
@@ -73,10 +73,10 @@ describe('daily snapshots (SPEC-PROGRESS-CHARTS §1)', () => {
 describe('the snapshot store', () => {
   beforeEach(() => resetSnapshotStore());
   it('back-fills once, then rewrites today', async () => {
-    await recordSnapshot('2026-11-13', { a: closedItem, b: learning }, { '2026-11-13': { technique: 60000 } });
+    await recordSnapshot('2026-11-13', { a: closedItem, b: learning }, { '2026-11-13': { 'keys|technique|scales|0|run': 60000 } });
     let all = await loadSnapshots();
     expect(Object.keys(all).sort()).toEqual(['2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13']);
-    await recordSnapshot('2026-11-13', { a: closedItem, b: learning, c: guitar }, { '2026-11-13': { technique: 120000 } });
+    await recordSnapshot('2026-11-13', { a: closedItem, b: learning, c: guitar }, { '2026-11-13': { 'keys|technique|scales|0|run': 120000 } });
     all = await loadSnapshots();
     expect(all['2026-11-13'].minutes).toEqual({ technique: 2 });
     expect(all['2026-11-13'].status['guitar:harmony']).toEqual({ almost: 1 });
