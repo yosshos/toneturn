@@ -5422,6 +5422,8 @@ export interface LevelDef {
   nps?: [number, number];
   /** A fixed start → target tempo (♩) for every item (the pianist's ear: a calm call, no speed ladder to climb). */
   tempo?: [number, number];
+  /** SPEC-STYLE-FOCUS: the style this level belongs to (a level of a mixed family); read through styles.ts styleOfLevel. */
+  style?: import('../styles').StyleId;
 }
 
 /** The ABRSM recommended minimum speeds, in notes per second (scales / arpeggios, Grades 1–8; ♩ in 8ths to G3, 16ths from G4). */
@@ -5432,8 +5434,11 @@ export const EXAM_NPS = {
 export interface FamilyDef {
   id: FamilyId;
   title: T2;
-  /** 'both': shown with either emphasis (the pianist's ear). */
-  style: 'classical' | 'jazz' | 'both';
+  /**
+   * The old piano emphasis value ('classical' | 'jazz' | 'both': 'both' = the pianist's ear), or, for a new family, its
+   * style tag (SPEC-STYLE-FOCUS, styles.ts — e.g. 'brazil'). Read a family's style only through styles.ts styleOfFamily.
+   */
+  style: import('../styles').FamilyStyle;
   levels: LevelDef[];
 }
 
