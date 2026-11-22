@@ -419,7 +419,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       <button className="icon-btn" onClick={back} aria-label="Back">
         <Icon k="back" />
       </button>
-      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
+      <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub">{/[֐-׿]/.test(title.slice(title.indexOf(' · ') + 3)) ? <BidiText text={title.slice(title.indexOf(' · ') + 3)} /> : <bdi dir="ltr">{title.slice(title.indexOf(' · ') + 3)}</bdi>}</small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
       {spark}
       {settings.midiInput && settings.activeCourse !== 'drums' && <KeysSoundButton on={settings.midiSound !== false} toggle={() => onSettings({ midiSound: settings.midiSound === false, midiSoundAsked: true })} lang={lang === 'he' ? 'he' : 'en'} />}
     </header>

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.119.0',
+    date: '2026-11-22',
+    en: ['Every lick runs in all 12 keys, in your language: a lick you play in many keys and use while improvising becomes yours', 'Each lick has two modes, from the page or by ear, and steps for the ear lead you from hearing to playing', 'Your takes are counted by how you played them: from the page, by ear or from memory; the progress page shows both sides', 'Notes fade as an item grows familiar, a short daily sight-reading dose, and two self-ratings when you pick an instrument'],
+    he: ['כל ליק בכל 12 הסולמות, בשפה שלכם: ליק שמנגנים בסולמות רבים ומשתמשים בו באלתור הופך לשלכם', 'לכל ליק שני מצבים, מהדף או משמיעה, וצעדים לאוזן מובילים משמיעה לנגינה', 'כל נגינה נספרת לפי איך ניגנתם: מהדף, משמיעה או מהזיכרון; דף ההתקדמות מראה את שני הצדדים', 'התווים נעלמים בהדרגה ככל שפריט מוכר יותר, מנת קריאה יומית קצרה, ושתי הערכות עצמיות כשבוחרים כלי'],
+  },
+  {
     version: '0.118.0',
     date: '2026-11-22',
     en: ['Practice has four places — Technique, Licks, Repertoire, Improvise — plus games and a tools strip; the menu reads Today, Practice, Path', 'Repertoire holds every piece: standards, songs, classical pieces, your charts, scores and recordings; add a piece from a lead sheet, a score or your own recording; each piece shows what you can do with it', 'One daily workout: new steps from the path, then technique and improvisation; the technique part comes from every key at your level, half from the key of the week; assignments from a teacher come first', 'Progress has an Over time tab: closed items per area, the ladder week by week, closeness to the target tempo, by ear and reading, the keys filling up, where the minutes go'],
