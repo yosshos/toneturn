@@ -166,3 +166,22 @@ export async function assignAudioUrl(path: string): Promise<string | null> {
   const { data } = await sb.storage.from(ASSIGN_AUDIO_BUCKET).createSignedUrl(path, 600);
   return data?.signedUrl ?? null;
 }
+
+// SPEC-PATH-TODAY-PRACTICE §5.2: an assignment's options (the required channel, minutes a day, spread / all today).
+// Needs migration 20261209000000_toneturn_assignment_opts.sql — set ASSIGN_OPTS_SYNCED once the owner applied it.
+export const ASSIGN_OPTS_SYNCED = false; // migration 20261209000000 — NOT APPLIED yet
+export type AssignChannel = 'free' | 'page' | 'ear' | 'memory';
+export interface AssignOpts {
+  channel: AssignChannel;
+  minutes: number | null;
+  ifShort: 'spread' | 'today';
+}
+export async function setAssignOpts(assignmentId: string, o: AssignOpts): Promise<void> {
+  if (!ASSIGN_OPTS_SYNCED) return;
+  await rpc<void>('toneturn_assignment_set_opts', { p_assignment: assignmentId, p_channel: o.channel, p_minutes: o.minutes, p_if_short: o.ifShort });
+}
+export async function assignOptsFor(ids: string[]): Promise<Record<string, AssignOpts>> {
+  if (!ASSIGN_OPTS_SYNCED || !ids.length) return {};
+  const rows = (await rpc<{ assignment_id: string; channel: AssignChannel; minutes: number | null; if_short: 'spread' | 'today' }[]>('toneturn_assignment_opts_for', { p_ids: ids })) ?? [];
+  return Object.fromEntries(rows.map((r) => [r.assignment_id, { channel: r.channel, minutes: r.minutes, ifShort: r.if_short }]));
+}

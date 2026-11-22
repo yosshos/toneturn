@@ -7,7 +7,7 @@ import { topicVerified } from '../engine/verifiedContent';
 import { useEffect, useMemo, useState } from 'react';
 import type { TeachingClass } from '../cloud/classes';
 import { EXTRA_ASSIGNABLE } from '../cloud/classes';
-import { assignItem, commentOn, createDigestLink, inboxOf, parseTopicRef, passed, readDigest, revokeDigestLink, type AssignItem, type AssignKind, type ClassDetail, type Digest, type Mark, type Strictness } from '../cloud/teacher';
+import { assignItem, setAssignOpts, type AssignChannel, commentOn, createDigestLink, inboxOf, parseTopicRef, passed, readDigest, revokeDigestLink, type AssignItem, type AssignKind, type ClassDetail, type Digest, type Mark, type Strictness } from '../cloud/teacher';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { CHALLENGES, CHALLENGE_GROUPS, type Challenge } from '../engine/improvRules';
 import { STANDARD_CHANGES } from '../engine/standards';
@@ -97,12 +97,17 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const [bpm, setBpm] = useState('');
   const [note, setNote] = useState('');
   const [due, setDue] = useState('');
+  // SPEC-PATH-TODAY-PRACTICE §5.2 (owner): the required channel, minutes a day, and spread / all today
+  const [channel, setChannel] = useState<AssignChannel>('free');
+  const [perDay, setPerDay] = useState('');
+  const [ifShort, setIfShort] = useState<'spread' | 'today'>('spread');
   const ref =
     kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : null;
   const can = kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
-      await assignItem({ classId, kind, lessonId: kind === 'lesson' ? lesson : null, ref, dueOn: due || null, strictness: strict, targetBpm: bpm ? Number(bpm) : null, note });
+      const id = await assignItem({ classId, kind, lessonId: kind === 'lesson' ? lesson : null, ref, dueOn: due || null, strictness: strict, targetBpm: bpm ? Number(bpm) : null, note });
+      if (id) await setAssignOpts(id, { channel, minutes: perDay ? Math.max(1, Math.min(180, Number(perDay))) : null, ifShort });
       setNote('');
       onAssigned();
     } catch (e) {
@@ -253,6 +258,26 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
         <label className="af-row">
           <span>{tx.due}</span>
           <input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+        </label>
+        <label className="af-row">
+          <span>{lang === 'he' ? 'ערוץ' : 'Channel'}</span>
+          <select value={channel} onChange={(e) => setChannel(e.target.value as AssignChannel)} data-assign-channel="1">
+            <option value="free">{lang === 'he' ? 'חופשי' : 'Free'}</option>
+            <option value="page">{lang === 'he' ? 'מתווים' : 'From the page'}</option>
+            <option value="ear">{lang === 'he' ? 'מהאוזן' : 'By ear'}</option>
+            <option value="memory">{lang === 'he' ? 'מהזיכרון' : 'From memory'}</option>
+          </select>
+        </label>
+        <label className="af-row">
+          <span>{lang === 'he' ? 'דקות ביום' : 'Minutes a day'}</span>
+          <input type="number" min={1} max={180} inputMode="numeric" value={perDay} onChange={(e) => setPerDay(e.target.value)} dir="ltr" data-assign-minutes="1" />
+        </label>
+        <label className="af-row">
+          <span>{lang === 'he' ? 'כשאין מספיק זמן היום' : "When today's time is short"}</span>
+          <select value={ifShort} onChange={(e) => setIfShort(e.target.value as 'spread' | 'today')} data-assign-ifshort="1">
+            <option value="spread">{lang === 'he' ? 'לפזר עד תאריך היעד' : 'Spread until the due date'}</option>
+            <option value="today">{lang === 'he' ? 'הכול היום' : 'All today'}</option>
+          </select>
         </label>
       </div>
       <input value={note} maxLength={300} onChange={(e) => setNote(e.target.value)} placeholder={tx.note} aria-label={tx.note} />
