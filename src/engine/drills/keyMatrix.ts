@@ -9,6 +9,7 @@ import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
 import { openKeyRungs, type LadderRung } from './keyIndex';
 import { coolingDown, itemStatus } from './itemStatus';
+import type { Lick } from '../licks';
 
 export type MatrixGroup = 'major' | 'minor';
 export type MatrixView = 'weak' | 'key' | 'exercise';
@@ -82,9 +83,11 @@ type CellShape = Omit<MatrixCell, 'need' | 'minutes'> & { drills: CellDrill[] };
 /** The matrix's structure per tier / focus / groups: it does not depend on the player's items, so it is built once. */
 const shapeCache = new Map<string, CellShape[]>();
 
-function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[] }): CellShape[] {
+function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[]; licks?: Lick[] }): CellShape[] {
   const groups = opts.groups ?? (tier >= MINOR_FROM_TIER ? ['major', 'minor'] : ['major']);
-  const key = `${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}`;
+  // block G (phase 4): the pool's licks are part of the shape (an own lick's notes too: an edit rebuilds it)
+  const licks = (opts.licks ?? []).map((l) => `${l.id}:${l.notes.length}:${l.notes.reduce((a, n) => a + n[0] * 7 + n[1] * 3, 0)}`).join(',');
+  const key = `${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}|${licks}`;
   const hit = shapeCache.get(key);
   if (hit) return hit;
   const out: CellShape[] = [];
@@ -95,6 +98,7 @@ function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; gr
       if (warm) out.push(cell(warm, warm.id.replace(`key-${root}-`, ''), 'W', -1));
       for (const b of built) out.push(cell(b.lvl, b.rung.id, b.rung.block, b.i));
     }
+  if (shapeCache.size >= 8) shapeCache.clear();
   shapeCache.set(key, out);
   return out;
 }
@@ -115,7 +119,7 @@ function needOf(ds: CellDrill[], items: Record<string, ItemState>, day: string):
 /** The local day ('YYYY-MM-DD'). */
 const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[]; /** The local day for the cooldowns (default today). */ day?: string } = {}): MatrixCell[] {
+export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[]; /** The local day for the cooldowns (default today). */ day?: string; /** The player's lick pool (vocab.lickPool): block G, language in the key. */ licks?: Lick[] } = {}): MatrixCell[] {
   const day = opts.day ?? today();
   return matrixShape(fams, tier, opts).map(({ drills, ...c }) => ({ ...c, need: needOf(drills, items, day), minutes: minutesOf(drills, items) }));
 }

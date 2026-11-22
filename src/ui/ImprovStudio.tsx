@@ -17,7 +17,10 @@ import { ListenOriginal } from './ListenOriginal';
 import { keepChartTake } from './recKeep';
 import type { MyChart } from './Charts';
 import { UseIt, lickInstrumentOf } from './LickTrainer';
-import { lickById } from '../engine/licks';
+import { lickById, type Lick } from '../engine/licks';
+import { lickImprovChart, TODAYS_LICK_RULES } from '../engine/lickImprov';
+import { kName } from './encore/bits';
+import { isMinorLick } from '../engine/licks';
 import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
@@ -28,11 +31,11 @@ type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
 /** The segmented control's short labels (COURSE-FEEDBACK-UI §4.7: Rules / Phrase / Vary / Trade). */
 const SEG: Record<'en' | 'he', Record<Mode, string>> = {
   en: { rules: 'Rules', phrasing: 'Phrase', vary: 'Vary', trade: 'Trade', useit: 'Lick' },
-  he: { rules: 'כללים', phrasing: 'משפט', vary: 'וריאציה', trade: 'חילופים', useit: 'ליק' },
+  he: { rules: 'כללים', phrasing: 'משפט', vary: 'וריאציה', trade: 'חילופים', useit: 'ליק היום' },
 };
 const TX = {
   en: {
-    title: 'Improvisation studio', useit: 'Use a lick', useitHow: 'Pick one of your licks; the band plays its changes through four keys and the app listens for it in your solo.', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
+    title: 'Improvisation studio', useit: "Today's lick", useitHow: 'One of your licks, picked by need (due for review, or the newest). Improvise over a chart and work it in where the chart marks it — or over the band through four keys.', overChart: 'Over a chart', overBand: 'Over the band, four keys', picked: 'Picked for you', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
     ruleNames: ['At most one note a beat', 'At most 2 notes a beat', 'Phrases of one bar', 'Phrases of two bars', 'Phrases of four bars', 'A bar of rest between phrases'],
     phrasingHow: 'Improvise over the band. Think in sentences: say something, then leave space. The rule shapes it.',
     varyHow: 'Listen to the phrase, then play it back changed as asked. Keep something of it — its shape or its rhythm.',
@@ -42,7 +45,7 @@ const TX = {
     round: 'Round',
   },
   he: {
-    title: 'סטודיו לאלתור', useit: 'להשתמש בליק', useitHow: 'בחרו ליק מהליקים שלכם; הלהקה מנגנת את האקורדים שלו בארבעה סולמות והאפליקציה מקשיבה אם הוא מופיע בסולו שלכם.', rules: 'אלתור עם כללים', rulesHow: 'מאלתרים מעל מהלך תחת כללים — כל צליל נבדק. בחרו מהלך ואז אתגר; או קבעו כללים משלכם בתוך המהלך.', chartFrom: 'מהלך לאלתר עליו', levels: 'שלבי אלתור', standards: 'סטנדרטים', mine: 'המהלכים שלי', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
+    title: 'סטודיו לאלתור', useit: 'הליק של היום', useitHow: 'אחד הליקים שלכם, לפי הצורך (חזרה שהגיע זמנה, או החדש ביותר). אלתרו על מהלך ושלבו אותו איפה שהמהלך מסמן — או מעל הלהקה בארבעה סולמות.', overChart: 'על מהלך', overBand: 'מעל הלהקה, ארבעה סולמות', picked: 'נבחר בשבילכם', rules: 'אלתור עם כללים', rulesHow: 'מאלתרים מעל מהלך תחת כללים — כל צליל נבדק. בחרו מהלך ואז אתגר; או קבעו כללים משלכם בתוך המהלך.', chartFrom: 'מהלך לאלתר עליו', levels: 'שלבי אלתור', standards: 'סטנדרטים', mine: 'המהלכים שלי', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
     ruleNames: ['לכל היותר צליל אחד לפעמה', 'לכל היותר 2 צלילים לפעמה', 'משפטים של תיבה אחת', 'משפטים של שתי תיבות', 'משפטים של ארבע תיבות', 'תיבה של שקט בין משפטים'],
     phrasingHow: 'אלתרו מעל הלהקה. חשבו במשפטים: להגיד משהו, ואז להשאיר מקום. החוק מעצב את זה.',
     varyHow: 'הקשיבו למשפט, ואז נגנו אותו בחזרה בשינוי שהתבקש. שמרו משהו ממנו — הצורה או הקצב.',
@@ -75,7 +78,7 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title }: { settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab }: { /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(onOpenChart ? 'rules' : 'phrasing');
@@ -87,7 +90,10 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const [result, setResult] = useState<React.ReactNode>(null);
   const [round, setRound] = useState(0);
   const [askIdx, setAskIdx] = useState(0);
-  const myLicks = (settings.lickBook?.mine ?? []).map((id) => lickById(id, settings.lickBook?.own ?? [])).filter((l): l is NonNullable<typeof l> => !!l);
+  // today's lick first, then the rest of the pool (any lick played at all); without a pool, the licks in "mine"
+  const mineOld = (settings.lickBook?.mine ?? []).map((id) => lickById(id, settings.lickBook?.own ?? [])).filter((l): l is NonNullable<typeof l> => !!l);
+  const pool = vocab?.pool.length ? vocab.pool : mineOld;
+  const myLicks = vocab?.today ? [vocab.today, ...pool.filter((l) => l.id !== vocab.today!.id)] : pool;
   const [lickId, setLickId] = useState(myLicks[0]?.id ?? '');
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
@@ -343,7 +349,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       {mode === 'useit' && myLicks.length > 0 && (
         <>
           <label className="field-row">
-            <span>{tx.useit}</span>
+            <span>{lickId === vocab?.today?.id ? tx.picked : tx.useit}</span>
             <select value={lickId} onChange={(e) => setLickId(e.target.value)} data-is-lick="1">
               {myLicks.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -354,7 +360,22 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           </label>
           {(() => {
             const l = myLicks.find((x) => x.id === lickId) ?? myLicks[0];
+            const k = l.homeKey ?? 0;
             return (
+              <>
+              {onOpenChart && (
+                <button
+                  className="btn primary"
+                  data-is-lick-chart={l.id}
+                  onClick={() => {
+                    const c = lickImprovChart(l, k);
+                    onOpenChart({ id: `lick-${l.id}-${Date.now()}`, title: `${tx.useit}: ${l.name[lang]} · ${kName(k, isMinorLick(l))}`, text: c.text, style: c.style, bpm: c.bpm, rules: TODAYS_LICK_RULES, lick: l.id });
+                  }}
+                >
+                  {tx.overChart}
+                </button>
+              )}
+              <small className="field-hint">{tx.overBand}</small>
               <UseIt
                 key={l.id}
                 lang={lang}
@@ -363,6 +384,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
                 inst={lickInstrumentOf(settings)}
                 onResult={(ok, good) => onLickUsed?.([{ id: `g:useit:${l.id}:${Date.now().toString(36)}`, skill: 'improv', difficulty: Math.round(1000 + l.level * 120), correct: ok, score: Math.min(1, good / 2), tags: [{ skill: 'improv', sub: 'improv/vocab', w: 0.6 }, { skill: 'improv', sub: 'improv/play', w: 0.4 }], at: new Date().toISOString() }], ok ? 8 : good ? 3 : 1)}
               />
+              </>
             );
           })()}
         </>

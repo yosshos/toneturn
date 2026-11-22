@@ -6,15 +6,18 @@
 // chromatic approach and enclosure notes, the bebop scale's passing half step, Barry Harris's "arpeggio up, scale
 // down" — none is copied from a book, a course or a recording.
 
-import type { Drill, DrillGoal, ExpNote, ItemState, TakeMetrics } from './drills/types';
+import type { Drill, DrillGoal, DrillSpec, ExpNote, ItemState, TakeMetrics } from './drills/types';
 import { itemPass } from './drills/ladder';
-import { keyName } from './drills/generate';
+import { catalog, generate, keyName, type LevelDef } from './drills/generate';
+import { targetBpmOf } from './drills/targetTempo';
+import { parseChart } from './charts';
+import { qualityOfIntervals } from './lickDetect';
 import { tuningById } from './fretboard';
 import type { RatingEvent } from './rating';
 import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from './fsrs';
 
 export type LickInstrument = 'piano' | 'guitar' | 'bass' | 'voice';
-export type LickContext = 'major-251' | 'minor-251' | 'dominant' | 'altered' | 'blues' | 'barry' | 'enclosure' | 'guide';
+export type LickContext = 'major-251' | 'minor-251' | 'dominant' | 'altered' | 'blues' | 'barry' | 'enclosure' | 'guide' | 'lines';
 type T2 = { en: string; he: string };
 
 /** Chord qualities a lick can sit on: chord tones, the chord scale (passing tones included), and tensions allowed on a beat. */
@@ -84,6 +87,14 @@ export interface Lick {
   /** Another phrase this one was made from (an edit / trim): it shares that phrase's daily cap and passed keys. */
   parent?: string;
   shared?: { code: string; visibility: 'friends' | 'class' | 'public' };
+  /**
+   * BUILD-PLAN §0.2 (phase 4): a line of a technique family (k-bebop, k-vocab, k-harrisline) as a lick. On the piano it
+   * plays the family's own drill (`spec` in the key) and keeps the family's item ids (`item`, '{k}' = the key), so the
+   * level (path, level test) and the lick share one progress.
+   */
+  src?: { fam: string; level: string; spec: Record<string, unknown>; item: string };
+  /** Its own tempo ladder (start … target, 4 rungs) — the family level's, for a line. */
+  tempos?: number[];
 }
 export interface PhraseMark {
   vel?: number;
@@ -130,6 +141,7 @@ export const CONTEXTS: { id: LickContext; name: T2; short: T2 }[] = [
   { id: 'barry', name: { en: 'Barry Harris lines', he: 'קווים של בארי האריס' }, short: { en: 'Barry', he: 'בארי' } },
   { id: 'enclosure', name: { en: 'Bebop enclosures', he: 'כיתורי ביבופ' }, short: { en: 'enclose', he: 'כיתור' } },
   { id: 'guide', name: { en: 'Guide-tone lines', he: 'קווי צלילים מנחים' }, short: { en: 'guide', he: 'מנחים' } },
+  { id: 'lines', name: { en: 'Lines from Technique', he: 'קווים מהטכניקה' }, short: { en: 'lines', he: 'קווים' } },
 ];
 
 /**
@@ -199,9 +211,92 @@ export const LICKS: Lick[] = [
   L('guide-halves', 'guide', 1, '3rds and 7ths in half notes', 'טרצות וספטימות בחצאים', II_V_I, '5h 12h | 11h 5h | 4h 11h'),
   L('guide-cycle', 'guide', 2, 'Guide tones through a turnaround', 'צלילים מנחים בטרנאראונד', [[0, 'maj7', 2], [9, '7', 2], [2, 'm7', 2], [7, '7', 2], [0, 'maj7', 4]], '4h 7h 5h 5h | 4w'),
   L('guide-eighths', 'guide', 3, 'Guide tones on the beats, lines between', 'מנחים על הפעמות, קו ביניהם', II_V_I_SHORT, '5 7 9 12 | 11 9 7 5 | 4q 7q 11h'),
+  // ── the steps for the ear, level 9 (transcribe.ts soloPhrase, owner 2026-11-22): the ii–V–I solo phrases, fixed — the
+  //    ii arpeggiated, the V as the bebop dominant down from the nearest chord tone, the I's nearest chord tone held ──
+  L('tx9-1', 'major-251', 2, 'Solo phrase over ii–V–I: up the ii, down the bebop V', 'משפט סולו על ii–V–I: במעלה ה־ii, במורד ה־V', II_V_I_SHORT, '2 5 9 12 | 11 9 7 6 | 7h'),
+  L('tx9-2', 'major-251', 2, 'Solo phrase over ii–V–I: from the 3rd of ii', 'משפט סולו על ii–V–I: מהטרצה של ii', II_V_I_SHORT, '5 9 12 16 | 14 12 11 9 | 7h'),
+  L('tx9-3', 'major-251', 2, 'Solo phrase over ii–V–I: down the ii, into the 7th', 'משפט סולו על ii–V–I: במורד ה־ii, אל הספטימה', II_V_I_SHORT, '12 9 5 2 | 5 4 2 0 | -1h'),
+  L('tx9-4', 'major-251', 2, 'Solo phrase over ii–V–I: from the top, home to the root', 'משפט סולו על ii–V–I: מלמעלה, הביתה לשורש', II_V_I_SHORT, '16 12 9 5 | 7 6 5 4 | 0h'),
 ];
 
-export const lickById = (id: string, own: Lick[] = []): Lick | undefined => LICKS.find((l) => l.id === id) ?? own.find((l) => l.id === id);
+/** Licks met while building the key ladder (the player's own included), so a lick drill can be made from its id. */
+const KNOWN = new Map<string, Lick>();
+export function knowLicks(ls: Lick[]): void {
+  for (const l of ls) KNOWN.set(l.id, l);
+}
+export const lickById = (id: string, own: Lick[] = []): Lick | undefined =>
+  LICKS.find((l) => l.id === id) ?? own.find((l) => l.id === id) ?? KNOWN.get(id) ?? (id.startsWith('ln-') ? lineLicks().find((l) => l.id === id) : undefined);
+
+// ───────────────────────────── the line families as licks (BUILD-PLAN §0.2, phase 4) ─────────────────────────────
+
+/** The technique families whose lines are vocabulary. ('jazz' has no chord chart on its drills: digital patterns,
+ *  scales, two-voice guide tones and whole forms — not licks.) */
+export const LINE_FAMILIES = ['k-bebop', 'k-vocab', 'k-harrisline'] as const;
+/** A line longer than this (beats: four bars and a pickup) is a chorus over a form, not a lick. */
+const LINE_MAX_BEATS = 18;
+let LINES: Lick[] | null = null;
+
+/**
+ * Every line of the line families that can be a lick, in C: one hand, one note at a time, a chord chart, at most four
+ * bars, an item id with one key slot. Its notes are semitones above C4, its chords the chart's (relative to C), its
+ * tempo ladder the level's. Built once.
+ */
+export function lineLicks(): Lick[] {
+  if (LINES) return LINES;
+  const out: Lick[] = [];
+  for (const f of catalog().filter((x) => (LINE_FAMILIES as readonly string[]).includes(x.id)))
+    for (const lv of f.levels)
+      lv.specs.forEach((sp, i) => {
+        const l = lineLick(f.id, lv, sp as unknown as Record<string, unknown>, i);
+        if (l) out.push(l);
+      });
+  LINES = out;
+  return out;
+}
+
+const LINE_Q: Record<string, string> = { alt: 'alt', '7': '7', dim7: 'dim7', hd7: 'hd7', m6: 'm6', m7: 'm7', maj7: 'maj7', '6': '6' };
+function lineLick(fam: string, lv: LevelDef, sp: Record<string, unknown>, i: number): Lick | null {
+  let d0: Drill;
+  let d5: Drill;
+  try {
+    d0 = generate({ ...(sp as unknown as DrillSpec), key: 0 });
+    d5 = generate({ ...(sp as unknown as DrillSpec), key: 5 });
+  } catch {
+    return null;
+  }
+  if (!d0.chart?.length || d0.beats > LINE_MAX_BEATS || d0.notes.length < 3 || d0.notes.some((n) => n.hand !== 'R')) return null;
+  if (new Set(d0.notes.map((n) => n.beat)).size !== d0.notes.length) return null;
+  // the item id with its key slot: exactly one segment differs between C and F, and it is the key
+  const a = d0.itemId.split(':');
+  const b = d5.itemId.split(':');
+  const diff = a.map((x, k) => (x !== b[k] ? k : -1)).filter((k) => k >= 0);
+  if (a.length !== b.length || diff.length !== 1 || a[diff[0]] !== '0' || b[diff[0]] !== '5') return null;
+  const item = a.map((x, k) => (k === diff[0] ? '{k}' : x)).join(':');
+  const pc = parseChart(d0.chart.join(' | '));
+  if (pc.errors.length || !pc.chords.length) return null;
+  const chords: LickChord[] = pc.chords.map((c) => [mod(c.root), LINE_Q[qualityOfIntervals(c.iv)] ?? 'maj7', c.beats] as LickChord);
+  const many = lv.specs.length > 1;
+  const level = Math.max(1, Math.min(5, fam === 'k-bebop' ? 3 + Math.floor((lv.level - 1) / 2) : fam === 'k-vocab' ? Math.ceil(lv.level / 2) : 1 + Math.floor(lv.level / 8)));
+  const start = d0.startBpm;
+  const target = Math.max(start, targetBpmOf(lv, d0));
+  return {
+    id: `ln-${lv.id}-${i}`,
+    ctx: 'lines',
+    level,
+    name: { en: `${lv.title.en}${many ? ` · ${i + 1}` : ''}`, he: `${lv.title.he}${many ? ` · ${i + 1}` : ''}` },
+    chords,
+    notes: d0.notes.map((n) => [n.pitch - 60, n.beat, n.dur] as LickNote),
+    straight: !d0.spec.swing,
+    src: { fam, level: lv.id, spec: sp, item },
+    tempos: [0, 1, 2, 3].map((k) => Math.round(start + ((target - start) * k) / 3)),
+  };
+}
+
+/** The lick a drill belongs to: a lick drill by its kind, a line's family drill by its item. */
+export function lickOfDrill(d: Drill, own: Lick[] = []): Lick | undefined {
+  if (d.spec.kind.startsWith('lick:')) return lickById(d.spec.kind.slice(5), own);
+  return lineLicks().find((l) => !!l.src && l.src.item.replace('{k}', String(d.spec.key)) === d.itemId);
+}
 const FREE_CTX = { id: 'free' as const, name: { en: 'Free phrase', he: 'משפט חופשי' }, short: { en: 'free', he: 'חופשי' } };
 export const contextOf = (id: LickContext | 'free') => CONTEXTS.find((c) => c.id === id) ?? FREE_CTX;
 
@@ -358,6 +453,7 @@ export function lickChart(l: Lick, key: number): string[] {
 
 /** The tempo ladder of a lick: four rungs from its start to its target tempo (♩). */
 export function lickTempos(l: Lick): number[] {
+  if (l.tempos?.length === 4) return l.tempos;
   const fast = l.notes.some((n) => n[2] < 0.5 - 1e-6);
   const start = Math.max(56, (fast ? 72 : 84) + (l.level - 1) * 4 - (l.notes.every((n) => n[2] >= 1) ? -12 : 0));
   const target = Math.round(start * (l.level >= 4 ? 1.75 : 1.6));
@@ -366,11 +462,16 @@ export function lickTempos(l: Lick): number[] {
 export const lickStart = (l: Lick) => lickTempos(l)[0];
 export const lickTarget = (l: Lick) => lickTempos(l)[3];
 
-export const lickItemId = (l: Lick, inst: LickInstrument, key: number) => `lick:${l.id}:${inst}:${mod(key)}`;
+export const lickItemId = (l: Lick, inst: LickInstrument, key: number) => (l.src && inst === 'piano' ? l.src.item.replace('{k}', String(mod(key))) : `lick:${l.id}:${inst}:${mod(key)}`);
 
 /** The lick as a drill in a key on an instrument: the take, the ladder, the ✓/✗ marks and the chart all come from the drills engine. */
 export function lickDrill(l: Lick, key: number, inst: LickInstrument = 'piano', o: { range?: { low: number; high: number } | null; tuning?: string; band?: boolean } = {}): Drill {
   const k = mod(key);
+  // a line of a technique family: on the piano, the family's own drill (one progress with its level)
+  if (l.src && inst === 'piano') {
+    const d = generate({ ...(l.src.spec as unknown as DrillSpec), key: k });
+    return o.band ? { ...d, band: { style: 'swing' as const, bass: true } } : d;
+  }
   const ps = lickPitches(l, k, inst, o.range);
   const guitar = inst === 'guitar' || inst === 'bass';
   const tu = guitar ? tuningById(o.tuning ?? (inst === 'bass' ? 'bass' : 'standard')) : null;

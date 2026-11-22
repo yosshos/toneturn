@@ -3,7 +3,7 @@
 // (#/licks/mine) and the challenges (#/licks/challenges). Encore's own deeper screens keep their addresses
 // (#/encore/plan/…, #/challenges/p/…); only the old homes (#/encore, #/challenges) now land on their section.
 
-// Phase 3 (SPEC-PRACTICE-IA-3 §2): Transcribe — the graded transcription coach — is the fourth section (#/licks/transcribe;
+// Phase 3 (SPEC-PRACTICE-IA-3 §2): Transcribe — the graded transcription coach, since phase 4 "Steps for the ear" — is the fourth section (#/licks/transcribe;
 // the old #/transcribe-coach lands there). It is its own route in App ('transcribe-coach'), so LicksRoute never renders it.
 export type LicksSection = 'library' | 'mine' | 'challenges' | 'transcribe';
 export const LICKS_SECTIONS: LicksSection[] = ['library', 'mine', 'challenges', 'transcribe'];

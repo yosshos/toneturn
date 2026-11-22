@@ -10,6 +10,7 @@ import { keysInOrder } from '../engine/drills/generate';
 import { weekOf } from '../engine/drills/keyIndex';
 import { playerTier } from '../engine/drills/tiers';
 import { keyMatrix, type MatrixCell, type MatrixGroup, type MatrixView } from '../engine/drills/keyMatrix';
+import { lickPool } from '../engine/vocab';
 import { freezePlan, thawPlan, todayTechPlan, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
 
 const lsGet = (k: string): string | null => {
@@ -98,10 +99,10 @@ export interface TodayTech {
  * Today's technique cells for the piano (null elsewhere: other instruments keep their opened levels' drills). Kept for
  * the day; built again when the block's minutes or the view change. `cells`: the matrix when the caller has it.
  */
-export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillStart'>; ds: DrillSettings; items: Record<string, ItemState>; minutes: number; day: string; cells?: MatrixCell[] }): TodayTech | null {
+export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook'>>; ds: DrillSettings; items: Record<string, ItemState>; minutes: number; day: string; cells?: MatrixCell[] }): TodayTech | null {
   if ((a.ds.instrument ?? 'piano') !== 'piano' || a.minutes <= 0) return null;
   const view = readMatrixView();
-  const cells = a.cells ?? keyMatrix(families('piano'), matrixTierOf(a.settings, a.ds, a.items), a.items, { jazz: a.ds.emphasis === 'jazz', day: a.day });
+  const cells = a.cells ?? keyMatrix(families('piano'), matrixTierOf(a.settings, a.ds, a.items), a.items, { jazz: a.ds.emphasis === 'jazz', day: a.day, licks: lickPool(a.items, a.settings.lickBook) });
   const group: MatrixGroup = 'major';
   const order = keysInOrder(a.ds.keyOrder, false);
   const weekRoot = keptWeekKey(group, 'piano', () => weekKeyFromMatrix(cells, group, order), `${a.day}T12:00:00`);

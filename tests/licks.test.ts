@@ -10,7 +10,8 @@ const mod = (n: number) => ((n % 12) + 12) % 12;
 
 describe('lick library', () => {
   it('has licks in every context and levels 1–4+, unique ids', () => {
-    for (const c of CONTEXTS) expect(LICKS.some((l) => l.ctx === c.id), c.id).toBe(true);
+    // 'lines' are the technique families' lines (lineLicks, phase 4), not library licks
+    for (const c of CONTEXTS.filter((x) => x.id !== 'lines')) expect(LICKS.some((l) => l.ctx === c.id), c.id).toBe(true);
     expect(new Set(LICKS.map((l) => l.id)).size).toBe(LICKS.length);
     expect(LICKS.length).toBeGreaterThanOrEqual(24);
   });

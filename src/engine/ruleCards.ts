@@ -11,7 +11,7 @@
 import { MODE_STEPS, type ModeId } from './modes';
 import type { ParsedChart } from './charts';
 import { LICKS, type Lick } from './licks';
-import { findLick, qualityOfIntervals, type ChartSpan, type ImpNote } from './lickDetect';
+import { findLick, qualityOfIntervals, type ChartSpan, type ImpNote, type LickHit } from './lickDetect';
 import { TRIAD_PAIRS, pairTriads } from './theoryPlay';
 
 type Bi = { en: string; he: string };
@@ -36,6 +36,10 @@ export interface CardOpt {
   split?: number;
   /** use-lick: the licks that count (default the whole library). */
   lickIds?: string[];
+  /** SPEC-LICKS-IN-IMPROV (phase 4): the player's pool (vocab.lickPool) — use-lick and lick-every-4 count these. */
+  licks?: Lick[];
+  /** todays-lick: the lick of the day. */
+  today?: Lick;
   /** quote-head: the tune's melody (beats, MIDI). */
   melody?: { beat: number; midi: number }[];
 }
@@ -429,10 +433,40 @@ const CARDS: CardDef[] = [
     pass: 1,
     check: (ctx) => {
       const ns = line(ctx);
-      const pool: Lick[] = ctx.opt?.lickIds?.length ? LICKS.filter((l) => ctx.opt!.lickIds!.includes(l.id)) : LICKS;
-      const chart: ChartSpan[] = ctx.spans.map((s) => ({ root: s.root, q: qualityOfIntervals(s.iv), at: s.at, beats: s.beats }));
-      const imp: ImpNote[] = ns.map((n) => ({ beat: n.beat, midi: Math.round(n.midi) }));
-      const found = ns.length >= 3 && pool.some((l) => findLick(l, imp, chart, { shape: false }).some((h) => h.overChord));
+      const found = ns.length >= 3 && lickHits(ctx, poolOf(ctx)).length > 0;
+      return { ok: found ? 1 : 0, total: 1, miss: found ? [] : [0] };
+    },
+  },
+  {
+    // SPEC-LICKS-IN-IMPROV §2 (owner 2026-11-22): windows with a use ÷ windows with notes, like the other 4-bar cards
+    id: 'lick-every-4',
+    fam: 'vocab',
+    name: { en: 'A lick every 4 bars', he: 'ליק כל 4 תיבות' },
+    how: { en: 'In every 4 bars you play in, one of your licks over its chord (any key, exact or varied).', he: 'בכל 4 תיבות שאתם מנגנים בהן, אחד מהליקים שלכם מעל האקורד שלו (בכל סולם, מדויק או בשינוי).' },
+    level: 3,
+    diff: 1460,
+    pass: 0.75,
+    check: (ctx) => {
+      const win = 4 * ctx.meter;
+      const withNotes = new Set(line(ctx).map((n) => Math.floor(n.beat / win + EPS)));
+      const hit = new Set(lickHits(ctx, poolOf(ctx)).map((h) => Math.floor(h.beat / win + EPS)));
+      const miss = [...withNotes].filter((w) => !hit.has(w)).map((w) => w * win);
+      return { ok: [...withNotes].filter((w) => hit.has(w)).length, total: withNotes.size, miss };
+    },
+  },
+  {
+    // SPEC-LICKS-IN-IMPROV §2: one lick the app picks (due for review, or the newest), at least once a chorus over its chord
+    id: 'todays-lick',
+    fam: 'vocab',
+    name: { en: "Today's lick", he: 'הליק של היום' },
+    how: { en: 'Play today’s lick at least once, over the chords it belongs to (marked on the chart).', he: 'נגנו את הליק של היום לפחות פעם אחת, מעל האקורדים שלו (מסומנים על המהלך).' },
+    level: 2,
+    diff: 1300,
+    pass: 1,
+    check: (ctx) => {
+      const t = ctx.opt?.today;
+      if (!t) return { ok: 0, total: 0 };
+      const found = line(ctx).length >= 3 && lickHits(ctx, [t]).length > 0;
       return { ok: found ? 1 : 0, total: 1, miss: found ? [] : [0] };
     },
   },
@@ -1173,4 +1207,17 @@ export function notesOfSeconds(played: { start: number; end: number; midi: numbe
 }
 export function ctxOfSeconds(played: { start: number; end: number; midi: number; vel?: number }[], bpm: number, spans: CSpan[], meter = 4, opt?: CardOpt): CardCtx {
   return { notes: notesOfSeconds(played, bpm), spans, meter, bpm, opt };
+}
+
+/** The licks a lick card counts: the player's pool, else the listed library licks, else the whole library. */
+function poolOf(ctx: CardCtx): Lick[] {
+  if (ctx.opt?.licks?.length) return ctx.opt.licks;
+  return ctx.opt?.lickIds?.length ? LICKS.filter((l) => ctx.opt!.lickIds!.includes(l.id)) : LICKS;
+}
+/** Clean uses of any of the licks over their chords (exact or varied, in time; one per occurrence). */
+export function lickHits(ctx: CardCtx, pool: Lick[]): LickHit[] {
+  const chart: ChartSpan[] = ctx.spans.map((s) => ({ root: s.root, q: qualityOfIntervals(s.iv), at: s.at, beats: s.beats }));
+  const imp: ImpNote[] = line(ctx).map((n) => ({ beat: n.beat, midi: Math.round(n.midi) }));
+  if (imp.length < 3) return [];
+  return pool.flatMap((l) => findLick(l, imp, chart, { shape: false, varied: true }).filter((h) => h.overChord && h.tight !== false));
 }

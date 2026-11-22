@@ -14,7 +14,8 @@ const NAME: Record<LicksSection, { en: string; he: string }> = {
   library: { en: 'Library', he: 'הספרייה' },
   mine: { en: 'Mine', he: 'שלי' },
   challenges: { en: 'Challenges', he: 'אתגרים' },
-  transcribe: { en: 'Transcribe', he: 'תמלול' },
+  // the graded transcription coach became the steps for the ear (BUILD-PLAN §0.2, owner 2026-11-22)
+  transcribe: { en: 'Ear steps', he: 'צעדים לאוזן' },
 };
 
 /** Due today per section: the library's lick reviews, my phrases' keys due. */

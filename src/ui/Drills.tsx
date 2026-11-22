@@ -120,6 +120,7 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
+import { lickPool } from '../engine/vocab';
 import { PlaceSpark } from './PlaceSpark';
 import type { CourseId } from '../engine/courses';
 import { playerTier } from '../engine/drills/tiers';
@@ -385,11 +386,12 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const keyMatrixSum = useMemo(() => {
     // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
     if ((ds.instrument ?? 'piano') !== 'piano' || !(pView === 'key' || view.k === 'keypage')) return null;
-    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz', ...(today ? { day: today.day } : {}) });
+    // block G (phase 4): the lick pool's licks are rungs of every key
+    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz', licks: lickPool(items, settings.lickBook), ...(today ? { day: today.day } : {}) });
     const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
-  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, pView, view.k, today?.day]);
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, pView, view.k, today?.day]);
   // The order of the rest of today's cells (the player's view, remembered): one plan with the workout's block.
   const [mv, setMvState] = useState<MatrixView>(readMatrixView);
   const setMv = (v: MatrixView) => (saveMatrixView(v), setMvState(v));
@@ -560,7 +562,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <KeyPage today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
       </main>
     );
   if (view.k === 'family')
@@ -605,7 +607,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onPView={setPView}
       keyGrid={
         keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} today={todayPlan ? { plan: todayPlan.plan, view: mv, onView: setMv, byKey: todayMarks?.byKey } : undefined} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds, keyMatrixSum?.cellsList)} onWeek={(root, g) => {
-          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
+          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', licks: lickPool(items, settings.lickBook) }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onToday={() => {
           // BUILD-PLAN phase 2: the same cells as today's workout technique block (one plan), resumed where it stopped;

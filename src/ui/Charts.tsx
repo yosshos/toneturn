@@ -30,6 +30,19 @@ import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { keepChartTake } from './recKeep';
 import { recordingPrefs } from '../storage/recordings';
+import { spansOfChart } from '../engine/ruleCards';
+import { findUses, lickFits, usesXp, type LickUse } from '../engine/vocab';
+import { kName } from './encore/bits';
+import { isMinorLick, type Lick } from '../engine/licks';
+
+/** The player's vocabulary in Improvise (SPEC-LICKS-IN-IMPROV, phase 4): the pool, today's lick, the usage log. */
+export interface VocabCtx {
+  pool: Lick[];
+  today: Lick | null;
+  log?: LickUse[];
+  /** The uses found in a take (booked by the app: the log, the review) and their XP. */
+  onUses?: (uses: LickUse[], xp: number) => void;
+}
 
 export interface MyChart {
   id: string;
@@ -46,6 +59,8 @@ export interface MyChart {
   level?: string;
   /** The standard (standards.ts id) this chart came from: its reference recordings are linked (owner 2026-11-11). */
   std?: string;
+  /** Opened from a lick page ("use it in improvisation"): today's lick is this lick (phase 4). */
+  lick?: string;
 }
 
 const PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -73,7 +88,7 @@ const TX = {
 
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial }: { settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
+export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial, vocab }: { /** The lick pool and today's lick (phase 4). */ vocab?: VocabCtx; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const mine = settings.myCharts ?? [];
@@ -105,6 +120,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         onImprov={onImprov}
         best={settings.challengeBest}
         onDrill={onDrill}
+        vocab={vocab ? { ...vocab, today: (open.lick ? vocab.pool.find((l) => l.id === open.lick) : null) ?? vocab.today } : undefined}
       />
     );
   return (
@@ -211,7 +227,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   );
 }
 
-function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture }: { best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
+function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture, vocab }: { vocab?: VocabCtx; best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string) => void; onDrill?: (kind: string, stride: boolean) => void }) {
   const tx = TX[lang];
   const ix = IMP[lang];
   const [headphones, setHeadphones] = useHeadphones();
@@ -222,6 +238,8 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const [scales, setScales] = useState<Record<number, ModeId>>(chart.scales ?? {});
   const [pickBar, setPickBar] = useState<number | null>(null);
   const [rulesRep, setRulesRep] = useState<RulesReport | null>(null);
+  // phase 4: the licks of mine found in the last take (debrief + a mark on the bar), none while playing
+  const [found, setFound] = useState<{ uses: (LickUse & { beat: number; fresh: boolean })[]; xp: number } | null>(null);
   // Practice this progression at the piano: a voicing (or a stride left hand), a comping rhythm, comp or LH + RH improv.
   const [pv, setPv] = useState<ChartVoicing>('rootless');
   const [pr, setPr] = useState<CompRhythm>('charleston');
@@ -352,6 +370,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     ctl.current = c;
     await piano.unlock();
     setReport(null);
+    setFound(null);
     setImprov('on');
     setPlaying(true);
     const loops = parsed.bars * meter < 24 ? 2 : 1;
@@ -446,8 +465,18 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const rep = improvReportBy(useMidi ? framesFromNotes(midiNotes.filter((n) => n.start >= 0)) : shifted, pcsAt, bpm);
     setReport(rep);
     const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape || rules.vocab || rules.extra);
-    const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops) : null;
+    const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops, vocab ? { licks: vocab.pool, ...(vocab.today ? { today: vocab.today } : {}) } : undefined) : null;
     setRulesRep(rr);
+    // SPEC-LICKS-IN-IMPROV §3–4: the licks of mine in the take (any key, over the right chord, in time); booked, XP, marks
+    if (vocab?.pool.length && judged.length >= 3) {
+      const at = new Date().toISOString();
+      const hits = findUses(vocab.pool, judged.map((n) => ({ beat: n.start / beatS, midi: Math.round(n.midi) })), spansOfChart(parsed, meter, parsed.bars * loops), `chart-${Date.now().toString(36)}`, at);
+      const seen = new Set((vocab.log ?? []).map((u) => `${u.id}:${u.key}`));
+      const uses = hits.map((u) => ({ ...u, beat: u.beat ?? 0, fresh: !seen.has(`${u.id}:${u.key}`) }));
+      const xp = usesXp(hits, vocab.log);
+      setFound({ uses, xp });
+      if (hits.length) vocab.onUses?.(hits.map(({ beat: _b, ...u }) => u), xp);
+    } else setFound(null);
     const score = rr && rr.notes >= 4 ? rr.score : rep.score;
     // My recordings: the take's notes (and sound) with the chart, so the player can play it back with the band.
     keepChartTake({ kind: 'chart', title: title || chart.title, notes: sung, bpm, meter, chart: text, style, loops, source: useMidi ? 'midi' : 'mic', audio: takeAudio, score, ...(chart.std ? { itemId: `chart:${chart.std}` } : {}) });
@@ -462,6 +491,13 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const r1 = firstRootPc(text);
   const practiceKey = stdRef ? { ...stdRef.appKey, pc: r0 !== null && r1 !== null ? (((stdRef.appKey.pc + r1 - r0) % 12) + 12) % 12 : stdRef.appKey.pc } : undefined;
   const barChords = Array.from({ length: parsed.bars }, (_, i) => parsed.chords.filter((c) => c.bar === i));
+  // phase 4: where today's lick fits (marked before the take) and where my licks were found (after it)
+  const lickCard = rules.vocab === 'todays-lick' || rules.vocab === 'lick-every-4' || rules.vocab === 'use-lick';
+  const today = vocab?.today ?? null;
+  const fits = today && rules.vocab === 'todays-lick' ? lickFits(today, spansOfChart(parsed, meter, parsed.bars)) : [];
+  const fitBars = new Set(fits.map((f) => Math.floor(f.at / meter + 1e-6) % Math.max(1, parsed.bars)));
+  const foundBars = new Set((found && !playing ? found.uses : []).map((u) => Math.floor(u.beat / meter + 1e-6) % Math.max(1, parsed.bars)));
+  const lickName = (id: string) => vocab?.pool.find((l) => l.id === id);
   return (
     <main className="panel-screen charts ch-play" data-chart-player="1">
       <header className="screen-head">
@@ -504,6 +540,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           cells={barChords.map((cs, i) => ({
             chord: cs.map((c) => c.sym).join(' ') || null,
             ...(rulesRep && !playing && rulesRep.bars.some((_x, j) => j % parsed.bars === i) ? { tab: { kind: rulesRep.bars.some((x, j) => j % parsed.bars === i && x.breaks > 0) ? ('bad' as const) : ('ok' as const), rules: [] } } : {}),
+            ...(foundBars.has(i) ? { lick: 'found' as const } : fitBars.has(i) && !playing ? { lick: 'fits' as const } : {}),
             ...(rules.note === 'scale' && cs[0] ? { note: scales[i] || cs.length === 1 ? MODE_NAMES[scales[i] ?? autoScale(cs[0].iv)][lang].replace(/ \(.*\)$/, '') : rx.auto, noteSet: !!scales[i] } : {}),
           }))}
           meter={meter}
@@ -535,6 +572,17 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         </p>
       )}
       <RulesPanel lang={lang} rules={rules} onRules={setRules} disabled={playing} best={best} />
+      {lickCard && vocab && (
+        <p className="field-hint ch-today-lick" data-today-lick={today?.id ?? ''} data-lick-fits={fits.length}>
+          {!vocab.pool.length
+            ? lang === 'he'
+              ? 'עוד אין ליקים שלכם: נגנו ליק אחד בליקים, והוא מצטרף לכאן.'
+              : 'No licks of yours yet: play one in Licks and it joins here.'
+            : rules.vocab === 'todays-lick' && today
+              ? `${lang === 'he' ? 'הליק של היום' : "Today's lick"}: ${today.name[lang]}${fits.length ? ` · ${lang === 'he' ? 'מסומן איפה שהוא מתאים' : 'marked where it fits'}` : ` · ${lang === 'he' ? 'אין לו מקום במהלך הזה' : 'no place for it in this chart'}`}`
+              : `${lang === 'he' ? 'הליקים שלכם' : 'Your licks'}: ${vocab.pool.length}`}
+        </p>
+      )}
       {pickBar !== null && (
         <div className="ch-scalepick" role="dialog" aria-label={`${rx.barScale} ${pickBar + 1}`} data-scale-pick={pickBar}>
           <div className="ch-sp-head">
@@ -652,6 +700,28 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       {hasTake && !playing && (lastTake.current?.notes?.length ?? 0) >= 3 && (
         // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this solo (guided improv when rules were on).
         <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: rulesRep ? 'guided' : 'chart', instrument: 'piano', title: title || (lang === 'he' ? 'סולו' : 'Solo'), source: 'midi', notes: (lastTake.current?.notes ?? []).map((n) => ({ pitch: n.midi, on: n.start * 1000, off: n.end * 1000, vel: n.vel ?? 80 })), bpm, t0: 0, meter, chart: text })} />
+      )}
+      {found && found.uses.length > 0 && !playing && (
+        <div className="take-card ch-licks-found" aria-live="polite" data-licks-found={found.uses.length} data-licks-xp={found.xp}>
+          <div className="take-score">
+            {lang === 'he' ? `ליקים שלכם בסולו: ${found.uses.length}` : `Licks of yours in the solo: ${found.uses.length}`}
+            {found.xp > 0 && <small dir="ltr"> · +{found.xp} XP</small>}
+          </div>
+          <ul className="perf-report">
+            {found.uses.slice(0, 6).map((u, k) => {
+              const l = lickName(u.id);
+              return (
+                <li key={k} data-lick-use={u.id}>
+                  {l?.name[lang] ?? u.id} · <bdi dir="ltr">{kName(u.key, !!l && isMinorLick(l))}</bdi>
+                  {u.fresh && <small> · {lang === 'he' ? 'סולם חדש' : 'new key'}</small>}
+                  {u.kind === 'varied' && <small> · {lang === 'he' ? 'בשינוי' : 'varied'}</small>}
+                  {u.viaSub && <small> · {lang === 'he' ? 'מעל תחליף הטריטון' : 'over the tritone sub'}</small>}
+                  <small> · {lang === 'he' ? 'תיבה' : 'bar'} {Math.floor(u.beat / meter) + 1}</small>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
       {rulesRep && !playing && (
         <div className="take-card ch-rules-result" aria-live="polite" data-rules-score={Math.round(rulesRep.score * 100)}>

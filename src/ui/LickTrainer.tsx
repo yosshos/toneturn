@@ -19,7 +19,7 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
 import {
-  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, nextLickKey, reviewKey,
+  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, lickOfDrill, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, lineLicks, nextLickKey, reviewKey,
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
@@ -31,6 +31,10 @@ import { PlaceSpark } from './PlaceSpark';
 import type { CourseId } from '../engine/courses';
 import { LickShareButton } from './LickShare';
 import { kName } from './encore/bits';
+import { inMyLanguage, usesOf } from '../engine/vocab';
+import { lickImprovChart, lickInRepertoire, TODAYS_LICK_RULES } from '../engine/lickImprov';
+import { STANDARD_CHANGES } from '../engine/standards';
+import type { MyChart, VocabCtx } from './Charts';
 
 type Lang = 'he' | 'en';
 export type TakeFn = (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => void;
@@ -43,7 +47,8 @@ const TX = {
     useHow: (n: string) => `Improvise over the band. Use "${n}" at least twice — in any key the band is in, over the right chords.`,
     found: 'Found', exact: 'the lick', shape: 'its shape', wrongChord: 'over another chord', passed: 'Used it — it is yours.', notYet: 'Not twice over the right chords yet.',
     reviewDone: 'Review done', reviewNext: 'Next', keysOnScreen: 'No MIDI keyboard: play here', of: 'of', voice: 'Sing it: pitch and time are measured.',
-    byEar: 'By ear', earAsk: 'Notes hidden: hear it, then play it back.', slower: 'Slower', reveal: 'Show the notes (less credit)', earLess: 'notes shown: less credit',
+    byEar: 'By ear', earAsk: 'Notes hidden: hear it, then play it back. They show once you play it right.', slower: 'Slower', reveal: 'Show the notes (less credit)', earLess: 'notes shown: less credit',
+    fromPage: 'From the page', improvise: 'Use it in improvisation', inLang: 'In my language', used: (n: number, k: number) => `used ${n} ${n === 1 ? 'time' : 'times'} in ${k} ${k === 1 ? 'key' : 'keys'}`, notUsed: 'Not used in improvisation yet', fits: 'Where it fits in the repertoire', bars: 'bars',
     insts: { piano: 'Piano', guitar: 'Guitar', bass: 'Bass', voice: 'Voice' } as Record<LickInstrument, string>,
   },
   he: {
@@ -53,7 +58,8 @@ const TX = {
     useHow: (n: string) => `אלתרו מעל הלהקה. השתמשו ב"${n}" לפחות פעמיים — בסולם שבו הלהקה נמצאת, מעל האקורדים הנכונים.`,
     found: 'נמצא', exact: 'הליק', shape: 'הצורה שלו', wrongChord: 'מעל אקורד אחר', passed: 'השתמשתם בו — הוא שלכם.', notYet: 'עוד לא פעמיים מעל האקורדים הנכונים.',
     reviewDone: 'החזרה הושלמה', reviewNext: 'הבא', keysOnScreen: 'אין מקלדת MIDI: נגנו כאן', of: 'מתוך', voice: 'שירו אותו: הגובה והזמן נמדדים.',
-    byEar: 'בשמיעה', earAsk: 'התווים מוסתרים: שמעו, ואז נגנו בחזרה.', slower: 'לאט יותר', reveal: 'להציג את התווים (פחות ניקוד)', earLess: 'התווים הוצגו: פחות ניקוד',
+    byEar: 'בשמיעה', earAsk: 'התווים מוסתרים: שמעו, ואז נגנו בחזרה. הם מופיעים כשמנגנים נכון.', slower: 'לאט יותר', reveal: 'להציג את התווים (פחות ניקוד)', earLess: 'התווים הוצגו: פחות ניקוד',
+    fromPage: 'מהדף', improvise: 'להשתמש באלתור', inLang: 'בשפה שלי', used: (n: number, k: number) => `שימוש ${n} ${n === 1 ? 'פעם' : 'פעמים'} ב־${k} ${k === 1 ? 'סולם' : 'סולמות'}`, notUsed: 'עוד לא שימש באלתור', fits: 'איפה הוא מתאים ברפרטואר', bars: 'תיבות',
     insts: { piano: 'פסנתר', guitar: 'גיטרה', bass: 'בס', voice: 'קול' } as Record<LickInstrument, string>,
   },
 };
@@ -127,7 +133,8 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   if (!drill) return null;
   const lick = l(drill);
   const earNow = ear[drill.itemId] ?? {};
-  const hidden = byEar && !earNow.taken && !earNow.revealed && !res;
+  // by ear (SPEC-EAR-AND-READING §3.2): the notes stay hidden until the lick is played back right (a clean take)
+  const hidden = byEar && !earNow.taken && !earNow.revealed;
   const go = (j: number) => {
     setRes(null);
     if (j >= queue.length) return onEnd(count.current.takes, count.current.clean, reviews.current);
@@ -147,7 +154,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     if (review) reviews.current.push({ lick: lick.id, pass: m.verdict === 'clean' });
     const by = byEar ? { byEar: true, revealed: !!earNow.revealed } : undefined;
     onTake(lad.state, lickEvents(lick, inst, m, bpm, new Date().toISOString(), session.current, n, sub, by), by ? byEarXp(m, by) : lickXp(m), { verdict: m.verdict, hands: 'R', cv: null });
-    if (byEar) setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, taken: true } }));
+    if (byEar && m.verdict === 'clean') setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, taken: true } }));
     setRes({ m, lad, bpm });
     setBpm(lad.next.bpm);
   };
@@ -159,7 +166,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
         {byEar && earNow.revealed && !earNow.taken && <small className="lk-voice-hint"> · {TX[lang].earLess}</small>}
       </p>
       {hidden ? <EarLick drill={drill} bpm={bpm} lang={lang} onReveal={() => setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, revealed: true } }))} /> : <DrillScore drill={drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />}
-      {res && <MarkLegend lang={lang} />}
+      {res && !hidden && <MarkLegend lang={lang} />}
       {!res && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={settings.headphones} />}
       {res && (
         <>
@@ -368,22 +375,27 @@ export interface LickTrainerProps {
   onPathDone?: (stars: number) => void;
   /** Inside the Licks tile (owner 2026-11-22): the library's header is the tile's, with its three sections. */
   hub?: boolean;
+  /** Phase 4: the usage log ("in my language", "used N times in K keys"). */
+  vocab?: VocabCtx;
+  /** "Use it in improvisation": open the chart player with this chart (today's lick = the lick). */
+  onImprovise?: (c: MyChart) => void;
 }
 
-export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub }: LickTrainerProps) {
+export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise }: LickTrainerProps) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
   // Encore phrases (Lick v3) live in the same book but practice in Encore (their own plan and map).
   const own = (book.own ?? []).filter((l) => !(l.v === 3 || l.id.startsWith('enc-')));
-  const all = [...LICKS, ...own];
+  // the line families' lines are licks too (phase 4: one progress with their levels) — on the piano, where they live
+  const all = [...LICKS, ...(inst === 'piano' ? lineLicks() : []), ...own];
   const due = dueLicks(book.review).filter((id) => lickById(id, own));
   const [tab, setTab] = useState<LickContext | 'all' | 'review' | 'mine'>(startReview && due.length ? 'review' : 'all');
   const [view, setView] = useState<View>({ k: 'lib' });
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
   const opts = { range: settings.voiceRange ?? null, tuning: inst === 'bass' ? bassTuningOf(settings) : undefined, band: true };
-  const lickOf = (d: Drill) => lickById(d.spec.kind.slice(5), own) ?? all[0];
+  const lickOf = (d: Drill) => lickOfDrill(d, own) ?? all[0];
   const take: TakeFn = (st, evs, xp, m) => {
     setLive((x) => ({ ...x, [st.itemId]: st }));
     onTake(st, evs, xp, m);
@@ -476,25 +488,38 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
     const mine = (book.mine ?? []).includes(l.id);
     const key = nextLickKey(l, inst, itemsNow);
     const preview = lickDrill(l, key, inst, opts);
+    const u = usesOf(book.uses, l.id);
+    const lang2 = inMyLanguage(book.uses, l.id);
+    const fitsRep = onImprovise ? lickInRepertoire(l, 3) : [];
+    const improvise = (k: number) => {
+      const c = lickImprovChart(l, k);
+      onImprovise?.({ id: `lick-${l.id}-${Date.now()}`, title: `${l.name[lang]} · ${kName(k, isMinorLick(l))}`, text: c.text, style: c.style, bpm: c.bpm, rules: TODAYS_LICK_RULES, lick: l.id });
+    };
     return (
       <main className="panel-screen lk-screen" data-licks="lick" data-lick={l.id}>
         {head(l.name[lang], () => setView({ k: 'lib' }))}
         <p className="lk-meta">
           <span>{contextOf(l.ctx).name[lang]}</span> · <span>{tx.lv} {l.level}</span> · <Stars n={stars} />
-          {book.used?.[l.id] ? <b className="lk-used"> · {tx.useIt} ✓</b> : null}
+          {lang2 && <b className="lk-lang" data-lick-lang="1"> · {tx.inLang}</b>}
+        </p>
+        <p className="lk-uses field-hint" data-lick-uses={u.n} data-lick-use-keys={u.keys}>
+          {u.n ? tx.used(u.n, u.keys) : tx.notUsed}
         </p>
         <DrillScore drill={preview} ds={drillSettingsOf(settings)} lang={lang} />
         <LickGrid l={l} inst={inst} items={itemsNow} lang={lang} />
         <div className="drill-actions lk-actions">
+          {/* two modes per lick (SPEC-EAR-AND-READING §3.2): from the page, or by ear (the notes hidden until played right) */}
           <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1">
-            {tx.practise} · {keyName(key)}
+            {tx.fromPage} · {keyName(key)}
           </button>
           <button className="btn" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1">
             {tx.byEar}
           </button>
-          <button className="btn" disabled={stars < LICK_KNOWN_STARS} onClick={() => setView({ k: 'useit', id: l.id })} data-lick-useit="1" title={stars < LICK_KNOWN_STARS ? tx.locked : undefined}>
-            {tx.useIt}
-          </button>
+          {onImprovise && (
+            <button className="btn" onClick={() => improvise(l.homeKey ?? key)} data-lick-improvise="1">
+              {tx.improvise}
+            </button>
+          )}
           <button className="btn" onClick={() => setView({ k: 'absorb', id: l.id })} data-lick-absorb="1">
             {lang === 'he' ? 'לספוג' : 'Absorb'}
           </button>
@@ -502,12 +527,36 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
             {mine ? tx.remove : tx.add}
           </button>
         </div>
-        {stars < LICK_KNOWN_STARS && <small className="field-hint">{tx.locked}</small>}
+        {fitsRep.length > 0 && (
+          <details className="lk-fits" data-lick-fits={fitsRep.length}>
+            <summary>{tx.fits}</summary>
+            <ul>
+              {fitsRep.map((f) => (
+                <li key={f.id}>
+                  <button
+                    className="link"
+                    onClick={() => {
+                      const sc = STANDARD_CHANGES.find((x) => x.id === f.id)!;
+                      onImprovise?.({ id: `lick-${l.id}-${f.id}-${Date.now()}`, title: `${f.name} · ${l.name[lang]}`, text: sc.text, style: sc.style, bpm: sc.bpm, std: sc.id, rules: TODAYS_LICK_RULES, lick: l.id });
+                    }}
+                    data-lick-fit={f.id}
+                  >
+                    {f.name} — {f.part[lang]}
+                  </button>
+                  <small dir="auto">
+                    {' '}
+                    · {tx.bars} <bdi dir="ltr">{f.bars.slice(0, 4).join(', ')}</bdi>
+                  </small>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </main>
     );
   }
   // The library.
-  const list = tab === 'review' ? due.map((id) => lickById(id, own)!) : tab === 'mine' ? all.filter((l) => (book.mine ?? []).includes(l.id)) : tab === 'all' ? all.filter((l) => !l.own) : all.filter((l) => l.ctx === tab && !l.own);
+  const list = tab === 'review' ? due.map((id) => lickById(id, own)!) : tab === 'mine' ? all.filter((l) => (book.mine ?? []).includes(l.id)) : tab === 'all' ? all.filter((l) => !l.own && !l.src) : all.filter((l) => l.ctx === tab && !l.own);
   const shown = pathLevel && tab === 'all' ? [...list.filter((l) => l.level === pathLevel), ...list.filter((l) => l.level !== pathLevel)] : list;
   const startReviewRun = () => {
     const day = new Date().toISOString().slice(0, 10);
@@ -530,7 +579,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
             {k === 'review' && due.length ? ` · ${due.length}` : ''}
           </button>
         ))}
-        {CONTEXTS.map((c) => (
+        {CONTEXTS.filter((c) => c.id !== 'lines' || inst === 'piano').map((c) => (
           <button key={c.id} role="tab" aria-selected={tab === c.id} className={`chip ${tab === c.id ? 'on' : ''}`} onClick={() => setTab(c.id)} data-lick-tab={c.id}>
             {c.short[lang]}
           </button>
@@ -551,11 +600,21 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
               <button className="lk-card" onClick={() => setView({ k: 'lick', id: l.id })} data-lick-card={l.id}>
                 <span className="lk-card-top">
                   <b>{l.name[lang]}</b>
-                  <Stars n={s} />
+                  {inMyLanguage(book.uses, l.id) ? (
+                    <span className="lk-lang-chip" data-lick-lang="1">
+                      {tx.inLang}
+                    </span>
+                  ) : (
+                    <Stars n={s} />
+                  )}
                 </span>
                 <span className="lk-card-sub">
                   <small>
                     {l.own ? tx.mine : contextOf(l.ctx).short[lang]} · {tx.lv} {l.level}
+                    {(() => {
+                      const uu = usesOf(book.uses, l.id);
+                      return uu.n ? ` · ${tx.used(uu.n, uu.keys)}` : '';
+                    })()}
                   </small>
                   <span className="lk-heat" dir="ltr" aria-hidden="true">
                     {g.map((c) => (

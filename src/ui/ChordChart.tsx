@@ -70,7 +70,7 @@ export function ChordChart({ cells, meter, beat = -1, first = 0, maxRows = 4, si
             const now = i === cur;
             const inLoop = !!loop && i >= loop[0] && i <= loop[1];
             const chords = c.chord ? c.chord.split(/\s+/).filter(Boolean) : [];
-            const label = `${c.chord ? chords.map(prettyChord).join(' ') : c.chord === undefined ? '' : '%'} · ${he ? 'תיבה' : 'bar'} ${first + i + 1}${c.role === 'band' ? (he ? ', הקשבה' : ', listen') : ''}${c.tab ? (c.tab.kind === 'ok' ? (he ? ', נשמר' : ', kept') : c.tab.kind === 'changed' ? (he ? ', שונה' : ', changed') : he ? ', נשבר' : ', broken') : ''}`;
+            const label = `${c.chord ? chords.map(prettyChord).join(' ') : c.chord === undefined ? '' : '%'} · ${he ? 'תיבה' : 'bar'} ${first + i + 1}${c.role === 'band' ? (he ? ', הקשבה' : ', listen') : ''}${c.tab ? (c.tab.kind === 'ok' ? (he ? ', נשמר' : ', kept') : c.tab.kind === 'changed' ? (he ? ', שונה' : ', changed') : he ? ', נשבר' : ', broken') : ''}${c.lick === 'found' ? (he ? ', ליק שלכם' : ', a lick of yours') : c.lick === 'fits' ? (he ? ', כאן הליק של היום מתאים' : ", today's lick fits here") : ''}`;
             const tap = onBar
               ? {
                   role: 'button',
@@ -110,6 +110,7 @@ export function ChordChart({ cells, meter, beat = -1, first = 0, maxRows = 4, si
                 ) : c.note ? (
                   <small className={`cc-sub ${c.noteSet ? 'set' : ''}`}>{c.note}</small>
                 ) : null}
+                {c.lick && <i className={`cc-lick ${c.lick}`} aria-hidden="true" data-lick-mark={c.lick} />}
                 {c.dots && c.dots.length > 0 && (
                   <span className="cc-dots" data-dots={c.dots.join(' ')} aria-label={c.dots.map((d) => ROLE_NAME[lang][d]).join(', ')}>
                     {c.dots.map((d, k) => (
