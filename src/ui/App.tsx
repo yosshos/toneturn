@@ -238,6 +238,7 @@ import { applySyncedMeta, putSyncedTake, runCleanup, setRecordingContext, setRec
 import { listTakes as listOldVocalTakes } from '../storage/takes';
 import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
 import { measuredMsOn } from '../engine/practiceTime';
+import { recordSnapshot } from '../storage/snapshots';
 import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 import { Icon } from './icons';
@@ -288,6 +289,15 @@ export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress());
   const [progressReady, setProgressReady] = useState(false);
+  // SPEC-PROGRESS-CHARTS §1 (phase 1b): today's progress snapshot, a few seconds after progress settles; the past is
+  // back-filled once. Feeds the over-time charts; nothing on screen yet.
+  useEffect(() => {
+    if (!progressReady) return;
+    const id = window.setTimeout(() => {
+      void recordSnapshot(localDay(new Date()), progress.drillItems ?? {}, loadLedger().days);
+    }, 4000);
+    return () => window.clearTimeout(id);
+  }, [progress.drillItems, progressReady]);
   // "mf cleared — f opens" (GAMES_TIERS_PLAN §2.3): one line for a few seconds after a run clears a tier.
   const [tierToast, setTierToast] = useState<{ tier: DynName; next: DynName | null } | null>(null);
   useEffect(() => {
