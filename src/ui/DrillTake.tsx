@@ -33,6 +33,7 @@ import { GT } from '../i18n/guitarText';
 import { bandBass } from '../engine/drills/bassBand';
 import { drillBandHits, drillDrumHits, unisonLine } from '../engine/drills/bandTimeline';
 import { clickPlan, hasTimeline, staffLines, timeMapOf } from '../engine/drills/timeline';
+import { cursorBeatAt, frameLead } from '../engine/playhead';
 import { withProg } from '../engine/drills/progAnalyze';
 import { withHarmony, type ChromaFrame } from '../engine/drills/harmonyGrade';
 import { isDrumDrill } from '../engine/drills/events';
@@ -669,7 +670,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
     box.scrollTop = Math.max(0, Math.min(y, box.scrollHeight - box.clientHeight));
   });
   return (
-    <div ref={boxRef} className={`drill-staff ${ht ? 'ht' : ''} ${playing ? 'following' : ''}`} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
+    <div ref={boxRef} className={`drill-staff ${ht ? 'ht' : ''} ${playing ? 'following' : ''}`} data-now-beat={playing ? beat.toFixed(3) : undefined} data-last-onset={drill.notes.length ? Math.max(...drill.notes.map((n) => n.beat)) : 0} data-clef={rhClef} data-hands-together={ht ? 1 : undefined}>
       {/* Slice 8: the chords over the staff in the shared chart (compact: four bars a row, the bar being played lit). */}
       {drill.chart && !paged && <ChordChart cells={drill.chart.map((c, i) => ({ chord: c, ...(!result && roles?.[i]?.length ? { dots: roles[i] } : {}) }))} meter={drill.meter || 4} beat={result ? -1 : beat} size="compact" maxRows={2} lang={lang} attrs={{ 'data-song-chart': drill.chart.length }} />}
       {drill.chart &&
@@ -952,8 +953,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             setBeat(i);
             if (i >= ci) setPhase('play');
           }
-          onBeat?.(el / beatMs - ci);
           const now = (el - ci * beatMs) * speed;
+          // the same clock as a real take: the written beat due now, stopped on the last note
+          onBeat?.(now >= 0 ? cursorBeatAt(drill, bpm, now) : el / beatMs - ci);
           if (now >= -200 && markable) {
             const l = liveGrade(drill, upTo(now), bpm, now);
             setPocket(l);
@@ -1179,27 +1181,37 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const armStart = performance.now();
     const firstBeat = drill.notes.length ? Math.min(...drill.notes.map((n) => n.beat)) : 0;
     setArm({ start: armStart, due: null });
-    // The score's now-cue glides between the clicks (owner 2026-11-13: it sat off the notes): a continuous beat from the
-    // last heard click and the beat's length, about 30 times a second; the staff turns it into a place on the line.
-    let lastBeat: { i: number; t: number; dt: number } | null = null;
-    let sent = -99;
-    const smooth = onBeat
-      ? window.setInterval(() => {
-          if (!lastBeat || lastBeat.i < plan.countIn) return;
-          const f = Math.min(0.999, (performance.now() - lastBeat.t) / lastBeat.dt);
-          const b = lastBeat.i - plan.countIn + f;
-          if (Math.abs(b - sent) >= 0.01) onBeat((sent = b));
-        }, 33)
-      : 0;
     // MIDI with an unreported output delay (Bluetooth): the play-along calibration's device latency, when it is above
     // what a human habit explains (latency.ts DEVICE_ONLY_ABOVE), is the speaker's delay — the cursor follows the heard click.
     const visLag = useMidi && cal.latencyMs > DEVICE_ONLY_ABOVE ? Math.round(cal.latencyMs - MIDI_IN_MS) : 0;
+    // The score's now-cue (owner 2026-11-22: it ran past the line and off the tempo). It was rebuilt from each click's
+    // setTimeout as it fired (late whenever the main thread was busy — the live analysis, a redraw — so it lagged, then
+    // jumped back to the whole beat when the next click came) and ran on through the extra click after the music to the
+    // end of the line. Now every frame reads the audio clock: the beat heard since the take's zero (the moment beat 0
+    // sounds, from the audio engine), mapped onto the written notes (swing, the tempo map) and stopped on the last note.
+    let sent = -99;
+    let over = false;
+    let raf = 0;
+    const lead = frameLead();
+    const tick = () => {
+      if (over) return;
+      const now = performance.now();
+      const ahead = lead(now);
+      if (zero && onBeat) {
+        const ms = now + ahead - zero - visLag;
+        if (ms >= 0) {
+          const b = cursorBeatAt(drill, bpm, ms);
+          if (Math.abs(b - sent) >= 0.002) onBeat((sent = b));
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    if (onBeat) raf = requestAnimationFrame(tick);
     const beatAt = (i: number) => {
+      if (over) return;
       setBeat(i);
-      const t = performance.now();
-      const gap = tl.clicks[i + 1] ? (tl.clicks[i + 1].t - tl.clicks[i].t) * 1000 : 0;
-      lastBeat = { i, t, dt: gap > 60 ? gap : lastBeat && i === lastBeat.i + 1 ? Math.max(120, t - lastBeat.t) : (lastBeat?.dt ?? 60000 / Math.max(30, bpm)) };
-      if (onBeat && i - plan.countIn !== sent) onBeat((sent = i - plan.countIn));
+      // the count-in beats (negative); from beat 0 on, the frame clock above owns the cursor
+      if (onBeat && i < plan.countIn && i - plan.countIn !== sent) onBeat((sent = i - plan.countIn));
       if (i >= plan.countIn) setPhase('play');
     };
     try {
@@ -1223,7 +1235,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       /* stopped */
     } finally {
       setArm(null);
-      window.clearInterval(smooth);
+      over = true;
+      cancelAnimationFrame(raf);
       window.clearInterval(liveTimer);
       window.clearInterval(heardTimer);
       if (hearRoles) onHeard!(null);

@@ -163,6 +163,15 @@ function TabNow({ xs, now }: { xs: number[]; now?: number }) {
 /** A drawn item's notehead centre (rests and tab numbers: the middle of the glyph). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const headX = (x: any): number => {
+  // Drawn already: the head's own glyph box in the SVG (2026-11-22: VexFlow's head bounds put the playhead ~6 px right
+  // of a half note's head after an accidental — the cursor looked as if it ran past the last note).
+  try {
+    const g = x.noteHeads?.[0]?.getSVGElement?.() as SVGGraphicsElement | undefined;
+    const b = g && typeof g.getBBox === 'function' ? g.getBBox() : null;
+    if (b && b.width > 0) return b.x + b.width / 2;
+  } catch {
+    /* not in the document */
+  }
   try {
     if (typeof x.getNoteHeadBeginX === 'function' && typeof x.getNoteHeadEndX === 'function') return (x.getNoteHeadBeginX() + x.getNoteHeadEndX()) / 2;
   } catch {

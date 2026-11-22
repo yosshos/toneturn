@@ -1496,16 +1496,17 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     };
   }
 
-  play(events: NoteEvent[], length: number, signal: AbortSignal): Promise<void> {
+  /** `onStart`: the performance.now() moment the events' time 0 is heard (a cursor running with the sound). */
+  play(events: NoteEvent[], length: number, signal: AbortSignal, onStart?: (heardPerf: number) => void): Promise<void> {
     const ctx = this.ctx;
     if (!ctx) return Promise.reject(new Error('Audio not unlocked'));
     if (signal.aborted) return Promise.reject(new Cancelled());
     // Processed sounds (spec AE) are rendered offline first (cached), then everything is scheduled together.
     const fx = events.filter((e) => e.fx);
-    if (!fx.length) return this.playNow(events, length, signal, []);
+    if (!fx.length) return this.playNow(events, length, signal, [], onStart);
     return Promise.all(fx.map((e) => renderFx(e.fx!))).then((bufs) => {
       if (signal.aborted) throw new Cancelled();
-      return this.playNow(events, length, signal, bufs);
+      return this.playNow(events, length, signal, bufs, onStart);
     });
   }
 
@@ -1555,10 +1556,11 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     src.start(Math.max(at, ctx.currentTime));
   }
 
-  private playNow(events: NoteEvent[], length: number, signal: AbortSignal, fxBufs: AudioBuffer[]): Promise<void> {
+  private playNow(events: NoteEvent[], length: number, signal: AbortSignal, fxBufs: AudioBuffer[], onStart?: (heardPerf: number) => void): Promise<void> {
     const ctx = this.ctx!;
     let fxI = 0;
     const t0 = ctx.currentTime + 0.06;
+    onStart?.(this.heardAt(t0));
     const local = new Set<ReturnType<typeof setTimeout>>();
     const later = (ms: number, fn: () => void) => {
       const t = setTimeout(() => {

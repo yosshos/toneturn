@@ -15,6 +15,12 @@ export const fakeTakeOn = (): Pattern | null => (import.meta.env.DEV && typeof w
  * at their moments, no audio), so the live marks and the pocket meter can be seen and tested. The value is the speed
  * (1 = the drill's tempo; 2 = twice as fast).
  */
+/** DEV ONLY (e2e): `window.__bpm` starts a drill run at this tempo instead of the item's own (the playhead tests). */
+export const devBpm = (): number | null => {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+  const v = (window as unknown as { __bpm?: number }).__bpm;
+  return typeof v === 'number' && v >= 30 ? v : null;
+};
 export const fakeLiveOn = (): number | null => {
   if (!import.meta.env.DEV || typeof window === 'undefined') return null;
   const v = (window as unknown as { __fakeLive?: number | boolean }).__fakeLive;
