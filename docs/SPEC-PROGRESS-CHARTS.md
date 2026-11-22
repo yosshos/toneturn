@@ -126,7 +126,17 @@ Everything in §2, plus:
 | 6 | the teacher: the student's page with the median and alerts; the class page (§4.2); the parent digest |
 | 8 | the weekly summary with the AI coach; the share card |
 
-## 8. Questions for the owner
+## 8. Owner's answers (2026-11-22)
 
-1. **The class median for students:** show an anonymous class median to a student (if the teacher turns it on), or keep it for the teacher only?
-2. **The default time frame on the "Over time" tab:** 30 days (as in the trends today) or 90 days, which shows longer-term progress better?
+1. **The class median for students:** yes, **if the teacher chooses**. The teacher's class settings get a switch "show students the class median (anonymous)", default off. The student sees a grey line with no names, and only on the tempo-index and minutes charts.
+2. **The time frame:** the default is **30 days**. The longer options **open as the player's tenure grows**:
+
+   | Tenure | Options shown |
+   |---|---|
+   | first week | 7 days |
+   | from 2 weeks | + 30 days (the default from here on) |
+   | from 2 months | + 90 days |
+   | from 6 months | + a year |
+   | from a year | + all |
+
+   An option with no data behind it is not shown, so there are no empty charts.
