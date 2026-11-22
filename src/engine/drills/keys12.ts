@@ -23,7 +23,7 @@ export function all12(keys: number[]): number[] {
  */
 export const TWELVE_KEY_FAMILIES: string[] = [
   // piano
-  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-tpair', 'k-dimcol', 'k-cadlib',
+  'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-bebop', 'k-reharm', 'k-theory', 'k-vl', 'k-rhythm', 'k-ear', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-tpair', 'k-dimcol', 'k-cadlib', 'k-keylick', 'k-keyx',
   // guitar
   'g-arps', 'g-jazz', 'g-theory', 'g-impro', 'g-harris', 'g-vl', 'g-harrisline', 'g-ctone', 'g-color', 'g-tpair', 'g-cadlib',
   // bass (the jazz track)

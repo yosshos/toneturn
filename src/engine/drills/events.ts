@@ -161,6 +161,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'k-harrisline') return { skill: 'chords', sub: 'chords/barry', w: 0.2 };
   if (f === 'k-sixdim') return { skill: 'chords', sub: 'chords/barry', w: 0.3 };
   // Colours of the diminished (dimColours.ts): Harris's half-step moves rate Barry Harris; the other colours extensions.
+  // SPEC-KEY-SESSION approach licks: lines through the scale's chords; a share for the chords they outline.
+  if (f === 'k-keylick') return { skill: 'chords', sub: 'chords/extension', w: 0.2 };
   if (f === 'k-dimcol') return drill.spec.kind === 'dc-lower' || drill.spec.kind === 'dc-raise' ? { skill: 'chords', sub: 'chords/barry', w: 0.3 } : { skill: 'chords', sub: 'chords/extension', w: 0.3 };
   // Voice leading as a performed skill (AUDIT-CONTENT-THEORY §ה.2): the theory share is voice leading.
   if (f === 'k-vl' || f === 'g-vl') return { skill: 'theory', sub: 'theory/voice-leading', w: 0.3 };

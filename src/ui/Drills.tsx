@@ -559,6 +559,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   cadences: 'chords', voicings: 'chords', accomp: 'chords', 'g-chords': 'chords', 'g-rhythm': 'chords',
   // AUDIT-SCALES: hand independence; the harmonization ladder with the scales.
   'k-indep': 'hands', 'k-sharm': 'scales', 'g-harm': 'scales',
+  // SPEC-KEY-SESSION: the approach licks with the scales; the key's extra exercises with the hands.
+  'k-keylick': 'scales', 'k-keyx': 'hands',
   // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales.
   'k-modes': 'scales', 'k-mmhm': 'scales',
   fingers: 'hands', control: 'hands', advanced: 'hands', 'g-fretting': 'hands', 'g-picking': 'hands', 'g-legato': 'hands', 'g-fingerstyle': 'hands',

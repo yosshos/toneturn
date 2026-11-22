@@ -1353,6 +1353,27 @@ Object.assign(GLYPHS, {
       <path d="M-6 -20 L4 -24" {...sw} strokeWidth={2.4} />
     </>
   ),
+  // SPEC-KEY-SESSION
+  /** Approach licks: a small chromatic note under the root, an arrow, then a triad climbing. */
+  keylick: (
+    <>
+      {head(-20, 14, 3.4, 2.6)}
+      <path d="M-15 12 L-8 9" {...sw} strokeWidth={2.2} />
+      {head(-2, 12, 4.4, 3.2)}
+      {head(9, 3, 4.4, 3.2)}
+      {head(20, -6, 4.4, 3.2)}
+      <path d="M-24 6 L-17 6" {...sw} strokeWidth={1.8} />
+    </>
+  ),
+  /** More in the key: a broken octave (low head, high head) with a leap arc over it. */
+  keyx: (
+    <>
+      {head(-14, 16, 4.4, 3.2)}
+      {head(12, -12, 4.4, 3.2)}
+      <path d="M-10 13 Q-6 -16 8 -14" {...sw} strokeWidth={2.2} />
+      <path d="M-24 22 H24" {...sw} strokeWidth={1.8} />
+    </>
+  ),
   // SPEC-PRACTICE-KEYS §6
   /** The modes on one root: three scale runs fanning up from one shared tonic. */
   modesroot: (

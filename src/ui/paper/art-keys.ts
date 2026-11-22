@@ -451,6 +451,27 @@ export const ART_KEYS: Record<string, Art> = {
     H(39, 19, 3.6, 'accent'),
     det(R(4, 45.4, 40, 1.8, 0.9, 'mark')),
   ),
+  /** SPEC-KEY-SESSION — approach licks: a small chromatic head under the root, leading into a climbing triad. */
+  keylick: art(
+    'lilac',
+    'teal',
+    H(7, 40, 2.8, 'accent'),
+    L(10, 38, 15, 35, 'wire', 1.6),
+    H(19, 35, 3.6, 'body'),
+    H(29, 26, 3.6, 'body'),
+    H(39, 17, 3.6, 'body'),
+    L(22.6, 33.6, 22.6, 12, 'wire', 1.6),
+    det(R(4, 45.4, 40, 1.8, 0.9, 'mark')),
+  ),
+  /** SPEC-KEY-SESSION — more in the key: a broken octave, low head and high head under a leap arc. */
+  keyx: art(
+    'teal',
+    'purple',
+    H(11, 38, 4.2, 'body'),
+    H(36, 12, 4.2, 'accent'),
+    P('M13 33 Q16 6 31 9', 'wire', 2),
+    det(R(3, 45.4, 42, 1.8, 0.9, 'mark')),
+  ),
   /** SPEC-PRACTICE-KEYS §6 — the modes on one root: three scale runs fanning up from one shared tonic. */
   modesroot: art(
     'teal',
