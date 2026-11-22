@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.117.0',
+    date: '2026-11-22',
+    en: ['One meaning of "closed" everywhere: three clean takes at the target tempo, on two different days', 'Your progress is saved as a daily summary, so charts of your progress over time can show your history'],
+    he: ['"סגור" פירושו אותו דבר בכל מקום: שלוש נגינות נקיות בטמפו היעד, ביומיים שונים', 'ההתקדמות שלכם נשמרת כסיכום יומי, כדי שגרפים של ההתקדמות לאורך זמן יוכלו להראות את ההיסטוריה שלכם'],
+  },
+  {
     version: '0.116.0',
     date: '2026-11-22',
     en: ['Practice by key shows every exercise in every key at your level, how many are closed, the time left and when you will finish at your minutes a day', "Today's key workout: the next exercises in the order you choose (weakest first, by key or by exercise), filling today's time", 'Licks and Encore are one tile: the library, my phrases and the challenges; share a lick once you play it clean at a tempo'],
