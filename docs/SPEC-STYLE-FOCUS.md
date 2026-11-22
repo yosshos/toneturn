@@ -119,6 +119,12 @@ The old fields are kept read-only for one version, then removed.
 
 ## 9. Exposure to styles the player didn't choose (owner, 2026-11-22)
 
+**The principle (owner):** exposure to every one of the jazz-adjacent styles serves the player. The focus tailors the path; it is not a wall. So exposure is a **lasting service** throughout use, not a one-off sales offer:
+- **Every style a player didn't choose is tasted at least once a quarter.** The rotation in §9.2 sets the order, not whether it happens.
+- **The 10% exposure in the daily workout never drops to zero,** even for a player who turned down everything (a style turned down only comes up less).
+- **The core units of the path include a moment from a neighbour style.** For example, the ii–V–I unit has a version over bossa and a version over a montuno, so the jazz core itself shows the styles.
+- **Turning a style down ("don't offer") stops only the offer to add it,** not the occasional taste in the workout.
+
 **The problem:** a player who chose a focus a year ago may forget there are other styles. From each style they would get tools: a straight-ahead jazz player gets voicings and inner-voice movement from gospel, and groove and language from Latin.
 
 ### 9.1 "A style taster": a purposeful taste, not random
