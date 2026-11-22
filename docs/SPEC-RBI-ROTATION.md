@@ -148,9 +148,9 @@ Tiers H-1…H-5 are in the research §5.3. Every item comes from a source listed
 - The weak modes from the profile come first.
 - The AI coach may tilt the share by up to ±10%, with a reason the player can accept or decline.
 
-## 8. Open questions for the owner
+## 8. Owner's answers (2026-11-22)
 
-1. **Naming:** "Scale rotation" for Track A and "The Barry Harris way" for Track B. Both are in the app, side by side?
-2. **Half-whole over V7 → minor:** its natural 13 (E over a G7 going to C minor) clashes with the key's E♭. Exclude it, or allow it as an advanced colour at T4+?
-3. **Altered over V7 → major:** allow it from T2 as bebop practice, or from T3?
-4. **Open Studio:** if a specific Open Studio lesson drills mode rotation, a link lets me check it. The public pages show only the Harris courses, which are non-modal.
+1. Naming: "Scale rotation" (Track A) and "The Barry Harris way" (Track B), both in the app. **Approved.**
+2. Half-whole over V7 → minor: **allowed as an advanced colour from T4.**
+3. Altered over V7 → major: **from T2** (bebop practice).
+4. Open Studio: no specific lesson given; Track A stays attributed to the chord-scale method (Aebersold, Levine).
