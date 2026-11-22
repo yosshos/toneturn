@@ -5,7 +5,7 @@
 
 import type { Drill, DrillSettings, ItemState } from './types';
 import type { FamilyDef, LevelDef } from './generate';
-import { specDrills } from './plan';
+import { itemTargetBpm, specDrills } from './plan';
 import { FACET_GROUPS, FAMILY_FACETS, keyFacet, type FacetGroup, type FacetRole } from './keyFacet';
 import { itemMastery, MIN_TAKES, STRONG_FROM, WEAK_BELOW, type KeyStatus } from '../analysis/keyMastery';
 
@@ -220,33 +220,108 @@ export function withLens(d: Drill, lens: Lens, keepId = false): Drill {
 }
 
 /**
- * The key's continuous session as a coach ladder (owner 2026-11-22: "the scale linear, then thirds, then triads, then
- * four-note chords — along the whole scale"): the scale at the player's tier, then the scale harmonised along its whole
- * length — diatonic 3rds, triads on every degree, 7th chords on every degree (and, from T4, block 7ths and drop 2) —
- * then a cadence at the tier. A one-key family the coach runs like any other: the tempo climbs, the basics are skipped
- * for a player past them, "almost" holds. Piano major / minor; null where the ladder has no material (then the list).
+ * The key's continuous session as a coach ladder (owner 2026-11-22, docs/SPEC-KEY-SESSION.md): the scale at the
+ * player's tier as the warm-up, then the rungs open at the tier — the scale in contrary motion / apart / in rhythms, two
+ * hands at different dynamics, the scale harmonised along its whole length (3rds, triads, 7th chords, block, drop 2),
+ * the approach licks, Hanon and hand independence in the key, octaves and double notes, a cadence at the tier, and the
+ * jazz top (6th-diminished, colours) — the ones the player needs most first: never played at this tier, then the lowest
+ * share of their target tempo, then the longest since played. The coach climbs each rung's tempo to its target or the
+ * player's limit, then moves on; a closing visit returns to the first harmonised rung, faster.
  */
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number): FamilyDef | null {
+export interface LadderRung {
+  fam: string;
+  id: string;
+  min: number;
+  max?: number;
+  pick?: (sp: LevelDef['specs'][number]) => boolean;
+  jazz?: boolean;
+  /** A the scale, S the harmonised spine (3rds, triads, 7ths), B its other forms, C licks, D fingers/hands, E cadence, F jazz. */
+  block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F';
+}
+
+/** The candidate rungs of a key, in teaching order (minor: the harmonic-minor rows). */
+export function ladderRungs(group: 'major' | 'minor'): LadderRung[] {
+  const minor = group === 'minor';
+  const opt = (o: number) => (sp: LevelDef['specs'][number]) => (sp as { option?: number }).option === o;
+  const sharm = (n: number) => `k-sharm-${minor ? n + 1 : n}`;
+  const so = minor ? 7 : 0;
+  const notMinor = (sp: LevelDef['specs'][number]) => !(sp as { minor?: boolean }).minor;
+  const isMinor = (sp: LevelDef['specs'][number]) => !!(sp as { minor?: boolean }).minor;
+  return [
+    ...(minor ? [] : [{ fam: 'scales', id: 'scales-4', min: 2, block: 'A' as const }]),
+    { fam: 'scales', id: minor ? 'scales-13' : 'scales-8', min: 4, block: 'A' as const },
+    ...(minor ? [] : [{ fam: 'control', id: 'control-8', min: 3, block: 'A' as const }, { fam: 'scales', id: 'scales-11', min: 3, block: 'A' as const }]),
+    { fam: 'k-sharm', id: sharm(3), min: 0, pick: opt(so), block: 'S' as const },
+    { fam: 'k-sharm', id: sharm(5), min: 3, pick: opt(so), block: 'B' as const },
+    { fam: 'k-sharm', id: sharm(7), min: 0, pick: opt(so), block: 'S' as const },
+    { fam: 'k-sharm', id: sharm(9), min: 3, pick: opt(so), block: 'B' as const },
+    { fam: 'k-sharm', id: sharm(11), min: 1, pick: opt(so), block: 'S' as const },
+    { fam: 'k-sharm', id: sharm(13), min: 4, pick: opt(so), block: 'B' as const },
+    { fam: 'k-sharm', id: sharm(15), min: 5, pick: opt(so), block: 'B' as const },
+    // the owner's approach licks (k-keylick), when the family exists: L1, L2, L3 up and down
+    { fam: 'k-keylick', id: 'k-keylick-1', min: 2, pick: minor ? isMinor : notMinor, block: 'C' as const },
+    { fam: 'k-keylick', id: 'k-keylick-2', min: 3, pick: minor ? isMinor : notMinor, block: 'C' as const },
+    { fam: 'k-keylick', id: 'k-keylick-3', min: 4, pick: minor ? isMinor : notMinor, block: 'C' as const },
+    ...(minor ? [] : [
+      { fam: 'fingers', id: 'fingers-15', min: 2, block: 'D' as const },
+      { fam: 'fingers', id: 'fingers-16', min: 4, block: 'D' as const },
+      { fam: 'k-indep', id: 'k-indep-1', min: 1, block: 'D' as const },
+      { fam: 'k-indep', id: 'k-indep-6', min: 3, block: 'D' as const },
+      { fam: 'k-indep', id: 'k-indep-7', min: 3, block: 'D' as const },
+      { fam: 'advanced', id: 'advanced-1', min: 5, block: 'D' as const },
+      { fam: 'advanced', id: 'advanced-4', min: 6, pick: (sp: LevelDef['specs'][number]) => (sp as { option?: number }).option === 0, block: 'D' as const },
+    ]),
+    ...(minor ? [{ fam: 'advanced', id: 'advanced-9', min: 5, block: 'D' as const }] : []),
+    { fam: 'cadences', id: minor ? 'cadences-3' : 'cadences-1', min: 0, max: 1, pick: minor ? isMinor : undefined, block: 'E' as const },
+    { fam: 'cadences', id: minor ? 'cadences-7' : 'cadences-2', min: 2, max: 3, pick: minor ? isMinor : undefined, block: 'E' as const },
+    { fam: 'k-cadlib', id: 'k-cadlib-6', min: 4, pick: (sp) => /cad:(m-)?ii-v-i~/.test((sp as { kind: string }).kind) && /m-ii/.test((sp as { kind: string }).kind) === minor, block: 'E' as const },
+    ...(minor ? [] : [{ fam: 'harris', id: 'harris-1', min: 5, jazz: true, block: 'F' as const }, { fam: 'k-dimcol', id: 'k-dimcol-1', min: 5, jazz: true, block: 'F' as const }]),
+  ];
+}
+
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number } = {}): FamilyDef | null {
   if (group !== 'major' && group !== 'minor') return null;
-  const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
   const minor = group === 'minor';
   const t = Math.max(0, tier);
+  const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
   const scale = minor ? (t <= 1 ? 'scales-17' : t <= 3 ? 'scales-5' : t <= 5 ? 'scales-13' : 'scales-33') : t <= 1 ? 'scales-1' : t <= 3 ? 'scales-3' : t <= 5 ? 'scales-8' : 'scales-10';
-  // the harmonised scale (k-sharm): option 0 = major; 7 = harmonic minor
-  const opt = minor ? 7 : 0;
-  const ladder = ['k-sharm-3', 'k-sharm-7', 'k-sharm-11', ...(t >= 4 ? ['k-sharm-13', 'k-sharm-15'] : [])].map((id) => (minor ? id.replace(/\d+$/, (n) => String(Number(n) + 1)) : id));
-  const cadence = t <= 1 ? 'cadences-1' : t <= 3 ? 'cadences-2' : 'k-cadlib-1';
-  const steps: LevelDef[] = [];
-  const add = (fam: string, id: string, pick?: (sp: LevelDef['specs'][number]) => boolean) => {
+  const make = (fam: string, id: string, pick?: LadderRung['pick'], n = 0): LevelDef | null => {
     const l = byId(fam, id);
-    if (!l) return;
+    if (!l) return null;
     const specs = pick ? l.specs.filter(pick) : l.specs;
-    if (!specs.length) return;
-    steps.push({ ...l, id: `key-${root}-${l.id}`, level: steps.length + 1, specs, keys: [root] });
+    return specs.length ? { ...l, id: `key-${root}-${l.id}${n ? `-${n}` : ''}`, level: 0, specs, keys: [root] } : null;
   };
-  add('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
-  for (const id of ladder) add('k-sharm', id, (sp) => (sp as { option?: number }).option === opt);
-  add(cadence.startsWith('k-cadlib') ? 'k-cadlib' : 'cadences', cadence, (sp) => !!(sp as { minor?: boolean }).minor === minor);
+  const warm = make('scales', scale, minor ? undefined : (sp) => !(sp as { minor?: boolean }).minor);
+  // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier)
+  const open = ladderRungs(group).filter((r) => r.id !== scale && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
+  const built = open.map((r, i) => ({ i, lvl: make(r.fam, r.id, r.pick) })).filter((x): x is { i: number; lvl: LevelDef } => !!x.lvl);
+  // what the player needs most: never played (in teaching order), then the lowest share of the target, then the oldest
+  const score = (l: LevelDef) => {
+    const ds = l.specs.flatMap((_, k) => specDrills(l, k, 'fifths-up'));
+    const sts = ds.map((d) => items[d.itemId]).filter(Boolean) as ItemState[];
+    if (!sts.length) return { s: 0, share: 0, last: '' };
+    const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, itemTargetBpm(d))));
+    const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
+    return { s: share >= 1 ? 2 : 1, share, last };
+  };
+  const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
+  // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
+  // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order
+  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 1, D: 2, E: 1, F: 1 };
+  const taken: Record<string, number> = {};
+  const pickd = ranked.filter((x) => {
+    const b = open[x.i].block;
+    taken[b] = (taken[b] ?? 0) + 1;
+    return taken[b] <= (per[b] ?? 1);
+  });
+  const chosen = pickd.slice(0, opts.rungs ?? 99).sort((a, b) => a.i - b.i).map((x) => x.lvl);
+  const steps: LevelDef[] = [];
+  if (warm) steps.push(warm);
+  steps.push(...chosen);
+  // a closing visit to the first harmonised rung, faster (its tempo starts from the best just played)
+  const back = chosen.find((l) => /k-sharm/.test(l.id));
+  if (back) steps.push({ ...back, id: `${back.id}-again` });
+  steps.forEach((l, k) => (l.level = k + 1));
   if (steps.length < 2) return null;
   return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
 }

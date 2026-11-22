@@ -511,7 +511,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onPView={setPView}
       keyGrid={
         keyIdx ? (general: React.ReactNode) => <KeyGrid idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
-          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0) : null;
+          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
       }

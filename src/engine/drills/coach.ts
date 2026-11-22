@@ -78,6 +78,9 @@ export interface CoachState {
   easy: number;
   /** The share of its target the last passed item was played at: the next item starts near it (tempo carried over). */
   carry: number;
+  /** This visit's best clean tempo on the current item, and takes at the top since it last went up (the limit). */
+  peak?: number;
+  stall?: number;
   /**
    * The placement probe (SPEC-COACH-2 §3.2): the first session on a family jumps levels by the takes — easy → two up,
    * clean → one up, almost → stay, a miss → one down and the probe ends — for at most PROBE_TAKES takes. null = off.
@@ -87,6 +90,11 @@ export interface CoachState {
 
 /** Takes in the placement probe. */
 export const PROBE_TAKES = 4;
+/**
+ * The player's limit (owner 2026-11-22, SPEC-KEY-SESSION §2): takes at the top without a new best clean tempo before
+ * the coach moves on to the next exercise (the best and the ceiling stay saved on the item).
+ */
+export const PLATEAU_TAKES = 3;
 
 export interface CoachTake {
   drill: Drill;
@@ -352,6 +360,39 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
   }
 
   const level = levelOf(fam, c.steps[c.step]);
+  // The limit: a new best clean tempo resets it; a clean take that is no faster, or a miss at a tempo above the best,
+  // counts a take at the top. After PLATEAU_TAKES the coach saves the best and moves on (SPEC-KEY-SESSION §2).
+  if (take.stage === null && take.kind === 'main') {
+    const peak = c.peak ?? 0;
+    if (clean && take.bpm > peak + 0.5) {
+      c.peak = take.bpm;
+      c.stall = 0;
+    } else if (peak > 0) c.stall = (c.stall ?? 0) + 1;
+    if ((c.stall ?? 0) >= PLATEAU_TAKES && peak > 0) {
+      const best = Math.round(peak);
+      c.peak = 0;
+      c.stall = 0;
+      c.misses = 0;
+      c.almost = 0;
+      c.up = 0;
+      c.run = 0;
+      c.slower = 0;
+      const said = { he: `זה הגבול שלך היום כאן: ♩${best}. ממשיכים לתרגיל הבא.`, en: `That is your limit here today: ♩${best}. On to the next exercise.` };
+      if (c.spec + 1 < level.specs.length) {
+        c.spec++;
+        return next(said);
+      }
+      // one-key ladders (the key session) go to the next step; a family goes to its next key
+      if (c.keys.length === 1 && c.step + 1 < c.steps.length) {
+        toStep(fam, c, c.step + 1, items, order);
+        c.demo = true;
+        return next(said);
+      }
+      c.spec = 0;
+      c.keyIdx = nextKeyIdx(c);
+      return next(said);
+    }
+  }
   if (clean) {
     c.misses = 0;
     c.almost = 0;
@@ -382,6 +423,8 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     c.up = 0;
     c.run = 0;
     c.slower = 0;
+    c.peak = 0;
+    c.stall = 0;
     // The other hand / the next item of the step, same key.
     if (c.spec + 1 < level.specs.length) {
       c.spec++;

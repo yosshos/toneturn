@@ -215,7 +215,7 @@ export function KeyPage({ idx, root, group, items, lang, ds, onGroup, onRun, adv
   const run = (q: Drill[]) => onRun(q.map((d) => withLens(d, lens)));
   const session = keySession(idx, root, g, items);
   // the coach over the key's ladder: the scale at the player's tier, then 3rds, triads and 7ths along the whole scale
-  const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0) : null;
+  const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />

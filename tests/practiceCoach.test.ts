@@ -219,3 +219,22 @@ describe('the placement probe (SPEC-COACH-2 §3.2)', () => {
     expect(coachStart(fam, played, order, 0).probe).toBeNull();
   });
 });
+
+describe('the player\'s limit (owner 2026-11-22)', () => {
+  const mk = (v: 'clean' | 'not', bpm: number): TakeMetrics => ({ verdict: v, wrong: v === 'not' ? 2 : 0, missing: 0, hesitations: 0, accuracy: v === 'not' ? 0.8 : 1, bpm, timingSD: 28, handsAbs: null }) as unknown as TakeMetrics;
+  it('three takes at the top without a new best tempo: the coach saves the best and moves on', async () => {
+    const { PLATEAU_TAKES } = await import('../src/engine/drills/coach');
+    let c = coachStart(fam, {}, order, 0, { skilled: true, noProbe: true });
+    const first = coachTake(fam, c, {}, order);
+    let nx = coachAfter(fam, c, first, mk('clean', first.bpm), {}, order, 0);
+    c = nx.state;
+    for (let k = 0; k < PLATEAU_TAKES; k++) {
+      const t = coachTake(fam, c, {}, order);
+      nx = coachAfter(fam, c, t, mk('not', t.bpm), {}, order, 0);
+      c = nx.state;
+      if (/limit/.test(nx.line.en)) break;
+    }
+    expect(nx.line.en).toMatch(/limit/);
+    expect(coachTake(fam, c, {}, order).drill.itemId).not.toBe(first.drill.itemId);
+  });
+});
