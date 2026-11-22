@@ -22,14 +22,14 @@ import { LicksHead } from './LicksHead';
 type Lang = 'he' | 'en';
 const TX = {
   en: {
-    title: 'Transcribe', steps: ['Hear', 'Play back', 'Write', '12 keys'], play: 'Play', loop: 'Loop', stop: 'Stop', band: 'Band', speed: 'Speed',
+    title: 'Steps for the ear', steps: ['Hear', 'Play back', 'Write', '12 keys'], play: 'Play', loop: 'Loop', stop: 'Stop', band: 'Band', speed: 'Speed',
     hearHow: 'Listen until you can sing it in your head. Slow it down if you need — the pitch stays.', backHow: 'Count-in, then play it back from memory.', backVoice: 'Count-in, then sing it back.',
     reveal: 'Show the notes', revealed: 'Shown — this phrase counts less.', write: 'Write it as degrees of the key, in order.', check: 'Check', undo: 'Undo', next: 'Next', newPhrase: 'New phrase',
     keysHow: 'Now play it in every key — the drills measure each one.', keep: 'Keep it in my licks', kept: 'In my licks', level: 'Level', again: 'Again', key: 'Key',
     pitch: 'Pitch', rhythm: 'Rhythm', octave: 'You played it an octave away — that is fine.', done: 'Phrase done', toWrite: 'Write it', to12: 'Play in 12 keys',
   },
   he: {
-    title: 'תמלול', steps: ['להקשיב', 'לנגן בחזרה', 'לכתוב', '12 סולמות'], play: 'לנגן', loop: 'בלולאה', stop: 'עצירה', band: 'להקה', speed: 'מהירות',
+    title: 'צעדים לאוזן', steps: ['להקשיב', 'לנגן בחזרה', 'לכתוב', '12 סולמות'], play: 'לנגן', loop: 'בלולאה', stop: 'עצירה', band: 'להקה', speed: 'מהירות',
     hearHow: 'הקשיבו עד שתוכלו לשיר אותו בראש. האטו אם צריך — הגובה נשאר.', backHow: 'ספירה, ואז נגנו אותו בחזרה מהזיכרון.', backVoice: 'ספירה, ואז שירו אותו בחזרה.',
     reveal: 'להציג את התווים', revealed: 'הוצג — המשפט הזה נחשב פחות.', write: 'כתבו אותו בדרגות של הסולם, לפי הסדר.', check: 'בדיקה', undo: 'ביטול', next: 'הבא', newPhrase: 'משפט חדש',
     keysHow: 'עכשיו נגנו אותו בכל הסולמות — התרגילים מודדים כל אחד.', keep: 'לשמור בליקים שלי', kept: 'בליקים שלי', level: 'שלב', again: 'שוב', key: 'סולם',

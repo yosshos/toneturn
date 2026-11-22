@@ -29,6 +29,9 @@ export interface ChartCell {
   note?: string;
   /** The note was chosen by the player (a bar scale set by hand), not the default. */
   noteSet?: boolean;
+  /** SPEC-LICKS-IN-IMPROV §4 (phase 4): a lick of mine was found in this bar (after the take), or today's lick fits here
+   *  (before it). A small mark only: no sound, no popup. */
+  lick?: 'found' | 'fits';
 }
 
 /** The band's bars of an ear / trading item (its listen windows). */

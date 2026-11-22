@@ -39,7 +39,8 @@ import { TeachScreen } from './TeachPhrase';
 import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './teacherPhraseSync';
 import { teacherMockOn } from '../cloud/teacher';
 import { phrasesDueCount } from '../engine/encore/connect';
-import { dueLicks } from '../engine/licks';
+import { dueLicks, reviewAfter } from '../engine/licks';
+import { bookUses, lickPool, todaysLick } from '../engine/vocab';
 import { TranscribeCoachScreen } from './TranscribeCoach';
 import { ExamsScreen, mockExamLesson } from './Exams';
 import type { ExamDef } from '../content/bagrut';
@@ -60,7 +61,7 @@ import { IMPROV_LEVELS } from '../engine/charts';
 import { loadPieces, PiecesScreen, piecesDue } from './Pieces';
 import { SlowDownScreen } from './SlowDown';
 import { MySongScreen } from './MySong';
-import { ChartsScreen, type MyChart } from './Charts';
+import { ChartsScreen, type MyChart, type VocabCtx } from './Charts';
 import { chartOfRulesRef } from './ImprovRules';
 import { PracticeLogSheet } from './PracticeLog';
 import { makeLogResult, type LogKind } from '../engine/practiceLog';
@@ -1672,6 +1673,21 @@ export function App() {
   /** Technique takes since the session opened (0.61): their XP, count and clean count go to the server as one result. */
   const drillSessionXp = useRef(0);
   const drillSession = useRef({ takes: 0, clean: 0 });
+  /** SPEC-LICKS-IN-IMPROV (phase 4): the lick pool, today's lick and the usage log for Improvise; a take's uses are booked
+   *  (the log; a passed review for a lick closed in a key) and their XP is one result (XP, league, course share). */
+  const vocabCtx = (): VocabCtx => {
+    const items = progress.drillItems ?? {};
+    const pool = lickPool(items, s.lickBook);
+    return {
+      pool,
+      today: todaysLick(pool, s.lickBook, items),
+      log: s.lickBook?.uses,
+      onUses: (uses, xp) => {
+        updateSettings({ lickBook: bookUses(s.lickBook, uses, items, (b, id) => ({ ...b, review: { ...(b.review ?? {}), [id]: reviewAfter(b.review?.[id], true) } })) });
+        if (xp > 0) void store.recordCompletion({ lessonId: 'improv-vocab', lessonVersion: 1, sessionId: uses[0]?.session ?? `vocab-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: uses.length, total: uses.length, xp, missed: [], items: [], course: (s.activeCourse ?? 'keys') as CourseId }).then(setProgress);
+      },
+    };
+  };
   const noteTake = (xp: number, verdict?: string) => {
     drillSessionXp.current += xp;
     drillSession.current = { takes: drillSession.current.takes + 1, clean: drillSession.current.clean + (verdict === 'clean' ? 1 : 0) };
@@ -3453,6 +3469,13 @@ export function App() {
                   void store.recordRatingEvents(evs).then(setProgress);
                 }}
                 startReview={lickReview.current}
+                vocab={vocabCtx()}
+                onImprovise={(c) => {
+                  // "use it in improvisation" (SPEC-LICKS-IN-IMPROV §5): the chart player with today's lick; Back returns to Licks
+                  chartInit.current = c;
+                  toolFrom.current = 'licks';
+                  go('charts');
+                }}
                 pathLevel={measuredStep.current?.level}
                 onPathDone={(stars) => leaveMeasured('licks', stars)}
                 onBack={() => leaveMeasured('licks', null)}
@@ -3519,6 +3542,7 @@ export function App() {
           settings={s}
           initialChart={improvInit.current}
           title={<PlaceSpark place="improv" course={(s.activeCourse ?? 'ear') as CourseId} lang={s.uiLang} />}
+          vocab={vocabCtx()}
           onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
           onBack={() => (improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
           onOpenChart={(c) => ((chartInit.current = c), go('charts'))}
@@ -3570,6 +3594,7 @@ export function App() {
           onChange={updateSettings}
           onBack={() => backToRep(() => go(toolFrom.current))}
           onMixer={openMixer}
+          vocab={vocabCtx()}
           onDrill={(kind, stride) => {
             chartQueue.current = [generate({ family: stride ? 'accomp' : 'voicings', kind, key: 0, hands: 'L', swing: true })];
             drillFrom.current = 'chart';

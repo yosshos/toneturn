@@ -24,7 +24,8 @@ test('lick trainer: library, a lick with its 12-key grid, a measured run — eac
   await expect(page.locator('[data-licks="lick"]')).toBeVisible();
   await expect(page.locator('[data-lick-grid]')).toBeVisible();
   await expect(page.locator('.lk-col')).toHaveCount(12);
-  await expect(page.locator('[data-lick-useit]')).toBeDisabled();
+  // phase 4: the old 3-star 'Use it' folded into Improvise (today's lick): the page opens improvisation with the lick
+  await expect(page.locator('[data-lick-improvise]')).toBeVisible();
   await fits(page);
   await noEmoji(page);
   await page.locator('[data-lick-practice]').click();

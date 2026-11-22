@@ -9,7 +9,7 @@
 import { MODE_STEPS, type ModeId } from './modes';
 import type { ParsedChart } from './charts';
 import { chordAtBeat } from './charts';
-import { RULE_CARDS, notesOfSeconds, spansOfChart, type CardCheck, type CardCtx } from './ruleCards';
+import { RULE_CARDS, notesOfSeconds, spansOfChart, type CardCheck, type CardCtx, type CardOpt } from './ruleCards';
 
 // AUDIT-DEPTH-3 C5 (owner 2026-11-14): the rule cards (ruleCards.ts) join the library — the drilled vocabulary in a
 // fifth slot (vocab), touch and instrument rules in a sixth (extra), and new note / interval / rhythm / shape rules in
@@ -29,7 +29,7 @@ export type RhythmRule =
 export type ShapeRule = 'octave' | 'fifth' | 'short-phrases' | 'long-lines' | 'rise' | 'fall' | 'arch' | 'motif' | 'end-chord-tone' | 'peak-once'
   | 'motif-dev' | 'repeat-vary' | 'end-guide' | 'chrom-up' | 'full-range' | 'fall-chord';
 /** The drilled vocabulary (rule cards). */
-export type VocabRule = 'harris' | 'pivot' | 'enc-ab' | 'enc-ba' | 'enc-step' | 'enc-bebop' | 'enc-delayed' | 'approach' | 'triad-pair' | 'pent-super' | 'use-lick' | 'guide-target' | 'quote-head' | 'target-ct' | 'inside' | 'active';
+export type VocabRule = 'harris' | 'pivot' | 'enc-ab' | 'enc-ba' | 'enc-step' | 'enc-bebop' | 'enc-delayed' | 'approach' | 'triad-pair' | 'pent-super' | 'use-lick' | 'lick-every-4' | 'todays-lick' | 'guide-target' | 'quote-head' | 'target-ct' | 'inside' | 'active';
 /** Touch (MIDI velocity) and instrument rules (rule cards). */
 export type ExtraRule = 'ghost' | 'accent-off' | 'one-string' | 'double-stops' | 'octaves' | 'imply-roots' | 'lh-shells';
 export type AnyRule = NoteRule | IntervalRule | RhythmRule | ShapeRule | VocabRule | ExtraRule;
@@ -49,7 +49,7 @@ export const NOTE_RULES: NoteRule[] = ['one-note', 'two-notes', 'three-notes', '
 export const INTERVAL_RULES: IntervalRule[] = ['steps', 'chromatic', 'thirds', 'fourths', 'sixths', 'leaps', 'wide', 'small', 'recover', 'zigzag', 'no-repeats'];
 export const RHYTHM_RULES: RhythmRule[] = ['quarters', 'half-notes', 'eighths', 'triplets', 'quarter-triplets', 'dotted', 'sixteenths', 'offbeats', 'start-and', 'start-two', 'no-one', 'same-rhythm', 'one-on', 'space', 'sparse', 'bars-2', 'rest-bar', 'call-response', 'displace', 'double-bar', 'behind', 'ahead'];
 export const SHAPE_RULES: ShapeRule[] = ['fifth', 'octave', 'full-range', 'short-phrases', 'long-lines', 'rise', 'fall', 'fall-chord', 'arch', 'motif', 'motif-dev', 'repeat-vary', 'end-chord-tone', 'end-guide', 'chrom-up', 'peak-once'];
-export const VOCAB_RULES: VocabRule[] = ['inside', 'active', 'target-ct', 'guide-target', 'approach', 'harris', 'enc-ab', 'enc-ba', 'enc-step', 'enc-bebop', 'enc-delayed', 'pivot', 'triad-pair', 'pent-super', 'use-lick', 'quote-head'];
+export const VOCAB_RULES: VocabRule[] = ['inside', 'active', 'target-ct', 'guide-target', 'approach', 'harris', 'enc-ab', 'enc-ba', 'enc-step', 'enc-bebop', 'enc-delayed', 'pivot', 'triad-pair', 'pent-super', 'use-lick', 'lick-every-4', 'todays-lick', 'quote-head'];
 export const EXTRA_RULES: ExtraRule[] = ['ghost', 'accent-off', 'imply-roots', 'lh-shells', 'one-string', 'double-stops', 'octaves'];
 /** Rule ids checked by a rule card (ruleCards.ts) rather than by checkRules' own code. */
 export const isCardRule = (r: string): boolean => r in RULE_CARDS;
@@ -236,6 +236,8 @@ export const CHALLENGES: Challenge[] = [
   { id: 'delayed', group: 'vocab', level: 5, title: { en: 'Delay the resolution', he: 'להשהות את הפתרון' }, idea: { en: 'Circle the target before you land; end phrases on a guide tone.', he: 'להקיף את המטרה לפני הנחיתה; לסיים משפטים על צליל מנחה.' }, rules: R(null, null, null, 'end-guide', 'enc-delayed') },
   { id: 'pairs-space', group: 'vocab', level: 4, title: { en: 'Triad pairs with space', he: 'זוגות משולשים עם אוויר' }, idea: { en: 'Two triads per chord, never more than four notes a bar.', he: 'שני משולשים לכל אקורד, לא יותר מארבעה צלילים בתיבה.' }, rules: R(null, null, 'sparse', null, 'triad-pair') },
   { id: 'pent-colours', group: 'vocab', level: 4, title: { en: 'Pentatonic colours', he: 'צבעים פנטטוניים' }, idea: { en: 'A superimposed pentatonic on every chord, wide leaps.', he: 'פנטטוני מונח על כל אקורד, בקפיצות רחבות.' }, rules: R(null, 'leaps', null, null, 'pent-super') },
+  { id: 'todays-lick', group: 'vocab', level: 2, title: { en: "Today's lick", he: 'הליק של היום' }, idea: { en: 'The lick picked for you today, once a chorus over its chords; the chart marks where it fits.', he: 'הליק שנבחר לכם היום, פעם בסבב מעל האקורדים שלו; המהלך מסמן איפה הוא מתאים.' }, rules: R('scale', null, null, null, 'todays-lick') },
+  { id: 'lick-every-4', group: 'vocab', level: 3, title: { en: 'A lick every 4 bars', he: 'ליק כל 4 תיבות' }, idea: { en: 'Your vocabulary as language: in every 4 bars, one of your licks over its chord.', he: 'אוצר המילים שלכם כשפה: בכל 4 תיבות, אחד מהליקים שלכם מעל האקורד שלו.' }, rules: R(null, null, null, null, 'lick-every-4') },
   { id: 'lick-in', group: 'vocab', level: 3, title: { en: 'Work a lick in', he: 'לשלב ליק' }, idea: { en: 'Fit one of your licks over its chord, inside the changes otherwise.', he: 'לשלב ליק שלכם מעל האקורד שלו, ובשאר הזמן בתוך המהלך.' }, rules: R('scale', null, null, null, 'use-lick') },
   { id: 'side-slip-in', group: 'masters', level: 5, title: { en: 'Out and back in', he: 'החוצה ובחזרה' }, idea: { en: 'Slip a half step outside, then resolve to a chord tone at the end of each phrase.', he: 'לגלוש חצי טון החוצה, ואז לפתור לצליל אקורד בסוף כל משפט.' }, rules: R('side-slip', null, null, 'end-chord-tone') },
   { id: 'dialogue', group: 'shape', level: 4, title: { en: 'Dialogue with a motif', he: 'דיאלוג עם מוטיב' }, idea: { en: 'Answer each phrase in its rhythm, and keep transforming your opening motif.', he: 'לענות לכל משפט בקצב שלו, ולהמשיך לשנות את מוטיב הפתיחה.' }, rules: R(null, null, 'call-response', 'motif-dev') },
@@ -343,7 +345,7 @@ function tonesOf(iv: number[]) {
  * Check a take against the rules. `scales[bar]` overrides the automatic chord-scale of that chart bar.
  * Beat positions are in quarter beats; swing is tolerated (an "&" anywhere from 1/2 to 2/3 of the beat).
  */
-export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: number, bpm: number, rules: RuleSet, scales: Record<number, ModeId> = {}, totalBars?: number): RulesReport {
+export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: number, bpm: number, rules: RuleSet, scales: Record<number, ModeId> = {}, totalBars?: number, /** The rule cards' options (the lick pool, today's lick, phase 4). */ opt?: CardOpt): RulesReport {
   const beatS = 60 / bpm;
   const notes = played.filter((n) => n.end - n.start > 0.04).sort((a, b) => a.start - b.start);
   const nBars = totalBars ?? Math.max(1, Math.ceil((notes.length ? notes[notes.length - 1].end : 0) / beatS / meter));
@@ -388,7 +390,7 @@ export function checkRules(played: PlayedNote[], chart: ParsedChart, meter: numb
   // Rule cards (ruleCards.ts): the take in beats over the chart's chords repeated through the take.
   let cardCtx: CardCtx | null = null;
   const addCard = (rule: AnyRule) => {
-    cardCtx ??= { notes: notesOfSeconds(notes, bpm), spans: spansOfChart(chart, meter, nBars), meter, bpm };
+    cardCtx ??= { notes: notesOfSeconds(notes, bpm), spans: spansOfChart(chart, meter, nBars), meter, bpm, ...(opt ? { opt } : {}) };
     const r: CardCheck = RULE_CARDS[rule].check(cardCtx);
     const c = add(rule);
     c.ok = r.ok;

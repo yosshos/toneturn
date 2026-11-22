@@ -218,6 +218,9 @@ html[data-motion='reduced'] .cc-progress { transition: none; }
 .cc-tab { position: absolute; top: 0; right: 0; min-width: 16px; height: 16px; padding: 0 3px; display: grid; place-items: center; font: 700 10px/1 var(--font); color: var(--ink-c); border-left: 1.5px solid var(--ink-c); border-bottom: 1.5px solid var(--ink-c); border-bottom-left-radius: 6px; }
 .cc-tab.ok { background: var(--teal); }
 .cc-tab.bad { background: var(--pink); }
+/* phase 4: a lick of mine found in the bar (a filled ink tick, bottom right), or where today's lick fits (dashed outline) */
+.cc-lick { position: absolute; right: 5px; bottom: 7px; width: 12px; height: 5px; border-radius: 3px; border: 1.5px solid var(--ink-c); background: var(--ink-c); }
+.cc-lick.fits { background: transparent; border-style: dashed; }
 /* the rules on screen: a number each, the same number in a broken bar's corner */
 .rc-n { display: inline-grid; place-items: center; width: 16px; height: 16px; margin-inline-end: 4px; border-radius: 50%; background: var(--ink-c); color: var(--card); font: 700 10px/1 var(--font); font-style: normal; }
 .rules-kept { margin: 0; font-size: 0.85rem; color: var(--ink); }

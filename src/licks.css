@@ -21,6 +21,12 @@
 .lk-stars i.on { background: var(--purple); }
 .lk-meta { margin: 0; color: var(--ink-soft); font-size: 0.9rem; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .lk-used { color: var(--purple); }
+/* phase 4: "in my language" (used in improvisation in 3 sessions and 2 keys), the usage line, where it fits */
+.lk-lang { color: var(--ink); }
+.lk-lang-chip { flex: none; padding: 1px 8px; border: 1.5px solid var(--ink-c); border-radius: 999px; font-size: 0.75rem; font-weight: 700; color: var(--ink); background: var(--card); }
+.lk-uses { margin: 0; }
+.lk-fits summary { cursor: pointer; font-size: 0.9rem; color: var(--ink); }
+.lk-fits ul { margin: 4px 0 0; padding-inline-start: 18px; display: grid; gap: 2px; font-size: 0.88rem; }
 .lk-grid { display: grid; grid-template-columns: 28px repeat(12, 1fr); gap: 3px; align-items: end; }
 .lk-grid-rows { display: flex; flex-direction: column; gap: 3px; padding-bottom: 16px; }
 .lk-grid-t { height: 14px; line-height: 14px; font-size: 0.62rem; color: var(--ink-dim); text-align: end; }
