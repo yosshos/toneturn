@@ -53,13 +53,11 @@ test.describe('the Jazz course folded into Ear (jazz focus)', () => {
     await expect(page.locator('.course-sheet [data-course="jazz"]')).toHaveCount(0);
     await expect(page.locator('.course-sheet [data-course="keys"]')).toBeVisible();
     await page.locator('.course-sheet [data-course="ear"]').click();
-    // Practice: the jazz rows of Ear lead (jazz focus).
+    // Practice (phase 3): the jazz pack changes the content, not the places — Ear's jazz standards are in Repertoire.
     await page.goto('/#/arcade');
-    await expect(page.locator('[data-hub="standards"]')).toBeVisible();
-    await expect(page.locator('.pt-grid .pt-tile').first()).toHaveAttribute('data-hub', 'standards');
-    // Off: the jazz rows stay (a migrated player keeps the jazz pack open), but no longer lead.
-    await page.locator('[data-jazz-focus]').first().click();
-    await expect(page.locator('[data-jazz-focus]').first()).toHaveAttribute('aria-checked', 'false');
-    await expect(page.locator('.pt-grid .pt-tile').first()).not.toHaveAttribute('data-hub', 'standards');
+    await expect(page.locator('[data-hub="standards"]')).toHaveCount(0);
+    await page.locator('[data-hub="repertoire"]').click();
+    await page.locator('[data-rep-search]').fill('Autumn');
+    await expect(page.locator('[data-rep-key^="rep:jazz:"]').first()).toBeVisible();
   });
 });

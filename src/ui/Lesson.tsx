@@ -1,4 +1,5 @@
-import { TypedText } from './TypedText';
+import { TypedText } from './TypedText';
+
 import { KeysSoundButton } from './KeysSound';
 import { useNarration } from './TalkToggle';
 import { DOMAIN_COLOR, Glyph } from './Glyph';
@@ -73,6 +74,8 @@ interface Props {
   /** From the brief: take this topic off my path / keep a ✓ step on it. */
   onHideTopic?: () => void;
   onKeepStep?: () => void;
+  /** SPEC-PATH-TODAY-PRACTICE §3.1: a path step's brief — "The full practice of the step" (the topic's home). */
+  onFullPractice?: () => void;
   t: Strings;
   lessonId: LessonId;
   settings: Settings;
@@ -126,7 +129,7 @@ function lessonTakeInfo(q: Question | undefined, midiOn: boolean, plays: boolean
 }
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, recent }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, onFullPractice, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -534,7 +537,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
           </button>
         </section>
       ) : v.stage === 'starting' && brief && !briefSeen ? (
-        <ExerciseBrief brief={brief} lang={lang} input={briefInput(lesson.questions[0], v.mode === 'voice')} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} onExplain={() => openAi('explain', 'topic')} />
+        <ExerciseBrief brief={brief} lang={lang} input={briefInput(lesson.questions[0], v.mode === 'voice')} how={howText(lesson.questions[0]?.kind, lang)} refresher={lesson.questions[0] ? refresherFor(lesson.questions[0], lesson.id) : null} onRefresher={openRefresher} onPlay={() => void ctrl.start()} voice={v.mode === 'voice'} onHide={onHideTopic} onKeep={onKeepStep} onFullPractice={onFullPractice} onExplain={() => openAi('explain', 'topic')} />
       ) : v.stage === 'starting' ? (
         <section className="paused-card">
           <h2>{withNote(meta.title[lang], bb)}</h2>
@@ -1690,7 +1693,7 @@ function briefInput(q: Question | undefined, voiceMode: boolean): InputCheckMode
 }
 
 /** The brief before a topic exercise: never starts playing on its own. */
-function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; input?: InputCheckMode | null; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void }) {
+function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay, voice, onHide, onKeep, onExplain, onFullPractice }: { brief: { kicker: string; title: string; about: string }; lang: 'en' | 'he'; input?: InputCheckMode | null; how: string; refresher: MiniLesson | null; onRefresher: ((l: MiniLesson, after: () => void) => void) | null; onPlay: () => void; voice: boolean; onHide?: () => void; onKeep?: () => void; onExplain?: () => void; onFullPractice?: () => void }) {
   const he = lang === 'he';
   const [kept, setKept] = useState(false);
   useAnyNote(true, onPlay);
@@ -1717,6 +1720,11 @@ function ExerciseBrief({ brief, lang, input, how, refresher, onRefresher, onPlay
           <Icon k={voice ? 'mic' : 'play'} size={38} />
         </button>
       </div>
+      {onFullPractice && (
+        <button className="link ex-full" onClick={onFullPractice} data-brief-full="1">
+          {he ? 'התרגול המלא של הצעד' : 'The full practice of the step'}
+        </button>
+      )}
       <AnyNoteHint lang={lang} />
       {/* §20.11: the whole-session recording also from the gate page of an exercise that listens */}
       {(input || voice) && <SessionRecToggle lang={lang} className="ex-sessrec" />}

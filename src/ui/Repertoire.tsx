@@ -1,203 +1,529 @@
-// Repertoire (docs/SPEC-REPERTOIRE.md): the Practice row that was "Songs", in every course. A goal header ("Next goal:
-// your first standard" + bar), the four tiers as tabs, items named by what they teach; an item page says what it leads
-// to, shows the best result and opens the course's measured practice for it. One phone screen each, no emoji.
+// Repertoire, one place for every piece (docs/SPEC-PRACTICE-IA-3.md §3, BUILD-PLAN-2026-11 phase 3). It absorbs
+// Charts & lead sheets, My pieces, My song and Ear's jazz standards; the engines stay (ChartPlayer, the piece coach,
+// My song, the course's measured ways) and open from the piece page.
+//   The list: tabs Foundations · Blues & progressions · Standards · Advanced · Mine, search, the next-goal card,
+//   "Add a piece" (lead sheet / score / my recording / type the chords).
+//   The piece page (SPEC-PATH-TODAY-PRACTICE §2, the one item page): name + status word, "where it sits" (its path
+//   node, or "later in your path"), "why today", the main button by the way in, then only the actions this piece has.
+// On a wide screen the list and the piece sit side by side. One phone screen each, no emoji.
 
-import { useState } from 'react';
-import type { RepCourse } from '../engine/repertoire';
-import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, repStatus, repertoireFor, tierName, wayLabel, type RepItem, type RepTier, type RepWay } from '../engine/repertoire';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
+import { chartOfPiece, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
+import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
+import { CHART_TEMPLATES } from '../engine/charts';
+import type { CourseId } from '../engine/courses';
+import type { PathView } from '../engine/path';
+import type { LeadSheet } from '../engine/leadsheet';
 import { ListenOriginal } from './ListenOriginal';
+import { LeadSheetImport } from './ImprovRules';
 import { loadMemo, memoProgress, MEMO_STEPS, moveTune, saveMemo, toggleMemoStep, TUNE_LISTS, tunesIn, type MemoState, type TuneList } from '../engine/practiceMethod';
+import { repHash, repViewOf, type RepView, type WayIn } from './practiceRoutes';
+import { loadPieces } from './Pieces';
+import { planProgress } from '../engine/piece/coach';
+import { songs } from './MySong';
+import { PlaceSpark } from './PlaceSpark';
 import '../repertoire.css';
 import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
+type Bi = { en: string; he: string };
 
 export interface RepertoireProps {
   lang: Lang;
-  course: RepCourse;
+  course: CourseId;
+  jazz: 'off' | 'on' | 'focus';
   lessons: Record<string, { best: number; completions: number }> | undefined;
-  /** The item to open on entry (from the Today card or a quest). */
-  initialItem?: string | null;
+  history: { lessonId: string; completedAt: string; firstTry: number; total: number }[] | undefined;
+  myCharts: MyChartLike[] | undefined;
+  /** The player's path, for "where it sits". */
+  pathView?: PathView | null;
+  /** Why a piece is in today's plan (null when it is not). */
+  whyToday?: (key: string) => Bi | null;
+  /** Leave the place (the list's Back). */
   onBack: () => void;
-  onWay: (item: RepItem, way: RepWay) => void;
-  /** The full public-domain songbook (melody / chords by the chords you know) — instrument courses. */
+  /** Leave a piece page that was opened from outside the list (the path, Today, the teacher). */
+  onLeavePiece: (from: WayIn) => void;
+  onAction: (e: LibEntry, a: PieceAction) => void;
+  /** The "where it sits" chip: the path, at this step. */
+  onPathNode: (stepId: string) => void;
+  /** Add a piece: a score (the piece coach), a recording (My song), typed chords (a new chart). */
+  onAdd: (src: 'score' | 'recording' | 'type') => void;
+  /** Lead sheets imported here become my charts; returns the piece key of the one to open (one sheet), or null. */
+  onSheets: (sheets: LeadSheet[]) => string | null;
+  /** Start a chart from a progression template. */
+  onTemplate: (id: string) => void;
+  /** The full public-domain songbook (instrument courses). */
   onSongbook?: () => void;
-  /** The item shown, so Back from a practice comes back to it. */
-  onItem?: (id: string | null) => void;
 }
 
-const pct = (x: number) => `${Math.round(x * 100)}%`;
+/** The view in the address (#/repertoire/…), followed as it changes. */
+function useRepView(): RepView {
+  const [v, setV] = useState<RepView>(() => repViewOf(location.hash));
+  useEffect(() => {
+    const on = () => setV(repViewOf(location.hash));
+    window.addEventListener('hashchange', on);
+    return () => window.removeEventListener('hashchange', on);
+  }, []);
+  return v;
+}
+/** Wide screens: the list and the piece side by side. */
+function useWide(): boolean {
+  const q = '(min-width: 960px)';
+  const [w, setW] = useState(() => typeof matchMedia !== 'undefined' && matchMedia(q).matches);
+  useEffect(() => {
+    if (typeof matchMedia === 'undefined') return;
+    const m = matchMedia(q);
+    const on = () => setW(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return w;
+}
+/** A piece opened from the list sits on its own history entry, so Back returns to the list. */
+let openedFromList = false;
 
-export function RepertoireScreen({ lang, course, lessons, initialItem, onBack, onWay, onSongbook, onItem }: RepertoireProps) {
+const statusMark = (s: ItemStatus, lang: Lang) => STATUS_WORD[s][lang];
+
+export function RepertoireScreen(p: RepertoireProps) {
+  const { lang, course, jazz, lessons, history: hist } = p;
   const he = lang === 'he';
-  const res = repResults(lessons, course);
-  const goal = repGoal(course, res);
-  const [open, setOpenRaw] = useState<string | null>(initialItem && repItem(course, initialItem) ? initialItem : null);
-  const setOpen = (id: string | null) => {
-    setOpenRaw(id);
-    onItem?.(id);
-  };
-  const [tier, setTier] = useState<RepTier>(goal.next?.tier ?? 1);
-  const item = open ? repItem(course, open) : undefined;
-  // Memorising tunes (practiceMethod.ts, Siskind's "How to Memorize a Jazz Standard"): the three lists, on the device.
+  const view = useRepView();
+  const wide = useWide();
+  const goalCourse: RepCourse = course;
+  const res = repResults(lessons, goalCourse);
+  const goal = repGoal(goalCourse, res);
+  const lib = useMemo(() => libraryFor(course, jazz), [course, jazz]);
+  // Mine: my charts (settings), my scores and recordings (IndexedDB on this device).
+  const [scores, setScores] = useState<{ id: string; title: string; composer?: string; progress: number; done: boolean }[]>([]);
+  const [recs, setRecs] = useState<{ id: string; name: string; best?: number }[]>([]);
+  useEffect(() => {
+    let alive = true;
+    void loadPieces()
+      .then((ps) => alive && setScores(ps.map((x) => ({ id: x.id, title: x.piece.title, composer: x.piece.composer, progress: planProgress(x.plan, x.piece.bars.length), done: !!x.plan.done }))))
+      .catch(() => undefined);
+    void songs
+      .list()
+      .then((ls) => alive && setRecs(ls.map((x) => ({ id: x.id, name: x.name, best: x.scores?.[course]?.score }))))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [course]);
+  const mine = useMemo(() => mineEntries(p.myCharts, scores, recs), [p.myCharts, scores, recs]);
+  const all = useMemo(() => [...lib, ...mine], [lib, mine]);
+  const [q, setQ] = useState('');
+  const [adding, setAdding] = useState(false);
   const [memo, setMemoRaw] = useState<MemoState>(() => loadMemo());
   const setMemo = (m: MemoState) => {
     setMemoRaw(m);
     saveMemo(m);
   };
   const [lists, setLists] = useState(false);
+  const [memoFor, setMemoFor] = useState<LibEntry | null>(null);
 
-  if (item) return <ItemPage lang={lang} course={course} item={item} res={res} onBack={() => setOpen(null)} onOpen={setOpen} onWay={onWay} memo={memo} setMemo={setMemo} />;
-  if (lists) return <ListsPage lang={lang} course={course} memo={memo} onBack={() => setLists(false)} onOpen={setOpen} />;
+  const statusOf = (e: LibEntry): ItemStatus => {
+    if (e.ref.kind === 'rep' && e.ref.course) return pieceStatus(hist, lessons, e.ref.course, e.ref.id);
+    if (e.ref.kind === 'score') {
+      const s = scores.find((x) => x.id === e.ref.id);
+      return s ? scoreStatus(s.progress, s.done) : 'new';
+    }
+    if (e.ref.kind === 'rec') return recStatus(recs.find((x) => x.id === e.ref.id)?.best);
+    return 'new';
+  };
+  const tab: RepTab = view.tab ?? goal.next?.tier ?? 1;
+  const mineF: MineFilter = view.mine ?? 'all';
+  const setView = (v: RepView, push = false) => {
+    const h = `#${repHash(v)}`;
+    if (push) location.hash = h.slice(1);
+    else location.replace(h);
+  };
+  const openPiece = (key: string) => {
+    if (wide && !view.piece) return setView({ tab, mine: view.mine, piece: key });
+    openedFromList = true;
+    setView({ tab, mine: view.mine, piece: key }, !wide);
+  };
+  const entry = view.piece ? (all.find((e) => e.key === view.piece) ?? entryOfKey(view.piece, p.myCharts)) : undefined;
+  const closePiece = () => {
+    const from = view.from ?? 'practice';
+    if (from !== 'practice') return p.onLeavePiece(from);
+    if (openedFromList && !wide) {
+      openedFromList = false;
+      return window.history.length > 1 ? window.history.back() : setView({ tab, mine: view.mine });
+    }
+    setView({ tab, mine: view.mine });
+  };
 
-  const items = repertoireFor(course).filter((x) => x.tier === tier);
-  const title = he ? 'רפרטואר' : 'Repertoire';
-  return (
-    <main className="rep-screen" data-repertoire={course}>
+  if (memoFor) return <MemoPage lang={lang} id={memoFor.item?.id ?? memoFor.key} title={memoFor.title[lang]} memo={memo} setMemo={setMemo} onBack={() => setMemoFor(null)} onTopic={memoFor.item ? (topic) => p.onAction(memoFor, { k: 'way', way: { k: 'topic', topic, level: 1 } }) : undefined} />;
+  if (lists) return <ListsPage lang={lang} entries={all} memo={memo} onBack={() => setLists(false)} onOpen={(k) => (setLists(false), openPiece(k))} />;
+
+  const piecePage = entry ? (
+    <PiecePage
+      key={entry.key}
+      {...p}
+      entry={entry}
+      status={statusOf(entry)}
+      wayIn={view.from ?? 'practice'}
+      inPane={wide && !!view.piece && (view.from ?? 'practice') === 'practice'}
+      memoDone={memoProgress(memo, entry.item?.id ?? entry.key).done}
+      onMemo={() => setMemoFor(entry)}
+      onBackPiece={closePiece}
+      onOpen={openPiece}
+    />
+  ) : null;
+  // A piece opened from outside the list (path, Today, teacher), or any piece on a phone: the page alone.
+  if (piecePage && (!wide || (view.from ?? 'practice') !== 'practice')) return piecePage;
+
+  const shown = q.trim() ? searchLib(all, q) : tab === 'mine' ? mine.filter((e) => mineMatches(e, mineF)) : lib.filter((e) => e.tab === tab);
+  const list = (
+    <main className="rep-screen" data-repertoire={course} data-rep-tab={String(tab)}>
       <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
+        <button className="icon-btn" onClick={p.onBack} aria-label={he ? 'חזרה' : 'Back'}>
           <Icon k="back" />
         </button>
-        <h1>{title}</h1>
+        <h1>{he ? 'רפרטואר' : 'Repertoire'}</h1>
+        <PlaceSpark place="repertoire" course={course} lang={lang} />
+        <button className="icon-btn rep-add-btn" onClick={() => setAdding(true)} aria-label={he ? 'להוסיף יצירה' : 'Add a piece'} title={he ? 'להוסיף יצירה' : 'Add a piece'} data-rep-add="1">
+          <Icon k="plus" />
+        </button>
       </header>
-      <button className="rep-goal" onClick={() => goal.next && setOpen(goal.next.id)} data-rep-goal={goal.id} disabled={!goal.next}>
-        <small>{he ? 'היעד הבא' : 'Next goal'}</small>
-        <b>{goal.title[lang]}</b>
-        <span className="rep-bar" aria-hidden="true">
-          <i style={{ width: `${(100 * goal.now) / Math.max(1, goal.target)}%` }} />
-        </span>
-        <span className="rep-goal-foot">
-          <span dir="ltr">
-            {goal.now}/{goal.target}
+      <label className="rep-search">
+        <Icon k="search" size={16} />
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={he ? 'חיפוש יצירה' : 'Search a piece'} aria-label={he ? 'חיפוש יצירה' : 'Search a piece'} data-rep-search="1" />
+      </label>
+      {!q.trim() && tab !== 'mine' && (
+        <button className="rep-goal" onClick={() => goal.next && openPiece(`rep:${goalCourse}:${goal.next.id}`)} data-rep-goal={goal.id} disabled={!goal.next}>
+          <small>{he ? 'היעד הבא' : 'Next goal'}</small>
+          <b>{goal.title[lang]}</b>
+          <span className="rep-bar" aria-hidden="true">
+            <i style={{ width: `${(100 * goal.now) / Math.max(1, goal.target)}%` }} />
           </span>
-          {goal.next && (
-            <span className="rep-next">
-              {he ? 'הבא: ' : 'Next: '}
-              {goal.next.title[lang]}
+          <span className="rep-goal-foot">
+            <span dir="ltr">
+              {goal.now}/{goal.target}
             </span>
-          )}
-        </span>
-      </button>
-      <div className="rep-tiers" role="tablist" aria-label={he ? 'שלבים' : 'Tiers'}>
-        {REP_TIERS.map((t) => {
-          const all = repertoireFor(course).filter((x) => x.tier === t.n);
-          const done = all.filter((x) => repStatus(res[x.id]) === 'learned').length;
-          return (
-            <button key={t.n} role="tab" aria-selected={tier === t.n} className={`rep-tier ${tier === t.n ? 'on' : ''}`} onClick={() => setTier(t.n)} data-rep-tier={t.n}>
-              <b>{t.n}</b>
-              <span>{t.name[lang]}</span>
-              <small dir="ltr">
-                {done}/{all.length}
-              </small>
-            </button>
-          );
-        })}
-      </div>
-      <p className="rep-tier-blurb">{REP_TIERS[tier - 1].blurb[lang]}</p>
-      <ul className="rep-list">
-        {items.map((x) => {
-          const st = repStatus(res[x.id]);
-          return (
-            <li key={x.id}>
-              <button className={`rep-row ${st}`} onClick={() => setOpen(x.id)} data-rep-item={x.id}>
-                <span className="rep-row-text">
-                  <b>{x.teaches[lang]}</b>
-                  <small>{x.title[lang]}</small>
-                </span>
-                <span className={`rep-mark ${st}`} aria-label={st === 'learned' ? (he ? 'נלמד' : 'Learned') : st === 'started' ? (he ? 'בתהליך' : 'Started') : he ? 'חדש' : 'New'}>
-                  {st === 'learned' ? '✓' : st === 'started' ? pct(res[x.id]!.best) : ''}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <button className="link rep-songbook" onClick={() => setLists(true)} data-rep-lists="1">
-        {he ? 'שלוש הרשימות: יודעים · לומדים · הבא' : 'Three lists: know · learning · next'}
-      </button>
-      {onSongbook && (
-        <button className="link rep-songbook" onClick={onSongbook} data-rep-songbook="1">
-          {he ? 'כל שירי נחלת הכלל — לפי האקורדים שאתם מכירים' : 'All public-domain songs — by the chords you know'}
+            {goal.next && (
+              <span className="rep-next">
+                {he ? 'הבא: ' : 'Next: '}
+                {goal.next.title[lang]}
+              </span>
+            )}
+          </span>
         </button>
       )}
+      {!q.trim() && (
+        <div className="rep-tabs" role="tablist" aria-label={he ? 'שלבים' : 'Tiers'}>
+          {REP_TABS.map((t) => {
+            const inTab = t === 'mine' ? mine : lib.filter((x) => x.tab === t);
+            const closed = inTab.filter((x) => statusOf(x) === 'closed').length;
+            return (
+              <button key={String(t)} role="tab" aria-selected={tab === t} className={`rep-tier ${tab === t ? 'on' : ''}`} onClick={() => setView({ tab: t })} data-rep-tier={String(t)}>
+                <span>{tabName(t)[lang]}</span>
+                <small dir="ltr">{t === 'mine' ? inTab.length : `${closed}/${inTab.length}`}</small>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {!q.trim() && tab === 'mine' && (
+        <div className="chips rep-mine-f" role="radiogroup" aria-label={he ? 'סוג' : 'Kind'}>
+          {(['all', 'charts', 'scores', 'recordings'] as MineFilter[]).map((f) => (
+            <button key={f} role="radio" aria-checked={mineF === f} className={`chip ${mineF === f ? 'on' : ''}`} onClick={() => setView({ tab: 'mine', mine: f })} data-rep-mine={f}>
+              {MINE_NAME[f][lang]}
+            </button>
+          ))}
+        </div>
+      )}
+      {!q.trim() && tab !== 'mine' && <p className="rep-tier-blurb">{REP_TIERS[(tab as number) - 1].blurb[lang]}</p>}
+      {shown.length ? (
+        <ul className="rep-list">
+          {shown.map((x) => {
+            const st = statusOf(x);
+            return (
+              <li key={x.key}>
+                <button className={`rep-row st-${st} ${view.piece === x.key ? 'on' : ''}`} onClick={() => openPiece(x.key)} data-rep-item={x.ref.kind === 'rep' ? x.ref.id : x.key} data-rep-key={x.key}>
+                  <span className="rep-row-text">
+                    <b>{x.item ? x.teaches[lang] : x.title[lang]}</b>
+                    <small>{x.item ? x.title[lang] : x.teaches[lang]}</small>
+                  </span>
+                  <span className={`rep-mark st-${st}`} data-status={st}>
+                    {st === 'new' ? '' : statusMark(st, lang)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        // A first step instead of an empty list (SPEC-PRACTICE-IA-3 §8).
+        <div className="rep-empty" data-rep-empty="1">
+          <p>{tab === 'mine' && !q.trim() ? (he ? 'עוד לא הוספתם יצירה. דף אקורדים, תווים, הקלטה שלכם או אקורדים בהקלדה.' : 'Nothing added yet. A lead sheet, a score, your own recording or typed chords.') : he ? 'לא נמצאה יצירה.' : 'No piece found.'}</p>
+          {tab === 'mine' && !q.trim() && (
+            <button className="btn primary" onClick={() => setAdding(true)} data-rep-add-first="1">
+              {he ? 'להוסיף יצירה' : 'Add a piece'}
+            </button>
+          )}
+        </div>
+      )}
+      <div className="rep-links">
+        <button className="link" onClick={() => setLists(true)} data-rep-lists="1">
+          {he ? 'שלוש הרשימות: יודעים · לומדים · הבא' : 'Three lists: know · learning · next'}
+        </button>
+        {p.onSongbook && (
+          <button className="link" onClick={p.onSongbook} data-rep-songbook="1">
+            {he ? 'כל שירי נחלת הכלל' : 'All public-domain songs'}
+          </button>
+        )}
+      </div>
+      {adding && <AddPieceSheet lang={lang} onClose={() => setAdding(false)} onAdd={(s) => (setAdding(false), p.onAdd(s))} onTemplate={(id) => (setAdding(false), p.onTemplate(id))} onSheets={(sh) => {
+        const k = p.onSheets(sh);
+        if (k) {
+          setAdding(false);
+          setView({ tab: 'mine', piece: k }, true);
+        }
+      }} />}
     </main>
+  );
+  if (!wide) return list;
+  return (
+    <div className="rep-split" data-rep-split="1">
+      {list}
+      <section className="rep-pane" aria-live="polite">
+        {piecePage ?? (
+          <div className="rep-pane-empty">
+            <p>{he ? 'בחרו יצירה מהרשימה' : 'Pick a piece from the list'}</p>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
-function ItemPage({ lang, course, item, res, onBack, onOpen, onWay, memo, setMemo }: { lang: Lang; course: RepCourse; item: RepItem; res: ReturnType<typeof repResults>; onBack: () => void; onOpen: (id: string) => void; onWay: (item: RepItem, way: RepWay) => void; memo: MemoState; setMemo: (m: MemoState) => void }) {
+const MINE_NAME: Record<MineFilter, Bi> = {
+  all: { en: 'All', he: 'הכול' },
+  charts: { en: 'Charts', he: 'מהלכים' },
+  scores: { en: 'Scores', he: 'תווים' },
+  recordings: { en: 'Recordings', he: 'הקלטות' },
+};
+
+/** A piece that is not in the lists on show (a standard in another collection, a template): built from its key. */
+function entryOfKey(key: string, myCharts: MyChartLike[] | undefined): LibEntry | undefined {
+  const ref = parsePieceKey(key);
+  if (!ref) return undefined;
+  if (ref.kind === 'rep' && ref.course) {
+    const it = repItem(ref.course, ref.id);
+    return it ? { key, ref, tab: it.tier, title: it.title, teaches: it.teaches, item: it } : undefined;
+  }
+  const c = chartOfPiece(ref, 'en', myCharts);
+  if (!c) return undefined;
+  const he = chartOfPiece(ref, 'he', myCharts)!;
+  return { key, ref, tab: ref.kind === 'chart' ? 'mine' : 2, title: { en: c.title, he: he.title }, teaches: { en: 'Chord chart', he: 'מהלך אקורדים' }, ...(c.std ? { std: c.std } : {}) };
+}
+
+// ------------------------------------------------------------------ the piece page
+
+const MAIN: Record<WayIn, Bi> = {
+  practice: { en: 'Practise', he: 'לתרגל' },
+  path: { en: 'Continue the step', he: 'להמשיך את הצעד' },
+  today: { en: "Today's dose", he: 'המנה של היום' },
+  teacher: { en: 'The assignment', he: 'המשימה' },
+};
+
+function actionLabel(a: PieceAction, course: CourseId, ref: LibEntry['ref']): Bi {
+  switch (a.k) {
+    case 'way':
+      return wayLabel(a.way, (ref.course ?? course) as RepCourse);
+    case 'band':
+      return { en: 'Play with the band', he: 'לנגן עם הלהקה' };
+    case 'improvise':
+      return { en: 'Improvise on it', he: 'לאלתר עליו' };
+    case 'score':
+      return { en: 'Learn it from the score', he: 'ללמוד מהתווים' };
+    case 'recording':
+      return course === 'ear' ? { en: 'Transcribe a phrase', he: 'לתמלל משפט' } : { en: 'Play along with my recording', he: 'לנגן עם ההקלטה שלי' };
+    case 'technique':
+      return { en: 'Practise it in the technique hub', he: 'לתרגל במרכז הטכניקה' };
+  }
+}
+
+function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatus; wayIn: WayIn; inPane: boolean; memoDone: number; onMemo: () => void; onBackPiece: () => void; onOpen: (key: string) => void }) {
+  const { lang, course, entry, status, wayIn, pathView, myCharts } = props;
   const he = lang === 'he';
-  const [memoOpen, setMemoOpen] = useState(false);
-  if (memoOpen) return <MemoPage lang={lang} item={item} memo={memo} setMemo={setMemo} onBack={() => setMemoOpen(false)} onWay={onWay} />;
-  const mp = memoProgress(memo, item.id);
-  const r = res[item.id];
-  const st = repStatus(r);
-  const to = item.leads?.to ? repItem(course, item.leads.to) : undefined;
-  const from = repLeadsFrom(course, item.id);
+  const it = entry.item;
+  const hasChart = !!chartOfPiece(entry.ref, lang, myCharts);
+  const actions = pieceActions(entry, course, hasChart);
+  const [full, setFull] = useState(wayIn !== 'path');
+  const where = entry.ref.kind === 'rep' ? whereInPath(pathView, entry.key) : null;
+  const why = props.whyToday?.(entry.key) ?? null;
+  const to = it?.leads?.to && entry.ref.course ? repItem(entry.ref.course, it.leads.to) : undefined;
+  const from = it && entry.ref.course ? repLeadsFrom(entry.ref.course, it.id) : [];
+  const main = actions[0];
+  const rest = full ? actions.slice(1) : [];
+  const std = entry.std ?? (it?.ref?.kind === 'standard' ? it.ref.id : undefined);
+  const kicker = it ? `${tierName(it.tier)[lang]}${it.standard ? (he ? ' · סטנדרט' : ' · Standard') : ''}` : entry.teaches[lang];
+  const chip = (body: ReactNode, attrs: Record<string, string>, onClick?: () => void) =>
+    onClick ? (
+      <button className="chip rep-chip" onClick={onClick} {...attrs}>
+        {body}
+      </button>
+    ) : (
+      <span className="chip rep-chip passive" {...attrs}>
+        {body}
+      </span>
+    );
   return (
-    <main className="rep-screen rep-item" data-rep-open={item.id}>
+    <main className={`rep-screen rep-item ${props.inPane ? 'in-pane' : ''}`} data-rep-open={it?.id ?? entry.key} data-rep-piece={entry.key} data-way-in={wayIn}>
       <header className="screen-head">
-        <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
-          <Icon k="back" />
-        </button>
-        <h1>{item.title[lang]}</h1>
+        {!props.inPane && (
+          <button className="icon-btn" onClick={props.onBackPiece} aria-label={he ? 'חזרה' : 'Back'} data-rep-back="1">
+            <Icon k="back" />
+          </button>
+        )}
+        <h1 dir="auto">{entry.title[lang]}</h1>
       </header>
-      <p className="rep-kicker">
-        {tierName(item.tier)[lang]}
-        {item.standard ? (he ? ' · סטנדרט' : ' · Standard') : ''}
-      </p>
-      <h2 className="rep-teaches">{item.teaches[lang]}</h2>
-      <div className={`rep-status ${st}`} data-rep-status={st}>
-        {st === 'new' ? (he ? 'עוד לא ניגנתם' : 'Not played yet') : st === 'learned' ? (he ? `נלמד · הכי טוב ${pct(r!.best)}` : `Learned · best ${pct(r!.best)}`) : he ? `הכי טוב ${pct(r!.best)} · ב־80% זה נלמד` : `Best ${pct(r!.best)} · learned at 80%`}
+      <div className="rep-top">
+        <span className={`rep-status-word st-${status}`} data-rep-status={status}>
+          {STATUS_WORD[status][lang]}
+        </span>
+        <small className="rep-kicker">{kicker}</small>
       </div>
-      {item.leads && (
+      {(where || why) && (
+        <div className="rep-chips">
+          {where &&
+            chip(
+              where.state === 'ahead' ? (he ? `בהמשך המסלול · יחידה ${where.unit}` : `Later in your path · Unit ${where.unit}`) : he ? `במסלול · יחידה ${where.unit} · צעד ${where.step}` : `In your path · Unit ${where.unit} · step ${where.step}`,
+              { 'data-rep-where': where.state },
+              () => props.onPathNode(entry.key),
+            )}
+          {why && chip(<>{why[lang]}</>, { 'data-rep-why': '1' })}
+        </div>
+      )}
+      {it && <h2 className="rep-teaches">{it.teaches[lang]}</h2>}
+      <div className="rep-ways">
+        {main && (
+          <button className="btn primary rep-main" onClick={() => props.onAction(entry, main)} data-rep-main={wayIn} data-rep-way={main.k === 'way' ? main.way.k : main.k}>
+            <span>{MAIN[wayIn][lang]}</span>
+            <small>{actionLabel(main, course, entry.ref)[lang]}</small>
+          </button>
+        )}
+        {!full && actions.length > 0 && (
+          <button className="btn ghost" onClick={() => setFull(true)} data-rep-full="1">
+            {he ? 'התרגול המלא של הצעד' : 'The full practice of the step'}
+          </button>
+        )}
+        {rest.length > 0 && (
+          <div className="rep-actions">
+            {rest.map((a, i) => (
+              <button key={i} className="btn ghost" onClick={() => props.onAction(entry, a)} data-rep-way={a.k === 'way' ? a.way.k : a.k} data-rep-action={a.k}>
+                {actionLabel(a, course, entry.ref)[lang]}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {full && it?.leads && (
         <div className="rep-leads">
           <small>{he ? 'לאן זה מוביל' : 'Where it leads'}</small>
-          <p>{item.leads.text[lang]}</p>
+          <p>{it.leads.text[lang]}</p>
           {to && (
-            <button className="chip" onClick={() => onOpen(to.id)} data-rep-to={to.id}>
+            <button className="chip" onClick={() => props.onOpen(`rep:${entry.ref.course}:${to.id}`)} data-rep-to={to.id}>
               {to.title[lang]} <Icon k="fwd" />
             </button>
           )}
         </div>
       )}
-      {!item.leads && from.length > 0 && (
+      {full && !it?.leads && from.length > 0 && (
         <div className="rep-leads">
           <small>{he ? 'מגיעים לכאן מ־' : 'Comes from'}</small>
           <span className="rep-from">
             {from.map((x) => (
-              <button key={x.id} className="chip" onClick={() => onOpen(x.id)}>
+              <button key={x.id} className="chip" onClick={() => props.onOpen(`rep:${entry.ref.course}:${x.id}`)}>
                 {x.title[lang]}
               </button>
             ))}
           </span>
         </div>
       )}
-      <div className="rep-ways">
-        {item.ways.map((w, i) => (
-          <button key={i} className={`btn ${i === 0 ? 'primary' : 'ghost'}`} onClick={() => onWay(item, w)} data-rep-way={w.k}>
-            {wayLabel(w, course)[lang]}
-          </button>
-        ))}
-      </div>
-      <button className="link" onClick={() => setMemoOpen(true)} data-rep-memo={mp.done}>
-        {he ? 'לשנן' : 'Memorise'} <span dir="ltr">{mp.done}/{MEMO_STEPS.length}</span>
-      </button>
-      {/* "Listen to the original" (src/content/references.ts, 0.70.2): standards only — the songbook tunes have no entry. */}
-      {item.ref?.kind === 'standard' && (
-        <div className="rep-refs" data-rep-ref={item.ref.id}>
-          <ListenOriginal id={item.ref.id} lang={lang} compact />
+      {full && entry.ref.kind !== 'score' && entry.ref.kind !== 'rec' && (
+        <button className="link" onClick={props.onMemo} data-rep-memo={props.memoDone}>
+          {he ? 'לשנן' : 'Memorise'} <span dir="ltr">{props.memoDone}/{MEMO_STEPS.length}</span>
+        </button>
+      )}
+      {full && std && (
+        <div className="rep-refs" data-rep-ref={std}>
+          <ListenOriginal id={std} lang={lang} compact />
         </div>
       )}
-      <p className="rep-legal">
-        {item.legal === 'pd' ? (he ? 'מנגינה מנחלת הכלל' : 'Public-domain melody') : item.legal === 'chords' ? (he ? 'מהלך אקורדים בלבד — בלי המנגינה' : 'Chord changes only — no melody') : he ? 'חומר מקורי של האפליקציה' : 'Our own material'}
-      </p>
+      {it && (
+        <p className="rep-legal">
+          {it.legal === 'pd' ? (he ? 'מנגינה מנחלת הכלל' : 'Public-domain melody') : it.legal === 'chords' ? (he ? 'מהלך אקורדים בלבד — בלי המנגינה' : 'Chord changes only — no melody') : he ? 'חומר מקורי של האפליקציה' : 'Our own material'}
+        </p>
+      )}
+      {(entry.ref.kind === 'score' || entry.ref.kind === 'rec' || entry.ref.kind === 'chart') && <p className="rep-legal">{he ? 'נשמר רק במכשיר הזה' : 'Kept on this device only'}</p>}
     </main>
   );
 }
 
-/** The three lists (Siskind: know / learning / next), tunes by title; tap opens the tune. */
-function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course: RepCourse; memo: MemoState; onBack: () => void; onOpen: (id: string) => void }) {
+// ------------------------------------------------------------------ Add a piece
+
+function AddPieceSheet({ lang, onClose, onAdd, onSheets, onTemplate }: { lang: Lang; onClose: () => void; onAdd: (s: 'score' | 'recording' | 'type') => void; onSheets: (s: LeadSheet[]) => void; onTemplate: (id: string) => void }) {
   const he = lang === 'he';
+  const [lead, setLead] = useState(false);
+  const [typed, setTyped] = useState(false);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    addEventListener('keydown', k);
+    return () => removeEventListener('keydown', k);
+  }, [onClose]);
+  const row = (id: string, title: string, sub: string, onClick: () => void) => (
+    <button className="rep-src" onClick={onClick} data-rep-src={id}>
+      <b>{title}</b>
+      <small>{sub}</small>
+    </button>
+  );
+  return (
+    <div className="sheet-backdrop" onClick={onClose}>
+      <div className="sheet rep-add-sheet" role="dialog" aria-modal="true" aria-labelledby="rep-add-title" onClick={(e) => e.stopPropagation()} data-rep-add-sheet="1">
+        <div className="menu-head">
+          <h2 id="rep-add-title">{he ? 'להוסיף יצירה' : 'Add a piece'}</h2>
+          <button className="icon-btn" onClick={onClose} aria-label={he ? 'סגירה' : 'Close'}>
+            <Icon k="close" />
+          </button>
+        </div>
+        {lead ? (
+          <LeadSheetImport lang={lang} onAdd={onSheets} />
+        ) : typed ? (
+          <div className="rep-typed">
+            <button className="btn primary" onClick={() => onAdd('type')} data-rep-type-new="1">
+              {he ? 'מהלך חדש' : 'A new chart'}
+            </button>
+            <small className="field-hint">{he ? 'או להתחיל ממהלך מוכר:' : 'Or start from a progression:'}</small>
+            <div className="chips">
+              {CHART_TEMPLATES.map((t) => (
+                <button key={t.id} className="chip" onClick={() => onTemplate(t.id)} data-rep-template={t.id}>
+                  {t.title[lang]}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="rep-srcs">
+            {row('leadsheet', he ? 'דף אקורדים' : 'Lead sheet', 'MusicXML · mxl · iReal Pro · ChordPro · text', () => setLead(true))}
+            {row('score', he ? 'תווים' : 'Score', he ? 'MusicXML · MIDI — למאמן היצירות' : 'MusicXML · MIDI — for the piece coach', () => onAdd('score'))}
+            {row('recording', he ? 'הקלטה שלי' : 'My recording', he ? 'קובץ שמע עד 10 דקות — נשאר במכשיר' : 'An audio file up to 10 minutes — stays on the device', () => onAdd('recording'))}
+            {row('type', he ? 'להקליד אקורדים' : 'Type the chords', he ? 'סימני אקורדים מופרדים ב־|' : 'Chord symbols separated by |', () => setTyped(true))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ memorising (Siskind): the three lists and the steps
+
+function ListsPage({ lang, entries, memo, onBack, onOpen }: { lang: Lang; entries: LibEntry[]; memo: MemoState; onBack: () => void; onOpen: (key: string) => void }) {
+  const he = lang === 'he';
+  const byId = (id: string) => entries.find((e) => (e.item?.id ?? e.key) === id);
   return (
     <main className="rep-screen" data-rep-listpage="1">
       <header className="screen-head">
@@ -207,7 +533,7 @@ function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course:
         <h1>{he ? 'שלוש הרשימות' : 'Three lists'}</h1>
       </header>
       {TUNE_LISTS.map((l) => {
-        const ids = tunesIn(memo, l.id).filter((id) => repItem(course, id));
+        const ids = tunesIn(memo, l.id).filter((id) => byId(id));
         return (
           <section key={l.id} className="rep-leads" data-rep-list={l.id}>
             <small>
@@ -216,8 +542,8 @@ function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course:
             <span className="rep-from">
               {ids.length ? (
                 ids.map((id) => (
-                  <button key={id} className="chip" onClick={() => onOpen(id)}>
-                    {repItem(course, id)!.title[lang]}
+                  <button key={id} className="chip" onClick={() => onOpen(byId(id)!.key)}>
+                    {byId(id)!.title[lang]}
                   </button>
                 ))
               ) : (
@@ -232,22 +558,22 @@ function ListsPage({ lang, course, memo, onBack, onOpen }: { lang: Lang; course:
 }
 
 /** One tune's memorising steps (tick each) and which list it is on. The write step opens harmonic dictation. */
-function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; item: RepItem; memo: MemoState; setMemo: (m: MemoState) => void; onBack: () => void; onWay: (item: RepItem, way: RepWay) => void }) {
+function MemoPage({ lang, id, title, memo, setMemo, onBack, onTopic }: { lang: Lang; id: string; title: string; memo: MemoState; setMemo: (m: MemoState) => void; onBack: () => void; onTopic?: (topic: string) => void }) {
   const he = lang === 'he';
   const today = new Date().toISOString().slice(0, 10);
-  const cur = memo.steps[item.id] ?? {};
-  const list: TuneList | undefined = memo.lists[item.id];
+  const cur = memo.steps[id] ?? {};
+  const list: TuneList | undefined = memo.lists[id];
   return (
-    <main className="rep-screen rep-item" data-rep-memopage={item.id}>
+    <main className="rep-screen rep-item" data-rep-memopage={id}>
       <header className="screen-head">
         <button className="icon-btn" onClick={onBack} aria-label={he ? 'חזרה' : 'Back'}>
           <Icon k="back" />
         </button>
-        <h1>{item.title[lang]}</h1>
+        <h1 dir="auto">{title}</h1>
       </header>
       <div className="chips" role="radiogroup" aria-label={he ? 'רשימה' : 'List'}>
         {TUNE_LISTS.map((l) => (
-          <button key={l.id} role="radio" aria-checked={list === l.id} className={`chip ${list === l.id ? 'on' : ''}`} onClick={() => setMemo(moveTune(memo, item.id, l.id))} data-memo-list={l.id}>
+          <button key={l.id} role="radio" aria-checked={list === l.id} className={`chip ${list === l.id ? 'on' : ''}`} onClick={() => setMemo(moveTune(memo, id, l.id))} data-memo-list={l.id}>
             {l.name[lang]}
           </button>
         ))}
@@ -256,13 +582,13 @@ function MemoPage({ lang, item, memo, setMemo, onBack, onWay }: { lang: Lang; it
         {MEMO_STEPS.map((x) => (
           <li key={x.id}>
             <label className="toggle-row" data-memo-step={x.id}>
-              <input type="checkbox" checked={!!cur[x.id]} onChange={() => setMemo(toggleMemoStep(memo, item.id, x.id, today))} />
+              <input type="checkbox" checked={!!cur[x.id]} onChange={() => setMemo(toggleMemoStep(memo, id, x.id, today))} />
               <span>
                 <b>{x.title[lang]}</b> <small className="field-hint">{x.how[lang]}</small>
               </span>
             </label>
-            {x.topic && (
-              <button className="link" onClick={() => onWay(item, { k: 'topic', topic: x.topic!, level: 1 })} data-memo-topic={x.topic}>
+            {x.topic && onTopic && (
+              <button className="link" onClick={() => onTopic(x.topic!)} data-memo-topic={x.topic}>
                 {he ? 'לתרגל' : 'Practice'} <Icon k="fwd" />
               </button>
             )}

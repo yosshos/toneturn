@@ -15,16 +15,17 @@ export type PaletteHit =
   | { kind: 'settings'; id: string; title: string; sub: string };
 
 const NAV: { id: NavId; en: string; he: string }[] = [
+  // Phase 3: Today · Practice · Path; the four places; charts, scores and recordings are in Repertoire.
   { id: 'home', en: 'Today', he: 'היום' },
-  { id: 'path', en: 'Path', he: 'מסלול' },
   { id: 'arcade', en: 'Practice', he: 'תרגול' },
-  { id: 'repertoire', en: 'Repertoire', he: 'רפרטואר' },
-  { id: 'songs', en: 'Songbook', he: 'שירון' },
+  { id: 'path', en: 'Path', he: 'מסלול' },
   { id: 'drills', en: 'Technique', he: 'טכניקה' },
+  { id: 'licks', en: 'Licks · transcribe', he: 'ליקים · תמלול' },
+  { id: 'repertoire', en: 'Repertoire · charts, lead sheets, my pieces, my song', he: 'רפרטואר · מהלכים, דפי אקורדים, היצירות שלי, השיר שלי' },
+  { id: 'improv', en: 'Improvise', he: 'אלתור' },
+  { id: 'gamelist', en: 'Games', he: 'משחקים' },
+  { id: 'songs', en: 'Songbook', he: 'שירון' },
   { id: 'learned', en: 'Lessons', he: 'שיעורים' },
-  { id: 'pieces', en: 'My pieces', he: 'היצירות שלי' },
-  { id: 'charts', en: 'Chord charts', he: 'מהלכים' },
-  { id: 'improv', en: 'Improvisation studio', he: 'סטודיו לאלתור' },
   { id: 'puzzle', en: 'Progression of the day', he: 'מהלך היום' },
   { id: 'exams', en: 'Exams: Bagrut & conservatory', he: 'מבחנים: בגרות וקונסרבטוריון' },
   { id: 'skills', en: 'Progress', he: 'התקדמות' },

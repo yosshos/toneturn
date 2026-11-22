@@ -31,8 +31,8 @@ const seed = async (page: Page, lang: 'en' | 'he') => {
 for (const lang of ['en', 'he'] as const)
   test(`chart player: loop bars 2–3, play inside the loop, Stop keeps it, ✕ / long press clear it (${lang})`, async ({ page }) => {
     await seed(page, lang);
-    await page.goto(`/?unlock=all&sim=1&lang=${lang}#/charts`);
-    await page.locator('[data-chart-template]').first().click();
+    // phase 3: Charts live in Repertoire — the first progression template opens on the chart player
+    await page.goto(`/?unlock=all&sim=1&lang=${lang}#/repertoire/chart/tpl%3Ablues-f`);
     const chart = page.locator('[data-chart-player] [data-chord-chart]');
     await expect(chart).toBeVisible();
     await page.locator('[data-chart-loop-pick]').click();

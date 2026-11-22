@@ -67,7 +67,7 @@ for (const [course, lang] of [
 ] as const) {
   test(`my song (${course}, ${lang}): add, analyse, keep, play along, resume`, async ({ page }) => {
     await seed(page, course, lang);
-    await page.goto('/#/mysong');
+    await page.goto('/#/repertoire/recording');
     await expect(page.locator('[data-my-song]')).toBeVisible({ timeout: 60_000 });
     await page.locator('[data-ms-file]').setInputFiles({ name: 'band_take.wav', mimeType: 'audio/wav', buffer: songWav() });
     const practice = page.locator(`[data-my-song-practice="${course}"]`);
@@ -87,14 +87,13 @@ for (const [course, lang] of [
   });
 }
 
-test('my song: the Practice tile opens it (guitar, he)', async ({ page }) => {
+test('my song: Repertoire › Add a piece › My recording opens it (guitar, he)', async ({ page }) => {
   await seed(page, 'guitar', 'he');
   await page.goto('/#/arcade');
-  // owner 2026-11-21: My song sits in the folded "More practice" sub-section
-  await page.locator('[data-hub-group="more"] summary').click({ timeout: 60_000 });
-  const tile = page.locator('[data-hub="mysong"]');
-  await expect(tile).toBeVisible({ timeout: 60_000 });
-  await tile.click();
+  // phase 3 (SPEC-PRACTICE-IA-3 §3): My song is a source of "Add a piece" in Repertoire
+  await page.locator('[data-hub="repertoire"]').click({ timeout: 60_000 });
+  await page.locator('[data-rep-add]').click();
+  await page.locator('[data-rep-src="recording"]').click();
   await expect(page.locator('[data-my-song="guitar"]')).toBeVisible();
   expect(await overflow(page), 'library').toBeLessThanOrEqual(2);
   await page.screenshot({ path: 'test-results/mysong-guitar-library-he.png' });
@@ -102,7 +101,7 @@ test('my song: the Practice tile opens it (guitar, he)', async ({ page }) => {
 
 test('my song library: rename and delete (en)', async ({ page }) => {
   await seed(page, 'bass', 'en');
-  await page.goto('/#/mysong');
+  await page.goto('/#/repertoire/recording');
   await page.locator('[data-ms-file]').setInputFiles({ name: 'groove.wav', mimeType: 'audio/wav', buffer: songWav() });
   await expect(page.locator('[data-my-song-practice="bass"]')).toBeVisible({ timeout: 90_000 });
   await page.locator('.ms-screen .screen-head .icon-btn').click();
@@ -118,7 +117,7 @@ test('my song library: rename and delete (en)', async ({ page }) => {
 });
 
 test('my song (ear, simulator): the demo recording opens a phrase to transcribe and fits', async ({ page }) => {
-  await page.goto('/?sim=1&unlock=all&lang=en#/mysong');
+  await page.goto('/?sim=1&unlock=all&lang=en#/repertoire/recording');
   await page.locator('[data-my-song-demo]').click({ timeout: 60_000 });
   await expect(page.locator('[data-my-song-practice="ear"]')).toBeVisible({ timeout: 60_000 });
   await expect(page.locator('[data-ms-plan]')).toHaveAttribute('data-ms-plan', 'transcribe');

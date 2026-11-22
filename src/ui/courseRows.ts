@@ -24,45 +24,36 @@ const ALL_COURSE_GAMES: Record<CourseId, string[]> = {
 export const COURSE_GAMES: Record<CourseId, string[]> = Object.fromEntries(Object.entries(ALL_COURSE_GAMES).map(([c, gs]) => [c, gs.filter(gameVerified)])) as Record<CourseId, string[]>;
 /** SPEC-JAZZ-FOLD: a course's games for a player — the jazz games only while the jazz pack is open there. */
 export const courseGames = (course: CourseId, jazzOn: boolean): string[] => (jazzOn ? COURSE_GAMES[course] : COURSE_GAMES[course].filter((g) => !JAZZ_GAMES.includes(g)));
-/** What Practice shows in each course (0.61, SPEC-COURSES): only the course's own rows; tools are shared.
- *  0.70 (SPEC-REPERTOIRE): "Songs" became "Repertoire" — the road from simple tunes to standards — in every course.
- *  Licks and the transcription coach (SPEC-LICKS-TRANSCRIPTION) sit in every course that plays or sings lines.
- *  SPEC-MY-SONG: "My song" (practice over your own recording, measured) in every course. */
-export const COURSE_ROWS: Record<CourseId, string[]> = {
-  ear: ['lessons', 'repertoire', 'puzzle', 'mysong', 'games'],
-  // Owner 2026-11-21: by importance — Technique first, then Licks, then (jazz open) Charts and Improvise, then the rest.
-  // Owner 2026-11-22 (SPEC-DAILY-WORKOUT §6.2): Encore moved inside the Licks tile (its "Mine" and "Challenges"
-  // sections, beside the library), so everything about licks sits together.
-  voice: ['drills', 'licks', 'repertoire', 'transcribe', 'mysong', 'games'],
-  keys: ['drills', 'licks', 'repertoire', 'pieces', 'transcribe', 'mysong', 'games'],
-  guitar: ['drills', 'licks', 'repertoire', 'pieces', 'transcribe', 'mysong', 'games'],
-  bass: ['drills', 'licks', 'repertoire', 'transcribe', 'mysong', 'games'],
-  drums: ['drills', 'repertoire', 'mysong', 'games'],
-};
 /**
- * SPEC-JAZZ-FOLD: the old Jazz course's rows, in the course that now holds them while the jazz pack is open — Ear: the
- * jazz standards, charts and lead sheets, improvising under rules, licks and transcription; the playing courses: charts
- * and improvising. In jazz focus they come first.
+ * What Practice shows in each course: its places (BUILD-PLAN-2026-11 phase 3, SPEC-PRACTICE-IA-3 §2 and §8, owner
+ * 2026-11-22). Four places in the playing courses — Technique, Licks, Repertoire, Improvise — then the games; Charts &
+ * lead sheets, My pieces, My song and Ear's jazz standards live inside Repertoire, the transcription coach inside Licks.
+ *   keys / guitar / bass: Technique, Licks, Repertoire, Improvise (for every player: the jazz pack changes the content).
+ *   voice: Technique (the voice), Licks (sung), Repertoire, and Improvise (scat over a progression) with the jazz pack.
+ *   drums: Technique, Repertoire (grooves and songs), Games, Improvise (fills, solos, trading fours); no Licks.
+ *   ear: Lessons, Repertoire (by ear), Puzzle, Games; in exam prep, Exams first.
  */
-export const JAZZ_ROWS: Partial<Record<CourseId, string[]>> = {
-  ear: ['standards', 'charts', 'improv', 'licks', 'transcribe'],
-  keys: ['charts', 'improv'],
-  guitar: ['charts', 'improv'],
-  bass: ['charts', 'improv'],
-  voice: ['charts'],
+export const COURSE_ROWS: Record<CourseId, string[]> = {
+  ear: ['lessons', 'repertoire', 'puzzle', 'games'],
+  voice: ['drills', 'licks', 'repertoire', 'games'],
+  keys: ['drills', 'licks', 'repertoire', 'improv', 'games'],
+  guitar: ['drills', 'licks', 'repertoire', 'improv', 'games'],
+  bass: ['drills', 'licks', 'repertoire', 'improv', 'games'],
+  drums: ['drills', 'repertoire', 'games', 'improv'],
 };
+/** The places the jazz pack adds (the voice's scat improvising); the other jazz content sits inside the places. */
+export const JAZZ_ROWS: Partial<Record<CourseId, string[]>> = {
+  voice: ['improv'],
+};
+/** The four places a course's Practice page shows as its main cards (the rows without Games). */
+export const PLACE_ROWS = ['drills', 'licks', 'repertoire', 'improv', 'lessons', 'puzzle', 'exams'];
 /** 0.67: the Ear course in exam-prep mode (was the Exams course) puts the mock exams first. */
-export const EXAM_PREP_ROWS = ['exams', 'lessons', 'puzzle', 'games'];
+export const EXAM_PREP_ROWS = ['exams', 'lessons', 'repertoire', 'puzzle', 'games'];
 export function courseRows(course: CourseId, examPrep = false, jazz: 'off' | 'on' | 'focus' = 'off'): string[] {
   if (course === 'ear' && examPrep) return EXAM_PREP_ROWS;
   const base = COURSE_ROWS[course];
   const jz = jazz === 'off' ? [] : (JAZZ_ROWS[course] ?? []).filter((r) => !base.includes(r));
   if (!jz.length) return base;
-  // Owner 2026-11-21: in the playing courses Charts and Improvise come right after Technique and Licks (focus or open).
-  const enc = base.indexOf('licks');
-  if (enc >= 0) return [...base.slice(0, enc + 1), ...jz, ...base.slice(enc + 1)];
-  if (jazz === 'focus') return [...jz, ...base];
-  // Open: after the course's own play rows, before My song and the games.
-  const at = base.findIndex((r) => r === 'mysong' || r === 'games');
+  const at = base.indexOf('games');
   return at < 0 ? [...base, ...jz] : [...base.slice(0, at), ...jz, ...base.slice(at)];
 }

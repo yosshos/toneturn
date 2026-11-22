@@ -813,7 +813,7 @@ export interface MySongResult {
 }
 
 /** "My song" for a course: the library, then the course's practice; a half-done session resumes on the next open. */
-export function MySongScreen({ lang, settings, course, onBack, onResult, onSettings }: { lang: Lang; settings: Settings; course: CourseId; onBack: () => void; onResult: (r: MySongResult) => void; onSettings: (p: Partial<Settings>) => void }) {
+export function MySongScreen({ lang, settings, course, onBack, onResult, onSettings, openId }: { lang: Lang; settings: Settings; course: CourseId; onBack: () => void; onResult: (r: MySongResult) => void; onSettings: (p: Partial<Settings>) => void; /** Opened on one recording (Repertoire's piece page): it opens at once, and leaving returns there. */ openId?: string | null }) {
   const L = (b: T2) => b[lang];
   const [o, setO] = useState<Opened | null>(null);
   const [session, setSession] = useState<MySession | null>(null);
@@ -824,6 +824,26 @@ export function MySongScreen({ lang, settings, course, onBack, onResult, onSetti
     setSession(s);
     saveMySession(course, s);
   };
+  // Opened on one recording (no half-done session waiting): open it.
+  useEffect(() => {
+    if (!openId || loadMySession(course)) return;
+    let alive = true;
+    void (async () => {
+      const song = await songs.get(openId);
+      if (!alive || !song?.analysis || song.analysis.v !== ANALYSIS_VERSION) return;
+      try {
+        const buffer = await decodeBlob(song.blob);
+        if (!alive) return;
+        setO({ song, buffer, analysis: song.analysis });
+        keep({ songId: song.id, sessionId: `mysong-${course}-${Date.now().toString(36)}`, section: 0, speed: 1, takes: [], startedAt: new Date().toISOString() });
+      } catch {
+        /* the recording could not be decoded: the library shows it */
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [openId, course]); // eslint-disable-line react-hooks/exhaustive-deps
   // Never lose progress: a session left half-done (reload, the app closed) opens again where it stopped.
   useEffect(() => {
     const s = loadMySession(course);
@@ -869,12 +889,13 @@ export function MySongScreen({ lang, settings, course, onBack, onResult, onSetti
     clearMySession(course);
     setO(null);
     setSession(null);
+    if (openId) onBack();
   };
 
   if (summary)
     return (
       <main className="panel-screen ms-screen" data-ms-summary="1">
-        <Head title={L(MS.summary)} onBack={() => setSummary(null)} lang={lang} />
+        <Head title={L(MS.summary)} onBack={() => (openId ? onBack() : setSummary(null))} lang={lang} />
         <section className="ms-result v-summary" aria-live="polite">
           {summary.total ? (
             <>
@@ -886,7 +907,7 @@ export function MySongScreen({ lang, settings, course, onBack, onResult, onSetti
             <p>{L(MS.noTakes)}</p>
           )}
         </section>
-        <button className="btn mega" onClick={() => setSummary(null)} data-ms-done="1">
+        <button className="btn mega" onClick={() => (openId ? onBack() : setSummary(null))} data-ms-done="1">
           {L(MS.done)}
         </button>
       </main>

@@ -49,7 +49,7 @@ import { GrooveTrainerScreen } from './GrooveTrainer';
 import { earIndex } from '../engine/rating';
 import { MixerScreen } from './Mixer';
 import type { Drill, FamilyId } from '../engine/drills/types';
-import { catalog, generate } from '../engine/drills/generate';
+import { catalog, generate, type FamilyDef } from '../engine/drills/generate';
 import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
@@ -228,6 +228,15 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
+import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView } from './practiceRoutes';
+import { chartOfLevel, chartOfPiece, parsePieceKey, pieceKey, type LibEntry, type PieceAction } from '../engine/repLibrary';
+import { firstRootPc } from './Charts';
+import { PlaceSpark } from './PlaceSpark';
+import { placeOfRoute, placeTitle, rememberPlace } from './continuePlace';
+import { DrumImprovScreen } from './DrumImprov';
+import type { LeadSheet } from '../engine/leadsheet';
+import { irealStyle } from '../engine/leadsheet';
+import type { ChartStyle } from '../engine/charts';
 import { isRepLesson, repGoal, repResult, repResults, type RepCourse, type RepItem, type RepWay } from '../engine/repertoire';
 import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { STANDARD_CHANGES } from '../engine/standards';
@@ -263,6 +272,12 @@ const routeFromHash = (): Route => {
   // section (Mine, Challenges); the address is rewritten in place, so Back never lands on the old one.
   const legacy = legacyLicksHash(location.hash);
   if (legacy) history.replaceState(history.state, '', `#${legacy}`);
+  // Phase 3 (SPEC-PRACTICE-IA-3 §5): Charts, My pieces, My song and the songbook live in Repertoire, the transcription
+  // coach in Licks › Transcribe — their old homes land there (practiceRoutes.ts).
+  const legacyP = legacyPracticeHash(location.hash);
+  if (legacyP) history.replaceState(history.state, '', `#${legacyP}`);
+  const pr = practiceRouteOf(location.hash);
+  if (pr) return pr;
   const h = location.hash.replace(/^#\/?/, '').replace(/^licks\/.*$/, 'licks').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings').replace(/^encore[/?].*$/, 'encore').replace(/^teach\/.*$/, 'teach').replace(/^challenges[/?].*$/, 'challenges');
   return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside', 'recordings', 'encore', 'whichpair', 'euclid', 'mirror', 'tonnetz', 'teach', 'challenges'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
@@ -368,7 +383,7 @@ export function App() {
   const [generated, setGenerated] = useState<{ def: LessonDef; adapt?: (s: SessionState) => Question[] | null } | null>(null);
   /** The running lesson's save slot (every lesson keeps its place after each answer; playtesting, 0.35.2). */
   const [dropTick, setDropTick] = useState(0);
-  type Brief = { kicker: string; title: string; about: string; topic?: string; keepStep?: string };
+  type Brief = { kicker: string; title: string; about: string; topic?: string; keepStep?: string; level?: number; pathStep?: string };
   const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession; brief?: Brief; briefSeen?: boolean } | null>(null);
   const [sync, setSync] = useState<SyncState>('idle');
   // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
@@ -929,15 +944,40 @@ export function App() {
   // Where a tool (tuner, metronome, drone) was opened from — Practice tab or the menu — so Back returns there.
   const toolFrom = useRef<Route>('home');
   const chartInit = useRef<MyChart | null>(null);
+  /** Improvise opened from a piece ("Improvise on it"): the chart its rules start on. */
+  const improvInit = useRef<MyChart | null>(null);
+  /** A practice at the piano opened from a chart player whose address names its piece: Back returns to that player. */
+  const chartReturn = useRef(false);
+  /** Technique opened from a piece ("Practise it in the technique hub"): the key page of the chart's key. */
+  const [drillsKey, setDrillsKey] = useState<number | null>(null);
   const go = (r: Route) => {
     // The Licks tile (owner 2026-11-22): Encore's home is its "Mine" section, the challenges gallery its "Challenges".
     if (r === 'encore' || r === 'challenges') {
       location.hash = licksHash(r === 'encore' ? 'mine' : 'challenges');
       return setRoute('licks');
     }
-    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned' || r === 'chordfinder' || r === 'chordbuilder') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' ? route : 'home';
-    location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
+    if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned' || r === 'chordfinder' || r === 'chordbuilder') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' || route === 'repertoire' || route === 'licks' ? route : 'home';
+    // Phase 3: the engines Repertoire / Licks reuse open at their new addresses (with the piece they show, for a reload).
+    const arg = engineArgNext.current;
+    engineArgNext.current = null;
+    location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : isEngineRoute(r) ? engineHash(r, arg) : `/${r}`;
     setRoute(r);
+  };
+  /** The id the next engine screen shows (go() puts it in the address). */
+  const engineArgNext = useRef<string | null>(null);
+  /** Repertoire at a view (a tab, Mine, a piece page and how it was reached). */
+  const openRep = (v: RepView) => {
+    location.hash = repHash(v);
+    setRoute('repertoire');
+  };
+  /** An engine screen opened from a piece page (the chart player, the piece coach, My song, a practice): its way back
+   *  is the browser's Back, to the very page it came from; without one (a reload) it lands on `fallback`. */
+  const repReturn = useRef<string | null>(null);
+  const backToRep = (fallback: () => void) => {
+    const h = repReturn.current;
+    repReturn.current = null;
+    if (h && location.hash !== h) return history.back();
+    fallback();
   };
 
   // Mini-lessons (spec X): a unit opens with its short lesson until the player has heard it to the end.
@@ -946,6 +986,22 @@ export function App() {
   const [opener, setOpener] = useState<{ spec: OpenerSpec; then?: () => void } | null>(null);
   /** Openers show on their own except in automated runs (like the mini-lessons), unless asked for with ?openers. */
   const openersOn = !(SIMULATED || params.has('unlock') || (typeof navigator !== 'undefined' && navigator.webdriver)) || params.has('openers');
+  // "Continue where I stopped" (phase 3): the last place's address, kept as the player moves inside it.
+  useEffect(() => {
+    const place = placeOfRoute(route);
+    if (!place || !settings) return;
+    const save = () => {
+      if (placeOfRoute(routeFromHash()) !== place) return;
+      rememberPlace({ place, hash: location.hash || `#/${route}`, title: placeTitle(route, location.hash, settings.uiLang, settings.myCharts) });
+    };
+    save();
+    window.addEventListener('hashchange', save);
+    return () => window.removeEventListener('hashchange', save);
+  }, [route, !!settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Licks › Transcribe opens with its quick lesson the first time (game:transcribe), as its tile did.
+  useEffect(() => {
+    if (route === 'transcribe-coach' && !measuredStep.current) gate('game:transcribe', () => undefined);
+  }, [route]); // eslint-disable-line react-hooks/exhaustive-deps
   // Icon tap motion (src/ui/paper/motion.ts) only on the app's own screens — never inside an exercise or a mini-lesson.
   useEffect(() => {
     document.documentElement.dataset.iconMotion = ICON_MOTION_ROUTES.has(route) && !mini ? 'on' : 'off';
@@ -1540,10 +1596,9 @@ export function App() {
       // PIANO_JAZZ P2: a repertoire step opens the item's page; its stars come from the item's measured result.
       if (step.game === 'repertoire' && step.rep) {
         pendingStep.current = null;
-        repShown.current = step.rep.id;
-        // SPEC-JAZZ-FOLD: a jazz standard (rep:jazz:…) opens the Ear course's jazz-standards collection.
-        repCourse.current = step.rep.course === 'jazz' ? 'jazz' : null;
-        return go('repertoire');
+        // Phase 3 (SPEC-PATH-TODAY-PRACTICE §2): the piece's one page, reached from the path — "Continue the step" and
+        // "The full practice of the step". A jazz standard (rep:jazz:…) keeps its own collection in the key.
+        return openRep({ piece: pieceKey({ kind: 'rep', course: step.rep.course, id: step.rep.id }), from: 'path' });
       }
       if (step.game === 'drills') drillFrom.current = 'path';
       // Licks / transcription steps open on their level; the screen reports the step's stars when the player leaves.
@@ -1557,7 +1612,7 @@ export function App() {
     }
     const how = mode === 'practice' ? 'step' : x.probe ? 'probe' : x.state === 'quick' ? 'quick' : 'step';
     const def = stepSession(step, seed, how);
-    if (def) return gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, x.state === 'tested' ? { keepStep: step.id } : {}) : undefined }));
+    if (def) return gate(`topic:${step.topic}`, () => openGenerated(def, undefined, false, { key: `pathstep:${step.id}`, title, brief: step.topic ? briefFor(step.topic, step.level ?? 1, { ...(x.state === 'tested' ? { keepStep: step.id } : {}), level: step.level ?? 1, pathStep: step.id }) : undefined }));
     // A step that can't build a session (0.68.1): never a dead tap — practice its skill instead.
     pendingStep.current = null;
     practiceSkill(step.skill);
@@ -1590,7 +1645,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | 'improv' | null>(null);
   /** A licks / transcription path step being played (SPEC-LICKS-TRANSCRIPTION), and the workout's lick-review block. */
   const measuredStep = useRef<{ id: string; level: number } | null>(null);
   const lickReview = useRef(false);
@@ -1631,14 +1686,11 @@ export function App() {
   /** Repertoire (SPEC-REPERTOIRE): the item being practiced (its result is recorded when the practice ends) and the
    *  item page to come back to. */
   const repOpen = useRef<{ course: RepCourse; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
-  const repShown = useRef<string | null>(null);
-  /** The repertoire collection on show when it is not the course's own: 'jazz' = the jazz standards (Ear, SPEC-JAZZ-FOLD). */
-  const repCourse = useRef<RepCourse | null>(null);
-  const openRepWay = (item: RepItem, way: RepWay) => {
+  const openRepWay = (item: RepItem, way: RepWay, inCourse?: RepCourse) => {
     if (!settings || !progress) return;
-    const course: RepCourse = repCourse.current ?? ((settings.activeCourse ?? 'ear') as CourseId);
+    const course: RepCourse = inCourse ?? ((settings.activeCourse ?? 'ear') as CourseId);
     const after = lastSession();
-    repShown.current = item.id;
+    repReturn.current = location.hash;
     if (isDrillWay(way)) {
       const q = repDrills(way, course, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
       if (!q.length) return;
@@ -1653,8 +1705,9 @@ export function App() {
       const st = STANDARD_CHANGES.find((x) => x.id === way.std);
       if (!st) return;
       repOpen.current = { course, id: item.id, after, kind: 'chart' };
-      chartInit.current = { id: `rep-${st.id}`, title: `${item.title[settings.uiLang]} — ${st.part[settings.uiLang]}`, text: st.text, style: st.style, bpm: st.bpm };
+      chartInit.current = { id: `rep-${st.id}`, title: `${item.title[settings.uiLang]} — ${st.part[settings.uiLang]}`, text: st.text, style: st.style, bpm: st.bpm, std: st.id };
       toolFrom.current = 'repertoire';
+      engineArgNext.current = pieceKey({ kind: 'rep', course, id: item.id });
       return go('charts');
     }
     if (way.k === 'topic') {
@@ -1676,6 +1729,72 @@ export function App() {
     if (!rp || rp.kind !== 'session' || !r || r.sessionId === rp.after || isRepLesson(r.lessonId) || r.total <= 0) return;
     repOpen.current = null;
     void store.recordCompletion(repResult(rp.course, rp.id, r.firstTry / r.total, 0, new Date(), true)).then(setProgress);
+  };
+  /** Phase 3: a piece page's action (SPEC-PRACTICE-IA-3 §3): its own measured way, the band, Improvise with this chart,
+   *  the piece coach, My song, or the technique hub at the chart's key. Each comes back to the page it left. */
+  const repAction = (e: LibEntry, a: PieceAction) => {
+    if (!settings) return;
+    const lang = settings.uiLang;
+    if (a.k === 'way' && e.item) return openRepWay(e.item, a.way, e.ref.course);
+    repReturn.current = location.hash;
+    const chart = chartOfPiece(e.ref, lang, settings.myCharts) as MyChart | null;
+    if (a.k === 'band' && chart) {
+      if (e.ref.kind === 'rep' && e.ref.course) repOpen.current = { course: e.ref.course, id: e.ref.id, after: lastSession(), kind: 'chart' };
+      chartInit.current = chart;
+      engineArgNext.current = e.key;
+      return go('charts');
+    }
+    if (a.k === 'improvise' && chart) {
+      improvInit.current = chart;
+      return go('improv');
+    }
+    if (a.k === 'score') {
+      engineArgNext.current = e.ref.id;
+      return go('pieces');
+    }
+    if (a.k === 'recording') return openRecording(e.ref.id);
+    if (a.k === 'technique') {
+      setDrillsKey(chart ? firstRootPc(chart.text) ?? 0 : 0);
+      return go('drills');
+    }
+  };
+  /** My song on a recording (or its library, to add one): the singer's is voice level 1308; the others open the
+   *  play-along / transcription screen, with its quick lesson the first time (game:mysong, game:mysong-ear). */
+  const openRecording = (id: string | null) => {
+    if (!settings) return;
+    if (settings.activeCourse === 'voice') {
+      setVocalWarmup(false);
+      setVocalLevel(1308);
+      return go('vocal');
+    }
+    gate(settings.activeCourse === 'ear' ? 'game:mysong-ear' : 'game:mysong', () => {
+      engineArgNext.current = id;
+      go('mysong');
+    });
+  };
+  const newChartId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+  /** Lead sheets added in Repertoire become my charts (as Charts did); one sheet opens as its piece. */
+  const addLeadSheets = (sheets: LeadSheet[]): string | null => {
+    if (!settings) return null;
+    const made: MyChart[] = sheets.map((l) => ({ id: newChartId(), title: l.title === 'Untitled' ? (settings.uiLang === 'he' ? 'המהלך שלי' : 'My chart') : l.title, text: l.text, style: (l.meter === 3 ? 'waltz' : l.style ? irealStyle(l.style) : 'swing') as ChartStyle, bpm: l.bpm && l.bpm > 30 ? l.bpm : 120, ...(l.melody ? { melody: l.melody.map((n) => ({ b: n.beat, d: n.dur, m: n.midi })) } : {}) }));
+    updateSettings({ myCharts: [...made, ...(settings.myCharts ?? [])].slice(0, 120) });
+    return made.length === 1 ? pieceKey({ kind: 'chart', id: made[0].id }) : null;
+  };
+  /** SPEC-PATH-TODAY-PRACTICE §3.1: a path step's home in Practice ("keep practising now"): a piece's page, a technique
+   *  level's family, Licks, Licks › Transcribe, a topic's practice. Null when the step has no home there. */
+  const [drillsFamily, setDrillsFamily] = useState<FamilyDef | null>(null);
+  const stepHome = (x: UnitStep): (() => void) | null => {
+    const st = x.step;
+    if (st.rep) return () => openRep({ piece: pieceKey({ kind: 'rep', course: st.rep!.course, id: st.rep!.id }) });
+    if (st.kind === 'tech' && st.ladder) {
+      const ref = st.ladder.ref;
+      const fam = [...catalog(), ...guitarCatalog()].find((f) => f.levels.some((l) => l.id === ref));
+      return fam ? () => (setDrillsFamily(fam), go('drills')) : null;
+    }
+    if (st.game === 'licks') return () => go('licks');
+    if (st.game === 'transcribe' && !st.bonus) return () => go('transcribe-coach');
+    if (st.topic) return () => openTopic(st.topic!, st.level ?? 1);
+    return null;
   };
   /** The mixer returns to the screen it was opened from (Settings or Charts). */
   const mixerFrom = useRef<Route>('settings');
@@ -1710,7 +1829,7 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'diary' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'diary' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || drillFrom.current === 'improv' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1753,7 +1872,8 @@ export function App() {
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
       if (rp && t0 > 0) void store.recordCompletion(repResult(rp.course, rp.id, c0 / t0, xp, new Date(), true)).then(setProgress);
-      return go('repertoire');
+      // back to the piece's page it was opened from
+      return backToRep(() => openRep({}));
     }
     const tech = from === 'path' && pendingStep.current?.kind === 'tech' ? pendingStep.current : null;
     const done = techResult(tech ? tech.id : from === 'assign' ? 'technique-assign' : 'technique', takes, clean);
@@ -1788,6 +1908,11 @@ export function App() {
       chartQueue.current = null;
       return go('depth');
     }
+    if (from === 'improv') {
+      // Improvise on the kit (drums): back to its list of fills, solos and trading levels.
+      chartQueue.current = null;
+      return go('improv');
+    }
     if (from === 'keys') {
       // Key mastery: a skill in one key, started from Insights — the technique result is recorded above; back to Insights.
       chartQueue.current = null;
@@ -1800,8 +1925,14 @@ export function App() {
     }
     if (from === 'chart') {
       chartQueue.current = null;
-      // back to Charts, and Charts' own back still goes where it came from (not to the drill)
+      // back to the chart player it came from (its address names the piece), and Charts' own back still goes where it
+      // came from (not to the drill)
       const keep = toolFrom.current;
+      if (/^#\/?drills/.test(location.hash) && chartReturn.current) {
+        chartReturn.current = false;
+        history.back();
+        return;
+      }
       go('charts');
       toolFrom.current = keep;
       return;
@@ -2317,6 +2448,7 @@ export function App() {
     }
     if (id === 'mixer') return openMixer();
     if (id === 'log') return setLogOpen(true);
+    if (id === 'improv') improvInit.current = null;
     go(id as Route);
   };
 
@@ -2479,7 +2611,7 @@ export function App() {
               signedIn={!!user}
               onLeague={() => go('friends')}
               exam={{ mock: openMock, practise: (topic, level) => openTopic(topic, level), all: () => go('exams') }}
-              onRepertoire={(id) => ((repShown.current = id ?? null), (repCourse.current = null), go('repertoire'))}
+              onRepertoire={(id) => openRep(id ? { piece: pieceKey({ kind: 'rep', course: (s.activeCourse ?? 'ear') as CourseId, id }), from: 'today' } : {})}
               onPitchMemory={() => go('pitchmemory')}
               streak={gems.streak.count}
               onStreak={() => setStreakOpen(true)}
@@ -2491,7 +2623,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
-          aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => go('improv')} />}
+          aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), go('improv'))} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}
           news={
@@ -2566,7 +2698,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onFullPractice={stepHome} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
@@ -2608,7 +2740,6 @@ export function App() {
         <PlayScreen
           key={arcadeKey}
           status={{
-            ...((s.myCharts ?? []).length ? { charts: s.uiLang === 'he' ? `${(s.myCharts ?? []).length} שמורים` : `${(s.myCharts ?? []).length} saved` } : {}),
             repertoire: (() => {
               const g = repGoal(s.activeCourse ?? 'ear', repResults(progress.lessons, s.activeCourse ?? 'ear'));
               return `${g.title[s.uiLang]} · ${g.now}/${g.target}`;
@@ -2643,8 +2774,8 @@ export function App() {
           lang={s.uiLang}
           hub={{
             songs: () => go('songs'),
-            repertoire: () => ((repShown.current = null), (repCourse.current = null), go('repertoire')),
-            standards: () => ((repShown.current = null), (repCourse.current = 'jazz'), go('repertoire')),
+            // Phase 3: one Repertoire for every piece (charts, scores, recordings, Ear's jazz standards inside it).
+            repertoire: () => openRep({}),
             drills: () => go('drills'),
             vocal: () => go('vocal'),
             singalong: () => go('singalong'),
@@ -2652,28 +2783,19 @@ export function App() {
             tuner: () => go('tuner'),
             metronome: () => go('metronome'),
             drone: () => go('drone'),
-            log: () => setLogOpen(true),
-            charts: () => go('charts'),
             slowdown: () => go('slowdown'),
             groove: () => go('groove'),
-            improv: () => go('improv'),
+            // Improvise for every player; on the kit it is fills, solos and trading fours.
+            improv: () => (improvInit.current = null, go('improv')),
             // Owner 2026-11-22: one Licks tile — the library, my phrases (Encore) and the challenges inside it.
             licks: () => gate('game:licks', () => go('licks')),
             // GUITAR_DEEPENING §6.3: the chord finder (guitar course), opened by its quick lesson the first time.
             ...(s.activeCourse === 'guitar' ? { chordfinder: () => gate('game:chordfinder', () => go('chordfinder')) } : {}),
             // Chord & cadence builder (guitar roadmap): the keys and guitar courses' Tools.
             ...(s.activeCourse === 'guitar' || s.activeCourse === 'keys' ? { chordbuilder: () => gate('game:chordbuilder', () => go('chordbuilder')) } : {}),
-            transcribe: () => gate('game:transcribe', () => go('transcribe-coach')),
             puzzle: () => go('puzzle'),
             exams: () => go('exams'),
-            pieces: () => go('pieces'),
             mixer: openMixer,
-            // SPEC-MY-SONG: the singer's own song is voice level 1308; every other course opens its play-along /
-            // transcription screen, with its quick lesson the first time.
-            mysong:
-              s.activeCourse === 'voice'
-                ? () => (setVocalWarmup(false), setVocalLevel(1308), (toolFrom.current = 'arcade'), go('vocal'))
-                : () => gate(s.activeCourse === 'ear' ? 'game:mysong-ear' : 'game:mysong', () => go('mysong')),
           }}
           onOnline={() => {
             setOnlineFacts(null);
@@ -2709,6 +2831,11 @@ export function App() {
             go('path');
           } : undefined}
           onKeepStep={slot?.brief?.keepStep ? () => updateSettings({ pathKeep: [...new Set([...(s.pathKeep ?? []), slot.brief!.keepStep!])] }) : undefined}
+          onFullPractice={slot?.brief?.pathStep && slot.brief.topic ? () => {
+            // SPEC-PATH-TODAY-PRACTICE §3.1: the topic's own practice, beyond the step's minimum (free, not the step).
+            pendingStep.current = null;
+            openTopic(slot.brief!.topic!, slot.brief!.level ?? 1);
+          } : undefined}
           lessonDef={generated?.def ?? slot?.resume?.lesson}
           adapt={generated?.adapt}
           resume={slot?.resume}
@@ -2767,6 +2894,16 @@ export function App() {
                 </span>
               </button>
               <DiaryEntryCard lang={s.uiLang} onOpen={() => go('diary')} />
+              {/* Phase 3 (SPEC-PRACTICE-IA-3 §2): logging practice away from the app sits beside the diary. */}
+              <button className="set-card in-entry in-log" onClick={() => setLogOpen(true)} data-open-log="progress">
+                <span className="in-entry-text">
+                  <b>{s.uiLang === 'he' ? 'רישום אימון מחוץ לאפליקציה' : 'Log practice away from the app'}</b>
+                  <small>{s.uiLang === 'he' ? 'דקות, מה תרגלתם, הערה' : 'Minutes, what you practised, a note'}</small>
+                </span>
+                <span aria-hidden="true">
+                  <Icon k="plus" />
+                </span>
+              </button>
               <RecordingsEntryCard lang={s.uiLang} />
               {/* owner 2026-11-21: an instrument course shows its own sections (the radar, Skills) — not the ear's chord,
                   areas and a challenge from another course */}
@@ -3114,8 +3251,11 @@ export function App() {
       )}
       {route === 'pieces' && (
         <PiecesScreen
+          key={`pieces-${engineArg(location.hash) ?? ''}`}
           settings={s}
-          onBack={() => go('songs')}
+          openId={engineArg(location.hash)}
+          // Phase 3 fix: Back returns to where it was opened from (the piece page, Mine, the songbook).
+          onBack={() => backToRep(() => (workoutPending.current ? go('workoutrun') : openRep({ tab: 'mine', mine: 'scores' })))}
           onMinutes={(min, cleanReps) => {
             const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
             const r = makeLogResult('piece', min, 0, new Date(), id);
@@ -3255,6 +3395,7 @@ export function App() {
       )}
       {route === 'transcribe-coach' && (
         <TranscribeCoachScreen
+          hub
           lang={s.uiLang}
           settings={s}
           items={progress.drillItems ?? {}}
@@ -3272,7 +3413,32 @@ export function App() {
           onBack={() => leaveMeasured('transcribe', null)}
         />
       )}
-      {route === 'improv' && <ImprovStudioScreen settings={s} onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)} onBack={() => go('arcade')} onOpenChart={(c) => ((chartInit.current = c), go('charts'))} />}
+      {route === 'improv' && s.activeCourse === 'drums' && (
+        <DrumImprovScreen
+          lang={s.uiLang}
+          items={progress.drillItems ?? {}}
+          order={drillSettingsOf(s).keyOrder}
+          onBack={() => go('arcade')}
+          onLevel={(lv) => {
+            chartQueue.current = levelDrills(lv, drillSettingsOf(s).keyOrder);
+            drillFrom.current = 'improv';
+            drillSessionXp.current = 0;
+            drillSession.current = { takes: 0, clean: 0 };
+            go('drills');
+          }}
+        />
+      )}
+      {route === 'improv' && s.activeCourse !== 'drums' && (
+        <ImprovStudioScreen
+          key={improvInit.current?.id ?? 'improv'}
+          settings={s}
+          initialChart={improvInit.current}
+          title={<PlaceSpark place="improv" course={(s.activeCourse ?? 'ear') as CourseId} lang={s.uiLang} />}
+          onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
+          onBack={() => (improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
+          onOpenChart={(c) => ((chartInit.current = c), go('charts'))}
+        />
+      )}
       {route === 'exams' && (
         <ExamsScreen
           lang={s.uiLang}
@@ -3288,11 +3454,13 @@ export function App() {
       {route === 'slowdown' && <SlowDownScreen lang={s.uiLang} onBack={() => go(toolFrom.current)} />}
       {route === 'mysong' && (
         <MySongScreen
+          key={`mysong-${engineArg(location.hash) ?? ''}`}
           lang={s.uiLang}
           settings={s}
           course={(s.activeCourse ?? 'ear') as CourseId}
+          openId={engineArg(location.hash)}
           onSettings={updateSettings}
-          onBack={() => go('arcade')}
+          onBack={() => backToRep(() => (workoutPending.current ? go('workoutrun') : openRep({ tab: 'mine', mine: 'recordings' })))}
           onResult={(r) => {
             // One measured session: XP, streak, daily goal, league (per course) and the rated items.
             void store
@@ -3302,14 +3470,25 @@ export function App() {
         />
       )}
       {route === 'charts' && <ChartsScreen
-          initial={() => { const c = chartInit.current; chartInit.current = null; return c; }}
+          key={`charts-${engineArg(location.hash) ?? ''}`}
+          initial={() => {
+            const c = chartInit.current;
+            chartInit.current = null;
+            if (c) return c;
+            // A reload on the chart player: the piece (or improvisation level) in the address.
+            const arg = engineArg(location.hash);
+            const lv = arg?.startsWith('lvl:') ? chartOfLevel(arg.slice(4), s.uiLang) : null;
+            const ref = parsePieceKey(arg);
+            return (lv ?? (ref ? chartOfPiece(ref, s.uiLang, s.myCharts) : null)) as MyChart | null;
+          }}
           settings={s}
           onChange={updateSettings}
-          onBack={() => go(toolFrom.current)}
+          onBack={() => backToRep(() => go(toolFrom.current))}
           onMixer={openMixer}
           onDrill={(kind, stride) => {
             chartQueue.current = [generate({ family: stride ? 'accomp' : 'voicings', kind, key: 0, hands: 'L', swing: true })];
             drillFrom.current = 'chart';
+            chartReturn.current = !!engineArg(location.hash);
             go('drills');
           }}
           onImprov={(score, bpm, chords, level, challenge) => {
@@ -3345,6 +3524,9 @@ export function App() {
         ))}
       {route === 'drills' && (
         <Drills
+          key={drillsKey === null ? (drillsFamily ? `drills-fam-${drillsFamily.id}` : 'drills') : `drills-key-${drillsKey}`}
+          openKey={drillsKey}
+          openFamily={drillsFamily}
           lang={s.uiLang}
           settings={s}
           onSettings={updateSettings}
@@ -3368,6 +3550,14 @@ export function App() {
           onBack={() => {
             if (drillFrom.current) return drillQueueDone(0, 0);
             void techResult('technique')?.then(setProgress);
+            if (drillsKey !== null) {
+              setDrillsKey(null);
+              return backToRep(() => go('arcade'));
+            }
+            if (drillsFamily) {
+              setDrillsFamily(null);
+              return go('path');
+            }
             go('arcade');
           }}
           onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
@@ -3384,15 +3574,35 @@ export function App() {
       )}
       {route === 'repertoire' && (
         <RepertoireScreen
-          key={`rep-${repCourse.current ?? s.activeCourse ?? 'ear'}`}
           lang={s.uiLang}
-          course={repCourse.current ?? ((s.activeCourse ?? 'ear') as CourseId)}
+          course={(s.activeCourse ?? 'ear') as CourseId}
+          jazz={jazzFocusOn(s, (s.activeCourse ?? 'ear') as CourseId) ? 'focus' : jazzOpenIn(s, (s.activeCourse ?? 'ear') as CourseId) ? 'on' : 'off'}
           lessons={progress.lessons}
-          initialItem={repShown.current}
-          onItem={(id) => (repShown.current = id)}
-          onBack={() => ((repShown.current = null), go('arcade'))}
-          onWay={openRepWay}
-          onSongbook={['keys', 'guitar', 'bass'].includes(s.activeCourse ?? 'ear') ? () => go('songs') : undefined}
+          history={progress.history}
+          myCharts={s.myCharts}
+          pathView={pathView}
+          whyToday={(key) => (pathView.current?.step.id === key ? { en: 'New from the path', he: 'חדש מהמסלול' } : null)}
+          onBack={() => go('arcade')}
+          onLeavePiece={(from) => go(from === 'path' ? 'path' : from === 'teacher' ? 'friends' : 'home')}
+          onAction={repAction}
+          onPathNode={() => go('path')}
+          onAdd={(src) => {
+            repReturn.current = location.hash;
+            if (src === 'score') return go('pieces');
+            if (src === 'recording') return openRecording(null);
+            chartInit.current = { id: newChartId(), title: s.uiLang === 'he' ? 'המהלך שלי' : 'My chart', text: '', style: 'swing', bpm: 110 };
+            go('charts');
+          }}
+          onSheets={addLeadSheets}
+          onTemplate={(id) => {
+            const c = chartOfPiece({ kind: 'tpl', id }, s.uiLang, s.myCharts);
+            if (!c) return;
+            chartInit.current = { ...c, id: newChartId() } as MyChart;
+            repReturn.current = location.hash;
+            engineArgNext.current = `tpl:${id}`;
+            go('charts');
+          }}
+          onSongbook={['keys', 'guitar', 'bass'].includes(s.activeCourse ?? 'ear') ? () => ((repReturn.current = location.hash), go('songs')) : undefined}
         />
       )}
       {route === 'songs' && (
@@ -3408,10 +3618,10 @@ export function App() {
           }}
           onBack={() => {
             void techResult('technique-songs')?.then(setProgress);
-            go('repertoire');
+            backToRep(() => openRep({ tab: 1 }));
           }}
           songs
-          onPieces={() => go('pieces')}
+          onPieces={() => ((repReturn.current = location.hash), go('pieces'))}
           onSing={
             s.noSing
               ? undefined

@@ -78,6 +78,9 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   const tx = TX[lang];
   const mine = settings.myCharts ?? [];
   const [open, setOpen] = useState<MyChart | null>(() => initial?.() ?? null);
+  // Opened on a piece (Repertoire's piece page, Improvise, a teacher's assignment): its Back returns there (phase 3).
+  const [direct] = useState(() => !!open);
+  const close = () => (direct ? onBack() : setOpen(null));
   const addSheets = (sheets: LeadSheet[]) => {
     const made: MyChart[] = sheets.map((l) => ({ id: newId(), title: l.title === 'Untitled' ? tx.untitled : l.title, text: l.text, style: l.meter === 3 ? 'waltz' : l.style ? (irealStyle(l.style) as ChartStyle) : 'swing', bpm: l.bpm && l.bpm > 30 ? l.bpm : 120, ...(l.melody ? { melody: l.melody.map((n) => ({ b: n.beat, d: n.dur, m: n.midi })) } : {}) }));
     onChange({ myCharts: [...made, ...mine].slice(0, 120) });
@@ -96,9 +99,9 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         }}
         onDelete={() => {
           onChange({ myCharts: mine.filter((x) => x.id !== open.id) });
-          setOpen(null);
+          close();
         }}
-        onBack={() => setOpen(null)}
+        onBack={close}
         onImprov={onImprov}
         best={settings.challengeBest}
         onDrill={onDrill}

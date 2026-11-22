@@ -68,7 +68,8 @@ describe('exam prep: what the mode changes', () => {
   });
   it('Practice puts the mock exams first in the ear course only', () => {
     expect(courseRows('ear', true)[0]).toBe('exams');
-    expect(courseRows('ear', true)).toEqual(['exams', 'lessons', 'puzzle', 'games']);
+    // phase 3: the Ear course's places — Lessons, Repertoire (by ear), Puzzle, Games — with Exams first
+    expect(courseRows('ear', true)).toEqual(['exams', 'lessons', 'repertoire', 'puzzle', 'games']);
     expect(courseRows('ear', false)).toEqual(COURSE_ROWS.ear);
     expect(courseRows('voice', true)).toEqual(COURSE_ROWS.voice);
   });

@@ -1,0 +1,49 @@
+/* Practice reorganised (BUILD-PLAN-2026-11 phase 3, SPEC-PRACTICE-IA-3): continue card, the places, games below, the
+   tools strip; the place sparkline. Mature, clean: small icon buttons in the chrome, no emoji. */
+
+.practice-hub.v3-places { display: flex; flex-direction: column; gap: 14px; }
+
+/* "Continue where I stopped" */
+.pt-continue {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px 10px 14px; border-radius: 16px;
+  border: 1.5px solid var(--stroke, #d9d2e6); background: var(--card, #fff); color: var(--ink, #1d1530);
+}
+.pt-continue-text { display: flex; flex-direction: column; min-width: 0; }
+.pt-continue-text small { color: var(--ink-dim, #6b6380); font-weight: 700; font-size: 0.78rem; }
+.pt-continue-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.98rem; }
+.pt-continue .btn { flex: none; }
+
+/* The places: two columns on a phone, four in a row on a wide screen. */
+@media (min-width: 900px) { :root[data-theme] .pt-grid.pt-places { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+:root[data-theme] .pt-places .pt-tile { min-height: 132px; }
+
+/* Games below the places: one row */
+.pt-games { display: flex; flex-direction: column; gap: 8px; }
+.pt-games-card {
+  all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer;
+  padding: 10px 14px; border-radius: 16px; border: 1.5px solid var(--stroke, #d9d2e6);
+  background: var(--card, #fff); color: var(--ink, #1d1530);
+}
+.pt-games-card:focus-visible { outline: 3px solid var(--sky, #3ab8ff); outline-offset: 2px; }
+.pt-games-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.pt-games-text b { font-size: 1rem; }
+.pt-games-text small { color: var(--ink-dim, #6b6380); font-size: 0.8rem; }
+.pt-game-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.pt-game-cats .chip { display: inline-flex; align-items: center; gap: 6px; }
+
+/* The tools: a strip of small icons, no heading */
+:root[data-theme] .pt-strip .pt-tool-row { flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.pt-strip .pt-tool-row::-webkit-scrollbar { display: none; }
+:root[data-theme] .pt-strip .pt-tool { flex: none; width: 64px; }
+:root[data-theme] .pt-strip .pt-tool small { overflow-wrap: normal; word-break: keep-all; }
+
+/* The one sparkline beside a place's title */
+.place-spark { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim, #6b6380); min-width: 0; margin-inline-start: auto; }
+.place-spark svg { flex: none; color: var(--teal-ink, #0d8f80); }
+.place-spark small { font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+@media (max-width: 420px) { .place-spark small { display: none; } }
+.screen-head .place-spark + .icon-btn { margin-inline-start: 0; }
+
+/* Drums: Improvise on the kit */
+.drum-improv .di-fam h2 { margin: 0 0 8px; font-size: 1rem; }

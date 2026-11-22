@@ -301,6 +301,7 @@ export function PathView2({
   top,
   onCourseIntro,
   onAboutUnit,
+  onFullPractice,
 }: {
   t: Strings;
   settings: Settings;
@@ -324,6 +325,8 @@ export function PathView2({
   onCourseIntro?: () => void;
   /** Replay a unit's opener ("About this unit"). */
   onAboutUnit?: (unit: PathUnit) => void;
+  /** SPEC-PATH-TODAY-PRACTICE §3.1: the step's home in Practice ("keep practising now"); null when it has none. */
+  onFullPractice?: (x: UnitStep) => (() => void) | null;
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -734,6 +737,10 @@ export function PathView2({
           lang={lang}
           title={stepTitle(sheet.x.step, settings, lang)}
           onClose={() => setSheet(null)}
+          onFull={(() => {
+            const f = onFullPractice?.(sheet.x);
+            return f ? () => (setSheet(null), f()) : undefined;
+          })()}
           onPractice={(x, keys) => {
             setSheet(null);
             if (x.step.kind === 'tech' && keys.length && onPracticeMissing) onPracticeMissing(x, sheet.unit, keys);
@@ -748,7 +755,7 @@ export function PathView2({
  * SPEC-PATH-ROLE §8: what an opened step is missing, in words — the stars, the keys at the target tempo (technique),
  * and one Practice button that starts exactly that. Fits a 320×720 phone (a bottom sheet, no sideways scroll).
  */
-function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice }: { x: UnitStep; unit: PathUnit; ctx: MasteryCtx; lang: Lang; title: string; onClose: () => void; onPractice: (x: UnitStep, keys: number[]) => void }) {
+function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice, onFull }: { x: UnitStep; unit: PathUnit; ctx: MasteryCtx; lang: Lang; title: string; onClose: () => void; onPractice: (x: UnitStep, keys: number[]) => void; onFull?: () => void }) {
   const tx = TX[lang];
   const m = missingFor(x, ctx);
   const ms = x.mstars ?? 0;
@@ -789,10 +796,20 @@ function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice }: { x: U
           </div>
         )}
         {checked && <p className="ms-checked" dir="auto">{tx.checked}</p>}
+        {onFull && (
+          <p className="ms-open-note" dir="auto" data-step-open-note="1">
+            {lang === 'he' ? 'הצעד פתוח. מכאן הוא נכנס לאימון היומי, דרך כל 12 הסולמות, עד שהוא סגור.' : 'The step is open. From here it goes into the daily workout, through all 12 keys up to closed.'}
+          </p>
+        )}
         <div className="sheet-actions">
           <button className="btn primary" data-missing-practice="1" onClick={() => onPractice(x, practiceKeys)}>
             {tx.practiceNow}
           </button>
+          {onFull && (
+            <button className="btn ghost" data-step-full="1" onClick={onFull}>
+              {lang === 'he' ? 'להמשיך לתרגל עכשיו' : 'Keep practising now'}
+            </button>
+          )}
         </div>
       </div>
     </div>
