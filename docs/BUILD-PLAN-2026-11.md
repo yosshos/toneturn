@@ -86,3 +86,7 @@
 - "varied" and "new key";
 - the combined sentence;
 - the AI tilt.
+
+## 4. Addendum (2026-11-22): path, Today, Practice and the teacher
+
+docs/SPEC-PATH-TODAY-PRACTICE.md: one item page whatever the way in; the menu Today · Practice · Path; "the full practice of the step" from the path; the teacher's section is added to the daily workout (never replaces it); the channel can be required in an assignment. Its §6 slots the work into phases 2–6.
