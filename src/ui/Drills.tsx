@@ -132,7 +132,7 @@ import { FadedScore } from './FadedScore';
 import { ChannelStrip, type RunChan } from './ChannelStrip';
 import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
 import { planFamily, weekKeyFromMatrix } from '../engine/drills/todayPlan';
-import { keptWeekKey, readMatrixView, saveMatrixView, setPlanAt, todayTech, weekKeyIfKept, type TodayTech } from './todayTech';
+import { keptWeekKey, matrixInst, readMatrixView, saveMatrixView, setPlanAt, todayTech, weekKeyIfKept, type TodayTech } from './todayTech';
 import { coolingDown, withCeiling } from '../engine/drills/itemStatus';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
@@ -381,13 +381,14 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const setKGroup = (g: FacetGroup) => (setKGroupState(g), lsSet('toneturn.keyGroup', g));
   // the advanced tabs (melodic / harmonic-minor modes) for a player past the basics: the course answers or the level test
   const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
-  // SPEC-DAILY-WORKOUT: the key × exercise matrix (piano), its summary and the projection at the player's minutes a day
+  // SPEC-DAILY-WORKOUT: the key × exercise matrix (piano; phase 7: guitar and bass too), its summary and the projection at the player's minutes a day
   const matrixTier = techTier >= 0 ? techTier : keysAdvanced ? 2 : 0;
   const keyMatrixSum = useMemo(() => {
     // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
-    if ((ds.instrument ?? 'piano') !== 'piano' || !(pView === 'key' || view.k === 'keypage')) return null;
-    // block G (phase 4): the lick pool's licks are rungs of every key
-    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz', licks: lickPool(items, settings.lickBook), ...(today ? { day: today.day } : {}) });
+    const mi = matrixInst(ds.instrument);
+    if (!mi || !(pView === 'key' || view.k === 'keypage')) return null;
+    // block G (phase 4): the lick pool's licks are rungs of every key (piano)
+    const cells = keyMatrix(familiesOf(mi), matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), ...(today ? { day: today.day } : {}) });
     const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
@@ -607,7 +608,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onPView={setPView}
       keyGrid={
         keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} today={todayPlan ? { plan: todayPlan.plan, view: mv, onView: setMv, byKey: todayMarks?.byKey } : undefined} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds, keyMatrixSum?.cellsList)} onWeek={(root, g) => {
-          const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', licks: lickPool(items, settings.lickBook) }) : null;
+          const mi = matrixInst(ds.instrument);
+          const lad = mi ? keyLadder(familiesOf(mi), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}) }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onToday={() => {
           // BUILD-PLAN phase 2: the same cells as today's workout technique block (one plan), resumed where it stopped;

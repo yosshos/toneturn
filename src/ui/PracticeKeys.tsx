@@ -14,7 +14,7 @@ import { itemStatus, STATUS_WORD } from '../engine/drills/itemStatus';
 import type { FamilyDef } from '../engine/drills/generate';
 import type { MatrixCell, MatrixSummary, MatrixView } from '../engine/drills/keyMatrix';
 import { whyCounts, type PlanCell } from '../engine/drills/todayPlan';
-import { cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { AEOLIAN_FROM_TIER, cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
@@ -286,7 +286,10 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
   const run = (q: Drill[]) => onRun(q.map((d) => withLens(d, lens)));
   const session = keySession(idx, root, g, items);
   // the coach over the key's ladder: the scale at the player's tier, then 3rds, triads and 7ths along the whole scale
-  const ladder = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', licks }) : null;
+  // phase 7: the guitar and the bass have their own ladders (drums: no keys)
+  const inst = ds.instrument ?? 'piano';
+  const li = inst === 'piano' || inst === 'guitar' || inst === 'bass' ? inst : null;
+  const ladder = li ? keyLadder(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(li === 'piano' ? { licks } : {}) }) : null;
   const focus = ladder ? ladderFocus(ladder, items) : null;
   const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (
@@ -302,6 +305,20 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
       {mk && (
         <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
           {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
+        </p>
+      )}
+      {li && g === 'major' && (tier >= 0 ? tier : advanced ? 2 : 0) >= AEOLIAN_FROM_TIER && (
+        // phase 7: the Aeolian lives inside the major key, practised from its 6th degree (SPEC-DAILY-WORKOUT §1)
+        <p className="key-matrix-line" data-kp-aeolian={(root + 9) % 12}>
+          {he ? (
+            <>
+              האיאולי של הסולם: <bdi dir="ltr">{keyName((root + 9) % 12, true)}</bdi> מינור = סולם <bdi dir="ltr">{keyName(root)}</bdi> מז׳ור מהדרגה השישית
+            </>
+          ) : (
+            <>
+              The key&apos;s Aeolian: <bdi dir="ltr">{keyName((root + 9) % 12, true)}</bdi> minor = the <bdi dir="ltr">{keyName(root)}</bdi> major scale from its 6th degree
+            </>
+          )}
         </p>
       )}
       {session.length > 0 && (
