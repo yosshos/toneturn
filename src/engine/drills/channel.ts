@@ -36,6 +36,16 @@ export function tallyChannel(t: ChannelTally | undefined, ch: Channel, clean: bo
   return out;
 }
 
+/** How many measured takes stand behind the two channel numbers: fresh ear takes and sight takes. */
+export function channelCounts(items: Record<string, ItemState>): { ear: number; reading: number } {
+  let ear = 0, reading = 0;
+  for (const st of Object.values(items)) {
+    ear += st.channels?.['ear-fresh']?.n ?? 0;
+    reading += st.channels?.['page-sight']?.n ?? 0;
+  }
+  return { ear, reading };
+}
+
 /**
  * The player's two channel numbers (SPEC-EAR-AND-READING §2.1), 0..1 or null without enough measured takes: by ear
  * from fresh ear takes, reading from sight takes — the clean share, shrunk toward the self-rating (1–5) while there

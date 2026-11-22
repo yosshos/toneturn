@@ -325,6 +325,13 @@ export interface Settings {
   /** SPEC-COURSE-START (2026-11-11): how each course started — welcome and self-report, setup, taste, first win,
    *  level-test offer, personal goal (engine/courseStart.ts). Existing players' courses are migrated as legacy. */
   courseStart?: import('../engine/courseStart').CourseStartMap;
+  /** BUILD-PLAN-2026-11 phase 6 (SPEC-EAR-AND-READING §8.3): per instrument course, the two 1–5 self-ratings asked at
+   *  its start — playing by ear, playing from notes. They seed the channel profile (channelProfile's prior). */
+  channelSelf?: Partial<Record<import('../engine/courses').CourseId, import('../engine/channelPlan').ChannelSelf>>;
+  /** Phase 6 (§8.1): this week's channel mix (strong / weak / memory), moved ≤ 5 points a week toward the profile's target. */
+  channelMix?: import('../engine/channelPlan').StoredMix;
+  /** Phase 6 (§3.1): today's sight dose (kept for the day so it stays the same item). */
+  sightDose?: import('../engine/channelPlan').StoredSight;
   /** Course and unit openers seen (content/openers.ts): each plays once on its own, then only from its replay button. */
   openers?: import('../content/openers').OpenersSeen;
   /** 0.67 (owner 2026-11-10): the Ear course's exam-prep mode (was the separate "Exams" course): exam-weighted path

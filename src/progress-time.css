@@ -42,3 +42,15 @@
 /* column charts keep a sane height on wide screens (the viewBox would otherwise scale up with the width) */
 .pt-stack svg { max-height: 200px; }
 .pt-multiple .pt-chart svg { max-height: 150px; }
+
+/* Phase 6 (SPEC-PROGRESS-CHARTS §8.1): the anonymous class median, grey, on the tempo and minutes charts. */
+.pt-median { stroke: #8a8f98; opacity: 0.85; }
+[data-theme='dark'] .pt-median { stroke: #9aa0a8; }
+/* §3 / §4.1: since the last lesson. */
+.since-card .pt-card-head { flex-wrap: wrap; gap: 6px 12px; }
+.since-date span { white-space: nowrap; }
+.since-date { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--ink-dim); }
+.since-date input { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; }
+.since-table th { text-align: start; font-weight: 600; color: var(--ink-dim); font-size: 0.8rem; }
+.class-settings { margin: 4px 0 8px; }
+.class-charts { display: grid; gap: 12px; margin: 8px 0; }

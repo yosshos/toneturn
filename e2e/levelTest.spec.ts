@@ -6,7 +6,8 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   await page.locator('[data-drills-test]').click();
   await expect(page.locator('[data-level-test="piano"]')).toBeVisible();
   // MEASUREMENT-AUDIT (second round): without MIDI the touch section is the microphone's (what a phone can measure)
-  await expect(page.locator('.lt-sections li')).toHaveCount(7);
+  // + phase 6: the two channel checks (one phrase by ear, one at sight) after the sections
+  await expect(page.locator('.lt-sections li')).toHaveCount(8);
   await page.locator('[data-test-start]').click();
   const probe = page.locator('[data-test-probe]');
   // Hands starts on its second step (two octaves hands together, not C).
@@ -31,8 +32,9 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
     await page.locator('[data-test-too-hard]').click();
   }
   await expect(page.locator('[data-level-test-done]')).toBeVisible();
-  expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'lines']));
-  expect(seen.length).toBeLessThanOrEqual(12);
+  expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'lines', 'channels']));
+  expect(seen.filter((x) => x === 'channels').length).toBe(2);
+  expect(seen.length).toBeLessThanOrEqual(14);
 });
 
 for (const inst of ['guitar', 'bass'] as const)

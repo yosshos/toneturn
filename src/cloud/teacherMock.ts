@@ -51,6 +51,25 @@ export async function mockTeacherRpc(fn: string, a: Record<string, unknown>): Pr
         assignments: [...d.assignments].reverse().map((x) => ({ ...x, submissions: d.submissions.filter((s) => s.assignment_id === x.id).reverse() })),
         minutes: { me: d.submissions.reduce((m, s) => m + Number(s.minutes ?? 0), 0) },
       };
+    // BUILD-PLAN phase 6: the class page itself (the teacher charts read the snapshot mock, snapshotsMock.ts)
+    case 'toneturn_my_classes':
+      return {
+        teaching: [
+          {
+            id: MOCK_CLASS,
+            code: 'DEMO42',
+            name: 'Demo',
+            assignments: [],
+            students: [
+              ['s1', 'Noa'],
+              ['s2', 'Ari'],
+              ['s3', 'Maya'],
+              ['s4', 'Tom'],
+            ].map(([user_id, name]) => ({ user_id, name, lessons_done: 3, week_xp: 120, streak: 2, last_active: new Date().toISOString(), skills: {} })),
+          },
+        ],
+        member_of: [{ id: MOCK_CLASS, name: 'Demo', teacher: 'Teacher', assignments: [] }],
+      };
     case 'toneturn_my_assignments':
       return d.assignments.map((x) => ({ ...x, submissions: d.submissions.filter((s) => s.assignment_id === x.id).reverse() }));
     default:

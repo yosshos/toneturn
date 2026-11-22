@@ -8,6 +8,7 @@ import type { CourseId } from './courses';
 import { DEFAULT_DRILL_SETTINGS, type FamilyId, type ItemState } from './drills/types';
 import { familyById } from './drills/plan';
 import { TECH_DONE_STARS, techStars } from './ladderFacts';
+import { channelCounts, channelProfile } from './drills/channel';
 
 export interface CourseSection {
   id: string;
@@ -73,6 +74,23 @@ export function timingScore(items: Record<string, ItemState>, families: Set<stri
   return Math.max(0, Math.min(1, (0.1 - m) / 0.07));
 }
 
+/** Measured channel takes at which the radar's "by ear" / "reading" value is all channel (below: blended with levels). */
+export const CHANNEL_FULL_TAKES = 12;
+
+/**
+ * BUILD-PLAN-2026-11 §0.2 / SPEC-EAR-AND-READING §4: the "by ear" and "reading" sections keep their families as their
+ * content, but their value comes from takes by channel (fresh ear takes, sight takes — channelProfile, measured only,
+ * no self-rating). While there are few such takes the channel number is blended with the family-based value, its weight
+ * growing to 1 at CHANNEL_FULL_TAKES. Below 3 takes and with no level passed the value stays empty.
+ */
+export function channelAxisValue(which: 'ear' | 'reading', items: Record<string, ItemState>, levels: number | null): number | null {
+  const n = channelCounts(items)[which];
+  const ch = channelProfile(items)[which];
+  if (ch === null || n < 3) return levels;
+  const w = Math.min(1, n / CHANNEL_FULL_TAKES);
+  return levels === null ? ch : w * ch + (1 - w) * levels;
+}
+
 /** The radar values of a course's sections (0..1, null = nothing passed or measured yet). */
 export function sectionAxes(secs: CourseSection[], items: Record<string, ItemState>, lang: 'he' | 'en'): { id: string; label: string; v: number | null; done: number; levels: number }[] {
   const all = new Set(secs.flatMap((s) => s.families));
@@ -87,7 +105,8 @@ export function sectionAxes(secs: CourseSection[], items: Record<string, ItemSta
     }
     const levels = done ? done / Math.max(1, lv) : null;
     const timing = sec.timing ? timingScore(items, all) : null;
-    const v = levels === null ? timing : timing === null ? levels : (levels + timing) / 2;
+    const base = levels === null ? timing : timing === null ? levels : (levels + timing) / 2;
+    const v = sec.id === 'byear' ? channelAxisValue('ear', items, base) : sec.id === 'reading' ? channelAxisValue('reading', items, base) : base;
     return { id: sec.id, label: sec.name[lang], v, done, levels: lv };
   });
 }

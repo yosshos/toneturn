@@ -78,3 +78,11 @@ grant execute on function public.toneturn_snapshot_put(date, jsonb) to authentic
 grant execute on function public.toneturn_class_snapshots(uuid, date) to authenticated;
 grant execute on function public.toneturn_class_set_median(uuid, boolean) to authenticated;
 grant execute on function public.toneturn_class_median(uuid, date) to authenticated;
+
+-- The teacher reads the switch (the class settings show its state).
+create or replace function public.toneturn_class_median_on(p_class uuid)
+returns boolean language sql security definer set search_path = public stable as $$
+  select coalesce((select show_median from toneturn_classes where id = p_class and teacher = auth.uid()), false);
+$$;
+revoke execute on function public.toneturn_class_median_on(uuid) from public, anon;
+grant execute on function public.toneturn_class_median_on(uuid) to authenticated;
