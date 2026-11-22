@@ -226,11 +226,12 @@ test('Encore: "Practise this span" in the recordings player opens trim on that t
   await expect(page.locator('[data-encore="plan"]')).toBeVisible();
 });
 
-test('Encore: the Practice page shows Encore first in Train; the sidebar has "הדרן"', async ({ page }) => {
+test('Encore lives inside the Licks tile: no Encore tile on Practice, no Encore item in the sidebar', async ({ page }) => {
   await seed(page, 'he');
   await page.setViewportSize({ width: 1280, height: 800 });
   await open(page, 'he', 'arcade');
-  await expect(page.locator('[data-hub="encore"]')).toBeVisible();
+  await expect(page.locator('[data-hub="licks"]')).toBeVisible();
+  await expect(page.locator('[data-hub="encore"]')).toHaveCount(0);
   await page.locator('[data-nav="arcade"]').first().click();
-  await expect(page.locator('[data-nav="encore"]')).toBeVisible();
+  await expect(page.locator('[data-nav="encore"]')).toHaveCount(0);
 });

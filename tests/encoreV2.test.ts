@@ -397,8 +397,9 @@ describe('wiring: events, key mastery, the courses (§9)', () => {
     const sk = keyMastery(itemsFor(l, [0, 5, 2], 'guitar'));
     expect(sk.find((s) => s.skill === 'licks:phrase:guitar')).toBeDefined();
   });
-  it('Encore is offered in the guitar, bass and voice courses (right after Technique, owner 2026-11-21)', () => {
-    for (const c of ['guitar', 'bass', 'voice'] as const) expect(COURSE_ROWS[c].slice(0, 2)).toEqual(['drills', 'encore']);
+  it('Encore (inside the Licks tile, owner 2026-11-22) is offered in the guitar, bass and voice courses right after Technique', () => {
+    for (const c of ['guitar', 'bass', 'voice'] as const) expect(COURSE_ROWS[c].slice(0, 2)).toEqual(['drills', 'licks']);
+    for (const c of ['keys', 'guitar', 'bass', 'voice'] as const) expect(COURSE_ROWS[c]).not.toContain('encore');
   });
   it('enharmonics: keys are pitch classes on every instrument', () => {
     for (const inst of ['guitar', 'bass', 'voice'] as LickInstrument[]) expect(phraseDrill(A_LICK(), 13, 'R', { inst }).itemId).toBe(phraseDrill(A_LICK(), 1, 'R', { inst }).itemId);

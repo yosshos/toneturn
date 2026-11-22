@@ -220,8 +220,9 @@ for (const lang of ['en', 'he'] as Lang[]) {
   });
 }
 
-test('Encore v2: the guitar course shows Encore first in Train', async ({ page }) => {
+test('Encore v2: the guitar course shows the Licks tile (Encore inside it)', async ({ page }) => {
   await seed(page, 'he', 'guitar');
   await open(page, 'he', 'arcade');
-  await expect(page.locator('[data-hub="encore"]')).toBeVisible();
+  await expect(page.locator('[data-hub="licks"]')).toBeVisible();
+  await expect(page.locator('[data-hub="encore"]')).toHaveCount(0);
 });

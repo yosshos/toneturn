@@ -70,3 +70,12 @@
 /* PIANO_AUDIT P3: nine transcription levels still fit one phone screen. */
 .tx-screen[data-transcribe="levels"] .lk-list { gap: 6px; }
 .tx-screen[data-transcribe="levels"] .lk-card { padding: 7px 12px; gap: 2px; }
+/* The Licks tile (owner 2026-11-22): Library / Mine / Challenges — small segmented tabs under the header. */
+.lk-seg { display: flex; border: 2px solid var(--outline); border-radius: 12px; overflow: hidden; background: var(--card); margin: 0 0 10px; }
+.lk-seg button { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 6px; font: 700 0.84rem var(--font); border: 0; border-inline-start: 2px solid var(--outline); background: none; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.lk-seg button:first-child { border-inline-start: 0; }
+.lk-seg button.on { background: var(--purple, #6d28d9); color: #fff; }
+.lk-seg-n { min-width: 18px; padding: 0 5px; border-radius: 9px; font-size: 0.72rem; line-height: 18px; background: var(--purple, #6d28d9); color: #fff; }
+.lk-seg button.on .lk-seg-n { background: #fff; color: var(--purple, #6d28d9); }
+/* Share after a clean tempo: a small action beside the result. */
+.lk-share { display: inline-flex; align-items: center; gap: 6px; align-self: center; }

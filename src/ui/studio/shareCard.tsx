@@ -24,7 +24,16 @@ function place(markup: string, x: number, y: number, w: number, h: number): stri
 
 export const STUDIO_CARD = { w: 540, h: 675 } as const;
 
-export function studioShareCardSvg(o: { title: string; by: string; bpm: number; keys: number; level: number; notes: { pitch: number; beat: number }[]; beats: number; meter: number; lang: 'en' | 'he' }): string {
+/** The card's words, when it is not a challenge (a lick passed clean at a tempo: owner 2026-11-22). */
+export interface CardWords {
+  kind: string;
+  who: string;
+  tempo: string;
+  foot: string;
+  cta: string;
+}
+
+export function studioShareCardSvg(o: { title: string; by: string; bpm: number; keys: number; level: number; notes: { pitch: number; beat: number }[]; beats: number; meter: number; lang: 'en' | 'he'; words?: CardWords }): string {
   const { w: W, h: H } = STUDIO_CARD;
   const he = o.lang === 'he';
   const dir = he ? 'rtl' : 'ltr';
@@ -66,11 +75,11 @@ export function studioShareCardSvg(o: { title: string; by: string; bpm: number; 
   const bx = he ? W - 106 : 106;
   const tx = he ? W - 200 : 200;
   const brand = he ? 'החוש ה־7' : 'The 7th Sense';
-  const kind = he ? 'אתגר הדרן' : 'Encore challenge';
-  const who = he ? `${o.by} מאתגר/ת אותך` : `${o.by} challenges you`;
-  const tempo = he ? `♩${o.bpm} · ${o.keys} סולמות` : `♩${o.bpm} · ${o.keys} keys`;
-  const foot = he ? `רמה ${o.level}` : `Level ${o.level}`;
-  const cta = he ? 'לנסות את המשפט' : 'Try the phrase';
+  const kind = o.words?.kind ?? (he ? 'אתגר הדרן' : 'Encore challenge');
+  const who = o.words?.who ?? (he ? `${o.by} מאתגר/ת אותך` : `${o.by} challenges you`);
+  const tempo = o.words?.tempo ?? (he ? `♩${o.bpm} · ${o.keys} סולמות` : `♩${o.bpm} · ${o.keys} keys`);
+  const foot = o.words?.foot ?? (he ? `רמה ${o.level}` : `Level ${o.level}`);
+  const cta = o.words?.cta ?? (he ? 'לנסות את המשפט' : 'Try the phrase');
   const ctaW = 190;
   const ctaX = he ? 28 : W - 28 - ctaW;
   return [
@@ -97,4 +106,29 @@ export function studioShareCardSvg(o: { title: string; by: string; bpm: number; 
     `<text x="${ctaX + ctaW / 2}" y="${H - 57}" text-anchor="middle" ${font} font-size="19" font-weight="700" fill="#1e1033" direction="${dir}">${esc(cta)}</text>`,
     `</svg>`,
   ].join('');
+}
+
+/** A card SVG as a PNG (twice its size), for the device's share sheet; null where it cannot be drawn. */
+export async function svgToPng(svg: string): Promise<Blob | null> {
+  if (!svg || typeof document === 'undefined') return null;
+  try {
+    const img = new Image();
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = url;
+    });
+    const c = document.createElement('canvas');
+    const m = /viewBox="0 0 (\d+) (\d+)"/.exec(svg);
+    const w = m ? Number(m[1]) * 2 : 1200;
+    const h = m ? Number(m[2]) * 2 : 680;
+    c.width = w;
+    c.height = h;
+    c.getContext('2d')!.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+    return await new Promise((res) => c.toBlob((b) => res(b), 'image/png'));
+  } catch {
+    return null;
+  }
 }

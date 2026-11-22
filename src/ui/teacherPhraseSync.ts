@@ -102,7 +102,7 @@ export function useTeacherPhrases(o: { enabled: boolean; route: string; book: Li
   bookRef.current = o.book;
   // fetch on Home / Encore / the assignment page, at most every 30 seconds; install the phrases into the lick book
   useEffect(() => {
-    if (!o.enabled || !['home', 'encore', 'teach', 'classes', 'friends'].includes(o.route)) return;
+    if (!o.enabled || !['home', 'encore', 'licks', 'teach', 'classes', 'friends'].includes(o.route)) return;
     if (Date.now() - last.current < 30_000) return;
     last.current = Date.now();
     void refreshTeacherPhrases()

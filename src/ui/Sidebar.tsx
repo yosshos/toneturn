@@ -14,8 +14,7 @@ export type NavId =
   | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
   | 'insights' | 'achievements' | 'diary' | 'recordings'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder' | 'chordbuilder'
-  | 'placement' | 'diagnostics' | 'settings'
-  | 'encore';
+  | 'placement' | 'diagnostics' | 'settings';
 
 type L = { en: string; he: string };
 interface Item {
@@ -35,8 +34,8 @@ interface Section extends Item {
 const SECTIONS: Section[] = [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: <NavIcon id="home" size={22} /> },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: <NavIcon id="path" size={22} /> },
-  // Encore (SPEC-PHRASE-STUDIO §17): "הדרן" under Practice.
-  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: <NavIcon id="arcade" size={22} />, children: [{ id: 'encore', label: { en: 'Encore', he: 'הדרן' } }] },
+  // Owner 2026-11-22: Encore lives inside the Licks tile on the Practice page (no menu item of its own).
+  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: <NavIcon id="arcade" size={22} /> },
   {
     id: 'skills',
     label: { en: 'Progress', he: 'התקדמות' },
@@ -79,7 +78,7 @@ const TOOLS_KEYS: Section = { ...TOOLS, children: [TOOLS.children![0], CHORD_BUI
 /** Which section a screen belongs to (for the highlight and the open section). */
 export function sectionOf(route: string): NavId | 'tools' | null {
   for (const s of [...SECTIONS, ...SHARED]) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
-  if (['games', 'songs', 'repertoire', 'pieces', 'charts', 'drills', 'improv', 'licks', 'transcribe', 'transcribe-coach', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
+  if (['games', 'songs', 'repertoire', 'pieces', 'charts', 'drills', 'improv', 'licks', 'encore', 'challenges', 'transcribe', 'transcribe-coach', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
   if (TOOLS.children!.some((c) => c.id === route) || route === 'chordfinder' || route === 'chordbuilder') return 'tools';
   if (route === 'settings' || route === 'diagnostics') return route;
   return null;
