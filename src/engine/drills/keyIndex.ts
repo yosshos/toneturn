@@ -258,8 +258,8 @@ export function ladderRungs(group: 'major' | 'minor'): LadderRung[] {
     { fam: 'k-sharm', id: sharm(11), min: 1, pick: opt(so), block: 'S' as const },
     { fam: 'k-sharm', id: sharm(13), min: 4, pick: opt(so), block: 'B' as const },
     { fam: 'k-sharm', id: sharm(15), min: 5, pick: opt(so), block: 'B' as const },
-    // the owner's approach licks (k-keylick, SPEC-KEY-SESSION §C): lick 1, 2, 3 on the 3rds, triads and 7ths, then hands together
-    ...([[1, 1], [2, 1], [3, 2], [4, 3], [5, 3], [6, 3], [7, 4], [8, 4], [9, 4], [10, 5], [11, 5], [12, 6]] as const).map(([n, min]) => ({ fam: 'k-keylick', id: `k-keylick-${n}`, min, pick: minor ? isMinor : notMinor, block: 'C' as const })),
+    // the owner's approach licks (k-keylick, SPEC-KEY-SESSION §C): lick 1, 2, 3 into the scale degrees, 3rds, triads and 7ths (each hand), then hands together
+    ...([[1, 0], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [7, 3], [8, 3], [9, 4], [10, 4], [11, 4], [12, 4], [13, 5], [14, 5], [15, 6]] as const).map(([n, min]) => ({ fam: 'k-keylick', id: `k-keylick-${n}`, min, pick: minor ? isMinor : notMinor, block: 'C' as const })),
     // more in the key (k-keyx): broken octaves, octave leaps, the canon, bass leaps, the scale over an ostinato
     ...(minor
       ? [{ fam: 'k-keyx', id: 'k-keyx-6', min: 3, block: 'D' as const }, { fam: 'k-keyx', id: 'k-keyx-7', min: 3, block: 'D' as const }]

@@ -64,11 +64,13 @@ describe('the approach licks: the owner’s C major triad examples, note for not
     expect(thirds[0].lick.map((x) => x.name).join(' ') + ' – ' + thirds[0].shape.map((x) => x.name).join(' ')).toBe('D♯ F – E C');
     expect(lickRun(0, MAJ, '1', '3', 'up', 60)[0].shape.map((x) => x.name)).toEqual(['C', 'E']);
   });
-  it('lick 3 on a target a half step under its scale step (E, B in C): the upper note held a quarter, nothing repeated', () => {
-    const g = lickRun(0, MAJ, '3', '3', 'up', 60)[2];
-    expect(g.lick.map((x) => x.name)).toEqual(['D♯', 'F', 'D♯']);
-    expect(g.lick.map((x) => x.dur)).toEqual([0.5, 1, 0.5]);
-    expect(g.shape.map((x) => x.name)).toEqual(['E', 'G']);
+  it('lick 3 on a target a half step under its scale step (owner 2026-11-22): above, the step below, chromatic below → target', () => {
+    const e = lickRun(0, MAJ, '3', 't', 'up', 60)[2];
+    expect(e.lick.map((x) => x.name).join(' ') + ' – ' + e.shape.map((x) => x.name).join(' ')).toBe('F D E♭ – E G B');
+    expect(e.lick.map((x) => x.p)).toEqual([65, 62, 63]);
+    const b = lickRun(0, MAJ, '3', 't', 'up', 60)[6];
+    expect(b.lick.map((x) => x.name).join(' ') + ' – ' + b.shape.map((x) => x.name).join(' ')).toBe('C A B♭ – B D F');
+    expect(b.lick.map((x) => x.p)).toEqual([72, 69, 70]);
   });
 });
 
@@ -109,14 +111,15 @@ describe('the licks in E♭ major and A harmonic minor', () => {
 
 describe('k-keylick: the family, all 12 keys', () => {
   const fam = catalog().find((f) => f.id === 'k-keylick')!;
-  it('levels: lick 1, 2, 3 on 3rds, triads, 7ths (up then down), then hands together in octaves', () => {
-    expect(fam.levels.map((l) => l.id)).toEqual(Array.from({ length: 12 }, (_, i) => `k-keylick-${i + 1}`));
-    expect(fam.levels[0].specs.map((s) => s.kind)).toEqual(['kl-1-3-up', 'kl-1-3-down', 'kl-1-3-up', 'kl-1-3-down']);
-    expect(fam.levels[1].specs[0].kind).toBe('kl-1-t-up');
-    expect(fam.levels[2].specs[0].kind).toBe('kl-1-7-up');
-    expect(fam.levels[3].specs.map((s) => s.kind)).toContain('kl-2ab-3-down');
-    expect(fam.levels[8].specs[0].kind).toBe('kl-3-7-up');
-    expect(fam.levels[9].specs.every((s) => s.hands === 'RL')).toBe(true);
+  it('levels (owner 2026-11-22): lick 1, 2, 3 into scale degrees, 3rds, triads, 7ths — up and down, each hand — then hands together', () => {
+    expect(fam.levels.map((l) => l.id)).toEqual(Array.from({ length: 15 }, (_, i) => `k-keylick-${i + 1}`));
+    expect(fam.levels[0].specs.map((s) => `${s.kind}/${s.hands}`)).toEqual(['kl-1-1-up/R', 'kl-1-1-down/R', 'kl-1-1-up/L', 'kl-1-1-down/L', 'kl-1-1-up/R', 'kl-1-1-down/R', 'kl-1-1-up/L', 'kl-1-1-down/L']);
+    expect(fam.levels[1].specs[0].kind).toBe('kl-1-3-up');
+    expect(fam.levels[2].specs[0].kind).toBe('kl-1-t-up');
+    expect(fam.levels[3].specs[0].kind).toBe('kl-1-7-up');
+    expect(fam.levels[4].specs.map((s) => s.kind)).toContain('kl-2ab-1-down');
+    expect(fam.levels[11].specs[0].kind).toBe('kl-3-7-up');
+    expect(fam.levels.slice(12).every((l) => l.specs.every((s) => s.hands === 'RL'))).toBe(true);
     for (const l of fam.levels) {
       expect(l.keys).toBe('major');
       for (const s of l.specs) expect(s.option === 7 ? s.minor : !s.minor, s.kind).toBe(true);
@@ -138,6 +141,14 @@ describe('k-keylick: the family, all 12 keys', () => {
                 for (const x of [...g.lick, ...g.shape]) expect(pcOf(x.name), `${key} ${x.name} ${x.p}`).toBe(x.p % 12);
                 for (const x of g.shape) expect(scale).toContain(x.p % 12);
                 const target = g.shape[0];
+                // lick 3 turns over when the scale step above is a half step: above, the step below, chromatic below → target
+                const turned = lick === '3' && g.lick.length === 3;
+                if (turned) {
+                  expect(g.lick[0].p).toBe(target.p + 1);
+                  expect(g.lick[2].p).toBe(target.p - 1);
+                  expect(pcOf(g.lick[2].name)).toBe((target.p + 11) % 12);
+                  continue;
+                }
                 expect(g.lick[lick === '2ab' ? 1 : 0].p).toBe(target.p - 1);
                 if (lick !== '1') expect(g.lick[lick === '2ab' ? 0 : 1].name[0]).toBe(String.fromCharCode(((target.name.charCodeAt(0) - 65 + 1) % 7) + 65));
                 const letters = new Set(g.shape.map((x) => x.name[0]));
@@ -148,6 +159,14 @@ describe('k-keylick: the family, all 12 keys', () => {
               expect(d.notes.every((n) => n.spell)).toBe(true);
               expect(d.title.he).toMatch(/ליק/);
             }
+  });
+  it('the scale degrees, and the LH alone: lick 1 into each degree; the LH an octave lower', () => {
+    expect(seg(0, MAJ, '1', '1', 'up', 0)).toBe('B – C');
+    expect(seg(0, MAJ, '2ba', '1', 'up', 1)).toBe('C♯ E – D');
+    const r = generate({ family: 'k-keylick', kind: 'kl-1-1-up', key: 0, hands: 'R', option: 0 });
+    const l = generate({ family: 'k-keylick', kind: 'kl-1-1-up', key: 0, hands: 'L', option: 0 });
+    expect(l.notes.every((n) => n.hand === 'L')).toBe(true);
+    expect(l.notes.map((n) => n.pitch + 12)).toEqual(r.notes.map((n) => n.pitch));
   });
   it('hands together in octaves: the LH an octave under every RH note', () => {
     const d = generate({ family: 'k-keylick', kind: 'kl-2ba-7-down', key: 2, hands: 'RL', option: 0 });

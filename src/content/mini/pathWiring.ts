@@ -41,7 +41,7 @@ export const UNITS: Record<string, string> = {
   'tech:k-sixdim': 'key-sixdim',
   // SPEC-KEY-SESSION: the approach licks open on approach notes, lick 2 on the enclosures; more in the key on the advanced page.
   'tech:k-keylick': 'vocab-approach',
-  'tech:k-keylick-4': 'vocab-enclose',
+  'tech:k-keylick-5': 'vocab-enclose',
   'tech:k-keyx': 'fam-advanced',
   'tech:k-dimcol': 'bh-brothers', // colours of the diminished open on the brothers: one dim, four dominants
   'tech:accomp': 'piano-lh-styles', // L9: root–5th, Alberti, stride, shells (accomp-1 is the Alberti bass)

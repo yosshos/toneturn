@@ -13,9 +13,9 @@
 // Each item runs the whole scale, degrees 1→8 up or 8→1 down, in 8ths, one shape after another. Major and harmonic
 // minor (the k-sharm scale table: option 0 = major, 7 = harmonic minor); hands together in octaves at the top levels.
 //
-// One case the owner's examples don't reach: in lick 3 a target whose upper scale step is only a half step away (E and
-// B in C major) has no chromatic note between the two — the chromatic above IS the scale step. There the upper note is
-// held for a quarter (below, above ♩, below → target), so the pulse stays and no note repeats.
+// Lick 3 on a target whose upper scale step is only a half step away (E and B in C major; owner 2026-11-22): there is no
+// chromatic note between them, so the lick turns over — the scale step above, the scale step below, the chromatic below
+// spelled on the target's letter → target: before E minor, F D E♭ – E G B; before B°, C A B♭ – B D F.
 //
 // Spelling: one letter per degree (keyTheory.spellScale); the chromatic below takes the letter under the target's
 // (B under C, C♯ under D, F♯ under G), the chromatic above the letter over it (D♭ over C, A♭ over G); a double
@@ -64,11 +64,11 @@ export function spellNeighbour(name: string, steps: number, semis: number): stri
 // ───────────────────────────── the licks ─────────────────────────────
 
 export type Lick = '1' | '2ba' | '2ab' | '3';
-export type Shape = '3' | 't' | '7';
+export type Shape = '1' | '3' | 't' | '7';
 export type Dir = 'up' | 'down';
 export const LICKS: Lick[] = ['1', '2ba', '2ab', '3'];
-export const SHAPES: Shape[] = ['3', 't', '7'];
-const SIZE: Record<Shape, number> = { '3': 2, t: 3, '7': 4 };
+export const SHAPES: Shape[] = ['1', '3', 't', '7'];
+const SIZE: Record<Shape, number> = { '1': 1, '3': 2, t: 3, '7': 4 };
 
 /** One written note of a lick run: pitch, its name, its length in beats. */
 export interface LN {
@@ -106,7 +106,12 @@ export function lickRun(key: number, sc: HScale, lick: Lick, shape: Shape, dir: 
     if (lick === '1') ns = [below];
     else if (lick === '2ba') ns = [below, above];
     else if (lick === '2ab') ns = [above, below];
-    else ns = above.p === chromAbove.p ? [below, { ...above, dur: 1 }, { ...below }] : [below, above, chromAbove, { ...below }];
+    else if (above.p === chromAbove.p) {
+      const stepBelow = d(tk - 1);
+      // the chromatic below on the target's letter (E♭ before E); a double flat falls back to the letter below
+      const same = spellNeighbour(target.name, 0, -1);
+      ns = [above, stepBelow, { p: target.p - 1, name: same === target.name ? spellNeighbour(target.name, -1, -1) : same, dur: 0.5 }];
+    } else ns = [below, above, chromAbove, { ...below }];
     out.push({ lick: ns, shape: shapeNs });
   }
   return out;
@@ -119,6 +124,7 @@ const LICK_T: Record<Lick, T2> = {
   '3': t('lick 3, the long enclosure', 'ליק 3, הכיתור הארוך'),
 };
 const SHAPE_T: Record<Shape, T2> = {
+  '1': t('each scale degree', 'כל דרגה בסולם'),
   '3': t('the diatonic 3rds', 'הטרצות הדיאטוניות'),
   t: t('the triads', 'המשולשים'),
   '7': t('the 7th chords', 'הספטאקורדים'),
@@ -127,7 +133,7 @@ const DIR_T: Record<Dir, T2> = { up: t('up the scale', 'במעלה הסולם'),
 
 /** kind `kl-<lick>-<shape>-<dir>`, e.g. kl-1-t-up, kl-2ab-7-down, kl-3-3-up. */
 export function parseLickKind(kind: string): { lick: Lick; shape: Shape; dir: Dir } {
-  const m = /^kl-(1|2ba|2ab|3)-(3|t|7)-(up|down)$/.exec(kind);
+  const m = /^kl-(1|2ba|2ab|3)-(1|3|t|7)-(up|down)$/.exec(kind);
   if (!m) throw new Error(`Unknown approach-lick drill: ${kind}`);
   return { lick: m[1] as Lick, shape: m[2] as Shape, dir: m[3] as Dir };
 }
@@ -169,14 +175,14 @@ function genLick(s: DrillSpec): Drill {
   let b = 0;
   flat.forEach((x, i) => {
     const dur = i === flat.length - 1 ? 2 : x.dur;
-    const parts: { hand: 'R' | 'L'; p: number; spell: string }[] = [{ hand: 'R', p: x.p, spell: x.name }];
+    const parts: { hand: 'R' | 'L'; p: number; spell: string }[] = s.hands === 'L' ? [{ hand: 'L', p: x.p - 12 * (shape === '7' ? 2 : 1), spell: x.name }] : [{ hand: 'R', p: x.p, spell: x.name }];
     if (s.hands === 'RL') parts.push({ hand: 'L', p: x.p - 12, spell: x.name });
     n.add(b, dur, parts);
     b += x.dur;
   });
   const h = handsT(s);
   const title = t(`${kName(key, sc)} ${sc.name.en}: ${LICK_T[lick].en} into ${SHAPE_T[shape].en}, ${DIR_T[dir].en}${h.en}`, `${kName(key, sc)} ${sc.name.he}: ${LICK_T[lick].he}, אל ${SHAPE_T[shape].he}, ${DIR_T[dir].he}${h.he}`);
-  return drillOf(s, n, title, shape === '7' ? 54 : 60, {}, SIG[mod(key + sc.sig, 12)]);
+  return drillOf(s, n, title, shape === '7' ? 54 : shape === '1' ? 66 : 60, {}, SIG[mod(key + sc.sig, 12)]);
 }
 
 // ───────────────────────────── more exercises in the key (k-keyx) ─────────────────────────────
@@ -265,7 +271,7 @@ export function genKeyLicks(s: DrillSpec): Drill {
 // ───────────────────────────── catalogues ─────────────────────────────
 
 /** Path difficulty (path.ts KEYS_LEVEL_DIFF): after the harmonised scale's arpeggios (k-sharm 7ths ~1230–1340). */
-export const K_KEYLICK_DIFF: Record<string, number> = Object.fromEntries([1150, 1210, 1270, 1310, 1350, 1390, 1430, 1470, 1510, 1550, 1590, 1630].map((d, i) => [`k-keylick-${i + 1}`, d]));
+export const K_KEYLICK_DIFF: Record<string, number> = Object.fromEntries([1100, 1150, 1210, 1270, 1290, 1330, 1370, 1410, 1430, 1470, 1510, 1550, 1580, 1610, 1640].map((d, i) => [`k-keylick-${i + 1}`, d]));
 export const K_KEYX_DIFF: Record<string, number> = Object.fromEntries([1180, 1220, 1260, 1300, 1340, 1360, 1380].map((d, i) => [`k-keyx-${i + 1}`, d]));
 
 export function keyLickFamily(): FamilyDef {
@@ -274,19 +280,19 @@ export function keyLickFamily(): FamilyDef {
     const level = levels.length + 1;
     levels.push({ id: `k-keylick-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: 'major', tempo });
   };
-  const it = (lick: Lick, shape: Shape, dir: Dir, option: number, hands: 'R' | 'RL' = 'R'): SpecTemplate => ({ family: 'k-keylick' as FamilyId, kind: `kl-${lick}-${shape}-${dir}`, hands, option, ...(option === 7 ? { minor: true } : {}) });
-  /** One lick on one shape: major up, down; harmonic minor up, down. */
-  const four = (lick: Lick, shape: Shape): SpecTemplate[] => LICK_SCALES.flatMap((o) => [it(lick, shape, 'up', o), it(lick, shape, 'down', o)]);
-  const tempoOf = (shape: Shape): [number, number] => (shape === '7' ? [50, 100] : [56, 112]);
-  const SH: [Shape, string, string][] = [['3', 'diatonic 3rds', 'טרצות דיאטוניות'], ['t', 'triads', 'משולשים'], ['7', '7th chords', 'ספטאקורדים']];
-  for (const [sh, en, he] of SH) LV(`Approach lick 1 (a half step below) into the ${en}, up and down the scale: major, harmonic minor`, `ליק גישה 1 (חצי טון מלמטה) אל ה${he}, במעלה הסולם ובמורדו: מז׳ור, מינור הרמוני`, four('1', sh), tempoOf(sh));
-  for (const [sh, en, he] of SH) LV(`Lick 2, the enclosure (below–above, above–below) into the ${en}: major, harmonic minor`, `ליק 2, כיתור (מלמטה–מלמעלה, מלמעלה–מלמטה) אל ה${he}: מז׳ור, מינור הרמוני`, [...four('2ba', sh), ...four('2ab', sh)], tempoOf(sh));
-  for (const [sh, en, he] of SH) LV(`Lick 3, the long enclosure into the ${en}: major, harmonic minor`, `ליק 3, הכיתור הארוך אל ה${he}: מז׳ור, מינור הרמוני`, four('3', sh), tempoOf(sh));
-  // hands together in octaves, on the triads and the 7th chords
-  const ht = (licks: Lick[]): SpecTemplate[] => licks.flatMap((l) => (['t', '7'] as Shape[]).flatMap((sh) => [it(l, sh, 'up', 0, 'RL'), it(l, sh, 'down', 0, 'RL'), it(l, sh, 'up', 7, 'RL'), it(l, sh, 'down', 7, 'RL')]));
-  LV('Hands together in octaves: lick 1 into the triads and the 7th chords', 'ידיים יחד באוקטבות: ליק גישה 1 אל המשולשים והספטאקורדים', ht(['1']), [50, 100]);
-  LV('Hands together in octaves: lick 2 into the triads and the 7th chords', 'ידיים יחד באוקטבות: ליק 2 אל המשולשים והספטאקורדים', ht(['2ba', '2ab']), [50, 96]);
-  LV('Hands together in octaves: lick 3 into the triads and the 7th chords', 'ידיים יחד באוקטבות: ליק 3 אל המשולשים והספטאקורדים', ht(['3']), [46, 92]);
+  const it = (lick: Lick, shape: Shape, dir: Dir, option: number, hands: 'R' | 'L' | 'RL' = 'R'): SpecTemplate => ({ family: 'k-keylick' as FamilyId, kind: `kl-${lick}-${shape}-${dir}`, hands, option, ...(option === 7 ? { minor: true } : {}) });
+  /** One lick on one shape (owner 2026-11-22: both directions, each hand): RH up, down, LH up, down; major, then harmonic minor. */
+  const each = (lick: Lick, shape: Shape): SpecTemplate[] => LICK_SCALES.flatMap((o) => (['R', 'L'] as const).flatMap((h) => [it(lick, shape, 'up', o, h), it(lick, shape, 'down', o, h)]));
+  const tempoOf = (shape: Shape): [number, number] => (shape === '7' ? [50, 100] : shape === '1' ? [60, 126] : [56, 112]);
+  const SH: [Shape, string, string][] = [['1', 'each scale degree', 'כל דרגה בסולם'], ['3', 'diatonic 3rds', 'טרצות דיאטוניות'], ['t', 'triads', 'משולשים'], ['7', '7th chords', 'ספטאקורדים']];
+  for (const [sh, en, he] of SH) LV(`Approach lick 1 (a half step below) into ${en}, up and down, each hand: major, harmonic minor`, `ליק גישה 1 (חצי טון מלמטה) אל ${he}, למעלה ולמטה, כל יד: מז׳ור, מינור הרמוני`, each('1', sh), tempoOf(sh));
+  for (const [sh, en, he] of SH) LV(`Lick 2, the enclosure (below–above, above–below) into ${en}, each hand: major, harmonic minor`, `ליק 2, כיתור (מלמטה–מלמעלה, מלמעלה–מלמטה) אל ${he}, כל יד: מז׳ור, מינור הרמוני`, [...each('2ba', sh), ...each('2ab', sh)], tempoOf(sh));
+  for (const [sh, en, he] of SH) LV(`Lick 3, the long enclosure into ${en}, each hand: major, harmonic minor`, `ליק 3, הכיתור הארוך אל ${he}, כל יד: מז׳ור, מינור הרמוני`, each('3', sh), tempoOf(sh));
+  // hands together in octaves, on the scale degrees, the triads and the 7th chords
+  const ht = (licks: Lick[]): SpecTemplate[] => licks.flatMap((l) => (['1', 't', '7'] as Shape[]).flatMap((sh) => [it(l, sh, 'up', 0, 'RL'), it(l, sh, 'down', 0, 'RL'), it(l, sh, 'up', 7, 'RL'), it(l, sh, 'down', 7, 'RL')]));
+  LV('Hands together in octaves: lick 1 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק גישה 1 אל הדרגות, המשולשים והספטאקורדים', ht(['1']), [50, 100]);
+  LV('Hands together in octaves: lick 2 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק 2 אל הדרגות, המשולשים והספטאקורדים', ht(['2ba', '2ab']), [50, 96]);
+  LV('Hands together in octaves: lick 3 into the scale degrees, triads and 7th chords', 'ידיים יחד באוקטבות: ליק 3 אל הדרגות, המשולשים והספטאקורדים', ht(['3']), [46, 92]);
   return { id: 'k-keylick', title: t('Approach licks through the scale', 'ליקי גישה לאורך הסולם'), style: 'both', levels };
 }
 
