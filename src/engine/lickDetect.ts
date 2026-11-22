@@ -20,13 +20,22 @@ export interface LickHit {
   index: number;
   beat: number;
   transpose: number;
-  /** exact = the same intervals (a few notes may differ); shape = the same contour and rhythm. */
-  kind: 'exact' | 'shape';
+  /** exact = the same intervals (a few notes may differ); shape = the same contour and rhythm; varied = at least 60 %
+   *  of the notes in order (a note dropped or changed, the start displaced) — SPEC-LICKS-IN-IMPROV §3. */
+  kind: 'exact' | 'shape' | 'varied';
   /** Every lick chord fell on a chart chord with the same root (after transposing) and a matching family. */
   overChord: boolean;
   /** Share of the lick's notes matched. */
   share: number;
+  /** The matched notes' mean distance from the lick's rhythm (beats), and whether that is within the tolerance. */
+  timing?: number;
+  tight?: boolean;
+  /** Played over the tritone substitute of the lick's dominant (the same notes, another bass). */
+  viaSub?: boolean;
 }
+
+/** Rhythm tolerance for a use to count as clean (beats; SPEC-LICKS-IN-IMPROV §3). */
+export const LICK_TIMING_TOL = 0.2;
 
 const mod = (n: number, m = 12) => ((n % m) + m) % m;
 /** Chord families: minor-ish, dominant-ish, major-ish, half-diminished / diminished. */
@@ -60,7 +69,7 @@ export function chartSpanAt(chart: ChartSpan[], beat: number): ChartSpan | null 
  * time). Over the chord: the lick's chords, moved by the same transposition and the same shift in time, land on chart
  * chords with the same root and family (the dominant family takes 7, 7♭9, alt, blues).
  */
-export function findLick(l: Lick, imp: ImpNote[], chart: ChartSpan[], o: { minShare?: number; shape?: boolean } = {}): LickHit[] {
+export function findLick(l: Lick, imp: ImpNote[], chart: ChartSpan[], o: { minShare?: number; shape?: boolean; varied?: boolean } = {}): LickHit[] {
   const notes = [...imp].sort((a, b) => a.beat - b.beat);
   const L = l.notes;
   const minShare = o.minShare ?? 0.8;
@@ -95,6 +104,8 @@ export function findLick(l: Lick, imp: ImpNote[], chart: ChartSpan[], o: { minSh
     const lastOk = got.length > 1 && notes[got[got.length - 1]].midi === L[L.length - 1][0] + t;
     const share = matched / L.length;
     let kind: LickHit['kind'] | null = share >= minShare && lastOk ? 'exact' : null;
+    // Varied: most of the notes in order though not the whole lick (a note dropped or changed, the ending altered).
+    if (!kind && o.varied !== false && share >= 0.6 && got.length >= 3) kind = 'varied';
     if (!kind && o.shape !== false && s + L.length - 1 < notes.length) {
       // Shape: the next L notes, same contour, same rhythm.
       const seg = notes.slice(s, s + L.length);
@@ -104,14 +115,21 @@ export function findLick(l: Lick, imp: ImpNote[], chart: ChartSpan[], o: { minSh
       if (sameDir && sameRhythm && L.length >= 3) kind = 'shape';
     }
     if (!kind) continue;
+    let viaSub = false;
     const overChord = l.chords.every((c, ci) => {
       const at = l.chords.slice(0, ci).reduce((a, x) => a + x[2], 0);
       // Only chords the lick's notes actually sound over count (a final long chord is entered on its first note).
       if (!L.some((n) => chordAt(l.chords, n[1]) === ci)) return true;
       const sp = chartSpanAt(chart, at + shift + 0.01) ?? chartSpanAt(chart, L.find((n) => chordAt(l.chords, n[1]) === ci)![1] + shift);
-      return !!sp && mod(sp.root) === mod(c[0] + t) && famOf(sp.q) === famOf(c[1]);
+      if (!sp) return false;
+      if (mod(sp.root) === mod(c[0] + t) && famOf(sp.q) === famOf(c[1])) return true;
+      // a dominant lick over the tritone substitute of its dominant: the same notes over another bass
+      if (famOf(c[1]) === '7' && famOf(sp.q) === '7' && mod(sp.root) === mod(c[0] + t + 6)) return (viaSub = true);
+      return false;
     });
-    hits.push({ index: s, beat: notes[s].beat, transpose: mod(t), kind, overChord, share: kind === 'exact' ? share : 0 });
+    const devs = got.map((k, i) => Math.abs(notes[k].beat - shift - L[Math.min(L.length - 1, i)][1]));
+    const timing = devs.length ? devs.reduce((a, b) => a + b, 0) / devs.length : 0;
+    hits.push({ index: s, beat: notes[s].beat, transpose: mod(t), kind, overChord, share: kind === 'shape' ? 0 : share, timing, tight: timing <= LICK_TIMING_TOL, ...(viaSub ? { viaSub } : {}) });
     skipUntil = s + Math.max(1, Math.floor(L.length * 0.6)) - 1;
   }
   return hits;

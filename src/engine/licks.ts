@@ -571,6 +571,8 @@ export interface LickBook {
   phraseRank?: Record<string, number>;
   /** Encore: XP earned per phrase today (the daily cap, §10.5), reset on a new day. */
   phraseXp?: { day: string; by: Record<string, number> };
+  /** SPEC-LICKS-IN-IMPROV: clean uses found in improvisation (vocab.ts LickUse), newest last, bounded. */
+  uses?: { id: string; key: number; kind: 'exact' | 'shape' | 'varied'; viaSub?: boolean; at: string; session: string }[];
 }
 
 /** Fold a session's result into the book: a lick that became known starts its review; a review take moves its box. */
