@@ -20,7 +20,8 @@ export const KEYS_TO_PROMOTE = 2;
 export const MISSES_TO_PARK = 3;
 /** A weak spot comes back after this many takes. */
 export const REVIEW_EVERY = 5;
-/** The session's length (minutes); the coach wraps up after the take that crosses it. */
+/** The session's default length (minutes); the coach wraps up after the take that crosses it. A run from today's
+ *  workout passes its block's minutes instead (CoachBackground.minutes, BUILD-PLAN phase 2). */
 export const SESSION_MIN = 12;
 /** "Slower" steps: −10 % each, never below ♩30. */
 const SLOWER = 0.9;
@@ -86,6 +87,8 @@ export interface CoachState {
    * clean → one up, almost → stay, a miss → one down and the probe ends — for at most PROBE_TAKES takes. null = off.
    */
   probe: { takes: number } | null;
+  /** The session's length in minutes (default SESSION_MIN): today's technique block gives its own. */
+  minutes?: number;
 }
 
 /** Takes in the placement probe. */
@@ -148,6 +151,14 @@ export interface CoachBackground {
   from?: number;
   /** Skip the placement probe (the intro's "No check"); a family already played never probes. */
   noProbe?: boolean;
+  /** The session's length (minutes): today's workout block's minutes (default SESSION_MIN). */
+  minutes?: number;
+  /**
+   * Walk the steps in order, solid or not, starting at `resumeAt` (today's plan of matrix cells: review cells are closed
+   * ones on purpose, and a stopped run resumes at the cell it reached).
+   */
+  walk?: boolean;
+  resumeAt?: number;
 }
 
 /** The first level of the family with a hands-together item: where a player past the basics starts. */
@@ -161,13 +172,13 @@ export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, ord
   const steps = fam.levels.map((l) => l.id);
   const skilled = !!bg.skilled || (bg.from ?? 1) > 1;
   const from = bg.from ?? (skilled ? firstTogether(fam) : 1);
-  let step = fam.levels.findIndex((l) => l.level >= from && !solid(l, items, order));
+  let step = bg.walk ? Math.max(0, Math.min(steps.length - 1, bg.resumeAt ?? 0)) : fam.levels.findIndex((l) => l.level >= from && !solid(l, items, order));
   if (step < 0) step = fam.levels.findIndex((l) => !solid(l, items, order));
   if (step < 0) step = steps.length - 1;
   const { keys, passed } = keysOf(fam.levels[step], items, order);
   // Warm up on the step below, in the first key it is clean in (a teacher's opening scale).
   let side: CoachState['side'] = null;
-  if (step > 0) {
+  if (step > 0 && !bg.walk) {
     const below = fam.levels[step - 1];
     const k = levelKeys(below, order).find((x) => keyClean(below, x, items, order));
     if (k !== undefined) side = { kind: 'warmup', step: step - 1, key: k, spec: below.specs.length - 1 };
@@ -175,7 +186,7 @@ export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, ord
   // The probe only on a family never played, without a level test start, and not skipped.
   const fresh = !Object.values(items).some((x) => x.family === fam.id && x.takes > 0);
   const probe = fresh && bg.from === undefined && !bg.noProbe ? { takes: 0 } : null;
-  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side: probe ? null : side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0, probe };
+  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side: probe ? null : side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0, probe, ...(bg.minutes && bg.minutes > 0 ? { minutes: bg.minutes } : {}) };
 }
 
 /** Move the session to another step (promotion or the probe): its keys, starting in a key just played. */
@@ -274,6 +285,8 @@ export interface CoachNext {
   line: T2;
   /** The session is over (its time is up). */
   end: boolean;
+  /** The limit rule fired on this item (BUILD-PLAN §0.2): its best clean tempo becomes "a ceiling for now". */
+  ceiling?: { itemId: string; bpm: number };
 }
 
 /** The next key of the step that is not yet passed (wrapping); the current one when all are. */
@@ -293,7 +306,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
   const clean = m.verdict === 'clean';
   const c: CoachState = { ...c0, takes: c0.takes + 1, clean: c0.clean + (clean ? 1 : 0), sinceReview: c0.sinceReview + 1, demo: false };
   const praise = PRAISE[c.takes % PRAISE.length];
-  const timeUp = now - c.startedAt >= SESSION_MIN * 60_000;
+  const timeUp = now - c.startedAt >= (c.minutes ?? SESSION_MIN) * 60_000;
   const next = (line: T2): CoachNext => {
     // A weak spot comes back every few takes (never over a new step's first take).
     if (!timeUp && !c.side && !c.demo && c.weak.length && c.sinceReview >= REVIEW_EVERY) {
@@ -378,19 +391,22 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       c.run = 0;
       c.slower = 0;
       const said = { he: `זה הגבול שלך היום כאן: ♩${best}. ממשיכים לתרגיל הבא.`, en: `That is your limit here today: ♩${best}. On to the next exercise.` };
+      // "a ceiling for now" on the item (BUILD-PLAN §0.2): the screen saves it, the matrix rests the cell for a few days
+      const ceiling = { itemId: take.drill.itemId, bpm: best };
+      const withCeil = (n: CoachNext): CoachNext => ({ ...n, ceiling });
       if (c.spec + 1 < level.specs.length) {
         c.spec++;
-        return next(said);
+        return withCeil(next(said));
       }
       // one-key ladders (the key session) go to the next step; a family goes to its next key
       if (c.keys.length === 1 && c.step + 1 < c.steps.length) {
         toStep(fam, c, c.step + 1, items, order);
         c.demo = true;
-        return next(said);
+        return withCeil(next(said));
       }
       c.spec = 0;
       c.keyIdx = nextKeyIdx(c);
-      return next(said);
+      return withCeil(next(said));
     }
   }
   if (clean) {

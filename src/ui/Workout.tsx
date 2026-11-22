@@ -8,7 +8,7 @@ import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import type { PathView } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
-import { add, blockLeftMs, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, total, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
+import { add, blockLeftMs, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, total, WHY_WORD, whyOf, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { DOMAIN_HUE, GAMES2 } from './Arcade';
 import { useCourse } from './courseContext';
@@ -53,8 +53,9 @@ const W = {
     presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes', 'four-slot': 'Four-slot session' } as Record<Preset, string>,
     ctx: { nomic: 'No mic', quiet: 'Quiet place', noinst: 'No instrument' },
     // SPEC-PATH-ROLE §3: three blocks — New (the path), Strengthen (depth on what is opened), Review.
-    kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen' } as Record<string, string>,
-    blockSub: { path: 'Next steps of the path', warmup: 'Spaced review', strengthen: 'Opened steps, weakest keys first' } as Record<string, string>,
+    kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen', keys: 'Technique', teacher: 'From the teacher' } as Record<string, string>,
+    improv: { improv: 'Improvise', repertoire: 'Repertoire', grooves: 'Grooves, fills and trading' } as Record<string, string>,
+    blockSub: { path: 'Next steps of the path', warmup: 'Spaced review', strengthen: 'Opened steps, weakest keys first', keys: 'Half in the key of the week, the rest weakest first', teacher: 'Your class assignments', improv: 'In the key of the week' } as Record<string, string>,
     practiceHint: 'Practice on your own instrument. The metronome helps; write what you worked on.',
     metronome: 'Metronome',
     note: 'What did you work on?',
@@ -100,8 +101,9 @@ const W = {
     done: 'סיום',
     presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות', 'four-slot': 'אימון בארבעה חלקים' } as Record<Preset, string>,
     ctx: { nomic: 'בלי מיקרופון', quiet: 'מקום שקט', noinst: 'בלי כלי' },
-    kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק' } as Record<string, string>,
-    blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם' } as Record<string, string>,
+    kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק', keys: 'טכניקה', teacher: 'מהמורה' } as Record<string, string>,
+    improv: { improv: 'אימפרוביזציה', repertoire: 'רפרטואר', grooves: 'גרובים, מעברים וחילופים' } as Record<string, string>,
+    blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם', keys: 'חצי בסולם השבוע, השאר מהחלש', teacher: 'המשימות מהכיתה', improv: 'בסולם השבוע' } as Record<string, string>,
     practiceHint: 'נגנו על הכלי שלכם. המטרונום עוזר; כתבו על מה עבדתם.',
     metronome: 'מטרונום',
     note: 'על מה עבדתם?',
@@ -135,11 +137,13 @@ export function blockLabel(t: Strings, b: BlockTarget, lang: Lang, id?: string):
       if (b.game === 'encore') return lang === 'he' ? 'ליקים · המשפטים שלי' : 'Licks · my phrases';
       if (b.game === 'transcribe') return lang === 'he' ? 'תמלול' : 'Transcribe';
       return GAMES2.find((g) => g.id === b.game)?.[lang][0] ?? b.game;
+    case 'improv':
+      return tx.improv[b.mode ?? 'improv'];
     default:
       return tx.kinds[b.kind] ?? b.kind;
   }
 }
-const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'strengthen' ? 'var(--hue-instrument)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
+const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'strengthen' || b.kind === 'keys' ? 'var(--hue-instrument)' : b.kind === 'improv' ? 'var(--hue-creative)' : b.kind === 'teacher' ? 'var(--purple)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
 
 /** The stacked bar of blocks. */
 function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null }) {
@@ -158,24 +162,40 @@ function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null })
   );
 }
 
+/** "Why today" (SPEC-PATH-TODAY-PRACTICE §2): a small chip on a block — new from the path, from your teacher, … */
+export function WhyChip({ target, lang }: { target: BlockTarget; lang: Lang }) {
+  const w = whyOf(target);
+  if (!w) return null;
+  return (
+    <span className={`wk-why why-${w}`} data-why={w}>
+      {WHY_WORD[w][lang]}
+    </span>
+  );
+}
+/** A block's second line: what the caller knows about it (the key of the week, the teacher …), else the kind's line. */
+const subOf = (tx: (typeof W)['en'], b: BlockTarget, leadsTo?: string | null, subs?: Partial<Record<string, string>>): string | undefined =>
+  b.kind === 'strengthen' && leadsTo ? leadsTo : (subs?.[b.kind] ?? tx.blockSub[b.kind]);
+
 /**
  * Today's workout (W1): the hero of Today. The context switches (no mic / quiet / no instrument) live in the editor.
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo }: {
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs }: {
   /** SPEC-PATH-ROLE §8: what the strengthen block leads to. */
   leadsTo?: string | null;
+  /** A block kind's own second line today ("Key of the week: E♭ · 6 exercises"). */
+  subs?: Partial<Record<string, string>>;
   t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; view?: PathView; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void }) {
   const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
   const at = run && !run.finished ? run.at : -1;
-  return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active: !!active, leftMin, at }} />;
+  return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active: !!active, leftMin, at }} />;
 }
 
 /**
  * The Today hero (redesign 2026-11): "Today's workout", the blocks as numbered steps (done / now / next)
  * with their minutes, a thin bar of time used, and one lemon button "Continue · <step>". Toni is not on it every day.
  */
-function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, active, leftMin, at }: { t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; active: boolean; leftMin: number; at: number }) {
+function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active, leftMin, at }: { t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; active: boolean; leftMin: number; at: number }) {
   const tx = W[lang];
   const sx = studioText(lang);
   const T = total(blocks);
@@ -201,14 +221,17 @@ function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, on
       <ol className="st-steps">
         {blocks.map((b, i) => {
           const state = finished || i < cur ? 'done' : i === cur ? 'cur' : '';
-          const sub = b.target.kind === 'strengthen' && leadsTo ? leadsTo : tx.blockSub[b.target.kind];
+          const sub = subOf(tx, b.target, leadsTo, subs);
           return (
-            <li key={b.id} className={state} data-step-state={state || 'next'}>
+            <li key={b.id} className={state} data-step-state={state || 'next'} data-block-kind={b.target.kind}>
               <span className="st-sn" aria-hidden="true">
                 {state === 'done' ? <Icon k="check" size={14} /> : i + 1}
               </span>
               <span className="st-st">
-                <b dir="auto">{blockLabel(t, b.target, lang, b.id)}</b>
+                <span className="st-st-h">
+                  <b dir="auto">{blockLabel(t, b.target, lang, b.id)}</b>
+                  <WhyChip target={b.target} lang={lang} />
+                </span>
                 {sub && (
                   <small dir="auto" data-leads-to={b.target.kind === 'strengthen' && leadsTo ? '1' : undefined}>
                     {sub}
@@ -256,9 +279,12 @@ export function WorkoutEditor({
   ctx,
   onCtx,
   leadsTo,
+  subs,
 }: {
   /** SPEC-PATH-ROLE §8: what the strengthen block leads to ("2 more steps and unit C is mastered"). */
   leadsTo?: string | null;
+  /** A block kind's own second line today (the key of the week, the teacher …). */
+  subs?: Partial<Record<string, string>>;
   t: Strings;
   lang: Lang;
   blocks: Block[];
@@ -274,7 +300,9 @@ export function WorkoutEditor({
   onCtx?: (c: { nomic: boolean; quiet: boolean; noinst: boolean }) => void;
 }) {
   const tx = W[lang];
-  const courseAreas = COURSE_AREAS[useCourse().active];
+  const activeCourse = useCourse().active;
+  const courseAreas = COURSE_AREAS[activeCourse];
+  const instrumentCourse = activeCourse === 'keys' || activeCourse === 'guitar' || activeCourse === 'bass' || activeCourse === 'drums';
   const [bs, setBs] = useState<Block[]>(initial);
   const [undo, setUndo] = useState<{ prev: Block[]; text: string } | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
@@ -336,7 +364,7 @@ export function WorkoutEditor({
       <h2 className="st-sec-h">{sx.duration}</h2>
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">
-          {[5, 10, 15, 20, 30, 45, 60].map((n) => (
+          {[5, 10, 15, 20, 30, 45, 60, 90, 120, 180].map((n) => (
             <button key={n} className={`chip ${T === n ? 'on' : ''}`} onClick={() => setTotal(n)} dir="ltr">
               {n}′
             </button>
@@ -382,10 +410,13 @@ export function WorkoutEditor({
               </span>
               <span className="wk-name">
                 <b>{blockLabel(t, b.target, lang, b.id)}</b>
+                <span className="wk-why-row">
+                  <WhyChip target={b.target} lang={lang} />
+                </span>
                 {path !== null && <small dir="auto">{path > 0 ? fill(tx.pathSteps, { n: path }) : tx.free}</small>}
-                {path === null && tx.blockSub[b.target.kind] && (
+                {path === null && subOf(tx, b.target, leadsTo, subs) && (
                   <small dir="auto" data-leads-to={b.target.kind === 'strengthen' && leadsTo ? '1' : undefined}>
-                    {b.target.kind === 'strengthen' && leadsTo ? leadsTo : tx.blockSub[b.target.kind]}
+                    {subOf(tx, b.target, leadsTo, subs)}
                   </small>
                 )}
               </span>
@@ -497,7 +528,7 @@ export function WorkoutEditor({
             <h2>{tx.add}</h2>
             <h3 className="intake-sub">{tx.suggested}</h3>
             <div className="intake-chips">
-              {[...addOptions.suggested.slice(0, 6), { kind: 'path' } as BlockTarget, { kind: 'strengthen' } as BlockTarget, { kind: 'warmup' } as BlockTarget, { kind: 'practice' } as BlockTarget, { kind: 'mistakes' } as BlockTarget].map((x, i) => (
+              {[...addOptions.suggested.slice(0, 6), { kind: 'path' } as BlockTarget, ...(instrumentCourse ? [{ kind: 'keys' } as BlockTarget, { kind: 'improv', mode: activeCourse === 'drums' ? 'grooves' : 'improv' } as BlockTarget] : [{ kind: 'strengthen' } as BlockTarget]), { kind: 'warmup' } as BlockTarget, { kind: 'practice' } as BlockTarget, { kind: 'mistakes' } as BlockTarget].map((x, i) => (
                 <button key={i} className="chip" onClick={() => (change(add(bs, x, 3)), setAdding(false))}>
                   {blockLabel(t, x, lang)}
                 </button>
@@ -531,7 +562,7 @@ export function WorkoutEditor({
 }
 
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen }: { t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs }: { /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -578,6 +609,12 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
     <main className="wk-run" style={{ ['--hue' as string]: hueOf(b.target) }}>
       <BlockBar blocks={run.blocks} run={run} />
       <h1>{blockLabel(t, b.target, lang, b.id)}</h1>
+      {(subs?.[b.target.kind] || whyOf(b.target)) && (
+        <p className="wk-run-sub" dir="auto">
+          <WhyChip target={b.target} lang={lang} />
+          {subs?.[b.target.kind] && <span>{subs[b.target.kind]}</span>}
+        </p>
+      )}
       <p className="wk-timer" dir="ltr">
         {mm}:{String(ss).padStart(2, '0')}
       </p>

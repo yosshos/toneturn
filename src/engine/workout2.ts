@@ -22,7 +22,18 @@ export type BlockTarget =
   | { kind: 'mistakes' }
   /** SPEC-PATH-ROLE §3: depth on what is already opened — technique weak keys first and the tempo ladder
    *  (planWithFocus), the weakest opened ear / theory steps. */
-  | { kind: 'strengthen' };
+  | { kind: 'strengthen' }
+  /** BUILD-PLAN phase 2 (D2, D3): the technique share of an instrument course — on the piano today's cells of the key ×
+   *  exercise matrix (half from the key of the week, the rest weakest first, maintenance inside); elsewhere the opened
+   *  levels' drills, weak keys first (as 'strengthen'). */
+  | { kind: 'keys' }
+  /** D2: the 30 % beside technique — improvisation in the key of the week; a classical emphasis plays repertoire (the
+   *  pieces coach); drums play grooves, fills and trading. */
+  | { kind: 'improv'; mode?: ImprovMode }
+  /** SPEC-PATH-TODAY-PRACTICE §5.1: the class assignments, first and added to the workout (never replacing it). */
+  | { kind: 'teacher'; ids?: string[] };
+
+export type ImprovMode = 'improv' | 'repertoire' | 'grooves';
 
 export interface Block {
   id: string;
@@ -31,7 +42,8 @@ export interface Block {
   locked?: boolean;
 }
 
-export const LIMITS = { minTotal: 5, maxTotal: 60, minBlock: 2, maxBlock: 30, maxBlocks: 12 };
+// BUILD-PLAN phase 2: a window up to 180 minutes for serious musicians (SPEC-DAILY-WORKOUT §4); a block up to 90.
+export const LIMITS = { minTotal: 5, maxTotal: 180, minBlock: 2, maxBlock: 90, maxBlocks: 12 };
 /** Minutes a path step takes, a checkpoint (§9.2). */
 export const STEP_MIN = 1.5;
 export const CHECK_MIN = 2;
@@ -75,6 +87,12 @@ export interface SuggestInput {
   /** SPEC-JAZZ-FOLD: the course's jazz pack — closed, open, or in jazz focus (the game rotation follows). */
   jazz?: 'off' | 'on' | 'focus';
   day?: string;
+  /** BUILD-PLAN phase 2 (D2): the player's technique tier (a beginner, tier ≤ 1, splits 85/15 instead of 70/30). */
+  techTier?: number;
+  /** The instrument's emphasis: classical turns the improvisation share into repertoire. */
+  emphasis?: 'both' | 'classical' | 'jazz';
+  /** SPEC-PATH-TODAY-PRACTICE §5.1: today's share of the open class assignments (teacherToday), added first. */
+  teacher?: TeacherToday | null;
 }
 
 /**
@@ -178,6 +196,14 @@ export function validateTemplate(bs: Block[], ok: { leaveOut: DomainId[]; topics
 }
 
 export function suggestWorkout(inp: SuggestInput): Block[] {
+  // §5.1: the teacher's section is added before the rest; the rest keeps the window less what the teacher takes inside
+  // it (an "all today" assignment that doesn't fit extends today's window instead).
+  const tp = inp.teacher && inp.teacher.minutes > 0 ? inp.teacher : null;
+  if (tp) return withTeacher(suggestRest({ ...inp, total: Math.max(LIMITS.minTotal, inp.total - (tp.minutes - tp.extend)) }), tp);
+  return suggestRest(inp);
+}
+
+function suggestRest(inp: SuggestInput): Block[] {
   const out = withLicks(inp, suggestBase(inp));
   if (!inp.piecesDue || inp.template?.length || total(out) < 10) return out;
   // The piece review (part of the review share, SPEC-PATH-ROLE §3): a short block (weak bars, then one full run at
@@ -221,6 +247,8 @@ function suggestBase(inp: SuggestInput): Block[] {
       left -= m;
     }
   };
+  // BUILD-PLAN D2: an instrument course with technique in the workout — the path, then technique / improvisation.
+  if (inp.technique) return suggestInstrument(inp, T, push, out);
   // SPEC-PATH-ROLE §3: new (the path) ~22 %, strengthen (opened items: weak keys, the tempo ladder, weak ear
   // sub-skills) ~48 %, review (spaced reviews, licks / pieces, a game) ~30 %. A new player with nothing opened: the
   // path takes the strengthen share too. "I choose" (§6 Q3): no New block — strengthen + review.
@@ -245,13 +273,154 @@ function suggestBase(inp: SuggestInput): Block[] {
   if (game) push({ kind: 'game', game: workoutGame(inp.course, inp.day, inp.jazz) }, game);
   return out;
 }
+/** BUILD-PLAN D2: about 20 % to new material from the path, the rest technique / improvisation 70/30 (a beginner 85/15). */
+export const DAY_SHARES = { path: 0.2, tech: 0.7, techBeginner: 0.85, maintenance: 0.15 };
+
+/** The improvisation share's content by course and emphasis (D2; BUILD-PLAN §2 for drums). */
+export const improvMode = (course?: CourseId, emphasis?: SuggestInput['emphasis']): ImprovMode => (course === 'drums' ? 'grooves' : emphasis === 'classical' ? 'repertoire' : 'improv');
+
+/**
+ * D2 for an instrument course: review (spaced reviews due, maintenance out of the technique share) → the path (~20 %)
+ * → technique (the matrix on the piano) → improvisation (or repertoire / grooves). Lick, phrase and piece reviews are
+ * added later from the largest block (the technique one), so they also live inside the technique share. A new player
+ * with nothing opened: the path takes the technique share (SPEC-PATH-ROLE §3); "I choose": no path block.
+ */
+function suggestInstrument(inp: SuggestInput, T: number, push: (t: BlockTarget, m: number) => void, out: Block[]): Block[] {
+  const min = LIMITS.minBlock;
+  const choose = inp.pathMode === 'choose';
+  const opened = inp.opened ?? openedCount(inp.view);
+  let path = choose ? 0 : Math.max(min, Math.round(T * DAY_SHARES.path));
+  if (T - path < min) path = T;
+  const rest = T - path;
+  const share = (inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech;
+  let tech = Math.round(rest * share);
+  let imp = rest - tech;
+  if (imp < min) {
+    tech += imp;
+    imp = 0;
+  }
+  if (tech > 0 && tech < min) {
+    imp += tech;
+    tech = 0;
+  }
+  if (opened === 0 && !choose) {
+    path += tech;
+    tech = 0;
+  }
+  // Maintenance (D2: inside the technique share): the spaced reviews due open the workout.
+  let review = 0;
+  if (inp.reviewsDue > 0) {
+    const from = tech > 0 ? 'tech' : 'path';
+    const pool = from === 'tech' ? tech : path;
+    if (pool >= 2 * min + 1) {
+      review = Math.max(min, Math.round(pool * DAY_SHARES.maintenance));
+      if (from === 'tech') tech -= review;
+      else path -= review;
+    }
+  }
+  if (review) push({ kind: 'warmup' }, review);
+  if (path) push({ kind: 'path' }, path);
+  if (tech) push({ kind: 'keys' }, tech);
+  if (imp) push({ kind: 'improv', mode: improvMode(inp.course, inp.emphasis) }, imp);
+  return out;
+}
+
+// ---------------------------------------------------------------- why today (SPEC-PATH-TODAY-PRACTICE §2, §3.4)
+
+export type Why = 'path' | 'teacher' | 'strengthen' | 'review' | 'week';
+export const WHY_WORD: Record<Why, { en: string; he: string }> = {
+  path: { en: 'New from the path', he: 'חדש מהמסלול' },
+  teacher: { en: 'From your teacher', he: 'מהמורה' },
+  strengthen: { en: 'Needs strengthening', he: 'צריך חיזוק' },
+  review: { en: 'Review', he: 'חזרה' },
+  week: { en: 'Key of the week', he: 'סולם השבוע' },
+};
+/** Why a block is in today's workout (null: no reason chip — a game, the vocal warm-up, off-app practice). */
+export function whyOf(t: BlockTarget): Why | null {
+  switch (t.kind) {
+    case 'path':
+      return 'path';
+    case 'teacher':
+      return 'teacher';
+    case 'warmup':
+    case 'mistakes':
+      return 'review';
+    case 'game':
+      return t.game === 'licks' || t.game === 'encore' || t.game === 'pieces' ? 'review' : null;
+    case 'keys':
+    case 'strengthen':
+    case 'area':
+    case 'skill':
+    case 'topic':
+      return 'strengthen';
+    case 'improv':
+      return (t.mode ?? 'improv') === 'improv' ? 'week' : null;
+    default:
+      return null;
+  }
+}
+
+// ---------------------------------------------------------------- the teacher's section (SPEC-PATH-TODAY-PRACTICE §5.1)
+
+/** An open class assignment as the workout sees it. */
+export interface TeacherItem {
+  id: string;
+  dueOn: string | null;
+  /** The work it asks for in minutes (default ASSIGN_MIN: one lesson). */
+  minutes?: number;
+  /** §5.1 (owner): when it doesn't fit today's window — spread until the due date (default) or all today. */
+  ifShort?: 'spread' | 'today';
+}
+export interface TeacherToday {
+  /** The teacher block's minutes today. */
+  minutes: number;
+  /** Minutes today's window grows by ("all today" assignments that don't fit). */
+  extend: number;
+  /** The assignments served today, the earliest due first. */
+  ids: string[];
+}
+/** Minutes one assignment takes when the teacher didn't say (a lesson or a short exercise set). */
+export const ASSIGN_MIN = 5;
+
+const dayNo = (d: string) => Math.floor(Date.parse(`${d}T12:00:00Z`) / 86400000);
+
+/**
+ * Today's share of the open assignments. They fit inside the window when they take at most half of it (the rest of the
+ * workout always stays). Otherwise each assignment's option decides: spread until the due date (its work over the days
+ * left, the default) or all today (its whole work, and the window grows by what doesn't fit).
+ */
+export function teacherToday(items: TeacherItem[], day: string, window: number): TeacherToday | null {
+  const open = [...items].sort((a, b) => (a.dueOn ?? '9999').localeCompare(b.dueOn ?? '9999'));
+  if (!open.length) return null;
+  const room = Math.floor(Math.max(LIMITS.minTotal, window) / 2);
+  const work = (a: TeacherItem) => Math.max(1, Math.round(a.minutes ?? ASSIGN_MIN));
+  const need = open.reduce((n, a) => n + work(a), 0);
+  if (need <= room) return { minutes: Math.min(LIMITS.maxBlock, Math.max(LIMITS.minBlock, need)), extend: 0, ids: open.map((a) => a.id) };
+  const today = open.filter((a) => a.ifShort === 'today');
+  const spread = open.filter((a) => a.ifShort !== 'today');
+  const todayMin = today.reduce((n, a) => n + work(a), 0);
+  const daysLeft = (a: TeacherItem) => (a.dueOn ? Math.max(1, dayNo(a.dueOn) - dayNo(day) + 1) : 1);
+  let spreadMin = spread.reduce((n, a) => n + Math.ceil(work(a) / daysLeft(a)), 0);
+  // spread work never grows the window: it fits in what the "all today" ones leave of the room
+  if (spread.length) spreadMin = Math.max(LIMITS.minBlock, Math.min(spreadMin, room - todayMin));
+  const minutes = Math.min(LIMITS.maxBlock, Math.max(LIMITS.minBlock, todayMin + spreadMin));
+  return { minutes, extend: Math.max(0, minutes - room), ids: open.map((a) => a.id) };
+}
+
+/** The teacher's block first, added (an existing one — today's edits — keeps its place and minutes). */
+export function withTeacher(bs: Block[], tp: TeacherToday | null): Block[] {
+  if (!tp || tp.minutes <= 0) return bs.filter((b) => b.target.kind !== 'teacher');
+  if (bs.some((b) => b.target.kind === 'teacher')) return bs.map((b) => (b.target.kind === 'teacher' ? { ...b, target: { kind: 'teacher' as const, ids: tp.ids } } : b));
+  return [{ id: uid(bs, 'teacher'), target: { kind: 'teacher', ids: tp.ids }, minutes: Math.max(LIMITS.minBlock, Math.min(LIMITS.maxBlock, tp.minutes)) }, ...bs];
+}
+
 // ---------------------------------------------------------------- editing (§4)
 
-/** W5: can the blocks take this total? (locked minutes must fit, every unlocked block keeps ≥ 2). */
+/** W5: can the blocks take this total? (locked minutes must fit, every unlocked block keeps 2 to LIMITS.maxBlock). */
 export function canRescale(bs: Block[], newTotal: number): boolean {
   const locked = total(bs.filter((b) => b.locked));
   const free = bs.filter((b) => !b.locked).length;
-  return newTotal >= LIMITS.minTotal && newTotal <= LIMITS.maxTotal && newTotal - locked >= free * LIMITS.minBlock;
+  return newTotal >= LIMITS.minTotal && newTotal <= LIMITS.maxTotal && newTotal - locked >= free * LIMITS.minBlock && newTotal - locked <= free * LIMITS.maxBlock;
 }
 
 /** Scale the unlocked blocks to a new total (locked keep their minutes; each ≥ 2; sums exactly; largest remainder). */
@@ -275,6 +444,22 @@ export function rescale(bs: Block[], newTotal: number): Block[] {
       diff++;
       i++;
       if (i > order.length - 1) i = order.length - 1;
+    }
+  }
+  // A block over LIMITS.maxBlock passes its excess to the others with room (a long window: 30 → 180 keeps its total).
+  for (let guard = 0; guard < 20; guard++) {
+    let excess = 0;
+    for (const [id, x] of m) if (x > LIMITS.maxBlock) (excess += x - LIMITS.maxBlock), m.set(id, LIMITS.maxBlock);
+    const room = [...m.entries()].filter(([, x]) => x < LIMITS.maxBlock);
+    if (!excess || !room.length) break;
+    for (let i = 0; excess > 0; i = (i + 1) % room.length) {
+      const [id] = room[i];
+      if (m.get(id)! >= LIMITS.maxBlock) {
+        if (room.every(([rid]) => m.get(rid)! >= LIMITS.maxBlock)) break;
+        continue;
+      }
+      m.set(id, m.get(id)! + 1);
+      excess--;
     }
   }
   return bs.map((b) => (b.locked ? { ...b } : { ...b, minutes: Math.min(LIMITS.maxBlock, m.get(b.id)!) }));
@@ -383,7 +568,7 @@ export function nextForBlock(b: Block, view: PathView, done: Set<string>): { ste
     if (t.kind === 'topic') return s.topic === t.topic;
     return false;
   };
-  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes' || b.target.kind === 'strengthen') return { free: b.target };
+  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes' || b.target.kind === 'strengthen' || b.target.kind === 'keys' || b.target.kind === 'improv' || b.target.kind === 'teacher') return { free: b.target };
   // SPEC-PATH-ROLE §3: a unit waiting for its checkpoint — the checkpoint takes the New block (the most recent first).
   if (b.target.kind === 'path') {
     const pend = pendingChecks(view).filter((p) => !done.has(p.step.step.id));
@@ -453,6 +638,22 @@ export function addSession(r: WorkoutRun, ms: number, items: number, right: numb
   const cur = r.items[b.id] ?? [0, 0];
   const next: WorkoutRun = { ...r, used: { ...r.used, [b.id]: (r.used[b.id] ?? 0) + active }, items: { ...r.items, [b.id]: [cur[0] + items, cur[1] + right] }, steps: stepId ? [...r.steps, stepId] : r.steps };
   return blockLeftMs(next) <= 0 ? nextBlock(next) : next;
+}
+/**
+ * SPEC-PATH-TODAY-PRACTICE §3.4 (counting from anywhere): active time on today's plan done outside the run (from
+ * Practice) goes to its block — the block in progress moves on when its time is used.
+ */
+export function creditBlock(r: WorkoutRun, blockId: string, ms: number): WorkoutRun {
+  const i = r.blocks.findIndex((b) => b.id === blockId);
+  if (i < 0 || r.finished || ms <= 0) return r;
+  const next: WorkoutRun = { ...r, used: { ...r.used, [blockId]: (r.used[blockId] ?? 0) + ms } };
+  return i === r.at && blockLeftMs(next) <= 0 ? nextBlock(next) : next;
+}
+/** The technique block today's matrix cells count toward: the first one not run out (from the block in progress on). */
+export function techBlockOf(r: { blocks: Block[]; at: number; used: Record<string, number> }): Block | null {
+  const ks = r.blocks.map((b, i) => ({ b, i })).filter((x) => x.b.target.kind === 'keys');
+  const left = (x: { b: Block }) => x.b.minutes * 60000 - (r.used[x.b.id] ?? 0) > 0;
+  return (ks.find((x) => x.i >= r.at && left(x)) ?? ks.find(left) ?? null)?.b ?? null;
 }
 export const nextBlock = (r: WorkoutRun): WorkoutRun => (r.at + 1 >= r.blocks.length ? { ...r, at: r.blocks.length, finished: true } : { ...r, at: r.at + 1 });
 export const extendBlock = (r: WorkoutRun, min = 2): WorkoutRun => ({ ...r, blocks: r.blocks.map((b, i) => (i === r.at ? { ...b, minutes: b.minutes + min } : b)) });

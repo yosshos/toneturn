@@ -124,8 +124,11 @@ import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
 import { defaultChannel } from '../engine/drills/channel';
-import { fillMinutes, keyMatrix, matrixOrder, matrixSummary, projectionDays, type MatrixView } from '../engine/drills/keyMatrix';
-import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
+import { planFamily, weekKeyFromMatrix } from '../engine/drills/todayPlan';
+import { keptWeekKey, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
+import { coolingDown, withCeiling } from '../engine/drills/itemStatus';
+import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
@@ -291,14 +294,39 @@ export interface DrillsProps {
   onVoice?: () => void;
   /** My pieces — learn a whole piece from a score (SPEC-PIECE). */
   onPieces?: () => void;
+  /**
+   * BUILD-PLAN phase 2 ("one today"): today's technique block — its minutes, the minutes left in it, the local day.
+   * The technique screen's "part of today's workout" runs the same cells as the workout's block.
+   */
+  today?: { minutes: number; left: number; day: string };
+  /** Open straight in today's technique run (the workout's technique block); its end calls onQueueDone. */
+  startToday?: boolean;
+  /** An item's state changed without a take (the coach's "ceiling for now" after a plateau, BUILD-PLAN §0.2). */
+  onItem?: (state: ItemState) => void;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
-  const [view, setView] = useState<View>(startTest ? (ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' }) : queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : songs ? { k: 'songs' } : { k: 'hub' });
+  /** Today's technique run (one source for the workout block and the technique screen's button). */
+  const todayView = (tt: TodayTech | null, from: View): View | null =>
+    tt && tt.plan.length && today ? { k: 'run', queue: [], i: 0, from, coach: planFamily(tt.plan, { en: "Today's technique", he: 'הטכניקה של היום' }), ladder: true, today: { at: tt.at, minutes: today.left >= 2 ? Math.round(today.left) : today.minutes } } : null;
+  const [view, setView] = useState<View>(() =>
+    startTest
+      ? ds.instrument === 'drums' && !settings.drumKit?.done
+        ? { k: 'kit' }
+        : { k: 'test' }
+      : startToday && today
+        ? (todayView(todayTech({ settings, ds, items, minutes: today.minutes, day: today.day }), { k: 'hub' }) ?? (queue?.length ? { k: 'run', queue, i: 0, from: { k: 'hub' } } : { k: 'hub' }))
+        : queue?.length
+          ? { k: 'run', queue, i: 0, from: { k: 'hub' } }
+          : songs
+            ? { k: 'songs' }
+            : { k: 'hub' },
+  );
+
   // A 5- / 6-string or drop-D bass (Settings → tuning): the bass-course drills are placed on that neck.
   // B12 (0.64): the bass has its own tuning setting (Settings → bassTuning), apart from the guitar's.
   const bassTuning = bassTuningOf(settings);
@@ -325,11 +353,27 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const keyMatrixSum = useMemo(() => {
     // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
     if ((ds.instrument ?? 'piano') !== 'piano' || !(pView === 'key' || view.k === 'keypage')) return null;
-    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz' });
+    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz', ...(today ? { day: today.day } : {}) });
     const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
-  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, pView, view.k]);
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, pView, view.k, today?.day]);
+  // The order of the rest of today's cells (the player's view, remembered): one plan with the workout's block.
+  const [mv, setMvState] = useState<MatrixView>(readMatrixView);
+  const setMv = (v: MatrixView) => (saveMatrixView(v), setMvState(v));
+  const todayPlan = useMemo(
+    () => (keyMatrixSum && today ? todayTech({ settings, ds, items, minutes: today.minutes, day: today.day, cells: keyMatrixSum.cellsList }) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [keyMatrixSum, today?.minutes, today?.day, mv],
+  );
+  /** Today's items (the marks in the key grid and on the key page). */
+  const todayMarks = useMemo(() => {
+    if (!todayPlan) return null;
+    const byKey = new Map<string, number>();
+    for (const p of todayPlan.plan) byKey.set(`${p.cell.group}-${p.cell.root}`, (byKey.get(`${p.cell.group}-${p.cell.root}`) ?? 0) + 1);
+    const ids = new Set(todayPlan.plan.flatMap((p) => p.cell.level.specs.flatMap((_, k) => specDrills(p.cell.level, k, ds.keyOrder).map((d) => d.itemId))));
+    return { byKey, ids };
+  }, [todayPlan, ds.keyOrder]);
   const keyIdx = useMemo(
     () => (ds.instrument === 'drums' || (pView !== 'key' && view.k !== 'keypage') ? null : buildKeyIndex(shownFamilies({ ...ds, bassTuning }), ds.keyOrder)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -350,11 +394,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'run')
     return (
       <main className="drills-screen" data-drills="run">
-        {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length ? onBack() : setView(view.from)))}
+        {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length || (startToday && view.today) ? onBack() : setView(view.from)))}
         <DrillRun
-          key={view.coach ? `coach:${view.coach.id}` : 'run'}
+          key={view.coach ? `coach:${view.coach.id}:${view.today ? 'today' : ''}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}) } : undefined}
+          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}), ...(view.today ? { walk: true, resumeAt: view.today.at, minutes: view.today.minutes } : {}) } : undefined}
+          onCoachStep={view.today && today ? (step) => setPlanAt(today.day, step) : undefined}
+          onItem={onItem}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}
           onIndex={setRunIdx}
@@ -370,7 +416,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           items={items}
           atTarget={atTarget}
           onTake={onTake}
-          onEnd={(takes, clean) => (onQueueDone && queue?.length ? onQueueDone(takes, clean) : setView(view.from))}
+          onEnd={(takes, clean) => (onQueueDone && (queue?.length || (startToday && view.today)) ? onQueueDone(takes, clean) : setView(view.from))}
           own={settings.ownFingering}
           onOwn={(ownFingering) => (onSettings({ ownFingering }), void syncOwnFingering(ownFingering))}
         />
@@ -480,7 +526,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
-        <KeyPage matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
+        <KeyPage today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
       </main>
     );
   if (view.k === 'family')
@@ -523,22 +569,22 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       pView={pView}
       onPView={setPView}
       keyGrid={
-        keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
+        keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} today={todayPlan ? { plan: todayPlan.plan, view: mv, onView: setMv, byKey: todayMarks?.byKey } : undefined} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds, keyMatrixSum?.cellsList)} onWeek={(root, g) => {
           const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
-        }} onToday={(mv: MatrixView) => {
-          if (!keyMatrixSum) return;
-          // today's technique share (SPEC-DAILY-WORKOUT §4: about 70 %) of the player's minutes, in the chosen view
-          const cells = fillMinutes(matrixOrder(keyMatrixSum.cellsList, mv), Math.round(keyMatrixSum.perDay * 0.7));
-          if (!cells.length) return;
-          const fam = { id: 'scales' as const, title: { en: "Today's key workout", he: 'האימון של היום בסולמות' }, style: 'both' as const, levels: cells.map((c, k) => ({ ...c.level, level: k + 1 })) };
-          setView({ k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: fam, ladder: true });
+        }} onToday={() => {
+          // BUILD-PLAN phase 2: the same cells as today's workout technique block (one plan), resumed where it stopped;
+          // the takes count toward today's workout (App: counting from anywhere)
+          const v = todayView(todayPlan, { k: 'hub' });
+          if (v) setView(v);
         }} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
       }
     />
   );
 }
 
+/** The local day ('YYYY-MM-DD'). */
+const localDayOf = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const lsGet = (k: string): string | null => {
   try {
     return localStorage.getItem(k);
@@ -553,15 +599,14 @@ const lsSet = (k: string, v: string) => {
     /* fine */
   }
 };
-/** The key of the week for this instrument and tab: picked once a week and kept on this device. */
-function weekKey(idx: KeyIndex, g: FacetGroup, items: Record<string, ItemState>, ds: DrillSettings): number | null {
-  const week = weekOf();
-  const tag = `${week}|${ds.instrument ?? 'piano'}|${g}`;
-  const kept = lsGet('toneturn.weekKey');
-  if (kept?.startsWith(tag + '|')) return Number(kept.split('|')[3]);
-  const r = pickWeekKey(idx, g, items, keysInOrder(ds.keyOrder, g === 'minor'));
-  if (r !== null) lsSet('toneturn.weekKey', `${tag}|${r}`);
-  return r;
+/**
+ * The key of the week for this instrument and tab: picked once a week and kept on this device (todayTech.ts — the
+ * workout's technique block reads the same value). On the piano's major / minor tabs it comes from the matrix (BUILD-PLAN
+ * §0.2: one per-key model); other tabs and instruments keep the key index's measure.
+ */
+function weekKey(idx: KeyIndex, g: FacetGroup, items: Record<string, ItemState>, ds: DrillSettings, cells?: MatrixCell[]): number | null {
+  const order = keysInOrder(ds.keyOrder, g === 'minor');
+  return keptWeekKey(g, ds.instrument ?? 'piano', () => (cells && (g === 'major' || g === 'minor') ? weekKeyFromMatrix(cells, g, order) : pickWeekKey(idx, g, items, order)));
 }
 /** "C major" / "C minor" / "C: melodic & harmonic minor modes" / "C: symmetric". */
 function keyPageTitle(root: number, g: FacetGroup, lang: Lang): string {
@@ -1076,7 +1121,7 @@ const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some(
 const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
 const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
 
-function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, coachBg, onKeyOrder, onTitle }: { /** The order of keys in a topic session (owner 2026-11-21: chromatic, or the circle of fifths up / down). */ onKeyOrder?: (o: KeyOrder) => void; /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
+function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach, coachBg, onKeyOrder, onTitle, onCoachStep, onItem }: { /** The coach moved to a step (today's plan keeps it: resume at the cell). */ onCoachStep?: (step: number) => void; /** An item changed without a take (the plateau's ceiling). */ onItem?: (st: ItemState) => void; /** The order of keys in a topic session (owner 2026-11-21: chromatic, or the circle of fifths up / down). */ onKeyOrder?: (o: KeyOrder) => void; /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
   const [i, setI] = useState(start);
@@ -1271,6 +1316,16 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     const after = { ...items, ...local.current };
     const nx = coachAfter(coach, coachRef.current, { ...cTake, stage }, m, after, ds.keyOrder, Date.now(), freeOk);
     coachRef.current = nx.state;
+    onCoachStep?.(nx.state.step);
+    // The limit rule fired (BUILD-PLAN §0.2): "a ceiling for now" on the item — the matrix rests it for a few days.
+    if (nx.ceiling) {
+      const cur = after[nx.ceiling.itemId];
+      if (cur && !coolingDown(cur, localDayOf())) {
+        const ns = withCeiling(cur, nx.ceiling.bpm, localDayOf());
+        local.current[ns.itemId] = ns;
+        onItem?.(ns);
+      }
+    }
     setCLine({ line: nx.line, end: nx.end, clean: m.verdict === 'clean' });
     if (nx.end) return;
     cSpeech.current?.abort();

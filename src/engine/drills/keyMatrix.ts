@@ -8,7 +8,7 @@ import type { FamilyDef, LevelDef } from './generate';
 import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
 import { openKeyRungs, type LadderRung } from './keyIndex';
-import { itemStatus } from './itemStatus';
+import { coolingDown, itemStatus } from './itemStatus';
 
 export type MatrixGroup = 'major' | 'minor';
 export type MatrixView = 'weak' | 'key' | 'exercise';
@@ -22,7 +22,8 @@ export interface MatrixCell {
   /** Teaching order inside the key (the warm-up is −1). */
   i: number;
   level: LevelDef;
-  need: { s: 0 | 1 | 2; share: number; last: string };
+  /** `cool`: every open item of the cell rests after a plateau (BUILD-PLAN §0.2) — skipped by the views and the projection. */
+  need: { s: 0 | 1 | 2; share: number; last: string; cool?: boolean };
   /** Estimated minutes to work the cell now (to its target or the player's limit). */
   minutes: number;
 }
@@ -99,19 +100,31 @@ function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; gr
 }
 
 /** How much a cell needs work (as rungNeed), from its precomputed items. */
-function needOf(ds: CellDrill[], items: Record<string, ItemState>): MatrixCell['need'] {
+function needOf(ds: CellDrill[], items: Record<string, ItemState>, day: string): MatrixCell['need'] {
   const sts = ds.map((d) => items[d.itemId]).filter((x): x is ItemState => !!x && x.takes > 0);
   if (!sts.length) return { s: 0, share: 0, last: '' };
   const share = Math.min(...ds.map((d) => (items[d.itemId]?.cleanBpm ?? 0) / Math.max(1, d.target)));
   const last = sts.map((x) => x.last ?? '').sort()[0] ?? '';
   // closed = every item closed by the one rule (BUILD-PLAN D1: 3 clean takes at ≥ 95 % of target on 2 days)
-  const closed = ds.every((d) => itemStatus(items[d.itemId], d.startBpm, d.target) === 'closed');
-  return { s: closed ? 2 : 1, share, last };
+  const open = ds.filter((d) => itemStatus(items[d.itemId], d.startBpm, d.target) !== 'closed');
+  // the plateau (BUILD-PLAN §0.2): every open item rests after the coach's limit rule
+  const cool = open.length > 0 && open.every((d) => coolingDown(items[d.itemId], day));
+  return { s: open.length ? 1 : 2, share, last, ...(cool ? { cool } : {}) };
 }
 
-export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[] } = {}): MatrixCell[] {
-  return matrixShape(fams, tier, opts).map(({ drills, ...c }) => ({ ...c, need: needOf(drills, items), minutes: minutesOf(drills, items) }));
+/** The local day ('YYYY-MM-DD'). */
+const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[]; /** The local day for the cooldowns (default today). */ day?: string } = {}): MatrixCell[] {
+  const day = opts.day ?? today();
+  return matrixShape(fams, tier, opts).map(({ drills, ...c }) => ({ ...c, need: needOf(drills, items, day), minutes: minutesOf(drills, items) }));
 }
+
+/** A cell's identity across days and builds: group, key and rung. */
+export const cellKey = (c: Pick<MatrixCell, 'group' | 'root' | 'rung'>): string => `${c.group}:${c.root}:${c.rung}`;
+
+/** The item ids of a cell (every spec of its level in its key). */
+export const cellItemIds = (c: Pick<MatrixCell, 'level'>): string[] => [...new Set(cellDrills(c.level).map((d) => d.itemId))];
 
 const needCmp = (a: MatrixCell, b: MatrixCell): number => a.need.s - b.need.s || a.need.share - b.need.share || a.need.last.localeCompare(b.need.last);
 
@@ -122,7 +135,8 @@ const needCmp = (a: MatrixCell, b: MatrixCell): number => a.need.s - b.need.s ||
  * - exercise: one exercise through the keys, interleaved — three keys of an exercise, then the next exercise, and so on.
  */
 export function matrixOrder(cells: MatrixCell[], view: MatrixView, keyOrder: number[] = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]): MatrixCell[] {
-  const open = cells.filter((c) => c.need.s < 2);
+  // cells resting after a plateau are left out (BUILD-PLAN §0.2); a by-key visit (the key page) still reaches them
+  const open = cells.filter((c) => c.need.s < 2 && !c.need.cool);
   const closed = cells.filter((c) => c.need.s === 2);
   const kpos = (c: MatrixCell) => (c.group === 'minor' ? 12 : 0) + keyOrder.indexOf(c.root);
   if (view === 'weak') return [...open.sort((a, b) => needCmp(a, b) || kpos(a) - kpos(b) || a.i - b.i), ...closed];
@@ -147,6 +161,7 @@ export function fillMinutes(ordered: MatrixCell[], minutes: number): MatrixCell[
   let m = 0;
   for (const c of ordered) {
     if (c.need.s === 2) break;
+    if (c.need.cool) continue;
     if (out.length && m + c.minutes > minutes) break;
     out.push(c);
     m += c.minutes;
@@ -164,7 +179,8 @@ export interface MatrixSummary {
 }
 
 export function matrixSummary(cells: MatrixCell[]): MatrixSummary {
-  const left = (cs: MatrixCell[]) => cs.filter((c) => c.need.s < 2).reduce((n, c) => n + c.minutes, 0);
+  // the projection ignores cells resting after a plateau (BUILD-PLAN §0.2: so it converges)
+  const left = (cs: MatrixCell[]) => cs.filter((c) => c.need.s < 2 && !c.need.cool).reduce((n, c) => n + c.minutes, 0);
   const byKey = new Map<string, MatrixCell[]>();
   const byRung = new Map<string, MatrixCell[]>();
   for (const c of cells) {

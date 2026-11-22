@@ -85,6 +85,24 @@ test('wide screens: the keys on the circle of fifths', async ({ page }) => {
 
 test('today’s key workout (SPEC-DAILY-WORKOUT): three views, remembered; the button runs the next cells under the coach', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  // BUILD-PLAN phase 2: the button is part of today's workout — a keys course whose workout has a technique block
+  await page.goto('/manifest.webmanifest');
+  await page.evaluate(async () => {
+    const d = new Date();
+    const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const settings = { version: 2, uiLang: 'en', inputLang: 'en', outputLang: 'en', mode: 'buttons', voiceConsent: true, courses: ['ear', 'keys'], activeCourse: 'keys', seenVersion: '9.9.9', workoutToday: { day, blocks: [{ id: 'path-1', target: { kind: 'path' }, minutes: 5 }, { id: 'keys-1', target: { kind: 'keys' }, minutes: 15 }] } };
+    await new Promise((res, rej) => {
+      const r = indexedDB.open('toneturn', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => {
+        const tx = r.result.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(settings, 'settings');
+        tx.oncomplete = res;
+        tx.onerror = rej;
+      };
+      r.onerror = rej;
+    });
+  });
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-practice-view="key"]').click();
   await expect(page.locator('[data-key-today]')).toBeVisible({ timeout: 30_000 });
