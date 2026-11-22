@@ -10,7 +10,8 @@ import { PaperSvg } from './paper/Paper';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch, JazzFocusSwitch } from './CourseSwitcher';
 import { COURSE_GAMES, COURSE_ROWS, courseGames, courseRows } from './courseRows';
-import { MS_TILE } from '../content/mySongText';
+import { lastPlace } from './continuePlace';
+import '../practice3.css';
 export { COURSE_GAMES, COURSE_ROWS, courseRows };
 import type { CourseId } from '../engine/courses';
 import { Icon } from './icons';
@@ -64,7 +65,8 @@ export function buzz(kind: 'good' | 'bad') {
 // ---------------------------------------------------------------------------------------------- tab bar
 
 export type TabId = 'home' | 'path' | 'skills' | 'arcade' | 'friends';
-export const TAB_ROUTES: TabId[] = ['home', 'path', 'arcade', 'skills', 'friends']
+// Phase 3 (SPEC-PATH-TODAY-PRACTICE §1, owner): Today · Practice · Path · Progress.
+export const TAB_ROUTES: TabId[] = ['home', 'arcade', 'path', 'skills', 'friends']
 
 export const TAB_ICONS: Record<TabId, React.ReactNode> = {
   // Today (SPEC-TODAY): a calendar page showing today's date.
@@ -725,8 +727,6 @@ export interface PracticeHub {
   /** SPEC-MY-SONG: practice over your own recording, measured with the course's own machinery. */
   mysong?: () => void;
 }
-/** Owner 2026-11-21: the rows that sit in the folded "More practice" sub-section, not among the big tiles. */
-const MORE_ROWS = ['pieces', 'mysong', 'transcribe'];
 /** Practice-page cards and tools in the Paper language: each hub row → its glyph (a chrome note when a glyph is missing). */
 const HUB_ART: Record<string, string> = {
   repertoire: 'repstep', standards: 'repstep', songs: 'songstrum', drills: 'scales', lessons: 'book', tuner: 'tune', metronome: 'tempo', drone: 'drone',
@@ -765,8 +765,9 @@ const HUB_TX = {
 
 /** The Practice page (SPEC-IA-2, owner 2026-11-09): four groups by what you do — play, train, study — and the tools. */
 export const PRACTICE_GROUPS: { id: 'play' | 'train' | 'study'; name: { en: string; he: string }; items: string[] }[] = [
-  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'standards', 'songs', 'pieces', 'charts', 'mysong'] },
-  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'licks', 'improv', 'transcribe', 'games'] },
+  // Phase 3 (SPEC-PRACTICE-IA-3 §2): the four places; Charts, My pieces, My song and the standards live in Repertoire.
+  { id: 'play', name: { en: 'Play', he: 'לנגן' }, items: ['repertoire', 'improv'] },
+  { id: 'train', name: { en: 'Train', he: 'להתאמן' }, items: ['drills', 'licks', 'games'] },
   { id: 'study', name: { en: 'Study', he: 'ללמוד' }, items: ['lessons', 'exams', 'puzzle'] },
 ];
 /** An instrument course's own words on shared game cards (the shared text is the piano's: Hanon, Barry Harris, MIDI). */
@@ -807,25 +808,29 @@ const CAT_GLYPH: Record<GameCat, GlyphKind> = { ear: 'intervals', rhythm: 'rhyth
 export const COURSE_GAME_CAT: Record<CourseId, GameCat> = { ear: 'ear', voice: 'voice', keys: 'instrument', guitar: 'instrument', bass: 'instrument', drums: 'instrument' };
 const VOICE_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Vocal technique', 'Range, breath, long tones, agility'], he: ['טכניקה קולית', 'מנעד, נשימה, צליל ארוך, גמישות'] },
+  licks: { en: ['Licks', 'Sung lines in 12 keys'], he: ['ליקים', 'קווים מושרים ב־12 סולמות'] },
+  improv: { en: ['Improvise', 'Scat over a progression'], he: ['אלתור', 'סקאט על מהלך'] },
   songs: { en: ['Sing along', 'Real songs in your key, with a guide voice'], he: ['שירה עם שירים', 'שירים אמיתיים בטונליות שלך, עם קול מוביל'] },
 };
 /** The drums course's own words on its rows (DRUMS_AUDIT I10). */
 const DRUMS_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   drills: { en: ['Technique', 'Rudiments, grooves, fills'], he: ['טכניקה', 'רודימנטים, גרובים, מעברים'] },
+  repertoire: { en: ['Repertoire', 'Grooves and songs'], he: ['רפרטואר', 'גרובים ושירים'] },
+  improv: { en: ['Improvise', 'Fills, solos, trading fours'], he: ['אלתור', 'מעברים, סולו, חילופי ארבע'] },
   games: { en: ['Games', 'Rhythm games and the kit Highway'], he: ['משחקים', 'משחקי קצב והייווי למערכת'] },
 };
 /** Technique in an instrument course: the instrument only ("and your voice" is the voice course's). */
 const INSTR_DRILLS_TX: { en: [string, string]; he: [string, string] } = { en: ['Technique', 'Your instrument, level by level — measured'], he: ['טכניקה', 'הכלי שלכם, שלב אחר שלב — במדידה'] };
 const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
-  repertoire: { en: ['Repertoire', 'From simple tunes to standards'], he: ['רפרטואר', 'ממנגינות פשוטות לסטנדרטים'] },
+  repertoire: { en: ['Repertoire', 'Every piece: tunes, standards, my charts, scores and recordings'], he: ['רפרטואר', 'כל היצירות: מנגינות, סטנדרטים, המהלכים, התווים וההקלטות שלי'] },
   // SPEC-JAZZ-FOLD: the old Jazz course's repertoire, an Ear collection while the jazz pack is open.
   standards: { en: ['Jazz standards', 'The blues, ii–V–I and the standards'], he: ['סטנדרטים של ג׳אז', 'בלוז, ii–V–I והסטנדרטים'] },
   songs: { en: ['Songs', 'Play and sing real songs — by the chords you know'], he: ['שירים', 'לנגן ולשיר שירים אמיתיים — לפי האקורדים שאתם מכירים'] },
   pieces: { en: ['My pieces', 'Bring a score; the coach takes you to tempo'], he: ['היצירות שלי', 'מעלים תווים; המאמן מביא אתכם לטמפו'] },
   charts: { en: ['Charts & lead sheets', 'Backing tracks, standards, import a lead sheet'], he: ['מהלכים ודפי אקורדים', 'ליווי, סטנדרטים, ייבוא דף אקורדים'] },
   drills: { en: ['Technique', 'Your instrument and your voice, level by level'], he: ['טכניקה', 'הכלי שלכם והקול שלכם, שלב אחר שלב'] },
-  improv: { en: ['Improvise', 'Under rules, phrasing, trading fours'], he: ['אלתור', 'עם כללים, פרייזינג, חילופי ארבע'] },
-  licks: { en: ['Licks', 'The library, my phrases and challenges — 12 keys'], he: ['ליקים', 'הספרייה, המשפטים שלי ואתגרים — ב־12 סולמות'] },
+  improv: { en: ['Improvise', 'Rules, phrasing, trading fours — over any chart'], he: ['אלתור', 'כללים, פרייזינג, חילופי ארבע — על כל מהלך'] },
+  licks: { en: ['Licks', 'The library, mine, challenges, transcribe — 12 keys'], he: ['ליקים', 'הספרייה, שלי, אתגרים, תמלול — ב־12 סולמות'] },
   transcribe: { en: ['Transcribe', 'Hear it, play it back, write it, 12 keys'], he: ['תמלול', 'לשמוע, לנגן בחזרה, לכתוב, 12 סולמות'] },
   games: { en: ['Games', 'Ear, rhythm and memory games'], he: ['משחקים', 'משחקי שמיעה, קצב וזיכרון'] },
   lessons: { en: ['Lessons', 'Short theory lessons by topic'], he: ['שיעורים', 'שיעורי תיאוריה קצרים לפי נושא'] },
@@ -833,10 +838,9 @@ const ROW_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
   puzzle: { en: ['Progression of the day', 'One daily puzzle to solve and share'], he: ['מהלך היום', 'חידה יומית לפתור ולשתף'] },
 };
 
-/** The My song tile's words per course (SPEC-MY-SONG). */
-const mySongTx = (c: CourseId): { en: [string, string]; he: [string, string] } => {
-  const b = MS_TILE[c === 'drums' ? 'drums' : c === 'ear' ? 'ear' : c === 'voice' ? 'voice' : 'play'];
-  return { en: ['My song', b.en], he: ['השיר שלי', b.he] };
+/** The Ear course's Repertoire is played by ear (SPEC-PRACTICE-IA-3 §8). */
+const EAR_TX: Record<string, { en: [string, string]; he: [string, string] }> = {
+  repertoire: { en: ['Repertoire', 'By ear: tunes, standards, my recordings'], he: ['רפרטואר', 'בשמיעה: מנגינות, סטנדרטים, ההקלטות שלי'] },
 };
 
 /** Each game's note-head symbol and its category colour (0.61, SPEC-REDESIGN: no emoji). */
@@ -895,6 +899,8 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
       /* ignore */
     }
   };
+  // "Continue where I stopped" (continuePlace.ts): read when the page opens.
+  const [last] = useState(() => (hub ? lastPlace() : null));
   const CAT_OF: Record<string, GameCat> = { melody: 'memory', rhythm: 'rhythm', truefalse: 'read', ghost: 'social', duel: 'social', daily: 'social' };
   // "Your level · next" on every game card (GAMES_TIERS_PLAN §2.2); social sets use the course level instead.
   const { mine } = useCourse();
@@ -953,20 +959,31 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
         </>
       )}
       {hub && !games && (
-        <section className="practice-hub v2-tiles" data-practice-hub="1">
-          {/* 0.63 (design board PhonePractice): big colour tiles — the course's own rows, and its games split by kind —
-              then the tools as round buttons. */}
-          <div className="pt-grid">
+        <section className="practice-hub v3-places" data-practice-hub="1">
+          {/* Phase 3 (SPEC-PRACTICE-IA-3 §2, §8): "continue where I stopped", the course's places as the main cards, the
+              games below, the tools as a strip of small icons. */}
+          {last && (
+            <div className="pt-continue" data-continue-place={last.place}>
+              <span className="pt-continue-text">
+                <small>{lang === 'he' ? 'להמשיך מאיפה שעצרתי' : 'Continue where I stopped'}</small>
+                <b dir="auto">{last.title}</b>
+              </span>
+              <button className="btn primary small" onClick={() => (location.hash = last.hash.replace(/^#/, ''))} data-continue-go="1">
+                {lang === 'he' ? 'להמשיך' : 'Continue'}
+              </button>
+            </div>
+          )}
+          <div className="pt-grid pt-places">
             {rows
-              .filter((k) => k !== 'games' && !MORE_ROWS.includes(k) && hub[k as keyof PracticeHub])
+              .filter((k) => k !== 'games' && hub[k as keyof PracticeHub])
               .map((k) => {
-                const tx = (k === 'mysong' ? mySongTx(course) : course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
+                const tx = (course === 'voice' && VOICE_TX[k] ? VOICE_TX[k] : course === 'drums' && DRUMS_TX[k] ? DRUMS_TX[k] : course === 'ear' && EAR_TX[k] ? EAR_TX[k] : course === 'bass' && BASS_TX[k] ? BASS_TX[k] : course === 'keys' && KEYS_TX[k] ? KEYS_TX[k] : k === 'drills' && (course === 'keys' || course === 'guitar' || course === 'bass') ? INSTR_DRILLS_TX : ROW_TX[k])[lang];
                 return (
                   <button
                     key={k}
                     className="pt-tile"
                     style={{ ['--tile' as string]: TILE_COLOR[k] ?? '#A78BFA' }}
-                    onClick={course === 'voice' && k === 'drills' && hub.vocal ? hub.vocal : course === 'voice' && k === 'songs' && hub.singalong ? hub.singalong : (hub[k as keyof PracticeHub] as () => void)}
+                    onClick={course === 'voice' && k === 'drills' && hub.vocal ? hub.vocal : (hub[k as keyof PracticeHub] as () => void)}
                     data-hub={k}
                   >
                     <span className="pt-icon">
@@ -977,62 +994,43 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
                   </button>
                 );
               })}
-            {rows.includes('games') &&
-              // Owner 2026-11-21: one category only (the instrument courses, voice) is the same list as "Games" — one tile.
-              (COURSE_TILE_CATS[course] ?? []).filter((_, __, cats) => cats.length > 1).map((c) => {
-                const gc = GAME_CATS.find((x) => x.id === c)!;
-                return (
-                  <button
-                    key={c}
-                    className="pt-tile"
-                    style={{ ['--tile' as string]: CAT_COLOR[c] }}
-                    onClick={() => {
-                      pickCat(c);
-                      showGames(true);
-                    }}
-                    data-hub-cat={c}
-                  >
-                    <span className="pt-icon">
-                      <Glyph kind={c === 'instrument' && INSTRUMENT_TILE[course] ? INSTRUMENT_TILE[course]! : CAT_GLYPH[c]} color="#FFFFFF" size={44} />
-                    </span>
-                    <b>{gc[lang]}</b>
-                    <small>{lang === 'he' ? 'משחקים ותרגילים' : 'Games and drills'}</small>
-                  </button>
-                );
-              })}
-            {rows.includes('games') && (
-              <button className="pt-tile pt-all" style={{ ['--tile' as string]: '#FFFFFF' }} onClick={() => showGames(true)} data-hub="games">
-                <span className="pt-icon">
-                  <HubIcon k="games" size={34} />
-                </span>
-                <b>{ROW_TX.games[lang][0]}</b>
-                <small>{lang === 'he' ? 'כל המשחקים' : 'All games'}</small>
-              </button>
-            )}
           </div>
-          {/* Owner 2026-11-21: the extra features in a small folded sub-section under the main rows. */}
-          {rows.some((k) => MORE_ROWS.includes(k) && hub[k as keyof PracticeHub]) && (
-            <details className="pt-more" data-hub-group="more">
-              <summary>{lang === 'he' ? 'עוד תרגול' : 'More practice'}</summary>
-              <div className="pt-tool-row">
-                {rows
-                  .filter((k) => MORE_ROWS.includes(k) && hub[k as keyof PracticeHub])
-                  .map((k) => {
-                    const tx = (k === 'mysong' ? mySongTx(course) : ROW_TX[k])[lang];
-                    return (
-                      <button key={k} className="pt-tool" onClick={hub[k as keyof PracticeHub] as () => void} data-hub={k} aria-label={tx[0]} title={tx[1]}>
-                        <HubIcon k={k} size={22} />
-                        <small>{tx[0]}</small>
-                      </button>
-                    );
-                  })}
-              </div>
-            </details>
+          {rows.includes('games') && (
+            <div className="pt-games" data-hub-group="games">
+              <button className="pt-games-card" onClick={() => showGames(true)} data-hub="games">
+                <span className="pt-games-icon" aria-hidden="true">
+                  <HubIcon k="games" size={28} />
+                </span>
+                <span className="pt-games-text">
+                  <b>{(course === 'drums' ? DRUMS_TX.games : ROW_TX.games)[lang][0]}</b>
+                  <small>{(course === 'drums' ? DRUMS_TX.games : ROW_TX.games)[lang][1]}</small>
+                </span>
+                <Icon k="fwd" />
+              </button>
+              {/* A course with several kinds of games (Ear): one small chip per kind, opening the list on it. */}
+              {(COURSE_TILE_CATS[course] ?? []).length > 1 && (
+                <div className="chips pt-game-cats">
+                  {(COURSE_TILE_CATS[course] ?? []).map((c) => (
+                    <button
+                      key={c}
+                      className="chip"
+                      onClick={() => {
+                        pickCat(c);
+                        showGames(true);
+                      }}
+                      data-hub-cat={c}
+                    >
+                      <Glyph kind={c === 'instrument' && INSTRUMENT_TILE[course] ? INSTRUMENT_TILE[course]! : CAT_GLYPH[c]} color={CAT_COLOR[c]} size={20} />
+                      {GAME_CATS.find((x) => x.id === c)![lang]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
-          <section className="pt-tools" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
-            <h2>{HUB_TX.tools[lang]}</h2>
+          <section className="pt-tools pt-strip" aria-label={HUB_TX.tools[lang]} data-hub-group="tools">
             <div className="pt-tool-row">
-              {(['tuner', 'chordfinder', 'chordbuilder', 'metronome', 'drone', 'groove', 'slowdown', 'mixer', 'log'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
+              {(['tuner', 'chordfinder', 'chordbuilder', 'metronome', 'drone', 'groove', 'slowdown', 'mixer'] as const).filter((k) => hub[k] && !(course === 'drums' && (k === 'tuner' || k === 'drone'))).map((k) => (
                 <button key={k} className="pt-tool" onClick={hub[k]} data-hub={k} aria-label={HUB_TX[k][lang]} title={HUB_TX[k][lang]}>
                   <HubIcon k={k} size={22} />
                   <small>{HUB_TX[k][lang]}</small>

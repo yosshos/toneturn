@@ -43,8 +43,10 @@ test('lick trainer: review tab and my licks are empty for a new player; Practice
 });
 
 test('transcription coach: levels, hear (speed, loop), play back — each on one screen', async ({ page }) => {
+  // phase 3: the old address lands on Licks › Transcribe (the graded coach)
   await page.goto('/?sim=1&unlock=all#/transcribe-coach');
   await expect(page.locator('[data-transcribe="levels"]')).toBeVisible();
+  await expect(page.locator('[data-licks-tab="transcribe"][aria-selected="true"]')).toBeVisible();
   await expect(page.locator('[data-tx-open]')).toHaveCount(9); // 9 levels since the solo-phrase-by-ear level
   await noEmoji(page);
   await page.locator('[data-tx-open="1"]').click();

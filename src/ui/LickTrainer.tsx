@@ -27,6 +27,8 @@ import { canComplete, completeStep, LICK_CONCEPTS, LICK_STEPS, loadLickFlows, ne
 import { RULE_NAME } from '../engine/improvRules';
 import { Icon } from './icons';
 import { LicksHead } from './LicksHead';
+import { PlaceSpark } from './PlaceSpark';
+import type { CourseId } from '../engine/courses';
 import { LickShareButton } from './LickShare';
 import { kName } from './encore/bits';
 
@@ -517,7 +519,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   };
   return (
     <main className="panel-screen lk-screen" data-licks="lib">
-      {hub ? <LicksHead lang={lang} section="library" onBack={leave} book={book} /> : head(tx.title, leave)}
+      {hub ? <LicksHead lang={lang} section="library" onBack={leave} book={book} spark={<PlaceSpark place="licks" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />} /> : head(tx.title, leave)}
       <p className="lk-inst">
         <Glyph kind="lick" color="#A78BFA" size={34} /> {tx.insts[inst]}
       </p>

@@ -35,7 +35,7 @@ test('Licks tile: opens with three sections; Mine is the Encore capture; Challen
   await page.locator('[data-hub="licks"]').click();
   const lib = page.locator('[data-licks="lib"]');
   await expect(lib).toBeVisible();
-  await expect(page.locator('[data-licks-tab]')).toHaveCount(3);
+  await expect(page.locator('[data-licks-tab]')).toHaveCount(4); // phase 3: Transcribe joined
   await expect(page.locator('[data-licks-tab="library"][aria-selected="true"]')).toBeVisible();
   await expect(page.locator('[data-lick-card]').first()).toBeVisible();
   // Mine: Encore's home — record / play / write a phrase, my phrases

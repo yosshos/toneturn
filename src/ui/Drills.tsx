@@ -120,6 +120,8 @@ import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
 import { Icon } from './icons';
 import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './PracticeKeys';
+import { PlaceSpark } from './PlaceSpark';
+import type { CourseId } from '../engine/courses';
 import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
@@ -303,11 +305,15 @@ export interface DrillsProps {
   startToday?: boolean;
   /** An item's state changed without a take (the coach's "ceiling for now" after a plateau, BUILD-PLAN §0.2). */
   onItem?: (state: ItemState) => void;
+  /** Phase 3 (SPEC-PATH-TODAY-PRACTICE §3.1): open on a key's page (a piece's key) or a family (a path step's full
+   *  practice); its Back then leaves Technique, back to where it was opened from. */
+  openKey?: number | null;
+  openFamily?: FamilyDef | null;
 }
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
@@ -324,8 +330,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           ? { k: 'run', queue, i: 0, from: { k: 'hub' } }
           : songs
             ? { k: 'songs' }
-            : { k: 'hub' },
+            : typeof openKey === 'number'
+              ? { k: 'keypage', root: ((openKey % 12) + 12) % 12 }
+              : openFamily
+                ? { k: 'family', f: openFamily }
+                : { k: 'hub' },
   );
+  const opened = typeof openKey === 'number' || !!openFamily;
 
   // A 5- / 6-string or drop-D bass (Settings → tuning): the bass-course drills are placed on that neck.
   // B12 (0.64): the bass has its own tuning setting (Settings → bassTuning), apart from the guitar's.
@@ -380,12 +391,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     [JSON.stringify(ds), bassTuning, pView, view.k === 'keypage'],
   );
   useEffect(() => (setRunIdx(null), setCoachTitle(null)), [view]);
-  const head = (title: string, back: () => void) => (
+  const head = (title: string, back: () => void, spark?: React.ReactNode) => (
     <header className="screen-head">
       <button className="icon-btn" onClick={back} aria-label="Back">
         <Icon k="back" />
       </button>
       <h1 title={typeof title === 'string' ? plainText(title) : undefined}>{view.k === 'run' && typeof title === 'string' && title.includes(' · ') ? (<><span className="st-title"><BidiText text={title.slice(0, title.indexOf(' · '))} /></span><small className="st-sub"><BidiText text={title.slice(title.indexOf(' · ') + 3)} /></small></>) : typeof title === 'string' ? <BidiText text={title} /> : title}</h1>
+      {spark}
       {settings.midiInput && settings.activeCourse !== 'drums' && <KeysSoundButton on={settings.midiSound !== false} toggle={() => onSettings({ midiSound: settings.midiSound === false, midiSoundAsked: true })} lang={lang === 'he' ? 'he' : 'en'} />}
     </header>
   );
@@ -525,14 +537,14 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'keypage' && keyIdx)
     return (
       <main className="drills-screen" data-drills="keypage">
-        {head(keyPageTitle(view.root, kGroup, lang), () => setView({ k: 'hub' }))}
+        {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
         <KeyPage today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
       </main>
     );
   if (view.k === 'family')
     return (
       <main className="drills-screen" data-drills="family">
-        {head(view.f.title[lang], () => setView({ k: 'hub' }))}
+        {head(view.f.title[lang], () => (opened ? onBack() : setView({ k: 'hub' })))}
         <FamilyLesson family={view.f.id} settings={settings} />
         <VoiceLeadLessons family={view.f.id} settings={settings} />
         <ReharmStudio family={view.f.id} lang={lang} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} />
@@ -555,7 +567,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       ds={ds}
       settings={settings}
       items={items}
-      head={head(tx.title, onBack)}
+      head={head(tx.title, onBack, <PlaceSpark place="technique" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />)}
       onFamily={(f) => setView({ k: 'family', f })}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}

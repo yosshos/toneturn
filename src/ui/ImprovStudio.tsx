@@ -75,11 +75,11 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }: { settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title }: { settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(onOpenChart ? 'rules' : 'phrasing');
-  const [src, setSrc] = useState('lv:4');
+  const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
   const [bpm, setBpm] = useState(96);
@@ -247,6 +247,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
           <Icon k="back" />
         </button>
         <h1>{tx.title}</h1>
+        {title}
       </header>
       {/* COURSE-FEEDBACK-UI §4.7: the modes as one segmented control with short labels (fits 288 px); the full name is
           the button's accessible name. */}
@@ -263,10 +264,16 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
           <label className="field-row is-src">
             <span>{tx.chartFrom}</span>
             <select value={src} onChange={(e) => setSrc(e.target.value)} data-is-chart-src="1">
+              {initialChart && (
+                <option value="piece:" data-is-piece="1">
+                  {initialChart.title}
+                </option>
+              )}
               <optgroup label={tx.levels}>
                 {IMPROV_LEVELS.map((l) => (
                   <option key={l.id} value={`lv:${l.n}`}>
                     {l.n}. {l.title[lang]}
+                    {settings.improvBest?.[l.id] !== undefined ? ` · ${Math.round(settings.improvBest[l.id] * 100)}%` : ''}
                   </option>
                 ))}
               </optgroup>
@@ -289,12 +296,36 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed }
             </select>
           </label>
           {src.startsWith('std:') && <ListenOriginal id={src.slice(4)} lang={lang} />}
+          {/* Phase 3: Charts' improvisation levels live here — over the chart with its own suggested rules, no challenge
+              (the level's best score is kept as before, improvBest). */}
+          <button
+            className="btn ghost is-free"
+            data-is-free="1"
+            onClick={() => {
+              const id = `${Date.now()}`;
+              const [kind, key] = [src.slice(0, src.indexOf(':')), src.slice(src.indexOf(':') + 1)];
+              if (kind === 'piece' && initialChart) return onOpenChart(initialChart);
+              if (kind === 'my') {
+                const c = (settings.myCharts ?? []).find((x) => x.id === key);
+                if (c) return onOpenChart(c);
+              }
+              if (kind === 'std') {
+                const s = STANDARD_CHANGES.find((x) => x.id === key) ?? STANDARD_CHANGES[0];
+                return onOpenChart({ id, title: `${s.name} — ${s.part[lang]}`, text: s.text, style: s.style, bpm: s.bpm, std: s.id });
+              }
+              const L = IMPROV_LEVELS.find((x) => String(x.n) === key) ?? IMPROV_LEVELS[0];
+              onOpenChart({ id, title: L.title[lang], text: L.text, style: L.style, bpm: L.bpm, rules: L.rules, level: L.id });
+            }}
+          >
+            {lang === 'he' ? 'לאלתר על המהלך, בלי אתגר' : 'Improvise over it, no challenge'}
+          </button>
           <ChallengeList
             best={settings.challengeBest}
             lang={lang}
             onPick={(ch) => {
               const id = `${Date.now()}`;
               const [kind, key] = [src.slice(0, src.indexOf(':')), src.slice(src.indexOf(':') + 1)];
+              if (kind === 'piece' && initialChart) return onOpenChart({ ...initialChart, title: `${initialChart.title} — ${ch.title[lang]}`, rules: ch.rules });
               if (kind === 'my') {
                 const c = (settings.myCharts ?? []).find((x) => x.id === key);
                 if (c) return onOpenChart({ ...c, rules: ch.rules });

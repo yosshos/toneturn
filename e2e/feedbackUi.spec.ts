@@ -523,8 +523,8 @@ for (const lang of ['en', 'he'] as const)
 for (const lang of ['en', 'he'] as const)
   test(`the chart player uses the shared chord chart (${lang})`, async ({ page }) => {
     await seed(page, lang, 'keys');
-    await page.goto(`/?unlock=all&sim=1&lang=${lang}#/charts`);
-    await page.locator('[data-chart-template]').first().click();
+    // phase 3: Charts live in Repertoire — the first progression template opens on the chart player
+    await page.goto(`/?unlock=all&sim=1&lang=${lang}#/repertoire/chart/tpl%3Ablues-f`);
     const chart = page.locator('[data-chart-player] [data-chord-chart]');
     await expect(chart).toBeVisible();
     expect(await chart.locator('.cc-row').first().locator('.cc-bar').count()).toBeLessThanOrEqual(4);
@@ -669,7 +669,7 @@ for (const lang of ['en', 'he'] as const)
     await seed(page, lang, 'keys');
     for (const id of ['minuet-g', 'prelude-c']) {
       await page.goto('about:blank');
-      await page.goto(`/?unlock=all&lang=${lang}#/pieces`);
+      await page.goto(`/?unlock=all&lang=${lang}#/repertoire/score`);
       await page.locator(`[data-pd-piece="${id}"]`).click();
       // the setup page: start practising
       await page.getByRole('button', { name: /start|begin|להתחיל/i }).last().click({ timeout: 5000 }).catch(() => {});

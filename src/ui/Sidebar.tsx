@@ -8,10 +8,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { NavIcon, type TabId } from './Arcade';
 import { Logo } from './brand/Logo';
 import { Icon } from './icons';
+import { courseRows } from './courseRows';
 
 export type NavId =
   | TabId
-  | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'puzzle' | 'exams' | 'gamelist'
+  | 'songs' | 'repertoire' | 'drills' | 'learned' | 'pieces' | 'charts' | 'improv' | 'licks' | 'puzzle' | 'exams' | 'gamelist'
   | 'insights' | 'achievements' | 'diary' | 'recordings'
   | 'tuner' | 'metronome' | 'drone' | 'groove' | 'slowdown' | 'mixer' | 'log' | 'chordfinder' | 'chordbuilder'
   | 'placement' | 'diagnostics' | 'settings';
@@ -31,11 +32,23 @@ interface Section extends Item {
 
 // 0.61 (SPEC-REDESIGN NavMap): the four screens of the active course first (their contents follow the course), then
 // what every course shares, then the tools. Songs, pieces, charts, technique… now live inside Practice, per course.
-const SECTIONS: Section[] = [
+/** Practice's children (phase 3, SPEC-PRACTICE-IA-3 §2): the course's places, then Games. */
+const PLACE_NAV: Record<string, Item> = {
+  drills: { id: 'drills', label: { en: 'Technique', he: 'טכניקה' } },
+  licks: { id: 'licks', label: { en: 'Licks', he: 'ליקים' } },
+  repertoire: { id: 'repertoire', label: { en: 'Repertoire', he: 'רפרטואר' } },
+  improv: { id: 'improv', label: { en: 'Improvise', he: 'אלתור' } },
+  lessons: { id: 'learned', label: { en: 'Lessons', he: 'שיעורים' } },
+  puzzle: { id: 'puzzle', label: { en: 'Progression of the day', he: 'מהלך היום' } },
+  exams: { id: 'exams', label: { en: 'Programs & exams', he: 'תכניות ומבחנים' } },
+  games: { id: 'gamelist', label: { en: 'Games', he: 'משחקים' } },
+};
+/** The menu (SPEC-PATH-TODAY-PRACTICE §1, owner): Today · Practice · Path · Progress. */
+const sectionsFor = (rows: string[]): Section[] => [
   { id: 'home', label: { en: 'Today', he: 'היום' }, icon: <NavIcon id="home" size={22} /> },
+  // Owner 2026-11-22: Encore lives inside Licks (no menu item of its own).
+  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: <NavIcon id="arcade" size={22} />, children: rows.map((r) => PLACE_NAV[r]).filter(Boolean) },
   { id: 'path', label: { en: 'Path', he: 'מסלול' }, icon: <NavIcon id="path" size={22} /> },
-  // Owner 2026-11-22: Encore lives inside the Licks tile on the Practice page (no menu item of its own).
-  { id: 'arcade', label: { en: 'Practice', he: 'תרגול' }, icon: <NavIcon id="arcade" size={22} /> },
   {
     id: 'skills',
     label: { en: 'Progress', he: 'התקדמות' },
@@ -44,11 +57,14 @@ const SECTIONS: Section[] = [
       { id: 'insights', label: { en: 'Insights', he: 'תובנות' } },
       // AUDIT-5: measured practice time, the quality ledger and the journal.
       { id: 'diary', label: { en: 'Practice diary', he: 'יומן אימון' } },
+      // Phase 3: logging practice done away from the app sits beside the diary (it left the tools).
+      { id: 'log', label: { en: 'Practice log', he: 'רישום אימון' } },
       // SPEC-PHRASE-STUDIO §6 / §17: every take, kept on the device.
       { id: 'recordings', label: { en: 'My recordings', he: 'ההקלטות שלי' } },
     ],
   },
 ];
+const SECTIONS: Section[] = sectionsFor(['drills', 'licks', 'repertoire', 'improv', 'games']);
 const SHARED: Section[] = [
   { id: 'friends', label: { en: 'Community & league', he: 'קהילה וליגה' }, icon: <NavIcon id="friends" size={22} /> },
   { id: 'achievements', label: { en: 'Achievements', he: 'הישגים' }, icon: <NavIcon id="achievements" size={22} /> },
@@ -65,7 +81,6 @@ const TOOLS: Section = {
     { id: 'groove', label: { en: 'Groove trainer', he: 'מאמן גרוב' } },
     { id: 'slowdown', label: { en: 'Slow down', he: 'האטה' } },
     { id: 'mixer', label: { en: 'Mixer', he: 'מיקסר' } },
-    { id: 'log', label: { en: 'Practice log', he: 'רישום אימון' } },
   ],
 };
 
@@ -77,8 +92,8 @@ const TOOLS_KEYS: Section = { ...TOOLS, children: [TOOLS.children![0], CHORD_BUI
 
 /** Which section a screen belongs to (for the highlight and the open section). */
 export function sectionOf(route: string): NavId | 'tools' | null {
+  if (['games', 'songs', 'repertoire', 'pieces', 'charts', 'mysong', 'drills', 'improv', 'licks', 'encore', 'challenges', 'transcribe', 'transcribe-coach', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
   for (const s of [...SECTIONS, ...SHARED]) if (s.id === route || s.children?.some((c) => c.id === route)) return s.id;
-  if (['games', 'songs', 'repertoire', 'pieces', 'charts', 'drills', 'improv', 'licks', 'encore', 'challenges', 'transcribe', 'transcribe-coach', 'learned', 'exams', 'puzzle', 'vocal', 'singalong'].includes(route)) return 'arcade';
   if (TOOLS.children!.some((c) => c.id === route) || route === 'chordfinder' || route === 'chordbuilder') return 'tools';
   if (route === 'settings' || route === 'diagnostics') return route;
   return null;
@@ -171,6 +186,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
     );
   };
   const course = useCourse();
+  const sections = sectionsFor(courseRows(course.active, course.examPrep, course.jazzFocus ? 'focus' : course.jazzOn ? 'on' : 'off'));
   return (
     <nav className={`side-nav ${collapsed ? 'collapsed' : ''}`} aria-label={lang === 'he' ? 'ניווט' : 'Navigation'} data-side-nav="1">
       <div className="sn-brand" dir="ltr">
@@ -189,7 +205,7 @@ export function Sidebar({ route, lang, onNav, badges, me, extra }: { route: stri
       </button>
       <div className="sn-list">
         <div className="sn-cap">{lang === 'he' ? 'הקורס' : 'Course'}</div>
-        {SECTIONS.map((s) => section(s, s.id))}
+        {sections.map((s) => section(s, s.id))}
         <div className="sn-cap">{lang === 'he' ? 'של כולם' : 'Shared'}</div>
         {SHARED.map((s) => section(s, s.id))}
         <div className="sn-hr" />

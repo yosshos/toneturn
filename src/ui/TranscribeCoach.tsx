@@ -17,6 +17,7 @@ import { LICK_KEYS, lickChart, lickDrill, lickFromPhrase, type LickBook } from '
 import { comparePhrase, DEGREE_NAMES, gradeDegrees, heardOfPlayed, phraseBeats, phraseDegrees, phraseEvents, phraseFor, phraseStars, phraseXp, TX_LEVELS, type Phrase, type PhraseResult } from '../engine/transcribe';
 import { calOf, LickRun, lickInstrumentOf, Stars, type TakeFn } from './LickTrainer';
 import { Icon } from './icons';
+import { LicksHead } from './LicksHead';
 
 type Lang = 'he' | 'en';
 const TX = {
@@ -52,9 +53,11 @@ export interface TranscribeProps {
   onBack: () => void;
   pathLevel?: number;
   onPathDone?: (stars: number) => void;
+  /** Licks › Transcribe (phase 3): the levels list wears the Licks header and its tabs. */
+  hub?: boolean;
 }
 
-export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTake, onPhrase, onBack, pathLevel, onPathDone }: TranscribeProps) {
+export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTake, onPhrase, onBack, pathLevel, onPathDone, hub }: TranscribeProps) {
   const tx = TX[lang];
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
@@ -93,7 +96,7 @@ export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTak
   const open = (lv: number) => lv === 1 || txLevelStars(itemsNow, lv - 1) >= 3 || (itemsNow[levelItem(lv)]?.takes ?? 0) > 0;
   return (
     <main className="panel-screen lk-screen tx-screen" data-transcribe="levels">
-      {head(tx.title, leave)}
+      {hub && !pathLevel ? <LicksHead lang={lang} section="transcribe" onBack={leave} book={settings.lickBook} /> : head(tx.title, leave)}
       <ul className="lk-list">
         {TX_LEVELS.map((l) => (
           <li key={l.level}>

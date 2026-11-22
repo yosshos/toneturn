@@ -95,13 +95,13 @@ export function coachLine(evs: CoachEvent[], lang: 'en' | 'he', p: Piece, plan: 
   return null;
 }
 
-export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settings; onBack: () => void; onMinutes: (minutes: number, cleanReps: number) => void }) {
+export function PiecesScreen({ settings, onBack, onMinutes, openId }: { settings: Settings; onBack: () => void; onMinutes: (minutes: number, cleanReps: number) => void; /** Opened on one piece (Repertoire's piece page): its practice opens at once and Back returns there. */ openId?: string | null }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const [pieces, setPieces] = useState<StoredPiece[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [setup, setSetup] = useState<{ piece: Piece; target: number; size: number; backward: boolean } | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(openId ?? null);
   useEffect(() => {
     void loadPieces().then(setPieces);
   }, []);
@@ -136,7 +136,7 @@ export function PiecesScreen({ settings, onBack, onMinutes }: { settings: Settin
     setOpen(id);
   };
   const cur = pieces?.find((p) => p.id === open);
-  if (cur) return <PiecePractice settings={settings} sp={cur} onSave={update} onBack={() => setOpen(null)} onMinutes={onMinutes} />;
+  if (cur) return <PiecePractice settings={settings} sp={cur} onSave={update} onBack={() => (openId && open === openId ? onBack() : setOpen(null))} onMinutes={onMinutes} />;
 
   if (setup)
     return (

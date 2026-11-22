@@ -187,7 +187,7 @@ test('the piece coach\'s score draws the Minuet\'s grace note and the Prelude\'s
     ['prelude-c', 'g[id^="vf-v2-"]'],
   ] as const) {
     await page.goto('about:blank');
-    await page.goto('/?unlock=all#/pieces');
+    await page.goto('/?unlock=all#/repertoire/score');
     await page.locator(`[data-pd-piece="${id}"]`).click();
     // the setup sheet: start
     await page.getByRole('button', { name: /start|begin|go/i }).first().click({ timeout: 5000 }).catch(() => {});

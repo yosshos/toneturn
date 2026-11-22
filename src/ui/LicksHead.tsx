@@ -14,15 +14,16 @@ const NAME: Record<LicksSection, { en: string; he: string }> = {
   library: { en: 'Library', he: 'הספרייה' },
   mine: { en: 'Mine', he: 'שלי' },
   challenges: { en: 'Challenges', he: 'אתגרים' },
+  transcribe: { en: 'Transcribe', he: 'תמלול' },
 };
 
 /** Due today per section: the library's lick reviews, my phrases' keys due. */
 export function licksDue(book: LickBook | undefined, now: Date = new Date()): Record<LicksSection, number> {
   const mine = phrasesDueCount(book, now.toISOString());
-  return { library: Math.max(0, dueLicks(book?.review, now).length - mine), mine, challenges: 0 };
+  return { library: Math.max(0, dueLicks(book?.review, now).length - mine), mine, challenges: 0, transcribe: 0 };
 }
 
-export function LicksHead({ lang, section, onBack, book, extra }: { lang: 'he' | 'en'; section: LicksSection; onBack: () => void; book?: LickBook; extra?: ReactNode }) {
+export function LicksHead({ lang, section, onBack, book, extra, spark }: { lang: 'he' | 'en'; section: LicksSection; onBack: () => void; book?: LickBook; extra?: ReactNode; /** The place's sparkline beside the title. */ spark?: ReactNode }) {
   const he = lang === 'he';
   const due = licksDue(book);
   return (
@@ -32,6 +33,7 @@ export function LicksHead({ lang, section, onBack, book, extra }: { lang: 'he' |
           <Icon k="back" />
         </button>
         <h1>{he ? 'ליקים' : 'Licks'}</h1>
+        {spark}
         {extra}
       </header>
       <div className="lk-seg" role="tablist" aria-label={he ? 'ליקים' : 'Licks'} data-licks-tabs={section}>

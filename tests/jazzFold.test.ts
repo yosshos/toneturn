@@ -97,10 +97,15 @@ describe('gating by background (SPEC-JAZZ-FOLD §2)', () => {
   it('the Practice rows, games and workout follow the pack', () => {
     expect(courseGames('ear', false)).not.toContain('reharm');
     expect(courseGames('ear', true)).toContain('reharm');
+    // phase 3 (SPEC-PRACTICE-IA-3 §8): the jazz pack changes the content, not whether a place exists — Ear's jazz
+    // standards and the charts are inside Repertoire; Improvise is a place for every instrument player.
     expect(courseRows('ear', false, 'off')).not.toContain('standards');
-    expect(courseRows('ear', false, 'on')).toEqual(expect.arrayContaining(['standards', 'charts', 'improv']));
-    expect(courseRows('ear', false, 'focus')[0]).toBe('standards');
+    expect(courseRows('ear', false, 'on')).toEqual(courseRows('ear', false, 'off'));
+    expect(courseRows('ear', false, 'focus')[0]).toBe('lessons');
     expect(courseRows('keys', false, 'on')).toContain('improv');
+    expect(courseRows('keys', false, 'off')).toContain('improv');
+    expect(courseRows('voice', false, 'off')).not.toContain('improv');
+    expect(courseRows('voice', false, 'on')).toContain('improv');
     expect(courseRows('ear', true, 'focus')[0]).toBe('exams');
     for (let d = 1; d <= 20; d++) expect(['reharm', 'mirror', 'rush-voicing', 'holdnote', 'whichpair']).not.toContain(workoutGame('ear', `2026-11-${String(d).padStart(2, '0')}`, 'off'));
   });

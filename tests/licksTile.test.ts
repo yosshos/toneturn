@@ -7,9 +7,9 @@ import { sectionOf } from '../src/ui/Sidebar';
 
 // The Licks tile (owner 2026-11-22, SPEC-DAILY-WORKOUT §6.2): Encore moved inside Licks.
 describe('Licks tile', () => {
-  it('three sections, each with its own address', () => {
-    expect(LICKS_SECTIONS).toEqual(['library', 'mine', 'challenges']);
-    expect(LICKS_SECTIONS.map(licksHash)).toEqual(['/licks', '/licks/mine', '/licks/challenges']);
+  it('four sections, each with its own address (phase 3: Transcribe joined)', () => {
+    expect(LICKS_SECTIONS).toEqual(['library', 'mine', 'challenges', 'transcribe']);
+    expect(LICKS_SECTIONS.map(licksHash)).toEqual(['/licks', '/licks/mine', '/licks/challenges', '/licks/transcribe']);
     for (const s of LICKS_SECTIONS) expect(licksSectionOf(`#${licksHash(s)}`)).toBe(s);
   });
   it('old Encore homes land on their section; deeper Encore screens keep their addresses', () => {
@@ -28,8 +28,8 @@ describe('Licks tile', () => {
       expect(COURSE_ROWS[c]).not.toContain('encore');
     }
     expect(PRACTICE_GROUPS.flatMap((g) => g.items)).not.toContain('encore');
-    // jazz rows still follow Technique and Licks
-    expect(courseRows('keys', false, 'on').slice(0, 4)).toEqual(['drills', 'licks', 'charts', 'improv']);
+    // phase 3: the four places, in order
+    expect(courseRows('keys', false, 'on').slice(0, 4)).toEqual(['drills', 'licks', 'repertoire', 'improv']);
   });
   it('the sidebar has no Encore item; Encore and challenge screens light Practice', () => {
     expect(sectionOf('encore')).toBe('arcade');
