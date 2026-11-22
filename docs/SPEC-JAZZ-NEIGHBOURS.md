@@ -86,6 +86,25 @@
 - **Improvise:** a phrygian dominant / hijaz colour as a rotation option on V7 → minor (already in the menus).
 - **Not added:** a separate unit.
 
+## 6a. Research done (2026-11-22) and the first fixes
+
+**The research files:** docs/research/STYLE-BRAZIL.md, STYLE-AFROCUBAN.md, STYLE-SOUL.md (with organ technique), STYLE-NEW-ORLEANS.md and STYLE-MEDITERRANEAN-TOUCH.md.
+
+**First task of the styles stage, before new content: fix what exists.**
+- **The Afro-Cuban grooves** (STYLE-AFROCUBAN F1–F6):
+  - "son clave" in grooves.ts is rumba clave squeezed into one bar. Rebuild it as a two-bar son clave aligned with the tumbao (drumStyles.ts has the correct two-bar patterns).
+  - The 6/8 bell becomes the bembé bell.
+  - The tumbao groove's kick is fixed.
+  - The hidden songo level gets its right hand on the four beats.
+  - The band's "latin" style becomes clave-aware.
+  - The cha-cha, songo, Mozambique, 6/8 and partido-alto bass cells are checked against sources or removed.
+- **Organ sound accuracy** (STYLE-SOUL §10):
+  - organKey stops responding to velocity;
+  - percussion becomes single-trigger;
+  - CC11 expression (the swell pedal) reaches the organ.
+- **Brazilian:** swing = 0 on every Brazilian item; the band's bossa rotates figures and anticipates the changes.
+- **Legal reference:** STANDARDS_LEGAL.md "Just a Closer Walk" is checked (its earliest prints may be around 1940).
+
 ## 7. Order of work (after BUILD-PLAN-2026-11, before the languages)
 
 1. Research per style: the patterns from sources, with every claim tagged [V] / [C] / [?].
