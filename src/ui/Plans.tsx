@@ -254,7 +254,7 @@ export function AdminScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
       <ReportsAdmin lang={lang} />
       {CHALLENGES_ON() && (
         <button className="btn small ghost" onClick={() => (location.hash = '/challenges/review')} data-admin-challenges="1">
-          {lang === 'he' ? 'אתגרי הדרן: דיווחים ומשפט השבוע' : 'Encore challenges: reports and the featured phrase'}
+          {lang === 'he' ? 'אתגרי ליקים: דיווחים ומשפט השבוע' : 'Lick challenges: reports and the featured phrase'}
         </button>
       )}
     </main>

@@ -149,8 +149,8 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           {profileErr && <p className="field-hint warn">{profileErr}</p>}
           {CHALLENGES_ON() && (
             <span className="row fr-chl-row">
-              <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges')} data-fr-challenges="1">
-                {lang === 'he' ? 'אתגרי הדרן' : 'Encore challenges'}
+              <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/licks/challenges')} data-fr-challenges="1">
+                {lang === 'he' ? 'אתגרי ליקים' : 'Lick challenges'}
               </button>
               <button className="btn small ghost fr-challenges" onClick={() => (location.hash = '/challenges/gifts')} data-fr-gifts="1">
                 <Icon k="gift" size={14} /> {lang === 'he' ? 'מתנות' : 'Gifts'}

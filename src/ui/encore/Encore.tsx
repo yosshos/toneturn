@@ -46,6 +46,7 @@ import { DEDICATION_XP } from '../../engine/encore/gifts';
 import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bits';
 import { Icon } from '../icons';
 import { EmptyState } from '../EmptyState';
+import { LicksHead } from '../LicksHead';
 
 export interface EncoreProps {
   lang: Lang;
@@ -56,6 +57,8 @@ export interface EncoreProps {
   onBack: () => void;
   /** Patterns practice as before, in the technique hub. */
   onDrills: () => void;
+  /** Inside the Licks tile (owner 2026-11-22): the home is the tile's "Mine" section, under the tile's header. */
+  hub?: boolean;
 }
 
 const mod = (n: number) => ((n % 12) + 12) % 12;
@@ -207,13 +210,18 @@ export function EncoreScreen(p: EncoreProps) {
   const nPh = lib.filter((x) => x.kind === 'phrase');
   const yours = nPh.filter((x) => x.rank >= 5).length;
   const sketch = nPh.filter((x) => x.rank === 0).length;
+  const libBtn = (
+    <button className="icon-btn" onClick={() => nav('library')} aria-label={he ? 'המשפטים שלי' : 'My phrases'} data-enc-lib="1">
+      <EncoreGlyph size={16} />
+    </button>
+  );
   return (
     <main className="panel-screen enc-screen" data-encore="home">
-      {head(he ? 'הדרן' : 'Encore', he ? 'המשפטים שלי' : 'My phrases', p.onBack, (
-        <button className="icon-btn" onClick={() => nav('library')} aria-label={he ? 'המשפטים שלי' : 'My phrases'} data-enc-lib="1">
-          <EncoreGlyph size={16} />
-        </button>
-      ))}
+      {p.hub ? (
+        <LicksHead lang={lang} section="mine" onBack={p.onBack} book={bookRef.current} extra={libBtn} />
+      ) : (
+        head(he ? 'הדרן' : 'Encore', he ? 'המשפטים שלי' : 'My phrases', p.onBack, libBtn)
+      )}
       {due.length > 0 && (
         <section className="enc-block" data-enc-due={due.length}>
           <div className="row">
@@ -237,14 +245,16 @@ export function EncoreScreen(p: EncoreProps) {
           ))}
         </section>
       )}
-      {/* Owner 2026-11-21: Licks folded into Encore — your phrases here, the ready-made lick library one tap away
-          (the same 12-key engine and tempo ladder). */}
-      <button className="enc-card" onClick={() => (location.hash = '/licks')} data-enc-licks="1">
-        <span className="grow col">
-          <b className="t2">{he ? 'ליקים מהספרייה' : 'Library licks'}</b>
-          <small className="t3">{he ? 'ליקים מוכנים של הגדולים, ב־12 סולמות ובטמפו עולה' : 'Ready-made licks of the masters, in 12 keys, tempo climbing'}</small>
-        </span>
-      </button>
+      {/* Owner 2026-11-22: Encore moved inside the Licks tile — the library is the tile's first section (in Encore's own
+          screens, outside the tile, it stays one tap away). */}
+      {!p.hub && (
+        <button className="enc-card" onClick={() => (location.hash = '/licks')} data-enc-licks="1">
+          <span className="grow col">
+            <b className="t2">{he ? 'ליקים מהספרייה' : 'Library licks'}</b>
+            <small className="t3">{he ? 'ליקים מוכנים של הגדולים, ב־12 סולמות ובטמפו עולה' : 'Ready-made licks of the masters, in 12 keys, tempo climbing'}</small>
+          </span>
+        </button>
+      )}
       <Shelf lang={lang} />
       <button className="enc-block enc-card-soft enc-lib-sum" onClick={() => nav('library')} data-enc-libsum="1">
         <span className="row">

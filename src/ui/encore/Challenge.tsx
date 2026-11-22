@@ -71,7 +71,8 @@ import { Bi, EncoreGlyph, KeyStrip, Seg, T, Tempo, kName, type Lang } from './bi
 import { ReactionBar, ReactionCountsLine } from './Reactions';
 import { GiftIcon, GiftsView } from './Gifts';
 import { Icon } from '../icons';
-import { studioShareCardSvg } from '../studio/shareCard';
+import { studioShareCardSvg, svgToPng } from '../studio/shareCard';
+import { LicksHead } from '../LicksHead';
 
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
 const mod = (n: number) => ((n % 12) + 12) % 12;
@@ -225,6 +226,8 @@ export interface ChallengeProps {
   onSettings: (p: Partial<Settings>) => void;
   onBack: () => void;
   onSignIn: () => void;
+  /** Inside the Licks tile (owner 2026-11-22): the gallery is the tile's "Challenges" section, under its header. */
+  hub?: boolean;
 }
 
 export function ChallengeScreen(p: ChallengeProps) {
@@ -248,17 +251,19 @@ export function ChallengeScreen(p: ChallengeProps) {
       {extra}
     </header>
   );
+  // In the Licks tile the section's home (the gallery, or the sign-in / not-yet notes) sits under the tile's header.
+  const top: Head = p.hub && r.view === 'gallery' ? (_t, _s, _b, extra) => <LicksHead lang={lang} section="challenges" onBack={p.onBack} book={p.settings.lickBook} extra={extra} /> : head;
   if (!CHALLENGES_ON())
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="off">
-        {head(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
+        {top(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
         <p className="t3">{L(lang, 'Not available yet — coming with the next server update.', 'עוד לא זמין — יגיע עם עדכון השרת הבא.')}</p>
       </main>
     );
   if (!p.signedIn && r.view !== 'page')
     return (
       <main className="panel-screen enc-screen chl-screen" data-chl="signin">
-        {head(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
+        {top(L(lang, 'Encore challenges', 'אתגרי הדרן'), undefined, p.onBack)}
         <p className="t3">{L(lang, 'Sign in to share phrases and take challenges.', 'כדי לשתף משפטים ולקבל אתגרים צריך להתחבר.')}</p>
         <button className="btn primary enc-full" onClick={p.onSignIn} data-chl-signin="1">
           {L(lang, 'Sign in', 'להתחבר')}
@@ -270,7 +275,7 @@ export function ChallengeScreen(p: ChallengeProps) {
   if (r.view === 'mine') return <MineView lang={lang} head={head} />;
   if (r.view === 'review') return <ReviewView lang={lang} head={head} />;
   if (r.view === 'gifts') return <GiftsView {...p} head={head} friend={r.friend} dedicate={r.dedicate} />;
-  return <GalleryView {...p} head={head} />;
+  return <GalleryView {...p} head={top} />;
 }
 type Head = (title: React.ReactNode, sub?: React.ReactNode, back?: () => void, extra?: React.ReactNode) => React.ReactNode;
 
@@ -507,31 +512,6 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
       </div>
     </main>
   );
-}
-
-async function svgToPng(svg: string): Promise<Blob | null> {
-  if (!svg || typeof document === 'undefined') return null;
-  try {
-    const img = new Image();
-    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-    await new Promise((res, rej) => {
-      img.onload = res;
-      img.onerror = rej;
-      img.src = url;
-    });
-    const c = document.createElement('canvas');
-    // Twice the card's own size (540×675).
-    const m = /viewBox="0 0 (\d+) (\d+)"/.exec(svg);
-    const w = m ? Number(m[1]) * 2 : 1200;
-    const h = m ? Number(m[2]) * 2 : 680;
-    c.width = w;
-    c.height = h;
-    c.getContext('2d')!.drawImage(img, 0, 0, w, h);
-    URL.revokeObjectURL(url);
-    return await new Promise((res) => c.toBlob((b) => res(b), 'image/png'));
-  } catch {
-    return null;
-  }
 }
 
 // ───────────────────────────── the challenge page (§11.3) ─────────────────────────────

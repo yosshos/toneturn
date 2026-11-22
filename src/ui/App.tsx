@@ -23,6 +23,8 @@ import { TodayAside } from './Asides';
 import { ProgPuzzleScreen } from './ProgPuzzle';
 import { ImprovStudioScreen } from './ImprovStudio';
 import { LickTrainerScreen } from './LickTrainer';
+import { LicksRoute, licksDue } from './LicksHead';
+import { legacyLicksHash, licksHash } from './licksHub';
 import { EncoreScreen } from './encore/Encore';
 import { ChallengeScreen, PhrasePublicScreen } from './encore/Challenge';
 import { CHALLENGES_ON, challengesMockOn, mockSignedOut, sharerBonusesDue, syncChallengeResults } from '../cloud/challenges';
@@ -256,7 +258,11 @@ const enterPlay = () => {
   if (location.hash.replace(/^#\/?/, '') !== PLAY_HASH) location.hash = `/${PLAY_HASH}`;
 };
 const routeFromHash = (): Route => {
-  const h = location.hash.replace(/^#\/?/, '').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings').replace(/^encore[/?].*$/, 'encore').replace(/^teach\/.*$/, 'teach').replace(/^challenges[/?].*$/, 'challenges');
+  // Owner 2026-11-22: Encore moved inside the Licks tile — its old homes (#/encore, #/challenges) open the tile's
+  // section (Mine, Challenges); the address is rewritten in place, so Back never lands on the old one.
+  const legacy = legacyLicksHash(location.hash);
+  if (legacy) history.replaceState(history.state, '', `#${legacy}`);
+  const h = location.hash.replace(/^#\/?/, '').replace(/^licks\/.*$/, 'licks').replace(/^online\/.*$/, 'online').replace(/^settings\/.*$/, 'settings').replace(/^recordings\/.*$/, 'recordings').replace(/^encore[/?].*$/, 'encore').replace(/^teach\/.*$/, 'teach').replace(/^challenges[/?].*$/, 'challenges');
   return (['path', 'arcade', 'settings', 'diagnostics', 'games', 'friends', 'skills', 'daily', 'duel', 'online', 'drone', 'classes', 'ghost', 'truefalse', 'vocal', 'achievements', 'singalong', 'perform', 'learned', 'studio', 'intake', 'tuner', 'metronome', 'songs', 'repertoire', 'drills', 'workout', 'workoutrun', 'peakhunter', 'rush-chord', 'rush-note', 'rush-fretboard', 'rush-interval', 'rush-keysig', 'rush-progression', 'rush-voicing', 'rush-scale', 'rush-standard', 'reharm', 'transcribe', 'bhtime', 'riffecho', 'polylock', 'gameboard', 'flight', 'pitchmemory', 'nametune', 'tuneup', 'highway', 'melodypuzzle', 'charts', 'slowdown', 'pieces', 'mixer', 'insights', 'groove', 'welcome', 'coursestart', 'puzzle', 'improv', 'exams', 'plans', 'admin', 'land', 'groove-echo', 'odd-echo', 'time-lock', 'ghost-control', 'rudiment-rush', 'groove-off', 'licks', 'transcribe-coach', 'chordfinder', 'mysong', 'chordbuilder', 'playback', 'voicingsprint', 'changerace', 'walkchanges', 'rootsear', 'harmonyhold', 'singinterval', 'kitread', 'namegroove', 'depth', 'bordercontrol', 'whichbrother', 'runcatcher', 'compcaller', 'elevator', 'guidetone', 'call5432', 'enclosure', 'crossword', 'holdnote', 'diary', 'staffrunner', 'rootcatch', 'strumchange', 'rebound', 'singback', 'thirdjump', 'darkside', 'recordings', 'encore', 'whichpair', 'euclid', 'mirror', 'tonnetz', 'teach', 'challenges'] as Route[]).includes(h as Route) ? (h as Route) : 'home';
 };
 
@@ -914,6 +920,11 @@ export function App() {
   const toolFrom = useRef<Route>('home');
   const chartInit = useRef<MyChart | null>(null);
   const go = (r: Route) => {
+    // The Licks tile (owner 2026-11-22): Encore's home is its "Mine" section, the challenges gallery its "Challenges".
+    if (r === 'encore' || r === 'challenges') {
+      location.hash = licksHash(r === 'encore' ? 'mine' : 'challenges');
+      return setRoute('licks');
+    }
     if ((r === 'tuner' || r === 'metronome' || r === 'drone' || r === 'charts' || r === 'slowdown' || r === 'groove' || r === 'vocal' || r === 'learned' || r === 'chordfinder' || r === 'chordbuilder') && route !== r && route !== 'lesson' && route !== 'singalong' && route !== 'mixer') toolFrom.current = route === 'arcade' || route === 'path' || route === 'drills' || route === 'insights' || route === 'improv' || route === 'friends' || route === 'exams' ? route : 'home';
     location.hash = r === 'lesson' || r === 'game' ? `/${PLAY_HASH}` : r === 'home' ? '' : `/${r}`;
     setRoute(r);
@@ -2598,7 +2609,12 @@ export function App() {
             })(),
             ...((s.knownChords ?? []).length ? { songs: s.uiLang === 'he' ? `${(s.knownChords ?? []).length} אקורדים` : `${(s.knownChords ?? []).length} chords` } : {}),
             ...(s.progPuzzle?.[localDay(new Date())] ? { puzzle: s.uiLang === 'he' ? 'שוחק היום' : 'Played today' } : {}),
-            ...(phrasesDueCount(s.lickBook) ? { encore: s.uiLang === 'he' ? `${phrasesDueCount(s.lickBook)} לחזרה היום` : `${phrasesDueCount(s.lickBook)} due today` } : {}),
+            // The Licks tile: the library's reviews and my phrases' keys due today, together.
+            ...((() => {
+              const d = licksDue(s.lickBook);
+              const n = d.library + d.mine;
+              return n ? { licks: s.uiLang === 'he' ? `${n} לחזרה היום` : `${n} due today` } : {};
+            })()),
             ...(Object.keys(s.challengeBest ?? {}).length ? { improv: `${Object.values(s.challengeBest ?? {}).filter((x) => x >= 0.85).length}/${CHALLENGES.length}` } : {}),
           }}
           t={t}
@@ -2631,9 +2647,8 @@ export function App() {
             slowdown: () => go('slowdown'),
             groove: () => go('groove'),
             improv: () => go('improv'),
+            // Owner 2026-11-22: one Licks tile — the library, my phrases (Encore) and the challenges inside it.
             licks: () => gate('game:licks', () => go('licks')),
-            // Encore (SPEC-PHRASE-STUDIO §17): the first Train card.
-            encore: () => go('encore'),
             // GUITAR_DEEPENING §6.3: the chord finder (guitar course), opened by its quick lesson the first time.
             ...(s.activeCourse === 'guitar' ? { chordfinder: () => gate('game:chordfinder', () => go('chordfinder')) } : {}),
             // Chord & cadence builder (guitar roadmap): the keys and guitar courses' Tools.
@@ -3155,25 +3170,61 @@ export function App() {
           }}
         />
       )}
+      {/* The Licks tile (owner 2026-11-22): the library, my phrases (what Encore was) and the challenges, as sections. */}
       {route === 'licks' && (
-        <LickTrainerScreen
-          lang={s.uiLang}
-          settings={s}
-          items={progress.drillItems ?? {}}
-          onSettings={updateSettings}
-          onTake={(st, evs, xp, m) => {
-            noteTake(xp, m?.verdict);
-            void store.recordDrill(st, evs, xp, m).then(setProgress);
-          }}
-          onUsed={(evs, xp) => {
-            drillSessionXp.current += xp;
-            void store.recordRatingEvents(evs).then(setProgress);
-          }}
-          startReview={lickReview.current}
-          pathLevel={measuredStep.current?.level}
-          onPathDone={(stars) => leaveMeasured('licks', stars)}
-          onBack={() => leaveMeasured('licks', null)}
-        />
+        <LicksRoute>
+          {(section) =>
+            section === 'mine' ? (
+              <EncoreScreen
+                hub
+                lang={s.uiLang}
+                settings={s}
+                items={progress.drillItems ?? {}}
+                onSettings={updateSettings}
+                onTake={(st, evs, xp, m) => {
+                  noteTake(xp, m.verdict);
+                  void store.recordDrill(st, evs, xp, m).then(setProgress);
+                }}
+                onBack={() => {
+                  void techResult('encore')?.then(setProgress);
+                  go(workoutPending.current ? 'workoutrun' : 'arcade');
+                }}
+                onDrills={() => go('drills')}
+              />
+            ) : section === 'challenges' ? (
+              <ChallengeScreen
+                hub
+                lang={s.uiLang}
+                settings={s}
+                items={progress.drillItems ?? {}}
+                signedIn={challengeSignedIn}
+                onSettings={updateSettings}
+                onBack={() => (history.length > 1 ? history.back() : go('friends'))}
+                onSignIn={() => (cloudConfigured ? void signInWithGoogle() : go('settings'))}
+              />
+            ) : (
+              <LickTrainerScreen
+                hub
+                lang={s.uiLang}
+                settings={s}
+                items={progress.drillItems ?? {}}
+                onSettings={updateSettings}
+                onTake={(st, evs, xp, m) => {
+                  noteTake(xp, m?.verdict);
+                  void store.recordDrill(st, evs, xp, m).then(setProgress);
+                }}
+                onUsed={(evs, xp) => {
+                  drillSessionXp.current += xp;
+                  void store.recordRatingEvents(evs).then(setProgress);
+                }}
+                startReview={lickReview.current}
+                pathLevel={measuredStep.current?.level}
+                onPathDone={(stars) => leaveMeasured('licks', stars)}
+                onBack={() => leaveMeasured('licks', null)}
+              />
+            )
+          }
+        </LicksRoute>
       )}
       {route === 'encore' && (
         <EncoreScreen

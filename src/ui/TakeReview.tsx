@@ -88,6 +88,7 @@ export function TakeReview({
   lastTake,
   children,
   onKeep,
+  share,
   fingering,
   drill,
   cal,
@@ -99,6 +100,8 @@ export function TakeReview({
   fingering?: ReactNode;
   /** Encore (SPEC-PHRASE-STUDIO §4.1): "Keep this phrase" — a small icon button beside Again / Loop / Next. */
   onKeep?: () => void;
+  /** A clean take at a tempo (owner 2026-11-22): the small share action, in the actions row (adds no height). */
+  share?: ReactNode;
   /** A previous take of the same item exists: the "Last take" toggle (its ticks faded under this take's). */
   lastTake?: { on: boolean; onToggle: () => void };
   /** The Next button's word ("Whole item" after a loop). */
@@ -239,6 +242,7 @@ export function TakeReview({
           </button>
         )}
         {onKeep && <KeepButton lang={lang} onKeep={onKeep} />}
+        {share}
       </div>
       {lastTake || fingering ? (
         // The take overlay (§4.1): the previous take's ticks, faded, under this one's — on the same notes.

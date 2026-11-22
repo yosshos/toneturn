@@ -2,7 +2,7 @@
 // both hands), then the analysis right away — verdict, the evenness strip, the velocity curve, the hands chart.
 
 import { DEVICE_ONLY_ABOVE, MIDI_IN_MS } from '../engine/latency';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
 import { splitDur } from '../engine/piece/layout';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
@@ -1438,7 +1438,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
 }
 
 /** The analysis shown after a take. */
-export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = false }: { m: TakeMetrics; lang: Lang; onAgain: () => void; onSlower: () => void; onNext?: () => void; /** A badly missed timed take: one take in free time (rubato.ts). */ onFree?: () => void; /** A free-time take: notes only, no timing numbers. */ free?: boolean }) {
+export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = false, extra }: { /** A small extra action in the actions row (the share after a clean tempo, owner 2026-11-22). */ extra?: ReactNode; m: TakeMetrics; lang: Lang; onAgain: () => void; onSlower: () => void; onNext?: () => void; /** A badly missed timed take: one take in free time (rubato.ts). */ onFree?: () => void; /** A free-time take: notes only, no timing numbers. */ free?: boolean }) {
   const tx = TX[lang];
   /** Ahead of the click on average (played − expected < −30 ms): slowing down is not the fix, waiting for the beat is. */
   const rushing = m.timingMean !== null && m.timingMean < -30;
@@ -1526,6 +1526,7 @@ export function TakeResult({ m, lang, onAgain, onSlower, onNext, onFree, free = 
             {tx.next} <Icon k="fwd" />
           </button>
         )}
+        {extra}
       </div>
     </section>
   );

@@ -19,13 +19,16 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
 import {
-  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, nextLickKey, reviewKey,
+  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, nextLickKey, reviewKey,
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
 import { canComplete, completeStep, LICK_CONCEPTS, LICK_STEPS, loadLickFlows, newLickFlow, saveLickFlows, stepCards, withKeyStars, type LickConcept, type LickFlow, type LickStepN } from '../engine/practiceMethod';
 import { RULE_NAME } from '../engine/improvRules';
 import { Icon } from './icons';
+import { LicksHead } from './LicksHead';
+import { LickShareButton } from './LickShare';
+import { kName } from './encore/bits';
 
 type Lang = 'he' | 'en';
 export type TakeFn = (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => void;
@@ -110,7 +113,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   const local = useRef<Record<string, ItemState>>({});
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 80));
-  const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
+  const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult; bpm: number } | null>(null);
   const [take, setTake] = useState(0);
   const [again, setAgain] = useState(false);
   const [beat, setBeat] = useState(-1);
@@ -141,7 +144,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     const by = byEar ? { byEar: true, revealed: !!earNow.revealed } : undefined;
     onTake(lad.state, lickEvents(lick, inst, m, bpm, new Date().toISOString(), session.current, n, sub, by), by ? byEarXp(m, by) : lickXp(m), { verdict: m.verdict, hands: 'R', cv: null });
     if (byEar) setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, taken: true } }));
-    setRes({ m, lad });
+    setRes({ m, lad, bpm });
     setBpm(lad.next.bpm);
   };
   return (
@@ -157,7 +160,8 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
       {res && (
         <>
           {!review && <p className="drill-ladder">{res.lad.message[lang]}</p>}
-          <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))} onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} />
+          <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))} onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} extra={!review && sub === 'vocab' && res.m.verdict === 'clean' ? <LickShareButton compact lang={lang} info={{ title: lick.name[lang], key: kName(drill.spec.key, isMinorLick(lick)), bpm: Math.round(res.m.bpm || res.bpm), drill, by: settings.nickname, level: lick.level }} /> : undefined} />
+          {/* Owner 2026-11-22: a clean take at a tempo offers a small share (the lick, the key, ♩N) in the actions row. */}
         </>
       )}
     </div>
@@ -358,9 +362,11 @@ export interface LickTrainerProps {
   /** A path step: open on this level's licks; onPathDone gets the stars when the player leaves. */
   pathLevel?: number;
   onPathDone?: (stars: number) => void;
+  /** Inside the Licks tile (owner 2026-11-22): the library's header is the tile's, with its three sections. */
+  hub?: boolean;
 }
 
-export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone }: LickTrainerProps) {
+export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub }: LickTrainerProps) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
@@ -509,7 +515,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   };
   return (
     <main className="panel-screen lk-screen" data-licks="lib">
-      {head(tx.title, leave)}
+      {hub ? <LicksHead lang={lang} section="library" onBack={leave} book={book} /> : head(tx.title, leave)}
       <p className="lk-inst">
         <Glyph kind="lick" color="#A78BFA" size={34} /> {tx.insts[inst]}
       </p>

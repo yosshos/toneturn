@@ -21,7 +21,8 @@ import { TakeReview } from '../TakeReview';
 import { DrillScore, drillSettingsOf } from '../Drills';
 import { calOf } from '../LickTrainer';
 import { barMarks, worstBar } from '../ErrorMap';
-import { KeyB, Tempo, type Lang } from './bits';
+import { KeyB, Tempo, kName, type Lang } from './bits';
+import { LickShareButton } from '../LickShare';
 import type { LiveTake } from '../../engine/drills/liveGrade';
 import { keepPhrase } from '../../engine/encore/takeSource';
 import { badge } from '../../engine/encore/difficulty';
@@ -72,7 +73,7 @@ export function EncoreRun({
   const stateOf = () => local.current[drill.itemId] ?? items[drill.itemId] ?? newItem(drill);
   const plan = planOf(l);
   const [bpm, setBpm] = useState(() => Math.max(drill.startBpm, Math.min(plan.goalBpm, stateOf().goalBpm || drill.startBpm)));
-  const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult | null; out: TakeOutcome; stage: 'free' | 'quarters' | 'tempo'; line: string } | null>(null);
+  const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult | null; out: TakeOutcome; stage: 'free' | 'quarters' | 'tempo'; line: string; bpm: number } | null>(null);
   const [take, setTake] = useState(0);
   const [again, setAgain] = useState(false);
   const [beat, setBeat] = useState(-1);
@@ -129,7 +130,7 @@ export function EncoreRun({
               : he
                 ? 'עוד פעם אחת נקייה בלי קצב.'
                 : 'One more clean take in free time.';
-    setRes({ m, lad, out, stage: st, line: out.bonus || out.completion ? `${line} +${out.bonus + out.completion} XP` : line });
+    setRes({ m, lad, out, stage: st, line: out.bonus || out.completion ? `${line} +${out.bonus + out.completion} XP` : line, bpm: usedBpm });
     if (lad) setBpm(Math.max(drill.startBpm, Math.min(plan.goalBpm, lad.next.bpm)));
     if (out.yours) {
       // friends' activity (flagged until the server migration is applied: postPhraseYours)
@@ -252,6 +253,7 @@ export function EncoreRun({
           onLoop={res.stage === 'tempo' && wb !== null && bm.length > 1 ? () => setLoop({ bar: wb, res: null }) : undefined}
           loopLabel={wb !== null ? `${wb + 1}` : undefined}
           onNext={nextAfter}
+          share={res.stage === 'tempo' && res.m.verdict === 'clean' ? <LickShareButton compact lang={lang} info={{ title: l.name[lang], key: kName(keyPc, !!l.minor), bpm: Math.round(res.m.bpm || res.bpm), drill, by: settings.nickname }} /> : undefined}
           onKeep={
             played.current.length >= 3 && res.stage === 'tempo'
               ? () => keepPhrase({ kind: 'phrase', instrument: inst, title: l.name, source: midi.devices.length && inst === 'piano' ? 'midi' : 'mic', notes: played.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart ? { chart: drill.chart.join(' | ') } : {}) }, wb !== null ? barSpanBeats(l, wb) : null)
