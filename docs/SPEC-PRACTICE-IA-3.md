@@ -144,3 +144,11 @@ The game `#/transcribe` stays the race.
 - **Improvise:** a place of its own *and* a button on every piece. **Approved.**
 - **Licks:** open, being brainstormed. The leading option is a place of its own (the "language" pillar), with doors from the key session, Improvise (docs/SPEC-LICKS-IN-IMPROV.md) and the piece page.
 - **Mockup:** an artifact canvas "Repertoire screens": phone and wide screen; Practice, the list, three piece pages, Add a piece.
+
+## 8. Owner decisions, 2026-11-22 (after the mockup canvas)
+
+- **One "today":** the daily workout on Today is the single plan, split by the window and the 70/30 share (technique part, improv part, lick reviews inside maintenance). The places show only their part, marked "part of today's workout"; no competing "today" plans.
+- **Per course:** keys, guitar and bass get all four places (guitar and bass by key use their 12-key neck drills). Voice: Technique (the voice), Licks (sung), Repertoire, Improvise (scat over a progression, jazz pack). Drums: Technique, Repertoire (grooves and songs), Games, and Improvise as fills, solos and trading fours; no Licks. Ear: Lessons, Repertoire (by ear), Puzzle, Games; Exams first in exam prep.
+- **Licks: a place of its own (owner's idea).** Once a lick has been practised, even a little (any take), it also appears in Technique, in every key (block G, "language in the key", picked by need like every rung), and in Improvise (the pool for the lick rule cards and "today's lick"). Improvise is reached from its own place and from every piece in Repertoire.
+- **Decided without asking (UI):** one status word, "closed", everywhere; "continue where I stopped" at the top of Practice; list and detail side by side on wide screens in every place, Technique included; long lead sheets turn every 8 bars by the playhead on a phone; a letter beside each scale-family colour; a first step instead of an empty list in every place.
+- **Open:** where the graded transcription coach sits.
