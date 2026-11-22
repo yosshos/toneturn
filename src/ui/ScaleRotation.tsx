@@ -1,0 +1,380 @@
+// Improvise › Scales (BUILD-PLAN-2026-11 phase 5; docs/SPEC-RBI-ROTATION.md, track A at T1–3): the lead sheet in colour
+// with the rotating scale over every chord, the half-bar subs a tier opens, the "next" chip, a count-in + click + the
+// now-cue on the sheet, and after the take the colour coverage per chord. One phone screen; the keyboard is behind a
+// button. The Barry Harris track is a separate thing (phase 8) and is not mixed in here.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { chartBacking, IMPROV_LEVELS, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
+import { STANDARD_CHANGES } from '../engine/standards';
+import { buildRotationSheet, cellAt, cellNotes, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, scaleShort, type ImprovTake, type RotationGrade, type RotationSheet, type SheetCell } from '../engine/rotationSheet';
+import type { ModeStats, PlayedNote } from '../engine/rotation';
+import type { NoteEvent } from '../engine/lesson';
+import type { Settings } from '../storage/progress';
+import type { MyChart } from './Charts';
+import { midi } from '../speech/midi';
+import { piano } from './services';
+import { Icon } from './icons';
+import { BeatDots } from './NewGameBits';
+import { kName } from './encore/bits';
+import '../newgames.css';
+import '../rotation.css';
+
+type Lang = 'en' | 'he';
+/** The charts the rotation runs on (the improvisation levels in one key, moved to the key of the day). */
+export const ROTATION_LEVELS = [4, 5, 6];
+
+const TX = {
+  en: { key: 'Key', tier: 'Tier', chart: 'Chart', next: 'Next', newScale: 'new scale', start: 'Start', stop: 'Stop', tempo: 'Tempo', keys: 'Keyboard', inSet: 'in the scale', colour: 'colour coverage', strong: 'chord tones on 1 and 3', avoid: 'avoid notes held', chorus: 'Chorus', standards: 'Standards', levels: 'Progressions', none: 'Play a few notes over the chords to see the coverage.', plain: 'This time the plain scales: no colour notes to cover. The next take rotates in new ones.', colourWhy: 'A colour note is what the scale adds over the chord’s plain scale.', sameNotes: 'same notes as' },
+  he: { key: 'סולם', tier: 'שלב', chart: 'מהלך', next: 'הבא', newScale: 'סולם חדש', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', keys: 'מקלדת', inSet: 'בתוך הסולם', colour: 'כיסוי צבע', strong: 'צלילי אקורד ב־1 וב־3', avoid: 'צלילי הימנעות שהוחזקו', chorus: 'כורוס', standards: 'סטנדרטים', levels: 'מהלכים', none: 'נגנו כמה צלילים מעל האקורדים כדי לראות את הכיסוי.', plain: 'הפעם הסולמות הרגילים: אין צלילי צבע לכסות. בטייק הבא ייכנסו סולמות חדשים.', colourWhy: 'צליל צבע הוא מה שהסולם מוסיף על הסולם הרגיל של האקורד.', sameNotes: 'אותם צלילים כמו' },
+};
+
+/** A scale label: the family colour + its short tag, then the scale's root and name (note names isolated LTR). */
+export function ScaleTag({ c, lang, full = true }: { c: Pick<SheetCell, 'fam' | 'mode' | 'rootName'>; lang: Lang; full?: boolean }) {
+  return (
+    <span className={`rs-scale fam-${c.fam}`} data-fam={c.fam} data-mode={c.mode}>
+      <span className="rs-tag" title={FAM_NAME[c.fam][lang]}>
+        {FAM_TAG[c.fam][lang]}
+      </span>
+      {full && (
+        <span className="rs-name">
+          <bdi dir="ltr">{c.rootName}</bdi> {scaleShort(c.mode, lang)}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** The lead sheet: 8 bars of one chorus (2 rows of 4), the chord large, the scale small above it, a sub above that. */
+export function LeadSheet({ sheet, chorus, now, hits, lang }: { sheet: RotationSheet; chorus: number; now: number; hits?: (boolean | null)[]; lang: Lang }) {
+  const cur = now >= 0 ? sheet.cells[now] : null;
+  const page = Math.floor((cur && cur.chorus === chorus ? cur.bar : 0) / 8);
+  const bars = Array.from({ length: Math.min(8, sheet.bars - page * 8) }, (_, i) => page * 8 + i);
+  return (
+    <div className="rs-sheet" dir="ltr" role="table" aria-label={lang === 'he' ? 'דף אקורדים' : 'Lead sheet'} data-rs-sheet={chorus}>
+      {bars.map((b) => (
+        <div className="rs-bar" role="row" key={b} data-rs-bar={b}>
+          {sheet.cells.map((c, i) =>
+            c.chorus === chorus && c.bar === b ? (
+              <div key={i} role="cell" className={`rs-cell fam-${c.fam}${i === now ? ' now' : ''}${hits?.[i] === true ? ' hit' : hits?.[i] === false ? ' miss' : ''}`} style={{ flexGrow: c.beats }} data-rs-cell={i} data-now={i === now ? '1' : undefined}>
+                {c.sub ? (
+                  <small className="rs-sub" title={c.sub.label[lang]}>
+                    <bdi dir="ltr">{c.sub.sym}</bdi>
+                  </small>
+                ) : (
+                  <small className="rs-sub" aria-hidden="true">
+                    {' '}
+                  </small>
+                )}
+                <b className="rs-sym">
+                  <bdi dir="ltr">{c.sym}</bdi>
+                </b>
+                <ScaleTag c={c} lang={lang} />
+                {hits?.[i] != null && (
+                  <span className="rs-hit" aria-label={hits[i] ? (lang === 'he' ? 'צליל צבע' : 'colour note') : lang === 'he' ? 'בלי צליל צבע' : 'no colour note'}>
+                    <Icon k={hits[i] ? 'check' : 'minus'} size={12} />
+                  </span>
+                )}
+              </div>
+            ) : null,
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** One line of the chords with their scales (Phrase / Trade: the scales the take is graded against). */
+export function ScaleStrip({ sheet, lang }: { sheet: RotationSheet; lang: Lang }) {
+  const seen = new Set<string>();
+  return (
+    <div className="rs-strip" dir="ltr" data-rs-strip="1">
+      {sheet.cells
+        .filter((c) => c.chorus === 0)
+        .filter((c) => {
+          const k = `${c.sub?.sym ?? c.sym}|${c.mode}`;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        })
+        .map((c, i) => (
+          <span key={i} className={`rs-chip fam-${c.fam}`}>
+            <bdi dir="ltr">{c.sub?.sym ?? c.sym}</bdi>
+            <ScaleTag c={c} lang={lang} />
+          </span>
+        ))}
+    </div>
+  );
+}
+
+/** The grade of a take in four numbers (colour coverage first: the metric the rotation tests). */
+export function RotationStats({ g, lang }: { g: RotationGrade; lang: Lang }) {
+  const tx = TX[lang];
+  return (
+    <ul className="is-stats rs-stats" data-rs-result="1">
+      <li data-rs-colour={Math.round(g.m.colour * 100)}>
+        <b>
+          <bdi dir="ltr">{Math.round(g.m.colour * 100)}%</bdi>
+        </b>{' '}
+        <small>{tx.colour}</small>
+      </li>
+      <li>
+        <b>
+          <bdi dir="ltr">{Math.round(g.m.inSet * 100)}%</bdi>
+        </b>{' '}
+        <small>{tx.inSet}</small>
+      </li>
+      <li>
+        <b>
+          <bdi dir="ltr">{Math.round(g.m.strongCt * 100)}%</bdi>
+        </b>{' '}
+        <small>{tx.strong}</small>
+      </li>
+      <li>
+        <b>
+          <bdi dir="ltr">{g.m.avoidFaults}</bdi>
+        </b>{' '}
+        <small>{tx.avoid}</small>
+      </li>
+    </ul>
+  );
+}
+
+/** Two octaves from C4, the active scale marked (in the scale: a dot; colour notes: the family colour). */
+function MarkedKeys({ onKey, pcs, colour, fam }: { onKey: (m: number) => void; pcs: number[]; colour: number[]; fam: string }) {
+  const keys = Array.from({ length: 25 }, (_, i) => 60 + i);
+  const black = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
+  return (
+    <div className="is-keys rs-keys" dir="ltr">
+      {keys.map((m) => {
+        const pc = m % 12;
+        const mark = colour.includes(pc) ? 'colour' : pcs.includes(pc) ? 'in' : '';
+        return <button key={m} className={`is-key ${black(m) ? 'b' : 'w'} ${mark ? `rs-${mark} fam-${fam}` : ''}`} onPointerDown={() => onKey(m)} aria-label={String(m)} />;
+      })}
+    </div>
+  );
+}
+
+export interface RotationChart {
+  id: string;
+  title: string;
+  text: string;
+  style: ChartStyle;
+  bpm: number;
+}
+
+/** The charts on offer: a piece's chart (from Repertoire), the progressions in the key of the day, the standards. */
+export function rotationCharts(lang: Lang, dayKey: number, piece?: MyChart | null): { group: 'piece' | 'levels' | 'standards'; c: RotationChart }[] {
+  const out: { group: 'piece' | 'levels' | 'standards'; c: RotationChart }[] = [];
+  if (piece) out.push({ group: 'piece', c: { id: 'piece:', title: piece.title, text: piece.text, style: piece.style, bpm: piece.bpm } });
+  for (const n of ROTATION_LEVELS) {
+    const L = IMPROV_LEVELS.find((x) => x.n === n);
+    if (L) out.push({ group: 'levels', c: { id: `lv:${n}`, title: `${L.title[lang].replace(/ (in C|בדו)$/, '')} · ${kName(dayKey)}`, text: dayKey ? transposeChart(L.text, dayKey) : L.text, style: L.style, bpm: L.bpm } });
+  }
+  for (const s of STANDARD_CHANGES) if (s.style !== 'waltz') out.push({ group: 'standards', c: { id: `std:${s.id}`, title: `${s.name} — ${s.part[lang]}`, text: s.text, style: s.style, bpm: s.bpm } });
+  return out;
+}
+
+export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onTake, top }: { settings: Settings; lang: Lang; tier: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey: number; piece?: MyChart | null; onTier?: (t: 1 | 2 | 3) => void; onTake?: (t: ImprovTake) => void; /** Above the sheet (the workout's "today's lick" card). */ top?: React.ReactNode }) {
+  const tx = TX[lang];
+  const charts = useMemo(() => rotationCharts(lang, dayKey, piece), [lang, dayKey, piece]);
+  const [src, setSrc] = useState(charts[0]?.c.id ?? 'lv:4');
+  const chart = (charts.find((x) => x.c.id === src) ?? charts[0]).c;
+  const [bpm, setBpm] = useState(Math.min(chart.bpm, tier === 1 ? 92 : tier === 2 ? 104 : 116));
+  const stats: ModeStats = settings.rotationStats ?? {};
+  const build = (seed: number) => buildRotationSheet(chart.text, { tier, stats, seed });
+  // the sheet stays as played until the next take (its colour marks belong to it); the next take picks again by need
+  // (a new seed, and the stats the last take moved)
+  const [sheet, setSheet] = useState<RotationSheet | null>(() => build(1));
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) return void (first.current = false);
+    setSheet(build(1));
+    setGrade(null);
+    setChorus(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chart.text, tier]);
+  const [running, setRunning] = useState(false);
+  const [beat, setBeat] = useState<number | null>(null);
+  const [grade, setGrade] = useState<RotationGrade | null>(null);
+  const [chorus, setChorus] = useState(0);
+  const [showKeys, setShowKeys] = useState(midi.devices.length === 0);
+  const ctl = useRef<AbortController | null>(null);
+  const t0 = useRef(0);
+  const notes = useRef<PlayedNote[]>([]);
+  const open = useRef(new Map<number, number>());
+  const raf = useRef(0);
+  const beatS = 60 / bpm;
+  useEffect(
+    () => () => {
+      ctl.current?.abort();
+      cancelAnimationFrame(raf.current);
+    },
+    [],
+  );
+  const noteOn = (m: number, at = performance.now()) => {
+    if (!t0.current) return;
+    const b = (at - t0.current) / 1000 / beatS;
+    open.current.set(m, b);
+    notes.current.push({ beat: b, dur: 0.25, midi: m });
+  };
+  const noteOff = (m: number, at = performance.now()) => {
+    const b = open.current.get(m);
+    if (b === undefined) return;
+    open.current.delete(m);
+    const n = [...notes.current].reverse().find((x) => x.midi === m && x.beat === b);
+    if (n) n.dur = Math.max(0.05, (at - t0.current) / 1000 / beatS - b);
+  };
+  useEffect(() => midi.onNote((m, on, at) => (on ? noteOn(m, at) : noteOff(m, at))));
+  const onScreenKey = (m: number) => {
+    noteOn(m);
+    if (settings.midiSound !== false) void piano.unlock().then(() => piano.play([{ midi: m, start: 0, duration: 0.35, velocity: 0.7 }], 0.4, new AbortController().signal).catch(() => {}));
+    setTimeout(() => noteOff(m), 250);
+  };
+
+  const sheet0 = sheet;
+  const start = async () => {
+    const sheet = grade ? build((Date.now() >>> 10) % 9973 || 1) : sheet0;
+    if (!sheet) return;
+    if (grade) setSheet(sheet);
+    ctl.current?.abort();
+    const c = new AbortController();
+    ctl.current = c;
+    setGrade(null);
+    setChorus(0);
+    setRunning(true);
+    const p = parseChart(chart.text);
+    const b = chartBacking(p, chart.style, bpm, sheet.choruses);
+    // the click on every beat of the take, under the band (the count-in comes from the backing)
+    const total = sheet.bars * sheet.meter * sheet.choruses;
+    const clicks: NoteEvent[] = Array.from({ length: total }, (_, k) => ({ midi: 96, start: (b.startBeat + k) * beatS, duration: 0.04, velocity: k % sheet.meter ? 0.16 : 0.26, perc: (k % sheet.meter ? 'click' : 'accent') as 'click' | 'accent' }));
+    await piano.unlock();
+    notes.current = [];
+    open.current.clear();
+    t0.current = performance.now() + 60 + b.startBeat * beatS * 1000;
+    const tick = () => {
+      const now = (performance.now() - t0.current) / 1000 / beatS;
+      setBeat(now);
+      const k = cellAt(sheet, now);
+      if (k >= 0) setChorus(sheet.cells[k].chorus);
+      if (!c.signal.aborted) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+    await piano.play([...b.events, ...clicks], b.length, c.signal).catch(() => {});
+    cancelAnimationFrame(raf.current);
+    const done = !c.signal.aborted;
+    c.abort();
+    setRunning(false);
+    setBeat(null);
+    t0.current = 0;
+    if (!done) return;
+    const g = gradeRotation(sheet, notes.current, stats, new Date().toISOString());
+    setGrade(g);
+    setChorus(0);
+    onTake?.(improvTake('rotation', { score: g.score, notes: notes.current.length, tier, bpm, stats: g.stats }));
+  };
+  const stop = () => {
+    ctl.current?.abort();
+    setRunning(false);
+    setBeat(null);
+  };
+
+  if (!sheet) return null;
+  const now = beat === null ? -1 : cellAt(sheet, beat);
+  const nx = nextCell(sheet, beat ?? -1);
+  const shown = now >= 0 ? sheet.cells[now] : nx?.cell ?? sheet.cells[0];
+  const marks = cellNotes(shown, sheet);
+  const fams = [...new Set(sheet.cells.map((c) => c.fam))];
+  const countNow = beat === null ? -1 : beat < 0 ? Math.max(0, Math.min(3, Math.floor(beat + 4))) : 4 + (Math.floor(beat) % sheet.meter);
+  return (
+    <section className="rot" data-rs="1" data-rs-tier={tier}>
+      <div className="rs-top">
+        <span className="rs-key" data-rs-key={dayKey}>
+          {tx.key} <bdi dir="ltr">{kName(sheet.tonic)}</bdi>
+        </span>
+        <div className="seg rs-tiers" role="radiogroup" aria-label={tx.tier}>
+          {([1, 2, 3] as const).map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={tier === t} className={tier === t ? 'on' : ''} onClick={() => onTier?.(t)} disabled={running} aria-label={`${tx.tier} ${t}`} data-rs-tier-pick={t}>
+              <bdi dir="ltr">T{t}</bdi>
+            </button>
+          ))}
+        </div>
+        <select className="rs-src" value={src} onChange={(e) => (setSrc(e.target.value), setGrade(null))} disabled={running} aria-label={tx.chart} data-rs-src="1">
+          {charts.some((x) => x.group === 'piece') && <option value="piece:">{charts[0].c.title}</option>}
+          <optgroup label={tx.levels}>
+            {charts
+              .filter((x) => x.group === 'levels')
+              .map((x) => (
+                <option key={x.c.id} value={x.c.id}>
+                  {x.c.title}
+                </option>
+              ))}
+          </optgroup>
+          <optgroup label={tx.standards}>
+            {charts
+              .filter((x) => x.group === 'standards')
+              .map((x) => (
+                <option key={x.c.id} value={x.c.id}>
+                  {x.c.title}
+                </option>
+              ))}
+          </optgroup>
+        </select>
+      </div>
+      {top}
+      <LeadSheet sheet={sheet} chorus={chorus} now={now} hits={grade?.hits} lang={lang} />
+      <div className="rs-under">
+        {nx ? (
+          <span className={`rs-next${nx.changed ? ' changed' : ''}`} data-rs-next={nx.cell.mode} aria-live="polite">
+            <small>{tx.next}</small> <bdi dir="ltr">{nx.cell.sub?.sym ?? nx.cell.sym}</bdi> <ScaleTag c={nx.cell} lang={lang} />
+            {nx.changed && <em className="rs-new">{tx.newScale}</em>}
+          </span>
+        ) : (
+          <span />
+        )}
+        {sheet.choruses > 1 && !running && (
+          <div className="seg rs-chorus" role="tablist" aria-label={tx.chorus}>
+            {Array.from({ length: sheet.choruses }, (_, k) => (
+              <button key={k} role="tab" aria-selected={chorus === k} className={chorus === k ? 'on' : ''} onClick={() => setChorus(k)} aria-label={`${tx.chorus} ${k + 1}`}>
+                <bdi dir="ltr">{k + 1}</bdi>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {running ? <BeatDots countIn={4} beats={sheet.meter} now={countNow} /> : (
+        <p className="rs-legend" aria-label={lang === 'he' ? 'משפחות הסולמות' : 'Scale families'}>
+          {fams.map((f) => (
+            <span key={f} className={`rs-scale fam-${f}`}>
+              <span className="rs-tag">{FAM_TAG[f][lang]}</span> <small>{FAM_NAME[f][lang]}</small>
+            </span>
+          ))}
+        </p>
+      )}
+      {grade && (grade.m.colourSpans ? <RotationStats g={grade} lang={lang} /> : <p className="field-hint" data-rs-plain={grade.m.inSet > 0 ? '1' : undefined}>{grade.m.inSet > 0 ? tx.plain : tx.none}</p>)}
+      <div className="rs-controls">
+        <div className="ch-step" dir="ltr">
+          <small>{tx.tempo}</small>
+          <button className="icon-btn" onClick={() => setBpm((x) => Math.max(50, x - 6))} disabled={running} aria-label="−">
+            <Icon k="minus" />
+          </button>
+          <b>{bpm}</b>
+          <button className="icon-btn" onClick={() => setBpm((x) => Math.min(220, x + 6))} disabled={running} aria-label="+">
+            <Icon k="plus" />
+          </button>
+        </div>
+        <button className={`chip rs-keys-btn${showKeys ? ' on' : ''}`} onClick={() => setShowKeys((v) => !v)} aria-pressed={showKeys} data-rs-keys="1">
+          {tx.keys}
+        </button>
+        {running ? (
+          <button className="btn primary" onClick={stop}>
+            <Icon k="stop" /> {tx.stop}
+          </button>
+        ) : (
+          <button className="btn primary" onClick={() => void start()} data-rs-start="1">
+            <Icon k="play" /> {tx.start}
+          </button>
+        )}
+      </div>
+      {showKeys && <MarkedKeys onKey={onScreenKey} pcs={marks.pcs} colour={marks.colour} fam={shown.fam} />}
+    </section>
+  );
+}

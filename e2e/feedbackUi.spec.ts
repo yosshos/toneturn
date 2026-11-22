@@ -557,6 +557,7 @@ for (const lang of ['en', 'he'] as const)
       expect(b.h, 'one line').toBeLessThan(48);
       expect(b.over, 'label fits').toBe(false);
     }
+    await page.locator('[data-is-mode="rules"]').click(); // phase 5: Improvise opens on the scale rotation
     await expect(page.locator('.ir-wave').first()).toBeVisible();
     expect(await page.locator('.ir-level').count()).toBe(0);
     expect((await overflow(page)).wide).toBeLessThanOrEqual(1);

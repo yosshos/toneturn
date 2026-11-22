@@ -25,17 +25,20 @@ import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { Icon } from './icons';
+import { ScaleRotation, ScaleStrip } from './ScaleRotation';
+import { buildRotationSheet, gradeRotation, improvTake, type ImprovTake, type RotationGrade } from '../engine/rotationSheet';
+import type { ModeStats } from '../engine/rotation';
 
 type Lang = 'en' | 'he';
-type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
+type Mode = 'scales' | 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
 /** The segmented control's short labels (COURSE-FEEDBACK-UI §4.7: Rules / Phrase / Vary / Trade). */
 const SEG: Record<'en' | 'he', Record<Mode, string>> = {
-  en: { rules: 'Rules', phrasing: 'Phrase', vary: 'Vary', trade: 'Trade', useit: 'Lick' },
-  he: { rules: 'כללים', phrasing: 'משפט', vary: 'וריאציה', trade: 'חילופים', useit: 'ליק היום' },
+  en: { scales: 'Scales', rules: 'Rules', phrasing: 'Phrase', vary: 'Vary', trade: 'Trade', useit: 'Lick' },
+  he: { scales: 'סולמות', rules: 'כללים', phrasing: 'משפט', vary: 'וריאציה', trade: 'חילופים', useit: 'ליק' },
 };
 const TX = {
   en: {
-    title: 'Improvisation studio', useit: "Today's lick", useitHow: 'One of your licks, picked by need (due for review, or the newest). Improvise over a chart and work it in where the chart marks it — or over the band through four keys.', overChart: 'Over a chart', overBand: 'Over the band, four keys', picked: 'Picked for you', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
+    title: 'Improvisation studio', scales: 'Scale rotation', scalesHow: 'Improvise over the chords with the scale written on each one. The scales change as you go; the colour notes are what each scale adds.', todayLick: "Today's lick", todayLickHow: 'Work it in once a chorus', inWorkout: "Part of today's workout", useIt: 'Improvise with it', covLine: 'Colour coverage', inSetLine: 'in the scale', useit: "Today's lick", useitHow: 'One of your licks, picked by need (due for review, or the newest). Improvise over a chart and work it in where the chart marks it — or over the band through four keys.', overChart: 'Over a chart', overBand: 'Over the band, four keys', picked: 'Picked for you', rules: 'Rules', rulesHow: 'Improvise over a chart under rules — every note is checked. Choose a chart, then a challenge; or set your own rules in the chart.', chartFrom: 'Chart to play over', levels: 'Improvisation levels', standards: 'Standards', mine: 'My charts', phrasing: 'Phrasing', vary: 'Vary it', trade: 'Trading fours', chart: 'Chart', rule: 'Rule', start: 'Start', stop: 'Stop', tempo: 'Tempo', back: 'Back',
     ruleNames: ['At most one note a beat', 'At most 2 notes a beat', 'Phrases of one bar', 'Phrases of two bars', 'Phrases of four bars', 'A bar of rest between phrases'],
     phrasingHow: 'Improvise over the band. Think in sentences: say something, then leave space. The rule shapes it.',
     varyHow: 'Listen to the phrase, then play it back changed as asked. Keep something of it — its shape or its rhythm.',
@@ -45,7 +48,7 @@ const TX = {
     round: 'Round',
   },
   he: {
-    title: 'סטודיו לאלתור', useit: 'הליק של היום', useitHow: 'אחד הליקים שלכם, לפי הצורך (חזרה שהגיע זמנה, או החדש ביותר). אלתרו על מהלך ושלבו אותו איפה שהמהלך מסמן — או מעל הלהקה בארבעה סולמות.', overChart: 'על מהלך', overBand: 'מעל הלהקה, ארבעה סולמות', picked: 'נבחר בשבילכם', rules: 'אלתור עם כללים', rulesHow: 'מאלתרים מעל מהלך תחת כללים — כל צליל נבדק. בחרו מהלך ואז אתגר; או קבעו כללים משלכם בתוך המהלך.', chartFrom: 'מהלך לאלתר עליו', levels: 'שלבי אלתור', standards: 'סטנדרטים', mine: 'המהלכים שלי', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
+    title: 'סטודיו לאלתור', scales: 'סבב סולמות', scalesHow: 'אלתרו מעל האקורדים בסולם שכתוב על כל אחד. הסולמות מתחלפים תוך כדי; צלילי הצבע הם מה שכל סולם מוסיף.', todayLick: 'הליק של היום', todayLickHow: 'שלבו אותו פעם בכל כורוס', inWorkout: 'חלק מהאימון של היום', useIt: 'לאלתר איתו', covLine: 'כיסוי צבע', inSetLine: 'בתוך הסולם', useit: 'הליק של היום', useitHow: 'אחד הליקים שלכם, לפי הצורך (חזרה שהגיע זמנה, או החדש ביותר). אלתרו על מהלך ושלבו אותו איפה שהמהלך מסמן — או מעל הלהקה בארבעה סולמות.', overChart: 'על מהלך', overBand: 'מעל הלהקה, ארבעה סולמות', picked: 'נבחר בשבילכם', rules: 'אלתור עם כללים', rulesHow: 'מאלתרים מעל מהלך תחת כללים — כל צליל נבדק. בחרו מהלך ואז אתגר; או קבעו כללים משלכם בתוך המהלך.', chartFrom: 'מהלך לאלתר עליו', levels: 'שלבי אלתור', standards: 'סטנדרטים', mine: 'המהלכים שלי', phrasing: 'פרייזינג', vary: 'וריאציה', trade: 'חילופי ארבע', chart: 'מהלך', rule: 'חוק', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', back: 'חזרה',
     ruleNames: ['לכל היותר צליל אחד לפעמה', 'לכל היותר 2 צלילים לפעמה', 'משפטים של תיבה אחת', 'משפטים של שתי תיבות', 'משפטים של ארבע תיבות', 'תיבה של שקט בין משפטים'],
     phrasingHow: 'אלתרו מעל הלהקה. חשבו במשפטים: להגיד משהו, ואז להשאיר מקום. החוק מעצב את זה.',
     varyHow: 'הקשיבו למשפט, ואז נגנו אותו בחזרה בשינוי שהתבקש. שמרו משהו ממנו — הצורה או הקצב.',
@@ -78,10 +81,41 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab }: { /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+/** The workout's improvisation block (SPEC-LICKS-IN-IMPROV §4): today's lick, over its chart in the key of the day. */
+export function TodayLickCard({ lick, dayKey, lang, onOpen }: { lick: Lick; dayKey: number; lang: Lang; onOpen?: (c: MyChart) => void }) {
+  const tx = TX[lang];
+  const minor = isMinorLick(lick);
+  return (
+    <div className="is-lick-card" data-is-today-lick={lick.id}>
+      <div>
+        <small>
+          {tx.inWorkout} · {tx.todayLick}
+        </small>
+        <b>
+          {lick.name[lang]} · <bdi dir="ltr">{kName(dayKey, minor)}</bdi>
+        </b>
+        <small>{tx.todayLickHow}</small>
+      </div>
+      {onOpen && (
+        <button
+          className="btn ghost"
+          data-is-today-lick-open="1"
+          onClick={() => {
+            const c = lickImprovChart(lick, dayKey);
+            onOpen({ id: `lick-${lick.id}-${Date.now()}`, title: `${tx.todayLick}: ${lick.name[lang]} · ${kName(dayKey, minor)}`, text: c.text, style: c.style, bpm: c.bpm, rules: TODAYS_LICK_RULES, lick: lick.id });
+          }}
+        >
+          {tx.useIt}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onTake, workout = false }: { /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
-  const [mode, setMode] = useState<Mode>(onOpenChart ? 'rules' : 'phrasing');
+  const [mode, setMode] = useState<Mode>(workout || !initialChart ? 'scales' : onOpenChart ? 'rules' : 'phrasing');
   const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
@@ -139,6 +173,19 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const L = IMPROV_LEVELS.find((x) => x.n === lv) ?? IMPROV_LEVELS[0];
     return { L, p: parseChart(L.text) };
   };
+  // Phrase / Trade are graded against the rotation's scales too (shown as a strip above Start): the same colour
+  // coverage, and the take folds into the mode × function stats (SPEC-RBI-ROTATION §5, BUILD-PLAN phase 5).
+  const stats: ModeStats = settings.rotationStats ?? {};
+  const levelSheet = (() => {
+    const { p } = chartOf();
+    return mode === 'trade' ? buildRotationSheet({ ...p, bars: Math.min(4, p.bars), chords: p.chords.filter((c) => c.bar < 4) }, { tier, stats, choruses: 1 }) : buildRotationSheet(p, { tier, stats, choruses: 2 });
+  })();
+  const CovLine = ({ g }: { g: RotationGrade }) =>
+    g.m.colourSpans ? (
+      <p className="is-cov" data-is-cov={Math.round(g.m.colour * 100)}>
+        {tx.covLine} <bdi dir="ltr">{Math.round(g.m.colour * 100)}%</bdi> · {tx.inSetLine} <bdi dir="ltr">{Math.round(g.m.inSet * 100)}%</bdi>
+      </p>
+    ) : null;
 
   const startPhrasing = async () => {
     setRunning(true);
@@ -155,6 +202,10 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     keepChartTake({ kind: 'improv', title: { en: `Phrasing · ${L.text.split('|')[0].trim()}`, he: `משפטים · ${L.text.split('|')[0].trim()}` }, notes: played.map((n) => ({ start: n.beat * beatS, end: (n.beat + Math.max(0.1, n.dur)) * beatS, midi: n.midi })), bpm, meter: 4, chart: L.text, style: L.style, loops: 2, source: midi.devices.length ? 'midi' : 'screen' });
     const chk = checkPhraseRule(played, total, RULES[rule]);
     const mot = motifReturns(played);
+    const sh = buildRotationSheet(p, { tier, stats, choruses: 2 });
+    const g = sh ? gradeRotation(sh, played, stats, new Date().toISOString()) : null;
+    const phraseScore = (chk.ok ? 0.5 : 0.2) + 0.25 * developmentScore(mot.returns) + 0.25 * (g?.score ?? 0);
+    onTake?.(improvTake('phrasing', { score: phraseScore, notes: played.length, tier, bpm, stats: g?.stats }));
     setResult(
       <div className="is-result" data-is-result="phrasing">
         <p className={chk.ok ? 'ok' : 'no'}>
@@ -177,6 +228,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
         <p className="field-hint">
           {tx.motif}: {mot.returns.length} {tx.times} · {tx.dev} {Math.round(developmentScore(mot.returns) * 100)}%
         </p>
+        {g && <CovLine g={g} />}
         {played.length >= 3 && (
           // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this take.
           <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: 'improv', instrument: 'piano', title: { en: `Improv over ${L.title.en}`, he: `אלתור על ${L.title.he}` }, source: midi.devices.length ? 'midi' : 'screen', notes: played.map((n) => ({ pitch: n.midi, on: n.beat * beatS * 1000, off: (n.beat + Math.max(0.1, n.dur)) * beatS * 1000, vel: 80 })), bpm, t0: 0, meter: 4, chart: L.text })} />
@@ -200,6 +252,8 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const answer = notes.current.filter((n) => n.beat >= 11.5 && n.beat <= 20).map((n) => ({ ...n, beat: n.beat - 12 + 0 }));
     const givenAligned = given.map((n) => ({ ...n }));
     const v = judgeVariation(givenAligned, answer, VARS[askIdx % VARS.length]);
+    // Vary has no chords under it: a rated result without the scale stats
+    onTake?.(improvTake('vary', { score: v.ok ? 1 : answer.length >= 3 ? 0.35 : 0, notes: answer.length, tier, bpm }));
     setResult(
       <div className="is-result" data-is-result="vary">
         <p className={v.ok ? 'ok' : 'no'}>
@@ -216,6 +270,10 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const { L, p } = chartOf();
     const four = { ...p, bars: Math.min(4, p.bars) };
     const scores: number[] = [];
+    let tStats = stats;
+    const grades: RotationGrade[] = [];
+    const sh = buildRotationSheet(four, { tier, stats, choruses: 1 });
+    let played = 0;
     for (let r = 0; r < 3; r++) {
       setRound(r + 1);
       // the player's four bars over the band (with a count-in)
@@ -223,6 +281,12 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       if (!(await run(b.events, b.length, b.startBeat))) break;
       const mine = notes.current.filter((n) => n.beat >= -0.25 && n.beat < 16);
       scores.push(developmentScore(motifReturns(mine).returns));
+      played += mine.length;
+      if (sh) {
+        const g = gradeRotation(sh, mine, tStats, new Date().toISOString());
+        tStats = g.stats;
+        grades.push(g);
+      }
       // the app's answer: the player's idea developed, over the band
       const ans = tradeAnswer(mine, 60, 0);
       const back = chartBacking(four, L.style, bpm, 1, 4, { countIn: false });
@@ -231,14 +295,21 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     }
     setRunning(false);
     setRound(0);
-    if (scores.length)
+    // the rounds' colour coverage together (each round's spans pooled)
+    const cov = grades.reduce((a, g) => ({ hit: a.hit + g.m.colour * g.m.colourSpans, n: a.n + g.m.colourSpans, inSet: a.inSet + g.m.inSet }), { hit: 0, n: 0, inSet: 0 });
+    const pooled: RotationGrade | null = grades.length ? { ...grades[grades.length - 1], m: { ...grades[grades.length - 1].m, colour: cov.n ? cov.hit / cov.n : 0, colourSpans: cov.n, inSet: cov.inSet / grades.length }, stats: tStats } : null;
+    if (scores.length) {
+      const dev = scores.reduce((a, b) => a + b, 0) / scores.length;
+      onTake?.(improvTake('trade', { score: 0.5 * dev + 0.5 * (pooled ? 0.5 * pooled.m.colour + 0.5 * pooled.m.inSet : 0), notes: played, tier, bpm, stats: grades.length ? tStats : undefined }));
       setResult(
         <div className="is-result" data-is-result="trade">
           <p>
-            {tx.dev}: {scores.map((s) => `${Math.round(s * 100)}%`).join(' · ')}
+            {tx.dev}: <bdi dir="ltr">{scores.map((s) => `${Math.round(s * 100)}%`).join(' · ')}</bdi>
           </p>
+          {pooled && <CovLine g={pooled} />}
         </div>,
       );
+    }
   };
 
   const stop = () => {
@@ -258,13 +329,25 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       {/* COURSE-FEEDBACK-UI §4.7: the modes as one segmented control with short labels (fits 288 px); the full name is
           the button's accessible name. */}
       <div className="seg is-seg" role="tablist" aria-label={tx.title}>
-        {([...(onOpenChart ? ['rules', 'phrasing', 'vary', 'trade'] : ['phrasing', 'vary', 'trade']), ...(myLicks.length ? ['useit'] : [])] as Mode[]).map((m) => (
+        {(['scales', ...(onOpenChart ? ['rules', 'phrasing', 'vary', 'trade'] : ['phrasing', 'vary', 'trade']), ...(myLicks.length ? ['useit'] : [])] as Mode[]).map((m) => (
           <button key={m} role="tab" aria-selected={mode === m} aria-label={tx[m]} title={tx[m]} className={mode === m ? 'on' : ''} onClick={() => (stop(), setMode(m), setResult(null))} data-is-mode={m}>
             {SEG[lang][m]}
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>
+      <p className="field-hint">{mode === 'scales' ? tx.scalesHow : mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>
+      {mode === 'scales' && (
+        <ScaleRotation
+          settings={settings}
+          lang={lang}
+          tier={tier}
+          dayKey={dayKey}
+          piece={initialChart}
+          onTier={onTier}
+          onTake={onTake}
+          top={workout && vocab?.today ? <TodayLickCard lick={vocab.today} dayKey={dayKey} lang={lang} onOpen={onOpenChart} /> : null}
+        />
+      )}
       {mode === 'rules' && onOpenChart && (
         <>
           <label className="field-row is-src">
@@ -389,7 +472,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           })()}
         </>
       )}
-      {mode !== 'vary' && mode !== 'rules' && mode !== 'useit' && (
+      {mode !== 'vary' && mode !== 'rules' && mode !== 'useit' && mode !== 'scales' && (
         <label className="field-row">
           <span>{tx.chart}</span>
           <select value={lv} onChange={(e) => setLv(Number(e.target.value))} disabled={running}>
@@ -401,6 +484,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           </select>
         </label>
       )}
+      {(mode === 'phrasing' || mode === 'trade') && levelSheet && <ScaleStrip sheet={levelSheet} lang={lang} />}
       {mode === 'phrasing' && (
         <div className="chips" role="radiogroup" aria-label={tx.rule}>
           {RULES.map((r, i) => (
@@ -411,7 +495,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
         </div>
       )}
       {mode === 'vary' && <p className="is-ask" data-is-ask={VARS[askIdx % VARS.length]}>{tx.asks[VARS[askIdx % VARS.length]]}</p>}
-      {mode !== 'rules' && mode !== 'useit' && <div className="ch-step" dir="ltr">
+      {mode !== 'rules' && mode !== 'useit' && mode !== 'scales' && <div className="ch-step" dir="ltr">
         <small>{tx.tempo}</small>
         <button className="icon-btn" onClick={() => setBpm((b) => Math.max(50, b - 6))} disabled={running} aria-label="−">
           <Icon k="minus" />
@@ -421,7 +505,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           <Icon k="plus" />
         </button>
       </div>}
-      {mode === 'rules' || mode === 'useit' ? null : running ? (
+      {mode === 'rules' || mode === 'useit' || mode === 'scales' ? null : running ? (
         <button className="btn primary" onClick={stop}>
           <Icon k="stop" /> {tx.stop} {round ? `· ${tx.round} ${round}/3` : ''}
         </button>
@@ -430,7 +514,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           <Icon k="play" /> {tx.start}
         </button>
       )}
-      {midi.devices.length === 0 && mode !== 'rules' && mode !== 'useit' && (
+      {midi.devices.length === 0 && mode !== 'rules' && mode !== 'useit' && mode !== 'scales' && (
         <>
           <small className="field-hint">{tx.keys}</small>
           <KeyStrip onKey={onScreenKey} />
