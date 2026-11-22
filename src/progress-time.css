@@ -30,3 +30,12 @@
 .pt-heat-row { display: grid; grid-template-columns: 28px repeat(auto-fit, minmax(8px, 1fr)); gap: 3px; align-items: center; }
 .pt-heat-row span { font-size: 0.72rem; color: var(--ink-soft); }
 .pt-heat-row i { height: 12px; border-radius: 3px; display: block; }
+/* The teacher's class charts (SPEC-PROGRESS-CHARTS §4). */
+.tp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.tp-card { font: inherit; text-align: start; display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.tp-card.need { border-color: var(--bad, #c2185b); }
+.tp-card small { font-size: 0.75rem; color: var(--ink-soft); }
+.tp-sparks { display: flex; gap: 8px; }
+.tp-heat td { text-align: center; min-width: 40px; }
+.tp-heat td:first-child { text-align: start; }
+.tp-switch { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--ink); min-height: 44px; }
