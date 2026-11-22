@@ -178,8 +178,11 @@ describe('the daily workout is the single plan (D2)', () => {
     expect(mins(withRev, 'improv')).toBe(mins(plain, 'improv'));
     expect(mins(withRev, 'keys')).toBeLessThan(mins(plain, 'keys'));
     expect(withRev.some((x) => x.target.kind === 'game' && x.target.game === 'licks')).toBe(true);
-    const fresh = sugg(30, { opened: 0 });
+    // a real beginner (tier 0) with nothing opened: the path takes the technique share; an experienced player new to
+    // the app (tier 1+) keeps a technique block from day one
+    const fresh = sugg(30, { opened: 0, techTier: 0 });
     expect(mins(fresh, 'keys')).toBe(0);
+    expect(mins(sugg(30, { opened: 0, techTier: 3 }), 'keys')).toBeGreaterThan(0);
     expect(mins(fresh, 'path')).toBeGreaterThan(mins(sugg(30), 'path'));
     expect(mins(sugg(30, { pathMode: 'choose' }), 'path')).toBe(0);
   });

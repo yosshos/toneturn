@@ -303,7 +303,9 @@ function suggestInstrument(inp: SuggestInput, T: number, push: (t: BlockTarget, 
     imp += tech;
     tech = 0;
   }
-  if (opened === 0 && !choose) {
+  // A new player with nothing opened on the path: a real beginner (tier 0) starts with the path; an experienced
+  // player new to the app (tier 1+ from the level test / self-rating) keeps a technique block from day one.
+  if (opened === 0 && !choose && (inp.techTier ?? 0) < 1) {
     path += tech;
     tech = 0;
   }
