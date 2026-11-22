@@ -6,30 +6,37 @@ import type { Drill } from '../engine/drills/types';
 import type { NoteEvent } from '../engine/lesson';
 import { isDrumDrill } from '../engine/drills/events';
 import { piano } from './services';
+import { expTimeMs } from '../engine/drills/analyze';
+import { cursorBeatAt, frameLead } from '../engine/playhead';
 import { Icon } from './icons';
 
 /** Items with written pitches to hear (not drums, singing, untimed note finding, or empty). */
 export const hearable = (d: Drill): boolean => d.notes.length > 0 && !isDrumDrill(d) && !d.sung && !d.untimed && !d.listen;
 
-/** piano.play schedules its notes this far ahead. */
-const AHEAD_MS = 60;
-
-/** Play the item at `bpm`; `onBeat` gets the running beat (fractional) and −1 at the end. Rejects when aborted. */
+/**
+ * Play the item at `bpm`; `onBeat` gets the running written beat (fractional) and −1 at the end. Rejects when aborted.
+ * Owner 2026-11-22: the notes sound where a take expects them (expTimeMs: swung 8ths at 2/3 of the beat, the tempo map)
+ * and the cursor reads the same clock from the moment the first note is heard (the audio engine says when), stopping
+ * on the last note — it no longer guessed the start (60 ms ahead, output latency ignored) or ran on to the line's end.
+ */
 export async function playDrill(d: Drill, bpm: number, signal: AbortSignal, onBeat?: (b: number) => void): Promise<void> {
   await piano.unlock();
-  const spb = 60 / Math.max(30, bpm);
-  const ev: NoteEvent[] = d.notes.map((n) => ({ midi: n.pitch, start: n.beat * spb, duration: Math.max(0.08, n.dur * spb * 0.95), velocity: n.accent ? 0.78 : 0.6 }));
-  const length = Math.max(d.beats, ...d.notes.map((n) => n.beat + n.dur)) * spb + 0.25;
-  const t0 = performance.now() + AHEAD_MS;
+  const b = Math.max(30, bpm);
+  const at = (beat: number) => expTimeMs(d, beat, b) / 1000;
+  const ev: NoteEvent[] = d.notes.map((n) => ({ midi: n.pitch, start: at(n.beat), duration: Math.max(0.08, (at(n.beat + n.dur) - at(n.beat)) * 0.95), velocity: n.accent ? 0.78 : 0.6 }));
+  const length = Math.max(at(d.beats), ...d.notes.map((n) => at(n.beat + n.dur))) + 0.25;
+  let t0 = 0;
   let raf = 0;
+  const lead = frameLead();
   const tick = () => {
-    const b = (performance.now() - t0) / 1000 / spb;
-    onBeat?.(Math.min(Math.max(0, b), d.beats - 0.001));
+    const now = performance.now();
+    const ahead = lead(now);
+    if (t0) onBeat?.(Math.max(0, cursorBeatAt(d, b, now + ahead - t0)));
     raf = requestAnimationFrame(tick);
   };
   if (onBeat) raf = requestAnimationFrame(tick);
   try {
-    await piano.play(ev, length, signal);
+    await piano.play(ev, length, signal, (heard) => (t0 = heard));
   } finally {
     cancelAnimationFrame(raf);
     onBeat?.(-1);

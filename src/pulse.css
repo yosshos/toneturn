@@ -121,12 +121,7 @@
   background: var(--accent);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
   pointer-events: none;
-  transition: left 0.04s linear;
-}
-@media (prefers-reduced-motion: reduce) {
-  .staff-now {
-    transition: none;
-  }
+  /* 2026-11-22: no transition — the place is set every frame from the audio clock; easing it trailed the notes */
 }
 
 /* Groove trainer: a ring that pulses on every audible click (remounted per click). */

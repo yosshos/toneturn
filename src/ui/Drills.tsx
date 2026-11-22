@@ -17,6 +17,7 @@ import { ChordChart } from './ChordChart';
 import { BACK_TO_RUBATO, hasRubato, QUARTERS_BPM, quartersDrill, RUBATO_CLEAN, rubatoStage, skipRubato, withStageTake, type RubatoStage } from '../engine/drills/rubato';
 import { RubatoTake } from './RubatoTake';
 import { hearable, playDrill } from './HearDrill';
+import { devBpm } from './fakeTake';
 import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
 import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
@@ -1132,7 +1133,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   // A checkpoint's technique part plays every item at its level's target tempo (SPEC-PATH-ROLE §4).
   const bpmOf = (d: Drill) => (atTarget ? itemTargetBpm(d) : stateOf(d).goalBpm);
-  const [bpm, setBpm] = useState(() => (coach && cTake ? cTake.bpm : drill ? bpmOf(drill) : 60));
+  const [bpm, setBpm] = useState(() => devBpm() ?? (coach && cTake ? cTake.bpm : drill ? bpmOf(drill) : 60));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult } | null>(null);
   const session = useRef(Date.now().toString(36));
   const count = useRef({ takes: 0, clean: 0 });

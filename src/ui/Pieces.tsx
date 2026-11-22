@@ -272,8 +272,9 @@ function PiecePractice({ settings, sp, onSave, onBack, onMinutes }: { settings: 
     const id = setInterval(() => {
       const b = beatAt.current;
       if (!b || !task) return;
-      const beatMs = 60000 / task.tempo;
-      setCursor(b.beat + Math.min(1, (performance.now() - b.t) / beatMs));
+      // the take's beat is continuous already (read from the audio clock each frame, stopped on the last note):
+      // extrapolating it ran the cursor ahead and past the end
+      setCursor(b.beat);
     }, 50);
     return () => clearInterval(id);
   });
