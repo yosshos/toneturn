@@ -9,7 +9,7 @@ import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
 import { families as familiesOf } from '../engine/drills/plan';
 import type { FamilyDef } from '../engine/drills/generate';
-import type { MatrixSummary } from '../engine/drills/keyMatrix';
+import { fillMinutes, matrixOrder, type MatrixCell, type MatrixSummary, type MatrixView } from '../engine/drills/keyMatrix';
 import { cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
@@ -122,7 +122,7 @@ function LevelBar({ done, of }: { done: number; of: number }) {
 
 /** The 12 key cards of a tab, in the player's key order, and General technique under them. */
 /** The matrix as the player reads it (SPEC-DAILY-WORKOUT §2, §5): exercises, closed, time left, and the projection. */
-type MatrixInfo = (MatrixSummary & { perDay: number; days: number | null }) | null | undefined;
+type MatrixInfo = (MatrixSummary & { cellsList?: MatrixCell[]; perDay: number; days: number | null }) | null | undefined;
 const hrs = (m: number, he: boolean): string => (m < 90 ? (he ? `כ־${Math.round(m)} דקות` : `about ${Math.round(m)} min`) : he ? `כ־${Math.round(m / 60)} שעות` : `about ${Math.round(m / 60)} h`);
 const span = (d: number, he: boolean): string => (d <= 14 ? (he ? `${d} ימים` : `${d} days`) : d <= 90 ? (he ? `${Math.round(d / 7)} שבועות` : `${Math.round(d / 7)} weeks`) : he ? `${Math.round(d / 30)} חודשים` : `${Math.round(d / 30)} months`);
 function MatrixLine({ m, lang }: { m: MatrixInfo; lang: Lang }) {
@@ -136,7 +136,53 @@ function MatrixLine({ m, lang }: { m: MatrixInfo; lang: Lang }) {
   );
 }
 
-export function KeyGrid({ matrix, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
+const MV_KEY = 'toneturn.matrixView';
+const readMv = (): MatrixView => {
+  try {
+    const v = localStorage.getItem(MV_KEY);
+    return v === 'key' || v === 'exercise' ? v : 'weak';
+  } catch {
+    return 'weak';
+  }
+};
+/** Today's chunk of the matrix (SPEC-DAILY-WORKOUT §3–4): the view chips (remembered) and the start button. */
+function TodayKeys({ m, lang, onToday }: { m: NonNullable<MatrixInfo>; lang: Lang; onToday: (v: MatrixView) => void }) {
+  const he = lang === 'he';
+  const [mv, setMv] = useState<MatrixView>(readMv);
+  const pick = (v: MatrixView) => {
+    setMv(v);
+    try {
+      localStorage.setItem(MV_KEY, v);
+    } catch {
+      /* fine */
+    }
+  };
+  const today = fillMinutes(matrixOrder(m.cellsList ?? [], mv), Math.round(m.perDay * 0.7));
+  const mins = Math.round(today.reduce((n, c) => n + c.minutes, 0));
+  const VIEWS: [MatrixView, string, string][] = [['weak', 'Weakest first', 'קודם החלש'], ['key', 'By key', 'לפי סולם'], ['exercise', 'By exercise', 'לפי תרגיל']];
+  return (
+    <div className="key-today" data-key-today={mv}>
+      <div className="chips" role="radiogroup" aria-label={he ? 'סדר העבודה' : 'Order of work'}>
+        {VIEWS.map(([v, en, h]) => (
+          <button key={v} className={`chip ${mv === v ? 'on' : ''}`} role="radio" aria-checked={mv === v} onClick={() => pick(v)} data-matrix-view={v}>
+            {he ? h : en}
+          </button>
+        ))}
+      </div>
+      {today.length > 0 && (
+        <button className="coach-entry" onClick={() => onToday(mv)} data-key-today-run={today.length}>
+          <Icon k="play" size={20} />
+          <span>
+            <b>{he ? `האימון של היום בסולמות · כ־${mins} דקות` : `Today's key workout · about ${mins} min`}</b>
+            <small>{he ? `${today.length} תרגילים, מ${today[0].level.title.he}` : `${today.length} exercises, from ${today[0].level.title.en}`}</small>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function KeyGrid({ matrix, onToday, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** SPEC-DAILY-WORKOUT: today's chunk of the matrix in the chosen view. */ onToday?: (view: MatrixView) => void; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items);
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -146,6 +192,7 @@ export function KeyGrid({ matrix, idx, items, lang, ds, group, onGroup, onKey, g
     <section className="key-grid-wrap" data-key-grid={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <MatrixLine m={matrix} lang={lang} />
+      {matrix?.cellsList && onToday && <TodayKeys m={matrix} lang={lang} onToday={onToday} />}
       {weekRoot !== null && onWeek && (
         <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot}>
           <Icon k="play" size={20} />

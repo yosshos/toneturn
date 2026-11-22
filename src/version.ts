@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.116.0',
+    date: '2026-11-22',
+    en: ['Practice by key shows every exercise in every key at your level, how many are closed, the time left and when you will finish at your minutes a day', "Today's key workout: the next exercises in the order you choose (weakest first, by key or by exercise), filling today's time", 'Licks and Encore are one tile: the library, my phrases and the challenges; share a lick once you play it clean at a tempo'],
+    he: ['האימון לפי סולם מראה את כל התרגילים בכל הסולמות ברמה שלכם, כמה סגורים, כמה זמן נשאר ומתי תסיימו בדקות שלכם ביום', 'האימון של היום בסולמות: התרגילים הבאים בסדר שבחרתם (קודם החלש, לפי סולם או לפי תרגיל), עד שהזמן של היום מתמלא', 'ליקים והדרן באריח אחד: הספרייה, המשפטים שלי והאתגרים; משתפים ליק אחרי שניגנתם אותו נקי בטמפו'],
+  },
+  {
     version: '0.115.1',
     date: '2026-11-22',
     en: ['Approach licks now lead into every scale degree too, before the 3rds, triads and 7th chords, up and down, with each hand and then hands together', 'Lick 3 where the step above is only a half step (E and B in C): F D E♭ – E, C A B♭ – B'],

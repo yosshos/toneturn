@@ -82,3 +82,18 @@ test('wide screens: the keys on the circle of fifths', async ({ page }) => {
   await expect(page.locator('[data-key-layout="circle"]')).toBeVisible({ timeout: 30_000 });
   await page.screenshot({ path: 'test-results/keys-circle.png' });
 });
+
+test('today’s key workout (SPEC-DAILY-WORKOUT): three views, remembered; the button runs the next cells under the coach', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?unlock=all#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await expect(page.locator('[data-key-today]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-key-today]')).toHaveAttribute('data-key-today', 'weak');
+  await page.locator('[data-matrix-view="exercise"]').click();
+  await expect(page.locator('[data-key-today]')).toHaveAttribute('data-key-today', 'exercise');
+  await page.screenshot({ path: 'test-results/key-today.png' });
+  await page.reload();
+  await expect(page.locator('[data-key-today]')).toHaveAttribute('data-key-today', 'exercise', { timeout: 30_000 });
+  await page.locator('[data-key-today-run]').click();
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+});

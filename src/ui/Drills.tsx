@@ -123,7 +123,7 @@ import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './P
 import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
-import { keyMatrix, matrixSummary, projectionDays } from '../engine/drills/keyMatrix';
+import { fillMinutes, keyMatrix, matrixOrder, matrixSummary, projectionDays, type MatrixView } from '../engine/drills/keyMatrix';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, weekOf, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
@@ -324,9 +324,10 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const keyMatrixSum = useMemo(() => {
     // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
     if ((ds.instrument ?? 'piano') !== 'piano' || !(pView === 'key' || view.k === 'keypage')) return null;
-    const sum = matrixSummary(keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz' }));
+    const cells = keyMatrix(familiesOf('piano'), matrixTier, items, { jazz: ds.emphasis === 'jazz' });
+    const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
-    return { ...sum, perDay, days: projectionDays(sum, perDay) };
+    return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
   }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, pView, view.k]);
   const keyIdx = useMemo(
     () => (ds.instrument === 'drums' || (pView !== 'key' && view.k !== 'keypage') ? null : buildKeyIndex(shownFamilies({ ...ds, bassTuning }), ds.keyOrder)),
@@ -524,6 +525,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds)} onWeek={(root, g) => {
           const lad = (ds.instrument ?? 'piano') === 'piano' ? keyLadder(familiesOf('piano'), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz' }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
+        }} onToday={(mv: MatrixView) => {
+          if (!keyMatrixSum) return;
+          // today's technique share (SPEC-DAILY-WORKOUT §4: about 70 %) of the player's minutes, in the chosen view
+          const cells = fillMinutes(matrixOrder(keyMatrixSum.cellsList, mv), Math.round(keyMatrixSum.perDay * 0.7));
+          if (!cells.length) return;
+          const fam = { id: 'scales' as const, title: { en: "Today's key workout", he: 'האימון של היום בסולמות' }, style: 'both' as const, levels: cells.map((c, k) => ({ ...c.level, level: k + 1 })) };
+          setView({ k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: fam, ladder: true });
         }} onKey={(root) => setView({ k: 'keypage', root })} general={general} /> : null
       }
     />

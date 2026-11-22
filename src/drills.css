@@ -646,6 +646,7 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .key-card.st-strong .kp-bar i { background: var(--paper); }
 .key-page { display: grid; gap: 8px; }
 .key-matrix-line { margin: 2px 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.4; }
+.key-today { display: grid; gap: 8px; }
 .kp-legend { margin: 0; }
 .kp-row { display: grid; gap: 6px; }
 .kp-row-head { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name n' 'bar bar'; gap: 6px 10px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--card-2); cursor: pointer; }
