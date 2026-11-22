@@ -151,7 +151,8 @@ export function assignScales(h: HarmonySpan[], tier: number, meter: number, chor
         curWin = w;
         picks = {};
       }
-      const fn = s.sub ? 'V-free' : s.fn;
+      // a substitution carries its own function (VI7 → V-min, the tritone sub → V-free, the passing dim → dim)
+      const fn = s.fn;
       picks[fn] ??= pickScale(fn, tier, stats, rand);
       out.push({ span: { ...s, at }, mode: picks[fn]!, window: w });
     }
@@ -230,7 +231,7 @@ export function classifyNotes(notes: PlayedNote[], plan: { span: HarmonySpan; mo
       const cts = chordPcs(q.span);
       const sc = scalePcs(q.mode, root);
       if (cts.includes(pc)) return 'ct' as NoteClass;
-      if (sc.includes(pc)) return isAvoid(pc, q.span, cts) ? 'avoid' : colourNotes(q.span.sub ? 'V-free' : q.span.fn, q.mode, root).includes(pc) ? 'colour' : 'tension';
+      if (sc.includes(pc)) return isAvoid(pc, q.span, cts) ? 'avoid' : colourNotes(q.span.fn, q.mode, root).includes(pc) ? 'colour' : 'tension';
       return null;
     };
     let c = test(p);
@@ -247,6 +248,9 @@ export function classifyNotes(notes: PlayedNote[], plan: { span: HarmonySpan; mo
   });
 }
 
+/** The colour notes of a planned span (empty for the function's default scale). */
+export const spanColours = (p: { span: HarmonySpan; mode: ModeId }): number[] => colourNotes(p.span.fn, p.mode, p.span.sub ? p.span.sub.root : p.span.root);
+
 export interface RotationMetrics {
   /** Share of note duration in the set (chord tones, tensions, colour, avoid handled, passing). */
   inSet: number;
@@ -254,7 +258,7 @@ export interface RotationMetrics {
   strongCt: number;
   /** Avoid notes held a beat or more on a strong beat. */
   avoidFaults: number;
-  /** Spans of ≥ 2 beats with at least one colour note ÷ such spans that had notes. */
+  /** Spans of ≥ 2 beats whose scale has colour notes: those with at least one played ÷ such spans that had notes. */
   colour: number;
   colourSpans: number;
 }
@@ -275,7 +279,7 @@ export function rotationMetrics(notes: PlayedNote[], plan: { span: HarmonySpan; 
   });
   let spans = 0, hit = 0;
   for (const p of plan) {
-    if (p.span.beats < 2) continue;
+    if (p.span.beats < 2 || !spanColours(p).length) continue;
     const idx = notes.map((n, i) => (n.beat >= p.span.at - 1e-6 && n.beat < p.span.at + p.span.beats - 1e-6 ? i : -1)).filter((i) => i >= 0);
     if (!idx.length) continue;
     spans++;
@@ -291,10 +295,11 @@ export function updateModeStats(stats: ModeStats, plan: { span: HarmonySpan; mod
   for (const p of plan) {
     const idx = notes.map((n, i) => (n.beat >= p.span.at - 1e-6 && n.beat < p.span.at + p.span.beats - 1e-6 ? i : -1)).filter((i) => i >= 0);
     if (!idx.length || p.span.beats < 2) continue;
-    const fn = p.span.sub ? 'V-free' : p.span.fn;
+    const fn = p.span.fn;
     const k = modeKey(fn, p.mode);
     const cur = out[k] ?? { n: 0, cov: 0, last: '' };
-    const hit = idx.some((i) => cls[i] === 'colour') ? 1 : 0;
+    // a scale with no colour notes (the function's default) has nothing to cover: it never reads as weak
+    const hit = !spanColours(p).length || idx.some((i) => cls[i] === 'colour') ? 1 : 0;
     out[k] = { n: cur.n + 1, cov: (cur.cov * cur.n + hit) / (cur.n + 1), last: at };
   }
   return out;

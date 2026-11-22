@@ -168,6 +168,7 @@ test.describe('practice hub', () => {
 
   test('0.53: a rules challenge from the studio opens the chart with its rules; a pasted lead sheet becomes a chart', async ({ page }) => {
     await page.goto('/?unlock=all#/improv');
+    await page.locator('[data-is-mode="rules"]').click(); // phase 5: Improvise opens on the scale rotation
     await page.locator('[data-is-chart-src]').selectOption('std:blue-bossa');
     await page.locator('[data-challenge="bebop-test"]').click();
     await expect(page.locator('[data-chart-player]')).toBeVisible();
