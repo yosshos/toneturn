@@ -91,10 +91,16 @@ This builds on docs/SPEC-WORKOUT.md: blocks of a target plus minutes, editable, 
    - V → I.
 
    The existing licks already run in 12 keys. They get filed on the key page and in the ladder by need, like every rung.
-2. **The Licks tile leaves the Practice page.** The library becomes "My vocabulary":
-   - a list in Study and on each key page ("language in this key"), with the keys each lick is closed in;
-   - spaced review flows into the daily maintenance;
-   - a lick closed in a key unlocks it for the improv card "use a lick", in that key.
+2. **One place for licks (owner 2026-11-22): the Licks tile stays on the Practice page and Encore moves inside it.**
+   - **Why:** a feature outside this area would be found less; people would not understand what it is. So everything about licks sits together.
+   - **Inside the tile:**
+     - **Library:** our licks and the known devices, filtered by chord context and level, with the keys each one is closed in. This is also where spaced review is due.
+     - **Mine** (what Encore was): add a lick by playing it, recording it or writing it; it becomes yours in 12 keys up a tempo ladder.
+     - **Challenges** (Encore's challenges and featured phrase).
+   - **Share:** after a lick is played clean at a tempo, a share card names the lick, the key and the tempo (♩).
+   - **The key session's block G** draws from the same library, both ours and the player's own.
+   - **The "use a lick" improv card** accepts any lick closed in that key.
+   - Encore's own entry point (the Practice tile and the sidebar item) goes. Its data and its review carry over unchanged.
 3. **The technique families of lines** (k-bebop, k-vocab, jazz, k-harrisline) feed block G instead of standing as separate rows of exercises. Their levels stay (path, level test, skill map), so nothing measured is lost.
 4. **Expanding the library:**
    - **Can go in:** known vocabulary *devices*, written in our own notes. These are generic material, not anyone's solo:
@@ -111,7 +117,7 @@ This builds on docs/SPEC-WORKOUT.md: blocks of a target plus minutes, editable, 
    - **Cannot go in:**
      - etude books (Snidero, Ligon, Bergonzi, Aebersold): copyrighted;
      - transcribed solos of players: copyrighted.
-   - **Etudes:** a chorus-long line over a standard progression could only come from (a) cells assembled by rule from the verified vocabulary, (b) the owner or a teacher recording one, or (c) a public-domain source. Owner question 2.
+   - **Etudes (owner 2026-11-22: option C):** only from public-domain sources, judged by **US copyright law** (the customers are in the US). Research: docs/research/PD-JAZZ-SOURCES.md. One open point: an improvised solo on a pre-1978 record may count as an unpublished work protected for life+70, even when the recording itself is PD.
 
 ## 7. Order of work
 
@@ -123,8 +129,8 @@ This builds on docs/SPEC-WORKOUT.md: blocks of a target plus minutes, editable, 
 6. Rule-based improv with rotating scales (SPEC-RBI-ROTATION) in the improv share, in the key of the day.
 7. The AI coach's tilt.
 
-## 8. Questions for the owner
+## 8. Owner's answers and open questions
 
-1. **The Licks tile:** move it off the Practice page into "My vocabulary" (Study and the key page), with the licks practised inside the key session (block G)?
-2. **Etudes:** cells assembled by rule from the verified vocabulary, or none until a teacher records some? (Owner rule: no Claude-composed music.)
-3. **The default window** for a new jazz player: 30 minutes?
+1. **Licks and Encore: answered** (see §6.2). One tile, with Encore inside it.
+2. **Etudes: answered.** Public domain only, under US law.
+3. **Open:** the default window for a new jazz player. Proposed: 30 minutes.
