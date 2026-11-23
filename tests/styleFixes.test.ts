@@ -15,9 +15,10 @@ import type { Drill, DrillSpec } from '../src/engine/drills/types';
 
 const G = (id: string) => GROOVES.find((g) => g.id === id)!;
 const at = (lane: string) => [...lane].flatMap((c, i) => (c === 'x' ? [i] : []));
-const bassDrill = (family: string, level: number, specIndex = 0): Drill => {
-  const l = guitarCatalog().find((f) => f.id === family)!.levels[level - 1];
-  const sp = l.specs[specIndex];
+// Levels by number (hidden levels leave the catalogue, so never by position); a spec by its option.
+const bassDrill = (family: string, level: number, option = 0): Drill => {
+  const l = guitarCatalog().find((f) => f.id === family)!.levels.find((x) => x.level === level)!;
+  const sp = l.specs.find((x) => (x.option ?? 0) === option) ?? l.specs[0];
   return generate({ ...sp, key: Array.isArray(l.keys) ? (l.keys[0] as number) : 0, tuning: 'bass' } as DrillSpec);
 };
 const near = (xs: number[], b: number) => xs.some((x) => Math.abs(x - b) < 1e-6);
@@ -64,7 +65,8 @@ describe('F2: the 6/8 bell is the bembé bell', () => {
     expect(grooveHits(g).filter((h) => h.kind === 'cowbell').map((h) => h.step)).toEqual([0, 2, 4, 5, 7, 9, 11]);
   });
   it('under b-latin L7 every 12/8 bar carries the whole bell', () => {
-    const d = bassDrill('b-latin', 7);
+    // b-latin L7 is hidden ('bass-latin-cells': its bass line is unsourced); the bell is tested on the same drill kind.
+    const d = generate({ family: 'b-latin', kind: 'afro68', minor: true, perBeat: 3, key: 9, hands: 'R', tuning: 'bass' } as unknown as DrillSpec);
     const bell = drillDrumHits(d).filter((h) => h.d === 'h').map((h) => h.beat);
     for (let bar = 0; bar < 8; bar++) for (const c of [0, 2, 4, 5, 7, 9, 11]) expect(near(bell, bar * 4 + c / 3), `bar ${bar} cell ${c}`).toBe(true);
     expect(bell.filter((b) => b < 32 - 1e-6).length).toBe(8 * 7);

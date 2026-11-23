@@ -8,7 +8,7 @@ import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import type { PathView } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
-import { add, blockLeftMs, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, total, WHY_WORD, whyOf, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
+import { add, BETWEEN_S, blockLeftMs, blockSummary, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, templateStale, total, WHY_WORD, whyOf, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { DOMAIN_HUE, GAMES2 } from './Arcade';
 import { useCourse } from './courseContext';
@@ -67,6 +67,17 @@ const W = {
     end: 'End workout',
     skipBlock: 'Skip this block',
     home: 'Home',
+    blockOver: '{b} done',
+    nextIn: 'Next: {b} in {s}',
+    nextPaused: 'Next: {b} · paused',
+    nextNow: 'Next now',
+    more: '+2 min',
+    runLeft: '{m} min left in the workout',
+    sumLine: '{m} min · {n} items · {r} right',
+    sumMin: '{m} min',
+    stale: 'Your default is over 30 days old. Refresh it?',
+    refresh: 'Refresh',
+    keep: 'Keep it',
   },
   he: {
     title: 'האימון של היום',
@@ -115,6 +126,17 @@ const W = {
     end: 'לסיים את האימון',
     skipBlock: 'לדלג על הבלוק',
     home: 'בית',
+    blockOver: '{b} הושלם',
+    nextIn: 'הבא: {b} בעוד {s}',
+    nextPaused: 'הבא: {b} · בהשהיה',
+    nextNow: 'הבא עכשיו',
+    more: '+2 דק׳',
+    runLeft: 'נשארו {m} דק׳ באימון',
+    sumLine: '{m} דק׳ · {n} פריטים · {r} נכונים',
+    sumMin: '{m} דק׳',
+    stale: 'ברירת המחדל שלכם בת יותר מ־30 יום. לרענן אותה?',
+    refresh: 'לרענן',
+    keep: 'להשאיר',
   },
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -280,7 +302,15 @@ export function WorkoutEditor({
   onCtx,
   leadsTo,
   subs,
+  templateAt,
+  today,
+  onTemplate,
 }: {
+  /** W6: when the default in use was saved (null: no default); with `today`, older than 30 days asks to refresh it. */
+  templateAt?: string | null;
+  today?: string;
+  /** W6's answer: keep the default (true) or refresh it (false: back to the suggestion). */
+  onTemplate?: (keep: boolean) => void;
   /** SPEC-PATH-ROLE §8: what the strengthen block leads to ("2 more steps and unit C is mastered"). */
   leadsTo?: string | null;
   /** A block kind's own second line today (the key of the week, the teacher …). */
@@ -361,6 +391,17 @@ export function WorkoutEditor({
         </button>
         <h1>{tx.title}</h1>
       </header>
+      {templateAt && today && onTemplate && templateStale(templateAt, today) && (
+        <div className="wk-stale" role="group" data-template-stale="1">
+          <small dir="auto">{tx.stale}</small>
+          <button className="btn small ghost" onClick={() => onTemplate(false)} data-stale="refresh">
+            {tx.refresh}
+          </button>
+          <button className="btn small ghost" onClick={() => onTemplate(true)} data-stale="keep">
+            {tx.keep}
+          </button>
+        </div>
+      )}
       <h2 className="st-sec-h">{sx.duration}</h2>
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">
@@ -561,8 +602,71 @@ export function WorkoutEditor({
   );
 }
 
-/** The run screen for blocks that are not lessons (practice timer, game, vocal), and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, endCard }: { /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+/**
+ * §5 / W20: between two blocks — the finished block's one-line summary, the time left in the workout, and the next
+ * block starting on its own after a 3-second countdown (touching the screen pauses it); Next now · +2 min · End.
+ */
+function BetweenBlocks({ t, lang, run, onNext, onMore, onEnd }: { t: Strings; lang: Lang; run: WorkoutRun; onNext: () => void; onMore: () => void; onEnd: () => void }) {
+  const tx = W[lang];
+  const done = run.blocks.find((b) => b.id === run.between);
+  const next = run.blocks[run.at];
+  const [left, setLeft] = useState(BETWEEN_S);
+  const [paused, setPaused] = useState(false);
+  const fired = useRef(false);
+  useEffect(() => {
+    if (paused) return;
+    if (left <= 0) {
+      if (!fired.current) {
+        fired.current = true;
+        onNext();
+      }
+      return;
+    }
+    const id = window.setTimeout(() => setLeft((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [left, paused]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!done || !next) return null;
+  const sum = blockSummary(run, done.id);
+  const nextName = blockLabel(t, next.target, lang, next.id);
+  return (
+    <main className="wk-run wk-between" style={{ ['--hue' as string]: hueOf(next.target) }} onPointerDown={() => setPaused(true)} data-between={done.id}>
+      <BlockBar blocks={run.blocks} run={run} />
+      <h1>
+        <Icon k="check" size={18} /> {fill(tx.blockOver, { b: blockLabel(t, done.target, lang, done.id) })}
+      </h1>
+      <p className="wk-sum" dir="auto" data-block-summary="1">
+        {sum.items ? fill(tx.sumLine, { m: sum.minutes, n: sum.items, r: sum.right }) : fill(tx.sumMin, { m: sum.minutes })}
+      </p>
+      <p className="field-hint" dir="auto" data-run-left="1">
+        {fill(tx.runLeft, { m: Math.ceil(runLeftMs(run) / 60000) })}
+      </p>
+      <p className="wk-next" dir="auto" aria-live="polite" data-countdown={paused ? 'paused' : left}>
+        {paused ? fill(tx.nextPaused, { b: nextName }) : fill(tx.nextIn, { b: nextName, s: left })}
+      </p>
+      <button
+        className="btn primary"
+        onClick={() => {
+          fired.current = true;
+          onNext();
+        }}
+        data-next-now="1"
+      >
+        <Icon k="play" /> {tx.nextNow}
+      </button>
+      <div className="wk-run-actions">
+        <button className="btn small ghost" onClick={onMore} data-more="1">
+          {tx.more}
+        </button>
+        <button className="btn small ghost" onClick={onEnd}>
+          {tx.end}
+        </button>
+      </div>
+    </main>
+  );
+}
+
+/** The run screen for blocks that are not lessons (practice timer, game, vocal), between blocks, and the finish summary. */
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, onNext, onMore, endCard }: { /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** §5: the countdown ran out or Next now (the next block starts). */ onNext?: () => void; /** §5: "+2 min" on the block that just ended. */ onMore?: () => void; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -603,6 +707,7 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
       </main>
     );
   }
+  if (run.between && onNext && onMore) return <BetweenBlocks key={run.between} t={t} lang={lang} run={run} onNext={onNext} onMore={onMore} onEnd={onEnd} />;
   const leftMs = Math.max(0, blockLeftMs(run) - (b.target.kind === 'practice' ? now - t0 : 0));
   const mm = Math.floor(leftMs / 60000);
   const ss = Math.floor((leftMs % 60000) / 1000);

@@ -381,6 +381,8 @@ export interface TeacherItem {
   minutes?: number;
   /** §5.1 (owner): when it doesn't fit today's window — spread until the due date (default) or all today. */
   ifShort?: 'spread' | 'today';
+  /** §5.2: the teacher's minutes a day (optional): today's share is this, not the work over the days left. */
+  perDay?: number | null;
 }
 export interface TeacherToday {
   /** The teacher block's minutes today. */
@@ -405,13 +407,17 @@ export function teacherToday(items: TeacherItem[], day: string, window: number):
   if (!open.length) return null;
   const room = Math.floor(Math.max(LIMITS.minTotal, window) / 2);
   const work = (a: TeacherItem) => Math.max(1, Math.round(a.minutes ?? ASSIGN_MIN));
-  const need = open.reduce((n, a) => n + work(a), 0);
+  // §5.2: minutes a day set by the teacher are today's work for that assignment ("all today" then means those minutes
+  // today even when the window is short; "spread": they fit in what the window leaves)
+  const daily = (a: TeacherItem) => (a.perDay && a.perDay > 0 ? Math.max(1, Math.round(a.perDay)) : null);
+  const todayWork = (a: TeacherItem) => daily(a) ?? work(a);
+  const need = open.reduce((n, a) => n + todayWork(a), 0);
   if (need <= room) return { minutes: Math.min(LIMITS.maxBlock, Math.max(LIMITS.minBlock, need)), extend: 0, ids: open.map((a) => a.id) };
   const today = open.filter((a) => a.ifShort === 'today');
   const spread = open.filter((a) => a.ifShort !== 'today');
-  const todayMin = today.reduce((n, a) => n + work(a), 0);
+  const todayMin = today.reduce((n, a) => n + todayWork(a), 0);
   const daysLeft = (a: TeacherItem) => (a.dueOn ? Math.max(1, dayNo(a.dueOn) - dayNo(day) + 1) : 1);
-  let spreadMin = spread.reduce((n, a) => n + Math.ceil(work(a) / daysLeft(a)), 0);
+  let spreadMin = spread.reduce((n, a) => n + (daily(a) ?? Math.ceil(work(a) / daysLeft(a))), 0);
   // spread work never grows the window: it fits in what the "all today" ones leave of the room
   if (spread.length) spreadMin = Math.max(LIMITS.minBlock, Math.min(spreadMin, room - todayMin));
   const minutes = Math.min(LIMITS.maxBlock, Math.max(LIMITS.minBlock, todayMin + spreadMin));
@@ -626,6 +632,10 @@ export function coverage(bs: Block[], view: PathView): { unitN: number | null; c
 
 export interface WorkoutRun {
   day: string;
+  /** §5: the block whose time just ran out (its summary and the 3-second countdown show before the next one). */
+  between?: string;
+  /** W16: the sub-skills (and topics) already served by a block today — later Area / Topic blocks skip them. */
+  served?: string[];
   blocks: Block[];
   /** Index of the block in progress. */
   at: number;
@@ -648,7 +658,7 @@ export function addSession(r: WorkoutRun, ms: number, items: number, right: numb
   const active = Math.min(ms, Math.max(1, items) * 60000);
   const cur = r.items[b.id] ?? [0, 0];
   const next: WorkoutRun = { ...r, used: { ...r.used, [b.id]: (r.used[b.id] ?? 0) + active }, items: { ...r.items, [b.id]: [cur[0] + items, cur[1] + right] }, steps: stepId ? [...r.steps, stepId] : r.steps };
-  return blockLeftMs(next) <= 0 ? nextBlock(next) : next;
+  return blockLeftMs(next) <= 0 ? { ...nextBlock(next), between: b.id } : next;
 }
 /**
  * SPEC-PATH-TODAY-PRACTICE §3.4 (counting from anywhere): active time on today's plan done outside the run (from
@@ -658,7 +668,7 @@ export function creditBlock(r: WorkoutRun, blockId: string, ms: number): Workout
   const i = r.blocks.findIndex((b) => b.id === blockId);
   if (i < 0 || r.finished || ms <= 0) return r;
   const next: WorkoutRun = { ...r, used: { ...r.used, [blockId]: (r.used[blockId] ?? 0) + ms } };
-  return i === r.at && blockLeftMs(next) <= 0 ? nextBlock(next) : next;
+  return i === r.at && blockLeftMs(next) <= 0 ? { ...nextBlock(next), between: blockId } : next;
 }
 /** The technique block today's matrix cells count toward: the first one not run out (from the block in progress on). */
 export function techBlockOf(r: { blocks: Block[]; at: number; used: Record<string, number> }): Block | null {
@@ -668,3 +678,99 @@ export function techBlockOf(r: { blocks: Block[]; at: number; used: Record<strin
 }
 export const nextBlock = (r: WorkoutRun): WorkoutRun => (r.at + 1 >= r.blocks.length ? { ...r, at: r.blocks.length, finished: true } : { ...r, at: r.at + 1 });
 export const extendBlock = (r: WorkoutRun, min = 2): WorkoutRun => ({ ...r, blocks: r.blocks.map((b, i) => (i === r.at ? { ...b, minutes: b.minutes + min } : b)) });
+
+// ---------------------------------------------------------------- between blocks (§5, W20)
+
+/** The countdown before the next block starts on its own (§5). */
+export const BETWEEN_S = 3;
+/** A finished block's one-line summary: minutes of active time, items and right answers. */
+export function blockSummary(r: WorkoutRun, id: string): { minutes: number; items: number; right: number } {
+  const [items, right] = r.items[id] ?? [0, 0];
+  return { minutes: Math.round((r.used[id] ?? 0) / 60000), items, right };
+}
+/** The summary was seen (Next now, or the countdown ran out): the next block is on. */
+export const clearBetween = (r: WorkoutRun): WorkoutRun => {
+  if (!r.between) return r;
+  const out = { ...r };
+  delete out.between;
+  return out;
+};
+/** "+2 min" (§5): back to the block that just ended, 2 more minutes in it. */
+export function extendLast(r: WorkoutRun, min = 2): WorkoutRun {
+  const i = r.between ? r.blocks.findIndex((b) => b.id === r.between) : -1;
+  if (i < 0) return extendBlock(clearBetween(r), min);
+  return extendBlock({ ...clearBetween(r), at: i, finished: false }, min);
+}
+/** W16: remember a served sub-skill / topic for later blocks. */
+export const markServed = (r: WorkoutRun, key: string): WorkoutRun => (r.served?.includes(key) ? r : { ...r, served: [...(r.served ?? []), key] });
+/** W16: the candidates not served yet today (all of them when every one was). */
+export function unserved<T extends string>(cands: readonly T[], served: readonly string[] | undefined): T[] {
+  const left = cands.filter((c) => !(served ?? []).includes(c));
+  return left.length ? left : [...cands];
+}
+
+// ---------------------------------------------------------------- context, nudges, defaults (W6, W10, W11, §9.4)
+
+/**
+ * W10: today's context swaps the blocks it rules out for buttons-only content in the same area. The mic or a quiet
+ * place: the vocal warm-up becomes a review (a quiet place: the game too). No instrument: the technique block becomes
+ * reading and theory, the improvisation block creative ear work, and off-app practice drops.
+ */
+export function contextSwap(bs: Block[], ctx: { nomic: boolean; quiet: boolean; noinst: boolean }): Block[] {
+  return bs
+    .map((b): Block => {
+      const t = b.target;
+      if ((ctx.nomic || ctx.quiet) && t.kind === 'vocal') return { ...b, target: { kind: 'warmup' } };
+      if (ctx.quiet && t.kind === 'game') return { ...b, target: { kind: 'warmup' } };
+      if (ctx.noinst && t.kind === 'keys') return { ...b, target: { kind: 'area', area: 'reading' } };
+      if (ctx.noinst && t.kind === 'improv') return { ...b, target: { kind: 'area', area: 'creative' } };
+      return b;
+    })
+    .filter((b) => !(ctx.noinst && b.target.kind === 'practice'));
+}
+
+/** W11: the feedback's nudge — tomorrow's total ±5 and the step window ±50 rating, for 3 days. */
+export function feedbackNudge(f: 'easy' | 'right' | 'hard' | 'long'): { delta: number; rating: number } {
+  return { delta: f === 'easy' ? 5 : f === 'long' ? -5 : 0, rating: f === 'easy' ? 50 : f === 'hard' ? -50 : 0 };
+}
+/** W11: ratings moved by the step-window nudge (free practice in the workout picks its level from them). */
+export function nudgedRatings<R extends { r: number }>(ratings: Partial<Record<string, R>>, delta: number): Partial<Record<string, R>> {
+  if (!delta) return ratings;
+  const out: Partial<Record<string, R>> = {};
+  for (const [k, v] of Object.entries(ratings)) if (v) out[k] = { ...v, r: v.r + delta };
+  return out;
+}
+
+/** W6: a default saved more than 30 days ago asks "refresh my default?". */
+export const TEMPLATE_STALE_DAYS = 30;
+export function templateStale(savedAt: string | undefined, today: string): boolean {
+  if (!savedAt) return false;
+  return dayNo(today) - dayNo(savedAt.slice(0, 10)) > TEMPLATE_STALE_DAYS;
+}
+
+/** §9.4: minutes each area got in a day's workout. */
+export type AreaDayLog = Record<string, Partial<Record<DomainId, number>>>;
+/** The minutes each of `areas` gets in a run: blocks already run count their used time, the rest their planned minutes. */
+export function areaMinutes(r: WorkoutRun, areas: DomainId[]): Partial<Record<DomainId, number>> {
+  const out: Partial<Record<DomainId, number>> = {};
+  for (const a of areas) out[a] = 0;
+  r.blocks.forEach((b, i) => {
+    if (b.target.kind !== 'area' || !areas.includes(b.target.area)) return;
+    const past = r.finished || i < r.at;
+    out[b.target.area] = (out[b.target.area] ?? 0) + (past ? (r.used[b.id] ?? 0) / 60000 : b.minutes);
+  });
+  return out;
+}
+/**
+ * §9.4: the area that "keeps waiting" — skipped or cut under a minute on 3 of the last 5 days while it still has steps
+ * in the current unit (the first such area; null: none). `asked`: areas whose question is dismissed until that day.
+ */
+export function waitingArea(log: AreaDayLog, waiting: DomainId[], today: string, asked: Partial<Record<DomainId, string>> = {}): DomainId | null {
+  const days = Object.keys(log).filter((d) => dayNo(today) - dayNo(d) >= 0 && dayNo(today) - dayNo(d) < 5);
+  for (const a of waiting) {
+    if ((asked[a] ?? '') >= today) continue;
+    // a day counts when the area was waiting that day (it is in the day's log) and got under a minute
+    if (days.filter((d) => log[d][a] !== undefined && (log[d][a] ?? 0) < 1).length >= 3) return a;
+  }
+  return null;
+}

@@ -1003,6 +1003,17 @@ function genChord(s: DrillSpec, tu: Tuning): Drill {
       const line: BN[] = evs.map((e) => ({ b: e.beat, d: e.dur, p: e.ps[0], ct: true }));
       return drillOf(s, tu, alt(line), { en: `Diatonic 7th arpeggios through the ${sc.name.en} scale`, he: `ארפג׳יו ספטאקורדים דיאטוניים לאורך סולם ${sc.name.he}`, open: false, bass: { shiftGap: 40 } });
     }
+    case 'dia1235':
+    case 'dia9': {
+      // SPEC-KEY-SESSION §1 B4, B5 (2026-11-23): the piano / guitar ladder's hl-c4 and hl-9a steps (harmLadder.ts) — the
+      // 1-2-3-5 cell from every degree, and the diatonic 9th chord arpeggiated on every degree, two octaves up and down
+      // (op = the H_SCALES index: 0 major, 7 harmonic minor).
+      const sc = H_SCALES[[0, 7].includes(op) ? op : 0];
+      const evs = ladderEvents(key, sc, s.kind === 'dia9' ? '9a' : 'c4', rootOf(tu, key), 2);
+      const line: BN[] = evs.map((e) => ({ b: e.beat, d: e.dur, p: e.ps[0], ct: true }));
+      const what = s.kind === 'dia9' ? { en: '9th chords arpeggiated on every degree of', he: 'אקורדי נונה בארפג׳יו על כל דרגה של' } : { en: '1-2-3-5 cells from every degree of', he: 'תאי 1-2-3-5 מכל דרגה של' };
+      return drillOf(s, tu, alt(line), { en: `${what.en} the ${sc.name.en} scale`, he: `${what.he} סולם ${sc.name.he}`, open: false, bass: { shiftGap: 40 } });
+    }
     case 'arp7x2':
     case 'arp9':
     case 'arpalt': {
@@ -2708,6 +2719,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
       // TECHNIQUE-COVERAGE-AUDIT §4.6 #8: diatonic 7th arpeggios through the key (the hl-7a step of k-sharm / g-harm).
       L('b-chord', 15, 'Diatonic 7th arpeggios through the major scale', 'ארפג׳יו ספטאקורדים דיאטוניים לאורך הסולם המז׳ורי', [CH('dia7', { option: 0 })], 'major', [50, 96], E8),
       L('b-chord', 16, 'Diatonic 7th arpeggios through natural and harmonic minor', 'ארפג׳יו ספטאקורדים דיאטוניים לאורך מינור טבעי והרמוני', [CH('dia7', { option: 5, minor: true }), CH('dia7', { option: 7, minor: true })], 'minor', [50, 96], E8),
+      // SPEC-KEY-SESSION §1 B4, B5 (2026-11-23): the key ladder's 1-2-3-5 cells and 9th arpeggios through the scale.
+      L('b-chord', 17, '1-2-3-5 cells through the scale: major and harmonic minor', 'תאי 1-2-3-5 לאורך הסולם: מז׳ור ומינור הרמוני', [CH('dia1235', { option: 0 }), CH('dia1235', { option: 7, minor: true })], 'major', [60, 112], E8),
+      L('b-chord', 18, '9th arpeggios through the scale: major and harmonic minor', 'ארפג׳יו נונות לאורך הסולם: מז׳ור ומינור הרמוני', [CH('dia9', { option: 0 }), CH('dia9', { option: 7, minor: true })], 'major', [50, 96], E8),
     ]),
     fam('b-ear', 'Bass ear', 'שמיעה לבסיסטים', [
       L('b-ear', 1, 'Higher or lower, in the bass register', 'גבוה או נמוך, באזור הבס', [EA('hilo'), EA('hilo', { option: 1 })], ANY, [60, 80], 'whole notes'),

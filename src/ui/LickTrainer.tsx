@@ -36,6 +36,21 @@ import { EarVocab, SentenceDebrief, type EarRun } from './EarVocab';
 import { weekKeyIfKept } from './todayTech';
 import { kName } from './encore/bits';
 import { inMyLanguage, usesOf } from '../engine/vocab';
+import { lickLadder } from '../engine/statusLadder';
+import { assignmentFor } from '../engine/itemAssign';
+import { AssignMark, ItemHead, StatusLadder, TodayMark, type WhereChip } from './ItemHead';
+import { assignedKeys, itemKey, useMyAssigns, useTeaching } from './itemAssigns';
+import type { WayIn } from './practiceRoutes';
+import { localDay } from '../storage/progress';
+import { BidiText } from './BidiText';
+
+/** The item page's main button by the way in (SPEC-PATH-TODAY-PRACTICE §2). */
+const ITEM_MAIN: Record<WayIn, { en: string; he: string }> = {
+  practice: { en: 'Practise', he: 'לתרגל' },
+  path: { en: 'Continue the step', he: 'להמשיך את הצעד' },
+  today: { en: "Today's dose", he: 'המנה של היום' },
+  teacher: { en: 'The assignment', he: 'המשימה' },
+};
 import { lickImprovChart, lickInRepertoire, TODAYS_LICK_RULES } from '../engine/lickImprov';
 import { STANDARD_CHANGES } from '../engine/standards';
 import type { MyChart, VocabCtx } from './Charts';
@@ -388,9 +403,16 @@ export interface LickTrainerProps {
   vocab?: VocabCtx;
   /** "Use it in improvisation": open the chart player with this chart (today's lick = the lick). */
   onImprovise?: (c: MyChart) => void;
+  /** SPEC-PATH-TODAY-PRACTICE §2: open straight on this lick's page (an assignment, the path step's full practice). */
+  openLick?: string;
+  /** The way in (the main button's words): the path, Today, the teacher, or Practice. */
+  wayIn?: WayIn;
+  /** "Where it sits": the path step of a lick level (licks:<course>:<level>), or null. */
+  whereOf?: (level: number) => WhereChip | null;
+  onWhere?: () => void;
 }
 
-export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise, startStyle, startLick }: LickTrainerProps) {
+export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise, vocab, openLick, wayIn: wayInProp, whereOf, onWhere, startStyle, startLick }: LickTrainerProps) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
@@ -402,10 +424,18 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const [tab, setTab] = useState<LickContext | 'all' | 'review' | 'mine' | 'ear'>(startReview && due.length ? 'review' : 'all');
   // SPEC-STYLE-FOCUS §4: the library opens on the first of my styles that has licks (untagged licks are jazz)
   const [styleF, setStyleF] = useState<StyleId | 'all'>(() => startStyle ?? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).find((st) => all.some((l) => !l.own && (l.style ?? 'jazz') === st)) ?? 'all');
-  // the taster's lick (§9.1): its page at once, when the library has it
-  const [view, setView] = useState<View>(() => (startLick && all.some((l) => l.id === startLick) ? ({ k: 'lick', id: startLick } as View) : { k: 'lib' }));
+  // the taster's lick (§9.1) or an opened lick: its page at once, when the library has it
+  const firstLick = openLick ?? startLick;
+  const [view, setView] = useState<View>(() => (firstLick && (lickById(firstLick, own) || all.some((l) => l.id === firstLick)) ? { k: 'lick', id: firstLick } : { k: 'lib' }));
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
+  // the one item page (SPEC-PATH-TODAY-PRACTICE §2): the way in, today's licks (today's lick, the due reviews), assignments
+  const wayIn: WayIn = wayInProp ?? (pathLevel ? 'path' : startReview ? 'today' : 'practice');
+  const todayIds = new Set([...(vocab?.today ? [vocab.today.id] : []), ...due]);
+  const myAssigns = useMyAssigns();
+  const assignedSet = assignedKeys(myAssigns);
+  const teaching = useTeaching();
+  const ladderOfLick = (l: Lick) => lickLadder(l, inst, itemsNow, inMyLanguage(book.uses, l.id));
   const opts = { range: settings.voiceRange ?? null, tuning: inst === 'bass' ? bassTuningOf(settings) : undefined, band: true };
   const lickOf = (d: Drill) => lickOfDrill(d, own) ?? all[0];
   const take: TakeFn = (st, evs, xp, m) => {
@@ -542,19 +572,39 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
     return (
       <main className="panel-screen lk-screen" data-licks="lick" data-lick={l.id}>
         {head(l.name[lang], () => setView({ k: 'lib' }))}
-        <p className="lk-meta">
-          <span>{contextOf(l.ctx).name[lang]}</span> · <span>{tx.lv} {l.level}</span> · <Stars n={stars} />
-          {lang2 && <b className="lk-lang" data-lick-lang="1"> · {tx.inLang}</b>}
-        </p>
-        <p className="lk-uses field-hint" data-lick-uses={u.n} data-lick-use-keys={u.keys}>
-          {u.n ? tx.used(u.n, u.keys) : tx.notUsed}
-        </p>
+        <ItemHead
+          dense
+          lang={lang}
+          tempoItem={Object.values(itemsNow).filter((x) => x.itemId?.startsWith(`lick:${l.id}:`) && x.takes > 0).sort((a, b) => (b.history?.length ?? 0) - (a.history?.length ?? 0))[0] ?? null}
+          ladder={ladderOfLick(l)}
+          kicker={
+            <span className="lk-meta" data-stars={stars}>
+              <span>
+                <BidiText text={contextOf(l.ctx).name[lang]} />
+              </span>{' '}
+              · <span>{tx.lv} {l.level}</span>
+              {lang2 && <b className="lk-lang" data-lick-lang="1"> · {tx.inLang}</b>}
+              {/* the usage log on the same line (one phone screen) */}
+              <span className="lk-uses" data-lick-uses={u.n} data-lick-use-keys={u.keys}>
+                {u.n ? ` · ${tx.used(u.n, u.keys)}` : ''}
+              </span>
+            </span>
+          }
+          where={l.own ? null : whereOf?.(l.level) ?? null}
+          onWhere={onWhere}
+          why={todayIds.has(l.id) ? (due.includes(l.id) ? { en: 'Review', he: 'חזרה' } : { en: "Today's lick", he: 'הליק של היום' }) : null}
+          assigned={assignmentFor(myAssigns, { k: 'lick', id: l.id }, localDay(new Date()))}
+          item={l.own ? null : { k: 'lick', id: l.id }}
+          teaching={teaching}
+          title={l.name[lang]}
+        />
+
         <DrillScore drill={preview} ds={drillSettingsOf(settings)} lang={lang} />
         <LickGrid l={l} inst={inst} items={itemsNow} lang={lang} />
         <div className="drill-actions lk-actions">
           {/* two modes per lick (SPEC-EAR-AND-READING §3.2): from the page, or by ear (the notes hidden until played right) */}
-          <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1">
-            {tx.fromPage} · {keyName(key)}
+          <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1" data-item-main={wayIn} title={`${tx.fromPage} · ${keyName(key)}`}>
+            {ITEM_MAIN[wayIn][lang]} · <bdi dir="ltr">{keyName(key)}</bdi>
           </button>
           <button className="btn" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1">
             {tx.byEar}
@@ -625,6 +675,16 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
       <p className="lk-inst">
         <Glyph kind="lick" color="#A78BFA" size={34} /> {tx.insts[inst]}
       </p>
+      {pathLevel ? (() => {
+        // SPEC-PATH-TODAY-PRACTICE §3.1: a lick step's full practice = the lick's page (12 keys, the two modes)
+        const lv = all.filter((l) => l.level === pathLevel && !l.own);
+        const first = lv.find((l) => !ladderOfLick(l).lit.includes('keys12')) ?? lv[0];
+        return first ? (
+          <button className="link ex-full" onClick={() => setView({ k: 'lick', id: first.id })} data-brief-full="lick" data-step-full-lick={first.id}>
+            {lang === 'he' ? 'התרגול המלא של הצעד' : 'The full practice of the step'}
+          </button>
+        ) : null;
+      })() : null}
       <div className="chips lk-tabs" role="tablist">
         {(['all', 'review', 'mine', 'ear'] as const).map((k) => (
           <button key={k} role="tab" aria-selected={tab === k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)} data-lick-tab={k}>
@@ -683,14 +743,14 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
             <li key={l.id}>
               <button className="lk-card" onClick={() => setView({ k: 'lick', id: l.id })} data-lick-card={l.id}>
                 <span className="lk-card-top">
-                  <b>{l.name[lang]}</b>
-                  {inMyLanguage(book.uses, l.id) ? (
-                    <span className="lk-lang-chip" data-lick-lang="1">
-                      {tx.inLang}
-                    </span>
-                  ) : (
-                    <Stars n={s} />
-                  )}
+                  <b>
+                    {l.name[lang]}
+                    {todayIds.has(l.id) && <TodayMark lang={lang} short />}
+                    {assignedSet.has(itemKey({ k: 'lick', id: l.id })) && <AssignMark lang={lang} />}
+                  </b>
+                  <span data-stars={s} data-lick-lang={inMyLanguage(book.uses, l.id) ? '1' : undefined}>
+                    <StatusLadder ladder={ladderOfLick(l)} lang={lang} compact />
+                  </span>
                 </span>
                 <span className="lk-card-sub">
                   <small>

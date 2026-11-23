@@ -116,3 +116,7 @@
 :root:root .today-cards.st-stats:has(.st-week) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 600px) { :root:root .today-cards.st-stats:has(.st-week) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .st-week .wk-ring b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+/* The item page's tempo over time folds open under its head (one phone screen). */
+.ih-tempo { margin-top: 6px; }
+.ih-tempo > summary { font-size: 0.82rem; color: var(--ink-soft); cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.ih-tempo .it-tempo { margin-top: 4px; }

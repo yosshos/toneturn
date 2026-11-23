@@ -23,7 +23,7 @@ import type { Drill, PlayedNote } from '../src/engine/drills/types';
 
 const famOf = (id: string) => [...catalog(), ...guitarCatalog()].find((f) => f.id === id)!;
 /** Guitar levels sit by grade on purpose (a later-added easier level opens first): these families may go down. */
-const BY_GRADE = ['g-rhythm', 'g-picking', 'g-scales', 'g-ear', 'g-fretting', 'g-lead', 'g-arps', 'g-jazz', 'g-prog', 'g-harris', 'g-theory'];
+const BY_GRADE = ['g-rhythm', 'g-picking', 'g-scales', 'g-ear', 'g-fretting', 'g-lead', 'g-arps', 'g-jazz', 'g-prog', 'g-harris', 'g-theory', 'g-harm'];
 
 describe('path difficulty order (AUDIT-DEPTH-3 §0)', () => {
   const tech = stepCatalogue().filter((s) => s.kind === 'tech' && s.ladder && ['piano', 'guitar', 'bass'].includes(s.ladder.instrument ?? ''));

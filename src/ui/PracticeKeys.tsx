@@ -15,12 +15,17 @@ import { itemStatus, STATUS_WORD } from '../engine/drills/itemStatus';
 import type { FamilyDef } from '../engine/drills/generate';
 import type { MatrixCell, MatrixSummary, MatrixView } from '../engine/drills/keyMatrix';
 import { whyCounts, type PlanCell } from '../engine/drills/todayPlan';
-import { AEOLIAN_FROM_TIER, cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { AEOLIAN_FROM_TIER, cleanAt, currentEntry, groupsOf, keyCeilings, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
 import { weekOf } from '../engine/drills/keyIndex';
 import { KeyClosedLine } from './PlaceCharts';
+import { levelLadder } from '../engine/statusLadder';
+import type { ItemRef } from '../engine/itemAssign';
+import { ItemHead, type WhereChip } from './ItemHead';
+import { useAssignFor, useTeaching } from './itemAssigns';
+import type { WayIn } from './practiceRoutes';
 
 type Lang = 'he' | 'en';
 export type PracticeView = 'topic' | 'key';
@@ -262,12 +267,13 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus }: { /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung }: { /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
   const rows = idx.pages[root][g];
-  const [open, setOpen] = useState<FacetRole | 'lang' | null>(null);
+  // the lit rung's row opens with the page (SPEC-PATH-TODAY-PRACTICE 3.1)
+  const [open, setOpen] = useState<FacetRole | 'lang' | null>(() => (rung ? ROLE_ORDER.find((r) => (rows[r] ?? []).some((e) => e.level.id === rung.id)) ?? null : null));
   // Dynamics as a lens (owner 2026-11-21): the session and every single-line exercise through a touch, remembered here.
   const [lens, setLensState] = useState<Lens>(() => {
     try {
@@ -292,9 +298,12 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
   const li = inst === 'piano' || inst === 'guitar' || inst === 'bass' ? inst : null;
   const ladder = li ? keyLadder(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(li === 'piano' ? { licks } : {}), ...(styleFocus ? { focus: styleFocus } : {}) }) : null;
   const focus = ladder ? ladderFocus(ladder, items) : null;
+  // SPEC-KEY-SESSION §1c / §2: the ceilings for now in this key (where the coach's limit rule stopped a rung's climb)
+  const ceilings = li && (g === 'major' || g === 'minor') ? keyCeilings(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(styleFocus ? { focus: styleFocus } : {}) }) : [];
   const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
+      {rung && <RungCard rung={rung} idx={idx} root={root} items={items} lang={lang} ds={ds} today={today} onRun={run} />}
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
       {/* SPEC-PROGRESS-CHARTS §2: the key's line — how much of it is closed, over time (the daily snapshots) */}
@@ -308,6 +317,17 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
       {mk && (
         <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
           {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
+        </p>
+      )}
+      {ceilings.length > 0 && (
+        <p className="key-matrix-line" data-kp-ceilings={ceilings.length}>
+          {he ? 'תקרה לעכשיו: ' : 'Ceiling for now: '}
+          {ceilings.slice(0, 3).map((c, i) => (
+            <span key={c.rung}>
+              {i > 0 ? ' · ' : ''}
+              {c.title[lang]} <bdi dir="ltr">♩{c.bpm}/{c.target}</bdi>
+            </span>
+          ))}
         </p>
       )}
       {li && g === 'major' && (tier >= 0 ? tier : advanced ? 2 : 0) >= AEOLIAN_FROM_TIER && (
@@ -370,7 +390,7 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
                   const inToday = !!today?.ids.size && e.drills.some((d) => today.ids.has(d.itemId));
                   return (
                     <li key={`${e.family.id}:${e.level.id}`}>
-                      <button type="button" className={`kp-entry ${done ? 'done' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id} data-today={inToday ? '1' : undefined}>
+                      <button type="button" className={`kp-entry ${done ? 'done' : ''} ${rung?.id === e.level.id ? 'lit' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id} data-today={inToday ? '1' : undefined} data-kp-lit={rung?.id === e.level.id ? '1' : undefined}>
                         <span className="kp-name">
                           <small>
                             {e.family.title[lang]}
@@ -394,6 +414,61 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
       })}
       {(g === 'major' || g === 'minor') && (ds.instrument ?? 'piano') === 'piano' && <LanguageRow licks={licks.filter((l) => lickGroup(l) === g)} root={root} items={items} lang={lang} today={today} open={open === 'lang'} onOpen={(o) => setOpen(o ? 'lang' : null)} onRun={run} />}
     </div>
+  );
+}
+
+const RUNG_MAIN: Record<WayIn, { en: string; he: string }> = {
+  practice: { en: 'Practise', he: 'לתרגל' },
+  path: { en: 'Continue the step', he: 'להמשיך את הצעד' },
+  today: { en: "Today's dose", he: 'המנה של היום' },
+  teacher: { en: 'The assignment', he: 'המשימה' },
+};
+
+/**
+ * The rung's item page on the key page (SPEC-PATH-TODAY-PRACTICE §2, §3.1, §3.3): the level in this key, lit — its
+ * status ladder over all its keys, where it sits on the path, why today, the teacher's part (and, for a teacher, assign),
+ * and the main button by the way in; the rest of the key page (all 12 keys of the level are its key cards) below.
+ */
+function RungCard({ rung, idx, root, items, lang, ds, today, onRun }: { rung: NonNullable<Parameters<typeof KeyPage>[0]['rung']>; idx: KeyIndex; root: number; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; today?: { n: number; ids: Set<string> }; onRun: (q: Drill[]) => void }) {
+  const he = lang === 'he';
+  const pages = idx.pages[root];
+  const found = (Object.keys(pages) as FacetGroup[]).flatMap((g) => Object.values(pages[g]).flatMap((es) => (es ?? []).map((e) => ({ e, g })))).find((x) => x.e.level.id === rung.id);
+  const item: ItemRef = { k: 'level', id: rung.id };
+  const assigned = useAssignFor(item);
+  const teaching = useTeaching();
+  if (!found) return null;
+  const { e, g } = found;
+  const ladder = levelLadder(e.level, items, ds.keyOrder);
+  const inToday = !!today?.ids.size && e.drills.some((d) => today.ids.has(d.itemId));
+  const title = `${e.family.title[lang]} · ${e.level.title[lang]}`;
+  return (
+    <section className="rung-card" data-rung-card={rung.id} data-rung-key={root} data-way-in={rung.wayIn}>
+      <h2 dir="auto">
+        {e.level.title[lang]} · <bdi dir="ltr">{nameOf(root, g)}</bdi>
+      </h2>
+      <ItemHead
+        lang={lang}
+        ladder={ladder}
+        kicker={e.family.title[lang]}
+        where={rung.where}
+        onWhere={rung.onWhere}
+        why={inToday ? { en: "Part of today's workout", he: 'חלק מהאימון של היום' } : null}
+        assigned={assigned}
+        item={item}
+        teaching={teaching}
+        title={title}
+        tempoItem={e.drills.map((d) => items[d.itemId]).filter((x): x is ItemState => !!x && x.takes > 0).sort((a, b) => (b.history?.length ?? 0) - (a.history?.length ?? 0))[0] ?? null}
+      />
+      <div className="ih-ways">
+        <button className="btn primary ih-main" onClick={() => onRun(e.drills)} data-item-main={rung.wayIn} data-rung-run={rung.id}>
+          <span>{RUNG_MAIN[rung.wayIn][lang]}</span>
+          <small>
+            {he ? 'בסולם ' : 'In '}
+            <bdi dir="ltr">{nameOf(root, g)}</bdi>
+          </small>
+        </button>
+      </div>
+    </section>
   );
 }
 

@@ -27,6 +27,7 @@ import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { Icon } from './icons';
+import { ImprovLevelPage } from './ImprovLevelPage';
 import { focusOf } from '../engine/styleFocus';
 import { STYLE_CHART, STYLE_TEXT, type StyleId } from '../engine/styles';
 import type { CourseId } from '../engine/courses';
@@ -133,6 +134,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const [band, setBand] = useState<'level' | 'style'>(styleBand ? 'style' : 'level');
   const startedAt = useRef<number | null>(null);
   const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
+  const [lvPage, setLvPage] = useState<number | null>(null);
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
   const [bpm, setBpm] = useState(96);
@@ -347,6 +349,30 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     setRunning(false);
   };
 
+  // SPEC-PATH-TODAY-PRACTICE §2: an improvisation level's item page (the ladder, the teacher's part, assign); its main
+  // button comes back here with the level chosen
+  const lvOpen = lvPage !== null ? IMPROV_LEVELS.find((x) => x.n === lvPage) : undefined;
+  if (lvOpen)
+    return (
+      <ImprovLevelPage
+        lang={lang}
+        level={lvOpen}
+        best={settings.improvBest?.[lvOpen.id]}
+        wayIn={workout ? 'today' : 'practice'}
+        onBack={() => setLvPage(null)}
+        onPlay={() => {
+          setLv(lvOpen.n);
+          if (src.startsWith('lv:')) setSrc(`lv:${lvOpen.n}`);
+          setLvPage(null);
+        }}
+      />
+    );
+  const lvPageBtn = (n: number) => (
+    <button type="button" className="icon-btn is-lv-page" onClick={() => setLvPage(n)} disabled={running} aria-label={lang === 'he' ? 'הדף של השלב' : "The level's page"} title={lang === 'he' ? 'הדף של השלב' : "The level's page"} data-improv-open={n}>
+      <Icon k="eye" size={18} />
+    </button>
+  );
+
   return (
     <main className="panel-screen improv-studio" data-improv-studio="1">
       <header className="screen-head">
@@ -393,6 +419,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
         <>
           <label className="field-row is-src">
             <span>{tx.chartFrom}</span>
+            {src.startsWith('lv:') && lvPageBtn(Number(src.slice(3)))}
             <select value={src} onChange={(e) => setSrc(e.target.value)} data-is-chart-src="1">
               {initialChart && (
                 <option value="piece:" data-is-piece="1">
@@ -524,6 +551,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
               </option>
             ))}
           </select>
+          {lvPageBtn(lv)}
         </label>
       )}
       {(mode === 'phrasing' || mode === 'vary' || mode === 'trade') && styleBand && (
