@@ -11,6 +11,10 @@ import type { DynName } from './courseSocial';
 import type { Lanes } from './drills/drums';
 import { barHits, hitsToEvents, type KitBar } from './kitRead';
 import { rng } from './topicKit';
+import { isVerified } from './verifiedContent';
+
+/** The groove styles no unverified claim hides (verifiedContent 'groove:<id>'), their look-alikes among the shown. */
+const shownOnly = <T extends { id: string; like: string[] }>(xs: T[]): T[] => xs.filter((g) => isVerified(`groove:${g.id}`)).map((g) => ({ ...g, like: g.like.filter((l) => isVerified(`groove:${l}`)) }));
 
 export interface GrooveStyle {
   id: string;
@@ -33,7 +37,7 @@ const B8 = (lanes: Lanes, groups: number[]): KitBar => {
   return { lanes, sub: 2, steps, num: steps, den: 8, groups };
 };
 
-export const GROOVE_STYLES: GrooveStyle[] = [
+export const GROOVE_STYLES: GrooveStyle[] = shownOnly<GrooveStyle>([
   // pp
   { id: 'rock', name: t('Rock', 'רוק'), level: 1, bars: 1, bpm: [100, 120], like: ['pop', 'halftime'], bar: B4({ h: 'xxxxxxxx', s: '..x...x.', k: 'x...x.x.' }, 2) },
   { id: 'pop', name: t('Pop (16th hats)', 'פופ (היי־האט בשש־עשריות)'), level: 1, bars: 1, bpm: [90, 104], like: ['rock', 'funk'], bar: B4({ h: 'x'.repeat(16), s: '....x.......x...', k: 'x.....x.x.......' }, 4) },
@@ -61,7 +65,8 @@ export const GROOVE_STYLES: GrooveStyle[] = [
   { id: 'rock58', name: t('5/8 (3+2)', '5/8 (3+2)'), level: 6, bars: 1, bpm: [100, 120], like: ['rock78', 'rock98'], bar: B8({ h: 'xxxxx', s: '...x.', k: 'x....' }, [3, 2]) },
   { id: 'rock98', name: t('9/8 (2+2+2+3)', '9/8 (2+2+2+3)'), level: 6, bars: 1, bpm: [100, 120], like: ['rock78', 'rock58'], bar: B8({ h: 'xxxxxxxxx', s: '..x...x..', k: 'x...x....' }, [2, 2, 2, 3]) },
   { id: 'swing54', name: t('5/4 swing', 'סווינג ב־5/4'), level: 6, bars: 1, bpm: [150, 172], like: ['swing', 'afro68'], bar: B4({ r: 'x..x.xx..x.xx..', p: '...x.....x.....', s: '.....x.....x...', k: 'x.....x........' }, 3, 15) },
-];
+  // a kit pattern no source verifies is not asked ('latin-kit-patterns': the songo); look-alike decoys come from the shown ones
+]);
 
 export const styleById = (id: string) => GROOVE_STYLES.find((s) => s.id === id);
 

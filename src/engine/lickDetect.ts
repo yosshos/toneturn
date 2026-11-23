@@ -183,7 +183,7 @@ export function findLick(l: Lick, imp: ImpNote[], chart: ChartSpan[], o: FindOpt
  * - lick 3 (the long enclosure): below, a whole step above, a half step above, below → target; on a target with only a
  *   half step above it (E, B in C) the turn-over: the half step above, the whole step below, the half step below → target.
  * Consecutive notes, at most a beat apart. One cell per target (the longest). Clean: the onsets even (each within the
- * tolerance of an even line from the first to the target).
+ * tolerance of an even line from the first to the target); lick 1: the approach an eighth before the target.
  */
 export function findCells(cell: 1 | 2 | 3, imp: ImpNote[], chart: ChartSpan[], o: FindOpts = {}): LickHit[] {
   const notes = [...imp].sort((a, b) => a.beat - b.beat);
@@ -220,7 +220,9 @@ export function findCells(cell: 1 | 2 | 3, imp: ImpNote[], chart: ChartSpan[], o
     lastUsed = ti;
     const span = notes[ti].beat - notes[from].beat;
     const step = span / pat.length;
-    const timing = pat.length > 1 ? notes.slice(from, ti + 1).reduce((x, n, q) => x + Math.abs(n.beat - (notes[from].beat + q * step)), 0) / (pat.length + 1) : 0;
+    // lick 1 (two notes) has no line to be even against: it is clean when the approach is the owner's eighth before
+    // the target (keyLicks.ts kl-1), within the tolerance
+    const timing = pat.length > 1 ? notes.slice(from, ti + 1).reduce((x, n, q) => x + Math.abs(n.beat - (notes[from].beat + q * step)), 0) / (pat.length + 1) : Math.abs(span - 0.5);
     hits.push({ index: from, beat: notes[from].beat, end: notes[ti].beat, transpose: mod(notes[ti].midi), kind: 'exact', overChord: true, share: 1, timing, tight: timing <= tol, target: { root: mod(sp.root), q: sp.q, deg: mod(notes[ti].midi - sp.root) } });
   }
   return hits;

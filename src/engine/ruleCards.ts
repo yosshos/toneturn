@@ -1370,9 +1370,11 @@ export function ctxOfSeconds(played: { start: number; end: number; midi: number;
   return { notes: notesOfSeconds(played, bpm), spans, meter, bpm, opt };
 }
 
-/** The licks a lick card counts: the player's pool, else the listed library licks, else the whole library. */
+/** The licks a lick card counts: the player's pool, else the listed library licks, else the whole library. Approach
+ *  cells never count (a half step into a chord tone is not "a lick of mine"). */
 function poolOf(ctx: CardCtx): Lick[] {
-  if (ctx.opt?.licks?.length) return ctx.opt.licks;
+  const own = (ctx.opt?.licks ?? []).filter((l) => !l.cell);
+  if (own.length) return own;
   return ctx.opt?.lickIds?.length ? LICKS.filter((l) => ctx.opt!.lickIds!.includes(l.id)) : LICKS;
 }
 /** Clean uses of any of the licks over their chords (exact or varied, in time; one per occurrence). */

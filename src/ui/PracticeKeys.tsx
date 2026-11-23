@@ -9,7 +9,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
 import { families as familiesOf, itemTargetBpm } from '../engine/drills/plan';
-import type { Lick } from '../engine/licks';
+import { lickDrill, type Lick } from '../engine/licks';
 import { lickGroup, lickKeyDrill } from '../engine/drills/lickRungs';
 import { itemStatus, STATUS_WORD } from '../engine/drills/itemStatus';
 import type { FamilyDef } from '../engine/drills/generate';
@@ -412,6 +412,11 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
           </section>
         );
       })}
+      {(g === 'major' || g === 'minor') && (ds.instrument === 'guitar' || ds.instrument === 'bass') && onImproviseLick && (() => {
+        // guitar and bass: the licks practise in Licks (their own items); a lick closed here lately → "now improvise with it"
+        const fresh = freshInKey(licks.filter((l) => lickGroup(l) === g), root, items, ds.instrument);
+        return fresh ? <ImproviseNow lick={fresh} lang={lang} onGo={() => onImproviseLick(fresh, root)} /> : null;
+      })()}
       {(g === 'major' || g === 'minor') && (ds.instrument ?? 'piano') === 'piano' && <LanguageRow licks={licks.filter((l) => lickGroup(l) === g)} root={root} items={items} lang={lang} today={today} open={open === 'lang'} onOpen={(o) => setOpen(o ? 'lang' : null)} onRun={run} onImprovise={onImproviseLick ? (l) => onImproviseLick(l, root) : undefined} />}
     </div>
   );
@@ -484,6 +489,35 @@ export function closedRecently(xs: { l: Lick; st: ItemState | undefined; closed:
   return r[0]?.l ?? null;
 }
 
+/**
+ * SPEC-LICKS-IN-IMPROV §5.4 on guitar and bass: the lick of the pool that closed in this key on the instrument in the
+ * last three days (its own lick items, lick:<id>:<inst>:<key>), or null.
+ */
+export function freshInKey(licks: Lick[], root: number, items: Record<string, ItemState>, inst: 'guitar' | 'bass', now = Date.now()): Lick | null {
+  return closedRecently(
+    licks.map((l) => {
+      const d = lickDrill(l, root, inst);
+      return { l, st: items[d.itemId], closed: itemStatus(items[d.itemId], d.startBpm, itemTargetBpm(d)) === 'closed' };
+    }),
+    now,
+  );
+}
+
+/** "Closed in this key: … — now improvise with it" (the key page's prompt). */
+function ImproviseNow({ lick, lang, onGo }: { lick: Lick; lang: Lang; onGo: () => void }) {
+  const he = lang === 'he';
+  return (
+    <div className="kp-improvise" data-kp-improvise={lick.id}>
+      <small>
+        {he ? 'נסגר בסולם הזה:' : 'Closed in this key:'} {lick.name[lang]}
+      </small>
+      <button type="button" className="btn ghost small" onClick={onGo} data-kp-improvise-go={lick.id}>
+        {he ? 'עכשיו לאלתר איתו' : 'Now improvise with it'}
+      </button>
+    </div>
+  );
+}
+
 function LanguageRow({ licks, root, items, lang, today, open, onOpen, onRun, onImprovise }: { licks: Lick[]; root: number; items: Record<string, ItemState>; lang: Lang; today?: { ids: Set<string> }; open: boolean; onOpen: (o: boolean) => void; onRun: (q: Drill[]) => void; onImprovise?: (l: Lick) => void }) {
   const he = lang === 'he';
   const ds = licks.map((l) => ({ l, d: lickKeyDrill(l, root) }));
@@ -497,16 +531,7 @@ function LanguageRow({ licks, root, items, lang, today, open, onOpen, onRun, onI
         <small>{licks.length ? (he ? `${licks.length} ליקים · סגורים ${closed}` : `${licks.length} licks · closed ${closed}`) : he ? 'ליק שניגנתם מגיע לכאן, בכל סולם' : 'A lick you have played comes here, in every key'}</small>
         {licks.length > 0 && <LevelBar done={closed} of={licks.length} />}
       </button>
-      {fresh && onImprovise && (
-        <div className="kp-improvise" data-kp-improvise={fresh.id}>
-          <small>
-            {he ? 'נסגר בסולם הזה:' : 'Closed in this key:'} {fresh.name[lang]}
-          </small>
-          <button type="button" className="btn ghost small" onClick={() => onImprovise(fresh)} data-kp-improvise-go={fresh.id}>
-            {he ? 'עכשיו לאלתר איתו' : 'Now improvise with it'}
-          </button>
-        </div>
-      )}
+      {fresh && onImprovise && <ImproviseNow lick={fresh} lang={lang} onGo={() => onImprovise(fresh)} />}
       {open && licks.length > 0 && (
         <ol className="kp-entries">
           {ds.map(({ l, d }) => {

@@ -27,6 +27,17 @@ const store = (): KV => {
   }
   return kv;
 };
+/**
+ * Every read-modify-write of the one record runs in turn (a promise queue): an improvisation take's note and a
+ * snapshot write that overlap would otherwise each write back what it read, and one of them would be lost.
+ */
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
 /** Tests: a fresh in-memory store. */
 export const resetSnapshotStore = (k?: KV) => {
   kv = k ?? memoryKV();
@@ -46,7 +57,10 @@ export type RecordExtra = Pick<SnapExtra, 'book' | 'modeStats' | 'ear' | 'mixTar
 const addDays = (day: string, n: number) => new Date(new Date(day + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
 
 /** One improvisation take's in-scale share (0..1), for the day's in-scale rate (SPEC-PROGRESS-CHARTS §1). Never throws. */
-export async function noteImprovTake(today: string, inSet: number): Promise<void> {
+export function noteImprovTake(today: string, inSet: number): Promise<void> {
+  return serial(() => noteImprovTakeNow(today, inSet));
+}
+async function noteImprovTakeNow(today: string, inSet: number): Promise<void> {
   try {
     const cur = (await store().get<Stored>('all')) ?? { v: 1 as const, days: {} };
     const im = cur.improv?.day === today ? cur.improv : { day: today, n: 0, inSet: 0 };
@@ -57,7 +71,10 @@ export async function noteImprovTake(today: string, inSet: number): Promise<void
 }
 
 /** Write today's snapshot (and, the first time, back-fill the past). Never throws. */
-export async function recordSnapshot(today: string, items: Record<string, ItemState>, ledgerDays: Record<string, Record<string, number>>, extra: RecordExtra = {}): Promise<Record<string, Snapshot>> {
+export function recordSnapshot(today: string, items: Record<string, ItemState>, ledgerDays: Record<string, Record<string, number>>, extra: RecordExtra = {}): Promise<Record<string, Snapshot>> {
+  return serial(() => recordSnapshotNow(today, items, ledgerDays, extra));
+}
+async function recordSnapshotNow(today: string, items: Record<string, ItemState>, ledgerDays: Record<string, Record<string, number>>, extra: RecordExtra): Promise<Record<string, Snapshot>> {
   try {
     const cur = (await store().get<Stored>('all')) ?? { v: 1 as const, days: {} };
     let days = { ...cur.days };

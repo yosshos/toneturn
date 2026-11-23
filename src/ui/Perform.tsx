@@ -5,7 +5,7 @@ import { Icon } from './icons';
 import { useMiniGate } from './MiniLesson';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { clockEvents, clockPlan, clockReport, type ClockReport } from '../engine/perform';
-import { backingPitches, backingTrack, chartBeats, CHARTS, checkVoicing, chordAt, chordSymbol, CIRCLE_KEYS, hasGuideTones, improvReport, QUALITY, scaleEvenness, synthImprov, type ChartId, type ImprovReport, type Quality, type VoicingKind } from '../engine/perform';
+import { backingPitches, backingTrack, chartBeats, CHARTS, checkVoicing, chordAt, chordSymbol, CIRCLE_KEYS, hasGuideTones, improvLine, improvReport, QUALITY, scaleEvenness, synthImprov, type ChartId, type ImprovReport, type Quality, type VoicingKind } from '../engine/perform';
 import { BleedGate } from '../engine/bleed';
 import type { SungFrame } from '../engine/sing';
 import { gradeTake, itemTargets, sessionSightItem, sightKeyName, SIGHT_LEVELS, synthMelody, type TakeGrade } from '../engine/vocal';
@@ -17,6 +17,9 @@ import type { Progress, Settings } from '../storage/progress';
 import { NotesView } from './NotesView';
 import { loadClick, PulseNotes, pulseClicks, saveClick, usePulseNow, type Pulse, type PulseClock } from './PulseNotes';
 import { piano, SIMULATED, store } from './services';
+import { bookTake } from '../engine/vocab';
+import type { VocabCtx } from './Charts';
+import { LicksFound, type FoundUses } from './LicksFound';
 
 type Tab = 'backing' | 'improv' | 'clock' | 'midi' | 'guitar';
 const KEYS = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -44,7 +47,7 @@ export function useHeadphones(): [boolean, (v: boolean) => void] {
   ];
 }
 
-export function PerformScreen({ t, settings, onBack, onProgress }: { t: Strings; settings: Settings; onBack: () => void; onProgress?: (p: Progress) => void }) {
+export function PerformScreen({ t, settings, onBack, onProgress, vocab }: { t: Strings; settings: Settings; onBack: () => void; onProgress?: (p: Progress) => void; /** SPEC-LICKS-IN-IMPROV §3: the licks of mine in an improvisation take. */ vocab?: VocabCtx }) {
   const [tab, setTab] = useState<Tab>('backing');
   const gate = useMiniGate();
   const [chart, setChart] = useState<ChartId>('ii-V-I');
@@ -104,7 +107,7 @@ export function PerformScreen({ t, settings, onBack, onProgress }: { t: Strings;
         ))}
       </div>
       {tab === 'backing' && <Backing t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} />}
-      {tab === 'improv' && <Improv t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} onProgress={onProgress} />}
+      {tab === 'improv' && <Improv t={t} chart={chart} keyPc={key} bpm={bpm} controls={chartControls} ctl={ctl} onProgress={onProgress} vocab={vocab} lang={settings.uiLang} />}
       {tab === 'clock' && <InnerClock t={t} ctl={ctl} onProgress={onProgress} />}
       {tab === 'midi' && <MidiDrills t={t} settings={settings} onProgress={onProgress} />}
       {tab === 'guitar' && <GuitarTabDrill t={t} settings={settings} ctl={ctl} onProgress={onProgress} />}
@@ -174,10 +177,11 @@ function Backing({ t, chart, keyPc, bpm, controls, ctl }: { t: Strings; chart: C
   );
 }
 
-function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: Strings; chart: ChartId; keyPc: number; bpm: number; controls: React.ReactNode; ctl: React.MutableRefObject<AbortController | null>; onProgress?: (p: Progress) => void }) {
+function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress, vocab, lang }: { t: Strings; chart: ChartId; keyPc: number; bpm: number; controls: React.ReactNode; ctl: React.MutableRefObject<AbortController | null>; onProgress?: (p: Progress) => void; vocab?: VocabCtx; lang: 'en' | 'he' }) {
   const [headphones, setHeadphones] = useHeadphones();
   const [phase, setPhase] = useState<'idle' | 'playing' | 'done'>('idle');
   const [report, setReport] = useState<ImprovReport | null>(null);
+  const [found, setFound] = useState<FoundUses | null>(null);
   const choruses = chart === 'blues' ? 1 : 2;
   const beat = useBeatClock(bpm, 4, phase === 'playing', chart);
   const go = async () => {
@@ -186,6 +190,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
     ctl.current = c;
     await piano.unlock();
     setReport(null);
+    setFound(null);
     setPhase('playing');
     const tr = backingTrack(chart, keyPc, bpm, choruses + 1);
     const secBeat = 60 / bpm;
@@ -214,8 +219,13 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
     }
     if (c.signal.aborted && !SIMULATED) return setPhase('idle');
     // Analyse against the chart: time 0 = the chart's first beat (the listening bar is chart bar 1).
-    const rep = improvReport(frames.map((f) => ({ ...f, t: f.t - t0 })), chart, keyPc, bpm);
+    const rel = frames.map((f) => ({ ...f, t: f.t - t0 }));
+    const rep = improvReport(rel, chart, keyPc, bpm);
     setReport(rep);
+    // SPEC-LICKS-IN-IMPROV §3: the licks of mine in the take (booked: the log, the review, XP)
+    const line = improvLine(rel, chart, keyPc, bpm, choruses + 1);
+    const r = bookTake(vocab, line, `perform-${Date.now().toString(36)}`);
+    setFound(r && r.uses.length ? { ...r, notes: line.notes, bpm } : null);
     // Improvisation skill: the report's score; harder charts and faster tempi are harder.
     if (rep.notes >= 3) void store.recordRatingEvents([{ id: `improv:${Date.now()}`, skill: 'improv', difficulty: Math.round(1050 + (chart === 'blues' ? 40 : chart === 'minor-ii-V-i' ? 80 : 0) + Math.max(0, bpm - 90) * 2), correct: rep.score >= 0.6, score: rep.score, at: new Date().toISOString() }]).then((p2) => onProgress?.(p2));
     setPhase('done');
@@ -272,6 +282,7 @@ function Improv({ t, chart, keyPc, bpm, controls, ctl, onProgress }: { t: String
           ))}
         </div>
       )}
+      {found && <LicksFound found={found} pool={vocab?.pool ?? []} lang={lang} />}
     </section>
   );
 }

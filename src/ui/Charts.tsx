@@ -34,6 +34,7 @@ import { spansOfChart } from '../engine/ruleCards';
 import { lickFits, takeUses, type LickUse } from '../engine/vocab';
 import { type Lick } from '../engine/licks';
 import { LicksFound, type FoundUses } from './LicksFound';
+import { compOnTime } from '../engine/compByEar';
 
 /** The player's vocabulary in Improvise (SPEC-LICKS-IN-IMPROV, phase 4): the pool, today's lick, the usage log. */
 export interface VocabCtx {
@@ -92,7 +93,7 @@ const TX = {
 
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
 
-export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial, vocab }: { /** The lick pool and today's lick (phase 4). */ vocab?: VocabCtx; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string, /** The take's channel: the lead sheet in view (page, known) or hidden (from memory). */ channel?: 'page-known' | 'unaided') => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
+export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, onMixer, initial, vocab, onComp }: { /** SPEC-EAR-AND-READING §3.3: a comping-by-ear take — its "chords on time" rate and channel. */ onComp?: (rate: number, bpm: number, channel: 'ear-fresh' | 'page-known') => void; /** The lick pool and today's lick (phase 4). */ vocab?: VocabCtx; settings: Settings; onChange: (p: Partial<Settings>) => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string, /** The take's channel: the lead sheet in view (page, known) or hidden (from memory). */ channel?: 'page-known' | 'unaided') => void; onDrill?: (kind: string, stride: boolean) => void; onMixer?: () => void; initial?: () => MyChart | null }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
   const mine = settings.myCharts ?? [];
@@ -122,6 +123,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
         }}
         onBack={close}
         onImprov={onImprov}
+        onComp={onComp}
         best={settings.challengeBest}
         onDrill={onDrill}
         vocab={vocab ? { ...vocab, today: (open.lick ? vocab.pool.find((l) => l.id === open.lick) : null) ?? vocab.today } : undefined}
@@ -231,7 +233,7 @@ export function ChartsScreen({ settings, onChange, onBack, onImprov, onDrill, on
   );
 }
 
-function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture, vocab }: { vocab?: VocabCtx; best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string, /** The take's channel: the lead sheet in view (page, known) or hidden (from memory). */ channel?: 'page-known' | 'unaided') => void; onDrill?: (kind: string, stride: boolean) => void }) {
+function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, onDrill, best, capture, vocab, onComp }: { onComp?: (rate: number, bpm: number, channel: 'ear-fresh' | 'page-known') => void; vocab?: VocabCtx; best?: Record<string, number>; /** BASS_NICHE_PLAN J3b: the bass's low-register capture in the bass course (E1 = 41 Hz). */ capture?: { minHz: number; fftSize: number } | null; lang: 'en' | 'he'; chart: MyChart; saved: boolean; onSave: (c: MyChart) => void; onDelete: () => void; onBack: () => void; onImprov?: (score: number, bpm: number, chords: number, level?: string, challenge?: string, /** The take's channel: the lead sheet in view (page, known) or hidden (from memory). */ channel?: 'page-known' | 'unaided') => void; onDrill?: (kind: string, stride: boolean) => void }) {
   const tx = TX[lang];
   const ix = IMP[lang];
   const [headphones, setHeadphones] = useHeadphones();
@@ -262,6 +264,12 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   // SPEC-EAR-AND-READING §3.3–3.4: the lead sheet can be turned off once the progression is known (from memory) — the
   // bars stay (the now-cue moves along them), the chords are hidden while playing
   const [hideSheet, setHideSheet] = useState(false);
+  // SPEC-EAR-AND-READING §3.3, comping by ear: the band plays the chorus with the chords hidden, then the player comps
+  // the next one (MIDI: the chords are heard as played). The chords can be revealed (the take is then from the page).
+  const [comp, setComp] = useState<'off' | 'listen' | 'comp'>('off');
+  const [revealed, setRevealed] = useState(false);
+  const revealedRef = useRef(false);
+  const [compRes, setCompRes] = useState<{ ok: number; total: number; rate: number; channel: 'ear-fresh' | 'page-known' } | null>(null);
   // SPEC-PRACTICE-IA-3 §8: a long lead sheet on a phone turns every 8 bars by the playhead
   const [phone] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(max-width: 600px)').matches);
   const [playing, setPlaying] = useState(false);
@@ -500,6 +508,49 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     keepChartTake({ kind: 'chart', title: title || chart.title, notes: sung, bpm, meter, chart: text, style, loops, source: useMidi ? 'midi' : 'mic', audio: takeAudio, score, ...(chart.std ? { itemId: `chart:${chart.std}` } : {}) });
     if ((rr?.notes ?? rep.notes) >= 3) onImprov?.(score, bpm, new Set(parsed.chords.map((x) => x.sym)).size, chart.level, rr && rr.notes >= 4 ? challengeOf(rules)?.id : undefined, hideSheet ? 'unaided' : 'page-known');
   };
+  const goComp = async () => {
+    stop();
+    if (!parsed.chords.length || !midi.devices.length) return;
+    const c = new AbortController();
+    ctl.current = c;
+    await piano.unlock();
+    setCompRes(null);
+    setReport(null);
+    setRulesRep(null);
+    setFound(null);
+    setRevealed(false);
+    revealedRef.current = false;
+    setComp('listen');
+    setPlaying(true);
+    const loopBeats = parsed.bars * meter;
+    const compLoops = loopBeats < 24 ? 2 : 1;
+    const b = chartBacking(parsed, style, bpm, 1 + compLoops, meter, { countIn: true, drums });
+    const beatS = 60 / bpm;
+    const start = performance.now() + 120;
+    const t0perf = start + b.startBeat * beatS * 1000;
+    const timer = setInterval(() => {
+      if (c.signal.aborted) return clearInterval(timer);
+      const x = (performance.now() - t0perf) / 1000 / beatS;
+      setBeat(x >= 0 ? Math.floor(x) % loopBeats : -1);
+      setComp(x >= loopBeats - 0.5 ? 'comp' : 'listen');
+    }, 40);
+    const onsets: { beat: number; midi: number }[] = [];
+    const off = midi.onNote((m, on, at) => {
+      if (on) onsets.push({ beat: (at - t0perf) / 1000 / beatS - loopBeats, midi: m });
+    });
+    await piano.play(b.events, b.length, c.signal).catch(() => {});
+    off();
+    clearInterval(timer);
+    const aborted = c.signal.aborted;
+    setPlaying(false);
+    setBeat(-1);
+    setComp('off');
+    if (aborted) return;
+    const r = compOnTime(onsets.filter((n) => n.beat >= -0.6), spansOfChart(parsed, meter, parsed.bars * compLoops), meter);
+    const channel = revealedRef.current ? 'page-known' : 'ear-fresh';
+    setCompRes({ ok: r.ok, total: r.total, rate: r.rate, channel });
+    if (onsets.length >= 2) onComp?.(r.rate, bpm, channel);
+  };
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const cur = beat >= 0 ? chordAtBeat(parsed, meter, beat) : null;
   // Reference recordings: the practice key follows the chart's transposition (its first root against the standard's).
@@ -555,7 +606,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         <ChordChart
           loop={loop ? [Math.min(...loop), Math.max(...loop)] : null}
           cells={barChords.map((cs, i) => ({
-            chord: hideSheet && playing ? null : cs.map((c) => c.sym).join(' ') || null,
+            chord: (hideSheet && playing) || (comp !== 'off' && !revealed) ? null : cs.map((c) => c.sym).join(' ') || null,
             ...(rulesRep && !playing && rulesRep.bars.some((_x, j) => j % parsed.bars === i) ? { tab: { kind: rulesRep.bars.some((x, j) => j % parsed.bars === i && x.breaks > 0) ? ('bad' as const) : ('ok' as const), rules: [] } } : {}),
             ...(foundBars.has(i) ? { lick: 'found' as const } : fitBars.has(i) && !playing ? { lick: 'fits' as const } : {}),
             ...(rules.note === 'scale' && cs[0] ? { note: scales[i] || cs.length === 1 ? MODE_NAMES[scales[i] ?? autoScale(cs[0].iv)][lang].replace(/ \(.*\)$/, '') : rx.auto, noteSet: !!scales[i] } : {}),
@@ -674,6 +725,16 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
               {beat < meter ? ix.listen : ix.now}
             </p>
           )}
+          {comp !== 'off' && (
+            <p className="vocal-cue" aria-live="assertive" data-chart-comp={comp}>
+              {comp === 'listen' ? (lang === 'he' ? 'מקשיבים למהלך' : 'Listen to the changes') : lang === 'he' ? 'עכשיו מלווים' : 'Now comp'}
+              {!revealed && (
+                <button className="btn ghost small" onClick={() => (setRevealed(true), (revealedRef.current = true))} data-chart-comp-reveal="1">
+                  {lang === 'he' ? 'להציג את האקורדים' : 'Show the chords'}
+                </button>
+              )}
+            </p>
+          )}
           <button className="btn mega" onClick={stop} data-chart-stop="1">
             <Icon k="stop" /> {tx.stop}
           </button>
@@ -703,6 +764,11 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           <button className="btn ghost" onClick={() => void goImprov()} disabled={!parsed.chords.length} data-chart-improv="1" title={ix.hint}>
             <Icon k="mic" /> {ix.go}
           </button>
+          {midi.devices.length > 0 && (
+            <button className="btn ghost" onClick={() => void goComp()} disabled={!parsed.chords.length} data-chart-comp-go="1" title={lang === 'he' ? 'הלהקה מנגנת סבב אחד בלי דף האקורדים, ואז אתם מלווים' : 'The band plays a chorus with the chords hidden, then you comp'}>
+              <Icon k="pads" /> {lang === 'he' ? 'ליווי מהשמיעה' : 'Comp by ear'}
+            </button>
+          )}
         </div>
       )}
       {!playing && (
@@ -723,6 +789,14 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
       {hasTake && !playing && (lastTake.current?.notes?.length ?? 0) >= 3 && (
         // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this solo (guided improv when rules were on).
         <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: rulesRep ? 'guided' : 'chart', instrument: 'piano', title: title || (lang === 'he' ? 'סולו' : 'Solo'), source: 'midi', notes: (lastTake.current?.notes ?? []).map((n) => ({ pitch: n.midi, on: n.start * 1000, off: n.end * 1000, vel: n.vel ?? 80 })), bpm, t0: 0, meter, chart: text })} />
+      )}
+      {compRes && !playing && (
+        <div className="take-card" aria-live="polite" data-chart-comp-result={Math.round(compRes.rate * 100)}>
+          <div className="take-score">
+            {lang === 'he' ? 'אקורדים בזמן' : 'Chords on time'}: <b dir="ltr">{`${compRes.ok}/${compRes.total}`}</b>
+          </div>
+          <small className="field-hint">{compRes.channel === 'ear-fresh' ? (lang === 'he' ? 'מהשמיעה, בלי דף האקורדים' : 'By ear, without the lead sheet') : lang === 'he' ? 'האקורדים הוצגו' : 'The chords were shown'}</small>
+        </div>
       )}
       {found && found.uses.length > 0 && !playing && <LicksFound found={found} pool={vocab?.pool ?? []} lang={lang} meter={meter} />}
       {rulesRep && !playing && (

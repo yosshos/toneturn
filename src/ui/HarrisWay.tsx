@@ -8,6 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { chartBacking, parseChart, transposeChart } from '../engine/charts';
 import { buildHarrisSheet, DEGREE_WORD, degreePc, gradeHarris, harrisCellAt, HARRIS_TIERS, thoughtLabel, thoughtName, thoughtScale, thoughtTones, TIERS, type HarrisGrade, type HarrisTier, type HNote } from '../engine/harrisTrack';
 import { improvTake, type ImprovTake } from '../engine/rotationSheet';
+import { spansOfChart } from '../engine/ruleCards';
+import { bookTake } from '../engine/vocab';
+import type { VocabCtx } from './Charts';
+import { LicksFound, type FoundUses } from './LicksFound';
 import type { NoteEvent } from '../engine/lesson';
 import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
@@ -30,7 +34,7 @@ function thinkText(c: { think: Parameters<typeof thoughtLabel>[0]; sym: string }
   return { label: thoughtLabel(c.think), name: c.think.name && c.think.name !== 'dominant' ? thoughtName[c.think.name][lang] : null };
 }
 
-export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { settings: Settings; lang: Lang; dayKey: number; tier: HarrisTier; onTier?: (t: HarrisTier) => void; onTake?: (t: ImprovTake) => void }) {
+export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab }: { settings: Settings; lang: Lang; dayKey: number; tier: HarrisTier; onTier?: (t: HarrisTier) => void; onTake?: (t: ImprovTake) => void; /** SPEC-LICKS-IN-IMPROV §3: the licks of mine in the take (booked; shown in the debrief). */ vocab?: VocabCtx }) {
   const tx = TX[lang];
   const he = lang === 'he';
   const sheet = useMemo(() => buildHarrisSheet(tier, dayKey), [tier, dayKey]);
@@ -39,6 +43,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { se
   const [running, setRunning] = useState(false);
   const [beat, setBeat] = useState<number | null>(null);
   const [grade, setGrade] = useState<HarrisGrade | null>(null);
+  const [found, setFound] = useState<FoundUses | null>(null);
   const [chorus, setChorus] = useState(0);
   const [showKeys, setShowKeys] = useState(midi.devices.length === 0);
   const ctl = useRef<AbortController | null>(null);
@@ -47,7 +52,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { se
   const open = useRef(new Map<number, number>());
   const raf = useRef(0);
   const beatS = 60 / bpm;
-  useEffect(() => (setGrade(null), setChorus(0)), [tier, dayKey]);
+  useEffect(() => (setGrade(null), setFound(null), setChorus(0)), [tier, dayKey]);
   useEffect(
     () => () => {
       ctl.current?.abort();
@@ -79,6 +84,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { se
     const c = new AbortController();
     ctl.current = c;
     setGrade(null);
+    setFound(null);
     setChorus(0);
     setRunning(true);
     const text = sheet.tonic ? transposeChart(def.chart, sheet.tonic) : def.chart;
@@ -110,6 +116,10 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { se
     setGrade(g);
     setChorus(0);
     onTake?.(improvTake('harris', { score: g.score, notes: g.notes, tier, bpm }));
+    // the licks of mine in the line, over the same chart (SPEC-LICKS-IN-IMPROV §3: every improvisation take)
+    const line = notes.current.map((n) => ({ beat: n.beat, midi: n.midi, dur: n.dur }));
+    const r = bookTake(vocab, { notes: line, spans: spansOfChart(parseChart(text), sheet.meter, sheet.bars * sheet.choruses), meter: sheet.meter }, `harris-${Date.now().toString(36)}`);
+    setFound(r && r.uses.length ? { ...r, notes: line, bpm } : null);
   };
   const stop = () => {
     ctl.current?.abort();
@@ -241,6 +251,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake }: { se
         ) : (
           <p className="field-hint">{tx.none}</p>
         ))}
+      {found && <LicksFound found={found} pool={vocab?.pool ?? []} lang={lang} meter={sheet.meter} />}
       <div className="rs-controls">
         <div className="ch-step" dir="ltr">
           <small>{tx.tempo}</small>

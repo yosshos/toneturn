@@ -36,7 +36,7 @@ describe('the registry', () => {
     for (const c of UNVERIFIED_CLAIMS) {
       expect(c.why.length).toBeGreaterThan(20);
       expect(c.hides.length).toBeGreaterThan(0);
-      for (const h of c.hides) expect(h).toMatch(/^(item|level|vocal|topic|lesson|card|game):/);
+      for (const h of c.hides) expect(h).toMatch(/^(item|level|vocal|topic|lesson|card|game|groove):/);
     }
     for (const id of SWITCHED_ON) expect(ids.includes(id) || id.includes(':'), id).toBe(true);
     // a not-pursued claim is never switched on
