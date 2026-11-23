@@ -1,6 +1,7 @@
 # Afro-Cuban and Latin jazz: style research (for SPEC-JAZZ-NEIGHBOURS §3 and SPEC-STYLE-FOCUS)
 
 **Date:** 2026-11-22. **Status:** research only. No code was changed.
+**Update 2026-11-23:** §2.5–2.8 add the researched cha-cha-chá, bolero, mambo and Latin-boogaloo findings (with sources); the verified parts are built as k-montuno 13–20, the band's `chacha` / `bolero` styles and the drum-style ear game.
 
 **Tags (the owner's rule: only verified theory)**
 
@@ -185,9 +186,9 @@ These are standard in the methods listed in §0. They are easy to measure in the
 | Style | Piano role | Tag |
 |---|---|---|
 | **Son montuno / salsa** | P1–P4 at medium to fast tempo, 2-3 by default. | [V] motif; [?] tempos |
-| **Cha-cha** | Cha-cha developed from danzón-mambo; Enrique Jorrín, early 1950s, "La engañadora" (1951). Jorrín simplified the syncopation for dancers [V] (Wikipedia *Cha-cha-chá*, after Alén, Urfé, Orovio). The piano part is less syncopated than salsa: more on the beat, with the "cha-cha-chá" cell (4, 4&, 1). | [V] history; [?] the exact figure. Wikipedia only shows an image (Orovio 1981). |
-| **Mambo** | Pérez Prado popularised the mambo in the late 1940s [V] (*Guajeo*). Fast montunos and **ponchando** block-chord hits with the horns' mambo figures [V for ponchando]. | [?] specific figures |
-| **Bolero** | Slow; broken chords in 8ths; the left hand on the bass. Cuban bolero is usually written in 2/4, and elsewhere often in 4/4. It comes from the guitar trova of Santiago de Cuba; the first bolero is "Tristezas" (Pepe Sánchez, 1883). The bolero-son was popular in the 1930s–40s (Trío Matamoros) [V] (Wikipedia *Bolero*). | [V] background; [?] the pattern |
+| **Cha-cha** | The montuno on the beats, at about 120 (see §2.5). | [V] 2026-11-23 (§2.5); [?] a piano "cha-cha-chá" cell |
+| **Mambo** | The montuno and ponchando in the clave at 140–200 (see §2.7). | [V] 2026-11-23 (§2.7); [?] horn riffs, the bell |
+| **Bolero** | Slow; the bass on 1 and 3, the chord broken in 8ths (see §2.6). | [V] 2026-11-23 (§2.6); [C] the exact 8th shape |
 | **Songo** | The right hand on onbeats over a looped minor progression (i–♭VII–♭VI), the left hand syncopated against it; displacement at the advanced level [V] (*Guajeo*, *Tumbao*, after Moore). | [?] the exact LH cells, until Moore's *Beyond Salsa Piano* is consulted |
 | **6/8 afro-cubano** | Chords placed on a subset of the bell's strokes (for example 0, 4, 7, or the 6/8 clave strokes 0, 2, 5, 7, 9) over a minor vamp. | [?] my proposal; no source read |
 
@@ -203,6 +204,77 @@ These are standard in the methods listed in §0. They are easy to measure in the
 8. **Mambo ponchando with the band's horn hits.**
 9. **Songo tumbao (two-hand interlock).** Then 6/8.
 10. **Advanced:** displacement and clave changes.
+
+### 2.5 Cha-cha-chá (researched 2026-11-23; built as k-montuno 13–16)
+
+**Sources read this session** (each feature below needs two independent ones to be [V]):
+
+| Short name | Source |
+|---|---|
+| W-Cha | Wikipedia *Cha-cha-chá (music)* (after Orovio 1981: 130–132; Urfé 1974; Alén 1994: 87; Santos 1982) |
+| W-Dance | Wikipedia *Cha-cha-cha (dance)* (WDC / WDSF tempo rules; Lavelle 1983) |
+| W-Guajeo | Wikipedia *Guajeo* (after Moore 2009: 15–17, 40; Peñalosa 2010: 256) |
+| W-Danzón, W-Mambo | Wikipedia *Danzón*, *Mambo (music)* (after Orovio, Salazar, Giro 1998: 212) |
+| Eijkhout | Victor Eijkhout, "Feel the beat: Cha-cha-cha", a musicology course for dancers (eijkhout.net, 2001) |
+| Roover | Edgar G. Roover with Joe and Pauly Ortiz, "Latin Lessons", *Recording Musician*, Nov 1992 (muzines.co.uk) |
+| SB-Cha | Soundbrenner, "Cha-cha-cha rhythm" (low authority) |
+| Clark | Michele Fernández Denlinger, "Latinizing your school jazz ensemble", clinic handout (Clark College jazz festival, 2020) |
+| López | Victor López, *Latin Rhythms: Mystery Unravelled*, Midwest Clinic 2005 slides (Alfred) |
+| Moore-BSP2 | Kevin Moore, *Beyond Salsa Piano* vol. 2, table of contents and chapter summaries (timba.com) |
+| PG | PianoGroove, "Cha-Cha-Cha & Mambo" lesson page (the patterns PDF is members-only; not read) |
+
+**What is verified:**
+
+| Feature | Finding | Sources | Tag |
+|---|---|---|---|
+| Origin | Enrique Jorrín, charanga (Orquesta América); "La engañadora" (1951; recorded 1953); from the danzón-mambo; the charanga format = flute, strings, piano, bass, percussion; Orquesta Aragón and Fajardo spread it | W-Cha, W-Dance, López ("developed around 1953 in the hands of Cuban charangas") | [V] |
+| Less syncopation | Jorrín simplified the syncopation for dancers ("as little syncopation as possible"; "a strongly marked first downbeat and less syncopation"); the main idea was to extend the danzón's montuno section, with melodies that use more onbeats | W-Cha (Alén, Orovio), W-Dance, W-Guajeo (Moore 2009: 15) | [V] |
+| The piano plays a montuno / tumbao | the piano plays "montuno-like patterns"; the cha-cha extends the danzón's montuno; Moore's vol. 2 studies the charanga piano tumbaos (Aragón, Fajardo) and the Arcaño tumbaos "later used for chachachá" | SB-Cha, W-Guajeo (Moore), Moore-BSP2 | [V] that it is a montuno; [?] the exact figure |
+| Octaves | Latin piano lines are "normally played in octaves", block chords for accents; piano guajeos are usually voiced in octaves | Roover, W-Guajeo (Sonny Bravo) | [V] (general Latin piano, not cha-cha only) |
+| Tempo | about 120: the WDC requires 30 bars a minute (= 120 bpm), the WDSF 30–32; Roover's pattern is 118 bpm, "too rushed" above about 125 and dragging below 80–90; SB-Cha suggests 110–128 | W-Dance, Roover, SB-Cha | [V] |
+| The "cha-cha-chá" | the name is the sound of the dancers' feet on three successive steps; the triple step falls on 4, its "and" and 1 ("2 3 4-and 1"; the original Cuban count "one, two, three, four-and") | W-Cha, W-Dance, Eijkhout, SB-Cha | [V] |
+| Conga | the high conga plays two hits on the last two 8ths of the bar (4 and its "and") | Eijkhout; a dance guide (udansa.com, via search) | [V] |
+| Bell | claves, woodblock or cowbell on every quarter note; the timbalero keeps steady notes on the small bell | Eijkhout; the existing d-latin L5 ([C] Mauleón) | [V] |
+| Güiro | a long stroke and two short ones (Eijkhout writes the güiro as "1 2& 3 4&") | Eijkhout; search summary of a percussion handout | [C] |
+| Bass | a tumbao-related line (the "and" of 2 and 4, the 4 ringing over the bar) | SB-Cha; Roover (the same anticipated bass for his cha-cha and mambo patterns) | [V] generic; the app's own b-latin cha-cha cells stay hidden (F6) |
+| 4/4 with a 2/4 feel | "played in 4/4 yet has a bouncy 2/4 feel"; Cuban scores in 2/4 | Clark, López, W-Dance | [V] |
+| Progressions | the montuno vamps of §2.2 (I–IV–V–IV, i–iv–V7–iv, ii–V, ii–V–I); PianoGroove practises the cha-cha over a ii–V–I | §2.2 [V generic], PG | [V] generic |
+
+**Unverified, left out** [?]:
+- **A piano "cha-cha-chá" cell** (the piano itself striking 4–&–1). No source gives one; the drums (the conga) and the feet carry it. Wikipedia's typical piano figure (Orovio 1981: 132) is an image only.
+- **The right hand on the beat, the left hand on the offbeat** ("chik-boom" reversed): only seen in search-engine summaries of a SalsaBlanca lesson and a MuseScore forum thread; neither page could be read. Check against Mauleón 1993 (cha-cha chapter) or *Cuban Masters Series: The Cuban Piano* (Morales / Griffin).
+- **The clave in the cha-cha.** SB-Cha: arrangements "may be built around son clave", some "imply it loosely". One source only: the app's cha-cha has **no clave direction** and the band plays no clave in it.
+- **Specific charanga tumbaos** (Aragón, Fajardo): in Moore's vol. 2, not read; never copy one.
+
+**What the app builds:** the montuno figure (§2.2, verified generic) on the onbeat grid in **every** bar — block chords (ponchando) first, then the octave line with the inner tones, then the left hand doubling, then with the band (the bank's cha-cha groove: the bell on the beats, the conga on 2, 4 and the "and" of 4; the tumbao bass). Tempo ladders 90–128. All 12 keys, free time first. Ear: the cha-cha is in the drum-style game from level 3 (it was only a look-alike before), with its own band style.
+
+### 2.6 Bolero (researched 2026-11-23; built as k-montuno 19–20)
+
+| Feature | Finding | Sources | Tag |
+|---|---|---|---|
+| Origin | the trova of Santiago de Cuba; "Tristezas" (Pepe Sánchez, 1883); duos and trios; the bolero-son of Trío Matamoros (1930s); the bolero-cha (1950s) | Wikipedia *Bolero*; Tapia Tovar 2007 (ALAS congress paper, "Música e identidad latinoamericana: el caso del bolero") | [V] |
+| Meter | Cuban boleros usually in 2/4, elsewhere 4/4 | Wikipedia *Bolero*, SB-Bolero (Soundbrenner "Bolero rhythm") | [V] |
+| Tempo | slow: "roughly 60 to 90 bpm" (SB-Bolero); 84–116, most often 104 (an uncredited Scribd handout "How to play Bolero"); about 120 for ballroom dancing, 96–104 American Rhythm (Wikipedia) | three sources, wide spread | [V] slow; the app uses 60–90 |
+| Bass | the low pulse on 1 and 3 (SB-Bolero); "a half note followed by two quarter notes" (López); "the left hand maintains the bass rhythm" (Scribd) | SB-Bolero, López, Scribd | [V] 1 and 3; [C] the extra note on 4 |
+| Right hand | "arpeggios, broken chords, or soft syncopated hits" (SB-Bolero); from 1921 Eusebio Delfín accompanied with semi-arpeggios, "the elements that will characterise the bolero to this day" (Tapia Tovar 2007, p. 3) | SB-Bolero, Tapia Tovar | [V] broken chords; [C] the exact 8th-note up-and-down shape |
+| Repertoire | "some jazz ballads can convert easily to boleros by simply adding [the] signature rhythm" | Clark | [V] (so the jazz-ballad ii–V–I is the progression) |
+
+**Left out** [?]: the conga's bolero "signature rhythm" (Clark shows it only as an image), the bongó part, the "bar and a half" rhythm Delfín spread his accompaniment over (Tapia Tovar names it, gives no notation), a bolero kit groove, the bolero guitar pattern (§3.2), the bolero-son and bolero-cha as separate grooves.
+
+### 2.7 Mambo (researched 2026-11-23; built as k-montuno 17–18)
+
+| Feature | Finding | Sources | Tag |
+|---|---|---|---|
+| Origin | the danzón de nuevo ritmo of Arcaño y sus Maravillas; Orestes López's "Mambo" (1938); Pérez Prado's big band from 1949 | W-Mambo, W-Danzón, W-Guajeo | [V] |
+| The piano | "the pianist attacks the mambo", the piano sets the montuno (Giro 1998: 212); mambo "uses many of same 'salsa' patterns but at a faster tempo" (Clark); ponchando [V] §2.1 | W-Mambo, Clark | [V] |
+| Clave | "likewise based on Son clave" | Clark; §2.1 (the montuno's onbeat/offbeat motif) | [V] |
+| Tempo | Roover's pattern 186 bpm; "mostly up-tempo, faster than the Son Montuno" (López); "driving, up-tempo" (Clark) | Roover, López, Clark | [V] fast; the app uses 140–196 |
+
+**Left out** [?]: the mambo bell (still image-only, §5.1), the horn riffs ("mambos"), Pérez Prado's figures, the cáscara-in-the-right-hand exercise (PianoGroove, members-only).
+
+### 2.8 Latin boogaloo (bugalú): not built
+
+Wikipedia *Boogaloo* and NPR: a 1960s New York fusion of R&B / soul with mambo, cha-cha-chá and son montuno; Joe Cuba's "Bang Bang" (1966); "otherwise slow, cha-cha-chá rhythm" (NPR); Juan Flores's chapter is titled "Cha-Cha with a Backbeat". **No source gives a piano figure, a drum grid or a bass line**, so nothing is built [?]. Check Flores, *From Bomba to Hip-Hop* (2000), ch. 4.
 
 ---
 
@@ -268,7 +340,7 @@ These are standard in the methods listed in §0. They are easy to measure in the
 |---|---|---|
 | Son / salsa / mambo | The tumbao, 2& and 4, the 4 anticipating the next chord; mambo is the same at faster tempos. | [V] tumbao; [C] mambo |
 | Cha-cha | The app plays: root on 1 (a dotted quarter), the 5th on 2&, the octave on 4, an approach on 4&. Sources I read give no cha-cha bass. | [?] check Mauleón 1993 |
-| Bolero | 1 and 3 (half notes) or 1 and 3 with a pickup. | [?] |
+| Bolero | 1 and 3 (half notes) or a half note and two quarters (§2.6). | [V] 1 and 3 (Soundbrenner, López); the band plays it since 2026-11-23 |
 | Songo | Syncopated two-bar cells around the kick. The app has its own cells. | [?] check Goines/Ameen or Moore |
 | Mozambique | App cells exist. | [?] |
 | 6/8 | The app plays root–5th–♭7 on the triplet grid. | [?] |
@@ -407,7 +479,7 @@ These are under copyright and may be named as listening references only:
 
 | Style | Cues to listen for | Tempo | Tag |
 |---|---|---|---|
-| **Cha-cha** | The "cha-cha-chá" cell on 4–&–1; cowbell quarter notes; the güiro; moderate, even, less syncopated (Jorrín simplified it) | about 110–130 | [V] origin and simplicity; [C] instruments; [?] tempo |
+| **Cha-cha** | The "cha-cha-chá" cell on 4–&–1; cowbell quarter notes; the güiro; moderate, even, less syncopated (Jorrín simplified it) | about 110–130 | [V] origin, simplicity, the bell, the conga's 4-&, tempo (§2.5) |
 | **Mambo** | A fast tumbao; the mambo bell in the montuno; ponchando and horn hits; big-band sound | about 160–220 | [V] ponchando and era; [?] tempo |
 | **Bolero** | Slow; sung melody; broken-chord guitar or piano; bongó in a steady pattern; no bell drive | slow (Wikipedia gives about 120 for dancing and 96–104 for American Rhythm competition; the notation basis isn't stated) | [V] facts; [?] how to put it in the game |
 | **Songo** | Kick on the kit; right hand on the quarters and left hand on the offbeats (§5.1); the bass syncopated around the kick; rumba-like conga quinto; funk feel | about 90–120 | [V] kit description; [?] tempo |

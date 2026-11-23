@@ -530,11 +530,13 @@ function brazilComping(p: ParsedChart, meter: number, total: number, style: 'sam
  *     on the offbeats, the two-side bar on the beats (§2.1 [V] Peñalosa, Moore); the drill's clave, else 2-3 ("most salsa
  *     piano guajeos use the 2-3 form" [V]). Per cycle either ponchando block chords [V] or the broken figure — the line
  *     note in octaves against the inner chord tones [C] Mauleón; offbeat hits anticipate the next chord by an 8th [C].
- *   chacha: the same clave-aware motif, block chords only. The "cha-cha-chá" piano cell is [?] (Wikipedia shows only an
- *     image), so the band does not play it.
+ *   chacha: the montuno on the beats in every bar (STYLE-AFROCUBAN §2.5 [V]: Jorrín's "as little syncopation as
+ *     possible", Wikipedia Cha-cha-chá; "more onbeats", Moore 2009: 15), ponchando or the broken figure per two-bar
+ *     cycle, as k-montuno 13–16. No clave direction (§2.5 [?]); the piano's own "cha-cha-chá" cell is not sourced, so the
+ *     band leaves it to the drums (the conga on 4 and its "and").
  *   songo: the right hand on the four beats ([V] Moore via Wikipedia); its left-hand cells are [?] and are left out.
- *   bolero: slow broken chords in 8ths ([V] the description, §2.3 / §7; the exact figure is [?]: an even up-and-down
- *     arpeggio of the chord).
+ *   bolero: slow broken chords in 8ths (§2.6: "arpeggios, broken chords", Soundbrenner; Delfín's semi-arpeggios, Tapia
+ *     Tovar 2007) — an even up-and-down arpeggio of the chord, as k-montuno 20; the bass on 1 and 3 (styleBand.ts).
  *   afro68: the bell is the referent (§6.1 [V]); the chord placement on the bell is [?], so the band only marks each
  *     dotted-quarter beat (a 4/4 chart bar = four dotted quarters; 6 or 12 eighth-beat bars every 3 eighths).
  * Meters other than 4 (and 2 / 6 / 12 for afro68): null.
@@ -551,7 +553,7 @@ function latinComping(p: ParsedChart, meter: number, total: number, style: Exclu
   } else {
     if (meter !== 4) return null;
     const clave = o.clave ?? '23';
-    const plan = figurePlan(Math.ceil((bars + off) / 2) + 1, style === 'chacha' ? [1] : [1, 2], r);
+    const plan = figurePlan(Math.ceil((bars + off) / 2) + 1, [1, 2], r);
     for (let bar = 0; bar < bars; bar++) {
       const b0 = bar * 4;
       const a = bar + off;
@@ -560,8 +562,8 @@ function latinComping(p: ParsedChart, meter: number, total: number, style: Exclu
       } else if (style === 'bolero') {
         for (let k = 0; k < 8; k++) hits.push({ beat: b0 + k / 2, len: 0.9, notes: [], vel: 0.26 + (k === 0 ? 0.04 : 0), part: 'arp' });
       } else {
-        const offbeat = threeSide(a, clave);
-        const broken = style !== 'chacha' && plan[Math.floor(a / 2)] === 1;
+        const offbeat = style !== 'chacha' && threeSide(a, clave);
+        const broken = plan[Math.floor(a / 2)] === 1;
         for (let k = 0; k < 4; k++) hits.push({ beat: b0 + k + (offbeat ? 0.5 : 0), len: 0.42, notes: [], vel: 0.32 + r() * 0.04, ...(broken ? { part: k % 2 === 0 ? ('oct' as const) : ('in' as const) } : {}) });
       }
     }

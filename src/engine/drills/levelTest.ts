@@ -145,6 +145,9 @@ const COMP_JAZZ: Rung[] = [
   // Brazilian and Afro-Cuban comping families (open from the start, so every test checks them).
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
   r('k-montuno-6', 7, { 'k-brazil': 4, 'k-montuno': 7 }),
+  // 2026-11-23: the cha-cha montuno on the beats (k-montuno 14) is asked too; its levels sit by difficulty, not number,
+  // so a clean take places the montuno family where the montuno step does.
+  r('k-montuno-14', 2, { 'k-brazil': 4, 'k-montuno': 7 }),
   // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
   // walking line place the soul and New Orleans comping families (open from the start).
   r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6 }),
@@ -161,6 +164,7 @@ const COMP_CLASSICAL: Rung[] = [
   r('k-pop-4', 5, { 'k-first': 11, accomp: 7, control: 10, 'k-pop': 5, 'k-pedal': 2 }),
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
   r('k-montuno-6', 7, { 'k-brazil': 4, 'k-montuno': 7 }),
+  r('k-montuno-14', 2, { 'k-brazil': 4, 'k-montuno': 7 }),
   // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
   // walking line place the soul and New Orleans comping families (open from the start).
   r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6 }),

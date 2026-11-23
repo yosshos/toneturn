@@ -10,14 +10,19 @@ import { chartBacking, chordAtBeat, type Backing, type ChartStyle, type ParsedCh
 import { GROOVES, grooveCycle, grooveHits, type HitKind } from './grooves';
 
 const CHART_STYLES: string[] = ['swing', 'pop', 'rock', 'bossa', 'ballad', 'waltz'];
-/** Afro-Cuban styles: the tumbao bass and the son clave (3-2). */
-const CLAVE_STYLES: string[] = ['chacha', 'mambo', 'songo', 'latin', 'bolero'];
+/**
+ * Afro-Cuban styles: the tumbao bass (the cha-cha too: "a tumbao-related line", STYLE-AFROCUBAN §2.5) and the son clave
+ * (3-2). The cha-cha plays the bank's cha-cha groove instead of the clave (its clave role is loose, §2.5 [?]); the bolero
+ * has the bass on 1 and 3 (§2.6: Soundbrenner, López) and light percussion, no clave.
+ */
+const TUMBAO_STYLES: string[] = ['chacha', 'mambo', 'songo', 'latin'];
+const CLAVE_STYLES: string[] = ['mambo', 'songo', 'latin'];
 /**
  * SPEC-JAZZ-NEIGHBOURS §4, §5: the soul and New Orleans styles play a groove of the bank under the band — soul-jazz the
  * shuffle (STYLE-SOUL §2.2), gospel 12/8 the slow-blues 12/8 (§1.4), funk-jazz the 16th funk (§3.2), trad the swing
  * ride, the second line its bass drum (STYLE-NEW-ORLEANS §2.1) at the measured in-between feel (8ths at ~57 %, Doleac).
  */
-const SOUL_NOLA_GROOVE: Record<string, string> = { souljazz: 'shuffle', gospel68: 'slow-blues', funkjazz: 'funk-1', trad: 'swing', secondline: 'second-line-3' };
+const SOUL_NOLA_GROOVE: Record<string, string> = { souljazz: 'shuffle', gospel68: 'slow-blues', funkjazz: 'funk-1', trad: 'swing', secondline: 'second-line-3', chacha: 'cha-cha' };
 const PERC_OF: Record<HitKind, NoteEvent['perc']> = { kick: 'kick', snare: 'snare', 'snare-soft': 'snare-soft', hat: 'hat', 'hat-open': 'hat-open', ride: 'ride', rim: 'rim', clap: 'snare', cowbell: 'bell', shaker: 'hat' };
 
 /** A backing for `loops` times through the chart in any band style. */
@@ -36,8 +41,8 @@ export function styledBacking(p: ParsedChart, style: ChartStyle | BandStyle, bpm
   for (let l = 0; l < loops; l++) {
     // the band's comping in the style
     for (const h of bandComping(p, meter, len, st, seed + l)) for (const m of h.notes) ev.push({ midi: m, start: at(h.beat + l * len), duration: Math.max(0.08, h.len * beat * 0.9), velocity: h.vel * 0.6, inst: 'piano' });
-    // the bass: the tumbao on the Afro-Cuban styles, else the root on 1 and the 5th / root on 3 (samba, baião, 6/8)
-    if (CLAVE_STYLES.includes(st)) for (const b of tumbaoBass(p, meter, len)) ev.push({ midi: b.midi, start: at(b.beat + l * len), duration: beat * 0.9, velocity: b.ghost ? 0.45 : 0.78, inst: 'bass' });
+    // the bass: the tumbao on the Afro-Cuban styles, else the root on 1 and the 5th / root on 3 (samba, baião, 6/8, bolero)
+    if (TUMBAO_STYLES.includes(st)) for (const b of tumbaoBass(p, meter, len)) ev.push({ midi: b.midi, start: at(b.beat + l * len), duration: beat * 0.9, velocity: b.ghost ? 0.45 : 0.78, inst: 'bass' });
     else if (st === 'souljazz') for (const b of walkingBass(p, meter, len, seed + l)) ev.push({ midi: b.midi, start: at(b.beat + l * len), duration: beat * (b.ghost ? 0.3 : 0.9), velocity: b.ghost ? 0.45 : 0.78, inst: 'bass' });
     else if (st === 'funkjazz') for (const b of funkBass(p, meter, len)) ev.push({ midi: b.midi, start: at(b.beat + l * len), duration: beat * (b.ghost ? 0.15 : 0.4), velocity: b.ghost ? 0.4 : b.acc ? 0.88 : 0.76, inst: 'bass' });
     else if (st === 'trad' || st === 'secondline') for (const b of twoFeelBass(p, meter, len)) ev.push({ midi: b.midi, start: at(b.beat + l * len), duration: beat * 1.5, velocity: 0.8, inst: 'bass' });
@@ -51,7 +56,8 @@ export function styledBacking(p: ParsedChart, style: ChartStyle | BandStyle, bpm
         ev.push({ midi, start: at(b + l * len), duration: beat * (meter / 2) * 0.85, velocity: 0.78, inst: 'bass' });
       }
   }
-  // the soul and New Orleans styles: their groove from the bank (the second line's 8ths at the in-between ~57 % feel)
+  // the soul and New Orleans styles and the cha-cha: their groove from the bank (the second line's 8ths at the
+  // in-between ~57 % feel)
   const gid = SOUL_NOLA_GROOVE[st];
   const g = gid ? GROOVES.find((x) => x.id === gid) : undefined;
   if (g) {

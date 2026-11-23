@@ -5,7 +5,7 @@
 //
 // Levels   1  rock · swing · bossa · reggae
 //          2  + shuffle · funk · samba · jazz waltz
-//          3  + songo · half-time shuffle · Afro 6/8 · 7/8 prog · maqsum
+//          3  + songo · cha-cha · half-time shuffle · Afro 6/8 · 7/8 prog · maqsum
 //          4  look-alikes: swing / shuffle / half-time shuffle, bossa / samba / songo, 7/8 / 5/4 / 9/8 …
 
 import type { NoteEvent, PercKind, Stimulus } from './lesson';
@@ -47,7 +47,8 @@ export const DRUM_STYLES: DrumStyle[] = shownOnly<DrumStyle>([
   // Look-alikes only (level 4).
   { id: 'five4', name: { en: '5/4', he: '5/4' }, groove: 'five-4', band: 'hold', chart: 'Dm | Am' },
   { id: 'nine8', name: { en: '9/8', he: '9/8' }, groove: 'nine-8', band: 'hold', chart: 'Em | D' },
-  { id: 'cha', name: { en: 'Cha-cha', he: 'צ׳ה־צ׳ה' }, groove: 'cha-cha', band: 'latin', chart: 'C | G7' },
+  // the cha-cha's band: the montuno on the beats over the bell and the conga's 4-and (band.ts, STYLE-AFROCUBAN §2.5)
+  { id: 'cha', name: { en: 'Cha-cha', he: 'צ׳ה־צ׳ה' }, groove: 'cha-cha', band: 'chacha', chart: 'C | G7' },
   // a groove the bank leaves out (unverified kit patterns, 'latin-kit-patterns') is not asked
 ]);
 const BY_ID: Record<string, DrumStyle> = Object.fromEntries(DRUM_STYLES.map((s) => [s.id, s]));
@@ -56,7 +57,7 @@ const BY_ID: Record<string, DrumStyle> = Object.fromEntries(DRUM_STYLES.map((s) 
 export const STYLE_POOL: string[][] = [
   ['rock', 'swing', 'bossa', 'reggae'],
   ['rock', 'swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz'],
-  ['swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz', 'songo', 'halftime', 'afro68', 'seven8', 'maqsum'],
+  ['swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz', 'songo', 'halftime', 'afro68', 'seven8', 'maqsum', 'cha'],
 ].map((p) => p.filter((id) => id in BY_ID));
 /** Level 4: groups that sound alike. */
 export const LOOK_ALIKES: string[][] = [
@@ -122,7 +123,7 @@ TOPIC_GEN['drum-style'] = {
   levels: [
     { en: 'Rock, swing, bossa, reggae', he: 'רוק, סווינג, בוסה, רגאיי' },
     { en: '+ shuffle, funk, samba, jazz waltz', he: '+ שאפל, פאנק, סמבה, ואלס ג׳אזי' },
-    { en: '+ songo, half-time shuffle, Afro 6/8, 7/8 prog, maqsum', he: '+ סונגו, שאפל חצי זמן, אפרו 6/8, פרוג ב־7/8, מקסום' },
+    { en: '+ songo, cha-cha, half-time shuffle, Afro 6/8, 7/8 prog, maqsum', he: '+ סונגו, צ׳ה־צ׳ה, שאפל חצי זמן, אפרו 6/8, פרוג ב־7/8, מקסום' },
     { en: 'Look-alikes: shuffle or swing, bossa or samba, 7/8 or 5/4', he: 'דומים: שאפל או סווינג, בוסה או סמבה, 7/8 או 5/4' },
   ],
   gen: (seed, level, id) => {

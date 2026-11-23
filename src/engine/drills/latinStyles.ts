@@ -11,14 +11,18 @@
 //             offbeats), ponchando block chords, the broken octave figure, I–IV–V–IV and i–iv–V7–iv, ii–V (2 bars) and
 //             ii–V–I (4 bars), the left hand doubling the line, anticipated changes, songo's right hand on the beats, and
 //             the montuno with the clave and a tumbao.
+//             Cha-cha-chá: the same figure every bar on the beats (block chords, octaves, hands together, with the
+//             band's cha-cha groove); mambo: the montuno at mambo tempo and with the clave band; bolero: the bass on 1
+//             and 3, the chord broken in 8ths over it (STYLE-AFROCUBAN §2.5–2.7, sources in the comments).
 //   g-brazil  guitar: the bossa batida — the thumb alone, root–5th, then the fingers (F1, the clave comp, upbeats), the
 //             surdo pickups, anticipated changes, the bossa grips; the samba (thumb on one repeated note, F1 at 16ths).
 //   g-guajeo  guitar: the guajeo, tres style — arpeggiated triads on strings 3-2-1 on the same onbeat/offbeat motif.
 //
 // Left out as [?]: the two-bar batida F3 (STYLE-BRAZIL B1), partido-alto (B2), Jovino's tamborim cells (B3), the cha-cha
-// piano / guitar figures, bolero accompaniment, mambo figures beyond ponchando, songo's left-hand cells, 6/8 comping
-// (STYLE-AFROCUBAN §2.3, §3.2, §3.3). All tempos are [?] in both files (B6): the ladders below use the research's
-// proposed tiers. Every item: all 12 keys, free time first (rubato.ts), then the tempo ladder with count-in and click;
+// and bolero guitar, a piano "cha-cha-chá" cell (no source gives one; the drums carry it), the cha-cha's right-hand /
+// left-hand split cell, mambo horn riffs, songo's left-hand cells, 6/8 comping, the Latin boogaloo (STYLE-AFROCUBAN
+// §2.5–2.8, §3.2, §3.3). Tempos: the cha-cha, mambo and bolero ladders follow sourced tempos (§2.5–2.7); the others are
+// [?] in both files (B6) and use the research's proposed tiers. Every item: all 12 keys, free time first (rubato.ts), then the tempo ladder with count-in and click;
 // the "with the band" levels are groove drills (the drums under the take), timed from the start like every band drill.
 // Swing is 0 throughout (STYLE-BRAZIL §0.2 [V]). Pure and deterministic.
 
@@ -474,8 +478,9 @@ function genMontuno(s: DrillSpec): Drill {
   const n = new Notes();
   const chart = [...chartOf(segs, bars, 4), segs[0].sym];
   const final = { ...segs[0], start: bars * 4 };
-  const ant = s.kind === 'mt-ant' || s.kind === 'mt-band';
-  const lh = s.kind === 'mt-hands' || s.kind === 'mt-ant' || s.kind === 'mt-band';
+  const ant = s.kind === 'mt-ant' || s.kind === 'mt-band' || s.kind === 'mb-band';
+  const lh = s.kind === 'mt-hands' || s.kind === 'mt-ant' || s.kind === 'mt-band' || s.kind === 'mb-fast' || s.kind === 'mb-band' || s.kind === 'cc-hands' || s.kind === 'cc-band';
+  if (s.kind === 'bo-lh' || s.kind === 'bo-arp') return genBolero(s, prog, segs, bars, chart, key);
   if (s.kind === 'mt-songo') {
     // Songo (§2.3 [V] Moore via Wikipedia): the right hand on the four beats over the looped minor vamp; the left-hand
     // cells are [?] and are not written.
@@ -488,7 +493,11 @@ function genMontuno(s: DrillSpec): Drill {
     n.add(bars * 4, 2, voiceLead(voicings(final, 'close'), prev), 'R');
     return pianoDone(s, n, titleOf('Songo: the right hand on the four beats', 'סונגו: יד ימין על ארבע הפעמות', prog.name, key, prog.minor), 4, { evenness: true }, { chart });
   }
-  const hits = montunoHits(bars, dir);
+  // Cha-cha-chá (STYLE-AFROCUBAN §2.5): the same figure, every bar on the beats — Jorrín's music kept "as little
+  // syncopation as possible" (Wikipedia Cha-cha-chá, after Alén / Orovio) and its melodies used "more onbeats"
+  // (Moore 2009: 15, via Wikipedia Guajeo); the cha-cha is the danzón's montuno section extended (Moore, ibid.).
+  const chacha = s.kind.startsWith('cc-');
+  const hits = chacha ? Array.from({ length: bars * 4 }, (_, b) => b) : montunoHits(bars, dir);
   let prevV: number[] | null = null;
   let line: number | null = null;
   // The ostinato: a chord keeps its line note every time it comes back (I–IV–V–IV: G–A–B–A, looped).
@@ -504,7 +513,7 @@ function genMontuno(s: DrillSpec): Drill {
     // anticipates the closing chord).
     const at = b + (ant && offbeat ? 0.5 : 0);
     const c = at >= bars * 4 - 1e-6 ? final : segAt(segs, at);
-    if (s.kind === 'mt-ponch') {
+    if (s.kind === 'mt-ponch' || s.kind === 'cc-beats') {
       // Ponchando (§2.1 [V]): block chords on the attack points.
       prevV = voiceLead(voicings(c, 'close'), prevV);
       n.add(b, 0.5, prevV, 'R');
@@ -518,7 +527,7 @@ function genMontuno(s: DrillSpec): Drill {
     }
   });
   // the closing chord on the next 1
-  if (s.kind === 'mt-ponch') n.add(bars * 4, 2, voiceLead(voicings(final, 'close'), prevV), 'R');
+  if (s.kind === 'mt-ponch' || s.kind === 'cc-beats') n.add(bars * 4, 2, voiceLead(voicings(final, 'close'), prevV), 'R');
   else {
     const l = lineFor(final);
     n.add(bars * 4, 2, [l - 12, ...innerTones(final, l), l], 'R');
@@ -531,10 +540,63 @@ function genMontuno(s: DrillSpec): Drill {
     'mt-hands': [`Montuno hands together: the left hand doubles the line, clave ${d}`, `מונטונו בשתי ידיים: יד שמאל מכפילה את הקו, קלאבה ${ltr(d)}`],
     'mt-ant': [`Montuno: anticipate the changes by an 8th, clave ${d}`, `מונטונו: להקדים את החילופים בשמינית, קלאבה ${ltr(d)}`],
     'mt-band': [`Montuno with the clave and the tumbao, clave ${d}`, `מונטונו עם הקלאבה והטומבאו, קלאבה ${ltr(d)}`],
+    'cc-beats': ['Cha-cha: block chords on the four beats', 'צ׳ה־צ׳ה: אקורדים חסומים על ארבע הפעמות'],
+    'cc-oct': ['Cha-cha montuno: octaves and inner tones on the beats', 'מונטונו של צ׳ה־צ׳ה: אוקטבות וצלילים פנימיים על הפעמות'],
+    'cc-hands': ['Cha-cha montuno hands together: the left hand doubles the line', 'מונטונו של צ׳ה־צ׳ה בשתי ידיים: יד שמאל מכפילה את הקו'],
+    'cc-band': ['Cha-cha with the band: the bell, the güiro, the conga on 4 and its "and"', 'צ׳ה־צ׳ה עם הלהקה: הפעמון, הגווירו, הקונגה על 4 וה"וְ" שלו'],
+    'mb-fast': [`Mambo tempo: the montuno hands together, clave ${d}`, `טמפו של מאמבו: המונטונו בשתי ידיים, קלאבה ${ltr(d)}`],
+    'mb-band': [`Mambo with the band: the clave and the tumbao, clave ${d}`, `מאמבו עם הלהקה: הקלאבה והטומבאו, קלאבה ${ltr(d)}`],
   };
   const [en, he] = T[s.kind] ?? T['mt-broken'];
-  const band = s.kind === 'mt-band';
-  return pianoDone(s, n, titleOf(en, he, prog.name, key, prog.minor), 4, {}, { chart, ...(band ? { drums: { groove: dir ? 'clave-32' : 'clave-23' }, band: { style: 'mambo' as const, bass: true, comp: false as const } } : {}) });
+  // The band levels: the montuno and the mambo in the clave (the groove's two-bar rim lane, the band's tumbao); the
+  // cha-cha over the bank's cha-cha groove (the bell on the quarters, the conga on 2, 4 and the "and" of 4 — §2.5 [V]
+  // Eijkhout, Wikipedia Cha-cha-chá (dance)) with the tumbao-related bass (§2.5 [V] Roover 1992, Soundbrenner).
+  const band = s.kind === 'mt-band' || s.kind === 'mb-band';
+  const extra = band
+    ? { drums: { groove: dir ? 'clave-32' : 'clave-23' }, band: { style: 'mambo' as const, bass: true, comp: false as const } }
+    : s.kind === 'cc-band'
+      ? { drums: { groove: 'cha-cha' }, band: { style: 'chacha' as const, bass: true, comp: false as const } }
+      : {};
+  return pianoDone(s, n, titleOf(en, he, prog.name, key, prog.minor), 4, {}, { chart, ...extra });
+}
+
+/**
+ * Bolero (STYLE-AFROCUBAN §2.6): a slow 4/4 (Cuban boleros are written in 2/4, elsewhere 4/4 — Wikipedia Bolero).
+ * The left hand keeps the bass on 1 and 3 (Soundbrenner "Bolero rhythm": "Low pulse: 1, 3"; López, Midwest Clinic 2005:
+ * the bolero bass "a half note followed by two quarter notes"; "the left hand maintains the bass rhythm", How to Play
+ * Bolero) — the root, then the 5th (a second chord in the bar: its root). The right hand plays the chord broken, in 8ths
+ * (Soundbrenner: "arpeggios, broken chords"; Tapia Tovar 2007, p. 3: Eusebio Delfín's semi-arpeggio accompaniment, from
+ * 1921, "will characterise the bolero to this day"), here an even up-and-down arpeggio of the close voicing, a new
+ * chord on its own beat. The progressions are the jazz-ballad ii–V–I and ii–V: "some jazz ballads can convert easily to
+ * boleros" (Fernández Denlinger, "Latinizing your school jazz ensemble", Clark College 2020).
+ */
+function genBolero(s: DrillSpec, prog: Prog, segs: Seg[], bars: number, chart: string[], key: number): Drill {
+  const n = new Notes();
+  bossaLH(n, segs, bars, 'halves');
+  // the closing tonic bar (the ii–V resolves)
+  n.add(bars * 4, 4, [lhRoot(key)], 'L');
+  chart = [...chart.slice(0, -1), NAMES[key] + 'maj7'];
+  if (s.kind === 'bo-arp') {
+    let prev: number[] | null = null;
+    let last: Seg | null = null;
+    let up: number[] = [];
+    let k = 0;
+    for (let b = 0; b < bars * 4; b += 0.5) {
+      const c = segAt(segs, b);
+      if (c !== last) {
+        prev = voiceLead(voicings(c, 'close'), prev);
+        const v = [...prev].sort((x, y) => x - y);
+        up = [...v, ...v.slice(1, -1).reverse()];
+        last = c;
+        k = 0;
+      }
+      n.add(b, 0.5, [up[k++ % up.length]], 'R', { accent: b % 4 === 0 });
+    }
+    const tonic: Seg = { ...segsOf(key, { name: '', chords: [[0, 'maj7', 4]] }, 4, 4)[0], start: bars * 4 };
+    n.add(bars * 4, 4, voiceLead(voicings(tonic, 'close'), prev), 'R');
+  }
+  const title = s.kind === 'bo-lh' ? titleOf('Bolero left hand: the bass on 1 and 3', 'יד שמאל בבולרו: הבס על 1 ו־3', prog.name, key) : titleOf('Bolero: the chord broken in 8ths over the bass', 'בולרו: האקורד שבור בשמיניות מעל הבס', prog.name, key);
+  return pianoDone(s, n, title, 4, { evenness: s.kind === 'bo-lh' }, { chart });
 }
 
 /** Build a k-brazil or k-montuno item. */
@@ -815,7 +877,7 @@ export function keysMontunoFamily(): FamilyDef {
   const L = (level: number, en: string, he: string, specs: SpecTemplate[], tempo: [number, number]): LevelDef => ({ id: `${fam}-${level}`, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: KEYS, tempo, style: 'afrocuban' });
   return {
     id: fam,
-    title: t('Montuno', 'מונטונו'),
+    title: t('Montuno, cha-cha, mambo, bolero', 'מונטונו, צ׳ה־צ׳ה, מאמבו, בולרו'),
     style: 'both',
     styleId: 'afrocuban',
     levels: [
@@ -833,6 +895,20 @@ export function keysMontunoFamily(): FamilyDef {
       // SPEC-STYLE-FOCUS §9 (the core's neighbour-style moment): the ii–V–I in ponchando — block chords on the montuno
       // rhythm (§2.1 [V]), close voicings led by voice leading; no line notes (ponchando is the montuno's first rung).
       L(12, 'Ponchando over ii–V–I', 'פונצ׳נדו על ii–V–I', [sp('mt-ponch', o(5)), sp('mt-ponch', o(5, 1))], [80, 110]),
+      // Cha-cha-chá (STYLE-AFROCUBAN §2.5): the montuno on the beats, at the dance's moderate tempo (about 120: the WDC's
+      // 30 bars a minute; Roover 1992, 118, "too rushed" above about 125; Soundbrenner 110–128). The clave is left out:
+      // the sources make its role in the cha-cha loose (§2.5 [?]).
+      L(13, 'Cha-cha: block chords on the four beats', 'צ׳ה־צ׳ה: אקורדים חסומים על ארבע הפעמות', [sp('cc-beats', o(2)), sp('cc-beats', o(5))], [90, 120]),
+      L(14, 'Cha-cha montuno: octaves on the beats', 'מונטונו של צ׳ה־צ׳ה: אוקטבות על הפעמות', [sp('cc-oct', o(2)), sp('cc-oct', o(3))], [100, 125]),
+      L(15, 'Cha-cha montuno, hands together', 'מונטונו של צ׳ה־צ׳ה בשתי ידיים', [sp('cc-hands', o(4), 'RL'), sp('cc-hands', o(5), 'RL')], [100, 125]),
+      L(16, 'Cha-cha with the band', 'צ׳ה־צ׳ה עם הלהקה', [sp('cc-band', o(2), 'RL'), sp('cc-band', o(5), 'RL'), sp('cc-band', o(3), 'RL')], [110, 128]),
+      // Mambo (§2.7): the montuno and its tumbao at a faster tempo (Roover 1992: 186; Fernández Denlinger: "many of same
+      // salsa patterns but at a faster tempo"; López 2005: "faster than the son montuno").
+      L(17, 'Mambo tempo: the montuno hands together', 'טמפו של מאמבו: המונטונו בשתי ידיים', [sp('mb-fast', o(2), 'RL'), sp('mb-fast', o(3, 1), 'RL')], [140, 186]),
+      L(18, 'Mambo with the band', 'מאמבו עם הלהקה', [sp('mb-band', o(2), 'RL'), sp('mb-band', o(4, 1), 'RL')], [160, 196]),
+      // Bolero (§2.6): slow; the bass on 1 and 3, the chord broken over it (Soundbrenner 60–90 bpm).
+      L(19, 'Bolero left hand: the bass on 1 and 3', 'יד שמאל בבולרו: הבס על 1 ו־3', [sp('bo-lh', o(5), 'L'), sp('bo-lh', o(4), 'L')], [60, 84]),
+      L(20, 'Bolero: the chord broken over the bass', 'בולרו: האקורד שבור מעל הבס', [sp('bo-arp', o(5), 'RL'), sp('bo-arp', o(4), 'RL')], [60, 90]),
     ],
   };
 }
@@ -888,4 +964,15 @@ export const LATIN_LEVEL_DIFF: Record<string, number> = {
   ...Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`k-montuno-${i + 1}`, 980 + 50 * i])),
   // the ponchando ii–V–I (SPEC-STYLE-FOCUS §9's neighbour moment): after the family's last level, in the family's order
   'k-montuno-12': 1500,
+  // Cha-cha, mambo and bolero (2026-11-23) sit by difficulty, not number (k-montuno is in NON_MONOTONE_FAMILIES): the
+  // cha-cha's on-beat chords after the ponchando, its figure beside the montuno figure; the mambo at the top; the
+  // bolero's left hand early, its broken chord with the hands-together levels.
+  'k-montuno-13': 1060,
+  'k-montuno-14': 1150,
+  'k-montuno-15': 1260,
+  'k-montuno-16': 1360,
+  'k-montuno-17': 1440,
+  'k-montuno-18': 1520,
+  'k-montuno-19': 1000,
+  'k-montuno-20': 1200,
 };

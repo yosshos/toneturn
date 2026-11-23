@@ -453,7 +453,7 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'g-cadlib': { en: 'Cadence charts on the neck', he: 'דפי קדנצות על הצוואר' },
   // SPEC-JAZZ-NEIGHBOURS §2, §3: Brazilian and Afro-Cuban comping.
   'k-brazil': { en: 'Bossa and samba comping', he: 'ליווי בוסה וסמבה' },
-  'k-montuno': { en: 'Montuno', he: 'מונטונו' },
+  'k-montuno': { en: 'Montuno, cha-cha, mambo, bolero', he: 'מונטונו, צ׳ה־צ׳ה, מאמבו, בולרו' },
   'g-brazil': { en: 'Bossa and samba guitar', he: 'גיטרת בוסה וסמבה' },
   'g-guajeo': { en: 'Guajeo on guitar', he: 'גואחאו בגיטרה' },
   // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel and soul-jazz, stride and boogie, odd meters in jazz; soul-jazz and funk guitar.
@@ -680,7 +680,9 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-cadlib': [['Shell Cadences', 'קדנצות בשלדים'], ['Guide-Tone Cadences', 'קדנצות בצלילים מנחים'], ['Rootless Cadences', 'קדנצות בלי שורש'], ['Drop 2 and Drop 3 Cadences', 'קדנצות בדרופ 2 ודרופ 3'], ['Four-Way Close Cadences', 'קדנצות בארבעה קולות צמודים'], ['Two-Handed Cadences', 'קדנצות בשתי ידיים'], ['Walking the Cadences', 'הקדנצות בבס מהלך']],
   // SPEC-JAZZ-NEIGHBOURS §2, §3: one title per level (k-brazil 14, k-montuno 11, g-brazil 11, g-guajeo 9).
   'k-brazil': [['Bossa Bass Hand', 'יד הבס של הבוסה'], ['Shell Batida', 'בטידת שלדים'], ['Bossa Clave 3-2', 'קלאבת בוסה 3-2'], ['Bossa Clave 2-3', 'קלאבת בוסה 2-3'], ['Surdo Pickups', 'הקדמות הסורדו'], ['Ahead of the Change', 'לפני החילוף'], ['Six-Nine Colours', 'צבעי שש-תשע'], ['Bossa Variations', 'וריאציות בוסה'], ['Sparse Comper', 'מלווה דליל'], ['Surdo Hand', 'יד הסורדו'], ['Tamborim Hand', 'יד הטמבורים'], ['Samba Anticipation', 'הקדמה בסמבה'], ['Bossa with the Band', 'בוסה עם הלהקה'], ['Samba with the Band', 'סמבה עם הלהקה']],
-  'k-montuno': [['Ponchando 2-3', 'פונצ׳נדו 2-3'], ['Ponchando 3-2', 'פונצ׳נדו 3-2'], ['Montuno Octaves', 'אוקטבות מונטונו'], ['Montuno 2-3', 'מונטונו 2-3'], ['Montuno 3-2', 'מונטונו 3-2'], ['Doubled Line', 'הקו המוכפל'], ['Anticipated Montuno', 'מונטונו מקדים'], ['ii–V Montuno', 'מונטונו ii–V'], ['Four-Bar Montuno', 'מונטונו בארבע תיבות'], ['Songo Hands', 'ידי סונגו'], ['In Clave', 'בתוך הקלאבה'], ['Ponchando ii–V–I', 'פונצ׳נדו ii–V–I']],
+  'k-montuno': [['Ponchando 2-3', 'פונצ׳נדו 2-3'], ['Ponchando 3-2', 'פונצ׳נדו 3-2'], ['Montuno Octaves', 'אוקטבות מונטונו'], ['Montuno 2-3', 'מונטונו 2-3'], ['Montuno 3-2', 'מונטונו 3-2'], ['Doubled Line', 'הקו המוכפל'], ['Anticipated Montuno', 'מונטונו מקדים'], ['ii–V Montuno', 'מונטונו ii–V'], ['Four-Bar Montuno', 'מונטונו בארבע תיבות'], ['Songo Hands', 'ידי סונגו'], ['In Clave', 'בתוך הקלאבה'], ['Ponchando ii–V–I', 'פונצ׳נדו ii–V–I'],
+    // cha-cha, mambo, bolero (k-montuno 13–20)
+    ['Cha-Cha Chords', 'אקורדי צ׳ה־צ׳ה'], ['Cha-Cha Octaves', 'אוקטבות צ׳ה־צ׳ה'], ['Cha-Cha Hands', 'ידי צ׳ה־צ׳ה'], ['Charanga Pianist', 'פסנתרן צ׳רנגה'], ['Mambo Tempo', 'טמפו של מאמבו'], ['Mambo Band', 'להקת מאמבו'], ['Bolero Bass', 'הבס של הבולרו'], ['Bolero Pianist', 'פסנתרן בולרו']],
   'g-brazil': [['Bossa Thumb', 'אגודל הבוסה'], ['Root and Fifth', 'שורש וקווינטה'], ['First Batida', 'בטידה ראשונה'], ['Batida ii–V–I', 'בטידה ii–V–I'], ['Clave Comper', 'מלווה הקלאבה'], ['Ahead of the Change, Guitar', 'לפני החילוף בגיטרה'], ['Surdo Thumb', 'אגודל הסורדו'], ['Batida Variations', 'וריאציות בטידה'], ['Samba Fingers', 'אצבעות סמבה'], ['Samba Anticipation, Guitar', 'הקדמה בסמבה בגיטרה'], ['Brazilian Rhythm Guitar', 'גיטרה קצבית ברזילאית']],
   'g-guajeo': [['Guajeo 2-3', 'גואחאו 2-3'], ['Guajeo 3-2', 'גואחאו 3-2'], ['Tres Changes 2-3', 'חילופי טרס 2-3'], ['Tres Changes 3-2', 'חילופי טרס 3-2'], ['Minor Guajeo', 'גואחאו במינור'], ['ii–V Guajeo', 'גואחאו ii–V'], ['Four-Bar Guajeo', 'גואחאו בארבע תיבות'], ['Anticipated Guajeo', 'גואחאו מקדים'], ['Guajeo in Clave', 'גואחאו בתוך הקלאבה']],
   // SPEC-JAZZ-NEIGHBOURS §4–§6: one title per level (k-gospel 14, k-souljazz 7, k-nola 9, k-odd 7, g-soul 6).
