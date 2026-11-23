@@ -8,7 +8,7 @@
 
 import type { Drill } from './types';
 import { parseChart } from '../charts';
-import { bandComping, hashOf, walkingBass, type BandStyle, type CompHit } from '../band';
+import { bandComping, claveOfGroove, hashOf, tumbaoBass, walkingBass, type BandOpts, type BandStyle, type CompHit } from '../band';
 import { chordAtBeat } from '../charts';
 import { GROOVES } from '../grooves';
 
@@ -16,7 +16,12 @@ import { GROOVES } from '../grooves';
 export function bandStyleOf(groove: string): BandStyle {
   if (groove === 'ballad-brush') return 'ballad';
   if (groove === 'jazz-waltz' || groove === 'waltz') return 'waltz';
-  if (groove === 'bossa') return 'bossa';
+  if (groove === 'bossa' || groove === 'bossa-23') return 'bossa';
+  // SPEC-JAZZ-NEIGHBOURS §7.2: the Latin grooves call for their own band styles (the son clave / tumbao: the montuno).
+  if (groove === 'samba') return 'samba';
+  if (groove === 'cha-cha') return 'chacha';
+  if (groove === 'songo') return 'songo';
+  if (groove === '6-8-afro') return 'afro68';
   if (groove === 'reggae') return 'reggae';
   if (groove === 'half-time' || groove === 'purdie') return 'pop';
   const g = GROOVES.find((x) => x.id === groove);
@@ -58,12 +63,17 @@ export function chartText(chart: string[]): string {
 }
 
 /** The band's comping hits for a drill (beats from beat 0 of the take), or none when it has no band. */
-export function bandHits(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId'>): CompHit[] {
+export function bandHits(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId' | 'drums'>): CompHit[] {
   const rests = drill.band?.rests ?? [];
   return bandHits0(drill).filter((h) => !rests.some(([a, b]) => h.beat >= a - 1e-6 && h.beat < b - 1e-6));
 }
-function bandHits0(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId'>): CompHit[] {
-  if (!drill.band || !drill.chart?.length) return [];
+/** The band options of a drill: its groove's clave direction (two-bar son / bossa clave lanes). */
+export const bandOptsOf = (drill: Pick<Drill, 'drums'>, barOffset = 0): BandOpts => {
+  const clave = claveOfGroove(drill.drums?.groove);
+  return { barOffset, ...(clave ? { clave } : {}) };
+};
+function bandHits0(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId' | 'drums'>): CompHit[] {
+  if (!drill.band || !drill.chart?.length || drill.band.comp === false) return [];
   const meter = drill.meter || 4;
   // Leading empty bars (a groove before the changes) are rests for the band.
   const lead = drill.chart.findIndex((b) => /[A-G]/.test(b));
@@ -71,7 +81,7 @@ function bandHits0(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'it
   const p = parseChart(chartText(drill.chart.slice(lead)), meter);
   if (!p.chords.length) return [];
   const total = Math.min(p.bars * meter, drill.beats - lead * meter);
-  return bandComping(p, meter, total, drill.band.style, hashOf(drill.itemId)).map((h) => ({ ...h, beat: h.beat + lead * meter }));
+  return bandComping(p, meter, total, drill.band.style, hashOf(drill.itemId), bandOptsOf(drill, lead)).map((h) => ({ ...h, beat: h.beat + lead * meter }));
 }
 
 /**
@@ -90,6 +100,9 @@ export function bandBass(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats'
   let out: { beat: number; midi: number; len: number; vel: number }[];
   if (drill.band.style === 'swing' || drill.band.style === 'waltz') {
     out = walkingBass(p, meter, total, hashOf(`${drill.itemId}:bass`)).map((n) => ({ beat: n.beat, midi: n.midi, len: n.ghost ? 0.3 : 0.9, vel: n.ghost ? 0.45 : 0.8 }));
+  } else if ((drill.band.style === 'mambo' || drill.band.style === 'latin') && !drill.notes.some((n) => n.voice === 'kick')) {
+    // Under a piano / guitar montuno (no drum part in the drill): the tumbao (STYLE-AFROCUBAN §4.1).
+    out = tumbaoBass(p, meter, total).map((n, i, a) => ({ beat: n.beat, midi: n.midi, len: Math.max(0.4, Math.min(2.4, (a[i + 1]?.beat ?? total) - n.beat) - 0.1), vel: 0.8 }));
   } else {
     const kicks = [...new Set(drill.notes.filter((n) => n.voice === 'kick' && n.beat < total - 1e-6).map((n) => n.beat))].sort((a, b) => a - b);
     out = kicks.map((b, i) => {

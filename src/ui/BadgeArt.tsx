@@ -1052,6 +1052,44 @@ export const GLYPHS: Record<string, Glyph> = {
     </>
   ),
   'family:k-pedal': () => p('M3 6h18 M4 17h16l-2 4H6z M12 17V9 M8 9h8', false),
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba (two surdo bass notes under a syncopated chord), the montuno (the clave's
+  // two sides: three strokes, then two), the batida on the neck (a thumb note and a pluck on strings), the guajeo (2-3).
+  'family:k-brazil': () => (
+    <>
+      {head(6, 19, 2.2)}
+      {head(16, 19, 2.2)}
+      {head(11, 9, 2)}
+      {head(11, 5, 2)}
+      {p('M13 9V2 M2 14h20', false)}
+    </>
+  ),
+  'family:k-montuno': () => (
+    <>
+      {dot(3, 8, 1.8)}
+      {dot(8, 8, 1.8)}
+      {dot(12.5, 8, 1.8)}
+      {dot(15, 16, 1.8)}
+      {dot(19.5, 16, 1.8)}
+      {p('M2 12h20 M12 3v18', false)}
+    </>
+  ),
+  'family:g-brazil': () => (
+    <>
+      {p('M2 6h20 M2 10h20 M2 14h20 M2 18h20', false)}
+      {head(6, 18, 2)}
+      {p('M14 4v12 M17 4v12 M20 4v12', false)}
+    </>
+  ),
+  'family:g-guajeo': () => (
+    <>
+      {p('M2 7h20 M2 12h20 M2 17h20 M12 3v18', false)}
+      {dot(4, 12, 1.6)}
+      {dot(8, 17, 1.6)}
+      {dot(14, 7, 1.6)}
+      {dot(17.5, 12, 1.6)}
+      {dot(21, 17, 1.6)}
+    </>
+  ),
   'family:k-classic': () => (
     <>
       {p('M8 21c-3 0-3-4 0-4s3 4 0 4 M8 17V3c3 1 4 3 2 6-2 3-6 4-6 8', false)}

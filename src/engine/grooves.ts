@@ -109,6 +109,8 @@ export const GROOVES: Groove[] = [
   G('jazz-waltz', 'Jazz waltz', 'ואלס ג׳אזי', 'jazz', 3, 4, 3, 150, 'x........', '.....o...', 'x..x.xx..', '...x...x.', RIDE),
   // The bossa clave 3-2 as a cross-stick over two bars (drumStyles.ts CLAVE.bossa32), the kick on 1, "&" of 2, 3, "&" of 4.
   { ...G('bossa', 'Bossa nova', 'בוסה נובה', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', 'x..x..x...x..x..'), bars: 2 },
+  // The same with the bossa clave 2-3 (drumStyles.ts CLAVE.bossa23; STYLE-BRAZIL §1(a) F2' [V] Ward "sometimes 2-3").
+  { ...G('bossa-23', 'Bossa nova, clave 2-3', 'בוסה נובה, קלאבה 2-3', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', '..x..x..x..x..x.'), bars: 2 },
   G('ballad-brush', 'Brush ballad', 'בלדת מברשות', 'jazz', 4, 4, 3, 66, 'x.....x.....', '...o.....o..', 'x..x.xx..x.x', undefined, RIDE),
   // blues
   G('shuffle', 'Shuffle', 'שאפל', 'blues', 4, 4, 3, 110, 'x.....x.....', '...x.....x..', 'x.xx.xx.xx.x'),

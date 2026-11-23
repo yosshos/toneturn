@@ -77,6 +77,8 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'k-pop': 'kpop', 'k-pedal': 'kpedal', 'k-classic': 'kclassic', 'b-riff': 'briff', 'b-feel': 'bfeel',
   // AUDIT-7 (#2, #8, #9): the singer's blues and scat start, improvising in pop, pop and theatre style.
   'v-jazz1': 'vjazz1', 'v-impro': 'vimpro', 'v-pop': 'vpop', 'g-jblues': 'gjblues',
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping and the montuno on the keys; the batida and the guajeo on the neck.
+  'k-brazil': 'kbrazil', 'k-montuno': 'kmontuno', 'g-brazil': 'gbrazil', 'g-guajeo': 'gguajeo',
   // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand.
   'k-gig': 'kgig', 'g-gig': 'ggig', 'b-gig': 'bgig',
 };

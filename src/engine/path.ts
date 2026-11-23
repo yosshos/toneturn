@@ -9,6 +9,7 @@ import { gameVerified, topicVerified } from './verifiedContent';
 import { K_HARM_DIFF } from './drills/harmLadder';
 import { K_INDEP_DIFF } from './drills/indepDrills';
 import { K_KEYLICK_DIFF, K_KEYX_DIFF } from './drills/keyLicks';
+import { LATIN_LEVEL_DIFF } from './drills/latinStyles';
 import { MODE_LEVEL_DIFF } from './drills/modeScales';
 import { questionTags } from './taxonomy';
 import { SUB_PREREQ, IMPORTANCE } from './scheduler';
@@ -655,6 +656,8 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   // SPEC-KEY-SESSION: the approach licks after the harmonised scale's arpeggios; the key's extra exercises alongside.
   ...K_KEYLICK_DIFF,
   ...K_KEYX_DIFF,
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping ~900–1420, the montuno ~980–1480 (open from the start, no gate).
+  ...LATIN_LEVEL_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
   // HARMONY-REHARM (colorDrills.ts): one note many chords, mediants, organ, k-reharm 11–22 and b-counter, ~1050–1800.
@@ -755,6 +758,9 @@ GUITAR_RANK['g-ctone'] = 6;
 GUITAR_RANK['g-color'] = 6;
 // AUDIT-7 #2: the jazz entry over the blues, with the jazz family (each level has its own rating, audit7Placement.ts).
 GUITAR_RANK['g-jblues'] = 4;
+// SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa batida and the guajeo with the rhythm guitar.
+GUITAR_RANK['g-brazil'] = 2;
+GUITAR_RANK['g-guajeo'] = 2;
 // STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
 Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
 /**

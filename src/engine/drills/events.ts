@@ -212,6 +212,8 @@ function secondTag(drill: Drill): Tags[number] | null {
   // AUDIT-7 #10, #11, #15: pop accompaniment and the bass feels / riffs rate progressions (playing a chart); the
   // classical pieces rate reading; pedalling is the instrument itself (its timing share below).
   if (f === 'k-pop' || f === 'b-feel') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: Brazilian and Afro-Cuban comping is syncopated time over the surdo / the clave.
+  if (f === 'k-brazil' || f === 'k-montuno' || f === 'g-brazil' || f === 'g-guajeo') return { skill: 'timing', sub: 'timing/subdivide', w: 0.25 };
   if (f === 'k-classic') return { skill: 'sight', sub: 'sight/read', w: 0.2 };
   if (f === 'b-riff' || f === 'k-pedal') return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };

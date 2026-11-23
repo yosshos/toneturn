@@ -59,6 +59,12 @@ export type FamilyId =
   | 'k-classic'
   // AUDIT-7 #2: the guitarist's jazz entry over the blues
   | 'g-jblues'
+  // SPEC-JAZZ-NEIGHBOURS §2, §3 (latinStyles.ts): bossa and samba comping, the montuno (piano); the batida and samba,
+  // the guajeo (guitar).
+  | 'k-brazil'
+  | 'k-montuno'
+  | 'g-brazil'
+  | 'g-guajeo'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
@@ -422,7 +428,7 @@ export interface Drill {
    * The harmony band under the take (bassBand.ts): the band engine's comping over `chart` in `style`, on the take's
    * clock. Like the drums it plays only with headphones / line-in / MIDI (else the click); it never changes the measure.
    */
-  band?: { style: import('../band').BandStyle; /** Drums course: a bass line under the comping too (roots on the groove's kick, a walking line in swing). */ bass?: boolean; /** Beat ranges where the band lays out (a drum solo while trading 4s). */ rests?: [number, number][]; /** Road map: from bar `bar` (the band's bars) on, the band plays `style` ('tacet' = lays out, e.g. a drum solo; 'stop' = stop-time: one short hit on each 1). */ sections?: { bar: number; style: import('../band').BandStyle | 'tacet' | 'stop' }[] };
+  band?: { style: import('../band').BandStyle; /** Drums course: a bass line under the comping too (roots on the groove's kick, a walking line in swing; a tumbao under a montuno). */ bass?: boolean; /** false: the band's piano lays out (the player comps: a montuno, a batida); its bass and the drums still play. */ comp?: false; /** Beat ranges where the band lays out (a drum solo while trading 4s). */ rests?: [number, number][]; /** Road map: from bar `bar` (the band's bars) on, the band plays `style` ('tacet' = lays out, e.g. a drum solo; 'stop' = stop-time: one short hit on each 1). */ sections?: { bar: number; style: import('../band').BandStyle | 'tacet' | 'stop' }[] };
   /** Quick Study Piece (RSL): seconds to study the score before Play opens (the player may start sooner). */
   prep?: number;
   /** Written transcription after the take (ear L7): the line's sounding pitches, entered on the neck and graded note for note. */

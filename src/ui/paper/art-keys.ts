@@ -260,6 +260,10 @@ export const ART_KEYS: Record<string, Art> = {
   /** On the bandstand (keys): the "Gig" mark over a strip of keys. */
   /** The cadence chart library (keys): the "V→I" mark. */
   kcadlib: art('lilac', 'purple', markParts('V→I')),
+  /** SPEC-JAZZ-NEIGHBOURS §2: bossa and samba comping — "Bossa" over the surdo's two bass notes. */
+  kbrazil: art('teal', 'purple', markParts('Bossa', det(H(30, 44, 1.8, 'accent'), H(38, 44, 1.8, 'accent')))),
+  /** SPEC-JAZZ-NEIGHBOURS §3: the montuno — "3-2", the clave's two sides, with its five strokes. */
+  kmontuno: art('lilac', 'tan', markParts('3-2', det(R(14, 42.5, 2.4, 4.5, 1.2, 'mark'), R(19, 42.5, 2.4, 4.5, 1.2, 'mark'), R(24, 42.5, 2.4, 4.5, 1.2, 'mark'), R(32, 42.5, 3, 4.5, 1.2, 'accent'), R(38, 42.5, 3, 4.5, 1.2, 'accent')))),
   kgig: art('lilac', 'purple', markParts('Gig', [R(7, 10.4, 18, 4.2, 1.2, 'body'), ...det(L(11.5, 10.4, 11.5, 14.6, 'line', 0.8), L(16, 10.4, 16, 14.6, 'line', 0.8), L(20.5, 10.4, 20.5, 14.6, 'line', 0.8))])),
   /** Theory you play: two triads, a whole step apart (a triad pair). */
   tpair: art(

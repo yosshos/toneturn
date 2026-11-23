@@ -77,6 +77,9 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'k-impro': { scope: 'apply', role: 'apply' },
   'k-read': { scope: 'apply', role: 'apply' },
   'k-pop': { role: 'comping' },
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping and the montuno.
+  'k-brazil': { role: 'comping' },
+  'k-montuno': { role: 'comping' },
   'k-pedal': { role: 'control' },
   'k-classic': { scope: 'apply', role: 'apply' },
   'k-gig': { scope: 'apply', role: 'apply' },
@@ -99,6 +102,8 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'g-arps': { role: 'arpeggio' },
   'g-chords': { role: 'voicing' },
   'g-rhythm': { role: 'comping' },
+  'g-brazil': { role: 'comping' },
+  'g-guajeo': { role: 'comping' },
   'g-lead': { scope: 'neutral', role: 'control' },
   'g-fingerstyle': { scope: 'neutral', role: 'pattern' },
   'g-flamenco': { scope: 'neutral', role: 'pattern' },

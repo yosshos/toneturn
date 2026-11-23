@@ -32,7 +32,9 @@ describe('harmony band under the take', () => {
     expect(bandStyleOf('funk-1')).toBe('funk');
     expect(bandStyleOf('rnb')).toBe('funk');
     expect(bandStyleOf('reggae')).toBe('reggae');
-    expect(bandStyleOf('samba')).toBe('latin');
+    // SPEC-JAZZ-NEIGHBOURS §7.2: the Latin grooves call for their own styles (tests/latinStyles.test.ts)
+    expect(bandStyleOf('samba')).toBe('samba');
+    expect(bandStyleOf('clave-32')).toBe('latin');
     expect(bandStyleOf('shuffle')).toBe('shuffle');
     expect(bandStyleOf('maqsum')).toBe('hold');
   });
@@ -46,7 +48,7 @@ describe('harmony band under the take', () => {
   it('close voicings hold the chord tones in the middle register; groove comping leads voices by step', () => {
     const p = parseChart('C | Am | F | G7');
     for (const c of p.chords) for (const v of closeVoicings(c)) for (const m of v) expect([...c.iv.map((x) => (c.root + x) % 12)]).toContain(m % 12);
-    for (const style of ['pop', 'rock', 'funk', 'reggae', 'latin', 'shuffle', 'hold'] as const) {
+    for (const style of ['pop', 'rock', 'funk', 'reggae', 'shuffle', 'hold'] as const) {
       const hits = bandComping(p, 4, 16, style, 7);
       expect(hits.length, style).toBeGreaterThanOrEqual(4);
       for (const h of hits) {
