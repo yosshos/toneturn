@@ -28,13 +28,16 @@ const fam = (id: string) => ALL.find((f) => f.id === id)!;
 const lvDrills = (id: string) => levelDrills(techLevel(id)!, 'fifths-up');
 const pc = (k: number) => ((k % 12) + 12) % 12;
 const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+const r3 = (x: number) => Math.round(x * 1000) / 1000;
+/** Beats in one loop of each montuno progression (latinStyles.ts MONTUNO): 2 bars, the ii–V–I and songo 4. */
+const MONTUNO_CYCLE = [8, 8, 8, 8, 8, 16, 16];
 /** Distinct onsets of a hand inside bar `bar` (beats from the bar's start). */
 const onsets = (d: Drill, bar: number, hand?: 'R' | 'L', meter = d.meter): number[] =>
   [...new Set(d.notes.filter((n) => (!hand || n.hand === hand) && n.beat >= bar * meter - 1e-6 && n.beat < (bar + 1) * meter - 1e-6).map((n) => +(n.beat - bar * meter).toFixed(4)))].sort((a, b) => a - b);
 
 describe('the families', () => {
   it('four families, every level tagged with its style, all 12 keys, none jazz-gated', { timeout: 120_000 }, () => {
-    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [4, 'afrocuban'] /* 8 of 12 hidden: montuno-lines (12 = ponchando over ii–V–I) */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
+    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [12, 'afrocuban'] /* 12 = ponchando over ii–V–I */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
     for (const f of FAMS) {
       const F = fam(f);
       expect(F.levels.length, f).toBe(want[f][0]);
@@ -82,7 +85,7 @@ describe('the families', () => {
       for (const lv of fam(f).levels) expect(stepCatalogue().some((s) => s.id === `tech:${lv.id}`), lv.id).toBe(true);
     }
     const levels = [...strandsFor('piano', 'both'), ...strandsFor('piano', 'classical'), ...strandsFor('guitar', 'both')].flatMap((s) => s.rungs.map((r) => r.level));
-    for (const id of ['k-brazil-3', 'k-montuno-2', 'g-brazil-5', 'g-guajeo-4']) expect(levels, id).toContain(id);
+    for (const id of ['k-brazil-3', 'k-montuno-6', 'g-brazil-5', 'g-guajeo-4']) expect(levels, id).toContain(id);
   });
 });
 
@@ -159,8 +162,32 @@ describe('the montuno (STYLE-AFROCUBAN §2.1): the three-side bar on the offbeat
     expect(lh.length).toBe(1);
     expect(pc(lh[0].pitch)).toBe(7);
   });
+  it('a looped ostinato (THEORY-QUESTIONS 13): the cycle repeats note for note, outer / inner alternate on the grid', () => {
+    // I–IV–V–IV in C: the octave line G–A–B–A, inner C–E, C–F | D–G, C–F
+    const d = generate({ family: 'k-montuno', kind: 'mt-broken', key: 0, hands: 'R', option: 2 });
+    const top = (b: number) => Math.max(...d.notes.filter((n) => near(n.beat, b)).map((n) => n.pitch));
+    expect([0, 2, 4.5, 6.5].map((b) => pc(top(b)))).toEqual([7, 9, 11, 9]);
+    for (const kind of ['mt-broken', 'mt-hands', 'mt-ant', 'mt-band']) {
+      for (const option of [0, 2, 3, 4, 5, 12, 13, 14, 15]) {
+        for (const key of [0, 1, 6, 10]) {
+          const x = generate({ family: 'k-montuno', kind, key, hands: 'RL', option } as never) as Drill;
+          const cyc = MONTUNO_CYCLE[option % 10];
+          const sig = (n: { beat: number; pitch: number; hand?: string }) => `${n.hand}:${r3(n.beat % cyc)}:${n.pitch}`;
+          const body = x.notes.filter((n) => n.beat < 32);
+          const first = new Set(body.filter((n) => n.beat < cyc).map(sig));
+          expect(body.every((n) => first.has(sig(n))), `${kind} ${option} ${key}`).toBe(true);
+          // the right hand: an octave on attacks 1 and 3 of every bar, inner tones on 2 and 4
+          const att = [...new Set(body.filter((n) => n.hand === 'R').map((n) => n.beat))].sort((a, b) => a - b);
+          att.forEach((b, i) => {
+            const p = body.filter((n) => n.hand === 'R' && near(n.beat, b)).map((n) => n.pitch).sort((a, c) => a - c);
+            expect(p[p.length - 1] - p[0] === 12, `${kind} ${option} ${key} @${b}`).toBe(i % 2 === 0);
+          });
+        }
+      }
+    }
+  });
   it('with the band: the clave groove matches the direction, the band\'s piano lays out, a tumbao plays', () => {
-    // k-montuno 11 is hidden until the montuno lines are confirmed (verifiedContent 'montuno-lines'); the band wiring is tested on the drills directly
+    // the band wiring on the drills directly (k-montuno 11, and more options and keys)
     for (const d of [2, 15, 3].flatMap((option) => [0, 7].map((key) => generate({ family: 'k-montuno', kind: 'mt-band', key, hands: 'RL', option } as never) as Drill))) {
       const dir = Math.floor(d.spec.option! / 10) % 2 ? '32' : '23';
       expect(claveOfGroove(d.drums!.groove)).toBe(dir);
@@ -212,6 +239,21 @@ describe('guitar: the batida and the guajeo', () => {
     expect(onsets(d, 1)).toEqual([0.5, 1.5, 2.5, 3.5]);
     expect(d.notes.filter((n) => n.beat < 32).every((n) => [1, 2, 3].includes(n.string!))).toBe(true);
     expect(new Set(d.notes.filter((n) => n.beat < 32).map((n) => pc(n.pitch)))).toEqual(new Set([0, 4, 7]));
+  });
+  it('the guajeo is a looped ostinato of arpeggiated chord tones (THEORY-QUESTIONS 13)', () => {
+    for (const kind of ['gg-one', 'gg-prog', 'gg-ant', 'gg-band']) {
+      for (const option of [0, 1, 2, 3, 4, 5, 12, 13, 15]) {
+        for (const key of [0, 3, 7, 11]) {
+          const d = generate({ family: 'g-guajeo', kind, key, hands: 'R', option, instrument: 'guitar' } as never) as Drill;
+          const cyc = MONTUNO_CYCLE[option % 10];
+          const sig = (n: { beat: number; string?: number; pitch: number }) => `${r3(n.beat % cyc)}:${n.string}:${n.pitch}`;
+          const body = d.notes.filter((n) => n.beat < 32);
+          const first = new Set(body.filter((n) => n.beat < cyc).map(sig));
+          expect(body.every((n) => first.has(sig(n))), `${kind} ${option} ${key}`).toBe(true);
+          expect(body.every((n, i) => i === 0 || !near(n.beat, body[i - 1].beat)), 'single notes').toBe(true);
+        }
+      }
+    }
   });
 });
 

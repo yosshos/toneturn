@@ -216,7 +216,7 @@ describe('the core ii–V–I unit includes its neighbour-style moment (§9)', (
     expect(ms.every((m) => m.bonus)).toBe(true);
     expect(ms[1].ladder?.ref).toBe('k-montuno-12');
     expect(verifiedLevel('k-montuno-12')).toBe(true);
-    expect(verifiedLevel('k-montuno-9')).toBe(false);
+    expect(verifiedLevel('k-montuno-9')).toBe(true); // the line levels, open since 2026-11-23 (THEORY-QUESTIONS 13)
     for (const m of NEIGHBOUR_MOMENTS.flatMap((x) => x.moments)) expect(byId.has(m.level), m.level).toBe(true);
   });
   it('the ponchando ii–V–I is block chords only', () => {

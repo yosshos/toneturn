@@ -213,11 +213,8 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
     hides: ['level:b-latin-4', 'level:b-latin-5', 'level:b-latin-6', 'level:b-latin-7', 'item:brazil:0'],
     unsourced: true,
   },
-  {
-    id: 'montuno-lines',
-    why: 'Montuno line pitches (k-montuno 3–9, 11): the rhythm is the documented Mauleón figure (STYLE-AFROCUBAN §2), but the notes come from a voice-leading rule (start on the 5th, nearest chord tone), not from a source; the research marks its example lines [?]. Ponchando (1–2) and the songo right hand (10) stay. Owner question 2026-11-23 (THEORY-QUESTIONS).',
-    hides: ['level:k-montuno-3', 'level:k-montuno-4', 'level:k-montuno-5', 'level:k-montuno-6', 'level:k-montuno-7', 'level:k-montuno-8', 'level:k-montuno-9', 'level:k-montuno-11'],
-  },
+  // 'montuno-lines' (k-montuno 3–9, 11) was closed 2026-11-23: checked against published pedagogy and the generator
+  // made a looped ostinato (THEORY-QUESTIONS 13).
 ];
 
 /**

@@ -189,8 +189,8 @@ export function unitEndSteps(n: number, unitDifficulty: number, open: PathStep[]
  * §9 (owner 2026-11-22): "the core units of the path include a moment from a neighbour style — for example, the ii–V–I
  * unit has a version over bossa and a version over a montuno, so the jazz core itself shows the styles." A unit that
  * holds a core ii–V–I level gets its neighbour-style versions as optional steps (never blocking the unit): the same
- * ii–V–I comped in bossa and in montuno ponchando (block chords only — the montuno line levels stay hidden until their
- * notes are verified). Each moment is the styled technique level itself, under its own id, so it counts for that level.
+ * ii–V–I comped in bossa and in montuno ponchando (block chords: the first montuno rung, before the line levels).
+ * Each moment is the styled technique level itself, under its own id, so it counts for that level.
  */
 export const NEIGHBOUR_MOMENTS: { core: string; moments: { id: string; level: string; title: { en: string; he: string } }[] }[] = [
   {
