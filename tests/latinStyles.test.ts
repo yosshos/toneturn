@@ -34,7 +34,7 @@ const onsets = (d: Drill, bar: number, hand?: 'R' | 'L', meter = d.meter): numbe
 
 describe('the families', () => {
   it('four families, every level tagged with its style, all 12 keys, none jazz-gated', { timeout: 120_000 }, () => {
-    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [11, 'afrocuban'], 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
+    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [3, 'afrocuban'] /* 8 of 11 hidden: montuno-lines */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
     for (const f of FAMS) {
       const F = fam(f);
       expect(F.levels.length, f).toBe(want[f][0]);
@@ -82,7 +82,7 @@ describe('the families', () => {
       for (const lv of fam(f).levels) expect(stepCatalogue().some((s) => s.id === `tech:${lv.id}`), lv.id).toBe(true);
     }
     const levels = [...strandsFor('piano', 'both'), ...strandsFor('piano', 'classical'), ...strandsFor('guitar', 'both')].flatMap((s) => s.rungs.map((r) => r.level));
-    for (const id of ['k-brazil-3', 'k-montuno-6', 'g-brazil-5', 'g-guajeo-4']) expect(levels, id).toContain(id);
+    for (const id of ['k-brazil-3', 'k-montuno-2', 'g-brazil-5', 'g-guajeo-4']) expect(levels, id).toContain(id);
   });
 });
 
@@ -160,7 +160,8 @@ describe('the montuno (STYLE-AFROCUBAN §2.1): the three-side bar on the offbeat
     expect(pc(lh[0].pitch)).toBe(7);
   });
   it('with the band: the clave groove matches the direction, the band\'s piano lays out, a tumbao plays', () => {
-    for (const d of lvDrills('k-montuno-11').slice(0, 6)) {
+    // k-montuno 11 is hidden until the montuno lines are confirmed (verifiedContent 'montuno-lines'); the band wiring is tested on the drills directly
+    for (const d of [2, 15, 3].flatMap((option) => [0, 7].map((key) => generate({ family: 'k-montuno', kind: 'mt-band', key, hands: 'RL', option } as never) as Drill))) {
       const dir = Math.floor(d.spec.option! / 10) % 2 ? '32' : '23';
       expect(claveOfGroove(d.drums!.groove)).toBe(dir);
       // the offbeat bar of the montuno is the bar where the clave plays three strokes
