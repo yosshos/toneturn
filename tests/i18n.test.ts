@@ -56,3 +56,15 @@ describe('locales', () => {
     expect(localeFromBrowser(['ru'])).toBe('en');
   });
 });
+
+describe('patterns never tear a sentence', () => {
+  afterEach(() => setCatalog(null, null));
+  it('an open pattern with one word, a lone function word, a fill-in that swallowed a sentence: all left as they are', () => {
+    setCatalog('es', { '{0} in {1}': '{0} en {1}', in: 'en', 'Level {0}': 'Nivel {0}', '{0} bars': '{0} compases', 'Open {0}': 'Abrir {0}' });
+    expect(translate('Hear what is going on in the music: chords, keys and the moves of jazz harmony.')).toBe('Hear what is going on in the music: chords, keys and the moves of jazz harmony.');
+    expect(translate('in')).toBe('in');
+    expect(translate('Level 4')).toBe('Nivel 4');
+    expect(translate('8 bars')).toBe('8 compases');
+    expect(translate('Open the long list of every chord you have played this week')).toBe('Open the long list of every chord you have played this week');
+  });
+});

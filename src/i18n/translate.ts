@@ -55,6 +55,9 @@ export function setCatalog(locale: LocaleCode | null, cat: Catalog | null): void
       } catch {
         continue;
       }
+      // a pattern open at both ends needs two words of its own ("{0} in {1}" would match any sentence with "in")
+      const fixed = parts.filter((x) => !isPh(x)).join(' ').match(/[A-Za-z]{2,}/g) ?? [];
+      if (fixed.length < 2 && parts[0] === '' && parts[parts.length - 1] === '') continue;
       const head = parts[0];
       const pat: Pat = { re, out: v, head, names };
       if (head.length >= HEAD) {
@@ -84,6 +87,10 @@ const WORDY = /[A-Za-z]{2}/;
 /** Chord symbols, note names, Roman numerals, keys and versions stay as they are. */
 const MUSIC = /^(?:(?:Do|Re|Mi|Fa|Sol|La|Si|Ti)[♯♭#b]?(?:\s+(?:Do|Re|Mi|Fa|Sol|La|Si|Ti)[♯♭#b]?)*|[A-G][#b♯♭]?(?:maj|min|m|dim|aug|sus|add|alt|ø|°|\+|-|Δ|\d|\(|\)|\/|[#b♯♭]|\s)*|[ivIV♭♯b#]+[°ø+]?\d*(?:\/[ivIV]+)?|v?\d+(?:\.\d+)*|[A-G][#b♯♭]?\s?(?:major|minor))$/;
 
+/** A lone function word is a piece of a sentence built in parts ("Hear what is going on" + "in" + "the music"):
+ *  translated alone it lands mid-English, so it stays as it is (the whole sentence wants one template instead). */
+const FRAGMENT = new Set(['in', 'on', 'of', 'at', 'to', 'by', 'for', 'and', 'or', 'the', 'a', 'an', 'with', 'from', 'as', 'is', 'are', 'it', 'than', 'then', 'into', 'over', 'under', 'per', 'via', 'vs', 'th', 'st', 'nd', 'rd']);
+
 function core(s: string): string {
   const hit = exact.get(s);
   if (hit !== undefined) return hit;
@@ -91,7 +98,8 @@ function core(s: string): string {
     if (!list) return null;
     for (const p of list) {
       const m = p.re.exec(s);
-      if (!m) continue;
+      // a fill-in is a number, a name or a short phrase; one that swallowed a sentence means the pattern is wrong here
+      if (!m || m.slice(1).some((x) => x.split(/\s+/).length > 6)) continue;
       const val = new Map<string, string>();
       p.names.forEach((n, i) => val.has(n) || val.set(n, m[i + 1]));
       // a fill-in goes back as it came (a number, a name), or translated when it is itself a known text; the
@@ -117,7 +125,7 @@ export function translate(s: string): string {
   if (c !== undefined) return c;
   const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(s)!;
   const body = m[2];
-  const out = !body || MUSIC.test(body) ? s : m[1] + core(body) + m[3];
+  const out = !body || MUSIC.test(body) || FRAGMENT.has(body) ? s : m[1] + core(body) + m[3];
   if (cache.size > 20000) cache.clear();
   cache.set(s, out);
   return out;

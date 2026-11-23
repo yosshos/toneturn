@@ -108,11 +108,15 @@ for (const f of files) {
 
 // the app's frame first (the shared string tables), then the screens, then the course content, file by file in the
 // order met: translating the first batches already gives a usable app, and texts of one screen travel together
+// Short texts (up to 5 words: labels, buttons, names of courses and areas) come right after the frame wherever they
+// live, since course data files hold many of the words every screen shows.
+const shortText = (s) => s.split(/\s+/).length <= 5;
 const prio = (f) => (f.startsWith('src/i18n/') ? 0 : f.startsWith('src/ui/') ? 1 : 2);
-const list = [...out.keys()].sort((x, y) => prio(out.get(x)) - prio(out.get(y)) || out.get(x).localeCompare(out.get(y)));
+const rank = (s) => (prio(out.get(s)) === 0 ? 0 : shortText(s) ? 1 : prio(out.get(s)) === 1 ? 2 : 3);
+const list = [...out.keys()].sort((x, y) => rank(x) - rank(y) || out.get(x).localeCompare(out.get(y)));
 writeFileSync(join(ROOT, 'i18n/source.json'), JSON.stringify(list, null, 0).replace(/","/g, '",\n"') + '\n');
-for (const [k, name] of [[0, 'frame'], [1, 'screens'], [2, 'content']]) {
-  const part = list.filter((s) => prio(out.get(s)) === k);
+for (const [k, name] of [[0, 'frame'], [1, 'short texts'], [2, 'screens'], [3, 'content']]) {
+  const part = list.filter((s) => rank(s) === k);
   console.log(`  ${name}: ${part.length} texts, ${part.reduce((a, s) => a + s.split(/\s+/).length, 0)} words`);
 }
 const words = list.reduce((a, s) => a + s.split(/\s+/).length, 0);
