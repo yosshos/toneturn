@@ -208,6 +208,12 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
     unsourced: true,
   },
   {
+    id: 'soul-boogaloo-grid',
+    why: 'The soul-jazz boogaloo (STYLE-SOUL §2.2, re-researched 2026-11-23): tempo, the almost-straight cymbal, the kick doubling the bass and the syncopated snare with ghosts are sourced; no readable source gives the kick and snare grid, the bass figure or the comping rhythm (notation images, paid lessons) — the groove, the drum level and the ear-game style wait for the owner.',
+    hides: ['groove:boogaloo', 'level:d-funk-10'],
+    unsourced: true,
+  },
+  {
     id: 'bass-latin-cells',
     why: 'b-latin cha-cha (4), songo (5), Mozambique (6), 6/8 (7) and the partido-alto cell (8, option 0): no source gives these bass lines (STYLE-AFROCUBAN F6, §4.2 [?]; STYLE-BRAZIL B2 gives only the partido-alto timeline). Tumbao 1–3, baião (8, option 1) and Latin jazz (9) are verified and stay.',
     hides: ['level:b-latin-4', 'level:b-latin-5', 'level:b-latin-6', 'level:b-latin-7', 'item:brazil:0'],

@@ -567,3 +567,10 @@ The app's d-latin level 1 (`BOSSA_K`, `CLAVE.bossa32/23`) matches this exactly [
 - **Still [?], held out:** *Corta-jaca* (undated print), *Tico-tico* (1930 per one bio), and **all Pixinguinha** (no publication date found).
 - **[?], still to check:** the exact two-bar batida (bar 2), the partido-alto grid (two secondary sources agree), the samba snare accents, the zabumba high strokes, and all tempo ranges. There are 11 check tasks (§9), mostly against Faria & Korman, Faria's guitar book and Da Fonseca & Weiner.
 - **App gaps:** piano has no Brazilian content; the guitar inventory under-reports (a bossa clave comp exists); the band's bossa should rotate the comp figures and anticipate changes; baião and samba-jazz need building on every instrument.
+
+## Style devices in the lick library (2026-11-23)
+
+| Device | Built | Tag and sources |
+|---|---|---|
+| Jobim's inner-voice chromatic line over III7–VI7 into II7: 13 → ♯5, 9 → ♭9, then the 5th of II (C♯ C B B♭ A in C) | `sty-br-inner` (licks.ts, the 'style' context, tagged `brazil`, straight 8ths, the band in bossa) | **[V]** Cosgrove, *Chromatic Devices in the Songs of Antônio Carlos Jobim* (Joshibi University bulletin 50: the \|iii13 iii7♯5 \| vi9 vi7(♭9)\| device, "something of a cliché of bossa nova harmony", 15 of 40 songs, e.g. *Wave*); the *Wave* chart (Guitar Composer's Toolbox, "Wave in B": D♯13 D♯7♭13 \| G♯9 G♯7♭9 \| C♯9) |
+| The minor line cliché 1–7–♭7–6 | left out as a bossa device | **[C]** a general jazz / pop cliché; no source ties it to bossa nova specifically |

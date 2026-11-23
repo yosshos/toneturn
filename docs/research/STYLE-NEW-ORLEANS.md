@@ -269,3 +269,11 @@ All **[C]**, from the sources above:
 - Antoon Aukes, *Second Line: 100 Years of New Orleans Drumming*
 - Berklee PULSE "Professor Longhair" lesson (the PDF did not extract)
 - *Catalog of Copyright Entries* 1923–1930 (archive.org): needed for *Muskrat Ramble* and the unchecked titles
+
+## Style devices in the lick library (2026-11-23)
+
+| Device | Built | Tag and sources |
+|---|---|---|
+| The chromatic line 3–♭3–2–1 (the top of the chromatic 6ths), moved with the chords (I7: E E♭ D C; IV7: A A♭ G F) | `sty-nola-line` (licks.ts, the 'style' context, tagged `neworleans`) | **[V]** Piano With Jonny, *New Orleans blues piano: the complete guide* ("3→♭3→2→1", "must move with the chord changes"); Paddy Milner, *Descending 3rds riff* (Music Gurus: descending 3rds / 6ths with a chromatic passing note) |
+| Trills and tremolos in the right hand | left out | **[V]** that they are central (Pianogroove / Jon Cleary; Piano With Jonny: tremolo by wrist rotation on long notes), **[?]** which notes: no source names them |
+| Professor Longhair's right-hand triplets | left out | **[V]** that they are characteristic (Wikipedia *Professor Longhair*), **[?]** no generic written description |

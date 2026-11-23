@@ -36,6 +36,26 @@ test('lick trainer: library, a lick with its 12-key grid, a measured run — eac
   await page.screenshot({ path: 'test-results/licks-run.png' });
 });
 
+test('lick trainer: the style devices tab (blues, gospel, New Orleans, bossa) — a device page and its run on one screen', async ({ page }) => {
+  await page.goto('/?sim=1&unlock=all#/licks');
+  await page.locator('[data-lick-tab="style"]').click();
+  for (const id of ['sty-bl-scale', 'sty-gos-scale', 'sty-gos-grace', 'sty-nola-line', 'sty-br-inner']) await expect(page.locator(`[data-lick-card="${id}"]`)).toBeVisible();
+  // the jazz licks are not in this tab
+  await expect(page.locator('[data-lick-card="maj-arp"]')).toHaveCount(0);
+  await noEmoji(page);
+  // the chips are the styles of the tab: one narrows the list to its devices
+  await page.locator('[data-lick-style-pick="brazil"]').click();
+  await expect(page.locator('[data-lick-card="sty-bl-scale"]')).toHaveCount(0);
+  await page.locator('[data-lick-card="sty-br-inner"]').click();
+  await expect(page.locator('[data-licks="lick"]')).toBeVisible();
+  await expect(page.locator('.lk-col')).toHaveCount(12);
+  await fits(page);
+  await noEmoji(page);
+  await page.locator('[data-lick-practice]').click();
+  await expect(page.locator('[data-lick-run="practice"]')).toBeVisible();
+  await fits(page);
+});
+
 test('lick trainer: review tab and my licks are empty for a new player; Practice shows the tiles in Jazz', async ({ page }) => {
   await page.goto('/?sim=1&unlock=all#/licks');
   await page.locator('[data-lick-tab="review"]').click();

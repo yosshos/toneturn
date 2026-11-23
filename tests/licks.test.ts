@@ -243,3 +243,56 @@ describe('use it: finding the lick in an improvisation', () => {
     expect(chordAt(l.chords, 99)).toBe(2);
   });
 });
+
+describe('the style devices (2026-11-23): generic vocabulary of the styles, tagged, found like any lick', () => {
+  const ids = ['sty-bl-scale', 'sty-gos-scale', 'sty-gos-grace', 'sty-nola-line', 'sty-br-inner'];
+  const sty = ids.map((id) => LICKS.find((l) => l.id === id)!);
+  it('each is in the style context, tagged with its style, valid over its chords', () => {
+    for (const l of sty) {
+      expect(l, 'missing').toBeTruthy();
+      expect(l.ctx).toBe('style');
+      expect(l.style).toBeTruthy();
+      expect(lickProblems(l), l.id).toEqual([]);
+    }
+    expect(Object.fromEntries(sty.map((l) => [l.id, l.style]))).toEqual({ 'sty-bl-scale': 'soul', 'sty-gos-scale': 'soul', 'sty-gos-grace': 'soul', 'sty-nola-line': 'neworleans', 'sty-br-inner': 'brazil' });
+    // every library lick outside the style context stays jazz (untagged)
+    expect(LICKS.filter((l) => l.ctx !== 'style').every((l) => !l.style)).toBe(true);
+  });
+  it('each is the device itself', () => {
+    const pcs = (id: string) => LICKS.find((l) => l.id === id)!.notes.map((n) => mod(n[0]));
+    // the hexatonic blues scale 1 b3 4 b5 5 b7 and nothing else
+    expect(new Set(pcs('sty-bl-scale'))).toEqual(new Set([0, 3, 5, 6, 7, 10]));
+    // the gospel (major blues) scale 1 2 b3 3 5 6
+    expect(new Set(pcs('sty-gos-scale'))).toEqual(new Set([0, 2, 3, 4, 7, 9]));
+    // 2-b3-3 into the 3rd of IV (G G# A) and of I (D Eb E), the grace notes a 16th each
+    const g = LICKS.find((l) => l.id === 'sty-gos-grace')!;
+    expect(g.notes.map((n) => n[0])).toEqual([7, 8, 9, 2, 3, 4]);
+    expect(g.notes.filter((_, i) => i % 3 < 2).every((n) => n[2] === 0.25)).toBe(true);
+    // 3 b3 2 1 on I7, then on IV7
+    expect(pcs('sty-nola-line')).toEqual([4, 3, 2, 0, 9, 8, 7, 5]);
+    // C# C B Bb A over E7 A7 D7: the 13th to the #5, the 9th to the b9, the 5th of II
+    const b = LICKS.find((l) => l.id === 'sty-br-inner')!;
+    expect(b.notes.map((n) => mod(n[0] - b.chords[chordAt(b.chords, n[1])][0]))).toEqual([9, 8, 2, 1, 7]);
+    expect(b.straight).toBe(true);
+  });
+  it('the drill, the band and the take work like every lick (piano, guitar, bass, voice)', () => {
+    for (const l of sty)
+      for (const inst of ['piano', 'guitar', 'bass', 'voice'] as const) {
+        const d = lickDrill(l, 5, inst, { band: true });
+        expect(d.notes.length, `${l.id} ${inst}`).toBe(l.notes.length);
+        expect(d.itemId).toBe(lickItemId(l, inst, 5));
+        expect(d.band?.style).toBe(l.style === 'brazil' ? 'bossa' : 'swing');
+        expect(parseChart(d.chart!.join(' | ')).errors, l.id).toEqual([]);
+      }
+  });
+  it('use it: each is found in an improvisation, transposed, over its own chords', () => {
+    for (const l of sty) {
+      const { spans } = useItChart(l, 0);
+      const len = Math.ceil(lickBeats(l) / 4) * 4;
+      const at = spans.find((s) => s.root === mod(l.chords[0][0] - 2) && s.at >= len - 1e-6)!.at;
+      const imp: ImpNote[] = lickPitches(l, 10).map((p, i) => ({ midi: p, beat: at + l.notes[i][1] }));
+      const hits = findLick(l, imp, spans);
+      expect(hits[0], l.id).toMatchObject({ kind: 'exact', overChord: true, transpose: 10 });
+    }
+  });
+});

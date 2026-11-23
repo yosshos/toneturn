@@ -3,7 +3,7 @@
 // Pure.
 
 import { parseChart, type ChartStyle } from './charts';
-import { lickChart, lickTempos, type Lick } from './licks';
+import { lickBandStyle, lickChart, lickTempos, type Lick } from './licks';
 import { spansOfChart } from './ruleCards';
 import { lickFits } from './vocab';
 import { STANDARD_CHANGES } from './standards';
@@ -18,7 +18,7 @@ export function lickImprovChart(l: Lick, key: number): { text: string; style: Ch
   const round = one.length % 2 ? [...one, '%'] : one;
   const reps = Math.max(2, Math.ceil(8 / Math.max(1, round.length)));
   const bars = Array.from({ length: reps }, () => round).flat();
-  return { text: bars.join(' | '), style: 'swing', bpm: Math.max(72, Math.min(160, lickTempos(l)[1])), bars: bars.length };
+  return { text: bars.join(' | '), style: lickBandStyle(l), bpm: Math.max(72, Math.min(160, lickTempos(l)[1])), bars: bars.length };
 }
 
 /** Standards whose changes carry the lick's progression: the bars where it fits (1-based) and the key it is in there. */

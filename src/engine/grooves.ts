@@ -104,6 +104,10 @@ export const GROOVES: Groove[] = shownOnly<Groove>([
   G('funk-2', 'Funk, open', 'פאנק פתוח', 'funk', 4, 4, 4, 100, 'x..x..x...x.....', '....x.......x...', 'x.x.x.x.x.x.x.x.'),
   G('soul', 'Soul', 'סול', 'funk', 4, 4, 3, 84, 'x.....x.x...', '...x.....x..', 'x.xx.xx.xx.x'),
   G('purdie', 'Half-time shuffle', 'שאפל חצי זמן', 'funk', 4, 4, 3, 86, 'x.....x.x...', '.o.oox.o..o.', 'x.xx.xx.xx.x'.replace(/o/g, 'x')),
+  // The soul-jazz boogaloo (1960s Blue Note, NOT the Latin bugalú): STYLE-SOUL §2.2. Verified only as principles — tempo
+  // ♩117–136, the cymbal almost straight, the kick doubling the bass, the snare carrying the syncopation with ghosts —
+  // the grid itself is the doc's candidate, hidden until checked (verifiedContent 'soul-boogaloo-grid').
+  G('boogaloo', 'Boogaloo (soul-jazz)', 'בוגלו (סול־ג׳אז)', 'funk', 4, 4, 4, 124, 'x..x..x...x.....', '..o.x..o.oo.x..o', 'x.x.x.x.x.x.x.x.'),
   // hip-hop / R&B
   G('boombap', 'Boom bap', 'בום באפ', 'hiphop', 4, 4, 4, 90, 'x......x..x.....', '....x.......x...', 'x.x.x.x.x.x.x.x.'),
   G('trap', 'Trap', 'טראפ', 'hiphop', 4, 4, 4, 70, 'x.........x.....', '........x.......', 'xxxxxxxxxxxx.xxx', undefined, { snareAs: 'clap' }),
