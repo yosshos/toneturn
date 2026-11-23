@@ -80,3 +80,28 @@
 /* SPEC-EAR-AND-READING §3.4: the lead sheet from memory — the bars and the now-cue only */
 .rs-sheet.hidden-sheet .rs-cell { background: var(--card); }
 .rs-sheet.hidden-sheet .rs-sym { color: var(--ink-dim); }
+
+/* Guitar and bass: the rotating scale on the neck in the current position (SPEC-RBI-ROTATION §4; RotationNeck.tsx).
+   Chord root gold, chord tones light with their degree, colour notes in the family colour, the rest of the scale small,
+   avoid notes dashed red; the announced next scale's new notes as hollow rings, the notes it drops faded. */
+.rs-neck { display: grid; gap: 2px; min-width: 0; }
+.rn-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.72rem; color: var(--ink-dim); min-width: 0; }
+.rn-pos { font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+.rn-legend { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; }
+.rn-key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-start: 6px; vertical-align: -1px; }
+.rn-key.rn-chord { background: #ffffff; border: 1.5px solid #10131c; }
+.rn-key.rn-colour { background: var(--fam); border: 1.5px solid #10131c; }
+.rn-key.rn-next { background: transparent; border: 2px dashed var(--fam); }
+.rs-neck .neck-wrap { overflow: hidden; }
+.rs-neck .neck { min-width: 0; width: 100%; max-height: 150px; }
+.rs-neck.rn-4 .neck { max-height: 118px; }
+.rs-neck .neck-dot circle { transform-box: fill-box; transform-origin: center; }
+/* :root:root, as the studio theme sets the neck dots (studio-elements.css): root teal, chord tones white */
+:root:root .rs-neck .neck-dot.rn-chord circle { fill: #ffffff; stroke: #10131c; stroke-width: 1.2; }
+:root:root .rs-neck .neck-dot.rn-root text,
+:root:root .rs-neck .neck-dot.rn-chord text { fill: #10131c; font-size: 10.5px; }
+:root:root .rs-neck .neck-dot.rn-colour circle { fill: var(--fam); stroke: #10131c; stroke-width: 2; transform: scale(0.8); }
+:root:root .rs-neck .neck-dot.rn-scale circle { fill: #b794ff; stroke: none; transform: scale(0.5); }
+:root:root .rs-neck .neck-dot.rn-avoid circle { stroke: #ff8a7e; stroke-width: 2.4; stroke-dasharray: 3 2; }
+:root:root .rs-neck .neck-dot.rn-leaving { opacity: 0.35; }
+:root:root .rs-neck .neck-dot.rn-next circle { fill: none; stroke: var(--fam); stroke-width: 2.6; stroke-dasharray: 4 3; transform: scale(0.8); }

@@ -63,6 +63,8 @@ export interface NeckDot {
   fret: number;
   label?: string;
   tone?: 'given' | 'mine' | 'ok' | 'wrong' | 'answer' | 'root';
+  /** Extra classes on the dot (the scale rotation's chord tone / colour / avoid / next marks). */
+  cls?: string;
 }
 
 /** A horizontal neck: string 1 (highest) on top, the nut on the left (right on a left-handed neck). */
@@ -145,7 +147,7 @@ export function Neck({ tuning, lo = 0, hi = 12, dots = [], strings, leftHanded, 
             }),
           )}
         {dots.map((d, i) => (
-          <g key={i} className={`neck-dot ${d.tone ?? 'given'}${hollowOpen && d.fret === 0 ? ' open-str' : ''}`} pointerEvents="none" data-open-string={hollowOpen && d.fret === 0 ? d.str : undefined}>
+          <g key={i} className={`neck-dot ${d.tone ?? 'given'}${d.cls ? ` ${d.cls}` : ''}${hollowOpen && d.fret === 0 ? ' open-str' : ''}`} pointerEvents="none" data-open-string={hollowOpen && d.fret === 0 ? d.str : undefined}>
             <circle cx={X(x(d.fret))} cy={y(d.str)} r={hollowOpen && d.fret === 0 ? 7.5 : 10} />
             {d.label && (
               <text x={X(x(d.fret))} y={y(d.str) + 4}>
