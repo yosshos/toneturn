@@ -580,7 +580,16 @@ function ladderRungsOf(group: 'major' | 'minor', inst: LadderInst): LadderRung[]
       { fam: 'advanced', id: 'advanced-1', min: 5, block: 'D' as const },
       { fam: 'advanced', id: 'advanced-4', min: 6, pick: (sp: LevelDef['specs'][number]) => (sp as { option?: number }).option === 0, block: 'D' as const },
     ]),
-    ...(minor ? [{ fam: 'advanced', id: 'advanced-9', min: 5, block: 'D' as const }] : []),
+    // D2 in a minor row (2026-11-23): the harmonic-minor forms of the same four (k-indep 9–12 mirror 1, 3, 6, 7)
+    ...(minor
+      ? [
+          { fam: 'k-indep', id: 'k-indep-9', min: 1, block: 'D' as const },
+          { fam: 'k-indep', id: 'k-indep-10', min: 2, block: 'D' as const },
+          { fam: 'k-indep', id: 'k-indep-11', min: 3, block: 'D' as const },
+          { fam: 'k-indep', id: 'k-indep-12', min: 3, block: 'D' as const },
+          { fam: 'advanced', id: 'advanced-9', min: 5, block: 'D' as const },
+        ]
+      : []),
     { fam: 'cadences', id: minor ? 'cadences-3' : 'cadences-1', min: 0, max: 1, pick: minor ? isMinor : undefined, block: 'E' as const },
     { fam: 'cadences', id: minor ? 'cadences-7' : 'cadences-2', min: 2, max: 3, pick: minor ? isMinor : undefined, block: 'E' as const },
     { fam: 'k-cadlib', id: 'k-cadlib-6', min: 4, pick: (sp) => /cad:(m-)?ii-v-i~/.test((sp as { kind: string }).kind) && /m-ii/.test((sp as { kind: string }).kind) === minor, block: 'E' as const },

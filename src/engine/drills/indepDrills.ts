@@ -4,10 +4,17 @@
 // each hand, legato against staccato, one hand loud and one soft. All in the five-finger position of each of the 12
 // keys. Graded like every piano drill (notes, timing, evenness); held notes by their length, a touch per hand by key
 // release, the loud hand by velocity — those three need a MIDI keyboard. Pure and deterministic.
+//
+// Minor (2026-11-23, SPEC-KEY-SESSION §D2: a minor key of the week gets them too): `minor: true` plays the same
+// exercise in the harmonic minor of the key — the key ladder's minor rows (the k-sharm table's option 7). The
+// five-finger position is degrees 1–5, the same in natural and harmonic minor; the raised 7th only sounds in the V
+// chord of "one hand loud" (E–G♯–B in A minor). Notes are spelled one letter per degree on the minor key signature.
 
 import type { Drill, DrillGoal, DrillSpec, ExpNote, FamilyId } from './types';
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { itemIdOf } from './generate';
+import { H_SCALES, hSig, hTonic } from './harmLadder';
+import { spellScale } from '../keyTheory';
 
 type T2 = { en: string; he: string };
 const t = (en: string, he: string): T2 => ({ en, he });
@@ -15,9 +22,9 @@ const mod = (n: number, m: number): number => ((n % m) + m) % m;
 const r6 = (x: number): number => Math.round(x * 1e6) / 1e6;
 const NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 const SIG = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-const MAJ = [0, 2, 4, 5, 7, 9, 11];
+/** The key ladder's minor: harmonic minor (H_SCALES option 7; read at call time — generate ↔ harmLadder import cycle). */
+const harm = () => H_SCALES[7];
 const rhTonic = (key: number): number => (mod(key, 12) <= 6 ? 60 + mod(key, 12) : 48 + mod(key, 12));
-const deg = (tonic: number, k: number): number => tonic + 12 * Math.floor(k / 7) + MAJ[mod(k, 7)];
 /** Five-finger position: degree 0–4 → finger (RH 1–5, LH 5–1). */
 const fingerOf = (hand: 'R' | 'L', d: number): number => (hand === 'R' ? d + 1 : 5 - d);
 
@@ -31,6 +38,15 @@ class Notes {
 }
 function done(s: DrillSpec, n: Notes, title: T2, startBpm: number, goal: Partial<DrillGoal>): Drill {
   const notes = n.list.slice().sort((a, b) => a.beat - b.beat || a.pitch - b.pitch);
+  // minor: every note spelled on its degree's letter (G♯ in A minor, not A♭)
+  if (s.minor) {
+    const key = mod(s.key, 12);
+    const names = spellScale(hTonic(key, harm()), harm().ints);
+    for (const x of notes) {
+      const k = harm().ints.indexOf(mod(x.pitch - key, 12));
+      if (k >= 0) x.spell = names[k];
+    }
+  }
   return {
     spec: { ...s },
     itemId: itemIdOf(s),
@@ -38,14 +54,15 @@ function done(s: DrillSpec, n: Notes, title: T2, startBpm: number, goal: Partial
     notes,
     beats: r6(Math.max(...notes.map((x) => x.beat + x.dur))),
     meter: 4,
-    keySig: SIG[mod(s.key, 12)],
+    keySig: s.minor ? hSig(mod(s.key, 12), harm()) : SIG[mod(s.key, 12)],
     goal: { evenness: true, hands: false, ...goal },
     startBpm: s.tempo ?? startBpm,
   };
 }
 const tk = (en: string, he: string, s: DrillSpec): T2 => {
   const h = s.hands === 'R' ? t(' · RH', ' · יד ימין') : s.hands === 'L' ? t(' · LH', ' · יד שמאל') : t('', '');
-  return t(`${en} · ${NAMES[mod(s.key, 12)]}${h.en}`, `${he} · ${NAMES[mod(s.key, 12)]}${h.he}`);
+  const k = s.minor ? t(`${hTonic(mod(s.key, 12), harm())} harmonic minor`, `${hTonic(mod(s.key, 12), harm())} מינור הרמוני`) : t(NAMES[mod(s.key, 12)], NAMES[mod(s.key, 12)]);
+  return t(`${en} · ${k.en}${h.en}`, `${he} · ${k.he}${h.he}`);
 };
 
 /** Held notes (option): the held degrees and the moving figure (degrees, 8ths) — four bars, two figures a bar. */
@@ -60,6 +77,8 @@ const MELODY: [number, number][] = [[0, 1], [2, 1], [4, 1], [3, 1], [2, 2], [1, 
 
 export function genIndep(s: DrillSpec): Drill {
   const key = mod(s.key, 12);
+  const ints = s.minor ? harm().ints : H_SCALES[0].ints;
+  const deg = (tonic: number, k: number): number => tonic + 12 * Math.floor(k / 7) + ints[mod(k, 7)];
   const R = rhTonic(key);
   const Lt = R - 12;
   const n = new Notes();
@@ -195,7 +214,8 @@ export function genIndep(s: DrillSpec): Drill {
 }
 
 /** Path difficulty per level (path.ts KEYS_LEVEL_DIFF). */
-export const K_INDEP_DIFF: Record<string, number> = Object.fromEntries([1000, 1060, 1120, 1180, 1240, 1290, 1330, 1400].map((d, i) => [`k-indep-${i + 1}`, d]));
+// 9–12: the minor forms of 1, 3, 6, 7 (the key ladder's D2 in a minor row), each just above its major level.
+export const K_INDEP_DIFF: Record<string, number> = Object.fromEntries([1000, 1060, 1120, 1180, 1240, 1290, 1330, 1400, 1030, 1150, 1310, 1350].map((d, i) => [`k-indep-${i + 1}`, d]));
 
 export function indepFamily(): FamilyDef {
   const levels: LevelDef[] = [];
@@ -205,7 +225,8 @@ export function indepFamily(): FamilyDef {
     void diff;
     levels.push({ id, level, title: t(en, he), specs: specs.map((x) => ({ ...x, tempo: tempo[0] })), keys: 'major', tempo });
   };
-  const sp = (kind: string, hands: SpecTemplate['hands'], option = 0): SpecTemplate => ({ family: 'k-indep' as FamilyId, kind, hands, option });
+  const sp = (kind: string, hands: SpecTemplate['hands'], option = 0, minor = false): SpecTemplate => ({ family: 'k-indep' as FamilyId, kind, hands, option, ...(minor ? { minor: true } : {}) });
+  const mi = (kind: string, hands: SpecTemplate['hands'], option = 0): SpecTemplate => sp(kind, hands, option, true);
   LV('Held notes: hold two fingers, the others move', 'צלילים מוחזקים: שתי אצבעות מוחזקות, האחרות נעות', [sp('ind-hold', 'R', 0), sp('ind-hold', 'L', 0), sp('ind-hold', 'R', 1), sp('ind-hold', 'L', 1)], [50, 96], 1000);
   LV('Held notes: hold a chord while the weak fingers move', 'צלילים מוחזקים: אקורד מוחזק והאצבעות החלשות נעות', [sp('ind-hold', 'R', 2), sp('ind-hold', 'L', 2), sp('ind-hold', 'R', 3), sp('ind-hold', 'L', 3)], [50, 96], 1060);
   LV('Two voices in one hand', 'שני קולות ביד אחת', [sp('ind-voices', 'R', 0), sp('ind-voices', 'L', 0), sp('ind-voices', 'R', 1), sp('ind-voices', 'L', 1)], [50, 92], 1120);
@@ -214,5 +235,11 @@ export function indepFamily(): FamilyDef {
   LV('Legato in one hand, staccato in the other', 'לגאטו ביד אחת, סטקטו בשנייה', [sp('ind-touch', 'RL', 0), sp('ind-touch', 'RL', 1)], [56, 100], 1290);
   LV('One hand loud, the other soft', 'יד אחת חזקה, השנייה רכה', [sp('ind-dyn', 'RL', 0), sp('ind-dyn', 'RL', 1)], [56, 96], 1330);
   LV('All at once: a touch per hand, a held note over triplets', 'הכול יחד: מגע לכל יד, צליל מוחזק מעל טריולות', [sp('ind-all', 'RL', 0), sp('ind-all', 'RL', 1)], [50, 90], 1400);
+  // 2026-11-23 (SPEC-KEY-SESSION §D2 in a minor row): the harmonic-minor forms of 1, 3, 6 and 7 — appended, so the
+  // levels above keep their ids and their items.
+  LV('Harmonic minor: held notes, two fingers held', 'מינור הרמוני: צלילים מוחזקים, שתי אצבעות מוחזקות', [mi('ind-hold', 'R', 0), mi('ind-hold', 'L', 0), mi('ind-hold', 'R', 1), mi('ind-hold', 'L', 1)], [50, 96], 1030);
+  LV('Harmonic minor: two voices in one hand', 'מינור הרמוני: שני קולות ביד אחת', [mi('ind-voices', 'R', 0), mi('ind-voices', 'L', 0), mi('ind-voices', 'R', 1), mi('ind-voices', 'L', 1)], [50, 92], 1150);
+  LV('Harmonic minor: legato in one hand, staccato in the other', 'מינור הרמוני: לגאטו ביד אחת, סטקטו בשנייה', [mi('ind-touch', 'RL', 0), mi('ind-touch', 'RL', 1)], [56, 100], 1310);
+  LV('Harmonic minor: one hand loud, the other soft', 'מינור הרמוני: יד אחת חזקה, השנייה רכה', [mi('ind-dyn', 'RL', 0), mi('ind-dyn', 'RL', 1)], [56, 96], 1350);
   return { id: 'k-indep', title: t('Hand independence', 'עצמאות הידיים'), style: 'classical', levels };
 }
