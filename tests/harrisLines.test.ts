@@ -230,6 +230,15 @@ describe('3-to-♭9 over the family (D15)', () => {
       expect([0, 4, 7, 9]).toContain(mod12(line[line.length - 1].p));
     }
   });
+  it('two dominants a bar at the advanced level (owner 2026-11-23): two beats each, home on beat 8', () => {
+    for (const dir of ['up', 'down'] as const) {
+      const { line } = threeToFlatNine(60, dir, 2);
+      expect(line.length).toBe(17);
+      for (let k = 0; k < 4; k++) expect(line.filter((n) => n.beat >= k * 2 && n.beat < k * 2 + 2).length).toBe(4);
+      expect(line[line.length - 1].beat).toBe(8);
+      expect([0, 4, 7, 9]).toContain(mod12(line[line.length - 1].p));
+    }
+  });
 });
 
 describe('rhythm, arpeggios down, the ABCs, compose (D16, D19, D17)', () => {

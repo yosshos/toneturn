@@ -388,7 +388,8 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       // D15: 3-to-♭9 over the whole family (the same four notes: the dim on the 3rd), one dominant per bar (owner
       // 2026-11-23: confirmed; the family inside one bar is too dense), resolving into the tonic.
       const tonic = rootIn(k, lo + 1, hi, 18);
-      const { line, roots } = threeToFlatNine(tonic, op === 1 ? 'down' : 'up');
+      // ops 2–3 (advanced, owner 2026-11-23): two dominants a bar
+      const { line, roots } = threeToFlatNine(tonic, op % 2 === 1 ? 'down' : 'up', op >= 2 ? 2 : 1);
       return {
         line: fit(line, lo, hi),
         title: t(`3 to ♭9 over the family: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — the same diminished each time`, `3 עד ♭9 על המשפחה: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — אותו מוקטן בכל פעם`),
@@ -639,11 +640,13 @@ export const HL_ROWS: Row[] = [
   // added 2026-11-15 (at the end, so every level above keeps its id)
   { kind: 'hl-eight', ops: [2, 4, 6, 8, 10, 12], rating: 1330, en: 'The dominant rule from every degree: three, or two', he: 'חוק הדומיננט מכל דרגה: שלושה, או שניים' },
   { kind: 'hl-chrom2', ops: [6, 7, 8, 9, 10], rating: 1560, en: "Barry's chromatic scale in two voices: every interval", he: 'הסולם הכרומטי של בארי בשני קולות: כל המרווחים' },
+  // added 2026-11-23: the advanced form of 3 to ♭9, two dominants a bar (owner: one a bar first, two at the advanced levels)
+  { kind: 'hl-3b9', ops: [2, 3], rating: 1570, en: '3 to ♭9 over the family: two dominants a bar', he: '3 עד ♭9 על המשפחה: שני דומיננטים בתיבה' },
 ];
 /** Path difficulty of each k-harrisline level (path.ts KEYS_LEVEL_DIFF). */
 export const HL_LEVEL_DIFF: Record<string, number> = Object.fromEntries(HL_ROWS.map((r, i) => [`k-harrisline-${i + 1}`, r.rating]));
 
-/** The keys family: 34 levels, ~1100 (arpeggios chromatically down) to ~1750 (your line in a tune). */
+/** The keys family: 35 levels, ~1100 (arpeggios chromatically down) to ~1750 (your line in a tune). */
 export function harrisLineFamily(): FamilyDef {
   return {
     id: HL_FAMILY,

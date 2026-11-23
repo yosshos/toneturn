@@ -13,14 +13,14 @@ const TIMED = ['hl-upbeat', 'hl-ands', 'hl-compose', 'hl-feel6', 'hl-walkties'];
 describe('k-harrisline, g-harrisline, b-harrisline drills', () => {
   const keysFam = catalog().find((f) => f.id === 'k-harrisline')!;
   // keys 23 since 3 to ♭9 (k-harrisline-20) was switched on, owner 2026-11-23
-  const KEYS_SHOWN = 23, G_SHOWN = 8, B_SHOWN = 8;
+  const KEYS_SHOWN = 24, G_SHOWN = 8, B_SHOWN = 8;
   const gFam = guitarCatalog().find((f) => f.id === 'g-harrisline')!;
   const bFam = guitarCatalog().find((f) => f.id === 'b-harrisline')!;
-  it('counts: 34 keys levels (the first 32 rated ~1100–1750 in rating order, 2 appended 2026-11-15), 10 guitar, 10 bass', () => {
-    // 34 built; the rest hidden until verified (src/engine/verifiedContent.ts)
-    expect(harrisLineFamily().levels.length).toBe(34);
+  it('counts: 35 keys levels (the first 32 rated ~1100–1750 in rating order, 2 appended 2026-11-15, 1 on 2026-11-23), 10 guitar, 10 bass', () => {
+    // 35 built; the rest hidden until verified (src/engine/verifiedContent.ts)
+    expect(harrisLineFamily().levels.length).toBe(35);
     expect(keysFam.levels.length).toBe(KEYS_SHOWN);
-    expect(HL_ROWS.length).toBe(34);
+    expect(HL_ROWS.length).toBe(35);
     const r = HL_ROWS.slice(0, 32).map((x) => x.rating);
     expect(r).toEqual([...r].sort((a, b) => a - b));
     expect(r[0]).toBe(1100);
