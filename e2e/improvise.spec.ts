@@ -193,5 +193,34 @@ for (const [inst, lang, extra] of [
     await expect(neck).toHaveCount(0);
     await page.locator('[data-rs-keys]').click();
     await expect(page.locator(`[data-rs-neck="${inst}"]`)).toBeVisible();
+    // the layout (owner 2026-11-24): a narrow screen opens on the position; the choice offers the usual layouts
+    // (3 per string on guitar only), keeps one screen, and stays picked after a reload
+    await expect(neck).toHaveAttribute('data-rs-neck-shape', 'box');
+    const pick = neck.locator('[data-rs-neck-pick]');
+    await expect(pick).toHaveAttribute('aria-label', /.+/);
+    await expect(pick.locator('option')).toHaveCount(inst === 'bass' ? 2 : 3);
+    for (const shape of inst === 'bass' ? ['full'] : ['3nps', 'full']) {
+      await pick.selectOption(shape);
+      await expect(neck).toHaveAttribute('data-rs-neck-shape', shape);
+      expect(await neck.locator('.neck-dot').count()).toBeGreaterThanOrEqual(7);
+      await fits(page, true);
+      await page.screenshot({ path: `test-results/improv-neck-${inst}-${shape}-${lang}.png` });
+    }
+    await page.reload();
+    await expect(page.locator(`[data-rs-neck="${inst}"]`)).toHaveAttribute('data-rs-neck-shape', 'full', { timeout: 60_000 });
   });
 }
+
+test('a wide screen opens the neck on the whole neck, the position lit', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await seed(page, 'he', { rotationTier: 2, courses: ['ear', 'guitar'], activeCourse: 'guitar', instrument: 'guitar', tuning: 'standard' });
+  await page.goto('/?unlock=all&lang=he#/improv');
+  const neck = page.locator('[data-rs-neck="guitar"]');
+  await expect(neck).toBeVisible({ timeout: 60_000 });
+  await expect(neck).toHaveAttribute('data-rs-neck-shape', 'full');
+  expect(await neck.locator('.neck-dot.rn-out').count()).toBeGreaterThan(0);
+  expect(await neck.locator('.neck-dot:not(.rn-out)').count()).toBeGreaterThanOrEqual(7);
+  await fits(page, true);
+  await page.screenshot({ path: 'test-results/improv-neck-wide-he.png' });
+});

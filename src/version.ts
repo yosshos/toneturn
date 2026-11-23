@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.127.1',
+    date: '2026-11-24',
+    en: ['The neck view in the scale rotation offers three layouts: the hand position, three notes per string (guitar) and the whole neck with the position lit; a wide screen opens on the whole neck, a phone on the position, and your pick is kept'],
+    he: ['תצוגת הצוואר בסבב הסולמות מציעה שלוש פריסות: פוזיציה, שלושה צלילים למיתר (גיטרה) וכל הצוואר עם הפוזיציה מודגשת. מסך רחב נפתח על כל הצוואר, טלפון על הפוזיציה, והבחירה נשמרת'],
+  },
+  {
     version: '0.127.0',
     date: '2026-11-24',
     en: ['Cha-cha, mambo and bolero on piano: the cha-cha on the beats, the mambo fast in clave, the bolero bass on 1 and 3 with the chord broken above; the band plays each style', 'Guitar and bass see the scale rotation on the neck: one hand position, chord tones marked, the next scale shown before it arrives', 'Style devices in the lick library: blues and gospel scales, the gospel grace, the New Orleans line, the Jobim inner line', 'Two voices in one hand and the other independence drills in minor; 3 to flat 9 with two dominants a bar at an advanced level'],

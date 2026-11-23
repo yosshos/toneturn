@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { IMPROV_LEVELS, transposeChart } from '../src/engine/charts';
 import { noteAt, TUNINGS, tuningById } from '../src/engine/fretboard';
-import { BOX_FRETS, boxPositions, cellBox, cellChord, homeLo, maxFretOf, neckPath, neckView, nextLo } from '../src/engine/rotationNeck';
+import { BOX_FRETS, boxPositions, cellBox, cellChord, homeLo, maxFretOf, neckPath, neckShapesFor, neckView, nextLo, npsPositions } from '../src/engine/rotationNeck';
 import { buildRotationSheet, cellNotes, nextChange } from '../src/engine/rotationSheet';
 import { STANDARD_CHANGES } from '../src/engine/standards';
 import { rotationNeckTuning } from '../src/ui/ScaleRotation';
@@ -167,5 +167,46 @@ describe('who sees the neck', () => {
     expect(rotationNeckTuning({ activeCourse: 'ear', instrument: 'guitar' })?.instrument).toBe('guitar');
     expect(rotationNeckTuning({ activeCourse: 'keys' })).toBeNull();
     expect(rotationNeckTuning({ activeCourse: 'ear', instrument: 'voice' })).toBeNull();
+  });
+});
+
+describe('the other layouts: three notes per string and the whole neck (owner 2026-11-24)', () => {
+  it('3 per string: three notes on every string, in scale order, from the low string up (two for a pentatonic)', () => {
+    const g = tuningById('standard');
+    const maj = [0, 2, 4, 5, 7, 9, 11];
+    const ps = npsPositions(g, 7, maj);
+    expect(ps.length).toBe(18);
+    for (let s = 1; s <= 6; s++) expect(ps.filter((p) => p.str === s).length).toBe(3);
+    for (let i = 1; i < ps.length; i++) expect(ps[i].midi).toBeGreaterThan(ps[i - 1].midi);
+    expect(ps[0]).toMatchObject({ str: 6, fret: 7 }); // B, the first scale note in the position
+    const frets = ps.map((p) => p.fret);
+    expect(Math.max(...frets) - Math.min(...frets)).toBeLessThanOrEqual(6);
+    expect(npsPositions(g, 5, [0, 2, 4, 7, 9]).length).toBe(12);
+  });
+  it('every take in all 12 keys, every layout: the scale complete, frets real, the whole neck lights the position', () => {
+    for (const t of NECKS)
+      for (const shape of neckShapesFor(t))
+        for (let k = 0; k < 12; k++) {
+          const sheet = buildRotationSheet(transposeChart(level(5), k), { tier: 2, seed: 3 + k })!;
+          const path = neckPath(t, sheet, shape);
+          path.forEach((b, i) => {
+            expect(b.shape).toBe(shape);
+            const want = new Set(cellNotes(sheet.cells[i], sheet).pcs.map(mod));
+            expect(new Set(b.notes.map((n) => n.pc)), `${t.id} ${shape} key ${k}`).toEqual(want);
+            for (const n of b.notes) expect(n.fret, `${t.id} ${shape} key ${k}`).toBeGreaterThanOrEqual(0);
+            if (shape === 'full') {
+              expect(neckView(t, b)).toEqual([0, maxFretOf(t)]);
+              expect(b.notes.some((n) => !n.out)).toBe(true);
+              expect(b.notes.some((n) => n.out)).toBe(true);
+            } else {
+              const [lo, hi] = neckView(t, b);
+              for (const n of b.notes) expect(n.fret >= lo && n.fret <= hi, `${t.id} ${shape} fret ${n.fret} in ${lo}-${hi}`).toBe(true);
+            }
+          });
+        }
+  });
+  it('bass offers the position and the whole neck, not 3 per string', () => {
+    expect(neckShapesFor(tuningById('bass'))).toEqual(['box', 'full']);
+    expect(neckShapesFor(tuningById('standard'))).toEqual(['box', '3nps', 'full']);
   });
 });

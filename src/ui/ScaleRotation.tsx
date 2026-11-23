@@ -10,7 +10,7 @@ import type { ModeStats, PlayedNote } from '../engine/rotation';
 import type { NoteEvent } from '../engine/lesson';
 import { bassTuningOf, courseInstrumentOf, type Settings } from '../storage/progress';
 import { tuningById, type Tuning } from '../engine/fretboard';
-import { neckPath } from '../engine/rotationNeck';
+import { neckPath, neckShapesFor, type NeckShape } from '../engine/rotationNeck';
 import { RotationNeck } from './RotationNeck';
 import type { MyChart } from './Charts';
 import { midi } from '../speech/midi';
@@ -244,7 +244,20 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   const [chorus, setChorus] = useState(0);
   // guitar and bass: the scale on the neck in the current position, shown from the start (SPEC-RBI-ROTATION §4)
   const neckTuning = useMemo(() => rotationNeckTuning(settings), [settings]);
-  const path = useMemo(() => (neckTuning && sheet ? neckPath(neckTuning, sheet) : null), [neckTuning, sheet]);
+  // the layout: the player's pick (kept on this device), else by screen width (a wide screen shows the whole neck)
+  const wide = useWide();
+  const [picked, setPicked] = useState<NeckShape | null>(readNeckShape);
+  const shapes = neckTuning ? neckShapesFor(neckTuning) : [];
+  const shape: NeckShape = picked && shapes.includes(picked) ? picked : wide ? 'full' : 'box';
+  const pickShape = (s: NeckShape) => {
+    setPicked(s);
+    try {
+      localStorage.setItem(NECK_SHAPE_KEY, s);
+    } catch {
+      /* private mode: the pick lasts this visit */
+    }
+  };
+  const path = useMemo(() => (neckTuning && sheet ? neckPath(neckTuning, sheet, shape) : null), [neckTuning, sheet, shape]);
   const [showKeys, setShowKeys] = useState(midi.devices.length === 0 || !!neckTuning);
   // SPEC-EAR-AND-READING §3.4: the lead sheet off once the progression is known (memory); hidden while playing only
   const [memory, setMemory] = useState(false);
@@ -457,10 +470,33 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
         )}
       </div>
       {showKeys && neckTuning && box ? (
-        <RotationNeck tuning={neckTuning} leftHanded={settings.leftHanded} cur={box} next={nextBox} fam={shown.fam} nextFam={ch?.cell.fam} lang={lang} onTap={onScreenKey} />
+        <RotationNeck tuning={neckTuning} leftHanded={settings.leftHanded} cur={box} next={nextBox} fam={shown.fam} nextFam={ch?.cell.fam} lang={lang} onTap={onScreenKey} shapes={shapes} onShape={pickShape} />
       ) : (
         showKeys && <MarkedKeys onKey={onScreenKey} pcs={marks.pcs} colour={marks.colour} avoid={marks.avoid} fam={shown.fam} />
       )}
     </section>
   );
+}
+
+const NECK_SHAPE_KEY = 'tt-rotation-neck-shape';
+function readNeckShape(): NeckShape | null {
+  try {
+    const v = localStorage.getItem(NECK_SHAPE_KEY);
+    return v === 'box' || v === '3nps' || v === 'full' ? v : null;
+  } catch {
+    return null;
+  }
+}
+/** A screen wide enough for the whole neck (16 frets at a readable size). */
+function useWide(): boolean {
+  const q = '(min-width: 900px)';
+  const [wide, setWide] = useState(() => window.matchMedia?.(q).matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.(q);
+    if (!mq) return;
+    const on = () => setWide(mq.matches);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+  return wide;
 }
