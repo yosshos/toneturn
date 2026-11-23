@@ -79,8 +79,10 @@ test.describe('lesson', () => {
     await expect(page.locator('[data-find-level]')).toHaveCount(1);
     await page.locator('[data-find-level]').click();
     await expect(page.locator('.level-sheet [data-level-all]')).toBeVisible();
-    // Owner 2026-11-13: the ear course's own test — its four areas only (no voice, instrument or creative).
-    await expect(page.locator('.level-sheet [data-domain]')).toHaveCount(4);
+    // Owner 2026-11-13: the ear course's own test — no voice or instrument. Since 82c3ac48 the Ear test also covers
+    // transposing and expression (the creative area), so it is COURSE_AREAS.ear's four plus creative.
+    await expect(page.locator('.level-sheet [data-domain]')).toHaveCount(5);
+    await expect(page.locator('.level-sheet [data-domain="creative"]')).toHaveCount(1);
     await expect(page.locator('.level-sheet [data-domain="voice"], .level-sheet [data-domain="instrument"]')).toHaveCount(0);
     await expect(page.locator('.level-sheet [data-level-all]')).toContainText('The whole course');
   });
@@ -214,7 +216,7 @@ test.describe('more lessons', () => {
 
   test('Major or minor (simulator, hands-free)', async ({ page }) => {
     await page.goto('/?sim=1&unlock=all#/path');
-    await page.getByRole('button', { name: /3\. Major or minor/ }).click();
+    await page.getByRole('button', { name: /^\d+\. Major or minor/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await expect(page.locator('.intro-card')).toHaveCount(2);
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 140_000 });
@@ -223,7 +225,7 @@ test.describe('more lessons', () => {
 
   test('Sing home & five (simulator): live tuner and per-attempt pitch feedback', async ({ page }) => {
     await page.goto('/?sim=1&unlock=all#/path');
-    await page.getByRole('button', { name: /5\. Sing home & five/ }).click();
+    await page.getByRole('button', { name: /^\d+\. Sing home & five/ }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     await expect(page.locator('.tuner')).toBeVisible();

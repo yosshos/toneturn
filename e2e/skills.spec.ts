@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openGames } from './practice';
+import { coursePlacementSkills } from '../src/engine/courses';
 
 // The first lesson of the day shows the streak screen over the recap; dismiss it whenever it is in the way.
 test.beforeEach(async ({ page }) => {
@@ -34,7 +35,9 @@ test.describe('placement, Skill Map, review, weekly puzzle', () => {
       }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-start'], childList: true });
     });
     // The topic strip shows what is done, now and left.
-    await expect(page.locator('.topic-strip .ts')).toHaveCount(18); // 2026-11-13: the ear course's own areas (pitch, time, memory, reading) — voice, instrument and creative have their own tests
+    // The Ear course's own test measures everything the course covers (82c3ac48, owner 2026-11-19: + harmony, transposing,
+    // expression) and, the jazz pack being always open (style focus, no locks), the theory of improvising: one section each.
+    await expect(page.locator('.topic-strip .ts')).toHaveCount(coursePlacementSkills('ear', true)!.length);
     await expect(page.locator('.topic-strip .ts.done').first()).toBeVisible({ timeout: 120_000 });
     // The meter at the side follows the climb.
     await expect(page.locator('.placement-meter')).toBeVisible();

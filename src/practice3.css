@@ -32,10 +32,10 @@
 .pt-game-cats { display: flex; flex-wrap: wrap; gap: 6px; }
 .pt-game-cats .chip { display: inline-flex; align-items: center; gap: 6px; }
 
-/* The tools: a strip of small icons, no heading */
-:root[data-theme] .pt-strip .pt-tool-row { flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-.pt-strip .pt-tool-row::-webkit-scrollbar { display: none; }
-:root[data-theme] .pt-strip .pt-tool { flex: none; width: 64px; }
+/* The tools: a strip of small icons, no heading. One row where it fits; on a narrow phone it wraps into even rows
+   (never a hidden sideways scroller — the last tools would sit off screen with no sign they are there). */
+:root[data-theme] .pt-strip .pt-tool-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
+:root[data-theme] .pt-strip .pt-tool { width: 64px; justify-self: center; }
 :root[data-theme] .pt-strip .pt-tool small { overflow-wrap: normal; word-break: keep-all; }
 
 /* The one sparkline beside a place's title */

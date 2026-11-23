@@ -1963,6 +1963,12 @@
     min-block-size: 34px;
   }
 }
+/* A kit notice under "Play with" (MIDI blocked / no kit) adds a two-line row: the cover gives way so Play stays in view */
+@media (min-height: 761px) and (max-height: 860px) {
+  :root:root main[data-gframe].hw-setup:has(.field-hint.warn) .gs-hero {
+    block-size: clamp(64px, 13dvh, 112px);
+  }
+}
 @media (max-height: 740px) {
   /* the five option rows need the whole height here: the name and "How to play" stay, the picture goes */
   :root:root main[data-gframe].hw-setup .gs-hero {
