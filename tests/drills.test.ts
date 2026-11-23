@@ -211,7 +211,7 @@ describe('drills: generate', () => {
     // k-comp is thinned to 3 while its named rhythms are hidden until verified (src/engine/verifiedContent.ts).
     // AUDIT-7: pedal levels 2–4 (k-pedal 3, after control-10), pop accompaniment (k-pop 6) and the classical tier (one level a
     // verified public-domain piece, content/classicalPD.ts) are short ladders by design.
-    for (const fam of catalog().filter((f) => !['k-first', 'k-comp', 'k-pop', 'k-pedal', 'k-classic'].includes(f.id))) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
+    for (const fam of catalog().filter((f) => !['k-first', 'k-comp', 'k-pop', 'k-pedal', 'k-classic', 'k-montuno' /* 8 levels hidden until montuno-lines is confirmed */].includes(f.id))) expect(fam.levels.length, fam.id).toBeGreaterThanOrEqual(7);
   });
 
   it('coverage additions: exact shapes', () => {
