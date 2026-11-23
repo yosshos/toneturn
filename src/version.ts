@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.127.0',
+    date: '2026-11-24',
+    en: ['Cha-cha, mambo and bolero on piano: the cha-cha on the beats, the mambo fast in clave, the bolero bass on 1 and 3 with the chord broken above; the band plays each style', 'Guitar and bass see the scale rotation on the neck: one hand position, chord tones marked, the next scale shown before it arrives', 'Style devices in the lick library: blues and gospel scales, the gospel grace, the New Orleans line, the Jobim inner line', 'Two voices in one hand and the other independence drills in minor; 3 to flat 9 with two dominants a bar at an advanced level'],
+    he: ['צ׳ה־צ׳ה, מאמבו ובולרו בפסנתר: הצ׳ה־צ׳ה על הפעמות, המאמבו מהיר בקלאבה, הבולרו עם בס על 1 ו־3 ואקורד מפורק מעליו; הלהקה מנגנת כל סגנון', 'גיטרה ובס רואים את סבב הסולמות על הצוואר: עמדה אחת ליד, צלילי האקורד מסומנים, הסולם הבא מוצג לפני שהוא מגיע', 'מילים של סגנון בספריית הליקים: סולמות הבלוז והגוספל, הקישוט של הגוספל, הקו של ניו אורלינס, הקו הפנימי של ג׳ובים', 'שני קולות ביד אחת ותרגילי העצמאות האחרים במינור; 3 עד במול 9 עם שני דומיננטים בתיבה ברמה מתקדמת'],
+  },
+  {
     version: '0.126.0',
     date: '2026-11-23',
     en: ['Piano montunos and guitar guajeos now loop exactly as a two-bar figure, checked against published teaching; all montuno levels are open', 'The Barry Harris way: 3 to flat 9 on the V, and a new top level over a full standard with a new rule every four bars and the rare Fm6 or Bm6 over the V', 'Repertoire opens on a style that has pieces here; the Practice tools strip wraps on narrow phones; the kit setup page fits with a MIDI notice'],
