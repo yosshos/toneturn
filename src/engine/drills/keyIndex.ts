@@ -6,7 +6,8 @@
 import type { Drill, DrillSettings, ItemState } from './types';
 import type { FamilyDef, LevelDef } from './generate';
 import { itemTargetBpm, specDrills } from './plan';
-import { itemStatus } from './itemStatus';
+import { coolingDown, itemStatus } from './itemStatus';
+import { tpDec } from './tpairDrills';
 import { FACET_GROUPS, FAMILY_FACETS, keyFacet, type FacetGroup, type FacetRole } from './keyFacet';
 import { itemMastery, MIN_TAKES, STRONG_FROM, WEAK_BELOW, type KeyStatus } from '../analysis/keyMastery';
 import type { Lick } from '../licks';
@@ -354,6 +355,10 @@ function guitarRungs(minor: boolean): LadderRung[] {
     harm(5, 3, 'B'),
     harm(7, 4, 'B'),
     ...(minor ? [] : [harm(8, 5, 'B')]),
+    // SPEC-KEY-SESSION §1 B2, B4, B5 (2026-11-23): triad inversions on string sets, 1-2-3-5 cells, 9th arpeggios
+    harm(15, 3, 'B'),
+    harm(14, 4, 'B'),
+    harm(16, 5, 'B'),
     ...(minor
       ? [{ fam: 'g-picking', id: 'g-picking-6', min: 5, pick: isMinorSp, block: 'D' as const }]
       : [
@@ -370,8 +375,18 @@ function guitarRungs(minor: boolean): LadderRung[] {
     ...(minor ? [] : [{ fam: 'g-vl', id: 'g-vl-1', min: 3, block: 'E' as const }]),
     cad(4, 4),
     ...(minor ? [] : [cad(9, 6), { fam: 'g-harris', id: 'g-harris-1', min: 5, jazz: true, block: 'F' as const }, { fam: 'g-harris', id: 'g-harris-2', min: 5, jazz: true, block: 'F' as const }]),
+    // F2 triad pairs over the I (the ionian and lydian pairs on the key's root), F3 the bebop dominant on the key's V
+    ...(minor
+      ? []
+      : [
+          { fam: 'g-tpair', id: 'g-tpair-1', min: 5, jazz: true, pick: tpairOver(['ionian', 'lydian']), block: 'F' as const },
+          { fam: 'g-scales', id: 'g-scales-21', off: 7, min: 5, jazz: true, pick: optIs(24), block: 'F' as const, title: T('the bebop dominant on the V, in position', 'ביבופ דומיננטי על ה־V, במצב') },
+        ]),
   ];
 }
+
+/** Triad-pair specs (k-tpair / g-tpair / b-tpair options) whose pair is one of these, on the key's root (over the I). */
+const tpairOver = (ids: string[]) => (sp: LevelDef['specs'][number]): boolean => ids.includes(tpDec((sp as { option?: number }).option ?? 0).c.id);
 
 /**
  * The bass's ladder of one key (phase 7), from the bass catalogue: A the scale's forms (octaves and 10ths, the scale in
@@ -386,6 +401,8 @@ function bassRungs(minor: boolean): LadderRung[] {
     return [
       { fam: 'b-chord', id: 'b-chord-16', min: 2, pick: optIs(7), block: 'S' },
       { fam: 'b-chord', id: 'b-chord-4', min: 2, pick: isMinorSp, block: 'B' },
+      { fam: 'b-chord', id: 'b-chord-17', min: 3, pick: isMinorSp, block: 'B' },
+      { fam: 'b-chord', id: 'b-chord-18', min: 5, pick: isMinorSp, block: 'B' },
       cad(1, 4),
       cad(3, 5),
     ];
@@ -400,6 +417,9 @@ function bassRungs(minor: boolean): LadderRung[] {
     { fam: 'b-chord', id: 'b-chord-7', min: 3, block: 'B' },
     { fam: 'b-chord', id: 'b-chord-11', min: 4, block: 'B' },
     { fam: 'b-chord', id: 'b-chord-12', min: 5, block: 'B' },
+    // SPEC-KEY-SESSION §1 B4, B5 (2026-11-23): the 1-2-3-5 cells and the 9th arpeggios through the scale
+    { fam: 'b-chord', id: 'b-chord-17', min: 3, pick: (sp) => !isMinorSp(sp), block: 'B' },
+    { fam: 'b-chord', id: 'b-chord-18', min: 5, pick: (sp) => !isMinorSp(sp), block: 'B' },
     { fam: 'b-fret', id: 'b-fret-2', min: 0, block: 'D' },
     { fam: 'b-pluck', id: 'b-pluck-4', min: 1, block: 'D' },
     { fam: 'b-fret', id: 'b-fret-4', min: 2, block: 'D' },
@@ -412,6 +432,9 @@ function bassRungs(minor: boolean): LadderRung[] {
     cad(3, 5),
     { fam: 'b-barry', id: 'b-barry-1', min: 5, jazz: true, block: 'F' },
     { fam: 'b-barry', id: 'b-barry-3', min: 5, jazz: true, block: 'F' },
+    // F2 triad pairs over the I (the arpeggiated lydian / ionian pair lines on the key's root)
+    { fam: 'b-tpair', id: 'b-tpair-1', min: 5, jazz: true, pick: tpairOver(['ionian', 'lydian']), block: 'F' },
+    { fam: 'b-tpair', id: 'b-tpair-2', min: 6, jazz: true, pick: tpairOver(['ionian', 'lydian']), block: 'F' },
   ];
 }
 
@@ -512,6 +535,11 @@ export function ladderRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'
     { fam: 'k-sharm', id: sharm(11), min: 1, pick: opt(so), block: 'S' as const },
     { fam: 'k-sharm', id: sharm(13), min: 4, pick: opt(so), block: 'B' as const },
     { fam: 'k-sharm', id: sharm(15), min: 5, pick: opt(so), block: 'B' as const },
+    // SPEC-KEY-SESSION §1 B2 (T4+), B4 (T3+), B5 (T5+), 2026-11-23: triad inversions on every degree, the 1-2-3-5 cells,
+    // the 9th arpeggios (k-sharm 43–48: odd major, even harmonic minor)
+    { fam: 'k-sharm', id: sharm(45), min: 3, pick: opt(so), block: 'B' as const },
+    { fam: 'k-sharm', id: sharm(43), min: 4, pick: opt(so), block: 'B' as const },
+    { fam: 'k-sharm', id: sharm(47), min: 5, pick: opt(so), block: 'B' as const },
     // the owner's approach licks (k-keylick, SPEC-KEY-SESSION §C): lick 1, 2, 3 into the scale degrees, 3rds, triads and 7ths (each hand), then hands together
     ...([[1, 0], [2, 1], [3, 1], [4, 2], [5, 2], [6, 3], [7, 3], [8, 3], [9, 4], [10, 4], [11, 4], [12, 4], [13, 5], [14, 5], [15, 6]] as const).map(([n, min]) => ({ fam: 'k-keylick', id: `k-keylick-${n}`, min, pick: minor ? isMinor : notMinor, block: 'C' as const })),
     // more in the key (k-keyx): broken octaves, octave leaps, the canon, bass leaps, the scale over an ostinato
@@ -521,7 +549,11 @@ export function ladderRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'
     ...(minor ? [] : [
       { fam: 'fingers', id: 'fingers-15', min: 2, block: 'D' as const },
       { fam: 'fingers', id: 'fingers-16', min: 4, block: 'D' as const },
+      // D1 Hanon Part I in the key, the number by the tier (fingers-15…18); D2 two voices in one hand (§1b)
+      { fam: 'fingers', id: 'fingers-17', min: 5, block: 'D' as const },
+      { fam: 'fingers', id: 'fingers-18', min: 6, block: 'D' as const },
       { fam: 'k-indep', id: 'k-indep-1', min: 1, block: 'D' as const },
+      { fam: 'k-indep', id: 'k-indep-3', min: 2, block: 'D' as const },
       { fam: 'k-indep', id: 'k-indep-6', min: 3, block: 'D' as const },
       { fam: 'k-indep', id: 'k-indep-7', min: 3, block: 'D' as const },
       { fam: 'advanced', id: 'advanced-1', min: 5, block: 'D' as const },
@@ -531,7 +563,27 @@ export function ladderRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'
     { fam: 'cadences', id: minor ? 'cadences-3' : 'cadences-1', min: 0, max: 1, pick: minor ? isMinor : undefined, block: 'E' as const },
     { fam: 'cadences', id: minor ? 'cadences-7' : 'cadences-2', min: 2, max: 3, pick: minor ? isMinor : undefined, block: 'E' as const },
     { fam: 'k-cadlib', id: 'k-cadlib-6', min: 4, pick: (sp) => /cad:(m-)?ii-v-i~/.test((sp as { kind: string }).kind) && /m-ii/.test((sp as { kind: string }).kind) === minor, block: 'E' as const },
+    // E1 at T6+: the So What voicing (Bill Evans's on "So What", Kind of Blue, 1959: three perfect 4ths and a major 3rd,
+    // D-G-C-F-A on Dm7) and the Kenny Barron voicing (stacked 5ths per hand, LH 1-5-9, RH ♭3-♭7-11) on the key's
+    // ii–V–I — the canonical stacks in chartDrills.ts soWhatOffsets / barronOffsets, with their published sources.
+    // Stated only for the major ii–V–I (no minor So What or Barron is published), so major rows only.
+    ...(minor
+      ? []
+      : [
+          { fam: 'k-cadlib', id: 'k-cadlib-23', min: 6, pick: kindIs(/cad:ii-v-i~/), block: 'E' as const },
+          { fam: 'k-cadlib', id: 'k-cadlib-24', min: 6, pick: kindIs(/cad:ii-v-i~/), block: 'E' as const },
+          { fam: 'k-cadlib', id: 'k-cadlib-26', min: 6, pick: kindIs(/cad:ii-v-i~/), block: 'E' as const },
+        ]),
     ...(minor ? [] : [{ fam: 'harris', id: 'harris-1', min: 5, jazz: true, block: 'F' as const }, { fam: 'k-dimcol', id: 'k-dimcol-1', min: 5, jazz: true, block: 'F' as const }]),
+    // F2 triad pairs over the I (the lydian pair in root position, then the ionian pair's 5-1-3 permutation, on the key's
+    // root); F3 the bebop scale — the bebop dominant on the key's V (G7 in C), each hand
+    ...(minor
+      ? []
+      : [
+          { fam: 'k-tpair', id: 'k-tpair-1', min: 5, jazz: true, pick: tpairOver(['lydian']), block: 'F' as const },
+          { fam: 'k-tpair', id: 'k-tpair-2', min: 6, jazz: true, pick: tpairOver(['ionian']), block: 'F' as const },
+          { fam: 'k-modes', id: 'k-modes-3', off: 7, min: 5, jazz: true, block: 'F' as const, title: T('the bebop dominant on the V, each hand, one and two octaves', 'ביבופ דומיננטי על ה־V, כל יד, אוקטבה ושתיים') },
+        ]),
   ];
 }
 
@@ -608,16 +660,109 @@ export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | '
   return { warm, built };
 }
 
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[]; instrument?: LadderInst; focus?: StyleFocus } = {}): FamilyDef | null {
+// ───────────────────────────── the week, the rung just passed, the ceilings (SPEC-KEY-SESSION §1c, §2, §3) ─────────────────────────────
+
+/** §3: by the end of the week every rung open at the player's tier has been visited at least this many times. */
+export const WEEK_VISITS = 2;
+const rungDrills = (l: LevelDef): Drill[] => l.specs.flatMap((_, k) => specDrills(l, k, 'fifths-up'));
+/** The local day ('YYYY-MM-DD') of a time. */
+const localDay = (now: number | string = Date.now()): string => {
+  const d = new Date(typeof now === 'number' ? now : Date.parse(now));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** §3: the days of this week (Monday weeks, weekOf) the rung was played in this key — clean days and the last take's day. */
+export function rungWeekVisits(l: LevelDef, items: Record<string, ItemState>, now: number | string = Date.now()): number {
+  const wk = weekOf(now);
+  const days = new Set<string>();
+  for (const d of rungDrills(l)) {
+    const st = items[d.itemId];
+    if (!st || !st.takes) continue;
+    for (const at of [...(st.history ?? []).map((h) => h.at), st.last]) if (at && weekOf(at) === wk) days.add(at.slice(0, 10));
+  }
+  return days.size;
+}
+
+export interface WeekCoverage {
+  /** Rungs open at the tier in this key (the warm-up and the style block's rest tier left out). */
+  open: number;
+  /** Visited at least WEEK_VISITS times this week. */
+  done: number;
+  /** The rungs still short of WEEK_VISITS, in teaching order, with their visits so far. */
+  short: { rung: LadderRung; lvl: LevelDef; visits: number }[];
+}
+
+/** §3 the week: how many of the key's open rungs were visited twice this week, and which are short. */
+export function keyWeekCoverage(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, items: Record<string, ItemState>, opts: Parameters<typeof openKeyRungs>[4] = {}, now: number | string = Date.now()): WeekCoverage {
+  const { built } = openKeyRungs(fams, root, group, tier, opts);
+  const rows = built.filter((b) => b.rung.block !== 'H' || b.rung.tier !== 'rest').map((b) => ({ rung: b.rung, lvl: b.lvl, visits: rungWeekVisits(b.lvl, items, now) }));
+  return { open: rows.length, done: rows.filter((r) => r.visits >= WEEK_VISITS).length, short: rows.filter((r) => r.visits < WEEK_VISITS) };
+}
+
+/**
+ * §1c "the rung that was just passed is not picked again": its every item reached its target tempo (or its ceiling for
+ * now, the limit rule) and its last take was today. The coach moved on from it; the next session takes another rung.
+ */
+export function justPassed(l: LevelDef, items: Record<string, ItemState>, day: string = localDay()): boolean {
+  const ds = rungDrills(l);
+  if (!ds.length) return false;
+  let last = '';
+  for (const d of ds) {
+    const st = items[d.itemId];
+    if (!st || !st.takes) return false;
+    if ((st.cleanBpm ?? 0) < itemTargetBpm(d) - 0.5 && !coolingDown(st, day)) return false;
+    if (st.last > last) last = st.last;
+  }
+  return localDay(last) === day;
+}
+
+export interface RungCeiling {
+  /** The rung's source level id (as the matrix cell's rung). */
+  rung: string;
+  title: { en: string; he: string };
+  /** The ceiling for now (♩): the lowest among the rung's items at their limit. */
+  bpm: number;
+  /** That item's target tempo (♩). */
+  target: number;
+}
+
+/**
+ * §1c / §2: the key page shows each rung's ceiling — where the coach's limit rule stopped the climb in this key (the
+ * best clean tempo saved as "a ceiling for now", BUILD-PLAN §0.2), until a faster clean take beats it. Teaching order.
+ */
+export function keyCeilings(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, items: Record<string, ItemState>, opts: Parameters<typeof openKeyRungs>[4] = {}): RungCeiling[] {
+  const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
+  const out: RungCeiling[] = [];
+  for (const { rung, lvl } of [...(warm ? [{ rung: null, lvl: warm }] : []), ...built.map((b) => ({ rung: b.rung as LadderRung | null, lvl: b.lvl }))]) {
+    let best: RungCeiling | null = null;
+    for (const d of rungDrills(lvl)) {
+      const st = items[d.itemId];
+      const c = st?.ceiling;
+      if (!st || !c || (st.cleanBpm ?? 0) > c.bpm + 0.5) continue;
+      if (!best || c.bpm < best.bpm) best = { rung: rung ? rungIdOf(rung) : lvl.id.replace(`key-${root}-`, ''), title: lvl.title, bpm: c.bpm, target: itemTargetBpm(d) };
+    }
+    if (best) out.push(best);
+  }
+  return out;
+}
+
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[]; instrument?: LadderInst; focus?: StyleFocus; /** The time now (the week's visits, "just passed" today); default now. */ now?: number | string } = {}): FamilyDef | null {
   if (group !== 'major' && group !== 'minor') return null;
   const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
+  const now = opts.now ?? Date.now();
+  const day = localDay(now);
   const score = (l: LevelDef) => rungNeed(l, items);
   // block H in a key session: the focus styles only (the rest's exposure is the daily workout's), main before also
   const tierRank = (r: LadderRung) => (r.block !== 'H' ? 0 : r.tier === 'main' ? 0 : r.tier === 'also' ? 1 : 2);
-  const ranked = built
+  // §3: among the rungs played below their target, those not yet visited twice this week come first
+  const weekShort = (l: LevelDef, s: number) => (s === 1 && rungWeekVisits(l, items, now) >= WEEK_VISITS ? 1 : 0);
+  const all = built
     .filter((b) => b.rung.block !== 'H' || b.rung.tier !== 'rest')
     .map((b) => ({ ...b, sc: score(b.lvl) }))
-    .sort((a, b) => a.sc.s - b.sc.s || tierRank(a.rung) - tierRank(b.rung) || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
+    .map((b) => ({ ...b, wk: weekShort(b.lvl, b.sc.s) }));
+  // §1c: the rung just passed today is not picked again (unless nothing else is open)
+  const fresh = all.filter((b) => !justPassed(b.lvl, items, day));
+  const ranked = (fresh.length ? fresh : all).sort((a, b) => a.sc.s - b.sc.s || tierRank(a.rung) - tierRank(b.rung) || a.wk - b.wk || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order.
   // The later rungs (the Aeolian, melodic minor, the modes: phase 7) give one rung a session between them (M).

@@ -15,7 +15,7 @@ import { itemStatus, STATUS_WORD } from '../engine/drills/itemStatus';
 import type { FamilyDef } from '../engine/drills/generate';
 import type { MatrixCell, MatrixSummary, MatrixView } from '../engine/drills/keyMatrix';
 import { whyCounts, type PlanCell } from '../engine/drills/todayPlan';
-import { AEOLIAN_FROM_TIER, cleanAt, currentEntry, groupsOf, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { AEOLIAN_FROM_TIER, cleanAt, currentEntry, groupsOf, keyCeilings, keyLadder, ladderFocus, keySession, LENS_NAME, LENS_SHORT, LENSES, measure, ROLE_ORDER, withLens, type KeyEntry, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
@@ -291,6 +291,8 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
   const li = inst === 'piano' || inst === 'guitar' || inst === 'bass' ? inst : null;
   const ladder = li ? keyLadder(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(li === 'piano' ? { licks } : {}), ...(styleFocus ? { focus: styleFocus } : {}) }) : null;
   const focus = ladder ? ladderFocus(ladder, items) : null;
+  // SPEC-KEY-SESSION §1c / §2: the ceilings for now in this key (where the coach's limit rule stopped a rung's climb)
+  const ceilings = li && (g === 'major' || g === 'minor') ? keyCeilings(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(styleFocus ? { focus: styleFocus } : {}) }) : [];
   const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
@@ -305,6 +307,17 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
       {mk && (
         <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
           {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
+        </p>
+      )}
+      {ceilings.length > 0 && (
+        <p className="key-matrix-line" data-kp-ceilings={ceilings.length}>
+          {he ? 'תקרה לעכשיו: ' : 'Ceiling for now: '}
+          {ceilings.slice(0, 3).map((c, i) => (
+            <span key={c.rung}>
+              {i > 0 ? ' · ' : ''}
+              {c.title[lang]} <bdi dir="ltr">♩{c.bpm}/{c.target}</bdi>
+            </span>
+          ))}
         </p>
       )}
       {li && g === 'major' && (tier >= 0 ? tier : advanced ? 2 : 0) >= AEOLIAN_FROM_TIER && (

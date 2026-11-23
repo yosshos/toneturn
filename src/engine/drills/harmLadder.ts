@@ -112,7 +112,11 @@ const isHarris = (sc: HScale): boolean => !!sc.chord;
 
 // ───────────────────────────── the ladder's music (instrument-free) ─────────────────────────────
 
-export type HStep = 'line' | '3b' | '3t' | 'ta' | 'tb' | '7a' | '7b' | 'd2' | 'd3' | 'd24';
+// SPEC-KEY-SESSION §1 B2, B4, B5 (2026-11-23): 'ti' the triads on every degree in root position, 1st and 2nd inversion
+// (block, one degree a bar of 3/4, one octave up and back); 'c4' the 1-2-3-5 cell from every degree (C-D-E-G, D-E-F-A …,
+// Premier Guitar [V]), the cell turned over on the way down (G-E-D-C …); '9a' the diatonic 9th chord arpeggiated on
+// every degree (C-E-G-B-D, D-F-A-C-E …). The seven-note scales only (the modes, harmonic and melodic minor).
+export type HStep = 'line' | '3b' | '3t' | 'ta' | 'tb' | '7a' | '7b' | 'd2' | 'd3' | 'd24' | 'ti' | 'c4' | '9a';
 export const H_STEPS: HStep[] = ['line', '3b', '3t', 'ta', 'tb', '7a', '7b', 'd2', 'd3'];
 const STEP_T: Record<HStep, T2> = {
   line: t('note by note, up and down', 'צליל אחר צליל, עולה ויורד'),
@@ -125,6 +129,9 @@ const STEP_T: Record<HStep, T2> = {
   d2: t('7th chords in drop 2, up and down', 'ספטאקורדים בדרופ 2, עולה ויורד'),
   d3: t('7th chords in drop 3, up and down', 'ספטאקורדים בדרופ 3, עולה ויורד'),
   d24: t('7th chords in drop 2&4, up and down', 'ספטאקורדים בדרופ 2 ו־4, עולה ויורד'),
+  ti: t('triads on every degree in root position, 1st and 2nd inversion', 'משולשים על כל דרגה במצב יסודי, בהיפוך ראשון ובהיפוך שני'),
+  c4: t('1-2-3-5 cells from every degree, up and down', 'תאי 1-2-3-5 מכל דרגה, עולה ויורד'),
+  '9a': t('9th chords on every degree, arpeggiated', 'אקורדי נונה על כל דרגה, בארפג׳יו'),
 };
 
 /** One onset of the ladder: pitches sounding together (low → high), its length, and the chord's pitch classes when it is a chord. */
@@ -184,6 +191,28 @@ export function ladderEvents(_key: number, sc: HScale, step: HStep, tonic: numbe
       for (let k = N; k >= 2 * (sz - 1); k--) for (let j = 0; j < sz; j++) push([d(k - 2 * j)], u, { ct: ctOf(k - 2 * j) });
       break;
     }
+    case 'ti': {
+      // one octave: on every degree the root-position triad, then its 1st and 2nd inversions; down from the 7th degree
+      // in the other order (2nd, 1st, root), home on the tonic triad
+      const inv = (k: number, i: number): number[] => {
+        const r = [d(k), d(k + 2), d(k + 4)];
+        return i === 0 ? r : i === 1 ? [r[1], r[2], r[0] + 12] : [r[2], r[0] + 12, r[1] + 12];
+      };
+      for (let k = 0; k <= n; k++) for (let i = 0; i < 3; i++) push(inv(k, i), 1, { pcs: pcsOf(inv(k, i)) });
+      for (let k = n - 1; k >= 0; k--) for (let i = 2; i >= 0; i--) push(inv(k, i), 1, { pcs: pcsOf(inv(k, i)) });
+      break;
+    }
+    case 'c4':
+      // the cell 1-2-3-5 from each degree up to the top (it lands on degree N), then turned over (5-3-2-1) from the one
+      // below the top down to the tonic
+      for (let k = 0; k <= N - 4; k++) for (const j of [0, 1, 2, 4]) push([d(k + j)], 0.5);
+      for (let k = N - 5; k >= 0; k--) for (const j of [4, 2, 1, 0]) push([d(k + j)], 0.5);
+      break;
+    case '9a':
+      // root, 3rd, 5th, 7th, 9th of each degree's diatonic 9th chord, up to the top; down from the 7th degree's chord
+      for (let k = 0; k <= N - 8; k++) for (let j = 0; j < 5; j++) push([d(k + 2 * j)], 0.5);
+      for (let k = N - 1; k >= 8; k--) for (let j = 0; j < 5; j++) push([d(k - 2 * j)], 0.5);
+      break;
     case 'tb':
     case '7b':
     case 'd2':
@@ -411,9 +440,15 @@ export function genHarmPiano(s: DrillSpec): Drill {
   const sc = scaleOf(s);
   const step = s.kind.replace(/^hl-/, '') as HStep;
   const drop = step === 'd2' || step === 'd3' || step === 'd24';
-  const chordStep = step === 'tb' || step === '7b' || drop;
-  const tonic = chordStep ? pitchIn(key, drop ? 58 : 59) : rhBase(key);
+  const chordStep = step === 'tb' || step === '7b' || step === 'ti' || drop;
+  const tonic = chordStep ? pitchIn(key, drop ? 58 : step === 'ti' ? 52 : 59) : rhBase(key);
   const evs = ladderEvents(key, sc, step, tonic);
+  // B2 / B4 / B5: every note spelled by the key (one letter per degree: F♯ in D, C♭ in G♭)
+  const names = step === 'ti' || step === 'c4' || step === '9a' ? spellH(hTonic(key, sc), sc.ints) : null;
+  const spellOf = (p: number): Partial<ExpNote> => {
+    const k = names ? sc.ints.indexOf(mod(p - key, 12)) : -1;
+    return k >= 0 ? { spell: names![k] } : {};
+  };
   const n = new Notes();
   const sets: NonNullable<DrillGoal['chordSets']> = [];
   const fing = step === 'line' ? autoFingering(key, sc.ints) : null;
@@ -425,12 +460,13 @@ export function genHarmPiano(s: DrillSpec): Drill {
     if (e.pcs) {
       let id: number;
       if (drop) id = n.addSplit(e.beat, e.dur, e.ps.map((p, j) => ({ hand: j === 0 || (step === 'd24' && j === 1) ? 'L' : 'R', p })));
+      else if (names) id = n.addSplit(e.beat, e.dur, e.ps.map((p) => ({ hand: 'R' as const, p, extra: spellOf(p) })));
       else if (s.hands === 'RL') id = n.addSplit(e.beat, e.dur, [{ hand: 'L', p: pitchIn(rootPc(key, sc, step, ks[i]), 33) }, ...e.ps.map((p) => ({ hand: 'R' as const, p }))]);
       else id = n.add(e.beat, e.dur, 'R', e.ps)!;
       const pcs = s.hands === 'RL' && !drop ? [...new Set([...e.pcs, rootPc(key, sc, step, ks[i])])].sort((a, b) => a - b) : e.pcs;
       sets.push({ chordId: id, required: pcs, allowed: pcs });
     } else {
-      const extra: Partial<ExpNote> = {};
+      const extra: Partial<ExpNote> = e.ps.length === 1 ? spellOf(e.ps[0]) : {};
       if (e.ct !== undefined) extra.chordTone = e.ct;
       if (fing && e.ps.length === 1) {
         const k = sc.ints.indexOf(mod(e.ps[0] - key, 12));
@@ -443,8 +479,8 @@ export function genHarmPiano(s: DrillSpec): Drill {
   const goal: Partial<DrillGoal> = chordStep ? { evenness: false, chordSets: sets } : harris && step === 'line' ? { chordTonesOnBeats: true } : {};
   const hn = s.hands === 'RL' && !drop ? t(' · LH root', ' · שורש ביד שמאל') : t('', '');
   const title = t(`${kName(key, sc)} ${sc.name.en}: ${STEP_T[step].en}${hn.en}`, `${kName(key, sc)} ${sc.name.he}: ${STEP_T[step].he}${hn.he}`);
-  const bpm = { line: 72, '3b': 66, '3t': 60, ta: 50, tb: 50, '7a': 60, '7b': 50, d2: 46, d3: 46, d24: 46 }[step];
-  return pDrill(s, n, title, bpm, goal, hSig(key, sc));
+  const bpm = { line: 72, '3b': 66, '3t': 60, ta: 50, tb: 50, '7a': 60, '7b': 50, d2: 46, d3: 46, d24: 46, ti: 50, c4: 66, '9a': 60 }[step];
+  return pDrill(s, n, title, bpm, goal, hSig(key, sc), step === 'ti' ? 3 : 4);
 }
 
 function genBorrowPiano(s: DrillSpec, key: number): Drill {
@@ -547,7 +583,7 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
   const evs: Ev[] = [];
   let title: T2;
   const sig = hSig(key, sc);
-  const lineStep = step === 'line' || step === '3b' || step === 'ta' || step === '7a';
+  const lineStep = step === 'line' || step === '3b' || step === 'ta' || step === '7a' || step === 'c4' || step === '9a';
   if (lineStep || step === '3t') {
     const { map, tonic, lo } = positionMap(tu, key, sc, 2);
     for (const e of ladderEvents(key, sc, step, tonic, 2)) {
@@ -587,7 +623,8 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
     // chords along the neck, one octave up and back: triads on 3 adjacent strings, 7ths in drop 2 / drop 3 on a set
     const set = step === 'tb' ? null : step === 'd3' ? G_SETS.d3[(s.position ?? 0) % 2] : step === 'd24' ? G_SETS.d24[(s.position ?? 0) % 2] : G_SETS.d2[step === '7b' ? 0 : (s.position ?? 0) % 3];
     const gStep: HStep = step === '7b' ? 'd2' : step;
-    const top = set ? pitchIn(key, openOf(tu, set[set.length - 1]) + 1) : pitchIn(key, openOf(tu, 1));
+    // the inversions climb from the root position: start them an octave lower (the D string's octave)
+    const top = set ? pitchIn(key, openOf(tu, set[set.length - 1]) + 1) : pitchIn(key, openOf(tu, step === 'ti' ? 4 : 1));
     let center = 5;
     for (const e of ladderEvents(key, sc, gStep, top, 1)) {
       let pl: { places: P[]; shift: number } | null = null;
@@ -615,7 +652,7 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
   }
   const chordStep = !lineStep && step !== '3t';
   const goal: Partial<DrillGoal> = chordStep ? { chordSets: chordSetsOf(evs, tu) } : {};
-  return gFinish(s, tu, evs, { title, bpm: chordStep ? 50 : step === 'line' ? 72 : 60, evenness: !chordStep, goal, keySig: sig });
+  return gFinish(s, tu, evs, { title, bpm: chordStep ? 50 : step === 'line' ? 72 : step === 'c4' ? 66 : 60, evenness: !chordStep, goal, keySig: sig, ...(step === 'ti' ? { meter: 3 } : {}) });
 }
 
 /** Chord sets of guitar chord events, in the order guitar finish() numbers them (events with 2+ notes). */
@@ -671,7 +708,7 @@ function genBorrowGuitar(s: DrillSpec, tu: Tuning, key: number): Drill {
 // ───────────────────────────── catalogues ─────────────────────────────
 
 /** Path difficulty of the piano levels (path.ts KEYS_LEVEL_DIFF): lines and 3rds ~900–1100, triads and 7ths 1100–1350, drops and borrowing 1350–1650. */
-export const K_HARM_DIFF: Record<string, number> = Object.fromEntries([900, 940, 980, 1010, 1050, 1090, 1110, 1140, 1170, 1200, 1230, 1260, 1300, 1340, 1380, 1450, 1520, 1600, 1360, 1400, 1440, 1480, 1540, 1600, 1650, 1560, 1580, 1600, 1620, 1640, 1670, 1700, 1450, 1500, 1620, 1460, 1500, 1520, 1680, 1480, 1420, 1690].map((d, i) => [`k-sharm-${i + 1}`, d]));
+export const K_HARM_DIFF: Record<string, number> = Object.fromEntries([900, 940, 980, 1010, 1050, 1090, 1110, 1140, 1170, 1200, 1230, 1260, 1300, 1340, 1380, 1450, 1520, 1600, 1360, 1400, 1440, 1480, 1540, 1600, 1650, 1560, 1580, 1600, 1620, 1640, 1670, 1700, 1450, 1500, 1620, 1460, 1500, 1520, 1680, 1480, 1420, 1690, 1320, 1350, 1150, 1180, 1400, 1430].map((d, i) => [`k-sharm-${i + 1}`, d]));
 
 export function pianoScaleHarmFamily(): FamilyDef {
   const levels: LevelDef[] = [];
@@ -739,6 +776,15 @@ export function pianoScaleHarmFamily(): FamilyDef {
     1420,
   );
   LV('A substitute on each V of a tune: itself, the family, the important minor, the tritone’s minor', 'תחליף על כל V של שיר: עצמו, המשפחה, המינור החשוב, המינור של הטריטון', [pd('sub-tune', 0), pd('sub-tune', 1)], [50, 100], 1690);
+  // SPEC-KEY-SESSION §1 B2, B4, B5 (2026-11-23), appended so the levels above keep their ids and items: triad inversions
+  // through the scale, the 1-2-3-5 cells and the 9th arpeggios (odd: major and the modes; even: harmonic and melodic minor).
+  const MIN = [7, 8];
+  LV('Triads on every degree in root position, 1st and 2nd inversion: major and the modes', 'משולשים על כל דרגה במצב יסודי, בהיפוך ראשון ובהיפוך שני: מז׳ור והמודוסים', hl('ti', M), [40, 80], 1320);
+  LV('Triad inversions on every degree: harmonic and melodic minor', 'היפוכי משולשים על כל דרגה: מינור הרמוני ומלודי', hl('ti', MIN), [40, 80], 1350);
+  LV('1-2-3-5 cells from every degree, 2 octaves up and down: major and the modes', 'תאי 1-2-3-5 מכל דרגה, 2 אוקטבות עולה ויורד: מז׳ור והמודוסים', hl('c4', M), [60, 120], 1150);
+  LV('1-2-3-5 cells from every degree: harmonic and melodic minor', 'תאי 1-2-3-5 מכל דרגה: מינור הרמוני ומלודי', hl('c4', MIN), [60, 120], 1180);
+  LV('9th chords on every degree, arpeggiated: major and the modes', 'אקורדי נונה על כל דרגה, בארפג׳יו: מז׳ור והמודוסים', hl('9a', M), [50, 100], 1400);
+  LV('9th arpeggios on every degree: harmonic and melodic minor', 'ארפג׳יו נונות על כל דרגה: מינור הרמוני ומלודי', hl('9a', MIN), [50, 100], 1430);
   return { id: 'k-sharm', title: t('Scale harmonization and borrowing', 'הרמוניזציה של סולמות והשאלה'), style: 'both', levels };
 }
 
@@ -764,6 +810,11 @@ export function guitarHarmLevels(): GuitarLevelDef[] {
   LV('Borrowing: two voices, the chord above, another diminished, a passing scale tone', 'השאלה: שני קולות, האקורד שמעל, מוקטן אחר, צליל סולם עובר', [g('bw-two', 0), g('bw-two', 11), g('bw-chord', 0), g('bw-out', 0), g('bw-scale', 0), g('bw-chord', 10)], [40, 72], 'quarters', 8);
   LV("Borrowing while walking the scale, over ii–V–I and a standard's turnaround", 'השאלה בהליכה לאורך הסולם, על ii–V–I ועל טרנאראונד של סטנדרט', [g('bw-walk', 0), g('bw-walk', 10), g('bw-walk', 20), g('bw-walk', 30), g('bw-iivi', 0), g('bw-iivi', 1), g('bw-std', 0)], [40, 72], 'quarters', 9);
   LV('Borrowing on other string sets: drop 2 on 5-4-3-2 and 6-5-4-3, drop 3 on 6-4-3-2 and 5-3-2-1', 'השאלה על קבוצות מיתרים נוספות: דרופ 2 על 5-4-3-2 ו־6-5-4-3, דרופ 3 על 6-4-3-2 ו־5-3-2-1', [g('bw-walk', 0, 1), g('bw-walk', 10, 2), g('bw-walk-d3', 0, 0), g('bw-walk-d3', 10, 1), g('bw-iivi-d3', 0, 0)], [40, 66], 'quarters', 9);
+  // SPEC-KEY-SESSION §1 B2, B4, B5 (2026-11-23), appended: the seven-note scales (the modes, harmonic and melodic minor)
+  const SEVEN = [...H_MODES, 7, 8];
+  LV('Triads on every degree in root position, 1st and 2nd inversion, on 3-string sets', 'משולשים על כל דרגה במצב יסודי, בהיפוך ראשון ובהיפוך שני, על קבוצות של 3 מיתרים', hl('ti', SEVEN), [40, 80], 'quarters', 7);
+  LV('1-2-3-5 cells from every degree, two octaves in position', 'תאי 1-2-3-5 מכל דרגה, שתי אוקטבות במצב', hl('c4', SEVEN), [60, 120], '8ths', 5);
+  LV('9th chords on every degree, arpeggiated in position', 'אקורדי נונה על כל דרגה, בארפג׳יו במצב', hl('9a', SEVEN), [50, 100], '8ths', 7);
   return out;
 }
 

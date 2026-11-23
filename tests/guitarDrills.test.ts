@@ -56,7 +56,7 @@ describe('guitar drills: catalogue', () => {
       // AUDIT-7 #7: g-scales has 15 (harmonic minor and the modes at grades 5–7, levels 13–15); TECHNIQUE-COVERAGE-AUDIT
       // §4.6: 18 (the minor scales in five positions, 16–18); SPEC-PRACTICE-KEYS §6: 21 (the remaining modes, 19–21).
       // HARMONY-REHARM: b-ear 24 (borrowed chords by ear); g-color 13–15 (the open-string pedal).
-      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' ? 21 : f.id === 'g-color' ? 16 : 13);
+      expect(f.levels.length).toBeLessThanOrEqual(f.id.startsWith('b-') ? 24 : f.id.startsWith('d-') ? 20 : f.id === 'g-scales' ? 21 : f.id === 'g-color' || f.id === 'g-harm' ? 16 : 13); // g-harm 14–16: SPEC-KEY-SESSION B2, B4, B5
       // numbered in order; a gap only where a level is hidden until verified (src/engine/verifiedContent.ts)
       f.levels.forEach((l, i) => expect(l.level).toBeGreaterThanOrEqual(i + 1));
       f.levels.forEach((l, i) => i > 0 && expect(l.level).toBeGreaterThan(f.levels[i - 1].level));
