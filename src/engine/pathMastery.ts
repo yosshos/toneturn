@@ -11,6 +11,7 @@ import { levelDrills, levelKeyProgress, levelKeys, planWithFocus } from './drill
 import { generate } from './drills/generate';
 import { techLevel } from './ladderFacts';
 import { recency, KEY_LABEL } from './analysis/keyMastery';
+import { levelLadder, stepLadder } from './statusLadder';
 import { MASTER_STARS, pendingChecks, type PathFacts, type PathStep, type PathUnit, type PathView, type UnitStep } from './path';
 import type { DomainId } from './rating';
 
@@ -73,12 +74,26 @@ export function decorateMastery(view: PathView, ctx: MasteryCtx): PathView {
     }
     const fade = ms >= MASTER_STARS && fresh < FADE_BELOW;
     const state = x.state === 'tested' ? 'tested' : ms >= MASTER_STARS ? 'mastered' : 'done';
-    return { ...x, mstars: ms, fade, state };
+    return { ...x, mstars: ms, fade, state, ladder: ladderOfStep(x.step, true, ms, ctx) };
   };
   const units = view.units.map((u) => ({ ...u, steps: u.steps.map(deco) }));
   const history = view.history.map((u) => ({ ...u, steps: u.steps.map(deco) }));
   const cur = view.current ? units.flatMap((u) => u.steps).find((x) => x.step.id === view.current!.step.id) ?? view.current : null;
   return { ...view, units, history, current: cur };
+}
+
+/**
+ * The one status ladder beside a step's ✓ (SPEC-PATH-TODAY-PRACTICE §4.2, BUILD-PLAN D4): a technique step reads its
+ * level's keys live (closed in a key, all keys, in the fingers); any other step from its stars (stepLadder). An opened
+ * technique step is at least "learning" (its ✓ stays even under a stored fact).
+ */
+export function ladderOfStep(step: PathStep, opened: boolean, mstars: number, ctx: MasteryCtx) {
+  const lv = step.kind === 'tech' && step.ladder ? techLevel(step.ladder.ref) : undefined;
+  if (lv) {
+    const l = levelLadder(lv, ctx.items, ctx.order);
+    return opened && l.top === 'new' ? { ...l, lit: [...l.lit, 'learning' as const], top: 'learning' as const } : l;
+  }
+  return stepLadder(opened, mstars);
 }
 
 export interface UnitMastery {

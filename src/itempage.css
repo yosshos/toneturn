@@ -1,0 +1,60 @@
+/* The one item page's top (ItemHead.tsx) and the one status ladder (BUILD-PLAN D4). */
+.item-head { display: grid; gap: 6px; }
+.ih-top { display: flex; align-items: flex-start; gap: 8px; }
+.ih-top .sl-full { flex: 1; min-width: 0; }
+.ih-assign { flex: none; }
+.ih-kicker { margin: 0; }
+.ih-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* the full ladder: a row of rungs, the lit ones filled, the summit rungs (12 keys, language, fingers) marked */
+.sl-full { display: grid; gap: 2px; }
+.sl-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sl-word { font-size: 0.95rem; font-weight: 800; color: var(--ink, #1d1530); }
+.sl-next { color: var(--ink-dim, #5d5470); font-size: 0.78rem; }
+.sl-rungs { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+.sl-rungs li { display: grid; gap: 2px; justify-items: center; min-width: 0; }
+.sl-rungs li i { display: block; width: 100%; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink, #1d1530) 10%, transparent); }
+.sl-rungs li.on i { background: var(--teal, #12c9b4); }
+.sl-rungs li.up i { height: 8px; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--purple, #7c5cff) 55%, transparent); }
+.sl-rungs li.up.on i { background: var(--purple, #7c5cff); box-shadow: none; }
+.sl-rungs li.top i { outline: 2px solid color-mix(in srgb, var(--ink, #1d1530) 40%, transparent); outline-offset: 1px; }
+.sl-rungs li small { font-size: 0.62rem; line-height: 1.1; color: var(--ink-dim, #5d5470); text-align: center; overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: nowrap; }
+.sl-rungs li.on small { color: var(--ink, #1d1530); font-weight: 650; }
+
+/* the compact ladder: small rising bars and the word (lists, path nodes, level rows) */
+.sl-compact { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; line-height: 1; white-space: nowrap; }
+.sl-compact .sl-bars { display: inline-flex; align-items: flex-end; gap: 1.5px; }
+.sl-compact .sl-bars i { display: block; width: 3px; border-radius: 1.5px; background: color-mix(in srgb, var(--ink, #1d1530) 18%, transparent); }
+.sl-compact .sl-bars i.on { background: var(--teal, #12c9b4); }
+.sl-compact .sl-bars i.up.on { background: var(--purple, #7c5cff); }
+.sl-compact b { font-weight: 700; color: var(--ink, #1d1530); }
+.sl-compact.st-new b { color: var(--ink-dim, #5d5470); font-weight: 600; }
+
+/* the teacher's part */
+.ih-teacher { display: grid; gap: 2px; padding: 8px 12px; border-radius: 12px; background: var(--card, #fff); border: 1px solid color-mix(in srgb, var(--purple, #7c5cff) 30%, transparent); }
+.ih-teacher small { color: var(--ink-dim, #5d5470); font-size: 0.75rem; font-weight: 700; }
+.ih-teacher p { margin: 0; font-size: 0.88rem; }
+.ih-target { font-size: 0.8rem; color: var(--ink, #1d1530); }
+.assign-chip { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: 6px; font-size: 11px; line-height: 1.2; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--teal, #12c9b4) 12%, transparent); color: var(--ink, #1d1530); border: 1px solid color-mix(in srgb, var(--teal, #12c9b4) 40%, transparent); vertical-align: middle; }
+.ih-chips .assign-chip { margin-inline-start: 0; }
+.ih-sheet { display: grid; gap: 10px; }
+
+/* the item's main button and its partner (the key page's rung, the lick page, the improvisation level) */
+.ih-ways { display: grid; gap: 8px; }
+.ih-main { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.ih-main small { font-weight: 600; opacity: 0.85; }
+.rung-card { display: grid; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--card, #fff); border: 1.5px solid var(--teal, #12c9b4); }
+.rung-card h2 { margin: 0; font-size: 1rem; }
+.step-channel { font-size: 0.8rem; color: var(--ink, #1d1530); }
+.item-head .today-chip, .lk-card .today-chip { display: inline-block; margin-inline-start: 6px; font-size: 11px; line-height: 1.2; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--purple, #7c5cff) 12%, transparent); color: var(--ink, #1d1530); border: 1px solid color-mix(in srgb, var(--purple, #7c5cff) 35%, transparent); vertical-align: middle; }
+
+/* the path node: the ladder beside the check (SPEC-PATH-TODAY-PRACTICE 4.2) */
+.road .node-ladder { display: inline-flex; justify-content: center; }
+.road .node-ladder .sl-compact { font-size: 0.66rem; }
+.missing-sheet .ms-ladder { display: grid; gap: 4px; margin: 4px 0 8px; }
+.missing-sheet .ms-ladder > small { color: var(--ink-dim, #5d5470); font-size: 0.78rem; }
+
+.kp-entry.lit { outline: 2px solid var(--teal, #12c9b4); outline-offset: 1px; }
+.ih-top.dense { align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
+.ih-top.dense .ih-kicker { flex: 1; min-width: 0; }
+.ih-top.dense .ih-assign { width: 36px; height: 36px; }

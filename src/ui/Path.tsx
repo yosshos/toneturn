@@ -26,6 +26,8 @@ const withNoteText = (s: string, n: string) => s.replace(/{[nk]}/g, n);
 import { TOPIC_GEN } from '../engine/topicKit';
 import { displayNote, pc } from '../engine/pitch';
 import { NodeIcon, starsFor, TOTALS } from './Home';
+import { StatusLadder } from './ItemHead';
+import { ladderWord } from '../engine/statusLadder';
 import { UNLOCK_ALL } from './services';
 import { LESSON_ORDER, type LessonId } from '../engine/lesson';
 import { DOMAIN_HUE, useRoad } from './Arcade';
@@ -306,6 +308,7 @@ export function PathView2({
   onCourseIntro,
   onAboutUnit,
   onFullPractice,
+  sheetFor,
 }: {
   t: Strings;
   settings: Settings;
@@ -331,6 +334,8 @@ export function PathView2({
   onAboutUnit?: (unit: PathUnit) => void;
   /** SPEC-PATH-TODAY-PRACTICE §3.1: the step's home in Practice ("keep practising now"); null when it has none. */
   onFullPractice?: (x: UnitStep) => (() => void) | null;
+  /** §3.1: the step just played — the path opens on its closing sheet if it is opened now (read once). */
+  sheetFor?: { current: string | null };
 }) {
   const lang = settings.uiLang;
   const tx = TX[lang];
@@ -338,6 +343,20 @@ export function PathView2({
   // SPEC-PATH-ROLE §8: open / opened (a thin ring filling with the stars) / mastered (a full gold ring) / refresh (silver).
   const { view, ctx: mctx } = useMasteryView(view0, settings, progress);
   const [sheet, setSheet] = useState<{ x: UnitStep; unit: PathUnit } | null>(null);
+  // SPEC-PATH-TODAY-PRACTICE §3.1: the step's closing screen (opened ✓) — the note and "Keep practising now"; waits for the
+  // step's result to land in the view (a moment after the run ends), then shows once
+  useEffect(() => {
+    const id = sheetFor?.current;
+    if (!id) return;
+    for (const unit of view.units) {
+      const x = unit.steps.find((y) => y.step.id === id);
+      if (x && (x.state === 'done' || x.state === 'mastered')) {
+        sheetFor.current = null;
+        setSheet({ x, unit });
+        return;
+      }
+    }
+  }, [view, sheetFor]);
   const [away, setAway] = useState<0 | 1 | -1>(0);
   const curRef = useRef<HTMLLIElement | null>(null);
   const roadRef = useRef<HTMLOListElement>(null);
@@ -424,7 +443,7 @@ export function PathView2({
     const ring = opened && x.step.kind !== 'check' && x.step.kind !== 'review';
     return (
       <li key={x.step.id} ref={isCur ? curRef : undefined} className={`node ${st === 'mastered' ? 'done mastered' : st} ${look} kind-${x.step.kind} ${x.probe ? 'probe' : ''}`} data-step={x.step.id} data-slot={slot} data-node-state={opened ? look : st === 'locked' ? 'locked' : 'open'} data-mstars={opened ? ms : undefined} style={{ ['--hue' as string]: hue }}>
-        <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${opened ? ` ✓ ${ms}/5` : ''}${x.fade ? ` · ${tx.refresh}` : ''}`}>
+        <button className="node-btn" disabled={st === 'locked'} onClick={click} aria-label={`${label}${opened ? ` ✓ ${x.ladder ? ladderWord(x.ladder, lang) : ''}` : ''}${x.fade ? ` · ${tx.refresh}` : ''}`}>
           {/* 0.63 (design board PhonePath): a note head on the staff — the unit test is a final double barline with a fermata,
               review is a repeat sign; the current one lemon with a ring. */}
           {x.step.kind === 'check' ? (
@@ -471,11 +490,10 @@ export function PathView2({
             </span>
           )}
           <span className="node-text">
-            {ring && (
-              <span className="mini-stars" aria-label={`${ms} ${tx.stars}`}>
-                {[0, 1, 2, 3, 4].map((s) => (
-                  <i key={s} className={s < ms ? 'won' : ''} />
-                ))}
+            {/* SPEC-PATH-TODAY-PRACTICE §4.2: the one status ladder beside the ✓ (BUILD-PLAN D4) — no stars */}
+            {ring && x.ladder && (
+              <span className="node-ladder" data-node-ladder={x.ladder.top}>
+                <StatusLadder ladder={x.ladder} lang={lang} compact />
               </span>
             )}
             <b>
@@ -778,10 +796,8 @@ function MissingSheet({ x, unit, ctx, lang, title, onClose, onPractice, onFull }
             <Icon k="close" />
           </button>
         </div>
-        <div className="ms-stars" role="img" aria-label={`${ms} / 5 ${tx.stars}`}>
-          {[0, 1, 2, 3, 4].map((s) => (
-            <i key={s} className={s < ms ? 'won' : ''} />
-          ))}
+        <div className="ms-ladder" data-missing-ladder={x.ladder?.top ?? 'new'}>
+          {x.ladder && <StatusLadder ladder={x.ladder} lang={lang} />}
           <small>{ms >= 5 && !x.fade ? (lang === 'he' ? 'נשלט' : 'Mastered') : x.fade ? tx.refresh : tx.opened}</small>
         </div>
         <p className="ms-text" dir="auto" data-missing-text>

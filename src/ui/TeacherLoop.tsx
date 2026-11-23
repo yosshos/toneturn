@@ -29,6 +29,10 @@ import { StyleChips } from './StyleChips';
 import { burnup } from '../engine/burnup';
 import { BurnUpRow } from './ExtraCharts';
 import { localDay } from '../storage/progress';
+import { itemOfAssign } from '../engine/itemAssign';
+import { lickById } from '../engine/licks';
+import { parsePieceKey } from '../engine/repLibrary';
+import { repItem } from '../engine/repertoire';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -78,7 +82,17 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
     const p = decodePhraseRef(a.ref);
     return p ? `${assignTitle(p, lang)} · ${kName(p.homeKey, p.minor)}${p.instrument !== 'piano' ? ` · ${PHRASE_INST[p.instrument][lang]}` : ''}` : TX[lang].phrase;
   }
-  if (a.kind === 'piece') return a.ref ?? TX[lang].piece;
+  if (a.kind === 'piece') {
+    // assigned from an item page (itemAssign.ts): a lick ("lick:<id>") or a piece by its key ("rep:<course>:<id>")
+    const it = itemOfAssign(a);
+    if (it?.k === 'lick') return `${lickById(it.id)?.name[lang] ?? it.id} · ${lang === 'he' ? 'ליק' : 'Lick'}`;
+    if (it?.k === 'piece') {
+      const r = parsePieceKey(it.key);
+      const rp = r?.kind === 'rep' && r.course ? repItem(r.course, r.id) : undefined;
+      return rp ? rp.title[lang] : it.key;
+    }
+    return a.ref ?? TX[lang].piece;
+  }
   if (a.kind === 'focus') {
     const f = parseFocusRef(a.ref);
     return f ? `${lang === 'he' ? 'מיקוד סגנון' : 'Style focus'}: ${picksOf(f.focus).map((s) => STYLE_TEXT[s][lang]).join(', ')}` : '';
@@ -88,9 +102,10 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
 
 // ---------------------------------------------------------------- teacher: assign
 
-export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { classId: string; lang: Lang; t: Strings; busy: boolean; onAssigned: () => void; onError: (e: string) => void }) {
+export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset }: { classId: string; lang: Lang; t: Strings; busy: boolean; onAssigned: () => void; onError: (e: string) => void; /** SPEC-PATH-TODAY-PRACTICE §5.2: assigned from an item's own page — the item is fixed (no "what" pickers). */ preset?: { kind: AssignKind; ref: string } }) {
   const tx = TX[lang];
-  const [kind, setKind] = useState<AssignKind>('topic');
+  const [kindPick, setKind] = useState<AssignKind>('topic');
+  const kind = preset?.kind ?? kindPick;
   const [lesson, setLesson] = useState<string>(LESSON_ORDER[0]);
   const topics = useMemo(() => Object.keys(TOPIC_GEN).filter((id) => topicVerified(id)).sort((a, b) => TOPIC_GEN[a].title[lang].localeCompare(TOPIC_GEN[b].title[lang])), [lang]);
   const [topic, setTopic] = useState(topics[0]);
@@ -115,9 +130,9 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const [channel, setChannel] = useState<AssignChannel>('free');
   const [perDay, setPerDay] = useState('');
   const [ifShort, setIfShort] = useState<'spread' | 'today'>('spread');
-  const ref =
+  const ref = preset ? preset.ref :
     kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
-  const can = kind !== 'piece' || piece.trim().length > 0;
+  const can = !!preset || kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
       const id = await assignItem({ classId, kind, lessonId: kind === 'lesson' ? lesson : null, ref, dueOn: due || null, strictness: strict, targetBpm: bpm ? Number(bpm) : null, note });
@@ -131,6 +146,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const nT = TOPIC_GEN[topic]?.levels.length ?? 1;
   return (
     <div className="assign-form2" data-assign-form="1">
+      {!preset && (<>
       <label className="af-row">
         <span>{tx.kind}</span>
         <select value={kind} onChange={(e) => setKind(e.target.value as AssignKind)} data-assign-kind="1">
@@ -253,10 +269,11 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
           {tx.phraseOpen}
         </button>
       )}
+      </>)}
       {kind === 'phrase' ? null : (
       <>
-      {kind === 'piece' && <input value={piece} maxLength={200} onChange={(e) => setPiece(e.target.value)} placeholder={tx.pieceText} aria-label={tx.pieceText} />}
-      {kind === 'focus' && (
+      {kind === 'piece' && !preset && <input value={piece} maxLength={200} onChange={(e) => setPiece(e.target.value)} placeholder={tx.pieceText} aria-label={tx.pieceText} />}
+      {kind === 'focus' && !preset && (
         <div className="af-focus" data-assign-focus="1">
           <label className="af-row">
             <span>{lang === 'he' ? 'קורס' : 'Course'}</span>

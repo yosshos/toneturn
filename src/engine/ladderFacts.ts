@@ -15,6 +15,7 @@ import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
 import { stepCatalogue, stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
 import { testedLevelIds } from './drills/levelTest';
 import { voiceStartNow } from './voiceFamilies';
+import { inChannel, STEP_CHANNEL, type StepChannel } from './stepChannel';
 
 let DIFFS: Map<string, number> | null = null;
 /** A technique level's path rating (its placement by difficulty, levelPlacement.ts / path.ts). */
@@ -146,7 +147,7 @@ export function workoutCreditsStep(step: { id: string; kind: string }, firstTry:
  */
 export function withLadderFacts(
   f: PathFacts,
-  opts: { families: string[]; items: Record<string, ItemState>; order: DrillSettings['keyOrder']; start: Partial<Record<FamilyId, number>>; vocalPassed: number[]; at: string },
+  opts: { families: string[]; items: Record<string, ItemState>; order: DrillSettings['keyOrder']; start: Partial<Record<FamilyId, number>>; vocalPassed: number[]; at: string; /** §4.4: steps that require a channel (default: stepChannel.STEP_CHANNEL). */ channels?: Record<string, StepChannel> },
 ): PathFacts {
   if (!opts.families.length) return f;
   const steps = { ...(f.steps ?? {}) };
@@ -165,7 +166,9 @@ export function withLadderFacts(
       if (tested.has(lv.id) && !tests[id]) tests[id] = opts.at;
       // SPEC-PATH-ROLE: a step is opened at 1 star (three keys clean at the base tempo). Facts only rise, so a ✓ given
       // under the old rule (three keys at the target tempo) is never taken away.
-      const st = techStars(lv, opts.items, opts.order);
+      // SPEC-PATH-TODAY-PRACTICE §4.4: a step that requires a channel opens only on clean takes in that channel
+      const req = (opts.channels ?? STEP_CHANNEL)[id];
+      const st = techStars(lv, req ? inChannel(opts.items, req) : opts.items, opts.order);
       if (st >= TECH_DONE_STARS) set(id, st);
     }
   }
@@ -184,9 +187,11 @@ export function withLadderFacts(
 
 /**
  * A path step's session for a technique level: its items not yet passed at the target tempo first (started ones before
- * fresh ones, key order), then the passed ones, least secure first.
+ * fresh ones, key order), then the passed ones, least secure first. SPEC-PATH-TODAY-PRACTICE §3.3: with `weekKey`, the
+ * step opens the rung in the key of the week — that key's open items lead (when the level has the key); from then the
+ * cell goes into the strengthen block and the other keys deepen it.
  */
-export function techQueue(levelId: string, items: Record<string, ItemState>, order: DrillSettings['keyOrder'], n = 5): Drill[] {
+export function techQueue(levelId: string, items: Record<string, ItemState>, order: DrillSettings['keyOrder'], n = 5, weekKey?: number | null): Drill[] {
   const lv = techLevel(levelId);
   if (!lv) return [];
   const ds = levelDrills(lv, order);
@@ -195,5 +200,11 @@ export function techQueue(levelId: string, items: Record<string, ItemState>, ord
   const started = open.filter((d) => (items[d.itemId]?.cleanBpm ?? 0) > 0);
   const fresh = open.filter((d) => !((items[d.itemId]?.cleanBpm ?? 0) > 0));
   const known = ds.filter(passed).sort((a, b) => (items[a.itemId]?.cleanBpm ?? 0) - (items[b.itemId]?.cleanBpm ?? 0));
-  return [...started, ...fresh, ...known].slice(0, n);
+  const q = [...started, ...fresh, ...known];
+  if (typeof weekKey === 'number') {
+    const wk = ((weekKey % 12) + 12) % 12;
+    const inWeek = (d: Drill) => ((d.spec.key % 12) + 12) % 12 === wk && !passed(d);
+    if (q.some(inWeek)) return [...q.filter(inWeek), ...q.filter((d) => !inWeek(d))].slice(0, n);
+  }
+  return q.slice(0, n);
 }

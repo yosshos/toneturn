@@ -7,11 +7,11 @@
 //   node, or "later in your path"), "why today", the main button by the way in, then only the actions this piece has.
 // On a wide screen the list and the piece sit side by side. One phone screen each, no emoji.
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
 import { STYLE_TEXT, type StyleId } from '../engine/styles';
 import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
-import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
+import type { ItemStatus } from '../engine/drills/itemStatus';
 import { CHART_TEMPLATES } from '../engine/charts';
 import type { CourseId } from '../engine/courses';
 import type { PathView } from '../engine/path';
@@ -26,6 +26,10 @@ import { songs } from './MySong';
 import { PlaceSpark } from './PlaceSpark';
 import '../repertoire.css';
 import { Icon } from './icons';
+import { AssignMark, ItemHead, StatusLadder, TodayMark } from './ItemHead';
+import { assignedKeys, itemKey, useAssignFor, useMyAssigns, useTeaching } from './itemAssigns';
+import { pieceLadder } from '../engine/statusLadder';
+import type { ItemRef } from '../engine/itemAssign';
 
 type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
@@ -86,7 +90,6 @@ function useWide(): boolean {
 /** A piece opened from the list sits on its own history entry, so Back returns to the list. */
 let openedFromList = false;
 
-const statusMark = (s: ItemStatus, lang: Lang) => STATUS_WORD[s][lang];
 
 export function RepertoireScreen(p: RepertoireProps) {
   const { lang, course, jazz, lessons, history: hist } = p;
@@ -124,6 +127,8 @@ export function RepertoireScreen(p: RepertoireProps) {
   };
   const [lists, setLists] = useState(false);
   const [memoFor, setMemoFor] = useState<LibEntry | null>(null);
+  // §3.4 / §5.1: the marks in the list — part of today, assigned by the teacher
+  const assignedSet = assignedKeys(useMyAssigns());
 
   const statusOf = (e: LibEntry): ItemStatus => {
     if (e.ref.kind === 'rep' && e.ref.course) return pieceStatus(hist, lessons, e.ref.course, e.ref.id);
@@ -264,10 +269,14 @@ export function RepertoireScreen(p: RepertoireProps) {
                 <button className={`rep-row st-${st} ${view.piece === x.key ? 'on' : ''}`} onClick={() => openPiece(x.key)} data-rep-item={x.ref.kind === 'rep' ? x.ref.id : x.key} data-rep-key={x.key}>
                   <span className="rep-row-text">
                     <b>{x.item ? x.teaches[lang] : x.title[lang]}</b>
-                    <small>{x.item ? x.title[lang] : x.teaches[lang]}</small>
+                    <small>
+                      {x.item ? x.title[lang] : x.teaches[lang]}
+                      {p.whyToday?.(x.key) && <TodayMark lang={lang} short />}
+                      {assignedSet.has(itemKey({ k: 'piece', key: x.key })) && <AssignMark lang={lang} />}
+                    </small>
                   </span>
                   <span className={`rep-mark st-${st}`} data-status={st}>
-                    {st === 'new' ? '' : statusMark(st, lang)}
+                    {st === 'new' ? '' : <StatusLadder ladder={pieceLadder(st, memoProgress(memo, x.item?.id ?? x.key).done >= MEMO_STEPS.length)} lang={lang} compact />}
                   </span>
                 </button>
               </li>
@@ -381,16 +390,10 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
   const rest = full ? actions.slice(1) : [];
   const std = entry.std ?? (it?.ref?.kind === 'standard' ? it.ref.id : undefined);
   const kicker = it ? `${tierName(it.tier)[lang]}${it.standard ? (he ? ' · סטנדרט' : ' · Standard') : ''}` : entry.teaches[lang];
-  const chip = (body: ReactNode, attrs: Record<string, string>, onClick?: () => void) =>
-    onClick ? (
-      <button className="chip rep-chip" onClick={onClick} {...attrs}>
-        {body}
-      </button>
-    ) : (
-      <span className="chip rep-chip passive" {...attrs}>
-        {body}
-      </span>
-    );
+  // the one item page's top (ItemHead): the ladder, where it sits, why today, the teacher's part, assign (a teacher)
+  const itemRef: ItemRef = { k: 'piece', key: entry.key };
+  const assigned = useAssignFor(itemRef);
+  const teaching = useTeaching();
   return (
     <main className={`rep-screen rep-item ${props.inPane ? 'in-pane' : ''}`} data-rep-open={it?.id ?? entry.key} data-rep-piece={entry.key} data-way-in={wayIn}>
       <header className="screen-head">
@@ -401,23 +404,18 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
         )}
         <h1 dir="auto">{entry.title[lang]}</h1>
       </header>
-      <div className="rep-top">
-        <span className={`rep-status-word st-${status}`} data-rep-status={status}>
-          {STATUS_WORD[status][lang]}
-        </span>
-        <small className="rep-kicker">{kicker}</small>
-      </div>
-      {(where || why) && (
-        <div className="rep-chips">
-          {where &&
-            chip(
-              where.state === 'ahead' ? (he ? `בהמשך המסלול · יחידה ${where.unit}` : `Later in your path · Unit ${where.unit}`) : he ? `במסלול · יחידה ${where.unit} · צעד ${where.step}` : `In your path · Unit ${where.unit} · step ${where.step}`,
-              { 'data-rep-where': where.state },
-              () => props.onPathNode(entry.key),
-            )}
-          {why && chip(<>{why[lang]}</>, { 'data-rep-why': '1' })}
-        </div>
-      )}
+      <ItemHead
+        lang={lang}
+        ladder={pieceLadder(status, props.memoDone >= MEMO_STEPS.length)}
+        kicker={kicker}
+        where={where}
+        onWhere={() => props.onPathNode(entry.key)}
+        why={why}
+        assigned={assigned}
+        item={itemRef}
+        teaching={teaching}
+        title={entry.title[lang]}
+      />
       {it && <h2 className="rep-teaches">{it.teaches[lang]}</h2>}
       <div className="rep-ways">
         {main && (
