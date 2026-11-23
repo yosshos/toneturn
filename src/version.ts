@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.124.0',
+    date: '2026-11-23',
+    en: ['One status ladder everywhere instead of stars: new, learning, almost, closed, all 12 keys, in my language, in the fingers; every item page shows it with where the item sits in your path and why it is in today', 'Guitar and bass get the same daily technique plan as piano; the workout counts the time you actually played, shows a short summary between blocks, and the key of the week can be minor', 'The scale rotation reads altered and secondary dominants correctly, brings more substitutions, warns of the next scale ahead, and can be played without the lead sheet', 'Licks are found in every improvisation, also varied; new ear activities: hear and continue, call and response, the melody by ear, trading where the band leads', 'More charts over time (language, improvisation, the ear course), a weekly summary in Today, and new key-ladder content: triad inversions, 1-2-3-5 cells, ninth arpeggios, triad pairs, the bebop scale'],
+    he: ['סולם סטטוס אחד בכל מקום במקום כוכבים: חדש, בלמידה, כמעט, סגור, בכל 12 הסולמות, בשפה שלי, באצבעות; כל דף פריט מראה אותו, איפה הפריט במסלול ולמה הוא בהיום', 'גיטרה ובס מקבלים את אותה תוכנית טכניקה יומית כמו הפסנתר; האימון סופר את הזמן שבאמת ניגנתם, מראה סיכום קצר בין בלוקים, וסולם השבוע יכול להיות מינורי', 'סבב הסולמות מזהה נכון אלטרד ודומיננטות משניות, מביא עוד תחליפים, מתריע מראש על הסולם הבא, ואפשר לנגן בלי דף האקורדים', 'ליקים מזוהים בכל אלתור, גם בווריאציה; פעילויות שמיעה חדשות: לשמוע ולהמשיך, שאלה ותשובה, המנגינה משמיעה, חילופים שבהם הלהקה פותחת', 'עוד גרפים לאורך זמן (שפה, אלתור, קורס השמיעה), סיכום שבועי בהיום, ותוכן חדש בסולם הסולמות: היפוכי משולשים, תאי 1-2-3-5, ארפג׳י נונות, זוגות משולשים וסולם הביבופ'],
+  },
+  {
     version: '0.123.0',
     date: '2026-11-23',
     en: ['Gospel on piano: IV over I, the walk-ups, rocking I and ii through the inversions, the classic turnarounds and the two gospel scales', 'Soul-jazz on piano, guitar and bass, more organ technique, stride and boogie-woogie in all 12 keys, and the New Orleans two-feel on bass', 'Comping in 7/8 and 9/8, as jazz uses odd meters', 'The band plays soul-jazz, gospel in 12/8, funk-jazz, trad and the second line'],
