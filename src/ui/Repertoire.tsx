@@ -150,8 +150,9 @@ export function RepertoireScreen(p: RepertoireProps) {
     return 'new';
   };
   const tab: RepTab = view.tab ?? goal.next?.tier ?? 1;
-  // SPEC-STYLE-FOCUS §4: the style filter opens on the first of my styles that has pieces here (else all styles)
-  const styleHas = (st: StyleId) => lib.some((e) => entryStyle(e) === st);
+  // SPEC-STYLE-FOCUS §4: the style filter opens on the first of my styles that has pieces here (else all styles) —
+  // "here" = the tier the page opens on, so the first view is never an empty list (Foundations has no jazz pieces).
+  const styleHas = (st: StyleId) => lib.some((e) => (tab === 'mine' || e.tab === tab) && entryStyle(e) === st);
   const startStyle = (p.styles ?? []).find(styleHas) ?? null;
   const [styleF, setStyleF] = useState<StyleId | 'all'>(startStyle ?? 'all');
   const byStyle = (e: LibEntry) => styleF === 'all' || entryStyle(e) === styleF;

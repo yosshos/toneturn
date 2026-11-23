@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { switchCourse } from './practice';
+import { CHALLENGES } from '../src/engine/improvRules';
 
 // Practice tab (0.44): the hub (Songs, Technique, Games, Singing + tools) → the songbook, the games list and back;
 // the menu in groups; a Progress area opens its sheet instead of playing.
@@ -174,7 +175,8 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-rule="note"]')).toHaveValue('guide-beats');
     await expect(page.locator('[data-rule="shape"]')).toHaveValue('end-chord-tone');
     await page.locator('[data-challenges-open]').click();
-    await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(90); // phase 4 added the lick challenges
+    // The library lists every challenge (it grew with phase 4's licks, phase 8's lick cards and the style challenges).
+    await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(CHALLENGES.length);
     await page.locator('[data-challenge-library] [data-challenge="one-note-swing"]').click();
     await expect(page.locator('[data-rule="note"]')).toHaveValue('one-note');
     // improvise (simulator): the debrief follows with a next step

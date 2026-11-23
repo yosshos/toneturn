@@ -7,7 +7,8 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   await expect(page.locator('[data-level-test="piano"]')).toBeVisible();
   // MEASUREMENT-AUDIT (second round): without MIDI the touch section is the microphone's (what a phone can measure)
   // + phase 6: the two channel checks (one phrase by ear, one at sight) after the sections
-  await expect(page.locator('.lt-sections li')).toHaveCount(8);
+  // + 0d2f431a (owner 2026-11-19, SPEC-LEVEL-TEST): a Rhythm and meter section (k-rhythm) so the test covers the whole course
+  await expect(page.locator('.lt-sections li')).toHaveCount(9);
   await page.locator('[data-test-start]').click();
   const probe = page.locator('[data-test-probe]');
   // Hands starts on its second step (two octaves hands together, not C).
@@ -32,7 +33,7 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
     await page.locator('[data-test-too-hard]').click();
   }
   await expect(page.locator('[data-level-test-done]')).toBeVisible();
-  expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'lines', 'channels']));
+  expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'meter', 'lines', 'channels']));
   expect(seen.filter((x) => x === 'channels').length).toBe(2);
   expect(seen.length).toBeLessThanOrEqual(14);
 });

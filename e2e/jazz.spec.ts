@@ -14,7 +14,8 @@ for (const [n, name] of [
   test(`${name} (lesson ${n}, simulator) runs to the end`, async ({ page }) => {
     test.setTimeout(240_000);
     await page.goto('/?sim=1&unlock=all#/path');
-    await page.getByRole('button', { name: new RegExp(`${n}\. ${name}`) }).click();
+    // The ?unlock=all list numbers lessons by LESSON_ORDER, which grows as lessons are inserted: match the title only.
+    await page.getByRole('button', { name: new RegExp(`^\\d+\\. ${name}`) }).click();
     await page.getByRole('button', { name: 'Use my voice & start' }).click();
     await page.getByRole('button', { name: 'Skip intro' }).click();
     await expect(page.getByRole('heading', { name: 'Lesson complete' })).toBeVisible({ timeout: 220_000 });

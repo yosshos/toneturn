@@ -54,7 +54,7 @@ const oneRow = async (page: Page) => {
   expect(box!.x + box!.width).toBeLessThanOrEqual(321);
 };
 
-const openScales = async (page: Page, lang: 'en' | 'he') => {
+const openScales = async (page: Page, lang: 'en' | 'he', beforeStart?: () => Promise<void>) => {
   await page.goto(`/?unlock=all&lang=${lang}#/drills`);
   // the hub first (the topic filter, when the course has one, renders with it)
   await expect(page.locator('[data-family], [data-topic]').first()).toBeVisible();
@@ -63,6 +63,7 @@ const openScales = async (page: Page, lang: 'en' | 'he') => {
   await page.locator('[data-family="scales"]').click();
   const card = page.locator('[data-level="scales-1"]');
   if ((await card.count()) && (await card.getAttribute('aria-expanded')) === 'false') await card.click();
+  await beforeStart?.();
   await page.locator('[data-level-start="scales-1"]').click();
   await expect(page.locator('[data-drills="run"]')).toBeVisible();
   await expect(page.locator('[data-drill-play]')).toBeVisible();
@@ -93,7 +94,10 @@ for (const lang of ['en', 'he'] as const) {
   test(`MIDI drill: device name, the activity light and the last note react to a key (${lang})`, async ({ page }) => {
     await stubMidi(page);
     await seed(page, lang, true);
-    await openScales(page, lang);
+    // Since 0.110.1 (owner 2026-11-21) a key on the keyboard is Play once the take has waited ANY_NOTE_ARM_MS, so the
+    // strip is checked with the page's clock held (the wait never arms); the clock then runs and a key starts the take.
+    await page.clock.install();
+    await openScales(page, lang, async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50));
     const strip = page.locator('[data-input-check="midi"]');
     await expect(strip).toBeVisible();
     await expect(strip.locator('.ic-dev bdi')).toHaveText('Test Keys');
@@ -117,6 +121,11 @@ for (const lang of ['en', 'he'] as const) {
     await fits(page);
     await page.waitForTimeout(600);
     await page.screenshot({ path: `${SHOTS}/drill-midi-${lang}.png` });
+    // Hands on the keys: with the wait over, the next key starts the count-in and the strip gives way to the take.
+    await page.clock.resume();
+    await page.clock.runFor(1000);
+    await note(page, 60, 100);
+    await expect(strip).toHaveCount(0);
   });
 
   test(`lesson gate: a sung item shows the mic strip; a choice item shows none (${lang})`, async ({ page }) => {
