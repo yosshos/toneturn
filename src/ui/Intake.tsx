@@ -23,6 +23,7 @@ import { SIMULATED, tts } from './services';
 import { WebSpeechTranscriber } from '../speech/webspeech';
 import { AREA_WORDS, MIX_WORDS, PLAY_WORDS, matchMany, matchOption, optionsSpoken, saidAny } from '../engine/intakeVoice';
 import { noteLabel } from './Vocal';
+import { intlTag } from '../i18n/translate';
 
 type Step = 'hello' | 'music' | 'singing' | 'theory' | 'reading' | 'plays' | 'goal' | 'naming' | 'rank' | 'leave' | 'motivation' | 'minutes' | 'range' | 'plan';
 const STEPS: Step[] = ['hello', 'music', 'singing', 'theory', 'reading', 'plays', 'goal', 'naming', 'rank', 'leave', 'motivation', 'minutes', 'range', 'plan'];
@@ -150,7 +151,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
       sttRef.current?.abort();
     }
   };
-  const speechLang = lang === 'he' ? 'he-IL' : 'en-US';
+  const speechLang = intlTag(lang === 'he' ? 'he' : 'en', 'en-US');
   const clean = (x: string) => x.replace(/[^\p{L}\p{N}\s,.?!'’–:;-]/gu, '').replace(/\s+/g, ' ').trim();
   const track = trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 });
   /** What the narrator says on a step, and how an answer is handled (true = understood). */

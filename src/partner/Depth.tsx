@@ -9,10 +9,11 @@ import { TEACHER_STATES, STATE_NAME, TeacherFrame } from './TeacherFrame';
 import type { CourseId } from '../engine/courses';
 import './depth.css';
 import { Icon } from '../ui/icons';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'en' | 'he';
 const L = (lang: Lang, en: string, he: string) => (lang === 'he' ? he : en);
-const fmt = (n: number, lang: Lang) => n.toLocaleString(lang === 'he' ? 'he-IL' : 'en-US');
+const fmt = (n: number, lang: Lang) => n.toLocaleString(intlTag(lang === 'he' ? 'he' : 'en', 'en-US'));
 
 const INST: Record<InstrumentId, { en: string; he: string; course: CourseId | 'voice' }> = {
   piano: { en: 'Piano', he: 'פסנתר', course: 'keys' },

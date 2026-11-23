@@ -29,6 +29,7 @@ import type { SungFrame } from '../engine/sing';
 import { SIMULATED } from './services';
 import { factSeed, SILENT_TOPICS, type FactLevel, type FactTopic } from '../engine/theoryFacts';
 import { FactPicker } from './TrueFalse';
+import { intlTag } from '../i18n/translate';
 
 /** Dev/E2E only: an in-page room server with bot opponents (never in production builds). */
 const FAKE_ROOMS = import.meta.env.DEV && params.has('fakeRooms');
@@ -228,7 +229,7 @@ function Board({ t, standings, me, limit, lang }: { t: Strings; standings: RoomS
             {s.nickname} <RatingBadge r={s.rating} provisional={s.ratingProvisional} t={t} size="sm" />
           </span>
           <span className="pbest" dir="ltr">
-            {s.points.toLocaleString(lang)} <small>{t.points}</small>
+            {s.points.toLocaleString(intlTag(lang))} <small>{t.points}</small>
           </span>
         </li>
       ))}
@@ -327,7 +328,7 @@ function RoomScreen({ t, settings, backend, roomId, onExit }: { t: Strings; sett
             p ? (
               <div key={p.userId} className={`step s${p.rank}`} style={{ order: i }}>
                 <b>{p.nickname}</b>
-                <span dir="ltr">{p.points.toLocaleString(lang)}</span>
+                <span dir="ltr">{p.points.toLocaleString(intlTag(lang))}</span>
                 <i>{p.rank}</i>
               </div>
             ) : null,

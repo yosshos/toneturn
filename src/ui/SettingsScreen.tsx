@@ -26,6 +26,7 @@ import { piano, store, tts } from './services';
 import { listMics } from '../speech/mic';
 import { APP_THEMES, appearanceOf } from './themes';
 import { GT } from '../i18n/guitarText';
+import { baseOf, LOCALES, offeredLocales, type LocaleCode } from '../i18n/locales';
 import { midi } from '../speech/midi';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
@@ -431,7 +432,26 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
         <Group id="language" icon={<SetIcon k="language" />} title={G.language.title[lang]} sub={G.language.sub[lang]}>
           <section className="set-card">
             <h2>{t.secLanguage}</h2>
-            <Seg label={t.settingsUi} value={s.uiLang} options={langs} onChange={(uiLang) => onChange({ uiLang, ...(s.inputLang === s.uiLang ? { inputLang: uiLang } : {}), ...(s.outputLang === s.uiLang ? { outputLang: uiLang } : {}) })} />
+            {/* docs/SPEC-I18N.md: ten screen languages; Hebrew and English are written in the app, the rest are
+                translated (beta until a native speaker reads them) and run on English underneath */}
+            <label className="field-row">
+              <span>{t.settingsUi}</span>
+              <select
+                value={s.locale ?? s.uiLang}
+                data-ui-locale="1"
+                onChange={(e) => {
+                  const locale = e.target.value as LocaleCode;
+                  const uiLang = baseOf(locale);
+                  onChange({ uiLang, locale, ...(s.inputLang === s.uiLang ? { inputLang: uiLang } : {}), ...(s.outputLang === s.uiLang ? { outputLang: uiLang } : {}) });
+                }}
+              >
+                {LOCALES.filter((l) => offeredLocales().includes(l) || l.code === s.locale).map((l) => (
+                  <option key={l.code} value={l.code} translate="no" lang={l.tag}>
+                    {l.beta ? `${l.name} (beta)` : l.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Seg label={t.settingsSpeakIn} hint={t.answerLangHint} value={s.inputLang} options={langs} onChange={(inputLang) => onChange({ inputLang })} />
             <Seg label={t.settingsListen} value={s.outputLang} options={langs} onChange={(outputLang) => onChange({ outputLang })} />
           </section>

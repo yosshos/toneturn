@@ -1,3 +1,4 @@
+import { intlTag } from '../i18n/translate';
 // Country for the profile flag (SPEC-SOCIAL §1.2): suggested from the device — time zone first, then the language's
 // region — with no location permission and nothing sent anywhere. The player can change it or choose "no flag". Pure.
 
@@ -65,7 +66,7 @@ export const COUNTRY_CODES =
 /** Country name in the UI language (Intl.DisplayNames; falls back to the code). */
 export function countryName(code: string, lang: 'en' | 'he'): string {
   try {
-    return new Intl.DisplayNames([lang], { type: 'region' }).of(code) ?? code;
+    return new Intl.DisplayNames([intlTag(lang)], { type: 'region' }).of(code) ?? code;
   } catch {
     return code;
   }

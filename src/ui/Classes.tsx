@@ -12,6 +12,7 @@ import { classDetail, myAssignments, teacherMockOn, type AssignItem, type ClassD
 import { ClassCharts, ClassMedianSetting } from './ClassCharts'; // phase 6: the teacher charts (only while the summaries sync)
 import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
 import { Icon } from './icons';
+import { intlTag } from '../i18n/translate';
 
 export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
@@ -191,7 +192,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
                   {shown.map((k) => (
                     <td key={k}>{pct(s.skills[k])}</td>
                   ))}
-                  <td dir="ltr">{s.lastActive ? new Date(s.lastActive).toLocaleDateString(lang) : '–'}</td>
+                  <td dir="ltr">{s.lastActive ? new Date(s.lastActive).toLocaleDateString(intlTag(lang)) : '–'}</td>
                 </tr>
               ))}
             </tbody>

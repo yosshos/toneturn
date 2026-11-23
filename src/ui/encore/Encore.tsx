@@ -47,6 +47,7 @@ import { Bi, Conf, DiffBadge, Dyn, EncoreGlyph, KeyB, KeyMap, KeyStrip, Seg, T, 
 import { Icon } from '../icons';
 import { EmptyState } from '../EmptyState';
 import { LicksHead } from '../LicksHead';
+import { intlTag } from '../../i18n/translate';
 
 export interface EncoreProps {
   lang: Lang;
@@ -322,7 +323,7 @@ function Shelf({ lang }: { lang: Lang }) {
                       <Bi text={T(t.title, lang)} />
                     </b>
                     <small className="t3">
-                      <bdi dir="ltr">{new Date(t.at).toLocaleDateString(he ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'numeric' })}</bdi> · <bdi dir="ltr">{t.notes.length}</bdi> {he ? 'תווים' : 'notes'}
+                      <bdi dir="ltr">{new Date(t.at).toLocaleDateString(intlTag(he ? 'he' : 'en', 'en-GB'), { day: 'numeric', month: 'numeric' })}</bdi> · <bdi dir="ltr">{t.notes.length}</bdi> {he ? 'תווים' : 'notes'}
                     </small>
                   </span>
                 </button>

@@ -15,6 +15,7 @@ import { CourseXpLine } from './CourseLevels';
 import { courseSetKinds, type ResultLike } from '../engine/courseSocial';
 import { DuelLinkButton, PlayerSafety, QuickMessages } from './Community';
 import { effectivePrivacy } from '../engine/privacy';
+import { intlTag } from '../i18n/translate';
 
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
 
@@ -61,7 +62,7 @@ export function LeagueCard({ t, lang, onBestTier, lastSeen, onSeen, history }: {
                 {m.me ? `${m.name} (${t.you})` : m.name} {zone === 'up' ? '▲' : zone === 'up-needs-xp' ? '△' : zone === 'down' ? '▼' : ''}
               </span>
               <span className="pbest" dir="ltr">
-                {m.xp.toLocaleString(lang)} XP
+                {m.xp.toLocaleString(intlTag(lang))} XP
               </span>
             </li>
           );

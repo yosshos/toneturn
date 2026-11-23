@@ -63,6 +63,7 @@ import { progressPoints } from '../engine/recCompare';
 import { refreshReserve, sessionAudioOf } from '../storage/recExtras';
 import { bgPlayer } from '../audio/bgPlayer';
 import { Icon, type IconKey } from './icons';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'en' | 'he';
 const RX2Compare = { en: 'Compare', he: 'להשוות' };
@@ -126,7 +127,7 @@ function dayLabel(iso: string, lang: Lang): string {
   if (k === dayKey(now.toISOString())) return RX.today[lang];
   if (k === dayKey(new Date(now.getTime() - 86_400_000).toISOString())) return RX.yesterday[lang];
   const d = new Date(iso);
-  return d.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  return d.toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'), { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 /** The take's result as the app's mark row: "clean · ♩144 · 96%". */

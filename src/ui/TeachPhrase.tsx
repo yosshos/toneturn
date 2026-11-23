@@ -43,6 +43,7 @@ import { cachedTeacherPhrases, refreshTeacherPhrases, sentKeysOf, subscribeTeach
 import { PianoRoll, type RollNote } from './encore/PianoRoll';
 import { Bi, KeyB, Seg, Tempo, kName, type Lang } from './encore/bits';
 import { Icon } from './icons';
+import { intlTag } from '../i18n/translate';
 
 const TX = {
   en: {
@@ -470,7 +471,7 @@ function useCached(): CachedPhraseAssign[] {
 const dueText = (iso: string | null, lang: Lang) => {
   if (!iso) return '';
   const d = new Date(`${iso}T12:00:00`);
-  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'numeric' });
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'), { weekday: 'short', day: 'numeric', month: 'numeric' });
 };
 
 /** Progress of a teacher phrase: required keys, passed among them, the next key. */
@@ -606,7 +607,7 @@ export function StudentPhraseAssignment({ lang, id, book, items, onBack }: { lan
           <div className="row">
             <span className="enc-pill">{tx.said}</span>
             <small className="tiny">
-              <bdi dir="ltr">{new Date(said.at).toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB')}</bdi>
+              <bdi dir="ltr">{new Date(said.at).toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'))}</bdi>
             </small>
           </div>
           {said.comment && (

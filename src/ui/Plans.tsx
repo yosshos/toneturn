@@ -5,6 +5,7 @@ import { CHALLENGES_ON } from '../cloud/challenges';
 import { ReportsAdmin } from './Community';
 import { grantPlan, listPlans, loadPricing, myPlan, saleNow, salePrice, savePricing, type MyPlan, type PlanId, type Pricing } from '../cloud/pricing';
 import { Icon } from './icons';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'en' | 'he';
 const PLAN_NAME: Record<PlanId, { en: string; he: string }> = {
@@ -38,12 +39,12 @@ export function PlansScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
       {mine && (
         <p className="field-hint" data-my-plan={mine.plan}>
           {he ? 'המנוי שלך' : 'Your plan'}: <b>{PLAN_NAME[mine.plan][lang]}</b>
-          {mine.until ? ` · ${he ? 'עד' : 'until'} ${new Date(mine.until).toLocaleDateString(lang)}` : ''}
+          {mine.until ? ` · ${he ? 'עד' : 'until'} ${new Date(mine.until).toLocaleDateString(intlTag(lang))}` : ''}
         </p>
       )}
       {p && saleNow(p) && (
         <p className="plans-sale" data-sale={p.sale.percent}>
-          {p.sale.text[lang] || (he ? 'מבצע' : 'Sale')} · −{p.sale.percent}%{p.sale.until ? ` · ${he ? 'עד' : 'until'} ${new Date(p.sale.until).toLocaleDateString(lang)}` : ''}
+          {p.sale.text[lang] || (he ? 'מבצע' : 'Sale')} · −{p.sale.percent}%{p.sale.until ? ` · ${he ? 'עד' : 'until'} ${new Date(p.sale.until).toLocaleDateString(intlTag(lang))}` : ''}
         </p>
       )}
       <div className="seg plans-period" role="radiogroup">
@@ -241,7 +242,7 @@ export function AdminScreen({ lang, onBack }: { lang: Lang; onBack: () => void }
                   <tr key={r.email}>
                     <td dir="ltr">{r.email}</td>
                     <td>{PLAN_NAME[r.plan][lang]}</td>
-                    <td dir="ltr">{r.until ? new Date(r.until).toLocaleDateString(lang) : '—'}</td>
+                    <td dir="ltr">{r.until ? new Date(r.until).toLocaleDateString(intlTag(lang)) : '—'}</td>
                     <td>{r.source}</td>
                     <td>{r.note ?? ''}</td>
                   </tr>

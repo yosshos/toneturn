@@ -10,6 +10,7 @@ import { band, overallHistory, ratingHistory, trendDelta, type RatingEvent, type
 import { DEFAULT_FRAME, dayOrdinal, FRAMES, frameSeries, longSeries, seriesFrom, type Change, type Frame, type Peaks, type RatingBase, type StatsDays } from '../engine/stats';
 import { STRINGS, type Strings } from '../i18n/strings';
 import { localDay } from '../storage/progress';
+import { intlTag } from '../i18n/translate';
 
 const dayOfLocal = (iso: string) => localDay(new Date(iso));
 export const langOf = (t: Strings): 'he' | 'en' => (t === STRINGS.he ? 'he' : 'en');
@@ -83,7 +84,7 @@ export function FrameChips({ lang, frame, onChange, allowed }: { lang: 'he' | 'e
 
 export function fmtDay(day: string, lang: 'he' | 'en', year = false) {
   const [y, m, d] = day.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(lang, { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
+  return new Date(y, m - 1, d).toLocaleDateString(intlTag(lang), { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
 }
 
 function Delta({ d, t }: { d: number | null; t: Strings }) {

@@ -7,6 +7,7 @@ import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useAmbient, usePlayOnMount } from './paper/motion';
 import { addDays, canBuy, canBuyCosmetic, COSMETICS, FRAMES, MAX_FREEZES, ownsCosmetic, PRICES, type Purchase, type StreakState } from '../engine/streak';
 import type { Strings } from '../i18n/strings';
+import { intlTag } from '../i18n/translate';
 
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ''));
 const reduced = () => document.documentElement.dataset.motion === 'reduced';
@@ -277,7 +278,7 @@ export function StreakSheet({
           <button className="icon-btn small" onClick={() => shift(-1)} aria-label={lang === 'he' ? 'החודש הקודם' : 'Previous month'}>
             <Icon k="back" />
           </button>
-          <b>{new Date(first + 'T12:00:00').toLocaleDateString(lang, { month: 'long', year: 'numeric' })}</b>
+          <b>{new Date(first + 'T12:00:00').toLocaleDateString(intlTag(lang), { month: 'long', year: 'numeric' })}</b>
           <button className="icon-btn small" onClick={() => shift(1)} aria-label={lang === 'he' ? 'החודש הבא' : 'Next month'} disabled={month >= today.slice(0, 7)}>
             <Icon k="fwd" />
           </button>

@@ -97,6 +97,21 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
+  if (url.pathname.startsWith(BASE + 'i18n/')) {
+    // The translated locales' catalogs (docs/SPEC-I18N.md): network-first (a new version brings new texts), the last
+    // copy kept in the samples cache (it survives app updates) for offline use.
+    e.respondWith(
+      caches.open(SAMPLES).then((c) =>
+        fetch(req)
+          .then((res) => {
+            if (res.ok) c.put(req, res.clone());
+            return res;
+          })
+          .catch(() => c.match(req)),
+      ),
+    );
+    return;
+  }
   if (url.pathname.startsWith(BASE + 'samples/')) {
     e.respondWith(
       caches.open(SAMPLES).then((c) =>

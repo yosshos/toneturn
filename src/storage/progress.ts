@@ -1,6 +1,8 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { activeLocale } from '../i18n/translate';
+import { localeInfo } from '../i18n/locales';
 import { addGameKeyTakes, isKeyGame, keyTakesOf } from '../engine/gameKeys';
 import { coursesFromProfile, migrateExamCourse, migrateJazzCourse } from '../engine/courses';
 import { placementResults } from '../engine/placement';
@@ -179,6 +181,9 @@ export interface Settings {
   version: number;
   mode: InputMode;
   uiLang: 'he' | 'en';
+  /** The screen's language when it is one of the translated ones (docs/SPEC-I18N.md); uiLang is then 'en' (the text
+   *  the translation starts from). Undefined = uiLang. */
+  locale?: import('../i18n/locales').LocaleCode;
   inputLang: 'he' | 'en';
   outputLang: 'he' | 'en';
   /** Keep the screen on while the app is open (Screen Wake Lock); undefined = on. */
@@ -491,7 +496,9 @@ export const DEFAULT_SETTINGS: Settings = {
 /** Effective note naming for a channel in a given language. */
 export function namingFor(pref: NamingPref, lang: 'he' | 'en'): Naming {
   if (pref !== 'auto') return pref;
-  return lang === 'he' ? 'solfege' : 'letter';
+  if (lang === 'he') return 'solfege';
+  // a translated locale runs on English: "auto" follows the locale (es, pt, fr, it: Do Re Mi; docs/SPEC-I18N.md §3)
+  return localeInfo(activeLocale()).naming === 'solfege' && activeLocale() ? 'solfege' : 'letter';
 }
 
 /** The phone's / browser's language: Hebrew when any preferred language is Hebrew (he, or the old code iw), else English. */

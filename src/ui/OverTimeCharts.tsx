@@ -7,9 +7,10 @@
 
 import { useRef, useState, type ReactNode } from 'react';
 import type { Point } from '../engine/progressSeries';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'he' | 'en';
-const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'), { day: 'numeric', month: 'short', timeZone: 'UTC' });
 export const pctOf = (v: number) => `${Math.round(v * 100)}%`;
 
 export interface Series {

@@ -21,3 +21,6 @@ public/voice/en/*.tmp
 .claude/settings.local.json
 .claude/worktrees/
 dist-openstudio
+
+# i18n translation work batches (scripts/i18n-batch.mjs)
+i18n/work/

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.128.0',
+    date: '2026-11-24',
+    en: ['Groundwork for eight more screen languages (Spanish, Portuguese, French, German, Italian, Japanese, Korean, Chinese): each opens in the language picker once its translation is ready', 'Dates and numbers follow the screen language; note names on Auto follow it too (Do Re Mi where musicians use it)'],
+    he: ['תשתית לשמונה שפות מסך נוספות (ספרדית, פורטוגזית, צרפתית, גרמנית, איטלקית, יפנית, קוריאנית, סינית): כל שפה תיפתח בבורר השפה כשהתרגום שלה מוכן', 'תאריכים ומספרים לפי שפת המסך; שמות התווים במצב אוטומטי לפי השפה (דו רה מי איפה שנהוג)'],
+  },
+  {
     version: '0.127.1',
     date: '2026-11-24',
     en: ['The neck view in the scale rotation offers three layouts: the hand position, three notes per string (guitar) and the whole neck with the position lit; a wide screen opens on the whole neck, a phone on the position, and your pick is kept'],

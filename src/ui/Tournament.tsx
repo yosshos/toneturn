@@ -26,6 +26,7 @@ import { withNote } from './bits';
 import { piano, store, tts } from './services';
 import { realClock } from '../game/adapters';
 import { PLAYER_COLORS } from '../engine/match';
+import { intlTag } from '../i18n/translate';
 
 // ======================================================================= Daily challenge
 
@@ -176,7 +177,7 @@ export function DailyBoardCard({ t, board, signedIn, error, lang }: { t: Strings
   return (
     <section className="set-card daily-board" aria-label={t.friendsToday}>
       <p className="daily-stats">
-        <b>{fmtS(t.todayPlayers, { n: board.players.toLocaleString(lang) })}</b>
+        <b>{fmtS(t.todayPlayers, { n: board.players.toLocaleString(intlTag(lang)) })}</b>
         {board.me && <span>{fmtS(t.yourRank, { r: board.me.rank, p: board.me.topPercent })}</span>}
       </p>
       <h2>{t.friendsToday}</h2>
@@ -192,7 +193,7 @@ export function DailyBoardCard({ t, board, signedIn, error, lang }: { t: Strings
               {f.squares}
             </span>
             <span className="pbest" dir="ltr">
-              {f.points.toLocaleString(lang)} <small>{t.points}</small>
+              {f.points.toLocaleString(intlTag(lang))} <small>{t.points}</small>
             </span>
           </li>
         ))}
@@ -502,7 +503,7 @@ export function TournamentPlay({
                 <span className="dot" aria-hidden="true" />
                 <span className="pname">{players[s.player]}</span>
                 <span className="pbest" dir="ltr">
-                  {s.points.toLocaleString(lang)} <small>{t.points}</small>
+                  {s.points.toLocaleString(intlTag(lang))} <small>{t.points}</small>
                 </span>
               </li>
             ))}
@@ -510,7 +511,7 @@ export function TournamentPlay({
         ) : (
           <>
             <p className="big-score">
-              <b dir="ltr">{winner.points.toLocaleString(lang)}</b>
+              <b dir="ltr">{winner.points.toLocaleString(intlTag(lang))}</b>
               <small>
                 {winner.correct}/{v.rounds} · {t.points}
               </small>
@@ -549,7 +550,7 @@ export function TournamentPlay({
           <span className="dot" aria-hidden="true" />
           <b>{players[p]}</b>
           <span className="half-score" dir="ltr">
-            {st.points.toLocaleString(lang)}
+            {st.points.toLocaleString(intlTag(lang))}
           </span>
         </div>
         {split && v.stage !== 'countdown' && <p className="half-ask">{withNote(askTemplate(q, lang, nm), target, 'key' in q ? displayNote(q.key as PitchClass, nm, lang) : '')}</p>}
@@ -612,10 +613,10 @@ export function TournamentPlay({
       {ghost && (
         <div className={`ghost-bar ${v.locked[1] !== undefined ? 'in' : ''}`} dir="ltr">
           <span>{players[1]}</span>
-          <b>{(v.standings.find((s) => s.player === 1)?.points ?? 0).toLocaleString(lang)}</b>
+          <b>{(v.standings.find((s) => s.player === 1)?.points ?? 0).toLocaleString(intlTag(lang))}</b>
           <span className="ghost-state">{v.locked[1] !== undefined ? '✓' : '…'}</span>
           <span className="ghost-me">
-            {t.you}: <b>{(v.standings.find((s) => s.player === 0)?.points ?? 0).toLocaleString(lang)}</b>
+            {t.you}: <b>{(v.standings.find((s) => s.player === 0)?.points ?? 0).toLocaleString(intlTag(lang))}</b>
           </span>
         </div>
       )}

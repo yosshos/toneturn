@@ -7,6 +7,7 @@ import { cloudConfigured } from '../cloud/cloud';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import { Icon, type IconKey } from './icons';
+import { intlTag } from '../i18n/translate';
 
 interface Props {
   t: Strings;
@@ -176,7 +177,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
           <Changelog lang={lang} entries={CHANGELOG.slice(0, 1)} bare />
           <p className="version-line" dir="ltr">
             {t.version} <b>{APP_VERSION}</b> · {APP_COMMIT}
-            {APP_BUILT && <> · {new Date(APP_BUILT).toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB')}</>}
+            {APP_BUILT && <> · {new Date(APP_BUILT).toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'))}</>}
           </p>
           <div className="row">
             {p.updateReady && (

@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { LocaleGate } from './i18n/boot';
 import '@fontsource-variable/rubik';
 import '@fontsource/secular-one';
 import '@fontsource/noto-music';
@@ -70,7 +71,9 @@ if (import.meta.env.DEV && location.hash.startsWith('#/dev/glyphs')) {
   // The opening animation is a sibling overlay: the app starts underneath, untouched.
   createRoot(document.getElementById('root')!).render(
     <>
-      <App />
+      <LocaleGate>
+        <App />
+      </LocaleGate>
       <BrandSplash />
     </>,
   );

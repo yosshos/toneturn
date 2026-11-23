@@ -34,6 +34,7 @@ import { itemOfAssign } from '../engine/itemAssign';
 import { lickById } from '../engine/licks';
 import { parsePieceKey } from '../engine/repLibrary';
 import { repItem } from '../engine/repertoire';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -368,7 +369,7 @@ export function GradingInbox({ detail, lang, t, onChanged }: { detail: ClassDeta
               <b>{s.name}</b>
               <span>{itemTitle(a, lang, t)}</span>
               <small dir="ltr">
-                {s.score !== null ? `${Math.round(s.score * 100)}%` : '—'} · {s.minutes ?? 0} {tx.min} · {new Date(s.createdAt).toLocaleDateString(lang)}
+                {s.score !== null ? `${Math.round(s.score * 100)}%` : '—'} · {s.minutes ?? 0} {tx.min} · {new Date(s.createdAt).toLocaleDateString(intlTag(lang))}
               </small>
             </div>
             <div className="ib-act">
@@ -651,7 +652,7 @@ export function DigestScreen({ token, lang, t, onHome }: { token: string; lang: 
                 {d.comments.map((c, i) => (
                   <li key={i}>
                     <span>{c.comment}</span>
-                    <small dir="ltr">{new Date(c.at).toLocaleDateString(lang)}</small>
+                    <small dir="ltr">{new Date(c.at).toLocaleDateString(intlTag(lang))}</small>
                   </li>
                 ))}
               </ul>

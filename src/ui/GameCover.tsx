@@ -14,7 +14,7 @@ import { GAMES_TX } from '../i18n/gamesText';
 import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
-export const docLang = (): Lang => (typeof document !== 'undefined' && document.documentElement.lang === 'en' ? 'en' : 'he');
+export const docLang = (): Lang => (typeof document !== 'undefined' && document.documentElement.lang !== 'he' ? 'en' : 'he');
 
 /** Covers of screens outside the games list's glyph table. */
 const EXTRA_GLYPH: Record<string, GlyphKind> = { online: 'live' };

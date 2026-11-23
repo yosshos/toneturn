@@ -16,9 +16,10 @@ import { SmallLine, useDark } from './ProgressOverTime';
 import { WeeklyRing } from './OverTimeCharts';
 import { Icon } from './icons';
 import '../progress-time.css';
+import { intlTag } from '../i18n/translate';
 
 type Lang = 'he' | 'en';
-const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'), { day: 'numeric', month: 'short', timeZone: 'UTC' });
 
 /** The snapshots on this device (given in tests). */
 function useSnaps(given?: Record<string, Snapshot>): Record<string, Snapshot> | null {

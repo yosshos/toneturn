@@ -18,6 +18,7 @@ import { Icon } from './icons';
 import { GT } from '../i18n/guitarText';
 import { calibEnabled, calibJson, clearCalib, readCalib, setCalibEnabled } from '../engine/drills/guitarCalib';
 import { APP_VERSION } from '../version';
+import { intlTag } from '../i18n/translate';
 
 type Status = 'idle' | 'running' | 'ok' | 'fail';
 interface LogLine {
@@ -39,7 +40,7 @@ export function Diagnostics({ t, settings, onBack }: { t: Strings; settings: Set
   const [lastHz, setLastHz] = useState<number | null>(null);
   const [recStatus, setRecStatus] = useState<Status>('idle');
   const [recErr, setRecErr] = useState<AccessError | null>(null);
-  const [recLang, setRecLang] = useState(settings.inputLang === 'he' ? 'he-IL' : 'en-US');
+  const [recLang, setRecLang] = useState(intlTag(settings.inputLang === 'he' ? 'he' : 'en', 'en-US'));
   const [heard, setHeard] = useState<string[]>([]);
   const [log, setLog] = useState<LogLine[]>([]);
   const [audioOk, setAudioOk] = useState<Status>('idle');

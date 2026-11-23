@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
 const commit = (() => {
@@ -52,7 +53,9 @@ function serviceWorker(): Plugin {
 export default defineConfig(({ mode }) => ({
   // GitHub Pages serves the app under /toneturn/; local dev and preview use /.
   base: process.env.BASE_PATH ?? '/',
-  plugins: [react(), serviceWorker(), ...(mode === 'https' ? [basicSsl()] : [])],
+  // the JSX runtime with the translation step for the translated locales (src/i18n/jsx, docs/SPEC-I18N.md)
+  plugins: [react({ jsxImportSource: '@tt/jsx' }), serviceWorker(), ...(mode === 'https' ? [basicSsl()] : [])],
+  resolve: { alias: [{ find: /^@tt\/jsx\/(.*)$/, replacement: fileURLToPath(new URL('./src/i18n/jsx/$1', import.meta.url)) }] },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(commit),
@@ -60,7 +63,8 @@ export default defineConfig(({ mode }) => ({
   },
   // Agents' worktrees live under .claude/ — the dev server must not watch them (each edit there reloaded every open page).
   server: { port: 5173, watch: { ignored: ['**/.claude/**', '**/test-results/**', '**/playwright-report/**'] } },
-  optimizeDeps: { entries: ['index.html'] },
+  // one copy of the translator: the JSX runtime is never pre-bundled apart from src/i18n/translate.ts
+  optimizeDeps: { entries: ['index.html'], exclude: ['@tt/jsx/jsx-runtime', '@tt/jsx/jsx-dev-runtime'] },
   // The Kokoro worker is an ES module worker (it imports onnxruntime-web).
   worker: { format: 'es' },
   test: {

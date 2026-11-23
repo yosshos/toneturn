@@ -23,6 +23,8 @@ import { Icon } from './icons';
 import { Logo } from './brand/Logo';
 import { InstallButton } from './brand/InstallButton';
 import { switchLang } from './langSwitch';
+import { isTranslated, LOCALES, OFFERED, type LocaleCode } from '../i18n/locales';
+import { activeLocale } from '../i18n/translate';
 
 type Lang = 'en' | 'he';
 
@@ -120,6 +122,9 @@ export function onboardingIntake(picked: CourseId[], music: Level4): IntakeResul
 
 export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r: IntakeResult) => void; onSignIn: () => void }) {
   const tx = TX[lang];
+  // the screen's language: a translated locale when one is on, else Hebrew / English
+  const loc: LocaleCode = activeLocale() ?? lang;
+  const more = LOCALES.filter((l) => isTranslated(l.code) && (OFFERED.includes(l.code) || l.code === loc));
   const [step, setStep] = useState<Step>('welcome');
   const [picked, setPicked] = useState<CourseId[]>([]);
   const first = picked[0] ?? defaultCourse();
@@ -193,12 +198,25 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
           <h1>{copy('ob.slogan', lang, { he: 'לשמוע. להבין. לבצע.', en: 'Hear. Understand. Perform.' })}</h1>
           <p>{copy('ob.sub', lang, { he: 'שמיעה, שירה ונגינה, עשר דקות ביום.', en: 'Ear, voice and playing, ten minutes a day.' })}</p>
           {/* The language comes first (owner 2026-11-19: most testers speak Hebrew; the default follows the phone). */}
-          <div className="ob-lang" role="radiogroup" aria-label="שפה · Language" data-ob-lang>
+          {/* docs/SPEC-I18N.md: Hebrew and English up front, the translated languages (once offered) in a third cell */}
+          <div className={`ob-lang${more.length ? ' ob-lang-3' : ''}`} role="radiogroup" aria-label="שפה · Language" data-ob-lang translate="no">
             {(['he', 'en'] as const).map((l) => (
-              <button key={l} type="button" role="radio" aria-checked={lang === l} className={lang === l ? 'on' : ''} lang={l} onClick={() => switchLang(l)} data-ob-lang-pick={l}>
+              <button key={l} type="button" role="radio" aria-checked={loc === l} className={loc === l ? 'on' : ''} lang={l} onClick={() => switchLang(l)} data-ob-lang-pick={l} translate="no">
                 {l === 'he' ? 'עברית' : 'English'}
               </button>
             ))}
+            {more.length > 0 && (
+              <select className={isTranslated(loc) ? 'on' : ''} value={isTranslated(loc) ? loc : ''} onChange={(e) => e.target.value && switchLang(e.target.value as LocaleCode)} aria-label="Other languages · שפות נוספות" data-ob-lang-more="1" translate="no">
+                <option value="" translate="no">
+                  {lang === 'he' ? 'שפה אחרת' : 'Other…'}
+                </option>
+                {more.map((l) => (
+                  <option key={l.code} value={l.code} lang={l.tag} translate="no">
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="ob-actions">
             <button className="btn primary ob-cta" onClick={next} data-ob="start">

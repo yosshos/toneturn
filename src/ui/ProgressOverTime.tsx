@@ -20,6 +20,7 @@ import type { ItemState } from '../engine/drills/types';
 import { ProjectionCard } from './ExtraCharts';
 import { ProgressShareButton } from './ShareCards';
 import '../progress-time.css';
+import { intlTag } from '../i18n/translate';
 
 /** What the projection needs (the app builds the matrix the same way the key screen does). */
 export interface ProjectionInput {
@@ -59,7 +60,7 @@ export function useDark(): boolean {
   return dark;
 }
 
-const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(intlTag(lang === 'he' ? 'he' : 'en', 'en-GB'), { day: 'numeric', month: 'short', timeZone: 'UTC' });
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** One series over time: a 2px line, a crosshair tooltip, the first and last day on the axis, an optional target line. */

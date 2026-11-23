@@ -53,6 +53,7 @@ import { msByDay, withLedgerMs } from '../engine/practiceTime';
 import { Icon } from './icons';
 import { ProgressOverTime } from './ProgressOverTime';
 import { EAR_AREAS } from '../engine/snapshot';
+import { intlTag } from '../i18n/translate';
 
 /** AUDIT-5 #1: the stats days with the practice clock's measured time (lessons, technique, games, songs …). */
 function usePracticeDays(days: StatsDays | undefined): StatsDays | undefined {
@@ -225,7 +226,7 @@ const today = () => localDay(new Date());
 const P = (p: Progress) => p as ProgressStats;
 function weekdayName(w: number, lang: Lang) {
   // 2026-11-01 is a Sunday.
-  return new Date(2026, 10, 1 + w).toLocaleDateString(lang, { weekday: 'long' });
+  return new Date(2026, 10, 1 + w).toLocaleDateString(intlTag(lang), { weekday: 'long' });
 }
 const areaLevel = (r: ReturnType<typeof foldFromMemo>, d: DomainId) => {
   const v = domainValue(r, d);
@@ -360,7 +361,7 @@ function OverviewV2({ lang, ratings, days }: { lang: 'he' | 'en'; ratings: Param
     const d = new Date();
     d.setDate(d.getDate() - (6 - k));
     const key = localDay(d);
-    return { key, xp: days?.[key]?.xp ?? 0, label: d.toLocaleDateString(he ? 'he-IL' : 'en-US', { weekday: 'narrow' }) };
+    return { key, xp: days?.[key]?.xp ?? 0, label: d.toLocaleDateString(intlTag(he ? 'he' : 'en', 'en-US'), { weekday: 'narrow' }) };
   });
   const maxXp = Math.max(1, ...week.map((w) => w.xp));
   const total = week.reduce((a, w) => a + w.xp, 0);
@@ -1135,7 +1136,7 @@ export function shareMonth(m: MonthReview, lang: Lang, t: Strings) {
 
 const monthLabel = (month: string, lang: Lang) => {
   const [y, m] = month.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(lang, { month: 'long', year: 'numeric' });
+  return new Date(y, m - 1, 1).toLocaleDateString(intlTag(lang), { month: 'long', year: 'numeric' });
 };
 
 /**

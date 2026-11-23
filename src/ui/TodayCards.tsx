@@ -23,6 +23,7 @@ import { studioText, sfill } from '../i18n/studioText';
 import { Icon } from './icons';
 import { WeeklyRingTile, WeeklySummaryCard } from './PlaceCharts';
 import { areaLabel } from './Stats';
+import { intlTag } from '../i18n/translate';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -35,7 +36,7 @@ export interface ExamActions {
 function ExamPrepCard({ progress, lang, on }: { progress: Progress; lang: 'he' | 'en'; on: ExamActions }) {
   const he = lang === 'he';
   const c = examCard(progress.history);
-  const last = c.lastAt ? new Date(c.lastAt).toLocaleDateString(he ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' }) : null;
+  const last = c.lastAt ? new Date(c.lastAt).toLocaleDateString(intlTag(he ? 'he' : 'en', 'en-GB'), { day: 'numeric', month: 'short' }) : null;
   return (
     <section className="tc-card tc-exam" aria-label={EXAM_PREP_NAME[lang]} data-today-exam={c.exam.id}>
       <small>{EXAM_PREP_NAME[lang]}</small>

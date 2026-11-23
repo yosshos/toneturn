@@ -106,6 +106,8 @@ import { shortName } from '../engine/pathNames';
 import { PathExtras } from './Tools';
 import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
+import { baseOf, isTranslated, localeInfo, LOCALES } from '../i18n/locales';
+import { useLocale } from '../i18n/boot';
 import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
@@ -603,18 +605,22 @@ export function App() {
     })();
   }, [user, runSync]);
 
-  // ?lang=he|en forces the interface language (shared links, tests).
-  const forcedLang = params.get('lang') === 'he' || params.get('lang') === 'en' ? (params.get('lang') as 'he' | 'en') : null;
+  // ?lang=he|en|es|… forces the interface language (shared links, tests); a translated locale runs on English.
+  const qLang = params.get('lang');
+  const forced = LOCALES.find((l) => l.code === qLang)?.code ?? null;
   const s0 = settings ?? DEFAULT_SETTINGS;
-  const s = forcedLang ? { ...s0, uiLang: forcedLang, outputLang: forcedLang } : s0;
+  const s = forced ? { ...s0, uiLang: baseOf(forced), outputLang: baseOf(forced), locale: forced } : s0;
   const t = STRINGS[s.uiLang];
+  const loc = localeInfo(s.locale ?? s.uiLang);
+  useLocale(loc.code, !forced);
 
   useEffect(() => {
-    document.documentElement.lang = s.uiLang;
-    document.documentElement.dir = s.uiLang === 'he' ? 'rtl' : 'ltr';
+    // 'he' / 'en' as before (screens read it), the full tag for a translated locale
+    document.documentElement.lang = isTranslated(loc.code) ? loc.tag : loc.code;
+    document.documentElement.dir = loc.dir;
     const osReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.documentElement.dataset.motion = (s.reducedMotion ?? osReduce) ? 'reduced' : 'full';
-  }, [s.uiLang, s.reducedMotion]);
+  }, [loc.tag, loc.dir, s.reducedMotion]);
   // The opening animation shows before settings load: it reads the last language and motion setting from here.
   useEffect(() => {
     if (settings) rememberSplashPrefs({ lang: s.uiLang, reduced: s.reducedMotion ?? undefined });
@@ -819,7 +825,10 @@ export function App() {
   // Owner 2026-11-19: no notices while the app is in development (no real users yet) — jazz opens quietly.
   useEffect(() => {
     // The globe switches the whole app: screens, spoken answers and the voice that answers (owner feedback 2026-11-18).
-    registerLangSetter((lang) => updateSettings({ uiLang: lang, inputLang: lang, outputLang: lang }));
+    registerLangSetter((to) => {
+      const lang = baseOf(to);
+      updateSettings({ uiLang: lang, locale: to, inputLang: lang, outputLang: lang });
+    });
     return () => registerLangSetter(null);
   }, [updateSettings]);
   /** SPEC-COURSE-START: one step of a course's start, applied to the latest state (several can land in one tap). */
