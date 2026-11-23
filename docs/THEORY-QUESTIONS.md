@@ -148,6 +148,13 @@ teaches it as a pair with 3 to 9.
 - The ladder's "thirds" and "triads" (`echols-ladder-thirds-triads`) stay hidden too. They were never asked, and a
   "third" of two 6-dim scale steps is a 2nd at the 6th (G A).
 
+**13. The notes of the montuno line (`montuno-lines`, 2026-11-23).**
+- The rhythm is sourced: the Mauleón montuno figure, with the offbeat bar on the clave's three side (STYLE-AFROCUBAN §2).
+- The notes are not. The app builds them by a rule: the top line starts on the chord's 5th and moves to the nearest chord tone, in octaves, with the other chord tones inside.
+- Over C–F | G–F (I–IV | V–IV, clave 2-3) the octave line comes out G, A on the beats of bar 1 and B, C on the offbeats of bar 2. The inner pairs are C–E, C–F | D–G, F–A.
+- **Question:** is this how a montuno line is taught (for example, matching Mauleón's *101 Montunos*)? Or should the line follow a different rule, such as starting on the root or the 3rd, or moving in octaves with the chord inside?
+- Until it is answered, k-montuno levels 3–9 and 11 are hidden; ponchando (levels 1–2) and the songo right hand (level 10) stay.
+
 ### Omitted for lack of verified knowledge
 
 The owner did not know these. They were re-researched against other sources and other teachers, and no consistent
