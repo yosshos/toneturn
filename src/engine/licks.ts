@@ -74,6 +74,8 @@ export interface Lick {
   /** The key it was played in (0–11), shown first. */
   homeKey?: number;
   minor?: boolean;
+  /** SPEC-STYLE-FOCUS: the lick's style (absent = jazz, the library's own); the Licks filter and the taster read it. */
+  style?: import('./styles').StyleId;
   instrument?: LickInstrument;
   plan?: PhrasePlan;
   source?: PhraseSource;

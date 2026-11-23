@@ -1,6 +1,8 @@
 // Name That Groove (0.76): two bars of a groove on the kit, name the style among four. 10 rounds; a right answer is
 // worth 10 within 2 s of the groove starting, falling to 5 at 12 s. The engine is src/engine/nameGroove.ts.
 
+import { focusOf, picksOf } from '../engine/styleFocus';
+import type { CourseId } from '../engine/courses';
 import '../kitread.css';
 import { useEffect, useRef, useState } from 'react';
 import { grooveAnswer, grooveOver, grooveResult, grooveSound, isGrooveSave, newGrooveSave, roundOf, styleById, GROOVE_ROUNDS, type GrooveRound, type GrooveSave } from '../engine/nameGroove';
@@ -68,7 +70,7 @@ export function NameGroove({ lang, settings, saved, onSave, onExit, onResult, be
   };
 
   const begin = (resume: boolean) => {
-    const s = resume && resumable ? resumable : newGrooveSave((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, levelOf(tier), tierInfo ? tier : undefined);
+    const s = resume && resumable ? resumable : newGrooveSave((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0, levelOf(tier), tierInfo ? tier : undefined, picksOf(focusOf(settings, (settings.activeCourse ?? 'drums') as CourseId)));
     setRun(s);
     setFb(null);
     setFinal(null);

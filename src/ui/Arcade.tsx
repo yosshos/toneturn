@@ -8,7 +8,7 @@ import { PAPER } from './paper';
 import { navArt } from './paper/art-core';
 import { PaperSvg } from './paper/Paper';
 import { useCourse } from './courseContext';
-import { ExamPrepSwitch, JazzFocusSwitch } from './CourseSwitcher';
+import { ExamPrepSwitch } from './CourseSwitcher';
 import { COURSE_GAMES, COURSE_ROWS, courseGames, courseRows } from './courseRows';
 import { lastPlace } from './continuePlace';
 import '../practice3.css';
@@ -859,7 +859,7 @@ export const GAME_GLYPH: Record<string, GlyphKind> = {
 const CAT_COLOR: Record<string, string> = { ear: DOMAIN_COLOR.ear, rhythm: DOMAIN_COLOR.rhythm, memory: DOMAIN_COLOR.harmony, read: DOMAIN_COLOR.theory, voice: DOMAIN_COLOR.voice, instrument: DOMAIN_COLOR.play, social: '#EDE6F7' };
 
 export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline, onGhost, onDaily, onPuzzle, onGame2, onBoard, lang = 'en', hub, status }: { onBoard?: () => void; status?: Partial<Record<string, string>>; t: Strings; progress: Progress; onGame: (k: GameKind) => void; onTrueFalse: () => void; onDuel: () => void; onOnline: () => void; onGhost: () => void; onDaily: () => void; onPuzzle: () => void; onGame2?: (id: (typeof GAMES2)[number]['id']) => void; lang?: 'he' | 'en'; hub?: PracticeHub }) {
-  const { active: course, examPrep, setExamPrep, jazzOn, jazzFocus, setJazzFocus } = useCourse();
+  const { active: course, examPrep, setExamPrep, jazzOn, jazzFocus } = useCourse();
   const rows = courseRows(course, examPrep, jazzFocus ? 'focus' : jazzOn ? 'on' : 'off');
   // SPEC-JAZZ-FOLD: the jazz games only while the jazz pack is open in the course.
   const gamesHere = courseGames(course, jazzOn);
@@ -950,10 +950,9 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             )}
           </div>
           {!hub && <p className="field-hint">{t.playHint}</p>}
-          {hub && course !== 'drums' && (
+          {hub && course === 'ear' && (
             <div className="exam-head-row">
-              {course === 'ear' && <ExamPrepSwitch on={examPrep} lang={lang} onChange={setExamPrep} />}
-              <JazzFocusSwitch on={jazzFocus} lang={lang} onChange={setJazzFocus} />
+              <ExamPrepSwitch on={examPrep} lang={lang} onChange={setExamPrep} />
             </div>
           )}
         </>

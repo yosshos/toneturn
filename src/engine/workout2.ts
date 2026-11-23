@@ -2,6 +2,7 @@
 // theirs to edit — total time, minutes per block, order, remove / add / swap, presets, today-only or default.
 // The path is WHAT to learn, the workout is HOW MUCH TODAY (§9): blocks serve path steps first. Pure.
 
+import type { StyleId } from './styles';
 import { gameVerified } from './verifiedContent';
 import type { DomainId } from './rating';
 import type { SkillId } from './lesson';
@@ -29,7 +30,7 @@ export type BlockTarget =
   | { kind: 'keys' }
   /** D2: the 30 % beside technique — improvisation in the key of the week; a classical emphasis plays repertoire (the
    *  pieces coach); drums play grooves, fills and trading. */
-  | { kind: 'improv'; mode?: ImprovMode }
+  | { kind: 'improv'; mode?: ImprovMode; /** SPEC-STYLE-FOCUS §4: today's style for the band and the tune (main ~60 %). */ style?: StyleId }
   /** SPEC-PATH-TODAY-PRACTICE §5.1: the class assignments, first and added to the workout (never replacing it). */
   | { kind: 'teacher'; ids?: string[] };
 
@@ -89,8 +90,12 @@ export interface SuggestInput {
   day?: string;
   /** BUILD-PLAN phase 2 (D2): the player's technique tier (a beginner, tier ≤ 1, splits 85/15 instead of 70/30). */
   techTier?: number;
-  /** The instrument's emphasis: classical turns the improvisation share into repertoire. */
+  /** The instrument's emphasis (old, read-only for one version): classical turns the improvisation share into repertoire. */
   emphasis?: 'both' | 'classical' | 'jazz';
+  /** SPEC-STYLE-FOCUS: the course's main style (classical: the improvisation share is repertoire, SPEC-DAILY-WORKOUT §4). */
+  mainStyle?: StyleId;
+  /** SPEC-STYLE-FOCUS §4: today's style for the improvisation share (styleFocus.improvStyleFor: the main ~60 %). */
+  improvStyle?: StyleId;
   /** SPEC-PATH-TODAY-PRACTICE §5.1: today's share of the open class assignments (teacherToday), added first. */
   teacher?: TeacherToday | null;
 }
@@ -277,7 +282,7 @@ function suggestBase(inp: SuggestInput): Block[] {
 export const DAY_SHARES = { path: 0.2, tech: 0.7, techBeginner: 0.85, maintenance: 0.15 };
 
 /** The improvisation share's content by course and emphasis (D2; BUILD-PLAN §2 for drums). */
-export const improvMode = (course?: CourseId, emphasis?: SuggestInput['emphasis']): ImprovMode => (course === 'drums' ? 'grooves' : emphasis === 'classical' ? 'repertoire' : 'improv');
+export const improvMode = (course?: CourseId, emphasis?: SuggestInput['emphasis'], mainStyle?: StyleId): ImprovMode => (course === 'drums' ? 'grooves' : emphasis === 'classical' || mainStyle === 'classical' ? 'repertoire' : 'improv');
 
 /**
  * D2 for an instrument course: review (spaced reviews due, maintenance out of the technique share) → the path (~20 %)
@@ -323,7 +328,7 @@ function suggestInstrument(inp: SuggestInput, T: number, push: (t: BlockTarget, 
   if (review) push({ kind: 'warmup' }, review);
   if (path) push({ kind: 'path' }, path);
   if (tech) push({ kind: 'keys' }, tech);
-  if (imp) push({ kind: 'improv', mode: improvMode(inp.course, inp.emphasis) }, imp);
+  if (imp) push({ kind: 'improv', mode: improvMode(inp.course, inp.emphasis, inp.mainStyle), ...(inp.improvStyle ? { style: inp.improvStyle } : {}) }, imp);
   return out;
 }
 

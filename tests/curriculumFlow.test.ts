@@ -133,17 +133,16 @@ describe('jazz in the Ear course (SPEC-JAZZ-FOLD)', () => {
 });
 
 describe('keys emphasis', () => {
-  it('a jazz pianist keeps the core scales / arpeggios below 1100; a classical pianist keeps the Alberti bass', () => {
-    const jazz = { ...DEFAULT_DRILL_SETTINGS, emphasis: 'jazz' as const };
-    expect(ladderFamiliesFor('keys', jazz)).toEqual(expect.arrayContaining(['scales', 'arpeggios', 'fingers']));
-    const hid = ladderHiddenFor('keys', undefined, undefined, false, jazz);
-    expect(hid).not.toContain('scales-1');
-    expect(hid).toContain('scales-30');
-    const cl = { ...DEFAULT_DRILL_SETTINGS, emphasis: 'classical' as const };
-    expect(ladderFamiliesFor('keys', cl)).toContain('accomp');
-    const hc = ladderHiddenFor('keys', undefined, undefined, false, cl);
-    expect(hc).not.toContain('accomp-1');
-    expect(hc).toContain('accomp-3');
+  it('SPEC-STYLE-FOCUS §2: the old emphasis hides nothing — every pianist keeps the scales, arpeggios and the accompaniment hand', () => {
+    for (const emphasis of ['jazz', 'classical', 'both'] as const) {
+      const d = { ...DEFAULT_DRILL_SETTINGS, emphasis };
+      expect(ladderFamiliesFor('keys', d)).toEqual(expect.arrayContaining(['scales', 'arpeggios', 'fingers', 'accomp', 'harris']));
+      const hid = ladderHiddenFor('keys', undefined, undefined, false, d);
+      for (const id of ['scales-1', 'scales-30', 'accomp-1', 'accomp-3']) expect(hid, `${emphasis} ${id}`).not.toContain(id);
+    }
+    // the style focus leaves out only the styled levels of other styles (they stay open in Practice)
+    expect(ladderHiddenFor('keys', undefined, undefined, false, undefined, { main: 'jazz', also: [] })).toContain('accomp-5');
+    expect(ladderHiddenFor('keys', undefined, undefined, false, undefined, { main: 'neworleans', also: [] })).not.toContain('accomp-5');
   });
 });
 

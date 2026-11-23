@@ -302,11 +302,12 @@ describe('the levels', () => {
 describe('wiring', () => {
   it('jazz emphasis / the jazz add-on / the jazz track show the families; each has its own path symbol', () => {
     expect(shownFamilies({ emphasis: 'jazz' }).map((x) => x.id)).toContain('k-vocab');
-    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).not.toContain('k-vocab');
+    // SPEC-STYLE-FOCUS §2: no lock — every old emphasis / add-on / track shows them
+    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).toContain('k-vocab');
     expect(shownFamilies({ emphasis: 'jazz', instrument: 'guitar', guitarAddOns: ['jazz'] }).map((x) => x.id)).toContain('g-bebop');
-    expect(shownFamilies({ emphasis: 'jazz', instrument: 'guitar', guitarAddOns: [] }).map((x) => x.id)).not.toContain('g-bebop');
+    expect(shownFamilies({ emphasis: 'jazz', instrument: 'guitar', guitarAddOns: [] }).map((x) => x.id)).toContain('g-bebop');
     expect(shownFamilies({ emphasis: 'jazz', instrument: 'bass', bassTrack: 'jazz' }).map((x) => x.id)).toContain('b-bebop');
-    expect(shownFamilies({ emphasis: 'jazz', instrument: 'bass', bassTrack: 'prog' }).map((x) => x.id)).not.toContain('b-bebop');
+    expect(shownFamilies({ emphasis: 'jazz', instrument: 'bass', bassTrack: 'prog' }).map((x) => x.id)).toContain('b-bebop');
     for (const f of ['k-vocab', 'g-bebop', 'b-bebop']) {
       expect(GLYPHS[FAMILY_GLYPH[f]], f).toBeDefined();
       expect(Object.entries(FAMILY_GLYPH).filter(([k, g]) => k !== f && g === FAMILY_GLYPH[f]), f).toEqual([]);

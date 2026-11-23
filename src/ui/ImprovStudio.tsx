@@ -5,7 +5,9 @@
 //   Trading 4s   — you play four bars, the app answers with your idea developed; three rounds.
 // Input: a MIDI keyboard, or the on-screen keys.
 import { useEffect, useRef, useState } from 'react';
-import { chartBacking, IMPROV_LEVELS, parseChart } from '../engine/charts';
+import { IMPROV_LEVELS, parseChart } from '../engine/charts';
+import { styledBacking } from '../engine/styleBand';
+import type { BandStyle } from '../engine/band';
 import { checkPhraseRule, developmentScore, judgeVariation, motifReturns, phraseToVary, phrasingReport, tradeAnswer, type PhraseRule, type PNote, type Variation } from '../engine/improvPhrasing';
 import type { NoteEvent } from '../engine/lesson';
 import type { Settings } from '../storage/progress';
@@ -25,6 +27,10 @@ import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { Icon } from './icons';
+import { focusOf } from '../engine/styleFocus';
+import { STYLE_CHART, STYLE_TEXT, type StyleId } from '../engine/styles';
+import type { CourseId } from '../engine/courses';
+import type { ChartStyle } from '../engine/charts';
 import { ScaleRotation, ScaleStrip } from './ScaleRotation';
 import { buildRotationSheet, gradeRotation, improvTake, type ImprovTake, type RotationGrade } from '../engine/rotationSheet';
 import type { ModeStats } from '../engine/rotation';
@@ -112,10 +118,16 @@ export function TodayLickCard({ lick, dayKey, lang, onOpen }: { lick: Lick; dayK
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onTake, workout = false }: { /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(workout || !initialChart ? 'scales' : onOpenChart ? 'rules' : 'phrasing');
+  // SPEC-STYLE-FOCUS §4: the band's default style is the main style (or today's style from the workout); the level's
+  // own band is one tap away.
+  const bandStyleId: StyleId = styleToday ?? focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId).main;
+  const styleBand: ChartStyle | BandStyle | null = STYLE_CHART[bandStyleId] ?? null;
+  const [band, setBand] = useState<'level' | 'style'>(styleBand ? 'style' : 'level');
+  const startedAt = useRef<number | null>(null);
   const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
@@ -171,8 +183,22 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
 
   const chartOf = () => {
     const L = IMPROV_LEVELS.find((x) => x.n === lv) ?? IMPROV_LEVELS[0];
-    return { L, p: parseChart(L.text) };
+    // the band: the player's style (any band style, styleBand.ts) or the level's own
+    const bandStyle: ChartStyle | BandStyle = band === 'style' && styleBand ? styleBand : L.style;
+    return { L, p: parseChart(L.text), bandStyle };
   };
+  // §9.4: the time over a style's band counts for that style (the level's own band is jazz)
+  useEffect(() => {
+    if (running) {
+      startedAt.current = Date.now();
+      return;
+    }
+    if (startedAt.current === null) return;
+    const min = (Date.now() - startedAt.current) / 60000;
+    startedAt.current = null;
+    if (min >= 0.25) onStyleMinutes?.(band === 'style' && styleBand ? bandStyleId : 'jazz', min);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
   // Phrase / Trade are graded against the rotation's scales too (shown as a strip above Start): the same colour
   // coverage, and the take folds into the mode × function stats (SPEC-RBI-ROTATION §5, BUILD-PLAN phase 5).
   const stats: ModeStats = settings.rotationStats ?? {};
@@ -190,8 +216,8 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const startPhrasing = async () => {
     setRunning(true);
     setResult(null);
-    const { L, p } = chartOf();
-    const b = chartBacking(p, L.style, bpm, 2);
+    const { L, p, bandStyle } = chartOf();
+    const b = styledBacking(p, bandStyle, bpm, 2);
     const total = p.bars * 4 * 2;
     const done = await run(b.events, b.length, b.startBeat);
     setRunning(false);
@@ -267,7 +293,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const startTrade = async () => {
     setRunning(true);
     setResult(null);
-    const { L, p } = chartOf();
+    const { p, bandStyle } = chartOf();
     const four = { ...p, bars: Math.min(4, p.bars) };
     const scores: number[] = [];
     let tStats = stats;
@@ -277,7 +303,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     for (let r = 0; r < 3; r++) {
       setRound(r + 1);
       // the player's four bars over the band (with a count-in)
-      const b = chartBacking(four, L.style, bpm, 1);
+      const b = styledBacking(four, bandStyle, bpm, 1);
       if (!(await run(b.events, b.length, b.startBeat))) break;
       const mine = notes.current.filter((n) => n.beat >= -0.25 && n.beat < 16);
       scores.push(developmentScore(motifReturns(mine).returns));
@@ -289,7 +315,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       }
       // the app's answer: the player's idea developed, over the band
       const ans = tradeAnswer(mine, 60, 0);
-      const back = chartBacking(four, L.style, bpm, 1, 4, { countIn: false });
+      const back = styledBacking(four, bandStyle, bpm, 1, { countIn: false });
       const ev: NoteEvent[] = [...back.events, ...ans.map((n) => ({ midi: n.midi, start: n.beat * beatS, duration: Math.max(0.2, n.dur * beatS), velocity: 0.72 }))];
       if (!(await run(ev, back.length, 0))) break;
     }
@@ -483,6 +509,16 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
             ))}
           </select>
         </label>
+      )}
+      {(mode === 'phrasing' || mode === 'vary' || mode === 'trade') && styleBand && (
+        <div className="chips is-band" role="radiogroup" aria-label={lang === 'he' ? 'הלהקה' : 'The band'} data-is-band={band === 'style' ? bandStyleId : 'level'}>
+          <button role="radio" aria-checked={band === 'style'} className={`chip ${band === 'style' ? 'on' : ''}`} onClick={() => setBand('style')} disabled={running} data-is-band-pick="style">
+            {lang === 'he' ? `להקה: ${STYLE_TEXT[bandStyleId].he}` : `Band: ${STYLE_TEXT[bandStyleId].en}`}
+          </button>
+          <button role="radio" aria-checked={band === 'level'} className={`chip ${band === 'level' ? 'on' : ''}`} onClick={() => setBand('level')} disabled={running} data-is-band-pick="level">
+            {lang === 'he' ? 'הלהקה של השלב' : "The level's band"}
+          </button>
+        </div>
       )}
       {(mode === 'phrasing' || mode === 'trade') && levelSheet && <ScaleStrip sheet={levelSheet} lang={lang} />}
       {mode === 'phrasing' && (

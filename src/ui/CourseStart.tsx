@@ -16,6 +16,8 @@ import { piano, SIMULATED } from './services';
 import { Icon } from './icons';
 import { FILM } from '../content/openers';
 import { RATED_COURSES, type ChannelSelf } from '../engine/channelPlan';
+import { DEFAULT_FOCUS, type StyleFocus } from '../engine/styleFocus';
+import { StyleChips } from './StyleChips';
 
 type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
@@ -66,18 +68,16 @@ function Head({ lang, onBack, step, of }: { lang: Lang; onBack: () => void; step
 }
 
 /** Step 1: what this course gets you, the ladder, and "Where are you?". */
-/** BASS_NICHE_PLAN X2: the bass player's direction — it opens the jazz or the prog families on the path (both = all). */
+/** BASS_NICHE_PLAN X2 (old): the bass player's direction. SPEC-STYLE-FOCUS §6: replaced by the style chips (prog is a style). */
 export type BassTrack = 'jazz' | 'prog' | 'both';
-const TRACK_T: Record<BassTrack, T2> = { both: { en: 'Both', he: 'שניהם' }, jazz: { en: 'Jazz', he: 'ג׳אז' }, prog: { en: 'Prog / fusion', he: 'פרוג / פיוז׳ן' } };
 
-export function CourseWelcome({ course, lang, report, onReport, onBack, track, onTrack, self, onSelf }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void; /** Bass: the chosen direction (absent = both). */ track?: BassTrack; onTrack?: (t: BassTrack) => void; /** Phase 6 (SPEC-EAR-AND-READING §8.3): an instrument course asks two 1–5 self-ratings after "Where are you?". */ self?: ChannelSelf; onSelf?: (s: ChannelSelf) => void }) {
+export function CourseWelcome({ course, lang, report, onReport, onBack, self, onSelf, focus, onFocus }: { course: CourseId; lang: Lang; report?: SelfReport; onReport: (r: SelfReport) => void; onBack: () => void; /** Phase 6 (SPEC-EAR-AND-READING §8.3): an instrument course asks two 1–5 self-ratings after "Where are you?". */ self?: ChannelSelf; onSelf?: (s: ChannelSelf) => void; /** SPEC-STYLE-FOCUS §3: the style chips beside the self-ratings (jazz pre-selected first). */ focus?: StyleFocus; onFocus?: (f: StyleFocus) => void }) {
   const def = courseOf(course);
   const [picked, setPicked] = useState<SelfReport | null>(report ?? null);
-  const [tr, setTr] = useState<BassTrack>(track ?? 'both');
   const rated = !!onSelf && (RATED_COURSES as readonly string[]).includes(course);
   const [rating, setRating] = useState(false);
   if (rating && picked && onSelf)
-    return <SelfRatings course={course} lang={lang} self={self} onBack={() => setRating(false)} onDone={(v) => (onSelf(v), onReport(picked))} />;
+    return <SelfRatings course={course} lang={lang} self={self} onBack={() => setRating(false)} focus={focus} hints={picked === 'well'} onDone={(v, f) => (onSelf(v), f && onFocus?.(f), onReport(picked))} />;
   return (
     <main className="onboarding cs-screen cs-welcome" data-course-start="welcome" data-cs-course={course}>
       <Head lang={lang} onBack={onBack} step={0} of={3} />
@@ -88,28 +88,6 @@ export function CourseWelcome({ course, lang, report, onReport, onBack, track, o
       </div>
       <h1>{L(lang, PROMISE[course])}</h1>
       <Ladder course={course} lang={lang} />
-      {course === 'bass' && onTrack && (
-        <div className="cs-track" data-cs-track={tr}>
-          <span>{lang === 'he' ? 'הכיוון שלכם' : 'Your direction'}</span>
-          <div className="chips" role="radiogroup" aria-label={lang === 'he' ? 'הכיוון שלכם' : 'Your direction'}>
-            {(['both', 'jazz', 'prog'] as const).map((v) => (
-              <button
-                key={v}
-                role="radio"
-                aria-checked={tr === v}
-                className={`chip ${tr === v ? 'on' : ''}`}
-                data-cs-track-pick={v}
-                onClick={() => {
-                  setTr(v);
-                  onTrack(v);
-                }}
-              >
-                {L(lang, TRACK_T[v])}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
       {/* Owner 2026-11-20: the question names its course — each course is asked on its own. */}
       <h2 className="cs-q" data-cs-q={course}>{lang === 'he' ? `איפה אתם ב${def.name.he}?` : `Where are you in ${def.name.en}?`}</h2>
       <div className="ob-choices" role="radiogroup">
@@ -155,10 +133,14 @@ export function RatingRow({ label, value, lang, onPick, id }: { label: string; v
   );
 }
 
-/** The two self-ratings of an instrument course (owner 2026-11-22): playing by ear, playing from notes — 1 to 5. */
-export function SelfRatings({ course, lang, self, onBack, onDone }: { course: CourseId; lang: Lang; self?: ChannelSelf; onBack: () => void; onDone: (v: ChannelSelf) => void }) {
+/**
+ * The two self-ratings of an instrument course (owner 2026-11-22): playing by ear, playing from notes — 1 to 5; and the
+ * style chips (SPEC-STYLE-FOCUS §3): up to three, the first the main style, jazz pre-selected.
+ */
+export function SelfRatings({ course, lang, self, onBack, onDone, focus, hints }: { course: CourseId; lang: Lang; self?: ChannelSelf; onBack: () => void; onDone: (v: ChannelSelf, f?: StyleFocus) => void; focus?: StyleFocus; hints?: boolean }) {
   const def = courseOf(course);
   const [v, setV] = useState<ChannelSelf>(self ?? {});
+  const [f, setF] = useState<StyleFocus>(focus ?? DEFAULT_FOCUS);
   const he = lang === 'he';
   return (
     <main className="onboarding cs-screen cs-welcome cs-ratings" data-course-start="ratings" data-cs-course={course}>
@@ -171,7 +153,8 @@ export function SelfRatings({ course, lang, self, onBack, onDone }: { course: Co
       <p className="field-hint">{he ? 'הערכה שלכם, מ־1 עד 5. האפליקציה תמדוד מכאן והלאה.' : 'Your own estimate, 1 to 5. The app measures from here on.'}</p>
       <RatingRow id="ear" lang={lang} label={he ? 'לנגן משמיעה' : 'Playing by ear'} value={v.ear} onPick={(ear) => setV((x) => ({ ...x, ear }))} />
       <RatingRow id="reading" lang={lang} label={he ? 'לנגן מתווים' : 'Playing from notes'} value={v.reading} onPick={(reading) => setV((x) => ({ ...x, reading }))} />
-      <button className="btn primary" onClick={() => onDone(v)} data-cs-ratings-done="1">
+      <StyleChips course={course} lang={lang} focus={f} onChange={setF} hints={hints} />
+      <button className="btn primary" onClick={() => onDone(v, f)} data-cs-ratings-done="1">
         {he ? 'המשך' : 'Continue'}
       </button>
     </main>

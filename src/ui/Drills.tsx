@@ -79,7 +79,8 @@ import { micUnmeasurable } from '../engine/drills/analyze';
 import { pathPianoLevels } from '../engine/ladderFacts';
 import { type GuitarLevelDef } from '../engine/drills/guitar';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
-import { GuitarAddOnPicker } from './GuitarAddOns';
+import { StyleChips } from './StyleChips';
+import { focusOf, withFocus } from '../engine/styleFocus';
 import { FAMILY_LESSON } from '../content/mini/guitar';
 import { MINI_LESSONS } from '../content/minilessons';
 import { MiniLessonPlayer } from './MiniLesson';
@@ -388,11 +389,11 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     const mi = matrixInst(ds.instrument);
     if (!mi || !(pView === 'key' || view.k === 'keypage')) return null;
     // block G (phase 4): the lick pool's licks are rungs of every key (piano)
-    const cells = keyMatrix(familiesOf(mi), matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), ...(today ? { day: today.day } : {}) });
+    const cells = keyMatrix(familiesOf(mi), matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), ...(today ? { day: today.day } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) });
     const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
-  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, pView, view.k, today?.day]);
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, settings.styleFocus, pView, view.k, today?.day]);
   // The order of the rest of today's cells (the player's view, remembered): one plan with the workout's block.
   const [mv, setMvState] = useState<MatrixView>(readMatrixView);
   const setMv = (v: MatrixView) => (saveMatrixView(v), setMvState(v));
@@ -522,7 +523,13 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="settings">
         {head(tx.settings, () => setView({ k: 'hub' }))}
-        <DrillSettingsView lang={lang} ds={ds} onChange={setDs} onCalib={() => setView(ds.instrument === 'drums' ? { k: 'kit' } : { k: 'calib' })} />
+        <DrillSettingsView
+          lang={lang}
+          ds={ds}
+          onChange={setDs}
+          onCalib={() => setView(ds.instrument === 'drums' ? { k: 'kit' } : { k: 'calib' })}
+          styleFocus={<StyleChips course={courseOfInstrument(ds.instrument)} lang={lang === 'he' ? 'he' : 'en'} focus={focusOf(settings, courseOfInstrument(ds.instrument))} onChange={(f) => onSettings({ styleFocus: withFocus(settings, courseOfInstrument(ds.instrument), f) })} />}
+        />
       </main>
     );
   if (view.k === 'calib')
@@ -563,7 +570,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
+        <KeyPage focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
       </main>
     );
   if (view.k === 'family')
@@ -597,7 +604,6 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       onFamily={(f) => setView({ k: 'family', f })}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}
-      onAddOns={(v) => setDs({ guitarAddOns: v })}
       onCreate={(edit) => setView({ k: 'creator', edit })}
       onTest={() => setView(ds.instrument === 'drums' && !settings.drumKit?.done ? { k: 'kit' } : { k: 'test' })}
       onInstrument={(i) => setDs({ instrument: i })}
@@ -609,7 +615,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       keyGrid={
         keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} today={todayPlan ? { plan: todayPlan.plan, view: mv, onView: setMv, byKey: todayMarks?.byKey } : undefined} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds, keyMatrixSum?.cellsList)} onWeek={(root, g) => {
           const mi = matrixInst(ds.instrument);
-          const lad = mi ? keyLadder(familiesOf(mi), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}) }) : null;
+          const lad = mi ? keyLadder(familiesOf(mi), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onToday={() => {
           // BUILD-PLAN phase 2: the same cells as today's workout technique block (one plan), resumed where it stopped;
@@ -727,7 +733,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; he: string } =>
   drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : piano && k === 'ear' ? { en: 'Pianist’s ear', he: 'שמיעה לפסנתרנים' } : piano && k === 'styles' ? { en: 'Jazz piano', he: 'פסנתר ג׳אז' } : TOPIC_NAME[k];
 
-function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, onAddOns, pView, onPView, keyGrid }: { /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid }: { /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
@@ -783,15 +789,7 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, o
     <main className="drills-screen" data-drills="hub">
       {head}
       {channelStrip}
-      {/* GUITAR_DEEPENING §5: the start of the guitar course — choose the add-ons once (they stay in the settings). */}
-      {ds.instrument === 'guitar' && settings.drills?.guitarAddOns === undefined && onAddOns && (
-        <div className="card g-addons-first" data-guitar-addons-first="1">
-          <GuitarAddOnPicker value={guitarAddOnsOf(ds)} onChange={onAddOns} lang={lang} />
-          <button className="btn" onClick={() => onAddOns(guitarAddOnsOf(ds))} data-addons-done="1">
-            {lang === 'he' ? 'שמירה' : 'Save'}
-          </button>
-        </div>
-      )}
+      {/* (GUITAR_DEEPENING §5's first add-on picker gave way to the style chips at the course start — SPEC-STYLE-FOCUS §3.) */}
       {/* 0.64 (owner): in an instrument course technique is that instrument's only — no switching to another one here. */}
       {!['keys', 'guitar', 'bass', 'drums'].includes(settings.activeCourse ?? 'ear') && (
       <div className="chips drill-inst" role="radiogroup" aria-label={tx.instrument}>
@@ -1934,7 +1932,7 @@ function CoachDemo({ drill, bpm, lang, onBeat, onDone }: { drill: Drill; bpm: nu
   );
 }
 
-function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: DrillSettings; onChange: (p: Partial<DrillSettings>) => void; onCalib: () => void }) {
+function DrillSettingsView({ lang, ds, onChange, onCalib, styleFocus }: { lang: Lang; ds: DrillSettings; onChange: (p: Partial<DrillSettings>) => void; onCalib: () => void; /** SPEC-STYLE-FOCUS: the course's style chips. */ styleFocus?: React.ReactNode }) {
   const tx = T[lang];
   const seg = <K extends keyof DrillSettings>(key: K, opts: Record<string, string>) => (
     <div className="chips" role="radiogroup">
@@ -2002,35 +2000,11 @@ function DrillSettingsView({ lang, ds, onChange, onCalib }: { lang: Lang; ds: Dr
           <b dir="ltr">{Math.round(ds.continuousAccuracy * 100)}%</b>
         </label>
       )}
-      {(ds.instrument ?? 'piano') === 'piano' ? (
-        <div className="row">
-          <span>{tx.emphasis}</span>
-          {seg('emphasis', tx.emph)}
-        </div>
-      ) : (
+      {/* SPEC-STYLE-FOCUS §3, §6: one setting — the course's styles (replaces the piano emphasis, the bass track and
+          the guitar add-ons / style, which no longer hide anything: every family is open). */}
+      {styleFocus && <div className="row row-col">{styleFocus}</div>}
+      {(ds.instrument ?? 'piano') !== 'piano' && (
         <>
-          {ds.instrument === 'bass' && (
-            // BASS_NICHE_PLAN: the jazz and prog families open by the player's track.
-            <div className="row" data-bass-track="1">
-              <span>{lang === 'he' ? 'מסלול' : 'Track'}</span>
-              <div className="chips" role="radiogroup">
-                {(['both', 'jazz', 'prog'] as const).map((v) => (
-                  <button key={v} role="radio" aria-checked={(ds.bassTrack ?? 'both') === v} className={`chip ${(ds.bassTrack ?? 'both') === v ? 'on' : ''}`} onClick={() => onChange({ bassTrack: v })} data-bass-track-pick={v}>
-                    {v === 'both' ? (lang === 'he' ? 'שניהם' : 'Both') : v === 'jazz' ? (lang === 'he' ? 'ג׳אז' : 'Jazz') : lang === 'he' ? 'פרוג' : 'Prog'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {ds.instrument === 'guitar' ? (
-            // GUITAR_DEEPENING §5: the guitar picks add-ons (the core is always on); the bass keeps its style filter.
-            <GuitarAddOnPicker value={guitarAddOnsOf(ds)} onChange={(v) => onChange({ guitarAddOns: v })} lang={lang} />
-          ) : (
-            <div className="row">
-              <span>{tx.gStyle}</span>
-              {seg('guitarStyle', tx.gStyles)}
-            </div>
-          )}
           <div className="row">
             <span>{tx.gView}</span>
             {seg('guitarView', tx.gViews)}
@@ -2187,7 +2161,8 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     const shown = new Set(shownFamilies({ ...ds, bassTuning, drumMic }).flatMap((f) => f.levels.map((l) => l.id)));
     // and every piano level the course path teaches (the jazz pianist's core scales and arpeggios, R8)
     if (inst === 'piano') for (const id of pathPianoLevels(ds)) shown.add(id);
-    return strandsFor(inst, ds.emphasis, { mic: byMic && inst === 'piano', upright: bassTuning === 'upright' || bassTuning === 'bass-fretless' })
+    // SPEC-STYLE-FOCUS §2: the test checks everything the course covers — no emphasis drops the jazz strand
+    return strandsFor(inst, 'both', { mic: byMic && inst === 'piano', upright: bassTuning === 'upright' || bassTuning === 'bass-fretless' })
       .map((x) => ({
         ...x,
         rungs: x.rungs

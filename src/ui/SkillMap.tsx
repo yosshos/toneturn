@@ -1,4 +1,8 @@
-import { COURSE_AREAS } from '../engine/courses';
+import { COURSE_AREAS, type CourseId } from '../engine/courses';
+import { picksOf, type StyleFocus } from '../engine/styleFocus';
+import { STYLE_TEXT, styleOfLevel, type StyleId } from '../engine/styles';
+import { catalog, type LevelDef } from '../engine/drills/generate';
+import { guitarCatalog } from '../engine/drills/guitar';
 import { useCourse } from './courseContext';
 import { LeagueBadge } from './LeagueBadge';
 import { chordTierForRating, tierOf } from '../engine/league';
@@ -22,9 +26,58 @@ import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
 /** Progress → Skills: an instrument course shows its sections (SPEC-COURSE-SECTIONS); Ear its skills by area. */
-export function SkillMap(props: Parameters<typeof EarSkillMap>[0]) {
+export function SkillMap({ styleFocus, ...props }: Parameters<typeof EarSkillMap>[0] & { /** SPEC-STYLE-FOCUS §4: the "My styles" strip. */ styleFocus?: StyleFocus }) {
   const course = useCourse().active;
-  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} /> : <EarSkillMap {...props} />;
+  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} styleFocus={styleFocus} /> : <EarSkillMap {...props} />;
+}
+
+/** A course's styled technique levels, by style (styles.ts tags). */
+function styleLevels(course: CourseId, style: StyleId): LevelDef[] {
+  const inst = course === 'keys' ? 'piano' : course === 'guitar' || course === 'bass' || course === 'drums' ? course : null;
+  if (!inst) return [];
+  const fams = inst === 'piano' ? catalog() : guitarCatalog().filter((f) => f.instruments.includes(inst) && !f.retired);
+  return fams.flatMap((f) => f.levels.filter((l) => styleOfLevel(l, f) === style));
+}
+
+/**
+ * SPEC-STYLE-FOCUS §4: no new axis (styles aren't skills) — a strip of the player's styles, each with its status: the
+ * levels closed in its block. A style with no levels in this course yet says so.
+ */
+export function MyStyles({ course, focus, items, lang }: { course: CourseId; focus: StyleFocus; items: Progress['drillItems']; lang: 'he' | 'en' }) {
+  const he = lang === 'he';
+  const rows = picksOf(focus).map((st) => {
+    const lv = styleLevels(course, st);
+    const done = lv.filter((l) => techStars(l, items ?? {}, DEFAULT_DRILL_SETTINGS.keyOrder) >= TECH_DONE_STARS).length;
+    return { st, total: lv.length, done };
+  });
+  return (
+    <section className="my-styles" data-my-styles={course} aria-label={he ? 'הסגנונות שלי' : 'My styles'}>
+      <h3>{he ? 'הסגנונות שלי' : 'My styles'}</h3>
+      <ul>
+        {rows.map((r, i) => (
+          <li key={r.st} data-my-style={r.st}>
+            <b>
+              {STYLE_TEXT[r.st][lang]}
+              {i === 0 ? (he ? ' · ראשי' : ' · main') : ''}
+            </b>
+            <small>
+              {r.total ? (
+                <>
+                  <bdi dir="ltr">
+                    {r.done}/{r.total}
+                  </bdi>{' '}
+                  {he ? 'שלבים נסגרו' : 'levels closed'}
+                </>
+              ) : he ? 'עוד אין שלבים בקורס הזה' : 'no levels in this course yet'}
+            </small>
+            <span className="ms-bar" aria-hidden="true">
+              <i style={{ width: `${r.total ? Math.round((100 * r.done) / r.total) : 0}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function EarSkillMap({
@@ -348,7 +401,7 @@ export function EarChordCard({ t, ratings, bestLeague }: { t: Strings; ratings: 
  * courses split): its sections as the radar's axes (technique one axis, time its own on piano), then one row per section
  * with its families and how many of their levels are passed; the weakest started section is the next to work on.
  */
-function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void }) {
+function CourseSectionsMap({ t, lang, progress, onBack, styleFocus }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void; styleFocus?: StyleFocus }) {
   const course = useCourse().active;
   const secs = COURSE_SECTIONS[course]!;
   const items = progress.drillItems ?? {};
@@ -398,6 +451,7 @@ function CourseSectionsMap({ t, lang, progress, onBack }: { t: Strings; lang: 'h
           <b>{next.label}</b>
         </p>
       )}
+      {styleFocus && <MyStyles course={course} focus={styleFocus} items={progress.drillItems} lang={lang} />}
       <section className="sm-areas" aria-label={t.skillMap}>
         {secs.map((sec, i) => {
           const a = axes[i];

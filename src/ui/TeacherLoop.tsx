@@ -22,6 +22,10 @@ import { assignmentTitle } from './Classes';
 import { assignTitle, autoMark, decodePhraseRef, keyStrip, submissionKey } from '../engine/encore/assign';
 import { kName } from './encore/bits';
 import '../teachphrase.css';
+import { DEFAULT_FOCUS, focusRef, parseFocusRef, picksOf, type StyleFocus } from '../engine/styleFocus';
+import { STYLE_TEXT } from '../engine/styles';
+import { COURSES, type CourseId } from '../engine/courses';
+import { StyleChips } from './StyleChips';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -72,6 +76,10 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
     return p ? `${assignTitle(p, lang)} · ${kName(p.homeKey, p.minor)}${p.instrument !== 'piano' ? ` · ${PHRASE_INST[p.instrument][lang]}` : ''}` : TX[lang].phrase;
   }
   if (a.kind === 'piece') return a.ref ?? TX[lang].piece;
+  if (a.kind === 'focus') {
+    const f = parseFocusRef(a.ref);
+    return f ? `${lang === 'he' ? 'מיקוד סגנון' : 'Style focus'}: ${picksOf(f.focus).map((s) => STYLE_TEXT[s][lang]).join(', ')}` : '';
+  }
   return assignmentTitle(a.lessonId, lang, t);
 }
 
@@ -93,6 +101,9 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const [challenge, setChallenge] = useState(CHALLENGES[0].id);
   const [src, setSrc] = useState('lv:1');
   const [piece, setPiece] = useState('');
+  // SPEC-STYLE-FOCUS §3: a style focus suggestion (the student approves it)
+  const [fCourse, setFCourse] = useState<CourseId>('keys');
+  const [focus, setFocus] = useState<StyleFocus>(DEFAULT_FOCUS);
   const [strict, setStrict] = useState<Strictness>('moderate');
   const [bpm, setBpm] = useState('');
   const [note, setNote] = useState('');
@@ -102,7 +113,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
   const [perDay, setPerDay] = useState('');
   const [ifShort, setIfShort] = useState<'spread' | 'today'>('spread');
   const ref =
-    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : null;
+    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
   const can = kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
@@ -120,9 +131,9 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
       <label className="af-row">
         <span>{tx.kind}</span>
         <select value={kind} onChange={(e) => setKind(e.target.value as AssignKind)} data-assign-kind="1">
-          {(['topic', 'lesson', 'drill', 'chart', 'piece', 'phrase'] as const).map((k) => (
+          {(['topic', 'lesson', 'drill', 'chart', 'piece', 'phrase', 'focus'] as const).map((k) => (
             <option key={k} value={k}>
-              {tx[k]}
+              {k === 'focus' ? (lang === 'he' ? 'מיקוד סגנון' : 'Style focus') : tx[k]}
             </option>
           ))}
         </select>
@@ -242,6 +253,21 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError }: { cl
       {kind === 'phrase' ? null : (
       <>
       {kind === 'piece' && <input value={piece} maxLength={200} onChange={(e) => setPiece(e.target.value)} placeholder={tx.pieceText} aria-label={tx.pieceText} />}
+      {kind === 'focus' && (
+        <div className="af-focus" data-assign-focus="1">
+          <label className="af-row">
+            <span>{lang === 'he' ? 'קורס' : 'Course'}</span>
+            <select value={fCourse} onChange={(e) => (setFCourse(e.target.value as CourseId), setFocus(DEFAULT_FOCUS))}>
+              {COURSES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name[lang]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <StyleChips course={fCourse} lang={lang} focus={focus} onChange={setFocus} title={false} />
+        </div>
+      )}
       <div className="af-grid">
         <label className="af-row">
           <span>{tx.strict}</span>

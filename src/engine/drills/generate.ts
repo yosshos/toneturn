@@ -5437,8 +5437,11 @@ export const EXAM_NPS = {
 export interface FamilyDef {
   id: FamilyId;
   title: T2;
-  /** 'both': shown with either emphasis (the pianist's ear). */
-  style: 'classical' | 'jazz' | 'both';
+  /**
+   * The old piano emphasis value ('classical' | 'jazz' | 'both': 'both' = the pianist's ear), or, for a new family, its
+   * style tag (SPEC-STYLE-FOCUS, styles.ts — e.g. 'brazil'). Read a family's style only through styles.ts styleOfFamily.
+   */
+  style: import('../styles').FamilyStyle;
   levels: LevelDef[];
   /** SPEC-STYLE-FOCUS: the style the whole family belongs to (`style` above is the old classical / jazz emphasis). */
   styleId?: StyleId;

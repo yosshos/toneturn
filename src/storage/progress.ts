@@ -344,6 +344,18 @@ export interface Settings {
   jazzOpen?: import('../engine/courses').CourseId[];
   /** SPEC-JAZZ-FOLD: a one-time notice still to show — 'fold' (the Jazz course is now jazz focus) or the course whose jazz just opened. */
   jazzNotice?: 'fold' | import('../engine/courses').CourseId;
+  /** SPEC-STYLE-FOCUS (owner 2026-11-22): per course, the main style and up to 2 more — one setting instead of jazzFocus,
+   *  the piano emphasis, the guitar add-ons / style and the bass track (those stay read-only for one version). Focus
+   *  changes weights (workout, path, defaults), never access: every style is open from day one. */
+  styleFocus?: import('../engine/styleFocus').StyleFocusMap;
+  /** SPEC-STYLE-FOCUS §9: the exposure service — tastes, answers, "don't offer" until, the 6-month look. */
+  styleTaste?: import('../engine/styleFocus').StyleTaste;
+  /** §9.4: minutes per style per day (improvisation, repertoire, tastes), kept 200 days. */
+  styleMinutes?: import('../engine/styleFocus').StyleMinutes[];
+  /** §3: a teacher's focus suggestion waiting for the student's yes (the assignment id it came from). */
+  styleSuggest?: { id: string; course: import('../engine/courses').CourseId; focus: import('../engine/styleFocus').StyleFocus; from?: string } | null;
+  /** §3: teacher suggestions already answered (assignment ids), so a suggestion is asked once. */
+  styleSuggestSeen?: string[];
   /** The next step ids last shown (to tell the player when a rebuild changed them). */
   pathSeen?: string[];
   /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) — the workout has a New block from the path; "I choose" — no New

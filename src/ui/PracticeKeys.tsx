@@ -4,6 +4,7 @@
 // control & dynamics), each with its levels in this key and their numbers: best clean tempo, accuracy, timing spread.
 // The key-neutral families (rhythm, independence, mechanics) sit under the cards as General technique.
 
+import type { StyleFocus } from '../engine/styleFocus';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Drill, DrillSettings, ItemState } from '../engine/drills/types';
 import type { FacetGroup, FacetRole } from '../engine/drills/keyFacet';
@@ -157,7 +158,7 @@ function TodayKeys({ today, lang, onToday }: { today: TodayInfo; lang: Lang; onT
   const { plan, view: mv } = today;
   const mins = Math.round(plan.reduce((n, p) => n + p.cell.minutes, 0));
   const w = whyCounts(plan);
-  const parts = [w.week ? (he ? `${w.week} בסולם השבוע` : `${w.week} in the key of the week`) : '', w.strengthen ? (he ? `${w.strengthen} לחיזוק` : `${w.strengthen} to strengthen`) : '', w.review ? (he ? `${w.review} חזרה` : `${w.review} review`) : ''].filter(Boolean);
+  const parts = [w.week ? (he ? `${w.week} בסולם השבוע` : `${w.week} in the key of the week`) : '', w.strengthen ? (he ? `${w.strengthen} לחיזוק` : `${w.strengthen} to strengthen`) : '', w.review ? (he ? `${w.review} חזרה` : `${w.review} review`) : '', w.style ? (he ? `${w.style} בסגנונות שלי` : `${w.style} in my styles`) : ''].filter(Boolean);
   const VIEWS: [MatrixView, string, string][] = [['weak', 'Weakest first', 'קודם החלש'], ['key', 'By key', 'לפי סולם'], ['exercise', 'By exercise', 'לפי תרגיל']];
   return (
     <div className="key-today" data-key-today={mv} data-today-plan={plan.length}>
@@ -261,7 +262,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [] }: { /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus }: { /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -289,7 +290,7 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
   // phase 7: the guitar and the bass have their own ladders (drums: no keys)
   const inst = ds.instrument ?? 'piano';
   const li = inst === 'piano' || inst === 'guitar' || inst === 'bass' ? inst : null;
-  const ladder = li ? keyLadder(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(li === 'piano' ? { licks } : {}) }) : null;
+  const ladder = li ? keyLadder(familiesOf(li), root, g, tier >= 0 ? tier : advanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: li, ...(li === 'piano' ? { licks } : {}), ...(styleFocus ? { focus: styleFocus } : {}) }) : null;
   const focus = ladder ? ladderFocus(ladder, items) : null;
   const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (

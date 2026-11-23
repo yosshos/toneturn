@@ -268,7 +268,7 @@ describe('k-tpair: the keys family', () => {
     }
     expect(KTP_ROWS.map((r) => r.rating)).toEqual([...KTP_ROWS.map((r) => r.rating)].sort((a, b) => a - b));
     expect(shownFamilies({ emphasis: 'jazz' }).map((x) => x.id)).toContain('k-tpair');
-    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).not.toContain('k-tpair');
+    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).toContain('k-tpair'); // SPEC-STYLE-FOCUS: no lock
   });
   for (const id of TPAIR_LEVEL_IDS.keys)
     it(`${id}: all 12 keys, notes from the pair(s), keyboard range, a steady take passes`, () => {

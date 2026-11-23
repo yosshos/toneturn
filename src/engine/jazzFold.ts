@@ -2,8 +2,7 @@
 // levels of Ear & theory, its playing lives in the instrument / voice courses, and jazz content is gated by the 'jazz'
 // pack per course. Pure: is the pack open in a course, which courses climbing opens, jazz focus toggling.
 
-import { courseLevel } from './courseSocial';
-import { JAZZ_FOCUS_COURSES, type CourseId } from './courses';
+import type { CourseId } from './courses';
 import { defaultPacks, type Goal, type Pack } from './path';
 import type { Track } from './intake';
 import type { Ratings } from './rating';
@@ -39,36 +38,44 @@ const playsOf = (s: JazzSettings): string[] => [
 /** The player's packs by background (the stored choice, else the questionnaire defaults: student / pro → jazz). */
 export const backgroundPacks = (s: JazzSettings): Pack[] => s.pathPacks ?? defaultPacks(s.track ?? 'hobby', playsOf(s), s.goal ?? 'general');
 
-export const jazzFocusOn = (s: Pick<JazzSettings, 'jazzFocus'>, c: CourseId): boolean => !!s.jazzFocus?.includes(c);
+/**
+ * Jazz focus (SPEC-JAZZ-FOLD §4), now read from the style focus (SPEC-STYLE-FOCUS §6): a CHOSEN main style of jazz in the
+ * course (or the old jazzFocus list, read-only for one version). The default focus (nothing chosen) is not "focus".
+ */
+export const jazzFocusOn = (s: Pick<JazzSettings, 'jazzFocus'> & { styleFocus?: Partial<Record<CourseId, { main: string }>> }, c: CourseId): boolean => {
+  const f = s.styleFocus?.[c];
+  return f ? f.main === 'jazz' : !!s.jazzFocus?.includes(c);
+};
 
-/** Why the jazz pack is open in a course (null = closed). */
-export function jazzOpenWhy(s: JazzSettings, c: CourseId): 'background' | 'focus' | 'climbed' | 'instrument' | null {
+/**
+ * SPEC-STYLE-FOCUS §2, §8.1 (owner 2026-11-22, "I don't believe in locking"): the jazz pack is no longer a lock. What
+ * used to open it — the background, climbing to mf, an explicit instrument choice, jazz focus — now only says where a
+ * player STARTS in jazz harmony. Why a course starts jazz at the intermediate level (null = from the first steps).
+ */
+export function jazzStartWhy(s: JazzSettings, c: CourseId): 'background' | 'focus' | 'climbed' | 'instrument' | null {
   if (jazzFocusOn(s, c)) return 'focus';
   if (backgroundPacks(s).includes('jazz')) return 'background';
   if (s.jazzOpen?.includes(c)) return 'climbed';
-  // An explicit instrument choice: piano emphasis "jazz", a ticked guitar jazz add-on, the bass jazz track.
   const d = s.drills ?? {};
   if (c === 'keys' && d.emphasis === 'jazz') return 'instrument';
   if (c === 'guitar' && d.guitarAddOns?.includes('jazz')) return 'instrument';
   if (c === 'bass' && d.bassTrack === 'jazz') return 'instrument';
   return null;
 }
-/** SPEC-JAZZ-FOLD §2: is the jazz pack open in this course? */
-export const jazzOpenIn = (s: JazzSettings, c: CourseId): boolean => jazzOpenWhy(s, c) !== null;
+/** The rating a course's jazz harmony starts at: the intermediate start (mf) when the above says so, else none (the beginning). */
+export const jazzStartLevel = (s: JazzSettings, c: CourseId): number | undefined => (jazzStartWhy(s, c) ? JAZZ_OPEN_AT : undefined);
 
-/** The packs a course's path uses: the background packs, with 'jazz' exactly when it is open in the course. */
-export function coursePacks(s: JazzSettings, c: CourseId): Pack[] {
-  const base = backgroundPacks(s).filter((p) => p !== 'jazz');
-  return jazzOpenIn(s, c) ? [...base, 'jazz'] : base;
+/** Every course has jazz from day one (SPEC-STYLE-FOCUS §2): difficulty is set by the level, not by a lock. */
+export const jazzOpenIn = (_s: JazzSettings, _c: CourseId): boolean => true;
+
+/** The packs a course's path uses: the background packs, always with 'jazz' (no lock). */
+export function coursePacks(s: JazzSettings, _c: CourseId): Pack[] {
+  return [...backgroundPacks(s).filter((p) => p !== 'jazz'), 'jazz'];
 }
 
-/**
- * SPEC-JAZZ-FOLD §3: the player's courses whose level reached mf while their jazz is still closed — the caller adds
- * them to Settings.jazzOpen (persisted) and shows the one-time notice. Never closes anything.
- */
-export function coursesToOpen(s: JazzSettings & { courses?: CourseId[] }, ratings: Ratings): CourseId[] {
-  const mine = s.courses?.length ? s.courses : (['ear'] as CourseId[]);
-  return mine.filter((c) => JAZZ_FOCUS_COURSES.includes(c) && !jazzOpenIn(s, c) && (courseLevel(c, ratings, mine).r ?? 0) >= JAZZ_OPEN_AT);
+/** Climbing no longer opens anything (nothing is closed); kept so old callers compile. */
+export function coursesToOpen(_s: JazzSettings & { courses?: CourseId[] }, _ratings: Ratings): CourseId[] {
+  return [];
 }
 
 /** Jazz focus on / off for one course. */

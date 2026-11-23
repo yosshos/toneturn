@@ -22,24 +22,20 @@ import { BASS_SUMMITS, improvCaptureOpts } from '../src/engine/drills/bassNiche'
 import { courseOfResult } from '../src/engine/courseSocial';
 
 describe('BASS_NICHE_PLAN P1: wiring', () => {
-  it('the jazz and prog families open by the player’s track; both shows all', () => {
+  it('SPEC-STYLE-FOCUS §2: every jazz and prog family is open whatever the old track (focus weighs them instead)', () => {
     const ids = (track?: 'jazz' | 'prog' | 'both') => ladderFamiliesFor('bass', { ...DEFAULT_DRILL_SETTINGS, bassTrack: track });
     for (const f of NEW_FAMS) expect(ids('both'), f).toContain(f);
     expect(ids()).toEqual(ids('both'));
-    for (const f of ['b-swing', 'b-barry', 'b-jform', 'b-latin']) {
+    for (const f of ['b-swing', 'b-barry', 'b-jform', 'b-latin', 'b-odd', 'b-prog', 'b-poly']) {
       expect(ids('jazz')).toContain(f);
-      expect(ids('prog')).not.toContain(f);
-    }
-    for (const f of ['b-odd', 'b-prog', 'b-poly']) {
       expect(ids('prog')).toContain(f);
-      expect(ids('jazz')).not.toContain(f);
     }
     // Shared families stay on both tracks (b-impro 7–14 and b-ear 10–19 included).
     for (const f of ['b-walk', 'b-impro', 'b-ear', 'b-pick']) {
       expect(ids('jazz')).toContain(f);
       expect(ids('prog')).toContain(f);
     }
-    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', bassTrack: 'prog' }).some((f) => f.id === 'b-swing')).toBe(false);
+    expect(shownFamilies({ emphasis: 'both', instrument: 'bass', bassTrack: 'prog' }).some((f) => f.id === 'b-swing')).toBe(true);
   });
 
   it('every new family: own symbol, after its prerequisite on the path, rated, badged, a quick lesson, bass course', () => {

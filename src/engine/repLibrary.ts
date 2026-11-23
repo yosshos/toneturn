@@ -9,7 +9,8 @@ import { CHART_TEMPLATES, IMPROV_LEVELS, type ChartStyle } from './charts';
 import { PASS_DAYS, PASS_TAKES } from './drills/ladder';
 import type { ItemStatus } from './drills/itemStatus';
 import type { CourseId } from './courses';
-import type { PathView } from './path';
+import { ladderStyleOf, type PathView } from './path';
+import type { StyleId } from './styles';
 
 type Bi = { en: string; he: string };
 
@@ -270,5 +271,19 @@ export function whereInPath(view: Pick<PathView, 'units' | 'history'> | null | u
     const state: WhereInPath['state'] = st === 'current' ? 'current' : st === 'done' || st === 'mastered' || st === 'tested' || st === 'refresh' ? 'done' : u.status === 'projected' || st === 'locked' ? 'ahead' : 'current';
     return { unit: u.no ?? u.n, step: i + 1, state };
   }
+  return null;
+}
+
+/**
+ * SPEC-STYLE-FOCUS §4: a library entry's style — a styled technique level among its ways (a bossa groove), else a
+ * standard's (a bossa standard is Brazilian, the rest jazz); null when it has none (songs, my pieces): "All styles" only.
+ */
+export function entryStyle(e: Pick<LibEntry, 'item' | 'std'>): StyleId | null {
+  for (const w of e.item?.ways ?? []) if (w.k === 'level') {
+    const st = ladderStyleOf(w.ref);
+    if (st) return st;
+  }
+  const stdId = e.std ?? (e.item?.ref?.kind === 'standard' ? e.item.ref.id : undefined) ?? e.item?.ways.map((w) => ('std' in w ? w.std : undefined)).find(Boolean);
+  if (stdId) return STANDARD_CHANGES.find((x) => x.id === stdId)?.style === 'bossa' ? 'brazil' : 'jazz';
   return null;
 }

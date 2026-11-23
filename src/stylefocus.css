@@ -1,0 +1,40 @@
+/* SPEC-STYLE-FOCUS: the style chips, the "My styles" strip, the style taster card and the preference cards. */
+.style-focus { display: grid; gap: 6px; }
+.style-focus .sf-title { font-weight: 600; color: var(--ink); }
+.style-focus .sf-hint { color: var(--ink-dim); font-size: 0.78rem; }
+.style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.style-chips .style-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 5px 11px; border: 1.5px solid var(--line-strong); border-radius: 999px; font-size: 0.86rem; color: var(--ink); background: var(--card); }
+.style-chips .style-chip.on { border-color: var(--purple, var(--mint)); background: color-mix(in srgb, var(--purple, var(--mint)) 12%, var(--card)); }
+.style-chips .style-chip.main { font-weight: 600; }
+.style-chips .style-chip:disabled { opacity: 0.45; }
+.style-chips .sc-rank { font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--purple, var(--mint)); color: #fff; font-variant-numeric: tabular-nums; }
+.style-chips .sc-hint { flex-basis: 100%; color: var(--ink-dim); font-size: 0.72rem; font-weight: 400; }
+.style-chips .style-chip:has(.sc-hint) { flex-wrap: wrap; border-radius: 12px; }
+
+/* the "My styles" strip on the skill map */
+.my-styles { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.my-styles h3 { margin: 0; font-size: 0.95rem; }
+.my-styles ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.my-styles li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; }
+.my-styles li b { font-weight: 600; }
+.my-styles li small { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.my-styles .ms-bar { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.my-styles .ms-bar i { display: block; height: 100%; background: var(--purple, var(--mint)); }
+
+/* the style taster (SPEC-STYLE-FOCUS §9.1) and the preference cards (§9.4) */
+.taster-card { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); }
+.taster-card .tc-head { display: flex; align-items: center; gap: 8px; }
+.taster-card .tc-head b { font-size: 1rem; }
+.taster-card .tc-head small { margin-inline-start: auto; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.taster-card .tc-gain { margin: 0; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.4; }
+.taster-card .tc-parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.taster-card .tc-parts li { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; color: var(--ink); }
+.taster-card .tc-parts li i { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: inline-grid; place-items: center; font-style: normal; font-size: 0.7rem; color: var(--ink-soft); flex: none; }
+.taster-card .tc-parts li.done i { background: var(--purple, var(--mint)); border-color: transparent; color: #fff; }
+.taster-card .tc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.taster-card .tc-q { margin: 0; font-weight: 600; }
+.taster-card .tc-swap { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.86rem; color: var(--ink-soft); }
+.taster-card .tc-close { margin-inline-start: auto; }
+.taster-card .tc-times { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.86rem; }
+.taster-card .tc-times li { display: flex; justify-content: space-between; gap: 8px; }
+.taster-card .tc-times li small { color: var(--ink-soft); font-variant-numeric: tabular-nums; }

@@ -3,7 +3,9 @@
 
 import type { CourseId } from './courses';
 import { catalog, type LevelDef } from './drills/generate';
-import { guitarCatalog, guitarLevelShown } from './drills/guitar';
+import { guitarCatalog } from './drills/guitar';
+import { styleOfLevel } from './styles';
+import { pathStyleRank, type StyleFocus } from './styleFocus';
 import { guitarAddOnsOf } from './drills/guitarMeta';
 import { drumFamilies } from './drills/drums';
 import { kitHiddenLevels } from './drumAcoustic';
@@ -35,9 +37,8 @@ export function techLevel(id: string): LevelDef | undefined {
 }
 
 /**
- * The guitar add-ons the course path uses: the player's choice once made; before that, the jazz add-on (jazz comping
- * and Barry Harris on the neck) joins the default path at its grade (AUDIT-CONTENT-THEORY §ב.3, the app's positioning).
- * The Drills page and the guitar voice still read the plain setting.
+ * The guitar add-ons the old settings imply (read-only for one version, SPEC-STYLE-FOCUS §6): the player's choice once
+ * made, else the jazz add-on. The path no longer reads it (every family is open; the style focus weighs them).
  */
 export function pathGuitarAddOns(ds: Pick<DrillSettings, 'guitarAddOns' | 'guitarStyle'>): NonNullable<DrillSettings['guitarAddOns']> {
   if (ds.guitarAddOns) return ds.guitarAddOns;
@@ -45,74 +46,62 @@ export function pathGuitarAddOns(ds: Pick<DrillSettings, 'guitarAddOns' | 'guita
   return a.includes('jazz') ? a : ['jazz', ...a];
 }
 
-/** The families / programs a course's path teaches, in teaching order. Other courses: none. */
-export function ladderFamiliesFor(course: CourseId, ds: DrillSettings, bassTuning?: string, drumMic?: DrumMic): string[] {
+/**
+ * The families / programs a course's path teaches, in teaching order. Other courses: none. SPEC-STYLE-FOCUS §2: every
+ * family (no emphasis / add-on / track lock); the style focus decides which STYLED levels the path pushes
+ * (ladderHiddenFor), the rest stay open in Practice.
+ */
+export function ladderFamiliesFor(course: CourseId, _ds: DrillSettings, bassTuning?: string, drumMic?: DrumMic): string[] {
   if (course === 'voice') return VOCAL_PROGRAMS.map((p) => p.id);
   const instrument = course === 'keys' ? 'piano' : course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : course === 'drums' ? 'drums' : null;
   if (!instrument) return [];
   // The upright track only for an upright / fretless bass (BASS_AUDIT B16); its families otherwise stay in Drills.
   const upright = bassTuning === 'upright' || bassTuning === 'bass-fretless';
-  const ids = shownFamilies({ emphasis: ds.emphasis, instrument, guitarStyle: ds.guitarStyle, guitarAddOns: pathGuitarAddOns(ds), drumMic, bassTrack: ds.bassTrack })
+  return shownFamilies({ emphasis: 'both', instrument, drumMic })
     .filter((f) => upright || !(f as { upright?: boolean }).upright)
     .map((f) => f.id);
-  // Curriculum flow (Instruments audit R8): the jazz pianist keeps the core scales, arpeggios and five-finger work
-  // (their levels below CORE_KEEP_BELOW — the Harris, jazz and voicing families assume both); the classical pianist
-  // keeps the accompaniment family for the Alberti bass and the pop left hand (ladderHiddenFor hides the rest).
-  if (course === 'keys' && ds.emphasis === 'jazz') for (const f of JAZZ_KEEPS_CORE) if (!ids.includes(f)) ids.push(f);
-  if (course === 'keys' && ds.emphasis === 'classical' && !ids.includes('accomp')) ids.push('accomp');
-  return ids;
 }
 
-/** Piano families a jazz-emphasis path keeps, below CORE_KEEP_BELOW. */
-export const JAZZ_KEEPS_CORE: FamilyId[] = ['scales', 'arpeggios', 'fingers'];
-export const CORE_KEEP_BELOW = 1100;
-/** Accompaniment levels a classical-emphasis path keeps: the Alberti bass and the pop left hand. */
-export const CLASSICAL_KEEPS_ACCOMP = ['accomp-1', 'accomp-7'];
-
-/**
- * Piano levels the course path teaches, by emphasis (ladderFamiliesFor less the parts it hides) — wider than the
- * emphasis's shown families: the jazz pianist's core scales, arpeggios and fingers below CORE_KEEP_BELOW. The level
- * test offers their steps too (owner 2026-11-19: the test checks everything the course covers).
- */
-export function pathPianoLevels(ds: Pick<DrillSettings, 'emphasis'>): string[] {
-  const fams = new Set(ladderFamiliesFor('keys', { ...DEFAULT_PATH_DS, emphasis: ds.emphasis }));
-  const hidden = new Set(emphasisHidden(ds));
+/** Piano levels the course path teaches (every family; the level test offers their steps too — owner 2026-11-19). */
+export function pathPianoLevels(_ds?: Pick<DrillSettings, 'emphasis'>): string[] {
+  const fams = new Set(ladderFamiliesFor('keys', DEFAULT_PATH_DS));
   return catalog()
     .filter((f) => fams.has(f.id))
-    .flatMap((f) => f.levels.filter((l) => !hidden.has(l.id)).map((l) => l.id));
+    .flatMap((f) => f.levels.map((l) => l.id));
 }
 const DEFAULT_PATH_DS = { emphasis: 'both' } as DrillSettings;
 
-/** Keys levels the emphasis leaves out of families it keeps only in part (R8). */
-function emphasisHidden(ds?: Partial<Pick<DrillSettings, 'emphasis'>>): string[] {
-  if (ds?.emphasis === 'jazz') {
-    const keep = new Set(shownFamilies({ emphasis: 'jazz', instrument: 'piano' }).map((f) => f.id));
-    return catalog()
-      .filter((f) => JAZZ_KEEPS_CORE.includes(f.id) && !keep.has(f.id))
-      .flatMap((f) => f.levels.filter((l) => (techDifficulty(l.id) ?? Infinity) >= CORE_KEEP_BELOW).map((l) => l.id));
-  }
-  if (ds?.emphasis === 'classical') {
-    const keep = new Set(shownFamilies({ emphasis: 'classical', instrument: 'piano' }).map((f) => f.id));
-    if (keep.has('accomp')) return [];
-    return (catalog().find((f) => f.id === 'accomp')?.levels ?? []).filter((l) => !CLASSICAL_KEEPS_ACCOMP.includes(l.id)).map((l) => l.id);
-  }
-  return [];
+/**
+ * SPEC-STYLE-FOCUS §4: the styled levels a course's path leaves out — those of a style outside the focus (neither the
+ * main style nor an "also" style; the jazz core is never styled out). They stay open in Practice.
+ */
+const styleHiddenCache = new Map<string, string[]>();
+export function styleHiddenLevels(course: CourseId, focus: StyleFocus): string[] {
+  const key = `${course}|${focus.main}|${focus.also.join('+')}`;
+  const hit = styleHiddenCache.get(key);
+  if (hit) return hit;
+  const out = styleHiddenUncached(course, focus);
+  styleHiddenCache.set(key, out);
+  return out;
+}
+function styleHiddenUncached(course: CourseId, focus: StyleFocus): string[] {
+  const inst = course === 'keys' ? 'piano' : course === 'guitar' ? 'guitar' : course === 'bass' ? 'bass' : course === 'drums' ? 'drums' : null;
+  if (!inst) return [];
+  const fams = inst === 'piano' ? catalog() : guitarCatalog().filter((f) => f.instruments.includes(inst));
+  return fams.flatMap((f) => f.levels.filter((l) => pathStyleRank(focus, styleOfLevel(l, f)) < 0).map((l) => l.id));
 }
 
 /**
  * Ladder levels the course's path leaves out (N10): the low-B levels on a bass without a low B; on drums played by
- * microphone, the levels that need an e-kit (a practice pad: grooves, fills, kit reading — DRUMS_CURRICULUM §3.8; an acoustic kit: all but ACOUSTIC_LEVELS).
+ * microphone, the levels that need an e-kit (a practice pad: grooves, fills, kit reading — DRUMS_CURRICULUM §3.8; an
+ * acoustic kit: all but ACOUSTIC_LEVELS); the MIDI-only piano levels on a microphone-only keyboard; and, with a style
+ * focus, the styled levels outside it (styleHiddenLevels).
  */
-export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic, pianoMicOnly?: boolean, ds?: Pick<DrillSettings, 'guitarAddOns' | 'guitarStyle'> & Partial<Pick<DrillSettings, 'emphasis'>>): string[] {
-  if (course === 'drums') return kitHiddenLevels(drumFamilies(), drumMic);
-  // Guitar (GUITAR_DEEPENING §5): add-on levels inside core families (bossa / Freddie Green, prog picking, chord-scale
-  // impro) and country levels, unless chosen. Whole add-on families are already left out by ladderFamiliesFor.
-  if (course === 'guitar') {
-    const shown = { guitarStyle: ds?.guitarStyle, guitarAddOns: pathGuitarAddOns(ds ?? {}) };
-    return guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired).flatMap((f) => f.levels.filter((l) => !guitarLevelShown(f, l, shown)).map((l) => l.id));
-  }
-  if (course === 'keys') return [...(pianoMicOnly ? pianoMicHiddenLevels() : []), ...emphasisHidden(ds)];
-  return course === 'bass' ? hiddenBassLevels(bassTuning) : [];
+export function ladderHiddenFor(course: CourseId, bassTuning?: string, drumMic?: DrumMic, pianoMicOnly?: boolean, _ds?: unknown, focus?: StyleFocus): string[] {
+  const byStyle = focus ? styleHiddenLevels(course, focus) : [];
+  if (course === 'drums') return [...kitHiddenLevels(drumFamilies(), drumMic), ...byStyle];
+  if (course === 'keys') return [...(pianoMicOnly ? pianoMicHiddenLevels() : []), ...byStyle];
+  return [...(course === 'bass' ? hiddenBassLevels(bassTuning) : []), ...byStyle];
 }
 
 /**

@@ -32,6 +32,8 @@ interface Props {
   workout?: React.ReactNode;
   /** Under the workout (0.63): daily goal, league, today's quests. */
   today?: React.ReactNode;
+  /** SPEC-STYLE-FOCUS §9: the one style card (taster, preferences, a teacher's suggestion) under today's cards. */
+  styleCard?: React.ReactNode;
   /** The side panel on a computer (this week, daily challenge, progression of the day). */
   aside?: React.ReactNode;
   /** Teacher assignments (today's homework), when there are some. */
@@ -94,7 +96,7 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, startHero, startLessonLink, keysSound }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, styleCard, startHero, startLessonLink, keysSound }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
@@ -167,6 +169,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {workout}
           {assigned}
           {today}
+          {styleCard}
           <div className="st-news">{news}</div>
           <button className="find-level-btn" onClick={() => (levelAreas.length > 1 ? setLevelSheet(true) : onFindLevel())} data-find-level="1">
             <Icon k="compass" size={18} /> {t.findLevel}

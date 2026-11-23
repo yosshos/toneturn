@@ -1,6 +1,7 @@
 // GUITAR_DEEPENING (owner-approved 2026-11-11): real target tempos, the core path + add-ons, grade ordering, the
 // guitarist's ear, jazz 8–12 and Barry Harris on the neck — catalogue, path and synthetic human takes.
 import { describe, expect, it } from 'vitest';
+import type { StyleFocus } from '../src/engine/styleFocus';
 import { generate } from '../src/engine/drills/generate';
 import { expTimeMs, IOI_FLOOR_MS, npsOf, tempoBand, thresholds } from '../src/engine/drills/analyze';
 import { analyzeGuitarTake, type GFrame } from '../src/engine/drills/guitarAnalyze';
@@ -202,43 +203,38 @@ describe("guitar deepening: the guitarist's ear", () => {
 describe('guitar deepening: the core path and add-ons (§5, owner 2026-11-11)', () => {
   const ds = (o: Partial<DrillSettings> = {}): DrillSettings => ({ ...DEFAULT_DRILL_SETTINGS, instrument: 'guitar', ...o });
   const base = { leaveOut: [], packs: ['pop', 'jazz'], plays: ['guitar'], track: 'standard', facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-11') } as never;
-  const pathOf = (d: DrillSettings) => {
-    const inp = { ...courseInput(base, 'guitar'), ladderFamilies: ladderFamiliesFor('guitar', d), ladderHidden: ladderHiddenFor('guitar', undefined, undefined, false, d) };
+  // SPEC-STYLE-FOCUS (owner 2026-11-22): every family is open in Practice; the path pushes the jazz core and the styles
+  // in focus (the old add-ons are styles now: prog, flamenco, fingerstyle; country levels are the country style).
+  const pathOf = (d: DrillSettings, focus: StyleFocus = { main: 'jazz', also: [] }) => {
+    const inp = { ...courseInput(base, 'guitar'), ladderFamilies: ladderFamiliesFor('guitar', d), ladderHidden: ladderHiddenFor('guitar', undefined, undefined, false, d, focus) };
     return stepCatalogue().filter((s) => s.ladder && eligible(s, inp));
   };
-  const ADDON_LEVELS = ['g-rhythm-6', 'g-impro-5', 'g-impro-6', 'g-picking-8', 'g-picking-9', 'g-legato-8'];
+  const PROG_LEVELS = ['g-picking-8', 'g-picking-9', 'g-legato-8'];
 
-  // AUDIT-CONTENT-THEORY §ב.3: with NO choice made the path now carries the jazz add-on (the app's positioning); the core
-  // alone is what a player gets who ticks no add-on.
-  it('no add-on ticked → the core only: no add-on family or level, no country level', () => {
+  it('jazz focus (the default) → the core and the jazz core (comping, Barry Harris on the neck); no other style\'s levels', () => {
     const steps = pathOf(ds({ guitarAddOns: [] }));
     const fams = new Set(steps.map((s) => s.ladder!.family));
-    for (const f of ['g-jazz', 'g-harris', 'g-prog', 'g-flamenco', 'g-fingerstyle']) expect(fams.has(f), f).toBe(false);
-    for (const f of ['g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-lead', 'g-reading', 'g-ear', 'g-legato', 'g-arps', 'g-impro', 'g-meter']) expect(fams.has(f), f).toBe(true);
+    for (const f of ['g-prog', 'g-flamenco', 'g-fingerstyle']) expect(fams.has(f), f).toBe(false);
+    for (const f of ['g-jazz', 'g-harris', 'g-fretting', 'g-picking', 'g-chords', 'g-rhythm', 'g-scales', 'g-lead', 'g-reading', 'g-ear', 'g-legato', 'g-arps', 'g-impro', 'g-meter']) expect(fams.has(f), f).toBe(true);
     const refs = steps.map((s) => s.ladder!.ref);
-    for (const id of [...ADDON_LEVELS, 'g-picking-7']) expect(refs, id).not.toContain(id);
-    // §5.2 counted 85 with country in the core; the owner left country out (picking 7).
-    expect(steps.length).toBe(159); // + SPEC-JAZZ-NEIGHBOURS g-brazil 11, g-guajeo 9 (core, no add-on) // + SPEC-PRACTICE-KEYS g-scales 19–21 // + §4.6 g-scales 16–18 // + AUDIT-7: g-scales 13–15 // + STAGE C speed 5 and fusion 5; // + g-first 8, g-riff 5 (AUDIT-6 Stage B) + 84 + g-meter 1–6 (R-4) + voice leading on the neck (3) + AUDIT-SCALES: technique 5 + harmonization 1–9
+    for (const id of [...PROG_LEVELS, 'g-picking-7']) expect(refs, id).not.toContain(id);
+    expect(refs).toEqual(expect.arrayContaining(['g-jazz-12', 'g-harris-6', 'g-impro-6', 'g-rhythm-6', 'g-chords-1']));
+    // the old add-on setting no longer changes the path
+    expect(pathOf(ds({ guitarAddOns: ['prog', 'flamenco'] })).length).toBe(steps.length);
   });
 
-  it('no choice made yet → the core plus the jazz add-on (jazz comping, Barry Harris on the neck) at their grades', () => {
-    const refs = pathOf(ds()).map((s) => s.ladder!.ref);
-    expect(refs).toEqual(expect.arrayContaining(['g-jazz-1', 'g-harris-1', 'g-chords-1']));
-    expect(refs.some((r) => r.startsWith('g-prog') || r.startsWith('g-flamenco'))).toBe(false);
-    expect(refs.length).toBe(pathOf(ds({ guitarAddOns: ['jazz'] })).length);
+  it('a style in focus adds its families and levels to the path', () => {
+    const prog = pathOf(ds(), { main: 'jazz', also: ['prog'] }).map((s) => s.ladder!.ref);
+    expect(prog).toEqual(expect.arrayContaining(['g-prog-1', 'g-prog-8', ...PROG_LEVELS]));
+    const fl = pathOf(ds(), { main: 'jazz', also: ['flamenco', 'fingerstyle'] }).map((s) => s.ladder!.ref);
+    expect(fl.some((r) => r.startsWith('g-flamenco'))).toBe(true);
+    expect(fl.some((r) => r.startsWith('g-fingerstyle'))).toBe(true);
+    expect(pathOf(ds(), { main: 'pop', also: ['country'] }).map((s) => s.ladder!.ref)).toContain('g-picking-7');
   });
 
-  it('each add-on adds its families and levels; all four give the full 306 minus country', () => {
-    const jazz = pathOf(ds({ guitarAddOns: ['jazz'] })).map((s) => s.ladder!.ref);
-    expect(jazz).toEqual(expect.arrayContaining(['g-jazz-12', 'g-harris-6', 'g-impro-6', 'g-rhythm-6']));
-    expect(jazz.some((r) => r.startsWith('g-prog'))).toBe(false);
-    const prog = pathOf(ds({ guitarAddOns: ['prog'] })).map((s) => s.ladder!.ref);
-    expect(prog).toEqual(expect.arrayContaining(['g-prog-1', 'g-prog-8', 'g-picking-9', 'g-legato-8']));
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'] })).length).toBe(373); /* + g-brazil 11, g-guajeo 9 */ /* + g-cadlib 10 */ /* + §4.6 g-scales 16–18 */ /* + g-tpair 7, g-gig 8, g-ctone 6, g-color 13–15 */ /* + AUDIT-7 g-scales 13–15, g-jblues 4 */ /* 3 hidden until verified (6 before 2026-11-16) */ // + g-first 8 + g-riff 5 (AUDIT-6 Stage B) + g-ctone 5 + g-color 12 + AUDIT-SCALES 21 + g-harrisline 10 + g-meter 6 + g-vl 3 + g-theory 7 + g-harris 10 + g-keys 12 + g-bebop 12 + g-phrase 8 + g-ear 11–13 + g-cmel 6 + g-tune 9 + g-ctx 11 + g-solo 10
-    expect(pathOf(ds({ guitarAddOns: ['jazz', 'flamenco', 'fingerstyle', 'prog'], guitarStyle: 'country' })).length).toBe(374);
-    // The Technique hub shows the same.
-    expect(shownFamilies(ds({ guitarAddOns: [] })).map((f) => f.id)).not.toContain('g-jazz');
-    expect(shownFamilies(ds({ guitarAddOns: ['fingerstyle'] })).map((f) => f.id)).toContain('g-fingerstyle');
+  it('the Technique hub shows every family and level, whatever was ticked (no lock)', () => {
+    const ids = shownFamilies(ds({ guitarAddOns: [] })).map((f) => f.id);
+    for (const f of ['g-jazz', 'g-fingerstyle', 'g-flamenco', 'g-prog']) expect(ids).toContain(f);
   });
 
   it('the old single style migrates; jazz is pre-ticked for a Jazz-course player; an explicit choice stays', () => {

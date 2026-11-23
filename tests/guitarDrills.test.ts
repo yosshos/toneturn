@@ -403,16 +403,11 @@ describe('guitar drills: plan', () => {
     expect(familyById('g-legato')?.levels.length).toBeGreaterThan(0);
   });
 
-  it('the old guitar style migrates to add-ons (GUITAR_DEEPENING §5): the core always, add-ons only when chosen', () => {
-    // flamenco → the flamenco add-on, on top of the core.
+  it('SPEC-STYLE-FOCUS §2: the old guitar style / add-ons no longer hide anything — every family and level is shown', () => {
     const fl = shownFamilies({ emphasis: 'both', instrument: 'guitar', guitarStyle: 'flamenco' }).map((f) => f.id);
-    expect(fl).toContain('g-flamenco');
-    expect(fl).toContain('g-scales');
-    expect(fl).not.toContain('g-jazz');
-    // rock / metal → core only: every core rhythm level (no genre filter on guitar any more), no add-on levels.
+    for (const f of ['g-flamenco', 'g-scales', 'g-jazz', 'g-prog']) expect(fl).toContain(f);
     const metal = shownFamilies({ emphasis: 'both', instrument: 'guitar', guitarStyle: 'metal' });
-    expect(metal.find((f) => f.id === 'g-rhythm')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10, 11]);
-    expect(metal.map((f) => f.id)).not.toContain('g-prog');
+    expect(metal.find((f) => f.id === 'g-rhythm')!.levels.map((l) => l.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   });
 
   it("today's items for a new guitar player come from the starter families", () => {

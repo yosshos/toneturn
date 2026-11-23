@@ -80,9 +80,9 @@ describe('bass course families', () => {
     expect(shown).toEqual(ORDER);
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'all' }).map((f) => f.id)).toEqual(ORDER);
     expect(guitarCatalog().find((f) => f.id === 'g-bass')?.levels.length).toBe(6);
-    // A genre filter keeps every family; only the style levels of other genres drop out.
+    // SPEC-STYLE-FOCUS §2: the old genre filter hides nothing any more (every style level is shown).
     const rock = shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock' });
-    expect(rock.find((f) => f.id === 'b-styles')!.levels.every((l) => (l as GuitarLevelDef).genres?.some((g) => g === 'rock' || g === 'all'))).toBe(true);
+    expect(rock.find((f) => f.id === 'b-styles')!.levels.length).toBe(shownFamilies({ emphasis: 'both', instrument: 'bass' }).find((f) => f.id === 'b-styles')!.levels.length);
     // 21 walking levels (19–20 the jazz waltz, BASS_NICHE_PLAN J5; 21 the first blues walk, AUDIT-7 #2) less the 4 old
     // standards levels retired for the ladder (11/13/14/18, owner 2026-11-11); the low-B one (L17) only on a bass with a low B (N10).
     expect(shownFamilies({ emphasis: 'both', instrument: 'bass', guitarStyle: 'rock', bassTuning: 'bass5' }).find((f) => f.id === 'b-walk')!.levels.length).toBe(17);
