@@ -106,3 +106,7 @@
 .ev-debrief li { display: flex; align-items: baseline; gap: 8px; padding: 4px 8px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: 0.88rem; }
 .ev-debrief li.known { border-color: color-mix(in oklab, #1baf7a 60%, var(--line)); }
 .ev-debrief small { margin-inline-start: auto; color: var(--ink-soft); }
+/* SPEC-LICKS-IN-IMPROV §4: each lick found in a take, replayed from the take */
+.lf-row { display: flex; align-items: center; gap: 8px; }
+.is-lead { margin: 6px 0; }
+.is-lick-rule { margin: 0 0 6px; }

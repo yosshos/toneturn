@@ -330,6 +330,8 @@ export interface Settings {
   channelSelf?: Partial<Record<import('../engine/courses').CourseId, import('../engine/channelPlan').ChannelSelf>>;
   /** Phase 6 (§8.1): this week's channel mix (strong / weak / memory), moved ≤ 5 points a week toward the profile's target. */
   channelMix?: import('../engine/channelPlan').StoredMix;
+  /** SPEC-EAR-AND-READING §5: this week's takes per channel (every place), for the weekly balance's measured shares. */
+  channelWeek?: import('../engine/channelPlan').ChannelWeek;
   /** Phase 6 (§3.1): today's sight dose (kept for the day so it stays the same item). */
   sightDose?: import('../engine/channelPlan').StoredSight;
   /** Course and unit openers seen (content/openers.ts): each plays once on its own, then only from its replay button. */

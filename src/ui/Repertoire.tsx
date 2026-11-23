@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
 import { STYLE_TEXT, type StyleId } from '../engine/styles';
-import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
+import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceKeys, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
 import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
 import { CHART_TEMPLATES } from '../engine/charts';
 import type { CourseId } from '../engine/courses';
@@ -58,6 +58,10 @@ export interface RepertoireProps {
   onTemplate: (id: string) => void;
   /** The full public-domain songbook (instrument courses). */
   onSongbook?: () => void;
+  /** SPEC-LICKS-IN-IMPROV §5.3: the licks of mine that fit a chart (its text) — shown with "Improvise on it". */
+  licksFit?: (text: string) => { id: string; name: Bi; bars: number[]; key: string }[];
+  /** SPEC-EAR-AND-READING §3.3: the player's strong channel — its way to learn a melody comes first. */
+  strong?: 'ear' | 'page';
 }
 
 /** The view in the address (#/repertoire/…), followed as it changes. */
@@ -87,6 +91,7 @@ function useWide(): boolean {
 let openedFromList = false;
 
 const statusMark = (s: ItemStatus, lang: Lang) => STATUS_WORD[s][lang];
+const KEY_NAME = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 
 export function RepertoireScreen(p: RepertoireProps) {
   const { lang, course, jazz, lessons, history: hist } = p;
@@ -264,7 +269,11 @@ export function RepertoireScreen(p: RepertoireProps) {
                 <button className={`rep-row st-${st} ${view.piece === x.key ? 'on' : ''}`} onClick={() => openPiece(x.key)} data-rep-item={x.ref.kind === 'rep' ? x.ref.id : x.key} data-rep-key={x.key}>
                   <span className="rep-row-text">
                     <b>{x.item ? x.teaches[lang] : x.title[lang]}</b>
-                    <small>{x.item ? x.title[lang] : x.teaches[lang]}</small>
+                    <small>
+                      {x.item ? x.title[lang] : x.teaches[lang]}
+                      {/* SPEC-PRACTICE-IA-3 §3: each piece shows its style */}
+                      {entryStyle(x) && <span className="rep-row-style" data-rep-row-style={entryStyle(x)!}> · {STYLE_TEXT[entryStyle(x)!][lang]}</span>}
+                    </small>
                   </span>
                   <span className={`rep-mark st-${st}`} data-status={st}>
                     {st === 'new' ? '' : statusMark(st, lang)}
@@ -363,6 +372,14 @@ function actionLabel(a: PieceAction, course: CourseId, ref: LibEntry['ref']): Bi
       return course === 'ear' ? { en: 'Transcribe a phrase', he: 'לתמלל משפט' } : { en: 'Play along with my recording', he: 'לנגן עם ההקלטה שלי' };
     case 'technique':
       return { en: 'Practise it in the technique hub', he: 'לתרגל במרכז הטכניקה' };
+    case 'melody':
+      return a.mode === 'ear' ? { en: 'Learn the melody by ear', he: 'ללמוד את המנגינה בשמיעה' } : { en: 'Learn the melody from the page', he: 'ללמוד את המנגינה מהתווים' };
+    case 'comp':
+      return course === 'bass' ? { en: 'Comp it: walk the changes', he: 'ללוות: בס מהלך' } : { en: 'Comp it', he: 'ללוות אותו' };
+    case 'voicings':
+      return { en: 'Its voicings', he: 'הווייסינגים שלו' };
+    case 'transcribe':
+      return { en: 'Transcribe a phrase', he: 'לתמלל משפט' };
   }
 }
 
@@ -370,8 +387,15 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
   const { lang, course, entry, status, wayIn, pathView, myCharts } = props;
   const he = lang === 'he';
   const it = entry.item;
-  const hasChart = !!chartOfPiece(entry.ref, lang, myCharts);
-  const actions = pieceActions(entry, course, hasChart);
+  const chart = chartOfPiece(entry.ref, lang, myCharts);
+  const hasChart = !!chart;
+  const hasMelody = !!(chart as { melody?: unknown[] } | null)?.melody?.length || !!it?.ways.some((w) => w.k === 'song');
+  const actions = pieceActions(entry, course, hasChart, { melody: hasMelody, strong: props.strong });
+  // the technique hub: the piece's keys (and, on the piano, its voicings) to pick from
+  const [techOpen, setTechOpen] = useState(false);
+  const keys = techOpen && chart ? pieceKeys(chart.text) : [];
+  const fits = chart && actions.some((a) => a.k === 'improvise') ? (props.licksFit?.(chart.text) ?? []) : [];
+  const act = (a: PieceAction) => (a.k === 'technique' && a.key === undefined && chart ? setTechOpen((v) => !v) : props.onAction(entry, a));
   const [full, setFull] = useState(wayIn !== 'path');
   const where = entry.ref.kind === 'rep' ? whereInPath(pathView, entry.key) : null;
   const why = props.whyToday?.(entry.key) ?? null;
@@ -421,7 +445,7 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
       {it && <h2 className="rep-teaches">{it.teaches[lang]}</h2>}
       <div className="rep-ways">
         {main && (
-          <button className="btn primary rep-main" onClick={() => props.onAction(entry, main)} data-rep-main={wayIn} data-rep-way={main.k === 'way' ? main.way.k : main.k}>
+          <button className="btn primary rep-main" onClick={() => act(main)} data-rep-main={wayIn} data-rep-way={main.k === 'way' ? main.way.k : main.k}>
             <span>{MAIN[wayIn][lang]}</span>
             <small>{actionLabel(main, course, entry.ref)[lang]}</small>
           </button>
@@ -434,11 +458,39 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
         {rest.length > 0 && (
           <div className="rep-actions">
             {rest.map((a, i) => (
-              <button key={i} className="btn ghost" onClick={() => props.onAction(entry, a)} data-rep-way={a.k === 'way' ? a.way.k : a.k} data-rep-action={a.k}>
+              <button key={i} className="btn ghost" onClick={() => act(a)} data-rep-way={a.k === 'way' ? a.way.k : a.k} data-rep-action={a.k === 'melody' ? `melody-${a.mode}` : a.k} aria-expanded={a.k === 'technique' ? techOpen : undefined}>
                 {actionLabel(a, course, entry.ref)[lang]}
               </button>
             ))}
           </div>
+        )}
+        {techOpen && keys.length > 0 && (
+          // SPEC-PRACTICE-IA-3 §3: "that piece's keys and voicings into the key session"
+          <div className="rep-tech chips" data-rep-tech={keys.length}>
+            <small>{he ? 'הסולמות של היצירה' : "The piece's keys"}</small>
+            {keys.map((k) => (
+              <button key={`${k.root}-${k.minor}`} className="chip" onClick={() => props.onAction(entry, { k: 'technique', key: k.root })} data-rep-tech-key={k.root}>
+                <bdi dir="ltr">{KEY_NAME[k.root] + (k.minor ? 'm' : '')}</bdi>
+              </button>
+            ))}
+            {course === 'keys' && (
+              <button className="chip" onClick={() => props.onAction(entry, { k: 'voicings' })} data-rep-tech-voicings="1">
+                {actionLabel({ k: 'voicings' }, course, entry.ref)[lang]}
+              </button>
+            )}
+          </div>
+        )}
+        {full && fits.length > 0 && (
+          // SPEC-LICKS-IN-IMPROV §5.3: "Improvise on it" shows the licks of mine that fit this progression
+          <p className="rep-licks field-hint" data-rep-licks={fits.length}>
+            {he ? 'הליקים שלכם שמתאימים: ' : 'Your licks that fit: '}
+            {fits.map((f, i) => (
+              <span key={f.id} data-rep-lick={f.id}>
+                {i ? ' · ' : ''}
+                {f.name[lang]} <bdi dir="ltr">({f.key}, {he ? 'תיבות' : 'bars'} {f.bars.slice(0, 3).join(', ')})</bdi>
+              </span>
+            ))}
+          </p>
         )}
       </div>
       {full && it?.leads && (

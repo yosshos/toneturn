@@ -1,4 +1,5 @@
 import { COURSE_AREAS, type CourseId } from '../engine/courses';
+import { inFingersShare } from '../engine/channelPlan';
 import { picksOf, type StyleFocus } from '../engine/styleFocus';
 import { STYLE_TEXT, styleOfLevel, type StyleId } from '../engine/styles';
 import { catalog, type LevelDef } from '../engine/drills/generate';
@@ -26,9 +27,9 @@ import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
 /** Progress → Skills: an instrument course shows its sections (SPEC-COURSE-SECTIONS); Ear its skills by area. */
-export function SkillMap({ styleFocus, ...props }: Parameters<typeof EarSkillMap>[0] & { /** SPEC-STYLE-FOCUS §4: the "My styles" strip. */ styleFocus?: StyleFocus }) {
+export function SkillMap({ styleFocus, vocabUse, ...props }: Parameters<typeof EarSkillMap>[0] & { /** SPEC-STYLE-FOCUS §4: the "My styles" strip. */ styleFocus?: StyleFocus; /** SPEC-LICKS-IN-IMPROV §4: "vocabulary in use" (licks in my language ÷ licks learned), in the improvisation area. */ vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
   const course = useCourse().active;
-  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} styleFocus={styleFocus} /> : <EarSkillMap {...props} />;
+  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} styleFocus={styleFocus} vocabUse={vocabUse} /> : <EarSkillMap {...props} />;
 }
 
 /** A course's styled technique levels, by style (styles.ts tags). */
@@ -401,7 +402,7 @@ export function EarChordCard({ t, ratings, bestLeague }: { t: Strings; ratings: 
  * courses split): its sections as the radar's axes (technique one axis, time its own on piano), then one row per section
  * with its families and how many of their levels are passed; the weakest started section is the next to work on.
  */
-function CourseSectionsMap({ t, lang, progress, onBack, styleFocus }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void; styleFocus?: StyleFocus }) {
+function CourseSectionsMap({ t, lang, progress, onBack, styleFocus, vocabUse }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void; styleFocus?: StyleFocus; vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
   const course = useCourse().active;
   const secs = COURSE_SECTIONS[course]!;
   const items = progress.drillItems ?? {};
@@ -409,6 +410,8 @@ function CourseSectionsMap({ t, lang, progress, onBack, styleFocus }: { t: Strin
   const he = lang === 'he';
   const started = axes.filter((a) => a.v !== null);
   const next = started.length ? started.reduce((a, b) => (b.v! < a.v! ? b : a)) : null;
+  // "in the fingers": shown once something is closed
+  const fingers = Object.values(items).some((x) => x.takes > 0 && x.targetBpm) ? inFingersShare(items) : null;
   // owner 2026-11-21: the map lives here only (not on Overview), and it is clickable — an axis opens its area
   const [open, setOpen] = useState<string | null>(null);
   const R = 92;
@@ -469,6 +472,23 @@ function CourseSectionsMap({ t, lang, progress, onBack, styleFocus }: { t: Strin
               {(sec.id === 'byear' || sec.id === 'reading') && a.v !== null && (
                 <p className="field-hint" data-section-measured={sec.id}>
                   {sec.id === 'byear' ? (he ? `נמדד מנגינות משמיעה של חומר חדש: ${Math.round(a.v * 100)}%` : `Measured from first takes by ear: ${Math.round(a.v * 100)}%`) : he ? `נמדד מקריאה מהדף של חומר חדש: ${Math.round(a.v * 100)}%` : `Measured from sight-reading takes: ${Math.round(a.v * 100)}%`}
+                </p>
+              )}
+              {/* SPEC-EAR-AND-READING §4: "in the fingers" beside technique — closed items also passed without help */}
+              {sec.id === 'technique' && fingers !== null && (
+                <p className="field-hint" data-section-fingers={Math.round(fingers * 100)}>
+                  {he ? 'באצבעות (גם בלי עזרה): ' : 'In the fingers (also without help): '}
+                  <bdi dir="ltr">{Math.round(fingers * 100)}%</bdi>
+                </p>
+              )}
+              {/* SPEC-LICKS-IN-IMPROV §4: "vocabulary in use" in the improvisation area */}
+              {sec.id === 'improv' && vocabUse && (
+                <p className="field-hint" data-section-vocab={Math.round(vocabUse.share * 100)}>
+                  {he ? 'אוצר מילים בשימוש: ' : 'Vocabulary in use: '}
+                  <bdi dir="ltr">
+                    {vocabUse.inLanguage} / {vocabUse.learned}
+                  </bdi>{' '}
+                  {he ? 'ליקים בשפה שלי' : 'licks in my language'}
                 </p>
               )}
               <ul className="sm-fams">

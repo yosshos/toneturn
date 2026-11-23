@@ -17,7 +17,13 @@ import { ChallengeList } from './ImprovRules';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { ListenOriginal } from './ListenOriginal';
 import { keepChartTake } from './recKeep';
-import type { MyChart } from './Charts';
+import type { MyChart, VocabCtx } from './Charts';
+import { LicksFound, type FoundUses } from './LicksFound';
+import { LICK_CARDS, takeUses, type LickCardId } from '../engine/vocab';
+import { cardKept, checkCard, spansOfChart } from '../engine/ruleCards';
+import { RULE_NAME } from '../engine/improvRules';
+import type { ParsedChart } from '../engine/charts';
+import type { Channel } from '../engine/drills/channel';
 import { UseIt, lickInstrumentOf } from './LickTrainer';
 import { lickById, type Lick } from '../engine/licks';
 import { lickImprovChart, TODAYS_LICK_RULES } from '../engine/lickImprov';
@@ -51,6 +57,8 @@ const TX = {
     phrasingHow: 'Improvise over the band. Think in sentences: say something, then leave space. The rule shapes it.',
     varyHow: 'Listen to the phrase, then play it back changed as asked. Keep something of it — its shape or its rhythm.',
     tradeHow: 'You play four bars; the band and the app answer with your idea developed. Three rounds.',
+    tradeEarHow: 'By ear: the band plays four bars with a phrase; you answer it in the next four — pick up its rhythm or its motif. Three rounds.',
+    whoLeads: 'Who starts', iLead: 'I start', bandLeads: 'The band starts (by ear)', answered: 'answered the phrase', notAnswered: 'no answer to the phrase', lickRule: 'With a lick card', none: 'No lick card',
     asks: { displace: 'Move it in time (start it on another beat)', ornament: 'Ornament it (add notes around it)', transpose: 'Move it to another pitch (same shape)', answer: 'Answer it (a reply that ends at home)' } as Record<Variation, string>,
     phrases: 'phrases', space: 'space', density: 'notes / beat', arcs: 'phrases that build', motif: 'Your opening idea came back', times: 'times', dev: 'development', listen: 'Listen', yourTurn: 'Your turn', keys: 'Play here if you have no MIDI keyboard',
     round: 'Round',
@@ -61,6 +69,8 @@ const TX = {
     phrasingHow: 'אלתרו מעל הלהקה. חשבו במשפטים: להגיד משהו, ואז להשאיר מקום. החוק מעצב את זה.',
     varyHow: 'הקשיבו למשפט, ואז נגנו אותו בחזרה בשינוי שהתבקש. שמרו משהו ממנו — הצורה או הקצב.',
     tradeHow: 'אתם מנגנים ארבע תיבות; הלהקה והאפליקציה עונות עם הרעיון שלכם בפיתוח. שלושה סבבים.',
+    tradeEarHow: 'בשמיעה: הלהקה מנגנת ארבע תיבות עם משפט; אתם עונים לו בארבע הבאות — תפסו את הקצב או את המוטיב שלו. שלושה סבבים.',
+    whoLeads: 'מי פותח', iLead: 'אני פותח', bandLeads: 'הלהקה פותחת (בשמיעה)', answered: 'עניתם למשפט', notAnswered: 'אין תשובה למשפט', lickRule: 'עם קלף ליק', none: 'בלי קלף ליק',
     asks: { displace: 'להזיז אותו בזמן (להתחיל על פעמה אחרת)', ornament: 'לקשט אותו (להוסיף צלילים סביבו)', transpose: 'להעביר לגובה אחר (אותה צורה)', answer: 'לענות לו (תשובה שמסתיימת בבית)' } as Record<Variation, string>,
     phrases: 'משפטים', space: 'שקט', density: 'צלילים לפעמה', arcs: 'משפטים שנבנים', motif: 'הרעיון הפותח חזר', times: 'פעמים', dev: 'פיתוח', listen: 'להקשיב', yourTurn: 'תורכם', keys: 'נגנו כאן אם אין מקלדת MIDI',
     round: 'סבב',
@@ -89,15 +99,48 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
+/** The chord tones (pitch classes) sounding at a beat of a parsed chart (4/4). */
+function pcsAt(p: ParsedChart, beat: number): number[] {
+  let cur = p.chords[0];
+  for (const c of p.chords) if (c.bar * 4 + c.at <= beat + 1e-6) cur = c;
+  return cur ? cur.iv.map((x) => (cur.root + x) % 12) : [0, 4, 7];
+}
+/**
+ * The band's phrase for trading by ear (SPEC-EAR-AND-READING §3.4): a short motif (the Vary exercise's generator: four
+ * to six scale notes, a clear rhythm) in bar 1, developed over bars 2–4 the way the band answers the player
+ * (tradeAnswer: a step up, inverted, a step down), every note moved to the nearest chord tone of the chord under it.
+ */
+export function callPhrase(p: ParsedChart, seed: number): PNote[] {
+  const tonic = 60 + (p.chords[0]?.root ?? 0);
+  const motif = phraseToVary(seed, tonic).filter((n) => n.beat < 3.75);
+  const line = [...motif, ...tradeAnswer(motif, tonic, 4).filter((n) => n.beat < 15)];
+  return line.map((n) => {
+    const pcs = pcsAt(p, n.beat);
+    let best = n.midi;
+    for (let d = 0; d <= 6; d++) {
+      if (pcs.includes((((n.midi - d) % 12) + 12) % 12)) {
+        best = n.midi - d;
+        break;
+      }
+      if (pcs.includes((n.midi + d) % 12)) {
+        best = n.midi + d;
+        break;
+      }
+    }
+    return { ...n, midi: best };
+  });
+}
+
 /** The workout's improvisation block (SPEC-LICKS-IN-IMPROV §4): today's lick, over its chart in the key of the day. */
-export function TodayLickCard({ lick, dayKey, lang, onOpen }: { lick: Lick; dayKey: number; lang: Lang; onOpen?: (c: MyChart) => void }) {
+export function TodayLickCard({ lick, dayKey, lang, onOpen, workout = true }: { lick: Lick; dayKey: number; lang: Lang; onOpen?: (c: MyChart) => void; /** Opened from the workout (the card says so). */ workout?: boolean }) {
   const tx = TX[lang];
   const minor = isMinorLick(lick);
   return (
     <div className="is-lick-card" data-is-today-lick={lick.id}>
       <div>
         <small>
-          {tx.inWorkout} · {tx.todayLick}
+          {workout ? `${tx.inWorkout} · ` : ''}
+          {tx.todayLick}
         </small>
         <b>
           {lick.name[lang]} · <bdi dir="ltr">{kName(dayKey, minor)}</bdi>
@@ -120,7 +163,7 @@ export function TodayLickCard({ lick, dayKey, lang, onOpen }: { lick: Lick; dayK
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onHarrisTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** Phase 8: the Barry Harris way's tier (H-1…H-4), chosen by the player. */ onHarrisTier?: (t: HarrisTier) => void; /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onHarrisTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** Phase 8: the Barry Harris way's tier (H-1…H-4), chosen by the player. */ onHarrisTier?: (t: HarrisTier) => void; /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats); `channel` = how it was played (trading by ear: ear-fresh; else the lead sheet in view). */ onTake?: (t: ImprovTake, channel?: Channel) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool, today's lick, the closed keys and the booking of a take's uses (SPEC-LICKS-IN-IMPROV). */ vocab?: VocabCtx; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(workout || !initialChart ? 'scales' : onOpenChart ? 'rules' : 'phrasing');
@@ -142,8 +185,16 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const [askIdx, setAskIdx] = useState(0);
   // today's lick first, then the rest of the pool (any lick played at all); without a pool, the licks in "mine"
   const mineOld = (settings.lickBook?.mine ?? []).map((id) => lickById(id, settings.lickBook?.own ?? [])).filter((l): l is NonNullable<typeof l> => !!l);
-  const pool = vocab?.pool.length ? vocab.pool : mineOld;
+  // the approach cells are detected in every take but are not "use it" licks
+  const pool = (vocab?.pool.length ? vocab.pool : mineOld).filter((l) => !l.cell);
   const myLicks = vocab?.today ? [vocab.today, ...pool.filter((l) => l.id !== vocab.today!.id)] : pool;
+  // SPEC-LICKS-IN-IMPROV §2: a lick card can ride along with the scale rotation (the take's notes are checked here, at
+  // the take boundary); its result and the licks found in the last rotation take
+  const [lickCard, setLickCard] = useState<LickCardId | ''>('');
+  const [rotLicks, setRotLicks] = useState<{ found: FoundUses | null; card: { id: LickCardId; ok: number; total: number; kept: boolean } | null } | null>(null);
+  // Trade (SPEC-EAR-AND-READING §3.4): the player starts (as before) or the band starts with a phrase, answered by ear
+  const [lead, setLead] = useState<'me' | 'band'>('me');
+  const [turn, setTurn] = useState<'band' | 'you' | null>(null);
   const [lickId, setLickId] = useState(myLicks[0]?.id ?? '');
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
@@ -210,6 +261,21 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const { p } = chartOf();
     return mode === 'trade' ? buildRotationSheet({ ...p, bars: Math.min(4, p.bars), chords: p.chords.filter((c) => c.bar < 4) }, { tier, stats, choruses: 1 }) : buildRotationSheet(p, { tier, stats, choruses: 2 });
   })();
+  /**
+   * SPEC-LICKS-IN-IMPROV §3–4 at the take boundary: the licks of mine in the take's notes (beats from the chart's first
+   * beat) over the chart — booked by the app (the usage log, "in my language", the review, XP) and shown in the debrief.
+   */
+  const bookLicks = (played: { beat: number; midi: number; dur?: number }[], p: ParsedChart, bars: number, takeBpm: number, session: string): FoundUses | null => {
+    if (!vocab?.pool.length || played.length < 3) return null;
+    const notesB = played.map((n) => ({ beat: n.beat, midi: Math.round(n.midi), dur: n.dur }));
+    const r = takeUses({ pool: vocab.pool, closed: vocab.closed, notes: notesB, spans: spansOfChart(p, 4, bars), session, tol: vocab.tol, meter: 4 });
+    if (r.uses.length) vocab.onUses?.(r.uses, r.xp);
+    return { ...r, notes: notesB, bpm: takeBpm };
+  };
+  const lickCardOf = (id: LickCardId, played: { beat: number; midi: number; dur?: number }[], p: ParsedChart, bars: number, takeBpm: number) => {
+    const c = checkCard(id, { notes: played.map((n) => ({ beat: n.beat, dur: n.dur ?? 0.25, midi: n.midi })), spans: spansOfChart(p, 4, bars), meter: 4, bpm: takeBpm, opt: { licks: vocab?.pool ?? [], ...(vocab?.today ? { today: vocab.today } : {}), ...(vocab?.closed ? { closedKeys: vocab.closed } : {}), ...(vocab?.tol ? { lickTol: vocab.tol } : {}) } });
+    return { id, ok: c.ok, total: c.total, kept: cardKept(id, c) };
+  };
   const CovLine = ({ g }: { g: RotationGrade }) =>
     g.m.colourSpans ? (
       <p className="is-cov" data-is-cov={Math.round(g.m.colour * 100)}>
@@ -236,6 +302,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const g = sh ? gradeRotation(sh, played, stats, new Date().toISOString()) : null;
     const phraseScore = (chk.ok ? 0.5 : 0.2) + 0.25 * developmentScore(mot.returns) + 0.25 * (g?.score ?? 0);
     onTake?.(improvTake('phrasing', { score: phraseScore, notes: played.length, tier, bpm, stats: g?.stats }));
+    const licksFound = bookLicks(played, p, p.bars * 2, bpm, `phrase-${Date.now().toString(36)}`);
     setResult(
       <div className="is-result" data-is-result="phrasing">
         <p className={chk.ok ? 'ok' : 'no'}>
@@ -259,6 +326,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           {tx.motif}: {mot.returns.length} {tx.times} · {tx.dev} {Math.round(developmentScore(mot.returns) * 100)}%
         </p>
         {g && <CovLine g={g} />}
+        {licksFound && licksFound.uses.length > 0 && <LicksFound found={licksFound} pool={vocab?.pool ?? []} lang={lang} />}
         {played.length >= 3 && (
           // Encore (SPEC-PHRASE-STUDIO §4.1): keep a phrase from this take.
           <KeepButton lang={lang} wide onKeep={() => keepPhrase({ kind: 'improv', instrument: 'piano', title: { en: `Improv over ${L.title.en}`, he: `אלתור על ${L.title.he}` }, source: midi.devices.length ? 'midi' : 'screen', notes: played.map((n) => ({ pitch: n.midi, on: n.beat * beatS * 1000, off: (n.beat + Math.max(0.1, n.dur)) * beatS * 1000, vel: 80 })), bpm, t0: 0, meter: 4, chart: L.text })} />
@@ -304,39 +372,71 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const grades: RotationGrade[] = [];
     const sh = buildRotationSheet(four, { tier, stats, choruses: 1 });
     let played = 0;
+    const fourOnly = { ...four, chords: four.chords.filter((c) => c.bar < four.bars) };
+    const allMine: PNote[] = [];
+    let answeredN = 0;
     for (let r = 0; r < 3; r++) {
       setRound(r + 1);
-      // the player's four bars over the band (with a count-in)
-      const b = styledBacking(four, bandStyle, bpm, 1);
+      let call: PNote[] = [];
+      if (lead === 'band') {
+        // by ear (SPEC-EAR-AND-READING §3.4): the band's four bars carry a phrase first (with the count-in); the player
+        // answers it in the next four
+        setTurn('band');
+        call = callPhrase(fourOnly, (Date.now() >>> 8) + r);
+        const b0 = styledBacking(four, bandStyle, bpm, 1, { countIn: r === 0 });
+        const ev0: NoteEvent[] = [...b0.events, ...call.map((n) => ({ midi: n.midi, start: (b0.startBeat + n.beat) * beatS, duration: Math.max(0.2, n.dur * beatS), velocity: 0.74 }))];
+        if (!(await run(ev0, b0.length, b0.startBeat))) break;
+      }
+      // the player's four bars over the band (a count-in when the player starts)
+      setTurn('you');
+      const b = styledBacking(four, bandStyle, bpm, 1, { countIn: lead === 'me' });
       if (!(await run(b.events, b.length, b.startBeat))) break;
       const mine = notes.current.filter((n) => n.beat >= -0.25 && n.beat < 16);
-      scores.push(developmentScore(motifReturns(mine).returns));
+      allMine.push(...mine.map((n) => ({ ...n, beat: n.beat + 16 * r })));
+      if (lead === 'band') {
+        // answered: the reply picks up the call's rhythm or its motif (judgeVariation: related)
+        const v = judgeVariation(call.filter((n) => n.beat < 4), mine.filter((n) => n.beat < 4.5), 'answer');
+        if (v.related) answeredN++;
+        scores.push(v.related ? 1 : mine.length >= 3 ? 0.4 : 0);
+      } else scores.push(developmentScore(motifReturns(mine).returns));
       played += mine.length;
       if (sh) {
         const g = gradeRotation(sh, mine, tStats, new Date().toISOString());
         tStats = g.stats;
         grades.push(g);
       }
-      // the app's answer: the player's idea developed, over the band
-      const ans = tradeAnswer(mine, 60, 0);
-      const back = styledBacking(four, bandStyle, bpm, 1, { countIn: false });
-      const ev: NoteEvent[] = [...back.events, ...ans.map((n) => ({ midi: n.midi, start: n.beat * beatS, duration: Math.max(0.2, n.dur * beatS), velocity: 0.72 }))];
-      if (!(await run(ev, back.length, 0))) break;
+      if (lead === 'me') {
+        // the app's answer: the player's idea developed, over the band
+        setTurn('band');
+        const ans = tradeAnswer(mine, 60, 0);
+        const back = styledBacking(four, bandStyle, bpm, 1, { countIn: false });
+        const ev: NoteEvent[] = [...back.events, ...ans.map((n) => ({ midi: n.midi, start: n.beat * beatS, duration: Math.max(0.2, n.dur * beatS), velocity: 0.72 }))];
+        if (!(await run(ev, back.length, 0))) break;
+      }
     }
     setRunning(false);
     setRound(0);
+    setTurn(null);
+    const licksFound = bookLicks(allMine, fourOnly, four.bars * 3, bpm, `trade-${Date.now().toString(36)}`);
     // the rounds' colour coverage together (each round's spans pooled)
     const cov = grades.reduce((a, g) => ({ hit: a.hit + g.m.colour * g.m.colourSpans, n: a.n + g.m.colourSpans, inSet: a.inSet + g.m.inSet }), { hit: 0, n: 0, inSet: 0 });
     const pooled: RotationGrade | null = grades.length ? { ...grades[grades.length - 1], m: { ...grades[grades.length - 1].m, colour: cov.n ? cov.hit / cov.n : 0, colourSpans: cov.n, inSet: cov.inSet / grades.length }, stats: tStats } : null;
     if (scores.length) {
       const dev = scores.reduce((a, b) => a + b, 0) / scores.length;
-      onTake?.(improvTake('trade', { score: 0.5 * dev + 0.5 * (pooled ? 0.5 * pooled.m.colour + 0.5 * pooled.m.inSet : 0), notes: played, tier, bpm, stats: grades.length ? tStats : undefined }));
+      onTake?.(improvTake('trade', { score: 0.5 * dev + 0.5 * (pooled ? 0.5 * pooled.m.colour + 0.5 * pooled.m.inSet : 0), notes: played, tier, bpm, stats: grades.length ? tStats : undefined }), lead === 'band' ? 'ear-fresh' : undefined);
       setResult(
         <div className="is-result" data-is-result="trade">
-          <p>
-            {tx.dev}: <bdi dir="ltr">{scores.map((s) => `${Math.round(s * 100)}%`).join(' · ')}</bdi>
-          </p>
+          {lead === 'band' ? (
+            <p className={answeredN >= 2 ? 'ok' : 'no'} data-is-answered={answeredN}>
+              <Icon k={answeredN >= 2 ? 'check' : 'close'} size={14} /> {answeredN ? tx.answered : tx.notAnswered} · <bdi dir="ltr">{answeredN}/{scores.length}</bdi>
+            </p>
+          ) : (
+            <p>
+              {tx.dev}: <bdi dir="ltr">{scores.map((s) => `${Math.round(s * 100)}%`).join(' · ')}</bdi>
+            </p>
+          )}
           {pooled && <CovLine g={pooled} />}
+          {licksFound && licksFound.uses.length > 0 && <LicksFound found={licksFound} pool={vocab?.pool ?? []} lang={lang} />}
         </div>,
       );
     }
@@ -365,7 +465,18 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           </button>
         ))}
       </div>
-      {!(mode === 'scales' && track === 'B') && <p className="field-hint">{mode === 'scales' ? tx.scalesHow : mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>}
+      {!(mode === 'scales' && track === 'B') && <p className="field-hint">{mode === 'scales' ? tx.scalesHow : mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : lead === 'band' ? tx.tradeEarHow : tx.tradeHow}</p>}
+      {/* SPEC-LICKS-IN-IMPROV §5.1: today's lick at the top of Improvise's setup, always (not only from the workout) */}
+      {vocab?.today && mode !== 'useit' && !(mode === 'scales' && track === 'B') && <TodayLickCard lick={vocab.today} dayKey={dayKey} lang={lang} onOpen={onOpenChart} workout={workout} />}
+      {mode === 'trade' && (
+        <div className="chips is-lead" role="radiogroup" aria-label={tx.whoLeads} data-is-lead={lead}>
+          {(['me', 'band'] as const).map((w) => (
+            <button key={w} type="button" role="radio" aria-checked={lead === w} className={`chip ${lead === w ? 'on' : ''}`} onClick={() => setLead(w)} disabled={running} data-is-lead-pick={w}>
+              {w === 'me' ? tx.iLead : tx.bandLeads}
+            </button>
+          ))}
+        </div>
+      )}
       {mode === 'scales' && (
         // SPEC-RBI-ROTATION §6, §8.1 (owner): two tracks by name — "Scale rotation" (A) and "The Barry Harris way" (B)
         <div className="chips rs-track" role="radiogroup" aria-label={lang === 'he' ? 'מסלול' : 'Track'}>
@@ -385,9 +496,40 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           dayKey={dayKey}
           piece={initialChart}
           onTier={onTier}
-          onTake={onTake}
-          top={workout && vocab?.today ? <TodayLickCard lick={vocab.today} dayKey={dayKey} lang={lang} onOpen={onOpenChart} /> : null}
+          onTake={(t, played) => {
+            onTake?.(t);
+            // the take boundary (SPEC-LICKS-IN-IMPROV §3): the licks in the rotation take, and the lick card riding along
+            if (!played) return;
+            const p = parseChart(played.chart);
+            const found = bookLicks(played.notes, p, played.bars, played.bpm, `rot-${Date.now().toString(36)}`);
+            setRotLicks({ found, card: lickCard ? lickCardOf(lickCard, played.notes, p, played.bars, played.bpm) : null });
+          }}
+          top={
+            vocab?.pool.length ? (
+              <label className="field-row is-lick-rule">
+                <span>{tx.lickRule}</span>
+                <select value={lickCard} onChange={(e) => (setLickCard(e.target.value as LickCardId | ''), setRotLicks(null))} data-is-lick-card="1">
+                  <option value="">{tx.none}</option>
+                  {LICK_CARDS.filter((id) => id !== 'todays-lick' || vocab.today).map((id) => (
+                    <option key={id} value={id}>
+                      {RULE_NAME[id][lang]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null
+          }
         />
+      )}
+      {mode === 'scales' && track === 'A' && rotLicks && (
+        <div className="is-result" data-is-result="rotation-licks">
+          {rotLicks.card && (
+            <p className={rotLicks.card.kept ? 'ok' : 'no'} data-is-lick-card-result={rotLicks.card.id}>
+              <Icon k={rotLicks.card.kept ? 'check' : 'close'} size={14} /> {RULE_NAME[rotLicks.card.id][lang]}: <bdi dir="ltr">{rotLicks.card.total ? `${rotLicks.card.ok}/${rotLicks.card.total}` : '—'}</bdi>
+            </p>
+          )}
+          {rotLicks.found && rotLicks.found.uses.length > 0 && <LicksFound found={rotLicks.found} pool={vocab?.pool ?? []} lang={lang} />}
+        </div>
       )}
       {mode === 'rules' && onOpenChart && (
         <>
@@ -559,6 +701,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       {mode === 'rules' || mode === 'useit' || mode === 'scales' ? null : running ? (
         <button className="btn primary" onClick={stop}>
           <Icon k="stop" /> {tx.stop} {round ? `· ${tx.round} ${round}/3` : ''}
+          {turn && <span className="is-turn" data-is-turn={turn}> · {turn === 'band' ? tx.listen : tx.yourTurn}</span>}
         </button>
       ) : (
         <button className="btn primary" onClick={() => void (mode === 'phrasing' ? startPhrasing() : mode === 'vary' ? startVary() : startTrade())} data-is-start="1">

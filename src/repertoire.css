@@ -109,3 +109,8 @@
 .rep-src small { color: var(--ink-dim, #6b6380); font-size: 0.8rem; }
 .rep-typed { display: flex; flex-direction: column; gap: 10px; }
 .rep-typed .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* SPEC-PRACTICE-IA-3 §3 (2026-11-23): the row's style; the piece's keys and voicings; the licks that fit */
+.rep-row-style { color: var(--ink-dim); }
+.rep-tech { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.rep-tech > small { flex-basis: 100%; color: var(--ink-dim); }
+.rep-licks { margin: 6px 0 0; }

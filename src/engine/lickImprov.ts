@@ -35,3 +35,21 @@ export function lickInRepertoire(l: Lick, max = 4): { id: string; name: string; 
   }
   return out;
 }
+
+/**
+ * The piece page's "Improvise on it" (SPEC-LICKS-IN-IMPROV §5.3): the licks of mine that fit this chart's progression —
+ * where (1-based bars) and in which key; today's lick first if it fits, then by the number of places. Approach cells fit
+ * everywhere and are not listed.
+ */
+export function licksThatFit(pool: Lick[], text: string, o: { today?: string | null; max?: number } = {}): { lick: Lick; bars: number[]; key: number }[] {
+  const p = parseChart(text, 4);
+  if (p.errors.length || !p.chords.length) return [];
+  const spans = spansOfChart(p, 4, p.bars);
+  const out = pool
+    .filter((l) => !l.cell)
+    .map((l) => ({ l, fits: lickFits(l, spans) }))
+    .filter((x) => x.fits.length > 0)
+    .map((x) => ({ lick: x.l, bars: [...new Set(x.fits.map((f) => Math.floor(f.at / 4 + 1e-6) + 1))], key: x.fits[0].key }));
+  out.sort((a, b) => Number(b.lick.id === o.today) - Number(a.lick.id === o.today) || b.bars.length - a.bars.length);
+  return out.slice(0, o.max ?? 3);
+}

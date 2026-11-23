@@ -221,7 +221,8 @@ describe("the workout's improvisation block (D2) and today's lick", () => {
     expect(app).toContain("go(workoutPending.current ? 'workoutrun' : 'arcade')) : improvInit.current");
     const ui = src('ui/ImprovStudio.tsx');
     expect(ui).toContain("useState<Mode>(workout || !initialChart ? 'scales'");
-    expect(ui).toContain('top={workout && vocab?.today ? <TodayLickCard');
+    // SPEC-LICKS-IN-IMPROV §5.1 (2026-11-23): today's lick at the top of the setup always; the workout marks it as its part
+    expect(ui).toContain('<TodayLickCard lick={vocab.today} dayKey={dayKey} lang={lang} onOpen={onOpenChart} workout={workout} />');
     expect(ui).toMatch(/const c = lickImprovChart\(lick, dayKey\);/);
   });
   it("today's lick over its chart in the key of the day", () => {

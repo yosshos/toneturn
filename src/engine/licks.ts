@@ -56,6 +56,9 @@ export interface Lick {
   straight?: boolean;
   /** The player's own lick (from the transcription coach or "my licks"). */
   own?: boolean;
+  /** An approach lick (k-keylick lick 1, 2, 3) as a cell: found by its pattern before a chord tone, not by its notes
+   *  (SPEC-LICKS-IN-IMPROV §1; lickDetect.findCells). */
+  cell?: 1 | 2 | 3;
   // ── v3 (Encore, SPEC-PHRASE-STUDIO §13.1). All optional; built-in licks are unchanged. ──
   v?: 3;
   /** Left-hand notes for two-hand piano phrases (same [semi, beat, dur], semi from the tonic an octave below). */
@@ -675,7 +678,7 @@ export interface LickBook {
   /** Encore: XP earned per phrase today (the daily cap, §10.5), reset on a new day. */
   phraseXp?: { day: string; by: Record<string, number> };
   /** SPEC-LICKS-IN-IMPROV: clean uses found in improvisation (vocab.ts LickUse), newest last, bounded. */
-  uses?: { id: string; key: number; kind: 'exact' | 'shape' | 'varied'; viaSub?: boolean; at: string; session: string }[];
+  uses?: { id: string; key: number; kind: 'exact' | 'shape' | 'varied'; viaSub?: boolean; at: string; session: string; /** The chart chord it was found over (its symbol). */ chord?: string }[];
 }
 
 /** Fold a session's result into the book: a lick that became known starts its review; a review take moves its box. */

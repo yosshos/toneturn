@@ -35,7 +35,8 @@ describe('ids kept', () => {
     // the cell keys of phase 2 (group:root:rung) are all there, untagged
     for (const k of ['major:0:scales-3', 'major:0:k-sharm-3', 'major:7:k-keylick-1', 'minor:9:k-sharm-4', 'minor:9:scales-5', 'major:2:cadences-2']) expect(own.map(cellKey)).toContain(k);
     // the own rows' rung ids are exactly the ladder's (tagless) — the later ones carry a tag
-    for (const c of cells) expect(!!c.mode).toBe(c.rung.includes(':'));
+    // (block R's hear-and-continue rung is tagged too: the same level heard first, its own items — SPEC-EAR-AND-READING §3.1)
+    for (const c of cells) expect(!!c.mode || c.rung.startsWith('hc:')).toBe(c.rung.includes(':'));
     // still 24 rows at T3 (the Aeolian lives inside the major rows, not as a new key family)
     expect(new Set(cells.map((c) => `${c.group}-${c.root}`)).size).toBe(24);
     // an own cell's items are the catalogue level's items in that key (k-sharm-3: the major option only)

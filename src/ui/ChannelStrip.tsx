@@ -4,7 +4,7 @@
 
 import type { Drill } from '../engine/drills/types';
 import { mixReason, type Mix, type Strong } from '../engine/presentation';
-import { mixLine } from '../engine/channelPlan';
+import { mixLine, weekLine } from '../engine/channelPlan';
 import { Icon } from './icons';
 
 type Lang = 'he' | 'en';
@@ -16,13 +16,18 @@ export interface RunChan {
   day: string;
 }
 
-export function ChannelStrip({ lang, mix, strong, sight, onSight }: { lang: Lang; mix: Mix; strong: Strong; sight: { drill: Drill; done: boolean } | null; onSight: (d: Drill) => void }) {
+export function ChannelStrip({ lang, mix, strong, sight, onSight, measured }: { lang: Lang; mix: Mix; strong: Strong; sight: { drill: Drill; done: boolean } | null; onSight: (d: Drill) => void; /** SPEC-EAR-AND-READING §5: this week's measured shares (every place), beside the target mix. */ measured?: { ear: number; page: number; memory: number } | null }) {
   const he = lang === 'he';
   return (
     <div className="ch-strip" data-channel-strip="1">
       <p className="ch-mix" data-channel-mix={`${Math.round(mix.strong * 100)}/${Math.round(mix.weak * 100)}/${Math.round(mix.memory * 100)}`}>
         <b>{he ? 'השבוע' : 'This week'}</b> <span>{mixLine(mix, strong, lang)}</span>
         <small>{mixReason(mix, strong, lang)}</small>
+        {measured && (
+          <small className="ch-measured" data-channel-measured={`${Math.round(measured.ear * 100)}/${Math.round(measured.page * 100)}/${Math.round(measured.memory * 100)}`}>
+            {weekLine(measured, lang)}
+          </small>
+        )}
       </p>
       {sight && (
         <button type="button" className={`ch-sight ${sight.done ? 'done' : ''}`} onClick={() => onSight(sight.drill)} disabled={sight.done} data-sight-dose={sight.done ? 'done' : 'open'}>

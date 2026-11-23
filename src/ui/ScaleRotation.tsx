@@ -173,7 +173,7 @@ export function rotationCharts(lang: Lang, dayKey: number, piece?: MyChart | nul
   return out;
 }
 
-export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onTake, top }: { settings: Settings; lang: Lang; tier: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey: number; piece?: MyChart | null; onTier?: (t: 1 | 2 | 3) => void; onTake?: (t: ImprovTake) => void; /** Above the sheet (the workout's "today's lick" card). */ top?: React.ReactNode }) {
+export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onTake, top }: { settings: Settings; lang: Lang; tier: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey: number; piece?: MyChart | null; onTier?: (t: 1 | 2 | 3) => void; /** Every take; `played` = the take's notes (beats from the chart's first beat) and its chart, for the lick detection at the take boundary (SPEC-LICKS-IN-IMPROV §3). */ onTake?: (t: ImprovTake, played?: { notes: PlayedNote[]; chart: string; bars: number; bpm: number }) => void; /** Above the sheet (the workout's "today's lick" card). */ top?: React.ReactNode }) {
   const tx = TX[lang];
   const charts = useMemo(() => rotationCharts(lang, dayKey, piece), [lang, dayKey, piece]);
   const [src, setSrc] = useState(charts[0]?.c.id ?? 'lv:4');
@@ -269,7 +269,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
     const g = gradeRotation(sheet, notes.current, stats, new Date().toISOString());
     setGrade(g);
     setChorus(0);
-    onTake?.(improvTake('rotation', { score: g.score, notes: notes.current.length, tier, bpm, stats: g.stats }));
+    onTake?.(improvTake('rotation', { score: g.score, notes: notes.current.length, tier, bpm, stats: g.stats }), { notes: [...notes.current], chart: chart.text, bars: sheet.bars * sheet.choruses, bpm });
   };
   const stop = () => {
     ctl.current?.abort();

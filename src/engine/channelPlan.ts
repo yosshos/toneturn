@@ -179,6 +179,61 @@ export function mixLine(mix: Mix, strong: Strong, lang: 'he' | 'en'): string {
 
 export { strongOf };
 
+// ───────────────────────────── the measured week and the channel's XP ─────────────────────────────
+
+/** A channel as the mix counts it: by ear, from the page, from memory (nothing shown). */
+export const channelGroup = (c: Channel): 'ear' | 'page' | 'memory' => (c === 'ear-fresh' || c === 'ear-known' ? 'ear' : c === 'unaided' ? 'memory' : 'page');
+
+/** Settings.channelWeek: this week's takes per channel group — every take, in every place (technique, licks, Repertoire, Pieces, Improvise). */
+export interface ChannelWeek {
+  week: string;
+  n: Partial<Record<'ear' | 'page' | 'memory', number>>;
+}
+
+/** One more take in a channel (a new week starts from zero). */
+export function noteChannelWeek(cw: ChannelWeek | null | undefined, ch: Channel, day: string, takes = 1): ChannelWeek {
+  const week = weekOfDay(day);
+  const base: ChannelWeek = cw && cw.week === week ? cw : { week, n: {} };
+  const g = channelGroup(ch);
+  return { week, n: { ...base.n, [g]: (base.n[g] ?? 0) + Math.max(1, takes) } };
+}
+
+/** This week's measured shares (SPEC-EAR-AND-READING §5, the weekly balance); null before any take this week. */
+export function weekShares(cw: ChannelWeek | null | undefined, week: string): { ear: number; page: number; memory: number; n: number } | null {
+  if (!cw || cw.week !== week) return null;
+  const ear = cw.n.ear ?? 0, page = cw.n.page ?? 0, memory = cw.n.memory ?? 0;
+  const n = ear + page + memory;
+  return n ? { ear: ear / n, page: page / n, memory: memory / n, n } : null;
+}
+
+/** The measured week as words, beside the target: "measured: by ear 64% · reading 22% · memory 14%". */
+export function weekLine(s: { ear: number; page: number; memory: number }, lang: 'he' | 'en'): string {
+  const p = (v: number) => `${Math.round(v * 100)}%`;
+  return lang === 'he' ? `נמדד: משמיעה ${p(s.ear)} · קריאה ${p(s.page)} · מהזיכרון ${p(s.memory)}` : `Measured: by ear ${p(s.ear)} · reading ${p(s.page)} · memory ${p(s.memory)}`;
+}
+
+/** The channel a drill take was recorded under: the one whose count went up between the item's two states. */
+export function takeChannelOf(prev: ItemState['channels'] | undefined, next: ItemState['channels'] | undefined): Channel | null {
+  for (const c of ['page-sight', 'page-known', 'ear-fresh', 'ear-known', 'unaided'] as Channel[]) if ((next?.[c]?.n ?? 0) > (prev?.[c]?.n ?? 0)) return c;
+  return null;
+}
+
+/** A clean take from memory (nothing shown) earns this much more (SPEC-EAR-AND-READING §5: "a small extra"). */
+export const MEMORY_XP = 2;
+/**
+ * XP by channel (SPEC-EAR-AND-READING §5): the same base everywhere; a take in the player's weaker channel earns ×(1 +
+ * gap / 2), the gap between the two profile numbers (0–1) — at most ×1.5, back to ×1 as the gap closes; a clean take
+ * from memory earns MEMORY_XP more. The strong channel is never cut.
+ */
+export function channelXp(xp: number, ch: Channel | null, profile: { ear: number | null; reading: number | null }, clean: boolean): number {
+  if (!ch || xp <= 0) return xp;
+  const g = channelGroup(ch);
+  if (g === 'memory') return xp + (clean ? MEMORY_XP : 0);
+  const strong = strongOf(profile);
+  const gap = profile.ear !== null && profile.reading !== null ? Math.min(1, Math.abs(profile.ear - profile.reading)) : 0;
+  return g !== strong ? Math.round(xp * (1 + gap / 2)) : xp;
+}
+
 // ───────────────────────────── the daily sight dose and the level-test checks ─────────────────────────────
 
 /** The reading family of an instrument (fresh reading material, SPEC-EAR-AND-READING §3.1). */

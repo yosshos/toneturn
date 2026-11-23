@@ -244,7 +244,9 @@ export interface LadderRung {
   /** A the scale, S the harmonised spine (3rds, triads, 7ths), B its other forms, C licks, D fingers/hands, E cadence, F jazz,
    *  G language in the key (the player's licks, phase 4), H the style block (SPEC-STYLE-FOCUS §5: comping patterns and
    *  grooves of the styles, in the key). */
-  block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+  block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'R';
+  /** Block R (SPEC-EAR-AND-READING §3.1): the rung played by ear — "continue" = hear and continue (repMelody.hearAndContinue). */
+  ear?: 'continue';
   /**
    * BUILD-PLAN phase 7 (matrix breadth): a later rung inside the row — the Aeolian of a major key (from its 6th degree),
    * melodic minor in a minor row, a mode from the root in a major row. Not a new key family: the cell stays in its row.
@@ -304,6 +306,7 @@ export const MELODIC_FROM_TIER = 4;
 export const MODES_FROM_TIER = 4;
 /** The name a later rung's title starts with. */
 export const RUNG_TAG_NAME: Record<string, { en: string; he: string }> = {
+  hc: { en: 'By ear: hear and continue', he: 'בשמיעה: לשמוע ולהמשיך' },
   aeolian: { en: 'Aeolian, from the 6th degree', he: 'איאולי, מהדרגה השישית' },
   melodic: { en: 'Melodic minor', he: 'מינור מלודי' },
   m6dim: { en: 'Minor 6th-diminished', he: 'מינור שישית-מוקטן' },
@@ -493,6 +496,24 @@ export function laterRungs(group: 'major' | 'minor', inst: LadderInst = 'piano')
 
 /** The candidate rungs of a key, in teaching order (minor: the harmonic-minor rows), per instrument. */
 export function ladderRungs(group: 'major' | 'minor', inst: LadderInst = 'piano'): LadderRung[] {
+  return [...ladderRungsOf(group, inst), ...earRungs(group === 'minor', inst)];
+}
+
+/**
+ * Block R, by ear in the key session (SPEC-EAR-AND-READING §3.1; one a session, by need):
+ * - call and response: a one-bar call over the key's chord (the phrases-by-ear family's first level: chord tones —
+ *   the major 7th / the dominant in a major row, the minor 7th in a minor row), answered on the instrument;
+ * - hear and continue (piano): the triads along the scale — the coach plays the first two, the player continues by ear.
+ */
+function earRungs(minor: boolean, inst: LadderInst): LadderRung[] {
+  const ctOpt = (sp: Spec) => (minor ? [1] : [0, 2]).includes(((sp as { option?: number }).option ?? 0) % 3);
+  const fam = inst === 'guitar' ? 'g-phrase' : inst === 'bass' ? 'b-phrase' : 'k-phrase';
+  const out: LadderRung[] = [{ fam, id: `${fam}-1`, min: 0, pick: ctOpt, block: 'R', title: { en: 'By ear: call and response in the key', he: 'בשמיעה: שאלה ותשובה בסולם' } }];
+  if (inst === 'piano') out.push({ fam: 'k-sharm', id: `k-sharm-${minor ? 8 : 7}`, min: 1, pick: optIs(minor ? 7 : 0), block: 'R', tag: 'hc', ear: 'continue' });
+  return out;
+}
+
+function ladderRungsOf(group: 'major' | 'minor', inst: LadderInst): LadderRung[] {
   if (inst === 'guitar') return guitarRungs(group === 'minor');
   if (inst === 'bass') return bassRungs(group === 'minor');
   const minor = group === 'minor';
@@ -582,7 +603,9 @@ export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | '
   const make = (fam: string, id: string, pick?: LadderRung['pick'], r?: LadderRung): LevelDef | null => {
     const l = byId(fam, id);
     if (!l) return null;
-    const specs = pick ? l.specs.filter(pick) : l.specs;
+    const specs0 = pick ? l.specs.filter(pick) : l.specs;
+    // block R: the same exercise heard first and continued by ear (its own item ids)
+    const specs = r?.ear ? specs0.map((x) => ({ ...x, ear: r.ear })) : specs0;
     if (!specs.length) return null;
     // a later rung (phase 7): its tag in the level id, its tonic from the row's root (the Aeolian: the 6th degree)
     const tag = r?.tag;
@@ -621,7 +644,7 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order.
   // The later rungs (the Aeolian, melodic minor, the modes: phase 7) give one rung a session between them (M).
-  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1, M: 1, H: 1 };
+  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1, M: 1, H: 1, R: 1 };
   const taken: Record<string, number> = {};
   const pickd = ranked.filter((x) => {
     const b = x.rung.mode ? 'M' : x.rung.block;

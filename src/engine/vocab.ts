@@ -10,7 +10,7 @@
 
 import type { ItemState } from './drills/types';
 import { dueLicks, LICKS, lickById, lineLicks, type Lick, type LickBook } from './licks';
-import { findLick, qualityOfIntervals, type ImpNote, type LickHit } from './lickDetect';
+import { findLick, LICK_TIMING_TOL, qualityOfIntervals, type ImpNote, type LickHit } from './lickDetect';
 import { itemStatus } from './drills/itemStatus';
 
 export interface LickUse {
@@ -20,13 +20,33 @@ export interface LickUse {
   viaSub?: boolean;
   at: string;
   session: string;
+  /** The chart chord it was found over (its symbol, e.g. "D7"; SPEC-LICKS-IN-IMPROV §6). */
+  chord?: string;
   /** Where it was found in the take (beats from the chart's first beat) — for the bar mark; not kept in the log. */
   beat?: number;
+  /** The beat of its last note (the debrief replays beat … end from the take); not kept in the log. */
+  end?: number;
+  /** An approach cell: the chord tone it targeted (semitones above the chord's root); not kept in the log. */
+  deg?: number;
 }
+
+// ───────────────────────────── the approach licks as cells ─────────────────────────────
+
+const cellLick = (n: 1 | 2 | 3, en: string, he: string, line: [number, number, number][]): Lick => ({ id: `ap-${n}`, ctx: 'free', level: n, name: { en, he }, chords: [[0, 'maj7', 4]], notes: line, cell: n });
+/** The owner's approach licks (k-keylick, keyLicks.ts) as cells, shown in C before the root (SPEC-LICKS-IN-IMPROV §1). */
+export const APPROACH_CELLS: Lick[] = [
+  cellLick(1, 'Approach lick 1', 'ליק גישה 1', [[-1, 0, 0.5], [0, 0.5, 0.5]]),
+  cellLick(2, 'Approach lick 2 (the enclosure)', 'ליק גישה 2 (כיתור)', [[-1, 0, 0.5], [2, 0.5, 0.5], [0, 1, 0.5]]),
+  cellLick(3, 'Approach lick 3 (the long enclosure)', 'ליק גישה 3 (הכיתור הארוך)', [[-1, 0, 0.5], [2, 0.5, 0.5], [1, 1, 0.5], [-1, 1.5, 0.5], [0, 2, 0.5]]),
+];
+/** The k-keylick items of a cell (lick 2 = both enclosures). */
+const cellItem = (n: 1 | 2 | 3, itemId: string | undefined): boolean => !!itemId && (n === 2 ? itemId.startsWith('k-keylick:kl-2') : itemId.startsWith(`k-keylick:kl-${n}-`));
 
 /** The lick items of one lick: "lick:<id>:<key>…" (licks.ts lickDrill item ids start so); a line of a technique family
  *  also owns its family items on the piano (its item id with any key: one progress, phase 4). */
 function itemsOfLick(items: Record<string, ItemState>, id: string): ItemState[] {
+  const cell = APPROACH_CELLS.find((c) => c.id === id)?.cell;
+  if (cell) return Object.values(items).filter((s) => cellItem(cell, s.itemId));
   const line = id.startsWith('ln-') ? lickById(id)?.src : undefined;
   const ids = line ? new Set(Array.from({ length: 12 }, (_, k) => line.item.replace('{k}', String(k)))) : null;
   return Object.values(items).filter((s) => s.itemId?.startsWith(`lick:${id}:`) || (!!ids && ids.has(s.itemId ?? '')));
@@ -36,6 +56,14 @@ function itemsOfLick(items: Record<string, ItemState>, id: string): ItemState[] 
 export function lickPool(items: Record<string, ItemState>, book: LickBook | undefined): Lick[] {
   const own = book?.own ?? [];
   return [...LICKS, ...lineLicks(), ...own].filter((l) => itemsOfLick(items, l.id).some((s) => s.takes > 0) || (book?.mine ?? []).includes(l.id));
+}
+
+/**
+ * Improvise's vocabulary (SPEC-LICKS-IN-IMPROV §1): the lick pool plus the approach licks the player has practised
+ * (any take of k-keylick lick 1, 2 or 3), detected as cells. The technique ladder keeps lickPool (cells are not rungs).
+ */
+export function vocabPool(items: Record<string, ItemState>, book: LickBook | undefined): Lick[] {
+  return [...lickPool(items, book), ...APPROACH_CELLS.filter((c) => itemsOfLick(items, c.id).some((s) => s.takes > 0))];
 }
 
 /** Keys in which a lick is closed (the one status rule). */
@@ -51,35 +79,67 @@ export function inMyLanguage(uses: LickUse[] | undefined, id: string): boolean {
 
 export const USES_CAP = 400;
 
-/** The uses found in one improvisation: each lick of the pool over its chord, clean in time; one per occurrence. */
-export function findUses(pool: Lick[], notes: ImpNote[], chart: { root: number; iv: number[]; at: number; beats: number }[], session: string, at: string): LickUse[] {
+const FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const SYM: Record<string, string> = { maj7: 'maj7', '6': '6', m7: 'm7', m6: 'm6', '7': '7', '7b9': '7b9', alt: '7alt', hd7: 'm7b5', dim7: 'dim7', blues7: '7' };
+/** A chart chord as a short symbol (the usage log's `chord`). */
+const symOf = (root: number, q: string): string => FLAT_NAMES[((root % 12) + 12) % 12] + (SYM[q] ?? '');
+
+/**
+ * The uses found in one improvisation: each lick of the pool over its chord, clean in time (within `tol` beats — the
+ * tier's tolerance, lickDetect.lickTimingTol); one per occurrence. Approach cells are found by their pattern.
+ */
+export function findUses(pool: Lick[], notes: ImpNote[], chart: { root: number; iv: number[]; at: number; beats: number }[], session: string, at: string, o: { tol?: number; meter?: number } = {}): LickUse[] {
   const spans = chart.map((s) => ({ root: s.root, q: qualityOfIntervals(s.iv), at: s.at, beats: s.beats }));
   const out: LickUse[] = [];
+  const tol = o.tol ?? LICK_TIMING_TOL;
   for (const l of pool)
-    for (const h of findLick(l, notes, spans, { shape: true, varied: true }))
-      if (h.overChord && h.tight !== false) out.push({ id: l.id, key: h.transpose, kind: h.kind, ...(h.viaSub ? { viaSub: true } : {}), at, session, beat: h.beat });
-  return out;
+    for (const h of findLick(l, notes, spans, { shape: true, varied: true, tol, meter: o.meter ?? 4 }))
+      if (h.overChord && h.tight !== false) {
+        const sp = h.target ? { root: h.target.root, q: h.target.q } : spans.find((x) => h.beat >= x.at - 1e-6 && h.beat < x.at + x.beats - 1e-6);
+        out.push({ id: l.id, key: h.transpose, kind: h.kind, ...(h.viaSub ? { viaSub: true } : {}), at, session, ...(sp ? { chord: symOf(sp.root, sp.q) } : {}), beat: h.beat, ...(h.end !== undefined ? { end: h.end } : {}), ...(h.target ? { deg: h.target.deg } : {}) });
+      }
+  return out.sort((a, b) => (a.beat ?? 0) - (b.beat ?? 0));
 }
 
-/** XP for one take's uses: full (6), then half, then 0 for the same lick in the take; +3 a new key, +2 a variation. */
-export function usesXp(uses: LickUse[], before: LickUse[] | undefined): number {
+/** The variety bonus: +2 for each distinct lick after the first in one take, at most +8 (SPEC-LICKS-IN-IMPROV §4). */
+export const VARIETY_XP = 2;
+/** "New key" (SPEC-LICKS-IN-IMPROV §2): a key where the lick is not closed yet. */
+export const isNewKey = (u: Pick<LickUse, 'id' | 'key'>, closed: Record<string, number[]> | undefined): boolean => !(closed?.[u.id] ?? []).includes(((u.key % 12) + 12) % 12);
+/**
+ * XP for one take's uses (SPEC-LICKS-IN-IMPROV §4): full (6), then half, then 0 for the same lick in the take; +3 in
+ * a key where the lick is not closed yet (`closed`: per lick, its closed keys — vocab.closedKeys), +2 a variation; and
+ * the variety bonus for distinct licks.
+ */
+export function usesXp(uses: LickUse[], closed: Record<string, number[]> | undefined): number {
   const seen: Record<string, number> = {};
-  const oldKeys = new Map<string, Set<number>>();
-  for (const u of before ?? []) (oldKeys.get(u.id) ?? oldKeys.set(u.id, new Set()).get(u.id)!).add(u.key);
   let xp = 0;
   for (const u of uses) {
     const n = (seen[u.id] = (seen[u.id] ?? 0) + 1);
     const base = n === 1 ? 6 : n === 2 ? 3 : 0;
     if (!base) continue;
-    xp += base + (oldKeys.get(u.id)?.has(u.key) ? 0 : 3) + (u.kind === 'varied' ? 2 : 0);
+    xp += base + (isNewKey(u, closed) ? 3 : 0) + (u.kind === 'varied' ? 2 : 0);
   }
-  return xp;
+  return xp + Math.min(8, VARIETY_XP * Math.max(0, Object.keys(seen).length - 1));
 }
+
+/**
+ * One take's uses, the shared boundary every improvisation calls (Charts, the scale rotation, Phrase, Trade —
+ * SPEC-LICKS-IN-IMPROV §3–4): the notes (beats from the chart's first beat) against the chart spans; the uses (each
+ * marked new-key or not) and their XP. Nothing with fewer than 3 notes or an empty pool.
+ */
+export function takeUses(o: { pool: Lick[]; closed?: Record<string, number[]>; notes: ImpNote[]; spans: { root: number; iv: number[]; at: number; beats: number }[]; session: string; at?: string; tol?: number; meter?: number }): { uses: (LickUse & { beat: number; fresh: boolean })[]; xp: number } {
+  if (!o.pool.length || o.notes.length < 3) return { uses: [], xp: 0 };
+  const hits = findUses(o.pool, o.notes, o.spans, o.session, o.at ?? new Date().toISOString(), { tol: o.tol, meter: o.meter });
+  return { uses: hits.map((u) => ({ ...u, beat: u.beat ?? 0, fresh: isNewKey(u, o.closed) })), xp: usesXp(hits, o.closed) };
+}
+
+/** The usage log's entry of a use (the take's beats and the target are not kept). */
+export const logEntry = ({ beat: _b, end: _e, deg: _d, ...u }: LickUse): LickUse => u;
 
 /** Book the uses: append to the log (bounded); licks closed in a key get a passed review. */
 export function bookUses(book: LickBook | undefined, uses: LickUse[], items: Record<string, ItemState>, review: (b: LickBook, id: string) => LickBook): LickBook {
   let b: LickBook = { ...(book ?? {}) };
-  const log = [...(b.uses ?? []), ...uses.map(({ beat: _b, ...u }) => u)];
+  const log = [...(b.uses ?? []), ...uses.map(logEntry)];
   b.uses = log.slice(Math.max(0, log.length - USES_CAP));
   for (const id of new Set(uses.map((u) => u.id))) if (closedKeys(items, id).length) b = review(b, id);
   return b;
@@ -95,7 +155,9 @@ export function usesOf(uses: LickUse[] | undefined, id: string): { n: number; ke
  * Today's lick (SPEC-LICKS-IN-IMPROV §2): a lick of the pool picked by need — due for review first (most overdue),
  * else the most recently practised one not yet in my language, else the first of the pool. Null with an empty pool.
  */
-export function todaysLick(pool: Lick[], book: LickBook | undefined, items: Record<string, ItemState>, now: Date | string = new Date()): Lick | null {
+export function todaysLick(pool0: Lick[], book: LickBook | undefined, items: Record<string, ItemState>, now: Date | string = new Date()): Lick | null {
+  // the approach cells are found in every take, never picked as today's lick
+  const pool = pool0.filter((l) => !l.cell);
   if (!pool.length) return null;
   const due = dueLicks(book?.review, now);
   const d = due.map((id) => pool.find((l) => l.id === id)).find((l): l is Lick => !!l);
@@ -129,4 +191,19 @@ export function lickFits(l: Lick, chart: { root: number; iv: number[]; at: numbe
     if (ok) out.push({ at: spans[i].at, key: t });
   }
   return out;
+}
+
+/** The lick cards of Improvise (SPEC-LICKS-IN-IMPROV §2), the ones a take can carry beside the scale rotation. */
+export const LICK_CARDS = ['todays-lick', 'use-lick', 'lick-every-4', 'lick-new-key', 'lick-varied', 'lick-three'] as const;
+export type LickCardId = (typeof LICK_CARDS)[number];
+
+/**
+ * "Vocabulary in use" (SPEC-LICKS-IN-IMPROV §4, the skill map's improvisation area): of the licks learned (closed in at
+ * least one key), the share already in my language. Null with nothing learned yet. Approach cells count like licks.
+ */
+export function vocabInUse(items: Record<string, ItemState>, book: LickBook | undefined): { learned: number; inLanguage: number; share: number } | null {
+  const learned = vocabPool(items, book).filter((l) => closedKeys(items, l.id).length > 0);
+  if (!learned.length) return null;
+  const inLanguage = learned.filter((l) => inMyLanguage(book?.uses, l.id)).length;
+  return { learned: learned.length, inLanguage, share: inLanguage / learned.length };
 }

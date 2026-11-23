@@ -18,10 +18,12 @@ const READ_FAMILIES = new Set(['k-read', 'g-reading', 'b-read', 'b-posread', 'b-
  * family is read at sight on its first take; everything else is played with its notation on screen after a demo, so
  * it is "page, known" — never sight (BUILD-PLAN §0.2: a coached take after a demo is not sight reading).
  */
-export function defaultChannel(drill: Pick<Drill, 'spec'>, st: ItemState | undefined): Channel {
+export function defaultChannel(drill: Pick<Drill, 'spec'> & Partial<Pick<Drill, 'show' | 'listen' | 'phrase'>>, st: ItemState | undefined): Channel {
   const first = !st || !st.takes;
   const fam = drill.spec.family as string;
   if (EAR_FAMILIES.has(fam)) return first ? 'ear-fresh' : 'ear-known';
+  // a drill heard first with its notation hidden (a melody by ear, hear and continue — repMelody.ts) is an ear take
+  if (drill.show === 'none' && (drill.listen || drill.phrase)) return first ? 'ear-fresh' : 'ear-known';
   if (READ_FAMILIES.has(fam)) return first ? 'page-sight' : 'page-known';
   return 'page-known';
 }

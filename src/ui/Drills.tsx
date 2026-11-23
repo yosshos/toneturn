@@ -130,7 +130,7 @@ import { playerTier } from '../engine/drills/tiers';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
 import { defaultChannel } from '../engine/drills/channel';
-import { courseOfInstrument, EAR_FAMILY, earCheckDrill, inFingersShare, mixForWeek, profileOf, READING_FAMILY, sightCheckDrill, rhythmDrill, runPresentation, sightForToday, strongOf, takeChannel, weekOfDay, type RunPresentation } from '../engine/channelPlan'; // phase 6: channels, visible
+import { courseOfInstrument, EAR_FAMILY, earCheckDrill, inFingersShare, mixForWeek, weekShares, profileOf, READING_FAMILY, sightCheckDrill, rhythmDrill, runPresentation, sightForToday, strongOf, takeChannel, weekOfDay, type RunPresentation } from '../engine/channelPlan'; // phase 6: channels, visible
 import { FadedScore } from './FadedScore';
 import { ChannelStrip, type RunChan } from './ChannelStrip';
 import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
@@ -285,6 +285,8 @@ export function DrillScore({ drill, ds, result, beat = -1, lang = 'en', bpm, liv
 }
 
 export interface DrillsProps {
+  /** SPEC-LICKS-IN-IMPROV §5.4: the key page's "now improvise with it" after a lick closes in the key. */
+  onImproviseLick?: (l: import('../engine/licks').Lick, key: number) => void;
   lang: Lang;
   settings: Settings;
   onSettings: (p: Partial<Settings>) => void;
@@ -326,7 +328,7 @@ export interface DrillsProps {
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily, onImproviseLick }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
@@ -578,7 +580,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
+        <KeyPage focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} />
       </main>
     );
   if (view.k === 'family')
@@ -608,7 +610,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       settings={settings}
       items={items}
       head={head(tx.title, onBack, <PlaceSpark place="technique" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />)}
-      channelStrip={<ChannelStrip lang={lang} mix={chMix.mix} strong={chStrong} sight={sight ? { drill: sight.drill, done: sight.done } : null} onSight={(d) => setView({ k: 'run', queue: [d], i: 0, from: { k: 'hub' } })} />}
+      channelStrip={<ChannelStrip lang={lang} mix={chMix.mix} strong={chStrong} measured={weekShares(settings.channelWeek, weekOfDay(chDay))} sight={sight ? { drill: sight.drill, done: sight.done } : null} onSight={(d) => setView({ k: 'run', queue: [d], i: 0, from: { k: 'hub' } })} />}
       onFamily={(f) => setView({ k: 'family', f })}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}

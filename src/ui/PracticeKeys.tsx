@@ -261,7 +261,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus }: { /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, onImproviseLick }: { /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -389,7 +389,7 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
           </section>
         );
       })}
-      {(g === 'major' || g === 'minor') && (ds.instrument ?? 'piano') === 'piano' && <LanguageRow licks={licks.filter((l) => lickGroup(l) === g)} root={root} items={items} lang={lang} today={today} open={open === 'lang'} onOpen={(o) => setOpen(o ? 'lang' : null)} onRun={run} />}
+      {(g === 'major' || g === 'minor') && (ds.instrument ?? 'piano') === 'piano' && <LanguageRow licks={licks.filter((l) => lickGroup(l) === g)} root={root} items={items} lang={lang} today={today} open={open === 'lang'} onOpen={(o) => setOpen(o ? 'lang' : null)} onRun={run} onImprovise={onImproviseLick ? (l) => onImproviseLick(l, root) : undefined} />}
     </div>
   );
 }
@@ -399,10 +399,19 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
  * library's, the player's own and the technique families' lines — with its status in this key; a tap plays it here.
  * Empty pool: one line that says how a lick gets here.
  */
-function LanguageRow({ licks, root, items, lang, today, open, onOpen, onRun }: { licks: Lick[]; root: number; items: Record<string, ItemState>; lang: Lang; today?: { ids: Set<string> }; open: boolean; onOpen: (o: boolean) => void; onRun: (q: Drill[]) => void }) {
+/** The lick closed most recently (its last take within three days) among closed ones; null when none. */
+export function closedRecently(xs: { l: Lick; st: ItemState | undefined; closed: boolean }[], now = Date.now()): Lick | null {
+  const DAY = 86_400_000;
+  const r = xs.filter((x) => x.closed && x.st?.last && now - Date.parse(x.st.last) <= 3 * DAY).sort((a, b) => (b.st!.last ?? '').localeCompare(a.st!.last ?? ''));
+  return r[0]?.l ?? null;
+}
+
+function LanguageRow({ licks, root, items, lang, today, open, onOpen, onRun, onImprovise }: { licks: Lick[]; root: number; items: Record<string, ItemState>; lang: Lang; today?: { ids: Set<string> }; open: boolean; onOpen: (o: boolean) => void; onRun: (q: Drill[]) => void; onImprovise?: (l: Lick) => void }) {
   const he = lang === 'he';
   const ds = licks.map((l) => ({ l, d: lickKeyDrill(l, root) }));
   const closed = ds.filter(({ d }) => cleanAt(items[d.itemId], d)).length;
+  // SPEC-LICKS-IN-IMPROV §5.4: a lick that closed in this key in the last three days — "now improvise with it"
+  const fresh = closedRecently(ds.map(({ l, d }) => ({ l, st: items[d.itemId], closed: itemStatus(items[d.itemId], d.startBpm, itemTargetBpm(d)) === 'closed' })));
   return (
     <section className="kp-row" data-kp-row="lang" data-kp-licks={licks.length}>
       <button type="button" className="kp-row-head" onClick={() => onOpen(!open)} aria-expanded={open}>
@@ -410,6 +419,16 @@ function LanguageRow({ licks, root, items, lang, today, open, onOpen, onRun }: {
         <small>{licks.length ? (he ? `${licks.length} ליקים · סגורים ${closed}` : `${licks.length} licks · closed ${closed}`) : he ? 'ליק שניגנתם מגיע לכאן, בכל סולם' : 'A lick you have played comes here, in every key'}</small>
         {licks.length > 0 && <LevelBar done={closed} of={licks.length} />}
       </button>
+      {fresh && onImprovise && (
+        <div className="kp-improvise" data-kp-improvise={fresh.id}>
+          <small>
+            {he ? 'נסגר בסולם הזה:' : 'Closed in this key:'} {fresh.name[lang]}
+          </small>
+          <button type="button" className="btn ghost small" onClick={() => onImprovise(fresh)} data-kp-improvise-go={fresh.id}>
+            {he ? 'עכשיו לאלתר איתו' : 'Now improvise with it'}
+          </button>
+        </div>
+      )}
       {open && licks.length > 0 && (
         <ol className="kp-entries">
           {ds.map(({ l, d }) => {

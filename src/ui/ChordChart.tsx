@@ -30,7 +30,9 @@ const ROLE_NAME: Record<Lang, Record<'chord' | 'tension' | 'outside', string>> =
   he: { chord: 'צליל אקורד', tension: 'טנשן', outside: 'מחוץ' },
 };
 
-export function ChordChart({ cells, meter, beat = -1, first = 0, maxRows = 4, size = 'full', loop, lang, attrs, onBar, sel }: {
+export function ChordChart({ cells, meter, beat = -1, first = 0, maxRows = 4, size = 'full', loop, lang, attrs, onBar, sel, page = false }: {
+  /** Turn whole pages (maxRows rows at a time) by the playhead instead of sliding row by row (a long lead sheet on a phone: 8 bars a page). */
+  page?: boolean;
   cells: ChartCell[];
   meter: number;
   /** The running take's beat (−1 idle), from the chart's first bar. */
@@ -59,7 +61,7 @@ export function ChordChart({ cells, meter, beat = -1, first = 0, maxRows = 4, si
   for (let i = 0; i < cells.length; i += 4) rows.push(Array.from({ length: Math.min(4, cells.length - i) }, (_, k) => i + k));
   // The row being played stays in the top part with the next row in view.
   const curRow = cur >= 0 ? Math.floor(cur / 4) : 0;
-  const start = Math.max(0, Math.min(rows.length - maxRows, curRow - (maxRows > 2 ? 1 : 0)));
+  const start = page ? Math.floor(curRow / Math.max(1, maxRows)) * Math.max(1, maxRows) : Math.max(0, Math.min(rows.length - maxRows, curRow - (maxRows > 2 ? 1 : 0)));
   const slashes = Math.min(meter, 7);
   return (
     <div className={`chord-chart ${size} ${onBar ? 'tappable' : ''}`} dir="ltr" role="group" aria-label={he ? 'דף אקורדים' : 'Chord chart'} data-chord-chart={cells.length} {...attrs}>

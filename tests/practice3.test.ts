@@ -136,7 +136,8 @@ describe('Repertoire: one place for every piece, every id kept', () => {
   it('the piece page shows only what the piece has', () => {
     const lib = libraryFor('keys', 'on');
     const std = lib.find((e) => e.ref.kind === 'std')!;
-    expect(pieceActions(std, 'keys', true).map((a) => a.k)).toEqual(['band', 'improvise', 'technique']);
+    // SPEC-PRACTICE-IA-3 §3 (2026-11-23): Comp it as a direct action, and Transcribe a phrase on a standard
+    expect(pieceActions(std, 'keys', true).map((a) => a.k)).toEqual(['band', 'comp', 'improvise', 'technique', 'transcribe']);
     expect(pieceActions(std, 'drums', true).map((a) => a.k)).toEqual(['band']);
     expect(pieceActions({ ref: { kind: 'score', id: 's' } }, 'keys', false).map((a) => a.k)).toEqual(['score']);
     expect(pieceActions({ ref: { kind: 'rec', id: 'r' } }, 'ear', false).map((a) => a.k)).toEqual(['recording']);

@@ -359,6 +359,8 @@ export interface DrillSpec {
   articulation?: Articulation;
   dynamics?: DynamicsGoal;
   variant?: Variant;
+  /** SPEC-EAR-AND-READING §3.1: played by ear — 'continue' = hear the first two segments, continue the pattern (repMelody.hearAndContinue). */
+  ear?: 'continue';
   /** Notes per beat (2 = eighths, 4 = sixteenths, 3 = triplets). */
   perBeat?: number;
   /** Swing the eighths (jazz families). */

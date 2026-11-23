@@ -26,11 +26,12 @@ describe('the vocabulary pool and uses (SPEC-LICKS-IN-IMPROV, owner 2026-11-22)'
     expect(findUses([lick], notes, sub, 's1', '2026-11-22')[0]?.viaSub).toBe(true);
     void lickPitches;
   });
-  it('XP: full, half, then nothing for the same lick in a take; a new key and a variation earn more', () => {
+  it('XP: full, half, then nothing for the same lick in a take; a key where it is not closed and a variation earn more', () => {
     const u = (key: number, kind: LickUse['kind'] = 'exact'): LickUse => ({ id: 'x', key, kind, at: '', session: 's' });
-    expect(usesXp([u(0), u(0), u(0)], [{ ...u(0) }])).toBe(6 + 3);
-    expect(usesXp([u(2)], [{ ...u(0) }])).toBe(9);
-    expect(usesXp([u(0, 'varied')], [{ ...u(0) }])).toBe(8);
+    const closed = { x: [0] };
+    expect(usesXp([u(0), u(0), u(0)], closed)).toBe(6 + 3);
+    expect(usesXp([u(2)], closed)).toBe(9);
+    expect(usesXp([u(0, 'varied')], closed)).toBe(8);
   });
   it('"in my language" = 3 sessions and 2 keys; a use is a review only once the lick is closed in a key', () => {
     const log: LickUse[] = [{ id: 'x', key: 0, kind: 'exact', at: '', session: 'a' }, { id: 'x', key: 0, kind: 'exact', at: '', session: 'b' }, { id: 'x', key: 7, kind: 'exact', at: '', session: 'c' }];

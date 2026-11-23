@@ -44,6 +44,7 @@ import { genKeysGig, keysGigFamily } from './gigDrills'; // AUDIT-DEPTH-3 #11, #
 // THEORY_PLAY: the k-theory family's music.
 import { LINE_CLICHE, RQ_SYM, RQ_TONES, pairLineUp, pentGroups, upFrom, pairById, pairName, pairTriads, pentById, pentName, pentNotes, ustById, type PairId, type PentId, type RQ, type Ust, type UstId } from '../theoryPlay';
 import { gateFamilies } from '../verifiedContent';
+import { hearAndContinue } from '../repMelody';
 import type { Drill, DrillGoal, DrillSpec, DynamicsGoal, ExpNote, FamilyId, Grace, Hand, KeyOrder, Motion, ScaleType, Variant } from './types';
 
 type T2 = { en: string; he: string };
@@ -401,6 +402,7 @@ export function itemIdOf(s: DrillSpec): string {
   if (s.perBeat) p.push('pb' + s.perBeat);
   if (s.swing) p.push('sw');
   if (s.option !== undefined) p.push('op' + s.option);
+  if (s.ear === 'continue') p.push('hc');
   return p.join(':');
 }
 
@@ -5250,6 +5252,8 @@ const LENGTH_KINDS = new Set(['reading', 'alberti', 'melody-alberti', 'pop-lh'])
 export function generate(spec: DrillSpec): Drill {
   const d = generateRaw(spec);
   if ((spec.family === 'k-read' || spec.family === 'k-classic' || LENGTH_KINDS.has(spec.kind)) && !d.goal.lengths && d.spec.instrument !== 'guitar' && d.spec.instrument !== 'bass') d.goal = { ...d.goal, lengths: true };
+  // SPEC-EAR-AND-READING §3.1: hear and continue (the key session's block R) — the first two segments heard, the rest by ear
+  if (spec.ear === 'continue') return hearAndContinue({ ...d, spec: { ...d.spec, ear: 'continue' }, itemId: itemIdOf({ ...d.spec, ear: 'continue' }) });
   return d;
 }
 

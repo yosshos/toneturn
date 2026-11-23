@@ -5,7 +5,7 @@
 
 import { REP_TIERS, repertoireFor, repLessonId, REP_LEARNED, REP_TOTAL, type RepCourse, type RepItem, type RepTier, type RepWay } from './repertoire';
 import { STANDARD_CHANGES, type StandardChanges } from './standards';
-import { CHART_TEMPLATES, IMPROV_LEVELS, type ChartStyle } from './charts';
+import { CHART_TEMPLATES, IMPROV_LEVELS, parseChart, type ChartStyle } from './charts';
 import { PASS_DAYS, PASS_TAKES } from './drills/ladder';
 import type { ItemStatus } from './drills/itemStatus';
 import type { CourseId } from './courses';
@@ -196,8 +196,16 @@ export type PieceAction =
   | { k: 'score' }
   /** Play along with my recording / transcribe a phrase (My song). */
   | { k: 'recording' }
-  /** Practise it in the technique hub: the chart's key on the key page. */
-  | { k: 'technique' };
+  /** Practise it in the technique hub: one of the piece's keys on the key page (`key`; absent = pick from the piece's keys). */
+  | { k: 'technique'; key?: number }
+  /** Learn the melody (SPEC-PRACTICE-IA-3 §3, SPEC-EAR-AND-READING §3.3): by ear (a phrase at a time, the notation after) or from the page. */
+  | { k: 'melody'; mode: 'ear' | 'page' }
+  /** Comp it (piano voicings and a comping rhythm, guitar comping, bass walking): a standard's own drill (`way`), or the chart's changes on the piano. */
+  | { k: 'comp'; way?: RepWay }
+  /** The piece's voicings on the piano (the technique hub's other half): the chart's changes in rootless voicings. */
+  | { k: 'voicings' }
+  /** Transcribe a phrase (standards and songs): Licks › Transcribe; the result goes into Licks › Mine. */
+  | { k: 'transcribe' };
 
 /** The courses whose players improvise over a chart (Improvise exists for them). */
 const IMPROV_COURSES: CourseId[] = ['keys', 'guitar', 'bass', 'voice', 'ear'];
@@ -209,16 +217,55 @@ const TECH_COURSES: CourseId[] = ['keys', 'guitar', 'bass'];
  * score, My song for a recording, the technique hub for a chart on an instrument. Memorise and Listen are links on
  * every page (Listen only for standards) and are not listed here.
  */
-export function pieceActions(e: Pick<LibEntry, 'ref' | 'item' | 'std'>, course: CourseId, hasChart: boolean): PieceAction[] {
+export function pieceActions(e: Pick<LibEntry, 'ref' | 'item' | 'std'>, course: CourseId, hasChart: boolean, o: { /** The piece has a melody to learn (an imported lead sheet's tune, a songbook song). */ melody?: boolean; /** The player's strong channel (the profile): its way to learn the melody comes first. */ strong?: 'ear' | 'page' } = {}): PieceAction[] {
   const out: PieceAction[] = [];
   if (e.ref.kind === 'score') return [{ k: 'score' }];
   if (e.ref.kind === 'rec') return [{ k: 'recording' }];
   for (const w of e.item?.ways ?? []) out.push({ k: 'way', way: w });
   const bandWay = out.some((a) => a.k === 'way' && a.way.k === 'chart');
+  const std = e.std ?? (e.item?.ref?.kind === 'standard' ? e.item.ref.id : undefined) ?? e.item?.ways.map((w) => ('std' in w ? w.std : undefined)).find(Boolean);
   if (hasChart && !bandWay) out.push({ k: 'band' });
+  // learn the melody, both ways, the strong channel first (SPEC-EAR-AND-READING §3.3)
+  if (o.melody && TECH_COURSES.includes(course)) {
+    const modes: ('ear' | 'page')[] = o.strong === 'page' ? ['page', 'ear'] : ['ear', 'page'];
+    for (const mode of modes) out.push({ k: 'melody', mode });
+  }
+  // comp it, as a direct action, unless one of the piece's own ways already comps it
+  const compWay = (e.item?.ways ?? []).some((w) => w.k === 'chartDrill' || w.k === 'guitarStd' || w.k === 'bassStd');
+  if (hasChart && !compWay && TECH_COURSES.includes(course)) {
+    const way: RepWay | undefined = std ? (course === 'keys' ? { k: 'chartDrill', std, voicing: 'rootless', rhythm: 'charleston' } : course === 'guitar' ? { k: 'guitarStd', std } : { k: 'bassStd', std }) : undefined;
+    if (way || course === 'keys') out.push({ k: 'comp', ...(way ? { way } : {}) });
+  }
   if (hasChart && IMPROV_COURSES.includes(course)) out.push({ k: 'improvise' });
   if (hasChart && TECH_COURSES.includes(course)) out.push({ k: 'technique' });
+  // transcribe a phrase: standards and songs, in the instrument courses
+  const song = (e.item?.ways ?? []).some((w) => w.k === 'song');
+  if ((std || song) && TECH_COURSES.includes(course)) out.push({ k: 'transcribe' });
   return out;
+}
+
+/**
+ * The keys a chart moves through (the technique hub's "that piece's keys"): every resolution of a dominant to the chord
+ * a 5th below (V → I, V → i), in order of first appearance, then the last chord's key if no resolution named it; at most
+ * four. A chart without one: its first chord's root.
+ */
+export function pieceKeys(text: string): { root: number; minor: boolean }[] {
+  const p = parseChart(text, 4);
+  const cs = p.chords;
+  if (!cs.length) return [];
+  const has = (iv: number[], x: number) => iv.some((i) => ((i % 12) + 12) % 12 === x);
+  const dom = (iv: number[]) => has(iv, 4) && has(iv, 10);
+  const out: { root: number; minor: boolean }[] = [];
+  const add = (root: number, minor: boolean) => {
+    if (!out.some((k) => k.root === root && k.minor === minor)) out.push({ root, minor });
+  };
+  for (let i = 0; i + 1 < cs.length; i++) {
+    const a = cs[i], b = cs[i + 1];
+    if (dom(a.iv) && !dom(b.iv) && (((b.root - a.root) % 12) + 12) % 12 === 5) add(b.root, has(b.iv, 3) && !has(b.iv, 4));
+  }
+  const last = cs[cs.length - 1];
+  if (!out.length) add(dom(last.iv) ? cs[0].root : last.root, has(last.iv, 3) && !has(last.iv, 4));
+  return out.slice(0, 4);
 }
 
 // ------------------------------------------------------------------ status (BUILD-PLAN D1, D4: one ladder, "closed")

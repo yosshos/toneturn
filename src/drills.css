@@ -723,3 +723,7 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .ch-sight small { color: var(--ink-dim); font-size: 0.8rem; }
 .ch-sight:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
 .ch-sight.done { cursor: default; opacity: 0.75; }
+/* SPEC-LICKS-IN-IMPROV §5.4: "now improvise with it" after a lick closes in the key */
+.kp-improvise { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0 6px; }
+.kp-improvise small { color: var(--ink-dim); }
+.ch-measured { display: block; color: var(--ink-dim); }

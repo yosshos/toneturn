@@ -39,8 +39,9 @@ import { TeachScreen } from './TeachPhrase';
 import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './teacherPhraseSync';
 import { teacherMockOn } from '../cloud/teacher';
 import { phrasesDueCount } from '../engine/encore/connect';
-import { dueLicks, reviewAfter } from '../engine/licks';
-import { bookUses, closedKeys, lickPool, todaysLick } from '../engine/vocab';
+import { dueLicks, isMinorLick, reviewAfter } from '../engine/licks';
+import { bookUses, closedKeys, todaysLick, vocabInUse, vocabPool } from '../engine/vocab';
+import { lickTimingTol } from '../engine/lickDetect';
 import { TranscribeCoachScreen } from './TranscribeCoach';
 import { ExamsScreen, mockExamLesson } from './Exams';
 import type { ExamDef } from '../content/bagrut';
@@ -249,6 +250,11 @@ import { irealStyle } from '../engine/leadsheet';
 import type { ChartStyle } from '../engine/charts';
 import { isRepLesson, repGoal, repResult, repResults, type RepCourse, type RepItem, type RepWay } from '../engine/repertoire';
 import { isDrillWay, repDrills } from '../engine/repertoireDrills';
+import { melodyByEar, melodyDrillOf } from '../engine/repMelody';
+import { chartKind } from '../engine/drills/chartDrills';
+import { licksThatFit, lickImprovChart, TODAYS_LICK_RULES } from '../engine/lickImprov';
+import { channelXp, courseOfInstrument, noteChannelWeek, profileOf, strongOf, takeChannelOf } from '../engine/channelPlan';
+import type { Channel } from '../engine/drills/channel';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
 import { PracticeDiaryScreen, DiaryEntryCard, plateausOf } from './PracticeDiary';
@@ -1705,17 +1711,34 @@ export function App() {
    *  (the log; a passed review for a lick closed in a key) and their XP is one result (XP, league, course share). */
   const vocabCtx = (): VocabCtx => {
     const items = progress.drillItems ?? {};
-    const pool = lickPool(items, s.lickBook);
+    // the licks and the practised approach cells (found by their pattern); clean = within the improvisation tier's timing
+    const pool = vocabPool(items, s.lickBook);
+    const improvTier = rbiTier(s.activeCourse === 'keys' || s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? matrixTierOf(s, drillSettingsOf(s), items) : 1, s.rotationTier);
     return {
       pool,
       today: todaysLick(pool, s.lickBook, items),
       log: s.lickBook?.uses,
       closed: Object.fromEntries(pool.map((l) => [l.id, closedKeys(items, l.id)])),
+      tol: lickTimingTol(improvTier),
       onUses: (uses, xp) => {
         updateSettings({ lickBook: bookUses(s.lickBook, uses, items, (b, id) => ({ ...b, review: { ...(b.review ?? {}), [id]: reviewAfter(b.review?.[id], true) } })) });
         if (xp > 0) void store.recordCompletion({ lessonId: 'improv-vocab', lessonVersion: 1, sessionId: uses[0]?.session ?? `vocab-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: uses.length, total: uses.length, xp, missed: [], items: [], course: (s.activeCourse ?? 'keys') as CourseId }).then(setProgress);
       },
     };
+  };
+  /** SPEC-EAR-AND-READING §5: a take in a channel counts toward this week's measured balance (every place). */
+  const noteChannel = (ch: Channel | null, takes = 1) => {
+    if (!ch || !settings) return;
+    updateSettings({ channelWeek: noteChannelWeek(settings.channelWeek, ch, localDay(new Date()), takes) });
+  };
+  /** Every drill take (technique, licks, songs, the transcription coach): its channel is the one its item's tally moved
+   *  — counted in the week's balance — and its XP by channel (the weaker channel more, memory a small extra). */
+  const recordDrillTake = (st: ItemState, evs: Parameters<typeof store.recordDrill>[1], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => {
+    const items = progress?.drillItems ?? {};
+    const ch = takeChannelOf(items[st.itemId]?.channels, st.channels);
+    noteChannel(ch);
+    const prof = profileOf(items, settings?.channelSelf?.[courseOfInstrument(settings ? drillSettingsOf(settings).instrument : undefined)]);
+    return store.recordDrill(st, evs, channelXp(xp, ch, prof, m?.verdict === 'clean'), m);
   };
   const noteTake = (xp: number, verdict?: string) => {
     drillSessionXp.current += xp;
@@ -1806,9 +1829,40 @@ export function App() {
     }
     if (a.k === 'recording') return openRecording(e.ref.id);
     if (a.k === 'technique') {
-      setDrillsKey(chart ? firstRootPc(chart.text) ?? 0 : 0);
+      // the piece's key picked on its page (SPEC-PRACTICE-IA-3 §3), else its first root
+      setDrillsKey(a.key ?? (chart ? firstRootPc(chart.text) ?? 0 : 0));
       return go('drills');
     }
+    const runQueue = (q: Drill[]) => {
+      if (!q.length) return;
+      chartQueue.current = q;
+      drillFrom.current = 'repertoire';
+      drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
+      go('drills');
+    };
+    if (a.k === 'comp' || a.k === 'voicings') {
+      // a standard's own comping drill (a road item's result when it is one); else the chart's changes on the piano
+      if (a.k === 'comp' && a.way) {
+        if (e.item) return openRepWay(e.item, a.way, e.ref.course);
+        return runQueue(repDrills(a.way, (settings.activeCourse ?? 'keys') as RepCourse, progress?.drillItems ?? {}, drillSettingsOf(settings).keyOrder));
+      }
+      if (!chart) return;
+      const kind = chartKind(`txt:${encodeURIComponent(`${chart.title}\n${chart.text}`)}`, 'rootless', a.k === 'voicings' ? 'whole' : 'charleston', 'comp');
+      return runQueue([generate({ family: 'voicings', kind, key: 0, hands: 'L', swing: chart.style === 'swing' || chart.style === 'ballad' || chart.style === 'waltz' })]);
+    }
+    if (a.k === 'melody') {
+      // SPEC-EAR-AND-READING §3.3: by ear (a phrase at a time, the notation after) or from the page
+      const songWay = e.item?.ways.find((w): w is Extract<RepWay, { k: 'song' }> => w.k === 'song');
+      const page = songWay
+        ? repDrills({ ...songWay, part: 'melody' }, (settings.activeCourse ?? 'keys') as RepCourse, progress?.drillItems ?? {}, drillSettingsOf(settings).keyOrder)[0]
+        : chart?.melody?.length
+          ? melodyDrillOf({ id: chart.id, title: { en: chart.title, he: chart.title }, melody: chart.melody, chart: chart.text.split('|').map((x) => x.trim()), bpm: chart.bpm })
+          : null;
+      if (!page) return;
+      return runQueue(a.mode === 'ear' ? melodyByEar(page) : [page]);
+    }
+    if (a.k === 'transcribe') return go('transcribe-coach');
   };
   /** My song on a recording (or its library, to add one): the singer's is voice level 1308; the others open the
    *  play-along / transcription screen, with its quick lesson the first time (game:mysong, game:mysong-ear). */
@@ -3065,7 +3119,7 @@ export function App() {
               {challengeInCourse(s.activeCourse ?? 'ear') && <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />}
             </>
           }
-          map={<SkillMap t={t} lang={s.uiLang} progress={progress} styleFocus={focusOf(s, (s.activeCourse ?? 'ear') as CourseId)} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+          map={<SkillMap t={t} lang={s.uiLang} progress={progress} vocabUse={vocabInUse(progress.drillItems ?? {}, s.lickBook)} styleFocus={focusOf(s, (s.activeCourse ?? 'ear') as CourseId)} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
@@ -3435,6 +3489,7 @@ export function App() {
           // Phase 3 fix: Back returns to where it was opened from (the piece page, Mine, the songbook).
           onBack={() => backToRep(() => (workoutPending.current ? go('workoutrun') : openRep({ tab: 'mine', mine: 'scores' })))}
           onMinutes={(min, cleanReps) => {
+            noteChannel('page-known', Math.max(1, cleanReps));
             const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
             const r = makeLogResult('piece', min, 0, new Date(), id);
             void store.recordCompletion({ ...r, sessionId: `piece-${id}`, xp: Math.min(30, cleanReps * 2) }).then(setProgress);
@@ -3511,7 +3566,7 @@ export function App() {
                 onSettings={updateSettings}
                 onTake={(st, evs, xp, m) => {
                   noteTake(xp, m.verdict);
-                  void store.recordDrill(st, evs, xp, m).then(setProgress);
+                  void recordDrillTake(st, evs, xp, m).then(setProgress);
                 }}
                 onBack={() => {
                   void techResult('encore')?.then(setProgress);
@@ -3539,7 +3594,7 @@ export function App() {
                 onSettings={updateSettings}
                 onTake={(st, evs, xp, m) => {
                   noteTake(xp, m?.verdict);
-                  void store.recordDrill(st, evs, xp, m).then(setProgress);
+                  void recordDrillTake(st, evs, xp, m).then(setProgress);
                 }}
                 onUsed={(evs, xp) => {
                   drillSessionXp.current += xp;
@@ -3569,7 +3624,7 @@ export function App() {
           onSettings={updateSettings}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m.verdict);
-            void store.recordDrill(st, evs, xp, m).then(setProgress);
+            void recordDrillTake(st, evs, xp, m).then(setProgress);
           }}
           onBack={() => {
             void techResult('encore')?.then(setProgress);
@@ -3587,11 +3642,11 @@ export function App() {
           onSettings={updateSettings}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
-            void store.recordDrill(st, evs, xp, m).then(setProgress);
+            void recordDrillTake(st, evs, xp, m).then(setProgress);
           }}
           onPhrase={(st, evs, xp, stars) => {
             noteTake(xp, stars === 3 ? 'clean' : 'not');
-            void store.recordDrill(st, evs, xp, { verdict: stars === 3 ? 'clean' : 'not', hands: 'R', cv: null }).then(setProgress);
+            void recordDrillTake(st, evs, xp, { verdict: stars === 3 ? 'clean' : 'not', hands: 'R', cv: null }).then(setProgress);
           }}
           pathLevel={measuredStep.current?.level}
           onPathDone={(stars) => leaveMeasured('transcribe', stars)}
@@ -3627,7 +3682,8 @@ export function App() {
           dayKey={weekKeyIfKept('major', drillSettingsOf(s).instrument ?? 'piano') ?? 0}
           onTier={(t) => updateSettings({ rotationTier: t })}
           onHarrisTier={(t) => updateSettings({ harrisTier: t })}
-          onTake={(t) => {
+          onTake={(t, channel) => {
+            noteChannel(channel ?? 'page-known');
             // Phase 5: every take of Improvise is one rated result — the rating (improv), XP, league and course share
             // through one completion; the mode × function stats the rotation picks from.
             if (t.stats) updateSettings({ rotationStats: t.stats });
@@ -3694,7 +3750,8 @@ export function App() {
             chartReturn.current = !!engineArg(location.hash);
             go('drills');
           }}
-          onImprov={(score, bpm, chords, level, challenge) => {
+          onImprov={(score, bpm, chords, level, challenge, channel) => {
+            noteChannel(channel ?? 'page-known');
             // A standard opened from the repertoire: the take is the item's result.
             const rp = repOpen.current;
             if (rp && rp.kind === 'chart') {
@@ -3729,6 +3786,13 @@ export function App() {
         <Drills
           key={drillsKey === null ? (drillsFamily ? `drills-fam-${drillsFamily.id}` : 'drills') : `drills-key-${drillsKey}`}
           openKey={drillsKey}
+          onImproviseLick={(l, key) => {
+            // SPEC-LICKS-IN-IMPROV §5.4: the lick's progression in the key, today's lick = this lick
+            const c = lickImprovChart(l, key);
+            chartInit.current = { id: `lick-${l.id}-${Date.now()}`, title: `${l.name[s.uiLang]} · ${keyNameOf(key, !!isMinorLick(l))}${isMinorLick(l) ? 'm' : ''}`, text: c.text, style: c.style, bpm: c.bpm, rules: TODAYS_LICK_RULES, lick: l.id };
+            toolFrom.current = 'drills';
+            go('charts');
+          }}
           openFamily={drillsFamily}
           lang={s.uiLang}
           settings={s}
@@ -3752,7 +3816,7 @@ export function App() {
               const d = chartQueue.current?.find((x) => x.itemId === st.itemId) ?? chartQueue.current?.[0];
               tasteTake.current = { acc: Math.max(tasteTake.current.acc, st.ewma.acc), bars: tasteTake.current.bars + (d ? Math.round(d.beats / (d.meter || 4)) : 0) };
             }
-            void (drillWrites.current = drillWrites.current.then(() => store.recordDrill(st, evs, xp, m)).then(setProgress).catch(() => {}));
+            void (drillWrites.current = drillWrites.current.then(() => recordDrillTake(st, evs, xp, m)).then(setProgress).catch(() => {}));
           }}
           onBack={() => {
             if (drillFrom.current) return drillQueueDone(0, 0);
@@ -3793,6 +3857,11 @@ export function App() {
           onBack={() => go('arcade')}
           onLeavePiece={(from) => go(from === 'path' ? 'path' : from === 'teacher' ? 'friends' : 'home')}
           onAction={repAction}
+          licksFit={(text) => {
+            const v = vocabCtx();
+            return licksThatFit(v.pool, text, { today: v.today?.id }).map((f) => ({ id: f.lick.id, name: f.lick.name, bars: f.bars, key: keyNameOf(f.key, !!isMinorLick(f.lick)) + (isMinorLick(f.lick) ? 'm' : '') }));
+          }}
+          strong={strongOf(profileOf(progress.drillItems ?? {}, s.channelSelf?.[courseOfInstrument(drillSettingsOf(s).instrument)]))}
           onPathNode={() => go('path')}
           onAdd={(src) => {
             repReturn.current = location.hash;
@@ -3822,7 +3891,7 @@ export function App() {
           items={progress.drillItems ?? {}}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
-            void store.recordDrill(st, evs, xp, m).then(setProgress);
+            void recordDrillTake(st, evs, xp, m).then(setProgress);
           }}
           onBack={() => {
             void techResult('technique-songs')?.then(setProgress);
