@@ -173,12 +173,13 @@ describe('hand independence (k-indep)', () => {
 describe('the harmonization ladder (k-sharm, g-harm)', () => {
   const kf = CAT.find((f) => f.id === 'k-sharm')!;
   const gf = GCAT.find((f) => f.id === 'g-harm')!;
-  it('42 piano levels and 13 guitar levels, every item in every key, a perfect take clean (piano)', () => {
+  it('48 piano levels and 16 guitar levels, every item in every key, a perfect take clean (piano)', () => {
     // 42 built; k-sharm-41 (Echols's voicing ladder) shows its shells (owner 2026-11-15); thirds, triads and octave
     // chords stay hidden (src/engine/verifiedContent.ts)
-    expect(kf.levels).toHaveLength(42);
+    // 43–48 (SPEC-KEY-SESSION B2, B4, B5, 2026-11-23): triad inversions, 1-2-3-5 cells, 9th arpeggios; g-harm 14–16 likewise
+    expect(kf.levels).toHaveLength(48);
     expect(kf.levels.find((l) => l.id === 'k-sharm-41')!.specs.map((s) => s.option)).toEqual([2, 8, 6, 9]);
-    expect(gf.levels).toHaveLength(13);
+    expect(gf.levels).toHaveLength(16);
     for (const l of kf.levels)
       for (const sp of l.specs)
         for (const key of [0, 1, 6, 11]) {
@@ -283,14 +284,14 @@ describe('wiring', () => {
     for (const f of ['k-indep', 'k-sharm', 'g-harm']) expect(FAMILY_GLYPH[f], f).toBeDefined();
     expect(new Set(['k-indep', 'k-sharm', 'g-harm'].map((f) => FAMILY_GLYPH[f])).size).toBe(3);
     expect(familyLevelCount('k-indep')).toBe(8);
-    expect(familyLevelCount('k-sharm')).toBe(42);
-    expect(familyLevelCount('g-harm')).toBe(13);
+    expect(familyLevelCount('k-sharm')).toBe(48);
+    expect(familyLevelCount('g-harm')).toBe(16);
     for (const id of ['hand-independence', 'scale-harm', 'bh-four-dim', 'bh-borrow']) expect(MINI_LESSONS[id], id).toBeDefined();
     expect(UNIT_LESSON['tech:k-indep-1']).toBe('hand-independence');
     expect(UNIT_LESSON['tech:k-sharm-19']).toBe('bh-borrow');
   });
   it('every new guitar technique level runs in 12 keys inside the neck', () => {
-    for (const id of ['g-scales-11', 'g-scales-12', 'g-lead-11', 'g-picking-10', 'g-rhythm-11', ...Array.from({ length: 13 }, (_, i) => `g-harm-${i + 1}`)]) {
+    for (const id of ['g-scales-11', 'g-scales-12', 'g-lead-11', 'g-picking-10', 'g-rhythm-11', ...Array.from({ length: 16 }, (_, i) => `g-harm-${i + 1}`)]) {
       const l = lv(id);
       expect(l.keys, id).toBe('major');
       for (const sp of l.specs)
@@ -301,7 +302,7 @@ describe('wiring', () => {
     }
   });
   it('every new piano level spans 12 keys', () => {
-    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 42 }, (_, i) => `k-sharm-${i + 1}`)]) {
+    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 48 }, (_, i) => `k-sharm-${i + 1}`)]) {
       const l = lv(id);
       expect(Array.isArray(l.keys) ? new Set(l.keys).size : 12, id).toBe(12);
     }
