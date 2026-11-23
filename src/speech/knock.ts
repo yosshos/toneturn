@@ -3,6 +3,7 @@ import { latencyHintOf } from '../audio/quality';
 
 import type { KnockInput } from '../game/adapters';
 import { openCapture, stopStream } from './mic';
+import { notifyInput } from '../engine/inputCheck';
 
 export class BrowserKnockInput implements KnockInput {
   async listen({ signal, onKnock, onReady }: Parameters<KnockInput['listen']>[0]) {
@@ -42,6 +43,8 @@ export class BrowserKnockInput implements KnockInput {
         last = now;
         armed = false;
         runMax = peak;
+        // an onset heard on the microphone is an input (active time, the input check's watchdog)
+        notifyInput('mic');
         onKnock(now - frameMs / 2, peak);
       }
       floor = floor * 0.98 + Math.min(peak, 0.05) * 0.02;

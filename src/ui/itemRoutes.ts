@@ -10,7 +10,8 @@ import { LICKS } from '../engine/licks';
 import { lickLadder } from '../engine/statusLadder';
 import type { Settings } from '../storage/progress';
 import { lickInstrumentOf } from './LickTrainer';
-import { weekKeyIfKept } from './todayTech';
+import { dayKeyIfKept } from './todayTech';
+import { weekKeyForLevel } from '../engine/drills/todayPlan';
 
 let idxCache: { k: string; idx: KeyIndex } | null = null;
 const indexOf = (ds: DrillSettings): KeyIndex => {
@@ -32,7 +33,8 @@ export function rungKeyOf(levelId: string, ds: DrillSettings, now: number | stri
   const lv = shownFamilies(ds).flatMap((f) => f.levels).find((l) => l.id === levelId);
   if (!lv) return null;
   const keys = levelKeys(lv, ds.keyOrder).map((k) => ((k % 12) + 12) % 12);
-  const week = weekKeyIfKept(lv.keys === 'minor' ? 'minor' : 'major', inst, now);
+  // D3: the week's key (major or a minor row) as this level's key — the same key the path step's run leads with
+  const week = weekKeyForLevel(dayKeyIfKept(inst, now), lv.keys === 'minor');
   const order = week !== null && keys.includes(week) ? [week, ...keys.filter((k) => k !== week)] : keys;
   return order.find((k) => onPage(idx, k, levelId)) ?? null;
 }

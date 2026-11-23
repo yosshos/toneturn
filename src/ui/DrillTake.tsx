@@ -56,6 +56,8 @@ import { markTakeZero, useKeptTakes } from './recKeep';
 import { Icon } from './icons';
 import { HearButton } from './HearDrill';
 import { useAnyNote } from './anyNote';
+import { takeCounting, takePlaying } from './takeClock';
+import { holdTake } from './activity';
 
 /** The live marks of a running take, by note (slice 5): the same mark rule as the review, on the settled notes only. */
 function liveIndex(live: LiveTake | null | undefined): Map<string, NoteResult> | null {
@@ -869,6 +871,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   onDone = useKeptTakes(drill, bpm, onDone); // My recordings: every take is kept, mic takes with their audio (SPEC-PHRASE-STUDIO §6.1)
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
+  // SPEC-DAILY-WORKOUT §2: the take's real time runs from its first expected note (the count-in excluded)
+  useEffect(() => {
+    if (phase === 'count') takeCounting();
+    else if (phase === 'play') takePlaying();
+  }, [phase]);
+  // SPEC-WORKOUT §5: a running take holds the workout's "time is up" until it ends
+  const busy = phase !== 'ready';
+  useEffect(() => (busy ? holdTake() : undefined), [busy]);
   const [beat, setBeat] = useState(-1);
   const ac = useRef<AbortController | null>(null);
   // Slice 5: the pocket meter's state (the take so far), and whether its notes can be marked one by one.

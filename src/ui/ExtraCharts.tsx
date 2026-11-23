@@ -12,6 +12,8 @@ import type { Projection } from '../engine/projection';
 import { spanWords } from '../engine/projection';
 import { Card, SmallLine, useDark } from './ProgressOverTime';
 import { kName } from './encore/bits';
+import { matrixGained } from './todayTech';
+import { localDay } from '../engine/stats';
 
 type Lang = 'he' | 'en';
 const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -129,8 +131,9 @@ export function AlertCards({ alerts, lang, who, itemName = (id) => id }: { alert
 }
 
 /** Measured time and the projection (D5: the Progress page only). */
-export function ProjectionCard({ p, lang }: { p: Projection; lang: Lang }) {
+export function ProjectionCard({ p, lang, gained: gainedProp }: { p: Projection; lang: Lang; /** §5: "+N new exercises opened" (default: what the technique screen kept for the last instrument seen). */ gained?: number }) {
   const he = lang === 'he';
+  const gained = gainedProp ?? matrixGained(localDay(new Date()));
   const dark = useDark();
   const groups = [...new Set(p.keys.map((k) => k.group))];
   const [group, setGroup] = useState<'major' | 'minor'>('major');
@@ -168,6 +171,11 @@ export function ProjectionCard({ p, lang }: { p: Projection; lang: Lang }) {
             <bdi dir="ltr">{keyLabel(p.week)}</bdi>
             {he ? `: נשארו ${hrs(p.week.left)}` : `: ${hrs(p.week.left)} left`}
             {p.week.days !== null ? (he ? ` · כ־${spanWords(p.week.days, 'he')}` : ` · about ${spanWords(p.week.days, 'en')}`) : ''}
+          </p>
+        )}
+        {gained > 0 && (
+          <p className="today-gained" data-gained={gained}>
+            {he ? `+${gained} תרגילים חדשים נפתחו` : `+${gained} new exercises opened`}
           </p>
         )}
         {p.all.days === null && <p className="pt-sub">{he ? 'התחזית מופיעה אחרי שלושה ימי טכניקה לפחות.' : 'The projection appears after at least three days with technique.'}</p>}

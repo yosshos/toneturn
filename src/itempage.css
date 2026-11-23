@@ -58,3 +58,8 @@
 .ih-top.dense { align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px; }
 .ih-top.dense .ih-kicker { flex: 1; min-width: 0; }
 .ih-top.dense .ih-assign { width: 36px; height: 36px; }
+/* The level's page from a key page row / a family row / today's cells (SPEC-PATH-TODAY-PRACTICE §2) */
+.kp-entries li.has-page { display: flex; align-items: center; gap: 6px; }
+.kp-entries li.has-page > .kp-entry { flex: 1; }
+.level-page-open { display: inline-block; margin: 4px 12px 0; font-size: 0.85rem; }
+.today-cells .today-cell-open { width: 100%; text-align: start; }

@@ -1019,6 +1019,11 @@ export interface CheckVerdict {
 /** Beyond the beginner section: a ladder level this hard, done or ✓ by test, means the first steps are behind the player. */
 const PAST_FIRST_STEPS = 840;
 let LADDER_BY_ID: Map<string, PathStep> | null = null;
+/** A technique / vocal ladder step by its id ("tech:<level id>"), as the path defines it (its channel included). */
+export function ladderStepById(id: string): PathStep | undefined {
+  if (!LADDER_BY_ID) LADDER_BY_ID = new Map(ladderSteps().map((x) => [x.id, x] as const));
+  return LADDER_BY_ID.get(id);
+}
 /**
  * Has the player arrived already playing past the first steps of this instrument / the voice? Curriculum-flow rule 1
  * (all three audits, R1): only evidence from outside the path counts — a level test / placement (✓ by test), or a

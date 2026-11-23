@@ -528,6 +528,16 @@ export function lickDrill(l: Lick, key: number, inst: LickInstrument = 'piano', 
 
 /** Keys in practice order: around the circle of fourths from C (the way ii–V–Is move). */
 export const LICK_KEYS = [0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7];
+/** A lick's 12 item ids on an instrument (a piano line of a technique family: the family's own items, lickItemId). */
+export const lickItemIds = (l: Lick, inst: LickInstrument): Set<string> => new Set(LICK_KEYS.map((k) => lickItemId(l, inst, k)));
+/**
+ * The item a lick's tempo chart shows (ItemHead's tempoItem): the most played of its 12 keys ON THIS instrument — the
+ * guitar's takes never on the piano's page, a piano line from a technique family read from the family's items.
+ */
+export function lickTempoItem(l: Lick, inst: LickInstrument, items: Record<string, ItemState>): ItemState | null {
+  const ids = lickItemIds(l, inst);
+  return Object.values(items).filter((x) => !!x && ids.has(x.itemId) && x.takes > 0).sort((a, b) => (b.history?.length ?? 0) - (a.history?.length ?? 0))[0] ?? null;
+}
 
 /** One cell per key: the highest rung (0 = none, 1–4) reached with a clean take. */
 export function lickGrid(l: Lick, inst: LickInstrument, items: Record<string, ItemState>): { key: number; rung: number; passed: boolean }[] {

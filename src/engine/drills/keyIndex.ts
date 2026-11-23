@@ -725,7 +725,9 @@ export interface WeekCoverage {
 
 /** §3 the week: how many of the key's open rungs were visited twice this week, and which are short. */
 export function keyWeekCoverage(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, items: Record<string, ItemState>, opts: Parameters<typeof openKeyRungs>[4] = {}, now: number | string = Date.now()): WeekCoverage {
-  const { built } = openKeyRungs(fams, root, group, tier, opts);
+  return coverageOf(openKeyRungs(fams, root, group, tier, opts).built, items, now);
+}
+function coverageOf(built: { rung: LadderRung; lvl: LevelDef }[], items: Record<string, ItemState>, now: number | string): WeekCoverage {
   const rows = built.filter((b) => b.rung.block !== 'H' || b.rung.tier !== 'rest').map((b) => ({ rung: b.rung, lvl: b.lvl, visits: rungWeekVisits(b.lvl, items, now) }));
   return { open: rows.length, done: rows.filter((r) => r.visits >= WEEK_VISITS).length, short: rows.filter((r) => r.visits < WEEK_VISITS) };
 }
@@ -791,18 +793,34 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
     .filter((b) => b.rung.block !== 'H' || b.rung.tier !== 'rest')
     .map((b) => ({ ...b, sc: score(b.lvl) }))
     .map((b) => ({ ...b, wk: weekShort(b.lvl, b.sc.s) }));
-  // §1c: the rung just passed today is not picked again (unless nothing else is open)
-  const fresh = all.filter((b) => !justPassed(b.lvl, items, day));
-  const ranked = (fresh.length ? fresh : all).sort((a, b) => a.sc.s - b.sc.s || tierRank(a.rung) - tierRank(b.rung) || a.wk - b.wk || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order.
   // The later rungs (the Aeolian, melodic minor, the modes: phase 7) give one rung a session between them (M).
   const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1, M: 1, H: 1, R: 1 };
+  const blockOf = (r: LadderRung) => (r.mode ? 'M' : r.block);
+  // §3 enforced (keyWeekCoverage): every open rung twice a week — when a block's rungs still short of WEEK_VISITS need
+  // more visits than the block's daily slots left this week (today included), its short rungs go first, the most
+  // short first; otherwise need decides as before
+  const cov = coverageOf(built, items, now);
+  const visits = new Map(cov.short.map((x) => [x.lvl.id, x.visits]));
+  const dow = (new Date(typeof now === 'number' ? now : Date.parse(now)).getUTCDay() + 6) % 7;
+  const daysLeft = 7 - dow;
+  const owed: Record<string, number> = {};
+  for (const x of cov.short) owed[blockOf(x.rung)] = (owed[blockOf(x.rung)] ?? 0) + (WEEK_VISITS - x.visits);
+  const urgent = (b: { lvl: LevelDef; rung: LadderRung }) => (visits.has(b.lvl.id) && (owed[blockOf(b.rung)] ?? 0) >= daysLeft * (per[blockOf(b.rung)] ?? 1) ? 0 : 1);
+  const owes = (b: { lvl: LevelDef }) => (visits.has(b.lvl.id) ? visits.get(b.lvl.id)! : WEEK_VISITS);
+  // §1c: the rung just passed today is not picked again (unless nothing else is open)
+  const fresh = all.filter((b) => !justPassed(b.lvl, items, day));
+  const ranked = (fresh.length ? fresh : all).sort((a, b) => a.sc.s - b.sc.s || tierRank(a.rung) - tierRank(b.rung) || a.wk - b.wk || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
+  // each block's slots: its urgent short rungs first (inside the block only — the blocks keep their places in the order)
+  const inBlock = new Map<string, typeof ranked>();
+  for (const x of ranked) inBlock.set(blockOf(x.rung), [...(inBlock.get(blockOf(x.rung)) ?? []), x]);
+  for (const [b, xs] of inBlock) inBlock.set(b, xs.map((x, k) => ({ x, k })).sort((p, q) => urgent(p.x) - urgent(q.x) || (urgent(p.x) === 0 ? owes(p.x) - owes(q.x) : 0) || p.k - q.k).map((p) => p.x));
   const taken: Record<string, number> = {};
-  const pickd = ranked.filter((x) => {
-    const b = x.rung.mode ? 'M' : x.rung.block;
-    taken[b] = (taken[b] ?? 0) + 1;
-    return taken[b] <= (per[b] ?? 1);
+  const pickd = ranked.flatMap((x) => {
+    const b = blockOf(x.rung);
+    const k = (taken[b] = (taken[b] ?? 0) + 1) - 1;
+    return k < (per[b] ?? 1) ? [inBlock.get(b)![k]] : [];
   });
   const chosenR = pickd.slice(0, opts.rungs ?? 99).sort((a, b) => a.i - b.i);
   const chosen = chosenR.map((x) => x.lvl);

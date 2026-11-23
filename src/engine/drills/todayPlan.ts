@@ -100,7 +100,8 @@ export function todayTechPlan(cells: MatrixCell[], o: TechPlanOpts): PlanCell[] 
   const maintBudget = closed.length ? minutes * MAINT_SHARE : 0;
   const review: MatrixCell[] = [];
   for (const c of closed) {
-    if (sum(review) + c.minutes > maintBudget) break;
+    // a due cell over what is left of the budget is skipped, not the end: smaller due cells still fit
+    if (sum(review) + c.minutes > maintBudget) continue;
     review.push(c);
   }
   const plan = take(review, 'review');
@@ -143,6 +144,18 @@ export function weekKeyFromMatrix(cells: MatrixCell[], group: MatrixGroup = 'maj
   return [...rows.entries()].sort((a, b) => mean(a[1]) - mean(b[1]) || keyOrder.indexOf(a[0]) - keyOrder.indexOf(b[0]))[0][0];
 }
 
+/**
+ * The key of the week as a level's key (D3 with the minor rows): a level in the week's own group plays the week's root;
+ * a major level in a minor week plays its relative major (the same signature: C minor → E♭), a minor level in a major
+ * week its relative minor (C → A minor). One answer for a path step's run and its "full practice" (the key page).
+ */
+export function weekKeyForLevel(week: { root: number; group: MatrixGroup } | null | undefined, levelMinor: boolean): number | null {
+  if (!week) return null;
+  const r = ((week.root % 12) + 12) % 12;
+  if ((week.group === 'minor') === levelMinor) return r;
+  return week.group === 'minor' ? (r + 3) % 12 : (r + 9) % 12;
+}
+
 /** The Monday-based week number (for alternating the week key's group). */
 const weekNo = (week: string) => Math.floor(Date.parse(`${week}T12:00:00Z`) / (7 * 86400000));
 
@@ -176,6 +189,26 @@ export interface FrozenPlan {
 
 export function freezePlan(plan: PlanCell[], day: string, minutes: number): FrozenPlan {
   return { day, minutes, cells: plan.map((p) => cellKey(p.cell)), why: plan.map((p) => p.why), items: [...new Set(plan.flatMap((p) => cellItemIds(p.cell)))], at: 0 };
+}
+
+/**
+ * Never lose progress: today's kept plan when the block's length (or the view) changes. The cells already reached
+ * (up to `at`) stay where they are; with `keepRest` the kept cells after them stay too (a longer block: "+2 min"); then
+ * cells from the fresh plan not yet in it fill to `minutes`. A shorter block trims the tail, never a reached cell.
+ */
+export function resizePlan(kept: PlanCell[], fresh: PlanCell[], minutes: number, at: number, keepRest = true): PlanCell[] {
+  const out = kept.slice(0, keepRest ? kept.length : Math.max(0, at + 1));
+  const has = new Set(out.map((p) => cellKey(p.cell)));
+  let total = sum(out.map((p) => p.cell));
+  for (const p of fresh) {
+    if (total >= minutes) break;
+    if (has.has(cellKey(p.cell))) continue;
+    out.push(p);
+    has.add(cellKey(p.cell));
+    total += p.cell.minutes;
+  }
+  while (out.length > at + 1 && total - out[out.length - 1].cell.minutes >= minutes) total -= out.pop()!.cell.minutes;
+  return out;
 }
 
 /** A frozen plan back on today's matrix (cells that left the matrix — a tier change — drop out). */

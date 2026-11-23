@@ -197,7 +197,7 @@ export type PieceAction =
   /** Play along with my recording / transcribe a phrase (My song). */
   | { k: 'recording' }
   /** Practise it in the technique hub: one of the piece's keys on the key page (`key`; absent = pick from the piece's keys). */
-  | { k: 'technique'; key?: number }
+  | { k: 'technique'; key?: number; /** The key's mode (a minor piece opens the minor rows). */ minor?: boolean }
   /** Learn the melody (SPEC-PRACTICE-IA-3 §3, SPEC-EAR-AND-READING §3.3): by ear (a phrase at a time, the notation after) or from the page. */
   | { k: 'melody'; mode: 'ear' | 'page' }
   /** Comp it (piano voicings and a comping rhythm, guitar comping, bass walking): a standard's own drill (`way`), or the chart's changes on the piano. */
@@ -353,4 +353,11 @@ export function repDueKey(history: HistLike[] | undefined, course: RepCourse, to
     if (!best || last < best.last) best = { key: pieceKey({ kind: 'rep', course, id: it.id }), last };
   }
   return best?.key ?? null;
+}
+
+/** The instrument course a piece's own drills (its melody, transcribing it) run in: the piece's course when it is the
+ *  piano, the guitar or the bass, else the active one of those, else the piano. */
+export function pieceDrillCourse(pieceCourse: string | undefined, active: string | undefined): 'keys' | 'guitar' | 'bass' {
+  const inst = (c: string | undefined): c is 'keys' | 'guitar' | 'bass' => c === 'keys' || c === 'guitar' || c === 'bass';
+  return inst(pieceCourse) ? pieceCourse : inst(active) ? active : 'keys';
 }

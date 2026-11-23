@@ -22,6 +22,21 @@ export function activeSpan(inputs: readonly number[], from: number, to: number, 
   return sum;
 }
 
+/** A take's own time is capped here (a take left running counts no further). */
+export const TAKE_CAP_MS = 10 * 60_000;
+/** The setup in the item between two takes is capped here (W3 already stops the clock after 15 s with no input). */
+export const SETUP_CAP_MS = 2 * 60_000;
+/**
+ * SPEC-DAILY-WORKOUT §2: a take's measured active time — the take itself from the first expected note to the stop
+ * (the count-in excluded), plus the setup time in the item since the previous take (active time only, the count-in
+ * taken out). Without a measured start (an untimed take, the synthesized e2e take) the model's length stands in.
+ */
+export function takeActiveMs(o: { model: number; firstNoteAt: number | null; stopAt: number; setupMs?: number; countInMs?: number }): number {
+  const play = o.firstNoteAt !== null && o.stopAt > o.firstNoteAt ? Math.min(TAKE_CAP_MS, o.stopAt - o.firstNoteAt) : o.model;
+  const setup = Math.min(SETUP_CAP_MS, Math.max(0, (o.setupMs ?? 0) - (o.countInMs ?? 0)));
+  return Math.max(1, Math.round(play + setup));
+}
+
 /** A small store of input times (newest last), at most one per `minGap` ms and at most `max` kept. */
 export class InputLog {
   private ts: number[] = [];

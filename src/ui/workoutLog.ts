@@ -34,6 +34,15 @@ export function logAreaDay(day: string, mins: Partial<Record<DomainId, number>>)
   set(AREA_KEY, Object.fromEntries(keep.map((d) => [d, log[d]])));
 }
 
+/** W10: today's context (no mic / quiet place / no instrument), kept for the day — a reload keeps it. */
+const CTX_KEY = 'toneturn.workoutCtx';
+export type DayCtx = { nomic: boolean; quiet: boolean; noinst: boolean };
+export function readDayCtx(day: string, dflt: DayCtx): DayCtx {
+  const v = get<(DayCtx & { day?: string }) | null>(CTX_KEY, null);
+  return v && v.day === day ? { nomic: !!v.nomic, quiet: !!v.quiet, noinst: !!v.noinst } : dflt;
+}
+export const saveDayCtx = (day: string, c: DayCtx) => set(CTX_KEY, { ...c, day });
+
 const ASK_KEY = 'toneturn.waitAsked';
 /** Areas whose "keeps waiting" question is dismissed, until a day. */
 export const waitAsked = (): Partial<Record<DomainId, string>> => get(ASK_KEY, {});

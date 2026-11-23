@@ -198,10 +198,50 @@ export function WhyChip({ target, lang }: { target: BlockTarget; lang: Lang }) {
 const subOf = (tx: (typeof W)['en'], b: BlockTarget, leadsTo?: string | null, subs?: Partial<Record<string, string>>): string | undefined =>
   b.kind === 'strengthen' && leadsTo ? leadsTo : (subs?.[b.kind] ?? tx.blockSub[b.kind]);
 
+/** W10: where you are today (no mic / quiet place / no instrument) — kept for the day; on Today and in the editor. */
+export type WorkoutCtx = { nomic: boolean; quiet: boolean; noinst: boolean };
+export function WorkoutCtxChips({ ctx, onCtx, lang }: { ctx: WorkoutCtx; onCtx: (c: WorkoutCtx) => void; lang: Lang }) {
+  const tx = W[lang];
+  return (
+    <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'} data-wk-ctx="1">
+      {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
+        <button key={k} type="button" className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })} data-wk-ctx-k={k}>
+          <Icon k={k === 'nomic' ? 'mute' : k === 'quiet' ? 'phones' : 'pads'} size={16} />
+          {tx.ctx[k]}
+        </button>
+      ))}
+    </div>
+  );
+}
+/** W6: a default over 30 days old asks once whether to keep it or refresh it (on Today and in the editor). */
+export function TemplateStaleAsk({ templateAt, today, onTemplate, lang }: { templateAt?: string | null; today?: string; onTemplate?: (keep: boolean) => void; lang: Lang }) {
+  const tx = W[lang];
+  if (!templateAt || !today || !onTemplate || !templateStale(templateAt, today)) return null;
+  return (
+    <div className="wk-stale" role="group" data-template-stale="1">
+      <small dir="auto">{tx.stale}</small>
+      <button type="button" className="btn small ghost" onClick={() => onTemplate(false)} data-stale="refresh">
+        {tx.refresh}
+      </button>
+      <button type="button" className="btn small ghost" onClick={() => onTemplate(true)} data-stale="keep">
+        {tx.keep}
+      </button>
+    </div>
+  );
+}
+
 /**
- * Today's workout (W1): the hero of Today. The context switches (no mic / quiet / no instrument) live in the editor.
+ * Today's workout (W1): the hero of Today, with today's context switches (no mic / quiet / no instrument) and the W6
+ * question about an old default (both also in the editor).
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs }: {
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, ctx, onCtx, templateAt, today, onTemplate }: {
+  /** W10: where you are today (kept for the day). */
+  ctx?: WorkoutCtx;
+  onCtx?: (c: WorkoutCtx) => void;
+  /** W6: when the default in use was saved; with `today`, older than 30 days asks to refresh it. */
+  templateAt?: string | null;
+  today?: string;
+  onTemplate?: (keep: boolean) => void;
   /** SPEC-PATH-ROLE §8: what the strengthen block leads to. */
   leadsTo?: string | null;
   /** A block kind's own second line today ("Key of the week: E♭ · 6 exercises"). */
@@ -210,14 +250,20 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
   const active = (run && !run.finished && run.at > 0) || (run && Object.keys(run.used).length > 0 && !run.finished);
   const leftMin = run && !run.finished ? Math.ceil(runLeftMs(run) / 60000) : total(blocks);
   const at = run && !run.finished ? run.at : -1;
-  return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active: !!active, leftMin, at }} />;
+  const extra = (
+    <>
+      {ctx && onCtx && !run?.finished && <WorkoutCtxChips ctx={ctx} onCtx={onCtx} lang={lang} />}
+      <TemplateStaleAsk templateAt={templateAt} today={today} onTemplate={onTemplate} lang={lang} />
+    </>
+  );
+  return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active: !!active, leftMin, at, extra }} />;
 }
 
 /**
  * The Today hero (redesign 2026-11): "Today's workout", the blocks as numbered steps (done / now / next)
  * with their minutes, a thin bar of time used, and one lemon button "Continue · <step>". Toni is not on it every day.
  */
-function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active, leftMin, at }: { t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; active: boolean; leftMin: number; at: number }) {
+function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active, leftMin, at, extra }: { extra?: React.ReactNode; t: Strings; lang: Lang; blocks: Block[]; run: WorkoutRun | null; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; active: boolean; leftMin: number; at: number }) {
   const tx = W[lang];
   const sx = studioText(lang);
   const T = total(blocks);
@@ -270,6 +316,7 @@ function StudioWorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, on
       <div className="st-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={usedPct} aria-label={tx.title}>
         <i style={{ width: `${usedPct}%` }} />
       </div>
+      {extra}
       <button className="btn mega wk-start st-cta" data-continue="1" onClick={onStart}>
         <Icon k="play" size={18} />
         <span>{curLabel ? `${active ? sx.cont : sx.start} · ${curLabel}` : active ? sx.cont : sx.start}</span>
@@ -372,16 +419,7 @@ export function WorkoutEditor({
 
   // Sectioned (length · where you are · blocks · presets) with the total and Done in a bottom bar.
   const sx = studioText(lang);
-  const ctxEl = ctx && onCtx && (
-    <div className="wk-ctx" role="group" aria-label={lang === 'he' ? 'איפה אתם היום' : 'Where you are today'}>
-      {(['nomic', 'quiet', 'noinst'] as const).map((k) => (
-        <button key={k} className={`chip small ${ctx[k] ? 'on' : ''}`} aria-pressed={ctx[k]} onClick={() => onCtx({ ...ctx, [k]: !ctx[k] })}>
-          <Icon k={k === 'nomic' ? 'mute' : k === 'quiet' ? 'phones' : 'pads'} size={16} />
-          {tx.ctx[k]}
-        </button>
-      ))}
-    </div>
-  );
+  const ctxEl = ctx && onCtx && <WorkoutCtxChips ctx={ctx} onCtx={onCtx} lang={lang} />;
 
   return (
     <main className="wk-editor st-editor">
@@ -391,17 +429,7 @@ export function WorkoutEditor({
         </button>
         <h1>{tx.title}</h1>
       </header>
-      {templateAt && today && onTemplate && templateStale(templateAt, today) && (
-        <div className="wk-stale" role="group" data-template-stale="1">
-          <small dir="auto">{tx.stale}</small>
-          <button className="btn small ghost" onClick={() => onTemplate(false)} data-stale="refresh">
-            {tx.refresh}
-          </button>
-          <button className="btn small ghost" onClick={() => onTemplate(true)} data-stale="keep">
-            {tx.keep}
-          </button>
-        </div>
-      )}
+      <TemplateStaleAsk templateAt={templateAt} today={today} onTemplate={onTemplate} lang={lang} />
       <h2 className="st-sec-h">{sx.duration}</h2>
       <section className="wk-total-bar" aria-label={tx.total}>
         <div className="wk-chips" role="group">

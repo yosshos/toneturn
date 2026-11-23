@@ -12,8 +12,9 @@
 .drill-today-part .field-hint { margin: 4px 0; }
 .drill-today-part .today-gained { font-weight: 700; color: var(--ink, inherit); }
 .drill-today-part .today-cells { margin: 6px 0 10px; padding: 0; list-style: none; }
-.drill-today-part .drill-level.static { cursor: default; display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; }
-.drill-today-part .drill-level.static small { grid-column: 2; color: var(--ink-dim, #6b6380); font-size: 0.78rem; }
+.drill-today-part .drill-level.static, .drill-today-part .drill-level.today-cell-open { cursor: default; display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; }
+.drill-today-part .drill-level.today-cell-open:not(:disabled) { cursor: pointer; }
+.drill-today-part .drill-level.static small, .drill-today-part .drill-level.today-cell-open small { grid-column: 2; color: var(--ink-dim, #6b6380); font-size: 0.78rem; }
 
 .wk-between h1 { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .wk-between .wk-next { font-weight: 700; text-align: center; margin: 6px 0 12px; }
