@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.122.0',
+    date: '2026-11-23',
+    en: ['Improvise has a second track, the Barry Harris way: a minor sixth chord to think of over each chord, no mode names', 'Ear challenges in Licks: two licks joined into one sentence, find the lick inside a passage, and play a lick by ear in a new key', 'The Over time tab shows your measured pace and when you will close the key of the week and every exercise; assignments show a progress line to the due date', 'Two new improvisation cards, a lick in a new key and a lick varied, and a weekly card to share'],
+    he: ['לאלתור נוסף מסלול שני, הדרך של בארי האריס: אקורד מינור שש לחשוב עליו מעל כל אקורד, בלי שמות מודוסים', 'אתגרי שמיעה בליקים: שני ליקים שמתחברים למשפט אחד, למצוא את הליק בתוך קטע, ולנגן ליק משמיעה בסולם חדש', 'בלשונית לאורך זמן רואים את הקצב שנמדד ומתי תסגרו את סולם השבוע ואת כל התרגילים; במטלות רואים קו התקדמות עד מועד ההגשה', 'שני כרטיסי אלתור חדשים, ליק בסולם חדש וליק בווריאציה, וכרטיס שבועי לשיתוף'],
+  },
+  {
     version: '0.121.0',
     date: '2026-11-23',
     en: ['Your styles: pick a main style and up to two more for each instrument; every style is open from the first day, and the focus only decides what comes up more often', 'Nothing is locked any more: jazz is open in every course, and your background only sets where you start', 'New: bossa and samba comping and the montuno on piano, the bossa batida, samba and the guajeo on guitar, and a band that plays samba, baiao, cha-cha, mambo, bolero, songo and 6/8 on the clave', 'Every couple of weeks a short taste of a style you did not pick, with what it gives you'],
