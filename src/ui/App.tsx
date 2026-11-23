@@ -238,8 +238,11 @@ import { APP_VERSION, unseenChanges } from '../version';
 import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
-import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView } from './practiceRoutes';
-import { chartOfLevel, chartOfPiece, parsePieceKey, pieceKey, type LibEntry, type PieceAction } from '../engine/repLibrary';
+import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView, type WayIn } from './practiceRoutes';
+import { stepChannelOf, type StepChannel } from '../engine/stepChannel';
+import { itemOfAssign } from '../engine/itemAssign';
+import { rungKeyOf, stepLickOf } from './itemRoutes';
+import { chartOfLevel, chartOfPiece, parsePieceKey, pieceKey, whereInPath, type LibEntry, type PieceAction } from '../engine/repLibrary';
 import { firstRootPc } from './Charts';
 import { PlaceSpark } from './PlaceSpark';
 import { placeOfRoute, placeTitle, rememberPlace } from './continuePlace';
@@ -981,6 +984,16 @@ export function App() {
   const chartReturn = useRef(false);
   /** Technique opened from a piece ("Practise it in the technique hub"): the key page of the chart's key. */
   const [drillsKey, setDrillsKey] = useState<number | null>(null);
+  /** SPEC-PATH-TODAY-PRACTICE §2/§3.1: the key page opened on one rung (a technique level), and how it was reached. */
+  const [drillsLevel, setDrillsLevel] = useState<{ id: string; wayIn: WayIn } | null>(null);
+  /** The technique step being played from the path: its full practice (the gate's link) and its required channel (§4.4). */
+  const pathTech = useRef<{ x: UnitStep; channel?: StepChannel } | null>(null);
+  /** §3.1: after a step's run, the path opens on its closing sheet ("The step is open … Keep practising now"). */
+  const pathSheetFor = useRef<string | null>(null);
+  /** The Licks tile opened on one lick's page (an assignment, a lick step's full practice) and how it was reached. */
+  const lickOpen = useRef<{ id: string; wayIn: WayIn } | null>(null);
+  /** "Where it sits" for an item page: its path node, by step id. */
+  const whereOfStep = (id: string) => whereInPath(pathView, id);
   const go = (r: Route) => {
     // The Licks tile (owner 2026-11-22): Encore's home is its "Mine" section, the challenges gallery its "Challenges".
     if (r === 'encore' || r === 'challenges') {
@@ -1207,6 +1220,13 @@ export function App() {
     void submitResult(x.a.id, score, (Date.now() - x.t0) / 60000, metrics).catch(() => {});
   };
   const openAssignItem = (a: AssignItem) => {
+    // SPEC-PATH-TODAY-PRACTICE §5.1: an item assigned from its page opens that page ("The assignment" as its main button)
+    const it = itemOfAssign(a);
+    if (it?.k === 'lick') {
+      lickOpen.current = { id: it.id, wayIn: 'teacher' };
+      return go('licks');
+    }
+    if (it?.k === 'piece') return openRep({ piece: it.key, from: 'teacher' });
     // Encore v2 (SPEC-PHRASE-STUDIO §11.2): a phrase goes into the lick book and opens its assignment page; each key
     // passed later is submitted by useTeacherPhrases (not by submitAssign)
     if (a.kind === 'phrase') {
@@ -1582,6 +1602,8 @@ export function App() {
   };
   const openPathStep = (x: UnitStep, unit: PathUnit, mode: 'step' | 'practice') => {
     const step = x.step;
+    pathSheetFor.current = null;
+    pathTech.current = null;
     pendingStep.current = { id: step.id, kind: step.kind, after: lastSession(), ...(step.kind === 'game' && step.tier ? { tier: step.tier } : {}) };
     lastStepId.current = step.id;
     const title = stepTitle(step, s, s.uiLang);
@@ -1605,7 +1627,10 @@ export function App() {
     }
     // 0.61 (owner): a technique level runs its items not yet clean as a drill queue; a vocal level opens the Vocal screen on it.
     if (step.kind === 'tech' && step.ladder && settings && progress) {
-      chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder);
+      // §3.3: the step = opening the rung in the key of the week (that key's open items lead the queue)
+      const inst = drillSettingsOf(settings).instrument ?? 'piano';
+      chartQueue.current = techQueue(step.ladder.ref, progress.drillItems ?? {}, drillSettingsOf(settings).keyOrder, 5, inst === 'drums' ? null : weekKeyIfKept('major', inst));
+      pathTech.current = { x, channel: stepChannelOf(step) };
       drillFrom.current = 'path';
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
@@ -1693,6 +1718,8 @@ export function App() {
     if (ms && stars !== null && settings && stars > 0) {
       pendingStep.current = null;
       updateSettings({ pathFacts: recordStep(settings.pathFacts ?? {}, ms.id, stars, new Date().toISOString()) });
+      // §3.1: the step's closing sheet ("The step is open … Keep practising now")
+      pathSheetFor.current = ms.id;
       return go('path');
     }
     if (ms) return go('path');
@@ -1841,7 +1868,25 @@ export function App() {
     if (st.kind === 'tech' && st.ladder) {
       const ref = st.ladder.ref;
       const fam = [...catalog(), ...guitarCatalog()].find((f) => f.levels.some((l) => l.id === ref));
+      // §3.1: the key page with this rung lit (in the key of the week when the level has it), else the family
+      const key = settings ? rungKeyOf(ref, drillSettingsOf(settings)) : null;
+      if (key !== null)
+        return () => {
+          pathTech.current = null;
+          setDrillsFamily(null);
+          setDrillsLevel({ id: ref, wayIn: 'path' });
+          setDrillsKey(key);
+          go('drills');
+        };
       return fam ? () => (setDrillsFamily(fam), go('drills')) : null;
+    }
+    if (st.game === 'licks' && !st.bonus) {
+      // §3.1: the lick step's full practice = the lick's page (the level's first lick not yet in all 12 keys)
+      const id = settings ? stepLickOf(st.level ?? 1, settings, progress.drillItems ?? {}) : null;
+      return () => {
+        if (id) lickOpen.current = { id, wayIn: 'path' };
+        go('licks');
+      };
     }
     if (st.game === 'licks') return () => go('licks');
     if (st.game === 'transcribe' && !st.bonus) return () => go('transcribe-coach');
@@ -1936,6 +1981,9 @@ export function App() {
     if (from === 'path' && pendingStep.current?.kind === 'tech') {
       // A technique level from the path: one result for the session (history → streak, teacher, workout, the step's stars).
       chartQueue.current = null;
+      // §3.1: the path opens on the step's closing sheet when the run opened it (Path shows it only for an opened step)
+      if (clean > 0) pathSheetFor.current = pendingStep.current.id;
+      pathTech.current = null;
       if (done)
         void done.then((p) => {
             setProgress(p);
@@ -2525,6 +2573,15 @@ export function App() {
   const workoutLive = !!wrun && !wrun.finished && wrun.day === today;
   // A path step started from the path screen still counts for the workout when it fits the block in progress (W2).
   const pathStepNow = origin.path && lastStepId.current ? pathView.units.flatMap((u) => u.steps).find((x) => x.step.id === lastStepId.current)?.step : null;
+  // SPEC-PATH-TODAY-PRACTICE §3.1: the step's closing screen — when this session opened the path step (✓ now), the recap
+  // says so and offers "Keep practising now" (the step's home in Practice)
+  const stepOpenNow = (() => {
+    if (!origin.path || !slot?.key.startsWith('pathstep:')) return null;
+    const x = pathView.units.flatMap((u) => u.steps).find((y) => y.step.id === slot.key.slice(9));
+    if (!x || (x.state !== 'done' && x.state !== 'mastered')) return null;
+    const f = stepHome(x);
+    return f ? { open: f } : null;
+  })();
   const blockNow = wrun && !wrun.finished ? wrun.blocks[wrun.at] : undefined;
   const pathFitsBlock = !!pathStepNow && !!blockNow && (blockNow.target.kind === 'path' || (blockNow.target.kind === 'area' && blockNow.target.area === pathStepNow.domain));
   const workoutAction = workoutLive && (origin.workout || pathFitsBlock) ? { label: s.uiLang === 'en' ? `Continue workout · ${Math.ceil(runLeftMs(wrun!) / 60000)} min` : `להמשיך באימון · ${Math.ceil(runLeftMs(wrun!) / 60000)} דק׳`, open: () => runCurrent(wrunRef.current!) } : null;
@@ -2850,7 +2907,7 @@ export function App() {
           }}
         />
       )}
-      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onFullPractice={stepHome} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
+      {route === 'path' && <PathView2 t={t} settings={s} progress={progress} view={pathView} onStep={openFromPath} onFullPractice={stepHome} sheetFor={pathSheetFor} onCourseIntro={() => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } })} onAboutUnit={(u) => setOpener({ spec: unitOpenerSpec(u, true) })} onPracticeMissing={practiceMissing} onTestOut={openTestOut} onPlacement={() => (instrumentCourse ? openTechTest() : s.activeCourse === 'voice' ? openVoiceTest() : openPlacement())} onTechTest={instrumentCourse && cStart?.legacy && !s.drillStart && !Object.keys(progress.drillItems ?? {}).length ? openTechTest : undefined} onSettings={updateSettings} top={
         cStage !== 'done' ? (
           <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} compact />
         ) : (
@@ -2999,6 +3056,7 @@ export function App() {
           onDone={slot ? () => clearSession(slot.key) : undefined}
           nextLabel={recapNext.label}
           secondary={recapNext.secondary}
+          stepOpen={stepOpenNow ?? undefined}
           ratings={ratingsOf(progress)}
           recent={recentBySkill(progress)}
           onNext={recapNext.open}
@@ -3554,6 +3612,10 @@ export function App() {
                   go('charts');
                 }}
                 pathLevel={measuredStep.current?.level}
+                openLick={lickOpen.current?.id}
+                wayIn={lickOpen.current?.wayIn}
+                whereOf={(level) => (['jazz', 'keys', 'guitar', 'bass', 'voice'] as const).map((c) => whereOfStep(`licks:${c}:${level}`)).find(Boolean) ?? null}
+                onWhere={() => go('path')}
                 onPathDone={(stars) => leaveMeasured('licks', stars)}
                 onBack={() => leaveMeasured('licks', null)}
               />
@@ -3727,9 +3789,24 @@ export function App() {
         ))}
       {route === 'drills' && (
         <Drills
-          key={drillsKey === null ? (drillsFamily ? `drills-fam-${drillsFamily.id}` : 'drills') : `drills-key-${drillsKey}`}
+          key={drillsKey === null ? (drillsFamily ? `drills-fam-${drillsFamily.id}` : 'drills') : `drills-key-${drillsKey}-${drillsLevel?.id ?? ''}`}
           openKey={drillsKey}
           openFamily={drillsFamily}
+          openLevel={drillsLevel?.id ?? null}
+          wayIn={drillsLevel?.wayIn}
+          whereOf={(id) => whereOfStep(`tech:${id}`)}
+          onWhere={() => (setDrillsKey(null), setDrillsLevel(null), go('path'))}
+          onFullPractice={drillFrom.current === 'path' && pathTech.current ? (() => {
+            // §3.1: leave the step's run (no result for the step) for the key page with the rung lit
+            const x = pathTech.current?.x;
+            const f = x ? stepHome(x) : null;
+            if (!f) return;
+            drillFrom.current = null;
+            chartQueue.current = null;
+            pendingStep.current = null;
+            f();
+          }) : undefined}
+          channel={drillFrom.current === 'path' ? pathTech.current?.channel : undefined}
           lang={s.uiLang}
           settings={s}
           onSettings={updateSettings}
@@ -3759,6 +3836,10 @@ export function App() {
             void techResult('technique')?.then(setProgress);
             if (drillsKey !== null) {
               setDrillsKey(null);
+              const lv = drillsLevel;
+              setDrillsLevel(null);
+              if (lv?.wayIn === 'path') return go('path');
+              if (lv?.wayIn === 'teacher') return go('friends');
               return backToRep(() => go('arcade'));
             }
             if (drillsFamily) {

@@ -84,7 +84,7 @@ test.describe('phone', () => {
       await page.locator('[data-rep-item="blues-basic"]').click();
       const piece = page.locator('[data-rep-piece="rep:keys:blues-basic"]');
       await expect(piece).toBeVisible();
-      await expect(piece.locator('[data-rep-status="new"]')).toHaveText(lang === 'he' ? 'חדש' : 'New');
+      await expect(piece.locator('[data-item-head] [data-status="new"] .sl-word')).toHaveText(lang === 'he' ? 'חדש' : 'New');
       await expect(piece.locator('[data-rep-main="practice"]')).toBeVisible();
       await expect(piece.locator('[data-rep-action="band"]')).toBeVisible();
       await expect(piece.locator('[data-rep-action="improvise"]')).toBeVisible();

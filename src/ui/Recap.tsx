@@ -48,9 +48,11 @@ interface Props {
   covered?: boolean;
   /** Slice 7: "Drill these N" — a short session of the misses. */
   drill?: { n: number; open: () => void };
+  /** SPEC-PATH-TODAY-PRACTICE §3.1: a path step opened by this session — the closing note and "Keep practising now". */
+  stepOpen?: { open: () => void };
 }
 
-export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, secondary, rating, playerName, xpTotals, covered = false, drill }: Props) {
+export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome, onNext, nextLabel, secondary, rating, playerName, xpTotals, covered = false, drill, stepOpen }: Props) {
   const s = view.session;
   const sm = summary(s);
   const [page, setPage] = useState(0);
@@ -335,6 +337,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         <p>{rec}</p>
       </section>
 
+      {stepOpen && (
+        <p className="ms-open-note recap-step-open" dir="auto" data-step-open-note="recap">
+          {lang === 'he' ? 'הצעד פתוח. מכאן הוא נכנס לאימון היומי, דרך כל 12 הסולמות, עד שהוא סגור.' : 'The step is open. From here it goes into the daily workout, through all 12 keys up to closed.'}
+        </p>
+      )}
       <div className="recap-actions">
         {onNext && (
           <button className="btn mega" onClick={onNext} data-recap-continue="1">
@@ -345,6 +352,11 @@ export function Recap({ t, view, settings, onReplay, onCompare, onAgain, onHome,
         {secondary && (
           <button className="btn" onClick={secondary.open} data-recap-secondary="1">
             {secondary.label} <Icon k="fwd" />
+          </button>
+        )}
+        {stepOpen && (
+          <button className="btn ghost" onClick={stepOpen.open} data-step-full="recap">
+            {lang === 'he' ? 'להמשיך לתרגל עכשיו' : 'Keep practising now'}
           </button>
         )}
         {drill && (

@@ -76,6 +76,12 @@ export interface PathStep {
   rep?: { course: import('./repertoire').RepCourse; id: string };
   /** Curriculum flow (consolidation): a practice step — another set of items of this topic level (its step id). */
   practiceOf?: string;
+  /**
+   * SPEC-PATH-TODAY-PRACTICE §4.4: the channel this step must be played in ("this one by ear" / "from memory"). The step
+   * is learned in the player's strong channel unless set; when set, only clean takes in that channel open it
+   * (stepChannel.ts) and its run hides the notation accordingly.
+   */
+  channel?: 'ear' | 'memory';
   title: { en: string; he: string };
 }
 
@@ -93,6 +99,8 @@ export interface UnitStep {
    * 5 = mastered). Technique steps: from the facts here, the live keys in pathMastery.decorateMastery.
    */
   mstars?: number;
+  /** SPEC-PATH-TODAY-PRACTICE §4.2: the one status ladder beside the ✓ (pathMastery.decorateMastery, opened steps). */
+  ladder?: import('./statusLadder').Ladder;
   /** A mastered step whose practice has gone stale (keyMastery recency): silver, "refresh" (never loses its ✓). */
   fade?: boolean;
   /** Why a step is ✓ (P19), or why it's a quick check. */

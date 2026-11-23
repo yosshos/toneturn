@@ -72,7 +72,11 @@ import { applyTake, drillKeyOf, drillMinorOf, familyLevel, newItem, type LadderR
 import { facetGroup } from '../engine/drills/keyFacet';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
-import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
+import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
+import { levelLadder } from '../engine/statusLadder';
+import { AssignMark, StatusLadder, TodayMark, type WhereChip } from './ItemHead';
+import { assignedKeys, useMyAssigns } from './itemAssigns';
+import type { WayIn } from './practiceRoutes';
 import { generate } from '../engine/drills/generate';
 import { advance, finishPlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandId, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
@@ -322,11 +326,22 @@ export interface DrillsProps {
    *  practice); its Back then leaves Technique, back to where it was opened from. */
   openKey?: number | null;
   openFamily?: FamilyDef | null;
+  /** SPEC-PATH-TODAY-PRACTICE §2/§3.1: the key page opened on one rung (a technique level) — its item page, lit. */
+  openLevel?: string | null;
+  /** The way in (the rung's main button): the path, Today, the teacher or Practice. */
+  wayIn?: WayIn;
+  /** "Where it sits": a technique level's path node, and the chip's tap. */
+  whereOf?: (levelId: string) => WhereChip | null;
+  onWhere?: () => void;
+  /** §3.1: a path step's run — "the full practice of the step" (the key page with the rung lit). */
+  onFullPractice?: () => void;
+  /** §4.4: the step requires a channel — the run plays it that way (by ear: notation hidden; from memory: nothing shown). */
+  channel?: 'ear' | 'memory';
 }
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
@@ -360,7 +375,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   useEffect(() => {
     if (settings.channelMix?.week !== chMix.week) onSettings({ channelMix: chMix });
   }, [chMix.week]); // eslint-disable-line react-hooks/exhaustive-deps
-  const chan: RunChan = { strong: chStrong, mix: chMix.mix, day: chDay };
+  const chan: RunChan = { strong: chStrong, mix: chMix.mix, day: chDay, ...(channel ? { force: channel } : {}) };
   const sight = useMemo(() => {
     const inst = ds.instrument ?? 'piano';
     return sightForToday(settings.sightDose, { instrument: inst, items, order: ds.keyOrder, start: settings.drillStart?.[READING_FAMILY[inst]], key: inst === 'drums' ? null : weekKeyIfKept('major', inst), day: chDay });
@@ -410,6 +425,18 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [keyMatrixSum, today?.minutes, today?.day, mv],
   );
+  /**
+   * §3.4: today's technique levels for the marks in the topic view (the families and their levels) — the same plan as
+   * the workout's technique block (built once per day and minutes; the takes of the day don't move the marks).
+   */
+  const todayTopicLevels = useMemo(() => {
+    if (!today || pView !== 'topic' || (view.k !== 'hub' && view.k !== 'family')) return null;
+    const tt = todayTech({ settings, ds, items, minutes: today.minutes, day: today.day });
+    return tt ? new Set(tt.plan.map((p) => p.cell.level.id)) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today?.day, today?.minutes, pView, view.k, ds.instrument]);
+  // §5.1: the levels the teacher assigned (the marks)
+  const assignedLv = assignedKeys(useMyAssigns());
   /** Today's items (the marks in the key grid and on the key page). */
   const todayMarks = useMemo(() => {
     if (!todayPlan) return null;
@@ -440,6 +467,17 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="run">
         {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length || (startToday && view.today) ? onBack() : setView(view.from)))}
+        {onFullPractice && !view.coach && (
+          // SPEC-PATH-TODAY-PRACTICE §3.1: a technique step's full practice — the key page with this rung lit
+          <button className="link ex-full drill-full" onClick={onFullPractice} data-brief-full="tech">
+            {lang === 'he' ? 'התרגול המלא של הצעד' : 'The full practice of the step'}
+          </button>
+        )}
+        {channel && (
+          <p className="step-channel" data-step-channel={channel}>
+            {channel === 'ear' ? (lang === 'he' ? 'הצעד הזה מהאוזן: התווים מוסתרים עד שמנגנים נכון.' : 'This step is by ear: the notes stay hidden until you play it right.') : lang === 'he' ? 'הצעד הזה מהזיכרון: בלי תווים.' : 'This step is from memory: no notation.'}
+          </p>
+        )}
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}:${view.today ? 'today' : ''}` : 'run'}
           coach={view.coach}
@@ -578,7 +616,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
+        <KeyPage rung={openLevel && view.root === (((openKey ?? -1) % 12) + 12) % 12 ? { id: openLevel, wayIn: wayIn ?? 'practice', where: whereOf?.(openLevel) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} />
       </main>
     );
   if (view.k === 'family')
@@ -598,7 +636,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
             </span>
           </button>
         )}
-        <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
+        <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} todayLevels={todayTopicLevels} assigned={assignedLv} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
   return (
@@ -610,6 +648,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       head={head(tx.title, onBack, <PlaceSpark place="technique" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />)}
       channelStrip={<ChannelStrip lang={lang} mix={chMix.mix} strong={chStrong} sight={sight ? { drill: sight.drill, done: sight.done } : null} onSight={(d) => setView({ k: 'run', queue: [d], i: 0, from: { k: 'hub' } })} />}
       onFamily={(f) => setView({ k: 'family', f })}
+      todayLevels={todayTopicLevels}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}
       onCreate={(edit) => setView({ k: 'creator', edit })}
@@ -743,7 +782,7 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; he: string } =>
   drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : piano && k === 'ear' ? { en: 'Pianist’s ear', he: 'שמיעה לפסנתרנים' } : piano && k === 'styles' ? { en: 'Jazz piano', he: 'פסנתר ג׳אז' } : TOPIC_NAME[k];
 
-function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid }: { /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid, todayLevels }: { /** §3.4: today's technique levels (the family cards' mark). */ todayLevels?: Set<string> | null; /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
@@ -779,7 +818,10 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, o
       const cur = currentLevel(f, items, ds.keyOrder, settings.drillStart?.[f.id]);
       return (
         <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
-          <b>{f.title[lang]}</b>
+          <b>
+            {f.title[lang]}
+            {todayLevels && f.levels.some((l) => todayLevels.has(l.id)) && <TodayMark lang={lang} short />}
+          </b>
           <small>
             {tx.level} <span className="lvl">{f.levels.indexOf(cur) + 1}</span> / {f.levels.length}
           </small>
@@ -981,7 +1023,7 @@ function FamilyLesson({ family, settings }: { family: string; settings: Settings
   );
 }
 
-function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void }) {
+function FamilyView({ lang, ds, f, items, start, onRun, todayLevels, assigned }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void; /** §3.4 / §5.1: the marks — part of today, assigned. */ todayLevels?: Set<string> | null; assigned?: Set<string> }) {
   const cur = currentLevel(f, items, ds.keyOrder, start);
   const [open, setOpen] = useState<string>(cur.id);
   // SPEC-PRACTICE-KEYS §3: the family split by scale family (major · minor · melodic/harmonic modes · symmetric) where
@@ -1004,20 +1046,20 @@ function FamilyView({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dril
       )}
       {levels.map((l) => {
         const done = levelDone(l, items, ds.keyOrder);
-        const stars = levelStars(l, items, ds.keyOrder);
+        const ladder = levelLadder(l, items, ds.keyOrder);
         return (
           <div key={l.id} className="drill-level-block">
             <button className={`drill-level ${done ? 'done' : ''} ${l.id === cur.id ? 'current' : ''}`} onClick={() => setOpen(open === l.id ? '' : l.id)} aria-expanded={open === l.id} data-level={l.id}>
               <span className="n">{l.level}</span>
               <span>
                 {l.title[lang]}
+                {todayLevels?.has(l.id) && <TodayMark lang={lang} short />}
+                {assigned?.has(`level:${l.id}`) && <AssignMark lang={lang} />}
                 <LevelMeta l={l} lang={lang} />
               </span>
-              {/* 0.64 (owner): five stars — 3 = three keys at the target tempo (done, the next level opens), 4 = half, 5 = all. */}
-              <span className="lvl-stars" aria-label={lang === 'he' ? `${stars} מתוך 5 כוכבים` : `${stars} of 5 stars`} data-level-stars={stars}>
-                {Array.from({ length: LEVEL_MAX_STARS }, (_, k) => (
-                  <i key={k} className={k < stars ? 'won' : ''} />
-                ))}
+              {/* BUILD-PLAN D4: the one status ladder (the five stars stay internal: badges, XP, the path's seal). */}
+              <span className="lvl-ladder" data-level-status={ladder.top}>
+                <StatusLadder ladder={ladder} lang={lang} compact />
               </span>
             </button>
             {open === l.id && <LevelGrid lang={lang} ds={ds} level={l} items={items} onRun={onRun} />}
@@ -1261,7 +1303,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const missedIds = useRef<Record<string, boolean>>({});
   const presOf = (d: Drill | undefined): RunPresentation | null => {
     if (!d || !chan || atTarget) return null;
-    const p = runPresentation({ drill: d, items: { ...items, ...local.current }, targetBpm: itemTargetBpm(d), strong: chan.strong, mix: chan.mix, day: chan.day, missedLast: missedIds.current[d.itemId] });
+    const p = runPresentation({ drill: d, items: { ...items, ...local.current }, targetBpm: itemTargetBpm(d), strong: chan.strong, mix: chan.mix, day: chan.day, missedLast: missedIds.current[d.itemId], force: chan.force });
     return revealed.current.has(d.itemId) ? { ...p, byEar: false } : p;
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps

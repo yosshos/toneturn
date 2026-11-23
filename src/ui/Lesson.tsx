@@ -97,6 +97,8 @@ interface Props {
   nextLabel?: string;
   /** A second action under the main one (the recap of a path step inside a workout: Continue workout). */
   secondary?: { label: string; open: () => void };
+  /** SPEC-PATH-TODAY-PRACTICE §3.1: the path step this session opened — the recap's closing note and "Keep practising now". */
+  stepOpen?: { open: () => void };
   /** Current skill ratings (for automatic aids). */
   ratings?: Ratings;
   /** The player's first name, for personal feedback. */
@@ -129,7 +131,7 @@ function lessonTakeInfo(q: Question | undefined, midiOn: boolean, plays: boolean
 }
 const targetMidiOf = (q: Question) => (q.kind === 'degree' || q.kind === 'sing' || q.kind === 'note-name' ? q.targetMidi : q.kind === 'sing-seq' || q.kind === 'sing-run' ? q.midis[0] : 60);
 
-export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, onFullPractice, recent }: Props) {
+export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit, onAgain, onNext, onProgress, lessonDef, adapt, resume, onStep, onDone, nextLabel, secondary, stepOpen, ratings, playerName, onSettings, brief, briefSeen, onHideTopic, onKeepStep, onFullPractice, recent }: Props) {
   const [phones, setPhones] = useState(!!settings.headphones);
   const ctrlRef = useRef<LessonController | null>(null);
   const [change, setChange] = useState<{ change: RatingChange; peakBefore: number | null } | null>(null);
@@ -381,7 +383,7 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
       : undefined;
     return (
       <>
-        <Recap covered={!!streakThen} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={gate(onAgain)} onHome={gate(onExit)} onNext={onNext && gate(onNext)} nextLabel={nextLabel} secondary={secondary && { label: secondary.label, open: gate(secondary.open) }} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} drill={drillOpen} />
+        <Recap covered={!!streakThen} t={t} view={v} settings={settings} onReplay={(i) => ctrl.replayQuestion(i)} onCompare={(i) => ctrl.compareQuestion(i)} onAgain={gate(onAgain)} onHome={gate(onExit)} onNext={onNext && gate(onNext)} nextLabel={nextLabel} secondary={secondary && { label: secondary.label, open: gate(secondary.open) }} stepOpen={stepOpen && { open: gate(stepOpen.open) }} rating={change} xpTotals={xpTotals} playerName={playerName ?? null} drill={drillOpen} />
         {streakMoment && streakThen && (
           <StreakAfterSheet
             t={t}
