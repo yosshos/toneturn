@@ -671,6 +671,58 @@ function genOrgan(s: DrillSpec): Drill {
       chart.push(`${rootName(root, fl)}m ${rootName(root, fl)}m(maj7)`, `${rootName(root, fl)}m7 ${rootName(root, fl)}m6`);
     }
     ttl = t(`A pad with a moving inner voice: ${rootName(key, fl)}m and ${rootName(key + 5, fl)}m, the middle voice falls by half steps`, `משטח עם קול פנימי נע: ${rootName(key, fl)}m ו־${rootName(key + 5, fl)}m, הקול האמצעי יורד בחצאי טון`);
+  } else if (s.kind === 'org-stab' || s.kind === 'org-hold' || s.kind === 'org-slide' || s.kind === 'org-legato') {
+    // SPEC-JAZZ-NEIGHBOURS §4, organ technique (STYLE-SOUL §10.2, [V] Wijnen / Wikipedia *Hammond organ*):
+    //   org-stab   RH Charleston stabs in 3–7 guide tones ([V] Purcell), DETACHED so the single-trigger percussion sounds
+    //              again on each ([V] Wijnen: "percussion only works when the notes are not connected"), over the LH
+    //              walking the blues in quarters (the bass on the lower manual [V]);
+    //   org-legato finger legato: the repeated plagal I – IV/I ([V]) as a held pad connected with no gap — the organ
+    //              sounds only while a key is down and has no damper pedal [V] (legato also keeps the percussion silent);
+    //   org-hold   one note (the root) held through the changes [V] Wijnen, the inner voices moving under it (I7 – IV7);
+    //   org-slide  grace-note slides into the chord's 3rd, a half step below ([V] Pianote as a gospel keys device; on
+    //              the organ [C]), over the I7 – IV7 vamp.
+    const vamp = s.kind !== 'org-stab';
+    const prog: [number, CtQ][] = s.kind === 'org-stab' ? BLUES.map((d) => [d, '7']) : Array.from({ length: 8 }, (_, b): [number, CtQ] => [b % 2 ? 5 : 0, s.kind === 'org-legato' ? 'M' : '7']);
+    const top = pin(key, 70);
+    prog.forEach(([d, q], bar) => {
+      const root = mod12(key + d);
+      const next = mod12(key + prog[(bar + 1) % prog.length][0]);
+      if (s.kind === 'org-stab') walk(root, next, bar, true, [0, 4, 7]);
+      else if (s.kind === 'org-legato') buf.add(bar * 4, 4, [{ pitch: pin(key, 36), hand: 'L' }]);
+      else walk(root, next, bar, false, [0, 4, 7]);
+      if (s.kind === 'org-stab') {
+        const v = pad([4, 10].map((x) => mod12(root + x)), 58, 72);
+        buf.add(bar * 4, 0.5, v.map((p) => ({ pitch: p, hand: 'R' as const })));
+        buf.add(bar * 4 + 1.5, 0.5, v.map((p) => ({ pitch: p, hand: 'R' as const })));
+      } else if (s.kind === 'org-legato') {
+        // RH 3–5–1 ↔ 4–6–1 with the tonic on top (STYLE-SOUL §1.1)
+        const v = d === 0 ? [top - 8, top - 5, top] : [top - 7, top - 3, top];
+        buf.add(bar * 4, 4, v.map((p) => ({ pitch: p, hand: 'R' as const })));
+      } else if (s.kind === 'org-hold') {
+        // the 3rd and 7th of each chord under the held root (C7: E–B♭ under C; F7: E♭–A under C)
+        const inner = [4, 10].map((x) => pin(root + x, top - 11)).sort((a, b) => a - b);
+        buf.add(bar * 4, 4, inner.map((p) => ({ pitch: p, hand: 'R' as const })));
+      } else {
+        const v = pad([4, 10, 2].map((x) => mod12(root + x)), 58, 74);
+        const third = mod12(root + 4);
+        buf.add(bar * 4, 4, v.filter((p) => mod12(p) !== third).map((p) => ({ pitch: p, hand: 'R' as const })));
+        for (const p of v.filter((x) => mod12(x) === third)) buf.add(bar * 4, 4, [{ pitch: p, hand: 'R', graces: [{ pitch: p - 1, slash: true }] }]);
+      }
+      chart.push(s.kind === 'org-legato' ? (d === 0 ? kn : `${rootName(root, fl)}/${kn}`) : nm(key, root, q));
+    });
+    if (s.kind === 'org-hold') buf.add(0, prog.length * 4, [{ pitch: top, hand: 'R' }]);
+    const T: Record<string, T2> = {
+      'org-stab': t(`Organ blues in ${kn}: detached stabs over the walk (the percussion sounds on each)`, `בלוז באורגן ב־${kn}: דקירות מנותקות מעל הבס המהלך (הפרקשן נשמע בכל אחת)`),
+      'org-legato': t(`Finger legato in ${kn}: I – IV/I with no gap between the chords`, `לגאטו באצבעות ב־${kn}: I – IV/I בלי רווח בין האקורדים`),
+      'org-hold': t(`One note held in ${kn}: the root stays, the 3rds and 7ths move under it`, `צליל אחד מוחזק ב־${kn}: השורש נשאר, הטרצות והספטימות זזות מתחתיו`),
+      'org-slide': t(`Organ slides in ${kn}: a grace note into each chord's 3rd`, `החלקות באורגן ב־${kn}: צליל חן אל הטרצה של כל אקורד`),
+    };
+    ttl = T[s.kind];
+    const sp0: DrillSpec = { ...s, key, hands: 'RL', ...(s.kind === 'org-stab' ? { swing: true } : {}) };
+    const goal: Partial<DrillGoal> = s.kind === 'org-stab' ? { handArt: { R: 'staccato' } } : s.kind === 'org-legato' ? { lengths: true } : s.kind === 'org-hold' ? { holds: 0.8 } : { graces: 'strict' };
+    const d0 = pianoFinish(sp0, buf, ttl, { evenness: false, hands: true, ...goal }, vamp ? 70 : 90, 4, SIG[key]);
+    const notes = s.kind === 'org-hold' ? d0.notes.map((n) => (n.hand === 'R' && n.pitch === top && n.beat === 0 && n.dur > 8 ? { ...n, hold: true } : n)) : d0.notes;
+    return { ...d0, notes, chart, sound: 'tonewheel' };
   } else {
     // org-ballad: the common-tone ladder on the top voice (C.1) — the 5th of I held over five chords.
     // Op 1: the 3rd of I held instead — Imaj7 (3), vi m7 (5), IVmaj7 (maj7), ♯i m7 (♭3), ♯IV7 (♭7), Imaj7.
@@ -734,6 +786,12 @@ export const ORG_ROWS: Row[] = [
   { kind: 'org-texture', ops: [0], rating: 1600, en: 'Thin and full: texture under a soloist', he: 'דק ומלא: מרקם מתחת לסולן', tempo: [80, 140] },
   { kind: 'org-ballad', ops: [0], rating: 1700, en: 'Organ ballad on the common-tone ladder', he: 'בלדה באורגן על סולם הצליל המשותף', tempo: [50, 72] },
   { kind: 'org-ballad', ops: [1], rating: 1720, en: 'Organ ballad: the 3rd held on top', he: 'בלדה באורגן: הטרצה נשארת למעלה', tempo: [50, 72] },
+  // SPEC-JAZZ-NEIGHBOURS §4 (STYLE-SOUL §10.2): organ technique — the verified items only (no drawbar / Leslie / swell
+  // grading: the registrations for gospel and the swell targets are [?] or need a pedal the app cannot assume).
+  { kind: 'org-stab', ops: [0], rating: 1730, en: 'Detached stabs over the walk: the percussion on each', he: 'דקירות מנותקות מעל הבס המהלך: הפרקשן בכל אחת', tempo: [80, 140] },
+  { kind: 'org-legato', ops: [0], rating: 1740, en: 'Finger legato: the plagal pad with no gap', he: 'לגאטו באצבעות: המשטח הפלגלי בלי רווח', tempo: [60, 100] },
+  { kind: 'org-hold', ops: [0], rating: 1760, en: 'One note held through the changes', he: 'צליל אחד מוחזק לאורך החילופים', tempo: [70, 120] },
+  { kind: 'org-slide', ops: [0], rating: 1780, en: 'Slides into the 3rds', he: 'החלקות אל הטרצות', tempo: [70, 120] },
 ];
 /** k-reharm 11–22: [kind, options, rating, en, he] (levels numbered on from the existing ten). */
 export const RH_ROWS: Row[] = [

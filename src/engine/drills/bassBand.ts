@@ -8,7 +8,7 @@
 
 import type { Drill } from './types';
 import { parseChart } from '../charts';
-import { bandComping, claveOfGroove, hashOf, tumbaoBass, walkingBass, type BandOpts, type BandStyle, type CompHit } from '../band';
+import { bandComping, claveOfGroove, funkBass, hashOf, tumbaoBass, twoFeelBass, walkingBass, type BandOpts, type BandStyle, type CompHit } from '../band';
 import { chordAtBeat } from '../charts';
 import { GROOVES } from '../grooves';
 
@@ -23,6 +23,8 @@ export function bandStyleOf(groove: string): BandStyle {
   if (groove === 'songo') return 'songo';
   if (groove === '6-8-afro') return 'afro68';
   if (groove === 'reggae') return 'reggae';
+  // SPEC-JAZZ-NEIGHBOURS §5: the second line's bass drum calls for the brass band (tuba, no piano).
+  if (groove === 'second-line' || groove === 'second-line-3') return 'secondline';
   if (groove === 'half-time' || groove === 'purdie') return 'pop';
   const g = GROOVES.find((x) => x.id === groove);
   switch (g?.style) {
@@ -98,11 +100,17 @@ export function bandBass(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats'
   const rests = drill.band.rests ?? [];
   const resting = (b: number) => rests.some(([a, e]) => b >= a - 1e-6 && b < e - 1e-6);
   let out: { beat: number; midi: number; len: number; vel: number }[];
-  if (drill.band.style === 'swing' || drill.band.style === 'waltz') {
+  if (drill.band.style === 'swing' || drill.band.style === 'waltz' || drill.band.style === 'souljazz') {
     out = walkingBass(p, meter, total, hashOf(`${drill.itemId}:bass`)).map((n) => ({ beat: n.beat, midi: n.midi, len: n.ghost ? 0.3 : 0.9, vel: n.ghost ? 0.45 : 0.8 }));
   } else if ((drill.band.style === 'mambo' || drill.band.style === 'latin') && !drill.notes.some((n) => n.voice === 'kick')) {
     // Under a piano / guitar montuno (no drum part in the drill): the tumbao (STYLE-AFROCUBAN §4.1).
     out = tumbaoBass(p, meter, total).map((n, i, a) => ({ beat: n.beat, midi: n.midi, len: Math.max(0.4, Math.min(2.4, (a[i + 1]?.beat ?? total) - n.beat) - 0.1), vel: 0.8 }));
+  } else if (drill.band.style === 'trad' || drill.band.style === 'secondline') {
+    // SPEC-JAZZ-NEIGHBOURS §5: the tuba / 2-feel — the root on 1, the 5th on 3 (STYLE-NEW-ORLEANS §2.2).
+    out = twoFeelBass(p, meter, total).map((n) => ({ beat: n.beat, midi: n.midi, len: meter / 2 - 0.4, vel: 0.8 }));
+  } else if (drill.band.style === 'funkjazz') {
+    // STYLE-SOUL §3.2: the generic funk line, the "one" accented, dead notes ghosted.
+    out = funkBass(p, meter, total).map((n) => ({ beat: n.beat, midi: n.midi, len: n.ghost ? 0.15 : 0.4, vel: n.ghost ? 0.4 : n.acc ? 0.9 : 0.78 }));
   } else {
     const kicks = [...new Set(drill.notes.filter((n) => n.voice === 'kick' && n.beat < total - 1e-6).map((n) => n.beat))].sort((a, b) => a - b);
     out = kicks.map((b, i) => {

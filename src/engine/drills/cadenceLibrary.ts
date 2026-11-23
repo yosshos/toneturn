@@ -122,7 +122,7 @@ const G_VOICING: Record<string, T2> = {
   rootless: t('rootless: 3rd, 7th and the colour tones', 'בלי שורש: טרצה, ספטימה וצלילי הצבע'),
 };
 /** Every placement of the pitch classes on the string sets (low → high, rising, each class once, a span of 4 frets). */
-function placements(tu: Tuning, pcs: number[], sets: number[][], shape: (ms: number[]) => boolean): P[][] {
+export function placements(tu: Tuning, pcs: number[], sets: number[][], shape: (ms: number[]) => boolean): P[][] {
   const want = new Set(pcs.map((p) => mod(p, 12)));
   const out: P[][] = [];
   for (const strings of sets) {
@@ -148,7 +148,7 @@ function placements(tu: Tuning, pcs: number[], sets: number[][], shape: (ms: num
   return out;
 }
 /** The candidate voicings of one chord in a guitar voicing type. */
-function guitarCands(tu: Tuning, c: ChartChordEv, v: string): P[][] {
+export function guitarCands(tu: Tuning, c: ChartChordEv, v: string): P[][] {
   const R = roles(c);
   // A 9sus4 is voiced R-4-♭7-9 (the 9th in place of the 5th), so it differs from the plain 7sus4; every other chord
   // takes the piano's 4-note form (fourTones: a 7♭9 is 3-5-♭7-♭9, never without its ♭9).
@@ -169,7 +169,7 @@ function guitarCands(tu: Tuning, c: ChartChordEv, v: string): P[][] {
   }
 }
 /** Voice-led: the first chord near fret 5, each next one with the least movement (and near the last position). */
-function lead(tu: Tuning, cands: P[][], prev: P[] | null): P[] | null {
+export function lead(tu: Tuning, cands: P[][], prev: P[] | null): P[] | null {
   if (!cands.length) return null;
   const low = (v: P[]) => Math.min(...v.map((p) => p.f));
   if (!prev) return cands.reduce((a, b) => (Math.abs(low(b) - 5) < Math.abs(low(a) - 5) ? b : a));

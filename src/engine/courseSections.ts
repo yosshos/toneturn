@@ -25,9 +25,9 @@ export const COURSE_SECTIONS: Partial<Record<CourseId, CourseSection[]>> = {
   keys: [
     S('technique', 'Technique', 'טכניקה', 'Scales, arpeggios, modes, fingers, hand independence', 'סולמות, ארפג׳יו, מודים, אצבעות, עצמאות הידיים', ['k-first', 'scales', 'arpeggios', 'fingers', 'advanced', 'k-indep', 'k-modes', 'k-mmhm', 'k-keylick', 'k-keyx']),
     S('tone', 'Dynamics', 'דינמיקה', 'Touch, dynamics, balance, voicing the melody, pedal, phrasing', 'מגע, דינמיקה, איזון, הבלטת מנגינה, פדל, משפטים', ['control', 'k-pedal', 'k-classic']),
-    S('time', 'Time', 'זמן', 'Steady time in every take, subdivision, meters, polyrhythm', 'זמן יציב בכל נגינה, חלוקה, משקלים, פוליריתמיקה', ['k-rhythm'], true),
+    S('time', 'Time', 'זמן', 'Steady time in every take, subdivision, meters, polyrhythm', 'זמן יציב בכל נגינה, חלוקה, משקלים, פוליריתמיקה', ['k-rhythm', 'k-odd'], true),
     S('harmony', 'Harmony', 'הרמוניה', 'Chords, voicings, voice leading, cadences', 'אקורדים, ווייסינגים, הובלת קולות, קדנצות', ['cadences', 'voicings', 'k-vl', 'k-theory', 'k-keys', 'k-sharm', 'k-harm', 'k-sixdim', 'k-reharm', 'k-ctone', 'k-mediant', 'k-cadlib', 'k-dimcol']),
-    S('comping', 'Comping', 'ליווי', 'Playing a song: accompaniment, textures, with a band', 'לנגן שיר: ליווי, מרקמים, עם להקה', ['accomp', 'k-pop', 'k-tune', 'k-comp', 'k-organ', 'k-lh', 'k-tex', 'k-gig', 'k-brazil', 'k-montuno']),
+    S('comping', 'Comping', 'ליווי', 'Playing a song: accompaniment, textures, with a band', 'לנגן שיר: ליווי, מרקמים, עם להקה', ['accomp', 'k-pop', 'k-tune', 'k-comp', 'k-organ', 'k-lh', 'k-tex', 'k-gig', 'k-brazil', 'k-montuno', 'k-gospel', 'k-souljazz', 'k-nola']),
     S('improv', 'Improvisation', 'אלתור', 'Lines, vocabulary, solos', 'קווים, אוצר מילים, סולו', ['harris', 'jazz', 'k-bebop', 'k-vocab', 'k-harrisline', 'k-ctx', 'k-solo', 'k-impro', 'k-tpair']),
     S('byear', 'By ear', 'משמיעה', 'Hear it and play it: melodies, bass lines, progressions', 'שומעים ומנגנים: מנגינות, קווי בס, מהלכים', ['k-ear', 'k-phrase']),
     S('reading', 'Reading', 'קריאה', 'Playing at sight', 'לנגן מתווים שלא ראיתם', ['k-read']),
@@ -35,14 +35,14 @@ export const COURSE_SECTIONS: Partial<Record<CourseId, CourseSection[]>> = {
   guitar: [
     S('technique', 'Technique', 'טכניקה', 'Fretting, picking, legato, speed', 'לחיצה, פריטה, לגאטו, מהירות', ['g-first', 'g-fretting', 'g-picking', 'g-legato', 'g-lead', 'g-speed', 'g-fingerstyle', 'g-flamenco']),
     S('harmony', 'Harmony', 'הרמוניה', 'Chords, voicings and chord melody on the neck', 'אקורדים, ווייסינגים ואקורד־מלודיה על הצוואר', ['g-chords', 'g-jazz', 'g-vl', 'g-harm', 'g-theory', 'g-keys', 'g-harris', 'g-ctone', 'g-color', 'g-cmel', 'g-cmarr', 'g-solojazz', 'g-cadlib']),
-    S('rhythm', 'Rhythm & groove', 'ריתם וגרוב', 'Comping, riffs, meters, steady time', 'ליווי, ריפים, משקלים, זמן יציב', ['g-riff', 'g-rhythm', 'g-meter', 'g-tune', 'g-jblues', 'g-gig', 'g-prog', 'g-brazil', 'g-guajeo'], true),
+    S('rhythm', 'Rhythm & groove', 'ריתם וגרוב', 'Comping, riffs, meters, steady time', 'ליווי, ריפים, משקלים, זמן יציב', ['g-riff', 'g-rhythm', 'g-meter', 'g-tune', 'g-jblues', 'g-gig', 'g-prog', 'g-brazil', 'g-guajeo', 'g-soul'], true),
     S('improv', 'Improvisation', 'אלתור', 'Scales, arpeggios, lines, solos', 'סולמות, ארפג׳יו, קווים, סולו', ['g-scales', 'g-arps', 'g-impro', 'g-bebop', 'g-harrisline', 'g-hlfast', 'g-tpair', 'g-ctx', 'g-solo', 'g-fusion']),
     S('byear', 'By ear', 'משמיעה', 'Hear it and play it', 'שומעים ומנגנים', ['g-ear', 'g-phrase']),
     S('reading', 'Reading', 'קריאה', 'Reading in positions', 'קריאה לפי מצבים', ['g-reading']),
   ],
   bass: [
     S('technique', 'Technique', 'טכניקה', 'Plucking, fretting, note length, slap', 'פריטה, לחיצה, אורך צליל, סלאפ', ['b-first', 'b-pluck', 'b-fret', 'b-length', 'b-legato', 'b-ext', 'b-pick', 'b-slap', 'g-bass', 'b-up-pos', 'b-up-arco', 'b-up-pizz']),
-    S('groove', 'Time & groove', 'זמן וגרוב', 'The pocket, feels, styles, meters', 'כיס, תחושות, סגנונות, משקלים', ['b-time', 'b-pocket', 'b-ghost', 'b-feel', 'b-swing', 'b-styles', 'b-latin', 'b-riff', 'b-odd', 'b-prog', 'b-poly', 'b-gig'], true),
+    S('groove', 'Time & groove', 'זמן וגרוב', 'The pocket, feels, styles, meters', 'כיס, תחושות, סגנונות, משקלים', ['b-time', 'b-pocket', 'b-ghost', 'b-feel', 'b-swing', 'b-styles', 'b-latin', 'b-soul', 'b-nola', 'b-riff', 'b-odd', 'b-prog', 'b-poly', 'b-gig'], true),
     S('lines', 'Lines & harmony', 'קווים והרמוניה', 'Chord tones, scales, walking, form', 'צלילי אקורד, סולמות, בס מהלך, צורה', ['b-chord', 'b-scale', 'b-walk', 'b-barry', 'b-keys', 'b-counter', 'b-jform', 'b-std', 'b-tune', 'b-cadlib', 'b-up-scales', 'b-up-walk']),
     S('improv', 'Improvisation', 'אלתור', 'Fills, lines, solos', 'מעברים, קווים, סולו', ['b-impro', 'b-bebop', 'b-harrisline', 'b-tpair', 'b-ctx', 'b-solo']),
     S('byear', 'By ear', 'משמיעה', 'Hear it and play it', 'שומעים ומנגנים', ['b-ear', 'b-phrase']),

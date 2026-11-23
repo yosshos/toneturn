@@ -80,6 +80,18 @@ export const CHART_SETS: Record<string, ChartRef> = {
     bpm: 100,
     home: { key: 0, minor: true },
   },
+  // SPEC-JAZZ-NEIGHBOURS §4 (STYLE-SOUL §2.5, §6): the soul-jazz forms — the I7–IV7 vamp [C], the 12-bar blues with a
+  // ii–V–I added in bars 4, 8, 10 and 12 ([V] Purcell; the bar-by-bar spelling [C]), the same with the ♭9 / ♯9 / ♭13 on
+  // its dominants for drop 2 behind the organ ([V] Purcell), and the minor blues [C].
+  'sj-vamp': { text: 'C7 | F7 | C7 | F7 | C7 | F7 | C7 | F7', title: { en: 'The I7–IV7 vamp', he: 'הוואמפ I7–IV7' }, bpm: 100, home: { key: 0 } },
+  'sj-blues': { text: 'C7 | F7 | C7 | Gm7 C7 | F7 | F7 | C7 | Em7 A7 | Dm7 | G7 | C7 | Dm7 G7', title: { en: 'Soul-jazz blues (ii–V in bars 4, 8, 10, 12)', he: 'בלוז סול-ג׳אז (ii–V בתיבות 4, 8, 10, 12)' }, bpm: 100, home: { key: 0 } },
+  'sj-blues-alt': { text: 'C7 | F7 | C7 | Gm7 C7b9 | F7 | F7 | C7 | Em7 A7#9 | Dm7 | G7b13 | C7 | Dm7 G7b9', title: { en: 'Soul-jazz blues, altered dominants', he: 'בלוז סול-ג׳אז, דומיננטים אלטרד' }, bpm: 100, home: { key: 0 } },
+  'sj-minor': { text: 'Cm7 | Fm7 | Cm7 | Cm7 | Fm7 | Fm7 | Cm7 | Cm7 | Ab7 | G7 | Cm7 | G7', title: { en: 'Minor blues', he: 'בלוז מינורי' }, bpm: 100, home: { key: 0, minor: true } },
+  // SPEC-JAZZ-NEIGHBOURS §5 (STYLE-NEW-ORLEANS §1.2): stride progressions — P1 the chain of secondary dominants
+  // I–VI7–II7–V7 ([C] Levine; the same chain is [V] in gospel, STYLE-SOUL §1.2) and P2 I–I7–IV–♯iv°7–I/5–V7–I ([C]
+  // Levine; [V] PianoGroove, STYLE-SOUL §1.2).
+  'nola-p1': { text: 'C | A7 | D7 | G7 | C | A7 | D7 | G7', title: { en: 'I–VI7–II7–V7', he: 'I–VI7–II7–V7' }, bpm: 100, home: { key: 0 } },
+  'nola-p2': { text: 'C | C7 | F | F#dim7 | C/G | G7 | C | C', title: { en: 'I–I7–IV–♯iv°7–I/5–V7–I', he: 'I–I7–IV–♯iv°7–I/5–V7–I' }, bpm: 100, home: { key: 0 } },
 };
 
 /** Resolve a chart reference. */

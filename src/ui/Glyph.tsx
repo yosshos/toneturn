@@ -929,6 +929,9 @@ Object.assign(GLYPHS, { vjazz1: mark('12-bar'), vimpro: mark('Q→A'), vpop: mar
 Object.assign(GLYPHS, { kgig: mark('Gig'), ggig: mark('Gig·6'), bgig: mark('Gig·4') });
 // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping and the montuno (keys), the batida and the guajeo (guitar, 6).
 Object.assign(GLYPHS, { kbrazil: mark('Bossa'), kmontuno: mark('3-2'), gbrazil: mark('Bossa·6'), gguajeo: mark('2-3·6') });
+// SPEC-JAZZ-NEIGHBOURS §4–§6: gospel (the plagal IV–I), soul-jazz, stride, odd meters (keys); soul / funk (guitar 6,
+// bass 4); New Orleans bass (the 2-feel).
+Object.assign(GLYPHS, { kgospel: mark('IV→I'), ksouljazz: mark('Soul'), knola: mark('Stride'), kodd: mark('7/8'), gsoul: mark('Funk·6'), bsoul: mark('Funk·4'), bnola: mark('2·4') });
 // The jazz cadence chart library — keys, guitar (6), bass (4).
 Object.assign(GLYPHS, { kcadlib: mark('V→I'), gcadlib: mark('V→I·6'), bcadlib: mark('V→I·4') });
 // THEORY_PLAY: theory you play (k-theory) — two triads stacked, a whole step apart (a triad pair).

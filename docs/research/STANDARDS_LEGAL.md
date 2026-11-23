@@ -97,9 +97,11 @@
 | Odeon | Ernesto Nazareth (1934) | 1909 | Choro |
 | El Choclo | Ángel Villoldo (1919) | 1903 | Tango |
 | La Cumparsita (instrumental) | G. Matos Rodríguez (1948) | 1916 | Tango (the later lyrics are a separate question) |
-| Spirituals: Nobody Knows the Trouble I've Seen, Sometimes I Feel Like a Motherless Child, Wade in the Water, Go Down Moses, Swing Low, Just a Closer Walk | Traditional | 19th c. | Modal/minor blues feel, sing-along. Use the trad melody, not a modern arrangement |
+| Spirituals: Nobody Knows the Trouble I've Seen, Sometimes I Feel Like a Motherless Child, Wade in the Water, Go Down Moses, Swing Low | Traditional | 19th c. | Modal/minor blues feel, sing-along. Use the trad melody, not a modern arrangement |
 | Careless Love, Frankie and Johnny, C.C. Rider (trad), When the Saints | Traditional | n/a | Blues, trad |
 | Hava Nagila | Trad. melody; A.Z. Idelsohn (1938) arr./lyrics; Moshe Nathanson (1987) credited by some | 1918–22 | Israeli audience. **Check the lyric credit [lawyer]**. The melody is the safe part |
+
+**Checked 2026-11-23 (SPEC-JAZZ-NEIGHBOURS §6a): *Just a Closer Walk with Thee* is NOT on the PD list.** Its author is unknown and it may come from 19th-century churches, but no 19th-century print of this song is known: the well-known version was first arranged and published by Kenneth Morris in **1940** (new lyrics and a choral arrangement), and the first known recording is the Selah Jubilee Singers, Decca 7872, 8 Oct 1941 (Wikipedia, *Just a Closer Walk with Thee*). The 1885 "Closer Walk with Thee" (Lankton / Kirkpatrick) is a different song. A 1940 US publication with notice, if renewed, stays protected to the end of 2035; whether Morris renewed is unchecked (*Catalog of Copyright Entries* 1967–68). Until that is checked: **chords only**, no melody, no lyrics.
 
 **Coming soon worldwide:** Isham Jones died in 1956, so *It Had to Be You* (1924) and *I'll See You in My Dreams* (1924) become PD worldwide on **1 Jan 2027**. Each New Year, add whatever the 1931 US list and the 1956 deaths free up.
 

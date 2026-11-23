@@ -43,6 +43,7 @@ import { genGuitarCtx, guitarCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5
 import { genGuitarGig, guitarGigFamily } from './gigDrills'; // AUDIT-DEPTH-3 #11, #12, C8
 import { gateFamilies } from '../verifiedContent';
 import { genLatinGuitar, guitarBrazilFamily, guitarGuajeoFamily } from './latinStyles'; // SPEC-JAZZ-NEIGHBOURS §2, §3
+import { genSoulGuitarDrill, guitarSoulFamily } from './soulStyles'; // SPEC-JAZZ-NEIGHBOURS §4
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2470,6 +2471,8 @@ export function generateGuitar(spec: DrillSpec): Drill {
     case 'g-brazil':
     case 'g-guajeo':
       return genLatinGuitar(s, tu);
+    case 'g-soul':
+      return genSoulGuitarDrill(s, tu);
     case 'b-first':
       return generateBassFirst(s, tu);
     // AUDIT-7 #15: riffs by grade and the broken-feel / ballad ladder on the bass.
@@ -2802,6 +2805,8 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa batida and samba, the guajeo (latinStyles.ts; core, no add-on).
     guitarBrazilFamily(LT, fam),
     guitarGuajeoFamily(LT, fam),
+    // SPEC-JAZZ-NEIGHBOURS §4: soul-jazz comping and funk (soulStyles.ts; core, no add-on).
+    guitarSoulFamily(LT, fam),
     // STAGE C (AUDIT-6 GA-4): speed, fusion and outside, chord-melody arranging, solo jazz guitar, Harris lines at tempo.
     ...guitarTopFamilies(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,

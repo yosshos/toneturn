@@ -713,6 +713,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-gig': 'styles', 'g-gig': 'styles', 'b-gig': 'styles',
   // SPEC-JAZZ-NEIGHBOURS §2, §3: Brazilian and Afro-Cuban comping are styles.
   'k-brazil': 'styles', 'k-montuno': 'styles', 'g-brazil': 'styles', 'g-guajeo': 'styles',
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: soul-jazz, gospel, funk, New Orleans and odd meters in jazz.
+  'k-gospel': 'styles', 'k-souljazz': 'styles', 'k-nola': 'styles', 'k-odd': 'styles', 'g-soul': 'styles', 'b-soul': 'styles', 'b-nola': 'styles',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   all: { en: 'All', he: 'הכול' },

@@ -165,7 +165,7 @@ describe('the drums course and its path', () => {
   });
   it('drum levels are path steps of the drums course only, each a "tech:" step rated as drum technique', () => {
     const tech = stepCatalogue().filter((s) => s.ladder?.instrument === 'drums');
-    expect(tech.length).toBe(225); // + AUDIT-7 d-fills 9 // + d-first 8 (AUDIT-6 Stage B) + 49 STAGE C levels (AUDIT-6 DA-10); d-latin 8–10 hidden until verified
+    expect(tech.length).toBe(226); // + SPEC-JAZZ-NEIGHBOURS d-funk 9 (the second line's bass drum) + AUDIT-7 d-fills 9 // + d-first 8 (AUDIT-6 Stage B) + 49 STAGE C levels (AUDIT-6 DA-10); d-latin 8–10 hidden until verified
     for (const s of tech) {
       expect(s.id.startsWith('tech:d-')).toBe(true);
       expect(s.sub).toBe('instrument/drum-tech');

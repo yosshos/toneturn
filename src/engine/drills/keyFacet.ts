@@ -80,6 +80,11 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping and the montuno.
   'k-brazil': { role: 'comping' },
   'k-montuno': { role: 'comping' },
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel, soul-jazz, stride / boogie comping; odd meters comped over a ii–V–I.
+  'k-gospel': { role: 'comping' },
+  'k-souljazz': { role: 'comping' },
+  'k-nola': { role: 'comping' },
+  'k-odd': { role: 'comping' },
   'k-pedal': { role: 'control' },
   'k-classic': { scope: 'apply', role: 'apply' },
   'k-gig': { scope: 'apply', role: 'apply' },
@@ -104,6 +109,7 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'g-rhythm': { role: 'comping' },
   'g-brazil': { role: 'comping' },
   'g-guajeo': { role: 'comping' },
+  'g-soul': { role: 'comping' },
   'g-lead': { scope: 'neutral', role: 'control' },
   'g-fingerstyle': { scope: 'neutral', role: 'pattern' },
   'g-flamenco': { scope: 'neutral', role: 'pattern' },
@@ -165,6 +171,9 @@ export const FAMILY_FACETS: Record<string, Fam> = {
   'b-ctx': { role: 'line' },
   'b-solo': { scope: 'apply', role: 'apply' },
   'b-gig': { scope: 'apply', role: 'apply' },
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: soul / funk bass, the 2-feel and the tuba role.
+  'b-soul': { scope: 'apply', role: 'apply' },
+  'b-nola': { scope: 'apply', role: 'apply' },
   'b-harrisline': { role: 'harris' },
   'b-counter': { role: 'colour' },
   'b-tpair': { role: 'colour' },

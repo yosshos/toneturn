@@ -24,6 +24,8 @@ import { moved, restateKey, transposeTextIn } from '../stdKey';
 import { generateBassEar } from './bassEar';
 import { generateUpright } from './upright';
 import { generateBassNiche, IMPRO_NICHE, improNicheLevels, jazzFamilies, NICHE_EXAM, progFamilies } from './bassNiche';
+import { bassSoulFamily, generateBassSoul } from './soulStyles';
+import { bassNolaFamily, generateBassNola } from './nolaStyles';
 import { extFamily, fusionLevels, generateBassNiche2, IMPRO_FUSION, NICHE2_EXAM, PICK_NICHE, pickTopLevels, standardsFamily, uprightTopLevels, WALK_NICHE, waltzLevels } from './bassNiche2';
 import { bassVocabFamily, genBassVocab } from './vocabDrills'; // AUDIT-GAPS-2: bebop vocabulary
 import { bassPhraseFamily, genBassPhrase } from './phraseDrills'; // phrases by ear
@@ -2590,6 +2592,11 @@ export function generateBass(s: DrillSpec, tu: Tuning): Drill {
     // Triad pairs, deep: arpeggiated pair lines, inversions, ii–V–I, side-slip (tpairDrills.ts).
     case 'b-tpair':
       return genTpairBass(s, tu);
+    // SPEC-JAZZ-NEIGHBOURS §4, §5 (soulStyles.ts, nolaStyles.ts).
+    case 'b-soul':
+      return generateBassSoul(s, tu);
+    case 'b-nola':
+      return generateBassNola(s, tu);
   }
   throw new Error(`Not a bass family: ${s.family}`);
 }
@@ -2890,6 +2897,9 @@ export function bassFamilies(): GuitarFamilyDef[] {
     bassCounterFamily(L, fam),
     // Triad pairs, deep (jazz track, owner 2026-11-16): pair lines, inversions, ii–V–I, side-slip (tpairDrills.ts).
     bassTpairFamily(L, fam),
+    // SPEC-JAZZ-NEIGHBOURS §4, §5: soul-jazz / gospel / funk bass, the 2-feel and the tuba role (both tracks).
+    bassSoulFamily(L, fam),
+    bassNolaFamily(L, fam),
     fam('b-legato', 'Slides, legato, harmonics', 'החלקות, לגאטו והרמוניקים', [
       L('b-legato', 1, 'Slides into notes', 'החלקות אל הצלילים', [LG('slide')], K6, [70, 110], E8),
       L('b-legato', 2, 'Hammer-on and pull-off pairs', 'זוגות הקשה ומשיכה', [LG('hp')], K6, [60, 100], E8),

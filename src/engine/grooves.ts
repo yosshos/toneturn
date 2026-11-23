@@ -111,6 +111,11 @@ export const GROOVES: Groove[] = [
   { ...G('bossa', 'Bossa nova', 'בוסה נובה', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', 'x..x..x...x..x..'), bars: 2 },
   // The same with the bossa clave 2-3 (drumStyles.ts CLAVE.bossa23; STYLE-BRAZIL §1(a) F2' [V] Ward "sometimes 2-3").
   { ...G('bossa-23', 'Bossa nova, clave 2-3', 'בוסה נובה, קלאבה 2-3', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', '..x..x..x..x..x.'), bars: 2 },
+  // SPEC-JAZZ-NEIGHBOURS §5 (STYLE-NEW-ORLEANS §2.1): the brass-band second line's bass drum only — the march pulse on 1
+  // and 3 [V] (Doleac 2013), and the tresillo 3+3+2 [V] as a building block (its placement 1, the "and" of 2, 4 [C]). The
+  // snare improvises off the march beat [V]; no written snare line is verified, so the lanes leave it out.
+  G('second-line', 'Second line: the bass drum', 'סקנד ליין: תוף הבס', 'jazz', 4, 4, 2, 100, 'x...x...', '........', '........'),
+  G('second-line-3', 'Second line: the tresillo bass drum', 'סקנד ליין: תוף הבס בטרסיו', 'jazz', 4, 4, 2, 100, 'x..x..x.', '........', '........'),
   G('ballad-brush', 'Brush ballad', 'בלדת מברשות', 'jazz', 4, 4, 3, 66, 'x.....x.....', '...o.....o..', 'x..x.xx..x.x', undefined, RIDE),
   // blues
   G('shuffle', 'Shuffle', 'שאפל', 'blues', 4, 4, 3, 110, 'x.....x.....', '...x.....x..', 'x.xx.xx.xx.x'),

@@ -65,6 +65,13 @@ export type FamilyId =
   | 'k-montuno'
   | 'g-brazil'
   | 'g-guajeo'
+  // SPEC-JAZZ-NEIGHBOURS §4, §5, §6: gospel and soul-jazz comping (soulStyles.ts), stride and boogie-woogie
+  // (nolaStyles.ts), odd meters in jazz (oddJazz.ts) on the piano; soul-jazz and funk on the guitar.
+  | 'k-gospel'
+  | 'k-souljazz'
+  | 'k-nola'
+  | 'k-odd'
+  | 'g-soul'
   // AUDIT-GAPS-2 #5/#6/#11/#12: key changes (common dim, pivot, ii–V, tritone, direct, pop) and turnarounds, performed.
   | 'k-keys'
   | 'g-keys'
@@ -207,7 +214,10 @@ export type BassFamilyId =
   | 'b-riff'
   | 'b-feel'
   // AUDIT-DEPTH-3 #11, #12, C8: the ballad in two, walked intros and endings, the whole tune (gigDrills.ts).
-  | 'b-gig';
+  | 'b-gig'
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: soul-jazz / gospel / funk bass (soulStyles.ts), the 2-feel and the tuba role (nolaStyles.ts).
+  | 'b-soul'
+  | 'b-nola';
 
 export type Dyn = 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff';
 export type Articulation = 'legato' | 'staccato' | 'portato';

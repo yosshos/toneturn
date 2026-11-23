@@ -10,6 +10,9 @@ import { K_HARM_DIFF } from './drills/harmLadder';
 import { K_INDEP_DIFF } from './drills/indepDrills';
 import { K_KEYLICK_DIFF, K_KEYX_DIFF } from './drills/keyLicks';
 import { LATIN_LEVEL_DIFF } from './drills/latinStyles';
+import { SOUL_LEVEL_DIFF } from './drills/soulStyles';
+import { NOLA_LEVEL_DIFF } from './drills/nolaStyles';
+import { ODD_LEVEL_DIFF } from './drills/oddJazz';
 import { MODE_LEVEL_DIFF } from './drills/modeScales';
 import { questionTags } from './taxonomy';
 import { SUB_PREREQ, IMPORTANCE } from './scheduler';
@@ -426,7 +429,10 @@ const BASS_NICHE_LATER: Record<string, number> = { 'b-swing': 9, 'b-barry': 12, 
   // AUDIT-DEPTH-3: improvising under rule cards and jazz in context on the bass.
   'b-solo': 8, 'b-ctx': 9,
   // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (fallback only: every level is placed by levelPlacement GIG_PLACEMENT).
-  'b-gig': 9 };
+  'b-gig': 9,
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: soul / funk bass with the styles (after the funk and shuffle of b-styles), the 2-feel
+  // with the first walking levels.
+  'b-soul': 6, 'b-nola': 4 };
 /**
  * AUDIT-CONTENT-THEORY §ב.4 ("roots & pocket first"): the bass core opened in catalogue order, so muting came at unit
  * 13, locking with the kick at 17 and walking at 32. Now time, the plucking hand, roots and the kick lock lead, muting
@@ -684,6 +690,11 @@ export const KEYS_LEVEL_DIFF: Record<string, number> = {
   ...K_KEYX_DIFF,
   // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping ~900–1420, the montuno ~980–1480 (open from the start, no gate).
   ...LATIN_LEVEL_DIFF,
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel ~880–1470, soul-jazz ~1050–1400, stride / boogie ~900–1340, odd meters in jazz
+  // ~1150–1510 (open from the start, no gate).
+  ...SOUL_LEVEL_DIFF,
+  ...NOLA_LEVEL_DIFF,
+  ...ODD_LEVEL_DIFF,
   // Barry Harris lines (BARRY-HARRIS-METHOD Part D): each level at its own rating, ~1100–1750, keys and bass.
   ...HL_LEVEL_DIFF, ...B_LEVEL_DIFF,
   // HARMONY-REHARM (colorDrills.ts): one note many chords, mediants, organ, k-reharm 11–22 and b-counter, ~1050–1800.
@@ -787,6 +798,8 @@ GUITAR_RANK['g-jblues'] = 4;
 // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa batida and the guajeo with the rhythm guitar.
 GUITAR_RANK['g-brazil'] = 2;
 GUITAR_RANK['g-guajeo'] = 2;
+// SPEC-JAZZ-NEIGHBOURS §4: soul-jazz comping and funk with the rhythm guitar.
+GUITAR_RANK['g-soul'] = 2;
 // STAGE C (AUDIT-6 GA-4): the families above grade 8 (guitarTop.ts).
 Object.assign(GUITAR_RANK, GUITAR_TOP_RANK);
 /**

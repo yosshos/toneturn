@@ -214,6 +214,11 @@ function secondTag(drill: Drill): Tags[number] | null {
   if (f === 'k-pop' || f === 'b-feel') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
   // SPEC-JAZZ-NEIGHBOURS §2, §3: Brazilian and Afro-Cuban comping is syncopated time over the surdo / the clave.
   if (f === 'k-brazil' || f === 'k-montuno' || f === 'g-brazil' || f === 'g-guajeo') return { skill: 'timing', sub: 'timing/subdivide', w: 0.25 };
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel rates progressions; soul-jazz, funk, stride, boogie and the 2-feel are time and
+  // groove; the odd meters in jazz feed meter.
+  if (f === 'k-gospel') return { skill: 'cadences', sub: 'cadences/progression', w: 0.3 };
+  if (f === 'k-odd') return { skill: 'meter', sub: 'meter/odd', w: 0.3 };
+  if (f === 'k-souljazz' || f === 'k-nola' || f === 'g-soul' || f === 'b-soul' || f === 'b-nola') return { skill: 'timing', sub: 'timing/subdivide', w: 0.25 };
   if (f === 'k-classic') return { skill: 'sight', sub: 'sight/read', w: 0.2 };
   if (f === 'b-riff' || f === 'k-pedal') return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };
   if (drill.goal.evenness) return { skill: 'timing', sub: 'timing/subdivide', w: 0.2 };

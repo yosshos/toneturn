@@ -1039,6 +1039,8 @@ export function allDrumFamilies(): DrumFamilyDef[] {
       L('d-funk', 6, 'Shuffle with ghost notes', 'שאפל עם תווי רפאים', 'shufghost', 3, [70, 90], '1/8T', false),
       L('d-funk', 7, 'Boom-bap: the lazy snare', 'בום־בפ: הסנר העצלן', 'boombap', 3, [85, 95], '1/16', false),
       L('d-funk', 8, 'Go-go and second line', 'גו־גו וסקנד ליין', 'gogo', 3, [90, 110], '1/16', false),
+      // SPEC-JAZZ-NEIGHBOURS §5 (STYLE-NEW-ORLEANS §2.1): the brass-band second line's bass drum (the New Orleans style).
+      L('d-funk', 9, 'Brass-band second line: the bass drum', 'סקנד ליין של להקת כלי נשיפה: תוף הבס', 'nola', 3, [90, 120], '1/8', false),
     ]),
     fam('d-shuffle', 'Shuffle & triplet feels', 'שאפל ותחושת טריולות', [
       L('d-shuffle', 1, 'Triplets on the hat, snare 2 and 4', 'טריולות בהיי־האט, סנר על 2 ו-4', 'triplets', 3, [60, 90], '1/8T', false),

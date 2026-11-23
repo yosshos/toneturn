@@ -27,6 +27,9 @@ import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, so
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
 import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop';
 import { genLatinPiano, keysBrazilFamily, keysMontunoFamily } from './latinStyles'; // SPEC-JAZZ-NEIGHBOURS §2, §3
+import { genSoulPiano, keysGospelFamily, keysSoulJazzFamily } from './soulStyles'; // SPEC-JAZZ-NEIGHBOURS §4
+import { genNolaPiano, keysNolaFamily } from './nolaStyles'; // SPEC-JAZZ-NEIGHBOURS §5
+import { genOddJazz, keysOddFamily } from './oddJazz'; // SPEC-JAZZ-NEIGHBOURS §6
 import type { StyleId } from '../styles'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
 import { genKeysClassic, keysClassicFamily } from './keysClassic'; // AUDIT-7 #11: public-domain classical pieces
 import { genModeScale, keysModesFamily, keysMmhmFamily } from './modeScales'; // SPEC-PRACTICE-KEYS §6: modes as full scales
@@ -3306,7 +3309,9 @@ function genBoogie(s: DrillSpec): Drill {
   });
   buf.add(48, 2, [{ pitch: pitchIn(key, 36), hand: 'L' }]);
   const nm = [t('5-6 shuffle', 'שאפל 5-6'), t('walking 1-3-5-6-♭7', 'הליכה 1-3-5-6-♭7'), t('broken octaves', 'אוקטבות שבורות')][op];
-  return finish(s, buf, title([t(`Boogie-woogie LH, blues in ${keyName(key)}`, `בוגי-ווגי ביד שמאל, בלוז ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false }, 80, 4, SIG[key]);
+  const d = finish(s, buf, title([t(`Boogie-woogie LH, blues in ${keyName(key)}`, `בוגי-ווגי ביד שמאל, בלוז ב-${keyName(key)}`), nm], { ...s, hands: 'L' }), { evenness: true, hands: false }, 80, 4, SIG[key]);
+  // the 12-bar blues as the chart (a band or a lead sheet can follow it; SPEC-JAZZ-NEIGHBOURS §5)
+  return { ...d, chart: [...BLUES_ROOTS.map((x) => `${keyName(mod(key + x, 12))}7`), `${keyName(key)}7`] };
 }
 
 /** Latin piano: bossa nova (0) — LH root / 5th, RH rootless chords on the bossa rhythm; montuno (1) — RH octaves over a tumbao bass. */
@@ -5283,6 +5288,11 @@ function generateRaw(spec: DrillSpec): Drill {
   // AUDIT-7 #10, #11: pop accompaniment, pedalling 2–4, the public-domain classical tier.
   if (s.family === 'k-pop' || s.family === 'k-pedal') return genKeysPop(s);
   if (s.family === 'k-brazil' || s.family === 'k-montuno') return genLatinPiano(s);
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel, the soul-jazz band level, the stride / boogie band level, odd meters in jazz
+  // (the soul-jazz and stride chart levels go to genChart, the boogie levels to genBoogie, below).
+  if (s.family === 'k-gospel' || (s.family === 'k-souljazz' && s.kind === 'sj-band')) return genSoulPiano(s);
+  if (s.family === 'k-nola' && s.kind === 'nola-band') return genNolaPiano(s);
+  if (s.family === 'k-odd') return genOddJazz(s);
   if (s.family === 'k-classic') return genKeysClassic(s);
   // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales (modeScales.ts).
   if (s.family === 'k-modes' || s.family === 'k-mmhm') return genModeScale(s);
@@ -6460,6 +6470,11 @@ export function catalog(): FamilyDef[] {
     // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa and samba comping, the montuno (latinStyles.ts).
     keysBrazilFamily(),
     keysMontunoFamily(),
+    // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel, soul-jazz comping, stride and boogie-woogie, odd meters in jazz.
+    keysGospelFamily(),
+    keysSoulJazzFamily(),
+    keysNolaFamily(),
+    keysOddFamily(),
     keysPedalFamily(),
     keysClassicFamily(),
     // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).

@@ -39,7 +39,7 @@ function take(d: Drill, bpm: number, sd = 0, seed = 'x'): PlayedNote[] {
 describe('guitar deepening: catalogue', () => {
   it('252 guitar levels: 79 + ear 13 + jazz 6 + Barry Harris 10 + prog 8 + core 21 + meter 6 + voice leading 3 + theory you play 7 + key changes 12 + bebop 12 + phrases by ear 8 + chord-melody 6 + tunes 9 + in context 11 + solo 10 + AUDIT-SCALES technique 5 + harmonization 13 + Harris 3 + Harris lines 10 + one note many chords 5 + colour harmony 12', () => {
     // 306 built; 6 hidden until verified (g-harrisline 1, 5, 6, 9, 10 and g-hlfast-5: src/engine/verifiedContent.ts)
-    expect(LEVELS.length).toBe(374); // + SPEC-JAZZ-NEIGHBOURS g-brazil 11, g-guajeo 9 // + g-cadlib 10 + §4.6 g-scales 16–18, SPEC-PRACTICE-KEYS 19–21 // + AUDIT-DEPTH-3 closing: g-cmel 7–9, g-tune 10–13, g-gig 9, g-color 16 // + g-tpair 7; + AUDIT-DEPTH-3 g-gig 8; + HARMONY-REHARM: g-ctone 6, g-color 13–15 // + AUDIT-6 Stage B: g-first 8, g-riff 5; + STAGE C 24; + AUDIT-7 g-scales 13–15, g-jblues 4
+    expect(LEVELS.length).toBe(380); // + SPEC-JAZZ-NEIGHBOURS §4 g-soul 6 // + SPEC-JAZZ-NEIGHBOURS g-brazil 11, g-guajeo 9 // + g-cadlib 10 + §4.6 g-scales 16–18, SPEC-PRACTICE-KEYS 19–21 // + AUDIT-DEPTH-3 closing: g-cmel 7–9, g-tune 10–13, g-gig 9, g-color 16 // + g-tpair 7; + AUDIT-DEPTH-3 g-gig 8; + HARMONY-REHARM: g-ctone 6, g-color 13–15 // + AUDIT-6 Stage B: g-first 8, g-riff 5; + STAGE C 24; + AUDIT-7 g-scales 13–15, g-jblues 4
     const n = (id: string) => GUITAR.find((f) => f.id === id)!.levels.length;
     expect([n('g-ear'), n('g-jazz'), n('g-harris'), n('g-prog')]).toEqual([13, 13, 13, 8]);
     for (const { lv } of LEVELS) expect(lv.title.en.length > 0 && /[֐-׿]/.test(lv.title.he), lv.id).toBe(true);

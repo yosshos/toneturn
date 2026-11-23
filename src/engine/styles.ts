@@ -133,6 +133,8 @@ export const STYLE_OF_LEVEL: Partial<Record<string, StyleId>> = {
   'd-latin-1': 'brazil',
   'd-latin-2': 'brazil',
   'd-latin-7': 'brazil',
+  // drums: the brass-band second line's bass drum (SPEC-JAZZ-NEIGHBOURS §5)
+  'd-funk-9': 'neworleans',
 };
 
 /** The guitar add-ons that are styles (the jazz add-on is the jazz core: unstyled). */
@@ -169,13 +171,14 @@ export function styleOfFamily(family: { id: string; style?: FamilyStyle | string
  * The band that plays a style today, for Improvise's default band, the workout's improvisation share and the taster's
  * 8 bars (styleBand.ts styledBacking plays both kinds): the chart band's styles (swing / pop / rock / bossa / ballad /
  * waltz) and the band engine's Brazilian and Afro-Cuban styles (band.ts: samba, baião, cha-cha, mambo, bolero, songo,
- * 6/8). Soul and New Orleans borrow the closest band until their own band styles land (SPEC-JAZZ-NEIGHBOURS §4–5).
+ * 6/8) and its soul and New Orleans styles (SPEC-JAZZ-NEIGHBOURS §4–5: soul-jazz, gospel 12/8, funk-jazz, trad, the
+ * second line).
  */
-export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bossa' | 'ballad' | 'waltz' | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68'>> = {
+export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bossa' | 'ballad' | 'waltz' | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68' | 'souljazz' | 'gospel68' | 'funkjazz' | 'trad' | 'secondline'>> = {
   brazil: 'bossa',
   afrocuban: 'mambo',
-  soul: 'rock',
-  neworleans: 'swing',
+  soul: 'souljazz',
+  neworleans: 'trad',
   pop: 'pop',
   prog: 'rock',
   classical: 'ballad',
@@ -191,8 +194,8 @@ export const STYLE_BANDS: Partial<Record<StyleId, string[]>> = {
   jazz: ['swing', 'ballad', 'waltz'],
   brazil: ['bossa', 'samba', 'baiao'],
   afrocuban: ['mambo', 'chacha', 'songo', 'bolero', 'afro68', 'latin'],
-  soul: ['funk', 'shuffle', 'soul', 'boogaloo'],
-  neworleans: ['shuffle', 'secondline'],
+  soul: ['souljazz', 'gospel68', 'funkjazz', 'funk', 'shuffle'],
+  neworleans: ['trad', 'secondline', 'shuffle'],
   pop: ['pop', 'rock'],
   reggae: ['reggae'],
   metal: ['rock'],
