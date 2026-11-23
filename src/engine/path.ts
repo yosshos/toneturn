@@ -741,6 +741,8 @@ export const NON_MONOTONE_FAMILIES = [
   'g-ctx',
   // 2026-11-23: the cha-cha, mambo and bolero levels (k-montuno 13–20) sit by difficulty among the montuno levels.
   'k-montuno',
+  // 2026-11-23: the minor independence levels (k-indep 9–12) sit by difficulty next to their major forms.
+  'k-indep',
   'harris', 'scales', 'k-mmhm', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
