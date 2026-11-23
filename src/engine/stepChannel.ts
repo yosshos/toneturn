@@ -7,8 +7,9 @@ import type { ItemState } from './drills/types';
 export type StepChannel = 'ear' | 'memory';
 
 /**
- * The steps that require a channel, by step id ("tech:<level id>"). Empty until the owner names them: the curriculum
- * decides which step is "by ear" (only verified, owner-approved content), the mechanism is ready.
+ * The steps that require a channel, by step id ("tech:<level id>"). Deliberately empty (owner 2026-11-23): the channel
+ * stays dynamic, following the player's strong channel, rather than being pinned to specific steps. The mechanism is
+ * kept for a future exception.
  */
 export const STEP_CHANNEL: Record<string, StepChannel> = {};
 
