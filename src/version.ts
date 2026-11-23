@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.125.0',
+    date: '2026-11-23',
+    en: ['The scale rotation now reads each passage in its own key and follows the written tensions: altered on 7alt, half-whole or Phrygian dominant on 7 flat 9, Lydian dominant on 7 sharp 11; minor tunes such as Blue Bossa and Solar get their real key', 'Licks are found in every improvisation, including the Barry Harris way, rule cards, Use it and Perform; approach notes no longer count as licks', 'Comp by ear with a MIDI keyboard: the chords hidden, the band plays, you comp', 'Adding two minutes keeps your place in the plan; the time on the microphone counts as practice; a level page opens from Practice, Today and assignments'],
+    he: ['סבב הסולמות קורא כל קטע בסולם שלו ומכבד את הטנשנים הכתובים: אלטרד על 7alt, חצי-שלם או פריגי דומיננטי על 7 במול 9, לידי דומיננטי על 7 דיאז 11; שירים במינור כמו בלו בוסה וסולאר מקבלים את הסולם האמיתי שלהם', 'ליקים מזוהים בכל אלתור, גם בדרך של בארי האריס, בכרטיסי הכללים, ב-Use it ובהופעה; צלילי גישה כבר לא נספרים כליקים', 'ליווי משמיעה עם מקלדת MIDI: האקורדים מוסתרים, הלהקה מנגנת ואתם מלווים', 'הוספת שתי דקות שומרת את המקום בתוכנית; זמן על המיקרופון נספר כתרגול; דף רמה נפתח מתרגול, מהיום וממטלות'],
+  },
+  {
     version: '0.124.0',
     date: '2026-11-23',
     en: ['One status ladder everywhere instead of stars: new, learning, almost, closed, all 12 keys, in my language, in the fingers; every item page shows it with where the item sits in your path and why it is in today', 'Guitar and bass get the same daily technique plan as piano; the workout counts the time you actually played, shows a short summary between blocks, and the key of the week can be minor', 'The scale rotation reads altered and secondary dominants correctly, brings more substitutions, warns of the next scale ahead, and can be played without the lead sheet', 'Licks are found in every improvisation, also varied; new ear activities: hear and continue, call and response, the melody by ear, trading where the band leads', 'More charts over time (language, improvisation, the ear course), a weekly summary in Today, and new key-ladder content: triad inversions, 1-2-3-5 cells, ninth arpeggios, triad pairs, the bebop scale'],
