@@ -14,6 +14,8 @@ export interface RunChan {
   strong: Strong;
   mix: Mix | null;
   day: string;
+  /** A step or an assignment that requires a channel (SPEC-PATH-TODAY-PRACTICE 4.4, 5.2): it wins over the mix. */
+  force?: 'ear' | 'memory';
 }
 
 export function ChannelStrip({ lang, mix, strong, sight, onSight, measured }: { lang: Lang; mix: Mix; strong: Strong; sight: { drill: Drill; done: boolean } | null; onSight: (d: Drill) => void; /** SPEC-EAR-AND-READING §5: this week's measured shares (every place), beside the target mix. */ measured?: { ear: number; page: number; memory: number } | null }) {

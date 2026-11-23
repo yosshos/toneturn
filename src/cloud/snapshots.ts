@@ -73,3 +73,16 @@ export async function classMedian(classId: string, from: string): Promise<{ day:
     return [];
   }
 }
+
+/**
+ * The parent digest (SPEC-PROGRESS-CHARTS §4.2, the simple version): the student's daily summaries behind a digest
+ * link, read without signing in. Needs the snapshot migration's digest RPC (SNAPSHOTS_SYNCED); until then empty.
+ */
+export async function digestSnapshots(token: string, from: string): Promise<Record<string, Snapshot>> {
+  try {
+    const rows = (await rpc<{ day: string; data: Snapshot }[]>('toneturn_digest_snapshots', { p_token: token, p_from: from })) ?? [];
+    return Object.fromEntries(rows.map((r) => [r.day, { ...r.data, day: r.day }]));
+  } catch {
+    return {};
+  }
+}

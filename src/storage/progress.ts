@@ -373,10 +373,14 @@ export interface Settings {
   // ---- today's workout (spec AH) ----
   /** Saved defaults: "all" days, or a weekday "0".."6" (W13). */
   workoutTemplates?: Record<string, import('../engine/workout2').Block[]>;
+  /** When a default was last saved or kept (W6: older than 30 days asks "refresh my default?"). */
+  workoutTemplateAt?: string;
   /** Today's own edits (W18). */
   workoutToday?: { day: string; blocks: import('../engine/workout2').Block[] };
-  /** After-workout feedback (W11): tomorrow's suggested total moves by delta until this day. */
-  workoutNudge?: { until: string; delta: number };
+  /** After-workout feedback (W11): tomorrow's suggested total moves by delta, and the step window by rating (±50), until this day. */
+  workoutNudge?: { until: string; delta: number; rating?: number };
+  /** SPEC-WORKOUT §9.4 "Less room": areas whose weight in each unit halves. */
+  pathLessRoom?: import('../engine/rating').DomainId[];
   // ---- technique drills (spec AI) ----
   drills?: import('../engine/drills/types').DrillSettings;
   /** Per-device: latency and the player's velocity range. */

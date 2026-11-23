@@ -1,7 +1,7 @@
 // Teacher / class mode (needs sign-in). All reads and writes go through server functions.
 
 import { supabase } from './cloud';
-import { teacherMockOn } from './teacher';
+import { teacherBackend, teacherMockOn, type AssignChannel, type AssignOpts } from './teacher';
 
 export interface Assignment {
   id: string;
@@ -15,6 +15,10 @@ export interface Assignment {
    */
   minutes?: number;
   ifShort?: 'spread' | 'today';
+  /** §5.2: the teacher's minutes a day (optional; the workout serves that much a day). */
+  perDay?: number | null;
+  /** §5.2: the channel the teacher requires (free / from the page / by ear / from memory; absent = free). */
+  channel?: AssignChannel;
 }
 export interface StudentRow {
   userId: string;
@@ -51,8 +55,33 @@ interface RawA {
   lesson_id: string;
   due_on: string | null;
   created_at: string;
+  /** §5.2 options, when the server sends them with the assignment (the side table's columns). */
+  minutes?: number | null;
+  if_short?: 'spread' | 'today' | null;
+  channel?: AssignChannel | null;
+  per_day?: number | null;
 }
-const asA = (a: RawA) => ({ id: a.id, lessonId: a.lesson_id, dueOn: a.due_on, createdAt: a.created_at });
+const asA = (a: RawA): Assignment => ({
+  id: a.id,
+  lessonId: a.lesson_id,
+  dueOn: a.due_on,
+  createdAt: a.created_at,
+  ...(a.minutes != null ? { minutes: Number(a.minutes) } : {}),
+  ...(a.if_short ? { ifShort: a.if_short } : {}),
+  ...(a.channel ? { channel: a.channel } : {}),
+  ...(a.per_day != null ? { perDay: Number(a.per_day) } : {}),
+});
+
+/**
+ * §5.2 on the student's side: the options the teacher set (assignOptsFor) merged into the assignments — the required
+ * channel, the minutes a day and spread / all today. Options win over what came with the row.
+ */
+export function withAssignOpts<A extends Assignment>(as: A[], opts: Record<string, AssignOpts>): A[] {
+  return as.map((a) => {
+    const o = opts[a.id];
+    return o ? { ...a, channel: o.channel, ifShort: o.ifShort, ...(o.minutes != null ? { perDay: o.minutes } : {}) } : a;
+  });
+}
 
 export function classesFromRaw(r: {
   teaching: { id: string; code: string; name: string; assignments: (RawA & { done: number })[]; students: { user_id: string; name: string; lessons_done: number; week_xp: number; streak: number; last_active: string | null; skills: Record<string, { n: number; correct: number }>; rating?: number | null; rating_provisional?: boolean | null }[] }[];
@@ -71,7 +100,9 @@ export function classesFromRaw(r: {
 }
 
 async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
-  // the dev mock (tt.mockTeacher = 1): the demo class (teacherMock.ts)
+  // tests answer through the teacher backend (setTeacherBackend); the dev mock (tt.mockTeacher = 1): the demo class
+  const be = teacherBackend();
+  if (be) return (await be(fn, args)) as T;
   if (teacherMockOn()) return (await (await import('./teacherMock')).mockTeacherRpc(fn, args)) as T;
   const sb = supabase();
   if (!sb) throw new Error('Cloud is not configured');

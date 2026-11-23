@@ -52,6 +52,7 @@ import { useLedger } from './useLedger';
 import { msByDay, withLedgerMs } from '../engine/practiceTime';
 import { Icon } from './icons';
 import { ProgressOverTime } from './ProgressOverTime';
+import { EAR_AREAS } from '../engine/snapshot';
 
 /** AUDIT-5 #1: the stats days with the practice clock's measured time (lessons, technique, games, songs …). */
 function usePracticeDays(days: StatsDays | undefined): StatsDays | undefined {
@@ -271,6 +272,8 @@ export interface ProgressTabsProps {
 const KIND_NAME: Record<string, L> = { technique: { en: 'Technique', he: 'טכניקה' }, improv: { en: 'Improvisation', he: 'אלתור' }, repertoire: { en: 'Repertoire', he: 'רפרטואר' }, ear: { en: 'Ear and theory', he: 'שמיעה ותיאוריה' }, games: { en: 'Games', he: 'משחקים' }, other: { en: 'Other', he: 'אחר' }, lick: { en: 'Licks', he: 'ליקים' } };
 export function areaLabel(area: string, lang: Lang): string {
   if (KIND_NAME[area]) return KIND_NAME[area][lang];
+  const ear = EAR_AREAS.find((x) => x.id === area);
+  if (ear) return ear.name[lang];
   const [course, id] = area.split(':');
   const sec = (COURSE_SECTIONS as Record<string, { id: string; name: L }[] | undefined>)[course]?.find((x) => x.id === id);
   return sec ? sec.name[lang] : area;

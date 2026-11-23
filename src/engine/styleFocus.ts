@@ -208,12 +208,42 @@ export function allocateSlots(n: number, shares: Record<StyleTier, number>, seed
  */
 export function improvStyleFor(s: FocusSettings, course: CourseId, day: string, offered: StyleId[] = stylesFor(course, { main: true })): StyleId {
   const f = focusOf(s, course);
-  const x = seedOf(`${day}|improv|${course}`);
+  // THE weight (styleWeight): 60 / 30 / 10 over the styles offered, the rest by taste (liked ×2, declined ×0.4)
+  const w = offeredWeights(s, course, offered, day);
+  return drawStyle(offered, (a) => w[a] ?? 0, seedOf(`${day}|improv|${course}`)) ?? f.main;
+}
+
+/**
+ * styleWeight over a subset of styles (only those with content in a place): an empty tier's share goes to the main
+ * style (tierShares), and within each tier the styles share as styleWeight shares them — "also" evenly, the rest by
+ * taste (§9.2: tasted and liked ×2, turned down ×0.4, never zero).
+ */
+export function offeredWeights(s: FocusSettings, course: CourseId, offered: StyleId[], today?: string): Partial<Record<StyleId, number>> {
+  const f = focusOf(s, course);
   const sh = tierShares(f, offered);
-  if (x < sh.main) return f.main;
-  if (x < sh.main + sh.also) return drawStyle(f.also.filter((a) => offered.includes(a)), () => 1, seedOf(`${day}|also`)) ?? f.main;
-  const rest = offered.filter((a) => styleTier(f, a) === 'rest');
-  return drawStyle(rest, (a) => restFactor(s.styleTaste, a, day), seedOf(`${day}|rest`)) ?? f.main;
+  const out: Partial<Record<StyleId, number>> = {};
+  const also = offered.filter((x) => styleTier(f, x) === 'also');
+  const rest = offered.filter((x) => styleTier(f, x) === 'rest');
+  const restTot = rest.reduce((n, x) => n + restFactor(s.styleTaste, x, today), 0) || 1;
+  for (const x of offered) {
+    const t = styleTier(f, x);
+    out[x] = t === 'main' ? sh.main : t === 'also' ? sh.also / Math.max(1, also.length) : (sh.rest * restFactor(s.styleTaste, x, today)) / restTot;
+  }
+  return out;
+}
+
+/** A focus that carries THE weights (styleWeight over every style of the course): the workout's style block (H) draws by them. */
+export type WeightedFocus = StyleFocus & { w?: Partial<Record<StyleId, number>> };
+export function weightedFocus(s: FocusSettings, course: CourseId, today?: string): WeightedFocus {
+  const f = focusOf(s, course);
+  return { ...f, w: Object.fromEntries(stylesFor(course).map((x) => [x, styleWeight(s, course, x, today)])) };
+}
+
+/** The style a place should lead with among those it has content for: the heaviest by styleWeight (main first). */
+export function heaviestStyle(s: FocusSettings, course: CourseId, available: StyleId[], today?: string): StyleId | null {
+  if (!available.length) return null;
+  const w = offeredWeights(s, course, available, today);
+  return [...available].sort((a, b) => (w[b] ?? 0) - (w[a] ?? 0))[0];
 }
 
 /** The order a place opens on: the main style first, then the "also" styles (Repertoire tab, Improvise band, Licks filter). */

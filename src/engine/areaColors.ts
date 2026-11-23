@@ -25,6 +25,11 @@ const SLOT: Record<string, number> = {
   form: 6,
   tone: 6,
   reading: 7,
+  // the Ear course's areas (snapshot.EAR_AREAS: ear:pitch, ear:harmony, ear:rhythm, ear:memory, ear:reading,
+  // ear:expression, ear:improv) — distinct slots within the course, harmony / rhythm / reading / improv as everywhere
+  pitch: 4,
+  memory: 6,
+  expression: 0,
   // the minutes chart's kinds of practice (snapshot.minuteArea): technique and improvisation keep their area's hue
   repertoire: 1,
   ear: 4,

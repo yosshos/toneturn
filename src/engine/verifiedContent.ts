@@ -208,6 +208,12 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
     unsourced: true,
   },
   {
+    id: 'bass-latin-cells',
+    why: 'b-latin cha-cha (4), songo (5), Mozambique (6), 6/8 (7) and the partido-alto cell (8, option 0): no source gives these bass lines (STYLE-AFROCUBAN F6, §4.2 [?]; STYLE-BRAZIL B2 gives only the partido-alto timeline). Tumbao 1–3, baião (8, option 1) and Latin jazz (9) are verified and stay.',
+    hides: ['level:b-latin-4', 'level:b-latin-5', 'level:b-latin-6', 'level:b-latin-7', 'item:brazil:0'],
+    unsourced: true,
+  },
+  {
     id: 'montuno-lines',
     why: 'Montuno line pitches (k-montuno 3–9, 11): the rhythm is the documented Mauleón figure (STYLE-AFROCUBAN §2), but the notes come from a voice-leading rule (start on the 5th, nearest chord tone), not from a source; the research marks its example lines [?]. Ponchando (1–2) and the songo right hand (10) stay. Owner question 2026-11-23 (THEORY-QUESTIONS).',
     hides: ['level:k-montuno-3', 'level:k-montuno-4', 'level:k-montuno-5', 'level:k-montuno-6', 'level:k-montuno-7', 'level:k-montuno-8', 'level:k-montuno-9', 'level:k-montuno-11'],

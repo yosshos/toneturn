@@ -5,7 +5,7 @@
 //   the keys filling up; the two channel numbers;
 // - "this week vs last week" tiles, and insight sentences only for a real change (not noise).
 
-import type { Snapshot } from './snapshot';
+import { UPPER_STEPS, type Snapshot, type UpperStep } from './snapshot';
 import type { ItemStatus } from './drills/itemStatus';
 
 export type Frame = '7d' | '30d' | '90d' | '1y' | 'all';
@@ -157,4 +157,129 @@ export function insights(snaps: Snapshot[], areaName: (a: string) => string, lan
   if (still.length && fast.length)
     out.push(lang === 'he' ? `${areaName(fast[0])} מתקדם; ${areaName(still[0])} עומד כבר שבועיים.` : `${areaName(fast[0])} is moving; ${areaName(still[0])} has stood still for two weeks.`);
   return out.slice(0, 2);
+}
+
+// ---------------------------------------------------------------- the full ladder, channels, language, improvisation
+
+/** The ladder's steps as the stacked chart draws them (one hue, light → dark): new is left out (nothing played). */
+export type LadderStep = Exclude<ItemStatus, 'new'> | UpperStep;
+export const LADDER_STEPS: LadderStep[] = ['learning', 'almost', 'closed', ...UPPER_STEPS];
+
+/** The full ladder per week (the week's last snapshot): "closed" split into closed only and the steps above it. */
+export function ladderByWeek(snaps: Snapshot[], area?: string): { week: string; by: Record<LadderStep, number> }[] {
+  return statusByWeek(snaps, area).map(({ week, counts }) => {
+    const s = [...snaps].reverse().find((x) => weekOf(x.day) === week);
+    const up: Record<UpperStep, number> = { keys12: 0, language: 0, fingers: 0 };
+    for (const [a, l] of Object.entries(s?.ladder ?? {})) if (!area || a === area) for (const k of UPPER_STEPS) up[k] += l[k] ?? 0;
+    const closed = counts.closed ?? 0;
+    const above = Math.min(closed, up.keys12 + up.language + up.fingers);
+    return { week, by: { learning: counts.learning ?? 0, almost: counts.almost ?? 0, closed: closed - above, ...up } };
+  });
+}
+
+export type MixShares = { ear: number; page: number; memory: number };
+/** Chart 6's bar: the latest week's actual channel mix and the target (null until a snapshot carries either). */
+export function weekMix(snaps: Snapshot[]): { actual: MixShares | null; target: MixShares | null } | null {
+  const s = [...snaps].reverse().find((x) => x.mix !== undefined || x.mixTarget);
+  if (!s) return null;
+  return { actual: s.mix ?? null, target: s.mixTarget ?? null };
+}
+
+/** BUILD-PLAN D2 (workout2.DAY_SHARES): the planned split — about 20 % path, the rest technique / improvisation 70 / 30. */
+export const PLANNED_SPLIT = { path: 0.2, technique: 0.56, improv: 0.24 } as const;
+/** The frame's actual split on the same three parts (path = lessons, ear topics and games; the rest is "other"). */
+export function minutesSplit(snaps: Snapshot[]): { path: number; technique: number; improv: number; other: number; total: number } {
+  const t = { path: 0, technique: 0, improv: 0, other: 0 };
+  for (const s of snaps)
+    for (const [k, m] of Object.entries(s.minutes)) {
+      if (k === 'technique') t.technique += m;
+      else if (k === 'improv') t.improv += m;
+      else if (k === 'ear' || k === 'games') t.path += m;
+      else t.other += m;
+    }
+  const total = t.path + t.technique + t.improv + t.other;
+  const sh = (x: number) => (total ? Math.round((x / total) * 1000) / 1000 : 0);
+  return { path: sh(t.path), technique: sh(t.technique), improv: sh(t.improv), other: sh(t.other), total: Math.round(total) };
+}
+
+/** Chart 8: licks learned (closed in a key) and in my language, over time (snapshots that carry them). */
+export function languageSeries(snaps: Snapshot[]): { learned: Point[]; language: Point[] } {
+  const xs = snaps.filter((s) => s.vocab.learned !== undefined);
+  return { learned: xs.map((s) => ({ day: s.day, v: s.vocab.learned ?? 0 })), language: xs.map((s) => ({ day: s.day, v: s.vocab.language ?? 0 })) };
+}
+
+/** Chart 9: colour coverage or the in-scale rate over time (only days that measured it). */
+export const improvSeries = (snaps: Snapshot[], which: 'cov' | 'inScale'): Point[] =>
+  snaps.filter((s) => s.improv && s.improv[which] !== null && s.improv[which] !== undefined).map((s) => ({ day: s.day, v: s.improv![which] as number }));
+
+/** Chart 9's heat map: the latest mode × function map — functions (rows) × modes (columns), shade = colour coverage. */
+export function modeFunctionGrid(snaps: Snapshot[]): { fns: string[]; modes: string[]; cell: (fn: string, mode: string) => number | null } | null {
+  const s = [...snaps].reverse().find((x) => x.improv && Object.keys(x.improv.map).length);
+  if (!s) return null;
+  const keys = Object.keys(s.improv!.map).map((k) => k.split('|') as [string, string]);
+  const fns = [...new Set(keys.map((k) => k[0]))];
+  const modes = [...new Set(keys.map((k) => k[1]))];
+  return { fns, modes, cell: (fn, mode) => s.improv!.map[`${fn}|${mode}`] ?? null };
+}
+
+/** The Ear course: an area's level over time (0..1). */
+export const levelSeries = (snaps: Snapshot[], area: string): Point[] => snaps.filter((s) => s.level?.[area] !== undefined).map((s) => ({ day: s.day, v: s.level![area] }));
+
+// ---------------------------------------------------------------- the weekly summary (§5)
+
+export interface WeeklyChange {
+  kind: 'minutes' | 'closed' | 'tempo';
+  area: string;
+  now: number;
+  prev: number;
+  pts: Point[];
+}
+export interface WeeklySummary {
+  tiles: Tile[];
+  /** The one series where the change was largest this week, with its last 14 days. */
+  change: WeeklyChange | null;
+  sentence: string;
+}
+
+/**
+ * The weekly summary (SPEC-PROGRESS-CHARTS §5): the 4 tiles, the chart where the change was largest (minutes per kind,
+ * closed per area, the tempo index per area — the biggest relative move of a real size), and one sentence of fact.
+ */
+export function weeklySummary(all: Record<string, Snapshot>, today: string, areaName: (a: string) => string, lang: 'he' | 'en'): WeeklySummary {
+  const tiles = weekTiles(all, today);
+  const s = sorted(all);
+  const last14 = s.filter((x) => x.day > addDays(today, -14) && x.day <= today);
+  const thisW = s.filter((x) => x.day > addDays(today, -7) && x.day <= today);
+  const lastW = s.filter((x) => x.day > addDays(today, -14) && x.day <= addDays(today, -7));
+  const before = (d: string) => s.filter((x) => x.day <= d).at(-1);
+  const cands: (WeeklyChange & { score: number })[] = [];
+  for (const k of new Set(last14.flatMap((x) => Object.keys(x.minutes)))) {
+    const sum = (xs: Snapshot[]) => Math.round(xs.reduce((n, x) => n + (x.minutes[k] ?? 0), 0));
+    const now = sum(thisW), prev = sum(lastW);
+    if (Math.abs(now - prev) >= 10) cands.push({ kind: 'minutes', area: k, now, prev, pts: last14.map((x) => ({ day: x.day, v: x.minutes[k] ?? 0 })), score: Math.abs(now - prev) / Math.max(10, prev) });
+  }
+  for (const a of new Set(last14.flatMap((x) => Object.keys(x.status)))) {
+    const c = (x?: Snapshot) => x?.status[a]?.closed ?? 0;
+    const now = c(thisW.at(-1)) - c(before(addDays(today, -7)));
+    const prev = c(before(addDays(today, -7))) - c(before(addDays(today, -14)));
+    if (Math.abs(now - prev) >= 2) cands.push({ kind: 'closed', area: a, now, prev, pts: last14.map((x) => ({ day: x.day, v: c(x) })), score: Math.abs(now - prev) / Math.max(2, prev) });
+    const tn = thisW.at(-1)?.tempo[a], tp = lastW.at(-1)?.tempo[a];
+    if (tn !== undefined && tp !== undefined && Math.abs(tn - tp) >= 0.05)
+      cands.push({ kind: 'tempo', area: a, now: Math.round(tn * 100), prev: Math.round(tp * 100), pts: last14.filter((x) => x.tempo[a] !== undefined).map((x) => ({ day: x.day, v: x.tempo[a] })), score: Math.abs(tn - tp) / Math.max(0.1, tp) });
+  }
+  cands.sort((x, y) => y.score - x.score);
+  const change = cands[0] ? (({ score: _s, ...c }) => c)(cands[0]) : null;
+  const he = lang === 'he';
+  const mins = tiles.find((x) => x.id === 'minutes')!.now;
+  const days = tiles.find((x) => x.id === 'days')!.now;
+  let sentence: string;
+  if (!change) sentence = he ? `השבוע ${mins} דקות ב־${days} ימי אימון.` : `This week: ${mins} minutes on ${days} practice days.`;
+  else {
+    const name = areaName(change.area);
+    const up = change.now > change.prev;
+    if (change.kind === 'minutes') sentence = he ? `${name}: ${change.now} דקות השבוע, ${up ? 'יותר' : 'פחות'} מ־${change.prev} בשבוע שעבר.` : `${name}: ${change.now} minutes this week, ${up ? 'up' : 'down'} from ${change.prev}.`;
+    else if (change.kind === 'closed') sentence = he ? `${name}: ${change.now} נסגרו השבוע, לעומת ${change.prev} בשבוע שעבר.` : `${name}: ${change.now} closed this week, against ${change.prev} last week.`;
+    else sentence = he ? `${name}: ${change.now}% מטמפו היעד, לעומת ${change.prev}% לפני שבוע.` : `${name}: ${change.now}% of the target tempo, from ${change.prev}% a week ago.`;
+  }
+  return { tiles, change, sentence };
 }

@@ -34,7 +34,7 @@ const onsets = (d: Drill, bar: number, hand?: 'R' | 'L', meter = d.meter): numbe
 
 describe('the families', () => {
   it('four families, every level tagged with its style, all 12 keys, none jazz-gated', { timeout: 120_000 }, () => {
-    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [3, 'afrocuban'] /* 8 of 11 hidden: montuno-lines */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
+    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [4, 'afrocuban'] /* 8 of 12 hidden: montuno-lines (12 = ponchando over ii–V–I) */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
     for (const f of FAMS) {
       const F = fam(f);
       expect(F.levels.length, f).toBe(want[f][0]);

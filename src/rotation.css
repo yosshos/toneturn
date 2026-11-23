@@ -57,6 +57,10 @@
 .rs-keys .is-key.rs-in { box-shadow: inset 0 -10px 0 -4px #3a4256; }
 .rs-keys .is-key.b.rs-in { box-shadow: inset 0 -10px 0 -4px #c9d0de; }
 .rs-keys .is-key.rs-colour { box-shadow: inset 0 -14px 0 -2px var(--fam); outline: 1.5px solid #10131c; outline-offset: -1.5px; }
+/* avoid notes (SPEC-RBI-ROTATION §4): outlined, dashed — in the scale but not to sit on */
+.rs-keys .is-key.rs-avoid { outline: 2px dashed #b3261e; outline-offset: -3px; }
+.rs-keys .is-key.b.rs-avoid { outline-color: #ff9a90; }
+.rs-same { min-width: 0; font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .is-lick-card { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 12px; border: 1.5px solid var(--line-strong, var(--line)); background: var(--card); }
 .is-lick-card div { display: grid; min-width: 0; }

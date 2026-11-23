@@ -23,13 +23,25 @@ import { COURSE_SECTIONS, sectionAxes } from '../engine/courseSections';
 import { familyById } from '../engine/drills/plan';
 import { TECH_DONE_STARS, techStars } from '../engine/ladderFacts';
 import { DEFAULT_DRILL_SETTINGS, type FamilyId } from '../engine/drills/types';
+import { weakestLine } from '../engine/rotationSheet';
+import type { ModeStats } from '../engine/rotation';
 
 type Axis = SkillId | (typeof PLANNED_SKILLS)[number];
 
 /** Progress → Skills: an instrument course shows its sections (SPEC-COURSE-SECTIONS); Ear its skills by area. */
-export function SkillMap({ styleFocus, vocabUse, ...props }: Parameters<typeof EarSkillMap>[0] & { /** SPEC-STYLE-FOCUS §4: the "My styles" strip. */ styleFocus?: StyleFocus; /** SPEC-LICKS-IN-IMPROV §4: "vocabulary in use" (licks in my language ÷ licks learned), in the improvisation area. */ vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
+export function SkillMap({ styleFocus, rotationStats, vocabUse, ...props }: Parameters<typeof EarSkillMap>[0] & { /** SPEC-STYLE-FOCUS §4: the "My styles" strip. */ styleFocus?: StyleFocus; /** The scale rotation's mode × function map (SPEC-RBI-ROTATION §3). */ rotationStats?: ModeStats; /** SPEC-LICKS-IN-IMPROV §4: "vocabulary in use" (licks in my language ÷ licks learned), in the improvisation area. */ vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
   const course = useCourse().active;
-  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} styleFocus={styleFocus} vocabUse={vocabUse} /> : <EarSkillMap {...props} />;
+  return COURSE_SECTIONS[course] ? <CourseSectionsMap t={props.t} lang={props.lang} progress={props.progress} onBack={props.onBack} styleFocus={styleFocus} rotationStats={rotationStats} vocabUse={vocabUse} /> : <EarSkillMap {...props} rotationStats={rotationStats} />;
+}
+
+/** SPEC-RBI-ROTATION §3: the Improvise area reads the mode × function map — its weakest scale, one line. */
+function WeakestScale({ stats, lang }: { stats?: ModeStats; lang: 'he' | 'en' }) {
+  const line = stats ? weakestLine(stats, lang) : null;
+  return line ? (
+    <p className="field-hint" data-weakest-scale="1">
+      {line}
+    </p>
+  ) : null;
 }
 
 /** A course's styled technique levels, by style (styles.ts tags). */
@@ -89,10 +101,12 @@ function EarSkillMap({
   onPlacement,
   lang,
   bestLeague: _bestLeague,
+  rotationStats,
 }: {
   t: Strings;
   lang: 'he' | 'en';
   progress: Progress;
+  rotationStats?: ModeStats;
   onBack: () => void;
   onPractice: (skill: SkillId) => void;
   onPlacement: (domain?: DomainId | null) => void;
@@ -182,6 +196,7 @@ function EarSkillMap({
                   );
                 })}
               </ul>
+              {d.id === 'creative' && <WeakestScale stats={rotationStats} lang={lang} />}
               <button className="link measure-domain" data-measure={d.id} onClick={() => onPlacement(d.id)} aria-label={`${t.measureDomain}: ${t.domainNames[d.id]}`}>
                 {t.measureDomain}
               </button>
@@ -402,7 +417,7 @@ export function EarChordCard({ t, ratings, bestLeague }: { t: Strings; ratings: 
  * courses split): its sections as the radar's axes (technique one axis, time its own on piano), then one row per section
  * with its families and how many of their levels are passed; the weakest started section is the next to work on.
  */
-function CourseSectionsMap({ t, lang, progress, onBack, styleFocus, vocabUse }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void; styleFocus?: StyleFocus; vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
+function CourseSectionsMap({ t, lang, progress, onBack, styleFocus, rotationStats, vocabUse }: { t: Strings; lang: 'he' | 'en'; progress: Progress; onBack: () => void; styleFocus?: StyleFocus; rotationStats?: ModeStats; vocabUse?: { learned: number; inLanguage: number; share: number } | null }) {
   const course = useCourse().active;
   const secs = COURSE_SECTIONS[course]!;
   const items = progress.drillItems ?? {};
@@ -468,6 +483,7 @@ function CourseSectionsMap({ t, lang, progress, onBack, styleFocus, vocabUse }: 
                 </span>
               </summary>
               <p className="field-hint">{sec.desc[lang]}</p>
+              {sec.id === 'improv' && <WeakestScale stats={rotationStats} lang={lang} />}
               {/* phase 6 (BUILD-PLAN §0.2): these two axes are measured from takes by channel, not from levels */}
               {(sec.id === 'byear' || sec.id === 'reading') && a.v !== null && (
                 <p className="field-hint" data-section-measured={sec.id}>

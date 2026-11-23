@@ -107,10 +107,12 @@ export interface RunPresentation {
  * or the pattern closed in ≥ 3 keys) — the weekly mix's channel (nextChannel): ear plays it first with the notation
  * hidden, memory shows nothing, page keeps the mastery default.
  */
-export function runPresentation(o: { drill: Drill; items: Record<string, ItemState>; targetBpm: number; strong: Strong; mix?: Mix | null; day: string; missedLast?: boolean }): RunPresentation {
+export function runPresentation(o: { drill: Drill; items: Record<string, ItemState>; targetBpm: number; strong: Strong; mix?: Mix | null; day: string; missedLast?: boolean; /** SPEC-PATH-TODAY-PRACTICE §4.4 / §5.2: a step or an assignment that requires a channel — it wins over the mix. */ force?: 'ear' | 'memory' }): RunPresentation {
   const st = o.items[o.drill.itemId];
   const status = itemStatus(st, o.drill.startBpm, o.targetBpm);
   if (!fadeable(o.drill)) return { fade: 'full', byEar: false, why: 'off', status };
+  if (o.force === 'ear') return { fade: 'full', byEar: true, why: 'mix-ear', status };
+  if (o.force === 'memory') return { fade: 'none', byEar: false, why: 'mix-memory', status };
   const pk = patternKeys(o.drill, o.items, o.targetBpm);
   const mem = memoryPassed(st);
   const missed = o.missedLast ?? (!!st && st.fails > 0);

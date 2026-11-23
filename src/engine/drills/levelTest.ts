@@ -5,8 +5,9 @@
 import type { DrillSettings, FamilyId } from './types';
 type T2 = { en: string; he: string };
 import { families } from './plan';
+import { styleOfLevel, STYLE_TEXT, type StyleId } from '../styles';
 
-export type StrandId = 'touch' | 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines' | 'rhythm' | 'lead' | 'jazz' | 'time' | 'walk' | 'grooves' | 'fills' | 'indep' | 'meter' | 'fills-bass' | 'pick' | 'slap' | 'odd' | 'bow' | 'mideast' | 'latin' | 'form' | 'fingerstyle' | 'flamenco';
+export type StrandId = 'touch' | 'hands' | 'chords' | 'comp' | 'reading' | 'ear' | 'lines' | 'rhythm' | 'lead' | 'jazz' | 'time' | 'walk' | 'grooves' | 'fills' | 'indep' | 'meter' | 'fills-bass' | 'pick' | 'slap' | 'odd' | 'bow' | 'mideast' | 'latin' | 'form' | 'fingerstyle' | 'flamenco' | 'style';
 export type Verdict = 'clean' | 'almost' | 'not';
 
 /** One step of a section: a level of the catalogue, in a chosen key, and the start levels it proves when passed. */
@@ -55,6 +56,7 @@ export const STRAND_TITLE: Record<StrandId, T2> = {
   form: { en: 'Song form', he: 'מבנה שיר' },
   fingerstyle: { en: 'Fingerstyle', he: 'פריטת אצבעות' },
   flamenco: { en: 'Flamenco', he: 'פלמנקו' },
+  style: { en: 'Your style', he: 'הסגנון שלכם' },
 };
 const EAR_T: T2 = { en: 'Ear', he: 'אוזן' };
 
@@ -588,9 +590,39 @@ export function drumStrands(): Strand[] {
   ];
 }
 
-/** The sections of an instrument's test. */
-export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis'], o: { mic?: boolean; upright?: boolean } = {}): Strand[] {
-  const all = instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis, o);
+/** Steps of the style check: a short section (SPEC-STYLE-FOCUS §4: "one short check"). */
+export const STYLE_CHECK_RUNGS = 4;
+
+/**
+ * SPEC-STYLE-FOCUS §4 (the level test): "the core as today, plus one short check in the main style (a groove / comping
+ * pattern) to place the starting level in it". The main style's own family on the instrument (the one with the most
+ * levels in the style: bossa / samba comping, the montuno, the tumbao, the Latin grooves …), up to 4 of its levels from
+ * the first to the last, evenly spaced; a clean step places the family after it. Jazz has no check of its own: its
+ * comping and lines are the core sections already. Null when the instrument has no levels in the style.
+ */
+export function styleStrand(instrument: NonNullable<DrillSettings['instrument']>, style: StyleId): Strand | null {
+  if (style === 'jazz') return null;
+  const fams = families(instrument);
+  const by = fams.map((f) => ({ f, ls: f.levels.filter((l) => styleOfLevel(l, f) === style) })).filter((x) => x.ls.length > 0);
+  if (!by.length) return null;
+  const { f, ls } = by.sort((a, b) => b.ls.length - a.ls.length)[0];
+  const lv = [...ls].sort((a, b) => a.level - b.level);
+  const n = Math.min(STYLE_CHECK_RUNGS, lv.length);
+  const pick = n <= 1 ? [lv[0]] : Array.from({ length: n }, (_, i) => lv[Math.round((i * (lv.length - 1)) / (n - 1))]);
+  const uniq = [...new Map(pick.map((l) => [l.id, l])).values()];
+  const keyOf = (l: (typeof lv)[number]): number => {
+    const k = (l as { keys?: unknown }).keys;
+    return Array.isArray(k) && typeof k[0] === 'number' ? (k[0] as number) : 0;
+  };
+  const name = STYLE_TEXT[style];
+  return { id: 'style', title: { en: `${STRAND_TITLE.style.en}: ${name.en}`, he: `${STRAND_TITLE.style.he}: ${name.he}` }, rungs: uniq.map((l) => r(l.id, keyOf(l), { [f.id]: l.level + 1 } as Rung['places'])) };
+}
+
+/** The sections of an instrument's test; with a main style (not jazz), its short check last (SPEC-STYLE-FOCUS §4). */
+export function strandsFor(instrument: NonNullable<DrillSettings['instrument']>, emphasis: DrillSettings['emphasis'], o: { mic?: boolean; upright?: boolean; style?: StyleId } = {}): Strand[] {
+  const core = instrument === 'guitar' ? guitarStrands() : instrument === 'bass' ? bassStrands() : instrument === 'drums' ? drumStrands() : pianoStrands(emphasis, o);
+  const st = o.style ? styleStrand(instrument, o.style) : null;
+  const all = st ? [...core, st] : core;
   // Hidden until verified (verifiedContent.ts): a rung whose level is not in the catalogue any more is left out; the
   // upright track's steps only for an upright / fretless bass (as its families in the course path, ladderFamiliesFor).
   const shown = new Set(families(instrument).filter((f) => o.upright || !(f as { upright?: boolean }).upright).flatMap((f) => f.levels.map((l) => l.id)));

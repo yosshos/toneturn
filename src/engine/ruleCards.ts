@@ -44,6 +44,8 @@ export interface CardOpt {
   closedKeys?: Record<string, number[]>;
   /** The lick cards' timing tolerance for a clean use (beats; lickDetect.lickTimingTol by the tier). */
   lickTol?: number;
+  /** The clave cards (SPEC-STYLE-FOCUS §4): the clave direction of the band (default 2-3); the chart's first bar starts the cycle. */
+  clave?: '23' | '32';
   /** quote-head: the tune's melody (beats, MIDI). */
   melody?: { beat: number; midi: number }[];
 }
@@ -1201,6 +1203,116 @@ function placement(ctx: CardCtx, dir: 1 | -1): CardCheck {
       }),
   );
 }
+
+/** The style cards (below), kept apart so they are listed by style. */
+const STYLE_CARDS: CardDef[] = [];
+
+// ───────────────────────────── style cards (SPEC-STYLE-FOCUS §4: rules by style) ─────────────────────────────
+// Only what the research supports: docs/research/STYLE-AFROCUBAN.md §1 (the clave grid [V]: son clave 3-2 = 0, 3, 6,
+// 10, 12 and 2-3 = 2, 4, 8, 11, 14 in 8th cells; "two-side" / "three-side" [V]) and §6.2 (improvising over a montuno
+// [C, "can be built"]: start phrases on the two-side, end on the ponche, phrases of 2 or 4 bars, the app rule "phrase
+// starts on a clave stroke"); docs/research/STYLE-BRAZIL.md §1(e) (Brazilian melodies "rarely beginning or ending on the
+// downbeat" [V], Jovino; straight 8ths). The chart's first bar starts the clave cycle; 2-3 unless the take says 3-2
+// ("most salsa piano guajeos use the 2-3 form" [V]). Grading is onsets against the grid only (§6.2: "grade only what
+// can be measured").
+
+/** Son clave strokes in beats within one 2-bar cycle (8 beats). */
+export const CLAVE_STROKES: Record<'23' | '32', number[]> = { '23': [1, 2, 4, 5.5, 7], '32': [0, 1.5, 3, 5, 6] };
+/** The two-side bar of a cycle (0 = the cycle's first bar). */
+const twoSideBar = (dir: '23' | '32'): number => (dir === '23' ? 0 : 1);
+/** Where in the 2-bar cycle a beat falls (0 ≤ x < 2 × meter). */
+const inCycle = (ctx: CardCtx, b: number): number => ((b % (2 * ctx.meter)) + 2 * ctx.meter) % (2 * ctx.meter);
+const dirOf = (ctx: CardCtx): '23' | '32' => ctx.opt?.clave ?? '23';
+
+STYLE_CARDS.push(
+  {
+    id: 'clave-two-side',
+    fam: 'rhythm',
+    name: { en: 'Start phrases on the 2-side', he: 'להתחיל משפטים בצד ה-2 של הקלאבה' },
+    how: { en: 'Every phrase begins in the clave’s two-side bar (2-3: the first bar of each pair).', he: 'כל משפט מתחיל בתיבת שתי המכות של הקלאבה (2-3: התיבה הראשונה בכל זוג).' },
+    level: 3,
+    diff: 1300,
+    pass: 0.75,
+    check: (ctx) => {
+      if (ctx.meter !== 4) return { ok: 0, total: 0 };
+      const two = twoSideBar(dirOf(ctx));
+      return tally(phrases(line(ctx)).map((p) => ({ ok: Math.floor(inCycle(ctx, p[0].beat + 0.15) / ctx.meter) === two, beat: p[0].beat })));
+    },
+  },
+  {
+    id: 'clave-stroke',
+    fam: 'rhythm',
+    name: { en: 'Play over the clave: start on a stroke', he: 'לנגן על הקלאבה: להתחיל על מכה' },
+    how: { en: 'Every phrase starts on one of the five clave strokes.', he: 'כל משפט מתחיל על אחת מחמש המכות של הקלאבה.' },
+    level: 3,
+    diff: 1320,
+    pass: 0.75,
+    check: (ctx) => {
+      if (ctx.meter !== 4) return { ok: 0, total: 0 };
+      const strokes = CLAVE_STROKES[dirOf(ctx)];
+      return tally(phrases(line(ctx)).map((p) => ({ ok: strokes.some((s) => Math.abs(inCycle(ctx, p[0].beat) - s) <= 0.15 || Math.abs(inCycle(ctx, p[0].beat) - s - 2 * ctx.meter) <= 0.15), beat: p[0].beat })));
+    },
+  },
+  {
+    id: 'clave-even',
+    fam: 'shape',
+    name: { en: 'Phrases of 2 or 4 bars', he: 'משפטים של 2 או 4 תיבות' },
+    how: { en: 'Each phrase fills 2 or 4 bars, so it never crosses the clave.', he: 'כל משפט ממלא 2 או 4 תיבות, כך שהוא לא חוצה את הקלאבה.' },
+    level: 3,
+    diff: 1340,
+    pass: 0.7,
+    check: (ctx) => {
+      if (ctx.meter !== 4) return { ok: 0, total: 0 };
+      const span = 2 * ctx.meter;
+      return tally(
+        phrases(line(ctx)).map((p) => {
+          // the phrase's cycles: from the cycle it starts in to the cycle it ends in — whole cycles, 1 or 2 of them
+          const a = Math.floor((p[0].beat + 0.15) / span);
+          const last = p[p.length - 1];
+          const b = Math.floor((last.beat + Math.min(last.dur, 1) - 0.15) / span);
+          const len = last.beat + last.dur - p[0].beat;
+          const cycles = b - a + 1;
+          return { ok: (cycles === 1 || cycles === 2) && len >= cycles * span * 0.5 - EPS, beat: p[0].beat };
+        }),
+      );
+    },
+  },
+  {
+    id: 'clave-ponche',
+    fam: 'shape',
+    name: { en: 'Land on the ponche', he: 'לנחות על הפונצ׳ה' },
+    how: { en: 'End each phrase on beat 4 of the three-side bar.', he: 'לסיים כל משפט בפעמה 4 של תיבת שלוש המכות.' },
+    level: 4,
+    diff: 1380,
+    pass: 0.7,
+    check: (ctx) => {
+      if (ctx.meter !== 4) return { ok: 0, total: 0 };
+      const three = 1 - twoSideBar(dirOf(ctx));
+      const ponche = three * ctx.meter + 3;
+      return tally(phrases(line(ctx)).map((p) => ({ ok: Math.abs(inCycle(ctx, p[p.length - 1].beat) - ponche) <= 0.2, beat: p[p.length - 1].beat })));
+    },
+  },
+  {
+    id: 'samba-phrase',
+    fam: 'rhythm',
+    name: { en: 'A samba phrase', he: 'משפט סמבה' },
+    how: { en: 'Straight eighths; every phrase starts and ends off the downbeat (anticipate it).', he: 'שמיניות ישרות; כל משפט מתחיל ונגמר לא על הפעמה הראשונה (להקדים אותה).' },
+    level: 3,
+    diff: 1280,
+    pass: 0.75,
+    check: (ctx) => {
+      const ps = phrases(line(ctx));
+      const onOne = (b: number) => Math.abs(b - barOf(ctx, b + 0.15) * ctx.meter) <= 0.15;
+      // straight (not swung): an off-beat note sits near the half beat, not at the swung two-thirds
+      const swung = (n: CNote) => Math.abs((n.beat % 1) - 2 / 3) < 0.07;
+      return tally(ps.map((p) => ({ ok: !onOne(p[0].beat) && !onOne(p[p.length - 1].beat) && !p.some(swung), beat: p[0].beat })));
+    },
+  },
+);
+
+CARDS.push(...STYLE_CARDS);
+/** The style cards' ids (SPEC-STYLE-FOCUS §4). */
+export const STYLE_CARD_IDS: string[] = STYLE_CARDS.map((c) => c.id);
 
 export const RULE_CARDS: Record<string, CardDef> = Object.fromEntries(CARDS.map((c) => [c.id, c]));
 export const CARD_IDS: string[] = CARDS.map((c) => c.id);

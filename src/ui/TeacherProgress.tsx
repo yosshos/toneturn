@@ -5,6 +5,11 @@
 import { useMemo, useState } from 'react';
 import type { Snapshot } from '../engine/snapshot';
 import { areaColor } from '../engine/areaColors';
+import { weekTiles } from '../engine/progressSeries';
+import { assignmentSpread, classAreas, minutesByDay, minutesPerDay, tempoSpread } from '../engine/classCharts';
+import type { BurnAssign } from '../engine/burnup';
+import { Card, SmallLine, StackCols } from './ProgressOverTime';
+import { BandChart, DotStrip, PracticeCalendar, RadarWithChange } from './OverTimeCharts';
 import '../progress-time.css';
 
 type Lang = 'he' | 'en';
@@ -121,5 +126,98 @@ export function MedianSwitch({ on, lang, onChange }: { on: boolean; lang: Lang; 
       <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} />
       <span>{he ? 'להציג לתלמידים את חציון הכיתה (בלי שמות)' : 'Show students the class median (no names)'}</span>
     </label>
+  );
+}
+
+// ---------------------------------------------------------------- §4.1 / §4.2 additions
+
+/** §4.1: a student's minutes a day (the last 14 days) against what the teacher asked (a dashed line; absent if none). */
+export function MinutesVsAsked({ snaps, asked, lang, today, who }: { snaps: Record<string, Snapshot>; asked: number | null; lang: Lang; today: string; who: string }) {
+  const he = lang === 'he';
+  const pts = minutesPerDay(snaps, today, 14);
+  const met = asked ? pts.filter((p) => p.v >= asked).length : null;
+  return (
+    <Card lang={lang} title={he ? `${who} · דקות ביום` : `${who} · Minutes a day`} sub={asked ? (he ? `הקו המקווקו: ${asked} דקות שביקשת · ${met} מתוך 14 ימים` : `Dashed line: the ${asked} minutes you asked · ${met} of 14 days`) : he ? 'לא נקבעו דקות ביום במשימות' : 'No minutes a day set on the assignments'} table={pts.map((p) => [p.day, String(p.v)])}>
+      <div data-minutes-asked={asked ?? 'none'}>
+        <SmallLine pts={pts} color={areaColor('technique')} name={he ? 'דקות' : 'Minutes'} lang={lang} target={asked ?? undefined} lo={0} />
+      </div>
+    </Card>
+  );
+}
+
+/** §4.2: one assignment across the class (median + quartile band) and its tempo spread (a strip of dots). */
+export function AssignmentAcrossClass({ assignments, students, lang, today, titleOf }: { assignments: (BurnAssign & { targetBpm?: number | null })[]; students: { id: string; name: string }[]; lang: Lang; today: string; titleOf: (a: BurnAssign) => string }) {
+  const he = lang === 'he';
+  const [pick, setPick] = useState(0);
+  const list = assignments.filter((a) => a.kind !== 'focus').slice(0, 8);
+  if (!list.length || students.length < 2) return null;
+  const a = list[Math.min(pick, list.length - 1)];
+  const spread = assignmentSpread(a, students, today);
+  const dots = tempoSpread(a, students);
+  const color = areaColor(a.kind === 'drill' ? 'technique' : a.kind === 'chart' || a.kind === 'phrase' ? 'improv' : 'repertoire');
+  return (
+    <section className="pt-card" aria-label={he ? 'משימה אחת בכל הכיתה' : 'One assignment across the class'} data-assign-class={a.id}>
+      <div className="pt-card-head">
+        <h3>{he ? 'משימה אחת בכל הכיתה' : 'One assignment across the class'}</h3>
+      </div>
+      {list.length > 1 && (
+        <div className="chips pt-areafilter" role="radiogroup" aria-label={he ? 'משימה' : 'Assignment'}>
+          {list.map((x, i) => (
+            <button key={x.id} type="button" role="radio" aria-checked={x.id === a.id} className={`chip ${x.id === a.id ? 'on' : ''}`} onClick={() => setPick(i)} data-assign-pick={x.id}>
+              {titleOf(x)}
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="pt-mname">{he ? 'חלק שנסגר מהמשימה' : 'Share of the assignment closed'}</span>
+      {spread ? <BandChart days={spread.days} median={spread.median} q1={spread.q1} q3={spread.q3} outside={spread.outside} color={color} lang={lang} label={titleOf(a)} /> : <p className="pt-empty">{he ? 'עוד אין מספיק ימים' : 'Not enough days yet'}</p>}
+      <span className="pt-mname">{he ? 'פיזור הטמפו (אחוז מהיעד)' : 'Tempo spread (% of the target)'}</span>
+      <DotStrip dots={dots} color={color} lang={lang} label={titleOf(a)} />
+    </section>
+  );
+}
+
+/** §4.2: the class's average per area (a radar) beside the change this month per area. */
+export function ClassAreasCard({ students, lang, today, areaName }: { students: StudentSnaps[]; lang: Lang; today: string; areaName: (a: string) => string }) {
+  const he = lang === 'he';
+  const axes = classAreas(students, today).map((x) => ({ ...x, name: areaName(x.id) }));
+  if (axes.length < 3) return null;
+  return (
+    <Card lang={lang} title={he ? 'התחומים של הכיתה' : 'Areas of the class'} sub={he ? 'ממוצע החלק שנסגר בכל תחום · השינוי החודש' : 'Average share closed per area · the change this month'} table={axes.map((x) => [x.name, `${Math.round(x.v * 100)}% · ${x.change === null ? '–' : `${x.change >= 0 ? '+' : ''}${Math.round(x.change * 100)}`}`])}>
+      <RadarWithChange axes={axes} color={areaColor('improv')} lang={lang} label={he ? 'התחומים של הכיתה' : 'Areas of the class'} />
+    </Card>
+  );
+}
+
+/** §4.2: the parent digest's simple version — the 4 tiles, the practice calendar, the week's minutes by kind. */
+export function DigestCharts({ snaps, lang, today, kindName }: { snaps: Record<string, Snapshot>; lang: Lang; today: string; kindName: (k: string) => string }) {
+  const he = lang === 'he';
+  if (!Object.keys(snaps).length) return null;
+  const tiles = weekTiles(snaps, today);
+  const TILE: Record<string, { en: string; he: string }> = { minutes: { en: 'Minutes', he: 'דקות' }, closed: { en: 'Closed', he: 'נסגרו' }, days: { en: 'Practice days', he: 'ימי אימון' }, tempo: { en: 'Of target tempo', he: 'מטמפו היעד' } };
+  const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+  const cols = week.map((d) => ({ week: d, by: snaps[d]?.minutes ?? {} }));
+  const keys = [...new Set(cols.flatMap((c) => Object.keys(c.by)))];
+  return (
+    <div className="digest-charts" data-digest-charts="1">
+      <div className="pgt-tiles">
+        {tiles.map((t) => {
+          const d = t.now - t.prev;
+          return (
+            <div key={t.id} className="pgt-tile" data-tile={t.id}>
+              <span>{TILE[t.id][lang]}</span>
+              <b dir="ltr">{t.id === 'tempo' ? `${t.now}%` : t.now}</b>
+              <small dir="ltr">{d === 0 ? '=' : `${d > 0 ? '▲' : '▼'} ${Math.abs(d)}`}</small>
+            </div>
+          );
+        })}
+      </div>
+      <Card lang={lang} title={he ? 'ימי אימון' : 'Practice days'}>
+        <PracticeCalendar days={minutesByDay(snaps)} color={areaColor('technique')} lang={lang} today={today} />
+      </Card>
+      <Card lang={lang} title={he ? 'הדקות השבוע' : "The week's minutes"} sub={he ? 'כל עמודה: יום' : 'Each column: a day'} table={cols.map((c) => [c.week, String(Math.round(Object.values(c.by).reduce((a, b) => a + b, 0)))])}>
+        <StackCols cols={cols} keys={keys} colorOf={(k) => (k === 'other' ? '#8a8f98' : areaColor(k))} labelOf={kindName} lang={lang} />
+      </Card>
+    </div>
   );
 }

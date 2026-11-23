@@ -1,0 +1,25 @@
+/* One today (BUILD-PLAN phase 2): the technique screen's "part of today's workout", Today's "continue where I
+   stopped", the area that keeps waiting, the run between blocks, and the stale-default line. Calm, ink on paper. */
+.today-continue { margin: 0 0 10px; }
+
+.wk-waiting { padding: 12px 14px; margin: 0 0 10px; }
+.wk-waiting p { margin: 0 0 8px; font-size: 0.92rem; line-height: 1.4; }
+.wk-waiting-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.drill-today-part { padding: 12px 14px; }
+.drill-today-part .drills-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.drill-today-part .drills-head h2 { margin: 0; font-size: 1rem; }
+.drill-today-part .field-hint { margin: 4px 0; }
+.drill-today-part .today-gained { font-weight: 700; color: var(--ink, inherit); }
+.drill-today-part .today-cells { margin: 6px 0 10px; padding: 0; list-style: none; }
+.drill-today-part .drill-level.static { cursor: default; display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; }
+.drill-today-part .drill-level.static small { grid-column: 2; color: var(--ink-dim, #6b6380); font-size: 0.78rem; }
+
+.wk-between h1 { display: flex; align-items: center; gap: 8px; justify-content: center; }
+.wk-between .wk-next { font-weight: 700; text-align: center; margin: 6px 0 12px; }
+.wk-between .field-hint { text-align: center; }
+
+.wk-stale { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; margin: 0 0 8px; border-radius: 10px; background: var(--paper-2, rgba(0, 0, 0, 0.04)); }
+.wk-stale small { flex: 1 1 100%; }
+
+.node-inwk { opacity: 0.8; }

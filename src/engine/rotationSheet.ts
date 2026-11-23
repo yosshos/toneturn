@@ -5,7 +5,7 @@
 
 import { parseChart, type ParsedChart } from './charts';
 import { spansOfChart } from './ruleCards';
-import { assignScales, classifyNotes, colourNotes, harmonyOf, insertSubs, qualityOf, rotationMetrics, spanColours, updateModeStats, type Fn, type HarmonySpan, type ModeStats, type PlayedNote, type RotationMetrics } from './rotation';
+import { assignScales, avoidPcs, classifyNotes, colourNotes, harmonyOf, insertSubs, qualityOf, rotationMetrics, spanColours, updateModeStats, type Fn, type HarmonySpan, type ModeStats, type PlayedNote, type RotationMetrics } from './rotation';
 import { MODE_FAMILY, MODE_NAMES, MODE_STEPS, type ModeId } from './modes';
 import type { RatingEvent } from './rating';
 
@@ -69,8 +69,16 @@ const FLAT = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B�
 export const prettySym = (sym: string): string => sym.replace(/^([A-G])b/, '$1♭').replace(/^([A-G])#/, '$1♯').replace(/\/([A-G])b/, '/$1♭').replace(/\/([A-G])#/, '/$1♯');
 const rootOfSym = (sym: string): string | null => prettySym(sym).match(/^[A-G][♭♯]?/)?.[0] ?? null;
 
-/** The tonic of a chart: its last major or minor-tonic chord, else its first chord's root. */
+/**
+ * The tonic of a chart: a last minor chord (m7, m6, mMaj7) with its dominant (V, or a ii–V) into it; else its last
+ * major or minor-tonic chord; else its first chord's root.
+ */
 export function tonicOfChart(p: ParsedChart): number {
+  const last = p.chords[p.chords.length - 1];
+  if (last && (qualityOf(last.iv) === 'm7' || qualityOf(last.iv) === 'mtonic')) {
+    const before = [...p.chords].reverse().find((c) => c.root !== last.root || c.iv.join() !== last.iv.join());
+    if (before && qualityOf(before.iv) === 'dom' && mod(before.root - last.root) === 7) return last.root;
+  }
   for (let i = p.chords.length - 1; i >= 0; i--) {
     const q = qualityOf(p.chords[i].iv);
     if (q === 'maj' || q === 'mtonic') return p.chords[i].root;
@@ -99,6 +107,8 @@ export interface SheetCell {
   fam: ScaleFam;
   /** The rotation window this scale belongs to. */
   window: number;
+  /** A tritone sub over Lydian dominant: the same notes as the original V's altered scale (SPEC-RBI-ROTATION §2). */
+  same?: { rootName: string; mode: ModeId };
 }
 
 export interface RotationSheet {
@@ -133,21 +143,32 @@ export function buildRotationSheet(chart: string | ParsedChart, o: { tier: numbe
     for (const c of p.chords) if (c.bar * meter + c.at <= b + 1e-6) cur = c;
     return cur.sym;
   };
+  const sharpChart = p.chords.some((c) => /^[A-G](#|♯)/.test(c.sym));
   const cells: SheetCell[] = plan.map((x) => {
     const s = x.span;
     const inChorus = s.at % (bars * meter);
     const sym = symAt(inChorus);
     let sub: SheetCell['sub'];
     let rootName = rootOfSym(sym) ?? FLAT[mod(s.root)];
+    let same: SheetCell['same'];
     if (s.sub) {
-      // the passing diminished is spelled as a raised root; the tritone sub and the rest with flats
-      const name = s.sub.iv.includes(9) && s.sub.iv.includes(6) ? SHARP[mod(s.sub.root)] : mod(s.sub.root) === mod(s.root) ? rootName : FLAT[mod(s.sub.root)];
-      sub = { sym: `${name}${s.q === 'dim7' ? '°7' : '7'}`, label: s.sub.label };
+      // the passing diminished is spelled as a raised root; the tritone sub and the backdoor's chords with flats;
+      // the rest as the chart spells (sharps in a chart written with sharps)
+      const flatSide = s.fn === 'V-sub' || s.fn === 'iv7';
+      const name = s.sub.iv.includes(9) && s.sub.iv.includes(6) ? SHARP[mod(s.sub.root)] : mod(s.sub.root) === mod(s.root) ? rootName : !flatSide && sharpChart ? SHARP[mod(s.sub.root)] : FLAT[mod(s.sub.root)];
+      sub = { sym: `${name}${subSuffix(s.sub.iv)}`, label: s.sub.label };
+      if (s.fn === 'V-sub' && x.mode === 'lydian-dominant' && mod(s.sub.root - s.root) === 6) same = { rootName, mode: 'altered' };
       rootName = name;
     }
-    return { at: s.at, beats: s.beats, chorus: Math.floor(s.at / (bars * meter) + 1e-6), bar: Math.floor(inChorus / meter + 1e-6), sym: prettySym(sym), sub, fn: s.fn, mode: x.mode, root: s.sub ? s.sub.root : s.root, rootName, fam: scaleFamily(x.mode), window: x.window };
+    return { at: s.at, beats: s.beats, chorus: Math.floor(s.at / (bars * meter) + 1e-6), bar: Math.floor(inChorus / meter + 1e-6), sym: prettySym(sym), sub, fn: s.fn, mode: x.mode, root: s.sub ? s.sub.root : s.root, rootName, fam: scaleFamily(x.mode), window: x.window, ...(same ? { same } : {}) };
   });
   return { tonic, tier: o.tier, meter, bars, choruses, plan, cells };
+}
+
+/** A sub chord's suffix from its intervals. */
+function subSuffix(iv: number[]): string {
+  const k = iv.join();
+  return k === '0,3,6,9' ? '°7' : k === '0,3,6,10' ? 'm7♭5' : k === '0,3,7,10' ? 'm7' : k === '0,3,7,9' ? 'm6' : k === '0,5,7,10' ? '7sus4' : '7';
 }
 
 /** The cell sounding at a beat (null before the first beat / after the end). */
@@ -169,12 +190,30 @@ export function nextCell(sheet: RotationSheet, beat: number): { cell: SheetCell;
   return { cell, changed: !!prev && prev.mode !== cell.mode, inBeats: cell.at - beat };
 }
 
-/** The scale notes of a cell for the keyboard: in the scale, and the colour notes (what the rotation tests). */
-export function cellNotes(c: SheetCell, sheet: RotationSheet): { pcs: number[]; colour: number[] } {
+/**
+ * The "new scale" warning ahead of time (SPEC-RBI-ROTATION §3, research §5.2): the next cell whose function gets a
+ * new scale, once it is within 2 bars at T1–2 and 1 bar at T3+. Null when no change is that close.
+ */
+export function nextChange(sheet: RotationSheet, beat: number): { cell: SheetCell; inBeats: number; bars: number } | null {
+  const horizon = (sheet.tier <= 2 ? 2 : 1) * sheet.meter;
+  for (let i = 0; i < sheet.cells.length; i++) {
+    const cell = sheet.cells[i];
+    if (cell.at <= beat + 1e-6) continue;
+    const inBeats = cell.at - beat;
+    if (inBeats > horizon + 1e-6) return null;
+    const prev = sheet.cells.slice(0, i).reverse().find((c) => c.fn === cell.fn);
+    if (prev && prev.mode !== cell.mode) return { cell, inBeats, bars: Math.max(1, Math.ceil(inBeats / sheet.meter - 1e-6)) };
+  }
+  return null;
+}
+
+/** The scale notes of a cell for the keyboard: in the scale, the colour notes (what the rotation tests), and the
+ *  avoid notes (outlined). */
+export function cellNotes(c: SheetCell, sheet: RotationSheet): { pcs: number[]; colour: number[]; avoid: number[] } {
   const p = sheet.plan.find((x) => Math.abs(x.span.at - c.at) < 1e-6);
   const span = p?.span;
   const pcs = [...new Set(scaleOf(c.mode, c.root))];
-  return { pcs, colour: span ? colourNotes(span.fn, c.mode, c.root) : [] };
+  return { pcs, colour: span ? colourNotes(span.fn, c.mode, c.root) : [], avoid: span ? avoidPcs(span, c.mode) : [] };
 }
 const scaleOf = (m: ModeId, root: number) => MODE_STEPS[m].map((x) => mod(root + x));
 
@@ -229,6 +268,36 @@ export function improvTake(kind: ImprovTakeKind, o: { score: number; notes: numb
   const event: RatingEvent = { id: `improv:${kind}:${Date.parse(at).toString(36)}`, skill: 'improv', difficulty, correct: score >= 0.6, score, tags: [{ skill: 'improv', sub: SUB[kind], w: 1 }], at };
   const xp = o.notes < 4 ? 1 : Math.max(2, Math.round(2 + score * 10));
   return { kind, lessonId: `improv-${kind}`, event, xp, ...(o.stats ? { stats: o.stats } : {}) };
+}
+
+/** Each function in words (the skill map's "weakest" line; Hebrew with no Latin, so it reads in one direction). */
+export const FN_NAME: Record<Fn, L> = {
+  I: { en: 'I', he: 'טוניקה מז׳ורית' },
+  IV: { en: 'IV', he: 'הדרגה הרביעית' },
+  ii: { en: 'ii', he: 'הדרגה השנייה' },
+  iii: { en: 'iii', he: 'הדרגה השלישית' },
+  vi: { en: 'vi', he: 'הדרגה השישית' },
+  i: { en: 'the minor tonic (m6)', he: 'טוניקה מינורית עם סקסטה' },
+  iM7: { en: 'the minor tonic (mMaj7)', he: 'טוניקה מינורית עם ספטימה גדולה' },
+  i7: { en: 'the minor tonic (m7)', he: 'טוניקה מינורית עם ספטימה קטנה' },
+  iv: { en: 'the minor iv', he: 'רביעית מינורית שאולה' },
+  iv7: { en: 'the backdoor iv', he: 'רביעית של הדלת האחורית' },
+  iiø: { en: 'iiø', he: 'שנייה חצי־מוקטנת' },
+  'V-maj': { en: 'V→major', he: 'דומיננטה שנפתרת למז׳ור' },
+  'V-min': { en: 'V→minor', he: 'דומיננטה שנפתרת למינור' },
+  'V-sec': { en: 'a secondary V→V', he: 'דומיננטה משנית לדומיננטה' },
+  'V-free': { en: 'a non-resolving V', he: 'דומיננטה שאינה נפתרת' },
+  'V-sub': { en: 'a substitute V', he: 'דומיננטה מחליפה' },
+  dim: { en: 'a passing dim', he: 'מוקטן עובר' },
+  sus: { en: 'sus', he: 'אקורד מושהה' },
+};
+
+/** The skill map's line from the mode × function map: the weakest scale with colour notes still to cover, or null. */
+export function weakestLine(stats: ModeStats, lang: 'en' | 'he'): string | null {
+  const w = weakModes(stats, 9).find((x) => x.takes > 0 && x.cov < 1 && FN_NAME[x.fn] && MODE_NAMES[x.mode]);
+  if (!w) return null;
+  const pct = Math.round(w.cov * 100);
+  return lang === 'he' ? `הכי חלש: ${scaleShort(w.mode, 'he')} מעל ${FN_NAME[w.fn].he} (${pct}%)` : `Weakest: ${scaleShort(w.mode, 'en')} over ${FN_NAME[w.fn].en} (${pct}%)`;
 }
 
 /** The weakest scales from the stats (the profile's mode × function map, "Lydian dominant on V-free: 62 %"). */

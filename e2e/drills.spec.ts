@@ -8,7 +8,8 @@ test.describe('technique drills', () => {
   test('hub, family levels, a run, settings and the creator', async ({ page }) => {
     await page.goto('/?sim=1&rubato=1#/drills');
     await expect(page.locator('[data-drills="hub"]')).toBeVisible();
-    await expect(page.locator('.drill-today .drill-level')).toHaveCount(5);
+    // BUILD-PLAN phase 2: no private "Today" list here any more (part of today's workout replaces it)
+    await expect(page.locator('.drill-today .drill-level')).toHaveCount(0);
     await page.locator('[data-family="scales"]').click();
     await expect(page.locator('[data-drills="family"]')).toBeVisible();
     await page.locator('[data-level-start="scales-1"]').click();
@@ -43,13 +44,7 @@ test.describe('technique drills', () => {
     await expect(page.locator('[data-drills="run"] .drill-tab svg').first()).toBeVisible();
     await page.locator('.screen-head .icon-btn').click();
     await page.locator('.screen-head .icon-btn').click();
-    // GUITAR_DEEPENING §5: the genre filter became add-ons (the core is always on); Flamenco is off until picked.
-    await expect(page.locator('[data-family="g-flamenco"]')).toHaveCount(0);
-    await page.locator('[data-drills-settings]').click();
-    const flamenco = page.getByRole('checkbox', { name: /^Flamenco/ });
-    await expect(flamenco).not.toBeChecked();
-    await flamenco.check();
-    await page.locator('.screen-head .icon-btn').click();
+    // SPEC-STYLE-FOCUS §2: every style is open from the first day (no add-on locks); Flamenco is listed without picking it.
     await expect(page.locator('[data-family="g-flamenco"]')).toBeVisible();
   });
 

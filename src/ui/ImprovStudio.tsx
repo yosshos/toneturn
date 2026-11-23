@@ -33,6 +33,7 @@ import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { Icon } from './icons';
+import { ImprovLevelPage } from './ImprovLevelPage';
 import { focusOf } from '../engine/styleFocus';
 import { STYLE_CHART, STYLE_TEXT, type StyleId } from '../engine/styles';
 import type { CourseId } from '../engine/courses';
@@ -163,7 +164,7 @@ export function TodayLickCard({ lick, dayKey, lang, onOpen, workout = true }: { 
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onHarrisTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** Phase 8: the Barry Harris way's tier (H-1…H-4), chosen by the player. */ onHarrisTier?: (t: HarrisTier) => void; /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats); `channel` = how it was played (trading by ear: ear-fresh; else the lead sheet in view). */ onTake?: (t: ImprovTake, channel?: Channel) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool, today's lick, the closed keys and the booking of a take's uses (SPEC-LICKS-IN-IMPROV). */ vocab?: VocabCtx; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onHarrisTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** Phase 8: the Barry Harris way's tier (H-1…H-4), chosen by the player. */ onHarrisTier?: (t: HarrisTier) => void; /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake & { /** SPEC-PROGRESS-CHARTS §1: the take's in-scale share (the snapshot's in-scale rate). */ inSet?: number }, /** How it was played (trading by ear: ear-fresh; else the lead sheet in view). */ channel?: Channel) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: VocabCtx; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(workout || !initialChart ? 'scales' : onOpenChart ? 'rules' : 'phrasing');
@@ -176,6 +177,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const [band, setBand] = useState<'level' | 'style'>(styleBand ? 'style' : 'level');
   const startedAt = useRef<number | null>(null);
   const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
+  const [lvPage, setLvPage] = useState<number | null>(null);
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
   const [bpm, setBpm] = useState(96);
@@ -301,7 +303,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const sh = buildRotationSheet(p, { tier, stats, choruses: 2 });
     const g = sh ? gradeRotation(sh, played, stats, new Date().toISOString()) : null;
     const phraseScore = (chk.ok ? 0.5 : 0.2) + 0.25 * developmentScore(mot.returns) + 0.25 * (g?.score ?? 0);
-    onTake?.(improvTake('phrasing', { score: phraseScore, notes: played.length, tier, bpm, stats: g?.stats }));
+    onTake?.({ ...improvTake('phrasing', { score: phraseScore, notes: played.length, tier, bpm, stats: g?.stats }), ...(g && played.length ? { inSet: g.m.inSet } : {}) });
     const licksFound = bookLicks(played, p, p.bars * 2, bpm, `phrase-${Date.now().toString(36)}`);
     setResult(
       <div className="is-result" data-is-result="phrasing">
@@ -423,7 +425,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const pooled: RotationGrade | null = grades.length ? { ...grades[grades.length - 1], m: { ...grades[grades.length - 1].m, colour: cov.n ? cov.hit / cov.n : 0, colourSpans: cov.n, inSet: cov.inSet / grades.length }, stats: tStats } : null;
     if (scores.length) {
       const dev = scores.reduce((a, b) => a + b, 0) / scores.length;
-      onTake?.(improvTake('trade', { score: 0.5 * dev + 0.5 * (pooled ? 0.5 * pooled.m.colour + 0.5 * pooled.m.inSet : 0), notes: played, tier, bpm, stats: grades.length ? tStats : undefined }), lead === 'band' ? 'ear-fresh' : undefined);
+      onTake?.({ ...improvTake('trade', { score: 0.5 * dev + 0.5 * (pooled ? 0.5 * pooled.m.colour + 0.5 * pooled.m.inSet : 0), notes: played, tier, bpm, stats: grades.length ? tStats : undefined }), ...(pooled ? { inSet: pooled.m.inSet } : {}) }, lead === 'band' ? 'ear-fresh' : undefined);
       setResult(
         <div className="is-result" data-is-result="trade">
           {lead === 'band' ? (
@@ -446,6 +448,30 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     ctl.current?.abort();
     setRunning(false);
   };
+
+  // SPEC-PATH-TODAY-PRACTICE §2: an improvisation level's item page (the ladder, the teacher's part, assign); its main
+  // button comes back here with the level chosen
+  const lvOpen = lvPage !== null ? IMPROV_LEVELS.find((x) => x.n === lvPage) : undefined;
+  if (lvOpen)
+    return (
+      <ImprovLevelPage
+        lang={lang}
+        level={lvOpen}
+        best={settings.improvBest?.[lvOpen.id]}
+        wayIn={workout ? 'today' : 'practice'}
+        onBack={() => setLvPage(null)}
+        onPlay={() => {
+          setLv(lvOpen.n);
+          if (src.startsWith('lv:')) setSrc(`lv:${lvOpen.n}`);
+          setLvPage(null);
+        }}
+      />
+    );
+  const lvPageBtn = (n: number) => (
+    <button type="button" className="icon-btn is-lv-page" onClick={() => setLvPage(n)} disabled={running} aria-label={lang === 'he' ? 'הדף של השלב' : "The level's page"} title={lang === 'he' ? 'הדף של השלב' : "The level's page"} data-improv-open={n}>
+      <Icon k="eye" size={18} />
+    </button>
+  );
 
   return (
     <main className="panel-screen improv-studio" data-improv-studio="1">
@@ -535,6 +561,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
         <>
           <label className="field-row is-src">
             <span>{tx.chartFrom}</span>
+            {src.startsWith('lv:') && lvPageBtn(Number(src.slice(3)))}
             <select value={src} onChange={(e) => setSrc(e.target.value)} data-is-chart-src="1">
               {initialChart && (
                 <option value="piece:" data-is-piece="1">
@@ -592,6 +619,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
             {lang === 'he' ? 'לאלתר על המהלך, בלי אתגר' : 'Improvise over it, no challenge'}
           </button>
           <ChallengeList
+            style={band === 'style' ? bandStyleId : undefined}
             best={settings.challengeBest}
             lang={lang}
             onPick={(ch) => {
@@ -665,6 +693,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
               </option>
             ))}
           </select>
+          {lvPageBtn(lv)}
         </label>
       )}
       {(mode === 'phrasing' || mode === 'vary' || mode === 'trade') && styleBand && (

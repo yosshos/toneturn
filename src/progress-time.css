@@ -75,3 +75,48 @@
 .ct-reasons { margin: 0; padding-inline-start: 18px; font-size: 0.85rem; color: var(--ink-soft); }
 .ct-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ct-taster { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* SPEC-PROGRESS-CHARTS §2 charts 4, 6–9: a few series on one axis, share bars, the mode × function grid. */
+.pt-endname { font-size: 9px; }
+.pt-median-key { background: #8a8f98; height: 2px !important; width: 14px !important; border-radius: 1px !important; }
+.pt-areafilter { flex-wrap: wrap; gap: 6px; }
+.pt-areafilter .chip:disabled { opacity: 0.45; }
+.pt-sharebars { display: grid; gap: 6px; margin-top: 6px; }
+.pt-sbrow { display: grid; grid-template-columns: 76px 1fr; align-items: center; gap: 8px; }
+.pt-sblabel { font-size: 0.75rem; color: var(--ink-soft); }
+.pt-sbtrack { display: flex; gap: 2px; height: 18px; border-radius: 5px; overflow: hidden; }
+.pt-sbtrack i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 0.66rem; color: #fff; min-width: 2px; }
+.pt-sbnone { font-size: 0.72rem; color: var(--ink-dim); align-items: center; }
+.pt-grid { display: grid; gap: 3px; align-items: center; }
+.pt-gridcol { font-size: 0.62rem; color: var(--ink-soft); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-gridrow { font-size: 0.72rem; color: var(--ink-soft); }
+.pt-gridcell { display: block; height: 16px; border-radius: 3px; }
+/* §4: the class radar beside its change column; the practice calendar; the weekly ring and summary (§2, §5). */
+.pt-radar { display: grid; grid-template-columns: minmax(140px, 200px) 1fr; gap: 10px; align-items: center; }
+@media (max-width: 420px) { .pt-radar { grid-template-columns: 1fr; } .pt-radar svg { max-width: 200px; margin: 0 auto; } }
+.pt-change td:nth-child(2), .pt-change td:nth-child(3) { text-align: end; white-space: nowrap; }
+.pt-cal { display: flex; gap: 3px; }
+.pt-calcol { display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; flex: 1; max-width: 14px; }
+.pt-calcol i { display: block; border-radius: 2px; }
+.wk-ring { display: inline-flex; align-items: center; gap: 6px; }
+.wk-ring svg { flex: none; }
+.wk-ring-txt { display: grid; line-height: 1.1; }
+.wk-ring-txt small { font-size: 0.72rem; color: var(--ink-soft); }
+.wk-summary { display: grid; gap: 8px; }
+.wk-summary .pgt-tiles { gap: 6px; }
+.wk-summary .pgt-tile { padding: 6px 8px; }
+.wk-summary .pgt-tile b { font-size: 1.05rem; }
+.wk-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wk-summary-head h3 { margin: 0; font-size: 0.95rem; }
+.wk-line { margin: 0; font-size: 0.85rem; color: var(--ink); }
+.it-tempo .pt-chart svg { max-height: 130px; }
+.digest-charts { display: grid; gap: 10px; }
+.it-ceiling { stroke: var(--ink-soft); stroke-width: 1.5; stroke-dasharray: 1 3; }
+/* Today's stats row with the weekly ring: four tiles, two by two on a phone. */
+:root:root .today-cards.st-stats:has(.st-week) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 600px) { :root:root .today-cards.st-stats:has(.st-week) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.st-week .wk-ring b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+/* The item page's tempo over time folds open under its head (one phone screen). */
+.ih-tempo { margin-top: 6px; }
+.ih-tempo > summary { font-size: 0.82rem; color: var(--ink-soft); cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.ih-tempo .it-tempo { margin-top: 4px; }

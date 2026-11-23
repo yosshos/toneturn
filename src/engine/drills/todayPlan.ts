@@ -1,12 +1,12 @@
 // Today's technique block from the key × exercise matrix (docs/BUILD-PLAN-2026-11.md phase 2, D2–D3): one plan for
 // the day, run from today's workout and from the technique screen alike (never two "todays"). About half its cells come
 // from the key of the week (in teaching order), the rest weakest-first (or the player's chosen view) from every key;
-// maintenance — closed cells revisited, longest since played first — sits inside the block (D2: 15–20 % of the
-// technique share). Cells resting after a plateau are skipped (matrixOrder). Pure.
+// maintenance — closed cells due for review by the FSRS (growing intervals), the most overdue first — sits inside the
+// block (D2: 15–20 % of the technique share). Cells resting after a plateau are skipped (matrixOrder). Pure.
 
 import type { FamilyDef } from './generate';
 import { cellItemIds, cellKey, fillMinutes, matrixOrder, type MatrixCell, type MatrixGroup, type MatrixView } from './keyMatrix';
-import { allocateSlots, seedOf, tierShares, type StyleFocus, type StyleTier } from '../styleFocus';
+import { allocateSlots, drawStyle, seedOf, tierShares, type StyleFocus, type StyleTier, type WeightedFocus } from '../styleFocus';
 import type { StyleId } from '../styles';
 
 /** Why a cell is in today's plan (SPEC-PATH-TODAY-PRACTICE §2 "why today"). */
@@ -58,9 +58,13 @@ export function pickStyleCells(cells: MatrixCell[], focus: StyleFocus, minutes: 
     const styles = [...new Set(pool.map((c) => c.style as StyleId))];
     const rot = styles.length ? Math.floor(seedOf(`${day}|${t}`) * styles.length) : 0;
     const order = [...styles.slice(rot), ...styles.slice(0, rot)];
+    // SPEC-STYLE-FOCUS §4 / §9.2: a focus carrying THE weights (styleFocus.weightedFocus → styleWeight) draws each slot's
+    // style by them — the rest by taste (liked ×2, declined ×0.4) — instead of in turn
+    const w = (focus as WeightedFocus).w;
     let k = 0;
     while (slots[t] > 0 && pool.some((c) => !out.includes(c))) {
-      const st = order[k++ % order.length];
+      const left = styles.filter((x) => pool.some((c) => c.style === x && !out.includes(c)));
+      const st = w ? (drawStyle(left, (x) => w[x] ?? 0, seedOf(`${day}|${t}|${k++}`)) ?? left[0]) : order[k++ % order.length];
       const c = pool.find((x) => x.style === st && !out.includes(x));
       if (c) {
         out.push(c);
@@ -73,14 +77,26 @@ export function pickStyleCells(cells: MatrixCell[], focus: StyleFocus, minutes: 
 
 const sum = (cs: MatrixCell[]) => cs.reduce((n, c) => n + c.minutes, 0);
 
-/** Today's technique cells: review (closed, oldest first) → the key of the week → the rest by the view. */
+/**
+ * Maintenance (SPEC-DAILY-WORKOUT §4): the closed cells due for review on `day` (FSRS, keyMatrix.cellDue), the most
+ * overdue first; without a day every closed cell, by its due date. Ties: the longest since played, key order, teaching
+ * order.
+ */
+export function dueClosed(cells: MatrixCell[], day: string | undefined, order: number[] = DEFAULT_ORDER): MatrixCell[] {
+  const end = day ? `${day}T23:59:59.999Z` : null;
+  return cells
+    .filter((c) => c.need.s === 2 && (!end || (c.need.due ?? '') <= end))
+    .sort((a, b) => (a.need.due ?? '').localeCompare(b.need.due ?? '') || a.need.last.localeCompare(b.need.last) || order.indexOf(a.root) - order.indexOf(b.root) || a.i - b.i);
+}
+
+/** Today's technique cells: review (closed cells due, most overdue first) → the key of the week → the rest by the view. */
 export function todayTechPlan(cells: MatrixCell[], o: TechPlanOpts): PlanCell[] {
   const minutes = Math.max(1, o.minutes);
   const order = o.keyOrder ?? DEFAULT_ORDER;
   const taken = new Set<string>();
   const take = (cs: MatrixCell[], why: CellWhy): PlanCell[] => cs.filter((c) => !taken.has(cellKey(c))).map((c) => (taken.add(cellKey(c)), { cell: c, why }));
-  // Maintenance: closed cells revisited at growing intervals — the ones played longest ago first.
-  const closed = cells.filter((c) => c.need.s === 2).sort((a, b) => a.need.last.localeCompare(b.need.last) || order.indexOf(a.root) - order.indexOf(b.root) || a.i - b.i);
+  // Maintenance: closed cells revisited at growing intervals (the FSRS) — the most overdue first.
+  const closed = dueClosed(cells, o.day, order);
   const maintBudget = closed.length ? minutes * MAINT_SHARE : 0;
   const review: MatrixCell[] = [];
   for (const c of closed) {
@@ -127,6 +143,21 @@ export function weekKeyFromMatrix(cells: MatrixCell[], group: MatrixGroup = 'maj
   return [...rows.entries()].sort((a, b) => mean(a[1]) - mean(b[1]) || keyOrder.indexOf(a[0]) - keyOrder.indexOf(b[0]))[0][0];
 }
 
+/** The Monday-based week number (for alternating the week key's group). */
+const weekNo = (week: string) => Math.floor(Date.parse(`${week}T12:00:00Z`) / (7 * 86400000));
+
+/**
+ * D3 with the minor rows (SPEC-DAILY-WORKOUT §1, T2+): the key of the week alternates week by week between the major and
+ * the harmonic-minor rows (even weeks major, odd weeks minor), each by need inside its rows; when one group has nothing
+ * open, the other one. Without minor rows, always major.
+ */
+export function weekGroupFor(cells: MatrixCell[], week: string): MatrixGroup {
+  const open = (g: MatrixGroup) => cells.some((c) => c.group === g && c.need.s < 2 && !c.need.cool);
+  if (!open('minor')) return 'major';
+  if (!open('major')) return 'minor';
+  return weekNo(week) % 2 === 0 ? 'major' : 'minor';
+}
+
 /** The plan as one coach family (the coach walks it cell by cell: one-key levels, in the plan's order). */
 export function planFamily(plan: PlanCell[], title = { en: "Today's technique", he: 'הטכניקה של היום' }): FamilyDef {
   return { id: 'scales', title, style: 'both', levels: plan.map((p, k) => ({ ...p.cell.level, level: k + 1 })) } as FamilyDef;
@@ -154,6 +185,20 @@ export function thawPlan(f: FrozenPlan, cells: MatrixCell[]): PlanCell[] {
     const c = by.get(k);
     return c ? [{ cell: c, why: f.why[i] ?? 'strengthen' }] : [];
   });
+}
+
+/**
+ * SPEC-DAILY-WORKOUT §5: when the tier rises and new cells open, "+N new exercises opened". `prev`: what was seen last
+ * (tier and cell count). Returns the cells gained by a tier change (0 without one, or on the first look).
+ */
+export function openedByTier(prev: { tier: number; n: number } | null, tier: number, n: number): number {
+  if (!prev || tier <= prev.tier) return 0;
+  return Math.max(0, n - prev.n);
+}
+
+/** SPEC-DAILY-WORKOUT §2: "an exercise through the 12 keys ≈ N minutes" — a rung's estimated minutes over its keys. */
+export function rungMinutes(cells: MatrixCell[], rung: string, group: MatrixGroup): number {
+  return cells.filter((c) => c.rung === rung && c.group === group).reduce((n, c) => n + c.minutes, 0);
 }
 
 /** How many of each reason (the button's line: "4 in the key of the week · 3 to strengthen · 1 review"). */

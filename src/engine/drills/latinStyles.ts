@@ -813,6 +813,9 @@ export function keysMontunoFamily(): FamilyDef {
       L(9, 'ii–V–I over four bars', 'ii–V–I על ארבע תיבות', [sp('mt-ant', o(5), 'RL'), sp('mt-ant', o(5, 1), 'RL')], [110, 150]),
       L(10, 'Songo: the right hand on the beats', 'סונגו: יד ימין על הפעמות', [sp('mt-songo', o(6))], [100, 130]),
       L(11, 'Montuno with the clave and the tumbao', 'מונטונו עם הקלאבה והטומבאו', [sp('mt-band', o(2), 'RL'), sp('mt-band', o(5, 1), 'RL'), sp('mt-band', o(3), 'RL')], [110, 150]),
+      // SPEC-STYLE-FOCUS §9 (the core's neighbour-style moment): the ii–V–I in ponchando — block chords on the montuno
+      // rhythm (§2.1 [V]), close voicings led by voice leading; no line notes (the montuno line levels stay hidden).
+      L(12, 'Ponchando over ii–V–I', 'פונצ׳נדו על ii–V–I', [sp('mt-ponch', o(5)), sp('mt-ponch', o(5, 1))], [80, 110]),
     ],
   };
 }
@@ -866,4 +869,6 @@ export function guitarGuajeoFamily(LT: LTFn, fam: GFamFn): GuitarFamilyDef {
 export const LATIN_LEVEL_DIFF: Record<string, number> = {
   ...Object.fromEntries(Array.from({ length: 14 }, (_, i) => [`k-brazil-${i + 1}`, 900 + 40 * i])),
   ...Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`k-montuno-${i + 1}`, 980 + 50 * i])),
+  // the ponchando ii–V–I (SPEC-STYLE-FOCUS §9's neighbour moment): after the family's last level, in the family's order
+  'k-montuno-12': 1500,
 };
