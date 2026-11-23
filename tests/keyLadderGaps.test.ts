@@ -145,6 +145,39 @@ describe('wired into the ladder of every key (piano, guitar, bass)', () => {
     expect(ids('piano', 'major', 6)).toContain('fingers-18');
     expect(ids('piano', 'minor', 5)).toEqual(expect.arrayContaining(['k-sharm-44', 'k-sharm-46', 'k-sharm-48']));
   });
+  it('minor rows: held notes, two voices in one hand, a touch per hand, one hand loud — in the harmonic minor of the key', () => {
+    expect(ids('piano', 'minor', 1)).toContain('k-indep-9');
+    expect(ids('piano', 'minor', 1)).not.toContain('k-indep-10');
+    expect(ids('piano', 'minor', 2)).toEqual(expect.arrayContaining(['k-indep-9', 'k-indep-10']));
+    expect(ids('piano', 'minor', 3)).toEqual(expect.arrayContaining(['k-indep-9', 'k-indep-10', 'k-indep-11', 'k-indep-12']));
+    expect(ids('piano', 'minor', 3).filter((i) => /^k-indep-[1-8]$/.test(i))).toEqual([]);
+    expect(ids('piano', 'major', 7).filter((i) => /^k-indep-(9|1[0-2])$/.test(i))).toEqual([]);
+    // A minor (the row's root 9): every note in A harmonic minor, spelled on the minor signature (no sharps or flats)
+    const { built } = openKeyRungs(families('piano'), 9, 'minor', 3, {});
+    const voices = built.find((x) => x.rung.id === 'k-indep-10')!;
+    expect(voices.lvl.keys).toEqual([9]);
+    const ds = voices.lvl.specs.flatMap((_, k) => specDrills(voices.lvl, k, 'fifths-up'));
+    expect(ds).toHaveLength(4);
+    for (const d of ds) {
+      expect(d.spec.minor).toBe(true);
+      expect(d.keySig).toBe('C');
+      expect(d.title.en).toContain('A harmonic minor');
+      expect(d.title.he).toContain('A מינור הרמוני');
+      expect(d.notes.every((n) => [9, 11, 0, 2, 4].includes(n.pitch % 12))).toBe(true);
+      expect(d.notes.some((n) => n.hold)).toBe(true);
+      expect(hasRubato(d)).toBe(true);
+    }
+    // the V chord of "one hand loud" takes the raised 7th, spelled G♯
+    const dyn = generate({ family: 'k-indep', kind: 'ind-dyn', key: 9, hands: 'RL', option: 0, minor: true } as DrillSpec);
+    expect(dyn.notes.filter((n) => n.pitch % 12 === 8).every((n) => n.spell === 'G♯')).toBe(true);
+    expect(dyn.notes.some((n) => n.pitch % 12 === 8)).toBe(true);
+    expect(dyn.notes.some((n) => n.pitch % 12 === 7)).toBe(false);
+    // C minor: E♭ and A♭ on three flats; the major item ids are untouched
+    const cm = generate({ family: 'k-indep', kind: 'ind-hold', key: 0, hands: 'R', option: 0, minor: true } as DrillSpec);
+    expect(cm.keySig).toBe('Eb');
+    expect(cm.itemId).toBe('k-indep:ind-hold:0:R:m:op0');
+    expect(generate({ family: 'k-indep', kind: 'ind-hold', key: 0, hands: 'R', option: 0 } as DrillSpec).itemId).toBe('k-indep:ind-hold:0:R:op0');
+  });
   it('E at T6+: So What (both variations) and Kenny Barron on the key’s ii–V–I; major rows only', () => {
     expect(ids('piano', 'major', 5)).not.toContain('k-cadlib-23');
     expect(ids('piano', 'major', 6)).toEqual(expect.arrayContaining(['k-cadlib-23', 'k-cadlib-24', 'k-cadlib-26']));

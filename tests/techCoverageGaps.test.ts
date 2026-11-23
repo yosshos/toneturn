@@ -49,6 +49,23 @@ describe('Hanon Part I notes (Schirmer edition)', () => {
     expect(n.length).toBe(14 * 8 + 14 * 8 + 1);
   });
 
+  // Nos. 17 and 18 re-checked 2026-11-23 against the Mutopia LilyPond source (MutopiaProject ftp/HanonCL/
+  // virtuoso-pianist-pt1, hanon17.ily / hanon18.ily): No. 17 turns at the top with its own last group and comes down in
+  // 13 groups (its last group ends B F D E C D E D); No. 18 is 14 groups each way.
+  it('No. 17 and No. 18 in C, note for note', () => {
+    const n17 = rhNames(piano({ option: 17 }));
+    expect(n17.slice(0, 16).join(' ')).toBe('C E A G B A G A D F B A C B A B');
+    expect(n17.slice(104, 112).join(' ')).toBe('B D G F A G F E');
+    expect(n17.slice(112, 120).join(' ')).toBe('G D B C A B C A');
+    expect(n17.slice(-9).join(' ')).toBe('B F D E C D E D C');
+    expect(n17.length).toBe(14 * 8 + 13 * 8 + 1);
+    const n18 = rhNames(piano({ option: 18 }));
+    expect(n18.slice(0, 16).join(' ')).toBe('C D F E G F D E D E G F A G E F');
+    expect(n18.slice(112, 120).join(' ')).toBe('G F D E C D F E');
+    expect(n18.slice(-9).join(' ')).toBe('A G E F D E G F C');
+    expect(n18.length).toBe(14 * 8 + 14 * 8 + 1);
+  });
+
   it('No. 8 in E♭: the figure 1-3-5-6-4-5-3-4 in E♭ major, both hands an octave apart', () => {
     const d = piano({ option: 8, key: 3 });
     // E♭ G B♭ C A♭ B♭ G A♭ as pitch classes

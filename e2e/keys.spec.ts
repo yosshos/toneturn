@@ -41,6 +41,8 @@ const FAMS: [string, number][] = [
   ['scales', 15], ['arpeggios', 14], ['cadences', 7], ['fingers', 14], ['control', 12], ['advanced', 8], ['harris', 18], ['voicings', 17], ['jazz', 10], ['accomp', 18], ['k-ear', 8],
   // PIANO_JAZZ: Barry Harris harmony, bebop lines and trading, jazz-piano harmony.
   ['k-sixdim', 10], ['k-bebop', 10], ['k-reharm', 8],
+  // AUDIT-SCALES: hand independence (9–12 the harmonic-minor forms, 2026-11-23).
+  ['k-indep', 12],
 ];
 
 test.describe('keys course', () => {

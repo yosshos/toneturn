@@ -143,8 +143,8 @@ describe('fingering for every scale', () => {
 
 describe('hand independence (k-indep)', () => {
   const fam = CAT.find((f) => f.id === 'k-indep')!;
-  it('8 levels, every item in 12 keys, rubato first, a perfect take is clean', () => {
-    expect(fam.levels).toHaveLength(8);
+  it('12 levels (9–12 the harmonic-minor forms), every item in 12 keys, rubato first, a perfect take is clean', () => {
+    expect(fam.levels).toHaveLength(12);
     for (const l of fam.levels) {
       expect(l.keys).toBe('major');
       for (const sp of l.specs)
@@ -283,7 +283,7 @@ describe('wiring', () => {
   it('glyphs, badges, lessons for the new families', () => {
     for (const f of ['k-indep', 'k-sharm', 'g-harm']) expect(FAMILY_GLYPH[f], f).toBeDefined();
     expect(new Set(['k-indep', 'k-sharm', 'g-harm'].map((f) => FAMILY_GLYPH[f])).size).toBe(3);
-    expect(familyLevelCount('k-indep')).toBe(8);
+    expect(familyLevelCount('k-indep')).toBe(12);
     expect(familyLevelCount('k-sharm')).toBe(48);
     expect(familyLevelCount('g-harm')).toBe(16);
     for (const id of ['hand-independence', 'scale-harm', 'bh-four-dim', 'bh-borrow']) expect(MINI_LESSONS[id], id).toBeDefined();
@@ -302,7 +302,7 @@ describe('wiring', () => {
     }
   });
   it('every new piano level spans 12 keys', () => {
-    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 8 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 48 }, (_, i) => `k-sharm-${i + 1}`)]) {
+    for (const id of ['harris-25', 'harris-26', ...Array.from({ length: 12 }, (_, i) => `k-indep-${i + 1}`), ...Array.from({ length: 48 }, (_, i) => `k-sharm-${i + 1}`)]) {
       const l = lv(id);
       expect(Array.isArray(l.keys) ? new Set(l.keys).size : 12, id).toBe(12);
     }
