@@ -44,18 +44,22 @@ export function ScaleTag({ c, lang, full = true }: { c: Pick<SheetCell, 'fam' | 
 }
 
 /** The lead sheet: 8 bars of one chorus (2 rows of 4), the chord large, the scale small above it, a sub above that. */
-export function LeadSheet({ sheet, chorus, now, hits, lang }: { sheet: RotationSheet; chorus: number; now: number; hits?: (boolean | null)[]; lang: Lang }) {
+export function LeadSheet({ sheet, chorus, now, hits, lang, hidden = false }: { sheet: RotationSheet; chorus: number; now: number; hits?: (boolean | null)[]; lang: Lang; /** SPEC-EAR-AND-READING §3.4: from memory — the bars and the now-cue stay, the chords and scales are hidden. */ hidden?: boolean }) {
   const cur = now >= 0 ? sheet.cells[now] : null;
   const page = Math.floor((cur && cur.chorus === chorus ? cur.bar : 0) / 8);
   const bars = Array.from({ length: Math.min(8, sheet.bars - page * 8) }, (_, i) => page * 8 + i);
   return (
-    <div className="rs-sheet" dir="ltr" role="table" aria-label={lang === 'he' ? 'דף אקורדים' : 'Lead sheet'} data-rs-sheet={chorus}>
+    <div className={`rs-sheet${hidden ? ' hidden-sheet' : ''}`} dir="ltr" role="table" aria-label={lang === 'he' ? 'דף אקורדים' : 'Lead sheet'} data-rs-sheet={chorus} data-rs-hidden={hidden ? '1' : undefined}>
       {bars.map((b) => (
         <div className="rs-bar" role="row" key={b} data-rs-bar={b}>
           {sheet.cells.map((c, i) =>
             c.chorus === chorus && c.bar === b ? (
-              <div key={i} role="cell" className={`rs-cell fam-${c.fam}${i === now ? ' now' : ''}${hits?.[i] === true ? ' hit' : hits?.[i] === false ? ' miss' : ''}`} style={{ flexGrow: c.beats }} data-rs-cell={i} data-now={i === now ? '1' : undefined}>
-                {c.sub ? (
+              <div key={i} role="cell" className={`rs-cell ${hidden ? 'fam-none' : `fam-${c.fam}`}${i === now ? ' now' : ''}${hits?.[i] === true ? ' hit' : hits?.[i] === false ? ' miss' : ''}`} style={{ flexGrow: c.beats }} data-rs-cell={i} data-now={i === now ? '1' : undefined}>
+                {hidden ? (
+                  <b className="rs-sym" aria-label={lang === 'he' ? 'מהזיכרון' : 'from memory'}>
+                    {'·'}
+                  </b>
+                ) : c.sub ? (
                   <small className="rs-sub" title={c.same ? `${c.sub.label[lang]} · ${TX[lang].sameNotes} ${c.same.rootName} ${scaleShort(c.same.mode, lang)}` : c.sub.label[lang]}>
                     <bdi dir="ltr">{c.sub.sym}</bdi>
                   </small>
@@ -64,10 +68,12 @@ export function LeadSheet({ sheet, chorus, now, hits, lang }: { sheet: RotationS
                     {' '}
                   </small>
                 )}
-                <b className="rs-sym">
-                  <bdi dir="ltr">{c.sym}</bdi>
-                </b>
-                <ScaleTag c={c} lang={lang} />
+                {!hidden && (
+                  <b className="rs-sym">
+                    <bdi dir="ltr">{c.sym}</bdi>
+                  </b>
+                )}
+                {!hidden && <ScaleTag c={c} lang={lang} />}
                 {hits?.[i] != null && (
                   <span className="rs-hit" aria-label={hits[i] ? (lang === 'he' ? 'צליל צבע' : 'colour note') : lang === 'he' ? 'בלי צליל צבע' : 'no colour note'}>
                     <Icon k={hits[i] ? 'check' : 'minus'} size={12} />
@@ -182,7 +188,7 @@ export function rotationCharts(lang: Lang, dayKey: number, piece?: MyChart | nul
   return out;
 }
 
-export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onTake, top }: { settings: Settings; lang: Lang; tier: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey: number; piece?: MyChart | null; onTier?: (t: 1 | 2 | 3) => void; /** Every take; `played` = the take's notes (beats from the chart's first beat) and its chart, for the lick detection at the take boundary (SPEC-LICKS-IN-IMPROV §3). */ onTake?: (t: ImprovTake & { inSet?: number }, played?: { notes: PlayedNote[]; chart: string; bars: number; bpm: number }) => void; /** Above the sheet (the workout's "today's lick" card). */ top?: React.ReactNode }) {
+export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onTake, top }: { settings: Settings; lang: Lang; tier: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey: number; piece?: MyChart | null; onTier?: (t: 1 | 2 | 3) => void; /** Every take; `played` = the take's notes (beats from the chart's first beat) and its chart, for the lick detection at the take boundary (SPEC-LICKS-IN-IMPROV §3). */ onTake?: (t: ImprovTake & { inSet?: number }, played?: { notes: PlayedNote[]; chart: string; bars: number; bpm: number; /** Played with the lead sheet hidden (the "from memory" channel). */ memory?: boolean }) => void; /** Above the sheet (the workout's "today's lick" card). */ top?: React.ReactNode }) {
   const tx = TX[lang];
   const charts = useMemo(() => rotationCharts(lang, dayKey, piece), [lang, dayKey, piece]);
   const [src, setSrc] = useState(charts[0]?.c.id ?? 'lv:4');
@@ -206,6 +212,8 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   const [grade, setGrade] = useState<RotationGrade | null>(null);
   const [chorus, setChorus] = useState(0);
   const [showKeys, setShowKeys] = useState(midi.devices.length === 0);
+  // SPEC-EAR-AND-READING §3.4: the lead sheet off once the progression is known (memory); hidden while playing only
+  const [memory, setMemory] = useState(false);
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
   const notes = useRef<PlayedNote[]>([]);
@@ -279,7 +287,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
     setGrade(g);
     setChorus(0);
     // SPEC-PROGRESS-CHARTS §1: the take's in-scale share feeds the snapshot's in-scale rate
-    onTake?.({ ...improvTake('rotation', { score: g.score, notes: notes.current.length, tier, bpm, stats: g.stats }), ...(notes.current.length ? { inSet: g.m.inSet } : {}) }, { notes: [...notes.current], chart: chart.text, bars: sheet.bars * sheet.choruses, bpm });
+    onTake?.({ ...improvTake('rotation', { score: g.score, notes: notes.current.length, tier, bpm, stats: g.stats }), ...(notes.current.length ? { inSet: g.m.inSet } : {}) }, { notes: [...notes.current], chart: chart.text, bars: sheet.bars * sheet.choruses, bpm, memory });
   };
   const stop = () => {
     ctl.current?.abort();
@@ -337,9 +345,9 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
         </select>
       </div>
       {top}
-      <LeadSheet sheet={sheet} chorus={chorus} now={now} hits={grade?.hits} lang={lang} />
+      <LeadSheet sheet={sheet} chorus={chorus} now={now} hits={grade?.hits} lang={lang} hidden={memory && running} />
       <div className="rs-under">
-        {chip ? (
+        {chip && !(memory && running) ? (
           <span className={`rs-next${chip.changed ? ' changed' : ''}`} data-rs-next={chip.cell.mode} data-rs-next-bars={chip.bars || undefined} aria-live="polite">
             <small>{tx.next}</small> <bdi dir="ltr">{chip.cell.sub?.sym ?? chip.cell.sym}</bdi> <ScaleTag c={chip.cell} lang={lang} />
             {chip.changed && (
@@ -389,6 +397,9 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
         </div>
         <button className={`chip rs-keys-btn${showKeys ? ' on' : ''}`} onClick={() => setShowKeys((v) => !v)} aria-pressed={showKeys} data-rs-keys="1">
           {tx.keys}
+        </button>
+        <button className={`chip rs-memory-btn${memory ? ' on' : ''}`} onClick={() => setMemory((v) => !v)} aria-pressed={memory} disabled={running} data-rs-memory="1">
+          {lang === 'he' ? 'מהזיכרון' : 'From memory'}
         </button>
         {running ? (
           <button className="btn primary" onClick={stop}>

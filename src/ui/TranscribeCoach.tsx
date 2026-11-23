@@ -55,9 +55,11 @@ export interface TranscribeProps {
   onPathDone?: (stars: number) => void;
   /** Licks › Transcribe (phase 3): the levels list wears the Licks header and its tabs. */
   hub?: boolean;
+  /** "Transcribe a phrase" from a piece's page (SPEC-PRACTICE-IA-3 §7): the coach opens on that piece's phrases. */
+  piece?: { title: string; phrases: Phrase[] } | null;
 }
 
-export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTake, onPhrase, onBack, pathLevel, onPathDone, hub }: TranscribeProps) {
+export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTake, onPhrase, onBack, pathLevel, onPathDone, hub, piece }: TranscribeProps) {
   const tx = TX[lang];
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
@@ -74,6 +76,25 @@ export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTak
       <h1>{title}</h1>
     </header>
   );
+  if (piece?.phrases.length && level === null)
+    return (
+      <main className="panel-screen lk-screen tx-screen" data-transcribe="piece" data-tx-piece={piece.phrases.length}>
+        {head(`${tx.title} · ${piece.title}`, leave)}
+        <PhraseCoach
+          lang={lang}
+          settings={settings}
+          level={piece.phrases[0].level}
+          given={piece.phrases}
+          items={itemsNow}
+          onSettings={onSettings}
+          onTake={onTake}
+          onPhrase={(st, evs, xp, stars) => {
+            setLive((x) => ({ ...x, [st.itemId]: st }));
+            onPhrase(st, evs, xp, stars);
+          }}
+        />
+      </main>
+    );
   if (level !== null)
     return (
       <main className="panel-screen lk-screen tx-screen" data-transcribe="phrase" data-tx-level={level}>
@@ -120,11 +141,12 @@ export function TranscribeCoachScreen({ lang, settings, items, onSettings, onTak
 
 const SPEEDS = [0.5, 0.75, 1];
 
-function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhrase }: { lang: Lang; settings: Settings; level: number; items: Record<string, ItemState>; onSettings: (p: Partial<Settings>) => void; onTake: TakeFn; onPhrase: TranscribeProps['onPhrase'] }) {
+function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhrase, given }: { lang: Lang; settings: Settings; level: number; items: Record<string, ItemState>; onSettings: (p: Partial<Settings>) => void; onTake: TakeFn; onPhrase: TranscribeProps['onPhrase']; /** A piece's own phrases, in order (instead of the level's generated ones). */ given?: Phrase[] }) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const [seed, setSeed] = useState(() => ((Date.now() >>> 10) ^ ((items[levelItem(level)]?.takes ?? 0) * 977)) % 100000);
-  const phrase0 = useMemo(() => phraseFor(level, seed), [level, seed]);
+  const [gi, setGi] = useState(0);
+  const phrase0 = useMemo(() => (given?.length ? given[gi % given.length] : phraseFor(level, seed)), [level, seed, given, gi]);
   const own = useMemo(() => lickFromPhrase(`tx-${phrase0.id}`, phrase0.title, phrase0.key, phrase0.notes, phrase0.chords), [phrase0]);
   // The phrase on the player's instrument (its register): the drill plays and measures it; the comparison uses its notes.
   const drill: Drill = useMemo(() => ({ ...lickDrill(own, phrase0.key, inst, { range: settings.voiceRange ?? null }), show: 'none' as const, chart: phrase0.chords ? lickChart(own, phrase0.key) : undefined }), [own, phrase0, inst, settings.voiceRange]);
@@ -195,6 +217,7 @@ function PhraseCoach({ lang, settings, level, items, onSettings, onTake, onPhras
   const next = () => {
     stop();
     setSeed((s) => s + 1);
+    setGi((i) => i + 1);
     setStep(0);
     setPlay(null);
     setWritten([]);

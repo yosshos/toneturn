@@ -33,7 +33,8 @@ import { PlaceSpark } from './PlaceSpark';
 import type { CourseId } from '../engine/courses';
 import { LickShareButton } from './LickShare';
 import { EarVocab, SentenceDebrief, type EarRun } from './EarVocab';
-import { weekKeyIfKept } from './todayTech';
+import { dayKeyIfKept } from './todayTech';
+import { courseOfInstrument, profileOf, strongOf } from '../engine/channelPlan';
 import { kName } from './encore/bits';
 import { inMyLanguage, usesOf } from '../engine/vocab';
 import { lickLadder } from '../engine/statusLadder';
@@ -415,6 +416,9 @@ export interface LickTrainerProps {
 export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise, vocab, openLick, wayIn: wayInProp, whereOf, onWhere, startStyle, startLick }: LickTrainerProps) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
+  // SPEC-EAR-AND-READING §2.2 outside technique: a lick is learned in the player's strong channel first (by ear or from
+  // the page, the measured profile with the course's self-ratings as the prior); the other way stays one tap away
+  const strongCh = strongOf(profileOf(items, settings.channelSelf?.[courseOfInstrument(inst === 'voice' ? 'piano' : inst)]));
   const book: LickBook = settings.lickBook ?? {};
   // Encore phrases (Lick v3) live in the same book but practice in Encore (their own plan and map).
   const own = (book.own ?? []).filter((l) => !(l.v === 3 || l.id.startsWith('enc-')));
@@ -603,10 +607,10 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         <LickGrid l={l} inst={inst} items={itemsNow} lang={lang} />
         <div className="drill-actions lk-actions">
           {/* two modes per lick (SPEC-EAR-AND-READING §3.2): from the page, or by ear (the notes hidden until played right) */}
-          <button className="btn primary" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1" data-item-main={wayIn} title={`${tx.fromPage} · ${keyName(key)}`}>
+          <button className={`btn ${strongCh === 'ear' ? '' : 'primary'}`} style={strongCh === 'ear' ? { order: 1 } : undefined} onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l) })} data-lick-practice="1" data-item-main={wayIn} title={`${tx.fromPage} · ${keyName(key)}`}>
             {ITEM_MAIN[wayIn][lang]} · <bdi dir="ltr">{keyName(key)}</bdi>
           </button>
-          <button className="btn" onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1">
+          <button className={`btn ${strongCh === 'ear' ? 'primary' : ''}`} style={strongCh === 'ear' ? { order: 0 } : undefined} onClick={() => setView({ k: 'run', id: l.id, queue: runFor(l), byEar: true })} data-lick-byear="1" data-lick-strong={strongCh}>
             {tx.byEar}
           </button>
           {onImprovise && (
@@ -728,7 +732,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
           licks={all}
           library={LICKS}
           inst={inst}
-          dayKey={weekKeyIfKept('major', inst === 'voice' ? 'piano' : inst) ?? 0}
+          dayKey={dayKeyIfKept(inst === 'voice' ? 'piano' : inst)?.root ?? 0}
           opts={opts}
           onRun={(run) => setView({ k: 'earRun', run })}
           onFound={(evs, xp) => onUsed(evs, xp)}

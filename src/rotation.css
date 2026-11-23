@@ -77,3 +77,6 @@
 .hw-think { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; }
 .hw-start { font-size: 0.68rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .hw .rs-keys .is-key.rs-colour { --fam: #6b5fc7; }
+/* SPEC-EAR-AND-READING §3.4: the lead sheet from memory — the bars and the now-cue only */
+.rs-sheet.hidden-sheet .rs-cell { background: var(--card); }
+.rs-sheet.hidden-sheet .rs-sym { color: var(--ink-dim); }

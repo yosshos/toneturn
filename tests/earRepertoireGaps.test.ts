@@ -153,3 +153,62 @@ describe('"now improvise with it" after a lick closes in the key (SPEC-LICKS-IN-
     expect(closedRecently([{ l: a, st: st('2026-11-23T10:00:00Z'), closed: false }], now)).toBeNull();
   });
 });
+
+// ───────────────────────────── after the merge (2026-11-23): the left-out items ─────────────────────────────
+import { repDueKey, REP_REVIEW_DAYS } from '../src/engine/repLibrary';
+import { repertoireFor, repLessonId } from '../src/engine/repertoire';
+import { suggestWorkout } from '../src/engine/workout2';
+import { buildPath } from '../src/engine/path';
+import { phraseOfLick, phrasesOfMelody } from '../src/engine/transcribe';
+import { readFileSync } from 'node:fs';
+
+describe('the Repertoire workout block offers a piece due for review (SPEC-PRACTICE-IA-3 §5)', () => {
+  const it0 = repertoireFor('keys')[0];
+  const run = (day: string) => ({ lessonId: repLessonId('keys', it0.id), completedAt: `${day}T10:00:00Z`, firstTry: 10, total: 10 });
+  const hist = [run('2026-11-01'), run('2026-11-01'), run('2026-11-02')];
+  it('a closed road piece comes back after a week; not before; never an open one', () => {
+    expect(repDueKey(hist, 'keys', '2026-11-12')).toBe(`rep:keys:${it0.id}`);
+    expect(repDueKey(hist, 'keys', '2026-11-05')).toBeNull();
+    expect(repDueKey(hist.slice(0, 1), 'keys', '2026-11-30')).toBeNull();
+    expect(REP_REVIEW_DAYS).toBe(7);
+  });
+  it('the workout adds a short review block that opens the piece (the score coach first when a score is due)', () => {
+    const view = buildPath({ track: 'hobby', goal: 'general', hidden: [], noSing: false, noMic: false, priorities: ['time', 'pitch', 'memory', 'reading', 'voice', 'creative', 'instrument'], leaveOut: [], packs: [], plays: [], minutes: 20, ratings: {}, events: [], facts: {}, keep: [], reviewDue: 0, now: new Date('2026-11-12T12:00:00Z') });
+    const base = { total: 15, goal: 'general' as const, priorities: null, leaveOut: [], reviewsDue: 0, singer: false, view };
+    const rep = suggestWorkout({ ...base, repDue: 'rep:keys:x' }).find((b) => b.target.kind === 'game' && b.target.game === 'rep-review');
+    expect(rep).toMatchObject({ minutes: 3, target: { piece: 'rep:keys:x' } });
+    const both = suggestWorkout({ ...base, repDue: 'rep:keys:x', piecesDue: 1 });
+    expect(both.some((b) => b.target.kind === 'game' && b.target.game === 'pieces')).toBe(true);
+  });
+});
+
+describe('Transcribe a phrase loads the piece (SPEC-PRACTICE-IA-3 §7)', () => {
+  it('a melody in two-bar phrases, each from its bar', () => {
+    const notes = Array.from({ length: 16 }, (_, b) => ({ midi: 60 + (b % 4), beat: b, dur: 1 }));
+    const ps = phrasesOfMelody({ id: 'song', title: { en: 'Song', he: 'שיר' }, notes, key: 0, bpm: 100 });
+    expect(ps).toHaveLength(2);
+    expect(ps[1].notes[0]).toMatchObject({ beat: 0, midi: 60 });
+    expect(ps[0]).toMatchObject({ level: 4, source: 'public-domain' });
+  });
+  it('a chords-only standard: one of the app\'s licks over its chords, in the key it fits', () => {
+    const p = phraseOfLick(LICKS[0], 5);
+    expect(p).toMatchObject({ key: 5, source: 'lick', chords: LICKS[0].chords });
+    expect(p.notes).toHaveLength(LICKS[0].notes.length);
+  });
+});
+
+describe('the rotation\'s lead sheet from memory; the Licks page in the strong channel; the day key with minor weeks', () => {
+  const src = (p: string) => readFileSync(`src/${p}`, 'utf8');
+  it('ScaleRotation hides the chords while playing from memory; the now-cue cell stays', () => {
+    const s = src('ui/ScaleRotation.tsx');
+    expect(s).toContain('hidden={memory && running}');
+    expect(s).toContain("i === now ? ' now' : ''");
+    expect(s).toContain('data-rs-memory="1"');
+  });
+  it('LickTrainer orders the two ways by the profile and reads the week key with its group', () => {
+    const s = src('ui/LickTrainer.tsx');
+    expect(s).toContain('strongOf(profileOf(items');
+    expect(s).toContain("dayKeyIfKept(inst === 'voice' ? 'piano' : inst)");
+    expect(s).not.toContain("weekKeyIfKept('major'");
+  });
+});

@@ -400,3 +400,31 @@ export function phraseEvents(p: Phrase, play: PhraseResult | null, written: { ok
   ];
 }
 export const phraseXp = (stars: number) => [1, 3, 5, 8][Math.max(0, Math.min(3, stars))];
+
+// ───────────────────────────── a piece's phrases ("Transcribe a phrase" on the piece page) ─────────────────────────────
+
+/**
+ * A piece's melody cut into phrases of `bars` bars (SPEC-PRACTICE-IA-3 §7: "Transcribe a phrase" on a song): each
+ * phrase from its bar's start, empty ones skipped; level 4 (two bars). The notes are the piece's own (a public-domain
+ * songbook tune, or the player's imported lead sheet).
+ */
+export function phrasesOfMelody(o: { id: string; title: T2; notes: PNote[]; key: number; bpm: number; minor?: boolean; meter?: number; bars?: number }): Phrase[] {
+  const meter = o.meter ?? 4;
+  const len = (o.bars ?? 2) * meter;
+  const ns = [...o.notes].sort((a, b) => a.beat - b.beat);
+  if (!ns.length) return [];
+  const end = Math.max(...ns.map((n) => n.beat + n.dur));
+  const out: Phrase[] = [];
+  for (let from = Math.floor(ns[0].beat / meter) * meter, i = 0; from < end - 1e-6; from += len, i++) {
+    const ph = ns.filter((n) => n.beat >= from - 1e-6 && n.beat < from + len - 1e-6);
+    if (ph.length < 2) continue;
+    out.push({ id: `${o.id}-p${i}`, level: 4, key: mod(o.key), minor: !!o.minor, notes: ph.map((n) => ({ ...n, beat: n.beat - from })), chords: null, swing: false, bpm: Math.max(60, Math.min(110, Math.round(o.bpm * 0.8))), source: 'public-domain', title: { en: `${o.title.en} · ${out.length + 1}`, he: `${o.title.he} · ${out.length + 1}` } });
+  }
+  return out;
+}
+
+/** One of the app's licks as a phrase in a key over its chords (a chords-only standard: the licks that fit its changes). */
+export function phraseOfLick(l: Lick, key: number, bpm = 96): Phrase {
+  const ps = lickPitches(l, key);
+  return { id: `lick-${l.id}-${mod(key)}`, level: Math.min(9, 5 + Math.max(0, l.level - 1)), key: mod(key), minor: false, notes: l.notes.map((n, i) => ({ midi: ps[i], beat: n[1], dur: n[2] })), chords: l.chords, swing: !l.straight, bpm, source: 'lick', title: l.name };
+}

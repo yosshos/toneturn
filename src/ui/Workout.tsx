@@ -155,7 +155,7 @@ export function blockLabel(t: Strings, b: BlockTarget, lang: Lang, id?: string):
       return TOPIC_GEN[b.topic]?.title[lang] ?? b.topic;
     case 'game':
       if (b.game === 'licks') return lang === 'he' ? 'חזרה על ליקים' : 'Lick review';
-      if (b.game === 'pieces') return lang === 'he' ? 'חזרה על יצירה' : 'Piece review';
+      if (b.game === 'pieces' || b.game === 'rep-review') return lang === 'he' ? 'חזרה על יצירה' : 'Piece review';
       if (b.game === 'encore') return lang === 'he' ? 'ליקים · המשפטים שלי' : 'Licks · my phrases';
       if (b.game === 'transcribe') return lang === 'he' ? 'תמלול' : 'Transcribe';
       return GAMES2.find((g) => g.id === b.game)?.[lang][0] ?? b.game;

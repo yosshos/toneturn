@@ -334,3 +334,23 @@ export function entryStyle(e: Pick<LibEntry, 'item' | 'std'>): StyleId | null {
   if (stdId) return STANDARD_CHANGES.find((x) => x.id === stdId)?.style === 'bossa' ? 'brazil' : 'jazz';
   return null;
 }
+
+/** A closed road piece comes back for a review run this many days after its last result (SPEC-PRACTICE-IA-3 §5). */
+export const REP_REVIEW_DAYS = 7;
+/**
+ * The road piece due for review (SPEC-PRACTICE-IA-3 §5, the workout's Repertoire block — not only the score coach):
+ * of the course's closed pieces, the one whose last result is oldest and at least REP_REVIEW_DAYS old. Its piece key, or
+ * null when none is due.
+ */
+export function repDueKey(history: HistLike[] | undefined, course: RepCourse, today: string): string | null {
+  const t = Date.parse(`${today}T12:00:00Z`);
+  let best: { key: string; last: number } | null = null;
+  for (const it of repertoireFor(course)) {
+    if (pieceStatus(history, undefined, course, it.id) !== 'closed') continue;
+    const lid = repLessonId(course, it.id);
+    const last = Math.max(...(history ?? []).filter((h) => h.lessonId === lid).map((h) => Date.parse(h.completedAt)));
+    if (!Number.isFinite(last) || t - last < REP_REVIEW_DAYS * 86_400_000) continue;
+    if (!best || last < best.last) best = { key: pieceKey({ kind: 'rep', course, id: it.id }), last };
+  }
+  return best?.key ?? null;
+}

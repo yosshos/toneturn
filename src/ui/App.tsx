@@ -39,7 +39,8 @@ import { TeachScreen } from './TeachPhrase';
 import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './teacherPhraseSync';
 import { teacherMockOn } from '../cloud/teacher';
 import { phrasesDueCount } from '../engine/encore/connect';
-import { dueLicks, isMinorLick, reviewAfter } from '../engine/licks';
+import { dueLicks, isMinorLick, LICKS, reviewAfter } from '../engine/licks';
+import { phraseOfLick, phrasesOfMelody, type Phrase } from '../engine/transcribe';
 import { bookUses, closedKeys, todaysLick, vocabInUse, vocabPool } from '../engine/vocab';
 import { lickTimingTol } from '../engine/lickDetect';
 import { TranscribeCoachScreen } from './TranscribeCoach';
@@ -248,7 +249,7 @@ import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRoute
 import { stepChannelOf, type StepChannel } from '../engine/stepChannel';
 import { itemOfAssign } from '../engine/itemAssign';
 import { rungKeyOf, stepLickOf } from './itemRoutes';
-import { chartOfLevel, chartOfPiece, parsePieceKey, pieceKey, whereInPath, type LibEntry, type PieceAction } from '../engine/repLibrary';
+import { chartOfLevel, chartOfPiece, parsePieceKey, pieceKey, repDueKey, whereInPath, type LibEntry, type PieceAction } from '../engine/repLibrary';
 import { firstRootPc } from './Charts';
 import { PlaceSpark } from './PlaceSpark';
 import { placeOfRoute, placeTitle, rememberPlace } from './continuePlace';
@@ -1912,6 +1913,8 @@ export function App() {
   };
   /** Phase 3: a piece page's action (SPEC-PRACTICE-IA-3 §3): its own measured way, the band, Improvise with this chart,
    *  the piece coach, My song, or the technique hub at the chart's key. Each comes back to the page it left. */
+  /** "Transcribe a phrase" from a piece's page: the phrases the coach opens on (cleared when it closes). */
+  const transcribePiece = useRef<{ title: string; phrases: Phrase[] } | null>(null);
   const repAction = (e: LibEntry, a: PieceAction) => {
     if (!settings) return;
     const lang = settings.uiLang;
@@ -1968,7 +1971,22 @@ export function App() {
       if (!page) return;
       return runQueue(a.mode === 'ear' ? melodyByEar(page) : [page]);
     }
-    if (a.k === 'transcribe') return go('transcribe-coach');
+    if (a.k === 'transcribe') {
+      // SPEC-PRACTICE-IA-3 §7: the coach opens on this piece — a song's own melody in two-bar phrases; a chords-only
+      // standard: the app's licks that fit its changes (no melody is used that the legal line doesn't allow)
+      const songWay = e.item?.ways.find((w): w is Extract<RepWay, { k: 'song' }> => w.k === 'song');
+      const title = e.title[settings.uiLang];
+      const mel = songWay ? repDrills({ ...songWay, part: 'melody' }, 'keys', progress?.drillItems ?? {}, drillSettingsOf(settings).keyOrder)[0] : null;
+      const phrases = mel
+        ? phrasesOfMelody({ id: e.key, title: e.title, notes: mel.notes.filter((n) => n.hand !== 'L').map((n) => ({ midi: n.pitch, beat: n.beat, dur: n.dur })), key: mel.spec.key, bpm: mel.startBpm })
+        : chart?.melody?.length
+          ? phrasesOfMelody({ id: e.key, title: e.title, notes: chart.melody.map((n) => ({ midi: n.m, beat: n.b, dur: n.d })), key: firstRootPc(chart.text) ?? 0, bpm: chart.bpm })
+          : chart
+            ? licksThatFit(LICKS, chart.text, { max: 4 }).map((f) => phraseOfLick(f.lick, f.key, Math.min(120, chart.bpm)))
+            : [];
+      transcribePiece.current = phrases.length ? { title, phrases } : null;
+      return go('transcribe-coach');
+    }
   };
   /** My song on a recording (or its library, to add one): the singer's is voice level 1308; the others open the
    *  play-along / transcription screen, with its quick lesson the first time (game:mysong, game:mysong-ear). */
@@ -2469,7 +2487,7 @@ export function App() {
     const techTier = course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' ? matrixTierOf(s, dsW, progress.drillItems ?? {}) : undefined;
     // SPEC-STYLE-FOCUS §4: the main style (classical: the improvisation share is repertoire) and today's band style.
     const mainStyle = focusOf(s, course.id).main;
-    return suggestWorkout({ techTier, mainStyle, improvStyle: improvStyleFor(s, course.id, today), teacher: teacherTp, tilt: activeTilt(s.aiTilt, today), total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
+    return suggestWorkout({ techTier, mainStyle, improvStyle: improvStyleFor(s, course.id, today), teacher: teacherTp, tilt: activeTilt(s.aiTilt, today), total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, repDue: course.id === 'ear' ? null : repDueKey(progress.history, course.id, today), pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.styleFocus, s.styleTaste, s.aiTilt, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
   // Today's edits keep the teacher's section (it is added, never replaced: §5.1).
@@ -2759,6 +2777,8 @@ export function App() {
       chartQueue.current = q.length ? q : null;
     }
     if (b.target.kind === 'game') {
+      // SPEC-PRACTICE-IA-3 §5: a Repertoire piece due for review opens on its page
+      if (b.target.game === 'rep-review' && b.target.piece) return openRep({ piece: b.target.piece });
       if (b.target.game === 'licks') lickReview.current = true;
       if (b.target.game === 'drills') {
         drillFrom.current = 'workout';
@@ -3894,6 +3914,8 @@ export function App() {
       )}
       {route === 'transcribe-coach' && (
         <TranscribeCoachScreen
+          key={transcribePiece.current ? `tx-piece-${transcribePiece.current.title}` : 'tx'}
+          piece={transcribePiece.current}
           hub
           lang={s.uiLang}
           settings={s}
@@ -3909,7 +3931,7 @@ export function App() {
           }}
           pathLevel={measuredStep.current?.level}
           onPathDone={(stars) => leaveMeasured('transcribe', stars)}
-          onBack={() => leaveMeasured('transcribe', null)}
+          onBack={() => (transcribePiece.current ? ((transcribePiece.current = null), backToRep(() => go('repertoire'))) : leaveMeasured('transcribe', null))}
         />
       )}
       {route === 'improv' && s.activeCourse === 'drums' && (

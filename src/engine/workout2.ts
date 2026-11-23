@@ -15,7 +15,8 @@ export type BlockTarget =
   | { kind: 'area'; area: DomainId }
   | { kind: 'skill'; skill: SkillId }
   | { kind: 'topic'; topic: string }
-  | { kind: 'game'; game: string }
+  /** `piece`: the piece key a Repertoire review block opens (game 'rep-review'). */
+  | { kind: 'game'; game: string; piece?: string }
   | { kind: 'vocal' }
   /** Off-app practice on the player's own instrument: a timer, the metronome, a note (W12). */
   | { kind: 'practice' }
@@ -79,6 +80,8 @@ export interface SuggestInput {
   phrasesDue?: number;
   /** Learned pieces due for a review run (SPEC-PIECE §2.10): a 3-minute piece-review block, taken from the path block. */
   piecesDue?: number;
+  /** A closed Repertoire piece due for review (repLibrary.repDueKey): the piece-review block opens it (SPEC-PRACTICE-IA-3 §5). */
+  repDue?: string | null;
   /** SPEC-PATH-ROLE §6 Q3: "guide me" (default) or "I choose" — no New block; strengthen + review only. */
   pathMode?: PathMode;
   /** Opened items the strengthen block can draw from; default: the opened steps in the view (0 = a new player). */
@@ -213,14 +216,16 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
 
 function suggestRest(inp: SuggestInput): Block[] {
   const out = withLicks(inp, suggestBase(inp));
-  if (!inp.piecesDue || inp.template?.length || total(out) < 10) return out;
+  if (!(inp.piecesDue || inp.repDue) || inp.template?.length || total(out) < 10) return out;
   // The piece review (part of the review share, SPEC-PATH-ROLE §3): a short block (weak bars, then one full run at
   // tempo) from the review block, else the largest block; placed after the review.
   const from = reviewSource(out, 3);
   if (!from) return out;
   from.minutes -= 3;
   const at = out.findIndex((b) => b.target.kind === 'warmup');
-  out.splice(at < 0 ? out.length : at + 1, 0, { id: uid(out, 'game'), target: { kind: 'game', game: 'pieces' }, minutes: 3 });
+  // a score in the piece coach first; else a Repertoire piece due for review (its page, the Review block's run)
+  const target: BlockTarget = inp.piecesDue ? { kind: 'game', game: 'pieces' } : { kind: 'game', game: 'rep-review', piece: inp.repDue! };
+  out.splice(at < 0 ? out.length : at + 1, 0, { id: uid(out, 'game'), target, minutes: 3 });
   return out;
 }
 
@@ -357,7 +362,7 @@ export function whyOf(t: BlockTarget): Why | null {
     case 'mistakes':
       return 'review';
     case 'game':
-      return t.game === 'licks' || t.game === 'encore' || t.game === 'pieces' ? 'review' : null;
+      return t.game === 'licks' || t.game === 'encore' || t.game === 'pieces' || t.game === 'rep-review' ? 'review' : null;
     case 'keys':
     case 'strengthen':
     case 'area':

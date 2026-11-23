@@ -523,7 +523,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           piece={initialChart}
           onTier={onTier}
           onTake={(t, played) => {
-            onTake?.(t);
+            onTake?.(t, played?.memory ? 'unaided' : undefined);
             // the take boundary (SPEC-LICKS-IN-IMPROV §3): the licks in the rotation take, and the lick card riding along
             if (!played) return;
             const p = parseChart(played.chart);
