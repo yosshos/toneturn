@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { chartBacking, IMPROV_LEVELS, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
 import { STANDARD_CHANGES } from '../engine/standards';
-import { buildRotationSheet, cellAt, cellNotes, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, scaleShort, type ImprovTake, type RotationGrade, type RotationSheet, type SheetCell } from '../engine/rotationSheet';
+import { buildRotationSheet, cellAt, cellNotes, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, nextChange, scaleShort, type ImprovTake, type RotationGrade, type RotationSheet, type SheetCell } from '../engine/rotationSheet';
 import type { ModeStats, PlayedNote } from '../engine/rotation';
 import type { NoteEvent } from '../engine/lesson';
 import type { Settings } from '../storage/progress';
@@ -23,8 +23,8 @@ type Lang = 'en' | 'he';
 export const ROTATION_LEVELS = [4, 5, 6];
 
 const TX = {
-  en: { key: 'Key', tier: 'Tier', chart: 'Chart', next: 'Next', newScale: 'new scale', start: 'Start', stop: 'Stop', tempo: 'Tempo', keys: 'Keyboard', inSet: 'in the scale', colour: 'colour coverage', strong: 'chord tones on 1 and 3', avoid: 'avoid notes held', chorus: 'Chorus', standards: 'Standards', levels: 'Progressions', none: 'Play a few notes over the chords to see the coverage.', plain: 'This time the plain scales: no colour notes to cover. The next take rotates in new ones.', colourWhy: 'A colour note is what the scale adds over the chord’s plain scale.', sameNotes: 'same notes as' },
-  he: { key: 'סולם', tier: 'שלב', chart: 'מהלך', next: 'הבא', newScale: 'סולם חדש', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', keys: 'מקלדת', inSet: 'בתוך הסולם', colour: 'כיסוי צבע', strong: 'צלילי אקורד ב־1 וב־3', avoid: 'צלילי הימנעות שהוחזקו', chorus: 'כורוס', standards: 'סטנדרטים', levels: 'מהלכים', none: 'נגנו כמה צלילים מעל האקורדים כדי לראות את הכיסוי.', plain: 'הפעם הסולמות הרגילים: אין צלילי צבע לכסות. בטייק הבא ייכנסו סולמות חדשים.', colourWhy: 'צליל צבע הוא מה שהסולם מוסיף על הסולם הרגיל של האקורד.', sameNotes: 'אותם צלילים כמו' },
+  en: { key: 'Key', tier: 'Tier', chart: 'Chart', next: 'Next', newScale: 'new scale', start: 'Start', stop: 'Stop', tempo: 'Tempo', keys: 'Keyboard', inSet: 'in the scale', colour: 'colour coverage', strong: 'chord tones on 1 and 3', avoid: 'avoid notes held', chorus: 'Chorus', standards: 'Standards', levels: 'Progressions', none: 'Play a few notes over the chords to see the coverage.', plain: 'This time the plain scales: no colour notes to cover. The next take rotates in new ones.', colourWhy: 'A colour note is what the scale adds over the chord’s plain scale.', sameNotes: 'same notes as', otherBass: 'over a different bass', inBars: (n: number) => (n === 1 ? 'in 1 bar' : `in ${n} bars`), resolution: 'resolved by step into the new chord' },
+  he: { key: 'סולם', tier: 'שלב', chart: 'מהלך', next: 'הבא', newScale: 'סולם חדש', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', keys: 'מקלדת', inSet: 'בתוך הסולם', colour: 'כיסוי צבע', strong: 'צלילי אקורד ב־1 וב־3', avoid: 'צלילי הימנעות שהוחזקו', chorus: 'כורוס', standards: 'סטנדרטים', levels: 'מהלכים', none: 'נגנו כמה צלילים מעל האקורדים כדי לראות את הכיסוי.', plain: 'הפעם הסולמות הרגילים: אין צלילי צבע לכסות. בטייק הבא ייכנסו סולמות חדשים.', colourWhy: 'צליל צבע הוא מה שהסולם מוסיף על הסולם הרגיל של האקורד.', sameNotes: 'אותם צלילים כמו', otherBass: 'מעל בס אחר', inBars: (n: number) => (n === 1 ? 'בעוד תיבה' : `בעוד ${n} תיבות`), resolution: 'נפתרו בצעד אל האקורד החדש' },
 };
 
 /** A scale label: the family colour + its short tag, then the scale's root and name (note names isolated LTR). */
@@ -56,7 +56,7 @@ export function LeadSheet({ sheet, chorus, now, hits, lang }: { sheet: RotationS
             c.chorus === chorus && c.bar === b ? (
               <div key={i} role="cell" className={`rs-cell fam-${c.fam}${i === now ? ' now' : ''}${hits?.[i] === true ? ' hit' : hits?.[i] === false ? ' miss' : ''}`} style={{ flexGrow: c.beats }} data-rs-cell={i} data-now={i === now ? '1' : undefined}>
                 {c.sub ? (
-                  <small className="rs-sub" title={c.sub.label[lang]}>
+                  <small className="rs-sub" title={c.same ? `${c.sub.label[lang]} · ${TX[lang].sameNotes} ${c.same.rootName} ${scaleShort(c.same.mode, lang)}` : c.sub.label[lang]}>
                     <bdi dir="ltr">{c.sub.sym}</bdi>
                   </small>
                 ) : (
@@ -106,7 +106,7 @@ export function ScaleStrip({ sheet, lang }: { sheet: RotationSheet; lang: Lang }
 }
 
 /** The grade of a take in four numbers (colour coverage first: the metric the rotation tests). */
-export function RotationStats({ g, lang }: { g: RotationGrade; lang: Lang }) {
+export function RotationStats({ g, lang, tier = 1 }: { g: RotationGrade; lang: Lang; /** The resolution metric counts from T3 (SPEC-RBI-ROTATION §5). */ tier?: number }) {
   const tx = TX[lang];
   return (
     <ul className="is-stats rs-stats" data-rs-result="1">
@@ -134,12 +134,21 @@ export function RotationStats({ g, lang }: { g: RotationGrade; lang: Lang }) {
         </b>{' '}
         <small>{tx.avoid}</small>
       </li>
+      {tier >= 3 && g.m.changes > 0 && (
+        <li data-rs-resolution={Math.round(g.m.resolution * 100)}>
+          <b>
+            <bdi dir="ltr">{Math.round(g.m.resolution * 100)}%</bdi>
+          </b>{' '}
+          <small>{tx.resolution}</small>
+        </li>
+      )}
     </ul>
   );
 }
 
-/** Two octaves from C4, the active scale marked (in the scale: a dot; colour notes: the family colour). */
-function MarkedKeys({ onKey, pcs, colour, fam }: { onKey: (m: number) => void; pcs: number[]; colour: number[]; fam: string }) {
+/** Two octaves from C4, the active scale marked (in the scale: a dot; colour notes: the family colour; avoid notes:
+ *  outlined). */
+function MarkedKeys({ onKey, pcs, colour, avoid, fam }: { onKey: (m: number) => void; pcs: number[]; colour: number[]; avoid: number[]; fam: string }) {
   const keys = Array.from({ length: 25 }, (_, i) => 60 + i);
   const black = (m: number) => [1, 3, 6, 8, 10].includes(m % 12);
   return (
@@ -147,7 +156,7 @@ function MarkedKeys({ onKey, pcs, colour, fam }: { onKey: (m: number) => void; p
       {keys.map((m) => {
         const pc = m % 12;
         const mark = colour.includes(pc) ? 'colour' : pcs.includes(pc) ? 'in' : '';
-        return <button key={m} className={`is-key ${black(m) ? 'b' : 'w'} ${mark ? `rs-${mark} fam-${fam}` : ''}`} onPointerDown={() => onKey(m)} aria-label={String(m)} />;
+        return <button key={m} className={`is-key ${black(m) ? 'b' : 'w'} ${mark ? `rs-${mark} fam-${fam}` : ''}${avoid.includes(pc) ? ' rs-avoid' : ''}`} onPointerDown={() => onKey(m)} aria-label={String(m)} />;
       })}
     </div>
   );
@@ -280,7 +289,14 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   if (!sheet) return null;
   const now = beat === null ? -1 : cellAt(sheet, beat);
   const nx = nextCell(sheet, beat ?? -1);
+  // a new scale is announced 2 bars ahead at T1–2 and 1 bar ahead at T3 (SPEC-RBI-ROTATION §3); otherwise the chip
+  // names the next chord
+  const ch = beat === null ? null : nextChange(sheet, beat);
+  const chip = ch ? { cell: ch.cell, changed: true, bars: ch.bars } : nx ? { cell: nx.cell, changed: nx.changed, bars: 0 } : null;
   const shown = now >= 0 ? sheet.cells[now] : nx?.cell ?? sheet.cells[0];
+  // the tritone sub's note, the first time one comes up in the sheet (now or next): same notes as the V's altered
+  const firstSame = sheet.cells.find((c) => c.same);
+  const sameCell = firstSame && beat !== null && (shown === firstSame || chip?.cell === firstSame) ? firstSame : null;
   const marks = cellNotes(shown, sheet);
   const fams = [...new Set(sheet.cells.map((c) => c.fam))];
   const countNow = beat === null ? -1 : beat < 0 ? Math.max(0, Math.min(3, Math.floor(beat + 4))) : 4 + (Math.floor(beat) % sheet.meter);
@@ -322,15 +338,24 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
       {top}
       <LeadSheet sheet={sheet} chorus={chorus} now={now} hits={grade?.hits} lang={lang} />
       <div className="rs-under">
-        {nx ? (
-          <span className={`rs-next${nx.changed ? ' changed' : ''}`} data-rs-next={nx.cell.mode} aria-live="polite">
-            <small>{tx.next}</small> <bdi dir="ltr">{nx.cell.sub?.sym ?? nx.cell.sym}</bdi> <ScaleTag c={nx.cell} lang={lang} />
-            {nx.changed && <em className="rs-new">{tx.newScale}</em>}
+        {chip ? (
+          <span className={`rs-next${chip.changed ? ' changed' : ''}`} data-rs-next={chip.cell.mode} data-rs-next-bars={chip.bars || undefined} aria-live="polite">
+            <small>{tx.next}</small> <bdi dir="ltr">{chip.cell.sub?.sym ?? chip.cell.sym}</bdi> <ScaleTag c={chip.cell} lang={lang} />
+            {chip.changed && (
+              <em className="rs-new">
+                {tx.newScale}
+                {chip.bars > 0 && ` · ${tx.inBars(chip.bars)}`}
+              </em>
+            )}
           </span>
         ) : (
           <span />
         )}
-        {sheet.choruses > 1 && !running && (
+        {sameCell?.same ? (
+          <small className="rs-same" data-rs-same={sameCell.same.mode}>
+            <bdi dir="ltr">{sameCell.sub?.sym}</bdi>: {tx.sameNotes} <bdi dir="ltr">{sameCell.same.rootName}</bdi> {scaleShort(sameCell.same.mode, lang)}, {tx.otherBass}
+          </small>
+        ) : sheet.choruses > 1 && !running && (
           <div className="seg rs-chorus" role="tablist" aria-label={tx.chorus}>
             {Array.from({ length: sheet.choruses }, (_, k) => (
               <button key={k} role="tab" aria-selected={chorus === k} className={chorus === k ? 'on' : ''} onClick={() => setChorus(k)} aria-label={`${tx.chorus} ${k + 1}`}>
@@ -349,7 +374,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
           ))}
         </p>
       )}
-      {grade && (grade.m.colourSpans ? <RotationStats g={grade} lang={lang} /> : <p className="field-hint" data-rs-plain={grade.m.inSet > 0 ? '1' : undefined}>{grade.m.inSet > 0 ? tx.plain : tx.none}</p>)}
+      {grade && (grade.m.colourSpans ? <RotationStats g={grade} lang={lang} tier={tier} /> : <p className="field-hint" data-rs-plain={grade.m.inSet > 0 ? '1' : undefined}>{grade.m.inSet > 0 ? tx.plain : tx.none}</p>)}
       <div className="rs-controls">
         <div className="ch-step" dir="ltr">
           <small>{tx.tempo}</small>
@@ -374,7 +399,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
           </button>
         )}
       </div>
-      {showKeys && <MarkedKeys onKey={onScreenKey} pcs={marks.pcs} colour={marks.colour} fam={shown.fam} />}
+      {showKeys && <MarkedKeys onKey={onScreenKey} pcs={marks.pcs} colour={marks.colour} avoid={marks.avoid} fam={shown.fam} />}
     </section>
   );
 }
