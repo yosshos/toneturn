@@ -137,3 +137,61 @@ test('Phrase shows the scales it grades against; the piece page brings its chart
   await expect(page.locator('[data-rs-src]')).toHaveValue('piece:');
   await expect(page.locator('[data-rs-sheet]')).toBeVisible();
 });
+
+// SPEC-RBI-ROTATION §4: guitar and bass players see the rotating scale on the neck in the current position (a 5-fret
+// box, chord tones named, colour notes in the family colour), the next scale previewed as rings when it is announced;
+// the lead sheet and the neck fit one phone screen before and during the take, a left-handed neck mirrored.
+for (const [inst, lang, extra] of [
+  ['guitar', 'he', { tuning: 'standard' }],
+  ['bass', 'en', { bassTuning: 'bass' }],
+  ['guitar', 'en', { leftHanded: true, tuning: 'drop-d' }],
+] as const) {
+  test(`the scale on the neck for a ${inst} player${'leftHanded' in extra ? ' (left-handed, drop D)' : ''}, one screen (${lang})`, async ({ page }) => {
+    test.setTimeout(120_000);
+    const done = { n: 2, cov: 1, last: '2026-11-20' };
+    await seed(page, lang, { rotationTier: 2, courses: ['ear', inst], activeCourse: inst, instrument: inst, rotationStats: { 'ii|dorian': done, 'V-maj|mixolydian': done, 'I|ionian': done }, ...extra });
+    await page.goto(`/?unlock=all&lang=${lang}#/improv`);
+    // a guitar / bass player's first load also warms the audio pitch input (busy for a while on a cold dev server)
+    await expect(page.locator('[data-rs-sheet]')).toBeVisible({ timeout: 60_000 });
+    const neck = page.locator(`[data-rs-neck="${inst}"]`);
+    await expect(neck).toBeVisible();
+    await expect(page.locator('.rs-keys')).toHaveCount(0);
+    await expect(neck.locator('svg.neck')).toHaveAttribute('aria-label', /.+/);
+    expect(await neck.locator('.neck-dot.rn-root').count()).toBeGreaterThan(0);
+    expect(await neck.locator('.neck-dot.rn-chord').count()).toBeGreaterThan(0);
+    expect(await neck.locator('.neck-dot').count()).toBeGreaterThanOrEqual(7);
+    // the strings: 6 on guitar, 4 on bass; the neck itself left to right inside the Hebrew screen
+    await expect(neck.locator('.str')).toHaveCount(inst === 'bass' ? 4 : 6);
+    await expect(neck.locator('.neck-wrap')).toHaveAttribute('dir', 'ltr');
+    if ('leftHanded' in extra) {
+      // mirrored: the low string names sit at the right edge
+      const x = Number(await neck.locator('.str-name').first().getAttribute('x'));
+      expect(x).toBeGreaterThan(100);
+    }
+    await fits(page, true);
+    if (lang === 'he') expect(await latinLeft(page)).toEqual([]);
+    await page.screenshot({ path: `test-results/improv-neck-${inst}${'leftHanded' in extra ? '-lefty' : ''}-${lang}.png` });
+    // the take: the neck follows the now-cue; a new scale shows as rings ahead of time; still one screen
+    for (let i = 0; i < 8; i++) await page.locator('.rs-controls .ch-step .icon-btn').nth(1).click();
+    await page.locator('[data-rs-start]').click();
+    await expect(page.locator('[data-rs-cell][data-now="1"]')).toBeVisible({ timeout: 10_000 });
+    await fits(page, true);
+    let previewed = false;
+    for (let k = 0; k < 120 && !previewed; k++) {
+      if (await neck.getAttribute('data-rs-neck-next')) previewed = true;
+      else await page.waitForTimeout(150);
+    }
+    expect(previewed).toBe(true);
+    expect(await neck.locator('.neck-dot.rn-next, .neck-dot.rn-leaving').count()).toBeGreaterThan(0);
+    await fits(page, true);
+    await page.screenshot({ path: `test-results/improv-neck-${inst}${'leftHanded' in extra ? '-lefty' : ''}-take-${lang}.png` });
+    // a tap on the neck plays into the take
+    await neck.locator('.neck-hit').first().click();
+    await page.locator('.rs-controls .btn.primary').click();
+    // the toggle hides and shows the neck
+    await page.locator('[data-rs-keys]').click();
+    await expect(neck).toHaveCount(0);
+    await page.locator('[data-rs-keys]').click();
+    await expect(page.locator(`[data-rs-neck="${inst}"]`)).toBeVisible();
+  });
+}
