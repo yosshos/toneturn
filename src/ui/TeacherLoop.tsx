@@ -26,6 +26,9 @@ import { DEFAULT_FOCUS, focusRef, parseFocusRef, picksOf, type StyleFocus } from
 import { STYLE_TEXT } from '../engine/styles';
 import { COURSES, type CourseId } from '../engine/courses';
 import { StyleChips } from './StyleChips';
+import { burnup } from '../engine/burnup';
+import { BurnUpRow } from './ExtraCharts';
+import { localDay } from '../storage/progress';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -36,7 +39,7 @@ const TX = {
     due: 'Due', assign: 'Assign', voicing: 'Voicing', rhythm: 'Rhythm', mode: 'Mode', comp: 'Comp', improv: 'Improvise', rules: 'Improvise under rules', challenge: 'Challenge', over: 'Over', pieceText: 'What to practice (piece, bars, tempo…)',
     inbox: 'To grade', inboxEmpty: 'Nothing new to grade.', score: 'score', min: 'min', commentPh: 'A short comment…', great: 'Great', good: 'Good', again: 'Again', send: 'Send',
     heat: 'Class map', heatHint: 'First-try accuracy per skill, 30 days · practice minutes this week', behind: 'behind', minutes: 'min 7d',
-    mine: 'Your assignments', open: 'Open', teacherSays: 'Teacher', sent: 'Sent', pass: 'passed', try: 'not yet',
+    mine: 'Your assignments', progressOf: 'Items closed', open: 'Open', teacherSays: 'Teacher', sent: 'Sent', pass: 'passed', try: 'not yet',
     parent: 'Parent link', parentHint: 'A private page for a parent: this week’s practice, streak, skills mastered and the teacher’s latest comments. No sign-in needed; you can turn it off.', make: 'Make a link', copy: 'Copy', revoke: 'Turn off', copied: 'Copied',
   },
   he: {
@@ -46,7 +49,7 @@ const TX = {
     due: 'עד', assign: 'להטיל', voicing: 'קולות', rhythm: 'קצב', mode: 'מצב', comp: 'ליווי', improv: 'אלתור', rules: 'אלתור עם כללים', challenge: 'אתגר', over: 'על', pieceText: 'מה לתרגל (יצירה, תיבות, טמפו…)',
     inbox: 'לבדיקה', inboxEmpty: 'אין הגשות חדשות.', score: 'ציון', min: 'דק׳', commentPh: 'הערה קצרה…', great: 'מצוין', good: 'טוב', again: 'שוב', send: 'לשלוח',
     heat: 'מפת הכיתה', heatHint: 'דיוק בניסיון ראשון לכל מיומנות, 30 יום · דקות אימון השבוע', behind: 'מאחר בקצב', minutes: 'דק׳ 7 ימים',
-    mine: 'המשימות שלך', open: 'לפתוח', teacherSays: 'המורה', sent: 'הוגש', pass: 'עבר', try: 'עוד לא',
+    mine: 'המשימות שלך', progressOf: 'פריטים שנסגרו', open: 'לפתוח', teacherSays: 'המורה', sent: 'הוגש', pass: 'עבר', try: 'עוד לא',
     parent: 'קישור להורים', parentHint: 'דף פרטי להורה: האימון השבוע, הרצף, מיומנויות שנשלטו וההערות האחרונות של המורה. בלי התחברות; אפשר לכבות.', make: 'ליצור קישור', copy: 'להעתיק', revoke: 'לכבות', copied: 'הועתק',
   },
 };
@@ -510,6 +513,8 @@ export function MyAssignmentsList({ items, lang, t, onOpen }: { items: AssignIte
                   {last ? ` · ${tx.sent} ${Math.round((last.score ?? 0) * 100)}% (${ok ? tx.pass : tx.try})` : ''}
                 </small>
                 {a.note && <small className="ma-note">{a.note}</small>}
+                {/* SPEC-PROGRESS-CHARTS §3 (phase 8): the assignment's burn-up — items closed against the due date */}
+                {a.kind !== 'focus' && a.kind !== 'piece' && <BurnUpRow b={burnup(a, localDay(new Date()))} kind={a.kind} title={tx.progressOf} lang={lang} />}
                 {said && (
                   <small className="ma-teacher">
                     {tx.teacherSays}: {said.mark ? `${tx[said.mark]} — ` : ''}

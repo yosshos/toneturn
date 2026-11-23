@@ -40,6 +40,8 @@ export interface VocabCtx {
   pool: Lick[];
   today: Lick | null;
   log?: LickUse[];
+  /** Phase 8: per lick, the keys it is closed in (the "new key" card). */
+  closed?: Record<string, number[]>;
   /** The uses found in a take (booked by the app: the log, the review) and their XP. */
   onUses?: (uses: LickUse[], xp: number) => void;
 }
@@ -465,7 +467,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     const rep = improvReportBy(useMidi ? framesFromNotes(midiNotes.filter((n) => n.start >= 0)) : shifted, pcsAt, bpm);
     setReport(rep);
     const anyRule = !!(rules.note || rules.interval || rules.rhythm || rules.shape || rules.vocab || rules.extra);
-    const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops, vocab ? { licks: vocab.pool, ...(vocab.today ? { today: vocab.today } : {}) } : undefined) : null;
+    const rr = anyRule ? checkRules(judged, parsed, meter, bpm, rules, scales, parsed.bars * loops, vocab ? { licks: vocab.pool, ...(vocab.today ? { today: vocab.today } : {}), ...(vocab.closed ? { closedKeys: vocab.closed } : {}) } : undefined) : null;
     setRulesRep(rr);
     // SPEC-LICKS-IN-IMPROV §3–4: the licks of mine in the take (any key, over the right chord, in time); booked, XP, marks
     if (vocab?.pool.length && judged.length >= 3) {
@@ -492,7 +494,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   const practiceKey = stdRef ? { ...stdRef.appKey, pc: r0 !== null && r1 !== null ? (((stdRef.appKey.pc + r1 - r0) % 12) + 12) % 12 : stdRef.appKey.pc } : undefined;
   const barChords = Array.from({ length: parsed.bars }, (_, i) => parsed.chords.filter((c) => c.bar === i));
   // phase 4: where today's lick fits (marked before the take) and where my licks were found (after it)
-  const lickCard = rules.vocab === 'todays-lick' || rules.vocab === 'lick-every-4' || rules.vocab === 'use-lick';
+  const lickCard = rules.vocab === 'todays-lick' || rules.vocab === 'lick-every-4' || rules.vocab === 'use-lick' || rules.vocab === 'lick-new-key' || rules.vocab === 'lick-varied';
   const today = vocab?.today ?? null;
   const fits = today && rules.vocab === 'todays-lick' ? lickFits(today, spansOfChart(parsed, meter, parsed.bars)) : [];
   const fitBars = new Set(fits.map((f) => Math.floor(f.at / meter + 1e-6) % Math.max(1, parsed.bars)));

@@ -98,6 +98,9 @@ export interface SuggestInput {
   improvStyle?: StyleId;
   /** SPEC-PATH-TODAY-PRACTICE §5.1: today's share of the open class assignments (teacherToday), added first. */
   teacher?: TeacherToday | null;
+  /** Phase 8, the coach's tilt (aiTilt.activeTilt): the improvisation share's change this week (±0.1 at most), only
+   *  once the player accepted it. 0 / absent = the plan as it always was. */
+  tilt?: number;
 }
 
 /**
@@ -297,7 +300,8 @@ function suggestInstrument(inp: SuggestInput, T: number, push: (t: BlockTarget, 
   let path = choose ? 0 : Math.max(min, Math.round(T * DAY_SHARES.path));
   if (T - path < min) path = T;
   const rest = T - path;
-  const share = (inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech;
+  const tilt = Math.max(-0.1, Math.min(0.1, inp.tilt ?? 0));
+  const share = Math.max(0.5, Math.min(0.95, ((inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech) - tilt));
   let tech = Math.round(rest * share);
   let imp = rest - tech;
   if (imp < min) {

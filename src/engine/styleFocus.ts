@@ -258,6 +258,9 @@ export interface StyleTaste {
   heavyAsked?: Partial<Record<StyleId, string>>;
   /** The taste in progress (its parts done), so leaving for a part and coming back resumes it (never-lose-progress). */
   cur?: { style: StyleId; course: CourseId; started: string; done: string[] };
+  /** §9.2 (phase 8): the weekly coach suggested this style (with a data reason) and the player asked to see it — the
+   *  taster card offers it on Today within the week, ahead of the two-week rhythm. */
+  coach?: { style: StyleId; course: CourseId; day: string };
 }
 
 export const TASTER_EVERY_DAYS = 14;
@@ -390,6 +393,12 @@ export function tasterFor(s: FocusSettings, course: CourseId, today: string, wea
   const last = t?.lastOffer;
   const order = tasterRotation(s, course, today, weak).filter((x) => !declined(t, x, today));
   if (!order.length) return null;
+  // the weekly coach's suggestion the player asked to see (phase 8): offered within its week, once (until tasted)
+  const c = t?.coach;
+  if (c && c.course === course && order.includes(c.style) && daysBetween(c.day, today) < 7 && !(t?.by?.[c.style]?.tasted && t.by[c.style]!.tasted! >= c.day)) {
+    const ask = !t?.lastAsk || daysBetween(t.lastAsk, today) >= TASTER_EVERY_DAYS;
+    return { style: c.style, gain: tasterSentence(focusOf(s, course).main, c.style), ask };
+  }
   const since = last ? daysBetween(last, today) : TASTER_EVERY_DAYS;
   const overdue = sinceTaste(t, order[0], today) >= QUARTER_DAYS;
   if (since < TASTER_EVERY_DAYS && !(overdue && since >= 7)) return null;
@@ -399,13 +408,13 @@ export function tasterFor(s: FocusSettings, course: CourseId, today: string, wea
 }
 
 /** The card was shown (counts for the two-week rhythm even when not played). */
-export const offerShown = (t: StyleTaste | undefined, today: string): StyleTaste => ({ since: t?.since ?? today, ...t, lastOffer: today });
+export const offerShown = (t: StyleTaste | undefined, today: string): StyleTaste => ({ since: t?.since ?? today, ...t, lastOffer: today, coach: undefined });
 
 /** The taste was played (the quarter's clock for that style restarts). */
 export function tasted(t: StyleTaste | undefined, style: StyleId, today: string): StyleTaste {
   const by = { ...(t?.by ?? {}) };
   by[style] = { ...(by[style] ?? {}), tasted: today };
-  return { since: t?.since ?? today, ...t, lastOffer: today, by };
+  return { since: t?.since ?? today, ...t, lastOffer: today, by, coach: undefined };
 }
 
 /** The answer to "add it to your styles?": add / not now / don't offer for 6 months. */

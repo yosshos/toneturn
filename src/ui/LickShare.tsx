@@ -21,6 +21,8 @@ export interface LickShareInfo {
   /** The player's name on the card. */
   by?: string;
   level?: number;
+  /** Phase 8: a technique exercise played clean at its target tempo shares the same card ("Exercise at tempo"). */
+  what?: 'lick' | 'exercise';
 }
 
 /** The share text: the lick, the key and the tempo, then the invitation (the link follows). */
@@ -45,7 +47,7 @@ export function lickShareCard(i: LickShareInfo, lang: Lang): string {
     meter: i.drill.meter,
     lang,
     words: {
-      kind: he ? 'ליק בטמפו' : 'Lick at tempo',
+      kind: i.what === 'exercise' ? (he ? 'תרגיל בטמפו היעד' : 'Exercise at target tempo') : he ? 'ליק בטמפו' : 'Lick at tempo',
       who: he ? `${by} ניגן/ה נקי` : `${by} played it clean`,
       tempo: `${i.key} · ♩${i.bpm}`,
       foot: i.level ? (he ? `רמה ${i.level}` : `Level ${i.level}`) : '',

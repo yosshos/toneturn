@@ -12,7 +12,19 @@ import { loadSnapshots } from '../storage/snapshots';
 import { localDay } from '../storage/progress';
 import { SinceLesson } from './SinceLesson';
 import { useClassMedian } from './useClassMedian';
+import { projection } from '../engine/projection';
+import type { MatrixCell } from '../engine/drills/keyMatrix';
+import type { ItemState } from '../engine/drills/types';
+import { ProjectionCard } from './ExtraCharts';
+import { ProgressShareButton } from './ShareCards';
 import '../progress-time.css';
+
+/** What the projection needs (the app builds the matrix the same way the key screen does). */
+export interface ProjectionInput {
+  cells: MatrixCell[];
+  items: Record<string, ItemState>;
+  weekRoot: number | null;
+}
 
 /** The Monday a day's week starts on (the minutes chart's columns). */
 const weekStart = (day: string) => {
@@ -27,7 +39,7 @@ const FRAME_NAME: Record<Frame, L> = { '7d': { en: '7 days', he: '7 ימים' },
 const KEY_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
 /** Dark when the theme's background is dark (themes set --bg on the root). */
-function useDark(): boolean {
+export function useDark(): boolean {
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const read = () => {
@@ -49,7 +61,7 @@ const fmtDay = (d: string, lang: Lang) => new Date(d + 'T00:00:00Z').toLocaleDat
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** One series over time: a 2px line, a crosshair tooltip, the first and last day on the axis, an optional target line. */
-function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)), target, lo, hi, refPts }: { pts: Point[]; color: string; name: string; lang: Lang; fmt?: (v: number) => string; target?: number; lo?: number; hi?: number; /** SPEC-PROGRESS-CHARTS §8.1: the class median, a grey line on the same scale (no names). */ refPts?: Point[] }) {
+export function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)), target, lo, hi, refPts }: { pts: Point[]; color: string; name: string; lang: Lang; fmt?: (v: number) => string; target?: number; lo?: number; hi?: number; /** SPEC-PROGRESS-CHARTS §8.1: the class median, a grey line on the same scale (no names). */ refPts?: Point[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   if (pts.length < 2) return <p className="pt-empty">{lang === 'he' ? 'עוד אין מספיק ימים' : 'Not enough days yet'}</p>;
@@ -95,7 +107,7 @@ function SmallLine({ pts, color, name, lang, fmt = (v) => String(Math.round(v)),
 }
 
 /** Stacked columns (one per week): rounded tops, a 2px surface gap between segments, a legend above. */
-function StackCols({ cols, keys, colorOf, labelOf, lang, marks }: { cols: { week: string; by: Record<string, number> }[]; keys: string[]; colorOf: (k: string) => string; labelOf: (k: string) => string; lang: Lang; /** The class median per week (minutes): a grey tick on each column. */ marks?: Record<string, number> }) {
+export function StackCols({ cols, keys, colorOf, labelOf, lang, marks }: { cols: { week: string; by: Record<string, number> }[]; keys: string[]; colorOf: (k: string) => string; labelOf: (k: string) => string; lang: Lang; /** The class median per week (minutes): a grey tick on each column. */ marks?: Record<string, number> }) {
   const [hover, setHover] = useState<number | null>(null);
   if (!cols.length) return <p className="pt-empty">{lang === 'he' ? 'עוד אין נתונים' : 'No data yet'}</p>;
   const w = 300, h = 130, pad = { l: 8, r: 8, t: 8, b: 20 };
@@ -150,7 +162,7 @@ function StackCols({ cols, keys, colorOf, labelOf, lang, marks }: { cols: { week
   );
 }
 
-function Card({ title, sub, children, table, lang }: { title: string; sub?: string; children: React.ReactNode; table?: [string, string][]; lang: Lang }) {
+export function Card({ title, sub, children, table, lang }: { title: string; sub?: string; children: React.ReactNode; table?: [string, string][]; lang: Lang }) {
   const tableWord = lang === 'he' ? { table: 'טבלה', chart: 'גרף' } : { table: 'Table', chart: 'Chart' };
   const [asTable, setAsTable] = useState(false);
   return (
@@ -184,7 +196,7 @@ function Card({ title, sub, children, table, lang }: { title: string; sub?: stri
 
 const STATUS_SHADES = ['#e9e4f8', '#c3b6ee', '#8f7ae0', '#5a3fc7'];
 
-export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course, median }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string; /** SPEC-PROGRESS-CHARTS §8.1: the class median (the teacher turned it on, the summaries sync) — grey lines on the tempo and minutes charts. */ median?: { day: string; tempo: number; minutes: number }[] | null }) {
+export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course, median, matrix }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string; /** SPEC-PROGRESS-CHARTS §8.1: the class median (the teacher turned it on, the summaries sync) — grey lines on the tempo and minutes charts. */ median?: { day: string; tempo: number; minutes: number }[] | null; /** Phase 8 (D5): the key × exercise matrix, built only when this tab is open — measured time and the projection. */ matrix?: () => ProjectionInput | null }) {
   const he = lang === 'he';
   const dark = useDark();
   // the class median: given (tests), or fetched when the summaries sync and the teacher turned it on
@@ -199,6 +211,13 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
   const [frame, setFrame] = useState<Frame | null>(null);
   const fr = frame && frames.includes(frame) ? frame : defaultFrame(tenure);
   const snaps = useMemo(() => (all ? inFrame(all, fr, today) : []), [all, fr, today]);
+  // measured time and the projection (D5): the matrix is built once, when the tab opens
+  const proj = useMemo(() => {
+    if (!all || !matrix) return null;
+    const m = matrix();
+    return m && m.cells.length ? projection(m.cells, m.items, all, today, m.weekRoot) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [all, today]);
   if (!all) return null;
   if (!snaps.length)
     return (
@@ -317,7 +336,12 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         <StackCols cols={mins} keys={minKeys} colorOf={(k) => (k === 'other' ? neutral : areaColor(k, dark ? 'dark' : 'light'))} labelOf={(k) => (k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k))} lang={lang} marks={medWeeks} />
       </Card>
 
+      {proj && <ProjectionCard p={proj} lang={lang} />}
+
       <SinceLesson snaps={all} lang={lang} today={today} areaName={areaName} />
+      <div className="pt-share">
+        <ProgressShareButton lang={lang} tiles={tiles} line={ins[0] ?? null} />
+      </div>
     </div>
   );
 }

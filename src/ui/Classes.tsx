@@ -251,7 +251,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
       <AssignForm classId={c.id} lang={lang} t={t} busy={busy} onAssigned={loadDetail} onError={onError} />
       {detail && <GradingInbox detail={detail} lang={lang} t={t} onChanged={loadDetail} />}
       {detail && <ClassHeatmap c={c} minutes={detail.minutes} lang={lang} t={t} />}
-      {c.students.length > 0 && <ClassCharts classId={c.id} students={c.students.map((s) => ({ id: s.userId, name: s.name }))} lang={lang} />}
+      {c.students.length > 0 && <ClassCharts classId={c.id} students={c.students.map((s) => ({ id: s.userId, name: s.name }))} lang={lang} assignments={detail?.assignments} titleOf={(a) => itemTitle(a, lang, t)} />}
       <button
         className="btn ghost small danger"
         disabled={busy}

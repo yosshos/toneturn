@@ -263,6 +263,8 @@ export interface ProgressTabsProps {
   onPin?: (ids: string[]) => void;
   /** Start on a tab (e.g. from a "what's new" link). */
   initial?: ProgressTab | string;
+  /** Phase 8 (D5): the key × exercise matrix for measured time and the projection ("Over time" only). */
+  matrix?: () => import('./ProgressOverTime').ProjectionInput | null;
 }
 
 /** The over-time charts' names: a course section ("keys:technique"), the lick book, or a kind of practice (minutes). */
@@ -305,7 +307,7 @@ export function ProgressTabs(props: ProgressTabsProps) {
       </div>
       <div role="tabpanel" id={`ps-panel-${tab}`} aria-labelledby={`ps-tab-${tab}`} className="ps-panel">
         {tab === 'overview' && <OverviewView {...props} />}
-        {tab === 'time' && <ProgressOverTime lang={lang} areaName={(a) => areaLabel(a, lang)} course={courseId} />}
+        {tab === 'time' && <ProgressOverTime lang={lang} areaName={(a) => areaLabel(a, lang)} course={courseId} matrix={courseId === 'keys' || courseId === 'guitar' || courseId === 'bass' ? props.matrix : undefined} />}
         {tab === 'skills' && (props.map ?? props.children)}
         {tab === 'activity' && <ActivityView {...props} />}
         {tab === 'awards' && (

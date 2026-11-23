@@ -19,6 +19,20 @@ export interface AiRequest {
   jazz?: boolean;
 }
 
+/**
+ * Phase 8, the coach's tilt (aiTilt.ts): the tilt and the style taster are computed on the device; the weekly summary
+ * may word them once the server's weekly prompt knows the fields (supabase/functions/toneturn-ai, `tilt` / `taster`).
+ * That edge function change is written but NOT DEPLOYED (no access to the project now): until it is, the client keeps
+ * the weekly request exactly as before. Set to true after deploying.
+ */
+export const AI_TILT_SERVER = false;
+let weeklyExtra: Record<string, unknown> | null = null;
+/** The coach's tilt / taster for the next weekly request (sent only when AI_TILT_SERVER). */
+export const setWeeklyExtra = (x: Record<string, unknown> | null) => {
+  weeklyExtra = x;
+};
+export const weeklyExtraContext = (): Record<string, unknown> => (AI_TILT_SERVER && weeklyExtra ? weeklyExtra : {});
+
 const sim = () => typeof location !== 'undefined' && new URLSearchParams(location.search).has('sim');
 const memo = new Map<string, AiResult>();
 

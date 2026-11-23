@@ -27,6 +27,44 @@ export interface Snapshot {
   vocab: { played: number; closed: number };
   /** A practice day (any minutes). */
   practised: boolean;
+  /** SPEC-PROGRESS-CHARTS §4.1 (phase 8): items stuck at the limit (the coach's ceiling held over the last 3 sessions) —
+   *  the teacher's alert "stuck at the limit for 3 sessions", with the tempo line and the ceiling. At most 3. */
+  stuck?: StuckItem[];
+}
+
+export interface StuckItem {
+  id: string;
+  area: string;
+  ceiling: number;
+  target: number;
+  /** The best clean tempo per session day, oldest first (at most 10). */
+  pts: { day: string; bpm: number }[];
+}
+
+/** Sessions at the ceiling before an item counts as stuck (SPEC-PROGRESS-CHARTS §4.1). */
+export const STUCK_SESSIONS = 3;
+
+/**
+ * Items stuck at the limit: the coach's ceiling is set (BUILD-PLAN §0.2), the item is not closed, and its best clean
+ * tempo on each of its last 3 session days stayed at or under the ceiling. The most recent first, at most 3.
+ */
+export function stuckItems(items: Record<string, ItemState>): StuckItem[] {
+  const out: (StuckItem & { last: string })[] = [];
+  for (const st of Object.values(items)) {
+    const c = st?.ceiling;
+    const target = st?.targetBpm ?? 0;
+    if (!c || !target || itemStatus(st, 0, target) === 'closed') continue;
+    const best = new Map<string, number>();
+    for (const h of st.history ?? []) best.set(h.at.slice(0, 10), Math.max(best.get(h.at.slice(0, 10)) ?? 0, h.bpm));
+    const pts = [...best.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([day, bpm]) => ({ day, bpm }));
+    const lastN = pts.slice(-STUCK_SESSIONS);
+    if (lastN.length < STUCK_SESSIONS || lastN.some((p) => p.bpm > c.bpm + 0.5) || (st.cleanBpm ?? 0) > c.bpm + 0.5) continue;
+    out.push({ id: st.itemId, area: areaOf(st), ceiling: c.bpm, target, pts: pts.slice(-10), last: lastN[lastN.length - 1].day });
+  }
+  return out
+    .sort((a, b) => b.last.localeCompare(a.last))
+    .slice(0, 3)
+    .map(({ last: _l, ...x }) => x);
 }
 
 /** The course a drill family belongs to (by its prefix). */
@@ -111,8 +149,14 @@ export function daySnapshot(day: string, items: Record<string, ItemState>, minut
     keys: Object.fromEntries(Object.entries(keyN).map(([k, v]) => [k, Math.round((v.c / v.n) * 1000) / 1000])),
     vocab: { played: lp, closed: lc },
     practised: total > 0,
+    ...stuckField(items),
   };
 }
+
+const stuckField = (items: Record<string, ItemState>): { stuck?: StuckItem[] } => {
+  const stuck = stuckItems(items);
+  return stuck.length ? { stuck } : {};
+};
 
 /** The day an item closed (the qualifying take that made 3 at ≥ 95 % of target on 2 days), or null. */
 export function closedOn(st: ItemState): string | null {

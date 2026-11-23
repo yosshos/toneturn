@@ -123,3 +123,14 @@ export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillSt
   lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view, inst } satisfies Kept));
   return { plan, weekRoot, at: 0, minutes: a.minutes };
 }
+
+/**
+ * Phase 8 (D5): the matrix for the Progress page's measured time and projection — the same build as the key screen
+ * (tier, jazz, the lick pool's block G on the piano, the focus's block H). Null off the piano / guitar / bass.
+ */
+export function projectionInput(settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook' | 'styleFocus' | 'jazzFocus' | 'drills'>>, ds: DrillSettings, items: Record<string, ItemState>): { cells: MatrixCell[]; items: Record<string, ItemState>; weekRoot: number | null } | null {
+  const inst = matrixInst(ds.instrument);
+  if (!inst) return null;
+  const cells = keyMatrix(families(inst), matrixTierOf(settings, ds, items), items, { jazz: ds.emphasis === 'jazz', instrument: inst, ...(inst === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, inst === 'piano' ? 'keys' : inst) });
+  return { cells, items, weekRoot: weekKeyIfKept('major', inst) };
+}

@@ -129,14 +129,13 @@ function LevelBar({ done, of }: { done: number; of: number }) {
 /** The matrix as the player reads it (SPEC-DAILY-WORKOUT §2, §5): exercises, closed, time left, and the projection. */
 type MatrixInfo = (MatrixSummary & { cellsList?: MatrixCell[]; perDay: number; days: number | null }) | null | undefined;
 const hrs = (m: number, he: boolean): string => (m < 90 ? (he ? `כ־${Math.round(m)} דקות` : `about ${Math.round(m)} min`) : he ? `כ־${Math.round(m / 60)} שעות` : `about ${Math.round(m / 60)} h`);
-const span = (d: number, he: boolean): string => (d <= 14 ? (he ? `${d} ימים` : `${d} days`) : d <= 90 ? (he ? `${Math.round(d / 7)} שבועות` : `${Math.round(d / 7)} weeks`) : he ? `${Math.round(d / 30)} חודשים` : `${Math.round(d / 30)} months`);
 function MatrixLine({ m, lang }: { m: MatrixInfo; lang: Lang }) {
   if (!m || !m.cells) return null;
   const he = lang === 'he';
   return (
     <p className="key-matrix-line" data-key-matrix={m.cells} data-key-matrix-closed={m.closed}>
       {he ? `כל התרגילים בכל הסולמות ברמה שלכם: ${m.cells} · סגורים ${m.closed} · נשארו ${hrs(m.minutesLeft, true)}` : `Every exercise in every key at your level: ${m.cells} · closed ${m.closed} · ${hrs(m.minutesLeft, false)} left`}
-      {m.days !== null ? (he ? ` · ב־${m.perDay} דקות ביום: ${span(m.days, true)}` : ` · at ${m.perDay} min a day: ${span(m.days, false)}`) : ''}
+      {/* D5 (BUILD-PLAN-2026-11 §3): the projection lives on the Progress page only (measured time, phase 8) */}
     </p>
   );
 }

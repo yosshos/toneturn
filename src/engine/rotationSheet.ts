@@ -207,7 +207,7 @@ export function gradeRotation(sheet: RotationSheet, notes: PlayedNote[], stats: 
 
 // ---------------------------------------------------------------- one rated result per take (everything connects)
 
-export type ImprovTakeKind = 'rotation' | 'phrasing' | 'vary' | 'trade';
+export type ImprovTakeKind = 'rotation' | 'phrasing' | 'vary' | 'trade' | 'harris';
 export interface ImprovTake {
   kind: ImprovTakeKind;
   lessonId: string;
@@ -217,7 +217,7 @@ export interface ImprovTake {
   stats?: ModeStats;
 }
 
-const SUB: Record<ImprovTakeKind, string> = { rotation: 'improv/play', phrasing: 'improv/play', vary: 'improv/answer', trade: 'improv/answer' };
+const SUB: Record<ImprovTakeKind, string> = { rotation: 'improv/play', phrasing: 'improv/play', vary: 'improv/answer', trade: 'improv/answer', harris: 'improv/play' };
 /**
  * A take of Improvise as one rated result: a rating event in improv (its sub-skill by mode), XP by the score (a take
  * with almost no notes earns 1), and the lesson id the XP, league and course share are booked under.

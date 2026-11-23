@@ -40,7 +40,7 @@ import { useTeacherPhrases, bookWithTeacherPhrases, phraseAssignsOf } from './te
 import { teacherMockOn } from '../cloud/teacher';
 import { phrasesDueCount } from '../engine/encore/connect';
 import { dueLicks, reviewAfter } from '../engine/licks';
-import { bookUses, lickPool, todaysLick } from '../engine/vocab';
+import { bookUses, closedKeys, lickPool, todaysLick } from '../engine/vocab';
 import { TranscribeCoachScreen } from './TranscribeCoach';
 import { ExamsScreen, mockExamLesson } from './Exams';
 import type { ExamDef } from '../content/bagrut';
@@ -140,7 +140,9 @@ import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, blockLeftMs, creditBlock, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, teacherToday, techBlockOf, validateTemplate, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
-import { keptPlan, matrixTierOf, weekKeyIfKept } from './todayTech';
+import { keptPlan, matrixTierOf, projectionInput, weekKeyIfKept } from './todayTech';
+import { CoachTilt } from './CoachTilt';
+import { activeTilt } from '../engine/aiTilt';
 import { rbiTier } from '../engine/rotationSheet';
 import { keyName as keyNameOf } from '../engine/drills/generate';
 import { subPriorities } from '../engine/scheduler';
@@ -1708,6 +1710,7 @@ export function App() {
       pool,
       today: todaysLick(pool, s.lickBook, items),
       log: s.lickBook?.uses,
+      closed: Object.fromEntries(pool.map((l) => [l.id, closedKeys(items, l.id)])),
       onUses: (uses, xp) => {
         updateSettings({ lickBook: bookUses(s.lickBook, uses, items, (b, id) => ({ ...b, review: { ...(b.review ?? {}), [id]: reviewAfter(b.review?.[id], true) } })) });
         if (xp > 0) void store.recordCompletion({ lessonId: 'improv-vocab', lessonVersion: 1, sessionId: uses[0]?.session ?? `vocab-${Date.now()}`, completedAt: new Date().toISOString(), firstTry: uses.length, total: uses.length, xp, missed: [], items: [], course: (s.activeCourse ?? 'keys') as CourseId }).then(setProgress);
@@ -2271,9 +2274,9 @@ export function App() {
     const techTier = course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' ? matrixTierOf(s, dsW, progress.drillItems ?? {}) : undefined;
     // SPEC-STYLE-FOCUS §4: the main style (classical: the improvisation share is repertoire) and today's band style.
     const mainStyle = focusOf(s, course.id).main;
-    return suggestWorkout({ techTier, mainStyle, improvStyle: improvStyleFor(s, course.id, today), teacher: teacherTp, total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
+    return suggestWorkout({ techTier, mainStyle, improvStyle: improvStyleFor(s, course.id, today), teacher: teacherTp, tilt: activeTilt(s.aiTilt, today), total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.styleFocus, s.styleTaste, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.styleFocus, s.styleTaste, s.aiTilt, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
   // Today's edits keep the teacher's section (it is added, never replaced: §5.1).
   const todayBlocks = s.workoutToday?.day === today ? withTeacher(s.workoutToday.blocks, teacherTp) : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
@@ -3028,6 +3031,7 @@ export function App() {
           extra={{ bestLeague: s.bestLeague, learned: learnedCount(s) }}
           pinned={s.trophies}
           onPin={(trophies) => updateSettings({ trophies })}
+          matrix={() => projectionInput(s, drillSettingsOf(s), progress.drillItems ?? {})}
           overview={
             <>
               <button className="set-card in-entry" onClick={() => go('insights')} data-open-insights="1">
@@ -3464,7 +3468,7 @@ export function App() {
           onPlateau={(f) => actOnPlateau(f, 'diary')}
         />
       )}
-      {route === 'insights' && <InsightsScreen onPlateau={(f) => actOnPlateau(f, 'keys')} plateauLabel={ledgerLabel} lang={s.uiLang} progress={progress} nearMastery={masteryLine(mview, mctx, unitName, (st) => nodeTitle(st, s, 'en')) || undefined} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
+      {route === 'insights' && <InsightsScreen coach={<CoachTilt settings={s} lang={s.uiLang} course={(s.activeCourse ?? 'ear') as CourseId} today={localDay(new Date())} weak={weakAreaOf(ratingsOf(progress))} onSettings={updateSettings} />} onPlateau={(f) => actOnPlateau(f, 'keys')} plateauLabel={ledgerLabel} lang={s.uiLang} progress={progress} nearMastery={masteryLine(mview, mctx, unitName, (st) => nodeTitle(st, s, 'en')) || undefined} onBack={() => go('skills')} onTopic={(id, lv) => openTopic(id, lv)} onDrills={() => go('drills')} onDrillKey={(family, key) => {
             const f = familyById(family);
             const q = f ? skillDrillsInKey(f, progress.drillItems ?? {}, drillSettingsOf(s).keyOrder, key, s.drillStart?.[family]) : [];
             if (!q.length) return go('drills');
@@ -3622,6 +3626,7 @@ export function App() {
           tier={rbiTier(s.activeCourse === 'keys' || s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? matrixTierOf(s, drillSettingsOf(s), progress.drillItems ?? {}) : 1, s.rotationTier)}
           dayKey={weekKeyIfKept('major', drillSettingsOf(s).instrument ?? 'piano') ?? 0}
           onTier={(t) => updateSettings({ rotationTier: t })}
+          onHarrisTier={(t) => updateSettings({ harrisTier: t })}
           onTake={(t) => {
             // Phase 5: every take of Improvise is one rated result — the rating (improv), XP, league and course share
             // through one completion; the mode × function stats the rotation picks from.

@@ -26,6 +26,7 @@ const EFFORT: Record<Kind, 'low' | 'medium'> = { card: 'low', weekly: 'medium', 
 const CAP: Record<Kind, number> = { card: 30, weekly: 3, explain: 20, hint: 30 };
 const MAX_FOLLOWUPS = 4;
 const MAX_FIELD = 1200;
+const MAX_WEEKLY_CONTEXT = 1800;
 
 const apiKey = () => (Deno.env.get('ANTHROPIC_API_KEY') ?? Deno.env.get('claude-7sense-cauch') ?? '').trim();
 
@@ -45,7 +46,7 @@ function systemPrompt(kind: Kind, lang: 'he' | 'en', naming: string): string {
   const by: Record<Kind, string> = {
     card: 'Write a short note after a practice session: at most two sentences, about 30 words. Name one concrete thing from the data (a strength or a pattern) and one concrete next step. When the data has "weakKeys" and this session was technique, the next step may be those keys: name the skill, up to three keys and the tempo given (e.g. "next time: ii–V lines in E♭ and A♭ at ♩80"). Plain text only.',
     weekly:
-      'Write the week\'s summary from the player profile: 4–7 short sentences. Start with what improved or what is solid, then the one or two recurring patterns that matter most and how they may connect, then a concrete plan for the coming week that uses the "practise" suggestions given. When the data has "weakKeys" (the weakest keys per instrument, measured in the drills), name those keys and make part of the plan key-focused: one skill, its two or three weakest keys, the tempo given, e.g. "this week: ii–V lines in E♭, A♭, D♭ at ♩80, slow and clean first". Use only the keys, skills and tempos in the data. When the data has "nearMastery" (path units close to mastery and what each is missing), name the closest unit and the concrete steps left (keys and tempo, or another clean run) as one goal for the week. Plain text, short paragraphs, no headings.',
+      'Write the week\'s summary from the player profile: 4–7 short sentences. Start with what improved or what is solid, then the one or two recurring patterns that matter most and how they may connect, then a concrete plan for the coming week that uses the "practise" suggestions given. When the data has "weakKeys" (the weakest keys per instrument, measured in the drills), name those keys and make part of the plan key-focused: one skill, its two or three weakest keys, the tempo given, e.g. "this week: ii–V lines in E♭, A♭, D♭ at ♩80, slow and clean first". Use only the keys, skills and tempos in the data. When the data has "nearMastery" (path units close to mastery and what each is missing), name the closest unit and the concrete steps left (keys and tempo, or another clean run) as one goal for the week. When the data has "tilt" (the app proposes moving the improvisation share of the daily plan from "from" % to "improvShare" %, with measured "reasons"), say in one sentence what changes and why, using only those reasons; say the player can accept or decline it on the Insights page. When the data has "taster" (a style and its measured reason), suggest that one style taster with that reason in one sentence. Plain text, short paragraphs, no headings.',
     explain:
       'Explain the topic or the question the player asks about, at their level: start from what they hear, then the theory, then one way to recognise it next time. 80–180 words. When they answered wrong, explain what distinguishes their answer from the right one, by sound. Plain text, short paragraphs; a simple list is fine. Be accurate: if unsure, say so rather than guess.',
     hint:
@@ -99,7 +100,8 @@ Deno.serve(async (req) => {
 
   const lang = body.lang === 'en' ? 'en' : 'he';
   const naming = body.naming === 'solfege' ? 'solfege' : 'letter';
-  const context = clip(JSON.stringify(body.context ?? {}));
+  // the weekly summary carries the tilt and the taster too (phase 8): a little more room for its data
+  const context = String(JSON.stringify(body.context ?? {})).slice(0, kind === 'weekly' ? MAX_WEEKLY_CONTEXT : MAX_FIELD);
   const follow = (Array.isArray(body.followups) ? body.followups : []).slice(0, MAX_FOLLOWUPS * 2) as { role: string; text: string }[];
   const jazz = body.jazz === true;
   const model = kind === 'explain' && jazz ? 'claude-opus-5-5' : MODEL[kind];

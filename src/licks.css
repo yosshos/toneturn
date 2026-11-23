@@ -85,3 +85,24 @@
 .lk-seg button.on .lk-seg-n { background: #fff; color: var(--purple, #6d28d9); }
 /* Share after a clean tempo: a small action beside the result. */
 .lk-share { display: inline-flex; align-items: center; gap: 6px; align-self: center; }
+/* Phase 8: ear challenges — the combined sentence, find the lick, transpose by ear (SPEC-EAR-AND-READING §3). */
+.ev { display: grid; gap: 10px; }
+.ev-seg { display: flex; }
+.ev-seg button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.82rem; }
+.ev-panel { display: grid; gap: 8px; }
+.ev-pair { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink); }
+.ev-why { margin: 0; font-size: 0.85rem; color: var(--ink-soft); }
+.ev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ev-actions .btn.primary { flex: 1 1 140px; }
+.ev-track { position: relative; height: 18px; border-radius: 9px; background: var(--card-2, var(--line)); overflow: hidden; }
+.ev-barline { position: absolute; top: 3px; bottom: 3px; width: 1px; background: var(--ink-dim); opacity: 0.5; }
+.ev-target { position: absolute; top: 0; bottom: 0; background: color-mix(in oklab, #1baf7a 45%, transparent); }
+.ev-now { position: absolute; top: 0; bottom: 0; width: 3px; margin-inline-start: -1px; background: var(--ink); }
+.ev-there { width: 100%; }
+.ev-result { margin: 0; font-weight: 600; }
+.ev-result.ok { color: var(--good, #0b7a52); }
+.ev-result.miss { color: var(--ink-soft); }
+.ev-debrief { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.ev-debrief li { display: flex; align-items: baseline; gap: 8px; padding: 4px 8px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: 0.88rem; }
+.ev-debrief li.known { border-color: color-mix(in oklab, #1baf7a 60%, var(--line)); }
+.ev-debrief small { margin-inline-start: auto; color: var(--ink-soft); }

@@ -40,6 +40,8 @@ export interface CardOpt {
   licks?: Lick[];
   /** todays-lick: the lick of the day. */
   today?: Lick;
+  /** lick-new-key (phase 8): per lick, the keys it is closed in (vocab.closedKeys) — a use elsewhere is a new key. */
+  closedKeys?: Record<string, number[]>;
   /** quote-head: the tune's melody (beats, MIDI). */
   melody?: { beat: number; midi: number }[];
 }
@@ -467,6 +469,36 @@ const CARDS: CardDef[] = [
       const t = ctx.opt?.today;
       if (!t) return { ok: 0, total: 0 };
       const found = line(ctx).length >= 3 && lickHits(ctx, [t]).length > 0;
+      return { ok: found ? 1 : 0, total: 1, miss: found ? [] : [0] };
+    },
+  },
+  {
+    // SPEC-LICKS-IN-IMPROV §2 (phase 8): a lick of mine in a key where it isn't closed yet, over its chord
+    id: 'lick-new-key',
+    fam: 'vocab',
+    name: { en: 'A lick in a new key', he: 'ליק בסולם חדש' },
+    how: { en: 'One of your licks, over its chord, in a key where it is not closed yet.', he: 'אחד מהליקים שלכם, מעל האקורד שלו, בסולם שבו הוא עוד לא סגור.' },
+    level: 4,
+    diff: 1520,
+    pass: 1,
+    check: (ctx) => {
+      const closed = ctx.opt?.closedKeys ?? {};
+      const found = line(ctx).length >= 3 && lickHitsWith(ctx, poolOf(ctx)).some(({ l, h }) => !(closed[l.id] ?? []).includes(((h.transpose % 12) + 12) % 12));
+      return { ok: found ? 1 : 0, total: 1, miss: found ? [] : [0] };
+    },
+  },
+  {
+    // SPEC-LICKS-IN-IMPROV §2–§3 (phase 8): a lick of mine changed — a partial hit (≈ 60 % of its notes, the shape kept),
+    // and NOT the exact lick (displaced, started on another degree, shortened or extended)
+    id: 'lick-varied',
+    fam: 'vocab',
+    name: { en: 'A lick, varied', he: 'ליק, בשינוי' },
+    how: { en: 'One of your licks, changed: displaced in rhythm, from another note, shortened or extended — not played exactly.', he: 'אחד מהליקים שלכם, בשינוי: מוזז בקצב, מצליל אחר, מקוצר או מוארך — לא בדיוק כמו שהוא.' },
+    level: 4,
+    diff: 1560,
+    pass: 1,
+    check: (ctx) => {
+      const found = line(ctx).length >= 3 && lickHitsWith(ctx, poolOf(ctx)).some(({ h }) => h.kind === 'varied');
       return { ok: found ? 1 : 0, total: 1, miss: found ? [] : [0] };
     },
   },
@@ -1220,4 +1252,11 @@ export function lickHits(ctx: CardCtx, pool: Lick[]): LickHit[] {
   const imp: ImpNote[] = line(ctx).map((n) => ({ beat: n.beat, midi: Math.round(n.midi) }));
   if (imp.length < 3) return [];
   return pool.flatMap((l) => findLick(l, imp, chart, { shape: false, varied: true }).filter((h) => h.overChord && h.tight !== false));
+}
+/** The same hits, each with its lick (the new-key card needs which lick it was). */
+function lickHitsWith(ctx: CardCtx, pool: Lick[]): { l: Lick; h: LickHit }[] {
+  const chart: ChartSpan[] = ctx.spans.map((s) => ({ root: s.root, q: qualityOfIntervals(s.iv), at: s.at, beats: s.beats }));
+  const imp: ImpNote[] = line(ctx).map((n) => ({ beat: n.beat, midi: Math.round(n.midi) }));
+  if (imp.length < 3) return [];
+  return pool.flatMap((l) => findLick(l, imp, chart, { shape: false, varied: true }).filter((h) => h.overChord && h.tight !== false).map((h) => ({ l, h })));
 }

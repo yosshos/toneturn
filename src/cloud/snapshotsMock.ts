@@ -32,6 +32,12 @@ export function mockStudentSnaps(st: (typeof MOCK_STUDENTS)[number], today = new
       practised,
     };
   }
+  // phase 8: one student stuck at the limit (the teacher's alert with the tempo line and the ceiling)
+  if (st.id === 's4') {
+    const days = Object.keys(out).sort();
+    const last = days[days.length - 1];
+    out[last] = { ...out[last], stuck: [{ id: 'scales:major:2:RL:0', area: 'keys:technique', ceiling: 96, target: 120, pts: days.slice(-12).filter((_, i) => i % 2 === 0).map((day, i) => ({ day, bpm: Math.min(96, 84 + i * 3) })) }] };
+  }
   return out;
 }
 

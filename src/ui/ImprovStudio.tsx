@@ -32,6 +32,8 @@ import { STYLE_CHART, STYLE_TEXT, type StyleId } from '../engine/styles';
 import type { CourseId } from '../engine/courses';
 import type { ChartStyle } from '../engine/charts';
 import { ScaleRotation, ScaleStrip } from './ScaleRotation';
+import { HarrisWay } from './HarrisWay';
+import { harrisTierOf, type HarrisTier } from '../engine/harrisTrack';
 import { buildRotationSheet, gradeRotation, improvTake, type ImprovTake, type RotationGrade } from '../engine/rotationSheet';
 import type { ModeStats } from '../engine/rotation';
 
@@ -118,10 +120,12 @@ export function TodayLickCard({ lick, dayKey, lang, onOpen }: { lick: Lick; dayK
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, tier = 1, dayKey = 0, onTier, onHarrisTier, onTake, workout = false, styleToday, onStyleMinutes }: { /** Phase 8: the Barry Harris way's tier (H-1…H-4), chosen by the player. */ onHarrisTier?: (t: HarrisTier) => void; /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The scale-rotation tier (T1–3, rotationSheet.rbiTier). */ tier?: 1 | 2 | 3; /** The key of the day (the key session's key of the week). */ dayKey?: number; onTier?: (t: 1 | 2 | 3) => void; /** Every take as one rated result (XP, league, rating, the mode × function stats). */ onTake?: (t: ImprovTake) => void; /** Opened from the workout's improvisation block: the scales first, with today's lick on top. */ workout?: boolean; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(workout || !initialChart ? 'scales' : onOpenChart ? 'rules' : 'phrasing');
+  // phase 8: the scales tab holds two tracks (A the scale rotation, B the Barry Harris way); A by default
+  const [track, setTrack] = useState<'A' | 'B'>('A');
   // SPEC-STYLE-FOCUS §4: the band's default style is the main style (or today's style from the workout); the level's
   // own band is one tap away.
   const bandStyleId: StyleId = styleToday ?? focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId).main;
@@ -361,8 +365,19 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           </button>
         ))}
       </div>
-      <p className="field-hint">{mode === 'scales' ? tx.scalesHow : mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>
+      {!(mode === 'scales' && track === 'B') && <p className="field-hint">{mode === 'scales' ? tx.scalesHow : mode === 'useit' ? tx.useitHow : mode === 'rules' ? tx.rulesHow : mode === 'phrasing' ? tx.phrasingHow : mode === 'vary' ? tx.varyHow : tx.tradeHow}</p>}
       {mode === 'scales' && (
+        // SPEC-RBI-ROTATION §6, §8.1 (owner): two tracks by name — "Scale rotation" (A) and "The Barry Harris way" (B)
+        <div className="chips rs-track" role="radiogroup" aria-label={lang === 'he' ? 'מסלול' : 'Track'}>
+          {(['A', 'B'] as const).map((tk) => (
+            <button key={tk} type="button" role="radio" aria-checked={track === tk} className={`chip ${track === tk ? 'on' : ''}`} onClick={() => setTrack(tk)} data-rs-track={tk}>
+              {tk === 'A' ? tx.scales : lang === 'he' ? 'הדרך של בארי האריס' : 'The Barry Harris way'}
+            </button>
+          ))}
+        </div>
+      )}
+      {mode === 'scales' && track === 'B' && <HarrisWay settings={settings} lang={lang} dayKey={dayKey} tier={harrisTierOf(tier, settings.harrisTier)} onTier={onHarrisTier} onTake={onTake} />}
+      {mode === 'scales' && track === 'A' && (
         <ScaleRotation
           settings={settings}
           lang={lang}

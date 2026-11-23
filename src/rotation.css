@@ -64,3 +64,12 @@
 .is-lick-card b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .is-lick-card .btn { flex: none; min-height: 34px; padding: 4px 12px; }
 .is-cov { margin: 0; font-size: 0.85rem; }
+
+/* Phase 8: the two tracks (Scale rotation / The Barry Harris way) and track B's sheet — a thought chord above each chord. */
+.rs-track { display: flex; gap: 6px; flex-wrap: wrap; }
+.hw-title { margin: 0; font-size: 0.92rem; color: var(--ink); }
+.hw-how { margin: -4px 0 0; }
+.hw-cell { --fam: #6b5fc7; }
+.hw-think { font-size: 0.72rem; color: var(--ink-soft); white-space: nowrap; }
+.hw-start { font-size: 0.68rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hw .rs-keys .is-key.rs-colour { --fam: #6b5fc7; }

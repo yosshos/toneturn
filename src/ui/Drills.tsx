@@ -116,6 +116,8 @@ import { isJazzStep } from '../engine/courses';
 import { jazzOpenIn } from '../engine/jazzFold';
 import { drumMicOf, type KitKind } from '../engine/drumKit';
 import { isDrumDrill } from '../engine/drills/events';
+import { LickShareButton } from './LickShare';
+import { PASS_SHARE } from '../engine/drills/ladder';
 import { standardIdOfSpec, standardOfSpec } from '../engine/drills/standardRef';
 import { ListenOriginal } from './ListenOriginal';
 import { referenceOf } from '../content/references';
@@ -140,6 +142,12 @@ import { keysInOrder } from '../engine/drills/generate';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
 const GENERAL_FAMILY = (id: string): boolean => FAMILY_FACETS[id]?.scope === 'neutral';
+
+/** Phase 8 (share after a clean tempo): a clean take at ≥ 95 % of the item's target tempo, on a pitched drill. */
+export const atTargetTempo = (res: { m: TakeMetrics; lad: { state: ItemState } }, drill: Drill): boolean => {
+  const target = res.lad.state.targetBpm ?? 0;
+  return res.m.verdict === 'clean' && target > 0 && (res.m.bpm || 0) >= PASS_SHARE * target - 1e-9 && !isDrumDrill(drill) && !drill.sung;
+};
 
 type Lang = 'he' | 'en';
 const T = {
@@ -1837,6 +1845,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1))}
             onNext={() => go(i + 1)}
             lastTake={prior ? { on: ghost, onToggle: () => setGhost((g) => !g) } : undefined}
+            share={atTargetTempo(res, drill) ? <LickShareButton compact lang={lang} info={{ what: 'exercise', title: drill.title[lang].split(' · ')[0], key: keyName(drill.spec.key, false).replace('b', '♭').replace('#', '♯'), bpm: Math.round(res.m.bpm || bpm), drill }} /> : undefined}
             fingering={onOwn && pianoFingered ? <OwnFingeringLink lang={lang} drill={drill} own={own} onChange={onOwn} /> : undefined}
             onKeep={lastPlayed.current.length >= 3 && !isDrumDrill(drill) ? () => keepPhrase({ kind: 'drill', instrument: drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano', title: drill.title, source: midi.devices.length ? 'midi' : 'mic', notes: lastPlayed.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart?.length ? { chart: drill.chart.join(' | ') } : {}) }, loopSel ? { from: loopSel[0] * drill.meter, to: (loopSel[1] + 1) * drill.meter } : null) : undefined}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}

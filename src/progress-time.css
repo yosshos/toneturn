@@ -54,3 +54,24 @@
 .since-table th { text-align: start; font-weight: 600; color: var(--ink-dim); font-size: 0.8rem; }
 .class-settings { margin: 4px 0 8px; }
 .class-charts { display: grid; gap: 12px; margin: 8px 0; }
+/* Phase 8: the assignment burn-up (§3 / §4.1), the teacher's alerts, measured time and the projection (D5). */
+.bu-chart svg { max-height: 120px; }
+.bu-due { stroke: var(--ink-soft); stroke-width: 1.5; }
+.bu-row { display: grid; gap: 2px; margin-top: 6px; }
+.bu-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-soft); }
+.bu-name i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.pj-lines p { margin: 0 0 4px; font-size: 0.9rem; color: var(--ink); }
+.pj-bars { display: grid; gap: 4px; }
+.pj-row { display: grid; grid-template-columns: 34px 1fr 40px; align-items: center; gap: 6px; min-height: 18px; }
+.pj-key { font-size: 0.75rem; color: var(--ink-soft); }
+.pj-n { font-size: 0.72rem; color: var(--ink-dim); text-align: end; }
+.pj-track { display: flex; gap: 2px; height: 10px; }
+.pj-track i { display: block; height: 100%; border-radius: 3px; min-width: 2px; }
+.pt-share { display: flex; justify-content: flex-start; }
+/* Phase 8: the coach's weekly tilt and style taster (Insights). */
+.coach-tilt { display: grid; gap: 8px; }
+.coach-tilt h2 { margin: 0; }
+.ct-line { margin: 0; color: var(--ink); }
+.ct-reasons { margin: 0; padding-inline-start: 18px; font-size: 0.85rem; color: var(--ink-soft); }
+.ct-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-taster { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px; }

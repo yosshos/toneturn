@@ -22,7 +22,7 @@ import type { CourseId } from '../engine/courses';
 import { refreshProfile } from '../storage/profile';
 import { profileDigest, type Profile, type ProfileAction, type ProfileSource } from '../engine/analysis/profile';
 import { weekKey } from '../engine/analysis/groove';
-import { aiErrorText, askAi, type AiError } from '../cloud/ai';
+import { aiErrorText, askAi, weeklyExtraContext, type AiError } from '../cloud/ai';
 import { instrumentKeys, instrumentName, keyList, type InstrumentKeys } from '../engine/analysis/keyMastery';
 import type { FamilyId } from '../engine/drills/types';
 import { skillTitle } from '../storage/profile';
@@ -51,7 +51,7 @@ const TX = {
 const KEYS_5THS = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 const KEY_N = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 
-export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear', nearMastery, onPlateau, plateauLabel }: { /** AUDIT-5 #5: act on a plateau / fading item. */ onPlateau?: (f: PlateauFinding) => void; plateauLabel?: (id: string) => string | null; lang: 'en' | 'he'; progress: Progress; /** SPEC-PATH-ROLE §8: path units close to mastery, for the weekly summary. */ nearMastery?: string; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
+export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDrillKey, onPieces, onGroove, course = 'ear', nearMastery, onPlateau, plateauLabel, coach }: { /** Phase 8: the coach's tilt and style taster suggestion (CoachTilt), on top. */ coach?: React.ReactNode; /** AUDIT-5 #5: act on a plateau / fading item. */ onPlateau?: (f: PlateauFinding) => void; plateauLabel?: (id: string) => string | null; lang: 'en' | 'he'; progress: Progress; /** SPEC-PATH-ROLE §8: path units close to mastery, for the weekly summary. */ nearMastery?: string; /** Only the active course's cards show (GUITAR_AUDIT P2). */ course?: CourseId; onBack: () => void; onTopic: (id: string, level: number) => void; onDrills: () => void; /** Key mastery: start a skill in one key. */ onDrillKey?: (family: FamilyId, key: number) => void; onPieces: () => void; onGroove?: () => void }) {
   const tx = TX[lang];
   const on = (c: Parameters<typeof showsInsight>[0]) => showsInsight(c, course);
   const [model, setModel] = useState<PlayerModel | null>(null);
@@ -90,6 +90,7 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
         <h1>{tx.title}</h1>
       </header>
 
+      {coach}
       {profile && <ProfileCard profile={profile} lang={lang} tx={tx} shows={(src) => on(SOURCE_CARD[src])} act={act} nearMastery={nearMastery} />}
       <PlateauSection lang={lang} progress={progress} onPlateau={onPlateau} label={plateauLabel} />
 
@@ -393,7 +394,7 @@ function WeeklyCoach({ lang, digest }: { lang: 'en' | 'he'; digest: ReturnType<t
     // AUDIT-5: measured practice time, quality share and plateaus go into the weekly summary's inputs.
     const today = localDay(new Date());
     const practice = practiceDigest(loadLedger(), today);
-    const r = await askAi('weekly', { lang, context: { week, ...digest, practice } });
+    const r = await askAi('weekly', { lang, context: { week, ...digest, practice, ...weeklyExtraContext() } });
     setBusy(false);
     if ('error' in r) return setErr(r.error);
     setText(r.text);

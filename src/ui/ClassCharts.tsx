@@ -10,6 +10,21 @@ import { ClassProgress, MedianSwitch, type StudentSnaps } from './TeacherProgres
 import { SinceLesson } from './SinceLesson';
 import { areaLabel } from './Stats';
 import { localDay } from '../storage/progress';
+import type { AssignItem } from '../cloud/teacher';
+import { alertsOf, burnup } from '../engine/burnup';
+import { AlertCards, BurnUpRow } from './ExtraCharts';
+import { catalog } from '../engine/drills/generate';
+
+/** An item id's readable name for the alerts (a technique level's title in its key), else the id. */
+function itemName(id: string, lang: Lang): string {
+  const [fam, , key] = id.split(':');
+  for (const f of catalog()) {
+    if (f.id !== fam) continue;
+    const k = Number(key);
+    return `${f.title[lang]}${Number.isFinite(k) ? ` · ${['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'][((k % 12) + 12) % 12]}` : ''}`;
+  }
+  return id;
+}
 
 type Lang = 'he' | 'en';
 const addDays = (day: string, n: number) => new Date(new Date(day + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
@@ -28,7 +43,7 @@ export function ClassMedianSetting({ classId, lang }: { classId: string; lang: L
   );
 }
 
-export function ClassCharts({ classId, students, lang }: { classId: string; students: { id: string; name: string }[]; lang: Lang }) {
+export function ClassCharts({ classId, students, lang, assignments, titleOf }: { classId: string; students: { id: string; name: string }[]; lang: Lang; /** Phase 8 (§4.1): the class's assignments — a burn-up per assignment for the opened student. */ assignments?: AssignItem[]; titleOf?: (a: AssignItem) => string }) {
   const on = snapshotsOn();
   const today = localDay(new Date());
   const [data, setData] = useState<StudentSnaps[] | null>(null);
@@ -45,7 +60,23 @@ export function ClassCharts({ classId, students, lang }: { classId: string; stud
   return (
     <div className="class-charts" data-class-charts={classId}>
       <ClassProgress students={data.filter((s) => Object.keys(s.snaps).length)} lang={lang} today={today} onOpenStudent={(id) => setOpen((o) => (o === id ? null : id))} />
+      {st && <AlertCards alerts={alertsOf(st.snaps, today)} lang={lang} who={st.name} itemName={(id) => itemName(id, lang)} />}
       {st && <SinceLesson key={st.id} snaps={st.snaps} lang={lang} today={today} areaName={(a) => areaLabel(a, lang)} who={st.name} />}
+      {st && assignments && assignments.length > 0 && (
+        <section className="pt-card" aria-label={lang === 'he' ? 'המשימות' : 'Assignments'} data-burnups={st.id}>
+          <div className="pt-card-head">
+            <h3>
+              {st.name} · {lang === 'he' ? 'התקדמות במשימות' : 'Assignment progress'}
+            </h3>
+          </div>
+          {assignments
+            .filter((a) => a.kind !== 'focus')
+            .slice(0, 6)
+            .map((a) => (
+              <BurnUpRow key={a.id} b={burnup(a, today, st.id)} kind={a.kind} title={titleOf?.(a) ?? a.ref ?? a.kind} lang={lang} />
+            ))}
+        </section>
+      )}
     </div>
   );
 }
