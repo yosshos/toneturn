@@ -5,6 +5,8 @@
 // Nothing here runs for Hebrew or English: active() is false and translate() returns its input.
 import { isTranslated, LOCALES, type LocaleCode } from './locales';
 
+declare const __APP_VERSION__: string;
+
 export interface Catalog {
   /** English text (or pattern with {0} / {name} fill-ins) → translated text. */
   [en: string]: string;
@@ -51,13 +53,14 @@ export function setCatalog(locale: LocaleCode | null, cat: Catalog | null): void
       const names = parts.filter(isPh).map((x) => x.slice(1, -1));
       let re: RegExp;
       try {
-        re = new RegExp(`^${parts.map((x) => (isPh(x) ? '(.+?)' : esc(x))).join('')}$`, 's');
+        re = new RegExp(`^${parts.map((x) => (isPh(x) ? '(.*?)' : esc(x))).join('')}$`, 's');
       } catch {
         continue;
       }
-      // a pattern open at both ends needs two words of its own ("{0} in {1}" would match any sentence with "in")
+      // a pattern open at both ends needs two words of its own, or one real word ("{0} in {1}" would match any sentence
+      // with "in"; "{0} hesitation{1}" is fine)
       const fixed = parts.filter((x) => !isPh(x)).join(' ').match(/[A-Za-z]{2,}/g) ?? [];
-      if (fixed.length < 2 && parts[0] === '' && parts[parts.length - 1] === '') continue;
+      if (fixed.length < 2 && parts[0] === '' && parts[parts.length - 1] === '' && (fixed[0] ?? '').length <= 4) continue;
       const head = parts[0];
       const pat: Pat = { re, out: v, head, names };
       if (head.length >= HEAD) {
@@ -106,6 +109,8 @@ function core(s: string): string {
       // translation may move it
       return p.out.replace(PH, (all, n: string) => {
         const f = val.get(n);
+        // an English plural ending carried in a fill-in ("hesitation{1}" with {1} = "s") means nothing in the locale
+        if (f === 's' || f === 'es') return '';
         return f === undefined ? all : (exact.get(f) ?? f);
       });
     }
@@ -113,6 +118,18 @@ function core(s: string): string {
   };
   const r = tryPats(buckets.get(s.slice(0, HEAD))) ?? tryPats(openers);
   if (r !== null) return r;
+  // texts the screens put together: "12. Sing it by name" (a numbered title), "Repertoire · 0/5" (parts joined by a
+  // middle dot): each part on its own
+  const num = /^(\d+\.\s+)(.+)$/.exec(s);
+  if (num) {
+    const t = core(num[2]);
+    if (t !== num[2]) return num[1] + t;
+  }
+  if (s.includes(' · ')) {
+    const parts = s.split(' · ');
+    const t = parts.map((x) => (WORDY.test(x) && !MUSIC.test(x) ? core(x) : x));
+    if (t.some((x, i) => x !== parts[i])) return t.join(' · ');
+  }
   misses.add(s);
   return s;
 }
@@ -155,7 +172,7 @@ export async function loadLocale(locale: LocaleCode): Promise<void> {
 async function fetchCatalog(locale: LocaleCode): Promise<void> {
   let cat: Catalog = {};
   try {
-    const r = await fetch(`${import.meta.env.BASE_URL}i18n/${locale}.json`);
+    const r = await fetch(`${import.meta.env.BASE_URL}i18n/${locale}.json?v=${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'}`);
     if (r.ok) cat = (await r.json()) as Catalog;
   } catch {
     /* offline before the first load: English until it can be fetched */

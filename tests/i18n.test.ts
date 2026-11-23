@@ -68,3 +68,23 @@ describe('patterns never tear a sentence', () => {
     expect(translate('Open the long list of every chord you have played this week')).toBe('Open the long list of every chord you have played this week');
   });
 });
+
+describe('English plural endings in fill-ins', () => {
+  afterEach(() => setCatalog(null, null));
+  it('"{0} hesitation{1}" reads right in the locale for one and for many', () => {
+    setCatalog('it', { '{0} hesitation{1}': '{0} esitazione{1}' });
+    expect(translate('1 hesitation')).toBe('1 esitazione');
+    expect(translate('3 hesitations')).toBe('3 esitazione');
+  });
+});
+
+describe('texts the screens put together', () => {
+  afterEach(() => setCatalog(null, null));
+  it('a numbered title and parts joined by a middle dot are translated part by part', () => {
+    setCatalog('es', { 'Sing it by name': 'Cántalo por su nombre', Repertoire: 'Repertorio', 'Your first standard': 'Tu primer standard' });
+    expect(translate('12. Sing it by name')).toBe('12. Cántalo por su nombre');
+    expect(translate('Your first standard · 0/5')).toBe('Tu primer standard · 0/5');
+    expect(translate('Repertoire · Your first standard')).toBe('Repertorio · Tu primer standard');
+    expect(translate('3. Unknown title')).toBe('3. Unknown title');
+  });
+});

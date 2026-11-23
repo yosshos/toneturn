@@ -25,7 +25,7 @@ test('a Hebrew phone opens the welcome in Hebrew, and the language choice switch
 // reload; Hebrew and English never load a catalog.
 test('a translated language: the screen text from the catalog, left to right; then back to the saved language', async ({ page }) => {
   let fetched = 0;
-  await page.route('**/i18n/es.json', (r) => {
+  await page.route('**/i18n/es.json*', (r) => {
     fetched++;
     return r.fulfill({ json: { 'Hear.': 'Escucha.', 'Get started': 'Empezar', 'I already have an account': 'Ya tengo una cuenta' } });
   });

@@ -112,10 +112,13 @@ for (const f of files) {
 // live, since course data files hold many of the words every screen shows.
 const shortText = (s) => s.split(/\s+/).length <= 5;
 const prio = (f) => (f.startsWith('src/i18n/') ? 0 : f.startsWith('src/ui/') ? 1 : 2);
-const rank = (s) => (prio(out.get(s)) === 0 ? 0 : shortText(s) ? 1 : prio(out.get(s)) === 1 ? 2 : 3);
+// titles of lessons, steps and units (up to 12 words, not a sentence ending in a full stop) are on the path and the
+// lists: they come before the long explanations
+const title = (s) => s.split(/\s+/).length <= 12 && !/[.:;]$/.test(s);
+const rank = (s) => (prio(out.get(s)) === 0 ? 0 : shortText(s) ? 1 : prio(out.get(s)) === 1 ? 2 : title(s) ? 3 : 4);
 const list = [...out.keys()].sort((x, y) => rank(x) - rank(y) || out.get(x).localeCompare(out.get(y)));
 writeFileSync(join(ROOT, 'i18n/source.json'), JSON.stringify(list, null, 0).replace(/","/g, '",\n"') + '\n');
-for (const [k, name] of [[0, 'frame'], [1, 'short texts'], [2, 'screens'], [3, 'content']]) {
+for (const [k, name] of [[0, 'frame'], [1, 'short texts'], [2, 'screens'], [3, 'titles'], [4, 'prose']]) {
   const part = list.filter((s) => rank(s) === k);
   console.log(`  ${name}: ${part.length} texts, ${part.reduce((a, s) => a + s.split(/\s+/).length, 0)} words`);
 }
