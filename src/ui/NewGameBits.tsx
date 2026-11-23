@@ -44,12 +44,12 @@ export function WhyLine({ lang, line, ok, why }: { lang: Lang; line: ReactNode; 
 }
 
 /** The beat dots of a timed take: count-in dots first (hollow), then the bar's beats; the now-cue on the current one. */
-export function BeatDots({ countIn, beats, now, marks, targets }: { countIn: number; beats: number; now: number; marks?: (string | undefined)[]; targets?: number[] }) {
+export function BeatDots({ countIn, beats, now, marks, targets, meter = 4 }: { countIn: number; beats: number; now: number; marks?: (string | undefined)[]; targets?: number[]; /** Beats per bar (a waltz: 3), for the bar marks. */ meter?: number }) {
   return (
     <div className="ng-beats" dir="ltr" aria-hidden="true">
       {Array.from({ length: countIn + beats }, (_, i) => {
         const b = i - countIn;
-        const cls = [b < 0 ? 'count' : '', b >= 0 && b % 4 === 0 ? 'bar' : '', i === now ? 'now' : '', b >= 0 && targets?.includes(b) ? 'target' : '', b >= 0 ? (marks?.[b] ?? '') : ''].join(' ');
+        const cls = [b < 0 ? 'count' : '', b >= 0 && b % meter === 0 ? 'bar' : '', i === now ? 'now' : '', b >= 0 && targets?.includes(b) ? 'target' : '', b >= 0 ? (marks?.[b] ?? '') : ''].join(' ');
         return <i key={i} className={cls} />;
       })}
     </div>

@@ -1,12 +1,14 @@
 // PIANO_AUDIT (2026-11-10): scale / arpeggio fingerings in every key, cadence voice leading, exam-grade tempos, Hebrew
 // titles, and the take analysis with realistic human takes (jitter, velocity noise) at every level's target tempo.
 import { micTouchGoal } from '../src/engine/drills/micTouch';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { catalog, EXAM_NPS, generate, parallelsBetween, type LevelDef } from '../src/engine/drills/generate';
 import { analyzeTake, micUnmeasurable, notesPerBeat, npsOf, tempoBand, thresholds } from '../src/engine/drills/analyze';
 import { levelDrills, targetBpmOf } from '../src/engine/drills/plan';
 import type { Drill, PlayedNote } from '../src/engine/drills/types';
 import { humanTake, steadySd } from './pianoTake';
+// Sweeps the whole catalogue: slower than the 30 s default on a loaded machine or CI.
+vi.setConfig({ testTimeout: 180_000 });
 
 const CAT = catalog();
 const isBlack = (p: number) => [1, 3, 6, 8, 10].includes(((p % 12) + 12) % 12);

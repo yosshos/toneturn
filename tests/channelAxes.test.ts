@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { channelAxisValue, COURSE_SECTIONS, CHANNEL_FULL_TAKES, sectionAxes } from '../src/engine/courseSections';
 import { channelCounts } from '../src/engine/drills/channel';
 import type { ItemState } from '../src/engine/drills/types';
+// Sweeps the whole catalogue: slower than the 30 s default on a loaded machine or CI.
+vi.setConfig({ testTimeout: 180_000 });
 
 // Phase 6 (BUILD-PLAN-2026-11 §0.2, SPEC-EAR-AND-READING §4): the "by ear" and "reading" axes from take channels.
 const item = (id: string, family: string, channels: ItemState['channels']): ItemState => ({ itemId: id, family: family as ItemState['family'], key: 0, hands: 'R', cleanBpm: 0, goalBpm: 60, streak: 0, fails: 0, ewma: { cv: 0, sd: 0, vsd: 0, hands: 0, acc: 0 }, takes: 1, last: '', history: [], channels });

@@ -207,7 +207,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
           </div>
         )}
       </div>
-      {running && <BeatDots countIn={4} beats={sheet.meter} now={countNow} />}
+      {running && <BeatDots countIn={4} beats={sheet.meter} meter={sheet.meter} now={countNow} />}
       {grade &&
         (grade.notes ? (
           <ul className="is-stats rs-stats" data-hw-result={Math.round(grade.score * 100)}>

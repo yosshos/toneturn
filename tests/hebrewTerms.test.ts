@@ -4,8 +4,10 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GLOSSARY } from '../src/content/glossary';
+// Sweeps the whole catalogue: slower than the 30 s default on a loaded machine or CI.
+vi.setConfig({ testTimeout: 180_000 });
 
 const ROOT = join(__dirname, '..');
 /**

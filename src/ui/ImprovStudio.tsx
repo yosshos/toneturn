@@ -266,7 +266,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   const stats: ModeStats = settings.rotationStats ?? {};
   const levelSheet = (() => {
     const { p } = chartOf();
-    return mode === 'trade' ? buildRotationSheet({ ...p, bars: Math.min(4, p.bars), chords: p.chords.filter((c) => c.bar < 4) }, { tier, stats, choruses: 1 }) : buildRotationSheet(p, { tier, stats, choruses: 2 });
+    return mode === 'trade' ? buildRotationSheet({ ...p, bars: Math.min(4, p.bars), chords: p.chords.filter((c) => c.bar < 4) }, { tier, stats, meter: chartOf().L.style === 'waltz' ? 3 : 4, choruses: 1 }) : buildRotationSheet(p, { tier, stats, meter: chartOf().L.style === 'waltz' ? 3 : 4, choruses: 2 });
   })();
   /**
    * SPEC-LICKS-IN-IMPROV §3–4 at the take boundary: the licks of mine in the take's notes (beats from the chart's first
@@ -303,7 +303,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     keepChartTake({ kind: 'improv', title: { en: `Phrasing · ${L.text.split('|')[0].trim()}`, he: `משפטים · ${L.text.split('|')[0].trim()}` }, notes: played.map((n) => ({ start: n.beat * beatS, end: (n.beat + Math.max(0.1, n.dur)) * beatS, midi: n.midi })), bpm, meter: 4, chart: L.text, style: L.style, loops: 2, source: midi.devices.length ? 'midi' : 'screen' });
     const chk = checkPhraseRule(played, total, RULES[rule]);
     const mot = motifReturns(played);
-    const sh = buildRotationSheet(p, { tier, stats, choruses: 2 });
+    const sh = buildRotationSheet(p, { tier, stats, meter: chartOf().L.style === 'waltz' ? 3 : 4, choruses: 2 });
     const g = sh ? gradeRotation(sh, played, stats, new Date().toISOString()) : null;
     const phraseScore = (chk.ok ? 0.5 : 0.2) + 0.25 * developmentScore(mot.returns) + 0.25 * (g?.score ?? 0);
     onTake?.({ ...improvTake('phrasing', { score: phraseScore, notes: played.length, tier, bpm, stats: g?.stats }), ...(g && played.length ? { inSet: g.m.inSet } : {}) });
@@ -375,7 +375,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const scores: number[] = [];
     let tStats = stats;
     const grades: RotationGrade[] = [];
-    const sh = buildRotationSheet(four, { tier, stats, choruses: 1 });
+    const sh = buildRotationSheet(four, { tier, stats, meter: chartOf().L.style === 'waltz' ? 3 : 4, choruses: 1 });
     let played = 0;
     const fourOnly = { ...four, chords: four.chords.filter((c) => c.bar < four.bars) };
     const turnBeats = tradeTurnBeats(four.bars);

@@ -401,7 +401,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
           </div>
         )}
       </div>
-      {running ? <BeatDots countIn={sheet.meter} beats={sheet.meter} now={countNow} /> : (
+      {running ? <BeatDots countIn={sheet.meter} beats={sheet.meter} meter={sheet.meter} now={countNow} /> : (
         <p className="rs-legend" aria-label={lang === 'he' ? 'משפחות הסולמות' : 'Scale families'}>
           {fams.map((f) => (
             <span key={f} className={`rs-scale fam-${f}`}>
