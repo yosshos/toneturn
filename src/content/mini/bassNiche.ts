@@ -4,6 +4,10 @@
 
 import type { Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
+import { isVerified } from '../../engine/verifiedContent';
+
+/** The b-latin cells no source gives (verifiedContent 'bass-latin-cells'): cha-cha, songo, Mozambique, 6/8, the partido-alto cell. */
+const latinCellsOn = (): boolean => isVerified('level:b-latin-4');
 
 const notes = (midis: number[], each = 0.5): Stimulus => ({ kind: 'notes', midis, each });
 const chord = (midis: number[], duration = 1.4): Stimulus => ({ kind: 'chord', midis, duration });
@@ -205,17 +209,30 @@ export const LESSONS: MiniLesson[] = [
       },
     ],
     more: [
-      {
-        say: { en: 'Cha-cha keeps the one, then adds the "cha-cha" on four and its "and". Songo and Mozambique syncopate in sixteenths.', he: 'בצ׳ה-צ׳ה האחת נשארת, ומתווסף ה"צ׳ה-צ׳ה" על ארבע וה"וְ" שלו. סונגו ומוזמביק מסנכפים בשש-עשריות.' },
-        play: [notes([36, 43, 48, 47], 0.4)],
-      },
-      {
-        say: { en: 'Afro-Cuban six-eight feels each beat in three. The bell pattern is long and asymmetric; count it slowly at first.', he: 'שש-שמיניות אפרו-קובני מרגיש כל פעמה בשלוש. דפוס הפעמון ארוך ולא סימטרי; סופרים אותו לאט בהתחלה.' },
-      },
-      {
-        say: { en: 'In Brazil the bass works differently: the samba and partido alto drive the sixteenths, the baião rocks on a dotted rhythm.', he: 'בברזיל הבס עובד אחרת: הסמבה והפרטידו אלטו מניעים את השש-עשריות, והבאיון מתנדנד על מקצב מנוקד.' },
-        play: [notes([36, 43, 48, 36, 43, 46], 0.3)],
-      },
+      // the tumbao's place and the clave's home (lines shared with the bass and drums family lessons)
+      { say: { en: 'The tumbao, from Cuban music, anticipates: the bass plays on the “and” of two and on four, rarely on one. It pulls the band forward.', he: 'הטומבאו, מהמוזיקה הקובנית, מקדים: הבס מנגן על ה"וְ" של שתיים ועל ארבע, כמעט אף פעם לא באחת. הוא מושך את הלהקה קדימה.' }, play: [notes([40, 33, 45, 40], 0.5)] },
+      { say: { en: 'Where it lives: salsa, mambo and Afro-Cuban jazz are all built on the clave. Even when nobody plays it, everyone feels it.', he: 'איפה זה חי: סלסה, מאמבו וג׳אז אפרו־קובני בנויים כולם על הקלאבה. גם כשאף אחד לא מנגן אותה, כולם מרגישים אותה.' }, play: [notes([72, 72, 72, 72, 72], 0.4)] },
+      { say: { en: 'Son clave comes from the Cuban son; rumba clave from the rumba, where the later third note gives a more restless feel.', he: 'קלאבת סון באה מהסון הקובני; קלאבת רומבה מהרומבה, שבה הצליל השלישי המאוחר נותן תחושה חסרת מנוחה יותר.' } },
+      // cha-cha, songo, Mozambique and 6/8 bass, and the partido-alto cell: only once their lines are verified
+      ...(latinCellsOn()
+        ? [
+            {
+              say: { en: 'Cha-cha keeps the one, then adds the "cha-cha" on four and its "and". Songo and Mozambique syncopate in sixteenths.', he: 'בצ׳ה-צ׳ה האחת נשארת, ומתווסף ה"צ׳ה-צ׳ה" על ארבע וה"וְ" שלו. סונגו ומוזמביק מסנכפים בשש-עשריות.' },
+              play: [notes([36, 43, 48, 47], 0.4)],
+            },
+            {
+              say: { en: 'Afro-Cuban six-eight feels each beat in three. The bell pattern is long and asymmetric; count it slowly at first.', he: 'שש-שמיניות אפרו-קובני מרגיש כל פעמה בשלוש. דפוס הפעמון ארוך ולא סימטרי; סופרים אותו לאט בהתחלה.' },
+            },
+          ]
+        : []),
+      ...(isVerified('item:brazil:0')
+        ? [
+            {
+              say: { en: 'In Brazil the bass works differently: the samba and partido alto drive the sixteenths, the baião rocks on a dotted rhythm.', he: 'בברזיל הבס עובד אחרת: הסמבה והפרטידו אלטו מניעים את השש-עשריות, והבאיון מתנדנד על מקצב מנוקד.' },
+              play: [notes([36, 43, 48, 36, 43, 46], 0.3)],
+            },
+          ]
+        : []),
       {
         say: { en: 'Latin jazz brings the tumbao to standards: the root of every new chord arrives an eighth early, on the "and".', he: 'ג׳אז לטיני מביא את הטומבאו לסטנדרטים: השורש של כל אקורד חדש מגיע שמינית מוקדם, על ה"וְ".' },
       },

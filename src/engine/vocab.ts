@@ -96,24 +96,29 @@ export function findUses(pool: Lick[], notes: ImpNote[], chart: { root: number; 
     for (const h of findLick(l, notes, spans, { shape: true, varied: true, tol, meter: o.meter ?? 4 }))
       if (h.overChord && h.tight !== false) {
         const sp = h.target ? { root: h.target.root, q: h.target.q } : spans.find((x) => h.beat >= x.at - 1e-6 && h.beat < x.at + x.beats - 1e-6);
-        out.push({ id: l.id, key: h.transpose, kind: h.kind, ...(h.viaSub ? { viaSub: true } : {}), at, session, ...(sp ? { chord: symOf(sp.root, sp.q) } : {}), beat: h.beat, ...(h.end !== undefined ? { end: h.end } : {}), ...(h.target ? { deg: h.target.deg } : {}) });
+        // an approach cell's key is the key of the chord it targets (its root), not the target note
+        out.push({ id: l.id, key: l.cell && h.target ? h.target.root : h.transpose, kind: h.kind, ...(h.viaSub ? { viaSub: true } : {}), at, session, ...(sp ? { chord: symOf(sp.root, sp.q) } : {}), beat: h.beat, ...(h.end !== undefined ? { end: h.end } : {}), ...(h.target ? { deg: h.target.deg } : {}) });
       }
   return out.sort((a, b) => (a.beat ?? 0) - (b.beat ?? 0));
 }
 
 /** The variety bonus: +2 for each distinct lick after the first in one take, at most +8 (SPEC-LICKS-IN-IMPROV §4). */
 export const VARIETY_XP = 2;
-/** "New key" (SPEC-LICKS-IN-IMPROV §2): a key where the lick is not closed yet. */
-export const isNewKey = (u: Pick<LickUse, 'id' | 'key'>, closed: Record<string, number[]> | undefined): boolean => !(closed?.[u.id] ?? []).includes(((u.key % 12) + 12) % 12);
+/** An approach cell's id (ap-1…3): a pattern found in almost any line — tracked in the usage log, never a lick card,
+ *  lick XP, the variety bonus or a "new key" (owner audit 2026-11-23). */
+export const isCellId = (id: string): boolean => APPROACH_CELLS.some((c) => c.id === id);
+/** "New key" (SPEC-LICKS-IN-IMPROV §2): a key where the lick is not closed yet (never for an approach cell). */
+export const isNewKey = (u: Pick<LickUse, 'id' | 'key'>, closed: Record<string, number[]> | undefined): boolean => !isCellId(u.id) && !(closed?.[u.id] ?? []).includes(((u.key % 12) + 12) % 12);
 /**
  * XP for one take's uses (SPEC-LICKS-IN-IMPROV §4): full (6), then half, then 0 for the same lick in the take; +3 in
  * a key where the lick is not closed yet (`closed`: per lick, its closed keys — vocab.closedKeys), +2 a variation; and
- * the variety bonus for distinct licks.
+ * the variety bonus for distinct licks. Approach cells earn nothing (they are only tracked).
  */
 export function usesXp(uses: LickUse[], closed: Record<string, number[]> | undefined): number {
   const seen: Record<string, number> = {};
   let xp = 0;
   for (const u of uses) {
+    if (isCellId(u.id)) continue;
     const n = (seen[u.id] = (seen[u.id] ?? 0) + 1);
     const base = n === 1 ? 6 : n === 2 ? 3 : 0;
     if (!base) continue;
@@ -131,6 +136,35 @@ export function takeUses(o: { pool: Lick[]; closed?: Record<string, number[]>; n
   if (!o.pool.length || o.notes.length < 3) return { uses: [], xp: 0 };
   const hits = findUses(o.pool, o.notes, o.spans, o.session, o.at ?? new Date().toISOString(), { tol: o.tol, meter: o.meter });
   return { uses: hits.map((u) => ({ ...u, beat: u.beat ?? 0, fresh: isNewKey(u, o.closed) })), xp: usesXp(hits, o.closed) };
+}
+
+/** Trade's turn (Improvise › Trade): the chart's first four bars, or all of a shorter chart — in beats. The rounds'
+ *  notes are laid end to end by this length, so the lick search's spans (the chart repeated) line up with them. */
+export const tradeTurnBeats = (bars: number, meter = 4): number => Math.max(1, Math.min(4, bars)) * meter;
+
+/** What a take boundary needs of the player's vocabulary (Charts.VocabCtx carries it). */
+export interface TakeVocab {
+  pool: Lick[];
+  closed?: Record<string, number[]>;
+  tol?: number;
+  onUses?: (uses: LickUse[], xp: number) => void;
+}
+/** An improvised line ready for the lick search: notes in beats from the chart's first beat, the chart's spans. */
+export interface ImprovLine {
+  notes: { beat: number; midi: number; dur?: number }[];
+  spans: { root: number; iv: number[]; at: number; beats: number }[];
+  meter: number;
+}
+/**
+ * Every improvisation take's lick search and booking (SPEC-LICKS-IN-IMPROV §3–4): the uses found in the line are
+ * handed to the app (the usage log, the review, XP). Null without a pool or a line.
+ */
+export function bookTake(v: TakeVocab | undefined, line: ImprovLine, session: string): { uses: (LickUse & { beat: number; fresh: boolean })[]; xp: number } | null {
+  if (!v?.pool.length || line.notes.length < 3) return null;
+  const notes = line.notes.map((n) => ({ beat: n.beat, midi: Math.round(n.midi) }));
+  const r = takeUses({ pool: v.pool, closed: v.closed, notes, spans: line.spans, session, tol: v.tol, meter: line.meter });
+  if (r.uses.length) v.onUses?.(r.uses, r.xp);
+  return r;
 }
 
 /** The usage log's entry of a use (the take's beats and the target are not kept). */

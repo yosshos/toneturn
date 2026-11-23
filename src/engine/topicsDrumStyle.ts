@@ -13,6 +13,10 @@ import { TOPIC_GEN, choiceQ, rng, shuffleR, pickR } from './topicKit';
 import { GROOVES, grooveBars, grooveHits, grooveSteps, stepSeconds, type Groove, type HitKind } from './grooves';
 import { bandComping, walkingBass, type BandStyle } from './band';
 import { chordAtBeat, parseChart } from './charts';
+import { isVerified } from './verifiedContent';
+
+/** The styles whose groove no unverified claim hides (verifiedContent 'groove:<id>'). */
+const shownOnly = <T extends { groove: string }>(xs: T[]): T[] => xs.filter((s) => isVerified(`groove:${s.groove}`));
 
 type Bi = { en: string; he: string };
 
@@ -26,7 +30,7 @@ export interface DrumStyle {
   chart: string;
 }
 
-export const DRUM_STYLES: DrumStyle[] = [
+export const DRUM_STYLES: DrumStyle[] = shownOnly<DrumStyle>([
   { id: 'rock', name: { en: 'Rock', he: 'רוק' }, groove: 'rock-8', band: 'rock', chart: 'A | D' },
   { id: 'swing', name: { en: 'Swing', he: 'סווינג' }, groove: 'swing', band: 'swing', chart: 'Dm7 G7 | Cmaj7' },
   { id: 'bossa', name: { en: 'Bossa nova', he: 'בוסה נובה' }, groove: 'bossa', band: 'bossa', chart: 'Dm7 | G7' },
@@ -44,7 +48,8 @@ export const DRUM_STYLES: DrumStyle[] = [
   { id: 'five4', name: { en: '5/4', he: '5/4' }, groove: 'five-4', band: 'hold', chart: 'Dm | Am' },
   { id: 'nine8', name: { en: '9/8', he: '9/8' }, groove: 'nine-8', band: 'hold', chart: 'Em | D' },
   { id: 'cha', name: { en: 'Cha-cha', he: 'צ׳ה־צ׳ה' }, groove: 'cha-cha', band: 'latin', chart: 'C | G7' },
-];
+  // a groove the bank leaves out (unverified kit patterns, 'latin-kit-patterns') is not asked
+]);
 const BY_ID: Record<string, DrumStyle> = Object.fromEntries(DRUM_STYLES.map((s) => [s.id, s]));
 
 /** The styles of each level (choices come from these). */
@@ -52,7 +57,7 @@ export const STYLE_POOL: string[][] = [
   ['rock', 'swing', 'bossa', 'reggae'],
   ['rock', 'swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz'],
   ['swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz', 'songo', 'halftime', 'afro68', 'seven8', 'maqsum'],
-];
+].map((p) => p.filter((id) => id in BY_ID));
 /** Level 4: groups that sound alike. */
 export const LOOK_ALIKES: string[][] = [
   ['swing', 'shuffle', 'halftime'],
@@ -61,7 +66,8 @@ export const LOOK_ALIKES: string[][] = [
   ['waltz', 'afro68', 'shuffle'],
   ['songo', 'cha', 'funk'],
   ['rock', 'funk', 'halftime'],
-];
+  // a group that lost a style (not shown) is left out: its look-alike is gone
+].filter((g) => g.every((id) => id in BY_ID));
 
 const PERC: Record<HitKind, PercKind> = { kick: 'kick', snare: 'snare', 'snare-soft': 'snare-soft', hat: 'hat', 'hat-open': 'hat-open', ride: 'ride', rim: 'rim', clap: 'snare', cowbell: 'ride-bell', shaker: 'hat' };
 const grooveOf = (id: string): Groove => GROOVES.find((g) => g.id === id)!;

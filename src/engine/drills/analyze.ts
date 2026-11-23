@@ -319,6 +319,11 @@ export function improvNotes(drill: Drill, bpm: number, played0: PlayedNote[]): C
     .sort((a, b) => a.beat - b.beat);
 }
 
+/** The improvised line of a rule-card take (goal.improv) for the lick search (vocab.bookTake): notes and the chart. */
+export function improvLineOf(drill: Drill, bpm: number, played0: PlayedNote[]): { notes: { beat: number; midi: number; dur: number }[]; spans: { at: number; beats: number; root: number; iv: number[] }[]; meter: number } {
+  return { notes: improvNotes(drill, bpm, played0).map((n) => ({ beat: n.beat, midi: n.midi, dur: n.dur })), spans: drill.goal.improv?.spans ?? [], meter: drill.meter || 4 };
+}
+
 /** AUDIT-DEPTH-3 C5: every rule card of an improvised take (goal.improv). Cards the input can't measure (total 0) are left out. */
 export function improvChecks(drill: Drill, bpm: number, played0: PlayedNote[]): NonNullable<TakeMetrics['improv']> {
   const g = drill.goal.improv;
@@ -1243,6 +1248,8 @@ export function analyzeTake(drill: Drill, bpm: number, played0: PlayedNote[], ca
     ...(unmeasured.length ? { unmeasured } : {}),
     ...(sections ? { sections } : {}),
     ...(drill.goal.improv ? { improv } : {}),
+    // SPEC-LICKS-IN-IMPROV §3: the improvised line, for the lick search at the take boundary (not kept)
+    ...(drill.goal.improv ? { improvLine: improvLineOf(drill, bpm, played0) } : {}),
     ...(drill.goal.improv ? (() => { const l = improvLandings(drill, bpm, played0); return l.length ? { landings: l } : {}; })() : {}),
     ...(po ? { phraseOrg: po.report } : {}),
     ...(po?.playRest ? { playRest: po.playRest } : {}),

@@ -21,6 +21,7 @@ import { ARP_SYM, pivotArp, scalePivotLine, straightArp, type ArpQuality } from 
 import { MODULATIONS, parseMeter, planBars, withBarPlan } from './timeline';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import type { BassFamilyId } from './types';
+import { isVerified } from '../verifiedContent';
 
 type T2 = { en: string; he: string };
 const tt = (en: string, he: string): T2 => ({ en, he });
@@ -1153,7 +1154,8 @@ export function jazzFamilies(L: LFn, fam: FamFn): GuitarFamilyDef[] {
       L('b-latin', 5, 'Songo', 'סונגו', [LA('songo', { minor: true, perBeat: 4 })], [9, 2, 4, 7], [100, 130], S16),
       L('b-latin', 6, 'Mozambique', 'מוזמביק', [LA('mozambique', { minor: true, perBeat: 4 })], [9, 2, 4, 7], [100, 130], S16),
       L('b-latin', 7, 'Afro-Cuban 6/8', 'אפרו-קובני 6/8', [LA('afro68', { minor: true, perBeat: 3 })], [9, 2, 4, 7], [56, 84], 'triplets (♩. = beat)'),
-      L('b-latin', 8, 'Partido alto and baião', 'פרטידו אלטו ובאיון', [LA('brazil', { perBeat: 4 }), LA('brazil', { perBeat: 4, option: 1 })], [0, 5, 7, 2], [80, 110], S16),
+      // the partido-alto cell (option 0) is hidden while unverified ('bass-latin-cells'): the level is the baião then
+      isVerified('item:brazil:0') ? L('b-latin', 8, 'Partido alto and baião', 'פרטידו אלטו ובאיון', [LA('brazil', { perBeat: 4 }), LA('brazil', { perBeat: 4, option: 1 })], [0, 5, 7, 2], [80, 110], S16) : L('b-latin', 8, 'Baião', 'באיון', [LA('brazil', { perBeat: 4 }), LA('brazil', { perBeat: 4, option: 1 })], [0, 5, 7, 2], [80, 110], S16),
       L('b-latin', 9, 'Latin jazz: anticipate the changes', 'ג׳אז לטיני: להקדים את החילופים', [LA('latin-jazz'), LA('latin-jazz', { option: 1 })], [0], [100, 160], E8),
     ]),
   ];

@@ -204,7 +204,7 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
   {
     id: 'latin-kit-patterns',
     why: 'Mambo, songo, Mozambique (d-latin 8–10): son clave and the tumbao kick (&2 and 4) confirmed; songo rebuilt 2026-11-22 to the verified hands (right hand on the four beats, left hand on the offbeats; STYLE-AFROCUBAN F4); the mambo / Mozambique bells, the Mozambique snare, the songo kick and accents and the hi-hat foot not (sources are notation images or books) — omitted for lack of verified knowledge.',
-    hides: ['level:d-latin-8', 'level:d-latin-9', 'level:d-latin-10'],
+    hides: ['level:d-latin-8', 'level:d-latin-9', 'level:d-latin-10', 'groove:songo'],
     unsourced: true,
   },
   {
@@ -265,10 +265,24 @@ export function itemVerified(kind: string, option?: number): boolean {
   return isVerified(`item:${k}`) && (option === undefined || isVerified(`item:${k}:${option}`));
 }
 
+/**
+ * Bass kinds that live in one level only, where the level is what a claim hides (the b-latin cells, 'bass-latin-cells'):
+ * a saved item of such a kind is hidden with its level. "family:kind" → level id.
+ */
+export const BASS_KIND_LEVEL: Readonly<Record<string, string>> = {
+  'b-latin:chacha': 'b-latin-4',
+  'b-latin:songo': 'b-latin-5',
+  'b-latin:mozambique': 'b-latin-6',
+  'b-latin:afro68': 'b-latin-7',
+};
+
 /** A saved item id ("family:kind:key:hands…:op3") is shown (key mastery, profiles). */
 export function itemIdVerified(itemId: string): boolean {
   const p = itemId.split(':');
   const fam = p[0] ?? '';
+  // bass kinds whose level is hidden (saved b-latin 4–7 items don't count in key mastery)
+  const bl = BASS_KIND_LEVEL[`${fam}:${p[1] ?? ''}`];
+  if (bl && !isVerified(`level:${bl}`)) return false;
   // a game's key takes ("k-game-call5432:game:…")
   const g = /^[kgb]-game-(.+)$/.exec(fam);
   if (g) return isVerified(`game:${g[1]}`);

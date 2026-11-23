@@ -60,13 +60,17 @@ const weekOf = (day: string) => {
 };
 
 /** The status ladder per week (the week's last snapshot), summed over areas (or one area). */
-export function statusByWeek(snaps: Snapshot[], area?: string): { week: string; counts: Partial<Record<ItemStatus, number>> }[] {
+/** An area, or a test on the area (a course's own areas, ProgressOverTime.ownArea). */
+export type AreaSel = string | ((area: string) => boolean);
+const inSel = (sel: AreaSel | undefined, a: string): boolean => (sel === undefined ? true : typeof sel === 'string' ? a === sel : sel(a));
+
+export function statusByWeek(snaps: Snapshot[], area?: AreaSel): { week: string; counts: Partial<Record<ItemStatus, number>> }[] {
   const last = new Map<string, Snapshot>();
   for (const s of snaps) last.set(weekOf(s.day), s);
   return [...last.entries()].map(([week, s]) => {
     const counts: Partial<Record<ItemStatus, number>> = {};
     for (const [a, st] of Object.entries(s.status)) {
-      if (area && a !== area) continue;
+      if (!inSel(area, a)) continue;
       for (const [k, v] of Object.entries(st)) counts[k as ItemStatus] = (counts[k as ItemStatus] ?? 0) + (v ?? 0);
     }
     return { week, counts };
@@ -107,19 +111,22 @@ export interface Tile {
   prev: number;
 }
 
-/** This week vs last week: minutes, items closed during the week, practice days, the median tempo index. */
-export function weekTiles(all: Record<string, Snapshot>, today: string): Tile[] {
+/**
+ * This week vs last week: minutes, items closed during the week, practice days, the median tempo index. A course's page
+ * counts only its own areas (`area`) and its own kinds of minutes (`minuteKinds`: the Ear course's ear and games).
+ */
+export function weekTiles(all: Record<string, Snapshot>, today: string, area?: AreaSel, minuteKinds?: string[]): Tile[] {
   const s = sorted(all);
   const week = (from: string, to: string) => s.filter((x) => x.day >= from && x.day <= to);
   const thisW = week(addDays(today, -6), today);
   const lastW = week(addDays(today, -13), addDays(today, -7));
-  const mins = (xs: Snapshot[]) => Math.round(xs.reduce((n, x) => n + Object.values(x.minutes).reduce((a, b) => a + b, 0), 0));
-  const closedAt = (x?: Snapshot) => (x ? Object.values(x.status).reduce((n, st) => n + (st.closed ?? 0), 0) : 0);
+  const mins = (xs: Snapshot[]) => Math.round(xs.reduce((n, x) => n + Object.entries(x.minutes).reduce((a, [k, b]) => a + (!minuteKinds || minuteKinds.includes(k) ? b : 0), 0), 0));
+  const closedAt = (x?: Snapshot) => (x ? Object.entries(x.status).reduce((n, [a, st]) => n + (inSel(area, a) ? st.closed ?? 0 : 0), 0) : 0);
   const closedIn = (xs: Snapshot[], before?: Snapshot) => Math.max(0, closedAt(xs.at(-1)) - closedAt(before ?? xs[0]));
   const beforeThis = s.filter((x) => x.day < addDays(today, -6)).at(-1);
   const beforeLast = s.filter((x) => x.day < addDays(today, -13)).at(-1);
   const tempo = (x?: Snapshot) => {
-    const v = x ? Object.values(x.tempo) : [];
+    const v = x ? Object.entries(x.tempo).filter(([a]) => inSel(area, a)).map(([, t]) => t) : [];
     return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 100) : 0;
   };
   return [
@@ -166,11 +173,11 @@ export type LadderStep = Exclude<ItemStatus, 'new'> | UpperStep;
 export const LADDER_STEPS: LadderStep[] = ['learning', 'almost', 'closed', ...UPPER_STEPS];
 
 /** The full ladder per week (the week's last snapshot): "closed" split into closed only and the steps above it. */
-export function ladderByWeek(snaps: Snapshot[], area?: string): { week: string; by: Record<LadderStep, number> }[] {
+export function ladderByWeek(snaps: Snapshot[], area?: AreaSel): { week: string; by: Record<LadderStep, number> }[] {
   return statusByWeek(snaps, area).map(({ week, counts }) => {
     const s = [...snaps].reverse().find((x) => weekOf(x.day) === week);
     const up: Record<UpperStep, number> = { keys12: 0, language: 0, fingers: 0 };
-    for (const [a, l] of Object.entries(s?.ladder ?? {})) if (!area || a === area) for (const k of UPPER_STEPS) up[k] += l[k] ?? 0;
+    for (const [a, l] of Object.entries(s?.ladder ?? {})) if (inSel(area, a)) for (const k of UPPER_STEPS) up[k] += l[k] ?? 0;
     const closed = counts.closed ?? 0;
     const above = Math.min(closed, up.keys12 + up.language + up.fingers);
     return { week, by: { learning: counts.learning ?? 0, almost: counts.almost ?? 0, closed: closed - above, ...up } };

@@ -916,6 +916,20 @@ export function eligible(s: PathStep, inp: Pick<PathInput, 'leaveOut' | 'packs' 
   return true;
 }
 
+/**
+ * SPEC-STYLE-FOCUS §9: a neighbour-style moment is shown to every player — the core units show the styles to everyone,
+ * the default jazz player included. Its styled level is left out of the path for a focus that doesn't hold its style
+ * (styleHiddenLevels inside ladderHidden): for the moment that one entry is lifted. Any other reason the level is hidden
+ * (a microphone-only kit, a bass without a low B) stays — ladderHiddenFor lists a level once per reason.
+ */
+export function momentInput<T extends Partial<Pick<PathInput, 'ladderHidden' | 'styleFocus'>>>(x: PathStep, inp: T): T {
+  const ref = x.ladder?.ref;
+  const h = inp.ladderHidden;
+  if (!ref || !h || !inp.styleFocus || pathStyleRank(inp.styleFocus, ladderStyleOf(ref)) >= 0) return inp;
+  const i = h.indexOf(ref);
+  return i < 0 ? inp : { ...inp, ladderHidden: [...h.slice(0, i), ...h.slice(i + 1)] };
+}
+
 /** Default packs from the questionnaire (§4). */
 export function defaultPacks(track: Track, plays: string[], goal: Goal = 'general'): Pack[] {
   const out: Pack[] = [...GOAL_PACKS[goal]];
@@ -1649,7 +1663,7 @@ export function buildPath(inp: PathInput): PathView {
     // SPEC-STYLE-FOCUS §9: the core's neighbour-style moment — a unit with the core ii–V–I gets its versions over bossa
     // and in montuno ponchando (optional steps, never blocking; the styled levels themselves under "moment:" ids)
     for (const x of neighbourMoments(order.map((p) => p.s.id), byId, taken)) {
-      if (!eligible(x, inp)) continue;
+      if (!eligible(x, momentInput(x, inp))) continue;
       taken.add(x.id);
       steps.push(stateOf(x));
     }

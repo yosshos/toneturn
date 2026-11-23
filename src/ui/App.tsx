@@ -41,7 +41,7 @@ import { teacherMockOn } from '../cloud/teacher';
 import { phrasesDueCount } from '../engine/encore/connect';
 import { dueLicks, isMinorLick, LICKS, reviewAfter } from '../engine/licks';
 import { phraseOfLick, phrasesOfMelody, type Phrase } from '../engine/transcribe';
-import { bookUses, closedKeys, todaysLick, vocabInUse, vocabPool } from '../engine/vocab';
+import { bookTake, bookUses, closedKeys, todaysLick, vocabInUse, vocabPool, type ImprovLine } from '../engine/vocab';
 import { lickTimingTol } from '../engine/lickDetect';
 import { TranscribeCoachScreen } from './TranscribeCoach';
 import { ExamsScreen, mockExamLesson } from './Exams';
@@ -1791,14 +1791,21 @@ export function App() {
     if (!ch || !settings) return;
     updateSettings({ channelWeek: noteChannelWeek(settings.channelWeek, ch, localDay(new Date()), takes) });
   };
+  /** SPEC-EAR-AND-READING §5: a take's XP by its channel (the weaker channel more, memory a small extra) — drills,
+   *  Improvise, Charts and pieces alike. */
+  const xpOfChannel = (xp: number, ch: Channel | null, clean: boolean): number => {
+    const items = progress?.drillItems ?? {};
+    return channelXp(xp, ch, profileOf(items, settings?.channelSelf?.[courseOfInstrument(settings ? drillSettingsOf(settings).instrument : undefined)]), clean);
+  };
   /** Every drill take (technique, licks, songs, the transcription coach): its channel is the one its item's tally moved
    *  — counted in the week's balance — and its XP by channel (the weaker channel more, memory a small extra). */
-  const recordDrillTake = (st: ItemState, evs: Parameters<typeof store.recordDrill>[1], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => {
+  const recordDrillTake = (st: ItemState, evs: Parameters<typeof store.recordDrill>[1], xp: number, m?: { verdict: string; hands: string; cv: number | null; improvLine?: ImprovLine }) => {
     const items = progress?.drillItems ?? {};
     const ch = takeChannelOf(items[st.itemId]?.channels, st.channels);
     noteChannel(ch);
-    const prof = profileOf(items, settings?.channelSelf?.[courseOfInstrument(settings ? drillSettingsOf(settings).instrument : undefined)]);
-    return store.recordDrill(st, evs, channelXp(xp, ch, prof, m?.verdict === 'clean'), m);
+    // a rule-card improvisation drill: the licks of mine in its line are booked like any improvisation take
+    if (m?.improvLine) bookTake(vocabCtx(), m.improvLine, `drill-${Date.now().toString(36)}`);
+    return store.recordDrill(st, evs, xpOfChannel(xp, ch, m?.verdict === 'clean'), m);
   };
   const noteTake = (xp: number, verdict?: string) => {
     drillSessionXp.current += xp;
@@ -3766,7 +3773,7 @@ export function App() {
             noteChannel('page-known', Math.max(1, cleanReps));
             const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
             const r = makeLogResult('piece', min, 0, new Date(), id);
-            void store.recordCompletion({ ...r, sessionId: `piece-${id}`, xp: Math.min(30, cleanReps * 2) }).then(setProgress);
+            void store.recordCompletion({ ...r, sessionId: `piece-${id}`, xp: xpOfChannel(Math.min(30, cleanReps * 2), 'page-known', cleanReps > 0) }).then(setProgress);
           }}
         />
       )}
@@ -3971,7 +3978,7 @@ export function App() {
             if (t.inSet !== undefined) void noteImprovTake(localDay(new Date()), t.inSet);
             const e = t.event;
             void store
-              .recordCompletion({ lessonId: t.lessonId, lessonVersion: 1, sessionId: e.id, completedAt: e.at, firstTry: e.correct ? 1 : 0, total: 1, xp: t.xp, missed: [], items: [{ id: e.id, skill: e.skill, difficulty: e.difficulty, correct: e.correct, tag: t.kind, score: e.score, tags: e.tags }], course: (s.activeCourse ?? 'keys') as CourseId })
+              .recordCompletion({ lessonId: t.lessonId, lessonVersion: 1, sessionId: e.id, completedAt: e.at, firstTry: e.correct ? 1 : 0, total: 1, xp: xpOfChannel(t.xp, channel ?? 'page-known', e.correct), missed: [], items: [{ id: e.id, skill: e.skill, difficulty: e.difficulty, correct: e.correct, tag: t.kind, score: e.score, tags: e.tags }], course: (s.activeCourse ?? 'keys') as CourseId })
               .then(setProgress);
           }}
           onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
@@ -4026,6 +4033,11 @@ export function App() {
           onBack={() => backToRep(() => go(toolFrom.current))}
           onMixer={openMixer}
           vocab={vocabCtx()}
+          onComp={(rate, bpm, channel) => {
+            // SPEC-EAR-AND-READING §3.3: a comping-by-ear take — its channel in the week's balance, XP by channel
+            noteChannel(channel);
+            void store.recordCompletion({ lessonId: 'chart-comp', lessonVersion: 1, sessionId: `comp-${Date.now()}-${bpm}`, completedAt: new Date().toISOString(), firstTry: rate >= 0.8 ? 1 : 0, total: 1, xp: xpOfChannel(Math.round(rate * 8), channel, rate >= 0.8), missed: [], items: [], course: (s.activeCourse ?? 'keys') as CourseId }).then(setProgress);
+          }}
           onDrill={(kind, stride) => {
             chartQueue.current = [generate({ family: stride ? 'accomp' : 'voicings', kind, key: 0, hands: 'L', swing: true })];
             drillFrom.current = 'chart';
@@ -4039,7 +4051,7 @@ export function App() {
             if (rp && rp.kind === 'chart') {
               repOpen.current = null;
               noteRepStyle(rp);
-              void store.recordCompletion(repResult(rp.course, rp.id, score, Math.round(score * 12))).then(setProgress);
+              void store.recordCompletion(repResult(rp.course, rp.id, score, xpOfChannel(Math.round(score * 12), channel ?? 'page-known', score >= 0.6))).then(setProgress);
             }
             if (challenge && score > (s.challengeBest?.[challenge] ?? -1)) updateSettings({ challengeBest: { ...(s.challengeBest ?? {}), [challenge]: score } });
             // an "improvise under rules" assignment: the take is the submission
@@ -4461,7 +4473,7 @@ export function App() {
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} frame={s.avatarFrame} onBuyCosmetic={buyCosmetic} onFrame={(avatarFrame) => updateSettings({ avatarFrame })} onClose={() => setStreakOpen(false)} />
       )}
       {route === 'drone' && <DroneScreen t={t} settings={s} onBack={() => go(toolFrom.current)} />}
-      {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} />}
+      {route === 'perform' && <PerformScreen t={t} settings={s} onBack={() => go('home')} onProgress={setProgress} vocab={vocabCtx()} />}
       {route === 'achievements' && <AchievementsScreen t={t} progress={progress} extra={{ bestLeague: s.bestLeague, learned: learnedCount(s), lessonsTotal: Object.keys(MINI_LESSONS).length }} onBack={() => go('skills')} />}
       {route === 'singalong' && <SingAlongScreen t={t} settings={s} onBack={() => go('vocal')} />}
       {route === 'vocal' && (

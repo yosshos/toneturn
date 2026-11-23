@@ -4,6 +4,11 @@
 //   x = hit, o = soft (ghost) hit, . = rest.   Lanes: k kick, s snare, h hi-hat, r rim / side-stick (soft snare).
 // Original patterns written for the app (common textbook grooves, no recordings). Pure data + helpers.
 
+import { isVerified } from './verifiedContent';
+
+/** The grooves no unverified claim hides (verifiedContent 'groove:<id>'). */
+const shownOnly = <T extends { id: string }>(xs: T[]): T[] => xs.filter((g) => isVerified(`groove:${g.id}`));
+
 export type GrooveStyle = 'rock' | 'pop' | 'funk' | 'hiphop' | 'jazz' | 'blues' | 'latin' | 'world' | 'ballad' | 'electronic' | 'odd';
 
 export interface Groove {
@@ -80,7 +85,7 @@ const ODD: [string, string, string, number[], number][] = [
   ['fifteen-8', '15/8 (7+8: 2+2+3+2+2+2+2)', '15/8 (7+8: 2+2+3+2+2+2+2)', [2, 2, 3, 2, 2, 2, 2], 240],
 ];
 
-export const GROOVES: Groove[] = [
+export const GROOVES: Groove[] = shownOnly<Groove>([
   // rock
   G('rock-8', 'Basic rock', 'רוק בסיסי', 'rock', 4, 4, 2, 100, 'x...x...', '..x...x.', 'xxxxxxxx'),
   G('rock-8b', 'Rock, busy kick', 'רוק, בס עסוק', 'rock', 4, 4, 2, 110, 'x..xx.x.', '..x...x.', 'xxxxxxxx'),
@@ -158,7 +163,8 @@ export const GROOVES: Groove[] = [
   // PROG_ENGINE (shared by the bass, guitar and drums prog levels and the metronome): one char per eighth, the kick on
   // the first group, the snare on the later group starts (the backbeat placed by group), hats on every eighth.
   ...ODD.map(([id, en, he, groups, bpm]) => ({ ...G(id, en, he, 'odd', sumOf(groups), 8, 2, bpm, ...oddLanes(groups)), groups })),
-];
+  // a kit pattern no source verifies stays out of the bank ('latin-kit-patterns': the songo)
+]);
 
 /** Steps in one bar. For den 8 grooves with sub 2 the "beat" is the eighth itself (one char per eighth). */
 export const grooveSteps = (g: Groove) => (g.den === 8 && g.sub === 2 ? g.beats : g.beats * g.sub);

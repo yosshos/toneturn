@@ -202,9 +202,18 @@ export const NEIGHBOUR_MOMENTS: { core: string; moments: { id: string; level: st
   },
   // guitar: the batida over the ii–V–I (no guitar ponchando level exists yet; the guajeo is a line, not ponchando)
   { core: 'tech:g-jazz-1', moments: [{ id: 'moment:guitar:iivi-bossa', level: 'tech:g-brazil-4', title: { en: 'The ii–V–I over bossa', he: 'ה־⁦ii–V–I⁩ בבוסה' } }] },
+  // bass: the core two-feel (roots and 5ths in halves) beside the bossa halves (b-styles 7: root on 1 and the 5th on 3,
+  // the next root on the "and" of 4 — STYLE-BRAZIL §1(c), §2.1); the partido-alto and Afro-Cuban cells stay hidden
+  { core: 'tech:b-walk-1', moments: [{ id: 'moment:bass:two-bossa', level: 'tech:b-styles-7', title: { en: 'The two-feel over bossa', he: 'התחושה בשתיים בבוסה' } }] },
+  // drums: the core ride pattern beside the bossa (d-latin 1: the cross-stick clave, the kick on 1, "and" of 2, 3, "and" of 4)
+  { core: 'tech:d-jazz-1', moments: [{ id: 'moment:drums:ride-bossa', level: 'tech:d-latin-1', title: { en: 'The time feel over bossa', he: 'תחושת הזמן בבוסה' } }] },
 ];
 
-/** The neighbour-style moments of a unit's steps: optional copies of the styled levels (ids "moment:…"), once each. */
+/**
+ * The neighbour-style moments of a unit's steps: optional copies of the styled levels (ids "moment:…"), once each. They
+ * keep the base level's ladder ref (they count for it); the path shows them to every player, whatever the style focus
+ * (path.ts momentInput: §9 "the jazz core itself shows the styles") — only the style part of the hidden ladder is lifted.
+ */
 export function neighbourMoments(unitStepIds: string[], byId: Map<string, PathStep>, taken: Set<string> = new Set()): PathStep[] {
   const out: PathStep[] = [];
   for (const m of NEIGHBOUR_MOMENTS) {

@@ -11,6 +11,15 @@ import { isDrillWay, repDrills } from '../src/engine/repertoireDrills';
 import type { CourseId } from '../src/engine/courses';
 
 const COURSES = Object.keys(REPERTOIRE) as CourseId[];
+// The drill sweeps build whole tunes in 12 keys: each way is built once and shared by the tests that check it, the
+// sweep runs one course per test, and those tests get a longer timeout (they slow down when 80+ files run in parallel).
+const built = new Map<string, ReturnType<typeof repDrills>>();
+const drillsOf = (w: Parameters<typeof repDrills>[0], c: CourseId) => {
+  const k = `${c}|${JSON.stringify(w)}`;
+  if (!built.has(k)) built.set(k, repDrills(w, c));
+  return built.get(k)!;
+};
+const SLOW = { timeout: 120_000 };
 
 describe('repertoire catalogue', () => {
   it('covers every course with all four tiers, and a standard in tier 3', () => {
@@ -58,15 +67,15 @@ describe('repertoire catalogue', () => {
         if (it.legal === 'chords') expect(r.songs).toEqual([]);
       }
   });
-  it('the measured drill ways build runnable drills', () => {
-    for (const c of COURSES)
+  for (const c of COURSES)
+    it(`the measured drill ways build runnable drills (${c})`, SLOW, () => {
       for (const it of repertoireFor(c))
         for (const w of it.ways.filter(isDrillWay)) {
-          const ds = repDrills(w, c);
+          const ds = drillsOf(w, c);
           expect(ds.length, `${c}:${it.id} ${JSON.stringify(w)}`).toBeGreaterThan(0);
           for (const d of ds) expect(d.itemId).toBeTruthy();
         }
-  });
+    });
   it('drums and voice open only their own kinds of practice', () => {
     for (const it of repertoireFor('drums')) for (const w of it.ways) expect(['level', 'chart']).toContain(w.k);
     for (const it of repertoireFor('voice')) for (const w of it.ways) expect(['vocal', 'topic']).toContain(w.k);
@@ -110,12 +119,12 @@ describe('repertoire results and the goal', () => {
 });
 
 describe('bass standards open the standards ladder (old one-chorus levels retired, owner 2026-11-11)', () => {
-  it('every bass repertoire standard on the ladder builds a b-std drill', () => {
+  it('every bass repertoire standard on the ladder builds a b-std drill', SLOW, () => {
     let n = 0;
     for (const it of repertoireFor('bass'))
       for (const w of it.ways)
         if (w.k === 'bassStd') {
-          const d = repDrills(w, 'bass');
+          const d = drillsOf(w, 'bass');
           // The tune through all 12 keys, the lead-sheet key (offset 0) first.
           expect(d.length, `${it.id}`).toBe(12);
           expect(d[0].spec.key, `${it.id}`).toBe(0);

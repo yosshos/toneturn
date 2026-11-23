@@ -107,6 +107,23 @@ export function framesFromNotes(notes: { start: number; end: number; midi: numbe
   return out;
 }
 
+/**
+ * The take as a line for the lick search (SPEC-LICKS-IN-IMPROV §3, Perform › Improv): the sung / played notes in beats
+ * from the chart's first beat, and the chart's chords (in the key) repeated over the choruses.
+ */
+export function improvLine(frames: SungFrame[], id: ChartId, key: number, bpm: number, choruses: number): { notes: { beat: number; midi: number; dur: number }[]; spans: { root: number; iv: number[]; at: number; beats: number }[]; meter: number } {
+  const beat = 60 / bpm;
+  const notes = segmentNotes(frames, { minSec: 0.09 }).map((n) => ({ beat: n.start / beat, midi: Math.round(n.midi), dur: (n.end - n.start) / beat }));
+  const spans: { root: number; iv: number[]; at: number; beats: number }[] = [];
+  let at = 0;
+  for (let k = 0; k < choruses; k++)
+    for (const c of CHARTS[id]) {
+      spans.push({ root: (key + c.deg) % 12, iv: QUALITY[c.q], at, beats: c.beats });
+      at += c.beats;
+    }
+  return { notes, spans, meter: 4 };
+}
+
 /** Analyse an improvised take over a chart (frames timed from the first beat after the count-in). */
 export function improvReport(frames: SungFrame[], id: ChartId, key: number, bpm: number): ImprovReport {
   return improvReportBy(frames, (b) => chordPcs(key, chordAt(id, b)), bpm);

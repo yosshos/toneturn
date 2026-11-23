@@ -190,7 +190,7 @@ const T = {
 
 const takeInfo = (d: Drill, m: TakeMetrics) => {
   const cvs = [m.cvR, m.cvL].filter((x): x is number => x !== null);
-  return { verdict: m.verdict, hands: d.spec.hands, cv: cvs.length ? Math.max(...cvs) : null };
+  return { verdict: m.verdict, hands: d.spec.hands, cv: cvs.length ? Math.max(...cvs) : null, ...(m.improvLine ? { improvLine: m.improvLine } : {}) };
 };
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
@@ -297,7 +297,7 @@ export interface DrillsProps {
   onSettings: (p: Partial<Settings>) => void;
   items: Record<string, ItemState>;
   /** One take: the item's new state, its rated events and XP. */
-  onTake: (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }) => void;
+  onTake: (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null; improvLine?: TakeMetrics['improvLine'] }) => void;
   onBack: () => void;
   /** Start straight in a run (path step / workout block). */
   queue?: Drill[];

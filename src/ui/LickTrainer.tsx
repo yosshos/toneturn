@@ -21,7 +21,7 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
 import {
-  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, lickOfDrill, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, lineLicks, nextLickKey, reviewKey,
+  bookAfterTake, byEarXp, CONTEXTS, LICK_Q, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, lickOfDrill, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, lineLicks, nextLickKey, reviewKey,
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
@@ -36,7 +36,7 @@ import { EarVocab, SentenceDebrief, type EarRun } from './EarVocab';
 import { dayKeyIfKept } from './todayTech';
 import { courseOfInstrument, profileOf, strongOf } from '../engine/channelPlan';
 import { kName } from './encore/bits';
-import { inMyLanguage, usesOf } from '../engine/vocab';
+import { bookTake, inMyLanguage, usesOf } from '../engine/vocab';
 import { lickLadder } from '../engine/statusLadder';
 import { assignmentFor } from '../engine/itemAssign';
 import { AssignMark, ItemHead, StatusLadder, TodayMark, type WhereChip } from './ItemHead';
@@ -261,7 +261,7 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
  * lick (or its rhythm and contour) over the right chords. MIDI or the on-screen keys on piano; the microphone on the
  * other instruments and the voice.
  */
-export function UseIt({ lang, settings, lick, inst, onResult }: { lang: Lang; settings: Settings; lick: Lick; inst: LickInstrument; onResult: (ok: boolean, good: number) => void }) {
+export function UseIt({ lang, settings, lick, inst, onResult, vocab }: { lang: Lang; settings: Settings; lick: Lick; inst: LickInstrument; onResult: (ok: boolean, good: number) => void; /** SPEC-LICKS-IN-IMPROV §3: every lick of mine in the take is booked (the log, the review, XP). */ vocab?: VocabCtx }) {
   const tx = TX[lang];
   const key = useMemo(() => LICK_KEYS[Math.floor(Math.random() * 4)], []);
   const chart = useMemo(() => useItChart(lick, key), [lick, key]);
@@ -322,8 +322,11 @@ export function UseIt({ lang, settings, lick, inst, onResult }: { lang: Lang; se
     c.abort();
     setRunning(false);
     if (aborted) return;
-    const hits = findLick(lick, notes.current.filter((n) => n.beat > -0.5 && n.beat < chart.beats + 1), chart.spans);
+    const played = notes.current.filter((n) => n.beat > -0.5 && n.beat < chart.beats + 1);
+    const hits = findLick(lick, played, chart.spans);
     setRes(hits);
+    // the take is an improvisation over the band: every lick of mine in it is booked (not only the one asked for)
+    bookTake(vocab, { notes: played, spans: chart.spans.map((x) => ({ root: x.root, iv: LICK_Q[x.q]?.ct ?? [0, 4, 7, 11], at: x.at, beats: x.beats })), meter: 4 }, `useit-${Date.now().toString(36)}`);
     const u = useItPassed(hits);
     onResult(u.ok, u.good);
   };
@@ -542,6 +545,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
           settings={settings}
           lick={l}
           inst={inst}
+          vocab={vocab}
           onResult={(ok, good) => {
             const at = new Date().toISOString();
             onUsed([{ id: `g:useit:${l.id}:${Date.now().toString(36)}`, skill: 'improv', difficulty: Math.round(1000 + l.level * 120), correct: ok, score: Math.min(1, good / 2), tags: [{ skill: 'improv', sub: 'improv/vocab', w: 0.6 }, { skill: 'improv', sub: 'improv/play', w: 0.4 }], at }], ok ? 8 : good ? 3 : 1);

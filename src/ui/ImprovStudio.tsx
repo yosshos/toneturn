@@ -19,7 +19,7 @@ import { ListenOriginal } from './ListenOriginal';
 import { keepChartTake } from './recKeep';
 import type { MyChart, VocabCtx } from './Charts';
 import { LicksFound, type FoundUses } from './LicksFound';
-import { LICK_CARDS, takeUses, type LickCardId } from '../engine/vocab';
+import { bookTake, LICK_CARDS, tradeTurnBeats, type LickCardId } from '../engine/vocab';
 import { cardKept, checkCard, spansOfChart } from '../engine/ruleCards';
 import { RULE_NAME } from '../engine/improvRules';
 import type { ParsedChart } from '../engine/charts';
@@ -268,11 +268,9 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
    * beat) over the chart — booked by the app (the usage log, "in my language", the review, XP) and shown in the debrief.
    */
   const bookLicks = (played: { beat: number; midi: number; dur?: number }[], p: ParsedChart, bars: number, takeBpm: number, session: string): FoundUses | null => {
-    if (!vocab?.pool.length || played.length < 3) return null;
     const notesB = played.map((n) => ({ beat: n.beat, midi: Math.round(n.midi), dur: n.dur }));
-    const r = takeUses({ pool: vocab.pool, closed: vocab.closed, notes: notesB, spans: spansOfChart(p, 4, bars), session, tol: vocab.tol, meter: 4 });
-    if (r.uses.length) vocab.onUses?.(r.uses, r.xp);
-    return { ...r, notes: notesB, bpm: takeBpm };
+    const r = bookTake(vocab, { notes: notesB, spans: spansOfChart(p, 4, bars), meter: 4 }, session);
+    return r ? { ...r, notes: notesB, bpm: takeBpm } : null;
   };
   const lickCardOf = (id: LickCardId, played: { beat: number; midi: number; dur?: number }[], p: ParsedChart, bars: number, takeBpm: number) => {
     const c = checkCard(id, { notes: played.map((n) => ({ beat: n.beat, dur: n.dur ?? 0.25, midi: n.midi })), spans: spansOfChart(p, 4, bars), meter: 4, bpm: takeBpm, opt: { licks: vocab?.pool ?? [], ...(vocab?.today ? { today: vocab.today } : {}), ...(vocab?.closed ? { closedKeys: vocab.closed } : {}), ...(vocab?.tol ? { lickTol: vocab.tol } : {}) } });
@@ -375,6 +373,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
     const sh = buildRotationSheet(four, { tier, stats, choruses: 1 });
     let played = 0;
     const fourOnly = { ...four, chords: four.chords.filter((c) => c.bar < four.bars) };
+    const turnBeats = tradeTurnBeats(four.bars);
     const allMine: PNote[] = [];
     let answeredN = 0;
     for (let r = 0; r < 3; r++) {
@@ -393,8 +392,9 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
       setTurn('you');
       const b = styledBacking(four, bandStyle, bpm, 1, { countIn: lead === 'me' });
       if (!(await run(b.events, b.length, b.startBeat))) break;
-      const mine = notes.current.filter((n) => n.beat >= -0.25 && n.beat < 16);
-      allMine.push(...mine.map((n) => ({ ...n, beat: n.beat + 16 * r })));
+      // the player's turn is the chart's bars (four, or fewer in a short chart): its notes, laid end to end by round
+      const mine = notes.current.filter((n) => n.beat >= -0.25 && n.beat < turnBeats);
+      allMine.push(...mine.map((n) => ({ ...n, beat: n.beat + turnBeats * r })));
       if (lead === 'band') {
         // answered: the reply picks up the call's rhythm or its motif (judgeVariation: related)
         const v = judgeVariation(call.filter((n) => n.beat < 4), mine.filter((n) => n.beat < 4.5), 'answer');
@@ -513,7 +513,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
           ))}
         </div>
       )}
-      {mode === 'scales' && track === 'B' && <HarrisWay settings={settings} lang={lang} dayKey={dayKey} tier={harrisTierOf(tier, settings.harrisTier)} onTier={onHarrisTier} onTake={onTake} />}
+      {mode === 'scales' && track === 'B' && <HarrisWay settings={settings} lang={lang} dayKey={dayKey} tier={harrisTierOf(tier, settings.harrisTier)} onTier={onHarrisTier} onTake={onTake} vocab={vocab} />}
       {mode === 'scales' && track === 'A' && (
         <ScaleRotation
           settings={settings}
@@ -676,6 +676,7 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
                 settings={settings}
                 lick={l}
                 inst={lickInstrumentOf(settings)}
+                vocab={vocab}
                 onResult={(ok, good) => onLickUsed?.([{ id: `g:useit:${l.id}:${Date.now().toString(36)}`, skill: 'improv', difficulty: Math.round(1000 + l.level * 120), correct: ok, score: Math.min(1, good / 2), tags: [{ skill: 'improv', sub: 'improv/vocab', w: 0.6 }, { skill: 'improv', sub: 'improv/play', w: 0.4 }], at: new Date().toISOString() }], ok ? 8 : good ? 3 : 1)}
               />
               </>

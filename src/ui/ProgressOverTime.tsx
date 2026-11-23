@@ -277,15 +277,17 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
   const own = ownArea(course === 'ear' && !earHas ? undefined : course);
   const isEar = earHas;
   const areas = areasOf(snaps).filter(own).slice(0, 6);
-  const tiles = weekTiles(all, today);
+  // a course's page counts its own areas (the Ear course: its ear areas, its ear and games minutes, no keys strip)
+  const sel = course ? own : undefined;
+  const tiles = weekTiles(all, today, sel, isEar ? ['ear', 'games'] : undefined);
   const TILE: Record<string, L> = { minutes: { en: 'Minutes', he: 'דקות' }, closed: { en: 'Closed', he: 'נסגרו' }, days: { en: 'Practice days', he: 'ימי אימון' }, tempo: { en: 'Of target tempo', he: 'מטמפו היעד' } };
   const ins = insights(snaps, areaName, lang);
-  const ladderKeys = LADDER_STEPS.filter((k) => snaps.some((s) => (k === 'learning' || k === 'almost' || k === 'closed' ? true : Object.values(s.ladder ?? {}).some((l) => (l[k as UpperStep] ?? 0) > 0))));
+  const ladderKeys = LADDER_STEPS.filter((k) => snaps.some((s) => (k === 'learning' || k === 'almost' || k === 'closed' ? true : Object.entries(s.ladder ?? {}).some(([a, l]) => (!sel || sel(a)) && (l[k as UpperStep] ?? 0) > 0))));
   const ladderAreas = areas;
-  const ladder = ladderByWeek(snaps).map((w) => ({ week: w.week, by: Object.fromEntries(ladderKeys.map((k) => [k, ladderAreas.length ? w.by[k] : 0])) as Record<string, number> }));
+  const ladder = ladderByWeek(snaps, sel).map((w) => ({ week: w.week, by: Object.fromEntries(ladderKeys.map((k) => [k, ladderAreas.length ? w.by[k] : 0])) as Record<string, number> }));
   const mins = minutesByWeek(snaps);
   const minKeys = [...new Set(mins.flatMap((m) => Object.keys(m.by)))];
-  const keys = keysByWeek(snaps);
+  const keys = course === 'ear' ? [] : keysByWeek(snaps);
   const ear = channelSeries(snaps, 'ear'), read = channelSeries(snaps, 'reading');
   const neutral = dark ? '#9aa0a8' : '#8a8f98';
   const medTempo: Point[] | undefined = med?.length ? med.map((m) => ({ day: m.day, v: m.tempo })) : undefined;
