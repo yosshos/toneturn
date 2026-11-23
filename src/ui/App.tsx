@@ -3065,7 +3065,7 @@ export function App() {
               {challengeInCourse(s.activeCourse ?? 'ear') && <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />}
             </>
           }
-          map={<SkillMap t={t} lang={s.uiLang} progress={progress} styleFocus={focusOf(s, (s.activeCourse ?? 'ear') as CourseId)} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+          map={<SkillMap t={t} lang={s.uiLang} progress={progress} styleFocus={focusOf(s, (s.activeCourse ?? 'ear') as CourseId)} bestLeague={s.bestLeague} rotationStats={s.rotationStats} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}

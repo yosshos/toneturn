@@ -81,11 +81,11 @@ describe('the T1–2 subs (and their scales)', () => {
     expect(dim.mode).toBe('whole-half');
     expect(dim.rootName).toBe('C♯');
   });
-  it('T3: the tritone sub of a whole-bar V (D♭7 → C), with a non-resolving dominant scale', () => {
+  it('T3: the tritone sub of a whole-bar V (D♭7 → C), with its own scale (Lydian dominant by default)', () => {
     const sh = buildRotationSheet(lvl(4), { tier: 3 })!;
     const tt = sh.cells.find((c) => c.sub?.sym === 'D♭7')!;
-    expect(tt.fn).toBe('V-free');
-    expect(['mixolydian', 'lydian-dominant']).toContain(tt.mode);
+    expect(tt.fn).toBe('V-sub');
+    expect(tt.mode).toBe('lydian-dominant');
     expect(tt.rootName).toBe('D♭');
   });
   it('no subs at T1 on a plain ii–V–I (none fits); the tonic is guessed from the last tonic chord', () => {
@@ -134,18 +134,20 @@ describe('the rotation over the take: the window, the next chip, the now-cue', (
 
 describe('a take: colour coverage and the stats (classifyNotes + rotationMetrics + updateModeStats)', () => {
   const sh = buildRotationSheet('Dm7 | G7 | Cmaj7 | Cmaj7', { tier: 2, choruses: 1, seed: 1, stats: { 'V-maj|mixolydian': { n: 9, cov: 0.95, last: 'a' }, 'V-maj|bebop-dominant': { n: 9, cov: 0.95, last: 'a' }, 'V-maj|diminished': { n: 9, cov: 0.95, last: 'a' } } })!;
-  const g7 = sh.cells.find((c) => c.sym === 'G7')!;
+  // (T2 puts a sus before the whole-bar V: G7sus4 on beats 4–5, G7 itself on 6–7)
+  const g7 = sh.cells.find((c) => c.sym === 'G7' && !c.sub)!;
   it('the setup: G7 over the altered scale at T2 when the milder ones are strong', () => {
     expect(g7.mode).toBe('altered');
+    expect(g7.at).toBe(6);
   });
   it('a colour note in the span counts; chord tones alone do not', () => {
     // G7 altered: A♭ (♭9) is a colour note over G Mixolydian
-    const colourTake = [{ beat: 4, dur: 1, midi: 71 }, { beat: 5, dur: 1, midi: 68 }, { beat: 6, dur: 1, midi: 65 }];
+    const colourTake = [{ beat: 6, dur: 0.5, midi: 71 }, { beat: 6.5, dur: 0.5, midi: 68 }, { beat: 7, dur: 1, midi: 65 }];
     const g = gradeRotation(sh, colourTake, {}, '2026-11-22');
     expect(g.hits[sh.cells.indexOf(g7)]).toBe(true);
     expect(g.m.colour).toBe(1);
     expect(g.stats['V-maj|altered']).toEqual({ n: 1, cov: 1, last: '2026-11-22' });
-    const plain = gradeRotation(sh, [{ beat: 4, dur: 1, midi: 71 }, { beat: 5, dur: 1, midi: 67 }], {}, 'd');
+    const plain = gradeRotation(sh, [{ beat: 6, dur: 1, midi: 71 }, { beat: 7, dur: 1, midi: 67 }], {}, 'd');
     expect(plain.hits[sh.cells.indexOf(g7)]).toBe(false);
     expect(plain.m.colour).toBe(0);
     expect(plain.stats['V-maj|altered'].cov).toBe(0);
@@ -154,11 +156,11 @@ describe('a take: colour coverage and the stats (classifyNotes + rotationMetrics
   });
   it('after a take on the default scales, the next sheet moves on (a default never reads as weak)', () => {
     const first = buildRotationSheet('Dm7 | G7 | Cmaj7 | Cmaj7', { tier: 2, choruses: 1 })!;
-    expect(first.cells.find((c) => c.sym === 'G7')!.mode).toBe('mixolydian');
-    const g = gradeRotation(first, [0, 4, 8, 12].map((b) => ({ beat: b, dur: 1, midi: 62 + b / 4 })), {}, 'd1');
+    expect(first.cells.find((c) => c.sym === 'G7' && !c.sub)!.mode).toBe('mixolydian');
+    const g = gradeRotation(first, [[0, 62], [6, 71], [8, 64], [12, 67]].map(([b, m]) => ({ beat: b, dur: 1, midi: m })), {}, 'd1');
     expect(g.hits.every((h) => h === null)).toBe(true);
     const next = buildRotationSheet('Dm7 | G7 | Cmaj7 | Cmaj7', { tier: 2, choruses: 1, stats: g.stats })!;
-    expect(next.cells.find((c) => c.sym === 'G7')!.mode).not.toBe('mixolydian');
+    expect(next.cells.find((c) => c.sym === 'G7' && !c.sub)!.mode).not.toBe('mixolydian');
   });
   it('the weakest scales for the profile', () => {
     expect(weakModes({ 'I|lydian': { n: 3, cov: 0.2, last: '' }, 'V-maj|altered': { n: 2, cov: 0.8, last: '' } })[0]).toMatchObject({ fn: 'I', mode: 'lydian' });
