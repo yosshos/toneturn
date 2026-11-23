@@ -110,3 +110,6 @@
 .lf-row { display: flex; align-items: center; gap: 8px; }
 .is-lead { margin: 6px 0; }
 .is-lick-rule { margin: 0 0 6px; }
+/* The lick page fits one phone screen with the item head: a long lick name stays on one or two short lines. */
+[data-licks="lick"] .screen-head h1 { font-size: clamp(1.15rem, 5.4vw, 1.6rem); line-height: 1.15; }
+[data-licks="lick"] .lk-actions { gap: 8px; }

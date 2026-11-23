@@ -465,6 +465,9 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       const ls = sl ? (sl[li]?.from ?? li * per) : li * per;
       if (!lines[li] && all.some((n) => bq(n) < ls - 1e-6 && bq(n) + dq(n) > ls + 0.24)) lines[li] = [];
     }
+    // A short last line (one bar, a held note) is drawn at the same scale as the others: every line of a staff gets at
+    // least the widest line's natural width, so the SVG is not stretched to the full width (a 1-bar line came out huge).
+    const evenW = !htPhone && lines.filter(Boolean).length > 1 ? 90 + Math.max(...lines.map((l) => l?.length ?? 0)) * (phone() ? 32 : 44) : undefined;
     return lines.map((xs, li) => {
       if (!xs || (windowed && !playing && (li < win.from || li >= win.from + winSize))) return null;
       const fing = fingering && xs.some((n) => n.finger);
@@ -613,7 +616,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
           now={now}
           ahead={ahead}
           spacing={htPhone ? htSpacing(items) : phone() ? 32 : 44}
-          minWidth={(lineItems.set(`${clef}${li}`, items.length), sysWidth?.(li))}
+          minWidth={(lineItems.set(`${clef}${li}`, items.length), sysWidth?.(li) ?? evenW)}
           fit={htPhone}
           key={`${clef}${li}`}
           notes={items.map((x) => (x.n ? x.n.pitch + shift : (x.p ?? 71)))}
