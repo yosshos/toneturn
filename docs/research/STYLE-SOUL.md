@@ -137,6 +137,21 @@ The exact grid is **[?]**; I found no readable notated pattern. A candidate to c
 
 **Bass:** soul-jazz shuffle bass = walking quarters or the boogie figure R–3–5–6–♭7–6–5–3 under the blues **[C]** (the app's `accomp` L5 boogie-woogie LH is the same figure). Boogaloo bass: **[?]** (needs a source; Drumeo says only that the kick doubles it).
 
+**Boogaloo, re-researched 2026-11-23** (text sources only; most transcriptions are notation images or paid lessons):
+
+| Point | Tag and sources |
+|---|---|
+| Tempo ♩117–136 | **[V]** Drumeo (examples 117–133; "Alligator Bogaloo" 129); Alfred / J.W. Pepper jazz-ensemble chart of "Alligator Boogaloo" ("boogaloo groove", ~136) |
+| The cymbal almost straight, "in the gap" between swing and straight 8ths | **[V]** DRUM! Magazine, "Jazz, blues & the in-between groove" (a "flattened out jazz-ride pattern" over a syncopated two-bar Latin rhythm); On Jazz Drumming, "Billy Higgins on The Sidewinder" ("played almost straight"); Francis' Drumming Blog, "Jazz grooves part 1" ("not swing and not straight eights") |
+| The kick doubles the bass | **[V]** Drumeo ("the bass drum follows the rhythm of the bass"); Brandt Schneider, "The groove that changed jazz" ("Bass drum listen to bass") |
+| The snare carries the syncopation (follows the piano), not a plain backbeat | **[V]** On Jazz Drumming ("the groove is carried in syncopation in the snare drum"); Drumeo ("the snare drum pattern often follows the rhythm of the percussion or piano"); a forum recollection that Higgins felt "there was really no back beat" (anecdote only) |
+| Ghost notes, snare / kick displacement, hat openings | **[V]** for ghosts and displacement only via Drumeo (one source; Cruise Ship Drummer hears Ben Dixon's snare at "roughly an even volume") — so **[C]** |
+| Caveat: Drumeo's guide files the boogaloo under *bugalú / Latin soul*; the soul-jazz sense is "the Sidewinder beat", also called "a Blue Note beat … a Lee Morgan beat" (Cruise Ship Drummer) | **[V]** |
+| The exact kick and snare grid | **[?]** no readable source; the candidate above is built **hidden** (grooves.ts `boogaloo`, d-funk 10, the ear game's `boogaloo`; verifiedContent `soul-boogaloo-grid`, question in THEORY-QUESTIONS.md) |
+| The boogaloo bass figure | **[?]** one source only (TrueFire, David Santos, "Boogaloo: bass line #35": a chromatic pickup into each chord's root, its own exercise, not a generic figure); no bass level built |
+| The piano / organ comping rhythm | **[?]** nothing specific to the boogaloo found; the hidden band style `boogaloo` comps the soul-jazz Charleston (§2.3 [V] Purcell) in straight 8ths, no keys level built |
+
+
 ### 2.3 Comping
 | Pattern | Tag and source |
 |---|---|
@@ -153,6 +168,7 @@ The exact grid is **[?]**; I found no readable notated pattern. A candidate to c
 | 7th-chord arpeggios over the ii–V–I that the soul-jazz blues adds | **[V]** Purcell |
 | **The blues scale and the minor pentatonic over the whole blues** | **[C]** Levine, *The Jazz Theory Book*; Wikipedia *Funk* (blues-scale melodies) |
 | **Riff-based soloing**: one riff repeated as the chords change under it (IV against a riff built on I) | **[C]** standard blues pedagogy; app already has blues runs in voice and licks |
+| **Built as style devices in the lick library (2026-11-23, the 'style' context, tagged `soul`):** the hexatonic blues scale 1 ♭3 4 ♭5 5 ♭7 (`sty-bl-scale`), the gospel / major blues scale 1 2 ♭3 3 5 6 (`sty-gos-scale`), the 2–♭3–3 grace into the 3rd on IV and I (`sty-gos-grace`) | **[V]** Wikipedia *Blues scale* (Greenblatt) + Levine; Piano With Jonny *gospel 6-step guide* + Loudlands *How to play gospel piano*; Loudlands ("the 2, the flat 3, and the 3 … so quickly that it sounds like a single note") + Pianote *Gospel piano 101* (two chromatic grace notes into the 3rd). Left out: the gospel "6-5-3-1" ending (no source), a ♭3–3 trill (one source, Guitar World) |
 
 ### 2.5 Forms
 | Form | In Roman numerals | Tag |
@@ -277,7 +293,7 @@ The game already exists as `drum-style` (drums course only). **Proposal:** open 
 |---|---|---|---|---|
 | **Shuffle** | triplet 8ths (long–short), 12 pulses per bar | 80–140 | the "let" of the triplet on the hat/ride, backbeat on 2 and 4, walking or boogie bass | [C]; exists |
 | **Half-time shuffle** | triplets, backbeat only on 3 | 70–90 | ghosted triplets between, snare once a bar | [C]; exists (`purdie`) |
-| **Boogaloo** | straight (or lightly swung) 8ths/16ths | ~117–133 | ghosted snare, kick doubling the bass, 1960s organ/guitar sound | [V] tempo, ghosts, kick=bass (Drumeo) |
+| **Boogaloo** | almost straight 8ths/16ths ("in the gap") | ~117–136 | syncopated snare instead of a plain backbeat, kick doubling the bass, 1960s organ/guitar sound | [V] tempo, feel, kick=bass, snare syncopation (§2.2, 2026-11-23); in the game (level 3, look-alike with funk and rock) but hidden with the grid [?] |
 | **16th funk** | straight or swung 16ths, continuous | ~90–115 | 16th hats, strong "one", syncopated kick, scratch guitar, often one chord | [V] (Wikipedia *Funk*, Drumeo tempi 98–115) |
 | **Gospel 12/8 ballad** | compound: 4 beats × 3 | slow (dotted quarter ≈ 50–70) | triplet piano/organ chords on every pulse, heavy backbeat on 2 and 4, plagal harmony | [C] feel; tempo range [?] |
 | **Gospel shout** | fast swung 4/4 | fast (150–190 [?]) | claps and snare on every upbeat, chromatic bass, dominant-7th organ | [V] features / [?] tempo |

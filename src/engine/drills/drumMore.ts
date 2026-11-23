@@ -6,7 +6,8 @@
 //   d-diddles 10    the paradiddle on the kit
 //   d-time 7–9      slow time ♩50 · the pocket (behind / on / ahead) · the click on 1 only, then every other bar
 //   d-rock 9        punk 8ths endurance
-//   d-funk 5–8      open-hat barks · the ghost-note shuffle · boom-bap with the lazy snare · go-go and second line
+//   d-funk 5–10     open-hat barks · the ghost-note shuffle · boom-bap with the lazy snare · go-go and second line ·
+//                   the brass-band bass drum · the soul-jazz boogaloo (hidden until verified)
 //   d-shuffle 5–8   the swing-ratio dial · reggae one-drop · steppers and rockers · the half-time shuffle
 //   d-fills 6–8     flam / accent fills into an anticipated crash · the fill length called · an improvised fill
 //   d-indep 5–8     ostinato with the reading limb swapped · 3-way jazz · 4-way (samba / baião feet) · clave over a groove
@@ -237,6 +238,18 @@ function funk(s: DrillSpec, lv: number): Drill {
       const hits: DH[] = op === 2 ? [0, 1, 2, 3, 4, 5, 6, 7].flatMap((k) => bar({ k: Math.floor(k / 2) % 2 ? tres : pulse }, 2, k * 4)) : gb({ k: op ? tres : pulse }, 2, 8);
       const nm = [t('the march pulse on 1 and 3', 'פעימת המצעד על 1 ו־3'), t('the tresillo, 3+3+2', 'הטרסיו, 3+3+2'), t('two bars each', 'שתי תיבות כל אחד')][op];
       return finish(s, hits, { title: t(`Second line, the bass drum · ${nm.en}`, `סקנד ליין, תוף הבס · ${nm.he}`), bpm: 100, bars: 8, mic: false, ...drumBand('secondline', 8, ['C', 'A7', 'D7', 'G7']) });
+    }
+    case 10: {
+      // The soul-jazz boogaloo (STYLE-SOUL §2.2; 1960s Blue Note, not the Latin bugalú). Sourced: ♩117–136, the cymbal
+      // almost straight, the kick doubling the bass, the snare carrying the syncopation with ghost notes (Drumeo; DRUM!
+      // Magazine; On Jazz Drumming). The grid is the doc's candidate (grooves.ts 'boogaloo'), hidden until the owner
+      // checks it (verifiedContent 'soul-boogaloo-grid'). op 1 moves the hat to the ride; op 2 keeps the hat in quarters
+      // (Drumeo's simple version), the snare and kick the same.
+      const k = 'x..x..x...x.....';
+      const sn = '..g.X..g.gg.X..g';
+      const l: Lanes = [{ h: 'x.x.x.x.x.x.x.x.', s: sn, k }, { r: 'x.x.x.x.x.x.x.x.', s: sn, k }, { h: 'x...x...x...x...', s: sn, k }][op];
+      const nm = [t('hi-hat 8ths', 'היי־האט בשמיניות'), t('on the ride', 'ברייד'), t('hi-hat in quarters', 'היי־האט ברבעים')][op];
+      return finish(s, gb(l, 4, 8), { title: t(`Soul-jazz boogaloo · ${nm.en}`, `בוגלו של סול־ג׳אז · ${nm.he}`), bpm: 120, bars: 8, mic: false, goal: { ghost: 0.8 }, ...drumBand('boogaloo', 8, ['F7', 'F7', 'Bb7', 'F7']) });
     }
     default: {
       // Go-go and the second line: swung 16ths (written as sextuplets: 1, e, &, a → steps 0, 2, 3, 5 of 6).

@@ -247,13 +247,20 @@ describe('the core ii–V–I unit includes its neighbour-style moment (§9)', (
 });
 
 describe('the taster\'s lick part falls back to the library on the style (§9.1)', () => {
-  it('the lick part stays without a style lick (none verified yet), and the library opens filtered to the style', () => {
-    expect(tasteLick('brazil')).toBeNull();
-    expect(tasteParts('keys', 'brazil')).toContain('lick');
-    expect(tasteParts('drums', 'brazil')).not.toContain('lick');
+  it('the lick part stays without a style lick (Afro-Cuban: none verified), and the library opens filtered to the style', () => {
+    expect(tasteLick('afrocuban')).toBeNull();
+    expect(tasteParts('keys', 'afrocuban')).toContain('lick');
+    expect(tasteParts('drums', 'afrocuban')).not.toContain('lick');
+    const html = renderToStaticMarkup(createElement(LickTrainerScreen, { lang: 'he', settings: { ...DEFAULT_SETTINGS, activeCourse: 'keys' }, items: {}, onSettings: () => {}, onTake: () => {}, onUsed: () => {}, onBack: () => {}, startStyle: 'afrocuban' } as never));
+    expect(html).toContain('data-lick-style-empty="afrocuban"');
+    expect(html).toContain('data-lick-style-pick="afrocuban"');
+    expect(html).toContain('אפרו-קובני');
+  });
+  it('a style with a verified device (2026-11-23: the bossa inner line) gives the taster its lick', () => {
+    expect(tasteLick('brazil')?.id).toBe('sty-br-inner');
+    expect(tasteLick('neworleans')?.id).toBe('sty-nola-line');
     const html = renderToStaticMarkup(createElement(LickTrainerScreen, { lang: 'he', settings: { ...DEFAULT_SETTINGS, activeCourse: 'keys' }, items: {}, onSettings: () => {}, onTake: () => {}, onUsed: () => {}, onBack: () => {}, startStyle: 'brazil' } as never));
-    expect(html).toContain('data-lick-style-empty="brazil"');
-    expect(html).toContain('data-lick-style-pick="brazil"');
-    expect(html).toContain('ברזילאי');
+    expect(html).not.toContain('data-lick-style-empty');
+    expect(html).toContain('data-lick-card="sty-br-inner"');
   });
 });

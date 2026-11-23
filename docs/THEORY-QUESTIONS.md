@@ -68,6 +68,7 @@
 - `siskind-lh-variants` — שום דבר לא נמצא; ואצל לוין הנונה למעלה (מתחת לאגודל) היא ב־Type A, לא B — ייתכן שהתווית אצלנו הפוכה.
 - `siskind-textures` — בסרטון יש פרק על צעדים צדדיים, אבל אין "חמש תנועות קול פנימי".
 - `latin-kit-patterns` — אושרו קלאבת הסון 2–3 והקיק על הטומבאו (ה"וְ" של 2 ו־4); הפעמונים, הסנר והקיק של הסונגו והמוזמביק ורגל ההיי־האט לא (המקורות הם תמונות תווים או ספרים).
+- `soul-boogaloo-grid` — הבוגלו של הסול־ג׳אז (שנות ה־60, "The Sidewinder"; לא הבוגלו הלטיני). מאומת (2026-11-23): טמפו ♩117–136, המצלה כמעט ישרה ("בין סווינג לישר"), הקיק מכפיל את הבס, הסנר נושא את הסינקופה עם תווי רפאים. לא נמצא מקור קריא לרשת הקיק והסנר, לקו הבס ולקצב הליווי. **שאלה לבעלים:** האם הרשת הזו (בשש־עשריות, תיבה אחת) נכונה כגרוב בוגלו בסיסי? היי־האט <bdi>x.x.x.x.x.x.x.x.</bdi>, סנר <bdi>..o.x..o.oo.x..o</bdi> (x = מכה, o = רפאים), קיק <bdi>x..x..x...x.....</bdi>. אם כן — מדליקים את הגרוב, רמת התופים <bdi>d-funk 10</bdi> ומשחק זיהוי הסגנון.
 
 ### טריוויאלי / נשאר (שורה לכל אחד)
 - כתיב סולם 7♭5־דים (<bdi>C D E F G♭ A♭ B♭ B</bdi>): נובע מבניית ה־6־דים. נשאר.
@@ -199,6 +200,12 @@ sources were found:
   - confirmed: son clave 2–3, and the tumbao kick on &2 and 4;
   - not confirmed: the bells, the songo and Mozambique snare and kick, and the hi-hat foot. The sources are notation
     images or books.
+- `soul-boogaloo-grid` — the soul-jazz boogaloo (1960s, "The Sidewinder"; not the Latin bugalú). Verified
+  2026-11-23: tempo ♩117–136, the cymbal almost straight ("in the gap" between swing and straight), the kick doubling
+  the bass, the snare carrying the syncopation with ghosts. No readable source gives the kick and snare grid, the bass
+  figure or the comping rhythm. **Question for the owner:** is this one-bar 16th grid right as a basic boogaloo groove?
+  Hat `x.x.x.x.x.x.x.x.`, snare `..o.x..o.oo.x..o` (x = hit, o = ghost), kick `x..x..x...x.....`. If yes, the groove,
+  the drum level d-funk 10 and the style in the ear game switch on.
 
 ### Trivial / kept (one line each)
 - The 7♭5-dim scale spelling (C D E F G♭ A♭ B♭ B): follows from the 6-dim construction. Kept.

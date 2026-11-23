@@ -276,8 +276,11 @@ export type BandStyle =
   // valid id: the clave-aware montuno, the same as 'mambo').
   | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68'
   // SPEC-JAZZ-NEIGHBOURS §4, §5: soul-jazz, gospel 12/8, funk-jazz (STYLE-SOUL), trad and the second line
-  // (STYLE-NEW-ORLEANS). Boogaloo is not a band style: its groove and bass line are [?] (STYLE-SOUL §2.2).
-  | 'souljazz' | 'gospel68' | 'funkjazz' | 'trad' | 'secondline';
+  // (STYLE-NEW-ORLEANS).
+  | 'souljazz' | 'gospel68' | 'funkjazz' | 'trad' | 'secondline'
+  // The soul-jazz boogaloo (STYLE-SOUL §2.2): straight 8ths, the Charleston comp; used only by the boogaloo groove's
+  // content, hidden until its grid is verified (verifiedContent 'soul-boogaloo-grid').
+  | 'boogaloo';
 /** The Brazilian and Afro-Cuban styles (latinComping / brazilComping). */
 export const LATIN_BAND_STYLES = ['samba', 'baiao', 'chacha', 'mambo', 'bolero', 'songo', 'afro68', 'latin'] as const;
 type LatinBandStyle = (typeof LATIN_BAND_STYLES)[number];
@@ -312,6 +315,8 @@ const CELLS: Record<GrooveBandStyle, [number, number, number][][]> = {
     [[1, 0.4, 0.34], [1 + SW, 0.3, 0.28], [3, 0.4, 0.34], [3 + SW, 0.3, 0.28]],
     [[0, 0.6, 0.34], [1, 0.4, 0.3], [2, 0.6, 0.32], [3, 0.4, 0.3]],
   ],
+  // the Charleston (1 and the "and" of 2) in straight 8ths: the soul-jazz basic comp ([V] Purcell, STYLE-SOUL §2.3)
+  boogaloo: [[[0, 0.5, 0.36], [1.5, 0.5, 0.34]]],
   hold: [[[0, 3.9, 0.3]]],
 };
 
@@ -597,7 +602,7 @@ function latinComping(p: ParsedChart, meter: number, total: number, style: Exclu
 
 // ---------------------------------------------------------------- soul-jazz, gospel, funk-jazz, New Orleans
 // SPEC-JAZZ-NEIGHBOURS §4, §5, written only from docs/research/STYLE-SOUL.md and STYLE-NEW-ORLEANS.md ([V] / well-
-// sourced [C]). Boogaloo is left out: its drum grid and bass line are [?] (STYLE-SOUL §2.2).
+// sourced [C]). The boogaloo is a groove style (CELLS), hidden with its grid (STYLE-SOUL §2.2).
 
 /** Guide tones (3 and 7, either on top) of a chord, every placement between D3 and about A4 ([V] Purcell, STYLE-SOUL §2.3). */
 export function guideTones(c: ChartChordEv): number[][] {

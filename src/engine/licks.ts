@@ -17,7 +17,7 @@ import type { RatingEvent } from './rating';
 import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from './fsrs';
 
 export type LickInstrument = 'piano' | 'guitar' | 'bass' | 'voice';
-export type LickContext = 'major-251' | 'minor-251' | 'dominant' | 'altered' | 'blues' | 'barry' | 'enclosure' | 'guide' | 'lines';
+export type LickContext = 'major-251' | 'minor-251' | 'dominant' | 'altered' | 'blues' | 'barry' | 'enclosure' | 'guide' | 'lines' | 'style';
 type T2 = { en: string; he: string };
 
 /** Chord qualities a lick can sit on: chord tones, the chord scale (passing tones included), and tensions allowed on a beat. */
@@ -147,6 +147,8 @@ export const CONTEXTS: { id: LickContext; name: T2; short: T2 }[] = [
   { id: 'enclosure', name: { en: 'Bebop enclosures', he: 'כיתורי ביבופ' }, short: { en: 'enclose', he: 'כיתור' } },
   { id: 'guide', name: { en: 'Guide-tone lines', he: 'קווי צלילים מנחים' }, short: { en: 'guide', he: 'מנחים' } },
   { id: 'lines', name: { en: 'Lines from Technique', he: 'קווים מהטכניקה' }, short: { en: 'lines', he: 'קווים' } },
+  // the style devices (blues, gospel, New Orleans, bossa): each tagged with its style, the style chips filter them
+  { id: 'style', name: { en: 'Style devices', he: 'מילים של סגנון' }, short: { en: 'styles', he: 'סגנונות' } },
 ];
 
 /**
@@ -178,6 +180,8 @@ const BLUES_I_IV: LickChord[] = [[0, 'blues7', 4], [5, 'blues7', 4]];
 const BLUES_I: LickChord[] = [[0, 'blues7', 4], [0, 'blues7', 4]];
 
 const L = (id: string, ctx: LickContext, level: number, en: string, he: string, chords: LickChord[], line: string): Lick => ({ id, ctx, level, name: { en, he }, chords, notes: parseLine(line) });
+/** A style device (the 'style' context, tagged with its style). */
+const ST = (id: string, style: import('./styles').StyleId, level: number, en: string, he: string, chords: LickChord[], line: string): Lick => ({ ...L(id, 'style', level, en, he, chords, line), style });
 
 /** The library (in C: the key's tonic = 0). */
 export const LICKS: Lick[] = [
@@ -232,6 +236,41 @@ export const LICKS: Lick[] = [
   // The half step up into the altered: the altered scale of V is the melodic minor a half step above its root (A♭ melodic
   // minor over G7alt: ♭9, ♯9, 3, ♭5, ♭13, ♭7, 1), up the scale, the ♭7 resolving a half step to the 3rd of I.
   L('dev-alt-up', 'altered', 3, 'A half step up into the altered: melodic minor from the ♭9', 'חצי טון למעלה אל האלטרד: מינור מלודי מה־♭9', ALT_I, '8 10 11 13 15 17 19 17 | 16w'),
+  // ── the style devices (2026-11-23, the same rule as the known devices above): generic, widely documented vocabulary of
+  //    the app's styles, each written out as the device itself — a scale, an ornament, a chromatic line — never a
+  //    transcription and never a composed melody. Each is tagged with its style (styles.ts), so style focus surfaces it
+  //    (the Licks style chips, today's lick weight). Every device has two independent sources (docs/research/STYLE-SOUL.md
+  //    §2.4, STYLE-NEW-ORLEANS, STYLE-BRAZIL hold the notes). Left out for want of a melodic device or a second source:
+  //    Afro-Cuban (the tumbao and montuno are bass / comping, not licks), funk (no melodic device beyond the blues scale),
+  //    the gospel "6-5-3-1" ending and the Professor Longhair triplet (no generic description found), the New Orleans
+  //    trill / tremolo (documented, but no source names its notes), a ♭3–3 blues trill (one source only; the ♭3 → 3
+  //    grace is the gospel device below and the jazz lick blues-grace). ──
+  // The hexatonic blues scale 1 ♭3 4 ♭5 5 ♭7, up and down over the I7 (the ♭5 as the passing tone between 4 and 5).
+  // Sources: Wikipedia "Blues scale" (Greenblatt: "1, ♭3, 4, ♭5, 5, ♭7"); Levine, The Jazz Theory Book (the blues scale).
+  ST('sty-bl-scale', 'soul', 1, 'The blues scale, up and down', 'סולם הבלוז, למעלה ולמטה', [[0, 'blues7', 8]], '0 3 5 6 7 10 12 10 | 7 6 5 3 0h'),
+  // The gospel scale (the major blues scale) 1 2 ♭3 3 5 6, up and down over the I.
+  // Sources: Piano With Jonny, "Play gospel piano: the 6-step beginner guide" ("1–2–♭3–♮3–5–6 … The Gospel Scale");
+  // Wikipedia "Blues scale" (Greenblatt's major blues scale "1, 2, ♭3, 3, 5, 6"); Loudlands, "How to play gospel piano"
+  // (the major pentatonic and the major blues scale as the base of gospel licks).
+  ST('sty-gos-scale', 'soul', 1, 'The gospel scale, up and down', 'סולם הגוספל, למעלה ולמטה', [[0, '6', 8]], '0 2 3 4 7 9 12 9 | 7 4 3 2 0h'),
+  // The 2–♭3–3 grace into the 3rd ("so quickly that it sounds like a single note"), on the IV and then on the I (the
+  // plagal IV–I, STYLE-SOUL §1 [V]).
+  // Sources: Loudlands, "How to play gospel piano" ("the most common lick is to play the 2, the flat 3, and the 3 in
+  // order so quickly that it sounds like a single note"); Pianote, "Gospel piano 101" (two chromatic grace notes into the
+  // target, "this works well for the thirds in your chords").
+  ST('sty-gos-grace', 'soul', 2, '2–♭3–3 into the 3rd, on IV and on I', '2–♭3–3 אל הטרצה, על IV ועל I', [[5, '6', 4], [0, '6', 4]], '7s 8s 9d rh | 2s 3s 4d rh'),
+  // The chromatic line 3–♭3–2–1 (the top of the New Orleans chromatic 6ths), moved with the chords: on I7 E E♭ D C, on
+  // IV7 A A♭ G F.
+  // Sources: Piano With Jonny, "New Orleans blues piano: the complete guide" ("descends melodically from the 3rd of the
+  // chord to the root … 3→♭3→2→1", "must move with the chord changes"); Paddy Milner, "Descending 3rds riff" (Music
+  // Gurus: descending 3rds / 6ths with a chromatic passing note).
+  ST('sty-nola-line', 'neworleans', 2, 'The chromatic line 3–♭3–2–1, with the chords', 'הקו הכרומטי 3–♭3–2–1, עם האקורדים', BLUES_I_IV, '4q 3q 2q 0q | 9q 8q 7q 5q'),
+  // Jobim's inner-voice chromatic line over III7–VI7 into II7: the 13th falls to the ♯5, the 9th to the ♭9, then the 5th
+  // of II (C♯ C B B♭ A in C) — "something of a cliché of bossa nova harmony", in 15 of 40 Jobim songs.
+  // Sources: Cosgrove, "Chromatic Devices in the Songs of Antônio Carlos Jobim" (Joshibi University bulletin 50: the
+  // |iii13 iii7♯5 | vi9 vi7(♭9)| inner-voice device); the Wave chart (Guitar Composer's Toolbox, "Wave in B": D♯13 D♯7♭13 |
+  // G♯9 G♯7♭9 | C♯9).
+  { ...ST('sty-br-inner', 'brazil', 3, 'Jobim\'s inner line: 13–♯5, 9–♭9', 'הקו הפנימי של ז׳ובים: 13–♯5, 9–♭9', [[4, '7', 2], [9, '7', 2], [2, '7', 4]], '13q 12q 11q 10q | 9w'), straight: true },
 ];
 
 /** Licks met while building the key ladder (the player's own included), so a lick drill can be made from its id. */
@@ -520,9 +559,12 @@ export function lickDrill(l: Lick, key: number, inst: LickInstrument = 'piano', 
     startBpm: lickStart(l),
     chart: lickChart(l, k),
     ...(inst === 'voice' ? { sung: true } : {}),
-    ...(o.band ? { band: { style: 'swing' as const, bass: true } } : {}),
+    ...(o.band ? { band: { style: lickBandStyle(l), bass: true } } : {}),
   };
 }
+
+/** The band under a lick: a Brazilian device over the bossa, every other lick over swing. */
+export const lickBandStyle = (l: Lick): 'swing' | 'bossa' => (l.style === 'brazil' ? 'bossa' : 'swing');
 
 // ───────────────────────────── the 12-key × tempo grid, stars ─────────────────────────────
 

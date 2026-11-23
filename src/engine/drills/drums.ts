@@ -1041,6 +1041,8 @@ export function allDrumFamilies(): DrumFamilyDef[] {
       L('d-funk', 8, 'Go-go and second line', 'גו־גו וסקנד ליין', 'gogo', 3, [90, 110], '1/16', false),
       // SPEC-JAZZ-NEIGHBOURS §5 (STYLE-NEW-ORLEANS §2.1): the brass-band second line's bass drum (the New Orleans style).
       L('d-funk', 9, 'Brass-band second line: the bass drum', 'סקנד ליין של להקת כלי נשיפה: תוף הבס', 'nola', 3, [90, 120], '1/8', false),
+      // STYLE-SOUL §2.2: the soul-jazz boogaloo (the soul style), hidden until its grid is verified ('soul-boogaloo-grid').
+      L('d-funk', 10, 'Soul-jazz boogaloo', 'בוגלו של סול־ג׳אז', 'boogaloo', 3, [117, 133], '1/16', false),
     ]),
     fam('d-shuffle', 'Shuffle & triplet feels', 'שאפל ותחושת טריולות', [
       L('d-shuffle', 1, 'Triplets on the hat, snare 2 and 4', 'טריולות בהיי־האט, סנר על 2 ו-4', 'triplets', 3, [60, 90], '1/8T', false),

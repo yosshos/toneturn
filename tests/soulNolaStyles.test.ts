@@ -3,6 +3,10 @@
 // second line's bass drum (d-funk 9), built only from the verified patterns of docs/research/STYLE-SOUL.md,
 // STYLE-NEW-ORLEANS.md and STYLE-MEDITERRANEAN-TOUCH.md. These pin the patterns to the research.
 import { describe, expect, it } from 'vitest';
+import { GROOVES } from '../src/engine/grooves';
+import { allDrumFamilies, drumFamilies, generateDrums } from '../src/engine/drills/drums';
+import { DRUM_STYLES, STYLE_POOL, LOOK_ALIKES } from '../src/engine/topicsDrumStyle';
+import { isVerified } from '../src/engine/verifiedContent';
 import { catalog, generate } from '../src/engine/drills/generate';
 import { guitarCatalog } from '../src/engine/drills/guitar';
 import { levelDrills } from '../src/engine/drills/plan';
@@ -351,5 +355,30 @@ describe('the band (band.ts): soul-jazz, gospel 12/8, funk-jazz, trad, the secon
       expect(b.events.some((e) => e.inst === 'piano'), st).toBe(st !== 'secondline');
     }
     expect(bandStyleOf('second-line')).toBe('secondline');
+  });
+});
+
+describe('the soul-jazz boogaloo (STYLE-SOUL §2.2, 2026-11-23): built, hidden until its grid is verified', () => {
+  it('the claim hides the groove, the drum level and the ear-game style', () => {
+    expect(isVerified('groove:boogaloo')).toBe(false);
+    expect(isVerified('level:d-funk-10')).toBe(false);
+    expect(GROOVES.some((g) => g.id === 'boogaloo')).toBe(false);
+    expect(drumFamilies().find((f) => f.id === 'd-funk')!.levels.some((l) => l.id === 'd-funk-10')).toBe(false);
+    expect(DRUM_STYLES.some((s) => s.id === 'boogaloo')).toBe(false);
+    expect(STYLE_POOL.flat().includes('boogaloo')).toBe(false);
+    expect(LOOK_ALIKES.flat().includes('boogaloo')).toBe(false);
+  });
+  it('the level is built: the sourced tempo, three variations over the boogaloo band', () => {
+    const lv = allDrumFamilies().find((f) => f.id === 'd-funk')!.levels.find((l) => l.id === 'd-funk-10')!;
+    expect(lv.tempo).toEqual([117, 133]);
+    for (let op = 0; op < 3; op++) {
+      const d = generateDrums({ ...lv.specs[op], key: 0 } as never);
+      expect(d.band?.style).toBe('boogaloo');
+      expect(d.notes.length).toBeGreaterThan(0);
+    }
+  });
+  it('the band comps the Charleston in straight 8ths', () => {
+    const h = bandComping(parseChart('F7 | Bb7 | F7 | F7'), 4, 16, 'boogaloo', 3);
+    expect(h.filter((x) => x.beat < 4).map((x) => x.beat)).toEqual([0, 1.5]);
   });
 });

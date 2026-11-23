@@ -666,9 +666,13 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const libStyles = new Set(all.filter((l) => !l.own).map(lickStyle));
   const myStyles0 = libStyles.size > 1 ? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).filter((st) => libStyles.has(st)) : [];
   // opened by the style taster on a style (§9.1): its chip shows even before the library holds licks in it
-  const myStyles = startStyle && !myStyles0.includes(startStyle) ? [startStyle, ...myStyles0] : myStyles0;
-  const styleEmpty = styleF !== 'all' && !libStyles.has(styleF);
-  const styled = styleF === 'all' || (tab !== 'all' && !CONTEXTS.some((c) => c.id === tab)) ? list : list.filter((l) => l.own || lickStyle(l) === styleF);
+  const myStyles1 = startStyle && !myStyles0.includes(startStyle) ? [startStyle, ...myStyles0] : myStyles0;
+  // the style devices tab: its chips are the styles it holds (mine first), and a style it does not hold shows them all
+  const tabStyles = tab === 'style' ? [...new Set(list.map(lickStyle))] : null;
+  const myStyles = tabStyles ? [...myStyles1.filter((st) => tabStyles.includes(st)), ...tabStyles.filter((st) => !myStyles1.includes(st))] : myStyles1;
+  const styleOn: StyleId | 'all' = tabStyles && styleF !== 'all' && !tabStyles.includes(styleF) ? 'all' : styleF;
+  const styleEmpty = styleOn !== 'all' && !libStyles.has(styleOn);
+  const styled = styleOn === 'all' || (tab !== 'all' && !CONTEXTS.some((c) => c.id === tab)) ? list : list.filter((l) => l.own || lickStyle(l) === styleOn);
   const shown = pathLevel && tab === 'all' ? [...styled.filter((l) => l.level === pathLevel), ...styled.filter((l) => l.level !== pathLevel)] : styled;
   const startReviewRun = () => {
     const day = new Date().toISOString().slice(0, 10);
@@ -708,20 +712,20 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         ))}
       </div>
       {myStyles.length > 0 && (tab === 'all' || CONTEXTS.some((c) => c.id === tab)) && (
-        <div className="chips lk-style" role="radiogroup" aria-label={lang === 'he' ? 'סגנון' : 'Style'} data-lick-style={styleF}>
+        <div className="chips lk-style" role="radiogroup" aria-label={lang === 'he' ? 'סגנון' : 'Style'} data-lick-style={styleOn}>
           {myStyles.map((st) => (
-            <button key={st} role="radio" aria-checked={styleF === st} className={`chip ${styleF === st ? 'on' : ''}`} onClick={() => setStyleF(st)} data-lick-style-pick={st}>
+            <button key={st} role="radio" aria-checked={styleOn === st} className={`chip ${styleOn === st ? 'on' : ''}`} onClick={() => setStyleF(st)} data-lick-style-pick={st}>
               {STYLE_TEXT[st][lang]}
             </button>
           ))}
-          <button role="radio" aria-checked={styleF === 'all'} className={`chip ${styleF === 'all' ? 'on' : ''}`} onClick={() => setStyleF('all')} data-lick-style-pick="all">
+          <button role="radio" aria-checked={styleOn === 'all'} className={`chip ${styleOn === 'all' ? 'on' : ''}`} onClick={() => setStyleF('all')} data-lick-style-pick="all">
             {lang === 'he' ? 'כל הסגנונות' : 'All styles'}
           </button>
         </div>
       )}
       {styleEmpty && (tab === 'all' || CONTEXTS.some((c) => c.id === tab)) && (
-        <p className="field-hint" data-lick-style-empty={styleF}>
-          {lang === 'he' ? `עוד אין בספרייה ליקים בסגנון ${STYLE_TEXT[styleF].he}. הם ייכנסו כשיימצאו להם מקורות מאומתים.` : `No ${STYLE_TEXT[styleF].en} licks in the library yet. They come in once verified sources are found.`}
+        <p className="field-hint" data-lick-style-empty={styleOn}>
+          {lang === 'he' ? `עוד אין בספרייה ליקים בסגנון ${STYLE_TEXT[styleOn as StyleId].he}. הם ייכנסו כשיימצאו להם מקורות מאומתים.` : `No ${STYLE_TEXT[styleOn as StyleId].en} licks in the library yet. They come in once verified sources are found.`}
         </p>
       )}
       {tab === 'review' && due.length > 0 && (

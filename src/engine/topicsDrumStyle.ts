@@ -48,6 +48,8 @@ export const DRUM_STYLES: DrumStyle[] = shownOnly<DrumStyle>([
   { id: 'five4', name: { en: '5/4', he: '5/4' }, groove: 'five-4', band: 'hold', chart: 'Dm | Am' },
   { id: 'nine8', name: { en: '9/8', he: '9/8' }, groove: 'nine-8', band: 'hold', chart: 'Em | D' },
   { id: 'cha', name: { en: 'Cha-cha', he: 'צ׳ה־צ׳ה' }, groove: 'cha-cha', band: 'latin', chart: 'C | G7' },
+  // STYLE-SOUL §8: the soul-jazz boogaloo (level 3 and the look-alikes), shown once its grid is verified.
+  { id: 'boogaloo', name: { en: 'Boogaloo (soul-jazz)', he: 'בוגלו (סול־ג׳אז)' }, groove: 'boogaloo', band: 'boogaloo', chart: 'F7 | Bb7' },
   // a groove the bank leaves out (unverified kit patterns, 'latin-kit-patterns') is not asked
 ]);
 const BY_ID: Record<string, DrumStyle> = Object.fromEntries(DRUM_STYLES.map((s) => [s.id, s]));
@@ -56,7 +58,7 @@ const BY_ID: Record<string, DrumStyle> = Object.fromEntries(DRUM_STYLES.map((s) 
 export const STYLE_POOL: string[][] = [
   ['rock', 'swing', 'bossa', 'reggae'],
   ['rock', 'swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz'],
-  ['swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz', 'songo', 'halftime', 'afro68', 'seven8', 'maqsum'],
+  ['swing', 'bossa', 'reggae', 'shuffle', 'funk', 'samba', 'waltz', 'songo', 'halftime', 'afro68', 'seven8', 'maqsum', 'boogaloo'],
 ].map((p) => p.filter((id) => id in BY_ID));
 /** Level 4: groups that sound alike. */
 export const LOOK_ALIKES: string[][] = [
@@ -66,6 +68,8 @@ export const LOOK_ALIKES: string[][] = [
   ['waltz', 'afro68', 'shuffle'],
   ['songo', 'cha', 'funk'],
   ['rock', 'funk', 'halftime'],
+  // STYLE-SOUL §8: boogaloo against 16th funk (the density of the hat and the kick)
+  ['boogaloo', 'funk', 'rock'],
   // a group that lost a style (not shown) is left out: its look-alike is gone
 ].filter((g) => g.every((id) => id in BY_ID));
 
