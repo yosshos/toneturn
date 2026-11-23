@@ -416,8 +416,8 @@ export interface Settings {
   rotationStats?: import('../engine/rotation').ModeStats;
   /** The rotation tier the player chose (1–3 in the first version; absent = from the technique tier). */
   rotationTier?: 1 | 2 | 3;
-  /** Phase 8 (the Barry Harris way, RBI track B): the tier the player chose (H-1…H-4). */
-  harrisTier?: 1 | 2 | 3 | 4;
+  /** Phase 8 (the Barry Harris way, RBI track B): the tier the player chose (H-1…H-5). */
+  harrisTier?: 1 | 2 | 3 | 4 | 5;
   /** Phase 8, the coach's tilt (aiTilt.ts): this week's proposal and the player's answer (the plan uses it only on yes). */
   aiTilt?: import('../engine/aiTilt').TiltAnswer;
   /** The mixer: levels, EQ and effects per channel (absent = the default mix). */

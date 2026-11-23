@@ -43,8 +43,7 @@
 
 ### עדיין פתוח
 
-**6. 3 עד ♭9 (`bh-3-to-b9`) — השאלה בניסוח פשוט:**
-מעל <bdi>G7</bdi>, האם בארי מלמד לנגן את ארפג׳ הדימיניש מהטרצה — <bdi>B D F A♭</bdi> — ככלי לקו, כמו שהוא מלמד את "3 עד 9" (<bdi>B D F A</bdi>)? (באפליקציה: אותו ארפג׳ על <bdi>G7, B♭7, D♭7, E7</bdi>, כי לכולם אותו דימיניש.) מה שנמצא: בפורומים "על הטרצה של כל דומיננט יש את הדימיניש", אבל אף מקור לא קורא לזה "3 עד ♭9" ולא מלמד את זה כזוג עם "3 עד 9".
+**6. 3 עד ♭9 (`bh-3-to-b9`) — נסגרה, הודלק (2026-11-23).** הבעלים אישר: מעל <bdi>G7</bdi> ארפג׳ הדימיניש מהטרצה — <bdi>B D F A♭</bdi>, המשותף לארבע הדומיננטות הקשורות — הוא כלי קו של בארי, כמו "3 עד 9". מוצג בתרגילי קווי האריס (דומיננטה אחת בכל תיבה), בתא אוצר המילים, בשיעורים ובדרך של בארי האריס (<bdi>H-4</bdi>, <bdi>H-5</bdi>). באותה תשובה: "תנועת המשפחה" (<bdi>G7, B♭7, D♭7, E7</bdi> בתוך תיבה אחת של <bdi>G7</bdi>) — הבעלים לא מכיר, צפוף מדי בתיבה אחת, נשארת בחוץ; <bdi>Fm6</bdi> ו־<bdi>Bm6</bdi> מעל <bdi>V7</bdi> — "נדיר אבל תקף": רק בשלב העליון, במשקל נמוך, <bdi>Bm6</bdi> רק כשהבס עובר ל־<bdi>E</bdi>.
 
 **12ב. "אקורד אוקטבה" של אקולס (`echols-octave-chord`).** לא נענה. בפורומים: המנגינה מוכפלת אוקטבה מתחת עם צלילי אקורד ביניהם — לא מקור של אקולס. גם ה"טרצות" וה"משולשים" בסולם הקולות (`echols-ladder-thirds-triads`) נשארו מוסתרים: לא נשאלו, ו"טרצה" של שני צעדים בסולם 6־דים היא סקונדה על השישית (<bdi>G A</bdi>).
 
@@ -137,11 +136,12 @@ researched again against other sources. Where things stand:
 
 ### Still open
 
-**6. 3 to ♭9 (`bh-3-to-b9`), in plain words.**
-Over G7, does Barry teach playing the diminished arpeggio from the 3rd (B D F A♭) as a line device, the way he teaches
-3-to-9 (B D F A)? In the app it is the same arpeggio over G7, B♭7, D♭7 and E7, since all four share that diminished.
-What we found: forums say "on the third of every dominant you'll find the diminished". No source calls it "3 to ♭9" or
-teaches it as a pair with 3 to 9.
+**6. 3 to ♭9 (`bh-3-to-b9`) — closed, switched on (2026-11-23).** The owner confirmed it: over G7 the diminished
+arpeggio from the 3rd (B D F A♭, shared by the four related dominants) is a Harris line device like 3-to-9. Shown in the
+Harris-line drills (one dominant per bar), the vocabulary cell, the lessons and the Barry Harris way (H-4, H-5). In the
+same answer: the family movement (G7, B♭7, D♭7, E7 inside one bar of G7) — the owner does not know it and finds it too
+dense in one bar, so it stays out; Fm6 and Bm6 over V7 — "rare but valid": only at the top tier, at low weight, Bm6
+only when the bass moves to E.
 
 **12b. Echols's "octave chord" (`echols-octave-chord`).** Not answered.
 - Forums describe it as the melody doubled an octave below with chord tones between. That is not an Echols source.

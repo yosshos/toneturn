@@ -3,10 +3,12 @@
 // no mode names. A count-in + click + the now-cue on the sheet (timing-cue rule); after the take: thought-chord tones on
 // the beat, half steps that resolve off the beat, the thought chord's identity notes, the starting degree / the landing.
 // One phone screen; the keyboard is behind a button. Only content verified in docs/BARRY-HARRIS-THEORY.md (harrisTrack.ts).
+// H-4 asks 3 to ♭9 on the V; H-5 (a standard, 16 bars) shows 8 bars at a time, a rule on each window's first chord, and a
+// line under the sheet for a rare thought over the V (owner 2026-11-23: "rare but valid").
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { chartBacking, parseChart, transposeChart } from '../engine/charts';
-import { buildHarrisSheet, DEGREE_WORD, degreePc, gradeHarris, harrisCellAt, HARRIS_TIERS, thoughtLabel, thoughtName, thoughtScale, thoughtTones, TIERS, type HarrisGrade, type HarrisTier, type HNote } from '../engine/harrisTrack';
+import { buildHarrisSheet, DEGREE_WORD, degreePc, gradeHarris, harrisCellAt, HARRIS_TIERS, RARE_THOUGHTS, relativeBass, RULE_WORD, thoughtLabel, thoughtName, thoughtScale, thoughtTones, threeToB9Pcs, TIERS, type HarrisCell, type HarrisGrade, type HarrisTier, type HNote } from '../engine/harrisTrack';
 import { improvTake, type ImprovTake } from '../engine/rotationSheet';
 import { spansOfChart } from '../engine/ruleCards';
 import { bookTake } from '../engine/vocab';
@@ -25,9 +27,14 @@ import '../rotation.css';
 type Lang = 'en' | 'he';
 const NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
 const TX = {
-  en: { key: 'Key', tier: 'Tier', think: 'think', start: 'Start', stop: 'Stop', tempo: 'Tempo', keys: 'Keyboard', next: 'Next', onBeat: 'thought-chord tones on the beat', offBeat: 'off the beat: in the scale or a half step that resolves', identity: 'the thought chord heard', startDeg: 'started from the asked note', landing: 'landed on the 3rd of the V', none: 'Play a few notes over the chords to see the result.' },
-  he: { key: 'סולם', tier: 'שלב', think: 'חשבו', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', keys: 'מקלדת', next: 'הבא', onBeat: 'צלילי האקורד החשוב על הפעמה', offBeat: 'בין הפעמות: בסולם או חצי טון שנפתר', identity: 'האקורד שחשבתם נשמע', startDeg: 'פתחתם מהצליל שהתבקש', landing: 'נחתתם על הטרצה של ה־V', none: 'נגנו כמה צלילים מעל האקורדים כדי לראות את התוצאה.' },
+  en: { key: 'Key', tier: 'Tier', think: 'think', start: 'Start', stop: 'Stop', tempo: 'Tempo', keys: 'Keyboard', next: 'Next', onBeat: 'thought-chord tones on the beat', offBeat: 'off the beat: in the scale or a half step that resolves', identity: 'the thought chord heard', startDeg: 'started from the asked note', landing: 'landed on the 3rd of the V', b9: '3 to ♭9 played over the V', rules: 'the rule of the bars kept', rare: 'Rare', over: 'over', bassTo: 'only when the bass moves to', bars: 'Bars', none: 'Play a few notes over the chords to see the result.' },
+  he: { key: 'סולם', tier: 'שלב', think: 'חשבו', start: 'להתחיל', stop: 'עצירה', tempo: 'טמפו', keys: 'מקלדת', next: 'הבא', onBeat: 'צלילי האקורד החשוב על הפעמה', offBeat: 'בין הפעמות: בסולם או חצי טון שנפתר', identity: 'האקורד שחשבתם נשמע', startDeg: 'פתחתם מהצליל שהתבקש', landing: 'נחתתם על הטרצה של ה־V', b9: 'ניגנתם 3 עד ♭9 על הדומיננטה', rules: 'שמרתם על החוק של התיבות', rare: 'נדיר', over: 'מעל', bassTo: 'רק כשהבס עובר ל־', bars: 'תיבות', none: 'נגנו כמה צלילים מעל האקורדים כדי לראות את התוצאה.' },
 };
+
+/** Bars on view at once (one phone screen). */
+const PAGE = 8;
+/** 3 to ♭9 over a V, its notes ("B D F A♭"). */
+const b9Notes = (c: Pick<HarrisCell, 'root'>): string => threeToB9Pcs(c.root).map((p) => NAMES[p]).join(' ');
 
 /** The line above a chord: "think A♭m6" (and, on a V, which of Harris's names it is). */
 function thinkText(c: { think: Parameters<typeof thoughtLabel>[0]; sym: string }, lang: Lang): { label: string; name: string | null } {
@@ -45,6 +52,8 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
   const [grade, setGrade] = useState<HarrisGrade | null>(null);
   const [found, setFound] = useState<FoundUses | null>(null);
   const [chorus, setChorus] = useState(0);
+  /** Which 8 bars are on view (a 16-bar standard shows half at a time). */
+  const [page, setPage] = useState(0);
   const [showKeys, setShowKeys] = useState(midi.devices.length === 0);
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
@@ -52,7 +61,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
   const open = useRef(new Map<number, number>());
   const raf = useRef(0);
   const beatS = 60 / bpm;
-  useEffect(() => (setGrade(null), setFound(null), setChorus(0)), [tier, dayKey]);
+  useEffect(() => (setGrade(null), setFound(null), setChorus(0), setPage(0)), [tier, dayKey]);
   useEffect(
     () => () => {
       ctl.current?.abort();
@@ -86,6 +95,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
     setGrade(null);
     setFound(null);
     setChorus(0);
+    setPage(0);
     setRunning(true);
     const text = sheet.tonic ? transposeChart(def.chart, sheet.tonic) : def.chart;
     const b = chartBacking(parseChart(text), 'swing', bpm, sheet.choruses);
@@ -100,7 +110,10 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
       const now = (performance.now() - t0.current) / 1000 / beatS;
       setBeat(now);
       const k = harrisCellAt(sheet, now);
-      if (k >= 0) setChorus(sheet.cells[k].chorus);
+      if (k >= 0) {
+        setChorus(sheet.cells[k].chorus);
+        setPage(Math.floor(sheet.cells[k].bar / PAGE));
+      }
       if (!c.signal.aborted) raf.current = requestAnimationFrame(tick);
     };
     raf.current = requestAnimationFrame(tick);
@@ -115,6 +128,7 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
     const g = gradeHarris(sheet, notes.current);
     setGrade(g);
     setChorus(0);
+    setPage(0);
     onTake?.(improvTake('harris', { score: g.score, notes: g.notes, tier, bpm }));
     // the licks of mine in the line, over the same chart (SPEC-LICKS-IN-IMPROV §3: every improvisation take)
     const line = notes.current.map((n) => ({ beat: n.beat, midi: n.midi, dur: n.dur }));
@@ -132,7 +146,10 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
   const nx = nxI >= 0 ? sheet.cells[nxI] : null;
   const shown = now >= 0 ? sheet.cells[now] : (nx ?? sheet.cells[0]);
   const countNow = beat === null ? -1 : beat < 0 ? Math.max(0, Math.min(3, Math.floor(beat + 4))) : 4 + (Math.floor(beat) % sheet.meter);
-  const bars = Array.from({ length: Math.min(8, sheet.bars) }, (_, i) => i);
+  const pages = Math.ceil(sheet.bars / PAGE);
+  const bars = Array.from({ length: Math.min(PAGE, sheet.bars - page * PAGE) }, (_, i) => page * PAGE + i);
+  // a rare thought over a V on view: one line under the sheet (the ♭9 relative's minor only when the bass moves to it)
+  const rare = sheet.cells.find((c) => c.chorus === chorus && Math.floor(c.bar / PAGE) === page && c.think.name && RARE_THOUGHTS.includes(c.think.name));
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   return (
     <section className="rot hw" data-hw="1" data-hw-tier={tier}>
@@ -171,6 +188,14 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
                     <small className="hw-start" data-hw-start={c.start}>
                       {DEGREE_WORD[c.start][lang]} <bdi dir="ltr">({NAMES[degreePc(c.think, c.start)]})</bdi>
                     </small>
+                  ) : c.rule ? (
+                    <small className="hw-start hw-rule" data-hw-rule={c.rule} title={RULE_WORD[c.rule].long[lang]}>
+                      <bdi dir={he ? 'rtl' : 'ltr'}>{RULE_WORD[c.rule].short[lang]}</bdi>
+                    </small>
+                  ) : c.b9 ? (
+                    <small className="hw-start" data-hw-b9="1" title={b9Notes(c)}>
+                      <bdi dir={he ? 'rtl' : 'ltr'}>{RULE_WORD['3b9'].short[lang]}</bdi>
+                    </small>
                   ) : t.name ? (
                     <small className="hw-start">{t.name}</small>
                   ) : (
@@ -189,6 +214,18 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
           </div>
         ))}
       </div>
+      {rare && (
+        <p className="field-hint hw-rare" data-hw-rare={rare.think.name}>
+          {tx.rare}: <bdi dir="ltr">{thoughtLabel(rare.think)}</bdi> {tx.over} <bdi dir="ltr">{rare.sym}</bdi>
+          {rare.think.name === 'relative-minor' ? (
+            <>
+              {' — '}
+              {tx.bassTo}
+              <bdi dir="ltr">{NAMES[relativeBass(rare.root)]}</bdi>
+            </>
+          ) : null}
+        </p>
+      )}
       <div className="rs-under">
         {nx && running ? (
           <span className="rs-next" data-hw-next={thoughtLabel(nx.think)} aria-live="polite">
@@ -196,6 +233,15 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
           </span>
         ) : (
           <span />
+        )}
+        {pages > 1 && !running && (
+          <div className="seg rs-chorus hw-pages" role="tablist" aria-label={tx.bars}>
+            {Array.from({ length: pages }, (_, k) => (
+              <button key={k} role="tab" aria-selected={page === k} className={page === k ? 'on' : ''} onClick={() => setPage(k)} data-hw-page={k}>
+                <bdi dir="ltr">{`${k * PAGE + 1}–${Math.min(sheet.bars, (k + 1) * PAGE)}`}</bdi>
+              </button>
+            ))}
+          </div>
         )}
         {sheet.choruses > 1 && !running && (
           <div className="seg rs-chorus" role="tablist" aria-label="Chorus">
@@ -245,6 +291,22 @@ export function HarrisWay({ settings, lang, dayKey, tier, onTier, onTake, vocab 
                   <bdi dir="ltr">{pct(grade.landing)}</bdi>
                 </b>{' '}
                 <small>{tx.landing}</small>
+              </li>
+            )}
+            {grade.b9 !== null && (
+              <li>
+                <b>
+                  <bdi dir="ltr">{pct(grade.b9)}</bdi>
+                </b>{' '}
+                <small>{tx.b9}</small>
+              </li>
+            )}
+            {grade.rules !== null && (
+              <li>
+                <b>
+                  <bdi dir="ltr">{pct(grade.rules)}</bdi>
+                </b>{' '}
+                <small>{tx.rules}</small>
               </li>
             )}
           </ul>

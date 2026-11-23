@@ -58,9 +58,9 @@ A G7 that resolves to C can be played as any of **8 chords**: the 4 dominants of
 | **D♭7** | ♯11 ♭7 ♭9 3 | altered: ♭9, ♭5; the tritone sub | dominant 7th-dim | **C°** |
 | **E7** | 13 ♭9 3 5 | 13♭9: half-whole colour | dominant 7th-dim | **C°** |
 | **Dm6** | 5 ♭7 9 3 | natural tensions (9, 13), smooth; makes ii–V one sound | minor 6th-dim | **D♭° (G°)** |
-| **Fm6** | ♭7 ♭9 11 5 | sus♭9 (phrygian colour) | minor 6th-dim | **D♭°** |
+| **Fm6** | ♭7 ♭9 11 5 | sus♭9 (phrygian colour); rare but valid over V7 (owner 2026-11-23) | minor 6th-dim | **D♭°** |
 | **A♭m6** | ♭9 3 ♭13 ♭7 | altered (♭9, ♭13): the dark resolution | minor 6th-dim | **D♭°** |
-| **Bm6** | 3 5 **maj7** ♭9 | clashes over a G bass (F♯ = maj7). Use it when the bass also moves to E, as E9 | minor 6th-dim | **D♭°** |
+| **Bm6** | 3 5 **maj7** ♭9 | clashes over a G bass (F♯ = maj7). Use it when the bass also moves to E, as E9; rare but valid over V7 (owner 2026-11-23) | minor 6th-dim | **D♭°** |
 
 The rule the owner stated, confirmed by computation (2026-11-14):
 - All four dominants share one diminished in their 6th-dim scales: **C° (= A°)**.
@@ -72,7 +72,8 @@ So one dominant function touches **all three** diminished chords:
 - D♭° is the passing dim of the m6 scales.
 - D° is the 7♭9 chord itself.
 
-Colour descriptions are the app's analysis and are marked **(verify)** for teacher review, especially Bm6's use and the choice between Fm6 and B♭7.
+Colour descriptions are the app's analysis.
+- **Fm6 and Bm6 as thought chords over V7:** owner 2026-11-23, "rare but valid". The app offers them only at the Harris way's top tier (H-5), at low weight, never as the default, and Bm6 always with "when the bass moves to E". The (verify) mark on them is removed.
 
 **Harris's names (sourced, docs/research/BARRY-HARRIS-METHOD.md).**
 - **Dm6 over G7** (the m6 on the dominant's 5th) is **the important minor**.
@@ -153,7 +154,8 @@ Every step runs rubato first, then the tempo ladder, on piano and guitar (and ba
 **Arpeggios on a dominant:**
 - **The three important arpeggios** sit on 1, 5 and ♭7. For C7: C E G / G B♭ D / B♭ D F, each played 1-3-5-8.
 - **3-to-9** is E G B♭ D.
-- **3-to-♭9** is E G B♭ D♭. It is the dim on the 3rd, shared by all four related dominants.
+- **3-to-♭9** is E G B♭ D♭. It is the dim on the 3rd, shared by all four related dominants. A Harris line device like 3-to-9: owner-confirmed 2026-11-23.
+- **Not used: the family movement inside one V** (G7, B♭7, D♭7, E7 within one bar of G7). The owner does not know it as a Harris device and finds it too dense in one bar (2026-11-23). The app's "3 to ♭9 over the family" drill gives each dominant its own bar.
 
 **Phrases:** the **5-4-3-2 phrases** (Workbook 1). See docs/research/BARRY-HARRIS-METHOD.md A2.9. The exact notes were never checked against the workbook; not pursued (owner: specific licks don't matter).
 
@@ -225,6 +227,9 @@ The owner's rule: anything not 100% certain is not shown. One registry, `src/eng
 - The ♭7-major pivot, taught with the three important arpeggios (on 1, the minor on 5, the major on ♭7).
 - The Cherokee, How High the Moon and Night in Tunisia charts. They were checked against iReal / jazzadvice and a lead sheet. Cherokee now has its real two-bar chords; How High the Moon has its ii–V into Gm7.
 
+**Switched on (owner, 2026-11-23)**
+- 3 to ♭9 (B D F A♭ over G7, the dim on the 3rd, shared by the four related dominants) as a line device like 3 to 9: owner-confirmed 2026-11-23. Shown in the Harris-line drills (one dominant per bar), the vocabulary cell, the lessons and the Barry Harris way (H-4 and H-5).
+
 **Rebuilt and switched on**
 - The dominant rule from every degree (§8). Three independent handouts confirm it; three from the root is left out.
 - The ABCs.
@@ -239,8 +244,10 @@ The owner's rule: anything not 100% certain is not shown. One registry, `src/eng
 - Compose a line: it duplicates the app's rule-based improv.
 - Major arpeggios chromatically down: no second source.
 
+**Left out (owner, 2026-11-23)**
+- The family movement inside one V (§9): not known to the owner, too dense in one bar.
+
 **Still open**
-- 3 to ♭9 (B D F A♭ over G7) as a line device like 3 to 9. The question is rewritten in plain words.
 - Echols's octave chord, and the ladder's "thirds" and "triads".
 
 **Omitted for lack of verified knowledge**

@@ -70,8 +70,8 @@ export const UNVERIFIED_CLAIMS: Claim[] = [
   },
   {
     id: 'bh-3-to-b9',
-    why: '3 to ♭9 (B D F A♭ over G7) as a Harris line device like 3 to 9: one secondary source (Larsen); forums say "on the third of every dominant, the diminished" but never as a named line arpeggio.',
-    // 2026-11-21: researched again, still no primary source -> out everywhere, the vocabulary cell too (owner).
+    why: '3 to ♭9 (B D F A♭ over G7, the dim on the 3rd, shared by the four related dominants) as a Harris line device like 3 to 9: owner-confirmed 2026-11-23.',
+    // 2026-11-21: hidden everywhere for lack of a primary source; 2026-11-23: the owner confirmed it -> switched on.
     hides: ['item:hl-3b9', 'item:v-3b9', 'card:bh-3b9'],
   },
   {
@@ -229,6 +229,7 @@ export const SWITCHED_ON: ReadonlySet<string> = new Set<string>([
   'bh-chromatic',
   'bh-chromatic-two-voices',
   'bh-seven-down',
+  'bh-3-to-b9',
   'bh-b7-major-pivot',
   'parks-eight-ways',
   'bh-abcs-arps-down',

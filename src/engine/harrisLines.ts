@@ -472,25 +472,25 @@ export function sevenDownLine(tonic: number, form: 'full' | 'down'): LineNote[] 
 
 /**
  * 3-to-♭9 over the four related dominants (the V7 of `tonic` and the dominants a minor 3rd apart: G7, B♭7, D♭7, E7 in C):
- * each one's 3rd, 5th, ♭7, ♭9 — always the same four notes, the dim on the 3rd (B D F A♭) [JL; R1; R3]. Up (or down),
- * two beats each, then the line resolves a half step into the tonic's 3rd.
+ * each one's 3rd, 5th, ♭7, ♭9 — always the same four notes, the dim on the 3rd (B D F A♭) [JL; R1; R3]; owner-confirmed
+ * 2026-11-23. One dominant per bar (the owner: several of the family inside one bar is too dense), 3 5 ♭7 ♭9 up to the
+ * octave and back (or down and back) in 8ths, then the line resolves a half step into a tone of the tonic's 6 chord.
  */
 export function threeToFlatNine(tonic: number, dir: 'up' | 'down'): { line: LineNote[]; roots: number[] } {
   const roots = [7, 10, 1, 4].map((d) => mod12(tonic + d));
   const line: LineNote[] = [];
   let third = tonic - 1; // B below C
+  const shape = dir === 'up' ? [0, 3, 6, 9, 12, 9, 6, 3] : [12, 9, 6, 3, 0, 3, 6, 9];
   roots.forEach((r, k) => {
     const t3 = third + mod12(r + 4 - third);
-    const ps = [t3, t3 + 3, t3 + 6, t3 + 9];
-    const xs = dir === 'up' ? ps : [...ps].reverse();
-    xs.forEach((p, i) => line.push({ p, beat: r6(k * 2 + i / 2), dur: 0.5, ct: true }));
+    shape.forEach((x, i) => line.push({ p: t3 + x, beat: r6(k * 4 + i / 2), dur: 0.5, ct: true }));
     third = t3 + 1;
   });
   const last = line[line.length - 1].p;
-  // into the tonic: a half step down from ♭9 (A♭ → G) or up from the 3rd (B → C), whichever is a chord tone of I6
+  // into the tonic: a half step down or up, whichever is a chord tone of I6 (B → C, F → E)
   const home = pcsAbove(tonic, [0, 4, 7, 9]);
   const land = home.includes(mod12(last - 1)) ? last - 1 : last + 1;
-  line.push({ p: land, beat: 8, dur: 2, ct: true });
+  line.push({ p: land, beat: 16, dur: 2, ct: true });
   return { line, roots };
 }
 

@@ -308,12 +308,12 @@ Each row is a "rotation" the app could make over a progression. The pieces are s
 | ID | Rotation | Over | What rotates | Example (G7 → C) | Pieces sourced in |
 |---|---|---|---|---|---|
 | H1 | **Starting degree** | any chord | Run the chord's scale (major / dominant / minor with half-step rules) down from the root, then from the 3rd, 5th or 7th | Bar 1 from G, bar 2 from B, next chorus from D... chord tones on beats | R1 "Scale practice or 'the ABC's'"; R2 "Any Scale Degree as the Tonic..."; BHM half-step rules [V] |
-| H2 | **Thought chord over V7** | V7 | Which of the 8 expressions you think: G7 itself, the family (B♭7, D♭7, E7), the important minor Dm6, the tritone's minor A♭m6 ("perfect altered scale"), Fm6, Bm6* | Chorus 1 think Dm (important minor), chorus 2 A♭m6 (altered), chorus 3 D♭7 (tritone)... | R1/R2 titles; BARRY-HARRIS-THEORY §4 [V]. *Bm6's use is (verify) in BARRY-HARRIS-THEORY |
+| H2 | **Thought chord over V7** | V7 | Which of the 8 expressions you think: G7 itself, the family (B♭7, D♭7, E7), the important minor Dm6, the tritone's minor A♭m6 ("perfect altered scale"), Fm6, Bm6* | Chorus 1 think Dm (important minor), chorus 2 A♭m6 (altered), chorus 3 D♭7 (tritone)... | R1/R2 titles; BARRY-HARRIS-THEORY §4 [V]. *Fm6 and Bm6: owner 2026-11-23 "rare but valid" (Bm6 when the bass moves to E) |
 | H3 | **Conversion** | ii, ø | Play ii as its V (Dm7 → G7 scale); play ø as the dominant a M3 below (Dø → B♭7 "7 up and down to the 3rd of G7") | Minor ii–V–i in C: B♭7 scale over Dø–G7 | R1 "Re-thinking the m7 and the m7♭5"; TC [V] |
 | H4 | **Rule set** | any | Plain scale → half-step rules → triplet rules → chromatic scale → pivot / arpeggio-up-scale-down | Same tune, a different rule each chorus | R1, R2; BHM A2, A9 [V] |
 | H5 | **Scale of chords** | I, i, ii | 6-dim scale (6-chord tones on beats, dim notes between) vs the plain scale | Over Cmaj7: C6-dim; over Dm7: F6-dim ("Dm7 = F6") | R2 "Dm7 = Fmaj6..."; OS-SoC; BHM [V] |
 | H6 | **The ♭9 dim** | resolving V | 3-to-♭9 dim arpeggio (B D F A♭) vs the plain dominant | Alternate bars | BHM (JL, 54); BC [V] |
-| H7 | **Family movement** | 2-bar V | Move through related dominant scales inside one V | G7 → B♭7 → D♭7 → E7 lines resolving to C | R2 "Running the Four Related Dominant 7th Scales into Each-Other" [V] |
+| H7 | **Family movement** | 2-bar V | Move through related dominant scales inside one V | G7 → B♭7 → D♭7 → E7 lines resolving to C | R2 "Running the Four Related Dominant 7th Scales into Each-Other" [V]. **Left out** (owner 2026-11-23: too dense in one bar) |
 
 **What the app must not do in the Harris track.**
 - Name modes.
@@ -357,6 +357,8 @@ All of §5 is my design proposal [?]. Its musical content rests on the tagged se
 | H-3 | ii–V–I + turnarounds | H2 over V: G7 / Dm6 (important minor) / A♭m6 (tritone's minor) | Every 8 bars | The characteristic notes of the thought chord (e.g., A♭ = ♭9 and E♭ = ♭13 for A♭m6 over G7; its C♭ is just G's 3rd) |
 | H-4 | Minor ii–V–i | H3 (ø → dominant a M3 down) + H6 (3-to-♭9) | Every 4 bars | Line ends on V's 3rd ("7 down to the 3rd") |
 | H-5 | Standards | H2 full family + H4 rule sets (triplets, chromatic scale) + H7 | Every 2–4 bars | Rule compliance (direction changes off the beat, etc.) |
+
+Built 2026-11-23 without H7 (owner: too dense in one bar): H-5 = How High the Moon's changes, a rule every 4 bars (half-step rules, triplet, chromatic scale, 3-to-♭9), H2 = the dominant / important minor / tritone's minor with Fm6 / Bm6 rare. Details in SPEC-RBI-ROTATION §6.
 
 ### 5.4 How the target is shown
 

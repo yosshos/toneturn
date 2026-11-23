@@ -115,7 +115,7 @@ describe('every verify-marked item is hidden unless switched on', () => {
   // The `verify` marks in src/engine (harrisLines, harrisLineDrills, harmLadder, soloPiano, soloPianoDrills, vocal) and
   // the drums' teacher-check levels.
   const VERIFY_MARKED: [string, number?][] = [
-    ['hl-5432'], ['hl-lick'], ['hl-outline', 0], ['hl-arps-down'], ['hl-feel6'], ['hl-compose'], ['hl-3b9'],
+    ['hl-5432'], ['hl-lick'], ['hl-outline', 0], ['hl-arps-down'], ['hl-feel6'], ['hl-compose'],
     ['el-borrow'], ['cm-elevator'], ['vl-ladder', 0], ['vl-ladder', 1], ['vl-ladder', 3], ['vl-ladder', 7],
     ['lh-bpalt', 1], ['lh-shB', 1], ['lh-strong', 1], ['lh-var1'], ['lh-332'], ['lh-var2'], ['lh-34'], ['lh-scomp', 3], ['lh-walk10', 2], ['lh-head10'],
     ['lh-shuttle'], ['tx-drop2'], ['tx-inner'], ['cp-basie'], ['cp-pushoff'], ['cp-accent'],

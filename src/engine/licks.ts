@@ -223,7 +223,7 @@ export const LICKS: Lick[] = [
   L('tx9-3', 'major-251', 2, 'Solo phrase over ii–V–I: down the ii, into the 7th', 'משפט סולו על ii–V–I: במורד ה־ii, אל הספטימה', II_V_I_SHORT, '12 9 5 2 | 5 4 2 0 | -1h'),
   L('tx9-4', 'major-251', 2, 'Solo phrase over ii–V–I: from the top, home to the root', 'משפט סולו על ii–V–I: מלמעלה, הביתה לשורש', II_V_I_SHORT, '16 12 9 5 | 7 6 5 4 | 0h'),
   // ── the known devices (SPEC-DAILY-WORKOUT §6.4, 2026-11-23): generic vocabulary, each written out as the device itself
-  //    (a cell or a scale run), nothing composed. 3 to ♭9 stays out: it is still open in docs/BARRY-HARRIS-THEORY.md §12. ──
+  //    (a cell or a scale run), nothing composed. 3 to ♭9 (owner-confirmed 2026-11-23) lives in the Harris-line drills and the vocabulary cell. ──
   // The 1-2-3-5 cell from each chord's root (Premier Guitar [V], SPEC-KEY-SESSION §1 B4): D-E-F-A, G-A-B-D, C-D-E-G.
   L('dev-1235', 'major-251', 1, 'The 1-2-3-5 cell on each chord', 'תא 1-2-3-5 על כל אקורד', II_V_I_SHORT, '2 4 5 9 | 7 9 11 14 | 12 14 16 19h'),
   // The minor pentatonic a 5th above V (D minor pentatonic over G7: 5, ♭7, 1, 9, 11 of the chord), down the scale, the 9th
