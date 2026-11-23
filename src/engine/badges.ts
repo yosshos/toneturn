@@ -346,11 +346,11 @@ const subBadges: Badge[] = SUB_SKILLS.map((s, i) => {
 // AUDIT-6 Stage B: the first steps at the piano grew to 11 levels and have their titles now (k-first), like the
 // guitar's (g-first); bass and drum first steps get the bass / drum milestones with their own names (bassBadges, drumBadges).
 export type BadgeFamily = Exclude<FamilyId, 'custom' | BassFamilyId | DrumFamilyId | 'k-ear' | 'licks' | 'transcribe'>;
-export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-dimcol', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic', 'k-gig', 'k-tpair', 'k-modes', 'k-mmhm', 'k-cadlib', 'k-keylick', 'k-keyx', 'k-brazil', 'k-montuno'];
-export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-gig', 'g-tpair', 'g-cadlib', 'g-brazil', 'g-guajeo'];
+export const PIANO_BADGE_FAMILIES: BadgeFamily[] = ['scales', 'arpeggios', 'cadences', 'fingers', 'control', 'advanced', 'harris', 'jazz', 'voicings', 'accomp', 'k-sixdim', 'k-dimcol', 'k-bebop', 'k-reharm', 'k-rhythm', 'k-vl', 'k-theory', 'k-keys', 'k-vocab', 'k-phrase', 'k-solo', 'k-harm', 'k-tune', 'k-ctx', 'k-indep', 'k-sharm', 'k-harrisline', 'k-ctone', 'k-lh', 'k-mediant', 'k-tex', 'k-organ', 'k-comp', 'k-impro', 'k-first', 'k-read', 'k-pop', 'k-pedal', 'k-classic', 'k-gig', 'k-tpair', 'k-modes', 'k-mmhm', 'k-cadlib', 'k-keylick', 'k-keyx', 'k-brazil', 'k-montuno', 'k-gospel', 'k-souljazz', 'k-nola', 'k-odd'];
+export const GUITAR_BADGE_FAMILIES: BadgeFamily[] = ['g-fretting', 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-lead', 'g-fingerstyle', 'g-flamenco', 'g-jazz', 'g-reading', 'g-impro', 'g-bass', 'g-ear', 'g-harris', 'g-prog', 'g-meter', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-harrisline', 'g-ctone', 'g-color', 'g-first', 'g-speed', 'g-riff', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-gig', 'g-tpair', 'g-cadlib', 'g-brazil', 'g-guajeo', 'g-soul'];
 export const BADGE_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES, ...GUITAR_BADGE_FAMILIES];
 /** Families whose levels together cover all 12 keys: one "Around the Clock" badge each (guitar list checked against guitarCatalog in tests). */
-export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter', 'g-gig', 'g-tpair', 'g-cadlib', 'g-brazil', 'g-guajeo'];
+export const KEYS_FAMILIES: BadgeFamily[] = [...PIANO_BADGE_FAMILIES.filter((f) => f !== 'k-classic' /* pieces stay in their own key */), 'g-picking', 'g-legato', 'g-scales', 'g-arps', 'g-chords', 'g-rhythm', 'g-fingerstyle', 'g-jazz', 'g-impro', 'g-reading', 'g-bass', 'g-ear', 'g-harris', 'g-vl', 'g-theory', 'g-keys', 'g-bebop', 'g-phrase', 'g-solo', 'g-cmel', 'g-tune', 'g-ctx', 'g-harm', 'g-lead', 'g-harrisline', 'g-ctone', 'g-color', 'g-riff', 'g-speed', 'g-fusion', 'g-cmarr', 'g-solojazz', 'g-hlfast', 'g-jblues', 'g-fretting', 'g-prog', 'g-meter', 'g-gig', 'g-tpair', 'g-cadlib', 'g-brazil', 'g-guajeo', 'g-soul'];
 export const FAMILY_NAME: Record<BadgeFamily, L> = {
   scales: { en: 'Scales', he: 'סולמות' },
   arpeggios: { en: 'Arpeggios', he: 'ארפג׳ים' },
@@ -456,6 +456,12 @@ export const FAMILY_NAME: Record<BadgeFamily, L> = {
   'k-montuno': { en: 'Montuno', he: 'מונטונו' },
   'g-brazil': { en: 'Bossa and samba guitar', he: 'גיטרת בוסה וסמבה' },
   'g-guajeo': { en: 'Guajeo on guitar', he: 'גואחאו בגיטרה' },
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel and soul-jazz, stride and boogie, odd meters in jazz; soul-jazz and funk guitar.
+  'k-gospel': { en: 'Gospel piano', he: 'פסנתר גוספל' },
+  'k-souljazz': { en: 'Soul-jazz comping', he: 'ליווי סול-ג׳אז' },
+  'k-nola': { en: 'Stride and boogie-woogie', he: 'סטרייד ובוגי-ווגי' },
+  'k-odd': { en: 'Odd meters in jazz', he: 'משקלים אי־זוגיים בג׳אז' },
+  'g-soul': { en: 'Soul-jazz and funk guitar', he: 'גיטרת סול-ג׳אז ופאנק' },
 };
 // `icon` on every badge is a glyph kind of src/ui/Glyph.tsx (2026-11-12: no emoji left; the medal itself is BadgeArt).
 const FAMILY_ICON: Record<BadgeFamily, string> = {
@@ -554,6 +560,11 @@ const FAMILY_ICON: Record<BadgeFamily, string> = {
   'k-montuno': 'kmontuno',
   'g-brazil': 'gbrazil',
   'g-guajeo': 'gguajeo',
+  'k-gospel': 'kgospel',
+  'k-souljazz': 'ksouljazz',
+  'k-nola': 'knola',
+  'k-odd': 'kodd',
+  'g-soul': 'gsoul',
 };
 // One title per catalogue level (piano 7; guitar as many as guitarCatalog has — tests check the counts).
 const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
@@ -572,7 +583,7 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   // HARMONY-REHARM: one title per level.
   'k-ctone': [['Common-Tone Triads', 'משולשי הצליל המשותף'], ['Common-Tone Sevenths', 'ספטאקורדי הצליל המשותף'], ['Held-Note Drop 2', 'דרופ 2 מתחת לצליל'], ['Tension on Top', 'טנשן למעלה'], ['Common-Tone Phrase', 'משפט בצליל משותף'], ['Counter-Line Pianist', 'פסנתרן הקו הנגדי'], ['One Note, Eight Chords', 'צליל אחד, שמונה אקורדים']],
   'k-mediant': [['Third Relations', 'יחסי טרצה'], ['Minor-Third Mediants', 'מדיאנטות בטרצה קטנה'], ['Cycle of Thirds', 'מעגל הטרצות'], ['Doubly Chromatic Mediants', 'מדיאנטות כרומטיות כפולות'], ['Mediant Sevenths', 'ספטאקורדי מדיאנטה'], ['The Coltrane Link', 'החיבור לקולטריין'], ['Octatonic Cycle', 'המעגל האוקטטוני'], ['Hexatonic Voice Leader', 'מוביל הקולות ההקסטוני']],
-  'k-organ': [['Organ Half Notes', 'חצאים באורגן'], ['Organ Walker', 'מהלך האורגן'], ['Inner-Voice Organist', 'אורגניסט הקול הפנימי'], ['Minor-Blues Organist', 'אורגניסט הבלוז המינורי'], ['Texture Shaper', 'מעצב המרקם'], ['Organ Balladeer', 'בלדות באורגן'], ['Held-Third Ballad', 'בלדת הטרצה הנשארת']],
+  'k-organ': [['Organ Half Notes', 'חצאים באורגן'], ['Organ Walker', 'מהלך האורגן'], ['Inner-Voice Organist', 'אורגניסט הקול הפנימי'], ['Minor-Blues Organist', 'אורגניסט הבלוז המינורי'], ['Texture Shaper', 'מעצב המרקם'], ['Organ Balladeer', 'בלדות באורגן'], ['Held-Third Ballad', 'בלדת הטרצה הנשארת'], ['Detached Stabs', 'דקירות מנותקות'], ['Finger Legato', 'לגאטו באצבעות'], ['Held Root', 'השורש הנשאר'], ['Organ Slides', 'החלקות באורגן']],
   'g-ctone': [['Held Note on the Neck', 'צליל נשאר על הצוואר'], ['Drop 2 Under the Note', 'דרופ 2 מתחת לצליל על הצוואר'], ['Middle-String Common Tone', 'צליל משותף על המיתרים האמצעיים'], ['Tensions on the Neck', 'טנשנים על הצוואר'], ['Common-Tone Guitarist', 'גיטריסט הצליל המשותף'], ['Eight Ways on the Neck', 'שמונה דרכים על הצוואר']],
   'g-color': [['Borrowed iv on the Neck', 'iv שאול על הצוואר'], ['Flat Six, Flat Seven', '♭VI, ♭VII על הצוואר'], ['Mediant Guitarist', 'גיטריסט המדיאנטות'], ['Thirds Cycles on the Neck', 'מעגלי טרצות על הצוואר'], ['Mediant Drop 2', 'דרופ 2 מדיאנטי'], ['Minor Plagal Guitarist', 'גיטריסט הפלגלית המינורית'], ['Half-Diminished Two', 'ה־ii החצי מוקטן'], ['Dameron Turnaround', 'הטרנאראונד של דמרון'], ['Borrowing in Minor', 'השאלה במינור'], ['Planing Guitarist', 'גיטריסט הפליינינג'], ['Side-Slipper', 'מחליק הצידה'], ['Sus Reharmonizer', 'מהרמן הסאס'], ['Open-String Pedal', 'פדל על מיתר פתוח'], ['Dominant Pedal on the Neck', 'פדל דומיננטה על הצוואר'], ['Ringing Strings', 'מיתרים מצלצלים'], ['Drop-D Pedal', 'פדל ב־Drop D']],
   // Triad pairs, deep: one title per level (k-tpair 16, g-tpair 7).
@@ -672,6 +683,12 @@ const FAMILY_TITLES: Record<BadgeFamily, [string, string][]> = {
   'k-montuno': [['Ponchando 2-3', 'פונצ׳נדו 2-3'], ['Ponchando 3-2', 'פונצ׳נדו 3-2'], ['Montuno Octaves', 'אוקטבות מונטונו'], ['Montuno 2-3', 'מונטונו 2-3'], ['Montuno 3-2', 'מונטונו 3-2'], ['Doubled Line', 'הקו המוכפל'], ['Anticipated Montuno', 'מונטונו מקדים'], ['ii–V Montuno', 'מונטונו ii–V'], ['Four-Bar Montuno', 'מונטונו בארבע תיבות'], ['Songo Hands', 'ידי סונגו'], ['In Clave', 'בתוך הקלאבה']],
   'g-brazil': [['Bossa Thumb', 'אגודל הבוסה'], ['Root and Fifth', 'שורש וקווינטה'], ['First Batida', 'בטידה ראשונה'], ['Batida ii–V–I', 'בטידה ii–V–I'], ['Clave Comper', 'מלווה הקלאבה'], ['Ahead of the Change, Guitar', 'לפני החילוף בגיטרה'], ['Surdo Thumb', 'אגודל הסורדו'], ['Batida Variations', 'וריאציות בטידה'], ['Samba Fingers', 'אצבעות סמבה'], ['Samba Anticipation, Guitar', 'הקדמה בסמבה בגיטרה'], ['Brazilian Rhythm Guitar', 'גיטרה קצבית ברזילאית']],
   'g-guajeo': [['Guajeo 2-3', 'גואחאו 2-3'], ['Guajeo 3-2', 'גואחאו 3-2'], ['Tres Changes 2-3', 'חילופי טרס 2-3'], ['Tres Changes 3-2', 'חילופי טרס 3-2'], ['Minor Guajeo', 'גואחאו במינור'], ['ii–V Guajeo', 'גואחאו ii–V'], ['Four-Bar Guajeo', 'גואחאו בארבע תיבות'], ['Anticipated Guajeo', 'גואחאו מקדים'], ['Guajeo in Clave', 'גואחאו בתוך הקלאבה']],
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: one title per level (k-gospel 14, k-souljazz 7, k-nola 9, k-odd 7, g-soul 6).
+  'k-gospel': [['Church Plagal', 'הפלגלית של הכנסייה'], ['Plagal Rocker', 'מתנדנד פלגלי'], ['Two-One Rocker', 'מתנדנד שתיים-אחת'], ['Minor Plagal', 'פלגלית מינורית'], ['Walk-Up Player', 'נגן העליות'], ['Gospel Sus', 'סאס של גוספל'], ['Chromatic Walk-Up', 'עלייה כרומטית'], ['One-Six-Two-Five', 'אחת-שש-שתיים-חמש'], ['Sharp-Four Diminished', 'המוקטן על ארבע דיאז'], ['Tritone Chain', 'שרשרת הטריטון'], ['Grace-Note Slides', 'החלקות חן'], ['Gospel Scales', 'סולמות הגוספל'], ['Twelve-Eight Feel', 'תחושת שתים-עשרה שמיניות'], ['Gospel with the Band', 'גוספל עם הלהקה']],
+  'k-souljazz': [['Charleston Comper', 'מלווה הצ׳רלסטון'], ['Soul-Jazz Blues', 'בלוז סול-ג׳אז'], ['Walking Left Hand', 'יד שמאל מהלכת'], ['Altered Drop 2', 'דרופ 2 אלטרד'], ['Minor Soul Blues', 'בלוז סול מינורי'], ['Minor Walking Hand', 'יד מהלכת במינור'], ['Soul-Jazz with the Band', 'סול-ג׳אז עם הלהקה']],
+  'k-nola': [['Stride Single Bass', 'סטרייד בבס בודד'], ['Stride Octaves', 'סטרייד באוקטבות'], ['Passing-Diminished Stride', 'סטרייד במוקטן עובר'], ['Stride Tenths', 'סטרייד בדצימות'], ['Stride Walk on Three', 'סטרייד הולך על שלוש'], ['Boogie Shuffle', 'שאפל בוגי'], ['Boogie Walker', 'מהלך הבוגי'], ['Boogie Octaves', 'אוקטבות בוגי'], ['New Orleans with the Drums', 'ניו אורלינס עם התופים']],
+  'k-odd': [['Seven-Eight Shells', 'שלדים ב־7/8'], ['Seven-Eight Ends', 'קצוות ב־7/8'], ['Nine-Eight Shells', 'שלדים ב־9/8'], ['Nine-Eight Ends', 'קצוות ב־9/8'], ['Group-Boundary Changes', 'חילופים על גבול קבוצה'], ['Odd-Meter Anticipation', 'הקדמה במשקל אי־זוגי'], ['The Nine-Eight Cycle', 'מחזור ה־9/8']],
+  'g-soul': [['Charleston on the Neck', 'צ׳רלסטון על הצוואר'], ['Soul-Jazz Blues, Guitar', 'בלוז סול-ג׳אז בגיטרה'], ['Drop 2 Behind the Organ', 'דרופ 2 מאחורי האורגן'], ['Funk Motor', 'מנוע הפאנק'], ['Funk Vamp', 'וואמפ פאנק'], ['Soul and Funk with the Band', 'סול ופאנק עם הלהקה']],
   'g-cadlib': [['Shell Cadences on the Neck', 'קדנצות בשלדים על הצוואר'], ['Shells on the Substitutes', 'שלדים על התחליפים'], ['Shells on Longer Changes', 'שלדים על מהלכים ארוכים'], ['Drop 2 Cadences', 'קדנצות בדרופ 2'], ['Drop 2 on the Substitutes', 'דרופ 2 על התחליפים'], ['Drop 2 on Longer Changes', 'דרופ 2 על מהלכים ארוכים'], ['Drop 3 Cadences', 'קדנצות בדרופ 3'], ['Drop 3 Everywhere', 'דרופ 3 בכל מקום'], ['Rootless Cadences on the Neck', 'קדנצות בלי שורש על הצוואר'], ['Rootless Everywhere', 'בלי שורש בכל מקום']],
 };
 /** Number of level badges of a family (piano 7; guitar = its guitarCatalog levels). */

@@ -373,6 +373,10 @@ export const ART_BASS: Record<string, Art> = {
   /** On the bandstand, bass: the mark 'Gig·4' with the four tuning pegs. */
   /** The cadence chart library on the bass: "V→I·4". */
   bcadlib: { hue: 'sky', hue2: 'purple', parts: markParts('V→I·4') },
+  /** SPEC-JAZZ-NEIGHBOURS §4: soul / funk bass — "Funk·4", the "one" accented and a ghost. */
+  bsoul: { hue: 'sky', hue2: 'teal', parts: markParts('Funk·4', [Ci(9.5, 13.5, 2.2, 'accent'), Ci(16, 13.5, 1.4, 'mark'), Ci(22.5, 13.5, 1.9, 'body')]) },
+  /** SPEC-JAZZ-NEIGHBOURS §5: the 2-feel / tuba role — "2·4", two half notes a bar. */
+  bnola: { hue: 'sky', hue2: 'tan', parts: markParts('2·4', [Ci(11, 13.5, 2.2, 'body'), Ci(24, 13.5, 2.2, 'body')]) },
   bgig: { hue: 'sky', hue2: 'purple', parts: markParts('Gig·4', [Ci(9.5, 13.5, 1.9, 'body'), Ci(15, 13.5, 1.9, 'body'), Ci(20.5, 13.5, 1.9, 'body'), Ci(26, 13.5, 1.9, 'body')]) },
   /** Walk the Changes (game): two chord plaques and a walking line climbing under them. */
   walkchanges: art(

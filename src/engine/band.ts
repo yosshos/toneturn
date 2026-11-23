@@ -274,12 +274,19 @@ export type BandStyle =
   | 'swing' | 'bossa' | 'ballad' | 'waltz' | 'pop' | 'rock' | 'funk' | 'reggae' | 'latin' | 'shuffle' | 'hold'
   // SPEC-JAZZ-NEIGHBOURS §7.2: real Brazilian and Afro-Cuban styles in place of the one generic 'latin' ('latin' stays a
   // valid id: the clave-aware montuno, the same as 'mambo').
-  | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68';
+  | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68'
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: soul-jazz, gospel 12/8, funk-jazz (STYLE-SOUL), trad and the second line
+  // (STYLE-NEW-ORLEANS). Boogaloo is not a band style: its groove and bass line are [?] (STYLE-SOUL §2.2).
+  | 'souljazz' | 'gospel68' | 'funkjazz' | 'trad' | 'secondline';
 /** The Brazilian and Afro-Cuban styles (latinComping / brazilComping). */
 export const LATIN_BAND_STYLES = ['samba', 'baiao', 'chacha', 'mambo', 'bolero', 'songo', 'afro68', 'latin'] as const;
 type LatinBandStyle = (typeof LATIN_BAND_STYLES)[number];
 const isLatinStyle = (s: BandStyle): s is LatinBandStyle => (LATIN_BAND_STYLES as readonly string[]).includes(s);
-type GrooveBandStyle = Exclude<BandStyle, 'swing' | 'bossa' | 'ballad' | 'waltz' | LatinBandStyle>;
+/** The soul and New Orleans styles (soulNolaComping). */
+export const SOUL_NOLA_BAND_STYLES = ['souljazz', 'gospel68', 'funkjazz', 'trad', 'secondline'] as const;
+type SoulNolaBandStyle = (typeof SOUL_NOLA_BAND_STYLES)[number];
+const isSoulNolaStyle = (s: BandStyle): s is SoulNolaBandStyle => (SOUL_NOLA_BAND_STYLES as readonly string[]).includes(s);
+type GrooveBandStyle = Exclude<BandStyle, 'swing' | 'bossa' | 'ballad' | 'waltz' | LatinBandStyle | SoulNolaBandStyle>;
 
 const SW = 2 / 3;
 /** [beat, length, velocity] rhythm cells for one 4/4 bar per groove style (other meters hold each chord). */
@@ -319,7 +326,11 @@ export function bandComping(p: ParsedChart, meter: number, total: number, style:
     const hits = style === 'samba' || style === 'baiao' ? brazilComping(p, meter, total, style, seed, o) : latinComping(p, meter, total, style, seed, o);
     if (hits) return hits;
   }
-  const st: GrooveBandStyle = style === 'swing' || style === 'bossa' || style === 'ballad' || isLatinStyle(style) ? 'hold' : style;
+  if (isSoulNolaStyle(style)) {
+    const hits = soulNolaComping(p, meter, total, style, seed);
+    if (hits) return hits;
+  }
+  const st: GrooveBandStyle = style === 'swing' || style === 'bossa' || style === 'ballad' || isLatinStyle(style) || isSoulNolaStyle(style) ? 'hold' : style;
   const r = rng(seed ^ 0x2545f491);
   const out: CompHit[] = [];
   let prev: number[] | null = null;
@@ -582,6 +593,127 @@ function latinComping(p: ParsedChart, meter: number, total: number, style: Exclu
     out.push({ beat: h.beat, len: h.len, notes: notes.length ? notes : v, vel: h.vel });
   }
   return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+// ---------------------------------------------------------------- soul-jazz, gospel, funk-jazz, New Orleans
+// SPEC-JAZZ-NEIGHBOURS §4, §5, written only from docs/research/STYLE-SOUL.md and STYLE-NEW-ORLEANS.md ([V] / well-
+// sourced [C]). Boogaloo is left out: its drum grid and bass line are [?] (STYLE-SOUL §2.2).
+
+/** Guide tones (3 and 7, either on top) of a chord, every placement between D3 and about A4 ([V] Purcell, STYLE-SOUL §2.3). */
+export function guideTones(c: ChartChordEv): number[][] {
+  const iv = c.iv.map((x) => x % 12);
+  const has = (x: number) => iv.includes(x);
+  const third = has(4) ? 4 : has(3) ? 3 : has(5) ? 5 : 4;
+  const sev = has(10) ? 10 : has(11) ? 11 : has(9) ? 9 : 10;
+  const out: number[][] = [];
+  for (let base = 50; base <= 64; base++) {
+    if (pc(base) === pc(c.root + third)) out.push([base, base + pc(sev - third)]);
+    if (pc(base) === pc(c.root + sev)) out.push([base, base + pc(third - sev)]);
+  }
+  return out.filter((v) => v[1] > v[0]);
+}
+
+/** The chord's plain triad (root, 3rd, 5th) as a chord event: gospel right-hand triads (STYLE-SOUL §1.4). */
+const triadOf = (c: ChartChordEv): ChartChordEv => {
+  const iv = c.iv.map((x) => x % 12);
+  const third = iv.includes(4) ? 4 : iv.includes(3) ? 3 : iv.includes(5) ? 5 : 4;
+  const fifth = iv.includes(7) ? 7 : iv.includes(6) ? 6 : iv.includes(8) ? 8 : 7;
+  return { ...c, iv: [0, third, fifth] };
+};
+
+/**
+ * The soul and New Orleans band styles (4/4 only; other meters: null, the caller holds the chord):
+ *   souljazz: the Charleston (beat 1 and the swung "and" of 2) in two-note 3–7 guide tones ([V] Purcell, Premier
+ *     Guitar "Style Guide: Soul Jazz"); a second chord in the bar gets its own hit.
+ *   gospel68: the 12/8 feel — a light triad on every triplet 8th, the beats accented ([C] PianoGroove "12/8 Grooves",
+ *     Tim Richards "Gospel groove": "RH triads repeat the triplet pulse").
+ *   funkjazz: extended voicings (9ths, rootless) on the downbeat of every beat, the "one" accented ([V] Wikipedia
+ *     *Funk*: the one, extended chords; [C] the chord on each downbeat, funk handouts).
+ *   trad: the oom-pah upper half — a chord on 2 and 4 in the middle register ([V] the stride/ragtime left hand: bass on
+ *     1 and 3, chord on 2 and 4, AllMusic / NPR); the bass plays the 1 and 3.
+ *   secondline: a brass band has no piano (STYLE-NEW-ORLEANS §4.2): nothing; the tuba bass and the drums carry it.
+ */
+function soulNolaComping(p: ParsedChart, meter: number, total: number, style: SoulNolaBandStyle, seed: number): CompHit[] | null {
+  if (style === 'secondline') return [];
+  if (meter !== 4) return null;
+  const r = rng(seed ^ 0x1b873593);
+  const bars = Math.ceil(total / meter - 1e-9);
+  const hits: (CompHit & { c: ChartChordEv })[] = [];
+  for (let bar = 0; bar < bars; bar++) {
+    const b0 = bar * 4;
+    const chords: { c: ChartChordEv; at: number }[] = [];
+    for (let k = 0; k < 4; k++) {
+      const c = chordAtBeat(p, meter, b0 + k);
+      if (c && (!chords.length || chords[chords.length - 1].c !== c)) chords.push({ c, at: k });
+    }
+    if (!chords.length) continue;
+    const at = (b: number) => chordAtBeat(p, meter, b0 + b)!;
+    if (style === 'souljazz') {
+      if (chords.length > 1) for (const x of chords) hits.push({ beat: b0 + x.at, len: 1.3, notes: [], vel: 0.36, c: x.c });
+      else {
+        hits.push({ beat: b0, len: 0.8, notes: [], vel: 0.36 + r() * 0.04, c: chords[0].c });
+        hits.push({ beat: b0 + 1 + SW, len: 1.2, notes: [], vel: 0.33 + r() * 0.04, c: chords[0].c });
+      }
+    } else if (style === 'gospel68') {
+      for (let k = 0; k < 12; k++) hits.push({ beat: b0 + k / 3, len: 0.3, notes: [], vel: k % 3 === 0 ? 0.32 : 0.22, c: at(k / 3) });
+    } else if (style === 'funkjazz') {
+      for (let k = 0; k < 4; k++) hits.push({ beat: b0 + k, len: 0.22, notes: [], vel: k === 0 ? 0.42 : 0.3, c: at(k) });
+    } else {
+      for (const k of [1, 3]) hits.push({ beat: b0 + k, len: 0.45, notes: [], vel: 0.3 + r() * 0.04, c: at(k) });
+    }
+  }
+  let prev: number[] | null = null;
+  const out: CompHit[] = [];
+  for (const h of hits) {
+    const cands = style === 'souljazz' ? guideTones(h.c) : style === 'gospel68' ? closeVoicings(triadOf(h.c)) : style === 'funkjazz' ? rootless(h.c) : closeVoicings(h.c);
+    const v = voiceLead(cands.length ? cands : closeVoicings(h.c), prev);
+    prev = v;
+    out.push({ beat: h.beat, len: h.len, notes: v, vel: h.vel });
+  }
+  return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+/**
+ * The funk-jazz bass under the band, one bar of 16ths on the chord ([C] STYLE-SOUL §3.2, the generic funk line
+ * R . g R' . . g ♭7 . 5 . g R . g ♭3 — R' the octave, g a ghosted dead note; the 7th and 3rd are the chord's own), the
+ * "one" accented ([V] Wikipedia *Funk*). 4/4 only.
+ */
+export function funkBass(p: ParsedChart, meter: number, total: number): (BassNote & { acc?: boolean })[] {
+  if (meter !== 4) return [];
+  const out: (BassNote & { acc?: boolean })[] = [];
+  for (let b0 = 0; b0 < total; b0 += 4) {
+    const c = chordAtBeat(p, meter, b0);
+    if (!c) continue;
+    const iv = c.iv.map((x) => x % 12);
+    const third = iv.includes(3) ? 3 : 4;
+    const sev = iv.includes(10) ? 10 : iv.includes(11) ? 11 : 10;
+    const R = nearest(pc(c.bass), 36);
+    const cell: [number, number | 'g'][] = [[0, 0], [2, 'g'], [3, 12], [6, 'g'], [7, sev], [9, 7], [11, 'g'], [12, 0], [14, 'g'], [15, third]];
+    for (const [step, iv2] of cell) {
+      const beat = b0 + step / 4;
+      if (beat >= total) continue;
+      if (iv2 === 'g') out.push({ beat, midi: R, ghost: true });
+      else out.push({ beat, midi: R + iv2 > HI ? R + iv2 - 12 : R + iv2, ...(step === 0 ? { acc: true } : {}) });
+    }
+  }
+  return out;
+}
+
+/** The 2-feel / tuba bass: the root on 1, the 5th on 3 ([V] the march pulse on 1 and 3, Doleac; [C] the tuba in 2, Schuller). */
+export function twoFeelBass(p: ParsedChart, meter: number, total: number): BassNote[] {
+  const out: BassNote[] = [];
+  let prev = 36;
+  for (let b = 0; b < total; b += meter / 2) {
+    const c = chordAtBeat(p, meter, b);
+    if (!c) continue;
+    const fifth = c.iv.includes(7) ? 7 : c.iv.includes(6) ? 6 : c.iv.includes(8) ? 8 : 7;
+    // a chord's first half note takes its bass, its second the 5th
+    const pcx = b % meter === 0 || chordAtBeat(p, meter, b - meter / 2) !== c ? c.bass : pc(c.root + fifth);
+    const m = nearest(pc(pcx), prev);
+    out.push({ beat: b, midi: m });
+    prev = m;
+  }
+  return out;
 }
 
 /**

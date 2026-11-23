@@ -1090,6 +1090,50 @@ export const GLYPHS: Record<string, Glyph> = {
       {dot(21, 17, 1.6)}
     </>
   ),
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel (IV over I: two stacked chords on one bass), soul-jazz (the Charleston's two
+  // hits), stride (bass low, chord high, twice), odd meters (groups 2+2+3), soul / funk guitar (a chord and muted
+  // strokes on strings).
+  'family:k-gospel': () => (
+    <>
+      {head(7, 8, 2)}
+      {head(7, 4, 2)}
+      {head(16, 10, 2)}
+      {head(16, 6, 2)}
+      {head(11, 20, 2.4)}
+      {p('M2 14h20', false)}
+    </>
+  ),
+  'family:k-souljazz': () => (
+    <>
+      {head(6, 12, 2.4)}
+      {head(14, 12, 2.4)}
+      {p('M8.4 12V3 M16.4 12V3 M2 18h20', false)}
+    </>
+  ),
+  'family:k-nola': () => (
+    <>
+      {head(4, 19, 2.2)}
+      {head(9, 9, 2)}
+      {head(14, 19, 2.2)}
+      {head(19, 9, 2)}
+      {p('M2 14h20', false)}
+    </>
+  ),
+  'family:k-odd': () => (
+    <>
+      {dot(3, 12, 1.8)}
+      {dot(9, 12, 1.8)}
+      {dot(15, 12, 1.8)}
+      {p('M3 17h4 M9 17h4 M15 17h7 M2 6h20', false)}
+    </>
+  ),
+  'family:g-soul': () => (
+    <>
+      {p('M2 6h20 M2 10h20 M2 14h20 M2 18h20', false)}
+      {head(5, 12, 2)}
+      {p('M11 5l3 3 M14 5l-3 3 M16 5l3 3 M19 5l-3 3', false)}
+    </>
+  ),
   'family:k-classic': () => (
     <>
       {p('M8 21c-3 0-3-4 0-4s3 4 0 4 M8 17V3c3 1 4 3 2 6-2 3-6 4-6 8', false)}

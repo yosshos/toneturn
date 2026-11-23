@@ -143,6 +143,12 @@ const COMP_JAZZ: Rung[] = [
   // Brazilian and Afro-Cuban comping families (open from the start, so every test checks them).
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
   r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
+  // walking line place the soul and New Orleans comping families (open from the start).
+  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6 }),
+  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3 }),
+  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
+  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
 ];
 const COMP_CLASSICAL: Rung[] = [
   r('accomp-1', 0, { accomp: 2, control: 4 }),
@@ -153,6 +159,12 @@ const COMP_CLASSICAL: Rung[] = [
   r('k-pop-4', 5, { 'k-first': 11, accomp: 7, control: 10, 'k-pop': 5, 'k-pedal': 2 }),
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
   r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
+  // walking line place the soul and New Orleans comping families (open from the start).
+  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6 }),
+  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3 }),
+  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
+  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
 ];
 // Sight-reading below the playing level is normal (placement auditions read about two grades lower); the takes feed the
 // reading skill, and a clean read opens the reading levels of Control.
@@ -204,6 +216,8 @@ const METER: Rung[] = [
   r('k-rhythm-1', 0, { 'k-first': 11, 'k-rhythm': 2 }),
   r('k-rhythm-4', 2, { 'k-first': 11, 'k-rhythm': 5 }),
   r('k-rhythm-6', 5, { 'k-first': 11, 'k-rhythm': 7 }),
+  // SPEC-JAZZ-NEIGHBOURS §6: shells on the groups of 9/8 (2+2+2+3) place the odd meters in jazz.
+  r('k-odd-3', 7, { 'k-first': 11, 'k-rhythm': 7, 'k-odd': 4 }),
 ];
 
 /** The piano test by emphasis: hands, chords, comping, reading, ear, rhythm & meter (all), and jazz lines (jazz / both). */
@@ -262,6 +276,9 @@ const G_RHYTHM: Rung[] = [
   // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa-clave comp over the thumb, the guajeo over I–IV–V–IV in 3-2.
   r('g-brazil-5', 7, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6 }),
   r('g-guajeo-4', 2, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6, 'g-guajeo': 5 }),
+  // SPEC-JAZZ-NEIGHBOURS §4: the soul-jazz blues in guide tones, then funk on every beat.
+  r('g-soul-2', 7, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6, 'g-guajeo': 5, 'g-soul': 3 }),
+  r('g-soul-4', 2, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6, 'g-guajeo': 5, 'g-soul': 5 }),
   // Owner 2026-11-19: the prog add-on's odd-meter riffs (g-prog, shown only with the add-on) top the rhythm section.
   r('g-prog-1', 4, { 'g-rhythm': 7, 'g-meter': 5, 'g-riff': 5, 'g-prog': 2 }),
   r('g-prog-2', 9, { 'g-rhythm': 7, 'g-meter': 5, 'g-riff': 5, 'g-prog': 3 }),
@@ -369,6 +386,9 @@ const B_TIME: Rung[] = [
   r('b-feel-2', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5, 'b-feel': 3 }),
   // Owner 2026-11-19: the tumbao against the clave (b-latin, jazz track) tops the time section.
   r('b-latin-1', 9, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5, 'b-feel': 3, 'b-latin': 2 }),
+  // SPEC-JAZZ-NEIGHBOURS §4, §5: the 2-feel over I–VI7–II7–V7 and the boogie figure under the shuffle blues.
+  r('b-nola-1', 7, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5, 'b-feel': 3, 'b-latin': 2, 'b-nola': 3 }),
+  r('b-soul-1', 4, { 'b-time': 8, 'b-pocket': 7, 'b-styles': 7, 'b-ghost': 3, 'b-riff': 5, 'b-feel': 3, 'b-latin': 2, 'b-nola': 3, 'b-soul': 3 }),
 ];
 const B_CHORDS: Rung[] = [
   // AUDIT-6 Stage B: roots on the E and A strings (b-first 5).

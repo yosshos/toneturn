@@ -63,9 +63,9 @@ const all = (): Drill[] => NEW.flatMap((lv) => levelDrills(lv, 'fifths-up'));
 describe('the rest of the curriculum: catalogue', () => {
   it('34 curriculum levels: strokes 8, rolls 10, diddles 10, time 9, rock 9, funk 8, shuffle 8, fills 8, indep 8, feet 8, read 11', () => {
     const n = (id: string) => FAMS.find((f) => f.id === id)!.levels.length;
-    expect(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-rock', 'd-funk', 'd-shuffle', 'd-fills', 'd-indep', 'd-feet', 'd-read'].map(n)).toEqual([8, 10, 10, 9, 9, 8, 8, 9, 8, 8, 11]);
+    expect(['d-strokes', 'd-rolls', 'd-diddles', 'd-time', 'd-rock', 'd-funk', 'd-shuffle', 'd-fills', 'd-indep', 'd-feet', 'd-read'].map(n)).toEqual([8, 10, 10, 9, 9, 9, 8, 9, 8, 8, 11]); // d-funk 9: SPEC-JAZZ-NEIGHBOURS §5, the second line
     // 33 built here; F14 L6 (a kit groove + fill) is d-read 10; AUDIT-7 #12 adds d-fills 9 (drumGroove.ts).
-    expect(NEW.length).toBe(34);
+    expect(NEW.length).toBe(35); // + d-funk 9 (SPEC-JAZZ-NEIGHBOURS §5)
   });
   it('every drum family numbers its levels 1..n (no gaps: placement caps by count)', () => {
     for (const f of FAMS) expect(f.levels.map((l) => l.level), f.id).toEqual(f.levels.map((_, i) => i + 1));

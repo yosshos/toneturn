@@ -227,6 +227,17 @@ function funk(s: DrillSpec, lv: number): Drill {
       const k = ['x.....x.x.......', 'x..x......x..x..', 'x.......x.x...x.'][op];
       return finish(s, gb({ h: 'x.x.x.x.x.x.x.x.', s: '....x.......x...', k }, 4, 8), { title: t(`Boom-bap: the lazy snare, 15 ms behind · variation ${op + 1}`, `בום־בפ: סנר עצלן, 15 מ״ש מאחור · וריאציה ${op + 1}`), bpm: 85, bars: 8, mic: false, goal: { pocket: { voices: ['snare'], ms: 15, tol: 8, share: 0.7 } }, ...drumBand('funk', 8) });
     }
+    case 9: {
+      // The brass-band second line (STYLE-NEW-ORLEANS §2.1, Doleac 2013): the bass drum holds the march pulse on 1 and 3
+      // [V]; the tresillo 3+3+2 is a core building block [V] (here 1, the "and" of 2, 4 [C]); op 2 switches every two
+      // bars. The snare improvises off the march beat [V] — no snare line is verified, so only the bass drum is written
+      // (feet alone; the hands rest). The tuba (the band's bass) plays the 2-feel over I–VI7–II7–V7.
+      const pulse = 'x...x...';
+      const tres = 'x..x..x.';
+      const hits: DH[] = op === 2 ? [0, 1, 2, 3, 4, 5, 6, 7].flatMap((k) => bar({ k: Math.floor(k / 2) % 2 ? tres : pulse }, 2, k * 4)) : gb({ k: op ? tres : pulse }, 2, 8);
+      const nm = [t('the march pulse on 1 and 3', 'פעימת המצעד על 1 ו־3'), t('the tresillo, 3+3+2', 'הטרסיו, 3+3+2'), t('two bars each', 'שתי תיבות כל אחד')][op];
+      return finish(s, hits, { title: t(`Second line, the bass drum · ${nm.en}`, `סקנד ליין, תוף הבס · ${nm.he}`), bpm: 100, bars: 8, mic: false, ...drumBand('secondline', 8, ['C', 'A7', 'D7', 'G7']) });
+    }
     default: {
       // Go-go and the second line: swung 16ths (written as sextuplets: 1, e, &, a → steps 0, 2, 3, 5 of 6).
       const l: Lanes = [

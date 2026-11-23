@@ -79,6 +79,9 @@ export const FAMILY_GLYPH: Record<string, GlyphKind> = {
   'v-jazz1': 'vjazz1', 'v-impro': 'vimpro', 'v-pop': 'vpop', 'g-jblues': 'gjblues',
   // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa / samba comping and the montuno on the keys; the batida and the guajeo on the neck.
   'k-brazil': 'kbrazil', 'k-montuno': 'kmontuno', 'g-brazil': 'gbrazil', 'g-guajeo': 'gguajeo',
+  // SPEC-JAZZ-NEIGHBOURS §4–§6: gospel, soul-jazz, stride / boogie, odd meters (keys); soul-jazz and funk (guitar, 6);
+  // soul / funk and New Orleans bass (4).
+  'k-gospel': 'kgospel', 'k-souljazz': 'ksouljazz', 'k-nola': 'knola', 'k-odd': 'kodd', 'g-soul': 'gsoul', 'b-soul': 'bsoul', 'b-nola': 'bnola',
   // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand.
   'k-gig': 'kgig', 'g-gig': 'ggig', 'b-gig': 'bgig',
 };

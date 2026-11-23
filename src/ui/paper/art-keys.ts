@@ -263,6 +263,14 @@ export const ART_KEYS: Record<string, Art> = {
   /** SPEC-JAZZ-NEIGHBOURS §2: bossa and samba comping — "Bossa" over the surdo's two bass notes. */
   kbrazil: art('teal', 'purple', markParts('Bossa', det(H(30, 44, 1.8, 'accent'), H(38, 44, 1.8, 'accent')))),
   /** SPEC-JAZZ-NEIGHBOURS §3: the montuno — "3-2", the clave's two sides, with its five strokes. */
+  /** SPEC-JAZZ-NEIGHBOURS §4: gospel piano — "IV→I", the plagal motion, over two held chords. */
+  kgospel: art('lilac', 'teal', markParts('IV→I', det(H(28, 44, 1.8, 'accent'), H(34, 44, 1.8, 'accent'), H(40, 44, 1.8, 'mark')))),
+  /** SPEC-JAZZ-NEIGHBOURS §4: soul-jazz comping — "Soul" with the Charleston's two hits. */
+  ksouljazz: art('teal', 'lilac', markParts('Soul', det(R(16, 42.5, 3, 4.5, 1.2, 'accent'), R(26, 42.5, 3, 4.5, 1.2, 'accent')))),
+  /** SPEC-JAZZ-NEIGHBOURS §5: stride and boogie — "Stride", the bass low and the chord high. */
+  knola: art('tan', 'purple', markParts('Stride', det(R(14, 44, 3, 3, 1, 'accent'), R(22, 40, 3, 5, 1, 'mark'), R(30, 44, 3, 3, 1, 'accent'), R(38, 40, 3, 5, 1, 'mark')))),
+  /** SPEC-JAZZ-NEIGHBOURS §6: odd meters in jazz — "7/8", its groups 2+2+3. */
+  kodd: art('lilac', 'indigo', markParts('7/8', det(R(12, 42.5, 6, 4.5, 1.2, 'mark'), R(20, 42.5, 6, 4.5, 1.2, 'mark'), R(28, 42.5, 9, 4.5, 1.2, 'accent')))),
   kmontuno: art('lilac', 'tan', markParts('3-2', det(R(14, 42.5, 2.4, 4.5, 1.2, 'mark'), R(19, 42.5, 2.4, 4.5, 1.2, 'mark'), R(24, 42.5, 2.4, 4.5, 1.2, 'mark'), R(32, 42.5, 3, 4.5, 1.2, 'accent'), R(38, 42.5, 3, 4.5, 1.2, 'accent')))),
   kgig: art('lilac', 'purple', markParts('Gig', [R(7, 10.4, 18, 4.2, 1.2, 'body'), ...det(L(11.5, 10.4, 11.5, 14.6, 'line', 0.8), L(16, 10.4, 16, 14.6, 'line', 0.8), L(20.5, 10.4, 20.5, 14.6, 'line', 0.8))])),
   /** Theory you play: two triads, a whole step apart (a triad pair). */

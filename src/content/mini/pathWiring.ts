@@ -9,6 +9,7 @@ import { VL_LEVEL_LESSON } from './voiceLead';
 import { UNITS as FAMILY_KEYS_GUITAR } from './familyKeysGuitar';
 import { UNITS as FAMILY_BASS } from './familyBass';
 import { UNITS as LATIN_STYLES } from './latinStyles';
+import { UNITS as SOUL_NOLA_STYLES } from './soulNolaStyles';
 
 export const UNITS: Record<string, string> = {
   // The guitar (and key-change, heads) family lessons used to open only from the family page in Technique.
@@ -116,6 +117,7 @@ export const UNITS: Record<string, string> = {
   ...FAMILY_KEYS_GUITAR,
   ...FAMILY_BASS,
   ...LATIN_STYLES,
+  ...SOUL_NOLA_STYLES,
 };
 
 /** The vocal families whose first level number points at another family's lesson (vocalUnit is by number). */
