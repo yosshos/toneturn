@@ -705,6 +705,8 @@ const TOPIC_OF: Record<string, Exclude<DrillTopic, 'all' | 'songs' | 'mine'>> = 
   'k-pop': 'chords', 'k-pedal': 'hands', 'k-classic': 'styles', 'b-riff': 'styles', 'b-feel': 'styles',
   // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand (intros, endings, the ballad, the whole tune) is a style.
   'k-gig': 'styles', 'g-gig': 'styles', 'b-gig': 'styles',
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: Brazilian and Afro-Cuban comping are styles.
+  'k-brazil': 'styles', 'k-montuno': 'styles', 'g-brazil': 'styles', 'g-guajeo': 'styles',
 };
 const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
   all: { en: 'All', he: 'הכול' },

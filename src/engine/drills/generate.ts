@@ -25,7 +25,9 @@ import { dimColourFamily, genDimColours } from './dimColours'; // colours of the
 import { genKeyLicks, keyExtraFamily, keyLickFamily } from './keyLicks'; // SPEC-KEY-SESSION §1C approach licks, §1b more in the key
 import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
-import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
+import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop';
+import { genLatinPiano, keysBrazilFamily, keysMontunoFamily } from './latinStyles'; // SPEC-JAZZ-NEIGHBOURS §2, §3
+import type { StyleId } from '../styles'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
 import { genKeysClassic, keysClassicFamily } from './keysClassic'; // AUDIT-7 #11: public-domain classical pieces
 import { genModeScale, keysModesFamily, keysMmhmFamily } from './modeScales'; // SPEC-PRACTICE-KEYS §6: modes as full scales
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
@@ -5280,6 +5282,7 @@ function generateRaw(spec: DrillSpec): Drill {
   if (s.family === 'k-read' || (s.family === 'k-first' && KEYS_FIRST_KINDS.has(s.kind))) return genKeysFirst(s);
   // AUDIT-7 #10, #11: pop accompaniment, pedalling 2–4, the public-domain classical tier.
   if (s.family === 'k-pop' || s.family === 'k-pedal') return genKeysPop(s);
+  if (s.family === 'k-brazil' || s.family === 'k-montuno') return genLatinPiano(s);
   if (s.family === 'k-classic') return genKeysClassic(s);
   // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales (modeScales.ts).
   if (s.family === 'k-modes' || s.family === 'k-mmhm') return genModeScale(s);
@@ -5422,6 +5425,8 @@ export interface LevelDef {
   nps?: [number, number];
   /** A fixed start → target tempo (♩) for every item (the pianist's ear: a calm call, no speed ladder to climb). */
   tempo?: [number, number];
+  /** SPEC-STYLE-FOCUS: the style this level belongs to (absent = the course's core). */
+  style?: StyleId;
 }
 
 /** The ABRSM recommended minimum speeds, in notes per second (scales / arpeggios, Grades 1–8; ♩ in 8ths to G3, 16ths from G4). */
@@ -5435,6 +5440,8 @@ export interface FamilyDef {
   /** 'both': shown with either emphasis (the pianist's ear). */
   style: 'classical' | 'jazz' | 'both';
   levels: LevelDef[];
+  /** SPEC-STYLE-FOCUS: the style the whole family belongs to (`style` above is the old classical / jazz emphasis). */
+  styleId?: StyleId;
 }
 
 /** Families → ordered levels → spec templates (spec §4–§5). */
@@ -6447,6 +6454,9 @@ export function catalog(): FamilyDef[] {
     keysReadFamily(),
     // AUDIT-7 #10, #11: pop accompaniment (k-pop), pedal levels 2–4 (k-pedal), graded public-domain pieces (k-classic).
     keysPopFamily(),
+    // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa and samba comping, the montuno (latinStyles.ts).
+    keysBrazilFamily(),
+    keysMontunoFamily(),
     keysPedalFamily(),
     keysClassicFamily(),
     // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).

@@ -19,6 +19,7 @@ import type { ChartChordEv, ParsedChart } from './charts';
 import { chordAtBeat } from './charts';
 import { MODE_STEPS } from './modes';
 import { autoScale } from './improvRules';
+import { GROOVES } from './grooves';
 
 /** A small seeded random generator (mulberry32). */
 export function rng(seed: number): () => number {
@@ -182,7 +183,8 @@ const SWING_RHYTHMS = (sw: number): { w: number; hits: [number, number][] }[] =>
 ];
 
 /** Comping for a whole chart in a style (swing, bossa, ballad, waltz, pop/rock use their own patterns). */
-export function comping(p: ParsedChart, meter: number, total: number, style: 'swing' | 'bossa' | 'ballad' | 'waltz', seed: number): CompHit[] {
+export function comping(p: ParsedChart, meter: number, total: number, style: 'swing' | 'bossa' | 'ballad' | 'waltz', seed: number, o: BandOpts = {}): CompHit[] {
+  if (style === 'bossa') return bossaComping(p, meter, total, seed, o);
   const r = rng(seed ^ 0x5bd1e995);
   const out: CompHit[] = [];
   let prev: number[] | null = null;
@@ -211,14 +213,6 @@ export function comping(p: ParsedChart, meter: number, total: number, style: 'sw
       for (const { c, at } of chords) {
         const v = voice(c);
         for (const k of [1, 2]) if (k >= at && (chords.length === 1 || k < meter)) out.push({ beat: b0 + k, len: 0.6, notes: v, vel: 0.28 + r() * 0.05 });
-      }
-      continue;
-    }
-    if (style === 'bossa') {
-      const pat = bar % 2 === 0 ? [[0, 1], [1.5, 1], [3, 0.9]] : [[1, 1], [2.5, 1.4]];
-      for (const [at, len] of pat) {
-        const c = chordAtBeat(p, meter, b0 + Math.floor(at)) ?? chords[0].c;
-        out.push({ beat: b0 + at, len, notes: voice(c), vel: 0.32 + r() * 0.05 });
       }
       continue;
     }
@@ -276,8 +270,16 @@ export function closeVoicings(c: ChartChordEv): number[][] {
 }
 
 /** Comping styles of the harmony band under bass drills (BASS_VALIDATION §3: styles, riffs, pieces with a band). */
-export type BandStyle = 'swing' | 'bossa' | 'ballad' | 'waltz' | 'pop' | 'rock' | 'funk' | 'reggae' | 'latin' | 'shuffle' | 'hold';
-type GrooveBandStyle = Exclude<BandStyle, 'swing' | 'bossa' | 'ballad' | 'waltz'>;
+export type BandStyle =
+  | 'swing' | 'bossa' | 'ballad' | 'waltz' | 'pop' | 'rock' | 'funk' | 'reggae' | 'latin' | 'shuffle' | 'hold'
+  // SPEC-JAZZ-NEIGHBOURS §7.2: real Brazilian and Afro-Cuban styles in place of the one generic 'latin' ('latin' stays a
+  // valid id: the clave-aware montuno, the same as 'mambo').
+  | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68';
+/** The Brazilian and Afro-Cuban styles (latinComping / brazilComping). */
+export const LATIN_BAND_STYLES = ['samba', 'baiao', 'chacha', 'mambo', 'bolero', 'songo', 'afro68', 'latin'] as const;
+type LatinBandStyle = (typeof LATIN_BAND_STYLES)[number];
+const isLatinStyle = (s: BandStyle): s is LatinBandStyle => (LATIN_BAND_STYLES as readonly string[]).includes(s);
+type GrooveBandStyle = Exclude<BandStyle, 'swing' | 'bossa' | 'ballad' | 'waltz' | LatinBandStyle>;
 
 const SW = 2 / 3;
 /** [beat, length, velocity] rhythm cells for one 4/4 bar per groove style (other meters hold each chord). */
@@ -299,10 +301,6 @@ const CELLS: Record<GrooveBandStyle, [number, number, number][][]> = {
     [[1, 0.3, 0.34], [3, 0.3, 0.34]],
     [[0.5, 0.25, 0.3], [1.5, 0.25, 0.32], [2.5, 0.25, 0.3], [3.5, 0.25, 0.32]],
   ],
-  latin: [
-    [[0, 0.4, 0.34], [0.5, 0.4, 0.3], [1.5, 0.4, 0.32], [2.5, 0.4, 0.3], [3, 0.4, 0.32], [3.5, 0.4, 0.34]],
-    [[0.5, 0.4, 0.32], [1, 0.4, 0.3], [2, 0.4, 0.32], [3, 0.4, 0.3], [3.5, 0.4, 0.34]],
-  ],
   shuffle: [
     [[1, 0.4, 0.34], [1 + SW, 0.3, 0.28], [3, 0.4, 0.34], [3 + SW, 0.3, 0.28]],
     [[0, 0.6, 0.34], [1, 0.4, 0.3], [2, 0.6, 0.32], [3, 0.4, 0.3]],
@@ -315,9 +313,13 @@ const CELLS: Record<GrooveBandStyle, [number, number, number][][]> = {
  * (pop, rock, funk, reggae, Latin, shuffle, a held pad) use close voicings led by voice leading and one rhythm cell a
  * bar from the style's vocabulary. Every chord change gets a hit at its own beat. Pure and seeded.
  */
-export function bandComping(p: ParsedChart, meter: number, total: number, style: BandStyle, seed: number): CompHit[] {
-  if (style === 'waltz' || ((style === 'swing' || style === 'bossa' || style === 'ballad') && meter === 4)) return comping(p, meter, total, style, seed);
-  const st: GrooveBandStyle = style === 'swing' || style === 'bossa' || style === 'ballad' ? 'hold' : style;
+export function bandComping(p: ParsedChart, meter: number, total: number, style: BandStyle, seed: number, o: BandOpts = {}): CompHit[] {
+  if (style === 'waltz' || ((style === 'swing' || style === 'bossa' || style === 'ballad') && meter === 4)) return comping(p, meter, total, style, seed, o);
+  if (isLatinStyle(style)) {
+    const hits = style === 'samba' || style === 'baiao' ? brazilComping(p, meter, total, style, seed, o) : latinComping(p, meter, total, style, seed, o);
+    if (hits) return hits;
+  }
+  const st: GrooveBandStyle = style === 'swing' || style === 'bossa' || style === 'ballad' || isLatinStyle(style) ? 'hold' : style;
   const r = rng(seed ^ 0x2545f491);
   const out: CompHit[] = [];
   let prev: number[] | null = null;
@@ -350,4 +352,257 @@ export function bandComping(p: ParsedChart, meter: number, total: number, style:
     for (const h of hits) out.push({ ...h, notes: voice(chordAtBeat(p, meter, h.beat)!) });
   }
   return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+// ---------------------------------------------------------------- Brazilian and Afro-Cuban styles
+// SPEC-JAZZ-NEIGHBOURS §7.2, written only from the verified patterns of docs/research/STYLE-BRAZIL.md and
+// STYLE-AFROCUBAN.md ([V] / well-sourced [C]); the unverified figures ([?]) are left out and named where they would be.
+
+/** Clave direction of a two-bar timeline: the bar with three strokes first (3-2) or second (2-3). */
+export type ClaveDir = '32' | '23';
+export interface BandOpts {
+  /** The drill's clave (from its groove's two-bar rim lane); a style that needs one and has none takes its default. */
+  clave?: ClaveDir;
+  /** The band's bar 0 is the drill's bar `barOffset` (leading empty bars), so the two-bar cycle lines up with the drums. */
+  barOffset?: number;
+}
+
+/**
+ * The clave direction a drum groove plays: a two-bar Latin groove whose rim lane (the cross-stick clave) has three
+ * strokes in its first bar is 3-2, three in its second 2-3 (son clave, the bossa clave). Other grooves: null.
+ */
+export function claveOfGroove(groove: string | undefined): ClaveDir | null {
+  const g = groove ? GROOVES.find((x) => x.id === groove) : undefined;
+  if (!g || g.bars !== 2 || !g.r) return null;
+  const half = g.r.length / 2;
+  const a = [...g.r.slice(0, half)].filter((c) => c === 'x').length;
+  const b = [...g.r.slice(half)].filter((c) => c === 'x').length;
+  return a === 3 && b === 2 ? '32' : a === 2 && b === 3 ? '23' : null;
+}
+
+/** The three-side of the clave at absolute bar `bar`. */
+const threeSide = (bar: number, clave: ClaveDir) => (bar % 2 === 0) === (clave === '32');
+
+/** Hits [beat, length] of one 4/4 bar. */
+type Cell = [number, number][];
+/**
+ * The bossa comping figures (STYLE-BRAZIL §1(a), one bar = 8 steps of 8ths):
+ *   F1  x.x..x..  1, 2, the "and" of 3, over the bass's 1 and 3 [V] (Wikipedia / Garcia; Gray);
+ *   F2  x..x..x. | ..x..x..  the bossa-clave comp 3-2, [C] Munro over the [V] clave; 2-3 is its two bars swapped [V];
+ *   F4  .x.x.x.x  all upbeats, as a variation [V] (JG lessons).
+ * F3 (the syncopated two-bar batida) is [?] (STYLE-BRAZIL task B1) and is not played.
+ */
+const BOSSA_F1: Cell = [[0, 1], [1, 1.4], [2.5, 1.4]];
+const BOSSA_F2: [Cell, Cell] = [[[0, 1], [1.5, 1], [3, 0.9]], [[1, 1], [2.5, 1.4]]];
+const BOSSA_F4: Cell = [[0.5, 0.45], [1.5, 0.45], [2.5, 0.45], [3.5, 0.45]];
+
+/**
+ * Pick a figure per two-bar block from weighted choices, never the same one three blocks running ("vary, don't loop":
+ * Faria & Korman, STYLE-BRAZIL §0.5 [V]).
+ */
+function figurePlan(n: number, weights: number[], r: () => number): number[] {
+  const out: number[] = [];
+  const sum = weights.reduce((a, b) => a + b, 0);
+  for (let k = 0; k < n; k++) {
+    let i = 0;
+    for (let tries = 0; tries < 6; tries++) {
+      let x = r() * sum;
+      i = 0;
+      while (i < weights.length - 1 && x > weights[i]) x -= weights[i++];
+      if (!(weights.length > 1 && k >= 2 && out[k - 1] === i && out[k - 2] === i)) break;
+    }
+    out.push(i);
+  }
+  return out;
+}
+
+/**
+ * Anticipated changes (STYLE-BRAZIL §1(a) F5 [V] Ward: the new chord on the "and" before the bar line): at most bar
+ * lines where the chord changes, a hit on the downbeat moves `ant` earlier (or one is added there), and the hits that
+ * fall `ant` before a chord's start sound that chord (the voicing pass). Pure.
+ */
+function anticipate(hits: CompHit[], p: ParsedChart, meter: number, total: number, ant: number, r: () => number, step = meter): void {
+  for (let b0 = step; b0 < total; b0 += step) {
+    const c = chordAtBeat(p, meter, b0);
+    if (!c || c === chordAtBeat(p, meter, b0 - 1e-3) || r() > 0.8) continue;
+    const at = hits.findIndex((h) => Math.abs(h.beat - b0) < 1e-6);
+    if (!hits.some((h) => Math.abs(h.beat - (b0 - ant)) < 1e-6)) {
+      if (at >= 0) hits[at].beat = b0 - ant;
+      else hits.push({ beat: b0 - ant, len: 1, notes: [], vel: 0.34 });
+    } else if (at >= 0) hits.splice(at, 1);
+    for (const h of hits) if (h.beat < b0 - ant - 1e-6 && h.beat + h.len > b0 - ant) h.len = b0 - ant - h.beat - 0.05;
+  }
+  hits.sort((a, b) => a.beat - b.beat);
+}
+
+/**
+ * The band's bossa (STYLE-BRAZIL §8: the comp was one fixed clave figure): F2 in the drums' clave direction (default
+ * 3-2, the bossa groove), F1 and F4, chosen per two bars; the changes anticipated by an 8th; rootless voicings kept
+ * low and soft (the "subdued and restrained" energy, Jovino [V]); straight 8ths (§0.2 [V]). Other meters hold the chord.
+ */
+function bossaComping(p: ParsedChart, meter: number, total: number, seed: number, o: BandOpts): CompHit[] {
+  const r = rng(seed ^ 0x5bd1e995);
+  const off = o.barOffset ?? 0;
+  const clave = o.clave ?? '32';
+  const bars = Math.ceil(total / meter - 1e-9);
+  const hits: CompHit[] = [];
+  if (meter !== 4) {
+    for (let b0 = 0; b0 < total; b0 += p.bars * meter) for (const c of p.chords) hits.push({ beat: b0 + c.bar * meter + c.at, len: c.beats - 0.1, notes: [], vel: 0.3 });
+  } else {
+    const plan = figurePlan(Math.ceil((bars + off) / 2) + 1, [3, 2, 1], r);
+    for (let bar = 0; bar < bars; bar++) {
+      const a = bar + off;
+      const fig = plan[Math.floor(a / 2)];
+      const cell = fig === 0 ? BOSSA_F2[threeSide(a, clave) ? 0 : 1] : fig === 1 ? BOSSA_F1 : BOSSA_F4;
+      for (const [at, len] of cell) hits.push({ beat: bar * 4 + at, len, notes: [], vel: 0.3 + r() * 0.05 });
+    }
+    // a chord that starts inside a bar with no hit near it gets one on its beat
+    for (let b0 = 0; b0 < total; b0 += p.bars * 4)
+      for (const c of p.chords) {
+        const at = b0 + c.bar * 4 + c.at;
+        if (c.at > 0 && at < total && !hits.some((h) => h.beat > at - 0.75 && h.beat <= at + 1e-6)) hits.push({ beat: at, len: 0.9, notes: [], vel: 0.32 });
+      }
+    hits.sort((a, b) => a.beat - b.beat);
+    anticipate(hits, p, meter, total, 0.5, r);
+  }
+  let prev: number[] | null = null;
+  const out: CompHit[] = [];
+  for (const h of hits) {
+    const c = chordAtBeat(p, meter, h.beat + (meter === 4 ? 0.5 : 0) + 1e-6);
+    if (!c) continue;
+    const v = voiceLead(rootless(c), prev);
+    prev = v;
+    out.push({ ...h, notes: v });
+  }
+  return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+/**
+ * Samba and baião comping, written in 2/4 (a 4/4 bar of the chart = two 2/4 bars; STYLE-BRAZIL §0.1 [V]):
+ *   samba: the tamborim layer over the surdo (§0.4 [V] Jovino) — F1 on the 16th grid (steps 0, 2, 5), or the
+ *          bossa-clave comp at 16ths (Munro: samba is "nearly the same rhythm as the syncopated bossa pattern" [V]);
+ *          the changes anticipated by a 16th (Jovino [V]);
+ *   baião: the chords not syncopated (Munro [V]), in 8ths ([C], §3.2).
+ * Meters other than 2 and 4: null (the caller holds the chord).
+ */
+function brazilComping(p: ParsedChart, meter: number, total: number, style: 'samba' | 'baiao', seed: number, o: BandOpts): CompHit[] | null {
+  if (meter !== 4 && meter !== 2) return null;
+  const r = rng(seed ^ 0x2c1b3c6d);
+  const off = (o.barOffset ?? 0) * (meter / 2);
+  const halves = Math.ceil(total / 2 - 1e-9);
+  const hits: CompHit[] = [];
+  const plan = figurePlan(Math.ceil((halves + off) / 2) + 1, [2, 1], r);
+  for (let h = 0; h < halves; h++) {
+    const a = h + off;
+    let cell: Cell;
+    if (style === 'baiao') cell = [[0, 0.4], [0.5, 0.4], [1, 0.4], [1.5, 0.4]];
+    else if (plan[Math.floor(a / 2)] === 0) cell = [[0, 0.4], [0.5, 0.6], [1.25, 0.6]];
+    else cell = a % 2 === 0 ? [[0, 0.6], [0.75, 0.6], [1.5, 0.4]] : [[0.5, 0.6], [1.25, 0.6]];
+    for (const [at, len] of cell) hits.push({ beat: h * 2 + at, len, notes: [], vel: (style === 'samba' ? 0.34 : 0.3) + r() * 0.05 });
+  }
+  if (style === 'samba') anticipate(hits, p, meter, total, 0.25, r, 2);
+  let prev: number[] | null = null;
+  const out: CompHit[] = [];
+  for (const h of hits) {
+    const c = chordAtBeat(p, meter, h.beat + (style === 'samba' ? 0.25 : 0) + 1e-6);
+    if (!c) continue;
+    const v = voiceLead(style === 'samba' ? rootless(c) : closeVoicings(c), prev);
+    prev = v;
+    out.push({ ...h, notes: v });
+  }
+  return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+/**
+ * The Afro-Cuban styles (STYLE-AFROCUBAN §2, §7). Chords are close voicings led by voice leading.
+ *   mambo / latin: the guajeo's onbeat/offbeat motif, chosen per TWO-bar cycle by the clave (F5): the three-side bar all
+ *     on the offbeats, the two-side bar on the beats (§2.1 [V] Peñalosa, Moore); the drill's clave, else 2-3 ("most salsa
+ *     piano guajeos use the 2-3 form" [V]). Per cycle either ponchando block chords [V] or the broken figure — the line
+ *     note in octaves against the inner chord tones [C] Mauleón; offbeat hits anticipate the next chord by an 8th [C].
+ *   chacha: the same clave-aware motif, block chords only. The "cha-cha-chá" piano cell is [?] (Wikipedia shows only an
+ *     image), so the band does not play it.
+ *   songo: the right hand on the four beats ([V] Moore via Wikipedia); its left-hand cells are [?] and are left out.
+ *   bolero: slow broken chords in 8ths ([V] the description, §2.3 / §7; the exact figure is [?]: an even up-and-down
+ *     arpeggio of the chord).
+ *   afro68: the bell is the referent (§6.1 [V]); the chord placement on the bell is [?], so the band only marks each
+ *     dotted-quarter beat (a 4/4 chart bar = four dotted quarters; 6 or 12 eighth-beat bars every 3 eighths).
+ * Meters other than 4 (and 2 / 6 / 12 for afro68): null.
+ */
+function latinComping(p: ParsedChart, meter: number, total: number, style: Exclude<LatinBandStyle, 'samba' | 'baiao'>, seed: number, o: BandOpts): CompHit[] | null {
+  const r = rng(seed ^ 0x7f4a7c15);
+  const off = o.barOffset ?? 0;
+  const bars = Math.ceil(total / meter - 1e-9);
+  const hits: (CompHit & { part?: 'oct' | 'in' | 'arp' })[] = [];
+  if (style === 'afro68') {
+    const step = meter === 4 || meter === 2 ? 1 : meter === 6 || meter === 12 ? 3 : 0;
+    if (!step) return null;
+    for (let b = 0; b < total; b += step) hits.push({ beat: b, len: step * 0.9, notes: [], vel: b % meter === 0 ? 0.34 : 0.28 });
+  } else {
+    if (meter !== 4) return null;
+    const clave = o.clave ?? '23';
+    const plan = figurePlan(Math.ceil((bars + off) / 2) + 1, style === 'chacha' ? [1] : [1, 2], r);
+    for (let bar = 0; bar < bars; bar++) {
+      const b0 = bar * 4;
+      const a = bar + off;
+      if (style === 'songo') {
+        for (let k = 0; k < 4; k++) hits.push({ beat: b0 + k, len: 0.4, notes: [], vel: 0.32 + (k === 0 ? 0.03 : 0) });
+      } else if (style === 'bolero') {
+        for (let k = 0; k < 8; k++) hits.push({ beat: b0 + k / 2, len: 0.9, notes: [], vel: 0.26 + (k === 0 ? 0.04 : 0), part: 'arp' });
+      } else {
+        const offbeat = threeSide(a, clave);
+        const broken = style !== 'chacha' && plan[Math.floor(a / 2)] === 1;
+        for (let k = 0; k < 4; k++) hits.push({ beat: b0 + k + (offbeat ? 0.5 : 0), len: 0.42, notes: [], vel: 0.32 + r() * 0.04, ...(broken ? { part: k % 2 === 0 ? ('oct' as const) : ('in' as const) } : {}) });
+      }
+    }
+  }
+  let prev: number[] | null = null;
+  let lastC: ChartChordEv | null = null;
+  let arp = 0;
+  const out: CompHit[] = [];
+  for (const h of hits) {
+    const offbeat = Math.abs(h.beat - Math.round(h.beat)) > 1e-6;
+    const c = chordAtBeat(p, meter, h.beat + (offbeat && style !== 'bolero' ? 0.5 : 0) + 1e-6);
+    if (!c) continue;
+    if (c !== lastC || prev === null) {
+      prev = voiceLead(closeVoicings(c), prev);
+      arp = 0;
+      lastC = c;
+    }
+    const v = [...prev].sort((x, y) => x - y);
+    const top = v[v.length - 1];
+    let notes = v;
+    // the line note in octaves with one chord tone inside; then the inner tones under the held thumb ([C] Mauleón)
+    const inner = v.slice(0, -1).filter((m) => m > top - 12);
+    if (h.part === 'oct') notes = [top - 12, ...inner.slice(-1), top];
+    else if (h.part === 'in') notes = [top - 12, ...inner];
+    else if (h.part === 'arp') {
+      const up = [...v, ...v.slice(1, -1).reverse()];
+      notes = [up[arp++ % up.length]];
+    }
+    out.push({ beat: h.beat, len: h.len, notes: notes.length ? notes : v, vel: h.vel });
+  }
+  return out.filter((h) => h.beat >= 0 && h.beat < total);
+}
+
+/**
+ * The tumbao under the band (STYLE-AFROCUBAN §4.1): nothing on 1, the "&" of 2 (bombo) and beat 4 (ponche) held over
+ * the bar line [V] (Peñalosa, Moore via Wikipedia); the note on 4 is the next bar's root (the anticipated bass, [C]
+ * Manuel 1985); the "&" of 2 the chord's 5th (as the b-latin drills). 4/4 only; beats from the chart's start.
+ */
+export function tumbaoBass(p: ParsedChart, meter: number, total: number): BassNote[] {
+  if (meter !== 4) return [];
+  const out: BassNote[] = [];
+  let prev = 40;
+  for (let b0 = 0; b0 < total; b0 += 4) {
+    const c = chordAtBeat(p, meter, b0);
+    const nx = chordAtBeat(p, meter, b0 + 4) ?? c;
+    if (!c || !nx) continue;
+    const fifth = c.iv.includes(7) ? 7 : c.iv.includes(6) ? 6 : c.iv.includes(8) ? 8 : 7;
+    const f = nearest(pc(c.root + fifth), prev);
+    out.push({ beat: b0 + 1.5, midi: f });
+    const rt = nearest(pc(nx.bass), f);
+    if (b0 + 3 < total) out.push({ beat: b0 + 3, midi: rt });
+    prev = rt;
+  }
+  return out;
 }
