@@ -9,6 +9,8 @@ import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
 import { openKeyRungs, rungIdOf, type KeyMode, type LadderInst, type LadderRung } from './keyIndex';
 import { coolingDown, itemStatus } from './itemStatus';
+import { PASS_SHARE } from './ladder';
+import { fsrsDue, fsrsInit, fsrsReview } from '../fsrs';
 import type { Lick } from '../licks';
 import type { StyleId } from '../styles';
 import type { StyleFocus, StyleTier } from '../styleFocus';
@@ -27,8 +29,11 @@ export interface MatrixCell {
   /** Teaching order inside the key (the warm-up is −1). */
   i: number;
   level: LevelDef;
-  /** `cool`: every open item of the cell rests after a plateau (BUILD-PLAN §0.2) — skipped by the views and the projection. */
-  need: { s: 0 | 1 | 2; share: number; last: string; cool?: boolean };
+  /**
+   * `cool`: every open item of the cell rests after a plateau (BUILD-PLAN §0.2) — skipped by the views and the projection.
+   * `due` (closed cells): when the cell is due for review (FSRS over the days it was passed at its target, §4).
+   */
+  need: { s: 0 | 1 | 2; share: number; last: string; cool?: boolean; due?: string };
   /** Estimated minutes to work the cell now (to its target or the player's limit). */
   minutes: number;
   /** Block H (SPEC-STYLE-FOCUS §5): the cell's style and its tier in the focus ("rest" cells are exposure only). */
@@ -66,6 +71,20 @@ interface CellDrill {
 }
 const cellDrills = (level: LevelDef): CellDrill[] => level.specs.flatMap((_, k) => specDrills(level, k, 'fifths-up').map((d) => ({ itemId: d.itemId, beats: d.beats, startBpm: d.startBpm, target: itemTargetBpm(d) })));
 
+/**
+ * SPEC-DAILY-WORKOUT §2: after play, the estimate moves toward the player's own measured time (a moving average): a
+ * played item's take length blends the model's with its measured active time per take, the measured part weighing more
+ * with every take (at most MEASURED_MAX).
+ */
+export const MEASURED_MAX = 0.8;
+export const measuredWeight = (takes: number): number => Math.min(MEASURED_MAX, takes / (takes + 4));
+export function takeSeconds(beats: number, bpm: number, st?: Pick<ItemState, 'takes' | 'activeMs'>): number {
+  const model = (beats * 60) / bpm;
+  if (!st || !st.takes || !st.activeMs) return model;
+  const w = measuredWeight(st.takes);
+  return (1 - w) * model + w * (st.activeMs / 1000 / st.takes);
+}
+
 function minutesOf(ds: CellDrill[], items: Record<string, ItemState>): number {
   let s = 0;
   let firstNew = true;
@@ -74,7 +93,7 @@ function minutesOf(ds: CellDrill[], items: Record<string, ItemState>): number {
     const target = d.target;
     const played = !!st && st.takes > 0;
     const bpm = Math.max(30, played && st.cleanBpm ? st.cleanBpm : (d.startBpm || 60) * CLIMB_MEAN);
-    const takeS = (d.beats * 60) / bpm + GAP_S;
+    const takeS = takeSeconds(d.beats, bpm, played ? st : undefined) + GAP_S;
     let takes: number;
     if (!played) {
       takes = firstNew ? TAKES.new : TAKES.newNext;
@@ -125,7 +144,23 @@ function needOf(ds: CellDrill[], items: Record<string, ItemState>, day: string):
   const open = ds.filter((d) => itemStatus(items[d.itemId], d.startBpm, d.target) !== 'closed');
   // the plateau (BUILD-PLAN §0.2): every open item rests after the coach's limit rule
   const cool = open.length > 0 && open.every((d) => coolingDown(items[d.itemId], day));
-  return { s: open.length ? 1 : 2, share, last, ...(cool ? { cool } : {}) };
+  return { s: open.length ? 1 : 2, share, last, ...(cool ? { cool } : {}), ...(open.length ? {} : { due: cellDue(ds, items, last) }) };
+}
+
+/**
+ * SPEC-DAILY-WORKOUT §4 (maintenance at growing intervals): a closed cell's review date from the existing FSRS. Each day
+ * the cell's items were passed at their target is a review graded "good" — the first one starts the card — so the
+ * interval grows with every day it held; the next review is due when recall is predicted to fall to 90 %. A cell with
+ * no pass log (older takes) starts from its last play.
+ */
+export function cellDue(ds: { itemId: string; target: number }[], items: Record<string, ItemState>, last: string): string {
+  const days = new Set<string>();
+  for (const d of ds) for (const p of items[d.itemId]?.passLog ?? []) if (p.bpm >= PASS_SHARE * d.target - 1e-9) days.add(p.at.slice(0, 10));
+  const sorted = [...days].sort();
+  if (!sorted.length) return fsrsDue(fsrsInit(3, (last || '2000-01-01').slice(0, 10)));
+  let c = fsrsInit(3, sorted[0]);
+  for (const day of sorted.slice(1)) c = fsrsReview(c, 3, day);
+  return fsrsDue(c);
 }
 
 /** The local day ('YYYY-MM-DD'). */

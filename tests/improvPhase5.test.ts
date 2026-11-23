@@ -217,8 +217,10 @@ describe("the workout's improvisation block (D2) and today's lick", () => {
     const app = src('ui/App.tsx');
     expect(app).toMatch(/if \(mode === 'improv'\) \{\s*improvInit\.current = null;\s*improvWorkout\.current = true;/);
     expect(app).toContain('workout={improvWorkout.current}');
-    expect(app).toContain("dayKey={weekKeyIfKept('major'");
-    expect(app).toContain("go(workoutPending.current ? 'workoutrun' : 'arcade')) : improvInit.current");
+    // the key of the week, picked from the matrix when none is kept (no fallback to C); minor weeks on their relative major
+    expect(app).toContain('dayKey={improvDayKey}');
+    expect(app).toContain('ensureDayKey(s, drillSettingsOf(s)');
+    expect(app).toContain("improvWorkout.current ? ((improvWorkout.current = false), go('workoutrun')) : improvInit.current");
     const ui = src('ui/ImprovStudio.tsx');
     expect(ui).toContain("useState<Mode>(workout || !initialChart ? 'scales'");
     expect(ui).toContain('top={workout && vocab?.today ? <TodayLickCard');

@@ -166,6 +166,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     noDrills: s.drills?.inPath === false,
     priorities: intake?.priorities ?? null,
     leaveOut: s.pathLeaveOut ?? [],
+    lessRoom: s.pathLessRoom ?? [],
     packs: s.pathPacks ?? defaultPacks(track, plays, goal),
     plays,
     minutes: (intake?.minutes ?? 10) as 5 | 10 | 20,
@@ -271,6 +272,7 @@ import { KitNotice } from './DrumViews';
 import { withRepFacts } from '../engine/pathBonus';
 import { decorateMastery, missingFor, unitMastery, type MasteryCtx } from '../engine/pathMastery';
 import { KEY_LABEL } from '../engine/analysis/keyMastery';
+import { stepsInWorkout } from './workoutLog';
 
 /** A step's own Paper symbol on the road (undefined: it shows a plain node icon). Also used by the unit opener. */
 export function stepGlyphOf(step: PathStep): GlyphKind | null {
@@ -485,6 +487,7 @@ export function PathView2({
             {pendingCheck && <small className="node-tag" data-promo="1">{tx.promo}</small>}
             {x.step.bonus && st !== 'done' && st !== 'mastered' && <small className="node-tag" data-bonus="1">{tx.bonus}</small>}
             {(st === 'refresh' || x.fade) && <small className="node-tag">{tx.refresh}</small>}
+            {opened && stepsInWorkout().has(x.step.id) && <small className="node-tag node-inwk" data-in-workout="1">{lang === 'he' ? 'באימון' : 'in workout'}</small>}
           </span>
         </button>
       </li>

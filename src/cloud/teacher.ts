@@ -3,6 +3,7 @@
 import { supabase } from './cloud';
 import { isPhraseRef, LEGACY_REF_MAX, PHRASE_REF_MAX, refBytes } from '../engine/encore/assign';
 import { parseFocusRef } from '../engine/styleFocus';
+import type { AssignChannel } from '../engine/assignChannel';
 
 export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phrase' | 'focus';
 
@@ -94,6 +95,8 @@ let backend: Backend | null = null;
 export function setTeacherBackend(b: Backend | null) {
   backend = b;
 }
+/** The backend set by a test (null: the server, or the dev mock). */
+export const teacherBackend = (): Backend | null => backend;
 export const teacherMockOn = (): boolean => {
   if (!import.meta.env.DEV) return false;
   try {
@@ -190,7 +193,7 @@ export async function assignAudioUrl(path: string): Promise<string | null> {
 // SPEC-PATH-TODAY-PRACTICE §5.2: an assignment's options (the required channel, minutes a day, spread / all today).
 // Needs migration 20261209000000_toneturn_assignment_opts.sql — set ASSIGN_OPTS_SYNCED once the owner applied it.
 export const ASSIGN_OPTS_SYNCED = false; // migration 20261209000000 — NOT APPLIED yet
-export type AssignChannel = 'free' | 'page' | 'ear' | 'memory';
+export type { AssignChannel };
 export interface AssignOpts {
   channel: AssignChannel;
   minutes: number | null;
@@ -200,8 +203,9 @@ export async function setAssignOpts(assignmentId: string, o: AssignOpts): Promis
   if (!ASSIGN_OPTS_SYNCED) return;
   await rpc<void>('toneturn_assignment_set_opts', { p_assignment: assignmentId, p_channel: o.channel, p_minutes: o.minutes, p_if_short: o.ifShort });
 }
-export async function assignOptsFor(ids: string[]): Promise<Record<string, AssignOpts>> {
-  if (!ASSIGN_OPTS_SYNCED || !ids.length) return {};
+/** The options of these assignments (student or teacher). `synced`: the migration is applied (tests pass true). */
+export async function assignOptsFor(ids: string[], synced = ASSIGN_OPTS_SYNCED): Promise<Record<string, AssignOpts>> {
+  if (!synced || !ids.length) return {};
   const rows = (await rpc<{ assignment_id: string; channel: AssignChannel; minutes: number | null; if_short: 'spread' | 'today' }[]>('toneturn_assignment_opts_for', { p_ids: ids })) ?? [];
   return Object.fromEntries(rows.map((r) => [r.assignment_id, { channel: r.channel, minutes: r.minutes, ifShort: r.if_short }]));
 }
