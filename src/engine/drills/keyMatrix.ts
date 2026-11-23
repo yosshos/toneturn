@@ -7,7 +7,7 @@
 import type { FamilyDef, LevelDef } from './generate';
 import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
-import { openKeyRungs, rungIdOf, type KeyMode, type LadderInst, type LadderRung } from './keyIndex';
+import { jazzFirst, openKeyRungs, rungIdOf, type KeyMode, type LadderInst, type LadderRung } from './keyIndex';
 import { coolingDown, itemStatus } from './itemStatus';
 import type { Lick } from '../licks';
 import type { StyleId } from '../styles';
@@ -99,7 +99,7 @@ function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; gr
   // block G (phase 4): the pool's licks are part of the shape (an own lick's notes too: an edit rebuilds it)
   const licks = (opts.licks ?? []).map((l) => `${l.id}:${l.notes.length}:${l.notes.reduce((a, n) => a + n[0] * 7 + n[1] * 3, 0)}`).join(',');
   const focus = opts.focus ? `${opts.focus.main}+${opts.focus.also.join('+')}` : '';
-  const key = `${opts.instrument ?? 'piano'}|${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}|${licks}|${focus}`;
+  const key = `${opts.instrument ?? 'piano'}|${fams.map((f) => f.id).join(',')}|${tier}|${jazzFirst(opts) ? 1 : 0}|${groups.join(',')}|${licks}|${focus}`;
   const hit = shapeCache.get(key);
   if (hit) return hit;
   const out: CellShape[] = [];

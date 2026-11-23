@@ -95,14 +95,17 @@ export function usesOf(uses: LickUse[] | undefined, id: string): { n: number; ke
  * Today's lick (SPEC-LICKS-IN-IMPROV §2): a lick of the pool picked by need — due for review first (most overdue),
  * else the most recently practised one not yet in my language, else the first of the pool. Null with an empty pool.
  */
-export function todaysLick(pool: Lick[], book: LickBook | undefined, items: Record<string, ItemState>, now: Date | string = new Date()): Lick | null {
+export function todaysLick(pool: Lick[], book: LickBook | undefined, items: Record<string, ItemState>, now: Date | string = new Date(), weight?: (l: Lick) => number): Lick | null {
   if (!pool.length) return null;
+  // SPEC-STYLE-FOCUS §4: "today's lick prefers the focus styles" — with a weight (styleFocus.styleWeight of the lick's
+  // style), the heavier style first at each step; the order inside a weight stays the need order below
+  const byW = <T extends Lick>(xs: T[]): T[] => (weight ? xs.map((l, i) => ({ l, i, w: weight(l) })).sort((a, b) => b.w - a.w || a.i - b.i).map((x) => x.l) : xs);
   const due = dueLicks(book?.review, now);
-  const d = due.map((id) => pool.find((l) => l.id === id)).find((l): l is Lick => !!l);
+  const d = byW(due.map((id) => pool.find((l) => l.id === id)).filter((l): l is Lick => !!l))[0];
   if (d) return d;
   const last = (l: Lick) => itemsOfLick(items, l.id).map((s) => s.last ?? '').sort().pop() ?? '';
-  const fresh = pool.filter((l) => !inMyLanguage(book?.uses, l.id)).sort((a, b) => last(b).localeCompare(last(a)));
-  return fresh[0] ?? pool[0];
+  const fresh = byW(pool.filter((l) => !inMyLanguage(book?.uses, l.id)).sort((a, b) => last(b).localeCompare(last(a))));
+  return fresh[0] ?? byW(pool)[0];
 }
 
 const fam = (q: string): string => (q === 'm7' || q === 'm6' ? 'm' : q === 'maj7' || q === '6' ? 'M' : q === 'hd7' ? 'hd' : q === 'dim7' ? 'd' : '7');

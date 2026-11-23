@@ -3,6 +3,7 @@
 // (each submission: score, minutes, metrics → a short comment and a mark); the class heat map (students × skills,
 // practice minutes, who is behind); the student's assignment list with the teacher's comments; the parent link and
 // the parent digest page.
+import { DigestOverTime } from './ClassCharts';
 import { topicVerified } from '../engine/verifiedContent';
 import { useEffect, useMemo, useState } from 'react';
 import type { TeachingClass } from '../cloud/classes';
@@ -618,6 +619,8 @@ export function DigestScreen({ token, lang, t, onHome }: { token: string; lang: 
               </div>
             )}
           </div>
+          {/* SPEC-PROGRESS-CHARTS §4.2: the simple version — tiles, the practice calendar, the week's minutes */}
+          <DigestOverTime token={token} lang={lang} />
           {d.mastered.length > 0 && (
             <section className="set-card">
               <h3>{he ? 'נשלט החודש' : 'Mastered this month'}</h3>

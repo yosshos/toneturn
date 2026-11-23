@@ -6,7 +6,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Snapshot } from '../engine/snapshot';
 import { areaColor } from '../engine/areaColors';
-import { areasOf, channelSeries, closedSeries, defaultFrame, framesFor, inFrame, insights, keysByWeek, minutesByWeek, statusByWeek, tempoSeries, tenureDays, weekTiles, type Frame, type Point } from '../engine/progressSeries';
+import { areasOf, channelSeries, closedSeries, defaultFrame, framesFor, improvSeries, inFrame, insights, keysByWeek, LADDER_STEPS, ladderByWeek, languageSeries, levelSeries, minutesByWeek, minutesSplit, modeFunctionGrid, PLANNED_SPLIT, tempoSeries, tenureDays, weekMix, weekTiles, type Frame, type LadderStep, type Point } from '../engine/progressSeries';
+import { UPPER_STEPS, UPPER_WORD, type UpperStep } from '../engine/snapshot';
+import { HeatGrid, MultiLine, ShareBars } from './OverTimeCharts';
 import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
 import { loadSnapshots } from '../storage/snapshots';
 import { localDay } from '../storage/progress';
@@ -194,23 +196,68 @@ export function Card({ title, sub, children, table, lang }: { title: string; sub
   );
 }
 
-const STATUS_SHADES = ['#e9e4f8', '#c3b6ee', '#8f7ae0', '#5a3fc7'];
+/** The status ladder's own sequence (§0): one hue, light → dark, separate from the area colours. */
+const LADDER_SHADES: Record<LadderStep, { light: string; dark: string }> = {
+  learning: { light: '#e4ddfa', dark: '#3b3170' },
+  almost: { light: '#c3b6ee', dark: '#54469a' },
+  closed: { light: '#9d8ae4', dark: '#7362c4' },
+  keys12: { light: '#7a62d6', dark: '#9183dc' },
+  language: { light: '#5a3fc7', dark: '#ada3ea' },
+  fingers: { light: '#3d2696', dark: '#cbc4f4' },
+};
+const ladderWord = (k: LadderStep, lang: Lang): string => ((UPPER_STEPS as string[]).includes(k) ? UPPER_WORD[k as UpperStep][lang] : tx(STATUS_WORD[k as ItemStatus], lang));
 
-export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course, median, matrix }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book). */ course?: string; /** SPEC-PROGRESS-CHARTS §8.1: the class median (the teacher turned it on, the summaries sync) — grey lines on the tempo and minutes charts. */ median?: { day: string; tempo: number; minutes: number }[] | null; /** Phase 8 (D5): the key × exercise matrix, built only when this tab is open — measured time and the projection. */ matrix?: () => ProjectionInput | null }) {
+/** The time frame is remembered per device (§0; the browser's own storage, guarded: private mode just forgets it). */
+const FRAME_KEY = 'tt.progressFrame';
+const readFrame = (): Frame | null => {
+  try {
+    const v = typeof localStorage !== 'undefined' ? localStorage.getItem(FRAME_KEY) : null;
+    return v === '7d' || v === '30d' || v === '90d' || v === '1y' || v === 'all' ? v : null;
+  } catch {
+    return null;
+  }
+};
+const writeFrame = (f: Frame) => {
+  try {
+    localStorage.setItem(FRAME_KEY, f);
+  } catch {
+    /* private mode: the frame is not remembered */
+  }
+};
+
+/** The Ear course's areas and the instrument courses' own (an instrument course shows only its sections and the licks). */
+export const ownArea = (course: string | undefined) => (a: string): boolean => {
+  if (course === 'ear') return a.startsWith('ear:');
+  if (course && ['keys', 'guitar', 'bass', 'drums'].includes(course)) return a === 'lick' || a.startsWith(`${course}:`);
+  return !a.startsWith('ear:');
+};
+
+/** Chart 9's names: the chord functions and the modes as the improvisation screens write them. */
+const FN_NAME: Record<string, string> = { I: 'I', IV: 'IV', ii: 'ii', iii: 'iii', vi: 'vi', i: 'i', 'iiø': 'iiø', 'V-maj': 'V', 'V-min': 'V (min)', 'V-free': 'V7', dim: '°7', sus: 'sus' };
+const modeName = (m: string) => m.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+export function ProgressOverTime({ lang, areaName, today = localDay(new Date()), snapshots, course, median, matrix, readOnly = false }: { lang: Lang; areaName: (area: string) => string; today?: string; snapshots?: Record<string, Snapshot>; /** An instrument course shows only its own areas (and the lick book); the Ear course its own areas. */ course?: string; /** SPEC-PROGRESS-CHARTS §8.1: the class median (the teacher turned it on, the summaries sync) — grey lines on the tempo and minutes charts. */ median?: { day: string; tempo: number; minutes: number }[] | null; /** Phase 8 (D5): the key × exercise matrix, built only when this tab is open — measured time and the projection. */ matrix?: () => ProjectionInput | null; /** §4.1: the teacher reads a student's charts (no share card, no "since the last lesson" here: the page has its own). */ readOnly?: boolean }) {
   const he = lang === 'he';
   const dark = useDark();
-  // the class median: given (tests), or fetched when the summaries sync and the teacher turned it on
+  const mode = dark ? 'dark' : 'light';
+  // the class median: given (tests, the teacher), or fetched when the summaries sync and the teacher turned it on
   const fetchedMedian = useClassMedian(median === undefined && !snapshots, today);
   const med = median === undefined ? fetchedMedian : median;
   const [all, setAll] = useState<Record<string, Snapshot> | null>(snapshots ?? null);
   useEffect(() => {
     if (!snapshots) void loadSnapshots().then(setAll);
+    else setAll(snapshots);
   }, [snapshots]);
   const tenure = all ? tenureDays(all, today) : 0;
   const frames = framesFor(tenure);
-  const [frame, setFrame] = useState<Frame | null>(null);
+  const [frame, setFrameState] = useState<Frame | null>(() => (readOnly ? null : readFrame()));
+  const setFrame = (f: Frame) => {
+    setFrameState(f);
+    if (!readOnly) writeFrame(f);
+  };
   const fr = frame && frames.includes(frame) ? frame : defaultFrame(tenure);
   const snaps = useMemo(() => (all ? inFrame(all, fr, today) : []), [all, fr, today]);
+  const [picked, setPicked] = useState<string[] | null>(null);
   // measured time and the projection (D5): the matrix is built once, when the tab opens
   const proj = useMemo(() => {
     if (!all || !matrix) return null;
@@ -225,13 +272,17 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         {he ? 'הגרפים יתמלאו אחרי כמה ימי אימון.' : 'The charts fill in after a few days of practice.'}
       </p>
     );
-  const own = (a: string) => !course || !['keys', 'guitar', 'bass', 'drums'].includes(course) || a === 'lick' || a.startsWith(`${course}:`);
+  // the Ear course shows its own areas; before it has any (an instrument player who never opened its path), everything
+  const earHas = course === 'ear' && areasOf(snaps).some((a) => a.startsWith('ear:'));
+  const own = ownArea(course === 'ear' && !earHas ? undefined : course);
+  const isEar = earHas;
   const areas = areasOf(snaps).filter(own).slice(0, 6);
   const tiles = weekTiles(all, today);
   const TILE: Record<string, L> = { minutes: { en: 'Minutes', he: 'דקות' }, closed: { en: 'Closed', he: 'נסגרו' }, days: { en: 'Practice days', he: 'ימי אימון' }, tempo: { en: 'Of target tempo', he: 'מטמפו היעד' } };
   const ins = insights(snaps, areaName, lang);
-  const statusKeys: ItemStatus[] = ['learning', 'almost', 'closed'];
-  const status = statusByWeek(snaps).map((w) => ({ week: w.week, by: Object.fromEntries(statusKeys.map((k) => [k, w.counts[k] ?? 0])) }));
+  const ladderKeys = LADDER_STEPS.filter((k) => snaps.some((s) => (k === 'learning' || k === 'almost' || k === 'closed' ? true : Object.values(s.ladder ?? {}).some((l) => (l[k as UpperStep] ?? 0) > 0))));
+  const ladderAreas = areas;
+  const ladder = ladderByWeek(snaps).map((w) => ({ week: w.week, by: Object.fromEntries(ladderKeys.map((k) => [k, ladderAreas.length ? w.by[k] : 0])) as Record<string, number> }));
   const mins = minutesByWeek(snaps);
   const minKeys = [...new Set(mins.flatMap((m) => Object.keys(m.by)))];
   const keys = keysByWeek(snaps);
@@ -240,8 +291,27 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
   const medTempo: Point[] | undefined = med?.length ? med.map((m) => ({ day: m.day, v: m.tempo })) : undefined;
   const medWeeks: Record<string, number> | undefined = med?.length ? med.reduce<Record<string, number>>((acc, m) => ((acc[weekStart(m.day)] = (acc[weekStart(m.day)] ?? 0) + m.minutes), acc), {}) : undefined;
   const medNote = med?.length ? (he ? 'קו אפור: חציון הכיתה' : 'Grey line: the class median') : null;
+  // chart 4: the areas with a tempo index, up to 4 chosen in the filter (the first 4 by default)
+  const tempoAreas = areas.filter((a) => tempoSeries(snaps, a).length > 1);
+  const chosen = (picked ?? tempoAreas.slice(0, 4)).filter((a) => tempoAreas.includes(a)).slice(0, 4);
+  const togglePick = (a: string) => setPicked(chosen.includes(a) ? chosen.filter((x) => x !== a) : chosen.length >= 4 ? chosen : [...chosen, a]);
+  const mix = weekMix(snaps);
+  const split = minutesSplit(snaps);
+  const lang8 = languageSeries(snaps);
+  const cov = improvSeries(snaps, 'cov'), inScale = improvSeries(snaps, 'inScale');
+  const grid = modeFunctionGrid(snaps);
+  const earLevels = isEar ? areas.filter((a) => levelSeries(snaps, a).length > 1) : [];
+  const CH = { ear: { en: 'By ear', he: 'משמיעה' }, page: { en: 'From the page', he: 'מהדף' }, memory: { en: 'From memory', he: 'מהזיכרון' } };
+  const chParts = (['page', 'ear', 'memory'] as const).map((k) => ({ id: k, name: tx(CH[k], lang), color: k === 'ear' ? areaColor('byear', mode) : k === 'page' ? areaColor('reading', mode) : areaColor('form', mode) }));
+  const splitParts = [
+    { id: 'path', name: he ? 'מסלול' : 'Path', color: areaColor('ear', mode) },
+    { id: 'technique', name: he ? 'טכניקה' : 'Technique', color: areaColor('technique', mode) },
+    { id: 'improv', name: he ? 'אלתור' : 'Improvisation', color: areaColor('improv', mode) },
+    { id: 'other', name: he ? 'אחר' : 'Other', color: neutral },
+  ];
+  const lastMix = mix?.actual ? `${tx(CH.page, lang)} ${pct(mix.actual.page)} · ${tx(CH.ear, lang)} ${pct(mix.actual.ear)} · ${tx(CH.memory, lang)} ${pct(mix.actual.memory)}` : '–';
   return (
-    <div className="pt-wrap" data-progress-time={fr}>
+    <div className="pt-wrap" data-progress-time={fr} data-course={course ?? 'all'}>
       <div className="chips pt-frames" role="radiogroup" aria-label={he ? 'טווח זמן' : 'Time frame'}>
         {frames.map((f) => (
           <button key={f} type="button" role="radio" aria-checked={f === fr} className={`chip ${f === fr ? 'on' : ''}`} onClick={() => setFrame(f)} data-frame={f}>
@@ -274,45 +344,76 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
           {areas.map((a) => (
             <div key={a} className="pt-multiple" data-area={a}>
               <span className="pt-mname">
-                <i style={{ background: areaColor(a, dark ? 'dark' : 'light') }} />
+                <i style={{ background: areaColor(a, mode) }} />
                 {areaName(a)}
               </span>
-              <SmallLine pts={closedSeries(snaps, a)} color={areaColor(a, dark ? 'dark' : 'light')} name={areaName(a)} lang={lang} lo={0} />
+              <SmallLine pts={closedSeries(snaps, a)} color={areaColor(a, mode)} name={areaName(a)} lang={lang} lo={0} />
             </div>
           ))}
         </div>
       </Card>
 
-      <Card lang={lang} title={he ? 'פריטים עולים בסולם' : 'Items move up the ladder'} sub={he ? 'כל עמודה: שבוע' : 'Each column: a week'} table={status.map((s) => [fmtDay(s.week, lang), statusKeys.map((k) => `${tx(STATUS_WORD[k], lang)} ${s.by[k]}`).join(' · ')])}>
-        <StackCols cols={status} keys={statusKeys} colorOf={(k) => STATUS_SHADES[statusKeys.indexOf(k as ItemStatus) + 1]} labelOf={(k) => tx(STATUS_WORD[k as ItemStatus], lang)} lang={lang} />
-      </Card>
-
-      <Card lang={lang} title={he ? 'קרבה לטמפו היעד' : 'Closeness to the target tempo'} sub={(he ? 'הקו המקווקו: היעד' : 'Dashed line: the target') + (medNote ? ` · ${medNote}` : '')}>
-        <div className="pt-multiples">
-          {areas.filter((a) => tempoSeries(snaps, a).length > 1).slice(0, 4).map((a) => (
-            <div key={a} className="pt-multiple">
-              <span className="pt-mname">
-                <i style={{ background: areaColor(a, dark ? 'dark' : 'light') }} />
-                {areaName(a)}
-              </span>
-              <SmallLine pts={tempoSeries(snaps, a)} color={areaColor(a, dark ? 'dark' : 'light')} name={areaName(a)} lang={lang} fmt={pct} target={1} lo={0} hi={1.1} refPts={medTempo} />
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {(ear.length > 1 || read.length > 1) && (
-        <Card lang={lang} title={he ? 'שמיעה וקריאה' : 'By ear and reading'}>
-          <div className="pt-multiples">
-            <div className="pt-multiple">
-              <span className="pt-mname">{he ? 'משמיעה' : 'By ear'}</span>
-              <SmallLine pts={ear} color={areaColor('byear', dark ? 'dark' : 'light')} name="ear" lang={lang} fmt={pct} lo={0} hi={1} />
-            </div>
-            <div className="pt-multiple">
-              <span className="pt-mname">{he ? 'קריאה' : 'Reading'}</span>
-              <SmallLine pts={read} color={areaColor('reading', dark ? 'dark' : 'light')} name="reading" lang={lang} fmt={pct} lo={0} hi={1} />
-            </div>
+      {earLevels.length > 0 && (
+        <Card lang={lang} title={he ? 'הרמה בכל תחום' : 'Level, by area'} sub={he ? 'לפי הדירוג בכל תחום' : 'From the rating in each area'} table={earLevels.map((a) => [areaName(a), pct(levelSeries(snaps, a).at(-1)!.v)])}>
+          <div className="pt-multiples" data-ear-levels={earLevels.length}>
+            {earLevels.map((a) => (
+              <div key={a} className="pt-multiple">
+                <span className="pt-mname">
+                  <i style={{ background: areaColor(a, mode) }} />
+                  {areaName(a)}
+                </span>
+                <SmallLine pts={levelSeries(snaps, a)} color={areaColor(a, mode)} name={areaName(a)} lang={lang} fmt={pct} lo={0} hi={1} />
+              </div>
+            ))}
           </div>
+        </Card>
+      )}
+
+      <Card lang={lang} title={he ? 'פריטים עולים בסולם' : 'Items move up the ladder'} sub={he ? 'כל עמודה: שבוע' : 'Each column: a week'} table={ladder.map((s) => [fmtDay(s.week, lang), ladderKeys.map((k) => `${ladderWord(k, lang)} ${s.by[k]}`).join(' · ')])}>
+        <StackCols cols={ladder} keys={ladderKeys} colorOf={(k) => LADDER_SHADES[k as LadderStep][mode]} labelOf={(k) => ladderWord(k as LadderStep, lang)} lang={lang} />
+      </Card>
+
+      {tempoAreas.length > 0 && (
+        <Card lang={lang} title={he ? 'קרבה לטמפו היעד' : 'Closeness to the target tempo'} sub={(he ? 'הקו המקווקו: היעד' : 'Dashed line: the target') + (medNote ? ` · ${medNote}` : '')} table={chosen.map((a) => [areaName(a), pct(tempoSeries(snaps, a).at(-1)!.v)])}>
+          {tempoAreas.length > 1 && (
+            <div className="chips pt-areafilter" role="group" aria-label={he ? 'תחומים (עד 4)' : 'Areas (up to 4)'}>
+              {tempoAreas.map((a) => (
+                <button key={a} type="button" className={`chip ${chosen.includes(a) ? 'on' : ''}`} aria-pressed={chosen.includes(a)} onClick={() => togglePick(a)} data-tempo-area={a} disabled={!chosen.includes(a) && chosen.length >= 4}>
+                  {areaName(a)}
+                </button>
+              ))}
+            </div>
+          )}
+          <MultiLine series={chosen.map((a) => ({ id: a, name: areaName(a), color: areaColor(a, mode), pts: tempoSeries(snaps, a) }))} lang={lang} fmt={pct} target={1} lo={0} hi={1.1} refPts={medTempo} refName={he ? 'חציון הכיתה' : 'Class median'} />
+        </Card>
+      )}
+
+      {(ear.length > 1 || read.length > 1 || mix) && (
+        <Card lang={lang} title={he ? 'שמיעה וקריאה' : 'By ear and reading'} table={[[he ? 'משמיעה' : 'By ear', ear.length ? pct(ear.at(-1)!.v) : '–'], [he ? 'קריאה' : 'Reading', read.length ? pct(read.at(-1)!.v) : '–'], [he ? 'התמהיל השבוע' : "This week's mix", lastMix]]}>
+          {(ear.length > 1 || read.length > 1) && (
+            <div className="pt-multiples">
+              <div className="pt-multiple">
+                <span className="pt-mname">{he ? 'משמיעה' : 'By ear'}</span>
+                <SmallLine pts={ear} color={areaColor('byear', mode)} name="ear" lang={lang} fmt={pct} lo={0} hi={1} />
+              </div>
+              <div className="pt-multiple">
+                <span className="pt-mname">{he ? 'קריאה' : 'Reading'}</span>
+                <SmallLine pts={read} color={areaColor('reading', mode)} name="reading" lang={lang} fmt={pct} lo={0} hi={1} />
+              </div>
+            </div>
+          )}
+          {mix && (
+            <div data-mix-bar="1">
+              <ShareBars
+                lang={lang}
+                parts={chParts}
+                rows={[
+                  { id: 'actual', label: he ? 'השבוע' : 'This week', v: mix.actual },
+                  { id: 'target', label: he ? 'היעד' : 'Target', v: mix.target },
+                ]}
+              />
+            </div>
+          )}
         </Card>
       )}
 
@@ -324,7 +425,7 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
                 <span>{n}</span>
                 {keys.map((w) => {
                   const v = w.keys[k];
-                  return <i key={w.week} title={`${n} · ${fmtDay(w.week, lang)} · ${v === undefined ? '–' : pct(v)}`} style={{ background: v === undefined ? 'var(--line)' : `color-mix(in oklab, ${areaColor('technique', dark ? 'dark' : 'light')} ${Math.round(15 + v * 85)}%, var(--card))` }} />;
+                  return <i key={w.week} title={`${n} · ${fmtDay(w.week, lang)} · ${v === undefined ? '–' : pct(v)}`} style={{ background: v === undefined ? 'var(--line)' : `color-mix(in oklab, ${areaColor('technique', mode)} ${Math.round(15 + v * 85)}%, var(--card))` }} />;
                 })}
               </div>
             ))}
@@ -332,16 +433,66 @@ export function ProgressOverTime({ lang, areaName, today = localDay(new Date()),
         </Card>
       )}
 
-      <Card lang={lang} title={he ? 'לאן הולכות הדקות' : 'Where the minutes go'} sub={medNote ?? undefined} table={mins.map((m) => [fmtDay(m.week, lang), Object.entries(m.by).map(([k, v]) => `${k} ${v}`).join(' · ') + (medWeeks?.[m.week] !== undefined ? ` · ${he ? 'חציון' : 'median'} ${Math.round(medWeeks[m.week])}` : '')])}>
-        <StackCols cols={mins} keys={minKeys} colorOf={(k) => (k === 'other' ? neutral : areaColor(k, dark ? 'dark' : 'light'))} labelOf={(k) => (k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k))} lang={lang} marks={medWeeks} />
+      <Card lang={lang} title={he ? 'לאן הולכות הדקות' : 'Where the minutes go'} sub={medNote ?? undefined} table={mins.map((m) => [fmtDay(m.week, lang), Object.entries(m.by).map(([k, v]) => `${k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k)} ${v}`).join(' · ') + (medWeeks?.[m.week] !== undefined ? ` · ${he ? 'חציון' : 'median'} ${Math.round(medWeeks[m.week])}` : '')])}>
+        <StackCols cols={mins} keys={minKeys} colorOf={(k) => (k === 'other' ? neutral : areaColor(k, mode))} labelOf={(k) => (k === 'other' ? (he ? 'אחר' : 'Other') : areaName(k))} lang={lang} marks={medWeeks} />
+        {!isEar && split.total > 0 && (
+          <div data-planned-split="1">
+            <ShareBars
+              lang={lang}
+              parts={splitParts}
+              rows={[
+                { id: 'plan', label: he ? 'התכנון' : 'Planned', v: { ...PLANNED_SPLIT, other: 0 } },
+                { id: 'actual', label: he ? 'בפועל' : 'Actual', v: split },
+              ]}
+            />
+          </div>
+        )}
       </Card>
+
+      {!isEar && lang8.learned.length > 1 && (lang8.learned.some((p) => p.v > 0) || lang8.language.some((p) => p.v > 0)) && (
+        <Card lang={lang} title={he ? 'שפה' : 'Language'} sub={he ? 'ליקים שנלמדו, ומהם — בשפה שלי' : 'Licks learned, and of them in my language'} table={[[he ? 'נלמדו' : 'Learned', String(lang8.learned.at(-1)!.v)], [he ? 'בשפה שלי' : 'In my language', String(lang8.language.at(-1)!.v)]]}>
+          <div data-language-chart="1">
+            <MultiLine
+              lang={lang}
+              lo={0}
+              series={[
+                { id: 'learned', name: he ? 'נלמדו' : 'Learned', color: areaColor('improv', mode), pts: lang8.learned },
+                { id: 'language', name: he ? 'בשפה שלי' : 'In my language', color: areaColor('harmony', mode), pts: lang8.language },
+              ]}
+            />
+          </div>
+        </Card>
+      )}
+
+      {(cov.length > 1 || inScale.length > 1 || grid) && (
+        <Card lang={lang} title={he ? 'אלתור' : 'Improvisation'} table={[[he ? 'כיסוי צלילי צבע' : 'Colour coverage', cov.length ? pct(cov.at(-1)!.v) : '–'], [he ? 'בתוך הסולם' : 'In the scale', inScale.length ? pct(inScale.at(-1)!.v) : '–'], ...(grid ? grid.fns.flatMap((f) => grid.modes.filter((m) => grid.cell(f, m) !== null).map((m): [string, string] => [`${FN_NAME[f] ?? f} · ${modeName(m)}`, pct(grid.cell(f, m)!)])) : [])]}>
+          <div className="pt-multiples" data-improv-charts="1">
+            <div className="pt-multiple">
+              <span className="pt-mname">{he ? 'כיסוי צלילי צבע' : 'Colour coverage'}</span>
+              <SmallLine pts={cov} color={areaColor('improv', mode)} name="colour" lang={lang} fmt={pct} lo={0} hi={1} />
+            </div>
+            <div className="pt-multiple">
+              <span className="pt-mname">{he ? 'בתוך הסולם' : 'In the scale'}</span>
+              <SmallLine pts={inScale} color={areaColor('improv', mode)} name="in-scale" lang={lang} fmt={pct} lo={0} hi={1} />
+            </div>
+          </div>
+          {grid && (
+            <div data-mode-grid={`${grid.fns.length}x${grid.modes.length}`}>
+              <span className="pt-mname">{he ? 'מוד × תפקיד: צלילי הצבע' : 'Mode × function: the colour notes'}</span>
+              <HeatGrid lang={lang} label={he ? 'מוד מול תפקיד' : 'Mode by function'} rows={grid.fns.map((f) => ({ id: f, name: FN_NAME[f] ?? f }))} cols={grid.modes.map((m) => ({ id: m, name: modeName(m) }))} cell={grid.cell} color={areaColor('improv', mode)} />
+            </div>
+          )}
+        </Card>
+      )}
 
       {proj && <ProjectionCard p={proj} lang={lang} />}
 
-      <SinceLesson snaps={all} lang={lang} today={today} areaName={areaName} />
-      <div className="pt-share">
-        <ProgressShareButton lang={lang} tiles={tiles} line={ins[0] ?? null} />
-      </div>
+      {!readOnly && <SinceLesson snaps={all} lang={lang} today={today} areaName={areaName} />}
+      {!readOnly && (
+        <div className="pt-share">
+          <ProgressShareButton lang={lang} tiles={tiles} line={ins[0] ?? null} />
+        </div>
+      )}
     </div>
   );
 }

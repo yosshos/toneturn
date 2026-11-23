@@ -50,14 +50,15 @@ export function tasteLevel(course: CourseId, style: StyleId): LevelDef | null {
   const lv = fams.flatMap((f) => f.levels.filter((l) => styleOfLevel(l, f) === style));
   return lv.sort((a, b) => (techDifficulty(a.id) ?? 9999) - (techDifficulty(b.id) ?? 9999))[0] ?? null;
 }
-/** The taste's lick: the first lick tagged with the style (none yet for most styles: the part is skipped). */
+/** The taste's lick: the first lick tagged with the style (none yet: the part opens the library on the style instead). */
 export const tasteLick = (style: StyleId) => LICKS.find((l) => l.style === style) ?? null;
 
-/** The parts this taste has in this course (drums: no lick; a style without content yet: only the band). */
+/** The parts this taste has in this course (drums: no lick; no groove level yet: no groove part). The lick part stays
+ *  even without a style lick in the library (SPEC-STYLE-FOCUS §9.1): it opens the Licks library filtered to the style. */
 export function tasteParts(course: CourseId, style: StyleId): Part[] {
   const out: Part[] = [];
   if (tasteLevel(course, style)) out.push('groove');
-  if (course !== 'drums' && tasteLick(style)) out.push('lick');
+  if (course !== 'drums') out.push('lick');
   out.push('band');
   return out;
 }
@@ -78,7 +79,8 @@ export interface StyleCardsProps {
   onSettings: (p: Partial<Settings>) => void;
   /** Run a taste part: the groove level's drills, the lick, the 8 bars over the band. */
   onGroove: (level: LevelDef) => void;
-  onLick: (lickId: string) => void;
+  /** The lick part: the style's lick when the library has one, else the library filtered to the style (lickId null). */
+  onLick: (lickId: string | null, style: StyleId) => void;
   onBand: (style: StyleId) => void;
 }
 
@@ -221,8 +223,7 @@ export function StyleCards(p: StyleCardsProps) {
       const lv = tasteLevel(course, style);
       if (lv) p.onGroove(lv);
     } else if (part === 'lick') {
-      const l = tasteLick(style);
-      if (l) p.onLick(l.id);
+      p.onLick(tasteLick(style)?.id ?? null, style);
     } else p.onBand(style);
   };
   const close = (t: StyleTaste): StyleTaste => ({ ...t, cur: undefined });

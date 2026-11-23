@@ -7,8 +7,9 @@
 //   node, or "later in your path"), "why today", the main button by the way in, then only the actions this piece has.
 // On a wide screen the list and the piece sit side by side. One phone screen each, no emoji.
 
+import { repGoalFor } from '../engine/repStyleGoal';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
+import { REP_TIERS, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
 import { STYLE_TEXT, type StyleId } from '../engine/styles';
 import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
 import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
@@ -95,7 +96,8 @@ export function RepertoireScreen(p: RepertoireProps) {
   const wide = useWide();
   const goalCourse: RepCourse = course;
   const res = repResults(lessons, goalCourse);
-  const goal = repGoal(goalCourse, res);
+  // SPEC-STYLE-FOCUS §4: the next-goal card follows the main style ("your third Brazilian piece"); jazz keeps the road
+  const goal = repGoalFor(goalCourse, res, p.styles?.length ? { styleFocus: { [course]: { main: p.styles[0], also: p.styles.slice(1) } } } : {});
   const lib = useMemo(() => libraryFor(course, jazz), [course, jazz]);
   // Mine: my charts (settings), my scores and recordings (IndexedDB on this device).
   const [scores, setScores] = useState<{ id: string; title: string; composer?: string; progress: number; done: boolean }[]>([]);

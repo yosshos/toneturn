@@ -81,6 +81,7 @@ import { type GuitarLevelDef } from '../engine/drills/guitar';
 import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
 import { StyleChips } from './StyleChips';
 import { focusOf, withFocus } from '../engine/styleFocus';
+import type { StyleId } from '../engine/styles';
 import { FAMILY_LESSON } from '../content/mini/guitar';
 import { MINI_LESSONS } from '../content/minilessons';
 import { MiniLessonPlayer } from './MiniLesson';
@@ -495,6 +496,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           lang={lang}
           ds={ds}
           noJazz={!!settings.activeCourse && !jazzOpenIn(settings, settings.activeCourse)}
+          mainStyle={focusOf(settings, courseOfInstrument(ds.instrument)).main}
           cal={calOf(settings)}
           items={items}
           onTake={onTake}
@@ -2124,7 +2126,7 @@ function Calibration({ lang, cal, onSave }: { lang: Lang; cal: DrillCalibration;
   );
 }
 
-type LevelTestProps = { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit']; /** SPEC-JAZZ-FOLD: the jazz pack is closed in the course — no jazz sections or steps. */ noJazz?: boolean };
+type LevelTestProps = { lang: Lang; ds: DrillSettings; cal: DrillCalibration; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onDone: (start: Partial<Record<FamilyId, number>> | null) => void; midiOctave: number; onOctave: (o: number) => void; onBassTuning?: (t: string) => void; kit?: Settings['drumKit']; /** SPEC-JAZZ-FOLD: the jazz pack is closed in the course — no jazz sections or steps. */ noJazz?: boolean; /** SPEC-STYLE-FOCUS §4: the course's main style — its short check closes the test. */ mainStyle?: StyleId };
 /** The playing level test: piano runs the section test (SPEC-LEVEL-TEST); the other instruments their probes. */
 function TechLevelTest(p: LevelTestProps & { bassTuning?: string }) {
   return <SectionLevelTest {...p} />;
@@ -2160,7 +2162,7 @@ const PIANO_TEST_TX = {
 };
 
 /** The playing level test: sections of real levels, adaptive, one take per step (docs/SPEC-LEVEL-TEST.md). */
-function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, kit, bassTuning, noJazz }: LevelTestProps & { bassTuning?: string }) {
+function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, onOctave, kit, bassTuning, noJazz, mainStyle }: LevelTestProps & { bassTuning?: string }) {
   const tx = PIANO_TEST_TX[lang];
   const inst = ds.instrument ?? 'piano';
   const cat = useMemo(() => familiesOf(inst), [inst]);
@@ -2173,7 +2175,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     // and every piano level the course path teaches (the jazz pianist's core scales and arpeggios, R8)
     if (inst === 'piano') for (const id of pathPianoLevels(ds)) shown.add(id);
     // SPEC-STYLE-FOCUS §2: the test checks everything the course covers — no emphasis drops the jazz strand
-    return strandsFor(inst, 'both', { mic: byMic && inst === 'piano', upright: bassTuning === 'upright' || bassTuning === 'bass-fretless' })
+    return strandsFor(inst, 'both', { mic: byMic && inst === 'piano', upright: bassTuning === 'upright' || bassTuning === 'bass-fretless', ...(mainStyle ? { style: mainStyle } : {}) })
       .map((x) => ({
         ...x,
         rungs: x.rungs
@@ -2194,7 +2196,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
       }))
       .filter((x) => x.rungs.length > 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cat, inst, ds.emphasis, bassTuning, kit, noJazz]);
+  }, [cat, inst, ds.emphasis, bassTuning, kit, noJazz, mainStyle]);
   const [started, setStarted] = useState(false);
   const [si, setSi] = useState(0);
   const [st, setSt] = useState<StrandState>(() => startState(strands[0]?.rungs.length ?? 0));

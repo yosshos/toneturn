@@ -12,6 +12,7 @@ import { examCard } from '../engine/examPrep';
 import type { ExamDef } from '../content/bagrut';
 import { EXAM_PREP_NAME } from './CourseSwitcher';
 import { repGoal, repResults } from '../engine/repertoire';
+import { repGoalFor } from '../engine/repStyleGoal';
 import '../repertoire.css';
 import '../todaypm.css';
 import { dayKey, doneOn, meanAbs, trend } from '../engine/pitchMemory';
@@ -20,6 +21,8 @@ import { FeaturedPhraseCard } from './encore/FeaturedToday';
 import '../encore.css';
 import { studioText, sfill } from '../i18n/studioText';
 import { Icon } from './icons';
+import { WeeklyRingTile, WeeklySummaryCard } from './PlaceCharts';
+import { areaLabel } from './Stats';
 
 /** What the exam-prep card opens (0.67): the next mock, a weak section's topic, the full exams list. */
 export interface ExamActions {
@@ -61,9 +64,10 @@ function ExamPrepCard({ progress, lang, on }: { progress: Progress; lang: 'he' |
 }
 
 /** Repertoire (SPEC-REPERTOIRE): the course's next goal on the road to standards, and the piece to play next. */
-function RepGoalCard({ progress, course, lang, onOpen }: { progress: Progress; course: CourseId; lang: 'he' | 'en'; onOpen: (itemId?: string) => void }) {
+function RepGoalCard({ progress, course, lang, onOpen, settings }: { progress: Progress; course: CourseId; lang: 'he' | 'en'; onOpen: (itemId?: string) => void; settings?: Settings }) {
   const he = lang === 'he';
-  const g = repGoal(course, repResults(progress.lessons, course));
+  // SPEC-STYLE-FOCUS §4: the goal follows the main style (THE weight); a jazz focus keeps the road to the standards
+  const g = settings ? repGoalFor(course, repResults(progress.lessons, course), settings) : repGoal(course, repResults(progress.lessons, course));
   return (
     <button type="button" className="tc-card tc-rep" onClick={() => onOpen(g.next?.id)} data-today-rep={g.id}>
       <small>{he ? 'היעד הבא ברפרטואר' : 'Next repertoire goal'}</small>
@@ -166,6 +170,8 @@ export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exa
             </>
           )}
         </button>
+        {/* SPEC-PROGRESS-CHARTS §2: the small weekly ring — this week's minutes against last week's, with ▲/▼ */}
+        <WeeklyRingTile lang={lang} />
         {streak !== undefined && (
           <button type="button" className="tc-card st-stat st-streak" onClick={onStreak} data-today-streak="1">
             <small>{sx.streak}</small>
@@ -178,8 +184,10 @@ export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exa
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       {onEncore && !examPrep && <TeacherPhraseTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}
       {onEncore && !examPrep && <EncoreTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} inst={encoreInstOf(settings)} range={settings.voiceRange ?? null} />}
+      {/* §5: the weekly summary, once a week (4 tiles, the largest change, one sentence) */}
+      <WeeklySummaryCard lang={lang} areaName={(a) => areaLabel(a, lang)} />
       <section className="st-more" aria-label={sx.moreToday}>
-        {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} />}
+        {onRepertoire && !examPrep && <RepGoalCard progress={progress} course={course} lang={lang} onOpen={onRepertoire} settings={settings} />}
         {onPitchMemory && !examPrep && PITCH_MEMORY_COURSES.includes(course) && <PitchMemoryCard progress={progress} lang={lang} onOpen={onPitchMemory} />}
         {onEncore && !examPrep && <FeaturedPhraseCard lang={lang} book={settings.lickBook} />}
         <details className="today-quests st-quests">

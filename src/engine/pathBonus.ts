@@ -182,3 +182,38 @@ export function unitEndSteps(n: number, unitDifficulty: number, open: PathStep[]
   }
   return out;
 }
+
+// ---------------------------------------------------------------- the core's neighbour-style moment (SPEC-STYLE-FOCUS §9)
+
+/**
+ * §9 (owner 2026-11-22): "the core units of the path include a moment from a neighbour style — for example, the ii–V–I
+ * unit has a version over bossa and a version over a montuno, so the jazz core itself shows the styles." A unit that
+ * holds a core ii–V–I level gets its neighbour-style versions as optional steps (never blocking the unit): the same
+ * ii–V–I comped in bossa and in montuno ponchando (block chords only — the montuno line levels stay hidden until their
+ * notes are verified). Each moment is the styled technique level itself, under its own id, so it counts for that level.
+ */
+export const NEIGHBOUR_MOMENTS: { core: string; moments: { id: string; level: string; title: { en: string; he: string } }[] }[] = [
+  {
+    core: 'tech:voicings-3',
+    moments: [
+      { id: 'moment:keys:iivi-bossa', level: 'tech:k-brazil-2', title: { en: 'The ii–V–I over bossa', he: 'ה־⁦ii–V–I⁩ בבוסה' } },
+      { id: 'moment:keys:iivi-ponchando', level: 'tech:k-montuno-12', title: { en: 'The ii–V–I in montuno ponchando', he: 'ה־⁦ii–V–I⁩ בפונצ׳נדו של מונטונו' } },
+    ],
+  },
+  // guitar: the batida over the ii–V–I (no guitar ponchando level exists yet; the guajeo is a line, not ponchando)
+  { core: 'tech:g-jazz-1', moments: [{ id: 'moment:guitar:iivi-bossa', level: 'tech:g-brazil-4', title: { en: 'The ii–V–I over bossa', he: 'ה־⁦ii–V–I⁩ בבוסה' } }] },
+];
+
+/** The neighbour-style moments of a unit's steps: optional copies of the styled levels (ids "moment:…"), once each. */
+export function neighbourMoments(unitStepIds: string[], byId: Map<string, PathStep>, taken: Set<string> = new Set()): PathStep[] {
+  const out: PathStep[] = [];
+  for (const m of NEIGHBOUR_MOMENTS) {
+    if (!unitStepIds.includes(m.core)) continue;
+    for (const x of m.moments) {
+      const base = byId.get(x.level);
+      if (!base || taken.has(x.id)) continue;
+      out.push({ ...base, id: x.id, bonus: true, title: x.title });
+    }
+  }
+  return out;
+}

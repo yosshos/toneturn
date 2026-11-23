@@ -220,7 +220,7 @@ import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, s
 import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
-import { focusOf, improvStyleFor, logStyleMinutes, migrateStyleFocus, picksOf, weakAreaOf, withFocus } from '../engine/styleFocus';
+import { focusOf, improvStyleFor, logStyleMinutes, migrateStyleFocus, picksOf, styleWeight, weakAreaOf, withFocus } from '../engine/styleFocus';
 import type { StyleId } from '../engine/styles';
 import { StyleCards } from './StyleTaster';
 import { focusSuggestions, myAssignments } from '../cloud/teacher';
@@ -247,7 +247,8 @@ import { DrumImprovScreen } from './DrumImprov';
 import type { LeadSheet } from '../engine/leadsheet';
 import { irealStyle } from '../engine/leadsheet';
 import type { ChartStyle } from '../engine/charts';
-import { isRepLesson, repGoal, repResult, repResults, type RepCourse, type RepItem, type RepWay } from '../engine/repertoire';
+import { isRepLesson, repGoal, repItem, repResult, repResults, type RepCourse, type RepItem, type RepWay } from '../engine/repertoire';
+import { repItemStyle } from '../engine/repStyleGoal';
 import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
@@ -257,8 +258,9 @@ import { applySyncedMeta, putSyncedTake, runCleanup, setRecordingContext, setRec
 import { listTakes as listOldVocalTakes } from '../storage/takes';
 import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
 import { measuredMsOn } from '../engine/practiceTime';
-import { recordSnapshot } from '../storage/snapshots';
-import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext } from '../storage/practice';
+import { installSnapshotRecorder, noteImprovTake } from '../storage/snapshots';
+import { snapshotExtra } from './snapshotInputs';
+import { addJournalNote, loadLedger, installPracticeClock, onMeasuredDay, recordPlateauTry, setPracticeContext, subscribePractice } from '../storage/practice';
 import { otherKey, stepBack, type PlateauFinding } from '../engine/plateau';
 import { Icon } from './icons';
 import { registerLangSetter } from './langSwitch';
@@ -316,13 +318,19 @@ export function App() {
   const [progressReady, setProgressReady] = useState(false);
   // SPEC-PROGRESS-CHARTS §1 (phase 1b): today's progress snapshot, a few seconds after progress settles; the past is
   // back-filled once. Feeds the over-time charts; nothing on screen yet.
+  // §1: rewritten after every session end of any kind (each ledger booking: ear, games, repertoire, improvisation) and
+  // after any change of progress or settings — debounced, reading the latest state (installSnapshotRecorder).
+  const snapIn = useRef<{ s: Settings | null; p: Progress }>({ s: null, p: progress });
+  snapIn.current = { s: settings, p: progress };
+  const snapRec = useRef<ReturnType<typeof installSnapshotRecorder> | null>(null);
   useEffect(() => {
     if (!progressReady) return;
-    const id = window.setTimeout(() => {
-      void recordSnapshot(localDay(new Date()), progress.drillItems ?? {}, loadLedger().days);
-    }, 4000);
-    return () => window.clearTimeout(id);
-  }, [progress.drillItems, progressReady]);
+    const r = installSnapshotRecorder(subscribePractice, () => ({ today: localDay(new Date()), items: snapIn.current.p.drillItems ?? {}, ledgerDays: loadLedger().days, extra: snapIn.current.s ? snapshotExtra(snapIn.current.s, snapIn.current.p) : undefined }));
+    snapRec.current = r;
+    r.schedule();
+    return () => r.stop();
+  }, [progressReady]);
+  useEffect(() => snapRec.current?.schedule(), [progress, settings?.lickBook, settings?.rotationStats, settings?.pathFacts]);
   // "mf cleared — f opens" (GAMES_TIERS_PLAN §2.3): one line for a few seconds after a run clears a tier.
   const [tierToast, setTierToast] = useState<{ tier: DynName; next: DynName | null } | null>(null);
   useEffect(() => {
@@ -982,6 +990,8 @@ export function App() {
   /** Technique opened from a piece ("Practise it in the technique hub"): the key page of the chart's key. */
   const [drillsKey, setDrillsKey] = useState<number | null>(null);
   const go = (r: Route) => {
+    // the style taster's lick start is for the next Licks screen only
+    if (r !== 'licks') lickStart.current = null;
     // The Licks tile (owner 2026-11-22): Encore's home is its "Mine" section, the challenges gallery its "Challenges".
     if (r === 'encore' || r === 'challenges') {
       location.hash = licksHash(r === 'encore' ? 'mine' : 'challenges');
@@ -1708,7 +1718,8 @@ export function App() {
     const pool = lickPool(items, s.lickBook);
     return {
       pool,
-      today: todaysLick(pool, s.lickBook, items),
+      // SPEC-STYLE-FOCUS §4: today's lick prefers the focus styles (THE weight; an untagged lick is jazz)
+      today: todaysLick(pool, s.lickBook, items, new Date(), (l) => styleWeight(s, (s.activeCourse ?? 'keys') as CourseId, l.style ?? 'jazz', localDay(new Date()))),
       log: s.lickBook?.uses,
       closed: Object.fromEntries(pool.map((l) => [l.id, closedKeys(items, l.id)])),
       onUses: (uses, xp) => {
@@ -1736,7 +1747,53 @@ export function App() {
   const chartQueue = useRef<Drill[] | null>(null);
   /** Repertoire (SPEC-REPERTOIRE): the item being practiced (its result is recorded when the practice ends) and the
    *  item page to come back to. */
-  const repOpen = useRef<{ course: RepCourse; id: string; after: string | null; kind: 'drill' | 'session' | 'chart' } | null>(null);
+  const repOpen = useRef<{ course: RepCourse; id: string; after: string | null; kind: 'drill' | 'session' | 'chart'; /** When it opened: its minutes count for the piece's style (SPEC-STYLE-FOCUS §9.4). */ at?: number } | null>(null);
+  /** SPEC-STYLE-FOCUS §3 / §9: the one style card (teacher's suggestion, the > 20 % trigger, the 6-month look or the
+   *  taster) — on Today and, §9.1, at the end of a session (the workout's finished screen). */
+  /** The style taster's lick part: the Licks library opens on this style (and lick), once. */
+  const lickStart = useRef<{ style: StyleId; lick: string | null } | null>(null);
+  const styleCardEl = () => {
+    if (!settings) return null;
+    const s = settings;
+    const activeC = (s.activeCourse ?? 'ear') as CourseId;
+    const today = localDay(new Date());
+    return (
+      <StyleCards
+        settings={s}
+        lang={s.uiLang}
+        course={activeC}
+        today={today}
+        weak={weakAreaOf(ratingsOf(progress))}
+        suggestion={focusSuggest}
+        onSettings={updateSettings}
+        onGroove={(lv) => {
+          chartQueue.current = levelDrills(lv, drillSettingsOf(s).keyOrder).slice(0, 3);
+          drillFrom.current = 'styletaste';
+          drillSessionXp.current = 0;
+          drillSession.current = { takes: 0, clean: 0 };
+          go('drills');
+        }}
+        onLick={(lick, st) => {
+          // §9.1: the style's lick, or the Licks library opened on the style (never a dead tap)
+          lickStart.current = { style: st, lick };
+          go('licks');
+        }}
+        onBand={(st) => {
+          improvStyleNext.current = st;
+          tasteBand.current = true;
+          improvInit.current = null;
+          go('improv');
+        }}
+      />
+    );
+  };
+  /** SPEC-STYLE-FOCUS §9.4: a repertoire piece's minutes go to its style's log, so the > 20 % trigger and the 6-month look see them. */
+  const noteRepStyle = (rp: { course: RepCourse; id: string; at?: number } | null) => {
+    if (!rp?.at) return;
+    const it = repItem(rp.course, rp.id);
+    const st = it ? repItemStyle(it) : null;
+    if (st) noteStyleMinutes(st, Math.min(60, (Date.now() - rp.at) / 60000), 'rep');
+  };
   const openRepWay = (item: RepItem, way: RepWay, inCourse?: RepCourse) => {
     if (!settings || !progress) return;
     const course: RepCourse = inCourse ?? ((settings.activeCourse ?? 'ear') as CourseId);
@@ -1749,24 +1806,24 @@ export function App() {
       drillFrom.current = 'repertoire';
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
-      repOpen.current = { course, id: item.id, after, kind: 'drill' };
+      repOpen.current = { course, id: item.id, after, kind: 'drill', at: Date.now() };
       return go('drills');
     }
     if (way.k === 'chart') {
       const st = STANDARD_CHANGES.find((x) => x.id === way.std);
       if (!st) return;
-      repOpen.current = { course, id: item.id, after, kind: 'chart' };
+      repOpen.current = { course, id: item.id, after, kind: 'chart', at: Date.now() };
       chartInit.current = { id: `rep-${st.id}`, title: `${item.title[settings.uiLang]} — ${st.part[settings.uiLang]}`, text: st.text, style: st.style, bpm: st.bpm, std: st.id };
       toolFrom.current = 'repertoire';
       engineArgNext.current = pieceKey({ kind: 'rep', course, id: item.id });
       return go('charts');
     }
     if (way.k === 'topic') {
-      repOpen.current = { course, id: item.id, after, kind: 'session' };
+      repOpen.current = { course, id: item.id, after, kind: 'session', at: Date.now() };
       return openTopic(way.topic, way.level);
     }
     if (way.k === 'vocal') {
-      repOpen.current = { course, id: item.id, after, kind: 'session' };
+      repOpen.current = { course, id: item.id, after, kind: 'session', at: Date.now() };
       toolFrom.current = 'repertoire';
       setVocalWarmup(false);
       setVocalLevel(way.level);
@@ -1779,6 +1836,7 @@ export function App() {
     const r = p.history[p.history.length - 1];
     if (!rp || rp.kind !== 'session' || !r || r.sessionId === rp.after || isRepLesson(r.lessonId) || r.total <= 0) return;
     repOpen.current = null;
+    noteRepStyle(rp);
     void store.recordCompletion(repResult(rp.course, rp.id, r.firstTry / r.total, 0, new Date(), true)).then(setProgress);
   };
   /** Phase 3: a piece page's action (SPEC-PRACTICE-IA-3 §3): its own measured way, the band, Improvise with this chart,
@@ -1790,7 +1848,7 @@ export function App() {
     repReturn.current = location.hash;
     const chart = chartOfPiece(e.ref, lang, settings.myCharts) as MyChart | null;
     if (a.k === 'band' && chart) {
-      if (e.ref.kind === 'rep' && e.ref.course) repOpen.current = { course: e.ref.course, id: e.ref.id, after: lastSession(), kind: 'chart' };
+      if (e.ref.kind === 'rep' && e.ref.course) repOpen.current = { course: e.ref.course, id: e.ref.id, after: lastSession(), kind: 'chart', at: Date.now() };
       chartInit.current = chart;
       engineArgNext.current = e.key;
       return go('charts');
@@ -1926,7 +1984,10 @@ export function App() {
       const xp = drillSessionXp.current;
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
-      if (rp && t0 > 0) void store.recordCompletion(repResult(rp.course, rp.id, c0 / t0, xp, new Date(), true)).then(setProgress);
+      if (rp && t0 > 0) {
+        noteRepStyle(rp);
+        void store.recordCompletion(repResult(rp.course, rp.id, c0 / t0, xp, new Date(), true)).then(setProgress);
+      }
       // back to the piece's page it was opened from
       return backToRep(() => openRep({}));
     }
@@ -2746,29 +2807,7 @@ export function App() {
           styleCard={
             // SPEC-STYLE-FOCUS §3 / §9: the teacher's focus suggestion, the >20 % trigger, the 6-month look or the
             // style taster — at most one, on Today (never inside an exercise).
-            <StyleCards
-              settings={s}
-              lang={s.uiLang}
-              course={activeC}
-              today={today}
-              weak={weakAreaOf(ratingsOf(progress))}
-              suggestion={focusSuggest}
-              onSettings={updateSettings}
-              onGroove={(lv) => {
-                chartQueue.current = levelDrills(lv, drillSettingsOf(s).keyOrder).slice(0, 3);
-                drillFrom.current = 'styletaste';
-                drillSessionXp.current = 0;
-                drillSession.current = { takes: 0, clean: 0 };
-                go('drills');
-              }}
-              onLick={() => go('licks')}
-              onBand={(st) => {
-                improvStyleNext.current = st;
-                tasteBand.current = true;
-                improvInit.current = null;
-                go('improv');
-              }}
-            />
+            styleCardEl()
           }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
           streak={gems.streak}
@@ -3330,6 +3369,7 @@ export function App() {
           lang={s.uiLang}
           run={wrun}
           subs={workoutSubs}
+          endCard={styleCardEl()}
           onGo={() => {
             const b = wrun.blocks[wrun.at];
             // BUILD-PLAN phase 2: the piano's technique block — today's matrix cells under the coach, as long as the block;
@@ -3533,6 +3573,7 @@ export function App() {
             ) : (
               <LickTrainerScreen
                 hub
+                {...(lickStart.current ? { startStyle: lickStart.current.style, ...(lickStart.current.lick ? { startLick: lickStart.current.lick } : {}) } : {})}
                 lang={s.uiLang}
                 settings={s}
                 items={progress.drillItems ?? {}}
@@ -3631,6 +3672,7 @@ export function App() {
             // Phase 5: every take of Improvise is one rated result — the rating (improv), XP, league and course share
             // through one completion; the mode × function stats the rotation picks from.
             if (t.stats) updateSettings({ rotationStats: t.stats });
+            if (t.inSet !== undefined) void noteImprovTake(localDay(new Date()), t.inSet);
             const e = t.event;
             void store
               .recordCompletion({ lessonId: t.lessonId, lessonVersion: 1, sessionId: e.id, completedAt: e.at, firstTry: e.correct ? 1 : 0, total: 1, xp: t.xp, missed: [], items: [{ id: e.id, skill: e.skill, difficulty: e.difficulty, correct: e.correct, tag: t.kind, score: e.score, tags: e.tags }], course: (s.activeCourse ?? 'keys') as CourseId })
@@ -3699,6 +3741,7 @@ export function App() {
             const rp = repOpen.current;
             if (rp && rp.kind === 'chart') {
               repOpen.current = null;
+              noteRepStyle(rp);
               void store.recordCompletion(repResult(rp.course, rp.id, score, Math.round(score * 12))).then(setProgress);
             }
             if (challenge && score > (s.challengeBest?.[challenge] ?? -1)) updateSettings({ challengeBest: { ...(s.challengeBest ?? {}), [challenge]: score } });

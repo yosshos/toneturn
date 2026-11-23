@@ -179,9 +179,9 @@ describe('Phrase / Vary / Trade record results (one rated result each)', () => {
   });
   it('the studio calls onTake from Phrase, Vary and Trade (and grades Phrase / Trade against the rotation)', () => {
     const ui = src('ui/ImprovStudio.tsx');
-    expect(ui).toContain("onTake?.(improvTake('phrasing'");
+    expect(ui).toContain("onTake?.({ ...improvTake('phrasing'");
     expect(ui).toContain("onTake?.(improvTake('vary'");
-    expect(ui).toContain("onTake?.(improvTake('trade'");
+    expect(ui).toContain("onTake?.({ ...improvTake('trade'");
     expect(ui.match(/gradeRotation\(/g)?.length).toBeGreaterThanOrEqual(2);
     expect(ui).toContain('<CovLine g={g} />');
     expect(ui).toContain("['scales', ...(onOpenChart");

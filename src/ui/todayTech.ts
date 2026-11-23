@@ -11,7 +11,7 @@ import { weekOf, type LadderInst } from '../engine/drills/keyIndex';
 import { playerTier } from '../engine/drills/tiers';
 import { keyMatrix, type MatrixCell, type MatrixGroup, type MatrixView } from '../engine/drills/keyMatrix';
 import { lickPool } from '../engine/vocab';
-import { focusOf } from '../engine/styleFocus';
+import { focusOf, weightedFocus } from '../engine/styleFocus';
 import { freezePlan, thawPlan, todayTechPlan, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
 
 const lsGet = (k: string): string | null => {
@@ -119,7 +119,8 @@ export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillSt
     const plan = thawPlan(kept, cells);
     if (plan.length) return { plan, weekRoot, at: Math.min(kept.at, plan.length - 1), minutes: a.minutes };
   }
-  const plan = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus, day: a.day });
+  // …drawn by THE weights (styleWeight via weightedFocus: the rest by taste, liked ×2 / declined ×0.4)
+  const plan = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus: weightedFocus(a.settings, inst === 'piano' ? 'keys' : inst, a.day), day: a.day });
   lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view, inst } satisfies Kept));
   return { plan, weekRoot, at: 0, minutes: a.minutes };
 }

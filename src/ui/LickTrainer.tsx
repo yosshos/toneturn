@@ -376,6 +376,9 @@ export interface LickTrainerProps {
   onBack: () => void;
   /** Open on the review (the workout's lick block). */
   startReview?: boolean;
+  /** SPEC-STYLE-FOCUS §9.1: the style taster's lick part — open on this style (the library filtered to it), and on this lick when given. */
+  startStyle?: StyleId;
+  startLick?: string;
   /** A path step: open on this level's licks; onPathDone gets the stars when the player leaves. */
   pathLevel?: number;
   onPathDone?: (stars: number) => void;
@@ -387,7 +390,7 @@ export interface LickTrainerProps {
   onImprovise?: (c: MyChart) => void;
 }
 
-export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise }: LickTrainerProps) {
+export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, onUsed, onBack, startReview, pathLevel, onPathDone, hub, onImprovise, startStyle, startLick }: LickTrainerProps) {
   const tx = TX[lang];
   const inst = lickInstrumentOf(settings);
   const book: LickBook = settings.lickBook ?? {};
@@ -398,8 +401,9 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const due = dueLicks(book.review).filter((id) => lickById(id, own));
   const [tab, setTab] = useState<LickContext | 'all' | 'review' | 'mine' | 'ear'>(startReview && due.length ? 'review' : 'all');
   // SPEC-STYLE-FOCUS §4: the library opens on the first of my styles that has licks (untagged licks are jazz)
-  const [styleF, setStyleF] = useState<StyleId | 'all'>(() => picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).find((st) => all.some((l) => !l.own && (l.style ?? 'jazz') === st)) ?? 'all');
-  const [view, setView] = useState<View>({ k: 'lib' });
+  const [styleF, setStyleF] = useState<StyleId | 'all'>(() => startStyle ?? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).find((st) => all.some((l) => !l.own && (l.style ?? 'jazz') === st)) ?? 'all');
+  // the taster's lick (§9.1): its page at once, when the library has it
+  const [view, setView] = useState<View>(() => (startLick && all.some((l) => l.id === startLick) ? ({ k: 'lick', id: startLick } as View) : { k: 'lib' }));
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
   const opts = { range: settings.voiceRange ?? null, tuning: inst === 'bass' ? bassTuningOf(settings) : undefined, band: true };
@@ -601,7 +605,10 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const lickStyle = (l: Lick): StyleId => l.style ?? 'jazz';
   // (the row shows once the library holds more than one style — today every built-in lick is jazz)
   const libStyles = new Set(all.filter((l) => !l.own).map(lickStyle));
-  const myStyles = libStyles.size > 1 ? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).filter((st) => libStyles.has(st)) : [];
+  const myStyles0 = libStyles.size > 1 ? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).filter((st) => libStyles.has(st)) : [];
+  // opened by the style taster on a style (§9.1): its chip shows even before the library holds licks in it
+  const myStyles = startStyle && !myStyles0.includes(startStyle) ? [startStyle, ...myStyles0] : myStyles0;
+  const styleEmpty = styleF !== 'all' && !libStyles.has(styleF);
   const styled = styleF === 'all' || (tab !== 'all' && !CONTEXTS.some((c) => c.id === tab)) ? list : list.filter((l) => l.own || lickStyle(l) === styleF);
   const shown = pathLevel && tab === 'all' ? [...styled.filter((l) => l.level === pathLevel), ...styled.filter((l) => l.level !== pathLevel)] : styled;
   const startReviewRun = () => {
@@ -642,6 +649,11 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
             {lang === 'he' ? 'כל הסגנונות' : 'All styles'}
           </button>
         </div>
+      )}
+      {styleEmpty && (tab === 'all' || CONTEXTS.some((c) => c.id === tab)) && (
+        <p className="field-hint" data-lick-style-empty={styleF}>
+          {lang === 'he' ? `עוד אין בספרייה ליקים בסגנון ${STYLE_TEXT[styleF].he}. הם ייכנסו כשיימצאו להם מקורות מאומתים.` : `No ${STYLE_TEXT[styleF].en} licks in the library yet. They come in once verified sources are found.`}
+        </p>
       )}
       {tab === 'review' && due.length > 0 && (
         <button className="btn primary" onClick={startReviewRun} data-lick-review="1">

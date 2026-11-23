@@ -47,6 +47,9 @@ export async function mockSnapshotRpc(fn: string, a: Record<string, unknown>): P
       return null;
     case 'toneturn_class_snapshots':
       return MOCK_STUDENTS.flatMap((st) => Object.values(mockStudentSnaps(st)).filter((s) => s.day >= String(a.p_from)).map((s) => ({ user_id: st.id, day: s.day, data: s })));
+    case 'toneturn_digest_snapshots':
+      // the parent digest: the first mock student's summaries
+      return Object.values(mockStudentSnaps(MOCK_STUDENTS[0])).filter((x) => x.day >= String(a.p_from)).map((x) => ({ day: x.day, data: x }));
     case 'toneturn_class_set_median':
       localStorage.setItem(MEDIAN_KEY, a.p_on ? '1' : '0');
       return null;

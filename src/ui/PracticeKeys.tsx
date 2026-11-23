@@ -20,6 +20,7 @@ import { keyName, keysInOrder } from '../engine/drills/generate';
 import { Icon } from './icons';
 import { keyFacts, keyQuiz, minorModesOn } from '../engine/keyTheory';
 import { weekOf } from '../engine/drills/keyIndex';
+import { KeyClosedLine } from './PlaceCharts';
 
 type Lang = 'he' | 'en';
 export type PracticeView = 'topic' | 'key';
@@ -296,6 +297,8 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
+      {/* SPEC-PROGRESS-CHARTS §2: the key's line — how much of it is closed, over time (the daily snapshots) */}
+      <KeyClosedLine root={root} lang={lang} name={keyName(root)} />
       {today && today.n > 0 && (
         <p className="kp-today" data-kp-today={today.n}>
           <span className="today-chip">{he ? 'חלק מהאימון של היום' : "Part of today's workout"}</span>

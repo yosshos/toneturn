@@ -572,6 +572,13 @@ const oneKeyTitle = (l: LevelDef): { en: string; he: string } => {
   return { en: cut(l.title.en), he: cut(l.title.he) };
 };
 
+/**
+ * SPEC-STYLE-FOCUS §6 (owner 2026-11-22): "jazz rungs a tier earlier" follows the style focus — the course's main style is
+ * jazz. The old piano emphasis (`jazz`, from drills.emphasis) is read only when no focus is given (read-only for one
+ * version), so a focus with another main style never opens the jazz rungs early whatever the old setting says.
+ */
+export const jazzFirst = (opts: { jazz?: boolean; focus?: Pick<StyleFocus, 'main'> }): boolean => (opts.focus ? opts.focus.main === 'jazz' : !!opts.jazz);
+
 /** Every rung of a key open at the tier, built for that key: the warm-up scale, then the ladder's rungs (teaching order i). */
 export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean; /** The player's lick pool (vocab.lickPool): block G (piano). */ licks?: Lick[]; /** The instrument's ladder (default the piano's). */ instrument?: LadderInst; /** SPEC-STYLE-FOCUS: the course's style focus — block H's tiers. */ focus?: StyleFocus } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
   const minor = group === 'minor';
@@ -593,7 +600,8 @@ export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | '
   };
   const warm = make(w.fam, w.id, w.pick);
   // the rungs open at this tier (a jazz rung for a jazz focus a tier earlier); the later rungs (phase 7) after the row's own
-  const open = [...ladderRungs(group, inst), ...laterRungs(group, inst)].filter((r) => (r.tag || r.id !== w.id) && t >= r.min - (r.jazz && opts.jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || opts.jazz || t >= r.min));
+  const jazz = jazzFirst(opts);
+  const open = [...ladderRungs(group, inst), ...laterRungs(group, inst)].filter((r) => (r.tag || r.id !== w.id) && t >= r.min - (r.jazz && jazz ? 2 : 0) && (r.max === undefined || t <= r.max) && (!r.jazz || jazz || t >= r.min));
   const built = open.map((r, i) => ({ i, rung: r, lvl: make(r.fam, r.id, r.pick, r) })).filter((x): x is { i: number; rung: LadderRung; lvl: LevelDef } => !!x.lvl);
   // block G, language in the key (SPEC-DAILY-WORKOUT §6, phase 4): every lick of the pool in this key, after the ladder (piano)
   if (inst === 'piano')

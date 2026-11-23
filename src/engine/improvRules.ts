@@ -25,9 +25,12 @@ export type IntervalRule = 'steps' | 'thirds' | 'no-repeats' | 'chromatic' | 'le
 export type RhythmRule =
   | 'eighths' | 'triplets' | 'quarters' | 'sixteenths' | 'space'
   | 'half-notes' | 'offbeats' | 'no-one' | 'start-and' | 'dotted' | 'quarter-triplets' | 'one-on' | 'same-rhythm'
-  | 'start-two' | 'bars-2' | 'rest-bar' | 'double-bar' | 'displace' | 'behind' | 'ahead' | 'sparse' | 'call-response';
+  | 'start-two' | 'bars-2' | 'rest-bar' | 'double-bar' | 'displace' | 'behind' | 'ahead' | 'sparse' | 'call-response'
+  // style cards (SPEC-STYLE-FOCUS §4): the clave and the samba phrase
+  | 'clave-two-side' | 'clave-stroke' | 'samba-phrase';
 export type ShapeRule = 'octave' | 'fifth' | 'short-phrases' | 'long-lines' | 'rise' | 'fall' | 'arch' | 'motif' | 'end-chord-tone' | 'peak-once'
-  | 'motif-dev' | 'repeat-vary' | 'end-guide' | 'chrom-up' | 'full-range' | 'fall-chord';
+  | 'motif-dev' | 'repeat-vary' | 'end-guide' | 'chrom-up' | 'full-range' | 'fall-chord'
+  | 'clave-even' | 'clave-ponche';
 /** The drilled vocabulary (rule cards). */
 export type VocabRule = 'harris' | 'pivot' | 'enc-ab' | 'enc-ba' | 'enc-step' | 'enc-bebop' | 'enc-delayed' | 'approach' | 'triad-pair' | 'pent-super' | 'use-lick' | 'lick-every-4' | 'todays-lick' | 'lick-new-key' | 'lick-varied' | 'guide-target' | 'quote-head' | 'target-ct' | 'inside' | 'active';
 /** Touch (MIDI velocity) and instrument rules (rule cards). */
@@ -47,8 +50,8 @@ export interface RuleSet {
 
 export const NOTE_RULES: NoteRule[] = ['one-note', 'two-notes', 'three-notes', 'five-notes', 'scale', 'pentatonic', 'blues-scale', 'triad', 'chord-tones', 'guide-tones', 'upper', 'no-roots', 'guide-beats', 'target-3', 'target-7', 'target-tension', 'enclose', 'connect', 'three-on-one', 'flat9', 'tensions', 'bebop-scale', 'pent-5th-up', 'mm-alt', 'tritone-sub', 'side-slip'];
 export const INTERVAL_RULES: IntervalRule[] = ['steps', 'chromatic', 'thirds', 'fourths', 'sixths', 'leaps', 'wide', 'small', 'recover', 'zigzag', 'no-repeats'];
-export const RHYTHM_RULES: RhythmRule[] = ['quarters', 'half-notes', 'eighths', 'triplets', 'quarter-triplets', 'dotted', 'sixteenths', 'offbeats', 'start-and', 'start-two', 'no-one', 'same-rhythm', 'one-on', 'space', 'sparse', 'bars-2', 'rest-bar', 'call-response', 'displace', 'double-bar', 'behind', 'ahead'];
-export const SHAPE_RULES: ShapeRule[] = ['fifth', 'octave', 'full-range', 'short-phrases', 'long-lines', 'rise', 'fall', 'fall-chord', 'arch', 'motif', 'motif-dev', 'repeat-vary', 'end-chord-tone', 'end-guide', 'chrom-up', 'peak-once'];
+export const RHYTHM_RULES: RhythmRule[] = ['quarters', 'half-notes', 'eighths', 'triplets', 'quarter-triplets', 'dotted', 'sixteenths', 'offbeats', 'start-and', 'start-two', 'no-one', 'same-rhythm', 'one-on', 'space', 'sparse', 'bars-2', 'rest-bar', 'call-response', 'displace', 'double-bar', 'behind', 'ahead', 'samba-phrase', 'clave-two-side', 'clave-stroke'];
+export const SHAPE_RULES: ShapeRule[] = ['fifth', 'octave', 'full-range', 'short-phrases', 'long-lines', 'rise', 'fall', 'fall-chord', 'arch', 'motif', 'motif-dev', 'repeat-vary', 'end-chord-tone', 'end-guide', 'chrom-up', 'peak-once', 'clave-even', 'clave-ponche'];
 export const VOCAB_RULES: VocabRule[] = ['inside', 'active', 'target-ct', 'guide-target', 'approach', 'harris', 'enc-ab', 'enc-ba', 'enc-step', 'enc-bebop', 'enc-delayed', 'pivot', 'triad-pair', 'pent-super', 'use-lick', 'lick-every-4', 'todays-lick', 'lick-new-key', 'lick-varied', 'quote-head'];
 export const EXTRA_RULES: ExtraRule[] = ['ghost', 'accent-off', 'imply-roots', 'lh-shells', 'one-string', 'double-stops', 'octaves'];
 /** Rule ids checked by a rule card (ruleCards.ts) rather than by checkRules' own code. */
@@ -140,7 +143,9 @@ export const familyOf = (r: AnyRule): 'note' | 'interval' | 'rhythm' | 'shape' |
 
 export interface Challenge {
   id: string;
-  group: 'first' | 'notes' | 'lines' | 'rhythm' | 'shape' | 'vocab' | 'masters';
+  group: 'first' | 'notes' | 'lines' | 'rhythm' | 'shape' | 'vocab' | 'masters' | 'styles';
+  /** SPEC-STYLE-FOCUS §4: a challenge of a style (the clave, the samba phrase): listed first for that style's players. */
+  style?: import('./styles').StyleId;
   /** 1 easy … 5 hard. */
   level: number;
   title: Bi;
@@ -164,6 +169,7 @@ export const CHALLENGE_GROUPS: Record<Challenge['group'], Bi> = {
   shape: { en: 'Phrases and form', he: 'משפטים וצורה' },
   vocab: { en: 'Vocabulary', he: 'אוצר מילים' },
   masters: { en: 'Combined — the hard ones', he: 'משולבים — הקשים' },
+  styles: { en: 'In the style', he: 'בסגנון' },
 };
 
 /** The challenge library: ready rule sets with a musical idea behind each. */
@@ -267,6 +273,22 @@ export const CHALLENGES: Challenge[] = [
   { id: 'octave-line', group: 'lines', level: 3, title: { en: 'Octave melody', he: 'מנגינה באוקטבות' }, idea: { en: 'Guitar: quarter notes in octaves, Wes-style.', he: 'גיטרה: רבעים באוקטבות, בסגנון ווס.' }, rules: R(null, null, 'quarters', null, null, 'octaves') },
   { id: 'double-stop-line', group: 'lines', level: 3, title: { en: 'Double stops', he: 'דאבל סטופים' }, idea: { en: 'Guitar: two notes at a time, chord tones on the change.', he: 'גיטרה: שני צלילים בבת אחת, צלילי אקורד בהחלפה.' }, rules: R(null, null, null, null, 'target-ct', 'double-stops') },
 ];
+
+// SPEC-STYLE-FOCUS §4 ("improvisation levels and rules by style: on the clave, a samba phrase"): only the rules the
+// research supports — STYLE-AFROCUBAN §6.2 (start on the two-side, land on the ponche, 2- or 4-bar phrases, a phrase on
+// a clave stroke, trading over a montuno in multiples of the 2-bar cycle) and STYLE-BRAZIL §1(e) (phrases off the
+// downbeat, straight 8ths; space: a 2-bar phrase plus 2 bars of rest). Over the style's band (Improvise plays it).
+CHALLENGES.push(
+  { id: 'clave-2-side', group: 'styles', style: 'afrocuban', level: 3, title: { en: 'Phrases from the 2-side', he: 'משפטים מצד ה-2' }, idea: { en: 'Begin every phrase in the clave’s two-side bar, and keep it 2 or 4 bars long.', he: 'להתחיל כל משפט בתיבת שתי המכות של הקלאבה, ולשמור עליו באורך 2 או 4 תיבות.' }, rules: R('scale', null, 'clave-two-side', 'clave-even') },
+  { id: 'clave-on', group: 'styles', style: 'afrocuban', level: 3, title: { en: 'Play over the clave', he: 'לנגן על הקלאבה' }, idea: { en: 'Start each phrase on a clave stroke; let the clave shape your rhythm.', he: 'להתחיל כל משפט על מכה של הקלאבה; לתת לקלאבה לעצב את הקצב.' }, rules: R('chord-tones', null, 'clave-stroke') },
+  { id: 'clave-ponche', group: 'styles', style: 'afrocuban', level: 4, title: { en: 'Land on the ponche', he: 'לנחות על הפונצ׳ה' }, idea: { en: 'Start on a clave stroke, end each phrase on beat 4 of the three-side.', he: 'להתחיל על מכה של הקלאבה, ולסיים כל משפט בפעמה 4 של צד ה-3.' }, rules: R('scale', null, 'clave-stroke', 'clave-ponche') },
+  { id: 'montuno-trade', group: 'styles', style: 'afrocuban', level: 3, title: { en: 'Trading over a montuno', he: 'חילופים על מונטונו' }, idea: { en: 'Two bars you, two bars the montuno: trade in whole clave cycles.', he: 'שתי תיבות אתם, שתיים המונטונו: חילופים במחזורי קלאבה שלמים.' }, rules: R('scale', null, 'space', 'clave-even') },
+  { id: 'samba-phrase', group: 'styles', style: 'brazil', level: 3, title: { en: 'A samba phrase', he: 'משפט סמבה' }, idea: { en: 'Straight eighths, never starting or ending on the downbeat: anticipate it.', he: 'שמיניות ישרות, בלי להתחיל או לסיים על הפעמה הראשונה: להקדים אותה.' }, rules: R('scale', null, 'samba-phrase') },
+  { id: 'bossa-space', group: 'styles', style: 'brazil', level: 2, title: { en: 'Bossa: say it and wait', he: 'בוסה: להגיד ולחכות' }, idea: { en: 'A 2-bar phrase, then 2 bars of rest: the restrained bossa voice.', he: 'משפט של 2 תיבות, ואז 2 תיבות שקט: הקול המאופק של הבוסה.' }, rules: R('scale', 'small', 'space', 'end-chord-tone') },
+);
+
+/** SPEC-STYLE-FOCUS §4: the challenges of a style (the clave for Afro-Cuban, the samba phrase for Brazilian). */
+export const challengesForStyle = (style: import('./styles').StyleId | null | undefined): Challenge[] => (style ? CHALLENGES.filter((c) => c.style === style) : []);
 
 /** A random challenge, optionally up to a level. */
 export function randomChallenge(maxLevel = 5, rnd: () => number = Math.random): Challenge {

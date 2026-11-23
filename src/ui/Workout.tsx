@@ -562,7 +562,7 @@ export function WorkoutEditor({
 }
 
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs }: { /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, endCard }: { /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -596,6 +596,7 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
             </button>
           ))}
         </div>
+        {endCard}
         <button className="btn primary" onClick={onEnd}>
           {tx.home}
         </button>

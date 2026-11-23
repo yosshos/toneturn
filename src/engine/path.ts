@@ -32,7 +32,7 @@ import { COLOR_LEVEL_DIFF } from './drills/colorDrills';
 import { SP_LEVEL_DIFF } from './drills/soloPianoDrills';
 import { FIRST_RANK, NEW_FIRST_FAMILIES } from './drills/firstStepsDiff'; // AUDIT-6 Stage B
 import { GUITAR_TOP_RANK } from './drills/guitarTop';
-import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
+import { bonusSteps, isUnitEndStep, NEIGHBOUR_MOMENTS, neighbourMoments, repSteps, unitEndSteps } from './pathBonus';
 import { FLOW_GAME_PREREQ, FLOW_PREREQ, LADDER_WAITS, REP_PREREQ } from './pathPrereq';
 import { REPERTOIRE, repRefs } from './repertoire';
 import { styleOfLevel, type StyleId } from './styles';
@@ -1636,6 +1636,13 @@ export function buildPath(inp: PathInput): PathView {
         taken.add(x.id);
         steps.push(stateOf(x));
       }
+    // SPEC-STYLE-FOCUS §9: the core's neighbour-style moment — a unit with the core ii–V–I gets its versions over bossa
+    // and in montuno ponchando (optional steps, never blocking; the styled levels themselves under "moment:" ids)
+    for (const x of neighbourMoments(order.map((p) => p.s.id), byId, taken)) {
+      if (!eligible(x, inp)) continue;
+      taken.add(x.id);
+      steps.push(stateOf(x));
+    }
     // A checkpoint asks questions: it needs question steps (a unit of technique only is checked by its own playing).
     const questions = order.filter((p) => p.s.kind === 'topic' || p.s.kind === 'lesson');
     // SPEC-PATH-ROLE §4: the checkpoint also has a technique part (the unit's technique levels in 4 random keys at the
@@ -1734,6 +1741,12 @@ function virtualStep(id: string, unitId: string, from: PathStep[] = []): PathSte
     return { id, kind: 'check', skill: from[0]?.skill ?? 'degrees', sub: from[0]?.sub ?? 'degrees/diatonic', domain: from[0]?.domain ?? 'pitch', difficulty: d, choices: 0, title: { en: 'Checkpoint', he: 'נקודת ביקורת' } };
   }
   if (id.startsWith('review:')) return { id, kind: 'review', skill: 'degrees', sub: 'degrees/diatonic', domain: 'pitch', difficulty: 0, choices: 0, title: { en: 'Review', he: 'חזרה' } };
+  // SPEC-STYLE-FOCUS §9: a neighbour-style moment in a frozen unit (pathBonus.NEIGHBOUR_MOMENTS)
+  if (id.startsWith('moment:')) {
+    const m = NEIGHBOUR_MOMENTS.flatMap((x) => x.moments).find((x) => x.id === id);
+    const base = m ? stepCatalogue().find((s) => s.id === m.level) : undefined;
+    return base && m ? { ...base, id, bonus: true, title: m.title } : null;
+  }
   if (id.startsWith('game:')) {
     const game = id.split(':')[2];
     const g = GAME_STEPS[game];

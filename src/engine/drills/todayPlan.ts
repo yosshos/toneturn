@@ -6,7 +6,7 @@
 
 import type { FamilyDef } from './generate';
 import { cellItemIds, cellKey, fillMinutes, matrixOrder, type MatrixCell, type MatrixGroup, type MatrixView } from './keyMatrix';
-import { allocateSlots, seedOf, tierShares, type StyleFocus, type StyleTier } from '../styleFocus';
+import { allocateSlots, drawStyle, seedOf, tierShares, type StyleFocus, type StyleTier, type WeightedFocus } from '../styleFocus';
 import type { StyleId } from '../styles';
 
 /** Why a cell is in today's plan (SPEC-PATH-TODAY-PRACTICE §2 "why today"). */
@@ -58,9 +58,13 @@ export function pickStyleCells(cells: MatrixCell[], focus: StyleFocus, minutes: 
     const styles = [...new Set(pool.map((c) => c.style as StyleId))];
     const rot = styles.length ? Math.floor(seedOf(`${day}|${t}`) * styles.length) : 0;
     const order = [...styles.slice(rot), ...styles.slice(0, rot)];
+    // SPEC-STYLE-FOCUS §4 / §9.2: a focus carrying THE weights (styleFocus.weightedFocus → styleWeight) draws each slot's
+    // style by them — the rest by taste (liked ×2, declined ×0.4) — instead of in turn
+    const w = (focus as WeightedFocus).w;
     let k = 0;
     while (slots[t] > 0 && pool.some((c) => !out.includes(c))) {
-      const st = order[k++ % order.length];
+      const left = styles.filter((x) => pool.some((c) => c.style === x && !out.includes(c)));
+      const st = w ? (drawStyle(left, (x) => w[x] ?? 0, seedOf(`${day}|${t}|${k++}`)) ?? left[0]) : order[k++ % order.length];
       const c = pool.find((x) => x.style === st && !out.includes(x));
       if (c) {
         out.push(c);

@@ -1,6 +1,7 @@
 // Improvising under rules — the shared UI (owner 2026-11-09: "the highlight of the app; there are too few options"):
 // the four rule families as pickers, the challenge library (ready rule sets with the idea behind each, by level),
 // a random challenge, and the lead-sheet import that brings any tune's chords in.
+import { STYLE_TEXT, type StyleId } from '../engine/styles';
 import { useEffect, useRef, useState } from 'react';
 import { CHALLENGES, CHALLENGE_GROUPS, EXTRA_RULES, INTERVAL_RULES, NOTE_RULES, RHYTHM_RULES, RULE_NAME, SHAPE_RULES, VOCAB_RULES, activeRules, challengeOf, randomChallenge, type Challenge, type RuleSet } from '../engine/improvRules';
 import { readLeadSheet, type LeadSheet } from '../engine/leadsheet';
@@ -103,14 +104,18 @@ export function ChallengeLibrary({ lang, current, onPick, onClose, best }: { lan
 }
 
 /** All challenges, grouped. */
-export function ChallengeList({ lang, current, onPick, best }: { lang: Lang; current?: string; onPick: (c: Challenge) => void; best?: Record<string, number> }) {
+export function ChallengeList({ lang, current, onPick, best, style }: { lang: Lang; current?: string; onPick: (c: Challenge) => void; best?: Record<string, number>; /** SPEC-STYLE-FOCUS §4: the band's style — its challenges (the clave, the samba phrase) come first; other styles' last. */ style?: StyleId }) {
+  const groups = Object.keys(CHALLENGE_GROUPS) as Challenge['group'][];
+  const mine = !!style && CHALLENGES.some((c) => c.style === style);
+  const order = mine ? ['styles' as const, ...groups.filter((g) => g !== 'styles')] : groups;
+  const inGroup = (g: Challenge['group']) => CHALLENGES.filter((c) => c.group === g).sort((x, y) => (g === 'styles' ? Number(y.style === style) - Number(x.style === style) : 0));
   return (
     <div className="ir-groups">
-      {(Object.keys(CHALLENGE_GROUPS) as Challenge['group'][]).map((g) => (
-        <section key={g} className="ir-group">
-          <h3 className="menu-group-h">{CHALLENGE_GROUPS[g][lang]}</h3>
+      {order.map((g) => (
+        <section key={g} className="ir-group" data-challenge-group={g}>
+          <h3 className="menu-group-h">{g === 'styles' && mine && style ? `${CHALLENGE_GROUPS[g][lang]} · ${STYLE_TEXT[style][lang]}` : CHALLENGE_GROUPS[g][lang]}</h3>
           <ul className="ch-list ir-list">
-            {CHALLENGES.filter((c) => c.group === g).map((c) => (
+            {inGroup(g).map((c) => (
               <li key={c.id}>
                 <button className={`ch-row ir-row ${current === c.id ? 'on' : ''}`} onClick={() => onPick(c)} data-challenge={c.id}>
                   <span className="lv-text">
