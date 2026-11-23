@@ -64,6 +64,8 @@
 ## 2. Gaps to define during the build (not now)
 
 - **Ladders for guitar and bass** (phase 7). For drums there are no keys, so the 70/30 split becomes technique / grooves-fills-trading.
+  - *Defined in phase 7 (keyIndex.ts `guitarRungs` / `bassRungs` / `laterRungs`):* the keys ladder's blocks from each catalogue, all 12 keys. Guitar: warm-up CAGED / 3nps scale by tier; A 3nps picking, connected CAGED, interval sequences; S g-harm 3rds, triads, 7ths; B triad shapes and inversions, double stops, block triads, drop 2; D finger permutations, alternate picking, hammer-ons / pull-offs, string crossing, 3nps legato, skipping, sweeps; E ii–V–I shells, triads on string sets, drop 2, rootless; F Harris 6th-diminished. Bass: warm-up scale in position, then two octaves; A octaves and 10ths, the scale in 4ths; S the scale in 3rds, diatonic 7ths; B arpeggios (triads → 9ths); D finger permutations, skipping, shifts, stamina, accents, upper register; E chord tones, nearest chord tone, walking ii–V–I; F Harris. No approach-lick block on either yet (the owner's licks are piano-only).
+  - *The later rungs:* the Aeolian inside each major key from T1 (its 6th degree, the major key's signature), melodic minor in the minor rows and the modes from the root in the major rows from T4 (each mode: its scale, its 7th chords, lick 1 into them). One later rung per continuous key session.
 - **The level test:** how it sets the tier and per-rung start tempos. The two channel checks will fit its rules (one take per step).
 - **Storage:** the take events go to IndexedDB on the device with a size limit, and summaries sync.
 - **Hebrew wording** for the mode names and the Harris track. A screen-reader reading of the lead sheet.

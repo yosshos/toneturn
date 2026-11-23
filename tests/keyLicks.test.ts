@@ -112,14 +112,16 @@ describe('the licks in E♭ major and A harmonic minor', () => {
 describe('k-keylick: the family, all 12 keys', () => {
   const fam = catalog().find((f) => f.id === 'k-keylick')!;
   it('levels (owner 2026-11-22): lick 1, 2, 3 into scale degrees, 3rds, triads, 7ths — up and down, each hand — then hands together', () => {
-    expect(fam.levels.map((l) => l.id)).toEqual(Array.from({ length: 15 }, (_, i) => `k-keylick-${i + 1}`));
+    // 1–15 kept; 16–20 appended in phase 7 (the Aeolian from the 6th degree, the modes from the root, melodic minor)
+    expect(fam.levels.map((l) => l.id)).toEqual(Array.from({ length: 20 }, (_, i) => `k-keylick-${i + 1}`));
     expect(fam.levels[0].specs.map((s) => `${s.kind}/${s.hands}`)).toEqual(['kl-1-1-up/R', 'kl-1-1-down/R', 'kl-1-1-up/L', 'kl-1-1-down/L', 'kl-1-1-up/R', 'kl-1-1-down/R', 'kl-1-1-up/L', 'kl-1-1-down/L']);
     expect(fam.levels[1].specs[0].kind).toBe('kl-1-3-up');
     expect(fam.levels[2].specs[0].kind).toBe('kl-1-t-up');
     expect(fam.levels[3].specs[0].kind).toBe('kl-1-7-up');
     expect(fam.levels[4].specs.map((s) => s.kind)).toContain('kl-2ab-1-down');
     expect(fam.levels[11].specs[0].kind).toBe('kl-3-7-up');
-    expect(fam.levels.slice(12).every((l) => l.specs.every((s) => s.hands === 'RL'))).toBe(true);
+    expect(fam.levels.slice(12, 15).every((l) => l.specs.every((s) => s.hands === 'RL'))).toBe(true);
+    expect(fam.levels.slice(15).map((l) => [...new Set(l.specs.map((s) => s.option))].join(','))).toEqual(['5', '5', '5', '1,2,3,4,6', '8']);
     for (const l of fam.levels) {
       expect(l.keys).toBe('major');
       for (const s of l.specs) expect(s.option === 7 ? s.minor : !s.minor, s.kind).toBe(true);

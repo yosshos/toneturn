@@ -7,7 +7,7 @@
 import type { FamilyDef, LevelDef } from './generate';
 import type { ItemState } from './types';
 import { itemTargetBpm, specDrills } from './plan';
-import { openKeyRungs, type LadderRung } from './keyIndex';
+import { openKeyRungs, rungIdOf, type KeyMode, type LadderInst, type LadderRung } from './keyIndex';
 import { coolingDown, itemStatus } from './itemStatus';
 import type { Lick } from '../licks';
 import type { StyleId } from '../styles';
@@ -22,6 +22,8 @@ export interface MatrixCell {
   /** The rung's source level id (scales-3, k-sharm-7, k-keylick-5 …): the same exercise across keys. */
   rung: string;
   block: LadderRung['block'] | 'W';
+  /** A later rung of the row (phase 7): the Aeolian of a major key (from its 6th degree), melodic minor, a mode. */
+  mode?: KeyMode;
   /** Teaching order inside the key (the warm-up is −1). */
   i: number;
   level: LevelDef;
@@ -83,26 +85,30 @@ function minutesOf(ds: CellDrill[], items: Record<string, ItemState>): number {
   return s / 60;
 }
 
-/** Every open cell of the matrix: 12 major keys (and harmonic minor from T2), every rung open at the tier. */
+/**
+ * Every open cell of the matrix: 12 major keys (and harmonic minor from T2), every rung open at the tier — on the piano,
+ * the guitar or the bass (phase 7: each its own ladder, all 12 keys). The later rungs stay in their rows: the Aeolian of
+ * each major key (from its 6th degree, T1+), the modes from the root (T4+), melodic minor in the minor rows (T4+).
+ */
 type CellShape = Omit<MatrixCell, 'need' | 'minutes'> & { drills: CellDrill[] };
 /** The matrix's structure per tier / focus / groups: it does not depend on the player's items, so it is built once. */
 const shapeCache = new Map<string, CellShape[]>();
 
-function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[]; licks?: Lick[]; focus?: StyleFocus }): CellShape[] {
+function matrixShape(fams: FamilyDef[], tier: number, opts: { jazz?: boolean; groups?: MatrixGroup[]; licks?: Lick[]; instrument?: LadderInst; focus?: StyleFocus }): CellShape[] {
   const groups = opts.groups ?? (tier >= MINOR_FROM_TIER ? ['major', 'minor'] : ['major']);
   // block G (phase 4): the pool's licks are part of the shape (an own lick's notes too: an edit rebuilds it)
   const licks = (opts.licks ?? []).map((l) => `${l.id}:${l.notes.length}:${l.notes.reduce((a, n) => a + n[0] * 7 + n[1] * 3, 0)}`).join(',');
   const focus = opts.focus ? `${opts.focus.main}+${opts.focus.also.join('+')}` : '';
-  const key = `${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}|${licks}|${focus}`;
+  const key = `${opts.instrument ?? 'piano'}|${fams.map((f) => f.id).join(',')}|${tier}|${opts.jazz ? 1 : 0}|${groups.join(',')}|${licks}|${focus}`;
   const hit = shapeCache.get(key);
   if (hit) return hit;
   const out: CellShape[] = [];
   for (const group of groups)
     for (let root = 0; root < 12; root++) {
       const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
-      const cell = (level: LevelDef, rung: string, block: MatrixCell['block'], i: number): CellShape => ({ root, group, rung, block, i, level, drills: cellDrills(level) });
+      const cell = (level: LevelDef, rung: string, block: MatrixCell['block'], i: number, mode?: KeyMode): CellShape => ({ root, group, rung, block, i, level, ...(mode ? { mode } : {}), drills: cellDrills(level) });
       if (warm) out.push(cell(warm, warm.id.replace(`key-${root}-`, ''), 'W', -1));
-      for (const b of built) out.push({ ...cell(b.lvl, b.rung.id, b.rung.block, b.i), ...(b.rung.style ? { style: b.rung.style } : {}), ...(b.rung.tier ? { tier: b.rung.tier } : {}) });
+      for (const b of built) out.push({ ...cell(b.lvl, rungIdOf(b.rung), b.rung.block, b.i, b.rung.mode), ...(b.rung.style ? { style: b.rung.style } : {}), ...(b.rung.tier ? { tier: b.rung.tier } : {}) });
     }
   if (shapeCache.size >= 8) shapeCache.clear();
   shapeCache.set(key, out);
@@ -125,7 +131,7 @@ function needOf(ds: CellDrill[], items: Record<string, ItemState>, day: string):
 /** The local day ('YYYY-MM-DD'). */
 const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[]; /** The local day for the cooldowns (default today). */ day?: string; /** The player's lick pool (vocab.lickPool): block G, language in the key. */ licks?: Lick[]; /** SPEC-STYLE-FOCUS: the course's focus — block H's tiers. */ focus?: StyleFocus } = {}): MatrixCell[] {
+export function keyMatrix(fams: FamilyDef[], tier: number, items: Record<string, ItemState>, opts: { jazz?: boolean; groups?: MatrixGroup[]; /** The local day for the cooldowns (default today). */ day?: string; /** The player's lick pool (vocab.lickPool): block G, language in the key. */ licks?: Lick[]; /** The instrument's ladder (phase 7: guitar and bass; default the piano). */ instrument?: LadderInst; /** SPEC-STYLE-FOCUS: the course's focus — block H's tiers. */ focus?: StyleFocus } = {}): MatrixCell[] {
   const day = opts.day ?? today();
   return matrixShape(fams, tier, opts).map(({ drills, ...c }) => ({ ...c, need: needOf(drills, items, day), minutes: minutesOf(drills, items) }));
 }

@@ -16,7 +16,7 @@ import type { NoteEvent, PercKind } from '../engine/lesson';
 import { Cancelled, type AudioEngine, type CueKind, type RhythmAudio, type RhythmTimelineLike } from '../game/adapters';
 import { renderFx } from './fx';
 import { layerGain, layerOf, RoundRobin, WURLI_LAYERS, wurliGain } from './layers';
-import { Leslie, organKey, REGISTRATIONS, type Registration } from './organ';
+import { Leslie, organKey, PercussionGate, REGISTRATIONS, swellGain, type Registration } from './organ';
 import { autoPan, epKey } from './epiano';
 import { damperTau, layerFor, nearestLoaded, NO_DAMPER_FROM, releaseNoiseGain, releaseResGain, targetDb, vel127, type GrandLayer } from './grand';
 import { bufferBytes, fadeGain, grandLayerSet, grandLoadOrder, latencyHintOf, liveStart, MemoryLedger, tailCut, TIERS, tierOf, type LatencyMode, type SoundQuality, type SoundTier } from './quality';
@@ -26,6 +26,8 @@ interface Voice {
   out: GainNode;
   oscs: AudioScheduledSourceNode[];
   end: number;
+  /** An organ key in the single-trigger percussion gate (its end moves to the release). */
+  organKey?: { start: number; end: number };
 }
 
 type SampleBank = { id: string; notes: number[]; buffers: Map<number, AudioBuffer> };
@@ -894,6 +896,15 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
   private organReg: Registration = REGISTRATIONS[0];
   private leslie: Leslie | null = null;
   private leslieFast = false;
+  /** The swell pedal (CC11) in front of the rotating speaker; full until the keyboard sends one. */
+  private organSwell: GainNode | null = null;
+  private swellCc = 127;
+  private percGate = new PercussionGate();
+  /** The expression pedal (CC11): the organ's volume (STYLE-SOUL §10.1, gap 3). */
+  setSwell(cc11: number) {
+    this.swellCc = cc11;
+    if (this.organSwell && this.ctx) this.organSwell.gain.setTargetAtTime(swellGain(cc11), this.ctx.currentTime, 0.015);
+  }
   setOrgan(o: { reg?: string; fast?: boolean }) {
     if (o.reg) this.organReg = REGISTRATIONS.find((r) => r.id === o.reg) ?? this.organReg;
     if (o.fast !== undefined) {
@@ -909,9 +920,15 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       g.gain.value = 0.26;
       this.leslie.output.connect(g).connect(this.strips.piano!.input);
       this.leslie.setSpeed(this.leslieFast);
+      this.organSwell = ctx.createGain();
+      this.organSwell.gain.value = swellGain(this.swellCc);
+      this.organSwell.connect(this.leslie.input);
     }
-    const k = organKey(ctx, 440 * Math.pow(2, (midi - 69) / 12), this.organReg, start, start + dur, v, this.leslie.input);
-    const vc: Voice = { out: k.out, oscs: k.srcs, end: k.stop };
+    // No velocity on the organ (v unused); the percussion only when every key was up (single-trigger).
+    void v;
+    const gate = this.percGate.press(start, this.liveRoute ? Infinity : start + dur);
+    const k = organKey(ctx, 440 * Math.pow(2, (midi - 69) / 12), this.organReg, start, start + dur, this.organSwell!, gate.fires);
+    const vc: Voice = { out: k.out, oscs: k.srcs, end: k.stop, organKey: gate.key };
     this.voices.add(vc);
     k.srcs[0].onended = () => {
       this.voices.delete(vc);
@@ -1141,6 +1158,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
         if (!this.liveSustain) this.releaseUnheld();
       }
     } else if (cc === 67) this.liveSoft = down;
+    else if (cc === 11) this.setSwell(value);
     else if (cc === 120 || cc === 123) this.liveAllOff();
   }
   /** All notes off (disconnect, app hidden, panic). */
@@ -1160,6 +1178,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
     if (!v || !this.ctx) return;
     this.live.delete(m);
     const t = this.ctx.currentTime;
+    if (v.organKey) this.percGate.release(v.organKey, t);
     if (v.grand) {
       // The grand: its damper by register (a re-struck key or a polyphony steal still stops quickly), the top keys
       // ring on, and the release sounds play.
@@ -1688,6 +1707,7 @@ export class PianoEngine implements AudioEngine, RhythmAudio {
       }
     }
     for (const v of this.voices) {
+      if (v.organKey) this.percGate.release(v.organKey, now);
       v.out.gain.cancelScheduledValues(now);
       v.out.gain.setValueAtTime(v.out.gain.value, now);
       v.out.gain.setTargetAtTime(0, now, 0.03);

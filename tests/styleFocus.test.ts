@@ -35,7 +35,9 @@ import {
   weakAreaOf,
   type StyleFocus,
 } from '../src/engine/styleFocus';
-import { MAIN_STYLES, STYLE_COURSES, STYLE_IDS, STYLE_TEXT, styleOfFamily, styleOfLevel, stylesFor } from '../src/engine/styles';
+import { MAIN_STYLES, STYLE_CHART, STYLE_COURSES, STYLE_IDS, STYLE_TEXT, styleOfFamily, styleOfLevel, stylesFor } from '../src/engine/styles';
+import { styledBacking } from '../src/engine/styleBand';
+import { parseChart } from '../src/engine/charts';
 import { catalog } from '../src/engine/drills/generate';
 import { guitarCatalog } from '../src/engine/drills/guitar';
 import { shownFamilies } from '../src/engine/drills/plan';
@@ -196,12 +198,33 @@ describe('the path: style units of the main style every 2–3 core units (§4)',
 describe('block H: the style block in the matrix (§5)', () => {
   it('styled levels that play in any key become style rungs, open at the tier, with their tier in the focus', () => {
     const rungs = styleRungs(catalog(), 5, C('brazil', ['soul']));
-    const br = rungs.find((r) => r.id === 'accomp-6');
-    expect(br?.style).toBe('brazil');
+    const br = rungs.find((r) => r.style === 'brazil');
+    expect(br?.block).toBe('H');
     expect(br?.tier).toBe('main');
     expect(rungs.every((r) => r.block === 'H')).toBe(true);
     // beginner style rungs exist from T0
     expect(styleRungs(catalog(), 0).length).toBeGreaterThan(0);
+  });
+  it('the content agent\'s families feed block H by their tags (k-brazil, k-montuno, g-brazil, g-guajeo); hidden levels never', () => {
+    expect(styleOfFamily({ id: 'k-brazil', styleId: 'brazil' })).toBe('brazil');
+    const piano = styleRungs(catalog(), 5, C('brazil', ['afrocuban']));
+    expect(piano.some((r) => r.fam === 'k-brazil' && r.style === 'brazil' && r.tier === 'main')).toBe(true);
+    expect(piano.some((r) => r.fam === 'k-montuno' && r.style === 'afrocuban' && r.tier === 'also')).toBe(true);
+    expect(piano.some((r) => r.id === 'k-montuno-3')).toBe(false); // hidden until verified ('montuno-lines')
+    const gtr = styleRungs(guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired), 5, C('brazil'));
+    expect(gtr.some((r) => r.fam === 'g-brazil')).toBe(true);
+    expect(gtr.some((r) => r.fam === 'g-guajeo')).toBe(true);
+  });
+  it('the band plays the style: the band engine\'s Brazilian and Afro-Cuban styles back any chart', () => {
+    expect(STYLE_CHART.afrocuban).toBe('mambo');
+    const p = parseChart('Dm7 | G7 | Cmaj7 | Cmaj7');
+    for (const st of ['bossa', 'swing'] as const) expect(styledBacking(p, st, 100, 1).events.length, st).toBeGreaterThan(8);
+    for (const st of ['mambo', 'samba', 'baiao', 'chacha', 'songo', 'bolero'] as const) {
+      const b = styledBacking(p, st, 100, 1);
+      expect(b.events.filter((e) => e.inst === 'piano').length, st).toBeGreaterThan(0);
+      expect(b.events.filter((e) => e.inst === 'bass').length, st).toBeGreaterThan(0);
+      expect(b.length, st).toBeGreaterThan(0);
+    }
   });
   it('the matrix gets H cells; the summary counts only the focus styles; today\'s plan gives them their slice', () => {
     const cells = keyMatrix(catalog(), 3, {}, { focus: C('brazil'), groups: ['major'], day: '2026-11-23' });

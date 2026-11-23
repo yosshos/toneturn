@@ -7,7 +7,7 @@ import type { DrillSettings, ItemState } from '../engine/drills/types';
 import type { Settings } from '../storage/progress';
 import { families, levelDrills } from '../engine/drills/plan';
 import { keysInOrder } from '../engine/drills/generate';
-import { weekOf } from '../engine/drills/keyIndex';
+import { weekOf, type LadderInst } from '../engine/drills/keyIndex';
 import { playerTier } from '../engine/drills/tiers';
 import { keyMatrix, type MatrixCell, type MatrixGroup, type MatrixView } from '../engine/drills/keyMatrix';
 import { lickPool } from '../engine/vocab';
@@ -68,7 +68,7 @@ export function weekKeyIfKept(group: string, instrument: string, now: number | s
 }
 
 const PLAN_KEY = 'toneturn.todayKeys';
-type Kept = FrozenPlan & { view: MatrixView };
+type Kept = FrozenPlan & { view: MatrixView; /** The instrument the plan was built for (phase 7: guitar and bass have their own ladders). */ inst?: string };
 const readKept = (): Kept | null => {
   try {
     const raw = lsGet(PLAN_KEY);
@@ -96,25 +96,30 @@ export interface TodayTech {
   minutes: number;
 }
 
+/** The instruments whose technique block runs the key × exercise matrix (phase 7: guitar and bass too; drums have no keys). */
+export const matrixInst = (instrument?: string): LadderInst | null => (instrument === 'guitar' || instrument === 'bass' ? instrument : (instrument ?? 'piano') === 'piano' ? 'piano' : null);
+
 /**
- * Today's technique cells for the piano (null elsewhere: other instruments keep their opened levels' drills). Kept for
- * the day; built again when the block's minutes or the view change. `cells`: the matrix when the caller has it.
+ * Today's technique cells on the piano, guitar or bass (null on drums: no keys — their technique block keeps the opened
+ * levels' drills). Kept for the day; built again when the block's minutes, the view or the instrument change. `cells`:
+ * the matrix when the caller has it.
  */
 export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook' | 'styleFocus' | 'jazzFocus' | 'drills'>>; ds: DrillSettings; items: Record<string, ItemState>; minutes: number; day: string; cells?: MatrixCell[] }): TodayTech | null {
-  if ((a.ds.instrument ?? 'piano') !== 'piano' || a.minutes <= 0) return null;
+  const inst = matrixInst(a.ds.instrument);
+  if (!inst || a.minutes <= 0) return null;
   const view = readMatrixView();
-  // SPEC-STYLE-FOCUS §4–5: block H by the keys course's focus (60/30/10 in the plan's style slice)
-  const focus = focusOf(a.settings, 'keys');
-  const cells = a.cells ?? keyMatrix(families('piano'), matrixTierOf(a.settings, a.ds, a.items), a.items, { jazz: a.ds.emphasis === 'jazz', day: a.day, licks: lickPool(a.items, a.settings.lickBook), focus });
+  // SPEC-STYLE-FOCUS §4–5: block H by the course's focus (60/30/10 in the plan's style slice)
+  const focus = focusOf(a.settings, inst === 'piano' ? 'keys' : inst);
+  const cells = a.cells ?? keyMatrix(families(inst), matrixTierOf(a.settings, a.ds, a.items), a.items, { jazz: a.ds.emphasis === 'jazz', day: a.day, instrument: inst, ...(inst === 'piano' ? { licks: lickPool(a.items, a.settings.lickBook) } : {}), focus });
   const group: MatrixGroup = 'major';
   const order = keysInOrder(a.ds.keyOrder, false);
-  const weekRoot = keptWeekKey(group, 'piano', () => weekKeyFromMatrix(cells, group, order), `${a.day}T12:00:00`);
+  const weekRoot = keptWeekKey(group, inst, () => weekKeyFromMatrix(cells, group, order), `${a.day}T12:00:00`);
   const kept = keptPlan(a.day);
-  if (kept && kept.minutes === a.minutes && kept.view === view) {
+  if (kept && kept.minutes === a.minutes && kept.view === view && (kept.inst ?? 'piano') === inst) {
     const plan = thawPlan(kept, cells);
     if (plan.length) return { plan, weekRoot, at: Math.min(kept.at, plan.length - 1), minutes: a.minutes };
   }
   const plan = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus, day: a.day });
-  lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view } satisfies Kept));
+  lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view, inst } satisfies Kept));
   return { plan, weekRoot, at: 0, minutes: a.minutes };
 }

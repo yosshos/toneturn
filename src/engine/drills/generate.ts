@@ -9,7 +9,7 @@ import { genVoiceLead, pianoVoiceLeadFamily } from './voiceLeadDrills';
 import { genKeyMovePiano, pianoKeyMoveFamily } from './keyMoveDrills';
 import { pianoCadenceFamily } from './cadenceLibrary';
 import { widenFamilies } from './keys12';
-import { chartDrillData, roles } from './chartDrills';
+import { chartDrillData, chartIsStraight, roles } from './chartDrills';
 import { applyForm, type FormPlan, type FormSection } from './roadmap';
 import { parseChart } from '../charts';
 import { genKeysRhythm, keysRhythmFamily } from './keysRhythm'; // AUDIT-CONTENT-THEORY R-1/R-2/R-5
@@ -25,7 +25,9 @@ import { dimColourFamily, genDimColours } from './dimColours'; // colours of the
 import { genKeyLicks, keyExtraFamily, keyLickFamily } from './keyLicks'; // SPEC-KEY-SESSION §1C approach licks, §1b more in the key
 import { compVocabFamily, genSoloPiano, improHabitsFamily, isSoloPianoFamily, soloLhFamily, soloTexFamily } from './soloPianoDrills'; // Siskind solo piano (SISKIND-SOLO-PIANO Part C)
 import { genKeysFirst, keysFirstFamily, keysReadFamily, KEYS_FIRST_KINDS } from './keysFirst'; // AUDIT-6 Stage B: the first steps and graded sight-reading
-import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
+import { genKeysPop, keysPedalFamily, keysPopFamily } from './keysPop';
+import { genLatinPiano, keysBrazilFamily, keysMontunoFamily } from './latinStyles'; // SPEC-JAZZ-NEIGHBOURS §2, §3
+import type { StyleId } from '../styles'; // AUDIT-7 #10: pop accompaniment, pedal levels 2–4
 import { genKeysClassic, keysClassicFamily } from './keysClassic'; // AUDIT-7 #11: public-domain classical pieces
 import { genModeScale, keysModesFamily, keysMmhmFamily } from './modeScales'; // SPEC-PRACTICE-KEYS §6: modes as full scales
 import { A_SECTION, beatsOf, callNotes, harmonyPlan, KEYS_STYLE, placeChords, progEarChords, PROG_EAR_NAME, type ProgEarKind } from './progEar'; // progressions by ear
@@ -917,7 +919,7 @@ function genChart(s: DrillSpec): Drill {
   const d = chartDrillData(s.kind, s.key);
   if (!d) throw new Error(`Unknown chart drill: ${s.kind}`);
   const evs: ChordEv[] = d.evs.map((e) => ({ beat: e.beat, dur: e.dur, notes: e.notes, required: e.required, allowed: e.allowed }));
-  const sp: DrillSpec = { ...s, hands: evs.some((e) => e.notes.some((n) => n.hand === 'R')) ? 'RL' : 'L', swing: s.swing ?? true };
+  const sp: DrillSpec = { ...s, hands: evs.some((e) => e.notes.some((n) => n.hand === 'R')) ? 'RL' : 'L', swing: s.swing ?? !chartIsStraight(s.kind) };
   // AUDIT-DEPTH-3 C5: the improvising right hand (voicings 17, accomp 16) is graded by rule cards — inside the changes,
   // a chord tone on every change, something played in most bars — not only shown against the chord-scales.
   const improv = d.freeAbove !== undefined ? (() => {
@@ -5280,6 +5282,7 @@ function generateRaw(spec: DrillSpec): Drill {
   if (s.family === 'k-read' || (s.family === 'k-first' && KEYS_FIRST_KINDS.has(s.kind))) return genKeysFirst(s);
   // AUDIT-7 #10, #11: pop accompaniment, pedalling 2–4, the public-domain classical tier.
   if (s.family === 'k-pop' || s.family === 'k-pedal') return genKeysPop(s);
+  if (s.family === 'k-brazil' || s.family === 'k-montuno') return genLatinPiano(s);
   if (s.family === 'k-classic') return genKeysClassic(s);
   // SPEC-PRACTICE-KEYS §6: the modes on a root, melodic / harmonic minor modes, symmetric scales (modeScales.ts).
   if (s.family === 'k-modes' || s.family === 'k-mmhm') return genModeScale(s);
@@ -5422,8 +5425,8 @@ export interface LevelDef {
   nps?: [number, number];
   /** A fixed start → target tempo (♩) for every item (the pianist's ear: a calm call, no speed ladder to climb). */
   tempo?: [number, number];
-  /** SPEC-STYLE-FOCUS: the style this level belongs to (a level of a mixed family); read through styles.ts styleOfLevel. */
-  style?: import('../styles').StyleId;
+  /** SPEC-STYLE-FOCUS: the style this level belongs to (absent = the course's core). */
+  style?: StyleId;
 }
 
 /** The ABRSM recommended minimum speeds, in notes per second (scales / arpeggios, Grades 1–8; ♩ in 8ths to G3, 16ths from G4). */
@@ -5440,6 +5443,8 @@ export interface FamilyDef {
    */
   style: import('../styles').FamilyStyle;
   levels: LevelDef[];
+  /** SPEC-STYLE-FOCUS: the style the whole family belongs to (`style` above is the old classical / jazz emphasis). */
+  styleId?: StyleId;
 }
 
 /** Families → ordered levels → spec templates (spec §4–§5). */
@@ -5538,12 +5543,11 @@ export function catalog(): FamilyDef[] {
     ...o,
   });
   // Any progression as a drill (chartDrills.ts): voicings / comping / stride over levels, standards and templates.
-  const cv = (ref: string, voicing: ChartVoicing, rhythm: CompRhythm = 'whole', mode: ChartMode = 'comp', fam: 'voicings' | 'accomp' = 'voicings'): SpecTemplate => ({
-    family: fam,
-    kind: chartKind(ref, voicing, rhythm, mode),
-    hands: 'L',
-    swing: true,
-  });
+  // Swung, except a bossa chart (STYLE-BRAZIL §0.2: swing = 0 on every Brazilian item).
+  const cv = (ref: string, voicing: ChartVoicing, rhythm: CompRhythm = 'whole', mode: ChartMode = 'comp', fam: 'voicings' | 'accomp' = 'voicings'): SpecTemplate => {
+    const kind = chartKind(ref, voicing, rhythm, mode);
+    return { family: fam, kind, hands: 'L', ...(chartIsStraight(kind) ? {} : { swing: true }) };
+  };
   const st = (ref: string, voicing: ChartVoicing, mode: ChartMode = 'comp') => cv(ref, voicing, 'whole', mode, 'accomp');
   const c = (kind: string, o: Partial<SpecTemplate> = {}): SpecTemplate => ({
     family: 'cadences',
@@ -6453,6 +6457,9 @@ export function catalog(): FamilyDef[] {
     keysReadFamily(),
     // AUDIT-7 #10, #11: pop accompaniment (k-pop), pedal levels 2–4 (k-pedal), graded public-domain pieces (k-classic).
     keysPopFamily(),
+    // SPEC-JAZZ-NEIGHBOURS §2, §3: bossa and samba comping, the montuno (latinStyles.ts).
+    keysBrazilFamily(),
+    keysMontunoFamily(),
     keysPedalFamily(),
     keysClassicFamily(),
     // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad ladder, the whole tune (gigDrills.ts).

@@ -10,7 +10,7 @@
 
 import type { NoteEvent, PercKind, Stimulus } from './lesson';
 import { TOPIC_GEN, choiceQ, rng, shuffleR, pickR } from './topicKit';
-import { GROOVES, grooveHits, grooveSteps, stepSeconds, type Groove, type HitKind } from './grooves';
+import { GROOVES, grooveBars, grooveHits, grooveSteps, stepSeconds, type Groove, type HitKind } from './grooves';
 import { bandComping, walkingBass, type BandStyle } from './band';
 import { chordAtBeat, parseChart } from './charts';
 
@@ -77,8 +77,12 @@ export function styleSound(st: DrumStyle, seed: number, bars = 2): Stimulus {
   const beatS = step * perBeat;
   const ev: NoteEvent[] = [];
   const hits = grooveHits(g);
-  for (let b = 0; b < bars; b++)
-    for (const h of hits) ev.push({ midi: 60, start: (b * n + h.step) * step, duration: 0.12, velocity: h.kind === 'shaker' ? h.vel * 0.6 : h.vel, perc: PERC[h.kind] });
+  // A two-bar timeline's hits span both bars: one cycle every grooveBars bars, cut at the end.
+  const cyc = grooveBars(g);
+  const cycles = (f: (at: number, h: (typeof hits)[number]) => void) => {
+    for (let b = 0; b < bars; b += cyc) for (const h of hits) if (b * n + h.step < bars * n) f(b * n + h.step, h);
+  };
+  cycles((at, h) => ev.push({ midi: 60, start: at * step, duration: 0.12, velocity: h.kind === 'shaker' ? h.vel * 0.6 : h.vel, perc: PERC[h.kind] }));
   const p = parseChart(st.chart, meter);
   const total = Math.min(p.bars, bars) * meter;
   if (p.chords.length) {
@@ -87,7 +91,11 @@ export function styleSound(st: DrumStyle, seed: number, bars = 2): Stimulus {
       for (const x of walkingBass(p, meter, total, seed)) ev.push({ midi: x.midi, start: x.beat * beatS, duration: beatS * (x.ghost ? 0.3 : 0.9), velocity: x.ghost ? 0.45 : 0.8, inst: 'bass' });
     } else {
       // The bass locks with the kick: the chord's root on every kick, held to the next one.
-      const kicks = [...new Set(Array.from({ length: bars }, (_, b) => hits.filter((h) => h.kind === 'kick').map((h) => b * n + h.step)).flat())].sort((a, z) => a - z);
+      const ks: number[] = [];
+      cycles((at, h) => {
+        if (h.kind === 'kick') ks.push(at);
+      });
+      const kicks = [...new Set(ks)].sort((a, z) => a - z);
       kicks.forEach((k, i) => {
         const c = chordAtBeat(p, meter, k / perBeat);
         const pc = c ? c.bass : 9;

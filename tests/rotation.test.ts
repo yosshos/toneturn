@@ -77,9 +77,13 @@ describe('grading', () => {
     expect(classifyNotes(notes, plan)).toEqual(['ct', 'colour', 'wrong', 'ct', 'avoid']);
     const m = rotationMetrics(notes, plan);
     expect(m.avoidFaults).toBe(1);
-    expect(m.colour).toBe(0.5);
+    // the C span plays the default (Ionian), which adds no colour notes: only the G7 span is judged (phase 5)
+    expect(m.colour).toBe(1);
+    expect(m.colourSpans).toBe(1);
     expect(m.strongCt).toBeCloseTo(2 / 4);
     const st = updateModeStats({}, plan, notes, '2026-11-22');
     expect(st['V-maj|altered']).toEqual({ n: 1, cov: 1, last: '2026-11-22' });
+    // a default scale never reads as weak (else the rotation would keep picking it)
+    expect(st['I|ionian'].cov).toBe(1);
   });
 });

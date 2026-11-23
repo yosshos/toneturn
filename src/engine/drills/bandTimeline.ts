@@ -10,9 +10,10 @@ import { GROOVES } from '../grooves';
 import { buildTimeMap, hasTimeline, timeMapOf, type MeterSpec } from './timeline';
 import { bandComping, closeVoicings, hashOf, voiceLead, type BandStyle, type CompHit } from '../band';
 import { parseChart } from '../charts';
-import { bandHits, chartText } from './bassBand';
+import { bandHits, bandOptsOf, chartText } from './bassBand';
 
-export type DrumLaneHit = { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' };
+/** 'r' = the rim lane (cross-stick) of a Latin groove: the clave (STYLE-AFROCUBAN F1) or the bossa clave. */
+export type DrumLaneHit = { beat: number; d: 'k' | 's' | 'h' | 'r' | 'tom-hi' | 'tom-lo' | 'crash' };
 /** A bar of the band's grid in drill beats. */
 export interface BandBar {
   index: number;
@@ -52,6 +53,10 @@ export function drumHitsOnBars(dr: NonNullable<Drill['drums']>, bars: BandBar[],
     // drill stepped 1/sub drill beats. Timeline drills (exact) count a quarter as 2 eighth-pulse beats.
     const stepB = g.den === 8 && g.sub === 2 ? (pulse === 8 ? 1 : 0.5) : (exact && pulse === 8 ? 2 : 1) / g.sub;
     const steps = Math.round(meter / stepB);
+    // Two-bar timelines (son clave, bembé bell): the odd bars play the lanes' second half.
+    const off = g.bars && g.bars > 1 ? (bar % g.bars) * steps : 0;
+    // The clave is heard: the rim lane of a Latin groove (cross-stick), not the other grooves' rim lanes.
+    const rim = g.style === 'latin' && (g.rimAs ?? 'rim') === 'rim' ? g.r : undefined;
     const b0 = B.start;
     if (fills.has(bar)) {
       const half = meter / 2;
@@ -66,9 +71,11 @@ export function drumHitsOnBars(dr: NonNullable<Drill['drums']>, bars: BandBar[],
     for (let i = 0; i < steps; i++) {
       const at = b0 + i * stepB;
       if (at >= beats - 1e-9) break;
-      if (g.k[i % g.k.length] === 'x') out.push({ beat: at, d: 'k' });
-      if (g.s[i % g.s.length] === 'x') out.push({ beat: at, d: 's' });
-      if (g.h[i % g.h.length] === 'x') out.push({ beat: at, d: 'h' });
+      const j = i + off;
+      if (g.k[j % g.k.length] === 'x') out.push({ beat: at, d: 'k' });
+      if (g.s[j % g.s.length] === 'x') out.push({ beat: at, d: 's' });
+      if (g.h[j % g.h.length] === 'x') out.push({ beat: at, d: 'h' });
+      if (rim && rim[j % rim.length] === 'x') out.push({ beat: at, d: 'r' });
     }
   }
   return out;
@@ -114,9 +121,9 @@ export function bandStyleAt(drill: Pick<Drill, 'band'>, bar: number): BandStyle 
  * one even bar length are comped as before (bandComping); bars in x/8 meters get a chord on each group start (the
  * odd-meter hits a prog band plays). 'tacet' sections and `rests` are silent. Old drills: bassBand `bandHits`.
  */
-export function drillBandHits(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId' | 'pulse' | 'groups' | 'meters' | 'tempoMap' | 'bandMeter'>): CompHit[] {
+export function drillBandHits(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'beats' | 'itemId' | 'pulse' | 'groups' | 'meters' | 'tempoMap' | 'bandMeter' | 'drums'>): CompHit[] {
   if (!bandOnTimeline(drill)) return bandHits(drill);
-  if (!drill.band || !drill.chart?.length) return [];
+  if (!drill.band || !drill.chart?.length || drill.band.comp === false) return [];
   const bars = bandBars(drill);
   const rests = drill.band.rests ?? [];
   const out: CompHit[] = [];
@@ -150,7 +157,7 @@ export function drillBandHits(drill: Pick<Drill, 'band' | 'chart' | 'meter' | 'b
             out.push({ beat: run[0].start + g, len: Math.max(0.3, (next - g) * 0.85), notes: v, vel: g === 0 ? 0.36 : 0.3 });
           }
         } else {
-          for (const h of bandComping(p, len, run.length * len, st, seed + k)) out.push({ ...h, beat: h.beat + run[0].start });
+          for (const h of bandComping(p, len, run.length * len, st, seed + k, bandOptsOf(drill, run[0].index))) out.push({ ...h, beat: h.beat + run[0].start });
         }
       }
     }

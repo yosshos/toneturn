@@ -5,6 +5,7 @@
 //   - LevelDef.style?: StyleId        (a level of a mixed family: "b-styles-7" is bossa)
 //   - FamilyDef.style: FamilyStyle    (the old field: 'classical' | 'jazz' | 'both' was the piano emphasis filter; it now
 //                                      also takes any StyleId, so a new family can say `style: 'brazil'`)
+//   - FamilyDef.styleId?: StyleId     (the content agent's family tag, e.g. k-brazil, k-montuno, g-brazil, g-guajeo)
 // For the families that existed before the tag, STYLE_OF_FAMILY / STYLE_OF_LEVEL below say it (the old 'classical' /
 // 'jazz' values on non-piano families meant nothing about style, so they are never read as one).
 // Read a level's style only through styleOfLevel().
@@ -144,7 +145,7 @@ const LEGACY_FAMILY_STYLE = new Set<string>(['both', 'classical', 'jazz']);
  * The style of a technique level, or null for core content. Order: the level's own tag, the table of levels, the
  * family table, then a new family's own `style` (anything but the legacy emphasis values).
  */
-export function styleOfLevel(level: { id: string; style?: StyleId }, family: { id: string; style?: FamilyStyle | string }): StyleId | null {
+export function styleOfLevel(level: { id: string; style?: StyleId }, family: { id: string; style?: FamilyStyle | string; styleId?: StyleId }): StyleId | null {
   if (level.style && isStyleId(level.style)) return level.style;
   const byLevel = STYLE_OF_LEVEL[level.id];
   if (byLevel) return byLevel;
@@ -152,14 +153,12 @@ export function styleOfLevel(level: { id: string; style?: StyleId }, family: { i
   const addOn = (level as { addOn?: string }).addOn;
   if (addOn && ADDON_STYLE[addOn]) return ADDON_STYLE[addOn]!;
   if ((level as { country?: boolean }).country) return 'country';
-  const byFam = STYLE_OF_FAMILY[family.id];
-  if (byFam) return byFam;
-  if (family.style && !LEGACY_FAMILY_STYLE.has(family.style) && isStyleId(family.style)) return family.style;
-  return null;
+  return styleOfFamily(family);
 }
 
-/** The style of a whole family (null = core or mixed). */
-export function styleOfFamily(family: { id: string; style?: FamilyStyle | string }): StyleId | null {
+/** The style of a whole family (null = core or mixed): the content's own tag (FamilyDef.styleId), the table, a new family's `style`. */
+export function styleOfFamily(family: { id: string; style?: FamilyStyle | string; styleId?: StyleId }): StyleId | null {
+  if (family.styleId && isStyleId(family.styleId)) return family.styleId;
   const byFam = STYLE_OF_FAMILY[family.id];
   if (byFam) return byFam;
   if (family.style && !LEGACY_FAMILY_STYLE.has(family.style) && isStyleId(family.style)) return family.style;
@@ -167,13 +166,14 @@ export function styleOfFamily(family: { id: string; style?: FamilyStyle | string
 }
 
 /**
- * The chart band (charts.ts ChartStyle: swing / pop / rock / bossa / ballad / waltz) that plays a style today, for
- * Improvise's default band, the workout's improvisation share and the taster's 8 bars. Afro-Cuban, soul and New Orleans
- * borrow the closest band until their own band styles land (SPEC-JAZZ-NEIGHBOURS §2–5); null = the level's own band.
+ * The band that plays a style today, for Improvise's default band, the workout's improvisation share and the taster's
+ * 8 bars (styleBand.ts styledBacking plays both kinds): the chart band's styles (swing / pop / rock / bossa / ballad /
+ * waltz) and the band engine's Brazilian and Afro-Cuban styles (band.ts: samba, baião, cha-cha, mambo, bolero, songo,
+ * 6/8). Soul and New Orleans borrow the closest band until their own band styles land (SPEC-JAZZ-NEIGHBOURS §4–5).
  */
-export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bossa' | 'ballad' | 'waltz'>> = {
+export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bossa' | 'ballad' | 'waltz' | 'samba' | 'baiao' | 'chacha' | 'mambo' | 'bolero' | 'songo' | 'afro68'>> = {
   brazil: 'bossa',
-  afrocuban: 'bossa',
+  afrocuban: 'mambo',
   soul: 'rock',
   neworleans: 'swing',
   pop: 'pop',
@@ -189,8 +189,8 @@ export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bo
 /** The band styles (band.ts BandStyle ids) of each style, for Improvise's default band and the taster's 8 bars. */
 export const STYLE_BANDS: Partial<Record<StyleId, string[]>> = {
   jazz: ['swing', 'ballad', 'waltz'],
-  brazil: ['bossa', 'samba'],
-  afrocuban: ['latin', 'chacha', 'mambo', 'songo', 'afro68', 'bolero'],
+  brazil: ['bossa', 'samba', 'baiao'],
+  afrocuban: ['mambo', 'chacha', 'songo', 'bolero', 'afro68', 'latin'],
   soul: ['funk', 'shuffle', 'soul', 'boogaloo'],
   neworleans: ['shuffle', 'secondline'],
   pop: ['pop', 'rock'],

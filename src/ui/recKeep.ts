@@ -70,8 +70,8 @@ export function drillBand(drill: Drill, bpm: number): Uint8Array | undefined {
   const out: (PlayedNote & { inst: number })[] = [];
   const add = (beat: number, len: number, m: number, vel: number, e: Pick<NoteEvent, 'inst' | 'perc'>) => out.push({ pitch: m, on: beat * beatMs, off: beat * beatMs + Math.max(40, len * beatMs), vel: Math.round(Math.max(0, Math.min(1, vel)) * 127), inst: instByte(e) });
   try {
-    const PERC = { k: 'kick', s: 'snare', h: 'hat', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
-    for (const h of drillDrumHits(drill)) add(h.beat, 0.25, 36, h.d === 'h' ? 0.4 : h.d === 'crash' ? 0.7 : 0.85, { perc: PERC[h.d] });
+    const PERC = { k: 'kick', s: 'snare', h: 'hat', r: 'rim', 'tom-hi': 'tom-hi', 'tom-lo': 'tom-lo', crash: 'crash' } as const;
+    for (const h of drillDrumHits(drill)) add(h.beat, 0.25, 36, h.d === 'h' ? 0.4 : h.d === 'r' ? 0.6 : h.d === 'crash' ? 0.7 : 0.85, { perc: PERC[h.d] });
     for (const h of drillBandHits(drill)) for (const m of h.notes) add(h.beat, h.len, m, h.vel, { inst: 'piano' });
     for (const n of bandBass(drill)) add(n.beat, n.len, n.midi, n.vel, { inst: 'bass' });
     for (const n of unisonLine(drill)) add(n.beat, n.len, n.midi, n.vel, { inst: n.inst === 'bass' ? 'bass' : 'piano' });

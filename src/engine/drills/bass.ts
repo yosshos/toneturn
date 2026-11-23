@@ -319,7 +319,7 @@ export function drillOf(s: DrillSpec, tu: Tuning, line: BN[], o: Out): Drill {
  * The drum hits of a groove under a drill (B5): kick and snare (and hats) per bar from the GROOVES lanes, a fill in the
  * `fills` bars (snare 16ths into toms on beats 3–4, crash on the next 1). Beats from beat 0 of the drill.
  */
-export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
+export function drumHits(dr: NonNullable<Drill['drums']>, beats: number, meter = 4, pulse?: 8): { beat: number; d: 'k' | 's' | 'h' | 'r' | 'tom-hi' | 'tom-lo' | 'crash' }[] {
   // The constant grid; timeline drills (mixed meters, polymeter) use bandTimeline.ts drillDrumHits.
   return drumHitsOnBars(dr, constantBars(beats, meter), beats, pulse);
 }
@@ -1945,9 +1945,13 @@ const STYLE_T: T2[] = [
   { en: 'Middle Eastern: Hijaz in 10/8', he: 'מזרחי: חיג׳אז ב-10/8' },
   { en: 'Gospel in the low register (low B)', he: 'גוספל באזור הנמוך (B נמוך)' },
   { en: 'Funk: the second cell set (octave and ♭7 pickups)', he: 'פאנק: סט התאים השני (אוקטבה והקדמות ♭7)' },
+  // SPEC-JAZZ-NEIGHBOURS §2 (STYLE-BRAZIL §1(c), §2.1): the bossa halves (B0), the anticipated root (B2), the surdo halves.
+  { en: 'Bossa nova: root on 1, 5th on 3', he: 'בוסה נובה: שורש על 1, קווינטה על 3' },
+  { en: 'Bossa nova: the next root on the "and" of 4', he: 'בוסה נובה: השורש הבא על ה"וְ" של 4' },
+  { en: 'Samba: the surdo, root on 1 and the accented 5th on 2', he: 'סמבה: הסורדו, שורש על 1 והקווינטה המוטעמת על 2' },
 ];
 /** Drum groove under each style (B5), from the metronome's groove bank. */
-const STYLE_GROOVE = ['rock-8b', 'ballad', 'motown', 'shuffle', 'disco', 'reggae', 'bossa', 'samba', 'tumbao', 'funk-1', 'rnb', 'rock-16', 'seven-8', 'maqsum', '', 'rnb', 'funk-2'];
+const STYLE_GROOVE = ['rock-8b', 'ballad', 'motown', 'shuffle', 'disco', 'reggae', 'bossa', 'samba', 'tumbao', 'funk-1', 'rnb', 'rock-16', 'seven-8', 'maqsum', '', 'rnb', 'funk-2', 'bossa', 'bossa', 'samba'];
 function genStyle(s: DrillSpec, tu: Tuning): Drill {
   const key = mod(s.key, 12);
   const op = (s.option ?? 0) % STYLE_T.length;
@@ -2036,16 +2040,42 @@ function genStyle(s: DrillSpec, tu: Tuning): Drill {
       break;
     }
     case 7: {
+      // The surdo figure x..xX..x as root–5th (STYLE-BRAZIL §2.1 [V] Hubbard: "R . . 5 | 5 . . R"): each pickup is the
+      // note it leads into — the 5th before the accented 5th on 2, the root before the next 1.
       prog = [[0, 'M'], [7, '7'], [7, '7'], [0, 'M']];
       line = overProg(tu, key, prog, (R) => {
         const five = R - 5 >= lowest(tu) ? R - 5 : R + 7;
         return [0, 2].flatMap((h) => [
           { b: h, d: 0.75, p: R },
-          { b: h + 0.75, d: 0.25, p: R },
+          { b: h + 0.75, d: 0.25, p: five },
           { b: h + 1, d: 0.75, p: five, acc: true },
-          { b: h + 1.75, d: 0.25, p: five },
+          { b: h + 1.75, d: 0.25, p: R },
         ]);
       });
+      break;
+    }
+    case 17:
+    case 18: {
+      // STYLE-BRAZIL §1(c): B0 the halves, root on 1 and 5th on 3 ([C], Ward Ex. 4); B2 the dotted figure with the next
+      // chord's root on the "and" of 4 ([C], matching the guitar's anticipated change F5 [V]).
+      prog = [[0, 'maj7'], [2, 'm7'], [7, '7'], [0, 'maj7']];
+      line = overProg(tu, key, prog, (R, _c, _bar, next) => {
+        const five = R - 5 >= lowest(tu) ? R - 5 : R + 7;
+        return op === 17
+          ? [{ b: 0, d: 2, p: R }, { b: 2, d: 2, p: five }]
+          : [{ b: 0, d: 1.5, p: R }, { b: 1.5, d: 0.5, p: five }, { b: 2, d: 1.5, p: five, acc: true }, { b: 3.5, d: 0.5, p: next, ct: next === R }];
+      });
+      evenness = op === 17;
+      break;
+    }
+    case 19: {
+      // The surdo halves x...X... (STYLE-BRAZIL §2.1 [V] Wikipedia Surdo, Jovino): the root on 1, the accented 5th on 2.
+      prog = [[0, 'M'], [7, '7'], [7, '7'], [0, 'M']];
+      line = overProg(tu, key, prog, (R) => {
+        const five = R - 5 >= lowest(tu) ? R - 5 : R + 7;
+        return [0, 2].flatMap((h) => [{ b: h, d: 1, p: R }, { b: h + 1, d: 1, p: five, acc: true }]);
+      });
+      evenness = true;
       break;
     }
     case 8: {
@@ -2774,8 +2804,8 @@ export function bassFamilies(): GuitarFamilyDef[] {
       L('b-styles', 4, 'Blues shuffle', 'שאפל בלוז', [ST('style', { option: 3 })], K6, [80, 140], 'swung 8ths', ['blues', 'rock']),
       L('b-styles', 5, 'Disco', 'דיסקו', [ST('style', { option: 4, perBeat: 4 })], K6, [110, 125], S16, ['funk', 'pop']),
       L('b-styles', 6, 'Reggae one-drop', 'רגאיי וואן-דרופ', [ST('style', { option: 5, minor: true })], K6, [70, 90], E8, ['reggae']),
-      L('b-styles', 7, 'Bossa nova', 'בוסה נובה', [ST('style', { option: 6 })], K6, [120, 150], E8, ['latin', 'jazz']),
-      L('b-styles', 8, 'Samba', 'סמבה', [ST('style', { option: 7, perBeat: 4 })], K6, [90, 110], S16, ['latin']),
+      L('b-styles', 7, 'Bossa nova', 'בוסה נובה', [ST('style', { option: 17 }), ST('style', { option: 6 }), ST('style', { option: 18 })], K6, [120, 150], E8, ['latin', 'jazz']),
+      L('b-styles', 8, 'Samba', 'סמבה', [ST('style', { option: 19 }), ST('style', { option: 7, perBeat: 4 })], K6, [90, 110], S16, ['latin']),
       L('b-styles', 9, 'Tumbao / son', 'טומבאו / סון', [ST('style', { option: 8 })], K6, [90, 120], E8, ['latin']),
       L('b-styles', 10, 'Funk', 'פאנק', [ST('style', { option: 9, perBeat: 4 }), ST('style', { option: 16, perBeat: 4 })], K6, [90, 110], S16, ['funk']),
       L('b-styles', 11, 'Gospel / neo-soul', 'גוספל / ניאו-סול', [ST('style', { option: 10, perBeat: 4 })], K6, [70, 90], S16, ['funk', 'pop', 'jazz']),

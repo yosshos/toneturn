@@ -3,8 +3,9 @@
 // These are our own transcriptions of the standard, widely taught kit patterns:
 //   * mambo: the mambo (campana) bell on the ride's bell over the son clave as a cross-stick, the kick on the bass's
 //     tumbao ("&" of 2 and 4), the hi-hat foot on 2 and 4;
-//   * songo: after Changuito's kit adaptation — bell 8ths in the right hand, the left hand's snare ghosts with two
-//     accents, the kick on the "&" of 2 and on 4, the hi-hat foot on 2 and 4;
+//   * songo (rebuilt 2026-11-22, STYLE-AFROCUBAN F4): the verified description (Wikipedia *Songo music*) — the right
+//     hand on the four main beats (bell, or closed hi-hat), the left hand on the offbeats (snare rim, then snare); a
+//     generic part, not Changuito's exact one. The kick on the "&" of 2 and on 4 (the tumbao) stays unverified [?];
 //   * Mozambique: after the Steve Gadd / Pacheco kit pattern — the Mozambique bell in the right hand, the left hand
 //     filling the gaps on the snare (linear hands), kick on 1 and 3, the hi-hat foot on 2 and 4.
 // A teacher has NOT checked them yet: every item carries `drum.teacherCheck` and the level `needsTeacherCheck`, and the
@@ -27,9 +28,9 @@ export const MAMBO32 = 'x.xx.xx.' + 'x.x.xx.x';
 const TUMBAO = '...x..x....x..x.';
 const FOOT24_8 = '..x...x...x...x.';
 
-/** One bar on the 16th grid (16 steps). */
-export const SONGO_BELL = 'x.x.x.x.x.x.x.x.';
-export const SONGO_SN = '.g.g...X.g.g...X';
+/** One bar on the 16th grid (16 steps). Songo: the right hand on the four beats, the left hand on the offbeats (F4). */
+export const SONGO_BELL = 'x...x...x...x...';
+export const SONGO_SN = '..x...x...x...x.';
 export const SONGO_K = '......x.....x...';
 export const MOZ_BELL = 'x.x.x.xx.xx.x.x.';
 export const MOZ_SN = '.g.g.g..g..X.g.g';
@@ -56,8 +57,10 @@ export function generateLatinMore(s: DrillSpec): Drill {
     return fin(two(l, 8), `Mambo bell · ${nm.en}`, `פעמון מאמבו · ${nm.he}`, 100);
   }
   if (lv === 9) {
-    const l: Lanes = op === 2 ? { h: SONGO_BELL, s: SONGO_SN, k: SONGO_K } : op === 1 ? { r: SONGO_BELL, s: SONGO_SN, k: SONGO_K, p: FOOT24_16 } : { r: SONGO_BELL, k: SONGO_K, p: FOOT24_16 };
-    const nm = [t('bell, kick and hi-hat foot', 'פעמון, קיק ורגל היי־האט'), t('with the snare ghosts and accents', 'עם רפאים והדגשות בסנר'), t('the bell on the hi-hat', 'הפעמון בהיי־האט')][op];
+    // Right hand on the beats; the left hand's offbeats on the snare rim (op 0) or the snare (op 1, and op 2 under a
+    // closed hi-hat); the kick on the tumbao.
+    const l: Lanes = op === 2 ? { h: SONGO_BELL, s: SONGO_SN, k: SONGO_K } : op === 1 ? { r: SONGO_BELL, s: SONGO_SN, k: SONGO_K } : { r: SONGO_BELL, rm: SONGO_SN, k: SONGO_K };
+    const nm = [t('bell on the beats, rim on the offbeats', 'פעמון על הפעמות, רים על האוף־ביט'), t('the offbeats on the snare', 'האוף־ביט בסנר'), t('the beats on the hi-hat', 'הפעמות בהיי־האט')][op];
     return fin(one(l, 8), `Songo · ${nm.en}`, `סונגו · ${nm.he}`, 90);
   }
   const l: Lanes = op === 2 ? { h: MOZ_BELL, s: MOZ_SN, k: MOZ_K } : op === 1 ? { r: MOZ_BELL, s: MOZ_SN, k: MOZ_K, p: FOOT24_16 } : { r: MOZ_BELL, k: MOZ_K, p: FOOT24_16 };

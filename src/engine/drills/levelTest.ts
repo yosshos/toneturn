@@ -139,6 +139,10 @@ const COMP_JAZZ: Rung[] = [
   // AUDIT-7 #10: pop accompaniment (the ballad) is a comping step of the jazz / both test too.
   r('k-pop-3', 7, { 'k-first': 11, accomp: 5, voicings: 12, 'k-lh': 12, 'k-tex': 6, 'k-comp': 3, 'k-impro': 5, 'k-pop': 4, 'k-pedal': 1 }),
   r('voicings-14', 7, { 'k-first': 11, accomp: 9, voicings: 15, 'k-lh': 14, 'k-tex': 8, 'k-comp': 5, 'k-impro': 5 }),
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa-clave comp (rootless voicings) and the montuno hands together place the
+  // Brazilian and Afro-Cuban comping families (open from the start, so every test checks them).
+  r('k-brazil-3', 5, { 'k-brazil': 4 }),
+  r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
 ];
 const COMP_CLASSICAL: Rung[] = [
   r('accomp-1', 0, { accomp: 2, control: 4 }),
@@ -147,6 +151,8 @@ const COMP_CLASSICAL: Rung[] = [
   // AUDIT-7 #10: pop accompaniment from a lead sheet (broken patterns, then rock) and the pedal levels.
   r('k-pop-2', 7, { 'k-first': 11, accomp: 5, control: 9, 'k-pop': 3, 'k-pedal': 1 }),
   r('k-pop-4', 5, { 'k-first': 11, accomp: 7, control: 10, 'k-pop': 5, 'k-pedal': 2 }),
+  r('k-brazil-3', 5, { 'k-brazil': 4 }),
+  r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
 ];
 // Sight-reading below the playing level is normal (placement auditions read about two grades lower); the takes feed the
 // reading skill, and a clean read opens the reading levels of Control.
@@ -253,6 +259,9 @@ const G_RHYTHM: Rung[] = [
   r('g-riff-4', 2, { 'g-rhythm': 4, 'g-meter': 4, 'g-riff': 5 }),
   r('g-rhythm-5', 4, { 'g-rhythm': 6, 'g-meter': 4 }),
   r('g-rhythm-6', 0, { 'g-rhythm': 7, 'g-meter': 5 }),
+  // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa-clave comp over the thumb, the guajeo over I–IV–V–IV in 3-2.
+  r('g-brazil-5', 7, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6 }),
+  r('g-guajeo-4', 2, { 'g-rhythm': 7, 'g-meter': 5, 'g-brazil': 6, 'g-guajeo': 5 }),
   // Owner 2026-11-19: the prog add-on's odd-meter riffs (g-prog, shown only with the add-on) top the rhythm section.
   r('g-prog-1', 4, { 'g-rhythm': 7, 'g-meter': 5, 'g-riff': 5, 'g-prog': 2 }),
   r('g-prog-2', 9, { 'g-rhythm': 7, 'g-meter': 5, 'g-riff': 5, 'g-prog': 3 }),

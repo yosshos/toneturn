@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 // taster card on Today (one groove, one lick, 8 bars over the band, then "add it?"). Hebrew, one phone screen.
 test.use({ viewport: { width: 390, height: 844 } });
 
-const SHOTS = 'docs/style-focus-shots';
+const SHOTS = 'test-results/style-focus-shots';
 const fits = async (page: Page, what: string) => {
   const over = await page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight);
   expect(over, `${what} fits one phone screen`).toBeLessThanOrEqual(4);

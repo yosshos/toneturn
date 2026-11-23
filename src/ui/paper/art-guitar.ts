@@ -447,6 +447,10 @@ export const ART_GUITAR: Record<string, Art> = {
   /** On the bandstand (guitar): "Gig·6" with a pick. */
   /** The cadence chart library on the neck: "V→I·6". */
   gcadlib: art('tan', 'purple', markParts('V→I·6')),
+  /** SPEC-JAZZ-NEIGHBOURS §2: the bossa batida on the neck — "Bossa·6" with a thumb note and a three-note pluck. */
+  gbrazil: art('teal', 'tan', markParts('Bossa·6', det(H(30, 44, 1.8, 'accent'), L(35, 42, 35, 46, 'wire', 1.2), L(38, 42, 38, 46, 'wire', 1.2), L(41, 42, 41, 46, 'wire', 1.2)))),
+  /** SPEC-JAZZ-NEIGHBOURS §3: the guajeo — "2-3·6", the clave's sides in the other order. */
+  gguajeo: art('tan', 'indigo', markParts('2-3·6', det(R(14, 42.5, 3, 4.5, 1.2, 'accent'), R(20, 42.5, 3, 4.5, 1.2, 'accent'), R(28, 42.5, 2.4, 4.5, 1.2, 'mark'), R(33, 42.5, 2.4, 4.5, 1.2, 'mark'), R(38, 42.5, 2.4, 4.5, 1.2, 'mark')))),
   ggig: art(
     'tan',
     'purple',

@@ -4,7 +4,7 @@
 // pendulum follows the audio clock too, so it swings exactly to what you hear.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { clampBpm, DEFAULT_METRO, defaultAccents, DRUM_KITS, KIT_NAME, GROOVES, grooveHits, grooveSteps, groovesOf, STYLE_NAME, stepSeconds, tapBpm, tempoName, type DrumKit, type GrooveStyle, type MetroSettings } from '../engine/grooves';
+import { clampBpm, DEFAULT_METRO, defaultAccents, DRUM_KITS, KIT_NAME, GROOVES, grooveCycle, grooveHits, grooveSteps, groovesOf, STYLE_NAME, stepSeconds, tapBpm, tempoName, type DrumKit, type GrooveStyle, type MetroSettings } from '../engine/grooves';
 import type { Settings } from '../storage/progress';
 import { piano } from './services';
 import { Icon } from './icons';
@@ -131,8 +131,10 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
         const g = cur.groove ? GROOVES.find((x) => x.id === cur.groove) ?? null : null;
         if (g) {
           const n = grooveSteps(g);
-          const s = st.step % n;
-          for (const h of grooveHits(g)) if (h.step === s) piano.metroHit(h.kind, st.next, h.vel);
+          // Two-bar timelines (son clave, bembé bell): the hits run over the whole cycle, the bars stay one bar long.
+          const sc = st.step % grooveCycle(g);
+          const s = sc % n;
+          for (const h of grooveHits(g)) if (h.step === sc) piano.metroHit(h.kind, st.next, h.vel);
           const perBeat = g.den === 8 && g.sub === 2 ? 1 : g.sub;
           if (s % perBeat === 0) st.beatTimes.push({ t: st.next, beat: s / perBeat, n: st.count++ });
           st.next += stepSeconds(g, st.bpm);
@@ -419,7 +421,7 @@ function clickSound(sound: MetroSettings['sound'], accent: boolean, beat: number
 
 /** A tiny drum-grid preview of a groove (kick / snare / hats). */
 function GrooveMini({ g }: { g: (typeof GROOVES)[number] }) {
-  const n = grooveSteps(g);
+  const n = grooveCycle(g);
   const lanes = [g.h, g.s, g.k];
   return (
     <svg className="mt-mini" viewBox={`0 0 ${n * 4} 12`} preserveAspectRatio="none" aria-hidden="true">

@@ -141,6 +141,7 @@ import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../eng
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import { addSession, blockLeftMs, creditBlock, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, teacherToday, techBlockOf, validateTemplate, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { keptPlan, matrixTierOf, weekKeyIfKept } from './todayTech';
+import { rbiTier } from '../engine/rotationSheet';
 import { keyName as keyNameOf } from '../engine/drills/generate';
 import { subPriorities } from '../engine/scheduler';
 import { foldSubs } from '../engine/taxonomy';
@@ -972,6 +973,8 @@ export function App() {
   const chartInit = useRef<MyChart | null>(null);
   /** Improvise opened from a piece ("Improvise on it"): the chart its rules start on. */
   const improvInit = useRef<MyChart | null>(null);
+  /** Improvise opened from the workout's improvisation block (D2): the scales first, today's lick on top, Back to the run. */
+  const improvWorkout = useRef(false);
   /** A practice at the piano opened from a chart player whose address names its piece: Back returns to that player. */
   const chartReturn = useRef(false);
   /** Technique opened from a piece ("Practise it in the technique hub"): the key page of the chart's key. */
@@ -1791,6 +1794,7 @@ export function App() {
     }
     if (a.k === 'improvise' && chart) {
       improvInit.current = chart;
+      improvWorkout.current = false;
       return go('improv');
     }
     if (a.k === 'score') {
@@ -2303,7 +2307,9 @@ export function App() {
   const workoutSubs = useMemo((): Partial<Record<string, string>> => {
     const he = s.uiLang === 'he';
     const out: Partial<Record<string, string>> = {};
-    const wk = s.activeCourse === 'keys' ? weekKeyIfKept('major', 'piano') : null;
+    // the key of the week on the technique block: the piano, and (phase 7) the guitar and the bass ladders
+    const wkInst = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? s.activeCourse : null;
+    const wk = wkInst ? weekKeyIfKept('major', wkInst) : null;
     if (wk !== null) {
       const n = keptPlan(today)?.cells.length ?? 0;
       const name = `${keyNameOf(wk)}`;
@@ -2563,7 +2569,7 @@ export function App() {
     }
     if (id === 'mixer') return openMixer();
     if (id === 'log') return setLogOpen(true);
-    if (id === 'improv') improvInit.current = null;
+    if (id === 'improv') (improvInit.current = null), (improvWorkout.current = false);
     go(id as Route);
   };
 
@@ -2766,7 +2772,7 @@ export function App() {
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
           assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
-          aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), go('improv'))} />}
+          aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), (improvWorkout.current = false), go('improv'))} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}
           news={
@@ -2929,7 +2935,7 @@ export function App() {
             slowdown: () => go('slowdown'),
             groove: () => go('groove'),
             // Improvise for every player; on the kit it is fills, solos and trading fours.
-            improv: () => (improvInit.current = null, go('improv')),
+            improv: () => (improvInit.current = null, (improvWorkout.current = false), go('improv')),
             // Owner 2026-11-22: one Licks tile — the library, my phrases (Encore) and the challenges inside it.
             licks: () => gate('game:licks', () => go('licks')),
             // GUITAR_DEEPENING §6.3: the chord finder (guitar course), opened by its quick lesson the first time.
@@ -3338,7 +3344,10 @@ export function App() {
               const mode = b.target.mode ?? 'improv';
               improvStyleNext.current = b.target.style ?? null;
               tasteBand.current = false;
-              improvInit.current = null;
+              if (mode === 'improv') {
+                improvInit.current = null;
+                improvWorkout.current = true;
+              }
               return go(mode === 'repertoire' ? 'pieces' : mode === 'grooves' ? 'groove-echo' : 'improv');
             }
             // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
@@ -3609,8 +3618,21 @@ export function App() {
           onStyleMinutes={(st, m) => noteStyleMinutes(st, m, tasteBand.current ? 'taste' : 'improv')}
           title={<PlaceSpark place="improv" course={(s.activeCourse ?? 'ear') as CourseId} lang={s.uiLang} />}
           vocab={vocabCtx()}
+          workout={improvWorkout.current}
+          tier={rbiTier(s.activeCourse === 'keys' || s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? matrixTierOf(s, drillSettingsOf(s), progress.drillItems ?? {}) : 1, s.rotationTier)}
+          dayKey={weekKeyIfKept('major', drillSettingsOf(s).instrument ?? 'piano') ?? 0}
+          onTier={(t) => updateSettings({ rotationTier: t })}
+          onTake={(t) => {
+            // Phase 5: every take of Improvise is one rated result — the rating (improv), XP, league and course share
+            // through one completion; the mode × function stats the rotation picks from.
+            if (t.stats) updateSettings({ rotationStats: t.stats });
+            const e = t.event;
+            void store
+              .recordCompletion({ lessonId: t.lessonId, lessonVersion: 1, sessionId: e.id, completedAt: e.at, firstTry: e.correct ? 1 : 0, total: 1, xp: t.xp, missed: [], items: [{ id: e.id, skill: e.skill, difficulty: e.difficulty, correct: e.correct, tag: t.kind, score: e.score, tags: e.tags }], course: (s.activeCourse ?? 'keys') as CourseId })
+              .then(setProgress);
+          }}
           onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
-          onBack={() => (improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
+          onBack={() => (improvWorkout.current ? ((improvWorkout.current = false), go(workoutPending.current ? 'workoutrun' : 'arcade')) : improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
           onOpenChart={(c) => ((chartInit.current = c), go('charts'))}
         />
       )}

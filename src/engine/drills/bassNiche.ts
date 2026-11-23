@@ -974,7 +974,7 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
         const nx = rootOf(tu, key + (prog[bar + 1] ?? prog[0])[0]);
         line.push({ b: bar * 4 + 1.5, d: 1.5, p: five(r), ct: true }, { b: bar * 4 + 3, d: bar === prog.length - 1 ? 1 : 2.5, p: bar === prog.length - 1 ? R : nx, ct: true });
       });
-      return drillOf(s, tu, alt(line), { ...(two ? tt('Tumbao with 2-3 clave: i – V7', 'טומבאו עם קלאבה 2-3: i – V7') : tt('Tumbao on one chord, 3-2 clave', 'טומבאו על אקורד אחד, קלאבה 3-2')), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: two ? 'clave-23' : 'clave-32' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...(two ? tt('Tumbao with 2-3 clave: i – V7', 'טומבאו עם קלאבה 2-3: i – V7') : tt('Tumbao on one chord, 3-2 clave', 'טומבאו על אקורד אחד, קלאבה 3-2')), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: two ? 'clave-23' : 'clave-32' }, band: 'mambo' });
     }
     case 'montuno': {
       // Tumbao over montuno changes (I–IV–V–IV, op 0; ii–V–I–I, op 1): free choice by the rules — the note on 4 is the
@@ -987,7 +987,7 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
         const nx = rootOf(tu, key + (prog[bar + 1] ?? prog[0])[0]);
         line.push({ b: bar * 4 + 1.5, d: 1.5, p: five(r), ct: true }, { b: bar * 4 + 3, d: bar === prog.length - 1 ? 1 : 2.5, p: nx, ct: true });
       });
-      return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Tumbao over ii–V–I: anticipate each change', 'טומבאו על ii–V–I: להקדים כל חילוף') : tt('Tumbao over I–IV–V–IV: anticipate each change', 'טומבאו על I–IV–V–IV: להקדים כל חילוף')), chart: chartLc(cs), show: 'chart', evenness: false, bass: { rules: rulesFor(cs, 'target', { anticipate: 1 }) }, drums: { groove: 'clave-32' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Tumbao over ii–V–I: anticipate each change', 'טומבאו על ii–V–I: להקדים כל חילוף') : tt('Tumbao over I–IV–V–IV: anticipate each change', 'טומבאו על I–IV–V–IV: להקדים כל חילוף')), chart: chartLc(cs), show: 'chart', evenness: false, bass: { rules: rulesFor(cs, 'target', { anticipate: 1 }) }, drums: { groove: 'clave-32' }, band: 'mambo' });
     }
     case 'chacha': {
       // Cha-cha: the root on 1, the 5th on the "and" of 2, and the "cha-cha" on 4 and its "and" leading to the next.
@@ -999,7 +999,7 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
         line.push({ b: bar * 4, d: 1.5, p: r, ct: true }, { b: bar * 4 + 1.5, d: 1.5, p: five(r), ct: true }, { b: bar * 4 + 3, d: 0.5, p: r + 12 > 50 ? r : r + 12, ct: true }, { b: bar * 4 + 3.5, d: 0.5, p: nx + (nx > r ? -1 : 1), ct: false });
       });
       line.push({ b: 32, d: 1, p: R });
-      return drillOf(s, tu, alt(line), { ...tt('Cha-cha', 'צ׳ה-צ׳ה'), chart: prog.map((c) => chordName(key, c)), evenness: false, drums: { groove: 'cha-cha' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...tt('Cha-cha', 'צ׳ה-צ׳ה'), chart: prog.map((c) => chordName(key, c)), evenness: false, drums: { groove: 'cha-cha' }, band: 'chacha' });
     }
     case 'songo':
     case 'mozambique': {
@@ -1019,7 +1019,7 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
         });
       });
       line.push({ b: 32, d: 1, p: R });
-      return drillOf(s, tu, alt(line), { ...(moz ? tt('Mozambique', 'מוזמביק') : tt('Songo', 'סונגו')), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: 'songo' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...(moz ? tt('Mozambique', 'מוזמביק') : tt('Songo', 'סונגו')), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: 'songo' }, band: 'songo' });
     }
     case 'afro68': {
       // Afro-Cuban 6/8 (the bembé bell): one beat = a dotted quarter, triplet 8ths; root – 5th – ♭7 cell per beat pair.
@@ -1031,19 +1031,21 @@ function genLatin(s: DrillSpec, tu: Tuning): Drill {
         for (const [b, d, iv] of CELL) line.push({ b: bar * 4 + b, d, p: r + (r + iv > 52 ? iv - 12 : iv), ct: true, acc: b === 0 });
       });
       line.push({ b: 32, d: 1, p: R });
-      return drillOf(s, tu, alt(line), { ...tt('Afro-Cuban 6/8 (bembé)', 'אפרו-קובני 6/8 (במבה)'), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: '6-8-afro' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...tt('Afro-Cuban 6/8 (bembé)', 'אפרו-קובני 6/8 (במבה)'), chart: prog.map((c) => chordName(key, c, key + 3)), keyName: km, evenness: false, drums: { groove: '6-8-afro' }, band: 'afro68' });
     }
     case 'brazil': {
       // Brazilian 16ths: partido alto (op 0) or baião (op 1), on I – V7.
+      // Baião (STYLE-BRAZIL §3.1, [V] Hubbard + Patitucci): x..x....x..x.... — the root on 1 and 3, the 5th on the 16th
+      // before 2 and 4 tied over the beat (no note on 2 or 4). The partido-alto cell is unverified (STYLE-BRAZIL task B2).
       const prog: Prog = [[0, 'M'], [0, 'M'], [7, '7'], [7, '7'], [0, 'M'], [0, 'M'], [7, '7'], [0, 'M']];
-      const CELL: [number, number, number][] = op % 2 ? [[0, 0.75, 0], [0.75, 0.25, 7], [1, 1, 12], [2, 0.75, 0], [2.75, 0.25, 7], [3, 1, 10]] : [[0, 0.5, 0], [0.75, 0.25, 12], [1.5, 0.5, 7], [2.25, 0.5, 0], [3, 0.5, 7], [3.5, 0.5, 10]];
+      const CELL: [number, number, number][] = op % 2 ? [[0, 0.75, 0], [0.75, 1.25, 7], [2, 0.75, 0], [2.75, 1.25, 7]] : [[0, 0.5, 0], [0.75, 0.25, 12], [1.5, 0.5, 7], [2.25, 0.5, 0], [3, 0.5, 7], [3.5, 0.5, 10]];
       const line: BN[] = [];
       prog.forEach((c, bar) => {
         const r = rootOf(tu, key + c[0]);
         for (const [b, d, iv] of CELL) line.push({ b: bar * 4 + b, d, p: r + (r + iv > 52 ? iv - 12 : iv) - (c[1] === 'M' && iv === 10 ? 1 : 0), ct: true, acc: b === 0 });
       });
       line.push({ b: 32, d: 1, p: R });
-      return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Baião', 'באיון') : tt('Partido alto', 'פרטידו אלטו')), chart: prog.map((c) => chordName(key, c)), evenness: false, drums: { groove: 'samba' }, band: 'latin' });
+      return drillOf(s, tu, alt(line), { ...(op % 2 ? tt('Baião', 'באיון') : tt('Partido alto', 'פרטידו אלטו')), chart: prog.map((c) => chordName(key, c)), evenness: false, drums: { groove: 'samba' }, band: op % 2 ? 'baiao' : 'samba' });
     }
     case 'latin-jazz': {
       // Latin jazz on a minor standard: free choice, the root of every new chord anticipated on the "and" before it.

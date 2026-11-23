@@ -1,5 +1,6 @@
 // The metronome's groove bank (owner, 2026-11-07): drum patterns to practice with instead of a click, sorted by
-// style. A pattern is one bar on a grid of `sub` steps per beat; each lane is a string, one character per step:
+// style. A pattern is one bar (two for the timelines that need them: `bars`) on a grid of `sub` steps per beat; each
+// lane is a string, one character per step:
 //   x = hit, o = soft (ghost) hit, . = rest.   Lanes: k kick, s snare, h hi-hat, r rim / side-stick (soft snare).
 // Original patterns written for the app (common textbook grooves, no recordings). Pure data + helpers.
 
@@ -26,6 +27,11 @@ export interface Groove {
   rimAs?: 'rim' | 'hat' | 'clap' | 'cowbell';
   /** Odd meters: the beat groups of the bar in steps of the groove's beat (7/8 = 2+2+3 eighths, 5/4 = 3+2 quarters): the accents. */
   groups?: number[];
+  /**
+   * Bars the lanes span (default 1). Two-bar timelines (STYLE-AFROCUBAN F1/F2): the son clave in two bars of 8ths, so
+   * it cycles once per two bars of the tumbao; the bembé bell over two bars of 6/8; the bossa clave.
+   */
+  bars?: 2;
 }
 
 export const STYLE_NAME: Record<GrooveStyle, { en: string; he: string }> = {
@@ -101,7 +107,10 @@ export const GROOVES: Groove[] = [
   G('swing', 'Swing', 'סווינג', 'jazz', 4, 4, 3, 140, 'x.....x.....', '............', 'x..x.xx..x.x', '...x.....x..', RIDE),
   G('swing-fast', 'Up-tempo swing', 'סווינג מהיר', 'jazz', 4, 4, 3, 220, 'x.....x.....', '............', 'x..x.xx..x.x', '...x.....x..', RIDE),
   G('jazz-waltz', 'Jazz waltz', 'ואלס ג׳אזי', 'jazz', 3, 4, 3, 150, 'x........', '.....o...', 'x..x.xx..', '...x...x.', RIDE),
-  G('bossa', 'Bossa nova', 'בוסה נובה', 'latin', 4, 4, 2, 130, 'x..xx..x', '........', 'xxxxxxxx', 'x..x..x...x..x..'.slice(0, 8)),
+  // The bossa clave 3-2 as a cross-stick over two bars (drumStyles.ts CLAVE.bossa32), the kick on 1, "&" of 2, 3, "&" of 4.
+  { ...G('bossa', 'Bossa nova', 'בוסה נובה', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', 'x..x..x...x..x..'), bars: 2 },
+  // The same with the bossa clave 2-3 (drumStyles.ts CLAVE.bossa23; STYLE-BRAZIL §1(a) F2' [V] Ward "sometimes 2-3").
+  { ...G('bossa-23', 'Bossa nova, clave 2-3', 'בוסה נובה, קלאבה 2-3', 'latin', 4, 4, 2, 130, 'x..xx..xx..xx..x', '................', 'xxxxxxxxxxxxxxxx', '..x..x..x..x..x.'), bars: 2 },
   G('ballad-brush', 'Brush ballad', 'בלדת מברשות', 'jazz', 4, 4, 3, 66, 'x.....x.....', '...o.....o..', 'x..x.xx..x.x', undefined, RIDE),
   // blues
   G('shuffle', 'Shuffle', 'שאפל', 'blues', 4, 4, 3, 110, 'x.....x.....', '...x.....x..', 'x.xx.xx.xx.x'),
@@ -111,10 +120,14 @@ export const GROOVES: Groove[] = [
   G('samba', 'Samba', 'סמבה', 'latin', 4, 4, 4, 100, 'x..xx..xx..xx..x', '..x...x...x..x..'.replace(/x/g, 'o'), 'xxxxxxxxxxxxxxxx', undefined, { hatAs: 'shaker' }),
   G('songo', 'Songo', 'סונגו', 'latin', 4, 4, 4, 110, '...x..x....x..x.', '..o.x..o..x..o..', 'x.x.x.x.x.x.x.x.', undefined, { rimAs: 'cowbell' }),
   G('cha-cha', 'Cha-cha', 'צ׳ה־צ׳ה', 'latin', 4, 4, 2, 120, 'x...x...', '..x...xx', 'x.x.x.x.', undefined, { hatAs: 'cowbell' }),
-  G('clave-32', 'Son clave 3-2', 'קלאבה 3-2', 'latin', 4, 4, 4, 100, 'x.......x.......', '................', 'x.x.x.x.x.x.x.x.', 'x..x...x..x.x...'),
-  // Bass b-latin 2 (BASS_NICHE_PLAN L1): the same clave from its 2 side (the 3-2 bar turned round).
-  G('clave-23', 'Son clave 2-3', 'קלאבה 2-3', 'latin', 4, 4, 4, 100, 'x.......x.......', '................', 'x.x.x.x.x.x.x.x.', '..x.x...x..x...x'),
-  G('tumbao', 'Tumbao (bass drum)', 'טומבאו', 'latin', 4, 4, 4, 100, '......x.......x.', '................', 'x.x.x.x.x.x.x.x.', '..x.x.....x.x...'),
+  // STYLE-AFROCUBAN F1: the son clave over TWO bars of 8ths (3-2 = 0, 3, 6 | 10, 12; 2-3 = 2, 4 | 8, 11, 14), the same
+  // strings as drumStyles.ts CLAVE, so it cycles once per two bars of the b-latin tumbao (its bombo and ponche, the
+  // "&" of 2 and 4 of the three-side bar, fall on clave strokes 2 and 3). Kick on 1 and 3, hats in 8ths.
+  { ...G('clave-32', 'Son clave 3-2', 'קלאבה 3-2', 'latin', 4, 4, 2, 100, 'x...x...x...x...', '................', 'xxxxxxxxxxxxxxxx', 'x..x..x...x.x...'), bars: 2 },
+  // Bass b-latin 2 (BASS_NICHE_PLAN L1): the same clave from its 2 side (the two bars swapped).
+  { ...G('clave-23', 'Son clave 2-3', 'קלאבה 2-3', 'latin', 4, 4, 2, 100, 'x...x...x...x...', '................', 'xxxxxxxxxxxxxxxx', '..x.x...x..x..x.'), bars: 2 },
+  // F3: the kick on the tumbao's "&" of 2 and 4 in every bar (16th steps 6 and 12).
+  G('tumbao', 'Tumbao (bass drum)', 'טומבאו', 'latin', 4, 4, 4, 100, '......x.....x...', '................', 'x.x.x.x.x.x.x.x.'),
   // world
   G('maqsum', 'Maqsum', 'מקסום', 'world', 4, 4, 4, 100, 'x.....x.x.......', '....x.......x...', 'x.x.x.x.x.x.x.x.'),
   G('baladi', 'Baladi', 'בלדי', 'world', 4, 4, 4, 92, 'x.x...x.x.......', '....x.......x...', 'x.x.x.x.x.x.x.x.'),
@@ -122,7 +135,8 @@ export const GROOVES: Groove[] = [
   G('ayub', 'Ayoub', 'איוב', 'world', 2, 4, 4, 120, 'x..x....', '......x.', 'x.x.x.x.'),
   G('wahda', 'Wahda', 'וואחדה', 'world', 4, 4, 2, 90, 'x.......', '..x.x.x.', 'x.x.x.x.'),
   G('afrobeat', 'Afrobeat', 'אפרוביט', 'world', 4, 4, 4, 110, 'x.....x...x.....', '....x..o.o..x...', 'x.xxx.xxx.xxx.xx', undefined, { hatAs: 'shaker' }),
-  G('6-8-afro', 'Afro 6/8', 'אפרו 6/8', 'world', 2, 8, 3, 80, 'x.....', '...x..', 'x.xx.x', undefined, { hatAs: 'cowbell' }),
+  // F2: the standard bembé bell x.x.xx.x.x.x (7 strokes in 12 cells) over two bars of 6/8, as drumStyles.ts L6.
+  { ...G('6-8-afro', 'Afro 6/8', 'אפרו 6/8', 'world', 2, 8, 3, 80, 'x.....x.....', '...x.....x..', 'x.x.xx.x.x.x', undefined, { hatAs: 'cowbell' }), bars: 2 },
   // ballad
   G('ballad', 'Ballad', 'בלדה', 'ballad', 4, 4, 2, 70, 'x...x.x.', '..x...x.', 'xxxxxxxx', '..x...x.'),
   G('ballad-68', 'Ballad 6/8', 'בלדה 6/8', 'ballad', 2, 8, 3, 56, 'x.....', '...x..', 'xxxxxx'),
@@ -143,21 +157,25 @@ export const GROOVES: Groove[] = [
 
 /** Steps in one bar. For den 8 grooves with sub 2 the "beat" is the eighth itself (one char per eighth). */
 export const grooveSteps = (g: Groove) => (g.den === 8 && g.sub === 2 ? g.beats : g.beats * g.sub);
+/** Bars one cycle of the lanes spans (two-bar timelines: 2). */
+export const grooveBars = (g: Groove): number => g.bars ?? 1;
+/** Steps in one cycle of the lanes (the bar, or both bars of a two-bar timeline). */
+export const grooveCycle = (g: Groove) => grooveSteps(g) * grooveBars(g);
 
 /** Normalise a lane to the bar length (pads with rests / trims). */
 export const lane = (s: string | undefined, n: number) => (s ?? '').slice(0, n).padEnd(n, '.');
 
 export type HitKind = 'kick' | 'snare' | 'snare-soft' | 'hat' | 'hat-open' | 'ride' | 'rim' | 'clap' | 'cowbell' | 'shaker';
 export interface Hit {
-  /** Step index in the bar. */
+  /** Step index in the cycle (the bar; both bars of a two-bar timeline). */
   step: number;
   kind: HitKind;
   vel: number;
 }
 
-/** The hits of one bar, in step order. */
+/** The hits of one cycle (a bar, or two for a two-bar timeline), in step order. */
 export function grooveHits(g: Groove): Hit[] {
-  const n = grooveSteps(g);
+  const n = grooveCycle(g);
   const out: Hit[] = [];
   const add = (str: string | undefined, kind: Hit['kind'], loud: number, soft: number) => {
     const l = lane(str, n);

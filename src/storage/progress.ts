@@ -405,6 +405,11 @@ export interface Settings {
   improvBest?: Record<string, number>;
   /** Best compliance per improvisation challenge (0.58). */
   challengeBest?: Record<string, number>;
+  /** Scale rotation (SPEC-RBI-ROTATION §3, phase 5): measured use per (function, scale) — takes, mean colour coverage,
+   *  last played; the rotation picks by need from it, and the profile reads it. */
+  rotationStats?: import('../engine/rotation').ModeStats;
+  /** The rotation tier the player chose (1–3 in the first version; absent = from the technique tier). */
+  rotationTier?: 1 | 2 | 3;
   /** The mixer: levels, EQ and effects per channel (absent = the default mix). */
   mixer?: Partial<import('../audio/mixer').MixerSettings>;
   /** Instrument sound for every exercise (spec Q): 'classic' (synth) or a sample set id. */

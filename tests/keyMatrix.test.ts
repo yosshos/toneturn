@@ -20,8 +20,8 @@ describe('the key × exercise matrix (SPEC-DAILY-WORKOUT)', () => {
     const d = t3.filter((c) => c.root === 2 && c.group === 'major');
     expect(d.length).toBeGreaterThan(14);
     expect(new Set(d.map((c) => c.rung)).size).toBe(d.length);
-    // every cell is in its key only
-    for (const c of d) expect(c.level.keys).toEqual([2]);
+    // every cell is in its key only (phase 7: the Aeolian of D major on its 6th degree, B)
+    for (const c of d) expect(c.level.keys).toEqual([c.mode === 'aeolian' ? 11 : 2]);
   });
   it('minutes: a never-played cell costs more than one below target, which costs more than a closed one', () => {
     const c = keyMatrix(fams, 3, {}).find((x) => x.rung === 'k-sharm-7' && x.root === 0)!;

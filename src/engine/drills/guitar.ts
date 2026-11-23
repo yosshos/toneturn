@@ -24,7 +24,8 @@ import { bassFirstFamily, generateBassFirst } from './bassFirst'; // AUDIT-6 Sta
 import { bassFeelFamily, bassRiffFamily, generateBassRiffFeel } from './bassRiffFeel'; // AUDIT-7 #15: bass riffs by grade, the feels
 import { generateGuitarEar } from './guitarEar';
 import { generateGuitarJazzStart } from './guitarJazzStart'; // AUDIT-7 #2: the guitarist's jazz entry over the blues
-import { generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
+import { compStdId, generateHarris, generateJazz2, generateTheoryGuitar, GUITAR_STD, guitarStdOption, guitarStdTempo } from './guitarJazz';
+import { isStraightStd } from '../standards';
 import { genGuitarHarrisLine, guitarHarrisLineFamily } from './harrisLineDrills'; // Barry Harris lines
 import { genGuitarColor, guitarColorFamily, guitarCtoneFamily } from './colorDrills'; // HARMONY-REHARM
 import { genTpairGuitar, guitarTpairFamily } from './tpairDrills'; // triad pairs, deep (2026-11-16)
@@ -41,6 +42,7 @@ import { genGuitarSolo, guitarSoloFamily } from './soloDrills'; // AUDIT-DEPTH-3
 import { genGuitarCtx, guitarCtxFamily } from './ctxDrills'; // AUDIT-DEPTH-3 #5, #6
 import { genGuitarGig, guitarGigFamily } from './gigDrills'; // AUDIT-DEPTH-3 #11, #12, C8
 import { gateFamilies } from '../verifiedContent';
+import { genLatinGuitar, guitarBrazilFamily, guitarGuajeoFamily } from './latinStyles'; // SPEC-JAZZ-NEIGHBOURS §2, §3
 
 export type GuitarStyle = NonNullable<DrillSettings['guitarStyle']>;
 export type GuitarTechnique = NonNullable<ExpNote['technique']>;
@@ -2465,6 +2467,9 @@ export function generateGuitar(spec: DrillSpec): Drill {
       return generateGuitarFirst(s, tu);
     case 'g-jblues':
       return generateGuitarJazzStart(s, tu);
+    case 'g-brazil':
+    case 'g-guajeo':
+      return genLatinGuitar(s, tu);
     case 'b-first':
       return generateBassFirst(s, tu);
     // AUDIT-7 #15: riffs by grade and the broken-feel / ballad ladder on the bass.
@@ -2682,7 +2687,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       L('g-jazz', 6, 'Walking bass on guitar', 'בס מהלך על גיטרה', [J('walking')], CYC4),
       L('g-jazz', 7, 'Harmonized scale in drop-2 (chord melody) and octaves', 'סולם מהורמן בדרופ 2 (אקורד-מלודיה) ואוקטבות', [J('harmonized'), J('octaves')], CYC4.slice(0, 6)),
       // GUITAR_DEEPENING §4.2: jazz for the niche.
-      LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: שלדים ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, swing: true })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
+      LT('g-jazz', 8, 'Comping on standards: shells and drop-2 in Charleston, four and anticipations, with the band', 'ליווי על סטנדרטים: שלדים ודרופ 2 בצ׳רלסטון, ארבע והקדמות, עם הלהקה', range(6).map((o) => J('comp-std', { option: o, ...(isStraightStd(compStdId(o)) ? {} : { swing: true }) })), [0, 5, 7, 10], [100, 160], 'swing quarters', 6),
       LT('g-jazz', 9, 'Voice leading by ear and by hand: guide tones, then drop-2 by step', 'הובלת קולות בשמיעה וביד: צלילים מנחים, ואז דרופ 2 בצעדים', [J('vl-ear', { option: 0 }), J('vl-ear', { option: 1 })], CYC4, [70, 100], 'halves', 7),
       LT('g-jazz', 10, 'Chord melody: our melody on top of drop-2 voicings', 'אקורד-מלודיה: המנגינה שלנו מעל קולות דרופ 2', range(4).map((o) => J('chord-melody', { option: o })), CYC4.slice(0, 6), [60, 90], 'halves', 8),
       LT('g-jazz', 11, 'Rhythm changes and tritone substitutions: shells and drop-3', 'ריתם צ׳יינג׳ס ותחליפי טריטון: שלדים ודרופ 3', range(4).map((o) => J('rhythm-changes', { option: o, swing: true })), [10, 3, 8, 0, 5, 7], [140, 200], 'swing quarters', 8),
@@ -2690,7 +2695,7 @@ export function guitarCatalog(): GuitarFamilyDef[] {
       // GUITAR_DEEPENING P2: comp a whole standard's chart, in its own key, each at its own tempo (the repertoire's guitar standards).
       LT('g-jazz', 13, 'Comp a whole standard: the full chart with the band', 'ליווי סטנדרט שלם: כל דף האקורדים עם הלהקה', GUITAR_STD.map((x) => {
         const [a, b] = guitarStdTempo(x.id);
-        return J('comp-chart', { option: guitarStdOption(x.id)!, swing: x.rhythm !== 'bossa', tempo: a, target: b });
+        return J('comp-chart', { option: guitarStdOption(x.id)!, swing: x.rhythm !== 'bossa' && !isStraightStd(x.id), tempo: a, target: b });
       }), [0], [80, 140], 'swing quarters', 7),
     ]),
     // AUDIT-7 #2: the jazz entry below 1000 (grades 1–3, placed by audit7Placement.ts), over the 12-bar blues in all 12
@@ -2794,6 +2799,9 @@ export function guitarCatalog(): GuitarFamilyDef[] {
     guitarSoloFamily(LT, fam),
     // AUDIT-DEPTH-3 #11, #12, C8: on the bandstand — intros, endings, the ballad, the whole tune (jazz add-on).
     guitarGigFamily(LT, fam),
+    // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa batida and samba, the guajeo (latinStyles.ts; core, no add-on).
+    guitarBrazilFamily(LT, fam),
+    guitarGuajeoFamily(LT, fam),
     // STAGE C (AUDIT-6 GA-4): speed, fusion and outside, chord-melody arranging, solo jazz guitar, Harris lines at tempo.
     ...guitarTopFamilies(LT, fam),
     // The 0.4x starter bass family: superseded by the b-* course families below (BASS_CURRICULUM §10.1). Kept, retired,
