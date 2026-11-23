@@ -210,7 +210,7 @@ describe('block H: the style block in the matrix (§5)', () => {
     const piano = styleRungs(catalog(), 5, C('brazil', ['afrocuban']));
     expect(piano.some((r) => r.fam === 'k-brazil' && r.style === 'brazil' && r.tier === 'main')).toBe(true);
     expect(piano.some((r) => r.fam === 'k-montuno' && r.style === 'afrocuban' && r.tier === 'also')).toBe(true);
-    expect(piano.some((r) => r.id === 'k-montuno-3')).toBe(false); // hidden until verified ('montuno-lines')
+    expect(piano.every((r) => catalog().some((f) => f.levels.some((l) => l.id === r.id)))).toBe(true); // hidden levels never (catalog() drops them)
     const gtr = styleRungs(guitarCatalog().filter((f) => f.instruments.includes('guitar') && !f.retired), 5, C('brazil'));
     expect(gtr.some((r) => r.fam === 'g-brazil')).toBe(true);
     expect(gtr.some((r) => r.fam === 'g-guajeo')).toBe(true);

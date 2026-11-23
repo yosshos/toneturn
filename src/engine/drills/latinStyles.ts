@@ -429,6 +429,14 @@ function montunoHits(bars: number, dir: number): number[] {
  * The broken figure ([C] Mauleón: the line note in octaves, alternating with inner chord tones; the left hand doubles
  * the line): the line note is the chord tone nearest the last one (ties upward), starting on the first chord's 5th
  * around G4; the inner tones are the chord's 3rd and 7th (a 7th chord) or its other two triad tones, inside the octave.
+ *
+ * Checked 2026-11-23 against published pedagogy (docs/THEORY-QUESTIONS.md question 13): the montuno / guajeo is a
+ * looped two-bar ostinato (Moore, Beyond Salsa Piano v.1 glossary: "a syncopated, looped figure"; Wikipedia Guajeo:
+ * "a typical Cuban ostinato melody"); the right hand plays a chord tone in octaves (root, 3rd or 5th, moving by step —
+ * Keyboard / MusicRadar "Master the montuno") with two other chord tones between, alternating outer and inner
+ * (pianowithjonny "outer-inner"; thejazzpianosite "Afro-Cuban Latin Jazz Explained", method 2; Sonny Bravo via
+ * Wikipedia: "octaves"). So each chord keeps one line note for the whole drill (genMontuno caches it by chord), and the
+ * outer / inner alternation runs on the attack grid, not per chord, so an anticipated change never doubles an octave.
  */
 function lineNote(c: ChartChordEv, prev: number | null): number {
   const pcs = [...new Set(c.iv.map((x) => mod(c.root + x, 12)))].filter((p) => c.iv.length < 4 || p !== mod(c.root, 12));
@@ -483,33 +491,36 @@ function genMontuno(s: DrillSpec): Drill {
   const hits = montunoHits(bars, dir);
   let prevV: number[] | null = null;
   let line: number | null = null;
-  let lastSeg: Seg | null = null;
-  let k = 0;
-  for (const b of hits) {
+  // The ostinato: a chord keeps its line note every time it comes back (I–IV–V–IV: G–A–B–A, looped).
+  const lineBySym = new Map<string, number>();
+  const lineFor = (c: Seg): number => {
+    const l = lineBySym.get(c.sym) ?? lineNote(c, line);
+    lineBySym.set(c.sym, l);
+    return l;
+  };
+  hits.forEach((b, k) => {
     const offbeat = b % 1 !== 0;
-    // Anticipated changes ([C] Mauleón): an offbeat attack an 8th before a new chord already plays it.
-    const c = segAt(segs, b + (ant && offbeat ? 0.5 : 0));
-    if (c !== lastSeg) {
-      k = 0;
-      lastSeg = c;
-    }
+    // Anticipated changes ([C] Mauleón): an offbeat attack an 8th before a new chord already plays it (the last one
+    // anticipates the closing chord).
+    const at = b + (ant && offbeat ? 0.5 : 0);
+    const c = at >= bars * 4 - 1e-6 ? final : segAt(segs, at);
     if (s.kind === 'mt-ponch') {
       // Ponchando (§2.1 [V]): block chords on the attack points.
       prevV = voiceLead(voicings(c, 'close'), prevV);
       n.add(b, 0.5, prevV, 'R');
     } else if (k % 2 === 0) {
-      line = lineNote(c, line);
+      // outer (the octave) on the 1st and 3rd attack of every bar, inner on the 2nd and 4th
+      line = lineFor(c);
       n.add(b, 0.5, [line - 12, line], 'R');
       if (lh) n.add(b, 0.5, [line - 24], 'L');
     } else {
-      n.add(b, 0.5, innerTones(c, line ?? lineNote(c, null)), 'R');
+      n.add(b, 0.5, innerTones(c, lineFor(c)), 'R');
     }
-    k++;
-  }
+  });
   // the closing chord on the next 1
   if (s.kind === 'mt-ponch') n.add(bars * 4, 2, voiceLead(voicings(final, 'close'), prevV), 'R');
   else {
-    const l = lineNote(final, line);
+    const l = lineFor(final);
     n.add(bars * 4, 2, [l - 12, ...innerTones(final, l), l], 'R');
     if (lh) n.add(bars * 4, 2, [l - 24], 'L');
   }
@@ -678,6 +689,9 @@ function genBrazilGuitar(s: DrillSpec, tu: Tuning): Drill {
  * motif [V]; on guitar the motif in single notes on strings 3-2-1 over close triad shapes [C] — the same grid as the piano
  * montuno. The triad: the chord's root triad (a 7th chord: its 3–5–7, the rootless upper triad), placed near the last
  * shape (from about the 7th fret); each attack walks it low–middle–high–middle.
+ * Checked 2026-11-23 (docs/THEORY-QUESTIONS.md question 13): Moore, Beyond Salsa Piano v.1 p. 32 (via Wikipedia Guajeo)
+ * — the generic son guajeo is "simply arpeggiating triads"; the tres (G–C–E) and the guitar imitating it play close
+ * triads with smooth voice leading on the top strings (Premier Guitar, "Son Montuno Guitar").
  */
 function triadShape(tu: Tuning, c: ChartChordEv, near: number): { s: number; f: number }[] {
   const has = (x: number) => c.iv.some((y) => mod(y, 12) === x);
@@ -718,22 +732,25 @@ function genGuajeo(s: DrillSpec, tu: Tuning): Drill {
   const ant = s.kind === 'gg-ant' || s.kind === 'gg-band';
   const evs: Ev[] = [];
   let near = 7.5;
-  let last: ChartChordEv | null = null;
-  let shape: { s: number; f: number }[] = [];
-  let k = 0;
-  for (const b of montunoHits(bars, dir)) {
+  // The ostinato (Wikipedia Guajeo: "a typical Cuban ostinato melody, most often consisting of arpeggiated chords"):
+  // a chord keeps its triad shape every time it comes back, and the walk counts from the written chord's first attack
+  // (an anticipated attack keeps its place in the walk), so the two-bar figure loops unchanged.
+  const shapeBySym = new Map<string, { s: number; f: number }[]>();
+  const hits = montunoHits(bars, dir);
+  for (const b of hits) {
     const offbeat = b % 1 !== 0;
-    const c = segAt(segs, b + (ant && offbeat ? 0.5 : 0));
-    if (c !== last) {
-      shape = triadShape(tu, c, near);
+    const at = b + (ant && offbeat ? 0.5 : 0);
+    const c = at >= bars * 4 - 1e-6 ? segs[0] : segAt(segs, at);
+    const shape = shapeBySym.get(c.sym) ?? triadShape(tu, c, near);
+    if (!shapeBySym.has(c.sym)) {
+      shapeBySym.set(c.sym, shape);
       near = shape.reduce((a, x) => a + x.f, 0) / 3;
-      last = c;
-      k = 0;
     }
+    const from = segAt(segs, b).start;
+    const k = hits.filter((h) => h >= from - 1e-6 && h < b - 1e-6).length;
     evs.push({ beat: b, dur: 0.5, notes: [{ ...shape[[0, 1, 2, 1][k % 4]] }] });
-    k++;
   }
-  const end = triadShape(tu, segs[0], near);
+  const end = shapeBySym.get(segs[0].sym) ?? triadShape(tu, segs[0], near);
   const gns = alt(evs.map((e) => e.notes[0]));
   evs.forEach((e, i) => (e.notes = [gns[i]]));
   evs.push({ beat: bars * 4, dur: 2, notes: end.map((x) => ({ ...x, stroke: 'D' as const })) });
@@ -814,7 +831,7 @@ export function keysMontunoFamily(): FamilyDef {
       L(10, 'Songo: the right hand on the beats', 'סונגו: יד ימין על הפעמות', [sp('mt-songo', o(6))], [100, 130]),
       L(11, 'Montuno with the clave and the tumbao', 'מונטונו עם הקלאבה והטומבאו', [sp('mt-band', o(2), 'RL'), sp('mt-band', o(5, 1), 'RL'), sp('mt-band', o(3), 'RL')], [110, 150]),
       // SPEC-STYLE-FOCUS §9 (the core's neighbour-style moment): the ii–V–I in ponchando — block chords on the montuno
-      // rhythm (§2.1 [V]), close voicings led by voice leading; no line notes (the montuno line levels stay hidden).
+      // rhythm (§2.1 [V]), close voicings led by voice leading; no line notes (ponchando is the montuno's first rung).
       L(12, 'Ponchando over ii–V–I', 'פונצ׳נדו על ii–V–I', [sp('mt-ponch', o(5)), sp('mt-ponch', o(5, 1))], [80, 110]),
     ],
   };

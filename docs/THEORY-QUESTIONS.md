@@ -32,6 +32,15 @@
   - כניסה מקדימה (אקורד על ה"וְ" של 3 או על 4 אל התיבה הבאה) — ההגדרה של סיסקינד עצמו, כבר מוצגת ב־cp-leadin.
   - הודלקו: <bdi>cp-beat3</bdi>, <bdi>tx-call</bdi>, הצ׳רלסטון ההפוך, רד גרלנד והכניסה בליווי שלדים ביד שמאל, ורמות 1 ו־3 של "מקצבי ליווי בשמיעה". המשחק Comp Caller לא קורא יותר לקצב בייסי ולפוש־אוף.
 - **דצימות הולכות (`walking-tenths`).** מכשיר סטרייד מקובל (Grove; סיסקינד): <bdi>I → IV → I</bdi> והעלייה המוקטנת.
+- **13. צלילי קו המונטונו (`montuno-lines`), והגואחאו בגיטרה — נסגר 2026-11-23.** נבדק מול פדגוגיה מתפרסמת (רשימת המקורות באנגלית למטה). מה שמתועד באופן כללי, בכמה מקורות בלתי תלויים:
+  - המונטונו / גואחאו הוא אוסטינטו — דמות של שתי תיבות שחוזרת בלולאה (קווין מור, Beyond Salsa Piano כרך 1, מילון המונחים; ויקיפדיה "Guajeo"; pianowithjonny; thejazzpianosite).
+  - יד ימין: צליל אקורד באוקטבה (יסוד, טרצה או קווינטה), ושני צלילי אקורד אחרים בתוכה, לסירוגין "חוץ־פנים" (pianowithjonny; thejazzpianosite; MusicRadar/Keyboard; סוני בראבו דרך ויקיפדיה). הקו נע בצעדים / בהובלת קולות. יד שמאל מכפילה את הקו.
+  - <bdi>I–IV–V–IV</bdi> הוא מהלך נפוץ (thejazzpianosite; MusicRadar). התיבה של הצד ה"שלוש" כולה על ה"וְ"ים (מור ופניאלוסה דרך ויקיפדיה).
+  - הגואחאו הגנרי של הסון "פשוט מפרק משולשים" (מור 2010, עמ׳ 32, דרך ויקיפדיה), והגיטרה מחקה את הטרס במשולשים צמודים על המיתרים העליונים (Premier Guitar).
+  - **הפסק:** הקצב, המבנה (אוקטבה + צלילים פנימיים, לסירוגין), המהלכים והגואחאו בגיטרה תואמים. אבל נמצא פגם: הקו לא חזר על עצמו. בסיבוב הראשון <bdi>G A | B C</bdi>, ואחר כך <bdi>C C | B C</bdi>, כי כל צליל חושב מחדש מהצליל הקודם — וזה כבר לא אוסטינטו. וברמות ההקדמה התחלפו האוקטבות והצלילים הפנימיים (שתי אוקטבות ברצף).
+  - **תוקן:** כל אקורד שומר את צליל הקו שלו לאורך כל התרגיל, כך שהדמות חוזרת תו בתו (ב־<bdi>C</bdi>: <bdi>G–A | B–A</bdi>, פנימיים <bdi>C–E, C–F | D–G, C–F</bdi>). חוץ/פנים מתחלפים לפי משבצות הקצב, לא לפי האקורד. גם בגיטרה כל אקורד שומר את תפיסת המשולש שלו, וההקדמה לא שוברת את הלולאה. בדיקות יחידה מוודאות את הלולאה בכל הגרסאות ובכמה סולמות.
+  - **הודלק:** רמות 3–9 ו־11 של המונטונו בפסנתר. הגואחאו בגיטרה (9 רמות) לא היה מוסתר, ועכשיו מאומת.
+  - מה שלא נבדק: הקווים המסוימים של מאולאון (*101 Montunos*) — לא קראנו את הספר ולא העתקנו ממנו. הקווים באפליקציה גנריים, לפי העקרונות המתועדים, ולא תעתיק של שיר.
 
 ### מוסתר, לא מבוקש
 
@@ -124,6 +133,28 @@ researched again against other sources. Where things stand:
   3 of "Comping rhythms by ear". Comp Caller no longer calls the Basie rhythm or the push-off.
 - **Walking 10ths (`walking-tenths`).** A standard stride device (Grove; Siskind): I → IV → I and the diminished
   walk-up.
+- **13. The notes of the montuno line (`montuno-lines`), and the guitar guajeo. Closed 2026-11-23.** Checked against
+  published pedagogy (sources below). What is documented generically, in several independent sources:
+  - A montuno / guajeo is an ostinato: a two-bar figure that loops (Moore, *Beyond Salsa Piano* v.1 glossary;
+    Wikipedia *Guajeo*; pianowithjonny; thejazzpianosite).
+  - Right hand: a chord tone in octaves (root, 3rd or 5th), with two other chord tones inside, alternating "outer–inner"
+    (pianowithjonny; thejazzpianosite method 2; MusicRadar / Keyboard; Sonny Bravo via Wikipedia). The line moves by
+    step / voice leading. The left hand doubles the line.
+  - I–IV–V–IV is a common vamp (thejazzpianosite; MusicRadar). The three-side bar is all offbeats (Moore and Peñalosa
+    via Wikipedia).
+  - The generic son guajeo is "simply arpeggiating triads" (Moore 2010 p. 32, via Wikipedia), and the guitar imitates
+    the tres with close triads on the top strings (Premier Guitar).
+  - **Verdict:** the rhythm, the shape (octave plus inner tones, alternating), the vamps and the guitar guajeo match.
+    One defect was found: the line did not repeat. The first cycle came out G A | B C, every later cycle C C | B C,
+    because each note was recomputed from the one before — no longer an ostinato. And the anticipated levels broke the
+    outer / inner alternation (two octaves in a row).
+  - **Fixed:** each chord keeps its line note for the whole drill, so the figure loops note for note (in C: G–A | B–A,
+    inner C–E, C–F | D–G, C–F). Outer / inner alternate on the attack grid, not per chord. On guitar each chord keeps its
+    triad shape and the anticipation no longer breaks the loop. Unit tests check the loop in every variant and several
+    keys.
+  - **Switched on:** piano montuno levels 3–9 and 11. The guitar guajeo (9 levels) was never hidden and is now checked.
+  - Not checked: Mauleón's specific lines (*101 Montunos*). We did not read or copy the book. The app's lines are
+    generic, built from the documented principles, not a transcription of any song.
 
 ### Hidden, not pursued
 
@@ -148,12 +179,6 @@ teaches it as a pair with 3 to 9.
 - The ladder's "thirds" and "triads" (`echols-ladder-thirds-triads`) stay hidden too. They were never asked, and a
   "third" of two 6-dim scale steps is a 2nd at the 6th (G A).
 
-**13. The notes of the montuno line (`montuno-lines`, 2026-11-23).**
-- The rhythm is sourced: the Mauleón montuno figure, with the offbeat bar on the clave's three side (STYLE-AFROCUBAN §2).
-- The notes are not. The app builds them by a rule: the top line starts on the chord's 5th and moves to the nearest chord tone, in octaves, with the other chord tones inside.
-- Over C–F | G–F (I–IV | V–IV, clave 2-3) the octave line comes out G, A on the beats of bar 1 and B, C on the offbeats of bar 2. The inner pairs are C–E, C–F | D–G, F–A.
-- **Question:** is this how a montuno line is taught (for example, matching Mauleón's *101 Montunos*)? Or should the line follow a different rule, such as starting on the root or the 3rd, or moving in octaves with the chord inside?
-- Until it is answered, k-montuno levels 3–9 and 11 are hidden; ponchando (levels 1–2) and the songo right hand (level 10) stay.
 
 ### Omitted for lack of verified knowledge
 
@@ -206,3 +231,20 @@ sources were found:
   - https://loudlands1.squarespace.com/blog/drum-set-multitasking-machine
   - https://salsa-musicality.blogspot.com/2009/04/mambo-cowbell.html
   - https://www.timba.com/encyclopedia_pages/changuito
+
+### Sources found (2026-11-23, question 13: montuno and guajeo)
+- Kevin Moore, *Beyond Salsa Piano* v.1 (sample PDF, glossary: guajeo "a syncopated, looped figure"; tumbao "a
+  syncopated, repeating ostinato figure"):
+  https://www.latinpulsemusic.com/files/charts%20page/BeyondSalsaPianoVol1_KevinMoore_SAMPLE.pdf
+- Wikipedia, *Guajeo* ("a typical Cuban ostinato melody"; Moore 2010 p. 32 on the generic son guajeo arpeggiating
+  triads; Peñalosa / Moore on the onbeat/offbeat motif; Sonny Bravo on octaves): https://en.wikipedia.org/wiki/Guajeo
+- Piano With Jonny, "Piano Montunos: The Complete Guide" (outer–inner, the two-bar rhythm locked to 2-3 clave, the left
+  hand doubling): https://pianowithjonny.com/piano-lessons/piano-montunos-the-complete-guide/
+- The Jazz Piano Site, "Afro-Cuban Latin Jazz Explained" (a repeated vamp in two hands an octave apart; a chord tone in
+  octaves with two chord tones inside; I–IV–V–IV, I–V, ii–V–I): https://www.thejazzpianosite.com/?p=2361
+- MusicRadar / Keyboard, "Afro-Cuban piano tips: how to master the montuno" (octaves on the root, 3rd and 5th over
+  I–IV–V–IV, moving by step; sevenths in octaves for voice leading):
+  https://www.musicradar.com/how-to/afro-cuban-piano-tips-how-to-master-the-montuno
+- Pianote, Latin piano lesson (outer octave fingers 1 and 5, inner thirds 2 and 4): https://www.pianote.com/blog/?p=5772
+- Premier Guitar, "Son Montuno Guitar" (the tres, G–C–E; a two-bar pattern in clave; triads with smooth voice leading):
+  https://www.premierguitar.com/lessons/rhythm/son-montuno-guitar

@@ -144,13 +144,13 @@ const COMP_JAZZ: Rung[] = [
   // SPEC-JAZZ-NEIGHBOURS §2, §3: the bossa-clave comp (rootless voicings) and the montuno hands together place the
   // Brazilian and Afro-Cuban comping families (open from the start, so every test checks them).
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
-  r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
+  r('k-montuno-6', 7, { 'k-brazil': 4, 'k-montuno': 7 }),
   // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
   // walking line place the soul and New Orleans comping families (open from the start).
-  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6 }),
-  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3 }),
-  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
-  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
+  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6 }),
+  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3 }),
+  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
+  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
 ];
 const COMP_CLASSICAL: Rung[] = [
   r('accomp-1', 0, { accomp: 2, control: 4 }),
@@ -160,13 +160,13 @@ const COMP_CLASSICAL: Rung[] = [
   r('k-pop-2', 7, { 'k-first': 11, accomp: 5, control: 9, 'k-pop': 3, 'k-pedal': 1 }),
   r('k-pop-4', 5, { 'k-first': 11, accomp: 7, control: 10, 'k-pop': 5, 'k-pedal': 2 }),
   r('k-brazil-3', 5, { 'k-brazil': 4 }),
-  r('k-montuno-2', 5, { 'k-brazil': 4, 'k-montuno': 2 }),
+  r('k-montuno-6', 7, { 'k-brazil': 4, 'k-montuno': 7 }),
   // SPEC-JAZZ-NEIGHBOURS §4, §5: the gospel walk-ups, the soul-jazz blues in guide tones, stride octaves and the boogie
   // walking line place the soul and New Orleans comping families (open from the start).
-  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6 }),
-  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3 }),
-  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
-  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 2, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
+  r('k-gospel-5', 2, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6 }),
+  r('k-souljazz-2', 7, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3 }),
+  r('k-nola-2', 0, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 3 }),
+  r('k-nola-7', 5, { 'k-brazil': 4, 'k-montuno': 7, 'k-gospel': 6, 'k-souljazz': 3, 'k-nola': 8 }),
 ];
 // Sight-reading below the playing level is normal (placement auditions read about two grades lower); the takes feed the
 // reading skill, and a clean read opens the reading levels of Control.

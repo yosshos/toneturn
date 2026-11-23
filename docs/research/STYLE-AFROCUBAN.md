@@ -142,7 +142,7 @@ These are standard in the methods listed in §0. They are easy to measure in the
 
 **What's verified and what isn't:**
 - **Rhythm (the motif level)** [V]: the attack grid follows the onbeat/offbeat motif above.
-- **The pitch line** [?]: the specific notes are my own stepwise line, written from the conventions. Check them against Mauleón's *101 Montunos* level 1 before building.
+- **The pitch line** [V generic, 2026-11-23]: checked against published pedagogy (docs/THEORY-QUESTIONS.md question 13 has the URLs). Several independent sources agree on the generic shape: a looped two-bar ostinato (Moore, *Beyond Salsa Piano* v.1 glossary; Wikipedia *Guajeo*); a chord tone (root, 3rd or 5th) in octaves with two chord tones inside, alternating outer–inner (pianowithjonny; thejazzpianosite; MusicRadar / Keyboard; Sonny Bravo via Wikipedia); a stepwise, voice-led line; the left hand doubling. P1 below fits all of it. The app's generator keeps one line note per chord, so the figure loops note for note. Mauleón's own lines (*101 Montunos*) were not read; the app's lines are generic, not a transcription.
 
 **Rhythm grids (one chord per half bar):**
 
@@ -216,6 +216,7 @@ These are standard in the methods listed in §0. They are easy to measure in the
   - The guajeo was born on the **tres**: three doubled courses. The usual tuning is G–C–E [C].
   - The changüí tres guajeo is all offbeats (cut time).
   - The generic son guajeo is **arpeggiated triads with the first bar all offbeats**.
+- **Checked 2026-11-23** [V generic]: Wikipedia *Guajeo* calls it "a typical Cuban ostinato melody, most often consisting of arpeggiated chords", and Moore 2010 (p. 32, via the same page) says the generic son guajeo is "simply arpeggiating triads". Premier Guitar ("Son Montuno Guitar") has the guitar imitate the tres with close triads and smooth voice leading. The app's g-guajeo (single notes walking a close triad on strings 3-2-1, on the onbeat/offbeat grid, looped) fits this. See THEORY-QUESTIONS question 13.
 - **On guitar** [C]: play the same onbeat/offbeat motif as §2.2 as single notes or dyads on strings 1–3, on close triad shapes. Example: C on the top three strings at the 8th–9th fret region for C–F–G. The pitch lines from P1–P4 work note for note. **This shares one generator with piano.**
 - **Two-guitar layering** [V history, ? exercise]: Arsenio Rodríguez's layered guajeos suggest a later rung. The player plays guajeo 2 against the app's guajeo 1.
 
