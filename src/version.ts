@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.123.0',
+    date: '2026-11-23',
+    en: ['Gospel on piano: IV over I, the walk-ups, rocking I and ii through the inversions, the classic turnarounds and the two gospel scales', 'Soul-jazz on piano, guitar and bass, more organ technique, stride and boogie-woogie in all 12 keys, and the New Orleans two-feel on bass', 'Comping in 7/8 and 9/8, as jazz uses odd meters', 'The band plays soul-jazz, gospel in 12/8, funk-jazz, trad and the second line'],
+    he: ['גוספל בפסנתר: IV מעל I, עליות הבס, נדנוד בין I ל-ii דרך ההיפוכים, הסיבובים המוכרים ושני סולמות הגוספל', 'סול-ג׳אז בפסנתר, בגיטרה ובבס, עוד טכניקת אורגן, סטרייד ובוגי-ווגי בכל 12 הסולמות, והשתיים של ניו אורלינס בבס', 'ליווי ב-7/8 וב-9/8, כמו שהג׳אז משתמש במשקלים אי-זוגיים', 'הלהקה מנגנת סול-ג׳אז, גוספל ב-12/8, פאנק-ג׳אז, טראד והסקנד ליין'],
+  },
+  {
     version: '0.122.0',
     date: '2026-11-23',
     en: ['Improvise has a second track, the Barry Harris way: a minor sixth chord to think of over each chord, no mode names', 'Ear challenges in Licks: two licks joined into one sentence, find the lick inside a passage, and play a lick by ear in a new key', 'The Over time tab shows your measured pace and when you will close the key of the week and every exercise; assignments show a progress line to the due date', 'Two new improvisation cards, a lick in a new key and a lick varied, and a weekly card to share'],
