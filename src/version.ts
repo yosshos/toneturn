@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.126.0',
+    date: '2026-11-23',
+    en: ['Piano montunos and guitar guajeos now loop exactly as a two-bar figure, checked against published teaching; all montuno levels are open', 'The Barry Harris way: 3 to flat 9 on the V, and a new top level over a full standard with a new rule every four bars and the rare Fm6 or Bm6 over the V', 'Repertoire opens on a style that has pieces here; the Practice tools strip wraps on narrow phones; the kit setup page fits with a MIDI notice'],
+    he: ['מונטונו בפסנתר וגואחאו בגיטרה חוזרים בדיוק כדמות של שתי תיבות, נבדקו מול חומרי הוראה מוכרים; כל רמות המונטונו פתוחות', 'הדרך של בארי האריס: 3 עד במול 9 על ה-V, ורמה עליונה חדשה על סטנדרט מלא עם כלל חדש כל ארבע תיבות ו-Fm6 או Bm6 נדירים מעל ה-V', 'הרפרטואר נפתח על סגנון שיש בו קטעים; פס הכלים בתרגול נשבר לשתי שורות בטלפון צר; דף הכנת המערכת נכנס במסך גם עם הודעת MIDI'],
+  },
+  {
     version: '0.125.0',
     date: '2026-11-23',
     en: ['The scale rotation now reads each passage in its own key and follows the written tensions: altered on 7alt, half-whole or Phrygian dominant on 7 flat 9, Lydian dominant on 7 sharp 11; minor tunes such as Blue Bossa and Solar get their real key', 'Licks are found in every improvisation, including the Barry Harris way, rule cards, Use it and Perform; approach notes no longer count as licks', 'Comp by ear with a MIDI keyboard: the chords hidden, the band plays, you comp', 'Adding two minutes keeps your place in the plan; the time on the microphone counts as practice; a level page opens from Practice, Today and assignments'],
