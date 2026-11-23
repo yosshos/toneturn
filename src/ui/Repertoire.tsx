@@ -9,7 +9,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { REP_TIERS, repGoal, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
-import { chartOfPiece, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
+import { STYLE_TEXT, type StyleId } from '../engine/styles';
+import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
 import { STATUS_WORD, type ItemStatus } from '../engine/drills/itemStatus';
 import { CHART_TEMPLATES } from '../engine/charts';
 import type { CourseId } from '../engine/courses';
@@ -33,6 +34,8 @@ export interface RepertoireProps {
   lang: Lang;
   course: CourseId;
   jazz: 'off' | 'on' | 'focus';
+  /** SPEC-STYLE-FOCUS §4: the course's styles (first = main) — the list opens on the main style, "All styles" one tap away. */
+  styles?: StyleId[];
   lessons: Record<string, { best: number; completions: number }> | undefined;
   history: { lessonId: string; completedAt: string; firstTry: number; total: number }[] | undefined;
   myCharts: MyChartLike[] | undefined;
@@ -132,6 +135,11 @@ export function RepertoireScreen(p: RepertoireProps) {
     return 'new';
   };
   const tab: RepTab = view.tab ?? goal.next?.tier ?? 1;
+  // SPEC-STYLE-FOCUS §4: the style filter opens on the first of my styles that has pieces here (else all styles)
+  const styleHas = (st: StyleId) => lib.some((e) => entryStyle(e) === st);
+  const startStyle = (p.styles ?? []).find(styleHas) ?? null;
+  const [styleF, setStyleF] = useState<StyleId | 'all'>(startStyle ?? 'all');
+  const byStyle = (e: LibEntry) => styleF === 'all' || entryStyle(e) === styleF;
   const mineF: MineFilter = view.mine ?? 'all';
   const setView = (v: RepView, push = false) => {
     const h = `#${repHash(v)}`;
@@ -174,7 +182,7 @@ export function RepertoireScreen(p: RepertoireProps) {
   // A piece opened from outside the list (path, Today, teacher), or any piece on a phone: the page alone.
   if (piecePage && (!wide || (view.from ?? 'practice') !== 'practice')) return piecePage;
 
-  const shown = q.trim() ? searchLib(all, q) : tab === 'mine' ? mine.filter((e) => mineMatches(e, mineF)) : lib.filter((e) => e.tab === tab);
+  const shown = q.trim() ? searchLib(all, q) : tab === 'mine' ? mine.filter((e) => mineMatches(e, mineF)) : lib.filter((e) => e.tab === tab && byStyle(e));
   const list = (
     <main className="rep-screen" data-repertoire={course} data-rep-tab={String(tab)}>
       <header className="screen-head">
@@ -214,7 +222,7 @@ export function RepertoireScreen(p: RepertoireProps) {
       {!q.trim() && (
         <div className="rep-tabs" role="tablist" aria-label={he ? 'שלבים' : 'Tiers'}>
           {REP_TABS.map((t) => {
-            const inTab = t === 'mine' ? mine : lib.filter((x) => x.tab === t);
+            const inTab = t === 'mine' ? mine : lib.filter((x) => x.tab === t && byStyle(x));
             const closed = inTab.filter((x) => statusOf(x) === 'closed').length;
             return (
               <button key={String(t)} role="tab" aria-selected={tab === t} className={`rep-tier ${tab === t ? 'on' : ''}`} onClick={() => setView({ tab: t })} data-rep-tier={String(t)}>
@@ -232,6 +240,18 @@ export function RepertoireScreen(p: RepertoireProps) {
               {MINE_NAME[f][lang]}
             </button>
           ))}
+        </div>
+      )}
+      {!q.trim() && tab !== 'mine' && (p.styles ?? []).some(styleHas) && (
+        <div className="chips rep-style-f" role="radiogroup" aria-label={he ? 'סגנון' : 'Style'} data-rep-style={styleF}>
+          {(p.styles ?? []).filter(styleHas).map((st) => (
+            <button key={st} role="radio" aria-checked={styleF === st} className={`chip ${styleF === st ? 'on' : ''}`} onClick={() => setStyleF(st)} data-rep-style-pick={st}>
+              {STYLE_TEXT[st][lang]}
+            </button>
+          ))}
+          <button role="radio" aria-checked={styleF === 'all'} className={`chip ${styleF === 'all' ? 'on' : ''}`} onClick={() => setStyleF('all')} data-rep-style-pick="all">
+            {he ? 'כל הסגנונות' : 'All styles'}
+          </button>
         </div>
       )}
       {!q.trim() && tab !== 'mine' && <p className="rep-tier-blurb">{REP_TIERS[(tab as number) - 1].blurb[lang]}</p>}

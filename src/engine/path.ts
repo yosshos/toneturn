@@ -31,6 +31,8 @@ import { GUITAR_TOP_RANK } from './drills/guitarTop';
 import { bonusSteps, isUnitEndStep, repSteps, unitEndSteps } from './pathBonus';
 import { FLOW_GAME_PREREQ, FLOW_PREREQ, LADDER_WAITS, REP_PREREQ } from './pathPrereq';
 import { REPERTOIRE, repRefs } from './repertoire';
+import { styleOfLevel, type StyleId } from './styles';
+import { isStyleUnit, pathStyleRank, type StyleFocus } from './styleFocus';
 
 // ---------------------------------------------------------------- types
 
@@ -218,6 +220,30 @@ export interface PathInput {
   otherDone?: string[];
   /** SPEC-JAZZ-FOLD §4: the course is in jazz focus — a unit prefers jazz steps among the near ones (jazz comes earlier). */
   jazzFocus?: boolean;
+  /**
+   * SPEC-STYLE-FOCUS §2: where this course's jazz harmony starts (jazzFold.jazzStartLevel: the intermediate start for a
+   * player whose background / climbing / choice used to open the pack). Unmeasured jazz steps are sought from there.
+   */
+  jazzStart?: number;
+  /**
+   * SPEC-STYLE-FOCUS §4: the course's style focus. Styled ladder levels of the main style come in style units (every
+   * STYLE_UNIT_EVERY-th unit), the "also" styles' when the main has none ready; other styled levels are left out of the
+   * path by the caller (ladderHidden) and stay open in Practice. Absent = the old path (no style units).
+   */
+  styleFocus?: StyleFocus;
+}
+
+let LADDER_STYLE: Map<string, StyleId> | null = null;
+/** SPEC-STYLE-FOCUS: the style of a technique level by its id (styles.ts styleOfLevel over the catalogues), or null (core). */
+export function ladderStyleOf(ref: string): StyleId | null {
+  if (!LADDER_STYLE) {
+    LADDER_STYLE = new Map();
+    for (const f of [...catalog(), ...guitarCatalog()]) for (const l of f.levels) {
+      const st = styleOfLevel(l, f);
+      if (st) LADDER_STYLE.set(l.id, st);
+    }
+  }
+  return LADDER_STYLE.get(ref) ?? null;
 }
 
 export interface PathView {
@@ -1294,8 +1320,17 @@ export function buildPath(inp: PathInput): PathView {
    * count), and while a first-steps family on the path is unfinished, the other families stay below the first-steps
    * band (PAST_FIRST_STEPS) so the first steps keep pace with the rest.
    */
-  const pickLadder = (room: number, scheduled: Set<string>): PathStep[] => {
-    const fams = byDifficulty(openFamilies(), scheduled);
+  // SPEC-STYLE-FOCUS §4: a styled level's place — 1 the main style, 2 an "also" style, 0 core (jazz included), −1 other.
+  const styleRank = (s: PathStep | undefined): number => (inp.styleFocus && s?.ladder ? pathStyleRank(inp.styleFocus, ladderStyleOf(s.ladder.ref)) : 0);
+  const pickLadder = (room: number, scheduled: Set<string>, styleUnit = false): PathStep[] => {
+    let fams = byDifficulty(openFamilies(), scheduled);
+    if (inp.styleFocus) {
+      // A style unit leads with the main style's next levels (the "also" styles' only when the main has none ready);
+      // the other units leave styled levels for the style units.
+      const styled = (r: number) => byDifficulty((inp.ladderFamilies ?? []).filter((f) => styleRank(nextLevel(f, scheduled)) === r), scheduled);
+      const lead = styleUnit ? (styled(1).length ? styled(1) : styled(2)) : [];
+      fams = [...lead, ...fams.filter((f) => !lead.includes(f) && styleRank(nextLevel(f, scheduled)) < 1)];
+    }
     if (!fams.length || room <= 0) return [];
     const out: PathStep[] = [];
     const waiting = (id: string | undefined) => !!id && onPath.has(id) && !taken.has(id) && !scheduled.has(id);
@@ -1328,9 +1363,10 @@ export function buildPath(inp: PathInput): PathView {
     const theme = themeFor(n);
     unitTheme.set(n, theme.id);
     // SPEC-JAZZ-FOLD §4: in jazz focus a jazz step gets the same pull as the unit's theme (never past its prerequisites).
-    const near = (s: PathStep, f: number) => Math.abs(s.difficulty - (f + 50)) - (inTheme(s.sub, theme) ? 120 : 0) - (inp.jazzFocus && isJazzStep(s) ? 120 : 0);
+    // SPEC-STYLE-FOCUS §2: a jazz step is sought from the course's jazz start (no lock: only where it starts).
+    const near = (s: PathStep, f: number) => Math.abs(s.difficulty - ((inp.jazzStart && isJazzStep(s) ? Math.max(f, inp.jazzStart - 150) : f) + 50)) - (inTheme(s.sub, theme) ? 120 : 0) - (inp.jazzFocus && isJazzStep(s) ? 120 : 0);
     const slots = L - 1 /* checkpoint */ - (inp.reviewDue >= 3 && n === units.length + 1 ? 1 : 0);
-    const ladder = pickLadder(Math.ceil(slots / 2), scheduled);
+    const ladder = pickLadder(Math.ceil(slots / 2), scheduled, isStyleUnit(n));
     const open = all.filter((s) => !taken.has(s.id) && !s.ladder && !isUnitEndStep(s));
     const live = [...new Set(open.map((s) => s.domain))];
     const shares = unitShares(weights, live, slots - ladder.length, n);

@@ -6,9 +6,11 @@
 
 import type { FamilyDef } from './generate';
 import { cellItemIds, cellKey, fillMinutes, matrixOrder, type MatrixCell, type MatrixGroup, type MatrixView } from './keyMatrix';
+import { allocateSlots, seedOf, tierShares, type StyleFocus, type StyleTier } from '../styleFocus';
+import type { StyleId } from '../styles';
 
 /** Why a cell is in today's plan (SPEC-PATH-TODAY-PRACTICE §2 "why today"). */
-export type CellWhy = 'week' | 'strengthen' | 'review';
+export type CellWhy = 'week' | 'strengthen' | 'review' | 'style';
 export interface PlanCell {
   cell: MatrixCell;
   why: CellWhy;
@@ -18,6 +20,8 @@ export interface PlanCell {
 export const WEEK_SHARE = 0.5;
 /** D2: maintenance (closed cells revisited) inside the technique share. */
 export const MAINT_SHARE = 0.15;
+/** SPEC-STYLE-FOCUS §4–5: the style block's (H) share of the technique block, split 60/30/10 by the focus. */
+export const STYLE_SHARE = 0.15;
 
 const DEFAULT_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
@@ -30,6 +34,41 @@ export interface TechPlanOpts {
   /** The order of the rest (the player's view, remembered; default weakest first). */
   view?: MatrixView;
   keyOrder?: number[];
+  /** SPEC-STYLE-FOCUS: the focus (block H's 60/30/10) and the day (its rounding). Absent: block H runs as any block. */
+  focus?: StyleFocus;
+  day?: string;
+}
+
+/**
+ * SPEC-STYLE-FOCUS §4: today's style cells (block H) within `minutes` — about 60 % from the main style, 30 % from the
+ * "also" styles, 10 % from the rest (never zero over the weeks: the day's seed rounds the fractions). Inside a tier the
+ * neediest cell first, one style after another.
+ */
+export function pickStyleCells(cells: MatrixCell[], focus: StyleFocus, minutes: number, day: string): MatrixCell[] {
+  const open = matrixOrder(cells.filter((c) => c.block === 'H' && c.style), 'weak').filter((c) => c.need.s < 2 && !c.need.cool);
+  if (!open.length || minutes <= 0) return [];
+  const avg = open.reduce((n, c) => n + c.minutes, 0) / open.length;
+  const n = Math.max(1, Math.round(minutes / Math.max(0.5, avg)));
+  const present = [...new Set(open.map((c) => c.style as StyleId))];
+  const slots = allocateSlots(n, tierShares(focus, present), seedOf(`${day}|styleblock`));
+  const out: MatrixCell[] = [];
+  for (const t of ['main', 'also', 'rest'] as StyleTier[]) {
+    const pool = open.filter((c) => (c.tier ?? 'rest') === t);
+    // one style after another inside the tier (the rest: a different style each day first)
+    const styles = [...new Set(pool.map((c) => c.style as StyleId))];
+    const rot = styles.length ? Math.floor(seedOf(`${day}|${t}`) * styles.length) : 0;
+    const order = [...styles.slice(rot), ...styles.slice(0, rot)];
+    let k = 0;
+    while (slots[t] > 0 && pool.some((c) => !out.includes(c))) {
+      const st = order[k++ % order.length];
+      const c = pool.find((x) => x.style === st && !out.includes(x));
+      if (c) {
+        out.push(c);
+        slots[t]--;
+      }
+    }
+  }
+  return out;
 }
 
 const sum = (cs: MatrixCell[]) => cs.reduce((n, c) => n + c.minutes, 0);
@@ -50,10 +89,18 @@ export function todayTechPlan(cells: MatrixCell[], o: TechPlanOpts): PlanCell[] 
   }
   const plan = take(review, 'review');
   let left = minutes - sum(review);
+  // SPEC-STYLE-FOCUS §4–5: with a focus, block H has its own slice (60/30/10) and stays out of the other parts.
+  const styled = !!o.focus && cells.some((c) => c.block === 'H');
+  const notH = (c: MatrixCell) => !styled || c.block !== 'H';
+  if (styled) {
+    const st = pickStyleCells(cells.filter((c) => !taken.has(cellKey(c))), o.focus!, left * STYLE_SHARE, o.day ?? '');
+    plan.push(...take(st, 'style'));
+    left -= sum(st);
+  }
   // The key of the week: its open cells in teaching order, about half of what is left.
   if (o.weekRoot !== null) {
     const g = o.weekGroup ?? 'major';
-    const wk = cells.filter((c) => c.root === o.weekRoot && c.group === g && c.need.s < 2 && !c.need.cool).sort((a, b) => a.i - b.i);
+    const wk = cells.filter((c) => notH(c) && c.root === o.weekRoot && c.group === g && c.need.s < 2 && !c.need.cool).sort((a, b) => a.i - b.i);
     if (wk.length) {
       const w = fillMinutes(wk, left * WEEK_SHARE);
       plan.push(...take(w, 'week'));
@@ -62,7 +109,7 @@ export function todayTechPlan(cells: MatrixCell[], o: TechPlanOpts): PlanCell[] 
   }
   // The rest: weakest first (or the chosen view) from every key, to the block's minutes.
   if (left >= 1 || plan.length === 0) {
-    const rest = matrixOrder(cells, o.view ?? 'weak', order).filter((c) => !taken.has(cellKey(c)));
+    const rest = matrixOrder(cells.filter(notH), o.view ?? 'weak', order).filter((c) => !taken.has(cellKey(c)));
     plan.push(...take(fillMinutes(rest, Math.max(1, left)), 'strengthen'));
   }
   return plan;
@@ -111,7 +158,7 @@ export function thawPlan(f: FrozenPlan, cells: MatrixCell[]): PlanCell[] {
 
 /** How many of each reason (the button's line: "4 in the key of the week · 3 to strengthen · 1 review"). */
 export function whyCounts(plan: { why: CellWhy }[]): Record<CellWhy, number> {
-  const out: Record<CellWhy, number> = { week: 0, strengthen: 0, review: 0 };
+  const out: Record<CellWhy, number> = { week: 0, strengthen: 0, review: 0, style: 0 };
   for (const p of plan) out[p.why]++;
   return out;
 }

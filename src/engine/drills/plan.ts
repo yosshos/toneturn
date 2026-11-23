@@ -7,9 +7,8 @@ import { customIncluded, customKeys, customToDrill } from './custom';
 import { drillKeyOf, itemPass, todaysItems, type TodayItem } from './ladder';
 import { micUnmeasurable } from './analyze';
 import { targetBpmOf } from './targetTempo';
-import { inBassTrack } from './bassNiche';
 import { FRETLESS_LEVELS } from './bassNiche2';
-import { guitarCatalog, guitarLevelShown, guitarStyleMatch, type GuitarFamilyDef } from './guitar';
+import { guitarCatalog, type GuitarFamilyDef } from './guitar';
 import { tuningById } from '../fretboard';
 import type { DrumFamilyDef } from './drums';
 import { kitLevels } from '../drumAcoustic';
@@ -77,9 +76,11 @@ export function pianoMicHiddenLevels(): string[] {
 
 export function shownFamilies(settings: ShowSettings): FamilyDef[] {
   const inst = settings.instrument ?? 'piano';
-  // The pianist's ear (style 'both') belongs to every emphasis. 0.67 (owner): "microphone only" hides the MIDI-only levels.
+  // SPEC-STYLE-FOCUS §2 (owner 2026-11-22, no locks): every family of every style is shown from day one — the old piano
+  // emphasis, guitar add-ons / style and bass track no longer hide anything (focus changes weights, not access).
+  // 0.67 (owner): "microphone only" hides the MIDI-only levels.
   if (inst === 'piano') {
-    const fams = CAT.filter((f) => settings.emphasis === 'both' || f.style === 'both' || f.style === settings.emphasis);
+    const fams = CAT;
     if (!settings.pianoMicOnly) return fams;
     const hidden = pianoMicHiddenLevels();
     return fams.map((f) => ({ ...f, levels: f.levels.filter((l) => !hidden.includes(l.id)) })).filter((f) => f.levels.length > 0);
@@ -89,18 +90,13 @@ export function shownFamilies(settings: ShowSettings): FamilyDef[] {
     const fams = GCAT.filter((f) => f.instruments.includes('drums'));
     return settings.drumMic ? kitLevels(fams as DrumFamilyDef[], settings.drumMic) : fams;
   }
-  // Guitar (GUITAR_DEEPENING §5, owner 2026-11-11): the core always, add-on families / levels only when ticked
-  // (guitarAddOns, migrated from the old single style); the old style no longer filters guitar genres.
-  if (inst === 'guitar')
-    return GCAT.filter((f) => f.instruments.includes('guitar') && !f.retired)
-      .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarLevelShown(f, l, settings)) }))
-      .filter((f) => f.levels.length > 0);
-  const style = settings.guitarStyle;
+  // Guitar: the core and every add-on family / level (flamenco, fingerstyle, prog, country …) — no lock.
+  if (inst === 'guitar') return GCAT.filter((f) => f.instruments.includes('guitar') && !f.retired);
   const hidden = inst === 'bass' ? hiddenBassLevels(settings.bassTuning) : [];
-  // Retired families (the old g-bass starter) keep their ids for progress but are not shown.
-  // Bass (BASS_NICHE_PLAN): the jazz / prog families open by the player's track (jazz, prog or both).
-  return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired && guitarStyleMatch(f.genres, style) && (inst !== 'bass' || inBassTrack(f.id, settings.bassTrack)))
-    .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => guitarStyleMatch(l.genres, style) && !hidden.includes(l.id)) }))
+  // Retired families (the old g-bass starter) keep their ids for progress but are not shown. Bass: every family on
+  // both old tracks (jazz and prog); only the tuning hides levels it can't play.
+  return GCAT.filter((f) => f.instruments.includes(inst) && !f.retired)
+    .map((f): GuitarFamilyDef => ({ ...f, levels: f.levels.filter((l) => !hidden.includes(l.id)) }))
     .filter((f) => f.levels.length > 0);
 }
 

@@ -258,7 +258,7 @@ describe('k-theory: theory you play on the keys', () => {
 describe('wiring', () => {
   it('jazz emphasis shows k-theory, classical hides it; its own path symbol; 7 badges in the keys course', () => {
     expect(shownFamilies({ emphasis: 'jazz' }).map((x) => x.id)).toContain('k-theory');
-    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).not.toContain('k-theory');
+    expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).toContain('k-theory'); // SPEC-STYLE-FOCUS: no lock
     expect(GLYPHS[FAMILY_GLYPH['k-theory']]).toBeDefined();
     expect(Object.entries(FAMILY_GLYPH).filter(([k, g]) => k !== 'k-theory' && g === FAMILY_GLYPH['k-theory'])).toEqual([]);
     const bs = BADGES.filter((b) => b.id.startsWith('tech:k-theory:'));

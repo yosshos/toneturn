@@ -11,6 +11,8 @@ import { FACET_GROUPS, FAMILY_FACETS, keyFacet, type FacetGroup, type FacetRole 
 import { itemMastery, MIN_TAKES, STRONG_FROM, WEAK_BELOW, type KeyStatus } from '../analysis/keyMastery';
 import type { Lick } from '../licks';
 import { lickGroup, lickRungLevel } from './lickRungs';
+import { styleOfLevel, type StyleId } from '../styles';
+import { styleTier, type StyleFocus, type StyleTier } from '../styleFocus';
 
 type Order = DrillSettings['keyOrder'];
 
@@ -240,8 +242,41 @@ export interface LadderRung {
   pick?: (sp: LevelDef['specs'][number]) => boolean;
   jazz?: boolean;
   /** A the scale, S the harmonised spine (3rds, triads, 7ths), B its other forms, C licks, D fingers/hands, E cadence, F jazz,
-   *  G language in the key (the player's licks, phase 4). */
-  block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+   *  G language in the key (the player's licks, phase 4), H the style block (SPEC-STYLE-FOCUS §5: comping patterns and
+   *  grooves of the styles, in the key). */
+  block: 'A' | 'S' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+  /** Block H: the rung's style and its tier in the player's focus (main / also / rest — the rest only for exposure). */
+  style?: StyleId;
+  tier?: StyleTier;
+}
+
+/** SPEC-STYLE-FOCUS §5: a styled level opens as a style rung at this technique tier (beginner style rungs from T0). */
+export const styleRungTier = (l: Pick<LevelDef, 'level'>): number => Math.max(0, Math.min(5, Math.floor((l.level - 1) / 3)));
+/** Style rungs per style in a key: the two closest to the player's tier (the matrix stays a manageable size). */
+export const STYLE_RUNGS_PER_STYLE = 2;
+/** A styled level that can be practised in any key (written for the keys, not a fixed piece). */
+const keyable = (l: LevelDef): boolean => l.keys === 'major' || l.keys === 'minor' || (Array.isArray(l.keys) && l.keys.length >= 3);
+
+/**
+ * Block H (SPEC-STYLE-FOCUS §5): the style rungs of the families given, open at the tier — every styled level that can
+ * be played in any key (tagged on the level / family, styles.ts), the two nearest the tier per style. With a focus,
+ * each rung carries its tier; "rest" styles stay in (the workout's 10 % exposure) unless `focusOnly`.
+ */
+export function styleRungs(fams: FamilyDef[], tier: number, focus?: StyleFocus, o: { focusOnly?: boolean } = {}): LadderRung[] {
+  const t = Math.max(0, tier);
+  const by = new Map<StyleId, { f: FamilyDef; l: LevelDef }[]>();
+  for (const f of fams)
+    for (const l of f.levels) {
+      const st = styleOfLevel(l, f);
+      if (!st || !keyable(l) || styleRungTier(l) > t) continue;
+      if (focus && o.focusOnly && styleTier(focus, st) === 'rest') continue;
+      by.set(st, [...(by.get(st) ?? []), { f, l }]);
+    }
+  const out: LadderRung[] = [];
+  for (const [st, xs] of by)
+    for (const { f, l } of xs.sort((a, b) => a.l.level - b.l.level).slice(-STYLE_RUNGS_PER_STYLE))
+      out.push({ fam: f.id, id: l.id, min: styleRungTier(l), block: 'H', style: st, ...(focus ? { tier: styleTier(focus, st) } : {}) });
+  return out;
 }
 
 /** The candidate rungs of a key, in teaching order (minor: the harmonic-minor rows). */
@@ -324,7 +359,7 @@ const oneKeyTitle = (l: LevelDef): { en: string; he: string } => {
 };
 
 /** Every rung of a key open at the tier, built for that key: the warm-up scale, then the ladder's rungs (teaching order i). */
-export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean; /** The player's lick pool (vocab.lickPool): block G. */ licks?: Lick[] } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
+export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | 'minor', tier: number, opts: { jazz?: boolean; /** The player's lick pool (vocab.lickPool): block G. */ licks?: Lick[]; /** SPEC-STYLE-FOCUS: the course's style focus — block H's tiers. */ focus?: StyleFocus } = {}): { warm: LevelDef | null; built: { i: number; rung: LadderRung; lvl: LevelDef }[] } {
   const minor = group === 'minor';
   const t = Math.max(0, tier);
   const byId = (fam: string, id: string) => fams.find((f) => f.id === fam)?.levels.find((l) => l.id === id);
@@ -342,17 +377,28 @@ export function openKeyRungs(fams: FamilyDef[], root: number, group: 'major' | '
   // block G, language in the key (SPEC-DAILY-WORKOUT §6, phase 4): every lick of the pool in this key, after the ladder
   for (const l of (opts.licks ?? []).filter((x) => lickGroup(x) === group))
     built.push({ i: open.length + built.length, rung: { fam: 'licks', id: `lick-${l.id}`, min: 0, block: 'G' }, lvl: lickRungLevel(l, root) });
+  // block H, the style block (SPEC-STYLE-FOCUS §5): comping patterns / grooves of the styles in this key (major rows)
+  if (!minor)
+    for (const r of styleRungs(fams, t, opts.focus)) {
+      const lvl = make(r.fam, r.id);
+      if (lvl) built.push({ i: open.length + built.length, rung: r, lvl });
+    }
   return { warm, built };
 }
 
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[] } = {}): FamilyDef | null {
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[]; focus?: StyleFocus } = {}): FamilyDef | null {
   if (group !== 'major' && group !== 'minor') return null;
   const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
   const score = (l: LevelDef) => rungNeed(l, items);
-  const ranked = built.map((b) => ({ ...b, sc: score(b.lvl) })).sort((a, b) => a.sc.s - b.sc.s || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
+  // block H in a key session: the focus styles only (the rest's exposure is the daily workout's), main before also
+  const tierRank = (r: LadderRung) => (r.block !== 'H' ? 0 : r.tier === 'main' ? 0 : r.tier === 'also' ? 1 : 2);
+  const ranked = built
+    .filter((b) => b.rung.block !== 'H' || b.rung.tier !== 'rest')
+    .map((b) => ({ ...b, sc: score(b.lvl) }))
+    .sort((a, b) => a.sc.s - b.sc.s || tierRank(a.rung) - tierRank(b.rung) || a.sc.share - b.sc.share || a.sc.last.localeCompare(b.sc.last) || a.i - b.i);
   // the spine (3rds, triads, 7ths along the whole scale) every session; from each other block the one needed most
   // (two from the harmonised forms and the fingers/hands block when the session is long); then back in teaching order
-  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1 };
+  const per: Record<string, number> = { S: 9, B: 1, A: 1, C: 2, D: 2, E: 1, F: 1, G: 1, H: 1 };
   const taken: Record<string, number> = {};
   const pickd = ranked.filter((x) => {
     const b = x.rung.block;

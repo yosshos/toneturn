@@ -77,7 +77,7 @@ const AvatarStudio = lazy(() => import('./AvatarStudio'));
 import { MiniGateContext, MiniLessonPlayer, RefresherContext } from './MiniLesson';
 import { LearnedScreen, learnedCount } from './Learned';
 import { ladderLessonKey, lessonForUnit, MINI_LESSONS } from '../content/minilessons';
-import { guitarAddOnsOf, guitarVoiceOf } from '../engine/drills/guitarMeta';
+import { guitarVoiceOf } from '../engine/drills/guitarMeta';
 import type { MiniLesson } from '../content/miniTypes';
 import { PerformScreen } from './Perform';
 import { topicLesson, TOPIC_GEN } from '../engine/topics';
@@ -216,7 +216,11 @@ import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
 import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
-import { coursesToOpen, jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
+import { jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
+import { focusOf, improvStyleFor, logStyleMinutes, migrateStyleFocus, picksOf, weakAreaOf, withFocus } from '../engine/styleFocus';
+import type { StyleId } from '../engine/styles';
+import { StyleCards } from './StyleTaster';
+import { focusSuggestions, myAssignments } from '../cloud/teacher';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { realDrills } from '../engine/tasteLessons';
 import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicCard, realMusicFor, skipReal } from '../engine/courseStart';
@@ -746,14 +750,33 @@ export function App() {
     [user],
   );
   useWakeLock(s.keepAwake !== false);
-  // SPEC-JAZZ-FOLD §3: a beginner whose course level reaches mf gets that course's jazz opened (persisted, with a
-  // one-time notice). Never closes anything.
-  const jazzToOpen = useMemo(() => (settings && progressReady ? coursesToOpen(settings, ratingsOf(progress)) : []), [settings, progress, progressReady]);
+  // SPEC-STYLE-FOCUS §2 (owner 2026-11-22): nothing opens by climbing any more — jazz is open in every course from day
+  // one. §6: the old settings (jazz focus, piano emphasis, guitar add-ons, bass track) become the style focus once;
+  // they stay read-only for one version.
   useEffect(() => {
-    if (!settings || !jazzToOpen.length) return;
-    updateSettings({ jazzOpen: Array.from(new Set([...(settings.jazzOpen ?? []), ...jazzToOpen])), jazzNotice: undefined });
+    if (!settings) return;
+    const m = migrateStyleFocus(settings, settings.courses?.length ? settings.courses : ['ear']);
+    if (m) updateSettings({ styleFocus: m });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jazzToOpen.join(',')]);
+  }, [!!settings, settings?.courses?.join(',')]);
+  // SPEC-STYLE-FOCUS §3: a teacher's focus suggestion among the student's assignments (signed in, on Home).
+  const [focusSuggest, setFocusSuggest] = useState<ReturnType<typeof focusSuggestions>[number] | null>(null);
+  useEffect(() => {
+    if (!user || route !== 'home') return;
+    void myAssignments()
+      .then((xs) => setFocusSuggest(focusSuggestions(xs).find((x) => !(settings?.styleSuggestSeen ?? []).includes(x.id)) ?? null))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, route]);
+  /** §9.4: minutes in a style (improvisation, repertoire, tastes) for the 6-month look and the >20 % trigger. */
+  const noteStyleMinutes = (style: StyleId, minutes: number, w: 'improv' | 'rep' | 'taste' = 'improv') => {
+    if (!settings || minutes <= 0) return;
+    updateSettings({ styleMinutes: logStyleMinutes(settings.styleMinutes, { d: localDay(new Date()), c: (settings.activeCourse ?? 'ear') as CourseId, s: style, m: minutes, w }) });
+  };
+  /** The workout's improvisation share: today's style for the band (SPEC-STYLE-FOCUS §4). */
+  const improvStyleNext = useRef<StyleId | null>(null);
+  /** The improvisation screen was opened by the style taster (its time counts as a taste, not as improvisation). */
+  const tasteBand = useRef(false);
   // Owner 2026-11-19: no notices while the app is in development (no real users yet) — jazz opens quietly.
   useEffect(() => {
     // The globe switches the whole app: screens, spoken answers and the voice that answers (owner feedback 2026-11-18).
@@ -1648,7 +1671,7 @@ export function App() {
     openGenerated(def, undefined, false, { key: `testout:${unit.id}`, title: s.uiLang === 'en' ? 'Test out' : 'מבחן מעבר' });
   };
   /** Technique drills opened from a path step or a workout block run today's items as a queue (spec AI §9). */
-  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | 'improv' | null>(null);
+  const drillFrom = useRef<'path' | 'workout' | 'test' | 'chart' | 'assign' | 'taste' | 'repertoire' | 'keys' | 'check' | 'depth' | 'diary' | 'improv' | 'styletaste' | null>(null);
   /** BUILD-PLAN phase 2: the workout's technique block opens today's matrix cells (the same plan as the technique screen). */
   const drillToday = useRef(false);
   /** Drill item writes in order (a take, then the coach's ceiling on it — never one overwriting the other). */
@@ -1851,7 +1874,7 @@ export function App() {
     go('drills');
   };
   const drillQueue = useMemo(
-    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'diary' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || drillFrom.current === 'improv' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
+    () => (route === 'drills' && (drillFrom.current === 'chart' || drillFrom.current === 'keys' || drillFrom.current === 'diary' || drillFrom.current === 'depth' || drillFrom.current === 'assign' || drillFrom.current === 'taste' || drillFrom.current === 'repertoire' || drillFrom.current === 'improv' || drillFrom.current === 'styletaste' || (drillFrom.current === 'path' && chartQueue.current) || drillFrom.current === 'check' || (drillFrom.current === 'workout' && chartQueue.current)) ? chartQueue.current ?? undefined : route === 'drills' && (drillFrom.current === 'path' || drillFrom.current === 'workout') && settings && progress ? todayDrills({ ...drillSettingsOf(settings), bassTuning: bassTuningOf(settings), drumMic: drumMicOf(settings.drumKit) }, progress.drillItems ?? {}, settings.drillStart ?? {}, settings.customDrills ?? []).map((x) => x.drill) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [route],
   );
@@ -1932,6 +1955,11 @@ export function App() {
     if (from === 'depth') {
       chartQueue.current = null;
       return go('depth');
+    }
+    if (from === 'styletaste') {
+      // SPEC-STYLE-FOCUS §9.1: the taster's groove part — back to Today, where the card goes on.
+      chartQueue.current = null;
+      return go('home');
     }
     if (from === 'improv') {
       // Improvise on the kit (drums): back to its list of fills, solos and trading levels.
@@ -2237,9 +2265,11 @@ export function App() {
     // D2: the technique tier sets the split (a beginner 85/15); a classical emphasis plays repertoire beside technique.
     const dsW = drillSettingsOf(s);
     const techTier = course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' ? matrixTierOf(s, dsW, progress.drillItems ?? {}) : undefined;
-    return suggestWorkout({ techTier, emphasis: dsW.emphasis, teacher: teacherTp, total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
+    // SPEC-STYLE-FOCUS §4: the main style (classical: the improvisation share is repertoire) and today's band style.
+    const mainStyle = focusOf(s, course.id).main;
+    return suggestWorkout({ techTier, mainStyle, improvStyle: improvStyleFor(s, course.id, today), teacher: teacherTp, total: tmpl ? tmpl.reduce((a, b) => a + b.minutes, 0) : baseMinutes, goal: courseGoal(course.id, !!s.examPrep, jazzFocusOn(s, course.id)), priorities: (s.intake as Intake | null | undefined)?.priorities ?? null, leaveOut: [...new Set([...(s.pathLeaveOut ?? []).filter((d) => course.id === 'ear' || !own.includes(d)), ...INTAKE_AREAS.filter((d) => !own.includes(d))])], reviewsDue: new Set(dueReviews(progress.review, now0).map((r) => r.key)).size, singer: course.id === 'voice' && !s.noMic, view: pathView, template: tmpl, technique: s.drills?.inWorkout !== false && (course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'drums'), licksDue: course.id === 'drums' || (course.id === 'ear' && !jazzOpenIn(s, 'ear')) ? 0 : dueLicks(s.lickBook?.review, now0).length - phrasesDueCount(s.lickBook, now0.toISOString()), phrasesDue: course.id === 'keys' || course.id === 'guitar' || course.id === 'bass' || course.id === 'voice' ? phrasesDueCount(s.lickBook, now0.toISOString()) : 0, piecesDue: course.id === 'ear' ? 0 : piecesDueN, pathMode: s.pathMode ?? 'guide', course: course.id, day: today, jazz: jazzFocusOn(s, course.id) ? 'focus' : jazzOpenIn(s, course.id) ? 'on' : 'off' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
+  }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.styleFocus, s.styleTaste, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
   // Today's edits keep the teacher's section (it is added, never replaced: §5.1).
   const todayBlocks = s.workoutToday?.day === today ? withTeacher(s.workoutToday.blocks, teacherTp) : suggestedWorkout;
   const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
@@ -2412,7 +2442,11 @@ export function App() {
     void piano.setSound(soundId);
   }, [soundId]);
   // GUITAR_DEEPENING §8: the modelled guitar's voice (steel / nylon / clean electric), by the add-ons or the player's choice.
-  const guitarVoice = settings ? guitarVoiceOf(settings.guitarVoice, guitarAddOnsOf(settings.drills ?? {}, settings.courses)) : 'steel';
+  // SPEC-STYLE-FOCUS §6: "auto" follows the guitar's styles (jazz / prog / soul / Afro-Cuban → the clean electric;
+  // Brazilian, classical, fingerstyle or flamenco → nylon; otherwise steel).
+  const gFocus = settings ? focusOf(settings, 'guitar') : null;
+  const gAddOns: ('jazz' | 'fingerstyle')[] = !gFocus ? [] : ['jazz', 'prog', 'soul', 'afrocuban'].includes(gFocus.main) ? ['jazz'] : ['brazil', 'classical'].includes(gFocus.main) || gFocus.also.some((x) => x === 'fingerstyle' || x === 'flamenco') ? ['fingerstyle'] : [];
+  const guitarVoice = settings ? guitarVoiceOf(settings.guitarVoice, gAddOns) : 'steel';
   useEffect(() => piano.setGuitarVoice(guitarVoice), [guitarVoice]);
   // Sound quality (0.69): Lite / Standard / Studio by device, or the player's choice (the 0.54 grand detail maps onto it).
   const soundQuality = settings ? qualityOf(settings) : 'auto';
@@ -2698,6 +2732,33 @@ export function App() {
               streak={gems.streak.count}
               onStreak={() => setStreakOpen(true)}
               onEncore={(h) => (location.hash = h)}
+            />
+          }
+          styleCard={
+            // SPEC-STYLE-FOCUS §3 / §9: the teacher's focus suggestion, the >20 % trigger, the 6-month look or the
+            // style taster — at most one, on Today (never inside an exercise).
+            <StyleCards
+              settings={s}
+              lang={s.uiLang}
+              course={activeC}
+              today={today}
+              weak={weakAreaOf(ratingsOf(progress))}
+              suggestion={focusSuggest}
+              onSettings={updateSettings}
+              onGroove={(lv) => {
+                chartQueue.current = levelDrills(lv, drillSettingsOf(s).keyOrder).slice(0, 3);
+                drillFrom.current = 'styletaste';
+                drillSessionXp.current = 0;
+                drillSession.current = { takes: 0, clean: 0 };
+                go('drills');
+              }}
+              onLick={() => go('licks')}
+              onBand={(st) => {
+                improvStyleNext.current = st;
+                tasteBand.current = true;
+                improvInit.current = null;
+                go('improv');
+              }}
             />
           }
           headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />}
@@ -2994,7 +3055,7 @@ export function App() {
               {challengeInCourse(s.activeCourse ?? 'ear') && <ChallengeCard input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} lang={s.uiLang} />}
             </>
           }
-          map={<SkillMap t={t} lang={s.uiLang} progress={progress} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
+          map={<SkillMap t={t} lang={s.uiLang} progress={progress} styleFocus={focusOf(s, (s.activeCourse ?? 'ear') as CourseId)} bestLeague={s.bestLeague} onBack={() => go('home')} onPractice={practiceSkill} onPlacement={openPlacement} />}
           badges={<BadgesView lang={s.uiLang} input={badgeInputOf(progress, new Date(), s.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(s.courseStart) })} log={progress.badges} earnedOnly course={s.activeCourse ?? 'ear'} courses={s.courses ?? ['ear']} />}
         />
       )}
@@ -3111,7 +3172,7 @@ export function App() {
       )}
       {route === 'coursestart' &&
         (cStage === 'welcome' || csWelcomeAgain ? (
-          <CourseWelcome key={activeC} course={activeC} lang={s.uiLang} report={cStart?.report} onReport={onCourseReport} onBack={() => (csWelcomeAgain ? setCsWelcomeAgain(false) : go('home'))} track={drillSettingsOf(s).bassTrack} onTrack={(t) => updateSettings({ drills: { ...drillSettingsOf(s), bassTrack: t } })} self={s.channelSelf?.[activeC]} onSelf={(v) => updateSettings({ channelSelf: { ...(s.channelSelf ?? {}), [activeC]: v } })} />
+          <CourseWelcome key={activeC} course={activeC} lang={s.uiLang} report={cStart?.report} onReport={onCourseReport} onBack={() => (csWelcomeAgain ? setCsWelcomeAgain(false) : go('home'))} self={s.channelSelf?.[activeC]} onSelf={(v) => updateSettings({ channelSelf: { ...(s.channelSelf ?? {}), [activeC]: v } })} focus={focusOf(s, activeC)} onFocus={(f) => updateSettings({ styleFocus: withFocus(s, activeC, f) })} />
         ) : cStage === 'setup' ? (
           <CourseSetup
             key={activeC}
@@ -3275,6 +3336,9 @@ export function App() {
             if (b.target.kind === 'improv') {
               saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
               const mode = b.target.mode ?? 'improv';
+              improvStyleNext.current = b.target.style ?? null;
+              tasteBand.current = false;
+              improvInit.current = null;
               return go(mode === 'repertoire' ? 'pieces' : mode === 'grooves' ? 'groove-echo' : 'improv');
             }
             // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
@@ -3541,6 +3605,8 @@ export function App() {
           key={improvInit.current?.id ?? 'improv'}
           settings={s}
           initialChart={improvInit.current}
+          styleToday={improvStyleNext.current ?? undefined}
+          onStyleMinutes={(st, m) => noteStyleMinutes(st, m, tasteBand.current ? 'taste' : 'improv')}
           title={<PlaceSpark place="improv" course={(s.activeCourse ?? 'ear') as CourseId} lang={s.uiLang} />}
           vocab={vocabCtx()}
           onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
@@ -3691,6 +3757,7 @@ export function App() {
           lang={s.uiLang}
           course={(s.activeCourse ?? 'ear') as CourseId}
           jazz={jazzFocusOn(s, (s.activeCourse ?? 'ear') as CourseId) ? 'focus' : jazzOpenIn(s, (s.activeCourse ?? 'ear') as CourseId) ? 'on' : 'off'}
+          styles={picksOf(focusOf(s, (s.activeCourse ?? 'ear') as CourseId))}
           lessons={progress.lessons}
           history={progress.history}
           myCharts={s.myCharts}

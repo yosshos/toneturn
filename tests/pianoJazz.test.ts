@@ -164,10 +164,10 @@ describe('PIANO_JAZZ sweep (synthetic human takes)', () => {
 
 describe('PIANO_JAZZ wiring', () => {
   const keysSteps = () => stepCatalogue().filter((s) => s.forPlays?.includes('keys'));
-  it('jazz emphasis shows the new families, classical hides them; each has its own drawn path symbol', () => {
+  it('the new families are shown with every old emphasis (SPEC-STYLE-FOCUS: no lock); each has its own drawn path symbol', () => {
     for (const f of NEW) {
       expect(shownFamilies({ emphasis: 'jazz' }).map((x) => x.id)).toContain(f);
-      expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).not.toContain(f);
+      expect(shownFamilies({ emphasis: 'classical' }).map((x) => x.id)).toContain(f);
       expect(GLYPHS[FAMILY_GLYPH[f]], f).toBeDefined();
     }
     expect(new Set(NEW.map((f) => FAMILY_GLYPH[f])).size).toBe(3);

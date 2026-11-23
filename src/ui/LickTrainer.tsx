@@ -2,6 +2,8 @@
 // tempo grid and stars, the measured run (the drills engine: MIDI or microphone, the tempo ladder), the spaced review
 // and the "Use it" challenge over a band. Per course it plays on the course's instrument (the voice sings it).
 
+import { focusOf, picksOf } from '../engine/styleFocus';
+import { STYLE_TEXT, type StyleId } from '../engine/styles';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import '../licks.css';
 import { bassTuningOf, type Settings } from '../storage/progress';
@@ -391,6 +393,8 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   const all = [...LICKS, ...(inst === 'piano' ? lineLicks() : []), ...own];
   const due = dueLicks(book.review).filter((id) => lickById(id, own));
   const [tab, setTab] = useState<LickContext | 'all' | 'review' | 'mine'>(startReview && due.length ? 'review' : 'all');
+  // SPEC-STYLE-FOCUS §4: the library opens on the first of my styles that has licks (untagged licks are jazz)
+  const [styleF, setStyleF] = useState<StyleId | 'all'>(() => picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).find((st) => all.some((l) => !l.own && (l.style ?? 'jazz') === st)) ?? 'all');
   const [view, setView] = useState<View>({ k: 'lib' });
   const [live, setLive] = useState<Record<string, ItemState>>({});
   const itemsNow = { ...items, ...live };
@@ -557,7 +561,13 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
   }
   // The library.
   const list = tab === 'review' ? due.map((id) => lickById(id, own)!) : tab === 'mine' ? all.filter((l) => (book.mine ?? []).includes(l.id)) : tab === 'all' ? all.filter((l) => !l.own && !l.src) : all.filter((l) => l.ctx === tab && !l.own);
-  const shown = pathLevel && tab === 'all' ? [...list.filter((l) => l.level === pathLevel), ...list.filter((l) => l.level !== pathLevel)] : list;
+  // SPEC-STYLE-FOCUS §4: the context filter opens on the main style (a lick without a tag is jazz, the library's own)
+  const lickStyle = (l: Lick): StyleId => l.style ?? 'jazz';
+  // (the row shows once the library holds more than one style — today every built-in lick is jazz)
+  const libStyles = new Set(all.filter((l) => !l.own).map(lickStyle));
+  const myStyles = libStyles.size > 1 ? picksOf(focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId)).filter((st) => libStyles.has(st)) : [];
+  const styled = styleF === 'all' || (tab !== 'all' && !CONTEXTS.some((c) => c.id === tab)) ? list : list.filter((l) => l.own || lickStyle(l) === styleF);
+  const shown = pathLevel && tab === 'all' ? [...styled.filter((l) => l.level === pathLevel), ...styled.filter((l) => l.level !== pathLevel)] : styled;
   const startReviewRun = () => {
     const day = new Date().toISOString().slice(0, 10);
     const q = due.map((id) => {
@@ -585,6 +595,18 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
           </button>
         ))}
       </div>
+      {myStyles.length > 0 && (tab === 'all' || CONTEXTS.some((c) => c.id === tab)) && (
+        <div className="chips lk-style" role="radiogroup" aria-label={lang === 'he' ? 'סגנון' : 'Style'} data-lick-style={styleF}>
+          {myStyles.map((st) => (
+            <button key={st} role="radio" aria-checked={styleF === st} className={`chip ${styleF === st ? 'on' : ''}`} onClick={() => setStyleF(st)} data-lick-style-pick={st}>
+              {STYLE_TEXT[st][lang]}
+            </button>
+          ))}
+          <button role="radio" aria-checked={styleF === 'all'} className={`chip ${styleF === 'all' ? 'on' : ''}`} onClick={() => setStyleF('all')} data-lick-style-pick="all">
+            {lang === 'he' ? 'כל הסגנונות' : 'All styles'}
+          </button>
+        </div>
+      )}
       {tab === 'review' && due.length > 0 && (
         <button className="btn primary" onClick={startReviewRun} data-lick-review="1">
           {tx.review} · {due.length}

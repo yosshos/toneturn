@@ -2,8 +2,17 @@
 // submissions from students, the teacher's comments (grading inbox), and the parent digest link.
 import { supabase } from './cloud';
 import { isPhraseRef, LEGACY_REF_MAX, PHRASE_REF_MAX, refBytes } from '../engine/encore/assign';
+import { parseFocusRef } from '../engine/styleFocus';
 
-export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phrase';
+export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phrase' | 'focus';
+
+/**
+ * SPEC-STYLE-FOCUS §3: the teacher suggests a style focus ("focus: Latin jazz") and the student approves. The ref is
+ * "focus:<course>:<main>+<also>…". Until migration 20261210000000_toneturn_focus_assign is applied (it only adds the kind
+ * to the check), a focus suggestion travels as a 'piece' assignment with that ref and reads back as kind 'focus' — the
+ * same path phrases took — so it works on today's server. NOT APPLIED: the owner dry-runs it first.
+ */
+export const FOCUS_ASSIGN_SYNCED = false; // migration 20261210000000 — NOT APPLIED yet
 
 /**
  * Encore v2 (SPEC-PHRASE-STUDIO §11): phrase assignments get their own kind, a 6000-char ref and the teacher's audio in
@@ -66,7 +75,8 @@ const sub = (s: RawSub): Submission => ({ id: s.id, userId: s.user_id, name: s.n
 export const itemFromRaw = (a: RawItem): AssignItem => ({
   id: a.id,
   // a phrase sent as a 'piece' (before the phrase migration) reads back as a phrase
-  kind: a.kind === 'piece' && isPhraseRef(a.ref) ? 'phrase' : (a.kind ?? 'lesson'),
+  // (and a focus suggestion sent as a 'piece' reads back as a focus)
+  kind: a.kind === 'piece' && isPhraseRef(a.ref) ? 'phrase' : a.kind === 'piece' && parseFocusRef(a.ref) ? 'focus' : (a.kind ?? 'lesson'),
   lessonId: a.lesson_id,
   ref: a.ref ?? null,
   dueOn: a.due_on,
@@ -106,7 +116,7 @@ export const assignItem = (p: { classId: string; kind: AssignKind; lessonId?: st
   if (p.kind === 'phrase' && (!p.ref || refBytes(p.ref) > phraseRefLimit())) return Promise.reject(new Error('phrase too long'));
   return rpc<string>('toneturn_class_assign_item', {
     p_class: p.classId,
-    p_kind: p.kind === 'phrase' && !PHRASE_ASSIGN_SYNCED ? 'piece' : p.kind,
+    p_kind: (p.kind === 'phrase' && !PHRASE_ASSIGN_SYNCED) || (p.kind === 'focus' && !FOCUS_ASSIGN_SYNCED) ? 'piece' : p.kind,
     p_lesson: p.lessonId ?? null,
     p_ref: p.ref ?? null,
     p_due: p.dueOn,
@@ -124,6 +134,16 @@ export async function classDetail(classId: string): Promise<ClassDetail> {
 }
 export async function myAssignments(): Promise<AssignItem[]> {
   return ((await rpc<RawItem[]>('toneturn_my_assignments')) ?? []).map(itemFromRaw);
+}
+/** SPEC-STYLE-FOCUS §3: the teacher's focus suggestions among a student's assignments (newest first). */
+export function focusSuggestions(items: AssignItem[]): { id: string; className?: string; course: import('../engine/courses').CourseId; focus: import('../engine/styleFocus').StyleFocus }[] {
+  return items
+    .filter((a) => a.kind === 'focus')
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .flatMap((a) => {
+      const f = parseFocusRef(a.ref);
+      return f ? [{ id: a.id, ...(a.className ? { className: a.className } : {}), ...f }] : [];
+    });
 }
 export const createDigestLink = () => rpc<string>('toneturn_digest_link_create');
 export const revokeDigestLink = () => rpc<void>('toneturn_digest_link_revoke');

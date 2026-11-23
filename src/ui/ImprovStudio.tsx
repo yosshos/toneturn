@@ -25,6 +25,10 @@ import type { RatingEvent } from '../engine/rating';
 import { KeepButton } from './encore/bits';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { Icon } from './icons';
+import { focusOf } from '../engine/styleFocus';
+import { STYLE_CHART, STYLE_TEXT, type StyleId } from '../engine/styles';
+import type { CourseId } from '../engine/courses';
+import type { ChartStyle } from '../engine/charts';
 
 type Lang = 'en' | 'he';
 type Mode = 'rules' | 'phrasing' | 'vary' | 'trade' | 'useit';
@@ -78,10 +82,16 @@ function KeyStrip({ onKey }: { onKey: (m: number) => void }) {
   );
 }
 
-export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab }: { /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
+export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, initialChart, title, vocab, styleToday, onStyleMinutes }: { /** SPEC-STYLE-FOCUS §4: the style the band plays first (today's workout share; default the main style). */ styleToday?: StyleId; /** Minutes improvised over a style's band (§9.4's time per style). */ onStyleMinutes?: (style: StyleId, minutes: number) => void; /** The lick pool and today's lick (phase 4: the Lick mode is "today's lick"). */ vocab?: { pool: Lick[]; today: Lick | null }; settings: Settings; onBack: () => void; onOpenChart?: (c: MyChart) => void; /** "Use it" with one of my licks (SPEC-LICKS-TRANSCRIPTION): its rated event and XP. */ onLickUsed?: (evs: RatingEvent[], xp: number) => void; /** Opened from a piece (Repertoire's "Improvise on it"): the rules start on this chart. */ initialChart?: MyChart | null; /** Beside the title (the place's sparkline). */ title?: React.ReactNode }) {
   const lang: Lang = settings.uiLang;
   const tx = TX[lang];
   const [mode, setMode] = useState<Mode>(onOpenChart ? 'rules' : 'phrasing');
+  // SPEC-STYLE-FOCUS §4: the band's default style is the main style (or today's style from the workout); the level's
+  // own band is one tap away.
+  const bandStyleId: StyleId = styleToday ?? focusOf(settings, (settings.activeCourse ?? 'keys') as CourseId).main;
+  const styleBand: ChartStyle | null = STYLE_CHART[bandStyleId] ?? null;
+  const [band, setBand] = useState<'level' | 'style'>(styleBand ? 'style' : 'level');
+  const startedAt = useRef<number | null>(null);
   const [src, setSrc] = useState(initialChart ? 'piece:' : 'lv:4');
   const [lv, setLv] = useState(IMPROV_LEVELS[3].n);
   const [rule, setRule] = useState(0);
@@ -136,9 +146,19 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
   };
 
   const chartOf = () => {
-    const L = IMPROV_LEVELS.find((x) => x.n === lv) ?? IMPROV_LEVELS[0];
+    const L0 = IMPROV_LEVELS.find((x) => x.n === lv) ?? IMPROV_LEVELS[0];
+    const L = band === 'style' && styleBand ? { ...L0, style: styleBand } : L0;
+    // §9.4: the time over a style's band counts for that style (the level's own band is jazz)
+    startedAt.current = Date.now();
     return { L, p: parseChart(L.text) };
   };
+  useEffect(() => {
+    if (running || startedAt.current === null) return;
+    const min = (Date.now() - startedAt.current) / 60000;
+    startedAt.current = null;
+    if (min >= 0.25) onStyleMinutes?.(band === 'style' && styleBand ? bandStyleId : 'jazz', min);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
 
   const startPhrasing = async () => {
     setRunning(true);
@@ -400,6 +420,16 @@ export function ImprovStudioScreen({ settings, onBack, onOpenChart, onLickUsed, 
             ))}
           </select>
         </label>
+      )}
+      {mode !== 'rules' && mode !== 'useit' && styleBand && (
+        <div className="chips is-band" role="radiogroup" aria-label={lang === 'he' ? 'הלהקה' : 'The band'} data-is-band={band === 'style' ? bandStyleId : 'level'}>
+          <button role="radio" aria-checked={band === 'style'} className={`chip ${band === 'style' ? 'on' : ''}`} onClick={() => setBand('style')} disabled={running} data-is-band-pick="style">
+            {lang === 'he' ? `להקה: ${STYLE_TEXT[bandStyleId].he}` : `Band: ${STYLE_TEXT[bandStyleId].en}`}
+          </button>
+          <button role="radio" aria-checked={band === 'level'} className={`chip ${band === 'level' ? 'on' : ''}`} onClick={() => setBand('level')} disabled={running} data-is-band-pick="level">
+            {lang === 'he' ? 'הלהקה של השלב' : "The level's band"}
+          </button>
+        </div>
       )}
       {mode === 'phrasing' && (
         <div className="chips" role="radiogroup" aria-label={tx.rule}>

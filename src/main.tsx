@@ -32,6 +32,8 @@ import './feedback2.css';
 import './practice.css';
 // GUITAR-AUDIT: chord boxes, the tab's finger row, the neck's string names (Paper tones inside).
 import './guitar.css';
+// SPEC-STYLE-FOCUS: the style chips, the "My styles" strip, the taster and preference cards.
+import './stylefocus.css';
 import { App } from './ui/App';
 import { BrandSplash } from './ui/brand/Splash';
 // The studio layer (redesign stage 1): after every other stylesheet, including those App's modules import.

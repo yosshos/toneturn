@@ -5,6 +5,7 @@
 // decoys are look-alikes. Patterns are our own generic textbook grooves (one char per step, drills/drums.ts lanes).
 // Pure: the style table, rounds, sound events, the run.
 
+import type { StyleId } from './styles';
 import type { NoteEvent } from './lesson';
 import type { DynName } from './courseSocial';
 import type { Lanes } from './drills/drums';
@@ -63,6 +64,21 @@ export const GROOVE_STYLES: GrooveStyle[] = [
 ];
 
 export const styleById = (id: string) => GROOVE_STYLES.find((s) => s.id === id);
+
+/** SPEC-STYLE-FOCUS §4 (Ear): each groove's style family, so the game leans on the player's styles. */
+export const GROOVE_STYLE_OF: Record<string, StyleId> = {
+  rock: 'pop', pop: 'pop', halftime: 'pop', disco: 'pop',
+  funk: 'soul', shuffle: 'soul', purdie: 'soul',
+  swing: 'jazz', swing54: 'jazz',
+  bossa: 'brazil', samba: 'brazil',
+  afro68: 'afrocuban', songo: 'afrocuban',
+  secondline: 'neworleans', train: 'neworleans',
+  reggae: 'reggae',
+  rock78: 'prog', rock58: 'prog', rock98: 'prog', dnb: 'prog',
+  maqsum: 'jazz',
+};
+/** About this share of rounds asks a groove of the player's styles (the rest: every style, so all still appear). */
+export const FOCUS_ROUND_SHARE = 0.5;
 /** Styles open at a level (1 = pp … 6 = ff). */
 export const stylesAt = (level: number) => GROOVE_STYLES.filter((s) => s.level <= level);
 
@@ -77,13 +93,18 @@ export interface GrooveRound {
   bpm: number;
 }
 
-/** Round i: the answer (half the time from the newest tier's styles), three decoys (look-alikes from level 5). */
-export function grooveRound(seed: number, i: number, level: number, prev?: string): GrooveRound {
+/**
+ * Round i: the answer (half the time from the newest tier's styles), three decoys (look-alikes from level 5). With the
+ * player's styles (SPEC-STYLE-FOCUS §4), about half the rounds ask a groove of those styles; every style still comes up.
+ */
+export function grooveRound(seed: number, i: number, level: number, prev?: string, focus?: StyleId[]): GrooveRound {
   const lv = Math.max(1, Math.min(6, Math.round(level) || 1));
   const r = rng((seed + Math.imul(i + 1, 0x9e3779b1)) ^ 0x7f4a7c15);
   const open = stylesAt(lv);
   const newest = open.filter((s) => s.level === lv);
-  const pool = r() < 0.55 && newest.length ? newest : open;
+  const mine = focus?.length ? open.filter((s) => focus.includes(GROOVE_STYLE_OF[s.id])) : [];
+  const fx = focus?.length ? r() : 1;
+  const pool = mine.length && fx < FOCUS_ROUND_SHARE ? mine : r() < 0.55 && newest.length ? newest : open;
   let ans = pool[Math.floor(r() * pool.length)];
   if (prev && ans.id === prev && pool.length > 1) ans = pool[(pool.indexOf(ans) + 1) % pool.length];
   const decoys: string[] = [];
@@ -114,12 +135,14 @@ export interface GrooveSave {
   seed: number;
   level: number;
   tier?: DynName;
+  /** SPEC-STYLE-FOCUS: the player's styles when the run started (rounds lean on them). */
+  focus?: StyleId[];
   /** Points per answered round (0 = wrong). */
   answers: number[];
   right: number;
   wrong: number;
 }
-export const newGrooveSave = (seed: number, level: number, tier?: DynName): GrooveSave => ({ v: 1, game: 'namegroove', seed: seed >>> 0, level: Math.max(1, Math.min(6, level)), ...(tier ? { tier } : {}), answers: [], right: 0, wrong: 0 });
+export const newGrooveSave = (seed: number, level: number, tier?: DynName, focus?: StyleId[]): GrooveSave => ({ v: 1, game: 'namegroove', seed: seed >>> 0, level: Math.max(1, Math.min(6, level)), ...(tier ? { tier } : {}), ...(focus?.length ? { focus } : {}), answers: [], right: 0, wrong: 0 });
 export function isGrooveSave(x: unknown): x is GrooveSave {
   const s = x as GrooveSave | null;
   return !!s && s.v === 1 && s.game === 'namegroove' && typeof s.seed === 'number' && Array.isArray(s.answers) && s.answers.length < GROOVE_ROUNDS;
@@ -128,11 +151,11 @@ export function isGrooveSave(x: unknown): x is GrooveSave {
 export function roundOf(s: GrooveSave, i = s.answers.length): GrooveRound {
   let prev: string | undefined;
   for (let k = 0; k <= i; k++) {
-    const r = grooveRound(s.seed, k, s.level, prev);
+    const r = grooveRound(s.seed, k, s.level, prev, s.focus);
     if (k === i) return r;
     prev = r.answer;
   }
-  return grooveRound(s.seed, i, s.level);
+  return grooveRound(s.seed, i, s.level, undefined, s.focus);
 }
 export function grooveAnswer(s: GrooveSave, choice: string, ms: number): { state: GrooveSave; correct: boolean; gained: number } {
   const correct = choice === roundOf(s).answer;

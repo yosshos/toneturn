@@ -37,13 +37,8 @@ test.describe('the Jazz course folded into Ear (jazz focus)', () => {
     // Ear is the active course; no notice about the fold (owner 2026-11-19: no users yet).
     await expect(page.locator('[data-course-chip="ear"]:visible').first()).toBeVisible();
     await expect(page.locator('[data-jazz-notice="fold"]')).toHaveCount(0);
-    // The path header: jazz focus on (exam prep off), fitting the phone.
-    const sw = page.locator('[data-jazz-focus]').first();
-    await expect(sw).toHaveAttribute('aria-checked', 'true');
-    await expect(sw).toContainText('מיקוד ג׳אז');
-    const box = await sw.boundingBox();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(390);
+    // SPEC-STYLE-FOCUS: no jazz-focus switch any more (the style chips in Settings); jazz is open in every course.
+    await expect(page.locator('[data-jazz-focus]')).toHaveCount(0);
     // Jazz steps on the Ear path (the jazz pack: swing, the blues, guide tones, the jazz lessons, Barry Harris …).
     await expect(page.locator('[data-step^="topic:swing-ratio"], [data-step^="topic:blues-ear"], [data-step^="topic:guide-tones"], [data-step^="lesson:jazz"], [data-step^="topic:bh-"], [data-step^="topic:comping"], [data-step^="licks:jazz"], [data-step^="bonus:jazz"], [data-step^="rep:jazz"]').first()).toBeAttached();
     expect(await page.evaluate(() => document.scrollingElement!.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);

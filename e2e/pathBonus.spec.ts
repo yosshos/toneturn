@@ -35,8 +35,8 @@ test.describe('path: bonus games and repertoire steps', () => {
       await page.goto('/?unlock#/path');
       // SPEC-JAZZ-FOLD: the old Jazz player walks Ear from its start, so the jazz bonus and repertoire steps sit in later
       // sections (their presence is checked by tests/jazzFold.test.ts and tests/newGamesConnections.test.ts). Here: the
-      // path opens in Ear with jazz focus on, and any bonus step on screen carries its label.
-      await expect(page.locator('[data-jazz-focus]').first()).toHaveAttribute('aria-checked', 'true');
+      // path opens in Ear (jazz open in every course, SPEC-STYLE-FOCUS), and any bonus step on screen carries its label.
+      await expect(page.locator('[data-course-chip="ear"]:visible').first()).toBeVisible();
       const bonus = page.locator('[data-step^="bonus:"] [data-bonus]');
       for (let i = 0; i < (await bonus.count()); i++) await expect(bonus.nth(i)).toHaveText(lang === 'he' ? 'בונוס' : 'Bonus');
       expect(await page.evaluate(() => document.scrollingElement!.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);

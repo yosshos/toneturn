@@ -51,7 +51,6 @@ test.describe('practice hub', () => {
     // Phase 3 (SPEC-PRACTICE-IA-3): Charts & lead sheets live in Repertoire for every player; the log moved to Progress.
     await switchCourse(page, 'ear');
     await page.goto('/?sim=1#/arcade');
-    if ((await page.locator('[data-jazz-focus]').first().getAttribute('aria-checked')) !== 'true') await page.locator('[data-jazz-focus]').first().click();
     await expect(page.locator('[data-hub="slowdown"]')).toBeVisible();
     for (const k of ['charts', 'log']) await expect(page.locator(`[data-hub="${k}"]`)).toHaveCount(0);
     // Charts: Add a piece → type the chords → a progression opens, plays and highlights a bar; transpose changes the text.

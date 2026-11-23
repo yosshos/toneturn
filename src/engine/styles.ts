@@ -46,7 +46,7 @@ export const STYLE_COURSES: Record<StyleId, CourseId[]> = {
   neworleans: ['ear', 'keys', 'bass', 'drums'],
   classical: ['ear', 'keys', 'guitar', 'voice'],
   pop: ALL,
-  prog: ['bass', 'drums'],
+  prog: ['bass', 'drums', 'guitar'],
   fingerstyle: ['guitar'],
   flamenco: ['guitar'],
   metal: ['guitar'],
@@ -134,6 +134,9 @@ export const STYLE_OF_LEVEL: Partial<Record<string, StyleId>> = {
   'd-latin-7': 'brazil',
 };
 
+/** The guitar add-ons that are styles (the jazz add-on is the jazz core: unstyled). */
+const ADDON_STYLE: Partial<Record<string, StyleId>> = { prog: 'prog', flamenco: 'flamenco', fingerstyle: 'fingerstyle' };
+
 /** The legacy values of FamilyDef.style that are not a style tag (the piano emphasis filter of old). */
 const LEGACY_FAMILY_STYLE = new Set<string>(['both', 'classical', 'jazz']);
 
@@ -145,6 +148,10 @@ export function styleOfLevel(level: { id: string; style?: StyleId }, family: { i
   if (level.style && isStyleId(level.style)) return level.style;
   const byLevel = STYLE_OF_LEVEL[level.id];
   if (byLevel) return byLevel;
+  // guitar (GUITAR_DEEPENING §5): an add-on level inside a core family (prog picking, …) and the country levels
+  const addOn = (level as { addOn?: string }).addOn;
+  if (addOn && ADDON_STYLE[addOn]) return ADDON_STYLE[addOn]!;
+  if ((level as { country?: boolean }).country) return 'country';
   const byFam = STYLE_OF_FAMILY[family.id];
   if (byFam) return byFam;
   if (family.style && !LEGACY_FAMILY_STYLE.has(family.style) && isStyleId(family.style)) return family.style;
@@ -158,6 +165,26 @@ export function styleOfFamily(family: { id: string; style?: FamilyStyle | string
   if (family.style && !LEGACY_FAMILY_STYLE.has(family.style) && isStyleId(family.style)) return family.style;
   return null;
 }
+
+/**
+ * The chart band (charts.ts ChartStyle: swing / pop / rock / bossa / ballad / waltz) that plays a style today, for
+ * Improvise's default band, the workout's improvisation share and the taster's 8 bars. Afro-Cuban, soul and New Orleans
+ * borrow the closest band until their own band styles land (SPEC-JAZZ-NEIGHBOURS §2–5); null = the level's own band.
+ */
+export const STYLE_CHART: Partial<Record<StyleId, 'swing' | 'pop' | 'rock' | 'bossa' | 'ballad' | 'waltz'>> = {
+  brazil: 'bossa',
+  afrocuban: 'bossa',
+  soul: 'rock',
+  neworleans: 'swing',
+  pop: 'pop',
+  prog: 'rock',
+  classical: 'ballad',
+  metal: 'rock',
+  country: 'pop',
+  reggae: 'pop',
+  fingerstyle: 'ballad',
+  flamenco: 'waltz',
+};
 
 /** The band styles (band.ts BandStyle ids) of each style, for Improvise's default band and the taster's 8 bars. */
 export const STYLE_BANDS: Partial<Record<StyleId, string[]>> = {

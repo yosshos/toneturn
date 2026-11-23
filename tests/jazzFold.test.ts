@@ -3,7 +3,7 @@
 // focus" is a mode; old Jazz-course players move to Ear in jazz focus with everything kept.
 import { describe, expect, it } from 'vitest';
 import { COURSES, COURSE_IDS, courseInput, courseOf, inCourse, isJazzStep, JAZZ_FAMILIES, JAZZ_FREE_LEVELS, migrateJazzCourse, normCourse, type CourseId } from '../src/engine/courses';
-import { backgroundPacks, coursePacks, coursesToOpen, JAZZ_OPEN_AT, jazzOpenIn, jazzOpenWhy, toggleJazzFocus } from '../src/engine/jazzFold';
+import { backgroundPacks, coursePacks, coursesToOpen, JAZZ_OPEN_AT, jazzFocusOn, jazzOpenIn, jazzStartLevel, jazzStartWhy, toggleJazzFocus } from '../src/engine/jazzFold';
 import { DYN, courseOfResult, friendsInCourse } from '../src/engine/courseSocial';
 import { buildPath, eligible, stepCatalogue, type PathInput } from '../src/engine/path';
 import { catalog } from '../src/engine/drills/generate';
@@ -58,41 +58,37 @@ describe('the jazz families (instrument courses)', () => {
   });
 });
 
-describe('gating by background (SPEC-JAZZ-FOLD §2)', () => {
-  it('a beginner (explorer / hobby) has no jazz in Ear, keys, guitar, bass or voice; a student / pro has it', () => {
-    expect(backgroundPacks({ track: 'explorer' })).not.toContain('jazz');
+describe('no lock: jazz is open in every course (SPEC-STYLE-FOCUS §2, §8.1 — supersedes SPEC-JAZZ-FOLD §2–3)', () => {
+  it('every course has jazz from day one, a beginner (explorer / hobby) too — difficulty by level, not by a lock', () => {
     expect(backgroundPacks({ track: 'hobby' })).not.toContain('jazz');
-    expect(backgroundPacks({ track: 'student' })).toContain('jazz');
-    expect(backgroundPacks({ track: 'pro' })).toContain('jazz');
     for (const c of ['ear', 'keys', 'guitar', 'bass', 'voice'] as CourseId[]) {
-      const closed = stepsOf(c, coursePacks({ track: 'hobby' }, c));
-      const open = stepsOf(c, coursePacks({ track: 'student' }, c));
-      expect(closed.filter((s) => isJazzStep(s)).map((s) => s.id), c).toEqual([]);
-      expect(open.filter((s) => isJazzStep(s)).length, c).toBeGreaterThan(c === 'voice' ? 5 : 20);
+      expect(jazzOpenIn({ track: 'explorer' }, c)).toBe(true);
+      expect(coursePacks({ track: 'hobby' }, c)).toContain('jazz');
+      const steps = stepsOf(c, coursePacks({ track: 'hobby' }, c));
+      expect(steps.filter((s) => isJazzStep(s)).length, c).toBeGreaterThan(c === 'voice' ? 5 : 20);
     }
   });
   it('Ear holds the old Jazz ear: Barry Harris, reharm and colour, negative harmony, jazz forms, ii–V chains, voicing types, the jazz lessons', () => {
-    const ids = new Set(stepsOf('ear', ['jazz']).map((s) => s.id));
+    const ids = new Set(stepsOf('ear', coursePacks({ track: 'explorer' }, 'ear')).map((s) => s.id));
     for (const id of ['topic:bh-convert:1', 'topic:reharm-spot:1', 'topic:negative-harmony:1', 'topic:jazz-form:1', 'topic:jazz-chains:1', 'topic:voicing-type:1', 'topic:swing-ratio:1', 'lesson:jazz-1', 'lesson:jazz-welcome', 'licks:jazz:1', 'bonus:jazz:reharm', 'rep:jazz:autumn']) expect(ids.has(id), id).toBe(true);
-    // None of it for a beginner.
-    const beginner = new Set(stepsOf('ear', []).map((s) => s.id));
-    for (const id of ['topic:bh-convert:1', 'lesson:jazz-1', 'licks:jazz:1', 'bonus:jazz:reharm', 'rep:jazz:autumn']) expect(beginner.has(id), id).toBe(false);
   });
   it('the playing courses hold the performed jazz: comping, Harris, walking, scat', () => {
-    expect(stepsOf('keys', ['jazz']).some((s) => s.ladder?.family === 'harris')).toBe(true);
-    expect(stepsOf('keys', []).some((s) => s.ladder?.family === 'harris')).toBe(false);
-    expect(stepsOf('bass', ['jazz']).some((s) => s.ladder?.family === 'b-walk')).toBe(true);
-    expect(stepsOf('bass', []).some((s) => s.ladder?.family === 'b-walk')).toBe(false);
-    expect(stepsOf('voice', ['jazz']).some((s) => s.ladder?.family === 'v-scat')).toBe(true);
-    // The first voicings (triads, 7th chords) and generic improvising stay for everyone.
-    expect(stepsOf('keys', []).some((s) => s.ladder?.ref === 'voicings-1')).toBe(true);
-    expect(stepsOf('keys', []).some((s) => s.ladder?.family === 'k-impro')).toBe(true);
+    const open = (c: CourseId) => stepsOf(c, coursePacks({ track: 'hobby' }, c));
+    expect(open('keys').some((s) => s.ladder?.family === 'harris')).toBe(true);
+    expect(open('bass').some((s) => s.ladder?.family === 'b-walk')).toBe(true);
+    expect(open('voice').some((s) => s.ladder?.family === 'v-scat')).toBe(true);
+    expect(open('keys').some((s) => s.ladder?.ref === 'voicings-1')).toBe(true);
+    expect(open('keys').some((s) => s.ladder?.family === 'k-impro')).toBe(true);
   });
-  it('an explicit instrument choice opens jazz in that course (piano emphasis, guitar add-on, bass track)', () => {
-    expect(jazzOpenWhy({ track: 'hobby', drills: { emphasis: 'jazz' } }, 'keys')).toBe('instrument');
-    expect(jazzOpenWhy({ track: 'hobby', drills: { guitarAddOns: ['jazz'] } }, 'guitar')).toBe('instrument');
-    expect(jazzOpenWhy({ track: 'hobby', drills: { bassTrack: 'jazz' } }, 'bass')).toBe('instrument');
-    expect(jazzOpenIn({ track: 'hobby', drills: { emphasis: 'jazz' } }, 'ear')).toBe(false);
+  it('what used to open the pack (background, climbing, an instrument choice, focus) now only sets where jazz harmony starts', () => {
+    expect(jazzStartWhy({ track: 'hobby', drills: { emphasis: 'jazz' } }, 'keys')).toBe('instrument');
+    expect(jazzStartWhy({ track: 'hobby', drills: { guitarAddOns: ['jazz'] } }, 'guitar')).toBe('instrument');
+    expect(jazzStartWhy({ track: 'hobby', drills: { bassTrack: 'jazz' } }, 'bass')).toBe('instrument');
+    expect(jazzStartWhy({ track: 'hobby', jazzOpen: ['ear'] }, 'ear')).toBe('climbed');
+    expect(jazzStartWhy({ track: 'student' }, 'ear')).toBe('background');
+    expect(jazzStartWhy({ track: 'hobby' }, 'ear')).toBe(null);
+    expect(jazzStartLevel({ track: 'student' }, 'keys')).toBe(JAZZ_OPEN_AT);
+    expect(jazzStartLevel({ track: 'hobby' }, 'keys')).toBe(undefined);
   });
   it('the Practice rows, games and workout follow the pack', () => {
     expect(courseGames('ear', false)).not.toContain('reharm');
@@ -109,10 +105,9 @@ describe('gating by background (SPEC-JAZZ-FOLD §2)', () => {
     expect(courseRows('ear', true, 'focus')[0]).toBe('exams');
     for (let d = 1; d <= 20; d++) expect(['reharm', 'mirror', 'rush-voicing', 'holdnote', 'whichpair']).not.toContain(workoutGame('ear', `2026-11-${String(d).padStart(2, '0')}`, 'off'));
   });
-  it('the Find-my-level ladders drop their jazz rungs for a beginner', () => {
+  it('the Find-my-level ladders can still drop their jazz rungs (kept for old callers; the app no longer asks)', () => {
     expect(ladderOf('chords', true).length).toBeLessThan(LADDERS.chords!.length);
     expect(ladderOf('chords', true).every((r) => !r.jazz)).toBe(true);
-    // A perfect beginner tops out below the jazz rungs.
     const answers: { skill: 'chords'; level: number; outcome: 'correct' }[] = [];
     for (let i = 0; i < 20; i++) {
       const p = planPlacement(answers, ['chords'], { noJazz: true });
@@ -122,27 +117,20 @@ describe('gating by background (SPEC-JAZZ-FOLD §2)', () => {
     expect(Math.max(...answers.map((a) => a.level))).toBeLessThanOrEqual(ladderOf('chords', true).length);
     expect((placementLesson(1, { skills: ['chords'], noJazz: true }) as { placementNoJazz?: boolean }).placementNoJazz).toBe(true);
   });
-});
-
-describe('a beginner who climbs gets jazz opened (SPEC-JAZZ-FOLD §3)', () => {
-  it('the threshold is the mf level, where the student track starts', () => {
+  it('the start threshold is the mf level, where the student track starts; climbing opens nothing (nothing is closed)', () => {
     expect(JAZZ_OPEN_AT).toBe(DYN.find((d) => d.name === 'mf')!.from);
-  });
-  it('opens a course once its level reaches mf; never one that is open; never closes', () => {
-    const low = { intervals: { r: 1000, n: 40, correct: 30, recent: [] }, degrees: { r: 1000, n: 40, correct: 30, recent: [] } } as unknown as Ratings;
     const high = { intervals: { r: 1250, n: 40, correct: 30, recent: [] }, degrees: { r: 1250, n: 40, correct: 30, recent: [] }, chords: { r: 1200, n: 40, correct: 30, recent: [] } } as unknown as Ratings;
-    const s = { track: 'hobby' as const, courses: ['ear', 'keys'] as CourseId[] };
-    expect(coursesToOpen(s, low)).toEqual([]);
-    expect(coursesToOpen(s, high)).toEqual(['ear']);
-    expect(coursesToOpen({ ...s, jazzOpen: ['ear'] }, high)).toEqual([]);
-    expect(coursesToOpen({ ...s, track: 'student' }, high)).toEqual([]);
-    expect(jazzOpenWhy({ ...s, jazzOpen: ['ear'] }, 'ear')).toBe('climbed');
+    expect(coursesToOpen({ track: 'hobby', courses: ['ear', 'keys'] }, high)).toEqual([]);
   });
 });
 
 describe('jazz focus (SPEC-JAZZ-FOLD §4)', () => {
   it('opens the pack whatever the background, uses the jazz goal in Ear, and prefers jazz steps', () => {
-    expect(jazzOpenWhy({ track: 'explorer', jazzFocus: ['keys'] }, 'keys')).toBe('focus');
+    expect(jazzStartWhy({ track: 'explorer', jazzFocus: ['keys'] }, 'keys')).toBe('focus');
+    // SPEC-STYLE-FOCUS §6: a chosen main style of jazz is jazz focus; another main style is not; nothing chosen reads the old list
+    expect(jazzFocusOn({ styleFocus: { keys: { main: 'jazz' } } }, 'keys')).toBe(true);
+    expect(jazzFocusOn({ styleFocus: { keys: { main: 'brazil' } }, jazzFocus: ['keys'] }, 'keys')).toBe(false);
+    expect(jazzFocusOn({ jazzFocus: ['keys'] }, 'keys')).toBe(true);
     expect(toggleJazzFocus({ jazzFocus: ['ear'] }, 'keys', true)).toEqual(['ear', 'keys']);
     expect(toggleJazzFocus({ jazzFocus: ['ear', 'keys'] }, 'ear', false)).toEqual(['keys']);
     const inp = courseInput({ ...base, packs: [] }, 'ear', false, true);

@@ -54,10 +54,10 @@ describe('BASS_NICHE_PLAN P2: wiring', () => {
     expect(P2_LEVELS().length).toBe(29); // + AUDIT-7 b-walk 21
   });
 
-  it('the standards ladder is on the jazz track; extended techniques on both', () => {
+  it('the standards ladder and extended techniques are open on every track (SPEC-STYLE-FOCUS: no lock)', () => {
     const ids = (track?: 'jazz' | 'prog' | 'both') => ladderFamiliesFor('bass', { ...DEFAULT_DRILL_SETTINGS, bassTrack: track });
     expect(ids('jazz')).toContain('b-std');
-    expect(ids('prog')).not.toContain('b-std');
+    expect(ids('prog')).toContain('b-std');
     expect(ids('jazz')).toContain('b-ext');
     expect(ids('prog')).toContain('b-ext');
   });

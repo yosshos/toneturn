@@ -9,7 +9,9 @@ import { REGISTRATIONS } from '../audio/organ';
 import { DOMAINS } from '../engine/rating';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS, type Goal } from '../engine/path';
 import { courseOf, JAZZ_FOCUS_COURSES, type CourseId } from '../engine/courses';
-import { jazzFocusOn, toggleJazzFocus } from '../engine/jazzFold';
+import { toggleJazzFocus } from '../engine/jazzFold';
+import { focusOf, withFocus } from '../engine/styleFocus';
+import { StyleChips } from './StyleChips';
 import { TOPIC_GEN } from '../engine/topicKit';
 import { TUNINGS } from '../engine/fretboard';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -18,9 +20,6 @@ import type { Strings } from '../i18n/strings';
 import { KOKORO_MB, type KokoroStatus } from '../speech/kokoro/decide';
 import { useNarratorStatus, useTalk } from './TalkToggle';
 import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings } from '../storage/progress';
-import { DEFAULT_DRILL_SETTINGS } from '../engine/drills/types';
-import { guitarAddOnsOf } from '../engine/drills/guitarMeta';
-import { GuitarAddOnPicker } from './GuitarAddOns';
 import { Note } from './bits';
 import { previewText } from '../speech/voice/preview';
 import { piano, store, tts } from './services';
@@ -153,18 +152,17 @@ function MyPath({ t, s, onChange }: { t: Strings; s: Settings; onChange: (p: Par
         <input type="checkbox" checked={!!s.examPrep} onChange={(e) => onChange({ examPrep: e.target.checked })} />
         <span>{lang === 'he' ? 'הכנה לבגרות (בקורס שמיעה ותיאוריה)' : 'Exam prep (in the Ear & theory course)'}</span>
       </label>
-      {/* SPEC-JAZZ-FOLD §4: jazz focus per course (was the Jazz course). */}
-      <h3 className="intake-sub">{lang === 'he' ? 'מיקוד ג׳אז' : 'Jazz focus'}</h3>
-      <p className="field-hint" dir="auto">{lang === 'he' ? 'פותח את הג׳אז בקורס, מקדים אותו ונותן לו משקל.' : 'Opens jazz in the course, brings it earlier and weighs it more.'}</p>
-      <div className="intake-chips" data-jazz-focus-setting="1">
-        {(s.courses?.length ? s.courses : (['ear'] as CourseId[])).filter((c) => JAZZ_FOCUS_COURSES.includes(c)).map((c) => {
-          const on = jazzFocusOn(s, c);
-          return (
-            <button key={c} type="button" className={`chip ${on ? 'on' : ''}`} aria-pressed={on} data-jazz-focus-course={c} onClick={() => onChange({ jazzFocus: toggleJazzFocus(s, c, !on) })}>
-              {courseOf(c).short[lang]}
-            </button>
-          );
-        })}
+      {/* SPEC-STYLE-FOCUS §3 (was jazz focus, the piano emphasis, the guitar add-ons and the bass track): per course,
+          the main style and up to two more — changeable any time; progress is never lost, only the weights change. */}
+      <h3 className="intake-sub">{lang === 'he' ? 'הסגנונות שלי' : 'My styles'}</h3>
+      <p className="field-hint" dir="auto">{lang === 'he' ? 'משנה את המשקל באימון ובמסלול, לא את הגישה: כל הסגנונות פתוחים.' : 'Changes the weight in the workout and the path, not the access: every style is open.'}</p>
+      <div className="style-focus-list" data-style-focus-setting="1">
+        {(s.courses?.length ? s.courses : (['ear'] as CourseId[])).filter((c) => JAZZ_FOCUS_COURSES.includes(c)).map((c) => (
+          <div key={c} className="field-col" data-style-focus-course={c}>
+            <b>{courseOf(c).short[lang]}</b>
+            <StyleChips course={c} lang={lang} focus={focusOf(s, c)} onChange={(f) => onChange({ styleFocus: withFocus(s, c, f) })} title={false} />
+          </div>
+        ))}
       </div>
       <h3 className="intake-sub">{q.leaveAreas}</h3>
       <div className="intake-chips">
@@ -583,14 +581,13 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
                 {/* GUITAR_DEEPENING §5: the guitar course's add-ons, changeable here any time. */}
                 {(s.activeCourse === 'guitar' || (s.courses ?? []).includes('guitar')) && (
                   <>
-                    <GuitarAddOnPicker value={guitarAddOnsOf(s.drills ?? {}, s.courses)} onChange={(v) => onChange({ drills: { ...DEFAULT_DRILL_SETTINGS, ...(s.drills ?? {}), guitarAddOns: v } })} lang={s.uiLang} />
-                    {/* GUITAR_DEEPENING §8: the modelled guitar's voice (auto follows the add-ons). */}
+                    {/* GUITAR_DEEPENING §8: the modelled guitar's voice (auto follows the guitar's styles, SPEC-STYLE-FOCUS). */}
                     <label className="field-row">
                       <span>{s.uiLang === 'he' ? 'צליל הגיטרה' : 'Guitar sound'}</span>
                       <select value={s.guitarVoice ?? 'auto'} onChange={(e) => onChange({ guitarVoice: e.target.value as NonNullable<Settings['guitarVoice']> })} data-guitar-voice="1">
                         {(['auto', 'steel', 'nylon', 'electric'] as const).map((v) => (
                           <option key={v} value={v}>
-                            {{ auto: { en: 'By the add-ons', he: 'לפי התוספות' }, steel: { en: 'Steel-string acoustic', he: 'אקוסטית מיתרי פלדה' }, nylon: { en: 'Nylon-string classical', he: 'קלאסית מיתרי ניילון' }, electric: { en: 'Clean electric', he: 'חשמלית נקייה' } }[v][s.uiLang]}
+                            {{ auto: { en: 'By my styles', he: 'לפי הסגנונות שלי' }, steel: { en: 'Steel-string acoustic', he: 'אקוסטית מיתרי פלדה' }, nylon: { en: 'Nylon-string classical', he: 'קלאסית מיתרי ניילון' }, electric: { en: 'Clean electric', he: 'חשמלית נקייה' } }[v][s.uiLang]}
                           </option>
                         ))}
                       </select>

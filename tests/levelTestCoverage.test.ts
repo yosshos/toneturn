@@ -37,7 +37,8 @@ function shownStrands(s: Setup): Strand[] {
   const settings = { ...s.ds, guitarAddOns: s.inst === 'guitar' ? pathGuitarAddOns(s.ds) : s.ds.guitarAddOns, bassTuning: s.tuning };
   const shown = new Set(shownFamilies(settings).flatMap((f) => f.levels.map((l) => l.id)));
   if (s.inst === 'piano') for (const id of pathPianoLevels(s.ds)) shown.add(id);
-  return strandsFor(s.inst, s.ds.emphasis, { upright })
+  // SPEC-STYLE-FOCUS §2: the app runs the whole test ('both') whatever the old emphasis
+  return strandsFor(s.inst, 'both', { upright })
     .map((st) => ({ ...st, rungs: st.rungs.filter((r) => shown.has(r.level)) }))
     .filter((st) => st.rungs.length > 0);
 }
