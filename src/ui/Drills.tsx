@@ -72,7 +72,7 @@ import { applyTake, drillKeyOf, drillMinorOf, familyLevel, newItem, type LadderR
 import { facetGroup } from '../engine/drills/keyFacet';
 import { customKeys, customToDrill } from '../engine/drills/custom';
 import { DrillCreator } from './DrillCreator';
-import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, todayDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
+import { currentLevel, families as familiesOf, levelDone, skillDrillsInKey, levelStars, LEVEL_MAX_STARS, levelKeys, shownFamilies, specDrills, levelDrills, withBassTuning, itemTargetBpm } from '../engine/drills/plan';
 import { generate } from '../engine/drills/generate';
 import { advance, finishPlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandId, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
@@ -134,8 +134,8 @@ import { courseOfInstrument, EAR_FAMILY, earCheckDrill, inFingersShare, mixForWe
 import { FadedScore } from './FadedScore';
 import { ChannelStrip, type RunChan } from './ChannelStrip';
 import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
-import { planFamily, weekKeyFromMatrix } from '../engine/drills/todayPlan';
-import { keptWeekKey, matrixInst, readMatrixView, saveMatrixView, setPlanAt, todayTech, weekKeyIfKept, type TodayTech } from './todayTech';
+import { planFamily, rungMinutes, weekKeyFromMatrix, whyCounts, type PlanCell } from '../engine/drills/todayPlan';
+import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, noteMatrixSeen, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
 import { coolingDown, withCeiling } from '../engine/drills/itemStatus';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
@@ -316,6 +316,8 @@ export interface DrillsProps {
   today?: { minutes: number; left: number; day: string };
   /** Open straight in today's technique run (the workout's technique block); its end calls onQueueDone. */
   startToday?: boolean;
+  /** "Part of today's workout" links to Today (SPEC-PATH-TODAY-PRACTICE §3.4). */
+  onTodayScreen?: () => void;
   /** An item's state changed without a take (the coach's "ceiling for now" after a plateau, BUILD-PLAN §0.2). */
   onItem?: (state: ItemState) => void;
   /** Phase 3 (SPEC-PATH-TODAY-PRACTICE §3.1): open on a key's page (a piece's key) or a family (a path step's full
@@ -326,7 +328,7 @@ export interface DrillsProps {
 
 type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily, onTodayScreen }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
@@ -363,7 +365,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const chan: RunChan = { strong: chStrong, mix: chMix.mix, day: chDay };
   const sight = useMemo(() => {
     const inst = ds.instrument ?? 'piano';
-    return sightForToday(settings.sightDose, { instrument: inst, items, order: ds.keyOrder, start: settings.drillStart?.[READING_FAMILY[inst]], key: inst === 'drums' ? null : weekKeyIfKept('major', inst), day: chDay });
+    return sightForToday(settings.sightDose, { instrument: inst, items, order: ds.keyOrder, start: settings.drillStart?.[READING_FAMILY[inst]], key: inst === 'drums' ? null : ((k) => (k ? improvRootOf(k) : null))(dayKeyIfKept(inst)), day: chDay });
   }, [settings.sightDose, items, ds.instrument, ds.keyOrder, chDay]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (sight?.keep) onSettings({ sightDose: sight.keep });
@@ -392,16 +394,28 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
   // SPEC-DAILY-WORKOUT: the key × exercise matrix (piano; phase 7: guitar and bass too), its summary and the projection at the player's minutes a day
   const matrixTier = techTier >= 0 ? techTier : keysAdvanced ? 2 : 0;
+  // Phase 2: the hub's "part of today's workout" shows today's cells too — built a moment after the hub paints
+  const [planReady, setPlanReady] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setPlanReady(true), 30);
+    return () => window.clearTimeout(id);
+  }, []);
   const keyMatrixSum = useMemo(() => {
-    // built only when the key screen or a key page is open (the first build takes a moment; later ones are cheap)
+    // built only when the key screen, a key page or (with a technique block today) the hub is open (the first build
+    // takes a moment; later ones are cheap)
     const mi = matrixInst(ds.instrument);
-    if (!mi || !(pView === 'key' || view.k === 'keypage')) return null;
+    if (!mi || !(pView === 'key' || view.k === 'keypage' || (planReady && !!today && view.k === 'hub'))) return null;
     // block G (phase 4): the lick pool's licks are rungs of every key (piano)
     const cells = keyMatrix(familiesOf(mi), matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), ...(today ? { day: today.day } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) });
     const sum = matrixSummary(cells);
     const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
-  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, settings.styleFocus, pView, view.k, today?.day]);
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, settings.styleFocus, pView, view.k, today?.day, planReady]);
+  // SPEC-DAILY-WORKOUT §5: "+N new exercises opened" when the tier rose (kept per instrument, shown for 3 days)
+  const gainedCells = useMemo(() => {
+    const mi = matrixInst(ds.instrument);
+    return mi && keyMatrixSum ? noteMatrixSeen(mi, matrixTier, keyMatrixSum.cellsList.filter((c) => c.tier !== 'rest').length, chDay) : 0;
+  }, [keyMatrixSum, matrixTier, ds.instrument, chDay]);
   // The order of the rest of today's cells (the player's view, remembered): one plan with the workout's block.
   const [mv, setMvState] = useState<MatrixView>(readMatrixView);
   const setMv = (v: MatrixView) => (saveMatrixView(v), setMvState(v));
@@ -601,12 +615,34 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
       </main>
     );
+  // Phase 2 ("one today"): the hub's default view shows the shared plan (the workout block's cells), not a private list
+  const todayPart = today ? (
+    <TodayPart
+      lang={lang}
+      plan={todayPlan?.plan ?? null}
+      cells={keyMatrixSum?.cellsList ?? null}
+      minutes={today.minutes}
+      left={today.left}
+      gained={gainedCells}
+      matrix={!!matrixInst(ds.instrument)}
+      week={(() => {
+        const mi = matrixInst(ds.instrument);
+        return mi ? dayKeyIfKept(mi, `${today.day}T12:00:00`) : null;
+      })()}
+      onRun={() => {
+        const v = todayView(todayPlan, { k: 'hub' });
+        if (v) setView(v);
+      }}
+      onToday={onTodayScreen}
+    />
+  ) : null;
   return (
     <Hub
       lang={lang}
       ds={ds}
       settings={settings}
       items={items}
+      todayPart={todayPart}
       head={head(tx.title, onBack, <PlaceSpark place="technique" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />)}
       channelStrip={<ChannelStrip lang={lang} mix={chMix.mix} strong={chStrong} sight={sight ? { drill: sight.drill, done: sight.done } : null} onSight={(d) => setView({ k: 'run', queue: [d], i: 0, from: { k: 'hub' } })} />}
       onFamily={(f) => setView({ k: 'family', f })}
@@ -743,13 +779,89 @@ const TOPIC_NAME: Record<DrillTopic, { en: string; he: string }> = {
 const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; he: string } =>
   drums && k === 'styles' ? { en: 'Styles', he: 'סגנונות' } : drums && k === 'ear' ? { en: 'Drummer’s ear', he: 'שמיעה למתופפים' } : piano && k === 'ear' ? { en: 'Pianist’s ear', he: 'שמיעה לפסנתרנים' } : piano && k === 'styles' ? { en: 'Jazz piano', he: 'פסנתר ג׳אז' } : TOPIC_NAME[k];
 
-function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid }: { /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+/**
+ * BUILD-PLAN phase 2 ("one today"): the technique screen's default view no longer keeps its own "Today" list — it shows
+ * part of today's workout: the same cells as the workout's technique block (half from the key of the week, the rest
+ * weakest first, reviews due), each with how long the exercise takes through its 12 keys, a Start that runs them (the
+ * takes count toward the workout) and a link to Today. On the drums (no keys) the block's minutes and the link.
+ */
+function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onRun, onToday }: { lang: Lang; plan: PlanCell[] | null; cells: MatrixCell[] | null; minutes: number; left: number; gained: number; matrix: boolean; week: { root: number; group: 'major' | 'minor' } | null; onRun: () => void; onToday?: () => void }) {
+  const he = lang === 'he';
+  const mins = Math.max(0, Math.round(left));
+  const w = plan ? whyCounts(plan) : null;
+  const parts = w ? [w.week ? (he ? `${w.week} בסולם השבוע` : `${w.week} in the key of the week`) : '', w.strengthen ? (he ? `${w.strengthen} לחיזוק` : `${w.strengthen} to strengthen`) : '', w.review ? (he ? `${w.review} חזרה` : `${w.review} review`) : '', w.style ? (he ? `${w.style} בסגנונות שלי` : `${w.style} in my styles`) : ''].filter(Boolean) : [];
+  const wkName = week ? `${keyName(week.root, week.group === 'minor')}${week.group === 'minor' ? 'm' : ''}` : null;
+  return (
+    <section className="drill-today-part card" aria-label={he ? 'חלק מהאימון של היום' : "Part of today's workout"} data-today-part="1" data-today-plan={plan?.length ?? 0}>
+      <div className="drills-head">
+        <h2>{he ? 'חלק מהאימון של היום' : "Part of today's workout"}</h2>
+        {onToday && (
+          <button className="icon-btn" onClick={onToday} aria-label={he ? 'להיום' : 'To Today'} title={he ? 'להיום' : 'To Today'} data-to-today="1">
+            <Icon k="fwd" size={18} />
+          </button>
+        )}
+      </div>
+      <p className="field-hint" dir="auto">
+        {he ? `טכניקה · נשארו ${mins} מתוך ${minutes} דק׳` : `Technique · ${mins} of ${minutes} min left`}
+        {wkName && (
+          <>
+            {' · '}
+            {he ? 'סולם השבוע ' : 'key of the week '}
+            <bdi dir="ltr">{wkName}</bdi>
+          </>
+        )}
+      </p>
+      {gained > 0 && (
+        <p className="field-hint today-gained" dir="auto" data-gained={gained}>
+          {he ? `+${gained} תרגילים חדשים נפתחו` : `+${gained} new exercises opened`}
+        </p>
+      )}
+      {matrix && plan && plan.length > 0 && (
+        <>
+          <small className="field-hint" dir="auto">
+            {he ? `${plan.length} תרגילים: ${parts.join(' · ')}` : `${plan.length} exercises: ${parts.join(' · ')}`}
+          </small>
+          <ol className="drill-levels today-cells">
+            {plan.slice(0, 4).map((p) => {
+              const through = cells ? Math.round(rungMinutes(cells, p.cell.rung, p.cell.group)) : null;
+              return (
+                <li key={`${p.cell.group}:${p.cell.root}:${p.cell.rung}`} data-today-cell={p.why}>
+                  <span className="drill-level static">
+                    <span className="n">
+                      <bdi dir="ltr">{`${keyName(p.cell.root, p.cell.group === 'minor')}${p.cell.group === 'minor' ? 'm' : ''}`}</bdi>
+                    </span>
+                    <span dir="auto">{p.cell.level.title[lang]}</span>
+                    {through !== null && through > 0 && (
+                      <small dir="auto" data-through-keys={through}>
+                        {he ? `ב־12 הסולמות ≈ ${through} דק׳` : `12 keys ≈ ${through} min`}
+                      </small>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+          <button className="btn primary" onClick={onRun} data-today-part-run="1">
+            <Icon k="play" /> {he ? 'להתחיל' : 'Start'}
+          </button>
+        </>
+      )}
+      {matrix && !plan && <small className="field-hint">…</small>}
+      {!matrix && onToday && (
+        <button className="btn primary" onClick={onToday} data-today-part-run="1">
+          <Icon k="play" /> {he ? 'לאימון של היום' : "To today's workout"}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid, todayPart }: { /** Phase 2: part of today's workout (replaces the old private "Today"). */ todayPart?: React.ReactNode; /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
   const drums = ds.instrument === 'drums';
   const drumMic = drums && drumMicOf(settings.drumKit);
-  const today = useMemo(() => todayDrills({ ...ds, bassTuning, drumMic }, items, settings.drillStart ?? {}, settings.customDrills ?? []), [ds, bassTuning, drumMic, items, settings.drillStart, settings.customDrills]);
   const fams = shownFamilies({ ...ds, bassTuning, drumMic });
   const [topicRaw, setTopicState] = useState<DrillTopic>(() => {
     try {
@@ -836,27 +948,7 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, o
           </button>
         ))}
       </div>
-      {topic === 'all' && (
-      <section className="drill-today card" aria-label={tx.today}>
-        <div className="drills-head">
-          <h2>{tx.today}</h2>
-          <button className="btn primary" onClick={() => onRun(today.map((t) => t.drill))} disabled={!today.length} data-drills-start="1">
-            <Icon k="play" /> {tx.start}
-          </button>
-        </div>
-        <ol className="drill-levels">
-          {today.map((t) => (
-            <li key={t.drill.itemId}>
-              <button className="drill-level" onClick={() => onRun([t.drill])}>
-                <span className="n">{tx.role[t.role]}</span>
-                <span>{t.drill.title[lang]}</span>
-                <span dir="ltr">♩{(items[t.drill.itemId] ?? newItem(t.drill)).goalBpm}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      </section>
-      )}
+      {topic === 'all' && todayPart}
       {famTopics.filter(show).map((k) => (
         <section key={k} className="drill-topic" data-drill-topic={k}>
           {topic === 'all' && <h2>{topicName(k, drums, (ds.instrument ?? 'piano') === 'piano')[lang]}</h2>}

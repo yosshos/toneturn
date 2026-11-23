@@ -55,7 +55,9 @@ import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
 import { listenCard, tuneSlotLevels } from '../engine/practiceMethod';
-import { parseTopicRef, submitResult, type AssignItem } from '../cloud/teacher';
+import { assignOptsFor, parseTopicRef, submitResult, type AssignItem, type AssignOpts } from '../cloud/teacher';
+import { emptyTally, tallyTake, takeChannel, type ChannelTally } from '../engine/assignChannel';
+import { activeSince, installActivity } from './activity';
 import { DigestScreen } from './TeacherLoop';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { loadPieces, PiecesScreen, piecesDue } from './Pieces';
@@ -118,7 +120,9 @@ import { OnlineScreen, PENDING_ONLINE_KEY } from './Online';
 import type { FactLevel, FactTopic } from '../engine/theoryFacts';
 import { DroneScreen } from './Drone';
 import { AssignedCard, ClassesScreen } from './Classes';
-import { myClasses, openAssignments } from '../cloud/classes';
+import { myClasses, openAssignments, withAssignOpts } from '../cloud/classes';
+import { CHANNEL_WORD } from '../engine/assignChannel';
+import { ContinueStrip, WaitingAsk } from './TodayExtras';
 import type { SetKind } from '../engine/tournament';
 import type { GameKind } from '../game/memoryGame';
 import { MenuSheet } from './Menu';
@@ -139,8 +143,9 @@ import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
-import { addSession, blockLeftMs, creditBlock, nextBlock, nextForBlock, runLeftMs, startRun, suggestWorkout, teacherToday, techBlockOf, validateTemplate, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
-import { keptPlan, matrixTierOf, projectionInput, weekKeyIfKept } from './todayTech';
+import { addSession, areaMinutes, blockLeftMs, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, markServed, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
+import { dayKeyIfKept, ensureDayKey, improvRootOf, keptPlan, matrixTierOf, projectionInput, techBlockRuns } from './todayTech';
+import { logAreaDay, readAreaLog, waitAsked, setWaitAsked, noteStepInWorkout } from './workoutLog';
 import { CoachTilt } from './CoachTilt';
 import { activeTilt } from '../engine/aiTilt';
 import { rbiTier } from '../engine/rotationSheet';
@@ -405,10 +410,18 @@ export function App() {
   const [assigned, setAssigned] = useState<ReturnType<typeof openAssignments>>([]);
   useEffect(() => {
     if (!user || route !== 'home') return;
+    // §5.2: the teacher's options (channel, minutes a day, spread / all today) reach the student — read once the
+    // migration is applied (ASSIGN_OPTS_SYNCED; until then assignOptsFor answers {} and the defaults stay)
     void myClasses()
-      .then((c) => setAssigned(openAssignments(c)))
+      .then(async (c) => {
+        const open = openAssignments(c);
+        const opts = await assignOptsFor(open.map((a) => a.id)).catch(() => ({}));
+        setAssigned(withAssignOpts(open, opts));
+      })
       .catch(() => {});
   }, [user, route]);
+  // W3: the player's inputs (taps, keys, MIDI) for the workout's active time.
+  useEffect(() => installActivity(), []);
   // Report the overall rating (spec L.2) whenever it changes while signed in; silent if the server lacks it.
   const reported = useRef<string>('');
   useEffect(() => {
@@ -1199,12 +1212,13 @@ export function App() {
   }, [route]);
   /** Class assignments: path lessons and generated practice (vocal levels, modes, wrong notes). */
   // The teacher loop (0.52): an assignment opened from the class list; its result is sent when it is finished.
-  const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null } | null>(null);
+  // §5.2: the assignment's options (its required channel) and the takes that met it.
+  const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null; opts?: AssignOpts; tally?: ChannelTally } | null>(null);
   const submitAssign = (score: number, metrics: Record<string, unknown> = {}) => {
     const x = activeAssign.current;
     if (!x) return;
     activeAssign.current = null;
-    void submitResult(x.a.id, score, (Date.now() - x.t0) / 60000, metrics).catch(() => {});
+    void submitResult(x.a.id, score, activeSince(x.t0) / 60000, { ...metrics, ...(x.opts && x.opts.channel !== 'free' ? { channel: x.opts.channel, otherChannel: x.tally?.other ?? 0 } : {}) }).catch(() => {});
   };
   const openAssignItem = (a: AssignItem) => {
     // Encore v2 (SPEC-PHRASE-STUDIO §11.2): a phrase goes into the lick book and opens its assignment page; each key
@@ -1215,7 +1229,11 @@ export function App() {
       location.hash = `/teach/a/${encodeURIComponent(a.id)}`;
       return;
     }
-    activeAssign.current = { a, t0: Date.now(), after: progress.history[progress.history.length - 1]?.sessionId ?? null };
+    activeAssign.current = { a, t0: Date.now(), after: progress.history[progress.history.length - 1]?.sessionId ?? null, tally: emptyTally() };
+    // the required channel (§5.2): fetched with the assignment's options (none until the migration is applied)
+    void assignOptsFor([a.id]).then((o) => {
+      if (activeAssign.current?.a.id === a.id && o[a.id]) activeAssign.current = { ...activeAssign.current, opts: o[a.id] };
+    });
     if (a.kind === 'lesson') return openAssignment(a.lessonId);
     if (a.kind === 'topic') {
       const r = parseTopicRef(a.ref);
@@ -1956,7 +1974,14 @@ export function App() {
     }
     if (from === 'assign') {
       chartQueue.current = null;
-      if (takes > 0) submitAssign(clean / takes, { takes, clean });
+      // §5.2: only the takes in the required channel count (a take with the notation shown doesn't meet "by ear")
+      const x = activeAssign.current;
+      const req = x?.opts?.channel;
+      if (req && req !== 'free') {
+        const tl = x?.tally ?? emptyTally();
+        if (tl.takes > 0) submitAssign(tl.clean / tl.takes, { takes: tl.takes, clean: tl.clean });
+        else activeAssign.current = null;
+      } else if (takes > 0) submitAssign(clean / takes, { takes, clean });
       return go('friends');
     }
     if (from === 'depth') {
@@ -2253,6 +2278,10 @@ export function App() {
   // SPEC-PATH-TODAY-PRACTICE §5.1: the open class assignments, today's share (spread until the due date by default).
   const teacherTp = useMemo(() => teacherToday(assigned.map((a) => ({ id: a.lessonId, dueOn: a.dueOn, minutes: a.minutes, ifShort: a.ifShort })), localDay(now0), baseMinutes), [assigned, baseMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
+  // W6: a default saved before its date was kept starts its 30 days now
+  useEffect(() => {
+    if (settings && tmplRaw && !settings.workoutTemplateAt) updateSettings({ workoutTemplateAt: localDay(new Date()) });
+  }, [!!tmplRaw, !!settings]); // eslint-disable-line react-hooks/exhaustive-deps
   // Learned pieces due for a review run (SPEC-PIECE §2.10): the pieces live in IndexedDB, so the count loads once a day
   // and again after the pieces screen closes.
   const [piecesDueN, setPiecesDueN] = useState(0);
@@ -2286,7 +2315,48 @@ export function App() {
     setWrun(r);
     wrunRef.current = r;
     if (r) saveSlot(`workout:${r.day}`, { title: s.uiLang === 'en' ? "Today's workout" : 'האימון של היום', route: 'home', done: r.at, total: r.blocks.length, data: r });
+    // §9.4: the minutes each area with waiting path steps gets today (the "keeps waiting" question reads 5 days of it)
+    if (r) {
+      const waitingNow = [...unitRemaining(pathView).byArea.entries()].filter(([, n]) => n > 0).map(([a]) => a);
+      if (waitingNow.length) logAreaDay(r.day, areaMinutes(r, waitingNow));
+      // the path's "in workout" note (§9.4): steps finished inside today's run
+      for (const id of r.steps) noteStepInWorkout(id);
+    }
   };
+  /**
+   * W3 for blocks that run on their own screens (Improvise, a game, the vocal warm-up, the drums' technique): the block
+   * is credited with the player's ACTIVE time there, every few seconds and on the way back — not in full on entry.
+   */
+  const liveBlock = useRef<{ id: string; t0: number; credited: number; /** The block's screen (the first route after it opened). */ route?: string } | null>(null);
+  const flushLive = () => {
+    const lb = liveBlock.current;
+    const r = wrunRef.current;
+    if (!lb || !r || r.day !== today || r.finished) return;
+    const total = activeSince(lb.t0);
+    const ms = total - lb.credited;
+    lb.credited = total;
+    const i = r.blocks.findIndex((b) => b.id === lb.id);
+    if (i < 0) return (liveBlock.current = null), undefined;
+    if (ms > 0) saveRun(creditBlock(r, lb.id, ms));
+    if (blockLeftMs(wrunRef.current!, i) <= 0) liveBlock.current = null;
+  };
+  const startLive = (id: string) => {
+    flushLive();
+    liveBlock.current = { id, t0: Date.now(), credited: 0 };
+  };
+  useEffect(() => {
+    const id = window.setInterval(flushLive, 5000);
+    return () => window.clearInterval(id);
+  });
+  useEffect(() => {
+    const lb = liveBlock.current;
+    if (!lb) return;
+    // leaving the block's screen (back to the run, Today, or anywhere else) books what was played and stops the clock
+    if (route === 'workoutrun' || route === 'home' || (lb.route && route !== lb.route)) {
+      flushLive();
+      liveBlock.current = null;
+    } else if (!lb.route) lb.route = route;
+  }, [route]); // eslint-disable-line react-hooks/exhaustive-deps
   /** A session started from the workout (credited when it completes). */
   const workoutPending = useRef<{ t0: number } | null>(null);
   // BUILD-PLAN phase 2: today's technique block — its minutes and what is left (the technique screen's "part of today's
@@ -2299,9 +2369,15 @@ export function App() {
    * SPEC-PATH-TODAY-PRACTICE §3.4: a take on an item of today's technique plan counts toward today's workout wherever it
    * is played (Practice, the key page, the workout itself) — its active time goes to the technique block.
    */
+  const lastPlanTake = useRef(0);
   const creditTodayTake = (st: ItemState, prevMs: number) => {
     if (!techMin || !keptPlan(today)?.items.includes(st.itemId)) return;
-    const ms = Math.max(0, (st.activeMs ?? 0) - prevMs) || 15000;
+    // W3: the active time since the previous take on the plan (playing, listening, the coach's line — gaps over 15 s
+    // count as 15 s), at least the take itself; the first take of a sitting counts its own length (or 15 s)
+    const now = Date.now();
+    const own = Math.max(0, (st.activeMs ?? 0) - prevMs) || 15000;
+    const ms = lastPlanTake.current && now - lastPlanTake.current < 5 * 60000 ? Math.max(own, activeSince(lastPlanTake.current, now)) : own;
+    lastPlanTake.current = now;
     const r0 = wrunRef.current && wrunRef.current.day === today ? wrunRef.current : startRun(today, withContext(todayBlocks));
     const tb = techBlockOf(r0);
     if (tb) saveRun(creditBlock(r0, tb.id, ms));
@@ -2310,26 +2386,43 @@ export function App() {
   const workoutSubs = useMemo((): Partial<Record<string, string>> => {
     const he = s.uiLang === 'he';
     const out: Partial<Record<string, string>> = {};
-    // the key of the week on the technique block: the piano, and (phase 7) the guitar and the bass ladders
+    // the key of the week on the technique block: the piano, and (phase 7) the guitar and the bass ladders; a minor
+    // week key (T2+, alternating weeks) improvises on its relative major's signature
     const wkInst = s.activeCourse === 'keys' ? 'piano' : s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? s.activeCourse : null;
-    const wk = wkInst ? weekKeyIfKept('major', wkInst) : null;
-    if (wk !== null) {
+    const wk = wkInst ? dayKeyIfKept(wkInst) : null;
+    if (wk) {
       const n = keptPlan(today)?.cells.length ?? 0;
-      const name = `${keyNameOf(wk)}`;
-      out.keys = he ? `סולם השבוע: ${name} מז׳ור${n ? ` · ${n} תרגילים` : ''}` : `Key of the week: ${name} major${n ? ` · ${n} exercises` : ''}`;
-      out.improv = he ? `בסולם השבוע: ${name} מז׳ור` : `In the key of the week: ${name} major`;
+      const minor = wk.group === 'minor';
+      const name = keyNameOf(wk.root, minor);
+      const mode = minor ? (he ? 'מינור' : 'minor') : he ? 'מז׳ור' : 'major';
+      out.keys = he ? `סולם השבוע: ${name} ${mode}${n ? ` · ${n} תרגילים` : ''}` : `Key of the week: ${name} ${mode}${n ? ` · ${n} exercises` : ''}`;
+      const rel = keyNameOf(improvRootOf(wk));
+      out.improv = minor ? (he ? `בסולם השבוע: ${name} מינור (על הסימנים של ${rel} מז׳ור)` : `In the key of the week: ${name} minor (on ${rel} major's signature)`) : he ? `בסולם השבוע: ${name} מז׳ור` : `In the key of the week: ${name} major`;
     }
     const a = assigned[0];
-    if (a) out.teacher = he ? `${a.className}${a.dueOn ? ` · עד ${a.dueOn.slice(8, 10)}.${a.dueOn.slice(5, 7)}` : ''}` : `${a.className}${a.dueOn ? ` · due ${a.dueOn.slice(5)}` : ''}`;
+    if (a) {
+      const ch = a.channel && a.channel !== 'free' ? CHANNEL_WORD[a.channel][he ? 'he' : 'en'] : null;
+      out.teacher = (he ? `${a.className}${a.dueOn ? ` · עד ${a.dueOn.slice(8, 10)}.${a.dueOn.slice(5, 7)}` : ''}` : `${a.className}${a.dueOn ? ` · due ${a.dueOn.slice(5)}` : ''}`) + (ch ? ` · ${ch}` : '');
+    }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.uiLang, s.activeCourse, assigned, today, route]);
   const [wctx, setWctx] = useState<{ nomic: boolean; quiet: boolean; noinst: boolean }>({ nomic: !!s.noMic, quiet: false, noinst: false });
-  /** W10: today's context swaps blocks that need the mic / sound / an instrument. */
-  const withContext = (bs: Block[]): Block[] =>
-    bs
-      .map((b) => (((wctx.nomic || wctx.quiet) && b.target.kind === 'vocal') || (wctx.quiet && b.target.kind === 'game') ? { ...b, target: { kind: 'warmup' } as BlockTarget } : b))
-      .filter((b) => !(wctx.noinst && b.target.kind === 'practice'));
+  /** D3: the key Improvise plays in — the key of the week (picked from the matrix when none is kept yet; it used to fall
+   *  back to C), a minor week key's relative major. */
+  const improvDayKey = useMemo(() => {
+    if (route !== 'improv') return 0;
+    const wk = ensureDayKey(s, drillSettingsOf(s), progress.drillItems ?? {}, today);
+    return wk ? improvRootOf(wk) : 0;
+  }, [route, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** §9.4: an area that keeps waiting (skipped or under a minute on 3 of the last 5 days, steps left in the unit). */
+  const [waitTick, setWaitTick] = useState(0);
+  const waitArea = useMemo(
+    () => (route !== 'home' ? null : waitingArea(readAreaLog(), [...unitRemaining(pathView).byArea.entries()].filter(([, n]) => n > 0).map(([a]) => a), today, waitAsked())),
+    [route, pathView, today, waitTick, s.pathLeaveOut, s.pathLessRoom], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  /** W10: today's context swaps blocks that need the mic / sound / an instrument (no instrument: technique and improvisation too). */
+  const withContext = (bs: Block[]): Block[] => contextSwap(bs, wctx);
   /** "Again" on a generated session's recap (0.68.1): the same kind of session again — it used to open the weekly
    * puzzle for every topic / path-step session. */
   const againGenerated = () => {
@@ -2347,8 +2440,10 @@ export function App() {
     if (generated) openGenerated(generated.def, generated.adapt, false, { key: k || undefined, title: slot?.title });
   };
   /** What a skill's practice opens, named (the workout card shows it). */
-  const skillOpen = (k: SkillId): { title: string; open: () => void } => {
-    const rec = recommendFor(k, ratingsOf(progress), (id) => lessonMastered(progress, id));
+  // W11: "too easy / too hard" moves the step window ±50 rating for 3 days (free practice picks its level from it)
+  const stepNudge = s.workoutNudge && s.workoutNudge.until >= today ? (s.workoutNudge.rating ?? 0) : 0;
+  const skillOpen = (k: SkillId): { title: string; open: () => void; skill?: SkillId } => {
+    const rec = recommendFor(k, nudgedRatings(ratingsOf(progress), stepNudge) as ReturnType<typeof ratingsOf>, (id) => lessonMastered(progress, id));
     const title = rec.kind === 'topic' ? `${TOPIC_GEN[rec.topic]?.title[s.uiLang] ?? rec.topic} · ${rec.level}` : rec.kind === 'lesson' ? lessonTitle(rec.lessonId) : (t.skillNames[k] ?? k);
     return { title, open: () => practiceSkill(k) };
   };
@@ -2361,7 +2456,7 @@ export function App() {
    * every branch ends in something that opens: due mistakes that can't be rebuilt, a path step that can't build a
    * session, or no open step fall back to the block's (or the weakest) skill.
    */
-  const workoutNext = (r: WorkoutRun): { title: string; open: () => void } | null => {
+  const workoutNext = (r: WorkoutRun): { title: string; open: () => void; skill?: SkillId } | null => {
     const b = r.blocks[r.at];
     if (r.finished || !b) return null;
     const tg = b.target;
@@ -2400,8 +2495,12 @@ export function App() {
       const unit = pathView.units.find((u) => u.id === nx.unitId);
       if (unit && stepOpens(nx.step.step)) return { title: nodeTitle(nx.step.step, s, s.uiLang), open: () => openPathStep(nx.step, unit, 'step') };
     }
-    // Free practice (§9.1.3): the area's / skill's weakest skill, or the topic at its first level.
-    if (tg.kind === 'area') return skillOpen(weakestSkill(ratings, DOMAINS.find((d) => d.id === tg.area)?.skills));
+    // Free practice (§9.1.3): the area's / skill's weakest skill, or the topic at its first level. W16: a sub-skill an
+    // earlier block served today is skipped (unless every one of the area's was).
+    if (tg.kind === 'area') {
+      const k = weakestSkill(ratings, unserved(DOMAINS.find((d) => d.id === tg.area)?.skills ?? [], r.served));
+      return { ...skillOpen(k), skill: k };
+    }
     if (tg.kind === 'skill') return skillOpen(tg.skill);
     if (tg.kind === 'topic' && TOPIC_GEN[tg.topic]) return { title: `${TOPIC_GEN[tg.topic].title[s.uiLang]} · 1`, open: () => openTopic(tg.topic, 1) };
     const cur = pathView.current;
@@ -2410,12 +2509,90 @@ export function App() {
     return skillOpen(weakestSkill(ratings));
   };
   const runCurrent = (r: WorkoutRun) => {
+    // §5: a block whose time ran out shows its summary and the countdown first (the run screen)
+    if (r.between && !r.finished) return go('workoutrun');
     const nx = workoutNext(r);
     const tg = r.blocks[r.at]?.target;
     if (!nx || !tg || tg.kind === 'game' || tg.kind === 'vocal' || tg.kind === 'practice' || tg.kind === 'improv' || tg.kind === 'keys' || (tg.kind === 'strengthen' && instrumentCourse)) return go('workoutrun');
+    // W16: remember what this block serves (later Area / Topic blocks skip it)
+    const served = nx.skill ?? (tg.kind === 'topic' ? `topic:${tg.topic}` : null);
+    if (served) saveRun(markServed(r, served));
     workoutPending.current = { t0: Date.now() };
     openFrom.current.path = false;
     nx.open();
+  };
+  /** Open the block in progress (the run screen's Go, Next now, +2 min). */
+  const openBlock = (wrun: WorkoutRun) => {
+    const b = wrun.blocks[wrun.at];
+    // BUILD-PLAN phase 2 + 7 ("one today"): the technique block on the piano, the guitar and the bass — today's matrix
+    // cells under the coach, as long as the block (the same plan as the technique screen's "part of today's workout");
+    // its time is counted take by take (creditTodayTake), so stopping resumes the block at the cell.
+    if (b.target.kind === 'keys' && techBlockRuns(s.activeCourse, drillSettingsOf(s).instrument) === 'matrix') {
+      chartQueue.current = null;
+      drillFrom.current = 'workout';
+      drillToday.current = true;
+      drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
+      return go('drills');
+    }
+    // D2: the improvisation share (repertoire for a classical emphasis, grooves on the drums) runs on its screen.
+    // W3: credited with the active time played there (startLive), not in full on entry.
+    if (b.target.kind === 'improv') {
+      startLive(b.id);
+      const mode = b.target.mode ?? 'improv';
+      improvStyleNext.current = b.target.style ?? null;
+      tasteBand.current = false;
+      if (mode === 'improv') {
+        improvInit.current = null;
+        improvWorkout.current = true;
+      }
+      return go(mode === 'repertoire' ? 'pieces' : mode === 'grooves' ? 'groove-echo' : 'improv');
+    }
+    // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
+    // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first
+    // (also the technique block on the drums: no keys, so no matrix).
+    if ((b.target.kind === 'strengthen' || b.target.kind === 'keys') && instrumentCourse) {
+      startLive(b.id);
+      let q = strengthenDrills(mview, mctx);
+      // AUDIT-5 #5: an item on a plateau leads the block (once in the opened levels' pool or not, it is edge work).
+      const pf = plateausOf(progress, loadLedger(), localDay(new Date()), 4).find((f) => f.scope === 'item' && f.kind === 'plateau');
+      const pd = pf ? drillOfItem(pf.id) : undefined;
+      if (pd && q.length) q = [pd, ...q.filter((d) => d.itemId !== pd.itemId)].slice(0, Math.max(q.length, 1));
+      chartQueue.current = q.length ? q : null;
+      drillFrom.current = 'workout';
+      drillSessionXp.current = 0;
+      drillSession.current = { takes: 0, clean: 0 };
+      return go('drills');
+    }
+    if (b.target.kind !== 'game' && b.target.kind !== 'vocal') return runCurrent(wrun);
+    // Games and the vocal warm-up run on their own screens: credited with the active time there (W3).
+    startLive(b.id);
+    // The four-slot session's Tunes block (practiceMethod.ts): the head levels for what slot 2 worked on.
+    if (b.id.startsWith('tunes-') && settings) {
+      const levels = [...catalog(), ...guitarCatalog()].flatMap((f) => f.levels);
+      let q: Drill[] = [];
+      for (const id of tuneSlotLevels(progress.drillItems ?? {}).levels) {
+        const lv = levels.find((l) => l.id === id);
+        if (!lv) continue;
+        try {
+          q = levelDrills(lv, drillSettingsOf(settings).keyOrder).slice(0, 6);
+        } catch {
+          q = [];
+        }
+        if (q.length) break;
+      }
+      chartQueue.current = q.length ? q : null;
+    }
+    if (b.target.kind === 'game') {
+      if (b.target.game === 'licks') lickReview.current = true;
+      if (b.target.game === 'drills') {
+        drillFrom.current = 'workout';
+        drillSessionXp.current = 0;
+        drillSession.current = { takes: 0, clean: 0 };
+      }
+      go(b.target.game as Route);
+    }
+    else go('vocal');
   };
   const startWorkout = () => {
     void piano.unlock();
@@ -2430,7 +2607,8 @@ export function App() {
     if (!r || r.finished || !lastR) return;
     const fromWorkout = workoutPending.current;
     workoutPending.current = null;
-    const ms = fromWorkout ? Date.now() - fromWorkout.t0 : lastR.total * 30000;
+    // W3: active time (gaps over 15 s with no input count as 15 s), not the wall clock
+    const ms = fromWorkout ? activeSince(fromWorkout.t0) : lastR.total * 30000;
     // From the road (not started in the workout): only path steps that fit the current block count (W2).
     if (!fromWorkout) {
       const b = r.blocks[r.at];
@@ -2713,6 +2891,19 @@ export function App() {
           settings={s}
           progress={progress}
           workout={
+            <>
+            {/* SPEC-PATH-TODAY-PRACTICE §3.4: "continue where I stopped" at the top of Today too (the same point as Practice) */}
+            <ContinueStrip lang={s.uiLang} />
+            {waitArea && (
+              <WaitingAsk
+                lang={s.uiLang}
+                areaName={t.domainNames[waitArea]}
+                area={waitArea}
+                onLeaveOut={() => (setWaitAsked(waitArea, localDay(new Date(Date.now() + 14 * 86400000))), updateSettings({ pathLeaveOut: [...new Set([...(s.pathLeaveOut ?? []), waitArea])] }))}
+                onLessRoom={() => (setWaitAsked(waitArea, localDay(new Date(Date.now() + 14 * 86400000))), updateSettings({ pathLessRoom: [...new Set([...(s.pathLessRoom ?? []), waitArea])] }))}
+                onKeep={() => (setWaitAsked(waitArea, localDay(new Date(Date.now() + 14 * 86400000))), setWaitTick((n) => n + 1))}
+              />
+            )}
             <WorkoutCard
               t={t}
               lang={s.uiLang}
@@ -2727,6 +2918,7 @@ export function App() {
               leadsTo={leadsLine}
               subs={workoutSubs}
             />
+            </>
           }
           today={
             <TodayCards
@@ -3307,7 +3499,10 @@ export function App() {
             if (wrun && wrun.day === today && !wrun.finished) saveRun({ ...wrun, blocks: [...wrun.blocks.slice(0, wrun.at), ...blocks] });
             updateSettings({ workoutToday: { day: today, blocks: wrun && wrun.day === today && !wrun.finished ? [...wrun.blocks.slice(0, wrun.at), ...blocks] : blocks } });
           }}
-          onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutToday: { day: today, blocks } })}
+          onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutTemplateAt: today, workoutToday: { day: today, blocks } })}
+          templateAt={tmplRaw ? (s.workoutTemplateAt ?? null) : null}
+          today={today}
+          onTemplate={(keep) => updateSettings(keep ? { workoutTemplateAt: today } : { workoutTemplates: undefined, workoutTemplateAt: today, workoutToday: undefined })}
           onClose={() => go('home')}
           ctx={wctx}
           onCtx={setWctx}
@@ -3330,76 +3525,24 @@ export function App() {
           lang={s.uiLang}
           run={wrun}
           subs={workoutSubs}
-          onGo={() => {
-            const b = wrun.blocks[wrun.at];
-            // BUILD-PLAN phase 2: the piano's technique block — today's matrix cells under the coach, as long as the block;
-            // its time is counted take by take (creditTodayTake), so stopping resumes the block at the cell.
-            if (b.target.kind === 'keys' && drillSettingsOf(s).instrument === 'piano' && s.activeCourse === 'keys') {
-              chartQueue.current = null;
-              drillFrom.current = 'workout';
-              drillToday.current = true;
-              drillSessionXp.current = 0;
-              drillSession.current = { takes: 0, clean: 0 };
-              return go('drills');
-            }
-            // D2: the improvisation share (repertoire for a classical emphasis, grooves on the drums) runs on its screen.
-            if (b.target.kind === 'improv') {
-              saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
-              const mode = b.target.mode ?? 'improv';
-              improvStyleNext.current = b.target.style ?? null;
-              tasteBand.current = false;
-              if (mode === 'improv') {
-                improvInit.current = null;
-                improvWorkout.current = true;
-              }
-              return go(mode === 'repertoire' ? 'pieces' : mode === 'grooves' ? 'groove-echo' : 'improv');
-            }
-            // Any other block (this screen restored on a path / area / warm-up block): open it as Continue would.
-            // SPEC-PATH-ROLE §3: an instrument course's strengthen block — the opened levels' drills, weak keys first
-            // (also the technique block on the guitar, bass and drums: other instruments keep this until their ladders).
-            if ((b.target.kind === 'strengthen' || b.target.kind === 'keys') && instrumentCourse) {
-              saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
-              let q = strengthenDrills(mview, mctx);
-              // AUDIT-5 #5: an item on a plateau leads the block (once in the opened levels' pool or not, it is edge work).
-              const pf = plateausOf(progress, loadLedger(), localDay(new Date()), 4).find((f) => f.scope === 'item' && f.kind === 'plateau');
-              const pd = pf ? drillOfItem(pf.id) : undefined;
-              if (pd && q.length) q = [pd, ...q.filter((d) => d.itemId !== pd.itemId)].slice(0, Math.max(q.length, 1));
-              chartQueue.current = q.length ? q : null;
-              drillFrom.current = 'workout';
-              drillSessionXp.current = 0;
-              drillSession.current = { takes: 0, clean: 0 };
-              return go('drills');
-            }
-            if (b.target.kind !== 'game' && b.target.kind !== 'vocal') return runCurrent(wrun);
-            // Games and the vocal warm-up: the block counts as done when started (they run on their own screens).
-            saveRun(addSession(wrun, b.minutes * 60000, Math.max(1, b.minutes), Math.max(1, b.minutes)));
-            // The four-slot session's Tunes block (practiceMethod.ts): the head levels for what slot 2 worked on.
-            if (b.id.startsWith('tunes-') && settings) {
-              const levels = [...catalog(), ...guitarCatalog()].flatMap((f) => f.levels);
-              let q: Drill[] = [];
-              for (const id of tuneSlotLevels(progress.drillItems ?? {}).levels) {
-                const lv = levels.find((l) => l.id === id);
-                if (!lv) continue;
-                try {
-                  q = levelDrills(lv, drillSettingsOf(settings).keyOrder).slice(0, 6);
-                } catch {
-                  q = [];
-                }
-                if (q.length) break;
-              }
-              chartQueue.current = q.length ? q : null;
-            }
-            if (b.target.kind === 'game') {
-              if (b.target.game === 'licks') lickReview.current = true;
-              if (b.target.game === 'drills') {
-                drillFrom.current = 'workout';
-                drillSessionXp.current = 0;
-                drillSession.current = { takes: 0, clean: 0 };
-              }
-              go(b.target.game as Route);
-            }
-            else go('vocal');
+          onNext={() => {
+            // §5: Next now, or the 3-second countdown ran out — the next block starts
+            const r = clearBetween(wrun);
+            saveRun(r);
+            if (r.finished) return;
+            const tg = r.blocks[r.at]?.target;
+            if (tg && (tg.kind === 'keys' || tg.kind === 'improv' || tg.kind === 'game' || tg.kind === 'vocal' || (tg.kind === 'strengthen' && instrumentCourse))) openBlock(r);
+            else runCurrent(r);
           }}
+          onMore={() => {
+            // §5: "+2 min" — back to the block that just ended, two more minutes in it
+            const r = extendLast(wrun);
+            saveRun(r);
+            const tg = r.blocks[r.at]?.target;
+            if (tg && (tg.kind === 'keys' || tg.kind === 'improv' || tg.kind === 'game' || tg.kind === 'vocal' || (tg.kind === 'strengthen' && instrumentCourse))) openBlock(r);
+            else runCurrent(r);
+          }}
+          onGo={() => openBlock(wrun)}
           onBlockDone={(ms, note) => {
             // AUDIT-5: book the time actually measured (not the planned block), and keep the player's note as a log entry.
             const r = addSession(wrun, ms, 1, 1);
@@ -3421,8 +3564,9 @@ export function App() {
             go('home');
           }}
           onFeedback={(f) => {
+            // W11: tomorrow's total ±5 and the step window ±50 rating, for 3 days
             const until = localDay(new Date(Date.now() + 3 * 86400000));
-            updateSettings({ workoutNudge: { until, delta: f === 'easy' ? 5 : f === 'long' ? -5 : 0 } });
+            updateSettings({ workoutNudge: { until, ...feedbackNudge(f) } });
             go('home');
           }}
         />
@@ -3624,7 +3768,7 @@ export function App() {
           vocab={vocabCtx()}
           workout={improvWorkout.current}
           tier={rbiTier(s.activeCourse === 'keys' || s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? matrixTierOf(s, drillSettingsOf(s), progress.drillItems ?? {}) : 1, s.rotationTier)}
-          dayKey={weekKeyIfKept('major', drillSettingsOf(s).instrument ?? 'piano') ?? 0}
+          dayKey={improvDayKey}
           onTier={(t) => updateSettings({ rotationTier: t })}
           onHarrisTier={(t) => updateSettings({ harrisTier: t })}
           onTake={(t) => {
@@ -3637,7 +3781,7 @@ export function App() {
               .then(setProgress);
           }}
           onLickUsed={(evs, xp) => void store.recordRatingEvents(evs).then(setProgress).then(() => void xp)}
-          onBack={() => (improvWorkout.current ? ((improvWorkout.current = false), go(workoutPending.current ? 'workoutrun' : 'arcade')) : improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
+          onBack={() => (improvWorkout.current ? ((improvWorkout.current = false), go('workoutrun')) : improvInit.current ? ((improvInit.current = null), backToRep(() => go('arcade'))) : go('arcade'))}
           onOpenChart={(c) => ((chartInit.current = c), go('charts'))}
         />
       )}
@@ -3735,11 +3879,15 @@ export function App() {
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
           today={drillsToday}
+          onTodayScreen={() => go('home')}
           startToday={drillFrom.current === 'workout' && drillToday.current}
           onItem={(st) => void (drillWrites.current = drillWrites.current.then(() => store.setDrillItem(st)).then(setProgress).catch(() => {}))}
           onTake={(st, evs, xp, m) => {
             noteTake(xp, m?.verdict);
             creditTodayTake(st, progress.drillItems?.[st.itemId]?.activeMs ?? 0);
+            // §5.2: an assignment's required channel — a take in another channel doesn't count toward it
+            const asg = activeAssign.current;
+            if (drillFrom.current === 'assign' && asg) asg.tally = tallyTake(asg.tally ?? emptyTally(), asg.opts?.channel, takeChannel(progress.drillItems?.[st.itemId], st), m?.verdict === 'clean');
             const ct = checkTech.current;
             if (drillFrom.current === 'check' && ct && m?.verdict === 'clean') {
               // The checkpoint's technique part: a clean take at the level's target tempo during the part.

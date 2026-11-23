@@ -12,7 +12,7 @@ import { playerTier } from '../engine/drills/tiers';
 import { keyMatrix, type MatrixCell, type MatrixGroup, type MatrixView } from '../engine/drills/keyMatrix';
 import { lickPool } from '../engine/vocab';
 import { focusOf } from '../engine/styleFocus';
-import { freezePlan, thawPlan, todayTechPlan, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
+import { freezePlan, openedByTier, thawPlan, todayTechPlan, weekGroupFor, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
 
 const lsGet = (k: string): string | null => {
   try {
@@ -67,6 +67,77 @@ export function weekKeyIfKept(group: string, instrument: string, now: number | s
   return kept?.startsWith(tag + '|') ? Number(kept.split('|')[2]) : null;
 }
 
+/**
+ * D3: the key of the week as one value — its row group (major, or a harmonic-minor row from T2: the groups alternate
+ * week by week, todayPlan.weekGroupFor) and its root. The group is kept per week and instrument beside the key.
+ */
+export interface WeekKey {
+  root: number;
+  group: MatrixGroup;
+}
+const WG_KEY = 'toneturn.weekGroup';
+/** The week's group, picked once a week (by `pick`) and kept on this device. */
+export function keptWeekGroup(instrument: string, pick: () => MatrixGroup, now: number | string = Date.now()): MatrixGroup {
+  const tag = `${weekOf(now)}|${instrument}`;
+  const kept = lsGet(WG_KEY);
+  if (kept?.startsWith(tag + '|')) return kept.split('|')[2] === 'minor' ? 'minor' : 'major';
+  const g = pick();
+  lsSet(WG_KEY, `${tag}|${g}`);
+  return g;
+}
+/** This week's key with its group if already picked (cheap: no matrix), for labels and Improvise. */
+export function dayKeyIfKept(instrument: string, now: number | string = Date.now()): WeekKey | null {
+  const tag = `${weekOf(now)}|${instrument}`;
+  const kept = lsGet(WG_KEY);
+  const group: MatrixGroup = kept?.startsWith(tag + '|') && kept.split('|')[2] === 'minor' ? 'minor' : 'major';
+  const root = weekKeyIfKept(group, instrument, now);
+  return root === null ? null : { root, group };
+}
+/**
+ * The major key Improvise and the rotation play in for a week key: the key itself, or a minor week key's relative major
+ * (the same signature: C minor's week improvises on E♭ major's sheet).
+ */
+export const improvRootOf = (k: WeekKey): number => (k.group === 'minor' ? (k.root + 3) % 12 : k.root);
+
+/**
+ * The key of the week, picking it from the matrix when this week has none kept yet (Improvise used to fall back to C).
+ * Builds the matrix only then; null off the piano / guitar / bass or with nothing open.
+ */
+export function ensureDayKey(settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook' | 'styleFocus' | 'jazzFocus' | 'drills'>>, ds: DrillSettings, items: Record<string, ItemState>, day: string): WeekKey | null {
+  const inst = matrixInst(ds.instrument);
+  if (!inst) return null;
+  const kept = dayKeyIfKept(inst, `${day}T12:00:00`);
+  if (kept) return kept;
+  const cells = keyMatrix(families(inst), matrixTierOf(settings, ds, items), items, { jazz: ds.emphasis === 'jazz', day, instrument: inst, ...(inst === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, inst === 'piano' ? 'keys' : inst) });
+  const order = keysInOrder(ds.keyOrder, false);
+  const group = keptWeekGroup(inst, () => weekGroupFor(cells, weekOf(`${day}T12:00:00`)), `${day}T12:00:00`);
+  const root = keptWeekKey(group, inst, () => weekKeyFromMatrix(cells, group, order), `${day}T12:00:00`);
+  return root === null ? null : { root, group };
+}
+
+/**
+ * SPEC-DAILY-WORKOUT §5: "+N new exercises opened" when the tier rises — the last seen tier and cell count are kept per
+ * instrument; a rise records the gain, shown for 3 days. Returns the gain to show today (0: none).
+ */
+const SEEN_KEY = 'toneturn.matrixSeen';
+export function noteMatrixSeen(instrument: string, tier: number, n: number, day: string): number {
+  let all: Record<string, { tier: number; n: number; gained?: number; day?: string }> = {};
+  try {
+    all = JSON.parse(lsGet(SEEN_KEY) ?? '{}') ?? {};
+  } catch {
+    all = {};
+  }
+  const prev = all[instrument] ?? null;
+  const gained = openedByTier(prev, tier, n);
+  if (!prev || gained > 0 || tier !== prev.tier || n !== prev.n) {
+    all[instrument] = gained > 0 ? { tier, n, gained, day } : { ...(prev ?? {}), tier, n };
+    lsSet(SEEN_KEY, JSON.stringify(all));
+  }
+  const cur = all[instrument];
+  const age = cur.day ? Math.round((Date.parse(`${day}T12:00:00Z`) - Date.parse(`${cur.day}T12:00:00Z`)) / 86400000) : 99;
+  return cur.gained && age >= 0 && age < 3 ? cur.gained : 0;
+}
+
 const PLAN_KEY = 'toneturn.todayKeys';
 type Kept = FrozenPlan & { view: MatrixView; /** The instrument the plan was built for (phase 7: guitar and bass have their own ladders). */ inst?: string };
 const readKept = (): Kept | null => {
@@ -91,6 +162,8 @@ export function setPlanAt(day: string, at: number) {
 export interface TodayTech {
   plan: PlanCell[];
   weekRoot: number | null;
+  /** The key of the week's rows (major, or a harmonic-minor row). */
+  weekGroup?: MatrixGroup;
   /** The coach's step to resume at. */
   at: number;
   minutes: number;
@@ -98,6 +171,16 @@ export interface TodayTech {
 
 /** The instruments whose technique block runs the key × exercise matrix (phase 7: guitar and bass too; drums have no keys). */
 export const matrixInst = (instrument?: string): LadderInst | null => (instrument === 'guitar' || instrument === 'bass' ? instrument : (instrument ?? 'piano') === 'piano' ? 'piano' : null);
+
+/**
+ * What the workout's technique block runs in a course (one today, BUILD-PLAN phase 2 + 7): on the piano, the guitar and
+ * the bass today's matrix cells under the coach (the same plan as the technique screen's "part of today's workout");
+ * on the drums (no keys) the opened levels' drills — grooves, fills and trading are the drums' other share.
+ */
+export function techBlockRuns(course: string | undefined, instrument: string | undefined): 'matrix' | 'drills' {
+  const byCourse = course === 'keys' ? 'piano' : course === 'guitar' || course === 'bass' ? course : null;
+  return byCourse && matrixInst(instrument) === byCourse ? 'matrix' : 'drills';
+}
 
 /**
  * Today's technique cells on the piano, guitar or bass (null on drums: no keys — their technique block keeps the opened
@@ -111,26 +194,28 @@ export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillSt
   // SPEC-STYLE-FOCUS §4–5: block H by the course's focus (60/30/10 in the plan's style slice)
   const focus = focusOf(a.settings, inst === 'piano' ? 'keys' : inst);
   const cells = a.cells ?? keyMatrix(families(inst), matrixTierOf(a.settings, a.ds, a.items), a.items, { jazz: a.ds.emphasis === 'jazz', day: a.day, instrument: inst, ...(inst === 'piano' ? { licks: lickPool(a.items, a.settings.lickBook) } : {}), focus });
-  const group: MatrixGroup = 'major';
+  // D3: the key of the week — a major or (T2+, alternating weeks) a harmonic-minor row
+  const group: MatrixGroup = keptWeekGroup(inst, () => weekGroupFor(cells, weekOf(`${a.day}T12:00:00`)), `${a.day}T12:00:00`);
   const order = keysInOrder(a.ds.keyOrder, false);
   const weekRoot = keptWeekKey(group, inst, () => weekKeyFromMatrix(cells, group, order), `${a.day}T12:00:00`);
   const kept = keptPlan(a.day);
   if (kept && kept.minutes === a.minutes && kept.view === view && (kept.inst ?? 'piano') === inst) {
     const plan = thawPlan(kept, cells);
-    if (plan.length) return { plan, weekRoot, at: Math.min(kept.at, plan.length - 1), minutes: a.minutes };
+    if (plan.length) return { plan, weekRoot, weekGroup: group, at: Math.min(kept.at, plan.length - 1), minutes: a.minutes };
   }
   const plan = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus, day: a.day });
   lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view, inst } satisfies Kept));
-  return { plan, weekRoot, at: 0, minutes: a.minutes };
+  return { plan, weekRoot, weekGroup: group, at: 0, minutes: a.minutes };
 }
 
 /**
  * Phase 8 (D5): the matrix for the Progress page's measured time and projection — the same build as the key screen
  * (tier, jazz, the lick pool's block G on the piano, the focus's block H). Null off the piano / guitar / bass.
  */
-export function projectionInput(settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook' | 'styleFocus' | 'jazzFocus' | 'drills'>>, ds: DrillSettings, items: Record<string, ItemState>): { cells: MatrixCell[]; items: Record<string, ItemState>; weekRoot: number | null } | null {
+export function projectionInput(settings: Pick<Settings, 'courseStart' | 'drillStart'> & Partial<Pick<Settings, 'lickBook' | 'styleFocus' | 'jazzFocus' | 'drills'>>, ds: DrillSettings, items: Record<string, ItemState>): { cells: MatrixCell[]; items: Record<string, ItemState>; weekRoot: number | null; weekGroup?: MatrixGroup } | null {
   const inst = matrixInst(ds.instrument);
   if (!inst) return null;
   const cells = keyMatrix(families(inst), matrixTierOf(settings, ds, items), items, { jazz: ds.emphasis === 'jazz', instrument: inst, ...(inst === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, inst === 'piano' ? 'keys' : inst) });
-  return { cells, items, weekRoot: weekKeyIfKept('major', inst) };
+  const wk = dayKeyIfKept(inst);
+  return { cells, items, weekRoot: wk?.root ?? null, ...(wk ? { weekGroup: wk.group } : {}) };
 }

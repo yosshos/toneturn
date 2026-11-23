@@ -8,7 +8,8 @@ test.describe('technique drills', () => {
   test('hub, family levels, a run, settings and the creator', async ({ page }) => {
     await page.goto('/?sim=1&rubato=1#/drills');
     await expect(page.locator('[data-drills="hub"]')).toBeVisible();
-    await expect(page.locator('.drill-today .drill-level')).toHaveCount(5);
+    // BUILD-PLAN phase 2: no private "Today" list here any more (part of today's workout replaces it)
+    await expect(page.locator('.drill-today .drill-level')).toHaveCount(0);
     await page.locator('[data-family="scales"]').click();
     await expect(page.locator('[data-drills="family"]')).toBeVisible();
     await page.locator('[data-level-start="scales-1"]').click();

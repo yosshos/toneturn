@@ -196,6 +196,8 @@ export interface PathInput {
   /** Areas in order of importance; null = mixed (equal). */
   priorities: DomainId[] | null;
   leaveOut: DomainId[];
+  /** SPEC-WORKOUT §9.4 "Less room": areas whose weight in each unit halves (the "keeps waiting" question). */
+  lessRoom?: DomainId[];
   packs: Pack[];
   plays: string[];
   /** Technique drills left out of the path (drill settings, spec AI owner Q7). */
@@ -1082,7 +1084,7 @@ function areaWeights(inp: PathInput): Map<DomainId, number> {
   for (const a of areas) {
     const g = gw[AREA_ORDER.indexOf(a)] ?? 1;
     const top3 = (inp.priorities ?? []).slice(0, 3).includes(a);
-    const w = (g || (top3 ? 1 : 0)) * rankW(a);
+    const w = (g || (top3 ? 1 : 0)) * rankW(a) * (inp.lessRoom?.includes(a) ? 0.5 : 1);
     if (w > 0) m.set(a, w);
   }
   return m;
