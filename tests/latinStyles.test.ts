@@ -21,6 +21,9 @@ import { strandsFor } from '../src/engine/drills/levelTest';
 import { stepCatalogue } from '../src/engine/path';
 import { JAZZ_FAMILIES } from '../src/engine/courses';
 import type { Drill } from '../src/engine/drills/types';
+import { styledBacking } from '../src/engine/styleBand';
+import { DRUM_STYLES, STYLE_POOL } from '../src/engine/topicsDrumStyle';
+import { UNIT_LESSON } from '../src/content/units';
 
 const FAMS = ['k-brazil', 'k-montuno', 'g-brazil', 'g-guajeo'] as const;
 const ALL = [...catalog(), ...guitarCatalog()];
@@ -37,7 +40,7 @@ const onsets = (d: Drill, bar: number, hand?: 'R' | 'L', meter = d.meter): numbe
 
 describe('the families', () => {
   it('four families, every level tagged with its style, all 12 keys, none jazz-gated', { timeout: 120_000 }, () => {
-    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [12, 'afrocuban'] /* 12 = ponchando over ii–V–I */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
+    const want = { 'k-brazil': [14, 'brazil'], 'k-montuno': [20, 'afrocuban'] /* 12 = ponchando over ii–V–I; 13–20 cha-cha, mambo, bolero */, 'g-brazil': [11, 'brazil'], 'g-guajeo': [9, 'afrocuban'] } as const;
     for (const f of FAMS) {
       const F = fam(f);
       expect(F.levels.length, f).toBe(want[f][0]);
@@ -167,7 +170,7 @@ describe('the montuno (STYLE-AFROCUBAN §2.1): the three-side bar on the offbeat
     const d = generate({ family: 'k-montuno', kind: 'mt-broken', key: 0, hands: 'R', option: 2 });
     const top = (b: number) => Math.max(...d.notes.filter((n) => near(n.beat, b)).map((n) => n.pitch));
     expect([0, 2, 4.5, 6.5].map((b) => pc(top(b)))).toEqual([7, 9, 11, 9]);
-    for (const kind of ['mt-broken', 'mt-hands', 'mt-ant', 'mt-band']) {
+    for (const kind of ['mt-broken', 'mt-hands', 'mt-ant', 'mt-band', 'mb-fast', 'mb-band', 'cc-oct', 'cc-hands', 'cc-band']) {
       for (const option of [0, 2, 3, 4, 5, 12, 13, 14, 15]) {
         for (const key of [0, 1, 6, 10]) {
           const x = generate({ family: 'k-montuno', kind, key, hands: 'RL', option } as never) as Drill;
@@ -207,6 +210,78 @@ describe('the montuno (STYLE-AFROCUBAN §2.1): the three-side bar on the offbeat
   it('songo: the right hand on the four beats', () => {
     const d = lvDrills('k-montuno-10')[0];
     for (const bar of [0, 1, 2, 3]) expect(onsets(d, bar, 'R')).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe('cha-cha-chá, mambo, bolero (STYLE-AFROCUBAN §2.5–2.7)', () => {
+  it('the cha-cha: every bar on the four beats (no offbeat bar), chords first, then the octave figure', () => {
+    for (const id of ['k-montuno-13', 'k-montuno-14', 'k-montuno-15', 'k-montuno-16'])
+      for (const d of lvDrills(id).slice(0, 3)) for (const bar of [0, 1, 2, 3, 6, 7]) expect(onsets(d, bar, 'R'), `${d.itemId} ${bar}`).toEqual([0, 1, 2, 3]);
+    // block chords (three or more notes) on every beat
+    const b = generate({ family: 'k-montuno', kind: 'cc-beats', key: 0, hands: 'R', option: 2 });
+    for (let k = 0; k < 8; k++) expect(b.notes.filter((n) => near(n.beat, k)).length).toBeGreaterThanOrEqual(3);
+    // the figure: I–IV–V–IV in C, the octave line G–A–B–A on beats 1 and 3, the inner tones between
+    const f = generate({ family: 'k-montuno', kind: 'cc-oct', key: 0, hands: 'R', option: 2 });
+    const top = (x: number) => Math.max(...f.notes.filter((n) => near(n.beat, x)).map((n) => n.pitch));
+    expect([0, 2, 4, 6].map((x) => pc(top(x)))).toEqual([7, 9, 11, 9]);
+    expect(f.notes.filter((n) => near(n.beat, 1)).map((n) => pc(n.pitch)).sort()).toEqual([0, 4]);
+  });
+  it('the cha-cha moves at the dance tempo (about 120), the mambo much faster; the bolero is slow', () => {
+    const lv = (id: string) => fam('k-montuno').levels.find((l) => l.id === id)!;
+    for (const id of ['k-montuno-13', 'k-montuno-14', 'k-montuno-15', 'k-montuno-16']) expect(lv(id).tempo![1]).toBeLessThanOrEqual(128);
+    for (const id of ['k-montuno-17', 'k-montuno-18']) expect(lv(id).tempo![1]).toBeGreaterThanOrEqual(180);
+    for (const id of ['k-montuno-19', 'k-montuno-20']) expect(lv(id).tempo![1]).toBeLessThanOrEqual(90);
+  });
+  it('the cha-cha with the band: the bank\'s cha-cha groove (the bell on the beats, the conga on 4 and its "and"), a tumbao, the band\'s piano out', () => {
+    const d = lvDrills('k-montuno-16')[0];
+    expect(d.drums!.groove).toBe('cha-cha');
+    expect(d.band!.style).toBe('chacha');
+    expect(bandHits(d)).toEqual([]);
+    expect(bandBass(d).every((n) => near(n.beat % 4, 1.5) || near(n.beat % 4, 3))).toBe(true);
+  });
+  it('the mambo with the band: the clave groove matches the montuno\'s direction', () => {
+    for (const d of lvDrills('k-montuno-18').slice(0, 4)) {
+      const dir = Math.floor(d.spec.option! / 10) % 2 ? '32' : '23';
+      expect(claveOfGroove(d.drums!.groove)).toBe(dir);
+      expect(d.band!.style).toBe('mambo');
+    }
+  });
+  it('the bolero: the left hand on 1 and 3 (root, then 5th), the right hand single 8ths of the chord', () => {
+    const l = lvDrills('k-montuno-19')[0];
+    expect(l.notes.every((n) => n.hand === 'L')).toBe(true);
+    expect(onsets(l, 0, 'L')).toEqual([0, 2]);
+    const a = generate({ family: 'k-montuno', kind: 'bo-arp', key: 0, hands: 'RL', option: 5 });
+    expect(onsets(a, 0, 'L')).toEqual([0, 2]);
+    const lh = a.notes.filter((n) => n.hand === 'L' && n.beat < 4).map((n) => pc(n.pitch));
+    expect(lh).toEqual([2, 9]); // D minor 7: D, then A
+    expect(onsets(a, 1, 'R')).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5]);
+    for (let b = 0; b < 32; b += 0.5) expect(a.notes.filter((n) => n.hand === 'R' && near(n.beat, b)).length).toBe(1);
+    // every right-hand note is a tone of the chord sounding
+    const g7 = a.notes.filter((n) => n.hand === 'R' && n.beat >= 4 && n.beat < 8).map((n) => pc(n.pitch));
+    expect(g7.every((p) => [7, 11, 2, 5].includes(p))).toBe(true);
+    expect(a.chart![a.chart!.length - 1]).toBe('Cmaj7');
+  });
+  it('the band: the cha-cha on the beats in every bar; the style taster plays the cha-cha groove, the bolero bass on 1 and 3', () => {
+    const p = parseChart('C | F | G | F | C | F | G | F');
+    for (const c of ['23', '32'] as const) {
+      const h = bandComping(p, 4, 32, 'chacha', 5, { clave: c });
+      expect(h.every((x) => x.beat % 1 === 0)).toBe(true);
+    }
+    const sb = styledBacking(p, 'bolero', 72, 1, { countIn: false });
+    const bass = sb.events.filter((e) => e.inst === 'bass').map((e) => +(e.start / (60 / 72)).toFixed(3));
+    expect(bass.every((b) => near(b % 2, 0))).toBe(true);
+    expect(sb.events.some((e) => e.perc === 'rim')).toBe(false);
+    const cc = styledBacking(p, 'chacha', 120, 1, { countIn: false });
+    expect(cc.events.some((e) => e.perc === 'bell')).toBe(true);
+    expect(cc.events.some((e) => e.perc === 'rim')).toBe(false);
+  });
+  it('wired: the cha-cha and bolero open with their own lesson; the drum-style game asks the cha-cha with its own band', () => {
+    expect(UNIT_LESSON['tech:k-montuno-13']).toBe('style-chacha');
+    expect(UNIT_LESSON['tech:k-montuno-19']).toBe('style-bolero');
+    expect(DRUM_STYLES.find((s) => s.id === 'cha')!.band).toBe('chacha');
+    expect(STYLE_POOL[2]).toContain('cha');
+    const levels = [...strandsFor('piano', 'both'), ...strandsFor('piano', 'classical')].flatMap((s) => s.rungs.map((r) => r.level));
+    expect(levels).toContain('k-montuno-14');
   });
 });
 

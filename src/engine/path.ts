@@ -739,6 +739,8 @@ export const PATH_CAP = 1900;
 export const NON_MONOTONE_FAMILIES = [
   // STAGE C (AUDIT-6 GA-4): the Coltrane sub in context (g-ctx 8) moved to the diploma grade 10, above ctx 9–11.
   'g-ctx',
+  // 2026-11-23: the cha-cha, mambo and bolero levels (k-montuno 13–20) sit by difficulty among the montuno levels.
+  'k-montuno',
   'harris', 'scales', 'k-mmhm', 'k-sharm', 'k-harrisline', 'b-harrisline', 'g-harrisline', 'k-reharm', 'k-tune', 'k-harm', 'b-tune', 'g-tune', 'k-lh', 'k-tex', 'k-comp', 'k-impro',
   // AUDIT-6 (levelPlacement.ts): a level whose number came after harder ones moved to its grade; ids stay, so the number
   // can't follow (control-11 sight-reading, arpeggios-9, cadences-5/6, k-rhythm-2; the bass stylistic studies,
