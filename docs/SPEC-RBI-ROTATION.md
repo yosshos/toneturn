@@ -124,19 +124,25 @@ The anticipation window is an eighth before the change.
 The same lead sheet. The line over the chord is a thought chord or a rule, not a mode.
 
 - **H1, the starting degree:** the chord's scale with the half-step rules, from the root, then from the 3rd, the 5th and the 7th.
-- **H2, the thought chord over V7:** G7 itself; the family (B♭7, D♭7, E7); the important minor (Dm6); the tritone's minor (A♭m6, "the perfect altered scale"); Fm6.
+- **H2, the thought chord over V7:** G7 itself; the family (B♭7, D♭7, E7); the important minor (Dm6); the tritone's minor (A♭m6, "the perfect altered scale"); Fm6 and Bm6, rare (owner 2026-11-23: "rare but valid"; Bm6 when the bass moves to E).
 - **H3, the conversion:** ii is played as its V; ø is played as the dominant a major 3rd below (Dø → B♭7).
 - **H4, the rule set:** the plain scale → the half-step rules → triplets → the chromatic scale → pivot / arpeggio up, scale down.
 - **H5, the scale of chords:** 6-dim (Dm7 = F6).
-- **H6, the ♭9 dim:** the dim from the 3rd (B D F A♭).
-- **H7, the family movement:** inside one V.
+- **H6, the ♭9 dim:** the dim from the 3rd (B D F A♭). Owner-confirmed 2026-11-23.
+- **H7, the family movement:** inside one V. **Left out** (owner 2026-11-23: not known to him, too dense in one bar).
 
 **Grading:**
 - chord tones of the thought chord on the beat;
 - any half step off the beat that resolves is allowed;
 - instead of colour coverage, the thought chord's identity notes (A♭ + E♭ for A♭m6 over G7).
 
-Tiers H-1…H-5 are in the research §5.3. Every item comes from a source listed there (Rees, Smithsonian, Open Studio Harris courses, docs/BARRY-HARRIS-THEORY.md). The use of Bm6 over V7 is not verified, so it stays out until the owner confirms it.
+Tiers H-1…H-5 are in the research §5.3. Every item comes from a source listed there (Rees, Smithsonian, Open Studio Harris courses, docs/BARRY-HARRIS-THEORY.md).
+
+**Built (2026-11-23, `src/engine/harrisTrack.ts`).**
+- H-1…H-3 as in the research table.
+- H-4: the conversion (Dø → B♭7, landing on the V's 3rd) plus H6, 3 to ♭9 over the V; graded as the landing and 3 5 ♭7 ♭9 in a row.
+- H-5: How High the Moon's checked 16 bars (harrisLines `TUNE_CHARTS`), in the key of the day, two choruses. Every 4 bars a rule: the half-step rules, a triplet, Barry's chromatic scale, 3 to ♭9 on the V. Over the V the thought rotates (the dominant, the important minor, the tritone's minor); Fm6 / Bm6 at most one window a sheet, never the first, Bm6 with "when the bass moves to E". Graded per window (rule kept) and per V (3 to ♭9).
+- Not built: H7 (left out), and the family dominants (B♭7, D♭7, E7) as whole-span thought chords — the in-bar movement is out, and H-5 is complete without them.
 
 ## 7. In the daily workout
 

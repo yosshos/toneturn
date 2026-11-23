@@ -4,7 +4,7 @@
 import type { Stimulus } from '../../engine/lesson';
 import type { MiniLesson } from '../miniTypes';
 import { gatedOr, isVerified } from '../../engine/verifiedContent';
-/** "3 to ♭9" stays out until a primary source confirms it (verifiedContent bh-3-to-b9; owner 2026-11-21). */
+/** "3 to ♭9": gated by verifiedContent bh-3-to-b9 (hidden 2026-11-21, owner-confirmed and switched on 2026-11-23). */
 const B9 = isVerified('card:bh-3b9');
 
 const chord = (midis: number[], duration = 1.2): Stimulus => ({ kind: 'chord', midis, duration });

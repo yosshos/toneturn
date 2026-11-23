@@ -131,6 +131,31 @@ for (const lang of ['he', 'en'] as const)
     if (lang === 'he') await page.screenshot({ path: 'test-results/phase8-harris-take-he.png' });
   });
 
+for (const lang of ['he', 'en'] as const)
+  test(`Improvise › the Barry Harris way H-5: a standard, a rule every 4 bars, 3 to ♭9, 8 bars at a time, one screen (${lang})`, async ({ page }) => {
+    await seed(page, lang, { settings: { harrisTier: 5 } });
+    await page.goto(`/?unlock=all&lang=${lang}#/improv`);
+    await expect(page.locator('[data-improv-studio]')).toBeVisible();
+    await page.locator('[data-rs-track="B"]').click();
+    await expect(page.locator('[data-hw]')).toHaveAttribute('data-hw-tier', '5');
+    await expect(page.locator('[data-hw-tier-pick="5"]')).toHaveAttribute('aria-checked', 'true');
+    // bars 1–8: the half-step rules, then a triplet
+    await expect(page.locator('[data-hw-rule="half-step"]')).toBeVisible();
+    await expect(page.locator('[data-hw-rule="triplets"]')).toBeVisible();
+    await expect(page.locator('[data-hw-cell]')).toHaveCount(8);
+    // bars 9–16: the chromatic scale, then 3 to ♭9 over every V
+    await page.locator('[data-hw-page="1"]').click();
+    await expect(page.locator('[data-hw-rule="chromatic"]')).toBeVisible();
+    await expect(page.locator('[data-hw-rule="3b9"]')).toBeVisible();
+    await expect(page.locator('[data-hw-b9]')).toHaveCount(3);
+    await fits(page, true);
+    if (lang === 'he') expect(await latinLeft(page, '[data-hw]')).toEqual([]);
+    await page.screenshot({ path: `test-results/phase8-harris-h5-${lang}.png` });
+    // H-4: 3 to ♭9 next to the conversion
+    await page.locator('[data-hw-tier-pick="4"]').click();
+    await expect(page.locator('[data-hw-b9]').first()).toBeVisible();
+  });
+
 const LICK_ITEMS = {
   'lick:maj-arp:piano:0': item('lick:maj-arp:piano:0', 0, true, { channels: { 'page-known': { n: 8, clean: 6, best: 120 } } }),
   'lick:dom-arp9:piano:0': item('lick:dom-arp9:piano:0', 0, true, { channels: { 'page-known': { n: 8, clean: 6, best: 120 } } }),

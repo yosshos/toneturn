@@ -219,11 +219,16 @@ describe('seven down to the 3rd (D9)', () => {
 });
 
 describe('3-to-♭9 over the family (D15)', () => {
-  it('G7, B♭7, D♭7, E7: always the same four notes, the dim on the 3rd', () => {
-    const { line } = threeToFlatNine(60, 'up');
-    const sets = [0, 1, 2, 3].map((k) => new Set(line.filter((n) => n.beat >= k * 2 && n.beat < k * 2 + 2).map((n) => mod12(n.p))));
-    for (const s of sets) expect([...s].sort((a, b) => a - b)).toEqual([2, 5, 8, 11]);
-    expect([0, 4, 7, 9]).toContain(mod12(line[line.length - 1].p));
+  it('G7, B♭7, D♭7, E7: always the same four notes, the dim on the 3rd — one dominant per bar (owner 2026-11-23)', () => {
+    for (const dir of ['up', 'down'] as const) {
+      const { line } = threeToFlatNine(60, dir);
+      const bars = [0, 1, 2, 3].map((k) => line.filter((n) => n.beat >= k * 4 && n.beat < k * 4 + 4));
+      for (const b of bars) expect([...new Set(b.map((n) => mod12(n.p)))].sort((a, z) => a - z)).toEqual([2, 5, 8, 11]);
+      // each bar starts on its own dominant's 3rd (up) or its ♭9 an octave up (down): B, D, F, A♭
+      expect(bars.map((b) => mod12(b[0].p))).toEqual([11, 2, 5, 8]);
+      expect(line[line.length - 1].beat).toBe(16);
+      expect([0, 4, 7, 9]).toContain(mod12(line[line.length - 1].p));
+    }
   });
 });
 

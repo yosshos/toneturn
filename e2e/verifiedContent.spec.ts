@@ -68,11 +68,11 @@ test('Drills (keys): hidden Harris-line levels are not listed; the ones switched
   await page.locator('[data-topic="all"]').click();
   await page.locator('[data-family="k-harrisline"]').click();
   // shown: the important arpeggios (4); switched on: the ABCs (2), the dominant rules (3, 33), the chromatic scale (6),
-  // two voices (19, 34), seven down (21), the tune outlines (14, 18)
-  for (const id of ['k-harrisline-2', 'k-harrisline-3', 'k-harrisline-4', 'k-harrisline-6', 'k-harrisline-14', 'k-harrisline-18', 'k-harrisline-19', 'k-harrisline-21', 'k-harrisline-33', 'k-harrisline-34'])
+  // two voices (19, 34), seven down (21), the tune outlines (14, 18); 3 to ♭9 (20, owner 2026-11-23)
+  for (const id of ['k-harrisline-2', 'k-harrisline-3', 'k-harrisline-4', 'k-harrisline-6', 'k-harrisline-14', 'k-harrisline-18', 'k-harrisline-19', 'k-harrisline-20', 'k-harrisline-21', 'k-harrisline-33', 'k-harrisline-34'])
     await expect(page.locator(`[data-level="${id}"]`), id).toBeAttached();
-  // still hidden: chromatic arpeggios down (1), the 5-4-3-2 phrases (17), 3 to ♭9 (20), feel 6 (24), compose (26)
-  for (const id of ['k-harrisline-1', 'k-harrisline-17', 'k-harrisline-20', 'k-harrisline-24', 'k-harrisline-26']) await expect(page.locator(`[data-level="${id}"]`), id).toHaveCount(0);
+  // still hidden: chromatic arpeggios down (1), the 5-4-3-2 phrases (17), feel 6 (24), compose (26)
+  for (const id of ['k-harrisline-1', 'k-harrisline-17', 'k-harrisline-24', 'k-harrisline-26']) await expect(page.locator(`[data-level="${id}"]`), id).toHaveCount(0);
 });
 
 test('Drills (keys): the shells on the 6th-diminished scale are listed (Echols, owner 2026-11-15)', async ({ page }) => {

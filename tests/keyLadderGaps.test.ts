@@ -1,7 +1,7 @@
 // SPEC-KEY-SESSION / SPEC-DAILY-WORKOUT audit gaps (2026-11-23): B2 triad inversions, B4 1-2-3-5 cells, B5 9th
 // arpeggios through the scale (piano, guitar, bass), Hanon 17–18 and two voices in one hand in the key, So What and
-// Kenny Barron at T6+, triad pairs over the I and the bebop scale in block F, the known lick devices (3 to ♭9 left out
-// while open), the week's two visits, the rung just passed, the key page's ceilings. Notes, spelling, 12 keys, wiring.
+// Kenny Barron at T6+, triad pairs over the I and the bebop scale in block F, the known lick devices (3 to ♭9 switched on
+// 2026-11-23, in the drills, not as a lick), the week's two visits, the rung just passed, the key page's ceilings. Notes, spelling, 12 keys, wiring.
 
 import { describe, expect, it } from 'vitest';
 import '../src/engine/topics';
@@ -209,8 +209,9 @@ describe('the lick library: the known devices (SPEC-DAILY-WORKOUT §6.4)', () =>
     // over G7: D minor pentatonic (a 5th above G)
     expect(LICKS.find((x) => x.id === 'dev-penta5')!.notes.slice(0, 8).every((n) => [2, 5, 7, 9, 0].includes(n[0] % 12))).toBe(true);
   });
-  it('3 to ♭9 stays out while docs/BARRY-HARRIS-THEORY.md lists it open', () => {
-    expect(isVerified('item:hl-3b9')).toBe(false);
+  it('3 to ♭9 is switched on (owner-confirmed 2026-11-23): in the Harris-line drills and the vocabulary cell, not as a lick', () => {
+    expect(isVerified('item:hl-3b9')).toBe(true);
+    expect(isVerified('item:v-3b9')).toBe(true);
     expect(LICKS.some((l) => /3b9|3-b9|3-to-b9/.test(l.id))).toBe(false);
   });
 });

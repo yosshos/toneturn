@@ -16,7 +16,9 @@ import { activeTilt, isoWeek, proposeTilt, tasterNudge, TILT_MAX } from '../src/
 import { suggestWorkout } from '../src/engine/workout2';
 import { tasterFor, offerShown } from '../src/engine/styleFocus';
 import { AI_TILT_SERVER, setWeeklyExtra, weeklyExtraContext } from '../src/cloud/ai';
-import { buildHarrisSheet, gradeHarris, HARRIS_TIERS, identityPcs, thoughtLabel, thoughtScale, TIERS } from '../src/engine/harrisTrack';
+import { buildHarrisSheet, gradeHarris, h5VName, HARRIS_TIERS, harrisTierOf, identityPcs, RARE_THOUGHTS, relativeBass, thoughtLabel, thoughtScale, threeToB9Pcs, TIERS } from '../src/engine/harrisTrack';
+import { TUNE_CHARTS } from '../src/engine/harrisLines';
+import { transposeChart } from '../src/engine/charts';
 import { improvTake } from '../src/engine/rotationSheet';
 import { combinedSentence, findEvents, gradeFind, learnedChannel, learnedLicks, passage, pickPair, sentenceChannel, sentenceDebrief, transposePlan } from '../src/engine/earVocab';
 import { LICKS, lickDrill, type Lick } from '../src/engine/licks';
@@ -254,14 +256,14 @@ describe('the Barry Harris way: RBI track B, only what BARRY-HARRIS-THEORY.md ve
     expect(c0.map((c) => thoughtLabel(c.think))).toEqual(['G7', 'G7', 'C6', 'C6']);
     expect(sh.cells.filter((c) => c.start).map((c) => c.start)).toEqual(['1', '3', '5', '7']);
   });
-  it('H-3: over the V, every 8 bars: the dominant, the important minor (Dm6), the tritone’s minor (A♭m6) — never Bm6 / Fm6', () => {
+  it('H-3: over the V, every 8 bars: the dominant, the important minor (Dm6), the tritone’s minor (A♭m6) — the rare two only at H-5', () => {
     const sh = buildHarrisSheet(3, 0);
     const v = (ch: number) => [...new Set(sh.cells.filter((c) => c.chorus === ch && c.q === 'dom').map((c) => thoughtLabel(c.think)))];
     expect(v(0)).toEqual(['G7']);
     expect(v(1)).toEqual(['Dm6']);
     expect(v(2)).toEqual(['A♭m6']);
     const all = HARRIS_TIERS.flatMap((t) => [0, 3, 7, 10].flatMap((k) => buildHarrisSheet(t, k).cells.map((c) => thoughtLabel(c.think))));
-    // the four related m6s: only the important minor and the tritone's minor are used (Fm6 / Bm6 wait for the owner)
+    // below H-5 only the important minor and the tritone's minor (the rare two: H-5, owner 2026-11-23)
     for (const k of [0, 3, 7, 10]) {
       const sh3 = buildHarrisSheet(3, k);
       for (const c of sh3.cells.filter((x) => x.think.kind === 'm6')) expect([7, 1].map((x) => (c.root + x) % 12)).toContain(c.think.root);
@@ -275,6 +277,77 @@ describe('the Barry Harris way: RBI track B, only what BARRY-HARRIS-THEORY.md ve
     const sh = buildHarrisSheet(4, 0);
     expect(sh.cells.slice(0, 3).map((c) => thoughtLabel(c.think))).toEqual(['B♭7', 'G7', 'Cm6']);
     expect(TIERS[4].every).toBe(0);
+    // H6 next to the conversion (CHORD-SCALE-ROTATION §5.3): 3 to ♭9 asked over the V after the ø, nowhere else
+    expect(sh.cells.filter((c) => c.b9).map((c) => c.sym)).toEqual(['G7', 'G7', 'G7', 'G7']);
+    expect(threeToB9Pcs(7)).toEqual([11, 2, 5, 8]);
+    // seven down to the 3rd, then 3 to ♭9, the ♭9 down to the 5th of i
+    const v = sh.cells[1];
+    const line = [{ beat: 0, midi: 70 }, { beat: 1, midi: 74 }, { beat: 2, midi: 77 }, { beat: 3, midi: 72 }, { beat: 4, midi: 71 }, { beat: 4.5, midi: 74 }, { beat: 5, midi: 77 }, { beat: 5.5, midi: 80 }, { beat: 6, midi: 79 }, { beat: 8, midi: 79 }].map((n) => ({ ...n, dur: 0.5 }));
+    const g = gradeHarris(sh, line);
+    expect(g.landing).toBe(1);
+    expect(g.b9).toBe(1);
+    expect(g.hits[sh.cells.indexOf(v)]).toBe(true);
+    // the V with only its arpeggio: landed, but no 3 to ♭9
+    expect(gradeHarris(sh, [{ beat: 4, dur: 1, midi: 71 }, { beat: 5, dur: 1, midi: 74 }, { beat: 6, dur: 1, midi: 77 }, { beat: 7, dur: 1, midi: 79 }]).b9).toBe(0);
+  });
+  it('H-5: a standard (How High the Moon’s checked changes), a rule every 4 bars, 3 to ♭9, no family movement inside a bar', () => {
+    expect(HARRIS_TIERS).toEqual([1, 2, 3, 4, 5]);
+    expect(TIERS[5].chart).toBe(transposeChart(TUNE_CHARTS.hhtm.text, 5));
+    const sh = buildHarrisSheet(5, 0);
+    expect(sh.bars).toBe(16);
+    expect(sh.cells.filter((c) => c.rule).map((c) => c.rule)).toEqual(['half-step', 'triplets', 'chromatic', '3b9', 'half-step', 'triplets', 'chromatic', '3b9']);
+    // the conversions: ii is V, ø the dominant a major 3rd below
+    expect(thoughtLabel(sh.cells.find((c) => c.sym.startsWith('Cm7'))!.think)).toBe('F7');
+    expect(thoughtLabel(sh.cells.find((c) => c.q === 'hd7')!.think)).toBe('B♭7');
+    // 3 to ♭9 windows: every written V asks for it and is thought as itself
+    for (const c of sh.cells.filter((x) => x.b9)) expect(c.q === 'dom' && thoughtLabel(c.think) === c.sym.replace(/7.*/, '7')).toBe(true);
+    // no in-bar family movement: every thought over a V is the dominant itself or an m6 — never another dominant
+    for (const k of [0, 1, 2, 5, 7, 10]) for (const c of buildHarrisSheet(5, k).cells.filter((x) => x.q === 'dom')) expect(c.think.kind === 'm6' || c.think.root === c.root).toBe(true);
+    // the default and the first window: the dominant itself
+    for (let k = 0; k < 12; k++) expect(h5VName(k, 0)).toBe('dominant');
+    expect(harrisTierOf(1, 5)).toBe(5);
+    expect(harrisTierOf(3)).toBe(3);
+  });
+  it('H-5: the backdoor’s minor and the ♭9 relative’s minor — rare (at most one window a sheet, never the first), right roots', () => {
+    let rareWins = 0, wins = 0;
+    const kinds = new Set<string>();
+    for (let k = 0; k < 12; k++) {
+      const sh = buildHarrisSheet(5, k);
+      const ws = new Set(sh.cells.filter((c) => c.q === 'dom' && c.think.name && RARE_THOUGHTS.includes(c.think.name)).map((c) => c.window));
+      expect(ws.size).toBeLessThanOrEqual(1);
+      expect(ws.has(0)).toBe(false);
+      rareWins += ws.size;
+      wins += new Set(sh.cells.map((c) => c.window)).size;
+      for (const c of sh.cells.filter((x) => x.think.name === 'backdoor-minor')) {
+        kinds.add('backdoor');
+        expect(c.think.root).toBe((c.root + 10) % 12); // Fm6 over G7
+      }
+      for (const c of sh.cells.filter((x) => x.think.name === 'relative-minor')) {
+        kinds.add('relative');
+        expect(c.think.root).toBe((c.root + 4) % 12); // Bm6 over G7, when the bass moves to E
+        expect(relativeBass(c.root)).toBe((c.root + 9) % 12);
+      }
+    }
+    expect([...kinds].sort()).toEqual(['backdoor', 'relative']);
+    expect(rareWins / wins).toBeLessThan(0.15);
+  });
+  it('H-5 grading: the rule of each window — triplets, the chromatic scale, the half-step rules; 3 to ♭9 over the V', () => {
+    const sh = buildHarrisSheet(5, 0);
+    // window 1 (bars 5–8, B♭6): a triplet B♭ C D on beat 16
+    const trip = [{ beat: 16, midi: 70 }, { beat: 16 + 1 / 3, midi: 72 }, { beat: 16 + 2 / 3, midi: 74 }, { beat: 17, midi: 77 }].map((n) => ({ ...n, dur: 0.3 }));
+    expect(gradeHarris(sh, trip).ruleHits[1]).toBe(true);
+    expect(gradeHarris(sh, trip.map((n, i) => ({ ...n, beat: 16 + i * 0.5 }))).ruleHits[1]).toBe(false);
+    // window 2 (bars 9–12, A♭6): A♭ on the beat, A (chromatic, off the beat) → B♭ ... scale notes on the beats
+    const chrom = [{ beat: 32, midi: 68 }, { beat: 32.5, midi: 69 }, { beat: 33, midi: 70 }, { beat: 34, midi: 72 }].map((n) => ({ ...n, dur: 0.5 }));
+    expect(gradeHarris(sh, chrom).ruleHits[2]).toBe(true);
+    expect(gradeHarris(sh, chrom.filter((n) => n.midi !== 69)).ruleHits[2]).toBe(false);
+    // window 3: over the ii played as G7 and the G7 (bar 14), B D F A♭ in a row
+    const v = sh.cells.find((c) => c.b9 && c.bar === 13)!;
+    const b9 = [71, 74, 77, 80].map((m, i) => ({ beat: v.at - 2 + i * 0.5, dur: 0.5, midi: m }));
+    const g = gradeHarris(sh, b9);
+    expect(g.b9).toBe(1);
+    expect(g.hits[sh.cells.indexOf(v)]).toBe(true);
+    expect(g.ruleHits[3]).toBeNull();
   });
   it('the scale under a thought chord: a m6 over the V is that dominant’s 9th without the root (Dm6 → the G scale)', () => {
     expect(thoughtScale({ root: 2, kind: 'm6' }).sort((a, b) => a - b)).toEqual([0, 2, 4, 5, 7, 9, 11]);
@@ -299,7 +372,7 @@ describe('the Barry Harris way: RBI track B, only what BARRY-HARRIS-THEORY.md ve
   it('no mode names, no "half-whole", no unverified devices in track B; count-in + click + now-cue; both languages', () => {
     const eng = src('engine/harrisTrack.ts').replace(/\/\/.*$/gm, '');
     const ui = src('ui/HarrisWay.tsx').replace(/\/\/.*$/gm, '');
-    for (const s of [eng, ui]) expect(s).not.toMatch(/mixolydian|dorian|lydian|phrygian|locrian|aeolian|ionian|half-whole|whole-half|altered scale|Bm6|Fm6/i);
+    for (const s of [eng, ui]) expect(s).not.toMatch(/mixolydian|dorian|lydian|phrygian|locrian|aeolian|ionian|half-whole|whole-half|altered scale|family movement/i);
     expect(ui).toContain('chartBacking(');
     expect(ui).toMatch(/perc: \(k % sheet\.meter \? 'click' : 'accent'\)/);
     expect(ui).toContain('<BeatDots countIn={4}');

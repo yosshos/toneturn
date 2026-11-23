@@ -226,8 +226,8 @@ describe('the levels', () => {
       for (const op of [0, 1]) expect(kinds(ls)).toContain(`v-digit:${op}`);
     }
     for (const [, ls] of allLevels()) for (const k of ['v-trip:0', 'v-trip:1', 'v-minor:0']) expect(kinds(ls)).toContain(k);
-    // "3 to ♭9" is out until a primary source confirms it (owner 2026-11-21).
-    for (const [, ls] of allLevels()) expect(kinds(ls)).not.toContain('v-3b9:0');
+    // "3 to ♭9": owner-confirmed 2026-11-23 (hidden 2026-11-21 until then).
+    for (const [, ls] of allLevels()) expect(kinds(ls)).toContain('v-3b9:0');
     // The click moves on piano and guitar lines and comping: 2 & 4, the gap, the "and".
     for (const ls of [KVOCAB().levels, GBEBOP().levels]) for (let op = 0; op < TIME_ITEMS.length; op++) expect(kinds(ls)).toContain(`v-time:${op}`);
   });

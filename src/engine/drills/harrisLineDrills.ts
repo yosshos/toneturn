@@ -385,13 +385,14 @@ export function lineItem(kind: string, op: number, key: number, lo: number, hi: 
       };
     }
     case 'hl-3b9': {
-      // D15: 3-to-♭9 over the whole family (the same four notes: the dim on the 3rd), resolving into the tonic.
+      // D15: 3-to-♭9 over the whole family (the same four notes: the dim on the 3rd), one dominant per bar (owner
+      // 2026-11-23: confirmed; the family inside one bar is too dense), resolving into the tonic.
       const tonic = rootIn(k, lo + 1, hi, 18);
       const { line, roots } = threeToFlatNine(tonic, op === 1 ? 'down' : 'up');
       return {
         line: fit(line, lo, hi),
         title: t(`3 to ♭9 over the family: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — the same diminished each time`, `3 עד ♭9 על המשפחה: ${roots.map((r) => `${nm(r)}7`).join(' ')} → ${kn} — אותו מוקטן בכל פעם`),
-        chart: [`${nm(roots[0])}7 ${nm(roots[1])}7`, `${nm(roots[2])}7 ${nm(roots[3])}7`, `${kn}6`],
+        chart: [...roots.map((r) => `${nm(r)}7`), `${kn}6`],
         sigOf: 0,
         ctGoal: true,
       };

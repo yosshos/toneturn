@@ -12,7 +12,7 @@ import type { Drill, DrillSpec, ExpNote, FamilyId, BassFamilyId } from './types'
 import type { FamilyDef, LevelDef, SpecTemplate } from './generate';
 import { itemIdOf } from './generate';
 import { isVerified } from '../verifiedContent';
-/** "3 to ♭9" stays out until a primary source confirms it (verifiedContent bh-3-to-b9; owner 2026-11-21). */
+/** "3 to ♭9": gated by verifiedContent bh-3-to-b9 (hidden 2026-11-21, owner-confirmed and switched on 2026-11-23). */
 const B9 = (): boolean => isVerified('item:v-3b9');
 import type { Tuning } from '../fretboard';
 import type { GuitarFamilyDef, GuitarLevelDef, GuitarStyle, Ev } from './guitar';

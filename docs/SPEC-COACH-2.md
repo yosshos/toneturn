@@ -228,4 +228,5 @@ check on his own keyboard.
   list of single exercises is the secondary way in.
 - **A topic session asks for the key order** on its opening screen: circle of fifths up or down, chromatic up or down.
   Built in 0.111.1; it uses the existing setting.
-- **"3 to ♭9"** is out everywhere. A second search found no primary source.
+- **"3 to ♭9"** is out everywhere. A second search found no primary source. (Switched on 2026-11-23: owner-confirmed,
+  see docs/BARRY-HARRIS-THEORY.md §12.)

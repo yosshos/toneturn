@@ -12,7 +12,8 @@ const TIMED = ['hl-upbeat', 'hl-ands', 'hl-compose', 'hl-feel6', 'hl-walkties'];
 
 describe('k-harrisline, g-harrisline, b-harrisline drills', () => {
   const keysFam = catalog().find((f) => f.id === 'k-harrisline')!;
-  const KEYS_SHOWN = 22, G_SHOWN = 8, B_SHOWN = 8;
+  // keys 23 since 3 to ♭9 (k-harrisline-20) was switched on, owner 2026-11-23
+  const KEYS_SHOWN = 23, G_SHOWN = 8, B_SHOWN = 8;
   const gFam = guitarCatalog().find((f) => f.id === 'g-harrisline')!;
   const bFam = guitarCatalog().find((f) => f.id === 'b-harrisline')!;
   it('counts: 34 keys levels (the first 32 rated ~1100–1750 in rating order, 2 appended 2026-11-15), 10 guitar, 10 bass', () => {
