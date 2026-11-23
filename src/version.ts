@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.121.0',
+    date: '2026-11-23',
+    en: ['Your styles: pick a main style and up to two more for each instrument; every style is open from the first day, and the focus only decides what comes up more often', 'Nothing is locked any more: jazz is open in every course, and your background only sets where you start', 'New: bossa and samba comping and the montuno on piano, the bossa batida, samba and the guajeo on guitar, and a band that plays samba, baiao, cha-cha, mambo, bolero, songo and 6/8 on the clave', 'Every couple of weeks a short taste of a style you did not pick, with what it gives you'],
+    he: ['הסגנונות שלכם: בוחרים סגנון ראשי ועוד עד שניים לכל כלי; כל הסגנונות פתוחים מהיום הראשון, והבחירה רק קובעת מה עולה יותר', 'שום דבר כבר לא נעול: הג׳אז פתוח בכל קורס, והרקע שלכם רק קובע מאיפה מתחילים', 'חדש: ליווי בוסה וסמבה ומונטונו בפסנתר, הבטידה של הבוסה, סמבה וגוואחאו בגיטרה, ולהקה שמנגנת סמבה, באיון, צ׳ה-צ׳ה, מאמבו, בולרו, סונגו ו-6/8 על הקלאבה', 'כל שבועיים בערך טעימה קצרה מסגנון שלא בחרתם, ומה הוא נותן לכם'],
+  },
+  {
     version: '0.120.0',
     date: '2026-11-23',
     en: ['Improvise opens on the scale rotation: a lead sheet with a scale for each chord, a colour and a letter per scale family, the next scale ahead, and after each take how many colour notes you used', 'Phrase and Trade are graded against the scales; the improvisation block of the daily workout opens with the lick of the day', 'Practice by key adds the natural minor inside each major key, ladders for guitar and bass, and from the upper tiers melodic minor and the modes', 'Corrected Latin grooves: a true two-bar son clave you can hear, the bembe bell in 6/8, the tumbao kick and the songo hands; Brazilian items are played straight; the organ no longer reacts to touch and takes the swell pedal'],

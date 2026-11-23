@@ -7,7 +7,7 @@ import { GUITAR_ADDON_STYLES, STYLE_TEXT, stylesFor } from '../engine/styles';
 
 type Lang = 'en' | 'he';
 
-export function StyleChips({ course, lang, focus, onChange, hints = false, title = true }: { course: CourseId; lang: Lang; focus: StyleFocus; onChange: (f: StyleFocus) => void; /** The short "what is it" line under each chip (an experienced player). */ hints?: boolean; title?: boolean }) {
+export function StyleChips({ course, lang, focus, onChange, hints = false, title = true }: { course: CourseId; lang: Lang; focus: StyleFocus; onChange: (f: StyleFocus) => void; /** One short "what is it" line for the picked styles (an experienced player); kept off the chips so the screen fits a phone. */ hints?: boolean; title?: boolean }) {
   const he = lang === 'he';
   const picks = picksOf(focus);
   const main = stylesFor(course, { main: true });
@@ -24,7 +24,6 @@ export function StyleChips({ course, lang, focus, onChange, hints = false, title
           </span>
         )}
         <span className="sc-name">{STYLE_TEXT[st][lang]}</span>
-        {hints && <small className="sc-hint">{STYLE_TEXT[st].hint[lang]}</small>}
       </button>
     );
   };
@@ -35,6 +34,16 @@ export function StyleChips({ course, lang, focus, onChange, hints = false, title
         {main.map(chip)}
         {extra.map(chip)}
       </div>
+      {hints && picks.length > 0 && (
+        <small className="sf-desc" data-style-desc="1">
+          {picks.map((st, i) => (
+            <span key={st}>
+              {i > 0 && ' · '}
+              <b>{STYLE_TEXT[st][lang]}</b> {STYLE_TEXT[st].hint[lang]}
+            </span>
+          ))}
+        </small>
+      )}
       <small className="sf-hint">{he ? 'עד שלושה. הראשון הוא הסגנון הראשי. כל הסגנונות פתוחים תמיד.' : 'Up to three. The first is your main style. Every style stays open.'}</small>
     </div>
   );

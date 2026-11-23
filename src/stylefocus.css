@@ -1,15 +1,15 @@
 /* SPEC-STYLE-FOCUS: the style chips, the "My styles" strip, the style taster card and the preference cards. */
 .style-focus { display: grid; gap: 6px; }
 .style-focus .sf-title { font-weight: 600; color: var(--ink); }
+.style-focus .sf-desc { color: var(--ink-dim); font-size: 0.78rem; line-height: 1.35; }
+.style-focus .sf-desc b { color: var(--ink); font-weight: 600; }
 .style-focus .sf-hint { color: var(--ink-dim); font-size: 0.78rem; }
-.style-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.style-chips .style-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 5px 11px; border: 1.5px solid var(--line-strong); border-radius: 999px; font-size: 0.86rem; color: var(--ink); background: var(--card); }
+.style-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.style-chips .style-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 3px 10px; border: 1.5px solid var(--line-strong); border-radius: 999px; font-size: 0.86rem; color: var(--ink); background: var(--card); }
 .style-chips .style-chip.on { border-color: var(--purple, var(--mint)); background: color-mix(in srgb, var(--purple, var(--mint)) 12%, var(--card)); }
 .style-chips .style-chip.main { font-weight: 600; }
 .style-chips .style-chip:disabled { opacity: 0.45; }
 .style-chips .sc-rank { font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; background: var(--purple, var(--mint)); color: #fff; font-variant-numeric: tabular-nums; }
-.style-chips .sc-hint { flex-basis: 100%; color: var(--ink-dim); font-size: 0.72rem; font-weight: 400; }
-.style-chips .style-chip:has(.sc-hint) { flex-wrap: wrap; border-radius: 12px; }
 
 /* the "My styles" strip on the skill map */
 .my-styles { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
