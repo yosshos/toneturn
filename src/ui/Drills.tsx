@@ -62,6 +62,7 @@ import { RULE_NAME } from '../engine/improvRules';
 import { SoloChorusEditor } from './SoloChorus';
 import { PART_NAME, songDrill } from '../engine/drills/songDrills';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { drillTakeMs } from './takeClock';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import type { RatingEvent } from '../engine/rating';
 import type { CustomDrill, Drill, DrillCalibration, DrillSettings, FamilyId, ItemState, KeyOrder, PlayedNote, TakeMetrics } from '../engine/drills/types';
@@ -77,6 +78,7 @@ import { levelLadder } from '../engine/statusLadder';
 import { AssignMark, StatusLadder, TodayMark, type WhereChip } from './ItemHead';
 import { assignedKeys, useMyAssigns } from './itemAssigns';
 import type { WayIn } from './practiceRoutes';
+import { rungKeyOf } from './itemRoutes';
 import { generate } from '../engine/drills/generate';
 import { advance, finishPlaces, strandsFor, recordTake, startState, strandPlaces, testStart, type StrandId, type StrandState } from '../engine/drills/levelTest';
 import { micUnmeasurable } from '../engine/drills/analyze';
@@ -330,6 +332,8 @@ export interface DrillsProps {
   /** Phase 3 (SPEC-PATH-TODAY-PRACTICE §3.1): open on a key's page (a piece's key) or a family (a path step's full
    *  practice); its Back then leaves Technique, back to where it was opened from. */
   openKey?: number | null;
+  /** The rows the key page opens on (a minor piece's key: the minor rows); absent: the remembered tab. */
+  openGroup?: 'major' | 'minor' | null;
   openFamily?: FamilyDef | null;
   /** SPEC-PATH-TODAY-PRACTICE §2/§3.1: the key page opened on one rung (a technique level) — its item page, lit. */
   openLevel?: string | null;
@@ -344,9 +348,9 @@ export interface DrillsProps {
   channel?: 'ear' | 'memory';
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number; /** SPEC-PATH-TODAY-PRACTICE §2: the rung's item page lit on the key page, and how it was reached. */ rung?: { id: string; wayIn: WayIn }; /** Where Back goes (a family's level row, Today's cells). */ from?: View };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openFamily, onTodayScreen, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel, onImproviseLick }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openGroup, openFamily, onTodayScreen, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel, onImproviseLick }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
@@ -364,7 +368,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           : songs
             ? { k: 'songs' }
             : typeof openKey === 'number'
-              ? { k: 'keypage', root: ((openKey % 12) + 12) % 12 }
+              ? { k: 'keypage', root: ((openKey % 12) + 12) % 12, ...(openLevel ? { rung: { id: openLevel, wayIn: wayIn ?? 'practice' } } : {}) }
               : openFamily
                 ? { k: 'family', f: openFamily }
                 : { k: 'hub' },
@@ -406,7 +410,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   // Practice by key (SPEC-PRACTICE-KEYS): the view and the scale-family tab, remembered on this device.
   const [pView, setPViewState] = useState<PracticeView>(() => lsGet('toneturn.practiceView') === 'key' ? 'key' : 'topic');
   const setPView = (v: PracticeView) => (setPViewState(v), lsSet('toneturn.practiceView', v));
-  const [kGroup, setKGroupState] = useState<FacetGroup>(() => (lsGet('toneturn.keyGroup') as FacetGroup | null) ?? 'major');
+  const [kGroup, setKGroupState] = useState<FacetGroup>(() => (typeof openKey === 'number' && openGroup ? openGroup : (lsGet('toneturn.keyGroup') as FacetGroup | null) ?? 'major'));
   const setKGroup = (g: FacetGroup) => (setKGroupState(g), lsSet('toneturn.keyGroup', g));
   // the advanced tabs (melodic / harmonic-minor modes) for a player past the basics: the course answers or the level test
   const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
@@ -633,8 +637,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'keypage' && keyIdx)
     return (
       <main className="drills-screen" data-drills="keypage">
-        {head(keyPageTitle(view.root, kGroup, lang), () => (opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage rung={openLevel && view.root === (((openKey ?? -1) % 12) + 12) % 12 ? { id: openLevel, wayIn: wayIn ?? 'practice', where: whereOf?.(openLevel) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} />
+        {head(keyPageTitle(view.root, kGroup, lang), () => (view.from ? setView(view.from) : opened ? onBack() : setView({ k: 'hub' })))}
+        <KeyPage gained={gainedCells} onRung={(id) => setView({ k: 'keypage', root: view.root, rung: { id, wayIn: view.rung?.wayIn === 'today' ? 'today' : 'practice' }, ...(view.from ? { from: view.from } : {}) })} rung={view.rung ? { id: view.rung.id, wayIn: view.rung.wayIn, where: whereOf?.(view.rung.id) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} />
       </main>
     );
   if (view.k === 'family')
@@ -654,7 +658,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
             </span>
           </button>
         )}
-        <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} todayLevels={todayTopicLevels} assigned={assignedLv} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} />
+        <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} todayLevels={todayTopicLevels} assigned={assignedLv} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} onPage={(id, root) => setView({ k: 'keypage', root, rung: { id, wayIn: todayTopicLevels?.has(id) ? 'today' : 'practice' }, from: view })} />
       </main>
     );
   // Phase 2 ("one today"): the hub's default view shows the shared plan (the workout block's cells), not a private list
@@ -676,6 +680,11 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         if (v) setView(v);
       }}
       onToday={onTodayScreen}
+      onCell={(p) => {
+        // SPEC-PATH-TODAY-PRACTICE §2: a cell of today's plan opens its rung's page in that key ("Today's dose")
+        setKGroup(p.cell.group as FacetGroup);
+        setView({ k: 'keypage', root: p.cell.root, rung: { id: p.cell.rung, wayIn: 'today' }, from: { k: 'hub' } });
+      }}
     />
   ) : null;
   return (
@@ -828,7 +837,7 @@ const topicName = (k: DrillTopic, drums: boolean, piano = false): { en: string; 
  * weakest first, reviews due), each with how long the exercise takes through its 12 keys, a Start that runs them (the
  * takes count toward the workout) and a link to Today. On the drums (no keys) the block's minutes and the link.
  */
-function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onRun, onToday }: { lang: Lang; plan: PlanCell[] | null; cells: MatrixCell[] | null; minutes: number; left: number; gained: number; matrix: boolean; week: { root: number; group: 'major' | 'minor' } | null; onRun: () => void; onToday?: () => void }) {
+function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onRun, onToday, onCell }: { /** Open a cell's rung page (its key page, the rung lit). */ onCell?: (p: PlanCell) => void; lang: Lang; plan: PlanCell[] | null; cells: MatrixCell[] | null; minutes: number; left: number; gained: number; matrix: boolean; week: { root: number; group: 'major' | 'minor' } | null; onRun: () => void; onToday?: () => void }) {
   const he = lang === 'he';
   const mins = Math.max(0, Math.round(left));
   const w = plan ? whyCounts(plan) : null;
@@ -869,7 +878,7 @@ function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onR
               const through = cells ? Math.round(rungMinutes(cells, p.cell.rung, p.cell.group)) : null;
               return (
                 <li key={`${p.cell.group}:${p.cell.root}:${p.cell.rung}`} data-today-cell={p.why}>
-                  <span className="drill-level static">
+                  <button type="button" className="drill-level today-cell-open" onClick={() => onCell?.(p)} disabled={!onCell} data-today-cell-open={p.cell.rung}>
                     <span className="n">
                       <bdi dir="ltr">{`${keyName(p.cell.root, p.cell.group === 'minor')}${p.cell.group === 'minor' ? 'm' : ''}`}</bdi>
                     </span>
@@ -879,7 +888,7 @@ function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onR
                         {he ? `ב־12 הסולמות ≈ ${through} דק׳` : `12 keys ≈ ${through} min`}
                       </small>
                     )}
-                  </span>
+                  </button>
                 </li>
               );
             })}
@@ -1119,7 +1128,7 @@ function FamilyLesson({ family, settings }: { family: string; settings: Settings
   );
 }
 
-function FamilyView({ lang, ds, f, items, start, onRun, todayLevels, assigned }: { lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void; /** §3.4 / §5.1: the marks — part of today, assigned. */ todayLevels?: Set<string> | null; assigned?: Set<string> }) {
+function FamilyView({ lang, ds, f, items, start, onRun, todayLevels, assigned, onPage }: { /** A level's item page (its rung on the key page; the week's key first). */ onPage?: (levelId: string, root: number) => void; lang: Lang; ds: DrillSettings; f: FamilyDef; items: Record<string, ItemState>; start?: number; onRun: (q: Drill[], i: number) => void; /** §3.4 / §5.1: the marks — part of today, assigned. */ todayLevels?: Set<string> | null; assigned?: Set<string> }) {
   const cur = currentLevel(f, items, ds.keyOrder, start);
   const [open, setOpen] = useState<string>(cur.id);
   // SPEC-PRACTICE-KEYS §3: the family split by scale family (major · minor · melodic/harmonic modes · symmetric) where
@@ -1158,11 +1167,23 @@ function FamilyView({ lang, ds, f, items, start, onRun, todayLevels, assigned }:
                 <StatusLadder ladder={ladder} lang={lang} compact />
               </span>
             </button>
+            {open === l.id && onPage && <LevelPageLink lang={lang} ds={ds} levelId={l.id} onPage={onPage} />}
             {open === l.id && <LevelGrid lang={lang} ds={ds} level={l} items={items} onRun={onRun} />}
           </div>
         );
       })}
     </div>
+  );
+}
+
+/** A family's level row → the level's item page (its rung on the key page, the week's key first); none for key-free levels. */
+function LevelPageLink({ lang, ds, levelId, onPage }: { lang: Lang; ds: DrillSettings; levelId: string; onPage: (levelId: string, root: number) => void }) {
+  const root = rungKeyOf(levelId, ds);
+  if (root === null) return null;
+  return (
+    <button type="button" className="link level-page-open" onClick={() => onPage(levelId, root)} data-level-page={levelId}>
+      {lang === 'he' ? 'הדף של השלב' : "The level's page"}
+    </button>
   );
 }
 
@@ -1475,7 +1496,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     void recordTakeAnalysis(drill, m, bpm, own).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
     const st0 = stateOf(drill);
-    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: channelOf(drill, st0), activeMs: (drill.beats * 60000) / Math.max(30, bpm) });
+    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: channelOf(drill, st0), activeMs: drillTakeMs(drill, bpm) });
     notePresented(drill, m.verdict === 'clean');
     // Studio look: a ladder step cleared above the previous best tempo is the moment (one tap continues).
     const nb = newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean');
@@ -2394,7 +2415,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     if (!rung) return;
     const d = rung.drill;
     const stt = items[d.itemId] ?? newItem(d);
-    const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d), channel: defaultChannel(d, stt), activeMs: (d.beats * 60000) / Math.max(30, d.startBpm) });
+    const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d), channel: defaultChannel(d, stt), activeMs: drillTakeMs(d, d.startBpm) });
     onTake(lad.state, drillEvents(d, m, new Date().toISOString(), session.current, n.current++), drillXp(m), takeInfo(d, m));
     setLast(m);
     // Show the marks for a moment, then move on by itself (owner: a mistake should simply move the test on).
@@ -2457,7 +2478,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     const checkDone = (m: TakeMetrics) => {
       const d = c.drill;
       const stt = items[d.itemId] ?? newItem(d);
-      const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d), channel: c.kind === 'ear' ? 'ear-fresh' : 'page-sight', activeMs: (d.beats * 60000) / Math.max(30, d.startBpm) });
+      const lad = applyTake(stt, m, d.startBpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(d), channel: c.kind === 'ear' ? 'ear-fresh' : 'page-sight', activeMs: drillTakeMs(d, d.startBpm) });
       onTake(lad.state, drillEvents(d, m, new Date().toISOString(), session.current, n.current++), drillXp(m), takeInfo(d, m));
       setLast(m);
       timer.current = window.setTimeout(nextCheck, m.verdict === 'clean' ? 1600 : 2600);

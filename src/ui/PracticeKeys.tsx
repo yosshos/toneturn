@@ -267,7 +267,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick }: { /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ onRung, gained = 0, today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick }: { /** Open a rung's item page here (lit, with its ladder, tempo chart and assign). */ onRung?: (levelId: string) => void; /** SPEC-DAILY-WORKOUT §5: "+N new exercises opened" after a tier rise (shown 3 days). */ gained?: number; /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -317,6 +317,11 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
       {mk && (
         <p className="key-matrix-line" data-key-matrix-key={mk.cells}>
           {he ? `כל התרגילים בסולם הזה ברמה שלכם: ${mk.cells} · סגורים ${mk.closed} · ${hrs(mk.minutes, true)}` : `Every exercise in this key at your level: ${mk.cells} · closed ${mk.closed} · ${hrs(mk.minutes, false)}`}
+        </p>
+      )}
+      {gained > 0 && (
+        <p className="field-hint today-gained" dir="auto" data-gained={gained}>
+          {he ? `+${gained} תרגילים חדשים נפתחו` : `+${gained} new exercises opened`}
         </p>
       )}
       {ceilings.length > 0 && (
@@ -389,7 +394,7 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
                   const done = e.drills.every((d) => cleanAt(items[d.itemId], d));
                   const inToday = !!today?.ids.size && e.drills.some((d) => today.ids.has(d.itemId));
                   return (
-                    <li key={`${e.family.id}:${e.level.id}`}>
+                    <li key={`${e.family.id}:${e.level.id}`} className={onRung ? 'has-page' : undefined}>
                       <button type="button" className={`kp-entry ${done ? 'done' : ''} ${rung?.id === e.level.id ? 'lit' : ''}`} onClick={() => run(e.drills)} data-kp-entry={e.level.id} data-today={inToday ? '1' : undefined} data-kp-lit={rung?.id === e.level.id ? '1' : undefined}>
                         <span className="kp-name">
                           <small>
@@ -404,6 +409,11 @@ export function KeyPage({ today, matrix, idx, root, group, items, lang, ds, onGr
                           </span>
                         )}
                       </button>
+                      {onRung && rung?.id !== e.level.id && (
+                        <button type="button" className="icon-btn kp-page" onClick={() => onRung(e.level.id)} aria-label={he ? 'הדף של השלב' : "The level's page"} title={he ? 'הדף של השלב' : "The level's page"} data-kp-page={e.level.id}>
+                          <Icon k="eye" size={18} />
+                        </button>
+                      )}
                     </li>
                   );
                 })}

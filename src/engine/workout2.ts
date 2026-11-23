@@ -397,6 +397,27 @@ export interface TeacherToday {
   /** The assignments served today, the earliest due first. */
   ids: string[];
 }
+/** The open assignments as the workout sees them — the teacher's minutes a day (§5.2) included. */
+export function teacherItems(as: readonly { lessonId: string; dueOn: string | null; minutes?: number | null; ifShort?: 'spread' | 'today'; perDay?: number | null }[]): TeacherItem[] {
+  return as.map((a) => ({ id: a.lessonId, dueOn: a.dueOn, ...(a.minutes != null ? { minutes: a.minutes } : {}), ...(a.ifShort ? { ifShort: a.ifShort } : {}), ...(a.perDay != null ? { perDay: a.perDay } : {}) }));
+}
+/**
+ * SPEC-PATH-TODAY-PRACTICE §3.4 for Improvise: the level that is part of today — with an improvisation block in today's
+ * workout, the first level not closed yet (its best under 90 %, improvLadder's "closed"); null without one.
+ */
+export function improvLevelToday(levels: readonly { id: string; n: number }[], best: Record<string, number> | undefined, blocks: readonly Block[]): number | null {
+  if (!blocks.some((b) => b.target.kind === 'improv' && (b.target.mode ?? 'improv') === 'improv')) return null;
+  return levels.find((l) => (best?.[l.id] ?? -1) < 0.9)?.n ?? null;
+}
+/**
+ * §3.4 for pieces: why a piece is part of today — the path's current step, or today's Repertoire review block (a piece
+ * due for review). Null: not part of today.
+ */
+export function pieceWhyToday(key: string, pathStepId: string | null | undefined, blocks: readonly Block[]): { en: string; he: string } | null {
+  if (pathStepId && pathStepId === key) return { en: 'New from the path', he: 'חדש מהמסלול' };
+  if (blocks.some((b) => b.target.kind === 'game' && b.target.game === 'rep-review' && b.target.piece === key)) return { en: 'Review today', he: 'חזרה היום' };
+  return null;
+}
 /** Minutes one assignment takes when the teacher didn't say (a lesson or a short exercise set). */
 export const ASSIGN_MIN = 5;
 
@@ -688,6 +709,17 @@ export const extendBlock = (r: WorkoutRun, min = 2): WorkoutRun => ({ ...r, bloc
 
 /** The countdown before the next block starts on its own (§5). */
 export const BETWEEN_S = 3;
+/** How long the player must be still (no tap, key, MIDI or heard note) before a run-out block hands over (§5). */
+export const BETWEEN_QUIET_MS = 4000;
+/**
+ * §5 for blocks on their own screens (Improvise, a game, the vocal warm-up): when the block's time runs out, the
+ * between-blocks screen shows at the end of the take — never while a take is in progress (`busy`) or the player is
+ * still playing / answering (an input within BETWEEN_QUIET_MS).
+ */
+export function betweenNow(timeUp: boolean, busy: boolean, lastInputAt: number | null, now: number): boolean {
+  if (!timeUp || busy) return false;
+  return lastInputAt === null || now - lastInputAt >= BETWEEN_QUIET_MS;
+}
 /** A finished block's one-line summary: minutes of active time, items and right answers. */
 export function blockSummary(r: WorkoutRun, id: string): { minutes: number; items: number; right: number } {
   const [items, right] = r.items[id] ?? [0, 0];

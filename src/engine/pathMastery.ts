@@ -11,7 +11,7 @@ import { levelDrills, levelKeyProgress, levelKeys, planWithFocus } from './drill
 import { generate } from './drills/generate';
 import { techLevel } from './ladderFacts';
 import { recency, KEY_LABEL } from './analysis/keyMastery';
-import { levelLadder, stepLadder } from './statusLadder';
+import { levelKeyRows, levelLadder, stepLadder } from './statusLadder';
 import { MASTER_STARS, pendingChecks, type PathFacts, type PathStep, type PathUnit, type PathView, type UnitStep } from './path';
 import type { DomainId } from './rating';
 
@@ -42,7 +42,11 @@ function techLive(step: PathStep, ctx: MasteryCtx): { stars: number; fresh: numb
   const n = kp.keys.filter((k) => k.target).length;
   const K = kp.keys.length;
   // The same five-star scale as plan.levelStars, read per key (the strip on the sheet shows the same keys).
-  const stars = !K ? 0 : n >= K ? 5 : n >= Math.ceil(K / 2) ? 4 : n >= Math.min(3, K) ? 3 : n >= 1 ? 2 : kp.keys.filter((k) => k.start).length >= Math.min(3, K) ? 1 : 0;
+  const raw = !K ? 0 : n >= K ? 5 : n >= Math.ceil(K / 2) ? 4 : n >= Math.min(3, K) ? 3 : n >= 1 ? 2 : kp.keys.filter((k) => k.start).length >= Math.min(3, K) ? 1 : 0;
+  // BUILD-PLAN D1/D4: the gold node ("Mastered", 5★) is the status ladder's "all keys" — every key closed (3 clean takes
+  // at ≥ 95 % of the target on 2 days); never gold beside a ladder still saying learning / almost / closed in one key
+  const allClosed = levelLadder(lv, ctx.items, ctx.order).lit.includes('keys12');
+  const stars = allClosed ? 5 : Math.min(raw, 4);
   const lasts = levelDrills(lv, ctx.order)
     .map((d) => ctx.items[d.itemId]?.last ?? '')
     .filter(Boolean)
@@ -143,7 +147,14 @@ export function missingFor(x: UnitStep, ctx: MasteryCtx): Missing {
       const keysDone = kp.keys.filter((k) => k.target).map((k) => k.key).sort((a, b) => rank(a) - rank(b));
       const names = keys.map((k) => KEY_LABEL[k]).join(', ');
       if (x.fade) return { kind: 'refresh', keys: kp.keys.map((k) => k.key), keysDone, bpm: kp.targetBpm, text: { en: `Refresh: play it again at ♩${kp.targetBpm}.`, he: `רענון: לנגן שוב ב־♩${kp.targetBpm}.` } };
-      if (!keys.length) return { kind: 'mastered', keys, keysDone, bpm: kp.targetBpm, text: { en: 'Mastered: every key at the target tempo.', he: 'נשלט: כל הסולמות בטמפו היעד.' } };
+      // D1: every key at the target once is not yet mastered — each key closes after clean takes on two days
+      const rows = levelKeyRows(lv, ctx.items, ctx.order);
+      const open = kp.keys.map((k) => k.key).filter((k) => rows.get(k)?.status !== 'closed').sort((a, b) => rank(a) - rank(b));
+      if (!keys.length && open.length) {
+        const on = open.map((k) => KEY_LABEL[k]).join(', ');
+        return { kind: 'tech', keys: open, keysDone: keysDone.filter((k) => !open.includes(k)), bpm: kp.targetBpm, text: { en: `Missing: ${on} closed — clean at ♩${kp.targetBpm} on another day`, he: `חסר: ${on} סגורים — נקי ב־♩${kp.targetBpm} ביום אחר` } };
+      }
+      if (!keys.length) return { kind: 'mastered', keys, keysDone, bpm: kp.targetBpm, text: { en: 'Mastered: every key closed at the target tempo.', he: 'נשלט: כל הסולמות סגורים בטמפו היעד.' } };
       return { kind: 'tech', keys, keysDone, bpm: kp.targetBpm, text: { en: `Missing: ${names} at ♩${kp.targetBpm}`, he: `חסר: ${names} ב־♩${kp.targetBpm}` } };
     }
   }

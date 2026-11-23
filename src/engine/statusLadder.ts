@@ -85,7 +85,7 @@ export function nextRung(l: Ladder): Rung | null {
 /** Passed from memory: a clean take with nothing shown (channelPlan.memoryPassed, kept here without the import cycle). */
 const memoryPassed = (st: ItemState | undefined): boolean => (st?.channels?.unaided?.clean ?? 0) > 0;
 
-interface KeyRow {
+export interface KeyRow {
   status: ItemStatus;
   memory: boolean;
 }
@@ -97,8 +97,8 @@ export function keyedLadder(kind: 'technique' | 'lick', rows: KeyRow[], language
   return ladderOf(kind, best, { keys12: allClosed, language, fingers: allClosed && rows.every((r) => r.memory) }, kind === 'technique' ? rows.length : undefined);
 }
 
-/** A technique level's ladder: per key, its items' status (the weakest) and a memory pass on all of them. */
-export function levelLadder(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): Ladder {
+/** A technique level per key: its items' status (the weakest, D1) and a memory pass on all of them. */
+export function levelKeyRows(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): Map<number, KeyRow> {
   const by = new Map<number, { sts: ItemStatus[]; mem: boolean }>();
   for (const d of levelDrills(level, order)) {
     const k = ((d.spec.key % 12) + 12) % 12;
@@ -108,7 +108,11 @@ export function levelLadder(level: LevelDef, items: Record<string, ItemState>, o
     cur.mem = cur.mem && memoryPassed(st);
     by.set(k, cur);
   }
-  return keyedLadder('technique', [...by.values()].map((v) => ({ status: unitStatus(v.sts), memory: v.mem })));
+  return new Map([...by.entries()].map(([k, v]) => [k, { status: unitStatus(v.sts), memory: v.mem }]));
+}
+/** A technique level's ladder: per key, its items' status (the weakest) and a memory pass on all of them. */
+export function levelLadder(level: LevelDef, items: Record<string, ItemState>, order: DrillSettings['keyOrder']): Ladder {
+  return keyedLadder('technique', [...levelKeyRows(level, items, order).values()]);
 }
 
 /** A lick's ladder over its 12 keys on this instrument; "in my language" from the usage log (vocab.inMyLanguage). */

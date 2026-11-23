@@ -5,6 +5,7 @@
 import { focusOf, picksOf } from '../engine/styleFocus';
 import { STYLE_TEXT, type StyleId } from '../engine/styles';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { drillTakeMs } from './takeClock';
 import '../licks.css';
 import { bassTuningOf, type Settings } from '../storage/progress';
 import type { Drill, DrillCalibration, ItemState, PlayedNote, TakeMetrics } from '../engine/drills/types';
@@ -21,7 +22,7 @@ import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
 import {
-  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, lickOfDrill, LICKS, lickSound, lickStars, lickTempos, lickTarget, lickXp, lineLicks, nextLickKey, reviewKey,
+  bookAfterTake, byEarXp, CONTEXTS, contextOf, dueLicks, isMinorLick, LICK_KEYS, LICK_KNOWN_STARS, lickById, lickDrill, lickEvents, lickGrid, lickOfDrill, LICKS, lickSound, lickStars, lickTempoItem, lickTempos, lickTarget, lickXp, lineLicks, nextLickKey, reviewKey,
   type Lick, type LickBook, type LickContext, type LickInstrument,
 } from '../engine/licks';
 import { findLick, useItChart, useItPassed, type ImpNote } from '../engine/lickDetect';
@@ -167,7 +168,7 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     const st0 = stateOf(drill);
     // the channel: by ear with the notes still hidden = ear (fresh on the item's first take); otherwise read from the page
     const ch = byEar && !earNow.revealed ? (st0.takes ? 'ear-known' : 'ear-fresh') : 'page-known';
-    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: lickTarget(lick), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: ch, activeMs: (drill.beats * 60000) / Math.max(30, bpm) });
+    const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: lickTarget(lick), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: ch, activeMs: drillTakeMs(drill, bpm) });
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
@@ -579,7 +580,7 @@ export function LickTrainerScreen({ lang, settings, items, onSettings, onTake, o
         <ItemHead
           dense
           lang={lang}
-          tempoItem={Object.values(itemsNow).filter((x) => x.itemId?.startsWith(`lick:${l.id}:`) && x.takes > 0).sort((a, b) => (b.history?.length ?? 0) - (a.history?.length ?? 0))[0] ?? null}
+          tempoItem={lickTempoItem(l, inst, itemsNow)}
           ladder={ladderOfLick(l)}
           kicker={
             <span className="lk-meta" data-stars={stars}>

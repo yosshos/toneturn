@@ -12,7 +12,7 @@ import { playerTier } from '../engine/drills/tiers';
 import { keyMatrix, type MatrixCell, type MatrixGroup, type MatrixView } from '../engine/drills/keyMatrix';
 import { lickPool } from '../engine/vocab';
 import { focusOf, weightedFocus } from '../engine/styleFocus';
-import { freezePlan, openedByTier, thawPlan, todayTechPlan, weekGroupFor, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
+import { freezePlan, openedByTier, resizePlan, thawPlan, todayTechPlan, weekGroupFor, weekKeyFromMatrix, type FrozenPlan, type PlanCell } from '../engine/drills/todayPlan';
 
 const lsGet = (k: string): string | null => {
   try {
@@ -133,9 +133,27 @@ export function noteMatrixSeen(instrument: string, tier: number, n: number, day:
     all[instrument] = gained > 0 ? { tier, n, gained, day } : { ...(prev ?? {}), tier, n };
     lsSet(SEEN_KEY, JSON.stringify(all));
   }
-  const cur = all[instrument];
+  lsSet(SEEN_LAST, instrument);
+  return gainedShown(all[instrument], day);
+}
+const SEEN_LAST = 'toneturn.matrixSeenLast';
+const gainedShown = (cur: { gained?: number; day?: string } | undefined, day: string): number => {
+  if (!cur) return 0;
   const age = cur.day ? Math.round((Date.parse(`${day}T12:00:00Z`) - Date.parse(`${cur.day}T12:00:00Z`)) / 86400000) : 99;
   return cur.gained && age >= 0 && age < 3 ? cur.gained : 0;
+};
+/**
+ * §5 on the Progress page: the "+N new exercises opened" kept by the technique screen (read only — no matrix), for
+ * `instrument` or the last instrument whose matrix was seen. 0: none to show.
+ */
+export function matrixGained(day: string, instrument?: string): number {
+  try {
+    const all = JSON.parse(lsGet(SEEN_KEY) ?? '{}') ?? {};
+    const inst = instrument ?? lsGet(SEEN_LAST);
+    return inst ? gainedShown(all[inst], day) : 0;
+  } catch {
+    return 0;
+  }
 }
 
 const PLAN_KEY = 'toneturn.todayKeys';
@@ -199,14 +217,17 @@ export function todayTech(a: { settings: Pick<Settings, 'courseStart' | 'drillSt
   const order = keysInOrder(a.ds.keyOrder, false);
   const weekRoot = keptWeekKey(group, inst, () => weekKeyFromMatrix(cells, group, order), `${a.day}T12:00:00`);
   const kept = keptPlan(a.day);
-  if (kept && kept.minutes === a.minutes && kept.view === view && (kept.inst ?? 'piano') === inst) {
-    const plan = thawPlan(kept, cells);
-    if (plan.length) return { plan, weekRoot, weekGroup: group, at: Math.min(kept.at, plan.length - 1), minutes: a.minutes };
-  }
+  const sameInst = !!kept && (kept.inst ?? 'piano') === inst;
+  const keptCells = kept && sameInst ? thawPlan(kept, cells) : [];
+  if (kept && sameInst && kept.minutes === a.minutes && kept.view === view && keptCells.length) return { plan: keptCells, weekRoot, weekGroup: group, at: Math.min(kept.at, keptCells.length - 1), minutes: a.minutes };
   // …drawn by THE weights (styleWeight via weightedFocus: the rest by taste, liked ×2 / declined ×0.4)
-  const plan = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus: weightedFocus(a.settings, inst === 'piano' ? 'keys' : inst, a.day), day: a.day });
-  lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), view, inst } satisfies Kept));
-  return { plan, weekRoot, weekGroup: group, at: 0, minutes: a.minutes };
+  const fresh = todayTechPlan(cells, { minutes: a.minutes, weekRoot, weekGroup: group, view, keyOrder: order, focus: weightedFocus(a.settings, inst === 'piano' ? 'keys' : inst, a.day), day: a.day });
+  // Never lose progress: "+2 min" (or a new view) keeps today's plan and the cell the run reached — the kept cells stay
+  // (a new view re-orders only the cells not reached yet) and the fresh plan fills the rest.
+  const at = kept && keptCells.length ? Math.min(kept.at, keptCells.length - 1) : 0;
+  const plan = kept && keptCells.length ? resizePlan(keptCells, fresh, a.minutes, at, kept.view === view) : fresh;
+  lsSet(PLAN_KEY, JSON.stringify({ ...freezePlan(plan, a.day, a.minutes), at, view, inst } satisfies Kept));
+  return { plan, weekRoot, weekGroup: group, at, minutes: a.minutes };
 }
 
 /**

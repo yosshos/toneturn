@@ -11,6 +11,7 @@ import { repGoalFor } from '../engine/repStyleGoal';
 import { useEffect, useMemo, useState } from 'react';
 import { REP_TIERS, repItem, repLeadsFrom, repResults, tierName, wayLabel, type RepCourse } from '../engine/repertoire';
 import { STYLE_TEXT, type StyleId } from '../engine/styles';
+import type { ItemState } from '../engine/drills/types';
 import { chartOfPiece, entryStyle, libraryFor, mineEntries, mineMatches, parsePieceKey, pieceActions, pieceKeys, pieceStatus, recStatus, REP_TABS, scoreStatus, searchLib, tabName, whereInPath, type LibEntry, type MineFilter, type MyChartLike, type PieceAction, type RepTab } from '../engine/repLibrary';
 import type { ItemStatus } from '../engine/drills/itemStatus';
 import { CHART_TEMPLATES } from '../engine/charts';
@@ -36,6 +37,8 @@ type Lang = 'he' | 'en';
 type Bi = { en: string; he: string };
 
 export interface RepertoireProps {
+  /** The piece page's tempo chart (ItemHead): the piece's most played drill item, if any. */
+  tempoItemOf?: (e: LibEntry) => ItemState | null;
   lang: Lang;
   course: CourseId;
   jazz: 'off' | 'on' | 'focus';
@@ -439,6 +442,7 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
         item={itemRef}
         teaching={teaching}
         title={entry.title[lang]}
+        tempoItem={props.tempoItemOf?.(entry) ?? null}
       />
       {it && <h2 className="rep-teaches">{it.teaches[lang]}</h2>}
       <div className="rep-ways">
@@ -467,7 +471,7 @@ function PiecePage(props: RepertoireProps & { entry: LibEntry; status: ItemStatu
           <div className="rep-tech chips" data-rep-tech={keys.length}>
             <small>{he ? 'הסולמות של היצירה' : "The piece's keys"}</small>
             {keys.map((k) => (
-              <button key={`${k.root}-${k.minor}`} className="chip" onClick={() => props.onAction(entry, { k: 'technique', key: k.root })} data-rep-tech-key={k.root}>
+              <button key={`${k.root}-${k.minor}`} className="chip" onClick={() => props.onAction(entry, { k: 'technique', key: k.root, minor: k.minor })} data-rep-tech-key={k.root}>
                 <bdi dir="ltr">{KEY_NAME[k.root] + (k.minor ? 'm' : '')}</bdi>
               </button>
             ))}

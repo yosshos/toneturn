@@ -12,10 +12,10 @@ import { kitHiddenLevels } from './drumAcoustic';
 import { hiddenBassLevels, pianoMicHiddenLevels, type DrumMic, levelDrills, levelStars, shownFamilies, targetBpmOf } from './drills/plan';
 import { itemPass } from './drills/ladder';
 import type { Drill, DrillSettings, FamilyId, ItemState } from './drills/types';
-import { stepCatalogue, stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
+import { ladderStepById, stepCatalogue, stepStars, VOCAL_PROGRAMS, type PathFacts } from './path';
 import { testedLevelIds } from './drills/levelTest';
 import { voiceStartNow } from './voiceFamilies';
-import { inChannel, STEP_CHANNEL, type StepChannel } from './stepChannel';
+import { inChannel, STEP_CHANNEL, stepChannelOf, type StepChannel } from './stepChannel';
 
 let DIFFS: Map<string, number> | null = null;
 /** A technique level's path rating (its placement by difficulty, levelPlacement.ts / path.ts). */
@@ -147,7 +147,7 @@ export function workoutCreditsStep(step: { id: string; kind: string }, firstTry:
  */
 export function withLadderFacts(
   f: PathFacts,
-  opts: { families: string[]; items: Record<string, ItemState>; order: DrillSettings['keyOrder']; start: Partial<Record<FamilyId, number>>; vocalPassed: number[]; at: string; /** §4.4: steps that require a channel (default: stepChannel.STEP_CHANNEL). */ channels?: Record<string, StepChannel> },
+  opts: { families: string[]; items: Record<string, ItemState>; order: DrillSettings['keyOrder']; start: Partial<Record<FamilyId, number>>; vocalPassed: number[]; at: string; /** §4.4: steps that require a channel (default: stepChannel.STEP_CHANNEL). */ channels?: Record<string, StepChannel>; /** §4.4: the path's steps (their own `channel` field wins over the table; default: the path's ladder steps). */ steps?: readonly { id: string; channel?: StepChannel }[] },
 ): PathFacts {
   if (!opts.families.length) return f;
   const steps = { ...(f.steps ?? {}) };
@@ -167,7 +167,8 @@ export function withLadderFacts(
       // SPEC-PATH-ROLE: a step is opened at 1 star (three keys clean at the base tempo). Facts only rise, so a ✓ given
       // under the old rule (three keys at the target tempo) is never taken away.
       // SPEC-PATH-TODAY-PRACTICE §4.4: a step that requires a channel opens only on clean takes in that channel
-      const req = (opts.channels ?? STEP_CHANNEL)[id];
+      // the step's own PathStep.channel first (path.ts), then the table
+      const req = stepChannelOf(opts.steps?.find((x) => x.id === id) ?? ladderStepById(id) ?? { id }, opts.channels ?? STEP_CHANNEL);
       const st = techStars(lv, req ? inChannel(opts.items, req) : opts.items, opts.order);
       if (st >= TECH_DONE_STARS) set(id, st);
     }

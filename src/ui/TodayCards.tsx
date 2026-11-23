@@ -119,7 +119,7 @@ export function PitchMemoryCard({ progress, lang, onOpen }: { progress: Progress
   );
 }
 
-export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore, streak, onStreak }: { /** The streak in the stats row. */ streak?: number; onStreak?: () => void; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
+export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore, streak, onStreak, onWeek }: { /** The weekly ring opens Progress → Over time. */ onWeek?: () => void; /** The streak in the stats row. */ streak?: number; onStreak?: () => void; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -171,7 +171,7 @@ export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exa
           )}
         </button>
         {/* SPEC-PROGRESS-CHARTS §2: the small weekly ring — this week's minutes against last week's, with ▲/▼ */}
-        <WeeklyRingTile lang={lang} />
+        <WeeklyRingTile lang={lang} onOpen={onWeek} />
         {streak !== undefined && (
           <button type="button" className="tc-card st-stat st-streak" onClick={onStreak} data-today-streak="1">
             <small>{sx.streak}</small>
