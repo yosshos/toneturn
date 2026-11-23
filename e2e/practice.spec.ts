@@ -175,7 +175,7 @@ test.describe('practice hub', () => {
     await expect(page.locator('[data-rule="note"]')).toHaveValue('guide-beats');
     await expect(page.locator('[data-rule="shape"]')).toHaveValue('end-chord-tone');
     await page.locator('[data-challenges-open]').click();
-    await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(88);
+    await expect(page.locator('[data-challenge-library] [data-challenge]')).toHaveCount(90); // phase 4 added the lick challenges
     await page.locator('[data-challenge-library] [data-challenge="one-note-swing"]').click();
     await expect(page.locator('[data-rule="note"]')).toHaveValue('one-note');
     // improvise (simulator): the debrief follows with a next step

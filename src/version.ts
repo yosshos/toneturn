@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.120.0',
+    date: '2026-11-23',
+    en: ['Improvise opens on the scale rotation: a lead sheet with a scale for each chord, a colour and a letter per scale family, the next scale ahead, and after each take how many colour notes you used', 'Phrase and Trade are graded against the scales; the improvisation block of the daily workout opens with the lick of the day', 'Practice by key adds the natural minor inside each major key, ladders for guitar and bass, and from the upper tiers melodic minor and the modes', 'Corrected Latin grooves: a true two-bar son clave you can hear, the bembe bell in 6/8, the tumbao kick and the songo hands; Brazilian items are played straight; the organ no longer reacts to touch and takes the swell pedal'],
+    he: ['האלתור נפתח בסבב הסולמות: דף אקורדים עם סולם לכל אקורד, צבע ואות לכל משפחת סולמות, הסולם הבא מראש, ואחרי כל נגינה כמה צלילי צבע השתמשתם', 'משפט וחילופים נבדקים מול הסולמות; בלוק האלתור של האימון היומי נפתח בליק של היום', 'האימון לפי סולם מוסיף את המינור הטבעי בתוך כל סולם מז׳ורי, סולמות התקדמות לגיטרה ולבס, ובדרגות הגבוהות מינור מלודי והמודוסים', 'גרובים לטיניים מתוקנים: קלאבה סון אמיתית של שתי תיבות שאפשר לשמוע, פעמון במבה ב-6/8, הבעיטה של הטומבאו והידיים בסונגו; פריטים ברזילאיים מנוגנים ישר; האורגן כבר לא מגיב לעוצמת הלחיצה ומקבל את פדל העוצמה'],
+  },
+  {
     version: '0.119.0',
     date: '2026-11-22',
     en: ['Every lick runs in all 12 keys, in your language: a lick you play in many keys and use while improvising becomes yours', 'Each lick has two modes, from the page or by ear, and steps for the ear lead you from hearing to playing', 'Your takes are counted by how you played them: from the page, by ear or from memory; the progress page shows both sides', 'Notes fade as an item grows familiar, a short daily sight-reading dose, and two self-ratings when you pick an instrument'],
