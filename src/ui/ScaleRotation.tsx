@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { chartBacking, IMPROV_LEVELS, parseChart, transposeChart, type ChartStyle } from '../engine/charts';
 import { STANDARD_CHANGES } from '../engine/standards';
-import { buildRotationSheet, cellAt, cellNotes, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, nextChange, scaleShort, type ImprovTake, type RotationGrade, type RotationSheet, type SheetCell } from '../engine/rotationSheet';
+import { buildRotationSheet, cellAt, cellNotes, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, nextChange, rotationMeter, scaleShort, type ImprovTake, type RotationGrade, type RotationSheet, type SheetCell } from '../engine/rotationSheet';
 import type { ModeStats, PlayedNote } from '../engine/rotation';
 import type { NoteEvent } from '../engine/lesson';
 import type { Settings } from '../storage/progress';
@@ -168,6 +168,23 @@ function MarkedKeys({ onKey, pcs, colour, avoid, fam }: { onKey: (m: number) => 
   );
 }
 
+/** The "same notes as G altered" note shows only the first time the sub comes up on this device (SPEC-RBI-ROTATION §2). */
+const SAME_SEEN = 'toneturn.rotation.sameNotesSeen';
+export function sameNoteSeen(): boolean {
+  try {
+    return localStorage.getItem(SAME_SEEN) === '1';
+  } catch {
+    return false;
+  }
+}
+export function markSameNoteSeen(): void {
+  try {
+    localStorage.setItem(SAME_SEEN, '1');
+  } catch {
+    /* storage blocked: the note may show again */
+  }
+}
+
 export interface RotationChart {
   id: string;
   title: string;
@@ -184,7 +201,7 @@ export function rotationCharts(lang: Lang, dayKey: number, piece?: MyChart | nul
     const L = IMPROV_LEVELS.find((x) => x.n === n);
     if (L) out.push({ group: 'levels', c: { id: `lv:${n}`, title: `${L.title[lang].replace(/ (in C|בדו)$/, '')} · ${kName(dayKey)}`, text: dayKey ? transposeChart(L.text, dayKey) : L.text, style: L.style, bpm: L.bpm } });
   }
-  for (const s of STANDARD_CHANGES) if (s.style !== 'waltz') out.push({ group: 'standards', c: { id: `std:${s.id}`, title: `${s.name} — ${s.part[lang]}`, text: s.text, style: s.style, bpm: s.bpm } });
+  for (const s of STANDARD_CHANGES) out.push({ group: 'standards', c: { id: `std:${s.id}`, title: `${s.name} — ${s.part[lang]}`, text: s.text, style: s.style, bpm: s.bpm } });
   return out;
 }
 
@@ -195,7 +212,8 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   const chart = (charts.find((x) => x.c.id === src) ?? charts[0]).c;
   const [bpm, setBpm] = useState(Math.min(chart.bpm, tier === 1 ? 92 : tier === 2 ? 104 : 116));
   const stats: ModeStats = settings.rotationStats ?? {};
-  const build = (seed: number) => buildRotationSheet(chart.text, { tier, stats, seed });
+  // a waltz is laid out in 3/4 (the backing plays it in 3)
+  const build = (seed: number) => buildRotationSheet(chart.text, { tier, stats, seed, meter: rotationMeter(chart.style) });
   // the sheet stays as played until the next take (its colour marks belong to it); the next take picks again by need
   // (a new seed, and the stats the last take moved)
   const [sheet, setSheet] = useState<RotationSheet | null>(() => build(1));
@@ -214,6 +232,9 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   const [showKeys, setShowKeys] = useState(midi.devices.length === 0);
   // SPEC-EAR-AND-READING §3.4: the lead sheet off once the progression is known (memory); hidden while playing only
   const [memory, setMemory] = useState(false);
+  // the tritone sub's "same notes" note: until it has been shown once in a take on this device
+  const [sameSeen, setSameSeen] = useState(sameNoteSeen);
+  const sameShown = useRef(false);
   const ctl = useRef<AbortController | null>(null);
   const t0 = useRef(0);
   const notes = useRef<PlayedNote[]>([]);
@@ -258,8 +279,8 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
     setGrade(null);
     setChorus(0);
     setRunning(true);
-    const p = parseChart(chart.text);
-    const b = chartBacking(p, chart.style, bpm, sheet.choruses);
+    const p = parseChart(chart.text, sheet.meter);
+    const b = chartBacking(p, chart.style, bpm, sheet.choruses, sheet.meter);
     // the click on every beat of the take, under the band (the count-in comes from the backing)
     const total = sheet.bars * sheet.meter * sheet.choruses;
     const clicks: NoteEvent[] = Array.from({ length: total }, (_, k) => ({ midi: 96, start: (b.startBeat + k) * beatS, duration: 0.04, velocity: k % sheet.meter ? 0.16 : 0.26, perc: (k % sheet.meter ? 'click' : 'accent') as 'click' | 'accent' }));
@@ -277,6 +298,10 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
     raf.current = requestAnimationFrame(tick);
     await piano.play([...b.events, ...clicks], b.length, c.signal).catch(() => {});
     cancelAnimationFrame(raf.current);
+    if (sameShown.current) {
+      markSameNoteSeen();
+      setSameSeen(true);
+    }
     const done = !c.signal.aborted;
     c.abort();
     setRunning(false);
@@ -305,15 +330,17 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
   const shown = now >= 0 ? sheet.cells[now] : nx?.cell ?? sheet.cells[0];
   // the tritone sub's note, the first time one comes up in the sheet (now or next): same notes as the V's altered
   const firstSame = sheet.cells.find((c) => c.same);
-  const sameCell = firstSame && beat !== null && (shown === firstSame || chip?.cell === firstSame) ? firstSame : null;
+  const sameCell = !sameSeen && firstSame && beat !== null && (shown === firstSame || chip?.cell === firstSame) ? firstSame : null;
+  if (sameCell) sameShown.current = true;
   const marks = cellNotes(shown, sheet);
   const fams = [...new Set(sheet.cells.map((c) => c.fam))];
-  const countNow = beat === null ? -1 : beat < 0 ? Math.max(0, Math.min(3, Math.floor(beat + 4))) : 4 + (Math.floor(beat) % sheet.meter);
+  // the count-in is one bar of the meter (3 beats in a waltz), as the backing counts it
+  const countNow = beat === null ? -1 : beat < 0 ? Math.max(0, Math.min(sheet.meter - 1, Math.floor(beat + sheet.meter))) : sheet.meter + (Math.floor(beat) % sheet.meter);
   return (
     <section className="rot" data-rs="1" data-rs-tier={tier}>
       <div className="rs-top">
         <span className="rs-key" data-rs-key={dayKey}>
-          {tx.key} <bdi dir="ltr">{kName(sheet.tonic)}</bdi>
+          {tx.key} <bdi dir="ltr">{kName(sheet.tonic, sheet.minor)}</bdi>
         </span>
         <div className="seg rs-tiers" role="radiogroup" aria-label={tx.tier}>
           {([1, 2, 3] as const).map((t) => (
@@ -347,7 +374,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
       {top}
       <LeadSheet sheet={sheet} chorus={chorus} now={now} hits={grade?.hits} lang={lang} hidden={memory && running} />
       <div className="rs-under">
-        {chip && !(memory && running) ? (
+        {chip ? (
           <span className={`rs-next${chip.changed ? ' changed' : ''}`} data-rs-next={chip.cell.mode} data-rs-next-bars={chip.bars || undefined} aria-live="polite">
             <small>{tx.next}</small> <bdi dir="ltr">{chip.cell.sub?.sym ?? chip.cell.sym}</bdi> <ScaleTag c={chip.cell} lang={lang} />
             {chip.changed && (
@@ -374,7 +401,7 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
           </div>
         )}
       </div>
-      {running ? <BeatDots countIn={4} beats={sheet.meter} now={countNow} /> : (
+      {running ? <BeatDots countIn={sheet.meter} beats={sheet.meter} now={countNow} /> : (
         <p className="rs-legend" aria-label={lang === 'he' ? 'משפחות הסולמות' : 'Scale families'}>
           {fams.map((f) => (
             <span key={f} className={`rs-scale fam-${f}`}>

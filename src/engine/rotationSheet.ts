@@ -3,9 +3,9 @@
 // per bar for the screen, with the scale family (a colour AND a short tag, never colour alone), the "next" chip, and a
 // take's grading (classifyNotes / rotationMetrics / updateModeStats) turned into one rated result. Pure.
 
-import { parseChart, type ParsedChart } from './charts';
+import { parseChart, type ChartStyle, type ParsedChart } from './charts';
 import { spansOfChart } from './ruleCards';
-import { assignScales, avoidPcs, classifyNotes, colourNotes, harmonyOf, insertSubs, qualityOf, rotationMetrics, spanColours, updateModeStats, type Fn, type HarmonySpan, type ModeStats, type PlayedNote, type RotationMetrics } from './rotation';
+import { assignScales, avoidPcs, classifyNotes, colourNotes, harmonyOf, insertSubs, keyAreas, qualityOf, rotationMetrics, spanColours, updateModeStats, type Fn, type HarmonySpan, type KeyCentre, type ModeStats, type PlayedNote, type RotationMetrics } from './rotation';
 import { MODE_FAMILY, MODE_NAMES, MODE_STEPS, type ModeId } from './modes';
 import type { RatingEvent } from './rating';
 
@@ -70,21 +70,36 @@ export const prettySym = (sym: string): string => sym.replace(/^([A-G])b/, '$1�
 const rootOfSym = (sym: string): string | null => prettySym(sym).match(/^[A-G][♭♯]?/)?.[0] ?? null;
 
 /**
- * The tonic of a chart: a last minor chord (m7, m6, mMaj7) with its dominant (V, or a ii–V) into it; else its last
- * major or minor-tonic chord; else its first chord's root.
+ * The key of a chart from its key areas (rotation.keyAreas) and its first and last chords: a tune that starts and
+ * ends in the same area is in that key (Blue Bossa, Solar: a last-bar turnaround resolves into the first bar, so the
+ * tune is minor); else the area of the last chord when the tune ends on its tonic (Autumn Leaves ends on Gm); else the
+ * area of the first chord. A chart with no cadence (a modal vamp, a blues of dominants): its first chord when the last
+ * chord has the same root, else its last major or minor-tonic chord, else its first chord.
  */
-export function tonicOfChart(p: ParsedChart): number {
-  const last = p.chords[p.chords.length - 1];
-  if (last && (qualityOf(last.iv) === 'm7' || qualityOf(last.iv) === 'mtonic')) {
-    const before = [...p.chords].reverse().find((c) => c.root !== last.root || c.iv.join() !== last.iv.join());
-    if (before && qualityOf(before.iv) === 'dom' && mod(before.root - last.root) === 7) return last.root;
+export function keyOfChart(p: ParsedChart): KeyCentre {
+  const cs = p.chords;
+  if (!cs.length) return { tonic: 0, minor: false };
+  const minorQ = (iv: number[]) => ['m7', 'mtonic', 'hd7'].includes(qualityOf(iv));
+  const areas = keyAreas(cs);
+  const first = areas[0], last = areas[cs.length - 1], lc = cs[cs.length - 1];
+  if (first && last) {
+    if (first.tonic === last.tonic && first.minor === last.minor) return first;
+    if (lc.root === last.tonic) return last;
+    return first;
   }
-  for (let i = p.chords.length - 1; i >= 0; i--) {
-    const q = qualityOf(p.chords[i].iv);
-    if (q === 'maj' || q === 'mtonic') return p.chords[i].root;
+  if (cs[0].root === lc.root) return { tonic: lc.root, minor: minorQ(lc.iv) };
+  for (let i = cs.length - 1; i >= 0; i--) {
+    const q = qualityOf(cs[i].iv);
+    if (q === 'maj' || q === 'mtonic') return { tonic: cs[i].root, minor: q === 'mtonic' };
   }
-  return p.chords[0]?.root ?? 0;
+  return { tonic: cs[0].root, minor: minorQ(cs[0].iv) };
 }
+
+/** The tonic of a chart (keyOfChart). */
+export const tonicOfChart = (p: ParsedChart): number => keyOfChart(p).tonic;
+
+/** The meter the rotation lays a chart out in: a waltz in 3/4, the rest in 4/4 (as the backing plays it). */
+export const rotationMeter = (style: ChartStyle): number => (style === 'waltz' ? 3 : 4);
 
 // ---------------------------------------------------------------- the sheet
 
@@ -113,6 +128,8 @@ export interface SheetCell {
 
 export interface RotationSheet {
   tonic: number;
+  /** The chart's key is minor (keyOfChart). */
+  minor: boolean;
   tier: number;
   meter: number;
   /** Bars per chorus. */
@@ -131,7 +148,9 @@ export function buildRotationSheet(chart: string | ParsedChart, o: { tier: numbe
   const meter = o.meter ?? 4;
   const p = typeof chart === 'string' ? parseChart(chart, meter) : chart;
   if (!p.chords.length || p.bars < 1) return null;
-  const tonic = o.tonic ?? tonicOfChart(p);
+  const key = keyOfChart(p);
+  const tonic = o.tonic ?? key.tonic;
+  const minor = o.tonic === undefined || o.tonic === key.tonic ? key.minor : false;
   const bars = p.bars;
   const choruses = o.choruses ?? (bars >= 16 ? 1 : Math.max(2, Math.ceil(8 / bars)));
   const spans = spansOfChart(p, meter, bars);
@@ -162,7 +181,7 @@ export function buildRotationSheet(chart: string | ParsedChart, o: { tier: numbe
     }
     return { at: s.at, beats: s.beats, chorus: Math.floor(s.at / (bars * meter) + 1e-6), bar: Math.floor(inChorus / meter + 1e-6), sym: prettySym(sym), sub, fn: s.fn, mode: x.mode, root: s.sub ? s.sub.root : s.root, rootName, fam: scaleFamily(x.mode), window: x.window, ...(same ? { same } : {}) };
   });
-  return { tonic, tier: o.tier, meter, bars, choruses, plan, cells };
+  return { tonic, minor, tier: o.tier, meter, bars, choruses, plan, cells };
 }
 
 /** A sub chord's suffix from its intervals. */
@@ -281,7 +300,7 @@ export const FN_NAME: Record<Fn, L> = {
   iM7: { en: 'the minor tonic (mMaj7)', he: 'טוניקה מינורית עם ספטימה גדולה' },
   i7: { en: 'the minor tonic (m7)', he: 'טוניקה מינורית עם ספטימה קטנה' },
   iv: { en: 'the minor iv', he: 'רביעית מינורית שאולה' },
-  iv7: { en: 'the backdoor iv', he: 'רביעית של הדלת האחורית' },
+  iv7: { en: 'the minor iv (m7)', he: 'רביעית מינורית עם ספטימה קטנה' },
   iiø: { en: 'iiø', he: 'שנייה חצי־מוקטנת' },
   'V-maj': { en: 'V→major', he: 'דומיננטה שנפתרת למז׳ור' },
   'V-min': { en: 'V→minor', he: 'דומיננטה שנפתרת למינור' },

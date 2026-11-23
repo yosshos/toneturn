@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { IMPROV_LEVELS, parseChart, transposeChart } from '../src/engine/charts';
-import { MENUS, type ModeStats } from '../src/engine/rotation';
+import { MENUS, menuFor, type ModeStats } from '../src/engine/rotation';
 import { buildRotationSheet, cellAt, FAM_NAME, FAM_TAG, gradeRotation, improvTake, nextCell, rbiTier, SCALE_FAMS, scaleFamily, scaleShort, tonicOfChart, weakModes } from '../src/engine/rotationSheet';
 import { suggestWorkout, whyOf } from '../src/engine/workout2';
 import { pieceActions } from '../src/engine/repLibrary';
@@ -24,13 +24,15 @@ describe('the lead sheet: the scale per chord from the spec menus only', () => {
           for (const seed of [1, 7, 42]) {
             const sh = buildRotationSheet(transposeChart(lvl(n), key), { tier, seed })!;
             expect(sh.tonic).toBe(key);
-            for (const c of sh.cells) {
-              const open = MENUS[c.fn].filter((e) => tier >= e.min).map((e) => e.mode);
+            sh.cells.forEach((c, i) => {
+              // the function's menu at the tier, filtered by the written tensions (a G7alt is altered at every tier)
+              const open = menuFor(sh.plan[i].span, tier);
+              for (const m of open) expect(MENUS[c.fn].map((e) => e.mode)).toContain(m);
               expect(open, `${n} T${tier} ${c.sym} ${c.fn}`).toContain(c.mode);
               expect(SCALE_FAMS).toContain(c.fam);
               expect(FAM_TAG[c.fam].en && FAM_TAG[c.fam].he).toBeTruthy();
               expect(scaleShort(c.mode, 'he')).not.toMatch(/[A-Za-z]/);
-            }
+            });
           }
   });
   it('owner answers: no altered over V→major at T1; altered opens at T2; no half-whole over V→minor below T4', () => {
@@ -124,7 +126,8 @@ describe('the rotation over the take: the window, the next chip, the now-cue', (
     const ui = src('ui/ScaleRotation.tsx');
     expect(ui).toContain('chartBacking(');
     expect(ui).toMatch(/perc: \(k % sheet\.meter \? 'click' : 'accent'\)/);
-    expect(ui).toContain('<BeatDots countIn={4}');
+    // the count-in is one bar of the chart's meter (a waltz counts 3)
+    expect(ui).toContain('<BeatDots countIn={sheet.meter}');
     expect(ui).toContain("i === now ? ' now' : ''");
     expect(ui).toContain('<bdi dir="ltr">{c.sym}</bdi>');
     expect(ui).toContain('<bdi dir="ltr">{c.rootName}</bdi>');
