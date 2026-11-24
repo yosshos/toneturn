@@ -192,10 +192,8 @@ describe('9. the teacher’s options reach the student (§5.2)', () => {
       if (fn === 'toneturn_my_classes') return { teaching: [], member_of: [{ id: 'k', name: 'Jazz 1', teacher: 'T', assignments: [{ id: 'x1', lesson_id: 'runs', due_on: null, created_at: DAY, done: false }] }] };
       throw new Error(fn);
     });
-    // the migration isn't applied: the flag keeps the call off
-    expect(await assignOptsFor(['x1'])).toEqual({});
-    expect(calls).toEqual([]);
-    const opts = await assignOptsFor(['x1'], true);
+    // the migration is applied (2026-11-24): the call goes through by default
+    const opts = await assignOptsFor(['x1']);
     expect(opts.x1).toEqual({ channel: 'ear', minutes: 12, ifShort: 'today' });
     const open = withAssignOpts(openAssignments(await myClasses()), opts);
     expect(open[0]).toMatchObject({ lessonId: 'runs', channel: 'ear', perDay: 12, ifShort: 'today' });

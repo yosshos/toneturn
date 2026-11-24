@@ -20,10 +20,8 @@ describe('since the last lesson (SPEC-PROGRESS-CHARTS §3)', () => {
 
 describe('teacher charts: only while the summaries sync (or a test backend answers)', () => {
   afterEach(() => setSnapshotsBackend(null));
-  it('off until the migration is applied; the injected backend answers the class RPCs', async () => {
-    expect(SNAPSHOTS_SYNCED).toBe(false);
-    expect(snapshotsOn()).toBe(false);
-    expect(await classSnapshots('demo-class', '2000-01-01')).toEqual({});
+  it('on since the migration was applied (2026-11-24); the injected backend answers the class RPCs', async () => {
+    expect(SNAPSHOTS_SYNCED).toBe(true);
     const store: Record<string, string> = {};
     (globalThis as { localStorage?: unknown }).localStorage ??= { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => void (store[k] = v), removeItem: (k: string) => void delete store[k] };
     setSnapshotsBackend(mockSnapshotRpc);

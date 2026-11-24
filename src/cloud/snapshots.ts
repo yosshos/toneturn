@@ -6,7 +6,7 @@
 import { supabase } from './cloud';
 import type { Snapshot } from '../engine/snapshot';
 
-export const SNAPSHOTS_SYNCED = false; // migration 20261208000000 — NOT APPLIED yet
+export const SNAPSHOTS_SYNCED = true; // migration 20261208000000 applied 2026-11-24
 
 /** Tests and the dev mock (localStorage tt.mockSnapshots = 1, dev builds only) answer the RPCs instead. */
 type Backend = (fn: string, args: Record<string, unknown>) => Promise<unknown>;

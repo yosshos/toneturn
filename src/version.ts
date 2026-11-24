@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.135.1',
+    date: '2026-11-24',
+    en: ['Teachers: students’ progress charts now sync, assignments carry their options (channel, minutes a day), and a style focus can be assigned'],
+    he: ['למורים: גרפי ההתקדמות של התלמידים מסתנכרנים עכשיו, משימות נושאות את האפשרויות שלהן (ערוץ, דקות ביום), ואפשר להקצות מיקוד סגנון'],
+  },
+  {
     version: '0.135.0',
     date: '2026-11-24',
     en: ['Testing round: every tester starts again as a new player (the streak is kept), to try the first questions, the daily session and the menus afresh'],

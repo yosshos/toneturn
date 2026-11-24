@@ -13,7 +13,7 @@ export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phr
  * to the check), a focus suggestion travels as a 'piece' assignment with that ref and reads back as kind 'focus' — the
  * same path phrases took — so it works on today's server. NOT APPLIED: the owner dry-runs it first.
  */
-export const FOCUS_ASSIGN_SYNCED = false; // migration 20261210000000 — NOT APPLIED yet
+export const FOCUS_ASSIGN_SYNCED = true; // migration 20261210000000 applied 2026-11-24
 
 /**
  * Encore v2 (SPEC-PHRASE-STUDIO §11): phrase assignments get their own kind, a 6000-char ref and the teacher's audio in
@@ -192,7 +192,7 @@ export async function assignAudioUrl(path: string): Promise<string | null> {
 
 // SPEC-PATH-TODAY-PRACTICE §5.2: an assignment's options (the required channel, minutes a day, spread / all today).
 // Needs migration 20261209000000_toneturn_assignment_opts.sql — set ASSIGN_OPTS_SYNCED once the owner applied it.
-export const ASSIGN_OPTS_SYNCED = false; // migration 20261209000000 — NOT APPLIED yet
+export const ASSIGN_OPTS_SYNCED = true; // migration 20261209000000 applied 2026-11-24
 export type { AssignChannel };
 export interface AssignOpts {
   channel: AssignChannel;
