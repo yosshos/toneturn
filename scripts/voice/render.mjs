@@ -2,13 +2,16 @@
 // public/voice/en/manifest.json (id → duration ms) up to date. Incremental: lines already in the manifest are
 // skipped, so it can be stopped and started again. Lines come from scripts/voice/.lines.json (npm run voice:lines),
 // in priority order (mini-lessons and intros first).
-//   node scripts/voice/render.mjs [--device cpu|dml] [--dtype fp32|q8] [--limit N] [--src mini,intro,...]
+//   node scripts/voice/render.mjs [--lang en|es|fr|it|pt] [--device cpu|dml] [--dtype fp32|q8] [--limit N] [--src mini,intro,...]
+// --lang <locale>: the translated locale's lines (scripts/voice/.lines.<locale>.json) in its own Kokoro voice, through
+// our phonemes (locale-kokoro.mjs), into public/voice/<locale>/.
 // MP3, mono, 24 kHz, 32 kbps (MPEG-2 layer III): plays everywhere (iOS Safari too), ~4 KB per second of speech.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { KokoroTTS } from 'kokoro-js';
 import { Mp3Encoder } from '@breezystack/lamejs';
+import { LOCALE_VOICES, speakLocale } from './locale-kokoro.mjs';
 
 const arg = (name, dflt) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -22,18 +25,20 @@ const SRC = (arg('src', null) ?? 'mini,mini-name,intro,go,opener,preview,memory,
 // --shard k/n: this process renders every n-th line (run n processes side by side); each writes its own part file
 // and merges all parts into manifest.json on every save.
 const [SHARD, SHARDS] = (arg('shard', '0/1')).split('/').map(Number);
-const VOICE = 'af_heart';
+const LANG = arg('lang', 'en');
+if (LANG !== 'en' && !LOCALE_VOICES[LANG]) throw new Error(`no voice for ${LANG}`);
+const VOICE = LANG === 'en' ? 'af_heart' : LOCALE_VOICES[LANG];
 const MODEL = 'k82m-v1';
 // 48 kbps: lamejs at 32 kbps resamples 24 kHz to 22.05 kHz and writes SILENCE (every 0.66–0.74 file decoded to a
 // peak of 1e-5 — the owner heard only pops on the phone). 48 kbps keeps 24 kHz and the speech. Checked 2026-11-11.
 // Re-rendering existing lines keeps their file names: bump LINES in src/sw-template.js too, or phones keep old copies.
 const KBPS = 48;
 
-const OUT = path.resolve('public/voice/en');
+const OUT = path.resolve(`public/voice/${LANG}`);
 const MANIFEST = path.join(OUT, 'manifest.json');
 mkdirSync(OUT, { recursive: true });
 const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : { v: 1, voice: VOICE, model: MODEL, files: {} };
-if (manifest.voice !== VOICE || manifest.model !== MODEL) throw new Error('manifest is for another voice/model: clear public/voice/en first');
+if (manifest.voice !== VOICE || manifest.model !== MODEL) throw new Error(`manifest is for another voice/model: clear public/voice/${LANG} first`);
 
 const PART = path.join(OUT, `manifest.part${SHARD}.json`);
 const readJson = (p) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null);
@@ -41,7 +46,7 @@ const parts = () => readdirSync(OUT).filter((f) => /^manifest\.part\d+\.json$/.t
 for (const p of parts()) Object.assign(manifest.files, p);
 const mine = readJson(PART)?.files ?? {};
 
-const lines = JSON.parse(readFileSync(new URL('./.lines.json', import.meta.url), 'utf8'));
+const lines = JSON.parse(readFileSync(new URL(LANG === 'en' ? './.lines.json' : `./.lines.${LANG}.json`, import.meta.url), 'utf8'));
 const todo = lines.filter((l, i) => i % SHARDS === SHARD && !manifest.files[l.key] && (!SRC || SRC.includes(l.src))).slice(0, LIMIT);
 console.log(`${lines.length} lines, ${Object.keys(manifest.files).length} rendered, ${todo.length} to do (${DEVICE}, ${DTYPE})`);
 if (!todo.length) process.exit(0);
@@ -101,9 +106,9 @@ for (const l of todo) {
   let sr = 24000;
   // (kokoro-js' stream() never settles on a plain string here, so long lines are split by sentence ourselves)
   for (const part of pieces(l.say)) {
-    const a = await tts.generate(part, { voice: VOICE, speed: 1 });
+    const a = LANG === 'en' ? await tts.generate(part, { voice: VOICE, speed: 1 }) : await speakLocale(tts, part, LANG);
     chunks.push(a.audio);
-    sr = a.sampling_rate;
+    sr = a.sampling_rate ?? a.sr;
   }
   const n = chunks.reduce((s, c) => s + c.length, 0);
   const f32 = new Float32Array(n);

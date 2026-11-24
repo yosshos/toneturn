@@ -12,7 +12,11 @@ const size = Number(sizeArg ?? 350);
 const src = JSON.parse(readFileSync(join(ROOT, 'i18n/source.json'), 'utf8'));
 const catFile = join(ROOT, 'public/i18n', `${loc}.json`);
 const cat = existsSync(catFile) ? JSON.parse(readFileSync(catFile, 'utf8')) : {};
-const todo = src.filter((s) => !cat[s]);
+// what the narrator says comes first (it is recorded per language once translated: scripts/voice/), the rest after
+const voiceFile = join(ROOT, 'scripts/voice/.lines.json');
+const spoken = new Set(existsSync(voiceFile) ? JSON.parse(readFileSync(voiceFile, 'utf8')).map((l) => l.say) : []);
+const missing = src.filter((s) => !cat[s]);
+const todo = [...missing.filter((s) => spoken.has(s)), ...missing.filter((s) => !spoken.has(s))];
 const dir = join(ROOT, 'i18n/work', loc);
 mkdirSync(dir, { recursive: true });
 for (const f of readdirSync(dir)) if (f.startsWith('in-')) rmSync(join(dir, f));

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.130.0',
+    date: '2026-11-24',
+    en: ['Spanish, Portuguese, French and Italian are now complete: every lesson explanation is translated, not only the screens and titles'],
+    he: ['ספרדית, פורטוגזית, צרפתית ואיטלקית מלאות עכשיו: כל ההסברים בשיעורים מתורגמים, לא רק המסכים והכותרות'],
+  },
+  {
     version: '0.129.1',
     date: '2026-11-24',
     en: ['In the eight new languages the narrator no longer speaks English: its lines stay on screen to read until each language has a voice of its own'],

@@ -24,3 +24,7 @@ dist-openstudio
 
 # i18n translation work batches (scripts/i18n-batch.mjs)
 i18n/work/
+scripts/voice/.voices/
+public/voice/*/manifest.part*.json
+public/voice/*/*.tmp
+scripts/voice/.lines.*.json

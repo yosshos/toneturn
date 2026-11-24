@@ -13,6 +13,8 @@ import { BrowserMicAccess } from '../speech/mic';
 import { BrowserPromptPlayer } from '../speech/tts';
 import { browserKokoroDeps, KokoroNarrator } from '../speech/kokoro/engine';
 import { browserFilesDeps, VoiceFiles } from '../speech/voice/files';
+import { LOCALE_VOICES } from '../speech/voice/manifest';
+import type { SpeechLang } from '../speech/speakable';
 import { WebSpeechTranscriber } from '../speech/webspeech';
 import { ProgressStore } from '../storage/progress';
 import { defaultKV, memoryKV } from '../storage/kv';
@@ -31,9 +33,19 @@ export const tts = new BrowserPromptPlayer();
 export const narrator = new KokoroNarrator(browserKokoroDeps(() => piano.voiceOut()));
 /** The same voice, pre-recorded for every line known ahead of time (public/voice/en, 0.66). */
 export const recordings = new VoiceFiles(browserFilesDeps(import.meta.env.BASE_URL ?? '/', () => piano.voiceOut(), () => piano.volume));
+/** A translated locale's recordings in its own voice (public/voice/<locale>/), made on first use. */
+const localeRecs = new Map<string, VoiceFiles>();
+function localeRecordings(locale: string): VoiceFiles | null {
+  const voice = LOCALE_VOICES[locale as SpeechLang];
+  if (!voice) return null;
+  let r = localeRecs.get(locale);
+  if (!r) localeRecs.set(locale, (r = new VoiceFiles(browserFilesDeps(import.meta.env.BASE_URL ?? '/', () => piano.voiceOut(), () => piano.volume, locale), locale as SpeechLang, voice)));
+  return r;
+}
 if (!SIMULATED) {
   tts.narrator = narrator;
   tts.recordings = recordings;
+  tts.localeRecordings = localeRecordings;
 }
 // Simulated runs never touch real progress.
 export const store = new ProgressStore(SIMULATED ? memoryKV() : defaultKV());

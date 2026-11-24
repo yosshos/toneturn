@@ -43,3 +43,12 @@ describe('speakable', () => {
     expect(speakable('Cdim. then G7', 'en')).toBe('C diminished. then G seven');
   });
 });
+
+describe('translated locales with a voice', () => {
+  it('chord symbols are said in fixed do with the language’s words; titles keep their pause', () => {
+    expect(speakable('Toca Cmaj7 y luego G7.', 'es')).toBe('Toca Do séptima mayor y luego Sol siete.');
+    expect(speakable('Joue Dm7, puis B♭.', 'fr')).toBe('Joue Ré mineur sept, puis Si bémol.');
+    expect(speakable('Escalas · 2 octavas', 'es')).toBe('Escalas, 2 octavas');
+    expect(speakable('ii–V–I', 'pt')).toBe('dois menor, cinco, um');
+  });
+});

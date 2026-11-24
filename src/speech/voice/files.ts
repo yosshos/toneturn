@@ -3,6 +3,8 @@
 
 import { Cancelled } from '../../game/adapters';
 import { lookup, voiceUrl, type VoiceManifest } from './manifest';
+import { KOKORO_VOICE } from '../kokoro/decide';
+import type { SpeechLang } from '../speakable';
 
 export interface FilesDeps {
   /** Fetch public/voice/en/manifest.json (null when missing / offline). */
@@ -21,7 +23,18 @@ export class VoiceFiles {
   private loading: Promise<VoiceManifest | null> | null = null;
   private listeners = new Set<() => void>();
   private lineListeners = new Set<(l: { text: string; ms: number }) => void>();
-  constructor(private deps: FilesDeps) {}
+  /** English by default; a translated locale's recordings live in public/voice/<locale>/ in that locale's voice. */
+  constructor(
+    private deps: FilesDeps,
+    private lang: SpeechLang = 'en',
+    private voice = KOKORO_VOICE,
+  ) {}
+  private hit(raw: string) {
+    return lookup(this.manifest, raw, this.voice, this.lang);
+  }
+  private url(id: string) {
+    return voiceUrl(this.deps.base, id, this.lang);
+  }
 
   /** Load the manifest (once); resolves with whether it's there. */
   load(): Promise<boolean> {
@@ -50,13 +63,13 @@ export class VoiceFiles {
 
   /** Is there a recording of this line? (false until the manifest has loaded) */
   has(raw: string): boolean {
-    return !!lookup(this.manifest, raw);
+    return !!this.hit(raw);
   }
 
   prefetch(raws: string[]) {
     for (const r of raws) {
-      const hit = lookup(this.manifest, r);
-      if (hit) this.deps.warm(voiceUrl(this.deps.base, hit.id));
+      const hit = this.hit(r);
+      if (hit) this.deps.warm(this.url(hit.id));
     }
   }
 
@@ -67,11 +80,11 @@ export class VoiceFiles {
   /** Play the recording of a line. False when there is none (the caller falls back); throws Cancelled on abort. */
   async speak(raw: string, rate: number, signal: AbortSignal, shownText = raw): Promise<boolean> {
     if (signal.aborted) throw new Cancelled();
-    const hit = lookup(this.manifest, raw);
+    const hit = this.hit(raw);
     if (!hit) return false;
     this.lineListeners.forEach((l) => l({ text: shownText, ms: hit.ms / rate }));
     try {
-      await this.deps.play(voiceUrl(this.deps.base, hit.id), rate, signal);
+      await this.deps.play(this.url(hit.id), rate, signal);
     } catch (e) {
       if (signal.aborted || e instanceof Cancelled) throw new Cancelled();
       return false;
@@ -103,7 +116,7 @@ export let lastVoiceFailure: string | null = null;
  * the next; when both fail the caller reads the line. 0.66–0.68 played the <audio> element only (Web Audio only
  * after a NotAllowedError), and an element that some Android browsers left silent or stuck took the voice away.
  */
-export function browserFilesDeps(base: string, webAudio: () => { ctx: AudioContext; out: AudioNode } | null, volume: () => number): FilesDeps {
+export function browserFilesDeps(base: string, webAudio: () => { ctx: AudioContext; out: AudioNode } | null, volume: () => number, folder = 'en'): FilesDeps {
   let el: HTMLAudioElement | null = null;
   const audio = () => {
     if (!el) {
@@ -204,7 +217,7 @@ export function browserFilesDeps(base: string, webAudio: () => { ctx: AudioConte
   return {
     base,
     loadManifest: async () => {
-      const r = await fetch(`${base}voice/en/manifest.json`);
+      const r = await fetch(`${base}voice/${folder}/manifest.json`);
       return r.ok ? ((await r.json()) as VoiceManifest) : null;
     },
     stop: () => {

@@ -135,6 +135,43 @@ describe('fallback order: recording → on-device voice → reading', () => {
     expect(played).toEqual([]);
   });
 
+  it('a translated locale with a voice plays its own recording of the translated line, never the English one', async () => {
+    const en = files(['Listen to the chord.']);
+    const loc = (() => {
+      const played: { url: string; rate: number }[] = [];
+      const deps: FilesDeps = {
+        base: '/',
+        loadManifest: async () => ({ v: 1, voice: 'ef_dora', model: VOICE_MODEL, files: { [voiceKey('Escucha el acorde.', 'ef_dora', 'es')]: 1200 } }),
+        play: async (url, rate) => void played.push({ url, rate }),
+        warm: vi.fn(),
+        stop: vi.fn(),
+      };
+      return { f: new VoiceFiles(deps, 'es', 'ef_dora'), played };
+    })();
+    const n = fakeNarrator(true, true);
+    const p = new BrowserPromptPlayer();
+    p.recordings = en.f;
+    p.narrator = n;
+    p.localeRecordings = (l) => (l === 'es' ? loc.f : null);
+    setCatalog('es', { 'Listen to the chord.': 'Escucha el acorde.', 'Now the other one.': 'Ahora el otro.' });
+    try {
+      await loc.f.load();
+      expect(p.speaksLine('Listen to the chord.', 'en')).toBe(true);
+      await p.speak('Listen to the chord.', 'en', new AbortController().signal);
+      expect(loc.played).toEqual([{ url: `/voice/es/${voiceKey('Escucha el acorde.', 'ef_dora', 'es')}.mp3`, rate: 1 }]);
+      // translated but not recorded yet: read
+      expect(p.speaksLine('Now the other one.', 'en')).toBe(false);
+      const done = p.speak('Now the other one.', 'en', new AbortController().signal);
+      await vi.runAllTimersAsync();
+      await done;
+      expect(loc.played).toHaveLength(1);
+      expect(en.played).toEqual([]);
+      expect(n.speak).not.toHaveBeenCalled();
+    } finally {
+      setCatalog(null, null);
+    }
+  });
+
   it('a translated locale without its own voice reads its lines: no English recording, no English voice', async () => {
     const { f, played } = files(['Listen to the chord.']);
     const n = fakeNarrator(true, true);

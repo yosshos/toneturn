@@ -1,7 +1,7 @@
 {
   "name": "toneturn",
   "private": true,
-  "version": "0.129.1",
+  "version": "0.130.0",
   "type": "module",
   "description": "ToneTurn — voice-first ear-training game",
   "scripts": {
@@ -42,6 +42,7 @@
     "@types/three": "^0.181.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^6.2.1",
+    "espeak-ng": "^1.0.2",
     "fake-indexeddb": "^6.2.8",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",

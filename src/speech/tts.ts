@@ -9,7 +9,7 @@ import { Cancelled, type PromptPlayer } from '../game/adapters';
 import { shown, speakable } from './speakable';
 import { automated, readingMs, talkOn } from './talk';
 import { wantsKokoro } from './kokoro/decide';
-import { activeLocale } from '../i18n/translate';
+import { activeLocale, translate } from '../i18n/translate';
 
 /** How long the first English line waits for the list of recordings (a phone on a slow network; 0.66–0.68: 1.5 s,
  *  after which the line was read instead of played). */
@@ -64,15 +64,31 @@ export class BrowserPromptPlayer implements PromptPlayer {
   recordings: Recordings | null = null;
   /** Speak even in reading mode, waiting for the voice to load (the preview in Settings). */
   force = false;
+  /** A translated locale's own recordings (public/voice/<locale>/), null when the locale has no voice; set by the app. */
+  localeRecordings: ((locale: string) => Recordings | null) | null = null;
+
+  /** A translated locale (docs/SPEC-I18N.md) runs on English underneath: its lines play from its own recordings of the
+   *  translated text, never in English; with no voice for the locale they are read. */
+  private localeRec(): Recordings | null | undefined {
+    const loc = activeLocale();
+    return loc ? (this.localeRecordings?.(loc) ?? null) : undefined;
+  }
+  /** The line as the locale's recordings know it: its translation (null when the catalog has none, or when part of it
+   *  is shown but never spoken: the translation can't keep those marks). */
+  private localeLine(raw: string): string | null {
+    if (/[⟦⟧]/.test(raw)) return null;
+    const t = translate(raw);
+    return t !== raw ? t : null;
+  }
 
   private wanted(lang: 'he' | 'en'): boolean {
-    // a translated locale (docs/SPEC-I18N.md) runs on English underneath: until it has a voice of its own its lines
-    // are read, never spoken in English
-    return !activeLocale() && wantsKokoro(lang, talkOn() || this.force, automated());
+    return this.localeRec() !== null && wantsKokoro(lang, talkOn() || this.force, automated());
   }
 
   /** Would English lines be spoken now (some voice is available)? */
   speaking(lang: 'he' | 'en'): boolean {
+    const lr = this.localeRec();
+    if (lr) return this.wanted(lang) && lr.loaded;
     return this.wanted(lang) && (!!this.recordings?.loaded || !!this.narrator?.isReady);
   }
 
@@ -82,19 +98,22 @@ export class BrowserPromptPlayer implements PromptPlayer {
    */
   speaksLine(raw: string, lang: 'he' | 'en', variant?: string): boolean {
     if (!this.wanted(lang)) return false;
+    const lr = this.localeRec();
+    if (lr) return [raw, variant].some((v) => v && this.localeLine(v) !== null && lr.has(this.localeLine(v)!));
     return !!this.recordings?.has(raw) || (!!variant && !!this.recordings?.has(variant)) || !!this.narrator?.isReady;
   }
 
   /** Wait (briefly, once) for the list of recordings so the first line can be judged spoken or read. */
   async prepare(lang: 'he' | 'en'): Promise<void> {
-    const rec = this.recordings;
+    const rec = this.localeRec() ?? this.recordings;
     if (!rec || rec.loaded || !this.wanted(lang)) return;
     await Promise.race([rec.load(), new Promise((r) => setTimeout(r, MANIFEST_WAIT_MS))]);
   }
 
   unlock() {
     // The recordings' manifest is small: fetch it as soon as English narration may be wanted.
-    if (this.recordings && this.wanted('en') && !this.recordings.loaded) void this.recordings.load();
+    const rec = this.localeRec() ?? this.recordings;
+    if (rec && this.wanted('en') && !rec.loaded) void rec.load();
   }
 
   resolvedLang(lang: 'he' | 'en'): 'he' | 'en' | null {
@@ -109,6 +128,11 @@ export class BrowserPromptPlayer implements PromptPlayer {
   /** Get the next lines ready while this one plays (mini-lesson steps, the lesson intro). */
   prefetch(raws: string[], lang: 'he' | 'en') {
     if (!this.wanted(lang)) return;
+    const lr = this.localeRec();
+    if (lr) {
+      lr.prefetch(raws.map((r) => this.localeLine(r)).filter((x): x is string => x !== null));
+      return;
+    }
     this.recordings?.prefetch(raws);
     const missing = raws.filter((r) => !this.recordings?.has(r));
     if (!missing.length || !this.narrator?.isReady) return;
@@ -128,6 +152,16 @@ export class BrowserPromptPlayer implements PromptPlayer {
     if (this.recordings?.loaded !== false) this.decisions.set(shown(raw), this.speaksLine(raw, lang, variant));
     if (this.decisions.size > 30) this.decisions.delete(this.decisions.keys().next().value!);
     if (!this.wanted(lang)) return readPause(raw, signal);
+    // a translated locale: its own recording of the translated line, or reading (never the English voices)
+    const lr = this.localeRec();
+    if (lr) {
+      if (!lr.loaded) await Promise.race([lr.load(), new Promise((r) => setTimeout(r, MANIFEST_WAIT_MS))]);
+      for (const v of variant && variant !== raw ? [raw, variant] : [raw]) {
+        const line = this.localeLine(v);
+        if (line && lr.has(line) && (await lr.speak(line, this.rate, signal, shown(raw)))) return;
+      }
+      return readPause(raw, signal);
+    }
     // 1. a recording (the manifest is tiny; on the very first line wait for it briefly)
     const rec = this.recordings;
     if (rec) {
