@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.134.2',
+    date: '2026-11-24',
+    en: ['Your level now moves with every lesson, drill and game (a saving fault dropped the newest results). Practising your weaker area counts as stretch, and the week’s rise in level counts toward Momentum'],
+    he: ['הרמה זזה עכשיו עם כל שיעור, תרגיל ומשחק (תקלה בשמירה איבדה את התוצאות האחרונות). תרגול בתחום החלש נספר כמתיחה, והעלייה ברמה השבוע נספרת במומנטום'],
+  },
+  {
     version: '0.134.1',
     date: '2026-11-24',
     en: ['Today: the minutes-this-week ring reads on one line again'],

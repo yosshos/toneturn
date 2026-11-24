@@ -168,6 +168,30 @@ export function foldRatings(events: RatingEvent[]): Ratings {
   return out;
 }
 
+/**
+ * SPEC-PRACTICE-SESSION §11.4: the rating points a batch of new events gained, from the ratings before them — per
+ * skill the batch's net change, only the rises counted (a skill that fell gives 0, never a negative). A placement
+ * (`set`) moves the ratings the later events start from but is not a gain; the per-instrument course subs are not
+ * counted (they mirror the shared skill). Duplicate ids count once. Pure.
+ */
+export function ratingGain(before: Ratings, events: readonly RatingEvent[]): number {
+  const cur: Ratings = { ...before };
+  const net = new Map<SkillId, number>();
+  const seen = new Set<string>();
+  for (const e of byTime([...events])) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    const r0 = new Map<SkillId, number>();
+    for (const k of [e.skill, ...(e.tags ?? []).map((t) => t.skill)]) r0.set(k, cur[k]?.r ?? START_RATING);
+    const changed = applyEvent(cur, e);
+    if (e.set !== undefined) continue;
+    for (const k of changed) net.set(k, (net.get(k) ?? 0) + ((cur[k]?.r ?? START_RATING) - (r0.get(k) ?? START_RATING)));
+  }
+  let gain = 0;
+  for (const d of net.values()) if (d > 0) gain += d;
+  return gain;
+}
+
 /** A skill's rating over time: one point per local day (the rating after that day's last answer). */
 export interface TrendPoint {
   day: string; // YYYY-MM-DD (local)

@@ -284,7 +284,9 @@ import { ConsentBody, RecordingsEntryCard, RecordingsScreen } from './Recordings
 import { applySyncedMeta, putSyncedTake, runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource, subscribeRecordings, syncCandidates } from '../storage/recordings';
 import { listTakes as listOldVocalTakes } from '../storage/takes';
 import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
-import { measuredMsOn, weekStart } from '../engine/practiceTime';
+import { kindOfRoute, measuredMsOn, weekStart } from '../engine/practiceTime';
+import { instrumentAreaOfKind, instrumentAreaStretch, takeInWeakerArea } from '../engine/areaStretch';
+import { DAY_SHARES } from '../engine/workout2';
 import { addBandMs, bumpTake, stretchXp, takeBand, type TakeBand, type TakeCounts, type T2 } from '../engine/stretch';
 import { boostFor, cellBonus, keyBonus, promotionBonus, recordBonus, sessionBonus, type Bonus } from '../engine/momentum';
 import { hm, milestoneText, sessionReward, type SessionReward } from '../engine/sessionReward';
@@ -1926,7 +1928,29 @@ export function App() {
         playerTier = undefined;
       }
     }
-    return takeBand({ status, clean, takeBpm, bestBpm: prev?.cleanBpm ?? 0, prevCleanBpm: lastClean, ...(target > 0 ? { targetBpm: target } : {}), due, ...(m?.tier !== undefined ? { itemTier: m.tier } : {}), ...(playerTier !== undefined ? { playerTier } : {}), easyRun: easyRun.current.n, keySessions: keyDays.size, keyClosed, weakerChannel, ...(m?.stage ? { stage: m.stage } : {}) });
+    const weakerArea = takeWeakerArea(items, day);
+    return takeBand({ status, clean, takeBpm, bestBpm: prev?.cleanBpm ?? 0, prevCleanBpm: lastClean, ...(target > 0 ? { targetBpm: target } : {}), due, ...(m?.tier !== undefined ? { itemTier: m.tier } : {}), ...(playerTier !== undefined ? { playerTier } : {}), easyRun: easyRun.current.n, keySessions: keyDays.size, keyClosed, weakerChannel, weakerArea, ...(m?.stage ? { stage: m.stage } : {}) });
+  };
+  /**
+   * §11.5: the take is in the instrument course's weakest area (technique / improvisation, by closeness to target) and
+   * that area already got more than its planned share of the last 7 days' minutes. The area is the screen's kind (drills
+   * and licks: technique; improvising and the pieces coach: improvisation), else the running workout block's.
+   */
+  const takeWeakerArea = (items: Record<string, ItemState>, day: string): boolean => {
+    const cid = (s.activeCourse ?? 'ear') as CourseId;
+    if (cid !== 'keys' && cid !== 'guitar' && cid !== 'bass' && cid !== 'drums') return false;
+    try {
+      const r = wrunRef.current;
+      const bk = r && r.day === day && !r.finished ? r.blocks[r.at]?.target.kind : undefined;
+      const area = instrumentAreaOfKind(kindOfRoute(route)) ?? (bk === 'keys' || bk === 'rubato' ? 'tech' : bk === 'improv' ? 'improv' : null);
+      if (!area) return false;
+      const tier = cid === 'drums' ? undefined : matrixTierOf(s, drillSettingsOf(s), items);
+      const techShare = (tier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech;
+      const a = instrumentAreaStretch(closeness(items, day, { levels: IMPROV_LEVELS, best: s.improvBest }), weekAreaMinutes(loadLedger(), day, cid, true), techShare);
+      return takeInWeakerArea(a, area);
+    } catch {
+      return false;
+    }
   };
   /**
    * Every drill take (technique, licks, songs, the transcription coach, Encore): its channel is the one its item's tally

@@ -370,9 +370,24 @@ const changedSkills = (items: { skill: SkillId; tags?: { skill: SkillId }[] }[])
 /** SPEC-PRACTICE-SESSION §11.4: Momentum's bonuses are XP for the day, never a session, a lesson or a perfect run. */
 const XP_ONLY_RESULTS = new Set(['momentum-bonus']);
 
+/**
+ * The stats fields only. Callers pass their whole progress and spread the result back over the progress they just
+ * built, so the result must not carry anything else from it (the new rating events, the week's gains, a new best …
+ * would be put back to the old values).
+ */
+const statsPart = (st: StatsState): StatsState => {
+  const out: StatsState = {};
+  if (st.statsDays) out.statsDays = st.statsDays;
+  if (st.statsHours) out.statsHours = st.statsHours;
+  if (st.peaks) out.peaks = st.peaks;
+  if (st.counts) out.counts = st.counts;
+  if (st.records) out.records = st.records;
+  return out;
+};
+
 export function statsAfterResult(st: StatsState, r: ResultLike, after: Ratings): StatsState {
   const items = r.items ?? [];
-  let next = addItems(st, items, r.completedAt);
+  let next = addItems(statsPart(st), items, r.completedAt);
   next = addLevels(next, changedSkills(items), after, r.completedAt);
   const day = localDay(new Date(r.completedAt));
   const d = next.statsDays![day];
@@ -391,8 +406,8 @@ export function statsAfterResult(st: StatsState, r: ResultLike, after: Ratings):
 
 /** Rating events saved outside a result (games, drills, True or false): items + levels, no session. */
 export function statsAfterEvents(st: StatsState, events: (RatingEvent & { timeMs?: number | null; input?: InputKind })[], after: Ratings): StatsState {
-  if (!events.length) return st;
-  let next = st;
+  if (!events.length) return statsPart(st);
+  let next = statsPart(st);
   const byAt = new Map<string, typeof events>();
   for (const e of events) byAt.set(e.at, [...(byAt.get(e.at) ?? []), e]);
   for (const [at, es] of byAt) next = addItems(next, es, at);

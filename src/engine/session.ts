@@ -2,8 +2,8 @@
 // so a late recognizer callback or a double click can never score twice.
 
 import { gradePlace, questionSkill, type Answer, type LessonDef, type Question } from './lesson';
-import { expected } from './rating';
-import { answerFactor } from './stretch';
+import { domainOf, expected } from './rating';
+import { answerStretchFactor } from './areaStretch';
 import { gradeGrid } from './progGrid';
 import { SCORING, xpFor, type ItemOutcome, type Modality } from './scoring';
 import { paceTarget, speedCredit, type PaceProfile } from './fluency';
@@ -63,6 +63,9 @@ export interface SessionState {
   /** SPEC-PRACTICE-SESSION §11.3: the player's rating per skill — an answer's base XP follows the Elo expected score
    *  (≥ 95 % expected ×0.5, under 60 % ×1.3); the speed bonus is kept as it is. Absent: no factor. */
   ratings?: Partial<Record<string, number>>;
+  /** §11.5: the area tilt per area (DomainId → ×1.2 weakest / ×0.8 strongest past its planned share; areaStretch.ts
+   *  answerAreaTilt), combined with the Elo factor within 0.3–1.5. Absent: no tilt. */
+  areaTilt?: Partial<Record<string, number>>;
 }
 
 /** Evidence from the answer channel, beyond the answer itself. */
@@ -142,11 +145,16 @@ function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp0: number
   return xp + Math.max(0, Math.round(SCORING.xp.maxSpeedBonus * credit) - (r.replays ?? 0));
 }
 
-/** §11.3: the base XP × the stretch factor of the answer (by the Elo expected score of the player on the item). */
-export function stretchBase(s: Pick<SessionState, 'ratings'>, q: Question, baseXp: number): number {
-  const r = s.ratings?.[questionSkill(q)];
-  if (baseXp <= 0 || r === undefined || !Number.isFinite(q.difficulty)) return baseXp;
-  return baseXp * answerFactor(expected(r, q.difficulty));
+/** §11.3: the base XP × the stretch factor of the answer (by the Elo expected score of the player on the item), × the
+ *  area tilt (§11.5: the weakest / strongest area past its planned share), the product within 0.3–1.5. */
+export function stretchBase(s: Pick<SessionState, 'ratings' | 'areaTilt'>, q: Question, baseXp: number): number {
+  if (baseXp <= 0) return baseXp;
+  const skill = questionSkill(q);
+  const r = s.ratings?.[skill];
+  const e = r !== undefined && Number.isFinite(q.difficulty) ? expected(r, q.difficulty) : undefined;
+  const tilt = s.areaTilt?.[domainOf(skill)];
+  if (e === undefined && tilt === undefined) return baseXp;
+  return baseXp * answerStretchFactor(e, tilt);
 }
 
 const NOTE_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };

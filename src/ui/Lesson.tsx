@@ -59,12 +59,24 @@ import { AiExplain } from './AiExplain';
 import { LiveRhythmStaff, RhythmStaff, useRhythmNow } from './RhythmStaff';
 import { buildPalette, CELLS, describe as describeRhythm, meterOf, onsetBeats, rhythmFromKey, rhythmKey, sameRhythm, totalBeats, type CellId, type Rhythm } from '../engine/rhythm';
 import { isMidiEnabled, makeAdapters, piano, SIMULATED, store } from './services';
+import { answerAreaTilt } from '../engine/areaStretch';
+import { loadLedger } from '../storage/practice';
+import type { CourseId } from '../engine/courses';
 import { keepingPitch, type LessonTakeInfo } from './recKeep';
 import { InputCheck } from './InputCheck';
 import type { InputCheckMode } from '../engine/inputCheck';
 import { SessionRecToggle } from './SessionRecSwitch';
 import { ANY_NOTE_ARM_MS, AnyNoteHint, useAnyNote } from './anyNote';
 import { CycleBuild, RhythmCircle } from './RhythmCircle';
+
+/** §11.5: the answer tilt per area of the active course (the ledger's last 7 days; never blocks a lesson). */
+function lessonAreaTilt(course: CourseId | undefined, ratings: Ratings | undefined): Partial<Record<string, number>> {
+  try {
+    return answerAreaTilt(course ?? 'ear', ratings ?? {}, loadLedger(), localDay(new Date()));
+  } catch {
+    return {};
+  }
+}
 
 interface Props {
   /** The brief before a topic exercise (owner, 2026-11-07): short name, what it's about, what you'll do, a refresher, Play. */
@@ -180,6 +192,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         pace: { profile: loadPace(), on: settings.timedScoring !== false },
         // SPEC-PRACTICE-SESSION §11.3: an answer's XP follows the Elo expected score (the player's rating per skill)
         ratings: Object.fromEntries(Object.entries(ratings ?? {}).filter(([, v]) => !!v && v.n > 0).map(([k, v]) => [k, v!.r])),
+        // §11.5: the weakest area past its planned share this week pays ×1.2, the strongest past its share ×0.8
+        areaTilt: lessonAreaTilt(settings.activeCourse, ratings),
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
         micLatencyMs: settings.micLatencyMs,

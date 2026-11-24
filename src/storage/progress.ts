@@ -20,7 +20,7 @@ import { questionTags, type Tag } from '../engine/taxonomy';
 
 /** Items carry their tag vector (spec AD) so ratings and sub-skills can credit every skill they train. */
 export const compactTags = (tags: Tag[]): Tag[] | undefined => (tags.length ? tags : undefined);
-import { SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
+import { ratingGain, SKILLS, type RatingEvent, type Ratings } from '../engine/rating';
 import { bumpCount, foldFromMemo, statsAfterEvents, statsAfterResult, trimIntoBase } from '../engine/stats';
 import { gameEvents } from '../engine/gameRating';
 import { afterRun, clearsRun, gameXp, gameXpLeft, isTier, TIERS, tierDifficulty, tierKey, tierSpec, type DailyBand, type DynName, type GameTiers } from '../engine/gameTiers';
@@ -186,10 +186,28 @@ export interface GhostRun {
 }
 
 export const ratingsOf = (p: Progress): Ratings => foldFromMemo(p.ratingBase, p.ratingEvents ?? []);
-/** Append rating events, folding the oldest beyond the cap into the base (S1). */
-function withEvents(p: Progress, fresh: RatingEvent[]): Pick<Progress, 'ratingEvents' | 'ratingBase'> {
+/**
+ * Append rating events, folding the oldest beyond the cap into the base (S1). SPEC-PRACTICE-SESSION §11.4: the rating
+ * the new events gained (the rises only) goes into their week's gains — Momentum's progress half counts it.
+ */
+function withEvents(p: Progress, fresh: RatingEvent[]): Pick<Progress, 'ratingEvents' | 'ratingBase' | 'weekGains'> {
   const t = trimIntoBase(p.ratingBase, [...(p.ratingEvents ?? []), ...fresh], 3000);
-  return { ratingEvents: t.events, ratingBase: t.base };
+  const g = withRatingGain(p, fresh);
+  return { ratingEvents: t.events, ratingBase: t.base, ...(g !== p && g.weekGains ? { weekGains: g.weekGains } : {}) };
+}
+
+/** §11.4: the rating new events gained (ids already in progress are skipped), added to the week of the latest event.
+ *  Pure; returns `p` itself when nothing was gained. */
+export function withRatingGain(p: Progress, events: readonly RatingEvent[]): Progress {
+  if (!events.length) return p;
+  const have = new Set((p.ratingEvents ?? []).map((e) => e.id));
+  const fresh = events.filter((e) => !have.has(e.id));
+  if (!fresh.length) return p;
+  const gain = ratingGain(ratingsOf(p), fresh);
+  if (!(gain > 0)) return p;
+  const at = fresh.reduce((a, e) => (e.at > a ? e.at : a), '');
+  const t = Date.parse(at);
+  return withWeekGains(p, localDay(Number.isFinite(t) ? new Date(t) : new Date()), { rating: gain });
 }
 
 function snapshot(p: Progress, now: Date): Progress['snapshots'] {
