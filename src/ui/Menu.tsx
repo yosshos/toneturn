@@ -14,7 +14,7 @@ interface Props {
   settings: Settings;
   user: CloudUser | null;
   onClose: () => void;
-  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'studio' | 'exams' | 'improv' | 'charts' | 'groove' | 'slowdown') => void;
+  onNavigate: (r: 'tuner' | 'metronome' | 'drone' | 'friends' | 'settings' | 'diagnostics' | 'games' | 'classes' | 'placement' | 'truefalse' | 'achievements' | 'exams' | 'improv' | 'charts' | 'groove' | 'slowdown') => void;
   onSettings: (p: Partial<Settings>) => void;
   /** 0.61: what's new and the month review moved here from the top bar. */
   extra?: React.ReactNode;

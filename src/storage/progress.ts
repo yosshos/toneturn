@@ -465,8 +465,6 @@ export interface Settings {
   track?: import('../engine/intake').Track;
   /** Learning-first players: no reward nudges (avatar card, unlock toasts). */
   cleanView?: boolean;
-  /** Avatar studio (phase 1 showcase): the two avatars' looks. */
-  avatars?: unknown;
   /** Vibrato target style (spec P.1). */
   vibratoStyle?: VibratoStyle;
   /** AUDIT-5 #4: weekly-target streak — practice days a week (3–6); absent / 0 = every day. */

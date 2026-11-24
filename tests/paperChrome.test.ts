@@ -117,7 +117,7 @@ const files = (dir: string): string[] =>
     const p = join(dir, n);
     return statSync(p).isDirectory() ? files(p) : p.endsWith('.tsx') ? [p] : [];
   });
-const SRC = [...files('src/ui'), ...files('src/partner')].filter((f) => !/AvatarStudio\.tsx$/.test(f));
+const SRC = [...files('src/ui'), ...files('src/partner')];
 /** The text glyphs that used to stand in for control symbols. */
 const CONTROL = /[▶■✕‹›⋯⌫↻❚⏹⏮⏭＋⬇⏸⏵⏺↺]/;
 /**
@@ -174,7 +174,7 @@ describe('no text glyphs or thin line icons standing in for control symbols', ()
 
   it('no thin-stroke line icon (24 grid, currentColor, ≤ 2.6) left in a control component', () => {
     // Content drawings that stay line art: notation, the step / avatar art, charts and meters.
-    const CONTENT = /(BadgeArt|Glyph|GameArt|TrioArt|InstrumentArt|LeagueBadge|Toni|NoteViews|Insights|Stats|Streak|Profile|Home|Path|encore[\\/]bits|AvatarStudio)\.tsx$/;
+    const CONTENT = /(BadgeArt|Glyph|GameArt|TrioArt|InstrumentArt|LeagueBadge|Toni|NoteViews|Insights|Stats|Streak|Profile|Home|Path|encore[\\/]bits)\.tsx$/;
     const left: string[] = [];
     for (const f of SRC) {
       if (CONTENT.test(f)) continue;

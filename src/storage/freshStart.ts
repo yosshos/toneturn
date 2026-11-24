@@ -16,7 +16,7 @@ export const KEEP_SETTINGS: readonly (keyof Settings)[] = [
   'uiLang', 'inputLang', 'outputLang', 'keepAwake', 'naming', 'voiceGender', 'voices', 'reducedMotion', 'voiceConsent', 'reminderHour', 'seenVersion',
   'tapLatencyMs', 'midiLatencyMs', 'midiBiasMs', 'micLatencyMs', 'midiInput', 'midiDevice', 'midiOctave', 'midiPedalInvert', 'midiGuitarChannels', 'midiBendRange', 'midiSound', 'midiVolume', 'midiCurve',
   'audioOutput', 'computerKeys', 'micDeviceId', 'volume', 'cues', 'ttsRate', 'haptics', 'textScale', 'timedScoring',
-  'nickname', 'hideNickPrompt', 'country', 'avatarIcon', 'avatarColor', 'avatarPhoto', 'privacy', 'birthYear', 'avatarFrame', 'avatars', 'purchases',
+  'nickname', 'hideNickPrompt', 'country', 'avatarIcon', 'avatarColor', 'avatarPhoto', 'privacy', 'birthYear', 'avatarFrame', 'purchases',
   'leftHanded', 'tuning', 'bassTuning', 'headphones', 'tunerPreset', 'metronome', 'drumKit', 'recalSnooze',
   'mixer', 'sound', 'guitarVoice', 'pianoDetail', 'soundQuality', 'audioLatency', 'organReg', 'organFast', 'epTremolo', 'bandDrums', 'droneSound', 'theme', 'cleanView', 'vibratoStyle',
   'keepTakes', 'keepTakeNotes', 'syncTakeNotes', 'myCharts', 'customDrills', 'lickBook', 'ownFingering', 'workoutTemplates', 'shareStats',

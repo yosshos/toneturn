@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.133.1',
+    date: '2026-11-24',
+    en: ['Housekeeping: an old experimental screen removed; the app downloads less'],
+    he: ['ניקיון: מסך ניסיוני ישן הוסר, והאפליקציה מורידה פחות'],
+  },
+  {
     version: '0.133.0',
     date: '2026-11-24',
     en: ['The practice session fits its length: few blocks when time is short, a slow warm-up from 20 minutes, a pleasant ending from 30. The coach gives more time to what was neglected this week and says why. Practise one key, one exercise through the 12 keys, or one item: from the card, or with “Practise this” on the Practice pages'],

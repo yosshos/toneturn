@@ -459,7 +459,7 @@ function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset,
           </button>
         )}
         <button className="link st-tlink wk-edit-link" onClick={onEdit} data-wk-edit="1">
-          {tx.editLink} <span aria-hidden="true">{lang === 'he' ? '‹' : '›'}</span>
+          {tx.editLink} <Icon k="next" size={12} className="flip-rtl" />
         </button>
       </div>
     </section>
