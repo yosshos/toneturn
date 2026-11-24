@@ -150,6 +150,8 @@ import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pi
 import { keysInOrder } from '../engine/drills/generate';
 import type { FocusTarget } from '../engine/workout2';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
+import { sectionMode, taskBriefOf, taskKindOf } from '../engine/drills/taskBrief';
+import { useBriefGate, type BriefProp } from './TaskBrief';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
 const GENERAL_FAMILY = (id: string): boolean => FAMILY_FACETS[id]?.scope === 'neutral';
 
@@ -1504,6 +1506,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // The new-best-tempo moment, over the review; any tap closes it.
   const [best, setBest] = useState<{ bpm: number; prev: number; title: string } | null>(null);
   const bestPop = best ? <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={best.title} onClose={() => setBest(null)} /> : null;
+  // Owner 2026-11-24 (taskBrief.ts): a new task kind (another family, level, hand, reading / ear) opens with a short brief and
+  // its count-in waits for Ready — the coach's next take no longer counts in by itself after a line read for ≤ 3 s.
+  const gate = useBriefGate();
   useAnyNote(!drill, () => onEnd(count.current.takes, count.current.clean));
   // The coach's one press (start) and its end page: a note does it too.
   useAnyNote(!!coach && (!cStarted || !!cLine?.end), () => (cLine?.end ? onEnd(count.current.takes, count.current.clean) : document.querySelector<HTMLButtonElement>('[data-coach-start]')?.click()));
@@ -1632,6 +1637,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setTake((k) => k + 1);
   };
   const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
+  // The take's brief: the coach's step (its level), or the run's item; by ear while its notation is hidden.
+  const briefFor = (): BriefProp => gate.prop(taskBriefOf(drill, { ...(coach && cTake ? { level: cTake.level.id } : {}), bpm: stage === 'quarters' ? QUARTERS_BPM : bpm, free: stage === 'free', ...(pres?.byEar && !shownIds.has(drill.itemId) ? { mode: 'ear' as const } : {}) }));
   /** Phase 6: the score as the item's presentation allows (full / rhythm / name / nothing; by ear until a clean take). */
   const fadedOn = !!pres && !shownNow && (pres.fade !== 'full' || pres.byEar);
   // no Listen before a sight take (reading is measured) or while the notation is hidden (Show notes is the help)
@@ -1775,6 +1782,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             onClick={() => {
               void piano.unlock();
               setCStarted(true);
+              // the intro named the first take: it counts as its brief
+              gate.seen(taskKindOf(cTake.drill, { level: cTake.level.id, ...(presOf(cTake.drill)?.byEar ? { mode: 'ear' as const } : {}) }));
               const demo = (cTake.demo || !!pres?.byEar) && hearable(cTake.drill);
               setCDemo(demo);
               setAgain(!demo);
@@ -1843,9 +1852,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         {bar}
         {faded(<DrillScore drill={shownDrill(takeDrill, own)} ds={ds} beat={beat} lang={lang} bpm={bpm} live={live} cue={counting} />, { autoListen: false })}
         {fingerKeysOn && <FingerKeys drill={shownDrill(takeDrill, own)} beat={beat} lang={lang} />}
-        {stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
-        {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
-        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+        {stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} brief={briefFor()} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
+        {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
       </div>
     );
   }
@@ -2032,9 +2041,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
           }}
         />
       )}
-      {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
-      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
-      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} onHeard={setHeard} />}
+      {!res && !writing && stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} brief={briefFor()} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
+      {!res && !writing && stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+      {!res && !writing && !stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), drill.write || drill.drumWrite ? setWriting({ m, p }) : done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} onHeard={setHeard} />}
       {/* Ear L7: write the line after playing it; the written grade joins the take's verdict. */}
       {!res && writing && !drill.drumWrite && <TranscribeWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withWritten(writing.m, g), writing.p))} />}
       {!res && writing && drill.drumWrite && <DrumWrite drill={drill} lang={lang} onDone={(g) => (setWriting(null), done(withDrumWrite(writing.m, g, drill), writing.p))} />}
@@ -2427,6 +2436,8 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   const n = useRef(0);
   const timer = useRef(0);
   useEffect(() => () => window.clearTimeout(timer.current), []);
+  // Owner 2026-11-24: a new section / kind of step opens with a short brief; its count-in waits for Ready (taskBrief.ts).
+  const gate = useBriefGate();
   const strand = strands[si];
   const rung = strand && st.at >= 0 ? strand.rungs[st.at] : null;
   const finishStrand = (s: StrandState) => {
@@ -2530,8 +2541,9 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
       timer.current = window.setTimeout(nextCheck, m.verdict === 'clean' ? 1600 : 2600);
     };
     const name = c.kind === 'ear' ? (lang === 'he' ? 'משפט משמיעה' : 'A phrase by ear') : lang === 'he' ? 'קריאה מהדף' : 'At sight';
+    const cb = gate.prop(taskBriefOf(c.drill, { section: 'channels', mode: c.kind === 'ear' ? 'ear' : 'read' }));
     return (
-      <div className="drill-run" data-test-check={c.kind} data-test-strand="channels" data-test-probe={c.drill.itemId}>
+      <div className="drill-run" data-test-check={c.kind} data-test-strand="channels" data-test-probe={c.drill.itemId} data-test-brief={last ? 'done' : cb.open ? 'open' : 'line'}>
         <p className="drill-goal">
           {tx.section} {strands.length + 1}/{strands.length + 1} · <b>{lang === 'he' ? 'משמיעה ומהדף' : 'By ear and at sight'}</b> · {name} · <span dir="ltr">♩ {c.drill.startBpm}</span>
         </p>
@@ -2540,7 +2552,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
             {last.verdict === 'clean' ? tx.clean : tx.not} · {last.why[lang]}
           </p>
         )}
-        <ProbeTake key={`check:${c.kind}:${take}`} drill={c.drill} ds={ds} last={last} bpm={c.drill.startBpm} lang={lang} cal={cal} kit={kit} onDone={(m) => checkDone(m)} />
+        <ProbeTake key={`check:${c.kind}:${take}`} drill={c.drill} ds={ds} last={last} bpm={c.drill.startBpm} lang={lang} cal={cal} kit={kit} brief={cb} onDone={(m) => checkDone(m)} />
         {!last && (
           <button className="btn ghost" onClick={nextCheck} data-test-too-hard="1">
             {tx.tooHard}
@@ -2551,8 +2563,9 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   }
   if (!rung) return null;
   const verdictLine = last ? (last.verdict === 'clean' ? tx.clean : last.verdict === 'almost' && !st.retried.includes(st.at) ? tx.almost : tx.not) : null;
+  const rb = gate.prop(taskBriefOf(rung.drill, { section: strand.id, level: rung.level, mode: sectionMode(strand.id) }));
   return (
-    <div className="drill-run" data-test-probe={rung.level} data-test-strand={strand.id}>
+    <div className="drill-run" data-test-probe={rung.level} data-test-strand={strand.id} data-test-brief={last ? 'done' : rb.open ? 'open' : 'line'}>
       <p className="drill-goal">
         {tx.section} {si + 1}/{strands.length} · <b>{strand.title[lang]}</b> · {rung.title[lang]}{inst === 'drums' ? '' : ` · ${keyName(drillKeyOf(rung.drill), drillMinorOf(rung.drill) || facetGroup(rung.drill) === 'minor')}`} · <span dir="ltr">♩ {rung.drill.startBpm}</span>
       </p>
@@ -2562,7 +2575,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
         </p>
       )}
       {last?.octaveShift !== undefined && <OctaveFix lang={lang} shift={last.octaveShift} current={midiOctave} onFix={onOctave} />}
-      <ProbeTake key={`${strand.id}:${take}`} drill={rung.drill} ds={ds} last={last} bpm={rung.drill.startBpm} lang={lang} cal={cal} kit={kit} autoStart={auto} onDone={(m) => done(m)} />
+      <ProbeTake key={`${strand.id}:${take}`} drill={rung.drill} ds={ds} last={last} bpm={rung.drill.startBpm} lang={lang} cal={cal} kit={kit} autoStart={auto} brief={rb} onDone={(m) => done(m)} />
       {!last && (
         <button className="btn ghost" onClick={() => step('not')} data-test-too-hard="1">
           {tx.tooHard}
@@ -2573,13 +2586,13 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
 }
 
 /** A placement probe's score and take, with the score's now-cue following the take. */
-function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone, autoStart = false }: { autoStart?: boolean; drill: Drill; ds: DrillSettings; last: TakeMetrics | null; bpm: number; lang: Lang; cal: DrillCalibration; kit?: Settings['drumKit']; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
+function ProbeTake({ drill, ds, last, bpm, lang, cal, kit, onDone, autoStart = false, brief }: { /** The step's brief (taskBrief.ts): open on a new kind — the count-in waits for Ready; a cold read hides the score until then. */ brief?: BriefProp; autoStart?: boolean; drill: Drill; ds: DrillSettings; last: TakeMetrics | null; bpm: number; lang: Lang; cal: DrillCalibration; kit?: Settings['drumKit']; onDone: (m: TakeMetrics, played: PlayedNote[]) => void }) {
   const [beat, setBeat] = useState(-1);
   return (
     <>
-      <DrillScore drill={drill} ds={ds} result={last} beat={last ? -1 : beat} lang={lang} />
+      {!(brief?.open && brief.brief.hideMaterial && !last) && <DrillScore drill={drill} ds={ds} result={last} beat={last ? -1 : beat} lang={lang} />}
       {last && <MarkLegend lang={lang} />}
-      {!last && <DrillTake hear={false} drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={autoStart} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />}
+      {!last && <DrillTake hear={false} drill={drill} bpm={bpm} lang={lang} cal={cal} kit={kit} autoStart={autoStart} brief={brief} onBeat={setBeat} onDone={(m, played) => (setBeat(-1), onDone(m, played))} />}
     </>
   );
 }

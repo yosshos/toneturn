@@ -56,6 +56,7 @@ import { markTakeZero, useKeptTakes } from './recKeep';
 import { Icon } from './icons';
 import { HearButton } from './HearDrill';
 import { useAnyNote } from './anyNote';
+import { BRIEF_ARM_MS, BriefCard, BriefLine, type BriefProp } from './TaskBrief';
 import { takeCounting, takePlaying } from './takeClock';
 import { holdTake } from './activity';
 
@@ -867,7 +868,7 @@ function usePrep(drill: Drill): { left: number; skip: () => void } {
 }
 
 /** Play a drill once: count-in, metronome, record; resolves with the analysis. */
-export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false, liveMarks = false, onLive, onCount, onHeard, hear = true }: { /** The Listen button beside Play (off in a level test: reading is measured). */ hear?: boolean; /** The count-in is running (true) or not: the score's first head pulses. */ onCount?: (on: boolean) => void; /** Rule-card items (§4.7 note roles): the improvised notes heard so far, in beats (null when the take ends). */ onHeard?: (notes: { beat: number; midi: number }[] | null) => void; /** Slice 5: grade each note as it is played and hand the marks to the score (practice); off = calm (the meter only). */ liveMarks?: boolean; /** The running take's settled notes (null when it ends). */ onLive?: (l: LiveTake | null) => void; /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
+export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDrums, kit, autoStart = false, liveMarks = false, onLive, onCount, onHeard, hear = true, brief }: { /** Owner 2026-11-24 (taskBrief.ts): the task's brief — open (a new kind: the card, and the count-in waits for Ready, never auto-starts) or only the compact line during the take. */ brief?: BriefProp; /** The Listen button beside Play (off in a level test: reading is measured). */ hear?: boolean; /** The count-in is running (true) or not: the score's first head pulses. */ onCount?: (on: boolean) => void; /** Rule-card items (§4.7 note roles): the improvised notes heard so far, in beats (null when the take ends). */ onHeard?: (notes: { beat: number; midi: number }[] | null) => void; /** Slice 5: grade each note as it is played and hand the marks to the score (practice); off = calm (the meter only). */ liveMarks?: boolean; /** The running take's settled notes (null when it ends). */ onLive?: (l: LiveTake | null) => void; /** Owner 2026-11-13: "Again" starts the take at once (count-in), no second Play press. */ autoStart?: boolean; drill: Drill; bpm: number; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; /** Beat index of the take (after the count-in; −1 when idle) — for a score cursor. */ onBeat?: (beat: number) => void; /** B5: headphones / line-in confirmed (undefined = never asked). An audio-routing choice only — it never passes anything. */ drumsOk?: boolean; onDrums?: (headphones: boolean) => void; /** Drums: the player's kit (map, velocity bands, practice-pad mode). */ kit?: KitProfile }) {
   onDone = useKeptTakes(drill, bpm, onDone); // My recordings: every take is kept, mic takes with their audio (SPEC-PHRASE-STUDIO §6.1)
   const tx = TX[lang];
   const [phase, setPhase] = useState<'ready' | 'count' | 'play'>('ready');
@@ -926,9 +927,12 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const askDrums = !!(drill.drums || drill.band) && !useMidi && !drumBlocked && drumsOk === undefined && !!onDrums;
   const prep = usePrep(drill);
   const startRef = useRef<(() => Promise<void>) | null>(null);
-  const autoGo = autoStart && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
-  // A note on the keyboard (or any computer key) = Play: the count-in starts (owner 2026-11-21, hands stay on the keys).
-  useAnyNote(phase === 'ready' && !autoGo && !askDrums && !drumBlocked && !pianoBlocked && !drill.untimed, () => void startRef.current?.());
+  // An open brief (a new task kind) never auto-starts: the count-in waits for Ready (owner 2026-11-24).
+  const briefOpen = !!brief?.open && !drill.untimed;
+  const autoGo = autoStart && !briefOpen && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
+  // A note on the keyboard (or any computer key) = Play: the count-in starts (owner 2026-11-21, hands stay on the keys);
+  // on an open brief only after a reading moment.
+  useAnyNote(phase === 'ready' && !autoGo && !askDrums && !drumBlocked && !pianoBlocked && !drill.untimed, () => void startRef.current?.(), briefOpen ? BRIEF_ARM_MS : undefined);
   useEffect(() => {
     if (!autoGo) return;
     prep.skip();
@@ -939,6 +943,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   }, []);
   if (drill.untimed) return <UntimedTake drill={drill} lang={lang} cal={cal} onDone={onDone} />;
   const start = async () => {
+    brief?.onReady?.();
     // DEV ONLY (e2e / screenshots): a synthesized take through the real analysis, no audio.
     const fake = fakeTakeOn();
     if (fake) {
@@ -1324,6 +1329,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     <div className="drill-take">
       {/* 0.91 (one screen): when the take is blocked without MIDI, the warning below says it — no second MIDI line. */}
       {/* Input check: the microphone strip's MIDI link says what MIDI adds (it replaced the old MIDI hint line). */}
+      {brief && (phase !== 'ready' || !briefOpen) && <BriefLine brief={brief.brief} lang={lang} />}
+      {brief && phase === 'ready' && briefOpen && !askDrums && <BriefCard brief={brief.brief} lang={lang} />}
       {checkMode && phase !== 'ready' && <InputWatchdog lang={lang} mode={checkMode} arm={arm} />}
       {drumBlocked && (
         <p className="kit-warn" data-drum-needs-kit="1">
@@ -1436,8 +1443,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
           )}
           <div className="take-start">
             {hear && <HearButton drill={drill} bpm={bpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
-            <button className="btn mega" onClick={() => void start()} data-drill-play="1" disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
-              <Icon k="play" /> {tx.play}
+            <button className="btn mega" onClick={() => void start()} data-drill-play="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})} disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
+              <Icon k="play" /> {briefOpen ? (lang === 'he' ? 'מוכנים' : 'Ready') : tx.play}
             </button>
           </div>
         </>

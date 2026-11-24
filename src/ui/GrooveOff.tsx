@@ -14,6 +14,8 @@ import { midi } from '../speech/midi';
 import { createGrooveDuel, myGrooveDuels, submitGrooveDuel, type GrooveDuelRow } from '../cloud/grooveOff';
 import { listFriends } from '../cloud/social';
 import { DrillTake } from './DrillTake';
+import { useBriefGate } from './TaskBrief';
+import { taskBriefOf } from '../engine/drills/taskBrief';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { G2Head } from './Flight';
 import { GameCeleArt } from './GameCele';
@@ -70,6 +72,8 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
   const [err, setErr] = useState(false);
   const [copied, setCopied] = useState(false);
   const [phones, setPhones] = useState<boolean | undefined>(settings.headphones);
+  // Owner 2026-11-24 (taskBrief.ts): a round of another kind opens with a short brief; its count-in waits for Ready.
+  const gate = useBriefGate();
   const [friends, setFriends] = useState<{ id: string; name: string }[]>([]);
   const [rows, setRows] = useState<GrooveDuelRow[]>([]);
   const [sent, setSent] = useState(false);
@@ -197,7 +201,7 @@ export function GrooveOff({ lang, settings, items, signedIn, onExit, onResult }:
         <div className="dg-score">
           <DrillScore drill={g.drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
         </div>
-        {!res && <DrillTake key={`${play.seed}:${round}`} autoStart={round > 0} drill={g.drill} bpm={g.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
+        {!res && <DrillTake key={`${play.seed}:${round}`} autoStart={round > 0} brief={gate.prop(taskBriefOf(g.drill, { bpm: g.bpm }))} drill={g.drill} bpm={g.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
         {res && (
           <div className={`dg-result ${res.s.ok ? 'ok' : 'bad'}`} data-dg-ok={res.s.ok ? '1' : '0'}>
             <p className="dg-line">{tx(res.s.line)}</p>

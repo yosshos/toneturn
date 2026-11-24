@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.135.4',
+    date: '2026-11-24',
+    en: ['A short brief before every new kind of task: what to play, which hand, the tempo. The count-in waits for Ready (or a note after a moment), in the level test, the coach, the daily session and the drum games; the instruction stays on screen during the take'],
+    he: ['הסבר קצר לפני כל סוג משימה חדש: מה לנגן, באיזו יד, באיזה טמפו. הספירה מחכה ל"מוכנים" (או לצליל אחרי רגע), במבדק הרמה, אצל המאמן, באימון היומי ובמשחקי התופים; ההנחיה נשארת על המסך בזמן הנגינה'],
+  },
+  {
     version: '0.135.3',
     date: '2026-11-24',
     en: ['Settings that belong to this device now stay put: timing calibration, the MIDI sound choice, audio and microphone choices are never overwritten by the cloud copy or another device. Each MIDI keyboard, microphone and audio output remembers its own settings'],

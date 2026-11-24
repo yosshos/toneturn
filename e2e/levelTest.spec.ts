@@ -14,10 +14,18 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   // Hands starts on its second step (two octaves hands together, not C).
   await expect(probe).toHaveAttribute('data-test-strand', 'hands');
   await expect(probe).toHaveAttribute('data-test-probe', 'scales-3');
+  // Owner 2026-11-24: the first step opens with a short brief; the count-in waits for Ready (no auto-start, no timer).
+  await expect(probe).toHaveAttribute('data-test-brief', 'open');
+  await expect(page.locator('[data-task-brief]')).toBeVisible();
+  await expect(page.locator('[data-task-brief] .tb-what')).not.toBeEmpty();
+  await page.waitForTimeout(1500);
+  await expect(page.locator('[data-brief-ready]')).toBeVisible();
+  await expect(page.locator('[data-task-brief]')).toBeVisible();
   await page.screenshot({ path: 'test-results/level-test-hands.png' });
   await page.locator('[data-test-too-hard]').click();
-  // A miss brackets down to the first step, in another key.
+  // A miss brackets down to the first step, in another key — another step, so its own brief.
   await expect(probe).toHaveAttribute('data-test-probe', 'scales-1');
+  await expect(probe).toHaveAttribute('data-test-brief', 'open');
   await page.locator('[data-test-too-hard]').click();
   // Then the next section — no insisting: touch by microphone (the crescendo up / diminuendo down, one hand).
   await expect(probe).toHaveAttribute('data-test-strand', 'touch');
@@ -29,13 +37,40 @@ test('piano level test: sections, adaptive steps, a miss moves on', async ({ pag
   const seen: string[] = [];
   for (let k = 0; k < 30; k++) {
     if (await page.locator('[data-level-test-done]').isVisible()) break;
-    seen.push((await probe.getAttribute('data-test-strand')) ?? '');
+    const strand = (await probe.getAttribute('data-test-strand')) ?? '';
+    // every section's first step (and every new kind) opens with its brief before any count-in
+    if (seen[seen.length - 1] !== strand) {
+      await expect(probe).toHaveAttribute('data-test-brief', 'open');
+      await expect(page.locator('[data-task-brief]')).toBeVisible();
+    }
+    seen.push(strand);
     await page.locator('[data-test-too-hard]').click();
   }
   await expect(page.locator('[data-level-test-done]')).toBeVisible();
   expect(new Set(seen)).toEqual(new Set(['chords', 'comp', 'reading', 'ear', 'meter', 'lines', 'channels']));
   expect(seen.filter((x) => x === 'channels').length).toBe(2);
   expect(seen.length).toBeLessThanOrEqual(14);
+});
+
+// Owner 2026-11-24: after a take the test moves on by itself, but a new step never counts in by itself — its brief waits
+// for Ready; the instruction stays as a compact line during the take.
+test('piano level test: Ready starts the take; the next step waits on its brief', async ({ page }) => {
+  await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
+  await page.goto('/?sim=1#/drills');
+  await page.locator('[data-drills-test]').click();
+  await page.locator('[data-test-start]').click();
+  const probe = page.locator('[data-test-probe]');
+  await expect(probe).toHaveAttribute('data-test-probe', 'scales-3');
+  await expect(probe).toHaveAttribute('data-test-brief', 'open');
+  await page.locator('[data-brief-ready]').click();
+  await expect(page.locator('[data-lt-verdict]')).toBeVisible();
+  // a clean take jumps ahead (another step): it shows its brief and waits — no verdict, no take, however long
+  await expect(probe).not.toHaveAttribute('data-test-probe', 'scales-3', { timeout: 10_000 });
+  await expect(probe).toHaveAttribute('data-test-brief', 'open');
+  await expect(page.locator('[data-task-brief]')).toBeVisible();
+  await page.waitForTimeout(2000);
+  await expect(page.locator('[data-lt-verdict]')).toHaveCount(0);
+  await expect(page.locator('[data-brief-ready]')).toBeVisible();
 });
 
 for (const inst of ['guitar', 'bass'] as const)

@@ -152,6 +152,8 @@ test('coach: every take and the demo start the cursor afresh and stop it on the 
     const t0 = performance.now();
     while (performance.now() - t0 < 30000 && out.length < 4) {
       await new Promise((res) => requestAnimationFrame(() => res(null)));
+      // a new kind of take waits on its brief (owner 2026-11-24): Ready
+      document.querySelector<HTMLButtonElement>('.coach-run [data-brief-ready]')?.click();
       const box = document.querySelector<HTMLElement>('.coach-run .drill-staff');
       const b = box?.getAttribute('data-now-beat');
       if (!box || b === null || b === undefined) {

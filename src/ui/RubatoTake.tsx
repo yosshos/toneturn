@@ -21,6 +21,8 @@ import { piano } from './services';
 import { InputCheck, InputWatchdog } from './InputCheck';
 import { Icon } from './icons';
 import { HearButton } from './HearDrill';
+import { useAnyNote } from './anyNote';
+import { BRIEF_ARM_MS, BriefCard, BriefLine, type BriefProp } from './TaskBrief';
 
 type Lang = 'en' | 'he';
 const TX = {
@@ -30,7 +32,7 @@ const TX = {
 /** Silence after the last note that ends a take once at least half the notes are in. */
 const QUIET_MS = 5000;
 
-export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false, hear = true }: { drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean; /** The Listen button beside Play (off in a level test). */ hear?: boolean }) {
+export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false, hear = true, brief }: { /** Owner 2026-11-24 (taskBrief.ts): open = a new task kind — the card, and the take waits for Ready; else the compact line. */ brief?: BriefProp; drill: Drill; lang: Lang; cal: DrillCalibration; onDone: (m: TakeMetrics, played: PlayedNote[]) => void; onBeat?: (beat: number) => void; autoStart?: boolean; /** The Listen button beside Play (off in a level test). */ hear?: boolean }) {
   onDone = useKeptTakes(drill, 0, onDone); // My recordings: free-time takes are kept too (no tempo)
   const tx = TX[lang];
   const [on, setOn] = useState(false);
@@ -42,6 +44,8 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
   const start = async () => {
+    if (on) return;
+    brief?.onReady?.();
     await piano.unlock();
     setOn(true);
     onBeat?.(0);
@@ -161,12 +165,17 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
     doneRef.current = finish;
   };
   const doneRef = useRef<(() => void) | null>(null);
+  const briefOpen = !!brief?.open;
+  // An open brief: a note or key is Ready only after a reading moment (the free take then starts on it).
+  useAnyNote(briefOpen && !on, () => void start(), BRIEF_ARM_MS);
   useEffect(() => {
-    if (autoStart) void start();
+    if (autoStart && !briefOpen) void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <div className="drill-take rubato" data-rubato-take={on ? 'on' : 'ready'}>
+      {brief && (on || !briefOpen) && <BriefLine brief={brief.brief} lang={lang} />}
+      {brief && !on && briefOpen && <BriefCard brief={brief.brief} lang={lang} free />}
       <p className="field-hint">{on ? tx.listening : tx.hint}</p>
       {on && <InputWatchdog lang={lang} mode={checkMode} arm={armAt ? { start: armAt, due: armAt + 2000 } : null} />}
       {!on && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
@@ -177,8 +186,8 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       ) : (
         <div className="take-start">
           {hear && <HearButton drill={drill} bpm={drill.startBpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
-          <button className="btn mega" onClick={() => void start()} data-rubato-start="1">
-            <Icon k="play" /> {tx.play}
+          <button className="btn mega" onClick={() => void start()} data-rubato-start="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})}>
+            <Icon k="play" /> {briefOpen ? (lang === 'he' ? 'מוכנים' : 'Ready') : tx.play}
           </button>
         </div>
       )}

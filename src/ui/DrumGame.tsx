@@ -11,6 +11,8 @@ import { inputLatency } from '../engine/latency';
 import type { Settings } from '../storage/progress';
 import { midi } from '../speech/midi';
 import { DrillTake } from './DrillTake';
+import { useBriefGate } from './TaskBrief';
+import { taskBriefOf } from '../engine/drills/taskBrief';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { TierChips } from './TierChips';
 import { kitKind, type KitProfile } from '../engine/drumKit';
@@ -58,6 +60,8 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
   const [beat, setBeat] = useState(-1);
   const [take, setTake] = useState(0);
   const [phones, setPhones] = useState<boolean | undefined>(settings.headphones);
+  // Owner 2026-11-24 (taskBrief.ts): a round of another kind opens with a short brief; its count-in waits for Ready.
+  const gate = useBriefGate();
   // Rudiment Rush: the two-zone sticking mode this kit can measure, and the tempo rising with every round passed.
   const kind = kitKind(settings.drumKit);
   const [zones, setZones] = useState<StickZones>(() => zonesOf(settings.drumKit, kind));
@@ -222,7 +226,7 @@ export function DrumGame({ game, lang, settings, onExit, onResult, best, tier: t
       <div className="dg-score">
         <DrillScore drill={r.drill} ds={ds} result={res?.m} beat={res ? -1 : beat} lang={lang} />
       </div>
-      {!res && <DrillTake key={`${r.drill.itemId}:${take}`} autoStart={round > 0} drill={r.drill} bpm={r.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
+      {!res && <DrillTake key={`${r.drill.itemId}:${take}`} autoStart={round > 0} brief={gate.prop(taskBriefOf(r.drill, { bpm: r.bpm }))} drill={r.drill} bpm={r.bpm} lang={lang} cal={cal} onDone={done} onBeat={setBeat} drumsOk={phones} onDrums={setPhones} kit={settings.drumKit} />}
       {res && (
         <div className={`dg-result ${res.s.ok ? 'ok' : 'bad'}`} data-dg-ok={res.s.ok ? '1' : '0'}>
           <p className="dg-line">{tx(res.s.line)}</p>

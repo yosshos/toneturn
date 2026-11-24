@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 // The practice coach (owner 2026-11-21): one press starts a continuous session on a family; after each take the coach
-// says one line and the next take starts by itself (another hand / key / step) — no button between takes; End shows
+// says one line and the next take starts by itself (another key, again, faster) — no button between takes; End shows
 // the session's summary and XP. Every reading take has Listen beside Play.
+// Owner 2026-11-24 (taskBrief.ts): a new kind of take (another hand, another step) opens with a short brief once and its
+// count-in waits for Ready; repeats of a kind already briefed keep flowing.
 test.describe.configure({ timeout: 120_000 });
 
 test('coach: scales run hands-free from take to take, then end with XP', async ({ page }) => {
@@ -17,12 +19,25 @@ test('coach: scales run hands-free from take to take, then end with XP', async (
   if (await demo.isVisible().catch(() => false)) await demo.click();
   // Takes follow one another with no click: collect the items seen.
   const seen = new Set<string>();
-  for (let k = 0; k < 40 && seen.size < 3; k++) {
+  let briefs = 0;
+  for (let k = 0; k < 60 && seen.size < 3; k++) {
     const id = await page.locator('.coach-run').getAttribute('data-drill').catch(() => null);
     if (id) seen.add(id);
+    // a new step is played first: skip it here too
+    if (await demo.isVisible().catch(() => false)) await demo.click().catch(() => {});
+    // a new kind of take waits on its brief (never counts in by itself): Ready
+    const ready = page.locator('[data-brief-ready]');
+    if (await ready.isVisible().catch(() => false)) {
+      await expect(page.locator('[data-task-brief]')).toBeVisible();
+      await page.waitForTimeout(600);
+      await expect(ready).toBeVisible();
+      briefs++;
+      await ready.click().catch(() => {});
+    }
     await page.waitForTimeout(400);
   }
   expect(seen.size).toBeGreaterThanOrEqual(3);
+  expect(briefs).toBeGreaterThanOrEqual(1);
   await expect(page.locator('.take-review')).toHaveCount(0);
   await page.locator('[data-coach-stop]').click();
   await expect(page.locator('[data-coach-end]')).toBeVisible();
