@@ -1423,25 +1423,6 @@ html[data-motion='reduced'] .wk-undo {
 .wk-calm .wk-start {
   flex: 1;
 }
-.wk-ring {
-  --p: 0deg;
-  flex: none;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  line-height: 1;
-  background: radial-gradient(closest-side, var(--card) 76%, transparent 78%), conic-gradient(var(--gold) var(--p), color-mix(in srgb, var(--ink) 12%, transparent) 0);
-}
-.wk-ring b {
-  font-size: 1rem;
-}
-.wk-ring small {
-  font-size: 0.62rem;
-  color: var(--ink-dim);
-}
 .wk-calm .wk-edited {
   justify-self: center;
   font-size: 0.85rem;

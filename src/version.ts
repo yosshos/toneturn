@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.134.1',
+    date: '2026-11-24',
+    en: ['Today: the minutes-this-week ring reads on one line again'],
+    he: ['היום: טבעת הדקות השבוע מוצגת שוב בשורה אחת'],
+  },
+  {
     version: '0.134.0',
     date: '2026-11-24',
     en: ['A real end to every practice session: the minutes, a milestone when you reach one, the week against your goal, this week, month and year, one graph of your progress and what comes tomorrow. XP now pays for stretching: new tempos, new keys and your weaker side earn more, comfortable repeats less, with a short line after each take. Momentum, a weekly score for showing up and improving, adds bonus XP that counts in the league'],
