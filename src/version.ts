@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.131.0',
+    date: '2026-11-24',
+    en: ['German, Japanese, Korean and Chinese are now complete too: every lesson explanation is translated'],
+    he: ['גם גרמנית, יפנית, קוריאנית וסינית מלאות עכשיו: כל ההסברים בשיעורים מתורגמים'],
+  },
+  {
     version: '0.130.0',
     date: '2026-11-24',
     en: ['Spanish, Portuguese, French and Italian are now complete: every lesson explanation is translated, not only the screens and titles'],
