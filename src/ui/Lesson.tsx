@@ -178,6 +178,8 @@ export function LessonScreen({ t, lessonId, settings, autoStart, onMode, onExit,
         timed: isTimed(settings.timedScoring, settings.firstUseAt, new Date()),
         // Pace goals count unless the player turned timed scoring off (the first-week grace is for the rating only).
         pace: { profile: loadPace(), on: settings.timedScoring !== false },
+        // SPEC-PRACTICE-SESSION §11.3: an answer's XP follows the Elo expected score (the player's rating per skill)
+        ratings: Object.fromEntries(Object.entries(ratings ?? {}).filter(([, v]) => !!v && v.n > 0).map(([k, v]) => [k, v!.r])),
         inputNaming: namingFor(settings.naming, settings.inputLang),
         latencyMs: settings.tapLatencyMs,
         micLatencyMs: settings.micLatencyMs,

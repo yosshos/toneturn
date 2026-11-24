@@ -3,12 +3,13 @@
 
 import { Iso } from './Iso';
 import { Icon } from './icons';
+import { SessionEnd, type SessionEndProps } from './SessionEnd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import type { PathView } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
-import { add, BETWEEN_S, blockLeftMs, blockSummary, canRescale, coverage, focusIdOf, LIMITS, moveTo, parseFocus, preset, remove, rescale, runLeftMs, setMinutes, templateStale, total, WHY_WORD, whyOf, type Block, type BlockTarget, type FocusMode, type Preset, type WorkoutRun } from '../engine/workout2';
+import { add, plusFive, plusFiveOffer, BETWEEN_S, blockLeftMs, blockSummary, canRescale, coverage, focusIdOf, LIMITS, moveTo, parseFocus, preset, remove, rescale, runLeftMs, setMinutes, templateStale, total, WHY_WORD, whyOf, type Block, type BlockTarget, type FocusMode, type Preset, type WorkoutRun } from '../engine/workout2';
 import { keyName } from '../engine/drills/generate';
 import { familyById } from '../engine/drills/plan';
 import type { FamilyId } from '../engine/drills/types';
@@ -68,6 +69,10 @@ const W = {
     blockDone: 'Block done',
     go: 'Go',
     finished: 'Workout done!',
+    plusQ: 'Keep going? +5 min',
+    plusSub: 'One more block: {b}.',
+    plusYes: '+5 min',
+    plusNo: 'Finish',
     howWas: 'How was it?',
     fb: { easy: 'Too easy', right: 'Just right', hard: 'Too hard', long: 'Too long' },
     end: 'End workout',
@@ -147,6 +152,10 @@ const W = {
     blockDone: 'הבלוק הושלם',
     go: 'קדימה',
     finished: 'האימון הושלם!',
+    plusQ: 'להמשיך? עוד 5 דקות',
+    plusSub: 'עוד בלוק אחד: {b}.',
+    plusYes: '5 דק׳ נוספות',
+    plusNo: 'לסיים',
     howWas: 'איך היה?',
     fb: { easy: 'קל מדי', right: 'בדיוק', hard: 'קשה מדי', long: 'ארוך מדי' },
     end: 'לסיים את האימון',
@@ -1016,8 +1025,26 @@ function BetweenBlocks({ t, lang, run, onNext, onMore, onEnd }: { t: Strings; la
   );
 }
 
+/** §5: "How was it?" — one tap, the chosen chip stays marked (tomorrow's session follows it: W11). */
+function FeedbackChips({ lang, onFeedback }: { lang: Lang; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void }) {
+  const tx = W[lang];
+  const [picked, setPicked] = useState<string | null>(null);
+  return (
+    <div className="wk-howwas">
+      <h2>{tx.howWas}</h2>
+      <div className="intake-chips" role="radiogroup" aria-label={tx.howWas}>
+        {(['easy', 'right', 'hard', 'long'] as const).map((f) => (
+          <button key={f} type="button" role="radio" aria-checked={picked === f} className={`chip ${picked === f ? 'on' : ''}`} onClick={() => (setPicked(f), onFeedback(f))} data-feedback={f}>
+            {tx.fb[f]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), between blocks, and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, onNext, onMore, endCard }: { /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** §5: the countdown ran out or Next now (the next block starts). */ onNext?: () => void; /** §5: "+2 min" on the block that just ended. */ onMore?: () => void; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, onNext, onMore, endCard, end, onPlusFive, onFinish }: { /** SPEC-PRACTICE-SESSION §5: the end screen's content and actions (engine/sessionReward.ts, engine/momentum.ts). */ end?: Omit<SessionEndProps, 'lang' | 'feedback'>; /** §4: "Keep going? +5 min" taken: one more block of the most needed area. */ onPlusFive?: (block: string) => void; /** §4: the offer declined — on to the end screen. */ onFinish?: () => void; /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** §5: the countdown ran out or Next now (the next block starts). */ onNext?: () => void; /** §5: "+2 min" on the block that just ended. */ onMore?: () => void; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -1034,28 +1061,56 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
     const id = window.setInterval(() => void piano.play([{ midi: 76, start: 0, duration: 0.05, velocity: 0.5, perc: 'click' }], 0.1, new AbortController().signal).catch(() => {}), 60000 / bpm);
     return () => window.clearInterval(id);
   }, [metro, bpm]);
-  if (run.finished || !b) {
-    const items = Object.values(run.items).reduce((a, [n, r]) => [a[0] + n, a[1] + r], [0, 0]);
-    const mins = Math.round(Object.values(run.used).reduce((a, x) => a + x, 0) / 60000);
+  // SPEC-PRACTICE-SESSION §4: the last block ran out on its own — "Keep going? +5 min" once, before the end screen
+  if (run.finished && plusFiveOffer(run) && onPlusFive && onFinish) {
+    const last = run.blocks.find((x) => x.id === run.between);
+    const sum = last ? blockSummary(run, last.id) : null;
+    const added = plusFive(run).blocks;
+    const nextB = added[added.length - 1];
     return (
-      <main className="wk-run wk-finished">
-        <h1>{tx.finished}</h1>
-        <p dir="ltr" className="wk-sum">
-          {mins}′ · {items[0]} ✓{items[1]} · {run.steps.length} {lang === 'he' ? 'שלבים' : 'steps'}
-        </p>
-        <h2>{tx.howWas}</h2>
-        <div className="intake-chips">
-          {(['easy', 'right', 'hard', 'long'] as const).map((f) => (
-            <button key={f} className="chip" onClick={() => onFeedback(f)}>
-              {tx.fb[f]}
-            </button>
-          ))}
-        </div>
-        {endCard}
-        <button className="btn primary" onClick={onEnd}>
-          {tx.home}
+      <main className="wk-run wk-between wk-plus5" data-plus5-offer="1">
+        <BlockBar blocks={run.blocks} run={run} />
+        {last && (
+          <h1>
+            <Icon k="check" size={18} /> {fill(tx.blockOver, { b: blockLabel(t, last.target, lang, last.id) })}
+          </h1>
+        )}
+        {sum && (
+          <p className="wk-sum" dir="auto">
+            {sum.items ? fill(tx.sumLine, { m: sum.minutes, n: sum.items, r: sum.right }) : fill(tx.sumMin, { m: sum.minutes })}
+          </p>
+        )}
+        <h2>{tx.plusQ}</h2>
+        {nextB && (
+          <p className="field-hint" dir="auto">
+            {fill(tx.plusSub, { b: blockLabel(t, nextB.target, lang, nextB.id) })}
+          </p>
+        )}
+        <button className="btn primary" onClick={() => onPlusFive(nextB?.id ?? '')} data-plus5="1">
+          <Icon k="play" /> {tx.plusYes}
         </button>
+        <div className="wk-run-actions">
+          <button className="btn small ghost" onClick={onFinish} data-plus5-no="1">
+            {tx.plusNo}
+          </button>
+        </div>
       </main>
+    );
+  }
+  if (run.finished || !b) {
+    if (!end) return null;
+    // §5: the end screen (also after "End" early); "How was it?" and the style card sit in its feedback slot
+    return (
+      <SessionEnd
+        lang={lang}
+        {...end}
+        feedback={
+          <>
+            <FeedbackChips lang={lang} onFeedback={onFeedback} />
+            {endCard}
+          </>
+        }
+      />
     );
   }
   if (run.between && onNext && onMore) return <BetweenBlocks key={run.between} t={t} lang={lang} run={run} onNext={onNext} onMore={onMore} onEnd={onEnd} />;

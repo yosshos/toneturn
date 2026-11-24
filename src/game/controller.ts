@@ -144,6 +144,8 @@ export interface ControllerSettings {
   timed?: boolean;
   /** Personal pace goals (engine/fluency.ts). */
   pace?: { profile: PaceProfile; on: boolean };
+  /** SPEC-PRACTICE-SESSION §11.3: the player's rating per skill (an answer's XP follows the expected score). */
+  ratings?: Partial<Record<string, number>>;
   /** Naming system for spoken note-name answers (input language). Default: same as `naming`. */
   inputNaming?: Naming;
   /** Calibrated tap delay (ms) subtracted from rhythm taps. */
@@ -205,7 +207,7 @@ export class LessonController {
     mode: InputMode,
     private hooks: ControllerHooks = {},
   ) {
-    this.s = { ...createSession(lesson), timed: cfg.timed ?? false, ...(cfg.pace ? { pace: cfg.pace } : {}) };
+    this.s = { ...createSession(lesson), timed: cfg.timed ?? false, ...(cfg.pace ? { pace: cfg.pace } : {}), ...(cfg.ratings ? { ratings: cfg.ratings } : {}) };
     const r = hooks.resume;
     if (r && r.records.length === lesson.questions.length && r.index >= 0 && r.index < lesson.questions.length) {
       this.s = { ...this.s, records: r.records, index: r.index, xp: r.xp };

@@ -76,3 +76,47 @@ test.describe('workout Continue always opens something', () => {
     });
   }
 });
+
+// SPEC-PRACTICE-SESSION §4–§5: "End" mid-run goes to the end screen (not home); it fits a phone; Done goes home.
+test.describe('the session end screen', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+  test('End early → the end screen with the minutes, the week ring and Momentum; Done → Today', async ({ page }) => {
+    await page.goto('/manifest.webmanifest');
+    await page.evaluate(async () => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const now = new Date();
+      const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const progress = { version: 1, xp: 40, applied: [], lessons: {}, history: [], streak: { count: 1, lastDay: today }, review: [], stats: { days: [today], goodSessions: 0, xpByDay: {} } };
+      const settings = { version: 2, uiLang: 'en', inputLang: 'en', outputLang: 'en', mode: 'buttons', voiceConsent: true, seenVersion: '9.9.9', miniLessons: false, dailyMinutes: 30, practiceDays: 5, intake: { v: 1, at: now.toISOString(), music: 1, singing: 1, theory: 1, reading: 1, plays: [], priorities: null, motivation: 'learn', minutes: 30, goal: 'general', leaveOut: [], packs: [], noSing: true, noMic: true }, courses: ['ear'], activeCourse: 'ear', courseStart: { ear: { legacy: true } } };
+      await new Promise((res, rej) => {
+        const r = indexedDB.open('toneturn', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => {
+          const tx = r.result.transaction('kv', 'readwrite');
+          tx.objectStore('kv').put(progress, 'progress');
+          tx.objectStore('kv').put(settings, 'settings');
+          tx.oncomplete = res;
+          tx.onerror = rej;
+        };
+        r.onerror = rej;
+      });
+      const blocks = [{ id: 'b1', target: { kind: 'practice' }, minutes: 10 }, { id: 'b2', target: { kind: 'practice' }, minutes: 20 }];
+      const run = { day: today, blocks, at: 1, used: { b1: 10 * 60000, b2: 2 * 60000 }, steps: [], items: {}, id: `${today}:ear:e2e`, course: 'ear', focus: 'plan', planned: 30 };
+      localStorage.setItem('toneturn.slots.v1', JSON.stringify([{ key: `workout:${today}:ear`, title: 'x', route: 'home', done: 1, total: 2, data: run, savedAt: now.toISOString() }]));
+    });
+    await page.goto('/?unlock#/workoutrun');
+    await page.getByRole('button', { name: 'End workout' }).click();
+    const end = page.locator('main.session-end');
+    await expect(end).toBeVisible();
+    await expect(end).toHaveAttribute('data-session-end', '12');
+    await expect(end.locator('[data-week-ring]')).toBeVisible();
+    await expect(end.locator('[data-momentum]')).toBeVisible();
+    await expect(end.locator('[data-feedback="right"]')).toBeVisible();
+    await end.locator('[data-feedback="right"]').click();
+    await expect(end.locator('[data-feedback="right"]')).toHaveAttribute('aria-checked', 'true');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(376);
+    await end.locator('.se-actions .btn.primary').click();
+    await expect(page.locator('main.session-end')).toHaveCount(0);
+    expect(new URL(page.url()).hash).toMatch(/^#?\/?(home)?$/);
+  });
+});

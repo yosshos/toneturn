@@ -111,9 +111,11 @@ test.describe('course start', () => {
     // "New" highlights Continue the path; the daily goal and the reminder are one tap away.
     await expect(page.locator('[data-next="path"]')).toHaveClass(/primary/);
     await page.locator('[data-next="daily"]').click();
-    await page.locator('[data-goal-xp="20"]').click();
+    await page.locator('[data-goal-min="20"]').click();
+    await page.locator('[data-goal-days="4"]').click();
+    await expect(page.locator('[data-daily-sheet] [data-week-total]')).toContainText('About 1 h 20 min a week');
     await page.locator('[data-daily-save]').click();
-    await expect(page.locator('[data-next="daily"]')).toContainText('20 XP');
+    await expect(page.locator('[data-next="daily"]')).toContainText('20 min · 4 days a week');
     await page.locator('[data-personal-goal]').click();
     await page.locator('[data-goal="ear-chords"]').click();
     await expect(page.locator('[data-personal-goal]')).toContainText('Your goal');

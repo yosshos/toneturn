@@ -26,6 +26,8 @@ export interface SessionRecord {
   blocks: { kind: string; ms: number; items: number; correct: number }[];
   /** Reached the end screen (also "End" early). */
   finished: boolean;
+  /** §11.6: active ms of the takes in the stretch band ("18 of them outside your comfort zone"). */
+  stretchMs?: number;
 }
 
 export interface SessionTotals {
@@ -80,6 +82,7 @@ export function sessionRecordOf(r: WorkoutRun, fallback: { course: CourseId; id?
     activeMs: blocks.reduce((a, b) => a + b.ms, 0),
     blocks,
     finished: !!r.finished,
+    ...(r.bandMs ? { stretchMs: Math.round(r.bandMs.stretch) } : {}),
   };
 }
 

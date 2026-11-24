@@ -106,7 +106,7 @@ import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
 import { baseOf, isTranslated, localeInfo, LOCALES } from '../i18n/locales';
 import { useLocale } from '../i18n/boot';
-import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, namingFor, ratingsOf, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
+import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, momentumOf, namingFor, ratingsOf, weeklyBonuses, withWeekGains, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
 import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
@@ -145,16 +145,17 @@ import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
-import { addSession, areaMinutes, betweenNow, blockLeftMs, canRescale, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, focusAreas, focusBlocks, focusIdOf, improvMode, markServed, parseFocus, reasonLine, rescale, sessionReason, targetFocusBlocks, total as blocksTotal, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, improvLevelToday, pieceWhyToday, teacherItems, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type FocusMode, type FocusTarget, type SuggestInput, type WorkoutRun } from '../engine/workout2';
+import type { SessionEndProps } from './SessionEnd';
+import { addSession, plusFive, areaMinutes, betweenNow, blockLeftMs, canRescale, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, focusAreas, focusBlocks, focusIdOf, improvMode, markServed, parseFocus, reasonLine, rescale, sessionReason, targetFocusBlocks, total as blocksTotal, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, improvLevelToday, pieceWhyToday, teacherItems, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type FocusMode, type FocusTarget, type SuggestInput, type WorkoutRun } from '../engine/workout2';
 import { closeness, slippingItems, weekAreaMinutes } from '../engine/sessionNeed';
 import { focusSheet, itemCells, rungCells, type CellState } from '../engine/drills/focusSheet';
-import { cellItemIds } from '../engine/drills/keyMatrix';
+import { cellDue, cellItemIds, cellKey } from '../engine/drills/keyMatrix';
 import { keyLadder, RUNG_TAG_NAME } from '../engine/drills/keyIndex';
 import { planFamily } from '../engine/drills/todayPlan';
 import { coachable } from '../engine/drills/coach';
 import { lickPool } from '../engine/vocab';
 import { keysInOrder } from '../engine/drills/generate';
-import { itemStatus } from '../engine/drills/itemStatus';
+import { itemStatus, type ItemStatus } from '../engine/drills/itemStatus';
 import type { SheetData, SheetWhich } from './Workout';
 import { dayKeyIfKept, ensureDayKey, improvRootOf, keptPlan, matrixInst, matrixTierOf, projectionInput, techBlockRuns, todayTech } from './todayTech';
 import { logAreaDay, readAreaLog, readDayCtx, saveDayCtx, waitAsked, setWaitAsked, noteStepInWorkout, type DayCtx } from './workoutLog';
@@ -167,7 +168,7 @@ import { foldSubs } from '../engine/taxonomy';
 import { DOMAINS, evidence, weakestSkill } from '../engine/rating';
 import { useMotion } from './motion';
 import { ICON_MOTION_ROUTES } from './paper/motion';
-import { awardName, MonthReviewIcon, ProgressTabs } from './Stats';
+import { awardName, MonthReviewIcon, ProgressTabs, shareCanvas } from './Stats';
 import { achievements, earnAwards, firstAwardsLine, firstLaunchAwards } from '../engine/achievements';
 import { bumpCount } from '../engine/stats';
 import { gameAccuracy } from '../engine/gameRating';
@@ -228,7 +229,7 @@ import { clearPendingChallenge, openChallenge, pendingChallenge, postMilestones,
 import { challengeFromHash, learnedStandards, type MilestoneEvents } from '../engine/socialRound';
 import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
-import { clampDaily, dailyMinutesOf, legacyRunSlotKey, pickRun, runSlotKey, sessionRecordOf, todayEditsFor, todayFocusFor, withTodayEdits, type SessionFocus } from '../engine/practiceSession';
+import { addSessionRecord, clampDaily, dailyMinutesOf, legacyRunSlotKey, pickRun, practiceDaysOf, runSlotKey, sessionRecordOf, todayEditsFor, todayFocusFor, weeklyGoalMin, withTodayEdits, type SessionFocus } from '../engine/practiceSession';
 import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './Path';
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
 import { THEMES, checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
@@ -245,7 +246,7 @@ import { focusSuggestions, myAssignments } from '../cloud/teacher';
 import { tasteDrills, tasteLesson } from '../engine/tasteLessons';
 import { realDrills } from '../engine/tasteLessons';
 import { firstWinCourses, markRealDone, markRealOpened, markRealSeen, realMusicCard, realMusicFor, skipReal } from '../engine/courseStart';
-import { RealMusicCard } from './CourseStart';
+import { RealMusicCard, xpGoalOfMinutes } from './CourseStart';
 import { Opener, type OpenerSpec } from './Opener';
 import { stepGlyphOf } from './Path';
 import { courseOpenerSeen, markCourseOpener, markUnitOpener, unitOpenerDue, unitThemeOf } from '../content/openers';
@@ -274,7 +275,7 @@ import { isDrillWay, repDrills } from '../engine/repertoireDrills';
 import { melodyByEar, melodyDrillOf } from '../engine/repMelody';
 import { chartKind } from '../engine/drills/chartDrills';
 import { licksThatFit, lickImprovChart, TODAYS_LICK_RULES } from '../engine/lickImprov';
-import { channelXp, courseOfInstrument, noteChannelWeek, profileOf, strongOf, takeChannelOf } from '../engine/channelPlan';
+import { channelGroup, channelXp, courseOfInstrument, MEMORY_XP, noteChannelWeek, profileOf, strongOf, takeChannelOf } from '../engine/channelPlan';
 import type { Channel } from '../engine/drills/channel';
 import { STANDARD_CHANGES } from '../engine/standards';
 import { setPreferredMic } from '../speech/mic';
@@ -283,7 +284,10 @@ import { ConsentBody, RecordingsEntryCard, RecordingsScreen } from './Recordings
 import { applySyncedMeta, putSyncedTake, runCleanup, setRecordingContext, setRecordingPrefs, setVocalMigrationSource, subscribeRecordings, syncCandidates } from '../storage/recordings';
 import { listTakes as listOldVocalTakes } from '../storage/takes';
 import { armGameTap, keepGameTake, setRecKindHint, setRecRoute } from './recKeep';
-import { measuredMsOn } from '../engine/practiceTime';
+import { measuredMsOn, weekStart } from '../engine/practiceTime';
+import { addBandMs, bumpTake, stretchXp, takeBand, type TakeBand, type TakeCounts, type T2 } from '../engine/stretch';
+import { boostFor, cellBonus, keyBonus, promotionBonus, recordBonus, sessionBonus, type Bonus } from '../engine/momentum';
+import { hm, milestoneText, sessionReward, type SessionReward } from '../engine/sessionReward';
 import { installSnapshotRecorder, noteImprovTake } from '../storage/snapshots';
 import { drumStyleBlock, DRUM_GROOVE_MINUTES } from '../engine/drills/drumStyleBlock';
 import { STYLE_SHARE, weekKeyForLevel } from '../engine/drills/todayPlan';
@@ -621,6 +625,16 @@ export function App() {
   const s = forced ? { ...s0, uiLang: baseOf(forced), outputLang: baseOf(forced), locale: forced } : s0;
   const t = STRINGS[s.uiLang];
   const loc = localeInfo(s.locale ?? s.uiLang);
+  /** SPEC-PRACTICE-SESSION §11.4: this week's Momentum, last week's score (the stretch boost) and the weeks behind. */
+  const momentumNow = useMemo(() => {
+    const goals = { daysGoal: practiceDaysOf(s), minutesGoal: weeklyGoalMin(s) };
+    try {
+      return { ...momentumOf(progress, loadLedger(), goals, localDay(new Date())), goals };
+    } catch {
+      return { now: null, last: 0, weeks: [], goals };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress, s.dailyMinutes, s.practiceDays]);
   useLocale(loc.code, !forced);
 
   useEffect(() => {
@@ -1551,7 +1565,16 @@ export function App() {
     // SPEC-PATH-ROLE §6 Q2: an area with an open checkpoint on the path waits for it before it moves up.
     const r = refreshRanksBadges(progress, new Date(), settings.uiLang === 'he' ? [5, 6] : undefined, { firstWins: firstWinCourses(settings.courseStart) }, rankHold(pathView));
     if (!r) return;
-    void store.saveProgress(r.next).then(() => setProgress(r.next));
+    // SPEC-PRACTICE-SESSION §11.4: a rank promotion pays +100 (once per area and division) and counts in Momentum —
+    // not on the first run of ranks (what was reached before is not news)
+    const promoted = progress.ranks ? r.rankChanges.filter((c) => c.kind === 'up') : [];
+    void store.saveProgress(r.next).then(async () => {
+      if (!promoted.length) return setProgress(r.next);
+      const day = localDay(new Date());
+      await store.patchRewards((q) => withWeekGains(q, day, { promotions: promoted.length }));
+      const paid = await store.payBonuses(promoted.map((c) => promotionBonus(c.area, String(c.to), weekStart(day))), settings.activeCourse);
+      setProgress(paid.progress);
+    });
     if (settings.cleanView || !settings.awardsInit) return;
     // First run of badges (an update): what was earned before is logged quietly, one note instead of a parade.
     if (!progress.badges) {
@@ -1563,6 +1586,13 @@ export function App() {
     if (up || r.newly.length) feedPost({ badges: r.newly, rank: up ?? null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress.applied.length, progress.ratingEvents?.length, progress.drillItems, route, firstWinCourses(settings?.courseStart).join()]);
+  // SPEC-PRACTICE-SESSION §11.4: the weekly goal (+100) and four full weeks (+200) also when reached outside a session
+  useEffect(() => {
+    if (route !== 'home' || !settings) return;
+    const offered = weeklyBonuses(momentumNow.weeks, momentumNow.goals).filter((b): b is Bonus => !!b && !(progress.paidBonuses ?? []).some((x) => x.key === b.key));
+    if (offered.length) void store.payBonuses(offered, settings.activeCourse).then((r) => r.now.length && setProgress(r.progress));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route, momentumNow]);
   useEffect(() => {
     if (!awardToast) return;
     const id = window.setTimeout(() => setAwardToast(null), 4500);
@@ -1853,15 +1883,117 @@ export function App() {
     const items = progress?.drillItems ?? {};
     return channelXp(xp, ch, profileOf(items, settings?.channelSelf?.[courseOfInstrument(settings ? drillSettingsOf(settings).instrument : undefined)]), clean);
   };
-  /** Every drill take (technique, licks, songs, the transcription coach): its channel is the one its item's tally moved
-   *  — counted in the week's balance — and its XP by channel (the weaker channel more, memory a small extra). */
-  const recordDrillTake = (st: ItemState, evs: Parameters<typeof store.recordDrill>[1], xp: number, m?: { verdict: string; hands: string; cv: number | null; improvLine?: ImprovLine }) => {
+  /** A take's facts (Drills.tsx TakeInfo): the verdict, plus what only the drill knows for the stretch band. */
+  type TakeM = { verdict: string; hands: string; cv: number | null; improvLine?: ImprovLine; bpm?: number; stage?: 'rubato' | 'slow' | 'tempo'; status?: ItemStatus; tier?: number; easy?: boolean };
+  /** SPEC-PRACTICE-SESSION §11.3: today's takes per item (the daily cap), ahead of the stored copy (writes are async). */
+  const takeCounts = useRef<TakeCounts | undefined>(undefined);
+  /** §11.3: easy takes in a row on one item (the 4th is comfort). */
+  const easyRun = useRef<{ id: string; n: number }>({ id: '', n: 0 });
+  /** §5: what this sitting closed (exercises at target tempo, keys filled), named for the end screen. */
+  const sessionWins = useRef<{ day: string; closed: T2[]; keys: T2[] }>({ day: '', closed: [], keys: [] });
+  /**
+   * §11.3: a drill take's stretch band — from the item before the take (status, clean best, last clean tempo, target,
+   * due), the tiers, the easy-take run, how often its key was played and the weaker channel (which no longer pays its own
+   * ×1.5 on top: it is one of the band's rules).
+   */
+  const bandOfTake = (st: ItemState, m: TakeM | undefined, ch: Channel | null): TakeBand => {
     const items = progress?.drillItems ?? {};
-    const ch = takeChannelOf(items[st.itemId]?.channels, st.channels);
+    const prev = items[st.itemId];
+    const day = localDay(new Date());
+    const target = st.targetBpm ?? prev?.targetBpm ?? 0;
+    const status = m?.status ?? (prev?.takes ? (target > 0 ? itemStatus(prev, 0, target) : 'learning') : 'new');
+    const clean = m?.verdict === 'clean';
+    const lastClean = prev?.history?.[prev.history.length - 1]?.bpm ?? 0;
+    const takeBpm = m?.bpm ?? (clean ? (st.history?.[st.history.length - 1]?.bpm ?? st.cleanBpm) : st.goalBpm);
+    const due = status === 'closed' && target > 0 && !!prev && cellDue([{ itemId: st.itemId, target }], items, prev.last) <= day;
+    // the easy-take run on this item (the coach's flag)
+    easyRun.current = m?.easy ? { id: st.itemId, n: easyRun.current.id === st.itemId ? easyRun.current.n + 1 : 1 } : { id: st.itemId, n: 0 };
+    // the key: practice days with a take in it (any exercise), and closed when every played item in it is closed
+    const inKey = Object.values(items).filter((x) => !!x && x.key === st.key && x.takes > 0);
+    const keyDays = new Set<string>();
+    for (const x of inKey) for (const h of [...(x.history ?? []), ...(x.passLog ?? [])]) keyDays.add(h.at.slice(0, 10));
+    const keyClosed = inKey.length > 0 && inKey.every((x) => (x.targetBpm ?? 0) > 0 && itemStatus(x, 0, x.targetBpm!) === 'closed');
+    // the weaker channel (ear / reading) against the player's profile
+    const prof = profileOf(items, settings?.channelSelf?.[courseOfInstrument(settings ? drillSettingsOf(settings).instrument : undefined)]);
+    const g = ch ? channelGroup(ch) : null;
+    const weakerChannel = !!g && g !== 'memory' && prof.ear !== null && prof.reading !== null && Math.abs(prof.ear - prof.reading) > 0.05 && g !== strongOf(prof);
+    const instr = s.activeCourse === 'keys' || s.activeCourse === 'guitar' || s.activeCourse === 'bass';
+    let playerTier: number | undefined;
+    if (instr && m?.tier !== undefined) {
+      try {
+        playerTier = matrixTierOf(s, drillSettingsOf(s), items);
+      } catch {
+        playerTier = undefined;
+      }
+    }
+    return takeBand({ status, clean, takeBpm, bestBpm: prev?.cleanBpm ?? 0, prevCleanBpm: lastClean, ...(target > 0 ? { targetBpm: target } : {}), due, ...(m?.tier !== undefined ? { itemTier: m.tier } : {}), ...(playerTier !== undefined ? { playerTier } : {}), easyRun: easyRun.current.n, keySessions: keyDays.size, keyClosed, weakerChannel, ...(m?.stage ? { stage: m.stage } : {}) });
+  };
+  /**
+   * Every drill take (technique, licks, songs, the transcription coach, Encore): its channel is the one its item's tally
+   * moved — counted in the week's balance — and its XP is base × the stretch band × the daily cap (§11.3; +10 % on
+   * stretch the week after a Momentum ≥ 80), memory a small extra. The session result counts the same XP. Then the take
+   * is saved and its bonuses paid (a tempo record, a cell or a key closed: §11.4). Returns the band (its line).
+   */
+  const take = (st: ItemState, evs: Parameters<typeof store.recordDrill>[1], xp: number, m?: TakeM, chained = false): TakeBand => {
+    const items = progress?.drillItems ?? {};
+    const prev = items[st.itemId];
+    const day = localDay(new Date());
+    const ch = takeChannelOf(prev?.channels, st.channels);
     noteChannel(ch);
+    const band = bandOfTake(st, m, ch);
+    const [tc, nth] = bumpTake(takeCounts.current?.day === day ? takeCounts.current : progress?.takeCounts, day, st.itemId);
+    takeCounts.current = tc;
+    const clean = m?.verdict === 'clean';
+    const paid = stretchXp(xp, band, nth, boostFor(momentumNow.last));
+    const final = paid + (paid > 0 && clean && ch && channelGroup(ch) === 'memory' ? MEMORY_XP : 0);
+    noteTake(final, m?.verdict);
+    // §11.6: the session's active time per band (only while today's session runs)
+    const r = wrunRef.current;
+    const ms = Math.max(0, (st.activeMs ?? 0) - (prev?.activeMs ?? 0));
+    if (r && r.day === day && !r.finished && ms > 0) saveRun({ ...r, bandMs: addBandMs(r.bandMs, band.band, ms) });
     // a rule-card improvisation drill: the licks of mine in its line are booked like any improvisation take
     if (m?.improvLine) bookTake(vocabCtx(), m.improvLine, `drill-${Date.now().toString(36)}`);
-    return store.recordDrill(st, evs, xpOfChannel(xp, ch, m?.verdict === 'clean'), m);
+    const write = () => store.recordDrill(st, evs, final, m, { takeCounts: tc }).then((p) => afterTake(p, prev, st));
+    if (chained) void (drillWrites.current = drillWrites.current.then(write).then(setProgress).catch(() => {}));
+    else void write().then(setProgress);
+    return band;
+  };
+  /** §11.4 after a take is saved: a new tempo record (+5), a cell closed (+20) and a key filled (+50) — each paid once,
+   *  with the week's gains (cells, keys) for Momentum. */
+  const afterTake = async (p: Progress, prev: ItemState | undefined, st: ItemState): Promise<Progress> => {
+    const day = localDay(new Date());
+    const wk = weekStart(day);
+    const offered: Bonus[] = [];
+    if (prev && prev.cleanBpm > 0 && st.cleanBpm > prev.cleanBpm) offered.push(recordBonus(st.itemId, st.cleanBpm, wk));
+    const target = st.targetBpm ?? prev?.targetBpm ?? 0;
+    const closedNow = target > 0 && itemStatus(st, 0, target) === 'closed' && itemStatus(prev, 0, target) !== 'closed';
+    const gains = { cells: 0, keys: 0 };
+    if (closedNow) {
+      try {
+        const pi = projectionInput(s, drillSettingsOf(s), p.drillItems ?? {});
+        const cells = (pi?.cells ?? []).filter((c) => c.tier !== 'rest');
+        if (sessionWins.current.day !== day) sessionWins.current = { day, closed: [], keys: [] };
+        for (const c of cells.filter((x) => x.need.s === 2 && cellItemIds(x).includes(st.itemId))) {
+          offered.push(cellBonus(cellKey(c), wk));
+          gains.cells++;
+          const minor = c.group === 'minor';
+          const kn = keyNameOf(c.root, minor);
+          sessionWins.current.closed.push({ he: `${c.level.title.he} · ${kn}${minor ? 'm' : ''}`, en: `${c.level.title.en} · ${kn}${minor ? 'm' : ''}` });
+          const row = cells.filter((x) => x.group === c.group && x.root === c.root);
+          if (row.length && row.every((x) => x.need.s === 2)) {
+            offered.push(keyBonus(`${c.group}:${c.root}`, wk));
+            gains.keys++;
+            sessionWins.current.keys.push({ he: `${kn} ${minor ? 'מינור' : 'מז׳ור'}`, en: `${kn} ${minor ? 'minor' : 'major'}` });
+          }
+        }
+      } catch {
+        /* the matrix is a bonus: a take is never lost over it */
+      }
+    }
+    let out = p;
+    if (gains.cells || gains.keys) out = await store.patchRewards((q) => withWeekGains(q, day, gains));
+    if (offered.length) out = (await store.payBonuses(offered, s.activeCourse)).progress;
+    return out;
   };
   const noteTake = (xp: number, verdict?: string) => {
     drillSessionXp.current += xp;
@@ -2619,7 +2751,21 @@ export function App() {
       // SPEC-PRACTICE-SESSION §8: the session reached its end (or End early) — its record; the day counts for the streak
       if (r.finished && prev && !prev.finished && prev.day === r.day) {
         const rec = sessionRecordOf(r, { course, id: `${r.day}:${course}:${Date.now().toString(36)}` });
-        if (rec.activeMs > 0) void store.recordSession(rec).then(setProgress);
+        // §11.4: a session at its planned length or more pays +10; the weekly goal (+100) and four full weeks (+200)
+        // are checked with it; this week's Momentum is kept (next week's boost reads it)
+        if (rec.activeMs > 0)
+          void store
+            .recordSession(rec)
+            .then(async (p) => {
+              const goals = { daysGoal: practiceDaysOf(s), minutesGoal: weeklyGoalMin(s) };
+              const mo = momentumOf(p, loadLedger(), goals, localDay(new Date()));
+              const wk = weekStart(rec.day);
+              if (mo.now && p.momentumWeeks?.[mo.weeks[mo.weeks.length - 1].week] !== mo.now.score) await store.patchRewards((q) => ({ ...q, momentumWeeks: { ...Object.fromEntries(Object.entries(q.momentumWeeks ?? {}).slice(-30)), [mo.weeks[mo.weeks.length - 1].week]: mo.now.score } }));
+              const paid = await store.payBonuses([sessionBonus(rec, wk), ...weeklyBonuses(mo.weeks, goals)], course);
+              return paid.progress;
+            })
+            .then(setProgress)
+            .catch(() => {});
       }
     }
     // §9.4: the minutes each area with waiting path steps gets today (the "keeps waiting" question reads 5 days of it)
@@ -2629,6 +2775,87 @@ export function App() {
       // the path's "in workout" note (§9.4): steps finished inside today's run
       for (const id of r.steps) noteStepInWorkout(id);
     }
+  };
+  /**
+   * SPEC-PRACTICE-SESSION §5 / §6: the end screen of a finished (or ended) session — its record, the totals before and
+   * after it, the ledger's week / month / year, the streak, the week ring and Momentum, today's main item as the graph,
+   * tomorrow's length, and the one-time "raise the goal" question.
+   */
+  const sessionEndOf = (r: WorkoutRun): Omit<SessionEndProps, 'lang' | 'feedback'> => {
+    const he = s.uiLang === 'he';
+    const course = (r.course ?? wCourse) as CourseId;
+    const rec0 = sessionRecordOf(r, { course });
+    const stored = progress.sessions?.find((x) => x.id === rec0.id);
+    const rec = stored && stored.activeMs >= rec0.activeMs ? stored : rec0;
+    let sessions = progress.sessions ?? [];
+    let totals = progress.sessionTotals;
+    let before = progress.sessionEnd?.id === rec.id ? progress.sessionEnd.before : undefined;
+    if (!stored || !totals) {
+      const a = addSessionRecord(progress.sessions, progress.sessionTotals, rec);
+      ({ sessions, totals } = a);
+      before = progress.sessionTotals;
+    } else if (progress.sessionEnd?.id !== rec.id) {
+      // an older session's end screen (after a reload): the totals without it
+      before = { finished: Math.max(0, totals.finished - (rec.finished ? 1 : 0)), totalMs: Math.max(0, totals.totalMs - rec.activeMs), longestMs: totals.longestMs };
+    }
+    // the session's main item: the drill item played most today (its best tempo over its last takes)
+    const items = Object.values(progress.drillItems ?? {}).filter((x) => !!x && (x.history ?? []).some((h) => h.at.slice(0, 10) === r.day));
+    const main = items.sort((a, b) => (b.history ?? []).filter((h) => h.at.slice(0, 10) === r.day).length - (a.history ?? []).filter((h) => h.at.slice(0, 10) === r.day).length)[0];
+    const fam = main ? familyById(main.family) : undefined;
+    const improvement = main && fam ? { name: { he: `${fam.title.he} · ${keyNameOf(main.key)}`, en: `${fam.title.en} · ${keyNameOf(main.key)}` }, unit: 'bpm' as const, pts: (main.history ?? []).slice(-10).map((h) => ({ day: h.at.slice(0, 10), v: h.bpm })) } : undefined;
+    const wins = sessionWins.current.day === r.day ? sessionWins.current : { closed: [], keys: [] };
+    const used = r.blocks.filter((b) => (r.used[b.id] ?? 0) > 0);
+    const parts = [...new Set(used.map((b) => blockLabel(t, b.target, s.uiLang, b.id)))].slice(0, 4).map((x) => ({ he: x, en: x }));
+    const reward: SessionReward = sessionReward({
+      today: r.day,
+      rec,
+      sessions,
+      ...(before ? { totalsBefore: before } : {}),
+      totalsAfter: totals!,
+      ledger: loadLedger(),
+      streak: gems.streak,
+      weeklyGoalMin: weeklyGoalMin(s),
+      dailyMin: dailyMinutesOf(s),
+      closedToday: wins.closed,
+      keysFilledToday: wins.keys,
+      ...(improvement ? { improvement } : {}),
+      ...(rec.stretchMs !== undefined || r.bandMs ? { stretchMs: rec.stretchMs ?? r.bandMs?.stretch ?? 0 } : {}),
+      tomorrow: { minutes: dailyMinutesOf(s) },
+      parts,
+      ...(progress.raiseAskedOn ? { raiseAskedOn: progress.raiseAskedOn } : {}),
+    });
+    return {
+      reward,
+      momentum: momentumNow.now,
+      onDone: () => go('home'),
+      onTotals: () => openProgressTab('time'),
+      onShare: () => {
+        const line = (reward.big ? milestoneText(reward.big) : reward.small[0] ? milestoneText(reward.small[0]) : null)?.[s.uiLang] ?? '';
+        const streakN = gems.streak.count;
+        void shareCanvas(
+          (ctx, w) => {
+            ctx.textAlign = 'center';
+            ctx.direction = he ? 'rtl' : 'ltr';
+            ctx.fillStyle = '#FFD43B';
+            ctx.font = '700 150px Rubik, system-ui, sans-serif';
+            ctx.fillText(`${reward.minutes}`, w / 2, 330);
+            ctx.fillStyle = '#f4f1ff';
+            ctx.font = '600 56px Rubik, system-ui, sans-serif';
+            ctx.fillText(he ? 'דקות אימון היום' : 'minutes of practice today', w / 2, 420);
+            ctx.font = '500 46px Rubik, system-ui, sans-serif';
+            const lines = [streakN > 0 ? (he ? `${streakN} ימים ברצף` : `${streakN} days in a row`) : '', line, he ? `השבוע: ${hm(reward.totals.weekMs, 'he')}` : `This week: ${hm(reward.totals.weekMs, 'en')}`].filter(Boolean);
+            lines.forEach((l, i) => ctx.fillText(l, w / 2, 560 + i * 80));
+          },
+          `toneturn-session-${r.day}.png`,
+          he ? `${reward.minutes} דקות אימון היום` : `${reward.minutes} minutes of practice today`,
+        );
+      },
+      onRaiseGoal: (yes) => {
+        const day = localDay(new Date());
+        void store.patchRewards((q) => ({ ...q, raiseAskedOn: day })).then(setProgress);
+        if (yes && reward.raiseGoal) updateSettings({ dailyMinutes: clampDaily(reward.raiseGoal.to) });
+      },
+    };
   };
   /**
    * W3 for blocks that run on their own screens (Improvise, a game, the vocal warm-up, the drums' technique): the block
@@ -3499,6 +3726,7 @@ export function App() {
               onStreak={() => setStreakOpen(true)}
               onEncore={(h) => (location.hash = h)}
               onWeek={() => openProgressTab('time')}
+              momentum={momentumNow.now}
             />
           }
           styleCard={
@@ -3939,11 +4167,12 @@ export function App() {
             lang={s.uiLang}
             cs={cStart}
             streak={gems.streak.count}
-            dailyGoal={s.dailyGoal}
+            dailyMinutes={s.dailyMinutes}
+            practiceDays={s.practiceDays}
             reminderHour={s.reminderHour}
             onPath={() => leaveWin(() => go('path'))}
             onFindLevel={() => leaveWin(findLevel)}
-            onDailyGoal={(xp) => updateSettings({ dailyGoal: xp })}
+            onDailyGoal={({ minutes, days }) => updateSettings({ dailyMinutes: clampDaily(minutes), practiceDays: days, dailyGoal: xpGoalOfMinutes(minutes) })}
             onReminder={async (h) => {
               updateSettings({ reminderHour: h });
               if (!user) return 'signin';
@@ -4071,6 +4300,16 @@ export function App() {
           run={wrun}
           subs={workoutSubs}
           endCard={styleCardEl()}
+          end={wrun.finished ? sessionEndOf(wrun) : undefined}
+          onPlusFive={() => {
+            // §4: one more block of the most needed area, 5 minutes, run at once
+            const r = plusFive(wrun);
+            saveRun(r);
+            const tg = r.blocks[r.at]?.target;
+            if (tg && (ownScreen(tg.kind) || (tg.kind === 'strengthen' && instrumentCourse))) openBlock(r);
+            else runCurrent(r);
+          }}
+          onFinish={() => saveRun(clearBetween(wrun))}
           onNext={() => {
             // §5: Next now, or the 3-second countdown ran out — the next block starts
             const r = clearBetween(wrun);
@@ -4106,14 +4345,14 @@ export function App() {
             runCurrent(r);
           }}
           onEnd={() => {
-            saveRun({ ...wrun, finished: true });
-            go('home');
+            // SPEC-PRACTICE-SESSION §4: "End" early goes to the end screen too, with what was done
+            if (wrun.finished) return go('home');
+            saveRun(clearBetween({ ...wrun, finished: true }));
           }}
           onFeedback={(f) => {
-            // W11: tomorrow's total ±5 and the step window ±50 rating, for 3 days
+            // W11: tomorrow's total ±5 and the step window ±50 rating, for 3 days (the end screen stays open)
             const until = localDay(new Date(Date.now() + 3 * 86400000));
             updateSettings({ workoutNudge: { until, ...feedbackNudge(f) } });
-            go('home');
           }}
         />
       )}
@@ -4200,10 +4439,7 @@ export function App() {
                 settings={s}
                 items={progress.drillItems ?? {}}
                 onSettings={updateSettings}
-                onTake={(st, evs, xp, m) => {
-                  noteTake(xp, m.verdict);
-                  void recordDrillTake(st, evs, xp, m).then(setProgress);
-                }}
+                onTake={(st, evs, xp, m) => take(st, evs, xp, m)}
                 onBack={() => {
                   void techResult('encore')?.then(setProgress);
                   go(workoutPending.current ? 'workoutrun' : 'arcade');
@@ -4229,10 +4465,7 @@ export function App() {
                 settings={s}
                 items={progress.drillItems ?? {}}
                 onSettings={updateSettings}
-                onTake={(st, evs, xp, m) => {
-                  noteTake(xp, m?.verdict);
-                  void recordDrillTake(st, evs, xp, m).then(setProgress);
-                }}
+                onTake={(st, evs, xp, m) => take(st, evs, xp, m)}
                 onUsed={(evs, xp) => {
                   drillSessionXp.current += xp;
                   void store.recordRatingEvents(evs).then(setProgress);
@@ -4263,10 +4496,7 @@ export function App() {
           settings={s}
           items={progress.drillItems ?? {}}
           onSettings={updateSettings}
-          onTake={(st, evs, xp, m) => {
-            noteTake(xp, m.verdict);
-            void recordDrillTake(st, evs, xp, m).then(setProgress);
-          }}
+          onTake={(st, evs, xp, m) => take(st, evs, xp, m)}
           onBack={() => {
             void techResult('encore')?.then(setProgress);
             go(workoutPending.current ? 'workoutrun' : 'arcade');
@@ -4283,14 +4513,8 @@ export function App() {
           settings={s}
           items={progress.drillItems ?? {}}
           onSettings={updateSettings}
-          onTake={(st, evs, xp, m) => {
-            noteTake(xp, m?.verdict);
-            void recordDrillTake(st, evs, xp, m).then(setProgress);
-          }}
-          onPhrase={(st, evs, xp, stars) => {
-            noteTake(xp, stars === 3 ? 'clean' : 'not');
-            void recordDrillTake(st, evs, xp, { verdict: stars === 3 ? 'clean' : 'not', hands: 'R', cv: null }).then(setProgress);
-          }}
+          onTake={(st, evs, xp, m) => take(st, evs, xp, m)}
+          onPhrase={(st, evs, xp, stars) => void take(st, evs, xp, { verdict: stars === 3 ? 'clean' : 'not', hands: 'R', cv: null })}
           pathLevel={measuredStep.current?.level}
           onPathDone={(stars) => leaveMeasured('transcribe', stars)}
           onBack={() => (transcribePiece.current ? ((transcribePiece.current = null), backToRep(() => go('repertoire'))) : leaveMeasured('transcribe', null))}
@@ -4474,7 +4698,6 @@ export function App() {
           startToday={drillFrom.current === 'workout' && drillToday.current}
           onItem={(st) => void (drillWrites.current = drillWrites.current.then(() => store.setDrillItem(st)).then(setProgress).catch(() => {}))}
           onTake={(st, evs, xp, m) => {
-            noteTake(xp, m?.verdict);
             creditTodayTake(st, progress.drillItems?.[st.itemId]?.activeMs ?? 0);
             // §5.2: an assignment's required channel — a take in another channel doesn't count toward it
             const asg = activeAssign.current;
@@ -4491,7 +4714,7 @@ export function App() {
               const d = chartQueue.current?.find((x) => x.itemId === st.itemId) ?? chartQueue.current?.[0];
               tasteTake.current = { acc: Math.max(tasteTake.current.acc, st.ewma.acc), bars: tasteTake.current.bars + (d ? Math.round(d.beats / (d.meter || 4)) : 0) };
             }
-            void (drillWrites.current = drillWrites.current.then(() => recordDrillTake(st, evs, xp, m)).then(setProgress).catch(() => {}));
+            return take(st, evs, xp, m, true);
           }}
           onBack={() => {
             if (drillFrom.current) return drillQueueDone(0, 0);
@@ -4582,10 +4805,7 @@ export function App() {
           settings={s}
           onSettings={updateSettings}
           items={progress.drillItems ?? {}}
-          onTake={(st, evs, xp, m) => {
-            noteTake(xp, m?.verdict);
-            void recordDrillTake(st, evs, xp, m).then(setProgress);
-          }}
+          onTake={(st, evs, xp, m) => take(st, evs, xp, m)}
           onBack={() => {
             void techResult('technique-songs')?.then(setProgress);
             backToRep(() => openRep({ tab: 1 }));

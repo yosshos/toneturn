@@ -22,6 +22,8 @@ import '../encore.css';
 import { studioText, sfill } from '../i18n/studioText';
 import { Icon } from './icons';
 import { WeeklyRingTile, WeeklySummaryCard } from './PlaceCharts';
+import { MomentumTile } from './SessionEnd';
+import type { Momentum } from '../engine/momentum';
 import { areaLabel } from './Stats';
 import { intlTag } from '../i18n/translate';
 
@@ -120,7 +122,7 @@ export function PitchMemoryCard({ progress, lang, onOpen }: { progress: Progress
   );
 }
 
-export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore, streak, onStreak, onWeek }: { /** The weekly ring opens Progress → Over time. */ onWeek?: () => void; /** The streak in the stats row. */ streak?: number; onStreak?: () => void; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
+export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exam, onRepertoire, onPitchMemory, onEncore, streak, onStreak, onWeek, momentum }: { /** SPEC-PRACTICE-SESSION §11.4: this week's Momentum (a small ring beside the week's). */ momentum?: Momentum | null; /** The weekly ring opens Progress → Over time. */ onWeek?: () => void; /** The streak in the stats row. */ streak?: number; onStreak?: () => void; settings: Settings; progress: Progress; goalXp: number; signedIn: boolean; onLeague: () => void; exam?: ExamActions; onRepertoire?: (itemId?: string) => void; onPitchMemory?: () => void; /** Encore (SPEC-PHRASE-STUDIO §9): open a due phrase (a hash). */ onEncore?: (hash: string) => void }) {
   const lang = settings.uiLang;
   const he = lang === 'he';
   const day = localDay(new Date());
@@ -181,6 +183,8 @@ export function TodayCards({ settings, progress, goalXp, signedIn, onLeague, exa
             </b>
           </button>
         )}
+        {/* SPEC-PRACTICE-SESSION §11.4: this week's Momentum, a slim ring tile at the end of the row */}
+        {momentum && <MomentumTile m={momentum} lang={lang} onOpen={onWeek} />}
       </section>
       {examPrep && exam && <ExamPrepCard progress={progress} lang={lang} on={exam} />}
       {onEncore && !examPrep && <TeacherPhraseTodayCard lang={lang} book={settings.lickBook} items={progress.drillItems ?? {}} onOpen={onEncore} />}

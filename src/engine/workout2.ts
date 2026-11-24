@@ -1022,6 +1022,10 @@ export interface WorkoutRun {
   /** 'plan', an area, or a target (§12: `key:…`, `rung:…`, `item:…`, `family:…`). */
   focus?: string;
   planned?: number;
+  /** SPEC-PRACTICE-SESSION §11.6: active ms of the session's takes per stretch band (stretch / work / comfort). */
+  bandMs?: { stretch: number; work: number; comfort: number };
+  /** §4: "+5 min" was taken at the end (offered once). */
+  plus5?: boolean;
 }
 
 export const startRun = (day: string, blocks: Block[], meta?: { id?: string; course?: CourseId; focus?: string }): WorkoutRun => ({ day, blocks, at: 0, used: {}, steps: [], items: {}, ...(meta ? { ...meta, planned: total(blocks) } : {}) });
@@ -1088,6 +1092,23 @@ export function extendLast(r: WorkoutRun, min = 2): WorkoutRun {
   if (i < 0) return extendBlock(clearBetween(r), min);
   return extendBlock({ ...clearBetween(r), at: i, finished: false }, min);
 }
+/**
+ * SPEC-PRACTICE-SESSION §4: "Keep going? +5 min" on the last block, before the end screen — one more block of the most
+ * needed area (the session's largest working block: technique, improvisation, the strengthen share …; never the
+ * warm-up or off-app practice), 5 minutes, run at once. Offered once per session.
+ */
+export function plusFive(r: WorkoutRun, min = 5): WorkoutRun {
+  const skip = new Set<BlockTarget['kind']>(['warmup', 'rubato', 'practice', 'vocal', 'teacher']);
+  const pool = r.blocks.filter((b) => !skip.has(b.target.kind) && !b.id.startsWith('listen-'));
+  const top = [...(pool.length ? pool : r.blocks)].sort((a, b) => b.minutes - a.minutes)[0];
+  if (!top) return r;
+  const block: Block = { id: `${top.id}+5`, target: top.target, minutes: min };
+  const out: WorkoutRun = { ...clearBetween(r), blocks: [...r.blocks, block], at: r.blocks.length, finished: false, plus5: true };
+  return out;
+}
+/** §4: the session reached its last block's end on its own (not "End"): the "+5 min" offer shows before the end screen. */
+export const plusFiveOffer = (r: WorkoutRun): boolean => !!r.finished && !!r.between && !r.plus5;
+
 /** W16: remember a served sub-skill / topic for later blocks. */
 export const markServed = (r: WorkoutRun, key: string): WorkoutRun => (r.served?.includes(key) ? r : { ...r, served: [...(r.served ?? []), key] });
 /** W16: the candidates not served yet today (all of them when every one was). */

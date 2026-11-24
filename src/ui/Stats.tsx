@@ -158,6 +158,10 @@ export const SX = {
   month: { en: 'Month in review', he: 'סיכום החודש' },
   monthOpen: { en: 'Your month in review is ready', he: 'סיכום החודש שלכם מוכן' },
   topArea: { en: 'Most practiced', he: 'הכי הרבה תרגול' },
+  mMinutes: { en: 'Minutes', he: 'דקות' },
+  mAvg: { en: 'Average session', he: 'אימון ממוצע' },
+  mLongest: { en: 'Longest session', he: 'האימון הארוך' },
+  mVsLast: { en: 'vs last month', he: 'לעומת החודש שעבר' },
   gains: { en: 'Best gains', he: 'השיפורים הגדולים' },
   newAwards: { en: 'Awards', he: 'הישגים' },
   close: { en: 'Close', he: 'סגירה' },
@@ -1201,7 +1205,17 @@ function MonthMelody({ days, month, lang }: { days: Record<string, { items: numb
 
 export function MonthReviewSheet({ t, lang, progress, month, onClose }: { t: Strings; lang: Lang; progress: Progress; month: string; onClose: () => void }) {
   const ps = P(progress);
-  const m = monthReview(ps.statsDays, ps.awards, month);
+  const m = monthReview(ps.statsDays, ps.awards, month, progress.sessions);
+  /** §6: a change from last month, one small line (▲ / ▼ / =); nothing without last month. */
+  const delta = (now: number | null, prev: number | null) => {
+    if (now === null || prev === null) return undefined;
+    const d = now - prev;
+    return (
+      <span className={`trend-delta ${d > 0 ? 'up' : d < 0 ? 'down' : ''}`} dir="ltr" title={SX.mVsLast[lang]}>
+        <span aria-hidden="true">{d > 0 ? '▲' : d < 0 ? '▼' : '='}</span> {d === 0 ? '' : `${d > 0 ? '+' : '−'}${Math.abs(d)}′`}
+      </span>
+    );
+  };
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet ps-month" role="dialog" aria-modal="true" aria-labelledby="ps-month-title" onClick={(e) => e.stopPropagation()}>
@@ -1218,6 +1232,11 @@ export function MonthReviewSheet({ t, lang, progress, month, onClose }: { t: Str
               <Tile label={SX.items[lang]} value={<N>{m.items}</N>} />
               <Tile label={SX.accuracy[lang]} value={<N>{pct(m.accuracy)}</N>} />
               <Tile label={SX.xp[lang]} value={<N>{m.xp}</N>} />
+            </div>
+            <div className="ps-tiles" data-month-practice="1">
+              <Tile label={SX.mMinutes[lang]} value={<N>{m.practice.minutes}</N>} sub={delta(m.practice.minutes, m.practice.prevMinutes)} />
+              <Tile label={SX.mAvg[lang]} value={<N>{m.practice.avgMin === null ? '–' : `${m.practice.avgMin}′`}</N>} sub={delta(m.practice.avgMin, m.practice.prevAvgMin)} />
+              <Tile label={SX.mLongest[lang]} value={<N>{m.practice.longestMin === null ? '–' : `${m.practice.longestMin}′`}</N>} sub={delta(m.practice.longestMin, m.practice.prevLongestMin)} />
             </div>
             {m.topArea && (
               <p>

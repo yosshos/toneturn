@@ -21,7 +21,7 @@ import { hearable, playDrill } from './HearDrill';
 import { devBpm } from './fakeTake';
 import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
-import { announce, coachable, coachAfter, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
+import { announce, coachable, coachAfter, easyTake, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
 /** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
 /**
  * SPEC-COACH-2 §7 (AI decisions 2026-11-14: Haiku cards): after a coach session, one or two sentences from the
@@ -134,7 +134,8 @@ import { GROUP_NAME, KeyGrid, KeyPage, ViewSwitch, type PracticeView } from './P
 import { lickPool } from '../engine/vocab';
 import { PlaceSpark } from './PlaceSpark';
 import type { CourseId } from '../engine/courses';
-import { playerTier } from '../engine/drills/tiers';
+import { itemTier, playerTier } from '../engine/drills/tiers';
+import { bandLine, type TakeBand } from '../engine/stretch';
 import { getGradeTier, setGradeTier } from '../engine/drills/analyze';
 import { askAi } from '../cloud/ai';
 import { defaultChannel } from '../engine/drills/channel';
@@ -144,7 +145,7 @@ import { ChannelStrip, type RunChan } from './ChannelStrip';
 import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
 import { planFamily, rungMinutes, weekKeyFromMatrix, whyCounts, type PlanCell } from '../engine/drills/todayPlan';
 import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, noteMatrixSeen, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
-import { coolingDown, withCeiling } from '../engine/drills/itemStatus';
+import { coolingDown, itemStatus, withCeiling, type ItemStatus } from '../engine/drills/itemStatus';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import type { FocusTarget } from '../engine/workout2';
@@ -192,10 +193,26 @@ const T = {
   },
 };
 
-const takeInfo = (d: Drill, m: TakeMetrics) => {
+const takeInfo = (d: Drill, m: TakeMetrics, band?: Omit<TakeFacts, 'bpm'>): TakeInfo => {
   const cvs = [m.cvR, m.cvL].filter((x): x is number => x !== null);
-  return { verdict: m.verdict, hands: d.spec.hands, cv: cvs.length ? Math.max(...cvs) : null, ...(m.improvLine ? { improvLine: m.improvLine } : {}) };
+  return { verdict: m.verdict, hands: d.spec.hands, cv: cvs.length ? Math.max(...cvs) : null, ...(m.improvLine ? { improvLine: m.improvLine } : {}), ...(m.bpm ? { bpm: m.bpm } : {}), ...(band ?? {}) };
 };
+/** SPEC-PRACTICE-SESSION §11.3: what the take's stretch band reads that only the drill knows (the rest is in the item). */
+export interface TakeFacts {
+  /** The take's tempo. */
+  bpm?: number;
+  /** The coach's stage: free time and quarters are the method (rubato-then-tempo), not comfort. */
+  stage?: 'rubato' | 'slow' | 'tempo';
+  /** The item's status before the take (against its start and target tempo). */
+  status?: ItemStatus;
+  /** drills/tiers.ts itemTier. */
+  tier?: number;
+  /** coach.ts easyTake: clean with room to spare. */
+  easy?: boolean;
+}
+export type TakeInfo = { verdict: string; hands: string; cv: number | null; improvLine?: TakeMetrics['improvLine'] } & TakeFacts;
+/** The band facts of a take at tempo. */
+const tempoFacts = (d: Drill, st0: ItemState, m: TakeMetrics): Omit<TakeFacts, 'bpm'> => ({ stage: 'tempo', status: itemStatus(st0.takes ? st0 : undefined, d.startBpm, itemTargetBpm(d)), tier: itemTier(d), easy: easyTake(m, d) });
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 // B7: in the guitar / bass course with the microphone chosen over a connected MIDI device, the mic's latency applies.
@@ -301,7 +318,8 @@ export interface DrillsProps {
   onSettings: (p: Partial<Settings>) => void;
   items: Record<string, ItemState>;
   /** One take: the item's new state, its rated events and XP. */
-  onTake: (state: ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null; improvLine?: TakeMetrics['improvLine'] }) => void;
+  /** A take: its state, rating events, base XP and facts. Returns the take's stretch band (§11.3) to show in one line. */
+  onTake: (state: ItemState, evs: RatingEvent[], xp: number, m?: TakeInfo) => TakeBand | void;
   onBack: () => void;
   /** Start straight in a run (path step / workout block). */
   queue?: Drill[];
@@ -1460,6 +1478,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   // asked for after a badly missed timed take.
   const [oneFree, setOneFree] = useState(false);
   const [stageRes, setStageRes] = useState<{ m: TakeMetrics; stage: RubatoStage } | null>(null);
+  /** §11.3: the last take's stretch band — one small line under the verdict (never hidden; comfort says how to stretch). */
+  const [bandTip, setBandTip] = useState<TakeBand | null>(null);
+  const bandEl = bandTip ? (
+    <p className={`drill-band b-${bandTip.band}`} data-band={bandTip.band} data-band-reason={bandTip.reason}>
+      {bandLine(bandTip)[lang]}
+    </p>
+  ) : null;
   // Loop the spot (COURSE-FEEDBACK-UI slice 3): bars picked on the error map, played at −10 % until 2 clean passes.
   // Loop takes are practice: they never move the item's ladder or level.
   const [sel, setSel] = useState<[number, number] | null>(null);
@@ -1522,7 +1547,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
-    onTake(lad.state, drillEvents(drill, m, new Date().toISOString(), session.current, n), drillXp(m), takeInfo(drill, m));
+    setBandTip(onTake(lad.state, drillEvents(drill, m, new Date().toISOString(), session.current, n), drillXp(m), takeInfo(drill, { ...m, bpm: m.bpm || bpm }, tempoFacts(drill, st0, m))) || null);
     setPrior(lastTake.current?.id === drill.itemId ? lastTake.current.m : null);
     lastTake.current = { id: drill.itemId, m };
     setSel(null);
@@ -1630,7 +1655,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     count.current.takes++;
     // Measured practice: it shows on the profile and earns a little XP, but no rating events (no tempo was measured).
     if (st === 'quarters') void recordTakeAnalysis(takeDrill, m, QUARTERS_BPM, own).catch(() => {});
-    onTake(next, [], Math.max(1, Math.floor(drillXp(m) / 2)), takeInfo(drill, m));
+    setBandTip(onTake(next, [], Math.max(1, Math.floor(drillXp(m) / 2)), takeInfo(drill, { ...m, bpm: st === 'quarters' ? QUARTERS_BPM : 0 }, { stage: st === 'free' ? 'rubato' : 'slow', status: itemStatus(before.takes ? before : undefined, drill.startBpm, itemTargetBpm(drill)), tier: itemTier(drill) })) || null);
     setOneFree(false);
     setStageRes({ m, stage: st });
     if (coach) coachNext(m, Math.max(1, Math.floor(drillXp(m) / 2)));
@@ -1767,6 +1792,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         <p className="coach-line" aria-live="polite" data-coach-line={cLine ? '1' : '0'}>
           {cLine ? cLine.line[lang] : cDemo ? (he ? 'מקשיבים קודם…' : 'Listen first…') : announce({ ...cTake, stage }, lang)}
         </p>
+        {cLine && !cLine.end && bandEl}
         <span className="coach-meta">{stepTx}</span>
         <span className="coach-btns">
           {cLine && !cLine.end && (
@@ -1845,6 +1871,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       <div className="drill-run" data-drill={drill.itemId} data-rubato-result={stageRes.stage} onClickCapture={hfTakeOver}>
         {hfBar}
         <DrillScore drill={stageRes.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={stageRes.m} beat={-1} lang={lang} />
+        {bandEl}
         <TakeReview drill={drill} cal={cal}
           m={stageRes.m}
           free={stageRes.stage === 'free'}
@@ -2014,6 +2041,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       {res && (
         <>
           <ErrorMap marks={bm} sel={loopSel} onPick={pickBar} lang={lang} />
+          {bandEl}
           <TakeReview drill={drill} cal={cal}
             m={res.m}
             lang={lang}

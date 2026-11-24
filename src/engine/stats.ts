@@ -367,14 +367,19 @@ const changedSkills = (items: { skill: SkillId; tags?: { skill: SkillId }[] }[])
  * Fold one saved result into the long-lived stats (call in applyResult, once per result — applyResult is
  * already idempotent by session id). `after` = ratings after the result's events (based fold).
  */
+/** SPEC-PRACTICE-SESSION §11.4: Momentum's bonuses are XP for the day, never a session, a lesson or a perfect run. */
+const XP_ONLY_RESULTS = new Set(['momentum-bonus']);
+
 export function statsAfterResult(st: StatsState, r: ResultLike, after: Ratings): StatsState {
   const items = r.items ?? [];
   let next = addItems(st, items, r.completedAt);
   next = addLevels(next, changedSkills(items), after, r.completedAt);
   const day = localDay(new Date(r.completedAt));
   const d = next.statsDays![day];
-  next.statsDays![day] = { ...d, xp: d.xp + r.xp, sessions: d.sessions + 1, ms: d.ms + Math.max(0, r.durationMs ?? 0) };
+  const xpOnly = XP_ONLY_RESULTS.has(r.lessonId);
+  next.statsDays![day] = { ...d, xp: d.xp + r.xp, sessions: d.sessions + (xpOnly ? 0 : 1), ms: d.ms + Math.max(0, r.durationMs ?? 0) };
   const counts = { ...(next.counts ?? {}) };
+  if (xpOnly) return { ...next, counts };
   // Game results (lesson id 'game-…', games' XP) are not lessons.
   if (r.lessonId !== 'placement' && r.lessonId !== 'weekly-puzzle' && !r.lessonId.startsWith('game-')) counts.lessons = (counts.lessons ?? 0) + 1;
   const perfect = r.total >= 3 && r.firstTry === r.total;
@@ -787,9 +792,29 @@ export interface MonthReview {
   topArea: DomainId | null;
   gains: { skill: SkillId; from: number | null; to: number; d: number }[];
   awards: { id: string; tier: number }[];
+  /** SPEC-PRACTICE-SESSION §6: the month's minutes, average and longest session, each with last month's (null: none). */
+  practice: MonthPractice;
+}
+export interface MonthPractice {
+  minutes: number;
+  prevMinutes: number | null;
+  avgMin: number | null;
+  prevAvgMin: number | null;
+  longestMin: number | null;
+  prevLongestMin: number | null;
+}
+/** §6: the practice minutes of a month and of the one before, and its finished sessions' average and longest. Pure. */
+export function monthPractice(days: StatsDays | undefined, sessions: readonly { day: string; activeMs: number; finished: boolean }[] | undefined, month: string): MonthPractice {
+  const prev = prevMonth(month);
+  const msIn = (m: string) => totalsIn(days, { start: `${m}-01`, end: `${m}-31` }).ms;
+  const hadDays = (m: string) => Object.keys(days ?? {}).some((d) => monthOf(d) === m);
+  const fin = (m: string) => (sessions ?? []).filter((x) => x.finished && x.activeMs > 0 && x.day.slice(0, 7) === m);
+  const avg = (xs: { activeMs: number }[]) => (xs.length ? Math.round(xs.reduce((a, x) => a + x.activeMs, 0) / xs.length / 60000) : null);
+  const top = (xs: { activeMs: number }[]) => (xs.length ? Math.round(Math.max(...xs.map((x) => x.activeMs)) / 60000) : null);
+  return { minutes: Math.round(msIn(month) / 60000), prevMinutes: hadDays(prev) ? Math.round(msIn(prev) / 60000) : null, avgMin: avg(fin(month)), prevAvgMin: avg(fin(prev)), longestMin: top(fin(month)), prevLongestMin: top(fin(prev)) };
 }
 /** Data for one month (null under 3 practice days). Gains: level at month end vs the last level before it. */
-export function monthReview(days: StatsDays | undefined, awards: Awards | undefined, month: string): MonthReview | null {
+export function monthReview(days: StatsDays | undefined, awards: Awards | undefined, month: string, sessions?: readonly { day: string; activeMs: number; finished: boolean }[]): MonthReview | null {
   const all = Object.entries(days ?? {}).sort((a, b) => a[0].localeCompare(b[0]));
   const inMonth = all.filter(([d]) => monthOf(d) === month);
   const active = inMonth.filter(([, d]) => d.items > 0 || d.sessions > 0);
@@ -809,7 +834,7 @@ export function monthReview(days: StatsDays | undefined, awards: Awards | undefi
   const aw = Object.entries(awards ?? {})
     .filter(([, a]) => !a.pre && monthOf(localDay(new Date(a.at))) === month)
     .map(([id, a]) => ({ id, tier: a.tier }));
-  return { month, days: active.length, items: t.items, accuracy: t.accuracy, xp: t.xp, ms: t.ms, topArea, gains: gains.filter((g) => g.d > 0).slice(0, 3), awards: aw };
+  return { month, days: active.length, items: t.items, accuracy: t.accuracy, xp: t.xp, ms: t.ms, topArea, gains: gains.filter((g) => g.d > 0).slice(0, 3), awards: aw, practice: monthPractice(days, sessions, month) };
 }
 /** The month to offer (S16): the previous month, at the first open after it ended, if not seen and ≥ 3 days. */
 export function dueMonthReview(today: string, seenMonth: string | null | undefined, days: StatsDays | undefined): string | null {

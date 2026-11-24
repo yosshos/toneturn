@@ -30,6 +30,15 @@ import type { KV } from './kv';
 import { fromLeitner, fsrsInit, fsrsReview, nextInterval, type FsrsCard } from '../engine/fsrs';
 import { bookDrillTake, bookGameRun, bookResult } from './practice';
 import { SHARER_RESULT_ID } from '../engine/encore/sharerBonus';
+import { fourWeeksBonus, mergePaid, momentum, payBonuses, weekGoalBonus, type Bonus, type Momentum, type PaidBonus, type WeekGains } from '../engine/momentum';
+import type { TakeCounts } from '../engine/stretch';
+import { addDay, msByDay, weekStart, type PracticeLedger } from '../engine/practiceTime';
+import { itemStatus, STATUS_ORDER } from '../engine/drills/itemStatus';
+
+/** SPEC-PRACTICE-SESSION §11.4: the lesson id Momentum's XP bonuses ride on (XP for the league, never a practice day). */
+export const BONUS_RESULT_ID = 'momentum-bonus';
+/** Results that carry XP only: not a practice day, not a "good session". */
+const xpOnly = (id: string) => id === SHARER_RESULT_ID || id === BONUS_RESULT_ID;
 
 /** AUDIT-5 #4: from this day on, only measured practice makes a streak day — minutes logged away from the app (the
  * practice log, the workout's off-app block) still count as practice time, but no longer as a streak day. Days before
@@ -137,6 +146,19 @@ export interface Progress {
   sessions?: import('../engine/practiceSession').SessionRecord[];
   /** Sessions finished, total time and the records (longest session, best week, best month) from the start. */
   sessionTotals?: import('../engine/practiceSession').SessionTotals;
+  // ---- SPEC-PRACTICE-SESSION §11 (rewards), device-local like the sessions, merged on a sync rebuild ----
+  /** §11.4: the Momentum bonuses paid (each key once; weekly limits per kind). */
+  paidBonuses?: PaidBonus[];
+  /** §11.3: takes per item today (the daily cap: full for 6, half to 15, then nothing). */
+  takeCounts?: TakeCounts;
+  /** §11.4: this player's real gains per week (the Monday), for Momentum's progress half and their own pace. */
+  weekGains?: Record<string, Partial<WeekGains>>;
+  /** §11.4: Momentum per week (the Monday), the last score seen (the next week's boost reads it). */
+  momentumWeeks?: Record<string, number>;
+  /** §6: the day "Make it N minutes a day?" was last asked. */
+  raiseAskedOn?: string;
+  /** §5: the session whose end screen is showing, and the totals before it (its milestones compare against them). */
+  sessionEnd?: { id: string; before?: import('../engine/practiceSession').SessionTotals };
 }
 
 export interface VocalTake {
@@ -902,8 +924,10 @@ export class ProgressStore {
 
   /** Best score of a 0.38 game (spec AE §8), plus Pitch Memory log entries. */
   /** A drill take's item state (spec AI); returns the new progress. */
-  async recordDrill(state: import('../engine/drills/types').ItemState, evs: RatingEvent[] = [], xp = 0, m?: { verdict: string; hands: string; cv: number | null }): Promise<Progress> {
-    const p = await this.loadProgress();
+  async recordDrill(state: import('../engine/drills/types').ItemState, evs: RatingEvent[] = [], xp = 0, m?: { verdict: string; hands: string; cv: number | null }, extra?: { takeCounts?: TakeCounts }): Promise<Progress> {
+    const p0 = await this.loadProgress();
+    // SPEC-PRACTICE-SESSION §11: today's take counts (the daily cap) and the week's gains (a record, a status step up)
+    const p = withDrillGains({ ...p0, ...(extra?.takeCounts ? { takeCounts: extra.takeCounts } : {}) }, p0.drillItems?.[state.itemId], state, localDay(new Date()));
     // Badge counters (spec AG §9): clean takes, tempo records, the best hands-together evenness.
     let counts = p.counts;
     const prev = p.drillItems?.[state.itemId];
@@ -920,6 +944,33 @@ export class ProgressStore {
     if (fresh.length) next.snapshots = snapshot(next, new Date());
     await this.kv.set('progress', next);
     safe(() => bookDrillTake(state, prev, m?.verdict), undefined);
+    return next;
+  }
+
+  /**
+   * SPEC-PRACTICE-SESSION §11.4: pay Momentum bonuses (each key once, the weekly limits). Their XP is one result
+   * (BONUS_RESULT_ID): the total, the daily goal and the league count it; it is never a practice day.
+   */
+  async payBonuses(offered: readonly (Bonus | null | undefined)[], course?: string, now = new Date()): Promise<{ progress: Progress; xp: number; now: Bonus[] }> {
+    const p = await this.loadProgress();
+    const r = withBonuses(p, offered);
+    if (!r.now.length) return { progress: p, xp: 0, now: [] };
+    await this.kv.set('progress', r.p);
+    // xp ≤ total × 20 (the server's plausibility rule): one "item" per 20 XP
+    const total = Math.max(1, Math.min(50, Math.ceil(r.xp / 20)));
+    let h = 0;
+    for (const ch of r.now.map((b) => b.key).join('|')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const res: LessonResult = { lessonId: BONUS_RESULT_ID, lessonVersion: 1, sessionId: `bonus-${h.toString(36)}-${now.getTime().toString(36)}`, completedAt: now.toISOString(), firstTry: 0, total, xp: r.xp, missed: [], items: [], ...(course ? { course: course as LessonResult['course'] } : {}) };
+    const next = await this.recordCompletion(res, now);
+    return { progress: next, xp: r.xp, now: r.now };
+  }
+
+  /** SPEC-PRACTICE-SESSION §11.4 / §6: small reward bookkeeping (gains from other places, Momentum's weekly score, the
+   *  "raise the goal" day). */
+  async patchRewards(f: (p: Progress) => Progress): Promise<Progress> {
+    const p = await this.loadProgress();
+    const next = f(p);
+    if (next !== p) await this.kv.set('progress', next);
     return next;
   }
 
@@ -1148,7 +1199,16 @@ export class ProgressStore {
 /** A session record into progress (pure; the same progress back when the id is already there). A finished session
  *  marks its day as a practice day (provisional, like markPracticeDay: the streak celebration still treats it as new). */
 export function withSessionRecord(p: Progress, rec: SessionRecord): Progress {
-  if ((p.sessions ?? []).some((x) => x.id === rec.id)) return p;
+  const old = (p.sessions ?? []).find((x) => x.id === rec.id);
+  if (old) {
+    // §4: the same session again after "+5 min" — the longer record replaces it (the totals move by the difference;
+    // the end screen still compares against the totals from before the session)
+    if (!(rec.activeMs > old.activeMs)) return p;
+    const t0 = p.sessionTotals ?? { finished: 0, totalMs: 0, longestMs: 0 };
+    const back = { ...t0, finished: Math.max(0, t0.finished - (old.finished ? 1 : 0)), totalMs: Math.max(0, t0.totalMs - old.activeMs) };
+    const r = addSessionRecord(p.sessions!.filter((x) => x.id !== rec.id), back, rec);
+    return { ...p, sessions: r.sessions, sessionTotals: r.totals, ...(p.sessionEnd?.id === rec.id ? {} : { sessionEnd: { id: rec.id, ...(p.sessionTotals ? { before: p.sessionTotals } : {}) } }) };
+  }
   const { sessions, totals } = addSessionRecord(p.sessions, p.sessionTotals, rec);
   let stats = p.stats;
   if (rec.finished && !practiceDays(p).has(rec.day)) {
@@ -1156,7 +1216,120 @@ export function withSessionRecord(p: Progress, rec: SessionRecord): Progress {
     provisionalDays.add(rec.day);
     stats = { ...st, days: [...st.days, rec.day].slice(-800) };
   }
-  return { ...p, sessions, sessionTotals: totals, ...(stats ? { stats } : {}) };
+  return { ...p, sessions, sessionTotals: totals, sessionEnd: { id: rec.id, ...(p.sessionTotals ? { before: p.sessionTotals } : {}) }, ...(stats ? { stats } : {}) };
+}
+
+/** §11.4: a week's gains, added (the week of `day`; the last 60 weeks kept). Pure. */
+export function withWeekGains(p: Progress, day: string, g: Partial<WeekGains>): Progress {
+  const wk = weekStart(day);
+  const cur = p.weekGains?.[wk] ?? {};
+  const next: Partial<WeekGains> = { ...cur };
+  let any = false;
+  for (const [k, v] of Object.entries(g) as [keyof WeekGains, number][]) {
+    if (!(v > 0)) continue;
+    next[k] = (next[k] ?? 0) + v;
+    any = true;
+  }
+  if (!any) return p;
+  const all = { ...(p.weekGains ?? {}), [wk]: next };
+  const keys = Object.keys(all).sort();
+  for (const k of keys.slice(0, Math.max(0, keys.length - 60))) delete all[k];
+  return { ...p, weekGains: all };
+}
+
+/** §11.4: what one drill take gained — a new clean tempo record, steps up the status ladder (new → learning → almost →
+ *  closed, against the item's target tempo). Pure. */
+export function drillGains(prev: import('../engine/drills/types').ItemState | undefined, next: import('../engine/drills/types').ItemState): Partial<WeekGains> {
+  const records = prev && prev.cleanBpm > 0 && next.cleanBpm > prev.cleanBpm ? 1 : 0;
+  const target = next.targetBpm ?? prev?.targetBpm ?? 0;
+  const up = target > 0 ? STATUS_ORDER.indexOf(itemStatus(next, 0, target)) - STATUS_ORDER.indexOf(itemStatus(prev, 0, target)) : 0;
+  return { records, statusUps: Math.max(0, up) };
+}
+
+const withDrillGains = (p: Progress, prev: import('../engine/drills/types').ItemState | undefined, next: import('../engine/drills/types').ItemState, day: string): Progress => withWeekGains(p, day, drillGains(prev, next));
+
+/** §11.4: pay Momentum bonuses into progress (each key once, the weekly limits). Pure: the XP itself goes through a
+ *  result (BONUS_RESULT_ID) so the league counts it. */
+export function withBonuses(p: Progress, offered: readonly (Bonus | null | undefined)[]): { p: Progress; xp: number; now: Bonus[] } {
+  const r = payBonuses(p.paidBonuses, offered);
+  return r.now.length ? { p: { ...p, paidBonuses: r.paid }, xp: r.xp, now: r.now } : { p, xp: 0, now: [] };
+}
+
+/** One week's practice: practice days (the streak's days) and active ms (the ledger). */
+export interface WeekPractice {
+  week: string;
+  days: number;
+  ms: number;
+}
+
+/** The last `n` weeks of practice (oldest first, the week of `today` last). Pure. */
+export function practiceWeeks(p: Progress, ledger: PracticeLedger, today: string, n: number): WeekPractice[] {
+  const days = practiceDays(p);
+  const byDay = msByDay(ledger);
+  const w0 = weekStart(today);
+  return Array.from({ length: n }, (_, i) => {
+    const week = addDay(w0, -7 * (n - 1 - i));
+    let d = 0;
+    let ms = 0;
+    for (let k = 0; k < 7; k++) {
+      const day = addDay(week, k);
+      if (day > today) break;
+      if (days.has(day)) d++;
+      ms += byDay[day] ?? 0;
+    }
+    return { week, days: d, ms };
+  });
+}
+
+/**
+ * SPEC-PRACTICE-SESSION §11.4: this week's Momentum, last week's score (the boost reads it: the stored score, else
+ * computed now) and the weeks behind them. Pure.
+ */
+export function momentumOf(p: Progress, ledger: PracticeLedger, goals: { daysGoal: number; minutesGoal: number }, today: string): { now: Momentum; last: number; weeks: WeekPractice[] } {
+  const weeks = practiceWeeks(p, ledger, today, 10);
+  const at = (i: number) => {
+    const w = weeks[i];
+    const trailing = weeks.slice(0, i).map((x) => ({ gains: p.weekGains?.[x.week] ?? {}, practised: x.days > 0 || x.ms > 0 }));
+    return momentum({ days: w.days, daysGoal: goals.daysGoal, minutes: Math.round(w.ms / 60000), minutesGoal: goals.minutesGoal, gains: p.weekGains?.[w.week] ?? {}, trailing });
+  };
+  const n = weeks.length;
+  const last = p.momentumWeeks?.[weeks[n - 2].week] ?? at(n - 2).score;
+  return { now: at(n - 1), last, weeks };
+}
+
+/** §11.4: the weekly bonuses this week has earned (the weekly goal; four full weeks in a row). */
+export function weeklyBonuses(weeks: readonly WeekPractice[], goals: { daysGoal: number; minutesGoal: number }): (Bonus | null)[] {
+  const now = weeks[weeks.length - 1];
+  if (!now) return [];
+  return [weekGoalBonus(now.week, { days: now.days, daysGoal: goals.daysGoal, minutes: Math.round(now.ms / 60000), minutesGoal: goals.minutesGoal }), fourWeeksBonus(weeks.map((w) => ({ week: w.week, days: w.days, daysGoal: goals.daysGoal })))];
+}
+
+/** Two devices' reward data (a sync rebuild): paid bonuses by key, gains and Momentum by the larger per week. */
+export function mergeRewards(local: Progress, rebuilt: Progress): Pick<Progress, 'paidBonuses' | 'takeCounts' | 'weekGains' | 'momentumWeeks' | 'raiseAskedOn' | 'sessionEnd'> {
+  const maxRec = <T extends Record<string, number>>(a?: Record<string, T>, b?: Record<string, T>): Record<string, T> | undefined => {
+    if (!a || !b) return a ?? b;
+    const out: Record<string, T> = { ...b };
+    for (const [w, x] of Object.entries(a)) {
+      const y = out[w];
+      if (!y) out[w] = x;
+      else out[w] = Object.fromEntries([...new Set([...Object.keys(x), ...Object.keys(y)])].map((k) => [k, Math.max(x[k] ?? 0, y[k] ?? 0)])) as T;
+    }
+    return out;
+  };
+  const mw = local.momentumWeeks && rebuilt.momentumWeeks ? Object.fromEntries([...new Set([...Object.keys(local.momentumWeeks), ...Object.keys(rebuilt.momentumWeeks)])].map((w) => [w, Math.max(local.momentumWeeks?.[w] ?? 0, rebuilt.momentumWeeks?.[w] ?? 0)])) : (local.momentumWeeks ?? rebuilt.momentumWeeks);
+  const paid = local.paidBonuses || rebuilt.paidBonuses ? mergePaid(local.paidBonuses, rebuilt.paidBonuses) : undefined;
+  const asked = [local.raiseAskedOn, rebuilt.raiseAskedOn].filter((x): x is string => !!x).sort().pop();
+  const out: Pick<Progress, 'paidBonuses' | 'takeCounts' | 'weekGains' | 'momentumWeeks' | 'raiseAskedOn' | 'sessionEnd'> = {};
+  if (paid) out.paidBonuses = paid;
+  const tc = local.takeCounts ?? rebuilt.takeCounts;
+  if (tc) out.takeCounts = tc;
+  const wg = maxRec(local.weekGains as Record<string, Record<string, number>> | undefined, rebuilt.weekGains as Record<string, Record<string, number>> | undefined);
+  if (wg) out.weekGains = wg as Progress['weekGains'];
+  if (mw) out.momentumWeeks = mw;
+  if (asked) out.raiseAskedOn = asked;
+  const se = local.sessionEnd ?? rebuilt.sessionEnd;
+  if (se) out.sessionEnd = se;
+  return out;
 }
 
 /** Done at least once with at least 80 % first-try correct (the latest result's total). */
@@ -1173,10 +1346,10 @@ export function lessonMastered(p: Progress, id: string): boolean {
 export function addSessionStats(stats: Progress['stats'], r: LessonResult): NonNullable<Progress['stats']> {
   const day = localDay(new Date(r.completedAt));
   const s = stats ?? { days: [], goodSessions: 0, xpByDay: {} };
-  const good = r.lessonId !== 'weekly-puzzle' && r.lessonId !== SHARER_RESULT_ID && r.total > 0 && r.firstTry / r.total >= 0.8;
+  const good = r.lessonId !== 'weekly-puzzle' && !xpOnly(r.lessonId) && r.total > 0 && r.firstTry / r.total >= 0.8;
   // AUDIT-5 #4: logged minutes are practice time, not a measured practice day.
   // a friend's mastery of my phrase (the sharer's bonus) is XP, not a day I practiced
-  const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM) && r.lessonId !== SHARER_RESULT_ID;
+  const counts = !(isLog(r.lessonId) && day >= MEASURED_STREAK_FROM) && !xpOnly(r.lessonId);
   const xpByDay = { ...s.xpByDay, [day]: (s.xpByDay[day] ?? 0) + (r.xpCounted ? 0 : r.xp) };
   const keys = Object.keys(xpByDay).sort();
   if (keys.length > 800) for (const k of keys.slice(0, keys.length - 800)) delete xpByDay[k];
@@ -1193,7 +1366,7 @@ export function practiceDays(p: Progress): Set<string> {
   const out = new Set<string>(p.stats?.days ?? []);
   for (const h of p.history) {
     const d = localDay(new Date(h.completedAt));
-    if ((isLog(h.lessonId) && d >= MEASURED_STREAK_FROM) || h.lessonId === SHARER_RESULT_ID) continue;
+    if ((isLog(h.lessonId) && d >= MEASURED_STREAK_FROM) || xpOnly(h.lessonId)) continue;
     out.add(d);
   }
   for (const d of Object.keys(p.daily ?? {})) out.add(d);
@@ -1208,7 +1381,7 @@ export function streakOf(p: Progress, purchases: Purchase[], now = new Date(), w
 export function gemsOf(p: Progress, purchases: Purchase[], now = new Date(), weeklyTarget?: number) {
   const st = streakOf(p, purchases, now, weeklyTarget);
   // Older data (before stats existed) still counts from the history.
-  const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && h.lessonId !== SHARER_RESULT_ID && h.total > 0 && h.firstTry / h.total >= 0.8).length;
+  const goodFromHistory = p.history.filter((h) => h.lessonId !== 'weekly-puzzle' && !xpOnly(h.lessonId) && h.total > 0 && h.firstTry / h.total >= 0.8).length;
   const xpByDay: Record<string, number> = { ...(p.stats?.xpByDay ?? {}) };
   if (!p.stats) for (const h of p.history) xpByDay[localDay(new Date(h.completedAt))] = (xpByDay[localDay(new Date(h.completedAt))] ?? 0) + h.xp;
   const medals = Object.values(p.puzzles ?? {});

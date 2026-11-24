@@ -18,6 +18,7 @@ import { FILM } from '../content/openers';
 import { RATED_COURSES, type ChannelSelf } from '../engine/channelPlan';
 import { DEFAULT_FOCUS, type StyleFocus } from '../engine/styleFocus';
 import { StyleChips } from './StyleChips';
+import { clampDaily, DAILY, INTAKE_MINUTES, WEEK_DAYS } from '../engine/practiceSession';
 
 type Lang = 'en' | 'he';
 type T2 = { en: string; he: string };
@@ -374,12 +375,17 @@ export function winLine(cs: CourseStartState, lang: Lang): string {
   return parts.join(' · ') || (he ? 'השיעור הראשון הושלם.' : 'Your first session is done.');
 }
 
-export const GOAL_XP: { xp: number; min: number }[] = [
-  { xp: 10, min: 5 },
-  { xp: 20, min: 10 },
-  { xp: 30, min: 15 },
-  { xp: 50, min: 25 },
-];
+/** SPEC-PRACTICE-SESSION §7: the daily goal is minutes (10 / 20 / 30 / 45 / 60) and practice days a week (3–7), as
+ *  the intake asks; the daily XP goal follows the minutes (2 XP a minute, at most 100) so the XP ring still works. */
+export const GOAL_MINUTES = INTAKE_MINUTES;
+export const xpGoalOfMinutes = (min: number): number => Math.min(100, Math.max(10, 2 * Math.round(min)));
+/** "About 2 h 30 min a week" (he / en). */
+export function weekTotalLine(minutes: number, days: number, lang: Lang): string {
+  const m = minutes * days;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return lang === 'he' ? `בערך ${h ? `${h} ש׳${r ? ` ו־${r} דק׳` : ''}` : `${r} דק׳`} בשבוע` : `About ${h ? `${h} h${r ? ` ${r} min` : ''}` : `${r} min`} a week`;
+}
 
 /** Steps 4–5: the measured first win, then the three choices (one highlighted by the self-report). */
 export function FirstWin({
@@ -387,7 +393,8 @@ export function FirstWin({
   lang,
   cs,
   streak,
-  dailyGoal,
+  dailyMinutes,
+  practiceDays,
   reminderHour,
   onPath,
   onFindLevel,
@@ -399,11 +406,14 @@ export function FirstWin({
   lang: Lang;
   cs: CourseStartState;
   streak: number;
-  dailyGoal?: number;
+  /** Settings.dailyMinutes / practiceDays (absent: the defaults, 30 and 5). */
+  dailyMinutes?: number;
+  practiceDays?: number;
   reminderHour: number;
   onPath: () => void;
   onFindLevel: () => void;
-  onDailyGoal: (xp: number) => void;
+  /** The daily length and practice days a week (the weekly goal = minutes × days). */
+  onDailyGoal: (g: { minutes: number; days: number }) => void;
   /** Ask for the reminder (a tap): resolves to a short status for the line under the button. */
   onReminder: (hour: number) => Promise<'on' | 'signin' | 'unsupported' | 'denied' | 'error'>;
   onPersonalGoal: (id: string | null) => void;
@@ -411,7 +421,8 @@ export function FirstWin({
   const he = lang === 'he';
   const def = courseOf(course);
   const [sheet, setSheet] = useState<'daily' | 'goal' | null>(null);
-  const [goalXp, setGoalXp] = useState<number>(dailyGoal ?? 20);
+  const [goalMin, setGoalMin] = useState<number>(() => clampDaily(dailyMinutes ?? DAILY.def));
+  const [goalDays, setGoalDays] = useState<number>(() => Math.max(WEEK_DAYS.min, Math.min(WEEK_DAYS.max, practiceDays ?? WEEK_DAYS.def)));
   const [hour, setHour] = useState(reminderHour);
   const [remind, setRemind] = useState<string | null>(null);
   const [savedDaily, setSavedDaily] = useState(false);
@@ -426,7 +437,7 @@ export function FirstWin({
   const nexts = [
     choice('path', he ? 'להמשיך במסלול' : 'Continue the path', he ? 'הצעד הבא בקורס' : 'The next step of the course', !well, onPath),
     choice('level', he ? 'בדיקת רמה' : 'Find my level', he ? '3–6 דקות, והמסלול זז למקום שלכם' : '3–6 minutes; the path moves to where you are', well, onFindLevel),
-    choice('daily', savedDaily ? (he ? `יעד יומי: ${goalXp} XP` : `Daily goal: ${goalXp} XP`) : he ? 'יעד יומי ותזכורת' : 'Set a daily goal', he ? 'כמה דקות ביום, ומתי להזכיר' : 'Minutes a day, and when to remind you', false, () => setSheet('daily')),
+    choice('daily', savedDaily ? (he ? `יעד יומי: ${goalMin} דק׳ · ${goalDays} ימים בשבוע` : `Daily goal: ${goalMin} min · ${goalDays} days a week`) : he ? 'יעד יומי ותזכורת' : 'Set a daily goal', he ? 'כמה דקות ביום, ומתי להזכיר' : 'Minutes a day, and when to remind you', false, () => setSheet('daily')),
   ];
   return (
     <main className="onboarding cs-screen cs-win" data-course-start="win" data-cs-course={course}>
@@ -461,14 +472,24 @@ export function FirstWin({
         <div className="sheet-backdrop" onClick={() => setSheet(null)}>
           <div className="sheet cs-sheet" role="dialog" aria-modal="true" aria-labelledby="cs-daily-title" onClick={(e) => e.stopPropagation()} data-daily-sheet="1">
             <h2 id="cs-daily-title">{he ? 'יעד יומי' : 'Daily goal'}</h2>
-            <div className="cs-chips" role="radiogroup">
-              {GOAL_XP.map((g) => (
-                <button key={g.xp} role="radio" aria-checked={goalXp === g.xp} className={`chip ${goalXp === g.xp ? 'on' : ''}`} onClick={() => setGoalXp(g.xp)} data-goal-xp={g.xp}>
-                  <b>{he ? `${g.min} דק׳` : `${g.min} min`}</b>
-                  <small dir="ltr">{g.xp} XP</small>
+            <div className="cs-chips" role="radiogroup" aria-label={he ? 'דקות ביום' : 'Minutes a day'}>
+              {GOAL_MINUTES.map((m) => (
+                <button key={m} role="radio" aria-checked={goalMin === m} className={`chip ${goalMin === m ? 'on' : ''}`} onClick={() => setGoalMin(m)} data-goal-min={m}>
+                  <b>{he ? `${m} דק׳` : `${m} min`}</b>
                 </button>
               ))}
             </div>
+            <div className="intake-days" role="radiogroup" aria-label={he ? 'ימים בשבוע' : 'Days a week'}>
+              <span className="intake-days-label">{he ? 'ימים בשבוע' : 'Days a week'}</span>
+              {Array.from({ length: WEEK_DAYS.max - WEEK_DAYS.min + 1 }, (_, i) => WEEK_DAYS.min + i).map((d) => (
+                <button key={d} role="radio" aria-checked={goalDays === d} className={`chip ${goalDays === d ? 'on' : ''}`} data-goal-days={d} onClick={() => setGoalDays(d)}>
+                  {d}
+                </button>
+              ))}
+            </div>
+            <p className="intake-week" data-week-total="1">
+              {weekTotalLine(goalMin, goalDays, lang)}
+            </p>
             <div className="cs-remind">
               <label className="hour-pick">
                 {he ? 'תזכורת ב־' : 'Remind me at'}{' '}
@@ -507,7 +528,7 @@ export function FirstWin({
             <button
               className="btn primary"
               onClick={() => {
-                onDailyGoal(goalXp);
+                onDailyGoal({ minutes: goalMin, days: goalDays });
                 setSavedDaily(true);
                 setSheet(null);
               }}

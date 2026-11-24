@@ -1,7 +1,7 @@
 // Pure merge logic for cloud sync: local and remote lesson results are unioned by session id
 // and progress is rebuilt deterministically, so syncing twice never double-counts XP.
 
-import { applyResult, emptyProgress, type LessonResult, type Progress } from './progress';
+import { applyResult, emptyProgress, mergeRewards, type LessonResult, type Progress } from './progress';
 
 export function mergeResults(local: LessonResult[], remote: LessonResult[]): LessonResult[] {
   const bySession = new Map<string, LessonResult>();
@@ -71,6 +71,8 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     // SPEC-PRACTICE-SESSION §8: the session records and their totals live on this device until the DB stores them.
     sessions: mergeSessions(local.sessions, rebuilt.sessions),
     sessionTotals: mergeSessionTotals(local.sessionTotals, rebuilt.sessionTotals),
+    // SPEC-PRACTICE-SESSION §11: the rewards' bookkeeping (paid bonuses, take counts, weekly gains, Momentum) too
+    ...mergeRewards(local, rebuilt),
   };
 }
 

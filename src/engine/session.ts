@@ -1,7 +1,9 @@
 // Pure lesson-session state. All scoring happens here, guarded by turn tokens
 // so a late recognizer callback or a double click can never score twice.
 
-import { gradePlace, type Answer, type LessonDef, type Question } from './lesson';
+import { gradePlace, questionSkill, type Answer, type LessonDef, type Question } from './lesson';
+import { expected } from './rating';
+import { answerFactor } from './stretch';
 import { gradeGrid } from './progGrid';
 import { SCORING, xpFor, type ItemOutcome, type Modality } from './scoring';
 import { paceTarget, speedCredit, type PaceProfile } from './fluency';
@@ -58,6 +60,9 @@ export interface SessionState {
   timed?: boolean;
   /** Personal pace goals (engine/fluency.ts): the XP speed bonus and the section score use them. */
   pace?: { profile: PaceProfile; on: boolean };
+  /** SPEC-PRACTICE-SESSION §11.3: the player's rating per skill — an answer's base XP follows the Elo expected score
+   *  (≥ 95 % expected ×0.5, under 60 % ×1.3); the speed bonus is kept as it is. Absent: no factor. */
+  ratings?: Partial<Record<string, number>>;
 }
 
 /** Evidence from the answer channel, beyond the answer itself. */
@@ -126,7 +131,8 @@ function patchRecord(s: SessionState, i: number, r: QuestionRecord): QuestionRec
  * XP for a resolved item. With pace goals, the speed bonus is earned against your own goal (fluency.ts),
  * only on a first try, and each replay takes a point of it away.
  */
-function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp: number, timed: boolean): number {
+function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp0: number, timed: boolean): number {
+  const baseXp = stretchBase(s, q, baseXp0);
   if (!s.pace) return xpFor(q, outcomeOf(r, timed), baseXp);
   const xp = xpFor(q, outcomeOf(r, false), baseXp);
   const a = r.attempts[0];
@@ -134,6 +140,13 @@ function itemXp(s: SessionState, q: Question, r: QuestionRecord, baseXp: number,
   const m = a.modality ?? (a.via === 'voice' ? 'voice' : 'buttons');
   const credit = s.pace.on ? speedCredit(a.timeMs, paceTarget(q, m, s.pace.profile)) : 1;
   return xp + Math.max(0, Math.round(SCORING.xp.maxSpeedBonus * credit) - (r.replays ?? 0));
+}
+
+/** §11.3: the base XP × the stretch factor of the answer (by the Elo expected score of the player on the item). */
+export function stretchBase(s: Pick<SessionState, 'ratings'>, q: Question, baseXp: number): number {
+  const r = s.ratings?.[questionSkill(q)];
+  if (baseXp <= 0 || r === undefined || !Number.isFinite(q.difficulty)) return baseXp;
+  return baseXp * answerFactor(expected(r, q.difficulty));
 }
 
 const NOTE_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
