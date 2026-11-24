@@ -94,3 +94,9 @@
 .ob-pair .ob-choice.right { border-width: 2px; border-color: var(--mint); background: color-mix(in srgb, var(--mint) 16%, var(--card)); }
 .ob-pair .ob-choice.wrong { border-color: var(--red); background: color-mix(in srgb, var(--red) 12%, var(--card)); }
 .ob-pair .ob-choice:disabled.right, .ob-pair .ob-choice:disabled.wrong { opacity: 1; }
+
+/* Intake: days a week above the minutes (SPEC-PRACTICE-SESSION §7) */
+.intake-days { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.intake-days-label { font-size: 0.9rem; color: var(--muted, #666); margin-inline-end: 4px; }
+.intake-days .chip { min-width: 40px; }
+.intake-week { margin: 10px 0 0; font-size: 0.9rem; color: var(--muted, #666); text-align: center; }

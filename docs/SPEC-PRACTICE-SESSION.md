@@ -213,7 +213,175 @@ A short session should not be 6 slices of 3 minutes. The number of blocks and th
 5. **The longer-practice nudges:** +5 min at the end, raise the goal, the monthly review additions.
 6. All four check-ins of the course-change checklist (opener lines that mention the workout, Today) and the i18n catalogs for the new texts.
 
-## 10. Questions for the owner
+## 10. Owner's answers (2026-11-24)
 
-1. **Practice days a week for the weekly goal:** 5 by default? (Proposed: 5. A player who practises daily simply passes it.)
-2. **Minutes in the leagues:** stay XP only? (Proposed: yes, for the reason in §6.)
+1. **Practice days a week:** 5 by default. Answered: yes.
+2. **Leagues:** XP, not minutes. Answered: yes.
+   - **But (owner):** "we need to see what gives persistence: maybe an XP bonus and the like. Today there is XP for the practice itself and points for the level. I want something given for the pace of progress and for persistence."
+   - The answer is §11.
+3. **Built (0.132.0):** phases 1–2:
+   - session records;
+   - the daily length and practice days a week;
+   - the card with length, focus and the live split.
+
+## 11. Rewards: what earns what (owner-approved 2026-11-24)
+
+### 11.1 Today (audit 2026-11-24)
+
+| Currency | What raises it | Problem |
+|---|---|---|
+| **XP:** league, daily goal, player level | volume: a fixed amount per correct answer or clean take (a clean drill take = 4 XP, whatever the item) | A clean take of a closed, easy item at a slow tempo pays the same as a new best on a hard one. Drill XP has no cap and no discount for repetition. |
+| **Level:** rating, rank, course dynamics | beating harder items; a win never lifts the rating above the item's difficulty + 50 | Already resists comfort practice. Nothing to fix. |
+| **Streak:** days, gems, badges | a practice day (≥ 5 measured minutes or a finished result) | Rewards showing up, not how much or how well. |
+
+**What already exists and can be reused:**
+- **Comfort / stretch signals:**
+  - the item's status (new / learning / almost / closed);
+  - its due date;
+  - its clean best tempo and its target;
+  - the coach's "easy take" flag and its "limit today";
+  - the item's tier against the player's tier;
+  - the weaker channel (ear / reading), which already pays ×1.5;
+  - the Elo expected score for any rated item.
+- **The model that already discounts repetition:** Encore's phrase XP:
+  - ×0.5 in a key already passed;
+  - a novelty factor;
+  - a daily cap per phrase.
+
+### 11.2 The principle
+
+Three separate things, each rewarded by its own measure. None can be bought with another.
+
+1. **XP = effort that stretches.** It still drives the league, the daily goal and the player level. A take or an answer earns its base XP × a **stretch factor**:
+   - more for leaving the comfort zone;
+   - less for staying in it.
+2. **Level = what the player can do.** Unchanged: only beating harder material raises it.
+3. **Momentum (new) = persistence and the pace of progress, per week.**
+   - It shows as its own meter.
+   - It pays fixed XP bonuses, so persistence and real progress also count in the league.
+
+### 11.3 The stretch factor (XP per take or answer)
+
+Each take gets one band, decided from what the app already knows. The first rule that applies wins:
+
+| Band | When | Factor |
+|---|---|---|
+| **Stretch** | a new clean best tempo; a take at or above the item's previous clean tempo while it is not closed; an item a tier above the player's; a key or scale not closed yet *and* rarely played (fewer than 3 sessions in it); the weaker channel; the weaker area (§11.5); the first clean take of a new item | **×1.5** |
+| **Work** | learning / almost items at their working tempo; the rubato and slow stages of an item **not yet closed** (learning slowly is the method, not comfort: rubato-then-tempo); due reviews (maintenance is the right thing to do) | **×1** |
+| **Comfort** | a closed item that is not due; a tempo more than 10% below the item's clean best; an item two tiers or more below the player's; the 4th "easy take" in a row on the same item | **×0.3** |
+
+- **Repetition:** the same item in one day pays full for 6 takes, then half, then nothing after 15. Same idea as Encore's daily cap.
+- **What the player sees after a take:** a small line.
+  - stretch: "Stretch ×1.5";
+  - comfort: "Comfort zone: try ♩96". The line always says how to stretch.
+
+  The band is never hidden. The point is to teach what good practice is.
+- **Lessons and ear questions:**
+  - questions are already chosen near the player's level, so the factor follows the Elo expected score;
+  - an answer the player was expected to get right with ≥ 95% pays ×0.5;
+  - an answer below 60% expected pays ×1.3.
+- **The same rule everywhere:** drills, licks, Encore (already close), My Song, ear, voice and games. Games keep their own caps.
+
+### 11.4 Momentum: persistence and the pace of progress (new, weekly)
+
+Momentum is a weekly score from 0 to 100 in two halves. It is shown as a ring on Today, on the end screen and in Progress.
+
+| Half | Measured by | Full when |
+|---|---|---|
+| **Persistence** (50) | practice days this week against the goal (5), and minutes against the weekly goal | both met |
+| **Progress** (50) | real gains this week: new tempo records, cells closed (an exercise in a key), keys filled, items up the status ladder, rating gained, a rank promotion | about one week's worth at the player's own usual pace: it compares the player with themselves, so a beginner and a pro can both fill it |
+
+**What Momentum pays (XP, counted in the league):**
+
+| Event | Bonus |
+|---|---|
+| A session finished at its planned length or more | +10 |
+| The weekly goal reached (days and minutes) | +100 |
+| A full week (practice days ≥ goal) for 4 weeks in a row | +200 (once per 4 weeks) |
+| A new tempo record | +5 |
+| A cell closed (an exercise passed in a key) | +20 |
+| A key with every exercise open at the player's level closed | +50 |
+| A rank promotion | +100 |
+| Momentum ≥ 80 for the week | the week ends with "+10% next week" on all stretch XP (one week, never compounding) |
+
+- **Why bonuses and not a multiplier on everything:** a multiplier would pay comfort practice too. A bonus pays only the act itself (showing up, closing, improving).
+- **The pace of progress also shows as a graph** on the end screen (§5) and in Progress: closed cells and tempo records per week, against the player's average.
+
+### 11.5 The weaker area and channel
+
+- **Channels:** ear and reading already pay the weaker channel ×1.5 (SPEC-EAR-AND-READING §5).
+- **Areas:** the same idea for areas inside a course. Example: in the ear course a player strong in reading and weak in ear:
+  - minutes in the weakest area beyond its planned share are stretch;
+  - minutes in the strongest area beyond its planned share are comfort.
+  - "Strong" and "weak" come from the area ratings.
+- **Keys and scales:** a key the player rarely plays is stretch; their favourite keys, once closed, are comfort unless due.
+
+### 11.6 Minutes: time counts for the habit, stretch counts for the reward
+
+- **All active minutes count toward the weekly minutes goal and the streak.** Time at the instrument has value, and maintenance is part of practice.
+- **The end screen splits them:** "32 min · 18 of them outside your comfort zone". Progress keeps a weekly "stretch minutes" line.
+  - This shows the difference without punishing.
+  - XP already pays the difference.
+
+### 11.7 Anti-farming
+
+- the daily caps per item (§11.3);
+- the existing caps on games, the log and Encore;
+- the server's plausibility check (xp ≤ total × 20) stays;
+- the Momentum bonuses have fixed, weekly limits.
+
+## 12. Choosing a key, a scale family or one exercise
+
+- **What exists:** the card offers only areas. A workout block cannot point at a key, a family or one item; only `keys` (today's matrix plan) exists.
+- **What the Practice page already has** (Technique, two views):
+  - **By key:** 12 keys × groups:
+    - major;
+    - minor;
+    - melodic/harmonic minor modes;
+    - symmetric.
+
+    Each key holds roles: scale, arpeggio, cadence, pattern, control, Harris, harmony, voicing, line, colour, comping, apply.
+  - **By topic:** families (scales, chords, hands, time, grooves, styles, reading, ear…), each with levels (= rungs).
+  - **The matrix cell** is (group, key, rung). An item is one exercise in one key.
+
+**The focus picker on the card, for an instrument course** (one tap opens a sheet; "My plan" stays the default):
+
+| Focus | What the session does | Built on |
+|---|---|---|
+| **My plan** | the coach's split (§3) | exists |
+| **Technique** | all technique, weakest first | exists (area preset) |
+| **A key**: pick one of 12 + major / minor / modes | the whole session in that key: every open exercise of the key (the key session), then improv in that key (rule-based improv with rotating scales) | `keyLadder(root, group)`, the key page |
+| **An exercise**: pick a rung (for example "triads", "bebop scale", "ii–V–I voicings"), listed by role as on the key page | that one exercise through the 12 keys, weakest keys first, changing key as the coach advances | `matrixOrder('exercise')`, `matrixSummary.byRung` |
+| **One item**: from the exercise page, "Practise this for N min" | that one item up its tempo ladder, then its other keys | the coach run |
+| **Licks** · **Improvise** · **Repertoire** | that area only | exist |
+
+- **Two ways in, one session:** from the card's sheet; and from the Practice page, where every key page, exercise page and item has "Practise this · N min". It sets today's focus and starts the session.
+- **Inside a key or exercise focus, the length still shapes the session** (§3.3). 10 minutes in E♭ = its scale and one more exercise; 60 minutes = every open exercise and an improv block in the key.
+- **The stretch factor applies inside any focus.** A focus on a closed, easy exercise earns comfort XP. The sheet marks keys and exercises by state so the player can choose:
+  - "new";
+  - "working";
+  - "closed";
+  - "due".
+- **Ear and theory course:** the focus is an area, a skill or a topic (the targets exist).
+- **Drums:** a family (grooves, rudiments, fills…) or one groove style.
+
+**Blocks:** new block targets:
+- `key {root, group}`;
+- `rung {rung}`;
+- `item {id}`;
+- `family {family}` (drums).
+
+## 13. Order of work (updated)
+
+1. Done (0.132.0): data and the card.
+2. **Next:**
+   - the split by length (§3.3) and by need (§3.2);
+   - the focus sheet with key / exercise / item (§12);
+   - "Practise this · N min" on the Practice pages.
+3. The end screen (§5), including stretch minutes and the Momentum ring.
+4. Rewards:
+   - the stretch factor (§11.3) with its take line;
+   - the daily caps;
+   - Momentum and its bonuses (§11.4).
+   - Unit-tested per band; the server rule is unchanged.
+5. The longer-practice nudges (§6).

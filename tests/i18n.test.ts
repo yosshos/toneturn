@@ -97,3 +97,12 @@ describe('a name with a running number', () => {
     expect(translate('Unknown 3')).toBe('Unknown 3');
   });
 });
+
+describe('a line addressed by name, shown without one', () => {
+  afterEach(() => setCatalog(null, null));
+  it('"Hey {name}! …" with no name reads "Hey! …" and translates without the name', () => {
+    setCatalog('es', { 'Hey {name}! A chord is three notes.': '¡Hola, {name}! Un acorde son tres notas.' });
+    expect(translate('Hey! A chord is three notes.')).toBe('¡Hola! Un acorde son tres notas.');
+    expect(translate('Hey Dana! A chord is three notes.')).toBe('¡Hola, Dana! Un acorde son tres notas.');
+  });
+});

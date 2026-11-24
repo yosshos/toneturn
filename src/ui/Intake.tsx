@@ -9,7 +9,7 @@ import { Icon } from './icons';
 import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
 import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type IntakeMinutes, type Level4, type Motivation } from '../engine/intake';
-import { clampDaily, DAILY } from '../engine/practiceSession';
+import { clampDaily, DAILY, practiceDaysOf, WEEK_DAYS } from '../engine/practiceSession';
 import { personalOrder } from '../engine/intake';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS } from '../engine/path';
 import type { DomainId } from '../engine/rating';
@@ -75,6 +75,8 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   const [ranked, setRanked] = useState<DomainId[]>(() => draft?.ranked ?? prev?.priorities ?? []);
   const [mixed, setMixed] = useState(draft?.mixed ?? (prev ? prev.priorities === null : false));
   const [range, setRange] = useState<VoiceRange | null>(draft?.range ?? settings.voiceRange ?? null);
+  // SPEC-PRACTICE-SESSION §7: how many days a week, asked with the minutes (the weekly goal = minutes × days)
+  const [days, setDays] = useState<number>(() => practiceDaysOf(settings));
   useEffect(() => {
     if (step === 'hello' && !Object.keys(a).some((k) => k !== 'plays')) return;
     saveDraft({ step, a, naming, ranked, mixed, range, savedAt: Date.now() });
@@ -310,7 +312,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   const finish = (then: 'placement' | 'basics' | 'home') => {
     const intake = full();
     const s = intakeSettings(intake);
-    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}), dailyMinutes: clampDaily(intake.minutes) };
+    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}), dailyMinutes: clampDaily(intake.minutes), practiceDays: days };
     // The path (spec AF D2 / D4) and the instrument (spec AE §6.1).
     patch.goal = intake.goal;
     // 0.67: "Exam prep" is the Ear course in exam-prep mode (the Exams course is gone): turn it on and go to Ear.
@@ -594,7 +596,23 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
         {step === 'minutes' && (
           <>
             <h1>{q.minQ}</h1>
+            <div className="intake-days" role="radiogroup" aria-label={lang === 'he' ? 'ימים בשבוע' : 'Days a week'}>
+              <span className="intake-days-label">{lang === 'he' ? 'ימים בשבוע' : 'Days a week'}</span>
+              {Array.from({ length: WEEK_DAYS.max - WEEK_DAYS.min + 1 }, (_, i) => WEEK_DAYS.min + i).map((d) => (
+                <button key={d} role="radio" aria-checked={days === d} className={`chip ${days === d ? 'on' : ''}`} data-days={d} onClick={() => setDays(d)}>
+                  {d}
+                </button>
+              ))}
+            </div>
             {opts('minutes', OPTS.minutes)}
+            <p className="intake-week" data-week-total="1">
+              {(() => {
+                const m = (a.minutes ?? DAILY.def) * days;
+                const h = Math.floor(m / 60);
+                const r = m % 60;
+                return lang === 'he' ? `בערך ${h ? `${h} ש׳${r ? ` ו־${r} דק׳` : ''}` : `${r} דק׳`} בשבוע` : `About ${h ? `${h} h${r ? ` ${r} min` : ''}` : `${r} min`} a week`;
+              })()}
+            </p>
           </>
         )}
         {step === 'range' && <RangeStep t={t} settings={settings} range={range} onRange={setRange} onNext={() => go(1)} />}

@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.132.1',
+    date: '2026-11-24',
+    en: ['The first questions now ask how many days a week you can practise, with the minutes a day, and show the week’s total'],
+    he: ['שאלות ההיכרות שואלות עכשיו גם כמה ימים בשבוע אפשר להתאמן, לצד הדקות ביום, ומראות את הסך השבועי'],
+  },
+  {
     version: '0.132.0',
     date: '2026-11-24',
     en: ['Today’s practice starts with one question: how long do you have? Pick 10 to 90 minutes (30 by default) and an area, and see the split before you start. Daily practice length and practice days a week are in Settings'],

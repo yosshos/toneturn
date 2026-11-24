@@ -36,7 +36,10 @@ test.describe('intake questionnaire', () => {
     await page.screenshot({ path: 'test-results/intake-3b-leave.png' });
     await page.locator('main.intake[data-step="leave"] .btn.mega').click();
     await page.locator('.intake-opt[data-v="learn"]').click();
-    await page.locator('.intake-opt[data-v="5"]').click();
+    // minutes a day with days a week above them (SPEC-PRACTICE-SESSION §7): 4 days × 20 min
+    await page.locator('.intake-days [data-days="4"]').click();
+    await expect(page.locator('[data-week-total]')).toContainText('2');
+    await page.locator('.intake-opt[data-v="20"]').click();
     // range: a gentle siren (the simulator sings C3 → C5)
     await expect(page.locator('main.intake[data-step="range"]')).toBeVisible();
     await expect(page.locator('.safety')).toBeVisible();

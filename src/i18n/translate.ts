@@ -48,6 +48,12 @@ export function setCatalog(locale: LocaleCode | null, cat: Catalog | null): void
         exact.set(k, v);
         continue;
       }
+      // a line addressed by name is shown (and recorded) without it when there is none: personal(text, null) turns
+      // "Hey {name}! …" into "Hey! …"; the translation drops the name the same way ("¡Hola, {name}! …" → "¡Hola! …")
+      if (/\{name\}/.test(k) && !/\{(?!name\})\w+\}/.test(k)) {
+        const bare = k.replace(/\s*\{name\}/g, '').replace(/\s+([!?.,])/g, '$1');
+        if (!exact.has(bare)) exact.set(bare, v.replace(/[,،、，]?\s*\{name\}/g, '').replace(/\s+([!?.,！？。])/g, '$1'));
+      }
       const parts = k.split(/(\{\w+\})/);
       const isPh = (x: string) => /^\{\w+\}$/.test(x);
       const names = parts.filter(isPh).map((x) => x.slice(1, -1));
