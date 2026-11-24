@@ -1,6 +1,8 @@
 // Narration on or off ("talk" vs "read"), one switch for the whole app: the intake, lessons, games.
 // Off: nothing is spoken; the text stays on screen and the flow pauses long enough to read it.
 
+import { activeLocale } from '../i18n/translate';
+
 const KEY = 'toneturn.talk';
 const OLD_KEY = 'toneturn.intake.talk';
 
@@ -53,5 +55,5 @@ export function readingMs(text: string): number {
 
 /** 0.64 (owner): narration only in English (Kokoro voice); Hebrew is read — typed text with a soft pop per word. */
 export function voiceOn(lang: 'he' | 'en'): boolean {
-  return lang === 'en' && talkOn();
+  return lang === 'en' && talkOn() && !activeLocale();
 }

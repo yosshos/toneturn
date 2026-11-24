@@ -5,6 +5,7 @@ import { VoiceFiles, type FilesDeps } from '../src/speech/voice/files';
 import { distinct, memoryLines, miniLines, openerLines, previewLines } from '../src/speech/voice/lines';
 import { BrowserPromptPlayer, type Narrator } from '../src/speech/tts';
 import { setTalk } from '../src/speech/talk';
+import { setCatalog } from '../src/i18n/translate';
 import { personal } from '../src/content/personal';
 import { MINI_LESSONS } from '../src/content/minilessons';
 
@@ -132,6 +133,25 @@ describe('fallback order: recording → on-device voice → reading', () => {
     await vi.runAllTimersAsync();
     await done;
     expect(played).toEqual([]);
+  });
+
+  it('a translated locale without its own voice reads its lines: no English recording, no English voice', async () => {
+    const { f, played } = files(['Listen to the chord.']);
+    const n = fakeNarrator(true, true);
+    const p = new BrowserPromptPlayer();
+    p.recordings = f;
+    p.narrator = n;
+    setCatalog('es', { 'Listen to the chord.': 'Escucha el acorde.' });
+    try {
+      expect(p.speaksLine('Listen to the chord.', 'en')).toBe(false);
+      const done = p.speak('Listen to the chord.', 'en', new AbortController().signal);
+      await vi.runAllTimersAsync();
+      await done;
+      expect(played).toEqual([]);
+      expect(n.speak).not.toHaveBeenCalled();
+    } finally {
+      setCatalog(null, null);
+    }
   });
 });
 

@@ -9,6 +9,7 @@ import { Cancelled, type PromptPlayer } from '../game/adapters';
 import { shown, speakable } from './speakable';
 import { automated, readingMs, talkOn } from './talk';
 import { wantsKokoro } from './kokoro/decide';
+import { activeLocale } from '../i18n/translate';
 
 /** How long the first English line waits for the list of recordings (a phone on a slow network; 0.66–0.68: 1.5 s,
  *  after which the line was read instead of played). */
@@ -65,7 +66,9 @@ export class BrowserPromptPlayer implements PromptPlayer {
   force = false;
 
   private wanted(lang: 'he' | 'en'): boolean {
-    return wantsKokoro(lang, talkOn() || this.force, automated());
+    // a translated locale (docs/SPEC-I18N.md) runs on English underneath: until it has a voice of its own its lines
+    // are read, never spoken in English
+    return !activeLocale() && wantsKokoro(lang, talkOn() || this.force, automated());
   }
 
   /** Would English lines be spoken now (some voice is available)? */

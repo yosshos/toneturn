@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.129.1',
+    date: '2026-11-24',
+    en: ['In the eight new languages the narrator no longer speaks English: its lines stay on screen to read until each language has a voice of its own'],
+    he: ['בשמונה השפות החדשות הקריין כבר לא מדבר אנגלית: השורות נשארות על המסך לקריאה עד שלכל שפה יהיה קול משלה'],
+  },
+  {
     version: '0.129.0',
     date: '2026-11-24',
     en: ['Eight more screen languages, in beta: Spanish, Portuguese (Brazil), French, German, Italian, Japanese, Korean and Chinese. Pick one in Settings or on the welcome screen; the app, its screens and every lesson title are translated, the longer explanations follow'],
