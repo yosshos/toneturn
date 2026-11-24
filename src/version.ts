@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.135.2',
+    date: '2026-11-24',
+    en: ['The bass course is offered on the welcome screen again'],
+    he: ['קורס הבס מוצע שוב במסך הפתיחה'],
+  },
+  {
     version: '0.135.1',
     date: '2026-11-24',
     en: ['Teachers: students’ progress charts now sync, assignments carry their options (channel, minutes a day), and a style focus can be assigned'],

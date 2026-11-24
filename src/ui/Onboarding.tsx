@@ -264,7 +264,7 @@ export function Onboarding({ lang, onDone, onSignIn }: { lang: Lang; onDone: (r:
           <h1>{lang === 'he' ? 'מה בא לך ללמוד?' : 'What would you like to learn?'}</h1>
           <p className="field-hint">{lang === 'he' ? 'אפשר לבחור כמה. כל קורס הוא מסלול נפרד, ומחליפים ביניהם בלחיצה.' : 'Pick as many as you like. Each course is its own path; switch with one tap.'}</p>
           <div className="ob-course-grid" role="group">
-            {visibleCourses().filter((c) => c.id !== 'bass').map((c) => {
+            {visibleCourses().map((c) => {
               const on = picked.includes(c.id);
               return (
                 <button key={c.id} className={`ob-course ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => togglePick(c.id)} data-ob={`course-${c.id}`}>

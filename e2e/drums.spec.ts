@@ -65,7 +65,8 @@ test.describe('drums course', () => {
     await expect(page.locator('[data-ob="course-drums"]')).toBeVisible();
     await page.locator('[data-ob="course-drums"]').click();
     await expect(page.locator('[data-ob="course-drums"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-ob="course-bass"]')).toHaveCount(0);
+    // bass is offered too (hidden while it was beta; out of beta since 0.66)
+    await expect(page.locator('[data-ob="course-bass"]')).toBeVisible();
     await page.locator('[data-ob="courses-next"]').click();
     // SPEC-COURSE-START: the drums course opens with its welcome card (no placement).
     await expect(page.locator('[data-course-start="welcome"][data-cs-course="drums"]')).toBeVisible();
