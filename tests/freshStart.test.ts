@@ -31,11 +31,15 @@ beforeEach(() => {
 describe('fresh start for every tester', () => {
   it('a used device drops progress and path state, keeps language, profile, calibration and own material', async () => {
     const old: Settings = { ...DEFAULT_SETTINGS, progressEpoch: undefined, uiLang: 'he', nickname: 'Yos', midiLatencyMs: 42, firstUseAt: '2026-11-01T10:00:00Z', activeCourse: 'jazz' as never, goal: 'jazz' } as Settings;
-    const s = memStore(old, { ...emptyProgress(), history: [result('2026-11-10T10:00:00Z')] });
+    const s = memStore(old, { ...emptyProgress(), history: [result('2026-11-10T10:00:00Z')], streak: { count: 9, lastDay: '2026-11-10' }, xp: 500 });
     ls.setItem('toneturn.resume.v2', '{}');
     ls.setItem('toneturn.headphones', '1');
     expect(await freshStartIfNeeded(s)).toBe(true);
     expect(s.st.progress.history).toEqual([]);
+    // the streak stays (owner 2026-11-24): its count and its practice days, nothing else
+    expect(s.st.progress.streak).toEqual({ count: 9, lastDay: '2026-11-10' });
+    expect(s.st.progress.stats?.days).toContain('2026-11-10');
+    expect(s.st.progress.xp).toBe(0);
     expect(s.st.settings.uiLang).toBe('he');
     expect(s.st.settings.nickname).toBe('Yos');
     expect(s.st.settings.midiLatencyMs).toBe(42);

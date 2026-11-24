@@ -4,11 +4,13 @@
 // profile, audio / MIDI calibration and sound choices, recordings, own charts and drills. Results finished before the
 // cutoff are ignored when they come back from the cloud, and cloud settings from before the epoch only bring back
 // the kept keys — so an old device or an old cloud copy cannot restore the old progress.
-import { DEFAULT_SETTINGS, emptyProgress, migrateSettings, PROGRESS_EPOCH, type LessonResult, type Progress, type Settings } from './progress';
+import { DEFAULT_SETTINGS, emptyProgress, migrateSettings, practiceDays, PROGRESS_EPOCH, type LessonResult, type Progress, type Settings } from './progress';
 
 export { PROGRESS_EPOCH };
 /** Results completed before this moment belong to the old path. */
-export const PROGRESS_CUTOFF = '2026-11-19T07:30:00Z';
+// round 2 (owner 2026-11-24): the daily session, menus and screens changed; testers start again as new players,
+// keeping their streak
+export const PROGRESS_CUTOFF = '2026-11-24T18:45:00Z';
 const EPOCH_KEY = 'toneturn.epoch';
 
 /** Settings that survive a fresh start: the person, the device and their own material — never progress. */
@@ -29,6 +31,7 @@ const PROGRESS_KEYS = [
   'toneturn.resume.v2', 'toneturn.placement.resume.v1', 'toneturn.intake.draft.v1', 'toneturn.practice', 'toneturn.practice.v1', 'toneturn.practice.pending',
   'toneturn.pace', 'toneturn.slots.v1', 'toneturn.highway.best.v1', 'toneturn.aiWeekly.v1', 'toneturn.lessonTopic', 'toneturn.drilltopic', 'toneturn.voiceTest.v1',
   'toneturn.workout.minutes', 'toneturn.feedSnap', 'toneturn.feedPosted', 'toneturn.diary.draft',
+  'toneturn.workoutAreaDays', 'toneturn.workoutCtx', 'toneturn.stepsInWorkout', 'toneturn.waitAsked', 'toneturn.todayKeys', 'toneturn.matrixSeen', 'toneturn.weekGroup',
 ];
 
 export function keepOnly(s: Partial<Settings> | null | undefined): Partial<Settings> {
@@ -61,6 +64,13 @@ function ls(): Storage | null {
   }
 }
 
+/** An empty progress that keeps the streak (owner 2026-11-24): the practice days and the streak count, nothing else. */
+export function keepStreak(old: Progress): Progress {
+  const p = emptyProgress();
+  const days = [...practiceDays(old)].sort().slice(-800);
+  return { ...p, streak: old.streak ?? p.streak, stats: { ...(p.stats ?? { goodSessions: 0, xpByDay: {} }), days, goodSessions: 0, xpByDay: {} } };
+}
+
 /** Runs once per device per epoch, before the app reads settings or progress. Returns true when it wiped. */
 export async function freshStartIfNeeded(store: FreshStore): Promise<boolean> {
   const l = ls();
@@ -79,7 +89,7 @@ export async function freshStartIfNeeded(store: FreshStore): Promise<boolean> {
   const used = progress.history.length > 0 || Boolean(settings.firstUseAt) || Boolean(settings.intake) || Boolean(settings.activeCourse);
   if (used) {
     await store.saveSettings(migrateSettings({ ...DEFAULT_SETTINGS, ...keepOnly(settings), progressEpoch: PROGRESS_EPOCH }));
-    await store.saveProgress(emptyProgress());
+    await store.saveProgress(keepStreak(progress));
     for (const k of PROGRESS_KEYS) {
       try {
         l.removeItem(k);

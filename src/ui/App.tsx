@@ -4066,10 +4066,10 @@ export function App() {
             <h2 id="fresh-title">{s.uiLang === 'he' ? 'מצב בדיקה: מתחילים מחדש' : 'Testing round: a fresh start'}</h2>
             <p>
               {s.uiLang === 'he'
-                ? 'סידרנו מחדש את השלבים בכל הקורסים, ולכן ההתקדמות של כל הבודקים נמחקה בכוונה. כך תוכלו לחוות את ההתחלה כמו משתמש חדש: בחירת קורס, הפתיחה המונפשת והיחידות הראשונות.'
-                : 'We reordered the steps in every course, so every tester’s progress was cleared on purpose. Now you can try the start as a new player would: choosing a course, the animated opening and the first units.'}
+                ? 'האימון היומי, התפריטים והמסכים השתנו, ולכן ההתקדמות של כל הבודקים נמחקה בכוונה. כך תוכלו לחוות את האפליקציה כמו משתמש חדש: שאלות ההיכרות, בחירת קורס, האימון היומי והתפריטים.'
+                : 'The daily session, the menus and the screens changed, so every tester’s progress was cleared on purpose. Now you can try the app as a new player would: the first questions, choosing a course, the daily session and the menus.'}
             </p>
-            <p className="muted">{s.uiLang === 'he' ? 'השפה, הכינוי, הכיול וההקלטות שלכם נשמרו.' : 'Your language, nickname, calibration and recordings were kept.'}</p>
+            <p className="muted">{s.uiLang === 'he' ? 'הסטריק, השפה, הכינוי, הכיול וההקלטות שלכם נשמרו.' : 'Your streak, language, nickname, calibration and recordings were kept.'}</p>
             <button className="btn mega" autoFocus onClick={() => setFreshNotice(false)}>
               {s.uiLang === 'he' ? 'מתחילים' : 'Start'}
             </button>

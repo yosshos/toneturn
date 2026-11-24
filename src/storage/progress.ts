@@ -519,7 +519,7 @@ export const SETTINGS_VERSION = 2;
 export const DEFAULT_SOUND = 'grand';
 
 /** Bumped when every tester starts over (storage/freshStart.ts). */
-export const PROGRESS_EPOCH = '2026-11-19';
+export const PROGRESS_EPOCH = '2026-11-24';
 
 export const DEFAULT_SETTINGS: Settings = {
   version: SETTINGS_VERSION,

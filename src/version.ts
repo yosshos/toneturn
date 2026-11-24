@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.135.0',
+    date: '2026-11-24',
+    en: ['Testing round: every tester starts again as a new player (the streak is kept), to try the first questions, the daily session and the menus afresh'],
+    he: ['סבב בדיקה: כל הבודקים מתחילים מחדש כמשתמשים חדשים (הסטריק נשמר), כדי לחוות מחדש את שאלות ההיכרות, האימון היומי והתפריטים'],
+  },
+  {
     version: '0.134.2',
     date: '2026-11-24',
     en: ['Your level now moves with every lesson, drill and game (a saving fault dropped the newest results). Practising your weaker area counts as stretch, and the week’s rise in level counts toward Momentum'],
