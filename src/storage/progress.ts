@@ -511,6 +511,39 @@ export interface Settings {
   streakWeekly?: number;
   /** The fresh-start epoch these settings belong to (storage/freshStart.ts). */
   progressEpoch?: string;
+  /** Per connected device (owner 2026-11-24, storage/deviceProfiles.ts): each MIDI input's sound choice, latency and
+   *  touch; each microphone's latency; each audio output's tap latency and latency mode. Never leaves this device. */
+  perDevice?: import('./deviceProfiles').PerDevice;
+}
+
+/**
+ * Preferences that belong to THIS device (owner 2026-11-24: "play through the app or the keyboard" and the timing
+ * calibration kept coming back wrong): they are never pushed to the cloud, never taken from a cloud copy (another
+ * device's or an older one), and they survive every fresh start. One list for push, pull and fresh start.
+ */
+export const DEVICE_SETTINGS: readonly (keyof Settings)[] = [
+  'voiceConsent', 'keepAwake', 'voices', 'haptics', 'textScale', 'volume',
+  'tapLatencyMs', 'midiLatencyMs', 'midiBiasMs', 'micLatencyMs', 'drillCal', 'audioLatency', 'soundQuality', 'pianoDetail',
+  'midiInput', 'midiDevice', 'midiOctave', 'midiPedalInvert', 'midiGuitarChannels', 'midiBendRange', 'midiSound', 'midiSoundAsked', 'midiVolume', 'midiCurve',
+  'audioOutput', 'computerKeys', 'micDeviceId', 'headphones', 'drumKit', 'perDevice',
+];
+
+/** The cloud copy over this device's settings: the person's keys from the cloud, every device key stays as it is here. */
+export function mergeCloudSettings(local: Settings, remote: Partial<Settings>, purchases: Purchase[] | undefined, epoch: string): Settings {
+  const next = migrateSettings({ ...local, ...withoutDeviceSettings(remote), purchases, progressEpoch: epoch });
+  const keep = next as unknown as Record<string, unknown>;
+  for (const k of DEVICE_SETTINGS) {
+    if (local[k] === undefined) delete keep[k];
+    else keep[k] = local[k];
+  }
+  return next;
+}
+
+/** The settings without this device's own keys (what is pushed to, and taken from, the cloud). */
+export function withoutDeviceSettings<T extends Partial<Settings>>(s: T): T {
+  const out = { ...s };
+  for (const k of DEVICE_SETTINGS) delete (out as Record<string, unknown>)[k];
+  return out;
 }
 
 export const SETTINGS_VERSION = 2;
@@ -887,6 +920,10 @@ export class ProgressStore {
   }
 
   async loadSettings(): Promise<Settings> {
+    return this.settingsOp(() => this.loadSettingsNow());
+  }
+
+  private async loadSettingsNow(): Promise<Settings> {
     const raw = await this.kv.get<Partial<Settings>>('settings');
     // A first visit opens in the phone's language (owner 2026-11-19: most testers speak Hebrew).
     if (!raw) { const l = browserLang(); return { ...DEFAULT_SETTINGS, uiLang: l, inputLang: l, outputLang: l }; }
@@ -1199,7 +1236,27 @@ export class ProgressStore {
   }
 
   async saveSettings(s: Settings) {
-    await this.kv.set('settings', s);
+    await this.settingsOp(() => this.kv.set('settings', s));
+  }
+
+  /** Settings writes and reads run one after another, so a read-modify-write never loses another write. */
+  private settingsQ: Promise<unknown> = Promise.resolve();
+  private settingsOp<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.settingsQ.then(fn, fn);
+    this.settingsQ = run.catch(() => undefined);
+    return run;
+  }
+
+  /**
+   * Writes only the changed keys onto the STORED settings (read-modify-write). The screen's copy may be stale, still
+   * loading, or the defaults after a failed read; a patch never writes those back over values it did not change.
+   */
+  async patchSettings(patch: Partial<Settings>): Promise<void> {
+    if (!Object.keys(patch).length) return;
+    await this.settingsOp(async () => {
+      const raw = await this.kv.get<Partial<Settings>>('settings');
+      await this.kv.set('settings', { ...(raw ?? (await this.loadSettingsNow())), ...patch });
+    });
   }
 
   /** Read-modify-write; safe to call repeatedly for the same session. */

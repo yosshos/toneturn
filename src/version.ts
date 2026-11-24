@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.135.3',
+    date: '2026-11-24',
+    en: ['Settings that belong to this device now stay put: timing calibration, the MIDI sound choice, audio and microphone choices are never overwritten by the cloud copy or another device. Each MIDI keyboard, microphone and audio output remembers its own settings'],
+    he: ['הגדרות של המכשיר נשמרות עכשיו במקומן: כיול התזמון, בחירת הסאונד ב-MIDI, השמע והמיקרופון לא נדרסים יותר מהעותק בענן או ממכשיר אחר. כל מקלדת MIDI, מיקרופון ויציאת שמע זוכרים את ההגדרות שלהם'],
+  },
+  {
     version: '0.135.2',
     date: '2026-11-24',
     en: ['The bass course is offered on the welcome screen again'],

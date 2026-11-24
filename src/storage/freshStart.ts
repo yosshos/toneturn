@@ -4,7 +4,7 @@
 // profile, audio / MIDI calibration and sound choices, recordings, own charts and drills. Results finished before the
 // cutoff are ignored when they come back from the cloud, and cloud settings from before the epoch only bring back
 // the kept keys — so an old device or an old cloud copy cannot restore the old progress.
-import { DEFAULT_SETTINGS, emptyProgress, migrateSettings, practiceDays, PROGRESS_EPOCH, type LessonResult, type Progress, type Settings } from './progress';
+import { DEFAULT_SETTINGS, DEVICE_SETTINGS, emptyProgress, migrateSettings, practiceDays, PROGRESS_EPOCH, withoutDeviceSettings, type LessonResult, type Progress, type Settings } from './progress';
 
 export { PROGRESS_EPOCH };
 /** Results completed before this moment belong to the old path. */
@@ -14,15 +14,17 @@ export const PROGRESS_CUTOFF = '2026-11-24T18:45:00Z';
 const EPOCH_KEY = 'toneturn.epoch';
 
 /** Settings that survive a fresh start: the person, the device and their own material — never progress. */
-export const KEEP_SETTINGS: readonly (keyof Settings)[] = [
-  'uiLang', 'inputLang', 'outputLang', 'keepAwake', 'naming', 'voiceGender', 'voices', 'reducedMotion', 'voiceConsent', 'reminderHour', 'seenVersion',
+export const KEEP_SETTINGS: readonly (keyof Settings)[] = [...new Set<keyof Settings>([
+  // every device key (calibration, MIDI / mic / output choices and their per-device copies) — one list, progress.ts
+  ...DEVICE_SETTINGS,
+  'locale', 'a4', 'uiLang','inputLang', 'outputLang', 'keepAwake', 'naming', 'voiceGender', 'voices', 'reducedMotion', 'voiceConsent', 'reminderHour', 'seenVersion',
   'tapLatencyMs', 'midiLatencyMs', 'midiBiasMs', 'micLatencyMs', 'midiInput', 'midiDevice', 'midiOctave', 'midiPedalInvert', 'midiGuitarChannels', 'midiBendRange', 'midiSound', 'midiVolume', 'midiCurve',
   'audioOutput', 'computerKeys', 'micDeviceId', 'volume', 'cues', 'ttsRate', 'haptics', 'textScale', 'timedScoring',
   'nickname', 'hideNickPrompt', 'country', 'avatarIcon', 'avatarColor', 'avatarPhoto', 'privacy', 'birthYear', 'avatarFrame', 'purchases',
   'leftHanded', 'tuning', 'bassTuning', 'headphones', 'tunerPreset', 'metronome', 'drumKit', 'recalSnooze',
   'mixer', 'sound', 'guitarVoice', 'pianoDetail', 'soundQuality', 'audioLatency', 'organReg', 'organFast', 'epTremolo', 'bandDrums', 'droneSound', 'theme', 'cleanView', 'vibratoStyle',
   'keepTakes', 'keepTakeNotes', 'syncTakeNotes', 'myCharts', 'customDrills', 'lickBook', 'ownFingering', 'workoutTemplates', 'shareStats',
-];
+])];
 
 /** Device stores that only hold derived progress (the player model, confusions, analysis, AI cards). */
 const PROGRESS_DBS = ['toneturn-profile', 'toneturn-confusion', 'toneturn-analysis', 'toneturn-ai'];
@@ -44,9 +46,10 @@ export function keepOnly(s: Partial<Settings> | null | undefined): Partial<Setti
 /** Results from the old path are left out of every rebuild. */
 export const currentResults = (h: LessonResult[]): LessonResult[] => h.filter((r) => r.completedAt >= PROGRESS_CUTOFF);
 
-/** Cloud settings saved before this epoch bring back only the kept keys. */
+/** Cloud settings saved before this epoch bring back only the kept keys — and never this device's own keys (a cloud
+ *  copy holds another device's, or an older, calibration and MIDI sound choice). */
 export function remoteSettingsForEpoch(remote: Partial<Settings>): Partial<Settings> {
-  return remote.progressEpoch === PROGRESS_EPOCH ? remote : keepOnly(remote);
+  return withoutDeviceSettings(remote.progressEpoch === PROGRESS_EPOCH ? remote : keepOnly(remote));
 }
 
 interface FreshStore {

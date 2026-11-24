@@ -65,7 +65,7 @@ describe('fresh start for every tester', () => {
     const stale = remoteSettingsForEpoch({ uiLang: 'he', activeCourse: 'jazz', pathFacts: {} } as unknown as Partial<Settings>);
     expect(stale).toEqual({ uiLang: 'he' });
     const fresh = { uiLang: 'he', activeCourse: 'jazz', progressEpoch: PROGRESS_EPOCH } as unknown as Partial<Settings>;
-    expect(remoteSettingsForEpoch(fresh)).toBe(fresh);
+    expect(remoteSettingsForEpoch(fresh)).toEqual(fresh);
     expect(keepOnly(null)).toEqual({});
   });
 });

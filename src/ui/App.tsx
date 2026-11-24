@@ -106,7 +106,8 @@ import { MicIcon } from './bits';
 import { STRINGS } from '../i18n/strings';
 import { baseOf, isTranslated, localeInfo, LOCALES } from '../i18n/locales';
 import { useLocale } from '../i18n/boot';
-import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, momentumOf, namingFor, ratingsOf, weeklyBonuses, withWeekGains, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, migrateSettings } from '../storage/progress';
+import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, momentumOf, namingFor, ratingsOf, weeklyBonuses, withWeekGains, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, mergeCloudSettings, withoutDeviceSettings } from '../storage/progress';
+import { activeMidiDevice, reconcileDevices, settingsDiff } from '../storage/deviceProfiles';
 import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { AccountCard, type SyncState } from './Account';
@@ -600,25 +601,32 @@ export function App() {
     return onAuthChange(setUser);
   }, []);
 
+  // The cloud copy is merged only once this device's own settings have loaded (else the local load replaced the merge,
+  // or the merge landed on the defaults), and it never brings device keys (calibration, MIDI sound…: deviceProfiles).
+  const localSettingsLoaded = !!settings;
   useEffect(() => {
-    if (!user) return;
+    if (!user || !localSettingsLoaded) return;
     void (async () => {
       const raw = await pullSettings(user.id).catch(() => null);
-      // A cloud copy from before the fresh start brings back only the person's and the device's settings.
+      // A cloud copy from before the fresh start brings back only the person's settings.
       const stale = Boolean(raw) && raw!.progressEpoch !== PROGRESS_EPOCH;
       const remote = raw ? remoteSettingsForEpoch(raw) : null;
       if (remote)
         setSettings((prev) => {
+          if (!prev) return prev;
           // Gem purchases are append-only: keep the union of both devices (by id).
-          const all = [...(prev?.purchases ?? []), ...((remote as Partial<Settings>).purchases ?? [])];
+          const all = [...(prev.purchases ?? []), ...((remote as Partial<Settings>).purchases ?? [])];
           const purchases = all.filter((x, i) => all.findIndex((y) => y.id === x.id) === i);
-          const next = migrateSettings({ ...(prev ?? DEFAULT_SETTINGS), ...remote, purchases, voiceConsent: prev?.voiceConsent ?? false, progressEpoch: PROGRESS_EPOCH });
+          const next = mergeCloudSettings(prev, remote, purchases, PROGRESS_EPOCH);
+          // stored too, so the next start (even offline) begins from the merged copy
+          void store.patchSettings(settingsDiff(prev, next));
           if (stale) void pushSettings(user.id, next).catch(() => {});
           return next;
         });
       await runSync();
     })();
-  }, [user, runSync]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, runSync, localSettingsLoaded]);
 
   // ?lang=he|en|es|… forces the interface language (shared links, tests); a translated locale runs on English.
   const qLang = params.get('lang');
@@ -777,8 +785,12 @@ export function App() {
   }, [s.midiInput, s.midiSound, s.computerKeys, s.activeCourse]);
   // Owner 2026-11-20: the app's sound for MIDI keys, one tap away in the top bar while a keyboard is connected, and one
   // question when a keyboard first connects (a digital piano has its own speakers; the app's echo arrives late).
-  const keysSound: KeysSoundProp | undefined = s.midiInput && s.activeCourse !== 'drums' ? { on: s.midiSound !== false, toggle: () => updateSettings({ midiSound: s.midiSound === false, midiSoundAsked: true }), lang: s.uiLang } : undefined;
+  const keysSound: KeysSoundProp | undefined = s.midiInput && s.activeCourse !== 'drums' ? { on: s.midiSound !== false, toggle: () => updateSettings((cur) => ({ midiSound: cur.midiSound === false, midiSoundAsked: true })), lang: s.uiLang } : undefined;
   const midiNames = useMidiDevices(!!s.midiInput && s.activeCourse !== 'drums');
+  // Owner 2026-11-24: each MIDI keyboard keeps its own sound choice, latency and touch (storage/deviceProfiles.ts).
+  const activeMidi = activeMidiDevice(s.midiDevice, midiNames);
+  const activeMidiRef = useRef<string | null>(activeMidi);
+  activeMidiRef.current = activeMidi;
   // Automated runs (e2e, stub keyboards) are asked only with ?keysask in the address — the sheet would cover every MIDI test.
   const askKeysSound = !!s.midiInput && s.activeCourse !== 'drums' && !s.midiSoundAsked && midiNames.length > 0 && !(typeof navigator !== 'undefined' && navigator.webdriver && !params.has('keysask')) ? midiNames[0] : null;
   // Drums: pad controllers without a sound module — the app plays the kit's sound on each hit (kit card, default off).
@@ -808,17 +820,33 @@ export function App() {
   // The computer keyboard as a piano (opt-in, Settings → MIDI).
   useEffect(() => (s.computerKeys ? startComputerKeys(midi) : undefined), [s.computerKeys]);
 
+  /**
+   * One change to the settings, applied to the LATEST state (a patch or a function of the current settings). Only the
+   * keys that changed are written onto the stored copy (store.patchSettings), so a stale or still-loading copy on the
+   * screen never writes old values back; the connected devices' own copies follow (deviceProfiles.ts).
+   */
   const updateSettings = useCallback(
-    (patch: Partial<Settings>) => {
+    (patch: Partial<Settings> | ((cur: Settings) => Partial<Settings>)) => {
       setSettings((prev) => {
-        const next = { ...(prev ?? DEFAULT_SETTINGS), ...patch };
-        void store.saveSettings(next);
-        if (user) void pushSettings(user.id, next).catch(() => {});
+        const base = prev ?? DEFAULT_SETTINGS;
+        const p = typeof patch === 'function' ? patch(base) : patch;
+        // before the stored settings load, keep this change only (the load brings it back with everything else)
+        const next = prev ? reconcileDevices({ ...base, ...p }, activeMidiRef.current) : { ...base, ...p };
+        const diff = prev ? settingsDiff(prev, next) : p;
+        if (!Object.keys(diff).length) return prev;
+        void store.patchSettings(diff);
+        // device-only changes (calibration, MIDI sound…) never go to the cloud
+        if (user && Object.keys(withoutDeviceSettings(diff)).length) void pushSettings(user.id, next).catch(() => {});
         return next;
       });
     },
     [user],
   );
+  // Another keyboard plugged in (or the chosen one): its own values come back, a new one starts from the values in use.
+  useEffect(() => {
+    if (settings) updateSettings({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMidi, !!settings]);
   useWakeLock(s.keepAwake !== false);
   // SPEC-STYLE-FOCUS §2 (owner 2026-11-22): nothing opens by climbing any more — jazz is open in every course from day
   // one. §6: the old settings (jazz focus, piano emphasis, guitar add-ons, bass track) become the style focus once;
@@ -864,7 +892,7 @@ export function App() {
         const cs = fn(base.courseStart);
         if (cs === base.courseStart) return prev;
         const next = { ...base, courseStart: cs };
-        void store.saveSettings(next);
+        void store.patchSettings({ courseStart: cs });
         if (user) void pushSettings(user.id, next).catch(() => {});
         return next;
       });
@@ -923,7 +951,7 @@ export function App() {
               for (const l of r.licks) if (!(book?.own ?? []).some((x) => x.id === l.id)) book = withAssignedPhrase(book, l);
               if (!add.length && book === base.lickBook) return prev;
               const next = { ...base, purchases: [...(base.purchases ?? []), ...add], lickBook: book };
-              void store.saveSettings(next);
+              void store.patchSettings({ purchases: next.purchases, lickBook: book });
               if (user) void pushSettings(user.id, next).catch(() => {});
               return next;
             });

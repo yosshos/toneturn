@@ -2,7 +2,7 @@
 // Without VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY the app stays fully local.
 
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
-import type { LessonResult, Progress, Settings } from '../storage/progress';
+import { withoutDeviceSettings, type LessonResult, type Progress, type Settings } from '../storage/progress';
 import { mergeResults, pendingUploads, rebuildProgress } from '../storage/sync';
 import { currentResults } from '../storage/freshStart';
 
@@ -130,14 +130,17 @@ export async function syncProgress(local: Progress): Promise<Progress> {
 export async function pushSettings(userId: string, s: Settings) {
   const sb = supabase();
   if (!sb) return;
-  const { voiceConsent: _drop, ...portable } = s; // consent is per device
-  void _drop;
-  await sb.from('toneturn_profiles').upsert({ id: userId, settings: portable });
+  await sb.from('toneturn_profiles').upsert({ id: userId, settings: portableSettings(s) });
 }
+
+/** What goes to the cloud: everything but this device's own keys (consent, calibration, MIDI / mic / output). */
+export const portableSettings = (s: Partial<Settings>): Partial<Settings> => withoutDeviceSettings(s);
 
 export async function pullSettings(userId: string): Promise<Partial<Settings> | null> {
   const sb = supabase();
   if (!sb) return null;
   const { data } = await sb.from('toneturn_profiles').select('settings').eq('id', userId).maybeSingle();
-  return (data?.settings as Partial<Settings> | undefined) ?? null;
+  // older cloud copies still hold device keys (another device's calibration and sound choice): never bring them in
+  const raw = data?.settings as Partial<Settings> | undefined;
+  return raw ? portableSettings(raw) : null;
 }
