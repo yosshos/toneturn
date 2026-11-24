@@ -147,6 +147,7 @@ import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, noteMatrixSeen, re
 import { coolingDown, withCeiling } from '../engine/drills/itemStatus';
 import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
+import type { FocusTarget } from '../engine/workout2';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
 /** Key-neutral families (rhythm, independence, mechanics): General technique under the key cards. */
 const GENERAL_FAMILY = (id: string): boolean => FAMILY_FACETS[id]?.scope === 'neutral';
@@ -347,18 +348,27 @@ export interface DrillsProps {
   onFullPractice?: () => void;
   /** §4.4: the step requires a channel — the run plays it that way (by ear: notation hidden; from memory: nothing shown). */
   channel?: 'ear' | 'memory';
+  /** SPEC-PRACTICE-SESSION §12: open straight in a workout block's coach run (a key, an exercise, an item, a family,
+   *  the warm-up), as long as the block (`walk`: cell by cell, in order); its end calls onQueueDone. */
+  startCoach?: { fam: FamilyDef; minutes: number; walk?: boolean } | null;
+  /** §12 "Practise this · N min": today's focus for the active course, and the session starts. */
+  onPractiseThis?: (t: FocusTarget) => void;
+  /** The session's length the action names (the daily length). */
+  practiseMin?: number;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number; /** SPEC-PATH-TODAY-PRACTICE §2: the rung's item page lit on the key page, and how it was reached. */ rung?: { id: string; wayIn: WayIn }; /** Where Back goes (a family's level row, Today's cells). */ from?: View };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** §12: a workout block's coach run — its minutes, and walked step by step in order. */ block?: { minutes: number; walk?: boolean }; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number } } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number; /** SPEC-PATH-TODAY-PRACTICE §2: the rung's item page lit on the key page, and how it was reached. */ rung?: { id: string; wayIn: WayIn }; /** Where Back goes (a family's level row, Today's cells). */ from?: View };
 
-export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openGroup, openFamily, onTodayScreen, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel, onImproviseLick }: DrillsProps) {
+export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openGroup, openFamily, onTodayScreen, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel, onImproviseLick, startCoach, onPractiseThis, practiseMin }: DrillsProps) {
   const tx = T[lang];
   const ds = drillSettingsOf(settings);
   /** Today's technique run (one source for the workout block and the technique screen's button). */
   const todayView = (tt: TodayTech | null, from: View): View | null =>
     tt && tt.plan.length && today ? { k: 'run', queue: [], i: 0, from, coach: planFamily(tt.plan, { en: "Today's technique", he: 'הטכניקה של היום' }), ladder: true, today: { at: tt.at, minutes: today.left >= 2 ? Math.round(today.left) : today.minutes } } : null;
   const [view, setView] = useState<View>(() =>
-    startTest
+    startCoach
+      ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: startCoach.fam, ladder: true, block: { minutes: startCoach.minutes, ...(startCoach.walk ? { walk: true } : {}) } }
+      : startTest
       ? ds.instrument === 'drums' && !settings.drumKit?.done
         ? { k: 'kit' }
         : { k: 'test' }
@@ -489,7 +499,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   if (view.k === 'run')
     return (
       <main className="drills-screen" data-drills="run">
-        {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length || (startToday && view.today) ? onBack() : setView(view.from)))}
+        {head((view.coach ? (coachTitle ?? view.coach.title[lang]) : null) ?? runQueue[runIdx ?? view.i]?.title[lang] ?? view.queue[view.i]?.title[lang] ?? tx.title, () => (queue?.length || (startToday && view.today) || view.block ? onBack() : setView(view.from)))}
         {onFullPractice && !view.coach && (
           // SPEC-PATH-TODAY-PRACTICE §3.1: a technique step's full practice — the key page with this rung lit
           <button className="link ex-full drill-full" onClick={onFullPractice} data-brief-full="tech">
@@ -504,7 +514,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}:${view.today ? 'today' : ''}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}), ...(view.today ? { walk: true, resumeAt: view.today.at, minutes: view.today.minutes } : {}) } : undefined}
+          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}), ...(view.today ? { walk: true, resumeAt: view.today.at, minutes: view.today.minutes } : {}), ...(view.block ? { minutes: view.block.minutes, ...(view.block.walk ? { walk: true, resumeAt: 0 } : {}) } : {}) } : undefined}
           onCoachStep={view.today && today ? (step) => setPlanAt(today.day, step) : undefined}
           onItem={onItem}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
@@ -523,7 +533,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           items={items}
           atTarget={atTarget}
           onTake={onTake}
-          onEnd={(takes, clean) => (onQueueDone && (queue?.length || (startToday && view.today)) ? onQueueDone(takes, clean) : setView(view.from))}
+          onEnd={(takes, clean) => (onQueueDone && (queue?.length || (startToday && view.today) || view.block) ? onQueueDone(takes, clean) : setView(view.from))}
           own={settings.ownFingering}
           onOwn={(ownFingering) => (onSettings({ ownFingering }), void syncOwnFingering(ownFingering))}
         />
@@ -640,7 +650,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (view.from ? setView(view.from) : opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage gained={gainedCells} onRung={(id) => setView({ k: 'keypage', root: view.root, rung: { id, wayIn: view.rung?.wayIn === 'today' ? 'today' : 'practice' }, ...(view.from ? { from: view.from } : {}) })} rung={view.rung ? { id: view.rung.id, wayIn: view.rung.wayIn, where: whereOf?.(view.rung.id) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} />
+        <KeyPage gained={gainedCells} onRung={(id) => setView({ k: 'keypage', root: view.root, rung: { id, wayIn: view.rung?.wayIn === 'today' ? 'today' : 'practice' }, ...(view.from ? { from: view.from } : {}) })} rung={view.rung ? { id: view.rung.id, wayIn: view.rung.wayIn, where: whereOf?.(view.rung.id) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} onPractise={onPractiseThis} practiseMin={practiseMin} />
       </main>
     );
   if (view.k === 'family')
@@ -660,6 +670,12 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
             </span>
           </button>
         )}
+        {onPractiseThis && practiseMin ? (
+          // SPEC-PRACTICE-SESSION §12: today's session on this family, at the daily length
+          <button type="button" className="link practise-this" onClick={() => onPractiseThis({ kind: 'family', family: view.f.id })} data-practise-this="family">
+            {lang === 'he' ? `לתרגל את זה · ${practiseMin} דק׳` : `Practise this · ${practiseMin} min`}
+          </button>
+        ) : null}
         <FamilyView lang={lang} ds={ds} f={view.f} items={items} start={settings.drillStart?.[view.f.id]} todayLevels={todayTopicLevels} assigned={assignedLv} onRun={(q, i) => setView({ k: 'run', queue: q, i, from: view })} onPage={(id, root) => setView({ k: 'keypage', root, rung: { id, wayIn: todayTopicLevels?.has(id) ? 'today' : 'practice' }, from: view })} />
       </main>
     );

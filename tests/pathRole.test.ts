@@ -49,7 +49,8 @@ const itemsFor = (lv: LevelDef, keys: { key: number; at: 'start' | 'target' }[],
 describe('workout = new + strengthen + review (§3)', () => {
   const opened = { opened: 5 };
   it('guide me: new ≈ 22 %, strengthen ≈ 48 %, review ≈ 30 % (whole minutes, sums to the total)', () => {
-    for (const t of [10, 15, 20, 30, 45, 60]) {
+    // SPEC-PRACTICE-SESSION §3.3: from 30 minutes every share has its block (shorter sessions hold fewer blocks)
+    for (const t of [30, 45, 60]) {
       const bs = sugg(t, opened);
       expect(total(bs), `total ${t}`).toBe(t);
       expect(bs.every((b) => b.minutes >= 2 && b.minutes <= 30)).toBe(true);
@@ -60,8 +61,9 @@ describe('workout = new + strengthen + review (§3)', () => {
       expect(Math.abs(s / t - SHARES.strengthen), `strengthen ${t}`).toBeLessThanOrEqual(0.12);
       expect(Math.abs(r / t - SHARES.review), `review ${t}`).toBeLessThanOrEqual(0.12);
     }
-    // Review first (the warm-up), then new, then strengthen.
-    expect(sugg(10, opened).map((b) => b.target.kind)).toEqual(['warmup', 'path', 'strengthen']);
+    // Review first (the warm-up), then new, then strengthen; 10 minutes: the most needed block (§3.3).
+    expect(sugg(20, opened).map((b) => b.target.kind)).toEqual(['warmup', 'path', 'strengthen']);
+    expect(sugg(10, opened).map((b) => b.target.kind)).toEqual(['strengthen']);
   });
   it('a new player with nothing opened: the path takes the strengthen share too', () => {
     expect(openedCount(fresh)).toBe(0);

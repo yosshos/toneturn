@@ -426,7 +426,8 @@ describe('connections (§9, §10.5–10.7)', () => {
     const d = duePhrases(o.book, items3, 'today', later);
     expect(d[0].l.id).toBe(l.id);
     expect(d[0].why).toBe('review');
-    const w = suggestWorkout({ total: 20, goal: 'general' as never, priorities: null, leaveOut: [], reviewsDue: 0, singer: false, view: { units: [] } as never, phrasesDue: 1, licksDue: 0, opened: 3 });
+    // (SPEC-PRACTICE-SESSION §3.3: a review add-on joins while the length has room for another block)
+    const w = suggestWorkout({ total: 60, goal: 'general' as never, priorities: null, leaveOut: [], reviewsDue: 0, singer: false, view: { units: [] } as never, phrasesDue: 1, licksDue: 0, opened: 3 });
     expect(w.some((b) => b.target.kind === 'game' && b.target.game === 'encore')).toBe(true);
   });
   it('a phrase in progress (not due) is offered to Today too; "yours" phrases are not', () => {

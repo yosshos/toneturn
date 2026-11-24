@@ -208,13 +208,15 @@ describe("the workout's improvisation block (D2) and today's lick", () => {
   it('an instrument course: ~20 % path, the rest 70/30 technique / improvisation (beginner 85/15)', () => {
     const w = suggestWorkout({ ...base, total: 40, techTier: 2 });
     const m = (k: string) => w.filter((b) => b.target.kind === k).reduce((a, b) => a + b.minutes, 0);
-    expect(m('path')).toBe(8);
-    expect(m('improv')).toBe(10);
-    expect(m('keys')).toBe(22);
+    // SPEC-PRACTICE-SESSION §3.3: the warm-up comes out of the window first
+    expect(Math.abs(m('path') / 40 - 0.2)).toBeLessThanOrEqual(0.06);
+    expect(Math.abs(m('improv') / (m('improv') + m('keys')) - 0.3)).toBeLessThanOrEqual(0.05);
     const imp = w.find((b) => b.target.kind === 'improv')!;
     expect(whyOf(imp.target)).toBe('week');
     const beg = suggestWorkout({ ...base, total: 40, techTier: 1 });
-    expect(beg.filter((b) => b.target.kind === 'improv').reduce((a, b) => a + b.minutes, 0)).toBe(5);
+    const bi = beg.filter((b) => b.target.kind === 'improv').reduce((a, b) => a + b.minutes, 0);
+    const bk = beg.filter((b) => b.target.kind === 'keys').reduce((a, b) => a + b.minutes, 0);
+    expect(Math.abs(bi / (bi + bk) - 0.15)).toBeLessThanOrEqual(0.05);
     // guitar and bass too; drums: grooves; classical: repertoire
     expect(suggestWorkout({ ...base, total: 40, techTier: 2, course: 'guitar' }).some((b) => b.target.kind === 'improv')).toBe(true);
   });

@@ -26,6 +26,7 @@ import type { ItemRef } from '../engine/itemAssign';
 import { ItemHead, type WhereChip } from './ItemHead';
 import { useAssignFor, useTeaching } from './itemAssigns';
 import type { WayIn } from './practiceRoutes';
+import type { FocusTarget } from '../engine/workout2';
 
 type Lang = 'he' | 'en';
 export type PracticeView = 'topic' | 'key';
@@ -267,7 +268,7 @@ const dedupe = (ds: Drill[]): Drill[] => {
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
 /** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ onRung, gained = 0, today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick }: { /** Open a rung's item page here (lit, with its ladder, tempo chart and assign). */ onRung?: (levelId: string) => void; /** SPEC-DAILY-WORKOUT §5: "+N new exercises opened" after a tier rise (shown 3 days). */ gained?: number; /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+export function KeyPage({ onRung, gained = 0, today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick, onPractise, practiseMin }: { /** SPEC-PRACTICE-SESSION §12 "Practise this · N min": the key, the lit rung's exercise or item as today's session. */ onPractise?: (t: FocusTarget) => void; practiseMin?: number; /** Open a rung's item page here (lit, with its ladder, tempo chart and assign). */ onRung?: (levelId: string) => void; /** SPEC-DAILY-WORKOUT §5: "+N new exercises opened" after a tier rise (shown 3 days). */ gained?: number; /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -303,7 +304,7 @@ export function KeyPage({ onRung, gained = 0, today, matrix, idx, root, group, i
   const mk = matrix?.byKey.find((k) => k.root === root && k.group === g);
   return (
     <div className="key-page" data-key-page={root} data-key-group-shown={g}>
-      {rung && <RungCard rung={rung} idx={idx} root={root} items={items} lang={lang} ds={ds} today={today} onRun={run} />}
+      {rung && <RungCard rung={rung} idx={idx} root={root} items={items} lang={lang} ds={ds} today={today} onRun={run} onPractise={onPractise} practiseMin={practiseMin} />}
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <KnowTheKey root={root} group={g} lang={lang} onOpenKey={onOpenKey} />
       {/* SPEC-PROGRESS-CHARTS §2: the key's line — how much of it is closed, over time (the daily snapshots) */}
@@ -361,6 +362,12 @@ export function KeyPage({ onRung, gained = 0, today, matrix, idx, root, group, i
           </span>
         </button>
       )}
+      {onPractise && practiseMin && ladder && (g === 'major' || g === 'minor') ? (
+        // SPEC-PRACTICE-SESSION §12: today's session in this key (its ladder, then improvisation in the key)
+        <button type="button" className="link practise-this" onClick={() => onPractise({ kind: 'key', root, group: g })} data-practise-this="key">
+          {he ? `לתרגל את הסולם הזה · ${practiseMin} דק׳` : `Practise this key · ${practiseMin} min`}
+        </button>
+      ) : null}
       <div className="kp-lens">
         <small>{he ? 'עדשת דינמיקה' : 'Dynamics lens'}</small>
         <div className="chips" role="radiogroup" aria-label={he ? 'עדשת דינמיקה' : 'Dynamics lens'}>
@@ -444,7 +451,7 @@ const RUNG_MAIN: Record<WayIn, { en: string; he: string }> = {
  * status ladder over all its keys, where it sits on the path, why today, the teacher's part (and, for a teacher, assign),
  * and the main button by the way in; the rest of the key page (all 12 keys of the level are its key cards) below.
  */
-function RungCard({ rung, idx, root, items, lang, ds, today, onRun }: { rung: NonNullable<Parameters<typeof KeyPage>[0]['rung']>; idx: KeyIndex; root: number; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; today?: { n: number; ids: Set<string> }; onRun: (q: Drill[]) => void }) {
+function RungCard({ rung, idx, root, items, lang, ds, today, onRun, onPractise, practiseMin }: { rung: NonNullable<Parameters<typeof KeyPage>[0]['rung']>; idx: KeyIndex; root: number; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; today?: { n: number; ids: Set<string> }; onRun: (q: Drill[]) => void; onPractise?: (t: FocusTarget) => void; practiseMin?: number }) {
   const he = lang === 'he';
   const pages = idx.pages[root];
   const found = (Object.keys(pages) as FacetGroup[]).flatMap((g) => Object.values(pages[g]).flatMap((es) => (es ?? []).map((e) => ({ e, g })))).find((x) => x.e.level.id === rung.id);
@@ -483,6 +490,19 @@ function RungCard({ rung, idx, root, items, lang, ds, today, onRun }: { rung: No
           </small>
         </button>
       </div>
+      {onPractise && practiseMin ? (
+        // SPEC-PRACTICE-SESSION §12: this item (then its other keys), or the exercise through the 12 keys, as today's session
+        <div className="practise-this-row">
+          <button type="button" className="link practise-this" onClick={() => onPractise({ kind: 'item', id: (e.drills.find((d) => !cleanAt(items[d.itemId], d)) ?? e.drills[0]).itemId })} data-practise-this="item">
+            {he ? `לתרגל את זה · ${practiseMin} דק׳` : `Practise this · ${practiseMin} min`}
+          </button>
+          {(g === 'major' || g === 'minor') && (
+            <button type="button" className="link practise-this" onClick={() => onPractise({ kind: 'rung', rung: rung.id, group: g })} data-practise-this="rung">
+              {he ? `התרגיל הזה בכל הסולמות · ${practiseMin} דק׳` : `This exercise in every key · ${practiseMin} min`}
+            </button>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

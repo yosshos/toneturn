@@ -31,9 +31,23 @@ export type BlockTarget =
   | { kind: 'keys' }
   /** D2: the 30 % beside technique — improvisation in the key of the week; a classical emphasis plays repertoire (the
    *  pieces coach); drums play grooves, fills and trading. */
-  | { kind: 'improv'; mode?: ImprovMode; /** SPEC-STYLE-FOCUS §4: today's style for the band and the tune (main ~60 %). */ style?: StyleId }
+  | { kind: 'improv'; mode?: ImprovMode; /** SPEC-STYLE-FOCUS §4: today's style for the band and the tune (main ~60 %). */ style?: StyleId; /** SPEC-PRACTICE-SESSION §12: improvise in this key (a key focus; a minor key plays on its relative major's sheet). */ root?: number; group?: KeyGroup }
   /** SPEC-PATH-TODAY-PRACTICE §5.1: the class assignments, first and added to the workout (never replacing it). */
-  | { kind: 'teacher'; ids?: string[] };
+  | { kind: 'teacher'; ids?: string[] }
+  /** SPEC-PRACTICE-SESSION §3.3: the warm-up — the slow, rubato start of today's main item (or the closed items that
+   *  slipped this week, `items`, §3.2). */
+  | { kind: 'rubato'; items?: string[] }
+  /** §12: the whole technique share in one key — every open exercise of the key (keyLadder). */
+  | { kind: 'key'; root: number; group: KeyGroup }
+  /** §12: one exercise (a matrix rung) through the 12 keys, weakest keys first. */
+  | { kind: 'rung'; rung: string; group: KeyGroup }
+  /** §12: one item up its tempo ladder, then its other keys. */
+  | { kind: 'item'; id: string }
+  /** §12: one family (drums: grooves, rudiments, fills …; elsewhere the family's coach). */
+  | { kind: 'family'; family: string };
+
+/** The key rows a key focus can name (the matrix's groups: the modes live inside them as rungs). */
+export type KeyGroup = 'major' | 'minor';
 
 export type ImprovMode = 'improv' | 'repertoire' | 'grooves';
 
@@ -57,7 +71,8 @@ const uid = (bs: Block[], base: string) => {
   while (bs.some((b) => b.id === `${base}-${i}`)) i++;
   return `${base}-${i}`;
 };
-export const targetKey = (t: BlockTarget) => (t.kind === 'area' ? `area:${t.area}` : t.kind === 'skill' ? `skill:${t.skill}` : t.kind === 'topic' ? `topic:${t.topic}` : t.kind === 'game' ? `game:${t.game}` : t.kind);
+export const targetKey = (t: BlockTarget) =>
+  t.kind === 'area' ? `area:${t.area}` : t.kind === 'skill' ? `skill:${t.skill}` : t.kind === 'topic' ? `topic:${t.topic}` : t.kind === 'game' ? `game:${t.game}` : t.kind === 'key' ? `key:${t.root}:${t.group}` : t.kind === 'rung' ? `rung:${t.group}:${t.rung}` : t.kind === 'item' ? `item:${t.id}` : t.kind === 'family' ? `family:${t.family}` : t.kind;
 
 // ---------------------------------------------------------------- the suggestion (§3, §9.2)
 
@@ -104,6 +119,8 @@ export interface SuggestInput {
   /** Phase 8, the coach's tilt (aiTilt.activeTilt): the improvisation share's change this week (±0.1 at most), only
    *  once the player accepted it. 0 / absent = the plan as it always was. */
   tilt?: number;
+  /** SPEC-PRACTICE-SESSION §3.2: the measured signals that move the shares (neglect, gap, slipping items). */
+  need?: NeedSignals;
 }
 
 /**
@@ -216,10 +233,10 @@ export function suggestWorkout(inp: SuggestInput): Block[] {
 
 function suggestRest(inp: SuggestInput): Block[] {
   const out = withLicks(inp, suggestBase(inp));
-  if (!(inp.piecesDue || inp.repDue) || inp.template?.length || total(out) < 10) return out;
+  if (!(inp.piecesDue || inp.repDue) || inp.template?.length || total(out) < 10 || !roomFor(inp, out)) return out;
   // The piece review (part of the review share, SPEC-PATH-ROLE §3): a short block (weak bars, then one full run at
   // tempo) from the review block, else the largest block; placed after the review.
-  const from = reviewSource(out, 3);
+  const from = reviewSource(out, 3, minBlockOf(inp));
   if (!from) return out;
   from.minutes -= 3;
   const at = out.findIndex((b) => b.target.kind === 'warmup');
@@ -229,15 +246,26 @@ function suggestRest(inp: SuggestInput): Block[] {
   return out;
 }
 
-/** The block a review add-on (licks, pieces) takes its minutes from: the review block, else the largest one. */
-const reviewSource = (out: Block[], m: number): Block | undefined =>
-  out.find((b) => b.target.kind === 'warmup' && b.minutes >= m + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= m + LIMITS.minBlock);
+/** Review-like blocks (the review, the warm-up, the lick / piece reviews) may be shorter than the minimum block (§3.3). */
+const shortOk = (t: BlockTarget) => t.kind === 'warmup' || t.kind === 'rubato' || t.kind === 'vocal' || (t.kind === 'game' && (t.game === 'licks' || t.game === 'encore' || t.game === 'pieces' || t.game === 'rep-review'));
+/**
+ * §3.3: a review add-on (licks, phrases, a piece) joins while the session has fewer blocks than its length allows —
+ * from 30 minutes always: it is part of the review (2–3 minutes beside it), not another area, and it would otherwise
+ * never fit an instrument session.
+ */
+const roomFor = (inp: SuggestInput, out: Block[]) => out.length < blockRange(total(out))[1] || total(out) >= SHAPE.endFrom || !!inp.template?.length;
+const minBlockOf = (inp: SuggestInput) => (inp.technique ? SHAPE.minInstrument : SHAPE.minEar);
+
+/** The block a review add-on (licks, pieces) takes its minutes from: the review block, else the largest one (a content
+ *  block keeps the minimum block, §3.3). */
+const reviewSource = (out: Block[], m: number, minB: number = LIMITS.minBlock): Block | undefined =>
+  out.find((b) => b.target.kind === 'warmup' && b.minutes >= m + LIMITS.minBlock) ?? [...out].sort((a, b) => b.minutes - a.minutes).find((b) => b.minutes >= m + (shortOk(b.target) ? LIMITS.minBlock : minB));
 
 function withLicks(inp: SuggestInput, out: Block[]): Block[] {
-  if (!(inp.licksDue || inp.phrasesDue) || inp.template?.length || total(out) < 10) return out;
+  if (!(inp.licksDue || inp.phrasesDue) || inp.template?.length || total(out) < 10 || !roomFor(inp, out)) return out;
   // The lick review (review share): 2 minutes from the review block (or the largest block), after the review. Licks
   // and phrases (Encore) share it: licks due first, else the player's own phrases.
-  const from = reviewSource(out, 2);
+  const from = reviewSource(out, 2, minBlockOf(inp));
   if (!from) return out;
   from.minutes -= 2;
   const at = out.findIndex((b) => b.target.kind === 'warmup');
@@ -246,45 +274,149 @@ function withLicks(inp: SuggestInput, out: Block[]): Block[] {
   return out;
 }
 
+// ---------------------------------------------------------------- §3.3 the length shapes the session
+
+/**
+ * SPEC-PRACTICE-SESSION §3.3: the smallest block on an instrument / in the ear course (a shorter one goes into its
+ * neighbour), the warm-up (~10 % from 20 minutes), the pleasant ending (from 30), the second technique block (from 45),
+ * the tune and the game (from 60), and the 20-minute ceiling of a block (from 90).
+ */
+export const SHAPE = { minInstrument: 4, minEar: 3, warmFrom: 20, warmShare: 0.1, warmMax: 8, endFrom: 30, tech2From: 45, extrasFrom: 60, longFrom: 90, maxLong: 20, reviewMax: 6 } as const;
+
+/** §3.3: how many blocks a session of `T` minutes has (at least, at most). Above 160 minutes a 20-minute ceiling needs more. */
+export function blockRange(T: number): [number, number] {
+  if (T <= 10) return [1, 2];
+  if (T <= 20) return [2, 3];
+  if (T <= 30) return [3, 4];
+  if (T <= 45) return [4, 5];
+  if (T <= 60) return [5, 6];
+  // 90+: 6–8; past 120 minutes eight 20-minute blocks beside the warm-up and the review no longer hold the session,
+  // so one more per 20 minutes
+  return [6, Math.max(8, Math.ceil(T / SHAPE.maxLong) + 2)];
+}
+/** §3.3: the warm-up's minutes (0 under 20 minutes). */
+export const warmMinutes = (T: number): number => (T >= SHAPE.warmFrom ? Math.max(2, Math.min(SHAPE.warmMax, Math.round(T * SHAPE.warmShare))) : 0);
+/** §3.2 Due: the review block grows with the reviews waiting, 2 → 6 minutes (2 in a session of 10 or less). */
+export const reviewMinutes = (due: number, T: number): number => (due <= 0 ? 0 : T <= 10 ? 2 : Math.max(2, Math.min(SHAPE.reviewMax, Math.round(T * 0.2), 2 + Math.floor((due - 1) / 3))));
+
+interface ShapePart {
+  target: BlockTarget;
+  /** Weight of the content minutes (fixed parts: their minutes). */
+  w: number;
+  /** Place in the session (low first). */
+  pos: number;
+}
+
+/**
+ * §3.3, the one shaper every session goes through. `fixed`: the warm-up and the review, in priority order (dropped from
+ * the end when the main block would fall under the minimum). `cands`: content blocks in priority order (the most needed
+ * first); as many are taken as the length allows, `ending` is kept from 30 minutes on, each gets its weight's share, and
+ * a block under `minB` goes into its neighbour. From 90 minutes no block runs over 20; a session under its least count
+ * splits its largest block. Deterministic.
+ */
+function shapeCore(T: number, fixed: (ShapePart & { minutes: number })[], cands: ShapePart[], minB: number, ending: ShapePart | null, fillLeast = true): Block[] {
+  const [lo, hi] = blockRange(T);
+  let fx = fixed.filter((f) => f.minutes > 0);
+  while (fx.length && T - fx.reduce((a, f) => a + f.minutes, 0) < minB) fx = fx.slice(0, -1);
+  const content = T - fx.reduce((a, f) => a + f.minutes, 0);
+  const slots = Math.max(1, T <= 10 ? 1 : hi - fx.length);
+  let chosen = cands.filter((c) => c.w > 0).slice(0, slots);
+  if (ending && T >= SHAPE.endFrom && !chosen.includes(ending) && slots >= 2) chosen = [...chosen.slice(0, slots - 1), ending];
+  while (chosen.length > 1 && chosen.length * minB > content) {
+    // the lowest priority goes (never the ending from 30 minutes on)
+    const k = [...chosen.keys()].reverse().find((i) => !(chosen[i] === ending && T >= SHAPE.endFrom)) ?? chosen.length - 1;
+    chosen = chosen.filter((_, i) => i !== k);
+  }
+  // weights → whole minutes, largest remainder
+  const W = chosen.reduce((a, c) => a + c.w, 0) || 1;
+  const raw = chosen.map((c) => (c.w / W) * content);
+  const mins = raw.map(Math.floor);
+  let left = content - mins.reduce((a, x) => a + x, 0);
+  const byRem = raw.map((q, i) => ({ i, r: q - Math.floor(q) })).sort((a, b) => b.r - a.r || a.i - b.i);
+  for (let k = 0; left > 0; k = (k + 1) % byRem.length, left--) mins[byRem[k].i]++;
+  let parts = chosen.map((c, i) => ({ ...c, minutes: mins[i] })).sort((a, b) => a.pos - b.pos);
+  // a block under the minimum goes into its neighbour (the one before it, else the one after)
+  for (let guard = 0; guard < 20 && parts.length > 1; guard++) {
+    const small = parts.map((p, i) => ({ p, i })).filter((x) => x.p.minutes < minB).sort((a, b) => a.p.minutes - b.p.minutes || b.i - a.i)[0];
+    if (!small) break;
+    const j = small.i > 0 ? small.i - 1 : 1;
+    parts[j] = { ...parts[j], minutes: parts[j].minutes + small.p.minutes };
+    parts = parts.filter((_, i) => i !== small.i);
+  }
+  // from 90 minutes no block over 20 (split in two halves of the same kind), and never fewer blocks than the table's
+  const count = () => parts.length + fx.length;
+  const split = (i: number) => {
+    const p = parts[i];
+    const a = Math.ceil(p.minutes / 2);
+    parts.splice(i, 1, { ...p, minutes: a }, { ...p, minutes: p.minutes - a });
+  };
+  const largest = () => parts.reduce((bi, p, i) => (p.minutes > parts[bi].minutes ? i : bi), 0);
+  if (T >= SHAPE.longFrom) {
+    for (let guard = 0; guard < 30 && count() < hi && parts[largest()].minutes > SHAPE.maxLong; guard++) split(largest());
+    // what halving left over 20 goes, a minute at a time, to the shortest block
+    for (let guard = 0; guard < 400 && parts[largest()].minutes > SHAPE.maxLong; guard++) {
+      const i = largest();
+      const j = parts.reduce((bj, p, k) => (p.minutes < parts[bj].minutes ? k : bj), 0);
+      if (parts[j].minutes >= SHAPE.maxLong) break;
+      parts[i] = { ...parts[i], minutes: parts[i].minutes - 1 };
+      parts[j] = { ...parts[j], minutes: parts[j].minutes + 1 };
+    }
+  }
+  // (a focus on one target keeps its one long block: two halves of the same key would only repeat its name)
+  if (fillLeast) for (let guard = 0; guard < 30 && count() < lo && parts[largest()].minutes >= 2 * minB; guard++) split(largest());
+  const all = [...fx, ...parts].sort((a, b) => a.pos - b.pos);
+  const out: Block[] = [];
+  for (const p of all) out.push({ id: uid(out, p.target.kind), target: p.target, minutes: p.minutes });
+  return out;
+}
+
 function suggestBase(inp: SuggestInput): Block[] {
   const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(inp.total)));
   // Migration (SPEC-PATH-ROLE §7.1): a saved template the player made stays exactly theirs (rescaled to the total);
   // only generated suggestions use the new shares.
   if (inp.template?.length) return rescale(inp.template.map((b) => ({ ...b })), T);
-  const out: Block[] = [];
-  const push = (target: BlockTarget, minutes: number) => {
-    // A long block is split at LIMITS.maxBlock (a 60-minute "I choose" workout has two strengthen blocks).
-    for (let left = minutes; left > 0; ) {
-      const m = left > LIMITS.maxBlock ? Math.min(LIMITS.maxBlock, left - LIMITS.minBlock) : left;
-      out.push({ id: uid(out, target.kind), target, minutes: m });
-      left -= m;
-    }
-  };
   // BUILD-PLAN D2: an instrument course with technique in the workout — the path, then technique / improvisation.
-  if (inp.technique) return suggestInstrument(inp, T, push, out);
-  // SPEC-PATH-ROLE §3: new (the path) ~22 %, strengthen (opened items: weak keys, the tempo ladder, weak ear
-  // sub-skills) ~48 %, review (spaced reviews, licks / pieces, a game) ~30 %. A new player with nothing opened: the
-  // path takes the strengthen share too. "I choose" (§6 Q3): no New block — strengthen + review.
+  if (inp.technique) return suggestInstrument(inp, T);
+  return suggestEar(inp, T);
+}
+
+/**
+ * SPEC-PATH-ROLE §3 shaped by §3.3: new (the path) ~22 %, strengthen (opened items: weak keys, the tempo ladder, weak
+ * ear sub-skills) ~48 %, review (spaced reviews, licks / pieces) ~30 %, moved by need (§3.2). A new player with nothing
+ * opened: the path takes the strengthen share too; "I choose" (§6 Q3): no New block. Singers warm up first (from 20
+ * minutes); review opens the session; a game ends it from 30 minutes; a second strengthen block from 45.
+ */
+function suggestEar(inp: SuggestInput, T: number): Block[] {
   const choose = inp.pathMode === 'choose';
   const opened = inp.opened ?? openedCount(inp.view);
-  const sh = choose ? { new: 0, strengthen: SHARES.new + SHARES.strengthen, review: SHARES.review } : opened === 0 ? { new: SHARES.new + SHARES.strengthen, strengthen: 0, review: SHARES.review } : { ...SHARES };
-  const m = splitShares(T, sh);
-  let game = 0;
-  if (m.review) {
-    let r = m.review;
-    if (inp.singer && T >= 15 && r >= 2 * LIMITS.minBlock) {
-      push({ kind: 'vocal' }, 2);
-      r -= 2;
-    }
-    game = !inp.technique && T >= 15 && r >= 3 + LIMITS.minBlock ? 3 : 0;
-    // Review opens the workout: the spaced reviews due (or the weakest skill) as the warm-up.
-    push({ kind: 'warmup' }, r - game);
+  const base = choose ? { new: 0, strengthen: SHARES.new + SHARES.strengthen, review: SHARES.review } : opened === 0 ? { new: SHARES.new + SHARES.strengthen, strengthen: 0, review: SHARES.review } : { ...SHARES };
+  const sh = earSharesByNeed(base, inp.need).shares;
+  const due = inp.reviewsDue > 0;
+  const fixed: (ShapePart & { minutes: number })[] = [];
+  const vocal = inp.singer ? warmMinutes(T) : 0;
+  if (vocal) fixed.push({ target: { kind: 'vocal' }, w: 0, pos: 0, minutes: vocal });
+  // a short session: the reviews due are a short fixed block (2 → 6 minutes); from 30 minutes review is a share
+  const shortReview = due && T < SHAPE.endFrom;
+  if (shortReview) fixed.unshift({ target: { kind: 'warmup' }, w: 0, pos: 1, minutes: reviewMinutes(inp.reviewsDue, T) });
+  const review: ShapePart = { target: { kind: 'warmup' }, w: sh.review, pos: 1 };
+  const path: ShapePart = { target: { kind: 'path' }, w: sh.new, pos: 2 };
+  const str: ShapePart = { target: { kind: 'strengthen' }, w: sh.strengthen, pos: 3 };
+  const ending: ShapePart = { target: { kind: 'game', game: workoutGame(inp.course, inp.day, inp.jazz) }, w: 0.1, pos: 6 };
+  const main = str.w >= path.w ? str : path;
+  const other = main === str ? path : str;
+  const cands: ShapePart[] = [main];
+  if (T >= SHAPE.endFrom) cands.push(ending);
+  // the reviews due before new material; otherwise the path's next steps before a plain review
+  if (!shortReview && due) cands.push(review);
+  cands.push(other);
+  if (!shortReview && !due) cands.push(review);
+  if (T >= SHAPE.tech2From && str.w > 0) {
+    // a second strengthen block: the strengthen share split in two
+    const half = str.w / 2;
+    str.w = half;
+    cands.push({ target: { kind: 'strengthen' }, w: half, pos: 4 });
   }
-  // New: the path's next steps (lesson + first pass); a waiting checkpoint first (nextForBlock).
-  if (m.new) push({ kind: 'path' }, m.new);
-  if (m.strengthen) push({ kind: 'strengthen' }, m.strengthen);
-  if (game) push({ kind: 'game', game: workoutGame(inp.course, inp.day, inp.jazz) }, game);
-  return out;
+  return shapeCore(T, fixed, cands, SHAPE.minEar, T >= SHAPE.endFrom ? ending : null);
 }
 /** BUILD-PLAN D2: about 20 % to new material from the path, the rest technique / improvisation 70/30 (a beginner 85/15). */
 export const DAY_SHARES = { path: 0.2, tech: 0.7, techBeginner: 0.85, maintenance: 0.15 };
@@ -298,47 +430,224 @@ export const improvMode = (course?: CourseId, emphasis?: SuggestInput['emphasis'
  * added later from the largest block (the technique one), so they also live inside the technique share. A new player
  * with nothing opened: the path takes the technique share (SPEC-PATH-ROLE §3); "I choose": no path block.
  */
-function suggestInstrument(inp: SuggestInput, T: number, push: (t: BlockTarget, m: number) => void, out: Block[]): Block[] {
-  const min = LIMITS.minBlock;
+function suggestInstrument(inp: SuggestInput, T: number): Block[] {
   const choose = inp.pathMode === 'choose';
   const opened = inp.opened ?? openedCount(inp.view);
-  let path = choose ? 0 : Math.max(min, Math.round(T * DAY_SHARES.path));
-  if (T - path < min) path = T;
-  const rest = T - path;
-  const tilt = Math.max(-0.1, Math.min(0.1, inp.tilt ?? 0));
-  const share = Math.max(0.5, Math.min(0.95, ((inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech) - tilt));
-  let tech = Math.round(rest * share);
-  let imp = rest - tech;
-  if (imp < min) {
-    tech += imp;
-    imp = 0;
-  }
-  if (tech > 0 && tech < min) {
-    imp += tech;
-    tech = 0;
-  }
+  const base = (inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech;
+  const share = techShareByNeed(base, inp.need, inp.tilt ?? 0).share;
+  let wPath = choose ? 0 : DAY_SHARES.path;
+  let wTech = (1 - DAY_SHARES.path) * share;
+  const wImp = (1 - DAY_SHARES.path) * (1 - share);
   // A new player with nothing opened on the path: a real beginner (tier 0) starts with the path; an experienced
   // player new to the app (tier 1+ from the level test / self-rating) keeps a technique block from day one.
   if (opened === 0 && !choose && (inp.techTier ?? 0) < 1) {
-    path += tech;
-    tech = 0;
+    wPath += wTech;
+    wTech = 0;
   }
-  // Maintenance (D2: inside the technique share): the spaced reviews due open the workout.
-  let review = 0;
-  if (inp.reviewsDue > 0) {
-    const from = tech > 0 ? 'tech' : 'path';
-    const pool = from === 'tech' ? tech : path;
-    if (pool >= 2 * min + 1) {
-      review = Math.max(min, Math.round(pool * DAY_SHARES.maintenance));
-      if (from === 'tech') tech -= review;
-      else path -= review;
-    }
+  const mode = improvMode(inp.course, inp.emphasis, inp.mainStyle);
+  const slipping = inp.need?.slipping ?? [];
+  // the warm-up (~10 % from 20 minutes): the slow start of today's main item — or the closed items that slipped this
+  // week (from 15 minutes, then 2 minutes); the reviews due (2 → 6 minutes) after it
+  const warm = warmMinutes(T) || (slipping.length && T >= 15 ? 2 : 0);
+  const fixed: (ShapePart & { minutes: number })[] = [];
+  if (warm) fixed.push({ target: slipping.length ? { kind: 'rubato', items: slipping.slice(0, 4) } : { kind: 'rubato' }, w: 0, pos: 0, minutes: warm });
+  const rev = reviewMinutes(inp.reviewsDue, T);
+  // a session of 10 minutes or less: the review before the warm-up (there is none under 20 anyway)
+  if (rev) fixed.splice(T <= 10 ? 0 : fixed.length, 0, { target: { kind: 'warmup' }, w: 0, pos: 1, minutes: rev });
+  const path: ShapePart = { target: { kind: 'path' }, w: wPath, pos: 2 };
+  const tech: ShapePart = { target: { kind: 'keys' }, w: wTech, pos: 3 };
+  const imp: ShapePart = { target: { kind: 'improv', mode, ...(inp.improvStyle ? { style: inp.improvStyle } : {}) }, w: wImp, pos: 8 };
+  const game: ShapePart = { target: { kind: 'game', game: workoutGame(inp.course, inp.day, inp.jazz) }, w: 0.08, pos: 6 };
+  // §3.3 at 60: "play a tune" — repertoire beside the improvisation (a classical emphasis already ends on repertoire;
+  // the drums have no tunes)
+  const tune: ShapePart | null = mode === 'improv' ? { target: { kind: 'improv', mode: 'repertoire' }, w: 0.12, pos: 7 } : null;
+  const byNeed = [tech, path, imp].filter((p) => p.w > 0).sort((a, b) => b.w - a.w || a.pos - b.pos);
+  const main = byNeed[0] ?? tech;
+  const ending = T >= SHAPE.endFrom ? (imp.w > 0 ? imp : game) : null;
+  const cands: ShapePart[] = [main];
+  if (ending && ending !== main) cands.push(ending);
+  for (const p of byNeed) if (!cands.includes(p)) cands.push(p);
+  if (T >= SHAPE.extrasFrom) {
+    if (tune) cands.push(tune);
+    if (!cands.includes(game)) cands.push(game);
   }
-  if (review) push({ kind: 'warmup' }, review);
-  if (path) push({ kind: 'path' }, path);
-  if (tech) push({ kind: 'keys' }, tech);
-  if (imp) push({ kind: 'improv', mode: improvMode(inp.course, inp.emphasis, inp.mainStyle), ...(inp.improvStyle ? { style: inp.improvStyle } : {}) }, imp);
-  return out;
+  if (T >= SHAPE.tech2From && tech.w > 0) {
+    // §3.3 at 45: a second technique block (today's plan goes on: another exercise or key)
+    const half = tech.w / 2;
+    tech.w = half;
+    cands.push({ target: { kind: 'keys' }, w: half, pos: 4 });
+  }
+  return shapeCore(T, fixed, cands, SHAPE.minInstrument, ending);
+}
+
+// ---------------------------------------------------------------- §3.2 the coach moves the shares by need
+
+/**
+ * SPEC-PRACTICE-SESSION §3.2: what the coach measured. Instrument courses: active minutes in the last 7 days on
+ * technique and on the improvisation share (the practice-time ledger, this course), and how close each is to its target
+ * (0..1: technique tempo against target, the improvisation level's score). Ear: minutes of spaced review and of the rest.
+ */
+export interface NeedSignals {
+  week?: { tech?: number; improv?: number; review?: number; work?: number };
+  close?: { tech?: number; improv?: number };
+  /** Closed drill items that failed twice this week: the warm-up takes them (§3.2 Slipping). */
+  slipping?: string[];
+}
+/** §3.2: the most a share moves from its baseline (points), what neglect and the gap add at most, and the least week
+ *  measured before neglect is read (minutes). */
+export const NEED = { maxMove: 15, neglect: 10, gap: 5, minWeek: 20, gapMin: 0.05 } as const;
+export type NeedArea = 'tech' | 'improv' | 'review' | 'work';
+export type NeedReason =
+  | { kind: 'neglect'; area: NeedArea; week: number; planned: number; points: number }
+  | { kind: 'gap'; area: NeedArea; points: number }
+  | { kind: 'tilt'; area: NeedArea; points: number }
+  | { kind: 'due'; n: number }
+  | { kind: 'slipping'; n: number };
+
+/** Points for an area that got less than its planned share: more than a third short → up to 10 (all of it short). */
+const neglectPoints = (actual: number, planned: number): number => {
+  if (planned <= 0) return 0;
+  const short = 1 - actual / planned;
+  return short > 1 / 3 ? Math.round(NEED.neglect * Math.min(1, short)) : 0;
+};
+
+/**
+ * §3.2 for an instrument course: the technique share (of technique + improvisation) moved by neglect (+ up to 10 to the
+ * area short of its planned minutes this week), the gap (+5 to the area furthest from its target) and the accepted AI
+ * tilt (±10 to improvisation, as before), together at most ±15 points from the baseline. Returns the reasons too, the
+ * biggest first.
+ */
+export function techShareByNeed(base: number, n: NeedSignals | undefined, tilt = 0): { share: number; moves: NeedReason[] } {
+  const moves: NeedReason[] = [];
+  const t = n?.week?.tech ?? 0;
+  const i = n?.week?.improv ?? 0;
+  if (n?.week && t + i >= NEED.minWeek) {
+    const pt = neglectPoints(t, base * (t + i));
+    const pi = neglectPoints(i, (1 - base) * (t + i));
+    if (pt) moves.push({ kind: 'neglect', area: 'tech', week: Math.round(t), planned: Math.round(base * (t + i)), points: pt });
+    if (pi) moves.push({ kind: 'neglect', area: 'improv', week: Math.round(i), planned: Math.round((1 - base) * (t + i)), points: pi });
+  }
+  const ct = n?.close?.tech;
+  const ci = n?.close?.improv;
+  if (ct !== undefined && ci !== undefined && Math.abs(ct - ci) >= NEED.gapMin) moves.push({ kind: 'gap', area: ct < ci ? 'tech' : 'improv', points: NEED.gap });
+  const tl = Math.round(Math.max(-0.1, Math.min(0.1, tilt)) * 100);
+  if (tl) moves.push({ kind: 'tilt', area: tl > 0 ? 'improv' : 'tech', points: Math.abs(tl) });
+  const toTech = moves.reduce((a, m) => a + ('points' in m ? (m.area === 'tech' ? m.points : -m.points) : 0), 0);
+  const move = Math.max(-NEED.maxMove, Math.min(NEED.maxMove, toTech));
+  const share = Math.max(0.5, Math.min(0.95, base + move / 100));
+  return { share, moves: moves.sort((a, b) => ('points' in b ? b.points : 0) - ('points' in a ? a.points : 0)) };
+}
+
+/**
+ * §3.2 for the ear course: review against the rest. Spaced review short of its planned share this week gets up to 10
+ * points (from new and strengthen, in their proportion); review over its share gives up to 10 to strengthening. At most
+ * ±15 from the baseline.
+ */
+export function earSharesByNeed(base: { new: number; strengthen: number; review: number }, n: NeedSignals | undefined): { shares: { new: number; strengthen: number; review: number }; moves: NeedReason[] } {
+  const moves: NeedReason[] = [];
+  const r = n?.week?.review ?? 0;
+  const w = n?.week?.work ?? 0;
+  if (n?.week && r + w >= NEED.minWeek && base.review > 0) {
+    const pr = neglectPoints(r, base.review * (r + w));
+    const pw = neglectPoints(w, (1 - base.review) * (r + w));
+    if (pr) moves.push({ kind: 'neglect', area: 'review', week: Math.round(r), planned: Math.round(base.review * (r + w)), points: pr });
+    if (pw) moves.push({ kind: 'neglect', area: 'work', week: Math.round(w), planned: Math.round((1 - base.review) * (r + w)), points: pw });
+  }
+  const toReview = Math.max(-NEED.maxMove, Math.min(NEED.maxMove, moves.reduce((a, m) => a + ('points' in m ? (m.area === 'review' ? m.points : -m.points) : 0), 0))) / 100;
+  if (!toReview) return { shares: { ...base }, moves };
+  const review = Math.max(0.05, Math.min(0.9, base.review + toReview));
+  const restBase = base.new + base.strengthen || 1;
+  const rest = 1 - review;
+  // review's points come from (or go to) new and strengthen in their proportion; strengthening takes review's surplus
+  const shares = toReview > 0 ? { new: (base.new / restBase) * rest, strengthen: (base.strengthen / restBase) * rest, review } : base.strengthen > 0 ? { new: base.new, strengthen: base.strengthen + (base.review - review), review } : { new: base.new + (base.review - review), strengthen: 0, review };
+  return { shares, moves: moves.sort((a, b) => ('points' in b ? b.points : 0) - ('points' in a ? a.points : 0)) };
+}
+
+/**
+ * §3.2 "one reason per change": the biggest move today — a share moved by need or the accepted tilt (3 points or more),
+ * else a review grown by the reviews due, else the closed items that slipped into the warm-up. Null: the plan as usual.
+ */
+export function sessionReason(inp: SuggestInput): NeedReason | null {
+  if (inp.template?.length) return null;
+  const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(inp.total)));
+  const moves = inp.technique ? techShareByNeed((inp.techTier ?? 2) <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech, inp.need, inp.tilt ?? 0).moves : earSharesByNeed(SHARES, inp.need).moves;
+  const top = moves.find((m) => 'points' in m && m.points >= 3);
+  if (top) return top;
+  if (reviewMinutes(inp.reviewsDue, T) > 2) return { kind: 'due', n: inp.reviewsDue };
+  const sl = inp.need?.slipping?.length ?? 0;
+  if (inp.technique && sl && T >= 15) return { kind: 'slipping', n: sl };
+  return null;
+}
+
+const AREA_WORD: Record<NeedArea | ImprovMode, { en: string; he: string }> = {
+  tech: { en: 'technique', he: 'טכניקה' },
+  improv: { en: 'improvisation', he: 'אימפרוביזציה' },
+  repertoire: { en: 'repertoire', he: 'רפרטואר' },
+  grooves: { en: 'grooves', he: 'גרובים' },
+  review: { en: 'review', he: 'חזרה' },
+  work: { en: 'strengthening', he: 'חיזוק' },
+};
+/** The reason as one line on the card (Hebrew and English). `mode`: what the improvisation share is in this course. */
+export function reasonLine(r: NeedReason, mode: ImprovMode = 'improv'): { en: string; he: string } {
+  if (r.kind === 'due') return { en: `A longer review: ${r.n} reviews due`, he: `חזרה ארוכה יותר: ${r.n} חזרות ממתינות` };
+  if (r.kind === 'slipping') return r.n === 1 ? { en: 'The warm-up returns to a closed item that slipped this week', he: 'החימום חוזר לפריט סגור שהחליק השבוע' } : { en: `The warm-up returns to ${r.n} closed items that slipped this week`, he: `החימום חוזר ל־${r.n} פריטים סגורים שהחליקו השבוע` };
+  const a = AREA_WORD[r.area === 'improv' ? mode : r.area];
+  if (r.kind === 'neglect') return { en: `More ${a.en} today: ${r.week} min this week out of ${r.planned} planned`, he: `יותר ${a.he} היום: ${r.week} דק׳ השבוע מתוך ${r.planned} שתוכננו` };
+  if (r.kind === 'gap') return { en: `More ${a.en} today: it is furthest from its target`, he: `יותר ${a.he} היום: הכי רחוק מהיעד` };
+  return { en: `More ${a.en} this week: the coach's suggestion you accepted`, he: `יותר ${a.he} השבוע: ההצעה של המאמן שקיבלתם` };
+}
+
+// ---------------------------------------------------------------- §12 a key, an exercise, an item, a family
+
+/** §12: what a session can be for beyond an area — written into today's focus as `key:0:major`, `rung:major:scales-3`,
+ *  `item:<id>`, `family:<id>`. */
+export type FocusTarget = { kind: 'key'; root: number; group: KeyGroup } | { kind: 'rung'; rung: string; group: KeyGroup } | { kind: 'item'; id: string } | { kind: 'family'; family: string } | { kind: 'mode'; mode: FocusMode };
+/** §12's "Licks · Improvise · Repertoire" (grooves on the drums): the course's other shares, each a whole session. */
+export type FocusMode = ImprovMode | 'licks';
+export const FOCUS_MODES: FocusMode[] = ['improv', 'repertoire', 'grooves', 'licks'];
+export const focusIdOf = (t: FocusTarget): string => (t.kind === 'key' ? `key:${t.root}:${t.group}` : t.kind === 'rung' ? `rung:${t.group}:${t.rung}` : t.kind === 'item' ? `item:${t.id}` : t.kind === 'mode' ? `mode:${t.mode}` : `family:${t.family}`);
+/** A focus string back to its target (null: 'plan' or an area). */
+export function parseFocus(f: string | null | undefined): FocusTarget | null {
+  if (!f) return null;
+  const k = f.indexOf(':');
+  if (k < 0) return null;
+  const kind = f.slice(0, k);
+  const rest = f.slice(k + 1);
+  if (kind === 'key') {
+    const [r, g] = rest.split(':');
+    const root = Number(r);
+    return Number.isInteger(root) && root >= 0 && root < 12 && (g === 'major' || g === 'minor') ? { kind: 'key', root, group: g } : null;
+  }
+  if (kind === 'rung') {
+    const j = rest.indexOf(':');
+    const g = rest.slice(0, j);
+    return j > 0 && (g === 'major' || g === 'minor') && rest.length > j + 1 ? { kind: 'rung', group: g, rung: rest.slice(j + 1) } : null;
+  }
+  if (kind === 'item') return rest ? { kind: 'item', id: rest } : null;
+  if (kind === 'family') return rest ? { kind: 'family', family: rest } : null;
+  if (kind === 'mode') return (FOCUS_MODES as string[]).includes(rest) ? { kind: 'mode', mode: rest as FocusMode } : null;
+  return null;
+}
+
+/**
+ * §12 + §3.3: today's blocks for a key, an exercise, an item or a family — the target takes the technique share and the
+ * length still shapes the session: 10 minutes is the target alone (the key's scale and one more exercise), from 15 the
+ * improvisation share joins (in the key, for a key focus; grooves on the drums) and from 30 it ends the session; from
+ * 90 no block runs over 20 minutes. The coach's run opens slowly by itself (the key ladder's scale first, a new item in
+ * free time), so there is no separate warm-up inside a target.
+ */
+export function targetFocusBlocks(t: FocusTarget, totalMin: number, o: { course?: CourseId; emphasis?: SuggestInput['emphasis']; mainStyle?: StyleId; improvStyle?: StyleId } = {}): Block[] {
+  const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(totalMin)));
+  // the improvisation share (or the licks) as the whole session: one block, split past 20 minutes from 90
+  if (t.kind === 'mode') {
+    const only: BlockTarget = t.mode === 'licks' ? { kind: 'game', game: 'licks' } : { kind: 'improv', mode: t.mode, ...(o.improvStyle && t.mode !== 'repertoire' ? { style: o.improvStyle } : {}) };
+    return shapeCore(T, [], [{ target: only, w: 1, pos: 1 }], SHAPE.minInstrument, null, false);
+  }
+  const target: BlockTarget = t.kind === 'key' ? { kind: 'key', root: t.root, group: t.group } : t.kind === 'rung' ? { kind: 'rung', rung: t.rung, group: t.group } : t.kind === 'item' ? { kind: 'item', id: t.id } : { kind: 'family', family: t.family };
+  const mode = improvMode(o.course, o.emphasis, o.mainStyle);
+  const main: ShapePart = { target, w: 0.75, pos: 1 };
+  const imp: ShapePart = { target: { kind: 'improv', mode, ...(o.improvStyle ? { style: o.improvStyle } : {}), ...(t.kind === 'key' && mode === 'improv' ? { root: t.root, group: t.group } : {}) }, w: 0.25, pos: 2 };
+  return shapeCore(T, [], [main, imp], SHAPE.minInstrument, T >= SHAPE.endFrom ? imp : null, false);
 }
 
 // ---------------------------------------------------------------- why today (SPEC-PATH-TODAY-PRACTICE §2, §3.4)
@@ -368,9 +677,15 @@ export function whyOf(t: BlockTarget): Why | null {
     case 'area':
     case 'skill':
     case 'topic':
+    case 'key':
+    case 'rung':
+    case 'item':
+    case 'family':
       return 'strengthen';
+    case 'rubato':
+      return t.items?.length ? 'review' : null;
     case 'improv':
-      return (t.mode ?? 'improv') === 'improv' ? 'week' : null;
+      return (t.mode ?? 'improv') === 'improv' && t.root === undefined ? 'week' : null;
     default:
       return null;
   }
@@ -608,8 +923,10 @@ export const focusAreas = (courseAreas: readonly DomainId[]): DomainId[] => cour
 export function focusBlocks(area: DomainId, totalMin: number, suggested: Block[], courseAreas: readonly DomainId[]): Block[] {
   const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(totalMin)));
   if (area === 'instrument') {
-    const own = suggested.filter((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen' || b.target.kind === 'improv' || b.target.kind === 'warmup' || b.target.kind === 'teacher');
-    if (own.some((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen' || b.target.kind === 'improv')) return rescale(own.map((b) => ({ ...b, locked: false })), T);
+    // §12 "Technique": all technique, weakest first — the warm-up, the review and the technique blocks (the
+    // improvisation share has its own focus now)
+    const own = suggested.filter((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen' || b.target.kind === 'rubato' || b.target.kind === 'warmup' || b.target.kind === 'teacher');
+    if (own.some((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen')) return rescale(own.map((b) => ({ ...b, locked: false })), T);
   }
   const p = FOCUS_PRESET[area];
   if (!p) return rescale(suggested.map((b) => ({ ...b })), T);
@@ -638,7 +955,7 @@ export function nextForBlock(b: Block, view: PathView, done: Set<string>): { ste
     if (t.kind === 'topic') return s.topic === t.topic;
     return false;
   };
-  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes' || b.target.kind === 'strengthen' || b.target.kind === 'keys' || b.target.kind === 'improv' || b.target.kind === 'teacher') return { free: b.target };
+  if (b.target.kind === 'warmup' || b.target.kind === 'game' || b.target.kind === 'vocal' || b.target.kind === 'practice' || b.target.kind === 'mistakes' || b.target.kind === 'strengthen' || b.target.kind === 'keys' || b.target.kind === 'improv' || b.target.kind === 'teacher' || b.target.kind === 'rubato' || b.target.kind === 'key' || b.target.kind === 'rung' || b.target.kind === 'item' || b.target.kind === 'family') return { free: b.target };
   // SPEC-PATH-ROLE §3: a unit waiting for its checkpoint — the checkpoint takes the New block (the most recent first).
   if (b.target.kind === 'path') {
     const pend = pendingChecks(view).filter((p) => !done.has(p.step.step.id));
@@ -702,11 +1019,12 @@ export interface WorkoutRun {
   /** SPEC-PRACTICE-SESSION §8: the session's id, its course and focus, and the minutes chosen at Start. */
   id?: string;
   course?: CourseId;
-  focus?: 'plan' | DomainId;
+  /** 'plan', an area, or a target (§12: `key:…`, `rung:…`, `item:…`, `family:…`). */
+  focus?: string;
   planned?: number;
 }
 
-export const startRun = (day: string, blocks: Block[], meta?: { id?: string; course?: CourseId; focus?: 'plan' | DomainId }): WorkoutRun => ({ day, blocks, at: 0, used: {}, steps: [], items: {}, ...(meta ? { ...meta, planned: total(blocks) } : {}) });
+export const startRun = (day: string, blocks: Block[], meta?: { id?: string; course?: CourseId; focus?: string }): WorkoutRun => ({ day, blocks, at: 0, used: {}, steps: [], items: {}, ...(meta ? { ...meta, planned: total(blocks) } : {}) });
 export const blockLeftMs = (r: WorkoutRun, i = r.at) => (r.blocks[i] ? Math.max(0, r.blocks[i].minutes * 60000 - (r.used[r.blocks[i].id] ?? 0)) : 0);
 export const runLeftMs = (r: WorkoutRun) => r.blocks.slice(r.at).reduce((a, _b, k) => a + blockLeftMs(r, r.at + k), 0);
 /** Count a session's active time (capped at 60 s per item: pauses and wandering off don't count). */
@@ -791,7 +1109,8 @@ export function contextSwap(bs: Block[], ctx: { nomic: boolean; quiet: boolean; 
       const t = b.target;
       if ((ctx.nomic || ctx.quiet) && t.kind === 'vocal') return { ...b, target: { kind: 'warmup' } };
       if (ctx.quiet && t.kind === 'game') return { ...b, target: { kind: 'warmup' } };
-      if (ctx.noinst && t.kind === 'keys') return { ...b, target: { kind: 'area', area: 'reading' } };
+      if (ctx.noinst && (t.kind === 'keys' || t.kind === 'key' || t.kind === 'rung' || t.kind === 'item' || t.kind === 'family')) return { ...b, target: { kind: 'area', area: 'reading' } };
+      if (ctx.noinst && t.kind === 'rubato') return { ...b, target: { kind: 'warmup' } };
       if (ctx.noinst && t.kind === 'improv') return { ...b, target: { kind: 'area', area: 'creative' } };
       return b;
     })

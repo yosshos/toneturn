@@ -8,7 +8,12 @@ import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
 import type { PathView } from '../engine/path';
 import { TOPIC_GEN } from '../engine/topicKit';
-import { add, BETWEEN_S, blockLeftMs, blockSummary, canRescale, coverage, LIMITS, moveTo, preset, remove, rescale, runLeftMs, setMinutes, templateStale, total, WHY_WORD, whyOf, type Block, type BlockTarget, type Preset, type WorkoutRun } from '../engine/workout2';
+import { add, BETWEEN_S, blockLeftMs, blockSummary, canRescale, coverage, focusIdOf, LIMITS, moveTo, parseFocus, preset, remove, rescale, runLeftMs, setMinutes, templateStale, total, WHY_WORD, whyOf, type Block, type BlockTarget, type FocusMode, type Preset, type WorkoutRun } from '../engine/workout2';
+import { keyName } from '../engine/drills/generate';
+import { familyById } from '../engine/drills/plan';
+import type { FamilyId } from '../engine/drills/types';
+import type { CellState, FocusSheet } from '../engine/drills/focusSheet';
+import { ROLE_NAME } from './PracticeKeys';
 import { DOMAINS, type DomainId } from '../engine/rating';
 import { DOMAIN_HUE, GAMES2 } from './Arcade';
 import { useCourse } from './courseContext';
@@ -53,9 +58,10 @@ const W = {
     presets: { suggested: 'Suggested', ear: 'Ear focus', rhythm: 'Rhythm focus', reading: 'Reading focus', voice: 'Voice focus', instrument: 'Instrument focus', quick5: 'Quick 5', mistakes: 'Fix my mistakes', 'four-slot': 'Four-slot session' } as Record<Preset, string>,
     ctx: { nomic: 'No mic', quiet: 'Quiet place', noinst: 'No instrument' },
     // SPEC-PATH-ROLE §3: three blocks — New (the path), Strengthen (depth on what is opened), Review.
-    kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen', keys: 'Technique', teacher: 'From the teacher' } as Record<string, string>,
+    kinds: { path: 'New', warmup: 'Review', vocal: 'Vocal warm-up', practice: 'My instrument', mistakes: 'Fix my mistakes', strengthen: 'Strengthen', keys: 'Technique', teacher: 'From the teacher', rubato: 'Warm-up', key: 'Key', rung: 'One exercise', item: 'One item', family: 'Family' } as Record<string, string>,
     improv: { improv: 'Improvise', repertoire: 'Repertoire', grooves: 'Grooves, fills and trading' } as Record<string, string>,
-    blockSub: { path: 'Next steps of the path', warmup: 'Spaced review', strengthen: 'Opened steps, weakest keys first', keys: 'Half in the key of the week, the rest weakest first', teacher: 'Your class assignments', improv: 'In the key of the week' } as Record<string, string>,
+    blockSub: { path: 'Next steps of the path', warmup: 'Spaced review', strengthen: 'Opened steps, weakest keys first', keys: 'Half in the key of the week, the rest weakest first', teacher: 'Your class assignments', improv: 'In the key of the week', rubato: 'Slowly, in free time: the start of today’s main item', key: 'Every open exercise in the key', rung: 'Through the 12 keys, weakest first', item: 'Up its tempo ladder, then its other keys', family: 'The family’s levels at your level' } as Record<string, string>,
+    slipped: 'Closed items that slipped this week',
     practiceHint: 'Practice on your own instrument. The metronome helps; write what you worked on.',
     metronome: 'Metronome',
     note: 'What did you work on?',
@@ -84,10 +90,19 @@ const W = {
     otherLen: 'Another length',
     focus: 'Focus',
     myPlan: 'My plan',
-    focusName: { instrument: 'Instrument', pitch: 'Ear', time: 'Rhythm', reading: 'Reading', voice: 'Voice' } as Partial<Record<DomainId, string>>,
+    focusName: { instrument: 'Technique', pitch: 'Ear', time: 'Rhythm', reading: 'Reading', voice: 'Voice' } as Partial<Record<DomainId, string>>,
     split: 'Today’s split',
     startN: 'Start · {m} min',
     editLink: 'Edit',
+    // §12: the course's other shares, and the sheets for a key, an exercise or a family
+    modeName: { improv: 'Improvise', repertoire: 'Repertoire', grooves: 'Grooves', licks: 'Licks' } as Record<FocusMode, string>,
+    pick: { key: 'Key…', exercise: 'Exercise…', family: 'Family…' },
+    sheet: { key: 'Practise one key', exercise: 'One exercise through the keys', family: 'One family' },
+    close: 'Close',
+    group: { major: 'major', minor: 'minor' },
+    state: { new: 'New', working: 'Working', closed: 'Closed', due: 'Due' } as Record<CellState, string>,
+    sheetEmpty: 'Nothing open here yet',
+    minorRow: 'Minor',
   },
   he: {
     title: 'האימון של היום',
@@ -122,9 +137,10 @@ const W = {
     done: 'סיום',
     presets: { suggested: 'מוצע', ear: 'דגש על שמיעה', rhythm: 'דגש על קצב', reading: 'דגש על קריאה', voice: 'דגש על קול', instrument: 'דגש על הכלי', quick5: 'חמש דקות מהירות', mistakes: 'לתקן טעויות', 'four-slot': 'אימון בארבעה חלקים' } as Record<Preset, string>,
     ctx: { nomic: 'בלי מיקרופון', quiet: 'מקום שקט', noinst: 'בלי כלי' },
-    kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק', keys: 'טכניקה', teacher: 'מהמורה' } as Record<string, string>,
+    kinds: { path: 'חדש', warmup: 'חזרה', vocal: 'חימום קולי', practice: 'הכלי שלי', mistakes: 'לתקן טעויות', strengthen: 'חיזוק', keys: 'טכניקה', teacher: 'מהמורה', rubato: 'חימום', key: 'סולם', rung: 'תרגיל אחד', item: 'פריט אחד', family: 'משפחה' } as Record<string, string>,
     improv: { improv: 'אימפרוביזציה', repertoire: 'רפרטואר', grooves: 'גרובים, מעברים וחילופים' } as Record<string, string>,
-    blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם', keys: 'חצי בסולם השבוע, השאר מהחלש', teacher: 'המשימות מהכיתה', improv: 'בסולם השבוע' } as Record<string, string>,
+    blockSub: { path: 'הצעדים הבאים במסלול', warmup: 'חזרה מרווחת', strengthen: 'צעדים שנפתחו, הסולמות החלשים קודם', keys: 'חצי בסולם השבוע, השאר מהחלש', teacher: 'המשימות מהכיתה', improv: 'בסולם השבוע', rubato: 'לאט ובזמן חופשי: הפתיחה של הפריט המרכזי של היום', key: 'כל התרגילים הפתוחים בסולם', rung: 'בכל 12 הסולמות, החלש קודם', item: 'במעלה סולם הטמפו, ואחר כך בסולמות האחרים', family: 'השלבים של המשפחה ברמה שלכם' } as Record<string, string>,
+    slipped: 'פריטים סגורים שהחליקו השבוע',
     practiceHint: 'נגנו על הכלי שלכם. המטרונום עוזר; כתבו על מה עבדתם.',
     metronome: 'מטרונום',
     note: 'על מה עבדתם?',
@@ -152,10 +168,18 @@ const W = {
     otherLen: 'אורך אחר',
     focus: 'מיקוד',
     myPlan: 'התוכנית שלי',
-    focusName: { instrument: 'הכלי', pitch: 'שמיעה', time: 'קצב', reading: 'קריאה', voice: 'קול' } as Partial<Record<DomainId, string>>,
+    focusName: { instrument: 'טכניקה', pitch: 'שמיעה', time: 'קצב', reading: 'קריאה', voice: 'קול' } as Partial<Record<DomainId, string>>,
     split: 'החלוקה של היום',
     startN: 'להתחיל · {m} דק׳',
     editLink: 'עריכה',
+    modeName: { improv: 'אימפרוביזציה', repertoire: 'רפרטואר', grooves: 'גרובים', licks: 'ליקים' } as Record<FocusMode, string>,
+    pick: { key: 'סולם…', exercise: 'תרגיל…', family: 'משפחה…' },
+    sheet: { key: 'אימון בסולם אחד', exercise: 'תרגיל אחד בכל הסולמות', family: 'משפחה אחת' },
+    close: 'סגירה',
+    group: { major: 'מז׳ור', minor: 'מינור' },
+    state: { new: 'חדש', working: 'בעבודה', closed: 'סגור', due: 'לחזרה' } as Record<CellState, string>,
+    sheetEmpty: 'עוד אין כאן תרגילים פתוחים',
+    minorRow: 'מינור',
   },
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -179,12 +203,16 @@ export function blockLabel(t: Strings, b: BlockTarget, lang: Lang, id?: string):
       if (b.game === 'transcribe') return lang === 'he' ? 'תמלול' : 'Transcribe';
       return GAMES2.find((g) => g.id === b.game)?.[lang][0] ?? b.game;
     case 'improv':
-      return tx.improv[b.mode ?? 'improv'];
+      return b.root !== undefined ? `${tx.improv[b.mode ?? 'improv']} · ${keyName(b.root, b.group === 'minor')} ${tx.group[b.group ?? 'major']}` : tx.improv[b.mode ?? 'improv'];
+    case 'key':
+      return `${keyName(b.root, b.group === 'minor')} ${tx.group[b.group]}`;
+    case 'family':
+      return familyById(b.family as FamilyId)?.title[lang] ?? tx.kinds.family;
     default:
       return tx.kinds[b.kind] ?? b.kind;
   }
 }
-const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'strengthen' || b.kind === 'keys' ? 'var(--hue-instrument)' : b.kind === 'improv' ? 'var(--hue-creative)' : b.kind === 'teacher' ? 'var(--purple)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
+const hueOf = (b: BlockTarget) => (b.kind === 'area' ? DOMAIN_HUE[b.area] : b.kind === 'path' ? 'var(--mint)' : b.kind === 'strengthen' || b.kind === 'keys' || b.kind === 'key' || b.kind === 'rung' || b.kind === 'item' || b.kind === 'family' ? 'var(--hue-instrument)' : b.kind === 'rubato' ? 'var(--gold)' : b.kind === 'improv' ? 'var(--hue-creative)' : b.kind === 'teacher' ? 'var(--purple)' : b.kind === 'warmup' || b.kind === 'mistakes' ? 'var(--gold)' : b.kind === 'game' ? 'var(--hue-creative)' : b.kind === 'vocal' ? 'var(--hue-voice)' : b.kind === 'practice' ? 'var(--hue-instrument)' : 'var(--hue-pitch)');
 
 /** The stacked bar of blocks. */
 function BlockBar({ blocks, run }: { blocks: Block[]; run?: WorkoutRun | null }) {
@@ -215,7 +243,7 @@ export function WhyChip({ target, lang }: { target: BlockTarget; lang: Lang }) {
 }
 /** A block's second line: what the caller knows about it (the key of the week, the teacher …), else the kind's line. */
 const subOf = (tx: (typeof W)['en'], b: BlockTarget, leadsTo?: string | null, subs?: Partial<Record<string, string>>): string | undefined =>
-  b.kind === 'strengthen' && leadsTo ? leadsTo : (subs?.[b.kind] ?? tx.blockSub[b.kind]);
+  b.kind === 'strengthen' && leadsTo ? leadsTo : b.kind === 'rubato' && b.items?.length ? tx.slipped : b.kind === 'improv' && b.root !== undefined ? undefined : (subs?.[b.kind] ?? tx.blockSub[b.kind]);
 
 /** W10: where you are today (no mic / quiet place / no instrument) — kept for the day; on Today and in the editor. */
 export type WorkoutCtx = { nomic: boolean; quiet: boolean; noinst: boolean };
@@ -253,12 +281,20 @@ export function TemplateStaleAsk({ templateAt, today, onTemplate, lang }: { temp
  * Today's workout (W1): the hero of Today, with today's context switches (no mic / quiet / no instrument) and the W6
  * question about an old default (both also in the editor).
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, ctx, onCtx, templateAt, today, onTemplate, focus, focusAreas, onFocus, onLength }: {
-  /** SPEC-PRACTICE-SESSION §2: today's focus in the active course ('plan' or one of its areas). */
-  focus?: 'plan' | DomainId;
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, ctx, onCtx, templateAt, today, onTemplate, focus, focusAreas, onFocus, onLength, reason, focusModes, loadSheet, focusLabel }: {
+  /** SPEC-PRACTICE-SESSION §2: today's focus in the active course ('plan', one of its areas, or a §12 target). */
+  focus?: string;
   /** The active course's areas the focus picker offers. */
   focusAreas?: DomainId[];
-  onFocus?: (f: 'plan' | DomainId) => void;
+  onFocus?: (f: string) => void;
+  /** §3.2: the one reason line for the biggest need-based move (my plan only). */
+  reason?: { en: string; he: string } | null;
+  /** §12: the course's other shares as a focus (Improvise / Repertoire / Grooves, Licks). */
+  focusModes?: FocusMode[];
+  /** §12: the sheets — a key or an exercise (piano, guitar, bass), a family (drums); null when unavailable. */
+  loadSheet?: (which: SheetWhich) => SheetData | null;
+  /** The name of today's target focus (a key, an exercise, an item, a family). */
+  focusLabel?: string | null;
   /** A length chip or the stepper: re-split today and remember it as the daily length. */
   onLength?: (minutes: number) => void;
   /** W10: where you are today (kept for the day). */
@@ -283,7 +319,7 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
     </>
   );
   // Before Start (§2): length, focus, the split and Start. Running or done: the card as it was.
-  if (!active && !run?.finished && onLength && onFocus) return <PlanCard {...{ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, onLength, onFocus }} focus={focus ?? 'plan'} focusAreas={focusAreas ?? []} />;
+  if (!active && !run?.finished && onLength && onFocus) return <PlanCard {...{ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, onLength, onFocus, reason, loadSheet, focusLabel }} focus={focus ?? 'plan'} focusAreas={focusAreas ?? []} focusModes={focusModes ?? []} />;
   return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active: !!active, leftMin, at, extra }} />;
 }
 
@@ -294,12 +330,36 @@ const LENGTHS = [10, 20, 30, 45, 60, 90];
  * (my plan or one of the active course's areas), the split as one bar with minutes (a block's "why today" on tap),
  * Start · N min and Edit ›.
  */
-function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, focus, focusAreas, onFocus, onLength }: { t: Strings; lang: Lang; blocks: Block[]; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; extra?: React.ReactNode; focus: 'plan' | DomainId; focusAreas: DomainId[]; onFocus: (f: 'plan' | DomainId) => void; onLength: (m: number) => void }) {
+/** §12: which sheet the focus row opens. */
+export type SheetWhich = 'key' | 'exercise' | 'family';
+/** §12: what a sheet lists — the matrix's keys and exercises (piano, guitar, bass) or the drums' families. */
+export type SheetData = { kind: 'matrix'; data: FocusSheet } | { kind: 'families'; families: { id: string; title: { en: string; he: string }; state: CellState }[] };
+
+/** The sheet a target focus belongs to (its pill shows the target's name). */
+const sheetOfFocus = (focus: string): SheetWhich | null => {
+  const f = parseFocus(focus);
+  return !f ? null : f.kind === 'key' ? 'key' : f.kind === 'rung' || f.kind === 'item' ? 'exercise' : f.kind === 'family' ? 'family' : null;
+};
+
+function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, focus, focusAreas, onFocus, onLength, reason, focusModes, loadSheet, focusLabel }: { t: Strings; lang: Lang; blocks: Block[]; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; extra?: React.ReactNode; focus: string; focusAreas: DomainId[]; onFocus: (f: string) => void; onLength: (m: number) => void; reason?: { en: string; he: string } | null; focusModes: FocusMode[]; loadSheet?: (which: SheetWhich) => SheetData | null; focusLabel?: string | null }) {
   const tx = W[lang];
   const T = total(blocks);
   const custom = !LENGTHS.includes(T);
   const [stepper, setStepper] = useState(false);
   const [sel, setSel] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<{ which: SheetWhich; data: SheetData } | null>(null);
+  const curSheet = sheetOfFocus(focus);
+  // the sheets this course has: a key and an exercise on the piano, the guitar and the bass; a family on the drums
+  const [sheets] = useState<SheetWhich[]>(() => (loadSheet ? (focusModes.includes('grooves') ? ['family'] : ['key', 'exercise']) : []));
+  const openSheet = (which: SheetWhich) => {
+    const data = loadSheet?.(which);
+    if (data) setSheet({ which, data });
+  };
+  const pick = (f: string) => {
+    setSheet(null);
+    setSel(null);
+    onFocus(f);
+  };
   const selB = blocks.find((b) => b.id === sel) ?? null;
   const selSub = selB ? subOf(tx, selB.target, leadsTo, subs) : undefined;
   const T1 = T || 1;
@@ -338,15 +398,29 @@ function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset,
           </button>
         </div>
       )}
-      {focusAreas.length > 0 && (
+      {focusAreas.length + focusModes.length + sheets.length > 0 && (
         <div className="wk-focus" role="radiogroup" aria-label={tx.focus} data-wk-focus={focus}>
           {(['plan', ...focusAreas] as ('plan' | DomainId)[]).map((f) => (
-            <button key={f} type="button" role="radio" aria-checked={focus === f} className={`wk-pill ${focus === f ? 'on' : ''}`} onClick={() => (setSel(null), onFocus(f))} data-focus={f}>
+            <button key={f} type="button" role="radio" aria-checked={focus === f} className={`wk-pill ${focus === f ? 'on' : ''}`} onClick={() => pick(f)} data-focus={f}>
               {f === 'plan' ? tx.myPlan : (tx.focusName[f] ?? t.domainNames[f])}
+            </button>
+          ))}
+          {focusModes.map((m) => {
+            const id = focusIdOf({ kind: 'mode', mode: m });
+            return (
+              <button key={id} type="button" role="radio" aria-checked={focus === id} className={`wk-pill ${focus === id ? 'on' : ''}`} onClick={() => pick(id)} data-focus={id}>
+                {tx.modeName[m]}
+              </button>
+            );
+          })}
+          {sheets.map((w) => (
+            <button key={w} type="button" role="radio" aria-checked={curSheet === w} aria-haspopup="dialog" className={`wk-pill wk-pill-sheet ${curSheet === w ? 'on' : ''}`} onClick={() => openSheet(w)} data-focus-sheet={w}>
+              <span>{curSheet === w && focusLabel ? focusLabel : tx.pick[w]}</span>
             </button>
           ))}
         </div>
       )}
+      {sheet && <FocusSheetPanel t={t} lang={lang} which={sheet.which} data={sheet.data} focus={focus} onPick={pick} onClose={() => setSheet(null)} />}
       <div className="wk-split" role="group" aria-label={tx.split}>
         <div className="wk-split-bar">
           {blocks.map((b) => (
@@ -367,6 +441,11 @@ function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset,
             <span>{selSub ?? blockLabel(t, selB.target, lang, selB.id)}</span>
           </p>
         )}
+        {!selB && reason && focus === 'plan' && (
+          <p className="wk-reason" dir="auto" data-wk-reason="1">
+            {reason[lang]}
+          </p>
+        )}
       </div>
       {extra}
       <button className="btn mega wk-start st-cta" data-continue="1" onClick={onStart}>
@@ -384,6 +463,122 @@ function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset,
         </button>
       </div>
     </section>
+  );
+}
+
+/**
+ * §12: the compact sheet behind "Key…", "Exercise…" (piano, guitar, bass) and "Family…" (drums). Keys: the 12 keys of
+ * each row group the matrix has open; exercises: the rungs by role, as on the key page; each marked new / working /
+ * closed / due. A tap sets today's focus.
+ */
+function FocusSheetPanel({ lang, which, data, focus, onPick, onClose }: { t: Strings; lang: Lang; which: SheetWhich; data: SheetData; focus: string; onPick: (f: string) => void; onClose: () => void }) {
+  const tx = W[lang];
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const cur = parseFocus(focus);
+  const groups = data.kind === 'matrix' ? data.data.groups : [];
+  const [group, setGroup] = useState<'major' | 'minor'>(() => (cur?.kind === 'key' && groups.includes(cur.group) ? cur.group : groups[0] ?? 'major'));
+  useEffect(() => {
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const mark = (s: CellState) => (
+    <small className={`wk-sh-st st-${s}`} data-state={s}>
+      {tx.state[s]}
+    </small>
+  );
+  let body: React.ReactNode = null;
+  if (data.kind === 'families') {
+    body = data.families.length ? (
+      <ul className="wk-sh-list">
+        {data.families.map((f) => {
+          const id = focusIdOf({ kind: 'family', family: f.id });
+          return (
+            <li key={f.id}>
+              <button type="button" className={`wk-sh-row ${focus === id ? 'on' : ''}`} aria-pressed={focus === id} onClick={() => onPick(id)} data-sheet-family={f.id}>
+                <span dir="auto">{f.title[lang]}</span>
+                {mark(f.state)}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    ) : null;
+  } else if (which === 'key') {
+    const keys = data.data.keys.filter((k) => k.group === group);
+    body = (
+      <>
+        {groups.length > 1 && (
+          <div className="wk-sh-groups" role="radiogroup" aria-label={tx.sheet.key}>
+            {groups.map((g) => (
+              <button key={g} type="button" role="radio" aria-checked={group === g} className={`wk-pill ${group === g ? 'on' : ''}`} onClick={() => setGroup(g)} data-sheet-group={g}>
+                {tx.group[g]}
+              </button>
+            ))}
+          </div>
+        )}
+        {keys.length > 0 && (
+          <div className="wk-sh-keys">
+            {keys.map((k) => {
+              const id = focusIdOf({ kind: 'key', root: k.root, group: k.group });
+              return (
+                <button key={id} type="button" className={`wk-sh-key ${focus === id ? 'on' : ''}`} aria-pressed={focus === id} aria-label={`${keyName(k.root, k.group === 'minor')} ${tx.group[k.group]} · ${tx.state[k.state]}`} onClick={() => onPick(id)} data-sheet-key={k.root}>
+                  <b dir="ltr">{keyName(k.root, k.group === 'minor')}</b>
+                  {mark(k.state)}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </>
+    );
+    if (!keys.length) body = null;
+  } else {
+    // the exercises by role, as on the key page (the minor rows' after the major ones)
+    const rows: { head: string; rungs: FocusSheet['rungs'] }[] = [];
+    for (const r of data.data.rungs) {
+      const head = `${r.group === 'minor' ? `${tx.minorRow} · ` : ''}${ROLE_NAME[r.role][lang]}`;
+      const last = rows[rows.length - 1];
+      if (last?.head === head) last.rungs.push(r);
+      else rows.push({ head, rungs: [r] });
+    }
+    const curRung = cur?.kind === 'rung' ? focusIdOf(cur) : null;
+    body = rows.length ? (
+      <div className="wk-sh-rows">
+        {rows.map((row) => (
+          <section key={row.head} className="wk-sh-role">
+            <h4 dir="auto">{row.head}</h4>
+            <ul className="wk-sh-list">
+              {row.rungs.map((r) => {
+                const id = focusIdOf({ kind: 'rung', rung: r.rung, group: r.group });
+                return (
+                  <li key={id}>
+                    <button type="button" className={`wk-sh-row ${curRung === id ? 'on' : ''}`} aria-pressed={curRung === id} onClick={() => onPick(id)} data-sheet-rung={r.rung}>
+                      <span dir="auto">{r.title[lang]}</span>
+                      {mark(r.state)}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+      </div>
+    ) : null;
+  }
+  return (
+    <div className="wk-sh-back" onClick={(e) => e.target === e.currentTarget && onClose()} data-focus-sheet-open={which}>
+      <section className="wk-sh" role="dialog" aria-modal="true" aria-label={tx.sheet[which]}>
+        <header className="wk-sh-h">
+          <h3 dir="auto">{tx.sheet[which]}</h3>
+          <button ref={closeRef} type="button" className="icon-btn" onClick={onClose} aria-label={tx.close}>
+            <Icon k="close" size={18} />
+          </button>
+        </header>
+        {body ?? <p className="field-hint">{tx.sheetEmpty}</p>}
+      </section>
+    </div>
   );
 }
 

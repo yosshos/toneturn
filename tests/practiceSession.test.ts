@@ -197,11 +197,11 @@ describe('the focus picker (§2)', () => {
     expect(focusAreas(COURSE_AREAS.drums)).toEqual(['instrument', 'time']);
     expect(focusAreas(COURSE_AREAS.voice)).toEqual(['voice']);
   });
-  it('an instrument focus keeps technique and improvisation at the chosen length', () => {
+  it('an instrument course’s Technique focus keeps the technique blocks at the chosen length (§12)', () => {
     const sug: Block[] = [{ id: 'path-1', target: { kind: 'path' }, minutes: 6 }, ...blocks];
     const out = focusBlocks('instrument', 45, sug, COURSE_AREAS.keys);
     expect(total(out)).toBe(45);
-    expect(out.map((x) => x.target.kind)).toEqual(['warmup', 'keys', 'improv']);
+    expect(out.map((x) => x.target.kind)).toEqual(['warmup', 'keys']);
   });
   it('an area preset stays inside the course and keeps the total', () => {
     for (const T of [10, 20, 30, 60, 180]) {

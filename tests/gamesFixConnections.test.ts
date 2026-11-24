@@ -78,7 +78,8 @@ describe('the workout game rotates through the course', () => {
   });
   it('suggestWorkout uses it', () => {
     const view = { units: [], history: [], current: null, progress: { done: 0, checked: 0, total: 0 }, sections: [], freeze: null } as never;
-    const bs = suggestWorkout({ total: 20, goal: 'general', priorities: null, leaveOut: [], reviewsDue: 0, singer: false, view, opened: 5, course: 'ear', day: '2026-11-16' });
+    // SPEC-PRACTICE-SESSION §3.3: the game ends a session of 30 minutes or more
+    const bs = suggestWorkout({ total: 30, goal: 'general', priorities: null, leaveOut: [], reviewsDue: 0, singer: false, view, opened: 5, course: 'ear', day: '2026-11-16' });
     const g = bs.find((b) => b.target.kind === 'game');
     expect(g && g.target.kind === 'game' && g.target.game).toBe(workoutGame('ear', '2026-11-16'));
   });

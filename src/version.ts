@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.133.0',
+    date: '2026-11-24',
+    en: ['The practice session fits its length: few blocks when time is short, a slow warm-up from 20 minutes, a pleasant ending from 30. The coach gives more time to what was neglected this week and says why. Practise one key, one exercise through the 12 keys, or one item: from the card, or with “Practise this” on the Practice pages'],
+    he: ['האימון מותאם לאורכו: מעט בלוקים כשהזמן קצר, חימום איטי מ-20 דקות, סיום נעים מ-30. המאמן נותן יותר זמן למה שהוזנח השבוע ואומר למה. אפשר לתרגל סולם אחד, תרגיל אחד דרך 12 הסולמות או פריט אחד: מהכרטיס, או ב"לתרגל את זה" בעמודי התרגול'],
+  },
+  {
     version: '0.132.1',
     date: '2026-11-24',
     en: ['The first questions now ask how many days a week you can practise, with the minutes a day, and show the week’s total'],

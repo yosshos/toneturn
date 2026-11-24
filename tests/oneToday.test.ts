@@ -144,14 +144,15 @@ const mins = (bs: Block[], k: string) => bs.filter((b) => b.target.kind === k).r
 
 describe('the daily workout is the single plan (D2)', () => {
   it('path ~20 %, then technique / improvisation 70/30; sums to the window', () => {
-    for (const T of [10, 20, 30, 45, 60, 90, 120, 180]) {
+    // SPEC-PRACTICE-SESSION §3.3: the path has its block from 25 minutes (warm-up, tune and game come out of the window)
+    for (const T of [30, 45, 90, 120, 180]) {
       const bs = sugg(T);
       expect(total(bs)).toBe(T);
       const path = mins(bs, 'path');
       const tech = mins(bs, 'keys');
-      const imp = mins(bs, 'improv');
-      expect(Math.abs(path - T * DAY_SHARES.path)).toBeLessThanOrEqual(1.5);
-      expect(Math.abs(tech / (tech + imp) - 0.7)).toBeLessThan(0.08);
+      const imp = bs.filter((b) => b.target.kind === 'improv' && b.target.mode !== 'repertoire').reduce((a, b) => a + b.minutes, 0);
+      expect(Math.abs(path / T - DAY_SHARES.path), `path ${T}`).toBeLessThanOrEqual(0.06);
+      expect(Math.abs(tech / (tech + imp) - 0.7), `tech ${T}`).toBeLessThan(0.08);
       // order: path → technique → improvisation
       const kinds = bs.map((b) => b.target.kind);
       expect(kinds.indexOf('path')).toBeLessThan(kinds.indexOf('keys'));
@@ -171,11 +172,10 @@ describe('the daily workout is the single plan (D2)', () => {
     expect(ear.some((x) => x.target.kind === 'strengthen')).toBe(true);
   });
   it('maintenance and lick reviews live inside the technique share; a new player: the path takes it; "I choose": no path', () => {
-    const plain = sugg(40);
-    const withRev = sugg(40, { reviewsDue: 4, licksDue: 2 });
+    // SPEC-PRACTICE-SESSION §3.3: the review (2 → 6 minutes) and the lick review take blocks the length allows
+    const plain = sugg(90);
+    const withRev = sugg(90, { reviewsDue: 4, licksDue: 2 });
     expect(mins(withRev, 'warmup')).toBeGreaterThan(0);
-    expect(mins(withRev, 'path')).toBe(mins(plain, 'path'));
-    expect(mins(withRev, 'improv')).toBe(mins(plain, 'improv'));
     expect(mins(withRev, 'keys')).toBeLessThan(mins(plain, 'keys'));
     expect(withRev.some((x) => x.target.kind === 'game' && x.target.game === 'licks')).toBe(true);
     // a real beginner (tier 0) with nothing opened: the path takes the technique share; an experienced player new to
@@ -201,7 +201,8 @@ describe('the daily workout is the single plan (D2)', () => {
   });
   it('why today: every planned block carries a reason', () => {
     const bs = sugg(40, { reviewsDue: 2 });
-    expect(bs.map((b) => whyOf(b.target))).toEqual(bs.map((b) => (b.target.kind === 'path' ? 'path' : b.target.kind === 'warmup' ? 'review' : b.target.kind === 'keys' ? 'strengthen' : 'week')));
+    // (the warm-up — the slow start of today's main item — has no chip)
+    expect(bs.map((b) => whyOf(b.target))).toEqual(bs.map((b) => (b.target.kind === 'rubato' ? null : b.target.kind === 'path' ? 'path' : b.target.kind === 'warmup' ? 'review' : b.target.kind === 'keys' ? 'strengthen' : 'week')));
     expect(whyOf({ kind: 'teacher' })).toBe('teacher');
     expect(whyOf({ kind: 'improv', mode: 'repertoire' })).toBeNull();
     expect(whyOf({ kind: 'game', game: 'licks' })).toBe('review');

@@ -10,7 +10,9 @@ import type { DomainId } from './rating';
 import type { Block, BlockTarget, WorkoutRun } from './workout2';
 import { weekStart } from './practiceTime';
 
-export type SessionFocus = 'plan' | DomainId;
+/** 'plan', one of the course's areas, or (§12) a key, an exercise, an item, a family or the course's other share
+ *  (improvise / repertoire / grooves / licks) — workout2.parseFocus. */
+export type SessionFocus = 'plan' | DomainId | `${'key' | 'rung' | 'item' | 'family' | 'mode'}:${string}`;
 
 export interface SessionRecord {
   id: string;
@@ -59,7 +61,8 @@ export const weeklyGoalMin = (s: { dailyMinutes?: number; practiceDays?: number 
 // ---------------------------------------------------------------- the record (§8)
 
 // (workout2's targetKey, kept here so progress.ts does not load the workout engine)
-const kindOf = (t: BlockTarget): string => (t.kind === 'area' ? `area:${t.area}` : t.kind === 'skill' ? `skill:${t.skill}` : t.kind === 'topic' ? `topic:${t.topic}` : t.kind === 'game' ? `game:${t.game}` : t.kind);
+const kindOf = (t: BlockTarget): string =>
+  t.kind === 'area' ? `area:${t.area}` : t.kind === 'skill' ? `skill:${t.skill}` : t.kind === 'topic' ? `topic:${t.topic}` : t.kind === 'game' ? `game:${t.game}` : t.kind === 'key' ? `key:${t.root}:${t.group}` : t.kind === 'rung' ? `rung:${t.group}:${t.rung}` : t.kind === 'item' ? `item:${t.id}` : t.kind === 'family' ? `family:${t.family}` : t.kind;
 
 /** A run → its record (the course and focus from the run, else the given ones). */
 export function sessionRecordOf(r: WorkoutRun, fallback: { course: CourseId; id?: string }): SessionRecord {
@@ -72,7 +75,7 @@ export function sessionRecordOf(r: WorkoutRun, fallback: { course: CourseId; id?
     id: r.id ?? fallback.id ?? `${r.day}:${course}`,
     day: r.day,
     course,
-    focus: r.focus ?? 'plan',
+    focus: (r.focus ?? 'plan') as SessionFocus,
     plannedMin: r.planned ?? r.blocks.reduce((a, b) => a + b.minutes, 0),
     activeMs: blocks.reduce((a, b) => a + b.ms, 0),
     blocks,
@@ -129,7 +132,7 @@ export interface TodayEdits {
   blocks?: Block[];
   byCourse?: Partial<Record<CourseId, Block[]>>;
   /** The card's focus per course today (absent = my plan). */
-  focus?: Partial<Record<CourseId, DomainId>>;
+  focus?: Partial<Record<CourseId, SessionFocus>>;
 }
 
 /** The course's own edits today, or null. */
@@ -150,7 +153,7 @@ export function withTodayEdits(wt: TodayEdits | undefined, day: string, course: 
   const byCourse: Partial<Record<CourseId, Block[]>> = { ...(same?.byCourse ?? (same?.blocks ? { [course]: same.blocks } : {})) };
   if (blocks) byCourse[course] = blocks;
   else delete byCourse[course];
-  const fo: Partial<Record<CourseId, DomainId>> = { ...(same?.focus ?? {}) };
+  const fo: Partial<Record<CourseId, SessionFocus>> = { ...(same?.focus ?? {}) };
   if (focus === 'plan') delete fo[course];
   else if (focus) fo[course] = focus;
   if (!Object.keys(byCourse).length && !Object.keys(fo).length) return undefined;

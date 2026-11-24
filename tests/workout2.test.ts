@@ -16,10 +16,11 @@ describe("today's workout (spec AH)", () => {
       expect(bs.every((b) => b.minutes >= LIMITS.minBlock), `min ${t}`).toBe(true);
       expect(bs.some((b) => b.target.kind === 'path'), `path ${t}`).toBe(true);
     }
-    // SPEC-PATH-ROLE §3: a new player (nothing opened) — review, then the path with the strengthen share too.
-    const ten = sugg(10);
-    expect(ten.map((b) => b.target.kind)).toEqual(['warmup', 'path']);
-    expect(sugg(20).at(-1)!.target.kind).toBe('game');
+    // SPEC-PATH-ROLE §3: a new player (nothing opened) — the path with the strengthen share too; SPEC-PRACTICE-SESSION
+    // §3.3: 10 minutes is the most needed block (a review only when due), a game ends the session from 30 minutes.
+    expect(sugg(10).map((b) => b.target.kind)).toEqual(['path']);
+    expect(sugg(10, { reviewsDue: 2 }).map((b) => b.target.kind)).toEqual(['warmup', 'path']);
+    expect(sugg(30).at(-1)!.target.kind).toBe('game');
   });
   it('left-out areas are never suggested (no area blocks are generated)', () => {
     const bs = sugg(20, { leaveOut: ['time', 'pitch'] });
@@ -38,7 +39,7 @@ describe("today's workout (spec AH)", () => {
     expect(canRescale([{ id: 'a', target: { kind: 'path' }, minutes: 10, locked: true }, { id: 'b', target: { kind: 'warmup' }, minutes: 2 }], 5)).toBe(false);
   });
   it('edits: minutes, move, remove (never the last), add', () => {
-    let bs = sugg(10);
+    let bs = sugg(10, { reviewsDue: 2 });
     const m0 = bs[0].minutes;
     bs = setMinutes(bs, bs[0].id, 5);
     expect(bs[0].minutes).toBe(5);
