@@ -92,7 +92,7 @@ const MUSIC = /^(?:(?:Do|Re|Mi|Fa|Sol|La|Si|Ti)[♯♭#b]?(?:\s+(?:Do|Re|Mi|Fa|S
 
 /** A lone function word is a piece of a sentence built in parts ("Hear what is going on" + "in" + "the music"):
  *  translated alone it lands mid-English, so it stays as it is (the whole sentence wants one template instead). */
-const FRAGMENT = new Set(['in', 'on', 'of', 'at', 'to', 'by', 'for', 'and', 'or', 'the', 'a', 'an', 'with', 'from', 'as', 'is', 'are', 'it', 'than', 'then', 'into', 'over', 'under', 'per', 'via', 'vs', 'th', 'st', 'nd', 'rd']);
+const FRAGMENT = new Set(['in', 'on', 'of', 'at', 'to', 'by', 'for', 'and', 'or', 'the', 'a', 'an', 'with', 'from', 'as', 'is', 'are', 'it', 'than', 'then', 'into', 'over', 'under', 'per', 'via', 'vs', 'was', 'were', 'be', 'been', 'not', 'no', 'but', 'so', 'if', 'at the', 'of the', 'in the', 'on the', 'to the', 'th', 'st', 'nd', 'rd']);
 
 function core(s: string): string {
   const hit = exact.get(s);

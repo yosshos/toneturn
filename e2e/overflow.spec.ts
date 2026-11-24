@@ -84,7 +84,8 @@ function recorder(page: Page) {
 }
 const openAll = (page: Page) => page.evaluate(() => document.querySelectorAll('details').forEach((d) => ((d as HTMLDetailsElement).open = true)));
 
-for (const lang of ['en', 'he'] as const) {
+// es: a translated language (docs/SPEC-I18N.md), whose text runs longer than English
+for (const lang of ['en', 'he', 'es'] as const) {
   const base = `/?sim=1&unlock=all&lang=${lang}`;
 
   test(`screens: no sideways scrolling (${lang})`, async ({ page }) => {
