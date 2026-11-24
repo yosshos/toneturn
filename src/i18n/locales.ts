@@ -36,7 +36,9 @@ export const LOCALES: LocaleInfo[] = [
 
 /** Translated locales offered in the pickers: a language joins once its catalog covers the app's frame and screens
  *  (scripts/i18n-merge.mjs reports the coverage). Any locale can still be opened with ?lang=xx for testing. */
-export const OFFERED: LocaleCode[] = [];
+// 2026-11-24 (0.129): all eight carry the frame, the labels, the screens and the lesson titles; long explanations still
+// show in English where not yet translated
+export const OFFERED: LocaleCode[] = ['es', 'pt', 'fr', 'de', 'it', 'ja', 'ko', 'zh'];
 export const offeredLocales = (): LocaleInfo[] => LOCALES.filter((l) => !isTranslated(l.code) || OFFERED.includes(l.code));
 
 export const localeInfo = (c: LocaleCode | undefined | null): LocaleInfo => LOCALES.find((l) => l.code === c) ?? LOCALES[1];

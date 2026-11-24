@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.129.0',
+    date: '2026-11-24',
+    en: ['Eight more screen languages, in beta: Spanish, Portuguese (Brazil), French, German, Italian, Japanese, Korean and Chinese. Pick one in Settings or on the welcome screen; the app, its screens and every lesson title are translated, the longer explanations follow'],
+    he: ['שמונה שפות מסך נוספות, בגרסת בטא: ספרדית, פורטוגזית (ברזיל), צרפתית, גרמנית, איטלקית, יפנית, קוריאנית וסינית. בוחרים בהגדרות או במסך הפתיחה; האפליקציה, המסכים וכל שמות השיעורים מתורגמים, ההסברים הארוכים יגיעו בהמשך'],
+  },
+  {
     version: '0.128.0',
     date: '2026-11-24',
     en: ['Groundwork for eight more screen languages (Spanish, Portuguese, French, German, Italian, Japanese, Korean, Chinese): each opens in the language picker once its translation is ready', 'Dates and numbers follow the screen language; note names on Auto follow it too (Do Re Mi where musicians use it)'],

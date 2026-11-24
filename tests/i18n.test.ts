@@ -88,3 +88,12 @@ describe('texts the screens put together', () => {
     expect(translate('3. Unknown title')).toBe('3. Unknown title');
   });
 });
+
+describe('a name with a running number', () => {
+  afterEach(() => setCatalog(null, null));
+  it('"High or low 2" keeps its number', () => {
+    setCatalog('de', { 'High or low': 'Hoch oder tief' });
+    expect(translate('High or low 2')).toBe('Hoch oder tief 2');
+    expect(translate('Unknown 3')).toBe('Unknown 3');
+  });
+});

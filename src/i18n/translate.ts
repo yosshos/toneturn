@@ -125,6 +125,12 @@ function core(s: string): string {
     const t = core(num[2]);
     if (t !== num[2]) return num[1] + t;
   }
+  // "High or low 2": a name with a running number after it
+  const tail = /^(.*\D)(\s+\d+)$/.exec(s);
+  if (tail && WORDY.test(tail[1])) {
+    const t = core(tail[1]);
+    if (t !== tail[1]) return t + tail[2];
+  }
   if (s.includes(' · ')) {
     const parts = s.split(' · ');
     const t = parts.map((x) => (WORDY.test(x) && !MUSIC.test(x) ? core(x) : x));
