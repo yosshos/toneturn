@@ -329,6 +329,40 @@ export function weekTotals(l: PracticeLedger, today: string, n: number, course?:
   return out;
 }
 
+/** SPEC-PRACTICE-SESSION §8: month totals ("YYYY-MM"), newest last, for the last `n` months up to `today`. */
+export function monthTotals(l: PracticeLedger, today: string, n: number, course?: CourseId): { month: string; ms: number; quality: number; inApp: number }[] {
+  const out: { month: string; ms: number; quality: number; inApp: number }[] = [];
+  const [y, m] = today.split('-').map(Number);
+  for (let i = n - 1; i >= 0; i--) {
+    const k = y * 12 + (m - 1) - i;
+    const month = `${Math.floor(k / 12)}-${String((k % 12) + 1).padStart(2, '0')}`;
+    const s = summarize(l, `${month}-01`, `${month}-31`, course);
+    out.push({ month, ms: s.ms, quality: s.quality, inApp: s.inApp });
+  }
+  return out;
+}
+
+/** The calendar year of `today` so far (the ledger keeps 400 days, so a whole year fits). */
+export function yearTotal(l: PracticeLedger, today: string, course?: CourseId): { year: string; ms: number; quality: number; inApp: number } {
+  const year = today.slice(0, 4);
+  const s = summarize(l, `${year}-01-01`, `${year}-12-31`, course);
+  return { year, ms: s.ms, quality: s.quality, inApp: s.inApp };
+}
+
+/** The average finished session per week (Monday-based), newest last: activeMs of the week's finished sessions ÷ their
+ *  count (0 and count 0 for a week without one). */
+export function averageSession(sessions: readonly { day: string; activeMs: number; finished: boolean }[], today: string, n: number): { week: string; avgMs: number; count: number }[] {
+  const w0 = weekStart(today);
+  const out: { week: string; avgMs: number; count: number }[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const w = addDay(w0, -7 * i);
+    const end = addDay(w, 6);
+    const done = sessions.filter((x) => x.finished && x.day >= w && x.day <= end);
+    out.push({ week: w, avgMs: done.length ? Math.round(done.reduce((a, x) => a + x.activeMs, 0) / done.length) : 0, count: done.length });
+  }
+  return out;
+}
+
 /** A compact line for the AI weekly summary (measured data only). */
 export function practiceDigest(l: PracticeLedger, today: string): { minutes: number; qualityMinutes: number; offAppMinutes: number; qualityShare: number | null; topSkills: string[]; lastWeekMinutes: number } {
   const w = weekStart(today);

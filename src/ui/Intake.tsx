@@ -8,7 +8,8 @@ import { toggleJazzFocus } from '../engine/jazzFold';
 import { Icon } from './icons';
 import { setTalk, talkOn } from '../speech/talk';
 import { useEffect, useRef, useState } from 'react';
-import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type Level4, type Motivation } from '../engine/intake';
+import { AREAS, intakeSettings, trackOf, voiceTypeOf, type Intake as IntakeT, type IntakeMinutes, type Level4, type Motivation } from '../engine/intake';
+import { clampDaily, DAILY } from '../engine/practiceSession';
 import { personalOrder } from '../engine/intake';
 import { defaultPacks, GOAL_NAMES, GOALS, PACKS } from '../engine/path';
 import type { DomainId } from '../engine/rating';
@@ -115,9 +116,12 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
       { v: 'friends' as Motivation, label: q.motFriends },
     ],
     minutes: [
-      { v: 5 as const, label: q.min5 },
+      // SPEC-PRACTICE-SESSION §7: 10 / 20 / 30 / 45 / 60, default 30 (it becomes the daily practice setting)
       { v: 10 as const, label: q.min10 },
       { v: 20 as const, label: q.min20 },
+      { v: 30 as const, label: q.min30 },
+      { v: 45 as const, label: q.min45 },
+      { v: 60 as const, label: q.min60 },
     ],
   };
   const NAMING: ['solfege' | 'letter' | 'auto', string, string][] = [
@@ -296,7 +300,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
     plays: a.plays ?? [],
     priorities: mixed || ranked.length < AREAS.length ? (mixed ? null : [...ranked, ...AREAS.filter((x) => !ranked.includes(x))]) : ranked,
     motivation: (a.motivation ?? 'learn') as Motivation,
-    minutes: (a.minutes ?? 10) as 5 | 10 | 20,
+    minutes: (a.minutes ?? DAILY.def) as IntakeMinutes,
     goal: a.goal ?? 'general',
     leaveOut: a.leaveOut ?? [],
     packs: a.packs ?? defaultPacks(trackOf({ music: (a.music ?? 0) as Level4, theory: (a.theory ?? 0) as Level4, reading: (a.reading ?? 0) as 0 | 1 | 2 }), a.plays ?? [], a.goal ?? 'general'),
@@ -306,7 +310,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   const finish = (then: 'placement' | 'basics' | 'home') => {
     const intake = full();
     const s = intakeSettings(intake);
-    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}) };
+    const patch: Partial<Settings> = { intake, track: s.track, cleanView: s.cleanView, miniLessons: s.miniLessons, ...(s.noteViews ? { noteViews: s.noteViews } : {}), dailyMinutes: clampDaily(intake.minutes) };
     // The path (spec AF D2 / D4) and the instrument (spec AE §6.1).
     patch.goal = intake.goal;
     // 0.67: "Exam prep" is the Ear course in exam-prep mode (the Exams course is gone): turn it on and go to Ear.
@@ -338,7 +342,7 @@ export function IntakeScreen({ t, settings, onDone, onSkip }: { t: Strings; sett
   const opts = <K extends 'music' | 'singing' | 'theory' | 'reading' | 'motivation' | 'minutes'>(k: K, list: { v: IntakeT[K]; label: string }[]) => (
     <div className="intake-opts" role="radiogroup">
       {list.map((o) => (
-        <button key={String(o.v)} role="radio" aria-checked={a[k] === o.v} className={`intake-opt ${a[k] === o.v ? 'on' : ''}`} data-v={String(o.v)} onClick={() => pick(k, o.v)}>
+        <button key={String(o.v)} role="radio" aria-checked={(a[k] ?? (k === 'minutes' ? DAILY.def : undefined)) === o.v} className={`intake-opt ${(a[k] ?? (k === 'minutes' ? DAILY.def : undefined)) === o.v ? 'on' : ''}`} data-v={String(o.v)} onClick={() => pick(k, o.v)}>
           <span>{o.label}</span>
         </button>
       ))}

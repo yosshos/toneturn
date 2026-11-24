@@ -171,7 +171,7 @@ export function pathInputFrom(s: Settings, p: Progress, now = new Date()): PathI
     lessRoom: s.pathLessRoom ?? [],
     packs: s.pathPacks ?? defaultPacks(track, plays, goal),
     plays,
-    minutes: (intake?.minutes ?? 10) as 5 | 10 | 20,
+    minutes: intake?.minutes ?? 10,
     ratings: ratingsOf(p),
     events: p.ratingEvents ?? [],
     // PIANO_JAZZ P2: repertoire results are done repertoire steps (measured on the item's own practice).

@@ -596,6 +596,33 @@ export function preset(p: Preset, totalMin: number, suggested: Block[]): Block[]
   }
 }
 
+/** SPEC-PRACTICE-SESSION §2: the areas the card's focus picker offers, each one an existing preset. */
+export const FOCUS_PRESET: Partial<Record<DomainId, Preset>> = { instrument: 'instrument', pitch: 'ear', time: 'rhythm', reading: 'reading', voice: 'voice' };
+/** The active course's areas that have a focus preset, in the course's order. */
+export const focusAreas = (courseAreas: readonly DomainId[]): DomainId[] => courseAreas.filter((a) => !!FOCUS_PRESET[a]);
+/**
+ * The card's focus (§2): today's blocks for one area of the active course, at `totalMin`. The session stays inside the
+ * course: an instrument course's "instrument" focus keeps the suggestion's technique / improvisation / warm-up blocks;
+ * otherwise the area's preset, its side block moved into the course when the preset reaches outside it.
+ */
+export function focusBlocks(area: DomainId, totalMin: number, suggested: Block[], courseAreas: readonly DomainId[]): Block[] {
+  const T = Math.max(LIMITS.minTotal, Math.min(LIMITS.maxTotal, Math.round(totalMin)));
+  if (area === 'instrument') {
+    const own = suggested.filter((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen' || b.target.kind === 'improv' || b.target.kind === 'warmup' || b.target.kind === 'teacher');
+    if (own.some((b) => b.target.kind === 'keys' || b.target.kind === 'strengthen' || b.target.kind === 'improv')) return rescale(own.map((b) => ({ ...b, locked: false })), T);
+  }
+  const p = FOCUS_PRESET[area];
+  if (!p) return rescale(suggested.map((b) => ({ ...b })), T);
+  const out: Block[] = [];
+  for (const b of preset(p, T, suggested)) {
+    const tg = b.target.kind === 'area' && !courseAreas.includes(b.target.area) ? { kind: 'area' as const, area } : b.target;
+    const same = out.find((x) => targetKey(x.target) === targetKey(tg));
+    if (same && same.minutes + b.minutes <= LIMITS.maxBlock) same.minutes += b.minutes;
+    else out.push({ ...b, target: tg });
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------- the path link (§9)
 
 /** What a block serves next: a path step (current unit first, then the next unit), or free practice. */
@@ -672,9 +699,14 @@ export interface WorkoutRun {
   /** Items answered and right, per block id. */
   items: Record<string, [number, number]>;
   finished?: boolean;
+  /** SPEC-PRACTICE-SESSION §8: the session's id, its course and focus, and the minutes chosen at Start. */
+  id?: string;
+  course?: CourseId;
+  focus?: 'plan' | DomainId;
+  planned?: number;
 }
 
-export const startRun = (day: string, blocks: Block[]): WorkoutRun => ({ day, blocks, at: 0, used: {}, steps: [], items: {} });
+export const startRun = (day: string, blocks: Block[], meta?: { id?: string; course?: CourseId; focus?: 'plan' | DomainId }): WorkoutRun => ({ day, blocks, at: 0, used: {}, steps: [], items: {}, ...(meta ? { ...meta, planned: total(blocks) } : {}) });
 export const blockLeftMs = (r: WorkoutRun, i = r.at) => (r.blocks[i] ? Math.max(0, r.blocks[i].minutes * 60000 - (r.used[r.blocks[i].id] ?? 0)) : 0);
 export const runLeftMs = (r: WorkoutRun) => r.blocks.slice(r.at).reduce((a, _b, k) => a + blockLeftMs(r, r.at + k), 0);
 /** Count a session's active time (capped at 60 s per item: pauses and wandering off don't count). */

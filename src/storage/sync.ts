@@ -29,6 +29,7 @@ import { mergeBase, mergeCounts, mergePeaks, mergeRecords, mergeStatsDays, merge
 import { mergeAwards } from '../engine/achievements';
 import { mergeRanks } from '../engine/ranks';
 import { mergeBadgeLog } from '../engine/badges';
+import { mergeSessions, mergeSessionTotals } from '../engine/practiceSession';
 
 export function rebuildProgress(results: LessonResult[], local?: Progress): Progress {
   // A rebuild starts from nothing: XP added take by take (technique) exists only in the results now, so count it.
@@ -67,6 +68,9 @@ export function rebuildProgress(results: LessonResult[], local?: Progress): Prog
     gameTiers: local.gameTiers,
     gameXpDays: local.gameXpDays,
     tierRuns: local.tierRuns,
+    // SPEC-PRACTICE-SESSION §8: the session records and their totals live on this device until the DB stores them.
+    sessions: mergeSessions(local.sessions, rebuilt.sessions),
+    sessionTotals: mergeSessionTotals(local.sessionTotals, rebuilt.sessionTotals),
   };
 }
 

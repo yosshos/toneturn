@@ -210,7 +210,7 @@ export interface PathInput {
   plays: string[];
   /** Technique drills left out of the path (drill settings, spec AI owner Q7). */
   noDrills?: boolean;
-  minutes: 5 | 10 | 20;
+  minutes: number;
   ratings: Ratings;
   events: RatingEvent[];
   /** Median time / reference time per sub-skill (P4), when known. */
@@ -278,6 +278,8 @@ export interface PathView {
 
 export const START: Record<Track, number> = { explorer: 850, hobby: 950, student: 1100, pro: 1250 };
 export const UNIT_LEN: Record<5 | 10 | 20, number> = { 5: 6, 10: 8, 20: 10 };
+/** Steps in a unit by the minutes a day: 5 → 6, 10 → 8, 20 and more → 10. */
+export const unitLenOf = (minutes: number): number => (!Number.isFinite(minutes) ? UNIT_LEN[10] : minutes <= 5 ? UNIT_LEN[5] : minutes <= 10 ? UNIT_LEN[10] : UNIT_LEN[20]);
 const RANK_W = [5, 4, 3, 2, 2, 1, 1];
 const DAY = 86400000;
 
@@ -1173,7 +1175,7 @@ export function buildPath(inp: PathInput): PathView {
   for (const s of all) verdict.set(s.id, checkStep(s, inp, subs));
   const isDone = (id: string) => (doneSteps[id]?.stars ?? 0) > 0;
   const isChecked = (id: string) => verdict.get(id)?.state === 'tested';
-  const L = UNIT_LEN[inp.minutes] ?? 8;
+  const L = unitLenOf(inp.minutes);
 
   const stateOf = (s: PathStep, extra?: Partial<UnitStep>): UnitStep => {
     const d = doneSteps[s.id];

@@ -11,6 +11,7 @@ import type { MetricKey, VibratoStyle, VoiceRange } from '../engine/vocal';
 import { memoryFactor } from '../engine/vocal';
 import type { AidMode, NoteView } from '../engine/aids';
 import { gemsEarned, gemsSpent, streakState, type Purchase, type StreakState } from '../engine/streak';
+import { addSessionRecord, type SessionRecord } from '../engine/practiceSession';
 import { placementUnlocks } from '../engine/recommend';
 import { outcomeOf, type InputMode, type SessionState } from '../engine/session';
 import { ratingScore } from '../engine/scoring';
@@ -132,6 +133,10 @@ export interface Progress {
   lastTierClear?: { game: string; tier: DynName; at: string };
   /** Recent tiered runs (quests read today's; badges read the cleared state). */
   tierRuns?: { game: string; tier: DynName; pass: boolean; cleared?: boolean; at: string }[];
+  /** SPEC-PRACTICE-SESSION §8: the last 500 daily practice sessions (finished or ended early), oldest first. */
+  sessions?: import('../engine/practiceSession').SessionRecord[];
+  /** Sessions finished, total time and the records (longest session, best week, best month) from the start. */
+  sessionTotals?: import('../engine/practiceSession').SessionTotals;
 }
 
 export interface VocalTake {
@@ -380,8 +385,12 @@ export interface Settings {
   workoutTemplates?: Record<string, import('../engine/workout2').Block[]>;
   /** When a default was last saved or kept (W6: older than 30 days asks "refresh my default?"). */
   workoutTemplateAt?: string;
-  /** Today's own edits (W18). */
-  workoutToday?: { day: string; blocks: import('../engine/workout2').Block[] };
+  /** Today's own edits (W18), per course (SPEC-PRACTICE-SESSION §2). */
+  workoutToday?: import('../engine/practiceSession').TodayEdits;
+  /** SPEC-PRACTICE-SESSION §7: the daily practice length in minutes (5–180, steps of 5; absent = 30). */
+  dailyMinutes?: number;
+  /** §6–§7: practice days a week for the weekly minutes goal (3–7; absent = 5). */
+  practiceDays?: number;
   /** After-workout feedback (W11): tomorrow's suggested total moves by delta, and the step window by rating (±50), until this day. */
   workoutNudge?: { until: string; delta: number; rating?: number };
   /** SPEC-WORKOUT §9.4 "Less room": areas whose weight in each unit halves. */
@@ -1100,6 +1109,17 @@ export class ProgressStore {
     return next;
   }
 
+  /**
+   * SPEC-PRACTICE-SESSION §8: a daily practice session reached its end (or was ended early) — its record, the totals and
+   * records; a finished session counts its day for the streak (§4, SPEC-WORKOUT W15). Once per session id.
+   */
+  async recordSession(rec: import('../engine/practiceSession').SessionRecord): Promise<Progress> {
+    const p = await this.loadProgress();
+    const next = withSessionRecord(p, rec);
+    if (next !== p) await this.kv.set('progress', next);
+    return next;
+  }
+
   /** Every recorded result carries the course the player was in (0.65, community per course). */
   private async withCourse(r: LessonResult): Promise<LessonResult> {
     if (r.course) return r;
@@ -1125,6 +1145,20 @@ export class ProgressStore {
     if (next !== p) await this.kv.set('progress', next);
     return next;
   }
+}
+
+/** A session record into progress (pure; the same progress back when the id is already there). A finished session
+ *  marks its day as a practice day (provisional, like markPracticeDay: the streak celebration still treats it as new). */
+export function withSessionRecord(p: Progress, rec: SessionRecord): Progress {
+  if ((p.sessions ?? []).some((x) => x.id === rec.id)) return p;
+  const { sessions, totals } = addSessionRecord(p.sessions, p.sessionTotals, rec);
+  let stats = p.stats;
+  if (rec.finished && !practiceDays(p).has(rec.day)) {
+    const st = p.stats ?? { days: [], goodSessions: 0, xpByDay: {} };
+    provisionalDays.add(rec.day);
+    stats = { ...st, days: [...st.days, rec.day].slice(-800) };
+  }
+  return { ...p, sessions, sessionTotals: totals, ...(stats ? { stats } : {}) };
 }
 
 /** Done at least once with at least 80 % first-try correct (the latest result's total). */

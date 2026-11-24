@@ -20,6 +20,7 @@ import type { Strings } from '../i18n/strings';
 import { KOKORO_MB, type KokoroStatus } from '../speech/kokoro/decide';
 import { useNarratorStatus, useTalk } from './TalkToggle';
 import { DEFAULT_SOUND, bassTuningOf, namingFor, type Settings } from '../storage/progress';
+import { clampDaily, DAILY, dailyMinutesOf, practiceDaysOf, WEEK_DAYS, weeklyGoalMin } from '../engine/practiceSession';
 import { Note } from './bits';
 import { previewText } from '../speech/voice/preview';
 import { piano, store, tts } from './services';
@@ -55,6 +56,41 @@ interface Props {
   onAdmin?: () => void;
   /** My ratings: the profile card shows my level in each course. */
   ratings?: Ratings;
+}
+
+/** SPEC-PRACTICE-SESSION §7: Practice — the daily practice length (5–180, steps of 5) and practice days a week (3–7). */
+function PracticeLength({ lang, s, onChange }: { lang: 'he' | 'en'; s: Settings; onChange: (p: Partial<Settings>) => void }) {
+  const he = lang === 'he';
+  const m = dailyMinutesOf(s);
+  const days = practiceDaysOf(s);
+  const goal = weeklyGoalMin(s);
+  const goalText = goal < 60 ? (he ? `${goal} דק׳` : `${goal} min`) : goal % 60 === 0 ? (he ? `${goal / 60} שע׳` : `${goal / 60} h`) : he ? `${Math.floor(goal / 60)} שע׳ ${goal % 60} דק׳` : `${Math.floor(goal / 60)} h ${goal % 60} min`;
+  return (
+    <section className="set-card" data-practice-settings="1">
+      <h2>{he ? 'אימון' : 'Practice'}</h2>
+      <div className="field-row">
+        <span>{he ? 'אימון יומי' : 'Daily practice'}</span>
+        <span className="row" style={{ gap: 8, alignItems: 'center' }}>
+          <button type="button" className="icon-btn" onClick={() => onChange({ dailyMinutes: clampDaily(m - DAILY.step) })} disabled={m <= DAILY.min} aria-label="−5" data-daily-minus="1">
+            <Icon k="minus" size={16} />
+          </button>
+          <b dir="auto" data-daily-minutes={m} style={{ minWidth: '5em', textAlign: 'center' }}>
+            {m} {he ? 'דק׳' : 'min'}
+          </b>
+          <button type="button" className="icon-btn" onClick={() => onChange({ dailyMinutes: clampDaily(m + DAILY.step) })} disabled={m >= DAILY.max} aria-label="+5" data-daily-plus="1">
+            <Icon k="plus" size={16} />
+          </button>
+        </span>
+      </div>
+      <Seg
+        label={he ? 'ימי אימון בשבוע' : 'Practice days a week'}
+        hint={he ? `יעד שבועי: ${goalText}` : `Weekly goal: ${goalText}`}
+        value={String(days)}
+        options={Array.from({ length: WEEK_DAYS.max - WEEK_DAYS.min + 1 }, (_, i) => String(WEEK_DAYS.min + i)).map((n) => [n, n] as [string, string])}
+        onChange={(v) => onChange({ practiceDays: Number(v) })}
+      />
+    </section>
+  );
 }
 
 function Seg<T extends string>({
@@ -516,6 +552,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
             </section>
           )}
           <MyPath t={t} s={s} onChange={onChange} />
+          <PracticeLength lang={lang} s={s} onChange={onChange} />
           <section className="set-card">
             <Seg
               label={lang === 'he' ? 'יעד יומי' : 'Daily goal'}

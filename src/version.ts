@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.132.0',
+    date: '2026-11-24',
+    en: ['Today’s practice starts with one question: how long do you have? Pick 10 to 90 minutes (30 by default) and an area, and see the split before you start. Daily practice length and practice days a week are in Settings'],
+    he: ['האימון של היום מתחיל בשאלה אחת: כמה זמן יש לך? בוחרים בין 10 ל-90 דקות (30 כברירת מחדל) ותחום, ורואים את החלוקה לפני שמתחילים. אורך האימון היומי וימי אימון בשבוע נמצאים בהגדרות'],
+  },
+  {
     version: '0.131.0',
     date: '2026-11-24',
     en: ['German, Japanese, Korean and Chinese are now complete too: every lesson explanation is translated'],

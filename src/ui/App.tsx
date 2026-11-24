@@ -147,7 +147,7 @@ import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
-import { addSession, areaMinutes, betweenNow, blockLeftMs, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, markServed, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, improvLevelToday, pieceWhyToday, teacherItems, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
+import { addSession, areaMinutes, betweenNow, blockLeftMs, canRescale, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, focusAreas, focusBlocks, markServed, rescale, total as blocksTotal, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, improvLevelToday, pieceWhyToday, teacherItems, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type WorkoutRun } from '../engine/workout2';
 import { dayKeyIfKept, ensureDayKey, improvRootOf, keptPlan, matrixTierOf, projectionInput, techBlockRuns } from './todayTech';
 import { logAreaDay, readAreaLog, readDayCtx, saveDayCtx, waitAsked, setWaitAsked, noteStepInWorkout, type DayCtx } from './workoutLog';
 import { CoachTilt } from './CoachTilt';
@@ -220,6 +220,7 @@ import { clearPendingChallenge, openChallenge, pendingChallenge, postMilestones,
 import { challengeFromHash, learnedStandards, type MilestoneEvents } from '../engine/socialRound';
 import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
+import { clampDaily, dailyMinutesOf, legacyRunSlotKey, pickRun, runSlotKey, sessionRecordOf, todayEditsFor, todayFocusFor, withTodayEdits, type SessionFocus } from '../engine/practiceSession';
 import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './Path';
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
 import { THEMES, checkpointParts, checkpointSession, recordStep, stepSession, stepStars, testOutPassed, testOutSession, type PathStep, type PathUnit, type UnitStep } from '../engine/path';
@@ -2513,10 +2514,14 @@ export function App() {
   const now0 = new Date();
   // W9: a workout belongs to the day it started; until 04:00 yesterday's unfinished one continues.
   const yday = localDay(new Date(now0.getTime() - 86400000));
-  const today = now0.getHours() < 4 && (loadSlot<WorkoutRun>(`workout:${yday}`)?.data?.finished === false) ? yday : localDay(now0);
+  // SPEC-PRACTICE-SESSION §2: the run and today's edits belong to the day and the active course.
+  const wCourse = courseOf(s.activeCourse).id;
+  const loadRun = (day: string): WorkoutRun | null => pickRun(loadSlot<WorkoutRun>(runSlotKey(day, wCourse))?.data, loadSlot<WorkoutRun>(legacyRunSlotKey(day))?.data, wCourse);
+  const today = now0.getHours() < 4 && loadRun(yday)?.finished === false ? yday : localDay(now0);
   const nudge = s.workoutNudge && s.workoutNudge.until >= today ? s.workoutNudge.delta : 0;
   // BUILD-PLAN phase 2: a window up to 180 minutes (SPEC-DAILY-WORKOUT §4).
-  const baseMinutes = Math.max(5, Math.min(180, ((s.intake as Intake | null | undefined)?.minutes ?? 10) + nudge));
+  // SPEC-PRACTICE-SESSION §7: the daily practice setting (30 by default) replaced the intake's 5 / 10 / 20.
+  const baseMinutes = Math.max(5, Math.min(180, dailyMinutesOf(s) + nudge));
   // SPEC-PATH-TODAY-PRACTICE §5.1: the open class assignments, today's share (spread until the due date by default).
   const teacherTp = useMemo(() => teacherToday(teacherItems(assigned), localDay(now0), baseMinutes), [assigned, baseMinutes]); // eslint-disable-line react-hooks/exhaustive-deps
   const tmplRaw = s.workoutTemplates?.[String(now0.getDay())] ?? s.workoutTemplates?.all ?? null;
@@ -2549,14 +2554,37 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathView, baseMinutes, tmplRaw, s.goal, s.examPrep, s.jazzFocus, s.jazzOpen, s.styleFocus, s.styleTaste, s.aiTilt, s.pathPacks, s.pathLeaveOut, s.pathHidden, s.mode, s.noSing, s.noMic, progress.review.length, today, progress.history.length, piecesDueN, s.pathMode, teacherTp, s.drills?.emphasis]);
   // Today's edits keep the teacher's section (it is added, never replaced: §5.1).
-  const todayBlocks = s.workoutToday?.day === today ? withTeacher(s.workoutToday.blocks, teacherTp) : suggestedWorkout;
-  const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadSlot<WorkoutRun>(`workout:${today}`)?.data ?? null);
-  const wrunRef = useRef(wrun);
-  wrunRef.current = wrun;
+  const todayEdits = todayEditsFor(s.workoutToday, today, wCourse);
+  const wFocus: SessionFocus = todayFocusFor(s.workoutToday, today, wCourse);
+  const todayBlocks = todayEdits ? withTeacher(todayEdits, teacherTp) : suggestedWorkout;
+  const [wrun, setWrun] = useState<WorkoutRun | null>(() => loadRun(today));
+  // switching course (or the day turning) brings that course's own run back
+  const runKey = `${today}|${wCourse}`;
+  const [wrunKey, setWrunKey] = useState(runKey);
+  const wrunNow = wrunKey === runKey ? wrun : loadRun(today);
+  if (wrunKey !== runKey) {
+    setWrunKey(runKey);
+    setWrun(wrunNow);
+  }
+  const wrunRef = useRef(wrunNow);
+  wrunRef.current = wrunNow;
+  /** A new run of today's session in the active course (its id, course and focus go into the session record). */
+  const newRun = (blocks: Block[]) => startRun(today, blocks, { id: `${today}:${wCourse}:${Date.now().toString(36)}`, course: wCourse, focus: wFocus });
   const saveRun = (r: WorkoutRun | null) => {
+    const prev = wrunRef.current;
     setWrun(r);
     wrunRef.current = r;
-    if (r) saveSlot(`workout:${r.day}`, { title: s.uiLang === 'en' ? "Today's workout" : 'האימון של היום', route: 'home', done: r.at, total: r.blocks.length, data: r });
+    if (r) {
+      const course = r.course ?? wCourse;
+      saveSlot(runSlotKey(r.day, course), { title: s.uiLang === 'en' ? "Today's workout" : 'האימון של היום', route: 'home', done: r.at, total: r.blocks.length, data: { ...r, course } });
+      // the day-only slot from before the course key: its run now lives under the course
+      if (loadSlot(legacyRunSlotKey(r.day))) clearSlot(legacyRunSlotKey(r.day));
+      // SPEC-PRACTICE-SESSION §8: the session reached its end (or End early) — its record; the day counts for the streak
+      if (r.finished && prev && !prev.finished && prev.day === r.day) {
+        const rec = sessionRecordOf(r, { course, id: `${r.day}:${course}:${Date.now().toString(36)}` });
+        if (rec.activeMs > 0) void store.recordSession(rec).then(setProgress);
+      }
+    }
     // §9.4: the minutes each area with waiting path steps gets today (the "keeps waiting" question reads 5 days of it)
     if (r) {
       const waitingNow = [...unitRemaining(pathView).byArea.entries()].filter(([, n]) => n > 0).map(([a]) => a);
@@ -2643,7 +2671,7 @@ export function App() {
     const own = Math.max(0, (st.activeMs ?? 0) - prevMs) || 15000;
     const ms = lastPlanTake.current && now - lastPlanTake.current < 5 * 60000 ? Math.max(own, activeSince(lastPlanTake.current, now)) : own;
     lastPlanTake.current = now;
-    const r0 = wrunRef.current && wrunRef.current.day === today ? wrunRef.current : startRun(today, withContext(todayBlocks));
+    const r0 = wrunRef.current && wrunRef.current.day === today ? wrunRef.current : newRun(withContext(todayBlocks));
     const tb = techBlockOf(r0);
     if (tb) saveRun(creditBlock(r0, tb.id, ms));
   };
@@ -2676,7 +2704,36 @@ export function App() {
   const [wctx, setWctxState] = useState<DayCtx>(() => readDayCtx(today, { nomic: !!s.noMic, quiet: false, noinst: false }));
   const setWctx = (c: DayCtx) => (saveDayCtx(today, c), setWctxState(c));
   /** W6's answer (Today and the editor): keep the old default (its 30 days start again) or go back to the suggestion. */
-  const onTemplateAnswer = (keep: boolean) => updateSettings(keep ? { workoutTemplateAt: today } : { workoutTemplates: undefined, workoutTemplateAt: today, workoutToday: undefined });
+  const onTemplateAnswer = (keep: boolean) => updateSettings(keep ? { workoutTemplateAt: today } : { workoutTemplates: undefined, workoutTemplateAt: today, workoutToday: withTodayEdits(s.workoutToday, today, wCourse, null, 'plan') });
+  /** A run saved at Start but not begun yet (nothing played): a new length or focus replaces it. */
+  const dropIdleRun = () => {
+    const r = wrunRef.current;
+    if (!r || r.day !== today || r.finished || r.at > 0 || Object.keys(r.used).length) return;
+    clearSlot(runSlotKey(today, wCourse));
+    setWrun(null);
+    wrunRef.current = null;
+  };
+  /**
+   * SPEC-PRACTICE-SESSION §2: a length chip or the stepper — remembered as the daily length, and today re-splits at
+   * once: the suggestion follows the setting; a focus, today's edits, a saved default or a feedback nudge rescale.
+   */
+  const onWorkoutLength = (n: number) => {
+    const m = clampDaily(n);
+    dropIdleRun();
+    const own = todayBlocks.filter((b) => b.target.kind !== 'teacher');
+    const teacherMin = blocksTotal(todayBlocks) - blocksTotal(own);
+    const patch: Partial<Settings> = { dailyMinutes: m };
+    if (wFocus !== 'plan') patch.workoutToday = withTodayEdits(s.workoutToday, today, wCourse, focusBlocks(wFocus, Math.max(5, m - teacherMin), suggestedWorkout.filter((b) => b.target.kind !== 'teacher'), COURSE_AREAS[wCourse]));
+    else if ((todayEdits || tmplRaw || nudge) && canRescale(todayBlocks, m)) patch.workoutToday = withTodayEdits(s.workoutToday, today, wCourse, rescale(todayBlocks, m));
+    updateSettings(patch);
+  };
+  /** §2: the focus — my plan (back to the suggestion) or one of the active course's areas, at today's length. */
+  const onWorkoutFocus = (f: SessionFocus) => {
+    dropIdleRun();
+    if (f === 'plan') return updateSettings({ workoutToday: withTodayEdits(s.workoutToday, today, wCourse, null, 'plan') });
+    const own = todayBlocks.filter((b) => b.target.kind !== 'teacher');
+    updateSettings({ workoutToday: withTodayEdits(s.workoutToday, today, wCourse, focusBlocks(f, blocksTotal(own), suggestedWorkout.filter((b) => b.target.kind !== 'teacher'), COURSE_AREAS[wCourse]), f) });
+  };
   /** D3: the key Improvise plays in — the key of the week (picked from the matrix when none is kept yet; it used to fall
    *  back to C), a minor week key's relative major. */
   const improvDayKey = useMemo(() => {
@@ -2882,7 +2939,7 @@ export function App() {
   };
   const startWorkout = () => {
     void piano.unlock();
-    const r = wrun && wrun.day === today && !wrun.finished ? wrun : startRun(today, withContext(todayBlocks));
+    const r = wrun && wrun.day === today && !wrun.finished ? wrun : newRun(withContext(todayBlocks));
     saveRun(r);
     runCurrent(r);
   };
@@ -3206,11 +3263,11 @@ export function App() {
               blocks={wrun && wrun.day === today && !wrun.finished ? wrun.blocks : todayBlocks}
               run={wrun && wrun.day === today ? wrun : null}
               view={pathView}
-              nextLine={workoutNext(wrun && wrun.day === today && !wrun.finished ? wrun : startRun(today, withContext(todayBlocks)))?.title ?? null}
-              edited={s.workoutToday?.day === today}
+              nextLine={workoutNext(wrun && wrun.day === today && !wrun.finished ? wrun : newRun(withContext(todayBlocks)))?.title ?? null}
+              edited={!!todayEdits && wFocus === 'plan'}
               onStart={() => (s.mode === 'voice' && !s.voiceConsent ? setConsentThen(() => () => startWorkout()) : startWorkout())}
               onEdit={() => go('workout')}
-              onReset={() => updateSettings({ workoutToday: undefined })}
+              onReset={() => updateSettings({ workoutToday: withTodayEdits(s.workoutToday, today, wCourse, null, 'plan') })}
               leadsTo={leadsLine}
               subs={workoutSubs}
               ctx={wctx}
@@ -3218,6 +3275,10 @@ export function App() {
               templateAt={tmplRaw ? (s.workoutTemplateAt ?? null) : null}
               today={today}
               onTemplate={onTemplateAnswer}
+              focus={wFocus}
+              focusAreas={focusAreas(COURSE_AREAS[wCourse])}
+              onFocus={onWorkoutFocus}
+              onLength={onWorkoutLength}
             />
             </>
           }
@@ -3778,9 +3839,9 @@ export function App() {
           onSave={(blocks) => {
             // W8: during a run only the blocks not run yet change.
             if (wrun && wrun.day === today && !wrun.finished) saveRun({ ...wrun, blocks: [...wrun.blocks.slice(0, wrun.at), ...blocks] });
-            updateSettings({ workoutToday: { day: today, blocks: wrun && wrun.day === today && !wrun.finished ? [...wrun.blocks.slice(0, wrun.at), ...blocks] : blocks } });
+            updateSettings({ workoutToday: withTodayEdits(s.workoutToday, today, wCourse, wrun && wrun.day === today && !wrun.finished ? [...wrun.blocks.slice(0, wrun.at), ...blocks] : blocks) });
           }}
-          onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutTemplateAt: today, workoutToday: { day: today, blocks } })}
+          onSaveDefault={(blocks, scope) => updateSettings({ workoutTemplates: { ...(s.workoutTemplates ?? {}), [scope === 'all' ? 'all' : String(new Date().getDay())]: blocks.map((b) => ({ ...b })) }, workoutTemplateAt: today, workoutToday: withTodayEdits(s.workoutToday, today, wCourse, blocks) })}
           templateAt={tmplRaw ? (s.workoutTemplateAt ?? null) : null}
           today={today}
           onTemplate={onTemplateAnswer}

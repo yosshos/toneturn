@@ -10,6 +10,7 @@ import type { FamilyId, ItemState } from './drills/types';
 import { localDay } from './stats';
 import { REPERTOIRE, repCounts, repResults } from './repertoire';
 import type { CourseId } from './courses';
+import { workoutDaysOf } from './practiceSession';
 
 /** Standards (tiers 3 and 4) and advanced pieces learned per course, from the repertoire results in progress.lessons. */
 export function repertoireOf(p: Progress): Partial<Record<CourseId, { standards: number; advanced: number }>> {
@@ -51,6 +52,8 @@ export function badgeInputOf(p: Progress, now: Date, weekendDays?: number[], ext
     statsHours: p.statsHours,
     counts: p.counts,
     days: [...practiceDays(p)],
+    // SPEC-PRACTICE-SESSION §8: the days a daily session was finished ("weekly-ritual", "iron-routine").
+    workoutDays: workoutDaysOf(p.sessions),
     gameTiers: p.gameTiers,
     repertoire: repertoireOf(p),
     vocalPassed: p.vocal?.passed,

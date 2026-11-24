@@ -78,6 +78,16 @@ const W = {
     stale: 'Your default is over 30 days old. Refresh it?',
     refresh: 'Refresh',
     keep: 'Keep it',
+    // SPEC-PRACTICE-SESSION §2: the card before Start
+    practiceToday: 'Practice today',
+    length: 'Length today',
+    otherLen: 'Another length',
+    focus: 'Focus',
+    myPlan: 'My plan',
+    focusName: { instrument: 'Instrument', pitch: 'Ear', time: 'Rhythm', reading: 'Reading', voice: 'Voice' } as Partial<Record<DomainId, string>>,
+    split: 'Today’s split',
+    startN: 'Start · {m} min',
+    editLink: 'Edit',
   },
   he: {
     title: 'האימון של היום',
@@ -137,6 +147,15 @@ const W = {
     stale: 'ברירת המחדל שלכם בת יותר מ־30 יום. לרענן אותה?',
     refresh: 'לרענן',
     keep: 'להשאיר',
+    practiceToday: 'האימון של היום',
+    length: 'אורך היום',
+    otherLen: 'אורך אחר',
+    focus: 'מיקוד',
+    myPlan: 'התוכנית שלי',
+    focusName: { instrument: 'הכלי', pitch: 'שמיעה', time: 'קצב', reading: 'קריאה', voice: 'קול' } as Partial<Record<DomainId, string>>,
+    split: 'החלוקה של היום',
+    startN: 'להתחיל · {m} דק׳',
+    editLink: 'עריכה',
   },
 };
 const fill = (s: string, v: Record<string, string | number>) => Object.entries(v).reduce((a, [k, x]) => a.replaceAll(`{${k}}`, String(x)), s);
@@ -234,7 +253,14 @@ export function TemplateStaleAsk({ templateAt, today, onTemplate, lang }: { temp
  * Today's workout (W1): the hero of Today, with today's context switches (no mic / quiet / no instrument) and the W6
  * question about an old default (both also in the editor).
  */
-export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, ctx, onCtx, templateAt, today, onTemplate }: {
+export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, ctx, onCtx, templateAt, today, onTemplate, focus, focusAreas, onFocus, onLength }: {
+  /** SPEC-PRACTICE-SESSION §2: today's focus in the active course ('plan' or one of its areas). */
+  focus?: 'plan' | DomainId;
+  /** The active course's areas the focus picker offers. */
+  focusAreas?: DomainId[];
+  onFocus?: (f: 'plan' | DomainId) => void;
+  /** A length chip or the stepper: re-split today and remember it as the daily length. */
+  onLength?: (minutes: number) => void;
   /** W10: where you are today (kept for the day). */
   ctx?: WorkoutCtx;
   onCtx?: (c: WorkoutCtx) => void;
@@ -256,7 +282,109 @@ export function WorkoutCard({ t, lang, blocks, run, nextLine, edited, onStart, o
       <TemplateStaleAsk templateAt={templateAt} today={today} onTemplate={onTemplate} lang={lang} />
     </>
   );
+  // Before Start (§2): length, focus, the split and Start. Running or done: the card as it was.
+  if (!active && !run?.finished && onLength && onFocus) return <PlanCard {...{ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, onLength, onFocus }} focus={focus ?? 'plan'} focusAreas={focusAreas ?? []} />;
   return <StudioWorkoutCard {...{ t, lang, blocks, run, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, active: !!active, leftMin, at, extra }} />;
+}
+
+const LENGTHS = [10, 20, 30, 45, 60, 90];
+
+/**
+ * SPEC-PRACTICE-SESSION §2: the card before Start — one row of length chips (… opens a 5–180 stepper), the focus
+ * (my plan or one of the active course's areas), the split as one bar with minutes (a block's "why today" on tap),
+ * Start · N min and Edit ›.
+ */
+function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset, leadsTo, subs, extra, focus, focusAreas, onFocus, onLength }: { t: Strings; lang: Lang; blocks: Block[]; nextLine: string | null; edited: boolean; onStart: () => void; onEdit: () => void; onReset: () => void; leadsTo?: string | null; subs?: Partial<Record<string, string>>; extra?: React.ReactNode; focus: 'plan' | DomainId; focusAreas: DomainId[]; onFocus: (f: 'plan' | DomainId) => void; onLength: (m: number) => void }) {
+  const tx = W[lang];
+  const T = total(blocks);
+  const custom = !LENGTHS.includes(T);
+  const [stepper, setStepper] = useState(false);
+  const [sel, setSel] = useState<string | null>(null);
+  const selB = blocks.find((b) => b.id === sel) ?? null;
+  const selSub = selB ? subOf(tx, selB.target, leadsTo, subs) : undefined;
+  const T1 = T || 1;
+  return (
+    <section className="wk-card wk-hero st-plan wk-plan2" aria-label={tx.practiceToday} data-plan-card="1">
+      <div className="st-plan-h">
+        <span className="st-eyebrow">{tx.practiceToday}</span>
+      </div>
+      {/* what Start opens (one decision with the start itself: 0.68.1) */}
+      {nextLine && (
+        <h2 className="wk-title wk-plan-next">
+          <Iso text={nextLine} />
+        </h2>
+      )}
+      <div className="wk-len" role="radiogroup" aria-label={tx.length} data-wk-len={T}>
+        {LENGTHS.map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={T === n} className={`wk-pill ${T === n ? 'on' : ''}`} onClick={() => (setStepper(false), onLength(n))} data-len={n} dir="ltr">
+            {n}
+          </button>
+        ))}
+        <button type="button" role="radio" aria-checked={custom} aria-expanded={stepper} aria-label={tx.otherLen} className={`wk-pill ${custom ? 'on' : ''}`} onClick={() => setStepper((x) => !x)} data-len="more" dir="ltr">
+          {custom ? T : '…'}
+        </button>
+        <span className="wk-len-unit">{tx.min}</span>
+      </div>
+      {stepper && (
+        <div className="wk-len-step" data-len-stepper="1">
+          <button type="button" className="icon-btn" onClick={() => onLength(T - 5)} disabled={T <= LIMITS.minTotal} aria-label="−5">
+            <Icon k="minus" size={16} />
+          </button>
+          <b dir="auto">
+            {T} {tx.min}
+          </b>
+          <button type="button" className="icon-btn" onClick={() => onLength(T + 5)} disabled={T >= LIMITS.maxTotal} aria-label="+5">
+            <Icon k="plus" size={16} />
+          </button>
+        </div>
+      )}
+      {focusAreas.length > 0 && (
+        <div className="wk-focus" role="radiogroup" aria-label={tx.focus} data-wk-focus={focus}>
+          {(['plan', ...focusAreas] as ('plan' | DomainId)[]).map((f) => (
+            <button key={f} type="button" role="radio" aria-checked={focus === f} className={`wk-pill ${focus === f ? 'on' : ''}`} onClick={() => (setSel(null), onFocus(f))} data-focus={f}>
+              {f === 'plan' ? tx.myPlan : (tx.focusName[f] ?? t.domainNames[f])}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="wk-split" role="group" aria-label={tx.split}>
+        <div className="wk-split-bar">
+          {blocks.map((b) => (
+            <button key={b.id} type="button" className={`wk-split-seg ${sel === b.id ? 'on' : ''}`} style={{ flexGrow: b.minutes / T1, ['--hue' as string]: hueOf(b.target) }} onClick={() => setSel(sel === b.id ? null : b.id)} aria-pressed={sel === b.id} aria-label={`${blockLabel(t, b.target, lang, b.id)} · ${b.minutes} ${tx.min}`} data-seg={b.target.kind} data-min={b.minutes} />
+          ))}
+        </div>
+        <p className="wk-split-legend" dir="auto">
+          {blocks.map((b) => (
+            <button key={b.id} type="button" className={`wk-split-item ${sel === b.id ? 'on' : ''}`} style={{ ['--hue' as string]: hueOf(b.target) }} onClick={() => setSel(sel === b.id ? null : b.id)} aria-pressed={sel === b.id}>
+              <i aria-hidden="true" />
+              {blockLabel(t, b.target, lang, b.id)} <bdi dir="ltr">{b.minutes}</bdi>
+            </button>
+          ))}
+        </p>
+        {selB && (
+          <p className="wk-split-why" dir="auto" data-why-of={selB.id}>
+            <WhyChip target={selB.target} lang={lang} />
+            <span>{selSub ?? blockLabel(t, selB.target, lang, selB.id)}</span>
+          </p>
+        )}
+      </div>
+      {extra}
+      <button className="btn mega wk-start st-cta" data-continue="1" onClick={onStart}>
+        <Icon k="play" size={18} />
+        <span>{fill(tx.startN, { m: T })}</span>
+      </button>
+      <div className="wk-plan-foot">
+        {edited && (
+          <button className="link wk-edited st-tlink" onClick={onReset}>
+            {tx.edited} · {tx.reset}
+          </button>
+        )}
+        <button className="link st-tlink wk-edit-link" onClick={onEdit} data-wk-edit="1">
+          {tx.editLink} <span aria-hidden="true">{lang === 'he' ? '‹' : '›'}</span>
+        </button>
+      </div>
+    </section>
+  );
 }
 
 /**

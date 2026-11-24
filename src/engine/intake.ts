@@ -11,6 +11,7 @@ import { DOMAINS, type DomainId } from './rating';
 export type Level4 = 0 | 1 | 2 | 3;
 export type Motivation = 'learn' | 'streaks' | 'collect' | 'friends';
 export type Track = 'explorer' | 'hobby' | 'student' | 'pro';
+export type IntakeMinutes = 5 | 10 | 20 | 30 | 45 | 60;
 
 export interface Intake {
   v: 1;
@@ -27,7 +28,8 @@ export interface Intake {
   /** Practice areas in the player's order of importance; null = everything mixed. */
   priorities: DomainId[] | null;
   motivation: Motivation;
-  minutes: 5 | 10 | 20;
+  /** Minutes a day (SPEC-PRACTICE-SESSION §7: asked as 10 / 20 / 30 / 45 / 60; 5 from older answers). */
+  minutes: IntakeMinutes;
   /** The path goal (spec AF D2). */
   goal?: import('./path').Goal;
   /** What to leave out of the path (D4). */

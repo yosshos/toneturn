@@ -1157,3 +1157,187 @@
 @media (max-height: 900px) {
   :root:root .panel-screen.vocal .screen-head h1 { font-size: clamp(1.05rem, 2.8vh, 1.5rem); line-height: 1.2; }
 }
+
+/* SPEC-PRACTICE-SESSION §2: the practice card before Start — length, focus, the split, Start (fits a 375 px screen) */
+:root:root .wk-plan2 {
+  gap: 10px;
+}
+:root:root .wk-hero.st-plan.wk-plan2 .wk-plan-next {
+  margin-top: -6px;
+  font: 700 1rem/1.3 var(--font);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root:root .wk-plan2 .wk-len,
+:root:root .wk-plan2 .wk-focus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+:root:root .wk-plan2 .wk-len {
+  flex-wrap: nowrap;
+}
+:root:root .wk-plan2 .wk-focus {
+  flex-wrap: wrap;
+}
+:root:root .wk-plan2 .wk-pill {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 99px;
+  border: 1px solid var(--ss-line);
+  background: var(--ss-surface);
+  color: var(--ink);
+  box-shadow: none;
+  font: 600 0.88rem/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+:root:root .wk-plan2 .wk-len .wk-pill {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 4px;
+}
+:root:root .wk-plan2 .wk-pill.on {
+  background: var(--ink-c);
+  border-color: var(--ink-c);
+  color: #ffffff;
+}
+:root:root[data-theme='dark'] .wk-plan2 .wk-pill.on {
+  background: var(--lilac);
+  border-color: var(--lilac);
+  color: var(--ink-c);
+}
+:root:root .wk-plan2 .wk-len-unit {
+  flex: none;
+  font: 500 0.8rem/1 var(--font);
+  color: var(--ss-muted);
+}
+/* below 340 px the length row scrolls sideways instead of squeezing */
+@media (max-width: 339px) {
+  :root:root .wk-plan2 .wk-len {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  :root:root .wk-plan2 .wk-len .wk-pill {
+    flex: none;
+    min-width: 40px;
+  }
+}
+:root:root .wk-plan2 .wk-len-step {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+:root:root .wk-plan2 .wk-len-step .icon-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--ss-line);
+  background: var(--ss-surface);
+  box-shadow: none;
+  color: var(--ink);
+}
+:root:root .wk-plan2 .wk-len-step b {
+  font: 700 1rem/1 var(--font);
+  min-width: 5.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+:root:root .wk-plan2 .wk-split {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+:root:root .wk-plan2 .wk-split-bar {
+  display: flex;
+  gap: 3px;
+  height: 14px;
+}
+:root:root .wk-plan2 .wk-split-seg {
+  flex-basis: 0;
+  min-width: 6px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: var(--hue, var(--teal));
+  box-shadow: none;
+  transition: flex-grow 0.35s ease, opacity 0.2s ease;
+  opacity: 0.85;
+}
+:root:root .wk-plan2 .wk-split-seg.on {
+  opacity: 1;
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+:root:root .wk-plan2 .wk-split-legend {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font: 500 0.8rem/1.5 var(--font);
+  color: var(--ss-muted);
+}
+:root:root .wk-plan2 .wk-split-item {
+  display: inline;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  white-space: nowrap;
+}
+:root:root .wk-plan2 .wk-split-item i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--hue, var(--teal));
+  margin-inline-end: 4px;
+}
+:root:root .wk-plan2 .wk-split-item.on {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+:root:root .wk-plan2 .wk-split-why {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 400 0.8rem/1.3 var(--font);
+  color: var(--ss-muted);
+}
+:root:root .wk-plan2 .wk-split-why span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root:root .wk-plan2 .wk-split-why .wk-why {
+  margin-inline-start: 0;
+}
+:root:root .wk-plan2 .wk-plan-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:root .wk-plan2 .wk-split-seg {
+    transition: none;
+  }
+}
+html:root:root[data-motion='reduced'] .wk-plan2 .wk-split-seg {
+  transition: none;
+}

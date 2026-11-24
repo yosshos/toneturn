@@ -2,6 +2,7 @@
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
 import { KeysSoundButton } from './KeysSound';
+import { dailyMinutesOf } from '../engine/practiceSession';
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
@@ -430,9 +431,10 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     // block G (phase 4): the lick pool's licks are rungs of every key (piano)
     const cells = keyMatrix(familiesOf(mi), matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), ...(today ? { day: today.day } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) });
     const sum = matrixSummary(cells);
-    const perDay = Math.max(5, ((settings.intake as { minutes?: number } | null | undefined)?.minutes ?? 30));
+    // SPEC-PRACTICE-SESSION §7: the daily practice setting (it replaced the intake's minutes)
+    const perDay = dailyMinutesOf(settings);
     return { ...sum, cellsList: cells, perDay, days: projectionDays(sum, perDay) };
-  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.intake, settings.lickBook, settings.styleFocus, pView, view.k, today?.day, planReady]);
+  }, [items, matrixTier, ds.instrument, ds.emphasis, settings.dailyMinutes, settings.lickBook, settings.styleFocus, pView, view.k, today?.day, planReady]);
   // SPEC-DAILY-WORKOUT §5: "+N new exercises opened" when the tier rose (kept per instrument, shown for 3 days)
   const gainedCells = useMemo(() => {
     const mi = matrixInst(ds.instrument);
