@@ -68,7 +68,7 @@ test(`no "Continuous practice" button: the family and the key simply practise ($
   {
     await page.goto(`/?unlock=all&lang=${lang}#/drills`);
     await page.locator('[data-practice-view="topic"]').click().catch(() => {});
-    await page.locator('[data-family="scales"]').click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     const entry = page.locator('[data-coach-open="scales"]');
     await expect(entry).toBeVisible();
     await expect(entry).toContainText(lang === 'en' ? 'Practise' : 'לתרגל');
@@ -133,7 +133,7 @@ test('family coach: stopped with Back, it continues from the family page; Start 
   await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
   await page.goto('/?unlock=all&lang=he#/drills');
   await page.locator('[data-practice-view="topic"]').click().catch(() => {});
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-start]').click();
   await drive(page, 3);
@@ -145,7 +145,7 @@ test('family coach: stopped with Back, it continues from the family page; Start 
   // closing the app and opening it again: still there
   await page.reload();
   await page.locator('[data-practice-view="topic"]').click().catch(() => {});
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   const intro = page.locator('[data-coach-intro]');
   await expect(intro).toHaveAttribute('data-coach-resume', '1');

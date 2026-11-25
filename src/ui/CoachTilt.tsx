@@ -1,7 +1,8 @@
 // The coach's weekly tilt and style taster suggestion (BUILD-PLAN-2026-11 phase 8; SPEC-RBI-ROTATION §7;
 // SPEC-STYLE-FOCUS §9.2). Computed on the device from the measured profile (aiTilt.ts); the player accepts or declines,
 // and only an accepted tilt changes the daily plan (workout2 SuggestInput.tilt). A card on the Insights page, beside
-// the weekly summary — never inside an exercise, never a toast.
+// the weekly summary, and (SPEC-WEEK-PLAN-TILT §2) on Today under the workout card while this week's proposal is
+// unanswered — never inside an exercise, never a toast.
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Settings } from '../storage/progress';
@@ -19,7 +20,7 @@ import '../progress-time.css';
 
 type Lang = 'he' | 'en';
 
-export function CoachTilt({ settings: s, lang, course, today, weak, onSettings, snapshots }: { settings: Settings; lang: Lang; course: CourseId; today: string; weak: WeakArea; onSettings: (p: Partial<Settings>) => void; /** Tests: the snapshots instead of the device store. */ snapshots?: Record<string, Snapshot> }) {
+export function CoachTilt({ settings: s, lang, course, today, weak, onSettings, snapshots, today_ = false }: { /** SPEC-WEEK-PLAN-TILT §2: the Today card — this week's unanswered tilt only (no taster, gone once answered). */ today_?: boolean; settings: Settings; lang: Lang; course: CourseId; today: string; weak: WeakArea; onSettings: (p: Partial<Settings>) => void; /** Tests: the snapshots instead of the device store. */ snapshots?: Record<string, Snapshot> }) {
   const he = lang === 'he';
   const [snaps, setSnaps] = useState<Record<string, Snapshot> | null>(snapshots ?? null);
   useEffect(() => {
@@ -34,15 +35,17 @@ export function CoachTilt({ settings: s, lang, course, today, weak, onSettings, 
   const base = 1 - (tier <= 1 ? DAY_SHARES.techBeginner : DAY_SHARES.tech);
   // the weekly summary may word the tilt and the taster (sent only once the server's prompt knows them, AI_TILT_SERVER)
   useEffect(() => {
+    if (today_) return; // the Insights card feeds the weekly summary; the Today card only asks
     setWeeklyExtra(tilt || nudge ? { ...(tilt ? { tilt: { improvShare: Math.round((base + tilt.improv) * 100), from: Math.round(base * 100), reasons: tilt.reasons.map((r) => r.en) } } : {}), ...(nudge ? { taster: { style: STYLE_TEXT[nudge.style].en, reason: nudge.reason.en } } : {}) } : null);
     return () => setWeeklyExtra(null);
-  }, [tilt, nudge, base]);
+  }, [tilt, nudge, base, today_]);
   const coachTaster = s.styleTaste?.coach;
   const asked = !!coachTaster && coachTaster.course === course && coachTaster.style === nudge?.style;
+  if (today_ && (answered || !tilt)) return null;
   if (!tilt && !answered && !nudge) return null;
   const shown = answered ?? (tilt ? { week, improv: tilt.improv, answer: null as null | 'yes' | 'no' } : null);
   return (
-    <section className="set-card coach-tilt" data-coach-tilt={shown ? (shown.answer ?? 'open') : 'taster'}>
+    <section className={`set-card coach-tilt ${today_ ? 'today' : ''}`} data-coach-tilt={shown ? (shown.answer ?? 'open') : 'taster'} data-coach-tilt-today={today_ ? '1' : undefined}>
       <h2>{he ? 'הצעת המאמן לשבוע' : "The coach's suggestion for the week"}</h2>
       {shown && (
         <div className="ct-tilt" data-tilt={Math.round(shown.improv * 100)}>
@@ -73,7 +76,7 @@ export function CoachTilt({ settings: s, lang, course, today, weak, onSettings, 
           )}
         </div>
       )}
-      {nudge && (
+      {nudge && !today_ && (
         <div className="ct-taster" data-coach-taster={nudge.style}>
           <p className="ct-line">
             {he ? 'טעימת סגנון: ' : 'A style taster: '}

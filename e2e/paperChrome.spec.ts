@@ -188,7 +188,7 @@ for (const lang of ['en', 'he'] as const) {
     await check(page, lang, 'lesson', { oneScreen: true });
     await open(page, lang, 'drills');
     await page.locator('[data-topic="all"]').click();
-    await page.locator('[data-family="scales"]').click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     const card = page.locator('[data-level="scales-1"]');
     await card.scrollIntoViewIfNeeded();
     if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();

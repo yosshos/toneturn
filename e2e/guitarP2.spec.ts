@@ -92,7 +92,7 @@ test('Chord Rush played: strum it — its own levels, a chord name and the liste
 test('mixed-meter tab: bar lines and signatures per bar (g-prog 3); a whole standard comped (g-jazz 13)', async ({ page }) => {
   await seed(page);
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="g-prog"]').click();
+  await page.locator('[data-family-levels="g-prog"], [data-family="g-prog"]:not([data-family-direct])').click();
   await page.locator('[data-level="g-prog-3"]').click();
   await page.locator('[data-level-start="g-prog-3"], [data-level="g-prog-3"] ~ * [data-level-start]').first().click();
   const tab = page.locator('.drill-tab').first();
@@ -104,7 +104,7 @@ test('mixed-meter tab: bar lines and signatures per bar (g-prog 3); a whole stan
   await page.screenshot({ path: 'test-results/tab-mixed.png' });
   await page.locator('.screen-head .icon-btn').first().click();
   await page.locator('.screen-head .icon-btn').first().click();
-  await page.locator('[data-family="g-jazz"]').click();
+  await page.locator('[data-family-levels="g-jazz"], [data-family="g-jazz"]:not([data-family-direct])').click();
   await page.locator('[data-level="g-jazz-13"]').click();
   await page.locator('[data-level-start="g-jazz-13"], [data-level="g-jazz-13"] ~ * [data-level-start]').first().click();
   await expect(page.locator('.drill-take')).toBeVisible();

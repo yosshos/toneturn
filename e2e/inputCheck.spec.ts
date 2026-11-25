@@ -60,7 +60,7 @@ const openScales = async (page: Page, lang: 'en' | 'he', beforeStart?: () => Pro
   await expect(page.locator('[data-family], [data-topic]').first()).toBeVisible();
   const all = page.locator('[data-topic="all"]');
   if (await all.count()) await all.click();
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   const card = page.locator('[data-level="scales-1"]');
   if ((await card.count()) && (await card.getAttribute('aria-expanded')) === 'false') await card.click();
   await beforeStart?.();

@@ -45,7 +45,7 @@ const openLevel = async (page: Page, family: string, level: string) => {
   await page.goto('about:blank');
   await page.goto('/?unlock#/drills');
   await page.locator('[data-topic="all"]').click();
-  await page.locator(`[data-family="${family}"]`).click();
+  await page.locator(`[data-family-levels="${family}"], [data-family="${family}"]:not([data-family-direct])`).click();
   const card = page.locator(`[data-level="${level}"]`);
   if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
   await page.locator(`[data-level-start="${level}"]`).click();
@@ -149,7 +149,7 @@ test.describe('drums course', () => {
     });
     await page.evaluate(() => (location.hash = '#/drills'));
     await page.locator('[data-topic="all"]').click();
-    await page.locator('[data-family="d-time"]').click();
+    await page.locator('[data-family-levels="d-time"], [data-family="d-time"]:not([data-family-direct])').click();
     const card = page.locator('[data-level="d-time-1"]');
     if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
     await page.locator('[data-level-start="d-time-1"]').click();
@@ -228,7 +228,7 @@ test.describe('drums course', () => {
     await page.goto('about:blank');
     await page.goto('/?unlock#/drills');
     await page.locator('[data-topic="all"]').click();
-    await page.locator('[data-family="d-rock"]').click();
+    await page.locator('[data-family-levels="d-rock"], [data-family="d-rock"]:not([data-family-direct])').click();
     await expect(page.locator('[data-level="d-rock-1"]')).toBeVisible();
     await expect(page.locator('[data-level="d-rock-3"]')).toHaveCount(0);
   });
@@ -326,7 +326,7 @@ test.describe('drums course', () => {
       await seed(page, { kit: eKit });
       await page.goto('/?unlock#/drills');
       await page.locator('[data-topic="all"]').click();
-      await page.locator('[data-family="d-latin"]').click();
+      await page.locator('[data-family-levels="d-latin"], [data-family="d-latin"]:not([data-family-direct])').click();
       await expect(page.locator('[data-level="d-latin-7"]')).toBeVisible();
       for (const lv of ['d-latin-8', 'd-latin-9', 'd-latin-10']) await expect(page.locator(`[data-level="${lv}"]`)).toHaveCount(0);
     });

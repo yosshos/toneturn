@@ -6,6 +6,7 @@ type Row = Record<string, unknown>;
 interface Db {
   assignments: Row[];
   submissions: Row[];
+  opts?: Record<string, Row>;
 }
 const KEY = 'tt.mockTeacher.db';
 const load = (): Db => {
@@ -46,6 +47,15 @@ export async function mockTeacherRpc(fn: string, a: Record<string, unknown>): Pr
       save(d);
       return null;
     }
+    // SPEC-PATH-TODAY-PRACTICE §5.2: an assignment's options (channel, minutes a day, spread / all today)
+    case 'toneturn_assignment_set_opts': {
+      if (!d.assignments.some((x) => x.id === a.p_assignment)) throw new Error('not your assignment');
+      d.opts = { ...(d.opts ?? {}), [String(a.p_assignment)]: { assignment_id: a.p_assignment, channel: a.p_channel, minutes: a.p_minutes, if_short: a.p_if_short } };
+      save(d);
+      return null;
+    }
+    case 'toneturn_assignment_opts_for':
+      return ((a.p_ids as string[]) ?? []).map((k) => d.opts?.[k]).filter(Boolean);
     case 'toneturn_class_detail':
       return {
         assignments: [...d.assignments].reverse().map((x) => ({ ...x, submissions: d.submissions.filter((s) => s.assignment_id === x.id).reverse() })),

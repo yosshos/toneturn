@@ -23,7 +23,7 @@ test('any note: a MIDI note counts a waiting take in', async ({ page }) => {
   await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'On' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-level-start="scales-1"]').click();
   await expect(page.locator('[data-drill-play]')).toBeVisible();
   await page.waitForTimeout(900);

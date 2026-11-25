@@ -123,7 +123,7 @@ for (const lang of ['en', 'he'] as const)
     await page.waitForTimeout(800);
     await page.locator('[data-topic="all"]').click();
     await page.waitForTimeout(400);
-    await page.locator('[data-family="k-ear"]').click();
+    await page.locator('[data-family-levels="k-ear"], [data-family="k-ear"]:not([data-family-direct])').click();
     const card = page.locator('[data-level="k-ear-10"]');
     await card.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);

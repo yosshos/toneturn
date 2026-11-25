@@ -207,3 +207,34 @@
 @media (max-width: 350px) {
   .topbar .wordmark { display: none; }
 }
+
+/* SPEC-WEEK-PLAN-TILT §1: the teacher's weekly plans */
+.week-plans { display: grid; gap: 10px; margin-block: 8px 12px; }
+.week-plans .wp-actions, .wp-form .wp-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wp-form { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--card-2); border-radius: 14px; background: var(--card); }
+.wp-form h4 { margin: 4px 0 0; font-size: 14px; }
+.wp-pick { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; }
+.wp-pick legend { font-size: 13px; color: var(--ink-soft); margin-block-end: 4px; }
+.wp-check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.wp-items { display: grid; gap: 6px; margin: 0; padding-inline-start: 20px; }
+.wp-items li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 14px; }
+.wp-items li small { color: var(--ink-soft); }
+
+.wp-item-btns { display: inline-flex; gap: 4px; margin-inline-start: auto; }
+.wp-ask { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wp-ask p { flex-basis: 100%; margin: 0; font-size: 14px; }
+.wp-start input { max-width: 200px; }
+
+.wp-field { display: grid; gap: 4px; font-size: 13px; color: var(--ink-soft); }
+.wp-field input { font: inherit; font-size: 15px; color: var(--ink); padding: 8px 10px; border: 1px solid var(--card-2); border-radius: 10px; background: var(--bg, var(--card)); width: 100%; box-sizing: border-box; }
+.wp-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.wp-plan { display: grid; gap: 2px; text-align: start; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--card-2); background: var(--card); color: var(--ink); font: inherit; cursor: pointer; max-width: 100%; }
+.wp-plan b { font-size: 14px; overflow-wrap: anywhere; }
+.wp-plan small { font-size: 12px; color: var(--ink-soft); }
+.wp-plan.on { border-color: var(--accent, var(--ink)); box-shadow: inset 0 0 0 1px var(--accent, var(--ink)); }
+
+.wp-waiting { display: grid; gap: 10px; padding: 12px; border-radius: 14px; border: 1px solid var(--bad, #b3261e); background: var(--card); }
+.wp-waiting h4 { margin: 0; font-size: 14px; }
+.wp-waiting-plan { display: grid; gap: 6px; justify-items: start; }
+.wp-waiting-plan small { color: var(--ink-soft); }
+.wp-items li small { color: var(--ink-soft); }

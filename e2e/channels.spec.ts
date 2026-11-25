@@ -60,7 +60,7 @@ for (const lang of ['en', 'he'] as const) {
     await expect(page.locator('[data-channel-mix]')).toBeVisible();
     await expect(page.locator('[data-sight-dose="open"]')).toBeVisible();
     await page.screenshot({ path: `test-results/channels-hub-${lang}.png` });
-    await page.locator('[data-family="scales"]').click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     // level 1 is passed (3 keys at the target), so the family opens on level 2: open level 1
     if (!(await page.locator('[data-level-start="scales-1"]').isVisible())) await page.locator('[data-level="scales-1"]').click();
     await page.locator('[data-level-start="scales-1"]').click();

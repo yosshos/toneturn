@@ -34,6 +34,31 @@
   font: inherit;
   cursor: pointer;
 }
+.drill-family-wrap {
+  position: relative;
+  display: grid;
+}
+.drill-family-wrap > .drill-family {
+  padding-inline-end: 52px;
+}
+/* owner 2026-11-25: the card starts practice; this small button opens the family's levels */
+.drill-family-levels {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--card-2);
+  background: var(--card);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.drill-family-levels:hover {
+  color: var(--ink);
+}
 .drill-family b {
   font-family: var(--display);
   font-size: 16px;
@@ -736,3 +761,17 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 .task-brief .tb-when { font-size: 12.5px; color: var(--ink-dim); }
 .task-brief-line { width: 100%; margin: 0; font-size: 13px; line-height: 1.35; color: var(--ink-soft); text-align: start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .task-brief-line b { font-weight: 600; color: var(--ink); }
+
+.drill-family-go {
+  justify-self: end;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  /* ink on the card colour: readable whatever the family's hue (readable-contrast rule) */
+  background: var(--ink);
+  color: var(--card);
+}
+
+.drill-family .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

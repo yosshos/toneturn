@@ -37,7 +37,7 @@ const seed = async (page: Page, lang: 'en' | 'he' = 'en') => {
 const overflow = (page: Page) => page.evaluate(() => document.scrollingElement!.scrollHeight - window.innerHeight);
 const openLevel = async (page: Page, level: string) => {
   await page.locator('[data-topic="all"]').click();
-  await page.locator('[data-family="k-vl"]').click();
+  await page.locator('[data-family-levels="k-vl"], [data-family="k-vl"]:not([data-family-direct])').click();
   const card = page.locator(`[data-level="${level}"]`);
   if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
   await page.locator(`[data-level-start="${level}"]`).click();
@@ -90,7 +90,7 @@ test.describe('voice leading (k-vl)', () => {
       await seed(page, lang);
       await page.goto('/?unlock#/drills');
       await page.locator('[data-topic="all"]').click();
-      await page.locator('[data-family="k-vl"]').click();
+      await page.locator('[data-family-levels="k-vl"], [data-family="k-vl"]:not([data-family-direct])').click();
       // The stage lessons sit on the family page.
       await expect(page.locator('[data-vl-lessons="k-vl"] [data-family-lesson]').first()).toBeVisible();
       for (const level of ['k-vl-1', 'k-vl-5', 'k-vl-6', 'k-vl-7', 'k-vl-8']) {

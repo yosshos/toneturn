@@ -12,7 +12,7 @@ test('coach: scales run hands-free from take to take, then end with XP', async (
   test.setTimeout(180_000);
   await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await expect(page.locator('[data-coach-intro]')).toBeVisible();
   await page.locator('[data-coach-start]').click();
@@ -52,7 +52,7 @@ test('coach: scales run hands-free from take to take, then end with XP', async (
 test('coach: pause holds the session on the result; resume moves on', async ({ page }) => {
   await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-start]').click();
   const demo = page.locator('[data-coach-skip-demo]');
@@ -71,7 +71,7 @@ test('coach: pause holds the session on the result; resume moves on', async ({ p
 
 test('listen: a reading take has Listen beside Play', async ({ page }) => {
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-level-start="scales-1"]').click();
   await expect(page.locator('[data-hear="off"]')).toBeVisible();
   await expect(page.locator('[data-drill-play]')).toBeVisible();
@@ -84,7 +84,7 @@ test('listen: a reading take has Listen beside Play', async ({ page }) => {
 test('hands-free: a level run moves on after a take with no button (again, slower, then the next item)', async ({ page }) => {
   await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'weak'));
   await page.goto('/?unlock=all&handsfree=1#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-level-start="scales-1"]').click();
   const first = await page.locator('.drill-run').getAttribute('data-drill');
   await page.locator('[data-drill-play]').click();
@@ -114,7 +114,7 @@ test('sound kept closed by the browser: the coach demo still skips, and a bar of
     Object.defineProperty(AudioContext.prototype, 'state', { get: () => 'suspended', configurable: true });
   });
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-start]').click();
   await expect(page.locator('[data-coach-demo]')).toBeVisible();
@@ -138,7 +138,7 @@ test('sound kept closed: Turn sound on opens a fresh audio channel and the bar g
     Object.defineProperty(AudioContext.prototype, 'state', { get(this: AudioContext) { return stuck.has(this) || !w.__fresh ? 'suspended' : desc.get!.call(this); }, configurable: true });
   });
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-start]').click();
   await expect(page.locator('[data-sound-blocked]')).toBeVisible({ timeout: 5000 });
@@ -150,7 +150,7 @@ test('sound kept closed: Turn sound on opens a fresh audio channel and the bar g
 
 test('coach intro: the key order is picked before the session (chromatic, circle of fifths up / down)', async ({ page }) => {
   await page.goto('/?unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await expect(page.locator('[data-coach-order="fifths-up"]')).toHaveAttribute('aria-checked', 'true');
   await page.locator('[data-coach-order="chromatic-up"]').click();
@@ -162,7 +162,7 @@ test('coach intro: the key order is picked before the session (chromatic, circle
 test('coach intro: the dynamics lens is picked before the session and applies to its takes', async ({ page }) => {
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-practice-view="topic"]').click().catch(() => {});
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-lens="cresc"]').click();
   await expect(page.locator('[data-coach-lens="cresc"]')).toHaveAttribute('aria-checked', 'true');

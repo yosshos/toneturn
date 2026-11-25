@@ -109,6 +109,8 @@ import { LOOP_PASSES, loopBpm, sliceDrill } from '../engine/drills/slice';
 import { VoiceLeadLessons, VoiceLeadScore } from './VoiceLeadScore';
 import { ReharmStudio } from './ReharmStudio'; // AUDIT-DEPTH-3 C3: your own reharm of a head
 import { TuneLadder } from './TuneLadder'; // AUDIT-DEPTH-3 C4: one tune, step by step
+import { ladderInstOf } from '../engine/tuneLadder';
+import { VL_LEVEL_LESSON } from '../content/mini/voiceLead';
 import { RoadMapStrip } from './RoadMap';
 import { TranscribeWrite } from './BassWrite';
 import { DrumWrite } from './DrumWrite';
@@ -796,6 +798,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       head={head(tx.title, onBack, <PlaceSpark place="technique" course={(settings.activeCourse ?? 'keys') as CourseId} lang={lang} />)}
       channelStrip={<ChannelStrip lang={lang} mix={chMix.mix} strong={chStrong} measured={weekShares(settings.channelWeek, weekOfDay(chDay))} sight={sight ? { drill: sight.drill, done: sight.done } : null} onSight={(d) => setView({ k: 'run', queue: [d], i: 0, from: { k: 'hub' } })} />}
       onFamily={(f) => setView({ k: 'family', f })}
+      onFamilyPractise={(f) => setView({ k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: f, rk: `fam:${inst}:${f.id}` })}
       todayLevels={todayTopicLevels}
       onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: { k: 'hub' } })}
       onSettings={() => setView({ k: 'settings' })}
@@ -1026,7 +1029,7 @@ function TodayPart({ lang, plan, cells, minutes, left, gained, matrix, week, onR
   );
 }
 
-function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid, todayPart, todayLevels }: { /** Phase 2: part of today's workout (replaces the old private "Today"). */ todayPart?: React.ReactNode; /** §3.4: today's technique levels (the family cards' mark). */ todayLevels?: Set<string> | null; /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
+function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onFamilyPractise, onRun, onSettings, onCreate, onTest, onInstrument, onVoice, onKit, onKitSave, pView, onPView, keyGrid, todayPart, todayLevels }: { /** Phase 2: part of today's workout (replaces the old private "Today"). */ todayPart?: React.ReactNode; /** §3.4: today's technique levels (the family cards' mark). */ todayLevels?: Set<string> | null; /** By topic / by key (SPEC-PRACTICE-KEYS). */ pView?: PracticeView; onPView?: (v: PracticeView) => void; keyGrid?: ((general: React.ReactNode) => React.ReactNode) | null; /** Phase 6: the week's channel mix and today's sight dose. */ channelStrip?: React.ReactNode; onAddOns?: (v: NonNullable<DrillSettings['guitarAddOns']>) => void; onKit?: (start?: KitKind) => void; onKitSave?: (k: NonNullable<Settings['drumKit']>) => void; onVoice?: () => void; lang: Lang; ds: DrillSettings; settings: Settings; items: Record<string, ItemState>; head: React.ReactNode; onFamily: (f: FamilyDef) => void; /** Owner 2026-11-25: a family whose page holds nothing beyond its levels starts at once (brief, then practice). */ onFamilyPractise?: (f: FamilyDef) => void; onRun: (q: Drill[]) => void; onSettings: () => void; onCreate: (edit?: CustomDrill) => void; onTest: () => void; onInstrument: (i: 'piano' | 'guitar' | 'bass' | 'drums') => void }) {
   const tx = T[lang];
   // N10: the bass tuning hides the low-B levels on a bass without a low B.
   const bassTuning = bassTuningOf(settings);
@@ -1059,8 +1062,12 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, o
     // (PIANO_AUDIT I6: its families have 7–17 levels; "level 2.3 / 7" was the tempo band), with its key heat row.
     {
       const cur = currentLevel(f, items, ds.keyOrder, settings.drillStart?.[f.id]);
-      return (
-        <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => onFamily(f)} data-family={f.id}>
+      // Owner 2026-11-25: when the family's page has nothing but its levels, the card itself starts practice (the brief,
+      // then the coach from where the player is; stopped earlier today, it continues there). A small button beside it
+      // still opens the levels.
+      const direct = !!onFamilyPractise && familyDirect(f, ds);
+      const card = (
+        <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => (direct ? onFamilyPractise!(f) : onFamily(f))} data-family={f.id} data-family-direct={direct ? '1' : undefined}>
           <b>
             {f.title[lang]}
             {todayLevels && f.levels.some((l) => todayLevels.has(l.id)) && <TodayMark lang={lang} short />}
@@ -1075,7 +1082,24 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onRun, o
           </span>
           {!drums && lv > 0 && <KeysCount cells={skillKeysOf(f.id, items)?.cells} lang={lang} />}
           {!drums && lv > 0 && <HeatRow cells={skillKeysOf(f.id, items)?.cells} />}
+          {direct && (
+            <>
+              <span className="sr-only">{lang === 'he' ? 'מתחיל תרגול' : 'Starts practice'}</span>
+              <span className="drill-family-go" aria-hidden="true">
+                <Icon k="play" size={14} />
+              </span>
+            </>
+          )}
         </button>
+      );
+      if (!direct) return card;
+      return (
+        <div key={f.id} className="drill-family-wrap">
+          {card}
+          <button type="button" className="drill-family-levels" onClick={() => onFamily(f)} aria-label={lang === 'he' ? `השלבים של ${f.title[lang]}` : `${f.title[lang]}: levels`} data-family-levels={f.id}>
+            <Icon k="more" size={18} />
+          </button>
+        </div>
       );
     }
   };
@@ -1227,6 +1251,16 @@ function SkillKeyMap({ lang, ds, f, items, start, onRun }: { lang: Lang; ds: Dri
       />
     </div>
   );
+}
+
+/** Owner 2026-11-25: a family card starts practice at once when its page would hold nothing beyond the levels: the coach
+ *  can run it, and it has no quick lesson, voice-leading lessons, reharm studio or tune ladder of its own. */
+export function familyDirect(f: FamilyDef, ds: DrillSettings): boolean {
+  if (ds.instrument === 'drums' || !coachable(f, ds.keyOrder)) return false;
+  if (FAMILY_LESSON[f.id]) return false;
+  if (Object.keys(VL_LEVEL_LESSON).some((lv) => lv.startsWith(`${f.id}-`))) return false;
+  if (f.id === 'k-tune' || f.id === 'g-tune' || f.id === 'b-tune' || ladderInstOf(f.id as FamilyId)) return false;
+  return true;
 }
 
 /** GUITAR_DEEPENING: the quick lesson behind a new guitar family (ear, comping, Barry Harris, prog), opened on demand. */

@@ -34,7 +34,7 @@ const openLevel = async (page: Page, lang: 'en' | 'he', level: string) => {
   await page.goto('about:blank');
   await page.goto(`/?unlock=all&lang=${lang}#/drills`);
   await page.locator('[data-topic="all"]').click();
-  await page.locator('[data-family="control"]').click();
+  await page.locator('[data-family-levels="control"], [data-family="control"]:not([data-family-direct])').click();
   const card = page.locator(`[data-level="${level}"]`);
   await card.scrollIntoViewIfNeeded();
   if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();

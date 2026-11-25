@@ -42,7 +42,7 @@ for (const lang of ['en', 'he'] as const)
     test(`a standard in another key fits one phone screen: ${c.family} ${c.level} (${lang})`, async ({ page }) => {
       await seed(page, lang, c.course, { [c.family]: c.level });
       await page.goto(`/?unlock=all&lang=${lang}#/drills`);
-      await page.locator(`[data-family="${c.family}"]`).click();
+      await page.locator(`[data-family-levels="${c.family}"], [data-family="${c.family}"]:not([data-family-direct])`).click();
       const map = page.locator(`[data-key-map-skill="${c.family}"]`);
       await expect(map).toBeVisible();
       await map.locator(`button[data-key="${c.key}"]`).click();

@@ -10,7 +10,7 @@ test.describe('technique drills', () => {
     await expect(page.locator('[data-drills="hub"]')).toBeVisible();
     // BUILD-PLAN phase 2: no private "Today" list here any more (part of today's workout replaces it)
     await expect(page.locator('.drill-today .drill-level')).toHaveCount(0);
-    await page.locator('[data-family="scales"]').click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     await expect(page.locator('[data-drills="family"]')).toBeVisible();
     await page.locator('[data-level-start="scales-1"]').click();
     await expect(page.locator('[data-drills="run"] .drill-staff svg').first()).toBeVisible();
@@ -39,7 +39,7 @@ test.describe('technique drills', () => {
     await page.locator('[data-inst="guitar"]').click();
     await expect(page.locator('[data-family="g-chords"]')).toBeVisible();
     await expect(page.locator('[data-family="scales"]')).toHaveCount(0);
-    await page.locator('[data-family="g-lead"]').click();
+    await page.locator('[data-family-levels="g-lead"], [data-family="g-lead"]:not([data-family-direct])').click();
     await page.locator('[data-level-start]').first().click();
     await expect(page.locator('[data-drills="run"] .drill-tab svg').first()).toBeVisible();
     await page.locator('.screen-head .icon-btn').click();

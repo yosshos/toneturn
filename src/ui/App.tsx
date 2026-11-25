@@ -3819,6 +3819,9 @@ export function App() {
               loadSheet={wCourse === 'keys' || wCourse === 'guitar' || wCourse === 'bass' || wCourse === 'drums' ? loadFocusSheet : undefined}
               focusLabel={focusLabelOf(wFocus)}
             />
+            {/* SPEC-WEEK-PLAN-TILT §2: this week's coach suggestion, while unanswered (it changes the plan above) */}
+            {/* only while the plan above can still change: the plan view, not edited for today, no saved default (it is used as it is), technique in the workout, no run started today */}
+            {wFocus === 'plan' && !todayEdits && !tmplRaw && s.drills?.inWorkout !== false && !(wrun && wrun.day === today) && <CoachTilt today_ settings={s} lang={s.uiLang} course={wCourse as CourseId} today={today} weak={weakAreaOf(ratingsOf(progress))} onSettings={updateSettings} />}
             </>
           }
           today={
@@ -4096,7 +4099,7 @@ export function App() {
       )}
       {route === 'depth' && <DepthScreen lang={s.uiLang} onBack={() => go(ACTIVE_PARTNER ? 'home' : 'settings')} onOpen={openDepthLink} />}
       {route === 'diagnostics' && <Diagnostics t={t} settings={s} onBack={() => go('home')} />}
-      {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
+      {route === 'friends' && <FriendsScreen profileErr={profileErr} settings={s} t={t} user={user} sync={sync} progress={progress} streak={gems.streak.count} onBack={() => go('home')} onBestTier={(b) => b > (s.bestLeague ?? 0) && updateSettings({ bestLeague: b })} onLeagueSeen={(leagueSeen) => updateSettings({ leagueSeen })} classes={<ClassesScreen t={t} settings={s} onSettings={updateSettings} user={user} onBack={() => go('friends')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} embedded />} />}
       {route === 'skills' && (
         <ProgressTabs
           t={t}
@@ -5169,7 +5172,7 @@ export function App() {
         />
       )}
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
-      {route === 'classes' && <ClassesScreen t={t} settings={s} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
+      {route === 'classes' && <ClassesScreen t={t} settings={s} onSettings={updateSettings} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
       {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x, note) => void saveLog(k, m, x, note)} onClose={() => setLogOpen(false)} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} frame={s.avatarFrame} onBuyCosmetic={buyCosmetic} onFrame={(avatarFrame) => updateSettings({ avatarFrame })} onClose={() => setStreakOpen(false)} />

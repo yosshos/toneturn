@@ -81,7 +81,7 @@ for (const lang of ['he', 'en'] as const) {
     await seed(page, lang);
     await open(page, lang, '/drills');
     await page.locator('[data-practice-view="topic"]').click().catch(() => undefined);
-    await page.locator('[data-family="scales"]').click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     const row = page.locator('[data-level="scales-1"]');
     await expect(row).toBeVisible();
     await expect(row.locator('.lvl-ladder .sl-compact')).toBeVisible();

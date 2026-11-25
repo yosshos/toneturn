@@ -12,7 +12,7 @@ type Shot = { t: number; beat: number; x: number; line: number; lastLine: number
 async function sampleTake(page: Page, level: string, family: string, bpm: number, mode: 'take' | 'listen' = 'take') {
   await page.addInitScript((b) => ((window as unknown as { __bpm: number }).__bpm = b), bpm);
   await page.goto('/?sim=1&unlock=all#/drills');
-  await page.locator(`[data-family="${family}"]`).click();
+  await page.locator(`[data-family-levels="${family}"], [data-family="${family}"]:not([data-family-direct])`).click();
   const row = page.locator(`[data-level="${level}"]`);
   if ((await row.getAttribute('aria-expanded')) !== 'true') await row.click();
   await page.locator(`[data-level-start="${level}"]`).click();
@@ -142,7 +142,7 @@ test('coach: every take and the demo start the cursor afresh and stop it on the 
     w.__fakeLive = 2;
   });
   await page.goto('/?sim=1&unlock=all#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-start]').click();
   const runs = await page.evaluate(async () => {

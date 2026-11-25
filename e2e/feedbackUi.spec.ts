@@ -40,7 +40,7 @@ const openFamily = async (page: Page, lang: 'en' | 'he', family: string) => {
   await page.goto('about:blank');
   await page.goto(`/?unlock=all&lang=${lang}#/drills`);
   await page.locator('[data-topic="all"]').click();
-  await page.locator(`[data-family="${family}"]`).click();
+  await page.locator(`[data-family-levels="${family}"], [data-family="${family}"]:not([data-family-direct])`).click();
 };
 
 for (const lang of ['en', 'he'] as const) {
@@ -195,7 +195,7 @@ test('Hebrew drill screen with MIDI: the staff has note heads, the device has a 
   });
   await page.evaluate(() => (location.hash = '#/drills'));
   await page.locator('[data-topic="all"]').click();
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   const card = page.locator('[data-level="scales-1"]');
   if ((await card.getAttribute('aria-expanded')) !== 'true') await card.click();
   await page.locator('[data-level-start="scales-1"]').click();
@@ -601,7 +601,7 @@ for (const lang of ['en', 'he'] as const)
         const fam = page.locator(`[data-family="${family}"]`);
         // (a family hidden in this build, e.g. by the verified-content gate, is skipped)
         if (!(await fam.isVisible({ timeout: 3000 }).catch(() => false))) continue;
-        await fam.click();
+        await page.locator(`[data-family-levels="${family}"], [data-family="${family}"]:not([data-family-direct])`).click();
         const card = page.locator(`[data-level="${level}"]`);
         if (!(await card.count())) continue;
         await card.scrollIntoViewIfNeeded();

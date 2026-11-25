@@ -47,7 +47,7 @@ test('sight-singing: the due note lights on the staff after the count-in', async
 
 test('piano drill: a now-cue column moves over the staff during the take', async ({ page }) => {
   await page.goto('/?sim=1#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-level-start="scales-1"]').click();
   await expect(page.locator('[data-drills="run"] .drill-staff svg').first()).toBeVisible();
   await page.locator('[data-drill-play]').click();
@@ -61,7 +61,7 @@ test('piano drill: a now-cue column moves over the staff during the take', async
 test('guitar drill: the now-cue column runs over the tab', async ({ page }) => {
   await page.goto('/?sim=1#/drills');
   await page.locator('[data-inst="guitar"]').click();
-  await page.locator('[data-family="g-lead"]').click();
+  await page.locator('[data-family-levels="g-lead"], [data-family="g-lead"]:not([data-family-direct])').click();
   await page.locator('[data-level-start]').first().click();
   await expect(page.locator('[data-drills="run"] .drill-tab svg').first()).toBeVisible();
   await page.locator('[data-drill-play]').click();

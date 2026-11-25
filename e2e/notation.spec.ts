@@ -91,7 +91,7 @@ const open = async (page: Page, lang: 'en' | 'he', family: string, level: string
   await page.waitForTimeout(800);
   await page.locator('[data-topic="all"]').click();
   await page.waitForTimeout(400);
-  await page.locator(`[data-family="${family}"]`).click();
+  await page.locator(`[data-family-levels="${family}"], [data-family="${family}"]:not([data-family-direct])`).click();
   const card = page.locator(`[data-level="${level}"]`);
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(300);

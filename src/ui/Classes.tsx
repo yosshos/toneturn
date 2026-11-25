@@ -12,10 +12,15 @@ import { classDetail, myAssignments, teacherMockOn, type AssignItem, type ClassD
 import { ClassCharts, ClassMedianSetting } from './ClassCharts'; // phase 6: the teacher charts (only while the summaries sync)
 import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
 import { Icon } from './icons';
+import { WeekPlans, type PlansUpdate } from './WeekPlans';
+import type { WeekPlan } from '../engine/weekPlan';
 import { intlTag } from '../i18n/translate';
 
-export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
+export function ClassesScreen({ t, settings, onSettings, user, onBack, onOpenLesson, onOpenItem, embedded }: { t: Strings; settings: Settings; /** SPEC-WEEK-PLAN-TILT §1: the teacher's weekly plans live in settings (a patch, or a function of the latest settings). */ onSettings?: (p: Partial<Settings> | ((cur: Settings) => Partial<Settings>)) => void; user: CloudUser | null; onBack: () => void; onOpenLesson: (id: LessonId) => void; /** An assignment of any kind (0.52); its result is sent when finished. */ onOpenItem?: (a: AssignItem) => void; /** Inside the Community tab (0.45): no own header. */ embedded?: boolean }) {
   const lang = settings.uiLang;
+  // SPEC-WEEK-PLAN-TILT §1: plans change against the app's LATEST settings (a send that ends after an edit, or after
+  // leaving this screen, never writes back an older copy)
+  const onPlans = onSettings ? (f: (list: WeekPlan[]) => WeekPlan[]) => onSettings((cur) => ({ teacherPlans: f(cur.teacherPlans ?? []) })) : undefined;
   // the dev mock (tt.mockTeacher = 1): the demo class stands in for a signed-in teacher (teacherMock.ts)
   const mock = teacherMockOn();
   const signedIn = !!user || mock;
@@ -123,7 +128,7 @@ export function ClassesScreen({ t, settings, user, onBack, onOpenLesson, onOpenI
               </button>
             </div>
           </section>
-          {data?.teaching.map((c) => <TeacherCard key={c.id} t={t} c={c} lang={lang} busy={busy} act={act} title={title} onError={setErr} />)}
+          {data?.teaching.map((c) => <TeacherCard key={c.id} t={t} c={c} lang={lang} busy={busy} act={act} title={title} onError={setErr} plans={settings.teacherPlans} onPlans={onPlans} />)}
         </>
       )}
       {err && (
@@ -139,7 +144,7 @@ function pct(s: { n: number; correct: number } | undefined) {
   return s && s.n ? `${Math.round((100 * s.correct) / s.n)}%` : '–';
 }
 
-function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: TeachingClass; lang: 'he' | 'en'; busy: boolean; act: (f: () => Promise<unknown>) => Promise<void>; title: (id: string) => string; onError: (e: string) => void }) {
+function TeacherCard({ t, c, lang, busy, act, onError, plans, onPlans }: { /** SPEC-WEEK-PLAN-TILT §1 */ plans?: WeekPlan[]; onPlans?: PlansUpdate; t: Strings; c: TeachingClass; lang: 'he' | 'en'; busy: boolean; act: (f: () => Promise<unknown>) => Promise<void>; title: (id: string) => string; onError: (e: string) => void }) {
   const [detail, setDetail] = useState<ClassDetail | null>(null);
   const loadDetail = useCallback(() => void classDetail(c.id).then(setDetail, () => {}), [c.id]);
   useEffect(() => loadDetail(), [loadDetail]);
@@ -249,6 +254,7 @@ function TeacherCard({ t, c, lang, busy, act, onError }: { t: Strings; c: Teachi
           );
         })}
       </ul>
+      {onPlans && <WeekPlans classId={c.id} assignments={detail?.assignments ?? null} plans={plans ?? []} onPlans={onPlans} lang={lang} t={t} onSent={loadDetail} />}
       <AssignForm classId={c.id} lang={lang} t={t} busy={busy} onAssigned={loadDetail} onError={onError} />
       {detail && <GradingInbox detail={detail} lang={lang} t={t} onChanged={loadDetail} />}
       {detail && <ClassHeatmap c={c} minutes={detail.minutes} lang={lang} t={t} />}

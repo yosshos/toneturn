@@ -423,6 +423,8 @@ export interface Settings {
   // ---- today's workout (spec AH) ----
   /** Saved defaults: "all" days, or a weekday "0".."6" (W13). */
   workoutTemplates?: Record<string, import('../engine/workout2').Block[]>;
+  /** SPEC-WEEK-PLAN-TILT §1: the teacher's saved weekly plans (several assignments sent to a class in one action). */
+  teacherPlans?: import('../engine/weekPlan').WeekPlan[];
   /** When a default was last saved or kept (W6: older than 30 days asks "refresh my default?"). */
   workoutTemplateAt?: string;
   /** Today's own edits (W18), per course (SPEC-PRACTICE-SESSION §2). */

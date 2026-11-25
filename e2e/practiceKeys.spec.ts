@@ -45,7 +45,7 @@ test('practice by key: the continuous session starts a run', async ({ page }) =>
 test('practice by topic: a family splits by scale family (major, minor, modes, symmetric)', async ({ page }) => {
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-practice-view="topic"]').click();
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await expect(page.locator('[data-family-group="minor"]')).toBeVisible();
   const all = await page.locator('[data-level]').count();
   await page.locator('[data-family-group="minor"]').click();

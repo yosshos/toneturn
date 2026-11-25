@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.138.0',
+    date: '2026-11-25',
+    en: ['Teachers can save a week of assignments as a weekly plan and send it to any class in one go, with due dates from the start day; anything that did not go out waits on the class card until you send it or let it go. The coach’s weekly suggestion now shows on Today under the workout. A technique card with nothing on its page but levels starts practice at once (its levels are a tap away), and your singing range stays through a fresh start'],
+    he: ['מורים יכולים לשמור שבוע של משימות כתוכנית שבועית ולשלוח אותה לכל כיתה בפעולה אחת, עם תאריכי הגשה מיום ההתחלה; מה שלא נשלח מחכה בכרטיס הכיתה עד שתשלחו אותו או תוותרו עליו. הצעת המאמן לשבוע מופיעה עכשיו במסך היום מתחת לאימון. כרטיס טכניקה שאין בעמוד שלו יותר מרשימת שלבים מתחיל תרגול מיד (השלבים בנגיעה אחת), והטווח הקולי נשמר גם אחרי התחלה מחדש'],
+  },
+  {
     version: '0.137.0',
     date: '2026-11-25',
     en: ['Practice flows on its own everywhere: no separate continuous-practice button or setting, and licks and Encore move to the next take by themselves too. Stop any time — later the same day the practice page, the key page or today’s session offers to continue exactly where you stopped'],

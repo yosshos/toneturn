@@ -66,7 +66,7 @@ test('Drills (keys): hidden Harris-line levels are not listed; the ones switched
   await seed(page, 'keys');
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-topic="all"]').click();
-  await page.locator('[data-family="k-harrisline"]').click();
+  await page.locator('[data-family-levels="k-harrisline"], [data-family="k-harrisline"]:not([data-family-direct])').click();
   // shown: the important arpeggios (4); switched on: the ABCs (2), the dominant rules (3, 33), the chromatic scale (6),
   // two voices (19, 34), seven down (21), the tune outlines (14, 18); 3 to ♭9 (20, owner 2026-11-23)
   for (const id of ['k-harrisline-2', 'k-harrisline-3', 'k-harrisline-4', 'k-harrisline-6', 'k-harrisline-14', 'k-harrisline-18', 'k-harrisline-19', 'k-harrisline-20', 'k-harrisline-21', 'k-harrisline-33', 'k-harrisline-34'])
@@ -79,7 +79,7 @@ test('Drills (keys): the shells on the 6th-diminished scale are listed (Echols, 
   await seed(page, 'keys');
   await page.goto('/?unlock=all#/drills');
   await page.locator('[data-topic="all"]').click();
-  await page.locator('[data-family="k-sharm"]').click();
+  await page.locator('[data-family-levels="k-sharm"], [data-family="k-sharm"]:not([data-family-direct])').click();
   await expect(page.locator('[data-level="k-sharm-41"]')).toBeAttached();
   await expect(page.locator('[data-level="k-sharm-41"]')).toContainText('shells');
 });

@@ -52,7 +52,7 @@ for (const lang of ['en', 'he'] as const)
     // The family card's strip marks the weak keys too.
     const card = page.locator('[data-family="scales"]');
     await expect(card.locator('.km-cell[data-key="1"]')).toHaveAttribute('data-key-status', 'weak');
-    await card.click();
+    await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
     const map = page.locator('[data-key-map-skill="scales"]');
     await expect(map).toBeVisible();
     for (const k of WEAK) await expect(map.locator(`button[data-key="${k}"]`)).toHaveAttribute('data-key-status', 'weak');

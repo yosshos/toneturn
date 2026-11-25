@@ -200,10 +200,10 @@ describe("the coach's tilt (client side; the plan changes only on yes)", () => {
     expect(activeTilt({ week: isoWeek(addDays(TODAY, -7)), improv: 0.1, answer: 'yes' }, TODAY)).toBe(0);
     expect(src('ui/App.tsx')).toContain('tilt: activeTilt(s.aiTilt, today)');
   });
-  it('the server field is behind a flag defaulting to the current behaviour (the edge function is not deployed)', () => {
-    expect(AI_TILT_SERVER).toBe(false);
+  it('the weekly request carries the tilt now that the edge function knows it (SPEC-WEEK-PLAN-TILT §2)', () => {
+    expect(AI_TILT_SERVER).toBe(true);
     setWeeklyExtra({ tilt: { improvShare: 40 } });
-    expect(weeklyExtraContext()).toEqual({});
+    expect(weeklyExtraContext()).toEqual({ tilt: { improvShare: 40 } });
     setWeeklyExtra(null);
     expect(readFileSync(new URL('../supabase/functions/toneturn-ai/index.ts', import.meta.url), 'utf8')).toMatch(/When the data has "tilt"/);
   });

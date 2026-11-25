@@ -22,10 +22,10 @@ export interface AiRequest {
 /**
  * Phase 8, the coach's tilt (aiTilt.ts): the tilt and the style taster are computed on the device; the weekly summary
  * may word them once the server's weekly prompt knows the fields (supabase/functions/toneturn-ai, `tilt` / `taster`).
- * That edge function change is written but NOT DEPLOYED (no access to the project now): until it is, the client keeps
- * the weekly request exactly as before. Set to true after deploying.
+ * Deployed: toneturn-ai version 8 (2026-11-24) carries the weekly prompt with `tilt` / `taster` (its source has not
+ * changed since the phase 8 commit), so the weekly request now sends them (SPEC-WEEK-PLAN-TILT §2).
  */
-export const AI_TILT_SERVER = false;
+export const AI_TILT_SERVER = true;
 let weeklyExtra: Record<string, unknown> | null = null;
 /** The coach's tilt / taster for the next weekly request (sent only when AI_TILT_SERVER). */
 export const setWeeklyExtra = (x: Record<string, unknown> | null) => {

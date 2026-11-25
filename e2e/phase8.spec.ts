@@ -19,13 +19,13 @@ const item = (id: string, key: number, closed: boolean, extra: Record<string, un
   ...extra,
 });
 
-const seed = async (page: Page, lang: 'en' | 'he', o: { items?: Record<string, unknown>; settings?: Record<string, unknown>; snaps?: (k: number) => Record<string, unknown> | null } = {}) => {
+const seed = async (page: Page, lang: 'en' | 'he', o: { items?: Record<string, unknown>; settings?: Record<string, unknown>; snaps?: (k: number) => Record<string, unknown> | null; progress?: Record<string, unknown> } = {}) => {
   await page.addInitScript(
-    ({ lang, items, settings, snapsSrc }) => {
+    ({ lang, items, settings, snapsSrc, prog }) => {
       if (sessionStorage.getItem('tt.seeded')) return;
       sessionStorage.setItem('tt.seeded', '1');
       const now = new Date().toISOString();
-      const progress = { version: 1, xp: 0, applied: [], lessons: {}, history: [], streak: { count: 1, lastDay: now.slice(0, 10) }, review: [], drillItems: items };
+      const progress = { version: 1, xp: 0, applied: [], lessons: {}, history: [], streak: { count: 1, lastDay: now.slice(0, 10) }, review: [], drillItems: items, ...prog };
       const s = {
         version: 2, uiLang: lang, inputLang: lang, outputLang: lang, mode: 'buttons', voiceConsent: true, midiInput: true,
         intake: { v: 1, at: now, music: 3, singing: 1, theory: 3, reading: 3, plays: ['keys'], priorities: null, motivation: 'learn', minutes: 30, goal: 'general', leaveOut: [], packs: [], noSing: false, noMic: false },
@@ -53,7 +53,7 @@ const seed = async (page: Page, lang: 'en' | 'he', o: { items?: Record<string, u
         q.onsuccess = () => q.result.transaction('kv', 'readwrite').objectStore('kv').put({ v: 1, backfilled: true, days }, 'all');
       }
     },
-    { lang, items: o.items ?? {}, settings: o.settings ?? {}, snapsSrc: o.snaps ? Array.from({ length: 28 }, (_, k) => o.snaps!(k)) : null },
+    { lang, items: o.items ?? {}, settings: o.settings ?? {}, prog: o.progress ?? {}, snapsSrc: o.snaps ? Array.from({ length: 28 }, (_, k) => o.snaps!(k)) : null },
   );
 };
 
@@ -106,6 +106,29 @@ test('Insights: the coach proposes a tilt with its measured reason; accept (he)'
   await expect(page.locator('[data-tilt-answer="yes"]')).toBeVisible();
   await fits(page);
 });
+
+// SPEC-WEEK-PLAN-TILT §2 (owner 2026-11-25): the unanswered suggestion shows on Today under the workout card, without the
+// taster; answering it there removes it from Today and Insights shows the answer.
+for (const lang of ['he', 'en'] as const)
+  test(`Today: the coach's weekly suggestion under the workout card; answered, it leaves Today (${lang})`, async ({ page }) => {
+    await seed(page, lang, { snaps: practised, settings: { courseStart: { keys: { legacy: true } } }, progress: { lessons: { placement: { completions: 1 } } } });
+    await page.goto(`/?unlock=all&lang=${lang}#/home`);
+    const c = page.locator('[data-coach-tilt-today]');
+    await expect(c).toBeVisible({ timeout: 30_000 });
+    await expect(c.locator('.ct-taster')).toHaveCount(0);
+    await expect(c.locator('.ct-reasons li').first()).toBeVisible();
+    await fits(page);
+    await c.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/today-coach-tilt-${lang}.png` });
+    const split = () => page.evaluate(() => [...document.querySelectorAll('.wk-split-seg')].map((e) => `${e.getAttribute('data-seg')}:${e.getAttribute('data-min')}`).join(' '));
+    const before = await split();
+    await c.locator('[data-tilt-accept]').click();
+    await expect(page.locator('[data-coach-tilt-today]')).toHaveCount(0);
+    // the plan above changes at once (the improvisation share moved)
+    await expect.poll(split).not.toBe(before);
+    await page.goto(`/?unlock=all&lang=${lang}#/insights`);
+    await expect(page.locator('[data-tilt-answer="yes"]')).toBeVisible({ timeout: 30_000 });
+  });
 
 for (const lang of ['he', 'en'] as const)
   test(`Improvise › the Barry Harris way: think chords, the starting degree, one screen (${lang})`, async ({ page }) => {

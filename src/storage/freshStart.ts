@@ -23,7 +23,9 @@ export const KEEP_SETTINGS: readonly (keyof Settings)[] = [...new Set<keyof Sett
   'nickname', 'hideNickPrompt', 'country', 'avatarIcon', 'avatarColor', 'avatarPhoto', 'privacy', 'birthYear', 'avatarFrame', 'purchases',
   'leftHanded', 'tuning', 'bassTuning', 'headphones', 'tunerPreset', 'metronome', 'drumKit', 'recalSnooze',
   'mixer', 'sound', 'guitarVoice', 'pianoDetail', 'soundQuality', 'audioLatency', 'organReg', 'organFast', 'epTremolo', 'bandDrums', 'droneSound', 'theme', 'cleanView', 'vibratoStyle',
-  'keepTakes', 'keepTakeNotes', 'syncTakeNotes', 'myCharts', 'customDrills', 'lickBook', 'ownFingering', 'workoutTemplates', 'shareStats',
+  // the measured singing range is the person's voice, not progress (owner 2026-11-25)
+  'voiceRange',
+  'keepTakes', 'keepTakeNotes', 'syncTakeNotes', 'myCharts', 'customDrills', 'lickBook', 'ownFingering', 'workoutTemplates', 'teacherPlans', 'shareStats',
 ])];
 
 /** Device stores that only hold derived progress (the player model, confusions, analysis, AI cards). */

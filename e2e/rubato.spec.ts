@@ -12,7 +12,7 @@ test('rubato: a new item in free time, graded on the notes only', async ({ page 
   await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'On' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
   await page.goto('/?unlock=all&rubato=1#/drills');
-  await page.locator('[data-family="scales"]').click();
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
   await page.locator('[data-level-start="scales-1"]').click();
   await expect(page.locator('[data-rubato-stage="free"]')).toBeVisible();
   await page.locator('[data-rubato-start]').click();
@@ -41,7 +41,7 @@ for (const [inst, fam, level] of [['piano', 'scales', 'scales-1'], ['piano', 'fi
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/?sim=1&rubato=1#/drills');
     if (inst === 'guitar') await page.locator('[data-inst="guitar"]').click();
-    await page.locator(`[data-family="${fam}"]`).click();
+    await page.locator(`[data-family-levels="${fam}"], [data-family="${fam}"]:not([data-family-direct])`).click();
     await page.locator(`[data-level-start="${level}"]`).click();
     await expect(page.locator('[data-rubato-stage="free"]')).toBeVisible();
     const fit = await page.evaluate(() => document.scrollingElement!.scrollHeight <= innerHeight + 1);
