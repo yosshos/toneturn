@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 import { clipKey, cyrb53, normText } from '../src/speech/kokoro/hash';
 import { ClipCache, fromPcm16, memoryClipStore, toPcm16, type Clip } from '../src/speech/kokoro/cache';
 import { paceFor, pickBackend, SLOW_FACTOR, tooSlow, wantsKokoro, KOKORO_VOICE } from '../src/speech/kokoro/decide';
-import { KokoroNarrator, type KokoroDeps, type PlayOut, type WorkerLike } from '../src/speech/kokoro/engine';
+import { KokoroNarrator, PROBE_GAP_MS, type KokoroDeps, type PlayOut, type WorkerLike } from '../src/speech/kokoro/engine';
 import type { FromWorker, ToWorker } from '../src/speech/kokoro/protocol';
 import { BrowserPromptPlayer } from '../src/speech/tts';
 import { setTalk } from '../src/speech/talk';
@@ -101,6 +101,8 @@ class FakeWorker implements WorkerLike {
   onerror: ((e: unknown) => void) | null = null;
   sent: ToWorker[] = [];
   gens: string[] = [];
+  /** Lines the worker fails to generate (a worker error for that line only). */
+  failOn = new Set<string>();
   terminated = false;
   constructor(
     public rtf = 0.3,
@@ -118,6 +120,7 @@ class FakeWorker implements WorkerLike {
       this.emit({ type: 'ready', genMs: 3000 * this.rtf, audioMs: 3000 });
     } else if (m.type === 'gen') {
       this.gens.push(m.text);
+      if (this.failOn.has(m.text)) return this.emit({ type: 'failed', id: m.id, message: 'boom' });
       const sr = 24000;
       const secs = Math.max(0.1, m.text.length / 10);
       this.emit({ type: 'audio', id: m.id, pcm: new Float32Array(Math.round(secs * sr)), sr, genMs: secs * 1000 * this.genRtf });
@@ -143,7 +146,7 @@ function fakeOut() {
   return { out, played, stops: () => stops };
 }
 
-function narrator(w: FakeWorker | (() => FakeWorker), store = memoryClipStore(), gpu = false) {
+function narrator(w: FakeWorker | (() => FakeWorker), store = memoryClipStore(), gpu = false, now: () => number = () => 0) {
   const o = fakeOut();
   let made = 0;
   const deps: KokoroDeps = {
@@ -154,7 +157,7 @@ function narrator(w: FakeWorker | (() => FakeWorker), store = memoryClipStore(),
     saveData: () => false,
     online: () => true,
   };
-  return { n: new KokoroNarrator(deps), o, made: () => made, store };
+  return { n: new KokoroNarrator(deps, now), o, made: () => made, store };
 }
 
 describe('Kokoro narrator', () => {
@@ -218,23 +221,77 @@ describe('Kokoro narrator', () => {
     expect(o.played.length === 0 || o.stops() === 1).toBe(true);
   });
 
-  it('falls back (unavailable, slow) when the calibration sentence is slower than 1.5× real time', async () => {
+  // SPEC-KEY-SESSION-2 §6 (2026-11-25): a slow line never switches the voice off for the session.
+  it('a slow calibration keeps the voice on: lines are read until probes show it is fast again', async () => {
+    let clock = 0;
     const w = new FakeWorker(1.8);
-    const { n } = narrator(w);
-    expect(await n.ensure()).toBe(false);
-    expect(n.state).toMatchObject({ state: 'unavailable', why: 'slow' });
+    const { n, o } = narrator(w, memoryClipStore(), false, () => clock);
+    expect(await n.ensure()).toBe(true);
+    expect(n.state.state).toBe('ready');
     expect(n.state.rtf).toBeCloseTo(1.8);
-    expect(w.terminated).toBe(true);
-    await expect(n.speak('Hi.', new AbortController().signal)).rejects.toThrow('unavailable');
+    expect(n.slow).toBe(true);
+    expect(w.terminated).toBe(false);
+    // not made yet: read this one (the caller reads on 'slow'), made in the background as a probe
+    await expect(n.speak('Hi there.', new AbortController().signal)).rejects.toThrow('slow');
+    await tick();
+    expect(w.gens).toEqual(['Hi there.']);
+    expect(o.played.length).toBe(0);
+    // the probe was slow too: the next line is read, and no new probe before the gap
+    await expect(n.speak('Second.', new AbortController().signal)).rejects.toThrow('slow');
+    n.prefetch(['Third.', 'Fourth.']);
+    await tick();
+    expect(w.gens).toEqual(['Hi there.']);
+    // a line already made plays even while slow
+    await n.speak('Hi there.', new AbortController().signal);
+    expect(o.played.length).toBe(1);
+    // the device speeds up (the shaders warmed): after the gap a probe measures it, the rolling factor drops
+    w.genRtf = 0.2;
+    clock += PROBE_GAP_MS + 1;
+    await expect(n.speak('Fifth line.', new AbortController().signal)).rejects.toThrow('slow');
+    await tick();
+    expect(w.gens).toEqual(['Hi there.', 'Fifth line.']);
+    expect(n.slow).toBe(false);
+    expect(n.state.rtf).toBeLessThan(1.5);
+    await n.speak('Sixth line.', new AbortController().signal);
+    expect(o.played.length).toBe(2);
+    expect(n.state.state).toBe('ready');
   });
 
-  it('falls back when the first real line is too slow, after playing it', async () => {
-    const w = new FakeWorker(0.5, false, 2);
+  it('a slow real line plays; the voice stays on and plays what is made', async () => {
+    const w = new FakeWorker(0.5, false, 3);
     const { n, o } = narrator(w);
     await n.ensure();
     await n.speak('First line.', new AbortController().signal);
     expect(o.played.length).toBe(1);
-    expect(n.state).toMatchObject({ state: 'unavailable', why: 'slow' });
+    expect(n.state.state).toBe('ready');
+    expect(n.slow).toBe(true);
+    await expect(n.speak('Second line.', new AbortController().signal)).rejects.toThrow('slow');
+    await n.speak('First line.', new AbortController().signal);
+    expect(o.played.length).toBe(2);
+    expect(w.terminated).toBe(false);
+  });
+
+  it('one fast line does not hide a slow device: the rolling factor of the recent lines decides', async () => {
+    const w = new FakeWorker(0.3);
+    const { n } = narrator(w);
+    await n.ensure();
+    w.genRtf = 2.5;
+    await n.speak('One slow line.', new AbortController().signal);
+    expect(n.slow).toBe(false); // (0.3 + 2.5) / 2 = 1.4
+    await n.speak('Another slow line.', new AbortController().signal);
+    expect(n.slow).toBe(true); // (0.3 + 2.5 + 2.5) / 3
+    expect(n.state.state).toBe('ready');
+  });
+
+  it('a worker error reads that line only', async () => {
+    const w = new FakeWorker();
+    const { n, o } = narrator(w);
+    await n.ensure();
+    w.failOn.add('Broken line.');
+    await expect(n.speak('Broken line.', new AbortController().signal)).rejects.toThrow('boom');
+    await n.speak('Next line.', new AbortController().signal);
+    expect(o.played.length).toBe(1);
+    expect(n.state.state).toBe('ready');
   });
 
   it('takes fp32 on WebGPU, and retries once on WASM q8 when WebGPU fails to start', async () => {
@@ -321,6 +378,16 @@ describe('the prompt player', () => {
     await done;
     expect(n.ensure).not.toHaveBeenCalled();
     expect(n.speak).not.toHaveBeenCalled();
+  });
+
+  it('reads the line the voice skips while slow', async () => {
+    n.speak = vi.fn(async () => {
+      throw new Error('slow');
+    });
+    const done = p.speak('Listen.', 'en', new AbortController().signal);
+    await vi.runAllTimersAsync();
+    await expect(done).resolves.toBeUndefined();
+    expect(n.speak).toHaveBeenCalledTimes(1);
   });
 
   it('reads instead when the voice gives up mid-session', async () => {

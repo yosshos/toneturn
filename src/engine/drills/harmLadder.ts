@@ -145,10 +145,18 @@ export interface HEv {
   ct?: boolean;
 }
 
-/** Degree span of a step: two octaves of the scale (N = 2 × notes) — `octs` 1 on the guitar's chord steps. */
-export function ladderEvents(_key: number, sc: HScale, step: HStep, tonic: number, octs = 2): HEv[] {
+/**
+ * Degree span of a step: two octaves of the scale (N = 2 × notes) — `octs` 1 on the guitar's chord steps and the
+ * 1-octave forms (SPEC-KEY-SESSION-2 B-1, B-2). The way down never repeats the top (§7): broken 3rds and the
+ * arpeggiated triads / 7ths turn around on the pair (chord) one degree below the top. '9a' needs two octaves (a 9th
+ * chord is wider than one), so it is always built over at least two; 'ti' is always one octave.
+ * The 1-octave forms of the broken / together 3rds and the arpeggiated triads and 7ths (owner 2026-11-25, U5) are one
+ * octave of ROOTS: a dyad / chord on every degree from I up to I an octave higher (so the top goes past the octave),
+ * then down from the one below the top, home on the tonic.
+ */
+export function ladderEvents(_key: number, sc: HScale, step: HStep, tonic: number, octs = 2, rooted = false): HEv[] {
   const n = sc.ints.length;
-  const N = n * octs;
+  const N = n * Math.max(1, step === '9a' ? Math.max(2, octs) : Math.round(octs));
   const d = (k: number) => deg(tonic, sc.ints, k);
   const ctOf = (k: number) => (isHarris(sc) ? mod(k, 2) === 0 : undefined);
   const out: HEv[] = [];
@@ -165,30 +173,34 @@ export function ladderEvents(_key: number, sc: HScale, step: HStep, tonic: numbe
     return ps;
   };
   const pcsOf = (ps: number[]) => [...new Set(ps.map((p) => mod(p, 12)))].sort((a, c) => a - c);
+  // one octave of roots (U5): the last root is the octave's tonic (degree n), the top note above it
+  const roots1 = Math.round(octs) === 1 && step !== '9a';
   switch (step) {
     case 'line':
       for (const k of upDown(0, N)) push([d(k)], 0.5, { ct: ctOf(k) });
       break;
     case '3b':
-      for (let k = 0; k <= N - 2; k++) {
+      for (let k = 0; k <= (roots1 ? n : N - 2); k++) {
         push([d(k)], 0.5, { ct: ctOf(k) });
         push([d(k + 2)], 0.5, { ct: ctOf(k + 2) });
       }
-      for (let k = N; k >= 2; k--) {
+      // down from the pair below the top (…A5 C6 · B5 G5 … in C): the top 3rd is not played twice
+      for (let k = (roots1 ? n + 2 : N) - 1; k >= 2; k--) {
         push([d(k)], 0.5, { ct: ctOf(k) });
         push([d(k - 2)], 0.5, { ct: ctOf(k - 2) });
       }
       break;
     case '3t':
-      for (const k of upDown(0, N - 2)) push([d(k), d(k + 2)], 1);
+      for (const k of upDown(0, roots1 ? n : N - 2)) push([d(k), d(k + 2)], 1);
       break;
     case 'ta':
     case '7a': {
       const sz = step === 'ta' ? 3 : 4;
       const u = 1 / (sz === 3 ? 3 : 2);
-      const top = N - 2 * (sz - 1);
+      const top = roots1 ? n : N - 2 * (sz - 1);
       for (let k = 0; k <= top; k++) for (let j = 0; j < sz; j++) push([d(k + 2 * j)], u, { ct: ctOf(k + 2 * j) });
-      for (let k = N; k >= 2 * (sz - 1); k--) for (let j = 0; j < sz; j++) push([d(k - 2 * j)], u, { ct: ctOf(k - 2 * j) });
+      // down from the chord on the degree below the top (its melody note is the top's neighbour): no repeated top note
+      for (let k = top + 2 * (sz - 1) - 1; k >= 2 * (sz - 1); k--) for (let j = 0; j < sz; j++) push([d(k - 2 * j)], u, { ct: ctOf(k - 2 * j) });
       break;
     }
     case 'ti': {
@@ -219,7 +231,8 @@ export function ladderEvents(_key: number, sc: HScale, step: HStep, tonic: numbe
     case 'd3':
     case 'd24': {
       const sz = step === 'tb' ? 3 : 4;
-      for (const k of upDown(0, N)) {
+      // `rooted` (the key session's 1-octave blocks, S8): root-position chords on every degree I … I (melody = the chord's top)
+      for (const k of rooted && roots1 && (step === 'tb' || step === '7b') ? upDown(2 * (sz - 1), n + 2 * (sz - 1)) : upDown(0, N)) {
         let ps = chordAt(k, sz);
         if (step === 'd2') ps = [ps[2] - 12, ps[0], ps[1], ps[3]];
         if (step === 'd3') ps = [ps[1] - 12, ps[0], ps[2], ps[3]];
@@ -442,7 +455,9 @@ export function genHarmPiano(s: DrillSpec): Drill {
   const drop = step === 'd2' || step === 'd3' || step === 'd24';
   const chordStep = step === 'tb' || step === '7b' || step === 'ti' || drop;
   const tonic = chordStep ? pitchIn(key, drop ? 58 : step === 'ti' ? 52 : 59) : rhBase(key);
-  const evs = ladderEvents(key, sc, step, tonic);
+  // SPEC-KEY-SESSION-2 B-1, B-2: `octaves: 1` builds the 1-octave form (no octaves = the catalogue's two, ids unchanged)
+  const octs = s.octaves === 1 ? 1 : 2;
+  const evs = ladderEvents(key, sc, step, tonic, octs, octs === 1);
   // B2 / B4 / B5: every note spelled by the key (one letter per degree: F♯ in D, C♭ in G♭)
   const names = step === 'ti' || step === 'c4' || step === '9a' ? spellH(hTonic(key, sc), sc.ints) : null;
   const spellOf = (p: number): Partial<ExpNote> => {
@@ -454,7 +469,7 @@ export function genHarmPiano(s: DrillSpec): Drill {
   const fing = step === 'line' ? autoFingering(key, sc.ints) : null;
   const top = Math.max(...evs.map((e) => e.ps[0]));
   // the degree under each block chord, for the LH root (melody on top, k up then down)
-  const N = sc.ints.length * 2;
+  const N = sc.ints.length * octs;
   const ks = [...Array.from({ length: N + 1 }, (_, i) => i), ...Array.from({ length: N }, (_, i) => N - 1 - i)];
   evs.forEach((e, i) => {
     if (e.pcs) {
@@ -585,8 +600,11 @@ export function genHarmGuitar(s: DrillSpec, tu: Tuning): Drill {
   const sig = hSig(key, sc);
   const lineStep = step === 'line' || step === '3b' || step === 'ta' || step === '7a' || step === 'c4' || step === '9a';
   if (lineStep || step === '3t') {
-    const { map, tonic, lo } = positionMap(tu, key, sc, 2);
-    for (const e of ladderEvents(key, sc, step, tonic, 2)) {
+    // `octaves: 1` = the 1-octave form (SPEC-KEY-SESSION-2 B-1, B-2); '9a' always spans two
+    const octs = s.octaves === 1 && step !== '9a' ? 1 : 2;
+    // the 1-octave forms are an octave of roots: their top goes past the octave, so the position spans two
+    const { map, tonic, lo } = positionMap(tu, key, sc, octs === 1 && step !== 'line' ? 2 : octs);
+    for (const e of ladderEvents(key, sc, step, tonic, octs)) {
       if (e.ps.length === 1) {
         const pl = map.get(e.ps[0])!;
         evs.push({ beat: e.beat, dur: e.dur, notes: [{ ...pl, finger: Math.min(4, Math.max(1, pl.f - lo + 1)), ...(e.ct !== undefined ? { ct: e.ct } : {}) }] });

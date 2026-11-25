@@ -1111,6 +1111,9 @@ export interface ItemState {
   /** BUILD-PLAN §0.2 (phase 2): the coach's limit rule fired here — "a ceiling for now" at this tempo; the matrix doesn't
    *  serve the item again before `until` (a local day, 'YYYY-MM-DD') unless the player visits it by key. */
   ceiling?: { bpm: number; until: string };
+  /** SPEC-KEY-SESSION-2 §4.3: the key session's stages passed on this item (stage codes, 'A-3', 'B-6' …), kept per key
+   *  with the item itself (the item id carries the key) — the next session resumes the rung at its first unpassed stage. */
+  stages?: string[];
 }
 
 /** The player's own drill (spec AI §12 owner request): a pattern in scale degrees, run through every key. */

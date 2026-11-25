@@ -40,7 +40,7 @@ describe('practice coach (scales)', () => {
     let items: Record<string, ItemState> = {};
     const seen: string[] = [];
     let promotedAt = -1;
-    for (let k = 0; k < 40 && c.step === 0; k++) {
+    for (let k = 0; k < 200 && c.step === 0; k++) {
       const r = play(c, items, true);
       seen.push(`${r.t.drill.spec.key}:${r.t.drill.spec.hands}:${r.t.stage ?? 'tempo'}`);
       items = r.items;
@@ -56,7 +56,8 @@ describe('practice coach (scales)', () => {
     expect(firstKey).toContain('0:L:tempo');
     const second = seen.filter((x) => x.startsWith('7:'));
     expect(second.filter((x) => x.endsWith(':free')).length).toBeLessThanOrEqual(2);
-    expect(promotedAt).toBeLessThan(20);
+    // SPEC-KEY-SESSION-2 §3.4: every item now climbs to its target (no pass at the start tempo)
+    expect(promotedAt).toBeLessThan(40);
     expect(KEYS_TO_PROMOTE).toBe(2);
   });
 
@@ -91,7 +92,7 @@ describe('practice coach (scales)', () => {
     // Play level 1 clean in two keys (both hands).
     let c = coachStart(fam, {}, order, 0, { noProbe: true });
     let it: Record<string, ItemState> = {};
-    for (let k = 0; k < 40 && c.step === 0; k++) {
+    for (let k = 0; k < 200 && c.step === 0; k++) {
       const r = play(c, it, true);
       it = r.items;
       c = r.nx.state;

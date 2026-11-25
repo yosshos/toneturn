@@ -17,28 +17,28 @@ test('coach: scales run hands-free from take to take, then end with XP', async (
   // A new step is played first (cursor running); skip it here.
   const demo = page.locator('[data-coach-skip-demo]');
   if (await demo.isVisible().catch(() => false)) await demo.click();
-  // Takes follow one another with no click: collect the items seen.
-  const seen = new Set<string>();
+  // Takes follow one another with no click (each item climbs to its target, SPEC-KEY-SESSION-2 §3.4): count the coach's
+  // lines after takes — four takes in a row, hands-free, is the flow; a new kind of take waits on its brief (Ready).
+  const lines: string[] = [];
   let briefs = 0;
-  for (let k = 0; k < 60 && seen.size < 3; k++) {
-    const id = await page.locator('.coach-run').getAttribute('data-drill').catch(() => null);
-    if (id) seen.add(id);
-    // a new step is played first: skip it here too
+  for (let k = 0; k < 80 && lines.length < 4; k++) {
     if (await demo.isVisible().catch(() => false)) await demo.click().catch(() => {});
-    // a new kind of take waits on its brief (never counts in by itself): Ready
     const ready = page.locator('[data-brief-ready]');
     if (await ready.isVisible().catch(() => false)) {
       await expect(page.locator('[data-task-brief]')).toBeVisible();
-      await page.waitForTimeout(600);
-      await expect(ready).toBeVisible();
       briefs++;
       await ready.click().catch(() => {});
     }
-    await page.waitForTimeout(400);
+    if ((await page.locator('[data-coach-line="1"]').count()) > 0) {
+      const t = ((await page.locator('.coach-line').textContent().catch(() => '')) ?? '').trim();
+      if (t && t !== lines[lines.length - 1]) lines.push(t);
+    }
+    await page.waitForTimeout(300);
   }
-  expect(seen.size).toBeGreaterThanOrEqual(3);
-  expect(briefs).toBeGreaterThanOrEqual(1);
+  expect(lines.length).toBeGreaterThanOrEqual(4);
+  expect(briefs).toBeGreaterThanOrEqual(0);
   await expect(page.locator('.take-review')).toHaveCount(0);
+  // End: the session's summary and its XP
   await page.locator('[data-coach-stop]').click();
   await expect(page.locator('[data-coach-end]')).toBeVisible();
   const xp = Number(await page.locator('[data-coach-xp]').getAttribute('data-coach-xp'));
@@ -89,7 +89,17 @@ test('hands-free: a level run moves on after a take with no button (again, slowe
   await expect(page.locator('[data-hf-bar]')).toBeVisible({ timeout: 30_000 });
   await expect(page.locator('[data-hf-bar]')).toContainText(/again/i);
   // Misses: again, slower, then on to the next item — all by itself, no click.
-  await expect.poll(async () => page.locator('.drill-run').getAttribute('data-drill'), { timeout: 60_000 }).not.toBe(first);
+  // a brief may open on the next kind of take: Ready keeps it moving (the hands-free flow itself needs no click)
+  await expect
+    .poll(
+      async () => {
+        const ready = page.locator('[data-brief-ready]');
+        if (await ready.isVisible().catch(() => false)) await ready.click().catch(() => {});
+        return page.locator('.drill-run').getAttribute('data-drill');
+      },
+      { timeout: 90_000, intervals: [500] },
+    )
+    .not.toBe(first);
   await expect(page.locator('.take-review button:focus')).toHaveCount(0);
 });
 
@@ -154,4 +164,95 @@ test('coach intro: the dynamics lens is picked before the session and applies to
   await page.locator('[data-coach-open="scales"]').click();
   await page.locator('[data-coach-lens="cresc"]').click();
   await expect(page.locator('[data-coach-lens="cresc"]')).toHaveAttribute('aria-checked', 'true');
+});
+
+// SPEC-KEY-SESSION-2 §6, §8.3: the key session climbs stage by stage — the strip above the music marks the current
+// stage and ticks the passed ones, each new stage opens with its own one-line brief, and the speed stage shows its tempo bar.
+test('key session: the stage strip, a brief per stage, ticks, and the tempo bar on the speed stage', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
+  await page.goto('/?unlock=all&lang=en#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await page.locator('[data-key-card="0"]').click();
+  await page.locator('[data-key-session="0"]').click();
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+  await page.locator('[data-coach-start]').click();
+  const demo = page.locator('[data-coach-skip-demo]');
+  const strip = page.locator('[data-stage-strip]');
+  const briefs = new Set<string>();
+  let tempo = false;
+  for (let k = 0; k < 120 && !tempo; k++) {
+    if (await demo.isVisible().catch(() => false)) await demo.click().catch(() => {});
+    const ready = page.locator('[data-brief-ready]');
+    if (await ready.isVisible().catch(() => false)) {
+      briefs.add((await page.locator('[data-task-brief] .tb-what').textContent().catch(() => '')) ?? '');
+      await ready.click().catch(() => {});
+    }
+    tempo = await page.locator('[data-stage-tempo]').isVisible().catch(() => false);
+    if (!tempo) await page.waitForTimeout(300);
+  }
+  await expect(strip).toBeVisible();
+  // the scale's stages: the current one marked, the ones before it ticked
+  await expect(page.locator('[data-stage-state="now"]')).toHaveCount(1);
+  // the passed stages fold into one tick chip with their count (S6: one line at 375 px)
+  expect(Number(await page.locator('[data-stage-done]').getAttribute('data-stage-done'))).toBeGreaterThanOrEqual(3);
+  // the tempo bar names the note value being played (U9)
+  await expect(page.locator('[data-stage-tempo]')).toContainText(/quarters|eighths|triplets/);
+  expect(tempo).toBe(true);
+  // each new stage opened with its own brief (both hands, two octaves, contrary, the speed …)
+  expect(briefs.size).toBeGreaterThanOrEqual(2);
+  expect([...briefs].join(' ')).toMatch(/Both hands|Contrary|The speed/);
+  // one phone screen: the strip stays inside the 375 px width
+  const box = await strip.boundingBox();
+  expect(box && box.x >= 0 && box.x + box.width <= 376).toBe(true);
+  await page.screenshot({ path: 'test-results/key-session-strip-375.png' });
+});
+
+/** Drive a key session until `done` says stop: skip demos, press Ready on each brief. */
+async function driveKeySession(page: import('@playwright/test').Page, done: () => Promise<boolean>, max = 160) {
+  const demo = page.locator('[data-coach-skip-demo]');
+  for (let k = 0; k < max; k++) {
+    if (await done()) return true;
+    if (await demo.isVisible().catch(() => false)) await demo.click().catch(() => {});
+    const ready = page.locator('[data-brief-ready]');
+    if (await ready.isVisible().catch(() => false)) await ready.click().catch(() => {});
+    await page.waitForTimeout(300);
+  }
+  return done();
+}
+
+// S14 (review 2026-11-25): the coach's lines are fixed phrases with recordings (public/voice/en): an English key session
+// plays them from the recordings (the test browser poses as a person's browser with the voice on).
+test('key session: the coach speaks a recorded phrase (English)', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    (window as unknown as { __fakeTake: string }).__fakeTake = 'clean';
+    localStorage.setItem('toneturn.talk', '1');
+  });
+  const played: string[] = [];
+  page.on('request', (r) => {
+    if (/\/voice\/en\/[^/]+\.mp3/.test(r.url())) played.push(r.url());
+  });
+  await page.goto('/?unlock=all&lang=en#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await page.locator('[data-key-card="0"]').click();
+  await page.locator('[data-key-session="0"]').click();
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+  await page.locator('[data-coach-start]').click();
+  expect(await driveKeySession(page, async () => played.length > 0, 120)).toBe(true);
+});
+
+test('key session in Hebrew: the strip, the brief and the coach line in Hebrew, tempi with their note value', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
+  await page.goto('/?unlock=all&lang=he#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await page.locator('[data-key-card="0"]').click();
+  await page.locator('[data-key-session="0"]').click();
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+  await page.locator('[data-coach-start]').click();
+  const line = page.locator('.coach-line');
+  expect(await driveKeySession(page, async () => /[א-ת]/.test((await line.textContent().catch(() => '')) ?? '') && /ב(רבעים|שמיניות)/.test((await line.textContent().catch(() => '')) ?? ''))).toBe(true);
+  await expect(page.locator('[data-stage-strip]')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

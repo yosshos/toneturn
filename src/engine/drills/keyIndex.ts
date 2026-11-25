@@ -788,7 +788,26 @@ export function keyCeilings(fams: FamilyDef[], root: number, group: 'major' | 'm
   return out;
 }
 
-export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: { jazz?: boolean; rungs?: number; licks?: Lick[]; instrument?: LadderInst; focus?: StyleFocus; /** The time now (the week's visits, "just passed" today); default now. */ now?: number | string } = {}): FamilyDef | null {
+export type KeyLadderOpts = { jazz?: boolean; rungs?: number; licks?: Lick[]; instrument?: LadderInst; focus?: StyleFocus; /** The time now (the week's visits, "just passed" today); default now. */ now?: number | string };
+
+export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: KeyLadderOpts = {}): FamilyDef | null {
+  const p = keyLadderPicks(fams, root, group, tier, items, opts);
+  if (!p) return null;
+  const { warm, chosenR } = p;
+  const chosen = chosenR.map((x) => x.lvl);
+  const steps: LevelDef[] = [];
+  if (warm) steps.push(warm);
+  steps.push(...chosen);
+  // a closing visit to the first harmonised rung: it starts just under the best clean tempo just reached
+  const back = chosenR.find((x) => x.rung.block === 'S' && !x.rung.mode)?.lvl;
+  if (back) steps.push({ ...back, id: `${back.id}-again`, title: { en: `${back.title.en}: again, from your best tempo`, he: `${back.title.he}: שוב, מהטמפו הכי טוב שלך` } });
+  steps.forEach((l, k) => (l.level = k + 1));
+  if (steps.length < 2) return null;
+  return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
+}
+
+/** The key ladder's picks (keyLadder's rungs before they are laid out): the warm-up scale and the chosen rungs, in teaching order. */
+export function keyLadderPicks(fams: FamilyDef[], root: number, group: FacetGroup, tier: number, items: Record<string, ItemState> = {}, opts: KeyLadderOpts = {}): { warm: LevelDef | null; chosenR: { i: number; rung: LadderRung; lvl: LevelDef }[] } | null {
   if (group !== 'major' && group !== 'minor') return null;
   const { warm, built } = openKeyRungs(fams, root, group, tier, opts);
   const now = opts.now ?? Date.now();
@@ -832,14 +851,5 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
     return k < (per[b] ?? 1) ? [inBlock.get(b)![k]] : [];
   });
   const chosenR = pickd.slice(0, opts.rungs ?? 99).sort((a, b) => a.i - b.i);
-  const chosen = chosenR.map((x) => x.lvl);
-  const steps: LevelDef[] = [];
-  if (warm) steps.push(warm);
-  steps.push(...chosen);
-  // a closing visit to the first harmonised rung: it starts just under the best clean tempo just reached
-  const back = chosenR.find((x) => x.rung.block === 'S' && !x.rung.mode)?.lvl;
-  if (back) steps.push({ ...back, id: `${back.id}-again`, title: { en: `${back.title.en}: again, from your best tempo`, he: `${back.title.he}: שוב, מהטמפו הכי טוב שלך` } });
-  steps.forEach((l, k) => (l.level = k + 1));
-  if (steps.length < 2) return null;
-  return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
+  return { warm, chosenR };
 }

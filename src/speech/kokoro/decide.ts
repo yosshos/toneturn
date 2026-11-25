@@ -9,7 +9,8 @@ export type KokoroDevice = 'webgpu' | 'wasm';
 /** af_heart: the only English voice graded A overall in Kokoro's VOICES.md (af_bella is A-); warm, clear, American. */
 export const KOKORO_VOICE = 'af_heart';
 
-/** Give up on the voice when the first sentence takes longer than this × its own length to make. */
+/** Too slow when a line takes longer than this × its own length to make (the rolling factor of the recent lines,
+ *  SPEC-KEY-SESSION-2 §6: lines not made yet are then read, but the voice is never switched off for the session). */
 export const SLOW_FACTOR = 1.5;
 
 export type KokoroState = 'off' | 'downloading' | 'ready' | 'unavailable';
@@ -19,14 +20,14 @@ export interface KokoroStatus {
   pct: number;
   /** Why it's unavailable (shown softly in Settings). */
   why?: 'offline' | 'unsupported' | 'slow' | 'error';
-  /** Real-time factor of the calibration sentence (generation time / audio time). */
+  /** Rolling real-time factor of the recent lines, the calibration sentence first (generation time / audio time). */
   rtf?: number;
   device?: KokoroDevice;
   /** Size of the download for the chosen graph. */
   mb?: number;
 }
 
-/** Should the narrator fall back to reading for this session? (generation slower than SLOW_FACTOR × real time) */
+/** Was this generation slower than SLOW_FACTOR × real time? */
 export function tooSlow(genMs: number, audioMs: number, factor = SLOW_FACTOR): boolean {
   if (!(audioMs > 0)) return true;
   return genMs > factor * audioMs;

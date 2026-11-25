@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.136.0',
+    date: '2026-11-25',
+    en: ['Practice by key, rebuilt: every exercise is a ladder of stages (right hand, left hand, both hands, two octaves, contrary motion, then speed), the tempo rises with how well you played and alternates eighths and triplets, a quick check skips what you already know, and the session fills your daily length. A strip shows the stages, the narrator speaks short recorded phrases, and 3rds, triads and 7ths no longer repeat the top note'],
+    he: ['תרגול לפי סולם נבנה מחדש: כל תרגיל הוא סולם של שלבים (יד ימין, יד שמאל, שתי ידיים, שתי אוקטבות, תנועה מנוגדת, ואז מהירות), הטמפו עולה לפי איכות הביצוע ומתחלף בין שמיניות לטריולות, בדיקה מהירה מדלגת על מה שכבר יודעים, והאימון ממלא את הזמן היומי. פס מראה את השלבים, הקריין אומר משפטים קצרים מוקלטים, וטרצות, טריאדות וספטים כבר לא חוזרים על הצליל העליון'],
+  },
+  {
     version: '0.135.4',
     date: '2026-11-24',
     en: ['A short brief before every new kind of task: what to play, which hand, the tempo. The count-in waits for Ready (or a note after a moment), in the level test, the coach, the daily session and the drum games; the instruction stays on screen during the take'],

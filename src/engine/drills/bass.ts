@@ -996,7 +996,8 @@ function genChord(s: DrillSpec, tu: Tuning): Drill {
     }
     case 'dia7': {
       // TECHNIQUE-COVERAGE-AUDIT §4.6 #8: diatonic 7th arpeggios through the key, the piano / guitar ladder's hl-7a step
-      // (harmLadder.ts): a 7th chord on every degree up two octaves, then down from the top (op = the H_SCALES index:
+      // (harmLadder.ts): a 7th chord on every degree up two octaves, then down from the chord below the top, never
+      // repeating the top note (SPEC-KEY-SESSION-2 §7) (op = the H_SCALES index:
       // 0 major, 5 natural minor, 7 harmonic minor).
       const sc = H_SCALES[[0, 5, 7].includes(op) ? op : 0];
       const evs = ladderEvents(key, sc, '7a', rootOf(tu, key), 2);

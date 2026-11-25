@@ -5251,10 +5251,27 @@ function genTheoryPlay(s: DrillSpec): Drill {
 const LENGTH_KINDS = new Set(['reading', 'alberti', 'melody-alberti', 'pop-lh']);
 export function generate(spec: DrillSpec): Drill {
   const d = generateRaw(spec);
+  // S7 (2026-11-25): harmonic / melodic minor's raised degrees are written as sharps or naturals (G♯ in A minor, not A♭)
+  const kh = spec.family === 'k-sharm' && /^hl-/.test(spec.kind);
+  const raised = spec.scale === 'harmonic' || (kh && spec.option === 7) ? [11] : spec.scale === 'melodic' || (kh && spec.option === 8) ? [9, 11] : [];
+  if (raised.length && !d.sharps && (spec.instrument ?? 'piano') === 'piano') d.sharps = raised.map((x) => mod(spec.key + x, 12));
   if ((spec.family === 'k-read' || spec.family === 'k-classic' || LENGTH_KINDS.has(spec.kind)) && !d.goal.lengths && d.spec.instrument !== 'guitar' && d.spec.instrument !== 'bass') d.goal = { ...d.goal, lengths: true };
   // SPEC-EAR-AND-READING §3.1: hear and continue (the key session's block R) — the first two segments heard, the rest by ear
   if (spec.ear === 'continue') return hearAndContinue({ ...d, spec: { ...d.spec, ear: 'continue' }, itemId: itemIdOf({ ...d.spec, ear: 'continue' }) });
   return d;
+}
+
+/** A right-hand drill played by the left hand (SPEC-KEY-SESSION-2 B-2, B-4): its notes down one octave per octave of range. */
+function leftHandOf(r: Drill, s: DrillSpec): Drill {
+  // block chords start near middle C whatever their range: one octave down keeps the left hand on the keyboard's middle
+  const down = (s.octaves === 1 || /^hl-(tb|7b)$/.test(s.kind) ? 1 : 2) * 12;
+  const notes = r.notes.map((n) => {
+    const { finger: _f, ...rest } = n as typeof n & { finger?: number };
+    void _f;
+    return { ...rest, pitch: n.pitch - down, hand: 'L' as const };
+  });
+  const lh = { en: ' · LH', he: ' · יד שמאל' };
+  return { ...r, spec: { ...r.spec, hands: 'L' }, itemId: itemIdOf(s), notes, title: { en: r.title.en + lh.en, he: r.title.he + lh.he }, goal: { ...r.goal, hands: false } };
 }
 
 function generateRaw(spec: DrillSpec): Drill {
@@ -5277,6 +5294,9 @@ function generateRaw(spec: DrillSpec): Drill {
   if (s.family === 'k-keys') return genKeyMovePiano(s);
   if (s.family === 'k-vocab') return genKeysVocab(s);
   // AUDIT-SCALES: the harmonization ladder + Barry Harris borrowing, hand independence.
+  // SPEC-KEY-SESSION-2 B-2, B-4: the harmonised ladder's broken forms in the left hand — the right hand's notes an octave
+  // lower per octave of range (1 octave: C3–C4, 2 octaves: C2–C4), played by the left hand.
+  if (s.family === 'k-sharm' && s.hands === 'L' && /^hl-(line|3b|3t|ta|tb|7a|7b|c4)$/.test(s.kind)) return leftHandOf(genHarmPiano({ ...s, hands: 'R' }), s);
   if (s.family === 'k-sharm') return genHarmPiano(s);
   if (s.family === 'k-indep') return genIndep(s);
   if (s.family === 'k-phrase') return genKeysPhrase(s);
@@ -5441,6 +5461,8 @@ export interface LevelDef {
   tempo?: [number, number];
   /** SPEC-STYLE-FOCUS: the style this level belongs to (absent = the course's core). */
   style?: StyleId;
+  /** SPEC-KEY-SESSION-2 §2: a stage of a rung in the key session (stages.ts) — the coach climbs a rung stage by stage. */
+  stage?: import('./stages').StageInfo;
 }
 
 /** The ABRSM recommended minimum speeds, in notes per second (scales / arpeggios, Grades 1–8; ♩ in 8ths to G3, 16ths from G4). */

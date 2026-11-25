@@ -10,6 +10,9 @@ import { levelKeys, specDrills, targetBpmOf } from './plan';
 import { newItem } from './ladder';
 import { bandOfBpm, thresholds } from './analyze';
 import { hasQuarters, hasRubato, QUARTERS_BPM, QUARTERS_CLEAN, RUBATO_CLEAN, rubatoStage, type RubatoStage } from './rubato';
+import { isStaged, type StageInfo } from './stages';
+import { ksAfter, ksStart, ksSummary, ksTake, type KsState } from './keyCoach';
+import { tempoText, type CoachLine } from './coachPhrases';
 
 type T2 = { en: string; he: string };
 type Order = DrillSettings['keyOrder'];
@@ -89,6 +92,8 @@ export interface CoachState {
   probe: { takes: number } | null;
   /** The session's length in minutes (default SESSION_MIN): today's technique block gives its own. */
   minutes?: number;
+  /** SPEC-KEY-SESSION-2: the coach over a key session of stages (keyCoach.ts). */
+  ks?: KsState;
 }
 
 /** Takes in the placement probe. */
@@ -110,6 +115,14 @@ export interface CoachTake {
   kind: 'warmup' | 'review' | 'main';
   /** The item's index among its level's specs (RH / LH …). */
   spec: number;
+  /** SPEC-KEY-SESSION-2 §3: how the take is played — its note value per beat (1 quarters, 2 eighths, 3 triplets …) and
+   *  its ♩ — while `bpm` stays the item's own tempo (what the ladder records); its notes per second. */
+  play?: { per: number; bpm: number };
+  nps?: number;
+  /** The stage being played (the strip, the brief). */
+  stageInfo?: StageInfo;
+  /** The rung's placement probe (SPEC-KEY-SESSION-2 §4.2): announced as a quick check. */
+  probe?: boolean;
 }
 
 const levelOf = (fam: FamilyDef, id: string): LevelDef => fam.levels.find((l) => l.id === id) ?? fam.levels[0];
@@ -169,6 +182,7 @@ function firstTogether(fam: FamilyDef): number {
 
 /** The family's first level the player is not yet solid in, from their background (no background → the first level). */
 export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, order: Order, now = Date.now(), bg: CoachBackground = {}): CoachState {
+  if (isStaged(fam)) return ksStart(fam, items, now, bg);
   const steps = fam.levels.map((l) => l.id);
   const skilled = !!bg.skilled || (bg.from ?? 1) > 1;
   const from = bg.from ?? (skilled ? firstTogether(fam) : 1);
@@ -231,6 +245,7 @@ export type FreeOk = (d: Drill) => boolean;
 
 /** The take the coach asks for now. */
 export function coachTake(fam: FamilyDef, c: CoachState, items: Record<string, ItemState>, order: Order, freeOk: FreeOk = () => true): CoachTake {
+  if (c.ks) return ksTake(fam, c, items, order, freeOk);
   if (c.side) {
     const level = levelOf(fam, c.steps[c.side.step]);
     const drill = drillOf(level, c.side.spec, c.side.key, order);
@@ -281,12 +296,14 @@ const PRAISE: T2[] = [
 
 export interface CoachNext {
   state: CoachState;
-  /** The coach's line: how it went, and what comes next. */
-  line: T2;
+  /** The coach's line: how it went, and what comes next (`say`: its fixed phrases, spoken one by one). */
+  line: CoachLine;
   /** The session is over (its time is up). */
   end: boolean;
   /** The limit rule fired on this item (BUILD-PLAN §0.2): its best clean tempo becomes "a ceiling for now". */
   ceiling?: { itemId: string; bpm: number };
+  /** SPEC-KEY-SESSION-2 §4.3: items whose passed stages changed (the screen saves them). */
+  items?: ItemState[];
 }
 
 /** The next key of the step that is not yet passed (wrapping); the current one when all are. */
@@ -303,6 +320,7 @@ function nextKeyIdx(c: CoachState): number {
  * its rubato stage).
  */
 export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: TakeMetrics, items: Record<string, ItemState>, order: Order, now = Date.now(), freeOk: FreeOk = () => true): CoachNext {
+  if (c0.ks) return ksAfter(fam, c0, take, m, items, order, now, freeOk);
   const clean = m.verdict === 'clean';
   const c: CoachState = { ...c0, takes: c0.takes + 1, clean: c0.clean + (clean ? 1 : 0), sinceReview: c0.sinceReview + 1, demo: false };
   const praise = PRAISE[c.takes % PRAISE.length];
@@ -421,8 +439,9 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     if (take.stage !== null) return next(nowSkilled ? { he: `${praise.he} זה קל לך — לטמפו.`, en: `${praise.en} This is easy for you — to tempo.` } : praise);
     // Below the tempo the item passes at (its target past the basics, its own tempo before), or eased by "slower":
     // climb and play it again (SPEC-COACH-2 §4.1).
+    // SPEC-KEY-SESSION-2 §3.4: the same climb for everyone — an item passes at its target (no pass at the start tempo)
     const target = targetBpmOf(level, take.drill);
-    const passAt = c.skilled ? target : take.drill.startBpm;
+    const passAt = target;
     if (c.slower > 0 || take.bpm < passAt - 0.5) {
       if (c.slower > 0) c.slower--;
       else if (easy) {
@@ -501,6 +520,9 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
 
 /** "Now: G major · hands together · ♩80" (free time: "in free time"). */
 export function announce(t: CoachTake, lang: 'he' | 'en'): string {
+  // a key-session stage: its one-line brief and the pulse as played (SPEC-KEY-SESSION-2 §6, no level titles)
+  // (the tempo isolated left-to-right so "♩90" never flips in a Hebrew line)
+  if (t.stageInfo) return `${t.probe ? (lang === 'he' ? 'קודם בדיקה קצרה. ' : 'A quick check first. ') : ''}${t.stageInfo.brief[lang]} ${t.stage === 'free' ? (lang === 'he' ? 'בקצב חופשי.' : 'In free time.') : tempoText(t.play?.bpm ?? t.bpm, t.play?.per, lang)}`;
   const title = t.drill.title[lang];
   const how =
     t.stage === 'free'
@@ -512,7 +534,8 @@ export function announce(t: CoachTake, lang: 'he' | 'en'): string {
 }
 
 /** The session's closing line (also when the player ends it). */
-export function summary(fam: FamilyDef, c: CoachState, last: T2): T2 {
+export function summary(fam: FamilyDef, c: CoachState, last: T2): CoachLine {
+  if (c.ks) return ksSummary(fam, c, last);
   const lv = levelOf(fam, c.steps[c.step]);
   const up = c.promoted ? { he: ` עלית ${c.promoted === 1 ? 'שלב' : `${c.promoted} שלבים`}.`, en: ` ${c.promoted === 1 ? 'One step up' : `${c.promoted} steps up`}.` } : { he: '', en: '' };
   return {

@@ -44,10 +44,20 @@ export function matrixTierOf(settings: Pick<Settings, 'courseStart' | 'drillStar
   const core = families(ds.instrument ?? 'piano').filter((f) => CORE_FAMILIES.includes(f.id));
   const tier = playerTier(core.flatMap((f) => f.levels.flatMap((l) => levelDrills(l, ds.keyOrder))), items);
   if (tier >= 0) return tier;
+  return priorTier(settings, ds);
+}
+
+/**
+ * SPEC-KEY-SESSION-2 §4.1: the starting tier before any measured take — the course self-report (new T0, "a bit" T2,
+ * "well" T4) or the level test (a start past the first levels: T2; the scales from level 8 on: T4), the higher.
+ */
+export function priorTier(settings: Pick<Settings, 'courseStart' | 'drillStart'>, ds: Pick<DrillSettings, 'instrument'>): number {
   const inst = ds.instrument ?? 'piano';
   const report = (settings.courseStart as Record<string, { report?: string } | undefined> | undefined)?.[inst === 'piano' ? 'keys' : inst]?.report;
-  const advanced = report === 'bit' || report === 'well' || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
-  return advanced ? 2 : 0;
+  const self = report === 'well' ? 4 : report === 'bit' ? 2 : 0;
+  const starts = Object.values(settings.drillStart ?? {}).map((x) => x ?? 1);
+  const test = (settings.drillStart?.scales ?? 1) >= 8 ? 4 : starts.some((x) => x > 1) ? 2 : 0;
+  return Math.max(self, test);
 }
 
 /** The key of the week for an instrument and a tab: picked once a week (by `pick`) and kept on this device. */

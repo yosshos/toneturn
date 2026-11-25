@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { lookup, voiceKey, voiceUrl, VOICE_MODEL, type VoiceManifest } from '../src/speech/voice/manifest';
 import { VoiceFiles, type FilesDeps } from '../src/speech/voice/files';
-import { distinct, memoryLines, miniLines, openerLines, previewLines } from '../src/speech/voice/lines';
+import { distinct, memoryLines, miniLines, coachLines, openerLines, previewLines } from '../src/speech/voice/lines';
 import { BrowserPromptPlayer, type Narrator } from '../src/speech/tts';
 import { setTalk } from '../src/speech/talk';
 import { setCatalog } from '../src/i18n/translate';
@@ -205,7 +205,7 @@ describe('the line inventory', () => {
   const MANIFEST = 'public/voice/en/manifest.json';
   it.skipIf(!existsSync(MANIFEST))('every static line is recorded', () => {
     const m = JSON.parse(readFileSync(MANIFEST, 'utf8')) as VoiceManifest;
-    const missing = distinct([...miniLines(), ...previewLines(), ...memoryLines(), ...openerLines()]).filter((l) => !lookup(m, l.text));
+    const missing = distinct([...miniLines(), ...previewLines(), ...memoryLines(), ...openerLines(), ...coachLines()]).filter((l) => !lookup(m, l.text));
     expect(missing.map((l) => l.text)).toEqual([]);
   });
 });

@@ -164,7 +164,8 @@ describe('bass', () => {
     const ps = d.notes.slice().sort((a, b) => a.beat - b.beat).map((n) => pcName(n.pitch));
     expect(ps.slice(0, 12).join(' ')).toBe('C E G B D F A C E G B D');
     expect(ps[ps.length - 1]).toBe('C');
-    expect(ps.length).toBe(72);
+    // SPEC-KEY-SESSION-2 §7: 9 chords up, 8 down (from the chord under the top, the top chord is not played twice)
+    expect(ps.length).toBe(68);
   });
 
   it('two-octave harmonic minor in E♭: E♭ F G♭ A♭ B♭ C♭ D E♭ …', () => {

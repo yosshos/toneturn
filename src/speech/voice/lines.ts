@@ -18,8 +18,9 @@ import { previewText } from './preview';
 export { previewText };
 import { openerLines as openerText } from '../../content/openers';
 import { ALL_TASTES } from '../../engine/courseStart';
+import { coachPhraseList } from '../../engine/drills/coachPhrases';
 
-export type LineSource = 'mini' | 'mini-name' | 'intro' | 'go' | 'prompt' | 'feedback' | 'memory' | 'preview' | 'opener' | 'other';
+export type LineSource = 'mini' | 'mini-name' | 'intro' | 'go' | 'prompt' | 'feedback' | 'memory' | 'preview' | 'opener' | 'coach' | 'other';
 export interface VoiceLine {
   /** The raw English text as the app passes it to tts.speak (before speakable()). */
   text: string;
@@ -58,7 +59,13 @@ export function memoryLines(): VoiceLine[] {
 /** The course and unit openers (src/content/openers.ts): every narrated English line, every first-lesson title. */
 export function openerLines(): VoiceLine[] {
   const titles = ALL_TASTES().map((t) => t.title);
-  return openerText('en', titles).map((text) => ({ text, src: 'opener' as const }));
+  // the key session's coach phrases ride with the openers into the inventory (scripts/voice/inventory.ts groups)
+  return [...openerText('en', titles).map((text) => ({ text, src: 'opener' as const })), ...coachLines()];
+}
+
+/** SPEC-KEY-SESSION-2 §6: the key session coach's fixed phrases and its tempi as words (coachPhrases.ts), spoken one by one. */
+export function coachLines(): VoiceLine[] {
+  return coachPhraseList().map((text) => ({ text, src: 'coach' as const }));
 }
 
 export function previewLines(): VoiceLine[] {

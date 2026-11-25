@@ -1830,3 +1830,21 @@ html[data-motion='reduced'] .se-big {
 }
 :root:root .session-end .wk-howwas .intake-chips { gap: 6px; }
 :root:root .se-actions .btn { white-space: nowrap; }
+/* SPEC-KEY-SESSION-2 §6: the key session's stage strip and the speed stage's tempo bar (StageStrip.tsx) */
+.stage-strip { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 4px; }
+.stage-strip .ss-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.stage-strip .ss-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.72rem; line-height: 1.35; color: var(--ink-dim); white-space: nowrap; }
+.stage-strip .ss-chip.done { color: var(--ink-soft); }
+.stage-strip .ss-chip.now { color: var(--ink); border-color: var(--lilac); background: color-mix(in srgb, var(--lilac) 18%, transparent); font-weight: 600; }
+.stage-strip .ss-chip.more { border-style: dashed; }
+.stage-strip .ss-tick { color: var(--mint-deep); font-size: 0.7rem; display: inline-block; }
+.stage-strip .ss-tick.rise { animation: ss-rise 420ms ease-out; }
+@keyframes ss-rise { from { transform: translateY(4px); opacity: 0; } to { transform: none; opacity: 1; } }
+.stage-strip .ss-tempo { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--ink-soft); }
+.stage-strip .ss-tempo small { color: var(--ink-dim); font-size: 0.68rem; }
+.stage-strip .ss-bar { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.stage-strip .ss-fill { position: absolute; inset-block: 0; inset-inline-start: 0; border-radius: 3px; background: var(--lilac); transition: width 300ms ease; }
+.stage-strip .ss-best { position: absolute; top: -3px; width: 2px; height: 12px; margin-inline-start: -1px; background: var(--mint-deep); }
+@media (prefers-reduced-motion: reduce) { .stage-strip .ss-tick.rise { animation: none; } .stage-strip .ss-fill { transition: none; } }
+html[data-motion='reduced'] .stage-strip .ss-tick.rise { animation: none; }
+html[data-motion='reduced'] .stage-strip .ss-fill { transition: none; }

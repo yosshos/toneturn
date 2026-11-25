@@ -1,13 +1,24 @@
 // The Kokoro narrator on the main thread (0.65, owner: a free, high-quality English voice; lines keep changing,
 // so nothing is pre-recorded). Loads lazily in a worker the first time an English line is wanted, caches every
 // generated line on the device (LRU, 50 MB), generates the next lines while the current one plays, and falls back
-// to the reading mode for the session when it can't load or is too slow on this device.
+// to the reading mode for the session when it can't load.
+//
+// Speed (SPEC-KEY-SESSION-2 §6, 2026-11-25): a slow line never switches the voice off. Every generation is timed; while
+// the rolling real-time factor of the recent lines is above SLOW_FACTOR, a line that isn't made yet is read (the caller
+// reads on Error('slow')), one line at a time is still generated in the background as a probe (spaced out, longer
+// while it stays slow), and when the recent lines are fast again the voice speaks them. Lines already made still play.
 
 import { Cancelled } from '../../game/adapters';
 import { ClipCache, fromPcm16, idbClipStore, memoryClipStore, toPcm16, type Clip } from './cache';
 import { clipKey, normText } from './hash';
-import { KOKORO_MB, KOKORO_MODEL, KOKORO_VOICE, pickBackend, tooSlow, type KokoroDevice, type KokoroDtype, type KokoroStatus } from './decide';
+import { KOKORO_MB, KOKORO_MODEL, KOKORO_VOICE, pickBackend, SLOW_FACTOR, type KokoroDevice, type KokoroDtype, type KokoroStatus } from './decide';
 import type { FromWorker, ToWorker } from './protocol';
+
+/** How many recent generations the rolling real-time factor averages. */
+export const RTF_WINDOW = 3;
+/** While slow: the first background probe waits this long after the last one, doubling up to PROBE_MAX_MS. */
+export const PROBE_GAP_MS = 10_000;
+export const PROBE_MAX_MS = 120_000;
 
 export interface WorkerLike {
   postMessage(m: ToWorker): void;
@@ -43,14 +54,41 @@ export class KokoroNarrator {
   private readyResolve: ((ok: boolean) => void) | null = null;
   private nextId = 1;
   private pending = new Map<number, Pending>();
-  private checkedFirst = false;
+  /** Real-time factors (generation time / audio time) of the recent generations, newest last. */
+  private rtfs: number[] = [];
+  /** Lines generated (or found in the device cache) this session: they play even while the voice is slow. */
+  private made = new Set<string>();
+  private probing = false;
+  private nextProbeAt = 0;
+  private probeGap = PROBE_GAP_MS;
   private backend: { device: KokoroDevice; dtype: KokoroDtype } | null = null;
   /** In-flight or finished lines this session, by cache key. */
   private lines = new Map<string, Promise<Clip>>();
   private playing: { stop(): void } | null = null;
   private lineListeners = new Set<(l: { text: string; ms: number }) => void>();
 
-  constructor(private deps: KokoroDeps) {}
+  constructor(
+    private deps: KokoroDeps,
+    private now: () => number = () => Date.now(),
+  ) {}
+
+  /** The rolling real-time factor of the recent generations (undefined before the first). */
+  get rollingRtf(): number | undefined {
+    if (!this.rtfs.length) return undefined;
+    return this.rtfs.reduce((a, x) => a + x, 0) / this.rtfs.length;
+  }
+  /** Recent lines were made slower than SLOW_FACTOR × real time: a line not made yet is read for now. */
+  get slow(): boolean {
+    const r = this.rollingRtf;
+    return r !== undefined && r > SLOW_FACTOR;
+  }
+  private measure(genMs: number, audioMs: number) {
+    const rtf = audioMs > 0 ? genMs / audioMs : Infinity;
+    this.rtfs.push(Number.isFinite(rtf) ? rtf : 10);
+    if (this.rtfs.length > RTF_WINDOW) this.rtfs.shift();
+    if (!this.slow) this.probeGap = PROBE_GAP_MS;
+    this.set({ rtf: this.rollingRtf });
+  }
 
   get state(): KokoroStatus {
     return this.status;
@@ -140,12 +178,10 @@ export class KokoroNarrator {
     if (m.type === 'progress') {
       if (this.status.state === 'downloading') this.set({ pct: m.pct });
     } else if (m.type === 'ready') {
-      const rtf = m.audioMs > 0 ? m.genMs / m.audioMs : Infinity;
-      if (tooSlow(m.genMs, m.audioMs)) {
-        this.set({ rtf });
-        return this.fail('slow');
-      }
-      this.set({ state: 'ready', pct: 100, rtf });
+      // the calibration sentence is the first measurement; a slow one only means the next lines are read until the
+      // voice proves fast (never off for the session)
+      this.measure(m.genMs, m.audioMs);
+      this.set({ state: 'ready', pct: 100 });
       this.readyResolve?.(true);
     } else if (m.type === 'error') {
       this.loadFailed();
@@ -153,14 +189,8 @@ export class KokoroNarrator {
       const p = this.pending.get(m.id);
       if (!p) return;
       this.pending.delete(m.id);
-      // The first line wanted now is the real test: still too slow on this device → reading for this session.
-      if (p.urgent && !this.checkedFirst) {
-        this.checkedFirst = true;
-        if (tooSlow(m.genMs, (1000 * m.pcm.length) / m.sr)) {
-          p.resolve({ pcm: toPcm16(m.pcm), sr: m.sr });
-          return this.fail('slow');
-        }
-      }
+      // every line is timed: a slow one still plays, and the rolling factor decides the next lines
+      this.measure(m.genMs, (1000 * m.pcm.length) / m.sr);
       p.resolve({ pcm: toPcm16(m.pcm), sr: m.sr });
     } else if (m.type === 'failed') {
       const p = this.pending.get(m.id);
@@ -194,8 +224,33 @@ export class KokoroNarrator {
       return clip;
     })();
     this.lines.set(key, p);
-    p.catch(() => this.lines.delete(key));
+    p.then(
+      () => void this.made.add(key),
+      () => this.lines.delete(key),
+    );
     return p;
+  }
+
+  /** Is this line made already (this session or in the device cache)? */
+  private async isMade(key: string): Promise<boolean> {
+    if (this.made.has(key)) return true;
+    const c = await this.deps.cache.get(key);
+    if (!c) return false;
+    this.made.add(key);
+    return true;
+  }
+
+  /** While slow: make one line in the background now and then, to learn when the voice is fast again. */
+  private probe(text: string) {
+    if (this.probing || this.now() < this.nextProbeAt || this.status.state !== 'ready') return;
+    this.probing = true;
+    this.clip(text, false)
+      .catch(() => {})
+      .finally(() => {
+        this.probing = false;
+        this.nextProbeAt = this.now() + this.probeGap;
+        if (this.slow) this.probeGap = Math.min(PROBE_MAX_MS, this.probeGap * 2);
+      });
   }
 
   /** A prefetched line that is now wanted moves to the front of the worker's queue. */
@@ -210,7 +265,13 @@ export class KokoroNarrator {
   /** Generate lines ahead (the next steps of a mini-lesson, the lesson intro) while the current one plays. */
   prefetch(texts: string[]) {
     if (this.status.state === 'unavailable') return;
-    for (const t of texts) if (t.trim()) this.clip(t, false).catch(() => {});
+    const want = texts.filter((t) => t.trim());
+    // slow right now: no queue of lines that would be read anyway, only the occasional probe
+    if (this.slow) {
+      if (want.length) this.probe(want[0]);
+      return;
+    }
+    for (const t of want) this.clip(t, false).catch(() => {});
   }
 
   /** Is this line ready to play without waiting? */
@@ -221,9 +282,15 @@ export class KokoroNarrator {
 
   /**
    * Speak a line (already cleaned by speakable()). Rejects with Cancelled on abort, with Error('unavailable')
-   * when the voice can't be used ג€” the caller then reads instead. `shownText` is what's on screen (for the pace).
+   * when the voice can't be used, with Error('slow') when recent lines were made too slowly and this one isn't made
+   * yet — the caller then reads this line instead. `shownText` is what's on screen (for the pace).
    */
   async speak(text: string, signal: AbortSignal, shownText = text): Promise<void> {
+    if (signal.aborted) throw new Cancelled();
+    if (this.slow && this.status.state === 'ready' && !(await this.isMade(this.key(text)))) {
+      this.probe(text);
+      throw new Error('slow');
+    }
     if (signal.aborted) throw new Cancelled();
     const clip = await abortable(this.clip(text, true), signal);
     const out = this.deps.out();

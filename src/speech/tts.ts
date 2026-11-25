@@ -26,6 +26,8 @@ export interface Narrator {
   stop(): void;
   /** Worth loading on this device (WebGPU): elsewhere it's too slow, and pre-recorded lines cover the lessons. */
   worthLoading(): Promise<boolean>;
+  /** SPEC-KEY-SESSION-2 §6: recent lines generated too slowly — a line not made yet is read (the voice stays on). */
+  readonly slow?: boolean;
 }
 
 /** Pre-recorded lines (VoiceFiles; a fake in tests). */
@@ -100,7 +102,7 @@ export class BrowserPromptPlayer implements PromptPlayer {
     if (!this.wanted(lang)) return false;
     const lr = this.localeRec();
     if (lr) return [raw, variant].some((v) => v && this.localeLine(v) !== null && lr.has(this.localeLine(v)!));
-    return !!this.recordings?.has(raw) || (!!variant && !!this.recordings?.has(variant)) || !!this.narrator?.isReady;
+    return !!this.recordings?.has(raw) || (!!variant && !!this.recordings?.has(variant)) || (!!this.narrator?.isReady && !this.narrator.slow);
   }
 
   /** Wait (briefly, once) for the list of recordings so the first line can be judged spoken or read. */

@@ -144,9 +144,14 @@ import { FadedScore } from './FadedScore';
 import { ChannelStrip, type RunChan } from './ChannelStrip';
 import { keyMatrix, matrixSummary, projectionDays, type MatrixCell, type MatrixView } from '../engine/drills/keyMatrix';
 import { planFamily, rungMinutes, weekKeyFromMatrix, whyCounts, type PlanCell } from '../engine/drills/todayPlan';
-import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, noteMatrixSeen, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
+import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, priorTier, noteMatrixSeen, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
 import { coolingDown, itemStatus, withCeiling, type ItemStatus } from '../engine/drills/itemStatus';
-import { buildKeyIndex, keyLadder, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
+import { keySessionLadder, subDrill } from '../engine/drills/stages';
+import { stageView } from '../engine/drills/keyCoach';
+import { UNIT } from '../engine/drills/coachPhrases';
+import { setCoachQuiet } from './coachQuiet';
+import { StageStrip } from './StageStrip';
+import { buildKeyIndex, keySession, LENS_NAME, LENS_SHORT, LENSES, pickWeekKey, withLens, type KeyIndex, type Lens } from '../engine/drills/keyIndex';
 import { keysInOrder } from '../engine/drills/generate';
 import type { FocusTarget } from '../engine/workout2';
 import { FAMILY_FACETS, type FacetGroup } from '../engine/drills/keyFacet';
@@ -446,7 +451,8 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
   // the advanced tabs (melodic / harmonic-minor modes) for a player past the basics: the course answers or the level test
   const keysAdvanced = coachBackground(settings, ds, 'scales').skilled || Object.values(settings.drillStart ?? {}).some((x) => (x ?? 1) > 1);
   // SPEC-DAILY-WORKOUT: the key × exercise matrix (piano; phase 7: guitar and bass too), its summary and the projection at the player's minutes a day
-  const matrixTier = techTier >= 0 ? techTier : keysAdvanced ? 2 : 0;
+  // SPEC-KEY-SESSION-2 §4.1: unmeasured — the self-report / level test (new T0, a bit T2, well T4)
+  const matrixTier = techTier >= 0 ? techTier : priorTier(settings, ds);
   // Phase 2: the hub's "part of today's workout" shows today's cells too — built a moment after the hub paints
   const [planReady, setPlanReady] = useState(false);
   useEffect(() => {
@@ -534,7 +540,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
         <DrillRun
           key={view.coach ? `coach:${view.coach.id}:${view.today ? 'today' : ''}` : 'run'}
           coach={view.coach}
-          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced } : {}), ...(view.today ? { walk: true, resumeAt: view.today.at, minutes: view.today.minutes } : {}), ...(view.block ? { minutes: view.block.minutes, ...(view.block.walk ? { walk: true, resumeAt: 0 } : {}) } : {}) } : undefined}
+          coachBg={view.coach ? { ...coachBackground(settings, ds, view.coach.id, techTier), ...(view.ladder ? { noProbe: true, skilled: techTier >= 2 || keysAdvanced, minutes: dailyMinutesOf(settings) } : {}), ...(view.today ? { walk: true, resumeAt: view.today.at, minutes: view.today.minutes } : {}), ...(view.block ? { minutes: view.block.minutes, ...(view.block.walk ? { walk: true, resumeAt: 0 } : {}) } : {}) } : undefined}
           onCoachStep={view.today && today ? (step) => setPlanAt(today.day, step) : undefined}
           onItem={onItem}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
@@ -670,7 +676,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     return (
       <main className="drills-screen" data-drills="keypage">
         {head(keyPageTitle(view.root, kGroup, lang), () => (view.from ? setView(view.from) : opened ? onBack() : setView({ k: 'hub' })))}
-        <KeyPage gained={gainedCells} onRung={(id) => setView({ k: 'keypage', root: view.root, rung: { id, wayIn: view.rung?.wayIn === 'today' ? 'today' : 'practice' }, ...(view.from ? { from: view.from } : {}) })} rung={view.rung ? { id: view.rung.id, wayIn: view.rung.wayIn, where: whereOf?.(view.rung.id) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} onPractise={onPractiseThis} practiseMin={practiseMin} />
+        <KeyPage gained={gainedCells} onRung={(id) => setView({ k: 'keypage', root: view.root, rung: { id, wayIn: view.rung?.wayIn === 'today' ? 'today' : 'practice' }, ...(view.from ? { from: view.from } : {}) })} rung={view.rung ? { id: view.rung.id, wayIn: view.rung.wayIn, where: whereOf?.(view.rung.id) ?? null, onWhere } : undefined} focus={focusOf(settings, 'keys')} today={todayMarks ? { n: todayMarks.byKey.get(`${kGroup}-${view.root}`) ?? 0, ids: todayMarks.ids } : undefined} matrix={keyMatrixSum} idx={keyIdx} root={view.root} group={kGroup} items={items} lang={lang} ds={ds} onGroup={setKGroup} advanced={keysAdvanced} onOpenKey={(root, g) => (setKGroup(g), setView({ k: 'keypage', root }))} tier={techTier} prior={priorTier(settings, ds)} onCoach={(f) => setView({ k: 'run', queue: [], i: 0, from: view, coach: f, ladder: true })} onRun={(q) => setView({ k: 'run', queue: q, i: 0, from: view })} licks={lickPool(items, settings.lickBook)} onImproviseLick={onImproviseLick} onPractise={onPractiseThis} practiseMin={practiseMin} />
       </main>
     );
   if (view.k === 'family')
@@ -749,7 +755,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
       keyGrid={
         keyIdx ? (general: React.ReactNode) => <KeyGrid matrix={keyMatrixSum} today={todayPlan ? { plan: todayPlan.plan, view: mv, onView: setMv, byKey: todayMarks?.byKey } : undefined} idx={keyIdx} items={items} lang={lang} ds={ds} group={kGroup} onGroup={setKGroup} advanced={keysAdvanced} weekRoot={weekKey(keyIdx, kGroup, items, ds, keyMatrixSum?.cellsList)} onWeek={(root, g) => {
           const mi = matrixInst(ds.instrument);
-          const lad = mi ? keyLadder(familiesOf(mi), root, g, techTier >= 0 ? techTier : keysAdvanced ? 2 : 0, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) }) : null;
+          const lad = mi ? keySessionLadder(familiesOf(mi), root, g, matrixTier, items, { jazz: ds.emphasis === 'jazz', instrument: mi, ...(mi === 'piano' ? { licks: lickPool(items, settings.lickBook) } : {}), focus: focusOf(settings, courseOfInstrument(ds.instrument)) }) : null;
           setView(lad ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: lad, ladder: true } : { k: 'run', queue: keySession(keyIdx, root, g, items), i: 0, from: { k: 'hub' } });
         }} onToday={() => {
           // BUILD-PLAN phase 2: the same cells as today's workout technique block (one plan), resumed where it stopped;
@@ -1383,6 +1389,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const freeOk = (d: Drill) => !noRubatoFor(d, atTarget);
   const [cTake, setCTake] = useState<CoachTake | null>(() => (coach && coachRef.current ? coachTake(coach, coachRef.current, items, ds.keyOrder, freeOk) : null));
   const [cLine, setCLine] = useState<{ line: { en: string; he: string }; end: boolean; clean: boolean } | null>(null);
+  // SPEC-KEY-SESSION-2 §6: the stage strip as it was when the take began (it never runs ahead of the score on the result)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const svAtTake = useMemo(() => (coach && coachRef.current && cTake ? stageView(coach, coachRef.current, { ...items, ...local.current }, cTake) : null), [cTake]);
   const [cStarted, setCStarted] = useState(false);
   // The key order picked on the intro: the session is laid out again (before it starts only).
   // SPEC-COACH-2 §3.2: the placement probe on a first session — the intro can skip it.
@@ -1395,6 +1404,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const [cPaused, setCPaused] = useState(false);
   const [cDemo, setCDemo] = useState(false);
   const cXp = useRef(0);
+  // B3 (review 2026-11-25): no pop-ups inside a coach run — its new best tempi are collected and shown once at the end
+  const cBests = useRef<{ title: string; bpm: number; unit: string }[]>([]);
+  useEffect(() => {
+    if (!coach) return;
+    setCoachQuiet(true);
+    return () => setCoachQuiet(false);
+  }, [coach]);
   const cTimer = useRef<number | null>(null);
   const cSpeech = useRef<AbortController | null>(null);
   useEffect(() => () => (cTimer.current && window.clearTimeout(cTimer.current), cSpeech.current?.abort()), []);
@@ -1548,7 +1564,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     notePresented(drill, m.verdict === 'clean');
     // Studio look: a ladder step cleared above the previous best tempo is the moment (one tap continues).
     const nb = newBestOf(st0.cleanBpm, lad.state.cleanBpm, m.verdict === 'clean');
-    if (nb) setBest({ ...nb, title: drill.title[lang] });
+    // a key-session take: the best shown at the note value it was played in (♩116 in quarters, not the item's ♩58 in eighths)
+    const kq = ksPlay ? playBpm / Math.max(1, bpm) : 1;
+    if (nb && coach) {
+      const unit = ksPlay ? (UNIT[ksPlay.per]?.[lang] ?? '') : '';
+      cBests.current = [...cBests.current.filter((b) => b.title !== drill.title[lang]), { title: drill.title[lang], bpm: Math.round(nb.bpm * kq), unit }];
+    } else if (nb) setBest({ ...nb, bpm: Math.round(nb.bpm * kq), prev: Math.round(nb.prev * kq), title: drill.title[lang] });
     local.current[drill.itemId] = lad.state;
     const n = count.current.takes++;
     if (m.verdict === 'clean') count.current.clean++;
@@ -1605,14 +1626,23 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         onItem?.(ns);
       }
     }
+    // SPEC-KEY-SESSION-2 §4.3: the stages passed are saved on their items (per key)
+    for (const st of nx.items ?? []) {
+      const cur = local.current[st.itemId] ?? items[st.itemId];
+      const ns = cur ? { ...cur, stages: st.stages } : st;
+      local.current[ns.itemId] = ns;
+      onItem?.(ns);
+    }
     setCLine({ line: nx.line, end: nx.end, clean: m.verdict === 'clean' });
     if (nx.end) return;
     cSpeech.current?.abort();
     const sp = new AbortController();
     cSpeech.current = sp;
     const t0 = performance.now();
-    void tts
-      .speak(nx.line[lang], lang, sp.signal)
+    // fixed phrases are spoken one by one (each has its recording); other lines whole
+    const says = lang === 'en' && nx.line.say?.length ? nx.line.say : lang === 'he' && nx.line.sayHe?.length ? nx.line.sayHe : [nx.line[lang]];
+    void says
+      .reduce<Promise<void>>((p, x) => p.then(() => (sp.signal.aborted ? undefined : tts.speak(x, lang, sp.signal))), Promise.resolve())
       .catch(() => {})
       .then(() => {
         if (sp.signal.aborted) return;
@@ -1636,9 +1666,13 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     setAgain(!demo);
     setTake((k) => k + 1);
   };
-  const takeDrill = stage === 'quarters' ? quartersDrill(drill) : drill;
+  // SPEC-KEY-SESSION-2 §3: a key-session take is played at its own note value (quarters below 2 notes a second, triplet
+  // eighths on the speed stage) and ♩; the item's ladder still records its own tempo (`bpm`)
+  const ksPlay = coach && cTake?.play && !stage ? cTake.play : null;
+  const takeDrill = ksPlay ? subDrill(drill, ksPlay.per) : stage === 'quarters' ? quartersDrill(drill) : drill;
+  const playBpm = ksPlay ? ksPlay.bpm : stage === 'quarters' ? QUARTERS_BPM : bpm;
   // The take's brief: the coach's step (its level), or the run's item; by ear while its notation is hidden.
-  const briefFor = (): BriefProp => gate.prop(taskBriefOf(drill, { ...(coach && cTake ? { level: cTake.level.id } : {}), bpm: stage === 'quarters' ? QUARTERS_BPM : bpm, free: stage === 'free', ...(pres?.byEar && !shownIds.has(drill.itemId) ? { mode: 'ear' as const } : {}) }));
+  const briefFor = (): BriefProp => gate.prop(taskBriefOf(drill, { ...(coach && cTake ? { level: cTake.level.id } : {}), ...(coach && cTake?.stageInfo ? { stage: { code: cTake.stageInfo.code, what: cTake.stageInfo.brief } } : {}), ...(ksPlay ? { per: ksPlay.per } : {}), bpm: playBpm, free: stage === 'free', ...(pres?.byEar && !shownIds.has(drill.itemId) ? { mode: 'ear' as const } : {}) }));
   /** Phase 6: the score as the item's presentation allows (full / rhythm / name / nothing; by ear until a clean take). */
   const fadedOn = !!pres && !shownNow && (pres.fade !== 'full' || pres.byEar);
   // no Listen before a sight take (reading is measured) or while the notation is hidden (Show notes is the help)
@@ -1724,7 +1758,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   };
   if (coach && cTake) {
     const cs = coachRef.current!;
-    const stepTx = he ? `שלב ${cs.step + 1} מתוך ${cs.steps.length}` : `Step ${cs.step + 1} of ${cs.steps.length}`;
+    const ksInfo = cs.ks ? cTake.stageInfo : undefined;
+    const stepTx = ksInfo ? `${ksInfo.title[lang]} · ${ksInfo.name[lang]}` : he ? `שלב ${cs.step + 1} מתוך ${cs.steps.length}` : `Step ${cs.step + 1} of ${cs.steps.length}`;
     const endNow = () => {
       if (cTimer.current) window.clearTimeout(cTimer.current);
       cSpeech.current?.abort();
@@ -1736,6 +1771,16 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         <section className="drill-result v-clean coach-end" data-coach-end="1">
           <h2>{he ? 'סוף הסשן' : 'Session done'}</h2>
           <p>{cLine.line[lang].trim()}</p>
+          {cBests.current.length > 0 && (
+            <ul className="coach-bests" data-coach-bests={cBests.current.length}>
+              {cBests.current.map((b) => (
+                <li key={b.title}>
+                  {he ? 'שיא חדש: ' : 'New best: '}
+                  {b.title} · <bdi dir="ltr">♩{b.bpm}</bdi> {b.unit}
+                </li>
+              ))}
+            </ul>
+          )}
           {coachRef.current && coach && <CoachDebrief lang={lang} c={coachRef.current} fam={coach} tier={getGradeTier()} />}
           <p className="coach-xp" data-coach-xp={cXp.current}>
             <bdi dir="ltr">+{cXp.current} XP</bdi>
@@ -1750,12 +1795,12 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       return (
         <section className="coach-intro" data-coach-intro="1">
           <p className="coach-step">
-            {stepTx} · {cTake.level.title[lang]}
+            {ksInfo ? stepTx : `${stepTx} · ${cTake.level.title[lang]}`}
           </p>
           <h2>{cTake.kind === 'warmup' ? (he ? 'חימום' : 'Warm-up') : he ? 'אימון רציף' : 'Continuous practice'}</h2>
           <p>{announce(cTake, lang)}</p>
           <p className="muted">{he ? 'הידיים נשארות על הכלי: אחרי כל נגינה ממשיכים לבד, עם הערה קצרה. אפשר לעצור בכל רגע.' : 'Hands stay on the instrument: after each take the session moves on by itself, with a short note. Pause any time.'}</p>
-          {onKeyOrder && (
+          {onKeyOrder && !cs.ks && (
             <div className="chips coach-order" role="radiogroup" aria-label={he ? 'סדר הסולמות' : 'Key order'}>
               {(['fifths-up', 'fifths-down', 'chromatic-up', 'chromatic-down', 'fingering'] as KeyOrder[]).map((o) => (
                 <button key={o} type="button" role="radio" aria-checked={ds.keyOrder === o} className={`chip ${ds.keyOrder === o ? 'on' : ''}`} onClick={() => onKeyOrder(o)} data-coach-order={o}>
@@ -1783,7 +1828,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
               void piano.unlock();
               setCStarted(true);
               // the intro named the first take: it counts as its brief
-              gate.seen(taskKindOf(cTake.drill, { level: cTake.level.id, ...(presOf(cTake.drill)?.byEar ? { mode: 'ear' as const } : {}) }));
+              gate.seen(taskKindOf(cTake.drill, { level: cTake.level.id, ...(cTake.stageInfo ? { stage: { code: cTake.stageInfo.code, what: cTake.stageInfo.brief } } : {}), ...(presOf(cTake.drill)?.byEar ? { mode: 'ear' as const } : {}) }));
               const demo = (cTake.demo || !!pres?.byEar) && hearable(cTake.drill);
               setCDemo(demo);
               setAgain(!demo);
@@ -1799,7 +1844,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     const bar = (
       <div className={`coach-bar ${cLine ? (cLine.clean ? 'ok' : 'miss') : ''}`} data-coach-bar="1">
         <p className="coach-line" aria-live="polite" data-coach-line={cLine ? '1' : '0'}>
-          {cLine ? cLine.line[lang] : cDemo ? (he ? 'מקשיבים קודם…' : 'Listen first…') : announce({ ...cTake, stage }, lang)}
+          {cLine ? cLine.line[lang] : cDemo ? (he ? 'מקשיבים קודם…' : 'Listen first…') : cs.ks && briefFor().open ? '' : announce({ ...cTake, stage }, lang)}
         </p>
         {cLine && !cLine.end && bandEl}
         <span className="coach-meta">{stepTx}</span>
@@ -1831,11 +1876,14 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         </span>
       </div>
     );
+    // SPEC-KEY-SESSION-2 §6: the stage strip (and the speed stage's tempo bar) above the music
+    const strip = svAtTake ? <StageStrip view={svAtTake} lang={lang} /> : null;
     if (shownRes)
       return (
         <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="result">
           {bar}
-          {faded(<DrillScore drill={stageRes?.stage === 'quarters' ? quartersDrill(drill) : drill} ds={ds} result={shownRes} beat={-1} lang={lang} />, { result: true, clean: shownRes.verdict === 'clean' })}
+          {strip}
+          {faded(<DrillScore drill={stageRes?.stage === 'quarters' ? quartersDrill(drill) : ksPlay ? takeDrill : drill} ds={ds} result={shownRes} beat={-1} lang={lang} />, { result: true, clean: shownRes.verdict === 'clean' })}
           {bestPop}
         </div>
       );
@@ -1843,18 +1891,20 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       return (
         <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="demo">
           {bar}
-          {faded(<DrillScore drill={takeDrill} ds={ds} beat={beat} lang={lang} bpm={stage === 'quarters' ? QUARTERS_BPM : bpm} />, { autoListen: false })}
-          <CoachDemo drill={takeDrill} bpm={stage === 'quarters' ? QUARTERS_BPM : cTake.bpm} lang={lang} onBeat={setBeat} onDone={() => (setBeat(-1), setCDemo(false), setAgain(true), setTake((k) => k + 1))} />
+          {strip}
+          {faded(<DrillScore drill={takeDrill} ds={ds} beat={beat} lang={lang} bpm={playBpm} />, { autoListen: false })}
+          <CoachDemo drill={takeDrill} bpm={ksPlay ? ksPlay.bpm : stage === 'quarters' ? QUARTERS_BPM : cTake.bpm} lang={lang} onBeat={setBeat} onDone={() => (setBeat(-1), setCDemo(false), setAgain(true), setTake((k) => k + 1))} />
         </div>
       );
     return (
       <div className="drill-run coach-run" data-drill={drill.itemId} data-coach="take" data-coach-stage={stage ?? 'tempo'}>
         {bar}
-        {faded(<DrillScore drill={shownDrill(takeDrill, own)} ds={ds} beat={beat} lang={lang} bpm={bpm} live={live} cue={counting} />, { autoListen: false })}
+        {strip}
+        {faded(<DrillScore drill={shownDrill(takeDrill, own)} ds={ds} beat={beat} lang={lang} bpm={playBpm} live={live} cue={counting} />, { autoListen: false })}
         {fingerKeysOn && <FingerKeys drill={shownDrill(takeDrill, own)} beat={beat} lang={lang} />}
         {stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} brief={briefFor()} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
         {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
-        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={playBpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(ksPlay ? { ...m, bpm } : m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
       </div>
     );
   }

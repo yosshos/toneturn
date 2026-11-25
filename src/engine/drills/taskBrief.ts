@@ -33,6 +33,10 @@ export interface TaskCtx {
   free?: boolean;
   /** A cold read: the material stays hidden until Ready (only where the reading test asks for it). */
   cold?: boolean;
+  /** SPEC-KEY-SESSION-2 §6: a key-session stage — its code (a new stage is a new task) and its one-line brief. */
+  stage?: { code: string; what: T2 };
+  /** The note value the take is played in (1 quarters, 2 eighths, 3 triplet eighths, 4 sixteenths). */
+  per?: number;
 }
 
 export interface TaskBrief {
@@ -57,7 +61,7 @@ export function taskModeOf(drill: Pick<Drill, 'spec'> & Partial<Pick<Drill, 'sho
 /** The task kind: section · family · level · kind of exercise · hands · mode (the key and the tempo are not part of it). */
 export function taskKindOf(drill: Pick<Drill, 'spec'> & Partial<Pick<Drill, 'show' | 'listen' | 'phrase'>>, ctx: TaskCtx = {}): string {
   const s = drill.spec;
-  return [ctx.section ?? '', s.instrument ?? 'piano', s.family, ctx.level ?? '', s.kind, s.hands, taskModeOf(drill, ctx)].join('|');
+  return [ctx.section ?? '', s.instrument ?? 'piano', s.family, ctx.level ?? '', s.kind, s.hands, taskModeOf(drill, ctx), ctx.stage?.code ?? ''].join('|');
 }
 
 /**
@@ -90,16 +94,20 @@ export function taskBriefOf(drill: Drill, ctx: TaskCtx = {}): TaskBrief {
       ? { en: `Sight-read: ${title.en}`, he: `קריאה מהדף: ${title.he}` }
       : mode === 'ear'
         ? { en: `By ear: listen, then play it back · ${title.en}`, he: `משמיעה: מקשיבים ומנגנים בחזרה · ${title.he}` }
-        : { en: `Play: ${title.en}`, he: `לנגן: ${title.he}` };
+        : ctx.stage
+          ? ctx.stage.what
+          : { en: `Play: ${title.en}`, he: `לנגן: ${title.he}` };
   const parts: T2[] = [];
   // hands only on the piano (a guitar, a bass or a kit has no "hand" choice in the item)
   const inst = drill.spec.instrument ?? 'piano';
   if (inst === 'piano' && !drill.sung && HANDS[drill.spec.hands]) parts.push(HANDS[drill.spec.hands]);
-  if (ctx.free) parts.push({ en: 'free time, no click', he: 'בלי קליק, בקצב שלכם' });
+  if (ctx.free) parts.push({ en: 'free time, no click', he: 'בקצב חופשי, בלי קליק' });
   else {
     const bpm = Math.round(ctx.bpm ?? drill.startBpm);
     const note = drill.pulse === 8 ? '♪' : '♩';
     parts.push({ en: `${note} ${bpm}`, he: `${note} ${bpm}` });
+    const PER: Record<number, T2> = { 0.5: { en: 'in half notes', he: 'בחצאים' }, 1: { en: 'in quarters', he: 'ברבעים' }, 2: { en: 'in eighths', he: 'בשמיניות' }, 3: { en: 'triplet feel: three notes per beat', he: 'תחושת טריולה: שלושה בפעמה' }, 4: { en: 'in sixteenths', he: 'בשש־עשריות' } };
+    if (ctx.per && PER[ctx.per]) parts.push(PER[ctx.per]);
     const meter = drill.meter || 4;
     if (meter !== 4 || drill.pulse === 8) {
       const m = `${meter}/${drill.pulse === 8 ? 8 : 4}`;

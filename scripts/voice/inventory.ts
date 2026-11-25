@@ -26,7 +26,7 @@ const rows = all
   .filter((r) => r.say.trim());
 const byKey = new Map(rows.map((r) => [r.key, r]));
 // Priority: what a player hears first (mini-lessons, intros), then the rest.
-const order = ['mini', 'mini-name', 'intro', 'go', 'opener', 'preview', 'memory', 'other', 'prompt', 'feedback'];
+const order = ['coach', 'mini', 'mini-name', 'intro', 'go', 'opener', 'preview', 'memory', 'other', 'prompt', 'feedback'];
 const out = [...byKey.values()].sort((a, b) => order.indexOf(a.src) - order.indexOf(b.src));
 writeFileSync(new URL('./.lines.json', import.meta.url), JSON.stringify(out));
 
@@ -47,7 +47,7 @@ console.log('per family (½ seeds → all seeds):', JSON.stringify(fam(Math.floo
 // translated exactly as the app translates them on screen, keyed the way the app looks them up in public/voice/<loc>/.
 // Lines the catalog doesn't cover yet, and lines with a part shown but never spoken, are left out (the app reads them).
 // → scripts/voice/.lines.<loc>.json   (then: npm run voice:render -- --lang <loc>)
-const FIXED = new Set(['mini', 'mini-name', 'intro', 'go', 'opener', 'preview', 'memory', 'other']);
+const FIXED = new Set(['coach', 'mini', 'mini-name', 'intro', 'go', 'opener', 'preview', 'memory', 'other']);
 for (const [loc, voice] of Object.entries(LOCALE_VOICES) as [SpeechLang, string][]) {
   const file = new URL(`../../public/i18n/${loc}.json`, import.meta.url);
   if (!existsSync(file)) continue;

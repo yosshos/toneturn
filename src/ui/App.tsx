@@ -144,6 +144,7 @@ import { BadgesView, ChallengeCard } from './Badges';
 import type { RankChange } from '../engine/ranks';
 import type { Badge } from '../engine/badges';
 import { BadgeUnlock, RankUpUnlock } from './BadgeUnlock';
+import { useCoachQuiet } from './coachQuiet';
 import { familyById, itemTargetBpm, skillDrillsInKey, todayDrills } from '../engine/drills/plan';
 import { blockLabel, WorkoutCard, WorkoutEditor, WorkoutRunScreen } from './Workout';
 import type { SessionEndProps } from './SessionEnd';
@@ -151,7 +152,8 @@ import { addSession, plusFive, areaMinutes, betweenNow, blockLeftMs, canRescale,
 import { closeness, slippingItems, weekAreaMinutes } from '../engine/sessionNeed';
 import { focusSheet, itemCells, rungCells, type CellState } from '../engine/drills/focusSheet';
 import { cellDue, cellItemIds, cellKey } from '../engine/drills/keyMatrix';
-import { keyLadder, RUNG_TAG_NAME } from '../engine/drills/keyIndex';
+import { RUNG_TAG_NAME } from '../engine/drills/keyIndex';
+import { keySessionLadder } from '../engine/drills/stages';
 import { planFamily } from '../engine/drills/todayPlan';
 import { coachable } from '../engine/drills/coach';
 import { lickPool } from '../engine/vocab';
@@ -1590,6 +1592,8 @@ export function App() {
 
   // ---- area ranks + badges (spec AG §9): refreshed after each save, the unlock overlay after the session ----
   const [unlock, setUnlock] = useState<{ badges: Badge[]; rank?: RankChange } | null>(null);
+  // B3: badges and rank-ups wait while a coach run is on screen (they show when it ends)
+  const coachQuiet = useCoachQuiet();
   useEffect(() => {
     if (!settings || route === 'lesson') return;
     // SPEC-PATH-ROLE §6 Q2: an area with an open checkpoint on the path waits for it before it moves up.
@@ -3250,7 +3254,7 @@ export function App() {
         if (q.length) queue = q.slice(0, 1);
       }
     } else if (tg.kind === 'key') {
-      if (inst) fam = keyLadder(families(inst), tg.root, tg.group, matrixTierOf(s, ds, items), items, { jazz: ds.emphasis === 'jazz', instrument: inst, ...(inst === 'piano' ? { licks: lickPool(items, s.lickBook) } : {}), focus: focusOf(s, inst === 'piano' ? 'keys' : inst) });
+      if (inst) fam = keySessionLadder(families(inst), tg.root, tg.group, matrixTierOf(s, ds, items), items, { jazz: ds.emphasis === 'jazz', instrument: inst, ...(inst === 'piano' ? { licks: lickPool(items, s.lickBook) } : {}), focus: focusOf(s, inst === 'piano' ? 'keys' : inst) });
     } else if (tg.kind === 'rung' || tg.kind === 'item') {
       const cells = cellsNow();
       const cs = tg.kind === 'rung' ? rungCells(cells, tg.rung, tg.group, order, today) : itemCells(cells, tg.id, order, today);
@@ -4704,6 +4708,7 @@ export function App() {
       )}
       {route === 'metronome' && <Metronome lang={s.uiLang} settings={s} onChange={updateSettings} onBack={() => go(toolFrom.current)} />}
       {unlock &&
+        !coachQuiet &&
         route !== 'lesson' &&
         (unlock.rank ? (
           <RankUpUnlock change={unlock.rank} lang={s.uiLang} onDone={() => setUnlock(unlock.badges.length ? { badges: unlock.badges } : null)} />

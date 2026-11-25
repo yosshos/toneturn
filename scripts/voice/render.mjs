@@ -21,7 +21,7 @@ const DEVICE = arg('device', 'cpu');
 const DTYPE = arg('dtype', 'fp32');
 const LIMIT = Number(arg('limit', Infinity));
 // Default: only the fixed lines the app plays from files (prompts / feedback are made per question and are never shipped — 0.69).
-const SRC = (arg('src', null) ?? 'mini,mini-name,intro,go,opener,preview,memory,other').split(',');
+const SRC = (arg('src', null) ?? 'coach,mini,mini-name,intro,go,opener,preview,memory,other').split(',');
 // --shard k/n: this process renders every n-th line (run n processes side by side); each writes its own part file
 // and merges all parts into manifest.json on every save.
 const [SHARD, SHARDS] = (arg('shard', '0/1')).split('/').map(Number);
@@ -54,7 +54,16 @@ if (!todo.length) process.exit(0);
 const write = (p, files) => {
   const tmp = `${p}.${process.pid}.tmp`;
   writeFileSync(tmp, JSON.stringify({ v: 1, voice: VOICE, model: MODEL, files: Object.fromEntries(Object.entries(files).sort()) }));
-  renameSync(tmp, p);
+  // Windows: the other shard may hold the manifest for a moment (EPERM on rename): retry briefly, never crash the run
+  for (let i = 0; ; i++) {
+    try {
+      renameSync(tmp, p);
+      return;
+    } catch (e) {
+      if (i >= 20 || (e.code !== 'EPERM' && e.code !== 'EBUSY' && e.code !== 'EACCES')) throw e;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 + 50 * i);
+    }
+  }
 };
 const save = () => {
   write(PART, mine);
