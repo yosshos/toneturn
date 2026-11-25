@@ -1,6 +1,6 @@
 // Practice by key (owner 2026-11-21, docs/SPEC-PRACTICE-KEYS.md + SPEC-COACH-2 §6): the 12 keys as cards with their
 // mastery, a tab per scale family (major · minor · melodic/harmonic-minor modes · symmetric), and a key page whose
-// first button is the key's continuous session; under it one row per kind of exercise (scale, arpeggio, cadence …,
+// first button practises the key (its session, flowing from take to take); under it one row per kind of exercise (scale, arpeggio, cadence …,
 // control & dynamics), each with its levels in this key and their numbers: best clean tempo, accuracy, timing spread.
 // The key-neutral families (rhythm, independence, mechanics) sit under the cards as General technique.
 
@@ -160,7 +160,7 @@ export interface TodayInfo {
  * Part of today's workout (BUILD-PLAN phase 2: no private "today" here): the same cells as the workout's technique
  * block — half from the key of the week, the rest in the chosen view (remembered) — and the button that runs them.
  */
-function TodayKeys({ today, lang, onToday }: { today: TodayInfo; lang: Lang; onToday: () => void }) {
+function TodayKeys({ today, lang, onToday, resumable }: { today: TodayInfo; lang: Lang; onToday: () => void; resumable?: boolean }) {
   const he = lang === 'he';
   const { plan, view: mv } = today;
   const mins = Math.round(plan.reduce((n, p) => n + p.cell.minutes, 0));
@@ -177,10 +177,10 @@ function TodayKeys({ today, lang, onToday }: { today: TodayInfo; lang: Lang; onT
         ))}
       </div>
       {plan.length > 0 && (
-        <button className="coach-entry" onClick={onToday} data-key-today-run={plan.length} data-today-part="1">
+        <button className="coach-entry" onClick={onToday} data-key-today-run={plan.length} data-today-part="1" data-coach-resume={resumable ? '1' : undefined}>
           <Icon k="play" size={20} />
           <span>
-            <b>{he ? `חלק מהאימון של היום · כ־${mins} דקות` : `Part of today's workout · about ${mins} min`}</b>
+            <b>{resumable ? (he ? 'להמשיך מאיפה שעצרתם · ' : 'Continue where you stopped · ') : ''}{he ? `חלק מהאימון של היום · כ־${mins} דקות` : `Part of today's workout · about ${mins} min`}</b>
             <small>{he ? `${plan.length} תרגילים: ${parts.join(' · ')}` : `${plan.length} exercises: ${parts.join(' · ')}`}</small>
           </span>
         </button>
@@ -189,7 +189,7 @@ function TodayKeys({ today, lang, onToday }: { today: TodayInfo; lang: Lang; onT
   );
 }
 
-export function KeyGrid({ matrix, today, onToday, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek }: { matrix?: MatrixInfo; /** BUILD-PLAN phase 2: today's technique cells (the workout's block) and their marks. */ today?: TodayInfo; /** Run today's technique cells. */ onToday?: () => void; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
+export function KeyGrid({ matrix, today, onToday, idx, items, lang, ds, group, onGroup, onKey, general, advanced = true, weekRoot = null, onWeek, weekResumable, todayResumable }: { /** Today's technique stopped earlier today. */ todayResumable?: boolean; /** Owner 2026-11-25: the key's session stopped earlier today — its button continues it. */ weekResumable?: (root: number, group: FacetGroup) => boolean; matrix?: MatrixInfo; /** BUILD-PLAN phase 2: today's technique cells (the workout's block) and their marks. */ today?: TodayInfo; /** Run today's technique cells. */ onToday?: () => void; /** The key of the week (owner 2026-11-21) and its session. */ weekRoot?: number | null; onWeek?: (root: number, group: FacetGroup) => void; /** Past the basics (SPEC-COACH-2 §3): the advanced tabs show. */ advanced?: boolean; idx: KeyIndex; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; group: FacetGroup; onGroup: (g: FacetGroup) => void; onKey: (root: number) => void; general: ReactNode }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items);
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -199,16 +199,16 @@ export function KeyGrid({ matrix, today, onToday, idx, items, lang, ds, group, o
     <section className="key-grid-wrap" data-key-grid={g}>
       <GroupTabs groups={groups} group={g} onGroup={onGroup} lang={lang} />
       <MatrixLine m={matrix} lang={lang} />
-      {today && onToday && <TodayKeys today={today} lang={lang} onToday={onToday} />}
+      {today && onToday && <TodayKeys today={today} lang={lang} onToday={onToday} resumable={todayResumable} />}
       {weekRoot !== null && onWeek && (
-        <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot}>
+        <button className="coach-entry" onClick={() => onWeek(weekRoot, g)} data-week-key={weekRoot} data-coach-resume={weekResumable?.(weekRoot, g) ? '1' : undefined}>
           <Icon k="play" size={20} />
           <span>
             <b>
               {he ? 'סולם השבוע: ' : 'Key of the week: '}
               <bdi dir="ltr">{nameOf(weekRoot, g)}</bdi>
             </b>
-            <small>{he ? 'אימון רציף בכל סוגי התרגילים בסולם, ברמה שלכם' : 'Continuous practice across the key, at your level'}</small>
+            <small>{weekResumable?.(weekRoot, g) ? (he ? 'להמשיך מאיפה שעצרתם היום' : 'Continue where you stopped today') : he ? 'כל סוגי התרגילים בסולם, ברמה שלכם; כל נגינה ממשיכה לבד לבאה' : 'Every kind of exercise in the key, at your level; each take flows into the next'}</small>
           </span>
         </button>
       )}
@@ -268,8 +268,8 @@ const dedupe = (ds: Drill[]): Drill[] => {
 
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
-/** One key page: the continuous session first, then a row per kind of exercise. */
-export function KeyPage({ prior, onRung, gained = 0, today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick, onPractise, practiseMin }: { /** SPEC-KEY-SESSION-2 §4.1: the tier before any measured take (self-report / level test). */ prior?: number; /** SPEC-PRACTICE-SESSION §12 "Practise this · N min": the key, the lit rung's exercise or item as today's session. */ onPractise?: (t: FocusTarget) => void; practiseMin?: number; /** Open a rung's item page here (lit, with its ladder, tempo chart and assign). */ onRung?: (levelId: string) => void; /** SPEC-DAILY-WORKOUT §5: "+N new exercises opened" after a tier rise (shown 3 days). */ gained?: number; /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef) => void; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
+/** One key page: practising the key first (its session, flowing take to take), then a row per kind of exercise. */
+export function KeyPage({ resumable, prior, onRung, gained = 0, today, matrix, idx, root, group, items, lang, ds, onGroup, onRun, advanced = true, onOpenKey, tier = -1, onCoach, licks = [], focus: styleFocus, rung, onImproviseLick, onPractise, practiseMin }: { /** SPEC-KEY-SESSION-2 §4.1: the tier before any measured take (self-report / level test). */ prior?: number; /** SPEC-PRACTICE-SESSION §12 "Practise this · N min": the key, the lit rung's exercise or item as today's session. */ onPractise?: (t: FocusTarget) => void; practiseMin?: number; /** Open a rung's item page here (lit, with its ladder, tempo chart and assign). */ onRung?: (levelId: string) => void; /** SPEC-DAILY-WORKOUT §5: "+N new exercises opened" after a tier rise (shown 3 days). */ gained?: number; /** SPEC-LICKS-IN-IMPROV §5.4: after a lick closes in the key, "now improvise with it" (over the key's progression, today's lick = it). */ onImproviseLick?: (l: Lick, key: number) => void; /** SPEC-PATH-TODAY-PRACTICE §2: the page opened on one rung (a technique level in this key) — its item page, lit. */ rung?: { id: string; wayIn: WayIn; where: WhereChip | null; onWhere?: () => void }; /** SPEC-STYLE-FOCUS: the course's style focus (block H of the key's ladder). */ focus?: StyleFocus; /** The player's lick pool (vocab.lickPool): the "language in the key" row (block G, phase 4). */ licks?: Lick[]; /** BUILD-PLAN phase 2: today's cells in this key and today's items (the marks). */ today?: { n: number; ids: Set<string> }; matrix?: MatrixInfo; /** The player's technique tier (−1 unknown) and the coach run of the key's ladder (owner 2026-11-22). */ tier?: number; onCoach?: (fam: FamilyDef, group: FacetGroup) => void; /** Owner 2026-11-25: the key's session stopped earlier today (per scale family tab) — its button continues it. */ resumable?: (group: FacetGroup) => boolean; /** Open a related key's page (relative, parallel). */ onOpenKey?: (root: number, group: FacetGroup) => void; advanced?: boolean; idx: KeyIndex; root: number; group: FacetGroup; items: Record<string, ItemState>; lang: Lang; ds: DrillSettings; onGroup: (g: FacetGroup) => void; onRun: (q: Drill[]) => void }) {
   const he = lang === 'he';
   const groups = shownGroups(idx, ds, advanced, items).filter((g) => groupsOf(idx, root).includes(g));
   const g = groups.includes(group) ? group : groups[0] ?? 'major';
@@ -354,11 +354,11 @@ export function KeyPage({ prior, onRung, gained = 0, today, matrix, idx, root, g
         </p>
       )}
       {session.length > 0 && (
-        <button className="coach-entry" onClick={() => (ladder && onCoach ? onCoach((li && keySessionLadder(familiesOf(li), root, g, lTier, items, lOpts)) || ladder) : run(session))} data-key-session={root} data-key-ladder={ladder ? ladder.levels.length : 0}>
+        <button className="coach-entry" onClick={() => (ladder && onCoach ? onCoach((li && keySessionLadder(familiesOf(li), root, g, lTier, items, lOpts)) || ladder, g) : run(session))} data-key-session={root} data-key-ladder={ladder ? ladder.levels.length : 0} data-coach-resume={ladder && resumable?.(g) ? '1' : undefined}>
           <Icon k="play" size={20} />
           <span>
             <b>
-              {he ? 'אימון רציף ב־' : 'Continuous practice in '}
+              {ladder && resumable?.(g) ? (he ? 'להמשיך מאיפה שעצרתם · ' : 'Continue where you stopped · ') : he ? 'לתרגל את ' : 'Practise '}
               <bdi dir="ltr">{nameOf(root, g)}</bdi>
             </b>
             <small>{ladder ? `${he ? `${ladder.levels.filter((l) => !l.id.endsWith('-again')).length} תרגילים: הסולם, טרצות, משולשים וספטאקורדים לאורך כל הסולם, ומה שהכי צריך חיזוק` : `${ladder.levels.filter((l) => !l.id.endsWith('-again')).length} exercises: the scale, 3rds, triads and 7th chords along the whole scale, and what needs work most`}${focus ? (he ? `. בדגש היום: ${focus.title.he}` : `. Today's focus: ${focus.title.en}`) : ''}` : he ? 'סולם, ארפג׳יו, קדנצה, תבנית ושליטה לסירוגין, כל אחד ברמה שלכם' : 'Scale, arpeggio, cadence, pattern and control in turn, each at your level'}</small>

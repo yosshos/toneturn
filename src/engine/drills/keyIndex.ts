@@ -803,7 +803,7 @@ export function keyLadder(fams: FamilyDef[], root: number, group: FacetGroup, ti
   if (back) steps.push({ ...back, id: `${back.id}-again`, title: { en: `${back.title.en}: again, from your best tempo`, he: `${back.title.he}: שוב, מהטמפו הכי טוב שלך` } });
   steps.forEach((l, k) => (l.level = k + 1));
   if (steps.length < 2) return null;
-  return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels: steps };
+  return { id: 'scales' as FamilyDef['id'], title: { en: 'Practice in the key', he: 'תרגול בסולם' }, style: 'both', levels: steps };
 }
 
 /** The key ladder's picks (keyLadder's rungs before they are laid out): the warm-up scale and the chosen rungs, in teaching order. */

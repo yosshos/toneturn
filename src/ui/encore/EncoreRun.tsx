@@ -31,6 +31,7 @@ import { recordTakeAnalysis } from '../../storage/analysis';
 import { hasFingering } from '../../engine/drills/ownFingering';
 import { FingerKeys } from '../OwnFingering';
 import { NewBestTempo, newBestOf } from '../studio/NewBestTempo';
+import { HF_OFF, hfStep, useHandsFree } from '../handsFree';
 
 export type EncoreTakeFn = (st: ItemState, evs: RatingEvent[], xp: number, m: { verdict: string; hands: string; cv: number | null }) => void;
 
@@ -84,6 +85,10 @@ export function EncoreRun({
   // The new-best-tempo moment: a tempo take above the key's previous best; one tap closes it.
   const [best, setBest] = useState<{ bpm: number; prev: number } | null>(null);
   const n = useRef(0);
+  // practice flows (owner 2026-11-25): after a take one line, then the next take follows by itself (a sung phrase keeps
+  // its buttons); the review's buttons stay and take over
+  const hfx = useHandsFree(lang);
+  const hfOn = !HF_OFF && inst !== 'voice' && !drill.sung;
   const played = useRef<PlayedNote[]>([]);
   const book = useRef<LickBook | undefined>(settings.lickBook);
   const stage = keyStage(l, all(), keyPc, inst, hand, phraseHasQuarters(drill));
@@ -132,6 +137,18 @@ export function EncoreRun({
                 : 'One more clean take in free time.';
     setRes({ m, lad, out, stage: st, line: out.bonus || out.completion ? `${line} +${out.bonus + out.completion} XP` : line, bpm: usedBpm });
     if (lad) setBpm(Math.max(drill.startBpm, Math.min(plan.goalBpm, lad.next.bpm)));
+    if (hfOn && !out.yours) {
+      const redo = (slower = false) => (setRes(null), setAgain(true), slower && setBpm((b) => Math.max(30, Math.round(b * 0.9))), setTake((t) => t + 1));
+      if (st !== 'tempo') {
+        // free time / quarters: the next take follows (the stage moves on by itself once it is clean)
+        hfx.schedule({ en: m.verdict === 'clean' ? 'Clean.' : 'Again, no rush.', he: m.verdict === 'clean' ? 'נקי.' : 'שוב, בלי למהר.' }, m.verdict === 'clean', () => redo());
+      } else {
+        // the tempo ladder: faster when it climbs, the next key once this key reached the goal, else again / slower
+        const atGoal = m.verdict === 'clean' && usedBpm >= plan.goalBpm - 0.5 && (next.passLog?.length ?? 0) >= 3;
+        const p = hfStep(m, { raise: lad && lad.next.action === 'raise' ? Math.min(plan.goalBpm, lad.next.bpm) : null, miss: hfx.miss, stay: !atGoal, next: atGoal ? { en: 'the next key', he: 'הסולם הבא' } : null });
+        hfx.schedule(p.line, p.clean, () => (p.step === 'next' ? nextAfter() : redo(p.step === 'slower')));
+      }
+    }
     if (out.yours) {
       // friends' activity (flagged until the server migration is applied: postPhraseYours)
       const b = badge(l, inst);
@@ -240,7 +257,9 @@ export function EncoreRun({
       {!res && stage === 'free' && <RubatoTake key={`free:${take}`} autoStart={again} drill={drill} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), settle(m, 'free', 0, p))} onBeat={setBeat} />}
       {!res && stage === 'quarters' && <DrillTake key={`q:${take}`} autoStart={again} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), settle(m, 'quarters', QUARTERS_BPM, p))} onBeat={setBeat} liveMarks onLive={setLive} onCount={setCounting} drumsOk={settings.headphones} />}
       {!res && !stage && <DrillTake key={`t:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), settle(m, 'tempo', bpm, p))} onBeat={setBeat} liveMarks={ds.liveMarks !== 'never'} onLive={setLive} onCount={setCounting} drumsOk={settings.headphones} />}
+      {res && hfx.bar}
       {res && (
+        <div onClickCapture={hfx.takeOver} className="enc-review">
         <TakeReview
           drill={drill}
           cal={cal}
@@ -262,6 +281,7 @@ export function EncoreRun({
         >
           {res.line && <p className="enc-after" data-after-line="1">{res.line}</p>}
         </TakeReview>
+        </div>
       )}
       {best && <NewBestTempo lang={lang} bpm={best.bpm} prev={best.prev} title={l.name[lang]} onClose={() => setBest(null)} />}
     </div>

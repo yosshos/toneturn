@@ -232,6 +232,7 @@ import { clearPendingChallenge, openChallenge, pendingChallenge, postMilestones,
 import { challengeFromHash, learnedStandards, type MilestoneEvents } from '../engine/socialRound';
 import { effectivePrivacy } from '../engine/privacy';
 import { loadSlot, saveSlot } from '../storage/resume';
+import { hasCoachRun, loadOpenRun, loadQueueIds } from '../storage/coachRun';
 import { addSessionRecord, clampDaily, dailyMinutesOf, legacyRunSlotKey, pickRun, practiceDaysOf, runSlotKey, sessionRecordOf, todayEditsFor, todayFocusFor, weeklyGoalMin, withTodayEdits, type SessionFocus } from '../engine/practiceSession';
 import { nodeTitle, PathView2, stepTitle, useMasteryView, usePathView } from './Path';
 import { checkpointTech, checkTechStars, leadsTo, masteryLine, rankHold, strengthenDrills, strengthenStep, unitMastery, UNIT_MASTERY_XP } from '../engine/pathMastery';
@@ -1857,7 +1858,7 @@ export function App() {
   const drillToday = useRef(false);
   /** SPEC-PRACTICE-SESSION §12: a workout block's coach run (a key ladder, an exercise through the keys, an item and its
    *  keys, a family, the warm-up), as long as the block. */
-  const coachInit = useRef<{ fam: FamilyDef; minutes: number; walk?: boolean } | null>(null);
+  const coachInit = useRef<{ fam: FamilyDef; minutes: number; walk?: boolean; resumeKey?: string } | null>(null);
   /** A new run inside the technique screen (it is already open: "Practise this" from a key page) remounts it. */
   const [drillsNonce, setDrillsNonce] = useState(0);
   /** §12: the key a key focus improvises in (null: the key of the week). */
@@ -2979,6 +2980,50 @@ export function App() {
   const techLeft = wrun && wrun.day === today ? wrun.blocks.reduce((n, b, i) => n + (b.target.kind === 'keys' ? blockLeftMs(wrun, i) : 0), 0) / 60000 : techMin;
   const drillsToday = techMin > 0 ? { minutes: techMin, left: Math.max(0, techLeft), day: today } : undefined;
   /**
+   * Owner 2026-11-25: the block in progress has a coach run stopped earlier today (storage/coachRun.ts) — its Go says
+   * "Continue where you stopped" and opens it there (a block's run, or today's technique on the technique block).
+   */
+  /** A block's coach run key: a key or a family block shares the Practice entry's run (stop in one, continue in the
+   *  other); the technique block is today's technique; other blocks their own. */
+  const blockRunKey = (r: WorkoutRun, b: Block): string => {
+    const inst = drillSettingsOf(s).instrument ?? 'piano';
+    const tg = b.target;
+    if (tg.kind === 'key') return `key:${inst}:${tg.group}:${tg.root}`;
+    if (tg.kind === 'family') return `fam:${inst}:${tg.family}`;
+    if (tg.kind === 'keys') return `today:${inst}`;
+    return `block:${r.id ?? today}:${b.id}`;
+  };
+  /** A block's list run (drums technique, strengthen, an item off the matrix …): its place and the list itself are kept
+   *  for the day — opened again, the same list comes back (a list rebuilt from newer items can't move the place). */
+  const blockQueueKey = useRef<string | null>(null);
+  const blockList = (b: Block, q: Drill[]): Drill[] => {
+    const key = `qb:${wrunRef.current?.id ?? today}:${b.id}`;
+    blockQueueKey.current = key;
+    const ids = loadQueueIds(key);
+    const back = ids ? ids.map((id) => drillOfItem(id)) : null;
+    return back && back.length && back.every((d): d is Drill => !!d) ? back : q;
+  };
+  const blockRunKeys = (r: WorkoutRun | null): string[] => {
+    const b = r && r.day === today && !r.finished ? r.blocks[r.at] : null;
+    return r && b ? [blockRunKey(r, b)] : [];
+  };
+  const blockResumable = (r: WorkoutRun | null) => {
+    const b = r && r.day === today && !r.finished ? r.blocks[r.at] : null;
+    return blockRunKeys(r).some((k) => hasCoachRun(k)) || (!!r && !!b && !!loadQueueIds(`qb:${r.id ?? today}:${b.id}`));
+  };
+  // …and a reload in the middle of that run (on the technique screen) comes back to the session's run screen, not to the
+  // technique hub (Drills reopens a practice run of its own; this one belongs to the session).
+  const reloadChecked = useRef(false);
+  // read at the app's first render (the technique screen forgets it once it opens on its hub)
+  const [openAtLoad] = useState(() => loadOpenRun());
+  useEffect(() => {
+    if (!settings || reloadChecked.current) return;
+    reloadChecked.current = true;
+    if (route !== 'drills' || drillFrom.current) return;
+    const o = openAtLoad;
+    if (o?.session && blockRunKeys(wrunRef.current).includes(o.key) && hasCoachRun(o.key)) go('workoutrun');
+  }, [!!settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  /**
    * SPEC-PATH-TODAY-PRACTICE §3.4: a take on an item of today's technique plan counts toward today's workout wherever it
    * is played (Practice, the key page, the workout itself) — its active time goes to the technique block.
    */
@@ -3215,6 +3260,11 @@ export function App() {
     if (r.between && !r.finished) return go('workoutrun');
     const nx = workoutNext(r);
     const tg = r.blocks[r.at]?.target;
+    // owner 2026-11-25: a block stopped earlier today opens straight where it stopped (its intro says so; one press goes on)
+    if (tg && ownScreen(tg.kind) && blockResumable(r)) {
+      openBlock(r);
+      return;
+    }
     if (!nx || !tg || tg.kind === 'practice' || ownScreen(tg.kind) || (tg.kind === 'strengthen' && instrumentCourse)) return go('workoutrun');
     // W16: remember what this block serves (later Area / Topic blocks skip it)
     const served = nx.skill ?? (tg.kind === 'topic' ? `topic:${tg.topic}` : null);
@@ -3293,8 +3343,11 @@ export function App() {
     drillToday.current = false;
     drillSessionXp.current = 0;
     drillSession.current = { takes: 0, clean: 0 };
-    chartQueue.current = fam ? null : queue;
-    coachInit.current = fam ? { fam, minutes: b.minutes, walk } : null;
+    blockQueueKey.current = null;
+    chartQueue.current = fam ? null : queue ? blockList(b, queue) : null;
+    // owner 2026-11-25: the block's coach run is kept for the day under the session and the block — stopped (Back, a
+    // reload, the app closed), Continue on Today opens it where it stopped
+    coachInit.current = fam ? { fam, minutes: b.minutes, walk, resumeKey: wrunRef.current ? blockRunKey(wrunRef.current, b) : `block:${today}:${b.id}` } : null;
     setDrillsNonce((n) => n + 1);
     go('drills');
     return true;
@@ -3374,7 +3427,7 @@ export function App() {
         const styled = picks.map((x) => x.drill);
         q = [...styled, ...q.filter((d) => !styled.some((x) => x.itemId === d.itemId))];
       }
-      chartQueue.current = q.length ? q : null;
+      chartQueue.current = q.length ? blockList(b, q) : null;
       drillFrom.current = 'workout';
       drillSessionXp.current = 0;
       drillSession.current = { takes: 0, clean: 0 };
@@ -4357,6 +4410,7 @@ export function App() {
           subs={workoutSubs}
           endCard={styleCardEl()}
           end={wrun.finished ? sessionEndOf(wrun) : undefined}
+          resumable={blockResumable(wrun)}
           onPlusFive={() => {
             // §4: one more block of the most needed area, 5 minutes, run at once
             const r = plusFive(wrun);
@@ -4792,6 +4846,7 @@ export function App() {
           }}
           onVoice={s.noSing ? undefined : () => (setVocalWarmup(false), go('vocal'))}
           queue={drillQueue}
+          queueKey={drillFrom.current === 'workout' ? blockQueueKey.current : null}
           onQueueDone={drillQueueDone}
           atTarget={drillFrom.current === 'check'}
           startTest={drillFrom.current === 'test'}

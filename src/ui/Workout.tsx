@@ -1044,7 +1044,7 @@ function FeedbackChips({ lang, onFeedback }: { lang: Lang; onFeedback: (f: 'easy
 }
 
 /** The run screen for blocks that are not lessons (practice timer, game, vocal), between blocks, and the finish summary. */
-export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, onNext, onMore, endCard, end, onPlusFive, onFinish }: { /** SPEC-PRACTICE-SESSION §5: the end screen's content and actions (engine/sessionReward.ts, engine/momentum.ts). */ end?: Omit<SessionEndProps, 'lang' | 'feedback'>; /** §4: "Keep going? +5 min" taken: one more block of the most needed area. */ onPlusFive?: (block: string) => void; /** §4: the offer declined — on to the end screen. */ onFinish?: () => void; /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** §5: the countdown ran out or Next now (the next block starts). */ onNext?: () => void; /** §5: "+2 min" on the block that just ended. */ onMore?: () => void; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
+export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEnd, onFeedback, listen, subs, onNext, onMore, endCard, end, onPlusFive, onFinish, resumable }: { /** Owner 2026-11-25: the block's run was stopped earlier today — Go continues it where it stopped. */ resumable?: boolean; /** SPEC-PRACTICE-SESSION §5: the end screen's content and actions (engine/sessionReward.ts, engine/momentum.ts). */ end?: Omit<SessionEndProps, 'lang' | 'feedback'>; /** §4: "Keep going? +5 min" taken: one more block of the most needed area. */ onPlusFive?: (block: string) => void; /** §4: the offer declined — on to the end screen. */ onFinish?: () => void; /** SPEC-STYLE-FOCUS §9.1: a card at the end of the session (the style taster), never inside an exercise. */ endCard?: React.ReactNode; /** §5: the countdown ran out or Next now (the next block starts). */ onNext?: () => void; /** §5: "+2 min" on the block that just ended. */ onMore?: () => void; /** A block kind's own line today (the key of the week …). */ subs?: Partial<Record<string, string>>; t: Strings; lang: Lang; run: WorkoutRun; onGo: () => void; onBlockDone: (ms: number, note?: string) => void; onSkip: () => void; onEnd: () => void; onFeedback: (f: 'easy' | 'right' | 'hard' | 'long') => void; /** The four-slot session's Recordings card (practiceMethod.ts listenCard). */ listen?: ListenCard }) {
   const tx = W[lang];
   const b = run.blocks[run.at];
   const [t0] = useState(() => performance.now());
@@ -1164,8 +1164,8 @@ export function WorkoutRunScreen({ t, lang, run, onGo, onBlockDone, onSkip, onEn
           </button>
         </>
       ) : (
-        <button className="btn primary" onClick={onGo}>
-          <Icon k="play" /> {tx.go}
+        <button className="btn primary" onClick={onGo} data-wk-go={resumable ? 'resume' : 'go'}>
+          <Icon k="play" /> {resumable ? (lang === 'he' ? 'להמשיך מאיפה שעצרתם' : 'Continue where you stopped') : tx.go}
         </button>
       )}
       <div className="wk-run-actions">

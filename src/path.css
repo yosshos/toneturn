@@ -2599,6 +2599,11 @@ button.chip.on {
 .coach-intro h2 { margin: 0; }
 .coach-intro .coach-step { margin: 0; color: var(--ink-dim); font-size: 14px; }
 .coach-intro .muted { color: var(--ink-dim); font-size: 14px; }
+/* a run stopped earlier today (owner 2026-11-25): what was played and the time left; Start over stays small */
+.coach-intro .coach-resume-line { margin: 0; font-size: 14px; font-weight: 600; }
+.coach-intro .coach-fresh { font-size: 14px; }
+/* the review of a lick / phrase take keeps its layout; the wrapper only listens for a button taking over the hands-free timer */
+.lk-review, .enc-review { display: contents; }
 /* the key order of a topic session (owner 2026-11-21) */
 .coach-intro .coach-order { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .coach-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 0 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); min-height: 48px; }

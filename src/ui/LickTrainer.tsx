@@ -18,6 +18,8 @@ import { piano } from './services';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { DrillTake, MarkLegend, TakeResult } from './DrillTake';
+import { HF_OFF, hfStep, useHandsFree } from './handsFree';
+import { loadQueueAt, queueRunKey, saveQueueAt, clearQueueAt } from '../storage/coachRun';
 import { DEFAULT_CAL, DrillScore, drillSettingsOf } from './Drills';
 import { Glyph } from './Glyph';
 import { chartBacking, parseChart } from '../engine/charts';
@@ -137,9 +139,16 @@ export function LickGrid({ l, inst, items, lang }: { l: Lick; inst: LickInstrume
 export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, review, sub = 'vocab', byEar = false, hearFrom, earNote, debrief, noShare = false }: { lang: Lang; settings: Settings; l: (d: Drill) => Lick; inst: LickInstrument; queue: Drill[]; items: Record<string, ItemState>; onTake: TakeFn; onEnd: (takes: number, clean: number, reviews: { lick: string; pass: boolean }[]) => void; review?: boolean; sub?: 'vocab' | 'transcribe'; /** By ear (owner 2026-11-14): the notes hidden until the first take; revealing them early gives less credit. */ byEar?: boolean; /** Phase 8, transpose by ear: what "Listen" plays (the lick in another key) instead of the drill itself. */ hearFrom?: (d: Drill) => Drill; /** A line over the hidden notes ("heard in E♭ — play it in A♭"). */ earNote?: React.ReactNode; /** Phase 8, the combined sentence: the debrief under the result (which part was recognised). */ debrief?: (m: TakeMetrics) => React.ReactNode; /** No share (a generated sentence is not a lick of the player's). */ noShare?: boolean }) {
   const ds = drillSettingsOf(settings);
   const cal = calOf(settings);
-  const [i, setI] = useState(0);
+  // owner 2026-11-25: the list's place is kept for the day (the same licks opened again continue at this one)
+  const qKey = queue.length > 1 ? queueRunKey(`lick:${inst}`, queue.map((d) => d.itemId)) : null;
+  const [i, setI] = useState(() => {
+    const at = qKey ? loadQueueAt(qKey) : null;
+    return at !== null && at < queue.length ? at : 0;
+  });
   const drill = queue[i];
   const local = useRef<Record<string, ItemState>>({});
+  // practice flows (owner 2026-11-25): after a take one line, then the next take follows by itself
+  const hfx = useHandsFree(lang);
   const stateOf = (d: Drill) => local.current[d.itemId] ?? items[d.itemId] ?? newItem(d);
   const [bpm, setBpm] = useState(() => (drill ? stateOf(drill).goalBpm : 80));
   const [res, setRes] = useState<{ m: TakeMetrics; lad: LadderResult; bpm: number } | null>(null);
@@ -156,14 +165,22 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
   const earNow = ear[drill.itemId] ?? {};
   // by ear (SPEC-EAR-AND-READING §3.2): the notes stay hidden until the lick is played back right (a clean take)
   const hidden = byEar && !earNow.taken && !earNow.revealed;
-  const go = (j: number) => {
+  const go = (j: number, auto = false) => {
+    hfx.stop();
+    hfx.miss.current = 0;
     setRes(null);
-    if (j >= queue.length) return onEnd(count.current.takes, count.current.clean, reviews.current);
+    if (j >= queue.length) {
+      if (qKey) clearQueueAt(qKey);
+      return onEnd(count.current.takes, count.current.clean, reviews.current);
+    }
+    if (qKey) saveQueueAt(qKey, j);
     setI(j);
     setBpm(stateOf(queue[j]).goalBpm);
-    setAgain(false);
+    // hands-free: the next lick counts in by itself
+    setAgain(auto);
     setTake((t) => t + 1);
   };
+  const hfOn = !HF_OFF && inst !== 'voice' && !drill.sung;
   const done = (m: TakeMetrics, _p: PlayedNote[]) => {
     const st0 = stateOf(drill);
     // the channel: by ear with the notes still hidden = ear (fresh on the item's first take); otherwise read from the page
@@ -178,6 +195,13 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
     if (byEar && m.verdict === 'clean') setEar((x) => ({ ...x, [drill.itemId]: { ...earNow, taken: true } }));
     setRes({ m, lad, bpm });
     setBpm(lad.next.bpm);
+    if (hfOn) {
+      // the last (or only) lick of the list stays until it reaches its target tempo, climbing; then the run ends
+      const nx = queue[i + 1];
+      const p = hfStep(m, { raise: lad.next.action === 'raise' ? lad.next.bpm : null, miss: hfx.miss, next: nx ? { en: l(nx).name.en, he: l(nx).name.he } : null, stay: !nx && !lad.targetReached });
+      const redo = (slower = false) => (setRes(null), setAgain(true), slower && setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1));
+      hfx.schedule(p.line, p.clean, () => (p.step === 'next' ? go(i + 1, true) : redo(p.step === 'slower')));
+    }
   };
   return (
     <div className="drill-run lk-run" data-drill={drill.itemId} data-lick-run={review ? 'review' : byEar ? 'ear' : 'practice'}>
@@ -190,12 +214,13 @@ export function LickRun({ lang, settings, l, inst, queue, items, onTake, onEnd, 
       {res && !hidden && <MarkLegend lang={lang} />}
       {!res && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} drill={drill} bpm={bpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(m, p))} onBeat={setBeat} drumsOk={settings.headphones} />}
       {res && (
-        <>
-          {!review && <p className="drill-ladder">{res.lad.message[lang]}</p>}
+        <div onClickCapture={hfx.takeOver} className="lk-review">
+          {hfx.bar}
+          {!review && !hfx.hf && <p className="drill-ladder">{res.lad.message[lang]}</p>}
           <TakeResult m={res.m} lang={lang} onAgain={() => (setRes(null), setAgain(true), setTake((t) => t + 1))} onSlower={() => (setRes(null), setAgain(true), setBpm((b) => Math.max(40, Math.round(b * 0.9))), setTake((t) => t + 1))} onNext={() => go(i + 1)} extra={!review && !noShare && sub === 'vocab' && res.m.verdict === 'clean' ? <LickShareButton compact lang={lang} info={{ title: lick.name[lang], key: kName(drill.spec.key, isMinorLick(lick)), bpm: Math.round(res.m.bpm || res.bpm), drill, by: settings.nickname, level: lick.level }} /> : undefined} />
           {/* Owner 2026-11-22: a clean take at a tempo offers a small share (the lick, the key, ♩N) in the actions row. */}
           {debrief?.(res.m)}
-        </>
+        </div>
       )}
     </div>
   );

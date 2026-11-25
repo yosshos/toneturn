@@ -1174,10 +1174,11 @@ export interface DrillSettings {
   /** The player's left-handed neck (Settings): the drill's chord boxes are mirrored (the tab stays as it is). Derived, not stored. */
   leftHanded?: boolean;
   keyOrder: KeyOrder;
-  /** Continuous practice: after a clean take raise the tempo (auto) or move on to the next key / drill. */
-  continuous: 'off' | 'raise-tempo' | 'next-key' | 'next-drill';
-  /** Accuracy (0..1) and evenness needed for the continuous step. */
-  continuousAccuracy: number;
+  /** @deprecated Owner 2026-11-25: practice flows on its own everywhere — the old "continuous practice" switch is ignored
+   *  (devices may still carry it; drillSettingsOf strips it). */
+  continuous?: string;
+  /** @deprecated ignored (see `continuous`). */
+  continuousAccuracy?: number;
   emphasis: 'both' | 'classical' | 'jazz';
   inPath: boolean;
   inWorkout: boolean;
@@ -1207,4 +1208,4 @@ export interface DrillSettings {
 }
 /** Guitar add-ons (tick boxes): jazz (g-jazz, g-harris, impro 5–6, bossa / Freddie Green), flamenco, fingerstyle / classical, prog / fusion. */
 export type GuitarAddOn = 'jazz' | 'flamenco' | 'fingerstyle' | 'prog';
-export const DEFAULT_DRILL_SETTINGS: DrillSettings = { showFingering: true, keyOrder: 'fifths-up', continuous: 'off', continuousAccuracy: 0.95, emphasis: 'both', inPath: true, inWorkout: true };
+export const DEFAULT_DRILL_SETTINGS: DrillSettings = { showFingering: true, keyOrder: 'fifths-up', emphasis: 'both', inPath: true, inWorkout: true };

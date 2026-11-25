@@ -443,7 +443,7 @@ export function keySessionLadder(fams: FamilyDef[], root: number, group: FacetGr
   }
   levels.forEach((l, k) => (l.level = k + 1));
   if (levels.length < 2) return null;
-  return { id: 'scales' as FamilyDef['id'], title: { en: 'Continuous practice in the key', he: 'אימון רציף בסולם' }, style: 'both', levels };
+  return { id: 'scales' as FamilyDef['id'], title: { en: 'Practice in the key', he: 'תרגול בסולם' }, style: 'both', levels };
 }
 
 /** The family is a key session of stages (the coach walks it with keyCoach.ts). */

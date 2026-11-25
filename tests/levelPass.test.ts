@@ -39,7 +39,7 @@ describe('the ladder with a target tempo', () => {
     expect(r.state.goalBpm).toBe(target);
     expect(r.next.action).toBe('again');
     expect(r.message.en).toMatch(/Level tempo reached/);
-    // continuous raise-tempo mode is capped too
+    // a stored continuous setting is ignored: still capped
     const c = applyTake(st, take('clean'), target, '2026-11-07T12:00:00Z', { ...DEFAULT_DRILL_SETTINGS, continuous: 'raise-tempo' });
     expect(c.state.goalBpm).toBe(target);
   });

@@ -7,7 +7,7 @@ import { median, tempoBand, npsOf } from './analyze';
 export { tempoBand, npsOf, bandOfBpm } from './analyze';
 import { tallyChannel, type Channel } from './channel';
 
-export type LadderAction = 'again' | 'raise' | 'lower' | 'next-key' | 'next-drill';
+export type LadderAction = 'again' | 'raise' | 'lower';
 export interface LadderResult {
   state: ItemState;
   next: { bpm: number; action: LadderAction };
@@ -88,11 +88,12 @@ const worstCv = (m: TakeMetrics): number | null => {
 };
 
 /**
- * Apply one take: EWMAs, history, the ladder (3 clean → +1 step, 2 failed → −10 %) and the continuous modes. With a
+ * Apply one take: EWMAs, history, the ladder (3 clean → +1 step, 2 failed → −10 %). Practice flows on its own everywhere (owner 2026-11-25):
+ * a stored "continuous" setting from before is ignored. With a
  * target tempo (opts / the item) the goal stops at the target ("level tempo reached"). A clean take at or above the
  * goal, not after "Slower", goes into the pass log (A4).
  */
-export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, at: string, settings: DrillSettings = DEFAULT_DRILL_SETTINGS, opts: TakeOpts = {}): LadderResult {
+export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, at: string, _settings: DrillSettings = DEFAULT_DRILL_SETTINGS, opts: TakeOpts = {}): LadderResult {
   const s: ItemState = {
     ...state,
     ewma: { ...state.ewma },
@@ -199,32 +200,6 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
     };
   }
 
-  // Continuous practice: a passing take moves on at once.
-  if (settings.continuous !== 'off') {
-    const pass = metrics.accuracy >= settings.continuousAccuracy && metrics.verdict !== 'not' && (cv === null || cv < 0.07);
-    if (pass) {
-      if (settings.continuous === 'raise-tempo') {
-        if (action !== 'raise') {
-          const from = Math.max(goal0, B);
-          s.goalBpm = capped(from + ladderStep(from));
-          s.streak = 0;
-        }
-        if (s.goalBpm > goal0) {
-          action = 'raise';
-          message = {
-            en: `Good — up to ♩ ${s.goalBpm}`,
-            he: `טוב — עולים ל-♩ ${s.goalBpm}`,
-          };
-        }
-      } else if (settings.continuous === 'next-key') {
-        action = 'next-key';
-        message = { en: 'Good — next key', he: 'טוב — לטונליות הבאה' };
-      } else {
-        action = 'next-drill';
-        message = { en: 'Good — next drill', he: 'טוב — לתרגיל הבא' };
-      }
-    }
-  }
   const res: LadderResult = { state: s, next: { bpm: s.goalBpm, action }, message };
   if (target && s.goalBpm >= target) res.targetReached = true;
   return res;

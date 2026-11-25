@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.137.0',
+    date: '2026-11-25',
+    en: ['Practice flows on its own everywhere: no separate continuous-practice button or setting, and licks and Encore move to the next take by themselves too. Stop any time — later the same day the practice page, the key page or today’s session offers to continue exactly where you stopped'],
+    he: ['התרגול רציף בכל מקום: אין יותר כפתור או הגדרה של תרגול רציף, וגם הליקים והאנקור עוברים ללקיחה הבאה לבד. אפשר לעצור בכל רגע, ובהמשך היום עמוד התרגול, עמוד הסולם או האימון היומי מציעים להמשיך בדיוק מאיפה שעצרתם'],
+  },
+  {
     version: '0.136.1',
     date: '2026-11-25',
     en: ['The eight translated languages now cover the newest screens too: the daily session, its end screen and rewards, and practice by key'],

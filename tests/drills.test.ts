@@ -555,27 +555,13 @@ describe('drills: ladder', () => {
     expect(r.state.ewma.acc).toBeCloseTo(1, 6);
   });
 
-  it('continuous modes: next key, raise tempo, next drill', () => {
+  it('a stored "continuous" setting from before is ignored (owner 2026-11-25: practice always flows)', () => {
     const st = { ...newItem(d), goalBpm: 80 };
-    const nk = applyTake(st, take('clean'), 80, '2026-11-07', {
-      ...DEFAULT_DRILL_SETTINGS,
-      continuous: 'next-key',
-    });
-    expect(nk.next.action).toBe('next-key');
-    const rt = applyTake(st, take('almost'), 80, '2026-11-07', {
-      ...DEFAULT_DRILL_SETTINGS,
-      continuous: 'raise-tempo',
-    });
-    expect(rt.next.action).toBe('raise');
-    expect(rt.next.bpm).toBe(83);
-    const nd = applyTake(st, take('clean'), 80, '2026-11-07', {
-      ...DEFAULT_DRILL_SETTINGS,
-      continuous: 'next-drill',
-    });
-    expect(nd.next.action).toBe('next-drill');
-    // Below the accuracy threshold: the plain ladder.
-    const low = applyTake(st, take('almost', { accuracy: 0.9 }), 80, '2026-11-07', { ...DEFAULT_DRILL_SETTINGS, continuous: 'next-key' });
-    expect(low.next.action).toBe('again');
+    const plain = applyTake(st, take('clean'), 80, '2026-11-07');
+    for (const continuous of ['next-key', 'raise-tempo', 'next-drill']) {
+      const r = applyTake(st, take('clean'), 80, '2026-11-07', { ...DEFAULT_DRILL_SETTINGS, continuous, continuousAccuracy: 0.5 });
+      expect(r.next).toEqual(plain.next);
+    }
   });
 
   it("weakness, today's items and the family level", () => {

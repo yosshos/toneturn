@@ -34,6 +34,8 @@ const PROGRESS_KEYS = [
   'toneturn.pace', 'toneturn.slots.v1', 'toneturn.highway.best.v1', 'toneturn.aiWeekly.v1', 'toneturn.lessonTopic', 'toneturn.drilltopic', 'toneturn.voiceTest.v1',
   'toneturn.workout.minutes', 'toneturn.feedSnap', 'toneturn.feedPosted', 'toneturn.diary.draft',
   'toneturn.workoutAreaDays', 'toneturn.workoutCtx', 'toneturn.stepsInWorkout', 'toneturn.waitAsked', 'toneturn.todayKeys', 'toneturn.matrixSeen', 'toneturn.weekGroup',
+  // practice runs kept for the day (storage/coachRun.ts)
+  'toneturn.coachRun.v1', 'toneturn.queueRun.v1', 'toneturn.drillsOpen.v1',
 ];
 
 export function keepOnly(s: Partial<Settings> | null | undefined): Partial<Settings> {
