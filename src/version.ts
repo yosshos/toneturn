@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.136.1',
+    date: '2026-11-25',
+    en: ['The eight translated languages now cover the newest screens too: the daily session, its end screen and rewards, and practice by key'],
+    he: ['שמונה השפות המתורגמות מכסות עכשיו גם את המסכים החדשים: האימון היומי, מסך הסיום והתגמולים, והתרגול לפי סולם'],
+  },
+  {
     version: '0.136.0',
     date: '2026-11-25',
     en: ['Practice by key, rebuilt: every exercise is a ladder of stages (right hand, left hand, both hands, two octaves, contrary motion, then speed), the tempo rises with how well you played and alternates eighths and triplets, a quick check skips what you already know, and the session fills your daily length. A strip shows the stages, the narrator speaks short recorded phrases, and 3rds, triads and 7ths no longer repeat the top note'],
