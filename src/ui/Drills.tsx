@@ -1,11 +1,15 @@
 // Technique drills (spec AI): the hub (today's items, families, the technique map), a family's levels with the
 // 12-key heat map, the run loop with the tempo ladder, drills settings, calibration and the drill creator.
 
+import { isOwn } from '../engine/drills/ownFingering';
+import { pianoTouch } from '../engine/drills/touch';
 import { KeysSoundButton } from './KeysSound';
 import { dailyMinutesOf } from '../engine/practiceSession';
 import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
+import { recordTrace } from '../storage/takeTraces';
+import { NOTHING, sessionTendency, takeTrace, type TakeKind, type TakeTrace } from '../engine/drills/tendency';
 import { CAL_PRESSES, calFromPresses, checkLevels, refineCal } from '../engine/drills/velCal';
 import { MT } from '../i18n/measureText';
 import { NOTE_BAND_NAME, PHRASE_BAND_NAME } from '../engine/phraseOrg';
@@ -1533,6 +1537,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const cXp = useRef(saved0?.xp ?? 0);
   // B3 (review 2026-11-25): no pop-ups inside a coach run — its new best tempi are collected and shown once at the end
   const cBests = useRef<{ title: string; bpm: number; unit: string }[]>(saved0?.bests ?? []);
+  // SPEC-PRACTICE-INTELLIGENCE P1: this session's take traces (its end line pools them; each is also kept in shadow mode)
+  const cTraces = useRef<TakeTrace[]>(saved0?.traces ?? []);
   /** The run ended by itself (time up / all done): nothing left to continue. Stopped by the player: kept for the day. */
   const cEnded = useRef(false);
   const cStopped = useRef(false);
@@ -1542,7 +1548,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     if (!coach || !resumeKey || !coachRef.current || cEnded.current || count.current.takes === 0) return;
     // resumed but not started again: the saved place stays exactly as it was
     if (saved0 && !cStarted) return;
-    saveCoachRun({ key: resumeKey, day: localDayOf(), fam: coach, state: coachRef.current, xp: cXp.current, takes: count.current.takes, clean: count.current.clean, bests: cBests.current });
+    saveCoachRun({ key: resumeKey, day: localDayOf(), fam: coach, state: coachRef.current, xp: cXp.current, takes: count.current.takes, clean: count.current.clean, bests: cBests.current, traces: cTraces.current.slice(-120) });
   };
   // Inside the daily session: a run that reached its end shows its summary a moment, then goes back by itself (the
   // between-blocks card follows) — no tap between blocks. Stopped by the player, the end page waits.
@@ -1710,6 +1716,18 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     }
     // The take also moves the player profile's timeline (SPEC-AI §8).
     void recordTakeAnalysis(drill, m, bpm, own).then(() => refreshProfile(undefined, undefined, { ...items, ...local.current })).catch(() => {});
+    // SPEC-PRACTICE-INTELLIGENCE P1 (shadow mode): the take's tendencies, kept on the device; a coach session pools them
+    // §5.3: a known rung's first takes of the day are its cold open (no tendencies); a review at a reached tempo counts
+    const ksNow = coachRef.current?.ks;
+    const kind: TakeKind = coach && cTake
+      ? cTake.challenge ? 'challenge' : cTake.probe ? 'probe' : (ksNow?.warmLeft ?? 0) > 0 ? (ksNow?.review ? 'review' : 'retention') : cTake.kind === 'warmup' ? 'retention' : cTake.kind === 'review' ? 'review' : 'normal'
+      : bpm < (stateOf(drill).goalBpm ?? 0) * 0.99 ? 'slow' : 'normal';
+    // drums and voice never (their notes are not a pitched line); the input as it really was
+    const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: midi.devices.length && (pianoTouch(drill) || guitarInputPref() !== 'mic') ? 'midi' : 'mic', kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId) });
+    if (trace) {
+      void recordTrace(trace);
+      if (coach) cTraces.current.push(trace);
+    }
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
     const st0 = stateOf(drill);
     const lad = applyTake(st0, m, bpm, new Date().toISOString(), ds, { targetBpm: itemTargetBpm(drill), slower: bpm < (st0.goalBpm ?? 0) * 0.99, channel: channelOf(drill, st0), activeMs: drillTakeMs(drill, bpm) });
@@ -1929,6 +1947,16 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         <section className="drill-result v-clean coach-end" data-coach-end="1">
           <h2>{he ? 'סוף הסשן' : 'Session done'}</h2>
           <p>{cLine.line[lang].trim()}</p>
+          {(() => {
+            // SPEC-PRACTICE-INTELLIGENCE §4.3 (P1): the strongest tendency over ≥ 10 takes, or "nothing consistent"
+            const st = sessionTendency(cTraces.current);
+            if (!st.enough) return null;
+            return (
+              <p className="coach-tendency" data-coach-tendency={st.top?.cell ?? 'none'}>
+                {(st.top?.line ?? NOTHING)[lang]}
+              </p>
+            );
+          })()}
           {cBests.current.length > 0 && (
             <ul className="coach-bests" data-coach-bests={cBests.current.length}>
               {cBests.current.map((b) => (

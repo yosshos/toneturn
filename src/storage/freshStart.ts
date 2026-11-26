@@ -29,7 +29,7 @@ export const KEEP_SETTINGS: readonly (keyof Settings)[] = [...new Set<keyof Sett
 ])];
 
 /** Device stores that only hold derived progress (the player model, confusions, analysis, AI cards). */
-const PROGRESS_DBS = ['toneturn-profile', 'toneturn-confusion', 'toneturn-analysis', 'toneturn-ai'];
+const PROGRESS_DBS = ['toneturn-profile', 'toneturn-confusion', 'toneturn-analysis', 'toneturn-ai', 'toneturn-traces'];
 /** localStorage keys that hold progress or a half-finished flow of the old path. */
 const PROGRESS_KEYS = [
   'toneturn.resume.v2', 'toneturn.placement.resume.v1', 'toneturn.intake.draft.v1', 'toneturn.practice', 'toneturn.practice.v1', 'toneturn.practice.pending',

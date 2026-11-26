@@ -1,4 +1,5 @@
 import { RATED_COURSES } from '../engine/channelPlan';
+import { loadTraces } from '../storage/takeTraces';
 import { RatingRow } from './CourseStart';
 import { APP_VERSION } from '../version';
 import { InstrumentArt } from './InstrumentArt';
@@ -998,8 +999,9 @@ function MicPicker({ lang, value, onChange }: { lang: 'en' | 'he'; value: string
 
 /** Settings → Account: everything this device keeps about you, as one JSON file. */
 async function downloadMyData() {
-  const [progress, settings] = await Promise.all([store.loadProgress(), store.loadSettings()]);
-  const blob = new Blob([JSON.stringify({ app: 'The 7th Sense', exportedAt: new Date().toISOString(), settings, progress }, null, 2)], { type: 'application/json' });
+  // the take traces too (SPEC-PRACTICE-INTELLIGENCE P1: calibration sessions are exported from here)
+  const [progress, settings, traces] = await Promise.all([store.loadProgress(), store.loadSettings(), loadTraces().catch(() => [])]);
+  const blob = new Blob([JSON.stringify({ app: 'The 7th Sense', exportedAt: new Date().toISOString(), settings, progress, traces }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `the-7th-sense-${new Date().toISOString().slice(0, 10)}.json`;

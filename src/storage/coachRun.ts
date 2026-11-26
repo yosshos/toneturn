@@ -32,6 +32,8 @@ export interface CoachSave {
   takes: number;
   clean: number;
   bests: { title: string; bpm: number; unit: string }[];
+  /** SPEC-PRACTICE-INTELLIGENCE P1: the session's take traces so far (its end line pools them; never lost on a reload). */
+  traces?: import('../engine/drills/tendency').TakeTrace[];
 }
 
 const ls = (): Storage | null => {

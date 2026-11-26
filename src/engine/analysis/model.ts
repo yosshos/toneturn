@@ -22,6 +22,11 @@ export interface Stat {
   vMean: number;
   vVar: number;
   last: string;
+  /** SPEC-PRACTICE-INTELLIGENCE §1 (the confidence fix): takes that touched this context. Notes of one take are not
+   *  independent, so a finding's confidence counts takes, never notes (absent on older models: notes / 10). */
+  tk?: number;
+  /** Notes per take in this context (running): the note average (HALF notes) holds only HALF / npt takes. */
+  npt?: number;
 }
 export interface PlayerModel {
   v: 1;
@@ -44,12 +49,16 @@ export const emptyModel = (): PlayerModel => ({ v: 1, stats: {}, takes: 0, updat
 
 /** ⚙ The weight of the newest note never drops below 1/HALF — older evidence fades over a few hundred notes. */
 const HALF = 400;
+/** ⚙ The take count a context's confidence may use: a window of recent takes (it never grows without bound). */
+const TK_CAP = 60;
 
 /** Context keys of one expected note. */
 export function contextsOf(drill: Drill, i: number, bpm: number): string[] {
   const n = drill.notes[i];
   const s = drill.spec;
-  const out = [`h:${n.hand}`, `fam:${s.family}`, `k:${((s.key % 12) + 12) % 12}`];
+  // the real key: a standard's spec.key is an offset from its lead sheet; drill.tonic holds the key it sounds in
+  const key = (((drill.tonic?.key ?? s.key) % 12) + 12) % 12;
+  const out = [`h:${n.hand}`, `fam:${s.family}`, `k:${key}`];
   // B1: the piano's fingers only — a guitar / bass fretting finger is another hand (its own contexts, never in the piano's HandMap)
   const piano = pianoTouch(drill);
   if (n.finger) out.push(piano ? `f:${n.hand}${n.finger}` : `gf:${n.hand}${n.finger}`);
@@ -57,14 +66,14 @@ export function contextsOf(drill: Drill, i: number, bpm: number): string[] {
   // there and in this drill context are kept apart so a finger is named only when the misses follow it.
   if (!piano && n.string && n.fret !== undefined) {
     out.push(`gp:${n.string}:${n.fret}`);
-    if (n.finger && n.fret > 0) out.push(`gpf:${n.finger}:${n.string}:${n.fret}`, `gfx:${n.finger}:${s.family}:${((s.key % 12) + 12) % 12}`);
+    if (n.finger && n.fret > 0) out.push(`gpf:${n.finger}:${n.string}:${n.fret}`, `gfx:${n.finger}:${s.family}:${key}`);
   }
   // G3 (owner 2026-11-17): the written fingering is a suggestion — so the note itself, and the suggested finger by note
   // and by key, are kept apart; a finger is named only when the weakness follows it (fingerHypotheses).
   if (piano && soloInHand(drill.notes, n)) {
     const pc = ((n.pitch % 12) + 12) % 12;
     out.push(`p:${n.hand}${pc}`);
-    if (n.finger) out.push(`fp:${n.hand}${n.finger}:${pc}`, `fk:${n.hand}${n.finger}:${((s.key % 12) + 12) % 12}`);
+    if (n.finger) out.push(`fp:${n.hand}${n.finger}:${pc}`, `fk:${n.hand}${n.finger}:${key}`);
   }
   // G3: a thumb right after a crossing (thumb under after 3 or 4, in the run's direction)
   if (piano && n.finger === 1 && soloInHand(drill.notes, n)) {
@@ -115,10 +124,13 @@ export function addTake(model: PlayerModel, drill: Drill, m: TakeMetrics, bpm: n
   const meanVel = Object.fromEntries(Object.entries(velByHand).map(([h, vs]) => [h, vs.reduce((a, b) => a + b, 0) / vs.length]));
   const velSpread = Object.values(velByHand).flat();
   const hasVel = velSpread.length > 2 && new Set(velSpread).size > 1;
+  const touched = new Map<string, number>();
   m.perNote.forEach((r, i) => {
     const idx = drill.notes.indexOf(r.exp);
     for (const key of contextsOf(playedPlace(drill, idx >= 0 ? idx : i, r.played), idx >= 0 ? idx : i, bpm)) {
       const s: Stat = { ...(stats[key] ?? { n: 0, err: 0, tn: 0, tMean: 0, tVar: 0, vn: 0, vMean: 1, vVar: 0, last: at }) };
+      touched.set(key, (touched.get(key) ?? 0) + 1);
+      if (touched.get(key) === 1) s.tk = Math.min(TK_CAP, (s.tk ?? Math.round(s.n / 10)) + 1);
       const w = Math.max(1 / (s.n + 1), 1 / HALF);
       s.n = Math.min(HALF, s.n + 1);
       s.err = s.err + w * ((r.ok ? 0 : 1) - s.err);
@@ -140,6 +152,10 @@ export function addTake(model: PlayerModel, drill: Drill, m: TakeMetrics, bpm: n
       stats[key] = s;
     }
   });
+  for (const [key, c] of touched) {
+    const s = stats[key];
+    if (s) stats[key] = { ...s, npt: s.npt ? 0.8 * s.npt + 0.2 * c : c };
+  }
   const phrasing = m.phraseOrg ? [...(model.phrasing ?? []), m.phraseOrg.band].slice(-PHRASING_KEEP) : model.phrasing;
   const control = addControl(model.control, m, at);
   return { v: 1, stats, takes: model.takes + 1, updated: at, ...(phrasing ? { phrasing } : {}), ...(control ? { control } : {}) };
@@ -190,6 +206,13 @@ const KEY_NAMES = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A',
 const KEY_HE = ['דו', 'רה♭', 'רה', 'מי♭', 'מי', 'פה', 'פה♯', 'סול', 'לה♭', 'לה', 'סי♭', 'סי'];
 const SUB = { beat: { en: 'notes on the beat', he: 'צלילים על הפעמה' }, '8': { en: 'off-beat eighths', he: 'שמיניות בין הפעמות' }, '16': { en: 'sixteenths', he: 'שש־עשריות' }, trip: { en: 'triplets', he: 'טריולות' } } as const;
 const z = (diff: number, varr: number, n: number) => (n > 1 && varr > 0 ? Math.abs(diff) / Math.sqrt(varr / n) : 0);
+/** The takes a context's statistics really hold (review round 5): its take count, never more than the note average
+ *  (HALF notes) covers — HALF / notes per take — nor more than its notes. */
+const heldTakes = (s: Stat) => (s.npt ? HALF / s.npt : Infinity);
+const eff = (s: Stat, n: number) => Math.max(1, Math.min(n, s.tk ?? Math.round(n / 10), heldTakes(s)));
+/** A confidence from takes: full at 12 takes, or at all the takes the average can hold for a long item (z, through eff,
+ *  stays honest about how much evidence there is). */
+const takeConf = (s: Stat, n: number) => Math.min(1, eff(s, n) / Math.min(12, Math.max(3, heldTakes(s))));
 const conf = (zz: number) => Math.max(0, Math.min(1, (zz - 1.5) / 2.5));
 
 /** ⚙ A suggested finger is named only with this much evidence: notes, distinct notes and keys where it is weak. */
@@ -209,7 +232,7 @@ export function fingerHypotheses(model: PlayerModel, minN: number = FINGER_HYP.m
   for (const [k, s] of Object.entries(S)) {
     if (!/^f:[RL]\d$/.test(k) || s.vn < minN) continue;
     const diff = s.vMean - 1;
-    const zz = z(diff, s.vVar, s.vn);
+    const zz = z(diff, s.vVar, eff(s, s.vn));
     if (Math.abs(diff) < H.effect || zz <= 2) continue;
     const sign = Math.sign(diff);
     const hand = k[2];
@@ -256,10 +279,10 @@ export function weakPlaces(model: PlayerModel, minN: number = GUITAR_FINGER_HYP.
   for (const [k, s] of Object.entries(S)) {
     if (!k.startsWith('gp:') || s.n < need) continue;
     const diff = s.err - base;
-    const zz = binZ(diff, base, s.n);
+    const zz = binZ(diff, base, eff(s, s.n));
     if (s.err < Math.max(0.15, base * 2) || zz <= 2) continue;
     const [, str, fret] = k.split(':').map(Number);
-    out.push({ kind: 'weak-place', ctx: k, size: Math.round(s.err * 100), confidence: Math.min(conf(zz), s.n / (need * 3)), text: GT.weakPlace(str, fret, Math.round(s.err * 100)), prescribe: { family: 'g-fretting', note: GT.weakPlaceNote } });
+    out.push({ kind: 'weak-place', ctx: k, size: Math.round(s.err * 100), confidence: Math.min(conf(zz), takeConf(s, s.n)), text: GT.weakPlace(str, fret, Math.round(s.err * 100)), prescribe: { family: 'g-fretting', note: GT.weakPlaceNote } });
   }
   return out;
 }
@@ -282,7 +305,7 @@ export function guitarFingerHypotheses(model: PlayerModel, minN: number = GUITAR
     if (!mk || s.n < minN) continue;
     const f = mk[1];
     const diff = s.err - base;
-    const zz = binZ(diff, base, s.n);
+    const zz = binZ(diff, base, eff(s, s.n));
     if (diff < H.effect || zz <= 2) continue;
     const weak = (x: { n: number; err: number } | undefined) => !!x && x.n >= H.perCtx && x.err - base >= H.ctxEffect;
     const mine = Object.entries(S).filter(([c, x]) => c.startsWith(`gpf:${f}:`) && x.n >= H.perCtx);
@@ -325,7 +348,7 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   for (const [k, s] of of('p:')) {
     if (s.vn < minN) continue;
     const diff = s.vMean - 1;
-    const zz = z(diff, s.vVar, s.vn);
+    const zz = z(diff, s.vVar, eff(s, s.vn));
     if (Math.abs(diff) < 0.1 || zz <= 2) continue;
     const pct = Math.round(diff * 100);
     const hand = k[2] === 'R' ? { en: 'right', he: 'ימין' } : { en: 'left', he: 'שמאל' };
@@ -344,7 +367,7 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
     const hand = S[`h:${k[2]}`];
     if (model.ownFingering || !hand || s.tn < minN) continue;
     const diff = s.tMean - hand.tMean;
-    const zz = z(diff, s.tVar, s.tn);
+    const zz = z(diff, s.tVar, eff(s, s.tn));
     if (diff >= 12 && zz > 2) {
       const fg = k.slice(3);
       const hn = k[2] === 'R' ? { en: 'right', he: 'ימין' } : { en: 'left', he: 'שמאל' };
@@ -359,7 +382,7 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   for (const [k, s] of of('ta:')) {
     if (s.vn < minN) continue;
     const diff = s.vMean - 1;
-    const zz = z(diff, s.vVar, s.vn);
+    const zz = z(diff, s.vVar, eff(s, s.vn));
     if (diff >= 0.1 && zz > 2) {
       const hn = k[3] === 'R' ? { en: 'right', he: 'ימין' } : { en: 'left', he: 'שמאל' };
       out.push({
@@ -385,7 +408,7 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   const L = S['h:L'];
   if (R && L && R.tn >= minN && L.tn >= minN) {
     const diff = L.tMean - R.tMean;
-    const zz = z(diff, (L.tVar + R.tVar) / 2, Math.min(L.tn, R.tn));
+    const zz = z(diff, (L.tVar + R.tVar) / 2, Math.min(eff(L, L.tn), eff(R, R.tn)));
     if (Math.abs(diff) >= 12 && zz > 2)
       out.push({
         kind: 'hand-balance', ctx: 'h:L', size: Math.round(diff), confidence: conf(zz),
@@ -399,15 +422,17 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   // MEASUREMENT-AUDIT B6: the habit the latency calibration no longer removes — a steady lead / lag on every subdivision.
   const allN = all.reduce((a, [, s]) => a + s.tn, 0);
   const allVar = all.reduce((a, [, s]) => a + s.tVar * s.tn, 0) / Math.max(1, allN);
-  if (allN >= 2 * minN && Math.abs(base) >= 12 && z(base, allVar, allN) > 2)
+  // takes, not notes (the confidence fix): the subdivision contexts' own take counts
+  const allTk = Math.max(0, ...all.map(([, s]) => eff(s, s.tn)));
+  if (allN >= 2 * minN && Math.abs(base) >= 12 && z(base, allVar, allTk) > 2)
     out.push({
-      kind: base < 0 ? 'rush' : 'drag', ctx: 'sub:all', size: Math.round(base), confidence: Math.min(1, allN / (minN * 4)),
+      kind: base < 0 ? 'rush' : 'drag', ctx: 'sub:all', size: Math.round(base), confidence: Math.min(1, allTk / 12),
       text: base < 0 ? { en: `You play ${Math.round(-base)} ms ahead of the beat`, he: `אתם מנגנים ${Math.round(-base)} מילישניות לפני הפעמה` } : { en: `You play ${Math.round(base)} ms behind the beat`, he: `אתם מנגנים ${Math.round(base)} מילישניות אחרי הפעמה` },
       prescribe: { topic: 'click-subdivide', note: { en: 'Let the click sound first, then play into it', he: 'לתת לקליק להישמע קודם, ואז לנגן לתוכו' } },
     });
   for (const [k, s] of all) {
     if (s.tn < minN) continue;
-    const zz = z(s.tMean, s.tVar, s.tn);
+    const zz = z(s.tMean, s.tVar, eff(s, s.tn));
     const sub = SUB[k.slice(4) as keyof typeof SUB];
     if (Math.abs(s.tMean) >= 12 && zz > 2 && Math.abs(s.tMean - base) >= 6)
       out.push({
@@ -416,9 +441,9 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
         prescribe: { topic: 'click-subdivide', note: { en: 'Subdivide the click and place each note in the middle of the sound', he: 'לחלק את הקליק ולשים כל צליל באמצע הצליל של הקליק' } },
       });
     const sd = Math.sqrt(s.tVar);
-    if (sd >= 35 && s.tn >= minN)
+    if (sd >= 35 && s.tn >= minN && eff(s, s.tn) >= 3)
       out.push({
-        kind: 'uneven', ctx: k, size: Math.round(sd), confidence: Math.min(1, s.tn / (minN * 3)),
+        kind: 'uneven', ctx: k, size: Math.round(sd), confidence: takeConf(s, s.tn),
         text: { en: `Your ${sub.en} spread ±${Math.round(sd)} ms — uneven`, he: `ה${sub.he} שלכם מפוזרות ±${Math.round(sd)} מילישניות — לא אחיד` },
         prescribe: { topic: 'gap-click', note: { en: 'Slower, with the click, until the spread is under 25 ms', he: 'לאט יותר, עם קליק, עד שהפיזור יורד מתחת ל־25 מילישניות' } },
       });
@@ -430,35 +455,35 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   };
   const kb = errBase('k:');
   for (const [k, s] of of('k:'))
-    if (s.n >= minN && s.err >= Math.max(0.08, kb * 1.6)) {
+    if (s.n >= minN && eff(s, s.n) >= 3 && s.err >= Math.max(0.08, kb * 1.6)) {
       const pc = Number(k.slice(2));
       out.push({
-        kind: 'weak-key', ctx: k, size: Math.round((s.err / Math.max(0.01, kb)) * 10) / 10, confidence: Math.min(1, s.n / (minN * 3)),
+        kind: 'weak-key', ctx: k, size: Math.round((s.err / Math.max(0.01, kb)) * 10) / 10, confidence: takeConf(s, s.n),
         text: { en: `${KEY_NAMES[pc]} is one of your weakest keys (${Math.round(s.err * 100)}% misses)`, he: `${KEY_HE[pc]} הוא אחד הסולמות החלשים שלכם (${Math.round(s.err * 100)}% החטאות)` },
         prescribe: { family: 'scales', kind: 'scale', key: pc, note: { en: `Scales and arpeggios in ${KEY_NAMES[pc]}, slowly`, he: `סולמות וארפג׳יו ב${KEY_HE[pc]}, לאט` } },
       });
     }
   const sb = errBase('s:');
   for (const [k, s] of of('s:'))
-    if (s.n >= minN && s.err >= Math.max(0.08, sb * 1.6))
+    if (s.n >= minN && eff(s, s.n) >= 3 && s.err >= Math.max(0.08, sb * 1.6))
       out.push({
-        kind: 'weak-scale', ctx: k, size: Math.round((s.err / Math.max(0.01, sb)) * 10) / 10, confidence: Math.min(1, s.n / (minN * 3)),
+        kind: 'weak-scale', ctx: k, size: Math.round((s.err / Math.max(0.01, sb)) * 10) / 10, confidence: takeConf(s, s.n),
         text: { en: `${k.slice(2)} scales cause the most misses (${Math.round(s.err * 100)}%)`, he: `סולמות ${k.slice(2)} גורמים להכי הרבה החטאות (${Math.round(s.err * 100)}%)` },
         prescribe: { family: 'scales', kind: 'scale', scale: k.slice(2), note: { en: 'That scale type in three keys, hands separately first', he: 'סוג הסולם הזה בשלושה סולמות, קודם כל יד לבד' } },
       });
   // leaps and fast tempi
   const step = S['leap:step'];
   const big = S['leap:big'];
-  if (step && big && big.n >= minN && big.err >= Math.max(0.1, step.err * 2))
+  if (step && big && big.n >= minN && eff(big, big.n) >= 3 && big.err >= Math.max(0.1, step.err * 2))
     out.push({
-      kind: 'leaps', ctx: 'leap:big', size: Math.round((big.err / Math.max(0.01, step.err)) * 10) / 10, confidence: Math.min(1, big.n / (minN * 3)),
+      kind: 'leaps', ctx: 'leap:big', size: Math.round((big.err / Math.max(0.01, step.err)) * 10) / 10, confidence: takeConf(big, big.n),
       text: { en: `Leaps of a 6th or more fail ${Math.round(big.err * 100)}% of the time (steps: ${Math.round(step.err * 100)}%)`, he: `קפיצות של סקסטה ומעלה נכשלות ב־${Math.round(big.err * 100)}% (צעדים: ${Math.round(step.err * 100)}%)` },
       prescribe: { family: 'advanced', kind: 'leaps', note: { en: 'Leap drills: look ahead, move early, land softly', he: 'תרגילי קפיצות: להסתכל קדימה, לזוז מוקדם, לנחות בעדינות' } },
     });
   // MEASUREMENT-AUDIT G11: landing timing after leaps (the tMean the leap contexts always kept) against steps
   if (step && big && big.tn >= minN && step.tn >= minN) {
     const diff = big.tMean - step.tMean;
-    const zz = z(diff, (big.tVar + step.tVar) / 2, Math.min(big.tn, step.tn));
+    const zz = z(diff, (big.tVar + step.tVar) / 2, Math.min(eff(big, big.tn), eff(step, step.tn)));
     if (diff >= 15 && zz > 2)
       out.push({
         kind: 'late-leap', ctx: 'leap:big', size: Math.round(diff), confidence: conf(zz),
@@ -468,9 +493,9 @@ export function findings(model: PlayerModel, minN = 30): Finding[] {
   }
   const fast = S['bpm:fast'];
   const mid = S['bpm:mid'];
-  if (fast && mid && fast.n >= minN && fast.err >= Math.max(0.1, mid.err * 2))
+  if (fast && mid && fast.n >= minN && eff(fast, fast.n) >= 3 && fast.err >= Math.max(0.1, mid.err * 2))
     out.push({
-      kind: 'fast-tempo', ctx: 'bpm:fast', size: Math.round((fast.err / Math.max(0.01, mid.err)) * 10) / 10, confidence: Math.min(1, fast.n / (minN * 3)),
+      kind: 'fast-tempo', ctx: 'bpm:fast', size: Math.round((fast.err / Math.max(0.01, mid.err)) * 10) / 10, confidence: takeConf(fast, fast.n),
       text: { en: `Above ♩=120 your misses jump to ${Math.round(fast.err * 100)}% (from ${Math.round(mid.err * 100)}%)`, he: `מעל ♩=120 ההחטאות קופצות ל־${Math.round(fast.err * 100)}% (מ־${Math.round(mid.err * 100)}%)` },
       prescribe: { note: { en: 'Short bursts at tempo, then back to a clean tempo (the tempo ladder)', he: 'פרצים קצרים בטמפו, ואז חזרה לטמפו נקי (סולם הטמפו)' } },
     });

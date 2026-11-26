@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.141.0',
+    date: '2026-11-27',
+    en: ['At the end of a practice session the coach now names the one tendency that kept showing in your playing, such as rushing on the way down or a late top note, or says that nothing consistent showed up. Behind the scenes every take now leaves a small measurement record on your device, the start of finer feedback'],
+    he: ['בסוף סשן תרגול המאמן מציין עכשיו את הנטייה האחת שחזרה בנגינה שלך, למשל מיהור בירידה או צליל עליון שמאחר, או אומר שלא הופיע שום דבר עקבי. מאחורי הקלעים כל ביצוע משאיר עכשיו רשומת מדידה קטנה במכשיר שלך, וזו ההתחלה של פידבק מדויק יותר'],
+  },
+  {
     version: '0.140.1',
     date: '2026-11-27',
     en: ['Each tempo step now weighs both how clean the take was and how fast you already are: a clean take at ♩60 can climb up to 20 %, the same take at ♪100 about half of that, and fast sixteenths a few percent'],

@@ -779,3 +779,6 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 /* Owner 2026-11-26: in a coach run the brief and Play / Ready stay on screen under a tall score (two hands, two octaves):
    the take's controls stick to the bottom of the viewport instead of waiting below the fold. */
 .coach-run .drill-take { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 16px -12px color-mix(in srgb, var(--ink) 35%, transparent); }
+
+/* SPEC-PRACTICE-INTELLIGENCE P1: the session's tendency line on the coach's end page (secondary, neutral) */
+.coach-end .coach-tendency { margin: 2px 0 0; font-size: 14px; color: var(--ink-soft); }
