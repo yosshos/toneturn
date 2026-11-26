@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.144.0',
+    date: '2026-11-26',
+    en: ['A bell in the top bar for class members and teachers: new assignments and teacher replies, and submissions waiting for review, with the number of new ones. A notification you missed waits there'],
+    he: ['פעמון בסרגל העליון למי שבכיתה ולמורים: משימות חדשות ותגובות המורה, והגשות שמחכות לבדיקה, עם מספר החדשים. התראה שפספסת מחכה שם'],
+  },
+  {
     version: '0.143.0',
     date: '2026-11-26',
     en: ['Class notifications: a student gets a notification when the teacher assigns something or replies to a submission, and a reminder the evening before an assignment is due; a teacher gets one daily summary of submissions at the hour they choose. New items are marked in the class list and counted on the app icon, and each kind can be turned off in Privacy settings'],

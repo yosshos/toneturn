@@ -23,6 +23,8 @@ import { KeysSoundButton, type KeysSoundProp } from './KeysSound';
 
 interface Props {
   keysSound?: KeysSoundProp;
+  /** The class bell (SPEC-CLASS-NOTIFICATIONS §4.5): shown in the top bar. */
+  bell?: React.ReactNode;
   t: Strings;
   settings: Settings;
   progress: Progress;
@@ -96,7 +98,7 @@ export const TOTALS: Partial<Record<LessonId, number>> = { 'bflat-two-homes': 3,
  * one small Find my level button. Everything else moved to its own place (Path: topics and practice rooms; Play:
  * puzzles and challenges; Progress: areas and ranks; Settings: account). First run keeps the welcome hero.
  */
-export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, styleCard, startHero, startLessonLink, keysSound }: Props) {
+export function Home({ t, settings, progress, streak, onStreak, onPractice, onButtonsInstead, onMode, whatsNew, onPlacement, onFindLevel, levelAreas, onMenu, news, assigned, headerExtra, workout, aside, today, styleCard, startHero, startLessonLink, keysSound, bell }: Props) {
   const [consentFor, setConsentFor] = useState<LessonId | null>(null);
   const [levelSheet, setLevelSheet] = useState(false);
   const lang = settings.uiLang;
@@ -116,7 +118,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
 
   return (
     <main className="home today-screen">
-      <TopBar t={t} lang={lang} streak={streak} onStreak={onStreak} whatsNew={whatsNew} headerExtra={headerExtra} onMenu={onMenu} home keysSound={keysSound} />
+      <TopBar t={t} lang={lang} streak={streak} onStreak={onStreak} whatsNew={whatsNew} headerExtra={headerExtra} onMenu={onMenu} home keysSound={keysSound} bell={bell} />
 
       {/* The workout is the one hero; resume / catch-up / offers move under it as a quiet list. */}
       {(startHero || firstRun) && news}
@@ -243,7 +245,7 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
  * The app's top bar (owner 2026-11-07): logo, streak, what's new / gift, month review, install / update, menu — the
  * same on every main tab (Today, Path, Progress, Play, Friends), never inside an exercise.
  */
-export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = false, keysSound }: { t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void; /** The home screen: the lit streak flame flickers softly. */ home?: boolean; /** The app sound for MIDI keys (shown while a keyboard is connected). */ keysSound?: KeysSoundProp }) {
+export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = false, keysSound, bell }: { /** The class bell. */ bell?: React.ReactNode; t: Strings; lang: 'he' | 'en'; streak: StreakState; onStreak: () => void; whatsNew: { unseen: boolean; onSeen: () => void }; headerExtra?: React.ReactNode; onMenu: () => void; /** The home screen: the lit streak flame flickers softly. */ home?: boolean; /** The app sound for MIDI keys (shown while a keyboard is connected). */ keysSound?: KeysSoundProp }) {
   // 0.61 (SPEC-REDESIGN, NavMap): course · streak · menu. "What's new" and the month review live in the menu (a dot
   // on the menu button says there is something new); update / install stay a small icon.
   const p = useSyncExternalStore(pwa.subscribe, pwa.get);
@@ -257,6 +259,7 @@ export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = fal
         <HeaderPwa t={t} lang={lang} />
         {keysSound && <KeysSoundButton {...keysSound} />}
         <LangButton lang={lang} />
+        {bell}
         <button className={`icon-btn menu-btn ${whatsNew.unseen ? 'has-dot' : ''}`} onClick={onMenu} aria-label={whatsNew.unseen ? `${t.menu} · ${lang === 'he' ? 'יש חדש' : 'something new'}` : t.menu}>
           <Icon k="menu" size={22} />
         </button>

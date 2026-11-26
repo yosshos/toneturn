@@ -244,3 +244,14 @@
 .push-ask { display: grid; gap: 8px; }
 .push-ask p { margin: 0; }
 .push-ask .pa-row { display: flex; flex-wrap: wrap; gap: 8px; }
+/* The class bell (SPEC-CLASS-NOTIFICATIONS §4.5): a small icon button in the top bar, its count, and its sheet */
+.bell-btn { position: relative; }
+.bell-count { position: absolute; top: -4px; inset-inline-end: -4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; font-size: 0.68rem; font-weight: 800; line-height: 18px; text-align: center; background: var(--accent); color: var(--accent-ink); border: 2px solid var(--card); }
+.bell-sheet { display: grid; gap: 10px; max-height: min(80vh, 640px); overflow: auto; }
+.bell-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.bell-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line, rgba(255,255,255,.1)); }
+.bell-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bell-list li.fresh .bell-row { border-inline-start: 4px solid var(--accent); background: var(--card); }
+.bell-row small { color: var(--ink-dim); }
+.bell-when { font-size: 0.72rem; }
+.bell-all { justify-self: start; }

@@ -93,6 +93,8 @@ const CORE = {
   person: art('purple', 'rose', an('hop', {}, Ci(24, 14, 8, 'body')), P('M8 38 Q8 24 24 24 Q40 24 40 38 Z', 'body')),
   /** Globe: the quick language switch in the top bar — a paper ball with its equator and one meridian cut out. */
   globe: art('purple', 'rose', an('turn', { o: [24, 22] }, Ci(24, 22, 15.5, 'body')), cut('M9 22 H39 M24 6.5 Q14.5 22 24 37.5 Q33.5 22 24 6.5', 3.2)),
+  /** Class notifications (SPEC-CLASS-NOTIFICATIONS): a paper bell on its loop, its clapper below; it swings when new. */
+  bell: art('purple', 'rose', an('swing', { o: [24, 6] }, P('M24 7 Q14.5 7 13.5 18 L12.5 27 Q12 30 8.5 32 Q7 33 8 34.5 H40 Q41 33 39.5 32 Q36 30 35.5 27 L34.5 18 Q33.5 7 24 7 Z', 'body'), Ci(24, 39, 4, 'body')), R(21.5, 3.5, 5, 5, 2.5, 'body')),
   menu: art('purple', 'rose', an('slide', {}, SL(10, 12, 38, 12, 6)), SL(10, 22, 38, 22, 6), an('slide', { d: 1 }, SL(10, 32, 38, 32, 6))),
 } satisfies Record<string, Art>;
 

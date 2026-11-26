@@ -243,7 +243,8 @@ import { FriendsScreen } from './Friends';
 import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
 import { addFriend, enablePush, refreshPush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
-import { freshCount, freshOf, loadSeen, setAppBadge } from '../storage/classSeen';
+import { freshOf, loadSeen } from '../storage/classSeen';
+import { BellButton, BellSheet, useClassInbox } from './ClassBell';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
 import { focusOf, improvStyleFor, logStyleMinutes, migrateStyleFocus, picksOf, styleWeight, weakAreaOf, weightedFocus, withFocus } from '../engine/styleFocus';
@@ -484,7 +485,6 @@ export function App() {
       .then((as) => {
         const f = freshOf(as, loadSeen(user.id));
         setAssignFresh(new Set([...f.assigns, ...f.replies]));
-        setAppBadge(freshCount(f));
       })
       .catch(() => {});
   }, [user, route]);
@@ -726,6 +726,10 @@ export function App() {
   const s = forced ? { ...s0, uiLang: baseOf(forced), outputLang: baseOf(forced), locale: forced } : s0;
   const t = STRINGS[s.uiLang];
   const loc = localeInfo(s.locale ?? s.uiLang);
+  // the class bell (SPEC-CLASS-NOTIFICATIONS §4.5): read again on the home screen and after the class page
+  const [bellOpen, setBellOpen] = useState(false);
+  const inbox = useClassInbox(user, s.uiLang, t, route === 'home' || route === 'classes' ? route : 'other');
+  const bellBtn = <BellButton inbox={inbox} lang={s.uiLang} onOpen={() => setBellOpen(true)} />;
   /** SPEC-PRACTICE-SESSION §11.4: this week's Momentum, last week's score (the stretch boost) and the weeks behind. */
   const momentumNow = useMemo(() => {
     const goals = { daysGoal: practiceDaysOf(s), minutesGoal: weeklyGoalMin(s) };
@@ -3881,12 +3885,13 @@ export function App() {
       )}
       {isTab && route !== 'home' && !mini && (
         <div className="tab-topbar">
-          <TopBar keysSound={keysSound} t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
+          <TopBar bell={bellBtn} keysSound={keysSound} t={t} lang={s.uiLang} streak={gems.streak} onStreak={() => setStreakOpen(true)} whatsNew={{ unseen: news.length > 0, onSeen: () => updateSettings({ seenVersion: APP_VERSION }) }} headerExtra={<MonthReviewIcon t={t} lang={s.uiLang} progress={progress} seenMonth={s.monthReviewSeen} onSeen={(monthReviewSeen) => updateSettings({ monthReviewSeen })} />} onMenu={() => setMenuOpen(true)} />
         </div>
       )}
       {route === 'learned' && <LearnedScreen t={t} settings={s} name={playerFirstName} onLearned={markLearned} onBack={() => go(toolFrom.current)} />}
       {route === 'home' && (
         <Home
+          bell={bellBtn}
           keysSound={keysSound}
           t={t}
           settings={s}
@@ -5287,6 +5292,7 @@ export function App() {
       {route === 'ghost' && <GhostScreen t={t} settings={s} progress={progress} onBack={() => go('arcade')} onProgress={setProgress} />}
       {route === 'classes' && <ClassesScreen t={t} settings={s} onSettings={updateSettings} user={user} onBack={() => go('home')} onOpenLesson={(id) => openAssignment(id)} onOpenItem={openAssignItem} />}
       {logOpen && <PracticeLogSheet lang={s.uiLang} progress={progress} onSave={(k, m, x, note) => void saveLog(k, m, x, note)} onClose={() => setLogOpen(false)} />}
+      {bellOpen && <BellSheet inbox={inbox} lang={s.uiLang} onClose={() => setBellOpen(false)} onOpenAssignment={openAssignItem} onOpenClasses={() => go('classes')} />}
       {streakOpen && (
         <StreakSheet t={t} st={gems.streak} gems={gems.balance} today={localDay(new Date())} lang={s.uiLang} onBuy={buy} purchases={s.purchases ?? []} frame={s.avatarFrame} onBuyCosmetic={buyCosmetic} onFrame={(avatarFrame) => updateSettings({ avatarFrame })} onClose={() => setStreakOpen(false)} />
       )}
