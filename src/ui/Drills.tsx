@@ -1776,7 +1776,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     // SPEC-KEY-SESSION-2 §4.3: the stages passed are saved on their items (per key)
     for (const st of nx.items ?? []) {
       const cur = local.current[st.itemId] ?? items[st.itemId];
-      const ns = cur ? { ...cur, stages: st.stages } : st;
+      // the stages passed and (SPEC-CLIMB-SYNC §2.4) the ceiling noted or cleared by a challenge
+      const ns = cur ? (({ ceil: _c, ...rest }) => ({ ...rest, stages: st.stages, ...(st.ceil ? { ceil: st.ceil } : {}) }))(cur) : st;
       local.current[ns.itemId] = ns;
       onItem?.(ns);
     }

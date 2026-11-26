@@ -1840,6 +1840,8 @@ html[data-motion='reduced'] .se-big {
 .stage-strip .ss-tick { color: var(--mint-deep); font-size: 0.7rem; display: inline-block; }
 .stage-strip .ss-tick.rise { animation: ss-rise 420ms ease-out; }
 @keyframes ss-rise { from { transform: translateY(4px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* SPEC-CLIMB-SYNC §2.4: the challenge take, marked on the tempo bar */
+.stage-strip .ss-chal { flex: 0 0 auto; padding: 1px 7px; border-radius: 999px; background: var(--purple); color: var(--paper); font-weight: 600; font-size: 0.7rem; line-height: 1.35; }
 .stage-strip .ss-tempo { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--ink-soft); }
 .stage-strip .ss-tempo small { color: var(--ink-dim); font-size: 0.68rem; }
 .stage-strip .ss-bar { position: relative; flex: 1; height: 6px; border-radius: 3px; background: var(--line); }

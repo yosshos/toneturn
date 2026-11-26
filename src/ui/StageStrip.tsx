@@ -51,6 +51,11 @@ export function StageStrip({ view, lang }: { view: StageView; lang: Lang }) {
       )}
       {t && (
         <div className="ss-tempo" data-stage-tempo={t.now} role="img" aria-label={he ? `טמפו ♩${t.now} ${unit}, יעד ♩${t.target} ${tUnit}` : `Tempo ♩${t.now} ${unit}, target ♩${t.target} ${tUnit}`}>
+          {view.challenge && (
+            <span className="ss-chal" data-stage-challenge="1">
+              {he ? 'אתגר' : 'Challenge'}
+            </span>
+          )}
           <span className="ss-now">
             <bdi dir="ltr">♩{t.now}</bdi> <small>{unit}</small>
           </span>

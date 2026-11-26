@@ -1114,6 +1114,12 @@ export interface ItemState {
   /** SPEC-KEY-SESSION-2 §4.3: the key session's stages passed on this item (stage codes, 'A-3', 'B-6' …), kept per key
    *  with the item itself (the item id carries the key) — the next session resumes the rung at its first unpassed stage. */
   stages?: string[];
+  /** SPEC-CLIMB-SYNC §2.4: the ceiling estimate — the lowest challenge pulse missed on this item (notes per second) and
+   *  when; cleared once a clean take reaches it. */
+  /** SPEC-CLIMB-SYNC §5: this device's revision of the item, set when a merge from another device changed it — a save
+   *  built on an older revision is merged, never written over it. Device-local: never synced, ignored when comparing. */
+  rev?: string;
+  ceil?: { nps: number; at: string; /** the notes per beat of the item's own tempo (♩ × npb / 60 = nps) */ npb?: number };
 }
 
 /** The player's own drill (spec AI §12 owner request): a pattern in scale degrees, run through every key. */

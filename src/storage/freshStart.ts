@@ -38,6 +38,8 @@ const PROGRESS_KEYS = [
   'toneturn.workoutAreaDays', 'toneturn.workoutCtx', 'toneturn.stepsInWorkout', 'toneturn.waitAsked', 'toneturn.todayKeys', 'toneturn.matrixSeen', 'toneturn.weekGroup',
   // practice runs kept for the day (storage/coachRun.ts)
   'toneturn.coachRun.v1', 'toneturn.queueRun.v1', 'toneturn.drillsOpen.v1',
+  // the drill sync's bookkeeping (SPEC-CLIMB-SYNC §3.2)
+  'toneturn.drillDirty.v1', 'toneturn.drillPulled.v1',
 ];
 
 export function keepOnly(s: Partial<Settings> | null | undefined): Partial<Settings> {
@@ -60,7 +62,7 @@ interface FreshStore {
   loadSettings(): Promise<Settings>;
   saveSettings(s: Settings): Promise<void>;
   loadProgress(): Promise<Progress>;
-  saveProgress(p: Progress): Promise<void>;
+  saveProgress(p: Progress, replaceDrills?: boolean): Promise<void>;
 }
 
 function ls(): Storage | null {
@@ -96,7 +98,7 @@ export async function freshStartIfNeeded(store: FreshStore): Promise<boolean> {
   const used = progress.history.length > 0 || Boolean(settings.firstUseAt) || Boolean(settings.intake) || Boolean(settings.activeCourse);
   if (used) {
     await store.saveSettings(migrateSettings({ ...DEFAULT_SETTINGS, ...keepOnly(settings), progressEpoch: PROGRESS_EPOCH }));
-    await store.saveProgress(keepStreak(progress));
+    await store.saveProgress(keepStreak(progress), true);
     for (const k of PROGRESS_KEYS) {
       try {
         l.removeItem(k);

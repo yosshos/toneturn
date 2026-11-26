@@ -110,6 +110,8 @@ import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, momentumOf,
 import { activeMidiDevice, reconcileDevices, settingsDiff } from '../storage/deviceProfiles';
 import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
+import { drillSync } from '../cloud/drillSync';
+import { onDrillDirty } from '../storage/drillDirty';
 import { AccountCard, type SyncState } from './Account';
 import { DAILY_GOAL_XP, Home, lessonStates, TopBar } from './Home';
 import { KeysSoundAsk, useMidiDevices, type KeysSoundProp } from './KeysSound';
@@ -353,6 +355,23 @@ const courseFactsOf = (s: Settings, p: Progress): ProgressFacts => ({
   vocalPassed: p.vocal?.passed?.length ?? 0,
 });
 
+/** SPEC-CLIMB-SYNC §3.2: one drill sync for a signed-in player — pull and merge, then push (refused items are pulled
+ *  and pushed once more). Returns the progress as saved and whether everything went out. */
+async function drillSyncNow(userId: string, onMerged?: (p: import('../storage/progress').Progress) => void): Promise<{ progress: import('../storage/progress').Progress; ok: boolean }> {
+  const ok = await drillSync({
+    epoch: PROGRESS_EPOCH,
+    userId,
+    items: async () => (await store.loadProgress()).drillItems ?? {},
+    merge: async (remote) => {
+      const r = await store.mergeDrillItems(remote);
+      // the screen's copy follows the merge at once (not only after the push): its next save builds on the merged items
+      if (r.changed.length) onMerged?.(r.progress);
+      return { items: r.progress.drillItems ?? {}, changed: r.changed };
+    },
+  }).catch(() => false);
+  return { progress: await store.loadProgress(), ok };
+}
+
 export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [progress, setProgress] = useState<Progress>(emptyProgress());
@@ -591,7 +610,10 @@ export function App() {
       const merged = await syncProgress(local);
       await store.saveProgress(merged);
       setProgress(merged);
-      setSync('synced');
+      // SPEC-CLIMB-SYNC §3: the drill items (tempi, stages, history) across devices
+      const u = await currentUser().catch(() => null);
+      const d = u ? await drillSyncNow(u.id, setProgress) : null;
+      setSync(d && !d.ok ? 'error' : 'synced');
     } catch (e) {
       console.warn('[toneturn] sync failed', e);
       setSync('error');
@@ -603,6 +625,55 @@ export function App() {
     void currentUser().then(setUser);
     return onAuthChange(setUser);
   }, []);
+
+  // SPEC-CLIMB-SYNC §3.2: drill items — a sync (pull, merge, push) 15 s after the last change and when the page hides;
+  // when it comes back after 5 minutes away too. A sync never blocks play; a failed push stays dirty for the next one.
+  useEffect(() => {
+    const uid = user?.id;
+    if (!uid || !cloudConfigured || SIMULATED) return;
+    let t: number | null = null;
+    let hiddenAt = 0;
+    let busy = false;
+    let again = false;
+    // merges reach the screen through onMerged (inside the store's turn); a sync asked for while one runs runs once more
+    const sync = () => {
+      if (busy) {
+        again = true;
+        return;
+      }
+      busy = true;
+      void drillSyncNow(uid, setProgress)
+        .catch(() => {})
+        .finally(() => {
+          busy = false;
+          if (again) {
+            again = false;
+            sync();
+          }
+        });
+    };
+    const off = onDrillDirty(() => {
+      if (t !== null) window.clearTimeout(t);
+      t = window.setTimeout(() => ((t = null), sync()), 15_000);
+    });
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+        if (t !== null) window.clearTimeout(t);
+        t = null;
+        sync();
+      } else if (hiddenAt && Date.now() - hiddenAt > 5 * 60_000) {
+        hiddenAt = 0;
+        sync();
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      off();
+      document.removeEventListener('visibilitychange', onVis);
+      if (t !== null) window.clearTimeout(t);
+    };
+  }, [user?.id]);
 
   // The cloud copy is merged only once this device's own settings have loaded (else the local load replaced the merge,
   // or the merge landed on the defaults), and it never brings device keys (calibration, MIDI sound…: deviceProfiles).

@@ -1,6 +1,8 @@
 // Local progress + settings. XP and completion writes are idempotent by event id,
 // so a repeated callback or an app resume can never award points twice.
 
+import { markDrillDirty } from './drillDirty';
+import { mergeItem, mergeItems } from './drillMerge';
 import { activeLocale } from '../i18n/translate';
 import { localeInfo } from '../i18n/locales';
 import { addGameKeyTakes, isKeyGame, keyTakesOf } from '../engine/gameKeys';
@@ -913,8 +915,34 @@ export function applyGameRun(
   return { progress: next, xp, cleared: newlyCleared, pass };
 }
 
+/** SPEC-CLIMB-SYNC §5: a drill save built on an older revision than the stored item (a merge from another device came in
+ *  after it was read) is merged onto the stored one — its own tempo and goal as the base, the rest the union. */
+function staleWrite(stored: import('../engine/drills/types').ItemState | undefined, state: import('../engine/drills/types').ItemState): import('../engine/drills/types').ItemState {
+  if (!stored || (stored.rev ?? '') === (state.rev ?? '')) return state;
+  const m = mergeItem(state, stored, true);
+  return stored.rev ? { ...m, rev: stored.rev } : m;
+}
+
 export class ProgressStore {
   constructor(private kv: KV) {}
+
+  /** SPEC-CLIMB-SYNC §3.2: drill writes (takes, item saves, merges from another device) run one at a time. */
+  private drillChain: Promise<unknown> = Promise.resolve();
+  /** Every progress write outside the drill methods: in turn with them, the drill items as stored right now (those
+   *  methods never change drill items, so a stale copy of them can't undo a take or a merge from another device).
+   *  The caller's object takes those drill items too (review 3): whatever it returns or shows next is what was written. */
+  private putProgress(p: Progress): Promise<void> {
+    return this.drillLock(async () => {
+      const cur = await this.kv.get<Progress>('progress');
+      if (cur) p.drillItems = cur.drillItems;
+      await this.kv.set('progress', p);
+    });
+  }
+  private drillLock<T>(f: () => Promise<T>): Promise<T> {
+    const run = this.drillChain.then(f, f);
+    this.drillChain = run.catch(() => undefined);
+    return run;
+  }
 
   async loadProgress(): Promise<Progress> {
     const p = await this.kv.get<Progress>('progress');
@@ -969,7 +997,7 @@ export class ProgressStore {
       const best = log.reduce((a, x) => ((kind === 'rhythm' && x.memoryPass !== undefined ? x.memoryPass : x.pass) ? Math.max(a, x.length) : a), 0);
       next = applyGameRun(next, { game: kind, tier, score: best, detail: { best, rounds: log.length }, runId: `${kind}-${seed}`, course: await this.course() }, now).progress;
     }
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     safe(() => bookGameRun(kind, { right: log.filter((x) => x.pass).length, of: log.length, edge: !!tier }), undefined);
     return next;
   }
@@ -981,8 +1009,14 @@ export class ProgressStore {
 
   /** Best score of a 0.38 game (spec AE §8), plus Pitch Memory log entries. */
   /** A drill take's item state (spec AI); returns the new progress. */
-  async recordDrill(state: import('../engine/drills/types').ItemState, evs: RatingEvent[] = [], xp = 0, m?: { verdict: string; hands: string; cv: number | null }, extra?: { takeCounts?: TakeCounts }): Promise<Progress> {
+  async recordDrill(state0: import('../engine/drills/types').ItemState, evs: RatingEvent[] = [], xp = 0, m?: { verdict: string; hands: string; cv: number | null }, extra?: { takeCounts?: TakeCounts }): Promise<Progress> {
+    return this.drillLock(() => this.recordDrillNow(state0, evs, xp, m, extra));
+  }
+  private async recordDrillNow(state0: import('../engine/drills/types').ItemState, evs: RatingEvent[], xp: number, m?: { verdict: string; hands: string; cv: number | null }, extra?: { takeCounts?: TakeCounts }): Promise<Progress> {
     const p0 = await this.loadProgress();
+    // a take built on a copy from before a merge (another device's takes came in meanwhile): merged, never overwritten
+    const stored0 = p0.drillItems?.[state0.itemId];
+    const state = staleWrite(stored0, state0);
     // SPEC-PRACTICE-SESSION §11: today's take counts (the daily cap) and the week's gains (a record, a status step up)
     const p = withDrillGains({ ...p0, ...(extra?.takeCounts ? { takeCounts: extra.takeCounts } : {}) }, p0.drillItems?.[state.itemId], state, localDay(new Date()));
     // Badge counters (spec AG §9): clean takes, tempo records, the best hands-together evenness.
@@ -1000,6 +1034,7 @@ export class ProgressStore {
     const next: Progress = fresh.length ? { ...next0, ...statsAfterEvents(base, fresh, ratingsOf(next0)) } : next0;
     if (fresh.length) next.snapshots = snapshot(next, new Date());
     await this.kv.set('progress', next);
+    markDrillDirty([state.itemId]);
     safe(() => bookDrillTake(state, prev, m?.verdict), undefined);
     return next;
   }
@@ -1012,7 +1047,7 @@ export class ProgressStore {
     const p = await this.loadProgress();
     const r = withBonuses(p, offered);
     if (!r.now.length) return { progress: p, xp: 0, now: [] };
-    await this.kv.set('progress', r.p);
+    await this.putProgress(r.p);
     // xp ≤ total × 20 (the server's plausibility rule): one "item" per 20 XP
     const total = Math.max(1, Math.min(50, Math.ceil(r.xp / 20)));
     let h = 0;
@@ -1027,7 +1062,7 @@ export class ProgressStore {
   async patchRewards(f: (p: Progress) => Progress): Promise<Progress> {
     const p = await this.loadProgress();
     const next = f(p);
-    if (next !== p) await this.kv.set('progress', next);
+    if (next !== p) await this.putProgress(next);
     return next;
   }
 
@@ -1039,16 +1074,38 @@ export class ProgressStore {
     const day = localDay(now);
     const s0 = p.stats ?? { days: [], goodSessions: 0, xpByDay: {} };
     const next: Progress = { ...p, xp: p.xp + xp, granted: { ...(p.granted ?? {}), [key]: xp }, stats: { ...s0, xpByDay: { ...s0.xpByDay, [day]: (s0.xpByDay[day] ?? 0) + xp } } };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
   /** Replace a drill item's state without counting a take (AUDIT-5 #5: a plateau's step back on the tempo ladder). */
-  async setDrillItem(state: import('../engine/drills/types').ItemState): Promise<Progress> {
+  async setDrillItem(state0: import('../engine/drills/types').ItemState): Promise<Progress> {
+    return this.drillLock(async () => {
     const p = await this.loadProgress();
+    const stored = p.drillItems?.[state0.itemId];
+    const state = staleWrite(stored, state0);
     const next: Progress = { ...p, drillItems: { ...(p.drillItems ?? {}), [state.itemId]: state } };
     await this.kv.set('progress', next);
+    markDrillDirty([state.itemId]);
     return next;
+    });
+  }
+
+  /** SPEC-CLIMB-SYNC §3.2: rows from another device merged into the items as they are now (already in the cloud: not
+   *  marked dirty here); the ids that changed. */
+  async mergeDrillItems(remote: import('../engine/drills/types').ItemState[]): Promise<{ progress: Progress; changed: string[] }> {
+    return this.drillLock(() => this.mergeDrillItemsNow(remote));
+  }
+  private async mergeDrillItemsNow(remote: import('../engine/drills/types').ItemState[]): Promise<{ progress: Progress; changed: string[] }> {
+    const p = await this.loadProgress();
+    const r = mergeItems(p.drillItems ?? {}, remote);
+    if (!r.changed.length) return { progress: p, changed: [] };
+    // a new revision on every item a merge changed: a save still built on the copy before it is merged (staleWrite)
+    const rev = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    for (const id of r.changed) r.items[id] = { ...r.items[id], rev };
+    const next: Progress = { ...p, drillItems: r.items };
+    await this.kv.set('progress', next);
+    return { progress: next, changed: r.changed };
   }
 
   async recordGame2(game: string, score: number, memory?: { day: string; cents: number; note: number }, detail?: Record<string, unknown>): Promise<Progress> {
@@ -1083,7 +1140,7 @@ export class ProgressStore {
     if (evs.length) next.snapshots = snapshot(next, new Date());
     // A tiered run (GAMES_TIERS_PLAN P1): the tier state, and the game's XP with the course.
     if (isTier(d.tier)) next = applyGameRun(next, { game, tier: d.tier, score, detail: d, runId: `${game}-${typeof d.runId === 'string' ? d.runId : Date.now().toString(36)}`, course: await this.course() }).progress;
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     const right = typeof d.right === 'number' ? d.right : undefined;
     const of = right !== undefined ? right + (typeof d.wrong === 'number' ? d.wrong : 0) : undefined;
     safe(() => bookGameRun(game, { right, of, pass: score > 0, edge: isTier(d.tier) && TIERS.indexOf(d.tier as DynName) > TIERS.indexOf(p.gameTiers?.[tierKey(game)]?.cleared ?? (null as unknown as DynName)) }), undefined);
@@ -1096,7 +1153,7 @@ export class ProgressStore {
     if (!p.lastTierClear) return p;
     const next = { ...p };
     delete next.lastTierClear;
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1105,7 +1162,7 @@ export class ProgressStore {
     const p = await this.loadProgress();
     const next = applyGameRun(p, { game, tier, score, detail, runId: `${game}-${runId}`, course: await this.course() }, now).progress;
     if (next !== p) {
-      await this.kv.set('progress', next);
+      await this.putProgress(next);
       safe(() => bookGameRun(game, { pass: score > 0, edge: true }), undefined);
     }
     return next;
@@ -1117,7 +1174,7 @@ export class ProgressStore {
     const games = { melody: 0, rhythm: 0, ...(p.games ?? {}) };
     if (best <= games[kind]) return p;
     const next = { ...p, games: { ...games, [kind]: best } };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1127,7 +1184,7 @@ export class ProgressStore {
     if (p.daily?.[day]) return p;
     const daily = Object.fromEntries(Object.entries({ ...(p.daily ?? {}), [day]: { points, text, ...extra } }).slice(-120));
     const next = { ...p, daily };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1137,7 +1194,7 @@ export class ProgressStore {
     const old = p.ghosts?.[key];
     if (old && run.points <= old.points) return { progress: p, kept: false };
     const next = { ...p, ghosts: { ...(p.ghosts ?? {}), [key]: run } };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return { progress: next, kept: true };
   }
 
@@ -1151,7 +1208,7 @@ export class ProgressStore {
     const next0: Progress = { ...p, ...withEvents(p, fresh) };
     const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1167,7 +1224,7 @@ export class ProgressStore {
     };
     const next: Progress = { ...next0, ...statsAfterEvents(p, fresh, ratingsOf(next0)) };
     next.snapshots = snapshot(next, now);
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return { progress: next, best: score > prevBest };
   }
 
@@ -1185,7 +1242,7 @@ export class ProgressStore {
     for (const t of takes) best[t.item] = Math.max(best[t.item] ?? 0, t.score);
     const passed = opts.passedLevel && !v.passed.includes(opts.passedLevel) ? [...v.passed, opts.passedLevel].sort((a, b) => a - b) : v.passed;
     next.vocal = { best, passed, takes: [...v.takes, ...takes].slice(-400), rangeMap: opts.rangeMap ? { ...(v.rangeMap ?? {}), ...opts.rangeMap } : v.rangeMap };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1195,7 +1252,7 @@ export class ProgressStore {
     const d = p.daily?.[day];
     if (!d || d.submitted) return p;
     const next = { ...p, daily: { ...p.daily, [day]: { ...d, submitted: true } } };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1211,7 +1268,7 @@ export class ProgressStore {
     if (practiceDays(p).has(day)) return p;
     provisionalDays.add(day);
     const next = { ...p, stats: { ...st, days: [...st.days, day].slice(-800) } };
-    await this.kv.set('progress', next);
+    await this.putProgress(next);
     return next;
   }
 
@@ -1222,7 +1279,7 @@ export class ProgressStore {
   async recordSession(rec: import('../engine/practiceSession').SessionRecord): Promise<Progress> {
     const p = await this.loadProgress();
     const next = withSessionRecord(p, rec);
-    if (next !== p) await this.kv.set('progress', next);
+    if (next !== p) await this.putProgress(next);
     return next;
   }
 
@@ -1233,8 +1290,11 @@ export class ProgressStore {
     return c ? { ...r, course: c } : r;
   }
 
-  async saveProgress(p: Progress) {
-    await this.kv.set('progress', p);
+  /** Save a whole progress object. Its drill items are taken from the store at that moment (SPEC-CLIMB-SYNC §5: a copy
+   *  from before a take or a merge never writes them back); `replaceDrills` (the fresh start) writes them as given. */
+  async saveProgress(p: Progress, replaceDrills = false) {
+    if (replaceDrills) await this.drillLock(() => this.kv.set('progress', p));
+    else await this.putProgress(p);
   }
 
   async saveSettings(s: Settings) {
@@ -1268,7 +1328,7 @@ export class ProgressStore {
     const r1 = await this.withCourse(r);
     // AUDIT-5 #1: the session's measured time rides on the result (durationMs); logs book their minutes off-app.
     const next = applyResult(p, safe(() => bookResult(r1, lessonMastered(p, r.lessonId)), r1), now);
-    if (next !== p) await this.kv.set('progress', next);
+    if (next !== p) await this.putProgress(next);
     return next;
   }
 }

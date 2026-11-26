@@ -23,6 +23,10 @@ export const PHRASES = {
   sixteenths: { en: 'Sixteenths.', he: 'שש־עשריות.' },
   triplets: { en: 'Triplet feel: three notes per beat.', he: 'תחושת טריולה: שלושה צלילים בפעמה.' },
   faster: { en: 'Faster.', he: 'מהר יותר.' },
+  // SPEC-CLIMB-SYNC §2.5: the challenge take
+  challenge: { en: "Let's try something harder.", he: 'בוא ננסה משהו מאתגר.' },
+  newLevel: { en: "That's your level now.", he: 'זו הרמה שלך עכשיו.' },
+  backTo: { en: 'Back to the tempo before.', he: 'חוזרים לטמפו הקודם.' },
   hold: { en: 'Hold this tempo.', he: 'נשארים בטמפו הזה.' },
   slower: { en: 'A little slower.', he: 'קצת לאט יותר.' },
   again: { en: 'Again.', he: 'שוב.' },

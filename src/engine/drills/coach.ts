@@ -123,6 +123,8 @@ export interface CoachTake {
   stageInfo?: StageInfo;
   /** The rung's placement probe (SPEC-KEY-SESSION-2 §4.2): announced as a quick check. */
   probe?: boolean;
+  /** SPEC-CLIMB-SYNC §2: a challenge take ("Let's try something harder"): well above the climb, to find the ceiling. */
+  challenge?: boolean;
 }
 
 const levelOf = (fam: FamilyDef, id: string): LevelDef => fam.levels.find((l) => l.id === id) ?? fam.levels[0];

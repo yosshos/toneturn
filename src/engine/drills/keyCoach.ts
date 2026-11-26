@@ -12,7 +12,7 @@ import type { FamilyDef, LevelDef } from './generate';
 import { bandOfBpm, notesPerBeat, thresholds } from './analyze';
 import { hasRubato } from './rubato';
 import { newItem } from './ladder';
-import { CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, LOOSE_STEP, MAELZEL, markStage, markUp, MAX_JUMP, passedElsewhere, playOf, SHARE, snapDown, snapNear, speedStep, stageDrill, stagePassed, STEP_UP, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
+import { bestCleanNps, CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, heightFactor, kindClean, kindOf, kindPlayed, lastCleanNps, LOOSE_STEP, MAELZEL, markStage, markUp, MAX_JUMP, passedElsewhere, playOf, SHARE, snapDown, snapNear, speedStep, stageDrill, stagePassed, STEP_UP, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
 import { line, PHRASES, tempoText, type CoachLine, type LinePart, type PhraseId, type T2 } from './coachPhrases';
 import type { CoachBackground, CoachNext, CoachState, CoachTake, FreeOk } from './coach';
 import { easyTake } from './coach';
@@ -116,7 +116,87 @@ export interface KsState {
   /** Owner 2026-11-26: per rung, the next stage's lowest pulse (nps) — one metronome mark above the last clean take, so the
    *  challenge rises a little after every clean take and carries from stage to stage (absent in runs saved before it). */
   flow?: Record<string, number>;
+  /** SPEC-CLIMB-SYNC §1: the first pulsed take of each rung today (nps): the climb slows once 25 % above it. */
+  dayStart?: Record<string, number>;
+  /** SPEC-CLIMB-SYNC §1 (review 1): the best clean nps per comfort kind in any key as the session began (the "near best"
+   *  factor: the take just played must not count as the best it is measured against). */
+  bestAt?: Record<string, number>;
+  /** SPEC-CLIMB-SYNC §2: the challenge takes — the take number of the last one, eligible takes counted, challenges had,
+   *  missed ones per comfort kind, the tidy streak per rung, the pending one (the pulse to go back to), and this session's
+   *  ceilings per comfort kind (the lowest missed challenge). */
+  chal?: { seed: number; lastAt: number; eligible: number; had: number; fails: Record<string, number>; tidy: Record<string, number>; pending: Pulse | null; ceil: Record<string, number> };
 }
+
+/** The best clean nps per comfort kind of the ladder's stages, in any key, now. */
+function bestsAt(fam: FamilyDef, items: Record<string, ItemState>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const l of fam.levels) {
+    if (!l.stage || l.stage.code === 'run') continue;
+    for (let k = 0; k < l.specs.length; k++) {
+      const d = stageDrill(l, k);
+      const key = comfortKey(d);
+      if (out[key] === undefined) out[key] = bestCleanNps(items, key, notesPerBeat(d));
+    }
+  }
+  return out;
+}
+
+/** SPEC-CLIMB-SYNC §1: how well a clean take was played — 1 tidy and tight, 0.6 within 0.8 of the timing limit, 0.3 looser. */
+export function stepQuality(m: TakeMetrics, drill: Drill): number {
+  if (m.verdict !== 'clean') return 0;
+  const th = thresholds(bandOfBpm(drill, m.bpm || drill.startBpm));
+  const sd = m.timingSD;
+  const tidy = (m.wrong ?? 0) === 0 && (m.hesitations ?? 0) === 0 && (m.handsAbs === null || m.handsAbs === undefined || m.handsAbs <= 0.6 * th.hands);
+  if (tidy && sd !== null && sd !== undefined && sd <= 0.5 * th.sd) return 1;
+  if (sd !== null && sd !== undefined && sd <= 0.8 * th.sd) return 0.6;
+  return 0.3;
+}
+
+const CEIL_MS = 30 * 86_400_000;
+/** The ceiling known for this item: this session's for its comfort kind, or the item's own (30 days); 0 = none. */
+function ceilOf(c: CoachState, d: Drill, items: Record<string, ItemState>, now: number): number {
+  const s = c.ks!.chal?.ceil[comfortKey(d)] ?? 0;
+  const it = items[d.itemId]?.ceil;
+  const own = it && now - Date.parse(it.at) <= CEIL_MS ? it.nps : 0;
+  return s && own ? Math.min(s, own) : s || own;
+}
+
+/**
+ * SPEC-CLIMB-SYNC §1: the next pulse after a clean take — at × (1 + 0.08 × quality × height × near × fresh), on the
+ * marks at note value `per`: at least one mark up, never more than 10 %.
+ */
+export function gradedUp(at: number, per: number, q: number, o: { best?: number; ceil?: number; start?: number }): number {
+  let p = 0.08 * q * heightFactor(at);
+  const raw = at * (1 + p);
+  const near = (ref?: number) => !!ref && ref > 0 && Math.abs(raw - ref) / ref <= 0.1;
+  if (near(o.best)) p *= 0.5;
+  if (near(o.ceil)) p *= 0.5;
+  if (o.start && at >= o.start * 1.25) p *= 0.6;
+  const cur = (at * 60) / per;
+  const top = (at * (1 + p) * 60) / per;
+  const cap = (at * MAX_JUMP * 60) / per;
+  const under = MAELZEL.filter((g) => g > cur + 0.5 && g <= Math.min(top, cap) + 1e-9);
+  let g = under.length ? under[under.length - 1] : MAELZEL.find((x) => x > cur + 0.5);
+  if (g === undefined || g > cap + 1e-9) g = Math.min(cap, cur * 1.03);
+  return Math.round(((g * per) / 60) * 100) / 100;
+}
+
+/** SPEC-CLIMB-SYNC §2.2: a deterministic draw in [0, 1) from the session start and the take number. */
+export function chalDraw(startedAt: number, takes: number): number {
+  let h = (Math.floor(startedAt / 1000) ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h ^ (takes + 0x7f4a7c15), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+/** SPEC-CLIMB-SYNC §2.3: the challenge's pulse — +20 % / 15 % / 12 % by height, or halfway to a known ceiling above. */
+export function chalTarget(at: number, ceil: number): number {
+  if (ceil > at * 1.12) return (at + ceil) / 2;
+  return at * (1 + (at < 3 ? 0.2 : at <= 5 ? 0.15 : 0.12));
+}
+export const CHAL_GAP = 6;
+export const CHAL_P = 1 / 3;
+export const CHAL_SURE = 4;
+export const CHAL_FAILS = 2;
 
 const lv = (fam: FamilyDef, c: CoachState): LevelDef => fam.levels[c.step];
 const inf = (l: LevelDef): StageInfo => l.stage!;
@@ -504,6 +584,8 @@ export function ksStart(fam: FamilyDef, items: Record<string, ItemState>, now: n
       reviewHere: false,
       meet: 0,
       flow: {},
+      chal: { seed: now, lastAt: -CHAL_GAP, eligible: 0, had: 0, fails: {}, tidy: {}, pending: null, ceil: {} },
+      bestAt: bestsAt(fam, items),
     },
   };
   openVisit(fam, c, 0, items, now);
@@ -516,7 +598,7 @@ export function ksTake(fam: FamilyDef, c: CoachState, _items: Record<string, Ite
   const level = lv(fam, c);
   const s = inf(level);
   const drill = takeDrill(fam, c);
-  const base = { drill, level, demo: c.demo && c.spec === 0, kind: 'main' as const, spec: c.spec, stageInfo: s, ...(ks.probe ? { probe: true } : {}) };
+  const base = { drill, level, demo: c.demo && c.spec === 0, kind: 'main' as const, spec: c.spec, stageInfo: s, ...(ks.probe ? { probe: true } : {}), ...(ks.chal?.pending ? { challenge: true } : {}) };
   if (ks.free && freeOk(drill) && hasRubato(drill)) return { ...base, stage: 'free', bpm: drill.startBpm };
   const nps = npsOf(ks.bpm, ks.per);
   return { ...base, stage: null, bpm: Math.max(20, Math.round((nps * 60) / notesPerBeat(drill))), play: { per: ks.per, bpm: ks.bpm }, nps };
@@ -623,7 +705,7 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
   const verdict = m.verdict === 'clean' ? 'clean' : m.verdict === 'almost' ? 'almost' : 'miss';
   const clean = verdict === 'clean';
   const ks0 = c0.ks!;
-  const ks: KsState = { ...ks0, comfort: { ...ks0.comfort }, rungMin: { ...ks0.rungMin }, lastBy: { ...ks0.lastBy }, bestBy: { ...ks0.bestBy }, lastGood: { ...ks0.lastGood }, itemPulse: { ...ks0.itemPulse }, itemDone: [...ks0.itemDone], eighths: [...ks0.eighths], tripSaid: [...ks0.tripSaid], limitSaid: [...ks0.limitSaid], cleanRungs: [...ks0.cleanRungs], passed: [...ks0.passed], limited: [...ks0.limited], visitPassed: [...ks0.visitPassed], visitBests: { ...ks0.visitBests }, visited: [...ks0.visited], finished: [...ks0.finished], revisits: { ...ks0.revisits }, sep: [...ks0.sep] };
+  const ks: KsState = { ...ks0, comfort: { ...ks0.comfort }, rungMin: { ...ks0.rungMin }, lastBy: { ...ks0.lastBy }, bestBy: { ...ks0.bestBy }, lastGood: { ...ks0.lastGood }, itemPulse: { ...ks0.itemPulse }, itemDone: [...ks0.itemDone], eighths: [...ks0.eighths], tripSaid: [...ks0.tripSaid], limitSaid: [...ks0.limitSaid], cleanRungs: [...ks0.cleanRungs], passed: [...ks0.passed], limited: [...ks0.limited], visitPassed: [...ks0.visitPassed], visitBests: { ...ks0.visitBests }, visited: [...ks0.visited], finished: [...ks0.finished], revisits: { ...ks0.revisits }, sep: [...ks0.sep], ...(ks0.dayStart ? { dayStart: { ...ks0.dayStart } } : {}), ...(ks0.chal ? { chal: { ...ks0.chal, fails: { ...ks0.chal.fails }, tidy: { ...ks0.chal.tidy }, ceil: { ...ks0.chal.ceil } } } : {}) };
   const c: CoachState = { ...c0, ks, takes: c0.takes + 1, clean: c0.clean + (clean ? 1 : 0), demo: false };
   const items: Record<string, ItemState> = { ...items0 };
   const marks: ItemState[] = [];
@@ -835,9 +917,53 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
     if (per >= 2 && s.sub && !ks.eighths.includes(comfortKey(d))) ks.eighths.push(comfortKey(d));
     const at = take.nps ?? 0;
     const here: Pulse = { nps: at, per, bpm: take.play?.bpm ?? take.bpm };
+    const q = stepQuality(m, d);
+    const ckey = comfortKey(d);
+    ks.dayStart = { ...(ks.dayStart ?? {}) };
+    if (ks.dayStart[s.rung] === undefined) ks.dayStart[s.rung] = at;
+    const chal = (ks.chal ??= { seed: c.startedAt, lastAt: -CHAL_GAP, eligible: 0, had: 0, fails: {}, tidy: {}, pending: null, ceil: {} });
+    const pend = chal.pending;
+    chal.pending = null;
+    chal.tidy[s.rung] = clean && q >= 0.6 ? (chal.tidy[s.rung] ?? 0) + 1 : 0;
+    /** SPEC-CLIMB-SYNC §1: the graded next pulse after a clean take at `at`. */
+    const upFrom = (x: number, p: number) => gradedUp(x, p, q, { best: ks.bestAt?.[ckey], ceil: ceilOf(c, d, items, now), start: ks.dayStart![s.rung] });
+    // §2.4 (review 1): any clean take at or above a ceiling clears it (the session's and the item's)
+    if (clean) {
+      if ((chal.ceil[ckey] ?? Infinity) <= at + 1e-6) delete chal.ceil[ckey];
+      const it0 = items[d.itemId];
+      if (it0?.ceil && it0.ceil.nps <= at + 1e-6) {
+        const { ceil: _gone, ...rest } = it0;
+        saveMark(rest as ItemState);
+      }
+    }
+    pulse: {
+    if (pend) {
+      chal.lastAt = c.takes;
+      if (clean) {
+        // §2.4: clean — this is the level now; a ceiling at or under it goes
+        headX = 'newLevel';
+      } else {
+        // §2.4: missed — back to the pulse before it, nothing counted; the ceiling is noted (session and item)
+        chal.fails[ckey] = (chal.fails[ckey] ?? 0) + 1;
+        chal.ceil[ckey] = Math.min(chal.ceil[ckey] ?? Infinity, at);
+        const it = items[d.itemId] ?? newItem(d);
+        const npb = notesPerBeat(d);
+        // a ceiling the clean tempo already passed is replaced (review 1)
+        const passed = !!it.ceil && (it.cleanBpm * npb) / 60 >= it.ceil.nps - 1e-6;
+        // a miss under the item's own best is today's ceiling only (review 3): the item keeps ceilings above its best
+        const underBest = (it.cleanBpm * npb) / 60 >= 0.98 * at;
+        if (!underBest && (!it.ceil || passed || at < it.ceil.nps || now - Date.parse(it.ceil.at) > CEIL_MS)) saveMark({ ...it, ceil: { nps: Math.round(at * 100) / 100, at: new Date(now).toISOString(), npb } });
+        ks.lastBy[ck] = pend.nps;
+        ks.stepTakes = Math.max(0, ks.stepTakes - 1);
+        setPulse(fam, c, pend.nps, pend.per === 3 ? 2 : pend.per, true);
+        dir = ['backTo'];
+        tempo = true;
+        break pulse;
+      }
+    }
     if (clean) {
       if (!ks.cleanRungs.includes(s.rung)) ks.cleanRungs.push(s.rung);
-      if (s.code !== 'run') ks.flow = { ...(ks.flow ?? {}), [s.rung]: Math.max(ks.flow?.[s.rung] ?? 0, markUp(at, per)) };
+      if (s.code !== 'run') ks.flow = { ...(ks.flow ?? {}), [s.rung]: Math.max(ks.flow?.[s.rung] ?? 0, upFrom(at, per)) };
       ks.bestBy[d.itemId] = Math.max(ks.bestBy[d.itemId] ?? 0, at);
       ks.sessionBest = Math.max(ks.sessionBest, at);
       ks.lastGood[d.itemId] = here;
@@ -851,7 +977,7 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
         else leave = 'done';
       } else if (clean && !ks.limited.includes(baseId(level))) {
         // owner 2026-11-26: a clean review take is followed by one a mark faster, not the same take again
-        setPulse(fam, c, markUp(at, per), per);
+        setPulse(fam, c, upFrom(at, per), per);
         dir = ['faster'];
         tempo = true;
       } else dir = clean ? ['again'] : ['noRush'];
@@ -923,7 +1049,13 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
           specPassed();
           if (!leave && dir[0] !== 'target') dir = ['target', ...dir];
         } else {
-          const q = climbStep(m, d);
+          // SPEC-CLIMB-SYNC §1: the graded step, slower once today climbed 25 % and near a known ceiling
+          let q0 = climbStep(m, d);
+          const st0 = ks.dayStart?.[s.rung];
+          if (st0 && at >= st0 * 1.25) q0 = 1 + (q0 - 1) * 0.6;
+          const cl = ceilOf(c, d, items, now);
+          if (cl && Math.abs(at * q0 - cl) / cl <= 0.1) q0 = 1 + (q0 - 1) * 0.5;
+          const q = q0;
           // U7, B2: triplets only after an eighths take and at ♩40 or more
           let nextPer = canTrip(d, s) && (per === 2 || per === 3) ? (per === 2 ? 3 : 2) : playOf(d, at * q, s.sub, ks.eighths.includes(comfortKey(d))).per;
           if (nextPer === 3 && (at * q * 60) / 3 < MIN_BPM - 0.5) nextPer = 2;
@@ -991,6 +1123,35 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
         } else if (!(ks.bpm <= MIN_BPM && floorMiss())) dir = ['again'];
       }
     }
+    }
+  }
+
+  /** SPEC-CLIMB-SYNC §2: after a tidy clean take, now and then (⅓, the 4th eligible one for sure) the next take is a
+   *  challenge well above the climb — never on a new stage, the probe, free time, hands apart, a review or the closing. */
+  function maybeChallenge(): void {
+    const ch = ks.chal;
+    if (!ch || take.stage !== null || !clean || ks.probe || ks.free || ks.sep.length || ks.warmLeft > 0 || ks.review || ks.closing || newStage) return;
+    const l = lv(fam, c);
+    const s1 = inf(l);
+    if (s1.code === 'run' || l !== take.level || c.spec !== take.spec || take.probe || ch.pending) return;
+    const d1 = stageDrill(l, c.spec);
+    const k1 = comfortKey(d1);
+    if ((ch.tidy[s1.rung] ?? 0) < 2 || c.takes - ch.lastAt < CHAL_GAP || (ch.fails[k1] ?? 0) >= CHAL_FAILS) return;
+    ch.eligible++;
+    const go = chalDraw(ch.seed, c.takes) < CHAL_P || (ch.had === 0 && ch.eligible >= CHAL_SURE);
+    if (!go) return;
+    const at = take.nps ?? ks.nps;
+    const per0 = take.play?.per ?? ks.per;
+    const from: Pulse = { nps: ks.nps, per: ks.per, bpm: ks.bpm };
+    setPulse(fam, c, chalTarget(at, ceilOf(c, d1, items, now)), undefined, true);
+    // at least two marks above the take just played
+    const two = markUp(markUp(at, per0), per0);
+    if (ks.nps < two - 1e-6) setPulse(fam, c, two, per0, true);
+    ch.pending = from;
+    ch.had++;
+    ch.lastAt = c.takes;
+    dir = ['challenge'];
+    tempo = true;
   }
 
   const elapsed = now - c.startedAt;
@@ -1031,6 +1192,7 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
     const intro = line(ks.closing ? 'backScale' : again ? 'resume' : NEXT_OF[ns.what], t.probe ? 'check' : null, ks.review ? (ks.reviewHere ? 'reviewHere' : 'review') : ks.warmLeft > 0 ? 'warm' : null, ...ns.say, t.stage === 'free' ? 'free' : { bpm: t.play?.bpm ?? t.bpm, per: t.play?.per });
     return { state: c, line: join(verdictLine, lim, line(...keptDir), fin, intro), end: false, items: marks, ...(ceiling ? { ceiling } : {}) };
   }
+  maybeChallenge();
   const t = ksTake(fam, c, items, order, freeOk);
   const tail: LinePart[] = [...dir];
   if (t.stage === 'free' && take.stage !== 'free' && !tail.includes('free')) tail.push('free');
@@ -1047,6 +1209,8 @@ export interface StageView {
   tempo: { now: number; target: number; best: number; nowNps: number; targetNps: number; bestNps: number; startNps: number; per: number; targetPer: number } | null;
   title: T2;
   closing: boolean;
+  /** SPEC-CLIMB-SYNC §2.4: the take is a challenge (the tempo bar says so). */
+  challenge?: boolean;
 }
 
 export function stageView(fam: FamilyDef, c: CoachState, items: Record<string, ItemState>, take?: CoachTake | null): StageView | null {
@@ -1070,7 +1234,7 @@ export function stageView(fam: FamilyDef, c: CoachState, items: Record<string, I
     const best = c.ks.bestBy[take.drill.itemId] ?? 0;
     tempo = { now: take.play.bpm, target: snapDown((tn * 60) / tp + 0.5), best: best > 0 ? Math.max(MIN_BPM, snapNear((best * 60) / per)) : 0, nowNps: take.nps, targetNps: tn, bestNps: best, startNps: c.ks.start || take.nps, per, targetPer: tp };
   }
-  return { stages, tempo, title: s.title, closing: !!s.closing };
+  return { stages, tempo, title: s.title, closing: !!s.closing, challenge: !!take?.challenge };
 }
 
 /** The session's closing line over a staged ladder (S2, S11, #10): once, always naming the next stage of the key — the scale's

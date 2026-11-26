@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.140.0',
+    date: '2026-11-26',
+    en: ['The climb weighs each take: a tight one goes up more, a loose one a little, and it slows near your best. Now and then the coach says "Let’s try something harder" and jumps well ahead to find your ceiling — clean, and that is your level; missed, and you are back where you were, with nothing counted against you. Your technique progress now syncs across your devices'],
+    he: ['העלייה בטמפו נשקלת לפי כל ביצוע: ביצוע הדוק מעלה יותר, ביצוע רופף מעלה מעט, וליד השיא שלך העלייה מאטה. מדי פעם המאמן אומר "בוא ננסה משהו מאתגר" וקופץ קדימה כדי למצוא את התקרה: אם הביצוע נקי, זו הרמה שלך; אם לא, חוזרים לטמפו הקודם, ושום דבר לא נספר נגדך. ההתקדמות בטכניקה מסתנכרנת עכשיו בין כל המכשירים שלך'],
+  },
+  {
     version: '0.139.0',
     date: '2026-11-26',
     en: ['The key session develops as you play: one clean take moves on, every clean take is a little faster than the last (also from stage to stage), a new key starts from where your hands are instead of from the right hand alone, your own tempo is no longer held at your level’s benchmark, and the speed goal rises with your best. A new stage’s brief starts by itself after a few seconds, and Play stays on screen under a tall score'],
