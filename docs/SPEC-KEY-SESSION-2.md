@@ -264,3 +264,29 @@ One line and the strip: "C major scale: both hands, 2 octaves, contrary motion. 
 
 - **S10 (review 3) The scale before the thirds.** The harmonised rungs (block B) never start before the scale has passed A-3. If A-3 is still open when the scale's budget ends, the scale's budget extends up to half the session; if A-3 is still open after that (or hit today's limit), the rest of the session goes to the other rungs (fingers and independence, cadences, licks), never to block B.
 - **Review 3 (2026-11-25).** The closing is at most two takes at the target (or "A short review at this tempo." after a limit); spare time goes to open stages first and the closing starts only when nothing else fits — a session with nothing left ends early with its summary. The closing returns to the scale's first open stage (A-3/A-4/A-5 before A-6). A step back ("A little slower.") that fails again is today's limit; no more than six takes on one tempo step. At ♩40 the coach never says "slower": after four misses there, a hands-together stage is played hands separately once ("Hands separately first."), other items once in free time; failing after that, "Let's leave it for today." A stage at its limit comes back the same day only as a two-take review. After a missed probe the first stage starts at min(1.0 nps, 0.9 × the scale's comfort, 0.9 × the probe); a missed hands-together probe tries the right hand alone once at the probe's tempo. Rotating rungs keep each item's own tempo. Targets are shown in the note value they will be played in (eighths above ♩120 quarters); end lines give eighths rather than triplets. The session's last line always names the next stage.
+
+## Owner 2026-11-26: it must develop, and flow
+
+The owner's report after three days: every session started at ♪54 in eighths. It played the right hand twice, the left hand twice, both hands twice, two octaves, then contrary motion, all at ♪54. Every new stage waited for Ready, and the Ready button sat below a tall score, so it took a scroll to reach. This section replaces the rules it names.
+
+- **D1 Comfort is never held at the tier benchmark.**
+  - A player with a clean tempo on this comfort kind starts at 0.9 × that tempo. Only the item's target caps it.
+  - The tier benchmark (§3.2) caps only a fresh kind.
+  - Cause of the report: at tier 0 the benchmark is 1.8 nps, which is ♪54.
+- **D2 One clean take passes a coordination stage.**
+  - This replaces "two clean or one easy" (§3.6).
+  - A clean probe also passes its own stage (S1 replaced). "Almost" and misses work as before.
+- **D3 Every clean take raises the next one.**
+  - The rung keeps a *flow* pulse: one metronome mark above its last clean take, never more than 10 %.
+  - The next take starts at no less than the flow, including the next stage and the next item of a stage, so the tempo climbs across RH → LH → both → 2 octaves → contrary → speed.
+  - A clean warm-up or review take is followed by one a mark faster. A review at today's limit is the exception and stays at its tempo.
+- **D4 A new key is not a new start.**
+  - Stages are still saved per key.
+  - When the rung's probe stage (A-3) passed in another key, the new key opens with the probe at the comfort tempo. It skips right hand and left hand on a clean take; a miss goes back to A-1 as before.
+  - Cause of the report: each day's key started again from A-1.
+- **D5 The speed target moves with the player.**
+  - The target is the tier's, or 10 % above the player's best clean speed on this kind in any key, whichever is higher. It never goes above the top tier's target.
+- **D6 Continuous coach.**
+  - In a coach run a new stage's brief is shown with a countdown, and the count-in starts by itself after 4 s. Ready or a note starts it sooner.
+  - The brief with Play / Ready sticks to the bottom of the screen under a tall score, so it never needs a scroll.
+  - The level test and other flows keep "count-in waits for Ready".

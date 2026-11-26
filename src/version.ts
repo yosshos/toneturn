@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.139.0',
+    date: '2026-11-26',
+    en: ['The key session develops as you play: one clean take moves on, every clean take is a little faster than the last (also from stage to stage), a new key starts from where your hands are instead of from the right hand alone, your own tempo is no longer held at your level’s benchmark, and the speed goal rises with your best. A new stage’s brief starts by itself after a few seconds, and Play stays on screen under a tall score'],
+    he: ['סשן המפתח מתפתח תוך כדי נגינה: ביצוע נקי אחד מספיק כדי להתקדם, כל ביצוע נקי מהיר מעט מהקודם (גם בין שלבים), מפתח חדש מתחיל מהמקום שבו הידיים שלך נמצאות ולא שוב מיד ימין לבד, הטמפו שלך כבר לא נעצר בתקרה של הדרגה, ויעד המהירות עולה יחד עם השיא שלך. התדריך של שלב חדש מתחיל מעצמו אחרי כמה שניות, וכפתור הנגינה נשאר על המסך גם מתחת לתווים גבוהים'],
+  },
+  {
     version: '0.138.0',
     date: '2026-11-25',
     en: ['Teachers can save a week of assignments as a weekly plan and send it to any class in one go, with due dates from the start day; anything that did not go out waits on the class card until you send it or let it go. The coach’s weekly suggestion now shows on Today under the workout. A technique card with nothing on its page but levels starts practice at once (its levels are a tap away), and your singing range stays through a fresh start'],

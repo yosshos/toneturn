@@ -53,10 +53,10 @@ interface Row {
   sayHe: string;
 }
 
-function run(opts: { tier: number; player: Player; minutes?: number; items?: Record<string, ItemState>; maxTakes?: number; now?: number }) {
+function run(opts: { tier: number; player: Player; minutes?: number; items?: Record<string, ItemState>; maxTakes?: number; now?: number; root?: number }) {
   const items: Record<string, ItemState> = { ...(opts.items ?? {}) };
   const now0 = opts.now ?? T0;
-  const fam = keySessionLadder(fams, 0, 'major', opts.tier, items, { instrument: 'piano', now: now0 }) as FamilyDef;
+  const fam = keySessionLadder(fams, opts.root ?? 0, 'major', opts.tier, items, { instrument: 'piano', now: now0 }) as FamilyDef;
   let now = now0;
   let c: CoachState = coachStart(fam, items, 'fifths-up', now, { noProbe: true, ...(opts.minutes ? { minutes: opts.minutes } : {}) });
   const rows: Row[] = [];
@@ -121,10 +121,10 @@ describe('key session 2: the simulator', () => {
     expect(firstOther).toBeGreaterThan(0);
     const codes = [...new Set(rows.slice(0, firstOther).map((r) => r.code))];
     expect(codes.slice(0, 4)).toEqual(['A-3', 'A-4', 'A-5', 'A-6']);
-    // coordination stages at comfort: no climbing inside A-3…A-5
+    // coordination stages (owner 2026-11-26): each clean take one mark up, never more than 10 %
     for (const c of ['A-4', 'A-5']) {
       const nps = scale.filter((r) => r.code === c).map((r) => r.nps);
-      expect(Math.max(...nps) - Math.min(...nps)).toBeLessThan(0.05);
+      for (let k = 1; k < nps.length; k++) expect(nps[k]).toBeLessThanOrEqual(nps[k - 1] * 1.1 + 1e-6);
       expect(Math.max(...nps)).toBeLessThanOrEqual(1.8);
     }
     // A-6 climbs, alternating eighths and triplets once in eighths
@@ -304,10 +304,12 @@ describe('key session 2: second review (2026-11-25)', () => {
     const three = run({ tier: 0, player: () => 'tight', items: two.items, now: T0 + 2 * 86_400_000 });
     const sixty = run({ tier: 0, minutes: 60, player: (t) => ((t.nps ?? 0) <= 2.05 ? 'tight' : 'miss') });
     for (const [r, len] of [[one, 30], [two, 30], [three, 30], [sixty, 60]] as const) {
+      if (process.env.KS_TRACE) console.log(len, r.rows.length, r.rows.slice(-8).map((x) => `${x.min.toFixed(1)} v${x.visit} ${x.rung} ${x.code} ♩${x.bpm}/${x.per} ${x.grade} ${x.line}`).join(' || '));
       expect(r.ended).toBe(true);
       const last = r.rows[r.rows.length - 1];
       // the closing is at most two takes of review (review 3): a session may end a little early
-      expect(last.min).toBeGreaterThan(len - 3);
+      // one clean take passes a stage (owner 2026-11-26): a player at today's limit everywhere may end a few minutes early
+      expect(last.min).toBeGreaterThan(len - (len > 30 ? 8 : 4));
       expect(last.min).toBeLessThan(len + 1.5);
       expect(last.closing).toBe(true);
     }
@@ -320,10 +322,12 @@ describe('key session 2: second review (2026-11-25)', () => {
     }
   });
 
-  it('S1: a clean probe keeps its tempo for the next take', () => {
+  it('S1 (owner 2026-11-26): a clean probe passes and the next take is one mark faster', () => {
     const { rows } = run({ tier: 0, player: () => 'tight', maxTakes: 3 });
     expect(rows[0].probe).toBe(true);
-    expect(rows[1].bpm).toBe(rows[0].bpm);
+    expect(rows[1].code).not.toBe(rows[0].code);
+    expect(rows[1].nps).toBeGreaterThan(rows[0].nps);
+    expect(rows[1].nps).toBeLessThanOrEqual(rows[0].nps * 1.1 + 1e-6);
   });
 
   it('S4: three "almost" in a row at one tempo step back one metronome mark', () => {
@@ -382,5 +386,43 @@ describe('key session 2: third review (2026-11-25)', () => {
     const { rows } = run({ tier: 0, player: (t) => (t.stage === 'free' ? 'tight' : (t.drill.spec as { hands: string }).hands === 'RL' ? 'miss' : 'tight') });
     expect(rows.some((r) => r.rung.startsWith('k-sharm'))).toBe(false);
     expect(rows[rows.length - 1].line).toMatch(/Next time/);
+  });
+});
+
+describe('key session: owner 2026-11-26 (the same thing three days at ♪54)', () => {
+  const tight = () => 'tight' as Grade;
+  it('a new key each day: no right hand / left hand again, the tempo starts above yesterday’s comfort, never held at the tier benchmark', () => {
+    const one = run({ tier: 0, player: tight });
+    const two = run({ tier: 0, player: tight, items: one.items, now: T0 + 86_400_000, root: 7 });
+    const three = run({ tier: 0, player: tight, items: two.items, now: T0 + 2 * 86_400_000, root: 2 });
+    if (process.env.KS_TRACE) for (const r of [one, two, three]) console.log(r.rows.filter((x) => x.visit === 0).map((x) => `${x.code}${x.probe ? '?' : ''} ${x.hands}${x.oct} ♩${x.bpm}/${x.per}`).join(' | '));
+    for (const r of [two, three]) {
+      const scale = r.rows.filter((x) => x.visit === 0 && !x.closing);
+      // a check (the probe at both hands) first, no single-hand stages
+      expect(scale[0]).toMatchObject({ code: 'A-3', probe: true });
+      expect(scale.some((x) => x.code === 'A-1' || x.code === 'A-2')).toBe(false);
+    }
+    const startOf = (r: typeof one) => r.rows.find((x) => x.visit === 0)!.nps;
+    const bestOf = (r: typeof one) => Math.max(...r.rows.filter((x) => x.visit === 0 && x.grade !== 'miss').map((x) => x.nps));
+    // each day starts near the last day's clean tempo (0.9 ×, on the marks), above the tier-0 benchmark (1.8 nps = ♪54)
+    expect(startOf(two)).toBeGreaterThan(1.8);
+    expect(startOf(two)).toBeGreaterThanOrEqual(0.8 * bestOf(one));
+    expect(startOf(three)).toBeGreaterThan(startOf(two));
+  });
+
+  it('every clean take raises the next one (at most one metronome mark, ≤ 10 %), and no stage asks for the same take twice', () => {
+    const { rows } = run({ tier: 0, player: tight, maxTakes: 12 });
+    const pulsed = rows.filter((r) => r.nps > 0);
+    for (let k = 1; k < pulsed.length; k++) {
+      if (pulsed[k].closing || pulsed[k].visit !== pulsed[k - 1].visit) continue;
+      expect(pulsed[k].nps, `#${pulsed[k].n}`).toBeGreaterThan(pulsed[k - 1].nps - 1e-6);
+      expect(pulsed[k].nps, `#${pulsed[k].n}`).toBeLessThanOrEqual(pulsed[k - 1].nps * 1.1 + 1e-6);
+    }
+    // a clean take on a coordination stage moves on: no two takes of one item at one tempo
+    for (let k = 1; k < pulsed.length; k++) {
+      const a = pulsed[k - 1];
+      const b = pulsed[k];
+      if (b.kind === 'coord' && a.code === b.code && a.oct === b.oct && a.motion === b.motion) expect(b.bpm, `#${b.n}`).not.toBe(a.bpm);
+    }
   });
 });

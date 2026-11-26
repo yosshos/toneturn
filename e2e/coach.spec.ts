@@ -258,3 +258,34 @@ test('key session in Hebrew: the strip, the brief and the coach line in Hebrew, 
   await expect(page.locator('[data-stage-strip]')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+// Owner 2026-11-26: "I have to scroll down and press Ready on every exercise" — in the coach a new stage's brief is read,
+// then its count-in starts by itself (no tap), and the brief with Play / Ready stays on screen under the tall score.
+test('key session: a new stage starts by itself after its brief, its Ready on screen without scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
+  await page.goto('/?unlock=all&lang=en#/drills');
+  await page.locator('[data-practice-view="key"]').click();
+  await page.locator('[data-key-card="0"]').click();
+  await page.locator('[data-key-session="0"]').click();
+  await expect(page.locator('[data-coach-intro]')).toBeVisible({ timeout: 20_000 });
+  await page.locator('[data-coach-start]').click();
+  const demo = page.locator('[data-coach-skip-demo]');
+  const ready = page.locator('[data-brief-ready]');
+  // wait for a brief (a new stage), skipping demos only — never pressing Ready
+  let seen = false;
+  for (let k = 0; k < 160 && !seen; k++) {
+    if (await demo.isVisible().catch(() => false)) await demo.click().catch(() => {});
+    seen = await ready.isVisible().catch(() => false);
+    if (!seen) await page.waitForTimeout(250);
+  }
+  expect(seen).toBe(true);
+  await expect(page.locator('[data-task-brief]')).toContainText(/starts by itself/);
+  // Ready sits inside the viewport (sticky under the score)
+  const box = await ready.boundingBox();
+  expect(box && box.y >= 0 && box.y + box.height <= 667).toBe(true);
+  await page.screenshot({ path: 'test-results/key-session-brief-auto-375.png' });
+  // no tap: the take starts by itself and the coach says its line
+  const takes0 = Number(await page.locator('[data-coach-bar]').getAttribute('data-coach-takes'));
+  await expect.poll(async () => Number(await page.locator('[data-coach-bar]').getAttribute('data-coach-takes')), { timeout: 15_000 }).toBeGreaterThan(takes0);
+});

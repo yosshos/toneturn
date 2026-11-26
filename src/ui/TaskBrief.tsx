@@ -19,7 +19,7 @@ export interface BriefProp {
 export const BRIEF_ARM_MS = 2500;
 
 /** The open brief: two short lines and when the count-in starts. */
-export function BriefCard({ brief, lang, free = false }: { brief: TaskBrief; lang: Lang; free?: boolean }) {
+export function BriefCard({ brief, lang, free = false, auto }: { brief: TaskBrief; lang: Lang; free?: boolean; /** Owner 2026-11-26: seconds until the count-in starts by itself (a flowing run). */ auto?: number }) {
   return (
     <div className="task-brief" data-task-brief={brief.mode} role="note">
       <p className="tb-what">{brief.what[lang]}</p>
@@ -27,7 +27,11 @@ export function BriefCard({ brief, lang, free = false }: { brief: TaskBrief; lan
         <bdi>{brief.how[lang]}</bdi>
       </p>
       <p className="tb-when">
-        {free
+        {auto
+          ? lang === 'he'
+            ? `הספירה מתחילה מעצמה בעוד ${auto} — או "מוכנים" / צליל`
+            : `The count-in starts by itself in ${auto} — or Ready / a note`
+          : free
           ? lang === 'he'
             ? 'מתחילים כשמוכנים — או נגנו צליל / הקישו על מקש'
             : 'Start when ready — or play a note / press a key'

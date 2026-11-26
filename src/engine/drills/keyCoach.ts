@@ -12,7 +12,7 @@ import type { FamilyDef, LevelDef } from './generate';
 import { bandOfBpm, notesPerBeat, thresholds } from './analyze';
 import { hasRubato } from './rubato';
 import { newItem } from './ladder';
-import { CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, LOOSE_STEP, MAELZEL, markStage, MAX_JUMP, playOf, SHARE, snapDown, snapNear, speedStep, stageDrill, stagePassed, STEP_UP, subDrill, targetNps, withStage, type StageInfo } from './stages';
+import { CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, LOOSE_STEP, MAELZEL, markStage, markUp, MAX_JUMP, passedElsewhere, playOf, SHARE, snapDown, snapNear, speedStep, stageDrill, stagePassed, STEP_UP, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
 import { line, PHRASES, tempoText, type CoachLine, type LinePart, type PhraseId, type T2 } from './coachPhrases';
 import type { CoachBackground, CoachNext, CoachState, CoachTake, FreeOk } from './coach';
 import { easyTake } from './coach';
@@ -113,6 +113,9 @@ export interface KsState {
   reviewHere: boolean;
   /** A rung without stages with several items: how many were met at the comfort tempo before the rotating climb. */
   meet: number;
+  /** Owner 2026-11-26: per rung, the next stage's lowest pulse (nps) — one metronome mark above the last clean take, so the
+   *  challenge rises a little after every clean take and carries from stage to stage (absent in runs saved before it). */
+  flow?: Record<string, number>;
 }
 
 const lv = (fam: FamilyDef, c: CoachState): LevelDef => fam.levels[c.step];
@@ -238,14 +241,14 @@ function enter(fam: FamilyDef, c: CoachState, step: number, items: Record<string
   ks.review = false;
   const s = inf(l);
   const d = stageDrill(l, spec);
-  ks.target = s.kind === 'speed' ? targetNps(l, d) : 0;
+  ks.target = s.kind === 'speed' ? stretchTarget(l, d, items) : 0;
   const st = items[d.itemId];
   ks.prior = st?.cleanBpm ? npsOf(st.cleanBpm, notesPerBeat(d)) : 0;
   if (spec === 0) {
     ks.best = 0;
     ks.meet = 0;
   }
-  const comfort = comfortOf(c, l, items);
+  const comfort = Math.max(comfortOf(c, l, items), (s.code !== 'run' && ks.flow?.[s.rung]) || 0);
   // a review at a tempo already played (the target reached) is not a jump: no 10 % cap
   setPulse(fam, c, at?.nps ?? comfort, at?.per, !!at?.known);
   if (s.what === 'scale' && !at) ks.scaleComfort = ks.nps;
@@ -345,9 +348,9 @@ function openVisit(fam: FamilyDef, c: CoachState, v: number, items: Record<strin
       ks.free = false;
       return;
     }
-    review(a6, { nps: targetNps(fam.levels[a6], d6), known: true }, false);
+    review(a6, { nps: stretchTarget(fam.levels[a6], d6, items), known: true }, false);
     // held under the target by the 10 % rule (a slower take just before): then it is a review at this tempo
-    if (ks.nps < targetNps(fam.levels[a6], d6) - 0.01) ks.reviewHere = true;
+    if (ks.nps < stretchTarget(fam.levels[a6], d6, items) - 0.01) ks.reviewHere = true;
     return;
   }
   const open = idx.filter((i) => playable(fam, c, fam.levels[i], items));
@@ -372,9 +375,14 @@ function openVisit(fam: FamilyDef, c: CoachState, v: number, items: Record<strin
   }
   const pr = idx.find((i) => !!inf(fam.levels[i]).probe);
   // §4.2: the probe once per kind on a fresh rung; after a missed scale probe the next rung starts at its first stage (S8)
-  if (pr !== undefined && idx.every((i) => !passedNow(c, fam.levels[i], items)) && !played && !(ks.probeFailed && s0.what !== 'scale')) {
+  // owner 2026-11-26: a rung whose probe stage passed in another key opens with the same check at the comfort tempo (a new
+  // key is not a new start: right hand, left hand, … again every day was the complaint)
+  const fresh = idx.every((i) => !passedNow(c, fam.levels[i], items));
+  const transfer = pr !== undefined && played && fresh && passedElsewhere(fam.levels[pr], items);
+  if (pr !== undefined && fresh && ((!played && !(ks.probeFailed && s0.what !== 'scale')) || transfer)) {
     ks.probe = true;
-    enter(fam, c, pr, items, 0, { nps: inf(fam.levels[pr]).probe!.nps });
+    c.demo = false;
+    enter(fam, c, pr, items, 0, transfer ? undefined : { nps: inf(fam.levels[pr]).probe!.nps });
     return;
   }
   // a speed stage reopened in this session resumes at its last clean pulse (never a second climb from scratch)
@@ -495,6 +503,7 @@ export function ksStart(fam: FamilyDef, items: Record<string, ItemState>, now: n
       review: false,
       reviewHere: false,
       meet: 0,
+      flow: {},
     },
   };
   openVisit(fam, c, 0, items, now);
@@ -664,10 +673,8 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
     // the stage item passed: its code on the item (per key); the next item of the stage, or the stage is passed
     if (s.code !== 'run') saveMark(withStage(items[d.itemId] ?? newItem(d), s.code));
     if (c.spec + 1 < level.specs.length) {
-      const keep = ks.nps;
       const from = c.spec;
       enterAnnounce(c.step, c.spec + 1, undefined, itemSwitch(level, from, c.spec + 1));
-      if (s.kind === 'coord' && ks.nps > keep) setPulse(fam, c, keep);
       return;
     }
     if (s.code !== 'run' && !ks.passed.includes(baseId(level))) ks.passed.push(baseId(level));
@@ -786,20 +793,20 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
         ks.sessionBest = Math.max(ks.sessionBest, probeNps);
         ks.lastGood[d.itemId] = { nps: probeNps, per: take.play?.per ?? ks.per, bpm: take.play?.bpm ?? ks.bpm };
         if ((take.play?.per ?? 1) >= 2 && s.sub && !ks.eighths.includes(comfortKey(d))) ks.eighths.push(comfortKey(d));
+        // owner 2026-11-26: one clean take passes the probe's own stage too (no "again" at the same tempo)
+        const codes = new Set([...(easy ? pr.easy : pr.clean), s.code]);
         for (const i of visitSteps(fam, s.visit)) {
           const x = fam.levels[i];
-          if (!(easy ? pr.easy : pr.clean).includes(inf(x).code)) continue;
+          if (!codes.has(inf(x).code)) continue;
           for (const st of markStage(x, items)) saveMark(st);
           if (!ks.passed.includes(baseId(x))) ks.passed.push(baseId(x));
         }
+        ks.flow = { ...(ks.flow ?? {}), [s.rung]: markUp(probeNps, take.play?.per ?? ks.per) };
         if (easy) {
           headX = 'easy';
           dir = ['known'];
-          nextStage();
-        } else {
-          ks.clean = 1;
-          dir = ['again'];
         }
+        nextStage();
       } else {
         if (s.what === 'scale') ks.probeFailed = true;
         const firstIdx = visitSteps(fam, s.visit)[0];
@@ -830,6 +837,7 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
     const here: Pulse = { nps: at, per, bpm: take.play?.bpm ?? take.bpm };
     if (clean) {
       if (!ks.cleanRungs.includes(s.rung)) ks.cleanRungs.push(s.rung);
+      if (s.code !== 'run') ks.flow = { ...(ks.flow ?? {}), [s.rung]: Math.max(ks.flow?.[s.rung] ?? 0, markUp(at, per)) };
       ks.bestBy[d.itemId] = Math.max(ks.bestBy[d.itemId] ?? 0, at);
       ks.sessionBest = Math.max(ks.sessionBest, at);
       ks.lastGood[d.itemId] = here;
@@ -841,6 +849,11 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
       if (ks.warmLeft === 0) {
         if (ks.warmNext >= 0) enterAnnounce(ks.warmNext);
         else leave = 'done';
+      } else if (clean && !ks.limited.includes(baseId(level))) {
+        // owner 2026-11-26: a clean review take is followed by one a mark faster, not the same take again
+        setPulse(fam, c, markUp(at, per), per);
+        dir = ['faster'];
+        tempo = true;
       } else dir = clean ? ['again'] : ['noRush'];
     } else if (s.kind === 'coord') {
       // §3.6: coordination and range at the comfort tempo — two clean takes, or one easy one; no climbing. "Almost" holds
@@ -850,8 +863,8 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
         ks.almost = 0;
         if (easy) ks.easy++;
         ks.bad = 0;
-        if (ks.clean >= 2 || ks.easy >= 1) specPassed();
-        else dir = ['again'];
+        // owner 2026-11-26: one clean take passes (two at the same tempo was the same exercise twice)
+        specPassed();
       } else if (ks.stepped || ks.stepTakes >= STEP_TAKES) {
         if (!floorMiss()) limit(here.bpm);
       } else if (verdict === 'almost') {

@@ -2097,8 +2097,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
         {faded(<DrillScore drill={shownDrill(takeDrill, own)} ds={ds} beat={beat} lang={lang} bpm={playBpm} live={live} cue={counting} />, { autoListen: false })}
         {fingerKeysOn && <FingerKeys drill={shownDrill(takeDrill, own)} beat={beat} lang={lang} />}
         {stage === 'free' && <RubatoTake key={`${drill.itemId}:free:${take}`} autoStart={again} brief={briefFor()} drill={drill} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'free'))} onBeat={setBeat} />}
-        {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
-        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} drill={takeDrill} bpm={playBpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(ksPlay ? { ...m, bpm } : m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+        {stage === 'quarters' && <DrillTake key={`${drill.itemId}:q:${take}`} autoStart={again} brief={briefFor()} briefAutoMs={COACH_BRIEF_MS} drill={takeDrill} bpm={QUARTERS_BPM} lang={lang} cal={cal} onDone={(m) => (setBeat(-1), stageDone(m, 'quarters'))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
+        {!stage && <DrillTake key={`${drill.itemId}:${take}`} autoStart={again} brief={briefFor()} briefAutoMs={COACH_BRIEF_MS} drill={takeDrill} bpm={playBpm} lang={lang} cal={cal} onDone={(m, p) => (setBeat(-1), done(ksPlay ? { ...m, bpm } : m, p))} onBeat={setBeat} drumsOk={headphones} onDrums={onHeadphones} kit={kit} liveMarks={liveOn} onLive={setLive} onCount={setCounting} hear={!noHear} />}
       </div>
     );
   }
@@ -2371,6 +2371,9 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
 
 /** The coach's pause on the result before the next take counts in (plus the spoken line). */
 const COACH_REVIEW_MS = 1800;
+/** Owner 2026-11-26 (continuous practice): a new stage's brief in a coach run is read for this long, then the count-in starts
+ *  by itself (Ready or a note starts it sooner). */
+const COACH_BRIEF_MS = 4000;
 /** Inside the daily session: how long a run's end summary stays before the session goes on by itself. */
 const COACH_END_MS = 4000;
 

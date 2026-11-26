@@ -118,13 +118,51 @@ export function lastCleanNps(items: Record<string, ItemState>, key: string, npb:
 }
 
 /**
- * §3.2: the comfort tempo — the last clean speed on its comfort kind × 0.9; never above the tier benchmark nor the item's
- * target (U6); fresh: `fresh` (1.0 nps, or the scale's comfort this session for a harmonised rung).
+ * §3.2: the comfort tempo — the last clean speed on its comfort kind × 0.9, never above the item's target; fresh: `fresh`
+ * (1.0 nps, or the scale's comfort this session for a harmonised rung), never above the tier benchmark. Owner 2026-11-26:
+ * a player's own clean tempo is never held under the tier benchmark (it kept every session at ♪54 for three days).
  */
 export function comfortNps(items: Record<string, ItemState>, key: string, npb: number, tier: number, target = Infinity, fresh = FRESH_NPS): number {
   const last = lastCleanNps(items, key, npb);
-  const cap = Math.min(benchNps(tier), target);
-  return r2(last > 0 ? Math.min(cap, Math.max(0.6, last * COMFORT)) : Math.min(fresh, cap));
+  return r2(last > 0 ? Math.min(target, Math.max(0.6, last * COMFORT)) : Math.min(fresh, benchNps(tier), target));
+}
+
+/**
+ * Owner 2026-11-26: a stage passed in another key (any item of its comfort kind carries its code). A new key of a rung
+ * known elsewhere opens with a check at the comfort tempo instead of every stage from the first one again.
+ */
+export function passedElsewhere(l: LevelDef, items: Record<string, ItemState>): boolean {
+  const s = l.stage;
+  if (!s) return false;
+  const key = comfortKey(stageDrill(l, 0));
+  return ofComfort(items, key).some((x) => !!x.stages?.includes(s.code));
+}
+
+/** The best clean speed on this comfort kind in any key (notes per second; 0 = never clean). */
+export function bestCleanNps(items: Record<string, ItemState>, key: string, npb: number): number {
+  let best = 0;
+  for (const x of ofComfort(items, key)) {
+    if (!(x.cleanBpm > 0)) continue;
+    const pb = /:pb(\d)/.exec(x.itemId);
+    best = Math.max(best, (x.cleanBpm * (pb ? Number(pb[1]) : npb)) / 60);
+  }
+  return best;
+}
+
+/** Owner 2026-11-26: the speed stage's target moves with the player — never under 10 % above their best clean speed on
+ *  this kind in any key (the tier's target was reached on day one and the climb stopped there), up to the top tier's. */
+export function stretchTarget(level: LevelDef, drill: Drill, items: Record<string, ItemState>): number {
+  const own = targetNps(level, drill);
+  const best = bestCleanNps(items, comfortKey(drill), notesPerBeat(drill));
+  return r2(Math.max(own, Math.min(SPEED_NPS[SPEED_NPS.length - 1], best * MAX_JUMP)));
+}
+
+/** One metronome mark up from a pulse (notes per second at note value `per`), never more than 10 % (owner 2026-11-26: the
+ *  challenge rises a little after every clean take, in every stage). */
+export function markUp(nps: number, per: number): number {
+  const bpm = (nps * 60) / per;
+  const next = MAELZEL.find((m) => m > bpm + 0.5) ?? bpm * 1.03;
+  return r2(Math.min((next * per) / 60, nps * MAX_JUMP));
 }
 
 /**

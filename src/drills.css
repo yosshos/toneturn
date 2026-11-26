@@ -775,3 +775,7 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 }
 
 .drill-family .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Owner 2026-11-26: in a coach run the brief and Play / Ready stay on screen under a tall score (two hands, two octaves):
+   the take's controls stick to the bottom of the viewport instead of waiting below the fold. */
+.coach-run .drill-take { position: sticky; bottom: 0; z-index: 5; background: var(--bg); padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 16px -12px color-mix(in srgb, var(--ink) 35%, transparent); }
