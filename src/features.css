@@ -713,8 +713,10 @@
 .assigned-card {
   padding: 14px 16px;
   border-radius: 22px;
-  background: linear-gradient(160deg, #23516b, #2b1a4a);
-  box-shadow: var(--shadow);
+  /* 0.144.1: the Paper/Studio card (the old dark gradient was a leftover: dark link text on it was unreadable) */
+  background: var(--ss-surface, var(--card));
+  border: 1px solid var(--ss-line, var(--line));
+  box-shadow: var(--ss-sh-s, var(--shadow));
   display: grid;
   gap: 8px;
   margin-bottom: 14px;

@@ -255,3 +255,9 @@
 .bell-row small { color: var(--ink-dim); }
 .bell-when { font-size: 0.72rem; }
 .bell-all { justify-self: start; }
+.assigned-card .assign-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.assigned-card .ac-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 8px 10px; border-radius: 12px; color: var(--ink); }
+.assigned-card .ac-row:hover { background: var(--ss-surface-2, var(--bg-2)); }
+.assigned-card .ac-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.assigned-card .ac-title { font-weight: 700; }
+.assigned-card .ac-row small, .assigned-card .ac-more { color: var(--ss-muted, var(--ink-dim)); }

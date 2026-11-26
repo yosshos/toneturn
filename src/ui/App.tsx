@@ -475,6 +475,8 @@ export function App() {
   const [assigned, setAssigned] = useState<ReturnType<typeof openAssignments>>([]);
   /** SPEC-CLASS-NOTIFICATIONS §4.5: assignments with something new (a new assignment or a teacher reply). */
   const [assignFresh, setAssignFresh] = useState<Set<string>>(new Set());
+  /** The student's assignments (every kind) for the Home card. */
+  const [assignMine, setAssignMine] = useState<AssignItem[]>([]);
   // §4.9: the device's push subscription stored again for whoever is signed in (silent subscription death, shared devices)
   useEffect(() => {
     if (user && settings) void refreshPush(settings.uiLang, settings.reminderHour);
@@ -485,6 +487,7 @@ export function App() {
       .then((as) => {
         const f = freshOf(as, loadSeen(user.id));
         setAssignFresh(new Set([...f.assigns, ...f.replies]));
+        setAssignMine(as);
       })
       .catch(() => {});
   }, [user, route]);
@@ -3968,7 +3971,7 @@ export function App() {
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
-          assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} fresh={assignFresh} onOpen={(id) => openAssignment(id)} onOpenClasses={() => go('classes')} /> : null}
+          assigned={user && assignMine.length ? <AssignedCard t={t} items={assignMine} lang={s.uiLang} fresh={assignFresh} onOpen={openAssignItem} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), (improvWorkout.current = false), go('improv'))} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}

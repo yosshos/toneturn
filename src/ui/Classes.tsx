@@ -10,7 +10,8 @@ import { SKILLS } from '../engine/rating';
 import { LESSON_META } from '../game/content';
 import type { Strings } from '../i18n/strings';
 import type { Settings } from '../storage/progress';
-import { classDetail, myAssignments, teacherMockOn, type AssignItem, type ClassDetail } from '../cloud/teacher';
+import { classDetail, myAssignments, passed, teacherMockOn, type AssignItem, type ClassDetail } from '../cloud/teacher';
+import { localDay } from '../storage/progress';
 import { ClassCharts, ClassMedianSetting } from './ClassCharts'; // phase 6: the teacher charts (only while the summaries sync)
 import { AssignForm, ClassHeatmap, GradingInbox, itemTitle, MyAssignmentsList, ParentLinkCard } from './TeacherLoop';
 import { Icon } from './icons';
@@ -296,27 +297,42 @@ function TeacherCard({ t, c, lang, busy, act, onError, plans, onPlans }: { /** S
   );
 }
 
-/** Home card: open assignments from the student's classes, soonest due first. An item the path can't open (a
- *  technique level, a chart, a piece…) opens the class page, where its own button runs it. */
-export function AssignedCard({ t, items, lang, onOpen, onOpenClasses, fresh }: { t: Strings; items: { id: string; lessonId: string; dueOn: string | null; className: string }[]; lang: 'he' | 'en'; onOpen: (id: LessonId) => void; onOpenClasses?: () => void; /** Assignments with something new (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
-  if (!items.length) return null;
+/** "due tomorrow" / "עד מחר" (the player's local day), a short date further off, nothing when past or unset. */
+export function dueShort(due: string | null, lang: 'he' | 'en', today = localDay(new Date())): string | null {
+  if (!due) return null;
+  const d = Math.round((Date.parse(`${due}T12:00:00Z`) - Date.parse(`${today}T12:00:00Z`)) / 86400000);
+  const he = lang === 'he';
+  if (d < 0) return he ? 'המועד עבר' : 'past due';
+  if (d === 0) return he ? 'עד היום' : 'due today';
+  if (d === 1) return he ? 'עד מחר' : 'due tomorrow';
+  const [, m, day] = due.split('-').map(Number);
+  return he ? `עד ${day}.${m}` : `due ${m}/${day}`;
+}
+
+/** Home card: the student's open assignments (not passed yet), soonest due first — the exercise's own name, the due
+ *  day in words, "new" since the last look; a tap opens the assignment itself. */
+export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; items: AssignItem[]; lang: 'he' | 'en'; onOpen: (a: AssignItem) => void; /** New since the last look (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
+  const open = items
+    .filter((a) => !(a.submissions[0] && passed(a, a.submissions[0])))
+    .sort((x, y) => (x.dueOn ?? '9999').localeCompare(y.dueOn ?? '9999') || y.createdAt.localeCompare(x.createdAt));
+  if (!open.length) return null;
   return (
-    <section className="assigned-card" aria-label={t.yourAssignments}>
+    <section className="assigned-card" aria-label={t.yourAssignments} data-assigned-card={open.length}>
       <h2>{t.yourAssignments}</h2>
       <ul className="assign-list">
-        {items.slice(0, 4).map((a) => (
+        {open.slice(0, 4).map((a) => (
           <li key={a.id}>
-            <button className="link" disabled={!openable(a.lessonId) && !onOpenClasses} onClick={() => (openable(a.lessonId) ? onOpen(a.lessonId as LessonId) : onOpenClasses?.())}>
-              {openable(a.lessonId) ? assignmentTitle(a.lessonId, lang, t) : lang === 'he' ? 'משימה מהמורה' : 'An assignment from your teacher'}
+            <button type="button" className="ac-row" onClick={() => onOpen(a)} data-assigned={a.id}>
+              <span className="ac-title">
+                {itemTitle(a, lang, t)}
+                {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
+              </span>
+              <small>{[dueShort(a.dueOn, lang), a.className].filter(Boolean).join(' · ')}</small>
             </button>
-            {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
-            <small>
-              {a.className}
-              {a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
-            </small>
           </li>
         ))}
       </ul>
+      {open.length > 4 && <small className="ac-more">{lang === 'he' ? `ועוד ${open.length - 4} בדף הכיתה` : `${open.length - 4} more on the class page`}</small>}
     </section>
   );
 }
