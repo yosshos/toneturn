@@ -121,18 +121,49 @@ export async function enablePush(lang: 'he' | 'en', hour: number): Promise<PushS
   const sub =
     (await reg.pushManager.getSubscription()) ??
     (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID) as BufferSource }));
-  const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-  const sb = supabase();
-  if (sb) {
-    const { error } = await sb
-      .from('toneturn_push_subscriptions')
-      .upsert({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, tz: localTz(), hour, lang }, { onConflict: 'endpoint' });
-    if (error) throw error;
+  await storeSub(sub, lang, hour);
+  try {
+    localStorage.removeItem(PUSH_OFF_KEY);
+  } catch {
+    /* blocked storage */
   }
   return 'on';
 }
 
+/** Store this device's subscription for the signed-in user: the server's claim (it also takes over an endpoint a
+ *  previous user of the device left behind, and stamps last_seen); before that migration, the old upsert. */
+async function storeSub(sub: PushSubscription, lang: 'he' | 'en', hour: number) {
+  const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+  const sb = supabase();
+  if (!sb) return;
+  const { error } = await sb.rpc('toneturn_push_claim', { p_endpoint: json.endpoint, p_p256dh: json.keys.p256dh, p_auth: json.keys.auth, p_tz: localTz(), p_hour: hour, p_lang: lang });
+  if (!error) return;
+  const up = await sb.from('toneturn_push_subscriptions').upsert({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth, tz: localTz(), hour, lang }, { onConflict: 'endpoint' });
+  if (up.error) throw up.error;
+}
+
+/** On every app open while signed in (SPEC-CLASS-NOTIFICATIONS §4.9): a granted permission's subscription is stored
+ *  again for this user — iPhone subscriptions die silently and a shared device changes hands. Quiet on any failure. */
+export async function refreshPush(lang: 'he' | 'en', hour: number): Promise<void> {
+  try {
+    if (!pushSupported() || !VAPID || Notification.permission !== 'granted') return;
+    // only an existing subscription (turned off in the app = unsubscribed, though the permission stays granted)
+    const sub = await swRegistration()?.pushManager.getSubscription();
+    if (sub) await storeSub(sub, lang, hour);
+  } catch {
+    /* offline or blocked: next open */
+  }
+}
+
+/** Set when the player turns notifications off in the app: the class page's ask stays away (unless they join a class). */
+export const PUSH_OFF_KEY = 'tt.pushOff';
+
 export async function disablePush(): Promise<void> {
+  try {
+    localStorage.setItem(PUSH_OFF_KEY, '1');
+  } catch {
+    /* blocked storage */
+  }
   const reg = swRegistration();
   const sub = await reg?.pushManager.getSubscription();
   if (!sub) return;

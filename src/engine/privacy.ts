@@ -15,10 +15,12 @@ export interface Privacy {
   nudges?: 'friends' | 'none';
   quickMessages?: Who;
   dontDisturb?: boolean;
-  notify?: { challenges?: boolean; requests?: boolean; nudges?: boolean; duets?: boolean; cheers?: boolean };
+  notify?: { challenges?: boolean; requests?: boolean; nudges?: boolean; duets?: boolean; cheers?: boolean; /** Class notifications (SPEC-CLASS-NOTIFICATIONS): new assignments, teacher replies, due tomorrow, the teacher's daily digest. */ classNew?: boolean; classFeedback?: boolean; classDue?: boolean; classDigest?: boolean };
+  /** The teacher's local hour for the daily digest of submissions (default 18). */
+  classDigestHour?: number;
   /** Post my measured milestones to friends' activity (default on; always off for young players). */
   feed?: boolean;
-  /** Quiet hours for social pushes, local hours 0–23 (default 22 → 8; equal = none). */
+  /** Quiet hours for every push but the practice reminder (social and class), local hours 0–23 (default 22 → 8; equal = none). */
   quietFrom?: number;
   quietTo?: number;
 }

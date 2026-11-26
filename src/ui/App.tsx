@@ -242,7 +242,8 @@ import { THEMES, checkpointParts, checkpointSession, recordStep, stepSession, st
 import { FriendsScreen } from './Friends';
 import { useWakeLock } from './useWakeLock';
 import { clearPendingFriend, friendFromHash, pendingFriend, savePendingFriend, setFriendFlash } from '../engine/shareLinks';
-import { addFriend, enablePush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { addFriend, enablePush, refreshPush, reportGameBest, reportRating, reportStreakDays, setProfile, uploadAvatar } from '../cloud/social';
+import { freshCount, freshOf, loadSeen, setAppBadge } from '../storage/classSeen';
 import { courseHasProgress, firstWeekDay, levelOfReport, levelTested, markSetup, markTasteDone, markTasteOpened, markWinSeen, migrateCourseStart, offerDue, pickProbes, reportCourse, sessionsSince, setPersonalGoal, setupNeeded, snoozeOffer, stageOf, goalById, tasteFor, type CourseStartMap, type ProgressFacts, type SelfReport } from '../engine/courseStart';
 import { jazzFocusOn, jazzOpenIn, toggleJazzFocus } from '../engine/jazzFold';
 import { focusOf, improvStyleFor, logStyleMinutes, migrateStyleFocus, picksOf, styleWeight, weakAreaOf, weightedFocus, withFocus } from '../engine/styleFocus';
@@ -471,6 +472,22 @@ export function App() {
   }, [settings?.midiInput]);
   // Class assignments for the Home card (signed in only).
   const [assigned, setAssigned] = useState<ReturnType<typeof openAssignments>>([]);
+  /** SPEC-CLASS-NOTIFICATIONS §4.5: assignments with something new (a new assignment or a teacher reply). */
+  const [assignFresh, setAssignFresh] = useState<Set<string>>(new Set());
+  // §4.9: the device's push subscription stored again for whoever is signed in (silent subscription death, shared devices)
+  useEffect(() => {
+    if (user && settings) void refreshPush(settings.uiLang, settings.reminderHour);
+  }, [user?.id, !!settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!user || route !== 'home') return;
+    void myAssignments()
+      .then((as) => {
+        const f = freshOf(as, loadSeen(user.id));
+        setAssignFresh(new Set([...f.assigns, ...f.replies]));
+        setAppBadge(freshCount(f));
+      })
+      .catch(() => {});
+  }, [user, route]);
   useEffect(() => {
     if (!user || route !== 'home') return;
     // §5.2: the teacher's options (channel, minutes a day, spread / all today) reach the student — read once the
@@ -3946,7 +3963,7 @@ export function App() {
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
-          assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} onOpen={(id) => openAssignment(id)} /> : null}
+          assigned={user && assigned.length ? <AssignedCard t={t} items={assigned} lang={s.uiLang} fresh={assignFresh} onOpen={(id) => openAssignment(id)} onOpenClasses={() => go('classes')} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), (improvWorkout.current = false), go('improv'))} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}

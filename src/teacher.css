@@ -238,3 +238,9 @@
 .wp-waiting-plan { display: grid; gap: 6px; justify-items: start; }
 .wp-waiting-plan small { color: var(--ink-soft); }
 .wp-items li small { color: var(--ink-soft); }
+/* SPEC-CLASS-NOTIFICATIONS §4.5–§4.6: "new" marks and the notification ask */
+.new-mark { display: inline-block; margin-inline-start: 8px; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; line-height: 1.5; vertical-align: middle; background: var(--accent); color: var(--accent-ink); }
+.assigned-card .assign-list li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.push-ask { display: grid; gap: 8px; }
+.push-ask p { margin: 0; }
+.push-ask .pa-row { display: flex; flex-wrap: wrap; gap: 8px; }

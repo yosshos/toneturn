@@ -532,7 +532,7 @@ export function ClassHeatmap({ c, minutes, lang, t }: { c: TeachingClass; minute
 
 // ---------------------------------------------------------------- student
 
-export function MyAssignmentsList({ items, lang, t, onOpen }: { items: AssignItem[]; lang: Lang; t: Strings; onOpen: (a: AssignItem) => void }) {
+export function MyAssignmentsList({ items, lang, t, onOpen, fresh }: { items: AssignItem[]; lang: Lang; t: Strings; onOpen: (a: AssignItem) => void; /** New since the last visit (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
   const tx = TX[lang];
   if (!items.length) return null;
   return (
@@ -546,7 +546,10 @@ export function MyAssignmentsList({ items, lang, t, onOpen }: { items: AssignIte
           return (
             <li key={a.id} className={ok ? 'done' : ''}>
               <div className="ma-main">
-                <b>{itemTitle(a, lang, t)}</b>
+                <b>
+                  {itemTitle(a, lang, t)}
+                  {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
+                </b>
                 <small>
                   {a.className}
                   {a.targetBpm ? ` · ♩=${a.targetBpm}` : ''}

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { enablePush, PUSH_OFF_KEY, pushStatus, type PushStatus } from '../cloud/social';
+import { freshOf, loadSeen, markSeen } from '../storage/classSeen';
 import { ClassBoardCard } from './Community';
 import { classVocal, createClass, deleteClass, EXTRA_ASSIGNABLE, joinClass, leaveClass, myClasses, unassign, type MyClasses, type StudentVocal, type TeachingClass } from '../cloud/classes';
 import { cloudConfigured, signInWithGoogle, type CloudUser } from '../cloud/cloud';
@@ -30,15 +32,36 @@ export function ClassesScreen({ t, settings, onSettings, user, onBack, onOpenLes
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [mine, setMine] = useState<AssignItem[]>([]);
+  // SPEC-CLASS-NOTIFICATIONS §4.5: what is new since the last visit, marked for this visit; seen when leaving
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
+  const freshTaken = useRef(false);
+  const seenItems = useRef<AssignItem[]>([]);
+  /** When the listed items were loaded: only what was loaded counts as seen (review L5). */
+  const loadedAt = useRef<Date | null>(null);
+  const uid = user?.id;
+  useEffect(() => () => {
+    if (uid && seenItems.current.length) markSeen(uid, seenItems.current, loadedAt.current ?? undefined);
+  }, [uid]);
+  /** A class was joined or created on this visit (SPEC-CLASS-NOTIFICATIONS §4.6: the moment to ask). */
+  const [justActed, setJustActed] = useState(false);
   const load = useCallback(async () => {
     try {
-      void myAssignments().then(setMine, () => {});
+      void myAssignments().then((as) => {
+        setMine(as);
+        seenItems.current = as;
+        loadedAt.current = new Date();
+        if (!freshTaken.current && user) {
+          freshTaken.current = true;
+          const f = freshOf(as, loadSeen(user.id));
+          setFresh(new Set([...f.assigns, ...f.replies]));
+        }
+      }, () => {});
       setData(await myClasses());
       setErr(null);
     } catch (e) {
       setErr(String((e as Error).message));
     }
-  }, []);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (signedIn) void load();
   }, [signedIn, load]);
@@ -81,13 +104,14 @@ export function ClassesScreen({ t, settings, onSettings, user, onBack, onOpenLes
             <h2>{t.joinClass}</h2>
             <div className="join-row">
               <input className="code-input" dir="ltr" value={code} aria-label={t.classCode} placeholder="ABC234" autoComplete="off" onChange={(e) => setCode(normaliseCode(e.target.value))} />
-              <button className="btn primary" disabled={busy || !ROOM_CODE_RE.test(code)} onClick={() => act(() => joinClass(code).then(() => setCode('')))}>
+              <button className="btn primary" disabled={busy || !ROOM_CODE_RE.test(code)} onClick={() => act(() => joinClass(code).then(() => (setCode(''), setJustActed(true))))}>
                 {t.join}
               </button>
             </div>
           </section>
 
-          {onOpenItem && <MyAssignmentsList items={mine} lang={lang} t={t} onOpen={onOpenItem} />}
+          {user && data && (data.memberOf.length > 0 || data.teaching.length > 0) && <ClassPushAsk lang={lang} student={data.memberOf.length > 0} teacher={data.teaching.length > 0} hour={settings.reminderHour} justActed={justActed} />}
+          {onOpenItem && <MyAssignmentsList items={mine} lang={lang} t={t} onOpen={onOpenItem} fresh={fresh} />}
           {data && data.memberOf.length > 0 && <ParentLinkCard lang={lang} />}
           {data?.memberOf.map((c) => (
             <section key={c.id} className="set-card class-card">
@@ -123,7 +147,7 @@ export function ClassesScreen({ t, settings, onSettings, user, onBack, onOpenLes
             <h2>{t.teachAClass}</h2>
             <div className="join-row">
               <input value={name} maxLength={40} placeholder={t.className} aria-label={t.className} onChange={(e) => setName(e.target.value)} className="code-input name-input" />
-              <button className="btn primary" disabled={busy || !name.trim()} onClick={() => act(() => createClass(name.trim()).then(() => setName('')))}>
+              <button className="btn primary" disabled={busy || !name.trim()} onClick={() => act(() => createClass(name.trim()).then(() => (setName(''), setJustActed(true))))}>
                 {t.create}
               </button>
             </div>
@@ -272,8 +296,9 @@ function TeacherCard({ t, c, lang, busy, act, onError, plans, onPlans }: { /** S
   );
 }
 
-/** Home card: open assignments from the student's classes, soonest due first. */
-export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { id: string; lessonId: string; dueOn: string | null; className: string }[]; lang: 'he' | 'en'; onOpen: (id: LessonId) => void }) {
+/** Home card: open assignments from the student's classes, soonest due first. An item the path can't open (a
+ *  technique level, a chart, a piece…) opens the class page, where its own button runs it. */
+export function AssignedCard({ t, items, lang, onOpen, onOpenClasses, fresh }: { t: Strings; items: { id: string; lessonId: string; dueOn: string | null; className: string }[]; lang: 'he' | 'en'; onOpen: (id: LessonId) => void; onOpenClasses?: () => void; /** Assignments with something new (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
   if (!items.length) return null;
   return (
     <section className="assigned-card" aria-label={t.yourAssignments}>
@@ -281,9 +306,10 @@ export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { 
       <ul className="assign-list">
         {items.slice(0, 4).map((a) => (
           <li key={a.id}>
-            <button className="link" disabled={!openable(a.lessonId)} onClick={() => onOpen(a.lessonId as LessonId)}>
-              {assignmentTitle(a.lessonId, lang, t)}
+            <button className="link" disabled={!openable(a.lessonId) && !onOpenClasses} onClick={() => (openable(a.lessonId) ? onOpen(a.lessonId as LessonId) : onOpenClasses?.())}>
+              {openable(a.lessonId) ? assignmentTitle(a.lessonId, lang, t) : lang === 'he' ? 'משימה מהמורה' : 'An assignment from your teacher'}
             </button>
+            {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
             <small>
               {a.className}
               {a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
@@ -291,6 +317,68 @@ export function AssignedCard({ t, items, lang, onOpen }: { t: Strings; items: { 
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+const ASK_KEY = 'tt.classPushAsk';
+
+/**
+ * SPEC-CLASS-NOTIFICATIONS §4.6: right after joining a class (or teaching one) — "get a notification when your teacher
+ * assigns or replies?" Our own short card first; only "Yes" opens the system prompt. "Not now" rests it 7 days. On an
+ * iPhone outside the installed app: how to install it first. Hidden once notifications are on (or can't be).
+ */
+function ClassPushAsk({ lang, student, teacher, hour, justActed }: { lang: 'he' | 'en'; student: boolean; teacher: boolean; hour: number; justActed: boolean }) {
+  const he = lang === 'he';
+  const [st, setSt] = useState<PushStatus | null>(null);
+  // asked once (or notifications were turned off in the app): only a new join / class brings the question back
+  const [answered, setAnswered] = useState(() => {
+    try {
+      return !!localStorage.getItem(ASK_KEY) || localStorage.getItem(PUSH_OFF_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const [later2, setLater2] = useState(false);
+  const rest = later2 || (answered && !justActed);
+  useEffect(() => {
+    void pushStatus().then(setSt, () => setSt('unsupported'));
+  }, []);
+  if (rest || (st !== 'off' && st !== 'needs-install')) return null;
+  const later = () => {
+    try {
+      localStorage.setItem(ASK_KEY, String(Date.now()));
+    } catch {
+      /* blocked storage: asked again next visit */
+    }
+    setAnswered(true);
+    setLater2(true);
+  };
+  const what = student && teacher
+    ? he ? 'לקבל התראה כשהמורה מטיל משימה או מגיב, וריכוז יומי של ההגשות בכיתות שלך?' : 'Get notified when your teacher assigns or replies, and a daily summary of submissions in your classes?'
+    : student
+      ? he ? 'לקבל התראה כשהמורה מטיל משימה או מגיב?' : 'Get notified when your teacher assigns or replies?'
+      : he ? 'לקבל ריכוז יומי של ההגשות בכיתה?' : 'Get a daily summary of your class’s submissions?';
+  return (
+    <section className="set-card push-ask" data-class-push-ask={st}>
+      {st === 'needs-install' ? (
+        <>
+          <p>{he ? 'כדי לקבל התראות באייפון, מוסיפים את האפליקציה למסך הבית (שיתוף, ואז "הוספה למסך הבית") ופותחים אותה משם.' : 'To get notifications on an iPhone, add the app to your Home Screen (Share, then "Add to Home Screen") and open it from there.'}</p>
+          <div className="pa-row">
+            <button type="button" className="btn ghost small" onClick={later}>{he ? 'הבנתי' : 'Got it'}</button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p>{what}</p>
+          <div className="pa-row">
+            <button type="button" className="btn primary small" onClick={() => void enablePush(lang, hour).then(setSt, () => setSt('unsupported'))} data-class-push-yes="1">
+              {he ? 'כן' : 'Yes'}
+            </button>
+            <button type="button" className="btn ghost small" onClick={later}>{he ? 'לא עכשיו' : 'Not now'}</button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

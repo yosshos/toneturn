@@ -1469,7 +1469,7 @@ function PrivacySettings({ lang, s, onChange }: { lang: 'en' | 'he'; s: Settings
           </label>
         )}
         <div className="field-row quiet-hours" data-quiet-hours="1">
-          <span>{he ? 'שעות שקט להתראות מחברים' : 'Quiet hours for friend notifications'}</span>
+          <span>{he ? 'שעות שקט להתראות' : 'Quiet hours for notifications'}</span>
           <span className="quiet-pick" dir="ltr">
             <select value={eff.quietFrom} onChange={(e) => set({ quietFrom: Number(e.target.value) })} aria-label={he ? 'מ־' : 'From'}>
               {Array.from({ length: 24 }, (_, h) => (
@@ -1484,8 +1484,33 @@ function PrivacySettings({ lang, s, onChange }: { lang: 'en' | 'he'; s: Settings
             </select>
           </span>
         </div>
-        <small className="field-hint">{he ? 'לכל היותר התראה חברתית אחת ביום, מאוחדת.' : 'At most one social notification a day, merged.'}</small>
+        <small className="field-hint">{he ? 'מחברים: לכל היותר התראה אחת ביום, מאוחדת. מהכיתה: עד 3 ביום.' : 'From friends: at most one notification a day, merged. From your classes: up to 3 a day.'}</small>
       </details>
+      {/* SPEC-CLASS-NOTIFICATIONS §4.7: each kind on or off (the device's permission stays as it is) */}
+      <section className="set-card" data-class-notify="1">
+        <b className="set-sub">{he ? 'התראות כיתה' : 'Class notifications'}</b>
+        {([
+          ['classNew', he ? 'משימה חדשה מהמורה' : 'A new assignment from your teacher'],
+          ['classFeedback', he ? 'המורה הגיב על הגשה' : 'Your teacher replied to a submission'],
+          ['classDue', he ? 'משימה שמועדה מחר' : 'An assignment due tomorrow'],
+          ['classDigest', he ? 'ריכוז הגשות יומי (למורה)' : 'Daily summary of submissions (teachers)'],
+        ] as const).map(([k, label]) => (
+          <label key={k} className="toggle-row">
+            <input type="checkbox" checked={p.notify?.[k] !== false} onChange={(e) => set({ notify: { ...(p.notify ?? {}), [k]: e.target.checked } })} data-class-notify-key={k} />
+            <span>{label}</span>
+          </label>
+        ))}
+        {p.notify?.classDigest !== false && (
+          <label className="field-row">
+            <span>{he ? 'שעת הריכוז' : 'Summary time'}</span>
+            <select value={p.classDigestHour ?? 18} onChange={(e) => set({ classDigestHour: Number(e.target.value) })} dir="ltr" data-class-digest-hour="1">
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </section>
       <section className="set-card">
         <b className="set-sub">{he ? 'חסומים' : 'Blocked'}</b>
         <BlockedList lang={lang} signedIn={cloudConfigured} />

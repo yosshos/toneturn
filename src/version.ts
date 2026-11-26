@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.143.0',
+    date: '2026-11-26',
+    en: ['Class notifications: a student gets a notification when the teacher assigns something or replies to a submission, and a reminder the evening before an assignment is due; a teacher gets one daily summary of submissions at the hour they choose. New items are marked in the class list and counted on the app icon, and each kind can be turned off in Privacy settings'],
+    he: ['התראות כיתה: תלמיד מקבל התראה כשהמורה מטיל משימה או מגיב על הגשה, ותזכורת בערב שלפני מועד משימה; מורה מקבל ריכוז יומי אחד של ההגשות בשעה שהוא בוחר. פריטים חדשים מסומנים ברשימת הכיתה ונספרים על אייקון האפליקציה, ואפשר לכבות כל סוג בהגדרות הפרטיות'],
+  },
+  {
     version: '0.142.0',
     date: '2026-11-26',
     en: ['A teacher can now assign a technique exercise in a chosen key as a timed session: the student opens the assignment and the coach runs that exercise in that key for the set minutes, with the session summary at the end'],
