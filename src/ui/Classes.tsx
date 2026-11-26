@@ -101,6 +101,7 @@ export function ClassesScreen({ t, settings, onSettings, user, onBack, onOpenLes
         </section>
       ) : (
         <>
+          <MyClassesStrip data={data} lang={lang} />
           <section className="set-card">
             <h2>{t.joinClass}</h2>
             <div className="join-row">
@@ -297,6 +298,44 @@ function TeacherCard({ t, c, lang, busy, act, onError, plans, onPlans }: { /** S
   );
 }
 
+/**
+ * "My classes" (owner 2026-11-26: "nothing on the Community screen says I'm in a class, its name, or who my teacher
+ * is"): one card per class — its name and the teacher for a student; "you teach", the students and the join code for a
+ * teacher. On the Community screen it opens the Class tab; on the Class tab it heads the page.
+ */
+export function MyClassesStrip({ data, lang, onOpen }: { data: MyClasses | null; lang: 'he' | 'en'; onOpen?: () => void }) {
+  if (!data || (data.memberOf.length === 0 && data.teaching.length === 0)) return null;
+  const he = lang === 'he';
+  const rows = [
+    ...data.memberOf.map((c) => ({ id: c.id, name: c.name, sub: he ? `המורה: ⁨${c.teacher}⁩` : `Teacher: ⁨${c.teacher}⁩`, role: 'student' as const })),
+    ...data.teaching.map((c) => ({ id: c.id, name: c.name, sub: he ? `את/ה המורה · ${c.students.length} תלמידים · קוד ${c.code}` : `You teach · ${c.students.length} students · code ${c.code}`, role: 'teacher' as const })),
+  ];
+  const Row = ({ r }: { r: (typeof rows)[number] }) => (
+    <>
+      <span className="mc-kicker">{r.role === 'student' ? (he ? 'הכיתה שלי' : 'My class') : he ? 'כיתה שאני מלמד/ת' : 'A class I teach'}</span>
+      <b>
+        <bdi>{r.name}</bdi>
+      </b>
+      <small>{r.sub}</small>
+    </>
+  );
+  return (
+    <section className="my-classes" aria-label={he ? 'הכיתות שלי' : 'My classes'} data-my-classes={rows.length}>
+      {rows.map((r) =>
+        onOpen ? (
+          <button key={`${r.role}:${r.id}`} type="button" className="mc-card" onClick={onOpen} data-my-class={r.role}>
+            <Row r={r} />
+          </button>
+        ) : (
+          <div key={`${r.role}:${r.id}`} className="mc-card" data-my-class={r.role}>
+            <Row r={r} />
+          </div>
+        ),
+      )}
+    </section>
+  );
+}
+
 /** "due tomorrow" / "עד מחר" (the player's local day), a short date further off, nothing when past or unset. */
 export function dueShort(due: string | null, lang: 'he' | 'en', today = localDay(new Date())): string | null {
   if (!due) return null;
@@ -319,6 +358,7 @@ export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; it
   return (
     <section className="assigned-card" aria-label={t.yourAssignments} data-assigned-card={open.length}>
       <h2>{t.yourAssignments}</h2>
+      <small className="ac-class">{[...new Set(open.map((a) => a.className).filter(Boolean))].join(' · ')}</small>
       <ul className="assign-list">
         {open.slice(0, 4).map((a) => (
           <li key={a.id}>
@@ -327,7 +367,7 @@ export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; it
                 {itemTitle(a, lang, t)}
                 {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
               </span>
-              <small>{[dueShort(a.dueOn, lang), a.className].filter(Boolean).join(' · ')}</small>
+              {dueShort(a.dueOn, lang) && <small>{dueShort(a.dueOn, lang)}</small>}
             </button>
           </li>
         ))}

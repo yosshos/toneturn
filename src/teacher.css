@@ -256,8 +256,20 @@
 .bell-when { font-size: 0.72rem; }
 .bell-all { justify-self: start; }
 .assigned-card .assign-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.assigned-card .ac-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 8px 10px; border-radius: 12px; color: var(--ink); }
-.assigned-card .ac-row:hover { background: var(--ss-surface-2, var(--bg-2)); }
-.assigned-card .ac-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.assigned-card .ac-title { font-weight: 700; }
-.assigned-card .ac-row small, .assigned-card .ac-more { color: var(--ss-muted, var(--ink-dim)); }
+:root:root .assigned-card h2 { color: #fff; }
+:root:root .assigned-card .ac-class { color: rgba(255, 255, 255, 0.8); font-size: 0.8rem; margin-top: -4px; }
+:root:root .assigned-card .ac-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 9px 12px; border-radius: 12px; color: #fff; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14); }
+:root:root .assigned-card .ac-row:hover { background: rgba(255, 255, 255, 0.13); }
+.assigned-card .ac-row:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+:root:root .assigned-card .ac-title { font-weight: 700; color: #fff; }
+:root:root .assigned-card .ac-row small, :root:root .assigned-card .ac-more { color: rgba(255, 255, 255, 0.78); }
+:root:root .assigned-card .new-mark { background: #fff; color: #2b1a4a; }
+/* "My classes" (owner 2026-11-26): the class you are in, its teacher — at the top of Community and the Class tab, in
+   the class card's own teal-to-purple sheet so it reads as "my class" everywhere */
+.my-classes { display: grid; gap: 8px; margin: 10px 0 14px; }
+.mc-card { all: unset; box-sizing: border-box; display: grid; gap: 2px; width: 100%; padding: 12px 14px; border-radius: 16px; background: linear-gradient(160deg, #23516b, #2b1a4a); color: #fff; box-shadow: var(--shadow); }
+button.mc-card { cursor: pointer; }
+button.mc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:root:root .mc-card b { font-size: 1.05rem; color: #fff; }
+:root:root .mc-card small { color: rgba(255, 255, 255, 0.8); }
+:root:root .mc-kicker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.75); }

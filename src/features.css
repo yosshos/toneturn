@@ -713,10 +713,11 @@
 .assigned-card {
   padding: 14px 16px;
   border-radius: 22px;
-  /* 0.144.1: the Paper/Studio card (the old dark gradient was a leftover: dark link text on it was unreadable) */
-  background: var(--ss-surface, var(--card));
-  border: 1px solid var(--ss-line, var(--line));
-  box-shadow: var(--ss-sh-s, var(--shadow));
+  /* the class's own card: the teal-to-purple sheet stays (owner 2026-11-26: it marks "from my class"); 0.144.2: every
+     text on it is light (dark link text on it was unreadable) */
+  background: linear-gradient(160deg, #23516b, #2b1a4a);
+  color: #fff;
+  box-shadow: var(--shadow);
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
