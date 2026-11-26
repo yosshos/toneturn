@@ -30,7 +30,8 @@ import { StyleChips } from './StyleChips';
 import { burnup } from '../engine/burnup';
 import { BurnUpRow } from './ExtraCharts';
 import { localDay } from '../storage/progress';
-import { itemOfAssign } from '../engine/itemAssign';
+import { drillRef, itemOfAssign, parseDrillRef } from '../engine/itemAssign';
+import { keyName } from '../engine/drills/generate';
 import { lickById } from '../engine/licks';
 import { parsePieceKey } from '../engine/repLibrary';
 import { repItem } from '../engine/repertoire';
@@ -40,6 +41,7 @@ type Lang = 'en' | 'he';
 const TX = {
   en: {
     phrase: 'Phrase (play it)', phraseOpen: 'Play and assign a phrase', auto: 'Graded automatically', autoHint: 'Each key a student passes is graded by the strictness; tap a mark to override.', override: 'Override',
+    dKey: 'Key', anyKey: 'Any key', dMin: 'Session, min (optional)',
     kind: 'What', lesson: 'Path lesson', topic: 'Topic level', drill: 'Technique level', chart: 'Chord chart', piece: 'Piece',
     level: 'Level', strict: 'Strictness', lenient: 'Lenient', moderate: 'Moderate', strictS: 'Strict', bpm: 'Target ♩', note: 'Note to the class',
     due: 'Due', assign: 'Assign', voicing: 'Voicing', rhythm: 'Rhythm', mode: 'Mode', comp: 'Comp', improv: 'Improvise', rules: 'Improvise under rules', challenge: 'Challenge', over: 'Over', pieceText: 'What to practice (piece, bars, tempo…)',
@@ -50,6 +52,7 @@ const TX = {
   },
   he: {
     phrase: 'משפט (לנגן)', phraseOpen: 'לנגן ולהטיל משפט', auto: 'נבדק אוטומטית', autoHint: 'כל סולם שתלמיד עובר נבדק לפי הקפדנות; נגיעה בסימן משנה את הציון.', override: 'לשנות',
+    dKey: 'סולם', anyKey: 'כל סולם', dMin: 'סשן, דקות (לא חובה)',
     kind: 'מה', lesson: 'שיעור במסלול', topic: 'רמה בנושא', drill: 'רמה בטכניקה', chart: 'מהלך אקורדים', piece: 'יצירה',
     level: 'רמה', strict: 'קפדנות', lenient: 'מקלה', moderate: 'בינונית', strictS: 'קפדנית', bpm: 'טמפו יעד ♩', note: 'הערה לכיתה',
     due: 'עד', assign: 'להטיל', voicing: 'קולות', rhythm: 'קצב', mode: 'מצב', comp: 'ליווי', improv: 'אלתור', rules: 'אלתור עם כללים', challenge: 'אתגר', over: 'על', pieceText: 'מה לתרגל (יצירה, תיבות, טמפו…)',
@@ -68,9 +71,12 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
     return T && r ? `${T.title[lang]} · ${T.levels[r.level - 1]?.[lang] ?? r.level}` : a.ref ?? '';
   }
   if (a.kind === 'drill') {
-    const id = (a.ref ?? '').replace(/^drill:/, '');
-    for (const f of catalog()) for (const l of f.levels) if (l.id === id) return `${f.title[lang]} · ${l.title[lang]}`;
-    return id;
+    const dr = parseDrillRef(a.ref);
+    // the teacher's key and minutes, when set: "… · in G · 10 min"
+    // the key isolated (a Latin note name inside a Hebrew title keeps its place)
+    const extra = `${dr.key !== null ? ` · ${lang === 'he' ? 'בסולם ' : 'in '}⁨${keyName(dr.key, false)}⁩` : ''}${dr.minutes ? ` · ⁨${dr.minutes}⁩ ${lang === 'he' ? 'דק׳' : 'min'}` : ''}`;
+    for (const f of catalog()) for (const l of f.levels) if (l.id === dr.id) return `${f.title[lang]} · ${l.title[lang]}${extra}`;
+    return dr.id + extra;
   }
   if (a.kind === 'chart') {
     if (a.ref?.startsWith('rules:')) return `${rulesRefTitle(a.ref, lang)} · ${TX[lang].rules}`;
@@ -114,6 +120,9 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   const [topicLv, setTopicLv] = useState(1);
   const levels = useMemo(() => catalog().flatMap((f) => f.levels.map((l) => ({ id: l.id, title: `${f.title[lang]} · ${l.title[lang]}` }))), [lang]);
   const [drill, setDrill] = useState(levels[0]?.id ?? '');
+  // a technique level in one key (and a timed session on it: the coach on that rung for so many minutes)
+  const [dKey, setDKey] = useState('');
+  const [dMin, setDMin] = useState('');
   const [chartLv, setChartLv] = useState(IMPROV_LEVELS[0].n);
   const [voicing, setVoicing] = useState(VOICINGS[0]);
   const [rhythm, setRhythm] = useState(RHYTHMS[0]);
@@ -133,7 +142,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   const [perDay, setPerDay] = useState('');
   const [ifShort, setIfShort] = useState<'spread' | 'today'>('spread');
   const ref = preset ? preset.ref :
-    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? `drill:${drill}` : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
+    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? drillRef(drill, dKey === '' ? null : Number(dKey), dKey !== '' && dMin ? Number(dMin) : null) : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
   const can = !!preset || kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
@@ -199,6 +208,19 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
             </option>
           ))}
         </select>
+      )}
+      {kind === 'drill' && (
+        <div className="af-grid" data-assign-drill-key="1">
+          <select value={dKey} onChange={(e) => setDKey(e.target.value)} aria-label={tx.dKey}>
+            <option value="">{tx.anyKey}</option>
+            {Array.from({ length: 12 }, (_, k) => (
+              <option key={k} value={k}>
+                {keyName(k, false)}
+              </option>
+            ))}
+          </select>
+          {dKey !== '' && <input type="number" inputMode="numeric" min={1} max={120} value={dMin} onChange={(e) => setDMin(e.target.value)} placeholder={tx.dMin} aria-label={tx.dMin} />}
+        </div>
       )}
       {kind === 'chart' && (
         <div className="af-grid">

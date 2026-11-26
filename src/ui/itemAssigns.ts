@@ -45,9 +45,9 @@ export const useMyAssigns = (on = true): AssignItem[] => useLoaded(loadMine, [] 
 export const useTeaching = (on = true): TeachingClass[] => useLoaded(loadTeaching, [] as TeachingClass[], on);
 
 /** The open assignment for one item page, or null. */
-export function useAssignFor(r: ItemRef | null, on = true): AssignItem | null {
+export function useAssignFor(r: ItemRef | null, on = true, key?: number): AssignItem | null {
   const as = useMyAssigns(on && !!r);
-  return r ? assignmentFor(as, r, localDay(new Date())) : null;
+  return r ? assignmentFor(as, r, localDay(new Date()), key) : null;
 }
 
 /** Every item named by an open assignment, as keys "level:<id>", "lick:<id>", "piece:<key>", "improv:<n>" (the marks). */

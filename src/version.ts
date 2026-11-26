@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.142.0',
+    date: '2026-11-26',
+    en: ['A teacher can now assign a technique exercise in a chosen key as a timed session: the student opens the assignment and the coach runs that exercise in that key for the set minutes, with the session summary at the end'],
+    he: ['מורה יכול עכשיו להטיל תרגיל טכניקה בסולם מסוים כסשן עם זמן: התלמיד פותח את המשימה, והמאמן מריץ את התרגיל בסולם הזה למשך הדקות שנקבעו, עם סיכום הסשן בסוף'],
+  },
+  {
     version: '0.141.0',
     date: '2026-11-27',
     en: ['At the end of a practice session the coach now names the one tendency that kept showing in your playing, such as rushing on the way down or a late top note, or says that nothing consistent showed up. Behind the scenes every take now leaves a small measurement record on your device, the start of finer feedback'],

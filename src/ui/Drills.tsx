@@ -384,7 +384,7 @@ export interface DrillsProps {
   channel?: 'ear' | 'memory';
   /** SPEC-PRACTICE-SESSION §12: open straight in a workout block's coach run (a key, an exercise, an item, a family,
    *  the warm-up), as long as the block (`walk`: cell by cell, in order); its end calls onQueueDone. */
-  startCoach?: { fam: FamilyDef; minutes: number; walk?: boolean; /** The block's key for the day (the session and the block): stopped, it continues there. */ resumeKey?: string } | null;
+  startCoach?: { fam: FamilyDef; minutes: number; walk?: boolean; /** A teacher's timed assignment: its end page waits for the player (no auto-advance). */ assign?: boolean; /** The block's key for the day (the session and the block): stopped, it continues there. */ resumeKey?: string } | null;
   /** §12 "Practise this · N min": today's focus for the active course, and the session starts. */
   onPractiseThis?: (t: FocusTarget) => void;
   /** The session's length the action names (the daily length). */
@@ -393,7 +393,7 @@ export interface DrillsProps {
   queueKey?: string | null;
 }
 
-type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** §12: a workout block's coach run — its minutes, and walked step by step in order. */ block?: { minutes: number; walk?: boolean }; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number }; /** Owner 2026-11-25: the run's key for the day (storage/coachRun.ts) — stopped, it continues there. */ rk?: string; /** Reopened after a reload: `coach` is the saved ladder (Start over builds it afresh). */ reopened?: boolean } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number; /** SPEC-PATH-TODAY-PRACTICE §2: the rung's item page lit on the key page, and how it was reached. */ rung?: { id: string; wayIn: WayIn }; /** Where Back goes (a family's level row, Today's cells). */ from?: View };
+type View = { k: 'test' } | { k: 'hub' } | { k: 'songs' } | { k: 'family'; f: FamilyDef } | { k: 'run'; queue: Drill[]; i: number; from: View; /** The practice coach on this family (coach.ts). */ coach?: FamilyDef; /** The coach over a key's ladder (no placement probe). */ ladder?: boolean; /** §12: a workout block's coach run — its minutes, and walked step by step in order. */ block?: { minutes: number; walk?: boolean; assign?: boolean }; /** Today's technique plan (walked cell by cell, resumed where it stopped, as long as the block). */ today?: { at: number; minutes: number }; /** Owner 2026-11-25: the run's key for the day (storage/coachRun.ts) — stopped, it continues there. */ rk?: string; /** Reopened after a reload: `coach` is the saved ladder (Start over builds it afresh). */ reopened?: boolean } | { k: 'settings' } | { k: 'calib' } | { k: 'creator'; edit?: CustomDrill } | { k: 'kit'; then?: 'test'; start?: KitKind } | { k: 'keypage'; root: number; /** SPEC-PATH-TODAY-PRACTICE §2: the rung's item page lit on the key page, and how it was reached. */ rung?: { id: string; wayIn: WayIn }; /** Where Back goes (a family's level row, Today's cells). */ from?: View };
 
 export function Drills({ lang, settings, onSettings, items, onTake, onBack, queue, onQueueDone, startTest, onTestDone, songs, onSing, onVoice, onPieces, atTarget, today, startToday, onItem, openKey, openGroup, openFamily, onTodayScreen, openLevel, wayIn, whereOf, onWhere, onFullPractice, channel, onImproviseLick, startCoach, onPractiseThis, practiseMin, queueKey: queueKeyIn }: DrillsProps) {
   const tx = T[lang];
@@ -404,7 +404,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
     tt && tt.plan.length && today ? { k: 'run', queue: [], i: 0, from, coach: planFamily(tt.plan, { en: "Today's technique", he: 'הטכניקה של היום' }), ladder: true, today: { at: tt.at, minutes: today.left >= 2 ? Math.round(today.left) : today.minutes }, rk: `today:${inst}` } : null;
   const [view, setView] = useState<View>(() =>
     startCoach
-      ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: startCoach.fam, ladder: true, block: { minutes: startCoach.minutes, ...(startCoach.walk ? { walk: true } : {}) }, ...(startCoach.resumeKey ? { rk: startCoach.resumeKey } : {}) }
+      ? { k: 'run', queue: [], i: 0, from: { k: 'hub' }, coach: startCoach.fam, ladder: true, block: { minutes: startCoach.minutes, ...(startCoach.walk ? { walk: true } : {}), ...(startCoach.assign ? { assign: true } : {}) }, ...(startCoach.resumeKey ? { rk: startCoach.resumeKey } : {}) }
       : startTest
       ? ds.instrument === 'drums' && !settings.drumKit?.done
         ? { k: 'kit' }
@@ -593,7 +593,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           onCoachStep={view.today && today ? (step) => setPlanAt(today.day, step) : undefined}
           resumeKey={view.coach ? view.rk : undefined}
           queueKey={!view.coach && runQueue.length > 1 ? (queueKeyIn && view.queue === queue ? queueKeyIn : queueRunKey(inst, runQueue.map((d) => d.itemId))) : undefined}
-          autoEnd={!!(view.block || view.today)}
+          autoEnd={!!((view.block && !view.block.assign) || view.today)}
           onItem={onItem}
           onKeyOrder={(keyOrder) => setDs({ keyOrder })}
           onTitle={setCoachTitle}

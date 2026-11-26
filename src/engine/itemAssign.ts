@@ -22,10 +22,30 @@ export function assignRefOf(r: ItemRef): { kind: 'drill' | 'piece' | 'chart'; re
   }
 }
 
+/**
+ * A technique level's assignment ref: "drill:<level id>", optionally with the teacher's key ("@<pitch class>", the rung
+ * in that key) and a timed session ("/<minutes>": the coach on that rung in that key for so many minutes).
+ */
+export interface DrillRef {
+  id: string;
+  key: number | null;
+  minutes: number | null;
+}
+export function parseDrillRef(ref: string | null | undefined): DrillRef {
+  const m = /^(?:drill:)?([^@/]*)(?:@(\d{1,2}))?(?:\/(\d{1,3}))?$/.exec(ref ?? '');
+  if (!m) return { id: (ref ?? '').replace(/^drill:/, ''), key: null, minutes: null };
+  const k = m[2] !== undefined ? Number(m[2]) : null;
+  const min = m[3] !== undefined ? Number(m[3]) : null;
+  return { id: m[1], key: k !== null && k >= 0 && k < 12 ? k : null, minutes: min !== null && min >= 1 && min <= 120 ? min : null };
+}
+export function drillRef(id: string, key: number | null = null, minutes: number | null = null): string {
+  return `drill:${id}${key !== null ? `@${((key % 12) + 12) % 12}` : ''}${minutes ? `/${Math.max(1, Math.min(120, Math.round(minutes)))}` : ''}`;
+}
+
 /** The item an assignment row names (null for lessons, topics, phrases, free-text pieces …). */
 export function itemOfAssign(a: { kind: string; ref: string | null }): ItemRef | null {
   const ref = a.ref ?? '';
-  if (a.kind === 'drill' && ref) return { k: 'level', id: ref.replace(/^drill:/, '') };
+  if (a.kind === 'drill' && ref) return { k: 'level', id: parseDrillRef(ref).id };
   if (a.kind === 'piece' && /^lick:./.test(ref)) return { k: 'lick', id: ref.slice(5) };
   if (a.kind === 'piece' && /^(rep:(ear|jazz|voice|keys|guitar|bass|drums)|std|chart|tpl|score|rec):./.test(ref)) return { k: 'piece', key: ref };
   if (a.kind === 'chart') {
@@ -38,11 +58,16 @@ export function itemOfAssign(a: { kind: string; ref: string | null }): ItemRef |
 
 export const sameItem = (a: ItemRef, b: ItemRef): boolean => JSON.stringify(a) === JSON.stringify(b);
 
-/** The newest open assignment (not past its due date by more than a week) for an item, or null. */
-export function assignmentFor<A extends { kind: string; ref: string | null; dueOn: string | null; createdAt: string }>(as: A[] | null | undefined, r: ItemRef, today: string): A | null {
+/** The newest open assignment (not past its due date by more than a week) for an item, or null. `key`: the rung's key
+ *  on a key page — an assignment for another key of the level is not this page's. */
+export function assignmentFor<A extends { kind: string; ref: string | null; dueOn: string | null; createdAt: string }>(as: A[] | null | undefined, r: ItemRef, today: string, key?: number): A | null {
   const open = (as ?? []).filter((a) => {
     const it = itemOfAssign(a);
     if (!it || !sameItem(it, r)) return false;
+    if (key !== undefined && a.kind === 'drill') {
+      const k = parseDrillRef(a.ref).key;
+      if (k !== null && k !== key) return false;
+    }
     if (!a.dueOn) return true;
     return Date.parse(`${today}T12:00:00Z`) - Date.parse(`${a.dueOn}T12:00:00Z`) <= 7 * 86400000;
   });

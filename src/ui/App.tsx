@@ -153,7 +153,7 @@ import type { SessionEndProps } from './SessionEnd';
 import { addSession, plusFive, areaMinutes, betweenNow, blockLeftMs, canRescale, clearBetween, contextSwap, creditBlock, extendLast, feedbackNudge, focusAreas, focusBlocks, focusIdOf, improvMode, markServed, parseFocus, reasonLine, rescale, sessionReason, targetFocusBlocks, total as blocksTotal, nextBlock, nextForBlock, nudgedRatings, runLeftMs, startRun, suggestWorkout, improvLevelToday, pieceWhyToday, teacherItems, teacherToday, techBlockOf, unitRemaining, unserved, validateTemplate, waitingArea, withTeacher, type Block, type BlockTarget, type FocusMode, type FocusTarget, type SuggestInput, type WorkoutRun } from '../engine/workout2';
 import { closeness, slippingItems, weekAreaMinutes } from '../engine/sessionNeed';
 import { focusSheet, itemCells, rungCells, type CellState } from '../engine/drills/focusSheet';
-import { cellDue, cellItemIds, cellKey } from '../engine/drills/keyMatrix';
+import { cellDue, cellItemIds, cellKey, keyMatrix, type MatrixCell } from '../engine/drills/keyMatrix';
 import { RUNG_TAG_NAME } from '../engine/drills/keyIndex';
 import { keySessionLadder } from '../engine/drills/stages';
 import { planFamily } from '../engine/drills/todayPlan';
@@ -265,7 +265,7 @@ import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
 import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView, type WayIn } from './practiceRoutes';
 import { stepChannelOf, type StepChannel } from '../engine/stepChannel';
-import { itemOfAssign } from '../engine/itemAssign';
+import { itemOfAssign, parseDrillRef } from '../engine/itemAssign';
 import { rungKeyOf, stepLickOf } from './itemRoutes';
 import { chartOfLevel, chartOfPiece, parsePieceKey, pieceDrillCourse, pieceKey, repDueKey, whereInPath, type LibEntry, type PieceAction } from '../engine/repLibrary';
 import { firstRootPc } from './Charts';
@@ -1392,6 +1392,8 @@ export function App() {
   // The teacher loop (0.52): an assignment opened from the class list; its result is sent when it is finished.
   // §5.2: the assignment's options (its required channel) and the takes that met it.
   const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null; opts?: AssignOpts; tally?: ChannelTally } | null>(null);
+  /** A timed technique assignment ("drill:<level>@<key>/<minutes>"): the coach on that rung in that key for so long. */
+  const assignCoach = useRef<{ fam: FamilyDef; minutes: number; walk?: boolean; assign?: boolean } | null>(null);
   const submitAssign = (score: number, metrics: Record<string, unknown> = {}) => {
     const x = activeAssign.current;
     if (!x) return;
@@ -1424,13 +1426,36 @@ export function App() {
       const r = parseTopicRef(a.ref);
       if (r) return openTopic(r.id, r.level);
     }
+    assignCoach.current = null;
     if (a.kind === 'drill' && settings) {
-      const id = (a.ref ?? '').replace(/^drill:/, '');
+      const dr = parseDrillRef(a.ref);
+      const id = dr.id;
       // Any instrument's level (a guitar teacher assigns g-* levels; the piano catalogue alone missed them).
       const lv = [...catalog(), ...guitarCatalog()].flatMap((f) => f.levels).find((l) => l.id === id);
+      // the teacher's key and minutes: a timed coach session on that rung in that key (its end page, then the result)
+      if (lv && dr.key !== null && dr.minutes) {
+        const ds0 = drillSettingsOf(settings);
+        const group = lv.keys === 'minor' ? 'minor' : 'major';
+        const pick = (cs: readonly MatrixCell[]) => cs.find((c) => c.rung === id && c.root === dr.key && c.group === group);
+        // the student's own matrix; else (a level outside the student's tier) the piano matrix at the first tier that has
+        // the rung — the cell's exercise is the same at any tier
+        const pianoLv = catalog().some((f) => f.levels.some((l) => l.id === id));
+        let cell = pick(projectionInput(settings, ds0, progress.drillItems ?? {})?.cells ?? []);
+        for (let t = 0; !cell && pianoLv && t <= 9; t++) cell = pick(keyMatrix(catalog(), t, progress.drillItems ?? {}, { instrument: 'piano', groups: [group] }));
+        if (cell) {
+          assignCoach.current = { fam: planFamily([{ cell, why: 'strengthen' as const }], cell.level.title), minutes: dr.minutes, assign: true };
+          chartQueue.current = null;
+          drillFrom.current = 'assign';
+          setDrillsFamily(null);
+          setDrillsLevel(null);
+          setDrillsKey(null);
+          setDrillsNonce((n) => n + 1);
+          return go('drills');
+        }
+      }
       // SPEC-PATH-TODAY-PRACTICE §5.1: a level assignment opens the level's page (its rung on the key page) with "The
       // assignment" as the main button — not straight into a run; a key-free level runs as before
-      const key = lv ? rungKeyOf(id, drillSettingsOf(settings)) : null;
+      const key = lv ? (dr.key ?? rungKeyOf(id, drillSettingsOf(settings))) : null;
       if (lv && key !== null) {
         chartQueue.current = null;
         drillFrom.current = 'assign';
@@ -4846,7 +4871,7 @@ export function App() {
       {route === 'drills' && (
         <Drills
           key={`${drillsKey === null ? (drillsFamily ? `drills-fam-${drillsFamily.id}` : 'drills') : `drills-key-${drillsKey}-${drillsGroup ?? ''}-${drillsLevel?.id ?? ''}`}-${drillsNonce}`}
-          startCoach={drillFrom.current === 'workout' ? coachInit.current : null}
+          startCoach={drillFrom.current === 'workout' ? coachInit.current : drillFrom.current === 'assign' ? assignCoach.current : null}
           onPractiseThis={wCourse === 'keys' || wCourse === 'guitar' || wCourse === 'bass' || wCourse === 'drums' ? practiseThis : undefined}
           practiseMin={baseMinutes}
           openKey={drillsKey}

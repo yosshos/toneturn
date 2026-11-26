@@ -459,7 +459,7 @@ function RungCard({ rung, idx, root, items, lang, ds, today, onRun, onPractise, 
   const pages = idx.pages[root];
   const found = (Object.keys(pages) as FacetGroup[]).flatMap((g) => Object.values(pages[g]).flatMap((es) => (es ?? []).map((e) => ({ e, g })))).find((x) => x.e.level.id === rung.id);
   const item: ItemRef = { k: 'level', id: rung.id };
-  const assigned = useAssignFor(item);
+  const assigned = useAssignFor(item, true, root);
   const teaching = useTeaching();
   if (!found) return null;
   const { e, g } = found;
