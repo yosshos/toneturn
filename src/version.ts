@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.140.1',
+    date: '2026-11-27',
+    en: ['Each tempo step now weighs both how clean the take was and how fast you already are: a clean take at ♩60 can climb up to 20 %, the same take at ♪100 about half of that, and fast sixteenths a few percent'],
+    he: ['כל צעד בטמפו נשקל עכשיו לפי כמה נקי היה הביצוע וגם לפי כמה מהר אתה כבר מנגן: ביצוע נקי ב-♩60 יכול לעלות עד 20%, אותו ביצוע ב-♪100 בערך חצי מזה, ובשש־עשריות מהירות כמה אחוזים בלבד'],
+  },
+  {
     version: '0.140.0',
     date: '2026-11-26',
     en: ['The climb weighs each take: a tight one goes up more, a loose one a little, and it slows near your best. Now and then the coach says "Let’s try something harder" and jumps well ahead to find your ceiling — clean, and that is your level; missed, and you are back where you were, with nothing counted against you. Your technique progress now syncs across your devices'],

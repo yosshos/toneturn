@@ -74,10 +74,6 @@ export const PROBE_NPS = 1.5;
 export const COMFORT = 0.9;
 /** No take is more than this much faster (notes per second) than the one before (§3.3). */
 export const MAX_JUMP = 1.1;
-/** A clean take with tight timing climbs this much (owner 2026-11-25: the step follows how well the take went). */
-export const STEP_UP = 1.06;
-/** A clean take with loose timing climbs this much (owner 2026-11-25: the step follows how well the take went). */
-export const LOOSE_STEP = 1.03;
 
 const clampTier = (t: number) => Math.max(0, Math.min(8, Math.round(t)));
 export const benchNps = (tier: number) => BENCH_NPS[clampTier(tier)];
@@ -162,7 +158,7 @@ export function stretchTarget(level: LevelDef, drill: Drill, items: Record<strin
 export function markUp(nps: number, per: number): number {
   const bpm = (nps * 60) / per;
   const next = MAELZEL.find((m) => m > bpm + 0.5) ?? bpm * 1.03;
-  return r2(Math.min((next * per) / 60, nps * MAX_JUMP));
+  return r2(Math.min((next * per) / 60, nps * (1 + stepCap(nps))));
 }
 
 /**
@@ -196,30 +192,13 @@ export function snapNear(bpm: number): number {
   return MAELZEL.reduce((b, m) => (Math.abs(m - bpm) < Math.abs(b - bpm) ? m : b), MAELZEL[0]);
 }
 
-/** How much of a step is taken at this speed (owner 2026-11-25): all of it below 3 nps, ¾ from 3 to 5, ½ above 5. */
-export const heightFactor = (nps: number): number => (nps < 3 ? 1 : nps <= 5 ? 0.75 : 0.5);
-
 /**
- * The speed stage's next pulse (owner 2026-11-25): the quality step (×1.10 / 1.06 / 1.03) shrunk by the height factor,
- * halved when the new tempo comes within 10 % of the player's best clean tempo on this item (or of the target), then
- * snapped to the Maelzel marks at the note value it will be played at (`per`) — at least one mark up, never more than
- * the computed step, never more than 10 % in notes per second, never past the target.
+ * The largest tempo step at this speed (owner 2026-11-27: "clean at 60 - up 20 %; clean at 100 - not straight 20 %"):
+ * 20 % up to 2 notes a second, falling smoothly with the speed - about 12 % at 3, 7 % at 5, 4 % at 8 nps (never under 3.5 %).
+ * A perfect take earns all of it; how clean the take was (stepQuality) scales it (keyCoach gradedUp).
  */
-export function speedStep(at: number, quality: number, o: { per: number; best?: number; target: number }): number {
-  if (quality <= 1) return at;
-  let pct = (quality - 1) * heightFactor(at);
-  const raw = at * (1 + pct);
-  const near = (ref: number | undefined) => !!ref && ref > 0 && Math.abs(raw - ref) / ref <= 0.1;
-  if (near(o.best) || near(o.target)) pct *= 0.5;
-  const want = Math.min(o.target, at * (1 + pct));
-  if (want >= o.target - 1e-9) return o.target;
-  const cur = (at * 60) / o.per;
-  const top = (want * 60) / o.per;
-  const cap = (at * MAX_JUMP * 60) / o.per;
-  const below = MAELZEL.filter((g) => g <= top + 1e-9 && g > cur + 0.5);
-  let g = below.length ? below[below.length - 1] : MAELZEL.find((x) => x > cur + 0.5);
-  if (g === undefined || g > cap + 1e-9) g = Math.min(cap, top > cur ? top : cur * 1.03);
-  return Math.min(o.target, (g * o.per) / 60);
+export function stepCap(nps: number): number {
+  return Math.max(0.035, Math.min(0.2, 0.2 * Math.pow(2 / Math.max(nps, 0.1), 1.16)));
 }
 
 /** The same notes at another note value (eighths → quarters, 16ths → eighths, eighths → triplet eighths): every onset moved. */

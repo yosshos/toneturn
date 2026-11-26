@@ -13,7 +13,7 @@ import { withStageTake } from '../src/engine/drills/rubato';
 import { bandOfBpm, thresholds } from '../src/engine/drills/analyze';
 import { withCeiling } from '../src/engine/drills/itemStatus';
 import { DEFAULT_DRILL_SETTINGS, type ItemState, type TakeMetrics } from '../src/engine/drills/types';
-import { keySessionLadder, MAELZEL, subDrill, stagePassed } from '../src/engine/drills/stages';
+import { keySessionLadder, MAELZEL, stepCap, subDrill, stagePassed } from '../src/engine/drills/stages';
 import { chalDraw, chalTarget, gradedUp } from '../src/engine/drills/keyCoach';
 import { generate } from '../src/engine/drills/generate';
 import type { DrillSpec } from '../src/engine/drills/types';
@@ -52,6 +52,7 @@ interface Row {
   /** The exercise kind and hands (the 10 % rule compares takes of the same one, U6). */
   ckey: string;
   chal: boolean;
+  item: string;
   sayHe: string;
 }
 
@@ -83,7 +84,7 @@ function run(opts: { tier: number; player: Player; minutes?: number; items?: Rec
     }
     if (nx.ceiling && items[nx.ceiling.itemId]) items[nx.ceiling.itemId] = withCeiling(items[nx.ceiling.itemId], nx.ceiling.bpm, '2026-11-25');
     const sp = d.spec as { hands: string; octaves?: number; motion?: string };
-    rows.push({ n, min: (now - now0) / 60000, visit: s.visit, rung: s.rung, code: s.code, kind: s.kind, hands: sp.hands, oct: String(sp.octaves ?? (d.spec.family === 'k-sharm' ? 2 : '-')), motion: sp.motion ?? 'parallel', per: t.stage === 'free' ? null : (t.play?.per ?? null), bpm: t.stage === 'free' ? null : (t.play?.bpm ?? t.bpm), nps: t.stage === 'free' ? 0 : (t.nps ?? 0), grade: g, said: (nx.line.say ?? []).join(' '), line: nx.line.en, probe, closing: !!s.closing, ckey: `${d.spec.family}:${d.spec.kind}:${d.spec.hands}`, chal: !!t.challenge, sayHe: (nx.line.sayHe ?? []).join(' ') });
+    rows.push({ n, min: (now - now0) / 60000, visit: s.visit, rung: s.rung, code: s.code, kind: s.kind, hands: sp.hands, oct: String(sp.octaves ?? (d.spec.family === 'k-sharm' ? 2 : '-')), motion: sp.motion ?? 'parallel', per: t.stage === 'free' ? null : (t.play?.per ?? null), bpm: t.stage === 'free' ? null : (t.play?.bpm ?? t.bpm), nps: t.stage === 'free' ? 0 : (t.nps ?? 0), grade: g, said: (nx.line.say ?? []).join(' '), line: nx.line.en, probe, closing: !!s.closing, ckey: `${d.spec.family}:${d.spec.kind}:${d.spec.hands}`, chal: !!t.challenge, item: d.itemId, sayHe: (nx.line.sayHe ?? []).join(' ') });
     c = nx.state;
     if (nx.end) {
       ended = true;
@@ -105,7 +106,8 @@ function maxJump(rows: Row[]): number {
     const b = rows[i];
     // a challenge take (SPEC-CLIMB-SYNC §2) jumps on purpose
     if (a.ckey !== b.ckey || a.nps <= 0 || b.nps <= 0 || b.chal) continue;
-    worst = Math.max(worst, b.nps / a.nps);
+    // owner 2026-11-27: the largest step depends on the speed it starts from (stepCap)
+    worst = Math.max(worst, b.nps / (a.nps * (1 + stepCap(a.nps))));
   }
   return worst;
 }
@@ -130,20 +132,20 @@ describe('key session 2: the simulator', () => {
     // coordination stages (owner 2026-11-26): each clean take one mark up, never more than 10 %
     for (const c of ['A-4', 'A-5']) {
       const nps = scale.filter((r) => r.code === c).map((r) => r.nps);
-      for (let k = 1; k < nps.length; k++) expect(nps[k]).toBeLessThanOrEqual(nps[k - 1] * 1.1 + 1e-6);
+      for (let k = 1; k < nps.length; k++) expect(nps[k]).toBeLessThanOrEqual(nps[k - 1] * (1 + stepCap(nps[k - 1])) + 1e-6);
       expect(Math.max(...nps)).toBeLessThanOrEqual(1.8);
     }
     // A-6 climbs, alternating eighths and triplets once in eighths
     // (a challenge take, SPEC-CLIMB-SYNC §2, may reach the target before the triplets come: they alternate when they do)
     const a6 = scale.filter((r) => r.code === 'A-6');
-    expect(a6.length).toBeGreaterThan(3);
+    expect(a6.length).toBeGreaterThanOrEqual(2);
     expect(a6[a6.length - 1].nps).toBeGreaterThan(a6[0].nps);
     const pers = a6.filter((r) => !r.chal).map((r) => r.per).filter((p) => p === 2 || p === 3);
     for (let i = 1; i < pers.length; i++) expect(pers[i]).not.toBe(pers[i - 1]);
     // then the harmonised rung, from its probe at B-3
     expect(rows[firstOther].code).toBe('B-3');
     expect(rows[firstOther].probe).toBe(true);
-    expect(maxJump(rows)).toBeLessThanOrEqual(1.1 + 1e-6);
+    expect(maxJump(rows)).toBeLessThanOrEqual(1 + 1e-6);
     // the closing visit happens, on A-6
     // the closing visit happens (U1: A-6 resumed, or 3–4 octaves once A-6 passed)
     expect(rows.some((r) => r.closing)).toBe(true);
@@ -167,7 +169,7 @@ describe('key session 2: the simulator', () => {
     expect(limitRow!.nps).toBeGreaterThanOrEqual(a6[0].nps - 1e-6);
     expect(limitRow!.nps).toBeLessThanOrEqual(2.05);
     expect(rows[firstOther].rung).toMatch(/k-sharm/);
-    expect(maxJump(rows)).toBeLessThanOrEqual(1.1 + 1e-6);
+    expect(maxJump(rows)).toBeLessThanOrEqual(1 + 1e-6);
   });
 
   it('a probe that misses: the right hand alone at the probe tempo, then the next stage at 1.0 nps', () => {
@@ -190,22 +192,21 @@ describe('key session 2: the simulator', () => {
     expect(rows[1].code).toBe('A-4');
     const b = rows.find((r) => r.visit === 1)!;
     expect(b.code).toBe('B-3');
-    expect(maxJump(rows)).toBeLessThanOrEqual(1.1 + 1e-6);
+    expect(maxJump(rows)).toBeLessThanOrEqual(1 + 1e-6);
   });
 
-  it('the climb step follows how well the take went: near-perfect ≥ tight ≥ loose, each ≤ its share and ≤ 10 %', () => {
-    const first = (g: Grade) => {
-      const { rows } = run({ tier: 0, player: () => g, maxTakes: 40 });
-      const a6 = rows.filter((r) => r.code === 'A-6' && !r.closing && !r.chal);
-      return a6[1].nps / a6[0].nps;
-    };
-    // (the A-6 start differs by grade since every stage before it climbs by how the takes went: the metronome grid can
-    // round two neighbouring steps either way by a mark's fraction)
-    const [p, t, l] = [first('perfect'), first('tight'), first('loose')];
-    expect(p).toBeGreaterThanOrEqual(t - 0.01);
-    expect(t).toBeGreaterThanOrEqual(l - 0.01);
-    expect(p).toBeLessThanOrEqual(1.1 + 1e-6);
-    expect(l).toBeGreaterThan(1);
+  it('the climb step follows how well the take went: each step within the cap at its speed', () => {
+    // (the order by quality at one starting speed is pinned in tests/keySessionStep.test.ts)
+    for (const g of ['perfect', 'tight', 'loose'] as Grade[]) {
+      const { rows } = run({ tier: 0, player: () => g, maxTakes: 60 });
+      const p = rows.filter((r) => r.nps > 0 && !r.closing);
+      for (let k = 1; k < p.length; k++) {
+        const [a, b] = [p[k - 1], p[k]];
+        if (a.item !== b.item || a.chal || b.chal) continue;
+        expect(b.nps, `${g} #${b.n}`).toBeLessThanOrEqual(a.nps * (1 + stepCap(a.nps)) + 1e-6);
+        if (a.kind === 'speed' && b.kind === 'speed') expect(b.nps, `${g} #${b.n}`).toBeGreaterThanOrEqual(a.nps - 1e-6);
+      }
+    }
   });
 
   it('steps shrink at higher speeds (an advanced player climbing past 3 and 5 nps)', () => {
@@ -214,10 +215,10 @@ describe('key session 2: the simulator', () => {
     // challenge takes (and the take after one) jump on purpose (SPEC-CLIMB-SYNC §2)
     const ups = a6.slice(1).map((r, i) => ({ at: a6[i].nps, k: r.nps / a6[i].nps, chal: r.chal || a6[i].chal })).filter((x) => x.k > 1.0001 && !x.chal);
     const slow = ups.filter((x) => x.at < 3).map((x) => x.k);
-    const fast = ups.filter((x) => x.at >= 3).map((x) => x.k);
+    const fast = ups.filter((x) => x.at >= 3);
     expect(fast.length).toBeGreaterThan(0);
-    if (slow.length) expect(Math.max(...fast)).toBeLessThanOrEqual(Math.max(...slow) + 1e-9);
-    for (const x of fast) expect(x).toBeLessThanOrEqual(1.0 + 0.1 * 0.75 + 0.012);
+    if (slow.length) expect(Math.max(...fast.map((x) => x.k))).toBeLessThanOrEqual(Math.max(...slow) + 1e-9);
+    for (const x of fast) expect(x.k).toBeLessThanOrEqual(1 + stepCap(x.at) + 0.012);
   });
 
   it('a 30-minute session ends on the closing return to A-6; a 10-minute one too, sooner', () => {
@@ -336,7 +337,7 @@ describe('key session 2: second review (2026-11-25)', () => {
     expect(rows[0].probe).toBe(true);
     expect(rows[1].code).not.toBe(rows[0].code);
     expect(rows[1].nps).toBeGreaterThan(rows[0].nps);
-    expect(rows[1].nps).toBeLessThanOrEqual(rows[0].nps * 1.1 + 1e-6);
+    expect(rows[1].nps).toBeLessThanOrEqual(rows[0].nps * (1 + stepCap(rows[0].nps)) + 1e-6);
   });
 
   it('S4: three "almost" in a row at one tempo step back one metronome mark', () => {
@@ -377,7 +378,8 @@ describe('key session 2: third review (2026-11-25)', () => {
     const { rows } = run({ tier: 0, player: lim });
     let same = 1;
     for (let i = 1; i < rows.length; i++) {
-      same = rows[i].code === rows[i - 1].code && rows[i].bpm === rows[i - 1].bpm && rows[i].hands === rows[i - 1].hands ? same + 1 : 1;
+      // the same item (a rotating rung meets each of its voicings once at the comfort tempo: different items)
+      same = rows[i].item === rows[i - 1].item && rows[i].bpm === rows[i - 1].bpm ? same + 1 : 1;
       expect(same, `#${rows[i].n}`).toBeLessThanOrEqual(6);
     }
     expect(rows.some((r) => /limit today/.test(r.line))).toBe(true);
@@ -425,7 +427,7 @@ describe('key session: owner 2026-11-26 (the same thing three days at ♪54)', (
     for (let k = 1; k < pulsed.length; k++) {
       if (pulsed[k].closing || pulsed[k].visit !== pulsed[k - 1].visit || pulsed[k].chal || pulsed[k - 1].chal || pulsed[k].ckey !== pulsed[k - 1].ckey) continue;
       expect(pulsed[k].nps, `#${pulsed[k].n}`).toBeGreaterThan(pulsed[k - 1].nps - 1e-6);
-      expect(pulsed[k].nps, `#${pulsed[k].n}`).toBeLessThanOrEqual(pulsed[k - 1].nps * 1.1 + 1e-6);
+      expect(pulsed[k].nps, `#${pulsed[k].n}`).toBeLessThanOrEqual(pulsed[k - 1].nps * (1 + stepCap(pulsed[k - 1].nps)) + 1e-6);
     }
     // a clean take on a coordination stage moves on: no two takes of one item at one tempo
     for (let k = 1; k < pulsed.length; k++) {
@@ -444,17 +446,17 @@ describe('SPEC-CLIMB-SYNC: the graded step and the challenge take (owner 2026-11
     const loose = gradedUp(at, 2, 0.3, {});
     expect(tight).toBeGreaterThan(loose);
     expect(loose).toBeGreaterThan(at); // at least one mark
-    expect(tight).toBeLessThanOrEqual(at * 1.1 + 1e-6);
+    expect(tight).toBeLessThanOrEqual(at * (1 + stepCap(at)) + 1e-6);
     expect(gradedUp(at, 2, 1, { best: 1.95 })).toBeLessThanOrEqual(tight);
     expect(gradedUp(at, 2, 1, { ceil: 1.95 })).toBeLessThanOrEqual(tight);
     expect(gradedUp(at, 2, 1, { start: 1.4 })).toBeLessThanOrEqual(tight);
     for (const x of [tight, loose]) expect(MAELZEL).toContain(Math.round((x * 60) / 2));
   });
 
-  it('the challenge: +20 % low, +15 % mid, +12 % high, halfway to a known ceiling; the draw is fixed by its seed', () => {
-    expect(chalTarget(2, 0)).toBeCloseTo(2.4);
-    expect(chalTarget(4, 0)).toBeCloseTo(4.6);
-    expect(chalTarget(6, 0)).toBeCloseTo(6.72);
+  it('the challenge: beyond the largest step at its speed, halfway to a known ceiling; the draw is fixed by its seed', () => {
+    // owner 2026-11-27: beyond the largest normal step at that speed, relatively bigger when slow
+    for (const at of [2, 4, 6]) expect(chalTarget(at, 0)).toBeGreaterThan(at * (1 + stepCap(at)));
+    expect(chalTarget(2, 0) / 2).toBeGreaterThan(chalTarget(6, 0) / 6);
     expect(chalTarget(2, 3)).toBeCloseTo(2.5);
     expect(chalDraw(123456789, 7)).toBe(chalDraw(123456789, 7));
     const xs = Array.from({ length: 300 }, (_, k) => chalDraw(1764150000000, k));

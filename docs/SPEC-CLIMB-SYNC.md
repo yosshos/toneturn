@@ -194,3 +194,41 @@ An independent review found the following, and each is now built.
 - **The background sync never sets the screen's progress from a copy loaded outside the store's turn.** Merges reach the screen through `onMerged`. A sync asked for while one is running runs once more after it, including the push when the page hides.
 - **A missed challenge under the item's own best clean tempo is today's ceiling only.** The item keeps only ceilings above its best, which the merge would otherwise drop.
 - **Known and older than this change:** non-drill writers (results, rewards, sessions) read the progress before the store's turn, so two of them racing can still lose an XP or count update. Drill items are protected. Moving them to an update-function write is on the list.
+
+## 8. Owner 2026-11-27: the step is weighed by the cleanliness and by the starting speed (replaces §1's formula)
+
+> In the owner's words: "Clean at 60, I'd go up 20 %. Clean at 100, not necessarily straight 20 %."
+
+**The largest step at a speed.** `stepCap(nps) = 0.2 × (2 / nps)^1.16`, clamped between 3.5 % and 20 %. Measured in notes per second, so the note value counts:
+
+| Tempo | nps | Largest step |
+|---|---|---|
+| ♩60 quarters or ♪60 eighths | 1–2 | 20 % |
+| ♪100 eighths | 3.3 | ~11 % |
+| 16ths at ♩100 | 6.7 | ~5 % |
+| 8 nps and up | 8+ | ~4 % (3.5 % at the floor) |
+
+**How clean (`stepQuality`).** A continuous value from 0.15 to 1, no longer three bins. It covers:
+- the timing spread;
+- the evenness of each hand;
+- the hands-together gap.
+
+Each is measured against its limit. It is 1 at 40 % of the limit or better, and falls linearly to 0.15 at the limit. The weakest one counts.
+
+**The step.** `stepCap(at) × quality`, then:
+- halved within 10 % of the best, a ceiling or the target;
+- × 0.6 once today has climbed 25 %;
+- snapped to the metronome marks, at least one mark up.
+
+The same function now serves every stage, the speed stage included. `climbStep`, `speedStep` and `heightFactor` are removed.
+
+**The repeat rule.** "Never more than X over the last take of the same exercise" now uses `stepCap` too, replacing the flat 10 %.
+
+**The challenge** goes beyond the largest normal step at its speed: `1.6 × stepCap + 4 %`, or halfway to a known ceiling.
+
+| nps | Challenge jump |
+|---|---|
+| 2 | ~36 % |
+| 3 | ~24 % |
+| 5 | ~15 % |
+| 8 | ~10 % |

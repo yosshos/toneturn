@@ -12,7 +12,7 @@ import type { FamilyDef, LevelDef } from './generate';
 import { bandOfBpm, notesPerBeat, thresholds } from './analyze';
 import { hasRubato } from './rubato';
 import { newItem } from './ladder';
-import { bestCleanNps, CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, heightFactor, kindClean, kindOf, kindPlayed, lastCleanNps, LOOSE_STEP, MAELZEL, markStage, markUp, MAX_JUMP, passedElsewhere, playOf, SHARE, snapDown, snapNear, speedStep, stageDrill, stagePassed, STEP_UP, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
+import { bestCleanNps, CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, MAELZEL, markStage, markUp, passedElsewhere, playOf, SHARE, snapDown, snapNear, stageDrill, stagePassed, stepCap, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
 import { line, PHRASES, tempoText, type CoachLine, type LinePart, type PhraseId, type T2 } from './coachPhrases';
 import type { CoachBackground, CoachNext, CoachState, CoachTake, FreeOk } from './coach';
 import { easyTake } from './coach';
@@ -141,15 +141,19 @@ function bestsAt(fam: FamilyDef, items: Record<string, ItemState>): Record<strin
   return out;
 }
 
-/** SPEC-CLIMB-SYNC §1: how well a clean take was played — 1 tidy and tight, 0.6 within 0.8 of the timing limit, 0.3 looser. */
+/**
+ * How clean a clean take was, 0.15 ... 1 (owner 2026-11-27: the step is weighed by it, continuously): the timing spread,
+ * the evenness and the hands against their limits - 1 at 40 % of the limit or better, down to 0.15 at the limit; the
+ * weakest of them counts. 0 for a take that wasn't clean.
+ */
 export function stepQuality(m: TakeMetrics, drill: Drill): number {
   if (m.verdict !== 'clean') return 0;
   const th = thresholds(bandOfBpm(drill, m.bpm || drill.startBpm));
-  const sd = m.timingSD;
-  const tidy = (m.wrong ?? 0) === 0 && (m.hesitations ?? 0) === 0 && (m.handsAbs === null || m.handsAbs === undefined || m.handsAbs <= 0.6 * th.hands);
-  if (tidy && sd !== null && sd !== undefined && sd <= 0.5 * th.sd) return 1;
-  if (sd !== null && sd !== undefined && sd <= 0.8 * th.sd) return 0.6;
-  return 0.3;
+  const score = (x: number | null | undefined, lim: number) => (x === null || x === undefined || !(lim > 0) ? 1 : Math.max(0.15, Math.min(1, 1 - ((x / lim - 0.4) / 0.6) * 0.85)));
+  const cv = Math.max(m.cvR ?? 0, m.cvL ?? 0);
+  let q = Math.min(score(m.timingSD, th.sd), score(m.handsAbs, th.hands), score(cv > 0 ? cv : null, th.cv));
+  if ((m.hesitations ?? 0) > 0 || (m.wrong ?? 0) > 0) q = Math.min(q, 0.3);
+  return Math.round(q * 100) / 100;
 }
 
 const CEIL_MS = 30 * 86_400_000;
@@ -162,23 +166,30 @@ function ceilOf(c: CoachState, d: Drill, items: Record<string, ItemState>, now: 
 }
 
 /**
- * SPEC-CLIMB-SYNC §1: the next pulse after a clean take — at × (1 + 0.08 × quality × height × near × fresh), on the
- * marks at note value `per`: at least one mark up, never more than 10 %.
+ * The next pulse after a clean take (owner 2026-11-27; SPEC-CLIMB-SYNC §1): at x (1 + stepCap(at) x quality x near x
+ * fresh) - the speed it started from and how clean it was, together - on the metronome marks at note value `per`: at
+ * least one mark up, never more than stepCap(at), never past `target` (halved within 10 % of it, of the best or of a
+ * ceiling; x 0.6 once today climbed 25 %).
  */
-export function gradedUp(at: number, per: number, q: number, o: { best?: number; ceil?: number; start?: number }): number {
-  let p = 0.08 * q * heightFactor(at);
+export function gradedUp(at: number, per: number, q: number, o: { best?: number; ceil?: number; start?: number; target?: number }): number {
+  const capPct = stepCap(at);
+  let p = capPct * Math.max(0, Math.min(1, q));
   const raw = at * (1 + p);
   const near = (ref?: number) => !!ref && ref > 0 && Math.abs(raw - ref) / ref <= 0.1;
   if (near(o.best)) p *= 0.5;
   if (near(o.ceil)) p *= 0.5;
+  if (near(o.target)) p *= 0.5;
   if (o.start && at >= o.start * 1.25) p *= 0.6;
+  const want = at * (1 + p);
+  if (o.target && want >= o.target - 1e-9) return o.target;
   const cur = (at * 60) / per;
-  const top = (at * (1 + p) * 60) / per;
-  const cap = (at * MAX_JUMP * 60) / per;
+  const top = (want * 60) / per;
+  const cap = (at * (1 + capPct) * 60) / per;
   const under = MAELZEL.filter((g) => g > cur + 0.5 && g <= Math.min(top, cap) + 1e-9);
   let g = under.length ? under[under.length - 1] : MAELZEL.find((x) => x > cur + 0.5);
   if (g === undefined || g > cap + 1e-9) g = Math.min(cap, cur * 1.03);
-  return Math.round(((g * per) / 60) * 100) / 100;
+  const out = Math.round(((g * per) / 60) * 100) / 100;
+  return o.target ? Math.min(o.target, out) : out;
 }
 
 /** SPEC-CLIMB-SYNC §2.2: a deterministic draw in [0, 1) from the session start and the take number. */
@@ -188,10 +199,12 @@ export function chalDraw(startedAt: number, takes: number): number {
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
-/** SPEC-CLIMB-SYNC §2.3: the challenge's pulse — +20 % / 15 % / 12 % by height, or halfway to a known ceiling above. */
+/** SPEC-CLIMB-SYNC §2.3 (owner 2026-11-27): the challenge's pulse - well beyond the largest normal step at this speed
+ *  (1.6 x stepCap + 4 %: ~36 % at 2 nps, ~24 % at 3, ~15 % at 5, ~10 % at 8), or halfway to a known ceiling above that. */
 export function chalTarget(at: number, ceil: number): number {
-  if (ceil > at * 1.12) return (at + ceil) / 2;
-  return at * (1 + (at < 3 ? 0.2 : at <= 5 ? 0.15 : 0.12));
+  const jump = 1.6 * stepCap(at) + 0.04;
+  if (ceil > at * (1 + jump * 0.7)) return (at + ceil) / 2;
+  return at * (1 + jump);
 }
 export const CHAL_GAP = 6;
 export const CHAL_P = 1 / 3;
@@ -256,7 +269,7 @@ function setPulse(fam: FamilyDef, c: CoachState, nps: number, per?: number, noCa
   if (p > 1 && s.sub && (nps * 60) / p < MIN_BPM - 0.5 && notesPerBeat(d) >= 1.99) p = (nps * 60) / 2 >= MIN_BPM - 0.5 ? 2 : 1;
   let bpm = Math.max(MIN_BPM, snapDown((nps * 60) / p + 0.5));
   const last = ks.lastBy[capKeyOf(d, s)] ?? 0;
-  if (last > 0 && !noCap) while (npsOf(bpm, p) > last * MAX_JUMP + 1e-9 && gridBelow(bpm) >= MIN_BPM) bpm = gridBelow(bpm);
+  if (last > 0 && !noCap) while (npsOf(bpm, p) > last * (1 + stepCap(last)) + 1e-9 && gridBelow(bpm) >= MIN_BPM) bpm = gridBelow(bpm);
   if (bpm !== ks.bpm || p !== ks.per) ks.stepTakes = 0;
   ks.per = p;
   ks.bpm = bpm;
@@ -602,20 +615,6 @@ export function ksTake(fam: FamilyDef, c: CoachState, _items: Record<string, Ite
   if (ks.free && freeOk(drill) && hasRubato(drill)) return { ...base, stage: 'free', bpm: drill.startBpm };
   const nps = npsOf(ks.bpm, ks.per);
   return { ...base, stage: null, bpm: Math.max(20, Math.round((nps * 60) / notesPerBeat(drill))), play: { per: ks.per, bpm: ks.bpm }, nps };
-}
-
-/**
- * The size of a tempo step on the speed stage (owner 2026-11-25): by how well the clean take was played — no wrong notes,
- * no stops and the timing SD within half the band's limit: +10 % (MAX_JUMP); within 0.8 of it: +6 %; looser: +3 %.
- */
-export function climbStep(m: TakeMetrics, drill: Drill): number {
-  if (m.verdict !== 'clean') return 1;
-  const th = thresholds(bandOfBpm(drill, m.bpm || drill.startBpm));
-  const sd = m.timingSD;
-  const tidy = (m.wrong ?? 0) === 0 && (m.hesitations ?? 0) === 0;
-  if (tidy && sd !== null && sd !== undefined && sd <= 0.5 * th.sd) return MAX_JUMP;
-  if (sd !== null && sd !== undefined && sd <= 0.8 * th.sd) return STEP_UP;
-  return LOOSE_STEP;
 }
 
 /** The speed stage alternates eighths and triplet eighths (owner 2026-11-25): items in eighths, once played in eighths. */
@@ -1049,17 +1048,13 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
           specPassed();
           if (!leave && dir[0] !== 'target') dir = ['target', ...dir];
         } else {
-          // SPEC-CLIMB-SYNC §1: the graded step, slower once today climbed 25 % and near a known ceiling
-          let q0 = climbStep(m, d);
-          const st0 = ks.dayStart?.[s.rung];
-          if (st0 && at >= st0 * 1.25) q0 = 1 + (q0 - 1) * 0.6;
-          const cl = ceilOf(c, d, items, now);
-          if (cl && Math.abs(at * q0 - cl) / cl <= 0.1) q0 = 1 + (q0 - 1) * 0.5;
-          const q = q0;
+          // owner 2026-11-27 (SPEC-CLIMB-SYNC §1): one graded step for every stage - how clean, from what speed, near the
+          // best / a ceiling / the target, after today's climb
+          const guess = at * (1 + stepCap(at) * q);
           // U7, B2: triplets only after an eighths take and at ♩40 or more
-          let nextPer = canTrip(d, s) && (per === 2 || per === 3) ? (per === 2 ? 3 : 2) : playOf(d, at * q, s.sub, ks.eighths.includes(comfortKey(d))).per;
-          if (nextPer === 3 && (at * q * 60) / 3 < MIN_BPM - 0.5) nextPer = 2;
-          const nps = speedStep(at, q, { per: nextPer, target: ks.target, best: ks.prior });
+          let nextPer = canTrip(d, s) && (per === 2 || per === 3) ? (per === 2 ? 3 : 2) : playOf(d, guess, s.sub, ks.eighths.includes(comfortKey(d))).per;
+          if (nextPer === 3 && (guess * 60) / 3 < MIN_BPM - 0.5) nextPer = 2;
+          const nps = gradedUp(at, nextPer, q, { best: Math.max(ks.prior, ks.bestAt?.[ckey] ?? 0) || undefined, ceil: ceilOf(c, d, items, now), start: ks.dayStart?.[s.rung], target: ks.target });
           const from = c.spec;
           if (rotating) {
             // #6: this item's own tempo rises one step; the next item plays at its own

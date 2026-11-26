@@ -1,43 +1,66 @@
-// The speed stage's tempo step (owner 2026-11-25): quality × height × near-best, on the Maelzel marks.
+// The tempo step (owner 2026-11-27): weighed by how clean the take was AND the speed it started from — "clean at 60, up
+// 20 %; clean at 100, not straight 20 %" — continuous in both, on the Maelzel marks.
 import { describe, expect, it } from 'vitest';
-import { heightFactor, MAELZEL, speedStep } from '../src/engine/drills/stages';
+import { MAELZEL, stepCap } from '../src/engine/drills/stages';
+import { chalTarget, gradedUp, stepQuality } from '../src/engine/drills/keyCoach';
+import { generate } from '../src/engine/drills/generate';
+import type { DrillSpec, TakeMetrics } from '../src/engine/drills/types';
 
 const bpmOf = (nps: number, per: number) => Math.round((nps * 60) / per);
 
-describe('speedStep', () => {
-  it('the height factor: whole below 3 nps, ¾ from 3 to 5, ½ above 5', () => {
-    expect(heightFactor(2)).toBe(1);
-    expect(heightFactor(4)).toBe(0.75);
-    expect(heightFactor(6)).toBe(0.5);
+describe('stepCap: the largest step falls with the speed', () => {
+  it('20 % at 60 (quarters or eighths), less at 100 eighths, little at fast sixteenths', () => {
+    expect(stepCap(1)).toBeCloseTo(0.2); // ♩60 quarters
+    expect(stepCap(2)).toBeCloseTo(0.2); // ♩60 eighths
+    expect(stepCap(100 * 2 / 60)).toBeLessThan(0.13); // ♩100 eighths ≈ 11 %
+    expect(stepCap(100 * 2 / 60)).toBeGreaterThan(0.09);
+    expect(stepCap(100 * 4 / 60)).toBeLessThan(0.06); // ♩100 sixteenths ≈ 5 %
+    expect(stepCap(12)).toBe(0.035);
+    for (let n = 1; n < 10; n += 0.5) expect(stepCap(n + 0.5)).toBeLessThanOrEqual(stepCap(n));
   });
-  it('slow: a near-perfect take climbs up to 10 % to a Maelzel mark', () => {
-    const at = (100 * 1) / 60; // quarters ♩100
-    const n = speedStep(at, 1.1, { per: 1, target: 5 });
-    expect(MAELZEL).toContain(bpmOf(n, 1));
-    expect(bpmOf(n, 1)).toBe(108);
-    expect(n / at).toBeLessThanOrEqual(1.1);
+});
+
+describe('gradedUp: quality × starting speed', () => {
+  it('a perfect take at ♩60 eighths climbs ~20 %; the same take at ♩100 eighths ~11 %', () => {
+    const slow = gradedUp(2, 2, 1, {});
+    const fast = gradedUp(100 * 2 / 60, 2, 1, {});
+    expect(slow / 2).toBeGreaterThan(1.15);
+    expect(slow / 2).toBeLessThanOrEqual(1.2 + 1e-6);
+    expect(fast / (100 * 2 / 60)).toBeLessThan(1.13);
+    expect(MAELZEL).toContain(bpmOf(slow, 2));
+    expect(MAELZEL).toContain(bpmOf(fast, 2));
   });
-  it('fast: the same take climbs less (eighths ♩144 = 4.8 nps → one mark)', () => {
-    const at = (144 * 2) / 60;
-    const n = speedStep(at, 1.1, { per: 2, target: 9 });
-    expect(bpmOf(n, 2)).toBe(152);
-    expect(n / at).toBeLessThanOrEqual(1 + 0.1 * 0.75 + 1e-9);
+  it('the cleaner the take, the bigger the step — continuously; a barely-clean take still one mark', () => {
+    const at = 2;
+    const steps = [0.15, 0.4, 0.7, 1].map((q) => gradedUp(at, 2, q, {}));
+    for (let k = 1; k < steps.length; k++) expect(steps[k]).toBeGreaterThanOrEqual(steps[k - 1]);
+    expect(steps[3]).toBeGreaterThan(steps[0]);
+    expect(bpmOf(steps[0], 2)).toBe(63);
   });
-  it('near the best: the step halves (but still at least one mark up)', () => {
-    const at = 100 / 60;
-    const far = speedStep(at, 1.1, { per: 1, target: 9 });
-    const near = speedStep(at, 1.1, { per: 1, target: 9, best: 110 / 60 });
-    expect(bpmOf(far, 1)).toBe(108);
-    expect(bpmOf(near, 1)).toBe(104);
+  it('slower near the best, a ceiling, the target; never past the target', () => {
+    const free = gradedUp(2, 2, 1, {});
+    expect(gradedUp(2, 2, 1, { best: 2.35 })).toBeLessThan(free);
+    expect(gradedUp(2, 2, 1, { ceil: 2.35 })).toBeLessThan(free);
+    expect(gradedUp(2, 2, 1, { target: 2.1 })).toBeCloseTo(2.1);
   });
-  it('a loose take still moves one mark; never past the target; hold = no move', () => {
-    const at = (96 * 2) / 60;
-    expect(bpmOf(speedStep(at, 1.03, { per: 2, target: 9 }), 2)).toBe(100);
-    expect(speedStep(at, 1.1, { per: 2, target: at * 1.02 })).toBeCloseTo(at * 1.02, 6);
-    expect(speedStep(at, 1, { per: 2, target: 9 })).toBe(at);
+});
+
+describe('stepQuality: continuous in the timing, the evenness and the hands', () => {
+  const d = generate({ family: 'scales', kind: 'scale', key: 0, hands: 'RL', octaves: 2 } as DrillSpec);
+  const m = (sd: number, extra: Partial<TakeMetrics> = {}) => ({ verdict: 'clean', bpm: 80, timingSD: sd, handsAbs: null, cvR: null, cvL: null, wrong: 0, hesitations: 0, ...extra }) as unknown as TakeMetrics;
+  it('tight → 1, at the limit → 0.15, in between in order; the weakest measure counts', () => {
+    const q = [5, 12, 18, 24, 29].map((sd) => stepQuality(m(sd), d));
+    expect(q[0]).toBe(1);
+    for (let k = 1; k < q.length; k++) expect(q[k]).toBeLessThanOrEqual(q[k - 1]);
+    expect(q[4]).toBeGreaterThanOrEqual(0.15);
+    expect(stepQuality(m(5, { handsAbs: 28 }), d)).toBeLessThan(0.4);
+    expect(stepQuality({ ...m(5), verdict: 'almost' } as TakeMetrics, d)).toBe(0);
   });
-  it('triplets: the ♩ sits on a mark too', () => {
-    const at = (66 * 3) / 60;
-    expect(MAELZEL).toContain(bpmOf(speedStep(at, 1.06, { per: 3, target: 9 }), 3));
+});
+
+describe('the challenge goes beyond the largest normal step at every speed', () => {
+  it('chalTarget > gradedUp(perfect) and scales with the speed', () => {
+    for (const at of [1.5, 2, 3, 5, 8]) expect(chalTarget(at, 0)).toBeGreaterThan(at * (1 + stepCap(at)));
+    expect(chalTarget(2, 0) / 2).toBeGreaterThan(chalTarget(8, 0) / 8);
   });
 });
