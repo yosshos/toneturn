@@ -19,8 +19,6 @@ import { CHALLENGES_ON } from '../cloud/challenges';
 import { GiftInboxCard } from './encore/Gifts';
 import { Icon } from './icons';
 import { ActivityFeed, FriendQuest, PlayerSafety } from './Community';
-import { myClasses, type MyClasses } from '../cloud/classes';
-import { MyClassesStrip } from './Classes';
 import { effectivePrivacy } from '../engine/privacy';
 import { postActivity } from '../cloud/community';
 import { appHome, friendInviteText, friendLink, pendingFriend, shareOut, takeFriendFlash } from '../engine/shareLinks';
@@ -80,15 +78,6 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
   const cdef = courseOf(course);
   const [scope, setScope] = useState<'all' | 'course'>('all');
   type Tab = 'friends' | 'activity' | 'league' | 'duels' | 'class';
-  const [myCls, setMyCls] = useState<MyClasses | null>(null);
-  useEffect(() => {
-    if (!user) return;
-    let alive = true;
-    void myClasses().then((c) => alive && setMyCls(c), () => {});
-    return () => {
-      alive = false;
-    };
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const priv = effectivePrivacy(settings.privacy, settings.birthYear);
   const [tab, setTab] = useState<Tab>(() => {
     try {
@@ -158,7 +147,6 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           </section>
 
           {/* owner 2026-11-26: the class you are in (and the teacher) shows at the top of Community; a tap opens the tab */}
-          {classes && tab !== 'class' && <MyClassesStrip data={myCls} lang={lang} onOpen={() => (pickTab('class'), requestAnimationFrame(() => document.querySelector('.fr-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })))} />}
           {profileErr && <p className="field-hint warn">{profileErr}</p>}
           {CHALLENGES_ON() && (
             <span className="row fr-chl-row">

@@ -18,21 +18,21 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
-    version: '0.145.0',
+    version: '0.145.1',
     date: '2026-11-26',
     en: [
       'Teachers: send an assignment to one student or to the whole class, edit it after sending, archive it, and get a new join code. A studio for private students, who never see each other',
       'Teachers: a lesson day and a private note for each student, which only the teacher sees',
       "When the teacher marks a take 'again', the assignment opens again for the student",
       'Joining a class asks how the teacher should call you, and a year of birth if it is missing',
-      'Class page: a clearer parent link, no repeated assignment list, and the class board numbers spelled out',
+      'Class page: a clearer parent link, no repeated assignment list, and the class board numbers spelled out. The class card shows once, in the Class tab',
     ],
     he: [
       'מורים: משימה לתלמיד אחד או לכל הכיתה, עריכה אחרי השליחה, ארכיון, וקוד הצטרפות חדש. סטודיו לתלמידים פרטיים, שלא רואים זה את זה',
       'מורים: יום שיעור והערה פרטית לכל תלמיד, שרק המורה רואה',
       "כשהמורה מסמן 'שוב', המשימה נפתחת מחדש אצל התלמיד",
       'הצטרפות לכיתה שואלת איך המורה יקרא לך, ושנת לידה אם חסרה',
-      'דף הכיתה: קישור הורים ברור יותר, בלי רשימת משימות כפולה, ומספרי לוח הכיתה עם מילים',
+      'דף הכיתה: קישור הורים ברור יותר, בלי רשימת משימות כפולה, ומספרי לוח הכיתה עם מילים. כרטיס הכיתה מופיע פעם אחת, בלשונית "כיתה"',
     ],
   },
   {
