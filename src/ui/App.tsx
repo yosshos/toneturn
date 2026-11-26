@@ -4385,7 +4385,7 @@ export function App() {
               updateSettings({ reminderHour: h });
               if (!user) return 'signin';
               try {
-                const st = await enablePush(s.outputLang, h);
+                const st = await enablePush(s.uiLang, h); // the screen's language (outputLang is the narration voice)
                 return st === 'on' ? 'on' : st === 'denied' ? 'denied' : 'unsupported';
               } catch {
                 return 'error';

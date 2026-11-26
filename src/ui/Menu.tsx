@@ -125,7 +125,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
                   onChange={(e) => {
                     const h = Number(e.target.value);
                     onSettings({ reminderHour: h });
-                    if (push === 'on') void updatePushPrefs(settings.outputLang, h);
+                    if (push === 'on') void updatePushPrefs(settings.uiLang, h);
                   }}
                 >
                   {Array.from({ length: 24 }, (_, h) => (
@@ -142,7 +142,7 @@ export function MenuSheet({ t, settings, user, onClose, onNavigate, onSettings, 
                   onClick={async () => {
                     setBusy(true);
                     try {
-                      setPush(await enablePush(settings.outputLang, settings.reminderHour));
+                      setPush(await enablePush(settings.uiLang, settings.reminderHour));
                     } catch {
                       setPush(await pushStatus());
                     }
