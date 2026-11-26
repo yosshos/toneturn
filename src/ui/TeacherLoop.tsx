@@ -8,7 +8,7 @@ import { topicVerified } from '../engine/verifiedContent';
 import { useEffect, useMemo, useState } from 'react';
 import type { TeachingClass } from '../cloud/classes';
 import { EXTRA_ASSIGNABLE } from '../cloud/classes';
-import { assignItem, setAssignOpts, type AssignChannel, commentOn, createDigestLink, inboxOf, parseTopicRef, passed, readDigest, revokeDigestLink, type AssignItem, type AssignKind, type ClassDetail, type Digest, type Mark, type Strictness } from '../cloud/teacher';
+import { wasUpdated, assignState, assignItem, setAssignOpts, type AssignChannel, commentOn, createDigestLink, inboxOf, parseTopicRef, passed, readDigest, revokeDigestLink, type AssignItem, type AssignKind, type ClassDetail, type Digest, type Mark, type Strictness } from '../cloud/teacher';
 import { IMPROV_LEVELS } from '../engine/charts';
 import { CHALLENGES, CHALLENGE_GROUPS, type Challenge } from '../engine/improvRules';
 import { STANDARD_CHANGES } from '../engine/standards';
@@ -48,7 +48,7 @@ const TX = {
     inbox: 'To grade', inboxEmpty: 'Nothing new to grade.', score: 'score', min: 'min', commentPh: 'A short comment…', great: 'Great', good: 'Good', again: 'Again', send: 'Send',
     heat: 'Class map', heatHint: 'First-try accuracy per skill, 30 days · practice minutes this week', behind: 'behind', minutes: 'min 7d',
     mine: 'Your assignments', progressOf: 'Items closed', open: 'Open', teacherSays: 'Teacher', sent: 'Sent', pass: 'passed', try: 'not yet',
-    parent: 'Parent link', parentHint: 'A private page for a parent: this week’s practice, streak, skills mastered and the teacher’s latest comments. No sign-in needed; you can turn it off.', make: 'Make a link', copy: 'Copy', revoke: 'Turn off', copied: 'Copied',
+    parent: 'Parent link', parentHint: 'A page for your parent showing how you are doing: this week’s practice, your streak, what you have mastered and your teacher’s comments. No account needed. You can turn the link off at any time.', make: 'Make a link for a parent', copy: 'Copy', revoke: 'Turn off', copied: 'Copied',
   },
   he: {
     phrase: 'משפט (לנגן)', phraseOpen: 'לנגן ולהטיל משפט', auto: 'נבדק אוטומטית', autoHint: 'כל סולם שתלמיד עובר נבדק לפי הקפדנות; נגיעה בסימן משנה את הציון.', override: 'לשנות',
@@ -59,7 +59,7 @@ const TX = {
     inbox: 'לבדיקה', inboxEmpty: 'אין הגשות חדשות.', score: 'ציון', min: 'דק׳', commentPh: 'הערה קצרה…', great: 'מצוין', good: 'טוב', again: 'שוב', send: 'לשלוח',
     heat: 'מפת הכיתה', heatHint: 'דיוק בניסיון ראשון לכל מיומנות, 30 יום · דקות אימון השבוע', behind: 'מאחר בקצב', minutes: 'דק׳ 7 ימים',
     mine: 'המשימות שלך', progressOf: 'פריטים שנסגרו', open: 'לפתוח', teacherSays: 'המורה', sent: 'הוגש', pass: 'עבר', try: 'עוד לא',
-    parent: 'קישור להורים', parentHint: 'דף פרטי להורה: האימון השבוע, הרצף, מיומנויות שנשלטו וההערות האחרונות של המורה. בלי התחברות; אפשר לכבות.', make: 'ליצור קישור', copy: 'להעתיק', revoke: 'לכבות', copied: 'הועתק',
+    parent: 'קישור להורים', parentHint: 'דף להורה שמראה איך הולך לכם: האימון השבוע, הרצף, מה כבר שולט, והערות המורה. ההורה לא צריך חשבון. אפשר לכבות את הקישור בכל רגע.', make: 'ליצור קישור להורה', copy: 'להעתיק', revoke: 'לכבות', copied: 'הועתק',
   },
 };
 
@@ -110,8 +110,10 @@ export function itemTitle(a: Pick<AssignItem, 'kind' | 'lessonId' | 'ref'>, lang
 
 // ---------------------------------------------------------------- teacher: assign
 
-export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset }: { classId: string; lang: Lang; t: Strings; busy: boolean; onAssigned: () => void; onError: (e: string) => void; /** SPEC-PATH-TODAY-PRACTICE §5.2: assigned from an item's own page — the item is fixed (no "what" pickers). */ preset?: { kind: AssignKind; ref: string } }) {
+export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset, students }: { classId: string; lang: Lang; t: Strings; busy: boolean; onAssigned: () => void; onError: (e: string) => void; /** SPEC-PATH-TODAY-PRACTICE §5.2: assigned from an item's own page — the item is fixed (no "what" pickers). */ preset?: { kind: AssignKind; ref: string }; /** SPEC-TEACHER-CLASS 1a: the class's students, to send to one of them. */ students?: { userId: string; name: string }[] }) {
   const tx = TX[lang];
+  const [to, setTo] = useState('');
+  useEffect(() => setTo(''), [classId]);
   const [kindPick, setKind] = useState<AssignKind>('topic');
   const kind = preset?.kind ?? kindPick;
   const [lesson, setLesson] = useState<string>(LESSON_ORDER[0]);
@@ -146,9 +148,10 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   const can = !!preset || kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
-      const id = await assignItem({ classId, kind, lessonId: kind === 'lesson' ? lesson : null, ref, dueOn: due || null, strictness: strict, targetBpm: bpm ? Number(bpm) : null, note });
+      const id = await assignItem({ classId, kind, lessonId: kind === 'lesson' ? lesson : null, ref, dueOn: due || null, strictness: strict, targetBpm: bpm ? Number(bpm) : null, note, studentId: to || null });
       if (id) await setAssignOpts(id, { channel, minutes: perDay ? Math.max(1, Math.min(180, Number(perDay))) : null, ifShort });
       setNote('');
+      setTo('');
       onAssigned();
     } catch (e) {
       onError(String((e as Error).message));
@@ -157,6 +160,19 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   const nT = TOPIC_GEN[topic]?.levels.length ?? 1;
   return (
     <div className="assign-form2" data-assign-form="1">
+      {students && students.length > 0 && (
+        <label className="af-row">
+          <span>{lang === 'he' ? 'למי' : 'To'}</span>
+          <select value={to} onChange={(e) => setTo(e.target.value)} data-assign-to="1">
+            <option value="">{lang === 'he' ? 'כל הכיתה' : 'The whole class'}</option>
+            {students.map((x) => (
+              <option key={x.userId} value={x.userId}>
+                {x.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {!preset && (<>
       <label className="af-row">
         <span>{tx.kind}</span>
@@ -541,24 +557,32 @@ export function MyAssignmentsList({ items, lang, t, onOpen, fresh }: { items: As
       <ul className="assign-list">
         {items.map((a) => {
           const last = a.submissions[0];
-          const ok = last ? passed(a, last) : false;
+          const st = assignState(a);
+          const ok = st === 'passed';
           const said = a.submissions.find((s) => s.comment || s.mark);
+          const he = lang === 'he';
           return (
-            <li key={a.id} className={ok ? 'done' : ''}>
+            <li key={a.id} className={ok ? 'done' : st === 'again' ? 'again' : ''} data-assign-state={st}>
               <div className="ma-main">
                 <b>
                   {itemTitle(a, lang, t)}
-                  {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
+                  {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{he ? 'חדש' : 'New'}</span>}
+                  {a.personal && <span className="tag-mark" data-personal="1">{he ? 'רק לך' : 'Just for you'}</span>}
+                  {wasUpdated(a) && <span className="tag-mark">{he ? 'עודכן' : 'Updated'}</span>}
                 </b>
+                {st === 'again' && <small className="ma-again" data-again="1">{he ? 'המורה ביקש לנגן שוב. ההגשה הבאה נבדקת מחדש.' : 'Your teacher asked for another take. The next one is checked again.'}</small>}
                 <small>
                   {a.className}
                   {a.targetBpm ? ` · ♩=${a.targetBpm}` : ''}
                   {a.dueOn ? ` · ${t.dueLabel} ${a.dueOn}` : ''}
-                  {last ? ` · ${tx.sent} ${Math.round((last.score ?? 0) * 100)}% (${ok ? tx.pass : tx.try})` : ''}
+                  {last && st !== 'again' ? ` · ${tx.sent} ${Math.round((last.score ?? 0) * 100)}% (${ok ? tx.pass : tx.try})` : ''}
                 </small>
                 {a.note && <small className="ma-note">{a.note}</small>}
                 {/* SPEC-PROGRESS-CHARTS §3 (phase 8): the assignment's burn-up — items closed against the due date */}
-                {a.kind !== 'focus' && a.kind !== 'piece' && <BurnUpRow b={burnup(a, localDay(new Date()))} kind={a.kind} title={tx.progressOf} lang={lang} />}
+                {a.kind !== 'focus' && a.kind !== 'piece' && (() => {
+                  const b = burnup(a, localDay(new Date()));
+                  return b.total > 1 ? <BurnUpRow b={b} kind={a.kind} title={tx.progressOf} lang={lang} /> : null;
+                })()}
                 {said && (
                   <small className="ma-teacher">
                     {tx.teacherSays}: {said.mark ? `${tx[said.mark]} — ` : ''}

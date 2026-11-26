@@ -153,7 +153,8 @@ describe("the teacher's alerts with their small charts (§4.1)", () => {
     expect(ui).not.toMatch(/linearGradient|radialGradient|drop-shadow|[\u{1F300}-\u{1FAFF}]/u);
     expect(src('ui/ClassCharts.tsx')).toContain('<AlertCards alerts={alertsOf(st.snaps, today)}');
     expect(src('ui/ClassCharts.tsx')).toContain('burnup(a, today, st.id)');
-    expect(src('ui/TeacherLoop.tsx')).toContain('<BurnUpRow b={burnup(a, localDay(new Date()))}');
+    expect(src('ui/TeacherLoop.tsx')).toContain('const b = burnup(a, localDay(new Date()));');
+    expect(src('ui/TeacherLoop.tsx')).toContain('b.total > 1 ? <BurnUpRow b={b}');
   });
 });
 

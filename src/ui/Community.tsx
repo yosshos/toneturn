@@ -492,6 +492,9 @@ export function ClassBoardCard({ lang, classId, teacher }: { lang: Lang; classId
   useEffect(load, [load]);
   if (b === 'loading' || b === null) return null;
   const goal = b.goal;
+  // a student with the board kept private sees only the class goal (nothing at all without one)
+  if (!teacher && b.hidden && !goal) return null;
+  const rows = !teacher && b.hidden ? [] : b.rows;
   const ratio = goal ? Math.min(1, goal.progress / Math.max(1, goal.target)) : 0;
   return (
     <div className="cm-class" data-class-board={classId}>
@@ -508,15 +511,12 @@ export function ClassBoardCard({ lang, classId, teacher }: { lang: Lang; classId
       ) : teacher ? null : (
         <small className="field-hint">{L(lang, 'No class goal this week.', 'אין יעד כיתתי השבוע.')}</small>
       )}
-      {b.hidden && !teacher && <small className="field-hint">{L(lang, 'Your teacher keeps the board private. Your own week:', 'המורה שומר/ת את הלוח פרטי. השבוע שלכם:')}</small>}
-      {b.rows.length > 0 && (
+      {rows.length > 0 && (
         <ol className="cm-class-rows">
-          {b.rows.slice(0, teacher ? 8 : 5).map((r, i) => (
+          {rows.slice(0, teacher ? 8 : 5).map((r, i) => (
             <li key={`${r.name}-${i}`} className={r.me ? 'me' : ''}>
               <bdi>{r.name}</bdi>
-              <span dir="ltr">
-                {r.minutes}′ · {r.clean} · {r.days}d
-              </span>
+              <span>{L(lang, `${r.minutes} min · ${r.clean} clean · ${r.days} ${r.days === 1 ? 'day' : 'days'}`, `${r.minutes} דק׳ · ${r.clean} נקיות · ${r.days === 1 ? 'יום אחד' : `${r.days} ימים`}`)}</span>
             </li>
           ))}
         </ol>

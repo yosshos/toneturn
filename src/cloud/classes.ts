@@ -11,7 +11,7 @@ export interface Assignment {
   /**
    * SPEC-PATH-TODAY-PRACTICE §5.1 (owner): the work in minutes (absent: one lesson, workout2 ASSIGN_MIN), and what the
    * daily workout does when the assignments don't fit today's window — spread until the due date (the default, also
-   * when absent) or all today (today's window grows). Not stored on the server yet: the teacher's form adds them later.
+   * when absent) or all today (today's window grows). Stored in toneturn_assignment_opts (withAssignOpts merges them in).
    */
   minutes?: number;
   ifShort?: 'spread' | 'today';
@@ -32,16 +32,22 @@ export interface StudentRow {
   rating?: number | null;
   ratingProvisional?: boolean;
 }
+/** SPEC-TEACHER-CLASS §4.1: a studio (private students: no peer layer) or a group (a class, a combo). */
+export type ClassKind = 'studio' | 'group';
 export interface TeachingClass {
   id: string;
   code: string;
   name: string;
+  kind: ClassKind;
+  /** The join code stops working after this (null: never). */
+  codeExpiresAt: string | null;
   assignments: (Assignment & { done: number })[];
   students: StudentRow[];
 }
 export interface MemberClass {
   id: string;
   name: string;
+  kind: ClassKind;
   teacher: string;
   assignments: (Assignment & { done: boolean })[];
 }
@@ -84,18 +90,20 @@ export function withAssignOpts<A extends Assignment>(as: A[], opts: Record<strin
 }
 
 export function classesFromRaw(r: {
-  teaching: { id: string; code: string; name: string; assignments: (RawA & { done: number })[]; students: { user_id: string; name: string; lessons_done: number; week_xp: number; streak: number; last_active: string | null; skills: Record<string, { n: number; correct: number }>; rating?: number | null; rating_provisional?: boolean | null }[] }[];
-  member_of: { id: string; name: string; teacher: string; assignments: (RawA & { done: boolean })[] }[];
+  teaching: { id: string; code: string; name: string; kind?: ClassKind; code_expires_at?: string | null; assignments: (RawA & { done: number })[]; students: { user_id: string; name: string; lessons_done: number; week_xp: number; streak: number; last_active: string | null; skills: Record<string, { n: number; correct: number }>; rating?: number | null; rating_provisional?: boolean | null }[] }[];
+  member_of: { id: string; name: string; kind?: ClassKind; teacher: string; assignments: (RawA & { done: boolean })[] }[];
 }): MyClasses {
   return {
     teaching: r.teaching.map((c) => ({
       id: c.id,
       code: c.code,
       name: c.name,
+      kind: c.kind ?? 'group',
+      codeExpiresAt: c.code_expires_at ?? null,
       assignments: c.assignments.map((a) => ({ ...asA(a), done: Number(a.done) })),
       students: c.students.map((s) => ({ userId: s.user_id, name: s.name, lessonsDone: Number(s.lessons_done), weekXp: Number(s.week_xp), streak: Number(s.streak ?? 0), lastActive: s.last_active, skills: s.skills ?? {}, rating: s.rating ?? null, ratingProvisional: !!s.rating_provisional })),
     })),
-    memberOf: r.member_of.map((c) => ({ id: c.id, name: c.name, teacher: c.teacher, assignments: c.assignments.map((a) => ({ ...asA(a), done: !!a.done })) })),
+    memberOf: r.member_of.map((c) => ({ id: c.id, name: c.name, kind: c.kind ?? 'group', teacher: c.teacher, assignments: c.assignments.map((a) => ({ ...asA(a), done: !!a.done })) })),
   };
 }
 
@@ -112,8 +120,13 @@ async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T
 }
 
 export const myClasses = async () => classesFromRaw(await rpc('toneturn_my_classes'));
-export const createClass = async (name: string) => (await rpc<{ id: string; code: string }[]>('toneturn_class_create', { p_name: name }))[0];
-export const joinClass = (code: string) => rpc<string>('toneturn_class_join', { p_code: code });
+export const createClass = async (name: string, kind: ClassKind = 'group') => (await rpc<{ id: string; code: string }[]>('toneturn_class_create', { p_name: name, p_kind: kind }))[0];
+/** Join with a code. The server asks for a year of birth when the profile has none ('birth year needed'), and keeps
+ *  the name the student chose for the teacher. */
+export const joinClass = (code: string, p: { name?: string | null; birthYear?: number | null } = {}) =>
+  rpc<string>('toneturn_class_join', { p_code: code, p_name: p.name ?? null, p_birth_year: p.birthYear ?? null });
+/** A new join code; expires: true = 14 days, false = never, undefined = by kind (a group 14 days, a studio never). */
+export const newClassCode = (id: string, expires?: boolean) => rpc<string>('toneturn_class_new_code', { p_class: id, p_expires: expires ?? null });
 export const leaveClass = (id: string) => rpc<void>('toneturn_class_leave', { p_class: id });
 export const deleteClass = (id: string) => rpc<void>('toneturn_class_delete', { p_class: id });
 export const assignLesson = (classId: string, lessonId: string, dueOn: string | null) => rpc<string>('toneturn_class_assign', { p_class: classId, p_lesson: lessonId, p_due: dueOn });

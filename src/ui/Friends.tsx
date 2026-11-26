@@ -158,7 +158,7 @@ export function FriendsScreen({ t, user: realUser, sync, onBack, settings, onBes
           </section>
 
           {/* owner 2026-11-26: the class you are in (and the teacher) shows at the top of Community; a tap opens the tab */}
-          {classes && <MyClassesStrip data={myCls} lang={lang} onOpen={() => (pickTab('class'), requestAnimationFrame(() => document.querySelector('.fr-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })))} />}
+          {classes && tab !== 'class' && <MyClassesStrip data={myCls} lang={lang} onOpen={() => (pickTab('class'), requestAnimationFrame(() => document.querySelector('.fr-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })))} />}
           {profileErr && <p className="field-hint warn">{profileErr}</p>}
           {CHALLENGES_ON() && (
             <span className="row fr-chl-row">

@@ -273,3 +273,85 @@ button.mc-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
 :root:root .mc-card b { font-size: 1.05rem; color: #fff; }
 :root:root .mc-card small { color: rgba(255, 255, 255, 0.8); }
 :root:root .mc-kicker { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.75); }
+
+/* SPEC-TEACHER-CLASS 1a: tags, the students panel, the teacher's assignment rows, join extras */
+.tag-mark {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  vertical-align: middle;
+  background: var(--card-2);
+  color: var(--ink-dim);
+}
+.ma-again {
+  display: block;
+  color: var(--red, #c0392b);
+  font-weight: 600;
+}
+.my-assign li.again {
+  border-inline-start: 3px solid var(--red, #c0392b);
+  padding-inline-start: 8px;
+}
+.join-more {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.students-panel .student-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.students-panel .student-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.students-panel li.paused .student-row {
+  opacity: 0.7;
+}
+.students-panel .student-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px 4px 4px;
+}
+.students-panel .af-col {
+  display: grid;
+  gap: 4px;
+}
+.students-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.ta-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.edit-assign {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ta-archived summary {
+  cursor: pointer;
+  margin: 8px 0;
+}

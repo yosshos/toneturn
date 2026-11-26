@@ -237,6 +237,7 @@ function AssignSheet({ lang, item, title, teaching, onClose }: { lang: Lang; ite
             )}
             <AssignForm
               classId={cls}
+              students={teaching.find((c) => c.id === cls)?.students.map((x) => ({ userId: x.userId, name: x.name }))}
               lang={lang}
               t={STRINGS[lang]}
               busy={false}

@@ -11,7 +11,7 @@ export type AssignKind = 'lesson' | 'topic' | 'drill' | 'chart' | 'piece' | 'phr
  * SPEC-STYLE-FOCUS §3: the teacher suggests a style focus ("focus: Latin jazz") and the student approves. The ref is
  * "focus:<course>:<main>+<also>…". Until migration 20261210000000_toneturn_focus_assign is applied (it only adds the kind
  * to the check), a focus suggestion travels as a 'piece' assignment with that ref and reads back as kind 'focus' — the
- * same path phrases took — so it works on today's server. NOT APPLIED: the owner dry-runs it first.
+ * same path phrases took — so it works on today's server.
  */
 export const FOCUS_ASSIGN_SYNCED = true; // migration 20261210000000 applied 2026-11-24
 
@@ -51,12 +51,32 @@ export interface AssignItem {
   note: string | null;
   createdAt: string;
   className?: string;
+  classId?: string;
+  /** SPEC-TEACHER-CLASS 1a: the teacher edited it after sending (the student sees "updated"). */
+  updatedAt?: string | null;
+  /** Archived by the teacher (only the teacher's view lists archived ones). */
+  archivedAt?: string | null;
+  /** Sent to one student: their id in the teacher's view; `personal` in the student's own view. */
+  studentId?: string | null;
+  personal?: boolean;
   submissions: Submission[];
+}
+/** SPEC-TEACHER-CLASS 1a: the teacher's own row per student (the name the student chose, lesson day, private note). */
+export interface EnrolledStudent {
+  userId: string;
+  name: string;
+  /** 0 = Sunday … 6 = Saturday. */
+  lessonDow: number | null;
+  status: 'active' | 'paused' | 'left';
+  privateNote: string | null;
+  /** Under 13 (or no year of birth): the stricter rules of SPEC-TEACHER-CLASS §6.4 apply. The year itself stays private. */
+  young: boolean;
 }
 export interface ClassDetail {
   assignments: AssignItem[];
   /** Minutes sent with submissions in the last 7 days, per student id. */
   minutes: Record<string, number>;
+  students?: EnrolledStudent[];
 }
 export interface Digest {
   name: string;
@@ -70,7 +90,9 @@ export interface Digest {
 }
 
 type RawSub = { id: string; user_id?: string; name?: string; created_at: string; score: number | null; minutes?: number; metrics?: Record<string, unknown>; comment: string | null; mark: Mark | null };
-type RawItem = { id: string; kind: AssignKind; lesson_id: string; ref: string | null; due_on: string | null; strictness: Strictness; target_bpm: number | null; note: string | null; created_at: string; class?: string; submissions: RawSub[] };
+type RawItem = { id: string; kind: AssignKind; lesson_id: string; ref: string | null; due_on: string | null; strictness: Strictness; target_bpm: number | null; note: string | null; created_at: string; class?: string; class_id?: string; updated_at?: string | null; archived_at?: string | null; student_id?: string | null; personal?: boolean; submissions: RawSub[] };
+type RawStudent = { user_id: string; name: string; lesson_dow: number | null; status: EnrolledStudent['status'] | null; private_note: string | null; young?: boolean | null };
+const studentFromRaw = (s: RawStudent): EnrolledStudent => ({ userId: s.user_id, name: s.name, lessonDow: s.lesson_dow ?? null, status: s.status ?? 'active', privateNote: s.private_note ?? null, young: !!s.young });
 
 const sub = (s: RawSub): Submission => ({ id: s.id, userId: s.user_id, name: s.name, createdAt: s.created_at, score: s.score, minutes: s.minutes, metrics: s.metrics, comment: s.comment, mark: s.mark });
 export const itemFromRaw = (a: RawItem): AssignItem => ({
@@ -86,6 +108,11 @@ export const itemFromRaw = (a: RawItem): AssignItem => ({
   note: a.note ?? null,
   createdAt: a.created_at,
   ...(a.class ? { className: a.class } : {}),
+  ...(a.class_id ? { classId: a.class_id } : {}),
+  ...(a.updated_at ? { updatedAt: a.updated_at } : {}),
+  ...(a.archived_at ? { archivedAt: a.archived_at } : {}),
+  ...(a.student_id ? { studentId: a.student_id } : {}),
+  ...(a.personal ? { personal: true } : {}),
   submissions: (a.submissions ?? []).map(sub),
 });
 
@@ -115,7 +142,7 @@ async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T
   return data as T;
 }
 
-export const assignItem = (p: { classId: string; kind: AssignKind; lessonId?: string | null; ref?: string | null; dueOn: string | null; strictness: Strictness; targetBpm?: number | null; note?: string | null }) => {
+export const assignItem = (p: { classId: string; kind: AssignKind; lessonId?: string | null; ref?: string | null; dueOn: string | null; strictness: Strictness; targetBpm?: number | null; note?: string | null; studentId?: string | null }) => {
   if (p.kind === 'phrase' && (!p.ref || refBytes(p.ref) > phraseRefLimit())) return Promise.reject(new Error('phrase too long'));
   return rpc<string>('toneturn_class_assign_item', {
     p_class: p.classId,
@@ -126,14 +153,28 @@ export const assignItem = (p: { classId: string; kind: AssignKind; lessonId?: st
     p_strict: p.strictness,
     p_bpm: p.targetBpm ?? null,
     p_note: p.note ?? null,
+    ...(p.studentId ? { p_student: p.studentId } : {}),
   });
 };
+/** SPEC-TEACHER-CLASS 1a: edit a sent assignment (everything but its kind); null ref = keep it. */
+export const updateAssignment = (id: string, p: { ref?: string | null; dueOn: string | null; strictness: Strictness; targetBpm: number | null; note: string | null }) =>
+  rpc<void>('toneturn_class_assign_update', { p_assignment: id, p_ref: p.ref ?? null, p_due: p.dueOn, p_strict: p.strictness, p_bpm: p.targetBpm, p_note: p.note });
+export const archiveAssignment = (id: string, on: boolean) => rpc<void>('toneturn_class_archive', { p_assignment: id, p_on: on });
+/** The teacher's own row per student: lesson day (null = none), private note ('' clears), paused / active. */
+export const setStudent = (studentId: string, p: { lessonDow?: number | null; note?: string | null; status?: 'active' | 'paused' }) =>
+  rpc<void>('toneturn_teacher_set_student', {
+    p_student: studentId,
+    p_dow: p.lessonDow ?? null,
+    p_note: p.note ?? null,
+    p_status: p.status ?? null,
+    p_clear_dow: p.lessonDow === null,
+  });
 export const submitResult = (assignmentId: string, score: number, minutes: number, metrics: Record<string, unknown> = {}) =>
   rpc<string>('toneturn_class_submit', { p_assignment: assignmentId, p_score: Math.max(0, Math.min(1, score)), p_minutes: Math.max(0, Math.min(600, Math.round(minutes))), p_metrics: metrics });
 export const commentOn = (submissionId: string, comment: string, mark: Mark | null) => rpc<void>('toneturn_class_comment', { p_submission: submissionId, p_comment: comment, p_mark: mark });
 export async function classDetail(classId: string): Promise<ClassDetail> {
-  const r = await rpc<{ assignments: RawItem[]; minutes: Record<string, number> }>('toneturn_class_detail', { p_class: classId });
-  return { assignments: (r.assignments ?? []).map(itemFromRaw), minutes: r.minutes ?? {} };
+  const r = await rpc<{ assignments: RawItem[]; minutes: Record<string, number>; students?: RawStudent[] }>('toneturn_class_detail', { p_class: classId });
+  return { assignments: (r.assignments ?? []).map(itemFromRaw), minutes: r.minutes ?? {}, students: (r.students ?? []).map(studentFromRaw) };
 }
 export async function myAssignments(): Promise<AssignItem[]> {
   return ((await rpc<RawItem[]>('toneturn_my_assignments')) ?? []).map(itemFromRaw);
@@ -155,7 +196,7 @@ export async function readDigest(token: string): Promise<Digest | null> {
 }
 
 /** The grading inbox: every submission still without a comment, newest first, with its assignment. */
-export function inboxOf(d: ClassDetail): { a: AssignItem; s: Submission }[] {
+export function inboxOf(d: Pick<ClassDetail, 'assignments'>): { a: AssignItem; s: Submission }[] {
   return d.assignments
     .flatMap((a) => a.submissions.filter((s) => !s.comment && !s.mark).map((s) => ({ a, s })))
     .sort((x, y) => y.s.createdAt.localeCompare(x.s.createdAt));
@@ -164,6 +205,25 @@ export function inboxOf(d: ClassDetail): { a: AssignItem; s: Submission }[] {
 /** Pass mark for a submission by the assignment's strictness. */
 export const PASS: Record<Strictness, number> = { lenient: 0.6, moderate: 0.75, strict: 0.9 };
 export const passed = (a: AssignItem, s: Submission) => s.score !== null && s.score >= PASS[a.strictness];
+
+/**
+ * SPEC-TEACHER-CLASS 1a, "again" reopens: a student's state on an assignment, from their submissions (newest first).
+ * The teacher's mark wins over the machine's score: "again" on the newest take reopens it even if the score passed,
+ * and "great" / "good" closes it even if it did not. A take sent after the "again" is judged again as usual.
+ */
+export type AssignState = 'open' | 'again' | 'sent' | 'passed';
+export function assignState(a: AssignItem, subs: Submission[] = a.submissions): AssignState {
+  const last = subs[0];
+  if (!last) return 'open';
+  if (last.mark === 'again') return 'again';
+  if (last.mark === 'great' || last.mark === 'good') return 'passed';
+  // only takes after the teacher's newest "again" count (an older passing take does not undo the request)
+  const cut = subs.findIndex((x) => x.mark === 'again');
+  const live = cut >= 0 ? subs.slice(0, cut) : subs;
+  return live.some((x) => x.mark === 'great' || x.mark === 'good' || passed(a, x)) ? 'passed' : 'sent';
+}
+/** Edited after it was sent (a minute's grace for the send itself). */
+export const wasUpdated = (a: AssignItem) => !!a.updatedAt && Date.parse(a.updatedAt) - Date.parse(a.createdAt) > 60_000;
 
 /** Refs: a topic level is "topic:<id>:<level>"; a chart drill is its drill kind ("chart~…"); a drill its spec key. */
 export function parseTopicRef(ref: string | null): { id: string; level: number } | null {

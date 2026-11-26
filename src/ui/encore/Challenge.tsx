@@ -305,6 +305,8 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
   const [clip, setClip] = useState<string | null>(null);
   const [known, setKnown] = useState<KnownMatch | null | undefined>(undefined);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  // SPEC-TEACHER-CLASS §1.3: the class to share with (it always went to the first one)
+  const [classPick, setClassPick] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState<{ code: string; id: string } | null>(null);
@@ -334,7 +336,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
       .catch(() => live && setClips([]));
     void import('../../cloud/classes')
       .then((c) => c.myClasses())
-      .then((m) => live && setClasses([...m.teaching.map((x) => ({ id: x.id, name: x.name })), ...m.memberOf.map((x) => ({ id: x.id, name: x.name }))]))
+      .then((m) => live && setClasses([...m.teaching.map((x) => ({ id: x.id, name: x.name })), ...m.memberOf.filter((x) => x.kind !== 'studio').map((x) => ({ id: x.id, name: x.name }))]))
       .catch(() => {});
     return () => {
       live = false;
@@ -353,7 +355,7 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
   const plan = planOf(l);
   const b = badge(l, inst);
   const context = `${l.ctx === 'free' ? '' : `${l.ctx === 'blues' ? 'blues' : l.ctx === 'minor-251' ? 'ii–V–i' : 'ii–V–I'} · `}${kName(l.homeKey ?? 0, !!l.minor)}`;
-  const { payload, problems } = sharePayload(l, { title, style, level, visibility: vis, classId: vis === 'class' ? (classes[0]?.id ?? null) : null, attested, audio: audio && !!clip }, { inst, lang, gate, context, grade: b.grade, known: !!known });
+  const { payload, problems } = sharePayload(l, { title, style, level, visibility: vis, classId: vis === 'class' ? ((classes.find((c) => c.id === classPick) ?? classes[0])?.id ?? null) : null, attested, audio: audio && !!clip }, { inst, lang, gate, context, grade: b.grade, known: !!known });
   const blocking = problems.filter((x) => x !== 'attest');
   const sn = shareNotes(payload.ref);
   const card = sn ? studioShareCardSvg({ title: payload.title || T(l.name, lang), by: settings.nickname || L(lang, 'Player', 'נגן/ית'), bpm: plan.goalBpm, keys: payload.needed, level: payload.level, notes: sn.notes, beats: sn.beats, meter: sn.meter, lang }) : '';
@@ -486,6 +488,18 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
       <div className="col">
         <b className="t2">{L(lang, 'Who sees it', 'מי רואה')}</b>
         <Seg value={vis} label={L(lang, 'Who sees it', 'מי רואה')} onChange={(v) => setVis(v)} options={visOpts.map((o) => ({ k: o.k, t: o.t }))} />
+        {vis === 'class' && classes.length > 1 && (
+          <label className="af-row">
+            <span>{L(lang, 'Class', 'כיתה')}</span>
+            <select value={classPick || classes[0].id} onChange={(e) => setClassPick(e.target.value)} data-share-class="1">
+              {classes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       <label className="enc-card-soft row chl-attest">
         <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} data-share-attest="1" />
