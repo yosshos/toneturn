@@ -1504,3 +1504,16 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
 - **Learn-a-tune step 8 ("a new key at sight")** hides the chart and the melody, as in step 7; only the new tonic is given. It is transposing by ear and from memory, not reading.
 - **Ain't Misbehavin'** cites Razaf (died 1973) as the governing year, under the latest-author rule. It is 1B, with `pdFrom` set from 1973.
 - **Traditional tunes with no period print** (When the Saints and some spirituals): the verification source is a hymnal or jubilee print from 1930 or earlier, **or** a transcription from a recording that passes the recording test. If neither exists, the tune is not served as a head.
+
+## 23. Round 15 → v13: binding content changes (merge at the next consolidation)
+- **The recording test adds two conditions for every unpublished work on the recording** (17 U.S.C. §303(a); PD-JAZZ-SOURCES §3.3):
+  - **no authorized publication between 1978 and 2002;** if there was one, the work is protected through 2047;
+  - **not a work made for hire;** if it is, the term is 120 years from creation (a 1925 work runs to the end of 2045).
+  - **Where either fact is unknown, the recording is not servable.** This keeps the rule conservative, as the rest of §8.1 is.
+  - **Guard tests:**
+    - a side whose improvisation was published in 1982 is never servable;
+    - a side carrying a 1925 work-for-hire arrangement is never servable before 2046.
+  - **The §17 canon checklist adds:** whether Dapogny's 1982 *Collected Piano Music* of Morton (Smithsonian / G. Schirmer) was authorized. If it was, the transcribed improvised passages on Morton's 1923–24 solo sides are protected through 2047, and those sides leave the canon.
+- **§1.10 renames step 8** "a new key from memory". It stays a valid key-transfer form.
+- **§8.2 Ain't Misbehavin'** cites Razaf (1973), cleaned up at the v13 merge.
+- **§14:** the 1894 Schirmer Italian arias (Parisotti) carry an "edited 1894 version" label in the style brief, which also notes the "Se tu m'ami" misattribution.
