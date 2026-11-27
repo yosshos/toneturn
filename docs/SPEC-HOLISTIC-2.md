@@ -1,4 +1,4 @@
-# Holistic round 2: one level, honest rewards, real music (v7, 2026-11-27)
+# Holistic round 2: one level, honest rewards, real music (v8-pre, 2026-11-27)
 
 This spec implements the two whole-app audits of 2026-11-27:
 - docs/AUDIT-HOLISTIC-MEASUREMENT.md (AM);
@@ -1187,3 +1187,90 @@ These override any text above that contradicts them. They are merged into the bo
 - the studio sharing rule.
 
 **Step 7 adds:** the story-ladder detectors.
+
+### 20.8 Owner answer (2026-11-27)
+- **§20.5 Q1, rank speed: the accurate version is approved.** Window 30, 0.975, 2–3 weeks per tier at p = 0.75, with the daily-moving bar.
+- **§20.5 Q2, the 5 app-written heads:** still open.
+
+---
+
+## 21. Round 6 → v8: binding changes
+
+### 21.1 Measurement (RM6)
+- **Dependence between looks.** The §9.1 harness must include day and cell random effects. Their SDs are estimated from the calibration traces; until then the harness uses day SD 0.8 and cell SD 0.7 on the logit scale.
+  - **The day is the unit:** at most **2 looks per area per day** count. A second look must come from a different exercise.
+  - **The threshold is raised until the < 5 % false-promotion target holds under that dependence** at p ≤ 0.55 over 730 looks. If 0.975 is not enough, it is raised; the harness picks the value.
+  - **§20.5's "about 98 % right" becomes the harness's figure under dependence.** The owner sees the real numbers (calendar time per tier, false-promotion rate) before step 1 ships.
+- **Breadth is counted in exercises,** not item ids. An exercise = spec template + level/option, with key and hand removed.
+  - The window needs ≥ 3 distinct exercises at the tier, or all of them if the tier has fewer than 3, plus ≥ 2 keys where keys apply.
+  - **The guard test:** "one exercise, any number of keys and hands" is never promoted.
+- **Absence of evidence corrects over-placement.** If, within 10 practice days in an area, no item at placedTier reaches the probe band, or the cold staircase estimates sit below 0.95 × target on ≥ 3 exercises at that tier, placedTier drops one tier. Rank is never touched.
+- **Current form re-promotes** with the same posterior test at current form + 1, capped at high-water. It pays no XP.
+  - It is initialised as high-water, or as placedTier while placed.
+- **Guaranteed supply of looks.** While a candidate tier's posterior is open, need() (§5) gives it ≥ 2 cold confirmation slots per practice day in that area. These are passed cells reviewed in the probe band, outside FSRS, or unpassed cells near the band.
+  - The harness reports calendar time per tier per area from the real catalogue's cell counts.
+  - **Areas without keys** (rhythm, voice, drum rudiments, small fixed-tempo tiers) widen breadth by using all of their exercises.
+- **Passed cells always confirm in the probe band.** Every scheduled confirmation take of a passed cell plays at 0.95–1.0 × target. The staircase moves only the non-confirmation cold tempo. §20.4's "drop below the band" sentence is deleted.
+- **Rank over inputs:** promotion pools all inputs into one posterior. A per-input series stays for current form and display. This removes the k-chances problem.
+- **Voice tier, one rule:**
+  - a voice cell = item level × its target cents band (60/45/30 ¢);
+  - a take is one look for its own cell only;
+  - the **ordering is lexicographic:** the content tier is the item level, and the cents band is a sub-band shown within it ("T3, ±30 ¢"). It is never added to T;
+  - §20.3's additive voice row is replaced by this.
+- **Reading tier:** the complexity score is mapped to T by catalogue quantiles. The reading items of each existing reading level set the cut points.
+- **The data model:** each cold entry stores `{at, bpm, clean, gap, src, cell, contentTier, target, inBand}` at the time of the take. Re-targeting never rewrites history.
+  - **The look log** is derived per area from the cold entries. It is not stored separately.
+- **No locks:** the entry rule limits only the rotation and the planner, never manual choice.
+
+### 21.2 Pedagogy and legal (RP6)
+- **Free improvisation** is graded on task compliance only, e.g. "only register and dynamics changed", "rhythm only". Variety is descriptive feedback. It counts as coverage only.
+- **Region and term classes:**
+  - **unknown region →** only items PD under the longest term class (life+100), plus the H4 pool;
+  - **§8.1's 1A definition** is rewritten to §19.10's ("US + life+70 by default; `servable()` checks `pdFrom` per term class");
+  - **`pdFrom` adds a life+75 class:** Guatemala, Honduras, Samoa.
+- **User-shared content:**
+  - **community, challenge and gift distribution of melody-bearing content requires,** before it is enabled:
+    - user-responsibility terms;
+    - a registered DMCA agent;
+    - notice-and-takedown;
+    - a repeat-infringer policy;
+    - EU DSA notice-and-action;
+  - **a phrase's source flag defaults to "unknown → private"** unless the user declares it their own or PD;
+  - **student ↔ student studio exchange** (duets, §12.3) is private within the studio, like the 1:1 teacher rule. It is not class-wide distribution.
+- **Goal tunes for every charted standard (by-ear variant):**
+  - any of the ~120 charted standards can be a goal or a learn-a-tune target in a **by-ear variant**: embed + chords-only chart;
+  - **melody steps** are self- or teacher-checked, never served or graded against a stored melody;
+  - **graded steps:** roots, guide tones, shells, chords from memory;
+  - **completion** = chords from memory (cold) + a self or teacher melody check.
+  - Example: "Autumn Leaves with a singer by June" becomes possible.
+- **The YouTube API monetisation policy** joins the §17 lawyer and policy list: whether embeds may sit behind a subscription, or must stay outside the paywall.
+- **The minor items, adopted:**
+  - **Recording test (c)** applies to every improvising ensemble member (e.g. Baby Dodds, died 1959, on the Oliver sides), not only featured soloists.
+  - **Band-1 learn-a-tune variants:**
+    - voice: sung melody → sung roots → sung guide tones;
+    - guitar: bass notes on strings 6/5 + triads;
+    - bass: roots on 1.
+  - **Drum "supporting a soloist"** uses rule-generated licks as the soloist (allowed by H4), so it is no longer "teacher or recording needed".
+  - **Embed tap grading** uses beat-level windows plus a per-device offset. It never feeds level.
+  - **The pop bar grid** shows in 4–8-bar windows beside the player (one screen).
+  - **Period-print dotted pairs** are accepted played straight-dotted or swung under the feel layer.
+  - **Area mapping additions:**
+    - §14 PD repertoire and piece-coach pieces → coverage only;
+    - **§1.10 adds rhythm/time as an area** for piano, guitar and bass.
+  - **Drum balance** is calibrated per kit (per-pad gain), or labelled as intent, not loudness.
+  - **Klezmer / Israeli idioms** (AP §2.14) are deferred, by the global positioning decision.
+  - **H4 note:** the Happy Birthday ruling was in 2015, settled in 2016.
+
+### 21.3 Consolidation now
+- **The spec is consolidated again (v8)** before round 7. It merges §19–§21 into the body, removes every superseded line, and updates Appendix A. The reviewers flagged the following stale lines, and all of them go:
+  - §1.7 sliding LLR;
+  - §1.9 ML fit and "counts only when clean";
+  - §1.6/§19.2 passing-take exclusion;
+  - §19.1 "≥ 2 days";
+  - §10.1 Hot Five and Oliver;
+  - §8.2 Indiana duplicate;
+  - §11.1 Billy Joel;
+  - §17.1 Ain't Misbehavin';
+  - §8.1 1A wording;
+  - §20.3 additive voice row;
+  - §20.4 "drop below the band".
