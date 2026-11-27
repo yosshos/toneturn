@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   admitLook, betaCdf, breadthOk, climb, defaultCatalogue, deriveRank, designEffect, entryCeiling, gamingOneExercise, initCurrentForm, initPlacement,
   itemPassAt, itemPassFlow, marginalP, muForMarginal, nonTempoPlacementDay, pPairWithin, placementRun, readingFalsePass, readingPassed, stepCurrentForm,
-  syntheticCatalogue, tempoPlacementDay, updateRankHW, wrongDemotion, type Exercise, type Look, type PassRecord, type Take,
+  snapToNonEmpty, syntheticCatalogue, tempoPlacementDay, RANK_V12, updateRankHW, wrongDemotion, type Exercise, type Look, type PassRecord, type Take,
 } from '../src/engine/measure/sim';
 import { realCatalogues } from '../src/engine/measure/sim/realCatalogue';
 
@@ -143,16 +143,52 @@ describe('placement correction (§1.3)', () => {
     expect(s.placedTier).toBe(4);
     expect(s.count).toBe(0);
   });
-  it('non-tempo: 20 offered days, no evidence, P(p < 0.4) ≥ 0.9', () => {
+  it('non-tempo (fix 3): ≥ 8 attempts on ≥ 3 offered days with a clean share < 35 % drops one tier', () => {
     let s = initPlacement(4);
-    for (let i = 0; i < 19; i++) s = nonTempoPlacementDay(s, false, 0.95);
-    expect(s.placedTier).toBe(4);
-    s = nonTempoPlacementDay(s, false, 0.95);
-    expect(s.placedTier).toBe(3);
+    s = nonTempoPlacementDay(s, [false, false, true, false]);
+    s = nonTempoPlacementDay(s, [false, false, false, false]);
+    expect(s.placedTier).toBe(4); // 8 attempts but only 2 days
+    s = nonTempoPlacementDay(s, [false]);
+    expect(s.placedTier).toBe(3); // 1 / 9 clean on 3 days
+    expect(s.attempts).toBe(0);
     let e = initPlacement(4);
-    e = nonTempoPlacementDay(e, true, 0.95);
-    for (let i = 0; i < 30; i++) e = nonTempoPlacementDay(e, false, 0.99);
-    expect(e.placedTier).toBe(4);
+    for (let i = 0; i < 10; i++) e = nonTempoPlacementDay(e, [true, false, false]); // 1/3 = 33 % < 35 %
+    expect(e.placedTier).toBeLessThan(4);
+    let ok = initPlacement(4);
+    for (let i = 0; i < 30; i++) ok = nonTempoPlacementDay(ok, [true, false]); // 50 %
+    expect(ok.placedTier).toBe(4);
+  });
+  it('fix 2: a placement or a drop onto an empty tier snaps down to a non-empty tier', () => {
+    expect(snapToNonEmpty(5, [0, 1, 2, 3, 4, 6])).toBe(4);
+    expect(initPlacement(5, [0, 1, 2, 3, 4, 6]).placedTier).toBe(4);
+    expect(snapToNonEmpty(1, [3, 4])).toBe(3);
+    let s = initPlacement(6, [0, 1, 2, 3, 4, 6]);
+    for (let i = 0; i < 5; i++) s = tempoPlacementDay(s, 1, [0, 1, 2, 3, 4, 6]);
+    expect(s.placedTier).toBe(4); // 6 − 1 = 5 is empty → 4
+  });
+});
+
+describe('item-pass variants (V0–V3)', () => {
+  const warm = [take(0, 18, true, true), take(0, 18.1, true, false), take(0, 18.2, true, false)];
+  const cold = (seq: boolean[]) => seq.map((c, i) => take(i + 1, 18, c, true));
+  it('V0: the pair; V1: pair + ≥ 2/3 of the last ≤ 6', () => {
+    expect(itemPassAt([...warm, ...cold([true, true])], 'anyCold', 'V0')).toBe(H(2, 18));
+    expect(itemPassAt([...warm, ...cold([true, true])], 'anyCold', 'V1')).toBe(H(2, 18));
+    // F F F T T: the pair completes at check 5, share 2/5 < 2/3 → V1 waits; T at 6 → 3/6 still < 2/3; T at 7 → 4/6
+    expect(itemPassAt([...warm, ...cold([false, false, false, true, true])], 'anyCold', 'V0')).toBe(H(5, 18));
+    expect(itemPassAt([...warm, ...cold([false, false, false, true, true, true])], 'anyCold', 'V1')).toBeNull();
+    expect(itemPassAt([...warm, ...cold([false, false, false, true, true, true, true])], 'anyCold', 'V1')).toBe(H(7, 18));
+  });
+  it('V2: 3 of the last 4 counting checks; V3: Beta posterior, ≥ 3 checks', () => {
+    expect(itemPassAt([...warm, ...cold([true, false, true, true])], 'anyCold', 'V2')).toBe(H(4, 18));
+    expect(itemPassAt([...warm, ...cold([true, true])], 'anyCold', 'V2')).toBeNull();
+    expect(itemPassAt([...warm, ...cold([true, true, true])], 'anyCold', 'V3')).toBe(H(3, 18)); // Beta(4,1): 0.87
+    expect(itemPassAt([...warm, ...cold([true, false, true, true])], 'anyCold', 'V3')).toBeNull(); // Beta(4,2): 0.66
+  });
+  it('stricter variants pass weak cells less often (28 days, 4 days/wk)', () => {
+    const v0 = itemPassFlow(0.4, 28, 300, SEED, { variant: 'V0' });
+    const v3 = itemPassFlow(0.4, 28, 300, SEED, { variant: 'V3' });
+    expect(v3).toBeLessThan(v0);
   });
 });
 
@@ -224,30 +260,33 @@ describe('§9.1 targets (synthetic learners)', () => {
   }, 60000);
 });
 
-// ---------------------------------------------------------------- spec conflicts the harness found (rules unchanged)
+// ---------------------------------------------------------------- the three findings, with the coordinator's fixes
 
-describe('§9.1 findings: targets the v12 rules as written do not meet', () => {
-  // FAILS: §1.7 guard "one exercise in many keys and hands never raises rank" vs the H8 rule itself: on a tier whose
-  // range t … ceiling holds ONE available exercise (real catalogue: piano arpeggios T6, guitar scales T6, bass
-  // independence T4, any 1-exercise top tier, or a mic learner's tier), min(3, 1) = 1 and min(2, 12) = 2, so that one
-  // exercise passed in 2 keys gives the tier.
-  it.fails('one exercise in two keys never raises rank, even on a 1-exercise tier', () => {
-    const cat = syntheticCatalogue('one', [3, 1], 12).exercises;
+describe('§9.1 findings, fixed (coordinator 2026-11-27)', () => {
+  // Fix 1. Under v12 as written, a range t … ceiling with ONE available exercise needs min(3, 1) = 1 exercise in
+  // min(2, 12) = 2 keys, so one exercise in 2 keys gave the tier (the guard failed). Now rank needs >= 2 distinct
+  // exercises; such a range is grouped with the next non-empty tier above.
+  it('one exercise in two keys never raises rank, even on a 1-exercise tier', () => {
+    const top = syntheticCatalogue('one', [3, 1], 12).exercises; // T1 = a 1-exercise top tier
     const p: PassRecord[] = [{ exerciseId: 'one:T1:0', tier: 1, key: 0, at: 0 }, { exerciseId: 'one:T1:0', tier: 1, key: 5, at: 1 }];
-    expect(updateRankHW(cat, p, 0, 0)).toBe(0);
+    expect(updateRankHW(top, p, 0, 0, RANK_V12)).toBe(1); // the v12 hole
+    expect(updateRankHW(top, p, 0, 0)).toBe(0); // fixed: nothing above to group with, so T1 is never ranked alone
+    // A 1-exercise tier below others: rank 0, ceiling T1 (1 exercise) → grouped with T2 (2 more): 2 distinct needed.
+    const mid = syntheticCatalogue('mid', [3, 1, 2], 12).exercises;
+    const one: PassRecord = { exerciseId: 'mid:T1:0', tier: 1, key: 0, at: 0 };
+    expect(updateRankHW(mid, [one, { ...one, key: 5 }], 0, 0, RANK_V12)).toBe(0); // passing T1 opened T2 already
+    expect(updateRankHW(mid, [one, { exerciseId: 'mid:T2:0', tier: 2, key: 3, at: 2 }, { exerciseId: 'mid:T2:1', tier: 2, key: 3, at: 3 }], 0, 0)).toBe(1); // T2: both in one key → T1
   });
 
-  // FAILS: §1.3 counts only "offered days: days on which items at placedTier were offered". A learner placed on an
-  // EMPTY tier (here T5 of the synthetic catalogue, true level T2) is never offered an item at placedTier, so the
-  // correction never runs (measured: 0 % corrected in 180 days).
-  it.fails('an over-placed learner placed on an empty tier is corrected', () => {
+  // Fix 2. A learner placed on an EMPTY tier (T5 of the synthetic catalogue, true level T2) was never offered an item
+  // at placedTier, so the correction never ran. Now the placement snaps down to T4 and is corrected.
+  it('an over-placed learner placed on an empty tier is corrected', () => {
     expect(placementRun(3, true, 20, SEED, { trueAt: 2 }).corrected).toBeGreaterThan(0.9);
   }, 60000);
 
-  // FAILS: §1.3 non-tempo correction needs P(p < 0.4) ≥ 0.9 on the §1.6 recency-discounted posterior, whose n_eff is
-  // capped near 1 / (1 − 0.5^(1/10)) / design effect ≈ 10–13; with true p ≈ 0.3 at placedTier that probability rarely
-  // reaches 0.9 (measured: 0 % of +2 over-placed reading learners corrected in 180 days).
-  it.fails('an over-placed learner (+2 tiers) is corrected in a non-tempo (reading) area', () => {
-    expect(placementRun(2, false, 20, SEED).corrected).toBeGreaterThan(0.9);
+  // Fix 3. The posterior rule P(p < 0.4) >= 0.9 rarely fired (0–4 % of +2 over-placed reading learners corrected).
+  // Now: >= 8 attempts on >= 3 offered days with a clean share < 35 %.
+  it('an over-placed learner (+2 tiers) is corrected in a non-tempo (reading) area', () => {
+    expect(placementRun(2, false, 20, SEED, { rate: 0 }).corrected).toBeGreaterThan(0.9); // a learner who stays over-placed
   }, 60000);
 });

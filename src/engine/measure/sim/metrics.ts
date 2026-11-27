@@ -1,10 +1,10 @@
 // The §9.1 / §17.4 harness numbers (SPEC-HOLISTIC-2). Each experiment is seeded and pure; `runs` sets the precision.
 
 import { defaultCatalogue, syntheticCatalogue, topTier, type AreaCatalogue } from './catalogue';
-import { ItemPassTracker } from './itemPass';
+import { ItemPassTracker, type PassVariant } from './itemPass';
 import { DEFAULT_LEARNER, thetaForP, type LearnerParams } from './learner';
 import { childSeed, mulberry32, normal, randInt } from './prng';
-import { nonEmptyTiers } from './rank';
+import { rankableTiers } from './rank';
 import { runReadingTier, simulateReadingArea } from './readingSim';
 import { simulate, type PlannerConfig } from './simulate';
 import { logistic, logit, muForMarginal, quantile } from './stats';
@@ -32,14 +32,14 @@ export function pPairWithin(p: number, k: number): number {
  * each visit = the cold check then 4 warm takes; cold p = p (marginal), warm = +0.8 logit, a shared day effect (SD 0.8).
  * Returns P(passed within `days` calendar days).
  */
-export function itemPassFlow(p: number, days: number, runs: number, seed: number, o: { dpw?: number; sdDay?: number; warmBoost?: number; warmTakes?: number } = {}): number {
+export function itemPassFlow(p: number, days: number, runs: number, seed: number, o: { dpw?: number; sdDay?: number; warmBoost?: number; warmTakes?: number; variant?: PassVariant } = {}): number {
   const dpw = o.dpw ?? 4;
   const sdDay = o.sdDay ?? 0.8;
   const mu = muForMarginal(p, sdDay);
   let passed = 0;
   for (let r = 0; r < runs; r++) {
     const rng = mulberry32(childSeed(seed, r));
-    const tr = new ItemPassTracker();
+    const tr = new ItemPassTracker('anyCold', o.variant ?? 'V0');
     let week = new Set<number>();
     for (let day = 0; day < days && tr.passedAt === null; day++) {
       if (day % 7 === 0) {
@@ -105,14 +105,16 @@ export interface TierTime {
   p90: number;
   /** Share that reached `to` within the cap. */
   reached: number;
+  /** Every run's days (the cap when not reached). */
+  days: number[];
 }
 
 /**
  * Calendar days from rank R to the next non-empty tier, for a learner whose true cold p at that next tier is `pNext`
  * (fixed ability, no item-practice gain: the conservative case), starting with rankHW = placedTier = R.
  */
-export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs: number, seed: number, cap = 240, lp: Partial<LearnerParams> = {}, planner: Partial<PlannerConfig> = {}): TierTime[] {
-  const tiers = nonEmptyTiers(cat.exercises);
+export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs: number, seed: number, cap = 240, lp: Partial<LearnerParams> = {}, planner: Partial<PlannerConfig> = {}, variant: PassVariant = 'V0'): TierTime[] {
+  const tiers = rankableTiers(cat.exercises);
   const out: TierTime[] = [];
   for (let i = 0; i < tiers.length; i++) {
     const from = i === 0 ? null : tiers[i - 1];
@@ -122,14 +124,14 @@ export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs
     const d: number[] = [];
     let reached = 0;
     for (let r = 0; r < runs; r++) {
-      const res = simulate({ catalogue: cat, learner: L, planner: { ...planner, practiceDaysPerWeek: dpw }, days: cap, seed: childSeed(seed, r * 31 + i), placedTier: from ?? 0, rankHW: from, stopWhenRank: to, noPlacementCorrection: true });
+      const res = simulate({ catalogue: cat, learner: L, planner: { ...planner, practiceDaysPerWeek: dpw }, days: cap, seed: childSeed(seed, r * 31 + i), placedTier: from ?? 0, rankHW: from, stopWhenRank: to, noPlacementCorrection: true, variant });
       const day = res.rankDay.get(to);
       if (day !== undefined) {
         reached++;
         d.push(day + 1);
       } else d.push(cap);
     }
-    out.push({ from, to, median: quantile(d, 0.5), p90: quantile(d, 0.9), reached: reached / runs });
+    out.push({ from, to, median: quantile(d, 0.5), p90: quantile(d, 0.9), reached: reached / runs, days: d });
   }
   return out;
 }
@@ -236,7 +238,7 @@ export interface ClimbReport {
   target: number;
   reachedTarget: number;
   medianDaysToTarget: number;
-  /** Every non-empty tier reached (rank touched or passed it). */
+  /** Every rankable tier reached (fix 1: a 1-exercise top tier is not rankable). */
   reachedAll: number;
   /** Learners with a stall: ≥ 42 days at true p ≥ 0.85 on the next tier without a rank rise. */
   stalls: number;
@@ -246,15 +248,18 @@ export interface ClimbReport {
   medianPAtRankUp: number;
   /** Share of rank rises where that p was < 0.5. */
   rankUpBelowHalf: number;
+  /** Every rank rise's true p. */
+  rankUps: number[];
 }
 
 /** §1.3 / §9.1 rotation-only climb from T0 (no placement), `days` long. */
-export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365, lp: LearnerParams = STEADY_LEARNER(), planner: Partial<PlannerConfig> = {}): ClimbReport {
-  const tiers = nonEmptyTiers(cat.exercises);
-  const top = topTier(cat);
+export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365, lp: LearnerParams = STEADY_LEARNER(), planner: Partial<PlannerConfig> = {}, variant: PassVariant = 'V0'): ClimbReport {
+  const tiers = rankableTiers(cat.exercises);
+  const top = tiers[tiers.length - 1];
+  const catTop = topTier(cat);
   // T5, or the first non-empty tier above it when T5 is empty, or the top tier when the area stops below T5.
   const target = tiers.find((t) => t >= 5) ?? top;
-  const perTier = Array.from({ length: top + 1 }, (_, t) => cat.exercises.filter((e) => e.available && e.tier === t).length);
+  const perTier = Array.from({ length: catTop + 1 }, (_, t) => cat.exercises.filter((e) => e.available && e.tier === t).length);
   const d: number[] = [];
   let reached = 0;
   let all = 0;
@@ -263,7 +268,7 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
   let worstTier: number | null = null;
   const ups: number[] = [];
   for (let r = 0; r < runs; r++) {
-    const res = simulate({ catalogue: cat, learner: lp, planner, days, seed: childSeed(seed, r) });
+    const res = simulate({ catalogue: cat, learner: lp, planner, days, seed: childSeed(seed, r), variant });
     for (const u of res.rankTruth) ups.push(u.p);
     const t = [...res.rankDay.entries()].filter(([k]) => k >= target).map(([, v]) => v);
     if (t.length) {
@@ -277,7 +282,7 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
       worstTier = res.stallTier;
     }
   }
-  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier, medianPAtRankUp: quantile(ups, 0.5), rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length) };
+  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier, medianPAtRankUp: quantile(ups, 0.5), rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), rankUps: ups };
 }
 
 /** The tier a learner truly is at: the highest tier with marginal cold p ≥ 0.75. */
@@ -288,10 +293,10 @@ export const trueTier = (theta: number, lp: LearnerParams): number => Math.floor
  * catalogue, non-tempo the reading area. Returns the share corrected, the median day of the first drop, and the median
  * day placedTier first reaches the true tier (or rank reaches placedTier, which ends "placed").
  */
-export function placementRun(offset: number, tempo: boolean, runs: number, seed: number, o: { days?: number; trueAt?: number; pAtTrue?: number } = {}): { corrected: number; medianFirstDrop: number; medianSettled: number; settled: number } {
+export function placementRun(offset: number, tempo: boolean, runs: number, seed: number, o: { days?: number; trueAt?: number; pAtTrue?: number; rate?: number } = {}): { corrected: number; medianFirstDrop: number; medianSettled: number; settled: number } {
   const days = o.days ?? 180;
   const T = o.trueAt ?? 1;
-  const L: LearnerParams = { ...DEFAULT_LEARNER, rate: 0.05 };
+  const L: LearnerParams = { ...DEFAULT_LEARNER, rate: o.rate ?? 0.05 };
   L.theta0 = thetaForP(o.pAtTrue ?? 0.75, T, L);
   let corrected = 0;
   let settled = 0;
@@ -327,4 +332,54 @@ export function gamingOneExercise(runs: number, seed: number): (number | null)[]
     out.push(simulate({ catalogue: cat, learner: L, days: 180, seed: childSeed(seed, r + 1000), onlyExercise: e.id, planner: { workCellsPerSession: 4 } }).finalRank);
   }
   return out;
+}
+
+// ---------------------------------------------------------------- 6. Item-pass variants (coordinator 2026-11-27)
+
+export interface VariantReport {
+  variant: PassVariant;
+  /** (a) P(pass within 28 days, 4 days/wk) at cold p 0.3 … 0.8. */
+  pass28: { p: number; rate: number }[];
+  /** (b) calendar days per tier pooled over every transition of every real area: per (pNext, days/wk). */
+  tierDays: { pNext: number; dpw: number; median: number; p90: number; reached: number }[];
+  /** (c) over the real-catalogue climbs: share of rank rises at true p < 0.5, median true p at a new tier. */
+  rankUpBelowHalf: number;
+  medianPAtRankUp: number;
+  /** (d) learners with a stall >= 42 days, and climbs that missed a rankable tier. */
+  stalls: number;
+  missedTop: number;
+  climbs: number;
+}
+
+/** Runs (a)-(d) for one variant on the given real catalogues. */
+export function variantStudy(variant: PassVariant, cats: AreaCatalogue[], seed: number, o: { flowRuns: number; tierRuns: number; climbRuns: number }): VariantReport {
+  const pass28 = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((p) => ({ p, rate: itemPassFlow(p, 28, o.flowRuns, seed + 1, { variant }) }));
+  const tierDays: VariantReport['tierDays'] = [];
+  for (const pNext of [0.75, 0.85]) {
+    for (const dpw of [3, 5]) {
+      const all: number[] = [];
+      let reached = 0;
+      let n = 0;
+      for (const cat of cats) {
+        for (const t of daysPerTier(cat, pNext, dpw, o.tierRuns, seed + 30, 240, {}, {}, variant)) {
+          all.push(...t.days);
+          reached += t.reached * t.days.length;
+          n += t.days.length;
+        }
+      }
+      tierDays.push({ pNext, dpw, median: quantile(all, 0.5), p90: quantile(all, 0.9), reached: reached / Math.max(1, n) });
+    }
+  }
+  const ups: number[] = [];
+  let stalls = 0;
+  let missed = 0;
+  let climbs = 0;
+  for (const cat of cats) {
+    const c = climb(cat, o.climbRuns, seed + 60, 365, STEADY_LEARNER(), {}, variant);
+    stalls += c.stalls;
+    missed += Math.round((1 - c.reachedAll) * o.climbRuns);
+    climbs += o.climbRuns;
+    ups.push(...c.rankUps);
+  }
+  return { variant, pass28, tierDays, rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length), medianPAtRankUp: quantile(ups, 0.5), stalls, missedTop: missed, climbs };
 }

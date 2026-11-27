@@ -5,12 +5,11 @@
 
 import type { AreaCatalogue } from './catalogue';
 import { admitLook, CURRENT_FORM, initCurrentForm, stepCurrentForm, windowAt, windowPosterior, type CurrentFormOpts, type Look, type PassedCell } from './currentForm';
-import { ItemPassTracker, type ResetMode } from './itemPass';
+import { ItemPassTracker, type PassVariant, type ResetMode } from './itemPass';
 import { Learner, type LearnerParams } from './learner';
 import { initPlacement, isPlaced, nonTempoPlacementDay, tempoPlacementDay, type PlacementState } from './placement';
 import { mulberry32, normal, randInt, type Rng } from './prng';
-import { entryCeiling, nonEmptyTiers, passedExerciseIds, updateRankHW, type Exercise, type PassRecord } from './rank';
-import { readingPBelow } from './readingPass';
+import { entryCeiling, nonEmptyTiers, passedExerciseIds, rankableTiers, RANK_FIX, updateRankHW, type Exercise, type PassRecord, type RankOpts } from './rank';
 import { betaQuantile, logit } from './stats';
 
 export interface PlannerConfig {
@@ -50,6 +49,10 @@ export interface SimOptions {
   rankHW?: number | null;
   currentForm?: Partial<CurrentFormOpts>;
   resetMode?: ResetMode;
+  /** The item pass's cold half (V0 = v12 as written, default). */
+  variant?: PassVariant;
+  /** Rank options (default: fix 1, rank needs >= 2 distinct exercises). */
+  rank?: RankOpts;
   /** Rank-gaming probe: the planner only ever offers this exercise, in a new key each time. */
   onlyExercise?: string;
   /** Days with no practice, [from, to). */
@@ -152,7 +155,9 @@ export function simulate(o: SimOptions): SimResult {
   const rankDay = new Map<number, number>();
   const rankTruth: { tier: number; day: number; p: number }[] = [];
   let rankHW: number | null = o.rankHW ?? null;
-  let place: PlacementState = initPlacement(o.placedTier ?? 0);
+  const rankOpts = o.rank ?? RANK_FIX;
+  const rankable = rankableTiers(ex, rankOpts);
+  let place: PlacementState = initPlacement(o.placedTier ?? 0, tiers);
   let cfs = initCurrentForm();
   const slumps: SlumpEvent[] = [];
   const rises: number[] = [];
@@ -178,7 +183,7 @@ export function simulate(o: SimOptions): SimResult {
     const practice = week.has(day % 7) && !inBreak(day);
     let paceToday: number | null = null;
     let offeredPlaced = false;
-    let passAtPlacedToday = false;
+    const placedToday: boolean[] = [];
     if (practice) {
       practiceDays++;
       if (day - lastPracticeDay - 1 >= 7) reentryLeft = 3;
@@ -246,7 +251,7 @@ export function simulate(o: SimOptions): SimResult {
             const free = Array.from({ length: e.keys }, (_, k) => k).filter((k) => !avoid.has(k));
             key = free.length ? free[randInt(rng, free.length)] : randInt(rng, e.keys);
           }
-          const c: Cell = { id: `${e.id}|${key}|${cells.length}`, ex: e, key, tracker: new ItemPassTracker(o.resetMode), lastSound: -Infinity, lastColdDay: -1, lastVisitDay: -1, lastLookDay: -1, visits: 0, passed: false, shelved: false };
+          const c: Cell = { id: `${e.id}|${key}|${cells.length}`, ex: e, key, tracker: new ItemPassTracker(o.resetMode, o.variant), lastSound: -Infinity, lastColdDay: -1, lastVisitDay: -1, lastLookDay: -1, visits: 0, passed: false, shelved: false };
           cells.push(c);
           cellById.set(c.id, c);
           visit.push(c);
@@ -257,7 +262,9 @@ export function simulate(o: SimOptions): SimResult {
           const cold = now - c.lastSound >= 1;
           const first = cold && c.lastColdDay !== day;
           if (first) c.lastColdDay = day;
-          c.tracker.add({ at: now, day, clean: learner.take(c.ex.tier, c.id, day, c.visits, !cold), cold, firstColdOfDay: first, atTarget: true });
+          const coldClean = learner.take(c.ex.tier, c.id, day, c.visits, !cold);
+          if (first && c.ex.tier === place.placedTier) placedToday.push(coldClean);
+          c.tracker.add({ at: now, day, clean: coldClean, cold, firstColdOfDay: first, atTarget: true });
           for (let k = 0; k < P.warmTakesPerVisit; k++) {
             now += 0.03;
             c.tracker.add({ at: now, day, clean: learner.take(c.ex.tier, c.id, day, c.visits, true), cold: false, firstColdOfDay: false, atTarget: true });
@@ -269,12 +276,11 @@ export function simulate(o: SimOptions): SimResult {
           if (c.tracker.passedAt !== null) {
             c.passed = true;
             passes.push({ exerciseId: c.ex.id, tier: c.ex.tier, key: c.key, at: c.tracker.passedAt });
-            if (c.ex.tier === place.placedTier) passAtPlacedToday = true;
           } else if (c.visits >= P.maxVisitsPerCell) c.shelved = true;
         }
         learner.hours += P.sessionMinutes / 60;
         const before: number | null = rankHW;
-        rankHW = updateRankHW(ex, passes, place.placedTier, rankHW);
+        rankHW = updateRankHW(ex, passes, place.placedTier, rankHW, rankOpts);
         if (rankHW !== null && rankHW !== before) {
           for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
           rankTruth.push({ tier: rankHW, day, p: learner.trueTierP(rankHW, day) });
@@ -322,16 +328,13 @@ export function simulate(o: SimOptions): SimResult {
       // Placement correction (§1.3), only while placed and only on offered days.
       if (!o.noPlacementCorrection && isPlaced(place, rankHW) && offeredPlaced) {
         const before = place.placedTier;
-        if (o.catalogue.tempo) place = tempoPlacementDay(place, paceToday as number);
-        else {
-          const att = coldAtTier(cells, place.placedTier);
-          place = nonTempoPlacementDay(place, passAtPlacedToday, att.length ? readingPBelow(att) : 0);
-        }
+        if (o.catalogue.tempo) place = tempoPlacementDay(place, paceToday as number, tiers);
+        else place = nonTempoPlacementDay(place, placedToday, tiers);
         if (place.placedTier !== before) placementDrops.push({ day, to: place.placedTier });
       }
     }
     // Stall watch (§9.1): rank stands still while the true p at the next non-empty tier is ≥ 0.85.
-    const next = tiers.find((t) => t > (rankHW ?? -1));
+    const next = rankable.find((t) => t > (rankHW ?? -1));
     const pNext = next === undefined ? null : learner.trueTierP(next, day);
     if (rankHW !== prevRank) stallRun = 0;
     prevRank = rankHW;
@@ -346,11 +349,4 @@ export function simulate(o: SimOptions): SimResult {
     if (o.stopWhenRank !== undefined && rankHW !== null && rankHW >= o.stopWhenRank) break;
   }
   return { passes, rankDay, rankTruth, finalRank: rankHW, finalCf: cfs.cf, slumps, rises, placementDrops, finalPlaced: place.placedTier, longestStall, stallTier, looks, calib, practiceDays, daily };
-}
-
-/** The first-cold-of-day takes at a tier, in time order, as attempts for the §1.3 non-tempo posterior. */
-function coldAtTier(cells: Cell[], t: number): { day: number; clean: boolean; cell: string }[] {
-  const out: { at: number; day: number; clean: boolean; cell: string }[] = [];
-  for (const c of cells) if (c.ex.tier === t) for (const a of c.tracker.coldLog) out.push({ ...a, cell: c.id });
-  return out.sort((a, b) => a.at - b.at);
 }

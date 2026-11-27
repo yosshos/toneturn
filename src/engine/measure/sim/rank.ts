@@ -55,14 +55,25 @@ export function entryCeiling(ex: Exercise[], placedTier: number, rankHW: number 
  *   in ≥ min(2, available keys) keys (union over those exercises), with ≥ 1 pass at tier t itself.
  * A tier above the ceiling (a manual pass) uses the available exercises at tiers t … t (see report). Null = none.
  */
-export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number): number | null {
+export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number, o: RankOpts = RANK_FIX): number | null {
   const counting = passes.filter((p) => p.countsForRank !== false);
   const tiers = nonEmptyTiers(ex);
   for (let i = tiers.length - 1; i >= 0; i--) {
     const t = tiers[i];
-    const top = Math.max(t, ceiling);
-    const avail = ex.filter((e) => e.available && e.tier >= t && e.tier <= top);
-    const need = Math.min(3, avail.length);
+    let top = Math.max(t, ceiling);
+    let avail = ex.filter((e) => e.available && e.tier >= t && e.tier <= top);
+    if (o.minTwoExercises) {
+      // Fix 1 (coordinator 2026-11-27): rank needs ≥ 2 distinct exercises; a range with < 2 available exercises is
+      // grouped with the next non-empty tier above (repeatedly). With nothing above, the tier cannot be ranked.
+      while (avail.length < 2) {
+        const up = tiers.find((x) => x > top);
+        if (up === undefined) break;
+        top = up;
+        avail = ex.filter((e) => e.available && e.tier >= t && e.tier <= top);
+      }
+      if (avail.length < 2) continue;
+    }
+    const need = o.minTwoExercises ? Math.max(2, Math.min(3, avail.length)) : Math.min(3, avail.length);
     const keysAvail = avail.reduce((m, e) => Math.max(m, e.keys), 0);
     const needKeys = Math.min(2, keysAvail);
     const above = counting.filter((p) => p.tier >= t);
@@ -76,10 +87,25 @@ export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number
   return null;
 }
 
+/**
+ * Tiers rank can ever reach: under fix 1, a non-empty tier with fewer than 2 available exercises at it and above
+ * (a 1-exercise top tier) can never be ranked. Under v12, every non-empty tier.
+ */
+export function rankableTiers(ex: Exercise[], o: RankOpts = RANK_FIX): number[] {
+  return nonEmptyTiers(ex).filter((t) => !o.minTwoExercises || ex.filter((e) => e.available && e.tier >= t).length >= 2);
+}
+
+/** Rank options. `minTwoExercises` = fix 1 (on by default); false = v12 as written. */
+export interface RankOpts {
+  minTwoExercises: boolean;
+}
+export const RANK_FIX: RankOpts = { minTwoExercises: true };
+export const RANK_V12: RankOpts = { minTwoExercises: false };
+
 /** §1.7 rank = max(rankHW, derived): never falls. Returns the new high-water. */
-export function updateRankHW(ex: Exercise[], passes: PassRecord[], placedTier: number, rankHW: number | null): number | null {
+export function updateRankHW(ex: Exercise[], passes: PassRecord[], placedTier: number, rankHW: number | null, o: RankOpts = RANK_FIX): number | null {
   const ceiling = entryCeiling(ex, placedTier, rankHW, passedExerciseIds(passes));
-  const d = deriveRank(ex, passes, ceiling);
+  const d = deriveRank(ex, passes, ceiling, o);
   if (d === null) return rankHW;
   return rankHW === null ? d : Math.max(rankHW, d);
 }

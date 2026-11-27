@@ -19,7 +19,8 @@
     "voice:lines": "rolldown scripts/voice/inventory.ts --platform node --format esm -o scripts/voice/.inventory.mjs > scripts/voice/.inventory.log && node scripts/voice/.inventory.mjs",
     "voice:render": "node scripts/voice/render.mjs",
     "daily-keys": "rolldown scripts/daily-keys.ts --platform node --format esm -o scripts/.daily-keys.mjs > scripts/.daily-keys.log && node scripts/.daily-keys.mjs",
-    "measure-sim": "rolldown scripts/measure-sim.ts --platform node --format esm -o scripts/.measure-sim.mjs > scripts/.measure-sim.log && node scripts/.measure-sim.mjs"
+    "measure-sim": "rolldown scripts/measure-sim.ts --platform node --format esm -o scripts/.measure-sim.mjs > scripts/.measure-sim.log && node scripts/.measure-sim.mjs",
+    "measure-variants": "rolldown scripts/measure-variants.ts --platform node --format esm -o scripts/.measure-variants.mjs > scripts/.measure-variants.log && node scripts/.measure-variants.mjs"
   },
   "dependencies": {
     "@fontsource-variable/rubik": "^5.3.0",

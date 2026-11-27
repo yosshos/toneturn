@@ -7,7 +7,7 @@ import type { AreaCatalogue } from './catalogue';
 import { initPlacement, isPlaced, nonTempoPlacementDay } from './placement';
 import { mulberry32, normal, randInt, type Rng } from './prng';
 import { entryCeiling, nonEmptyTiers, passedExerciseIds, updateRankHW, type PassRecord } from './rank';
-import { readingPassed, readingPBelow, READING_PASS, type Attempt, type ReadingPassOpts } from './readingPass';
+import { readingPassed, READING_PASS, type Attempt, type ReadingPassOpts } from './readingPass';
 import { logistic, marginalP, muForMarginal } from './stats';
 
 export interface TierRunOpts {
@@ -94,7 +94,7 @@ export function simulateReadingArea(o: ReadingAreaOpts): ReadingAreaResult {
   const passes: PassRecord[] = [];
   const rankDay = new Map<number, number>();
   const drops: { day: number; to: number }[] = [];
-  let place = initPlacement(o.placedTier ?? 0);
+  let place = initPlacement(o.placedTier ?? 0, tiers);
   let rankHW: number | null = null;
   let hours = 0;
   let week = new Set<number>();
@@ -109,28 +109,26 @@ export function simulateReadingArea(o: ReadingAreaOpts): ReadingAreaResult {
     const today = pool.sort((a, b) => b.k - a.k).slice(0, o.exercisesPerDay).map((x) => x.e);
     const v = normal(rng) * o.sdDay;
     const theta = o.theta0 + o.rate * hours;
-    let passAtPlaced = false;
-    let offeredPlaced = false;
+    const placedToday: boolean[] = [];
     for (let i = 0; i < o.attemptsPerDay && today.length; i++) {
       const e = today[i % today.length];
-      if (e.tier === place.placedTier) offeredPlaced = true;
       const a = att.get(e.id) ?? [];
       att.set(e.id, a);
-      a.push({ day, clean: rng() < logistic(o.beta * (theta - e.tier) + v + normal(rng) * o.sdItem) });
+      const clean = rng() < logistic(o.beta * (theta - e.tier) + v + normal(rng) * o.sdItem);
+      a.push({ day, clean });
+      if (e.tier === place.placedTier) placedToday.push(clean);
       if (!passed.has(e.id) && readingPassed(a)) {
         passed.add(e.id);
         passes.push({ exerciseId: e.id, tier: e.tier, key: null, at: day * 24 });
-        if (e.tier === place.placedTier) passAtPlaced = true;
       }
     }
     hours += o.sessionMinutes / 60;
     const before: number | null = rankHW;
     rankHW = updateRankHW(ex, passes, place.placedTier, rankHW);
     if (rankHW !== null && rankHW !== before) for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
-    if (isPlaced(place, rankHW) && offeredPlaced) {
-      const atPlaced = ex.filter((e) => e.tier === place.placedTier).flatMap((e) => att.get(e.id) ?? []).sort((a, b) => a.day - b.day);
+    if (isPlaced(place, rankHW) && placedToday.length) {
       const b = place.placedTier;
-      place = nonTempoPlacementDay(place, passAtPlaced, atPlaced.length ? readingPBelow(atPlaced) : 0);
+      place = nonTempoPlacementDay(place, placedToday, tiers);
       if (place.placedTier !== b) drops.push({ day, to: place.placedTier });
     }
   }
