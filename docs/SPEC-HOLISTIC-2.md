@@ -1179,3 +1179,76 @@ Every amendment item and where it now lives in v8. "Struck" items are superseded
 | H5 | 5 app-written jazz heads approved as labelled practice tunes | §0, §8.1, §8.2 |
 | H6 | standards by title with own charts; embeds; by-ear variant; library beyond ~120 | §0, §8.3, §8.4, §6.1, §18 step 5 |
 | H7 | collecting-society question closed; all major standards incl. Latin; many variations; protected melodies never served; "harmony is the work" as a note | §0, §8.3, §11.1, §17.1 |
+
+---
+
+## 19. Round 7 → v9: binding changes (merge into the body)
+
+### 19.1 Rank by passed exercises (owner decision H8, 2026-11-27; replaces the posterior-based rank)
+- **The round-7 simulations** found that the statistical rank (window 30, posterior ≥ 0.975, 2 looks a day, with day and cell dependence) needs **2–4 months per tier** to keep false promotion under 5 %, and that 5–16 % of p = 0.75 learners never promote. The owner chose a rank built from passed exercises.
+- **Rank in an area** = the highest content tier at which the learner has **≥ 3 distinct exercises passed**, in **≥ 2 keys** where keys apply. An exercise = spec template + level/option, without key or hand. A pass = `passedAt`, per SP §4.2 as amended: 3 counted clean takes at ≥ 95 % of target on ≥ 2 days, including a clean cold take on a later day (≥ 8 h after the day the target was first reached; see §19.6).
+  - **Areas without keys** need ≥ min(3, the available exercises at that tier). Exercises that are unavailable are excluded: "needs MIDI", "teacher or recording needed", region-denied, and small-hands-replaced.
+  - **Fixed-tempo areas** count rung passes.
+  - **Voice, rhythm and reading** count `cellPass` passes, using §1.6's per-area pass definitions.
+- **Rank never falls.** It is a high-water mark. A pass stays a pass.
+- **The bar to next** = the passed exercises toward the next tier ("2 of 3", plus the keys). It never moves backward.
+- **Calendar time** is about 1–3 weeks per tier, depending on practice. The harness reports it per area from the real catalogue.
+- **The Bayesian posterior** (window 30, Beta(1, 1), day-dependence aware) now drives only these:
+  - **Current form**, shown beside rank. It can show refresh, or a lower tier after a confirmed slump (P(p < 0.5) ≥ 0.95 over ≥ 8 looks on ≥ 2 days, never in a re-entry window).
+  - **Adaptivity:** entry, need, spacing and the refresh probe.
+  - **Reporting** (the teacher's view).
+
+  None of these is permanent, so no false-promotion horizon target applies. The §9.1 harness reports the posterior's calibration under day and cell dependence (a beta-binomial with a day effect).
+- **Removed:** the posterior-based promotion test as the rank source, the "2–3 weeks" claim, the 0.975 threshold and the false-promotion horizon target.
+- **The guard tests** become:
+  - one exercise in many keys and hands never raises rank;
+  - three passes all in one key don't raise it either, where keys apply.
+
+### 19.2 Placement, simplified
+- **`placedTier`** sets entry only: content tier ≤ max(placedTier, rank) + 1. It never sets rank.
+- **The UI** shows "placed: T5" until rank reaches it.
+- **Over-placement correction:** after 20 practice days in an area without a pass at placedTier, or on the posterior slump rule at placedTier, placedTier drops one tier. Rank is never touched.
+- **Initial state:**
+  - rank = none until the first tier is reached;
+  - a non-placed beginner starts with placedTier = T0.
+
+### 19.3 Supply and slots
+- **A daily cap on confirmation slots across all areas:** 2–4 per session, scaled by session length. The slots rotate across areas by need and goal, and go only to areas practised that day.
+- **A minimal slot injector ships in step 1,** in workout2/todayPlan. It is folded into need() in step 6.
+- **The probe band** is the only confirmation tempo: 0.95–1.0 × target. "Near the band" is struck.
+- **Probe takes on non-due days** are not graded into FSRS.
+
+### 19.4 Memorised material never feeds level
+- **On a head the learner has already played,** learn-a-tune steps, k-pop and k-accomp-voice go to coverage and `repertoire-memory`. They never feed area level or rank.
+- **Only transfer forms feed level:** a new key at sight (step 8), a chart at sight, an unseen head.
+- **A guard test** checks this.
+
+### 19.5 Content fixes
+- **Contrafact pairs show:**
+  - the PD head's melody (region-gated);
+  - the bebop tune's chord chart only;
+  - an official embed and a by-ear option.
+
+  The gate depends only on the PD side.
+- **The by-ear variant's reference:**
+  - the learner (or the teacher) picks one chart variation as "my chart";
+  - grading accepts functional equivalents: a tritone sub for V7, ii–V for V, inversions, extensions;
+  - this is stated in §8.4 and §6.1.
+- **Native feel:** each item has a native feel. Swing applies for `spec.swing` and jazz-native items such as guide tones, shells and lines. A take in the native feel counts as "straight" for coldness, passes and confirmations. Feel-layer modifiers stay non-qualifying. SP §16.5 is amended to point here.
+- **Reading items are rule-generated per tier** (random stimulus), so the supply of first-sight items never runs out.
+- **The §6.1 example** becomes "My Blue Heaven by June" (a served 1A head). A goal "with a singer" completes only with a human singer's take (§12.3).
+- **The ballad capstone** uses a 1A ballad (If I Could Be with You, or spirituals), or the labelled practice ballad Quiet Hours.
+- **Drums:** timing SD is folded explicitly into the grooves area (time is part of the groove level).
+- **Voice:** range/agility levels are tied to comfortable tessitura and agility, never extremes (vocal health).
+- **Owner tasks:** PD repertoire (§14) needs note-by-note verification, added to the owner tasks and the time budget.
+- **Non-US regions:** rhythm changes, modal and Coltrane forms are learned only through the by-ear variant there. This is stated.
+
+### 19.6 Small measurement fixes
+- **"Later day" rules** (`established`, the SP §4.2 later-day cold take, firstTargetDay) need **≥ 8 h and a different local day.** That closes the midnight hole.
+- **Momentum "cold rise"** pays only when the estimate rises by more than 1 posterior SD above its previous high.
+- **Rank can jump:** passes at a higher tier raise rank directly (high-water).
+- **Voice sub-bands:** passes count per cell (item level × cents band). Rank uses the item level. A 60 ¢ pass counts as that item's pass at the 60 ¢ sub-band only, and the display shows the sub-band.
+- **The SP §22 pointer** is updated to v9 section numbers. SP §14's area-tier definition is marked superseded.
+
+### 19.7 Owner decision row (§0)
+- **H8 (2026-11-27):** rank = the highest tier with ≥ 3 distinct passed exercises in ≥ 2 keys (cold-guarded passes). It never falls, and takes about 1–3 weeks per tier. The statistical posterior drives only current form and adaptivity. This replaces the earlier "rank speed" row.
