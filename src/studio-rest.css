@@ -777,6 +777,34 @@
   color: var(--ink);
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.12);
 }
+/* one empty value: a muted "Not yet" at body size (never a big dash in the number's place) */
+:root:root .not-yet {
+  display: inline-block;
+  color: var(--ink-dim);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+:root:root .ps-big .not-yet {
+  font-size: 1rem;
+}
+:root:root .in-entry-n .not-yet {
+  font-size: 0.72rem;
+  text-align: center;
+}
+:root:root[data-theme] .ov-week.empty .ov-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+:root:root[data-theme] .ov-week.empty .ov-bars {
+  height: 34px;
+  margin-top: 8px;
+}
 :root:root:root[data-theme] .lk-seg button.on .lk-seg-n {
   background: var(--purple, #6d28d9);
   color: #fff;

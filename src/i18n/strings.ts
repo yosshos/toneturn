@@ -29,6 +29,8 @@ const en = {
   domainsTitle: 'Your areas',
   domainsHint: 'Your rank in each area. Tap one to practice what needs you most.',
   domainUnmeasured: 'Not measured yet',
+  /** The one empty-value text (UI review 0.145.12): muted, in place of a big dash. */
+  notYet: 'Not yet',
   hotChip: 'Hot',
   unitN: 'Unit {n}',
   pathCount: '{d} / {n} lessons',
@@ -961,6 +963,7 @@ const he: Strings = {
   domainsTitle: 'התחומים שלך',
   domainsHint: 'הדרגה שלכם בכל תחום. הקישו כדי לתרגל את מה שהכי צריך אתכם.',
   domainUnmeasured: 'עוד לא נמדד',
+  notYet: 'עוד לא',
   hotChip: 'חם',
   unitN: 'יחידה {n}',
   pathCount: '{d} / {n} שיעורים',
