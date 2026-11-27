@@ -1517,3 +1517,13 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
 - **§1.10 renames step 8** "a new key from memory". It stays a valid key-transfer form.
 - **§8.2 Ain't Misbehavin'** cites Razaf (1973), cleaned up at the v13 merge.
 - **§14:** the 1894 Schirmer Italian arias (Parisotti) carry an "edited 1894 version" label in the style brief, which also notes the "Se tu m'ami" misattribution.
+
+## 24. Round 16 (CLEAN on content): minor notes adopted for the v13 merge
+- **The first v13 merge edits:**
+  - §8.1 (b)/(c), the §8.10 phrase-flag wording and the §18 step 5 recording test → the §22/§23 rule;
+  - §8.2 Ain't Misbehavin' → Razaf (1973);
+  - the Groove Match rows in §1.10 and §13.2 → game (need and coverage only).
+- **"With a singer" goals** are offered only when a studio singer, or a bank take for that head, exists.
+- **Memory step at band 3+:** structural notes are graded (paraphrase DTW alignment), so idiomatic embellishment is accepted. At bands 1–2 the step is "as printed".
+- **Voice "sung roots":** octave displacement into voiceRange is accepted.
+- **Voice melody passes:** the syllable or degree-number pass comes first, then the lyric pass.
