@@ -780,15 +780,17 @@ In addition:
 - `firstTargetDay` and "best" use straight, qualifying takes only.
 
 ## 22. Pointer: superseded by SPEC-HOLISTIC-2 (2026-11-27)
-These SP rules are governed by docs/SPEC-HOLISTIC-2.md (§19.8, §20). Where they differ, HOLISTIC wins:
-- **§2.5 / §3 cold check:** HOLISTIC's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's cold check is played before its coordination stages.
-- **§4.1 coldness:** `lastSound`, per cell, from any sounding take. `lastQual` remains only for the ≥ 1 h re-measure rule.
-- **§4.2:** passes are kept; the level comes from HOLISTIC §1 (confirmations, posterior) with `passedAt` sticky.
+These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v9: §1, governance list §1.16). Where they differ, HOLISTIC wins:
+- **§2.5 / §3 cold check:** HOLISTIC §1.9's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's cold check is played before its coordination stages (HOLISTIC §1.4).
+- **§4.1 coldness:** `lastSound`, per cell, from any sounding take (HOLISTIC §1.4). `lastQual` remains only for the ≥ 1 h re-measure rule.
+- **§4.2:** passes are kept, `passedAt` sticky. Rank comes from passed exercises (HOLISTIC §1.7, owner decision H8); the posterior drives only current form and adaptivity. The later-day cold take needs ≥ 8 h and a different local day (HOLISTIC §1.6).
 - **§9:** "promotion by day 2–3" means the **item pass**, not a tier promotion.
-- **§14 / §15.5 entry:** HOLISTIC's entry formula and `placedTier`.
-  - Prerequisites cross-session read `established`.
+- **§14 area-tier definition superseded** by HOLISTIC §1.3 (`areaTier`) and §1.7 (rank).
+- **§14 / §15.5 entry:** HOLISTIC §1.3's entry formula and `placedTier`.
+  - Prerequisites cross-session read `established` (HOLISTIC §1.6).
   - In-session forms follow D2 / A10 (`acquired`).
-- **§15.4 burst trigger:** no new clean session peak in 3 sessions on ≥ 2 days.
-- **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step.
-- **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch. The A8 "≥ 3 cold takes" switch is deleted.
-- **A12:** G reads HOLISTIC's threshold estimate.
+- **§15.4 burst trigger:** no new clean session peak in 3 sessions on ≥ 2 days (HOLISTIC §6.2).
+- **§16.5 straight-only:** native feel counts as straight (HOLISTIC §1.4).
+- **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step (HOLISTIC §1.9).
+- **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch (HOLISTIC §1.3). The A8 "≥ 3 cold takes" switch is deleted.
+- **A12:** G reads HOLISTIC §1.9's threshold estimate.
