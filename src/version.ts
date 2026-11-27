@@ -20,7 +20,7 @@ export const CHANGELOG: ChangeEntry[] = [
   {
     version: '0.145.7',
     date: '2026-11-27',
-    en: ['In a coach session the click thins as your time holds: every beat, then only 1 and 3, only 2 and 4, only 1, and a bar on, a bar off (2 and 4 comes first when jazz is your main style). Each thinner click keeps the tempo for one take; a miss brings one level back. A teacher's "exactly this exercise" keeps the click on every beat'],
+    en: ['In a coach session the click thins as your time holds: every beat, then only 1 and 3, only 2 and 4, only 1, and a bar on, a bar off (2 and 4 comes first when jazz is your main style). Each thinner click keeps the tempo for one take; a miss brings one level back. A teacher’s "exactly this exercise" keeps the click on every beat'],
     he: ['בסשן מאמן הקליק מתדלדל כשהזמן שלך מחזיק: כל פעמה, אחר כך רק 1 ו־3, רק 2 ו־4, רק 1, ותיבה עם קליק ותיבה בלי (2 ו־4 קודם כשג׳אז הוא הסגנון הראשי). כל דילול שומר על הטמפו לנגינה אחת, ונגינה שלא הצליחה מחזירה רמה אחת. "בדיוק התרגיל הזה" של המורה משאיר קליק על כל פעמה'],
   },
   {
