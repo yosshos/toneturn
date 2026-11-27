@@ -22,26 +22,29 @@ function cellOf(root: number, rung = 'scales-3'): MatrixCell {
   throw new Error('no cell');
 }
 
-interface Row { stage: string | null; bpm: number; verdict: string; line: string; target: number; item: string }
+interface Row { stage: string | null; bpm: number; verdict: string; line: string; target: number; item: string; click: string }
+
+type Bg = { exact?: boolean; jazz?: boolean; missOn?: string };
 
 /** A player clean up to `limit`, "almost" a little above it, missing far above. */
-function session(root: number, items: Record<string, ItemState>, limit: number, takes = 30, forms: string[] = []): Row[] {
+function session(root: number, items: Record<string, ItemState>, limit: number, takes = 30, forms: string[] = [], bg: Bg = {}): Row[] {
   const cell = cellOf(root);
   const fam = planFamily([cell, ...forms.map((r) => cellOf(root, r))].map((c) => ({ cell: c, why: 'strengthen' as const })), cell.level.title);
   let now = Date.parse('2026-11-27T20:00:00');
-  let c = coachStart(fam, items, 'fifths-up', now, { minutes: 60, noProbe: true, ...(forms.length ? { walk: true, resumeAt: 0 } : {}) });
+  let c = coachStart(fam, items, 'fifths-up', now, { minutes: 60, noProbe: true, ...(forms.length ? { walk: true, resumeAt: 0 } : {}), ...(bg.exact ? { exact: true } : {}), ...(bg.jazz ? { jazz: true } : {}) });
   const rows: Row[] = [];
   for (let n = 0; n < takes; n++) {
     const t = coachTake(fam, c, items, 'fifths-up', () => true);
     const d = t.drill;
     const th = thresholds(bandOfBpm(d, t.bpm));
-    const verdict = t.stage ? 'clean' : t.bpm > limit * 1.08 ? 'not' : t.bpm > limit ? 'almost' : 'clean';
+    const verdict = t.stage ? 'clean' : bg.missOn && t.thin === bg.missOn ? 'not' : t.bpm > limit * 1.08 ? 'not' : t.bpm > limit ? 'almost' : 'clean';
     const m = { verdict, bpm: t.bpm, nps: 0, accuracy: verdict === 'clean' ? 1 : 0.9, wrong: verdict === 'not' ? 2 : 0, missing: 0, timingMean: 0, timingSD: t.stage === 'free' ? null : (verdict === 'clean' ? 0.6 : 1.2) * th.sd, hesitations: 0, handsAbs: null } as unknown as TakeMetrics;
     const st0 = items[d.itemId] ?? newItem(d);
     items[d.itemId] = t.stage ? withStageTake(st0, t.stage, m) : applyTake(st0, m, t.bpm, new Date(now).toISOString(), DEFAULT_DRILL_SETTINGS, { targetBpm: itemTargetBpm(d) }).state;
     now += 25_000;
     const nx = coachAfter(fam, c, t, m, items, 'fifths-up', now, () => true);
-    rows.push({ stage: t.stage, bpm: t.bpm, verdict, line: nx.line.he, target: itemTargetBpm(d), item: d.itemId });
+    rows.push({ stage: t.stage, bpm: t.bpm, verdict, line: nx.line.he, target: itemTargetBpm(d), item: d.itemId, click: t.thin ?? 'all' });
+    if (t.thin) expect(d.click).toBe(t.thin);
     c = nx.state;
     if (nx.end) break;
   }
@@ -63,7 +66,8 @@ describe('a timed one-key assignment on the old coach (owner 2026-11-27)', () =>
   it('a clean tempo take is never followed by the same tempo', () => {
     for (const rows of [first, second])
       for (let i = 0; i + 1 < rows.length; i++)
-        if (rows[i].stage === null && rows[i].verdict === 'clean' && rows[i + 1].stage === null) expect(rows[i + 1].bpm, `take ${i + 2}`).not.toBe(rows[i].bpm);
+        // the same tempo only with a thinner click (owner 2026-11-27: a different take)
+        if (rows[i].stage === null && rows[i].verdict === 'clean' && rows[i + 1].stage === null && rows[i + 1].click === rows[i].click) expect(rows[i + 1].bpm, `take ${i + 2}`).not.toBe(rows[i].bpm);
   });
 
   it('goes on past the target, and says so', () => {
@@ -89,5 +93,41 @@ describe('a timed one-key assignment on the old coach (owner 2026-11-27)', () =>
     if (process.env.SHOW) console.log(rows.map((r) => `${r.item} ${r.stage ?? ''} ${r.bpm} | ${r.line.slice(0, 70)}`).join(String.fromCharCode(10)));
     expect(ids.length).toBeGreaterThan(1);
     expect(rows.some((r) => r.line.includes('שלב חדש'))).toBe(true);
+  });
+});
+
+// Owner 2026-11-27: the click is not always on every beat — it thins as the time holds (option A: everyone).
+describe('the click thins in the coach (owner 2026-11-27)', () => {
+  it('every beat → 1 & 3 → 2 & 4 → 1 → a bar on, a bar off; each thinning keeps the tempo once and says so', () => {
+    const rows = session(0, {}, 200, 50);
+    if (process.env.SHOW) console.log(rows.map((r) => `${r.stage ?? ''} ${r.bpm} ${r.click} | ${r.line.slice(0, 80)}`).join(String.fromCharCode(10)));
+    const order = [...new Set(rows.map((r) => r.click))];
+    expect(order).toEqual(['all', '13', '24', 'one', 'gap']);
+    expect(rows.some((r) => r.line.includes('אותו טמפו, עכשיו הקליק רק על 1 ו־3'))).toBe(true);
+    const i = rows.findIndex((r) => r.click === '13');
+    expect(rows[i].bpm).toBe(rows[i - 1].bpm);
+  });
+  it('jazz as the main style: 2 & 4 right after the full click', () => {
+    const order = [...new Set(session(0, {}, 200, 30, [], { jazz: true }).map((r) => r.click))];
+    expect(order.slice(0, 3)).toEqual(['all', '24', '13']);
+  });
+  it("a teacher's 'exactly this exercise' keeps the click on every beat", () => {
+    expect(session(0, {}, 200, 40, [], { exact: true }).every((r) => r.click === 'all')).toBe(true);
+  });
+  it('a miss with a thinner click: one level back, with a word', () => {
+    const rows = session(0, {}, 200, 40, [], { missOn: '24' });
+    const i = rows.findIndex((r) => r.click === '24');
+    expect(i).toBeGreaterThan(0);
+    expect(rows[i].line).toContain('חוזרים: הקליק רק על 1 ו־3');
+    expect(rows[i + 1].click).toBe('13');
+  });
+});
+
+describe('the 1 & 3 click', () => {
+  it('sounds on beats 1 and 3 after the count-in', async () => {
+    const { legacyClickHeard } = await import('../src/engine/drills/timeline');
+    const d = { meter: 4, click: '13' as const };
+    expect([4, 5, 6, 7].map((i) => legacyClickHeard(d, i))).toEqual([true, false, true, false]);
+    expect([0, 1, 2, 3].every((i) => legacyClickHeard(d, i))).toBe(true);
   });
 });

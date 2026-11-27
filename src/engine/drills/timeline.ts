@@ -318,6 +318,7 @@ export function legacyClickHeard(drill: Pick<Drill, 'meter' | 'click' | 'gap' | 
   const bar = Math.floor((i - m) / m);
   if (drill.click === 'gap') return !drill.gap || bar % (drill.gap[0] + drill.gap[1]) < drill.gap[0];
   if (drill.click === '24') return beat === 1 || beat === 3;
+  if (drill.click === '13') return beat === 0 || beat === 2;
   // DRUMS P2 (d-time 9): 'one' with a gap = the 1 only in the bars the gap leaves on (every other bar with [1, 1]).
   if (drill.click === 'one') return beat === 0 && (!drill.gap || bar % (drill.gap[0] + drill.gap[1]) < drill.gap[0]);
   if (drill.click === 'and') return false;
@@ -363,6 +364,7 @@ export function clickPlan(drill: Pick<Drill, 'meter' | 'click' | 'gap' | 'groups
     if (heard && drill.click && drill.click !== 'all') {
       if (drill.click === 'gap') heard = !drill.gap || k % (drill.gap[0] + drill.gap[1]) < drill.gap[0];
       else if (drill.click === '24') heard = beatNo === 1 || beatNo === 3;
+      else if (drill.click === '13') heard = beatNo === 0 || beatNo === 2;
       else if (drill.click === 'one') heard = lvl === 2 && (!drill.gap || k % (drill.gap[0] + drill.gap[1]) < drill.gap[0]);
       else if (drill.click === 'and') heard = false;
       else heard = k < 2 || (k < 4 && lvl === 2);

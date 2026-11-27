@@ -417,7 +417,7 @@ export interface Drill {
   /** Length in beats (the take ends one beat after). */
   beats: number;
   /** Metronome after the count-in (bass time drills): every beat (default), only 2 and 4, only the off-beats, only beat 1, or a click that fades out. */
-  click?: 'all' | '24' | 'and' | 'one' | 'fade' | 'gap';
+  click?: 'all' | '13' | '24' | 'and' | 'one' | 'fade' | 'gap';
   /** Drums time drills (click 'gap'): bars with the click, then bars without, repeating (e.g. [2, 2], [1, 3]). */
   gap?: [number, number];
   /** Beats per bar (count-in = one bar). */

@@ -1477,7 +1477,7 @@ export function App() {
           };
           const forms = dr.exact || !pianoLv ? [] : scaleFormsFor(id, (r) => (firstTier(r) as (MatrixCell & { tier?: number }) | null)?.tier ?? null).map(firstTier).filter((c): c is MatrixCell => !!c);
           const plan = [cell, ...forms].map((c) => ({ cell: c, why: 'strengthen' as const }));
-          assignCoach.current = { fam: planFamily(plan, cell.level.title), minutes: dr.minutes, assign: true, note: a.note, ...(forms.length ? { walk: true } : {}) };
+          assignCoach.current = { fam: planFamily(plan, cell.level.title), minutes: dr.minutes, assign: true, note: a.note, ...(forms.length ? { walk: true } : {}), ...(dr.exact ? { exact: true } : {}) };
           chartQueue.current = null;
           drillFrom.current = 'assign';
           setDrillsFamily(null);

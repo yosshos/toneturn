@@ -104,7 +104,40 @@ export interface CoachState {
   over?: boolean;
   /** Today's limit on that item (the wave's top): the next wave climbs to just above it, in small steps. */
   limit?: number;
+  /**
+   * Owner 2026-11-27: the click thins as the time holds — every beat → 1 & 3 → 2 & 4 → 1 only → a bar on, a bar off
+   * (2 & 4 first when jazz is the main style). `lv` on item `id` (another item starts one level lower), clean takes at
+   * it (`run`), and `hold`: the next take keeps the tempo with the thinner click. Absent = off (a teacher's "exactly this").
+   */
+  thin?: { lv: number; id?: string; run: number; jazz?: boolean; hold?: boolean };
 }
+
+export type ThinClick = 'all' | '13' | '24' | 'one' | 'gap';
+const THIN_LADDER: ThinClick[] = ['all', '13', '24', 'one', 'gap'];
+const THIN_LADDER_JAZZ: ThinClick[] = ['all', '24', '13', 'one', 'gap'];
+/** Clean takes at a click level before it thins. */
+export const THIN_EVERY = 3;
+export const thinLadder = (t: CoachState['thin']): ThinClick[] => (t?.jazz ? THIN_LADDER_JAZZ : THIN_LADDER);
+/** A drill the click can thin on: 4/4 on a constant grid, with no click mode of its own. */
+export const thinnable = (d: Drill): boolean => (!d.click || d.click === 'all') && d.meter === 4 && !d.meters?.length && !d.tempoMap?.length && !d.groups;
+/** The click level on this drill now (another item than the one it reached starts one lower). */
+export function thinLv(c: CoachState, d: Drill): number {
+  if (!c.thin || !thinnable(d)) return 0;
+  const lv = c.thin.id === d.itemId ? c.thin.lv : Math.max(0, c.thin.lv - 1);
+  return Math.max(0, Math.min(thinLadder(c.thin).length - 1, lv));
+}
+export function withThin(d: Drill, k: ThinClick): Drill {
+  if (k === 'all') return d;
+  return { ...d, click: k, ...(k === 'gap' ? { gap: [1, 1] as [number, number] } : {}) };
+}
+const THIN_SAY: Record<ThinClick, T2> = {
+  all: { he: 'הקליק על כל פעמה', en: 'the click on every beat' },
+  '13': { he: 'הקליק רק על 1 ו־3', en: 'the click only on 1 and 3' },
+  '24': { he: 'הקליק רק על 2 ו־4', en: 'the click only on 2 and 4' },
+  one: { he: 'הקליק רק על 1', en: 'the click only on 1' },
+  gap: { he: 'תיבה עם קליק ותיבה בלי', en: 'a bar with the click, a bar without' },
+};
+export const thinSay = (k: ThinClick): T2 => THIN_SAY[k];
 
 /** Above its target, how far the climb may go (a ceiling for the arithmetic, never a goal). */
 const OVER_MAX = 1.6;
@@ -142,6 +175,9 @@ export interface CoachTake {
   probe?: boolean;
   /** SPEC-CLIMB-SYNC §2: a challenge take ("Let's try something harder"): well above the climb, to find the ceiling. */
   challenge?: boolean;
+  /** The click thinned on this take (owner 2026-11-27); `held`: the tempo stayed from the last take for it. */
+  thin?: ThinClick;
+  held?: boolean;
 }
 
 const levelOf = (fam: FamilyDef, id: string): LevelDef => fam.levels.find((l) => l.id === id) ?? fam.levels[0];
@@ -212,6 +248,10 @@ export interface CoachBackground {
    */
   walk?: boolean;
   resumeAt?: number;
+  /** A teacher's "exactly this exercise": the click stays on every beat (no thinning). */
+  exact?: boolean;
+  /** Jazz is the main style: 2 & 4 comes right after the full click. */
+  jazz?: boolean;
 }
 
 /** The first level of the family with a hands-together item: where a player past the basics starts. */
@@ -240,7 +280,7 @@ export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, ord
   // The probe only on a family never played, without a level test start, and not skipped.
   const fresh = !Object.values(items).some((x) => x.family === fam.id && x.takes > 0);
   const probe = fresh && bg.from === undefined && !bg.noProbe ? { takes: 0 } : null;
-  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side: probe ? null : side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0, probe, ...(bg.minutes && bg.minutes > 0 ? { minutes: bg.minutes } : {}) };
+  return { family: fam.id, steps, step, keys, keyIdx: 0, spec: 0, passed, passedNow: 0, misses: 0, slower: 0, weak: [], side: probe ? null : side, demo: true, takes: 0, clean: 0, promoted: 0, sinceReview: 0, startedAt: now, skilled, up: 0, run: 0, almost: 0, easy: 0, carry: 0, probe, ...(bg.minutes && bg.minutes > 0 ? { minutes: bg.minutes } : {}), ...(bg.exact ? {} : { thin: { lv: 0, run: 0, ...(bg.jazz ? { jazz: true } : {}) } }) };
 }
 
 /** Move the session to another step (promotion or the probe): its keys, starting in a key just played. */
@@ -299,6 +339,9 @@ export function coachTake(fam: FamilyDef, c: CoachState, items: Record<string, I
   // Past the basics: straight to the item's tempo (SPEC-COACH-2 §3.3).
   const stage = !c.skilled && freeOk(drill) ? coachStage(level, c.spec, drill, items, order) : null;
   const bpm = stage === 'quarters' ? QUARTERS_BPM : tempoOf(c, level, drill, st(items, drill), patternBest(drill, items));
+  const lv = stage === null && !c.probe ? thinLv(c, drill) : 0;
+  const k = thinLadder(c.thin)[lv];
+  if (lv > 0) return { drill: withThin(drill, k), level, stage, bpm, demo: false, kind: 'main', spec: c.spec, thin: k, ...(c.thin?.hold ? { held: true } : {}) };
   return { drill, level, stage, bpm, demo: c.demo && c.spec === 0, kind: 'main', spec: c.spec };
 }
 
@@ -380,12 +423,35 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
   const c: CoachState = { ...c0, takes: c0.takes + 1, clean: c0.clean + (clean ? 1 : 0), sinceReview: c0.sinceReview + 1, demo: false };
   const praise = PRAISE[c.takes % PRAISE.length];
   const timeUp = now - c.startedAt >= (c.minutes ?? SESSION_MIN) * 60_000;
-  const next = (line: T2): CoachNext => {
+  // The click thins as the time holds (owner 2026-11-27): THIN_EVERY clean takes at a level → the same tempo with a
+  // thinner click; a miss with a thinner click → one level back.
+  let thinBack: T2 | null = null;
+  if (c.thin) c.thin = { ...c.thin, hold: false };
+  const plain = { ...take.drill, click: undefined, gap: undefined };
+  if (c.thin && take.kind === 'main' && take.stage === null && !c0.probe && thinnable(plain)) {
+    const lad = thinLadder(c.thin);
+    const lv = thinLv(c0, plain);
+    const run = (c0.thin?.id === take.drill.itemId && c0.thin.lv === lv ? c0.thin.run : 0) + (clean ? 1 : 0);
+    c.thin = { ...c.thin, id: take.drill.itemId, lv, run };
+    if (clean && run >= THIN_EVERY && lv + 1 < lad.length) c.thin = { ...c.thin, lv: lv + 1, run: 0, hold: true };
+    else if (!clean && m.verdict !== 'almost' && lv > 0) {
+      c.thin = { ...c.thin, lv: lv - 1, run: 0 };
+      const s = thinSay(lad[lv - 1]);
+      thinBack = lv - 1 === 0 ? { he: 'הקליק חוזר לכל פעמה.', en: 'The click is back on every beat.' } : { he: `חוזרים: ${s.he}.`, en: `Back to ${s.en}.` };
+    }
+  }
+  const holdLine = (line: T2): T2 => {
+    const k = thinLadder(c.thin)[c.thin?.lv ?? 0];
+    return { he: `${line.he} אותו טמפו, עכשיו ${thinSay(k).he}.`, en: `${line.en} Same tempo, now ${thinSay(k).en}.` };
+  };
+  const next = (line0: T2): CoachNext => {
+    const line = thinBack ? { he: `${line0.he} ${thinBack.he}`, en: `${line0.en} ${thinBack.en}` } : line0;
     // A weak spot comes back every few takes (never over a new step's first take).
     if (!timeUp && !c.side && !c.demo && c.weak.length && c.sinceReview >= REVIEW_EVERY) {
       const w = c.weak[0];
       c.side = { kind: 'review', step: w.step, key: w.key, spec: 0 };
       c.sinceReview = 0;
+      if (c.thin) c.thin = { ...c.thin, hold: false };
       const lv = levelOf(fam, c.steps[w.step]);
       const d = drillOf(lv, 0, w.key, order);
       return { state: c, line: { he: `${line.he} חוזרים לנקודה קשה: ${d.title.he}.`, en: `${line.en} Back to a hard spot: ${d.title.en}.` }, end: false };
@@ -453,7 +519,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     if (clean && take.bpm > peak + 0.5) {
       c.peak = take.bpm;
       c.stall = 0;
-    } else if (peak > 0) c.stall = (c.stall ?? 0) + 1;
+    } else if (peak > 0 && !(clean && take.held)) c.stall = (c.stall ?? 0) + 1;
     if ((c.stall ?? 0) >= PLATEAU_TAKES && peak > 0) {
       const best = Math.round(peak);
       c.peak = 0;
@@ -521,7 +587,13 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       // at the top of the arithmetic with nowhere to go: back a little and up again (never the same take)
       if (nb <= take.bpm && was) {
         c.at = Math.max(30, Math.round(take.bpm * WAVE_BACK));
+        if (c.thin) c.thin = { ...c.thin, hold: false };
         return next({ he: `${praise.he} יורדים קצת ובונים שוב למעלה.`, en: `${praise.en} A little slower, then up again.` });
+      }
+      // the click thins: the same tempo once, with less of it (a different take, not the same one again)
+      if (c.thin?.hold) {
+        c.at = take.bpm;
+        return next(holdLine(praise));
       }
       if (nb <= take.bpm) return next(praise);
       if (!was && nb >= target - 0.5 && take.bpm < target - 0.5) return next({ he: `${praise.he} עכשיו ביעד.`, en: `${praise.en} Now at the target.` });
@@ -541,8 +613,15 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       c.over = true;
       c.peak = take.bpm;
       c.at = climbFrom(take.bpm, m, take.drill, Math.round(target * OVER_MAX));
-      return next({ he: `${praise.he} עברת את היעד (♩${Math.round(target)}). ממשיכים מעליו.`, en: `${praise.en} Past the target (♩${Math.round(target)}). On above it.` });
+      const past = { he: `${praise.he} עברת את היעד (♩${Math.round(target)}). ממשיכים מעליו.`, en: `${praise.en} Past the target (♩${Math.round(target)}). On above it.` };
+      if (c.thin?.hold) {
+        c.at = take.bpm;
+        return next(holdLine(past));
+      }
+      return next(past);
     }
+    // another item next: it starts one click level lower, at its own tempo
+    if (c.thin) c.thin = { ...c.thin, hold: false };
     // The other hand / the next item of the step, same key.
     if (c.spec + 1 < level.specs.length) {
       c.spec++;
@@ -617,7 +696,8 @@ export function announce(t: CoachTake, lang: 'he' | 'en'): string {
         ? 'בלי קצב'
         : 'in free time'
       : `♩${t.bpm}`;
-  return lang === 'he' ? `עכשיו: ${title}, ${how}.` : `Now: ${title}, ${how}.`;
+  const clk = t.thin ? `, ${thinSay(t.thin)[lang]}` : '';
+  return lang === 'he' ? `עכשיו: ${title}, ${how}${clk}.` : `Now: ${title}, ${how}${clk}.`;
 }
 
 /** The session's closing line (also when the player ends it). */
