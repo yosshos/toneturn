@@ -702,3 +702,82 @@
 :root:root .set-card .example .spoken-ex { color: var(--purple) !important; font-weight: 700; }
 :root:root[data-theme='dark'] .example { background: #2a1f42; }
 :root:root[data-theme='dark'] .set-card .example .spoken-ex { color: #c4a8ff !important; }
+
+/* ================================================================ UI review 0.145.12: one control language
+   One switch (brand purple when on), one range, one select, one segmented control (white pill on lavender,
+   scrolls sideways when the labels do not fit). The older layers (v2.css teal, the exam switch's orange, the
+   browser's blue range, the Licks tabs' solid purple) are overridden here, last. */
+:root:root:root[data-theme] :is(.toggle-row, .check, .panel-screen.settings) input[type='checkbox']:checked,
+:root:root:root[data-theme] :is(.enc-tog, .rec-tog):checked {
+  background: var(--purple);
+}
+:root:root:root[data-theme] :is(.toggle-row, .check, .panel-screen.settings) input[type='checkbox']:not(:checked),
+:root:root:root[data-theme] :is(.enc-tog, .rec-tog):not(:checked),
+:root:root:root[data-theme] .exam-switch:not(.on) .es-track {
+  background: var(--line-strong);
+}
+:root:root:root[data-theme] .exam-switch.on .es-track {
+  background: var(--purple);
+}
+:root:root:root[data-theme] .exam-switch .es-track i {
+  box-shadow: 0 1px 3px rgba(30, 16, 51, 0.25);
+}
+:root:root:root[data-theme='contrast'] :is(.toggle-row, .check, .panel-screen.settings) input[type='checkbox']:checked,
+:root:root:root[data-theme='contrast'] .exam-switch.on .es-track {
+  background: #ffe600;
+}
+:root:root :where(input[type='range']) {
+  accent-color: var(--purple, #6d28d9);
+}
+:root:root select:not([multiple]):not([size]) {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 40px;
+  padding-inline: 12px 34px;
+  color: var(--ink);
+  font: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%237a6f8f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  cursor: pointer;
+}
+:root:root select:not([multiple]):not([size]):dir(rtl) {
+  background-position: left 12px center;
+}
+:root:root .lk-seg {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 10px;
+  padding: 3px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--st-surface-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+:root:root .lk-seg::-webkit-scrollbar {
+  display: none;
+}
+:root:root .lk-seg button {
+  flex: 1 0 auto;
+  min-width: max-content;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-weight: 600;
+  box-shadow: none;
+}
+:root:root:root[data-theme] .lk-seg button.on {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(30, 16, 51, 0.12);
+}
+:root:root:root[data-theme] .lk-seg button.on .lk-seg-n {
+  background: var(--purple, #6d28d9);
+  color: #fff;
+}

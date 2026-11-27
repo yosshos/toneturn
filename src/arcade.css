@@ -545,7 +545,21 @@ h2,
   top: 0;
   z-index: 6;
   padding: 8px 0 12px;
-  background: linear-gradient(var(--bg) 82%, transparent);
+  /* 0.145.12: solid, with a hairline — the old fade let the card scrolled under it bleed through as a ghost line */
+  background: var(--bg);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink, #1d1640) 8%, transparent);
+}
+.ph-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ph-tools .path-intro,
+.ph-tools .exam-head-row {
+  margin: 0;
 }
 .ph-row {
   display: flex;

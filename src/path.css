@@ -646,6 +646,9 @@ html[data-motion='reduced'] .back-to-step {
   font-size: 54px;
   line-height: 1;
 }
+.tuner-note.idle {
+  min-height: 1em; /* keeps the dial's height while idle, so the first note does not push the page */
+}
 .tuner-cents {
   color: var(--soft, #d8d5f0);
   font-size: 14px;

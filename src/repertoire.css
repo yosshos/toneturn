@@ -94,10 +94,15 @@
 .rep-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 :root[data-theme] .rep-actions .btn { width: 100%; min-height: 44px; text-decoration: none; border: 1.5px solid var(--stroke, #d9d2e6); border-radius: 12px; background: var(--card, #fff); color: var(--ink, #1d1530); font-weight: 650; font-size: 0.88rem; line-height: 1.2; padding-inline: 8px; white-space: normal; }
 /* wide: the list and the piece side by side */
-.rep-split { display: grid; grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
-.rep-pane { position: sticky; top: 12px; min-width: 0; }
+/* 0.145.12 (UI review): a real master-detail grid; the detail column always holds a panel, empty or not */
+:root .rep-split { display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); gap: 24px; align-items: start; }
+:root .rep-split > .rep-screen { min-width: 0; }
+.rep-pane { position: sticky; top: 12px; min-width: 0; padding-top: 64px; }
 .rep-pane .rep-item { padding: 14px 16px; border-radius: 18px; border: 1.5px solid var(--stroke, #d9d2e6); background: var(--card, #fff); }
-.rep-pane-empty { display: grid; place-items: center; min-height: 240px; border-radius: 18px; border: 1.5px dashed var(--stroke, #d9d2e6); color: var(--ink-dim, #6b6380); }
+:root:root .rep-split .rep-pane-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 320px; padding: 24px; text-align: center; border-radius: 18px; border: 1.5px dashed var(--stroke, #d9d2e6); background: color-mix(in srgb, var(--card, #fff) 70%, transparent); color: var(--ink-dim, #6b6380); }
+.rep-pane-empty .rpe-ico { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 6px; border-radius: 20px; background: color-mix(in srgb, var(--brand, #6d28d9) 8%, var(--card, #fff)); }
+.rep-pane-empty b { color: var(--ink, #1d1530); font-size: 1rem; font-weight: 650; }
+.rep-pane-empty p { margin: 0; max-width: 32ch; font-size: 0.86rem; line-height: 1.45; }
 /* Add a piece */
 .rep-add-sheet { display: flex; flex-direction: column; gap: 10px; }
 .rep-srcs { display: flex; flex-direction: column; gap: 8px; }
