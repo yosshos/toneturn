@@ -80,7 +80,7 @@ export const RHO_CELL = 0.2;
  * ≈ 80 % coverage of the 80 % interval under the spec's shared supply (docs/MEASURE-R17-REPORT.txt §3). Proposed, not yet
  * the default (RHO_CELL stays the decision value until the owner decides).
  */
-export const RHO_CELL_TIER = 0.1;
+export const RHO_CELL_TIER = 0.08;
 
 /**
  * §1.7 "dependence aware": the design effect 1 + (m_d − 1)ρ_d + (m_c − 1)ρ_c, with m_d = looks per day and m_c = looks
