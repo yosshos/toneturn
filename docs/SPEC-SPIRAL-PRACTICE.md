@@ -780,13 +780,13 @@ In addition:
 - `firstTargetDay` and "best" use straight, qualifying takes only.
 
 ## 22. Pointer: superseded by SPEC-HOLISTIC-2 (2026-11-27)
-These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v12: §1, governance list §1.16). Where they differ, HOLISTIC wins:
+These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v13: §1, governance list §1.16; consolidated file docs/SPEC-HOLISTIC-2.v13.md). Where they differ, HOLISTIC wins:
 - **§2.5 / §3 cold check:** HOLISTIC §1.9's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's main-item cold check is played before any other sounding take of the cell, in every planner (HOLISTIC §1.4).
 - **§4.1 coldness:** `lastSound`, per cell, from any sounding take (HOLISTIC §1.4). `lastQual` remains only for the ≥ 1 h re-measure rule.
 - **§4.2:** passes are kept, `passedAt` sticky. Rank comes from passed exercises (HOLISTIC §1.7, owner decision H8); the posterior drives only current form and adaptivity. The later-day cold take needs ≥ 8 h and a different local day (HOLISTIC §1.6).
 - **§9:** "promotion by day 2–3" means the **item pass**, not a tier promotion.
 - **§14 area-tier definition superseded** by HOLISTIC §1.3 (`areaTier`) and §1.7 (rank).
-- **§14 / §15.5 entry:** HOLISTIC §1.3's entry formula and `placedTier`.
+- **§14 / §15.5 entry:** HOLISTIC §1.3's entry formula and `placedTier`, with readiness entry (HOLISTIC §1.7a, owner decision H10); entry never exceeds max(`placedTier`, `rankHW`) + 2.
   - Prerequisites cross-session read `established` (HOLISTIC §1.6).
   - In-session forms follow D2 / A10 (`acquired`).
 - **§15.4 burst trigger:** no new clean session peak in 3 sessions on ≥ 2 days (HOLISTIC §6.2).
@@ -794,5 +794,6 @@ These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v12: §1, governance lis
 - **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step (HOLISTIC §1.9).
 - **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch (HOLISTIC §1.3). The A8 "≥ 3 cold takes" switch is deleted.
 - **A12:** G reads HOLISTIC §1.9's threshold estimate.
-- **§4.2 (v12):** a pass needs 2 clean first-cold takes of the cell's main item on two distinct later days (HOLISTIC §1.6). Licks, Encore phrases and repertoire drills keep the old rule and count as coverage only for rank.
+- **§4.2 (v13, owner decision H9 = variant V1):** a pass needs 3 counted clean takes at ≥ 95 % of target on ≥ 2 days, 2 clean first-cold takes of the cell's main item on two distinct later days (each ≥ 8 h after the first clean take at target and on a different local day; any cold miss of the main item at the probe band between them resets the pair), and a clean share ≥ 2/3 over the last ≤ 6 counting cold checks of the cell (HOLISTIC §1.6). The reference implementation is src/engine/measure/sim/itemPass.ts (HOLISTIC §9.1). Licks, Encore phrases and repertoire drills keep the old rule and count as coverage only for rank.
 - **§15.5 / §17.3:** the rate's "band step" is a tier step, capped at +1.
+- **§14 items 35 and 37 for guitar and bass:** item 35 → harmonised arpeggios in 3rds and 6ths across two strings or two positions; item 37 → position-shift leaps (HOLISTIC §13.1). Piano keeps the originals.
