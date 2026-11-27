@@ -794,3 +794,5 @@ These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v9: §1, governance list
 - **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step (HOLISTIC §1.9).
 - **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch (HOLISTIC §1.3). The A8 "≥ 3 cold takes" switch is deleted.
 - **A12:** G reads HOLISTIC §1.9's threshold estimate.
+- **§4.2 (v11):** the counting cold take of a pass is the cell's first cold take of that local day. Licks, Encore phrases and repertoire drills keep the old rule and count as coverage only for rank.
+- **§15.5 / §17.3:** the rate's "band step" is a tier step, capped at +1.
