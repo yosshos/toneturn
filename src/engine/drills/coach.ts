@@ -458,7 +458,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     }
     if (timeUp) return { state: c, line: summary(fam, c, line), end: true };
     const t = coachTake(fam, c, items, order, freeOk);
-    return { state: c, line: { he: `${line.he} ${announce(t, 'he')}`, en: `${line.en} ${announce(t, 'en')}` }, end: false };
+    return { state: c, line: { he: `${line.he} ${announce(t, 'he', take)}`, en: `${line.en} ${announce(t, 'en', take)}` }, end: false };
   };
 
   // A warm-up: whatever happened, on to the session's step.
@@ -685,7 +685,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
 }
 
 /** "Now: G major · hands together · ♩80" (free time: "in free time"). */
-export function announce(t: CoachTake, lang: 'he' | 'en'): string {
+export function announce(t: CoachTake, lang: 'he' | 'en', prev?: CoachTake): string {
   // a key-session stage: its one-line brief and the pulse as played (SPEC-KEY-SESSION-2 §6, no level titles)
   // (the tempo isolated left-to-right so "♩90" never flips in a Hebrew line)
   if (t.stageInfo) return `${t.probe ? (lang === 'he' ? 'קודם בדיקה קצרה. ' : 'A quick check first. ') : ''}${t.stageInfo.brief[lang]} ${t.stage === 'free' ? (lang === 'he' ? 'בקצב חופשי.' : 'In free time.') : tempoText(t.play?.bpm ?? t.bpm, t.play?.per, lang)}`;
@@ -697,6 +697,8 @@ export function announce(t: CoachTake, lang: 'he' | 'en'): string {
         : 'in free time'
       : `♩${t.bpm}`;
   const clk = t.thin ? `, ${thinSay(t.thin)[lang]}` : '';
+  // owner 2026-11-27: the same exercise at another tempo needs no title again
+  if (prev && prev.drill.itemId === t.drill.itemId && prev.stage === t.stage && t.stage !== 'free') return lang === 'he' ? `עכשיו ${how}${clk}.` : `Now ${how}${clk}.`;
   return lang === 'he' ? `עכשיו: ${title}, ${how}${clk}.` : `Now: ${title}, ${how}${clk}.`;
 }
 

@@ -131,3 +131,13 @@ describe('the 1 & 3 click', () => {
     expect([0, 1, 2, 3].every((i) => legacyClickHeard(d, i))).toBe(true);
   });
 });
+
+// Owner 2026-11-27: the same exercise at another tempo is not named again
+describe('the coach line names the exercise only when it changes', () => {
+  it('a climb on the same item says only the tempo', () => {
+    const rows = session(0, {}, 200, 12);
+    const climb = rows.filter((r, i) => i > 0 && r.stage === null && rows[i - 1].stage === null && rows[i - 1].item === r.item && r.line.includes('מהר יותר'));
+    expect(climb.length).toBeGreaterThan(0);
+    for (const r of climb) expect(r.line).toMatch(/עכשיו ♩\d+/);
+  });
+});

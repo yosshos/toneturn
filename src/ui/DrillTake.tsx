@@ -1088,6 +1088,14 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const chNotes: ChannelNote[] = [];
     const bends: BendEvent[] = [];
     const openP = new Map<number, PlayedNote>();
+    // Owner 2026-11-27 ("a silence before the feedback"): a MIDI take ends once the last written note has been played
+    // and every key is up — not after the last note's written length and one more beat. Not for drums, guitar, ear
+    // drills, a pedal goal or a band backing (they need the full timeline).
+    const lastOnBeat = drill.notes.reduce((mx, n) => Math.max(mx, n.beat), 0);
+    const earlyOk = !drum && !guitarItem && !drill.listen && !drill.goal.pedal && !backing.length && drill.notes.length > 0;
+    const tlAbort = new AbortController();
+    abort.signal.addEventListener('abort', () => tlAbort.abort(), { once: true });
+    let earlyT: number | null = null;
     const offMidi = midi.onNote((m, on, at, vel, ch = 0) => {
       if (!zero) return;
       const t = at - zero - cal.latencyMs;
@@ -1106,6 +1114,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         if (p) p.off = t;
         open.delete(k);
         openP.delete(k);
+        if (earlyOk && earlyT === null && open.size === 0 && !pedalWas && p && p.on >= bms(lastOnBeat) - beatS * 500 && notes.length >= drill.notes.length * 0.8)
+          earlyT = window.setTimeout(() => tlAbort.abort(), EARLY_END_MS);
       }
     });
     const offBend = guitarItem && useMidi ? midi.onBend((ch, cents, at) => zero && bends.push({ ch, cents, at: at - zero - cal.latencyMs })) : null;
@@ -1263,7 +1273,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       if (backing.length) void piano.play(backing, plan.responseEnd + 0.5, abort.signal).catch(() => {});
       await piano.playTimeline(
         tl,
-        abort.signal,
+        tlAbort.signal,
         (i) => {
           // Owner 2026-11-20 (Bluetooth speaker): an output delay the browser does not report (found by the MIDI
           // play-along calibration, above DEVICE_ONLY_ABOVE) — the score's cursor waits for the click to be heard.
@@ -1279,6 +1289,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     } catch {
       /* stopped */
     } finally {
+      if (earlyT !== null) window.clearTimeout(earlyT);
       setArm(null);
       over = true;
       cancelAnimationFrame(raf);
@@ -1699,3 +1710,6 @@ function UntimedTake({ drill, lang, cal, onDone }: { drill: Drill; lang: Lang; c
     </div>
   );
 }
+
+/** The take's end after the last key is released (owner 2026-11-27): a moment for a stray extra note. */
+const EARLY_END_MS = 150;

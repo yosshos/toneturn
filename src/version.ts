@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.9',
+    date: '2026-11-27',
+    en: ['A take with a MIDI keyboard ends when you lift the last key, so the feedback comes at once', 'When the coach keeps the same exercise, its line says only the new tempo'],
+    he: ['נגינה עם מקלדת MIDI נגמרת כשמרימים את הקליד האחרון, כך שהפידבק מגיע מיד', 'כשהמאמן נשאר באותו תרגיל, השורה אומרת רק את הטמפו החדש'],
+  },
+  {
     version: '0.145.8',
     date: '2026-11-27',
     en: ['A coach session for a teacher’s assignment sends its closing line with the result, so it can be read later', 'Calibration accounts send their take timing to the server'],
