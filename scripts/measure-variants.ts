@@ -24,7 +24,7 @@ for (const r of reps) line(`| ${r.variant} | ${r.pass28.map((x) => pct(x.rate)).
 line('\n## (b) Calendar days per tier, pooled over every transition of every real area (median / p90; share reached in 240 d)');
 line('| variant | p 0.75, 3 d/wk | p 0.75, 5 d/wk | p 0.85, 3 d/wk | p 0.85, 5 d/wk |');
 line('|---|---|---|---|---|');
-for (const r of reps) line(`| ${r.variant} | ${r.tierDays.map((t) => `${t.median} / ${t.p90}${t.reached < 0.995 ? ` (${pct(t.reached)})` : ''}`).join(' | ')} |`);
+for (const r of reps) line(`| ${r.variant} | ${r.tierDays.map((t) => `${t.median} / ${Math.round(t.p90)}${t.reached < 0.995 ? ` (${pct(t.reached)})` : ''}`).join(' | ')} |`);
 
 line('\n## (c) Honesty of rank rises, and (d) stalls (steady learner, 365 d, 4 d/wk)');
 line('| variant | rank rises at true p < 0.5 | median true p at a new tier | learners with a stall ≥ 42 d | climbs missing a rankable tier |');

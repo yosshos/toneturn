@@ -289,4 +289,11 @@ describe('§9.1 findings, fixed (coordinator 2026-11-27)', () => {
   it('an over-placed learner (+2 tiers) is corrected in a non-tempo (reading) area', () => {
     expect(placementRun(2, false, 20, SEED, { rate: 0 }).corrected).toBeGreaterThan(0.9); // a learner who stays over-placed
   }, 60000);
+
+  // FAILS (fix 3 side effect, §9.1 target "a correctly placed learner is never corrected"): with true cold p 0.75 at
+  // placedTier, the cumulative clean share over the first ≥ 8 attempts on ≥ 3 days falls below 35 % for ~1.3 % of
+  // learners (day SD 0.8, item SD 0.7): measured 2 of 150 at seed SEED + 70. The 40-run check above misses it.
+  it.fails('a correctly placed reading learner is never corrected under fix 3 (150 learners)', () => {
+    expect(placementRun(0, false, 150, SEED + 70, { rate: 0 }).corrected).toBe(0);
+  }, 60000);
 });
