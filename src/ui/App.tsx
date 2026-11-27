@@ -57,6 +57,8 @@ import { drumMicOf, VOICE_PERC } from '../engine/drumKit';
 import { guitarCatalog } from '../engine/drills/guitar';
 import { levelDrills } from '../engine/drills/plan';
 import { listenCard, tuneSlotLevels } from '../engine/practiceMethod';
+import { resetCalibUpload, syncCalibTraces } from '../cloud/calibUpload';
+import { takeLastCoachLine } from '../storage/lastCoachLine';
 import { assignOptsFor, parseTopicRef, submitResult, type AssignItem, type AssignOpts } from '../cloud/teacher';
 import { emptyTally, tallyTake, takeChannel, type ChannelTally } from '../engine/assignChannel';
 import { activeSince, installActivity, lastInputAt, takeBusy } from './activity';
@@ -694,6 +696,11 @@ export function App() {
       if (t !== null) window.clearTimeout(t);
     };
   }, [user?.id]);
+  // Calibration accounts send the take traces kept on this device that the server doesn't have yet (owner 2026-11-27)
+  useEffect(() => {
+    resetCalibUpload();
+    if (user) void syncCalibTraces();
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The cloud copy is merged only once this device's own settings have loaded (else the local load replaced the merge,
   // or the merge landed on the defaults), and it never brings device keys (calibration, MIDI sound…: deviceProfiles).
@@ -1422,7 +1429,9 @@ export function App() {
     const x = activeAssign.current;
     if (!x) return;
     activeAssign.current = null;
-    void submitResult(x.a.id, score, activeSince(x.t0) / 60000, { ...metrics, ...(x.opts && x.opts.channel !== 'free' ? { channel: x.opts.channel, otherChannel: x.tally?.other ?? 0 } : {}) }).catch(() => {});
+    // owner 2026-11-27: the coach's closing line goes with the result (the teacher, and calibration, can read it later)
+    const end = x.a.kind === 'drill' ? takeLastCoachLine() : null;
+    void submitResult(x.a.id, score, activeSince(x.t0) / 60000, { ...metrics, ...(end ? { line: end.he, lineEn: end.en } : {}), ...(x.opts && x.opts.channel !== 'free' ? { channel: x.opts.channel, otherChannel: x.tally?.other ?? 0 } : {}) }).catch(() => {});
   };
   const openAssignItem = (a: AssignItem) => {
     // SPEC-PATH-TODAY-PRACTICE §5.1: an item assigned from its page opens that page ("The assignment" as its main button)

@@ -64,6 +64,8 @@ export interface TakeTrace {
   drift: number | null;
   /** A swung item: no direction or class measures (§7 measures swing). */
   swing?: boolean;
+  /** The click was thinned on this take (coach.ts, owner 2026-11-27): the timing noise is not the full click's. */
+  click?: string;
   R?: HandTrace;
   L?: HandTrace;
   /** Right minus left at shared onsets (ms, + = right later), going up / going down. */
@@ -369,6 +371,7 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
     lead,
     drift,
     ...(swing ? { swing: true } : {}),
+    ...(drill.click && drill.click !== 'all' ? { click: drill.click } : {}),
     ...(R ? { R } : {}),
     ...(L ? { L } : {}),
     ...(sync ? { sync } : {}),

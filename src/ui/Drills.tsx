@@ -9,6 +9,8 @@ import { SONGBOOK } from '../content/songbook';
 import { COMMON_CHORDS, keyName as songKeyName, songFit } from '../engine/songChords';
 import { recordTakeAnalysis } from '../storage/analysis';
 import { recordTrace } from '../storage/takeTraces';
+import { syncCalibTraces } from '../cloud/calibUpload';
+import { setLastCoachLine } from '../storage/lastCoachLine';
 import { NOTHING, sessionTendency, takeTrace, type TakeKind, type TakeTrace } from '../engine/drills/tendency';
 import { CAL_PRESSES, calFromPresses, checkLevels, refineCal } from '../engine/drills/velCal';
 import { MT } from '../i18n/measureText';
@@ -1759,7 +1761,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     // drums and voice never (their notes are not a pitched line); the input as it really was
     const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: midi.devices.length && (pianoTouch(drill) || guitarInputPref() !== 'mic') ? 'midi' : 'mic', kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId) });
     if (trace) {
-      void recordTrace(trace);
+      // a calibration account sends it to the server too (a no-op for every other account)
+      void recordTrace(trace).then(() => syncCalibTraces());
       if (coach) cTraces.current.push(trace);
     }
     // BASS_AUDIT A4: a take counts toward the level only at the item's goal / the level's target tempo, never a "Slower" one.
@@ -1834,6 +1837,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       onItem?.(ns);
     }
     setCLine({ line: nx.line, end: nx.end, clean: m.verdict === 'clean' });
+    if (nx.end) setLastCoachLine(nx.line);
     // the run's place for the day: kept after every take; a run that reached its end has nothing left to continue
     if (nx.end) {
       cEnded.current = true;
@@ -1975,6 +1979,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       // stopped by the player: the run stays kept for the day as saved after the last take (opening it again continues there)
       cStopped.current = true;
       setCLine({ line: coachSummary(coach, cs, { he: '', en: '' }), end: true, clean: true });
+      setLastCoachLine(coachSummary(coach, cs, { he: '', en: '' }));
     };
     // The session's end: what happened, the XP, and back.
     if (cLine?.end)

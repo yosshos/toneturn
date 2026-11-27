@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.8',
+    date: '2026-11-27',
+    en: ['A coach session for a teacher’s assignment sends its closing line with the result, so it can be read later', 'Calibration accounts send their take timing to the server'],
+    he: ['סשן מאמן של משימה מהמורה שולח את שורת הסיום עם התוצאה, כדי שאפשר יהיה לקרוא אותה אחר כך', 'חשבונות כיול שולחים לשרת את נתוני התזמון של הנגינות'],
+  },
+  {
     version: '0.145.7',
     date: '2026-11-27',
     en: ['In a coach session the click thins as your time holds: every beat, then only 1 and 3, only 2 and 4, only 1, and a bar on, a bar off (2 and 4 comes first when jazz is your main style). Each thinner click keeps the tempo for one take; a miss brings one level back. A teacher’s "exactly this exercise" keeps the click on every beat'],
