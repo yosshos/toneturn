@@ -38,26 +38,37 @@
   position: relative;
   display: grid;
 }
+/* UI review 0.145.12: in a direct card the footer row holds both controls — the levels "•••" at the start, the
+   brand play button at the end — pinned to the card's bottom, so every card's buttons line up and the title has
+   the full width. */
 .drill-family-wrap > .drill-family {
-  padding-inline-end: 52px;
+  height: 100%;
 }
 /* owner 2026-11-25: the card starts practice; this small button opens the family's levels */
 .drill-family-levels {
   position: absolute;
-  inset-block-start: 4px;
-  inset-inline-end: 4px;
-  width: 44px;
-  height: 44px;
+  inset-block-end: 10px;
+  inset-inline-start: 8px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  border: 1px solid var(--card-2);
-  background: var(--card);
-  color: var(--ink-soft);
+  padding: 0;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-dim, var(--ink-soft));
   cursor: pointer;
+}
+.drill-family-levels::before {
+  /* a 44px touch target around the 32px visual */
+  content: '';
+  position: absolute;
+  inset: -6px;
 }
 .drill-family-levels:hover {
   color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 .drill-family b {
   font-family: var(--display);
@@ -766,14 +777,36 @@ button.km-cell:focus-visible { outline: 2px solid var(--ink); outline-offset: 1p
 
 .drill-family-go {
   justify-self: end;
+  align-self: end;
+  margin-top: auto;
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  /* ink on the card colour: readable whatever the family's hue (readable-contrast rule) */
-  background: var(--ink);
-  color: var(--card);
+  /* the brand colour with white (UI review 0.145.12; contrast 7:1+), the same purple as every play/primary action */
+  background: var(--purple, #6d28d9);
+  color: #fff;
+  /* the chrome icon's paper ramp for a purple fill (paper.css): white sheet, lilac edge, purple cut-outs */
+  --cs: #ffffff;
+  --ce: #b9a3e8;
+  --cl: var(--purple, #6d28d9);
+}
+.drill-family-wrap > .drill-family:has(.drill-family-go) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.drill-family-wrap > .drill-family .drill-family-go {
+  align-self: flex-end;
+}
+/* titles: at most two lines (the full name is the title attribute and the button's name) */
+.drill-family b {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .drill-family .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
