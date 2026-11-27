@@ -2602,6 +2602,8 @@ button.chip.on {
 /* a run stopped earlier today (owner 2026-11-25): what was played and the time left; Start over stays small */
 .coach-intro .coach-resume-line { margin: 0; font-size: 14px; font-weight: 600; }
 .coach-intro .coach-fresh { font-size: 14px; }
+/* owner 2026-11-27: the teacher's note on a timed assignment, on the session's start page */
+.coach-intro .coach-teacher-note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--card-2, rgba(127,127,127,.08)); color: var(--ink); font-size: 15px; line-height: 1.45; text-align: start; max-width: 460px; }
 /* the review of a lick / phrase take keeps its layout; the wrapper only listens for a button taking over the hands-free timer */
 .lk-review, .enc-review { display: contents; }
 /* the key order of a topic session (owner 2026-11-21) */

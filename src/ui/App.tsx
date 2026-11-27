@@ -1417,7 +1417,7 @@ export function App() {
   // §5.2: the assignment's options (its required channel) and the takes that met it.
   const activeAssign = useRef<{ a: AssignItem; t0: number; after: string | null; opts?: AssignOpts; tally?: ChannelTally } | null>(null);
   /** A timed technique assignment ("drill:<level>@<key>/<minutes>"): the coach on that rung in that key for so long. */
-  const assignCoach = useRef<{ fam: FamilyDef; minutes: number; walk?: boolean; assign?: boolean } | null>(null);
+  const assignCoach = useRef<{ fam: FamilyDef; minutes: number; walk?: boolean; assign?: boolean; note?: string | null } | null>(null);
   const submitAssign = (score: number, metrics: Record<string, unknown> = {}) => {
     const x = activeAssign.current;
     if (!x) return;
@@ -1467,7 +1467,7 @@ export function App() {
         let cell = pick(projectionInput(settings, ds0, progress.drillItems ?? {})?.cells ?? []);
         for (let t = 0; !cell && pianoLv && t <= 9; t++) cell = pick(keyMatrix(catalog(), t, progress.drillItems ?? {}, { instrument: 'piano', groups: [group] }));
         if (cell) {
-          assignCoach.current = { fam: planFamily([{ cell, why: 'strengthen' as const }], cell.level.title), minutes: dr.minutes, assign: true };
+          assignCoach.current = { fam: planFamily([{ cell, why: 'strengthen' as const }], cell.level.title), minutes: dr.minutes, assign: true, note: a.note };
           chartQueue.current = null;
           drillFrom.current = 'assign';
           setDrillsFamily(null);

@@ -10,8 +10,9 @@ import { levelKeys, specDrills, targetBpmOf } from './plan';
 import { newItem } from './ladder';
 import { bandOfBpm, thresholds } from './analyze';
 import { hasQuarters, hasRubato, QUARTERS_BPM, QUARTERS_CLEAN, RUBATO_CLEAN, rubatoStage, type RubatoStage } from './rubato';
-import { isStaged, type StageInfo } from './stages';
-import { ksAfter, ksStart, ksSummary, ksTake, type KsState } from './keyCoach';
+import { isStaged, stepCap, type StageInfo } from './stages';
+import { ksAfter, ksStart, ksSummary, ksTake, stepQuality, type KsState } from './keyCoach';
+import { notesPerBeat } from './analyze';
 import { tempoText, type CoachLine } from './coachPhrases';
 
 type T2 = { en: string; he: string };
@@ -94,7 +95,23 @@ export interface CoachState {
   minutes?: number;
   /** SPEC-KEY-SESSION-2: the coach over a key session of stages (keyCoach.ts). */
   ks?: KsState;
+  /**
+   * Owner 2026-11-27: the current item's next tempo, set by the last take (a clean take climbs from it, never the same
+   * tempo twice; "slower" eases from it). Cleared when the item changes.
+   */
+  at?: number;
+  /** Past the target with nowhere else to go (one item, one key: a teacher's timed key assignment): the climb goes on. */
+  over?: boolean;
+  /** Today's limit on that item (the wave's top): the next wave climbs to just above it, in small steps. */
+  limit?: number;
 }
+
+/** Above its target, how far the climb may go (a ceiling for the arithmetic, never a goal). */
+const OVER_MAX = 1.6;
+/** After the limit with nowhere else to go: back to this share of it, and up again (a wave, never the same take). */
+const WAVE_BACK = 0.85;
+/** A key whose pattern is clean in another key starts at this share of that tempo (owner 2026-11-27: not from ♩60 again). */
+const CARRY_KEYS = 0.85;
 
 /** Takes in the placement probe. */
 export const PROBE_TAKES = 4;
@@ -135,6 +152,27 @@ const drillOf = (level: LevelDef, spec: number, key: number, order: Order): Dril
 const st = (items: Record<string, ItemState>, d: Drill): ItemState => items[d.itemId] ?? newItem(d);
 /** Played clean at its own tempo at least once (a slowed take never counts: SPEC-COACH-2 A4). */
 const cleanAtTempo = (s: ItemState | undefined, d: Drill): boolean => !!s && s.cleanBpm > 0 && s.cleanBpm >= d.startBpm - 0.5;
+
+/** Item ids that differ only by their key field: the same pattern in other keys. */
+function sameInOtherKeys(id: string, items: Record<string, ItemState>): ItemState[] {
+  const a = id.split(':');
+  const out: ItemState[] = [];
+  for (const [k, v] of Object.entries(items)) {
+    if (k === id) continue;
+    const b = k.split(':');
+    if (b.length !== a.length) continue;
+    let diff = -1;
+    let n = 0;
+    for (let j = 0; j < a.length; j++) if (a[j] !== b[j]) (diff = j, n++);
+    if (n === 1 && /^\d+$/.test(a[diff]) && /^\d+$/.test(b[diff])) out.push(v);
+  }
+  return out;
+}
+
+/** The best clean tempo of the item's pattern in other keys (0 = none). */
+export function patternBest(d: Drill, items: Record<string, ItemState>): number {
+  return Math.max(0, ...sameInOtherKeys(d.itemId, items).map((x) => x.cleanBpm || 0));
+}
 
 /** Every item of the level clean at tempo in this key. */
 function keyClean(level: LevelDef, key: number, items: Record<string, ItemState>, order: Order): boolean {
@@ -208,6 +246,7 @@ export function coachStart(fam: FamilyDef, items: Record<string, ItemState>, ord
 /** Move the session to another step (promotion or the probe): its keys, starting in a key just played. */
 function toStep(fam: FamilyDef, c: CoachState, step: number, items: Record<string, ItemState>, order: Order): LevelDef {
   c.step = step;
+  c.at = undefined;
   const nl = levelOf(fam, c.steps[c.step]);
   const kp = keysOf(nl, items, order);
   const first = c.keys[0];
@@ -232,7 +271,8 @@ function toStep(fam: FamilyDef, c: CoachState, step: number, items: Record<strin
 export function coachStage(level: LevelDef, spec: number, drill: Drill, items: Record<string, ItemState>, order: Order): RubatoStage | null {
   const base = rubatoStage(items[drill.itemId], drill);
   if (!base) return null;
-  const known = specDrills(level, spec, order).some((d) => d.itemId !== drill.itemId && (cleanAtTempo(items[d.itemId], d) || (items[d.itemId]?.rubato?.free ?? 0) >= RUBATO_CLEAN));
+  // owner 2026-11-27: also the same pattern in a key outside this level (a one-key assignment in E♭ after B♭)
+  const known = specDrills(level, spec, order).some((d) => d.itemId !== drill.itemId && (cleanAtTempo(items[d.itemId], d) || (items[d.itemId]?.rubato?.free ?? 0) >= RUBATO_CLEAN)) || patternBest(drill, items) >= drill.startBpm - 0.5;
   if (!known) return base;
   return (items[drill.itemId]?.rubato?.free ?? 0) >= 1 ? null : 'free';
 }
@@ -258,7 +298,7 @@ export function coachTake(fam: FamilyDef, c: CoachState, items: Record<string, I
   const drill = drillOf(level, c.spec, c.keys[c.keyIdx], order);
   // Past the basics: straight to the item's tempo (SPEC-COACH-2 §3.3).
   const stage = !c.skilled && freeOk(drill) ? coachStage(level, c.spec, drill, items, order) : null;
-  const bpm = stage === 'quarters' ? QUARTERS_BPM : tempoOf(c, level, drill, st(items, drill));
+  const bpm = stage === 'quarters' ? QUARTERS_BPM : tempoOf(c, level, drill, st(items, drill), patternBest(drill, items));
   return { drill, level, stage, bpm, demo: c.demo && c.spec === 0, kind: 'main', spec: c.spec };
 }
 
@@ -267,10 +307,23 @@ export function coachTake(fam: FamilyDef, c: CoachState, items: Record<string, I
  * near the share of the target the last passed item reached — climbed by this visit's steps, eased by "slower", never
  * past the target.
  */
-function tempoOf(c: CoachState, level: LevelDef, drill: Drill, s: ItemState): number {
+function tempoOf(c: CoachState, level: LevelDef, drill: Drill, s: ItemState, otherKeys = 0): number {
   const target = targetBpmOf(level, drill);
-  const base = Math.min(target, Math.max(s.goalBpm, Math.round(s.cleanBpm * 0.94), c.skilled ? Math.round(target * c.carry * 0.94) : 0));
-  return Math.max(30, Math.min(target, Math.round(base * TEMPO_STEP ** c.up * SLOWER ** c.slower)));
+  const cap = c.over ? Math.round(target * OVER_MAX) : target;
+  // the last take set it: a clean one climbed, a slower one eased (owner 2026-11-27: never the same tempo twice)
+  if (c.at) return Math.max(30, Math.min(cap, Math.round(c.at)));
+  const base = Math.min(target, Math.max(s.goalBpm, Math.round(s.cleanBpm * 0.94), c.skilled ? Math.round(target * c.carry * 0.94) : 0, Math.round(otherKeys * CARRY_KEYS)));
+  return Math.max(30, Math.min(cap, Math.round(base * TEMPO_STEP ** c.up * SLOWER ** c.slower)));
+}
+
+/**
+ * The next tempo after a clean take (owner 2026-11-26/27): every clean take climbs, by how clean it was and from where
+ * (stepCap: up to +20 % at 2 notes a second, less when faster), and always at least 2 ♩ — never the same tempo again.
+ */
+export function climbFrom(bpm: number, m: TakeMetrics, drill: Drill, cap: number): number {
+  const q = Math.max(0.25, stepQuality(m, drill));
+  const nps = (bpm * Math.max(0.25, notesPerBeat(drill))) / 60;
+  return Math.min(cap, Math.max(bpm + 2, Math.round(bpm * (1 + stepCap(nps) * q))));
 }
 
 /** Clean with room to spare: the timing well inside its limits, no stops, no wrong notes. */
@@ -414,6 +467,13 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       // "a ceiling for now" on the item (BUILD-PLAN §0.2): the screen saves it, the matrix rests the cell for a few days
       const ceiling = { itemId: take.drill.itemId, bpm: best };
       const withCeil = (n: CoachNext): CoachNext => ({ ...n, ceiling });
+      // one item, one key, nothing after it (a teacher's timed key assignment): back a little and build up again
+      if (c.step + 1 >= c.steps.length && c.keys.length === 1 && c.spec + 1 >= level.specs.length) {
+        c.at = Math.max(30, Math.round(best * WAVE_BACK));
+        c.limit = Math.max(c.limit ?? 0, best);
+        return withCeil(next({ he: `הגבול שלך היום: ♩${best}. יורדים קצת ובונים שוב למעלה.`, en: `Your limit today: ♩${best}. A little slower, then up again.` }));
+      }
+      c.at = undefined;
       if (c.spec + 1 < level.specs.length) {
         c.spec++;
         return withCeil(next(said));
@@ -438,23 +498,33 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     const nowSkilled = !c.skilled && c.easy >= EASY_TO_SKILLED;
     if (nowSkilled) c.skilled = true;
     // Free time / quarters: the same item again at its next stage (the item state moved it on).
+    // owner 2026-11-27: ♩60 in quarters → ♩66 in eighths more than doubled the notes; the first tempo take stays at ♩60
+    if (take.stage === 'quarters') c.at = Math.min(QUARTERS_BPM, c.at ?? QUARTERS_BPM);
     if (take.stage !== null) return next(nowSkilled ? { he: `${praise.he} זה קל לך — לטמפו.`, en: `${praise.en} This is easy for you — to tempo.` } : praise);
     // Below the tempo the item passes at (its target past the basics, its own tempo before), or eased by "slower":
     // climb and play it again (SPEC-COACH-2 §4.1).
     // SPEC-KEY-SESSION-2 §3.4: the same climb for everyone — an item passes at its target (no pass at the start tempo)
     const target = targetBpmOf(level, take.drill);
     const passAt = target;
-    if (c.slower > 0 || take.bpm < passAt - 0.5) {
-      if (c.slower > 0) c.slower--;
-      else if (easy) {
-        c.up += 2;
-        c.run = 0;
-      } else if (++c.run >= 2) {
-        c.up++;
-        c.run = 0;
+    // owner 2026-11-26/27: every clean take climbs (never the same tempo twice) — below the target, and past it when
+    // there is nowhere else to go
+    if (c.over || c.slower > 0 || take.bpm < passAt - 0.5) {
+      c.slower = 0;
+      c.run = 0;
+      const was = c.over;
+      // after a limit, the next wave goes to just above it (a few ♩ at a time there), not past it in one jump
+      const top = c.over ? (c.limit ? Math.max(c.limit + 2, Math.round(c.limit * 1.03), take.bpm + 2) : Math.round(target * OVER_MAX)) : target;
+      c.at = climbFrom(take.bpm, m, take.drill, Math.min(top, Math.round(target * OVER_MAX)));
+      if (c.limit && take.bpm > c.limit) c.limit = take.bpm;
+      const nb = coachTake(fam, c, items, order, freeOk).bpm;
+      // at the top of the arithmetic with nowhere to go: back a little and up again (never the same take)
+      if (nb <= take.bpm && was) {
+        c.at = Math.max(30, Math.round(take.bpm * WAVE_BACK));
+        return next({ he: `${praise.he} יורדים קצת ובונים שוב למעלה.`, en: `${praise.en} A little slower, then up again.` });
       }
-      const faster = coachTake(fam, c, items, order, freeOk).bpm > take.bpm;
-      return next(faster ? { he: `${praise.he} מהר יותר.`, en: `${praise.en} Faster.` } : praise);
+      if (nb <= take.bpm) return next(praise);
+      if (!was && nb >= target - 0.5 && take.bpm < target - 0.5) return next({ he: `${praise.he} עכשיו ביעד.`, en: `${praise.en} Now at the target.` });
+      return next({ he: `${praise.he} מהר יותר.`, en: `${praise.en} Faster.` });
     }
     c.carry = Math.max(c.carry, take.bpm / target);
     c.up = 0;
@@ -462,12 +532,23 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     c.slower = 0;
     c.peak = 0;
     c.stall = 0;
+    c.at = undefined;
+    // one item, one key, nothing after it (owner 2026-11-27: it repeated ♩83 for minutes): past the target, on up
+    if (c.step + 1 >= c.steps.length && c.keys.length === 1 && c.spec + 1 >= level.specs.length && (c.passed.includes(c.keys[c.keyIdx]) || level.specs.length === 1)) {
+      if (!c.passed.includes(c.keys[c.keyIdx])) c.passed = [...c.passed, c.keys[c.keyIdx]];
+      c.passedNow++;
+      c.over = true;
+      c.peak = take.bpm;
+      c.at = climbFrom(take.bpm, m, take.drill, Math.round(target * OVER_MAX));
+      return next({ he: `${praise.he} עברת את היעד (♩${Math.round(target)}). ממשיכים מעליו.`, en: `${praise.en} Past the target (♩${Math.round(target)}). On above it.` });
+    }
     // The other hand / the next item of the step, same key.
     if (c.spec + 1 < level.specs.length) {
       c.spec++;
       return next(praise);
     }
-    // The key is done.
+    // The key is done (a key with several items: the next lap of them goes on above the target).
+    if (c.step + 1 >= c.steps.length && c.keys.length === 1) c.over = true;
     const key = c.keys[c.keyIdx];
     if (!c.passed.includes(key)) c.passed = [...c.passed, key];
     c.passedNow++;
@@ -494,6 +575,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
     c.almost = 0;
     if (c.up > 0) c.up--;
     else c.slower++;
+    if (c.at) c.at = Math.max(30, Math.round(take.bpm * 0.95));
     return next({ he: 'כמעט. קצת לאט יותר.', en: 'Almost. A little slower.' });
   }
 
@@ -505,6 +587,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
   if (c.misses === 2 && take.stage === null) {
     if (c.up > 0) c.up = Math.max(0, c.up - 2);
     else c.slower++;
+    if (c.at) c.at = Math.max(30, Math.round(take.bpm * SLOWER));
     return next({ he: `${ml.he}. לאט יותר.`, en: `${ml.en}. Slower.` });
   }
   if (c.misses < MISSES_TO_PARK) return next({ he: `${ml.he}. שוב, בלי למהר.`, en: `${ml.en}. Again, no rush.` });
@@ -516,6 +599,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
   c.up = 0;
   c.almost = 0;
   c.spec = 0;
+  c.at = undefined;
   c.keyIdx = nextKeyIdx(c);
   return next({ he: 'נחזור לזה אחר כך.', en: "We'll come back to this." });
 }

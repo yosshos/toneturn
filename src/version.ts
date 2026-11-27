@@ -18,6 +18,22 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.2',
+    date: '2026-11-27',
+    en: [
+      "A teacher's timed scale assignment climbs on every clean take, goes on past the target, and after your limit steps back and builds up again (it no longer repeats one tempo)",
+      'From quarters to eighths the tempo stays at ♩60, and a key whose scale you already play starts near your tempo there (no quarters again)',
+      "The teacher's note shows on the session's start page, and the by-ear demo plays once, not before every take",
+      'Assignments are listed in the order the teacher gave them',
+    ],
+    he: [
+      'משימת סולם עם זמן מהמורה עולה אחרי כל נגינה נקייה, ממשיכה מעל היעד, ואחרי הגבול שלך יורדת קצת ובונה שוב (לא חוזרת על אותו טמפו)',
+      'מרבעים לשמיניות הטמפו נשאר ♩60, וסולם שכבר מנוגן בסולם אחר מתחיל ליד הטמפו שלך שם (בלי רבעים שוב)',
+      'הערת המורה מופיעה בדף הפתיחה של הסשן, וההשמעה מראש מתנגנת פעם אחת, לא לפני כל נגינה',
+      'המשימות מופיעות בסדר שהמורה נתן',
+    ],
+  },
+  {
     version: '0.145.1',
     date: '2026-11-26',
     en: [

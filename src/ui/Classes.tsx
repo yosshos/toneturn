@@ -573,7 +573,7 @@ export function dueShort(due: string | null, lang: 'he' | 'en', today = localDay
 export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; items: AssignItem[]; lang: 'he' | 'en'; onOpen: (a: AssignItem) => void; /** New since the last look (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
   const open = items
     .filter((a) => assignState(a) !== 'passed')
-    .sort((x, y) => (x.dueOn ?? '9999').localeCompare(y.dueOn ?? '9999') || y.createdAt.localeCompare(x.createdAt));
+    .sort((x, y) => (x.dueOn ?? '9999').localeCompare(y.dueOn ?? '9999') || x.createdAt.localeCompare(y.createdAt)); // owner 2026-11-27: homework in the teacher's order (1 before 4)
   if (!open.length) return null;
   return (
     <section className="assigned-card" aria-label={t.yourAssignments} data-assigned-card={open.length}>
