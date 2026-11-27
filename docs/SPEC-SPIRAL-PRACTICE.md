@@ -778,3 +778,17 @@ In addition:
 - `swingBand` re-centring keeps the `drill.swingRatio` override and leaves voiceGrade's swingBand untouched.
 - The §9 return test scales with `VISIT_TAKES`.
 - `firstTargetDay` and "best" use straight, qualifying takes only.
+
+## 22. Pointer: superseded by SPEC-HOLISTIC-2 (2026-11-27)
+These SP rules are governed by docs/SPEC-HOLISTIC-2.md (§19.8, §20). Where they differ, HOLISTIC wins:
+- **§2.5 / §3 cold check:** HOLISTIC's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's cold check is played before its coordination stages.
+- **§4.1 coldness:** `lastSound`, per cell, from any sounding take. `lastQual` remains only for the ≥ 1 h re-measure rule.
+- **§4.2:** passes are kept; the level comes from HOLISTIC §1 (confirmations, posterior) with `passedAt` sticky.
+- **§9:** "promotion by day 2–3" means the **item pass**, not a tier promotion.
+- **§14 / §15.5 entry:** HOLISTIC's entry formula and `placedTier`.
+  - Prerequisites cross-session read `established`.
+  - In-session forms follow D2 / A10 (`acquired`).
+- **§15.4 burst trigger:** no new clean session peak in 3 sessions on ≥ 2 days.
+- **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step.
+- **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch. The A8 "≥ 3 cold takes" switch is deleted.
+- **A12:** G reads HOLISTIC's threshold estimate.
