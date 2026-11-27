@@ -430,7 +430,7 @@ each learner. Sources:
 ### 15.4 Burst practice (fixes M3)
 - **Trigger:**
   - for the anchor: its limit fired twice this session;
-  - for any item: no new cold best in 3 sessions.
+  - for any item: no new clean session peak in 3 sessions on ≥ 2 days (matches §21 A9).
 - **When it plays:** automatically, as the item's next visit (hands-free, no offer card). The coach says "Short bursts, then we join them." The burst is a visit of its slot, not a new slot or angle.
 - **The visit:**
   - Groups of 2 → 4 → 8 notes. Each burst is followed by a one-beat rest, with the click going on through the rest.
