@@ -1440,3 +1440,25 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
 - **Native swing below ♩ 90** is graded only where an item has 8ths. Long-note items are graded straight.
 - **§14 PD repertoire** goes through `servable()` and term classes, like heads.
 - **Coverage on a first-time head:** the non-transfer steps also go to coverage, not only on a head the learner has already played.
+
+## 20. Round 12 → v13: binding content changes (merge at the next consolidation)
+- **Groove Match is a game: need and coverage only.** It never feeds the drums grooves area (§1.2 games rule). The §1.10 table and §13.2 are corrected.
+- **Head-based sight-singing goes to `repertoire-memory`.** Generated items stay the measured core of Ear sight-singing.
+  - Well-known heads carry a `familiar` tag (Saints, spirituals, Bill Bailey, Ain't We Got Fun and similar). They are excluded from any Ear evidence.
+- **Bass learn-a-tune step 6:** the bassist walks or plays roots while the app plays the melody, or while singing it. Only the bass line is graded, against the chart.
+  - **Guitar step 6:** melody and shells alternate at band 2, and are played together (chord-melody) at band 3.
+- **Reading complexity features add:**
+  - a syncopation index (ties across beats, off-beat onsets, rests);
+  - mean absolute interval and leap share;
+  - a texture count (voices, staves or hands, chords).
+  - Each is normalised to 0–1 like the others. Head difficulty cards use the same features.
+- **The minor items, adopted:**
+  - **"Tunes you know":** the starting degree is graded relative to the given tonic reference; the key of the sung phrase is free.
+  - **"An unseen head" as a transfer form** means a head presented at sight outside the learn-a-tune protocol (reading or level test).
+  - **§8.7 order:** transposing at sight (±2) comes before following human rubato.
+  - **Comp velocity grading is MIDI only.** `g-accomp-voice` on a mic is graded on register and timing only.
+  - **The instrumentalists' singing step (learn-a-tune step 2)** uses the lenient singing tolerance (singing-timing-first), so non-singers are never stalled.
+  - **Tune of the week for voice** picks the transposition from voiceRange.
+  - **Guitar tone** (pick attack, vibrato quality, dynamics) is assessed in the §12.1 teacher rubrics.
+  - **The voice cents bands** are measured on each note's steady-state mean pitch, with vibrato averaged out.
+  - **§10.1:** the King Oliver note also names Armstrong (died 1971) among the improvisers on those sides.
