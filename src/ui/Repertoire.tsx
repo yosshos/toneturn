@@ -332,8 +332,12 @@ export function RepertoireScreen(p: RepertoireProps) {
       {list}
       <section className="rep-pane" aria-live="polite">
         {piecePage ?? (
-          <div className="rep-pane-empty">
-            <p>{he ? 'בחרו יצירה מהרשימה' : 'Pick a piece from the list'}</p>
+          <div className="rep-pane-empty" data-rep-pane-empty="1">
+            <span className="rpe-ico" aria-hidden="true">
+              <Icon k="book" size={40} />
+            </span>
+            <b>{he ? 'בחרו יצירה מהרשימה' : 'Pick a piece from the list'}</b>
+            <p>{he ? 'כאן ייפתחו הדרכים ללמוד אותה, הקצב והסטטוס שלה.' : 'Its ways in, tempo and status open here.'}</p>
           </div>
         )}
       </section>

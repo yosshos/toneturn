@@ -106,9 +106,12 @@ export function Tuner({ lang, settings, onChange, onBack }: { lang: Lang; settin
             </g>
             <circle cx={120} cy={125} r={6} className="needle-hub" />
           </svg>
-          <div className="tuner-note" dir="ltr">{read ? noteName(read.target, sol) : '—'}</div>
+          {/* 0.145.12 (UI review): idle shows no big dash — the note slot keeps its height and the prompt below speaks */}
+          <div className={`tuner-note ${read ? '' : 'idle'}`} dir="ltr" aria-hidden={read ? undefined : true}>
+            {read ? noteName(read.target, sol) : ' '}
+          </div>
           <div className="tuner-cents" dir="ltr">
-            {read ? `${cents > 0 ? '+' : ''}${cents} ${tx.cents} · ${read.hz.toFixed(1)} ${tx.hz}` : tx.listen}
+            {read ? `${cents > 0 ? '+' : ''}${cents} ${tx.cents} · ${read.hz.toFixed(1)} ${tx.hz}` : <bdi className="tuner-listen">{tx.listen}</bdi>}
           </div>
           <p className="tuner-verdict">{read ? (ok ? tx.inTune : cents > 0 ? `▲ ${tx.sharp}` : `▼ ${tx.flat}`) : ''}</p>
         </section>

@@ -128,7 +128,12 @@ export function Home({ t, settings, progress, streak, onStreak, onPractice, onBu
           {startHero}
           {/* How to answer (voice-first), and — before the ear course's welcome is answered — the classic first lesson. */}
           <div className="cs-hero-extra">
-            <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+            <div className="cs-answer">
+              <span className="cs-answer-label" aria-hidden="true">
+                {t.answerWith}
+              </span>
+              <ModeSwitch mode={settings.mode} onChange={onMode} t={t} />
+            </div>
             {startLessonLink && (
               <button className="link start-from-one" onClick={() => start(next)}>
                 {t.startFromLessonOne}

@@ -1075,7 +1075,7 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onFamily
       const direct = !!onFamilyPractise && familyDirect(f, ds);
       const card = (
         <button key={f.id} className="drill-family" style={drums ? undefined : { ['--hue' as string]: FAM_HUE[f.id] }} onClick={() => (direct ? onFamilyPractise!(f) : onFamily(f))} data-family={f.id} data-family-direct={direct ? '1' : undefined}>
-          <b>
+          <b title={f.title[lang]}>
             {f.title[lang]}
             {todayLevels && f.levels.some((l) => todayLevels.has(l.id)) && <TodayMark lang={lang} short />}
           </b>

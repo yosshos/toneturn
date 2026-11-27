@@ -2,7 +2,7 @@
 // Practice's, continuePlace.ts) and the workout's one-time question about an area that keeps waiting (SPEC-WORKOUT §9.4).
 
 import { useState } from 'react';
-import { lastPlace } from './continuePlace';
+import { lastPlace, lastPlaceTitle } from './continuePlace';
 import type { DomainId } from '../engine/rating';
 import '../todayplan.css';
 
@@ -16,7 +16,7 @@ export function ContinueStrip({ lang }: { lang: Lang }) {
     <div className="pt-continue today-continue" data-continue-place={last.place} data-today-continue="1">
       <span className="pt-continue-text">
         <small>{lang === 'he' ? 'להמשיך מאיפה שעצרתי' : 'Continue where I stopped'}</small>
-        <b dir="auto">{last.title}</b>
+        <b dir="auto">{lastPlaceTitle(last, lang)}</b>
       </span>
       <button className="btn primary small" onClick={() => (location.hash = last.hash.replace(/^#/, ''))} data-continue-go="1">
         {lang === 'he' ? 'להמשיך' : 'Continue'}

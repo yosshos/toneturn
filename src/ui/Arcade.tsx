@@ -10,7 +10,7 @@ import { PaperSvg } from './paper/Paper';
 import { useCourse } from './courseContext';
 import { ExamPrepSwitch } from './CourseSwitcher';
 import { COURSE_GAMES, COURSE_ROWS, courseGames, courseRows } from './courseRows';
-import { lastPlace } from './continuePlace';
+import { lastPlace, lastPlaceTitle } from './continuePlace';
 import '../practice3.css';
 export { COURSE_GAMES, COURSE_ROWS, courseRows };
 import type { CourseId } from '../engine/courses';
@@ -965,7 +965,7 @@ export function PlayScreen({ t, progress, onGame, onTrueFalse, onDuel, onOnline,
             <div className="pt-continue" data-continue-place={last.place}>
               <span className="pt-continue-text">
                 <small>{lang === 'he' ? 'להמשיך מאיפה שעצרתי' : 'Continue where I stopped'}</small>
-                <b dir="auto">{last.title}</b>
+                <b dir="auto">{lastPlaceTitle(last, lang)}</b>
               </span>
               <button className="btn primary small" onClick={() => (location.hash = last.hash.replace(/^#/, ''))} data-continue-go="1">
                 {lang === 'he' ? 'להמשיך' : 'Continue'}

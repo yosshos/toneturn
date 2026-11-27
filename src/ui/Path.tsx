@@ -546,16 +546,21 @@ export function PathView2({
             {view.progress.done + view.progress.checked}/{view.progress.total}
           </span>
         </div>
-        {onCourseIntro && (
-          <button type="button" className="path-intro" onClick={onCourseIntro} data-course-intro>
-            <Icon k="play" size={14} />
-            {FILM.watchIntro[lang]}
-          </button>
-        )}
-        {/* 0.67 exam prep (Ear). (SPEC-STYLE-FOCUS: jazz focus is now the style chips in Settings.) */}
-        {(settings.activeCourse ?? 'ear') === 'ear' && (
-          <div className="exam-head-row">
-            <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />
+        {/* 0.145.12 (UI review): the course film and the exam-prep switch share one tidy row under the title. */}
+        {(onCourseIntro || (settings.activeCourse ?? 'ear') === 'ear') && (
+          <div className="ph-tools">
+            {onCourseIntro && (
+              <button type="button" className="path-intro" onClick={onCourseIntro} data-course-intro>
+                <Icon k="play" size={14} />
+                {FILM.watchIntro[lang]}
+              </button>
+            )}
+            {/* 0.67 exam prep (Ear). (SPEC-STYLE-FOCUS: jazz focus is now the style chips in Settings.) */}
+            {(settings.activeCourse ?? 'ear') === 'ear' && (
+              <div className="exam-head-row">
+                <ExamPrepSwitch on={courseCtx.examPrep} lang={lang} onChange={courseCtx.setExamPrep} />
+              </div>
+            )}
           </div>
         )}
         <div className="section-bar" style={{ ['--p' as string]: `${secStats.total ? (100 * secStats.known) / secStats.total : 0}%` }}>

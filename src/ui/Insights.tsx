@@ -98,9 +98,13 @@ export function InsightsScreen({ lang, progress, onBack, onTopic, onDrills, onDr
       <section className="set-card in-ear" data-ear-index={ei?.r ?? ''}>
         <div className="in-head">
           <h2>{tx.ear}</h2>
-          <b className="in-big" dir="ltr">
-            {ei ? ei.r : '—'}
-          </b>
+          {ei ? (
+            <b className="in-big" dir="ltr">
+              {ei.r}
+            </b>
+          ) : (
+            <span className="not-yet">{STRINGS[lang].notYet}</span>
+          )}
         </div>
         {ei?.provisional && <small className="field-hint">{tx.provisional}</small>}
         {hist.length > 1 && <Spark pts={hist.map((p) => p.r)} />}

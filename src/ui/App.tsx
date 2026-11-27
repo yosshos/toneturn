@@ -4269,7 +4269,7 @@ export function App() {
             <>
               <button className="set-card in-entry" onClick={() => go('insights')} data-open-insights="1">
                 <span className="in-entry-n" dir="ltr">
-                  {COURSE_SECTIONS[s.activeCourse ?? 'ear'] ? <Icon k="quaver" /> : (earIndex(ratingsOf(progress))?.r ?? '—')}
+                  {COURSE_SECTIONS[s.activeCourse ?? 'ear'] ? <Icon k="quaver" /> : (earIndex(ratingsOf(progress))?.r ?? <span className="not-yet">{STRINGS[s.uiLang].notYet}</span>)}
                 </span>
                 <span className="in-entry-text">
                   <b>{s.uiLang === 'he' ? 'תובנות' : 'Insights'}</b>

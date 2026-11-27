@@ -45,7 +45,7 @@ import {
   type SessionKind,
   type StatsDays,
 } from '../engine/stats';
-import type { Strings } from '../i18n/strings';
+import { STRINGS, type Strings } from '../i18n/strings';
 import { localDay, practiceDays, type LessonResult, type Progress } from '../storage/progress';
 import { fmtDay, FrameChips, FrameDelta, Spark, TrendDetail, useStatsFrame } from './Trends';
 import { useLedger } from './useLedger';
@@ -74,6 +74,8 @@ export function fmtDuration(ms: number, lang: Lang) {
   return lang === 'he' ? `${h} ש׳ ${m % 60} דק׳` : `${h} h ${m % 60} min`;
 }
 const N = ({ children }: { children: ReactNode }) => <bdi dir="ltr">{children}</bdi>;
+/** The one empty-value pattern (UI review 0.145.12): a muted "Not yet" instead of a big dash. */
+export const NotYet = ({ t }: { t: Pick<Strings, 'notYet'> }) => <span className="not-yet">{t.notYet}</span>;
 /**
  * A duration isolated in its own direction, as the practice diary shows it: Hebrew "1 ש׳ 5 דק׳" reads right to left
  * (wrapped as LTR text it showed reversed, "דק׳ 5 ש׳ 1"); English stays left to right.
@@ -387,11 +389,13 @@ function OverviewV2({ lang, ratings, days }: { lang: 'he' | 'en'; ratings: Param
           <i style={{ width: `${r === null ? 0 : into * 100}%` }} />
         </span>
       </section>
-      <section className="ov-card ov-week" aria-label={he ? 'השבוע' : 'This week'}>
+      {/* UI review 0.145.12: an empty week collapses to a short strip with one muted line, not a tall blank chart */}
+      <section className={`ov-card ov-week ${total ? '' : 'empty'}`} aria-label={he ? 'השבוע' : 'This week'}>
         <div className="ov-head">
           <small>
             {he ? 'השבוע' : 'This week'} · <span dir="ltr">{total} XP</span>
           </small>
+          {!total && <span className="not-yet">{he ? 'עוד לא תרגלתם השבוע' : 'No practice yet this week'}</span>}
         </div>
         <div className="ov-bars" dir="ltr">
           {week.map((w) => (
@@ -488,7 +492,7 @@ export function OverviewView(props: ProgressTabsProps) {
           <div>
             <small>{SX.overall[lang]}</small>
             <div className="ps-big">
-              <N>{o ? `${o.r}${o.provisional ? '?' : ''}` : '—'}</N> {o && <span className="ps-band">{t.bands[band(o.r)]}</span>}
+              {o ? <N>{`${o.r}${o.provisional ? '?' : ''}`}</N> : <NotYet t={t} />} {o && <span className="ps-band">{t.bands[band(o.r)]}</span>}
             </div>
           </div>
         </div>
@@ -571,7 +575,7 @@ export function StatsView({ t, lang, progress, leagueLevels, friendLevels }: Pro
           <div>
             <small>{SX.overall[lang]}</small>
             <div className="ps-big">
-              <N>{o ? `${o.r}${o.provisional ? '?' : ''}` : '—'}</N> {o && <span className="ps-band">{t.bands[band(o.r)]}</span>}
+              {o ? <N>{`${o.r}${o.provisional ? '?' : ''}`}</N> : <NotYet t={t} />} {o && <span className="ps-band">{t.bands[band(o.r)]}</span>}
             </div>
           </div>
           <FrameDelta c={ofs.change} t={t} />
@@ -609,7 +613,7 @@ export function StatsView({ t, lang, progress, leagueLevels, friendLevels }: Pro
             <button className={`ps-skill ${sel === 'overall' ? 'on' : ''}`} aria-pressed={sel === 'overall'} onClick={() => setSel('overall')}>
               <span className="ps-skill-name">{SX.overall[lang]}</span>
               <span className="ps-skill-now">
-                <N>{o?.r ?? '—'}</N> <FrameDelta c={ofs.change} t={t} />
+                {o ? <N>{o.r}</N> : <NotYet t={t} />} <FrameDelta c={ofs.change} t={t} />
               </span>
               <Spark pts={ofs.pts} />
             </button>
@@ -705,12 +709,13 @@ export function ActivityCalendar({ progress, lang }: { progress: Progress; lang:
 export function RecordsCard({ progress, lang }: { progress: Progress; lang: Lang }) {
   const ps = P(progress);
   const r = personalRecords(ps.records, ps.statsDays, practiceDays(progress));
+  const none = <NotYet t={STRINGS[lang]} />;
   const d = (iso: string) => fmtDay(localDay(new Date(iso)), lang, true);
   const rows: [string, ReactNode, string | null][] = [
-    [SX.fastPerfect[lang], r.fastPerfect ? <Dur ms={r.fastPerfect.ms} lang={lang} /> : '—', r.fastPerfect ? d(r.fastPerfect.at) : null],
-    [SX.run[lang], r.run ? fill(SX.inARow[lang], { n: r.run.n }) : '—', r.run ? d(r.run.at) : null],
-    [SX.bestDay[lang], r.bestDay ? <N>{`${pct(r.bestDay.acc)} · ${r.bestDay.items}`}</N> : '—', r.bestDay ? fmtDay(r.bestDay.day, lang, true) : null],
-    [SX.longestStreak[lang], r.streak ? fill(SX.daysN[lang], { n: r.streak.n }) : '—', r.streak ? fmtDay(r.streak.end, lang, true) : null],
+    [SX.fastPerfect[lang], r.fastPerfect ? <Dur ms={r.fastPerfect.ms} lang={lang} /> : none, r.fastPerfect ? d(r.fastPerfect.at) : null],
+    [SX.run[lang], r.run ? fill(SX.inARow[lang], { n: r.run.n }) : none, r.run ? d(r.run.at) : null],
+    [SX.bestDay[lang], r.bestDay ? <N>{`${pct(r.bestDay.acc)} · ${r.bestDay.items}`}</N> : none, r.bestDay ? fmtDay(r.bestDay.day, lang, true) : null],
+    [SX.longestStreak[lang], r.streak ? fill(SX.daysN[lang], { n: r.streak.n }) : none, r.streak ? fmtDay(r.streak.end, lang, true) : null],
   ];
   return (
     <section className="set-card ps-records">
