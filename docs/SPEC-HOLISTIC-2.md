@@ -1492,3 +1492,15 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
   - **SP §14 items 35 and 37 for guitar and bass:** item 35 → harmonised arpeggios in 3rds and 6ths across two strings or two positions; item 37 → position-shift leaps. Piano keeps the originals.
   - **Drum buzz rolls** are graded on evenness and sustain quality, not on a rate: a quality criterion within the rudiment family.
   - **STANDARDS_LEGAL** gets a note: its proposed app-written contrafact heads (e.g. row 46) are **not approved**. Only the 5 labelled practice heads are approved (H5). This is a doc edit.
+
+## 22. Round 14 → v13: binding content changes (merge at the next consolidation)
+- **Recording test, one rule for every work on the recording** (replaces tests (b) and (c) in §8.1, and the §8.10 phrase source flags):
+  - The recording itself was released in 1925 or earlier. This is test (a), and it stays.
+  - **Every author of every work on it** (composition, arrangement or improvisation) either:
+    - published or registered that work in 1930 or earlier; or
+    - **if the work is unpublished** (§303(b): selling a pre-1978 record did not publish it), died in 1955 or earlier.
+  - In long-term countries, `pdFrom` uses the latest of those death years.
+  - **Guard test:** a 1924 band side whose arranger died in 1964 is never servable.
+- **Learn-a-tune step 8 ("a new key at sight")** hides the chart and the melody, as in step 7; only the new tonic is given. It is transposing by ear and from memory, not reading.
+- **Ain't Misbehavin'** cites Razaf (died 1973) as the governing year, under the latest-author rule. It is 1B, with `pdFrom` set from 1973.
+- **Traditional tunes with no period print** (When the Saints and some spirituals): the verification source is a hymnal or jubilee print from 1930 or earlier, **or** a transcription from a recording that passes the recording test. If neither exists, the tune is not served as a head.
