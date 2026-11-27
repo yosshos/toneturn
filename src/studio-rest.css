@@ -777,6 +777,56 @@
   color: var(--ink);
   box-shadow: 0 1px 3px rgba(30, 16, 51, 0.12);
 }
+/* the top bar's course chip never spills: it shrinks (name ellipsised), its chevron stays inside its padding, and on
+   a phone with the Update button showing the chip keeps only its glyph and chevron */
+:root:root .v2-topbar .course-chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+:root:root .v2-topbar .course-chip :is(.glyph, .cc-chev) {
+  flex: none;
+}
+:root:root .v2-topbar .course-chip .cc-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 420px) {
+  :root:root .v2-topbar:has(.update-btn) .course-chip .cc-name {
+    display: none;
+  }
+}
+/* Today: the voice / buttons switch carries a small label; "or start from lesson 1" reads as a link */
+:root:root .cs-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+}
+:root:root .cs-answer-label {
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+:root:root .cs-hero-extra .start-from-one {
+  border: 0;
+  background: none;
+  padding: 6px 4px;
+  color: var(--purple);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+:root:root .cs-hero-extra .start-from-one:hover,
+:root:root .cs-hero-extra .start-from-one:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+:root:root[data-theme='dark'] .cs-hero-extra .start-from-one {
+  color: #c4a8ff;
+}
 /* one empty value: a muted "Not yet" at body size (never a big dash in the number's place) */
 :root:root .not-yet {
   display: inline-block;
