@@ -1237,3 +1237,69 @@ Every amendment item and where it now lives in v9 (v9 keeps v8's section numbers
 | R7 19.6 (rank jump, voice sub-bands) | passes at a higher tier raise rank directly; voice passes per cell, rank by item level, 60 ¢ sub-band shown | §1.7 |
 | R7 19.6 (SP pointer) | SP §22 updated to v9 numbers; SP §14 area-tier definition superseded | §1.16, SP §22 |
 | R7 19.7 | owner decision H8 replaces the "rank speed" row | §0 H8 |
+
+---
+
+## 19. Round 8 → v10: binding changes (merge into the body)
+
+### 19.1 The rank rule, made exact (RM8 #1, #2, #4, #8; RP8 M3)
+- **Rank in an area** = the highest tier t such that **≥ min(3, available exercises at tiers ≥ t) distinct exercises are passed at tiers ≥ t**, in **≥ min(2, available keys)** keys where keys apply, with **≥ 1 pass at tier t itself**. Breadth is the union over those exercises.
+  - Passes **above** a tier count toward it, so scattered passes at T4, T5 and T6 give at least T4.
+  - **Tiers with no available exercise** are skipped, never passed by default.
+  - Keyed and keyless areas use the same min(3, available) rule.
+- **Stored state:** each `passedAt` record stores `{contentTier, target, exerciseId, src, at}` at pass time. A synced `rankHW` per area stores the high-water.
+  - **Rank = max(rankHW, derived).** Re-tiering, re-targeting or catalogue edits can never lower rank.
+- **What counts as a distinct exercise:**
+  - **`exerciseId`** = spec template + level/option, without key or hand. Its derivation from `itemId` is specified in code (`exerciseIdOf`) and covered by a test.
+  - **An exercise's pass is its cell's main item:** the hands-together item where one exists. Hand-separate passes never count alone.
+  - **Fixed-tempo rungs** pass only under the §1.6 rule (2 days, including a later-day cold take). Variants (voicing, inversion, seed, start degree) are **not** distinct exercises, and an in-session "rung passed today" moves the rotation but is not a `passedAt`.
+  - **The voice cents band is not part of exercise identity.**
+- **Teacher targets:** a pass counts for rank only at ≥ the option's catalogue target. A pass at a teacher's lower target counts as coverage only (and toward that assignment).
+- **Promotion XP** pays once per tier gained, under the Q6 caps.
+- **Guard tests:**
+  - scattered passes;
+  - an empty tier;
+  - a mic learner whose tier is all "needs MIDI";
+  - three RH-only passes;
+  - three variants of one rung;
+  - one voice item in three cents bands;
+  - a lowered teacher target;
+  - re-tiering never lowers rank.
+- **Top tiers:** T7–8 has no content today (`LadderRung.min` runs 0–6). Until it does, the DYN table caps at the highest tier with content, so "ff" means the top content tier. Adding T7–8 content is a backlog item for the owner.
+
+### 19.2 Transfer forms and reading get a pass (RP8 M1; RM8 #3)
+- **A transfer pass** (learn-a-tune transfer steps, chart at sight, k-accomp-voice and k-pop at sight) passes a tier when **≥ 3 clean out of the last 5 distinct unseen items** (charts, keys or heads at that tier's difficulty card) land on **≥ 2 days**. Each such tier pass counts as one exercise toward rank.
+- **Reading** uses the same rate rule, so a lucky streak can't pass it: ≥ 3 clean in the last 5 cold first-sight takes at the tier, on ≥ 2 days.
+  - A reading exercise = reading generator × tier.
+- **Storage:** both are stored in `cellPass`, which now covers voice, rhythm, reading and transfer.
+
+### 19.3 Current form, fixed (RM8 #5, #6, #7; RP8 M4)
+- **Current form follows rank up:** on a rank rise, current form = the new rank.
+- **Re-promotion after a slump:** P(p ≥ 0.6 | data) ≥ 0.9 over the window (the harness may tune this). There is no 30-look cap for re-promotion; all looks since the slump count.
+- **The posterior counts only passed and established cells.** Probes of unpassed items feed the staircase and threshold only. A learner working on new exercises is never marked as slumping.
+- **"Day-dependence aware"** = an effective-n design effect, n_eff = n / (1 + (m − 1)ρ), where m is looks per day and ρ is the intra-day correlation estimated from the traces. The posterior uses n_eff.
+- **Who drives what:**
+  - **entry** = max(placedTier, rank) + 1, and never shrinks (no locks);
+  - **current form** sets §5's distance ("at the cold level" = current form), need weights, spacing and tempo choice. It does not set entry.
+
+### 19.4 Placement correction (RM8 #9)
+- The over-placement count restarts at each drop. It counts only days on which items at placedTier were offered.
+- A drop below band 2 restores beginner status, with D1 floor 3. This is intended.
+
+### 19.5 Content and legal (RP8)
+- **Modal and Coltrane forms** are by-ear everywhere: their melodies are protected in the US too. **Rhythm changes:** the I Got Rhythm melody (1B) in the US only, by-ear elsewhere. The §8.4 wording is corrected.
+- **The curriculum-flow audit is a gate:** every new or changed ladder in steps 5, 7 and 8 passes a flow audit (no gaps, no topic hopping, several success items per stage) before it ships. The upper Ear levels, voice, drums, bass and guitar get their audits scheduled across those steps (curriculum-flow rule).
+- **The minor items, adopted:**
+  - **goal projection:** a target-tier goal projects by passes per practice hour; a tempo goal by G;
+  - **drum rudiments:** content tier = their nps tier, like scales;
+  - **swing band:** the accept band widens upward below ♩ 110 (ballads). D9's target is unchanged;
+  - **trading 4s inside the form** is added for keys, guitar, bass and voice. It is graded by form position and density, as improv-prep in the line-jazz area;
+  - **goal tunes** come from the learner's region pool (1B for US learners);
+  - **items without an official recording:** the app's clean version only;
+  - **the Scrapple ↔ Honeysuckle Rose card** notes that only the A sections match; the bridge is I Got Rhythm;
+  - **the §9.1 report** shows re-promotion time per area.
+
+### 19.6 Slots and looks (RM8 minors)
+- **The slot cap** is 2–4 **per session**.
+- **FSRS review probes and pass probes outside the slots also count as looks.** The slots guarantee a minimum supply.
+- **If the window fails breadth,** no decision is made, and the slot injector picks the missing exercise or key.
