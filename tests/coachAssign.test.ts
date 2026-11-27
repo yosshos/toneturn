@@ -14,22 +14,22 @@ import { DEFAULT_DRILL_SETTINGS, type ItemState, type TakeMetrics } from '../src
 import { bandOfBpm, thresholds } from '../src/engine/drills/analyze';
 import type { MatrixCell } from '../src/engine/drills/keyMatrix';
 
-function cellOf(root: number): MatrixCell {
+function cellOf(root: number, rung = 'scales-3'): MatrixCell {
   for (let t = 0; t <= 9; t++) {
-    const c = keyMatrix(catalog(), t, {}, { instrument: 'piano', groups: ['major'] }).find((x) => x.rung === 'scales-3' && x.root === root);
+    const c = keyMatrix(catalog(), t, {}, { instrument: 'piano', groups: ['major'] }).find((x) => x.rung === rung && x.root === root);
     if (c) return c;
   }
   throw new Error('no cell');
 }
 
-interface Row { stage: string | null; bpm: number; verdict: string; line: string; target: number }
+interface Row { stage: string | null; bpm: number; verdict: string; line: string; target: number; item: string }
 
 /** A player clean up to `limit`, "almost" a little above it, missing far above. */
-function session(root: number, items: Record<string, ItemState>, limit: number, takes = 30): Row[] {
+function session(root: number, items: Record<string, ItemState>, limit: number, takes = 30, forms: string[] = []): Row[] {
   const cell = cellOf(root);
-  const fam = planFamily([{ cell, why: 'strengthen' }], cell.level.title);
+  const fam = planFamily([cell, ...forms.map((r) => cellOf(root, r))].map((c) => ({ cell: c, why: 'strengthen' as const })), cell.level.title);
   let now = Date.parse('2026-11-27T20:00:00');
-  let c = coachStart(fam, items, 'fifths-up', now, { minutes: 60, noProbe: true });
+  let c = coachStart(fam, items, 'fifths-up', now, { minutes: 60, noProbe: true, ...(forms.length ? { walk: true, resumeAt: 0 } : {}) });
   const rows: Row[] = [];
   for (let n = 0; n < takes; n++) {
     const t = coachTake(fam, c, items, 'fifths-up', () => true);
@@ -41,7 +41,7 @@ function session(root: number, items: Record<string, ItemState>, limit: number, 
     items[d.itemId] = t.stage ? withStageTake(st0, t.stage, m) : applyTake(st0, m, t.bpm, new Date(now).toISOString(), DEFAULT_DRILL_SETTINGS, { targetBpm: itemTargetBpm(d) }).state;
     now += 25_000;
     const nx = coachAfter(fam, c, t, m, items, 'fifths-up', now, () => true);
-    rows.push({ stage: t.stage, bpm: t.bpm, verdict, line: nx.line.he, target: itemTargetBpm(d) });
+    rows.push({ stage: t.stage, bpm: t.bpm, verdict, line: nx.line.he, target: itemTargetBpm(d), item: d.itemId });
     c = nx.state;
     if (nx.end) break;
   }
@@ -81,5 +81,13 @@ describe('a timed one-key assignment on the old coach (owner 2026-11-27)', () =>
     expect(second.filter((r) => r.stage === 'free').length).toBeLessThanOrEqual(1);
     const firstTempo = second.find((r) => r.stage === null)!;
     expect(firstTempo.bpm).toBeGreaterThanOrEqual(70);
+  });
+
+  it('with forms (owner 2026-11-27, boring): after the target the session moves on to other forms of the scale', () => {
+    const rows = session(5, {}, 200, 60, ['scales-4', 'scales-11', 'scales-8']);
+    const ids = [...new Set(rows.map((r) => r.item))];
+    if (process.env.SHOW) console.log(rows.map((r) => `${r.item} ${r.stage ?? ''} ${r.bpm} | ${r.line.slice(0, 70)}`).join(String.fromCharCode(10)));
+    expect(ids.length).toBeGreaterThan(1);
+    expect(rows.some((r) => r.line.includes('שלב חדש'))).toBe(true);
   });
 });

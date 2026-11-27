@@ -125,6 +125,8 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   // a technique level in one key (and a timed session on it: the coach on that rung for so many minutes)
   const [dKey, setDKey] = useState('');
   const [dMin, setDMin] = useState('');
+  // owner 2026-11-27: a timed scale session goes on with forms of the scale after its target, unless "exactly this"
+  const [dExact, setDExact] = useState(false);
   const [chartLv, setChartLv] = useState(IMPROV_LEVELS[0].n);
   const [voicing, setVoicing] = useState(VOICINGS[0]);
   const [rhythm, setRhythm] = useState(RHYTHMS[0]);
@@ -144,7 +146,7 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
   const [perDay, setPerDay] = useState('');
   const [ifShort, setIfShort] = useState<'spread' | 'today'>('spread');
   const ref = preset ? preset.ref :
-    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? drillRef(drill, dKey === '' ? null : Number(dKey), dKey !== '' && dMin ? Number(dMin) : null) : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
+    kind === 'topic' ? `topic:${topic}:${topicLv}` : kind === 'drill' ? drillRef(drill, dKey === '' ? null : Number(dKey), dKey !== '' && dMin ? Number(dMin) : null, dExact) : kind === 'chart' ? (mode === 'rules' ? rulesRef(challenge, src) : chartKind(`lv:${chartLv}`, voicing, rhythm, mode)) : kind === 'piece' ? piece.trim() : kind === 'focus' ? focusRef(fCourse, focus) : null;
   const can = !!preset || kind !== 'piece' || piece.trim().length > 0;
   const go = async () => {
     try {
@@ -236,6 +238,12 @@ export function AssignForm({ classId, lang, t, busy, onAssigned, onError, preset
             ))}
           </select>
           {dKey !== '' && <input type="number" inputMode="numeric" min={1} max={120} value={dMin} onChange={(e) => setDMin(e.target.value)} placeholder={tx.dMin} aria-label={tx.dMin} />}
+          {dKey !== '' && dMin !== '' && /^scales-\d+$/.test(drill) && (
+            <label className="af-check" data-assign-exact="1">
+              <input type="checkbox" checked={dExact} onChange={(e) => setDExact(e.target.checked)} />
+              <span>{lang === 'he' ? 'בדיוק התרגיל הזה כל הסשן (בלי צורות נוספות של הסולם אחרי היעד)' : 'Exactly this exercise all session (no other forms of the scale after the target)'}</span>
+            </label>
+          )}
         </div>
       )}
       {kind === 'chart' && (

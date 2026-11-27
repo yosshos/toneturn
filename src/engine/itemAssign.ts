@@ -30,16 +30,34 @@ export interface DrillRef {
   id: string;
   key: number | null;
   minutes: number | null;
+  /** "!" after the minutes: exactly this exercise for the whole session (no forms of it after the target). */
+  exact: boolean;
 }
 export function parseDrillRef(ref: string | null | undefined): DrillRef {
-  const m = /^(?:drill:)?([^@/]*)(?:@(\d{1,2}))?(?:\/(\d{1,3}))?$/.exec(ref ?? '');
-  if (!m) return { id: (ref ?? '').replace(/^drill:/, ''), key: null, minutes: null };
+  const m = /^(?:drill:)?([^@/!]*)(?:@(\d{1,2}))?(?:\/(\d{1,3}))?(!)?$/.exec(ref ?? '');
+  if (!m) return { id: (ref ?? '').replace(/^drill:/, ''), key: null, minutes: null, exact: false };
   const k = m[2] !== undefined ? Number(m[2]) : null;
   const min = m[3] !== undefined ? Number(m[3]) : null;
-  return { id: m[1], key: k !== null && k >= 0 && k < 12 ? k : null, minutes: min !== null && min >= 1 && min <= 120 ? min : null };
+  return { id: m[1], key: k !== null && k >= 0 && k < 12 ? k : null, minutes: min !== null && min >= 1 && min <= 120 ? min : null, exact: !!m[4] };
 }
-export function drillRef(id: string, key: number | null = null, minutes: number | null = null): string {
-  return `drill:${id}${key !== null ? `@${((key % 12) + 12) % 12}` : ''}${minutes ? `/${Math.max(1, Math.min(120, Math.round(minutes)))}` : ''}`;
+export function drillRef(id: string, key: number | null = null, minutes: number | null = null, exact = false): string {
+  return `drill:${id}${key !== null ? `@${((key % 12) + 12) % 12}` : ''}${minutes ? `/${Math.max(1, Math.min(120, Math.round(minutes)))}${exact ? '!' : ''}` : ''}`;
+}
+
+/**
+ * Owner 2026-11-27 ("ten minutes of the same scale is boring"): a timed scale assignment, once its scale passes the
+ * target, goes on with forms of the same scale in the same key — contrary motion, rhythm variations, a third / sixth /
+ * tenth apart — only forms at most two tiers above the assigned one. Unless the teacher asked for exactly it ("!").
+ */
+export const SCALE_FORMS = ['scales-4', 'scales-11', 'scales-8'] as const;
+export function scaleFormsFor(id: string, tierOf: (rung: string) => number | null): string[] {
+  if (!/^scales-\d+$/.test(id)) return [];
+  const t0 = tierOf(id);
+  if (t0 === null) return [];
+  return SCALE_FORMS.filter((r) => r !== id).filter((r) => {
+    const t = tierOf(r);
+    return t !== null && t <= t0 + 2;
+  });
 }
 
 /** The item an assignment row names (null for lessons, topics, phrases, free-text pieces …). */

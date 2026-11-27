@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.6',
+    date: '2026-11-27',
+    en: ["A teacher's timed scale assignment, once the scale reaches its target, goes on with forms of the same scale: contrary motion, rhythm variations, a third / sixth / tenth apart. The teacher can ask for exactly the one exercise instead"],
+    he: ['משימת סולם עם זמן מהמורה ממשיכה, אחרי שהסולם מגיע ליעד, לצורות של אותו סולם: תנועה נגדית, וריאציות קצב, בהפרש טרצה, סקסטה ודצימה. המורה יכול לבקש בדיוק את התרגיל האחד'],
+  },
+  {
     version: '0.145.5',
     date: '2026-11-27',
     en: ['The session clock shows the clean takes as a running score, not as a goal that moves away', 'After your limit the tempo steps back only a little, says why, and comes back to the limit in a take or two'],

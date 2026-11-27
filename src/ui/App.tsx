@@ -267,7 +267,7 @@ import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
 import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView, type WayIn } from './practiceRoutes';
 import { stepChannelOf, type StepChannel } from '../engine/stepChannel';
-import { itemOfAssign, parseDrillRef } from '../engine/itemAssign';
+import { itemOfAssign, parseDrillRef, scaleFormsFor } from '../engine/itemAssign';
 import { rungKeyOf, stepLickOf } from './itemRoutes';
 import { chartOfLevel, chartOfPiece, parsePieceKey, pieceDrillCourse, pieceKey, repDueKey, whereInPath, type LibEntry, type PieceAction } from '../engine/repLibrary';
 import { firstRootPc } from './Charts';
@@ -1467,7 +1467,17 @@ export function App() {
         let cell = pick(projectionInput(settings, ds0, progress.drillItems ?? {})?.cells ?? []);
         for (let t = 0; !cell && pianoLv && t <= 9; t++) cell = pick(keyMatrix(catalog(), t, progress.drillItems ?? {}, { instrument: 'piano', groups: [group] }));
         if (cell) {
-          assignCoach.current = { fam: planFamily([{ cell, why: 'strengthen' as const }], cell.level.title), minutes: dr.minutes, assign: true, note: a.note };
+          // owner 2026-11-27: after the target, forms of the same scale in the same key (unless the teacher said "exactly")
+          const firstTier = (rung: string): MatrixCell | null => {
+            for (let t = 0; t <= 9; t++) {
+              const c = keyMatrix(catalog(), t, progress.drillItems ?? {}, { instrument: 'piano', groups: [group] }).find((x) => x.rung === rung && x.root === dr.key && x.group === group);
+              if (c) return Object.assign(c, { tier: t });
+            }
+            return null;
+          };
+          const forms = dr.exact || !pianoLv ? [] : scaleFormsFor(id, (r) => (firstTier(r) as (MatrixCell & { tier?: number }) | null)?.tier ?? null).map(firstTier).filter((c): c is MatrixCell => !!c);
+          const plan = [cell, ...forms].map((c) => ({ cell: c, why: 'strengthen' as const }));
+          assignCoach.current = { fam: planFamily(plan, cell.level.title), minutes: dr.minutes, assign: true, note: a.note, ...(forms.length ? { walk: true } : {}) };
           chartQueue.current = null;
           drillFrom.current = 'assign';
           setDrillsFamily(null);
