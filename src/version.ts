@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.10',
+    date: '2026-11-27',
+    en: ['On a computer, the Update button in the top bar shows its word on one line'],
+    he: ['במחשב, כפתור העדכון בסרגל העליון מציג את המילה בשורה אחת'],
+  },
+  {
     version: '0.145.9',
     date: '2026-11-27',
     en: ['A take with a MIDI keyboard ends when you lift the last key, so the feedback comes at once', 'When the coach keeps the same exercise, its line says only "Same exercise" and the new tempo', 'The coach speaks its line sentence by sentence, so the voice starts sooner', 'No more "your limit today": the coach says your best so far, and climbs past it', 'After a homework session you are back on Home, with the next homework item marked'],

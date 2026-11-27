@@ -1047,3 +1047,10 @@
 :root:root :is(.cs-hero h1, .cs-hero h2) {
   font-weight: 600;
 }
+
+/* owner 2026-11-27: the top bar's fixed 42px squeezed the computer's "Update" chip into one letter per line */
+@media (min-width: 700px) {
+  :root:root .topbar .icon-btn.update-btn,
+  :root:root .v2-topbar .icon-btn.update-btn { width: auto; padding: 0 12px 0 10px; gap: 6px; white-space: nowrap; display: inline-flex; align-items: center; border-radius: 999px; }
+}
+:root:root .update-btn .hdr-label { white-space: nowrap; }
