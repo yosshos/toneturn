@@ -1,0 +1,44 @@
+﻿
+> toneturn@0.145.12 measure-variants
+> rolldown scripts/measure-variants.ts --platform node --format esm -o scripts/.measure-variants.mjs > scripts/.measure-variants.log && node scripts/.measure-variants.mjs
+
+# Item-pass variants (15 real piano/guitar/bass areas; rank with fix 1, 1-exercise top tiers grouped downward)
+runs: 1000 per flow cell, 20 per tier transition, 20 climbs per area; seed 20261127
+
+## (a) P(pass within 28 days, 4 days/wk) by cold clean rate
+| variant | p 0.3 | p 0.4 | p 0.5 | p 0.6 | p 0.7 | p 0.8 |
+|---|---|---|---|---|---|---|
+| V0 | 67.2 % | 84.9 % | 94.7 % | 99.1 % | 99.9 % | 100.0 % |
+| V1 | 36.3 % | 62.8 % | 84.5 % | 96.0 % | 99.3 % | 100.0 % |
+| V2 | 44.6 % | 68.9 % | 87.0 % | 96.9 % | 99.6 % | 100.0 % |
+| V3 | 2.3 % | 6.3 % | 17.1 % | 34.4 % | 59.8 % | 84.4 % |
+
+## (b) Calendar days per tier, pooled over every transition of every real area (median / p90; share reached in 240 d)
+| variant | p 0.75, 3 d/wk | p 0.75, 5 d/wk | p 0.85, 3 d/wk | p 0.85, 5 d/wk |
+|---|---|---|---|---|
+| V0 | 16 / 37 | 10 / 23 | 14 / 28 | 9 / 17 |
+| V1 | 18 / 45 | 11 / 28 | 14 / 31 | 9 / 19 |
+| V2 | 22 / 52 | 14 / 34 | 19 / 37 | 12 / 23 |
+| V3 | 47 / 160 (94.6 %) | 28 / 96 (98.3 %) | 30 / 78 | 19 / 51 |
+
+## (c) Honesty of rank rises, and (d) stalls (steady learner, 365 d, 4 d/wk)
+| variant | rank rises at true p < 0.5 | median true p at a new tier | learners with a stall ≥ 42 d | climbs missing a tier with content |
+|---|---|---|---|---|
+| V0 | 23.4 % | 0.62 | 0 / 300 | 0 / 300 |
+| V1 | 9.2 % | 0.71 | 0 / 300 | 0 / 300 |
+| V2 | 7.8 % | 0.71 | 0 / 300 | 0 / 300 |
+| V3 | 0.1 % | 0.89 | 15 / 300 | 0 / 300 |
+
+## Rank / placement fixes
+- Fix 1: one exercise in 2 keys on a 1-exercise top tier → rank 0 (v12 gave 1); that pass + one T0 pass in another key → rank 1 (grouped downward).
+- Fix 2 (snap empty placed tier down): placed T5 (empty), true T2 → 100.0 % corrected, first drop median day 13; 100.0 % settled at ≤ T3, median day 13.
+
+## Non-tempo placement correction (reading area, true T1, p 0.75 at the true tier, 180 d, 400 learners per cell)
+| mode | correct placement corrected (rate 0 / 0.05) | +2 corrected (rate 0 / 0.05) | +3 corrected (rate 0 / 0.05) | median first-drop day +2 / +3 (rate 0) | +3 settled ≤ T2 (rate 0), median day |
+|---|---|---|---|---|---|
+| N0 | 1.8 % / 1.3 % | 96.8 % / 82.3 % | 100.0 % / 100.0 % | 18 / 16 | 97.3 %, 37 |
+| N1 (default) | 0.0 % / 0.0 % | 85.5 % / 65.0 % | 100.0 % / 99.0 % | 25 / 24 | 86.8 %, 54 |
+| N2 | 3.8 % / 0.0 % | 100.0 % / 87.8 % | 100.0 % / 100.0 % | 32 / 25 | 99.8 %, 57 |
+| N3 | 0.0 % / 0.0 % | 82.3 % / 55.5 % | 100.0 % / 98.3 % | 30 / 28 | 82.8 %, 62 |
+
+(143 s)
