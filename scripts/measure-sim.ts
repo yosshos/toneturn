@@ -16,10 +16,11 @@ const line = (s = '') => console.log(s);
 const verdict = (ok: boolean) => (ok ? 'PASS' : 'FAIL');
 
 line(`# Measurement harness report (SPEC-HOLISTIC-2 v12 §9.1 / §17.4)${quick ? ' — QUICK' : ''}`);
+line('Defaults: item pass V1 (owner 2026-11-27); rank needs ≥ 2 distinct exercises (1-exercise tiers grouped up, or down at the top); empty placed tier snaps down; non-tempo placement correction N1.');
 line(`seed ${SEED}; day SD 0.8, cell SD 0.7 (logit); ρ_d 0.15, ρ_c 0.20; β 1.2 logit/tier; warm +0.8 logit`);
 
 line('\n## 1. P(item pass | cold clean rate) (§1.6)');
-line('Exact pair rule: P(two consecutive clean counting cold checks within k checks), warm half already met.');
+line('k columns: the exact V0 pair rule (two consecutive clean counting cold checks within k checks), warm half already met. Flow columns: the default rule (V1) through the tracker.');
 line('| p | k=2 | k=3 | k=5 | k=10 | E[checks] | flow 14 d | flow 28 d |');
 line('|---|---|---|---|---|---|---|---|');
 for (const p of [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]) {
@@ -27,7 +28,7 @@ for (const p of [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]) {
   const f28 = itemPassFlow(p, 28, N(2000), SEED + 2);
   line(`| ${p} | ${pct(pPairWithin(p, 2))} | ${pct(pPairWithin(p, 3))} | ${pct(pPairWithin(p, 5))} | ${pct(pPairWithin(p, 10))} | ${((1 + p) / (p * p)).toFixed(1)} | ${pct(f14)} | ${pct(f28)} |`);
 }
-line('flow = full rule through the tracker: a visit on each practice day (4/wk), cold check + 4 warm takes (warm +0.8 logit), day SD 0.8.');
+line('flow = full default (V1) rule through the tracker: a visit on each practice day (4/wk), cold check + 4 warm takes (warm +0.8 logit), day SD 0.8.');
 
 line('\n## 2. Reading / transfer pass (§1.6): false passes (target < 10 % at p = 0.5, day SD 0.8)');
 line('| schedule | true p | 30 d | 60 d | 90 d | 180 d |');

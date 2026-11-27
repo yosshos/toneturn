@@ -61,22 +61,32 @@ export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number
   for (let i = tiers.length - 1; i >= 0; i--) {
     const t = tiers[i];
     let top = Math.max(t, ceiling);
-    let avail = ex.filter((e) => e.available && e.tier >= t && e.tier <= top);
+    let lo = t;
+    let avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
+    let downward = false;
     if (o.minTwoExercises) {
       // Fix 1 (coordinator 2026-11-27): rank needs ≥ 2 distinct exercises; a range with < 2 available exercises is
-      // grouped with the next non-empty tier above (repeatedly). With nothing above, the tier cannot be ranked.
+      // grouped with the next non-empty tier above (repeatedly). With nothing above (a 1-exercise top tier), it is
+      // grouped with the next non-empty tier below: ≥ 2 distinct exercises across the two, ≥ 1 at the top tier.
       while (avail.length < 2) {
         const up = tiers.find((x) => x > top);
         if (up === undefined) break;
         top = up;
-        avail = ex.filter((e) => e.available && e.tier >= t && e.tier <= top);
+        avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
+      }
+      while (avail.length < 2) {
+        const down = [...tiers].reverse().find((x) => x < lo);
+        if (down === undefined) break;
+        lo = down;
+        downward = true;
+        avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
       }
       if (avail.length < 2) continue;
     }
-    const need = o.minTwoExercises ? Math.max(2, Math.min(3, avail.length)) : Math.min(3, avail.length);
+    const need = o.minTwoExercises ? (downward ? 2 : Math.max(2, Math.min(3, avail.length))) : Math.min(3, avail.length);
     const keysAvail = avail.reduce((m, e) => Math.max(m, e.keys), 0);
     const needKeys = Math.min(2, keysAvail);
-    const above = counting.filter((p) => p.tier >= t);
+    const above = counting.filter((p) => p.tier >= lo);
     const exIds = new Set(above.map((p) => p.exerciseId));
     if (exIds.size < Math.max(1, need)) continue;
     if (!above.some((p) => p.tier === t)) continue;
@@ -88,11 +98,12 @@ export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number
 }
 
 /**
- * Tiers rank can ever reach: under fix 1, a non-empty tier with fewer than 2 available exercises at it and above
- * (a 1-exercise top tier) can never be ranked. Under v12, every non-empty tier.
+ * Tiers rank can ever reach: every non-empty tier (a 1-exercise top tier is grouped downward), except in a catalogue
+ * with a single available exercise in all, which fix 1 can never rank.
  */
 export function rankableTiers(ex: Exercise[], o: RankOpts = RANK_FIX): number[] {
-  return nonEmptyTiers(ex).filter((t) => !o.minTwoExercises || ex.filter((e) => e.available && e.tier >= t).length >= 2);
+  const tiers = nonEmptyTiers(ex);
+  return o.minTwoExercises && ex.filter((e) => e.available).length < 2 ? [] : tiers;
 }
 
 /** Rank options. `minTwoExercises` = fix 1 (on by default); false = v12 as written. */

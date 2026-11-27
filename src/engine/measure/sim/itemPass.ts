@@ -4,7 +4,7 @@
 //            + 2 clean first-cold takes of the cell's main item on two distinct later days, each ≥ 8 h after, and on a
 //              different local day from, the day the target was first reached. A cold miss between the two resets the pair.
 //
-// The cold half has harness variants (PassVariant; V0 = v12 as written, the default).
+// The cold half has variants (PassVariant): V1 is the default (owner 2026-11-27); V0 = v12 as written.
 // Time is in hours from an arbitrary origin; `day` is the local day index. The harness abstracts tempo: `atTarget`
 // marks a take in the probe band (≥ 0.95 × target), the only takes the rule reads.
 
@@ -37,13 +37,15 @@ export type ResetMode = 'anyCold' | 'countingOnly';
 
 /**
  * The cold half of the item pass (harness option):
- * - V0 (v12 as written, default): 2 clean first-cold takes on distinct later days; a cold miss between them resets.
- * - V1: V0's pair, plus a clean share ≥ 2/3 over the last ≤ 6 counting cold checks of the cell.
+ * - V0 (v12 as written): 2 clean first-cold takes on distinct later days; a cold miss between them resets.
+ * - V1 (the default, owner 2026-11-27): V0's pair, plus a clean share ≥ 2/3 over the last ≤ 6 counting cold checks of the cell.
  * - V2: a rolling 3-of-4: ≥ 3 clean among the last ≤ 4 counting cold checks (distinct days by construction).
  * - V3: Beta(1, 1) over the counting cold checks only: P(p ≥ 0.6) ≥ 0.85, with ≥ 3 checks on ≥ 3 days.
  */
 export type PassVariant = 'V0' | 'V1' | 'V2' | 'V3';
 export const PASS_VARIANTS: PassVariant[] = ['V0', 'V1', 'V2', 'V3'];
+/** The default cold half: V1, approved by the owner 2026-11-27 (V0 = v12 as written stays selectable). */
+export const DEFAULT_PASS_VARIANT: PassVariant = 'V1';
 
 /** Incremental pass state for one cell (the sim feeds takes in time order). */
 export class ItemPassTracker {
@@ -66,7 +68,7 @@ export class ItemPassTracker {
   /** Every first-cold-of-day take at the probe band (for the §1.3 non-tempo placement correction). */
   readonly coldLog: { at: number; day: number; clean: boolean }[] = [];
 
-  constructor(private readonly reset: ResetMode = 'anyCold', private readonly variant: PassVariant = 'V0') {}
+  constructor(private readonly reset: ResetMode = 'anyCold', private readonly variant: PassVariant = DEFAULT_PASS_VARIANT) {}
 
   /** §1.6 counting take: a first cold take of a later day (≥ 8 h and a different local day after the first target). */
   isCounting(t: Take): boolean {
@@ -124,7 +126,7 @@ export class ItemPassTracker {
 }
 
 /** §1.6 item pass over a whole take log (time order): the time of the pass, or null. */
-export function itemPassAt(takes: Take[], reset: ResetMode = 'anyCold', variant: PassVariant = 'V0'): number | null {
+export function itemPassAt(takes: Take[], reset: ResetMode = 'anyCold', variant: PassVariant = DEFAULT_PASS_VARIANT): number | null {
   const tr = new ItemPassTracker(reset, variant);
   for (const t of takes) tr.add(t);
   return tr.passedAt;

@@ -4,7 +4,7 @@
 //   ceiling and the §1.3 non-tempo placement correction.
 
 import type { AreaCatalogue } from './catalogue';
-import { initPlacement, isPlaced, nonTempoPlacementDay } from './placement';
+import { initPlacement, isPlaced, nonTempoPlacementDay, type NonTempoMode } from './placement';
 import { mulberry32, normal, randInt, type Rng } from './prng';
 import { entryCeiling, nonEmptyTiers, passedExerciseIds, updateRankHW, type PassRecord } from './rank';
 import { readingPassed, READING_PASS, type Attempt, type ReadingPassOpts } from './readingPass';
@@ -75,6 +75,7 @@ export interface ReadingAreaOpts {
   days: number;
   seed: number;
   placedTier?: number;
+  nonTempoMode?: NonTempoMode;
 }
 
 export interface ReadingAreaResult {
@@ -128,7 +129,7 @@ export function simulateReadingArea(o: ReadingAreaOpts): ReadingAreaResult {
     if (rankHW !== null && rankHW !== before) for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
     if (isPlaced(place, rankHW) && placedToday.length) {
       const b = place.placedTier;
-      place = nonTempoPlacementDay(place, placedToday, tiers);
+      place = nonTempoPlacementDay(place, placedToday, tiers, o.nonTempoMode, day);
       if (place.placedTier !== b) drops.push({ day, to: place.placedTier });
     }
   }

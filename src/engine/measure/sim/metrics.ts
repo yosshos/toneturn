@@ -1,10 +1,11 @@
 // The §9.1 / §17.4 harness numbers (SPEC-HOLISTIC-2). Each experiment is seeded and pure; `runs` sets the precision.
 
 import { defaultCatalogue, syntheticCatalogue, topTier, type AreaCatalogue } from './catalogue';
-import { ItemPassTracker, type PassVariant } from './itemPass';
+import { DEFAULT_PASS_VARIANT, ItemPassTracker, type PassVariant } from './itemPass';
 import { DEFAULT_LEARNER, thetaForP, type LearnerParams } from './learner';
 import { childSeed, mulberry32, normal, randInt } from './prng';
 import { rankableTiers } from './rank';
+import type { NonTempoMode } from './placement';
 import { runReadingTier, simulateReadingArea } from './readingSim';
 import { simulate, type PlannerConfig } from './simulate';
 import { logistic, logit, muForMarginal, quantile } from './stats';
@@ -39,7 +40,7 @@ export function itemPassFlow(p: number, days: number, runs: number, seed: number
   let passed = 0;
   for (let r = 0; r < runs; r++) {
     const rng = mulberry32(childSeed(seed, r));
-    const tr = new ItemPassTracker('anyCold', o.variant ?? 'V0');
+    const tr = new ItemPassTracker('anyCold', o.variant ?? DEFAULT_PASS_VARIANT);
     let week = new Set<number>();
     for (let day = 0; day < days && tr.passedAt === null; day++) {
       if (day % 7 === 0) {
@@ -113,7 +114,7 @@ export interface TierTime {
  * Calendar days from rank R to the next non-empty tier, for a learner whose true cold p at that next tier is `pNext`
  * (fixed ability, no item-practice gain: the conservative case), starting with rankHW = placedTier = R.
  */
-export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs: number, seed: number, cap = 240, lp: Partial<LearnerParams> = {}, planner: Partial<PlannerConfig> = {}, variant: PassVariant = 'V0'): TierTime[] {
+export function daysPerTier(cat: AreaCatalogue, pNext: number, dpw: number, runs: number, seed: number, cap = 240, lp: Partial<LearnerParams> = {}, planner: Partial<PlannerConfig> = {}, variant: PassVariant = DEFAULT_PASS_VARIANT): TierTime[] {
   const tiers = rankableTiers(cat.exercises);
   const out: TierTime[] = [];
   for (let i = 0; i < tiers.length; i++) {
@@ -253,7 +254,7 @@ export interface ClimbReport {
 }
 
 /** §1.3 / §9.1 rotation-only climb from T0 (no placement), `days` long. */
-export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365, lp: LearnerParams = STEADY_LEARNER(), planner: Partial<PlannerConfig> = {}, variant: PassVariant = 'V0'): ClimbReport {
+export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365, lp: LearnerParams = STEADY_LEARNER(), planner: Partial<PlannerConfig> = {}, variant: PassVariant = DEFAULT_PASS_VARIANT): ClimbReport {
   const tiers = rankableTiers(cat.exercises);
   const top = tiers[tiers.length - 1];
   const catTop = topTier(cat);
@@ -293,7 +294,7 @@ export const trueTier = (theta: number, lp: LearnerParams): number => Math.floor
  * catalogue, non-tempo the reading area. Returns the share corrected, the median day of the first drop, and the median
  * day placedTier first reaches the true tier (or rank reaches placedTier, which ends "placed").
  */
-export function placementRun(offset: number, tempo: boolean, runs: number, seed: number, o: { days?: number; trueAt?: number; pAtTrue?: number; rate?: number } = {}): { corrected: number; medianFirstDrop: number; medianSettled: number; settled: number } {
+export function placementRun(offset: number, tempo: boolean, runs: number, seed: number, o: { days?: number; trueAt?: number; pAtTrue?: number; rate?: number; mode?: NonTempoMode } = {}): { corrected: number; medianFirstDrop: number; medianSettled: number; settled: number } {
   const days = o.days ?? 180;
   const T = o.trueAt ?? 1;
   const L: LearnerParams = { ...DEFAULT_LEARNER, rate: o.rate ?? 0.05 };
@@ -305,8 +306,8 @@ export function placementRun(offset: number, tempo: boolean, runs: number, seed:
   for (let r = 0; r < runs; r++) {
     const placed = T + offset;
     let drops: { day: number; to: number }[];
-    if (tempo) drops = simulate({ catalogue: defaultCatalogue(), learner: L, days, seed: childSeed(seed, r), placedTier: placed }).placementDrops;
-    else drops = simulateReadingArea({ catalogue: syntheticCatalogue('reading', [3, 3, 3, 3, 3, 3, 3, 3], 0, false), theta0: L.theta0, rate: L.rate, beta: L.beta, sdDay: 0.8, sdItem: 0.7, practiceDaysPerWeek: 4, attemptsPerDay: 6, exercisesPerDay: 3, sessionMinutes: 20, days, seed: childSeed(seed, r), placedTier: placed }).placementDrops;
+    if (tempo) drops = simulate({ catalogue: defaultCatalogue(), learner: L, days, seed: childSeed(seed, r), placedTier: placed, nonTempoMode: o.mode }).placementDrops;
+    else drops = simulateReadingArea({ catalogue: syntheticCatalogue('reading', [3, 3, 3, 3, 3, 3, 3, 3], 0, false), theta0: L.theta0, rate: L.rate, beta: L.beta, sdDay: 0.8, sdItem: 0.7, practiceDaysPerWeek: 4, attemptsPerDay: 6, exercisesPerDay: 3, sessionMinutes: 20, days, seed: childSeed(seed, r), placedTier: placed, nonTempoMode: o.mode }).placementDrops;
     if (drops.length) {
       corrected++;
       first.push(drops[0].day);

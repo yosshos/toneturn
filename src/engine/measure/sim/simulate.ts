@@ -7,7 +7,7 @@ import type { AreaCatalogue } from './catalogue';
 import { admitLook, CURRENT_FORM, initCurrentForm, stepCurrentForm, windowAt, windowPosterior, type CurrentFormOpts, type Look, type PassedCell } from './currentForm';
 import { ItemPassTracker, type PassVariant, type ResetMode } from './itemPass';
 import { Learner, type LearnerParams } from './learner';
-import { initPlacement, isPlaced, nonTempoPlacementDay, tempoPlacementDay, type PlacementState } from './placement';
+import { initPlacement, isPlaced, nonTempoPlacementDay, tempoPlacementDay, type NonTempoMode, type PlacementState } from './placement';
 import { mulberry32, normal, randInt, type Rng } from './prng';
 import { entryCeiling, nonEmptyTiers, passedExerciseIds, rankableTiers, RANK_FIX, updateRankHW, type Exercise, type PassRecord, type RankOpts } from './rank';
 import { betaQuantile, logit } from './stats';
@@ -49,10 +49,12 @@ export interface SimOptions {
   rankHW?: number | null;
   currentForm?: Partial<CurrentFormOpts>;
   resetMode?: ResetMode;
-  /** The item pass's cold half (V0 = v12 as written, default). */
+  /** The item pass's cold half (default DEFAULT_PASS_VARIANT = V1; V0 = v12 as written). */
   variant?: PassVariant;
   /** Rank options (default: fix 1, rank needs >= 2 distinct exercises). */
   rank?: RankOpts;
+  /** The non-tempo placement-correction rule (default DEFAULT_NON_TEMPO). */
+  nonTempoMode?: NonTempoMode;
   /** Rank-gaming probe: the planner only ever offers this exercise, in a new key each time. */
   onlyExercise?: string;
   /** Days with no practice, [from, to). */
@@ -329,7 +331,7 @@ export function simulate(o: SimOptions): SimResult {
       if (!o.noPlacementCorrection && isPlaced(place, rankHW) && offeredPlaced) {
         const before = place.placedTier;
         if (o.catalogue.tempo) place = tempoPlacementDay(place, paceToday as number, tiers);
-        else place = nonTempoPlacementDay(place, placedToday, tiers);
+        else place = nonTempoPlacementDay(place, placedToday, tiers, o.nonTempoMode, day);
         if (place.placedTier !== before) placementDrops.push({ day, to: place.placedTier });
       }
     }
