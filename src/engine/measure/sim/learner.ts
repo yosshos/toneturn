@@ -29,9 +29,18 @@ export interface LearnerParams {
   itemHalf: number;
   /** Extra logits by local day (a temporary dip, an injury…). */
   shift?: (day: number) => number;
+  /**
+   * The tempo axis (used only by the H10 tempo model, §1.7a / §1.9): a take at f × target is ln(f) / ln(tempoStep) tiers
+   * harder (one content tier ≈ one tempo tier, a ×1.2 tempo ratio). f = 1 (the default everywhere else) changes nothing.
+   */
+  tempoStep?: number;
 }
 
 export const DEFAULT_LEARNER: LearnerParams = { theta0: 0, rate: 0.25, beta: 1.2, warmBoost: 0.8, sdDay: 0.8, sdCell: 0.7, itemGain: 0, itemHalf: 6 };
+/** The default tempo ratio per tier (§1.7a tempo model). */
+export const TEMPO_STEP = 1.2;
+/** Difficulty, in tiers, of tier `c` played at `f` × target. */
+export const tempoDifficulty = (c: number, f: number, step = TEMPO_STEP): number => c + Math.log(f) / Math.log(step);
 
 /**
  * θ for which the marginal cold p (over the day and cell effects) at tier c equals p — "a learner whose cold p at the
@@ -63,21 +72,22 @@ export class Learner {
     return v;
   }
   /** The logit of a take before the day effect. */
-  private base(tier: number, cell: string, visits: number, day: number): number {
+  private base(tier: number, cell: string, visits: number, day: number, f = 1): number {
     const g = this.p.itemGain * (1 - Math.exp(-visits / this.p.itemHalf));
-    return this.p.beta * (this.theta() - tier) + this.cellEffect(cell) + g + (this.p.shift ? this.p.shift(day) : 0);
+    const d = f === 1 ? tier : tempoDifficulty(tier, f, this.p.tempoStep ?? TEMPO_STEP);
+    return this.p.beta * (this.theta() - d) + this.cellEffect(cell) + g + (this.p.shift ? this.p.shift(day) : 0);
   }
-  /** P(clean) of a take today. */
-  pTake(tier: number, cell: string, day: number, visits: number, warm: boolean): number {
-    return logistic(this.base(tier, cell, visits, day) + this.dayEffect(day) + (warm ? this.p.warmBoost : 0));
+  /** P(clean) of a take today (at f × target; f = 1 unless the tempo model is on). */
+  pTake(tier: number, cell: string, day: number, visits: number, warm: boolean, f = 1): number {
+    return logistic(this.base(tier, cell, visits, day, f) + this.dayEffect(day) + (warm ? this.p.warmBoost : 0));
   }
   /** Draw a take. */
-  take(tier: number, cell: string, day: number, visits: number, warm: boolean): boolean {
-    return this.rng() < this.pTake(tier, cell, day, visits, warm);
+  take(tier: number, cell: string, day: number, visits: number, warm: boolean, f = 1): boolean {
+    return this.rng() < this.pTake(tier, cell, day, visits, warm, f);
   }
-  /** Truth: the cell's cold p marginal over the day effect (the cell effect included). */
-  trueCellP(tier: number, cell: string, day: number, visits: number): number {
-    return marginalP(this.base(tier, cell, visits, day), this.p.sdDay);
+  /** Truth: the cell's cold p marginal over the day effect (the cell effect and item practice included). */
+  trueCellP(tier: number, cell: string, day: number, visits: number, f = 1): number {
+    return marginalP(this.base(tier, cell, visits, day, f), this.p.sdDay);
   }
   /** Truth: the tier's cold p marginal over day and cell effects (a fresh cell, no item practice). */
   trueTierP(tier: number, day = 0): number {

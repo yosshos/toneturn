@@ -20,7 +20,8 @@
     "voice:render": "node scripts/voice/render.mjs",
     "daily-keys": "rolldown scripts/daily-keys.ts --platform node --format esm -o scripts/.daily-keys.mjs > scripts/.daily-keys.log && node scripts/.daily-keys.mjs",
     "measure-sim": "rolldown scripts/measure-sim.ts --platform node --format esm -o scripts/.measure-sim.mjs > scripts/.measure-sim.log && node scripts/.measure-sim.mjs",
-    "measure-variants": "rolldown scripts/measure-variants.ts --platform node --format esm -o scripts/.measure-variants.mjs > scripts/.measure-variants.log && node scripts/.measure-variants.mjs"
+    "measure-variants": "rolldown scripts/measure-variants.ts --platform node --format esm -o scripts/.measure-variants.mjs > scripts/.measure-variants.log && node scripts/.measure-variants.mjs",
+    "measure-r17": "rolldown scripts/measure-r17.ts --platform node --format esm -o scripts/.measure-r17.mjs > scripts/.measure-r17.log && node scripts/.measure-r17.mjs"
   },
   "dependencies": {
     "@fontsource-variable/rubik": "^5.3.0",

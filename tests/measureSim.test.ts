@@ -1,4 +1,4 @@
-// SPEC-HOLISTIC-2 v12 §9.1: the measurement simulation harness. Unit tests of each rule, then the spec's stated targets
+// SPEC-HOLISTIC-2 v12 §9.1 (+ round 17): the measurement simulation harness. Unit tests of each rule, then the spec's stated targets
 // on synthetic learners (fixed seeds, modest run counts). A target that fails is marked it.fails with the measured
 // number in the comment — the rule is never weakened to make it pass (owner: the harness validates the rules).
 import { describe, expect, it } from 'vitest';
@@ -6,6 +6,7 @@ import {
   admitLook, betaCdf, breadthOk, climb, defaultCatalogue, deriveRank, designEffect, entryCeiling, gamingOneExercise, initCurrentForm, initPlacement,
   itemPassAt, itemPassFlow, marginalP, muForMarginal, nonTempoPlacementDay, pPairWithin, placementRun, readingFalsePass, readingPassed, stepCurrentForm,
   snapToNonEmpty, syntheticCatalogue, type NonTempoMode, tempoPlacementDay, RANK_V12, updateRankHW, wrongDemotion, type Exercise, type Look, type PassRecord, type Take,
+  H10_ON, h10Study, mulberry32, RANK_FIX, RANK_GUARDED, RHO_CELL, RHO_CELL_TIER, SHARED_SUPPLY, stationaryHonesty, THRESHOLD, thresholdEstimate, TIER_GUARD, tierGuardOk,
 } from '../src/engine/measure/sim';
 import { realCatalogues } from '../src/engine/measure/sim/realCatalogue';
 
@@ -310,5 +311,101 @@ describe('§9.1 findings, fixed (coordinator 2026-11-27)', () => {
   }, 60000);
   it('N0 did correct some correctly placed learners (the reason it is not the default)', () => {
     expect(placementRun(0, false, 300, SEED + 70, { rate: 0, mode: 'N0' }).corrected).toBeGreaterThan(0);
+  }, 60000);
+});
+
+// ---------------------------------------------------------------- round 17 (docs/REVIEW-HOLISTIC-round17-measurement.md)
+
+describe('round 17: pass evidence, keys union, tier guard, threshold estimate (units)', () => {
+  const warm = (d: number) => [take(d, 18, true, true), take(d, 18.1, true, false), take(d, 18.2, true, false)];
+  const cold = (from: number, seq: boolean[]) => seq.map((c, i) => take(from + i, 18, c, true));
+  it('P1: a new key of the same exercise does not reset its misses; P0 does', () => {
+    const a = [...warm(0), ...cold(1, [false, false, false, false])];
+    const b = [...warm(10), ...cold(11, [true, true])];
+    expect(itemPassAt(b, 'anyCold', 'V1', 'P0')).toBe(H(12, 18)); // a fresh key passes on 2 / 2
+    const pool: boolean[] = [];
+    expect(itemPassAt(a, 'anyCold', 'V1', 'P1', pool)).toBeNull();
+    expect(itemPassAt(b, 'anyCold', 'V1', 'P1', pool)).toBeNull(); // pooled last 6: 2 / 6 < 2 / 3
+  });
+  it('P2: >= 4 counting checks before the share test', () => {
+    expect(itemPassAt([...warm(0), ...cold(1, [true, true])], 'anyCold', 'V1', 'P2')).toBeNull();
+    expect(itemPassAt([...warm(0), ...cold(1, [true, true, true, true])], 'anyCold', 'V1', 'P2')).toBe(H(4, 18));
+  });
+  it('§1.7 step 4: available keys = the union of the exercises\' keys', () => {
+    const ex: Exercise[] = [
+      { id: 'z0', tier: 0, keys: 12, available: true }, { id: 'z1', tier: 0, keys: 12, available: true },
+      { id: 'a', tier: 1, keys: 1, keySet: [0], available: true }, { id: 'b', tier: 1, keys: 1, keySet: [5], available: true },
+      { id: 'c', tier: 2, keys: 12, available: true }, { id: 'd', tier: 2, keys: 12, available: true },
+    ];
+    const p: PassRecord[] = [{ exerciseId: 'a', tier: 1, key: 0, at: 0 }, { exerciseId: 'c', tier: 2, key: 0, at: 1 }];
+    expect(updateRankHW(ex, p, 0, 0)).toBe(0); // union: 2 keys available (C, F), 1 covered
+    expect(updateRankHW(ex, p, 0, 0, { ...RANK_FIX, keysUnion: false })).toBe(1); // the earlier max rule
+  });
+  it('rank tier guard: the pooled record of every counting check at the tier', () => {
+    const ck = (n: number, clean: number) => Array.from({ length: n }, (_, i) => ({ tier: 2, day: Math.floor(i / 3), cell: `c${i % 6}`, clean: i < clean }));
+    expect(tierGuardOk(ck(12, 10), 2, 2, TIER_GUARD)).toBe(true);
+    expect(tierGuardOk(ck(12, 5), 2, 2, TIER_GUARD)).toBe(false);
+    expect(tierGuardOk(ck(5, 5), 2, 2, TIER_GUARD)).toBe(false); // < 6 checks
+    expect(tierGuardOk(ck(12, 12), 3, 3, TIER_GUARD)).toBe(false); // no checks at T3
+  });
+  it('§1.9 threshold estimate recovers a known threshold', () => {
+    const rng = mulberry32(SEED);
+    const tau = Math.log(0.85);
+    const trials = Array.from({ length: 300 }, () => {
+      const f = 0.65 + rng() * 0.4;
+      return { day: 0, f, clean: rng() < 1 / (1 + Math.exp(-(Math.log(0.707 / 0.293) + THRESHOLD.slope * (tau - Math.log(f))))) };
+    });
+    const e = thresholdEstimate(trials, 0, 0.7);
+    expect(e.f).toBeGreaterThan(0.8);
+    expect(e.f).toBeLessThan(0.9);
+    expect(e.provisional).toBe(false);
+    expect(thresholdEstimate(trials.slice(0, 5), 0, 0.7).provisional).toBe(true);
+  });
+});
+
+describe('round 17 targets', () => {
+  // Review #1: learners who never improve. Rank never falls, so every rise above the true level is permanent. P1-P3
+  // barely move this (the inflation comes from choosing the easiest of many different cells, not from luck on one cell);
+  // measured (report, 100 learners): P0 22 % of rises at tier p < 0.5 (p 0.75 at T2), final rank T4 at tier p 0.30.
+  it.fails('stationary learners: rank rises at tier p < 0.5 <= 10 % over 365 days (default, P0)', () => {
+    expect(stationaryHonesty(0.75, 12, SEED + 1).risesBelowHalf).toBeLessThanOrEqual(0.1);
+  }, 60000);
+  it('stationary learners: the rank tier guard (proposal G) meets it', () => {
+    expect(stationaryHonesty(0.75, 12, SEED + 1, { sim: { rank: RANK_GUARDED } }).risesBelowHalf).toBeLessThanOrEqual(0.1);
+  }, 60000);
+
+  // Review #3: the spec's supply (a per-session cap shared by the instrument's areas, plus FSRS-review looks).
+  it('wrong demotion < 5 % per 90 days at true p >= 0.75 under the shared supply', () => {
+    expect(wrongDemotion(0.75, 40, SEED, { sim: { supply: SHARED_SUPPLY } }).wrongRate).toBeLessThan(0.05);
+  }, 60000);
+
+  // Review #4: the estimand is the tier's fresh-cell p; ρ_c 0.20 over-covers it (≈ 82-86 %), the re-tuned ρ_c is ≈ 80 %.
+  const cal = (() => {
+    let r: ReturnType<typeof wrongDemotion> | null = null;
+    return () => (r ??= wrongDemotion(0.85, 40, SEED + 60, { sim: { supply: SHARED_SUPPLY, calibRhoC: [RHO_CELL, RHO_CELL_TIER] } }));
+  })();
+  it.fails('the window posterior is calibrated for the tier estimand at ρ_c 0.20 (80 % interval covers 77-83 %)', () => {
+    const c = cal().grid[0].tierCoverage;
+    expect(c).toBeGreaterThanOrEqual(0.77);
+    expect(c).toBeLessThanOrEqual(0.83);
+  }, 60000);
+  it('the window posterior is calibrated for the tier estimand at the re-tuned ρ_c', () => {
+    const c = cal().grid[1].tierCoverage;
+    expect(c).toBeGreaterThanOrEqual(0.77);
+    expect(c).toBeLessThanOrEqual(0.83);
+  }, 60000);
+
+  // Review #2 / H10: offered frontier difficulty tracks θ (up to the +2 cap) while rank is flat.
+  it('H10: offered difficulty tracks θ while rank is flat, never above the +2 cap, target never falls', () => {
+    const r = h10Study('H10', 20, SEED + 90, { h10: H10_ON });
+    expect(r.flatSlope).toBeGreaterThanOrEqual(0.7);
+    expect(r.flatPlateau).toBeLessThanOrEqual(0.15);
+    expect(r.overCap).toBe(0);
+    expect(r.targetFell).toBe(0);
+  }, 60000);
+
+  // Minor: N1 counts every cell at placedTier (spec), confirmation looks of passed cells included.
+  it('N1 over all cells at placedTier never corrects a correctly placed learner (fixed-tempo area)', () => {
+    expect(placementRun(0, false, 100, SEED + 70, { rate: 0, fixedTempoSim: true }).corrected).toBe(0);
   }, 60000);
 });
