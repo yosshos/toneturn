@@ -1310,3 +1310,72 @@ Every amendment item and where it now lives in v10 (v10 keeps v9's and v8's sect
 | R8 19.6 (looks) | FSRS review probes and pass probes outside the slots count as looks; slots guarantee a minimum supply | §1.7 |
 | R8 19.6 (breadth fail) | no decision; the slot injector picks the missing exercise or key | §1.7 |
 | R8 (consolidation) | v9 §19 merged and removed; done-when moved to round 9 on v10 | this document, §18 |
+
+---
+
+## 19. Round 9 → v11: binding changes (merge into the body)
+
+### 19.1 Passes cannot be farmed by retrying (both reviewers)
+- **The technique and fixed-tempo pass:** the counting cold take must be the cell's **first cold take of that local day**. A cold miss that day blocks the pass until another day. Every other cold take still feeds FSRS and the staircase.
+- **Reading and transfer** replace "3 of the last 5" with a test over **all cold attempts at the tier since the tier started**:
+  - prior Beta(1, 1);
+  - pass when P(p ≥ 0.6 | data) ≥ 0.9;
+  - with ≥ 5 attempts on ≥ 2 days.
+  - The §9.1 harness reports the false-pass rate at true p = 0.4 and 0.5 (target < 10 % at 0.5).
+- **Voice and rhythm pass rule:** the technique rule, where "clean" means within the cell's cents and timing band (voice) or SD band (rhythm). That is 3 clean on ≥ 2 days, including the first cold take of a later day (≥ 8 h and a different local day).
+
+### 19.2 Rank and entry cannot deadlock
+- **"Available" in the rank rule counts only what the planner can offer:** min(3, available exercises in tiers t … entry ceiling).
+- **Entry also opens tier t+2** once every available exercise at t+1 is passed.
+- **Guard test:** a tier with 2 exercises, climbed rotation-only.
+
+### 19.3 Current form: buildable window
+- **Breadth** is measured over the passed and established exercises at the tier: min(3, that count).
+- **Current form at tier t** reads passed cells at tiers ≥ t, matching rank.
+- **The slot injector** targets only passed cells.
+- **The window** holds looks from the last 90 days only, the last 30 within that.
+- **n_eff** includes cell clustering: n / (1 + (m_d − 1)ρ_d + (m_c − 1)ρ_c), with pooled defaults from the calibration traces (ρ_d and ρ_c stated in §9.1).
+- **The wrong-demotion target** is < 5 % per 90 days of practice at true p ≥ 0.75.
+- **A tier with no passed cells** shows current form as "unmeasured". Only re-promotion at the tier above moves it.
+- **§1.1** says current form uses hysteresis: re-promotion at P(p ≥ 0.6) ≥ 0.9, a slump at P(p < 0.5) ≥ 0.95. It is initialised from rank and capped at it.
+
+### 19.4 Placement correction that works
+- **The posterior-slump clause for placedTier is deleted.**
+- **The placement rule instead:** placedTier drops one tier if the staircase or threshold estimates sit below 0.8 × target on ≥ 3 exercises at placedTier over ≥ 5 offered days. The 20-offered-day rule stays as the slow path.
+- **While placed,** current form comes from the threshold estimates.
+
+### 19.5 Voice pitch rank includes intonation
+- **A required cents band per tier** for a pass to count toward rank:
+  - T0–2: 60 ¢;
+  - T3–4: 45 ¢;
+  - T5+: 30 ¢.
+- A pass at a looser band than the tier requires is coverage only.
+
+### 19.6 Licks, Encore phrases, repertoire drills
+- **Coverage only for rank.** These keep SP §4.2's old pass rule and are memorised material.
+- **Rule-generated licks count only as unseen generated licks at sight,** under the cold pass rule. They join the transfer class.
+- **Guard test:** a warm lick pass never raises rank.
+
+### 19.7 The other player in trading and comping
+- **Trading 4s** (keys, guitar, bass, voice) and **responsive comping** use the §13.6 sources for the other player:
+  - rule-generated licks;
+  - PD lines;
+  - a teacher or the human model bank.
+- Otherwise they trade against drums only, or leave the 4 bars silent. **Never an app-improvised soloist.**
+
+### 19.8 A repertoire axis (beside rank, never mixed into it)
+- **Per course:** the hardest difficulty card, plus the number of tunes and pieces completed to the cold memory step and kept up by piece FSRS.
+- **Shown** on the profile and the course page as "Repertoire: N tunes, hardest T4".
+- **It feeds** Momentum (a new tune completed) and goals. Never rank.
+
+### 19.9 Minor items
+- **Optional stopping on cross-device merge:** a pass whose counting take is downgraded to warm at merge is revoked if it was set within the last 24 h. Older passes stand.
+- **"Catalogue target"** = the option's target at its catalogue entry band, before any rate shift.
+- **§8.2:** the STANDARDS_LEGAL heads are "US PD + tier".
+- **heads.ts:** `HeadLicence` gains `tier` / `pdFrom`, replacing `pd-worldwide`. The superseded comment banning I Got Rhythm and Body and Soul is removed (build task, step 5).
+- **The by-ear melody self-check, the performance self-rate and the rubric self-rating** use the §7 MIDI-key or voice yes/no input, staying hands-free.
+- **The rate's entry shift works in tiers,** capped at +1 (SP §15.5 / §17.3 "band step" means tier step).
+- **The transfer pool** is filled by keys and charts. The harness checks that every transfer tier is reachable.
+- **Unknown region:** the region-safe pool (practice heads, songbook, voice melodies, licks, charts) carries these users.
+- **Drum rudiments:** contentTier seeds rudiment complexity (single / double / diddle / flam / drag families), then nps within the family.
+- **The Momentum high-water false-payout rate** is measured in the Q6 test.
