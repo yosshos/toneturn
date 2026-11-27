@@ -561,6 +561,9 @@ h2,
 .ph-tools .exam-head-row {
   margin: 0;
 }
+.ph-tools .path-intro {
+  --ink-c: var(--ink); /* --ink-c is the light theme's fixed ink: dark-on-dark in the dark theme */
+}
 .ph-row {
   display: flex;
   align-items: center;
