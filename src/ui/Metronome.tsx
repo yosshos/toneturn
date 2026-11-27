@@ -293,7 +293,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
           <Icon k={running ? 'stop' : 'play'} size={running ? 30 : 32} />
         </button>
         <span className="mt-meter-tag" aria-hidden="true">
-          {groove ? grooveMeter(groove) : `${beats}/${den}`}
+          <bdi dir="ltr">{groove ? grooveMeter(groove) : `${beats}/${den}`}</bdi>
         </span>
       </div>
 
@@ -322,7 +322,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
                 </button>
               ))}
               <button type="button" className="chip" onClick={() => setMeter(m.beats, m.den === 4 ? 8 : 4)} aria-label={he ? 'ערך הפעמה' : 'Beat value'}>
-                /{m.den}
+                <bdi dir="ltr">/{m.den}</bdi>
               </button>
             </div>
           </div>

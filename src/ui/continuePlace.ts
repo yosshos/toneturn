@@ -63,6 +63,17 @@ export function placeTitle(route: string, hash: string, lang: 'en' | 'he', myCha
   return base;
 }
 
+/** The card's name in the language shown now (UI review 0.145.12: a place saved while the app was in English said
+ *  "Technique" on the Hebrew card). Re-derived from the address; the saved title is the fallback (my charts' names). */
+export function lastPlaceTitle(last: LastPlace, lang: 'en' | 'he', myCharts?: MyChartLike[]): string {
+  const route = last.hash.replace(/^#\/?/, '').split(/[/?]/)[0] ?? '';
+  const t = placeTitle(route, last.hash, lang, myCharts);
+  if (!t) return last.title;
+  // a piece of mine is not in the library: keep the saved name after the place, in today's language
+  if (last.place === 'repertoire' && !t.includes(' · ') && last.title.includes(' · ')) return `${t} · ${last.title.split(' · ').slice(1).join(' · ')}`;
+  return t;
+}
+
 export function lastPlace(now = Date.now()): LastPlace | null {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? 'null') as LastPlace | null;

@@ -373,10 +373,14 @@ export function ScaleRotation({ settings, lang, tier, dayKey, piece, onTier, onT
         <span className="rs-key" data-rs-key={dayKey}>
           {tx.key} <bdi dir="ltr">{kName(sheet.tonic, sheet.minor)}</bdi>
         </span>
+        {/* UI review 0.145.12: the word ("שלב" / "Tier") once, then the digits — no Latin "T1–T3" in the Hebrew UI */}
         <div className="seg rs-tiers" role="radiogroup" aria-label={tx.tier}>
+          <span className="rs-tier-label" aria-hidden="true">
+            {tx.tier}
+          </span>
           {([1, 2, 3] as const).map((t) => (
             <button key={t} type="button" role="radio" aria-checked={tier === t} className={tier === t ? 'on' : ''} onClick={() => onTier?.(t)} disabled={running} aria-label={`${tx.tier} ${t}`} data-rs-tier-pick={t}>
-              <bdi dir="ltr">T{t}</bdi>
+              <bdi dir="ltr">{t}</bdi>
             </button>
           ))}
         </div>
