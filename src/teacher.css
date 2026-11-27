@@ -261,6 +261,11 @@
 :root:root .assigned-card .ac-row { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 2px; width: 100%; padding: 9px 12px; border-radius: 12px; color: #fff; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14); }
 :root:root .assigned-card .ac-row:hover { background: rgba(255, 255, 255, 0.13); }
 .assigned-card .ac-row:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* owner 2026-11-27: a done assignment stays, checked and quieter */
+:root:root .assigned-card .ac-row.done { background: rgba(255, 255, 255, 0.03); border-style: dashed; }
+:root:root .assigned-card .ac-row.done .ac-title { color: rgba(255, 255, 255, 0.78); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+:root:root .assigned-card .ac-check { flex: none; color: #fff; background: rgba(255, 255, 255, 0.18); border-radius: 50%; padding: 2px; }
+:root:root .assigned-card .ac-done-count { font-size: 0.8rem; font-weight: 500; color: rgba(255, 255, 255, 0.8); }
 :root:root .assigned-card .ac-title { font-weight: 700; color: #fff; }
 :root:root .assigned-card .ac-row small, :root:root .assigned-card .ac-more { color: rgba(255, 255, 255, 0.78); }
 :root:root .assigned-card .new-mark { background: #fff; color: #2b1a4a; }

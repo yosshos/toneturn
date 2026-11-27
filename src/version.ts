@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.4',
+    date: '2026-11-27',
+    en: ['Homework you finished stays on the Home card for a week with a check, and the card says how many are done'],
+    he: ['משימה שסיימת נשארת בכרטיס בבית שבוע עם וי, והכרטיס אומר כמה כבר בוצעו'],
+  },
+  {
     version: '0.145.3',
     date: '2026-11-27',
     en: ['A practice session always shows how much time is left and how many takes were clean, on phones too (no more "step 1 of 1")'],

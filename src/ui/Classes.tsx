@@ -568,31 +568,58 @@ export function dueShort(due: string | null, lang: 'he' | 'en', today = localDay
   return he ? `עד ${day}.${m}` : `due ${m}/${day}`;
 }
 
-/** Home card: the student's open assignments (not passed yet), soonest due first — the exercise's own name, the due
- *  day in words, "new" since the last look; a tap opens the assignment itself. */
+/** Done assignments stay on the Home card with a check for this long after the take that closed them. */
+const DONE_SHOWN_MS = 7 * 86_400_000;
+
+/** An assignment done lately (passed, its newest take within DONE_SHOWN_MS): it stays on the card, checked. */
+export function doneLately(a: AssignItem, now = Date.now()): boolean {
+  if (assignState(a) !== 'passed') return false;
+  const last = a.submissions.reduce((m, s) => (s.createdAt > m ? s.createdAt : m), '');
+  return !!last && now - Date.parse(last) < DONE_SHOWN_MS;
+}
+
+/** Home card: the student's homework in the teacher's order (soonest due first) — the exercise's own name, the due day
+ *  in words, "new" since the last look; a tap opens the assignment itself. Owner 2026-11-27: a done one stays for a week
+ *  with a check ("it just vanished"), and the card says how many are done. */
 export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; items: AssignItem[]; lang: 'he' | 'en'; onOpen: (a: AssignItem) => void; /** New since the last look (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
+  const now = Date.now();
   const open = items
-    .filter((a) => assignState(a) !== 'passed')
+    .filter((a) => assignState(a) !== 'passed' || doneLately(a, now))
     .sort((x, y) => (x.dueOn ?? '9999').localeCompare(y.dueOn ?? '9999') || x.createdAt.localeCompare(y.createdAt)); // owner 2026-11-27: homework in the teacher's order (1 before 4)
+  const doneN = open.filter((a) => assignState(a) === 'passed').length;
   if (!open.length) return null;
+  // the open ones first in the first four places, so a done list never hides what is left
+  const rows = [...open.filter((a) => assignState(a) !== 'passed'), ...open.filter((a) => assignState(a) === 'passed')].slice(0, Math.max(4, Math.min(6, open.length)));
+  const shown = open.filter((a) => rows.includes(a));
   return (
-    <section className="assigned-card" aria-label={t.yourAssignments} data-assigned-card={open.length}>
-      <h2>{t.yourAssignments}</h2>
+    <section className="assigned-card" aria-label={t.yourAssignments} data-assigned-card={open.length - doneN}>
+      <h2>
+        {t.yourAssignments}
+        {doneN > 0 && (
+          <small className="ac-done-count" data-assigned-done={doneN}>
+            {lang === 'he' ? ` · ${doneN} מתוך ${open.length} בוצעו` : ` · ${doneN} of ${open.length} done`}
+          </small>
+        )}
+      </h2>
       <small className="ac-class">{[...new Set(open.map((a) => a.className).filter(Boolean))].join(' · ')}</small>
       <ul className="assign-list">
-        {open.slice(0, 4).map((a) => (
+        {shown.map((a) => {
+          const done = assignState(a) === 'passed';
+          return (
           <li key={a.id}>
-            <button type="button" className="ac-row" onClick={() => onOpen(a)} data-assigned={a.id}>
+            <button type="button" className={`ac-row${done ? ' done' : ''}`} onClick={() => onOpen(a)} data-assigned={a.id} data-assigned-state={done ? 'done' : 'open'}>
               <span className="ac-title">
+                {done && <Icon k="check" size={16} className="ac-check" />}
                 {itemTitle(a, lang, t)}
                 {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
               </span>
-              {dueShort(a.dueOn, lang) && <small>{dueShort(a.dueOn, lang)}</small>}
+              {done ? <small>{lang === 'he' ? 'בוצע' : 'Done'}</small> : dueShort(a.dueOn, lang) && <small>{dueShort(a.dueOn, lang)}</small>}
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
-      {open.length > 4 && <small className="ac-more">{lang === 'he' ? `ועוד ${open.length - 4} בדף הכיתה` : `${open.length - 4} more on the class page`}</small>}
+      {open.length > shown.length && <small className="ac-more">{lang === 'he' ? `ועוד ${open.length - shown.length} בדף הכיתה` : `${open.length - shown.length} more on the class page`}</small>}
     </section>
   );
 }
