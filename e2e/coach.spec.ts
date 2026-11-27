@@ -289,3 +289,18 @@ test('key session: a new stage starts by itself after its brief, its Ready on sc
   const takes0 = Number(await page.locator('[data-coach-bar]').getAttribute('data-coach-takes'));
   await expect.poll(async () => Number(await page.locator('[data-coach-bar]').getAttribute('data-coach-takes')), { timeout: 15_000 }).toBeGreaterThan(takes0);
 });
+
+// Owner 2026-11-27: a coach session always shows how much is left and how it is going (phones too).
+test('coach: the clock shows the time left and the clean takes, on a phone', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => ((window as unknown as { __fakeTake: string }).__fakeTake = 'clean'));
+  await page.goto('/?unlock=all&lang=he#/drills');
+  await page.locator('[data-family-levels="scales"], [data-family="scales"]:not([data-family-direct])').click();
+  await page.locator('[data-coach-open="scales"]').click();
+  await page.locator('[data-coach-start]').click();
+  const clock = page.locator('[data-coach-clock]');
+  await expect(clock).toBeVisible({ timeout: 20_000 });
+  await expect(clock).toContainText('נשארו');
+  await page.screenshot({ path: 'test-results/coach-clock-he-375.png' });
+});

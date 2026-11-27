@@ -26,7 +26,7 @@ import { hearable, playDrill } from './HearDrill';
 import { devBpm } from './fakeTake';
 import { useAnyNote } from './anyNote';
 import { piano, tts } from './services';
-import { announce, coachable, coachAfter, easyTake, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
+import { SESSION_MIN, announce, coachable, coachAfter, easyTake, missLine, coachStage, coachStart, coachTake, rubatoDoneByCoach, summary as coachSummary, type CoachBackground, type CoachState, type CoachTake } from '../engine/drills/coach';
 /** SPEC-COACH-2 §3: the course self-report ("some" / "a lot") or a level-test start past level 1 → past the basics. */
 /**
  * SPEC-COACH-2 §7 (AI decisions 2026-11-14: Haiku cards): after a coach session, one or two sentences from the
@@ -154,7 +154,7 @@ import { planFamily, rungMinutes, weekKeyFromMatrix, whyCounts, type PlanCell } 
 import { dayKeyIfKept, improvRootOf, keptWeekKey, matrixInst, priorTier, noteMatrixSeen, readMatrixView, saveMatrixView, setPlanAt, todayTech, type TodayTech } from './todayTech';
 import { coolingDown, itemStatus, withCeiling, type ItemStatus } from '../engine/drills/itemStatus';
 import { keySessionLadder, subDrill } from '../engine/drills/stages';
-import { stageView } from '../engine/drills/keyCoach';
+import { KS_MINUTES, stageView } from '../engine/drills/keyCoach';
 import { UNIT } from '../engine/drills/coachPhrases';
 import { setCoachQuiet } from './coachQuiet';
 import { StageStrip } from './StageStrip';
@@ -1487,6 +1487,35 @@ const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some(
 const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
 const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
 
+/**
+ * Owner 2026-11-27: "I didn't know when it would end" — a coach session shows, all the time, how much of it is left and
+ * how it is going (the same clock that ends it: its minutes from its start).
+ */
+function CoachClock({ startedAt, minutes, takes, clean, lang }: { startedAt: number; minutes: number; takes: number; clean: number; lang: Lang }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 5000);
+    return () => window.clearInterval(id);
+  }, []);
+  const total = minutes * 60_000;
+  const done = Math.max(0, Math.min(1, (now - startedAt) / total));
+  const left = Math.max(0, Math.ceil((total - (now - startedAt)) / 60_000));
+  const he = lang === 'he';
+  const leftTx = left <= 0 ? (he ? 'זאת הנגינה האחרונה' : 'Last take') : left === 1 ? (he ? 'נשארה דקה' : '1 min left') : he ? `נשארו ${left} דק׳` : `${left} min left`;
+  const takesTx = takes ? (he ? ` · ${clean} נקיות מתוך ${takes}` : ` · ${clean} clean of ${takes}`) : '';
+  return (
+    <div className="coach-clock" data-coach-clock={left}>
+      <span className="coach-clock-bar" aria-hidden="true">
+        <span style={{ width: `${Math.round(done * 100)}%` }} />
+      </span>
+      <span className="coach-clock-tx">
+        {leftTx}
+        {takesTx}
+      </span>
+    </div>
+  );
+}
+
 function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphones, onHeadphones, kit, onIndex, atTarget, onCalRefine, own, onOwn, coach: coachIn, coachBg, onKeyOrder, onTitle, onCoachStep, onItem, chan, resumeKey, queueKey, autoEnd, freshCoach, teacherNote }: { /** A teacher's assignment note (owner 2026-11-27: the homework's instructions were nowhere in the session). */ teacherNote?: string; /** Owner 2026-11-25 (storage/coachRun.ts): the run's place kept for the day — the coach's state after every take, a list's item; opening it again the same day continues it. */ resumeKey?: string; queueKey?: string; /** The run's ladder built afresh (a run reopened after a reload holds the saved one): Start over, or a save that can no longer be played. */ freshCoach?: () => FamilyDef | null; /** Inside the daily session: the coach's natural end goes back to the session by itself (no tap; the between-blocks card follows). */ autoEnd?: boolean; /** BUILD-PLAN phase 6: presentation by mastery (channelPlan.ts) — the strong channel, this week's mix, the day. */ chan?: RunChan; /** The coach moved to a step (today's plan keeps it: resume at the cell). */ onCoachStep?: (step: number) => void; /** An item changed without a take (the plateau's ceiling). */ onItem?: (st: ItemState) => void; /** The order of keys in a topic session (owner 2026-11-21: chromatic, or the circle of fifths up / down). */ onKeyOrder?: (o: KeyOrder) => void; /** SPEC-COACH-2 §3: where the player stands (self-report, level test) — the coach's start. */ coachBg?: CoachBackground; /** The practice coach (coach.ts): one family as a continuous, climbing, hands-free session; `queue` is unused. */ coach?: FamilyDef; /** The coach reports the item being played (the screen's title). */ onTitle?: (t: string) => void; /** "I use a different fingering": the player's own numbers per item, and the change. */ own?: OwnFingerings; onOwn?: (o: OwnFingerings) => void; /** B7: the velocity range widened from a real MIDI take. */ onCalRefine?: (c: DrillCalibration) => void; atTarget?: boolean; onIndex?: (i: number) => void; lang: Lang; ds: DrillSettings; cal: DrillCalibration; queue: Drill[]; start: number; items: Record<string, ItemState>; onTake: DrillsProps['onTake']; onEnd: (takes: number, clean: number) => void; headphones?: boolean; onHeadphones?: (h: boolean) => void; kit?: Settings['drumKit'] }) {
   const [beat, setBeat] = useState(-1);
   const tx = T[lang];
@@ -1934,7 +1963,8 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   if (coach && cTake) {
     const cs = coachRef.current!;
     const ksInfo = cs.ks ? cTake.stageInfo : undefined;
-    const stepTx = ksInfo ? `${ksInfo.title[lang]} · ${ksInfo.name[lang]}` : he ? `שלב ${cs.step + 1} מתוך ${cs.steps.length}` : `Step ${cs.step + 1} of ${cs.steps.length}`;
+    // owner 2026-11-27: "step 1 of 1" said nothing in a one-step session (a teacher's assignment) — the clock below says it
+    const stepTx = ksInfo ? `${ksInfo.title[lang]} · ${ksInfo.name[lang]}` : cs.steps.length < 2 ? '' : he ? `שלב ${cs.step + 1} מתוך ${cs.steps.length}` : `Step ${cs.step + 1} of ${cs.steps.length}`;
     /** Where the session stands (the next take's step and tempo): the same after a stop and a resume (e2e). */
     const atTx = `${cs.step}:${cs.keyIdx}:${cs.spec}:${cs.ks ? `${cs.ks.nps.toFixed(3)}:${cs.ks.per}:${cs.ks.passed.length}` : `${cs.up}:${cs.slower}`}`;
     const endNow = () => {
@@ -2106,6 +2136,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             <Icon k="stop" size={18} />
           </button>
         </span>
+        <CoachClock startedAt={cs.startedAt} minutes={cs.minutes ?? (cs.ks ? KS_MINUTES : SESSION_MIN)} takes={cs.takes} clean={cs.clean} lang={lang} />
       </div>
     );
     // SPEC-KEY-SESSION-2 §6: the stage strip (and the speed stage's tempo bar) above the music

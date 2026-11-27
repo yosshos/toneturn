@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.3',
+    date: '2026-11-27',
+    en: ['A practice session always shows how much time is left and how many takes were clean, on phones too (no more "step 1 of 1")'],
+    he: ['סשן תרגול מראה כל הזמן כמה זמן נשאר וכמה נגינות יצאו נקיות, גם בטלפון (בלי "שלב 1 מתוך 1")'],
+  },
+  {
     version: '0.145.2',
     date: '2026-11-27',
     en: [

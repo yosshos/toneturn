@@ -2608,12 +2608,17 @@ button.chip.on {
 .lk-review, .enc-review { display: contents; }
 /* the key order of a topic session (owner 2026-11-21) */
 .coach-intro .coach-order { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.coach-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 0 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); min-height: 48px; }
+.coach-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 12px; margin: 0 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); min-height: 48px; }
 .coach-bar.ok { background: color-mix(in srgb, var(--mint) 18%, transparent); }
 .coach-bar.miss { background: color-mix(in srgb, var(--tangerine) 16%, transparent); }
 .coach-bar .coach-line { flex: 1; margin: 0; font-weight: 600; line-height: 1.35; }
 .coach-bar .coach-meta { color: var(--ink-dim); font-size: 13px; white-space: nowrap; }
 .coach-bar .coach-btns { display: flex; gap: 4px; }
+/* owner 2026-11-27: how much of the session is left, always visible (phones too) */
+.coach-bar .coach-clock { flex-basis: 100%; display: flex; align-items: center; gap: 8px; margin-top: -4px; }
+.coach-clock-bar { flex: 1; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+.coach-clock-bar > span { display: block; height: 100%; background: var(--ink-dim); border-radius: 2px; transition: width .6s ease; }
+.coach-clock-tx { color: var(--ink-dim); font-size: 13px; white-space: nowrap; }
 .coach-demo { padding: 6px 0; }
 .coach-end .coach-xp { font-family: var(--display); font-size: 22px; margin: 4px 0 10px; }
 .take-start { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
