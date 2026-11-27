@@ -780,8 +780,8 @@ In addition:
 - `firstTargetDay` and "best" use straight, qualifying takes only.
 
 ## 22. Pointer: superseded by SPEC-HOLISTIC-2 (2026-11-27)
-These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v9: §1, governance list §1.16). Where they differ, HOLISTIC wins:
-- **§2.5 / §3 cold check:** HOLISTIC §1.9's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's cold check is played before its coordination stages (HOLISTIC §1.4).
+These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v12: §1, governance list §1.16). Where they differ, HOLISTIC wins:
+- **§2.5 / §3 cold check:** HOLISTIC §1.9's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's main-item cold check is played before any other sounding take of the cell, in every planner (HOLISTIC §1.4).
 - **§4.1 coldness:** `lastSound`, per cell, from any sounding take (HOLISTIC §1.4). `lastQual` remains only for the ≥ 1 h re-measure rule.
 - **§4.2:** passes are kept, `passedAt` sticky. Rank comes from passed exercises (HOLISTIC §1.7, owner decision H8); the posterior drives only current form and adaptivity. The later-day cold take needs ≥ 8 h and a different local day (HOLISTIC §1.6).
 - **§9:** "promotion by day 2–3" means the **item pass**, not a tier promotion.
@@ -794,5 +794,5 @@ These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v9: §1, governance list
 - **§17.3:** the "cold-check tempo, 0.9 × best" row is deleted; R drives the staircase step (HOLISTIC §1.9).
 - **A3 / A8:** the beginner by placement content band; `paceTier` only for timing tolerances and stretch (HOLISTIC §1.3). The A8 "≥ 3 cold takes" switch is deleted.
 - **A12:** G reads HOLISTIC §1.9's threshold estimate.
-- **§4.2 (v11):** the counting cold take of a pass is the cell's first cold take of that local day. Licks, Encore phrases and repertoire drills keep the old rule and count as coverage only for rank.
+- **§4.2 (v12):** a pass needs 2 clean first-cold takes of the cell's main item on two distinct later days (HOLISTIC §1.6). Licks, Encore phrases and repertoire drills keep the old rule and count as coverage only for rank.
 - **§15.5 / §17.3:** the rate's "band step" is a tier step, capped at +1.

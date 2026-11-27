@@ -1,14 +1,14 @@
-# Holistic round 2: one level, honest rewards, real music (v11, 2026-11-27)
+# Holistic round 2: one level, honest rewards, real music (v12, 2026-11-27)
 
 This spec implements the two whole-app audits of 2026-11-27:
 - docs/AUDIT-HOLISTIC-MEASUREMENT.md (AM);
 - docs/AUDIT-HOLISTIC-PEDAGOGY.md (AP);
 
-and the review rounds that followed (round 1: RP / RM; round 2: RP2 / RM2; round 3; round 4; round 5: RM5 / RP5; round 6: RM6 / RP6; round 7; round 8: RM8 / RP8; round 9).
+and the review rounds that followed (round 1: RP / RM; round 2: RP2 / RM2; round 3; round 4; round 5: RM5 / RP5; round 6: RM6 / RP6; round 7; round 8: RM8 / RP8; round 9; round 10).
 
 It sits beside docs/SPEC-SPIRAL-PRACTICE.md (SP, v6). Where they overlap, this spec says which one governs. It governs SP §4 and SP §17 where they touch level, and the SP sections listed in §1.16. SP §22 points here.
 
-v11 consolidates the round-9 binding changes (v10 §19) into the v10 body, keeping v10's section numbers. It closes pass farming: technique, fixed-tempo, voice and rhythm passes count only the cell's first cold take of the day, and reading and transfer pass by a Bayesian test over all cold attempts at the tier (§1.6). It makes rank's "available" count only what the planner can offer, and lets entry open t + 2 (§1.3, §1.7); makes the current-form window buildable (breadth over passed and established exercises, tiers ≥ t, a 90-day window, n_eff with cell clustering, "unmeasured", hysteresis) (§1.1, §1.7); replaces the posterior-slump placement clause with a threshold-estimate rule (§1.3); requires a cents band per tier for voice rank (§1.7); makes licks, Encore phrases and repertoire drills coverage only, with unseen generated licks at sight as transfer (§1.6, §1.10); names the other player's sources in trading and comping (§8.4, §8.7); adds a repertoire axis beside rank (§1.1, §1.10); and enters the round-9 minor items. Superseded text is removed; no other rule is changed. v10 had consolidated round 8 (the exact rank rule, stored pass records, transfer and reading passes in `cellPass`, current form following rank), v9 round 7 (owner decision H8: **rank is built from passed exercises**; the Bayesian posterior drives only current form and adaptivity), and v8 rounds 4–6 and owner decisions H5–H7. Appendix A maps every amendment item to its place here.
+v12 consolidates the round-10 binding changes (v11 §19) and the v11 clarifications (v11 §16a) into the v11 body, keeping v11's section numbers; §16a is folded into the sections it clarifies and removed. Round 10 makes the technique, fixed-tempo, voice and rhythm item pass need 2 clean first-cold takes of the cell's main item on two distinct later days (§1.6); passes reading and transfer by a recency-discounted posterior with n_eff (P(p ≥ 0.6) ≥ 0.95, ≥ 8 attempts on ≥ 3 days), and counts a transfer tier pass as one exercise per family (§1.6, §1.7); adds the nps rung to scale and arpeggio exercise identity (§1.7); lets a voice pass count at the tier's cents band or tighter (§1.7); drops the hand group from the cell key and plays the main item's cold check first in every planner, with a vocal warm-up before voice cold checks (§1.4); corrects over-placement by the expected trajectory (§1.3); computes the entry ceiling over non-empty tiers from the stored `rankHW` and `placedTier` (§1.3); makes a current-form slump exactly one tier, with ≥ 8 fresh looks per decision, defines "unmeasured", current form while placed and after an input change (§1.7, §1.12); and makes trading 4s coverage only, adds the chart difficulty card, fixes the lick-bank soloist as-is, sets the voice areas, adds Latin rhythm to the flow audit and corrects the §17.1 example (§1.10, §8.3, §8.4, §13.1, §17.1). Superseded text is removed; no other rule is changed. v11 had consolidated round 9 (pass farming, planner-offerable "available" and the t + 2 opening, the buildable current-form window, cents bands per tier, licks coverage only, the other player's sources, the repertoire axis), v10 round 8 (the exact rank rule, stored pass records, `cellPass`), v9 round 7 (owner decision H8: **rank is built from passed exercises**; the Bayesian posterior drives only current form and adaptivity), and v8 rounds 4–6 and owner decisions H5–H7. Appendix A maps every amendment item to its place here.
 
 ---
 
@@ -33,7 +33,7 @@ v11 consolidates the round-9 binding changes (v10 §19) into the v10 body, keepi
 
 ### 1.1 Definition and separate axes
 - **Rank in an area** (owner decision H8) = the highest **content tier** t such that ≥ min(3, available exercises in tiers t … the entry ceiling) distinct exercises are passed at tiers ≥ t, in ≥ min(2, available keys) keys where keys apply, with ≥ 1 pass at tier t itself. "Available" counts only what the planner can offer (§1.3, §1.7). It never falls.
-- **Current form in an area** = the learner's **cold** level from the posterior, with **hysteresis:** it re-promotes at P(p ≥ 0.6) ≥ 0.9 and slumps at P(p < 0.5) ≥ 0.95 (§1.7). It is initialised from rank and capped at it. Current form at tier t reads passed cells at tiers ≥ t, matching rank; a tier with no passed cells shows "unmeasured" (§1.7). It is shown with a range until the uncertainty is small. It is estimated by the Phase A posterior (§1.7) until Phase B (§1.8) is validated. It drives adaptivity and reporting, never rank or entry (§1.7).
+- **Current form in an area** = the learner's **cold** level from the posterior, with **hysteresis:** it re-promotes at P(p ≥ 0.6) ≥ 0.9 and slumps at P(p < 0.5) ≥ 0.95 (§1.7). It is initialised from rank and capped at it. Current form at tier t reads passed cells at tiers ≥ t, matching rank; a tier t with no passed cell at tiers ≥ t shows "unmeasured" (§1.7). While placed, and after a change of input, it follows §1.7. It is shown with a range until the uncertainty is small. It is estimated by the Phase A posterior (§1.7) until Phase B (§1.8) is validated. It drives adaptivity and reporting, never rank or entry (§1.7).
 - **Not measured:** tone, posture and tension are not measured by the level. They come only from teacher rubrics (§12.1).
 - **Separate axes, never mixed into level:**
   - **Coverage:** stars, 12 keys, forms played, and the "coverage only" families (§1.10).
@@ -50,10 +50,10 @@ v11 consolidates the round-9 binding changes (v10 §19) into the v10 body, keepi
 
 | Area | Content tier | Ordering |
 |---|---|---|
-| Technique (piano, guitar, bass, drums) | `contentTier` of the spec / option. **Scales and arpeggios:** content = their nps tier (their content is the tempo, consistent with SP A8). **Drum rudiments:** `contentTier` seeds rudiment complexity (single / double / diddle / flam / drag families), then nps within the family. | content tier → tempo. A T4 item at a slow tempo ranks above a T2 item at a fast tempo. |
+| Technique (piano, guitar, bass, drums) | `contentTier` of the spec / option. **Scales and arpeggios:** content = their nps tier (their content is the tempo, consistent with SP A8); each nps rung is its own exercise (§1.7). **Drum rudiments:** `contentTier` seeds rudiment complexity (single / double / diddle / flam / drag families), then nps within the family. | content tier → tempo. A T4 item at a slow tempo ranks above a T2 item at a fast tempo. |
 | Ear | the feature-based difficulty (SPEC-EAR-INTELLIGENCE §4), with a guess floor per answer count. SPEC-EAR-INTELLIGENCE governs the Ear level itself (§1.14). | — |
 | Reading | **reading complexity** = a weighted sum of subdivision level, accidentals, ledger lines, density and key distance. Each feature is normalised to 0–1 over the catalogue range before the sum. Equal weights to start; the weights are fitted later. **The score is mapped to T by catalogue quantiles:** the reading items of each existing reading level set the cut points. **Reading items are rule-generated per tier** (random stimulus), so the supply of first-sight items never runs out. | complexity tier → tempo |
-| Voice | the **item level** is the content tier. The cents band (60/45/30 ¢) is a **sub-band shown within it** ("T3, ±30 ¢"). It is never added to T; each tier requires a cents band for a pass to count toward rank (§1.7). | item level → cents band → timing band |
+| Voice | the **item level** is the content tier. The cents band (60/45/30 ¢) is a **sub-band shown within it** ("T3, ±30 ¢"). It is never added to T; each tier requires a cents band (or tighter) for a pass to count toward rank (§1.7). | item level → cents band → timing band |
 | Rhythm / time | subdivision level → T, with the timing SD band | subdivision → SD band |
 | Games | excluded from Phase A level evidence. Games are practice only (they may feed need, §5) and never set a level. | — |
 
@@ -67,23 +67,30 @@ v11 consolidates the round-9 binding changes (v10 §19) into the v10 body, keepi
 - The units never mix, so promotion and tolerance can't oscillate.
 - **`placedTier`** is a separate field per area, set by the level test or self-report. **It sets entry only, never rank.**
   - The UI shows "placed: T5" until rank reaches it.
-  - **Over-placement correction:** `placedTier` drops one tier if the staircase or threshold estimates sit below 0.8 × target on ≥ 3 exercises at `placedTier` over ≥ 5 offered days. **The slow path stays:** after 20 practice days in an area without a pass at `placedTier`, `placedTier` drops one tier. Rank is never touched.
-    - **The count restarts at each drop.** It counts only days on which items at `placedTier` were offered.
+  - **Over-placement correction uses the expected trajectory, not the target.** Rank is never touched.
+    - **Tempo areas:** `placedTier` drops one tier if the area's cold scale benchmark (`paceTier`) is ≥ 2 tiers below `placedTier` on ≥ 5 offered days.
+    - **Non-tempo areas:** `placedTier` drops one tier if no non-provisional threshold estimate or rung pass appears at `placedTier` within 20 offered days, **and** the transfer / reading posterior (§1.6) at `placedTier` is P(p < 0.4) ≥ 0.9.
+    - **The provisional threshold estimate** (§1.9) is never used for this.
+    - **The count restarts at each drop.** It counts only offered days: days on which items at `placedTier` were offered.
     - **A drop below band 2 restores beginner status,** with D1 floor 3. This is intended.
-  - **While placed,** current form comes from the threshold estimates (§1.9).
+    - **Harness case:** a correctly placed learner is never corrected (§9.1).
+  - **While placed** (rank = none or below `placedTier`), current form follows the placed rule in §1.7.
   - **Initial state:** rank = none until the first tier is reached; a non-placed beginner starts with `placedTier` = T0.
   - SP A8's "≥ 3 cold takes" switch is deleted.
 - **One entry rule (content-based):** with t = max(`placedTier`, rank), entry = t + 1: an item may enter when its entry content tier ≤ that value. **Entry also opens tier t + 2** once every available exercise at t + 1 is passed. The highest tier entry allows is the **entry ceiling**, which bounds rank's "available" (§1.7). Entry falls only through the placedTier over-placement correction (§1.3); items already in the rotation stay, and manual choice is never limited (no locks). Current form never sets entry (§1.7).
+  - **The entry ceiling** counts + 1 and + 2 over **non-empty tiers**: empty tiers are skipped when computing it. It is computed from the stored `rankHW` (§1.7) and `placedTier`, not from the derived rank, so it is not circular.
+  - **The t + 2 opening** is a planner-availability exception. It sits outside the "+1 beyond the base" stacking limit below. The base is max(`placedTier`, rank).
   - **The rate's entry shift works in tiers,** capped at +1 (SP §15.5 / §17.3 "band step" means a tier step). It and this +1 never stack beyond one tier above that base.
   - **Prerequisites:** cross-session they read `established` (§1.6); inside an assignment or session they follow §1.6 (D2 / SP A10, `acquired`).
   - **Teacher-assigned forms are exempt** from the entry rule; SP §2.6's "at most 2 tiers up" governs them.
   - **No locks:** the entry rule limits only the rotation and the planner, never manual choice.
   - This is how SP §14 / §15.5 entry reads the tier.
-  - **Harness test:** a steadily improving simulated learner climbs from T0 to T5 on rotation alone (§9). **Guard test:** a tier with 2 exercises is climbed rotation-only (§1.7).
+  - **Harness test:** a steadily improving simulated learner climbs from T0 to T5 on rotation alone (§9). **Guard tests:** a tier with 2 exercises is climbed rotation-only (§1.7); per area, on the real catalogue, rotation-only climbs reach every tier that has content.
 
 ### 1.4 Cold evidence and cells
 - **The cold flag** (`ev.cold: boolean`) is written on every rating event in every area, at creation; refolds keep it.
-- **The cell key** = family + level id + key (+ hand group), derivable from any take: list runs, licks and key-session stages included. If none is derivable, the item id is used.
+- **The cell key** = family + level id + key, derivable from any take: list runs, licks and key-session stages included. If none is derivable, the item id is used. **There is no hand group:** RH, LH and HT share one cell.
+- **The cell's main item** is its HT item where one exists (otherwise the last spec, §4.1). **"First cold take of the day"** always refers to the cell's main item.
 - **Technique cold take:** SP §4.1 as amended here:
   - the item's take is cold when **≥ 1 h has passed since any sounding take of the item or of any item in its cell**: RH, LH, slower, burst, challenge and coordination takes included. This closes warm-up laundering.
   - The gap is timed by a per-cell **`lastSound`** (any sounding take). SP §4.1 and SP §3 are amended to read `lastSound`. `lastQual` remains only for the ≥ 1 h re-measure rule.
@@ -91,14 +98,14 @@ v11 consolidates the round-9 binding changes (v10 §19) into the v10 body, keepi
   - `sessionMs` (minutes since the session start) is logged on every cold entry. It is a Phase B covariate.
 - **Native feel:** each item has a native feel. Swing applies for `spec.swing` and jazz-native items such as guide tones, shells and lines. **A take in the native feel counts as "straight"** for coldness, passes and confirmations. Feel-layer modifiers stay non-qualifying. SP §16.5 is amended to point here (§1.16).
 - **What counts where:**
-  - **For confirmations (looks for the current-form posterior):** the first cold take **per cell per day**, in passed and established cells only (§1.6, §1.7).
+  - **For confirmations (looks for the current-form posterior):** the first cold take (of the main item) **per cell per day**, in passed and established cells only (§1.6, §1.7).
   - **For FSRS and the staircase:** every cold take counts.
-  - **For the item pass:** the counting cold take must be the cell's **first cold take of that local day** (§1.6). The SP §9 3-day test stands.
+  - **For the item pass:** the 2 counting cold takes are **first cold takes of the cell's main item**, on two distinct later days (§1.6). The SP §9 3-day test stands.
   - **General hand warm-up is not penalised.** Coldness is per item and cell (`lastSound`).
-- **The key session** plays a cell's cold check **before** any coordination stage of that cell in a session, so coordination work never steals the cold take.
+- **Cold check first, in every planner:** every planner, the rotation, the key session and list runs play the main item's cold check **before any other sounding take of that cell** in a session: lead-ins, LH visits, list-run hand takes and coordination stages included. Warm-up work never steals the cold take.
 - **Per modality:**
   - **Ear:** the first 5 trials of a skill/contrast after ≥ 8 h. Where SPEC-EAR-INTELLIGENCE's own cold definition differs, it governs.
-  - **Voice:** per item, after ≥ 1 h, kept in the `cellPass` store (§1.6). `sessionMs` is its warm-up covariate (vocal warm-up is physiological; AM §3.6).
+  - **Voice:** per item, after ≥ 1 h, kept in the `cellPass` store (§1.6). `sessionMs` is its warm-up covariate (vocal warm-up is physiological; AM §3.6). **A voice cell's cold check is never scheduled before ≥ 2–3 minutes of warm-up in that session** (SOVT, or other voice cells): vocal health, and the measurement is then of a warmed voice.
   - **Rhythm:** per subdivision cell, after ≥ 1 h, kept in the `cellPass` store. First cold take per cell per day for confirmations; passes follow the voice and rhythm pass rule (§1.6).
   - **Reading:** sight takes are cold by design, kept in the `cellPass` store (§1.6).
   - **Games:** the first run of a game after ≥ 8 h (used for game refresh, §4.3; games are not level evidence).
@@ -134,24 +141,26 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 - **Confirmations are not selected on success:** every eligible take counts, passed or not, in time order (never the best). **Each item's own passing take is included** (the likelihood principle; the posterior ignores the stopping rule): it is the cell's first confirmation in the current-form posterior, which counts only passed and established cells (§1.7). Probes of unpassed items feed only the staircase and threshold.
 - **Above-target staircase takes are excluded from confirmations, both clean and miss.** They feed only the staircase and the threshold estimate (§1.9).
 - **Passed cells always confirm in the probe band:** every scheduled confirmation take of a passed cell plays at 0.95–1.0 × target (§1.9).
-- **Breadth is counted in exercises,** not item ids. An exercise (`exerciseId`) = spec template + level/option, with key and hand removed (exercise identity in full: §1.7). Rank's breadth rule and the posterior window's breadth are in §1.7.
+- **Breadth is counted in exercises,** not item ids. An exercise (`exerciseId`) = spec template + level/option (+ the nps rung for scales and arpeggios), with key and hand removed (exercise identity in full: §1.7). Rank's breadth rule and the posterior window's breadth are in §1.7.
 - **Not enough:** a clean take at an item's start tempo never counts toward level.
 - **Exclusions:** `~feel`, burst, link and challenge takes never count. (A take in the item's native feel counts as straight, §1.4.)
 - **The level test** sets `placedTier`, shown "placed: T5" until rank reaches it. It sets entry only, never rank (§1.3).
-- **The pass** = `passedAt`, per SP §4.2 as amended: 3 counted clean takes at ≥ 95 % of target on ≥ 2 days, including a clean cold take on a later day (≥ 8 h after, and on a different local day from, the day the target was first reached).
-  - **Technique and fixed-tempo passes:** the counting cold take must be the cell's **first cold take of that local day.** A cold miss that day blocks the pass until another day. Every other cold take still feeds FSRS and the staircase.
+- **The item pass** (technique, fixed-tempo, voice and rhythm) = `passedAt`, per SP §4.2 as amended: 3 counted clean takes at ≥ 95 % of target on ≥ 2 days, **plus 2 clean first-cold takes of the cell's main item on two distinct later days** (each ≥ 8 h after, and on a different local day from, the day the target was first reached).
+  - **A cold miss between the two resets that pair.** Every other cold take still feeds FSRS and the staircase.
+  - **The §9.1 harness reports P(pass | cold clean rate)** for p = 0.2–0.9, and the owner sees it (§17.4).
 - **"Later day" rules** (`established`, the SP §4.2 later-day cold take, `firstTargetDay`) need **≥ 8 h and a different local day.** That closes the midnight hole.
 - **Items stay passed** (SP §4.2, `passedAt`). Passed items show as passed on the path and the matrix at once, and passes raise rank directly (§1.7). Current form can fall to "refresh", but a closed item never reopens on its own.
 - **Areas without `passedAt`:**
-  - **Reading:** cold sight takes per complexity tier. A tier passes by a Bayesian test over **all cold first-sight takes at the tier since the tier started:**
-    - prior Beta(1, 1);
-    - pass when **P(p ≥ 0.6 | data) ≥ 0.9**;
-    - with **≥ 5 attempts on ≥ 2 days**.
-    - A reading exercise = reading generator × tier. The §1.7 posterior runs on sight takes.
-  - **Transfer forms** (learn-a-tune transfer steps, chart at sight, k-accomp-voice and k-pop at sight, and unseen rule-generated licks at sight, §1.10): a tier passes by the same Bayesian test over **all cold attempts at the tier since the tier started** (each attempt a distinct unseen item: a chart, key or head at that tier's difficulty card, or a generated lick): prior Beta(1, 1); pass when P(p ≥ 0.6 | data) ≥ 0.9; with ≥ 5 attempts on ≥ 2 days. Each such tier pass counts as one exercise toward rank (§1.7).
+  - **The reading and transfer pass test:** a posterior over **recency-discounted counts** of the tier's cold attempts:
+    - half-life 10 attempts; every attempt is kept, in order, so there is no window that can be cherry-picked;
+    - the counts are corrected with the §1.7 day-clustering n_eff;
+    - pass when **P(p ≥ 0.6) ≥ 0.95**, with **≥ 8 attempts on ≥ 3 days**.
+  - **Reading:** cold first-sight takes per complexity tier, under the reading and transfer pass test. A reading exercise = reading generator × tier. The §1.7 posterior runs on sight takes.
+  - **Transfer forms** (learn-a-tune transfer steps, chart at sight, k-accomp-voice and k-pop at sight, and unseen rule-generated licks at sight, §1.10): a tier passes under the reading and transfer pass test over its cold attempts (each attempt a distinct unseen item: a chart, key or head at that tier's difficulty card (§8.2, §8.3), or a generated lick).
+    - **A transfer tier pass counts as one exercise per family** toward rank (§1.7): chart at sight, learn-a-tune transfer, k-accomp-voice, k-pop, generated licks. Its keys are the keys of the clean attempts.
     - **The transfer pool** is filled by keys and charts. The §9.1 harness checks that every transfer tier is reachable.
-  - **False passes:** the §9.1 harness reports the reading and transfer false-pass rate at true p = 0.4 and 0.5 (target < 10 % at 0.5).
-  - **Voice and rhythm:** each cell has a sticky pass under the technique pass rule, where "clean" means within the cell's cents and timing band (voice) or SD band (rhythm): 3 clean on ≥ 2 days, including the first cold take of a later day (≥ 8 h and a different local day).
+  - **False passes and time to pass:** the §9.1 harness reports the reading and transfer false-pass rate at true p = 0.4 and 0.5 (target < 10 % at p = 0.5, with day SD 0.8), and the time to pass for a learner improving from p = 0.3 to 0.85.
+  - **Voice and rhythm:** each cell has a sticky pass under the item pass rule above, where "clean" means within the cell's cents and timing band (voice) or SD band (rhythm).
   - **Storage:** a new synced store **`cellPass`** (under the fresh-start epoch) holds `{passedAt, cold[]}` for voice, rhythm, reading and transfer. It is the per-item cold store for voice and rhythm.
   - **Games:** excluded from Phase A. Practice only (they may feed need).
 - **`acquired` vs `established`:**
@@ -169,12 +178,13 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
   - **Tiers with no available exercise** are skipped, never passed by default.
   - **Keyed and keyless areas** use the same min(3, available) rule. Exercises that are unavailable are excluded from "available": "needs MIDI", "teacher or recording needed", region-denied, and small-hands-replaced.
   - **Fixed-tempo areas** count rung passes.
-  - **Voice, rhythm, reading and transfer forms** count `cellPass` passes, using §1.6's per-area pass definitions.
-  - **Voice sub-bands and intonation:** passes are recorded per cell (item level × cents band). Rank uses the item level, and **a pass counts toward rank only at the cents band its tier requires:** T0–2: 60 ¢; T3–4: 45 ¢; T5+: 30 ¢. A pass at a looser band than the tier requires is coverage only. The display shows the sub-band.
+  - **Voice, rhythm, reading and transfer forms** count `cellPass` passes, using §1.6's per-area pass definitions. **A transfer tier pass counts as one exercise per family** (chart at sight, learn-a-tune transfer, k-accomp-voice, k-pop, generated licks); its keys are the keys of the clean attempts (§1.6).
+  - **Voice sub-bands and intonation:** passes are recorded per cell (item level × cents band). Rank uses the item level, and **a pass counts toward rank only at the cents band its tier requires, or tighter:** T0–2: 60 ¢; T3–4: 45 ¢; T5+: 30 ¢. A pass at a looser band than the tier requires is coverage only. The planner offers a voice item at its tier's required band by default. The display shows the sub-band.
 - **What counts as a distinct exercise:**
   - **`exerciseId`** = spec template + level/option, without key or hand. Its derivation from `itemId` is specified in code (`exerciseIdOf`) and covered by a test.
+  - **Scales and arpeggios:** exercise = spec + option + **nps rung**, with one `passedAt` per rung.
   - **An exercise's pass is its cell's main item:** the hands-together item where one exists. Hand-separate passes never count alone.
-  - **Fixed-tempo rungs** pass only under the §1.6 rule (2 days, including a later-day cold take). Variants (voicing, inversion, seed, start degree) are **not** distinct exercises, and an in-session "rung passed today" moves the rotation but is not a `passedAt`.
+  - **Fixed-tempo rungs** pass only under the §1.6 item pass rule. Variants (voicing, inversion, seed, start degree) are **not** distinct exercises, and an in-session "rung passed today" moves the rotation but is not a `passedAt`.
   - **The voice cents band is not part of exercise identity.**
 - **Teacher targets:** a pass counts for rank only at ≥ the option's catalogue target (= the option's target at its catalogue entry band, before any rate shift). A pass at a teacher's lower target counts as coverage only (and toward that assignment).
 - **Stored state:** each `passedAt` record stores `{contentTier, target, exerciseId, src, at}` at pass time. A synced `rankHW` per area stores the high-water (§1.15).
@@ -182,7 +192,7 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 - **Rank can jump:** passes at a higher tier raise rank directly (high-water).
 - **Promotion XP** pays once per tier gained, under the Q6 caps (§3).
 - **Inputs:** passes from any input count toward rank; changing input never lowers rank. The harness checks that per-input jitter only widens thresholds by the measured noise, so a lenient input can't inflate rank (§9.1).
-- **Memorised material never feeds rank or area level** (§1.10, §8.4). **Licks, Encore phrases and repertoire drills** are coverage only for rank: they keep SP §4.2's old pass rule and are memorised material. Rule-generated licks count only as unseen generated licks at sight, under the transfer pass rule (§1.6).
+- **Memorised material never feeds rank or area level** (§1.10, §8.4). **Licks, Encore phrases and repertoire drills** are coverage only for rank: they keep SP §4.2's old pass rule and are memorised material. Rule-generated licks count only as unseen generated licks at sight, under the transfer pass rule (§1.6); they feed the instrument's line-jazz area.
 - **The bar to next** = the passed exercises toward the next tier ("2 of 3", plus the keys). It never moves backward, and it is never full below Master.
 - **Calendar time** is about 1–3 weeks per tier, depending on practice. The §9.1 harness reports it per area from the real catalogue.
 - **Guard tests:**
@@ -197,7 +207,9 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
   - a lowered teacher target;
   - re-tiering never lowers rank;
   - a tier with 2 exercises, climbed rotation-only;
-  - a warm lick pass never raises rank.
+  - a warm lick pass never raises rank;
+  - one scale passed at 3 tempo tiers = 1 exercise per tier, never 3 at one tier;
+  - per area, on the real catalogue: rotation-only climbs reach every tier that has content (§1.3).
 
 **Current form: the posterior**
 - **The Bayesian posterior** (the window below, Beta(1, 1), dependence aware) drives only these:
@@ -213,19 +225,23 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 - **A look** is one confirmation (§1.6), counted only as the **first eligible confirmation of the day per cell**, in time order (never the best).
   - **FSRS review probes and pass probes outside the slots also count as looks,** within the passed-and-established rule above. The slots guarantee a minimum supply.
   - **The day is the unit:** at most **2 looks per area per day** count. **A second look must come from a different exercise.**
-- **"Dependence aware"** = an effective-n design effect with day and cell clustering, n_eff = n / (1 + (m_d − 1)ρ_d + (m_c − 1)ρ_c), where m_d is looks per day, m_c looks per cell, and ρ_d and ρ_c the intra-day and intra-cell correlations, with pooled defaults from the calibration traces (ρ_d and ρ_c are stated in §9.1). The posterior uses n_eff.
-- **The window** at tier t reads looks from passed cells at tiers ≥ t, matching rank. It holds looks from the last **90 days** only, and the last **30** looks within that. It must contain:
+- **"Dependence aware"** = an effective-n design effect with day and cell clustering, n_eff = n / (1 + (m_d − 1)ρ_d + (m_c − 1)ρ_c), where m_d is looks per day, m_c looks per cell, and ρ_d and ρ_c the intra-day and intra-cell correlations, with pooled defaults from the calibration traces (ρ_d and ρ_c are stated in §9.1; until fitted, ρ_d = 0.15 and ρ_c = 0.20). The posterior uses n_eff.
+- **The window** at tier t reads looks from passed cells at tiers ≥ t, matching rank. It holds looks from the last **90 days** only, and the last **30** looks within that. **Each decision uses only looks after the last decision.** It must contain:
   - ≥ min(3, the passed and established exercises at the tier) distinct exercises;
-  - ≥ 2 keys, where keys apply.
-  - **Areas without keys** (rhythm, voice, drum rudiments, small fixed-tempo tiers) widen breadth by using all of their passed and established exercises.
+  - ≥ 2 keys, where keys apply, counting passed and established cells only.
+  - **Areas without keys** (rhythm, voice, drum rudiments, small fixed-tempo tiers): breadth = min(3, the passed and established exercises at the tier).
   - **If the window fails breadth,** no decision is made, and the slot injector picks the missing exercise or key among passed cells.
 - **The posterior:** beta-binomial, prior Beta(1, 1), over the window, using n_eff.
-- **Slump (current form drops):** when P(p < 0.5 | data) ≥ 0.95 over ≥ 8 looks on ≥ 2 days. **Never inside a re-entry window.** Rank is never touched.
-- **Current form follows rank up:** current form is initialised from rank and capped at it. On a rank rise, current form = the new rank. **While placed,** current form comes from the threshold estimates (§1.3, §1.9).
-- **Re-promotion after a slump:** current form rises to current form + 1, capped at rank, when P(p ≥ 0.6 | data) ≥ 0.9 at current form + 1 (the harness may tune this). There is no 30-look cap for re-promotion; all looks since the slump within the 90-day window count. Current form is not permanent, so no horizon target applies. It pays no XP.
+- **Slump (current form drops):** when P(p < 0.5 | data) ≥ 0.95 over ≥ 8 looks on ≥ 2 days. **A slump drops exactly one tier.** **Never inside a re-entry window.** Rank is never touched.
+- **Fresh looks after each decision:** after any drop or rise, the next decision at the new tier needs **≥ 8 fresh looks (raw n) on ≥ 2 days**, plus the n_eff-corrected posterior rule.
+- **Current form follows rank up:** current form is initialised from rank and capped at it. On a rank rise, current form = the new rank.
+- **While placed** (rank = none or below `placedTier`):
+  - current form = the highest tier where ≥ min(3, offered) exercises have a non-provisional threshold estimate (§1.9) ≥ 0.95 × target, capped at `placedTier`;
+  - **non-laddered areas** (harmony, voicing, reading, voice, rhythm, grooves) use `placedTier` as current form until they have passed cells.
+- **Re-promotion after a slump:** current form rises to current form + 1, capped at rank, when P(p ≥ 0.6 | data) ≥ 0.9 at current form + 1 (the harness may tune this). There is no 30-look cap for re-promotion; all looks since the slump within the last 90 days count (the ≥ 8 fresh looks rule above applies). Current form is not permanent, so no horizon target applies. It pays no XP.
 - **Hysteresis:** re-promotion at P(p ≥ 0.6) ≥ 0.9 and the slump at P(p < 0.5) ≥ 0.95 are the two thresholds of current form (§1.1).
-- **Unmeasured:** a tier with no passed cells shows current form as "unmeasured". Only re-promotion at the tier above moves it.
-- **Inputs:** current form and display read the current input's series (§1.12).
+- **Unmeasured:** "unmeasured" at tier t = no passed cell at tiers ≥ t. Only re-promotion at the tier above moves it.
+- **Inputs:** current form and display read the current input's series (§1.12). **After a change of input,** current form on the new series starts at rank and shows "new input" until 8 looks exist.
 - **Wrong demotion** (current form dropped at true p ≥ 0.75): target < 5 % per 90 days of practice (§9.1).
 - **Range:** the top of the range needs ≥ 2 clean cold takes on ≥ 2 days at that tier, and is capped at rank + 1. The width also follows §1.11.
 - **Staleness:** a tier without cold evidence for 60 days shows "refresh" only. It never lowers rank.
@@ -282,13 +298,13 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 | Guitar | the same as piano |
 | Bass | scales, arpeggios/chord tones, walking/groove, reading, rhythm/time |
 | Drums | rudiments, coordination, grooves/styles (timing SD is folded into grooves: time is part of the groove level), reading |
-| Voice | pitch, time, range/agility (tied to comfortable tessitura and agility, never extremes: vocal health), harmony |
+| Voice | pitch, time, range/agility (comfortable tessitura, never extremes), harmony (round 10's "pitch and time" applies to the mapping of voice learn-a-tune steps only) |
 
 - **New families map to an area, or are "coverage only"** (coverage never enters level):
 
 | Family | Area |
 |---|---|
-| Learn-a-tune steps | the instrument's line or harmony area, by step (transfer forms only; see below) |
+| Learn-a-tune steps | the instrument's line or harmony area, by step (transfer forms only; see below). **Voice:** pitch (melody) and time (rhythmic placement); a sung new key is not counted as transfer |
 | Accompanying a singer | harmony / voicing (transfer forms only; see below) |
 | Pop levels | harmony / voicing (transfer forms only; see below) |
 | Drum balance and soloist work | drums grooves/styles |
@@ -298,12 +314,13 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 | Voice registration, text and diction | coverage only (hint-only) |
 | Improvisation story ladder | coverage only (descriptive) |
 | Free improvisation | coverage only |
+| Trading 4s (§8.4) | coverage only |
 | Listening lab and Ear capstones | `repertoire-memory` and coverage, never the Ear course skills |
 | §14 PD repertoire and piece-coach pieces | coverage only |
 | Licks, Encore phrases, repertoire drills | coverage only (memorised material; SP §4.2's old pass rule) |
-| Unseen rule-generated licks at sight | transfer forms (§1.6) |
+| Unseen rule-generated licks at sight | the instrument's line-jazz area (transfer forms, §1.6) |
 
-- **Memorised material never feeds level:** on a head the learner has already played, learn-a-tune steps, k-pop and k-accomp-voice go to coverage and `repertoire-memory`. They never feed area level or rank. Licks, Encore phrases and repertoire drills are coverage only for rank (they keep SP §4.2's old pass rule). **Only transfer forms feed level:** a new key at sight (learn-a-tune step 8), a chart at sight, an unseen head, an unseen rule-generated lick at sight. They pass by the transfer pass rule (§1.6), and each tier pass counts as one exercise toward rank. **Guard tests** check this, including that a warm lick pass never raises rank.
+- **Memorised material never feeds level:** on a head the learner has already played, learn-a-tune steps, k-pop and k-accomp-voice go to coverage and `repertoire-memory`. They never feed area level or rank. Licks, Encore phrases and repertoire drills are coverage only for rank (they keep SP §4.2's old pass rule). **Only transfer forms feed level:** a new key at sight (learn-a-tune step 8; not on voice, where relative pitch makes a sung new key trivial), a chart at sight, an unseen head, an unseen rule-generated lick at sight. They pass by the transfer pass rule (§1.6), and a tier pass counts as one exercise per family toward rank. **Guard tests** check this, including that a warm lick pass never raises rank.
 - **Rank** = the highest tier t with ≥ min(3, available exercises in tiers t … the entry ceiling) distinct exercises passed at tiers ≥ t, in ≥ min(2, available keys) keys, with ≥ 1 pass at t (owner decision H8; the exact rule is in §1.7). Rank, course DYN and friend level read rank, which never falls. So rank = hardest items beaten holds (promotion-not-full-bars).
   - Passes (`passedAt`) show at once on the path and the matrix, and raise rank directly. Rank takes about 1–3 weeks per tier, depending on practice (the harness reports it per area, §9.1). Nothing ever looks lost.
 - **Rank over inputs:** changing input never lowers rank; a lenient input can't inflate it (§1.7, §9.1).
@@ -345,7 +362,7 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 
 ### 1.12 Input awareness (AM #12)
 - `src` (the input) is stored on every take record, passLog entry, cold entry and rating event.
-- **A cold series never mixes inputs.** A change of input starts a new series, and the old one is kept. Current form and display read the current input's series; another input's higher level is shown as a note, e.g. "ff on MIDI".
+- **A cold series never mixes inputs.** A change of input starts a new series, and the old one is kept. Current form and display read the current input's series; another input's higher level is shown as a note, e.g. "ff on MIDI". After a change of input, current form on the new series starts at rank and shows "new input" until 8 looks exist (§1.7).
 - **Rank is not split by input:** changing input never lowers it (§1.7, §1.10).
 - **Mic learners:** dynamics, pedal and release strands are excluded from their level and labelled "needs MIDI". They are never counted as missing, and stay excluded for mic series.
 - **Per-input jitter** widens timing thresholds by the measured noise only (SPEC-PRACTICE-INTELLIGENCE §9א).
@@ -380,11 +397,11 @@ Every warm-peak reader (AM §3.4) moves to a cold reading, and **every move gets
 - These are synced fields. **No users yet, so a fresh-start epoch** (memory: fresh-start-round) is the migration. It is done once, when §1 ships.
 
 ### 1.16 Governance: SP sections amended
-This spec amends these SP sections. SP is edited to point here at each of them (SP §22, updated to the v9 section numbers, which v10 and v11 keep); **the pointer edits are done before step 1 starts, as a doc commit**:
+This spec amends these SP sections. SP is edited to point here at each of them (SP §22, updated to the v9 section numbers, which v10, v11 and v12 keep); **the pointer edits are done before step 1 starts, as a doc commit**:
 - §2.5 (cold check: the staircase, §1.9);
-- §3 (`lastSound`; the cold check order, cold before coordination; `max(0.9 × best, 0.95 × target)` superseded);
+- §3 (`lastSound`; the cold check order: the main item's cold check before any other sounding take of the cell, coordination stages included, §1.4; `max(0.9 × best, 0.95 × target)` superseded);
 - §4.1 (`lastSound`, per cell; the `lastQual` gap superseded, `lastQual` kept only for the ≥ 1 h re-measure rule);
-- §4.2 (passes kept, `passedAt` sticky; passes set rank, §1.7 (H8); the later-day cold take needs ≥ 8 h and a different local day, and the counting cold take is the cell's first cold take of that local day, §1.6; licks, Encore phrases and repertoire keep the old rule and are coverage only for rank, §1.7, §1.10);
+- §4.2 (passes kept, `passedAt` sticky; passes set rank, §1.7 (H8); the later-day cold take needs ≥ 8 h and a different local day, and the pass needs 2 clean first-cold takes of the cell's main item on two distinct later days, §1.6; licks, Encore phrases and repertoire keep the old rule and are coverage only for rank, §1.7, §1.10);
 - §9 ("promotion by day 2–3" means the **item pass**, not a tier promotion);
 - §14 (the area-tier definition is superseded by §1.3 `areaTier` and §1.7 rank);
 - §14 / §15.5 (the entry rule and `placedTier`, §1.3; cross-session prerequisites read `established`, in-session forms follow D2 / A10 `acquired`; "acquired" as the cross-session gate superseded);
@@ -575,6 +592,7 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
   - **a verify screen** shows the source beside the engraving;
   - the verification time is budgeted as an owner task (§17, §18 step 5);
   - each chart goes with official-recording embeds (§10.1) and the by-ear learn-a-tune variant (§8.4).
+- **The chart difficulty card** (for charts with no served melody) is computed from harmonic rhythm, the share of non-diatonic chords, key-centre changes, the set of chord qualities, form length and key distance, mapped to T by quantiles. It feeds transfer tiers (§1.6), by-ear goals (§6.1) and section suggestions (§13.1), and joins the course-change checklist (§16).
 - **"Harmony is the work" care** (few songs, chords only) is kept only as a note on very idiosyncratic modern writers (e.g. Collier, Steely Dan, some post-bop / Shorter charts) (H7, §11.1).
 
 ### 8.4 Learn a tune (AP #2)
@@ -586,7 +604,7 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
   5. guide tones;
   6. melody + shells (piano / guitar), or melody + roots / walking (bass), or melody over the band (voice, horn-style);
   7. **from memory**: the chart and melody hidden, graded on the same items, **cold, ≥ 8 h after step 6**. It creates a **pending memory check** that shows on Today and resumes there;
-  8. in 2 more keys. **Voice:** "find your key" from voiceRange, then one more key;
+  8. in 2 more keys. **Voice:** "find your key" from voiceRange, then one more key (a sung new key is not counted as transfer, §1.10);
   9. solo on it (§10.3).
   - **Voice variant:** steps 3–5 = sing the melody, then the roots (a sung bass line), then the guide tones (sung).
 - **Per band:** band 1 uses its table; band 2+ uses the full protocol.
@@ -607,12 +625,13 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
 - **Modal and Coltrane forms** are learned only through the by-ear variant, in every region: their melodies are protected in the US too.
 - **Rhythm changes:** the I Got Rhythm melody (1B) is served in the US only; elsewhere rhythm changes are learned by ear.
 - **Drums:** sing the head while keeping time, then kicks and set-ups from the head, then trading 4s inside the form.
-- **Trading 4s inside the form** is also added for keys, guitar, bass and voice. It is graded by form position and density, as improv-prep in the line-jazz area (voice, which has no line-jazz area: coverage only).
+- **Trading 4s inside the form** is also added for keys, guitar, bass and voice. It is coverage only (§1.10), like the story ladder and free improvisation.
   - **The other player** (trading 4s and responsive comping, §8.7) comes from the §13.6 sources: rule-generated licks, PD lines, or a teacher or the human model bank (§8.9). Otherwise the learner trades against drums only, or the 4 bars are left silent. **Never an app-improvised soloist.**
+  - **The lick-bank "soloist"** plays bank licks **as they are**: no generative phrasing, no reactive density. This keeps it out of the forbidden AI band.
 - Each step is a fixed-tempo or laddered item per SP §15. Step 7 is the memory modifier (SP item 30), raised to H for tunes.
 - **The score** shows in 4–8-bar windows with the playhead (one screen).
 - **A harmonic map page per tune:** key areas, ii–V brackets, the turnaround, the form. It is shown before step 4 and hidden at step 7.
-- **Area:** learn-a-tune steps map to the instrument's line or harmony area by step (§1.10). **On a head the learner has already played,** the steps go to coverage and `repertoire-memory` and never feed area level or rank; only transfer forms feed level (a new key at sight in step 8, a chart at sight, an unseen head), passing by the transfer pass rule (§1.6, §1.10).
+- **Area:** learn-a-tune steps map to the instrument's line or harmony area by step (§1.10). **On a head the learner has already played,** the steps go to coverage and `repertoire-memory` and never feed area level or rank; only transfer forms feed level (a new key at sight in step 8, except on voice; a chart at sight; an unseen head), passing by the transfer pass rule (§1.6, §1.10). **Voice** learn-a-tune steps map to pitch (melody) and time (rhythmic placement).
 - **Contrafact pairs** show the PD head's melody (region-gated), the bebop tune's chord chart only, and an official embed and a by-ear option. **The gate depends only on the PD side.**
   - Hot House ↔ What Is This Thing Called Love;
   - Donna Lee ↔ Indiana;
@@ -643,7 +662,7 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
 - **Grading:** chord onsets against the singer's **beat map**, not the melody onsets. Comp velocity is graded below the melody. Register overlap stays.
 - **Comp dynamics** are graded against the singer's phrase envelope, MIDI only, and mapped through the synth's rendered loudness. "Teacher or recording needed" until the bank exists.
 - **Duet assignments:** a voice student's take is the melody track for a keys student, using SPEC-TEACHER-CLASS async layering (§12.3).
-- **Responsive comping:** comping behind a soloist that answers phrase ends. The soloist comes from the §13.6 sources (rule-generated licks, PD lines, or a teacher or the human model bank, §8.4); otherwise drums only or silence. **Never an app-improvised soloist.**
+- **Responsive comping:** comping behind a soloist that answers phrase ends. The soloist comes from the §13.6 sources (rule-generated licks, PD lines, or a teacher or the human model bank, §8.4); otherwise drums only or silence. The lick-bank soloist plays bank licks as they are (§8.4). **Never an app-improvised soloist.**
 
 ### 8.8 Idiomatic jazz ladders per instrument (AP #15)
 - The k/g/b jazz ladders keep a shared spine, and gain instrument-specific levels:
@@ -683,16 +702,17 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
 ---
 
 ## 9. Validation programme (AM #11)
-1. **The synthetic-learner harness (part of step 1):** learners with known θ, learning rate, forgetting, warm-up decrement, fatigue and input noise, **with day and cell random effects** (look dependence). Their SDs are estimated from the calibration traces; until then the harness uses day SD 0.8 and cell SD 0.7 on the logit scale. **It states ρ_d and ρ_c,** the pooled day and cell correlations that n_eff uses (§1.7), from the calibration traces. Every level rule (§1), planner (§5) and SP rule runs on them. The test passes when:
+1. **The synthetic-learner harness (part of step 1):** learners with known θ, learning rate, forgetting, warm-up decrement, fatigue and input noise, **with day and cell random effects** (look dependence). Their SDs are estimated from the calibration traces; until then the harness uses day SD 0.8 and cell SD 0.7 on the logit scale. **It states ρ_d and ρ_c,** the pooled day and cell correlations that n_eff uses (§1.7), from the calibration traces; until fitted, ρ_d = 0.15 (same day) and ρ_c = 0.20 (same cell). Every level rule (§1), planner (§5) and SP rule runs on them. The test passes when:
    - current form tracks θ_cold (bias and RMSE reported);
    - the current-form posterior is calibrated under day and cell dependence (a beta-binomial with a day effect) (§1.7);
    - wrong demotions of current form stay < 5 % per 90 days of practice (true p ≥ 0.75);
-   - the reading and transfer false-pass rate stays < 10 % at true p = 0.5 (reported at 0.4 and 0.5, §1.6);
+   - the reading and transfer false-pass rate stays < 10 % at true p = 0.5 with day SD 0.8 (reported at 0.4 and 0.5, §1.6);
    - every transfer tier is reachable from the transfer pool (§1.6);
-   - a steadily improving learner climbs from T0 to T5 on rotation alone (§1.3);
+   - a steadily improving learner climbs from T0 to T5 on rotation alone, and per area, on the real catalogue, rotation-only climbs reach every tier that has content (§1.3);
+   - a correctly placed learner is never corrected by the over-placement rule (§1.3);
    - per-input jitter only widens thresholds by the measured noise, so a lenient input can't inflate rank (§1.10);
    - the rank guard tests hold (§1.7).
-   - **It reports, before step 1 ships:** calendar time per tier per area for rank (H8) from the real catalogue, the posterior's calibration, the wrong-demotion rate, the reading and transfer false-pass rates, and the re-promotion time per area. The owner sees these numbers (§17.4).
+   - **It reports, before step 1 ships:** calendar time per tier per area for rank (H8) from the real catalogue, the posterior's calibration, the wrong-demotion rate, the reading and transfer false-pass rates, the reading and transfer time to pass for a learner improving from p = 0.3 to 0.85, P(item pass | cold clean rate) for p = 0.2–0.9 (§1.6), and the re-promotion time per area. The owner sees these numbers (§17.4).
 2. **The calibration-trace replay:** split-half and test-retest of the cold levels. A number appears on screen only when its reliability is ≥ 0.7 (levels) or ≥ 0.4 (rates). **This gate exempts Phase A** (a transparent rule shown as such); it gates Phase B, the rates and any model number.
 3. **Shadow mode:** the new levels are computed beside the old ones for 2–4 weeks of real users.
 4. **The teacher agreement study** (SPEC-PRACTICE-INTELLIGENCE §3.5) before any absolute claim.
@@ -859,8 +879,9 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
 ### 13.1 Flow
 - **The curriculum-flow audit is a gate:** every new or changed ladder in steps 5, 7 and 8 passes a flow audit (no gaps, no topic hopping, several success items per stage) before it ships. The upper Ear levels, voice, drums, bass and guitar get their audits scheduled across those steps (curriculum-flow rule).
 - **The bin families get the flow audit:** voicings, k-reharm, jazz, accomp, g-scales (curriculum-flow rule). Each is split into 2–3 coherent ladders, or given explicit cross-family prerequisites in place of in-family order.
+- **Latin rhythm** (clave, bossa, montuno comping) is covered by the style-focus families (k-montuno, k-brazil and their guitar / bass equivalents). It is on the flow-audit list.
 - **A "use it" step for advanced theory topics:** each one (negative harmony, twelve-tone, neo-Riemannian…) gets at least one instrument or composition step, tagged.
-- **A tune suggestion at each section boundary:** passing "developing" on an instrument course suggests one real tune (from the region pool, matched by difficulty card, §8.2), learned to the memory step. It is skippable, never a lock.
+- **A tune suggestion at each section boundary:** passing "developing" on an instrument course suggests one real tune (from the region pool, matched by difficulty card: heads §8.2, charts §8.3), learned to the memory step. It is skippable, never a lock.
 - **The level test and skill map get a tune section per course:** an opt-in "tunes I know" pick, and a chart at sight. It is never "from memory" for new users, and never samples a "teacher or recording needed" level (§8.9).
 - **Klezmer / Israeli idioms** (AP §2.14) are deferred, by the global positioning decision.
 
@@ -893,7 +914,7 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
 
 ### 13.6 Drums
 - **Balance:** ride above snare comping, kick under the bass, by per-pad velocity ratios. **Calibrated per kit** (per-pad gain), or labelled as intent, not loudness.
-- **Supporting a soloist:** density follows the soloist. The soloist is the lick bank's rule-generated licks (allowed by H4), or PD or teacher lines, never Claude-composed. It is not "teacher or recording needed".
+- **Supporting a soloist:** density follows the soloist. The soloist is the lick bank's rule-generated licks (allowed by H4), played as they are with no generative phrasing and no reactive density (§8.4), or PD or teacher lines, never Claude-composed. It is not "teacher or recording needed".
 - **Melodic soloing:** a motif on the toms, developed and returned, graded by motif matching on pad and rhythm with the drum-motif detector (pad sequence + IOI n-gram, §10.3).
 - **A tuning brief** (not graded).
 - **Balance, Groove Match and singing while drumming are "needs MIDI".** On an acoustic kit they get a self or teacher rating.
@@ -949,25 +970,16 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
   - no movable do.
 - **The syllable rule:** every sung step (learn-a-tune, transcription, sing-what-you-play and the rest) uses a neutral syllable, degree numbers or letters. **"Letters" means localized note names, fixed do included in Romance locales** (ear-intelligence decision). Movable do stays out.
 - **No memorizable items** (§13.5).
-- **Course change checklist:** openers, unit openers, skill map, the level test per area, and the head difficulty cards (§8.2).
+- **Course change checklist:** openers, unit openers, skill map, the level test per area, the head difficulty cards (§8.2) and the chart difficulty cards (§8.3).
 - **No locks.** The entry rule limits only the rotation and the planner (§1.3). No change notices before real users.
 
 ---
-
-## 16a. Clarifications (v11 owner/editor decisions)
-- **The t+2 opening** (§1.3, §1.7) is a planner-availability exception. It sits outside the "+1 beyond the base" stacking limit. The base is max(placedTier, rank).
-- **The 90-day window** applies during re-promotion too: all looks since the slump within the last 90 days count.
-- **While placed (rank = none or below placedTier):** current form = min(tier from threshold estimates, placedTier). The rank cap applies only once rank exists.
-- **Keyless areas:** breadth = min(3, passed + established exercises at the tier).
-- **Keys in the current-form window** count passed and established cells only.
-- **Unseen generated licks at sight** feed the instrument's line-jazz area (transfer pass rule, §1.6).
-- **ρ defaults until fitted from the pooled calibration traces:** ρ_d = 0.15 (same day), ρ_c = 0.20 (same cell).
 
 ## 17. Open questions and owner tasks
 
 ### 17.1 Lawyer and policy questions (before charging money)
 - The rule of the shorter term (serving 1B content, the region gate, and 1A heads in long-term countries, §8.1).
-- **Songs whose composer died by 1955 but whose lyricist died later** (Tea for Two, Honeysuckle Rose): may a melody-only use serve them? The EU joins the two terms for songs with words, and Israel is unclear.
+- **Songs whose composer died by 1955 but whose lyricist died later** (e.g. Tea for Two: lyricist Irving Caesar died 1996; Honeysuckle Rose is not such a case, since Razaf died in 1953): may a melody-only use serve them? The EU joins the two terms for songs with words, and Israel is unclear.
 - **A PD recording of a 1B composition** needs the same region gate.
 - Mexico and other long-term countries (incl. the life+75 class).
 - **The studio sharing rule** (§8.10): private 1:1 and within-studio exchange vs distribution.
@@ -984,7 +996,7 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
 - Any lick whose rule origin is unclear (flagged for the owner).
 
 ### 17.4 Owner questions and decisions to see
-- **Before step 1 ships:** the harness's report (calendar time per tier per area for rank, from the real catalogue; the posterior's calibration under day and cell dependence; the wrong-demotion rate; the reading and transfer false-pass rates; the re-promotion time per area) (§1.6, §1.7, §9.1).
+- **Before step 1 ships:** the harness's report (calendar time per tier per area for rank, from the real catalogue; the posterior's calibration under day and cell dependence; the wrong-demotion rate; the reading and transfer false-pass rates and time to pass; P(item pass | cold clean rate) for p = 0.2–0.9; the re-promotion time per area) (§1.6, §1.7, §9.1).
 - Owner may adjust the T → DYN mapping (§1.10).
 
 ### 17.5 Owner tasks
@@ -998,8 +1010,8 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
 
 ## 18. Order of work
 1. **Level semantics, built with SP step 1 (cold takes, pass rule).** **Before it starts:** the SP pointer edits (§1.16) as a doc commit. Then:
-   - §1.1–§1.6 and §1.12–§1.14: definition; `contentTier` per spec / option (band seeding at the band's lower T; drum rudiments by complexity family, then nps); the voice sub-band and reading quantile tiers; `areaTier` {content, pace} and `paceTier`; `placedTier` (entry only), the over-placement correction (the threshold-estimate rule on ≥ 3 exercises over ≥ 5 offered days; the 20-offered-day slow path; count restarts at each drop) and current form from the threshold estimates while placed; the one entry rule (t + 1, and t + 2 once every available exercise at t + 1 is passed; the rate shift in tiers, capped at +1) with the climb test; cold flags with the ≥ 1 h any-sounding-take gap (`lastSound`); native feel counting as straight; cell keys; first cold take per cell per day for confirmations; the pass counting only the cell's first cold take of the day; later-day rules at ≥ 8 h and a different local day; the key-session cold-first ordering; cross-device downgrade and the 24-h revocation of a downgraded pass; the per-area confirmation table; `cellPass` (voice, rhythm, reading, transfer) with the reading and transfer Bayesian passes (all cold attempts since the tier started), the voice and rhythm pass rule and the transfer pool; `established` vs `acquired`; input series; the Elo as practice form; the Ear course skills and `*-ear` routing;
-   - §1.7 rank by passed exercises (H8): the exact rule (passes at tiers ≥ t, min(3, available in tiers t … the entry ceiling), min(2, available keys), ≥ 1 pass at t, empty tiers skipped, unavailable exercises excluded), `exerciseId` / `exerciseIdOf`, main-item passes, fixed-tempo rung passes and variants, `cellPass` passes, voice sub-bands with the cents band per tier, teacher targets at the catalogue target, licks / Encore phrases / repertoire drills coverage only, stored `passedAt` records and `rankHW` (rank = max(`rankHW`, derived); never falls, can jump), promotion XP once per tier, the "2 of 3" bar, the rank guard tests; the current-form posterior: passed and established cells only, looks (first per cell per day, FSRS review and pass probes outside the slots included, ≤ 2 per area per day, second from another exercise), n_eff with day and cell clustering, the window (tiers ≥ t, last 30 looks within 90 days, breadth over passed and established exercises; no decision on failed breadth), the slump rule, current form following rank up and capped at it, hysteresis, "unmeasured", re-promotion after a slump, the re-entry window per item; entry vs current-form roles; the confirmation-slot cap (2–4 per session) with the minimal slot injector in workout2 / todayPlan (passed cells only), probe band only; the simplified placement (§1.3);
+   - §1.1–§1.6 and §1.12–§1.14: definition; `contentTier` per spec / option (band seeding at the band's lower T; drum rudiments by complexity family, then nps); the voice sub-band and reading quantile tiers; `areaTier` {content, pace} and `paceTier`; `placedTier` (entry only), the over-placement correction by the expected trajectory (tempo areas: `paceTier` ≥ 2 tiers below on ≥ 5 offered days; non-tempo areas: no non-provisional estimate or rung pass in 20 offered days and the posterior P(p < 0.4) ≥ 0.9; count restarts at each drop; the correctly-placed harness case); the one entry rule (t + 1, and t + 2 once every available exercise at t + 1 is passed; the entry ceiling over non-empty tiers from the stored `rankHW` and `placedTier`; the rate shift in tiers, capped at +1) with the climb tests; cold flags with the ≥ 1 h any-sounding-take gap (`lastSound`); native feel counting as straight; cell keys without a hand group, and the main item; first cold take per cell per day for confirmations; the item pass with 2 clean first-cold takes of the main item on two distinct later days (a cold miss between resets the pair); later-day rules at ≥ 8 h and a different local day; the main-item cold-first ordering in every planner, the rotation and list runs; the voice warm-up before voice cold checks; cross-device downgrade and the 24-h revocation of a downgraded pass; the per-area confirmation table; `cellPass` (voice, rhythm, reading, transfer) with the reading and transfer pass test (recency-discounted counts, half-life 10 attempts, n_eff, P(p ≥ 0.6) ≥ 0.95, ≥ 8 attempts on ≥ 3 days), the voice and rhythm pass rule, transfer counted one exercise per family, and the transfer pool; `established` vs `acquired`; input series; the Elo as practice form; the Ear course skills and `*-ear` routing;
+   - §1.7 rank by passed exercises (H8): the exact rule (passes at tiers ≥ t, min(3, available in tiers t … the entry ceiling), min(2, available keys), ≥ 1 pass at t, empty tiers skipped, unavailable exercises excluded), `exerciseId` / `exerciseIdOf` (with the nps rung for scales and arpeggios), main-item passes, fixed-tempo rung passes and variants, `cellPass` passes, voice sub-bands with the cents band per tier (or tighter; offered at the required band by default), teacher targets at the catalogue target, licks / Encore phrases / repertoire drills coverage only, stored `passedAt` records and `rankHW` (rank = max(`rankHW`, derived); never falls, can jump), promotion XP once per tier, the "2 of 3" bar, the rank guard tests; the current-form posterior: passed and established cells only, looks (first per cell per day, FSRS review and pass probes outside the slots included, ≤ 2 per area per day, second from another exercise), n_eff with day and cell clustering, the window (tiers ≥ t, last 30 looks within 90 days, only looks after the last decision, breadth over passed and established exercises; no decision on failed breadth), the slump rule (exactly one tier), ≥ 8 fresh looks on ≥ 2 days after any drop or rise, current form following rank up and capped at it, current form while placed and after an input change, hysteresis, "unmeasured", re-promotion after a slump, the re-entry window per item; entry vs current-form roles; the confirmation-slot cap (2–4 per session) with the minimal slot injector in workout2 / todayPlan (passed cells only), probe band only; the simplified placement (§1.3);
    - §9.1 the harness with day and cell random effects, and its report to the owner before step 1 ships;
    - §1.9 the staircase (R-multiplier step, probe-band confirmations for passed cells) and the MAP threshold estimate;
    - §1.10 rank, current form, the area table and the new-family area mapping, memorised material out of level (guard test), the passed-exercise bar, the DYN top-tier cap;
@@ -1014,7 +1026,7 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
    - heads.ts `HeadLicence` `tier` / `pdFrom` (replacing `pd-worldwide`), and removal of the superseded comment banning I Got Rhythm and Body and Soul;
    - the region pool, `servable()` and its guard test, `pdFrom` per term class (incl. life+75), the unknown-region rule;
    - the recording test (a)–(c), every improvising ensemble member;
-   - head difficulty cards;
+   - head difficulty cards and chart difficulty cards;
    - phrase source flags (default "unknown → private"), the sharing gate and the studio sharing rule; community melody sharing stays off until the §17.2 prerequisites exist;
    - the official-channel embed registry;
    - the annotation tool;
@@ -1035,17 +1047,17 @@ Each step gets:
 - the §16 checklist;
 - in steps 5, 7 and 8, the curriculum-flow audit gate for every new or changed ladder (§13.1).
 
-**Done when:** an independent spec-only round on v11 (round 10) finds no new blocker in this spec (and the SP pointer edits) before step 1 starts.
+**Done when:** an independent spec-only round on v12 (round 11) finds no new blocker in this spec (and the SP pointer edits) before step 1 starts.
 
 ---
 
 ## Appendix A. Traceability
 
-Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8's section numbers; round-7 changes are noted "per R7 19.x" and mapped in A.8; round-8 changes, from v9 §19, are noted "per R8 19.x" and mapped in A.9; round-9 changes, from v10 §19, are noted "per R9 19.x" and mapped in A.10). "Struck" items are superseded and appear only in their final form. Two numbering schemes used "19.x": items from the v4 amendment layer are prefixed **v4-** (A.3); the round-4 binding changes are **R4 19.x** (A.4).
+Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's and v8's section numbers; v11 §16a is folded in and removed; round-7 changes are noted "per R7 19.x" and mapped in A.8; round-8 changes, from v9 §19, are noted "per R8 19.x" and mapped in A.9; round-9 changes, from v10 §19, are noted "per R9 19.x" and mapped in A.10; round-10 changes, from v11 §19, are noted "per R10 19.x" and mapped in A.11). "Struck" items are superseded and appear only in their final form. Two numbering schemes used "19.x": items from the v4 amendment layer are prefixed **v4-** (A.3); the round-4 binding changes are **R4 19.x** (A.4).
 
 ### A.1 v2 (§17 of v2–v4)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | B1 | `contentTier`, seeding, guard test, `tierBounds` = tempo, lexicographic ordering, reading complexity | §1.2 |
 | B2 | Phase A evidence, confirmation, start-tempo rule, exclusions, "placed, to confirm" | §1.6, §1.7 (statistic per R4 19.1 / R5 20.1 / R6 21.1; breadth now exercises per R6 21.1; placement as `placedTier` per R5 20.2; rank by passed exercises per R7 19.1; placement sets entry only per R7 19.2) |
@@ -1114,7 +1126,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.2 v3 (§18 of v3–v4)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | 18.1-a | unpassed pass-probe branch | §1.9 |
 | 18.1-b | 2-up-1-down, step sizes, re-fit | §1.9 (step formula per R4 19.8) |
@@ -1183,7 +1195,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.3 v4 amendment layer (v4 §19)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | v4-19.1-a | sliding-window LLR, ≥ 2 days | struck (rank by passes, §1.7, per R7 19.1) |
 | v4-19.1-b | confirmations not selected on success | §1.6 |
@@ -1215,7 +1227,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.4 Round 4 (R4, §19 of v6–v7)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | R4 19.1 | beta-binomial posterior, prior Beta(1, 1), demotion P(p < 0.5) ≥ 0.95 over ≥ 8 on ≥ 2 days, indifference zones, operating characteristic | §1.7 (window 30 / 0.975 per R5 20.1; promotion "≥ 2 days" struck per R6 21.3; 1-per-tier-per-day look cap struck per R6 21.1; promotion as the rank source, 0.975 and the horizon target struck per R7 19.1: the posterior drives current form only) |
 | R4 19.2 | above-target takes excluded from confirmations both ways; probe-band confirmations | §1.6, §1.9 (passing-take exclusion struck per R5 20.1) |
@@ -1224,7 +1236,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R4 19.5 | `acquired` in-session (D2 / A10), `established` cross-session | §1.6, §1.3 |
 | R4 19.6 | rank over inputs | §1.10, §1.12 ("max over inputs, shown with input" struck; pooled posterior struck per R7 19.1) |
 | R4 19.7 | `paceTier`; band = SP §14; beginner = A3; entry formula; prerequisites; teacher forms exempt; band seeding at lower T | §1.2, §1.3 (entry formula per R5 20.2) |
-| R4 19.8 | range top; re-entry end; cell key; staircase step; key-session cold-first; SP governance list; `playerTier` guard | §1.7, §1.4, §1.9, §1.16, §1.5 (re-entry per item per R5 20.4) |
+| R4 19.8 | range top; re-entry end; cell key; staircase step; key-session cold-first; SP governance list; `playerTier` guard | §1.7, §1.4, §1.9, §1.16, §1.5 (re-entry per item per R5 20.4; hand group struck and cold-first in every planner per R10 19.2) |
 | R4 19.9 | rank semantics owner question | §0 H8, §1.10 (answered per R5 20.8; replaced by H8 per R7 19.7) |
 | R4 19.10 (area mapping) | new families → area or coverage only | §1.10 table |
 | R4 19.10 (difficulty card) | head difficulty card; beginner/core derived; matching; checklist | §8.2, §13.1, §16 |
@@ -1235,7 +1247,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.5 Round 5 (R5, §20 of v7)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | R5 20.1 (looks) | look = first eligible confirmation per cell per day, time order | §1.7, for the current-form posterior (6-per-day cap struck; 2 per area per day per R6 21.1) |
 | R5 20.1 (window) | window 30; breadth; promote at 0.975 | §1.7, posterior window (item breadth struck: exercises per R6 21.1; 0.975 struck per R7 19.1; rank breadth per R7 19.1) |
@@ -1258,7 +1270,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.6 Round 6 (R6, §21 of v7-pre)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | R6 21.1 (dependence) | harness day/cell random effects; 2 looks per area per day, second from another exercise; threshold raised under dependence; owner sees real numbers | §1.7, §9.1, §17.4 (threshold struck and report contents per R7 19.1) |
 | R6 21.1 (breadth) | breadth in exercises; guard test one exercise | §1.6, §1.7 |
@@ -1281,7 +1293,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.7 Owner decisions entered during the consolidation
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | H5 | 5 app-written jazz heads approved as labelled practice tunes | §0, §8.1, §8.2 |
 | H6 | standards by title with own charts; embeds; by-ear variant; library beyond ~120 | §0, §8.3, §8.4, §6.1, §18 step 5 |
@@ -1289,7 +1301,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.8 Round 7 (R7, §19 of v8)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | R7 19.1 (rank) | rank = highest tier with ≥ 3 distinct passed exercises in ≥ 2 keys; pass definition; keyless areas min(3, available), unavailable exercises excluded; fixed-tempo rung passes; voice/rhythm/reading `cellPass` passes | §1.1, §1.6, §1.7, §1.10 ("at that tier" wording struck: tiers ≥ t and one rule for keyed and keyless areas per R8 19.1) |
 | R7 19.1 (never falls, bar, time) | high-water, a pass stays a pass; bar "2 of 3" plus keys, never backward; about 1–3 weeks per tier, harness reports per area | §1.7, §1.10, §0 H8, §9.1 |
@@ -1305,7 +1317,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R7 19.5 (reading) | reading items rule-generated per tier | §1.2 |
 | R7 19.5 (goals) | "My Blue Heaven by June" (served 1A head); "with a singer" needs a human singer's take | §6.1 (goal tunes from the region pool, 1B for US learners, per R8 19.5) |
 | R7 19.5 (ballad) | 1A ballad (If I Could Be with You, spirituals) or practice ballad Quiet Hours | §8.6 |
-| R7 19.5 (drums, voice) | timing SD folded into drum grooves; voice range/agility at comfortable tessitura | §1.10 |
+| R7 19.5 (drums, voice) | timing SD folded into drum grooves; voice range/agility at comfortable tessitura | §1.10 (voice areas = pitch and time per R10 19.5) |
 | R7 19.5 (owner tasks) | PD repertoire note-by-note verification | §14, §17.5 |
 | R7 19.5 (non-US) | rhythm changes, modal and Coltrane forms only by ear outside the US | struck (modal and Coltrane by ear everywhere; rhythm changes 1B in the US only, per R8 19.5), §8.4 |
 | R7 19.6 (later day) | ≥ 8 h and a different local day for `established`, SP §4.2 later-day take, `firstTargetDay` | §1.6, §1.16, §18 step 1 |
@@ -1316,7 +1328,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.9 Round 8 (R8, §19 of v9)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
 | R8 19.1 (rule) | rank = highest t with ≥ min(3, available at tiers ≥ t) distinct exercises passed at tiers ≥ t, in ≥ min(2, available keys) keys, ≥ 1 pass at t; breadth = union; passes above count; empty tiers skipped; keyed and keyless same rule | §0 H8, §1.1, §1.7, §1.10 ("at that tier" and keyless-only min(3, available) struck; "available" = planner-offerable per R9 19.2) |
 | R8 19.1 (stored state) | `passedAt` record `{contentTier, target, exerciseId, src, at}`; synced `rankHW`; rank = max(`rankHW`, derived); re-tiering never lowers rank | §1.7, §1.15, §18 step 1 |
@@ -1325,7 +1337,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R8 19.1 (promotion XP) | once per tier gained, under the Q6 caps | §1.7, §3 |
 | R8 19.1 (guard tests) | scattered passes; empty tier; all-"needs MIDI" mic tier; three RH-only passes; three variants of one rung; one voice item in three cents bands; lowered teacher target; re-tiering never lowers rank | §1.7 |
 | R8 19.1 (top tiers) | T7–8 has no content; DYN caps at the top content tier; T7–8 content an owner backlog item | §1.10, §17.5 ("T7–8 content backlog") |
-| R8 19.2 (transfer) | ≥ 3 clean of the last 5 distinct unseen items on ≥ 2 days; one exercise per tier pass | §1.6, §1.7, §1.10, §8.4 ("3 of the last 5" struck: Bayesian test per R9 19.1) |
+| R8 19.2 (transfer) | ≥ 3 clean of the last 5 distinct unseen items on ≥ 2 days; one exercise per tier pass | §1.6, §1.7, §1.10, §8.4 ("3 of the last 5" struck: Bayesian test per R9 19.1, then recency-discounted posterior and one exercise per family per R10 19.1) |
 | R8 19.2 (reading) | ≥ 3 clean in the last 5 cold first-sight takes on ≥ 2 days; reading exercise = generator × tier | §1.6 ("3 clean first-sight takes" struck; "3 of the last 5" struck: Bayesian test per R9 19.1) |
 | R8 19.2 (storage) | `cellPass` covers voice, rhythm, reading and transfer | §1.4, §1.6, §1.7, §1.15, §18 step 1 ("voice and rhythm only" struck) |
 | R8 19.3 (follows rank) | on a rank rise, current form = the new rank | §1.7 |
@@ -1339,7 +1351,7 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R8 19.5 (goal projection) | target-tier goal by passes per practice hour; tempo goal by G | §6.1 |
 | R8 19.5 (drum rudiments) | content tier = nps tier, like scales | §1.2 (struck: complexity family, then nps, per R9 19.9) |
 | R8 19.5 (swing band) | accept band widens upward below ♩ 110; D9 target unchanged | §13.4 |
-| R8 19.5 (trading 4s) | inside the form for keys, guitar, bass and voice; graded by form position and density, improv-prep in line-jazz | §8.4 |
+| R8 19.5 (trading 4s) | inside the form for keys, guitar, bass and voice; graded by form position and density, improv-prep in line-jazz | §8.4 (line-jazz grading struck: coverage only per R10 19.5) |
 | R8 19.5 (goal tunes) | from the learner's region pool (1B for US learners) | §6.1 |
 | R8 19.5 (no official recording) | the app's clean version only | §8.4 step 1 |
 | R8 19.5 (Scrapple) | only the A sections match; the bridge is I Got Rhythm | §8.4 |
@@ -1351,17 +1363,17 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 
 ### A.10 Round 9 (R9, §19 of v10)
 
-| Item | Content | v11 section |
+| Item | Content | v12 section |
 |---|---|---|
-| R9 19.1 (technique pass) | the counting cold take is the cell's first cold take of that local day; a cold miss that day blocks the pass until another day; every other cold take still feeds FSRS and the staircase | §1.4, §1.6, §1.16, §18 step 1 ("every cold take counts" for the pass and "SP §4.2 unchanged" struck) |
-| R9 19.1 (reading, transfer) | Bayesian test over all cold attempts at the tier since it started: Beta(1, 1), pass at P(p ≥ 0.6 \| data) ≥ 0.9, ≥ 5 attempts on ≥ 2 days; harness false-pass rate at true p = 0.4 and 0.5, target < 10 % at 0.5 | §1.6, §1.10, §8.4, §9.1, §17.4, §18 step 1 ("≥ 3 clean in the last 5", "rate rule" and "a lucky streak can't pass it" struck) |
-| R9 19.1 (voice, rhythm) | the technique rule; clean = within the cents and timing band (voice) or SD band (rhythm); 3 clean on ≥ 2 days incl. the first cold take of a later day | §1.4, §1.6 ("all cold takes for passes" struck) |
-| R9 19.2 | "available" = min(3, available exercises in tiers t … entry ceiling); entry also opens t + 2 once every available exercise at t + 1 is passed; guard test: a 2-exercise tier climbed rotation-only | §0 H8, §1.1, §1.3, §1.7, §1.10, §18 step 1 ("available exercises at tiers ≥ t" struck) |
+| R9 19.1 (technique pass) | the counting cold take is the cell's first cold take of that local day; a cold miss that day blocks the pass until another day; every other cold take still feeds FSRS and the staircase | §1.4, §1.6, §1.16, §18 step 1 ("every cold take counts" for the pass and "SP §4.2 unchanged" struck; single first-cold-take pass and "a cold miss that day blocks" struck: 2 first-cold takes of the main item on two distinct later days per R10 19.1) |
+| R9 19.1 (reading, transfer) | Bayesian test over all cold attempts at the tier since it started: Beta(1, 1), pass at P(p ≥ 0.6 \| data) ≥ 0.9, ≥ 5 attempts on ≥ 2 days; harness false-pass rate at true p = 0.4 and 0.5, target < 10 % at 0.5 | §1.6, §1.10, §8.4, §9.1, §17.4, §18 step 1 ("≥ 3 clean in the last 5", "rate rule" and "a lucky streak can't pass it" struck; "all attempts since the tier started", Beta(1, 1), 0.9, ≥ 5 on ≥ 2 days struck per R10 19.1) |
+| R9 19.1 (voice, rhythm) | the technique rule; clean = within the cents and timing band (voice) or SD band (rhythm); 3 clean on ≥ 2 days incl. the first cold take of a later day | §1.4, §1.6 ("all cold takes for passes" struck; pass rule per R10 19.1) |
+| R9 19.2 | "available" = min(3, available exercises in tiers t … entry ceiling); entry also opens t + 2 once every available exercise at t + 1 is passed; guard test: a 2-exercise tier climbed rotation-only | §0 H8, §1.1, §1.3, §1.7, §1.10, §18 step 1 ("available exercises at tiers ≥ t" struck; entry ceiling over non-empty tiers from stored `rankHW` per R10 19.3) |
 | R9 19.3 (breadth, tiers, injector) | breadth over passed and established exercises, min(3, that count); current form at t reads passed cells at tiers ≥ t; the slot injector targets passed cells only | §1.1, §1.7, §5, §18 step 1 (breadth over all exercises at the tier struck) |
 | R9 19.3 (window, n_eff) | looks from the last 90 days, the last 30 within that; n_eff with day and cell clustering; ρ_d and ρ_c stated in §9.1 | §1.7, §9.1 ("window 30" alone and n / (1 + (m − 1)ρ) struck) |
 | R9 19.3 (wrong demotion) | < 5 % per 90 days of practice at true p ≥ 0.75 | §1.7, §9.1 |
 | R9 19.3 (unmeasured, hysteresis) | no passed cells → "unmeasured", moved only by re-promotion at the tier above; hysteresis: re-promotion at P(p ≥ 0.6) ≥ 0.9, slump at P(p < 0.5) ≥ 0.95; initialised from rank and capped at it | §1.1, §1.7, §1.10 (current form as plain "p ≥ p* = 0.7" and "initialised as `placedTier` while placed" struck) |
-| R9 19.4 | the posterior-slump clause for `placedTier` deleted; drop on staircase or threshold estimates < 0.8 × target on ≥ 3 exercises over ≥ 5 offered days; 20-offered-day slow path stays; current form from threshold estimates while placed | §1.3, §1.7, §18 step 1 |
+| R9 19.4 | the posterior-slump clause for `placedTier` deleted; drop on staircase or threshold estimates < 0.8 × target on ≥ 3 exercises over ≥ 5 offered days; 20-offered-day slow path stays; current form from threshold estimates while placed | §1.3, §1.7, §18 step 1 (0.8 × target rule and the slow path struck: trajectory rule per R10 19.3; placed current form per R10 19.4) |
 | R9 19.5 | cents band per tier for rank: T0–2 60 ¢, T3–4 45 ¢, T5+ 30 ¢; a looser-band pass is coverage only | §1.2, §1.7, §18 step 1 ("60 ¢ pass at the 60 ¢ sub-band only" struck) |
 | R9 19.6 | licks, Encore phrases, repertoire drills coverage only for rank (SP §4.2's old rule, memorised); rule-generated licks only as unseen generated licks at sight, in the transfer class; guard test: a warm lick pass never raises rank | §1.6, §1.7, §1.10, §1.16, §18 step 1 |
 | R9 19.7 | trading 4s and responsive comping: the other player from the §13.6 sources, else drums only or silent; never an app-improvised soloist | §8.4, §8.7 |
@@ -1378,55 +1390,34 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R9 19.9 (Momentum) | the high-water false-payout rate measured in the Q6 test | §2 Q6, §18 step 2 |
 | R9 (consolidation) | v10 §19 merged and removed; done-when moved to round 10 on v11 | this document, §18 |
 
----
+### A.11 Round 10 (R10, §19 of v11) and the v11 clarifications (v11 §16a)
 
-## 19. Round 10 → v12: binding changes (merge into the body)
-
-### 19.1 Passes
-- **Technique, voice and rhythm item pass:** 3 counted clean takes on ≥ 2 days, **plus 2 clean first-cold takes of the cell's main item on two distinct later days** (each ≥ 8 h and a different local day after the day the target was first reached).
-  - A cold miss between the two resets that pair.
-  - The §9.1 harness reports P(pass | cold clean rate) for p = 0.2–0.9, and the owner sees it.
-- **Reading and transfer pass:**
-  - a posterior over **recency-discounted counts** (half-life 10 attempts, every attempt kept in order, no window that can be cherry-picked);
-  - the counts are corrected with the §1.7 day-clustering n_eff;
-  - pass when P(p ≥ 0.6) ≥ 0.95 with ≥ 8 attempts on ≥ 3 days;
-  - the harness reports the false-pass rate at p = 0.5 (target < 10 % with day SD 0.8) **and** the time to pass for a learner improving from 0.3 to 0.85.
-- **Transfer counting:**
-  - a transfer tier pass counts as **one exercise per family** (chart at sight, learn-a-tune transfer, k-accomp-voice, k-pop, generated licks);
-  - its keys are the keys of the clean attempts.
-- **Scale and arpeggio exercise identity:**
-  - exercise = spec + option + **nps rung**, with one `passedAt` per rung;
-  - **guard test:** one scale passed at 3 tempo tiers = 1 exercise per tier, never 3 at one tier.
-- **Voice:** a pass counts toward rank at the tier's required cents band **or tighter**. The planner offers a voice item at its tier's required band by default.
-
-### 19.2 Cell identity and session order
-- **The cell key** = family + level id + key. There is no hand group: RH, LH and HT share one cell.
-- **"First cold take of the day"** refers to the cell's **main item** (HT where it exists).
-- **Every planner, the rotation and list runs** play the main item's cold check **before any other sounding take of that cell** in a session. This includes lead-ins, LH visits and list-run hand takes. It generalises the key-session ordering.
-- **Voice:** a voice cell's cold check is never scheduled before ≥ 2–3 minutes of warm-up in that session: SOVT, or other voice cells. Vocal health; the measurement is then of a warmed voice.
-
-### 19.3 Placement and entry
-- **Over-placement uses the expected trajectory, not the target:**
-  - **Tempo areas:** placedTier drops one tier if the area's cold scale benchmark (`paceTier`) is ≥ 2 tiers below placedTier on ≥ 5 offered days.
-  - **Non-tempo areas:** it drops one tier if no non-provisional estimate or rung pass appears at placedTier within 20 offered days, **and** the transfer/reading posterior at placedTier is P(p < 0.4) ≥ 0.9.
-  - The provisional threshold estimate is never used for this.
-  - **Harness case:** a correctly placed learner is never corrected.
-- **The entry ceiling** counts +1 and +2 over **non-empty tiers**: empty tiers are skipped when computing it. It is computed from the stored `rankHW` and placedTier, not from the derived rank, so it is not circular.
-  - **Guard test** per area on the real catalogue: rotation-only climbs reach every tier that has content.
-
-### 19.4 Current form mechanics
-- **A slump drops exactly one tier.** After any drop or rise, the next decision at the new tier needs **≥ 8 fresh looks (raw n) on ≥ 2 days**, plus the n_eff-corrected posterior rule.
-- **Windows:** current form at tier t reads looks from passed cells at tiers ≥ t. Each decision uses only looks after the last decision.
-- **"Unmeasured"** = no passed cell at tiers ≥ t.
-- **While placed:**
-  - current form = the highest tier where ≥ min(3, offered) exercises have a non-provisional threshold estimate ≥ 0.95 × target, capped at placedTier;
-  - **non-laddered areas** (harmony, voicing, reading, voice, rhythm, grooves) use placedTier as current form until they have passed cells.
-- **After a change of input,** current form on the new series starts at rank and shows "new input" until 8 looks exist.
-
-### 19.5 Content
-- **Trading 4s** is coverage only. It is added to the §1.10 table, like the story ladder and free improvisation.
-- **The chart difficulty card** (for charts with no served melody) is computed from harmonic rhythm, the share of non-diatonic chords, key-centre changes, the set of chord qualities, form length and key distance, mapped to T by quantiles. It feeds transfer tiers, by-ear goals and section suggestions, and joins the course-change checklist.
-- **The lick-bank "soloist"** plays bank licks **as they are**: no generative phrasing, no reactive density. This keeps it out of the forbidden AI band.
-- **Voice areas** are pitch and time. Voice learn-a-tune steps map to pitch (melody) and time (rhythmic placement). A sung new key is not counted as transfer, because relative pitch makes it trivial.
-- **Latin rhythm** (clave, bossa, montuno comping) is covered by the style-focus families (k-montuno, k-brazil and their guitar/bass equivalents). It is added to the flow-audit list.
-- **§17.1's example** of "composer died by 1955, lyricist later" becomes Tea for Two (Irving Caesar, died 1996). Honeysuckle Rose is not such a case: Razaf died in 1953.
+| Item | Content | v12 section |
+|---|---|---|
+| R10 19.1 (item pass) | technique, voice and rhythm item pass: 3 clean on ≥ 2 days plus 2 clean first-cold takes of the main item on two distinct later days; a cold miss between resets the pair; harness reports P(pass \| cold clean rate), p = 0.2–0.9, to the owner | §1.4, §1.6, §1.7, §1.16, §9.1, §17.4, §18 step 1 (single cold take pass struck; fixed-tempo rungs follow the same item pass rule) |
+| R10 19.1 (reading, transfer) | recency-discounted posterior (half-life 10 attempts, all attempts in order), day-clustering n_eff, P(p ≥ 0.6) ≥ 0.95, ≥ 8 attempts on ≥ 3 days; false-pass rate at p = 0.5 < 10 % with day SD 0.8; time to pass 0.3 → 0.85 | §1.6, §9.1, §17.4, §18 step 1 (Beta(1, 1), 0.9, ≥ 5 on ≥ 2 days, "all attempts since the tier started" struck) |
+| R10 19.1 (transfer counting) | one exercise per family (chart at sight, learn-a-tune transfer, k-accomp-voice, k-pop, generated licks); keys = keys of the clean attempts | §1.6, §1.7, §1.10, §18 step 1 |
+| R10 19.1 (scale identity) | exercise = spec + option + nps rung, one `passedAt` per rung; guard test: 3 tempo tiers = 1 exercise per tier | §1.2, §1.6, §1.7, §18 step 1 |
+| R10 19.1 (voice band) | pass counts at the tier's band or tighter; planner offers the required band by default | §1.2, §1.7, §18 step 1 |
+| R10 19.2 (cell key) | family + level id + key, no hand group; "first cold take of the day" = the main item | §1.4, §1.6, §18 step 1 ("+ hand group" struck) |
+| R10 19.2 (cold-first) | every planner, the rotation and list runs play the main item's cold check before any other sounding take of the cell | §1.4, §1.16, §18 step 1 |
+| R10 19.2 (voice warm-up) | voice cold check never before ≥ 2–3 min of warm-up (SOVT or other voice cells) | §1.4, §18 step 1 |
+| R10 19.3 (over-placement) | tempo areas: `paceTier` ≥ 2 tiers below on ≥ 5 offered days; non-tempo areas: no non-provisional estimate or rung pass in 20 offered days and posterior P(p < 0.4) ≥ 0.9; never the provisional estimate; harness: a correctly placed learner never corrected | §1.3, §9.1, §18 step 1 ("below 0.8 × target" and the 20-practice-day slow path struck) |
+| R10 19.3 (entry ceiling) | + 1 and + 2 over non-empty tiers; from stored `rankHW` and `placedTier`; guard test per area on the real catalogue | §1.3, §1.7, §9.1, §18 step 1 (ceiling over all tiers struck) |
+| R10 19.4 (slump) | exactly one tier; ≥ 8 fresh looks (raw n) on ≥ 2 days after any drop or rise, plus the n_eff rule | §1.7, §18 step 1 |
+| R10 19.4 (windows, unmeasured) | tiers ≥ t; each decision uses only looks after the last decision; "unmeasured" = no passed cell at tiers ≥ t | §1.1, §1.7, §18 step 1 |
+| R10 19.4 (while placed) | highest tier with ≥ min(3, offered) exercises at a non-provisional estimate ≥ 0.95 × target, capped at `placedTier`; non-laddered areas use `placedTier` until passed cells | §1.3, §1.7, §18 step 1 ("min(threshold tier, placedTier)" struck) |
+| R10 19.4 (input change) | new series starts at rank, "new input" until 8 looks | §1.1, §1.7, §1.12 |
+| R10 19.5 (trading 4s) | coverage only, in the §1.10 table | §1.10, §8.4 (graded by density in line-jazz struck) |
+| R10 19.5 (chart card) | chart difficulty card: harmonic rhythm, non-diatonic share, key-centre changes, chord qualities, form length, key distance → T by quantiles; feeds transfer tiers, by-ear goals, section suggestions; course-change checklist | §8.3, §1.6, §13.1, §16, §18 step 5 |
+| R10 19.5 (soloist) | lick-bank soloist plays bank licks as they are | §8.4, §8.7, §13.6 |
+| R10 19.5 (voice areas) | pitch and time; voice learn-a-tune steps → pitch and time; a sung new key is not transfer | §1.10, §8.4 (range/agility and harmony kept as voice areas; v12 editor's note) |
+| R10 19.5 (Latin rhythm) | covered by k-montuno, k-brazil and guitar / bass equivalents; on the flow-audit list | §13.1 |
+| R10 19.5 (§17.1 example) | Tea for Two (Irving Caesar, died 1996); Honeysuckle Rose not such a case (Razaf died 1953) | §17.1 |
+| v11 §16a (t + 2) | planner-availability exception outside the "+1" stacking limit; base max(placedTier, rank) | §1.3 |
+| v11 §16a (90 days) | the 90-day window applies during re-promotion | §1.7 |
+| v11 §16a (while placed) | min(threshold tier, placedTier); rank cap once rank exists | struck (placed rule per R10 19.4, §1.7) |
+| v11 §16a (keyless, keys) | keyless breadth = min(3, passed + established at the tier); keys count passed and established cells only | §1.7 |
+| v11 §16a (licks) | unseen generated licks at sight feed the line-jazz area | §1.7, §1.10 |
+| v11 §16a (ρ) | ρ_d = 0.15, ρ_c = 0.20 until fitted | §1.7, §9.1 |
+| R10 (consolidation) | v11 §19 and §16a merged and removed; done-when moved to round 11 on v12 | this document, §18 |
