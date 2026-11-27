@@ -310,3 +310,5 @@ If a lawyer confirms that the rule of the shorter term frees US-PD works in Isra
 - Contrafacts: [Jazz Piano Site](https://www.thejazzpianosite.com/jazz-piano-lessons/jazz-chord-progressions/contrafacts/), [JazzFuel](https://jazzfuel.com/?p=97862)
 - Datasets: [OpenBook](https://github.com/veltzer/openbook), [Weimar Jazz Database download](https://jazzomat.hfm-weimar.de/download/download.html), [JAAH](https://mtg.github.io/JAAH) and [ISMIR paper](https://ismir2018.ismir.net/doc/pdfs/206_Paper.pdf), [MCR wiki (iRb)](https://github.com/dharasim/MCR/wiki), [hcorp](https://github.com/pmcharrison/hcorp), [EWLD](https://projects.dharc.unibo.it/musow/view-1645596444-6679177)
 - Composer death years: standard biographical references. **Check each against the Copyright Office registration and the original sheet music before shipping a melody.**
+
+> **Note (2026-11-27, owner decisions H4/H5 in docs/SPEC-HOLISTIC-2.md):** the app-written contrafact heads proposed above (e.g. "Our Indiana-changes head") are **not approved**. Only the 5 labelled practice heads (Corner Bench, Long Way Round, Back Porch Blues, Night Ferry, Quiet Hours) are approved, as practice tunes.

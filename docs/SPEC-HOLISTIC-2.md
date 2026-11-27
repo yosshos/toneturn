@@ -1462,3 +1462,33 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
   - **Guitar tone** (pick attack, vibrato quality, dynamics) is assessed in the §12.1 teacher rubrics.
   - **The voice cents bands** are measured on each note's steady-state mean pitch, with vibrato averaged out.
   - **§10.1:** the King Oliver note also names Armstrong (died 1971) among the improvisers on those sides.
+
+## 21. Round 13 → v13: binding content changes (merge at the next consolidation)
+- **Area mapping for bass and drums transfer evidence** (rows added to the §1.10 table):
+  - **Bass:**
+    - melody or lick at sight → scales;
+    - roots, guide tones or walking at sight, and chart at sight → walking/groove.
+  - **Drums:**
+    - kicks and set-ups inside the form → grooves/styles (trading stays coverage only);
+    - head or chart at sight → reading.
+  - **Guard test:** every family × instrument resolves to an existing area, or to coverage.
+- **Accompanying a singer: levels are referred to by name, not number** (§8.7, §8.9, §13.1). In order:
+  1. intro;
+  2. register;
+  3. fills at phrase ends;
+  4. **transposing at sight** (measurable);
+  5. **following human rubato** (human takes only; "teacher or recording needed" until the bank exists);
+  6. **fermata endings.**
+  - **Fermata endings** are graded only as release-on-cue against a notated, fixed hold, in the measurable version. A human take is used when one exists. Never an app-chosen "human" hold length.
+- **"Tunes you know" uses one rule:**
+  - the tonic reference is played, then the sung phrase is graded on its starting degree plus intervals in that key;
+  - **the octave is free;**
+  - the key is not free.
+  - This replaces both earlier phrasings.
+- **The minor items, adopted:**
+  - **The contrafact card** says that outside the US most pairs are by-ear: only the Indiana side is 1A.
+  - **Voice "sung guide tones"** is gated on a voice harmony-area 7th-chord item (sing the 7th-chord arpeggio), the equivalent of the piano k-sharm gate.
+  - **§16 hands-free** names the learn-a-tune step 1 click-to-play embed as an allowed listening exception, beside the §7 one.
+  - **SP §14 items 35 and 37 for guitar and bass:** item 35 → harmonised arpeggios in 3rds and 6ths across two strings or two positions; item 37 → position-shift leaps. Piano keeps the originals.
+  - **Drum buzz rolls** are graded on evenness and sustain quality, not on a rate: a quality criterion within the rudiment family.
+  - **STANDARDS_LEGAL** gets a note: its proposed app-written contrafact heads (e.g. row 46) are **not approved**. Only the 5 labelled practice heads are approved (H5). This is a doc edit.
