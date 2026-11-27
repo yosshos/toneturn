@@ -1,4 +1,4 @@
-# Holistic round 2: one level, honest rewards, real music (v5, consolidated, 2026-11-27)
+# Holistic round 2: one level, honest rewards, real music (v6, 2026-11-27)
 
 This spec implements the two whole-app audits of 2026-11-27:
 - docs/AUDIT-HOLISTIC-MEASUREMENT.md (AM);
@@ -950,3 +950,130 @@ Every amendment item of v4 §17–§19 and where it now lives. "Struck" items ar
 | 19.2-l | minor: comp dynamics via synth rendered loudness | §8.7 |
 | 19.3 | order of work (steps 1, 2, 5) | §18 |
 | §20 | consolidation | this document |
+
+---
+
+## 19. Round 4 (fresh independent reviewers) → v6: binding changes
+
+These override any text above that contradicts them. They are merged into the body at the next consolidation.
+
+### 19.1 The promotion test: one statistic (replaces the sliding-window LLR of §1.7)
+- **A Bayesian beta-binomial posterior** over the **last 20 cold confirmations** at the candidate tier:
+  - prior Beta(1, 1);
+  - **promote** when P(p ≥ 0.7 | data) ≥ 0.95, with ≥ 2 days and ≥ 2 keys (where keys apply) in the window;
+  - **demote current form** when P(p < 0.5 | data) ≥ 0.95 over ≥ 8 confirmations on ≥ 2 days. Never inside a re-entry window.
+- **Looks are capped:** at most one confirmation per area per tier per day counts toward the posterior, so the number of looks over 6 months is ≤ 180 per tier.
+- **Operating characteristic (published by the §9.1 harness before step 1 ships):** expected confirmations to promote at p = 0.75 and 0.85; false promotion at p = 0.55 over the 6-month look cap (target < 5 %); wrong demotion at p ≥ 0.75 (target < 5 %).
+- **Indifference zones:**
+  - a false promotion is one at true p ≤ 0.55;
+  - a wrong demotion is one at true p ≥ 0.75.
+  - The window size (20) and the thresholds are the harness's tuning knobs. The rule's form is fixed.
+
+### 19.2 Confirmations are two-sided everywhere
+- **Above-target staircase takes are excluded from confirmations, both clean and miss.** They feed only the staircase and the threshold estimate. This removes the one-sided "count only when clean" rule.
+- **Confirmations** are only cold takes at 0.95–1.0 × target (the probe band) on items of that content tier, excluding each item's own passing take.
+
+### 19.3 The threshold estimate (replaces the ML fit of §1.9)
+- **A MAP logistic fit:**
+  - the slope is fixed from the catalogue tier (a prior);
+  - the threshold prior is centred on the item's start tempo;
+  - trials are recency-weighted, with a half-life of 10 days;
+  - the posterior SD is reported.
+- The reversal discard is dropped.
+- **Before 6 trials** the estimate is "provisional". Momentum and record XP never pay from a provisional estimate.
+- **The plateau test (§6.2)** uses the raw cold points: a slope with its CI, not the smoothed estimate.
+
+### 19.4 What "first cold take in a session" means (replaces the §1.4 rule)
+- **For level confirmations:** the first cold take **per cell per session** counts.
+- **For the item pass, FSRS and the staircase:** every cold take counts (SP §4.2 unchanged; the SP §9 3-day test stands).
+- **General hand warm-up is not penalised.** Coldness is per item and cell (`lastSound`). `sessionMs` is logged as a Phase B covariate.
+- **Rhythm:** "the first 2 takes of a subdivision type after ≥ 1 h" is reconciled to the same rule: first per cell per session for level, all cold takes for passes.
+
+### 19.5 `acquired` vs `established` in sessions (with D2 / A10)
+- **Inside an assignment or a session,** forms and same-session entry follow owner decision D2 and SP A10: the anchor `acquired` (warm, D1) opens its forms.
+- **`established`** (a clean cold take on a later day) gates only cross-session pool entry, need readiness and the strengthen pool.
+- Both specs say this.
+
+### 19.6 Rank across inputs
+- **Rank, DYN and friend level** = the **maximum high-water confirmed tier over all inputs**, shown with the input it was earned on.
+- **Current form and the cold series** stay per input.
+- **Strands the mic can't measure** stay excluded for mic series.
+- Changing input never lowers rank.
+
+### 19.7 The pace axis and the entry rule (one formula)
+- **The tempo axis is renamed `paceTier`.** "Band" keeps SP §14's meaning (a group of tiers: band 1 = T0–1 …).
+- **The beginner definition** stays SP A3: band 1 by the placement content tier, until confirmed.
+- **`paceTier`** (the tempo tier of the area's confirmed scale benchmark) is used only for timing tolerances and stretch.
+- **One entry formula:** item entry content tier ≤ min(high-water content tier + 1, current form + 1). The rate's ±1 step and the +1 never stack beyond one tier above high-water.
+- **Prerequisites:**
+  - cross-session they read `established`;
+  - in-session they follow §19.5.
+- **Teacher-assigned forms are exempt from the entry formula.** SP §2.6's "at most 2 tiers up" governs them.
+- **Seeding content tiers from SP bands:** the band's lower T. Band 2 → T2.
+
+### 19.8 Other measurement fixes
+- **The range top** needs ≥ 2 clean cold takes on ≥ 2 days, and is capped at high-water + 1.
+- **The re-entry window ends at whichever comes first:** 3 practice days, or the first FSRS-good review.
+- **The cell key** = family + level id + key (+ hand group), derivable from any take: list runs, licks and key-session stages included. If none is derivable, the item id is used.
+- **Staircase step** = round(base marks × R multiplier), snapped to the metronome grid, minimum 1 mark. The base is 2 marks until the first reversal, then 1.
+- **The key session** plays a cell's cold check **before** any coordination stage of that cell in a session, so coordination work never steals the cold take.
+- **Governance:** this spec amends these SP sections:
+  - §2.5 (cold check);
+  - §3 (`lastSound`, the cold check order);
+  - §4.1;
+  - §4.2 (via `passedAt` and confirmations);
+  - §14 / §15.5 (entry, `established`);
+  - §15.4 (burst trigger);
+  - §17.3 (the 0.9 × best row deleted; R drives the staircase step);
+  - A3 / A8 (`paceTier`, beginner);
+  - A12 (G reads the threshold estimate).
+
+  SP is edited to point here at each of them.
+- **`playerTier`** (tiers.ts) is on the §1.5 guard list, and is replaced by `paceTier` / content as above.
+
+### 19.9 Rank semantics (owner question)
+- **The guarantee is restated:** "rank = the hardest tier **confirmed cold**".
+- **Passed items (`passedAt`) show as passed on the path and the matrix at once.** Rank may lag them for days or weeks until the confirmation posterior crosses. Nothing ever looks lost.
+- *(This needs the owner's OK. It refines promotion-not-full-bars.)*
+
+### 19.10 Real music: placement in the level model, difficulty, legal
+- **Each new family maps to an area** (§1.10), or is marked "coverage only":
+  - learn-a-tune steps → the instrument's line or harmony area by step;
+  - accompanying a singer → harmony / voicing;
+  - capstones → coverage only;
+  - drum balance and soloist work → drums grooves/styles;
+  - composition → coverage only;
+  - pop levels → harmony / voicing.
+- **Each head gets a difficulty card,** computed from the §1.2 reading features + range + harmonic rhythm + chromatic-note share, mapped to a content tier.
+  - "Beginner" and "core" are derived from the card, not hand labels.
+  - Learn-a-tune, goal tunes, tune of the week and section suggestions match heads to the learner by this tier.
+  - It joins the course-change checklist.
+- **Public domain by term class:**
+  - each head stores `pdFrom` per term class: life+70, life+80, life+99, life+100;
+  - `servable()` denies 1A heads in long-term countries (Mexico, Colombia, Côte d'Ivoire, Spain for authors who died before 1987, and others on the list) when the author died within that term, until the lawyer clears the rule of the shorter term;
+  - 1A, meaning "US + life+70", is the default pool.
+- **User-made phrases from a protected source:**
+  - every user-made phrase and recording carries a source flag;
+  - content transcribed from a protected recording, or carrying a protected or US-only melody, stays on the device or goes only to the learner's own teacher. It is never sent to the community, challenges or gifts;
+  - teacher and ensemble content that carries a melody goes through `servable()` for the recipient's region.
+- **The minor items, adopted:**
+  - **§8.4 step 1** (embed, then the app's version) is click-to-play only;
+  - **Hot Five:** the release date is a fact check (done: PD from 2027 for 1926 releases). 78-rpm transfers must come from a PD-clean source;
+  - **1A heads for the other styles,** to verify: choro (Pixinguinha pre-1931 prints, life term permitting), tango ("La Cumparsita" 1916: check its author term class), blues (W. C. Handy, died 1958: 1B, so other blues for 1A);
+  - **§14 repertoire** adds Tárrega and the 1894 Schirmer Italian arias;
+  - **§8.7 levels 2–3:** the app's playback of a served head is the melody source; only level 4 needs a human take;
+  - **§11.1:** the example uses a curated artist.
+
+### 19.11 Order of work: step 1 adds
+- the beta-binomial test with the look cap, plus its operating-characteristic report from the harness;
+- the MAP threshold estimate;
+- cell keys;
+- `paceTier` and the one entry formula;
+- rank as the maximum over inputs;
+- the key-session cold-first ordering;
+- the SP pointer edits.
+
+**Step 5 adds:**
+- head difficulty cards;
+- `pdFrom` per term class;
+- phrase source flags and the sharing gate.
