@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.5',
+    date: '2026-11-27',
+    en: ['The session clock shows the clean takes as a running score, not as a goal that moves away', 'After your limit the tempo steps back only a little, says why, and comes back to the limit in a take or two'],
+    he: ['שעון הסשן מראה את הנגינות הנקיות כציון רץ, לא כיעד שמתרחק', 'אחרי הגבול הטמפו יורד רק מעט, אומר למה, וחוזר לגבול תוך נגינה או שתיים'],
+  },
+  {
     version: '0.145.4',
     date: '2026-11-27',
     en: ['Homework you finished stays on the Home card for a week with a check, and the card says how many are done'],

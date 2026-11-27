@@ -109,7 +109,7 @@ export interface CoachState {
 /** Above its target, how far the climb may go (a ceiling for the arithmetic, never a goal). */
 const OVER_MAX = 1.6;
 /** After the limit with nowhere else to go: back to this share of it, and up again (a wave, never the same take). */
-const WAVE_BACK = 0.85;
+const WAVE_BACK = 0.94;
 /** A key whose pattern is clean in another key starts at this share of that tempo (owner 2026-11-27: not from ♩60 again). */
 const CARRY_KEYS = 0.85;
 
@@ -471,7 +471,8 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       if (c.step + 1 >= c.steps.length && c.keys.length === 1 && c.spec + 1 >= level.specs.length) {
         c.at = Math.max(30, Math.round(best * WAVE_BACK));
         c.limit = Math.max(c.limit ?? 0, best);
-        return withCeil(next({ he: `הגבול שלך היום: ♩${best}. יורדים קצת ובונים שוב למעלה.`, en: `Your limit today: ♩${best}. A little slower, then up again.` }));
+        // owner 2026-11-27: a drop with no word why felt arbitrary — say what set the limit, and come back to it soon
+        return withCeil(next({ he: `${PLATEAU_TAKES} נגינות בלי שיא חדש: ♩${best} הוא הגבול שלך היום. עכשיו ♩${c.at}, ומתקרבים אליו שוב בצעדים קטנים.`, en: `${PLATEAU_TAKES} takes without a new best: ♩${best} is your limit today. Now ♩${c.at}, then back toward it in small steps.` }));
       }
       c.at = undefined;
       if (c.spec + 1 < level.specs.length) {

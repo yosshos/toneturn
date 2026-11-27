@@ -1502,7 +1502,9 @@ function CoachClock({ startedAt, minutes, takes, clean, lang }: { startedAt: num
   const left = Math.max(0, Math.ceil((total - (now - startedAt)) / 60_000));
   const he = lang === 'he';
   const leftTx = left <= 0 ? (he ? 'זאת הנגינה האחרונה' : 'Last take') : left === 1 ? (he ? 'נשארה דקה' : '1 min left') : he ? `נשארו ${left} דק׳` : `${left} min left`;
-  const takesTx = takes ? (he ? ` · ${clean} נקיות מתוך ${takes}` : ` · ${clean} clean of ${takes}`) : '';
+  // owner 2026-11-27: "11 of 15" read as a goal that kept moving away — the takes are a running score, not a target
+  const pct = takes ? Math.round((clean / takes) * 100) : 0;
+  const takesTx = takes ? (he ? ` · ${clean} נקיות (${pct}%)` : ` · ${clean} clean (${pct}%)`) : '';
   return (
     <div className="coach-clock" data-coach-clock={left}>
       <span className="coach-clock-bar" aria-hidden="true">
