@@ -164,7 +164,7 @@ describe('key session 2: the simulator', () => {
     expect(new Set(scale.map((r) => r.code))).toEqual(new Set(['A-3', 'A-4', 'A-5', 'A-6']));
     // the limit: in the scale's visit or, when its budget ran out first, in the closing return to A-6
     const a6 = rows.filter((r) => r.code === 'A-6');
-    const limitRow = a6.find((r) => /limit/.test(r.line));
+    const limitRow = a6.find((r) => /best for now/.test(r.line));
     expect(limitRow).toBeTruthy();
     expect(limitRow!.nps).toBeGreaterThanOrEqual(a6[0].nps - 1e-6);
     expect(limitRow!.nps).toBeLessThanOrEqual(2.05);
@@ -303,7 +303,7 @@ describe('key session 2: the lines and the evidence (review 2026-11-25)', () => 
     const { rows } = run({ tier: 0, player: p, maxTakes: 40 });
     const a6 = rows.filter((r) => r.code === 'A-6');
     for (let i = 1; i < a6.length; i++) if (a6[i - 1].grade === 'almost') expect(a6[i].nps).toBeCloseTo(a6[i - 1].nps, 6);
-    expect(rows.some((r) => /limit/.test(r.line))).toBe(false);
+    expect(rows.some((r) => /best for now/.test(r.line))).toBe(false);
   });
 });
 
@@ -382,7 +382,7 @@ describe('key session 2: third review (2026-11-25)', () => {
       same = rows[i].item === rows[i - 1].item && rows[i].bpm === rows[i - 1].bpm ? same + 1 : 1;
       expect(same, `#${rows[i].n}`).toBeLessThanOrEqual(6);
     }
-    expect(rows.some((r) => /limit today/.test(r.line))).toBe(true);
+    expect(rows.some((r) => /best for now/.test(r.line))).toBe(true);
   });
 
   it('a missed thirds probe starts B-1 at no more than 0.9 × the probe (and 1.0 nps)', () => {
@@ -490,7 +490,7 @@ describe('SPEC-CLIMB-SYNC: the graded step and the challenge take (owner 2026-11
       const next = rows[i + 1];
       if (next && next.ckey === r.ckey && !next.closing) {
         expect(next.nps).toBeLessThan(r.nps);
-        expect(next.said).not.toMatch(/limit/i);
+        expect(next.said).not.toMatch(/best for now/i);
       }
     }
     const byKind = new Map<string, number>();

@@ -479,6 +479,16 @@ export function App() {
   const [assignFresh, setAssignFresh] = useState<Set<string>>(new Set());
   /** The student's assignments (every kind) for the Home card. */
   const [assignMine, setAssignMine] = useState<AssignItem[]>([]);
+  /** Just back from a homework item: Home scrolls to the homework card and marks the next open one. */
+  const afterAssign = useRef(false);
+  const [nextMark, setNextMark] = useState(false);
+  useEffect(() => {
+    if (route !== 'home' || !afterAssign.current) return;
+    afterAssign.current = false;
+    setNextMark(true);
+    const id = window.setTimeout(() => document.querySelector('[data-assigned-card]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400);
+    return () => window.clearTimeout(id);
+  }, [route]);
   // §4.9: the device's push subscription stored again for whoever is signed in (silent subscription death, shared devices)
   useEffect(() => {
     if (user && settings) void refreshPush(settings.uiLang, settings.reminderHour);
@@ -1431,7 +1441,11 @@ export function App() {
     activeAssign.current = null;
     // owner 2026-11-27: the coach's closing line goes with the result (the teacher, and calibration, can read it later)
     const end = x.a.kind === 'drill' ? takeLastCoachLine() : null;
-    void submitResult(x.a.id, score, activeSince(x.t0) / 60000, { ...metrics, ...(end ? { line: end.he, lineEn: end.en } : {}), ...(x.opts && x.opts.channel !== 'free' ? { channel: x.opts.channel, otherChannel: x.tally?.other ?? 0 } : {}) }).catch(() => {});
+    void submitResult(x.a.id, score, activeSince(x.t0) / 60000, { ...metrics, ...(end ? { line: end.he, lineEn: end.en } : {}), ...(x.opts && x.opts.channel !== 'free' ? { channel: x.opts.channel, otherChannel: x.tally?.other ?? 0 } : {}) })
+      // owner 2026-11-27: back on Home the list shows this one done and the next one marked
+      .then(() => myAssignments())
+      .then((as) => setAssignMine(as))
+      .catch(() => {});
   };
   const openAssignItem = (a: AssignItem) => {
     // SPEC-PATH-TODAY-PRACTICE §5.1: an item assigned from its page opens that page ("The assignment" as its main button)
@@ -2569,7 +2583,9 @@ export function App() {
       // played on the level's page (runs inside the technique screen): the takes counted on the way
       else if (tl.takes > 0) submitAssign(tl.clean / tl.takes, { takes: tl.takes, clean: tl.clean });
       else activeAssign.current = null;
-      return go('friends');
+      // owner 2026-11-27: after homework, Home with the homework card (the next one marked), not the Community page
+      afterAssign.current = true;
+      return go('home');
     }
     if (from === 'depth') {
       chartQueue.current = null;
@@ -3990,7 +4006,7 @@ export function App() {
           streak={gems.streak}
           onStreak={() => setStreakOpen(true)}
           onMenu={() => setMenuOpen(true)}
-          assigned={user && assignMine.length ? <AssignedCard t={t} items={assignMine} lang={s.uiLang} fresh={assignFresh} onOpen={openAssignItem} /> : null}
+          assigned={user && assignMine.length ? <AssignedCard t={t} items={assignMine} lang={s.uiLang} fresh={assignFresh} onOpen={(a) => (setNextMark(false), openAssignItem(a))} next={nextMark} /> : null}
           aside={<TodayAside lang={s.uiLang} progress={progress} streak={gems.streak.count} puzzleRows={s.progPuzzle?.[localDay(new Date())]?.rows} onPuzzle={() => go('puzzle')} onDaily={() => go('daily')} onExams={() => go('exams')} onImprov={() => ((improvInit.current = null), (improvWorkout.current = false), go('improv'))} />}
           startLessonLink={activeC === 'ear' && cStage === 'welcome'}
           startHero={cStage !== 'done' ? <CourseStartHero course={activeC} lang={s.uiLang} stage={cStage} cs={cStart} jazz={tasteJazz(activeC)} onStart={continueCourseStart} onFindLevel={findLevel} onIntro={openersOn && courseOpenerSeen(s.openers, activeC) ? () => setOpener({ spec: { kind: 'course', course: activeC, report: cStart?.report ?? 'new', replay: true, taste: tasteFor(activeC, cStart?.report, tasteJazz(activeC)).title, jazz: jazzOpenIn(s, activeC) } }) : undefined} /> : undefined}

@@ -20,8 +20,8 @@ export const CHANGELOG: ChangeEntry[] = [
   {
     version: '0.145.9',
     date: '2026-11-27',
-    en: ['A take with a MIDI keyboard ends when you lift the last key, so the feedback comes at once', 'When the coach keeps the same exercise, its line says only the new tempo'],
-    he: ['נגינה עם מקלדת MIDI נגמרת כשמרימים את הקליד האחרון, כך שהפידבק מגיע מיד', 'כשהמאמן נשאר באותו תרגיל, השורה אומרת רק את הטמפו החדש'],
+    en: ['A take with a MIDI keyboard ends when you lift the last key, so the feedback comes at once', 'When the coach keeps the same exercise, its line says only "Same exercise" and the new tempo', 'The coach speaks its line sentence by sentence, so the voice starts sooner', 'No more "your limit today": the coach says your best so far, and climbs past it', 'After a homework session you are back on Home, with the next homework item marked'],
+    he: ['נגינה עם מקלדת MIDI נגמרת כשמרימים את הקליד האחרון, כך שהפידבק מגיע מיד', 'כשהמאמן נשאר באותו תרגיל, השורה אומרת רק "אותו תרגיל" והטמפו החדש', 'המאמן אומר את השורה משפט אחרי משפט, כך שהקול מתחיל מהר יותר', 'אין יותר "הגבול שלך היום": המאמן אומר את השיא שלך עד עכשיו, וממשיך מעליו', 'אחרי סשן של שיעורי בית חוזרים לדף הבית, והמשימה הבאה מסומנת'],
   },
   {
     version: '0.145.8',

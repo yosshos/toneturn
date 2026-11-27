@@ -1850,7 +1850,10 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
     cSpeech.current = sp;
     const t0 = performance.now();
     // fixed phrases are spoken one by one (each has its recording); other lines whole
-    const says = lang === 'en' && nx.line.say?.length ? nx.line.say : lang === 'he' && nx.line.sayHe?.length ? nx.line.sayHe : [nx.line[lang]];
+    // owner 2026-11-27 (the voice started late): a whole line was synthesised before a word was heard — speak it
+    // sentence by sentence (the short first one starts at once) and get the rest ready while it plays
+    const says = lang === 'en' && nx.line.say?.length ? nx.line.say : lang === 'he' && nx.line.sayHe?.length ? nx.line.sayHe : nx.line[lang].split(/(?<=[.!?])\s+/).filter((x) => x.trim());
+    tts.prefetch(says.slice(1), lang);
     void says
       .reduce<Promise<void>>((p, x) => p.then(() => (sp.signal.aborted ? undefined : tts.speak(x, lang, sp.signal))), Promise.resolve())
       .catch(() => {})

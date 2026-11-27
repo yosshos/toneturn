@@ -529,7 +529,7 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
       c.up = 0;
       c.run = 0;
       c.slower = 0;
-      const said = { he: `זה הגבול שלך היום כאן: ♩${best}. ממשיכים לתרגיל הבא.`, en: `That is your limit here today: ♩${best}. On to the next exercise.` };
+      const said = { he: `השיא שלך כאן עד עכשיו: ♩${best}. ממשיכים לתרגיל הבא, ונחזור לזה.`, en: `Your best here so far: ♩${best}. On to the next exercise; we'll come back to this.` };
       // "a ceiling for now" on the item (BUILD-PLAN §0.2): the screen saves it, the matrix rests the cell for a few days
       const ceiling = { itemId: take.drill.itemId, bpm: best };
       const withCeil = (n: CoachNext): CoachNext => ({ ...n, ceiling });
@@ -538,7 +538,8 @@ export function coachAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: T
         c.at = Math.max(30, Math.round(best * WAVE_BACK));
         c.limit = Math.max(c.limit ?? 0, best);
         // owner 2026-11-27: a drop with no word why felt arbitrary — say what set the limit, and come back to it soon
-        return withCeil(next({ he: `${PLATEAU_TAKES} נגינות בלי שיא חדש: ♩${best} הוא הגבול שלך היום. עכשיו ♩${c.at}, ומתקרבים אליו שוב בצעדים קטנים.`, en: `${PLATEAU_TAKES} takes without a new best: ♩${best} is your limit today. Now ♩${c.at}, then back toward it in small steps.` }));
+        // owner 2026-11-27: not "your limit today" — the best so far, and the climb goes on past it
+        return withCeil(next({ he: `השיא שלך עד עכשיו: ♩${best}. יורדים קצת ל־♩${c.at}, ובונים שוב למעלה, אל השיא ומעבר לו.`, en: `Your best so far: ♩${best}. A little lower, ♩${c.at}, then back up toward it and past it.` }));
       }
       c.at = undefined;
       if (c.spec + 1 < level.specs.length) {
@@ -698,7 +699,7 @@ export function announce(t: CoachTake, lang: 'he' | 'en', prev?: CoachTake): str
       : `♩${t.bpm}`;
   const clk = t.thin ? `, ${thinSay(t.thin)[lang]}` : '';
   // owner 2026-11-27: the same exercise at another tempo needs no title again
-  if (prev && prev.drill.itemId === t.drill.itemId && prev.stage === t.stage && t.stage !== 'free') return lang === 'he' ? `עכשיו ${how}${clk}.` : `Now ${how}${clk}.`;
+  if (prev && prev.drill.itemId === t.drill.itemId && prev.stage === t.stage && t.stage !== 'free') return lang === 'he' ? `אותו תרגיל, ${how}${clk}.` : `Same exercise, ${how}${clk}.`;
   return lang === 'he' ? `עכשיו: ${title}, ${how}${clk}.` : `Now: ${title}, ${how}${clk}.`;
 }
 

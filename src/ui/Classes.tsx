@@ -581,7 +581,7 @@ export function doneLately(a: AssignItem, now = Date.now()): boolean {
 /** Home card: the student's homework in the teacher's order (soonest due first) — the exercise's own name, the due day
  *  in words, "new" since the last look; a tap opens the assignment itself. Owner 2026-11-27: a done one stays for a week
  *  with a check ("it just vanished"), and the card says how many are done. */
-export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; items: AssignItem[]; lang: 'he' | 'en'; onOpen: (a: AssignItem) => void; /** New since the last look (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string> }) {
+export function AssignedCard({ t, items, lang, onOpen, fresh, next }: { t: Strings; items: AssignItem[]; lang: 'he' | 'en'; onOpen: (a: AssignItem) => void; /** New since the last look (SPEC-CLASS-NOTIFICATIONS §4.5). */ fresh?: Set<string>; /** Just back from one (owner 2026-11-27): the first open one is marked "Next". */ next?: boolean }) {
   const now = Date.now();
   const open = items
     .filter((a) => assignState(a) !== 'passed' || doneLately(a, now))
@@ -605,15 +605,16 @@ export function AssignedCard({ t, items, lang, onOpen, fresh }: { t: Strings; it
       <ul className="assign-list">
         {shown.map((a) => {
           const done = assignState(a) === 'passed';
+          const isNext = !!next && !done && a.id === rows.find((r) => assignState(r) !== 'passed')?.id;
           return (
           <li key={a.id}>
-            <button type="button" className={`ac-row${done ? ' done' : ''}`} onClick={() => onOpen(a)} data-assigned={a.id} data-assigned-state={done ? 'done' : 'open'}>
+            <button type="button" className={`ac-row${done ? ' done' : ''}${isNext ? ' next' : ''}`} onClick={() => onOpen(a)} data-assigned={a.id} data-assigned-state={done ? 'done' : 'open'} {...(isNext ? { 'data-assigned-next': '1' } : {})}>
               <span className="ac-title">
                 {done && <Icon k="check" size={16} className="ac-check" />}
                 {itemTitle(a, lang, t)}
                 {fresh?.has(a.id) && <span className="new-mark" data-new-assignment={a.id}>{lang === 'he' ? 'חדש' : 'New'}</span>}
               </span>
-              {done ? <small>{lang === 'he' ? 'בוצע' : 'Done'}</small> : dueShort(a.dueOn, lang) && <small>{dueShort(a.dueOn, lang)}</small>}
+              {done ? <small>{lang === 'he' ? 'בוצע' : 'Done'}</small> : isNext ? <small className="ac-next">{lang === 'he' ? 'הבאה' : 'Next'}</small> : dueShort(a.dueOn, lang) && <small>{dueShort(a.dueOn, lang)}</small>}
             </button>
           </li>
           );

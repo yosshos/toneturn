@@ -360,3 +360,7 @@ button.mc-card:focus-visible { outline: 2px solid var(--accent); outline-offset:
   cursor: pointer;
   margin: 8px 0;
 }
+
+/* owner 2026-11-27: back from a homework item, the next open one is marked */
+:root:root .assigned-card .ac-row.next { background: rgba(255, 255, 255, 0.16); border: 2px solid #fff; }
+:root:root .assigned-card .ac-next { font-weight: 700; }

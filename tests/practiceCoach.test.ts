@@ -233,9 +233,9 @@ describe('the player\'s limit (owner 2026-11-22)', () => {
       const t = coachTake(fam, c, {}, order);
       nx = coachAfter(fam, c, t, mk('not', t.bpm), {}, order, 0);
       c = nx.state;
-      if (/limit/.test(nx.line.en)) break;
+      if (/best (here )?so far/.test(nx.line.en)) break;
     }
-    expect(nx.line.en).toMatch(/limit/);
+    expect(nx.line.en).toMatch(/best (here )?so far/);
     expect(coachTake(fam, c, {}, order).drill.itemId).not.toBe(first.drill.itemId);
   });
 });

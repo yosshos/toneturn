@@ -77,7 +77,7 @@ describe('a timed one-key assignment on the old coach (owner 2026-11-27)', () =>
   });
 
   it('after a limit: back a little and up again, with a word why', () => {
-    expect(first.some((r) => r.line.includes('הגבול שלך היום'))).toBe(true);
+    expect(first.some((r) => r.line.includes('השיא שלך עד עכשיו'))).toBe(true);
   });
 
   it('the next key of a pattern played clean: one free take, no quarters, and a tempo near the other key', () => {
@@ -138,6 +138,6 @@ describe('the coach line names the exercise only when it changes', () => {
     const rows = session(0, {}, 200, 12);
     const climb = rows.filter((r, i) => i > 0 && r.stage === null && rows[i - 1].stage === null && rows[i - 1].item === r.item && r.line.includes('מהר יותר'));
     expect(climb.length).toBeGreaterThan(0);
-    for (const r of climb) expect(r.line).toMatch(/עכשיו ♩\d+/);
+    for (const r of climb) expect(r.line).toMatch(/אותו תרגיל, ♩\d+/);
   });
 });

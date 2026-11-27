@@ -37,7 +37,8 @@ export const PHRASES = {
   almost: { en: 'Almost.', he: 'כמעט.' },
   notYet: { en: 'Not yet.', he: 'עוד לא.' },
   noRush: { en: 'No rush.', he: 'בלי למהר.' },
-  limit: { en: "That's your limit today.", he: 'זה הגבול שלך היום.' },
+  // owner 2026-11-27: not a cap for the day — the best so far (a later take may pass it)
+  limit: { en: "That's your best for now.", he: 'זה השיא שלך עד עכשיו.' },
   target: { en: 'Target reached.', he: 'הגעת ליעד.' },
   speed: { en: 'Now the speed.', he: 'עכשיו המהירות.' },
   theSpeed: { en: 'The speed.', he: 'המהירות.' },
