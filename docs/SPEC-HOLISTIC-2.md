@@ -573,8 +573,8 @@ SPEC-EAR-INTELLIGENCE E1 as specced:
   - **core:** Rose Room, Avalon, Japanese Sandman, Love Me or Leave Me, Mean to Me, My Blue Heaven, If I Could Be with You, King Porter Stomp, Charleston, Indiana.
   - The served "beginner" and "core" labels are derived from each head's difficulty card (below), not hand labels.
 - **1B (US-only)** is an additional layer on top for US users, e.g. Body and Soul, Star Dust, I Got Rhythm.
-- **The US-PD candidate list, each to be checked and given its tier:** Sweet Georgia Brown, Tea for Two, Honeysuckle Rose, Ain't Misbehavin' (**1B**: co-composer Harry Brooks died 1981), What Is This Thing Called Love, Softly as in a Morning Sunrise, Lover Come Back to Me, Star Dust, Body and Soul, I Got Rhythm, Embraceable You, But Not for Me, Georgia on My Mind, St. Louis Blues, Basin Street Blues, Bye Bye Blackbird, Blue Skies, Someone to Watch Over Me, 'S Wonderful. Mood Indigo (1930/31) is checked for its print year.
-- **1A heads for the other styles, to verify:** choro (Pixinguinha pre-1931 prints, life term permitting), tango ("La Cumparsita" 1916: check its author term class), blues (W. C. Handy, died 1958: 1B, so other blues for 1A).
+- **The US-PD candidate list, each to be checked and given its tier:** Sweet Georgia Brown, Tea for Two, Honeysuckle Rose, Ain't Misbehavin' (**1B**: co-composer Harry Brooks died 1970 (per STANDARDS_LEGAL)), What Is This Thing Called Love, Softly as in a Morning Sunrise, Lover Come Back to Me, Star Dust, Body and Soul, I Got Rhythm, Embraceable You, But Not for Me, Georgia on My Mind, St. Louis Blues, Basin Street Blues, Bye Bye Blackbird, Blue Skies, Someone to Watch Over Me, 'S Wonderful. Mood Indigo (1930/31) is checked for its print year.
+- **1A heads for the other styles, to verify:** choro (Ernesto Nazareth, died 1934, and Chiquinha Gonzaga, died 1935; Pixinguinha died 1973, so his prints are not 1A until 2044), tango ("La Cumparsita" 1916: check its author term class), blues (W. C. Handy, died 1958: 1B, so other blues for 1A).
 - **The workflow** is the `verify` flag in heads.ts: I transcribe, and the owner checks each note before the head is served (owner task, §17).
 - **The legal note** in heads.ts changes from "PD worldwide" to "US PD (published ≤ 1930)", with the per-head tier and `pdFrom` per term class. **`HeadLicence`** gains `tier` / `pdFrom`, replacing `pd-worldwide`. The superseded comment banning I Got Rhythm and Body and Soul is removed (build task, step 5).
 - **Each head stores** an "as printed" melody, a jazz chart, and a reconciliation note. Swing comes from the feel layer (SP §16), not from rewriting the melody. **Period-print dotted pairs** are accepted played straight-dotted or swung under the feel layer.
@@ -979,7 +979,7 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
 
 ### 17.1 Lawyer and policy questions (before charging money)
 - The rule of the shorter term (serving 1B content, the region gate, and 1A heads in long-term countries, §8.1).
-- **Songs whose composer died by 1955 but whose lyricist died later** (e.g. Tea for Two: lyricist Irving Caesar died 1996; Honeysuckle Rose is not such a case, since Razaf died in 1953): may a melody-only use serve them? The EU joins the two terms for songs with words, and Israel is unclear.
+- **Songs whose composer died by 1955 but whose lyricist died later** (e.g. Tea for Two: lyricist Irving Caesar died 1996; Honeysuckle Rose: Waller died 1943, lyricist Andy Razaf died 1973; Ain't Misbehavin': co-composer Brooks died 1970): may a melody-only use serve them? The EU joins the two terms for songs with words, and Israel is unclear.
 - **A PD recording of a 1B composition** needs the same region gate.
 - Mexico and other long-term countries (incl. the life+75 class).
 - **The studio sharing rule** (§8.10): private 1:1 and within-studio exchange vs distribution.
@@ -990,7 +990,7 @@ See §11.2 (diction, mic technique, English diction, PD lyrics per language).
 
 ### 17.3 Items to check
 - Each 1A head confirmed 1A, with `pdFrom` per term class, and verified; each candidate head given its tier; Mood Indigo's print year.
-- The other-style 1A heads: Pixinguinha prints (life term), "La Cumparsita" (author term class), non-Handy blues.
+- The other-style 1A heads: Nazareth and Gonzaga choro prints, "La Cumparsita" (author term class), non-Handy blues.
 - The listening-canon candidates: Jelly Roll Morton solo piano 1923–24 and James P. Johnson solo piano, each through the recording test (release date, compositions, every improvising ensemble member's death year).
 - Folk/trad print years and authors (e.g. the Hava Nagila lyric credit).
 - Any lick whose rule origin is unclear (flagged for the owner).
@@ -1413,7 +1413,7 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
 | R10 19.5 (soloist) | lick-bank soloist plays bank licks as they are | §8.4, §8.7, §13.6 |
 | R10 19.5 (voice areas) | pitch and time; voice learn-a-tune steps → pitch and time; a sung new key is not transfer | §1.10, §8.4 (range/agility and harmony kept as voice areas; v12 editor's note) |
 | R10 19.5 (Latin rhythm) | covered by k-montuno, k-brazil and guitar / bass equivalents; on the flow-audit list | §13.1 |
-| R10 19.5 (§17.1 example) | Tea for Two (Irving Caesar, died 1996); Honeysuckle Rose not such a case (Razaf died 1953) | §17.1 |
+| R10 19.5 (§17.1 example) | Tea for Two (Irving Caesar, died 1996); Honeysuckle Rose corrected to such a case (Razaf died 1973, round 11) | §17.1 |
 | v11 §16a (t + 2) | planner-availability exception outside the "+1" stacking limit; base max(placedTier, rank) | §1.3 |
 | v11 §16a (90 days) | the 90-day window applies during re-promotion | §1.7 |
 | v11 §16a (while placed) | min(threshold tier, placedTier); rank cap once rank exists | struck (placed rule per R10 19.4, §1.7) |
@@ -1421,3 +1421,22 @@ Every amendment item and where it now lives in v12 (v12 keeps v11's, v10's, v9's
 | v11 §16a (licks) | unseen generated licks at sight feed the line-jazz area | §1.7, §1.10 |
 | v11 §16a (ρ) | ρ_d = 0.15, ρ_c = 0.20 until fitted | §1.7, §9.1 |
 | R10 (consolidation) | v11 §19 and §16a merged and removed; done-when moved to round 11 on v12 | this document, §18 |
+
+---
+
+## 19. Round 11 → v13: binding changes (content; merge at the next consolidation)
+- **The legal tier uses every credited author.** A head's tier uses the **latest death year among all credited authors, lyricists included**, unless the lawyer rules otherwise. Honeysuckle Rose (Razaf, died 1973) is therefore **1B**: US only, protected in life+70 countries until 2044. That also gates the Scrapple contrafact's PD side outside the US.
+  - **Guard test:** a head credited to authors who died in 1943 and 1973 is never 1A.
+- **The syllable rule covers pitch-training steps only.** Its purpose is to keep movable do out.
+  - **The voice learn-a-tune variant** adds "sing with the lyric" after the sung melody, wherever a servable lyric exists (the region gate applies). The memory step includes the text.
+  - Scat syllables are exempt.
+- **The lick-bank soloist (trading 4s, responsive comping) must fit the changes.**
+  - Only a lick whose source progression matches the 4 bars' chords (a functional match) is chosen, then transposed to the key. Choosing and transposing are not generative phrasing.
+  - If no lick matches, it falls back to drums only or silence.
+- **"Tunes you know" audiation** is graded by intervals, so any key is accepted, after a tonic reference.
+- **Head melody timing at band 3+** has a loose-timing tolerance: anticipations and laid-back entries are accepted. Interpretation is left to rubrics and the story ladder.
+- **King Porter Stomp** is used through its trio strain for non-piano learn-a-tune, and its difficulty card places it.
+- **Jazz brushes:** a brief, plus a self- or teacher-rated item ("needs MIDI" / acoustic).
+- **Native swing below ♩ 90** is graded only where an item has 8ths. Long-note items are graded straight.
+- **§14 PD repertoire** goes through `servable()` and term classes, like heads.
+- **Coverage on a first-time head:** the non-transfer steps also go to coverage, not only on a head the learner has already played.
