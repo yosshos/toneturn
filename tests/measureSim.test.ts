@@ -223,3 +223,31 @@ describe('§9.1 targets (synthetic learners)', () => {
     expect(gamingOneExercise(10, SEED).every((r) => r === null)).toBe(true);
   }, 60000);
 });
+
+// ---------------------------------------------------------------- spec conflicts the harness found (rules unchanged)
+
+describe('§9.1 findings: targets the v12 rules as written do not meet', () => {
+  // FAILS: §1.7 guard "one exercise in many keys and hands never raises rank" vs the H8 rule itself: on a tier whose
+  // range t … ceiling holds ONE available exercise (real catalogue: piano arpeggios T6, guitar scales T6, bass
+  // independence T4, any 1-exercise top tier, or a mic learner's tier), min(3, 1) = 1 and min(2, 12) = 2, so that one
+  // exercise passed in 2 keys gives the tier.
+  it.fails('one exercise in two keys never raises rank, even on a 1-exercise tier', () => {
+    const cat = syntheticCatalogue('one', [3, 1], 12).exercises;
+    const p: PassRecord[] = [{ exerciseId: 'one:T1:0', tier: 1, key: 0, at: 0 }, { exerciseId: 'one:T1:0', tier: 1, key: 5, at: 1 }];
+    expect(updateRankHW(cat, p, 0, 0)).toBe(0);
+  });
+
+  // FAILS: §1.3 counts only "offered days: days on which items at placedTier were offered". A learner placed on an
+  // EMPTY tier (here T5 of the synthetic catalogue, true level T2) is never offered an item at placedTier, so the
+  // correction never runs (measured: 0 % corrected in 180 days).
+  it.fails('an over-placed learner placed on an empty tier is corrected', () => {
+    expect(placementRun(3, true, 20, SEED, { trueAt: 2 }).corrected).toBeGreaterThan(0.9);
+  }, 60000);
+
+  // FAILS: §1.3 non-tempo correction needs P(p < 0.4) ≥ 0.9 on the §1.6 recency-discounted posterior, whose n_eff is
+  // capped near 1 / (1 − 0.5^(1/10)) / design effect ≈ 10–13; with true p ≈ 0.3 at placedTier that probability rarely
+  // reaches 0.9 (measured: 0 % of +2 over-placed reading learners corrected in 180 days).
+  it.fails('an over-placed learner (+2 tiers) is corrected in a non-tempo (reading) area', () => {
+    expect(placementRun(2, false, 20, SEED).corrected).toBeGreaterThan(0.9);
+  }, 60000);
+});

@@ -86,6 +86,8 @@ export interface SimResult {
   passes: PassRecord[];
   /** First day rank reached each tier. */
   rankDay: Map<number, number>;
+  /** At each rank rise: the new rank and the learner's true marginal cold p at that tier (a fresh cell). */
+  rankTruth: { tier: number; day: number; p: number }[];
   finalRank: number | null;
   finalCf: number | null;
   slumps: SlumpEvent[];
@@ -148,6 +150,7 @@ export function simulate(o: SimOptions): SimResult {
   const passes: PassRecord[] = [];
   const looks: Look[] = [];
   const rankDay = new Map<number, number>();
+  const rankTruth: { tier: number; day: number; p: number }[] = [];
   let rankHW: number | null = o.rankHW ?? null;
   let place: PlacementState = initPlacement(o.placedTier ?? 0);
   let cfs = initCurrentForm();
@@ -272,7 +275,10 @@ export function simulate(o: SimOptions): SimResult {
         learner.hours += P.sessionMinutes / 60;
         const before: number | null = rankHW;
         rankHW = updateRankHW(ex, passes, place.placedTier, rankHW);
-        if (rankHW !== null && rankHW !== before) for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
+        if (rankHW !== null && rankHW !== before) {
+          for (const t of tiers) if (t <= rankHW && !rankDay.has(t)) rankDay.set(t, day);
+          rankTruth.push({ tier: rankHW, day, p: learner.trueTierP(rankHW, day) });
+        }
       }
       if (reentryLeft > 0) reentryLeft--;
       // The day's cold scale benchmark as a tier (§1.3 paceTier): the tier where cold p ≈ 0.7, with the day effect.
@@ -339,7 +345,7 @@ export function simulate(o: SimOptions): SimResult {
     if (o.recordDaily) daily.push({ day, practice, theta: learner.theta(), rank: rankHW, cf: cfs.cf, placedTier: place.placedTier, ceiling: entryCeiling(ex, place.placedTier, rankHW, passedExerciseIds(passes)), pNext });
     if (o.stopWhenRank !== undefined && rankHW !== null && rankHW >= o.stopWhenRank) break;
   }
-  return { passes, rankDay, finalRank: rankHW, finalCf: cfs.cf, slumps, rises, placementDrops, finalPlaced: place.placedTier, longestStall, stallTier, looks, calib, practiceDays, daily };
+  return { passes, rankDay, rankTruth, finalRank: rankHW, finalCf: cfs.cf, slumps, rises, placementDrops, finalPlaced: place.placedTier, longestStall, stallTier, looks, calib, practiceDays, daily };
 }
 
 /** The first-cold-of-day takes at a tier, in time order, as attempts for the §1.3 non-tempo posterior. */

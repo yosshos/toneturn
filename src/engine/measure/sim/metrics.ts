@@ -187,9 +187,11 @@ export function wrongDemotion(pAtRank: number, runs: number, seed: number, o: { 
 
 /**
  * Re-promotion time: a learner at p = `pAtRank` (rank R reached in burn-in), a dip of `dipLogit` for `dipDays`, then
- * back. Returns the share that slumped and the median days from the dip's end until current form is back at rank.
+ * back. Returns the share that slumped during the dip and the median days from the dip's end until current form is
+ * back at its pre-dip value (not at rank: rank often sits above the learner's cold level, see report), plus the share
+ * of learners whose pre-dip current form was already below rank.
  */
-export function repromotion(runs: number, seed: number, o: { pAtRank?: number; dipLogit?: number; dipDays?: number; burn?: number; after?: number; dpw?: number; slots?: number } = {}): { slumped: number; recovered: number; medianDays: number; p90Days: number } {
+export function repromotion(runs: number, seed: number, o: { pAtRank?: number; dipLogit?: number; dipDays?: number; burn?: number; after?: number; dpw?: number; slots?: number } = {}): { slumped: number; recovered: number; medianDays: number; p90Days: number; cfBelowRankBefore: number } {
   const cat = defaultCatalogue();
   const R = 3;
   const burn = o.burn ?? 90;
@@ -199,21 +201,24 @@ export function repromotion(runs: number, seed: number, o: { pAtRank?: number; d
   const theta0 = thetaForP(o.pAtRank ?? 0.85, R, L0);
   let slumped = 0;
   let recovered = 0;
+  let below = 0;
   const days: number[] = [];
   for (let r = 0; r < runs; r++) {
     const L: LearnerParams = { ...L0, theta0, shift: (d) => (d >= burn && d < burn + dipDays ? -(o.dipLogit ?? 3) : 0) };
     const res = simulate({ catalogue: cat, learner: L, planner: { practiceDaysPerWeek: o.dpw ?? 4, confirmSlots: o.slots ?? 2 }, days: burn + dipDays + after, seed: childSeed(seed, r), placedTier: R, noPlacementCorrection: true, recordDaily: true });
+    const pre = res.daily[burn - 1];
+    if (pre.cf !== null && pre.rank !== null && pre.cf < pre.rank) below++;
     const dipSlump = res.slumps.some((s) => s.day >= burn && s.day < burn + dipDays + 14);
-    if (!dipSlump) continue;
+    if (!dipSlump || pre.cf === null) continue;
     slumped++;
     const end = burn + dipDays;
-    const back = res.daily.find((d) => d.day >= end && d.rank !== null && d.cf === d.rank && res.slumps.every((s) => s.day <= d.day));
+    const back = res.daily.find((d) => d.day >= end && d.cf !== null && d.cf >= (pre.cf as number));
     if (back) {
       recovered++;
       days.push(back.day - end);
     } else days.push(after);
   }
-  return { slumped: slumped / runs, recovered: recovered / Math.max(1, slumped), medianDays: quantile(days, 0.5), p90Days: quantile(days, 0.9) };
+  return { slumped: slumped / runs, recovered: recovered / Math.max(1, slumped), medianDays: quantile(days, 0.5), p90Days: quantile(days, 0.9), cfBelowRankBefore: below / runs };
 }
 
 // ---------------------------------------------------------------- 5. Climbs, stalls, placement, gaming (§1.3, §1.7)
@@ -237,6 +242,10 @@ export interface ClimbReport {
   stalls: number;
   worstStall: number;
   worstStallTier: number | null;
+  /** Median true marginal cold p at the new rank tier, at the moment of each rank rise. */
+  medianPAtRankUp: number;
+  /** Share of rank rises where that p was < 0.5. */
+  rankUpBelowHalf: number;
 }
 
 /** §1.3 / §9.1 rotation-only climb from T0 (no placement), `days` long. */
@@ -252,8 +261,10 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
   let stalls = 0;
   let worst = 0;
   let worstTier: number | null = null;
+  const ups: number[] = [];
   for (let r = 0; r < runs; r++) {
     const res = simulate({ catalogue: cat, learner: lp, planner, days, seed: childSeed(seed, r) });
+    for (const u of res.rankTruth) ups.push(u.p);
     const t = [...res.rankDay.entries()].filter(([k]) => k >= target).map(([, v]) => v);
     if (t.length) {
       reached++;
@@ -266,7 +277,7 @@ export function climb(cat: AreaCatalogue, runs: number, seed: number, days = 365
       worstTier = res.stallTier;
     }
   }
-  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier };
+  return { name: cat.name, perTier, target, reachedTarget: reached / runs, medianDaysToTarget: quantile(d, 0.5), reachedAll: all / runs, stalls, worstStall: worst, worstStallTier: worstTier, medianPAtRankUp: quantile(ups, 0.5), rankUpBelowHalf: ups.filter((p) => p < 0.5).length / Math.max(1, ups.length) };
 }
 
 /** The tier a learner truly is at: the highest tier with marginal cold p ≥ 0.75. */

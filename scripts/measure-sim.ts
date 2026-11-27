@@ -68,14 +68,14 @@ for (const p of [0.75, 0.85]) {
   }
 }
 const rp = repromotion(N(200), SEED + 50);
-line(`\nRe-promotion: p 0.85 at rank T3, a 4-week dip of −3 logits then back: ${pct(rp.slumped)} slumped; of those ${pct(rp.recovered)} back at rank within 120 d, median ${rp.medianDays} d (90th pct ${rp.p90Days} d) after the dip.`);
+line(`\nRe-promotion: p 0.85 at rank T3, a 4-week dip of −3 logits then back: ${pct(rp.slumped)} slumped; of those ${pct(rp.recovered)} back at their pre-dip current form within 120 d, median ${rp.medianDays} d (90th pct ${rp.p90Days} d) after the dip. Before the dip, ${pct(rp.cfBelowRankBefore)} already had current form below rank.`);
 
 line('\n## 5. Rotation-only climbs and stalls (§1.3, §9.1), steady learner (p 0.6 at T0, ≈ 1 tier / 3 weeks of ability), 365 d, 4 d/wk');
-line('| area | exercises per tier | target | reached target | median days to target | reached top tier | learners with a stall ≥ 42 d | worst stall (days, at rank) |');
-line('|---|---|---|---|---|---|---|---|');
+line('| area | exercises per tier | target | reached target | median days to target | reached top tier | learners with a stall ≥ 42 d | worst stall (days, at rank) | median true cold p at the new tier when rank rises | rank rises with true p < 0.5 |');
+line('|---|---|---|---|---|---|---|---|---|---|');
 for (const cat of cats) {
   const c = climb(cat, N(60), SEED + 60);
-  line(`| ${c.name} | ${c.perTier.join(' ')} | T${c.target} | ${pct(c.reachedTarget)} | ${c.medianDaysToTarget} | ${pct(c.reachedAll)} | ${c.stalls} | ${c.worstStall} (T${c.worstStallTier ?? '-'}) |`);
+  line(`| ${c.name} | ${c.perTier.join(' ')} | T${c.target} | ${pct(c.reachedTarget)} | ${c.medianDaysToTarget} | ${pct(c.reachedAll)} | ${c.stalls} | ${c.worstStall} (T${c.worstStallTier ?? '-'}) | ${c.medianPAtRankUp.toFixed(2)} | ${pct(c.rankUpBelowHalf)} |`);
 }
 
 line('\n## 6. Placement correction (§1.3)');
