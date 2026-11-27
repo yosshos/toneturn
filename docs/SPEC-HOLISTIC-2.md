@@ -1377,3 +1377,56 @@ Every amendment item and where it now lives in v11 (v11 keeps v10's, v9's and v8
 | R9 19.9 (drum rudiments) | `contentTier` seeds rudiment complexity (single / double / diddle / flam / drag), then nps within the family | §1.2, §18 step 1 ("content = nps tier, like scales" struck) |
 | R9 19.9 (Momentum) | the high-water false-payout rate measured in the Q6 test | §2 Q6, §18 step 2 |
 | R9 (consolidation) | v10 §19 merged and removed; done-when moved to round 10 on v11 | this document, §18 |
+
+---
+
+## 19. Round 10 → v12: binding changes (merge into the body)
+
+### 19.1 Passes
+- **Technique, voice and rhythm item pass:** 3 counted clean takes on ≥ 2 days, **plus 2 clean first-cold takes of the cell's main item on two distinct later days** (each ≥ 8 h and a different local day after the day the target was first reached).
+  - A cold miss between the two resets that pair.
+  - The §9.1 harness reports P(pass | cold clean rate) for p = 0.2–0.9, and the owner sees it.
+- **Reading and transfer pass:**
+  - a posterior over **recency-discounted counts** (half-life 10 attempts, every attempt kept in order, no window that can be cherry-picked);
+  - the counts are corrected with the §1.7 day-clustering n_eff;
+  - pass when P(p ≥ 0.6) ≥ 0.95 with ≥ 8 attempts on ≥ 3 days;
+  - the harness reports the false-pass rate at p = 0.5 (target < 10 % with day SD 0.8) **and** the time to pass for a learner improving from 0.3 to 0.85.
+- **Transfer counting:**
+  - a transfer tier pass counts as **one exercise per family** (chart at sight, learn-a-tune transfer, k-accomp-voice, k-pop, generated licks);
+  - its keys are the keys of the clean attempts.
+- **Scale and arpeggio exercise identity:**
+  - exercise = spec + option + **nps rung**, with one `passedAt` per rung;
+  - **guard test:** one scale passed at 3 tempo tiers = 1 exercise per tier, never 3 at one tier.
+- **Voice:** a pass counts toward rank at the tier's required cents band **or tighter**. The planner offers a voice item at its tier's required band by default.
+
+### 19.2 Cell identity and session order
+- **The cell key** = family + level id + key. There is no hand group: RH, LH and HT share one cell.
+- **"First cold take of the day"** refers to the cell's **main item** (HT where it exists).
+- **Every planner, the rotation and list runs** play the main item's cold check **before any other sounding take of that cell** in a session. This includes lead-ins, LH visits and list-run hand takes. It generalises the key-session ordering.
+- **Voice:** a voice cell's cold check is never scheduled before ≥ 2–3 minutes of warm-up in that session: SOVT, or other voice cells. Vocal health; the measurement is then of a warmed voice.
+
+### 19.3 Placement and entry
+- **Over-placement uses the expected trajectory, not the target:**
+  - **Tempo areas:** placedTier drops one tier if the area's cold scale benchmark (`paceTier`) is ≥ 2 tiers below placedTier on ≥ 5 offered days.
+  - **Non-tempo areas:** it drops one tier if no non-provisional estimate or rung pass appears at placedTier within 20 offered days, **and** the transfer/reading posterior at placedTier is P(p < 0.4) ≥ 0.9.
+  - The provisional threshold estimate is never used for this.
+  - **Harness case:** a correctly placed learner is never corrected.
+- **The entry ceiling** counts +1 and +2 over **non-empty tiers**: empty tiers are skipped when computing it. It is computed from the stored `rankHW` and placedTier, not from the derived rank, so it is not circular.
+  - **Guard test** per area on the real catalogue: rotation-only climbs reach every tier that has content.
+
+### 19.4 Current form mechanics
+- **A slump drops exactly one tier.** After any drop or rise, the next decision at the new tier needs **≥ 8 fresh looks (raw n) on ≥ 2 days**, plus the n_eff-corrected posterior rule.
+- **Windows:** current form at tier t reads looks from passed cells at tiers ≥ t. Each decision uses only looks after the last decision.
+- **"Unmeasured"** = no passed cell at tiers ≥ t.
+- **While placed:**
+  - current form = the highest tier where ≥ min(3, offered) exercises have a non-provisional threshold estimate ≥ 0.95 × target, capped at placedTier;
+  - **non-laddered areas** (harmony, voicing, reading, voice, rhythm, grooves) use placedTier as current form until they have passed cells.
+- **After a change of input,** current form on the new series starts at rank and shows "new input" until 8 looks exist.
+
+### 19.5 Content
+- **Trading 4s** is coverage only. It is added to the §1.10 table, like the story ladder and free improvisation.
+- **The chart difficulty card** (for charts with no served melody) is computed from harmonic rhythm, the share of non-diatonic chords, key-centre changes, the set of chord qualities, form length and key distance, mapped to T by quantiles. It feeds transfer tiers, by-ear goals and section suggestions, and joins the course-change checklist.
+- **The lick-bank "soloist"** plays bank licks **as they are**: no generative phrasing, no reactive density. This keeps it out of the forbidden AI band.
+- **Voice areas** are pitch and time. Voice learn-a-tune steps map to pitch (melody) and time (rhythmic placement). A sung new key is not counted as transfer, because relative pitch makes it trivial.
+- **Latin rhythm** (clave, bossa, montuno comping) is covered by the style-focus families (k-montuno, k-brazil and their guitar/bass equivalents). It is added to the flow-audit list.
+- **§17.1's example** of "composer died by 1955, lyricist later" becomes Tea for Two (Irving Caesar, died 1996). Honeysuckle Rose is not such a case: Razaf died in 1953.
