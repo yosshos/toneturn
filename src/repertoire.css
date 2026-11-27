@@ -64,8 +64,9 @@
   border: 1.5px solid var(--stroke, #d9d2e6); background: var(--card, #fff); color: var(--ink-dim, #6b6380);
 }
 :root .rep-search input, :root[data-theme] .rep-search input { flex: 1; box-shadow: none; padding: 0; height: auto; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--ink, #1d1530); }
-.rep-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
-.rep-tabs .rep-tier { min-height: 52px; padding: 5px 2px; }
+.rep-tabs { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.rep-tabs::-webkit-scrollbar { display: none; }
+.rep-tabs .rep-tier { flex: 1 0 auto; min-width: 62px; min-height: 52px; padding: 5px 8px; }
 .rep-mine-f { display: flex; flex-wrap: wrap; gap: 6px; }
 .rep-row.on { border-color: var(--outline, #2b2140); background: var(--card-2, #eee8f5); }
 .rep-mark { padding: 0 8px; }

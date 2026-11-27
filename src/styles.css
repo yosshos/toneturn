@@ -1856,7 +1856,9 @@ html, body { max-width: 100%; overflow-x: hidden; }
 .app { overflow-x: clip; }
 svg, img, canvas, video { max-width: 100%; }
 main svg:not(.league-badge) { height: auto; }
-p, h1, h2, h3, li, button, small, b, label { overflow-wrap: anywhere; }
+/* owner 2026-11-27 (UI sweep): 'anywhere' let a box shrink below one word and split it letter by letter in tight
+   chips and tabs; break-word breaks only a word too long for a whole line */
+p, h1, h2, h3, li, button, small, b, label { overflow-wrap: break-word; hyphens: auto; }
 .answers > *, .seg > *, .perf-controls > *, .modes-levels > *, .theme-grid > *, .learned-grid > * { min-width: 0; }
 
 /* Fluency (0.36): section score, pace goal, time you can see. */

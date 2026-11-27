@@ -1054,3 +1054,8 @@
   :root:root .v2-topbar .icon-btn.update-btn { width: auto; padding: 0 12px 0 10px; gap: 6px; white-space: nowrap; display: inline-flex; align-items: center; border-radius: 999px; }
 }
 :root:root .update-btn .hdr-label { white-space: nowrap; }
+
+/* owner 2026-11-27 (UI sweep): the progression puzzle's chord keys read as underlined links squeezed into a row;
+   they are keys: a calm grid of equal, outlined tiles, the numeral on one line */
+:root:root .pp-keys { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+:root:root .pp-keys > .btn.ghost { min-width: 0; height: 44px; padding: 0 2px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); text-decoration: none; white-space: nowrap; font-weight: 700; }

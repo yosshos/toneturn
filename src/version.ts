@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.11',
+    date: '2026-11-27',
+    en: ['Words no longer break letter by letter in tight chips and tabs; the repertoire tabs scroll sideways on a phone; the progression puzzle keys are proper tiles'],
+    he: ['מילים כבר לא נשברות אות־אות בשבבים ובלשוניות צפופים; לשוניות הרפרטואר נגללות הצידה בטלפון; מקשי חידת המהלכים הם אריחים של ממש'],
+  },
+  {
     version: '0.145.10',
     date: '2026-11-27',
     en: ['On a computer, the Update button in the top bar shows its word on one line'],
