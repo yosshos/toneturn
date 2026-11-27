@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.12',
+    date: '2026-11-27',
+    en: ['A cleaner look across the app: the path header no longer shows content through it, the repertoire on a computer has a proper detail panel, one switch and one slider style everywhere, "Not yet" instead of empty dashes, tidier exercise cards, the tuner without browser-default controls, and the answer mode on Home is labelled'],
+    he: ['מראה נקי יותר בכל האפליקציה: כותרת המסלול כבר לא שקופה לתוכן, ברפרטואר במחשב יש לוח פרטים של ממש, סגנון אחד למתגים ולמחוונים, "עוד לא" במקום קווים ריקים, כרטיסי תרגיל מסודרים יותר, הטיונר בלי פקדי דפדפן, ובחירת אופן התשובה בבית מסומנת'],
+  },
+  {
     version: '0.145.11',
     date: '2026-11-27',
     en: ['Words no longer break letter by letter in tight chips and tabs; the repertoire tabs scroll sideways on a phone; the progression puzzle keys are proper tiles'],
