@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.14',
+    date: '2026-11-28',
+    en: ['Tidier screens: one course picker on a computer, scrolling chip rows in Licks, steppers in the same order everywhere, matching voice-course cards and workout blocks that fit a phone; the last old-style drawings (instrument sound cards, game intros, path test and review steps) redrawn in the Paper style'],
+    he: ['מסכים מסודרים יותר: בורר קורס אחד במחשב, שורות תגיות נגללות בליקים, אותו סדר בכל הכפתורים של פלוס ומינוס, כרטיסי קורס השירה תואמים, ויחידות האימון נכנסות בטלפון. הציורים האחרונים בסגנון הישן (כרטיסי צלילי הכלים, פתיחי המשחקים, צעדי המבחן והחזרה במסלול) צוירו מחדש בסגנון נייר'],
+  },
+  {
     version: '0.145.13',
     date: '2026-11-28',
     en: ['If your MIDI keyboard is not detected, the exercise now stops and says so instead of quietly listening through the microphone; a take in which no sound arrived at all no longer counts as a mistake'],
