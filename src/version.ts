@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.17',
+    date: '2026-11-28',
+    en: ['A very long practice session (more than 50 takes) no longer stops your results from reaching your other devices and your teacher'],
+    he: ['סשן תרגול ארוך מאוד (יותר מ־50 ניסיונות) כבר לא עוצר את הסנכרון של התוצאות למכשירים האחרים ולמורה'],
+  },
+  {
     version: '0.145.16',
     date: '2026-11-28',
     en: ['Behind the scenes: keyboard takes now record each note in detail, so the coming fingering coach can find where a hand position breaks at speed'],

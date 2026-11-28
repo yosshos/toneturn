@@ -81,13 +81,23 @@ interface ResultRow {
   note?: string | null;
 }
 
+/**
+ * The server's row checks (total 1..50, first_try <= total, xp <= total * 20): a long technique session (more than 50
+ * takes) is sent within them, so one big session can never block the device's whole upload. The local result keeps its
+ * real numbers.
+ */
+export function rowCounts(r: Pick<LessonResult, 'total' | 'firstTry' | 'xp'>): { total: number; first_try: number; xp: number } {
+  const total = Math.min(50, Math.max(1, Math.round(r.total || 0)));
+  const ratio = r.total > 0 ? Math.min(1, Math.max(0, r.firstTry / r.total)) : 0;
+  const first_try = Math.min(total, Math.round(ratio * total));
+  const xp = Math.min(total * 20, Math.max(0, Math.round(r.xp || 0)));
+  return { total, first_try, xp };
+}
 const toRow = (r: LessonResult): ResultRow => ({
   session_id: r.sessionId,
   lesson_id: r.lessonId,
   lesson_version: r.lessonVersion,
-  first_try: r.firstTry,
-  total: r.total,
-  xp: r.xp,
+  ...rowCounts(r),
   missed: r.missed,
   completed_at: r.completedAt,
   items: r.items ?? [],
@@ -122,7 +132,16 @@ export async function syncProgress(local: Progress): Promise<Progress> {
   const up = pendingUploads(mine, remote);
   if (up.length) {
     const { error: e2 } = await sb.from('toneturn_lesson_results').upsert(up.map(toRow), { onConflict: 'user_id,session_id', ignoreDuplicates: true });
-    if (e2) throw e2;
+    if (e2) {
+      // One bad row must not block every later result: retry one by one and skip (log) only the rows the server refuses.
+      let sent = 0;
+      for (const r of up) {
+        const { error: e3 } = await sb.from('toneturn_lesson_results').upsert([toRow(r)], { onConflict: 'user_id,session_id', ignoreDuplicates: true });
+        if (e3) console.warn('result not synced', r.sessionId, e3.message);
+        else sent++;
+      }
+      if (!sent) throw e2;
+    }
   }
   return rebuildProgress(mergeResults(mine, remote), local);
 }
