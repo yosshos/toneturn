@@ -780,10 +780,10 @@ In addition:
 - `firstTargetDay` and "best" use straight, qualifying takes only.
 
 ## 22. Pointer: superseded by SPEC-HOLISTIC-2 (2026-11-27)
-These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v13: §1, governance list §1.16; consolidated file docs/SPEC-HOLISTIC-2.v13.md). Where they differ, HOLISTIC wins:
+These SP rules are governed by docs/SPEC-HOLISTIC-2.md (v14: §1, governance list §1.16; v14 keeps v13's section numbers). Where they differ, HOLISTIC wins:
 - **§2.5 / §3 cold check:** HOLISTIC §1.9's cold staircase. The key session's `max(0.9 × best, 0.95 × target)` is superseded, and the cell's main-item cold check is played before any other sounding take of the cell, in every planner (HOLISTIC §1.4).
 - **§4.1 coldness:** `lastSound`, per cell, from any sounding take (HOLISTIC §1.4). `lastQual` remains only for the ≥ 1 h re-measure rule.
-- **§4.2:** passes are kept, `passedAt` sticky. Rank comes from passed exercises (HOLISTIC §1.7, owner decision H8); the posterior drives only current form and adaptivity. The later-day cold take needs ≥ 8 h and a different local day (HOLISTIC §1.6).
+- **§4.2:** passes are kept, `passedAt` sticky. Rank comes from passed exercises plus the tier guard over every counting cold check at the tier (HOLISTIC §1.7 steps 1–6, owner decisions H8 and H11); the posterior drives only current form and adaptivity. The later-day cold take needs ≥ 8 h and a different local day (HOLISTIC §1.6).
 - **§9:** "promotion by day 2–3" means the **item pass**, not a tier promotion.
 - **§14 area-tier definition superseded** by HOLISTIC §1.3 (`areaTier`) and §1.7 (rank).
 - **§14 / §15.5 entry:** HOLISTIC §1.3's entry formula and `placedTier`, with readiness entry (HOLISTIC §1.7a, owner decision H10); entry never exceeds max(`placedTier`, `rankHW`) + 2.
