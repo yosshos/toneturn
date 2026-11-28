@@ -23,7 +23,8 @@
     "measure-variants": "rolldown scripts/measure-variants.ts --platform node --format esm -o scripts/.measure-variants.mjs > scripts/.measure-variants.log && node scripts/.measure-variants.mjs",
     "measure-r17": "rolldown scripts/measure-r17.ts --platform node --format esm -o scripts/.measure-r17.mjs > scripts/.measure-r17.log && node scripts/.measure-r17.mjs",
     "measure-v14": "rolldown scripts/measure-v14.ts --platform node --format esm -o scripts/.measure-v14.mjs > scripts/.measure-v14.log && node scripts/.measure-v14.mjs",
-    "measure-v15": "rolldown scripts/measure-v15.ts --platform node --format esm -o scripts/.measure-v15.mjs > scripts/.measure-v15.log && node scripts/.measure-v15.mjs"
+    "measure-v15": "rolldown scripts/measure-v15.ts --platform node --format esm -o scripts/.measure-v15.mjs > scripts/.measure-v15.log && node scripts/.measure-v15.mjs",
+    "measure-v16": "rolldown scripts/measure-v16.ts --platform node --format esm -o scripts/.measure-v16.mjs > scripts/.measure-v16.log && node scripts/.measure-v16.mjs"
   },
   "dependencies": {
     "@fontsource-variable/rubik": "^5.3.0",

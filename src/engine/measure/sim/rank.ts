@@ -66,15 +66,35 @@ export interface TierGuard {
    * newest `persist` entries, so one lucky run at the end of a long, repeatedly tested record is not enough (default 0).
    */
   persist?: number;
+  /**
+   * Candidate (v16 proposed fix, NOT a default): the guard reads only its newest `window` entries. The §1.7 design effect
+   * counts raw entries per cell, so in an area with few cells (keyless, few keys) a long record inflates m_c without
+   * bound while the recency weights cap the evidence, and P >= 0.9 becomes nearly unreachable (default: the whole record).
+   */
+  window?: number;
+  /**
+   * Candidate (v16 proposed fix, NOT a default): the design effect's cluster sizes use the recency-weighted count
+   * (m_d = Σw / days, m_c = Σw / cells) instead of the raw entry count, so they stay bounded as the record grows.
+   */
+  weightedDeff?: boolean;
 }
-/** The guard approved 2026-11-28 (bar 0.5, 80 %, half-life 24 checks, >= 6 checks). */
-export const TIER_GUARD: TierGuard = { bar: 0.5, conf: 0.8, halfLife: 24, minChecks: 6 };
+/**
+ * The default guard (v16; owner 2026-11-28, §17.4 question 1, option B): bar 0.5, P >= 0.9, half-life 24 checks,
+ * >= 6 checks. Chosen on the per-learner honesty numbers (the guard is a repeated test, so 0.8 let about 1 plateaued
+ * learner in 10, and 1 in 2 with item gain, keep a rank above their cold level at the probe band).
+ */
+export const TIER_GUARD: TierGuard = { bar: 0.5, conf: 0.9, halfLife: 24, minChecks: 6 };
+/** The v15 guard (P >= 0.8, approved 2026-11-28 before the per-learner numbers): a selectable variant since v16. */
+export const TIER_GUARD_P80: TierGuard = { ...TIER_GUARD, conf: 0.8 };
 /** H8 with the tier guard (and the fresh-check re-offer it needs in the planner). The default rank rule. */
 export const RANK_GUARDED: RankOpts = { minTwoExercises: true, keysUnion: true, tierGuard: TIER_GUARD };
+/** H8 with the v15 guard at P >= 0.8 (variant). */
+export const RANK_GUARDED_P80: RankOpts = { ...RANK_GUARDED, tierGuard: TIER_GUARD_P80 };
 
 /** Does the pooled counting-check record at tiers lo … t pass the guard? */
 export function tierGuardOk(checks: CountingCheck[], lo: number, t: number, g: TierGuard): boolean {
-  const w = checks.filter((c) => c.tier >= lo && c.tier <= t && c.countsForRank !== false);
+  const all = checks.filter((c) => c.tier >= lo && c.tier <= t && c.countsForRank !== false);
+  const w = g.window && all.length > g.window ? all.slice(all.length - g.window) : all;
   if (!guardRecordOk(w, g)) return false;
   return !g.persist || guardRecordOk(w.slice(0, Math.max(0, w.length - g.persist)), g);
 }
@@ -90,7 +110,7 @@ function guardRecordOk(w: CountingCheck[], g: TierGuard): boolean {
     if (c.clean) s += wt;
     else f += wt;
   });
-  const deff = designEffect(w.length, new Set(w.map((c) => c.day)).size, new Set(w.map((c) => c.cell)).size);
+  const deff = designEffect(g.weightedDeff ? s + f : w.length, new Set(w.map((c) => c.day)).size, new Set(w.map((c) => c.cell)).size);
   return 1 - betaCdf(g.bar, 1 + s / deff, 1 + f / deff) >= g.conf;
 }
 
@@ -232,4 +252,23 @@ export function updateRankHW(ex: Exercise[], passes: PassRecord[], placedTier: n
   const d = deriveRank(ex, passes, ceiling, o, checks);
   if (d === null) return rankHW;
   return rankHW === null ? d : Math.max(rankHW, d);
+}
+
+/** How long after a rank rise a merge downgrade may still re-derive it (§1.4, §1.7; owner 2026-11-28, §17.4 question 3). */
+export const MERGE_REDERIVE_HOURS = 24;
+
+/**
+ * §1.4 merge downgrades (v16; owner 2026-11-28): a counting cold check downgraded to warm at merge leaves the guard's
+ * record and the V1 share whatever its age (the caller removes it, and any pass it revoked, before calling). If the
+ * last rank rise was set within MERGE_REDERIVE_HOURS of `now`, rankHW is re-derived from the pre-rise high-water
+ * (`rankBefore`) and the merged record; it may fall back to rankBefore, never below it. An older rise stands. This is a
+ * sync correction, not a drop from measurement or a break.
+ */
+export function rankAfterMergeDowngrade(
+  ex: Exercise[], passes: PassRecord[], placedTier: number,
+  rank: { rankHW: number | null; rankBefore: number | null; riseAt: number | null },
+  now: number, o: RankOpts = DEFAULT_RANK, checks?: CountingCheck[],
+): number | null {
+  if (rank.riseAt === null || now - rank.riseAt > MERGE_REDERIVE_HOURS) return rank.rankHW;
+  return updateRankHW(ex, passes, placedTier, rank.rankBefore, o, checks);
 }
