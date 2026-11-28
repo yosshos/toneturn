@@ -88,14 +88,14 @@ export function PathExtras({
           {he ? 'חדרי תרגול' : 'Practice rooms'}
         </summary>
         <div className="room-list">
-          {room('drills-room', <NodeIcon kind="steps" />, he ? 'תרגילים טכניים' : 'Technique drills', he ? 'סולמות, ארפג׳ים ועוד — פסנתר, גיטרה ובס' : 'Scales, arpeggios and more — piano, guitar, bass', onDrills, { data: { 'data-room': 'drills' } })}
-          {room('vocal-room', <NodeIcon kind="mic" />, t.vocalTitle, `${t.vocalLevel.replace('{n}', String(vocalLv))} · ${t.vocalLevelNames[vocalLv - 1]}`, () => onVocal(false), { data: { 'data-room': 'vocal' } })}
-          {room('warmup-room', <NodeIcon kind="mic" />, t.vocalWarmup, t.vocalBlurb, () => onVocal(true), { data: { 'data-room': 'vocal-warmup' } })}
-          {room('review-room', <NodeIcon kind="review" />, t.reviewN, reviewCount ? `${reviewCount} ${t.dueNow}` : nextDays ? t.nextReviewIn.replace('{n}', String(nextDays)) : t.nothingToReview, onReview, { badge: reviewCount, disabled: reviewCount === 0, data: { 'data-room': 'review' } })}
-          {room('runs-card', <NodeIcon kind="mic" />, t.runsWorkshop, t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null))), onRuns, { data: { 'data-room': 'runs' } })}
-          {room('drone-card', <NodeIcon kind="mic" />, t.dronePractice, t.droneBlurb, onDrone, { data: { 'data-room': 'drone' } })}
-          {onPerform && room('perform-card', <NodeIcon kind="mic" />, t.perfTitle, t.perfBlurb, onPerform, { data: { 'data-perform': '1' } })}
-          {onLearned && room('learned-card-tool', <NodeIcon kind="map" />, t.learnedTitle, learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb, onLearned, { data: { 'data-learned': '1' } })}
+          {room('drills-room', <NodeIcon kind="steps" size={22} />, he ? 'תרגילים טכניים' : 'Technique drills', he ? 'סולמות, ארפג׳ים ועוד — פסנתר, גיטרה ובס' : 'Scales, arpeggios and more — piano, guitar, bass', onDrills, { data: { 'data-room': 'drills' } })}
+          {room('vocal-room', <NodeIcon kind="mic" size={22} />, t.vocalTitle, `${t.vocalLevel.replace('{n}', String(vocalLv))} · ${t.vocalLevelNames[vocalLv - 1]}`, () => onVocal(false), { data: { 'data-room': 'vocal' } })}
+          {room('warmup-room', <NodeIcon kind="mic" size={22} />, t.vocalWarmup, t.vocalBlurb, () => onVocal(true), { data: { 'data-room': 'vocal-warmup' } })}
+          {room('review-room', <NodeIcon kind="review" size={22} />, t.reviewN, reviewCount ? `${reviewCount} ${t.dueNow}` : nextDays ? t.nextReviewIn.replace('{n}', String(nextDays)) : t.nothingToReview, onReview, { badge: reviewCount, disabled: reviewCount === 0, data: { 'data-room': 'review' } })}
+          {room('runs-card', <NodeIcon kind="mic" size={22} />, t.runsWorkshop, t.runsWorkshopHint.replace('{n}', String(runLevelFor(ratings.agility?.n ? ratings.agility.r : null))), onRuns, { data: { 'data-room': 'runs' } })}
+          {room('drone-card', <NodeIcon kind="mic" size={22} />, t.dronePractice, t.droneBlurb, onDrone, { data: { 'data-room': 'drone' } })}
+          {onPerform && room('perform-card', <NodeIcon kind="mic" size={22} />, t.perfTitle, t.perfBlurb, onPerform, { data: { 'data-perform': '1' } })}
+          {onLearned && room('learned-card-tool', <NodeIcon kind="map" size={22} />, t.learnedTitle, learnedCount ? `${learnedCount} · ${t.learnedBlurb}` : t.learnedBlurb, onLearned, { data: { 'data-learned': '1' } })}
         </div>
       </details>
       <details className="px-section" data-px="topics">

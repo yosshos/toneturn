@@ -14,6 +14,10 @@ import { Glyph } from './Glyph';
 import { Toni } from './Toni';
 import { piano, SIMULATED } from './services';
 import { Icon } from './icons';
+import { PAPER } from './paper';
+import { medalArt } from './paper/art-scenes';
+import { PaperSvg } from './paper/Paper';
+import type { HueName } from './paper/kit';
 import { FILM } from '../content/openers';
 import { RATED_COURSES, type ChannelSelf } from '../engine/channelPlan';
 import { DEFAULT_FOCUS, type StyleFocus } from '../engine/styleFocus';
@@ -350,16 +354,9 @@ function ListenCheck({ lang, course, onSettings, onDone, onBack, skip }: { lang:
   );
 }
 
-/** A plain medal for the "First session" mark (no emoji: a ring, a ribbon, the course colour). */
-function Medal({ color }: { color: string }) {
-  return (
-    <svg viewBox="0 0 40 48" width="34" height="40" aria-hidden="true">
-      <path d="M12 2h7l-4 14h-7zM28 2h-7l4 14h7z" fill="var(--ink-dim)" />
-      <circle cx="20" cy="30" r="15" fill={color} stroke="var(--ink)" strokeWidth="2" />
-      <circle cx="20" cy="30" r="9" fill="none" stroke="var(--ink)" strokeWidth="1.6" opacity="0.6" />
-      <path d="M20 24l1.8 3.8 4.2.4-3.2 2.8 1 4.1-3.8-2.2-3.8 2.2 1-4.1-3.2-2.8 4.2-.4z" fill="var(--ink)" />
-    </svg>
-  );
+/** The "First session" medal (no emoji): a Paper ribbon and disc in the course icon's hue, a star cut from it. */
+function Medal({ hue }: { hue?: HueName }) {
+  return <PaperSvg art={medalArt(hue)} cut="badge" width={34} height={34} />;
 }
 
 /** The measured line of the first win: what the player actually did. */
@@ -450,7 +447,7 @@ export function FirstWin({
       </div>
       <ul className="cs-stats">
         <li data-win-badge="1">
-          <Medal color={def.color} />
+          <Medal hue={PAPER[def.glyph]?.hue} />
           <span>{he ? 'שיעור ראשון' : 'First session'}</span>
         </li>
         <li>

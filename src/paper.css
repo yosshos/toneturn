@@ -106,6 +106,12 @@
   --pf: var(--kf);
   --pfE: var(--kfE);
 }
+/* the mastered node's check (the chrome cut on the purple disc): white paper with a lilac edge */
+:root[data-theme] .path2 .road .node.mastered .node-disc .node-check {
+  --cs: #ffffff;
+  --ce: #c9b8ec;
+  --cl: var(--purple, #6d28d9);
+}
 /* locked path nodes: the drawing, quieter */
 :root .path2 .road .node.locked .node-disc .pp {
   opacity: 0.55;

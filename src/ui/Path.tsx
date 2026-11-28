@@ -268,6 +268,8 @@ export function nodeTitle(step: PathStep, s: Settings, lang: Lang): string {
 const ICON: Record<string, 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum'> = { pitch: 'ear', time: 'drum', memory: 'steps', voice: 'mic', reading: 'map', creative: 'puzzle', instrument: 'chord' };
 const iconOf = (step: PathStep) => (step.kind === 'tech' ? 'chord' : step.kind === 'vocal' ? 'mic' : step.kind === 'game' ? 'puzzle' : step.kind === 'review' ? 'review' : step.lesson ? (LESSON_META[step.lesson]?.icon ?? 'ear') : ICON[step.domain] ?? 'ear');
 
+import { PATH_CHECK_ART, PATH_CHECK_VIEWBOX, PATH_REPEAT_ART, PATH_REPEAT_VIEWBOX } from './paper/art-scenes';
+import { PaperSvg } from './paper/Paper';
 import { BONUS_STEP_GLYPH, FAMILY_GLYPH, GAME_STEP_GLYPH, LESSON_GLYPH, TOPIC_GLYPH } from './stepGlyphs';
 import { drumMicOf } from '../engine/drumKit';
 import { KitNotice } from './DrumViews';
@@ -448,21 +450,11 @@ export function PathView2({
               review is a repeat sign; the current one lemon with a ring. */}
           {x.step.kind === 'check' ? (
             <span className="node-bar" aria-hidden="true">
-              <svg viewBox="0 0 60 90" width="60" height="90">
-                <path d="M12 26 A18 18 0 0 1 48 26" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                <circle cx="30" cy="22" r="3.6" fill="currentColor" />
-                <rect x="24" y="34" width="3" height="56" fill="var(--ink-c)" />
-                <rect x="31" y="34" width="9" height="56" fill="var(--ink-c)" />
-              </svg>
+              <PaperSvg art={PATH_CHECK_ART} cut="badge" viewBox={PATH_CHECK_VIEWBOX} width={60} height={90} />
             </span>
           ) : x.step.kind === 'review' ? (
             <span className="node-bar repeat" aria-hidden="true">
-              <svg viewBox="0 0 40 90" width="40" height="90">
-                <rect x="6" y="34" width="6" height="56" fill="var(--ink-c)" />
-                <rect x="17" y="34" width="2.5" height="56" fill="var(--ink-c)" />
-                <circle cx="27" cy="55" r="3.5" fill="var(--ink-c)" />
-                <circle cx="27" cy="69" r="3.5" fill="var(--ink-c)" />
-              </svg>
+              <PaperSvg art={PATH_REPEAT_ART} cut="badge" viewBox={PATH_REPEAT_VIEWBOX} width={40} height={90} />
             </span>
           ) : (
             <span className={`node-disc ${ring ? 'has-ring' : ''}`} aria-hidden="true" style={ring ? { ['--p' as string]: Math.max(4, Math.min(100, ms * 20)) } : undefined}>
@@ -471,9 +463,7 @@ export function PathView2({
                   <Icon k="lock" />
                 </span>
               ) : look === 'mastered' ? (
-                <svg className="node-check" viewBox="0 0 24 24" width="24" height="24">
-                  <path d="M5 12.5l5 5 9-10" fill="none" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Icon k="check" size={26} className="node-check" />
               ) : (
                 <StepIcon step={x.step} />
               )}

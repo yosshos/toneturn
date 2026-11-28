@@ -17,6 +17,8 @@ import type { Progress, Settings } from '../storage/progress';
 import { MicIcon, ModeSwitch } from './bits';
 import { UNLOCK_ALL } from './services';
 import { Icon } from './icons';
+import { PaperGlyph, type GlyphKind } from './Glyph';
+import { cutFor } from './paper/Paper';
 import { LangButton } from './LangButton';
 import { KeysSoundButton, type KeysSoundProp } from './KeysSound';
 
@@ -273,78 +275,11 @@ export function TopBar({ t, lang, streak, onStreak, whatsNew, onMenu, home = fal
   );
 }
 
-export function NodeIcon({ kind }: { kind: 'ear' | 'steps' | 'chord' | 'cadence' | 'mic' | 'map' | 'review' | 'puzzle' | 'drum' }) {
-  switch (kind) {
-    case 'ear':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-          <path d="M10 13a7 7 0 1 1 13 3.5c-1.5 2.5-4 3.5-4 6.5a3.5 3.5 0 0 1-6.5 1.5" />
-          <path d="M14 13.5a3 3 0 1 1 5 2" />
-        </svg>
-      );
-    case 'steps':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <circle cx="7" cy="24" r="4" />
-          <circle cx="16" cy="16" r="4" />
-          <circle cx="25" cy="8" r="4" />
-        </svg>
-      );
-    case 'chord':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <ellipse cx="12" cy="24" rx="5" ry="3.6" transform="rotate(-20 12 24)" />
-          <ellipse cx="12" cy="16" rx="5" ry="3.6" transform="rotate(-20 12 16)" />
-          <ellipse cx="12" cy="8" rx="5" ry="3.6" transform="rotate(-20 12 8)" />
-          <rect x="16" y="5" width="2.6" height="20" rx="1.3" />
-        </svg>
-      );
-    case 'cadence':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 22l7-8 6 5 9-11" />
-          <path d="M20 8h6v6" />
-        </svg>
-      );
-    case 'mic':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-          <rect x="12" y="4" width="8" height="15" rx="4" fill="currentColor" />
-          <path d="M8 15a8 8 0 0 0 16 0M16 23v5" />
-        </svg>
-      );
-    case 'map':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round">
-          <polygon points="16,3 28,11 24,27 8,27 4,11" opacity=".45" />
-          <polygon points="16,9 23,13 21,22 11,23 9,14" fill="currentColor" />
-        </svg>
-      );
-    case 'review':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 16a10 10 0 1 0 3-7" />
-          <path d="M5 4v6h6" />
-          <path d="M16 11v6l4 2" />
-        </svg>
-      );
-    case 'drum':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <ellipse cx="9" cy="23" rx="4.5" ry="3.4" transform="rotate(-20 9 23)" />
-          <ellipse cx="23" cy="20" rx="4.5" ry="3.4" transform="rotate(-20 23 20)" />
-          <path d="M12.5 22V7l14-3v15h-2.6V8L15 9.8V22z" />
-        </svg>
-      );
-    case 'puzzle':
-      return (
-        <svg viewBox="0 0 32 32" width="30" height="30" fill="currentColor">
-          <path d="M6 6h8a3 3 0 1 1 4 0h8v8a3 3 0 1 0 0 4v8h-8a3 3 0 1 0-4 0H6v-8a3 3 0 1 1 0-4z" />
-        </svg>
-      );
-  }
+/** The plain node icons (Arcade road, Practice rooms, a path step without its own symbol) as Paper drawings. */
+export const NODE_GLYPH = { ear: 'ear', steps: 'scales', chord: 'chords', cadence: 'prog', mic: 'mic', map: 'roadmap', review: 'memory', puzzle: 'puzzle', drum: 'rhythm' } as const satisfies Record<string, GlyphKind>;
+export function NodeIcon({ kind, size = 30 }: { kind: keyof typeof NODE_GLYPH; size?: number }) {
+  return <PaperGlyph kind={NODE_GLYPH[kind]} width={size} height={size} cut={cutFor(size)} className="node-glyph" />;
 }
-
 
 /** "Done X of Y" per topic across the whole path. */
 export function TopicBars({ t, progress }: { t: Strings; progress: Progress }) {

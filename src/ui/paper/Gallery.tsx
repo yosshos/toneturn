@@ -1,6 +1,6 @@
 // Dev-only gallery of the Paper icon language (#/dev/glyphs): every glyph in its three cuts on light and dark cards,
 // the nav in the bar, path nodes, course icons and the badges. Query: ?only=a,b (names or prefixes ending in *),
-// &sec=glyphs|nav|badges|chrome (default all), &theme=light|dark. e2e/paperGallery.spec.ts screenshots it.
+// &sec=glyphs|nav|badges|chrome|scenes (default all), &theme=light|dark. e2e/paperGallery.spec.ts screenshots it.
 import { useEffect, useRef, useState } from 'react';
 import { BADGES } from '../../engine/badges';
 import { COURSES } from '../../engine/courses';
@@ -13,6 +13,11 @@ import { motionsOf, playIcon, useAmbient } from './motion';
 import { PaperSvg } from './Paper';
 import { CHROME_KEYS } from './art-chrome';
 import { Icon } from '../icons';
+import { InstrumentArt } from '../InstrumentArt';
+import { EchoArt, TuneUpArt } from '../GameArt';
+import { TrioArt } from '../TrioArt';
+import { NODE_GLYPH, NodeIcon } from '../Home';
+import { INSTRUMENT_ART, medalArt, PATH_CHECK_ART, PATH_CHECK_VIEWBOX, PATH_REPEAT_ART, PATH_REPEAT_VIEWBOX } from './art-scenes';
 
 const q = () => new URLSearchParams(location.hash.split('?')[1] ?? '');
 const NAV = ['home', 'path', 'arcade', 'skills', 'friends', 'tools', 'achievements'];
@@ -212,6 +217,55 @@ export function PaperGallery() {
               )}
             </div>
           )}
+        </section>
+      )}
+      {(sec === 'all' || sec === 'scenes') && (
+        <section>
+          <h2>scenes · sound cards · game intros · node icons</h2>
+          <div className="pg-row" data-scenes="instruments">
+            {Object.keys(INSTRUMENT_ART).map((id) => (
+              <span key={id} className="pg-cell" data-play="1" style={{ width: 128 }}>
+                <InstrumentArt id={id} />
+                <small>{id}</small>
+              </span>
+            ))}
+          </div>
+          <div className="pg-row" data-scenes="games">
+            <span style={{ width: 300 }} data-play="1">
+              <TuneUpArt />
+            </span>
+            <span style={{ width: 300 }} data-play="1">
+              <EchoArt kind="melody" />
+            </span>
+            <span style={{ width: 300 }} data-play="1">
+              <EchoArt kind="rhythm" />
+            </span>
+            <span style={{ width: 300 }}>
+              <TrioArt n={1} left="C" mid="E" right="G" intervalLeft="M3" intervalRight="m3" />
+            </span>
+          </div>
+          <div className="pg-row" data-scenes="nodes">
+            {(Object.keys(NODE_GLYPH) as (keyof typeof NODE_GLYPH)[]).map((k) => (
+              <span key={k} className="pg-cell" data-play="1">
+                <NodeIcon kind={k} size={16} />
+                <NodeIcon kind={k} size={22} />
+                <NodeIcon kind={k} />
+                <small>{k}</small>
+              </span>
+            ))}
+            <span className="pg-cell" data-play="1">
+              <PaperSvg art={medalArt('teal')} cut="badge" width={34} />
+              <small>medal</small>
+            </span>
+            <span className="pg-cell" data-play="1">
+              <PaperSvg art={PATH_CHECK_ART} cut="badge" viewBox={PATH_CHECK_VIEWBOX} width={40} height={60} />
+              <small>unit test</small>
+            </span>
+            <span className="pg-cell" data-play="1">
+              <PaperSvg art={PATH_REPEAT_ART} cut="badge" viewBox={PATH_REPEAT_VIEWBOX} width={27} height={60} />
+              <small>review</small>
+            </span>
+          </div>
         </section>
       )}
       {(sec === 'all' || sec === 'badges') && (
