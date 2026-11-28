@@ -125,9 +125,9 @@ function take(o: { rush?: number; top?: number; mpb?: number }): TakeMetrics {
 const tr = (m: TakeMetrics) => takeTrace(scale, m, { at: '2026-11-28T08:00:00Z', src: 'midi', kind: 'normal' })!;
 
 describe('v2 trace: the descent slope (recorded, never flagged)', () => {
-  it('the trace version is 2 and an even take has a flat descent', () => {
+  it('the trace carries the descent (version 2 and later; 3 adds the per-note log) and an even take has a flat descent', () => {
     const t = tr(take({}));
-    expect(t.v).toBe(2);
+    expect(t.v).toBe(3);
     expect(t.R?.desc).toBeDefined();
     expect(Math.abs(t.R!.desc![0])).toBeLessThan(0.5);
   });

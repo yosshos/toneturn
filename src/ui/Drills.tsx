@@ -1761,7 +1761,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       ? cTake.challenge ? 'challenge' : cTake.probe ? 'probe' : (ksNow?.warmLeft ?? 0) > 0 ? (ksNow?.review ? 'review' : 'retention') : cTake.kind === 'warmup' ? 'retention' : cTake.kind === 'review' ? 'review' : 'normal'
       : bpm < (stateOf(drill).goalBpm ?? 0) * 0.99 ? 'slow' : 'normal';
     // drums and voice never (their notes are not a pitched line); the input as it really was
-    const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: m.src ?? inputSource(drill).src, ...(m.nc ? { nc: true } : {}), kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId) });
+    const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: m.src ?? inputSource(drill).src, ...(m.nc ? { nc: true } : {}), kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId), ownFingers: own?.[drill.itemId] });
     if (trace) {
       // a calibration account sends it to the server too (a no-op for every other account)
       void recordTrace(trace).then(() => syncCalibTraces());

@@ -43,7 +43,9 @@ describe('takeTrace', () => {
     expect(t.R && t.L).toBeTruthy();
     expect(t.ioi).toBeGreaterThan(100);
     expect(Object.keys(t.R!.cls).length).toBeGreaterThan(1);
-    expect(JSON.stringify(t).length).toBeLessThan(700);
+    // the summary stays compact; the v3 per-note log rides beside it (tests/noteLog.test.ts bounds it)
+    const { nl: _nl, ...summary } = t;
+    expect(JSON.stringify(summary).length).toBeLessThan(700);
   });
 
   it('a constant latency / lead of 40 ms moves only the global lead, never the position tendencies', () => {

@@ -57,9 +57,45 @@ export interface HandTrace {
    */
   desc?: [number, number];
 }
+/**
+ * v3 (SPEC-FINGERING F1, owner 2026-11-28): the per-note log of a MIDI keys take — one entry per written note of a hand
+ * (R / L), in score order, as parallel arrays (no object per note; ~1–2 KB for a two-octave hands-together scale). Kept
+ * for the calibration accounts' upload (cloud/calibUpload.ts); never pooled, never shown. Absent on microphone, not
+ * comparable (`nc`), guitar / bass and drum takes.
+ */
+export interface NoteLog {
+  /** The hand of each logged note: one character per note ('R' | 'L'). */
+  h: string;
+  /** The written onset in twelfths of a beat (a sixteenth = 3, a triplet eighth = 4). */
+  b: number[];
+  /** The written pitch (MIDI). */
+  e: number[];
+  /** The matched played pitch minus the written one (0 = the right key); null = no played note was matched. */
+  p: (number | null)[];
+  /** The onset residual against the grid (ms, + = late, integer): the note's deviation from the click minus the take's
+   *  `lead` (deviation = d + lead; session-relative = d + `sessionRelativeLead` of the take). Null = not matched. */
+  d: (number | null)[];
+  /** Key velocity (1–127; 0 = not matched). */
+  v: number[];
+  /** Release vs the next note of the same hand's line: its note-off minus the next note's note-on (ms, integer; + =
+   *  overlap / legato, − = a gap); null = no note-off, no next note, a chord note or not matched. */
+  o: (number | null)[];
+  /** The class of each note in its hand's single line, from the EXPECTED fingering (the player's own numbers where
+   *  entered, else the suggestion; none when own fingering is marked without a number): 'u' thumb under going out,
+   *  'o' 3/4 over the thumb coming back, 't' top turn, 'b' bottom turn, 'c' the figure's boundary (octave / chunk),
+   *  'l' a leap of a 5th or more, '.' plain, '-' a chord note (not in a single line). A crossing wins over the boundary
+   *  here (the trace's class means give the boundary priority). */
+  x: string;
+  /** The expected finger per note (one digit; '0' = none). */
+  f: string;
+}
+
+/** The longest per-note log kept (notes): ~2.3 KB at most; a longer take logs its first NOTE_LOG_MAX notes. */
+export const NOTE_LOG_MAX = 96;
+
 export interface TakeTrace {
-  /** 1 = before the descent slope; 2 = with `desc` (2026-11-28). */
-  v: 1 | 2;
+  /** 1 = before the descent slope; 2 = with `desc` (2026-11-28); 3 = with the per-note log `nl` (2026-11-28). */
+  v: 1 | 2 | 3;
   id: string;
   fam: string;
   at: string;
@@ -87,6 +123,8 @@ export interface TakeTrace {
   L?: HandTrace;
   /** Right minus left at shared onsets (ms, + = right later), going up / going down. */
   sync?: { up: number | null; down: number | null };
+  /** v3: the per-note log (MIDI keys takes only; see NoteLog). */
+  nl?: NoteLog;
 }
 
 const r1 = (x: number) => Math.round(x * 10) / 10;
@@ -131,7 +169,7 @@ const classedKind = (kind: string | undefined) => kind === 'scale' || /^arp-/.te
 export const isSwing = (drill: Drill): boolean => !!drill.spec.swing || drill.swingRatio !== undefined || !!drill.goal?.bass?.swing || drill.notes.some((n) => n.swing);
 
 /** One take's trace, or null when there is too little to say (fewer than 8 matched notes, free time, no timing). */
-export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; /** R5: not comparable (kept, never pooled or uploaded) */ nc?: boolean; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean }): TakeTrace | null {
+export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; /** R5: not comparable (kept, never pooled or uploaded) */ nc?: boolean; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean; /** the player's own finger numbers per note index (0 = not entered), for the per-note log's expected fingering */ ownFingers?: number[] }): TakeTrace | null {
   if (drill.untimed || o.kind === 'free') return null;
   const per = m.perNote ?? [];
   // the written single notes of each hand (no other written note of the same hand at the same beat), in score order:
@@ -403,8 +441,10 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
     (d > 0 ? ups : downs).push(p.dev - q.dev);
   });
   if (ups.length >= 3 || downs.length >= 3) sync = { up: ups.length >= 3 ? r1(mean(ups)) : null, down: downs.length >= 3 ? r1(mean(downs)) : null };
+  // v3: the per-note log — MIDI keys takes only (a piano take, comparable); never a microphone, guitar / bass or nc take
+  const nl = o.src === 'midi' && o.piano !== false && !o.nc ? noteLog(per, lead, o.ownFingering ? (o.ownFingers ?? []) : null) : undefined;
   return {
-    v: 2,
+    v: 3,
     id: drill.itemId,
     fam: drill.spec.family,
     at: o.at,
@@ -422,7 +462,67 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
     ...(R ? { R } : {}),
     ...(L ? { L } : {}),
     ...(sync ? { sync } : {}),
+    ...(nl ? { nl } : {}),
   };
+}
+
+/**
+ * The per-note log (NoteLog) of one take (`perNote`): every written note of a hand, in score order, at most
+ * NOTE_LOG_MAX. `own` = the player's own numbers by note index when the item is marked own fingering (null = the
+ * suggestion is the expected fingering). `perNote[i]` is `drill.notes[i]` (analyze.ts), so the index is the note's. Pure.
+ */
+export function noteLog(per: NoteResult[], lead: number, own: number[] | null): NoteLog | undefined {
+  const idx = per.map((_, i) => i).filter((i) => per[i].exp.hand === 'R' || per[i].exp.hand === 'L');
+  if (!idx.length) return undefined;
+  const finger = (i: number): number => (own ? (own[i] ?? 0) : (per[i].exp.finger ?? 0));
+  // each hand's single line (no other written note of the hand at the same beat), by beat
+  const solo = (i: number) => !idx.some((j) => j !== i && per[j].exp.hand === per[i].exp.hand && Math.abs(per[j].exp.beat - per[i].exp.beat) < 1e-4);
+  const cls = new Map<number, string>();
+  const nextOf = new Map<number, number>();
+  for (const h of ['R', 'L'] as const) {
+    const line = idx.filter((i) => per[i].exp.hand === h && solo(i)).sort((a, b) => per[a].exp.beat - per[b].exp.beat);
+    const pitch = (k: number) => per[line[k]].exp.pitch;
+    const runBefore = (k: number, d: number) => {
+      let n = 0;
+      for (let j = k; j > 0 && Math.sign(pitch(j) - pitch(j - 1)) === d; j--) n++;
+      return n;
+    };
+    const boundary = line.length ? (((pitch(0) % 12) + 12) % 12) : -1;
+    line.forEach((i, k) => {
+      if (k + 1 < line.length) nextOf.set(i, line[k + 1]);
+      if (k === 0) return void cls.set(i, ((pitch(0) % 12) + 12) % 12 === boundary ? 'c' : '.');
+      const p = pitch(k);
+      const prev = per[line[k - 1]].exp;
+      const next = k + 1 < line.length ? per[line[k + 1]].exp : null;
+      if (next && p > prev.pitch && p > next.pitch && runBefore(k, 1) >= 3) return void cls.set(i, 't');
+      if (next && p < prev.pitch && p < next.pitch && runBefore(k, -1) >= 3) return void cls.set(i, 'b');
+      const fp = finger(line[k - 1]);
+      const fn = finger(i);
+      if (fp && fn && afterCrossing({ ...prev, finger: fp }, { ...per[i].exp, finger: fn })) return void cls.set(i, fn === 1 ? 'u' : 'o');
+      if ((((p % 12) + 12) % 12) === boundary) return void cls.set(i, 'c');
+      if (Math.abs(p - prev.pitch) >= 7) return void cls.set(i, 'l');
+      cls.set(i, '.');
+    });
+  }
+  const take = idx.slice(0, NOTE_LOG_MAX);
+  const int = (x: number) => Math.round(x);
+  const out: NoteLog = { h: '', b: [], e: [], p: [], d: [], v: [], o: [], x: '', f: '' };
+  for (const i of take) {
+    const r = per[i];
+    const pl = r.played;
+    out.h += r.exp.hand;
+    out.b.push(int(r.exp.beat * 12));
+    out.e.push(r.exp.pitch);
+    out.p.push(pl ? pl.pitch - r.exp.pitch : null);
+    out.d.push(pl && r.dev !== null && Number.isFinite(r.dev) && Math.abs(r.dev) < 1000 ? int(r.dev - lead) : null);
+    out.v.push(pl ? Math.max(0, Math.min(127, int(pl.vel))) : 0);
+    const nx = nextOf.get(i);
+    const npl = nx !== undefined ? per[nx].played : null;
+    out.o.push(pl && pl.off !== null && Number.isFinite(pl.off) && npl ? int(pl.off - npl.on) : null);
+    out.x += cls.get(i) ?? '-';
+    out.f += String(Math.max(0, Math.min(9, finger(i) | 0)));
+  }
+  return out;
 }
 
 // ───────────────────────────── pooling (§2.3) ─────────────────────────────
