@@ -77,6 +77,11 @@ export interface TierGuard {
    * (m_d = Σw / days, m_c = Σw / cells) instead of the raw entry count, so they stay bounded as the record grows.
    */
   weightedDeff?: boolean;
+  /**
+   * Candidate (v16 grid, NOT a default): the weighted record must span >= minDaysRecent distinct days among its entries
+   * of weight >= 1/2 (the newest `halfLife` entries), so a guard cannot pass on one or two days of recent checks.
+   */
+  minDaysRecent?: number;
 }
 /**
  * The default guard (v16; owner 2026-11-28, §17.4 question 1, option B): bar 0.5, P >= 0.9, half-life 24 checks,
@@ -103,6 +108,7 @@ export function tierGuardOk(checks: CountingCheck[], lo: number, t: number, g: T
 function guardRecordOk(w: CountingCheck[], g: TierGuard): boolean {
   if (w.length < g.minChecks) return false;
   if (g.minDays && new Set(w.map((c) => c.day)).size < g.minDays) return false;
+  if (g.minDaysRecent && new Set(w.slice(Math.max(0, w.length - g.halfLife)).map((c) => c.day)).size < g.minDaysRecent) return false;
   let s = 0;
   let f = 0;
   w.forEach((c, i) => {
