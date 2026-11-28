@@ -26,9 +26,10 @@ const markSent = (at: string) => {
   }
 };
 
-/** The traces after `since` (by time), oldest first. Pure. */
+/** The traces after `since` (by time), oldest first; never a not-comparable take (SPEC-INPUT-SOURCE R5: a microphone
+ *  take where MIDI was expected says nothing about the player's timing). Pure. */
 export function unsent(list: TakeTrace[], since: string): TakeTrace[] {
-  return list.filter((t) => t.at > since).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  return list.filter((t) => t.at > since && !t.nc).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
 }
 
 /** Send the traces not sent yet (a calibration account only). Resolves to how many the server took. */

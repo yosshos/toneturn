@@ -259,8 +259,12 @@ export interface Settings {
   timedScoring: boolean | null;
   /** First time the app was used on this device (ISO). */
   firstUseAt: string | null;
-  /** Answer and "sing" with a MIDI keyboard instead of the voice. */
+  /** Answer and "sing" with a MIDI keyboard instead of the voice. Since SPEC-INPUT-SOURCE (0.146) the stored value is
+   *  only the source of the one-time migration to `midiPref`; the value the screens see is the LIVE one (App: MIDI in use). */
   midiInput?: boolean;
+  /** SPEC-INPUT-SOURCE R1: auto (MIDI when a keyboard is connected, else the mic; the default), MIDI only, mic only.
+   *  This device only (never synced). */
+  midiPref?: import('../speech/inputSource').MidiPref;
   /** Settings audit (0.41): MIDI device (null = all), octave shift for small keyboards, inverted sustain pedal. */
   midiDevice?: string | null;
   midiOctave?: number;
@@ -528,7 +532,7 @@ export interface Settings {
 export const DEVICE_SETTINGS: readonly (keyof Settings)[] = [
   'voiceConsent', 'keepAwake', 'voices', 'haptics', 'textScale', 'volume',
   'tapLatencyMs', 'midiLatencyMs', 'midiBiasMs', 'micLatencyMs', 'drillCal', 'audioLatency', 'soundQuality', 'pianoDetail',
-  'midiInput', 'midiDevice', 'midiOctave', 'midiPedalInvert', 'midiGuitarChannels', 'midiBendRange', 'midiSound', 'midiSoundAsked', 'midiVolume', 'midiCurve',
+  'midiInput', 'midiPref', 'midiDevice', 'midiOctave', 'midiPedalInvert', 'midiGuitarChannels', 'midiBendRange', 'midiSound', 'midiSoundAsked', 'midiVolume', 'midiCurve',
   'audioOutput', 'computerKeys', 'micDeviceId', 'headphones', 'drumKit', 'perDevice',
 ];
 
@@ -597,7 +601,14 @@ export function migrateSettings(raw: Partial<Settings> | undefined): Settings {
   if (!raw.version || raw.version < 2) {
     return { ...DEFAULT_SETTINGS, mode: raw.mode ?? DEFAULT_SETTINGS.mode, voiceConsent: raw.voiceConsent ?? false, reducedMotion: raw.reducedMotion ?? null };
   }
-  return migrateBassTuning({ ...withCourses({ ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } }) });
+  return migrateMidiPref(migrateBassTuning({ ...withCourses({ ...DEFAULT_SETTINGS, ...raw, voices: { ...DEFAULT_SETTINGS.voices, ...(raw.voices ?? {}) } }) }));
+}
+
+/** SPEC-INPUT-SOURCE §3.1: the old MIDI on/off becomes the three-way preference once (true → auto, false → mic only,
+ *  never set → auto). The old key stays as it was (read-only from now on). */
+export function migrateMidiPref(s: Settings): Settings {
+  if (s.midiPref) return s;
+  return { ...s, midiPref: s.midiInput === false ? 'mic' : 'auto' };
 }
 
 /** Is this a bass tuning id (fretboard.ts: bass, bass5, bass6, bass-dropd, bass-fretless, upright)? */

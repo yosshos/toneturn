@@ -205,7 +205,7 @@ test('Hebrew drill screen with MIDI: the staff has note heads, the device has a 
   const box = await page.locator('.drill-staff svg').first().boundingBox();
   expect(box!.height).toBeGreaterThan(30);
   expect(box!.width).toBeLessThanOrEqual(320);
-  await expect(page.locator('.input-check .ic-dev')).toContainText('מקלדת:');
+  await expect(page.locator('.input-check .ic-dev')).toContainText('MIDI:');
   await expect(page.locator('.input-check .ic-dev bdi')).toHaveText('Test Keys');
   expect(await latinLeft(page)).toEqual([]);
   await shot(page, 'keys-midi-ready-he');

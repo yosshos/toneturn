@@ -2,7 +2,7 @@
 // now-cue waits on the next note to play; the take ends by itself when every note is in (or on "Done"). Graded on the
 // notes only (rubato.ts analyzeFree).
 
-import { silentTake } from './DrillTake';
+import { silentTake, withSource } from './DrillTake';
 import { useEffect, useRef, useState } from 'react';
 import { useKeptTakes } from './recKeep';
 import { analyzeFree, freeProgress } from '../engine/drills/rubato';
@@ -10,7 +10,8 @@ import { captureOptsFor, detectOnsets, onsetOptsFor, type GFrame } from '../engi
 import { isGuitarDrill } from '../engine/drills/events';
 import type { Drill, DrillCalibration, PlayedNote, TakeMetrics } from '../engine/drills/types';
 import { midi } from '../speech/midi';
-import { takeUsesMidi } from '../speech/guitarInput';
+import { inputState, watchMidiLoss } from '../speech/inputSource';
+import { InputSourceChip, MidiGuardLine, useInputDecision } from './InputSource';
 import { analyzeGuitarFree, guitarFreeProgress } from '../engine/drills/guitarFree';
 import { logGuitarTake } from '../engine/drills/guitarCalib';
 import { bendTrace, placeMidiGuitar, type BendEvent, type ChannelNote } from '../engine/midiGuitar';
@@ -42,12 +43,20 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   // Input check: free time has no first-note time, so the watchdog gives the player 2 s to begin, then its usual wait.
   const [armAt, setArmAt] = useState(0);
   // B7: a guitar item listens to MIDI unless the player chose the microphone (DrillTake says which, and switches).
-  const byMidi = takeUsesMidi(drill);
+  // SPEC-INPUT-SOURCE: the one input decision, live; R3 the expected keyboard; R4 a keyboard lost mid-take.
+  const input = useInputDecision(drill);
+  const byMidi = input.src === 'midi';
+  const [lostMidi, setLostMidi] = useState(false);
+  const [, setMicPick] = useState(0);
+  useEffect(() => {
+    if (byMidi) setLostMidi(false);
+  }, [byMidi]);
+  const midiMissing = input.blocked || (lostMidi && !byMidi && !inputState().sessionMic);
   const checkMode = byMidi ? 'midi' : 'mic';
   const stop = useRef<(() => void) | null>(null);
   useEffect(() => () => stop.current?.(), []);
   const start = async () => {
-    if (on) return;
+    if (on || midiMissing) return;
     brief?.onReady?.();
     await piano.unlock();
     setOn(true);
@@ -70,6 +79,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       finished = true;
       abort.abort();
       offMidi();
+      offLost?.();
       offBend?.();
       window.clearInterval(tick);
       setOn(false);
@@ -78,11 +88,11 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       if (silentTake(drill, played)) return setSilent(true);
       setSilent(false);
       // (voice leading and own-chord items keep their own graders: any good voicing counts)
-      if (!guitar || drill.goal.vl || drill.goal.ct) return onDone(analyzeFree(drill, played), played);
+      if (!guitar || drill.goal.vl || drill.goal.ct) return onDone(withSource(analyzeFree(drill, played), input.src, input.notComparable), played);
       // B5: a guitar take in free time keeps the guitar checks (strums, unclear onsets, bends) — guitarFree.ts.
       const gm = analyzeGuitarFree(drill, played, byMidi ? [] : frames, byMidi && bends.length ? { pitchTrace: bendTrace(chNotes, bends) } : {});
       logGuitarTake(drill, 0, gm, { input: byMidi ? 'midi' : 'mic', free: true });
-      onDone(gm, played);
+      onDone(withSource(gm, input.src, false), played);
     };
     stop.current = () => {
       finished = true;
@@ -91,7 +101,19 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       offBend?.();
       window.clearInterval(tick);
     };
+    // R4: the keyboard in use disconnects — the take ends uncounted (not graded, stored or uploaded)
+    const offLost = byMidi && input.device
+      ? watchMidiLoss(midi, input.device, () => {
+          if (finished) return;
+          stop.current?.();
+          setOn(false);
+          onBeat?.(-1);
+          setLostMidi(true);
+        })
+      : null;
     const offMidi = midi.onNote((m, isOn, at, vel, ch = 0) => {
+      // a microphone take never mixes in a connected keyboard's notes
+      if (!byMidi) return;
       const t = at - zero - cal.latencyMs;
       if (isOn) {
         const n: PlayedNote = { pitch: m, on: t, off: null, vel };
@@ -164,6 +186,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       finished = true;
       abort.abort();
       offMidi();
+      offLost?.();
       offBend?.();
       window.clearInterval(tick);
     };
@@ -172,9 +195,9 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   const doneRef = useRef<(() => void) | null>(null);
   const briefOpen = !!brief?.open;
   // An open brief: a note or key is Ready only after a reading moment (the free take then starts on it).
-  useAnyNote(briefOpen && !on, () => void start(), BRIEF_ARM_MS);
+  useAnyNote(briefOpen && !on && !midiMissing, () => void start(), BRIEF_ARM_MS);
   useEffect(() => {
-    if (autoStart && !briefOpen) void start();
+    if (autoStart && !briefOpen && !midiMissing) void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -189,6 +212,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       )}
       {on && <InputWatchdog lang={lang} mode={checkMode} arm={armAt ? { start: armAt, due: armAt + 2000 } : null} />}
       {!on && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
+      {!on && (midiMissing ? <MidiGuardLine lang={lang} expected={inputState().expected} lost={lostMidi} onMic={() => (setLostMidi(false), setMicPick((x) => x + 1))} /> : input.reason !== 'sung' && !isGuitarDrill(drill) && !byMidi && <InputSourceChip d={input} lang={lang} />)}
       {on ? (
         <button className="btn primary" onClick={() => doneRef.current?.()} data-rubato-done="1">
           {tx.done}
@@ -196,7 +220,7 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       ) : (
         <div className="take-start">
           {hear && <HearButton drill={drill} bpm={drill.startBpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
-          <button className="btn mega" onClick={() => void start()} data-rubato-start="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})}>
+          <button className="btn mega" onClick={() => void start()} disabled={midiMissing} data-rubato-start="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})}>
             <Icon k="play" /> {briefOpen ? (lang === 'he' ? 'מוכנים' : 'Ready') : tx.play}
           </button>
         </div>

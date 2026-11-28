@@ -54,6 +54,9 @@ export interface TakeTrace {
   bpm: number;
   ioi: number;
   src: 'midi' | 'mic';
+  /** SPEC-INPUT-SOURCE R5: a microphone take on a keys item that expects MIDI — kept on the device, never pooled, never
+   *  uploaded for calibration. */
+  nc?: boolean;
   /** Not a piano take (guitar / bass over MIDI or mic): recorded for calibration, never pooled (§2.5). */
   other?: boolean;
   kind: TakeKind;
@@ -114,7 +117,7 @@ const classedKind = (kind: string | undefined) => kind === 'scale' || /^arp-/.te
 export const isSwing = (drill: Drill): boolean => !!drill.spec.swing || drill.swingRatio !== undefined || !!drill.goal?.bass?.swing || drill.notes.some((n) => n.swing);
 
 /** One take's trace, or null when there is too little to say (fewer than 8 matched notes, free time, no timing). */
-export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean }): TakeTrace | null {
+export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; /** R5: not comparable (kept, never pooled or uploaded) */ nc?: boolean; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean }): TakeTrace | null {
   if (drill.untimed || o.kind === 'free') return null;
   const per = m.perNote ?? [];
   // the written single notes of each hand (no other written note of the same hand at the same beat), in score order:
@@ -365,6 +368,7 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
     bpm: Math.round(60000 / msPerBeat),
     ioi,
     src: o.src,
+    ...(o.nc ? { nc: true } : {}),
     ...(o.piano === false ? { other: true } : {}),
     kind: o.kind,
     verdict: m.verdict,
@@ -432,7 +436,7 @@ function phrase(cell: string, m: number, both: boolean): T2 {
 export const NOTHING: T2 = { en: 'Nothing consistent today: steady playing.', he: 'שום דבר עקבי היום: נגינה יציבה.' };
 
 /** Takes whose tendencies count (§2.3): an eligible kind, clean or almost, wired MIDI (§2.5). */
-export const eligible = (t: TakeTrace) => TAKE_KIND[t.kind].tendencies && t.verdict !== 'not' && t.src === 'midi' && !t.other;
+export const eligible = (t: TakeTrace) => TAKE_KIND[t.kind].tendencies && t.verdict !== 'not' && t.src === 'midi' && !t.other && !t.nc;
 
 /**
  * The strongest tendency over a session's takes (§2.3, §4.3), or null: ≥ POOL_MIN eligible takes, the cell present in

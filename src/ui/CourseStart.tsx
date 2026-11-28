@@ -1,6 +1,7 @@
 // How a course starts (docs/SPEC-COURSE-START.md): the welcome card, the instrument check as a musical moment, the
 // measured first win with the three next choices — and the small cards Home and Path show around it (the first-run
 // hero "Start: <taste>", the level-test offer, the first-week card, the goal line). One phone screen each, no emoji.
+import { midiOnPatch } from '../speech/inputSource';
 import { useEffect, useRef, useState } from 'react';
 import { courseOf, type CourseId } from '../engine/courses';
 import { LADDER, PERSONAL_GOALS, PROMISE, goalById, goalProgress, rungOf, tasteFor, type CourseStartState, type SelfReport, type Stage, type TasteDef } from '../engine/courseStart';
@@ -248,7 +249,7 @@ export function CourseSetup({ course, lang, settings, onSettings, onDone, onBack
       <main className="onboarding cs-screen cs-setup" data-course-start="setup" data-cs-course={course}>
         <Head lang={lang} onBack={onBack} step={1} of={3} />
         {/* The short form (three pads, no pedal / velocity steps); the kit card finishes it later. */}
-        <KitSetup quick lang={lang} kit={settings.drumKit} latency={settings} onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : { midiInput: true }) })} onLatency={(p) => onSettings(p)} onDone={() => onDone(false)} />
+        <KitSetup quick lang={lang} kit={settings.drumKit} latency={settings} onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : midiOnPatch()) })} onLatency={(p) => onSettings(p)} onDone={() => onDone(false)} />
         {skip}
       </main>
     );
@@ -262,7 +263,7 @@ function PlayCheck({ lang, course, onSettings, onDone, onBack, skip }: { lang: L
   const [heard, setHeard] = useState<number | null>(null);
   const { live, err } = useListen(on && heard === null, { midiFirst: course === 'keys', fft: tx.fft, minHz: tx.minHz, sim: tx.sim }, (m, via) => {
     setHeard(m);
-    if (via === 'midi') onSettings({ midiInput: true });
+    if (via === 'midi') onSettings(midiOnPatch());
     const root = Math.round(m);
     // The answer: a chord on the note (keys), the band's power chord (strings), Toni's echo (voice).
     if (course === 'keys') chordOn(root < 48 ? root + 12 : root, [0, 4, 7, 12]);

@@ -92,6 +92,11 @@ export class MidiInput {
     return typeof navigator !== 'undefined' && 'requestMIDIAccess' in navigator;
   }
 
+  /** MIDI access was granted and is live (SPEC-INPUT-SOURCE R1: enabled at start-up only when already granted). */
+  get enabled() {
+    return !!this.access;
+  }
+
   /** Ask for MIDI access (no SysEx). Resolves to the connected input names. */
   async enable(): Promise<string[]> {
     if (!this.supported) throw new Error('unsupported');

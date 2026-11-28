@@ -1,5 +1,6 @@
 // Composition root: real browser adapters, or the labelled simulator (?sim=1).
 
+import { keysByMidi } from '../speech/inputSource';
 import { MidiPitchCapture } from '../speech/midi';
 import type { PitchCapture } from '../game/adapters';
 import { PianoEngine } from '../audio/piano';
@@ -62,12 +63,8 @@ const SIM_SCRIPT = (say: (() => string | null) | null): ScriptStep[] => {
   return [right, wrong, ...Array.from({ length: 40 }, () => right)];
 };
 
-/** Set from Settings: singing tasks capture from a MIDI keyboard instead of the microphone. */
-let midiEnabled = false;
-export const setMidiEnabled = (on: boolean) => {
-  midiEnabled = on;
-};
-export const isMidiEnabled = () => midiEnabled;
+/** Played answers capture from a MIDI keyboard instead of the microphone: the one input decision (SPEC-INPUT-SOURCE). */
+export const isMidiEnabled = () => keysByMidi();
 
 /** MIDI for played answers; the microphone whenever the task is to sing (a MIDI keyboard can't sing — owner 2026-11-13). */
 class RoutedPitch implements PitchCapture {
@@ -75,7 +72,7 @@ class RoutedPitch implements PitchCapture {
   private mic = new BrowserPitchCapture();
   private midi = new MidiPitchCapture();
   sing(opts: Parameters<PitchCapture['sing']>[0]) {
-    return (midiEnabled && !this.sung() ? this.midi : this.mic).sing(opts);
+    return (keysByMidi() && !this.sung() ? this.midi : this.mic).sing(opts);
   }
 }
 
@@ -102,5 +99,5 @@ export function makeAdapters(expected: () => Answer, targetMidi: () => number, t
 }
 
 export function makeGameAdapters(): GameAdapters {
-  return { audio: piano, tts, pitch: midiEnabled ? new MidiPitchCapture() : new BrowserPitchCapture(), knock: new BrowserKnockInput(), clock: realClock, simulated: SIMULATED };
+  return { audio: piano, tts, pitch: keysByMidi() ? new MidiPitchCapture() : new BrowserPitchCapture(), knock: new BrowserKnockInput(), clock: realClock, simulated: SIMULATED };
 }

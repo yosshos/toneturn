@@ -30,6 +30,8 @@ import { APP_THEMES, appearanceOf } from './themes';
 import { GT } from '../i18n/guitarText';
 import { baseOf, LOCALES, offeredLocales, type LocaleCode } from '../i18n/locales';
 import { midi } from '../speech/midi';
+import { inputStatusText, midiPrefOf, type MidiPref } from '../speech/inputSource';
+import { useInputDecision } from './InputSource';
 import { LatencyCalibrate } from './LatencyCalibrate';
 import { AudioOutputPicker } from './AudioOutput';
 import { LiveLatencySetting, MidiIosNote, SoundQualitySetting } from './SoundQuality';
@@ -315,6 +317,9 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const lang = s.uiLang;
   const G = GROUPS;
   const wide = useWide();
+  // SPEC-INPUT-SOURCE R2: every place that names the input says what is connected now, never the setting's label
+  const inputNow = useInputDecision('keys');
+  const inputLine = inputStatusText(inputNow, lang === 'he' ? 'he' : 'en');
   const hashId = typeof location !== 'undefined' ? /^#\/settings\/(\w+)/.exec(location.hash)?.[1] : undefined;
   const [active, setActive] = useState<string>(hashId ?? '');
   const [query, setQuery] = useState('');
@@ -332,7 +337,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
     { id: 'language', title: G.language.title[lang], sub: G.language.sub[lang] },
     { id: 'learning', title: G.learning.title[lang], sub: G.learning.sub[lang] },
     { id: 'instrument', title: t.instrumentTitle, sub: G.instrument[lang] },
-    { id: 'midi', title: G.midi.title[lang], sub: (s.midiInput ? G.midi.on : G.midi.off)[lang] },
+    { id: 'midi', title: G.midi.title[lang], sub: inputLine },
     { id: 'input', title: G.input.title[lang], sub: G.input.sub[lang] },
     { id: 'sound', title: G.sound.title[lang], sub: G.sound.sub[lang] },
     { id: 'display', title: G.display.title[lang], sub: G.display.sub[lang] },
@@ -347,7 +352,7 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
   const SECS: { id: string; groups: string[]; title: string; values: string; icon: string; color: string }[] = [
     { id: 'me', groups: ['account', 'privacy', 'language'], title: he ? 'אני ושפה' : 'Me & language', values: [s.nickname, he ? (s.uiLang === 'he' ? 'עברית' : 'אנגלית') : s.uiLang === 'he' ? 'Hebrew' : 'English'].filter(Boolean).join(' · '), icon: 'account', color: '#A78BFA' },
     { id: 'learn', groups: ['learning'], title: he ? 'הלימוד' : 'Learning', values: he ? `יעד יומי ${s.dailyGoal ?? 30} XP` : `Daily goal ${s.dailyGoal ?? 30} XP`, icon: 'learning', color: '#12C9B4' },
-    { id: 'inst', groups: ['instrument', 'midi', 'input'], title: he ? 'הכלי והקלט' : 'Instrument & input', values: `${instName} · MIDI ${s.midiInput ? (he ? 'פעיל' : 'on') : he ? 'כבוי' : 'off'}`, icon: 'instrument', color: '#FFD43B' },
+    { id: 'inst', groups: ['instrument', 'midi', 'input'], title: he ? 'הכלי והקלט' : 'Instrument & input', values: `${instName} · ${inputLine}`, icon: 'instrument', color: '#FFD43B' },
     { id: 'sound', groups: ['sound'], title: he ? 'צליל' : 'Sound', values: `${he ? 'עוצמה' : 'Volume'} ${Math.round((s.volume ?? 0.9) * 100)}%`, icon: 'sound', color: '#FF5FA2' },
     { id: 'display', groups: ['display'], title: he ? 'תצוגה' : 'Display', values: apName, icon: 'display', color: '#3AB8FF' },
   ];
@@ -664,8 +669,8 @@ export function SettingsScreen({ t, settings: s, onChange, onBack, account, onIn
           </section>
         </Group>
 
-        <Group id="midi" icon={<SetIcon k="midi" />} title={G.midi.title[lang]} sub={s.midiInput ? G.midi.on[lang] : G.midi.off[lang]}>
-          <MidiPanel t={t} lang={lang} on={!!s.midiInput} onChange={(midiInput) => onChange({ midiInput })} naming={uiNaming} s={s} onSettings={onChange} />
+        <Group id="midi" icon={<SetIcon k="midi" />} title={G.midi.title[lang]} sub={inputLine}>
+          <MidiPanel t={t} lang={lang} pref={midiPrefOf(s)} onPref={(midiPref) => onChange({ midiPref })} naming={uiNaming} s={s} onSettings={onChange} />
           {s.midiInput && <LatencyCalibrate lang={lang} values={s} onSave={(p) => onChange(p)} sources={['midi']} initial="midi" />}
           <details className="set-howto" data-midi-howto="1">
             <summary>{lang === 'he' ? 'איך מחברים מקלדת (כבל / בלוטות׳)' : 'How to connect a keyboard (cable / Bluetooth)'}</summary>
@@ -1009,8 +1014,10 @@ async function downloadMyData() {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: Strings; lang: 'en' | 'he'; on: boolean; onChange: (on: boolean) => void; naming: ReturnType<typeof namingFor>; s: Settings; onSettings: (p: Partial<Settings>) => void }) {
+function MidiPanel({ t, lang, pref, onPref, naming, s, onSettings }: { t: Strings; lang: 'en' | 'he'; pref: MidiPref; onPref: (p: MidiPref) => void; naming: ReturnType<typeof namingFor>; s: Settings; onSettings: (p: Partial<Settings>) => void }) {
   const he = lang === 'he';
+  // SPEC-INPUT-SOURCE R1: auto (MIDI when connected, else the mic), MIDI only, mic only — this device only
+  const on = pref !== 'mic';
   const [status, setStatus] = useState<string | null>(null);
   const [devices, setDevices] = useState<string[]>(midi.devices);
   const [last, setLast] = useState<{ note: number; vel: number } | null>(null);
@@ -1022,7 +1029,9 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
   }, []);
   useEffect(() => {
     if (!on) return;
-    if (midi.supported) void midi.enable().then(setDevices, () => setStatus(t.midiUnsupported));
+    // never a permission prompt without a tap (R1): the list shows what an already granted MIDI sees
+    if (!midi.supported) setStatus(t.midiUnsupported);
+    else if (midi.enabled) setDevices([...midi.devices]);
     const offS = midi.onState(() => setDevices([...midi.devices]));
     const offN = midi.onNote((note, down, _at, vel) => {
       if (down) setLast({ note, vel });
@@ -1036,28 +1045,29 @@ function MidiPanel({ t, lang, on, onChange, naming, s, onSettings }: { t: String
       offC();
     };
   }, [on, t.midiUnsupported]);
-  const turnOn = async () => {
+  const turnOn = async (v: MidiPref) => {
     void piano.unlock().catch(() => {}); // inside the tap: the keys can sound at once
+    onPref(v);
     if (!midi.supported) return setStatus(t.midiUnsupported);
     try {
-      setDevices(await midi.enable());
+      setDevices([...(await midi.enable())]);
       setStatus(null);
-      onChange(true);
     } catch {
       setStatus(t.midiUnsupported);
     }
   };
   return (
     <section className="set-card midi-setting" data-midi-panel="1">
-      <Seg
+      <Seg<MidiPref>
         label={t.midiKeyboard}
-        hint={t.midiHint}
-        value={on ? 'on' : 'off'}
+        hint={pref === 'auto' ? (he ? 'אוטומטי: מקלדת מחוברת משמשת לתרגילים, ובלעדיה המיקרופון.' : 'Auto: a connected keyboard is used for takes, the microphone when none is.') : t.midiHint}
+        value={pref}
         options={[
-          ['off', t.off],
-          ['on', t.on],
+          ['auto', he ? 'אוטומטי' : 'Auto'],
+          ['midi', he ? <><bdi>MIDI</bdi> בלבד</> : 'MIDI only'],
+          ['mic', he ? 'מיקרופון בלבד' : 'Mic only'],
         ]}
-        onChange={(v) => (v === 'on' ? void turnOn() : onChange(false))}
+        onChange={(v) => (v === 'mic' ? onPref('mic') : void turnOn(v))}
       />
       <label className="toggle-row">
         <input type="checkbox" checked={!!s.computerKeys} onChange={(e) => onSettings({ computerKeys: e.target.checked })} data-computer-keys="1" />

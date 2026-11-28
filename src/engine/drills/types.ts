@@ -983,6 +983,11 @@ export interface TakeMetrics {
   /** Grace notes (engine/drills/grace.ts): played / written, and the indexes (into notes) of the main notes whose graces were left out. */
   graces?: { ok: number; total: number; missed: number[] };
   verdict: Verdict;
+  /** SPEC-INPUT-SOURCE R5: the input the take listened to (absent on older records and synthetic takes). */
+  src?: 'midi' | 'mic';
+  /** R5 / R6: not comparable — a microphone take on a keys item that expects MIDI: never a counting check, never
+   *  calibration (the trace and the upload skip it). */
+  nc?: boolean;
   /** The one-line reason (worst factor), EN / HE. */
   why: { en: string; he: string };
   /** Most notes were played exactly this many semitones off (±12, ±24): the keyboard is shifted by octaves. */
