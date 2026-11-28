@@ -158,13 +158,15 @@ export interface PaperSvgProps {
   className?: string;
   /** Accessible name; without it the icon is decorative. */
   label?: string;
+  /** A wider scene's own grid (default the 48 icon grid): instrument cards, game intros, the medal. */
+  viewBox?: string;
 }
 /** One Paper icon as an <svg> on the 48 grid. */
-export function PaperSvg({ art, cut = 'full', width = 48, height, className, label }: PaperSvgProps) {
+export function PaperSvg({ art, cut = 'full', width = 48, height, className, label, viewBox = '0 0 48 48' }: PaperSvgProps) {
   return (
     <svg
       className={`pp pp-${cut}${hasMotion(art, cut) ? '' : ' pm-lift'}${className ? ` ${className}` : ''}`}
-      viewBox="0 0 48 48"
+      viewBox={viewBox}
       width={width}
       height={height ?? width}
       style={paperVars(art)}

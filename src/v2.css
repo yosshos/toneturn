@@ -1342,6 +1342,7 @@
 :root[data-theme] .trio-v2 .trio-heads { animation: v2-pop 0.2s ease-out both; }
 :root[data-theme='dark'] .trio-v2 g[stroke] { stroke: #fff; }
 :root[data-theme='dark'] .trio-v2 .arc { stroke: #fff; }
+:root[data-theme='dark'] .trio-v2 .trio-staff { fill: #fff; }
 @keyframes v2-pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
 :root[data-theme] .trio-v2 .trio-heads, :root[data-theme] .trio-v2 .trio-badges { transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) { :root[data-theme] .trio-v2 * { animation: none !important; } }
