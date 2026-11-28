@@ -153,12 +153,28 @@ export function stretchTarget(level: LevelDef, drill: Drill, items: Record<strin
   return r2(Math.max(own, Math.min(SPEED_NPS[SPEED_NPS.length - 1], best * MAX_JUMP)));
 }
 
-/** One metronome mark up from a pulse (notes per second at note value `per`), never more than 10 % (owner 2026-11-26: the
- *  challenge rises a little after every clean take, in every stage). */
+/** One metronome mark up from a pulse (notes per second at note value `per`) (owner 2026-11-26: the challenge rises a
+ *  little after every clean take, in every stage). Always a whole mark: at fast tempi stepCap is smaller than one mark
+ *  (sixteenths from ♩120), and an off-grid pulse was snapped back down to the same mark - the climb stalled. Above the
+ *  top mark: the top mark (the metronome's ceiling). */
 export function markUp(nps: number, per: number): number {
-  const bpm = (nps * 60) / per;
-  const next = MAELZEL.find((m) => m > bpm + 0.5) ?? bpm * 1.03;
-  return r2(Math.min((next * per) / 60, nps * (1 + stepCap(nps))));
+  const next = markAbove((nps * 60) / per);
+  return next === undefined ? r2((MAELZEL[MAELZEL.length - 1] * per) / 60) : r2((next * per) / 60);
+}
+
+/** The next metronome mark above a ♩ (undefined at or above the top mark: the metronome's ceiling). */
+export function markAbove(bpm: number): number | undefined {
+  return MAELZEL.find((m) => m > bpm + 0.5);
+}
+
+/**
+ * The fastest pulse (notes per second) a clean take at `at` may lead to at note value `per`: stepCap(at) above it, but
+ * never less than the next metronome mark (owner 2026-11-26: every clean take rises; at fast tempi one mark is more than
+ * stepCap, and a cap under one mark held the take at the same tempo). Slow tempi keep stepCap (the marks are fine there).
+ */
+export function upLimit(at: number, per: number): number {
+  const next = markAbove((at * 60) / per);
+  return Math.max(at * (1 + stepCap(at)), next === undefined ? 0 : (next * per) / 60);
 }
 
 /**

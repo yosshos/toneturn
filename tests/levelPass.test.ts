@@ -52,13 +52,18 @@ describe('the ladder with a target tempo', () => {
     expect(itemPass(st, d.startBpm, target).target).toBe(true);
   });
 
-  it('"Slower" takes and takes under the goal never count', () => {
+  it('takes under the goal never count; a "Slower" take counts only in the pass band (SPEC-HOLISTIC-2 §1.6 V1)', () => {
     let st: ItemState = { ...newItem(d), goalBpm: target };
     st = applyTake(st, take('clean'), 30, '2026-11-07T10:00:00Z', DEFAULT_DRILL_SETTINGS, { targetBpm: target }).state;
+    expect(st.passLog ?? []).toHaveLength(0);
+    // 2026-11-28: a clean take at ≥ 95 % of the target counts whatever the goal and "Slower" say
     st = applyTake(st, take('clean'), target, '2026-11-07T10:01:00Z', DEFAULT_DRILL_SETTINGS, { slower: true }).state;
     expect(st.cleanBpm).toBe(target);
-    expect(st.passLog ?? []).toHaveLength(0);
-    expect(itemPass(st, d.startBpm, target)).toMatchObject({ start: false, target: false });
+    expect(st.passLog ?? []).toHaveLength(1);
+    expect(itemPass(st, d.startBpm, target)).toMatchObject({ start: true, target: false });
+    // under the band, "Slower" still keeps a take at the goal out
+    const low = applyTake({ ...newItem(d), goalBpm: 40 }, take('clean'), 40, '2026-11-07T10:02:00Z', DEFAULT_DRILL_SETTINGS, { targetBpm: target, slower: true }).state;
+    expect(low.passLog ?? []).toHaveLength(0);
   });
 
   it('one clean take at 30 bpm gives 0 stars; 3 clean at the target on 2 days pass the item', () => {
