@@ -53,6 +53,18 @@ const CLEAN_IN_A_ROW = 3;
 const FAILS_TO_LOWER = 2;
 const MIN_BPM = 30;
 
+/**
+ * A take's ♩ as a whole number (the history and the pass log keep whole ♩): rounded, but a ♩ inside the pass band
+ * (≥ PASS_SHARE × the target) never rounds out of it - a stage-target take at ♩160 triplets of an eighths item is ♩53.33,
+ * which rounded to 53 under a band of 53.01 and never counted.
+ */
+export function wholeBpm(bpm: number, target = 0): number {
+  const r = Math.round(bpm);
+  const band = PASS_SHARE * target;
+  if (target > 0 && bpm >= band - 1e-9 && r < band - 1e-9) return Math.ceil(band - 1e-9);
+  return r;
+}
+
 /** One ladder step: ≈ 4 % of the tempo, whole bpm, at least +2. */
 export function ladderStep(bpm: number): number {
   return Math.max(2, Math.round(bpm * 0.04));
@@ -125,7 +137,7 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
   s.last = at;
   s.channels = tallyChannel(s.channels, opts.channel ?? 'page-known', metrics.verdict === 'clean', bpm);
   if (opts.activeMs && opts.activeMs > 0) s.activeMs = (s.activeMs ?? 0) + Math.round(opts.activeMs);
-  const B = Math.round(bpm);
+  const B = wholeBpm(bpm, target);
   const goal0 = s.goalBpm;
   const clean = metrics.verdict === 'clean';
   const atGoal = bpm >= goal0 - 0.5;
@@ -138,9 +150,10 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
       if (B >= lastH.bpm) s.history[s.history.length - 1] = { at, bpm: B, cv: cv ?? 0 };
     } else s.history.push({ at, bpm: B, cv: cv ?? 0 });
     if (s.history.length > 200) s.history.splice(0, s.history.length - 200);
-    // A4: only takes at the goal (or above, or already at the level's target), never after "Slower", count.
+    // A4: only takes at the goal (never after "Slower"), or in the level's pass band (≥ PASS_SHARE × the target, whatever
+    // the stored goal and "Slower" say: SPEC-HOLISTIC-2 §1.6 V1 counts every clean take there), count.
     // SPEC-INPUT-SOURCE R5: a microphone take where MIDI is expected is not comparable — never a counting take.
-    if ((atGoal || (target && bpm >= PASS_SHARE * target - 1e-9)) && !opts.slower && !metrics.nc) {
+    if (((atGoal && !opts.slower) || (target && bpm >= PASS_SHARE * target - 1e-9)) && !metrics.nc) {
       s.passLog!.push({ at, bpm: B });
       if (s.passLog!.length > 60) s.passLog!.splice(0, s.passLog!.length - 60);
     }

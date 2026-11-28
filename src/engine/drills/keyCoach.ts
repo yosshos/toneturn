@@ -11,8 +11,9 @@ import type { Drill, DrillSettings, ItemState, TakeMetrics } from './types';
 import type { FamilyDef, LevelDef } from './generate';
 import { bandOfBpm, notesPerBeat, thresholds } from './analyze';
 import { hasRubato } from './rubato';
-import { newItem } from './ladder';
-import { bestCleanNps, CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, MAELZEL, markStage, markUp, passedElsewhere, playOf, SHARE, snapDown, snapNear, stageDrill, stagePassed, stepCap, stretchTarget, subDrill, targetNps, withStage, type StageInfo } from './stages';
+import { newItem, wholeBpm } from './ladder';
+import { itemTargetBpm } from './plan';
+import { bestCleanNps, CLOSING_MIN, comfortKey, comfortNps, FRESH_NPS, kindClean, kindOf, kindPlayed, lastCleanNps, MAELZEL, markStage, markUp, passedElsewhere, playOf, SHARE, snapDown, snapNear, stageDrill, stagePassed, stepCap, stretchTarget, subDrill, targetNps, upLimit, withStage, type StageInfo } from './stages';
 import { line, PHRASES, tempoText, type CoachLine, type LinePart, type PhraseId, type T2 } from './coachPhrases';
 import type { CoachBackground, CoachNext, CoachState, CoachTake, FreeOk } from './coach';
 import { easyTake } from './coach';
@@ -184,7 +185,9 @@ export function gradedUp(at: number, per: number, q: number, o: { best?: number;
   if (o.target && want >= o.target - 1e-9) return o.target;
   const cur = (at * 60) / per;
   const top = (want * 60) / per;
-  const cap = (at * (1 + capPct) * 60) / per;
+  // never under one mark (upLimit): at fast tempi stepCap is smaller than a mark, and the off-grid pulse it gave was
+  // snapped back to the same mark by setPulse - every clean take held (sixteenths from ♩120)
+  const cap = (upLimit(at, per) * 60) / per;
   const under = MAELZEL.filter((g) => g > cur + 0.5 && g <= Math.min(top, cap) + 1e-9);
   let g = under.length ? under[under.length - 1] : MAELZEL.find((x) => x > cur + 0.5);
   if (g === undefined || g > cap + 1e-9) g = Math.min(cap, cur * 1.03);
@@ -255,6 +258,17 @@ function takeDrill(fam: FamilyDef, c: CoachState): Drill {
   return h ? stageDrill({ ...l, specs: [{ ...l.specs[c.spec], hands: h }] }, 0) : stageDrill(l, c.spec);
 }
 
+/**
+ * setPulse's ♩ for a pulse (notes per second) at note value `p`: on the metronome marks (the mark at or below it), no ♩
+ * under MIN_BPM, and no faster than upLimit(last) - the step limit above the last take of the same exercise, never under
+ * one mark (a limit under one mark pulled every rise back to the same mark at fast tempi). `noCap`: no step limit.
+ */
+export function pulseBpm(nps: number, p: number, last: number, noCap = false): number {
+  let bpm = Math.max(MIN_BPM, snapDown((nps * 60) / p + 0.5));
+  if (last > 0 && !noCap) while (npsOf(bpm, p) > upLimit(last, p) + 1e-9 && gridBelow(bpm) >= MIN_BPM) bpm = gridBelow(bpm);
+  return bpm;
+}
+
 /** Set the next take's pulse (U7, U11, B2): its note value — a hand that reached eighths stays in them, never quarters again,
  *  but no ♩ under 40 (quarters then); triplets only at ♩40 or more — its ♩ on the metronome marks, never more than 10 %
  *  (nps) above the last take of the same exercise. */
@@ -267,9 +281,7 @@ function setPulse(fam: FamilyDef, c: CoachState, nps: number, per?: number, noCa
   let p = per ?? playOf(d, nps, s.sub, ks.eighths.includes(key)).per;
   if (p === 3 && (nps * 60) / 3 < MIN_BPM - 0.5) p = 2;
   if (p > 1 && s.sub && (nps * 60) / p < MIN_BPM - 0.5 && notesPerBeat(d) >= 1.99) p = (nps * 60) / 2 >= MIN_BPM - 0.5 ? 2 : 1;
-  let bpm = Math.max(MIN_BPM, snapDown((nps * 60) / p + 0.5));
-  const last = ks.lastBy[capKeyOf(d, s)] ?? 0;
-  if (last > 0 && !noCap) while (npsOf(bpm, p) > last * (1 + stepCap(last)) + 1e-9 && gridBelow(bpm) >= MIN_BPM) bpm = gridBelow(bpm);
+  const bpm = pulseBpm(nps, p, ks.lastBy[capKeyOf(d, s)] ?? 0, noCap);
   if (bpm !== ks.bpm || p !== ks.per) ks.stepTakes = 0;
   ks.per = p;
   ks.bpm = bpm;
@@ -614,7 +626,8 @@ export function ksTake(fam: FamilyDef, c: CoachState, _items: Record<string, Ite
   const base = { drill, level, demo: c.demo && c.spec === 0, kind: 'main' as const, spec: c.spec, stageInfo: s, ...(ks.probe ? { probe: true } : {}), ...(ks.chal?.pending ? { challenge: true } : {}) };
   if (ks.free && freeOk(drill) && hasRubato(drill)) return { ...base, stage: 'free', bpm: drill.startBpm };
   const nps = npsOf(ks.bpm, ks.per);
-  return { ...base, stage: null, bpm: Math.max(20, Math.round((nps * 60) / notesPerBeat(drill))), play: { per: ks.per, bpm: ks.bpm }, nps };
+  // the item's own ♩ (what the ladder logs): whole, but never rounded out of the pass band (wholeBpm)
+  return { ...base, stage: null, bpm: Math.max(20, wholeBpm((nps * 60) / notesPerBeat(drill), itemTargetBpm(drill))), play: { per: ks.per, bpm: ks.bpm }, nps };
 }
 
 /** The speed stage alternates eighths and triplet eighths (owner 2026-11-25): items in eighths, once played in eighths. */
@@ -977,7 +990,8 @@ export function ksAfter(fam: FamilyDef, c0: CoachState, take: CoachTake, m: Take
       } else if (clean && !ks.limited.includes(baseId(level))) {
         // owner 2026-11-26: a clean review take is followed by one a mark faster, not the same take again
         setPulse(fam, c, upFrom(at, per), per);
-        dir = ['faster'];
+        // at the metronome's top mark there is nowhere faster: not "faster" at the same tempo
+        dir = ks.nps > at + 1e-9 ? ['faster'] : ['again'];
         tempo = true;
       } else dir = clean ? ['again'] : ['noRush'];
     } else if (s.kind === 'coord') {

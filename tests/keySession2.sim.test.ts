@@ -499,3 +499,22 @@ describe('SPEC-CLIMB-SYNC: the graded step and the challenge take (owner 2026-11
     expect(Object.values(items).some((x) => !!x.ceil && x.ceil.nps > 2.0)).toBe(true);
   });
 });
+
+describe('fast tempi (spec review 2026-11-28): a clean take is never followed by the same tempo', () => {
+  it('an advanced player on D major, day after day: every clean take of an item rises, below its target and the top mark', () => {
+    let items: Record<string, ItemState> = {};
+    const held: string[] = [];
+    for (let day = 0; day < 4; day++) {
+      const r = run({ tier: 6, player: () => 'perfect', items, now: T0 + day * 86_400_000, root: 2 });
+      items = r.items;
+      const p = r.rows.filter((x) => x.nps > 0);
+      for (let k = 1; k < p.length; k++) {
+        const [a, b] = [p[k - 1], p[k]];
+        if (a.item !== b.item || a.code !== b.code || a.kind !== 'speed' || a.chal || b.chal || a.closing !== b.closing || a.probe) continue;
+        if ((a.bpm ?? 0) >= MAELZEL[MAELZEL.length - 1] || /Target reached|best for now/i.test(a.line + a.said)) continue;
+        if (b.nps <= a.nps + 1e-9) held.push(`day ${day} #${b.n} ${b.code} ♩${a.bpm}/${a.per} → ♩${b.bpm}/${b.per} "${a.said}"`);
+      }
+    }
+    expect(held).toEqual([]);
+  });
+});
