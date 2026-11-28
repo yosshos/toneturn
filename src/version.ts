@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.19',
+    date: '2026-11-28',
+    en: ['Fast scales keep climbing: at quick tempos (sixteenths around ♩120 and up) every clean take now rises at least one metronome mark instead of repeating the same tempo; and a clean take within 95% of the target now counts toward passing the item, as intended'],
+    he: ['סולמות מהירים ממשיכים לעלות: בטמפו גבוה (שש־עשריות סביב ♩120 ומעלה) כל ניסיון נקי עולה עכשיו לפחות שנתה אחת במטרונום במקום לחזור על אותו טמפו. וניסיון נקי בתוך 95% מהיעד נספר עכשיו כמו שצריך למעבר הפריט'],
+  },
+  {
     version: '0.145.18',
     date: '2026-11-28',
     en: ['The cursor on the staff now sits exactly on the note being played at every tempo and screen width (on wide screens with both hands it used to run ahead); triplet tempo changes stay on the beat, the cursor no longer lights a note early, and runs longer than 8 bars show all their bars'],
