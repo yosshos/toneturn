@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.16',
+    date: '2026-11-28',
+    en: ['Behind the scenes: keyboard takes now record each note in detail, so the coming fingering coach can find where a hand position breaks at speed'],
+    he: ['מאחורי הקלעים: ניסיונות במקלדת שומרים עכשיו כל צליל בפירוט, כדי שמאמן האצבוע שבדרך יוכל לזהות איפה עמדת היד נשברת במהירות'],
+  },
+  {
     version: '0.145.15',
     date: '2026-11-28',
     en: ['Your MIDI keyboard is used automatically whenever it is connected (Settings: Auto, MIDI only or microphone only, per device), the app shows which input is really listening, and if a keyboard you use is missing the exercise waits with Reconnect or Use the microphone; a keyboard unplugged mid-take ends the take without counting it; the coach now notices when the top note waits before the way down'],
