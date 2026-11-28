@@ -6,7 +6,8 @@ async function sample(page: Page) {
   await page.goto('/?sim=1#/drills');
   await page.locator('[data-drills-test]').click();
   await page.locator('[data-test-start]').click();
-  await page.getByRole('button', { name: /Play/ }).first().click();
+  // a new kind of task opens on its brief (owner 2026-11-24): Ready starts it, like Play
+  await page.getByRole('button', { name: /^(Play|Ready)/ }).first().click();
   return page.evaluate(async () => {
     const shots: { cx: number; heads: number[]; s0: number; s1: number }[] = [];
     const t0 = performance.now();

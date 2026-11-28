@@ -203,7 +203,10 @@ export function stepCap(nps: number): number {
 
 /** The same notes at another note value (eighths → quarters, 16ths → eighths, eighths → triplet eighths): every onset moved. */
 export function subDrill(drill: Drill, per: number): Drill {
-  const own = notesPerBeat(drill);
+  // notesPerBeat reads onsets rounded to 1e-4: triplets came out 3.0003 a beat, and every onset of a key-session take moved
+  // by 0.01 % more per beat (28.0028 for beat 28), off the click grid and off the score's beat lines (owner 2026-11-28)
+  const raw = notesPerBeat(drill);
+  const own = Math.abs(raw - Math.round(raw)) < 0.01 ? Math.round(raw) : raw;
   if (Math.abs(per - own) < 0.01) return drill;
   const k = own / per;
   const beats = Math.ceil(drill.beats * k);

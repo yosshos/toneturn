@@ -41,7 +41,13 @@ function onsetTable(drill: Clocked, bpm: number): { heard: number[]; written: nu
   if (!by) tables.set(drill, (by = new Map()));
   const hit = by.get(bpm);
   if (hit) return hit;
-  const ws = [...new Set(drill.notes.map((n) => Math.round(n.beat * 1e6) / 1e6))].sort((a, b) => a - b);
+  // each onset once, at the note's own beat (rounded beats left the cursor a hair before a head: off its line's first item)
+  const byKey = new Map<number, number>();
+  for (const n of drill.notes) {
+    const k = Math.round(n.beat * 1e6);
+    if (!byKey.has(k)) byKey.set(k, n.beat);
+  }
+  const ws = [...byKey.values()].sort((a, b) => a - b);
   const heard: number[] = [];
   const written: number[] = [];
   for (const w of ws) {
@@ -96,13 +102,32 @@ export function nowX(xs: number[], now: number): number | null {
   return a + (b - a) * f;
 }
 
+/** The SVG's drawing box (its viewBox) and its user-unit → screen matrix (SVGSVGElement.getScreenCTM()). */
+export type SvgFrame = { vb: { x: number; y: number; width: number; height: number }; ctm: { a: number; b: number; c: number; d: number; e: number; f: number } };
+
+/**
+ * Owner 2026-11-28 (D major, hands together: "the cursor moved faster than the notes"): where a share `x` of the drawn
+ * staff (headX / the SVG width, as `nowX` gives it) is on screen, in px from `wrapLeft`. The staff SVG is `width: 100%`
+ * with a CSS `max-height`; when the cap bites, the browser keeps the music's aspect and centres it (preserveAspectRatio
+ * meet), so the heads span less than the SVG's box. Taking `x` of the box width put the cursor up to ~90 px behind the
+ * first head and ahead of the last one on a wide screen. The SVG's own matrix maps exactly what the heads are drawn with
+ * (the viewBox, the letterbox, any crop), so the cursor lands on the drawn head whatever the CSS does.
+ */
+export function shareToPx(x: number, f: SvgFrame, wrapLeft: number): number {
+  const ux = f.vb.x + x * f.vb.width;
+  const uy = f.vb.y + f.vb.height / 2;
+  return f.ctm.a * ux + f.ctm.c * uy + f.ctm.e - wrapLeft;
+}
+
 /**
  * The fractional now-cue position from real start times: `ats` = each drawn item's start, `end` = the line's end (same
- * unit as `cur`). −1 before the first item. A note lights a hair early (20 ms-ish) so it is on the head as it sounds.
+ * unit as `cur`). −1 before the first item. A note lights `early` (same unit) ahead so it is on the head as it sounds
+ * (20 ms on a clock in seconds). A score whose beat is already computed for the frame it is seen on (DrillTake's frame
+ * lead) passes 0: in beats, 0.02 was 30 ms early at ♩40 and a third of the gap between close notes (owner 2026-11-28).
  */
-export function glidePos(ats: number[], end: number, cur: number): number {
+export function glidePos(ats: number[], end: number, cur: number, early = 0.02): number {
   let k = -1;
-  for (let i = 0; i < ats.length; i++) if (ats[i] <= cur + 0.02) k = i;
+  for (let i = 0; i < ats.length; i++) if (ats[i] <= cur + early + 1e-6) k = i;
   if (k < 0) return -1;
   const a = ats[k];
   const b = ats[k + 1] ?? end;

@@ -128,19 +128,27 @@ function NowColumn({ xs, now }: { xs: number[]; now?: number }) {
   return x === null ? null : <Playhead x={x} />;
 }
 /**
- * The playhead at a share `x` of the drawn staff. Placed against the SVG's own box, not the wrapper: the staff is often
- * narrower than its row (wide screens), and a share of the row put the line far from the notes (owner 2026-11-13).
+ * Place an overlay (the playhead, the tab's now band) at a share `x` of the drawn staff: through the SVG's own matrix
+ * (shareToPx), so it sits on the drawn heads even when a CSS height cap letterboxes the music inside the SVG's box
+ * (owner 2026-11-28). Not against the wrapper either: the staff is often narrower than its row (owner 2026-11-13).
  */
+function placeOnSvg(el: HTMLElement, x: number): void {
+  const wrap = el.parentElement;
+  const svg = wrap?.querySelector('svg');
+  if (!wrap || !svg) return;
+  const a = wrap.getBoundingClientRect();
+  const b = svg.getBoundingClientRect();
+  if (!(a.width > 0 && b.width > 0)) return;
+  const m = typeof svg.getScreenCTM === 'function' ? svg.getScreenCTM() : null;
+  const v = svg.viewBox?.baseVal;
+  if (m && v && v.width > 0) el.style.left = `${shareToPx(x, { vb: v, ctm: m }, a.left)}px`;
+  else el.style.left = `${b.left - a.left + x * b.width}px`;
+}
+/** The playhead at a share `x` of the drawn staff (placed on the drawn music: placeOnSvg). */
 export function Playhead({ x }: { x: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
-    const el = ref.current;
-    const wrap = el?.parentElement;
-    const svg = wrap?.querySelector('svg');
-    if (!el || !wrap || !svg) return;
-    const a = wrap.getBoundingClientRect();
-    const b = svg.getBoundingClientRect();
-    if (a.width > 0 && b.width > 0) el.style.left = `${b.left - a.left + x * b.width}px`;
+    if (ref.current) placeOnSvg(ref.current, x);
   });
   return <span ref={ref} className="staff-now" style={{ left: `${x * 100}%` }} aria-hidden="true" />;
 }
@@ -150,13 +158,7 @@ function TabNow({ xs, now }: { xs: number[]; now?: number }) {
   const k = now === undefined || !(now >= 0) || xs.length < 2 ? -1 : Math.min(Math.floor(now + 1e-6), xs.length - 2);
   const x = k >= 0 ? xs[k] : null;
   useLayoutEffect(() => {
-    const el = ref.current;
-    const wrap = el?.parentElement;
-    const svg = wrap?.querySelector('svg');
-    if (!el || !wrap || !svg || x === null) return;
-    const a = wrap.getBoundingClientRect();
-    const b = svg.getBoundingClientRect();
-    if (a.width > 0 && b.width > 0) el.style.left = `${b.left - a.left + x * b.width}px`;
+    if (ref.current && x !== null) placeOnSvg(ref.current, x);
   });
   return x === null ? null : <span ref={ref} className="tab-col-now" style={{ left: `${x * 100}%` }} aria-hidden="true" />;
 }
@@ -182,7 +184,7 @@ export const headX = (x: any): number => {
 
 /** Per-note result colours on the staff (after an answer / a take). */
 import type { NoteMark } from '../engine/noteMarks';
-import { glidePos, nowX } from '../engine/playhead';
+import { glidePos, nowX, shareToPx } from '../engine/playhead';
 export type { NoteMark };
 import { drawCue, drawExtras, drawMarks, drawTouch, type MarkSpot } from './markLayer';
 import type { TouchMark } from '../engine/drills/types';
