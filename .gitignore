@@ -20,6 +20,8 @@ scripts/.measure-v14.mjs
 scripts/.measure-v14.log
 scripts/.measure-v15.mjs
 scripts/.measure-v15.log
+scripts/.measure-v16.mjs
+scripts/.measure-v16.log
 scripts/voice/.inventory.mjs
 scripts/voice/.inventory.log
 scripts/voice/.lines.json

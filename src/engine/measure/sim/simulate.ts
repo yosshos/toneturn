@@ -4,7 +4,7 @@
 // posterior (§1.7). Pure.
 //
 // Defaults (owner 2026-11-28, SPEC-HOLISTIC-2 v14; v15 rule fixes of round 18): rank = H8 + the tier guard G
-// (RANK_GUARDED; ungated H8 = RANK_FIX); supply = SHARED_SUPPLY (a per-session slot cap shared across areas + FSRS-review
+// (RANK_GUARDED; v16: P >= 0.9, the v15 P >= 0.8 = RANK_GUARDED_P80; ungated H8 = RANK_FIX); supply = SHARED_SUPPLY (a per-session slot cap shared across areas + FSRS-review
 // looks; PER_AREA_SUPPLY = v13); the planner = H10 in full (readiness entry, challenge point, no-easier; the tempo model
 // in tempo areas; H10_OFF = v13).
 // v15 (round 18):
@@ -78,7 +78,10 @@ export interface PlannerConfig {
   unplayedMiss: boolean;
   skipShareMax: number;
   skipWindowDays: number;
-  /** Alternative (owner question): warm-first skips also count as misses only above the skip share (default false: always). */
+  /**
+   * Alternative, NOT adopted (owner 2026-11-28, §17.4 question 2: a warm-first skip is always a miss): warm-first skips
+   * count as misses only above the skip share (default false: always a miss). The skip share gates only unplayed due checks.
+   */
   warmSkipGated: boolean;
   /**
    * Explored in v14 for the item-gain sensitivity, NOT adopted (default off): a cell shelved with no counting check at all
