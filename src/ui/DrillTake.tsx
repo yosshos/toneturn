@@ -1497,7 +1497,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               {lang === 'he' ? 'התבנית עוד לא נבדקה בידי מורה.' : 'Pattern not yet teacher-checked.'}
             </p>
           )}
-          {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
+          {checkMode && !midiMissing && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
           {guitarItem && (useMidi || input.reason === 'guitar-mic') && (
             // B7: which input the guitar take listens to, and the other one a tap away (never a silent switch).
             <p className="field-hint guitar-input" data-guitar-input={useMidi ? 'midi' : 'mic'}>

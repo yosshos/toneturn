@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.15',
+    date: '2026-11-28',
+    en: ['Your MIDI keyboard is used automatically whenever it is connected (Settings: Auto, MIDI only or microphone only, per device), the app shows which input is really listening, and if a keyboard you use is missing the exercise waits with Reconnect or Use the microphone; a keyboard unplugged mid-take ends the take without counting it; the coach now notices when the top note waits before the way down'],
+    he: ['מקלדת ה־MIDI נבחרת אוטומטית כשהיא מחוברת (בהגדרות: אוטומטי, רק MIDI או רק מיקרופון, לכל מכשיר). האפליקציה מראה איזה קלט באמת מקשיב, ואם מקלדת שאתם משתמשים בה חסרה, התרגיל מחכה עם חיבור מחדש או מיקרופון. ניתוק באמצע ניסיון עוצר אותו בלי לספור. המאמן מזהה עכשיו כשהצליל העליון מתעכב לפני הירידה'],
+  },
+  {
     version: '0.145.14',
     date: '2026-11-28',
     en: ['Tidier screens: one course picker on a computer, scrolling chip rows in Licks, steppers in the same order everywhere, matching voice-course cards and workout blocks that fit a phone; the last old-style drawings (instrument sound cards, game intros, path test and review steps) redrawn in the Paper style'],
