@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.13',
+    date: '2026-11-28',
+    en: ['If your MIDI keyboard is not detected, the exercise now stops and says so instead of quietly listening through the microphone; a take in which no sound arrived at all no longer counts as a mistake'],
+    he: ['אם מקלדת ה־MIDI לא מזוהה, התרגיל עוצר ואומר את זה במקום להקשיב בשקט דרך המיקרופון. ניסיון שלא נקלט בו שום צליל כבר לא נחשב טעות'],
+  },
+  {
     version: '0.145.12',
     date: '2026-11-27',
     en: ['A cleaner look across the app: the path header no longer shows content through it, the repertoire on a computer has a proper detail panel, one switch and one slider style everywhere, "Not yet" instead of empty dashes, tidier exercise cards, the tuner without browser-default controls, and the answer mode on Home is labelled'],

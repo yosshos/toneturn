@@ -20,6 +20,7 @@ import { pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
 import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
 import { midi } from '../speech/midi';
+import { useMidiDevices } from './KeysSound';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { InputCheck, InputWatchdog } from './InputCheck';
@@ -903,11 +904,20 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const drumBlocked = drum && !drumMidi && !drill.drum?.mic && !acoustic;
   // A take whose drums were mostly not told apart: not counted (no pass, no fail) — the reason, and play again.
   const [voided, setVoided] = useState<{ en: string; he: string } | null>(null);
+  const [silent, setSilent] = useState(false);
   // GUITAR-AUDIT B7: a guitar item with MIDI connected listens to MIDI unless the player chose the microphone — and says
   // which one it listens to (a keyboard left plugged in must not silently turn the guitar's mic checks off).
   const guitarItem = isGuitarDrill(drill);
   const [gIn, setGIn] = useState(guitarInputPref);
   const useMidi = drum ? drumMidi : midi.devices.length > 0 && !(guitarItem && gIn === 'mic');
+  // Owner 2026-11-28: a keyboard that was used before and is not seen now must not silently turn the take into a
+  // microphone take (the D major session was graded by mic, 8 of 29 notes heard). Stop the flowing run and say so.
+  const midiNow = useMidiDevices(true);
+  useEffect(() => {
+    if (midiNow.length) markMidiSeen();
+  }, [midiNow.length]);
+  const [micOk, setMicOk] = useState(micChosenThisRun);
+  const midiMissing = !drum && !guitarItem && !drill.sung && midiNow.length === 0 && midiSeenBefore() && !micOk;
   // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
   const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
   // Input check (owner 2026-11-15): the strip above Play shows the signal arriving; the watchdog speaks up mid-take.
@@ -929,9 +939,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   const startRef = useRef<(() => Promise<void>) | null>(null);
   // An open brief (a new task kind) never auto-starts: the count-in waits for Ready (owner 2026-11-24).
   const briefOpen = !!brief?.open && !drill.untimed;
-  const autoGo = autoStart && !briefOpen && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
+  const autoGo = autoStart && !briefOpen && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked && !midiMissing;
   // Owner 2026-11-26: in a flowing run (the coach) a new task's brief is read, then the count-in starts by itself.
-  const briefAuto = !!briefAutoMs && autoStart && briefOpen && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked;
+  const briefAuto = !!briefAutoMs && autoStart && briefOpen && !drill.untimed && !askDrums && !drumBlocked && !pianoBlocked && !midiMissing;
   const [autoLeft, setAutoLeft] = useState(briefAuto ? Math.ceil((briefAutoMs ?? 0) / 1000) : 0);
   const autoTimer = useRef<number | null>(null);
   useEffect(() => {
@@ -956,7 +966,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   }, []);
   // A note on the keyboard (or any computer key) = Play: the count-in starts (owner 2026-11-21, hands stay on the keys);
   // on an open brief only after a reading moment.
-  useAnyNote(phase === 'ready' && !autoGo && !askDrums && !drumBlocked && !pianoBlocked && !drill.untimed, () => void startRef.current?.(), briefOpen ? BRIEF_ARM_MS : undefined);
+  useAnyNote(phase === 'ready' && !autoGo && !askDrums && !drumBlocked && !pianoBlocked && !midiMissing && !drill.untimed, () => void startRef.current?.(), briefOpen ? BRIEF_ARM_MS : undefined);
   useEffect(() => {
     if (!autoGo) return;
     prep.skip();
@@ -1032,7 +1042,13 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     // Every result passes the prog measures (unchanged for drills without a timeline, unison, form or goal.prog).
     // Progressions by ear: the harmony report (root / colour / bass per chord) joins every result; guitar passes its chroma.
     let harmonyFrames: ChromaFrame[] = [];
-    const done = (m: TakeMetrics, played: PlayedNote[]) => onDone(withHarmony(withProg(m, drill, bpm, played), drill, bpm, played, harmonyFrames), played);
+    const done = (m: TakeMetrics, played: PlayedNote[]) => {
+      // Owner 2026-11-28: a take in which no input arrived at all is a technical failure, never a wrong take — it is not
+      // graded, stored or counted; the player is told and plays again.
+      if (silentTake(drill, played)) return setSilent(true);
+      setSilent(false);
+      onDone(withHarmony(withProg(m, drill, bpm, played), drill, bpm, played, harmonyFrames), played);
+    };
     const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) + 120);
     let zero = 0;
     const notes: PlayedNote[] = [];
@@ -1450,6 +1466,11 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         </div>
       ) : phase === 'ready' ? (
         <>
+          {silent && (
+            <p className="kit-warn" role="alert" data-take-silent="1">
+              {lang === 'he' ? 'לא נקלט שום צליל, אז הניסיון לא נספר. בדקו את החיבור ונסו שוב.' : 'No input arrived, so this take did not count. Check the connection and try again.'}
+            </p>
+          )}
           {voided && (
             <p className="kit-warn" data-drum-unsure="1">
               {voided[lang]} {lang === 'he' ? 'קרבו את המיקרופון לתופים, או כיילו שוב בכרטיס המערכת.' : 'Move the mic closer, or calibrate again on the kit card.'}
@@ -1479,9 +1500,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               </button>
             </p>
           )}
+          {midiMissing && (
+            <p className="field-hint midi-missing" role="alert" data-midi-missing="1">
+              {lang === 'he' ? 'המקלדת לא מזוהה. חבר אותה (ורענן אם צריך), או המשך במיקרופון.' : 'Your MIDI keyboard is not detected. Connect it (reload if needed), or continue with the microphone.'}{' '}
+              <button className="btn small ghost" onClick={() => { setMicChosenThisRun(); setMicOk(true); }} data-midi-missing-mic="1">
+                {lang === 'he' ? 'המשך במיקרופון' : 'Use the microphone'}
+              </button>
+            </p>
+          )}
           <div className="take-start">
             {hear && <HearButton drill={drill} bpm={bpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
-            <button className="btn mega" onClick={() => void start()} data-drill-play="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})} disabled={(drumBlocked || pianoBlocked) && !fakeTakeOn()}>
+            <button className="btn mega" onClick={() => void start()} data-drill-play="1" {...(briefOpen ? { 'data-brief-ready': '1' } : {})} disabled={(drumBlocked || pianoBlocked || midiMissing) && !fakeTakeOn()}>
               <Icon k="play" /> {briefOpen && autoLeft > 0 ? (lang === 'he' ? `מתחילים · ${autoLeft}` : `Starting · ${autoLeft}`) : briefOpen ? (lang === 'he' ? 'מוכנים' : 'Ready') : tx.play}
             </button>
           </div>
@@ -1493,6 +1522,27 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       )}
     </div>
   );
+}
+
+/** A take with no input at all (no note, no hit) on an item that expects notes: a technical failure, not a wrong take. */
+export function silentTake(drill: Pick<Drill, 'notes'>, played: readonly unknown[]): boolean {
+  return drill.notes.length > 0 && played.length === 0;
+}
+
+const MIDI_SEEN = 'tt.midiSeen';
+let micChosen = false;
+function markMidiSeen() {
+  try { localStorage.setItem(MIDI_SEEN, '1'); } catch { /* storage off */ }
+}
+function midiSeenBefore(): boolean {
+  try { return localStorage.getItem(MIDI_SEEN) === '1'; } catch { return false; }
+}
+/** The player chose the microphone after the "keyboard not detected" line: until the page reloads. */
+function micChosenThisRun(): boolean {
+  return micChosen;
+}
+function setMicChosenThisRun() {
+  micChosen = true;
 }
 
 /** The analysis shown after a take. */

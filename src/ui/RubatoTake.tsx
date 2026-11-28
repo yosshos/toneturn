@@ -2,6 +2,7 @@
 // now-cue waits on the next note to play; the take ends by itself when every note is in (or on "Done"). Graded on the
 // notes only (rubato.ts analyzeFree).
 
+import { silentTake } from './DrillTake';
 import { useEffect, useRef, useState } from 'react';
 import { useKeptTakes } from './recKeep';
 import { analyzeFree, freeProgress } from '../engine/drills/rubato';
@@ -36,6 +37,8 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
   onDone = useKeptTakes(drill, 0, onDone); // My recordings: free-time takes are kept too (no tempo)
   const tx = TX[lang];
   const [on, setOn] = useState(false);
+  // Owner 2026-11-28: no input at all = a technical failure (not graded, not counted).
+  const [silent, setSilent] = useState(false);
   // Input check: free time has no first-note time, so the watchdog gives the player 2 s to begin, then its usual wait.
   const [armAt, setArmAt] = useState(0);
   // B7: a guitar item listens to MIDI unless the player chose the microphone (DrillTake says which, and switches).
@@ -72,6 +75,8 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       setOn(false);
       onBeat?.(-1);
       const played = current();
+      if (silentTake(drill, played)) return setSilent(true);
+      setSilent(false);
       // (voice leading and own-chord items keep their own graders: any good voicing counts)
       if (!guitar || drill.goal.vl || drill.goal.ct) return onDone(analyzeFree(drill, played), played);
       // B5: a guitar take in free time keeps the guitar checks (strums, unclear onsets, bends) — guitarFree.ts.
@@ -177,6 +182,11 @@ export function RubatoTake({ drill, lang, cal, onDone, onBeat, autoStart = false
       {brief && (on || !briefOpen) && <BriefLine brief={brief.brief} lang={lang} />}
       {brief && !on && briefOpen && <BriefCard brief={brief.brief} lang={lang} free />}
       <p className="field-hint">{on ? tx.listening : tx.hint}</p>
+      {!on && silent && (
+        <p className="kit-warn" role="alert" data-take-silent="1">
+          {lang === 'he' ? 'לא נקלט שום צליל, אז הניסיון לא נספר. בדקו את החיבור ונסו שוב.' : 'No input arrived, so this take did not count. Check the connection and try again.'}
+        </p>
+      )}
       {on && <InputWatchdog lang={lang} mode={checkMode} arm={armAt ? { start: armAt, due: armAt + 2000 } : null} />}
       {!on && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
       {on ? (
