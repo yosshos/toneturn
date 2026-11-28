@@ -1,6 +1,6 @@
-# SPEC-FINGERING: training correct fingering inside normal practice (v3, 2026-11-28)
+# SPEC-FINGERING: training correct fingering inside normal practice (v4, 2026-11-28)
 
-**v3** resolves review round 2 (`docs/REVIEW-FINGERING-round2.md`): the 9 issues N1–N9 and every minor note. **v2** resolved round 1 (`docs/REVIEW-FINGERING-round1.md`, S1–S9). Both change logs are in §20. The owner accepted the reviewer's defaults for Q1–Q7 on 2026-11-28 (§19, decided) and added one requirement: a fingering-coach setting in Settings (§14.6). **Q8 stays open** with two options (§19), to be decided on the numbers of the G3 simulation, which runs before F6 (§18).
+**v4** resolves review round 3 (`docs/REVIEW-FINGERING-round3.md`): the 7 issues M1–M7 and every minor note. The reviewer confirmed v3's three author choices (silent thresholds 5 and 10, the mean + 1 SD tolerance, no hold on manual starts and pins), with the M3 and M6 adjustments applied. **v3** resolved round 2 (`docs/REVIEW-FINGERING-round2.md`, N1–N9) and **v2** round 1 (`docs/REVIEW-FINGERING-round1.md`, S1–S9). All change logs are in §20. The owner accepted the reviewer's defaults for Q1–Q7 on 2026-11-28 (§19, decided) and added one requirement: a fingering-coach setting in Settings (§14.6). **Q8 stays open** with two options (§19), to be decided on the numbers of the G3 simulation, which runs before F6 (§18).
 
 **Sources.** `docs/RESEARCH-FINGERING.md` (RF1) and `docs/RESEARCH-FINGERING-2.md` (RF2). This spec does not re-research; every evidence claim cites a section there.
 
@@ -53,12 +53,12 @@
 - **Direction** = down when the written pitch is below the previous note of the same hand's line. LH `u` and RH `o` are descents (RF2 §2).
 - **Group** = (hand, class, direction) over crossing notes, e.g. "LH thumb-under going down". **Site** = (group, pitch class of the crossing note). A site names the place ("at F♯") and recurs per octave.
 - **Reference notes** = notes of the hand's single line whose class is `.` (not `u`, `o`, `c`, `t`, `b`, `l`, nor a chord note `-`), not an edge, with `p === 0`.
-- **Residual of any note (S5.4, S5.7)**: r_j for every non-edge note j whose played pitch is right (`p === 0`, S5.3) is computed **at trace time with the trace's own rule** (`tendency.ts` `sidePredict`):
-  - up to 6 nearest reference notes of j's run on each side, at **the same place in the beat**, one shared slope;
-  - the two sides' residuals must agree in sign, otherwise j has no residual;
+- **Residual of any note (S5.4, S5.7)**: r_j for every non-edge note j whose played pitch is right (`p === 0`, S5.3) is computed **at trace time with the trace's own rule** (`tendency.ts` `sidePredict`, as `takeTrace` uses it for class notes):
+  - from each side of j separately: the 6 nearest reference notes of j's run on that side, **at any place in the beat**, fitted with one level per place in the beat and one shared slope, and **≥ 2 of them at j's own place**; j's prediction is the level at its place;
+  - **both sides, when both exist, must agree in sign**, otherwise j has no residual; **one side suffices** when the other has too few references (`tendency.ts` keeps such notes); r_j is the mean of the available sides;
   - j itself is excluded from its own reference.
   - Edges: the first 2 notes and the last max(5, 2 × notes per beat) notes of a line (the trace's `EDGE_START`/`EDGE_END`).
-- **The hand's local SD** `sdl` = the SD of r_j over the reference notes of the hand in that take. It is not `HandTrace.sd`, which uses a whole-run line fit.
+- **The hand's local SD** `sdl` = the SD, over the hand's reference notes in the take, of each reference note's **side-0 residual**: the 8 nearest reference notes of its run on both sides together, one level per place and one shared slope, ≥ 2 at its own place (the rule `pc` already uses). The two-sided sign filter is **not** applied here: it would drop near-zero residuals and inflate the SD (minor). It is not `HandTrace.sd`, which uses a whole-run line fit.
 - **Group residual of a take** R_g = the mean r_j over g's crossing notes in the take (boundary crossings excluded).
 
 ### 1.4 Edges, states, takes
@@ -68,7 +68,7 @@
 - **Goal** G = 0.95 × the item's target (§11.1).
 - **State per cell:** `none` → `flagged` → `offered` → `retraining` → `retired` → `done`, with rechecks as sub-states of `retired` (§11). **A decline is per hand** (`snoozeUntil`, `declines`), never a cell state.
 - **Hold** = R2 applies to a `retraining` cell. Only a cell with evidence of a slip is held (§9.2.0, N8).
-- **Fingering take** = a take played as one of the §5 structures. New `TakeKind` **`fingering`** with the same zeros as `form`: no history, staircase, passes or tendencies. Straight takes inside a block or visit, **P0 included** (§5.3), are ordinary takes of their normal kind with no `vr`: they count as usual and are eligible evidence (N7).
+- **Fingering take** = a take played as one of the §5 structures (A, B, C at P1–P3, G, drums O). New `TakeKind` **`fingering`** with the same zeros as `form`. **`TAKE_KIND` alone isolates nothing** (it is read only by the tendency filter, `tendency.ts:641`), so a fingering take is also kept off the item's own record by a separate path (§9.8, M1). Straight takes inside a block or visit, **P0 included** (§5.3), are ordinary takes of their normal kind with no `vr`: they count as usual and are eligible evidence (N7).
 - **Touch point** = one of the two moments in a day when the report is asked (§8.1).
 
 ### 1.5 Scope of v1
@@ -176,15 +176,32 @@ For each group g of a hand:
 - Eligible: clean, almost, and timing-only failures (`to`). The owner's clearest break (D ♩124, RH `xo` +96 ms) was a failed take (RF1 §3.2).
 - **Fires:** 2 break takes of the same group within 7 days in one 1.25× tempo band. The MIDI edge = one mark below the slower of the two.
 - **Strength for offer ranking:** 3 + the number of break takes of g in 21 days (a t-equivalent, minor note).
+- **R_g can rest on one note.** In the owner's D-major two-octave HT scale every take has **exactly one** LH `xu` note (round 3 recomputed this from the traces: `[x, 1]` on every take), so R_g there is a single note's residual, and break and T2 rates read **per note**, not per crossing group.
 
 ### 3.4 T3: a report
 - A "slipped" at any touch point flags the cell and hand at once, with its date (`t3At`).
-- **The slip mark (N6).** Touch points ask only on cells that already have a state, so they cannot start a flag. A cell with no state is flagged by a **slip mark** that the player gives without being asked:
+- **The slip mark (N6).** Touch points ask only on cells that already have a state, so they cannot start a flag. Any in-scope cell, with or without a state, can get a **slip mark** that the player gives without being asked:
   - **when:** within 4 s after any straight take of an in-scope cell (§1.5) has decayed (the §8.2 decay rule); no window is shown;
   - **how:** a **double press in the bottom zone** within 1 s (zones learned, §8.3; a single press does nothing, so noodling after a take never flags), or ←, ↓ or PageUp on computer keys or a page turner, or "לא"/"no" when voice is on, or the item menu's **"My fingering slipped"** in any run (the tap route, also on mic);
   - on HT takes the hand press follows as in §8.3;
   - **the end line confirms it** with one clause, "Noted: left hand slipped in D major.", and an **Undo** chrome button. Nothing needs a tap to keep it;
-  - at most one slip mark per cell per day. It is a report (T3), with the take's tempo as the slipped tempo (§9.4).
+  - at most one slip mark per cell per day. It is a report (T3), with the take's tempo as the slipped tempo (§9.4);
+  - **introduced once** (minor): the first time a session plays an in-scope cell, a one-line brief (§14.3) names the gesture; on MIDI that brief also learns the keyboard range when it is not yet known (§8.3), so the double press works before any cell has a state. The Settings card can learn it too (§14.6). The "Retrain this fingering" brief names the slip mark as well;
+  - zone notes during a hands-free countdown neither start a take nor count as count-in input;
+  - **drums:** the ride bell when the kit maps one, else two kicks 80–400 ms apart, within 4 s after the last stroke has decayed (§12.3).
+- **What a slip does, by state (M4).** One path, used by §4, §7.1 and §9.2.0:
+
+  | Cell state when the slip arrives | Result |
+  |---|---|
+  | none, `flagged`, or `done` | → `flagged` with `t3At` (T3 ends a snooze). **No hold.** Visits **without a hold** for 7 days (§7.1). The next end line carries the offer (T3 ranks first; after a keep-hold question, §11.5). With "Suggest fingering work" off: recorded only, no visits, no offer. |
+  | `flagged`, Yes given | → `offered` → day-1 block → `retraining` **with the hold** (the slip is the evidence), E from the slip (§9.4). |
+  | `flagged`, no Yes within 7 days of `t3At` | the visits stop; the flag stays (`flagged`) and can be offered again. |
+  | `offered` (block pending) | recorded; the block runs; `retraining` starts with the hold. |
+  | `retraining` without a hold | **adds the hold at once** (the cell is in retraining by the player's choice or the teacher's pin); E from the slip. |
+  | `retraining` with a hold | lowers E (§9.4). |
+  | `retired` (recheck period) | a failed recheck: back to `retraining` with the hold (§11.4). |
+
+  So **a slip alone never caps a cell that has not been through Yes, a manual start or a pin** (Q7): one accidental double press costs at most 7 days of visits and one offer.
 - The slip mark works on mic too.
 
 ### 3.5 Guards
@@ -199,9 +216,9 @@ For each group g of a hand:
 
 ## 4. The offer
 - **Where:** one clause in the end line of a session (coach, key session, list run) in which the flagged cell was played. Never mid-session, never in the level test, never in a `!` assignment.
-  - At most **one offer per session**, ranked T3 first, then by t (T1) or the T2 strength.
+  - At most **one end-line question per session** (M3): the keep-hold question (§11.5) first; otherwise one offer, ranked T3 first, then by t (T1) or the T2 strength. A deferred offer waits for the next session.
   - Off when **Settings → Learning → Fingering coach → "Suggest fingering work"** is off (default on; synced; §14.6).
-- **Line:** "Your left hand's way down in D major changes above ♩100. A fingering block next time?" Two small chrome buttons, **Yes** and **Not now**. In hands-free runs the answer keys also work within 6 s (top = yes, bottom = not now). No answer = not now, without the snooze.
+- **Line:** "Above ♩100, your left hand's way down in D major changes. A fingering block next time?" Two small chrome buttons, **Yes** and **Not now**. In hands-free runs the answer keys also work within 6 s (top = yes, bottom = not now). No answer = not now, without the snooze.
 - **Yes** → `offered`. The day-1 block replaces that cell's next visit in the next session where it appears; if it is not in today's plan, the planner adds it once.
 - **Not now** → that hand is declined and snoozed (§3.5); the cell stays `flagged`.
 - **No auto-start (Q7, decided):** visits never start from a data flag alone. R2 restricts the player's climb, so it needs consent.
@@ -243,20 +260,21 @@ Each structure turns the *position map* into something MIDI can see (RF2 §3). N
   | P3 | ¼ beat | 3 |
   | P0 | none: the straight run | 0 |
 
-  Every rung is a whole number of twelfths, on `b`'s grid, for duple and triplet note values alike.
+  Every rung is a whole number of twelfths, on `b`'s grid.
+  - **Triplet items** (`subDrill` triplet eighths, `stages.ts:204`; minor): P2 = ½ beat and P3 = ¼ beat would put the following notes at 4k + 6 and 4k + 3 twelfths, off the eighth and sixteenth click. For triplet items **P2 = ⅔ beat (8 twelfths) and P3 = ⅓ beat (4 twelfths), with a triplet click**. Q1 did not cover triplets, so this is **Q9** for the owner (§19); until decided, the triplet rungs above are the proposal.
 - **Generator** `pauseAtCrossings(drill, hands, rung)`:
   - the note before each crossing of the trained hand(s) gets its **real lengthened value**: e.g. in eighths, P2 makes it a quarter and P3 a dotted eighth. No comma or breath mark: the pause is metered;
   - on hands-together items both hands hold;
-  - **the click subdivides** on C takes to the rung's grid (eighths at P2, sixteenths at P3), so every shifted note sits on a click (S3). Count-in and now-cue as usual.
+  - **the click subdivides** on C takes to the rung's grid (eighths at P2, sixteenths at P3; triplet eighths at both for triplet items), so every shifted note sits on a click (S3). Count-in and now-cue as usual.
 - **Grading (S3, minor):** the take has **one IOI** (the written grid) with **one offset per segment** between pauses. The shifted grid is not a reading test, but a free line per 3–4-note segment would hide rushing. Evenness = the SD of the onsets against that grid after each segment's offset. Each pause's length must be within ±max(25 ms, 25 % of p). Wrong notes and misses as usual.
 - **Placement verified** when each crossing's IOI ≥ IOI + 0.5 p and every other IOI < IOI + 0.5 p.
   - **The floor:** 0.5 p ≥ max(20 ms, 3 × `sdl`) on MIDI; 0.5 p ≥ 60 ms on mic (mic takes have no `sdl`).
   - **It is not always met** (v2 said it was): in eighths near ♩240, P3's 0.5 p is 31 ms, below 3 × `sdl` once `sdl` > 10 ms.
-  - **When the floor is not met,** the take is graded on evenness and pause length only, the rung is kept (an unverified take never shortens it), and the next C take plays **one mark slower**, where p is longer. If the floor is still not met at T_C − 2 marks, the visit uses G and B in place of C that day.
+  - **When the floor is not met,** the take is graded on evenness and pause length only, the rung is kept (an unverified take never shortens it), and the next C take plays **one mark slower**, where p is longer. If the floor is still not met at T_C − 2 marks, the visit uses G and B in place of C that day; **on mic, G only** (B is not offered on mic; minor).
 - **Two tempos, defined (S3):**
   - **C tempo** T_C = min(the item's session tempo, cap + 1 mark). Without a session tempo yet, min(the item's last clean tempo, cap + 1 mark). Without a hold (§9.2.0) there is no cap, and T_C is the session tempo. This is the item's tempo, as O2 and RF2 §9 say. T_C is where C starts; **only in the key session's cap visit** may C and B climb above it, to cap + 3 marks (§9.2.2). G keeps its own range (§5.4).
   - **Straight start tempo** T_S = min(the session tempo − 1 mark, cap); on day 1 see §6.2. P0 is the first straight take, at T_S, **never above the cap**.
-  - **P0 is an ordinary straight take of its normal kind, with no `vr`** (N7). It counts as usual (`cleanBpm`, the warm half) and is eligible evidence. The straight takes after it follow the straight ladder (§5.5).
+  - **P0 is an ordinary straight take of its normal kind, with no `vr`** (N7). It counts as usual (`cleanBpm`, the warm half) and is eligible evidence. The straight takes after it follow the straight ladder (§5.5). P1–P3 are fingering takes and never touch the item's record (§9.8).
 - **The ladder within a visit or block:**
 
   | Take result | Next take |
@@ -282,7 +300,7 @@ Each structure turns the *position map* into something MIDI can see (RF2 §3). N
 
 ### 5.5 The straight ladder in a block or visit (N7)
 Every block and visit ends with straight takes. One rule governs them, so a straight take never plays twice at one tempo (key-session-must-develop; KS2 D3: a clean take is followed by one a mark faster):
-- **The ceiling:** the cap with a hold; the session's normal limit without one; **E on day 1** (the block's closing stays below the edge, RF2 §8.3).
+- **The ceiling:** the cap with a hold; the session's normal limit without one; **on day 1, E** (the block's closing stays below the edge, RF2 §8.3), or **the day-1 reference** when there is no E (§6.2, M5).
 - **Start:** P0 at T_S (or at T_S when C did not run).
 - **Each clean straight take is followed by one a mark faster**, up to the ceiling.
 - **At the ceiling** the straight part stops. In the key session's cap visit the variants take over (§9.2.2); elsewhere the visit ends. The clean take at the ceiling is the visit's **top take** (touch point 2, §8.1), and it meets end-on-success (SP §1).
@@ -316,6 +334,7 @@ Always **after the cell's main-item cold check of the day** (R1).
 | 6 | **Closing:** the straight ladder (§5.5) from one mark above the block's last P0 of the main item, up to **E**, ending on a clean one (end-on-success +2, SP §1); touch point 2 after the top one | 2–3 | ≤ E |
 
 - **Day-1 tempi:** P0 plays 2 marks below E (floor the comfort pulse), so the closing can rise to E without repeating a tempo. The hand-alone P0 (step 3) and the HT P0 (step 5) are different items, so different takes.
+- **Without E (M5)** (a manual start or a pin with no evidence, §9.2.0): the **day-1 reference** is the item's session tempo, else its last clean tempo. P0 plays 2 marks below it (floor the comfort pulse), the closing ceiling is the reference itself, and T_C is the reference. Step 6's "≤ E" reads "≤ the reference".
 - About 13–20 takes, 6–8 minutes for a two-octave scale with count-in (RF2 §8.2).
 - When the budget runs out, the current take finishes, then step 6 (≥ 2 takes).
 - One closing line (§14.4).
@@ -330,7 +349,7 @@ State → `retraining`, `blockDay` = today, with a hold only when the cell has e
 
 ### 7.1 Eligibility
 A cell gets a fingering visit in a session when all hold:
-- state `retraining`, or `flagged` with a T3 report in the last 7 days (`t3At`). A data-only flag without Yes gets **no** visits (Q7, decided);
+- state `retraining`, or `flagged` with a T3 report in the last 7 days (`t3At`), the latter **without a hold** (§3.4 table; the visits stop after 7 days without a Yes). A data-only flag without Yes gets **no** visits (Q7, decided);
 - its main-item cold check of the day is done (R1);
 - the session has ≥ 10 minutes;
 - **at most 1** fingering visit per cell per session, and at most **2 cells** per session;
@@ -339,7 +358,7 @@ A cell gets a fingering visit in a session when all hold:
 ### 7.2 Content (3–4 takes, about 1–1.5 min)
 1. **G** on the flagged group's site (kind `fingering`).
 2. **C** from the remembered rung at T_C (kind `fingering`). The plan check replaces it when due, and **always on the first visit of a cell that reached visits through a T3 report without a block** (minor). **B** replaces C on every third fingering visit (variety; RF2 §5, Bangert 2014: partial support).
-3. **The straight ladder (§5.5)** from T_S: 1–3 ordinary takes of their normal kind, counted as usual, each at a new tempo. **Touch point 2** follows the top straight take (§8.1). In the key session's cap visit, the variants and any pass-evidence attempts follow (§9.2.2, §9.2.3).
+3. **The straight ladder (§5.5)** from T_S: 1–3 ordinary takes of their normal kind, counted as usual, each at a new tempo. **Touch point 2** follows the top straight take (§8.1). In the key session's cap visit the variants follow (§9.2.2). The pass-evidence attempts follow in whichever visit is the held cell's last of the session (§9.2.3, M2).
 
 - **Key session:** a fingering visit may replace one speed or review visit of the flagged cell (not the closing, never coordination stages). Budget `VISIT_TAKES` + the end-on-success extension.
 - **Old coach, linear path:** the same steps, once per session, after the cell's first clean straight take that is not its cold check.
@@ -350,7 +369,7 @@ A cell gets a fingering visit in a session when all hold:
 
 ### 8.1 The two touch points, per cell, per day
 1. **Cold:** after the day's main-item cold check of a cell that is `flagged`, `retraining` or recheck-due, **only when that take is clean**. The habit is strongest cold (RF2 §9).
-2. **Top:** after the **top straight take** of a `flagged` or `retraining` cell's visit: the clean straight take at which the straight ladder stops (§5.5: the ceiling, the target, the budget, or the clean take after a miss), when it is the cell's highest clean straight tempo today. In the block, it is the closing's top take. **When pass-evidence attempts are planned for the visit (§9.2.3), touch point 2 moves to the clean attempt;** if neither attempt is clean, touch point 2 is not asked that visit. After retirement it also fires once on the first climb that passes E0 (§11.4).
+2. **Top:** after the **top straight take** of **any** visit of a `flagged` or `retraining` cell (a fingering visit, or an ordinary speed visit or climb, e.g. the key session's A-6 at the cap; minor): the clean straight take at which the straight climb stops (§5.5: the ceiling, the target, the budget, or the clean take after a miss), when it is the cell's highest clean straight tempo today. In the block, it is the closing's top take. **When pass-evidence attempts are planned for the visit (§9.2.3), touch point 2 moves to the clean attempt;** if neither attempt is clean, touch point 2 is not asked that visit. After retirement it also fires once on the first climb that passes E0 (§11.4).
 
 - Each touch point fires **at most once per cell per day**. No fingering take asks.
 - **Shadow mode (S5.9, N5):** on calibration accounts while F3 runs in shadow, extra label questions fire at the flag's tempo band, on shadow-flagged and control cells, with one neutral wording (§16.2).
@@ -405,7 +424,8 @@ A take with a touch point never also gets H2 §7's self-prediction question; tha
 #### 9.2.0 When R2 applies: the hold (N8)
 - **R2 applies only with evidence of a slip:** a data flag (T1, T2) that the player accepted with Yes, or a reported slip (T3: a "slipped" at a touch point, or a slip mark, §3.4).
 - **Without evidence** (a teacher pin, or a manual "Retrain this fingering" with no flag) the cell gets the block and the visits **with no hold**: no cap, the climb unchanged, no pass delay. The visits work as an angle, like a pinned feel (RF2 §9).
-- **A hold starts later when evidence arrives:** a "slipped" or a slip mark on the cell adds it at once (the cell is already in retraining by the player's choice or the teacher's pin); a T1/T2 fire is offered in the end line as usual, and Yes adds it. E starts from that evidence (§9.4).
+- **A hold starts later when evidence arrives:** a "slipped" or a slip mark on a cell **already in `retraining`** adds it at once (the cell is in retraining by the player's choice or the teacher's pin); a T1/T2 fire is offered in the end line as usual, and Yes adds it. E starts from that evidence (§9.4). `preTop` is taken when the hold starts, not when retraining starts (the pin-then-slip case; minor).
+- **A slip on a cell not in `retraining` never holds by itself** (M4): it flags, gives 7 days of visits without a hold and an offer; the hold starts only through Yes and the block (§3.4 table).
 - `hold` is stored on the cell (§15.1). The teacher's "Don't hold" switch still lifts a hold for that assignment's sessions (§9.2.3).
 
 #### 9.2.1 What it caps
@@ -426,7 +446,7 @@ A take with a touch point never also gets H2 §7's self-prediction question; tha
 - **H10 (N9):** a held cell's fingering variants count as offered difficulty at their **effective tempo**, never at the click tempo:
   - T_eff = the tempo of a straight take of the same notes in the same total time. C and B: the written beats over the written beats plus the added pauses or long notes. G: min(the burst tempo, T_S), since a 5-note cell is not a run. Blocks (A) count nothing;
   - difficulty = content tier + ln(T_eff / target) / ln 1.2, as in H2 §1.7a. A P1 take at cap + 3 marks therefore counts well below the cap; P3 and P0 count near their tempo;
-  - **held cells are reported separately** in the flat-rank windows ("held cells: n, days held"). The harness asserts that a held cell's effective difficulty rises across visits (shorter rungs, E rising), so the slope cannot pass by construction (G22).
+  - **held cells are excluded from the flat-rank slope** for the days they are held, and **reported separately** ("held cells: n, days held"; minor). The harness asserts that a held cell's effective difficulty rises across visits (shorter rungs, E rising), so the slope cannot pass by construction (G22).
 - **H2 amendment entry (N9).** R2 departs from H2 §1.7a ("the climb continues whatever the rank"). This entry is added to H2 with this spec, beside the SP §21 entry: *H2 §1.7a is amended for held cells (SPEC-FINGERING §9.2): their plain straight climb stops at E + 1 mark; their variants count at effective difficulty; they are reported apart in the H10 metric; passes and rank are untouched except for the delay stated in SPEC-FINGERING §9.2.3.*
 
 #### 9.2.3 Passes: the pass-evidence take, and the honest limit (S1, N1, N2)
@@ -435,13 +455,14 @@ A take with a touch point never also gets H2 §7's self-prediction question; tha
   - the placement probe; level-test takes; teacher submission targets.
 - **The pass-evidence take (N2):** up to **2 plain straight attempts per session per held cell at 0.95–1.0 × target, stopping at the first clean one.** They feed the warm half of the V1 pass (3 counted clean takes at ≥ 95 % of target on ≥ 2 days, H2 §1.6), and a clean one is "the target first reached" for the cold half's later-day rule.
   - **Tempi:** attempt 1 at the highest mark ≤ target. Attempt 2, after a miss, one mark lower if that is still ≥ 0.95 × target, else at 0.95 × target; there is no attempt 2 when that equals attempt 1's tempo. Never two attempts at one tempo (N7).
-  - **Place:** the visit's last takes, after the variants (§9.2.2). On a day they run there is no closing straight take at the cap. Touch point 2 follows the clean attempt (once a day).
-  - **Allowed when** (v3 rule, pending Q8): before retraining began, the main item's `cleanBpm` had already reached the probe band (`preTop` ≥ 0.95 × target), **or** the cell's non-provisional threshold estimate is ≥ 0.95 × target (H2 §1.9). Q8 decides whether it widens (§19).
-- **How E reaches the qualifying tempi (N1).** H2 §1.9 plays an unpassed item's cold check at max(staircase, 0.95 × target) **once `cleanBpm` ≥ 0.95 × target**. Under a hold, `cleanBpm` grows only up to the cap (E + 1 mark), except through the pass-evidence take. So E, and the reports that move E, decide **when** the pass-probe branch opens. A "slipped" can delay it. An OK can bring it forward, but **never above or before the feature-off baseline**, because the cap only removes takes. **No report value is ever itself used as a qualifying tempo** (G16 a and b).
+  - **Where (M2): in every session in which a held cell is played, in every planner** (key session, rotation, old coach, linear path, list runs, standalone), in any visit kind (a fingering visit or an ordinary speed visit), short sessions included, and in `!` sessions unless "Don't hold" is set. They are **the last straight takes of the cell's last visit of the session**: planners that build a plan (key session, rotation) reserve them in that visit; planners without one (old coach, linear path, list runs) put them at the end of the cell's run, before moving on. In the cap visit they come after the variants (§9.2.2). On a day they run there is no closing straight take at the cap. Touch point 2 follows the clean attempt (once a day). They are not limited by §7.1's visit rationing.
+  - **A missed attempt is not a limit** (M1): like a cap hit, it is ignored by KS2's limit, `STEP_TAKES` and `ALMOSTS_BACK` (`keyCoach.ts`), the reopen rules and the WAVE logic.
+  - **Allowed when** (v4 rule, pending Q8): when the hold began, the main item's `cleanBpm` had already reached the probe band (`preTop` ≥ 0.95 × target), **or** the cell's non-provisional threshold estimate is ≥ 0.95 × target (H2 §1.9). Q8 decides whether it widens (§19).
+- **How E reaches the qualifying tempi (N1).** H2 §1.9 plays an unpassed item's cold check at max(staircase, 0.95 × target) **once `cleanBpm` ≥ 0.95 × target**. Under a hold, **plain straight takes** raise `cleanBpm` only up to the cap (E + 1 mark). Three kinds of take still raise it as with the feature off: the exempt takes (cold checks, FSRS probes, placement, level test, submissions all go through `applyTake`), and the pass-evidence attempts, which **add** takes at target. Fingering takes never raise it (§9.8). So E, and the reports that move E, decide **when** the pass-probe branch opens, together with those takes. A "slipped" can delay it. An OK can bring it forward. **No report value is ever itself used as a qualifying tempo** (G16 b). Whether the branch can open **before** the feature-off arm is a distributional question, because the attempts add jumps to target: G16 (a) bounds it for the v4 rule, and Q8's options are judged on it (§19).
 - **The remaining delay, stated honestly:**
   - **`preTop` cells.** The cold half is unchanged: their `cleanBpm` had already opened the branch. The warm half gets at most 2 attempts a session instead of several, so it needs about 3 / (1 − (1 − p)²) sessions, where p is the clean rate at 0.95–1.0 × target: about 4 sessions at p = 0.5, about 3.3 at p = 0.7 (feature off: often 2). The cold half needs about 3 days of its own and often hides the gap. **The expected delay is about 1 practice day at p ≥ 0.6, and more at lower p.** G3 measures it.
   - **Cells that had not reached the probe band: both halves of the pass wait** (v2 said only the warm half did). The warm half needs a clean straight take in the probe band, which only the pass-evidence take can give, and that waits for the threshold estimate (or, under Q8, the cap) to reach the band. The cold half's counting cold checks need the pass-probe branch (`cleanBpm` ≥ 0.95 × target) and a day later than the target was first reached. **Both wait until the cap or the cold staircase reaches the probe band, or until retirement.** On MIDI, E rises by up to 1 mark a day on clean top takes even without answers (§9.4, N6), so in the clean case the wait is roughly the number of marks from the cap to the probe band, in practice days. On mic it needs reports, and §11.5 ends a silent hold. **This is a real delay of the pass, and so possibly of rank.** It is the price of not rehearsing the slip above the edge (RF2 §8.2). Owner question **Q8**.
-- **G3 is a harness simulation that must run before F6** (§17, §18): seeded learners over 28 days, fingering on and off, at clean rates **p = 0.5 and 0.7**, for `preTop` and non-`preTop` cells, under the v3 rule and both Q8 options. It reports P(pass by day N) for every combination. **The bound:** for `preTop` cells at p ≥ 0.6, the median pass delay ≤ 1 practice day. Every other case is reported, not bounded. The owner decides Q8 on these numbers.
+- **G3 is a harness simulation that must run before F6** (§17, §18): seeded learners over 28 days, fingering on and off, at clean rates **p = 0.5 and 0.7**, for `preTop` and non-`preTop` cells, under the v4 rule and both Q8 options, **with realistic visit frequencies per planner** and the attempts in every session in which the held cell is played (M2). It reports P(pass by day N) for every combination. **The bound:** for `preTop` cells at p ≥ 0.6, the median pass delay ≤ 1 practice day. Every other case is reported, not bounded. The owner decides Q8 on these numbers.
 - **`!` sessions:** the cap still applies (Q3, decided). The take line and the teacher digest say "Held at ♩116 while the fingering settles." The teacher has an explicit **"Don't hold"** switch on the assignment, which lifts R2 for that assignment's sessions.
 
 #### 9.2.4 When the cap moves
@@ -456,9 +477,10 @@ A take with a touch point never also gets H2 §7's self-prediction question; tha
 ### 9.4 The edge
 Per cell and hand, in nps.
 - **Start:** from T1, one mark below c*; from T2, one mark below the slower break take; from T3, one mark below the slipped tempo. A manual start or pin with no data has no E and no hold (§9.2.0); E starts when evidence arrives.
-- **OK at tempo t** (touch point 1 or 2): E rises toward t, by **at most 1 mark per day** (S8). An OK on a take that is **MIDI-clean at the flagged group** (the §11.3 condition) may raise it by **at most 2 marks per day** (minor: v2 had no bound). On mic, always at most 1 mark per day.
-- **Without an answer (N6):** a clean top take at t > E that is MIDI-clean at the flagged group raises E by 1 mark that day, with no report. It only lifts this feature's own restriction, so §9.6 allows it.
-- **The day's total rise** from all sources is ≤ 2 marks, and ≤ 1 mark unless a MIDI-clean take supports it.
+- **OK at tempo t** (touch point 1 or 2): E rises toward t, by **at most 1 mark per day** (S8). An OK on a take that passes the **"no break, no worse than flagged" check** (§11.3) may raise it by **at most 2 marks per day**. On mic, always at most 1 mark per day.
+- **Without an answer (N6):** a clean top take at t > E that passes the same check raises E by 1 mark that day, with no report. It only lifts this feature's own restriction, so §9.6 allows it. **Read honestly (M6):** the check passes about 84 % of takes played with an unchanged fingering, so in practice this is a ramp of 1 mark per day of clean play without a break. That is its purpose: silence must not trap the player (§11.5).
+- **The day's total rise** from all sources is ≤ 2 marks, and ≤ 1 mark unless a take that passed the check supports it (the per-day `midi` bit, §15.1).
+- **The label "your report"** is used only when the current E came from a report; otherwise the edge is shown "from your playing" (`edgeSrc`, §14.4; minor).
 - **Slipped at t:** E = min(E, one mark below t), floor the comfort pulse. It sets the hand's `lastSlipAt` (§11.4).
 - **Hand unknown on an HT take:** the slip applies to the flagged hand; if both or neither are flagged, to both.
 - **Slips today** at a tempo are counted per hand (`slipsToday`). A second slip at the same T_S today makes that day's edge one mark below and adds a G take to the next visit.
@@ -490,6 +512,16 @@ Per cell and hand, in nps.
 | No toasts | End-line clauses and the item page only (no-active-users rule). |
 | Rank by passes, V1, guard G | `fingering` kind never passes; straight takes count as they are; exemptions and the pass-evidence take (§9.2.3). |
 
+### 9.8 Fingering takes never touch the item's own record (M1)
+- **The hole.** The take path writes the item's ladder state for **every** take: `Drills.tsx:1772` calls `applyTake(st0, …)` on the item; `applyTake` sets `cleanBpm = max(cleanBpm, bpm)` on any clean take (`ladder.ts:134`) and pushes a `passLog` entry when the take is at ≥ `PASS_SHARE` × target and not "slower" (`ladder.ts:143–145`), which the warm half of the pass reads; result XP comes from `drillXp(m)` (`Drills.tsx:1785`). A clean C take at P1 at cap + 3 marks would lift `cleanBpm` above the cap at its click tempo, could add a warm-half entry, and G bursts would count although H2 §1.6 excludes bursts.
+- **The rule.** A take of kind `fingering` (A, B, C at P1–P3, G, drums O) is applied to its own pseudo item **`<itemId>~fg`** (the SP §16.4 pattern for `<item>~feel`): `applyTake` runs on `stateOf('<itemId>~fg')`, never on the item's `st0`. On the **main item** it writes only:
+  - `activeMs` (practice-time XP, `drillTakeMs`, §14.1);
+  - `lastSound` (H2 §1.4: fingering takes are sounding takes, §9.1).
+- **Never written by a fingering take**, on the main item: `cleanBpm`, `passLog`, `goalBpm` and the goal streak, `history`, `channels`, the SP §1 session tempo, KS2 stage counters (`stepTakes`, `almost`, the limit, reopen and WAVE state, `STEP_TAKES`, `ALMOSTS_BACK`), the challenge `ceil`, plateau state, the "today's best" display (`newBestOf`), and result XP (`drillXp` is replaced by practice-time XP only). `drillEvents` for goals and streaks are not emitted.
+- **The `~fg` record** carries the fingering ladders' own state: one feel group per structure, **`positions`** (B, §5.2), **`pause`** (C) and **`cell`** (G), each with its own session tempo, peak and limit, never shared with the item's groups. Nothing reads its `cleanBpm` or `passLog`: not passes, rank, the staircase, the threshold estimate, readiness or H10's working edge. It never appears in lists, the path, the matrix or rank's exercise count, and it has no D1.
+- **Straight takes stay on the item:** P0, the straight ladder, the closing and the pass-evidence attempts are ordinary takes and go through the normal path.
+- Checked by **G24**; G16 (b) also asserts that no fingering take's tempo reaches `cleanBpm`.
+
 ---
 
 ## 10. Blocks on a new key's first appearance (O7)
@@ -515,40 +547,44 @@ Per cell and hand, in nps.
 - **No cold-tempo override (Q5, resolved by S2):** v1's "cold take at G" is removed. With G in the probe band, every confirmation and recheck lands on a cold take H2 §1.9 already plays there: the pass probe for unpassed items with `cleanBpm` ≥ 0.95 × target (after which the staircase resets to the tempo played, as H2 says), or the probe-band confirmation for passed cells. A cell whose climb is below the probe band cannot confirm yet. It climbs first, under the cap that rises with E.
 
 ### 11.2 Confirmation (per hand)
-A **clean cold check at ≥ G**, reported **OK** at touch point 1, which also meets the **MIDI condition** (MIDI setups).
+A **clean cold check at ≥ G**, reported **OK** at touch point 1, which also passes the **"no break, no worse than flagged" check** (MIDI setups, §11.3).
 
-### 11.3 The MIDI condition (N3)
+### 11.3 The "no break, no worse than flagged" check (N3, M6)
 - **Tempo-matched.** The confirmation take plays in the probe band, often 30 % or more above the T1 lower band, and a correct fingering also shifts with tempo (RF1 §3.2). So the take is compared with **the flagged state at its own tempo band**, never with a slow reference (v2 did, and failed the owner's own fast takes).
-- **The frozen reference.** At flag time (any source) F3 freezes in the synced flag record (`FlagStat.ref`, §15.1) the flagged group's R_g per 1.25× tempo band, from the eligible warm takes in `fingerEvidence` (cold takes excluded, as in T1): `{lo, mean, sd, n}` for each band with n ≥ 5, from c*/1.25 (or the lowest band with data) up to the highest band with data, at most 6 bands. It also freezes Δ's side (`dir`): the sign of Δ for T1, of the break residuals for T2, and for T3 and manual flags the sign of the highest band's mean minus the lowest band's, when both exist. The reference never ages out and is the same on every device.
+- **Its honest name (M6).** The reference is the flagged state itself, so the check asks only "**no break, and no worse than flagged**". About 84 % of takes played with an **unchanged** fingering pass it; in the probe band it means, in practice, "no break". It cannot show that the fingering changed. That is acceptable in v1 because it only restricts the player (§9.6), and it is how §9.4's E rises, §11.5 and §14.2 are worded.
+- **The frozen reference.** At flag time (any source) F3 freezes in the synced flag record (`FlagStat.ref`, §15.1) the flagged group's R_g per 1.25× tempo band, **from T1-eligible rows only** (§3.1: straight, full click, clean or almost; failed takes excluded): `{lo, mean, sd, n}` for each band with n ≥ 5, at most 6 bands. **Bands are anchored at the lowest eligible row's mark and half-open**: [lo · 1.25^k, lo · 1.25^(k+1)).
+- **Two references, warm and cold (M6).** T1 drops cold takes because they carry the cold effect, so a warm reference would fail a cold-late thumb systematically. F3 therefore freezes **`ref`** from warm rows and **`refCold`** from cold rows (`cd`), the same way. A **cold** take (a confirmation or recheck) is compared with `refCold` when its band has ≥ 5 cold rows; **otherwise the check is the break check only**, until shadow labels exist. A **warm** take (the top take of §9.4) is compared with `ref`. It also freezes Δ's side (`dir`): the sign of Δ for T1, of the break residuals for T2, and for T3 and manual flags the sign of the highest band's mean minus the lowest band's, when both exist. The reference never ages out and is the same on every device.
 - **The v1 condition**, until the shadow analysis shows what R_g means at the probe band:
   - **not a break take** for that hand (§3.3), **and**
-  - **not worse than the flagged state at the same tempo band:** R_g lies no further on Δ's side than that band's frozen mean + 1 frozen SD. The band is the one that holds the take's tempo; if it has no row, the nearest band below within one band (25 %); if there is none, or no `dir`, the condition is "not a break take" only.
-- **Checked on the owner's D-major numbers** (RF1 §3.2, LH `xu`; T1 at c* = ♩100, Δ > 0):
-  - the frozen rows would include ♩100–125 (the 10 takes at ♩104–125: mean ≈ +11.7 ms, SD ≈ 9.9) and ♩125–156 (17 takes at ♩126+: mean +4.6 ms, SD 12.1);
-  - a probe-band confirmation at ♩126 or above passes when R_g ≤ +16.7 ms. A take like the owner's fast takes (mean +4.6) passes about 84 % of the time. v2's band (−36.5 … +3.5 ms) failed more than half of them;
-  - a confirmation at ♩118–125 compares with the ♩100–125 row: R_g ≤ +21.6 ms;
-  - a take with a break (the +96 ms take at ♩124) fails on the break check.
-  - **Honest reading:** at ♩126+ the owner's group shows almost no shift, so in the probe band the condition is mostly the break check. That is why it is tightened only on shadow labels.
+  - **no worse than flagged at the same tempo band:** R_g lies no further on Δ's side than that band's frozen mean + 1 frozen SD (of the matching reference, warm or cold). The band is the one that holds the take's tempo; if it has no row, the nearest band below within one band; if there is none, or no `dir`, the check is "not a break take" only.
+- **On the owner's D-major numbers** (LH `xu`, T1 at c* = ♩100, Δ > 0; T1-eligible rows recomputed from the traces in round 3; bands anchored at ♩80):
+  - ♩100–125, the ♩103 take included: mean +11.3 ms, SD 11.4, so a warm take there passes at R_g ≤ +22.7 ms;
+  - ♩125–156: n 14, mean +4.4 ms, SD 10.5, so a warm take passes at R_g ≤ +14.9 ms; 12 of the 14 reference takes pass (that is the check's permissiveness, not evidence of a fix);
+  - a take with a break (the +96 ms take at ♩124) fails;
+  - **cold confirmations:** v1 traces do not mark cold takes, so no cold rows exist yet, and a cold confirmation today would get the break check only;
+  - in this item R_g is **one note per take** (§3.3), so the check rests on a single LH `xu` residual.
+  - **Honest reading:** at ♩126+ the owner's group shows almost no shift, so in the probe band the check is mostly the break check. That is why it is tightened only on shadow labels.
 - **Tightened only after §16.2**, with the owner (on the re-fit list).
-- OK alone still cannot retire a MIDI player whose take shows a break (§14.2).
+- OK alone still cannot retire a MIDI player whose confirmation take shows a break (§14.2). It can retire one whose fingering did not change but who did not break; the check does not claim otherwise.
 
 ### 11.4 Retirement, rechecks, relapse
 - **Retired** when every flagged hand has confirmations on **2 distinct days** (≥ 8 h apart, different local days; H2 §1.6 "later day"), with no slipped on that hand between them: **only confirmations after the hand's `lastSlipAt` count** (strict, like H9's reset). `lastSlipAt` is synced, so a slip on one device clears the other device's earlier confirmations on merge (minor). Then R2 is lifted, visits stop, and `recheckDue` = +7 days.
 - **Rechecks at speed:**
-  - The recheck is the first cold check **at ≥ G** on or after `recheckDue`. Touch point 1 asks, with the MIDI condition.
+  - The recheck is the first cold check **at ≥ G** on or after `recheckDue`. Touch point 1 asks, with the §11.3 check.
   - Touch point 2 also fires once on the first climb that passes E0 after retirement.
   - A T1 or T2 fire during the recheck period brings the next recheck forward to the next cold check at ≥ G.
-  - OK (and the MIDI condition) → `recheckDue` = +21 days; after that recheck → `done`.
-  - **Slipped, or a failed MIDI condition** → back to `retraining` from the next session (visits, R2), E from the slipped tempo (or one mark below the take), **no new block**. A second failed recheck of the same fingering → a block on the next appearance.
-- **Mic players (honest fallback):** there is no MIDI condition on mic. Retirement and rechecks are **report-only**: two clean cold checks at ≥ G reported OK on distinct days. This is safe because R2 only restricts the player, and nothing measured depends on it. The item page labels it "by your report". The mic C ladder moves on onset-verified placement in hands-separate takes (§5.3), so a mic visit never repeats the same take at one tempo.
+  - OK (and the §11.3 check) → `recheckDue` = +21 days; after that recheck → `done`.
+  - **Slipped, or a failed §11.3 check** → back to `retraining` from the next session (visits, R2), E from the slipped tempo (or one mark below the take), **no new block**. A second failed recheck of the same fingering → a block on the next appearance.
+- **Mic players (honest fallback):** there is no §11.3 check on mic. Retirement and rechecks are **report-only**: two clean cold checks at ≥ G reported OK on distinct days. This is safe because R2 only restricts the player, and nothing measured depends on it. The item page labels it "by your report". The mic C ladder moves on onset-verified placement in hands-separate takes (§5.3), so a mic visit never repeats the same take at one tempo.
 - **Breaks:** time away never changes the state. After 60 days without a cold check, a state returns to `flagged` with E kept, and asks nothing until the cell is played.
 - **Nothing is promised about duration** (RF2 §5: no piano study; 4 days was not enough in Hardwick).
 
 ### 11.5 A player who never answers (N6)
 v2 raised E only on answered reports, so a silent player stayed capped for good.
-- **On MIDI,** E rises without answers on MIDI-clean top takes (§9.4), so the cap climbs with clean playing.
-- **After 5 practice days in retraining** (days on which the cell was played) with **no answered window** for the cell (touch points, spot checks), the end line asks once: "Keep the fingering hold on D major? Yes · Stop". Hands-free: top key = yes, bottom key = stop, within 6 s. Yes resets the count.
-- **After 10 such practice days** (that question unanswered too), **the hold ends by itself:** state `done`, `stoppedAt`, `stopWhy: 'silent'`. R2 lifts at once. The item page says "Fingering hold ended: no answers". Settings → "Offer again" undoes it (§14.6). T1 and T2 keep running, and a later fire is offered as usual.
+- **On MIDI,** E rises without answers on top takes that pass the §11.3 check (§9.4), so the cap climbs with clean playing.
+- **Only asked-and-unanswered days count (M3).** A **silent day** for a cell = a day on which **at least one window for that cell was shown** (touch point, spot check) **and none was answered**. Days with no window (TP1 fires only after a clean cold check, TP2 only after the day's highest clean top take, the 2 + 2 daily limit is shared across cells, and visits skip sessions) do not count. `quiet` stores the count (§15.1).
+- **After 5 silent days in retraining**, the end line asks once: "Keep the fingering hold on D major? Yes · Stop". Hands-free: top key = yes, bottom key = stop, within 6 s. Yes resets the count. **It shares the end line by priority:** one end-line question per session, the keep-hold question first; an offer waits for the next session (§4).
+- **After 10 silent days** (that question unanswered too), **the hold ends by itself:** state `done`, `stoppedAt`, `stopWhy: 'silent'`. R2 lifts at once. The item page says "Fingering hold ended: no answers". Settings → "Offer again" undoes it (§14.6). T1 and T2 keep running, and a later fire is offered as usual.
 - Any answered window or slip mark resets the count.
 - A cell without a hold (§9.2.0) has nothing to lift; its visits end with the assignment or at "Stop".
 
@@ -587,7 +623,8 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
   - **two kicks 80–400 ms apart** = slipped (debounced against kick double-triggering), or the **ride bell** when the kit map has one;
   - never the hi-hat foot, which moves incidentally;
   - no hand question: the orchestrated takes locate the hand;
-  - window: 3 s after the last stroke has decayed (≥ 0.8 s).
+  - window: 3 s after the last stroke has decayed (≥ 0.8 s);
+  - **slip mark** (no window, §3.4): the ride bell when mapped, else two kicks 80–400 ms apart, within 4 s after the last stroke has decayed.
 
 ---
 
@@ -601,13 +638,13 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
 
 ### 14.1 Reports earn nothing
 - **No XP, rank, pass, star, Momentum, league, badge, streak or cap** comes from a report or from a `fingering` take's verdict (RF1 §2.2).
-- **XP:** fingering takes earn the practice-time XP every take earns from its active time (`drillTakeMs`), and nothing per result or report.
+- **XP:** fingering takes earn the practice-time XP every take earns from its active time (`drillTakeMs`), and nothing per result or report: `drillXp(m)` is not called for them (§9.8, M1).
 - **A slipped never cancels anything** (RF1 §6.5).
 
 ### 14.2 Why lying doesn't pay
 - OK cannot retire a MIDI player alone (§11.3).
-- OK raises E by at most 1 mark per day, 2 when MIDI agrees (§9.4).
-- Silence never traps the player: E rises on MIDI-clean takes, and a silent hold ends (§11.5).
+- OK raises E by at most 1 mark per day, 2 when the take passes the "no break, no worse than flagged" check (§9.4, §11.3). That check is permissive (about 84 % of unchanged-fingering takes pass); what it reliably stops is an OK on a take with a break.
+- Silence never traps the player: E rises on takes that pass the check, and a hold ends after 10 asked-and-unanswered days (§11.5).
 - Escaping is free: "Stop fingering work on this item".
 - The spot check catches OK on an audible break (§8.4).
 - Questions are rare and narrow.
@@ -619,6 +656,10 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
 |---|---|---|
 | Day-1 block | One fingering, slow first. We'll shrink the pause before each hand-position change. | אצבוע אחד, קודם לאט. נקצר את העצירה לפני כל מעבר מנח יד. |
 | First report on this keyboard | Press your highest key, then your lowest. | לחצו על הקליד הכי גבוה, ואז על הכי נמוך. |
+| Slip mark (first in-scope cell; M4, minor) | Fingering slipped? Press your lowest key twice after the take. | האצבוע לא יצא נכון? לחצו פעמיים על הקליד הכי נמוך אחרי הנגינה. |
+| Slip mark, no keyboard range yet | First, press your highest key, then your lowest. | קודם, לחצו על הקליד הכי גבוה, ואז על הכי נמוך. |
+| Slip mark, mic or no zones | Fingering slipped? Use "My fingering slipped" in the menu. | האצבוע לא יצא נכון? בתפריט: "האצבוע שלי לא יצא נכון". |
+| Retrain this fingering (manual start) | One fingering, slow first. If it slips, press your lowest key twice after the take. | אצבוע אחד, קודם לאט. אם הוא לא יוצא נכון, לחצו פעמיים על הקליד הכי נמוך אחרי הנגינה. |
 | Blocks (A) | Each hand position as one chord: you'll see where the hand moves. | כל מנח יד כאקורד אחד: תראו איפה היד זזה. |
 | Position rhythm (B) | Make the last note of each hand position long. | הצליל האחרון בכל מנח יד: ארוך. |
 | Vanishing pause (C) | Hold before each hand-position change and place the hand. | החזיקו לפני כל מעבר מנח יד והניחו את היד. |
@@ -640,8 +681,9 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
 | Item menu, slip mark | My fingering slipped | האצבוע שלי לא יצא נכון |
 | Silent hold, question | Keep the fingering hold on D major? Yes · Stop | להמשיך לעצור את הטמפו בגלל האצבוע ברה מז'ור? כן · להפסיק |
 | Silent hold, ended | Fingering hold ended: no answers. | העצירה בגלל האצבוע הסתיימה: אין תשובות. |
+| Settings button (device) | Learn keyboard range | ללמוד את טווח המקלדת |
 | Item page, no hold | Fingering visits · no hold | ביקורי אצבוע · בלי עצירה |
-| Offer | Your left hand's way down in D major changes above ♩100. A fingering block next time? | הירידה של יד שמאל ברה מז'ור משתנה מעל ♩100. בלוק אצבוע בפעם הבאה? |
+| Offer | Above ♩100, your left hand's way down in D major changes. A fingering block next time? | הירידה של יד שמאל ברה מז'ור משתנה מעל ♩100. בלוק אצבוע בפעם הבאה? |
 | Offer buttons | Yes · Not now | כן · לא עכשיו |
 | Plan check, wrong | The holds fell on E and B. The hand positions end on F♯ and C♯. Once more. | העצירות נפלו על E ועל B. מנחי היד נגמרים ב-F♯ וב-C♯. עוד פעם. |
 | Plan check, second miss | Your hand positions end elsewhere. Mark your own fingering? | מנחי היד שלך נגמרים במקום אחר. לסמן אצבוע משלך? |
@@ -649,9 +691,10 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
 | Block end | Left hand holds to ♩116. Next: the hold, down to a quarter beat. | יד שמאל מחזיקה עד ♩116. הבא: העצירה, עד רבע פעמה. |
 | End-line clause | Left hand, way down at F♯: hold down to a quarter beat. | יד שמאל, בירידה ב-F♯: עצירה עד רבע פעמה. |
 | R2 hold | Held at ♩116 while the fingering settles. | נשאר ב-♩116 עד שהאצבוע מתייצב. |
-| Retired | The D major fingering held in the first take of the day, on two days. Back to normal practice. | האצבוע ברה מז'ור יציב גם בנגינה הראשונה של היום, יומיים. חוזרים לתרגול רגיל. |
+| Retired | The D major fingering held in the first take of the day, on two days. Back to normal practice. | האצבוע ברה מז'ור החזיק בנגינה הראשונה של היום, ביומיים שונים. חוזרים לתרגול רגיל. |
 | Recheck relapse | The old fingering came back in the first take of the day. Short fingering visits again. | האצבוע הישן חזר בנגינה הראשונה של היום. שוב ביקורי אצבוע קצרים. |
 | Item page | Fingering ♩116 · your report | אצבוע ♩116 · לפי הדיווח שלך |
+| Item page, E not from a report | Fingering ♩116 · from your playing | אצבוע ♩116 · לפי הנגינה שלך |
 | Item page, mic retirement | Fingering settled · by your report | האצבוע התייצב · לפי הדיווח שלך |
 | Item page actions | Retrain this fingering · Stop fingering work | לאמן מחדש את האצבוע · להפסיק עבודת אצבוע |
 | Settings card title | Fingering coach | מאמן האצבוע |
@@ -686,11 +729,12 @@ On an e-kit the MIDI carries the pad, not the hand. **Orchestration** plays each
   2. **Small button: "Offer again"**, shown when any hand is snoozed or declined, or a cell was stopped (by "Stop", "End" or the silent timeout, §11.5) in the last 60 days. It:
      - turns `fingeringOffer` on;
      - clears every hand's `snoozeUntil` and `declines`;
-     - returns cells stopped by "Stop fingering work" in the last 60 days to `flagged` if they still have a flag, otherwise to no state.
+     - returns cells stopped in the last 60 days, by "Stop fingering work", "End" or the silent timeout (§11.5), to `flagged` if they still have a flag, otherwise to no state (minor: now matches the hint and G19).
 
      Nothing restarts by itself: the next offer still waits for Yes (Q7, decided).
   3. **List: "In retraining now"**, one row per cell in `retraining`, plus `retired` cells with a recheck pending (marked "recheck").
-     - Each row shows the item title in its key, the hand(s), and the edge ("♩116 · your report"), or "no hold" for a cell without a hold (§9.2.0).
+     - Each row shows the item title in its key, the hand(s), and the edge ("♩116 · your report", or "· from your playing" when E did not come from a report), or "no hold" for a cell without a hold (§9.2.0).
+  4. **Small button: "Learn keyboard range"** (device; MIDI only): the two-press range step of §8.3, so the slip mark's double press works before any report (§3.4).
      - A small **"End"** button on each row does "Stop fingering work" for that cell and lifts R2 at once.
      - An empty list shows one muted line: "No fingering work right now."
 - **Sync rule (decided):** `fingeringOffer`, the snoozes, the stops and the list are **synced per account**. They are practice preferences and progress, the same on every device. Two fingering preferences stay **on the device**, because they depend on the hardware: "Answer by voice" (`fingeringVoice`) and the learned key zones (`fgZones`) (device-settings rule). "Answer by voice" sits in this card too, labelled "this device".
@@ -708,7 +752,8 @@ interface FlagStat {
   src: 'T1' | 'T2' | 'T3' | 'manual' | 'teacher'; group: string; sitePc: number;
   c?: number; t?: number; delta?: number; brk?: number; at: string;
   dir?: 1 | -1;                                       // Δ's side (§11.3)
-  ref?: RefBand[];                                    // frozen at flag time, never ages out (N3)
+  ref?: RefBand[];                                    // warm, T1-eligible rows, frozen at flag time, never ages out (N3, M6)
+  refCold?: RefBand[];                                // cold rows (`cd`), same rule; used for cold takes when n ≥ 5 (M6)
 }
 interface HandState {
   upd: string;                                        // ISO, per-hand merge key
@@ -716,7 +761,8 @@ interface HandState {
   t3At?: string;
   snoozeUntil?: string; declines: number;             // §3.5, Q4
   edge?: number; edge0?: number;                      // nps
-  edgeRaisedDay?: string; edgeRaisedMarks?: number;   // the daily limits (§9.4)
+  edgeSrc?: 'report' | 'play';                        // shown "your report" only when 'report' (§9.4)
+  edgeRaise?: { day: string; marks: number; midi: boolean };  // the daily limits; midi = a take passed the §11.3 check that day (§9.4)
   lastSlipAt?: string;                                // only confirmations after it count (§11.4)
   slipsToday?: { day: string; nps: number; n: number };
   rung?: 1 | 2 | 3 | 0; planAt?: number;              // C ladder memory
@@ -729,20 +775,20 @@ interface FingerCell {
   fsOwn: string; fsSug: string;                       // §1.2
   state: 'flagged' | 'offered' | 'retraining' | 'retired' | 'done';   // a decline is per hand (§1.4)
   stateUpd: string;                                   // ISO
-  hold?: boolean;                                     // R2 applies (§9.2.0, N8)
+  hold?: boolean; holdUpd?: string;                   // R2 applies (§9.2.0, N8); own merge key
   hands: Partial<Record<Hand, HandState>>;
-  preTop?: number;                                    // cleanBpm in nps at retraining start (§9.2.3)
+  preTop?: number;                                    // cleanBpm in nps when the hold starts (§9.2.0, §9.2.3)
   blockDay?: string;
   recheckDue?: string; recheckStep?: 7 | 21; failedRechecks: number;
   asked: { day: string; cold?: boolean; top?: boolean; spot?: boolean; mark?: boolean };  // mark = the day's slip mark (§3.4)
   pe?: { day: string; n: number; clean: boolean };    // pass-evidence attempts today (§9.2.3)
-  quiet?: { since: string; days: number; asked?: boolean };  // practice days with no answered window (§11.5)
+  quiet?: { days: number; lastDay?: string; asked?: boolean; upd: string };  // asked-and-unanswered days (§11.5, M3)
   dontHold?: string[];                                // assignment ids with the teacher's switch
   stoppedAt?: string; stopWhy?: 'player' | 'silent'; // "Stop fingering work", Settings "End", or §11.5; reversible for 60 days (§14.6)
 }
 type FingerStore = Record<string /* cellKey */, FingerCell>;
 ```
-- **Merge (S6):** per cell, `state` by the newest `stateUpd`; each hand by its newest `upd`; `confirms` is the union by (hand, day); `failedRechecks` and `declines` by max; `asked` by the newest day, OR-ing the flags of the same day. A merge that brings two confirmations closer than 8 h keeps only the earlier (H2 §1.4 cross-device rule). `lastSlipAt` by max, after which confirmations older than it are dropped; `hold` and `quiet` follow `stateUpd`; `FlagStat.ref` travels with its flag.
+- **Merge (S6):** per cell, `state` by the newest `stateUpd`; each hand by its newest `upd`; `confirms` is the union by (hand, day); `failedRechecks` and `declines` by max; `asked` by the newest day, OR-ing the flags of the same day. A merge that brings two confirmations closer than 8 h keeps only the earlier (H2 §1.4 cross-device rule). `lastSlipAt` by max, after which confirmations older than it are dropped; `hold` by `holdUpd` and `quiet` by its own `upd` (both change without a state change; minor); `FlagStat.ref` and `refCold` travel with their flag.
 - R2 and the planners read it. Rank, passes, the staircase, XP and history never read it (G1, G16).
 
 ### 15.2 Device only
@@ -781,15 +827,21 @@ On the take traces (SP §8: device plus the calibration upload); no new tables.
 - **Who:** the calibration accounts only. **Length:** 2–3 weeks.
 - T1 and T2 compute flags and log them (`fgShadow` on the trace: group, c*, Δ, t, strength) **without offering**. Nothing changes state.
 - **Labels at the flag's tempo (N5).** Below the edge the slip "gets away" (RF1 §3.3: recall about 0 %), so cold labels at the staircase tempo would undercount true flags. Shadow labels are asked at **the top straight take** (touch point 2's moment) **when its tempo is in the flag's band**: [c*, 1.25 c*] for T1, the 1.25× band of the two break takes for T2.
-- **Controls:** each day a random 1 in 3 of the eligible scale cells with no shadow flag. A control is asked at its top straight take when that take is in **its own upper band** (the top 1.25× band of the cell's eligible takes in the last 21 days), the band where flags fire.
+- **Controls:** each day a random 1 in 3 of the eligible scale cells with no shadow flag, **at most one control unit per (cell, hand) per 14 days** (M7). A control is asked at its top straight take when that take is in **its own upper band** (the top 1.25× band of the cell's eligible takes in the last 21 days), the band where flags fire.
 - **Neutral wording:** every shadow question, on flagged and control cells alike, is "Fingering OK?" with no place, and **no spot check runs in shadow** (it names a place). The owner cannot tell flagged cells from controls.
 - At most one shadow label per cell per day. Answers are written as `fg.rep` with `tp: 'shadow'` and change nothing (no edge, no state). Touch point 1 answers are still logged for RF2 §7's questions, but they are **not** used for precision.
 - **Positives are "slipped" answers only.** A later T2 break does **not** count as confirmation: it is the same signal again (v2 counted it).
 - **The unit** = one flag on (cell, hand, group), or one control draw on (cell, hand), with its first **3** answered in-band labels within 14 days. A unit with no answered in-band label is excluded and counted as unlabelled.
 - **Precision** = (flag units with ≥ 1 "slipped" among their ≤ 3 labels) ÷ (flag units with ≥ 1 label). **Control rate** = the same ratio over control units. The 3-label cap gives both the same exposure.
-- **The gate for offering:** ≥ **10** labelled flag units and ≥ 10 labelled control units, **precision ≥ 50 %, and precision ≥ 2 × the control rate** (a control rate of 0 needs precision ≥ 50 % only). Otherwise shadow mode extends by 2 weeks, up to 6 weeks in all. If the gate still fails, offers run on T3 and manual starts only, and T1/T2 stay silent telemetry.
+- **The gate for offering (M7):** all of
+  - ≥ **10** labelled flag units and ≥ 10 labelled control units;
+  - precision ≥ **50 %** and ≥ **2 × the control rate** (a control rate of 0 needs precision ≥ 50 % only);
+  - **P(p_flag > p_control) ≥ 0.95**, with independent Beta(1, 1) priors: p_flag ~ Beta(1 + s_f, 1 + n_f − s_f), p_control ~ Beta(1 + s_c, 1 + n_c − s_c), where s = units with a "slipped" and n = labelled units. Examples: 5/10 vs 2/10 gives about 0.91 and **fails**; 6/10 vs 1/10 passes. (v3's gate passed 5/10 vs 2/10, one-sided Fisher p = 0.175.)
+  Otherwise shadow mode extends by 2 weeks, up to 6 weeks in all. If the gate still fails, offers run on T3 and manual starts only, and T1/T2 stay silent telemetry.
+- **The expected outcome may be "T3 and manual only".** T1 fired on 1 of 5 keys in the owner's data, so 10 labelled flag units may not exist within 6 weeks. That outcome is a valid result of the gate, not a failure of the feature: T3, manual starts and the slip mark carry it.
+- **One labeller (M7).** Every label comes from one person on two accounts, so units are not independent and the gate measures agreement with **this** player. It is re-run when real users exist (≥ 5 players with labels) before data-flag offers reach them.
 - **Recall** (reported, not gated): the share of in-band "slipped" units on cells that were shadow-flagged before the slip.
-- **The re-fit list,** with the owner, before the offer turns on: the thresholds (20 ms, 8 %, t 3, 30 ms, 3.5 SD), the §11.3 MIDI condition (N3), and whether boundary crossings (§1.3) join R_g (tested here as a separate group).
+- **The re-fit list,** with the owner, before the offer turns on: the thresholds (20 ms, 8 %, t 3, 30 ms, 3.5 SD), the §11.3 "no break, no worse than flagged" check and its cold reference (N3, M6), and whether boundary crossings (§1.3) join R_g (tested here as a separate group).
 - RF2 §7's three questions (does structure H flag reported slips; do velocity bumps fall at slips; at what pause length the map breaks) are answered from the same data.
 - The camera stays a later spike (RF1 §4, RF2 §4).
 
@@ -802,11 +854,11 @@ On the take traces (SP §8: device plus the calibration upload); no new tables.
 | F1 | **Done (0.145.16):** the per-note log, trace v3, the device trim, tests. | S |
 | **F1b** | **Trace v4:** `fs`, `vr`, `cell`, `xs` (residuals by the trace's own rule, `sdl`, break flag, `bd`, per-site `[pc, r]`), `to`, `cd`; `NOTE_LOG_MAX` 120; the `fingerEvidence` store with its retention. Tests: residuals equal the trace rule; wrong-key notes excluded; thinned and feel takes excluded; a 4-octave HT scale logs whole; retention ≥ 21 days at 200 takes a day. | S–M |
 | F2 | **Report input:** the window (decay, 3 s, verdict first), zones learned per input (octave-aware), the HT second press (after "slipped" only), pedal, keys, foot switch and page turner, optional voice, the any-time slip mark with Undo, prompts that name only working inputs, the count-in hold, one question per take, reminder and fatigue across cells. `fg` on traces. | M |
-| F3 | **Flags:** T1, T2, T3 (pure `fingerFlags.ts`), per cell and hand, guards, snoozes, the frozen reference. **Shadow mode with in-band neutral labels and controls** (§16.2), the precision analysis, then the gate with the owner. | S–M |
+| F3 | **Flags:** T1, T2, T3 (pure `fingerFlags.ts`), per cell and hand, guards, snoozes, the frozen warm and cold references (T1-eligible rows, anchored half-open bands). **Shadow mode with in-band neutral labels and controls** (§16.2), the precision analysis, then the gate with the owner. | S–M |
 | F4 | **Structures:** `positionBlocks`, `positionRhythm`, `pauseAtCrossings` (whole-twelfth rungs, lengthened notes, the subdivided click, segment grading), `crossingCell`; grading. Tests in 12 keys, both hands, own fingering. | M |
 | F5 | **The ladder and the block:** `fingerLadder.ts` (rungs, rung memory, drop-back one mark slower, the verification floor, plan check, T_C/T_S, the straight ladder with distinct tempi, E rules incl. the daily limits and the no-answer rise) and the block composer with its budget. A 3-day simulation. | M |
-| F6 | **Integration** (after the G3 simulation and the owner's Q8 decision): the key session (block, visits, the variants-only cap visit, "held" vs limit, A-7 on `passedAt`, new-key blocks), the old coach and assignments (mirror, pin without a hold, `!`, "Don't hold"), R1 in every planner, the hold rule and R2 in every climb, the pass-evidence take (2 attempts), challenge takes off, H10 at effective difficulty with held cells apart. SP rotation hooks behind its own build. SP §16.7 and H2 §1.7a amendment entries. | M–L |
-| F7 | **Across days:** confirmations with the tempo-matched MIDI condition and the frozen references, `lastSlipAt`, retirement, rechecks at ≥ G, relapse, the mic report-only path, the silent-hold question and timeout, breaks, the `fingering` store with its merge. | S–M |
+| F6 | **Integration** (after the G3 simulation and the owner's Q8 decision): **the `<item>~fg` path, so fingering takes write only `activeMs` and `lastSound` on the item (§9.8, G24)**; the pass-evidence attempts in every planner and visit kind; the key session (block, visits, the variants-only cap visit, "held" vs limit, A-7 on `passedAt`, new-key blocks), the old coach and assignments (mirror, pin without a hold, `!`, "Don't hold"), R1 in every planner, the hold rule and R2 in every climb, the pass-evidence take (2 attempts), challenge takes off, H10 at effective difficulty with held cells apart. SP rotation hooks behind its own build. SP §16.7 and H2 §1.7a amendment entries. | M–L |
+| F7 | **Across days:** confirmations with the "no break, no worse than flagged" check (warm and cold references), `lastSlipAt`, retirement, rechecks at ≥ G, relapse, the mic report-only path, the silent-hold question and timeout on asked-and-unanswered days, the slip path per state, breaks, the `fingering` store with its merge. | S–M |
 | F8 | **UI and copy:** chip, report line, offer, item page, **the Fingering coach card in Settings → Learning (§14.6: switch, "Offer again", the retraining list with End, the device voice switch)**, briefs, the teacher switch; he + en; `speakable` for ♩ and ♯; screenshots at 320/390 widths; the contrast sweep. | S–M |
 | F9 | **Drums:** the drum `nl`, `orchestrate`, the crosstalk-safe wrong pad, orchestrated takes in the feel pool, the drum flags, cap and report. | M |
 | F10 | **Harness and review:** independent review rounds until clean before F1b (owner rules); G1 and G16 at planner level with seeded learners; **the G3 simulation (p = 0.5 and 0.7, on vs off, both cell groups, both Q8 options) before F6**, its numbers shown to the owner for Q8. | — |
@@ -823,7 +875,7 @@ Order: F10 review → F1b → F3 shadow (it needs F1b and F2's top-take label qu
 |---|---|
 | G1 | **Honesty (planner level):** seeded learners over 28 days with reports scripted to lie OK at every touch point vs honest vs no reports vs random slip marks. The learner's skill trajectory is the same in both arms (the model gives fingering takes no extra skill), so differences come from the planner only. Passes, rank, cold results, staircase, threshold estimate, Momentum, XP beyond practice time and history never exceed, or come before, the feature-off baseline (§9.6). |
 | G2 | **R1:** in every planner, no `fingering` take precedes the cell's main-item cold check on a cold day; new-key blocks are the only exception, on a first appearance. |
-| G3 | **R2 vs passes: a harness simulation that runs before F6** (N2). Seeded learners over 28 days, fingering on and off, at clean rates **p = 0.5 and 0.7** at 0.95–1.0 × target, for `preTop` and non-`preTop` cells, under the v3 rule and Q8 options (a) and (b). It reports P(pass by day N) for every combination, and the numbers go to the owner for Q8. **Bound:** for `preTop` cells at p ≥ 0.6, the median pass delay ≤ 1 practice day; every other case is reported, not bounded. Also: plain straight takes never exceed the cap outside the exemptions and the pass-evidence attempts (≤ 2 per session, stopping at the first clean one, never two at one tempo). |
+| G3 | **R2 vs passes: a harness simulation that runs before F6** (N2, M2). Seeded learners over 28 days, fingering on and off, at clean rates **p = 0.5 and 0.7** at 0.95–1.0 × target, for `preTop` and non-`preTop` cells, under the v4 rule and Q8 options (a) and (b), **with realistic visit frequencies per planner** (key session, rotation, old coach) and the pass-evidence attempts in every session in which the held cell is played. It reports P(pass by day N) for every combination, and the numbers go to the owner for Q8. **Bound:** for `preTop` cells at p ≥ 0.6, the median pass delay ≤ 1 practice day; every other case is reported, not bounded. Also: plain straight takes never exceed the cap outside the exemptions and the pass-evidence attempts (≤ 2 per session, stopping at the first clean one, never two at one tempo); a missed attempt never sets a KS2 limit or consumes `STEP_TAKES`/`ALMOSTS_BACK`. |
 | G4 | **Develops (N7):** in the 3-day simulation (MIDI and mic), **in every block and visit**, no two takes of one cell have the same structure, rung and tempo, except one "almost" hold; no straight take repeats a tempo already played straight in the visit or block (P0, the closing, the cap visit and the pass-evidence attempts included). Each clean straight take below the ceiling is followed by one a mark faster. At the cap, clean takes are followed by variants that rise. P0 is an ordinary straight take with no `vr` and is counted. |
 | G5 | **Per key (fixture only, N4):** on the owner's five-key class means (`takeTrace` `xu`/`xo`, which equal R_g for the suggested fingering, §1.3), T1 fires on **D at ♩100** (edge ♩96) and nowhere else; a constant early lean in E♭ flags nothing; an injected shift in one key flags only that key. |
 | G5b | **Per key from per-note logs** (once v3/v4 traces reach the server): recompute `xs` and T1 from `nl` with the §1.3 class array (boundary crossings excluded) and check the result against G5's class-mean result; report any difference before F3 leaves shadow mode. |
@@ -831,24 +883,25 @@ Order: F10 review → F1b → F3 shadow (it needs F1b and F2's top-take label qu
 | G7 | **Verification:** B passes the correct long-note set and names a misplaced one; C detects a pause one note early, and grades segments without cumulative offset; A fails a roll > 40 ms and an extra note. |
 | G8 | **Report grammar:** no MIDI answers before the range is learned; zones after the octave shift; reset on a shift change; empty zones fall back; the HT second press; pedal < 600 ms; zone notes never start a take; a non-zone note closes as no answer; the verdict is shown before the report line; one question per take with H2 §7. |
 | G9 | **Input source:** mic takes have no `nl`/`xs`; mic C moves the ladder only on HS onset placement; `nc` takes move nothing; a mid-take MIDI loss leaves the state unchanged; A and B never on mic. |
-| G10 | **Retirement:** OK alone with break takes never retires a MIDI player; two clean confirmed cold days at ≥ G retire; a slip between resets, also when it happened on another device (`lastSlipAt` on merge); the MIDI condition uses the frozen reference of the take's own tempo band (N3), survives 60 days and a second device, and passes the owner's D-major fast-take profile (mean +4.6 ms, SD 12.1 at ♩126+) at least 80 % of the time per take; rechecks only at ≥ G; a recheck slip → retraining without a block, a second → a block; mic retires by report only and is labelled. |
+| G10 | **Retirement (M6, not self-referential):** OK alone with a break take never retires a MIDI player; two clean confirmed cold days at ≥ G retire; a slip between resets, also when it happened on another device (`lastSlipAt` on merge); rechecks only at ≥ G; a recheck slip → retraining without a block, a second → a block; mic retires by report only and is labelled. **The check, on fixtures held out from the reference:** the reference is built only from T1-eligible rows (adding failed takes to the evidence leaves `ref` unchanged); bands are anchored at the lowest eligible mark, half-open; on the recomputed D-major rows (♩125–156: n 14, mean +4.4, SD 10.5) a warm take at +14.0 ms passes and one at +16.0 ms fails, and a take with a break fails at any R_g; **a cold case:** a cold confirmation in a band with < 5 cold rows gets the break check only, and with ≥ 5 cold rows (cold mean +20, SD 8) a cold take at +25 ms passes against `refCold` where the warm `ref` would fail it; the reference survives 60 days and a second device. |
 | G11 | **Signatures:** an `fsOwn` change resets; an `fsSug` change keeps E, the confirmations and the state, and drops older evidence from T1/T2. |
-| G12 | **Mirror:** one scripted player through `keyCoach` and `coach.ts` assignments gets the same R1, R2, hold, cap-visit and eligibility decisions. **A teacher pin or manual start without a flag or a reported slip never holds** (N8): the plain climb, `cleanBpm` and the pass are identical to the feature-off run; a later slip adds the hold. |
+| G12 | **Mirror:** one scripted player through `keyCoach` and `coach.ts` assignments gets the same R1, R2, hold, cap-visit and eligibility decisions, and **the same pass-evidence attempts in every session in which the held cell is played** (M2), including the old coach, the linear path and short sessions. **A teacher pin or manual start without a flag or a reported slip never holds** (N8): the plain climb, `cleanBpm` and the pass are identical to the feature-off run; a later slip adds the hold. |
 | G13 | **Drums:** orchestration maps each stroke's hand to its voice; a crosstalk hit with the expected pad also struck is not a slip; a substitution is; orchestrated takes appear in the pool before any flag; the plain cap is max(orchestrated edge + 2 marks, plain edge). |
 | G14 | **Copy:** every line in he and en; `speakable` reads "♩116" and "F♯"; no bare "מנח"/"מנחים". |
 | G15 | **F1 (exists):** `tests/noteLog.test.ts`. |
-| G16 | **Reports and qualifying tempi, two properties (N1).** **(a) No report raises any qualifying tempo above the feature-off baseline:** over 28 seeded days, for any report script (lying OK at every touch point included), the day the pass-probe branch opens is never earlier than with fingering off, and every qualifying take (cold check, confirmation, pass probe, FSRS review probe) is chosen by the same H2 §1.9 function of (`cleanBpm`, staircase, pass state) as with fingering off. **(b) No report value is ever used as a qualifying tempo:** that function has no report, E, cap, rung or G input (a property test: any E and any reports give the identical tempo for identical H2 inputs), and no report's tempo is written into `cleanBpm`, the staircase or the threshold estimate. After a pass-probe take the staircase resets to the tempo played (H2 §1.9). |
-| G17 | **Key session at the cap:** a cap hit never sets "limit", never consumes reopen or six-take budgets; A-6 shows "held"; A-7 opens on `passedAt`; no closing straight take repeats the cap; one OK raises E by ≤ 1 mark, ≤ 2 when MIDI-clean at the group, and the day's total rise is ≤ 2 marks. |
+| G16 | **Reports and qualifying tempi, two properties (N1, minor).** **(a) No report raises any qualifying tempo above the feature-off baseline**, tested on **paired seeds with common random numbers** (each learner's take outcomes drawn from one stream indexed by day, tempo band and take ordinal, the same in both arms) over ≥ 2000 learners and 28 days: for any report script (lying OK at every touch point included), P_on(pass-probe branch open by day N) ≤ P_off(open by day N) + ε, ε = 0.02, for every N, under the v4 rule; every qualifying take (cold check, confirmation, pass probe, FSRS review probe) is chosen by the same H2 §1.9 function of (`cleanBpm`, staircase, pass state) as with fingering off. Under Q8 (a) and (b) the attempts can open the branch earlier; the excess is reported for the owner, not bounded. **(b) No report value is ever used as a qualifying tempo:** that function has no report, E, cap, rung or G input (a property test: any E and any reports give the identical tempo for identical H2 inputs); no report's tempo is written into `cleanBpm`, the staircase or the threshold estimate; and **no fingering take's tempo reaches `cleanBpm`** (§9.8). After a pass-probe take the staircase resets to the tempo played (H2 §1.9). |
+| G17 | **Key session at the cap:** a cap hit never sets "limit", never consumes reopen or six-take budgets; A-6 shows "held"; A-7 opens on `passedAt`; no closing straight take repeats the cap; one OK raises E by ≤ 1 mark, ≤ 2 when the take passes the §11.3 check, and the day's total rise is ≤ 2 marks. |
 | G18 | **Evidence retention:** after 25 days at the owner's take rate, T1 sees ≥ 21 days of rows for a cell, independent of the 500-trace `nl` trim. |
 | G19 | **The Settings card (§14.6):** the switch off suppresses every offer (T1, T2, T3, and the t ≥ 5 exception) while retraining cells continue. "Offer again" turns offers on, clears all snoozes and declines, and returns cells stopped ≤ 60 days ago to `flagged` (when they have a flag) without starting any visit. The list shows exactly the `retraining` cells plus pending rechecks. "End" equals "Stop fingering work" (R2 lifted on the next take). `fingeringOffer` and the store sync across two devices; `fingeringVoice` and `fgZones` do not. The he and en strings exist. The card renders at 320/390 px in the existing switch style. A cell without a hold shows "no hold". "Offer again" also undoes a silent-timeout stop. |
-| G20 | **Silence (N6):** a scripted MIDI player who never answers and plays clean, MIDI-clean top takes sees E rise 1 mark a day; after 5 practice days the keep-hold question appears once; after 10 the hold ends (`stopWhy: 'silent'`), R2 lifts, and nothing is ever capped for good. An answer at any point resets the count. |
-| G21 | **The slip mark (N6):** a bottom-zone double press within 1 s, ←/↓/PageUp, "לא" with voice on, or the item menu after a straight take of a cell with no state flags it (T3) with the take's tempo; a single bottom-zone press does nothing; one per cell per day; Undo removes it; works on mic through the menu. |
-| G22 | **H10 with held cells (N9):** C, B and G count at effective tempo (a P1 take at cap + 3 marks counts below the cap); held cells are reported apart in the flat-rank windows; a held cell's effective difficulty rises across visits in the 3-day simulation. |
-| G23 | **Shadow analysis (N5):** on synthetic labels, the precision and control-rate formulas of §16.2 give the expected values; labels outside the flag band, T2 "confirmations" and touch point 1 answers are not counted; the gate fails below 10 units or below 2 × the control rate; shadow questions never name a place and no spot check fires in shadow. |
+| G20 | **Silence (N6, M3):** a scripted MIDI player who never answers and plays clean top takes that pass the §11.3 check sees E rise 1 mark a day. Only days with ≥ 1 window shown for the cell and none answered count: a cooperative player with no window for 10 days keeps the hold and is never told "no answers". After 5 silent days the keep-hold question appears once, ahead of any offer, as the session's only end-line question; after 10 the hold ends (`stopWhy: 'silent'`), R2 lifts, and nothing is ever capped for good. An answer at any point resets the count. |
+| G21 | **The slip mark (N6, M4):** a bottom-zone double press within 1 s, ←/↓/PageUp, "לא" with voice on, or the item menu after a straight take flags the cell (T3) with the take's tempo; a single bottom-zone press does nothing; one per cell per day; Undo removes it; works on mic through the menu; the first-use brief learns the keyboard range; zone notes in a hands-free countdown start nothing and are not count-in input; the drum gesture is the ride bell or two kicks 80–400 ms apart. **Per state (§3.4 table):** on no state, `flagged` or `done` it flags with no hold, gives visits for 7 days and an offer, and the visits stop after 7 days without Yes; Yes → block → retraining with the hold; on `retraining` without a hold it adds the hold; it never caps a cell that has not been through Yes, a manual start or a pin. |
+| G22 | **H10 with held cells (N9):** C, B and G count at effective tempo (a P1 take at cap + 3 marks counts below the cap); held cells are excluded from the flat-rank slope while held and reported apart; a held cell's effective difficulty rises across visits in the 3-day simulation. |
+| G23 | **Shadow analysis (N5, M7):** on synthetic labels, the precision and control-rate formulas of §16.2 give the expected values; labels outside the flag band, T2 "confirmations" and touch point 1 answers are not counted; at most one control unit per (cell, hand) per 14 days; the gate fails below 10 units, below 2 × the control rate, or when P(p_flag > p_control) < 0.95 under Beta(1, 1) posteriors (5/10 vs 2/10 fails, 6/10 vs 1/10 passes); shadow questions never name a place and no spot check fires in shadow. |
+| G24 | **Fingering takes are isolated (M1):** for every structure (A, B, C at P1–P3, G, drums O), clean and failed, at tempi below, at and above target: the main item's `cleanBpm`, `passLog`, `goalBpm` and streak, `history`, `channels`, session tempo, KS2 counters (`stepTakes`, `almost`, limit, reopen, WAVE), challenge `ceil`, plateau state and "today's best" are unchanged; only `activeMs` and `lastSound` change; no `drillXp` result XP is granted; the take lands on `<itemId>~fg`, whose state nothing in passes, rank, the staircase, readiness or H10 reads. P0, the straight ladder and the pass-evidence attempts do change the item as ordinary takes. |
 
 ---
 
-## 19. Questions: Q1–Q7 decided (owner 2026-11-28), Q8 open
+## 19. Questions: Q1–Q7 decided (owner 2026-11-28), Q8 and Q9 open
 
 | # | Question | Decision (the review's default, accepted by the owner 2026-11-28) |
 |---|---|---|
@@ -859,13 +912,40 @@ Order: F10 review → F1b → F3 shadow (it needs F1b and F2's top-take label qu
 | Q5 (decided) | The cold take at G | **Accepted with the S2 fixes, which make the override unnecessary:** G = 0.95 × target from the catalogue; confirmations and rechecks use the probe-band cold takes H2 §1.9 already plays; no report or E reaches a qualifying tempo (G16). |
 | Q6 (decided) | Accent the position start (D) | **Not in v1.** Test the thumb-bump hypothesis on `nl.v` with labelled slips first; add later as a rate-keeping feel. |
 | Q7 (decided) | Visits without an offer | **No auto-start.** A strong T1 flag (t ≥ 5) may be offered once inside a snooze, and still waits for Yes. |
-| **Q8 (open)** | **Where may the pass-evidence take run?** (§9.2.3) | **The problem (N1):** for held cells whose climb had not reached the probe band before retraining, **both halves** of the pass wait until the cap or the cold staircase reaches the band, or until retirement. N6 bounds this on MIDI in the clean case (E rises about 1 mark a clean day), but the delay can still be weeks, and it can delay rank. Today (v3 rule) the take runs only for `preTop` cells or once the threshold estimate is in the band. Two options; **no default until the G3 numbers exist** (p = 0.5 and 0.7, on vs off, shown to the owner before F6). **(a) The reviewer's: the take also runs once the cap is within 2 marks of the probe band.** *For:* the extra straight takes sit at most about 3 marks above the edge, where the rehearsal risk is small, and the long tail of the delay is cut. *Against:* a cell far below the band still waits for E to climb (on MIDI about 1 mark a clean day; on mic only by report), so some delay remains. **(b) The take runs in every held cell from the start.** *For:* no pass delay beyond the clean-rate effect of 2 attempts a session; the simplest rule; a clean attempt also sets `cleanBpm` in the band and so opens the cold half at once. *Against:* up to 2 straight takes a session at target, possibly many marks above the edge, which is the rehearsal of the slip R2 exists to prevent (RF2 §8.2); and for a cell far below target the attempts mostly fail, about 2 takes a session for nothing. |
+| **Q8 (open)** | **Where may the pass-evidence take run?** (§9.2.3) | **The problem (N1):** for held cells whose climb had not reached the probe band before retraining, **both halves** of the pass wait until the cap or the cold staircase reaches the band, or until retirement. N6 bounds this on MIDI in the clean case (E rises about 1 mark a clean day), but the delay can still be weeks, and it can delay rank. O5 was approved on the premise "rank and passes are never affected". Today (v4 rule) the take runs only for `preTop` cells or once the threshold estimate is in the band, and since M2 it runs in **every** session in which a held cell is played. Two options; **no default until the G3 numbers exist** (p = 0.5 and 0.7, on vs off, shown to the owner before F6). **(a) The reviewer's: the take also runs once the cap is within 2 marks of the probe band.** *For:* the extra straight takes sit at most about 3 marks above the edge, where the rehearsal risk is small, and the long tail of the delay is cut. *Against:* a cell far below the band still waits for E to climb (on MIDI about 1 mark a clean day; on mic only by report), so some delay remains, and O5 holds only approximately. **(b) The take runs in every held cell from the start.** *For:* honours O5: no pass delay beyond the clean-rate effect of 2 attempts a session; the simplest rule; a clean attempt sets `cleanBpm` in the band and opens the cold half at once. *Against:* each attempt is a **planned jump to target that counts toward the warm half**, while H2 §1.6 excludes challenge takes (also jumps) from counting, so **(b) needs an explicit H2 amendment entry**; it rehearses above the edge in every session (RF2 §8.2), possibly many marks above it; for a cell far below target the attempts mostly fail, about 2 takes a session for nothing; and it can open the pass-probe branch before the feature-off arm (G16 a reports the excess). **The round-3 reviewer recommends (a) together with M2**, then G3 to the owner; if the owner holds O5 literally, (b) with the H2 entry, allowing **one** attempt only while the cap is more than 3 marks below the band. Either option keeps the G16 (a) wording (paired seeds, ε bound). |
+| **Q9 (open, small)** | **Pause rungs for triplet items** (§5.3) | Q1 set ½ and ¼ beat, which put triplet items' following notes off the click. **Proposal:** for triplet items P2 = ⅔ beat (8 twelfths) and P3 = ⅓ beat (4 twelfths) with a triplet click; P1 stays 1 beat. Duple items are unchanged. |
 
 ---
 
 ## 20. Change logs
 
-### 20.1 v2 → v3 (review round 2)
+### 20.1 v3 → v4 (review round 3)
+
+| Issue | Resolution |
+|---|---|
+| M1 fingering takes write the item's record | §9.8: fingering takes (A, B, C at P1–P3, G, O) are applied to `<itemId>~fg` (the SP §16.4 pattern), bypassing `applyTake` on the item (`Drills.tsx:1772`; `ladder.ts:134` `cleanBpm`, `:143–145` `passLog`) and `drillXp` (`Drills.tsx:1785`); on the item they write only `activeMs` and `lastSound`; the excluded fields listed; C and G get their own feel groups (`pause`, `cell`); a missed pass-evidence attempt is exempt from the KS2 limit, `STEP_TAKES` and `ALMOSTS_BACK` (§9.2.3). G24 added; G16 (b) extended. §1.4, §5.3, §14.1, F6. |
+| M2 attempts only in the cap visit | Pass-evidence attempts run in every session in which a held cell is played, in every planner and visit kind, short and `!` sessions included (unless "Don't hold"), as the last straight takes of the cell's last visit of the session (§9.2.3, §7.2). G3 restated with realistic visit frequencies; G12 covers it. |
+| M3 silent days | Only days with ≥ 1 window shown for the cell and none answered count (`quiet`, §11.5, §15.1); one end-line question per session, keep-hold first, offer deferred (§4, §11.5). G20. |
+| M4 slip on a cell with no state or `flagged` | One path per state (§3.4 table): no state / `flagged` / `done` → `flagged` with `t3At`, visits without a hold for 7 days, an offer; Yes → block → `retraining` with the hold; no Yes in 7 days → visits stop, flag stays; `retraining` without a hold → hold at once. §7.1, §9.2.0 aligned. G21. |
+| M5 day-1 block without E | The day-1 reference = the session tempo, else the last clean tempo; P0 at reference − 2 marks; closing ceiling = the reference (§5.5, §6.2). |
+| M6 cold vs warm, naming, numbers | Renamed the "no break, no worse than flagged" check everywhere (§9.4, §11.2–§11.4, §14.2); its ~84 % permissiveness stated; references frozen from T1-eligible rows, bands anchored at the lowest eligible mark, half-open; `refCold` for cold takes when ≥ 5 cold rows, else break check only; §11.3 example recomputed (♩125–156: n 14, mean +4.4, SD 10.5, threshold +14.9; ♩100–125: +11.3, SD 11.4); R_g = one LH `xu` note per take in the D-major item (§3.3, §11.3); G10 rewritten on held-out fixtures with a cold case. |
+| M7 weak shadow gate | Added P(p_flag > p_control) ≥ 0.95 under Beta(1, 1) posteriors; one control unit per (cell, hand) per 14 days; the single-labeller limitation and a re-run with real users; "T3 and manual only" named as an expected outcome (§16.2, G23). |
+| Minor: residual rule | One side suffices, both must agree when both exist; references at any place in the beat with ≥ 2 at j's place; `sdl` uses the side-0 rule, 8 nearest, no sign filter (§1.3). |
+| Minor: `cleanBpm` and "only removes takes" | Corrected: exempt takes and the attempts still raise `cleanBpm`, and the attempts add takes; G16 (a) defined on paired seeds with an ε bound, the Q8 excess reported (§9.2.3, G16). |
+| Minor: triplet rungs | P2 = ⅔, P3 = ⅓ beat with a triplet click proposed; Q9 for the owner (§5.3, §19). |
+| Minor: mic fallback | G only on mic (§5.3). |
+| Minor: TP2 and the silent rise | Fire on the top straight take of any visit of the cell, ordinary speed visits included (§8.1). |
+| Minor: slip mark | One-time brief, he + en; the range learned at that brief or in Settings ("Learn keyboard range"); zone notes in a countdown start nothing; drum gesture defined; the slip mark named in the "Retrain this fingering" brief (§3.4, §12.3, §14.3, §14.6). |
+| Minor: merge | `hold` with `holdUpd`, `quiet` with its own `upd`; `preTop` at the start of the hold; `edgeRaise` with a per-day `midi` bit (§9.2.0, §15.1). |
+| Minor: Settings | "Offer again" restores stops by "Stop", "End" and the silent timeout, as the hint and G19 say (§14.6). |
+| Minor: H10 | Held cells excluded from the flat-rank slope while held, reported apart (§9.2.2, G22). |
+| Minor: "your report" | Only when E came from a report; else "from your playing" / "לפי הנגינה שלך" (`edgeSrc`, §9.4, §14.4, §14.6). |
+| Minor: copy | Hebrew retired line and English offer line as proposed (§4, §14.4). |
+| Minor: R_g per take | Stated in §3.3: one note per take in the two-octave HT D-major scale; T2 rates per note. |
+| Q8 | Kept open with (a) and (b); the reviewer's recommendation of (a) with M2 noted; (b) needs an H2 amendment (§19). |
+| Author choices | Silent thresholds 5/10, the mean + 1 SD tolerance and no hold without evidence: confirmed by the reviewer, with M3 (asked-and-unanswered days) and M6 (naming, T1-eligible rows, cold reference) applied. |
+
+### 20.2 v2 → v3 (review round 2)
 
 | Issue | Resolution |
 |---|---|
@@ -894,7 +974,7 @@ Order: F10 review → F1b → F3 shadow (it needs F1b and F2's top-take label qu
 | Minor: numbering | G18 before G19 (§18). |
 | Q8 | Kept open with options (a) cap within 2 marks of the probe band and (b) every held cell from the start, with trade-offs; decided on the G3 numbers (§19). |
 
-### 20.2 v1 → v2 (review round 1)
+### 20.3 v1 → v2 (review round 1)
 
 | Issue | Resolution |
 |---|---|
