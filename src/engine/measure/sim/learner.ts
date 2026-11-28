@@ -93,9 +93,10 @@ export class Learner {
    * Truth: a cell of the tier with `visits` of item practice, marginal over day and cell effects (its own cell effect not
    * known): the item-practice gain counted, the cell's luck not. visits 0 = trueTierP.
    */
-  trueTierPAfter(tier: number, day: number, visits: number): number {
+  trueTierPAfter(tier: number, day: number, visits: number, f = 1): number {
     const g = this.p.itemGain * (1 - Math.exp(-visits / this.p.itemHalf));
-    const mu = this.p.beta * (this.theta() - tier) + g + (this.p.shift ? this.p.shift(day) : 0);
+    const d = f === 1 ? tier : tempoDifficulty(tier, f, this.p.tempoStep ?? TEMPO_STEP);
+    const mu = this.p.beta * (this.theta() - d) + g + (this.p.shift ? this.p.shift(day) : 0);
     return marginalP(mu, Math.sqrt(this.p.sdDay ** 2 + this.p.sdCell ** 2));
   }
   /** Truth: the tier's cold p marginal over day and cell effects (a fresh cell, no item practice), at f × target. */

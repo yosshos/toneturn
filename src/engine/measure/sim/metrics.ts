@@ -5,10 +5,10 @@ import { DEFAULT_PASS_EVIDENCE, DEFAULT_PASS_VARIANT, ItemPassTracker, type Pass
 import { DEFAULT_LEARNER, thetaForP, type LearnerParams } from './learner';
 import { childSeed, mulberry32, normal, randInt } from './prng';
 import { Learner } from './learner';
-import { rankableTiers } from './rank';
+import { rankableTiers, tierGuardOk, type CountingCheck, type TierGuard } from './rank';
 import type { NonTempoMode } from './placement';
 import { runReadingTier, simulateReadingArea } from './readingSim';
-import { H10_BASELINE, H10_ON, h10Default, simulate, type DailyRecord, type H10Opts, type PlannerConfig, type SimOptions } from './simulate';
+import { H10_BASELINE, H10_ON, H10_V14, h10Default, simulate, type DailyRecord, type H10Opts, type PlannerConfig, type SimOptions } from './simulate';
 import { logistic, logit, muForMarginal, quantile } from './stats';
 
 // ---------------------------------------------------------------- 1. P(item pass | cold clean rate) (§1.6)
@@ -507,10 +507,29 @@ export interface StationaryReport {
   /** Median of that catalogue truth at the rises. */
   risesCatMedian: number;
   /**
-   * The same against the fresh-cell p at the floor of the probe band (0.95 × target): the tempo at which the tempo model
-   * plays counting checks and pass probes (§1.9: the probe band 0.95–1.0 × target counts as "at target").
+   * The same against the fresh-cell p at the floor of the probe band (0.95 × target in tempo areas, target in fixed-tempo
+   * areas): the tempo of counting checks and pass probes, and the rank estimand (§1.1, v15).
    */
   risesBelowHalfProbe: number;
+  /**
+   * Per learner (round 18 #4): the share of learners whose final (permanent) rank sits at a tier where their true p < 0.5:
+   * at target, at the probe band (the rank estimand) and against the tier's material as practised (catalogue p).
+   */
+  finalBelowHalf: number;
+  finalBelowHalfProbe: number;
+  finalBelowHalfCat: number;
+  /** Per learner: the share with at least one rise at tier p < 0.5 (at target / at the probe band). */
+  anyFalseRise: number;
+  anyFalseRiseProbe: number;
+  /** Skipped due checks per learner (day pickers). */
+  skipsPerLearner: number;
+  /**
+   * Why false rises happen (round 18 #4): among rises at probe-band p < 0.5, the share whose guard record's own cells,
+   * with their item practice, were at p ≥ 0.5 (pPractised: the guard measured practised cells correctly, the tier is
+   * not learned), and the median pPractised over those rises.
+   */
+  falseRisesPractisedOk: number;
+  falseRisesPractisedMedian: number;
   /** Passes, and the share at a cell p < 0.5 (the cell's own truth, item practice included) / a tier p < 0.5 (fresh cell). */
   passes: number;
   passesCellBelowHalf: number;
@@ -540,16 +559,32 @@ export function stationaryHonesty(p: number, runs: number, seed: number, o: { st
   const risesProbe: number[] = [];
   const cellPs: number[] = [];
   const tierPs: number[] = [];
+  let fb = 0;
+  let fbp = 0;
+  let fbc = 0;
+  let anyF = 0;
+  let anyFp = 0;
+  let skips = 0;
+  const falsePract: number[] = [];
   for (let r = 0; r < runs; r++) {
     const res = simulate({ catalogue: cat, learner: L, days: o.days ?? 365, seed: childSeed(seed, r), placedTier: 0, ...o.sim });
     const f = res.finalRank ?? -1;
     finals.push(f);
     if (res.finalRank !== null) pFinal.push(tp(res.finalRank));
     if (f > (trueT ?? -1)) above++;
+    if (res.finalTruth) {
+      if (res.finalTruth.p < 0.5) fb++;
+      if (res.finalTruth.pProbe < 0.5) fbp++;
+      if (res.finalTruth.pCat < 0.5) fbc++;
+    }
+    if (res.rankTruth.some((u) => u.p < 0.5)) anyF++;
+    if (res.rankTruth.some((u) => u.pProbe < 0.5)) anyFp++;
+    skips += res.skips;
     for (const u of res.rankTruth) {
       rises.push(u.p);
       risesCat.push(u.pCat);
-      risesProbe.push(truth.trueTierP(u.tier, 0, 0.95));
+      risesProbe.push(u.pProbe);
+      if (u.pProbe < 0.5 && Number.isFinite(u.pPractised)) falsePract.push(u.pPractised);
     }
     for (const x of res.passTruth) {
       cellPs.push(x.cellP);
@@ -557,7 +592,7 @@ export function stationaryHonesty(p: number, runs: number, seed: number, o: { st
     }
   }
   const below = (xs: number[]) => xs.filter((x) => x < 0.5).length / Math.max(1, xs.length);
-  return { p, startTier: S, trueTier: trueT, finalRankMedian: quantile(finals, 0.5), finalRankP90: quantile(finals, 0.9), pAtFinalRankMedian: quantile(pFinal, 0.5), aboveTrueTier: above / runs, rises: rises.length, risesBelowHalf: below(rises), risesBelowHalfCat: below(risesCat), risesCatMedian: quantile(risesCat, 0.5), risesBelowHalfProbe: below(risesProbe), passes: cellPs.length, passesCellBelowHalf: below(cellPs), passesTierBelowHalf: below(tierPs) };
+  return { p, startTier: S, trueTier: trueT, finalRankMedian: quantile(finals, 0.5), finalRankP90: quantile(finals, 0.9), pAtFinalRankMedian: quantile(pFinal, 0.5), aboveTrueTier: above / runs, rises: rises.length, risesBelowHalf: below(rises), risesBelowHalfCat: below(risesCat), risesCatMedian: quantile(risesCat, 0.5), risesBelowHalfProbe: below(risesProbe), finalBelowHalf: fb / runs, finalBelowHalfProbe: fbp / runs, finalBelowHalfCat: fbc / runs, anyFalseRise: anyF / runs, anyFalseRiseProbe: anyFp / runs, skipsPerLearner: skips / runs, falseRisesPractisedOk: falsePract.filter((x) => x >= 0.5).length / Math.max(1, falsePract.length), falseRisesPractisedMedian: falsePract.length ? quantile(falsePract, 0.5) : NaN, passes: cellPs.length, passesCellBelowHalf: below(cellPs), passesTierBelowHalf: below(tierPs) };
 }
 
 // ---------------------------------------------------------------- 8. H10: offered challenge tracks ability (round 17 review #2)
@@ -681,9 +716,93 @@ export function h10Study(name: string, runs: number, seed: number, o: { h10?: Pa
   return { name, weeks, flatSlope: sumDd / Math.max(1e-9, sumDt), flatWindows: windows, flatPlateau: plateau / Math.max(1, windows), meanLag: lag / Math.max(1, lagN), targetFell: tFell / Math.max(1, sessions), difficultyFell: dFell / Math.max(1, sessions), overCap, medianDaysToTop: quantile(toTop, 0.5) };
 }
 
+export interface OvershootReport {
+  /** Means over the practice days of the last `tailDays` days (pooled over learners). */
+  rank: number;
+  contentEdge: number;
+  target: number;
+  tier: number;
+  /** Fresh-cell cold p of the offered working visits at their offered tempo, and at the probe band (target when fixed-tempo). */
+  pOffer: number;
+  pProbe: number;
+  /** Share of those practice days whose offered probe-band p is < 0.3 (hopeless items) / whose offer is at the +2 cap. */
+  hopeless: number;
+  atCap: number;
+  /** Share of sessions exempted by the struggle rule. */
+  struggleDays: number;
+}
+
+/**
+ * Round 18 #3: a learner who stops improving (rate 0, tier p `p` at T2, from scratch): where does the H10 planner aim in
+ * the last `tailDays` of `days`? The challenge should sit near the challenge point (offered probe-band p well above 0.3),
+ * not ratchet to the + 2 cap on noise.
+ */
+export function h10Overshoot(p: number, runs: number, seed: number, o: { cat?: AreaCatalogue; sim?: Partial<SimOptions>; days?: number; tailDays?: number } = {}): OvershootReport {
+  const cat = o.cat ?? defaultCatalogue();
+  const tiers = rankableTiers(cat.exercises);
+  const days = o.days ?? 365;
+  const tail = o.tailDays ?? 90;
+  const L: LearnerParams = { ...DEFAULT_LEARNER, rate: 0 };
+  L.theta0 = thetaForP(p, 2, L);
+  const acc = { n: 0, rank: 0, edge: 0, target: 0, tier: 0, pOffer: 0, pProbe: 0, hopeless: 0, cap: 0, struggle: 0 };
+  for (let r = 0; r < runs; r++) {
+    const res = simulate({ catalogue: cat, learner: L, days, seed: childSeed(seed, r), placedTier: 0, ...o.sim, recordDaily: true });
+    for (const d of res.daily) {
+      if (d.day < days - tail || !d.frontier) continue;
+      const f = d.frontier;
+      acc.n++;
+      acc.rank += d.rank ?? -1;
+      acc.edge += f.contentEdge;
+      acc.target += f.target;
+      acc.tier += f.tier;
+      acc.pOffer += f.pOffer;
+      acc.pProbe += f.pProbe;
+      if (f.pProbe < 0.3) acc.hopeless++;
+      if (f.maxTier >= capTier(tiers, Math.max(d.placedTier, d.rank ?? -1))) acc.cap++;
+      if (f.struggle) acc.struggle++;
+    }
+  }
+  const n = Math.max(1, acc.n);
+  return { rank: acc.rank / n, contentEdge: acc.edge / n, target: acc.target / n, tier: acc.tier / n, pOffer: acc.pOffer / n, pProbe: acc.pProbe / n, hopeless: acc.hopeless / n, atCap: acc.cap / n, struggleDays: acc.struggle / n };
+}
+
+/**
+ * Round 18 #4: the guard as a repeated test. A stream of counting checks at a fixed true probe-band p (marginal over day
+ * and cell effects, SD 0.8 / 0.7), 2 checks per practice day, a new cell every 6 checks. Returns, for each n in `ns`,
+ * P(the guard passes at the single test after n checks) and P(it has passed at any test up to n): it is re-tested after
+ * every check and rank keeps the high-water, so the second is the one that matters.
+ */
+export function guardRepeatedTest(p: number, g: TierGuard, runs: number, seed: number, ns: number[] = [12, 24, 48, 96]): { single: number[]; ever: number[] } {
+  const single = ns.map(() => 0);
+  const ever = ns.map(() => 0);
+  const last = ns[ns.length - 1];
+  const mu = muForMarginal(p, Math.sqrt(0.8 ** 2 + 0.7 ** 2));
+  for (let r = 0; r < runs; r++) {
+    const rng = mulberry32(childSeed(seed, r));
+    const rec: CountingCheck[] = [];
+    let passed = false;
+    let cellEff = 0;
+    let dayEff = 0;
+    for (let i = 0; i < last; i++) {
+      if (i % 6 === 0) cellEff = normal(rng) * 0.7;
+      if (i % 2 === 0) dayEff = normal(rng) * 0.8;
+      rec.push({ tier: 1, day: Math.floor(i / 2), cell: `c${Math.floor(i / 6)}`, clean: rng() < logistic(mu + cellEff + dayEff) });
+      const ok = tierGuardOk(rec, 1, 1, g);
+      passed = passed || ok;
+      const k = ns.indexOf(i + 1);
+      if (k >= 0) {
+        if (ok) single[k]++;
+        if (passed) ever[k]++;
+      }
+    }
+  }
+  return { single: single.map((x) => x / runs), ever: ever.map((x) => x / runs) };
+}
+
 /** The H10 planner presets, for the report. */
 export const H10_PLANNERS: { name: string; h10: Partial<H10Opts> }[] = [
   { name: 'v13 planner (tempo model only)', h10: H10_BASELINE },
   { name: 'readiness entry only', h10: { ...H10_BASELINE, readiness: true } },
-  { name: 'H10 default: readiness + challenge point + no-easier', h10: H10_ON },
+  { name: 'H10 as in v14: sticky readiness on one clean check, no struggle exemption', h10: H10_V14 },
+  { name: 'H10 default (v15): evidence readiness + challenge point + no-easier + struggle exemption', h10: H10_ON },
 ];
