@@ -6,7 +6,7 @@
 // Report: docs/MEASURE-V16-REPORT.txt. Every number quoted in SPEC-HOLISTIC-2 v16 §1 / §9.1 / §17.4 comes from it.
 // Usage: npm run measure-v16               (full precision)
 //        npm run measure-v16 -- --quick    (fewer runs)
-//        npm run measure-v16 -- --only=1,d (some sections: 1 1g 1b k d 2 2r 3 4 5 6 w)
+//        npm run measure-v16 -- --only=1,d (some sections: 1 1g 1b k d 2 2r 3 4 5 6 w g)
 import {
   climb, daysPerTier, defaultCatalogue, gamingOneExercise, guardRepeatedTest, H10_ON, h10Overshoot, h10Study, PER_AREA_SUPPLY, placementRun, quantile, RANK_FIX, RANK_GUARDED_P80,
   repromotion, RHO_CELL, RHO_DAY, SHARED_SUPPLY, stationaryHonesty, STEADY_LEARNER, syntheticCatalogue, TIER_GUARD, TIER_GUARD_P80, updateRankHW, RANK_GUARDED, variantStudy,
@@ -327,6 +327,56 @@ if (want('w')) {
     const harm = realCatalogues('piano').find((c) => c.name === 'piano/harmony')!;
     const h = h10Study(name, N(60), SEED + 90, { h10: { ...H10_ON, tempo: harm.tempo }, cat: harm, sim });
     line(`| ${name} | ${s0.map((x) => pct(x.finalBelowHalfProbe)).join(' / ')} | ${s1.map((x) => pct(x.finalBelowHalfProbe)).join(' / ')} | ${kl.map((c) => `${pct(c.reachedAll)}; ${c.stalls} (${c.worstStall})`).join(' / ')} | ${ks.map((x) => pct(x.finalBelowHalfProbe)).join(' / ')} | ${stalls} / ${real.length * N(20)} (${worst}); ${pct(below / Math.max(1, rises))} | ${quantile(all, 0.5)} / ${Math.round(quantile(all, 0.9))} | ${h.flatSlope.toFixed(2)}; ${h.meanLag.toFixed(2)} |`);
+  }
+}
+
+if (want('g')) {
+  line('\n## G. W1 grid (coordinator request, NOT defaults): the weighted design effect (W1) at P 0.9 / 0.93 / 0.95 / 0.97, and W1 + P 0.9 + >= 3 distinct days among the newest 24 entries');
+  line('Same seeds and run counts as sections 1, 1b, K, 4 and W. Per learner = final rank at probe-band p < 0.5 (stationary, 100 learners; real piano areas 30 per area, p 0.75 at the 2nd tier). Days per tier: 13 real areas, 3 d/wk, 20 runs per transition, median / p90 (share within 240 d when < 99.5 %).');
+  line('Stalls >= 42 d: 13 real areas x 20 climbs (longest; areas); keyless-3 / keyless-2 / keyless-real-ish / 1-key-3 / 2-key-2 x 20 climbs (stalls; longest; share reaching the top when < 100 %). H10: flat-rank slope; mean lag (60 learners).');
+  const G = (g: Partial<TierGuard>): Partial<SimOptions> => ({ rank: { ...RANK_GUARDED, tierGuard: { ...TIER_GUARD, ...g } } });
+  const rows: [string, Partial<SimOptions>][] = [
+    ['DEFAULT v16 (P 0.9, raw design effect)', {}],
+    ['W1 P 0.9', G({ weightedDeff: true })],
+    ['W1 P 0.93', G({ weightedDeff: true, conf: 0.93 })],
+    ['W1 P 0.95', G({ weightedDeff: true, conf: 0.95 })],
+    ['W1 P 0.97', G({ weightedDeff: true, conf: 0.97 })],
+    ['W1 P 0.9 + >= 3 recent days', G({ weightedDeff: true, minDaysRecent: 3 })],
+    ['W1 P 0.9 + only the first 3 counting checks per cell', { ...G({ weightedDeff: true }), planner: { guardPerCell: 3 } }],
+  ];
+  line('| setting | per learner p 0.5 / 0.75, no gain | per learner p 0.5 / 0.75, item gain | real piano per learner (per rise) | days per tier p 0.75 | days per tier p 0.85 | real areas: stalls (longest; where) | keyless / few-key: stalls (longest) | harmony slope; lag | synthetic fixed-tempo slope; lag |');
+  line('|---|---|---|---|---|---|---|---|---|---|');
+  const gArg = process.argv.find((a) => a.startsWith('--grows='));
+  const gRows = gArg ? new Set(gArg.slice(8).split(',').map(Number)) : null;
+  for (const [i, [name, sim]] of rows.entries()) {
+    if (gRows && !gRows.has(i)) continue;
+    const s0 = [0.5, 0.75].map((p) => stationaryHonesty(p, N(100), SEED + 1, { sim }));
+    const s1 = [0.5, 0.75].map((p) => stationaryHonesty(p, N(100), SEED + 1, { sim, lp: ITEM_GAIN }));
+    let fl = 0, n = 0, rises = 0, below = 0;
+    for (const cat of realCatalogues('piano')) {
+      const ts = [...new Set(cat.exercises.map((e) => e.tier))].sort((a, b) => a - b);
+      const r = stationaryHonesty(0.75, N(30), SEED + 2, { sim, cat, startTier: ts[Math.min(1, ts.length - 1)] });
+      fl += r.finalBelowHalfProbe * N(30); n += N(30); rises += r.rises; below += r.risesBelowHalfProbe * r.rises;
+    }
+    const tier: string[] = [];
+    for (const pNext of [0.75, 0.85]) {
+      const all: number[] = [];
+      let reached = 0, k = 0;
+      for (const cat of real) for (const t of daysPerTier(cat, pNext, 3, N(20), SEED + 30, 240, {}, {}, 'V1', sim)) { all.push(...t.days); reached += t.reached * t.days.length; k += t.days.length; }
+      tier.push(`${quantile(all, 0.5)} / ${Math.round(quantile(all, 0.9))}${reached / k < 0.995 ? ` (${pct(reached / k)})` : ''}`);
+    }
+    let stalls = 0, worst = 0;
+    const where: string[] = [];
+    for (const cat of real) {
+      const c = climb(cat, N(20), SEED + 60, 365, STEADY_LEARNER(), {}, 'V1', sim);
+      stalls += c.stalls; worst = Math.max(worst, c.worstStall);
+      if (c.stalls) where.push(`${cat.name} ${c.stalls}`);
+    }
+    const kl = [keyless3, keyless2, keylessReal, oneKey, twoKey].map((cat) => climb(cat, N(20), 4242, 365, STEADY_LEARNER(), {}, 'V1', sim));
+    const harm = realCatalogues('piano').find((c) => c.name === 'piano/harmony')!;
+    const h = h10Study(name, N(60), SEED + 90, { h10: { ...H10_ON, tempo: false }, cat: harm, sim });
+    const f = h10Study(name, N(60), SEED + 90, { h10: { ...H10_ON, tempo: false }, cat: fixedSyn, sim });
+    line(`| ${name} | ${s0.map((x) => pct(x.finalBelowHalfProbe)).join(' / ')} | ${s1.map((x) => pct(x.finalBelowHalfProbe)).join(' / ')} | ${pct(fl / n)} (${pct(below / Math.max(1, rises))}) | ${tier[0]} | ${tier[1]} | ${stalls} / ${real.length * N(20)} (${worst}; ${where.join(', ') || '-'}) | ${kl.map((c) => `${c.stalls} (${c.worstStall})${c.reachedAll < 1 ? ` ${pct(c.reachedAll)}` : ''}`).join(' / ')} | ${h.flatSlope.toFixed(2)}; ${h.meanLag.toFixed(2)} | ${f.flatSlope.toFixed(2)}; ${f.meanLag.toFixed(2)} |`);
   }
 }
 

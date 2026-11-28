@@ -265,3 +265,19 @@ Windowing the record at W entries (3 half-lives = 72, or 2 = 48) bounds m_c; so 
 | v15 default (G P 0.8) | 6.0 % / 10.0 % | 39.0 % / 60.0 % | 100.0 %; 0 (34) / 100.0 %; 1 (60) / 100.0 %; 0 (36) | 0.0 % / 0.0 % / 5.0 % | 2 / 260 (47); 2.1 % | 24 / 55 | 0.69; 0.41 |
 | G P 0.9 + weighted design effect | 1.0 % / 6.0 % | 23.0 % / 38.0 % | 100.0 %; 0 (29) / 100.0 %; 0 (32) / 100.0 %; 0 (40) | 0.0 % / 0.0 % / 5.0 % | 1 / 260 (58); 1.1 % | 26 / 59 | 0.67; 0.48 |
 (per row: 319 s, 308 s, 308 s, 307 s, 141 s)
+
+## G. W1 grid (coordinator request, NOT defaults): the weighted design effect (W1) at P 0.9 / 0.93 / 0.95 / 0.97, W1 + P 0.9 + >= 3 distinct days among the newest 24 entries, and W1 + P 0.9 + only the first 3 counting checks per cell
+Same seeds and run counts as sections 1, 1b, K, 4 and W. Per learner = final rank at probe-band p < 0.5 (stationary, 100 learners; real piano areas 30 per area, p 0.75 at the 2nd tier). Days per tier: 13 real areas, 3 d/wk, 20 runs per transition, median / p90 (share within 240 d when < 99.5 %).
+Stalls >= 42 d: 13 real areas x 20 climbs (longest; areas); keyless-3 / keyless-2 / keyless-real-ish / 1-key-3 / 2-key-2 x 20 climbs (stalls; longest; share reaching the top when < 100 %). H10: flat-rank slope; mean lag (60 learners).
+| setting | per learner p 0.5 / 0.75, no gain | per learner p 0.5 / 0.75, item gain | real piano per learner (per rise) | days per tier p 0.75 | days per tier p 0.85 | real areas: stalls (longest; where) | keyless / few-key: stalls (longest) | harmony slope; lag | synthetic fixed-tempo slope; lag |
+|---|---|---|---|---|---|---|---|---|---|
+| DEFAULT v16 (P 0.9, raw design effect) | 3.0 % / 4.0 % | 13.0 % / 10.0 % | 8.7 % (3.7 %) | 26 / 64 (98.9 %) | 21 / 37 | 2 / 260 (58; guitar/arpeggios 1, bass/walking 1) | 3 (103) / 16 (233) 90.0 % / 11 (252) 85.0 % / 0 (39) / 0 (29) | 0.63; 0.53 | 0.61; 0.49 |
+| W1 P 0.9 | 1.0 % / 6.0 % | 23.0 % / 38.0 % | 20.0 % (7.4 %) | 26 / 59 (99.0 %) | 21 / 37 | 1 / 260 (58; bass/walking 1) | 0 (29) / 0 (32) / 0 (40) / 0 (16) / 0 (17) | 0.67; 0.48 | 0.64; 0.42 |
+| W1 P 0.93 | 2.0 % / 2.0 % | 11.0 % / 20.0 % | 15.3 % (5.8 %) | 27 / 68 (99.0 %) | 21 / 39 | 1 / 260 (46; guitar/arpeggios 1) | 0 (33) / 1 (42) / 2 (46) / 0 (18) / 0 (17) | 0.67; 0.57 | 0.62; 0.48 |
+| W1 P 0.95 | 0.0 % / 1.0 % | 3.0 % / 19.0 % | 14.7 % (5.7 %) | 30 / 77 (98.9 %) | 22 / 41 | 3 / 260 (71; piano/scales 1, guitar/harmony 1, guitar/arpeggios 1) | 0 (26) / 4 (50) / 1 (42) / 0 (22) / 0 (20) | 0.67; 0.58 | 0.66; 0.52 |
+| W1 P 0.97 | 2.0 % / 1.0 % | 6.0 % / 10.0 % | 10.0 % (4.0 %) | 34 / 94 (98.9 %) | 24 / 44 | 6 / 260 (52; piano/scales 1, piano/harmony 2, guitar/scales 1, guitar/arpeggios 1, bass/walking 1) | 0 (34) / 4 (52) / 2 (46) / 0 (32) / 0 (26) | 0.70; 0.60 | 0.62; 0.60 |
+| W1 P 0.9 + >= 3 recent days | 1.0 % / 8.0 % | 26.0 % / 34.0 % | 17.3 % (6.4 %) | 26 / 59 (99.0 %) | 21 / 37 | 1 / 260 (58; bass/walking 1) | 0 (29) / 0 (32) / 0 (39) / 0 (16) / 0 (17) | 0.71; 0.48 | 0.65; 0.41 |
+| W1 P 0.9 + only the first 3 counting checks per cell | 4.0 % / 3.0 % | 20.0 % / 22.0 % | 18.0 % (6.8 %) | 27 / 66 (98.7 %) | 21 / 39 | 1 / 260 (58; bass/walking 1) | 0 (21) / 0 (34) / 0 (29) / 0 (24) / 0 (22) | 0.62; 0.52 | 0.64; 0.43 |
+(one row per process, `--only=g --grows=<i>`; per row: 381 s, 372 s, 382 s, 388 s, 390 s, 374 s, 239 s)
+Reading: no setting meets all of "item-gain per learner <= ~12 % at p 0.5 and 0.75, no new stalls, reasonable days". Item-gain honesty is not monotone in P (0.93: 11 / 20 %, 0.95: 3 / 19 %, 0.97: 6 / 10 %): it is a bias (the record's practised cells sit at the bar), not noise, so a stricter P buys little of it,
+while every step above 0.9 brings stalls back (0.93: 3 keyless + guitar/arpeggios; 0.95: 3 real + 5 keyless; 0.97: 6 real + 6 keyless), pushes the harmony lag out of band (0.57-0.60) and slows the median tier (27 / 30 / 34 days). The recent-days rule and the first-3-checks-per-cell rule change little at W1 P 0.9.

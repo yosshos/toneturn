@@ -588,6 +588,13 @@ describe('round 18 #1: the guard in areas without fresh cells (keyless, few keys
     expect(tierGuardOk(rec(200), 2, 2, TIER_GUARD)).toBe(false); // same quality, longer record: m_c = 67 raw entries per cell
     expect(tierGuardOk(rec(200), 2, 2, { ...TIER_GUARD, weightedDeff: true })).toBe(true);
   });
+  it('grid candidate minDaysRecent: the newest halfLife entries must span that many days', () => {
+    const rec: CountingCheck[] = Array.from({ length: 30 }, (_, i) => ({ tier: 2, day: i < 6 ? i : 10 + (i % 2), cell: `c${i % 6}`, clean: true }));
+    const g = { ...TIER_GUARD, weightedDeff: true };
+    expect(tierGuardOk(rec, 2, 2, g)).toBe(true);
+    expect(tierGuardOk(rec, 2, 2, { ...g, minDaysRecent: 3 })).toBe(false); // the newest 24 entries sit on 2 days
+    expect(tierGuardOk(rec, 2, 2, { ...g, minDaysRecent: 2 })).toBe(true);
+  });
   it('the v15 guard (P >= 0.8) met it (what P >= 0.9 lost)', () => {
     for (const cat of [keyless, oneKey, syntheticCatalogue('keyless-real-ish', [3, 4, 2, 3, 0, 2, 2], 0, true)]) {
       const c = climb(cat, 10, SEED + 4242, 365, STEADY_LEARNER(), {}, 'V1', { rank: RANK_GUARDED_P80 });
