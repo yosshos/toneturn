@@ -4,7 +4,7 @@
 import { DEVICE_ONLY_ABOVE, MIDI_IN_MS } from '../engine/latency';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { scoreInformedNotes } from '../engine/drills/pianoMic';
-import { splitDur } from '../engine/piece/layout';
+import { lineItems as staffLineItems, longerThan8Bars } from '../engine/staffItems';
 import type { Drill, PlayedNote, TakeMetrics, DrillCalibration } from '../engine/drills/types';
 import { analyzeTake, improvNotes, micUnmeasurable, tempoBand, thresholds } from '../engine/drills/analyze';
 import type { ExpNote, NoteResult, TouchMark } from '../engine/drills/types';
@@ -246,7 +246,7 @@ export function DrillTab({ drill, fingering = false, picking = false, result, be
           <TabLine
             bottomLabel={fingerLabel}
             key={from + i}
-            now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat) : -1}
+            now={beat >= 0 && !result && lineOf(beat) === from + i ? glidePos(l.map((c) => c.at), sl?.[from + i] ? sl[from + i].to / k : (from + i + 1) * perLine, beat, 0) : -1}
             cols={l.map(({ mark: _m, at: _a, lmark: _lm, ldev: _ld, pmark: _pm, pdev: _pd, ...c }) => ({ ...c, ...(kicks.has(Math.round(_a * 1e3)) ? { kick: true } : {}) }))}
             live={lv ? { marks: l.map((c) => c.lmark), devs: l.map((c) => c.ldev ?? null) } : undefined}
             prior={pf ? { marks: l.map((c) => c.pmark), devs: l.map((c) => c.pdev ?? null) } : undefined}
@@ -417,7 +417,10 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   // Hands together (one phone screen at 320×720): one system at a time — the RH line and the LH line of the same bars —
   // paged like the bass, never four or more staff cards in a scrolling box.
   const ht = !bass && rh.length > 0 && lh.length > 0;
-  const paged = bass || !!drill.paged || ht;
+  // Owner 2026-11-28 (the cursor must always be on the note due): a run longer than 8 bars (a chromatic scale over 3
+  // octaves, 4 octaves in 8ths) is paged too — it used to show only its first 8 bars, so its last notes were never drawn.
+  const long8 = longerThan8Bars(drill);
+  const paged = bass || !!drill.paged || ht || long8;
   // Owner 2026-11-20 (desktop): one system at a time hid the next line, so the cursor jumped to music never seen —
   // a phone keeps one system (one screen), a wide screen shows the next one too (faded, the look-ahead).
   const winSize = ht && phone() ? 1 : 2;
@@ -450,7 +453,7 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
   const lineOf = (n: ExpNote) => lineAtQ(bq(n));
   // A song shows all of itself (≤ 96 notes); a bass drill all of itself in a moving window (B2); others their first 8 bars.
   // A paged item (a piece's long section) all of itself too.
-  const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || bass || drill.paged || bq(n) < meter * 8);
+  const shown = (ns: ExpNote[]) => firstOfChord(ns).filter((n) => drill.chart || paged || bq(n) < meter * 8);
   const nLines = Math.max(1, ...shown(paged ? [...rh, ...lh] : rh).map((n) => lineOf(n) + 1));
   const firstBad = result ? shown(rh).find((n) => markFor(n, rh) && markFor(n, rh) !== 'ok') : undefined;
   // Owner 2026-11-20: reading-play must be perfect — while a take runs, every line is drawn and the score box scrolls
@@ -482,130 +485,16 @@ export function DrillStaff({ drill, fingering = false, result, beat = -1, upTo, 
       const lives = lv ? xs.map((n) => liveFor(n, ns)) : null;
       const priors = pf ? xs.map((n) => pf.at(groupOf(n, ns))) : null;
       const ghosts = result ? xs.map((n) => { const p = byKey.get(noteKey(n))?.played; return p && p.pitch !== n.pitch ? p.pitch + shift : null; }) : undefined;
-      // Written values; a gap before the next note (or to the bar line at the end) becomes rests of standard values.
-      // `at`: where the item really starts (quarter notes). The written value is rounded to a standard one (a triplet is
-      // drawn as an eighth), so the now-cue follows `at`, never a sum of written values (it drifted off the notes).
-      // 0.98: a length in 16ths is written exactly — 16ths, dotted 8ths, a note over the bar line as tied values (a piece's
-      // ties, Bach's 16ths); anything else (triplets) keeps the old rounding to 8ths.
-      type It = { n: ExpNote | null; dur: number; at: number; /** A tied continuation's pitch (n null, not a rest). */ p?: number; extra?: number[]; tie?: boolean; orn?: string; /** Two voices: which one (2 = stems down). */ v?: 1 | 2 };
-      const items: It[] = [];
-      const std = (d: number) => [4, 3, 2, 1.5, 1, 0.5].find((v) => v <= d + 1e-6) ?? 0.5;
-      const in16 = (d: number) => Math.abs(d * 4 - Math.round(d * 4)) < 1e-3;
-      const VALS16 = [4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25];
-      /** A length in 16ths as standard written values, longest first (tied). */
-      const split16 = (d: number): number[] => {
-        const out: number[] = [];
-        let g = d;
-        while (g > 0.24) {
-          const v = VALS16.find((x) => x <= g + 1e-6)!;
-          out.push(v);
-          g -= v;
-        }
-        return out;
-      };
-      const pushRest = (gap: number, from: number) => {
-        let g = gap;
-        let at = from;
-        const fine = in16(gap);
-        while (g > (fine ? 0.24 : 0.49)) {
-          const v = (fine ? [4, 2, 1, 0.5, 0.25] : [4, 2, 1, 0.5]).find((x) => x <= g + 1e-6)!;
-          items.push({ n: null, dur: v, at });
-          g -= v;
-          at += v;
-        }
-      };
-      /** The end of the bar holding position q (quarter notes). */
-      // (a step past q, so a bar's own start gives its end — never q itself; a guard keeps every loop moving)
-      const barEndOf = (q: number) => Math.max(q + 0.25, barEnd(q + 1e-3));
-      const extraOf = (n: ExpNote) => (n.chordId === undefined ? undefined : ns.filter((x) => x.chordId === n.chordId && x !== n).map((x) => x.pitch + shift));
+      // The line's items (notes, tied continuations, rests), each with where it really starts (staffItems.ts: pure, so the
+      // guard tests check the item the now-cue is on against the note due).
       const lineStart = sl ? sl[li].from : li * per;
       const lineEnd = sl ? sl[li].to : lineStart + per;
       const barEnd = (q: number) => (sl ? (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).from + (sl[li].bars.find((b) => q < b.from + b.len - 1e-6) ?? sl[li].bars[sl[li].bars.length - 1]).len : Math.ceil(q / meter - 1e-6) * meter);
-      // Two voices on this staff (0.99): each voice laid out on its own (notes, rests, ties), then merged in time order;
-      // NoteStaff draws voice 1 stems up and voice 2 stems down. One voice: exactly as before.
-      const two = ns.some((n) => n.staffVoice === 2);
-      /** A length as written values: one voice, longest first (as before); two voices, never across a beat (layout.splitDur). */
-      const splitIn = (at: number, d: number): number[] => (two ? splitDur(at, d) : split16(d));
-      let carry: ExpNote | undefined;
-      let tin0 = -1;
-      const tins = new Set<number>();
-      const build = (vxs: ExpNote[], vall: ExpNote[], v: 1 | 2) => {
-        const k0 = items.length;
-        tin0 = -1;
-        // a note held over from the line before (a tie over the line's start): its rest of the length, tied in
-        const held = vall.filter((n) => in16(dq(n)) && bq(n) < lineStart - 1e-6 && bq(n) + dq(n) > lineStart + 0.24 && !vall.some((m) => bq(m) > bq(n) + 1e-6 && bq(m) < lineStart + 1e-6));
-        carry = held[0];
-        let from0 = lineStart;
-        if (carry) {
-          const end = Math.min(lineEnd, bq(carry) + dq(carry), vxs[0] ? bq(vxs[0]) : lineEnd);
-          tin0 = items.length;
-          let a = lineStart;
-          while (end - a > 0.24) {
-            const be = Math.min(end, barEndOf(a));
-            for (const v of splitIn(a, be - a)) {
-              items.push({ n: null, p: carry.pitch + shift, extra: extraOf(carry), dur: v, at: a, tie: true });
-              a += v;
-            }
-            a = be;
-          }
-          const last = items[items.length - 1];
-          if (last && bq(carry) + dq(carry) <= lineEnd + 1e-6) last.tie = false;
-          from0 = a;
-        }
-        if (vxs[0] && bq(vxs[0]) - from0 > 0.24) pushRest(bq(vxs[0]) - from0, from0);
-        vxs.forEach((n, i) => {
-          const nextAt = vxs[i + 1] ? bq(vxs[i + 1]) : Math.min(lineEnd, barEnd(bq(n) + dq(n) - 1e-6));
-          const orn = ornCode.get(n);
-          if (in16(dq(n)) && in16(bq(n))) {
-            // exact: the written length up to the next note, split at each bar line into tied values
-            const end = Math.min(bq(n) + dq(n), nextAt, lineEnd);
-            let a = bq(n);
-            let first = true;
-            while (end - a > 0.24) {
-              const be = Math.min(end, barEndOf(a));
-              for (const v of splitIn(a, be - a)) {
-                items.push(first ? { n, dur: v, at: a, extra: extraOf(n), tie: true, ...(orn ? { orn } : {}) } : { n: null, p: n.pitch + shift, extra: extraOf(n), dur: v, at: a, tie: true });
-                first = false;
-                a += v;
-              }
-              a = be;
-            }
-            if (first) items.push({ n, dur: 0.25, at: bq(n), extra: extraOf(n), ...(orn ? { orn } : {}) });
-            // the last value is tied on only when the note goes on into the next line
-            else if (bq(n) + dq(n) <= lineEnd + 1e-6 || end < lineEnd - 1e-6) items[items.length - 1].tie = false;
-            if (nextAt - a > 0.24) pushRest(nextAt - a, a);
-            return;
-          }
-          const d = std(Math.min(Math.max(0.5, dq(n)), Math.max(0.5, nextAt - bq(n))));
-          items.push({ n, dur: d, at: bq(n), extra: extraOf(n), ...(orn ? { orn } : {}) });
-          if (nextAt - (bq(n) + d) > 0.49) pushRest(nextAt - (bq(n) + d), bq(n) + d);
-        });
-        if (tin0 >= 0) tins.add(tin0);
-        if (two) {
-          // each voice fills the line (its own rests to the line's end), so both voices meet at every bar line
-          const endAt = items.length > k0 ? items[items.length - 1].at + items[items.length - 1].dur : lineStart;
-          if (lineEnd - endAt > 0.24) pushRest(lineEnd - endAt, endAt);
-          for (let k = k0; k < items.length; k++) items[k].v = v;
-        }
-        return carry;
-      };
-      if (!two) carry = build(xs, all, 1);
-      else {
-        build(xs.filter((n) => n.staffVoice !== 2), all.filter((n) => n.staffVoice !== 2), 1);
-        build(xs.filter((n) => n.staffVoice === 2), all.filter((n) => n.staffVoice === 2), 2);
-        // merge the voices in time order (stable: voice 1 first at the same onset); tie-ins follow their items
-        const order = items.map((_, k) => k).sort((p, q) => items[p].at - items[q].at || (items[p].v ?? 1) - (items[q].v ?? 1) || p - q);
-        const merged = order.map((k) => items[k]);
-        const tinNew = new Set(order.map((k, j) => (tins.has(k) ? j : -1)).filter((j) => j >= 0));
-        items.splice(0, items.length, ...merged);
-        tins.clear();
-        for (const j of tinNew) tins.add(j);
-        carry = undefined;
-      }
+      const { items, tins, carry, two } = staffLineItems({ xs, all, ns, lineStart, lineEnd, barEnd, qk, shift, ornCode });
       const idx = (n: ExpNote) => xs.indexOf(n);
       // The now-cue: the item (note or rest) the running take is on, in this line.
       const cur = beat >= 0 && !result ? beat * qk : -1;
-      const now = cur >= lineStart - 0.03 && cur < lineEnd - 0.03 ? glidePos(items.map((x) => x.at), lineEnd, cur) : -1;
+      const now = cur >= lineStart - 0.03 && cur < lineEnd - 0.03 ? glidePos(items.map((x) => x.at), lineEnd, cur, 0) : -1;
       // Look-ahead: while playing, every line but the one being played is drawn faded.
       const ahead = beat >= 0 && !result && now < 0;
       // Played notes not in the score (§4.1): a small ✕ above this staff where they were played (hands together: the
