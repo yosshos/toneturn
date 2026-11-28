@@ -206,3 +206,23 @@
 .vlt-head .field-hint, .vlt-head .lt-verdict { margin: 0; text-align: center; }
 .vlt-head .lt-verdict { font-weight: 600; }
 .vlt-skip { font-size: 0.85rem; }
+
+/* The three tool rows above the family list (warm-up, sing along, find my level): the same card as a family row ג€”
+   glyph, title over one line of detail ג€” instead of a narrow title column squeezed beside the text. */
+:root:root .warmup-card.vtool {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: none;
+  color: var(--ink);
+  text-align: start;
+}
+:root:root .warmup-card.vtool .vfam-text { display: grid; gap: 1px; min-width: 0; flex: 1; }
+:root:root .warmup-card.vtool b { font-size: 0.98rem; line-height: 1.25; }
+:root:root .warmup-card.vtool small { color: var(--ink-dim); font-size: 0.8rem; line-height: 1.35; }

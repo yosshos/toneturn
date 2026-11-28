@@ -442,11 +442,11 @@ function ShareSheet({ lang, settings, onSettings, head, phraseId }: ChallengePro
           <Bi text={context} />
         </span>
         <span className="ch gh">{INST[inst][lang]}</span>
-        <span className="chl-level" data-share-level={payload.level}>
+        <span className="chl-level" data-share-level={payload.level} dir="ltr">
           <button className="ch" onClick={() => setLevel(Math.max(1, auto - 1, payload.level - 1))} disabled={payload.level <= Math.max(1, auto - 1)} aria-label={L(lang, 'Easier', 'קל יותר')}>
             <Icon k="minus" />
           </button>
-          <span className="tiny">
+          <span className="tiny" dir={lang === 'he' ? 'rtl' : 'ltr'}>
             {L(lang, 'Level', 'רמה')} <b>{payload.level}</b>
           </span>
           <button className="ch" onClick={() => setLevel(Math.min(5, auto + 1, payload.level + 1))} disabled={payload.level >= Math.min(5, auto + 1)} aria-label={L(lang, 'Harder', 'קשה יותר')}>

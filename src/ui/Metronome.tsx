@@ -268,7 +268,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
         </div>
       </div>
 
-      <div className="mt-tempo">
+      <div className="mt-tempo" dir="ltr">
         <button className="icon-btn mt-step" onClick={() => setBpm(m.bpm - 1)} aria-label="−1">
           <Icon k="minus" />
         </button>
@@ -283,7 +283,7 @@ export function Metronome({ lang, settings, onChange, onBack }: { lang: Lang; se
           <Icon k="plus" />
         </button>
       </div>
-      <input className="mt-slider" type="range" min={30} max={260} value={m.bpm} onChange={(e) => setBpm(Number(e.target.value))} aria-label="BPM" />
+      <input className="mt-slider" dir="ltr" type="range" min={30} max={260} value={m.bpm} onChange={(e) => setBpm(Number(e.target.value))} aria-label="BPM" />
 
       <div className="mt-main">
         <button className="btn ghost mt-tap" onClick={doTap} data-tap="1">

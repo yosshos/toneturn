@@ -222,3 +222,13 @@
   .sheet-backdrop > .sheet h2 { font-size: 1.25rem; font-weight: 600; }
   @keyframes dialog-in { from { transform: translateY(8px) scale(0.985); opacity: 0; } }
 }
+
+/* One course switcher at a time: the side menu's chip when the full menu shows (from 1100 px, not collapsed),
+   otherwise the top bar's. The rail (tablet width or collapsed) has no room for the chip. */
+@media (min-width: 700px) {
+  .side-nav .course-chip.side { display: none; }
+}
+@media (min-width: 1100px) {
+  .side-nav:not(.collapsed) .course-chip.side { display: inline-flex; }
+  :root:root .app.with-side:has(.side-nav:not(.collapsed)) .v2-topbar .course-chip { display: none; }
+}

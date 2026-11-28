@@ -449,7 +449,7 @@ export function TeachPhraseSheet({ lang, classId, settings, onBack, onDone }: { 
 
 function Stepper({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange: (v: number) => void; label: string }) {
   return (
-    <span className="tp-step" role="group" aria-label={label}>
+    <span className="tp-step" role="group" aria-label={label} dir="ltr">
       <button className="icon-btn small" disabled={value <= min} onClick={() => onChange(value - 1)} aria-label="−">
         <Icon k="minus" />
       </button>

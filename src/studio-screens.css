@@ -1850,3 +1850,30 @@ html[data-motion='reduced'] .se-big {
 @media (prefers-reduced-motion: reduce) { .stage-strip .ss-tick.rise { animation: none; } .stage-strip .ss-fill { transition: none; } }
 html[data-motion='reduced'] .stage-strip .ss-tick.rise { animation: none; }
 html[data-motion='reduced'] .stage-strip .ss-fill { transition: none; }
+
+/* Workout blocks on a phone: the name gets the row (up to two lines, never cut after a few letters) and the
+   minutes stepper moves under it; the why-chip shrinks with an ellipsis instead of running past the card. */
+:root:root .st-editor .wk-name b {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+:root:root .st-editor .wk-why-row .wk-why {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  :root:root .st-editor .wk-block {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'drag name more' 'drag min min';
+    row-gap: 6px;
+  }
+  :root:root .st-editor .wk-min {
+    justify-self: start;
+  }
+}

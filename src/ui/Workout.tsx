@@ -395,7 +395,7 @@ function PlanCard({ t, lang, blocks, nextLine, edited, onStart, onEdit, onReset,
         <span className="wk-len-unit">{tx.min}</span>
       </div>
       {stepper && (
-        <div className="wk-len-step" data-len-stepper="1">
+        <div className="wk-len-step" data-len-stepper="1" dir="ltr">
           <button type="button" className="icon-btn" onClick={() => onLength(T - 5)} disabled={T <= LIMITS.minTotal} aria-label="−5">
             <Icon k="minus" size={16} />
           </button>
@@ -771,7 +771,7 @@ export function WorkoutEditor({
             </button>
           ))}
         </div>
-        <div className="wk-stepper">
+        <div className="wk-stepper" dir="ltr">
           <button className="icon-btn" onClick={() => setTotal(T - 5)} aria-label="−5">
             <Icon k="minus" />
           </button>
@@ -821,7 +821,7 @@ export function WorkoutEditor({
                   </small>
                 )}
               </span>
-              <span className="wk-min">
+              <span className="wk-min" dir="ltr">
                 <button className="icon-btn" aria-label="−1" disabled={b.minutes <= LIMITS.minBlock} onClick={() => change(setMinutes(bs, b.id, b.minutes - 1))}>
                   <Icon k="minus" />
                 </button>

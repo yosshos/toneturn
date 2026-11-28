@@ -113,3 +113,11 @@
 /* The lick page fits one phone screen with the item head: a long lick name stays on one or two short lines. */
 [data-licks="lick"] .screen-head h1 { font-size: clamp(1.15rem, 5.4vw, 1.6rem); line-height: 1.15; }
 [data-licks="lick"] .lk-actions { gap: 8px; }
+/* Filter rows (category, style): one scrolling line of chips, like the section switch above. `.chips` is a plain
+   block, so the chips used to wrap into four ragged rows and push the list below the fold. */
+.lk-tabs, .lk-style { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; padding-bottom: 2px; }
+.lk-style::-webkit-scrollbar { display: none; }
+.lk-style .chip { flex: 0 0 auto; }
+@media (max-width: 360px) {
+  :root:root:root .lk-seg button { padding-inline: 7px; font-size: 0.8rem; }
+}

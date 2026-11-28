@@ -71,7 +71,7 @@ function PracticeLength({ lang, s, onChange }: { lang: 'he' | 'en'; s: Settings;
       <h2>{he ? 'אימון' : 'Practice'}</h2>
       <div className="field-row">
         <span>{he ? 'אימון יומי' : 'Daily practice'}</span>
-        <span className="row" style={{ gap: 8, alignItems: 'center' }}>
+        <span className="row" style={{ gap: 8, alignItems: 'center' }} dir="ltr">
           <button type="button" className="icon-btn" onClick={() => onChange({ dailyMinutes: clampDaily(m - DAILY.step) })} disabled={m <= DAILY.min} aria-label="−5" data-daily-minus="1">
             <Icon k="minus" size={16} />
           </button>
