@@ -74,6 +74,13 @@ export function betaQuantile(q: number, a: number, b: number): number {
 /** The pooled dependence defaults (§1.7, §9.1): ρ_d = 0.15 (same day), ρ_c = 0.20 (same cell), until fitted. */
 export const RHO_DAY = 0.15;
 export const RHO_CELL = 0.2;
+/**
+ * Round 17 (review #4): the slump / re-promotion decisions are about the learner's ability at the tier (fresh cells), so
+ * calibration is scored against the tier's fresh-cell p. ρ_c = 0.20 over-covers that estimand; this re-tuned value gives
+ * ≈ 80 % coverage of the 80 % interval under the shared supply. NOT adopted: the owner kept RHO_CELL = 0.20 as a cautious
+ * decision value (H12, 2026-11-28); this constant is kept for the evaluation grid only.
+ */
+export const RHO_CELL_TIER = 0.08;
 
 /**
  * §1.7 "dependence aware": the design effect 1 + (m_d − 1)ρ_d + (m_c − 1)ρ_c, with m_d = looks per day and m_c = looks

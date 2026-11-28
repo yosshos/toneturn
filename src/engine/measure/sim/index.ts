@@ -11,3 +11,4 @@ export * from './catalogue';
 export * from './simulate';
 export * from './readingSim';
 export * from './metrics';
+export * from './threshold';

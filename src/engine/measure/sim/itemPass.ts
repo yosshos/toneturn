@@ -47,6 +47,29 @@ export const PASS_VARIANTS: PassVariant[] = ['V0', 'V1', 'V2', 'V3'];
 /** The default cold half: V1, approved by the owner 2026-11-27 (V0 = v12 as written stays selectable). */
 export const DEFAULT_PASS_VARIANT: PassVariant = 'V1';
 
+/**
+ * Where the cold half's share test reads its counting checks (round 17 review #1; harness option on top of the variant):
+ * - P0 (current): the cell's own counting checks (a new key starts a fresh record);
+ * - P1: pooled per EXERCISE across all its keys and cells, shelved ones included (a new key never resets misses);
+ * - P2: the cell's own checks, but ≥ 4 counting checks before the share test can pass;
+ * - P3: P1 + P2 (pooled per exercise, ≥ 4 pooled checks);
+ * - P4: pooled per content TIER (every exercise and key at the cell's tier, shelved cells included), ≥ 4 pooled checks
+ *   (added in round 17 after P1–P3 left the stationary learner's inflation almost unchanged).
+ * The pair (V0 / V1) stays per cell in every option. The simulator owns the pools (per exercise, or per tier for P4).
+ */
+export type PassEvidence = 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+export const PASS_EVIDENCE: PassEvidence[] = ['P0', 'P1', 'P2', 'P3', 'P4'];
+export const DEFAULT_PASS_EVIDENCE: PassEvidence = 'P0';
+export const EVIDENCE_RULE: Record<PassEvidence, { pooled: boolean; minChecks: number }> = {
+  P0: { pooled: false, minChecks: 0 },
+  P1: { pooled: true, minChecks: 0 },
+  P2: { pooled: false, minChecks: 4 },
+  P3: { pooled: true, minChecks: 4 },
+  P4: { pooled: true, minChecks: 4 },
+};
+/** The pool key of a cell: its exercise (P1 / P3) or its content tier (P4). */
+export const poolKey = (evidence: PassEvidence, exerciseId: string, tier: number): string => (evidence === 'P4' ? `tier:${tier}` : exerciseId);
+
 /** Incremental pass state for one cell (the sim feeds takes in time order). */
 export class ItemPassTracker {
   private cleanCount = 0;
@@ -63,12 +86,23 @@ export class ItemPassTracker {
   /** The variant's cold half met. */
   coldDoneAt: number | null = null;
   passedAt: number | null = null;
+  /** Whether the last take added was a counting cold check (the simulator logs these for the rank tier guard). */
+  lastCounting = false;
   /** The counting cold checks (first cold takes of later days), clean or not, in order. */
   readonly counting: boolean[] = [];
   /** Every first-cold-of-day take at the probe band (for the §1.3 non-tempo placement correction). */
   readonly coldLog: { at: number; day: number; clean: boolean }[] = [];
 
-  constructor(private readonly reset: ResetMode = 'anyCold', private readonly variant: PassVariant = DEFAULT_PASS_VARIANT) {}
+  /**
+   * `pool`: the exercise's shared counting-check log (P1 / P3), in time order across all its cells; this tracker appends
+   * its own counting checks to it. Without one, a pooled option falls back to the cell's own log.
+   */
+  constructor(private readonly reset: ResetMode = 'anyCold', private readonly variant: PassVariant = DEFAULT_PASS_VARIANT, private readonly evidence: PassEvidence = DEFAULT_PASS_EVIDENCE, private readonly pool?: boolean[]) {}
+
+  /** A clean cold take at the probe band on a later day (≥ 8 h, a different local day) than the first target: §1.6 `established`. */
+  get established(): boolean {
+    return this.counting.includes(true);
+  }
 
   /** §1.6 counting take: a first cold take of a later day (≥ 8 h and a different local day after the first target). */
   isCounting(t: Take): boolean {
@@ -77,7 +111,9 @@ export class ItemPassTracker {
 
   /** The variant's cold rule, checked after each counting check. */
   private coldRuleMet(): boolean {
-    const c = this.counting;
+    const rule = EVIDENCE_RULE[this.evidence];
+    const c = rule.pooled && this.pool ? this.pool : this.counting;
+    if (c.length < rule.minChecks) return false;
     const last = (k: number) => c.slice(Math.max(0, c.length - k));
     const clean = (xs: boolean[]) => xs.filter(Boolean).length;
     switch (this.variant) {
@@ -98,8 +134,10 @@ export class ItemPassTracker {
 
   add(t: Take): void {
     if (t.cold && t.firstColdOfDay && t.atTarget) this.coldLog.push({ at: t.at, day: t.day, clean: t.clean });
+    this.lastCounting = false;
     if (this.passedAt !== null) return; // passed stays passed (SP §4.2)
     const counting = this.isCounting(t);
+    this.lastCounting = counting;
     if (this.pairDoneAt === null) {
       if (counting && t.clean) {
         if (this.pendingDay !== null && this.pendingDay !== t.day) this.pairDoneAt = t.at;
@@ -110,6 +148,7 @@ export class ItemPassTracker {
     }
     if (counting) {
       this.counting.push(t.clean);
+      if (this.pool) this.pool.push(t.clean);
       if (this.coldDoneAt === null && this.coldRuleMet()) this.coldDoneAt = t.at;
     }
     if (t.clean && t.atTarget) {
@@ -126,8 +165,8 @@ export class ItemPassTracker {
 }
 
 /** §1.6 item pass over a whole take log (time order): the time of the pass, or null. */
-export function itemPassAt(takes: Take[], reset: ResetMode = 'anyCold', variant: PassVariant = DEFAULT_PASS_VARIANT): number | null {
-  const tr = new ItemPassTracker(reset, variant);
+export function itemPassAt(takes: Take[], reset: ResetMode = 'anyCold', variant: PassVariant = DEFAULT_PASS_VARIANT, evidence: PassEvidence = DEFAULT_PASS_EVIDENCE, pool?: boolean[]): number | null {
+  const tr = new ItemPassTracker(reset, variant, evidence, pool);
   for (const t of takes) tr.add(t);
   return tr.passedAt;
 }

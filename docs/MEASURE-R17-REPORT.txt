@@ -1,0 +1,182 @@
+# Round 17 measurement studies (SPEC-HOLISTIC-2 v13 harness + round 17 options)
+seed 20261127; defaults: item pass V1, rank fix 1 (keys = union), N1 (all cells at placedTier), day SD 0.8, cell SD 0.7, β 1.2, warm +0.8.
+Truths: "tier p" = the learner's cold p on a FRESH cell of that tier (marginal over day and cell effects); "cell p" = that cell's own cold p (its cell effect and item practice included).
+
+## 1. Stationary-learner honesty (review #1): rate 0, from scratch (placedTier 0, rank none), 365 days, 4 d/wk, synthetic catalogue
+Start tier T2; true tier = the highest tier with tier p >= 0.75. Target suggested by the review: rank rises at tier p < 0.5 <= 10 % over 365 days.
+| option | item gain | tier p at T2 | true tier | final rank median / p90 | tier p at final rank (median) | final rank above true tier | rank rises at tier p < 0.5 | passes at cell p < 0.5 | passes at tier p < 0.5 |
+|---|---|---|---|---|---|---|---|---|---|
+| P0 (V1 as approved, per cell) | 0 | 0.5 | T0 | T3 / T4 | 0.27 | 100.0 % | 30.9 % FAIL | 40.7 % | 36.6 % |
+| P0 (V1 as approved, per cell) | 0 | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 22.3 % FAIL | 23.8 % | 21.2 % |
+| P0 (V1 as approved, per cell) | 0 | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 23.4 % FAIL | 17.7 % | 25.8 % |
+| P1 (pooled per exercise) | 0 | 0.5 | T0 | T3 / T3 | 0.27 | 100.0 % | 28.2 % FAIL | 38.0 % | 33.0 % |
+| P1 (pooled per exercise) | 0 | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 22.3 % FAIL | 23.6 % | 20.3 % |
+| P1 (pooled per exercise) | 0 | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 23.2 % FAIL | 14.7 % | 22.8 % |
+| P2 (>= 4 checks) | 0 | 0.5 | T0 | T3 / T3 | 0.27 | 100.0 % | 28.3 % FAIL | 36.4 % | 33.5 % |
+| P2 (>= 4 checks) | 0 | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 22.9 % FAIL | 23.2 % | 20.8 % |
+| P2 (>= 4 checks) | 0 | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 23.3 % FAIL | 13.4 % | 23.3 % |
+| P3 (P1 + P2) | 0 | 0.5 | T0 | T3 / T3 | 0.27 | 100.0 % | 28.3 % FAIL | 36.7 % | 32.9 % |
+| P3 (P1 + P2) | 0 | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 22.7 % FAIL | 23.6 % | 20.7 % |
+| P3 (P1 + P2) | 0 | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 23.1 % FAIL | 13.8 % | 23.3 % |
+| P4 (pooled per tier, >= 4) | 0 | 0.5 | T0 | T3 / T3 | 0.27 | 100.0 % | 30.0 % FAIL | 38.5 % | 32.5 % |
+| P4 (pooled per tier, >= 4) | 0 | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 23.1 % FAIL | 25.1 % | 20.3 % |
+| P4 (pooled per tier, >= 4) | 0 | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 23.9 % FAIL | 15.2 % | 22.1 % |
+| G (P0 + rank tier guard) | 0 | 0.5 | T0 | T2 / T2 | 0.50 | 100.0 % | 0.5 % PASS | 42.2 % | 30.5 % |
+| G (P0 + rank tier guard) | 0 | 0.75 | T2 | T3 / T3 | 0.53 | 82.0 % | 1.0 % PASS | 35.1 % | 28.2 % |
+| G (P0 + rank tier guard) | 0 | 0.85 | T2 | T3 / T4 | 0.67 | 100.0 % | 5.8 % PASS | 30.6 % | 57.2 % |
+| P0 (V1 as approved, per cell) | 0.3 / 10 takes | 0.5 | T0 | T4 / T4 | 0.12 | 100.0 % | 40.8 % FAIL | 35.5 % | 42.3 % |
+| P0 (V1 as approved, per cell) | 0.3 / 10 takes | 0.75 | T2 | T4 / T4 | 0.30 | 100.0 % | 22.9 % FAIL | 15.6 % | 23.3 % |
+| P0 (V1 as approved, per cell) | 0.3 / 10 takes | 0.85 | T2 | T4 / T6 | 0.44 | 100.0 % | 27.9 % FAIL | 14.1 % | 28.6 % |
+| G (P0 + rank tier guard) | 0.3 / 10 takes | 0.5 | T0 | T2 / T2 | 0.50 | 100.0 % | 0.0 % PASS | 38.2 % | 54.4 % |
+| G (P0 + rank tier guard) | 0.3 / 10 takes | 0.75 | T2 | T3 / T3 | 0.53 | 100.0 % | 1.0 % PASS | 29.0 % | 50.4 % |
+| G (P0 + rank tier guard) | 0.3 / 10 takes | 0.85 | T2 | T4 / T4 | 0.44 | 100.0 % | 21.0 % FAIL | 16.3 % | 54.1 % |
+
+The same on the real piano areas (tier p 0.75 at each area's 2nd non-empty tier), pooled over the 5 areas:
+| option | rank rises at tier p < 0.5 | final rank above true tier | passes at cell p < 0.5 |
+|---|---|---|---|
+| P0 (V1 as approved, per cell) | 23.9 % | 99.3 % | 27.0 % |
+| P3 (P1 + P2) | 20.2 % | 98.0 % | 22.5 % |
+| G (P0 + rank tier guard) | 2.0 % | 82.0 % | 31.5 % |
+
+## 1b. Improving learners, real catalogue (15 piano/guitar/bass areas): days per tier, honesty, stalls (runs: 20 per transition, 20 climbs per area)
+| option | item gain | days/tier p 0.75, 3 d/wk | p 0.75, 5 d/wk | p 0.85, 3 d/wk | p 0.85, 5 d/wk | rank rises at tier p < 0.5 (steady climb) | median tier p at a new rank | passes at cell p < 0.5 | stalls >= 42 d | climbs missing a tier |
+|---|---|---|---|---|---|---|---|---|---|---|
+| P0 (V1 as approved, per cell) | 0 | 18 / 45 | 11 / 28 | 14 / 31 | 9 / 19 | 9.2 % | 0.71 | 16.3 % | 0 / 300 | 0 / 300 |
+| P1 (pooled per exercise) | 0 | 18 / 45 | 11 / 30 | 14 / 32 | 9 / 19 | 6.7 % | 0.71 | 15.4 % | 0 / 300 | 0 / 300 |
+| P2 (>= 4 checks) | 0 | 25 / 63 | 14 / 36 | 22 / 46 | 14 / 28 | 3.7 % | 0.76 | 9.4 % | 0 / 300 | 0 / 300 |
+| P3 (P1 + P2) | 0 | 25 / 60 | 14 / 35 | 22 / 43 | 14 / 26 | 3.2 % | 0.74 | 10.4 % | 0 / 300 | 0 / 300 |
+| P4 (pooled per tier, >= 4) | 0 | 21 / 52 | 12 / 33 | 18 / 34 | 11 / 22 | 10.7 % | 0.69 | 19.2 % | 0 / 300 | 0 / 300 |
+| G (P0 + rank tier guard) | 0 | 22 / 64 (99.4 %) | 14 / 38 | 16 / 38 | 10 / 21 | 1.3 % | 0.82 | 8.8 % | 1 / 300 | 0 / 300 |
+| P0 (V1 as approved, per cell) | 0.3 / 10 takes | 16 / 35 | 10 / 22 | 13 / 28 | 8 / 16 | 20.8 % | 0.64 | 13.2 % | 0 / 300 | 0 / 300 |
+| G (P0 + rank tier guard) | 0.3 / 10 takes | 19 / 42 | 12 / 25 | 15 / 31 | 9 / 18 | 5.0 % | 0.76 | 6.3 % | 0 / 300 | 0 / 300 |
+
+## 2. Look supply (review #3): current form under a per-SESSION slot cap shared across areas, plus FSRS-review looks (rank R = T3 at burn-in start; 60-day burn-in, 90-day window)
+Wrong demotion = a slump while the truth >= 0.75: "cells" = mean cell p of the passed cells at tiers >= the tier left (v13 definition); "tier" = fresh-cell p at the tier left.
+| supply | tier p at R | d/wk | looks / 90 d (from reviews) | wrong demotion / 90 d (cells; tier) | any slump | rank rose above R | coverage vs cells: n_eff / naive | coverage vs tier: n_eff / naive |
+|---|---|---|---|---|---|---|---|---|
+| v13 harness: 2 slots/session for this area, no reviews | 0.75 | 3 | 77 (0.0 %) | 0.0 %; 0.0 % PASS | 9.0 % | 100.0 % | 93.8 % / 79.5 % | 86.4 % / 66.8 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.75 | 5 | 129 (0.0 %) | 0.0 %; 0.0 % PASS | 15.5 % | 100.0 % | 93.8 % / 79.7 % | 86.5 % / 68.9 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.85 | 3 | 77 (0.0 %) | 0.0 %; 0.0 % PASS | 9.5 % | 100.0 % | 93.0 % / 79.5 % | 85.1 % / 68.0 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.85 | 5 | 129 (0.0 %) | 0.0 %; 0.0 % PASS | 25.0 % | 100.0 % | 94.4 % / 81.8 % | 85.7 % / 69.2 % |
+| shared: 3 slots/session over 4 areas, no reviews | 0.75 | 3 | 33 (0.0 %) | 0.0 %; 0.0 % PASS | 4.5 % | 100.0 % | 89.9 % / 79.8 % | 84.4 % / 69.5 % |
+| shared: 3 slots/session over 4 areas, no reviews | 0.75 | 5 | 55 (0.0 %) | 0.0 %; 0.0 % PASS | 11.0 % | 100.0 % | 93.4 % / 81.5 % | 85.1 % / 70.5 % |
+| shared: 3 slots/session over 4 areas, no reviews | 0.85 | 3 | 33 (0.0 %) | 0.0 %; 0.0 % PASS | 8.5 % | 100.0 % | 91.6 % / 81.3 % | 86.7 % / 74.8 % |
+| shared: 3 slots/session over 4 areas, no reviews | 0.85 | 5 | 55 (0.0 %) | 0.0 %; 0.5 % PASS | 21.5 % | 100.0 % | 93.2 % / 82.7 % | 84.4 % / 72.0 % |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 0.75 | 3 | 76 (94.2 %) | 0.0 %; 0.0 % PASS | 4.5 % | 100.0 % | 93.2 % / 83.0 % | 87.2 % / 73.8 % |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 0.75 | 5 | 115 (86.0 %) | 0.0 %; 6.0 % PASS | 36.5 % | 100.0 % | 93.6 % / 81.9 % | 84.2 % / 69.0 % |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 0.85 | 3 | 75 (94.0 %) | 0.0 %; 0.0 % PASS | 8.0 % | 100.0 % | 92.3 % / 81.9 % | 86.8 % / 75.5 % |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 0.85 | 5 | 114 (85.5 %) | 0.0 %; 10.0 % PASS | 44.0 % | 100.0 % | 92.8 % / 81.5 % | 82.6 % / 68.3 % |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 0.75 | 3 | 55 (76.4 %) | 0.0 %; 0.0 % PASS | 2.0 % | 100.0 % | 91.3 % / 82.0 % | 86.3 % / 73.7 % |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 0.75 | 5 | 91 (76.3 %) | 0.0 %; 0.0 % PASS | 11.0 % | 100.0 % | 93.2 % / 81.8 % | 84.5 % / 68.0 % |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 0.85 | 3 | 55 (76.6 %) | 0.0 %; 0.0 % PASS | 2.5 % | 100.0 % | 89.7 % / 81.7 % | 86.6 % / 75.6 % |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 0.85 | 5 | 91 (76.3 %) | 0.0 %; 0.0 % PASS | 19.0 % | 100.0 % | 92.7 % / 82.9 % | 82.8 % / 68.7 % |
+| shared: 4 over 3 areas + FSRS reviews (<= 2/session) | 0.75 | 3 | 77 (91.8 %) | 0.0 %; 0.0 % PASS | 8.5 % | 100.0 % | 92.0 % / 80.2 % | 84.5 % / 70.9 % |
+| shared: 4 over 3 areas + FSRS reviews (<= 2/session) | 0.75 | 5 | 124 (81.3 %) | 0.5 %; 5.0 % PASS | 35.5 % | 100.0 % | 92.0 % / 79.3 % | 81.9 % / 66.0 % |
+| shared: 4 over 3 areas + FSRS reviews (<= 2/session) | 0.85 | 3 | 76 (91.4 %) | 0.0 %; 0.0 % PASS | 9.0 % | 100.0 % | 91.7 % / 81.5 % | 85.9 % / 73.2 % |
+| shared: 4 over 3 areas + FSRS reviews (<= 2/session) | 0.85 | 5 | 124 (80.4 %) | 0.0 %; 8.5 % PASS | 47.0 % | 100.0 % | 93.5 % / 82.1 % | 81.6 % / 66.2 % |
+
+Re-promotion after a 4-week dip of −3 logits (tier p 0.85 at R = T3, 4 d/wk): days from the dip's end until current form is back at its pre-dip value
+| supply | slumped in the dip | back within 120 d | median days | p90 days |
+|---|---|---|---|---|
+| v13 harness: 2 slots/session for this area, no reviews | 97.5 % | 57.4 % | 94 | 120 |
+| shared: 3 slots/session over 4 areas, no reviews | 27.5 % | 52.7 % | 77 | 120 |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 73.0 % | 57.5 % | 94 | 120 |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 29.5 % | 42.4 % | 120 | 120 |
+| shared: 4 over 3 areas + FSRS reviews (<= 2/session) | 76.0 % | 50.7 % | 113.5 | 120 |
+
+## 3. Calibration estimand (review #4): 80 % interval coverage by ρ_c (ρ_d 0.15), against the window's cells and against the tier (fresh cells)
+Evaluation only (decisions use ρ_c 0.20 here); learners as in section 2, pooled over tier p 0.75 / 0.85 and 3 / 5 d/wk.
+| supply | naive (raw n) cells / tier | ρ_c 0: cells / tier | ρ_c 0.05: cells / tier | ρ_c 0.08: cells / tier | ρ_c 0.1: cells / tier | ρ_c 0.12: cells / tier | ρ_c 0.15: cells / tier | ρ_c 0.2: cells / tier | ρ_c 0.3: cells / tier |
+|---|---|---|---|---|---|---|---|---|---|
+| v13 harness: 2 slots/session for this area, no reviews | 81.0 % / 68.6 % | 83.9 % / 70.5 % | 87.8 % / 77.2 % | 89.4 % / 79.0 % | 90.5 % / 79.9 % | 91.4 % / 81.6 % | 92.5 % / 83.7 % | 94.2 % / 85.9 % | 96.3 % / 89.7 % |
+| shared: 3 over 4 areas + FSRS reviews (<= 2/session) | 84.0 % / 72.2 % | 84.8 % / 73.0 % | 88.2 % / 77.3 % | 89.7 % / 79.6 % | 90.5 % / 80.8 % | 91.3 % / 81.7 % | 92.6 % / 83.5 % | 93.9 % / 85.8 % | 95.7 % / 89.2 % |
+| shared: 2 over 6 areas + FSRS reviews (<= 1/session) | 83.9 % / 74.5 % | 84.4 % / 75.0 % | 87.9 % / 79.0 % | 89.4 % / 81.0 % | 90.3 % / 82.2 % | 91.0 % / 83.3 % | 92.1 % / 85.0 % | 93.5 % / 87.4 % | 95.6 % / 90.3 % |
+- v13 harness: 2 slots/session for this area, no reviews: tier coverage closest to 80 % at ρ_c = 0.1 (79.9 %)
+- shared: 3 over 4 areas + FSRS reviews (<= 2/session): tier coverage closest to 80 % at ρ_c = 0.08 (79.6 %)
+- shared: 2 over 6 areas + FSRS reviews (<= 1/session): tier coverage closest to 80 % at ρ_c = 0.08 (81.0 %)
+
+Re-tuned ρ_c = 0.08 (the spec's shared supply), decisions now use it — wrong demotion, coverage and re-promotion:
+| supply | ρ_c | tier p at R | d/wk | wrong demotion / 90 d (cells; tier) | any slump | coverage vs tier (n_eff) | tier bias | tier RMSE |
+|---|---|---|---|---|---|---|---|---|
+| shared + reviews | 0.2 | 0.75 | 3 | 0.0 %; 0.0 % PASS | 4.5 % | 87.2 % | 0.030 | 0.111 |
+| shared + reviews | 0.2 | 0.75 | 5 | 0.0 %; 6.0 % PASS | 36.5 % | 84.2 % | 0.039 | 0.112 |
+| shared + reviews | 0.2 | 0.85 | 3 | 0.0 %; 0.0 % PASS | 8.0 % | 86.8 % | 0.004 | 0.107 |
+| shared + reviews | 0.2 | 0.85 | 5 | 0.0 %; 10.0 % PASS | 44.0 % | 82.6 % | 0.039 | 0.117 |
+| shared + reviews | 0.08 | 0.75 | 3 | 0.0 %; 0.0 % PASS | 10.5 % | 80.8 % | 0.033 | 0.115 |
+| shared + reviews | 0.08 | 0.75 | 5 | 0.5 %; 7.0 % PASS | 48.5 % | 77.3 % | 0.039 | 0.115 |
+| shared + reviews | 0.08 | 0.85 | 3 | 0.0 %; 0.0 % PASS | 11.0 % | 81.3 % | 0.007 | 0.109 |
+| shared + reviews | 0.08 | 0.85 | 5 | 1.5 %; 15.5 % PASS | 54.5 % | 76.3 % | 0.039 | 0.118 |
+- Re-promotion, shared + reviews, ρ_c 0.2: 73.0 % slumped; 57.5 % back within 120 d; median 94 d, p90 120 d.
+- Re-promotion, shared + reviews, ρ_c 0.08: 81.0 % slumped; 55.6 % back within 120 d; median 98 d, p90 120 d.
+- With the rank tier guard (G) as well, shared + reviews, ρ_c 0.08, tier p 0.75, 4 d/wk: wrong demotion 0.0 %; tier coverage 77.7 %; rank rose above R in 60.0 % (P0: see section 2).
+
+## 4. H10 (review #2): offered frontier vs true θ, tempo model on (new items start at 0.7 × target, 2-up-1-down cold staircase, warm climb, §1.9 threshold estimates)
+Learner: tier p 0.6 at T0, +0.15 tiers per practice hour (≈ 0.2 tier / week at 4 × 20 min), θ capped at the top tier; 280 days; synthetic catalogue.
+difficulty = content tier + ln(tempo) / ln(1.2) (a 0.83 × target take is one tier easier). θ = the difficulty at which a fresh cold take succeeds half the time, so the 70.7 % working point sits ≈ 0.8 tier below θ.
+"flat-rank slope" = Σ Δ(offered difficulty) / Σ Δ min(θ, cap) over 4-week windows in which rank did not move and θ rose; cap = the +2 entry cap (2nd non-empty tier above max(placedTier, rank)).
+
+### synthetic
+| planner | flat-rank slope | windows | windows with no rise in offer | mean lag min(θ, cap) − offer | target tier fell (non-exempt sessions) | offer fell > 0.5 tier day to day (non-exempt) | days offering above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|---|---|
+| v13 planner (tempo model only) | 0.87 PASS | 625 | 14.6 % | 0.89 | 0.0 % | 9.7 % | 0 | 246.5 |
+| readiness entry only | 0.95 PASS | 582 | 13.1 % | 0.84 | 0.0 % | 8.1 % | 0 | 238 |
+| H10: readiness + challenge point + no-easier | 0.93 PASS | 609 | 11.2 % | 0.75 | 0.0 % | 5.4 % | 0 | 240 |
+
+Weekly means (H10 planner | v13 planner): θ, rank (−1 = none), cap, content edge, entered top, offered tier, offered cold tempo, offered difficulty
+| week | θ | rank | cap | edge | entered top | offered tier | tempo | difficulty | v13: rank | v13: offered tier | v13: tempo | v13: difficulty |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0.55 | -0.97 | 2.0 | 0.10 | 1.01 | 0.41 | 0.78 | -0.99 | -1.00 | 0.73 | 0.77 | -0.77 |
+| 2 | 1.01 | 0.08 | 2.3 | 1.02 | 1.79 | 1.12 | 0.86 | 0.22 | 0.13 | 0.88 | 0.83 | -0.18 |
+| 4 | 1.47 | 0.82 | 2.8 | 1.73 | 2.38 | 1.82 | 0.84 | 0.80 | 0.83 | 1.43 | 0.83 | 0.34 |
+| 6 | 1.92 | 1.38 | 3.4 | 2.25 | 2.98 | 2.43 | 0.82 | 1.29 | 1.22 | 1.94 | 0.84 | 0.90 |
+| 8 | 2.38 | 1.85 | 3.9 | 2.87 | 3.50 | 2.91 | 0.82 | 1.76 | 1.82 | 2.44 | 0.83 | 1.37 |
+| 10 | 2.85 | 2.47 | 5.0 | 3.11 | 3.99 | 3.30 | 0.82 | 2.13 | 2.18 | 2.92 | 0.84 | 1.87 |
+| 12 | 3.31 | 2.97 | 5.9 | 3.72 | 4.79 | 3.80 | 0.82 | 2.62 | 2.87 | 3.41 | 0.83 | 2.33 |
+| 14 | 3.77 | 3.30 | 6.3 | 4.05 | 5.72 | 4.39 | 0.78 | 2.94 | 3.17 | 4.01 | 0.83 | 2.88 |
+| 16 | 4.23 | 3.67 | 6.7 | 4.40 | 6.02 | 4.95 | 0.77 | 3.38 | 3.72 | 4.69 | 0.81 | 3.44 |
+| 18 | 4.69 | 3.93 | 6.9 | 5.01 | 6.17 | 5.37 | 0.76 | 3.76 | 3.92 | 5.59 | 0.76 | 3.95 |
+| 20 | 5.15 | 4.03 | 7.0 | 5.70 | 6.53 | 5.89 | 0.78 | 4.40 | 4.00 | 5.91 | 0.79 | 4.55 |
+| 22 | 5.60 | 4.10 | 7.0 | 6.12 | 6.89 | 6.28 | 0.78 | 4.85 | 4.20 | 6.02 | 0.82 | 4.83 |
+| 24 | 6.07 | 4.87 | 7.4 | 6.67 | 7.08 | 6.58 | 0.82 | 5.41 | 4.87 | 6.30 | 0.83 | 5.23 |
+| 26 | 6.52 | 5.65 | 7.8 | 7.01 | 7.50 | 7.08 | 0.80 | 5.79 | 5.57 | 6.71 | 0.83 | 5.59 |
+| 28 | 6.97 | 6.23 | 8.0 | 7.42 | 7.83 | 7.57 | 0.81 | 6.29 | 6.00 | 7.15 | 0.83 | 6.06 |
+| 30 | 7.42 | 6.69 | 8.0 | 7.87 | 7.98 | 7.83 | 0.83 | 6.76 | 6.23 | 7.53 | 0.83 | 6.42 |
+| 32 | 7.89 | 7.10 | 8.0 | 7.99 | 8.00 | 7.96 | 0.86 | 7.03 | 6.72 | 7.81 | 0.85 | 6.87 |
+| 34 | 8.30 | 7.36 | 8.0 | 8.00 | 8.00 | 7.99 | 0.89 | 7.30 | 7.23 | 7.94 | 0.89 | 7.23 |
+| 36 | 8.73 | 7.58 | 8.0 | 8.00 | 8.00 | 8.00 | 0.91 | 7.44 | 7.50 | 8.00 | 0.91 | 7.43 |
+| 38 | 8.94 | 8.00 | 8.0 | 8.00 | 8.00 | 8.00 | 0.94 | 7.68 | 7.33 | 8.00 | 0.90 | 7.40 |
+
+### piano/scales
+| planner | flat-rank slope | windows | windows with no rise in offer | mean lag min(θ, cap) − offer | target tier fell (non-exempt sessions) | offer fell > 0.5 tier day to day (non-exempt) | days offering above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|---|---|
+| v13 planner (tempo model only) | 0.73 PASS | 377 | 20.4 % | 0.89 | 0.0 % | 11.2 % | 0 | 177 |
+| readiness entry only | 0.86 PASS | 396 | 11.1 % | 0.85 | 0.0 % | 8.5 % | 0 | 174 |
+| H10: readiness + challenge point + no-easier | 0.88 PASS | 419 | 12.4 % | 0.72 | 0.0 % | 6.0 % | 0 | 173.5 |
+
+Weekly means (H10 planner | v13 planner): θ, rank (−1 = none), cap, content edge, entered top, offered tier, offered cold tempo, offered difficulty
+| week | θ | rank | cap | edge | entered top | offered tier | tempo | difficulty | v13: rank | v13: offered tier | v13: tempo | v13: difficulty |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0.54 | -1.00 | 3.0 | 1.02 | 2.00 | 1.67 | 0.71 | -0.24 | -1.00 | 1.67 | 0.71 | -0.23 |
+| 2 | 1.01 | -1.00 | 3.0 | 1.71 | 2.18 | 1.81 | 0.80 | 0.46 | -0.97 | 1.72 | 0.78 | 0.26 |
+| 4 | 1.47 | -0.77 | 3.0 | 2.01 | 2.59 | 2.20 | 0.81 | 0.98 | -0.83 | 1.90 | 0.84 | 0.85 |
+| 6 | 1.94 | 0.17 | 3.2 | 2.46 | 2.96 | 2.64 | 0.79 | 1.25 | 0.03 | 2.22 | 0.84 | 1.22 |
+| 8 | 2.40 | 1.53 | 3.7 | 2.93 | 3.38 | 3.05 | 0.82 | 1.88 | 1.02 | 2.65 | 0.82 | 1.47 |
+| 10 | 2.86 | 2.15 | 4.2 | 3.30 | 3.88 | 3.63 | 0.80 | 2.34 | 1.97 | 3.06 | 0.84 | 2.05 |
+| 12 | 3.32 | 2.67 | 4.7 | 3.82 | 4.38 | 3.95 | 0.81 | 2.69 | 2.47 | 3.40 | 0.84 | 2.37 |
+| 14 | 3.77 | 3.37 | 5.4 | 4.08 | 4.85 | 4.24 | 0.83 | 3.11 | 3.05 | 3.81 | 0.83 | 2.72 |
+| 16 | 4.24 | 3.85 | 5.8 | 4.53 | 5.19 | 4.58 | 0.84 | 3.54 | 3.67 | 4.26 | 0.84 | 3.22 |
+| 18 | 4.69 | 4.18 | 6.0 | 4.95 | 5.68 | 4.99 | 0.84 | 3.92 | 4.20 | 4.72 | 0.84 | 3.71 |
+| 20 | 5.15 | 4.60 | 6.0 | 5.30 | 5.97 | 5.19 | 0.84 | 4.17 | 4.67 | 5.12 | 0.83 | 4.06 |
+| 22 | 5.61 | 5.12 | 6.0 | 5.86 | 6.00 | 5.34 | 0.86 | 4.46 | 5.07 | 5.55 | 0.84 | 4.54 |
+| 24 | 6.04 | 5.43 | 6.0 | 5.99 | 6.00 | 5.55 | 0.89 | 4.87 | 5.24 | 5.84 | 0.86 | 4.94 |
+| 26 | 6.43 | 5.45 | 6.0 | 6.00 | 6.00 | 5.92 | 0.91 | 5.35 | 5.50 | 5.96 | 0.91 | 5.43 |
+| 28 | 6.79 | 5.50 | 6.0 | 6.00 | 6.00 | 6.00 | 0.92 | 5.52 | 5.67 | 6.00 | 0.92 | 5.50 |
+| 30 | 7.26 | 5.33 | 6.0 | 6.00 | 6.00 | 6.00 | 0.86 | 5.12 | 5.00 | 6.00 | 0.84 | 4.98 |
+
+## 5. Minor notes
+- §1.7 step 4 "available keys" = union: T1 holds two 1-key exercises (C and F); rank 0, entry ceiling T1; passes: the C exercise at T1 and a T2 exercise (a manual pass above the ceiling), both in C → rank 0 with the union rule (2 keys available, 1 covered); 1 with the earlier max rule (max 1 key → 1 needed). The union is now the default.
+- N1 in a fixed-tempo (harmony-like) area through the simulator, working cells only (v13 harness): correctly placed corrected 0.0 % PASS; +2 corrected 84.7 % (median first drop day 30).
+- N1 in a fixed-tempo (harmony-like) area through the simulator, ALL cells at placedTier (spec): correctly placed corrected 0.0 % PASS; +2 corrected 79.7 % (median first drop day 28).
+- (sanity) a 2-tier catalogue with rank guard: rank from no checks → null (the guard needs >= 6 checks).
+
+(1144 s)
