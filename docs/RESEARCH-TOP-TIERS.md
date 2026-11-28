@@ -581,3 +581,6 @@ T7 stays the default in this plan. If the owner opens voice T8, these changes ma
 - Q9: yes. Guitar beginners start on pentatonics, blues shells and picking, as the syllabi do.
 - Q10: yes. The diploma tempo for guitar and bass is grade 8 x 1.2, labelled an estimate.
 - Q11: yes. Voice tops out at T7 for now; voice T8 goes to the backlog.
+
+## Owner decision, round 3 (2026-11-28)
+- Q12: keep voice capped at T7 for now. Appendix A stays as the ready plan for opening voice T8 once there is enough content.
