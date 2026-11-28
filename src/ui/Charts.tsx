@@ -690,7 +690,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
         ))}
       </div>
       <div className="ch-ctrls">
-        <span className="ch-step">
+        <span className="ch-step" dir="ltr">
           <small>{tx.tempo}</small>
           <button className="icon-btn" onClick={() => setBpm((b) => Math.max(40, b - 4))} aria-label="−">
             <Icon k="minus" />

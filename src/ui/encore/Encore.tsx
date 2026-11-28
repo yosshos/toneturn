@@ -905,11 +905,11 @@ function PlanView({ lang, head, l, items, onSave }: { lang: Lang; head: Head; l:
   return (
     <main className="panel-screen enc-screen" data-encore="plan" data-phrase={l.id}>
       {head(he ? 'תוכנית אימון' : 'Practice plan', <Bi text={T(l.name, lang)} />, () => nav(`phrase/${l.id}`))}
-      <div className="enc-card row enc-target">
+      <div className="enc-card row enc-target" dir="ltr">
         <button className="icon-btn" onClick={() => step(-1)} aria-label={he ? 'פחות' : 'Slower'} disabled={plan.locked?.includes('goalBpm')} data-goal-minus="1">
           <Icon k="minus" />
         </button>
-        <div className="grow enc-center">
+        <div className="grow enc-center" dir={he ? 'rtl' : 'ltr'}>
           <div className="enc-big" data-goal={plan.goalBpm}>
             <Tempo bpm={plan.goalBpm} eighth={l.meter === 6} />
           </div>

@@ -73,7 +73,9 @@ for (const sz of process.env.ALL ? SIZES.slice(0, 1) : SIZES)
             const rc = e.getBoundingClientRect();
             if (rc.right > vw + 1 || rc.left < -1) {
               const pr = e.parentElement?.getBoundingClientRect();
-              if (!(pr && (pr.right > vw + 1 || pr.left < -1))) out.overflow.push(sel(e));
+              // a chip scrolled out of sight inside a horizontal scroller (inside the viewport) is not page overflow
+              const sc = e.parentElement && ['auto', 'scroll'].includes(getComputedStyle(e.parentElement).overflowX);
+              if (!(pr && (pr.right > vw + 1 || pr.left < -1)) && !sc) out.overflow.push(sel(e));
             }
             // leaf-ish text nodes
             const own = [...e.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();

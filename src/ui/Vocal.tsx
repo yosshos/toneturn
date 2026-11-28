@@ -537,20 +537,29 @@ export function VocalScreen({ t, settings, progress, onSettings, onProgress, onB
         </fieldset>
       </section>
 
-      <button className="tool-card warmup-card" onClick={() => setView({ kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) })}>
-        <b>{t.vocalWarmup}</b>
-        <small>{t.vocalWarmupHint}</small>
+      <button className="warmup-card vtool" onClick={() => setView({ kind: 'session', level: 'warmup', items: warmupItems(v.passed).filter((it) => itemFits(it, range)) })}>
+        <Glyph kind="breath" color={DOMAIN_COLOR.voice} size={38} />
+        <span className="vfam-text">
+          <b>{t.vocalWarmup}</b>
+          <small>{t.vocalWarmupHint}</small>
+        </span>
       </button>
       {onSingAlong && (
-        <button className="tool-card warmup-card" onClick={onSingAlong}>
-          <b>{t.singAlongTitle}</b>
-          <small>{t.singAlongHint}</small>
+        <button className="warmup-card vtool" onClick={onSingAlong}>
+          <Glyph kind="mic" color={DOMAIN_COLOR.voice} size={38} />
+          <span className="vfam-text">
+            <b>{t.singAlongTitle}</b>
+            <small>{t.singAlongHint}</small>
+          </span>
         </button>
       )}
 
-      <button className="tool-card warmup-card" data-voice-probe="1" onClick={() => setView({ kind: 'test' })}>
-        <b>{VT.probe[settings.uiLang === 'en' ? 'en' : 'he']}</b>
-        <small>{VT.probeHint[settings.uiLang === 'en' ? 'en' : 'he']}</small>
+      <button className="warmup-card vtool" data-voice-probe="1" onClick={() => setView({ kind: 'test' })}>
+        <Glyph kind="target" color={DOMAIN_COLOR.voice} size={38} />
+        <span className="vfam-text">
+          <b>{VT.probe[settings.uiLang === 'en' ? 'en' : 'he']}</b>
+          <small>{VT.probeHint[settings.uiLang === 'en' ? 'en' : 'he']}</small>
+        </span>
       </button>
       <VoiceFamilies t={t} settings={settings} passed={v.passed} best={v.best} open={openFam} onOpen={(id) => {
         setOpenFam(id);
