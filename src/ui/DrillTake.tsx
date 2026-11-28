@@ -20,7 +20,8 @@ import { pedalDown, type PedalEvent } from '../engine/drills/pedal';
 import { piano } from './services';
 import { callSound, REPLAY_SLOW } from '../engine/drills/phraseDrills';
 import { midi } from '../speech/midi';
-import { useMidiDevices } from './KeysSound';
+import { InputSourceChip, MidiGuardLine, useInputDecision } from './InputSource';
+import { inputSource, inputState, watchMidiLoss } from '../speech/inputSource';
 import { BrowserPitchCapture } from '../speech/pitchCapture';
 import { listenLoop } from './Flight';
 import { InputCheck, InputWatchdog } from './InputCheck';
@@ -897,7 +898,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   }, [phase]);
   // Drums (0.65): an e-kit by MIDI, or a practice pad by microphone (single-surface items only — never self-report).
   const drum = isDrumDrill(drill);
-  const drumMidi = drum && midi.devices.length > 0 && !kit?.mic;
+  // SPEC-INPUT-SOURCE: the one input decision (speech/inputSource.ts), live — a keyboard plugged in or out re-renders
+  const input = useInputDecision(drill, { kitMic: !!kit?.mic });
+  const drumMidi = drum && input.src === 'midi';
   // An acoustic kit by microphone (calibrated): the basic groove levels, drums told apart by their sound (drumAcoustic).
   const acKit = drum && !drumMidi && kitKind(kit) === 'acoustic';
   const acoustic = acKit && !drill.drum?.mic && acousticOk(drill);
@@ -908,16 +911,17 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
   // GUITAR-AUDIT B7: a guitar item with MIDI connected listens to MIDI unless the player chose the microphone — and says
   // which one it listens to (a keyboard left plugged in must not silently turn the guitar's mic checks off).
   const guitarItem = isGuitarDrill(drill);
-  const [gIn, setGIn] = useState(guitarInputPref);
-  const useMidi = drum ? drumMidi : midi.devices.length > 0 && !(guitarItem && gIn === 'mic');
-  // Owner 2026-11-28: a keyboard that was used before and is not seen now must not silently turn the take into a
-  // microphone take (the D major session was graded by mic, 8 of 29 notes heard). Stop the flowing run and say so.
-  const midiNow = useMidiDevices(true);
+  const [, setGIn] = useState(guitarInputPref);
+  const useMidi = input.src === 'midi';
+  // R3 (owner 2026-11-28: the D major session was graded by mic, 8 of 29 notes heard): a device that has had a keyboard
+  // expects one — with none detected a keys take does not start (a flowing run stops) and the line says so, until the
+  // player reconnects or takes the microphone for this session. R4: a keyboard lost mid-take ends the take uncounted.
+  const [lostMidi, setLostMidi] = useState(false);
+  const [, setMicPick] = useState(0);
   useEffect(() => {
-    if (midiNow.length) markMidiSeen();
-  }, [midiNow.length]);
-  const [micOk, setMicOk] = useState(micChosenThisRun);
-  const midiMissing = !drum && !guitarItem && !drill.sung && midiNow.length === 0 && midiSeenBefore() && !micOk;
+    if (useMidi) setLostMidi(false);
+  }, [useMidi]);
+  const midiMissing = input.blocked || (lostMidi && !useMidi && !inputState().sessionMic);
   // PIANO_AUDIT A2: a piano drill whose goal is loudness, release or the pedal needs MIDI (the mic would pass it on notes alone).
   const pianoBlocked = !drum && !isGuitarDrill(drill) && !useMidi && micUnmeasurable(drill).length > 0;
   // Input check (owner 2026-11-15): the strip above Play shows the signal arriving; the watchdog speaks up mid-take.
@@ -1047,7 +1051,8 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       // graded, stored or counted; the player is told and plays again.
       if (silentTake(drill, played)) return setSilent(true);
       setSilent(false);
-      onDone(withHarmony(withProg(m, drill, bpm, played), drill, bpm, played, harmonyFrames), played);
+      // R5 / R6: the input is part of the record; a microphone take where MIDI is expected is not comparable
+      onDone(withSource(withHarmony(withProg(m, drill, bpm, played), drill, bpm, played, harmonyFrames), input.src, input.notComparable), played);
     };
     const inBand = (ms: number) => (drill.listen?.windows ?? []).some(([a, b]) => ms >= bms(a) - 40 && ms < bms(b) + 120);
     let zero = 0;
@@ -1059,7 +1064,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const softPedal: PedalEvent[] = [];
     let pedalWas = false;
     let softWas = false;
-    const offCC = midi.devices.length && !drum
+    const offCC = useMidi && !drum
       ? midi.onCC((cc, value, at) => {
           if (cc === 67 && zero) {
             const sd = value >= 64;
@@ -1111,9 +1116,18 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const earlyOk = !drum && !guitarItem && !drill.listen && !drill.goal.pedal && !backing.length && drill.notes.length > 0;
     const tlAbort = new AbortController();
     abort.signal.addEventListener('abort', () => tlAbort.abort(), { once: true });
+    // R4: the keyboard in use disconnects mid-take — a technical failure: not graded, stored, counted or uploaded
+    let lost = false;
+    const offLost = useMidi && input.device
+      ? watchMidiLoss(midi, input.device, () => {
+          lost = true;
+          tlAbort.abort();
+        })
+      : null;
     let earlyT: number | null = null;
     const offMidi = midi.onNote((m, on, at, vel, ch = 0) => {
-      if (!zero) return;
+      // a microphone take (mic only, or a guitar on its mic) never mixes in a connected keyboard's notes
+      if (!zero || (!useMidi && !drum)) return;
       const t = at - zero - cal.latencyMs;
       if (on) {
         const n: ChannelNote = { pitch: m, on: t, off: null, vel, ch };
@@ -1148,7 +1162,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const guitar = isGuitarDrill(drill);
     const frames: GFrame[] = [];
     // Piano chords by microphone (0.49): frames with chroma, judged against the expected chords (score-informed).
-    const pianoChords = !guitar && !drum && !midi.devices.length && drill.notes.some((n) => n.chordId !== undefined);
+    const pianoChords = !guitar && !drum && !useMidi && drill.notes.some((n) => n.chordId !== undefined);
     // A practice pad by microphone: energy onsets on the raw frames (no pitch).
     const drumMic = drum && !drumMidi;
     if ((guitar && !useMidi) || pianoChords || drumMic) {
@@ -1166,7 +1180,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
         // BASS_AUDIT A1: bass hears down to low E / low B (28 / 22 Hz, a 4096-sample window, the spectral centroid).
         { chroma: chords && !drum, ...(captureOptsFor(drill) ?? {}), ...(acoustic ? { bands: true } : {}) },
       );
-    } else if (!midi.devices.length && !drum) {
+    } else if (!useMidi && !drum) {
       micStop = new AbortController();
       const sungSet = drill.sung ? drill.notes.map((n) => n.pitch) : [];
       const sungTol = sungTolOf(drill);
@@ -1216,7 +1230,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               }
             : pianoChords
               ? null
-              : () => analyzeTake(drill, bpm, notes.slice(), cal, { mic: !midi.devices.length || !!drill.sung, voice: !!drill.sung });
+              : () => analyzeTake(drill, bpm, notes.slice(), cal, { mic: !useMidi || !!drill.sung, voice: !!drill.sung });
     const liveTimer = sofar
       ? window.setInterval(
           () => {
@@ -1315,6 +1329,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       setPocket(null);
       onLive?.(null);
       offMidi();
+      offLost?.();
       offBend?.();
       offCC?.();
       offHit?.();
@@ -1323,8 +1338,9 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       micStop?.abort();
       if (drumMidi) midi.setOptions(prevMode);
     }
-    if (abort.signal.aborted) {
+    if (abort.signal.aborted || lost) {
       setPhase('ready');
+      if (lost) setLostMidi(true);
       return;
     }
     setPhase('ready');
@@ -1365,7 +1381,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
       return done(gm, played);
     }
     // PIANO_AUDIT A2: the microphone is flagged so a loudness / release / pedal goal can't pass on notes alone.
-    const pianoMicTake = !midi.devices.length;
+    const pianoMicTake = !useMidi;
     // Pianist's ear (k-ear): notes inside the call's bars are the app's call (or noodling), never the answer.
     const answer = (ps: PlayedNote[]) => (drill.listen ? ps.filter((p) => !inBand(p.on)) : ps);
     if (pianoChords) {
@@ -1375,7 +1391,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
     const heardNotes = answer(notes);
     // Sung licks (the voice course): the voice's timing tolerance, always by microphone.
     // The pedal (B5 / G6) is graded inside the analysis now, per change, so its marks reach the staff.
-    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung, ...(midi.devices.length && !pianoMicTake ? { pedal, softPedal } : {}), ...(pianoMicTake && !drill.sung && frames.length ? { frames: frames.map((f) => ({ t: f.t, rms: f.rms })) } : {}) });
+    const m = analyzeTake(drill, bpm, heardNotes, cal, { mic: pianoMicTake || !!drill.sung, voice: !!drill.sung, ...(!pianoMicTake ? { pedal, softPedal } : {}), ...(pianoMicTake && !drill.sung && frames.length ? { frames: frames.map((f) => ({ t: f.t, rms: f.rms })) } : {}) });
     done(m, heardNotes);
   };
   startRef.current = start;
@@ -1482,7 +1498,7 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
             </p>
           )}
           {checkMode && <InputCheck mode={checkMode} lang={lang} alsoMidi={checkMode === 'mic' && !isGuitarDrill(drill)} />}
-          {guitarItem && midi.devices.length > 0 && (
+          {guitarItem && (useMidi || input.reason === 'guitar-mic') && (
             // B7: which input the guitar take listens to, and the other one a tap away (never a silent switch).
             <p className="field-hint guitar-input" data-guitar-input={useMidi ? 'midi' : 'mic'}>
               {(useMidi ? GT.inputMidi : GT.inputMic)[lang]}{' '}
@@ -1500,13 +1516,10 @@ export function DrillTake({ drill, bpm, lang, cal, onDone, onBeat, drumsOk, onDr
               </button>
             </p>
           )}
-          {midiMissing && (
-            <p className="field-hint midi-missing" role="alert" data-midi-missing="1">
-              {lang === 'he' ? 'המקלדת לא מזוהה. חבר אותה (ורענן אם צריך), או המשך במיקרופון.' : 'Your MIDI keyboard is not detected. Connect it (reload if needed), or continue with the microphone.'}{' '}
-              <button className="btn small ghost" onClick={() => { setMicChosenThisRun(); setMicOk(true); }} data-midi-missing-mic="1">
-                {lang === 'he' ? 'המשך במיקרופון' : 'Use the microphone'}
-              </button>
-            </p>
+          {midiMissing ? (
+            <MidiGuardLine lang={lang === 'he' ? 'he' : 'en'} expected={inputState().expected} lost={lostMidi} onMic={() => (setLostMidi(false), setMicPick((x) => x + 1))} />
+          ) : (
+            !guitarItem && !drum && !drill.sung && !useMidi && <InputSourceChip d={input} lang={lang === 'he' ? 'he' : 'en'} />
           )}
           <div className="take-start">
             {hear && <HearButton drill={drill} bpm={bpm} lang={lang === 'he' ? 'he' : 'en'} onBeat={onBeat} />}
@@ -1529,20 +1542,16 @@ export function silentTake(drill: Pick<Drill, 'notes'>, played: readonly unknown
   return drill.notes.length > 0 && played.length === 0;
 }
 
-const MIDI_SEEN = 'tt.midiSeen';
-let micChosen = false;
-function markMidiSeen() {
-  try { localStorage.setItem(MIDI_SEEN, '1'); } catch { /* storage off */ }
-}
-function midiSeenBefore(): boolean {
-  try { return localStorage.getItem(MIDI_SEEN) === '1'; } catch { return false; }
-}
-/** The player chose the microphone after the "keyboard not detected" line: until the page reloads. */
-function micChosenThisRun(): boolean {
-  return micChosen;
-}
-function setMicChosenThisRun() {
-  micChosen = true;
+/**
+ * SPEC-INPUT-SOURCE R5 / R6: the take's input on its metrics. A microphone take on a keys item that expects MIDI is not
+ * comparable (never a counting check, never calibration); when it also matched under 40 % of the notes it is shown as a
+ * failed take that says it was listened to by microphone.
+ */
+export function withSource(m: TakeMetrics, src: 'midi' | 'mic', notComparable: boolean): TakeMetrics {
+  const out: TakeMetrics = { ...m, src, ...(notComparable ? { nc: true } : {}) };
+  if (notComparable && m.accuracy < 0.4)
+    return { ...out, verdict: 'not', why: { en: `Listened by microphone: ${Math.round(m.accuracy * 100)}% of the notes heard.`, he: `נשמע במיקרופון: ${Math.round(m.accuracy * 100)}% מהתווים נקלטו.` } };
+  return out;
 }
 
 /** The analysis shown after a take. */
@@ -1691,7 +1700,7 @@ function UntimedTake({ drill, lang, cal, onDone }: { drill: Drill; lang: Lang; c
     let buf: { t: number; hz: number | null; conf: number }[] = [];
     let held: number | null = null;
     const win = onsetOptsFor(drill);
-    if (!midi.devices.length)
+    if (inputSource(drill).src !== 'midi')
       void listenLoop(
         new BrowserPitchCapture(),
         abort.signal,

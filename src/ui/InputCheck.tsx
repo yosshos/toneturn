@@ -37,7 +37,7 @@ const TX = {
     test: 'Test the mic',
     hit: 'Hit',
     noDevice: 'No MIDI device',
-    keysLabel: 'Keys:',
+    keysLabel: 'MIDI:', // SPEC-INPUT-SOURCE R2: the strip names the source
     padsLabel: 'Pads:',
     mic: 'Microphone',
     hints: {
@@ -62,7 +62,7 @@ const TX = {
     test: 'לבדוק מיקרופון',
     hit: 'מכה',
     noDevice: 'אין התקן MIDI',
-    keysLabel: 'מקלדת:',
+    keysLabel: 'MIDI:',
     padsLabel: 'פדים:',
     mic: 'מיקרופון',
     hints: {

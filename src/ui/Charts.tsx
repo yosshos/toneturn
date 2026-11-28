@@ -18,6 +18,7 @@ import type { SungFrame } from '../engine/sing';
 import { useHeadphones } from './Perform';
 import { segmentNotes } from '../engine/memory';
 import { midi } from '../speech/midi';
+import { keysByMidi } from '../speech/inputSource';
 import { MODE_NAMES, type ModeId } from '../engine/modes';
 import { BAR_SCALES, RULE_NAME, autoScale, challengeOf, checkRules, type PlayedNote, type RuleSet, type RulesReport } from '../engine/improvRules';
 import { LeadSheetImport, RulesPanel } from './ImprovRules';
@@ -410,7 +411,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
     }, 40);
     let frames: SungFrame[] = [];
     const midiNotes: PlayedNote[] = [];
-    const useMidi = midi.devices.length > 0;
+    const useMidi = keysByMidi(); // SPEC-INPUT-SOURCE: the one input decision
     let takeAudio: Blob | null = null; // My recordings: the take's own sound (mic)
     if (SIMULATED) {
       await new Promise((r) => setTimeout(r, 300));
@@ -510,7 +511,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
   };
   const goComp = async () => {
     stop();
-    if (!parsed.chords.length || !midi.devices.length) return;
+    if (!parsed.chords.length || !keysByMidi()) return;
     const c = new AbortController();
     ctl.current = c;
     await piano.unlock();
@@ -764,7 +765,7 @@ function ChartPlayer({ lang, chart, saved, onSave, onDelete, onBack, onImprov, o
           <button className="btn ghost" onClick={() => void goImprov()} disabled={!parsed.chords.length} data-chart-improv="1" title={ix.hint}>
             <Icon k="mic" /> {ix.go}
           </button>
-          {midi.devices.length > 0 && (
+          {keysByMidi() && (
             <button className="btn ghost" onClick={() => void goComp()} disabled={!parsed.chords.length} data-chart-comp-go="1" title={lang === 'he' ? 'הלהקה מנגנת סבב אחד בלי דף האקורדים, ואז אתם מלווים' : 'The band plays a chorus with the chords hidden, then you comp'}>
               <Icon k="pads" /> {lang === 'he' ? 'ליווי מהשמיעה' : 'Comp by ear'}
             </button>

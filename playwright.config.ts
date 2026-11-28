@@ -12,6 +12,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5174',
     trace: 'retain-on-failure',
+    // SPEC-INPUT-SOURCE R1: the app enables MIDI by itself only where the browser already granted it (a returning player).
+    permissions: ['midi'],
     launchOptions: { args: ['--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'] },
   },
   projects: [

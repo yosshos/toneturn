@@ -123,7 +123,7 @@ import { DrumWrite } from './DrumWrite';
 import { withDrumWrite } from '../engine/drills/drumEar';
 import { withWritten } from '../engine/drills/bassEar';
 import { midi } from '../speech/midi';
-import { guitarInputPref } from '../speech/guitarInput';
+import { inputSource, midiOnPatch, type ItemInput } from '../speech/inputSource';
 import { keepPhrase } from '../engine/encore/takeSource';
 import { inputLatency } from '../engine/latency';
 import { LatencyCalibrate } from './LatencyCalibrate';
@@ -230,7 +230,9 @@ const tempoFacts = (d: Drill, st0: ItemState, m: TakeMetrics): Omit<TakeFacts, '
 export const DEFAULT_CAL: DrillCalibration = { latencyMs: 0, velMin: 20, velMax: 120 };
 /** The drill calibration with the input's calibrated delay (MIDI when a keyboard is connected, else the microphone). */
 // B7: in the guitar / bass course with the microphone chosen over a connected MIDI device, the mic's latency applies.
-const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, midi.devices.length && !((s.activeCourse === 'guitar' || s.activeCourse === 'bass') && guitarInputPref() === 'mic') ? 'midi' : 'mic') });
+const calOf = (s: Settings): DrillCalibration => ({ ...DEFAULT_CAL, ...(s.drillCal ?? {}), latencyMs: inputLatency(s, inputSource(s.activeCourse === 'guitar' || s.activeCourse === 'bass' ? 'guitar' : 'keys').src) });
+/** SPEC-INPUT-SOURCE: an instrument's input kind for the one input decision. */
+const inputKindOf = (inst: string | undefined): ItemInput => (inst === 'guitar' || inst === 'bass' ? 'guitar' : inst === 'drums' ? 'drums' : 'keys');
 /** Family stripe colours: domain tokens only (COURSE-FEEDBACK-UI §3.3) — play lemon, harmony lilac, ear sky, theory tangerine, time pink, improvisation purple. */
 const FAM_HUE: Partial<Record<FamilyId, string>> = { scales: 'var(--hue-instrument)', arpeggios: 'var(--hue-instrument)', fingers: 'var(--hue-instrument)', control: 'var(--hue-instrument)', advanced: 'var(--hue-instrument)', voicings: 'var(--hue-instrument)', 'k-keys': 'var(--hue-instrument)', 'k-indep': 'var(--hue-instrument)', 'k-lh': 'var(--hue-instrument)', 'k-tex': 'var(--hue-instrument)', custom: 'var(--hue-instrument)', cadences: 'var(--lilac)', harris: 'var(--lilac)', jazz: 'var(--lilac)', 'k-sixdim': 'var(--lilac)', 'k-dimcol': 'var(--lilac)', 'k-bebop': 'var(--lilac)', 'k-reharm': 'var(--lilac)', 'k-vocab': 'var(--lilac)', 'k-harrisline': 'var(--lilac)', 'k-ctone': 'var(--lilac)', 'k-mediant': 'var(--lilac)', 'k-organ': 'var(--lilac)', 'k-vl': 'var(--lilac)', 'k-harm': 'var(--lilac)', 'k-tune': 'var(--lilac)', 'k-sharm': 'var(--lilac)', 'k-ctx': 'var(--lilac)', 'k-gig': 'var(--lilac)', 'k-ear': 'var(--hue-pitch)', 'k-phrase': 'var(--hue-pitch)', 'k-theory': 'var(--tangerine)', 'k-comp': 'var(--hue-time)', accomp: 'var(--hue-time)', 'k-solo': 'var(--purple)', 'k-impro': 'var(--purple)' , 'k-tpair': 'var(--tangerine)', 'g-tpair': 'var(--tangerine)', 'b-tpair': 'var(--tangerine)'};
 const HANDS_TX: Record<Lang, Record<string, string>> = { en: { R: 'RH', L: 'LH', RL: 'HT' }, he: { R: 'ימין', L: 'שמאל', RL: 'ביחד' } };
@@ -674,7 +676,7 @@ export function Drills({ lang, settings, onSettings, items, onTake, onBack, queu
           lang={lang}
           kit={settings.drumKit}
           latency={settings}
-          onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : { midiInput: true }) })}
+          onSave={(k) => onSettings({ drumKit: k, ...(k.mic ? {} : midiOnPatch()) })}
           onLatency={(p) => onSettings(p)}
           onDone={() => setView({ k: 'hub' })}
           onTest={() => setView({ k: 'test' })}
@@ -1131,7 +1133,7 @@ function Hub({ lang, ds, settings, items, head, channelStrip, onFamily, onFamily
         )}
       </div>
       )}
-      {!midi.devices.length && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
+      {inputSource('keys').src !== 'midi' && (ds.instrument ?? 'piano') === 'piano' && <p className="field-hint">{tx.noMidi}</p>}
       {!drums && onPView && <ViewSwitch view={pView ?? 'topic'} onView={onPView} lang={lang} />}
       {!drums && pView === 'key' && keyGrid ? (
         keyGrid(<div className="drill-families">{fams.filter((f) => GENERAL_FAMILY(f.id)).map(famCard)}</div>)
@@ -1482,12 +1484,12 @@ function LevelRefs({ level, lang }: { level: LevelDef; lang: Lang }) {
 }
 
 /** Chords heard by a microphone can't be followed note by note: those items keep the timed take. */
-const micChordsOf = (d: Drill): boolean => !midi.devices.length && d.notes.some((n, k) => d.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
+const micChordsOf = (d: Drill): boolean => inputSource(d).src !== 'midi' && d.notes.some((n, k) => d.notes.some((o, j) => j !== k && Math.abs(o.beat - n.beat) < 1e-4));
 /** No free-time step for this item: mic chords, a goal the microphone can't measure (loudness, pedal — it waits for a MIDI
  *  keyboard in the timed take), a checkpoint at target tempo, or automated runs (e2e) without ?rubato in the address. */
 /** Automated runs (e2e) look at the review at length: hands-free there only with ?handsfree in the address. */
 const HF_OFF = typeof navigator !== 'undefined' && navigator.webdriver && !new URLSearchParams(typeof location !== 'undefined' ? location.search : '').has('handsfree');
-const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (!midi.devices.length && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
+const noRubatoFor = (d: Drill, atTarget?: boolean): boolean => micChordsOf(d) || (inputSource(d).src !== 'midi' && micUnmeasurable(d).length > 0) || RUBATO_OFF || !!atTarget;
 
 /**
  * Owner 2026-11-27: "I didn't know when it would end" — a coach session shows, all the time, how much of it is left and
@@ -1746,7 +1748,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
   const done = (m: TakeMetrics, _played: PlayedNote[]) => {
     lastPlayed.current = _played;
     // MEASUREMENT-AUDIT B7: a real piano MIDI take refines the velocity range (only ever wider, a quarter step).
-    if (onCalRefine && midi.devices.length && !isDrumDrill(drill) && drill.spec.instrument !== 'guitar' && drill.spec.instrument !== 'bass' && !drill.sung) {
+    if (onCalRefine && (m.src ?? inputSource(drill).src) === 'midi' && !isDrumDrill(drill) && drill.spec.instrument !== 'guitar' && drill.spec.instrument !== 'bass' && !drill.sung) {
       const r = refineCal(cal, _played.map((p) => p.vel));
       if (r) onCalRefine(r);
     }
@@ -1759,7 +1761,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
       ? cTake.challenge ? 'challenge' : cTake.probe ? 'probe' : (ksNow?.warmLeft ?? 0) > 0 ? (ksNow?.review ? 'review' : 'retention') : cTake.kind === 'warmup' ? 'retention' : cTake.kind === 'review' ? 'review' : 'normal'
       : bpm < (stateOf(drill).goalBpm ?? 0) * 0.99 ? 'slow' : 'normal';
     // drums and voice never (their notes are not a pitched line); the input as it really was
-    const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: midi.devices.length && (pianoTouch(drill) || guitarInputPref() !== 'mic') ? 'midi' : 'mic', kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId) });
+    const trace = isDrumDrill(drill) || drill.sung ? null : takeTrace(drill, m, { at: new Date().toISOString(), src: m.src ?? inputSource(drill).src, ...(m.nc ? { nc: true } : {}), kind, piano: pianoTouch(drill), ownFingering: isOwn(own, drill.itemId) });
     if (trace) {
       // a calibration account sends it to the server too (a no-op for every other account)
       void recordTrace(trace).then(() => syncCalibTraces());
@@ -2386,7 +2388,7 @@ function DrillRun({ lang, ds, cal, queue, start, items, onTake, onEnd, headphone
             lastTake={prior ? { on: ghost, onToggle: () => setGhost((g) => !g) } : undefined}
             share={atTargetTempo(res, drill) ? <LickShareButton compact lang={lang} info={{ what: 'exercise', title: drill.title[lang].split(' · ')[0], key: keyName(drill.spec.key, false).replace('b', '♭').replace('#', '♯'), bpm: Math.round(res.m.bpm || bpm), drill }} /> : undefined}
             fingering={onOwn && pianoFingered ? <OwnFingeringLink lang={lang} drill={drill} own={own} onChange={onOwn} /> : undefined}
-            onKeep={lastPlayed.current.length >= 3 && !isDrumDrill(drill) ? () => keepPhrase({ kind: 'drill', instrument: drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano', title: drill.title, source: midi.devices.length ? 'midi' : 'mic', notes: lastPlayed.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart?.length ? { chart: drill.chart.join(' | ') } : {}) }, loopSel ? { from: loopSel[0] * drill.meter, to: (loopSel[1] + 1) * drill.meter } : null) : undefined}
+            onKeep={lastPlayed.current.length >= 3 && !isDrumDrill(drill) ? () => keepPhrase({ kind: 'drill', instrument: drill.spec.instrument === 'guitar' || drill.spec.instrument === 'bass' ? drill.spec.instrument : 'piano', title: drill.title, source: res.m.src ?? inputSource(drill).src, notes: lastPlayed.current.map((p) => ({ pitch: p.pitch, on: p.on, off: p.off, vel: p.vel })), bpm: res.m.bpm || bpm, t0: 0, meter: drill.meter, graded: true, itemId: drill.itemId, ...(drill.chart?.length ? { chart: drill.chart.join(' | ') } : {}) }, loopSel ? { from: loopSel[0] * drill.meter, to: (loopSel[1] + 1) * drill.meter } : null) : undefined}
             onFree={hasRubato(drill) && !noRubato && res.m.accuracy < BACK_TO_RUBATO ? () => (setRes(null), setOneFree(true), setAgain(false), setTake((t) => t + 1)) : undefined}
           >
           {/* AUDIT-DEPTH-3 C5 + slice 8: the rule cards of an improvised take, one compact line. With the chart on screen:
@@ -2695,7 +2697,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
   // Only steps this player's setup shows (guitar add-ons, the bass track and tuning, a practice pad or acoustic kit),
   // and on piano without MIDI only what a microphone can measure (loudness, release, pedal can never pass by mic).
   const strands = useMemo(() => {
-    const byMic = !midi.devices.length;
+    const byMic = inputSource(inputKindOf(inst)).src !== 'midi';
     const drumMic = inst === 'drums' ? drumMicOf(kit) : undefined;
     const shown = new Set(shownFamilies({ ...ds, bassTuning, drumMic }).flatMap((f) => f.levels.map((l) => l.id)));
     // and every piano level the course path teaches (the jazz pianist's core scales and arpeggios, R8)
@@ -2758,7 +2760,7 @@ function SectionLevelTest({ lang, ds, cal, items, onTake, onDone, midiOctave, on
     placed.current.push({ strand: strand.id, places: strandPlaces(strand, s) });
     const k = si + 1;
     if (k >= strands.length) {
-      const fin = finishPlaces(placed.current, !midi.devices.length && inst === 'piano');
+      const fin = finishPlaces(placed.current, inputSource('keys').src !== 'midi' && inst === 'piano');
       setInferred(fin.inferred);
       const places = testStart(inst, fin.places);
       const list = channelChecks(places);

@@ -109,7 +109,8 @@ import { STRINGS } from '../i18n/strings';
 import { baseOf, isTranslated, localeInfo, LOCALES } from '../i18n/locales';
 import { useLocale } from '../i18n/boot';
 import { bassTuningOf, dueReviews, gemsOf, lessonMastered, localDay, momentumOf, namingFor, ratingsOf, weeklyBonuses, withWeekGains, type Progress, type Settings, DEFAULT_SETTINGS, DEFAULT_SOUND, emptyProgress, mergeCloudSettings, withoutDeviceSettings } from '../storage/progress';
-import { activeMidiDevice, reconcileDevices, settingsDiff } from '../storage/deviceProfiles';
+import { activeMidiDevice, midiExpectedOf, migrateMidiExpectation, reconcileDevices, settingsDiff } from '../storage/deviceProfiles';
+import { enableMidiIfGranted, midiPrefOf, setInputPrefs } from '../speech/inputSource';
 import { freshStartIfNeeded, PROGRESS_EPOCH, remoteSettingsForEpoch } from '../storage/freshStart';
 import { cloudConfigured, currentUser, signInWithGoogle, onAuthChange, pullSettings, pushSettings, syncProgress, type CloudUser } from '../cloud/cloud';
 import { drillSync } from '../cloud/drillSync';
@@ -264,7 +265,7 @@ import { CourseGoalLine, CourseSetup, CourseStartHero, CourseWelcome, FirstWeekC
 import { isYoung } from '../engine/privacy';
 import { overallRating } from '../engine/rating';
 import { APP_VERSION, unseenChanges } from '../version';
-import { params, piano, setMidiEnabled, SIMULATED, store, tts } from './services';
+import { params, piano, SIMULATED, store, tts } from './services';
 import { midi } from '../speech/midi';
 import { RepertoireScreen } from './Repertoire';
 import { engineArg, engineHash, isEngineRoute, legacyPracticeHash, practiceRouteOf, repHash, type RepView, type WayIn } from './practiceRoutes';
@@ -468,11 +469,17 @@ export function App() {
   type Brief = { kicker: string; title: string; about: string; topic?: string; keepStep?: string; level?: number; pathStep?: string };
   const [slot, setSlot] = useState<{ key: string; title: string; seed?: number; resume?: SavedSession; brief?: Brief; briefSeen?: boolean } | null>(null);
   const [sync, setSync] = useState<SyncState>('idle');
-  // MIDI keyboard input (Settings): singing tasks capture from the keyboard.
+  // SPEC-INPUT-SOURCE R1: MIDI first, automatically — enabled at start-up whenever the browser already granted it (and
+  // when the grant appears later), whatever the preference says; the permission prompt itself only ever follows a tap.
   useEffect(() => {
-    setMidiEnabled(!!settings?.midiInput);
-    if (settings?.midiInput && midi.supported) void midi.enable().catch(() => {});
-  }, [settings?.midiInput]);
+    let stop: (() => void) | null = null;
+    let alive = true;
+    void enableMidiIfGranted().then((f) => (alive ? (stop = f) : f()));
+    return () => {
+      alive = false;
+      stop?.();
+    };
+  }, []);
   // Class assignments for the Home card (signed in only).
   const [assigned, setAssigned] = useState<ReturnType<typeof openAssignments>>([]);
   /** SPEC-CLASS-NOTIFICATIONS §4.5: assignments with something new (a new assignment or a teacher reply). */
@@ -742,7 +749,15 @@ export function App() {
   // ?lang=he|en|es|… forces the interface language (shared links, tests); a translated locale runs on English.
   const qLang = params.get('lang');
   const forced = LOCALES.find((l) => l.code === qLang)?.code ?? null;
-  const s0 = settings ?? DEFAULT_SETTINGS;
+  const s00 = settings ?? DEFAULT_SETTINGS;
+  // SPEC-INPUT-SOURCE: the device preference (auto / MIDI only / mic only) and the keyboards this device expects feed the
+  // one input decision (speech/inputSource.ts); every screen's `midiInput` is the LIVE answer (a keyboard in use now),
+  // never the old stored on/off label.
+  const midiPref = midiPrefOf(s00);
+  setInputPrefs({ pref: midiPref, expected: midiExpectedOf(s00), chosen: s00.midiDevice ?? null });
+  const midiLive = useMidiDevices(midiPref !== 'mic');
+  const midiInUse = midiPref !== 'mic' && (midiLive.length > 0 || !!s00.computerKeys);
+  const s0 = s00.midiInput === midiInUse ? s00 : { ...s00, midiInput: midiInUse };
   const s = forced ? { ...s0, uiLang: baseOf(forced), outputLang: baseOf(forced), locale: forced } : s0;
   const t = STRINGS[s.uiLang];
   const loc = localeInfo(s.locale ?? s.uiLang);
@@ -944,7 +959,9 @@ export function App() {
     (patch: Partial<Settings> | ((cur: Settings) => Partial<Settings>)) => {
       setSettings((prev) => {
         const base = prev ?? DEFAULT_SETTINGS;
-        const p = typeof patch === 'function' ? patch(base) : patch;
+        const p0 = typeof patch === 'function' ? patch(base) : patch;
+        // SPEC-INPUT-SOURCE: `midiInput` on the screens is the live state, never a choice — the choice is `midiPref`
+        const { midiInput: _live, ...p } = p0;
         // before the stored settings load, keep this change only (the load brings it back with everything else)
         const next = prev ? reconcileDevices({ ...base, ...p }, activeMidiRef.current) : { ...base, ...p };
         const diff = prev ? settingsDiff(prev, next) : p;
@@ -963,6 +980,25 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMidi, !!settings]);
   useWakeLock(s.keepAwake !== false);
+  // SPEC-INPUT-SOURCE §3.1: the old MIDI on/off and the global "a keyboard was seen" flag move into this device's
+  // settings once (the preference; the keyboards expected, by name).
+  useEffect(() => {
+    if (!settings) return;
+    let seen = false;
+    try {
+      seen = localStorage.getItem('tt.midiSeen') === '1';
+    } catch {
+      /* storage off */
+    }
+    const m = migrateMidiExpectation(settings, seen);
+    if (m) updateSettings(m);
+    try {
+      localStorage.removeItem('tt.midiSeen');
+    } catch {
+      /* storage off */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!settings]);
   // SPEC-STYLE-FOCUS §2 (owner 2026-11-22): nothing opens by climbing any more — jazz is open in every course from day
   // one. §6: the old settings (jazz focus, piano emphasis, guitar add-ons, bass track) become the style focus once;
   // they stay read-only for one version.
@@ -2831,7 +2867,7 @@ export function App() {
       seenPlacement.current = lastR.sessionId;
       updateSettings({ pathFacts: unfreezeIfEarly(settings.pathFacts) });
       // Keys players: the level test continues with its technique section (spec AI §13).
-      if (!lastR.lessonId.includes('domain') && (settings.midiInput || settings.instrument === 'keys' || settings.instrument === 'guitar' || settings.instrument === 'bass' || ((settings.intake as Intake | null | undefined)?.plays ?? []).includes('keys'))) techAfterPlacement.current = true;
+      if (!lastR.lessonId.includes('domain') && (s.midiInput || settings.instrument === 'keys' || settings.instrument === 'guitar' || settings.instrument === 'bass' || ((settings.intake as Intake | null | undefined)?.plays ?? []).includes('keys'))) techAfterPlacement.current = true;
     }
     const ps = pendingStep.current;
     const r = p.history[p.history.length - 1];

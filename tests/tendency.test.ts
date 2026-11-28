@@ -187,6 +187,7 @@ describe('sessionTendency (§2.3)', () => {
 
   it('review round 3: a ritardando over the last two beats (five eighths) is not a tendency', () => {
     let alarms = 0;
+    let hes = 0;
     for (let k = 0; k < 120; k++) {
       const d = scaleIn([0, 5, 9][k % 3]);
       const ts: TakeTrace[] = [];
@@ -206,9 +207,15 @@ describe('sessionTendency (§2.3)', () => {
         }
         ts.push(trace(m, d));
       }
-      if (sessionTendency(ts).top) alarms++;
+      const top = sessionTendency(ts).top;
+      // the calibrated top-note hesitation (thresholds from the owner's sessions at 8-12 ms random timing) is counted
+      // apart: the ritardando never touches the top note; at this player's 20 ms noise (twice the calibration's) it may
+      // fire by chance
+      if (top && top.cell.startsWith('hes')) hes++;
+      else if (top) alarms++;
     }
     expect(alarms / 120).toBeLessThan(0.05);
+    expect(hes).toBeLessThanOrEqual(2);
   });
 
   it('review round 3: rushing on the way down is never named a late top note', () => {

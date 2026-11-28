@@ -208,7 +208,7 @@ test('a MIDI take of the Minuet (bars 1–8) with the grace note played: clean, 
   });
   await seed(page, 'en');
   await page.goto('/?unlock=all#/settings/midi');
-  await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'On' }).click();
+  await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'Auto' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
   await open(page, 'en', 'k-classic', 'k-classic-2', '&rubato=1');
   await expect(page.locator('[data-rubato-stage="free"]')).toBeVisible();

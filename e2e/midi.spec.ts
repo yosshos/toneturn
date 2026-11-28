@@ -16,7 +16,7 @@ test('MIDI keyboard (stub device): enable in Settings, answer a degree question 
     });
   });
   await page.goto('/?unlock=all#/settings/midi');
-  await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'On' }).click();
+  await page.getByRole('radiogroup', { name: 'MIDI keyboard' }).getByRole('radio', { name: 'Auto' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Connected: Test Keys' })).toBeVisible();
   // The key test in the MIDI category shows the note and velocity.
   await page.evaluate(() => {

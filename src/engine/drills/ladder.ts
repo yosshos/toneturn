@@ -139,7 +139,8 @@ export function applyTake(state: ItemState, metrics: TakeMetrics, bpm: number, a
     } else s.history.push({ at, bpm: B, cv: cv ?? 0 });
     if (s.history.length > 200) s.history.splice(0, s.history.length - 200);
     // A4: only takes at the goal (or above, or already at the level's target), never after "Slower", count.
-    if ((atGoal || (target && bpm >= PASS_SHARE * target - 1e-9)) && !opts.slower) {
+    // SPEC-INPUT-SOURCE R5: a microphone take where MIDI is expected is not comparable — never a counting take.
+    if ((atGoal || (target && bpm >= PASS_SHARE * target - 1e-9)) && !opts.slower && !metrics.nc) {
       s.passLog!.push({ at, bpm: B });
       if (s.passLog!.length > 60) s.passLog!.splice(0, s.passLog!.length - 60);
     }

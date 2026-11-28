@@ -8,6 +8,11 @@
 // is "plain". Direction is measured on intervals. Swung items get neither (their off-beats sit on the player's ratio).
 // One compact record per take (TakeTrace, ~250 B) is kept in shadow mode (storage/takeTraces.ts); a session's records
 // are pooled for its end line (§4.3) only when a tendency is consistent across ≥ 10 takes (§2.3). Pure.
+// Calibrated rules (piano tendency P1, the owner's labelled sessions of 2026-11-27/28: C, E♭, D normal; G a deliberate
+// rush on the way down; B♭ a deliberate hesitation on the top note): the top-note hesitation flag (`topHesitation`) and
+// no rush flag from `dir` (it does not separate G from normal variation) — the descent's own IOI slope is recorded
+// instead (v2, `desc`), unflagged until enough normal sessions exist. Timing against the click is always relative to the
+// session (`sessionRelativeLead`): the lead moved by session (−4 to −47 ms), never by key.
 
 import type { Drill, NoteResult, TakeMetrics } from './types';
 import { afterCrossing } from './touch';
@@ -43,9 +48,18 @@ export interface HandTrace {
   /** Plain notes' mean residual by pitch class (ms; review round 7): a note that is consistently off has no name, and
    *  it would bias every class it sits next to — the pooling then names no class for that hand. */
   pc?: Record<number, number>;
+  /**
+   * v2 (calibration 2026-11-28): the descent's inter-onset intervals — [slope, IOIs] — the change of the interval per
+   * note along the descending runs (ms per note, in units of the trace's `ioi`; each run against its own mean, the turn
+   * note left out so a top-note hesitation never reads as a rush). Negative = the intervals shorten on the way down (a
+   * rush). Compared only relative to the session's own median `ioi` (`descentRelative`). Not flagged yet: the
+   * thresholds come once enough normal sessions have accumulated (the G session's deliberate rush is one sample).
+   */
+  desc?: [number, number];
 }
 export interface TakeTrace {
-  v: 1;
+  /** 1 = before the descent slope; 2 = with `desc` (2026-11-28). */
+  v: 1 | 2;
   id: string;
   fam: string;
   at: string;
@@ -54,6 +68,9 @@ export interface TakeTrace {
   bpm: number;
   ioi: number;
   src: 'midi' | 'mic';
+  /** SPEC-INPUT-SOURCE R5: a microphone take on a keys item that expects MIDI — kept on the device, never pooled, never
+   *  uploaded for calibration. */
+  nc?: boolean;
   /** Not a piano take (guitar / bass over MIDI or mic): recorded for calibration, never pooled (§2.5). */
   other?: boolean;
   kind: TakeKind;
@@ -114,7 +131,7 @@ const classedKind = (kind: string | undefined) => kind === 'scale' || /^arp-/.te
 export const isSwing = (drill: Drill): boolean => !!drill.spec.swing || drill.swingRatio !== undefined || !!drill.goal?.bass?.swing || drill.notes.some((n) => n.swing);
 
 /** One take's trace, or null when there is too little to say (fewer than 8 matched notes, free time, no timing). */
-export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean }): TakeTrace | null {
+export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'midi' | 'mic'; /** R5: not comparable (kept, never pooled or uploaded) */ nc?: boolean; kind: TakeKind; /** a piano take (guitar / bass are recorded, never pooled in P1) */ piano?: boolean; /** the player uses their own fingering on this item: the suggested crossings say nothing (owner 2026-11-17) */ ownFingering?: boolean }): TakeTrace | null {
   if (drill.untimed || o.kind === 'free') return null;
   const per = m.perNote ?? [];
   // the written single notes of each hand (no other written note of the same hand at the same beat), in score order:
@@ -140,7 +157,8 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
   if (!(msPerBeat > 20 && msPerBeat < 5000)) return null;
   const busy = P.R.length >= P.L.length ? P.R : P.L;
   const steps = busy.slice(1).map((p, i) => p.beat - busy[i].beat).filter((d) => d > 1e-4);
-  const ioi = r1((steps.length ? median(steps) : 0.5) * msPerBeat);
+  const stepBeats = steps.length ? median(steps) : 0.5;
+  const ioi = r1(stepBeats * msPerBeat);
   // the global baseline: the click (the mean lead)
   const lead = r1(mean(all.map((p) => p.dev)));
   const tonic = (((drill.tonic?.key ?? drill.spec.key) % 12) + 12) % 12; // fallback for an empty line
@@ -313,6 +331,34 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
       }
       if (ups.length && downs.length) out.dir = r1(((mean(downs) - mean(ups)) / msPerBeat) * 100);
     }
+    // v2: the descent's IOI slope (calibration 2026-11-28) — each descending run's intervals (ms per written step of the
+    // busiest hand, so in the trace's `ioi` units) against their place in the run, each run around its own mean; the turn
+    // note (the run's first) and the edges left out. Recorded only (see HandTrace.desc).
+    if (classed && !contrary) {
+      const xs: number[] = [];
+      const ys: number[] = [];
+      for (const r of runs) {
+        if (r.d >= 0) continue;
+        const js = r.idx.slice(1).filter((j) => cls[j] !== 'skip' && ok_[j]);
+        const pts: { k: number; ioi: number }[] = [];
+        for (let q = 1; q < js.length; q++) {
+          const a = js[q - 1];
+          const b = js[q];
+          const wb = beat(b) - beat(a);
+          if (wb <= 1e-4 || b - a !== 1) continue;
+          pts.push({ k: q, ioi: ((line[b].played!.on - line[a].played!.on) / wb) * stepBeats });
+        }
+        if (pts.length < 4) continue;
+        const mk = mean(pts.map((x) => x.k));
+        const mi = mean(pts.map((x) => x.ioi));
+        for (const x of pts) {
+          xs.push(x.k - mk);
+          ys.push(x.ioi - mi);
+        }
+      }
+      const sxx = xs.reduce((a, x) => a + x * x, 0);
+      if (xs.length >= 6 && sxx > 0) out.desc = [r1(xs.reduce((a, x, i) => a + x * ys[i], 0) / sxx), xs.length];
+    }
     // speeding up (§2.1): only between runs of the SAME direction (the first ascent against a later one)
     if (classed) {
       const ratiosOf = (r: { idx: number[] }) => {
@@ -358,13 +404,14 @@ export function takeTrace(drill: Drill, m: TakeMetrics, o: { at: string; src: 'm
   });
   if (ups.length >= 3 || downs.length >= 3) sync = { up: ups.length >= 3 ? r1(mean(ups)) : null, down: downs.length >= 3 ? r1(mean(downs)) : null };
   return {
-    v: 1,
+    v: 2,
     id: drill.itemId,
     fam: drill.spec.family,
     at: o.at,
     bpm: Math.round(60000 / msPerBeat),
     ioi,
     src: o.src,
+    ...(o.nc ? { nc: true } : {}),
     ...(o.piano === false ? { other: true } : {}),
     kind: o.kind,
     verdict: m.verdict,
@@ -431,8 +478,67 @@ function phrase(cell: string, m: number, both: boolean): T2 {
 /** The line when nothing is consistent over enough takes. */
 export const NOTHING: T2 = { en: 'Nothing consistent today: steady playing.', he: 'שום דבר עקבי היום: נגינה יציבה.' };
 
+/** The calibrated top-note hesitation (owner's labelled sessions 2026-11-27/28): per hand, per cell (the item in its
+ *  key), at least this many MIDI takes with a top-note measure, a mean delay above HES_MS, and a share of takes above
+ *  HES_MS beyond HES_SHARE. Only the B♭ hesitation session passes (R 31.9 ms / 76 %, L 26.5 ms / 56 %); the normal
+ *  sessions stay under it (D, the largest: R 14.8 ms / 17 %). */
+export const HES_MIN_TAKES = 8;
+export const HES_MS = 20;
+export const HES_SHARE = 0.55;
+/** The coach's line for it: what is heard, matter-of-fact (§4.3: the sound, never a finger). */
+export const HESITATION_LINE: T2 = { en: 'The top note waits a moment before the way down.', he: 'הצליל העליון מתעכב רגע לפני הירידה.' };
+
+/** Takes that may feed a calibrated threshold: wired MIDI, a piano take, comparable, straight (any verdict). */
+const calibratable = (t: TakeTrace) => t.src === 'midi' && !t.other && !t.nc && !t.swing && t.kind !== 'free';
+
+/** Per cell and hand: the takes with a top-note measure, their mean delay (ms) and the share above HES_MS. */
+export function topNoteStats(traces: TakeTrace[]): { cell: string; hand: 'R' | 'L'; takes: number; mean: number; share: number }[] {
+  const by = new Map<string, number[]>();
+  for (const t of traces) {
+    if (!calibratable(t)) continue;
+    for (const h of ['R', 'L'] as const) {
+      const x = t[h]?.cls.top?.[0];
+      if (x === undefined || !Number.isFinite(x)) continue;
+      const k = `${t.id}|${h}`;
+      (by.get(k) ?? by.set(k, []).get(k)!).push(x);
+    }
+  }
+  return [...by].map(([k, xs]) => {
+    const [cell, hand] = k.split('|') as [string, 'R' | 'L'];
+    return { cell, hand, takes: xs.length, mean: r1(mean(xs)), share: xs.filter((x) => x > HES_MS).length / xs.length };
+  });
+}
+
+/** The top-note hesitation over a session's takes, or null (the rule above, per hand; both hands → one line). */
+export function topHesitation(traces: TakeTrace[]): Tendency | null {
+  const hit = topNoteStats(traces).filter((x) => x.takes >= HES_MIN_TAKES && x.mean > HES_MS && x.share > HES_SHARE);
+  if (!hit.length) return null;
+  const best = hit.reduce((a, b) => (b.mean > a.mean ? b : a));
+  const hands = new Set(hit.filter((x) => x.cell === best.cell).map((x) => x.hand));
+  return { cell: hands.size > 1 ? 'hes:top' : `hes:${best.hand}:top`, mean: best.mean, takes: best.takes, t: 0, line: HESITATION_LINE };
+}
+
+/** Timing against the click, relative to the session (owner's sessions: the lead moved −4 to −47 ms by session, not by
+ *  key): each take's lead minus the median of the session's leads. Any lead comparison goes through this — never an
+ *  absolute lead. */
+export function sessionRelativeLead(traces: TakeTrace[]): (number | null)[] {
+  const ls = traces.map((t) => t.lead).filter((x): x is number => x !== null && Number.isFinite(x));
+  if (!ls.length) return traces.map(() => null);
+  const m = median(ls);
+  return traces.map((t) => (t.lead === null || !Number.isFinite(t.lead) ? null : r1(t.lead - m)));
+}
+
+/** v2 descent slopes relative to the session (% of the session's median interval per note; + = slowing, − = rushing),
+ *  per take and hand, or null. Recorded for the calibration only: no flag until enough normal sessions exist. */
+export function descentRelative(traces: TakeTrace[]): { R: number | null; L: number | null }[] {
+  const iois = traces.map((t) => t.ioi).filter((x) => x > 0);
+  const base = iois.length ? median(iois) : 0;
+  const rel = (d: [number, number] | undefined) => (d && base > 0 ? r1((d[0] / base) * 100) : null);
+  return traces.map((t) => ({ R: rel(t.R?.desc), L: rel(t.L?.desc) }));
+}
+
 /** Takes whose tendencies count (§2.3): an eligible kind, clean or almost, wired MIDI (§2.5). */
-export const eligible = (t: TakeTrace) => TAKE_KIND[t.kind].tendencies && t.verdict !== 'not' && t.src === 'midi' && !t.other;
+export const eligible = (t: TakeTrace) => TAKE_KIND[t.kind].tendencies && t.verdict !== 'not' && t.src === 'midi' && !t.other && !t.nc;
 
 /**
  * The strongest tendency over a session's takes (§2.3, §4.3), or null: ≥ POOL_MIN eligible takes, the cell present in
@@ -440,6 +546,9 @@ export const eligible = (t: TakeTrace) => TAKE_KIND[t.kind].tendencies && t.verd
  * `enough` says whether there were enough takes to judge at all (else neither a tendency nor "nothing consistent").
  */
 export function sessionTendency(traces: TakeTrace[]): { enough: boolean; top: Tendency | null } {
+  // the calibrated top-note hesitation first (its own rule, ≥ 8 MIDI takes of the cell)
+  const hes = topHesitation(traces);
+  if (hes) return { enough: true, top: hes };
   // only takes that measured something count (review round 3): ten cadence or lick takes say nothing about timing
   const measured = (t: TakeTrace) => t.drift !== null || !!t.sync || (['R', 'L'] as const).some((h) => !!t[h] && (t[h]!.dir !== null || Object.keys(t[h]!.cls).length > 0));
   const ts = traces.filter((t) => eligible(t) && measured(t));
@@ -483,6 +592,8 @@ export function sessionTendency(traces: TakeTrace[]): { enough: boolean; top: Te
     if (xs.length < POOL_MIN || cell.startsWith('pc:')) continue;
     if (cell.startsWith('cls:') && pcOff.has(cell.split(':')[1])) continue;
     const m = mean(xs);
+    // a late top note is the calibrated hesitation rule's (topHesitation above), never the generic test
+    if (/^cls:[RL]:top$/.test(cell) && m > 0) continue;
     const s = sd(xs);
     const t = s > 0 ? m / (s / Math.sqrt(xs.length)) : 0;
     const same = xs.filter((x) => Math.sign(x) === Math.sign(m)).length / xs.length;

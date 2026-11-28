@@ -223,3 +223,61 @@
     animation-duration: 0.5s;
   }
 }
+
+/* SPEC-INPUT-SOURCE R2: the input a take listens to, live — one small line above Play (chrome only: existing tokens) */
+.input-src-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--ink-dim, #5b4a86);
+  min-width: 0;
+}
+.input-src-chip bdi {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.input-src-chip.src-midi bdi {
+  color: var(--ink, #1e1033);
+  font-weight: 600;
+}
+.input-src-chip .isc-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #6d28d9);
+}
+.input-src-chip .isc-connect {
+  flex: none;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* R3 / R4: the expected keyboard is not there — the line, reconnect, the mic for this session */
+.midi-guard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 4px 0;
+  padding: 8px 10px;
+  border: 1.5px solid var(--outline, #1e1033);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: var(--ink, #1e1033);
+  font-size: 13.5px;
+}
+.midi-guard p {
+  margin: 0;
+  flex: 1 1 200px;
+}
+.midi-guard-actions {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}

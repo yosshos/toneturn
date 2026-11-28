@@ -4,6 +4,7 @@
 // this module keeps a copy per device id, swaps it in when the device changes and seeds a new device from the values
 // in use. It all stays on this device (DEVICE_SETTINGS in progress.ts).
 import type { Settings } from './progress';
+import { COMPUTER_KEYS_NAME } from '../speech/computerKeys';
 
 export type DeviceKind = 'midi' | 'mic' | 'out';
 
@@ -22,6 +23,9 @@ export interface PerDevice {
   out?: Record<string, DeviceProfile>;
   /** The device each kind's flat values belong to right now. */
   cur?: Partial<Record<DeviceKind, string>>;
+  /** SPEC-INPUT-SOURCE R3: the MIDI inputs this device has had, by name — a keys take expects one of them (replaces the
+   *  global `tt.midiSeen`). The computer keyboard never counts. */
+  midiExpected?: string[];
 }
 
 /** The system default microphone / output when none is chosen. */
@@ -81,8 +85,37 @@ export function reconcileDevices(next: Settings, midi: string | null): Settings 
     pd = { ...pd, [kind]: { ...book, [id]: prof }, cur: { ...pd.cur, [kind]: id } };
     moved = true;
   }
+  // R3: a real keyboard in use is remembered by name (the device then expects a keyboard on keys takes)
+  if (midi && midi !== COMPUTER_KEYS_NAME && !(pd.midiExpected ?? []).includes(midi)) {
+    pd = { ...pd, midiExpected: [...(pd.midiExpected ?? []), midi] };
+    moved = true;
+  }
   return moved ? { ...s, perDevice: pd } : next;
 }
+
+/** The MIDI inputs this device expects (R3). */
+export function midiExpectedOf(s: Pick<Settings, 'perDevice'>): string[] {
+  return s.perDevice?.midiExpected ?? [];
+}
+
+/**
+ * SPEC-INPUT-SOURCE §3.1, once per device: the expectation moves from the old global `tt.midiSeen` flag into the device
+ * profile — every keyboard this device already keeps a profile for, or (the flag set but no profile) an unnamed one; and
+ * the preference comes from the old boolean (progress.ts migrateMidiPref). The patch to save, or null when nothing moves.
+ */
+export function migrateMidiExpectation(s: Pick<Settings, 'perDevice' | 'midiPref' | 'midiInput'>, midiSeen: boolean): Partial<Settings> | null {
+  const out: Partial<Settings> = {};
+  if (!s.midiPref) out.midiPref = s.midiInput === false ? 'mic' : 'auto';
+  if (s.perDevice?.midiExpected === undefined) {
+    const known = Object.keys(s.perDevice?.midi ?? {}).filter((n) => n !== COMPUTER_KEYS_NAME);
+    const expected = known.length ? known : midiSeen ? [UNNAMED_MIDI] : [];
+    out.perDevice = { ...(s.perDevice ?? {}), midiExpected: expected };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** The name kept for a keyboard seen before the expectation was kept by name (0.145.13's flag). */
+export const UNNAMED_MIDI = 'MIDI';
 
 /** The keys whose values differ between two settings (shallow): what a save has to write. */
 export function settingsDiff(prev: Settings | null | undefined, next: Settings): Partial<Settings> {

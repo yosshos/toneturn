@@ -35,6 +35,7 @@ import { keyFifths, spell } from '../../engine/encore/musicxml';
 import { EX } from '../../i18n/encoreText';
 import { ladderStep } from '../../engine/drills/ladder';
 import { midi } from '../../speech/midi';
+import { inputState, keysByMidi } from '../../speech/inputSource';
 import { saveTake } from '../../storage/recordings';
 import { PianoRoll, type RollNote } from './PianoRoll';
 import { EncoreRun, type EncoreTakeFn } from './EncoreRun';
@@ -129,7 +130,7 @@ export function EncoreScreen(p: EncoreProps) {
   );
 
   // ─── views ───
-  if (r.view === 'record') return INST !== 'piano' || r.id === 'mic' || (!midi.devices.length && !settings.midiInput) ? <AudioRecordMode lang={lang} head={head} inst={INST} onMidi={INST === 'piano' && midi.devices.length ? () => nav('record') : undefined} /> : <RecordMode lang={lang} head={head} />;
+  if (r.view === 'record') return INST !== 'piano' || r.id === 'mic' || (!keysByMidi() && inputState().pref !== 'midi') ? <AudioRecordMode lang={lang} head={head} inst={INST} onMidi={INST === 'piano' && keysByMidi() ? () => nav('record') : undefined} /> : <RecordMode lang={lang} head={head} />;
   if (r.view === 'caught' && r.id) return <CaughtView lang={lang} head={head} takeId={r.id} />;
   if ((r.view === 'new' || r.view === 'context') && r.take)
     return <TrimFlow key={r.take} lang={lang} head={head} takeId={r.take} from={r.from} to={r.to} step={r.view === 'new' ? 'trim' : 'context'} settings={settings} onSave={(l) => (savePhrase(l), clearSlot(`encore:trim:${r.take}`), nav(`plan/${l.id}`))} />;
@@ -446,7 +447,7 @@ function RecordMode({ lang, head }: { lang: Lang; head: Head }) {
           <input type="checkbox" className="enc-tog" checked={click} onChange={(e) => setClick(e.target.checked)} data-rec-click="1" />
         </label>
       </div>
-      {!midi.devices.length && <p className="field-hint">{he ? 'חברו מקלדת MIDI והדליקו MIDI בהגדרות כדי להקליט.' : 'Connect a MIDI keyboard and turn MIDI on in Settings to record.'}</p>}
+      {!keysByMidi() && <p className="field-hint">{he ? 'חברו מקלדת MIDI והדליקו MIDI בהגדרות כדי להקליט.' : 'Connect a MIDI keyboard and turn MIDI on in Settings to record.'}</p>}
       <div className="enc-foot">
         <button className="btn mega enc-full" onClick={finish} disabled={state !== 'listening'} data-rec-stop="1">
           <span className="enc-stop" aria-hidden="true" />
