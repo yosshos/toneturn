@@ -1,0 +1,236 @@
+# Measurement harness report, SPEC-HOLISTIC-2 v15 defaults
+seed 20261127. Defaults: item pass V1 (+ a pending pair expires after 60 days); rank = H8 (>= 2 exercises, grouped tiers, keys = union) + tier guard G (bar 0.5, P >= 0.8, half-life 24 checks, >= 6 checks; the guard reserve);
+round 18 (v15): cells unique per exercise x key (shelved cells resumed, never duplicated); at a tier with no fresh cell left the guard also reads the passed cells' probe-band looks, and the reserve plays a guard probe there;
+a skipped due check (cell sounded before / without its due cold check) is a miss (guard + V1 share); due checks left unplayed are misses while the skip share over 30 days > 0.2;
+H10: evidence readiness (>= 2 clean of the last <= 3 probe-band cold takes, or a non-provisional threshold >= 0.95), content edge capped at the entered top, struggle step-down (probe-band p estimate < 0.25 over 21 days and not rising, lifts at >= 0.5);
+current form rho_d 0.15, rho_c 0.2 (cautious); supply = 3 slots per session shared by 4 areas + FSRS-review looks (<= 2 per session per area); N1 over all cells at placedTier.
+Learners: day SD 0.8, cell SD 0.7 (logit), beta 1.2 logit per tier, warm +0.8 logit.
+Truths: "probe-band p" = cold p on a FRESH cell of the tier at the floor of the probe band (0.95 x target in tempo areas, the fixed tempo in fixed-tempo areas) — the RANK ESTIMAND (v15, §1.1);
+"tier p at target" = the same at 1.0 x target; "catalogue p" = mean over every exercise x key of the tier with that cell's own item-practice gain (unoffered cells at 0);
+"practised p" = the recency-weighted mean probe-band p of the cells behind the guard's record, with their item practice (what the guard actually measured).
+
+Sections were run in parallel processes (`npm run measure-v15 -- --only=<section>`), each with its own seeds as in the script; the "(N s)" lines are per-section run times.
+
+## 1. Stationary-learner honesty: rate 0, from scratch (placedTier 0, rank none), 365 days, 4 d/wk, synthetic catalogue (tempo area; 100 learners per row)
+Start tier T2. Per rise = share of rank rises at p < 0.5 (the v14 statement). PER LEARNER (round 18 #4) = share of learners whose final, permanent rank sits at a tier with p < 0.5. Target (v15 §9.1): per learner, probe-band p, <= 10 % at p 0.5 and 0.75 without item gain.
+| rule | item gain | tier p at T2 | final rank median / p90 | per learner: final rank at probe-band p < 0.5 | at target p < 0.5 | at catalogue p < 0.5 | per rise: probe-band | at target | false rises (probe) whose practised p >= 0.5 (median practised p) |
+|---|---|---|---|---|---|---|---|---|---|
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0 | 0.5 | T2 / T2 | 6.0 % PASS | 6.0 % | 6.0 % | 2.2 % | 2.2 % | 0.0 % (0.33) |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0 | 0.75 | T3 / T3.1 | 10.0 % PASS | 10.0 % | 10.0 % | 2.8 % | 2.8 % | 0.0 % (0.36) |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0 | 0.85 | T4 / T4 | 0.0 % | 66.0 % | 66.0 % | 0.0 % | 16.0 % | 0.0 % (-) |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0.3 / 10 takes | 0.5 | T2 / T3 | 39.0 % | 39.0 % | 39.0 % | 12.9 % | 12.9 % | 0.0 % (0.47) |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0.3 / 10 takes | 0.75 | T4 / T4 | 60.0 % | 60.0 % | 60.0 % | 14.6 % | 14.6 % | 48.3 % (0.50) |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0.3 / 10 takes | 0.85 | T4 / T4 | 1.0 % | 100.0 % | 6.0 % | 0.2 % | 22.5 % | 0.0 % (0.20) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0 | 0.5 | T2 / T2 | 5.0 % PASS | 5.0 % | 5.0 % | 2.0 % | 2.0 % | 0.0 % (0.33) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0 | 0.75 | T3 / T3 | 6.0 % PASS | 6.0 % | 6.0 % | 1.7 % | 1.7 % | 0.0 % (0.36) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0 | 0.85 | T4 / T4 | 0.0 % | 59.0 % | 59.0 % | 0.0 % | 14.6 % | 0.0 % (-) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.3 / 10 takes | 0.5 | T2 / T3 | 34.0 % | 34.0 % | 34.0 % | 11.3 % | 11.3 % | 0.0 % (0.48) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.3 / 10 takes | 0.75 | T3 / T4 | 41.0 % | 41.0 % | 41.0 % | 10.6 % | 10.6 % | 48.8 % (0.50) |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.3 / 10 takes | 0.85 | T4 / T4 | 0.0 % | 97.0 % | 89.0 % | 0.0 % | 21.8 % | 0.0 % (-) |
+| ungated H8 (RANK_FIX) | 0 | 0.5 | T3 / T3 | 100.0 % FAIL | 100.0 % | 100.0 % | 26.2 % | 26.2 % | 0.0 % (0.33) |
+| ungated H8 (RANK_FIX) | 0 | 0.75 | T4 / T4 | 99.0 % FAIL | 99.0 % | 99.0 % | 20.1 % | 20.1 % | 0.0 % (0.36) |
+| ungated H8 (RANK_FIX) | 0 | 0.85 | T4 / T4 | 0.0 % | 100.0 % | 100.0 % | 0.0 % | 20.3 % | 0.0 % (-) |
+| ungated H8 (RANK_FIX) | 0.3 / 10 takes | 0.5 | T3 / T4 | 100.0 % | 100.0 % | 100.0 % | 29.4 % | 29.4 % | 0.0 % (0.48) |
+| ungated H8 (RANK_FIX) | 0.3 / 10 takes | 0.75 | T4 / T4 | 100.0 % | 100.0 % | 100.0 % | 20.3 % | 20.3 % | 70.0 % (0.51) |
+| ungated H8 (RANK_FIX) | 0.3 / 10 takes | 0.85 | T4 / T6 | 15.0 % | 100.0 % | 19.0 % | 3.0 % | 22.8 % | 0.0 % (0.22) |
+The learners' tiers, fresh-cell p at target / at 0.95 x target: p 0.5: T2 0.50 / 0.57; T3 0.27 / 0.33; T4 0.12 / 0.15 | p 0.75: T2 0.75 / 0.80; T3 0.53 / 0.60; T4 0.30 / 0.36 | p 0.85: T2 0.85 / 0.88; T3 0.67 / 0.73; T4 0.44 / 0.50.
+The same on the real piano areas (p 0.75 at each area's 2nd non-empty tier), 30 learners per area, pooled over the 5 areas:
+| rule | per learner: final rank at probe-band p < 0.5 | per rise (probe-band) |
+|---|---|---|
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 16.0 % | 6.0 % |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 12.7 % | 4.9 % |
+| ungated H8 (RANK_FIX) | 57.3 % | 17.9 % |
+(669 s)
+
+## 1g. The guard as a repeated test (round 18 #4): a stream of counting checks at a fixed true probe-band p (day / cell SD 0.8 / 0.7, 2 checks a day, a new cell every 6 checks), the guard tested after every check; 4000 streams per row
+"single" = P(the guard passes at the one test after n checks); "ever" = P(it has passed at any test up to n) — what a high-water rank sees.
+| true p | guard | single at n = 12 / 24 / 48 / 96 | ever by n = 12 / 24 / 48 / 96 |
+|---|---|---|---|
+| 0.3 | G P 0.8 (approved) | 0.9 % / 0.1 % / 0.0 % / 0.0 % | 5.3 % / 6.1 % / 6.4 % / 6.5 % |
+| 0.3 | G P 0.9 | 0.2 % / 0.0 % / 0.0 % / 0.0 % | 1.6 % / 1.7 % / 1.8 % / 1.8 % |
+| 0.3 | G P 0.8 + persist 6 | 0.6 % / 0.1 % / 0.0 % / 0.0 % | 0.6 % / 0.9 % / 1.0 % / 1.1 % |
+| 0.3 | G P 0.8 + >= 12 checks | 0.9 % / 0.1 % / 0.0 % / 0.0 % | 0.9 % / 2.1 % / 2.5 % / 2.5 % |
+| 0.4 | G P 0.8 (approved) | 4.3 % / 2.0 % / 1.0 % / 0.4 % | 12.9 % / 16.5 % / 19.0 % / 21.3 % |
+| 0.4 | G P 0.9 | 1.1 % / 0.4 % / 0.1 % / 0.0 % | 5.1 % / 6.2 % / 6.9 % / 7.2 % |
+| 0.4 | G P 0.8 + persist 6 | 2.6 % / 0.9 % / 0.4 % / 0.1 % | 2.6 % / 5.1 % / 6.7 % / 7.8 % |
+| 0.4 | G P 0.8 + >= 12 checks | 4.3 % / 2.0 % / 1.0 % / 0.4 % | 4.3 % / 9.6 % / 12.4 % / 15.0 % |
+| 0.45 | G P 0.8 (approved) | 7.4 % / 5.6 % / 3.8 % / 1.9 % | 19.1 % / 26.2 % / 32.5 % / 38.4 % |
+| 0.45 | G P 0.9 | 2.2 % / 1.2 % / 0.7 % / 0.4 % | 8.0 % / 10.7 % / 12.9 % / 14.6 % |
+| 0.45 | G P 0.8 + persist 6 | 4.7 % / 2.9 % / 1.8 % / 1.0 % | 4.7 % / 10.0 % / 14.3 % / 18.9 % |
+| 0.45 | G P 0.8 + >= 12 checks | 7.4 % / 5.6 % / 3.8 % / 1.9 % | 7.4 % / 17.8 % / 25.4 % / 32.2 % |
+| 0.5 | G P 0.8 (approved) | 12.3 % / 11.6 % / 10.5 % / 8.1 % | 27.4 % / 37.7 % / 48.1 % / 61.0 % |
+| 0.5 | G P 0.9 | 4.5 % / 3.2 % / 2.4 % / 1.6 % | 12.7 % / 17.9 % / 22.9 % / 28.8 % |
+| 0.5 | G P 0.8 + persist 6 | 7.8 % / 6.4 % / 6.4 % / 4.9 % | 7.8 % / 17.4 % / 26.9 % / 37.6 % |
+| 0.5 | G P 0.8 + >= 12 checks | 12.3 % / 11.6 % / 10.5 % / 8.1 % | 12.3 % / 28.6 % / 41.0 % / 55.5 % |
+| 0.6 | G P 0.8 (approved) | 28.3 % / 34.3 % / 39.8 % / 44.6 % | 46.0 % / 64.6 % / 81.1 % / 93.8 % |
+| 0.6 | G P 0.9 | 12.5 % / 14.4 % / 17.2 % / 18.1 % | 25.3 % / 39.3 % / 55.5 % / 73.9 % |
+| 0.6 | G P 0.8 + persist 6 | 18.5 % / 22.4 % / 30.4 % / 35.0 % | 18.5 % / 40.8 % / 62.5 % / 83.2 % |
+| 0.6 | G P 0.8 + >= 12 checks | 28.3 % / 34.3 % / 39.8 % / 44.6 % | 28.3 % / 57.2 % / 77.1 % / 92.5 % |
+| 0.7 | G P 0.8 (approved) | 51.3 % / 66.0 % / 80.8 % / 88.5 % | 67.3 % / 86.9 % / 97.1 % / 99.9 % |
+| 0.7 | G P 0.9 | 29.1 % / 40.5 % / 55.9 % / 68.0 % | 44.6 % / 67.3 % / 87.2 % / 97.9 % |
+| 0.7 | G P 0.8 + persist 6 | 36.5 % / 51.7 % / 73.3 % / 84.2 % | 36.5 % / 69.3 % / 91.7 % / 99.2 % |
+| 0.7 | G P 0.8 + >= 12 checks | 51.3 % / 66.0 % / 80.8 % / 88.5 % | 51.3 % / 83.5 % / 96.5 % / 99.9 % |
+(114 s)
+
+## Q. Owner question (v15 §17.4): guard settings — per-learner honesty vs days per tier and stalls
+Per learner = final rank at probe-band p < 0.5 (stationary, synthetic, 60 learners). Days per tier: fixed ability, 13 real areas pooled, 3 d/wk, 12 runs per transition; median / p90 (share within 240 d). Climbs: 12 per real area (13 areas).
+| setting | per learner p 0.5 / 0.75 (no gain) | per learner p 0.5 / 0.75 (item gain) | per rise p 0.5 / 0.75 (item gain) | days per tier p 0.75 | days per tier p 0.85 | stalls >= 42 d (longest) |
+|---|---|---|---|---|---|---|
+| A. G P 0.8 (approved; v15 default) | 6.7 % / 11.7 % | 38.3 % / 63.3 % | 12.8 % / 15.3 % | 24 / 55 (99.1 %) | 20 / 35 (99.9 %) | 1 / 156 (47) |
+| B. G P 0.9 | 3.3 % / 5.0 % | 11.7 % / 10.0 % | 4.3 % / 2.8 % | 26 / 64 (99.0 %) | 20 / 37 (99.9 %) | 0 / 156 (39) |
+| C. G P 0.8 + persist 6 (sequential correction) | 0.0 % / 3.3 % | 33.3 % / 30.0 % | 13.2 % / 9.2 % | 32 / 67 (99.1 %) | 29 / 48 (99.9 %) | 1 / 156 (44) |
+| D. G P 0.8 + persist 6 + first 3 checks per cell | 1.7 % / 5.0 % | 21.7 % / 18.3 % | 8.6 % / 5.9 % | 36 / 76 (99.0 %) | 30 / 50 (99.9 %) | 1 / 156 (43) |
+(591 s)
+
+## 1b. Improving learners, real catalogue (13 areas: piano 5, guitar 5, bass 3 per §1.10): days per tier, honesty, stalls (20 runs per transition, 20 climbs per area)
+Days per tier: fixed ability, true tier p 0.75 / 0.85 at the next tier, from rank = placedTier = the tier below; median / p90 calendar days (share reached in 240 d when < 99.5 %).
+Climbs: steadily improving learner (cold p 0.6 at T0, +0.25 tiers per practice hour, 4 d/wk), 365 days from T0. Stall = >= 42 days at tier p >= 0.85 on the next tier without a rank rise.
+| rule | item gain | p 0.75, 3 d/wk | p 0.75, 5 d/wk | p 0.85, 3 d/wk | p 0.85, 5 d/wk | rank rises at tier p < 0.5 (climbs) | median tier p at a new rank | passes at cell p < 0.5 | stalls >= 42 d | longest stall (days) | climbs missing a tier |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0 | 24 / 55 (99.0 %) | 14 / 32 (99.4 %) | 20 / 35 | 12 / 21 | 2.1 % | 0.77 | 8.3 % | 2 / 260 | 47 | 0 / 260 |
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0.3 / 10 takes | 21 / 40 | 13 / 24 | 19 / 31 | 12 / 19 | 8.9 % | 0.71 | 5.7 % | 0 / 260 | 31 | 0 / 260 |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0 | 23 / 53 (99.1 %) | 14 / 31 | 20 / 37 | 12 / 22 | 3.4 % | 0.76 | 12.9 % | 1 / 260 | 44 | 0 / 260 |
+| ungated H8 (RANK_FIX) | 0 | 21 / 47 (98.9 %) | 13 / 28 | 19 / 34 | 12 / 21 | 6.8 % | 0.71 | 12.6 % | 2 / 260 | 45 | 0 / 260 |
+Stalls per area (v15 default, the climbs above):
+- bass/walking: 2 stalls (longest 47 d at rank null), reached all 100.0 %
+(489 s)
+
+## K. Areas without keys and exercises with few keys (round 18 #1): rotation-only climbs, steadily improving learner, 365 days, 20 climbs per row (seed 4242)
+| catalogue | rule | reach the top tier | reach T5 (median day) | stalls >= 42 d | longest stall | rises at tier p < 0.5 |
+|---|---|---|---|---|---|---|
+| keyless-3 | DEFAULT v15 (G P 0.8 + round 18 fixes) | 100.0 % | 100.0 % (106.5) | 0 / 20 | 34 | 3.2 % |
+| keyless-3 | v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.0 % | 0.0 % (365) | 20 / 20 | 341 | 5.7 % |
+| keyless-3 | ungated H8 (RANK_FIX) | 100.0 % | 100.0 % (94.5) | 0 / 20 | 4 | 7.9 % |
+| keyless-2 | DEFAULT v15 (G P 0.8 + round 18 fixes) | 100.0 % | 100.0 % (112.5) | 1 / 20 | 60 | 0.0 % |
+| keyless-2 | v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.0 % | 0.0 % (365) | 20 / 20 | 347 | 0.0 % |
+| keyless-2 | ungated H8 (RANK_FIX) | 100.0 % | 100.0 % (100.5) | 0 / 20 | 16 | 8.1 % |
+| keyless-real-ish (tempo) | DEFAULT v15 (G P 0.8 + round 18 fixes) | 100.0 % | 100.0 % (101.5) | 0 / 20 | 36 | 5.1 % |
+| keyless-real-ish (tempo) | v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.0 % | 0.0 % (365) | 20 / 20 | 344 | 3.2 % |
+| keyless-real-ish (tempo) | ungated H8 (RANK_FIX) | 100.0 % | 100.0 % (100) | 0 / 20 | 8 | 4.2 % |
+| 1-key-3 | DEFAULT v15 (G P 0.8 + round 18 fixes) | 100.0 % | 100.0 % (104.5) | 0 / 20 | 25 | 0.8 % |
+| 1-key-3 | v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 0.0 % | 5.0 % (365) | 20 / 20 | 324 | 2.6 % |
+| 1-key-3 | ungated H8 (RANK_FIX) | 100.0 % | 100.0 % (93) | 0 / 20 | 13 | 2.9 % |
+| 2-key-2 | DEFAULT v15 (G P 0.8 + round 18 fixes) | 100.0 % | 100.0 % (106) | 0 / 20 | 16 | 0.7 % |
+| 2-key-2 | v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 15.0 % | 40.0 % (365) | 17 / 20 | 326 | 0.0 % |
+| 2-key-2 | ungated H8 (RANK_FIX) | 100.0 % | 100.0 % (107.5) | 0 / 20 | 15 | 1.4 % |
+Stationary learners in the keyless area (keyless-3, fixed-tempo; per learner, probe-band p = target p there; 60 learners):
+| rule | p 0.5: per learner / per rise | p 0.75: per learner / per rise | p 0.75 with item gain: per learner |
+|---|---|---|---|
+| DEFAULT v15 (G P 0.8 + round 18 fixes) | 0.0 % / 0.0 % | 0.0 % / 0.0 % | 5.0 % |
+| v14 rules (no keyless fix, no skip rule, sticky H10 readiness) | 1.7 % / 0.9 % | 0.0 % / 0.0 % | 10.0 % |
+| ungated H8 (RANK_FIX) | 55.0 % / 16.8 % | 68.3 % / 15.5 % | 100.0 % |
+Days per tier in the keyless area (fixed ability, p 0.75 / 0.85 at the next tier, 3 d/wk, 30 runs per transition):
+- DEFAULT v15 (G P 0.8 + round 18 fixes): p 0.75: 19 / 36; p 0.85: 16 / 23
+(327 s)
+
+## D. Learners who choose the day for cold checks (round 18 #2): stationary, synthetic catalogue, 60 learners per row
+warmFirst = on every below-average day (day effect < 0) the learner warms each cell up first; warmFirst20 = only on the worst 20 % of days; senseSkip = on a bad day, warms up the first item, then leaves the area;
+careless = honest, but ignores the cold-first order on a random 20 % of days; quitter = honest, leaves the area after the first item on a random 20 % of days.
+| rule | learner | p 0.5: final rank median / p90; per learner (probe) | p 0.75: final rank median / p90; per learner (probe) | skipped due checks per learner |
+|---|---|---|---|---|
+| DEFAULT v15 (warm-first skip always a miss) | honest | T2 / T2.1; 10.0 % | T3 / T4; 20.0 % | 0 |
+| DEFAULT v15 (warm-first skip always a miss) | careless | T1 / T2; 0.0 % | T3 / T3; 1.7 % | 218 |
+| DEFAULT v15 (warm-first skip always a miss) | quitter | T2 / T2; 5.0 % | T3 / T3; 5.0 % | 153 |
+| DEFAULT v15 (warm-first skip always a miss) | warmFirst | T0 / T1.1; 0.0 % | T2 / T3; 0.0 % | 588 |
+| DEFAULT v15 (warm-first skip always a miss) | warmFirst20 | T2 / T2; 3.3 % | T3 / T3; 3.3 % | 212 |
+| DEFAULT v15 (warm-first skip always a miss) | senseSkip | T1 / T2; 0.0 % | T2 / T3; 3.3 % | 549 |
+| alternative: warm-first skips gated by the skip share | honest | T2 / T2.1; 10.0 % | T3 / T4; 20.0 % | 0 |
+| alternative: warm-first skips gated by the skip share | careless | T2 / T2; 6.7 % | T3 / T3; 8.3 % | 212 |
+| alternative: warm-first skips gated by the skip share | quitter | T2 / T2; 5.0 % | T3 / T3; 5.0 % | 153 |
+| alternative: warm-first skips gated by the skip share | warmFirst | T1 / T2; 0.0 % | T2 / T3; 3.3 % | 606 |
+| alternative: warm-first skips gated by the skip share | warmFirst20 | T2 / T3; 13.3 % | T3 / T4; 16.7 % | 203 |
+| alternative: warm-first skips gated by the skip share | senseSkip | T1 / T2; 1.7 % | T2 / T3; 1.7 % | 554 |
+| v14 rules | honest | T2 / T2; 3.3 % | T3 / T3; 6.7 % | 0 |
+| v14 rules | careless | T2 / T2; 5.0 % | T3 / T3; 8.3 % | 181 |
+| v14 rules | quitter | T2 / T2; 3.3 % | T3 / T3; 3.3 % | 129 |
+| v14 rules | warmFirst | T2 / T3; 31.7 % | T4 / T4; 65.0 % | 426 |
+| v14 rules | warmFirst20 | T2 / T3; 11.7 % | T3 / T4; 26.7 % | 168 |
+| v14 rules | senseSkip | T2 / T3; 28.3 % | T3 / T4; 31.7 % | 416 |
+Cost to honest deviators in days per tier (fixed ability p 0.75 at the next tier, 3 d/wk, 13 real areas, 8 runs per transition): median / p90
+- honest: 23 / 56
+- careless: 34 / 157
+- quitter: 30 / 75
+(675 s)
+
+## 2. Look supply and current form (rank R = T3 placed, fixed ability; 60-day burn-in, 90-day window; 200 learners per row)
+Wrong demotion = a slump while the truth >= 0.75 ("window" = mean fresh-cell p over the decision window's own looks; "tier t" = the tier left only; "cells" = the passed cells). Target < 5 %, judged on the window estimand.
+| supply | tier p at R | d/wk | looks / 90 d (share from reviews) | wrong demotion / 90 d (window; tier t; cells) | any slump | 80 % coverage vs tier: n_eff / naive |
+|---|---|---|---|---|---|---|
+| DEFAULT: 3 slots/session over 4 areas + FSRS reviews (<= 2/session/area) | 0.75 | 3 | 76 (94.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 7.5 % | 84.0 % / 74.4 % |
+| DEFAULT: 3 slots/session over 4 areas + FSRS reviews (<= 2/session/area) | 0.75 | 5 | 125 (93.3 %) | 0.0 %; 0.0 %; 0.0 % PASS | 15.5 % | 83.8 % / 75.7 % |
+| DEFAULT: 3 slots/session over 4 areas + FSRS reviews (<= 2/session/area) | 0.85 | 3 | 76 (94.6 %) | 0.0 %; 0.0 %; 0.0 % PASS | 1.0 % | 83.3 % / 75.1 % |
+| DEFAULT: 3 slots/session over 4 areas + FSRS reviews (<= 2/session/area) | 0.85 | 5 | 126 (93.8 %) | 0.0 %; 0.0 %; 0.0 % PASS | 5.5 % | 83.3 % / 76.2 % |
+| shared 3 over 4 areas, no reviews | 0.75 | 3 | 33 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 4.0 % | 82.5 % / 76.3 % |
+| shared 3 over 4 areas, no reviews | 0.75 | 5 | 54 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 8.0 % | 81.2 % / 77.3 % |
+| shared 3 over 4 areas, no reviews | 0.85 | 3 | 33 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 0.0 % | 84.0 % / 78.4 % |
+| shared 3 over 4 areas, no reviews | 0.85 | 5 | 55 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 2.0 % | 82.9 % / 79.3 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.75 | 3 | 77 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 5.0 % | 84.2 % / 72.3 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.75 | 5 | 128 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 12.5 % | 83.1 % / 74.0 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.85 | 3 | 77 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 0.0 % | 84.7 % / 75.0 % |
+| v13 harness: 2 slots/session for this area, no reviews | 0.85 | 5 | 129 (0.0 %) | 0.0 %; 0.0 %; 0.0 % PASS | 0.5 % | 82.9 % / 74.4 % |
+Re-promotion after a 4-week dip of −3 logits (tier p 0.85 at R = T3, 4 d/wk; 200 learners): (a) back at the pre-dip current form, (b) capped at the highest tier with p >= 0.6, (c) at the true tier (p >= 0.75); 120 = not back within 120 days.
+| supply | slumped in the dip | (a) back within 120 d; median / p90 | (b) | (c) |
+|---|---|---|---|---|
+| DEFAULT: 3 slots/session over 4 areas + FSRS reviews (<= 2/session/area) | 79.5 % | 47.8 %; 120 / 120 | 49.7 %; 120 / 120 | 91.8 %; 0 / 91 |
+(434 s)
+
+## 3. Calibration (estimand: tier p on fresh cells). Decisions use rho_c 0.20 (H12: cautious); the grid is evaluation only. 120 learners per cell, pooled over p 0.75 / 0.85 x 3 / 5 d/wk.
+| estimand | naive (raw n) | rho_c 0 | rho_c 0.05 | rho_c 0.08 | rho_c 0.1 | rho_c 0.15 | rho_c 0.2 | rho_c 0.3 |
+|---|---|---|---|---|---|---|---|---|
+| tier (fresh cells) | 75.5 % | 76.7 % | 78.4 % | 79.4 % | 80.0 % | 81.8 % | 83.0 % | 85.2 % |
+| window's own cells | 79.6 % | 81.1 % | 83.2 % | 84.1 % | 84.8 % | 86.3 % | 87.5 % | 89.7 % |
+- Tier bias of the posterior mean 0.002, RMSE 0.102.
+(163 s)
+
+## 4. H10: offered challenge vs ability
+Improving learners: tier p 0.6 at T0, +0.15 tiers per practice hour, 280 days, 60 learners. difficulty = content tier + ln(tempo) / ln(1.2). "flat-rank slope" = Σ Δ(offered difficulty) / Σ Δ min(θ, cap) over 4-week windows with rank flat and θ rising >= 0.1; cap = the +2 entry cap.
+Targets (v15 §9.1): tempo areas slope >= 0.7; fixed-tempo areas slope >= 0.6 with a mean lag min(θ, cap) − offer within ± 0.5 tier (integer content steps are the only axis there); no offer above the cap; no target fall in a non-exempt session.
+### synthetic (tempo)
+| planner | flat-rank slope | windows | mean lag | target fell (non-exempt) | days above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|
+| H10 as in v14 (sticky readiness, no step-down) | 0.88 PASS | 840 | 0.82 | 0.0 % | 0 | 251 |
+| H10 v15 default (evidence readiness + struggle step-down) | 0.79 PASS | 757 | 0.99 | 0.0 % | 0 | 255 |
+### piano/scales (tempo)
+| planner | flat-rank slope | windows | mean lag | target fell (non-exempt) | days above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|
+| H10 as in v14 (sticky readiness, no step-down) | 0.86 PASS | 560 | 0.80 | 0.0 % | 0 | 189.5 |
+| H10 v15 default (evidence readiness + struggle step-down) | 0.81 PASS | 524 | 0.91 | 0.0 % | 0 | 190.5 |
+### synthetic fixed-tempo (fixed-tempo)
+| planner | flat-rank slope | windows | mean lag | target fell (non-exempt) | days above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|
+| H10 as in v14 (sticky readiness, no step-down) | 0.61 PASS | 904 | 0.06 | 0.0 % | 0 | 262 |
+| H10 v15 default (evidence readiness + struggle step-down) | 0.60 PASS | 852 | 0.35 | 0.0 % | 0 | 265.5 |
+### piano/harmony (fixed-tempo)
+| planner | flat-rank slope | windows | mean lag | target fell (non-exempt) | days above the +2 cap | median days to top rank |
+|---|---|---|---|---|---|---|
+| H10 as in v14 (sticky readiness, no step-down) | 0.62 PASS | 637 | 0.10 | 0.0 % | 0 | 201 |
+| H10 v15 default (evidence readiness + struggle step-down) | 0.69 PASS | 635 | 0.41 | 0.0 % | 0 | 206 |
+Plateaued learners (rate 0, from scratch, tier p at T2 as given), last 90 of 365 days, 60 learners: where the planner aims. "hopeless" = practice days whose offered items have a fresh-cell probe-band p < 0.3. Target (v15): offered probe-band p >= 0.35 and hopeless days <= 35 %.
+| area | planner | tier p at T2 | rank | content edge | target | offered tier | offered p at its tempo | offered probe-band p | hopeless days | days offering at the +2 cap | days under a struggle step-down |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| synthetic | H10 as in v14 (sticky readiness, no step-down) | 0.5 | 1.90 | 3.74 | 3.78 | 3.56 | 0.55 | 0.24 | 84.0 % | 98.3 % | 0.0 % |
+| synthetic | H10 as in v14 (sticky readiness, no step-down) | 0.75 | 3.12 | 4.70 | 5.75 | 5.31 | 0.52 | 0.17 | 95.4 % | 85.7 % | 0.0 % |
+| synthetic | H10 v15 default (evidence readiness + struggle step-down) | 0.5 | 2.03 | 3.24 | 2.27 | 2.77 | 0.57 | 0.39 PASS | 22.4 % | 55.7 % | 87.8 % |
+| synthetic | H10 v15 default (evidence readiness + struggle step-down) | 0.75 | 3.05 | 4.02 | 3.52 | 3.98 | 0.56 | 0.39 PASS | 29.1 % | 50.9 % | 88.6 % |
+| synthetic fixed-tempo | H10 as in v14 (sticky readiness, no step-down) | 0.5 | 1.50 | 3.51 | 3.52 | 3.21 | 0.25 | 0.25 | 48.4 % | 99.7 % | 0.0 % |
+| synthetic fixed-tempo | H10 as in v14 (sticky readiness, no step-down) | 0.75 | 2.73 | 5.43 | 5.46 | 4.90 | 0.19 | 0.19 | 72.7 % | 99.6 % | 0.0 % |
+| synthetic fixed-tempo | H10 v15 default (evidence readiness + struggle step-down) | 0.5 | 1.62 | 3.26 | 1.71 | 2.53 | 0.39 | 0.39 PASS | 27.0 % | 73.0 % | 88.7 % |
+| synthetic fixed-tempo | H10 v15 default (evidence readiness + struggle step-down) | 0.75 | 2.79 | 4.14 | 2.97 | 3.70 | 0.39 | 0.39 PASS | 28.2 % | 58.8 % | 94.2 % |
+(381 s)
+
+## 5. Placement, gaming, teacher targets and minor rules on the v15 defaults
+- Tempo area: correctly placed corrected 0.0 % PASS; +2 corrected 100.0 % (median first drop day 10); +3 corrected 100.0 %; placed on an empty tier (+3, true T2) corrected 99.0 % (median day 9).
+- N1 in a fixed-tempo (harmony-like) area, all cells at placedTier: correctly placed corrected 0.0 % PASS; +2 corrected 88.3 % (median first drop day 10).
+- Rank-gaming guard (one exercise, a new key every session, 180 days): rank none in every run PASS.
+- Guard minimum: three T0 passes and no counting checks → rank null (the guard needs >= 6 checks).
+(330 s)
+
+## 6. Exercises per tier (catalogue rule): synthetic areas with k exercises at every tier T0-T6 (12 keys), days per tier on the v15 defaults
+Fixed ability, tier p at the next tier as given, from rank = placedTier = the tier below; median / p90 days pooled over the 6 transitions (40 runs each).
+| exercises per tier | p 0.75, 3 d/wk | p 0.75, 5 d/wk | p 0.85, 3 d/wk | p 0.85, 5 d/wk |
+|---|---|---|---|---|
+| 2 | 29 / 53 | 18 / 32 | 25 / 33 | 15 / 21 |
+| 3 | 24 / 36 | 15 / 22 | 20 / 29 | 12 / 19 |
+| 4 | 24 / 35 | 15 / 22 | 20 / 30 | 12 / 18 |
+| 6 | 24 / 37 | 15 / 23 | 21 / 31 | 13 / 20 |
+(59 s)

@@ -27,6 +27,8 @@ export interface Take {
 
 /** §1.6 / §1.4: "later day" = ≥ 8 h after the first-target take and a different local day. */
 export const LATER_DAY_HOURS = 8;
+/** v15 (§1.6): a pending first clean of the pair expires after this many days (forgetting over long breaks is not modelled). */
+export const PENDING_MAX_DAYS = 60;
 
 /**
  * Which cold misses reset the pending pair. 'anyCold' (default, strict): any cold miss of the main item at the probe
@@ -132,6 +134,24 @@ export class ItemPassTracker {
     }
   }
 
+  /**
+   * v15 (§1.6): a skipped due check: on a later day the cell's counting cold check was due (offered at the probe band) but
+   * the cell was sounded that day before, or without, it. It is a counting miss: it enters the clean share and resets a
+   * pending pair. Honest learners, who play the cold check first (§1.4), never produce one.
+   */
+  addSkip(at: number, day: number): boolean {
+    if (!this.due(at, day)) return false;
+    if (this.pairDoneAt === null) this.pendingDay = null;
+    this.counting.push(false);
+    if (this.pool) this.pool.push(false);
+    return true;
+  }
+
+  /** A counting cold check would count at this time (unpassed; a later day, ≥ 8 h after the first target). */
+  due(at: number, day: number): boolean {
+    return this.passedAt === null && this.firstTargetAt !== null && day > (this.firstTargetDay as number) && at - this.firstTargetAt >= LATER_DAY_HOURS;
+  }
+
   add(t: Take): void {
     if (t.cold && t.firstColdOfDay && t.atTarget) this.coldLog.push({ at: t.at, day: t.day, clean: t.clean });
     this.lastCounting = false;
@@ -139,6 +159,8 @@ export class ItemPassTracker {
     const counting = this.isCounting(t);
     this.lastCounting = counting;
     if (this.pairDoneAt === null) {
+      // v15: a pending first clean older than PENDING_MAX_DAYS expires (a long break cannot complete a pair).
+      if (counting && this.pendingDay !== null && t.day - this.pendingDay > PENDING_MAX_DAYS) this.pendingDay = null;
       if (counting && t.clean) {
         if (this.pendingDay !== null && this.pendingDay !== t.day) this.pairDoneAt = t.at;
         else this.pendingDay = t.day;

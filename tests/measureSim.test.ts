@@ -8,7 +8,9 @@ import {
   snapToNonEmpty, syntheticCatalogue, type NonTempoMode, tempoPlacementDay, RANK_V12, updateRankHW, wrongDemotion, type Exercise, type Look, type PassRecord, type Take,
   H10_ON, h10Study, mulberry32, RANK_FIX, RANK_GUARDED, RHO_CELL, RHO_CELL_TIER, SHARED_SUPPLY, stationaryHonesty, THRESHOLD, thresholdEstimate, TIER_GUARD, tierGuardOk,
   childSeed, DEFAULT_RANK, DEFAULT_SUPPLY, H10_OFF, h10Default, simulate, STEADY_LEARNER,
+  DEFAULT_LEARNER, guardLo, h10Overshoot, H10_V14, ItemPassTracker, PENDING_MAX_DAYS, V14_GUARD_PLANNER, type CountingCheck,
 } from '../src/engine/measure/sim';
+const DEFAULT_LEARNER_FOR_TEST = { ...DEFAULT_LEARNER, rate: 0 };
 import { realCatalogues } from '../src/engine/measure/sim/realCatalogue';
 
 const SEED = 20261127;
@@ -364,7 +366,7 @@ describe('round 17: pass evidence, keys union, tier guard, threshold estimate (u
   });
 });
 
-describe('v14 defaults (owner 2026-11-28)', () => {
+describe('v14 / v15 defaults (owner 2026-11-28; round 18 fixes)', () => {
   it('rank = H8 + the tier guard G; supply = shared slots + FSRS reviews; planner = H10 in full', () => {
     expect(DEFAULT_RANK).toBe(RANK_GUARDED);
     expect(DEFAULT_RANK.tierGuard).toEqual({ bar: 0.5, conf: 0.8, halfLife: 24, minChecks: 6 });
@@ -396,7 +398,7 @@ describe('v14 defaults (owner 2026-11-28)', () => {
   });
 });
 
-describe('round 17 targets (on the v14 defaults)', () => {
+describe('round 17 targets (on the v15 defaults)', () => {
   // Review #1: learners who never improve. Rank never falls, so every rise above the true level is permanent. Ungated H8
   // inflates it (round 17 report: 22 % of rises at tier p < 0.5 at p 0.75); the tier guard G, now the default, meets it.
   it('stationary learners: rank rises at tier p < 0.5 <= 10 % over 365 days at p 0.5 and 0.75 (default, G)', () => {
@@ -480,4 +482,124 @@ describe('round 17 targets (on the v14 defaults)', () => {
   it('N1 over all cells at placedTier never corrects a correctly placed learner (fixed-tempo area)', () => {
     expect(placementRun(0, false, 100, SEED + 70, { rate: 0, fixedTempoSim: true }).corrected).toBe(0);
   }, 60000);
+});
+
+// ---------------------------------------------------------------- round 18 (docs/REVIEW-HOLISTIC-round18-measurement.md), v15
+
+describe('round 18 #1: the guard in areas without fresh cells (keyless, few keys)', () => {
+  const keyless = syntheticCatalogue('keyless', [3, 3, 3, 3, 3, 3, 3], 0, false);
+  const oneKey = syntheticCatalogue('one-key', [3, 3, 3, 3, 3, 3, 3], 1, true);
+  it('cells are unique per exercise × key: a shelved cell is resumed, never duplicated', () => {
+    const r = simulate({ catalogue: oneKey, learner: STEADY_LEARNER(), days: 365, seed: SEED });
+    expect(r.cellCount).toBeLessThanOrEqual(oneKey.exercises.length);
+    const k = simulate({ catalogue: keyless, learner: { ...STEADY_LEARNER(), rate: 0 }, days: 200, seed: SEED });
+    expect(k.cellCount).toBeLessThanOrEqual(keyless.exercises.length);
+    // the gaming probe uses every key once, then resumes, never a second cell in a used key
+    const g = simulate({ catalogue: defaultCatalogue(), learner: { ...DEFAULT_LEARNER_FOR_TEST, theta0: 4 }, days: 180, seed: SEED, onlyExercise: 'synthetic:T1:0' });
+    expect(g.cellCount).toBeLessThanOrEqual(12);
+  }, 60000);
+  it('keyless and 1-key catalogues: rotation-only climbs reach the top tier with no stall >= 42 days (v15)', () => {
+    for (const cat of [keyless, oneKey, syntheticCatalogue('keyless-real-ish', [3, 4, 2, 3, 0, 2, 2], 0, true)]) {
+      const c = climb(cat, 10, SEED + 4242);
+      expect(c.reachedAll, cat.name).toBe(1);
+      expect(c.stalls, cat.name).toBe(0);
+    }
+  }, 120000);
+  it('the v14 guard deadlocks there (why v15 reads passed-cell looks at tiers with no fresh cell left)', () => {
+    const c = climb(keyless, 6, SEED + 4242, 365, STEADY_LEARNER(), {}, 'V1', { planner: V14_GUARD_PLANNER });
+    expect(c.reachedAll).toBeLessThan(0.5);
+    expect(c.stalls).toBeGreaterThan(3);
+  }, 60000);
+  it('the guard reads looks only at exhausted tiers: in a 12-key area the record is the counting checks alone', () => {
+    const r = simulate({ catalogue: defaultCatalogue(), learner: STEADY_LEARNER(), days: 150, seed: SEED });
+    expect(r.lookChecks.length).toBeGreaterThan(0);
+    // every rise is derivable from the counting-check record alone (no tier of a 12-key, 3–5 exercise area is exhausted in 150 days)
+    expect(r.cellCount).toBeLessThan(defaultCatalogue().exercises.length * 12);
+  }, 60000);
+  it('step 6 lo: the guard range of a 1-exercise top tier grouped downward starts at the tier below', () => {
+    const ex = syntheticCatalogue('top1', [3, 3, 1], 12).exercises;
+    expect(guardLo(ex, 2, 2)).toBe(1);
+    expect(guardLo(ex, 1, 2)).toBe(1);
+  });
+});
+
+describe('round 18 #2: skipped due checks', () => {
+  it('a skipped due check is a counting miss: it resets the pending pair and enters the share', () => {
+    const tr = new ItemPassTracker();
+    for (const t of [take(0, 18, true, true), take(0, 18.1, true, false), take(0, 18.2, true, false), take(1, 18, true, true)]) tr.add(t);
+    expect(tr.pendingDay).toBe(1);
+    expect(tr.addSkip(H(2, 18), 2)).toBe(true);
+    expect(tr.pendingDay).toBeNull();
+    expect(tr.counting).toEqual([true, false]);
+    tr.add(take(3, 18, true, true));
+    expect(tr.passedAt).toBeNull(); // the pair restarts
+    expect(new ItemPassTracker().addSkip(H(2, 18), 2)).toBe(false); // nothing due before the target was reached
+  });
+  it('a pending first clean expires after 60 days (a long break cannot complete a pair)', () => {
+    const t = [take(0, 18, true, true), take(0, 18.1, true, false), take(0, 18.2, true, false), take(1, 18, true, true), take(1 + PENDING_MAX_DAYS + 1, 18, true, true)];
+    expect(itemPassAt(t)).toBeNull();
+    expect(itemPassAt([...t, take(PENDING_MAX_DAYS + 3, 18, true, true)])).toBe(H(PENDING_MAX_DAYS + 3, 18));
+  });
+  it('a day picker (warms up first on bad days) does not gain rank under v15; under the v14 rules it did', () => {
+    const honest = stationaryHonesty(0.75, 12, SEED + 5);
+    const picker = stationaryHonesty(0.75, 12, SEED + 5, { sim: { dayPicker: 'warmFirst' } });
+    const v14 = stationaryHonesty(0.75, 12, SEED + 5, { sim: { dayPicker: 'warmFirst', planner: V14_GUARD_PLANNER, h10: H10_V14 } });
+    expect(picker.finalRankMedian).toBeLessThanOrEqual(honest.finalRankMedian);
+    expect(picker.finalBelowHalfProbe).toBeLessThanOrEqual(0.1);
+    expect(v14.finalRankMedian).toBeGreaterThan(honest.finalRankMedian);
+  }, 120000);
+  it('a learner who senses a bad day and leaves the area is held by the skip share (unplayed due checks become misses)', () => {
+    const picker = stationaryHonesty(0.75, 12, SEED + 5, { sim: { dayPicker: 'senseSkip' } });
+    expect(picker.finalBelowHalfProbe).toBeLessThanOrEqual(0.1);
+  }, 120000);
+});
+
+describe('round 18 #4–#6: per-learner honesty, estimand, teacher targets, records', () => {
+  it('stationary learners, per learner: final rank at a tier whose probe-band p < 0.5 in <= 10 % (p 0.5, 0.75; no item gain)', () => {
+    expect(stationaryHonesty(0.5, 20, SEED + 1).finalBelowHalfProbe).toBeLessThanOrEqual(0.1);
+    expect(stationaryHonesty(0.75, 20, SEED + 1).finalBelowHalfProbe).toBeLessThanOrEqual(0.1);
+  }, 120000);
+  it('the estimand: the p 0.85 learner\'s T4 is p 0.44 at target but 0.50 at the probe band, so its rank is not false', () => {
+    const r = stationaryHonesty(0.85, 12, SEED + 1);
+    expect(r.finalBelowHalfProbe).toBe(0);
+  }, 60000);
+  it('the guard ignores records that never count for rank, and the candidate corrections are pure', () => {
+    const ck = (n: number, clean: number, extra: Partial<CountingCheck> = {}): CountingCheck[] => Array.from({ length: n }, (_, i) => ({ tier: 2, day: Math.floor(i / 2), cell: `c${i % 6}`, clean: i < clean, ...extra }));
+    expect(tierGuardOk(ck(12, 11), 2, 2, TIER_GUARD)).toBe(true);
+    expect(tierGuardOk(ck(12, 11, { countsForRank: false }), 2, 2, TIER_GUARD)).toBe(false); // teacher target / loose voice band / not comparable
+    expect(tierGuardOk(ck(12, 11), 2, 2, { ...TIER_GUARD, minDays: 7 })).toBe(false); // 6 days
+    // persist: a record carried by its last 6 entries passes the plain guard but not the persistence rule
+    const run: CountingCheck[] = Array.from({ length: 16 }, (_, i) => ({ tier: 2, day: i, cell: `c${i}`, clean: i >= 6 }));
+    expect(tierGuardOk(run, 2, 2, TIER_GUARD)).toBe(true);
+    expect(tierGuardOk(run, 2, 2, { ...TIER_GUARD, persist: 6 })).toBe(false);
+  });
+  it('a lowered teacher target: its passes are coverage only and its checks never enter the guard', () => {
+    const cat = syntheticCatalogue('tt', [3, 3, 3], 12);
+    const teacherTarget = Object.fromEntries(cat.exercises.map((e) => [e.id, 0.8]));
+    const r = simulate({ catalogue: cat, learner: { ...STEADY_LEARNER(), rate: 0.4 }, days: 200, seed: SEED, teacherTarget });
+    expect(r.passes.length).toBeGreaterThan(0);
+    expect(r.passes.every((p) => p.countsForRank === false)).toBe(true);
+    expect(r.checks.every((c) => c.countsForRank === false)).toBe(true);
+    expect(r.finalRank).toBeNull();
+  }, 60000);
+});
+
+describe('round 18 #3: H10 readiness and the challenge point', () => {
+  it('evidence readiness and the struggle exemption: a plateaued learner is not served hopeless items at the cap (fixed-tempo and tempo)', () => {
+    for (const cat of [defaultCatalogue(), { ...defaultCatalogue(), name: 'fixed', tempo: false }]) {
+      const v15 = h10Overshoot(0.75, 12, 99, { cat });
+      const v14 = h10Overshoot(0.75, 12, 99, { cat, sim: { h10: { ...H10_V14, tempo: cat.tempo } } });
+      expect(v15.pProbe, cat.name).toBeGreaterThan(v14.pProbe);
+      expect(v15.hopeless, cat.name).toBeLessThan(v14.hopeless);
+      expect(v15.pProbe, cat.name).toBeGreaterThanOrEqual(0.35);
+      expect(v15.hopeless, cat.name).toBeLessThanOrEqual(0.35);
+    }
+  }, 120000);
+  it('fixed-tempo areas: the flat-rank slope is >= 0.6 with the offer within 0.5 tier of ability (the v15 target there)', () => {
+    const r = h10Study('fixed', 20, SEED + 90, { cat: { ...defaultCatalogue(), name: 'fixed', tempo: false } });
+    expect(r.flatSlope).toBeGreaterThanOrEqual(0.6);
+    expect(Math.abs(r.meanLag)).toBeLessThanOrEqual(0.5);
+    expect(r.overCap).toBe(0);
+    expect(r.targetFell).toBe(0);
+  }, 120000);
 });

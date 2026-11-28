@@ -33,6 +33,19 @@ export interface CountingCheck {
   day: number;
   cell: string;
   clean: boolean;
+  /** Hours since the origin (orders a merged record; optional for hand-built records, which are already in order). */
+  at?: number;
+  /**
+   * What the entry is (v15): 'check' = a counting cold check of a working cell (§1.6); 'look' = a probe-band cold look of
+   * a passed cell (confirmation slot, FSRS review or guard probe), read only at a tier with no fresh cell left (§1.7 step
+   * 6); 'skip' = a skipped due check (the cell was sounded that day before, or without, its due cold check): a miss.
+   */
+  kind?: 'check' | 'look' | 'skip';
+  /**
+   * False = never read by the guard: a check at a lowered teacher target, at a looser voice cents band than the tier
+   * requires, or from a not-comparable input (a mic take on a keys item that expects MIDI; SPEC-INPUT-SOURCE R5).
+   */
+  countsForRank?: boolean;
 }
 
 /**
@@ -46,6 +59,13 @@ export interface TierGuard {
   conf: number;
   halfLife: number;
   minChecks: number;
+  /** Candidate (v15 owner question): the record must span >= minDays distinct days (default: no such rule). */
+  minDays?: number;
+  /**
+   * Candidate (v15 owner question), a sequential-testing correction: the guard must also hold on the record without its
+   * newest `persist` entries, so one lucky run at the end of a long, repeatedly tested record is not enough (default 0).
+   */
+  persist?: number;
 }
 /** The guard approved 2026-11-28 (bar 0.5, 80 %, half-life 24 checks, >= 6 checks). */
 export const TIER_GUARD: TierGuard = { bar: 0.5, conf: 0.8, halfLife: 24, minChecks: 6 };
@@ -54,8 +74,15 @@ export const RANK_GUARDED: RankOpts = { minTwoExercises: true, keysUnion: true, 
 
 /** Does the pooled counting-check record at tiers lo … t pass the guard? */
 export function tierGuardOk(checks: CountingCheck[], lo: number, t: number, g: TierGuard): boolean {
-  const w = checks.filter((c) => c.tier >= lo && c.tier <= t);
+  const w = checks.filter((c) => c.tier >= lo && c.tier <= t && c.countsForRank !== false);
+  if (!guardRecordOk(w, g)) return false;
+  return !g.persist || guardRecordOk(w.slice(0, Math.max(0, w.length - g.persist)), g);
+}
+
+/** The guard's posterior test on one record (already restricted to the range, in time order). */
+function guardRecordOk(w: CountingCheck[], g: TierGuard): boolean {
   if (w.length < g.minChecks) return false;
+  if (g.minDays && new Set(w.map((c) => c.day)).size < g.minDays) return false;
   let s = 0;
   let f = 0;
   w.forEach((c, i) => {
@@ -99,34 +126,57 @@ export function entryCeiling(ex: Exercise[], placedTier: number, rankHW: number 
  *   in ≥ min(2, available keys) keys (union over those exercises), with ≥ 1 pass at tier t itself.
  * A tier above the ceiling (a manual pass) uses the available exercises at tiers t … t (see report). Null = none.
  */
+/** §1.7 steps 1–2: the range R of tier t (lo … top after grouping), its available exercises, and whether it grew downward. */
+export interface RankRange {
+  lo: number;
+  top: number;
+  avail: Exercise[];
+  downward: boolean;
+}
+
+/** §1.7 steps 1–2 for tier t under the given entry ceiling; null when fix 1 cannot reach 2 exercises at all. */
+export function rankRange(ex: Exercise[], t: number, ceiling: number, o: RankOpts = DEFAULT_RANK): RankRange | null {
+  const tiers = nonEmptyTiers(ex);
+  let top = Math.max(t, ceiling);
+  let lo = t;
+  let avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
+  let downward = false;
+  if (o.minTwoExercises) {
+    // Fix 1 (coordinator 2026-11-27): rank needs ≥ 2 distinct exercises; a range with < 2 available exercises is
+    // grouped with the next non-empty tier above (repeatedly). With nothing above (a 1-exercise top tier), it is
+    // grouped with the next non-empty tier below: ≥ 2 distinct exercises across the two, ≥ 1 at the top tier.
+    while (avail.length < 2) {
+      const up = tiers.find((x) => x > top);
+      if (up === undefined) break;
+      top = up;
+      avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
+    }
+    while (avail.length < 2) {
+      const down = [...tiers].reverse().find((x) => x < lo);
+      if (down === undefined) break;
+      lo = down;
+      downward = true;
+      avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
+    }
+    if (avail.length < 2) return null;
+  }
+  return { lo, top, avail, downward };
+}
+
+/** The lowest tier of the guard's range for tier t (step 6: lo = the lowest tier of R when R grew downward, else t). */
+export function guardLo(ex: Exercise[], t: number, ceiling: number, o: RankOpts = DEFAULT_RANK): number {
+  const r = rankRange(ex, t, ceiling, o);
+  return r && r.downward ? r.lo : t;
+}
+
 export function deriveRank(ex: Exercise[], passes: PassRecord[], ceiling: number, o: RankOpts = DEFAULT_RANK, checks?: CountingCheck[]): number | null {
   const counting = passes.filter((p) => p.countsForRank !== false);
   const tiers = nonEmptyTiers(ex);
   for (let i = tiers.length - 1; i >= 0; i--) {
     const t = tiers[i];
-    let top = Math.max(t, ceiling);
-    let lo = t;
-    let avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
-    let downward = false;
-    if (o.minTwoExercises) {
-      // Fix 1 (coordinator 2026-11-27): rank needs ≥ 2 distinct exercises; a range with < 2 available exercises is
-      // grouped with the next non-empty tier above (repeatedly). With nothing above (a 1-exercise top tier), it is
-      // grouped with the next non-empty tier below: ≥ 2 distinct exercises across the two, ≥ 1 at the top tier.
-      while (avail.length < 2) {
-        const up = tiers.find((x) => x > top);
-        if (up === undefined) break;
-        top = up;
-        avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
-      }
-      while (avail.length < 2) {
-        const down = [...tiers].reverse().find((x) => x < lo);
-        if (down === undefined) break;
-        lo = down;
-        downward = true;
-        avail = ex.filter((e) => e.available && e.tier >= lo && e.tier <= top);
-      }
-      if (avail.length < 2) continue;
-    }
+    const rr = rankRange(ex, t, ceiling, o);
+    if (!rr) continue;
+    const { lo, avail, downward } = rr;
     const need = o.minTwoExercises ? (downward ? 2 : Math.max(2, Math.min(3, avail.length))) : Math.min(3, avail.length);
     const keysAvail = o.keysUnion ? keyUnion(avail).size : avail.reduce((m, e) => Math.max(m, e.keys), 0);
     const needKeys = Math.min(2, keysAvail);
