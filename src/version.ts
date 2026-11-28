@@ -18,6 +18,12 @@ export interface ChangeEntry {
 /** Newest first. Keep entries short and player-facing. */
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: '0.145.18',
+    date: '2026-11-28',
+    en: ['The cursor on the staff now sits exactly on the note being played at every tempo and screen width (on wide screens with both hands it used to run ahead); triplet tempo changes stay on the beat, the cursor no longer lights a note early, and runs longer than 8 bars show all their bars'],
+    he: ['הסמן על החמשה עומד עכשיו בדיוק על התו שמתנגן, בכל טמפו ובכל רוחב מסך (במסכים רחבים עם שתי ידיים הוא רץ קדימה). מעברי טמפו בטריולות נשארים על הפעמה, הסמן כבר לא מדליק תו מוקדם, וריצות ארוכות מ־8 תיבות מציגות את כל התיבות'],
+  },
+  {
     version: '0.145.17',
     date: '2026-11-28',
     en: ['A very long practice session (more than 50 takes) no longer stops your results from reaching your other devices and your teacher'],
